@@ -3,6 +3,7 @@
 This hack only edits existing data tables: move params, Pokemon base stats, Pokemon types, and level-up learnsets.
 `docs/CHANGES.txt` is generated from this file by `scripts/export_changes_from_manifest.py`.
 `docs/CHANGES_BY_CATEGORY.txt` is generated from this file by `scripts/export_changes_by_category.py`.
+`docs/RELEASE_NOTES.md` is a hand-written final summary and is not generated from this file.
 
 ## Moves
 
