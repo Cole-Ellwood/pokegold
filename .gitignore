@@ -20,6 +20,10 @@
 
 # tool binaries
 *.exe
+rgbds-1.0.1/
+rgbds-win64.zip
+rgbds-win64*.zip
+rgbds-*/
 
 # precompiled python
 *.pyc

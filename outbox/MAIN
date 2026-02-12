@@ -1,17 +1,7 @@
-summary: "Baseline/hacked ROM handling was switched to local-only storage, docs/checksums were aligned, and outbox references were corrected away from dist ROM paths."
+summary: "Updated ignore policy for local RGBDS tooling artifacts and unblocked Batch 2 intake readiness."
 branch: "pm/gsc-data-rebalance"
 files_changed:
   - ".gitignore"
-  - "docs/build.md"
-  - "dist/checksums.txt"
   - "outbox/MAIN"
-actions_taken:
-  - "Confirmed no ROM/save/state binaries are tracked by git."
-  - "Confirmed dist tracked files remain artifact-only (dist/checksums.txt and dist/pokegold-data-rebalance.bps)."
-  - "Created .local/roms/ and moved local ROM binaries from dist/ into .local/roms/ (untracked local workspace)."
-  - "Updated .gitignore to ignore .local/ and keep ROM/emulator artifact ignores in dist/."
-  - "Updated docs/build.md to document baseline SHA1 from pret/pokegold README and local-only ROM storage under .local/roms/."
-  - "Updated dist/checksums.txt to record baseline expected hash, local hacked ROM hash, and patch hash metadata."
-  - "Re-verified patch roundtrip using .local/roms baseline -> output hash matches local hacked ROM hash."
-patch_verified: true
-notes: "No game data files were modified. dist/ now contains tracked patch+checksums only, while ROM binaries are local-only under .local/roms/."
+ready: true
+notes: "Clean working tree for batch prep now means no pending tracked modifications (M/A/D), while untracked files are allowed only when covered by ignore policy (e.g., rgbds tool artifacts). rgbds-1.0.1/ and rgbds-win64*.zip are now ignored; proceed to accept Batch 2 edits."
