@@ -75,6 +75,35 @@ GENERATED FROM docs/manifest.md
 - `DEWGONG`: `HP 90 -> 140`, `Atk 70 -> 110`, `Def 80 -> 80`, `Spe 70 -> 70`, `SpA 70 -> 110`, `SpD 95 -> 95`
 - `PILOSWINE`: `HP 100 -> 180`, `Atk 100 -> 100`, `Def 80 -> 160`, `Spe 50 -> 50`, `SpA 60 -> 60`, `SpD 60 -> 140`
 
+### Batch 5
+- `GRIMER`: `HP 80 -> 80`, `Atk 80 -> 100`, `Def 50 -> 50`, `Spe 25 -> 25`, `SpA 40 -> 40`, `SpD 50 -> 50`
+- `MUK`: `HP 105 -> 135`, `Atk 105 -> 135`, `Def 75 -> 75`, `Spe 50 -> 50`, `SpA 65 -> 65`, `SpD 100 -> 100`
+- `SNEASEL`: `HP 55 -> 25`, `Atk 95 -> 155`, `Def 55 -> 55`, `Spe 115 -> 160`, `SpA 35 -> 135`, `SpD 75 -> 75`
+- `VILEPLUME`: `HP 75 -> 150`, `Atk 80 -> 130`, `Def 85 -> 115`, `Spe 50 -> 100`, `SpA 100 -> 150`, `SpD 90 -> 130`
+- `HOUNDOUR`: `HP 45 -> 85`, `Atk 60 -> 60`, `Def 30 -> 30`, `Spe 65 -> 65`, `SpA 80 -> 110`, `SpD 50 -> 90`
+- `HOUNDOOM`: `HP 75 -> 115`, `Atk 90 -> 90`, `Def 50 -> 50`, `Spe 95 -> 95`, `SpA 110 -> 140`, `SpD 80 -> 125`
+- `DRAGONAIR`: `HP 61 -> 111`, `Atk 84 -> 84`, `Def 65 -> 95`, `Spe 70 -> 55`, `SpA 70 -> 110`, `SpD 70 -> 85`
+- `KINGDRA`: `HP 75 -> 150`, `Atk 95 -> 135`, `Def 95 -> 135`, `Spe 85 -> 65`, `SpA 95 -> 125`, `SpD 95 -> 135`
+- `DRATINI`: `HP 41 -> 91`, `Atk 64 -> 64`, `Def 45 -> 75`, `Spe 50 -> 50`, `SpA 50 -> 100`, `SpD 50 -> 50`
+- `GLIGAR`: `HP 65 -> 125`, `Atk 75 -> 95`, `Def 105 -> 135`, `Spe 85 -> 85`, `SpA 35 -> 35`, `SpD 65 -> 115`
+- `URSARING`: `HP 90 -> 130`, `Atk 130 -> 160`, `Def 75 -> 75`, `Spe 55 -> 55`, `SpA 75 -> 75`, `SpD 75 -> 75`
+- `EXEGGUTOR`: `HP 95 -> 125`, `Atk 95 -> 95`, `Def 85 -> 135`, `Spe 55 -> 55`, `SpA 125 -> 175`, `SpD 65 -> 85`
+- `SLOWBRO`: `HP 95 -> 135`, `Atk 75 -> 75`, `Def 110 -> 190`, `Spe 30 -> 30`, `SpA 100 -> 100`, `SpD 80 -> 160`
+- `JYNX`: `HP 65 -> 65`, `Atk 50 -> 120`, `Def 35 -> 35`, `Spe 95 -> 95`, `SpA 115 -> 145`, `SpD 95 -> 155`
+- `VENOMOTH`: `HP 70 -> 110`, `Atk 65 -> 65`, `Def 60 -> 60`, `Spe 90 -> 150`, `SpA 90 -> 90`, `SpD 75 -> 75`
+- `FORRETRESS`: `HP 75 -> 105`, `Atk 90 -> 160`, `Def 140 -> 140`, `Spe 40 -> 40`, `SpA 60 -> 60`, `SpD 60 -> 40`
+- `CROBAT`: `HP 85 -> 145`, `Atk 90 -> 60`, `Def 80 -> 80`, `Spe 130 -> 170`, `SpA 70 -> 70`, `SpD 80 -> 80`
+- `HITMONTOP`: `HP 50 -> 50`, `Atk 95 -> 165`, `Def 95 -> 95`, `Spe 70 -> 70`, `SpA 35 -> 65`, `SpD 110 -> 170`
+- `HITMONLEE`: `HP 50 -> 50`, `Atk 120 -> 150`, `Def 53 -> 53`, `Spe 87 -> 137`, `SpA 35 -> 35`, `SpD 110 -> 110`
+- `HITMONCHAN`: `HP 50 -> 70`, `Atk 105 -> 125`, `Def 79 -> 79`, `Spe 76 -> 76`, `SpA 35 -> 135`, `SpD 110 -> 110`
+- `ONIX`: `HP 35 -> 135`, `Atk 45 -> 115`, `Def 160 -> 160`, `Spe 70 -> 30`, `SpA 30 -> 30`, `SpD 45 -> 45`
+- `MACHAMP`: `HP 90 -> 150`, `Atk 130 -> 130`, `Def 80 -> 110`, `Spe 55 -> 55`, `SpA 65 -> 65`, `SpD 85 -> 125`
+- `UMBREON`: `HP 95 -> 115`, `Atk 65 -> 65`, `Def 110 -> 140`, `Spe 65 -> 65`, `SpA 60 -> 60`, `SpD 130 -> 170`
+- `GYARADOS`: `HP 95 -> 125`, `Atk 125 -> 145`, `Def 79 -> 79`, `Spe 81 -> 81`, `SpA 60 -> 100`, `SpD 100 -> 100`
+- `CHARIZARD`: `HP 78 -> 78`, `Atk 84 -> 124`, `Def 78 -> 78`, `Spe 100 -> 100`, `SpA 109 -> 149`, `SpD 85 -> 85`
+- `AERODACTYL`: `HP 80 -> 80`, `Atk 105 -> 145`, `Def 65 -> 65`, `Spe 130 -> 130`, `SpA 60 -> 60`, `SpD 75 -> 75`
+- `DRAGONITE`: `HP 91 -> 161`, `Atk 134 -> 154`, `Def 95 -> 125`, `Spe 80 -> 20`, `SpA 100 -> 140`, `SpD 100 -> 140`
+
 ### Batch 1
 - `MEGANIUM`: `GRASS/GRASS -> GRASS/NORMAL`
 - `FERALIGATR`: `WATER/DARK -> WATER/FIGHTING`

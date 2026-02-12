@@ -1,6 +1,6 @@
 	db UMBREON ; 197
 
-	db  95,  65, 110,  65,  60, 130
+	db  115,  65, 140,  65,  60, 170
 	;   hp  atk  def  spd  sat  sdf
 
 	db DARK, DARK ; type
