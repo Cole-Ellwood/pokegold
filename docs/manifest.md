@@ -64,6 +64,35 @@ This hack only edits existing data tables: move params, Pokemon base stats, Poke
 - `ZUBAT`: `HP 40 -> 60`, `Atk 45 -> 65`
 - `GOLBAT`: `HP 75 -> 95`, `Atk 80 -> 100`, `Def 70 -> 90`
 
+### Batch 4
+
+- `MILTANK`: `HP 95 -> 125`, `Atk 80 -> 110`, `Def 105 -> 135`, `Spe 100 -> 40`, `SpA 40 -> 40`, `SpD 70 -> 30`
+- `CLEFAIRY`: `HP 70 -> 70`, `Atk 45 -> 75`, `Def 48 -> 48`, `Spe 35 -> 35`, `SpA 60 -> 60`, `SpD 65 -> 65`
+- `YANMA`: `HP 65 -> 65`, `Atk 65 -> 125`, `Def 45 -> 45`, `Spe 95 -> 140`, `SpA 75 -> 75`, `SpD 45 -> 45`
+- `SUDOWOODO`: `HP 70 -> 130`, `Atk 100 -> 150`, `Def 115 -> 145`, `Spe 30 -> 30`, `SpA 30 -> 30`, `SpD 65 -> 65`
+- `SHUCKLE`: `HP 20 -> 100`, `Atk 10 -> 10`, `Def 230 -> 230`, `Spe 5 -> 5`, `SpA 10 -> 10`, `SpD 230 -> 230`
+- `STANTLER`: `HP 73 -> 108`, `Atk 95 -> 135`, `Def 62 -> 82`, `Spe 85 -> 60`, `SpA 85 -> 85`, `SpD 65 -> 80`
+- `MAGNEMITE`: `HP 25 -> 70`, `Atk 35 -> 135`, `Def 70 -> 100`, `Spe 45 -> 30`, `SpA 95 -> 125`, `SpD 55 -> 40`
+- `MAGNETON`: `HP 50 -> 90`, `Atk 60 -> 160`, `Def 95 -> 135`, `Spe 70 -> 50`, `SpA 120 -> 150`, `SpD 70 -> 70`
+- `GENGAR`: `HP 60 -> 110`, `Atk 65 -> 135`, `Def 60 -> 90`, `Spe 110 -> 110`, `SpA 130 -> 130`, `SpD 75 -> 75`
+- `SNUBBULL`: `HP 60 -> 100`, `Atk 80 -> 130`, `Def 50 -> 80`, `Spe 30 -> 30`, `SpA 40 -> 40`, `SpD 40 -> 40`
+- `CHINCHOU`: `HP 75 -> 75`, `Atk 38 -> 38`, `Def 38 -> 38`, `Spe 67 -> 67`, `SpA 56 -> 96`, `SpD 56 -> 56`
+- `LANTURN`: `HP 125 -> 145`, `Atk 58 -> 58`, `Def 58 -> 108`, `Spe 67 -> 67`, `SpA 76 -> 126`, `SpD 76 -> 96`
+- `MANTINE`: `HP 65 -> 105`, `Atk 40 -> 80`, `Def 70 -> 70`, `Spe 70 -> 100`, `SpA 80 -> 80`, `SpD 140 -> 140`
+- `CORSOLA`: `HP 55 -> 55`, `Atk 55 -> 125`, `Def 85 -> 85`, `Spe 35 -> 35`, `SpA 65 -> 135`, `SpD 85 -> 85`
+- `PRIMEAPE`: `HP 65 -> 105`, `Atk 105 -> 125`, `Def 60 -> 60`, `Spe 95 -> 145`, `SpA 60 -> 60`, `SpD 70 -> 70`
+- `POLIWRATH`: `HP 90 -> 150`, `Atk 85 -> 85`, `Def 95 -> 145`, `Spe 70 -> 50`, `SpA 70 -> 70`, `SpD 90 -> 50`
+- `STEELIX`: `HP 75 -> 135`, `Atk 85 -> 135`, `Def 200 -> 200`, `Spe 30 -> 30`, `SpA 55 -> 55`, `SpD 65 -> 45`
+- `GIRAFARIG`: `HP 70 -> 40`, `Atk 80 -> 120`, `Def 65 -> 65`, `Spe 85 -> 85`, `SpA 90 -> 130`, `SpD 65 -> 65`
+- `RATTATA`: `HP 30 -> 15`, `Atk 56 -> 96`, `Def 35 -> 35`, `Spe 72 -> 72`, `SpA 25 -> 25`, `SpD 35 -> 35`
+- `RATICATE`: `HP 55 -> 25`, `Atk 81 -> 145`, `Def 60 -> 60`, `Spe 97 -> 97`, `SpA 50 -> 50`, `SpD 70 -> 70`
+- `ARBOK`: `HP 60 -> 120`, `Atk 85 -> 85`, `Def 69 -> 109`, `Spe 80 -> 80`, `SpA 65 -> 65`, `SpD 79 -> 79`
+- `GLOOM`: `HP 60 -> 60`, `Atk 65 -> 85`, `Def 70 -> 70`, `Spe 40 -> 40`, `SpA 85 -> 105`, `SpD 75 -> 75`
+- `MURKROW`: `HP 60 -> 140`, `Atk 85 -> 135`, `Def 42 -> 42`, `Spe 91 -> 191`, `SpA 85 -> 135`, `SpD 42 -> 42`
+- `SEEL`: `HP 65 -> 95`, `Atk 45 -> 85`, `Def 55 -> 55`, `Spe 45 -> 45`, `SpA 45 -> 85`, `SpD 70 -> 70`
+- `DEWGONG`: `HP 90 -> 140`, `Atk 70 -> 110`, `Def 80 -> 80`, `Spe 70 -> 70`, `SpA 70 -> 110`, `SpD 95 -> 95`
+- `PILOSWINE`: `HP 100 -> 180`, `Atk 100 -> 100`, `Def 80 -> 160`, `Spe 50 -> 50`, `SpA 60 -> 60`, `SpD 60 -> 140`
+
 ## Pokemon types
 
 - `TYPHLOSION`: `FIRE/FIRE -> FIRE/NORMAL`

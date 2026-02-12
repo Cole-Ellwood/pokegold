@@ -1,6 +1,6 @@
 	db GENGAR ; 094
 
-	db  60,  65,  60, 110, 130,  75
+	db  110, 135,  90, 110, 130,  75
 	;   hp  atk  def  spd  sat  sdf
 
 	db GHOST, PSYCHIC_TYPE ; type
