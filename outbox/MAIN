@@ -1,62 +1,11 @@
-summary: "Applied Batch 2 Pokemon base stat/type deltas, updated manifest, rebuilt, and regenerated verified patch/checksums with local-only ROM workflow."
-branch: "pm/gsc-data-rebalance"
-batch: "Batch 2"
-files_changed:
-  - "data/pokemon/base_stats/togetic.asm"
-  - "data/pokemon/base_stats/gastly.asm"
-  - "data/pokemon/base_stats/haunter.asm"
-  - "data/pokemon/base_stats/gengar.asm"
-  - "data/pokemon/base_stats/pidgeotto.asm"
-  - "data/pokemon/base_stats/pidgeot.asm"
-  - "data/pokemon/base_stats/flaaffy.asm"
-  - "data/pokemon/base_stats/ampharos.asm"
-  - "data/pokemon/base_stats/hoppip.asm"
-  - "data/pokemon/base_stats/skiploom.asm"
-  - "data/pokemon/base_stats/jumpluff.asm"
-  - "data/pokemon/base_stats/wooper.asm"
-  - "data/pokemon/base_stats/quagsire.asm"
-  - "data/pokemon/base_stats/qwilfish.asm"
-  - "data/pokemon/base_stats/natu.asm"
-  - "data/pokemon/base_stats/xatu.asm"
-  - "data/pokemon/base_stats/unown.asm"
-  - "data/pokemon/base_stats/koffing.asm"
-  - "data/pokemon/base_stats/weezing.asm"
-  - "data/pokemon/base_stats/scyther.asm"
-  - "data/pokemon/base_stats/zubat.asm"
-  - "data/pokemon/base_stats/golbat.asm"
-  - "docs/manifest.md"
-  - "dist/checksums.txt"
-  - "dist/pokegold-data-rebalance.bps"
-  - "outbox/MAIN"
-needs_clarification: []
-applied_changes:
-  - "TOGETIC: Atk +70, Spe +100"
-  - "GASTLY: HP +10, Spe +40; type GHOST/PSYCHIC_TYPE"
-  - "HAUNTER: Atk +20, SpA +10, Spe +40; type GHOST/PSYCHIC_TYPE"
-  - "GENGAR: type GHOST/PSYCHIC_TYPE"
-  - "PIDGEOTTO: HP +30, Atk +30"
-  - "PIDGEOT: HP +30, Atk +30"
-  - "FLAAFFY: HP +30, Def +30, SpD +30"
-  - "AMPHAROS: HP +30, Def +30, SpA +30, SpD +30; type ELECTRIC/DRAGON"
-  - "HOPPIP: Atk +30, SpA +30"
-  - "SKIPLOOM: HP +25, Def +50, SpD +50, Spe -40; type GRASS/STEEL"
-  - "JUMPLUFF: HP +10, Atk +50, SpA +70, Spe +40"
-  - "WOOPER: HP +50"
-  - "QUAGSIRE: HP +50, Atk +40, SpA +40"
-  - "QWILFISH: Def +75, SpA +40"
-  - "NATU: SpA +40"
-  - "XATU: SpA +45, SpD +30"
-  - "UNOWN: HP +100, Atk +30, SpA +30"
-  - "KOFFING: HP +20, Atk +20, SpA +20; type POISON/DARK"
-  - "WEEZING: HP +40, Atk +30, SpA +40; type POISON/DARK"
-  - "SCYTHER: HP +20, Atk +30"
-  - "ZUBAT: HP +20, Atk +20"
-  - "GOLBAT: HP +20, Atk +20, Def +20"
-build:
-  ok: true
-  notes: "Built with 'make RGBDS=rgbds-1.0.1/ gold' per docs/build.md; canonical hacked ROM copied to .local/roms/pokegold-data-rebalance.gbc."
-patch:
-  ok: true
-  path: "dist/pokegold-data-rebalance.bps"
-  checksums_updated: true
-notes: "Validated all Batch 2 outputs in 1..255 bounds; baseline SHA1 matched expected d8b8a3600a465308c9953dfa04f0081c05bdcb94; verified BPS roundtrip baseline->patched SHA1 equals hacked SHA1 3cb3864a9d8bd2ee6433655aed48ca35821c0745."
+files changed:
+- docs/manifest.md
+- docs/CHANGES.txt
+- scripts/export_changes_from_manifest.py
+- outbox/MAIN
+
+command run:
+python scripts/export_changes_from_manifest.py
+
+git log -1:
+d85b6e36 data: batch2 pokemon rebalance
