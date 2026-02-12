@@ -32,3 +32,15 @@
 *.sn*
 *.sa*
 *.sg1
+
+# repo hygiene: ROM/emulator artifacts
+dist/*.gb
+dist/*.gbc
+dist/*.sgb
+dist/*.sav
+dist/*.rtc
+dist/*.state
+dist/*.zip
+*.sav
+*.rtc
+*.state

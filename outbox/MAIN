@@ -1,0 +1,7 @@
+summary: "Enforced ROM/artifact hygiene: added ignore rules; no tracked ROM binaries found to untrack."
+repo_path: "C:\\Users\\Owner\\Downloads\\pokemon gold hack"
+files_changed:
+  - ".gitignore"
+  - "outbox/MAIN"
+removed_from_tracking: []
+notes: "dist/ currently has untracked build outputs; ROM binaries remain untracked. Patch/checksum artifacts were not removed."
