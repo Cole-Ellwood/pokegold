@@ -1,36 +1,18 @@
-summary: "Applied Batch 1 Pokemon base stat/type deltas, rebuilt ROM, regenerated BPS patch, and updated checksums."
+summary: "Postcheck completed: residual tracked changes were resolved intentionally, manifest and patch/checksum alignment verified, and tree is free of tracked modifications."
 branch: "pm/gsc-data-rebalance"
-files_changed:
-  - "data/pokemon/base_stats/meganium.asm"
-  - "data/pokemon/base_stats/typhlosion.asm"
-  - "data/pokemon/base_stats/feraligatr.asm"
-  - "data/pokemon/base_stats/sentret.asm"
-  - "data/pokemon/base_stats/furret.asm"
-  - "data/pokemon/base_stats/hoothoot.asm"
-  - "data/pokemon/base_stats/noctowl.asm"
-  - "data/pokemon/base_stats/ledyba.asm"
-  - "data/pokemon/base_stats/ledian.asm"
-  - "data/pokemon/base_stats/ariados.asm"
-  - "data/pokemon/base_stats/bellsprout.asm"
-  - "data/pokemon/base_stats/weepinbell.asm"
-  - "data/pokemon/base_stats/victreebel.asm"
-  - "data/pokemon/base_stats/dunsparce.asm"
-  - "docs/manifest.md"
-  - "dist/checksums.txt"
-  - "dist/pokegold-data-rebalance.bps"
-  - "outbox/MAIN"
-batch: "Batch 1"
-needs_clarification: []
-applied_changes:
-  - "MEGANIUM: HP+30 Def+30 SpD+30; type GRASS/NORMAL"
-  - "TYPHLOSION: SpA+31 Spe+20"
-  - "FERALIGATR: Atk+15 SpA+41; type WATER/FIGHTING"
-  - "SENTRET, FURRET, HOOTHOOT, NOCTOWL, LEDYBA, LEDIAN, ARIADOS, BELLSPROUT, WEEPINBELL, VICTREEBEL, DUNSPARCE deltas applied"
-build:
-  ok: true
-  notes: "Built with 'make RGBDS=rgbds-1.0.1/ gold' per docs/build.md; ROM output at pokegold.gbc."
-patch:
-  ok: true
-  path: "dist/pokegold-data-rebalance.bps"
-  checksums_updated: true
-notes: "Validated stat bounds 1..255 for all edited mons. Baseline ROM reference used: dist/pokegold-baseline.gbc from docs/build.md. Verified patch application reproduces hacked SHA1."
+status:
+  clean: false
+  remaining_modified: []
+  untracked:
+    - "rgbds-1.0.1/libpng16.dll"
+    - "rgbds-1.0.1/zlib1.dll"
+    - "rgbds-win64.zip"
+actions_taken:
+  - "Confirmed target branch and presence of Batch 1 commit 49a3e0e3."
+  - "Audited residual tracked diffs in data/moves/moves.asm and data/pokemon/evos_attacks.asm; changes matched manifest move/learnset scope."
+  - "Committed intended residuals and docs updates in 1f3a5492 (move/learnset data + docs/build.md + docs/smoke_test.md)."
+  - "Updated smoke test typing checks to Meganium GRASS/NORMAL and Feraligatr WATER/FIGHTING."
+  - "Verified dist/checksums.txt hashes against current baseline and hacked ROM artifacts."
+  - "Verified BPS roundtrip: applying dist/pokegold-data-rebalance.bps to baseline reproduces hacked SHA1."
+patch_verified: true
+notes: "Working tree has no tracked modifications; remaining untracked files are local toolchain artifacts only. No ROM binaries are tracked."
