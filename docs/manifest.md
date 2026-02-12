@@ -31,6 +31,31 @@ This hack only edits existing data tables: move params, Pokemon base stats, Poke
 - `VICTREEBEL`: `HP 80 -> 90`, `Atk 105 -> 145`, `Def 65 -> 50`, `SpA 100 -> 140`, `SpD 60 -> 45`, `Spe 70 -> 110`
 - `DUNSPARCE`: `HP 100 -> 180`, `Atk 70 -> 140`, `Def 70 -> 130`, `Spe 45 -> 15`
 
+
+### Batch 2
+
+- `TOGETIC`: `Atk 40 -> 110`, `Spe 40 -> 140`
+- `GASTLY`: `HP 30 -> 40`, `Spe 80 -> 120`
+- `HAUNTER`: `Atk 50 -> 70`, `SpA 115 -> 125`, `Spe 95 -> 135`
+- `PIDGEOTTO`: `HP 63 -> 93`, `Atk 60 -> 90`
+- `PIDGEOT`: `HP 83 -> 113`, `Atk 80 -> 110`
+- `FLAAFFY`: `HP 70 -> 100`, `Def 55 -> 85`, `SpD 60 -> 90`
+- `AMPHAROS`: `HP 90 -> 120`, `Def 75 -> 105`, `SpA 115 -> 145`, `SpD 90 -> 120`
+- `HOPPIP`: `Atk 35 -> 65`, `SpA 35 -> 65`
+- `SKIPLOOM`: `HP 55 -> 80`, `Def 50 -> 100`, `SpD 65 -> 115`, `Spe 80 -> 40`
+- `JUMPLUFF`: `HP 75 -> 85`, `Atk 55 -> 105`, `SpA 55 -> 125`, `Spe 110 -> 150`
+- `WOOPER`: `HP 55 -> 105`
+- `QUAGSIRE`: `HP 95 -> 145`, `Atk 85 -> 125`, `SpA 65 -> 105`
+- `QWILFISH`: `Def 75 -> 150`, `SpA 55 -> 95`
+- `NATU`: `SpA 70 -> 110`
+- `XATU`: `SpA 95 -> 140`, `SpD 70 -> 100`
+- `UNOWN`: `HP 48 -> 148`, `Atk 72 -> 102`, `SpA 72 -> 102`
+- `KOFFING`: `HP 40 -> 60`, `Atk 65 -> 85`, `SpA 60 -> 80`
+- `WEEZING`: `HP 65 -> 105`, `Atk 90 -> 120`, `SpA 85 -> 125`
+- `SCYTHER`: `HP 70 -> 90`, `Atk 110 -> 140`
+- `ZUBAT`: `HP 40 -> 60`, `Atk 45 -> 65`
+- `GOLBAT`: `HP 75 -> 95`, `Atk 80 -> 100`, `Def 70 -> 90`
+
 ## Pokemon types
 
 - `TYPHLOSION`: `FIRE/FIRE -> FIRE/NORMAL`
@@ -40,6 +65,17 @@ This hack only edits existing data tables: move params, Pokemon base stats, Poke
 
 - `MEGANIUM`: `GRASS/GRASS -> GRASS/NORMAL`
 - `FERALIGATR`: `WATER/DARK -> WATER/FIGHTING`
+
+
+### Batch 2
+
+- `GASTLY`: `GHOST/POISON -> GHOST/PSYCHIC_TYPE`
+- `HAUNTER`: `GHOST/POISON -> GHOST/PSYCHIC_TYPE`
+- `GENGAR`: `GHOST/POISON -> GHOST/PSYCHIC_TYPE`
+- `AMPHAROS`: `ELECTRIC/ELECTRIC -> ELECTRIC/DRAGON`
+- `SKIPLOOM`: `GRASS/FLYING -> GRASS/STEEL`
+- `KOFFING`: `POISON/POISON -> POISON/DARK`
+- `WEEZING`: `POISON/POISON -> POISON/DARK`
 
 ## Learnsets
 
@@ -52,3 +88,4 @@ This hack only edits existing data tables: move params, Pokemon base stats, Poke
 - No new moves, no new move effects, no new mechanics, no new type IDs.
 - No map/script/text changes.
 - No engine code changes.
+
