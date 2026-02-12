@@ -34,6 +34,7 @@
 *.sg1
 
 # repo hygiene: ROM/emulator artifacts
+.local/
 dist/*.gb
 dist/*.gbc
 dist/*.sgb
