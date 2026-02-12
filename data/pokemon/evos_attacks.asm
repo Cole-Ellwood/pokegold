@@ -2097,7 +2097,7 @@ MeganiumEvosAttacks:
 	db 23, SYNTHESIS
 	db 31, BODY_SLAM
 	db 41, LIGHT_SCREEN
-	db 51, SAFEGUARD
+	db 51, EARTHQUAKE
 	db 61, SOLARBEAM
 	db 0 ; no more level-up moves
 
@@ -2138,7 +2138,7 @@ TyphlosionEvosAttacks:
 	db 12, EMBER
 	db 21, QUICK_ATTACK
 	db 31, FLAME_WHEEL
-	db 45, SWIFT
+	db 45, THUNDERPUNCH
 	db 60, FLAMETHROWER
 	db 0 ; no more level-up moves
 
@@ -2182,7 +2182,7 @@ FeraligatrEvosAttacks:
 	db 21, BITE
 	db 28, SCARY_FACE
 	db 38, SLASH
-	db 47, SCREECH
+	db 47, CRUNCH
 	db 58, HYDRO_PUMP
 	db 0 ; no more level-up moves
 
