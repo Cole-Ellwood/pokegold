@@ -1,30 +1,17 @@
-# Data Rebalance Manifest
-
-This hack only edits existing data tables: move params, Pokemon base stats, Pokemon types, and level-up learnsets.
-`docs/CHANGES.txt` is generated from this file by `scripts/export_changes_from_manifest.py`.
-`docs/CHANGES_BY_CATEGORY.txt` is generated from this file by `scripts/export_changes_by_category.py`.
+CHANGES BY CATEGORY
+GENERATED FROM docs/manifest.md
+GENERATED: 2026-02-12
 
 ## Moves
-
-- `CUT`: `power 50 -> 60`, `accuracy 95 -> 100`, `pp 30 -> 30`, `type NORMAL -> NORMAL`, `effect EFFECT_NORMAL_HIT -> EFFECT_NORMAL_HIT`
-- `FIRE_SPIN`: `power 15 -> 25`, `accuracy 70 -> 85`, `pp 15 -> 10`, `type FIRE -> FIRE`, `effect EFFECT_TRAP_TARGET -> EFFECT_TRAP_TARGET`
-- `MUD_SLAP`: `power 20 -> 30`, `accuracy 100 -> 100`, `pp 10 -> 10`, `type GROUND -> GROUND`, `effect EFFECT_ACCURACY_DOWN_HIT -> EFFECT_ACCURACY_DOWN_HIT`
-
 ### Batch 3
-
 - `SOLARBEAM`: `power 120 -> 180`
 - `GIGA_DRAIN`: `power 60 -> 75`, `pp 5 -> 25`
 - `FIRE_BLAST`: `power 120 -> 140`, `pp 5 -> 10`
 - `CROSS_CHOP`: `power 100 -> 120`, `pp 5 -> 20`
 
+
 ## Pokemon base stats
-
-- `MEGANIUM`: `HP 80 -> 85`, `Atk 82 -> 88`, `Def 100 -> 105`, `Spd 80 -> 82`, `SpAtk 83 -> 90`, `SpDef 100 -> 105`
-- `TYPHLOSION`: `HP 78 -> 78`, `Atk 84 -> 92`, `Def 78 -> 80`, `Spd 100 -> 103`, `SpAtk 109 -> 114`, `SpDef 85 -> 90`
-- `FERALIGATR`: `HP 85 -> 88`, `Atk 105 -> 112`, `Def 100 -> 103`, `Spd 78 -> 82`, `SpAtk 79 -> 84`, `SpDef 83 -> 88`
-
 ### Batch 1
-
 - `MEGANIUM`: `HP 85 -> 115`, `Def 105 -> 135`, `SpD 105 -> 135`
 - `TYPHLOSION`: `SpA 114 -> 145`, `Spe 103 -> 123`
 - `FERALIGATR`: `Atk 112 -> 127`, `SpA 84 -> 125`
@@ -40,9 +27,7 @@ This hack only edits existing data tables: move params, Pokemon base stats, Poke
 - `VICTREEBEL`: `HP 80 -> 90`, `Atk 105 -> 145`, `Def 65 -> 50`, `SpA 100 -> 140`, `SpD 60 -> 45`, `Spe 70 -> 110`
 - `DUNSPARCE`: `HP 100 -> 180`, `Atk 70 -> 140`, `Def 70 -> 130`, `Spe 45 -> 15`
 
-
 ### Batch 2
-
 - `TOGETIC`: `Atk 40 -> 110`, `Spe 40 -> 140`
 - `GASTLY`: `HP 30 -> 40`, `Spe 80 -> 120`
 - `HAUNTER`: `Atk 50 -> 70`, `SpA 115 -> 125`, `Spe 95 -> 135`
@@ -66,7 +51,6 @@ This hack only edits existing data tables: move params, Pokemon base stats, Poke
 - `GOLBAT`: `HP 75 -> 95`, `Atk 80 -> 100`, `Def 70 -> 90`
 
 ### Batch 4
-
 - `MILTANK`: `HP 95 -> 125`, `Atk 80 -> 110`, `Def 105 -> 135`, `Spe 100 -> 40`, `SpA 40 -> 40`, `SpD 70 -> 30`
 - `CLEFAIRY`: `HP 70 -> 70`, `Atk 45 -> 75`, `Def 48 -> 48`, `Spe 35 -> 35`, `SpA 60 -> 60`, `SpD 65 -> 65`
 - `YANMA`: `HP 65 -> 65`, `Atk 65 -> 125`, `Def 45 -> 45`, `Spe 95 -> 140`, `SpA 75 -> 75`, `SpD 45 -> 45`
@@ -94,19 +78,13 @@ This hack only edits existing data tables: move params, Pokemon base stats, Poke
 - `DEWGONG`: `HP 90 -> 140`, `Atk 70 -> 110`, `Def 80 -> 80`, `Spe 70 -> 70`, `SpA 70 -> 110`, `SpD 95 -> 95`
 - `PILOSWINE`: `HP 100 -> 180`, `Atk 100 -> 100`, `Def 80 -> 160`, `Spe 50 -> 50`, `SpA 60 -> 60`, `SpD 60 -> 140`
 
+
 ## Pokemon types
-
-- `TYPHLOSION`: `FIRE/FIRE -> FIRE/NORMAL`
-- `FERALIGATR`: `WATER/WATER -> WATER/DARK`
-
 ### Batch 1
-
 - `MEGANIUM`: `GRASS/GRASS -> GRASS/NORMAL`
 - `FERALIGATR`: `WATER/DARK -> WATER/FIGHTING`
 
-
 ### Batch 2
-
 - `GASTLY`: `GHOST/POISON -> GHOST/PSYCHIC_TYPE`
 - `HAUNTER`: `GHOST/POISON -> GHOST/PSYCHIC_TYPE`
 - `GENGAR`: `GHOST/POISON -> GHOST/PSYCHIC_TYPE`
@@ -116,25 +94,13 @@ This hack only edits existing data tables: move params, Pokemon base stats, Poke
 - `WEEZING`: `POISON/POISON -> POISON/DARK`
 
 ### Batch 3
-
 - `BAYLEEF`: `GRASS/GRASS -> GRASS/NORMAL`
 
+
 ## Learnsets
-
-- `MEGANIUM` level-up: `Lv51 SAFEGUARD -> Lv51 EARTHQUAKE`
-- `TYPHLOSION` level-up: `Lv45 SWIFT -> Lv45 THUNDERPUNCH`
-- `FERALIGATR` level-up: `Lv47 SCREECH -> Lv47 CRUNCH`
-
 ### Batch 3
-
 - `BAYLEEF` level-up: `Lv17 SUBSTITUTE absent -> present`, `Lv17 LEECH_SEED absent -> present`, `Lv17 GIGA_DRAIN absent -> present`, `Lv21 SOLARBEAM absent -> present`
 - `QUILAVA` level-up: `Lv20 FLAMETHROWER absent -> present`
 - `TYPHLOSION` level-up: `Lv37 FIRE_BLAST absent -> present`
 - `TOTODILE` level-up: `Lv13 WATER_GUN -> Lv13 SURF`
 - `CROCONAW` level-up: `Lv28 SCARY_FACE -> Lv28 CROSS_CHOP`
-
-## Scope confirmation
-
-- No new moves, no new move effects, no new mechanics, no new type IDs.
-- No map/script/text changes.
-- No engine code changes.
