@@ -2078,6 +2078,10 @@ BayleefEvosAttacks:
 	db 8, RAZOR_LEAF
 	db 12, REFLECT
 	db 15, POISONPOWDER
+	db 17, SUBSTITUTE
+	db 17, LEECH_SEED
+	db 17, GIGA_DRAIN
+	db 21, SOLARBEAM
 	db 23, SYNTHESIS
 	db 31, BODY_SLAM
 	db 39, LIGHT_SCREEN
@@ -2122,6 +2126,7 @@ QuilavaEvosAttacks:
 	db 1, SMOKESCREEN
 	db 6, SMOKESCREEN
 	db 12, EMBER
+	db 20, FLAMETHROWER
 	db 21, QUICK_ATTACK
 	db 31, FLAME_WHEEL
 	db 42, SWIFT
@@ -2138,6 +2143,7 @@ TyphlosionEvosAttacks:
 	db 12, EMBER
 	db 21, QUICK_ATTACK
 	db 31, FLAME_WHEEL
+	db 37, FIRE_BLAST
 	db 45, THUNDERPUNCH
 	db 60, FLAMETHROWER
 	db 0 ; no more level-up moves
@@ -2148,7 +2154,7 @@ TotodileEvosAttacks:
 	db 1, SCRATCH
 	db 1, LEER
 	db 7, RAGE
-	db 13, WATER_GUN
+	db 13, SURF
 	db 20, BITE
 	db 27, SCARY_FACE
 	db 35, SLASH
@@ -2165,7 +2171,7 @@ CroconawEvosAttacks:
 	db 7, RAGE
 	db 13, WATER_GUN
 	db 21, BITE
-	db 28, SCARY_FACE
+	db 28, CROSS_CHOP
 	db 37, SLASH
 	db 45, SCREECH
 	db 55, HYDRO_PUMP

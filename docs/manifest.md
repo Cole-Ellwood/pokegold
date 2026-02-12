@@ -9,6 +9,13 @@ This hack only edits existing data tables: move params, Pokemon base stats, Poke
 - `FIRE_SPIN`: `power 15 -> 25`, `accuracy 70 -> 85`, `pp 15 -> 10`, `type FIRE -> FIRE`, `effect EFFECT_TRAP_TARGET -> EFFECT_TRAP_TARGET`
 - `MUD_SLAP`: `power 20 -> 30`, `accuracy 100 -> 100`, `pp 10 -> 10`, `type GROUND -> GROUND`, `effect EFFECT_ACCURACY_DOWN_HIT -> EFFECT_ACCURACY_DOWN_HIT`
 
+### Batch 3
+
+- `SOLARBEAM`: `power 120 -> 180`
+- `GIGA_DRAIN`: `power 60 -> 75`, `pp 5 -> 25`
+- `FIRE_BLAST`: `power 120 -> 140`, `pp 5 -> 10`
+- `CROSS_CHOP`: `power 100 -> 120`, `pp 5 -> 20`
+
 ## Pokemon base stats
 
 - `MEGANIUM`: `HP 80 -> 85`, `Atk 82 -> 88`, `Def 100 -> 105`, `Spd 80 -> 82`, `SpAtk 83 -> 90`, `SpDef 100 -> 105`
@@ -78,11 +85,23 @@ This hack only edits existing data tables: move params, Pokemon base stats, Poke
 - `KOFFING`: `POISON/POISON -> POISON/DARK`
 - `WEEZING`: `POISON/POISON -> POISON/DARK`
 
+### Batch 3
+
+- `BAYLEEF`: `GRASS/GRASS -> GRASS/NORMAL`
+
 ## Learnsets
 
 - `MEGANIUM` level-up: `Lv51 SAFEGUARD -> Lv51 EARTHQUAKE`
 - `TYPHLOSION` level-up: `Lv45 SWIFT -> Lv45 THUNDERPUNCH`
 - `FERALIGATR` level-up: `Lv47 SCREECH -> Lv47 CRUNCH`
+
+### Batch 3
+
+- `BAYLEEF` level-up: `Lv17 SUBSTITUTE absent -> present`, `Lv17 LEECH_SEED absent -> present`, `Lv17 GIGA_DRAIN absent -> present`, `Lv21 SOLARBEAM absent -> present`
+- `QUILAVA` level-up: `Lv20 FLAMETHROWER absent -> present`
+- `TYPHLOSION` level-up: `Lv37 FIRE_BLAST absent -> present`
+- `TOTODILE` level-up: `Lv13 WATER_GUN -> Lv13 SURF`
+- `CROCONAW` level-up: `Lv28 SCARY_FACE -> Lv28 CROSS_CHOP`
 
 ## Scope confirmation
 

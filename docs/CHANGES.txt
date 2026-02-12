@@ -2,6 +2,12 @@ Rebalance Changes
 Generated: 2026-02-12
 GENERATED FROM docs/manifest.md
 
+### Batch 3
+- `SOLARBEAM`: `power 120 -> 180`
+- `GIGA_DRAIN`: `power 60 -> 75`, `pp 5 -> 25`
+- `FIRE_BLAST`: `power 120 -> 140`, `pp 5 -> 10`
+- `CROSS_CHOP`: `power 100 -> 120`, `pp 5 -> 20`
+
 ### Batch 1
 - `MEGANIUM`: `HP 85 -> 115`, `Def 105 -> 135`, `SpD 105 -> 135`
 - `TYPHLOSION`: `SpA 114 -> 145`, `Spe 103 -> 123`
@@ -53,3 +59,13 @@ GENERATED FROM docs/manifest.md
 - `SKIPLOOM`: `GRASS/FLYING -> GRASS/STEEL`
 - `KOFFING`: `POISON/POISON -> POISON/DARK`
 - `WEEZING`: `POISON/POISON -> POISON/DARK`
+
+### Batch 3
+- `BAYLEEF`: `GRASS/GRASS -> GRASS/NORMAL`
+
+### Batch 3
+- `BAYLEEF` level-up: `Lv17 SUBSTITUTE absent -> present`, `Lv17 LEECH_SEED absent -> present`, `Lv17 GIGA_DRAIN absent -> present`, `Lv21 SOLARBEAM absent -> present`
+- `QUILAVA` level-up: `Lv20 FLAMETHROWER absent -> present`
+- `TYPHLOSION` level-up: `Lv37 FIRE_BLAST absent -> present`
+- `TOTODILE` level-up: `Lv13 WATER_GUN -> Lv13 SURF`
+- `CROCONAW` level-up: `Lv28 SCARY_FACE -> Lv28 CROSS_CHOP`

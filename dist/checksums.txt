@@ -4,10 +4,10 @@ baseline (expected clean pret/pokegold Gold ROM)
   sha256 fb0016d27b1e5374e1ec9fcad60e6628d8646103b5313ca683417f52b97e7e4e
 
 hacked (.local/roms/pokegold-data-rebalance.gbc)
-  sha1   3cb3864a9d8bd2ee6433655aed48ca35821c0745
-  sha256 c3982feffe25c6bf1ed46ffe06b0fbcb19706cda735763bd321d8cbab2ff6f20
+  sha1   a23c9d091df0c6381650196f7f13d3cf96406463
+  sha256 f2d0ec74a10d46a095b7b28feb3756e4dc4c8f7da9cd68aecb5e72a6e9e39295
 
 patch (dist/pokegold-data-rebalance.bps)
   method bps
-  sha1   8ef01f6d887de212e67ddd558c7d7e60f46c9d56
-  sha256 808acb18fb3664a2b9f1f324b02fedf57435e229c7617997fcdd98b5e66736e7
+  sha1   5a93748b94cac1051865b8d3ccc201625ed84908
+  sha256 601324b65ccafc0f50026d21ec21898a33fac1e361f20d64a4167f8ced804f75

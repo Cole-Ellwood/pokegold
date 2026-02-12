@@ -1,11 +1,41 @@
-files changed:
-- docs/manifest.md
-- docs/CHANGES.txt
-- scripts/export_changes_from_manifest.py
-- outbox/MAIN
+needs_clarification:
+- []
 
-command run:
-python scripts/export_changes_from_manifest.py
+changes_applied:
+1. POKEMON type: BAYLEEF `GRASS/GRASS -> GRASS/NORMAL`.
+2. LEARNSET add: BAYLEEF `+ SUBSTITUTE@17`, `+ LEECH_SEED@17`, `+ GIGA_DRAIN@17`, `+ SOLARBEAM@21`.
+3. LEARNSET add: QUILAVA `+ FLAMETHROWER@20`.
+4. LEARNSET add: TYPHLOSION `+ FIRE_BLAST@37`.
+5. LEARNSET replace: TOTODILE `WATER_GUN@13 -> SURF@13`.
+6. LEARNSET replace: CROCONAW `SCARY_FACE@28 -> CROSS_CHOP@28`.
+7. MOVE params: SOLARBEAM `power 120 -> 180`.
+8. MOVE params: GIGA_DRAIN `power 60 -> 75`, `pp 5 -> 25`.
+9. MOVE params: FIRE_BLAST `power 120 -> 140`, `pp 5 -> 10`.
+10. MOVE params: CROSS_CHOP `power 100 -> 120`, `pp 5 -> 20`.
+11. Docs updated: `docs/manifest.md` Batch 3 entries (Moves, Pokemon types, Learnsets) and regenerated `docs/CHANGES.txt`.
 
-git log -1:
-d85b6e36 data: batch2 pokemon rebalance
+build_command:
+- `make RGBDS=rgbds-1.0.1/ gold`
+
+patch_regen:
+- Copied rebuilt ROM to `.local/roms/pokegold-data-rebalance.gbc`.
+- Regenerated `dist/pokegold-data-rebalance.bps` against `.local/roms/pokegold-baseline.gbc`.
+- Applied BPS to baseline for roundtrip check at `.local/roms/pokegold-roundtrip-check.gbc`.
+
+checksums:
+- baseline sha1: `d8b8a3600a465308c9953dfa04f0081c05bdcb94`
+- hacked sha1: `a23c9d091df0c6381650196f7f13d3cf96406463`
+- patch sha1: `5a93748b94cac1051865b8d3ccc201625ed84908`
+- roundtrip sha1: `a23c9d091df0c6381650196f7f13d3cf96406463`
+
+roundtrip_sha1_match:
+- true
+
+hygiene_status:
+- branch: `pm/gsc-data-rebalance`
+- rom binaries kept local-only under `.local/roms/`
+- tracked `dist/` files limited to `dist/checksums.txt` and `dist/pokegold-data-rebalance.bps`
+- no ROM binaries tracked
+
+final_git_log_1:
+- `data: batch3 pokemon rebalance`
