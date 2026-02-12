@@ -1,0 +1,10 @@
+pokegold-baseline.gbc
+  sha1   d8b8a3600a465308c9953dfa04f0081c05bdcb94
+  sha256 fb0016d27b1e5374e1ec9fcad60e6628d8646103b5313ca683417f52b97e7e4e
+
+pokegold-data-rebalance.gbc
+  sha1   6c3f9be8d65f17e21b0d05f7a7f3a0c63ca4dcde
+  sha256 fa4560065e4525071b7387c84463dfd4acb6afa16d0ab081b830387ebeb51e25
+
+pokegold-data-rebalance.bps
+  method bps

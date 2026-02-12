@@ -1,9 +1,9 @@
 	db FERALIGATR ; 160
 
-	db  85, 105, 100,  78,  79,  83
+	db  88, 127, 103,  82, 125,  88
 	;   hp  atk  def  spd  sat  sdf
 
-	db WATER, WATER ; type
+	db WATER, FIGHTING ; type
 	db 45 ; catch rate
 	db 210 ; base exp
 	db NO_ITEM, NO_ITEM ; items

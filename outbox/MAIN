@@ -1,7 +1,36 @@
-summary: "Enforced ROM/artifact hygiene: added ignore rules; no tracked ROM binaries found to untrack."
-repo_path: "C:\\Users\\Owner\\Downloads\\pokemon gold hack"
+summary: "Applied Batch 1 Pokemon base stat/type deltas, rebuilt ROM, regenerated BPS patch, and updated checksums."
+branch: "pm/gsc-data-rebalance"
 files_changed:
-  - ".gitignore"
+  - "data/pokemon/base_stats/meganium.asm"
+  - "data/pokemon/base_stats/typhlosion.asm"
+  - "data/pokemon/base_stats/feraligatr.asm"
+  - "data/pokemon/base_stats/sentret.asm"
+  - "data/pokemon/base_stats/furret.asm"
+  - "data/pokemon/base_stats/hoothoot.asm"
+  - "data/pokemon/base_stats/noctowl.asm"
+  - "data/pokemon/base_stats/ledyba.asm"
+  - "data/pokemon/base_stats/ledian.asm"
+  - "data/pokemon/base_stats/ariados.asm"
+  - "data/pokemon/base_stats/bellsprout.asm"
+  - "data/pokemon/base_stats/weepinbell.asm"
+  - "data/pokemon/base_stats/victreebel.asm"
+  - "data/pokemon/base_stats/dunsparce.asm"
+  - "docs/manifest.md"
+  - "dist/checksums.txt"
+  - "dist/pokegold-data-rebalance.bps"
   - "outbox/MAIN"
-removed_from_tracking: []
-notes: "dist/ currently has untracked build outputs; ROM binaries remain untracked. Patch/checksum artifacts were not removed."
+batch: "Batch 1"
+needs_clarification: []
+applied_changes:
+  - "MEGANIUM: HP+30 Def+30 SpD+30; type GRASS/NORMAL"
+  - "TYPHLOSION: SpA+31 Spe+20"
+  - "FERALIGATR: Atk+15 SpA+41; type WATER/FIGHTING"
+  - "SENTRET, FURRET, HOOTHOOT, NOCTOWL, LEDYBA, LEDIAN, ARIADOS, BELLSPROUT, WEEPINBELL, VICTREEBEL, DUNSPARCE deltas applied"
+build:
+  ok: true
+  notes: "Built with 'make RGBDS=rgbds-1.0.1/ gold' per docs/build.md; ROM output at pokegold.gbc."
+patch:
+  ok: true
+  path: "dist/pokegold-data-rebalance.bps"
+  checksums_updated: true
+notes: "Validated stat bounds 1..255 for all edited mons. Baseline ROM reference used: dist/pokegold-baseline.gbc from docs/build.md. Verified patch application reproduces hacked SHA1."

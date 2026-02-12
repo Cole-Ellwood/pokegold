@@ -1,9 +1,9 @@
 	db TYPHLOSION ; 157
 
-	db  78,  84,  78, 100, 109,  85
+	db  78,  92,  80, 123, 145,  90
 	;   hp  atk  def  spd  sat  sdf
 
-	db FIRE, FIRE ; type
+	db FIRE, NORMAL ; type
 	db 45 ; catch rate
 	db 209 ; base exp
 	db NO_ITEM, NO_ITEM ; items
