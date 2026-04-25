@@ -85,6 +85,165 @@ Prediction method:
 - Sample from top predicted player lines (not single hard counterpick).
 - Select AI action by expected value across predicted distribution.
 
+### Current switch prediction formula
+
+Current implementation: `engine/battle/ai/boss.asm`, `BossAI_PredictPlayerSwitch`.
+
+The routine starts from a baseline of `10`, then applies only observed/public
+state:
+
+- If committed `wBossAIPlayerSwitchCount * 2 >= wBossAITurnsElapsed`, add `20`.
+- Else if the player has switched at least once, add `10`.
+- If the player's active Pokemon is not at quarter HP or lower, add `20`.
+- If public/observed threat checks say the player plausibly pressures the enemy,
+  add `15`.
+- If the player has revealed a super-effective damaging move, subtract `10`.
+- Cap final predicted switch chance at `80`.
+
+This prediction is intentionally heuristic. Future changes should preserve the
+rule that it is based on previous observations and public state, not current
+hidden input.
+
+`BossAI_RecordPlayerSwitch` must write current-turn switch observations to
+pending state only. `BossAI_IncrementTurnsElapsed` commits that pending state on
+the next turn before `BossAI_PredictPlayerSwitch` can consume it.
+
+## Turn-Order Safety
+
+Boss AI timing has a specific cheating hazard: move choice and switch/item
+choice do not happen at the same point in the turn.
+
+```mermaid
+flowchart TD
+    A["BattleTurn starts"] --> B["BossAI_IncrementTurnsElapsed"]
+    B --> C["AIChooseMove"]
+    C --> D["BossAI_ApplyMoveModel"]
+    D --> E["BossAI_SelectMove"]
+    E --> F["BattleMenu: player chooses action"]
+    F --> G["ParsePlayerAction"]
+    G --> H["BossAI_RecordPlayerSwitch if player switched"]
+    H --> I["EnemyTriesToFlee / AI switch-item paths may run"]
+    I --> J["DetermineMoveOrder"]
+    J --> K["Moves/switches execute"]
+    K --> L["UsedMoveText records revealed player moves when visible"]
+```
+
+Safety rules:
+
+- `BossAI_SelectMove` is before player input, so move scoring cannot peek at the
+  current player action unless another routine already stored unsafe state.
+- `BossAI_RecordPlayerSwitch` runs during `ParsePlayerAction`, before some
+  enemy switch/item logic can run later in the same turn.
+- Any new state derived from `BossAI_RecordPlayerSwitch` must be pending-only
+  until the next `BossAI_IncrementTurnsElapsed`.
+- Revealed move tracking is safe only after the move is visibly used. Do not
+  infer unrevealed moves from party data or exact private stats.
+
+Key source anchors:
+
+- `engine/battle/core.asm`: `BossAI_IncrementTurnsElapsed`, `AIChooseMove`,
+  `BattleMenu`, `ParsePlayerAction`, `BossAI_RecordPlayerSwitch`,
+  `DetermineMoveOrder`.
+- `engine/battle/ai/move.asm`: `BossAI_ApplyMoveModel`,
+  `BossAI_SelectMove`.
+- `engine/battle/ai/items.asm`: `AI_SwitchOrTryItem`,
+  `BossAI_SwitchOrTryItem`, `BossAI_OnSwitchExecuted`.
+- `engine/battle/used_move_text.asm`: `BossAI_RecordRevealedPlayerMove`.
+- `engine/battle/read_trainer_attributes.asm`: `LoadBossAITier`,
+  `ClearBossAIState`.
+- `engine/battle/ai/switch.asm`: legacy enemy switch scoring helpers. Boss
+  model code should prefer boss-safe wrappers in `boss.asm`.
+
+## Legacy AI Scoring Interaction
+
+Current implementation: boss trainers skip the normal AI scoring layers in
+`engine/battle/ai/move.asm` and jump directly to the boss model when
+`wBossAITier != 0`.
+
+Rules:
+
+- Keep boss move selection on the boss model unless legacy scoring has been
+  audited for hidden-information reads.
+- If a legacy helper needs private player information for ordinary trainers,
+  gate that helper off for boss tiers or replace it with public/observed state.
+- `AI_Smart_MeanLook` defensively skips `AICheckLastPlayerMon` for boss tiers
+  because that helper scans hidden player party HP.
+- If normal scoring is ever re-enabled for boss tiers, re-audit
+  `engine/battle/ai/scoring.asm` before relying on it.
+
+## Boss-Safe Decision Helpers
+
+The boss model should use wrappers that avoid exact private player stats and
+hidden party information:
+
+- `BossAI_CurrentEnemyMoveHasKOPressure`: heuristic KO pressure from move power,
+  public typing, STAB, type matchup, and coarse public HP bands.
+- `BossAI_CurrentEnemyMovePressureScore`: shared pressure score used by move
+  scoring and lookahead.
+- `BossAI_PlayerHasPublicThreatVsEnemy`: revealed player moves first, then
+  current public typing as a fallback.
+- `BossAI_PublicEnemyFaster`: public species base-speed estimate, not exact
+  runtime speed stats.
+- `BossAI_CheckPlayerMoveTypeMatchupVsEnemyNoItem` and
+  `BossAI_CheckEnemyMoveTypeMatchupVsPlayerNoItem`: type matchup without held
+  item peeking.
+- `BossAI_CheckAbleToSwitchSafe`: boss switch candidate check that avoids
+  player hidden-information scoring.
+
+Treat direct boss-model calls to `AIDamageCalc`, `AICompareSpeed`, or
+`CheckPlayerMoveTypeMatchups` as suspect unless the caller is clearly ordinary
+AI or battle resolution rather than boss decision knowledge.
+
+## Runtime State Budget
+
+Boss AI runtime state lives in `ram/wram.asm`, in WRAMX bank 1, because battle
+code reads and writes it directly without WRAM bank switching.
+
+Reserved block:
+
+- Start: `wBossAITier`.
+- Normal-build logical end: `wBossAIStateEnd`.
+- Reserved size: `140` bytes, enforced by
+  `ds 140 - (wBossAIStateEnd - wBossAITier)`.
+- Current normal build: `wBossAITier = 01:d72b`,
+  `wBossAIStateEnd = 01:d76e`, so normal state uses `67` bytes and leaves `73`
+  reserved bytes.
+- Current trace field set adds `19` bytes under `BOSS_AI_TRACE`, so trace state
+  would use `86` bytes and leave `54` reserved bytes.
+
+Adding 2-3 bytes to this block is acceptable in principle, but every change must
+still be build-verified because WRAMX overall has no free unreserved space.
+Never move save-compatible or unrelated WRAM fields casually to make room.
+
+## Implementation Checklist For Boss AI Changes
+
+- Confirm the new signal is legal public or previously observed information.
+- Decide whether the signal is same-turn unsafe. If yes, commit it only at the
+  next `BossAI_IncrementTurnsElapsed`.
+- Update or inspect `ClearBossAIState` coverage if adding fields.
+- Check `AIChooseMove`, `AI_SwitchOrTryItem`, and execution flow for both player
+  and enemy timing.
+- Verify bank `0e` size and avoid moving logic into tight `Battle Core` bank
+  `0f` unless necessary.
+- Refresh `docs/generated/dev_index.md` after a build changes symbols.
+
+## Known Remaining Fairness Risk
+
+Exact battle helpers such as `AIDamageCalc` and `AICompareSpeed` remain in the
+legacy AI code and battle engine. Those helpers use exact active Pokemon stats,
+including private player stat values. That is stronger than a human-like
+estimate when used for boss decision knowledge.
+
+Future fix direction:
+
+- Add boss-safe damage and speed estimators based on public species, level,
+  typing, stat stages, revealed moves, and observed damage ranges.
+- Keep exact helpers for ordinary AI or internal battle resolution, but do not
+  use them for boss decision knowledge unless the exact value has become public
+  through observed turn order or damage.
+- Treat any new direct boss-model call to those exact helpers as a review
+  finding unless it is deliberately documented and justified.
+
 ## Explicit No-Cheating Invariants
 
 - AI cannot read hidden player party slots.

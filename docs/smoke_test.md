@@ -14,6 +14,7 @@ Status (2026-04-25):
 - [x] Core module wiring validated (`move_reminder`, `tm_tutor`, `boss ai`, specials pointer).
 
 Additional automated audits (run separately):
+- [x] `python tools/audit/check_docs_navigation.py`
 - [x] `python tools/audit/check_ai_tiers.py`
 - [x] `python tools/audit/check_boss_ai_gating.py`
 - [x] `python tools/audit/check_boss_ai_no_cheat.py`

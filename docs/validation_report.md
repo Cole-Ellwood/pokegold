@@ -9,6 +9,7 @@ Date: 2026-04-25
 - BPS roundtrip: NOT RUN
 
 ## Automated gameplay/config audits
+- `python tools/audit/check_docs_navigation.py` : PASS
 - `python tools/audit/check_release_smoke.py` : PASS
 - `python tools/audit/check_ai_tiers.py` : PASS
 - `python tools/audit/check_boss_ai_gating.py` : PASS
