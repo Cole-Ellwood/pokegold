@@ -1,6 +1,7 @@
-# Data Rebalance Manifest
+# Data Rebalance Manifest (Data Layer Only)
 
-This hack only edits existing data tables: move params, Pokemon base stats, Pokemon types, and level-up learnsets.
+This file tracks data-table rebalance history (move params, Pokemon base stats, Pokemon types, level-up learnsets).
+It is no longer a complete release manifest for the current project state.
 `docs/CHANGES.txt` is generated from this file by `scripts/export_changes_from_manifest.py`.
 `docs/CHANGES_BY_CATEGORY.txt` is generated from this file by `scripts/export_changes_by_category.py`.
 `docs/RELEASE_NOTES.md` is a hand-written final summary and is not generated from this file.
@@ -165,8 +166,8 @@ This hack only edits existing data tables: move params, Pokemon base stats, Poke
 - `TOTODILE` level-up: `Lv13 WATER_GUN -> Lv13 SURF`
 - `CROCONAW` level-up: `Lv28 SCARY_FACE -> Lv28 CROSS_CHOP`
 
-## Scope confirmation
+## Scope note
 
-- No new moves, no new move effects, no new mechanics, no new type IDs.
-- No map/script/text changes.
-- No engine code changes.
+- This document covers only data-layer diffs.
+- Current release scope includes engine, AI, and script/map behavior changes.
+- See `docs/mechanics_changes_from_base.md` and `docs/RELEASE_NOTES.md` for full release scope.

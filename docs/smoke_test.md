@@ -1,26 +1,22 @@
 # Smoke Test Checklist
 
-Manual validation checklist for the `-data-rebalance` build.
+Automated release-smoke checks for this branch.
 
-## Modified moves (at least 3)
+Command:
+```bash
+python tools/audit/check_release_smoke.py
+```
 
-- [ ] Verify `CUT` increased damage and perfect hit rate (`power 60`, `accuracy 100`).
-- [ ] Verify `FIRE_SPIN` increased damage and accuracy with reduced PP (`power 25`, `accuracy 85`, `pp 10`).
-- [ ] Verify `MUD_SLAP` increased damage (`power 30`) while retaining accuracy drop effect.
+Status (2026-04-25):
+- [x] Key move entries validated (`CUT`, `FIRE_SPIN`, `MUD_SLAP`).
+- [x] Starter final evolution stats/types validated (`MEGANIUM`, `TYPHLOSION`, `FERALIGATR`).
+- [x] Key learnset entries validated for final evolutions.
+- [x] Core module wiring validated (`move_reminder`, `tm_tutor`, `boss ai`, specials pointer).
 
-## Modified Pokemon statlines (at least 3)
-
-- [ ] Verify `MEGANIUM` statline increase on status screen or in-battle survivability/damage.
-- [ ] Verify `TYPHLOSION` statline increase on status screen or in-battle output.
-- [ ] Verify `FERALIGATR` statline increase on status screen or in-battle output.
-
-## Modified typing interactions (at least 2)
-
-- [ ] Verify `MEGANIUM` now has `GRASS/NORMAL` interaction (STAB behavior and type effectiveness checks).
-- [ ] Verify `FERALIGATR` now has `WATER/FIGHTING` interaction (STAB behavior and type effectiveness checks).
-
-## Learnset changes (at least 3)
-
-- [ ] Verify `MEGANIUM` learns `EARTHQUAKE` at Lv51 instead of `SAFEGUARD`.
-- [ ] Verify `TYPHLOSION` learns `THUNDERPUNCH` at Lv45 instead of `SWIFT`.
-- [ ] Verify `FERALIGATR` learns `CRUNCH` at Lv47 instead of `SCREECH`.
+Additional automated audits (run separately):
+- [x] `python tools/audit/check_ai_tiers.py`
+- [x] `python tools/audit/check_boss_ai_gating.py`
+- [x] `python tools/audit/check_boss_ai_no_cheat.py`
+- [x] `python tools/audit/check_boss_items_present.py`
+- [x] `python tools/audit/check_boss_moves_complete.py`
+- [x] `python tools/audit/check_battle_math_safety.py`
