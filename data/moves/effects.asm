@@ -224,11 +224,16 @@ SpecialAttackUp:
 	checkobedience
 	usedmovetext
 	doturn
+	skipsuncharge
+	attackup
+	effect0x5d
 	specialattackup
-	lowersub
-	statupanim
-	raisesub
-	statupmessage
+	statupfailtext
+	endmove
+	charge
+	attackup2
+	effect0x5d
+	specialattackup2
 	statupfailtext
 	endmove
 
@@ -1762,6 +1767,8 @@ RapidSpin:
 	criticaltext
 	supereffectivetext
 	clearhazards
+	speedup
+	statupmessage
 	checkfaint
 	buildopponentrage
 	kingsrock
@@ -2071,6 +2078,66 @@ DefenseCurl:
 	doturn
 	defenseup
 	curl
+	lowersub
+	statupanim
+	raisesub
+	statupmessage
+	statupfailtext
+	endmove
+
+DragonDance:
+	checkobedience
+	usedmovetext
+	doturn
+	attackup
+	lowersub
+	statupanim
+	raisesub
+	statupmessage
+	effect0x5d
+	speedup
+	lowersub
+	statupanim
+	raisesub
+	statupmessage
+	statupfailtext
+	endmove
+
+CalmMind:
+	checkobedience
+	usedmovetext
+	doturn
+	specialattackup
+	lowersub
+	statupanim
+	raisesub
+	statupmessage
+	effect0x5d
+	specialdefenseup
+	lowersub
+	statupanim
+	raisesub
+	statupmessage
+	statupfailtext
+	endmove
+
+QuiverDance:
+	checkobedience
+	usedmovetext
+	doturn
+	specialattackup
+	lowersub
+	statupanim
+	raisesub
+	statupmessage
+	effect0x5d
+	specialdefenseup
+	lowersub
+	statupanim
+	raisesub
+	statupmessage
+	effect0x5d
+	speedup
 	lowersub
 	statupanim
 	raisesub

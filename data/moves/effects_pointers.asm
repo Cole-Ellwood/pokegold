@@ -131,7 +131,7 @@ MoveEffectsPointers:
 	dw BatonPass
 	dw Pursuit
 	dw RapidSpin
-	dw NormalHit
+	dw DragonDance
 	dw NormalHit
 	dw MorningSun
 	dw Synthesis
@@ -158,4 +158,6 @@ MoveEffectsPointers:
 	dw BeatUp
 	dw Fly
 	dw DefenseCurl
+	dw CalmMind
+	dw QuiverDance
 	assert_table_length NUM_MOVE_EFFECTS

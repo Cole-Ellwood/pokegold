@@ -330,6 +330,12 @@ GymStatue_CityGymText:
 	text_ram wStringBuffer3
 	text_start
 	line "#MON GYM"
+
+	para "LEADER battles"
+	line "lock your PACK."
+
+	para "The level cap is"
+	line "your prep target."
 	done
 
 GymStatue_WinningTrainersText:

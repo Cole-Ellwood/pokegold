@@ -2,7 +2,7 @@ BattleAnimations::
 ; entries correspond to constants/move_constants.asm
 	table_width 2
 	dw BattleAnim_Dummy
-	dw BattleAnim_Pound
+	dw BattleAnim_MetalClaw
 	dw BattleAnim_KarateChop
 	dw BattleAnim_Doubleslap
 	dw BattleAnim_CometPunch
@@ -253,10 +253,10 @@ BattleAnimations::
 	dw BattleAnim_RockSmash
 	dw BattleAnim_Whirlpool
 	dw BattleAnim_BeatUp
+	dw BattleAnim_SwordsDance
+	dw BattleAnim_Amnesia
+	dw BattleAnim_SwordsDance
 	assert_table_length NUM_ATTACKS + 1
-	dw BattleAnim_Dummy
-	dw BattleAnim_Dummy
-	dw BattleAnim_Dummy
 	dw BattleAnim_SweetScent2
 	assert_table_length $100
 ; $100
@@ -3526,14 +3526,32 @@ BattleAnim_Octazooka:
 
 BattleAnim_Spikes:
 	anim_1gfx BATTLE_ANIM_GFX_MISC
+	anim_if_param_equal $0, .layer1
+	anim_if_param_equal $1, .layer2
+; layer 3
 	anim_sound 6, 2, SFX_MENU
-	anim_obj BATTLE_ANIM_OBJ_SPIKES, 48, 88, $20
-	anim_wait 8
-	anim_sound 6, 2, SFX_MENU
-	anim_obj BATTLE_ANIM_OBJ_SPIKES, 48, 88, $30
+	anim_obj BATTLE_ANIM_OBJ_SPIKES, 40, 88, $20
 	anim_wait 8
 	anim_sound 6, 2, SFX_MENU
 	anim_obj BATTLE_ANIM_OBJ_SPIKES, 48, 88, $28
+	anim_wait 8
+	anim_sound 6, 2, SFX_MENU
+	anim_obj BATTLE_ANIM_OBJ_SPIKES, 56, 88, $30
+	anim_wait 64
+	anim_ret
+
+.layer2
+	anim_sound 6, 2, SFX_MENU
+	anim_obj BATTLE_ANIM_OBJ_SPIKES, 44, 88, $20
+	anim_wait 8
+	anim_sound 6, 2, SFX_MENU
+	anim_obj BATTLE_ANIM_OBJ_SPIKES, 52, 88, $30
+	anim_wait 64
+	anim_ret
+
+.layer1
+	anim_sound 6, 2, SFX_MENU
+	anim_obj BATTLE_ANIM_OBJ_SPIKES, 48, 88, $20
 	anim_wait 64
 	anim_ret
 

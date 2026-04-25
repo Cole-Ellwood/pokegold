@@ -70,7 +70,7 @@ ItemDescriptions:
 	dw SecretPotionDesc
 	dw SSTicketDesc
 	dw MysteryEggDesc
-	dw TeruSama6Desc
+	dw LifeOrbDesc
 	dw SilverWingDesc
 	dw MoomooMilkDesc
 	dw QuickClawDesc
@@ -115,8 +115,8 @@ ItemDescriptions:
 	dw EverStoneDesc
 	dw SpellTagDesc
 	dw RageCandyBarDesc
-	dw TeruSama9Desc
-	dw TeruSama10Desc
+	dw TMVoucherDesc
+	dw ChoiceBandDesc
 	dw MiracleSeedDesc
 	dw ThickClubDesc
 	dw FocusBandDesc
@@ -129,32 +129,32 @@ ItemDescriptions:
 	dw LuckyEggDesc
 	dw CardKeyDesc
 	dw MachinePartDesc
-	dw TeruSama12Desc
+	dw ChoiceSpecsDesc
 	dw LostItemDesc
 	dw StardustDesc
 	dw StarPieceDesc
 	dw BasementKeyDesc
 	dw PassDesc
 	dw TeruSama13Desc
-	dw TeruSama14Desc
-	dw TeruSama15Desc
+	dw ChoiceScarfDesc
+	dw AssaultVestDesc
 	dw CharcoalDesc
 	dw BerryJuiceDesc
 	dw ScopeLensDesc
-	dw TeruSama16Desc
-	dw TeruSama17Desc
+	dw ExpertBeltDesc
+	dw MuscleBandDesc
 	dw MetalCoatDesc
 	dw DragonFangDesc
-	dw TeruSama18Desc
+	dw WiseGlassesDesc
 	dw LeftoversDesc
-	dw TeruSama19Desc
-	dw TeruSama20Desc
-	dw TeruSama21Desc
+	dw EvioliteDesc
+	dw AirBalloonDesc
+	dw ShellBellDesc
 	dw MysteryBerryDesc
 	dw DragonScaleDesc
 	dw BerserkGeneDesc
-	dw TeruSama22Desc
-	dw TeruSama23Desc
+	dw RockyHelmetDesc
+	dw MetronomeItemDesc
 	dw TeruSama24Desc
 	dw SacredAshDesc
 	dw HeavyBallDesc
@@ -531,8 +531,9 @@ MysteryEggDesc:
 	db   "An EGG obtained"
 	next "from MR.#MON.@"
 
-TeruSama6Desc:
-	db   "?@"
+LifeOrbDesc:
+	db   "Boosts damage but"
+	next "cuts HP. (HOLD)@"
 
 SilverWingDesc:
 	db   "A strange, silver-"
@@ -703,11 +704,13 @@ RageCandyBarDesc:
 	db   "Restores #MON"
 	next "HP by 20.@"
 
-TeruSama9Desc:
-	db   "?@"
+TMVoucherDesc:
+	db   "Redeem at the TM"
+	next "TUTOR for lessons.@"
 
-TeruSama10Desc:
-	db   "?@"
+ChoiceBandDesc:
+	db   "Boosts ATTACK but"
+	next "locks move. (HOLD)@"
 
 MiracleSeedDesc:
 	db   "Powers up grass-"
@@ -756,8 +759,9 @@ MachinePartDesc:
 	db   "A machine part for"
 	next "the POWER PLANT.@"
 
-TeruSama12Desc:
-	db   "?@"
+ChoiceSpecsDesc:
+	db   "Boosts SPCL.ATK"
+	next "but locks move.@"
 
 LostItemDesc:
 	db   "The # DOLL lost"
@@ -781,11 +785,13 @@ PassDesc:
 TeruSama13Desc:
 	db   "?@"
 
-TeruSama14Desc:
-	db   "?@"
+ChoiceScarfDesc:
+	db   "Boosts SPEED but"
+	next "locks move. (HOLD)@"
 
-TeruSama15Desc:
-	db   "?@"
+AssaultVestDesc:
+	db   "Boosts SPCL.DEF,"
+	next "status blocked.@"
 
 CharcoalDesc:
 	db   "Powers up fire-"
@@ -799,11 +805,13 @@ ScopeLensDesc:
 	db   "Raises critical"
 	next "hit ratio. (HOLD)@"
 
-TeruSama16Desc:
-	db   "?@"
+ExpertBeltDesc:
+	db   "Boosts super-"
+	next "effective hits.@"
 
-TeruSama17Desc:
-	db   "?@"
+MuscleBandDesc:
+	db   "Boosts physical"
+	next "moves. (HOLD)@"
 
 MetalCoatDesc:
 	db   "Powers up steel-"
@@ -813,21 +821,25 @@ DragonFangDesc:
 	db   "Powers up dragon-"
 	next "type moves. (HOLD)@"
 
-TeruSama18Desc:
-	db   "?@"
+WiseGlassesDesc:
+	db   "Boosts special"
+	next "moves. (HOLD)@"
 
 LeftoversDesc:
 	db   "Restores HP during"
 	next "battle. (HOLD)@"
 
-TeruSama19Desc:
-	db   "?@"
+EvioliteDesc:
+	db   "Boosts DEF and"
+	next "SPCL.DEF. (HOLD)@"
 
-TeruSama20Desc:
-	db   "?@"
+AirBalloonDesc:
+	db   "Avoids ground"
+	next "moves till hit.@"
 
-TeruSama21Desc:
-	db   "?@"
+ShellBellDesc:
+	db   "Restores HP from"
+	next "damage dealt.@"
 
 MysteryBerryDesc:
 	db   "A self-restore"
@@ -841,11 +853,13 @@ BerserkGeneDesc:
 	db   "Boosts ATTACK but"
 	next "causes confusion.@"
 
-TeruSama22Desc:
-	db   "?@"
+RockyHelmetDesc:
+	db   "Hurts contact"
+	next "foes. (HOLD)@"
 
-TeruSama23Desc:
-	db   "?@"
+MetronomeItemDesc:
+	db   "Boosts repeated"
+	next "move use. (HOLD)@"
 
 TeruSama24Desc:
 	db   "?@"

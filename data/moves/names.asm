@@ -1,6 +1,6 @@
 MoveNames::
 	list_start MOVE_NAME_LENGTH - 1
-	li "POUND"
+	li "IRON HEAD"
 	li "KARATE CHOP"
 	li "DOUBLESLAP"
 	li "COMET PUNCH"
@@ -251,4 +251,7 @@ MoveNames::
 	li "ROCK SMASH"
 	li "WHIRLPOOL"
 	li "BEAT UP"
+	li "DRAGON DANCE"
+	li "CALM MIND"
+	li "QUIVER DANCE"
 	assert_list_length NUM_ATTACKS

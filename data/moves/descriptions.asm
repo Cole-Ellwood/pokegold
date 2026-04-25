@@ -1,7 +1,7 @@
 MoveDescriptions::
 ; entries correspond to move ids (see constants/move_constants.asm)
 	table_width 2
-	dw PoundDescription
+	dw IronHeadDescription
 	dw KarateChopDescription
 	dw DoubleslapDescription
 	dw CometPunchDescription
@@ -252,24 +252,23 @@ MoveDescriptions::
 	dw RockSmashDescription
 	dw WhirlpoolDescription
 	dw BeatUpDescription
+	dw DragonDanceDescription
+	dw CalmMindDescription
+	dw QuiverDanceDescription
 	assert_table_length NUM_ATTACKS
-	dw MoveFCDescription
-	dw MoveFDDescription
-	dw MoveFEDescription
 	dw MoveFFDescription
 	dw Move00Description
 	assert_table_length $100
 
-MoveFCDescription:
 MoveFDDescription:
 MoveFEDescription:
 MoveFFDescription:
 Move00Description:
 	db "?@"
 
-PoundDescription:
-	db   "Pounds with fore-"
-	next "legs or tail.@"
+IronHeadDescription:
+	db   "Slams head into"
+	next "foe. May flinch.@"
 
 KarateChopDescription:
 	db   "Has a high criti-"
@@ -560,8 +559,8 @@ LeechSeedDescription:
 	next "foe on every turn.@"
 
 GrowthDescription:
-	db   "Raises the SPCL."
-	next "ATK rating.@"
+	db   "Raises ATK and"
+	next "SPCL.ATK. SUN x2.@"
 
 RazorLeafDescription:
 	db   "Has a high criti-"
@@ -1270,3 +1269,15 @@ WhirlpoolDescription:
 BeatUpDescription:
 	db   "Party #MON join"
 	next "in the attack.@"
+
+DragonDanceDescription:
+	db   "A mystic dance"
+	next "ups ATTACK/SPEED.@"
+
+CalmMindDescription:
+	db   "Raises user's"
+	next "SPCL.ATK/DEF.@"
+
+QuiverDanceDescription:
+	db   "Raises SPCL.ATK,"
+	next "DEF and SPEED.@"
