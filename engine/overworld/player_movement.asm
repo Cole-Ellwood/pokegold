@@ -218,7 +218,7 @@ DoPlayerMovement::
 	ret
 
 .continue_walk
-	ld a, STEP_WALK
+	ld a, STEP_BIKE
 	call .DoStep
 	ld a, PLAYERMOVEMENT_CONTINUE
 	scf
@@ -286,19 +286,19 @@ DoPlayerMovement::
 	cp DOWN
 	jr z, .fast
 
-	ld a, STEP_WALK
-	call .DoStep
-	scf
-	ret
-
-.fast
 	ld a, STEP_BIKE
 	call .DoStep
 	scf
 	ret
 
+.fast
+	ld a, STEP_PLAYER_TURBO
+	call .DoStep
+	scf
+	ret
+
 .walk
-	ld a, STEP_WALK
+	ld a, STEP_BIKE
 	call .DoStep
 	scf
 	ret
@@ -333,7 +333,7 @@ DoPlayerMovement::
 	and a
 	jr nz, .ExitWater
 
-	ld a, STEP_WALK
+	ld a, STEP_BIKE
 	call .DoStep
 	scf
 	ret
@@ -341,7 +341,7 @@ DoPlayerMovement::
 .ExitWater:
 	call .GetOutOfWater
 	call PlayMapMusic
-	ld a, STEP_WALK
+	ld a, STEP_BIKE
 	call .DoStep
 	ld a, PLAYERMOVEMENT_EXIT_WATER
 	scf
@@ -391,9 +391,9 @@ DoPlayerMovement::
 	db FACE_UP | FACE_LEFT    ; COLL_HOP_UP_LEFT
 
 .CheckWarp:
-; BUG: No bump noise if standing on tile $3E (see docs/bugs_and_glitches.md)
-
 	ld a, [wWalkingDirection]
+	cp STANDING
+	jr z, .not_warp
 	ld e, a
 	ld d, 0
 	ld hl, .EdgeWarps
@@ -405,8 +405,6 @@ DoPlayerMovement::
 	ld a, TRUE
 	ld [wWalkingIntoEdgeWarp], a
 	ld a, [wWalkingDirection]
-	cp STANDING
-	jr z, .not_warp
 
 	ld e, a
 	ld a, [wPlayerDirection]
@@ -471,6 +469,7 @@ DoPlayerMovement::
 	dw .TurningStep
 	dw .BackJumpStep
 	dw .FinishFacing
+	dw .PlayerTurboStep
 	assert_table_length NUM_STEPS
 
 .SlowStep:
@@ -513,6 +512,11 @@ DoPlayerMovement::
 	db $80 | UP
 	db $80 | LEFT
 	db $80 | RIGHT
+.PlayerTurboStep:
+	db movement_player_turbo_step_down
+	db movement_player_turbo_step_up
+	db movement_player_turbo_step_left
+	db movement_player_turbo_step_right
 
 .StandInPlace:
 	ld a, 0

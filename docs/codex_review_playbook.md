@@ -70,6 +70,9 @@ Important files: `engine/battle/ai/boss.asm`, `engine/battle/ai/move.asm`,
 ## Memory And Docs Safety
 
 - Treat ROM0, WRAM0, WRAMX, and HRAM as scarce.
+- For exact implementation facts, trust current source and linker outputs first,
+  `docs/generated/dev_index.md` second, and hand-authored helper docs only after
+  checking they still agree.
 - Check `docs/generated/dev_index.md` before adding code/data to tight banks.
 - Boss AI state must stay inside the reserved `140` byte block beginning at
   `wBossAITier`.

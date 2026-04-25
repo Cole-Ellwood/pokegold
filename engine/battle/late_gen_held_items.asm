@@ -449,21 +449,95 @@ DittoMetalPowder_Far:
 	pop bc
 	ret nz
 
-	ld a, c
-	srl a
-	add c
-	ld c, a
+	ld h, b
+	ld l, c
+	srl b
+	rr c
+	add hl, bc
+	ld b, h
+	ld c, l
+
+	ld a, HIGH(MAX_STAT_VALUE)
+	cp b
+	jr c, .cap
+	ret nz
+	ld a, LOW(MAX_STAT_VALUE)
+	cp c
 	ret nc
 
-	srl b
-	ld a, b
-	and a
-	jr nz, .done
-	inc b
-.done
-	scf
-	rr c
+.cap
+	ld bc, MAX_STAT_VALUE
 	ret
+
+SpeciesItemBoost_Far:
+; Return in hl the stat value at hl.
+; If the attacking monster is species b or c and
+; it's holding item d, double it.
+	ld a, [hli]
+	ld l, [hl]
+	ld h, a
+
+	push hl
+	ld a, MON_SPECIES
+	call BattlePartyAttr
+
+	ldh a, [hBattleTurn]
+	and a
+	ld a, [hl]
+	jr z, .CompareSpecies
+	ld a, [wTempEnemyMonSpecies]
+.CompareSpecies:
+	pop hl
+
+	cp b
+	jr z, .GetItemHeldEffect
+	cp c
+	ret nz
+
+.GetItemHeldEffect:
+	push hl
+	callfar GetUserItem
+	ld a, [hl]
+	pop hl
+	cp d
+	ret nz
+
+	sla l
+	rl h
+
+	ld a, HIGH(MAX_STAT_VALUE)
+	cp h
+	jr c, .cap
+	ret nz
+	ld a, LOW(MAX_STAT_VALUE)
+	cp l
+	ret nc
+
+.cap
+	ld hl, MAX_STAT_VALUE
+	ret
+
+EnemyHPPercentage:
+	ld hl, wEnemyMonMaxHP
+	ld a, [hli]
+	ld b, [hl]
+	ld c, 100
+	and a
+	jr z, .shift_done
+.shift
+	rra
+	rr b
+	srl c
+	and a
+	jr nz, .shift
+.shift_done
+	ld a, c
+	ldh [hMultiplier], a
+	call Multiply
+	ld a, b
+	ld b, 4
+	ldh [hDivisor], a
+	jp Divide
 
 CheckDamageStatsCritical_Far:
 ; Return carry if boosted stats should be used in damage calculations.

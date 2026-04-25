@@ -214,4 +214,9 @@ MACRO return_dig
 	db \1 ; length
 ENDM
 
+	const movement_player_turbo_step_down ; $59
+	const movement_player_turbo_step_up   ; $5a
+	const movement_player_turbo_step_left ; $5b
+	const movement_player_turbo_step_right ; $5c
+
 DEF NUM_MOVEMENT_CMDS EQU const_value

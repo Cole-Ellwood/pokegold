@@ -518,7 +518,7 @@ CheckEnemyTurn:
 	call StdBattleTextbox
 
 	call HitSelfInConfusion
-	call BattleCommand_DamageCalc
+	call ConfusionDamageCalc
 	call BattleCommand_LowerSub
 
 	xor a
@@ -624,7 +624,7 @@ HitConfusion:
 	ld [wCriticalHit], a
 
 	call HitSelfInConfusion
-	call BattleCommand_DamageCalc
+	call ConfusionDamageCalc
 	call BattleCommand_LowerSub
 
 	xor a
@@ -1892,14 +1892,15 @@ BattleCommand_EffectChance:
 	ld hl, wEnemyMoveStruct + MOVE_CHANCE
 .got_move_chance
 
-	; BUG: 1/256 chance to fail even for a 100% effect chance,
-	; since carry is not set if BattleRandom == [hl] == 255
-	call BattleRandom
+	ld a, [hl]
+	sub 100 percent
+	call c, BattleRandom
 	cp [hl]
 	pop hl
 	ret c
 
 .failed
+BattleCommand_EffectFailed:
 	ld a, 1
 	ld [wEffectFailed], a
 	and a
@@ -2124,6 +2125,8 @@ BattleCommand_FailureText:
 	cp EFFECT_DOUBLE_HIT
 	jr z, .multihit
 	cp EFFECT_POISON_MULTI_HIT
+	jr z, .multihit
+	cp EFFECT_BEAT_UP
 	jr z, .multihit
 	jp EndMoveEffect
 
@@ -2541,11 +2544,13 @@ PlayerAttackDamage:
 
 .done
 	callfar ApplyLateGenDamageStatsItemMods_Far
+	push hl
+	callfar DittoMetalPowder_Far
+	pop hl
 	call TruncateHL_BC
 
 	ld a, [wBattleMonLevel]
 	ld e, a
-	callfar DittoMetalPowder_Far
 
 	ld a, 1
 	and a
@@ -2603,7 +2608,7 @@ ThickClubBoost:
 	ld b, CUBONE
 	ld c, MAROWAK
 	ld d, THICK_CLUB
-	call SpeciesItemBoost
+	callfar SpeciesItemBoost_Far
 	pop de
 	pop bc
 	ret
@@ -2618,49 +2623,9 @@ LightBallBoost:
 	ld b, PIKACHU
 	ld c, PIKACHU
 	ld d, LIGHT_BALL
-	call SpeciesItemBoost
+	callfar SpeciesItemBoost_Far
 	pop de
 	pop bc
-	ret
-
-SpeciesItemBoost:
-; Return in hl the stat value at hl.
-
-; If the attacking monster is species b or c and
-; it's holding item d, double it.
-
-	ld a, [hli]
-	ld l, [hl]
-	ld h, a
-
-	push hl
-	ld a, MON_SPECIES
-	call BattlePartyAttr
-
-	ldh a, [hBattleTurn]
-	and a
-	ld a, [hl]
-	jr z, .CompareSpecies
-	ld a, [wTempEnemyMonSpecies]
-.CompareSpecies:
-	pop hl
-
-	cp b
-	jr z, .GetItemHeldEffect
-	cp c
-	ret nz
-
-.GetItemHeldEffect:
-	push hl
-	call GetUserItem
-	ld a, [hl]
-	pop hl
-	cp d
-	ret nz
-
-; Double the stat
-	sla l
-	rl h
 	ret
 
 EnemyAttackDamage:
@@ -2732,11 +2697,13 @@ EnemyAttackDamage:
 
 .done
 	callfar ApplyLateGenDamageStatsItemMods_Far
+	push hl
+	callfar DittoMetalPowder_Far
+	pop hl
 	call TruncateHL_BC
 
 	ld a, [wEnemyMonLevel]
 	ld e, a
-	callfar DittoMetalPowder_Far
 
 	ld a, 1
 	and a
@@ -2785,6 +2752,8 @@ HitSelfInConfusion:
 	ld d, 40
 	pop af
 	ld e, a
+	ld a, TRUE
+	ld [wIsConfusionDamage], a
 	ret
 
 BattleCommand_DamageCalc:
@@ -2818,6 +2787,10 @@ BattleCommand_DamageCalc:
 	ret z
 
 .skip_zero_damage_check
+	xor a
+	ld [wIsConfusionDamage], a
+
+ConfusionDamageCalc:
 ; Minimum defense value is 1.
 	ld a, c
 	and a
@@ -2872,6 +2845,10 @@ BattleCommand_DamageCalc:
 	call Divide
 
 ; Item boosts
+	ld a, [wIsConfusionDamage]
+	and a
+	jr nz, .DoneItem
+
 	call GetUserItem
 
 	ld a, b
@@ -5116,8 +5093,7 @@ BattleCommand_EndLoop:
 	ld a, BATTLE_VARS_SUBSTATUS3
 	call GetBattleVarAddr
 	res SUBSTATUS_IN_LOOP, [hl]
-	call BattleCommand_BeatUpFailText
-	jp EndMoveEffect
+	ret
 
 .not_triple_kick
 	call BattleRandom
@@ -6398,39 +6374,16 @@ INCLUDE "engine/battle/move_effects/future_sight.asm"
 INCLUDE "engine/battle/move_effects/thunder.asm"
 
 CheckHiddenOpponent:
-; BUG: This routine is completely redundant and introduces a bug, since BattleCommand_CheckHit does these checks properly.
+	ld a, BATTLE_VARS_SUBSTATUS5_OPP
+	call GetBattleVar
+	cpl
+	and 1 << SUBSTATUS_LOCK_ON
+	ret z
+
 	ld a, BATTLE_VARS_SUBSTATUS3_OPP
 	call GetBattleVar
 	and 1 << SUBSTATUS_FLYING | 1 << SUBSTATUS_UNDERGROUND
 	ret
-
-TryActivateDittoImposter:
-	ld hl, wBattleMonHP
-	ld de, wBattleMonSpecies
-	ldh a, [hBattleTurn]
-	and a
-	jr z, .check_hp
-	ld hl, wEnemyMonHP
-	ld de, wEnemyMonSpecies
-.check_hp
-	ld a, [hli]
-	or [hl]
-	ret z
-
-	ld a, [de]
-	cp DITTO
-	ret nz
-
-	ld a, BATTLE_VARS_SUBSTATUS5_OPP
-	call GetBattleVarAddr
-	bit SUBSTATUS_TRANSFORMED, [hl]
-	ret nz
-	call CheckHiddenOpponent
-	ret nz
-
-	ld hl, DittoImposterActivatedText
-	call StdBattleTextbox
-	jp BattleCommand_Transform
 
 GetUserItem:
 ; Return the effect of the user's item in bc, and its id at hl.

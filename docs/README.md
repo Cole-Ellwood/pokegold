@@ -1,0 +1,58 @@
+# Helper Docs Entrypoint
+
+READ THIS FIRST in new Codex/helper sessions before broad source search.
+
+Audience: future Codex/helper agents, not human readers. Optimize for source
+navigation, implementation safety, and drift detection.
+
+## Required Read Order
+
+1. `docs/README.md`: helper-doc routing and precedence.
+2. `docs/codex_context.md`: project intent, design constraints, done criteria.
+3. `docs/project_map.md`: task-to-source routing.
+4. `docs/generated/dev_index.md`: current banks, labels, source anchors, memory.
+5. Task-specific docs:
+   - Boss AI / trainer difficulty: `docs/boss_ai_spec.md`
+   - Review / bug hunt: `docs/codex_review_playbook.md`
+   - Existing mechanics: `docs/mechanics_changes_from_base.md`
+   - QoL follow-up work: `docs/qol_handoff.md`
+   - Data rebalance history: `docs/manifest.md`
+   - Build/release status: `docs/build.md`, `docs/validation_report.md`
+
+## Truth Precedence
+
+1. Current source files and linker outputs (`pokegold.map`, `pokegold.sym`).
+2. Generated navigation mirror: `docs/generated/dev_index.md`.
+3. Hand-authored helper docs for intent, workflow, review policy, and task notes.
+
+If a helper doc conflicts with source/linker truth, trust source/linker truth and
+update the helper doc. If linker outputs change and are kept, refresh the index:
+
+```powershell
+python scripts\generate_dev_index.py --rom pokegold
+```
+
+## Task Routing
+
+- Start any mechanics, balance, AI, progression, or QoL task with
+  `docs/codex_context.md`.
+- Use `docs/project_map.md` to choose source areas before broad `rg` searches.
+- Use `docs/generated/dev_index.md` before memory-sensitive edits or when
+  jumping to labels/banks.
+- Use `docs/codex_review_playbook.md` for reviews, bug hunts, and finding
+  severity/risk classes.
+- Use `docs/boss_ai_spec.md` before changing boss decisions, switch/item logic,
+  prediction, timing, or AI memory.
+- Use `docs/qol_handoff.md` before proposing or implementing QoL work; it marks
+  already-implemented QoL separately from remaining candidates.
+
+## Always Verify
+
+Run the doc navigation audit after helper-doc or navigation changes:
+
+```powershell
+python tools\audit\check_docs_navigation.py
+```
+
+Run task-relevant audits from `tools/audit/` before finalizing source changes.
+Do not edit `.gbc`, `.o`, `.map`, `.sym`, or generated index output by hand.

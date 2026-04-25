@@ -14,9 +14,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 
 HELPER_DOCS = (
+    "docs/README.md",
     "docs/codex_context.md",
     "docs/project_map.md",
     "docs/codex_review_playbook.md",
+    "docs/boss_ai_spec.md",
+    "docs/qol_handoff.md",
     "docs/generated/dev_index.md",
 )
 
@@ -56,7 +59,11 @@ REQUIRED_PATHS = (
     "data/maps",
     "engine/events",
     "data/events/special_pointers.asm",
+    "data/default_options.asm",
     "engine/overworld",
+    "engine/events/move_reminder.asm",
+    "engine/items/pack.asm",
+    "maps/GoldenrodBikeShop.asm",
     "ram/wram.asm",
     "ram/sram.asm",
     "ram/hram.asm",
@@ -72,6 +79,8 @@ OBJECTIVE_PHRASES = (
     "Fairness is non-negotiable",
     "Quality-of-life changes support the main game",
     "Weak Pokemon should become usable",
+    "Audience: future Codex/helper agents, not human readers",
+    "Human readability is secondary to machine-searchable facts and auditability",
 )
 
 PATH_PREFIXES = (
@@ -147,6 +156,22 @@ def backtick_path_refs(path: Path) -> set[str]:
     return refs
 
 
+def read_repo_text(path: str) -> str:
+    return (ROOT / path).read_text(encoding="utf-8")
+
+
+def section(text: str, start_marker: str, end_marker: str | None = None) -> str | None:
+    start = text.find(start_marker)
+    if start == -1:
+        return None
+    if end_marker is None:
+        return text[start:]
+    end = text.find(end_marker, start + len(start_marker))
+    if end == -1:
+        return None
+    return text[start:end]
+
+
 def check_required_paths(errors: list[str]) -> None:
     missing = [path for path in REQUIRED_PATHS if not (ROOT / path).exists()]
     for path in missing:
@@ -181,6 +206,28 @@ def check_objective_text(errors: list[str]) -> None:
         errors.append(f"missing objective phrase in docs/codex_context.md: {phrase!r}")
     if not missing:
         print("PASS: core objective phrases are present")
+
+
+def check_helper_entrypoint(errors: list[str]) -> None:
+    readme_path = ROOT / "docs/README.md"
+    if not readme_path.exists():
+        errors.append("missing docs/README.md helper-doc entrypoint")
+        return
+
+    text = readme_path.read_text(encoding="utf-8")
+    required = (
+        "READ THIS FIRST",
+        "Audience: future Codex/helper agents, not human readers",
+        "## Required Read Order",
+        "## Truth Precedence",
+        "## Task Routing",
+        "python tools\\audit\\check_docs_navigation.py",
+    )
+    missing = [phrase for phrase in required if phrase not in text]
+    for phrase in missing:
+        errors.append(f"docs/README.md missing helper-entrypoint phrase: {phrase!r}")
+    if not missing:
+        print("PASS: helper-doc entrypoint is present")
 
 
 def check_generated_index(errors: list[str]) -> None:
@@ -238,12 +285,142 @@ def check_generated_index(errors: list[str]) -> None:
     print("PASS: generated dev index matches current linker outputs")
 
 
+def check_python_command_paths(errors: list[str]) -> None:
+    missing: list[tuple[str, str]] = []
+    command_re = re.compile(r"\bpython(?:3)?\s+([A-Za-z0-9_./\\-]+\.py)\b")
+    for helper in HELPER_DOCS:
+        helper_path = ROOT / helper
+        if not helper_path.exists():
+            continue
+        text = helper_path.read_text(encoding="utf-8")
+        for raw in sorted(set(command_re.findall(text))):
+            ref = raw.replace("\\", "/")
+            if not (ROOT / ref).exists():
+                missing.append((helper, ref))
+
+    for helper, ref in missing:
+        errors.append(f"broken Python command path in {helper}: {ref}")
+    if not missing:
+        print("PASS: listed Python command paths resolve")
+
+
+def check_boss_ai_budget_doc(errors: list[str]) -> None:
+    dev_index = read_repo_text("docs/generated/dev_index.md")
+    boss_spec = read_repo_text("docs/boss_ai_spec.md")
+
+    tier_match = re.search(r"\| `wBossAITier` \| (?P<address>[0-9a-f]{2}:[0-9a-f]{4}) \|", dev_index)
+    end_match = re.search(r"\| `wBossAIStateEnd` \| (?P<address>[0-9a-f]{2}:[0-9a-f]{4}) \|", dev_index)
+    normal_match = re.search(r"\| Normal \| (?P<used>\d+) \| (?P<free>\d+) \|", dev_index)
+    trace_match = re.search(
+        r"\| With `BOSS_AI_TRACE` fields \| (?P<used>\d+) \| (?P<free>\d+) \|",
+        dev_index,
+    )
+
+    missing_index_data: list[str] = []
+    if tier_match is None:
+        missing_index_data.append("wBossAITier address")
+    if end_match is None:
+        missing_index_data.append("wBossAIStateEnd address")
+    if normal_match is None:
+        missing_index_data.append("normal Boss AI budget")
+    if trace_match is None:
+        missing_index_data.append("trace Boss AI budget")
+    if missing_index_data:
+        errors.append("cannot validate Boss AI budget doc; missing " + ", ".join(missing_index_data))
+        return
+
+    assert tier_match is not None
+    assert end_match is not None
+    assert normal_match is not None
+    assert trace_match is not None
+
+    expected_snippets = (
+        f"`wBossAITier = {tier_match.group('address')}`",
+        f"`wBossAIStateEnd = {end_match.group('address')}`",
+        f"uses `{normal_match.group('used')}` bytes and leaves `{normal_match.group('free')}`",
+        f"would use `{trace_match.group('used')}` bytes and leave `{trace_match.group('free')}`",
+        "`docs/generated/dev_index.md`",
+    )
+    missing = [snippet for snippet in expected_snippets if snippet not in boss_spec]
+    for snippet in missing:
+        errors.append(f"docs/boss_ai_spec.md missing current Boss AI budget fact: {snippet}")
+    if not missing:
+        print("PASS: Boss AI budget doc matches generated index")
+
+
+def check_qol_handoff_status(errors: list[str]) -> None:
+    qol_doc = read_repo_text("docs/qol_handoff.md")
+    default_options = read_repo_text("data/default_options.asm")
+    move_reminder = read_repo_text("engine/events/move_reminder.asm")
+    bike_shop = read_repo_text("maps/GoldenrodBikeShop.asm")
+    implemented = section(qol_doc, "## Already Implemented", "## Remaining Candidates")
+    remaining = section(qol_doc, "## Remaining Candidates", "## Verification Checklist")
+    if implemented is None or remaining is None:
+        errors.append("docs/qol_handoff.md must split QoL work into Already Implemented and Remaining Candidates")
+        return
+
+    implemented_features: list[tuple[str, bool]] = [
+        (
+            "Default Text Speed FAST",
+            "DefaultOptions:" in default_options and "db TEXT_DELAY_FAST" in default_options,
+        ),
+        (
+            "Move Reminder Page Size",
+            re.search(
+                r"^DEF\s+MOVE_REMINDER_PAGE_SIZE\s+EQU\s+4\b",
+                move_reminder,
+                re.MULTILINE,
+            )
+            is not None,
+        ),
+        (
+            "Auto-Register Bicycle If Empty",
+            "callasm GoldenrodBikeShopAutoRegisterBicycle" in bike_shop
+            and "GoldenrodBikeShopAutoRegisterBicycle:" in bike_shop
+            and "CheckRegisteredItem" in bike_shop,
+        ),
+    ]
+    for title, active in implemented_features:
+        if not active:
+            continue
+        heading = f"### {title}"
+        if heading not in implemented:
+            errors.append(f"docs/qol_handoff.md must list active QoL feature under Already Implemented: {title}")
+        if heading in remaining:
+            errors.append(f"docs/qol_handoff.md still lists active QoL feature as remaining candidate: {title}")
+
+    remaining_features = (
+        "Clearer Custom Item Text",
+        "Day-Care Service Signage",
+        "Repel Renewal Prompt",
+        "Pokemon Center Friction Trim",
+    )
+    for title in remaining_features:
+        if f"### {title}" not in remaining:
+            errors.append(f"docs/qol_handoff.md missing remaining QoL candidate: {title}")
+
+    stale_phrases = (
+        "Candidate: raise `MOVE_REMINDER_PAGE_SIZE` from `3` to `4`",
+        "Change only the first `wOptions` byte from medium text delay to fast text delay",
+    )
+    for phrase in stale_phrases:
+        if phrase in qol_doc:
+            errors.append(f"docs/qol_handoff.md still contains stale future-work wording: {phrase}")
+
+    if not any(error.startswith("docs/qol_handoff.md") for error in errors):
+        print("PASS: QoL handoff current/remaining status matches source")
+
+
 def main() -> int:
     errors: list[str] = []
     check_required_paths(errors)
     check_backtick_references(errors)
     check_objective_text(errors)
+    check_helper_entrypoint(errors)
     check_generated_index(errors)
+    check_python_command_paths(errors)
+    check_boss_ai_budget_doc(errors)
+    check_qol_handoff_status(errors)
 
     if errors:
         for error in errors:

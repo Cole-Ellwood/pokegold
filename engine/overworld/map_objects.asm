@@ -379,6 +379,11 @@ StepVectors:
 	db  0, -4,  4, 4
 	db -4,  0,  4, 4
 	db  4,  0,  4, 4
+	; player turbo
+	db  0,  8,  2, 8
+	db  0, -8,  2, 8
+	db -8,  0,  2, 8
+	db  8,  0,  2, 8
 
 GetStepVectorSign:
 	add a
@@ -392,6 +397,7 @@ UpdatePlayerStep:
 	ld hl, OBJECT_WALKING
 	add hl, bc
 	ld a, [hl]
+	push af
 	and %00000011
 	ld [wPlayerStepDirection], a
 	call AddStepVector
@@ -403,6 +409,11 @@ UpdatePlayerStep:
 	ld [wPlayerStepVectorY], a
 	ld hl, wPlayerStepFlags
 	set PLAYERSTEP_CONTINUE_F, [hl]
+	pop af
+	and %00001100
+	cp STEP_PLAYER_TURBO_VECTOR << 2
+	ret nz
+	set PLAYERSTEP_TURBO_F, [hl]
 	ret
 
 GetMapObjectField: ; unreferenced

@@ -5,15 +5,25 @@ before making mechanics, balance, AI, or progression changes. If another helper
 doc conflicts with the objective or fairness rules here, update that doc to match
 this one.
 
+## Agent Doc Policy
+
+- Audience: future Codex/helper agents, not human readers.
+- Optimize helper docs for rapid code navigation, source verification, and safe
+  implementation.
+- Prefer explicit paths, commands, labels, constraints, and current-vs-remaining
+  status over explanatory prose.
+- Human readability is secondary to machine-searchable facts and auditability.
+
 ## First Read Checklist
 
 Before changing gameplay code, read these in order:
 
-1. `docs/codex_context.md` for project intent.
-2. `docs/project_map.md` for task routing and canonical source locations.
-3. `docs/generated/dev_index.md` for current banks, labels, source anchors, and
+1. `docs/README.md` for helper-doc routing and truth precedence.
+2. `docs/codex_context.md` for project intent.
+3. `docs/project_map.md` for task routing and canonical source locations.
+4. `docs/generated/dev_index.md` for current banks, labels, source anchors, and
    memory pressure.
-4. Relevant spec/change docs, especially:
+5. Relevant spec/change docs, especially:
    - `docs/boss_ai_spec.md`
    - `docs/codex_review_playbook.md`
    - `docs/mechanics_changes_from_base.md`
@@ -108,6 +118,10 @@ damages the feel of Pokemon Gold, adapt it instead of copying it directly.
 - Do not edit `.gbc`, `.o`, `.map`, or `.sym` files directly.
 - `pokegold.map` and `pokegold.sym` are linker outputs used as current truth for
   addresses and free space.
+- Truth precedence is: current source and linker outputs first,
+  `docs/generated/dev_index.md` second, and hand-authored helper docs third for
+  intent and workflow. If helper docs disagree with source or linker truth,
+  update the docs.
 - Refresh `docs/generated/dev_index.md` after a successful build changes linker
   addresses:
   `python scripts/generate_dev_index.py --rom pokegold`

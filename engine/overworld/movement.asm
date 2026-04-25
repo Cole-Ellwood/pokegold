@@ -90,6 +90,10 @@ MovementPointers:
 	dw Movement_tree_shake            ; 56
 	dw Movement_rock_smash            ; 57
 	dw Movement_return_dig            ; 58
+	dw Movement_player_turbo_step_down  ; 59
+	dw Movement_player_turbo_step_up    ; 5a
+	dw Movement_player_turbo_step_left  ; 5b
+	dw Movement_player_turbo_step_right ; 5c
 	assert_table_length NUM_MOVEMENT_CMDS
 
 Movement_teleport_from:
@@ -478,6 +482,22 @@ Movement_big_step_left:
 
 Movement_big_step_right:
 	ld a, STEP_BIKE << 2 | RIGHT
+	jp NormalStep
+
+Movement_player_turbo_step_down:
+	ld a, STEP_PLAYER_TURBO_VECTOR << 2 | DOWN
+	jp NormalStep
+
+Movement_player_turbo_step_up:
+	ld a, STEP_PLAYER_TURBO_VECTOR << 2 | UP
+	jp NormalStep
+
+Movement_player_turbo_step_left:
+	ld a, STEP_PLAYER_TURBO_VECTOR << 2 | LEFT
+	jp NormalStep
+
+Movement_player_turbo_step_right:
+	ld a, STEP_PLAYER_TURBO_VECTOR << 2 | RIGHT
 	jp NormalStep
 
 Movement_turn_away_down:

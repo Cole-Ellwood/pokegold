@@ -11,7 +11,11 @@ _HandlePlayerStep::
 	ret
 
 .update_overworld_map
+	bit PLAYERSTEP_TURBO_F, a
 	ld a, 4
+	jr z, .got_step_delay
+	ld a, 2
+.got_step_delay
 	ld [wHandlePlayerStep], a
 	call UpdateOverworldMap
 	jr .finish

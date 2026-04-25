@@ -115,7 +115,8 @@ DEF DAY_CARE_WITHDRAW EQU 2
 DEF DAY_CARE_DEPOSIT  EQU 3
 
 ; wPlayerStepFlags::
-	const_def 4
+	const_def 3
+	const PLAYERSTEP_TURBO_F   ; 3
 	const PLAYERSTEP_MIDAIR_F   ; 4
 	const PLAYERSTEP_CONTINUE_F ; 5
 	const PLAYERSTEP_STOP_F     ; 6

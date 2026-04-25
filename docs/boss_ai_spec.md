@@ -152,7 +152,7 @@ Key source anchors:
 - `engine/battle/read_trainer_attributes.asm`: `LoadBossAITier`,
   `ClearBossAIState`.
 - `engine/battle/ai/switch.asm`: legacy enemy switch scoring helpers. Boss
-  model code should prefer boss-safe wrappers in `boss.asm`.
+  model code should prefer boss-safe wrappers in `engine/battle/ai/boss.asm`.
 
 ## Legacy AI Scoring Interaction
 
@@ -206,14 +206,16 @@ Reserved block:
 - Reserved size: `140` bytes, enforced by
   `ds 140 - (wBossAIStateEnd - wBossAITier)`.
 - Current normal build: `wBossAITier = 01:d72b`,
-  `wBossAIStateEnd = 01:d76e`, so normal state uses `67` bytes and leaves `73`
+  `wBossAIStateEnd = 01:d776`, so normal state uses `75` bytes and leaves `65`
   reserved bytes.
 - Current trace field set adds `19` bytes under `BOSS_AI_TRACE`, so trace state
-  would use `86` bytes and leave `54` reserved bytes.
+  would use `94` bytes and leave `46` reserved bytes.
 
 Adding 2-3 bytes to this block is acceptable in principle, but every change must
 still be build-verified because WRAMX overall has no free unreserved space.
 Never move save-compatible or unrelated WRAM fields casually to make room.
+For exact current addresses and byte counts, treat `docs/generated/dev_index.md`
+as the source of truth; refresh it after linker outputs change.
 
 ## Implementation Checklist For Boss AI Changes
 

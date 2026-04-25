@@ -3,8 +3,13 @@
 This is the front door for ROM work. Use it to route a task before broad
 searching, then jump to the deeper doc or source area it names.
 
+Agent-facing format rule: keep path tokens, task labels, command lines, and
+source-truth rules explicit even when that makes the prose less human-friendly.
+
 ## First Reads
 
+- `docs/README.md`: helper-doc entrypoint, read order, and source-truth
+  precedence for future Codex/helper sessions.
 - `docs/codex_context.md`: objective, design rules, and done criteria. If another
   helper doc conflicts with project intent, this file wins.
 - `docs/codex_review_playbook.md`: review and bug-hunt workflow.
@@ -116,3 +121,11 @@ Do not use these as canonical gameplay-edit sources:
 
 Search output or scratch paths only when the task explicitly concerns artifacts,
 old analysis, or generated files.
+
+## Source Truth Precedence
+
+Use current source files and linker outputs (`pokegold.map`, `pokegold.sym`) as
+the highest authority for exact implementation facts. Use
+`docs/generated/dev_index.md` as the generated navigation mirror of those
+outputs. Use hand-authored helper docs for project intent, workflow, and review
+policy, and update them when they drift from source or generated truth.

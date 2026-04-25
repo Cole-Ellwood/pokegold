@@ -17,37 +17,77 @@ hack without drifting from the project intent.
 The worktree may already be dirty. Do not revert unrelated user or previous
 Codex changes. Do not edit generated ROM/linker artifacts by hand.
 
-## Recommended Implementation Order
+## Current Status And Recommended Order
 
-Start with changes that are pure data/text or very small script edits:
+Already implemented low-risk QoL in this handoff:
 
-1. Default new games to FAST text speed.
-2. Tighten/help text for new custom items and TM Voucher.
-3. Increase Move Reminder page size to 4; do not use 5 without adding a larger
-   safe menu-string buffer.
-4. Add/adjust Day-Care signage or NPC text pointing to the TM Tutor and Move
+- Default new games to FAST text speed.
+- Move Reminder page size is `4`.
+- Bicycle auto-registers on receipt when no valid item is already registered.
+
+Recommended remaining order:
+
+1. Tighten/help text for new custom items and TM Voucher.
+2. Add/adjust Day-Care signage or NPC text pointing to the TM Tutor and Move
    Reminder.
-5. Auto-register Bicycle on receipt only when no valid item is already
-   registered.
-6. Consider Repel renewal prompt last; it is useful but has the most edge cases.
-7. Consider Pokemon Center pause trimming only if it preserves heal animation,
+3. Consider Repel renewal prompt last; it is useful but has the most edge cases.
+4. Consider Pokemon Center pause trimming only if it preserves heal animation,
    music restart, and Pokerus behavior.
 
 Avoid running shoes, free portable PC, reusable TMs, cheaper/free healing, EXP
 changes, or HM removal as "low-risk" QoL. Those affect pacing, boss prep,
 resource pressure, or Gen 2 feel.
 
-## Candidate Changes
+## Already Implemented
 
-### 1) Default Text Speed FAST
+### Default Text Speed FAST
 
 - Source: `data/default_options.asm`.
-- Change only the first `wOptions` byte from medium text delay to fast text delay.
+- Current state: the first `wOptions` byte is `TEXT_DELAY_FAST`.
 - Scope: new games only; existing saves keep their saved option.
 - Verify: new-game defaults show FAST in the Options menu; cycling FAST/MID/SLOW
   still works.
 
-### 2) Clearer Custom Item Text
+### Move Reminder Page Size
+
+- Source: `engine/events/move_reminder.asm`.
+- Current state: `MOVE_REMINDER_PAGE_SIZE` is `4`.
+- Do not raise it to `5` with the current scratch layout. Worst-case 5 move
+  names plus `NEXT` and `CANCEL` needs 79 bytes, while the contiguous scratch
+  area from `wStringBuffer2` through `wStringBuffer5` is 70 bytes.
+- Edge cases:
+  - no available moves still prints the no-moves text;
+  - exactly page-size moves shows no `NEXT`;
+  - page-size + 1 moves shows `NEXT` and then remaining moves;
+  - `CANCEL` always exits;
+  - long move names do not overwrite window borders.
+- Verify manually if possible with a species that has many reminder moves.
+
+### Auto-Register Bicycle If Empty
+
+- Sources: `maps/GoldenrodBikeShop.asm`, `engine/overworld/select_menu.asm`,
+  `engine/items/pack.asm` for registration behavior reference.
+- Current state: `GoldenrodBikeShopAutoRegisterBicycle` runs only after
+  `giveitem BICYCLE` succeeds. It calls `CheckRegisteredItem` first, so existing
+  valid registrations are preserved and stale registrations are cleared.
+- It sets both:
+  - `wWhichRegisteredItem`: key-item pocket encoded with registered slot number.
+  - `wRegisteredItem`: `BICYCLE`.
+- It mirrors the key-item registration encoding from `RegisterItem` in
+  `engine/items/pack.asm`; do not call `RegisterItem` directly from the map
+  script.
+- Edge cases:
+  - player already has another registered item: leave it alone;
+  - player receives Bicycle with nothing registered: SELECT uses Bicycle;
+  - full key-item pocket: do not set `EVENT_GOT_BICYCLE`;
+  - if Bicycle is somehow removed, existing `CheckRegisteredItem` clears stale
+    registration.
+- Verify: receive Bicycle, press SELECT outside; repeat with another registered
+  item already set.
+
+## Remaining Candidates
+
+### Clearer Custom Item Text
 
 - Main sources: `data/items/descriptions.asm`, possibly map/gym text where
   vouchers are mentioned.
@@ -63,23 +103,7 @@ resource pressure, or Gen 2 feel.
 - Verify: build succeeds; item descriptions render without wrapping into nearby
   UI.
 
-### 3) Move Reminder Page Size
-
-- Source: `engine/events/move_reminder.asm`.
-- Candidate: raise `MOVE_REMINDER_PAGE_SIZE` from `3` to `4`.
-- Do not alter the move-list building logic unless a UI issue requires it.
-- Do not raise it to `5` with the current scratch layout. Worst-case 5 move
-  names plus `NEXT` and `CANCEL` needs 79 bytes, while the contiguous scratch
-  area from `wStringBuffer2` through `wStringBuffer5` is 70 bytes.
-- Edge cases:
-  - no available moves still prints the no-moves text;
-  - exactly page-size moves shows no `NEXT`;
-  - page-size + 1 moves shows `NEXT` and then remaining moves;
-  - `CANCEL` always exits;
-  - long move names do not overwrite window borders.
-- Verify manually if possible with a species that has many reminder moves.
-
-### 4) Day-Care Service Signage
+### Day-Care Service Signage
 
 - Source: `maps/DayCare.asm`.
 - Prefer text-only changes or an existing background event if practical.
@@ -90,29 +114,7 @@ resource pressure, or Gen 2 feel.
 - Verify: Day-Care loads, egg callback behavior still works, both service NPCs
   remain reachable.
 
-### 5) Auto-Register Bicycle If Empty
-
-- Sources: `maps/GoldenrodBikeShop.asm`, `engine/overworld/select_menu.asm`,
-  `engine/items/pack.asm` for registration behavior reference.
-- Current implementation: `GoldenrodBikeShopAutoRegisterBicycle` runs only after
-  `giveitem BICYCLE` succeeds. It calls `CheckRegisteredItem` first, so existing
-  valid registrations are preserved and stale registrations are cleared.
-- Set both:
-  - `wWhichRegisteredItem`: key-item pocket encoded with registered slot number.
-  - `wRegisteredItem`: `BICYCLE`.
-- It mirrors the key-item registration encoding from `RegisterItem` in
-  `engine/items/pack.asm`; do not call `RegisterItem` directly from the map
-  script.
-- Edge cases:
-  - player already has another registered item: leave it alone;
-  - player receives Bicycle with nothing registered: SELECT uses Bicycle;
-  - full key-item pocket: do not set `EVENT_GOT_BICYCLE`;
-  - if Bicycle is somehow removed, existing `CheckRegisteredItem` clears stale
-    registration.
-- Verify: receive Bicycle, press SELECT outside; repeat with another registered
-  item already set.
-
-### 6) Repel Renewal Prompt
+### Repel Renewal Prompt
 
 - Sources: `engine/overworld/events.asm`, `engine/events/repel.asm`,
   `engine/items/item_effects.asm`, `data/text/common_1.asm`.
@@ -136,7 +138,7 @@ resource pressure, or Gen 2 feel.
   - accepting renewal consumes exactly one item and sets correct step count;
   - step counters and poison/egg behavior continue normally afterward.
 
-### 7) Pokemon Center Friction Trim
+### Pokemon Center Friction Trim
 
 - Source: `engine/events/std_scripts.asm`, `PokecenterNurseScript`.
 - Lowest-risk approach: reduce pauses only, not flow.
@@ -165,13 +167,10 @@ resource pressure, or Gen 2 feel.
 
 ## Suggested First Batch
 
-For a safe first implementation pass, do only:
+For a safe next implementation pass, do only:
 
-- default text speed FAST;
 - clearer custom item descriptions / voucher text;
-- Move Reminder page size to 4;
 - Day-Care text/signage hint.
-- Bicycle auto-register after successful Bike Shop gift.
 
 Leave Repel renewal and Pokemon Center trimming for a second pass unless the user
 explicitly wants them now.

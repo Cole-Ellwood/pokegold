@@ -14,7 +14,11 @@ HallOfFame::
 	ld hl, wStatusFlags
 	set STATUSFLAGS_HALL_OF_FAME_F, [hl]
 
-; BUG: Entering the Hall of Fame without a save file can corrupt the PC boxes (see docs/bugs_and_glitches.md)
+	ld a, [wSavedAtLeastOnce]
+	and a
+	jr nz, .saved
+	farcall ErasePreviousSave
+.saved
 
 	ld hl, wHallOfFameCount
 	ld a, [hl]
@@ -357,9 +361,8 @@ _HallOfFamePC:
 	call ClearBGPalettes
 	pop hl
 	call DisplayHOFMon
-; BUG: A "HOF Master!" title for 200-Time Famers is defined but inaccessible (see docs/bugs_and_glitches.md)
 	ld a, [wHallOfFameTempWinCount]
-	cp HOF_MASTER_COUNT + 1
+	cp HOF_MASTER_COUNT
 	jr c, .print_num_hof
 	ld de, .HOFMaster
 	hlcoord 1, 2
