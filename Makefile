@@ -44,22 +44,20 @@ pokesilver_vc_obj     := $(rom_obj:.o=_silver_vc.o) $(silver_vc_excl_obj)
 
 ### Build tools
 
-ifeq (,$(shell command -v sha1sum 2>/dev/null))
-SHA1 := shasum
-else
-SHA1 := sha1sum
-endif
-
 RGBDS ?=
 RGBASM  ?= $(RGBDS)rgbasm
 RGBFIX  ?= $(RGBDS)rgbfix
 RGBGFX  ?= $(RGBDS)rgbgfx
 RGBLINK ?= $(RGBDS)rgblink
+PYTHON  ?= python
+RMFILES ?= $(PYTHON) tools/rm_files.py
 
 RGBASMFLAGS  ?= -Weverything -Wtruncation=1
 RGBLINKFLAGS ?= -Weverything -Wtruncation=1
 RGBFIXFLAGS  ?= -Weverything
 RGBGFXFLAGS  ?= -Weverything
+# Optional extra assembler defines passed from CLI, e.g. DEFINES="-D BOSS_AI_TRACE".
+DEFINES      ?=
 
 
 ### Build targets
@@ -99,31 +97,32 @@ clean: tidy
 	     -delete
 
 tidy:
-	$(RM) $(roms) \
-	      $(roms:.gbc=.sym) \
-	      $(roms:.gbc=.map) \
-	      $(patches) \
-	      $(patches:.patch=_vc.gbc) \
-	      $(patches:.patch=_vc.sym) \
-	      $(patches:.patch=_vc.map) \
-	      $(patches:%.patch=vc/%.constants.sym) \
-	      $(pokegold_obj) \
-	      $(pokesilver_obj) \
-	      $(pokegold_vc_obj) \
-	      $(pokesilver_vc_obj) \
-	      $(pokegold_debug_obj) \
-	      $(pokesilver_debug_obj) \
-	      rgbdscheck.o
+	$(RMFILES) $(roms) \
+	           $(roms:.gbc=.sym) \
+	           $(roms:.gbc=.map) \
+	           $(patches) \
+	           $(patches:.patch=_vc.gbc) \
+	           $(patches:.patch=_vc.sym) \
+	           $(patches:.patch=_vc.map) \
+	           $(patches:%.patch=vc/%.constants.sym) \
+	           $(pokegold_obj) \
+	           $(pokesilver_obj) \
+	           $(pokegold_vc_obj) \
+	           $(pokesilver_vc_obj) \
+	           $(pokegold_debug_obj) \
+	           $(pokesilver_debug_obj) \
+	           rgbdscheck.o
 	$(MAKE) clean -C tools/
 
 compare: $(roms) $(patches)
-	@$(SHA1) -c roms.sha1
+	@$(PYTHON) tools/verify_sha1.py roms.sha1
 
 tools:
 	$(MAKE) -C tools/
 
 
 RGBASMFLAGS += -Q8 -P includes.asm
+RGBASMFLAGS += $(DEFINES)
 # Create a sym/map for debug purposes if `make` run with `DEBUG=1`
 ifeq ($(DEBUG),1)
 RGBASMFLAGS += -E
@@ -147,7 +146,7 @@ rgbdscheck.o: rgbdscheck.asm
 # This has to happen before the rules are processed, since that's when scan_includes is run.
 ifeq (,$(filter clean tidy tools,$(MAKECMDGOALS)))
 
-$(info $(shell $(MAKE) -C tools))
+tools_bootstrap := $(shell $(MAKE) -s -C tools)
 
 # The dep rules have to be explicit or else missing files won't be reported.
 # As a side effect, they're evaluated immediately instead of when the rule is invoked.

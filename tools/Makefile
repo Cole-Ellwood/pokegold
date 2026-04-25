@@ -2,6 +2,8 @@
 
 CC := gcc
 CFLAGS := -O3 -std=c11 -Wall -Wextra -pedantic
+PYTHON ?= python
+RMFILES ?= $(PYTHON) rm_files.py
 
 tools := \
 	gbcpal \
@@ -16,7 +18,7 @@ all: $(tools)
 	@:
 
 clean:
-	$(RM) $(tools)
+	$(RMFILES) $(tools)
 
 lzcomp: CFLAGS += -Wno-strict-overflow -Wno-sign-compare
 lzcomp: $(wildcard lz/*.c) $(wildcard lz/*.h)
