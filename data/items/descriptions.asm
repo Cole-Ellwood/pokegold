@@ -705,11 +705,11 @@ RageCandyBarDesc:
 	next "HP by 20.@"
 
 TMVoucherDesc:
-	db   "Redeem at the TM"
-	next "TUTOR for lessons.@"
+	db   "DAY-CARE TM TUTOR"
+	next "gives 3 lessons.@"
 
 ChoiceBandDesc:
-	db   "Boosts ATTACK but"
+	db   "Boosts ATTACK,"
 	next "locks move. (HOLD)@"
 
 MiracleSeedDesc:
@@ -760,8 +760,8 @@ MachinePartDesc:
 	next "the POWER PLANT.@"
 
 ChoiceSpecsDesc:
-	db   "Boosts SPCL.ATK"
-	next "but locks move.@"
+	db   "Boosts SPCL.ATK,"
+	next "locks move. (HOLD)@"
 
 LostItemDesc:
 	db   "The # DOLL lost"
@@ -786,12 +786,12 @@ TeruSama13Desc:
 	db   "?@"
 
 ChoiceScarfDesc:
-	db   "Boosts SPEED but"
+	db   "Boosts SPEED,"
 	next "locks move. (HOLD)@"
 
 AssaultVestDesc:
 	db   "Boosts SPCL.DEF,"
-	next "status blocked.@"
+	next "no status moves.@"
 
 CharcoalDesc:
 	db   "Powers up fire-"
@@ -830,16 +830,16 @@ LeftoversDesc:
 	next "battle. (HOLD)@"
 
 EvioliteDesc:
-	db   "Boosts DEF and"
-	next "SPCL.DEF. (HOLD)@"
+	db   "If can evolve,"
+	next "DEF/SPCL.DEF up.@"
 
 AirBalloonDesc:
-	db   "Avoids ground"
-	next "moves till hit.@"
+	db   "Ground immunity"
+	next "until hit. (HOLD)@"
 
 ShellBellDesc:
-	db   "Restores HP from"
-	next "damage dealt.@"
+	db   "Heals from damage"
+	next "it deals. (HOLD)@"
 
 MysteryBerryDesc:
 	db   "A self-restore"
@@ -858,8 +858,8 @@ RockyHelmetDesc:
 	next "foes. (HOLD)@"
 
 MetronomeItemDesc:
-	db   "Boosts repeated"
-	next "move use. (HOLD)@"
+	db   "Same move boosts"
+	next "damage. (HOLD)@"
 
 TeruSama24Desc:
 	db   "?@"

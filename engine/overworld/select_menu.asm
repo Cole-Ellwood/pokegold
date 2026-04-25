@@ -15,7 +15,7 @@ MayRegisterItemText:
 	text_far _MayRegisterItemText
 	text_end
 
-CheckRegisteredItem:
+CheckRegisteredItem::
 	ld a, [wWhichRegisteredItem]
 	and a
 	jr z, .NoRegisteredItem

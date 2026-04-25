@@ -21,10 +21,12 @@ GoldenrodBikeShopClerkScript:
 	promptbutton
 	waitsfx
 	giveitem BICYCLE
+	iffalse .NoRoomForBicycle
 	writetext BorrowedABicycleText
 	playsound SFX_KEY_ITEM
 	waitsfx
 	itemnotify
+	callasm GoldenrodBikeShopAutoRegisterBicycle
 	setflag ENGINE_BIKE_SHOP_CALL_ENABLED
 	setevent EVENT_GOT_BICYCLE
 .GotBicycle:
@@ -38,6 +40,35 @@ GoldenrodBikeShopClerkScript:
 	waitbutton
 	closetext
 	end
+
+.NoRoomForBicycle:
+	pocketisfull
+	closetext
+	end
+
+GoldenrodBikeShopAutoRegisterBicycle:
+	farcall CheckRegisteredItem
+	ret nc
+
+	ld hl, wKeyItems
+	ld b, 0
+.FindBicycle
+	ld a, [hli]
+	cp -1
+	ret z
+	cp BICYCLE
+	jr z, .RegisterBicycle
+	inc b
+	jr .FindBicycle
+
+.RegisterBicycle
+	ld a, b
+	inc a
+	or KEY_ITEM_POCKET << 6
+	ld [wWhichRegisteredItem], a
+	ld a, BICYCLE
+	ld [wRegisteredItem], a
+	ret
 
 GoldenrodBikeShopJustReleasedCompactBike: ; unreferenced
 	jumptext GoldenrodBikeShopJustReleasedCompactBikeText

@@ -1,5 +1,7 @@
 DEF MOVE_REMINDER_MAX_MOVES EQU 30
-DEF MOVE_REMINDER_PAGE_SIZE EQU 3
+; Four moves plus NEXT and CANCEL is the largest page that fits the menu
+; window and the wStringBuffer2-wStringBuffer5 scratch area.
+DEF MOVE_REMINDER_PAGE_SIZE EQU 4
 DEF MOVE_REMINDER_MENU_NEXT EQU $ff
 DEF MOVE_REMINDER_MENU_CANCEL EQU $fe
 

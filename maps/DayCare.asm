@@ -168,11 +168,21 @@ DayCareMoveReminderScript:
 	end
 
 DayCareBookshelf:
-	jumpstd DifficultBookshelfScript
+	jumptext DayCareServicePamphletText
 
 Text_GrampsLookingForYou:
 	text "Gramps was looking"
 	line "for you."
+	done
+
+DayCareServicePamphletText:
+	text "DAY-CARE SERVICES"
+	line "TM TUTOR redeems"
+	cont "VOUCHERS for"
+	cont "lessons."
+
+	para "MOVE REMINDER:"
+	line "free old moves."
 	done
 
 DayCareTMTutorLockedIntroText:
