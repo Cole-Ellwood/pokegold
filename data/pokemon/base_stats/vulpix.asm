@@ -1,8 +1,6 @@
 	db VULPIX ; 037
-
-	db  38,  41,  40,  65,  50,  65
+	db  55,  41,  40,  65,  70,  65
 	;   hp  atk  def  spd  sat  sdf
-
 	db FIRE, FIRE ; type
 	db 190 ; catch rate
 	db 63 ; base exp

@@ -1,8 +1,6 @@
 	db POLIWHIRL ; 061
-
-	db  65,  65,  65,  90,  50,  50
+	db  75,  65,  75,  90,  70,  50
 	;   hp  atk  def  spd  sat  sdf
-
 	db WATER, WATER ; type
 	db 120 ; catch rate
 	db 131 ; base exp

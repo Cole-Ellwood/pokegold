@@ -1,8 +1,6 @@
 	db CLEFABLE ; 036
-
-	db  95,  70,  73,  60,  85,  90
+	db 120,  50,  90,  45,  85, 100
 	;   hp  atk  def  spd  sat  sdf
-
 	db NORMAL, NORMAL ; type
 	db 25 ; catch rate
 	db 129 ; base exp

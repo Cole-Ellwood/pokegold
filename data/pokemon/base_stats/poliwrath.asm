@@ -1,8 +1,6 @@
 	db POLIWRATH ; 062
-
-	db  150,  85, 145,  50,  70,  50
+	db 120,  85, 110,  70,  70,  90
 	;   hp  atk  def  spd  sat  sdf
-
 	db WATER, FIGHTING ; type
 	db 45 ; catch rate
 	db 185 ; base exp

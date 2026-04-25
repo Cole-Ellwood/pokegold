@@ -1,6 +1,6 @@
 	db AMPHAROS ; 181
 
-	db 120,  75, 105,  55, 145, 120
+	db 112,  75,  75,  55, 115,  90
 	;   hp  atk  def  spd  sat  sdf
 
 	db ELECTRIC, DRAGON ; type

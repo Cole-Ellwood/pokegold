@@ -1,8 +1,6 @@
 	db PRIMEAPE ; 057
-
-	db  105, 125,  60, 145,  60,  70
+	db 100, 120, 120,  95,  60,  40
 	;   hp  atk  def  spd  sat  sdf
-
 	db FIGHTING, FIGHTING ; type
 	db 75 ; catch rate
 	db 149 ; base exp

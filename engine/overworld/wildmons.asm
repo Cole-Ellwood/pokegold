@@ -330,6 +330,7 @@ ChooseWildEncounter:
 	inc b
 ; Store the level
 .ok
+	call RaiseWildLevelForProgression
 ; BUG: ChooseWildEncounter doesn't really validate the wild Pokemon species (see docs/bugs_and_glitches.md)
 	ld a, b
 	ld [wCurPartyLevel], a
@@ -359,6 +360,71 @@ ChooseWildEncounter:
 
 .startwildbattle
 	xor a
+	ret
+
+RaiseWildLevelForProgression:
+; Raise low wild levels so each progression stage has a practical training floor.
+; Keeps existing higher levels unchanged.
+	push af
+	push de
+	push hl
+	call .GetMtSilverWildFloor
+	ld e, a
+	push bc
+	ld de, EVENT_BEAT_BLUE
+	ld b, CHECK_FLAG
+	call EventFlagAction
+	ld a, c
+	pop bc
+	and a
+	jr z, .use_progression_cap_floor
+	ld a, 65
+	jr .got_floor
+
+.use_progression_cap_floor
+	push bc
+	farcall GetProgressionLevelCap
+	pop bc
+	and a
+	jr z, .got_floor
+	sub 6
+	jr nc, .got_floor
+	ld a, 1
+
+.got_floor
+	cp e
+	jr nc, .use_floor
+	ld a, e
+
+.use_floor
+	and a
+	jr z, .done
+	ld d, a
+	ld a, b
+	cp d
+	jr nc, .done
+	ld b, d
+
+.done
+	pop hl
+	pop de
+	pop af
+	ret
+
+.GetMtSilverWildFloor:
+	push bc
+	call CopyCurrMapDE
+	ld b, d
+	ld c, e
+	call GetWorldMapLocation
+	pop bc
+	cp LANDMARK_SILVER_CAVE
+	jr z, .silver_cave
+	xor a
+	ret
+
+.silver_cave
+	ld a, 65
 	ret
 
 INCLUDE "data/wild/probabilities.asm"

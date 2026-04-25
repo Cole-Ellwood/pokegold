@@ -1,6 +1,6 @@
 	db SKIPLOOM ; 188
 
-	db  80,  45, 100,  40,  45, 115
+	db  55,  45,  50,  80,  45,  65
 	;   hp  atk  def  spd  sat  sdf
 
 	db GRASS, STEEL ; type

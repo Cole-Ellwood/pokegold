@@ -160,4 +160,124 @@ CalcExpAtLevel:
 	ldh [hMultiplier], a
 	jp Multiply
 
+GetProgressionLevelCap::
+; Returns the current progression cap in a.
+; - Before 8 Johto badges: strongest mon at the next Johto gym.
+; - At 8 badges: Lance cap.
+; - After first League clear: Blue cap.
+; - After beating Blue: Red cap.
+	ld de, EVENT_BEAT_BLUE
+	ld b, CHECK_FLAG
+	call EventFlagAction
+	ld a, c
+	and a
+	jr nz, .red_cap
+
+	ld de, EVENT_BEAT_CHAMPION_LANCE
+	ld b, CHECK_FLAG
+	call EventFlagAction
+	ld a, c
+	and a
+	jr nz, .blue_cap
+
+	ld hl, wJohtoBadges
+	ld b, 1
+	call CountSetBits
+	ld a, [wNumSetBits]
+	cp NUM_JOHTO_BADGES
+	jr nc, .lance_cap
+
+	ld e, a
+	ld d, 0
+	ld hl, .NextJohtoGymCaps
+	add hl, de
+	ld a, [hl]
+	ret
+
+.lance_cap
+	ld a, 50
+	ret
+
+.blue_cap
+	ld a, 69
+	ret
+
+.red_cap
+	ld a, 81
+	ret
+
+.NextJohtoGymCaps:
+	db 11 ; before Falkner
+	db 17 ; before Bugsy
+	db 21 ; before Whitney
+	db 26 ; before Morty
+	db 34 ; before Pryce
+	db 34 ; before Jasmine
+	db 34 ; before Chuck
+	db 39 ; before Clair
+
+ApplyProgressionExpScaling::
+; Apply global EXP pacing:
+; - 1.3x EXP when at least 3 levels below the current progression cap
+; - 1x EXP when close to the cap
+; - 0.1x EXP at or above the cap
+	push de
+	push hl
+	ld a, MON_LEVEL
+	call GetPartyParamLocation
+	ld d, [hl]
+	call GetProgressionLevelCap
+	and a
+	jr z, .done
+	cp d
+	jr z, .above_cap
+	jr c, .above_cap
+	sub d
+	cp 3
+	jr c, .done
+
+; 1.3x EXP (13/10), clamped to 0xffff.
+	xor a
+	ldh [hMultiplicand + 0], a
+	ldh a, [hProduct + 2]
+	ldh [hMultiplicand + 1], a
+	ldh a, [hProduct + 3]
+	ldh [hMultiplicand + 2], a
+	ld a, 13
+	ldh [hMultiplier], a
+	call Multiply
+	ld a, 10
+	ldh [hDivisor], a
+	ld b, 4
+	call Divide
+	ldh a, [hQuotient + 1]
+	and a
+	jr z, .store_scaled
+	ld a, $ff
+	ldh [hProduct + 2], a
+	ldh [hProduct + 3], a
+	jr .done
+
+.store_scaled
+	ldh a, [hQuotient + 2]
+	ldh [hProduct + 2], a
+	ldh a, [hQuotient + 3]
+	ldh [hProduct + 3], a
+	jr .done
+
+.above_cap
+; 0.1x EXP.
+	xor a
+	ldh [hDividend + 0], a
+	ldh [hDividend + 1], a
+	ld a, 10
+	ldh [hDivisor], a
+	ld b, 4
+	call Divide
+
+.done
+	pop hl
+	pop de
+	ret
+
 INCLUDE "data/growth_rates.asm"

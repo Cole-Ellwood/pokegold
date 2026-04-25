@@ -1,6 +1,6 @@
 	db EXEGGUTOR ; 103
 
-	db  125,  95, 135,  55, 175,  85
+	db 105,  95,  85,  55, 125,  80
 	;   hp  atk  def  spd  sat  sdf
 
 	db GRASS, PSYCHIC_TYPE ; type

@@ -1,6 +1,6 @@
 	db RATICATE ; 020
 
-	db   25, 145,  60,  97,  50,  70
+	db  55, 120,  60,  97,  50,  70
 	;   hp  atk  def  spd  sat  sdf
 
 	db NORMAL, NORMAL ; type

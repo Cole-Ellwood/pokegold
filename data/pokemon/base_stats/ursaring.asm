@@ -1,6 +1,6 @@
 	db URSARING ; 217
 
-	db  130, 160,  75,  55,  75,  75
+	db 120, 145,  75,  55,  75,  75
 	;   hp  atk  def  spd  sat  sdf
 
 	db NORMAL, NORMAL ; type

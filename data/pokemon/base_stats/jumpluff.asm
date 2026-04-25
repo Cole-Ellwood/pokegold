@@ -1,6 +1,6 @@
 	db JUMPLUFF ; 189
 
-	db  85, 105,  70, 150, 125,  85
+	db 110,  55,  70, 135,  55,  85
 	;   hp  atk  def  spd  sat  sdf
 
 	db GRASS, FLYING ; type

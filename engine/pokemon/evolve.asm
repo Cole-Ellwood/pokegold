@@ -113,7 +113,7 @@ EvolveAfterBattle_MasterLoop:
 	jp nz, .dont_evolve_2
 
 	inc hl
-	jr .proceed
+	jp .proceed
 
 .happiness
 	ld a, [wTempMonHappiness]
@@ -125,7 +125,7 @@ EvolveAfterBattle_MasterLoop:
 
 	ld a, [hli]
 	cp TR_ANYTIME
-	jr z, .proceed
+	jp z, .proceed
 	cp TR_MORNDAY
 	jr z, .happiness_daylight
 
@@ -133,13 +133,13 @@ EvolveAfterBattle_MasterLoop:
 	ld a, [wTimeOfDay]
 	cp NITE_F
 	jp nz, .dont_evolve_3
-	jr .proceed
+	jp .proceed
 
 .happiness_daylight
 	ld a, [wTimeOfDay]
 	cp NITE_F
 	jp z, .dont_evolve_3
-	jr .proceed
+	jp .proceed
 
 .trade
 	ld a, [wLinkMode]
@@ -152,7 +152,7 @@ EvolveAfterBattle_MasterLoop:
 	ld a, [hli]
 	ld b, a
 	inc a
-	jr z, .proceed
+	jp z, .proceed
 
 	ld a, [wLinkMode]
 	cp LINK_TIMECAPSULE
@@ -164,7 +164,7 @@ EvolveAfterBattle_MasterLoop:
 
 	xor a
 	ld [wTempMonItem], a
-	jr .proceed
+	jp .proceed
 
 .item
 	ld a, [hli]
@@ -179,7 +179,7 @@ EvolveAfterBattle_MasterLoop:
 	ld a, [wLinkMode]
 	and a
 	jp nz, .dont_evolve_3
-	jr .proceed
+	jp .proceed
 
 .level
 	ld a, [hli]
@@ -189,6 +189,12 @@ EvolveAfterBattle_MasterLoop:
 	jp c, .dont_evolve_3
 	call IsMonHoldingEverstone
 	jp z, .dont_evolve_3
+	push hl
+	call ChooseLevelEvolutionSpecies
+	pop hl
+	jp nc, EvolveAfterBattle_MasterLoop
+	ld [wEvolutionNewSpecies], a
+	ld hl, wEvolutionNewSpecies
 
 .proceed
 	ld a, [wTempMonLevel]
@@ -601,6 +607,155 @@ EvoFlagAction:
 	predef SmallFarFlagAction
 	pop de
 	ret
+
+DEF EVOLUTION_BRANCH_MAX_CHOICES EQU 5
+
+ChooseLevelEvolutionSpecies:
+; input: hl points to species for the first valid EVOLVE_LEVEL entry
+; output: carry + a = chosen species, or no carry if canceled
+	xor a
+	ld [wMenuSelectionQuantity], a
+	ld a, [hl]
+	call .AppendCandidate
+
+	inc hl
+	ld d, h
+	ld e, l
+
+.scan_loop
+	ld a, [de]
+	and a
+	jr z, .choose
+	cp EVOLVE_STAT
+	jr z, .skip_stat
+	cp EVOLVE_LEVEL
+	jr z, .check_level
+
+; EVOLVE_ITEM / EVOLVE_TRADE / EVOLVE_HAPPINESS
+	inc de
+	inc de
+	inc de
+	jr .scan_loop
+
+.skip_stat
+	inc de
+	inc de
+	inc de
+	inc de
+	jr .scan_loop
+
+.check_level
+	inc de
+	ld a, [de]
+	ld b, a
+	ld a, [wTempMonLevel]
+	cp b
+	jr c, .skip_level_species
+	inc de
+	ld a, [de]
+	call .AppendCandidate
+	jr .next_entry
+
+.skip_level_species
+	inc de
+
+.next_entry
+	inc de
+	jr .scan_loop
+
+.choose
+	ld a, [wMenuSelectionQuantity]
+	and a
+	ret z
+	cp 1
+	jr nz, .menu
+	ld a, [wMenuItemsList]
+	scf
+	ret
+
+.menu
+	call .BuildMenuData
+	ld hl, .MenuHeader
+	call LoadMenuHeader
+	call VerticalMenu
+	push af
+	call CloseWindow
+	pop af
+	jr c, .canceled
+
+	ld a, [wMenuCursorY]
+	dec a
+	ld c, a
+	ld b, 0
+	ld hl, wMenuItemsList
+	add hl, bc
+	ld a, [hl]
+	scf
+	ret
+
+.canceled
+	and a
+	ret
+
+.AppendCandidate
+	push hl
+	push bc
+	push de
+	ld d, a
+	ld a, [wMenuSelectionQuantity]
+	cp EVOLUTION_BRANCH_MAX_CHOICES
+	jr nc, .done
+	ld c, a
+	ld b, 0
+	ld hl, wMenuItemsList
+	add hl, bc
+	ld [hl], d
+	ld hl, wMenuSelectionQuantity
+	inc [hl]
+.done
+	pop de
+	pop bc
+	pop hl
+	ret
+
+.BuildMenuData
+	ld hl, wStringBuffer2
+	ld a, STATICMENU_CURSOR | STATICMENU_NO_TOP_SPACING
+	ld [hli], a
+	ld a, [wMenuSelectionQuantity]
+	ld [hli], a
+	ld b, a
+	ld de, wMenuItemsList
+
+.next_name
+	ld a, [de]
+	inc de
+	push bc
+	push de
+	push hl
+	ld [wNamedObjectIndex], a
+	call GetPokemonName
+	pop hl
+	ld de, wStringBuffer1
+
+.copy_name
+	ld a, [de]
+	inc de
+	ld [hli], a
+	cp '@'
+	jr nz, .copy_name
+
+	pop de
+	pop bc
+	dec b
+	jr nz, .next_name
+	ret
+
+.MenuHeader:
+	db MENU_BACKUP_TILES ; flags
+	menu_coords 2, 1, 17, 13
+	dw wStringBuffer2
+	db 1 ; default option
 
 INCLUDE "engine/movie/evolution_animation.asm"
 

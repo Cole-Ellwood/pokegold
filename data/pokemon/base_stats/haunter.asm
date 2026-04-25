@@ -1,6 +1,6 @@
 	db HAUNTER ; 093
 
-	db  45,  70,  45, 135, 125,  55
+	db  45,  70,  45,  95, 115,  55
 	;   hp  atk  def  spd  sat  sdf
 
 	db GHOST, PSYCHIC_TYPE ; type

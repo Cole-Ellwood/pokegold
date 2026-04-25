@@ -1,8 +1,6 @@
 	db GOLBAT ; 042
-
-	db  95, 100,  90,  90,  65,  75
+	db  80,  80,  80,  90,  65,  75
 	;   hp  atk  def  spd  sat  sdf
-
 	db POISON, FLYING ; type
 	db 90 ; catch rate
 	db 171 ; base exp

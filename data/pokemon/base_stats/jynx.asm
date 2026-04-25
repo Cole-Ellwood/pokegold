@@ -1,6 +1,6 @@
 	db JYNX ; 124
 
-	db   65, 120,  35,  95, 145, 155
+	db  65,  50,  35,  95, 130,  95
 	;   hp  atk  def  spd  sat  sdf
 
 	db ICE, PSYCHIC_TYPE ; type

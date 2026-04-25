@@ -1,6 +1,6 @@
 	db KINGDRA ; 230
 
-	db  150, 135, 135,  65, 125, 135
+	db  95,  95,  95,  85,  95,  95
 	;   hp  atk  def  spd  sat  sdf
 
 	db WATER, DRAGON ; type

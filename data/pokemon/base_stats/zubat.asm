@@ -1,8 +1,6 @@
 	db ZUBAT ; 041
-
-	db  60,  65,  35,  55,  30,  40
+	db  40,  45,  35,  55,  30,  40
 	;   hp  atk  def  spd  sat  sdf
-
 	db POISON, FLYING ; type
 	db 255 ; catch rate
 	db 54 ; base exp

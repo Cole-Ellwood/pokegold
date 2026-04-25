@@ -1,6 +1,6 @@
 	db MAGNEMITE ; 081
 
-	db   70, 135, 100,  30, 125,  40
+	db 25, 75, 70, 45, 95, 55
 	;   hp  atk  def  spd  sat  sdf
 
 	db ELECTRIC, STEEL ; type

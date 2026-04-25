@@ -1,8 +1,6 @@
 	db WIGGLYTUFF ; 040
-
-	db 140,  70,  45,  45,  75,  50
+	db 160, 100,  55,  45,  75,  80
 	;   hp  atk  def  spd  sat  sdf
-
 	db NORMAL, NORMAL ; type
 	db 50 ; catch rate
 	db 109 ; base exp

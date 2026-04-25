@@ -1,8 +1,6 @@
 	db DIGLETT ; 050
-
-	db  10,  55,  25,  95,  35,  45
+	db  10,  70,  25,  95,  35,  45
 	;   hp  atk  def  spd  sat  sdf
-
 	db GROUND, GROUND ; type
 	db 255 ; catch rate
 	db 81 ; base exp

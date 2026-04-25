@@ -1448,6 +1448,11 @@ FishFunction:
 	ld a, d
 	and a
 	jr z, .nonibble
+	ld b, e
+	farcall RaiseWildLevelForProgression
+	ld e, b
+	call .UpgradeSilverCaveFishEncounter
+	ld a, d
 	ld [wTempWildMonSpecies], a
 	ld a, e
 	ld [wCurPartyLevel], a
@@ -1458,6 +1463,46 @@ FishFunction:
 
 .nonibble
 	ld a, $1
+	ret
+
+.UpgradeSilverCaveFishEncounter:
+; Keep Mt. Silver fishing aligned with late-game wild encounter expectations.
+	ld a, d
+	ld [wTempWildMonSpecies], a
+	ld a, e
+	ld [wCurPartyLevel], a
+	ld a, [wMapGroup]
+	ld b, a
+	ld a, [wMapNumber]
+	ld c, a
+	call GetWorldMapLocation
+	cp LANDMARK_SILVER_CAVE
+	jr nz, .done
+	ld a, [wTempWildMonSpecies]
+	cp MAGIKARP
+	jr nz, .check_poliwag
+	ld a, GYARADOS
+	jr .store
+
+.check_poliwag
+	cp POLIWAG
+	jr nz, .check_goldeen
+	ld a, POLIWHIRL
+	jr .store
+
+.check_goldeen
+	cp GOLDEEN
+	jr nz, .done
+	ld a, SEAKING
+
+.store
+	ld [wTempWildMonSpecies], a
+
+.done
+	ld a, [wTempWildMonSpecies]
+	ld d, a
+	ld a, [wCurPartyLevel]
+	ld e, a
 	ret
 
 .FailFish:

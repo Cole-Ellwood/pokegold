@@ -1,8 +1,6 @@
 	db VILEPLUME ; 045
-
-	db  150, 130, 115, 100, 150, 130
+	db 120,  80,  85,  50, 100,  90
 	;   hp  atk  def  spd  sat  sdf
-
 	db GRASS, POISON ; type
 	db 45 ; catch rate
 	db 184 ; base exp

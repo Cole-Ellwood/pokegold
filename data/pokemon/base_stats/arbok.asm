@@ -1,9 +1,9 @@
 	db ARBOK ; 024
 
-	db  120,  85, 109,  80,  65,  79
+	db 100,  85,  99,  80,  80,  79
 	;   hp  atk  def  spd  sat  sdf
 
-	db POISON, POISON ; type
+	db POISON, DARK ; type
 	db 90 ; catch rate
 	db 147 ; base exp
 	db NO_ITEM, NO_ITEM ; items
