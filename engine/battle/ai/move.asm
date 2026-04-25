@@ -63,6 +63,10 @@ AIChooseMove:
 
 ; Apply AI scoring layers depending on the trainer class.
 .ApplyLayers:
+	ld a, [wBossAITier]
+	and a
+	jr nz, .BossModel
+
 	ld hl, TrainerClassAttributes + TRNATTR_AI_MOVE_WEIGHTS
 	ld a, [wTrainerClass]
 	dec a

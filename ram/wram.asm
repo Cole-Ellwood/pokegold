@@ -2537,6 +2537,7 @@ wBossAISwitchConfidence:: db
 wBossAILastSwitchedOut:: db
 wBossAISwitchCooldown:: db
 wBossAIPlayerSwitchCount:: db
+wBossAIPendingPlayerSwitchCount:: db
 wBossAITurnsElapsed:: db
 wBossAIPlanId:: db
 wBossAIPlanPhase:: db
@@ -2547,11 +2548,13 @@ wBossAIScoutedMask:: db
 wBossAIRepeatCount:: db
 wBossAILastChosenMove:: db
 wBossAIPlausibleTypeMaskSpecies:: db
+wBossAIPlausibleTypeMaskLevel:: db
 wBossAIPlausibleTypeMaskCache:: ds 4
 wBossAISeenPlayerSpeciesCount:: db
 wBossAISeenPlayerSpecies:: ds PARTY_LENGTH
 wBossAIRevealedMovesBitmap:: ds 32
 wBossAIScorePtr:: dw
+wBossAISavedEnemyMoveStruct:: ds MOVE_LENGTH
 wBossAITemp:: db
 wBossAITemp2:: db
 wBossAITemp3:: db

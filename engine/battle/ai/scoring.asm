@@ -1729,10 +1729,14 @@ AI_Smart_MeanLook:
 	call AICheckEnemyHalfHP
 	jr nc, .discourage
 
+	ld a, [wBossAITier]
+	and a
+	jr nz, .skip_last_mon_check
 	push hl
 	call AICheckLastPlayerMon
 	pop hl
 	jp z, AIDiscourageMove
+.skip_last_mon_check
 
 ; 80% chance to greatly encourage this move if the player is badly poisoned.
 	ld a, [wPlayerSubStatus5]

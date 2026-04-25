@@ -6,13 +6,30 @@ BossAI_IncrementTurnsElapsed:
 	inc [hl]
 	ld hl, wBossAIPlanPhase
 	inc [hl]
+	ld a, [wBossAIPendingPlayerSwitchCount]
+	and a
+	jr z, .no_pending_switch
+	ld b, a
+	xor a
+	ld [wBossAIPendingPlayerSwitchCount], a
+	ld a, [wBossAIPlayerSwitchCount]
+	add b
+	jr nc, .store_switch_count
+	ld a, $ff
+.store_switch_count
+	ld [wBossAIPlayerSwitchCount], a
+.no_pending_switch
+	call BossAI_DecaySwitchCooldown
 	ret
 
 BossAI_RecordPlayerSwitch:
 	ld a, [wBossAITier]
 	and a
 	ret z
-	ld hl, wBossAIPlayerSwitchCount
+	ld hl, wBossAIPendingPlayerSwitchCount
+	ld a, [hl]
+	cp $ff
+	ret z
 	inc [hl]
 	ret
 
@@ -235,6 +252,7 @@ BossAI_RecordRevealedPlayerMove:
 	ld [hl], a
 	xor a
 	ld [wBossAIPlausibleTypeMaskSpecies], a
+	ld [wBossAIPlausibleTypeMaskLevel], a
 	ret
 
 BossAI_ApplyMoveModel:
@@ -279,16 +297,8 @@ BossAI_ApplyMoveModel:
 	and a
 	jr z, .skip_ko
 	push hl
-	call AIDamageCalc
+	call BossAI_CurrentEnemyMoveHasKOPressure
 	pop hl
-	ld a, [wCurDamage + 1]
-	ld e, a
-	ld a, [wCurDamage]
-	ld d, a
-	ld a, [wBattleMonHP + 1]
-	cp e
-	ld a, [wBattleMonHP]
-	sbc d
 	jr nc, .skip_ko
 	ld c, 0
 	call .EncourageByTierWeight
@@ -312,18 +322,12 @@ BossAI_ApplyMoveModel:
 	cp EFFECT_PRIORITY_HIT
 	jr z, .tempo_bonus
 	push hl
-	ldh a, [hBattleTurn]
-	push af
-	ld a, 1
-	ldh [hBattleTurn], a
-	callfar BattleCheckTypeMatchup
-	pop af
-	ldh [hBattleTurn], a
+	call BossAI_CheckEnemyMoveTypeMatchupVsPlayerNoItem
 	pop hl
 	ld a, [wTypeMatchup]
 	cp EFFECTIVE + 1
 	jr c, .skip_tempo
-	call AICompareSpeed
+	call BossAI_PublicEnemyFaster
 	jr nc, .skip_tempo
 
 .tempo_bonus
@@ -671,9 +675,7 @@ BossAI_ApplyMoveModel:
 .EnemyUnderPressure
 	call AICheckEnemyQuarterHP
 	jr nc, .pressure_yes
-	call CheckPlayerMoveTypeMatchups
-	ld a, [wEnemyAISwitchScore]
-	cp BASE_AI_SWITCH_SCORE
+	call BossAI_PlayerHasPublicThreatVsEnemy
 	jr c, .pressure_yes
 	and a
 	ret
@@ -685,15 +687,7 @@ BossAI_ApplyMoveModel:
 	ld a, [wEnemyMoveStruct + MOVE_POWER]
 	and a
 	jr z, .hasko_no
-	call AIDamageCalc
-	ld a, [wCurDamage + 1]
-	ld e, a
-	ld a, [wCurDamage]
-	ld d, a
-	ld a, [wBattleMonHP + 1]
-	cp e
-	ld a, [wBattleMonHP]
-	sbc d
+	call BossAI_CurrentEnemyMoveHasKOPressure
 	jr nc, .hasko_no
 	scf
 	ret
@@ -923,8 +917,7 @@ BossAI_SwitchOrTryItem:
 	ret
 
 .check_switch
-	call BossAI_DecaySwitchCooldown
-	callfar CheckAbleToSwitch
+	call BossAI_CheckAbleToSwitchSafe
 	ld a, [wEnemySwitchMonParam]
 	and a
 	jp z, AI_TryItem
@@ -1012,6 +1005,385 @@ BossAI_DecaySwitchCooldown:
 	ret z
 	dec a
 	ld [wBossAISwitchCooldown], a
+	ret
+
+BossAI_CheckAbleToSwitchSafe:
+	xor a
+	ld [wEnemySwitchMonParam], a
+	call BossAI_FindFirstAliveSwitchCandidate
+	ret nc
+	call BossAI_PlayerHasPublicThreatVsEnemy
+	jr c, .high_confidence
+	call AICheckEnemyQuarterHP
+	ret c
+	ld b, $20
+	jr .store
+
+.high_confidence
+	ld b, $30
+
+.store
+	ld a, [wBossAITemp]
+	or b
+	ld [wEnemySwitchMonParam], a
+	ret
+
+BossAI_FindFirstAliveSwitchCandidate:
+	ld a, [wOTPartyCount]
+	cp 2
+	jr c, .none
+	ld d, a
+	ld e, 0
+	ld hl, wOTPartyMon1HP
+
+.loop
+	ld a, [wCurOTMon]
+	cp e
+	jr z, .next
+	push hl
+	ld a, [hli]
+	or [hl]
+	pop hl
+	jr z, .next
+	ld a, e
+	ld [wBossAITemp], a
+	scf
+	ret
+
+.next
+	push bc
+	ld bc, PARTYMON_STRUCT_LENGTH
+	add hl, bc
+	pop bc
+	inc e
+	dec d
+	jr nz, .loop
+
+.none
+	and a
+	ret
+
+BossAI_PlayerHasPublicThreatVsEnemy:
+	ld hl, wPlayerUsedMoves
+	ld a, [hl]
+	and a
+	jr z, .unknown_moves
+	ld d, NUM_MOVES
+
+.used_move_loop
+	ld a, [hli]
+	and a
+	jr z, .no
+	push hl
+	dec a
+	ld hl, Moves + MOVE_POWER
+	call GetMoveAttr
+	and a
+	jr z, .next_used_move
+	inc hl
+	call GetMoveByte
+	call BossAI_CheckPlayerMoveTypeMatchupVsEnemyNoItem
+	ld a, [wTypeMatchup]
+	cp EFFECTIVE + 1
+	jr nc, .yes_pop_hl
+
+.next_used_move
+	pop hl
+	dec d
+	jr nz, .used_move_loop
+
+.no
+	and a
+	ret
+
+.yes_pop_hl
+	pop hl
+.yes
+	scf
+	ret
+
+.unknown_moves
+	ld a, [wBattleMonType1]
+	call BossAI_CheckPlayerMoveTypeMatchupVsEnemyNoItem
+	ld a, [wTypeMatchup]
+	cp EFFECTIVE + 1
+	jr nc, .yes
+	ld a, [wBattleMonType2]
+	ld c, a
+	ld a, [wBattleMonType1]
+	cp c
+	jr z, .no
+	ld a, c
+	call BossAI_CheckPlayerMoveTypeMatchupVsEnemyNoItem
+	ld a, [wTypeMatchup]
+	cp EFFECTIVE + 1
+	jr nc, .yes
+	jr .no
+
+BossAI_CheckPlayerMoveTypeMatchupVsEnemyNoItem:
+	push bc
+	ld c, a
+	ldh a, [hBattleTurn]
+	push af
+	xor a
+	ldh [hBattleTurn], a
+	ld a, c
+	ld hl, wEnemyMonType1
+	call BossAI_CheckTypeMatchupNoItem
+	pop af
+	ldh [hBattleTurn], a
+	pop bc
+	ret
+
+BossAI_CheckPlayerMoveTypeMatchupVsBaseNoItem:
+	push bc
+	ld c, a
+	ldh a, [hBattleTurn]
+	push af
+	xor a
+	ldh [hBattleTurn], a
+	ld a, c
+	ld hl, wBaseType1
+	call BossAI_CheckTypeMatchupNoItem
+	pop af
+	ldh [hBattleTurn], a
+	pop bc
+	ret
+
+BossAI_CheckEnemyMoveTypeMatchupVsPlayerNoItem:
+	push bc
+	ldh a, [hBattleTurn]
+	push af
+	ld a, 1
+	ldh [hBattleTurn], a
+	ld a, [wEnemyMoveStruct + MOVE_TYPE]
+	ld hl, wBattleMonType1
+	call BossAI_CheckTypeMatchupNoItem
+	pop af
+	ldh [hBattleTurn], a
+	pop bc
+	ret
+
+BossAI_CheckTypeMatchupNoItem:
+	push hl
+	push de
+	push bc
+	ld d, a
+	ld b, [hl]
+	inc hl
+	ld c, [hl]
+	ld a, EFFECTIVE
+	ld [wTypeMatchup], a
+	ld hl, TypeMatchups
+
+.types_loop
+	ld a, BANK(TypeMatchups)
+	call GetFarByte
+	inc hl
+	cp -1
+	jr z, .end
+	cp -2
+	jr nz, .next
+	ld a, BATTLE_VARS_SUBSTATUS1_OPP
+	call GetBattleVar
+	bit SUBSTATUS_IDENTIFIED, a
+	jr nz, .end
+	jr .types_loop
+
+.next
+	cp d
+	jr nz, .nope
+	ld a, BANK(TypeMatchups)
+	call GetFarByte
+	inc hl
+	cp b
+	jr z, .yup
+	cp c
+	jr z, .yup
+	inc hl
+	jr .types_loop
+
+.nope
+	inc hl
+	inc hl
+	jr .types_loop
+
+.yup
+	xor a
+	ldh [hDividend + 0], a
+	ldh [hMultiplicand + 0], a
+	ldh [hMultiplicand + 1], a
+	ld a, BANK(TypeMatchups)
+	call GetFarByte
+	inc hl
+	ldh [hMultiplicand + 2], a
+	ld a, [wTypeMatchup]
+	ldh [hMultiplier], a
+	call Multiply
+	ld a, 10
+	ldh [hDivisor], a
+	push bc
+	ld b, 4
+	call Divide
+	pop bc
+	ldh a, [hQuotient + 3]
+	ld [wTypeMatchup], a
+	jr .types_loop
+
+.end
+	pop bc
+	pop de
+	pop hl
+	ret
+
+BossAI_CurrentEnemyMoveHasKOPressure:
+	call BossAI_CurrentEnemyMovePressureScore
+	ld d, a
+	and a
+	jr z, .no
+	call AICheckPlayerQuarterHP
+	jr nc, .low_hp
+	call AICheckPlayerHalfHP
+	jr nc, .half_hp
+	ld a, d
+	cp 4
+	jr nc, .yes
+	jr .no
+
+.low_hp
+	ld a, d
+	cp 1
+	jr nc, .yes
+	jr .no
+
+.half_hp
+	ld a, d
+	cp 3
+	jr nc, .yes
+
+.no
+	and a
+	ret
+
+.yes
+	scf
+	ret
+
+BossAI_CurrentEnemyMovePressureScore:
+	ld a, [wEnemyMoveStruct + MOVE_POWER]
+	and a
+	jr z, .none
+	ld b, 0
+	cp 100
+	jr c, .check_mid_power
+	ld b, 2
+	jr .type_matchup
+
+.check_mid_power
+	cp 70
+	jr c, .type_matchup
+	ld b, 1
+
+.type_matchup
+	call BossAI_CheckEnemyMoveTypeMatchupVsPlayerNoItem
+	ld a, [wTypeMatchup]
+	and a
+	jr z, .none
+	cp EFFECTIVE
+	jr c, .resisted
+	cp EFFECTIVE * 4
+	jr nc, .plus_two
+	cp EFFECTIVE * 2
+	jr nc, .plus_one
+	jr .stab
+
+.plus_two
+	inc b
+.plus_one
+	inc b
+
+.stab
+	ld a, [wEnemyMoveStruct + MOVE_TYPE]
+	ld c, a
+	ld a, [wEnemyMonType1]
+	cp c
+	jr z, .stab_bonus
+	ld a, [wEnemyMonType2]
+	cp c
+	jr nz, .cap
+
+.stab_bonus
+	inc b
+	jr .cap
+
+.resisted
+	ld a, b
+	and a
+	jr z, .done
+	dec b
+
+.cap
+	ld a, b
+	cp 5
+	ret c
+	ld a, 4
+	ret
+
+.done
+	ld a, b
+	ret
+
+.none
+	xor a
+	ret
+
+BossAI_PublicEnemyFaster:
+	push hl
+	push de
+	push bc
+	ld a, [wCurSpecies]
+	push af
+	ld a, [wBattleMonSpecies]
+	and a
+	jr z, .enemy_not_faster
+	ld [wCurSpecies], a
+	call GetBaseData
+	ld a, [wBaseSpeed]
+	ld b, a
+	ld a, [wEnemyMonSpecies]
+	and a
+	jr nz, .got_enemy_species
+	ld a, [wTempEnemyMonSpecies]
+
+.got_enemy_species
+	and a
+	jr z, .enemy_not_faster
+	ld [wCurSpecies], a
+	call GetBaseData
+	ld a, [wBaseSpeed]
+	cp b
+	jr c, .enemy_not_faster
+
+.enemy_faster
+	pop af
+	ld [wCurSpecies], a
+	and a
+	call nz, GetBaseData
+	pop bc
+	pop de
+	pop hl
+	scf
+	ret
+
+.enemy_not_faster
+	pop af
+	ld [wCurSpecies], a
+	and a
+	call nz, GetBaseData
+	pop bc
+	pop de
+	pop hl
+	and a
 	ret
 
 BossAI_GetSwitchThreshold:
@@ -1121,9 +1493,7 @@ BossAI_NeedsLoopPenalty:
 BossAI_IsImminentKOPrevention:
 	call AICheckEnemyQuarterHP
 	jr nc, .yes
-	call CheckPlayerMoveTypeMatchups
-	ld a, [wEnemyAISwitchScore]
-	cp BASE_AI_SWITCH_SCORE
+	call BossAI_PlayerHasPublicThreatVsEnemy
 	jr c, .yes
 	call BossAI_ShouldRespectPotentialPlayerRevenge
 	jr c, .yes
@@ -1135,10 +1505,8 @@ BossAI_IsImminentKOPrevention:
 
 BossAI_ShouldRespectPotentialPlayerRevenge:
 ; Carry if the player is likely to threaten a fast revenge KO line.
-	call AICompareSpeed
-	jr nc, .check_threat
-	call BossAI_IsScarfSwingPossible
-	jr nc, .no
+	call BossAI_PublicEnemyFaster
+	jr c, .no
 
 .check_threat
 	call BossAI_GetPrimaryThreatType
@@ -1165,37 +1533,8 @@ BossAI_ShouldRespectPotentialPlayerRevenge:
 	ret
 
 BossAI_IsScarfSwingPossible:
-; Carry if player is currently slower but would be faster with a 1.5x speed boost.
-	call AICompareSpeed
-	jr nc, .no
-
-	ld a, [wBattleMonSpeed]
-	ld h, a
-	ld b, a
-	ld a, [wBattleMonSpeed + 1]
-	ld l, a
-	ld c, a
-	add hl, bc
-	add hl, bc
-	ld b, h
-	ld c, l
-	srl b
-	rr c
-
-	ld a, [wEnemyMonSpeed]
-	cp b
-	jr c, .yes
-	jr nz, .no
-	ld a, [wEnemyMonSpeed + 1]
-	cp c
-	jr c, .yes
-
-.no
+; Do not infer unrevealed player Choice Scarf from private speed values.
 	and a
-	ret
-
-.yes
-	scf
 	ret
 
 BossAI_IsSuspiciousSwitchIn:
@@ -1206,8 +1545,6 @@ BossAI_IsSuspiciousSwitchIn:
 	ld a, [wPlayerTurnsTaken]
 	and a
 	jr nz, .no
-	call AICompareSpeed
-	jr nc, .no
 
 	ld a, [wBattleMonType1]
 	call .IsTypeNotVeryEffective
@@ -1231,8 +1568,7 @@ BossAI_IsSuspiciousSwitchIn:
 	ret
 
 .IsTypeNotVeryEffective
-	ld hl, wEnemyMonType1
-	call CheckTypeMatchup
+	call BossAI_CheckPlayerMoveTypeMatchupVsEnemyNoItem
 	ld a, [wTypeMatchup]
 	cp EFFECTIVE
 	jr c, .nve
@@ -1272,8 +1608,7 @@ BossAI_IsImmunityPivotOpportunity:
 	call GetMoveAttr
 	inc hl
 	call GetMoveByte
-	ld hl, wBaseType
-	call CheckTypeMatchup
+	call BossAI_CheckPlayerMoveTypeMatchupVsBaseNoItem
 	ld a, [wTypeMatchup]
 	and a
 	ret nz
@@ -1425,10 +1760,8 @@ BossAI_PredictPlayerSwitch:
 	ld [wBossAITemp], a
 .hp_done
 
-	call CheckPlayerMoveTypeMatchups
-	ld a, [wEnemyAISwitchScore]
-	cp BASE_AI_SWITCH_SCORE + 1
-	jr c, .done
+	call BossAI_PlayerHasPublicThreatVsEnemy
+	jr nc, .done
 	ld a, [wBossAITemp]
 	add 15
 	ld [wBossAITemp], a
@@ -1480,8 +1813,7 @@ BossAI_HasRevealedSuperEffectiveMove:
 	jr z, .restore
 	inc hl
 	call GetMoveByte
-	ld hl, wEnemyMonType1
-	call CheckTypeMatchup
+	call BossAI_CheckPlayerMoveTypeMatchupVsEnemyNoItem
 	ld a, [wTypeMatchup]
 	cp EFFECTIVE + 1
 	jr c, .restore
@@ -1510,6 +1842,7 @@ BossAI_HasRevealedSuperEffectiveMove:
 	ret
 
 BossAI_HasAnyKOMove:
+	call BossAI_SaveEnemyMoveStruct
 	ld de, wEnemyMonMoves
 	ld c, NUM_MOVES
 .loop
@@ -1522,18 +1855,11 @@ BossAI_HasAnyKOMove:
 	ld a, [wEnemyMoveStruct + MOVE_POWER]
 	and a
 	jr z, .next
-	call AIDamageCalc
-	ld a, [wCurDamage + 1]
-	ld e, a
-	ld a, [wCurDamage]
-	ld d, a
-	ld a, [wBattleMonHP + 1]
-	cp e
-	ld a, [wBattleMonHP]
-	sbc d
+	call BossAI_CurrentEnemyMoveHasKOPressure
 	jr nc, .next
 	pop de
 	pop bc
+	call BossAI_RestoreEnemyMoveStruct
 	scf
 	ret
 .next
@@ -1543,7 +1869,34 @@ BossAI_HasAnyKOMove:
 	dec c
 	jr nz, .loop
 .no
+	call BossAI_RestoreEnemyMoveStruct
 	and a
+	ret
+
+BossAI_SaveEnemyMoveStruct:
+	push hl
+	push de
+	push bc
+	ld hl, wEnemyMoveStruct
+	ld de, wBossAISavedEnemyMoveStruct
+	ld bc, MOVE_LENGTH
+	call CopyBytes
+	pop bc
+	pop de
+	pop hl
+	ret
+
+BossAI_RestoreEnemyMoveStruct:
+	push hl
+	push de
+	push bc
+	ld hl, wBossAISavedEnemyMoveStruct
+	ld de, wEnemyMoveStruct
+	ld bc, MOVE_LENGTH
+	call CopyBytes
+	pop bc
+	pop de
+	pop hl
 	ret
 
 BossAI_SeenSpeciesThreatScore:
@@ -1562,8 +1915,7 @@ BossAI_SeenSpeciesThreatScore:
 
 	ld a, [wBaseType1]
 	ld d, a
-	ld hl, wEnemyMonType1
-	call CheckTypeMatchup
+	call BossAI_CheckPlayerMoveTypeMatchupVsEnemyNoItem
 	ld a, [wTypeMatchup]
 	cp EFFECTIVE + 1
 	jr nc, .favorable
@@ -1571,8 +1923,7 @@ BossAI_SeenSpeciesThreatScore:
 	ld a, [wBaseType2]
 	cp d
 	jr z, .next
-	ld hl, wEnemyMonType1
-	call CheckTypeMatchup
+	call BossAI_CheckPlayerMoveTypeMatchupVsEnemyNoItem
 	ld a, [wTypeMatchup]
 	cp EFFECTIVE + 1
 	jr c, .next
@@ -1946,12 +2297,20 @@ BossAI_ComputePlayerPlausibleTypeMask:
 	ret z
 	ld b, a
 	ld [wBossAITemp], a
+	ld a, [wBattleMonLevel]
+	ld c, a
 	ld a, [wBossAIPlausibleTypeMaskSpecies]
 	cp b
+	jr nz, .recompute
+	ld a, [wBossAIPlausibleTypeMaskLevel]
+	cp c
 	ret z
 
+.recompute
 	ld a, b
 	ld [wBossAIPlausibleTypeMaskSpecies], a
+	ld a, c
+	ld [wBossAIPlausibleTypeMaskLevel], a
 	call BossAI_ClearPlausibleMask
 
 	ld a, [wBattleMonType1]
@@ -2179,6 +2538,10 @@ BossAI_AddSpeciesLevelUpMovesToMask:
 	call GetFarByte
 	and a
 	ret z
+	ld b, a
+	ld a, [wBattleMonLevel]
+	cp b
+	ret c
 	inc hl
 	ld a, BANK("Evolutions and Attacks")
 	call GetFarByte
@@ -2327,16 +2690,8 @@ BossAI_ApplyRepeatPenalty:
 	and a
 	jr z, .penalize
 	push hl
-	call AIDamageCalc
+	call BossAI_CurrentEnemyMoveHasKOPressure
 	pop hl
-	ld a, [wCurDamage + 1]
-	ld e, a
-	ld a, [wCurDamage]
-	ld d, a
-	ld a, [wBattleMonHP + 1]
-	cp e
-	ld a, [wBattleMonHP]
-	sbc d
 	ret c
 .penalize
 	ld a, BOSS_AI_REPEAT_PENALTY
@@ -2518,32 +2873,35 @@ BossAI_EvaluateActionLookahead:
 	ld a, [wEnemyMoveStruct + MOVE_POWER]
 	and a
 	jr z, .check_setup
-	push bc
-	call AIDamageCalc
-	pop bc
-	ld a, [wCurDamage + 1]
-	ld e, a
-	ld a, [wCurDamage]
+	call BossAI_CurrentEnemyMovePressureScore
 	ld d, a
-	ld a, [wBattleMonHP + 1]
-	cp e
-	ld a, [wBattleMonHP]
-	sbc d
-	jr nc, .not_ko
+	call AICheckPlayerQuarterHP
+	jr nc, .low_hp
+	call AICheckPlayerHalfHP
+	jr nc, .half_hp
+	ld a, d
+	cp 4
+	jr c, .not_ko
+	ld b, BOSS_AI_LOOKAHEAD_BONUS_CAP
+	jr .check_setup
+
+.low_hp
+	ld a, d
+	cp 1
+	jr c, .not_ko
+	ld b, BOSS_AI_LOOKAHEAD_BONUS_CAP
+	jr .check_setup
+
+.half_hp
+	ld a, d
+	cp 3
+	jr c, .not_ko
 	ld b, BOSS_AI_LOOKAHEAD_BONUS_CAP
 	jr .check_setup
 
 .not_ko
-	ld a, [wBattleMonHP + 1]
-	ld e, a
-	ld a, [wBattleMonHP]
-	ld d, a
-	srl d
-	rr e
-	ld a, [wCurDamage + 1]
-	cp e
-	ld a, [wCurDamage]
-	sbc d
+	ld a, d
+	cp 3
 	jr c, .check_quarter
 	ld a, b
 	add 4
@@ -2551,18 +2909,8 @@ BossAI_EvaluateActionLookahead:
 	jr .check_setup
 
 .check_quarter
-	ld a, [wBattleMonHP + 1]
-	ld e, a
-	ld a, [wBattleMonHP]
-	ld d, a
-	srl d
-	rr e
-	srl d
-	rr e
-	ld a, [wCurDamage + 1]
-	cp e
-	ld a, [wCurDamage]
-	sbc d
+	ld a, d
+	cp 2
 	jr c, .check_setup
 	ld a, b
 	add 2
@@ -2747,9 +3095,7 @@ BossAI_ApplyMultiTurnProjection:
 	push bc
 	call AICheckEnemyQuarterHP
 	jr nc, .pressure_yes
-	call CheckPlayerMoveTypeMatchups
-	ld a, [wEnemyAISwitchScore]
-	cp BASE_AI_SWITCH_SCORE
+	call BossAI_PlayerHasPublicThreatVsEnemy
 	jr c, .pressure_yes
 	pop bc
 	and a
@@ -2932,8 +3278,7 @@ BossAI_GetRevealedMoveThreatTypeAndSeverity:
 
 BossAI_GetTypeThreatSeverityVsEnemyMon:
 	push hl
-	ld hl, wEnemyMonType1
-	predef CheckTypeMatchup
+	call BossAI_CheckPlayerMoveTypeMatchupVsEnemyNoItem
 	pop hl
 	ld a, [wTypeMatchup]
 	cp EFFECTIVE * 4
@@ -3094,20 +3439,20 @@ BossAI_RefineSwitchCandidateForPlausibleRisk:
 	ld [wBossAITemp5], a
 .scan_loop
 	ld a, [wBossAITargetMonIdx]
-	ld h, a
+	ld c, a
 	ld a, [wOTPartyCount]
-	cp h
+	cp c
 	jr z, .done
 	jr c, .done
 	ld a, [wBossAITemp5]
 	cp BOSS_AI_SWITCH_CANDIDATE_CAP
 	jr nc, .done
 	ld a, [wCurOTMon]
-	cp h
+	cp c
 	jr z, .next
 
 	ld hl, wOTPartyMon1HP
-	ld a, h
+	ld a, c
 	ld bc, PARTYMON_STRUCT_LENGTH
 	call AddNTimes
 	ld a, [hli]
@@ -3250,8 +3595,18 @@ BossAI_ComputeSwitchCandidateRisk:
 
 .GetTypeRiskPoints
 	push hl
+	push bc
+	ld c, a
+	ldh a, [hBattleTurn]
+	push af
+	xor a
+	ldh [hBattleTurn], a
+	ld a, c
 	ld hl, wBaseType1
-	predef CheckTypeMatchup
+	call BossAI_CheckTypeMatchupNoItem
+	pop af
+	ldh [hBattleTurn], a
+	pop bc
 	pop hl
 	ld a, [wTypeMatchup]
 	cp EFFECTIVE * 4
