@@ -39,7 +39,7 @@ OlivineLighthouse5FGreatBall:
 	itemball GREAT_BALL
 
 OlivineLighthouse5FTMSwagger:
-	itemball TM_SWAGGER
+	itemball ROCKY_HELMET
 
 OlivineLighthouse5FHiddenHyperPotion:
 	hiddenitem HYPER_POTION, EVENT_OLIVINE_LIGHTHOUSE_5F_HIDDEN_HYPER_POTION

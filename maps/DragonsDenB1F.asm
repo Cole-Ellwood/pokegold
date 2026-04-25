@@ -57,12 +57,6 @@ DragonsDenB1FDragonFangScript:
 	specialphonecall SPECIALCALL_MASTERBALL
 	writetext DragonShrineRisingBadgeExplanationText
 	promptbutton
-	verbosegiveitem TM_DRAGONBREATH, 1
-	iffalse .ClairLastText
-	setevent EVENT_GOT_TM24_DRAGONBREATH
-	writetext ClairText_DescribeDragonbreathDragonDen
-	promptbutton
-	sjump .ClairLastText
 .ClairLastText
 	writetext ClairText_CollectedAllBadges
 	waitbutton
@@ -157,26 +151,20 @@ DragonShrineRisingBadgeExplanationText:
 	para "command without"
 	line "question."
 
-	para "I also want you to"
-	line "have this TM."
+	para "Make good use of"
+	line "the TM VOUCHER I"
+	cont "gave you earlier."
 	done
 
 Text_ReceivedTM24: ; unreferenced
 	text "<PLAYER> received"
-	line "TM24."
+	line "TM VOUCHER."
 	done
 
 ClairText_DescribeDragonbreathDragonDen:
-	text "That contains"
-	line "DRAGONBREATH."
-
-	para "No, it doesn't"
-	line "have anything to"
-	cont "do with my breath."
-
-	para "If you don't want"
-	line "it, you don't have"
-	cont "to take it."
+	text "Redeem that TM"
+	line "VOUCHER at the"
+	cont "tutor for lessons."
 	done
 
 ClairText_CollectedAllBadges:

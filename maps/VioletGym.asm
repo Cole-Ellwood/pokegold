@@ -38,8 +38,8 @@ VioletGymFalknerScript:
 	specialphonecall SPECIALCALL_ASSISTANT
 	writetext FalknerZephyrBadgeText
 	promptbutton
-	verbosegiveitem TM_MUD_SLAP
-	iffalse .NoRoomForMudSlap
+	verbosegiveitem TM_VOUCHER
+	iffalse .NoRoomForVoucher
 	setevent EVENT_GOT_TM31_MUD_SLAP
 	writetext FalknerTMMudSlapText
 	waitbutton
@@ -49,7 +49,7 @@ VioletGymFalknerScript:
 .SpeechAfterTM:
 	writetext FalknerFightDoneText
 	waitbutton
-.NoRoomForMudSlap:
+.NoRoomForVoucher:
 	closetext
 	end
 
@@ -162,33 +162,24 @@ FalknerZephyrBadgeText:
 	para "FLASH, if they"
 	line "have it, anytime."
 
-	para "Here--take this"
-	line "too."
+	para "Take this TM"
+	line "VOUCHER too."
 	done
 
 FalknerTMMudSlapText:
-	text "By using a TM, a"
-	line "#MON will"
+	text "That TM VOUCHER"
+	line "can be redeemed"
+	cont "for lessons."
 
-	para "instantly learn a"
-	line "new move."
+	para "You'll find the TM"
+	line "TUTOR by the DAY-"
+	cont "CARE on ROUTE 34,"
+	cont "just outside"
+	cont "GOLDENROD."
 
-	para "Think before you"
-	line "act--a TM can be"
-	cont "used only once."
-
-	para "TM31 contains"
-	line "MUD-SLAP."
-
-	para "It reduces the"
-	line "enemy's accuracy"
-
-	para "while it causes"
-	line "damage."
-
-	para "In other words, it"
-	line "is both defensive"
-	cont "and offensive."
+	para "Train well, and"
+	line "make every lesson"
+	cont "count."
 	done
 
 FalknerFightDoneText:

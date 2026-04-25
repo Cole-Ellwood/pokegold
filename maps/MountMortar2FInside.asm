@@ -18,7 +18,7 @@ MountMortar2FInsideRareCandy:
 	itemball RARE_CANDY
 
 MountMortar2FInsideTMDefenseCurl:
-	itemball TM_DEFENSE_CURL
+	itemball ASSAULT_VEST
 
 MountMortar2FInsideDragonScale:
 	itemball DRAGON_SCALE

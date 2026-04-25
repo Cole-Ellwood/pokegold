@@ -89,7 +89,7 @@ GoldenrodUndergroundWarehouseMaxEther:
 	itemball MAX_ETHER
 
 GoldenrodUndergroundWarehouseTMSleepTalk:
-	itemball TM_SLEEP_TALK
+	itemball CHOICE_BAND
 
 GruntM24SeenText:
 	text "How did you get"

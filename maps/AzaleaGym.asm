@@ -41,8 +41,8 @@ AzaleaGymBugsyScript:
 	setevent EVENT_BEAT_BUG_CATCHER_JOSH
 	writetext BugsyText_HiveBadgeSpeech
 	promptbutton
-	verbosegiveitem TM_FURY_CUTTER
-	iffalse .NoRoomForFuryCutter
+	verbosegiveitem TM_VOUCHER
+	iffalse .NoRoomForVoucher
 	setevent EVENT_GOT_TM49_FURY_CUTTER
 	writetext BugsyText_FuryCutterSpeech
 	waitbutton
@@ -52,7 +52,7 @@ AzaleaGymBugsyScript:
 .GotFuryCutter:
 	writetext BugsyText_BugMonsAreDeep
 	waitbutton
-.NoRoomForFuryCutter:
+.NoRoomForVoucher:
 	closetext
 	end
 
@@ -197,24 +197,23 @@ BugsyText_HiveBadgeSpeech:
 	para "to use it outside"
 	line "of battle too."
 
-	para "Here, I also want"
-	line "you to have this."
+	para "Here, take this TM"
+	line "VOUCHER too."
 	done
 
 BugsyText_FuryCutterSpeech:
-	text "TM49 contains"
-	line "FURY CUTTER."
+	text "That TM VOUCHER is"
+	line "proof of your"
+	cont "technique."
 
-	para "If you don't miss,"
-	line "it gets stronger"
-	cont "every turn."
+	para "Trade it to the TM"
+	line "TUTOR for lessons,"
+	cont "then test your"
+	cont "ideas in battle."
 
-	para "The longer your"
-	line "battle goes, the"
-	cont "better it gets."
-
-	para "Isn't that great?"
-	line "I discovered it!"
+	para "Keep researching."
+	line "You'll find plenty"
+	cont "to discover."
 	done
 
 BugsyText_BugMonsAreDeep:

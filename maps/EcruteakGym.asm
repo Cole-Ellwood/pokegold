@@ -41,8 +41,8 @@ EcruteakGymMortyScript:
 	setevent EVENT_BEAT_MEDIUM_GRACE
 	writetext MortyText_FogBadgeSpeech
 	promptbutton
-	verbosegiveitem TM_SHADOW_BALL
-	iffalse .NoRoomForShadowBall
+	verbosegiveitem TM_VOUCHER
+	iffalse .NoRoomForVoucher
 	setevent EVENT_GOT_TM30_SHADOW_BALL
 	writetext MortyText_ShadowBallSpeech
 	waitbutton
@@ -52,7 +52,7 @@ EcruteakGymMortyScript:
 .GotShadowBall:
 	writetext MortyFightDoneText
 	waitbutton
-.NoRoomForShadowBall:
+.NoRoomForVoucher:
 	closetext
 	end
 
@@ -200,19 +200,18 @@ MortyText_FogBadgeSpeech:
 	para "able to use that"
 	line "move anytime."
 
-	para "I want you to have"
-	line "this too."
+	para "Take this TM"
+	line "VOUCHER as well."
 	done
 
 MortyText_ShadowBallSpeech:
-	text "It's SHADOW BALL."
-	line "It causes damage"
+	text "A TM VOUCHER."
+	line "Use it at the"
+	cont "tutor for lessons."
 
-	para "and may reduce"
-	line "SPCL.DEF."
-
-	para "Use it if it"
-	line "appeals to you."
+	para "Choose the move"
+	line "that best fits"
+	cont "your path ahead."
 	done
 
 MortyFightDoneText:

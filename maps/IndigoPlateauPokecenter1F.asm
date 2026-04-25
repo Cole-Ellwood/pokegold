@@ -213,6 +213,13 @@ IndigoPlateauPokecenter1FCooltrainerMText:
 
 	para "lose, you have to"
 	line "start all over!"
+
+	para "PACK is locked"
+	line "for trainer"
+	cont "battles."
+
+	para "Use the level cap"
+	line "as your prep mark."
 	done
 
 PlateauRivalText1:

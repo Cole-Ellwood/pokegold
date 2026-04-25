@@ -64,8 +64,8 @@ GoldenrodGymWhitneyScript:
 .GotPlainBadge:
 	writetext WhitneyPlainBadgeText
 	promptbutton
-	verbosegiveitem TM_ATTRACT
-	iffalse .NoRoomForAttract
+	verbosegiveitem TM_VOUCHER
+	iffalse .NoRoomForVoucher
 	setevent EVENT_GOT_TM45_ATTRACT
 	writetext WhitneyAttractText
 	waitbutton
@@ -75,7 +75,7 @@ GoldenrodGymWhitneyScript:
 .GotAttract:
 	writetext WhitneyGoodCryText
 	waitbutton
-.NoRoomForAttract:
+.NoRoomForVoucher:
 	closetext
 	end
 
@@ -244,20 +244,21 @@ WhitneyPlainBadgeText:
 	line "your #MON's"
 	cont "SPEED."
 
-	para "Oh, you can have"
-	line "this too!"
+	para "Oh, and this TM"
+	line "VOUCHER is yours!"
 	done
 
 WhitneyAttractText:
-	text "It's ATTRACT!"
-	line "It makes full use"
+	text "That TM VOUCHER is"
+	line "for the tutor's"
+	cont "lessons."
 
-	para "of a #MON's"
-	line "charm."
+	para "Use it to teach"
+	line "something adorable"
+	cont "and strong!"
 
-	para "Isn't it just per-"
-	line "fect for a cutie"
-	cont "like me?"
+	para "Perfect, right?"
+	line "Just like me!"
 	done
 
 WhitneyGoodCryText:

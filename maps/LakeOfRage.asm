@@ -227,7 +227,7 @@ LakeOfRageMaxEther:
 	itemball MAX_ETHER
 
 LakeOfRageTMDetect:
-	itemball TM_DETECT
+	itemball EVOLITE
 
 LakeOfRageHiddenFullRestore:
 	hiddenitem FULL_RESTORE, EVENT_LAKE_OF_RAGE_HIDDEN_FULL_RESTORE

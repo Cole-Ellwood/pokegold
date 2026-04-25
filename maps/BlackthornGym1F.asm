@@ -41,10 +41,6 @@ BlackthornGymClairScript:
 	startbattle
 	reloadmapafterbattle
 	setevent EVENT_BEAT_CLAIR
-	opentext
-	writetext ClairText_GoToDragonsDen
-	waitbutton
-	closetext
 	setevent EVENT_BEAT_COOLTRAINERM_PAUL
 	setevent EVENT_BEAT_COOLTRAINERM_CODY
 	setevent EVENT_BEAT_COOLTRAINERM_MIKE
@@ -53,9 +49,34 @@ BlackthornGymClairScript:
 	clearevent EVENT_MAHOGANY_MART_OWNERS
 	setevent EVENT_BLACKTHORN_CITY_GRAMPS_BLOCKS_DRAGONS_DEN
 	clearevent EVENT_BLACKTHORN_CITY_GRAMPS_NOT_BLOCKING_DRAGONS_DEN
+	opentext
+	checkevent EVENT_GOT_TM24_DRAGONBREATH
+	iftrue .AfterVoucherReward
+	writetext BlackthornGymClairText_YouKeptMeWaiting
+	promptbutton
+	verbosegiveitem TM_VOUCHER
+	iffalse .BagFull
+	setevent EVENT_GOT_TM24_DRAGONBREATH
+	writetext BlackthornGymClairText_DescribeTM24
+	promptbutton
+.AfterVoucherReward:
+	writetext ClairText_GoToDragonsDen
+	waitbutton
+	closetext
 	end
 
 .FightDone:
+	checkevent EVENT_GOT_TM24_DRAGONBREATH
+	iftrue .CheckDragonFang
+	writetext BlackthornGymClairText_YouKeptMeWaiting
+	promptbutton
+	verbosegiveitem TM_VOUCHER
+	iffalse .BagFull
+	setevent EVENT_GOT_TM24_DRAGONBREATH
+	writetext BlackthornGymClairText_DescribeTM24
+	promptbutton
+
+.CheckDragonFang:
 	checkitem DRAGON_FANG
 	iftrue .HasDragonFang
 	writetext ClairText_WhatsTheMatter
@@ -71,18 +92,16 @@ BlackthornGymClairScript:
 
 .AlreadyGotBadge:
 	checkevent EVENT_GOT_TM24_DRAGONBREATH
-	iftrue .GotTM24
+	iftrue .GotVoucher
 	writetext BlackthornGymClairText_YouKeptMeWaiting
 	promptbutton
-	verbosegiveitem TM_DRAGONBREATH
+	verbosegiveitem TM_VOUCHER
 	iffalse .BagFull
 	setevent EVENT_GOT_TM24_DRAGONBREATH
 	writetext BlackthornGymClairText_DescribeTM24
-	waitbutton
-	closetext
-	end
+	promptbutton
 
-.GotTM24:
+.GotVoucher:
 	writetext BlackthornGymClairText_League
 	waitbutton
 
@@ -247,26 +266,23 @@ BlackthornGymClairText_YouKeptMeWaiting:
 	line "proven yourself to"
 	cont "me."
 
-	para "I want you to have"
-	line "this TM."
+	para "Take this TM"
+	line "VOUCHER."
 	done
 
 BlackthornGymText_ReceivedTM24: ; unreferenced
 	text "<PLAYER> received"
-	line "TM24."
+	line "TM VOUCHER."
 	done
 
 BlackthornGymClairText_DescribeTM24:
-	text "That contains"
-	line "DRAGONBREATH."
+	text "Redeem it at the"
+	line "TM TUTOR for"
+	cont "lessons."
 
-	para "No, it doesn't"
-	line "have anything to"
-	cont "do with my breath."
-
-	para "If you don't want"
-	line "it, you don't have"
-	cont "to take it."
+	para "Use those lessons"
+	line "to sharpen your"
+	cont "battle style."
 	done
 
 BlackthornGymClairText_League:
