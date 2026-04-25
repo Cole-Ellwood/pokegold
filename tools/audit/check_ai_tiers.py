@@ -1,0 +1,165 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import re
+import sys
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[2]
+AI_TIERS_FILE = ROOT / "data" / "trainers" / "ai_tiers.asm"
+MOVE_AI_FILE = ROOT / "engine" / "battle" / "ai" / "move.asm"
+TRAINER_ATTRIBUTES_FILE = ROOT / "engine" / "battle" / "read_trainer_attributes.asm"
+
+JOHTO_LEADERS = {
+    ("FALKNER", "FALKNER1"),
+    ("BUGSY", "BUGSY1"),
+    ("WHITNEY", "WHITNEY1"),
+    ("MORTY", "MORTY1"),
+    ("CHUCK", "CHUCK1"),
+    ("JASMINE", "JASMINE1"),
+    ("PRYCE", "PRYCE1"),
+    ("CLAIR", "CLAIR1"),
+}
+
+RIVAL1_IDS = {
+    "RIVAL1_1_CHIKORITA",
+    "RIVAL1_1_CYNDAQUIL",
+    "RIVAL1_1_TOTODILE",
+    "RIVAL1_2_CHIKORITA",
+    "RIVAL1_2_CYNDAQUIL",
+    "RIVAL1_2_TOTODILE",
+    "RIVAL1_3_CHIKORITA",
+    "RIVAL1_3_CYNDAQUIL",
+    "RIVAL1_3_TOTODILE",
+    "RIVAL1_4_CHIKORITA",
+    "RIVAL1_4_CYNDAQUIL",
+    "RIVAL1_4_TOTODILE",
+    "RIVAL1_5_CHIKORITA",
+    "RIVAL1_5_CYNDAQUIL",
+    "RIVAL1_5_TOTODILE",
+}
+
+RIVAL2_IDS = {
+    "RIVAL2_1_CHIKORITA",
+    "RIVAL2_1_CYNDAQUIL",
+    "RIVAL2_1_TOTODILE",
+    "RIVAL2_2_CHIKORITA",
+    "RIVAL2_2_CYNDAQUIL",
+    "RIVAL2_2_TOTODILE",
+}
+
+ELITE_FOUR_AND_CHAMPION = {
+    ("WILL", "WILL1"),
+    ("BRUNO", "BRUNO1"),
+    ("KOGA", "KOGA1"),
+    ("KAREN", "KAREN1"),
+    ("CHAMPION", "LANCE"),
+}
+
+TARGETS = (
+    JOHTO_LEADERS
+    | {("RIVAL1", trainer_id) for trainer_id in RIVAL1_IDS}
+    | {("RIVAL2", trainer_id) for trainer_id in RIVAL2_IDS}
+    | ELITE_FOUR_AND_CHAMPION
+)
+
+NONZERO_TIERS = {"AI_TIER_EARLY", "AI_TIER_MID", "AI_TIER_LATE"}
+
+ENTRY_RE = re.compile(
+    r"^\s*db\s+([A-Z0-9_]+)\s*,\s*([A-Z0-9_]+)\s*,\s*([A-Z0-9_]+)\s*(?:;.*)?$"
+)
+
+
+def main() -> int:
+    if not AI_TIERS_FILE.exists():
+        print(f"ERROR: missing file: {AI_TIERS_FILE}", file=sys.stderr)
+        return 1
+    if not MOVE_AI_FILE.exists():
+        print(f"ERROR: missing file: {MOVE_AI_FILE}", file=sys.stderr)
+        return 1
+    if not TRAINER_ATTRIBUTES_FILE.exists():
+        print(f"ERROR: missing file: {TRAINER_ATTRIBUTES_FILE}", file=sys.stderr)
+        return 1
+
+    entries: dict[tuple[str, str], str] = {}
+    for raw_line in AI_TIERS_FILE.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith(";"):
+            continue
+        match = ENTRY_RE.match(raw_line)
+        if not match:
+            continue
+        trainer_class, trainer_id, tier = match.groups()
+        if trainer_class == "0":
+            continue
+        entries[(trainer_class, trainer_id)] = tier
+
+    missing = sorted(TARGETS - set(entries))
+    if missing:
+        print("ERROR: missing required AI_TIER mappings:", file=sys.stderr)
+        for trainer_class, trainer_id in missing:
+            print(f"  - {trainer_class}, {trainer_id}", file=sys.stderr)
+        return 1
+
+    zero_or_unknown = sorted(
+        (pair, tier)
+        for pair, tier in entries.items()
+        if pair in TARGETS and tier not in NONZERO_TIERS
+    )
+    if zero_or_unknown:
+        print(
+            "ERROR: required boss mappings must use non-zero tiers "
+            "(AI_TIER_EARLY/MID/LATE):",
+            file=sys.stderr,
+        )
+        for (trainer_class, trainer_id), tier in zero_or_unknown:
+            print(f"  - {trainer_class}, {trainer_id} -> {tier}", file=sys.stderr)
+        return 1
+
+    move_ai_text = MOVE_AI_FILE.read_text(encoding="utf-8")
+    if "Temporary safety path: Rival1" in move_ai_text:
+        print(
+            "ERROR: RIVAL1 move-choice bypass is still present; mapped rivals must use the normal boss AI path.",
+            file=sys.stderr,
+        )
+        return 1
+
+    attributes_text = TRAINER_ATTRIBUTES_FILE.read_text(encoding="utf-8")
+    tier_loader_match = re.search(
+        r"LoadBossAITier:(?P<body>.*?)ClearBossAIState:",
+        attributes_text,
+        flags=re.DOTALL,
+    )
+    if not tier_loader_match:
+        print("ERROR: could not locate LoadBossAITier block.", file=sys.stderr)
+        return 1
+    tier_loader_body = tier_loader_match.group("body")
+    if "cp RIVAL1" in tier_loader_body:
+        print(
+            "ERROR: LoadBossAITier contains a RIVAL1 special case; ai_tiers.asm mappings must not be nulled out.",
+            file=sys.stderr,
+        )
+        return 1
+
+    by_tier: dict[str, int] = {"AI_TIER_EARLY": 0, "AI_TIER_MID": 0, "AI_TIER_LATE": 0}
+    for pair in TARGETS:
+        tier = entries[pair]
+        by_tier[tier] += 1
+
+    print("AI_TIER mapping audit passed.")
+    print(f"Required boss entries covered: {len(TARGETS)}")
+    print(
+        "Tier counts: "
+        + ", ".join(f"{tier}={count}" for tier, count in by_tier.items())
+    )
+    print("Mapped trainer class/id pairs:")
+    for (trainer_class, trainer_id), tier in sorted(entries.items()):
+        if (trainer_class, trainer_id) not in TARGETS:
+            continue
+        print(f"  - {trainer_class}, {trainer_id} -> {tier}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
