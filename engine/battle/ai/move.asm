@@ -16,6 +16,7 @@ AIChooseMove:
 	ret nz
 
 ; The default score is 20. Unusable moves are given a score of 80.
+.default_scoring
 	ld a, 20
 	ld hl, wEnemyAIMoveScores
 	ld [hli], a
@@ -77,7 +78,7 @@ AIChooseMove:
 
 	ld a, c
 	cp 16 ; up to 16 scoring layers
-	jr z, .DecrementScores
+	jr z, .BossModel
 
 	push bc
 	ld d, BANK(TrainerClassAttributes)
@@ -105,6 +106,13 @@ AIChooseMove:
 	call FarCall_hl
 
 	jr .CheckLayer
+
+.BossModel
+	callfar BossAI_ApplyMoveModel
+	callfar BossAI_SelectMove
+	ld a, [wBossAIMoveChoiceReady]
+	and a
+	ret nz
 
 ; Decrement the scores of all moves one by one until one reaches 0.
 .DecrementScores:

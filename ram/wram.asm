@@ -733,7 +733,7 @@ wSurfWaveBGEffect:: ds $40
 wSurfWaveBGEffectEnd::
 ENDU
 
-	ds 134
+	ds 118
 
 wBattle::
 wEnemyMoveStruct:: move_struct wEnemyMoveStruct
@@ -823,6 +823,9 @@ wEnemyPerishCount:: db
 wEnemyFuryCutterCount:: db
 wEnemyProtectCount:: db
 
+wPlayerDarkShieldConsumed:: db
+wEnemyDarkShieldConsumed:: db
+
 wPlayerDamageTaken:: dw
 wEnemyDamageTaken::  dw
 
@@ -880,8 +883,12 @@ wPlayerTurnsTaken:: db
 wPlayerSubstituteHP:: db
 wEnemySubstituteHP::  db
 
-wUnusedPlayerLockedMove:: db
-	ds 1
+wPlayerChoiceLockedMove:: db
+wEnemyChoiceLockedMove:: db
+wPlayerMetronomeMove:: db
+wEnemyMetronomeMove:: db
+wPlayerMetronomeCount:: db
+wEnemyMetronomeCount:: db
 
 wCurPlayerMove:: db
 wCurEnemyMove::  db
@@ -2455,8 +2462,10 @@ wTradeFlags:: flag_array NUM_NPC_TRADES
 
 wMooMooBerries:: db
 wUndergroundSwitchPositions:: db
+wTMTutorBadgesCounted:: db ; RESERVED_UNUSED: keep byte allocated for WRAM layout stability
+wTMTutorCredits:: db
 
-	ds 14
+	ds 12
 
 wPokecenter2FSceneID::                            db
 wTradeCenterSceneID::                             db
@@ -2518,7 +2527,51 @@ wFastShip1FSceneID::                              db
 wFastShipB1FSceneID::                             db
 wMountMoonSquareSceneID::                         db
 
-	ds 197
+wTMTutorTMHMBackup:: ds NUM_TMS + NUM_HMS
+
+; Boss AI battle runtime state must live in WRAMX bank 1 because battle code
+; reads/writes it directly without WRAM bank switching.
+wBossAITier:: db
+wBossAIMoveChoiceReady:: db
+wBossAISwitchConfidence:: db
+wBossAILastSwitchedOut:: db
+wBossAISwitchCooldown:: db
+wBossAIPlayerSwitchCount:: db
+wBossAITurnsElapsed:: db
+wBossAIPlanId:: db
+wBossAIPlanPhase:: db
+wBossAIPlanConfidence:: db
+wBossAIWinconMonIdx:: db
+wBossAITargetMonIdx:: db
+wBossAIScoutedMask:: db
+wBossAIRepeatCount:: db
+wBossAILastChosenMove:: db
+wBossAIPlausibleTypeMaskSpecies:: db
+wBossAIPlausibleTypeMaskCache:: ds 4
+wBossAISeenPlayerSpeciesCount:: db
+wBossAISeenPlayerSpecies:: ds PARTY_LENGTH
+wBossAIRevealedMovesBitmap:: ds 32
+wBossAIScorePtr:: dw
+wBossAITemp:: db
+wBossAITemp2:: db
+wBossAITemp3:: db
+wBossAITemp4:: db
+wBossAITemp5:: db
+IF DEF(BOSS_AI_TRACE)
+wBossAITraceTopMoves:: ds 3
+wBossAITraceTopScores:: ds 3
+wBossAITraceChosenMove:: db
+wBossAITraceSwitchConfidence:: db
+wBossAITracePlanId:: db
+wBossAITracePlanPhase:: db
+wBossAITracePlanConfidence:: db
+wBossAITracePlausibleMask:: ds 4
+wBossAITraceRiskFlags:: db
+wBossAITraceLookaheadBonusTop:: ds 3
+ENDC
+wBossAIStateEnd::
+
+	ds 140 - (wBossAIStateEnd - wBossAITier)
 
 wEventFlags:: flag_array NUM_EVENTS
 

@@ -331,9 +331,12 @@ BattleCommand_CheckTurn:
 	bit PAR, [hl]
 	ret z
 
-	; 25% chance to be fully paralyzed
 	call BattleRandom
-	cp 25 percent
+	ld c, a
+	farcall TypePassive_GetUserParalysisFailThreshold_Far
+	ld b, a
+	ld a, c
+	cp b
 	ret nc
 
 	ld hl, FullyParalyzedText
@@ -580,9 +583,12 @@ CheckEnemyTurn:
 	bit PAR, [hl]
 	ret z
 
-	; 25% chance to be fully paralyzed
 	call BattleRandom
-	cp 25 percent
+	ld c, a
+	farcall TypePassive_GetUserParalysisFailThreshold_Far
+	ld b, a
+	ld a, c
+	cp b
 	ret nc
 
 	ld hl, FullyParalyzedText
@@ -1396,32 +1402,44 @@ BattleCommand_Stab:
 	and STAB_DAMAGE
 	or b
 	ld [wTypeModifier], a
+	farcall TypePassive_ApplyDamageModifiers_Far
 	ret
 
 BattleCheckTypeMatchup:
 	ld hl, wEnemyMonType1
 	ldh a, [hBattleTurn]
 	and a
-	jr z, CheckTypeMatchup
+	jr z, .got_target
 	ld hl, wBattleMonType1
+.got_target
+	push hl
+	ld a, BATTLE_VARS_MOVE_TYPE
+	call GetBattleVar
+	pop hl
 CheckTypeMatchup:
-; There is an incorrect assumption about this function made in the AI related code: when
-; the AI calls CheckTypeMatchup (not BattleCheckTypeMatchup), it assumes that placing the
-; offensive type in a will make this function do the right thing. Since a is overwritten,
-; this assumption is incorrect. A simple fix would be to load the move type for the
-; current move into a in BattleCheckTypeMatchup, before falling through, which is
-; consistent with how the rest of the code assumes this code works like.
 	push hl
 	push de
 	push bc
-	ld a, BATTLE_VARS_MOVE_TYPE
-	call GetBattleVar
 	ld d, a
 	ld b, [hl]
 	inc hl
 	ld c, [hl]
 	ld a, EFFECTIVE
 	ld [wTypeMatchup], a
+	ld a, d
+	cp GROUND
+	jr nz, .skip_air_balloon
+	push bc
+	call GetOpponentItem
+	ld a, b
+	pop bc
+	cp HELD_AIR_BALLOON
+	jr nz, .skip_air_balloon
+	xor a
+	ld [wTypeMatchup], a
+	jr .End
+
+.skip_air_balloon
 	ld hl, TypeMatchups
 .TypesLoop:
 	ld a, [hli]
@@ -1566,6 +1584,9 @@ BattleCommand_CheckHit:
 	call .FlyDigMoves
 	jp nz, .Miss
 
+	farcall TypePassive_TryDarkStatusShield_Far
+	jr c, .Miss
+
 	call .ThunderRain
 	ret z
 
@@ -1605,6 +1626,8 @@ BattleCommand_CheckHit:
 	ld b, 0
 
 .skip_brightpowder
+	farcall TypePassive_ApplyFlyingAccuracyBonusToB_Far
+
 	ld a, b
 	cp -1
 	jr z, .Hit
@@ -2083,7 +2106,7 @@ BattleCommand_FailureText:
 	and a
 	ret z
 
-	call GetFailureResultText
+	farcall GetFailureResultText_Far
 	ld a, BATTLE_VARS_MOVE_ANIM
 	call GetBattleVarAddr
 
@@ -2145,6 +2168,7 @@ BattleCommand_ApplyDamage:
 
 .damage
 	push bc
+	farcall TypePassive_TryMindShield_Far
 	call .update_damage_taken
 	ld c, FALSE
 	ldh a, [hBattleTurn]
@@ -2156,7 +2180,11 @@ BattleCommand_ApplyDamage:
 .damage_player
 	call DoPlayerDamage
 
-.done_damage
+	.done_damage
+	farcall TypePassive_MaybePoisonRetaliation_Far
+	pop bc
+	push bc
+	callfar HandleLateGenAfterHitEffects_Far
 	pop bc
 	ld a, b
 	and a
@@ -2206,74 +2234,6 @@ BattleCommand_ApplyDamage:
 	ld [de], a
 	ret
 
-GetFailureResultText:
-	ld hl, DoesntAffectText
-	ld de, DoesntAffectText
-	ld a, [wTypeModifier]
-	and EFFECTIVENESS_MASK
-	jr z, .got_text
-	ld a, BATTLE_VARS_MOVE_EFFECT
-	call GetBattleVar
-	cp EFFECT_FUTURE_SIGHT
-	ld hl, ButItFailedText
-	ld de, ItFailedText
-	jr z, .got_text
-	ld hl, AttackMissedText
-	ld de, AttackMissed2Text
-	ld a, [wCriticalHit]
-	cp -1
-	jr nz, .got_text
-	ld hl, UnaffectedText
-.got_text
-	call FailText_CheckOpponentProtect
-	xor a
-	ld [wCriticalHit], a
-
-	ld a, BATTLE_VARS_MOVE_EFFECT
-	call GetBattleVar
-	cp EFFECT_JUMP_KICK
-	ret nz
-
-	ld a, [wTypeModifier]
-	and EFFECTIVENESS_MASK
-	ret z
-
-	ld hl, wCurDamage
-	ld a, [hli]
-	ld b, [hl]
-rept 3
-	srl a
-	rr b
-endr
-	ld [hl], b
-	dec hl
-	ld [hli], a
-	or b
-	jr nz, .do_at_least_1_damage
-	inc a
-	ld [hl], a
-.do_at_least_1_damage
-	ld hl, CrashedText
-	call StdBattleTextbox
-	ld a, $1
-	ld [wBattleAnimParam], a
-	call LoadMoveAnim
-	ld c, TRUE
-	ldh a, [hBattleTurn]
-	and a
-	jp nz, DoEnemyDamage
-	jp DoPlayerDamage
-
-FailText_CheckOpponentProtect:
-	ld a, BATTLE_VARS_SUBSTATUS1_OPP
-	call GetBattleVar
-	bit SUBSTATUS_PROTECT, a
-	jr z, .not_protected
-	ld h, d
-	ld l, e
-.not_protected
-	jp StdBattleTextbox
-
 BattleCommand_BideFailText:
 	ld a, [wAttackMissed]
 	and a
@@ -2283,6 +2243,10 @@ BattleCommand_BideFailText:
 	and EFFECTIVENESS_MASK
 	jp z, PrintDoesntAffect
 	jp PrintButItFailed
+
+FailText_CheckOpponentProtect:
+	farcall FailText_CheckOpponentProtect_Far
+	ret
 
 BattleCommand_CriticalText:
 ; Prints the message for critical hits or one-hit KOs.
@@ -2497,42 +2461,6 @@ EndMoveEffect:
 	ld [hl], a
 	ret
 
-DittoMetalPowder:
-	ld a, MON_SPECIES
-	call BattlePartyAttr
-	ldh a, [hBattleTurn]
-	and a
-	ld a, [hl]
-	jr nz, .got_species
-	ld a, [wTempEnemyMonSpecies]
-
-.got_species
-	cp DITTO
-	ret nz
-
-	push bc
-	call GetOpponentItem
-	ld a, [hl]
-	cp METAL_POWDER
-	pop bc
-	ret nz
-
-	ld a, c
-	srl a
-	add c
-	ld c, a
-	ret nc
-
-	srl b
-	ld a, b
-	and a
-	jr nz, .done
-	inc b
-.done
-	scf
-	rr c
-	ret
-
 BattleCommand_DamageStats:
 	ldh a, [hBattleTurn]
 	and a
@@ -2612,11 +2540,12 @@ PlayerAttackDamage:
 	call ThickClubBoost
 
 .done
+	callfar ApplyLateGenDamageStatsItemMods_Far
 	call TruncateHL_BC
 
 	ld a, [wBattleMonLevel]
 	ld e, a
-	call DittoMetalPowder
+	callfar DittoMetalPowder_Far
 
 	ld a, 1
 	and a
@@ -2659,45 +2588,8 @@ CheckDamageStatsCritical:
 ; Return carry if boosted stats should be used in damage calculations.
 ; Unboosted stats should be used if the attack is a critical hit,
 ;  and the stage of the opponent's defense is higher than the user's attack.
-
-	ld a, [wCriticalHit]
-	and a
-	scf
-	ret z
-
 	push hl
-	push bc
-	ldh a, [hBattleTurn]
-	and a
-	jr nz, .enemy
-	ld a, [wPlayerMoveStructType]
-	cp SPECIAL
-; special
-	ld a, [wPlayerSAtkLevel]
-	ld b, a
-	ld a, [wEnemySDefLevel]
-	jr nc, .end
-; physical
-	ld a, [wPlayerAtkLevel]
-	ld b, a
-	ld a, [wEnemyDefLevel]
-	jr .end
-
-.enemy
-	ld a, [wEnemyMoveStructType]
-	cp SPECIAL
-; special
-	ld a, [wEnemySAtkLevel]
-	ld b, a
-	ld a, [wPlayerSDefLevel]
-	jr nc, .end
-; physical
-	ld a, [wEnemyAtkLevel]
-	ld b, a
-	ld a, [wPlayerDefLevel]
-.end
-	cp b
-	pop bc
+	callfar CheckDamageStatsCritical_Far
 	pop hl
 	ret
 
@@ -2839,11 +2731,12 @@ EnemyAttackDamage:
 	call ThickClubBoost
 
 .done
+	callfar ApplyLateGenDamageStatsItemMods_Far
 	call TruncateHL_BC
 
 	ld a, [wEnemyMonLevel]
 	ld e, a
-	call DittoMetalPowder
+	callfar DittoMetalPowder_Far
 
 	ld a, 1
 	and a
@@ -3017,6 +2910,7 @@ BattleCommand_DamageCalc:
 	call Divide
 
 .DoneItem:
+	callfar ApplyLateGenDamageMultipliers_Far
 ; Critical hits
 	call .CriticalMultiplier
 
@@ -5353,6 +5247,9 @@ BattleCommand_HeldFlinch:
 	and a
 	ret nz
 
+	farcall TypePassive_IsCurrentMoveContact_Far
+	ret nc
+
 	call GetUserItem
 	ld a, b
 	cp HELD_FLINCH
@@ -5360,10 +5257,6 @@ BattleCommand_HeldFlinch:
 
 	call CheckSubstituteOpp
 	ret nz
-	ld a, BATTLE_VARS_MOVE_EFFECT
-	call GetBattleVarAddr
-	ld d, h
-	ld e, l
 	call GetUserItem
 	call BattleRandom
 	cp c
@@ -5648,6 +5541,11 @@ BattleCommand_Recoil:
 	jr nz, .min_damage
 	inc c
 .min_damage
+	farcall TypePassive_AdjustRecoilBCForSteel_Far
+	ld a, b
+	or c
+	ret z
+
 	ld a, [hli]
 	ld [wHPBuffer1 + 1], a
 	ld a, [hl]
@@ -6308,6 +6206,8 @@ INCLUDE "engine/battle/move_effects/rollout.asm"
 
 BattleCommand_Unused5D:
 ; effect0x5d
+	xor a
+	ld [wAttackMissed], a
 	ret
 
 INCLUDE "engine/battle/move_effects/fury_cutter.asm"
@@ -6503,6 +6403,34 @@ CheckHiddenOpponent:
 	call GetBattleVar
 	and 1 << SUBSTATUS_FLYING | 1 << SUBSTATUS_UNDERGROUND
 	ret
+
+TryActivateDittoImposter:
+	ld hl, wBattleMonHP
+	ld de, wBattleMonSpecies
+	ldh a, [hBattleTurn]
+	and a
+	jr z, .check_hp
+	ld hl, wEnemyMonHP
+	ld de, wEnemyMonSpecies
+.check_hp
+	ld a, [hli]
+	or [hl]
+	ret z
+
+	ld a, [de]
+	cp DITTO
+	ret nz
+
+	ld a, BATTLE_VARS_SUBSTATUS5_OPP
+	call GetBattleVarAddr
+	bit SUBSTATUS_TRANSFORMED, [hl]
+	ret nz
+	call CheckHiddenOpponent
+	ret nz
+
+	ld hl, DittoImposterActivatedText
+	call StdBattleTextbox
+	jp BattleCommand_Transform
 
 GetUserItem:
 ; Return the effect of the user's item in bc, and its id at hl.

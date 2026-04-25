@@ -38,3 +38,10 @@ DEF NO_AI EQU 0
 	const TRAINERTYPE_MOVES
 	const TRAINERTYPE_ITEM
 	const TRAINERTYPE_ITEM_MOVES
+
+; Boss AI tiers (see engine/battle/read_trainer_attributes.asm)
+	const_def
+	const AI_TIER_BASELINE ; 0
+	const AI_TIER_EARLY    ; 1
+	const AI_TIER_MID      ; 2
+	const AI_TIER_LATE     ; 3

@@ -134,6 +134,7 @@ ClearBattleRAM:
 	call ByteFill
 
 	callfar ResetEnemyStatLevels
+	callfar ClearBossAIState
 
 	call ClearWindowData
 

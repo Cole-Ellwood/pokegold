@@ -1,4 +1,15 @@
 LoadBattleMenu:
+	ld a, [wBattleMode]
+	cp TRAINER_BATTLE
+	jr nz, .normal
+	ld a, [wLinkMode]
+	and a
+	jr nz, .normal
+	ld hl, TrainerBattleMenuHeader
+	call LoadMenuHeader
+	jr CommonBattleMenu
+
+.normal
 	ld hl, BattleMenuHeader
 	call LoadMenuHeader
 	jr CommonBattleMenu
@@ -39,6 +50,24 @@ BattleMenuHeader:
 	db "FIGHT@"
 	db "<PK><MN>@"
 	db "PACK@"
+	db "RUN@"
+
+TrainerBattleMenuHeader:
+	db MENU_BACKUP_TILES ; flags
+	menu_coords 8, 11, SCREEN_WIDTH - 1, SCREEN_HEIGHT - 1
+	dw .MenuData
+	db 1 ; default option
+
+.MenuData:
+	db STATICMENU_CURSOR | STATICMENU_DISABLE_B | STATICMENU_NO_TOP_SPACING ; flags
+	dn 3, 1 ; rows, columns
+	db 6 ; spacing
+	dba .Text
+	dbw BANK(@), NULL
+
+.Text:
+	db "FIGHT@"
+	db "<PK><MN>@"
 	db "RUN@"
 
 SafariBattleMenuHeader:

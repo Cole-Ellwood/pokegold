@@ -13,6 +13,7 @@ UsedMoveText:
 
 	ld a, [wPlayerMoveStruct + MOVE_ANIM]
 	call UpdateUsedMoves
+	callfar BossAI_RecordRevealedPlayerMove
 
 .start
 	ld a, BATTLE_VARS_LAST_MOVE
@@ -34,6 +35,7 @@ UsedMoveText:
 	ld a, [wMoveGrammar]
 	ld [hl], a
 	ld [de], a
+	call UpdateMetronomeTracker
 
 .grammar
 	call GetMoveGrammar ; convert move id to grammar index
@@ -164,6 +166,99 @@ GetMoveGrammar:
 
 ; we're done
 	pop bc
+	ret
+
+UpdateMetronomeTracker:
+	push hl
+	push de
+	push bc
+	call GetUserItem
+	ld a, b
+	cp HELD_METRONOME
+	jr z, .holding_item
+	call .Clear
+	jr .done
+
+.holding_item
+	ld a, [wMoveGrammar]
+	ld b, a
+	call .IsDamagingMove
+	jr c, .clear_and_done
+	call .GetTrackerPointers
+	ld a, [hl]
+	cp b
+	jr nz, .new_move
+	ld a, [de]
+	inc a
+	ld [de], a
+	jr .done
+
+.new_move
+	ld a, b
+	ld [hl], a
+	xor a
+	ld [de], a
+	jr .done
+
+.clear_and_done
+	call .Clear
+
+.done
+	pop bc
+	pop de
+	pop hl
+	ret
+
+.Clear
+	call .GetTrackerPointers
+	xor a
+	ld [hl], a
+	ld [de], a
+	ret
+
+.GetTrackerPointers
+	ld hl, wPlayerMetronomeMove
+	ld de, wPlayerMetronomeCount
+	ldh a, [hBattleTurn]
+	and a
+	ret z
+	ld hl, wEnemyMetronomeMove
+	ld de, wEnemyMetronomeCount
+	ret
+
+.IsDamagingMove
+; input b = move id
+; carry set if status/non-damaging
+	ld a, b
+	cp SEISMIC_TOSS
+	jr z, .damaging
+	cp NIGHT_SHADE
+	jr z, .damaging
+	cp DRAGON_RAGE
+	jr z, .damaging
+	cp SONICBOOM
+	jr z, .damaging
+	cp PSYWAVE
+	jr z, .damaging
+	cp COUNTER
+	jr z, .damaging
+	cp BIDE
+	jr z, .damaging
+	dec a
+	ld hl, Moves + MOVE_POWER
+	ld bc, MOVE_LENGTH
+	call AddNTimes
+	ld a, BANK(Moves)
+	call GetFarByte
+	and a
+	jr z, .blocked
+
+.damaging
+	and a
+	ret
+
+.blocked
+	scf
 	ret
 
 INCLUDE "data/moves/grammar.asm"

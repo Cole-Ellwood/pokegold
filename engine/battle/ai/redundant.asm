@@ -121,8 +121,10 @@ AI_Redundant:
 
 .Spikes:
 	ld a, [wPlayerScreens]
-	bit SCREENS_SPIKES, a
-	ret
+	and SCREENS_SPIKES_MASK
+	cp 3
+	jr z, .Redundant
+	jr .NotRedundant
 
 .Foresight:
 	ld a, [wPlayerSubStatus1]
@@ -176,9 +178,8 @@ AI_Redundant:
 	ret
 
 .FutureSight:
-; BUG: AI does not discourage Future Sight when it's already been used (see docs/bugs_and_glitches.md)
-	ld a, [wEnemyScreens]
-	bit SCREENS_UNUSED, a
+	ld a, [wEnemyFutureSightCount]
+	and a
 	ret
 
 .Heal:

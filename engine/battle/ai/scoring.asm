@@ -90,6 +90,9 @@ AI_Setup:
 
 	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
 
+	cp EFFECT_DRAGON_DANCE
+	jr z, .statup
+
 	cp EFFECT_ATTACK_UP
 	jr c, .checkmove
 	cp EFFECT_EVASION_UP + 1
@@ -1731,9 +1734,8 @@ AI_Smart_MeanLook:
 	pop hl
 	jp z, AIDiscourageMove
 
-; 80% chance to greatly encourage this move if the enemy is badly poisoned.
-; BUG: "Smart" AI encourages Mean Look if its own Pokémon is badly poisoned (see docs/bugs_and_glitches.md)
-	ld a, [wEnemySubStatus5]
+; 80% chance to greatly encourage this move if the player is badly poisoned.
+	ld a, [wPlayerSubStatus5]
 	bit SUBSTATUS_TOXIC, a
 	jr nz, .encourage
 
@@ -2247,6 +2249,8 @@ AI_Smart_RapidSpin:
 ; 80% chance to greatly encourage this move if the enemy is
 ; trapped (Bind effect), seeded, or scattered with spikes.
 
+	ld b, 0 ; spikes layers on AI side
+
 	ld a, [wEnemyWrapCount]
 	and a
 	jr nz, .encourage
@@ -2256,14 +2260,22 @@ AI_Smart_RapidSpin:
 	jr nz, .encourage
 
 	ld a, [wEnemyScreens]
-	bit SCREENS_SPIKES, a
+	and SCREENS_SPIKES_MASK
 	ret z
+	ld b, a
 
 .encourage
 	call AI_80_20
 	ret c
 
 	dec [hl]
+	dec [hl]
+	ld a, b
+	cp 2
+	ret c
+	dec [hl]
+	cp 3
+	ret c
 	dec [hl]
 	ret
 
@@ -3020,6 +3032,9 @@ INCLUDE "data/battle/ai/constant_damage_effects.asm"
 
 AI_Cautious:
 ; 90% chance to discourage moves with residual effects after the first turn.
+	ld a, [wBossAITier]
+	cp AI_TIER_LATE
+	ret z
 
 	ld a, [wEnemyTurnsTaken]
 	and a

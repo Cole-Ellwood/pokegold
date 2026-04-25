@@ -20,6 +20,10 @@ AI_SwitchOrTryItem:
 	and a
 	jr nz, DontSwitch
 
+	ld a, [wBossAITier]
+	and a
+	jp nz, BossAI_SwitchOrTryItem
+
 	ld a, [wTrainerClass]
 	dec a
 	ld hl, TrainerClassAttributes + TRNATTR_AI_ITEM_SWITCH
@@ -147,6 +151,14 @@ CheckSubstatusCantRun: ; unreferenced
 	ret
 
 AI_TryItem:
+	; Disable opponent bag items in trainer battles.
+	ld a, [wBattleMode]
+	cp TRAINER_BATTLE
+	jr nz, .check_items
+	and a
+	ret
+
+.check_items
 	ld a, [wEnemyTrainerItem1]
 	ld b, a
 	ld a, [wEnemyTrainerItem2]
@@ -226,6 +238,13 @@ AI_TryItem:
 	ret
 
 .IsHighestLevel:
+	ld a, [wBossAITier]
+	and a
+	jr z, .legacy_check
+	scf
+	ret
+
+.legacy_check
 	ld a, [wOTPartyCount]
 	ld d, a
 	ld e, 0
@@ -661,6 +680,7 @@ AI_TrySwitch:
 	ret
 
 AI_Switch:
+	callfar BossAI_OnSwitchExecuted
 	ld a, $1
 	ld [wEnemyIsSwitching], a
 	ld [wEnemyGoesFirst], a

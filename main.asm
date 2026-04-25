@@ -147,8 +147,10 @@ INCLUDE "engine/items/print_item_description.asm"
 INCLUDE "engine/battle/trainer_huds.asm"
 INCLUDE "engine/battle/ai/redundant.asm"
 INCLUDE "engine/events/move_deleter.asm"
+INCLUDE "engine/events/move_reminder.asm"
 INCLUDE "engine/link/mystery_gift_2.asm"
 INCLUDE "engine/items/tmhm.asm"
+INCLUDE "engine/events/tm_tutor.asm"
 INCLUDE "engine/pokemon/print_move_description.asm"
 INCLUDE "engine/events/pokerus/pokerus.asm"
 
@@ -162,7 +164,12 @@ SECTION "Enemy Trainers", ROMX
 
 INCLUDE "engine/battle/ai/items.asm"
 INCLUDE "engine/battle/ai/scoring.asm"
+INCLUDE "engine/battle/ai/boss.asm"
 INCLUDE "engine/battle/read_trainer_attributes.asm"
+
+
+SECTION "Enemy Trainer Parties", ROMX
+
 INCLUDE "engine/battle/read_trainer_party.asm"
 
 
@@ -354,6 +361,12 @@ INCLUDE "data/moves/names.asm"
 SECTION "Move Descriptions", ROMX
 
 INCLUDE "data/moves/descriptions.asm"
+
+
+SECTION "Late Gen Held Items", ROMX
+
+INCLUDE "engine/battle/late_gen_held_items.asm"
+INCLUDE "engine/battle/type_passive_damage_mods.asm"
 
 
 SECTION "Item Descriptions", ROMX

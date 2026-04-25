@@ -322,6 +322,11 @@ BattleText_TheMoveIsDisabled:
 	line "DISABLED!"
 	prompt
 
+BattleText_AssaultVestBlocksStatusMoves:
+	text "ASSAULT VEST"
+	line "blocks status!"
+	prompt
+
 BattleText_MonHasNoMovesLeft:
 	text_ram wBattleMonNickname
 	text_start
@@ -425,6 +430,16 @@ BattleText_UsersHurtByStringBuffer1:
 	cont "@"
 	text_ram wStringBuffer1
 	text "!"
+	prompt
+
+BattleText_AirBalloonPopped:
+	text "The AIR BALLOON"
+	line "popped!"
+	prompt
+
+BattleText_RockyHelmetHurt:
+	text "<USER> was hurt"
+	line "by ROCKY HELMET!"
 	prompt
 
 BattleText_UserWasReleasedFromStringBuffer1:
@@ -855,6 +870,11 @@ TransformedText:
 	cont "@"
 	text_ram wStringBuffer1
 	text "!"
+	prompt
+
+DittoImposterActivatedText:
+	text "<USER>'s"
+	line "IMPOSTER activated!"
 	prompt
 
 LightScreenEffectText:

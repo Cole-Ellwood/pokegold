@@ -6,14 +6,22 @@ BattleCommand_Spikes:
 	ld hl, wPlayerScreens
 .got_screens
 
-; Fails if spikes are already down!
+; Fails only if three layers are already down.
 
-	bit SCREENS_SPIKES, [hl]
-	jr nz, .failed
+	ld a, [hl]
+	and SCREENS_SPIKES_MASK
+	cp 3
+	jr nc, .failed
 
-; Nothing else stops it from working.
+; Animate based on current layer count (0, 1, 2), then increment to 1..3 layers.
+	ld [wBattleAnimParam], a
+	inc a
+	ld b, a
 
-	set SCREENS_SPIKES, [hl]
+	ld a, [hl]
+	and SCREENS_NON_SPIKES_MASK
+	or b
+	ld [hl], a
 
 	call AnimateCurrentMove
 

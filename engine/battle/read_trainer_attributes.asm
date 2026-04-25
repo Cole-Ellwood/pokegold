@@ -61,6 +61,54 @@ GetTrainerAttributes:
 	ld [de], a
 	ld a, [hl]
 	ld [wEnemyTrainerBaseReward], a
+	call LoadBossAITier
 	ret
 
 INCLUDE "data/trainers/attributes.asm"
+
+LoadBossAITier:
+	call ClearBossAIState
+	xor a
+	ld [wBossAITier], a
+
+	ld a, [wTrainerClass]
+	and a
+	ret z
+	ld b, a
+	ld a, [wOtherTrainerID]
+	ld c, a
+
+	ld hl, BossAITierMap
+.loop
+	ld a, [hli]
+	and a
+	ret z
+	cp b
+	jr nz, .next
+
+	ld a, [hli]
+	cp c
+	jr nz, .skip_tier
+
+	ld a, [hli]
+	ld [wBossAITier], a
+.done
+	ret
+
+.skip_tier
+	inc hl
+	jr .loop
+
+.next
+	inc hl
+	inc hl
+	jr .loop
+
+ClearBossAIState:
+	ld hl, wBossAITier
+	ld bc, wBossAIStateEnd - wBossAITier
+	xor a
+	call ByteFill
+	ret
+
+INCLUDE "data/trainers/ai_tiers.asm"

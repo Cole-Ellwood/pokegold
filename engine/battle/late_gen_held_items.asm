@@ -1,0 +1,718 @@
+ApplyLateGenDamageStatsItemMods_Far:
+	push af
+	ld a, BATTLE_VARS_MOVE_TYPE
+	call GetBattleVar
+	cp SPECIAL
+	jr nc, .special
+	call .ApplyChoiceBandBoost
+	call .ApplyEvioliteDefenseBoost
+	jr .done
+
+.special
+	call .ApplyChoiceSpecsBoost
+	call .ApplyAssaultVestBoostToDefense
+	call .ApplyEvioliteSpDefBoost
+
+.done
+	pop af
+	ret
+
+.ApplyChoiceBandBoost:
+	push bc
+	callfar GetUserItem
+	ld a, b
+	cp HELD_CHOICE_BAND
+	pop bc
+	ret nz
+	ld a, CHOICE_STAT_NUM
+	ld d, CHOICE_STAT_DEN
+	jp .ApplyFractionToHL
+
+.ApplyChoiceSpecsBoost:
+	push bc
+	callfar GetUserItem
+	ld a, b
+	cp HELD_CHOICE_SPECS
+	pop bc
+	ret nz
+	ld a, CHOICE_STAT_NUM
+	ld d, CHOICE_STAT_DEN
+	jp .ApplyFractionToHL
+
+.ApplyAssaultVestBoostToDefense:
+	push hl
+	push bc
+	callfar GetOpponentItem
+	ld a, b
+	cp HELD_ASSAULT_VEST
+	pop bc
+	pop hl
+	ret nz
+	ld a, ASSAULT_VEST_SPD_NUM
+	ld d, ASSAULT_VEST_SPD_DEN
+	jp .ApplyFractionToBC
+
+.ApplyEvioliteDefenseBoost:
+	push hl
+	push bc
+	callfar GetOpponentItem
+	ld a, b
+	cp HELD_EVOLITE
+	jr nz, .no_boost_def
+	call .GetOpponentSpecies
+	call .SpeciesCanEvolve
+	jr z, .no_boost_def
+	pop bc
+	pop hl
+	ld a, EVOLITE_DEF_NUM
+	ld d, EVOLITE_DEF_DEN
+	jp .ApplyFractionToBC
+
+.no_boost_def
+	pop bc
+	pop hl
+	ret
+
+.ApplyEvioliteSpDefBoost:
+	push hl
+	push bc
+	callfar GetOpponentItem
+	ld a, b
+	cp HELD_EVOLITE
+	jr nz, .no_boost_spd
+	call .GetOpponentSpecies
+	call .SpeciesCanEvolve
+	jr z, .no_boost_spd
+	pop bc
+	pop hl
+	ld a, EVOLITE_SPD_NUM
+	ld d, EVOLITE_SPD_DEN
+	jp .ApplyFractionToBC
+
+.no_boost_spd
+	pop bc
+	pop hl
+	ret
+
+.GetOpponentSpecies:
+	ldh a, [hBattleTurn]
+	and a
+	ld a, [wEnemyMonSpecies]
+	ret z
+	ld a, [wBattleMonSpecies]
+	ret
+
+.SpeciesCanEvolve:
+	and a
+	ret z
+	dec a
+	ld c, a
+	ld b, 0
+	ld hl, EvosAttacksPointers
+	add hl, bc
+	add hl, bc
+	ld a, BANK(EvosAttacksPointers)
+	call GetFarWord
+	ld a, BANK("Evolutions and Attacks")
+	call GetFarByte
+	and a
+	ret
+
+.ApplyFractionToHL:
+	push bc
+	ld b, h
+	ld c, l
+	call .ApplyFractionToBC
+	ld h, b
+	ld l, c
+	pop bc
+	ret
+
+.ApplyFractionToBC:
+; a = numerator, d = denominator, bc = value
+	push hl
+	push de
+	ld e, a
+	xor a
+	ldh [hMultiplicand + 0], a
+	ld a, b
+	ldh [hMultiplicand + 1], a
+	ld a, c
+	ldh [hMultiplicand + 2], a
+	ld a, e
+	ldh [hMultiplier], a
+	call Multiply
+	ldh a, [hProduct + 0]
+	ldh [hDividend + 0], a
+	ldh a, [hProduct + 1]
+	ldh [hDividend + 1], a
+	ldh a, [hProduct + 2]
+	ldh [hDividend + 2], a
+	ldh a, [hProduct + 3]
+	ldh [hDividend + 3], a
+	pop de
+	ld a, d
+	ldh [hDivisor], a
+	ld b, 4
+	call Divide
+	ldh a, [hQuotient + 2]
+	ld b, a
+	ldh a, [hQuotient + 3]
+	ld c, a
+	pop hl
+	ret
+
+ApplyLateGenDamageMultipliers_Far:
+	callfar GetUserItem
+	ld a, b
+	and a
+	ret z
+
+	cp HELD_MUSCLE_BAND
+	jr z, .muscle_band
+	cp HELD_WISE_GLASSES
+	jr z, .wise_glasses
+	cp HELD_EXPERT_BELT
+	jr z, .expert_belt
+	cp HELD_METRONOME
+	jr z, .metronome
+	cp HELD_LIFE_ORB
+	jr z, .life_orb
+	ret
+
+.muscle_band
+	ld a, BATTLE_VARS_MOVE_TYPE
+	call GetBattleVar
+	cp SPECIAL
+	ret nc
+	ld a, MUSCLE_BAND_NUM
+	ld d, MUSCLE_BAND_DEN
+	jp .ApplyDamageQuotientMultiplier
+
+.wise_glasses
+	ld a, BATTLE_VARS_MOVE_TYPE
+	call GetBattleVar
+	cp SPECIAL
+	ret c
+	ld a, WISE_GLASSES_NUM
+	ld d, WISE_GLASSES_DEN
+	jp .ApplyDamageQuotientMultiplier
+
+.expert_belt
+	callfar BattleCheckTypeMatchup
+	ld a, [wTypeMatchup]
+	cp EFFECTIVE + 1
+	ret c
+	ld a, EXPERT_BELT_NUM
+	ld d, EXPERT_BELT_DEN
+	jp .ApplyDamageQuotientMultiplier
+
+.metronome
+	call .GetUserMetronomeCount
+	add a
+	add METRONOME_STEP_DEN
+	cp METRONOME_MAX_MULT_NUM + 1
+	jr c, .metronome_num_ok
+	ld a, METRONOME_MAX_MULT_NUM
+.metronome_num_ok
+	ld d, METRONOME_MAX_MULT_DEN
+	jp .ApplyDamageQuotientMultiplier
+
+.life_orb
+	ld a, LIFE_ORB_DAMAGE_NUM
+	ld d, LIFE_ORB_DAMAGE_DEN
+	jp .ApplyDamageQuotientMultiplier
+
+.GetUserMetronomeCount:
+	ld hl, wPlayerMetronomeCount
+	ldh a, [hBattleTurn]
+	and a
+	jr z, .got_counter
+	ld hl, wEnemyMetronomeCount
+.got_counter
+	ld a, [hl]
+	ret
+
+.ApplyDamageQuotientMultiplier:
+; a = numerator, d = denominator
+	push de
+	ldh [hMultiplier], a
+	xor a
+	ldh [hMultiplicand + 0], a
+	ldh a, [hQuotient + 2]
+	ldh [hMultiplicand + 1], a
+	ldh a, [hQuotient + 3]
+	ldh [hMultiplicand + 2], a
+	call Multiply
+
+	ldh a, [hProduct + 0]
+	ldh [hDividend + 0], a
+	ldh a, [hProduct + 1]
+	ldh [hDividend + 1], a
+	ldh a, [hProduct + 2]
+	ldh [hDividend + 2], a
+	ldh a, [hProduct + 3]
+	ldh [hDividend + 3], a
+
+	pop de
+	ld a, d
+	ldh [hDivisor], a
+	ld b, 4
+	call Divide
+	ret
+
+HandleLateGenAfterHitEffects_Far:
+	ld hl, wCurDamage
+	ld a, [hli]
+	or [hl]
+	ret z
+
+	call .MaybePopAirBalloon
+	call .MaybeApplyRockyHelmetRecoil
+
+	call .UserStillAlive
+	ret z
+
+	call .MaybeApplyShellBellHeal
+	call .UserStillAlive
+	ret z
+	call .MaybeApplyLifeOrbRecoil
+	ret
+
+.MaybePopAirBalloon:
+	callfar GetOpponentItem
+	ld a, b
+	cp HELD_AIR_BALLOON
+	ret nz
+	call .ClearOpponentHeldItem
+	ld hl, BattleText_AirBalloonPopped
+	jp StdBattleTextbox
+
+.MaybeApplyRockyHelmetRecoil:
+	callfar GetOpponentItem
+	ld a, b
+	cp HELD_ROCKY_HELMET
+	ret nz
+	call TypePassive_IsCurrentMoveContact_Far
+	ret nc
+	ld a, ROCKY_HELMET_DEN
+	call .GetUserMaxHPDividedByA
+	ld a, b
+	or c
+	jr nz, .recoil_ready
+	inc c
+.recoil_ready
+	callfar SubtractHPFromUser
+	ld hl, BattleText_RockyHelmetHurt
+	jp StdBattleTextbox
+
+.MaybeApplyShellBellHeal:
+	callfar GetUserItem
+	ld a, b
+	cp HELD_SHELL_BELL
+	ret nz
+	ld hl, wCurDamage
+	ld b, [hl]
+	inc hl
+	ld c, [hl]
+	srl b
+	rr c
+	srl b
+	rr c
+	srl b
+	rr c
+	ld a, b
+	or c
+	jr nz, .heal_ready
+	inc c
+.heal_ready
+	call .HealUserByBC
+	ret
+
+.MaybeApplyLifeOrbRecoil:
+	callfar GetUserItem
+	ld a, b
+	cp HELD_LIFE_ORB
+	ret nz
+	ld a, LIFE_ORB_RECOIL_DEN
+	call .GetUserMaxHPDividedByA
+	ld a, b
+	or c
+	jr nz, .do_recoil
+	inc c
+.do_recoil
+	callfar SubtractHPFromUser
+	ld a, LIFE_ORB
+	ld [wNamedObjectIndex], a
+	call GetItemName
+	ld hl, BattleText_UsersHurtByStringBuffer1
+	jp StdBattleTextbox
+
+.UserStillAlive:
+	ld hl, wBattleMonHP
+	ldh a, [hBattleTurn]
+	and a
+	jr z, .check_hp
+	ld hl, wEnemyMonHP
+.check_hp
+	ld a, [hli]
+	or [hl]
+	ret
+
+.GetUserMaxHPDividedByA:
+; a = denominator, returns bc = floor(maxhp / denominator)
+	push af
+	callfar GetMaxHP
+	pop af
+	jp .DivideBCByA
+
+.DivideBCByA:
+; a = denominator, bc = value, returns bc = floor(value / a)
+	push de
+	ld d, a
+	xor a
+	ldh [hDividend + 0], a
+	ld a, b
+	ldh [hDividend + 1], a
+	ld a, c
+	ldh [hDividend + 2], a
+	ld a, d
+	ldh [hDivisor], a
+	ld b, 3
+	call Divide
+	ldh a, [hQuotient + 2]
+	ld b, a
+	ldh a, [hQuotient + 3]
+	ld c, a
+	pop de
+	ret
+
+.HealUserByBC:
+	callfar BattleCommand_SwitchTurn
+	callfar RestoreHP
+	callfar BattleCommand_SwitchTurn
+	ret
+
+.ClearOpponentHeldItem:
+	push hl
+	push bc
+	push de
+	ldh a, [hBattleTurn]
+	and a
+	ld hl, wEnemyMonItem
+	ld de, wOTPartyMon1Item
+	ld a, [wCurOTMon]
+	jr z, .got_side
+	ld hl, wBattleMonItem
+	ld de, wPartyMon1Item
+	ld a, [wCurBattleMon]
+.got_side
+	ld c, a
+	xor a
+	ld [hl], a
+	ld h, d
+	ld l, e
+	ld a, c
+	call GetPartyLocation
+	ldh a, [hBattleTurn]
+	and a
+	jr nz, .clear_party_item
+	ld a, [wBattleMode]
+	dec a
+	jr z, .done
+.clear_party_item
+	xor a
+	ld [hl], a
+.done
+	pop de
+	pop bc
+	pop hl
+	ret
+
+DittoMetalPowder_Far:
+	ld a, MON_SPECIES
+	call BattlePartyAttr
+	ldh a, [hBattleTurn]
+	and a
+	ld a, [hl]
+	jr nz, .got_species
+	ld a, [wTempEnemyMonSpecies]
+
+.got_species
+	cp DITTO
+	ret nz
+
+	push bc
+	callfar GetOpponentItem
+	ld a, [hl]
+	cp METAL_POWDER
+	pop bc
+	ret nz
+
+	ld a, c
+	srl a
+	add c
+	ld c, a
+	ret nc
+
+	srl b
+	ld a, b
+	and a
+	jr nz, .done
+	inc b
+.done
+	scf
+	rr c
+	ret
+
+CheckDamageStatsCritical_Far:
+; Return carry if boosted stats should be used in damage calculations.
+; Unboosted stats should be used if the attack is a critical hit,
+;  and the stage of the opponent's defense is higher than the user's attack.
+	ld a, [wCriticalHit]
+	and a
+	scf
+	ret z
+
+	push bc
+	ldh a, [hBattleTurn]
+	and a
+	jr nz, .enemy
+	ld a, [wPlayerMoveStructType]
+	cp SPECIAL
+; special
+	ld a, [wPlayerSAtkLevel]
+	ld b, a
+	ld a, [wEnemySDefLevel]
+	jr nc, .end
+; physical
+	ld a, [wPlayerAtkLevel]
+	ld b, a
+	ld a, [wEnemyDefLevel]
+	jr .end
+
+.enemy
+	ld a, [wEnemyMoveStructType]
+	cp SPECIAL
+; special
+	ld a, [wEnemySAtkLevel]
+	ld b, a
+	ld a, [wPlayerSDefLevel]
+	jr nc, .end
+; physical
+	ld a, [wEnemyAtkLevel]
+	ld b, a
+	ld a, [wPlayerDefLevel]
+.end
+	cp b
+	pop bc
+	ret
+
+EnforceEnemyHeldMoveRestrictions_Far:
+	ld a, [wCurEnemyMove]
+	cp $ff
+	ret z
+	and a
+	ret z
+	cp STRUGGLE
+	ret z
+	ld a, [wEnemyMonItem]
+	ld b, a
+	callfar GetItemHeldEffect
+	ld e, b
+
+	ld a, e
+	call IsChoiceHeldEffect_Far
+	jr z, .choice_item
+	xor a
+	ld [wEnemyChoiceLockedMove], a
+	jr .assault_vest
+
+.choice_item
+	ld a, [wEnemyChoiceLockedMove]
+	and a
+	jr nz, .force_choice_move
+	ld a, [wCurEnemyMove]
+	ld [wEnemyChoiceLockedMove], a
+	jr .assault_vest
+
+.force_choice_move
+	ld [wCurEnemyMove], a
+	call .SyncEnemyMoveIndex
+	jr c, .force_choice_struggle
+	call .IsCurrentEnemyMoveUsable
+	jr nc, .assault_vest
+.force_choice_struggle
+	ld a, STRUGGLE
+	ld [wCurEnemyMove], a
+	xor a
+	ld [wCurEnemyMoveNum], a
+
+.assault_vest
+	ld a, e
+	cp HELD_ASSAULT_VEST
+	ret nz
+	ld a, [wCurEnemyMove]
+	call IsMoveBlockedByAssaultVest_Far
+	ret nc
+	call .FindEnemyUsableDamagingMove
+	ret nc
+	ld a, STRUGGLE
+	ld [wCurEnemyMove], a
+	xor a
+	ld [wCurEnemyMoveNum], a
+	ret
+
+.SyncEnemyMoveIndex:
+	ld hl, wEnemyMonMoves
+	ld c, 0
+	ld a, [wCurEnemyMove]
+	ld d, a
+.sync_loop
+	ld a, [hli]
+	cp d
+	jr z, .sync_found
+	inc c
+	ld a, c
+	cp NUM_MOVES
+	jr nz, .sync_loop
+	scf
+	ret
+
+.sync_found
+	ld a, c
+	ld [wCurEnemyMoveNum], a
+	and a
+	ret
+
+.IsCurrentEnemyMoveUsable:
+	ld a, [wCurEnemyMove]
+	and a
+	jr z, .choice_unusable
+	cp $ff
+	jr z, .choice_unusable
+	ld b, a
+	ld a, [wEnemyDisabledMove]
+	cp b
+	jr z, .choice_unusable
+	ld a, [wCurEnemyMoveNum]
+	ld c, a
+	ld b, 0
+	ld hl, wEnemyMonPP
+	add hl, bc
+	ld a, [hl]
+	and PP_MASK
+	jr z, .choice_unusable
+	and a
+	ret
+
+.choice_unusable
+	scf
+	ret
+
+.FindEnemyUsableDamagingMove:
+	ld hl, wEnemyMonMoves
+	ld de, wEnemyMonPP
+	ld c, 0
+.find_loop
+	ld a, [hl]
+	and a
+	jr z, .find_next
+	ld b, a
+	ld a, [wEnemyDisabledMove]
+	cp b
+	jr z, .find_next
+	ld a, [de]
+	and PP_MASK
+	jr z, .find_next
+	ld a, b
+	call IsMoveBlockedByAssaultVest_Far
+	jr c, .find_next
+	ld a, b
+	ld [wCurEnemyMove], a
+	ld a, c
+	ld [wCurEnemyMoveNum], a
+	and a
+	ret
+
+.find_next
+	inc hl
+	inc de
+	inc c
+	ld a, c
+	cp NUM_MOVES
+	jr nz, .find_loop
+	scf
+	ret
+
+IsChoiceHeldEffect_Far:
+	cp HELD_CHOICE_BAND
+	ret z
+	cp HELD_CHOICE_SPECS
+	ret z
+	cp HELD_CHOICE_SCARF
+	ret
+
+IsMoveBlockedByAssaultVest_Far:
+	and a
+	jr z, .blocked
+	cp $ff
+	jr z, .blocked
+	cp SEISMIC_TOSS
+	jr z, .allowed
+	cp NIGHT_SHADE
+	jr z, .allowed
+	cp DRAGON_RAGE
+	jr z, .allowed
+	cp SONICBOOM
+	jr z, .allowed
+	cp PSYWAVE
+	jr z, .allowed
+	cp COUNTER
+	jr z, .allowed
+	cp BIDE
+	jr z, .allowed
+	dec a
+	ld hl, Moves + MOVE_POWER
+	ld bc, MOVE_LENGTH
+	call AddNTimes
+	ld a, BANK(Moves)
+	call GetFarByte
+	and a
+	jr z, .blocked
+
+.allowed
+	and a
+	ret
+
+.blocked
+	scf
+	ret
+
+GetSixthMaxHP_Far:
+; output: bc
+	push de
+	callfar GetMaxHP
+	ld a, 6
+	ld d, a
+	xor a
+	ldh [hDividend + 0], a
+	ld a, b
+	ldh [hDividend + 1], a
+	ld a, c
+	ldh [hDividend + 2], a
+	ld a, d
+	ldh [hDivisor], a
+	ld b, 3
+	call Divide
+	ldh a, [hQuotient + 2]
+	ld b, a
+	ldh a, [hQuotient + 3]
+	ld c, a
+	pop de
+	ld a, b
+	or c
+	jr nz, .end
+	inc c
+.end
+	ret

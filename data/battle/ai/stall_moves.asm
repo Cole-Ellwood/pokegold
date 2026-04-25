@@ -14,6 +14,7 @@ StallMoves:
 	db STRING_SHOT
 	db MEDITATE
 	db AGILITY
+	db DRAGON_DANCE
 	db RAGE
 	db MIMIC
 	db SCREECH

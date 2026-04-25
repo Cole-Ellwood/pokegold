@@ -6,6 +6,14 @@ DoBattle:
 	ld [wBattleParticipantsIncludingFainted], a
 	ld [wBattlePlayerAction], a
 	ld [wBattleEnded], a
+	ld [wPlayerChoiceLockedMove], a
+	ld [wEnemyChoiceLockedMove], a
+	ld [wPlayerMetronomeMove], a
+	ld [wEnemyMetronomeMove], a
+	ld [wPlayerMetronomeCount], a
+	ld [wEnemyMetronomeCount], a
+	ld [wPlayerDarkShieldConsumed], a
+	ld [wEnemyDarkShieldConsumed], a
 	inc a
 	ld [wBattleHasJustStarted], a
 	ld hl, wOTPartyMon1HP
@@ -36,6 +44,7 @@ DoBattle:
 	jr z, .wild
 	xor a
 	ld [wEnemySwitchMonIndex], a
+	callfar MaybePickAdaptiveEnemyLead
 	call NewEnemyMonStatus
 	call ResetEnemyStatLevels
 	call BreakAttraction
@@ -147,6 +156,7 @@ BattleTurn:
 .loop
 	call CheckContestBattleOver
 	jr c, .quit
+	callfar BossAI_IncrementTurnsElapsed
 
 	xor a
 	ld [wPlayerIsSwitching], a
@@ -239,6 +249,7 @@ HandleBetweenTurnEffects:
 	ret c
 
 .NoMoreFaintingConditions:
+	farcall HandleTypePassiveRegrowth_Far
 	call HandleLeftovers
 	call HandleMysteryberry
 	call HandleDefrost
@@ -483,11 +494,17 @@ DetermineMoveOrder:
 	jr .speed_check
 
 .speed_check
-	ld de, wBattleMonSpeed
-	ld hl, wEnemyMonSpeed
-	ld c, 2
-	call CompareBytes
+	call .GetPlayerSpeedForTurnOrder
+	push bc
+	call .GetEnemySpeedForTurnOrder
+	pop hl
+	ld a, h
+	cp b
+	jr nz, .compare_done
+	ld a, l
+	cp c
 	jr z, .speed_tie
+.compare_done
 	jp nc, .player_first
 	jp .enemy_first
 
@@ -511,6 +528,30 @@ DetermineMoveOrder:
 .enemy_first
 	and a
 	ret
+
+.GetPlayerSpeedForTurnOrder:
+	ld a, [wBattleMonItem]
+	ld d, a
+	ld hl, wBattleMonSpeed
+	jr .GetSpeedForTurnOrder
+
+.GetEnemySpeedForTurnOrder:
+	ld a, [wEnemyMonItem]
+	ld d, a
+	ld hl, wEnemyMonSpeed
+
+.GetSpeedForTurnOrder:
+	ld a, [hli]
+	ld b, a
+	ld c, [hl]
+	push bc
+	ld b, d
+	callfar GetItemHeldEffect
+	ld a, b
+	pop bc
+	cp HELD_CHOICE_SCARF
+	ret nz
+	jp Battle_ThreeHalvesBC
 
 CheckContestBattleOver:
 	ld a, [wBattleType]
@@ -555,7 +596,33 @@ CheckPlayerLockedIn:
 	scf
 	ret
 
+LockInPlayerChoiceMoveIfNeeded:
+	call RefreshPlayerChoiceLockState
+	ld a, [wPlayerChoiceLockedMove]
+	and a
+	ret nz
+	ld a, [wCurPlayerMove]
+	cp STRUGGLE
+	ret z
+	ld [wPlayerChoiceLockedMove], a
+	ret
+
+RefreshPlayerChoiceLockState:
+	ld a, [wBattleMonItem]
+	ld b, a
+	callfar GetItemHeldEffect
+	ld a, b
+	callfar IsChoiceHeldEffect_Far
+	jr z, .choice_item
+	xor a
+	ld [wPlayerChoiceLockedMove], a
+	ret
+
+.choice_item
+	ret
+
 ParsePlayerAction:
+	call RefreshPlayerChoiceLockState
 	call CheckPlayerLockedIn
 	jp c, .locked_in
 	ld hl, wPlayerSubStatus5
@@ -568,7 +635,7 @@ ParsePlayerAction:
 .not_encored
 	ld a, [wBattlePlayerAction]
 	cp BATTLEPLAYERACTION_SWITCH
-	jr z, .reset_rage
+	jp z, .reset_rage
 	and a
 	jr nz, .reset_bide
 	ld a, [wPlayerSubStatus3]
@@ -576,7 +643,7 @@ ParsePlayerAction:
 	jr nz, .locked_in
 	xor a
 	ld [wMoveSelectionMenuType], a
-	assert POUND == 1
+	assert IRON_HEAD == 1
 	inc a
 	ld [wFXAnimID], a
 	call MoveSelectionScreen
@@ -593,6 +660,7 @@ ParsePlayerAction:
 	ldh [hBGMapMode], a
 	pop af
 	ret nz
+	call LockInPlayerChoiceMoveIfNeeded
 
 .encored
 	call SetPlayerTurn
@@ -642,6 +710,7 @@ ParsePlayerAction:
 	ret
 
 .reset_rage
+	callfar BossAI_RecordPlayerSwitch
 	xor a
 	ld [wPlayerFuryCutterCount], a
 	ld [wPlayerProtectCount], a
@@ -1828,6 +1897,18 @@ GetHalfMaxHP:
 	jr nz, .end
 	inc c
 .end
+	ret
+
+Battle_ThreeHalvesBC:
+; bc = floor(bc * 3 / 2)
+	ld h, b
+	ld l, c
+	add hl, bc
+	add hl, bc
+	ld b, h
+	ld c, l
+	srl b
+	rr c
 	ret
 
 GetMaxHP:
@@ -3387,6 +3468,10 @@ NewEnemyMonStatus:
 	ld [wLastPlayerCounterMove], a
 	ld [wLastEnemyCounterMove], a
 	ld [wLastEnemyMove], a
+	ld [wEnemyChoiceLockedMove], a
+	ld [wEnemyMetronomeMove], a
+	ld [wEnemyMetronomeCount], a
+	ld [wEnemyDarkShieldConsumed], a
 	ld hl, wEnemySubStatus1
 rept 4
 	ld [hli], a
@@ -3841,6 +3926,10 @@ NewBattleMonStatus:
 	ld [wLastPlayerCounterMove], a
 	ld [wLastEnemyCounterMove], a
 	ld [wLastPlayerMove], a
+	ld [wPlayerChoiceLockedMove], a
+	ld [wPlayerMetronomeMove], a
+	ld [wPlayerMetronomeCount], a
+	ld [wPlayerDarkShieldConsumed], a
 	ld hl, wPlayerSubStatus1
 rept 4
 	ld [hli], a
@@ -3862,6 +3951,7 @@ endr
 	ld [wPlayerTurnsTaken], a
 	ld hl, wEnemySubStatus5
 	res SUBSTATUS_CANT_RUN, [hl]
+	callfar BossAI_RecordPlayerSpecies
 	ret
 
 BreakAttraction:
@@ -3883,8 +3973,9 @@ SpikesDamage:
 	ld bc, UpdateEnemyHUD
 .ok
 
-	bit SCREENS_SPIKES, [hl]
-	ret z
+	ld a, [hl]
+	and SCREENS_SPIKES_MASK
+	jr z, .imposter
 
 	; Flying-types aren't affected by Spikes.
 	ld a, [de]
@@ -3896,16 +3987,36 @@ SpikesDamage:
 	ret z
 
 	push bc
+	ld a, [hl]
+	and SCREENS_SPIKES_MASK
+	push af
 
 	ld hl, BattleText_UserHurtBySpikes ; "hurt by SPIKES!"
 	call StdBattleTextbox
 
+	pop af
+	cp 1
+	jr z, .one_layer
+	cp 2
+	jr z, .two_layers
+	call GetQuarterMaxHP
+	jr .do_damage
+
+.one_layer
 	call GetEighthMaxHP
+	jr .do_damage
+
+.two_layers
+	callfar GetSixthMaxHP_Far
+
+.do_damage
 	call SubtractHPFromTarget
 
 	pop hl
 	call .hl
 
+.imposter
+	callfar TryActivateDittoImposter
 	jp WaitBGMap
 
 .hl
@@ -4669,13 +4780,40 @@ BattleMenu:
 	ld a, [wBattleMenuCursorPosition]
 	cp $1
 	jp z, BattleMenu_Fight
-	cp $3
-	jp z, BattleMenu_Pack
 	cp $2
 	jp z, BattleMenu_PKMN
+	cp $3
+	jr nz, .check_run
+	ld a, [wBattleMode]
+	cp TRAINER_BATTLE
+	jr nz, .check_pack
+	ld a, [wLinkMode]
+	and a
+	jr nz, .check_pack
+	jp BattleMenu_Run
+
+.check_pack
+	jp BattleMenu_CheckPack
+
+.check_run
 	cp $4
 	jp z, BattleMenu_Run
 	jr .loop
+
+BattleMenu_CheckPack:
+	ld a, [wBattleMode]
+	cp TRAINER_BATTLE
+	jr nz, .allow_pack
+	ld a, [wLinkMode]
+	and a
+	jr nz, .allow_pack
+	ld de, SFX_WRONG
+	call PlaySFX
+	call WaitSFX
+	jp BattleMenu
+
+.allow_pack
+	jp BattleMenu_Pack
 
 BattleMenu_Fight:
 	xor a
@@ -5198,10 +5336,20 @@ MoveSelectionScreen:
 	pop af
 	ret nz
 
-	ld hl, wBattleMonPP
+	call RefreshPlayerChoiceLockState
 	ld a, [wMenuCursorY]
 	ld c, a
 	ld b, 0
+	ld a, [wPlayerChoiceLockedMove]
+	and a
+	jr z, .have_move_index
+	ld [wCurPlayerMove], a
+	call .SyncPlayerMoveNumWithCurrentMove
+	ld a, [wCurMoveNum]
+	ld c, a
+
+.have_move_index
+	ld hl, wBattleMonPP
 	add hl, bc
 	ld a, [hl]
 	and PP_MASK
@@ -5212,18 +5360,22 @@ MoveSelectionScreen:
 	dec a
 	cp c
 	jr z, .move_disabled
-	ld a, [wUnusedPlayerLockedMove]
+	ld a, [wPlayerChoiceLockedMove]
 	and a
-	jr nz, .skip2
-	ld a, [wMenuCursorY]
+	jr nz, .check_assault_vest
 	ld hl, wBattleMonMoves
-	ld c, a
-	ld b, 0
 	add hl, bc
 	ld a, [hl]
-
-.skip2
 	ld [wCurPlayerMove], a
+	call .SyncPlayerMoveNumWithCurrentMove
+
+.check_assault_vest
+	call .PlayerMoveBlockedByAssaultVest
+	jr nc, .accept_move
+	ld hl, BattleText_AssaultVestBlocksStatusMoves
+	jr .place_textbox_start_over
+
+.accept_move
 	xor a
 	ret
 
@@ -5264,43 +5416,81 @@ MoveSelectionScreen:
 	jp .menu_loop
 
 .CheckPlayerHasUsableMoves:
+	call RefreshPlayerChoiceLockState
 	ld a, STRUGGLE
 	ld [wCurPlayerMove], a
-	ld a, [wPlayerDisableCount]
+	ld a, [wPlayerChoiceLockedMove]
 	and a
+	jr z, .scan_all_moves
+	ld [wCurPlayerMove], a
+	call .SyncPlayerMoveNumWithCurrentMove
+	jr c, .force_struggle
+	ld a, [wCurMoveNum]
+	ld c, a
+	ld b, 0
 	ld hl, wBattleMonPP
-	jr nz, .disabled
-
-	ld a, [hli]
-	or [hl]
-	inc hl
-	or [hl]
-	inc hl
-	or [hl]
+	add hl, bc
+	ld a, [hl]
 	and PP_MASK
-	ret nz
-	jr .force_struggle
-
-.disabled
+	jr z, .force_struggle
+	ld a, [wPlayerDisableCount]
 	swap a
 	and $f
-	ld b, a
-	ld d, NUM_MOVES + 1
-	xor a
-.loop
-	dec d
-	jr z, .done
-	ld c, [hl]
-	inc hl
-	dec b
-	jr z, .loop
-	or c
-	jr .loop
+	dec a
+	cp c
+	jr z, .force_struggle
+	ld a, [wCurPlayerMove]
+	call .PlayerMoveBlockedByAssaultVest
+	jr c, .force_struggle
+	ld a, 1
+	and a
+	ret
 
-.done
-	; Bug: this will result in a move with PP Up confusing the game.
-	and a ; should be "and PP_MASK"
-	ret nz
+.scan_all_moves
+	ld a, [wPlayerDisableCount]
+	swap a
+	and $f
+	ld d, a
+	ld hl, wBattleMonMoves
+	ld bc, wBattleMonPP
+	ld e, 1
+.loop
+	ld a, [hl]
+	and a
+	jr z, .next_move
+	push af
+	ld a, d
+	and a
+	jr z, .check_pp
+	cp e
+	jr z, .discard_move
+.check_pp
+	ld a, [bc]
+	and PP_MASK
+	jr z, .discard_move
+	pop af
+	push bc
+	push de
+	push hl
+	call .PlayerMoveBlockedByAssaultVest
+	pop hl
+	pop de
+	pop bc
+	jr c, .next_move
+	ld a, 1
+	and a
+	ret
+
+.discard_move
+	pop af
+
+.next_move
+	inc hl
+	inc bc
+	inc e
+	ld a, e
+	cp NUM_MOVES + 1
+	jr nz, .loop
 
 .force_struggle
 	ld hl, BattleText_MonHasNoMovesLeft
@@ -5308,6 +5498,51 @@ MoveSelectionScreen:
 	ld c, 60
 	call DelayFrames
 	xor a
+	ret
+
+.PlayerMoveBlockedByAssaultVest:
+	push af
+	ld a, [wBattleMonItem]
+	ld b, a
+	callfar GetItemHeldEffect
+	ld a, b
+	cp HELD_ASSAULT_VEST
+	jr nz, .not_blocked
+	pop af
+	callfar IsMoveBlockedByAssaultVest_Far
+	ret
+
+.not_blocked
+	pop af
+	and a
+	ret
+
+.SyncPlayerMoveNumWithCurrentMove:
+	push hl
+	push bc
+	ld hl, wBattleMonMoves
+	ld c, 0
+	ld a, [wCurPlayerMove]
+	ld b, a
+.sync_loop
+	ld a, [hli]
+	cp b
+	jr z, .sync_found
+	inc c
+	ld a, c
+	cp NUM_MOVES
+	jr nz, .sync_loop
+	pop bc
+	pop hl
+	scf
+	ret
+
+.sync_found
+	ld a, c
+	ld [wCurMoveNum], a
+	pop bc
+	pop hl
+	and a
 	ret
 
 .pressed_select
@@ -5588,6 +5823,7 @@ ParseEnemyAction:
 	ld [wCurEnemyMove], a
 
 .skip_load
+	call EnforceEnemyHeldMoveRestrictions
 	call SetEnemyTurn
 	callfar UpdateMoveData
 	call CheckEnemyLockedIn
@@ -5646,6 +5882,10 @@ CheckEnemyLockedIn:
 
 	ld hl, wEnemySubStatus1
 	bit SUBSTATUS_ROLLOUT, [hl]
+	ret
+
+EnforceEnemyHeldMoveRestrictions:
+	callfar EnforceEnemyHeldMoveRestrictions_Far
 	ret
 
 LinkBattleSendReceiveAction:
@@ -6339,93 +6579,16 @@ ApplyStatusEffectOnEnemyStats:
 
 ApplyStatusEffectOnStats:
 	ldh [hBattleTurn], a
-	call ApplyPrzEffectOnSpeed
-	jp ApplyBrnEffectOnAttack
-
-ApplyPrzEffectOnSpeed:
-	ldh a, [hBattleTurn]
-	and a
-	jr z, .enemy
-	ld a, [wBattleMonStatus]
-	and 1 << PAR
-	ret z
-	ld hl, wBattleMonSpeed + 1
-	ld a, [hld]
-	ld b, a
-	ld a, [hl]
-	srl a
-	rr b
-	srl a
-	rr b
-	ld [hli], a
-	or b
-	jr nz, .player_ok
-	ld b, $1 ; min speed
-
-.player_ok
-	ld [hl], b
+	farcall ApplyPrzEffectOnSpeed_Far
+	farcall ApplyBrnEffectOnAttack_Far
 	ret
 
-.enemy
-	ld a, [wEnemyMonStatus]
-	and 1 << PAR
-	ret z
-	ld hl, wEnemyMonSpeed + 1
-	ld a, [hld]
-	ld b, a
-	ld a, [hl]
-	srl a
-	rr b
-	srl a
-	rr b
-	ld [hli], a
-	or b
-	jr nz, .enemy_ok
-	ld b, $1 ; min speed
-
-.enemy_ok
-	ld [hl], b
+ApplyPrzEffectOnSpeed:
+	farcall ApplyPrzEffectOnSpeed_Far
 	ret
 
 ApplyBrnEffectOnAttack:
-	ldh a, [hBattleTurn]
-	and a
-	jr z, .enemy
-	ld a, [wBattleMonStatus]
-	and 1 << BRN
-	ret z
-	ld hl, wBattleMonAttack + 1
-	ld a, [hld]
-	ld b, a
-	ld a, [hl]
-	srl a
-	rr b
-	ld [hli], a
-	or b
-	jr nz, .player_ok
-	ld b, $1 ; min attack
-
-.player_ok
-	ld [hl], b
-	ret
-
-.enemy
-	ld a, [wEnemyMonStatus]
-	and 1 << BRN
-	ret z
-	ld hl, wEnemyMonAttack + 1
-	ld a, [hld]
-	ld b, a
-	ld a, [hl]
-	srl a
-	rr b
-	ld [hli], a
-	or b
-	jr nz, .enemy_ok
-	ld b, $1 ; min attack
-
-.enemy_ok
-	ld [hl], b
+	farcall ApplyBrnEffectOnAttack_Far
 	ret
 
 ApplyStatLevelMultiplierOnAllStats:
@@ -6865,6 +7028,7 @@ GiveExperiencePoints:
 	ld a, [hl]
 	cp LUCKY_EGG
 	call z, BoostExp
+	farcall ApplyProgressionExpScaling
 	ldh a, [hQuotient + 3]
 	ld [wStringBuffer2 + 1], a
 	ldh a, [hQuotient + 2]
