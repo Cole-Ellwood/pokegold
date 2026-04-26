@@ -38,11 +38,13 @@ Read these files in order:
 1. `docs/README.md`
 2. `docs/codex_context.md`
 3. `docs/project_map.md`
-4. `docs/agent_navigation/start_card.md`
-5. `docs/agent_navigation/task_router.md`
-6. `docs/agent_navigation/verification_matrix.md`
-7. `docs/codex_review_playbook.md`
-8. `docs/generated/dev_index.md`
+4. `docs/project_roadmap.md`
+5. `docs/agent_navigation/start_card.md`
+6. `docs/agent_navigation/README.md`
+7. `docs/agent_navigation/task_router.md`
+8. `docs/agent_navigation/verification_matrix.md`
+9. `docs/codex_review_playbook.md`
+10. `docs/generated/dev_index.md`
 
 Before touching source, write down the investigation frame in the scratch notes
 or final report:
@@ -60,6 +62,38 @@ If no route fits, search docs first and report the missing route as a doc bug:
 rg -n "keyword|related phrase" docs
 rg -n "SymbolOrPhrase" engine data maps constants home ram
 ```
+
+## Read-Only Bug Hunt Mode
+
+Use this mode when the user says read-only, review-only, report-only, or "do not
+fix." In strict read-only mode, do not edit files and do not run commands that
+write repo-tracked files, build products, generated docs, emulator state, or
+scratch/temp output without asking first.
+
+Safe read-only commands:
+
+```powershell
+git status --short --branch
+git diff --stat
+git diff --name-status
+git ls-files
+rg -n "pattern" docs engine data maps constants home ram tools scripts
+Get-Content path\to\file
+Get-Item path\to\file
+```
+
+Ask first before running:
+
+- builds or `make`;
+- audit scripts, because some create `.local/tmp` or inspect generated mirrors;
+- generators such as `scripts\generate_balance_audit.py`, because default
+  output may update `docs/generated/`;
+- trace, emulator, PyBoy, or save-state tools;
+- formatters, cleanup helpers, or anything that stages/commits.
+
+In read-only reports, list the checks that would prove or disprove each lead,
+but do not run them unless the user loosens the constraint. If a command writes
+only ignored temp output, say that explicitly before asking.
 
 ## Search Method
 
@@ -136,6 +170,25 @@ For each suspicious routine:
    no trainer, end-of-table, and fainted party slot.
 9. Check both normal and debug/trace builds if the routine is inside
    conditional assembly.
+
+State-lifetime checklist:
+
+- If a helper writes `wCurSpecies`, `wCurPartySpecies`, `wBaseType1`,
+  `wBaseType2`, or any base-data field through `GetBaseData`, prove every return
+  path restores the prior state or document that downstream consumers are meant
+  to see the candidate species.
+- If a helper writes `hBattleTurn`, prove it restores the old turn value before
+  returning.
+- If a helper writes `wTypeMatchup`, `wEnemyMoveStruct`, `wPlayerMoveStruct`,
+  `wCurEnemyMove`, or `wCurPlayerMove`, check whether later scoring, text, or
+  battle-resolution code consumes that scratch state.
+- If a helper uses `wBossAITemp*`, `wTempByteValue`, `wBuffer*`, or HRAM scratch
+  bytes, search all nested calls for the same scratch variables before assuming
+  the value survives.
+- Candidate-evaluation helpers are especially dangerous: a routine that tests a
+  possible switch target may intentionally load candidate base data, but the
+  caller must not accidentally leave that state visible to stay/item/attack
+  paths unless that is the documented contract.
 
 Use comments sparingly in findings. Quote the exact line/label and explain the
 behavior, not the whole routine.

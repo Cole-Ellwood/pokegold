@@ -18,7 +18,8 @@ Implemented behavior:
   emergency exception applies.
 - Boss move scoring now hard-discourages visible status failures: already
   statused target, Safeguard, Poison/Toxic into Poison or Steel, paralysis into
-  Electric, and Leech Seed into Grass.
+  real type-chart immunities such as Thunder Wave into Ground or Glare into
+  Ghost, and Leech Seed into Grass.
 - First-layer Spikes treats `wBossAITurnsElapsed <= 1` as the first scoring
   turn after `BossAI_IncrementTurnsElapsed`, and avoids high hazard greed under
   immediate public pressure.
@@ -52,9 +53,10 @@ Current post-patch memory summary:
 - Boss WRAM reserve with `BOSS_AI_TRACE`: still uses 94 bytes and leaves 46
   reserved bytes.
 - `wBossAIStateEnd` remains before `wEventFlags`.
-- `Battle Core` remains in bank `0f` and has current range `0f:4000-7fca`.
-- Boss AI logic lives in the Enemy Trainers section, bank `0e`; current normal
-  range is `0e:4000-71f7`, and current trace range is `0e:4000-72e4`.
+- `Battle Core` remains in bank `0f`: normal range is `0f:4000-7b9a`; trace
+  range is `0f:4000-7fca`.
+- Boss AI logic lives in the Enemy Trainers section, bank `0e`: normal range is
+  `0e:4000-722b`; trace range is `0e:4000-7318`.
 - Plausible player move inference now uses a possible mask plus
   `wBossAILikelyTypeMaskCache`; the likely mask reuses old spare bytes from the
   revealed-move reserve and does not grow the Boss AI WRAM block.
