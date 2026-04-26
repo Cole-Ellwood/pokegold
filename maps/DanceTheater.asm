@@ -97,10 +97,18 @@ DanceTheaterSurfGuy:
 .GetSurf:
 	writetext SurfGuyLikeADanceText
 	promptbutton
+	checkitem SURFBOARD
+	iftrue .HaveSurfboard
+	verbosegiveitem SURFBOARD
+	iffalse .Done
+	promptbutton
+.HaveSurfboard:
 	verbosegiveitem HM_SURF
+	iffalse .Done
 	setevent EVENT_GOT_HM03_SURF
 	writetext SurfGuySurfExplanationText
 	waitbutton
+.Done:
 	closetext
 	end
 
@@ -262,11 +270,11 @@ SurfGuyLikeADanceText:
 	done
 
 SurfGuySurfExplanationText:
-	text "That's SURF."
+	text "The SURFBOARD lets"
+	line "you cross water."
 
-	para "It's a move that"
-	line "lets #MON swim"
-	cont "across water."
+	para "The disc teaches"
+	line "SURF to #MON."
 	done
 
 SurfGuyElegantKimonoGirlsText:

@@ -155,6 +155,8 @@ UseRegisteredItem:
 	xor a
 	ld [wUsingItemWithSelect], a
 	ld a, [wItemEffectSucceeded]
+	cp 2
+	jr z, ._handled_no_effect
 	cp 1
 	jr nz, ._cantuse
 	scf
@@ -168,5 +170,6 @@ UseRegisteredItem:
 ._cantuse
 	call CantUseItem
 	call CloseText
+._handled_no_effect
 	and a
 	ret

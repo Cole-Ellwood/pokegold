@@ -177,9 +177,9 @@ Text_GrampsLookingForYou:
 
 DayCareServicePamphletText:
 	text "DAY-CARE SERVICES"
-	line "TM TUTOR redeems"
-	cont "VOUCHERS for"
-	cont "lessons."
+	line "TM TUTOR:"
+	cont "1 VOUCHER buys"
+	cont "3 TM lessons."
 
 	para "MOVE REMINDER:"
 	line "free old moves."

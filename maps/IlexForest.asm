@@ -249,7 +249,14 @@ IlexForestCharcoalMasterScript:
 	iftrue .AlreadyGotCut
 	writetext Text_CharcoalMasterIntro
 	promptbutton
+	checkitem PRUNERS
+	iftrue .HavePruners
+	verbosegiveitem PRUNERS
+	iffalse .Done
+	promptbutton
+.HavePruners:
 	verbosegiveitem HM_CUT
+	iffalse .Done
 	setevent EVENT_GOT_HM01_CUT
 	writetext Text_CharcoalMasterOutro
 	waitbutton
@@ -265,6 +272,7 @@ IlexForestCharcoalMasterScript:
 .AlreadyGotCut:
 	writetext Text_CharcoalMasterTalkAfter
 	waitbutton
+.Done:
 	closetext
 	end
 
@@ -594,11 +602,11 @@ Text_CharcoalMasterIntro:
 	done
 
 Text_CharcoalMasterOutro:
-	text "That's the CUT HM."
-	line "Teach that to a"
+	text "The PRUNERS will"
+	line "clear small trees."
 
-	para "#MON to clear"
-	line "small trees."
+	para "The disc teaches"
+	line "CUT in battle."
 
 	para "Of course, you"
 	line "have to have the"

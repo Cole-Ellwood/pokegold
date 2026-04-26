@@ -27,20 +27,25 @@ Already implemented:
 - FAST text speed for new games.
 - Move Reminder page size `4`.
 - Bicycle auto-register after receipt when no valid item is already registered.
+- Custom item / TM Voucher description cleanup.
+- Route 34 / Day-Care service text for TM Tutor and Move Reminder discovery.
+- Pokemon Center pause trimming that preserves the same heal flow.
+- Repel renewal prompt with Max Repel, Super Repel, Repel priority.
+- Constrained HM-slot relief: seven key items handle field use while badge/story
+  gates remain, and the former HM discs behave as TM51-TM57. The implementation
+  uses the existing key-item pocket size exactly; do not add another key item
+  here without handling capacity or removing a key item.
+  The tools are registerable `CANT_TOSS` key items, old HM reward flags can
+  backfill missing tools for legacy saves, and badge/advice text should keep
+  naming the replacement tools rather than "Pokemon must know the HM" wording.
 
-Recommended low-risk next candidates:
-
-1. custom item and TM Voucher text;
-2. Day-Care signage or NPC text for TM Tutor and Move Reminder services.
-
-Riskier candidates:
-
-- Repel renewal prompt;
-- Pokemon Center pause trimming.
+No low-risk QoL candidate from `docs/qol_handoff.md` is currently queued.
+Reopen this lane only for manual Repel feel checks, a bug report, or a new QoL
+candidate that respects the pacing guardrails.
 
 Do not treat running shoes, reusable TMs, free portable PC, cheaper/free healing,
-EXP changes, or HM removal as low-risk QoL. Those touch pacing, resource
-pressure, boss preparation, or Gen 2 feel.
+EXP changes, or further route-skip/HM expansion as low-risk QoL. Those touch
+pacing, resource pressure, boss preparation, or Gen 2 feel.
 
 ## Map Script Edit Checklist
 
@@ -57,6 +62,9 @@ Before editing a map/script:
 
 Repel renewal must preserve step-event ordering, poison, egg, Day-Care, bike
 shop call, link-room behavior, item priority, and no-consumption-on-decline.
+It must not offer Bag-item renewal while `ENGINE_BUG_CONTEST_TIMER` is set.
+`python tools\audit\check_release_smoke.py` now guards the source-level item
+priority and step-count writes, but it is not a substitute for emulator feel.
 
 Pokemon Center trimming must preserve the heal prompt, `special HealParty`,
 `HealMachineAnim`, `special RestartMapMusic`, Pokerus checks, phone behavior,

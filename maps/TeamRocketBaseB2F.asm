@@ -284,7 +284,14 @@ RocketBaseElectrodeScript:
 	opentext
 	writetext RocketBaseLanceElectrodeDoneText
 	promptbutton
+	checkitem WHIRL_KIT
+	iftrue .HaveWhirlKit
+	verbosegiveitem WHIRL_KIT
+	iffalse .BagFull
+	promptbutton
+.HaveWhirlKit:
 	verbosegiveitem HM_WHIRLPOOL
+	iffalse .BagFull
 	setevent EVENT_GOT_HM06_WHIRLPOOL
 	writetext RocketBaseLanceWhirlpoolText
 	waitbutton
@@ -294,6 +301,7 @@ RocketBaseElectrodeScript:
 	writetext RocketBaseLanceMonMasterText
 	waitbutton
 	closetext
+.Done:
 	turnobject PLAYER, DOWN
 	applymovement TEAMROCKETBASEB2F_LANCE, RocketBaseLanceLeavesBaseMovement
 	disappear TEAMROCKETBASEB2F_LANCE
@@ -309,6 +317,10 @@ RocketBaseElectrodeScript:
 	setevent EVENT_SECURITY_CAMERA_3
 	setevent EVENT_SECURITY_CAMERA_4
 	setevent EVENT_SECURITY_CAMERA_5
+	end
+
+.BagFull:
+	closetext
 	end
 
 TeamRocketBaseB2FLockedDoor:
@@ -732,15 +744,15 @@ RocketBaseLanceElectrodeDoneText:
 
 RocketBaseReceivedHM06Text: ; unreferenced
 	text "<PLAYER> received"
-	line "HM06."
+	line "TM56."
 	done
 
 RocketBaseLanceWhirlpoolText:
-	text "That's WHIRLPOOL."
-	line "Teach it to a"
+	text "The WHIRL KIT can"
+	line "clear whirlpools."
 
-	para "#MON to get"
-	line "across wild water."
+	para "The disc teaches"
+	line "WHIRLPOOL."
 
 	para "But keep this in"
 	line "mind."

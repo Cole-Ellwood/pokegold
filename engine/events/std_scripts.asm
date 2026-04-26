@@ -82,17 +82,17 @@ PokecenterNurseScript:
 	iffalse .done
 
 	writetext NurseTakePokemonText
-	pause 20
-	turnobject LAST_TALKED, LEFT
 	pause 10
+	turnobject LAST_TALKED, LEFT
+	pause 5
 	special HealParty
 	playmusic MUSIC_NONE
 	setval HEALMACHINE_POKECENTER
 	special HealMachineAnim
-	pause 30
+	pause 15
 	special RestartMapMusic
 	turnobject LAST_TALKED, DOWN
-	pause 10
+	pause 5
 
 	checkphonecall ; elm already called about pokerus
 	iftrue .no
@@ -102,15 +102,15 @@ PokecenterNurseScript:
 	iftrue .pokerus
 .no
 	writetext NurseReturnPokemonText
-	pause 20
+	pause 10
 
 .done
 	writetext NurseGoodbyeText
 
 	turnobject LAST_TALKED, UP
-	pause 10
+	pause 5
 	turnobject LAST_TALKED, DOWN
-	pause 10
+	pause 5
 
 	waitbutton
 	closetext

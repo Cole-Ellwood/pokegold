@@ -27,13 +27,13 @@ AzaleaPokecenter1FPokefanFScript:
 
 AzaleaPokecenter1FGentlemanText:
 	text "Do your #MON"
-	line "know HM moves?"
+	line "know field moves?"
 
-	para "Those moves can"
-	line "be used even if"
+	para "Key items handle"
+	line "travel now, but"
 
-	para "your #MON has"
-	line "fainted."
+	para "the moves are"
+	line "still useful."
 	done
 
 AzaleaPokecenter1FFishingGuruText:

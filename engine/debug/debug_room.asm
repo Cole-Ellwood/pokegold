@@ -916,7 +916,7 @@ DebugRoom_PrintItemName:
 
 DebugRoomMenu_ItemGet_Page1Values:
 	db 2
-	paged_value wDebugRoomItemID,       1, NUM_POKEMON, MASTER_BALL, .ItemNameString, DebugRoom_PrintItemName, FALSE
+	paged_value wDebugRoomItemID,       1, HM_WATERFALL, MASTER_BALL, .ItemNameString, DebugRoom_PrintItemName, FALSE
 	paged_value wDebugRoomItemQuantity, 1, 99,          1,           .NumberString,   NULL,                    FALSE
 
 .ItemNameString: db "ITEM NAME@"
@@ -1099,7 +1099,7 @@ DebugRoom_UpdateExpForLevel:
 DebugRoomMenu_PokemonGet_Page1Values:
 	db 8
 	paged_value wDebugRoomMonSpecies,       1,   NUM_POKEMON, BULBASAUR,      DebugRoom_BoxStructStrings.Pokemon,   DebugRoom_PrintPokemonName, FALSE
-	paged_value wDebugRoomMonItem,          1,   $ff,         MASTER_BALL,    DebugRoom_BoxStructStrings.Item,      DebugRoom_PrintItemName2,   FALSE
+	paged_value wDebugRoomMonItem,          1,   HM_WATERFALL, MASTER_BALL,   DebugRoom_BoxStructStrings.Item,      DebugRoom_PrintItemName2,   FALSE
 	paged_value wDebugRoomMonMoves+0,       1,   NUM_ATTACKS, TACKLE,         DebugRoom_BoxStructStrings.Move1,     DebugRoom_PrintMoveName,    FALSE
 	paged_value wDebugRoomMonMoves+1,       1,   NUM_ATTACKS, TACKLE,         DebugRoom_BoxStructStrings.Move2,     DebugRoom_PrintMoveName,    FALSE
 	paged_value wDebugRoomMonMoves+2,       1,   NUM_ATTACKS, TACKLE,         DebugRoom_BoxStructStrings.Move3,     DebugRoom_PrintMoveName,    FALSE

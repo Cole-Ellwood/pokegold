@@ -593,7 +593,13 @@ OpenPartyStats:
 	ld a, 0
 	ret
 
+ClearFieldMoveItem:
+	xor a
+	ld [wCurItem], a
+	ret
+
 MonMenu_Cut:
+	call ClearFieldMoveItem
 	farcall CutFunction
 	ld a, [wFieldMoveSucceeded]
 	cp $1
@@ -607,6 +613,7 @@ MonMenu_Cut:
 	ret
 
 MonMenu_Fly:
+	call ClearFieldMoveItem
 	farcall FlyFunction
 	ld a, [wFieldMoveSucceeded]
 	cp $2
@@ -630,6 +637,7 @@ MonMenu_Fly:
 	ret
 
 MonMenu_Flash:
+	call ClearFieldMoveItem
 	farcall FlashFunction
 	ld a, [wFieldMoveSucceeded]
 	cp $1
@@ -643,6 +651,7 @@ MonMenu_Flash:
 	ret
 
 MonMenu_Strength:
+	call ClearFieldMoveItem
 	farcall StrengthFunction
 	ld a, [wFieldMoveSucceeded]
 	cp $1
@@ -656,6 +665,7 @@ MonMenu_Strength:
 	ret
 
 MonMenu_Whirlpool:
+	call ClearFieldMoveItem
 	farcall WhirlpoolFunction
 	ld a, [wFieldMoveSucceeded]
 	cp $1
@@ -669,6 +679,7 @@ MonMenu_Whirlpool:
 	ret
 
 MonMenu_Waterfall:
+	call ClearFieldMoveItem
 	farcall WaterfallFunction
 	ld a, [wFieldMoveSucceeded]
 	cp $1
@@ -695,6 +706,7 @@ MonMenu_Teleport:
 	ret
 
 MonMenu_Surf:
+	call ClearFieldMoveItem
 	farcall SurfFunction
 	ld a, [wFieldMoveSucceeded]
 	and a

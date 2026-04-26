@@ -191,10 +191,10 @@ BugsyText_HiveBadgeSpeech:
 	line "#MON up to L30"
 	cont "will obey you."
 
-	para "#MON that know"
-	line "CUT will be able"
+	para "PRUNERS will be"
+	line "able to CUT"
 
-	para "to use it outside"
+	para "outside"
 	line "of battle too."
 
 	para "Here, take this TM"

@@ -235,10 +235,10 @@ PlayerReceivedPlainBadgeText:
 
 WhitneyPlainBadgeText:
 	text "PLAINBADGE lets"
-	line "your #MON use"
+	line "the POWER GLOVE"
 
-	para "STRENGTH outside"
-	line "of battle."
+	para "move boulders"
+	line "outside battle."
 
 	para "It also boosts"
 	line "your #MON's"

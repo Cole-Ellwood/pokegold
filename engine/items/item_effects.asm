@@ -133,7 +133,7 @@ ItemEffects:
 	dw NoEffect            ; MIRACLE_SEED
 	dw NoEffect            ; THICK_CLUB
 	dw NoEffect            ; FOCUS_BAND
-	dw NoEffect            ; ITEM_78
+	dw PrunersEffect       ; PRUNERS
 	dw EnergypowderEffect  ; ENERGYPOWDER
 	dw EnergyRootEffect    ; ENERGY_ROOT
 	dw HealPowderEffect    ; HEAL_POWDER
@@ -148,7 +148,7 @@ ItemEffects:
 	dw NoEffect            ; STAR_PIECE
 	dw BasementKeyEffect   ; BASEMENT_KEY
 	dw NoEffect            ; PASS
-	dw NoEffect            ; ITEM_87
+	dw SurfboardEffect     ; SURFBOARD
 	dw NoEffect            ; CHOICE_SCARF
 	dw NoEffect            ; ASSAULT_VEST
 	dw NoEffect            ; CHARCOAL
@@ -168,14 +168,14 @@ ItemEffects:
 	dw NoEffect            ; BERSERK_GENE
 	dw NoEffect            ; ROCKY_HELMET
 	dw NoEffect            ; METRONOME_ITEM
-	dw NoEffect            ; ITEM_9B
+	dw WhirlKitEffect      ; WHIRL_KIT
 	dw SacredAshEffect     ; SACRED_ASH
 	dw PokeBallEffect      ; HEAVY_BALL
 	dw NoEffect            ; FLOWER_MAIL
 	dw PokeBallEffect      ; LEVEL_BALL
 	dw PokeBallEffect      ; LURE_BALL
 	dw PokeBallEffect      ; FAST_BALL
-	dw NoEffect            ; ITEM_A2
+	dw SkyPassEffect       ; SKY_PASS
 	dw NoEffect            ; LIGHT_BALL
 	dw PokeBallEffect      ; FRIEND_BALL
 	dw PokeBallEffect      ; MOON_BALL
@@ -184,17 +184,17 @@ ItemEffects:
 	dw GorgeousBoxEffect   ; GORGEOUS_BOX
 	dw EvoStoneEffect      ; SUN_STONE
 	dw NoEffect            ; POLKADOT_BOW
-	dw NoEffect            ; ITEM_AB
+	dw LanternEffect       ; LANTERN
 	dw NoEffect            ; UP_GRADE
 	dw RestoreHPEffect     ; BERRY
 	dw RestoreHPEffect     ; GOLD_BERRY
 	dw SquirtbottleEffect  ; SQUIRTBOTTLE
-	dw NoEffect            ; ITEM_B0
+	dw PowerGloveEffect    ; POWER_GLOVE
 	dw PokeBallEffect      ; PARK_BALL
 	dw NoEffect            ; RAINBOW_WING
-	dw NoEffect            ; ITEM_B3
-	assert_table_length ITEM_B3
-; The items past ITEM_B3 do not have effect entries:
+	dw ClimbGearEffect     ; CLIMB_GEAR
+	assert_table_length CLIMB_GEAR
+; The items past CLIMB_GEAR do not have effect entries:
 ;	BRICK_PIECE
 ;	SURF_MAIL
 ;	LITEBLUEMAIL
@@ -1085,6 +1085,42 @@ TownMapEffect:
 
 BicycleEffect:
 	farcall BikeFunction
+	ret
+
+PrunersEffect:
+	farcall CutFunction
+	jr FieldToolEffect
+
+SkyPassEffect:
+	farcall FlyFunction
+	jr FieldToolEffect
+
+SurfboardEffect:
+	farcall SurfFunction
+	jr FieldToolEffect
+
+PowerGloveEffect:
+	farcall StrengthFunction
+	jr FieldToolEffect
+
+LanternEffect:
+	farcall FlashFunction
+	jr FieldToolEffect
+
+WhirlKitEffect:
+	farcall WhirlpoolFunction
+	jr FieldToolEffect
+
+ClimbGearEffect:
+	farcall WaterfallFunction
+
+FieldToolEffect:
+	ld a, [wFieldMoveSucceeded]
+	cp $1
+	jr z, .done
+	ld a, $2
+.done
+	ld [wItemEffectSucceeded], a
 	ret
 
 EvoStoneEffect:

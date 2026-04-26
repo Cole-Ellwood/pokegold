@@ -55,11 +55,6 @@ AskTeachTMHM:
 	call GetMoveName
 	call CopyName1
 	ld hl, BootedTMText ; Booted up a TM
-	ld a, [wCurItem]
-	cp HM01
-	jr c, .TM
-	ld hl, BootedHMText ; Booted up an HM
-.TM:
 	call PrintText
 	ld hl, ContainedMoveText
 	call PrintText
@@ -145,8 +140,8 @@ TeachTMHM:
 	jr z, .nope
 
 	ld a, [wCurItem]
-	call IsHM
-	ret c
+	and a
+	jr z, .learned_move
 
 	ld c, HAPPINESS_LEARNMOVE
 	callfar ChangeHappiness
@@ -166,10 +161,6 @@ TeachTMHM:
 
 BootedTMText:
 	text_far _BootedTMText
-	text_end
-
-BootedHMText:
-	text_far _BootedHMText
 	text_end
 
 ContainedMoveText:
@@ -355,25 +346,9 @@ TMHM_DisplayPocketItems:
 	call TMHMPocket_GetCurrentLineCoord
 	push hl
 	ld a, [wTempTMHM]
-	cp NUM_TMS + 1
-	jr nc, .HM
 	ld de, wTempTMHM
 	lb bc, PRINTNUM_LEADINGZEROS | 1, 2
 	call PrintNum
-	jr .okay
-
-.HM:
-	push af
-	sub NUM_TMS
-	ld [wTempTMHM], a
-	ld [hl], 'H'
-	inc hl
-	ld de, wTempTMHM
-	lb bc, PRINTNUM_LEFTALIGN | 1, 2
-	call PrintNum
-	pop af
-	ld [wTempTMHM], a
-.okay
 	predef GetTMHMMove
 	ld a, [wNamedObjectIndex]
 	ld [wPutativeTMHMMove], a
@@ -387,8 +362,6 @@ TMHM_DisplayPocketItems:
 	pop bc
 	ld a, c
 	push bc
-	cp NUM_TMS + 1
-	jr nc, .hm2
 	ld bc, SCREEN_WIDTH + 9
 	add hl, bc
 	ld [hl], '×'
@@ -401,7 +374,6 @@ TMHM_DisplayPocketItems:
 	ld de, wTempTMHM
 	lb bc, 1, 2
 	call PrintNum
-.hm2
 	pop bc
 	pop de
 	pop hl

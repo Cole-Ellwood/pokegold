@@ -135,12 +135,10 @@ DragonShrinePlayerReceivedRisingBadgeText:
 	done
 
 DragonShrineRisingBadgeExplanationText:
-	text "RISINGBADGE will"
-	line "enable your"
+	text "RISINGBADGE lets"
+	line "CLIMB GEAR scale"
 
-	para "#MON to use the"
-	line "move for climbing"
-	cont "waterfalls."
+	para "waterfalls."
 
 	para "Also, all #MON"
 	line "will recognize you"

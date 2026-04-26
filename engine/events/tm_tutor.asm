@@ -7,19 +7,12 @@ TMTutorTeachAnyTM:
 	call CopyBytes
 
 	ld hl, wTMsHMs
-	ld b, NUM_TMS
+	ld b, NUM_TMS + NUM_HMS
 	ld a, 1
 .fill_tms
 	ld [hli], a
 	dec b
 	jr nz, .fill_tms
-
-	xor a
-	ld b, NUM_HMS
-.fill_hms
-	ld [hli], a
-	dec b
-	jr nz, .fill_hms
 
 	xor a
 	ld [wTMHMPocketScrollPosition], a
@@ -54,18 +47,21 @@ TMTutorTeachAnyTM:
 	jr c, .canceled
 
 	ld a, [wCurItem]
-	ld b, a
-	ld a, HM01
+	push af
+	ld a, NO_ITEM
 	ld [wCurItem], a
 	farcall TeachTMHM
-	ld a, b
-	ld [wCurItem], a
-	jr c, .taught
+	jr c, .taught_restore_cur_item
 
+	pop af
+	ld [wCurItem], a
 	ld a, 2
 	ld [wScriptVar], a
 	ret
 
+.taught_restore_cur_item
+	pop af
+	ld [wCurItem], a
 .taught
 	ld a, 1
 	ld [wScriptVar], a

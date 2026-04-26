@@ -82,11 +82,10 @@ BirdKeeperRoyBeatenText:
 	done
 
 BirdKeeperRoyAfterBattleText:
-	text "You have #MON"
-	line "that know the HM"
+	text "You can use FLY"
+	line "with a SKY PASS?"
 
-	para "move FLY, don't"
-	line "you? I envy you."
+	para "I envy you."
 	done
 
 PokefanmTrevorSeenText:

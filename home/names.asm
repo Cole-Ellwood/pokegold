@@ -177,16 +177,9 @@ GetTMHMName::
 	ld a, [wNamedObjectIndex]
 	push af
 
-; TM/HM prefix
-	cp HM01
+; Former HMs are numbered as TM51-TM57.
+	scf
 	push af
-	jr c, .TM
-
-	ld hl, .HMText
-	ld bc, .HMTextEnd - .HMText
-	jr .copy
-
-.TM:
 	ld hl, .TMText
 	ld bc, .TMTextEnd - .TMText
 
@@ -201,7 +194,7 @@ GetTMHMName::
 	callfar GetTMHMNumber
 	pop de
 
-; HM numbers start from 51, not 1
+; Former HMs keep their sequential TM numbers.
 	pop af
 	ld a, c
 	jr c, .not_hm
@@ -243,11 +236,6 @@ GetTMHMName::
 .TMText:
 	db "TM"
 .TMTextEnd:
-	db "@"
-
-.HMText:
-	db "HM"
-.HMTextEnd:
 	db "@"
 
 INCLUDE "home/hm_moves.asm"

@@ -65,7 +65,9 @@ SageLiScript:
 	faceplayer
 	opentext
 	checkevent EVENT_GOT_HM05_FLASH
-	iftrue .GotFlash
+	iftrue .CheckLegacyLantern
+	checkevent EVENT_BEAT_SAGE_LI
+	iftrue .GiveFlash
 	writetext SageLiSeenText
 	waitbutton
 	closetext
@@ -73,14 +75,23 @@ SageLiScript:
 	loadtrainer SAGE, LI
 	startbattle
 	reloadmapafterbattle
+	setevent EVENT_BEAT_SAGE_LI
 	opentext
+.GiveFlash:
 	writetext SageLiTakeThisFlashText
 	promptbutton
+	checkitem LANTERN
+	iftrue .HaveLantern
+	verbosegiveitem LANTERN
+	iffalse .Done
+	promptbutton
+.HaveLantern:
 	verbosegiveitem HM_FLASH
+	iffalse .Done
 	setevent EVENT_GOT_HM05_FLASH
-	setevent EVENT_BEAT_SAGE_LI
 	writetext SageLiFlashExplanationText
 	waitbutton
+.Done:
 	closetext
 	end
 
@@ -89,6 +100,16 @@ SageLiScript:
 	waitbutton
 	closetext
 	end
+
+.CheckLegacyLantern:
+	checkitem LANTERN
+	iftrue .GotFlash
+	verbosegiveitem LANTERN
+	iffalse .Done
+	promptbutton
+	writetext SageLiFlashExplanationText
+	waitbutton
+	sjump .Done
 
 TrainerSageJin:
 	trainer SAGE, JIN, EVENT_BEAT_SAGE_JIN, SageJinSeenText, SageJinBeatenText, 0, .Script
@@ -157,7 +178,7 @@ SproutTowerElderLecturesRivalText:
 	cont "trainer."
 
 	para "As promised, here"
-	line "is your HM."
+	line "is your disc."
 
 	para "But let me say"
 	line "this: You should"
@@ -237,8 +258,8 @@ SageLiTakeThisFlashText:
 	para "no problem using"
 	line "this move."
 
-	para "Take this FLASH"
-	line "HM."
+	para "Take this LANTERN"
+	line "and FLASH disc."
 	done
 
 SageLiFlashExplanationText:
@@ -299,8 +320,8 @@ SageTroyAfterBattleText:
 	done
 
 SageNealSeenText:
-	text "The ELDER's HM"
-	line "lights even pitch-"
+	text "The ELDER's light"
+	line "pierces pitch-"
 	cont "black darkness."
 	done
 

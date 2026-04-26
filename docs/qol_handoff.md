@@ -37,19 +37,46 @@ Already implemented low-risk QoL in this handoff:
 - Default new games to FAST text speed.
 - Move Reminder page size is `4`.
 - Bicycle auto-registers on receipt when no valid item is already registered.
+- TM Voucher / held-item descriptions have clearer mechanics text.
+- Route 34 and Day-Care text now point players to TM Tutor lessons and the Move
+  Reminder.
+- Pokemon Center healing keeps the same flow, heal animation, music restart, and
+  Pokerus handling, but uses shorter pauses.
+- Repel renewal prompts when another Repel item is in the Bag and renews in
+  Max Repel, Super Repel, Repel priority.
+- HM-slot relief is implemented in the constrained form: seven key items
+  (`PRUNERS`, `SKY_PASS`, `SURFBOARD`, `POWER_GLOVE`, `LANTERN`, `WHIRL_KIT`,
+  `CLIMB_GEAR`) provide field use while acquisition and badge gates remain.
+  The former HM discs are now TM51-TM57, consumable, tossable, and forgettable.
+  This deliberately stays within the existing `MAX_KEY_ITEMS` pocket capacity:
+  the source currently has exactly 25 key-item attributes for 25 slots.
+  `tools/audit/check_release_smoke.py` guards both the tool slots and this
+  capacity.
+  The tools are `CANT_TOSS` key items without `CANT_SELECT`, so they can be
+  registered for SELECT use.
+  Old saves that have the original HM reward event but not the new key item are
+  treated as owning the matching tool during field checks, and the check tries
+  to backfill the key item. `SKY_PASS` and `LANTERN` are also recoverable by
+  revisiting their reward NPCs because Fly/Flash have no A-button obstacle path.
+  Failed or canceled tool use from the Bag/SELECT path uses a handled no-effect
+  state, preventing duplicate generic "not the time" text after the specific
+  field-move response.
+  A-button obstacle prompts and tool success text use the actual tool names
+  (`SURFBOARD`, `PRUNERS`, `POWER GLOVE`, `WHIRL KIT`, `CLIMB GEAR`) instead of
+  asking the player to use the old HM move.
+  Badge speeches and nearby field-move advice NPCs now describe those badge
+  gates in terms of the replacement tools instead of saying a party Pokemon must
+  know the HM.
 
 Recommended remaining order:
 
-1. Tighten/help text for new custom items and TM Voucher.
-2. Add/adjust Day-Care signage or NPC text pointing to the TM Tutor and Move
-   Reminder.
-3. Consider Repel renewal prompt last; it is useful but has the most edge cases.
-4. Consider Pokemon Center pause trimming only if it preserves heal animation,
-   music restart, and Pokerus behavior.
+- No remaining low-risk QoL item from this handoff is currently queued.
 
 Avoid running shoes, free portable PC, reusable TMs, cheaper/free healing, EXP
-changes, or HM removal as "low-risk" QoL. Those affect pacing, boss prep,
-resource pressure, or Gen 2 feel.
+changes, or further route-skip/HM expansion as "low-risk" QoL. Those affect
+pacing, boss prep, resource pressure, or Gen 2 feel. The implemented HM-tool
+system is the bounded exception: it removes move-slot tax without removing badge
+or story progression.
 
 ## Already Implemented
 
@@ -104,6 +131,12 @@ resource pressure, or Gen 2 feel.
 
 - Main sources: `data/items/descriptions.asm`, possibly map/gym text where
   vouchers are mentioned.
+- 2026-04-26 pass completed the low-risk text-only layer:
+  - `TMVoucherDesc`: points to Day-Care redemption for 3 TM lessons.
+  - `ChoiceBandDesc`, `ChoiceSpecsDesc`, `ChoiceScarfDesc`: say boost plus move
+    lock.
+  - `AssaultVestDesc`, `EvioliteDesc`, `AirBalloonDesc`, `ShellBellDesc`:
+    clarify the held effect in two-line item text.
 - Keep item order and pointer table alignment unchanged.
 - Respect two-line item description constraints. Short text is safer than exact
   mechanical detail that overflows or misleads.
@@ -119,6 +152,8 @@ resource pressure, or Gen 2 feel.
 ### Day-Care Service Signage
 
 - Source: `maps/DayCare.asm`.
+- 2026-04-26 pass updated the inside pamphlet. Route 34 `DayCareSignText` now
+  points to raising Pokemon, TM lessons, and old-move service inside.
 - Prefer text-only changes or an existing background event if practical.
 - Do not add event flags or persistent state.
 - Do not disturb Day-Care egg/mon callbacks or object positions unless necessary.
@@ -131,10 +166,20 @@ resource pressure, or Gen 2 feel.
 
 - Sources: `engine/overworld/events.asm`, `engine/events/repel.asm`,
   `engine/items/item_effects.asm`, `data/text/common_1.asm`.
+- 2026-04-26 pass implemented script-only renewal in `RepelWoreOffScript`:
+  - first checks `ENGINE_BUG_CONTEST_TIMER`; during an active Bug-Catching
+    Contest, it preserves the old wore-off-only behavior and does not offer Bag
+    item renewal;
+  - checks `MAX_REPEL`, then `SUPER_REPEL`, then `REPEL`;
+  - no prompt appears if none are in the Bag;
+  - declining leaves the old wore-off message as the only effect;
+  - accepting consumes exactly one item with `takeitem` and writes `wRepelEffect`
+    to `250`, `200`, or `100`;
+  - no new WRAM/SRAM or item-effect call path was added.
 - Current flow: `DoRepelStep` decrements `wRepelEffect`; when it reaches zero it
   calls `RepelWoreOffScript` and returns carry, causing the step not to continue
   into poison/egg/Day-Care/bike-step processing during that same event.
-- This is the riskiest QoL item. Keep it isolated and test hard.
+- This is the riskiest QoL item. Keep it isolated and test hard if edited again.
 - Must preserve:
   - no prompt if no Repel items are available;
   - old wore-off message when no renewal occurs;
@@ -154,6 +199,11 @@ resource pressure, or Gen 2 feel.
 ### Pokemon Center Friction Trim
 
 - Source: `engine/events/std_scripts.asm`, `PokecenterNurseScript`.
+- 2026-04-26 pass reduced only fixed pauses:
+  - pre-turn handoff `20 -> 10`;
+  - nurse turn waits `10 -> 5`;
+  - post-`HealMachineAnim` wait `30 -> 15`;
+  - post-return-text wait `20 -> 10`.
 - Lowest-risk approach: reduce pauses only, not flow.
 - Do not remove:
   - initial heal yes/no prompt;

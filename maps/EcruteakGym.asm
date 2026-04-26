@@ -194,11 +194,11 @@ MortyText_FogBadgeSpeech:
 	para "to L50 will obey"
 	line "you."
 
-	para "Also, #MON that"
-	line "know SURF will be"
+	para "Also, with FOG-"
+	line "BADGE, SURFBOARD"
 
-	para "able to use that"
-	line "move anytime."
+	para "can cross water"
+	line "anytime."
 
 	para "Take this TM"
 	line "VOUCHER as well."

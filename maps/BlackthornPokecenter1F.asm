@@ -44,7 +44,7 @@ BlackthornPokecenter1FTwinText:
 
 	para "So I got the MOVE"
 	line "DELETER to make it"
-	cont "forget an HM move."
+	cont "forget that move."
 	done
 
 BlackthornPokecenter1F_MapEvents:

@@ -470,8 +470,19 @@ UseItem:
 	ld a, [wItemEffectSucceeded]
 	and a
 	jr z, .Oak
+	cp $2
+	jr z, .didnt_use_field_item
 	ld a, PACKSTATE_QUITRUNSCRIPT
 	ld [wJumptableIndex], a
+	ret
+
+.didnt_use_field_item
+	xor a
+	ld [wItemEffectSucceeded], a
+	ldh [hBGMapMode], a
+	call Pack_InitGFX
+	call WaitBGMap_DrawPackGFX
+	call Pack_InitColors
 	ret
 
 TossMenu:

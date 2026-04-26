@@ -381,7 +381,7 @@ SchoolboyJackTradeMonText:
 
 	para "For example…"
 
-	para "There are {d:NUM_TMS} kinds"
+	para "There are {d:NUM_TM_HM} kinds"
 	line "of TM."
 
 	para "Traded #MON"

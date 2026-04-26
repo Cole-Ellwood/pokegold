@@ -339,60 +339,60 @@ AcademyFreezeText:
 	done
 
 AcademyNotebookText:
-	text "It's this kid's"
-	line "notebook…"
+	text "It's a battle"
+	line "notes booklet…"
 
-	para "Catch #MON"
-	line "using # BALLS."
+	para "JOHTO LEAGUE"
+	line "uses SET rules."
 
-	para "Up to six can be"
-	line "in your party."
+	para "Trainer battles:"
+	line "no PACK breaks."
+
+	para "Plan first."
 
 	para "Keep reading?"
 	done
 
 AcademyNotebookText1:
-	text "Before throwing a"
-	line "# BALL, weaken"
-	cont "the target first."
+	text "GYM LEADERS"
+	line "remember public"
+	cont "moves."
 
-	para "A poisoned or"
-	line "burned #MON is"
-	cont "easier to catch."
+	para "Show THUNDERPUNCH,"
+	line "and they may"
+	cont "play around it."
 
 	para "Keep reading?"
 	done
 
 AcademyNotebookText2:
-	text "Some moves may"
-	line "cause confusion."
+	text "Type habits are"
+	line "stronger now."
 
-	para "Confusion may make"
-	line "a #MON attack"
-	cont "itself."
+	para "POISON may hurt"
+	line "contact attackers."
 
-	para "Leaving battle"
-	line "clears up any"
-	cont "confusion."
+	para "GRASS may heal"
+	line "between turns."
+
+	para "DRAGON can bend"
+	line "matchups."
 
 	para "Keep reading?"
 	done
 
 AcademyNotebookText3:
-	text "People who catch"
-	line "and use #MON"
+	text "Held items are"
+	line "serious now."
 
-	para "in battle are"
-	line "#MON trainers."
+	para "Some boost stats"
+	line "but lock moves."
 
-	para "They are expected"
-	line "to visit #MON"
+	para "Read ITEM text"
+	line "before a GYM."
 
-	para "GYMS and defeat"
-	line "other trainers."
-
-	para "The next page"
-	line "is… Blank!"
+	para "The next page is"
+	line "blank."
 
 	para "Boy: E-he-he…"
 

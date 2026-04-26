@@ -125,7 +125,7 @@
 	const MIRACLE_SEED ; 75
 	const THICK_CLUB   ; 76
 	const FOCUS_BAND   ; 77
-	const ITEM_78      ; 78
+	const PRUNERS      ; 78
 	const ENERGYPOWDER ; 79
 	const ENERGY_ROOT  ; 7a
 	const HEAL_POWDER  ; 7b
@@ -140,7 +140,7 @@
 	const STAR_PIECE   ; 84
 	const BASEMENT_KEY ; 85
 	const PASS         ; 86
-	const ITEM_87      ; 87
+	const SURFBOARD    ; 87
 	const CHOICE_SCARF ; 88
 	const ASSAULT_VEST ; 89
 	const CHARCOAL     ; 8a
@@ -160,14 +160,14 @@
 	const BERSERK_GENE ; 98
 	const ROCKY_HELMET ; 99
 	const METRONOME_ITEM ; 9a
-	const ITEM_9B      ; 9b
+	const WHIRL_KIT    ; 9b
 	const SACRED_ASH   ; 9c
 	const HEAVY_BALL   ; 9d
 	const FLOWER_MAIL  ; 9e
 	const LEVEL_BALL   ; 9f
 	const LURE_BALL    ; a0
 	const FAST_BALL    ; a1
-	const ITEM_A2      ; a2
+	const SKY_PASS     ; a2
 	const LIGHT_BALL   ; a3
 	const FRIEND_BALL  ; a4
 	const MOON_BALL    ; a5
@@ -176,15 +176,15 @@
 	const GORGEOUS_BOX ; a8
 	const SUN_STONE    ; a9
 	const POLKADOT_BOW ; aa
-	const ITEM_AB      ; ab
+	const LANTERN      ; ab
 	const UP_GRADE     ; ac
 	const BERRY        ; ad
 	const GOLD_BERRY   ; ae
 	const SQUIRTBOTTLE ; af
-	const ITEM_B0      ; b0
+	const POWER_GLOVE  ; b0
 	const PARK_BALL    ; b1
 	const RAINBOW_WING ; b2
-	const ITEM_B3      ; b3
+	const CLIMB_GEAR   ; b3
 	const BRICK_PIECE  ; b4
 	const SURF_MAIL    ; b5
 	const LITEBLUEMAIL ; b6

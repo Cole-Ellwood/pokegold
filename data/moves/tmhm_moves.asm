@@ -11,7 +11,7 @@ for n, 1, NUM_TMS + 1
 endr
 	assert_table_length NUM_TMS
 
-; HMs
+; Former HM moves, displayed as TM51-TM57.
 for n, 1, NUM_HMS + 1
 	db HM{02d:n}_MOVE
 endr

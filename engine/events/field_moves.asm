@@ -393,12 +393,21 @@ FlyFunction_InitGFX:
 	ld hl, vTiles0 tile FIELDMOVE_GRASS
 	lb bc, BANK(CutGrassGFX), 4
 	call Request2bpp
+	ld a, [wCurItem]
+	cp SKY_PASS
+	jr nz, .party_mon
+	ld a, PIDGEY
+	jr .got_species
+
+.party_mon
 	ld a, [wCurPartyMon]
 	ld hl, wPartySpecies
 	ld e, a
 	ld d, 0
 	add hl, de
 	ld a, [hl]
+
+.got_species
 	ld [wTempIconSpecies], a
 	ld e, FIELDMOVE_FLY
 	farcall GetSpeciesIcon

@@ -10,7 +10,7 @@ _AlreadySurfingText::
 
 _AskSurfText::
 	text "The water is calm."
-	line "Want to SURF?"
+	line "Use SURFBOARD?"
 	done
 
 _UseWaterfallText::
@@ -19,14 +19,21 @@ _UseWaterfallText::
 	line "WATERFALL!"
 	done
 
+_UseClimbGearText::
+	text "<PLAYER> used the"
+	line "CLIMB GEAR!"
+	done
+
 _HugeWaterfallText::
 	text "Wow, it's a huge"
 	line "waterfall."
+
+	para "CLIMB GEAR may"
+	line "help you climb."
 	done
 
 _AskWaterfallText::
-	text "Do you want to use"
-	line "WATERFALL?"
+	text "Use CLIMB GEAR?"
 	done
 
 _UseDigText::
@@ -68,18 +75,27 @@ _UseStrengthText::
 	line "STRENGTH!"
 	done
 
+_UsePowerGloveText::
+	text "<PLAYER> used the"
+	line "POWER GLOVE!"
+	done
+
 _MoveBoulderText::
 	text_ram wStringBuffer1
 	text " can"
 	line "move boulders."
 	prompt
 
-_AskStrengthText::
-	text "A #MON may be"
-	line "able to move this."
+_PowerGloveMoveBoulderText::
+	text "The POWER GLOVE"
+	line "can move boulders."
+	prompt
 
-	para "Want to use"
-	line "STRENGTH?"
+_AskStrengthText::
+	text "This boulder looks"
+	line "movable."
+
+	para "Use POWER GLOVE?"
 	done
 
 _BouldersMoveText::
@@ -88,8 +104,8 @@ _BouldersMoveText::
 	done
 
 _BouldersMayMoveText::
-	text "A #MON may be"
-	line "able to move this."
+	text "A POWER GLOVE may"
+	line "move this."
 	done
 
 _UseWhirlpoolText::
@@ -98,20 +114,24 @@ _UseWhirlpoolText::
 	line "WHIRLPOOL!"
 	prompt
 
+_UseWhirlKitText::
+	text "<PLAYER> used the"
+	line "WHIRL KIT!"
+	prompt
+
 _MayPassWhirlpoolText::
 	text "It's a vicious"
 	line "whirlpool!"
 
-	para "A #MON may be"
-	line "able to pass it."
+	para "A WHIRL KIT may"
+	line "clear it."
 	done
 
 _AskWhirlpoolText::
 	text "A whirlpool is in"
 	line "the way."
 
-	para "Want to use"
-	line "WHIRLPOOL?"
+	para "Use WHIRL KIT?"
 	done
 
 _UseHeadbuttText::
@@ -186,14 +206,14 @@ _GotOffBikeText::
 
 _AskCutText::
 	text "This tree can be"
-	line "CUT!"
+	line "CUT."
 
-	para "Want to use CUT?"
+	para "Use PRUNERS?"
 	done
 
 _CanCutText::
-	text "This tree can be"
-	line "CUT!"
+	text "PRUNERS could"
+	line "CUT this tree."
 	done
 
 _FoundItemText::

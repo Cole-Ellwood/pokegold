@@ -120,7 +120,7 @@ ItemDescriptions:
 	dw MiracleSeedDesc
 	dw ThickClubDesc
 	dw FocusBandDesc
-	dw TeruSama11Desc
+	dw PrunersDesc
 	dw EnergyPowderDesc
 	dw EnergyRootDesc
 	dw HealPowderDesc
@@ -135,7 +135,7 @@ ItemDescriptions:
 	dw StarPieceDesc
 	dw BasementKeyDesc
 	dw PassDesc
-	dw TeruSama13Desc
+	dw SurfboardDesc
 	dw ChoiceScarfDesc
 	dw AssaultVestDesc
 	dw CharcoalDesc
@@ -155,14 +155,14 @@ ItemDescriptions:
 	dw BerserkGeneDesc
 	dw RockyHelmetDesc
 	dw MetronomeItemDesc
-	dw TeruSama24Desc
+	dw WhirlKitDesc
 	dw SacredAshDesc
 	dw HeavyBallDesc
 	dw FlowerMailDesc
 	dw LevelBallDesc
 	dw LureBallDesc
 	dw FastBallDesc
-	dw TeruSama25Desc
+	dw SkyPassDesc
 	dw LightBallDesc
 	dw FriendBallDesc
 	dw MoonBallDesc
@@ -171,15 +171,15 @@ ItemDescriptions:
 	dw GorgeousBoxDesc
 	dw SunStoneDesc
 	dw PolkadotBowDesc
-	dw TeruSama26Desc
+	dw LanternDesc
 	dw UpGradeDesc
 	dw BerryDesc
 	dw GoldBerryDesc
 	dw SquirtBottleDesc
-	dw TeruSama27Desc
+	dw PowerGloveDesc
 	dw ParkBallDesc
 	dw RainbowWingDesc
-	dw TeruSama28Desc
+	dw ClimbGearDesc
 	dw BrickPieceDesc
 	dw SurfMailDesc
 	dw LiteBlueMailDesc
@@ -705,11 +705,11 @@ RageCandyBarDesc:
 	next "HP by 20.@"
 
 TMVoucherDesc:
-	db   "DAY-CARE TM TUTOR"
-	next "gives 3 lessons.@"
+	db   "Redeem at DAY-CARE"
+	next "for 3 TM lessons.@"
 
 ChoiceBandDesc:
-	db   "Boosts ATTACK,"
+	db   "Raises ATTACK;"
 	next "locks move. (HOLD)@"
 
 MiracleSeedDesc:
@@ -724,8 +724,9 @@ FocusBandDesc:
 	db   "May prevent faint-"
 	next "ing. (HOLD)@"
 
-TeruSama11Desc:
-	db   "?@"
+PrunersDesc:
+	db   "Cuts trees and"
+	next "grass in the way.@"
 
 EnergyPowderDesc:
 	db   "Restores #MON"
@@ -760,7 +761,7 @@ MachinePartDesc:
 	next "the POWER PLANT.@"
 
 ChoiceSpecsDesc:
-	db   "Boosts SPCL.ATK,"
+	db   "Raises SPCL.ATK;"
 	next "locks move. (HOLD)@"
 
 LostItemDesc:
@@ -782,15 +783,16 @@ PassDesc:
 	db   "A ticket for the"
 	next "MAGNET TRAIN.@"
 
-TeruSama13Desc:
-	db   "?@"
+SurfboardDesc:
+	db   "Ride it across"
+	next "calm water.@"
 
 ChoiceScarfDesc:
-	db   "Boosts SPEED,"
+	db   "Raises SPEED;"
 	next "locks move. (HOLD)@"
 
 AssaultVestDesc:
-	db   "Boosts SPCL.DEF,"
+	db   "Raises SPCL.DEF;"
 	next "no status moves.@"
 
 CharcoalDesc:
@@ -830,16 +832,16 @@ LeftoversDesc:
 	next "battle. (HOLD)@"
 
 EvioliteDesc:
-	db   "If can evolve,"
+	db   "Unevolved only:"
 	next "DEF/SPCL.DEF up.@"
 
 AirBalloonDesc:
-	db   "Ground immunity"
+	db   "Immune to GROUND"
 	next "until hit. (HOLD)@"
 
 ShellBellDesc:
-	db   "Heals from damage"
-	next "it deals. (HOLD)@"
+	db   "Heals on damage"
+	next "dealt. (HOLD)@"
 
 MysteryBerryDesc:
 	db   "A self-restore"
@@ -861,8 +863,9 @@ MetronomeItemDesc:
 	db   "Same move boosts"
 	next "damage. (HOLD)@"
 
-TeruSama24Desc:
-	db   "?@"
+WhirlKitDesc:
+	db   "Clears whirlpools"
+	next "blocking the way.@"
 
 SacredAshDesc:
 	db   "Fully revives all"
@@ -888,8 +891,9 @@ FastBallDesc:
 	db   "A BALL for catch-"
 	next "ing fast #MON.@"
 
-TeruSama25Desc:
-	db   "?@"
+SkyPassDesc:
+	db   "Use outdoors to"
+	next "FLY between towns.@"
 
 LightBallDesc:
 	db   "An odd, electrical"
@@ -923,8 +927,9 @@ PolkadotBowDesc:
 	db   "Powers up normal-"
 	next "type moves. (HOLD)@"
 
-TeruSama26Desc:
-	db   "?@"
+LanternDesc:
+	db   "Lights dark caves"
+	next "with FLASH.@"
 
 UpGradeDesc:
 	db   "A mysterious box"
@@ -942,8 +947,9 @@ SquirtBottleDesc:
 	db   "A bottle used for"
 	next "watering plants.@"
 
-TeruSama27Desc:
-	db   "?@"
+PowerGloveDesc:
+	db   "Moves boulders"
+	next "with STRENGTH.@"
 
 ParkBallDesc:
 	db   "The Bug-Catching"
@@ -953,8 +959,9 @@ RainbowWingDesc:
 	db   "A mystical feather"
 	next "of rainbow colors.@"
 
-TeruSama28Desc:
-	db   "?@"
+ClimbGearDesc:
+	db   "Climbs waterfalls"
+	next "with WATERFALL.@"
 
 BrickPieceDesc:
 	db   "A rare chunk of"

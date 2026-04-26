@@ -105,6 +105,126 @@ CheckPartyMove:
 	scf
 	ret
 
+CheckFieldTool:
+; Check if the matching HM replacement item is in the KEY ITEMS pocket.
+; Legacy saves may have the old HM event flag without the new tool, so those
+; events also count and opportunistically backfill the key item.
+; Input: a = item. Return carry if owned.
+	ld [wCurItem], a
+	ld hl, wNumKeyItems
+	call CheckItem
+	ret c
+	call CheckLegacyFieldToolEvent
+	ret nc
+	ld a, 1
+	ld [wItemQuantityChange], a
+	ld hl, wNumItems
+	call ReceiveItem
+	scf
+	ret
+
+CheckLegacyFieldToolEvent:
+	ld a, [wCurItem]
+	cp PRUNERS
+	jr z, .cut
+	cp SURFBOARD
+	jr z, .surf
+	cp POWER_GLOVE
+	jr z, .strength
+	cp WHIRL_KIT
+	jr z, .whirlpool
+	cp CLIMB_GEAR
+	jr z, .waterfall
+	cp SKY_PASS
+	jr z, .fly
+	cp LANTERN
+	jr z, .flash
+	and a
+	ret
+
+.cut
+	ld de, EVENT_GOT_HM01_CUT
+	jr .check
+.fly
+	ld de, EVENT_GOT_HM02_FLY
+	jr .check
+.surf
+	ld de, EVENT_GOT_HM03_SURF
+	jr .check
+.strength
+	ld de, EVENT_GOT_HM04_STRENGTH
+	jr .check
+.flash
+	ld de, EVENT_GOT_HM05_FLASH
+	jr .check
+.whirlpool
+	ld de, EVENT_GOT_HM06_WHIRLPOOL
+	jr .check
+.waterfall
+	ld de, EVENT_GOT_HM07_WATERFALL
+
+.check
+	ld b, CHECK_FLAG
+	call EventFlagAction
+	ld a, c
+	and a
+	ret z
+	scf
+	ret
+
+GetFieldMoveUserName:
+	ld a, [wCurItem]
+	cp PRUNERS
+	jr z, .item
+	cp SURFBOARD
+	jr z, .item
+	cp POWER_GLOVE
+	jr z, .item
+	cp WHIRL_KIT
+	jr z, .item
+	cp CLIMB_GEAR
+	jr z, .item
+	jp GetPartyNickname
+
+.item
+	ld [wNamedObjectIndex], a
+	call GetItemName
+	call CopyName1
+	ld de, wStringBuffer2
+	ld hl, wStringBuffer3
+	call CopyName2
+	ret
+
+IsUsingPruners:
+	ld a, PRUNERS
+	jr IsUsingFieldTool
+
+IsUsingSurfboard:
+	ld a, SURFBOARD
+	jr IsUsingFieldTool
+
+IsUsingPowerGlove:
+	ld a, POWER_GLOVE
+	jr IsUsingFieldTool
+
+IsUsingWhirlKit:
+	ld a, WHIRL_KIT
+	jr IsUsingFieldTool
+
+IsUsingClimbGear:
+	ld a, CLIMB_GEAR
+
+IsUsingFieldTool:
+	ld b, a
+	ld a, [wCurItem]
+	cp b
+	ld a, FALSE
+	jr nz, .done
+	ld a, TRUE
+.done
+	ld [wScriptVar], a
+	ret
+
 FieldMoveFailed:
 	ld hl, .CantUseItemText
 	call MenuTextboxBackup
@@ -162,6 +282,10 @@ UseCutText:
 	text_far _UseCutText
 	text_end
 
+UsePrunersText:
+	text_far _UsePrunersText
+	text_end
+
 CutNothingText:
 	text_far _CutNothingText
 	text_end
@@ -204,8 +328,14 @@ Script_CutFromMenu:
 	special UpdateTimePals
 
 Script_Cut:
+	callasm IsUsingPruners
+	iftrue .UsePruners
 	callasm GetPartyNickname
 	writetext UseCutText
+	sjump .Cut
+.UsePruners:
+	writetext UsePrunersText
+.Cut:
 	refreshmap
 	callasm CutDownTreeOrGrass
 	closetext
@@ -370,7 +500,7 @@ SurfFunction:
 .DoSurf:
 	call GetSurfType
 	ld [wSurfingPlayerState], a
-	call GetPartyNickname
+	call GetFieldMoveUserName
 	ld hl, SurfFromMenuScript
 	call QueueScript
 	ld a, JUMPTABLE_EXIT | $1
@@ -392,7 +522,13 @@ SurfFromMenuScript:
 	special UpdateTimePals
 
 UsedSurfScript:
+	callasm IsUsingSurfboard
+	iftrue .UsedSurfboard
 	writetext UsedSurfText ; "used SURF!"
+	sjump .AfterSurfText
+.UsedSurfboard:
+	writetext UsedSurfboardText
+.AfterSurfText:
 	waitbutton
 	closetext
 
@@ -408,6 +544,10 @@ UsedSurfText:
 	text_far _UsedSurfText
 	text_end
 
+UsedSurfboardText:
+	text_far _UsedSurfboardText
+	text_end
+
 CantSurfText:
 	text_far _CantSurfText
 	text_end
@@ -420,6 +560,9 @@ GetSurfType:
 ; Surfing on Pikachu uses an alternate sprite.
 ; This is done by using a separate movement type.
 
+	ld a, [wCurItem]
+	cp SURFBOARD
+	jr z, .normal
 	ld a, [wCurPartyMon]
 	ld e, a
 	ld d, 0
@@ -430,6 +573,7 @@ GetSurfType:
 	cp PIKACHU
 	ld a, PLAYER_SURF_PIKA
 	ret z
+.normal
 	ld a, PLAYER_SURF
 	ret
 
@@ -489,9 +633,9 @@ TrySurfOW::
 	call CheckEngineFlag
 	jr c, .quit
 
-	ld d, SURF
-	call CheckPartyMove
-	jr c, .quit
+	ld a, SURFBOARD
+	call CheckFieldTool
+	jr nc, .quit
 
 	ld hl, wBikeFlags
 	bit BIKEFLAGS_ALWAYS_ON_BIKE_F, [hl]
@@ -499,7 +643,7 @@ TrySurfOW::
 
 	call GetSurfType
 	ld [wSurfingPlayerState], a
-	call GetPartyNickname
+	call GetFieldMoveUserName
 
 	ld a, BANK(AskSurfScript)
 	ld hl, AskSurfScript
@@ -649,8 +793,14 @@ Script_WaterfallFromMenu:
 	special UpdateTimePals
 
 Script_UsedWaterfall:
+	callasm IsUsingClimbGear
+	iftrue .UsedClimbGear
 	callasm GetPartyNickname
 	writetext .UseWaterfallText
+	sjump .AfterText
+.UsedClimbGear:
+	writetext .UseClimbGearText
+.AfterText:
 	waitbutton
 	closetext
 	playsound SFX_BUBBLEBEAM
@@ -678,10 +828,14 @@ Script_UsedWaterfall:
 	text_far _UseWaterfallText
 	text_end
 
+.UseClimbGearText:
+	text_far _UseClimbGearText
+	text_end
+
 TryWaterfallOW::
-	ld d, WATERFALL
-	call CheckPartyMove
-	jr c, .failed
+	ld a, CLIMB_GEAR
+	call CheckFieldTool
+	jr nc, .failed
 	ld de, ENGINE_RISINGBADGE
 	call CheckEngineFlag
 	jr c, .failed
@@ -964,6 +1118,13 @@ StrengthFunction:
 SetStrengthFlag:
 	ld hl, wBikeFlags
 	set BIKEFLAGS_STRENGTH_ACTIVE_F, [hl]
+	ld a, [wCurItem]
+	cp POWER_GLOVE
+	jr nz, .pokemon
+	call GetFieldMoveUserName
+	ret
+
+.pokemon
 	ld a, [wCurPartyMon]
 	ld e, a
 	ld d, 0
@@ -980,11 +1141,18 @@ Script_StrengthFromMenu:
 
 Script_UsedStrength:
 	callasm SetStrengthFlag
+	callasm IsUsingPowerGlove
+	iftrue .UsedPowerGlove
 	writetext .UseStrengthText
 	readmem wStrengthSpecies
 	cry 0 ; plays [wStrengthSpecies] cry
 	pause 3
 	writetext .MoveBoulderText
+	sjump .Done
+.UsedPowerGlove:
+	writetext .UsePowerGloveText
+	writetext .PowerGloveMoveBoulderText
+.Done:
 	closetext
 	end
 
@@ -992,8 +1160,16 @@ Script_UsedStrength:
 	text_far _UseStrengthText
 	text_end
 
+.UsePowerGloveText:
+	text_far _UsePowerGloveText
+	text_end
+
 .MoveBoulderText:
 	text_far _MoveBoulderText
+	text_end
+
+.PowerGloveMoveBoulderText:
+	text_far _PowerGloveMoveBoulderText
 	text_end
 
 AskStrengthScript:
@@ -1029,9 +1205,9 @@ BouldersMayMoveText:
 	text_end
 
 TryStrengthOW:
-	ld d, STRENGTH
-	call CheckPartyMove
-	jr c, .nope
+	ld a, POWER_GLOVE
+	call CheckFieldTool
+	jr nc, .nope
 
 	ld de, ENGINE_PLAINBADGE
 	call CheckEngineFlag
@@ -1103,6 +1279,10 @@ UseWhirlpoolText:
 	text_far _UseWhirlpoolText
 	text_end
 
+UseWhirlKitText:
+	text_far _UseWhirlKitText
+	text_end
+
 TryWhirlpoolMenu:
 	call GetFacingTileCoord
 	ld c, a
@@ -1138,8 +1318,14 @@ Script_WhirlpoolFromMenu:
 	special UpdateTimePals
 
 Script_UsedWhirlpool:
+	callasm IsUsingWhirlKit
+	iftrue .UsedWhirlKit
 	callasm GetPartyNickname
 	writetext UseWhirlpoolText
+	sjump .AfterText
+.UsedWhirlKit:
+	writetext UseWhirlKitText
+.AfterText:
 	refreshmap
 	callasm DisappearWhirlpool
 	closetext
@@ -1163,9 +1349,9 @@ DisappearWhirlpool:
 	ret
 
 TryWhirlpoolOW::
-	ld d, WHIRLPOOL
-	call CheckPartyMove
-	jr c, .failed
+	ld a, WHIRL_KIT
+	call CheckFieldTool
+	jr nc, .failed
 	ld de, ENGINE_GLACIERBADGE
 	call CheckEngineFlag
 	jr c, .failed
@@ -1783,9 +1969,9 @@ GotOffBikeText:
 	text_end
 
 TryCutOW::
-	ld d, CUT
-	call CheckPartyMove
-	jr c, .cant_cut
+	ld a, PRUNERS
+	call CheckFieldTool
+	jr nc, .cant_cut
 
 	ld de, ENGINE_HIVEBADGE
 	call CheckEngineFlag

@@ -348,7 +348,8 @@ Mechanic:
 - New TM Tutor at Day Care area.
 - One-time unlock fee: `1000` money (`EVENT_TM_TUTOR_UNLOCKED`).
 - `TM_VOUCHER` can be redeemed for 3 tutor lesson credits.
-- Teaching uses the TM/HM move-selection UI but does not consume actual TM inventory.
+- Teaching uses the TM move-selection UI, including former HM slots, but does
+  not consume actual TM inventory.
 - Credit decreases only on successful learn.
 - Credits are stored (`wTMTutorCredits`) and capped to 99.
 - Backup/restore buffer used to preserve true TM/HM inventory during tutor flow (`wTMTutorTMHMBackup`).
@@ -377,6 +378,47 @@ Files:
 Mechanic:
 - Selected gym reward scripts now grant `TM_VOUCHER` instead of direct TM items.
 - Voucher is consumed by TM Tutor for lesson credits.
+
+### 3.4 HM Field Tools And Former HMs As TMs
+
+Files:
+- `constants/item_constants.asm`
+- `data/items/attributes.asm`
+- `data/items/names.asm`
+- `engine/events/overworld.asm`
+- `engine/items/item_effects.asm`
+- `engine/items/tmhm.asm`
+- `engine/events/tm_tutor.asm`
+- HM reward map scripts in `maps/`
+
+Mechanic:
+- Field use no longer requires a party Pokemon to know the old HM move.
+- Seven key items provide field actions while preserving acquisition and badge
+  gates: `PRUNERS`, `SKY_PASS`, `SURFBOARD`, `POWER_GLOVE`, `LANTERN`,
+  `WHIRL_KIT`, and `CLIMB_GEAR`.
+- Former HM discs are displayed and handled as `TM51`-`TM57`.
+- Former HM moves can be forgotten and their discs are consumed when taught.
+- Original HM reward moments now give the key item plus the corresponding
+  converted TM.
+- Legacy saves that already set an original HM reward event treat that event as
+  ownership for matching field-tool checks and try to backfill the missing key
+  item. `SKY_PASS` and `LANTERN` can also be recovered by revisiting their
+  reward NPCs, since Fly/Flash do not have an A-button route-blocker check.
+- `SKY_PASS` uses a fixed Pidgey-style fly animation icon instead of reading
+  stale party-mon state.
+- Failed or canceled tool use from the Bag or SELECT registration is marked as
+  handled no-effect state, so field-specific failure text is not followed by the
+  generic Oak "not the time" message.
+- The tools are `CANT_TOSS` key items without `CANT_SELECT`, so they can be
+  registered for SELECT use.
+- A-button obstacle prompts and tool-use success text name the replacement
+  tools instead of asking the player to use the old HM moves.
+- Badge speeches and nearby field-move advice NPCs explain badge gates using
+  the replacement tools rather than "Pokemon must know the HM" wording.
+- The seven tools fit exactly in the existing key-item pocket budget: 25
+  key-item attributes for `MAX_KEY_ITEMS = 25`.
+- TM Tutor uses `NO_ITEM` as its no-consume sentinel and can offer the former HM
+  move slots without consuming or mutating true TM inventory.
 
 ## 4) Evolution Mechanics
 

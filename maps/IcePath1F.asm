@@ -8,7 +8,20 @@ IcePath1F_MapScripts:
 	def_callbacks
 
 IcePath1FHMWaterfall:
-	itemball HM_WATERFALL
+	opentext
+	checkitem CLIMB_GEAR
+	iftrue .HaveClimbGear
+	verbosegiveitem CLIMB_GEAR
+	iffalse .Done
+	promptbutton
+.HaveClimbGear:
+	verbosegiveitem HM_WATERFALL
+	iffalse .Done
+	setevent EVENT_GOT_HM07_WATERFALL
+	disappear ICEPATH1F_POKE_BALL1
+.Done:
+	closetext
+	end
 
 IcePath1FPPUp:
 	itemball PP_UP
@@ -27,5 +40,5 @@ IcePath1F_MapEvents:
 	def_bg_events
 
 	def_object_events
-	object_event 31,  7, SPRITE_POKE_BALL, SPRITEMOVEDATA_STILL, 0, 0, -1, -1, 0, OBJECTTYPE_ITEMBALL, 0, IcePath1FHMWaterfall, EVENT_GOT_HM07_WATERFALL
+	object_event 31,  7, SPRITE_POKE_BALL, SPRITEMOVEDATA_STILL, 0, 0, -1, -1, 0, OBJECTTYPE_SCRIPT, 0, IcePath1FHMWaterfall, EVENT_GOT_HM07_WATERFALL
 	object_event 32, 23, SPRITE_POKE_BALL, SPRITEMOVEDATA_STILL, 0, 0, -1, -1, 0, OBJECTTYPE_ITEMBALL, 0, IcePath1FPPUp, EVENT_ICE_PATH_1F_PP_UP

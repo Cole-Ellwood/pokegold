@@ -14,11 +14,19 @@ OlivineCafeStrengthSailorScript:
 	iftrue .GotStrength
 	writetext OlivineCafeStrengthSailorText
 	promptbutton
+	checkitem POWER_GLOVE
+	iftrue .HavePowerGlove
+	verbosegiveitem POWER_GLOVE
+	iffalse .Done
+	promptbutton
+.HavePowerGlove:
 	verbosegiveitem HM_STRENGTH
+	iffalse .Done
 	setevent EVENT_GOT_HM04_STRENGTH
 .GotStrength:
 	writetext OlivineCafeStrengthSailorText_GotStrength
 	waitbutton
+.Done:
 	closetext
 	end
 
@@ -35,14 +43,17 @@ OlivineCafeStrengthSailorText:
 	cont "boulders aside."
 
 	para "Here, use this"
-	line "and teach them"
-	cont "STRENGTH!"
+	line "POWER GLOVE for"
+	cont "boulders!"
+
+	para "The disc teaches"
+	line "STRENGTH."
 
 	para "You'll need"
 	line "GOLDENROD's GYM"
 
-	para "BADGE to use that"
-	line "outside battles."
+	para "BADGE to use the"
+	line "POWER GLOVE."
 	done
 
 OlivineCafeStrengthSailorText_GotStrength:
@@ -64,11 +75,10 @@ OlivineCafeFishingGuruText:
 	line "pools on the way"
 	cont "to CIANWOOD."
 
-	para "Your #MON must"
-	line "know a special"
+	para "You'll need a"
+	line "WHIRL KIT to get"
 
-	para "move to get over"
-	line "the whirlpools."
+	para "over whirlpools."
 	done
 
 OlivineCafe_MapEvents:

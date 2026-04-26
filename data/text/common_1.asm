@@ -1725,10 +1725,6 @@ _BootedTMText::
 	text "Booted up a TM."
 	prompt
 
-_BootedHMText::
-	text "Booted up an HM."
-	prompt
-
 _ContainedMoveText::
 	text "It contained"
 	line "@"
@@ -1835,6 +1831,11 @@ _UseCutText::
 	line "CUT!"
 	prompt
 
+_UsePrunersText::
+	text "The PRUNERS cut"
+	line "a path!"
+	prompt
+
 _CutNothingText::
 	text "There's nothing to"
 	line "CUT here."
@@ -1850,4 +1851,9 @@ _UsedSurfText::
 	text_ram wStringBuffer2
 	text " used"
 	line "SURF!"
+	done
+
+_UsedSurfboardText::
+	text "<PLAYER> hopped on"
+	line "the SURFBOARD!"
 	done

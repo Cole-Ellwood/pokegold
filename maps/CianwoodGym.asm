@@ -205,11 +205,10 @@ ChuckExplainBadgeText:
 	para "L70 obey, even"
 	line "traded ones."
 
-	para "It also lets your"
-	line "#MON use FLY"
+	para "It also lets the"
+	line "SKY PASS use FLY"
 
-	para "when you're not in"
-	line "a battle."
+	para "outside battle."
 
 	para "Now take this TM"
 	line "VOUCHER too!"

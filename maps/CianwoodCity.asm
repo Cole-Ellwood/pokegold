@@ -24,7 +24,7 @@ CianwoodCityChucksWife:
 	faceplayer
 	opentext
 	checkevent EVENT_GOT_HM02_FLY
-	iftrue .GotFly
+	iftrue .CheckLegacySkyPass
 	writetext ChucksWifeEasierToFlyText
 	promptbutton
 	checkevent EVENT_BEAT_CHUCK
@@ -37,6 +37,12 @@ CianwoodCityChucksWife:
 .BeatChuck:
 	writetext ChucksWifeGiveHMText
 	promptbutton
+	checkitem SKY_PASS
+	iftrue .HaveSkyPass
+	verbosegiveitem SKY_PASS
+	iffalse .Done
+	promptbutton
+.HaveSkyPass:
 	verbosegiveitem HM_FLY
 	iffalse .Done
 	setevent EVENT_GOT_HM02_FLY
@@ -48,6 +54,16 @@ CianwoodCityChucksWife:
 .Done:
 	closetext
 	end
+
+.CheckLegacySkyPass:
+	checkitem SKY_PASS
+	iftrue .GotFly
+	verbosegiveitem SKY_PASS
+	iffalse .Done
+	promptbutton
+	writetext ChucksWifeFlySpeechText
+	promptbutton
+	sjump .GotFly
 
 CianwoodCityYoungster:
 	jumptextfaceplayer CianwoodCityYoungsterText
@@ -93,16 +109,15 @@ ChucksWifeEasierToFlyText:
 	line "been hard."
 
 	para "It would be much"
-	line "easier if your"
+	line "easier with a"
 
-	para "#MON knew how"
-	line "to FLY…"
+	para "SKY PASS…"
 	done
 
 ChucksWifeBeatChuckText:
 	text "But you can't use"
-	line "FLY without this"
-	cont "city's GYM BADGE."
+	line "SKY PASS without"
+	cont "this GYM BADGE."
 
 	para "If you beat the"
 	line "GYM LEADER here,"
@@ -117,18 +132,18 @@ ChucksWifeGiveHMText:
 	line "GYM BADGE!"
 
 	para "Then you should"
-	line "take this HM."
+	line "take these."
 	done
 
 ChucksWifeFlySpeechText:
-	text "Teach FLY to your"
-	line "#MON."
+	text "The SKY PASS lets"
+	line "you FLY outdoors."
 
-	para "You will be able"
-	line "to FLY instantly"
+	para "The disc teaches"
+	line "FLY to #MON."
 
-	para "to anywhere you "
-	line "have visited."
+	para "You can travel to"
+	line "visited towns."
 	done
 
 ChucksWifeChubbyText:
