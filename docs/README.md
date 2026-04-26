@@ -30,12 +30,14 @@ player can lose, and old knowledge is useful but incomplete.
 8. Task-specific docs:
    - Boss AI / trainer difficulty: `docs/boss_ai_spec.md`,
      `docs/boss_ai_bug_testing_plan.md`
-   - Review / bug hunt: `docs/codex_review_playbook.md`
+   - Review / bug hunt: `docs/codex_review_playbook.md`,
+     `docs/bug_hunt_master_playbook.md`
    - Pokemon balance intent: `docs/balance_intent.md`,
      `docs/evolution_policy.md`, `docs/buff_backlog.md`,
      `docs/generated/balance_audit.md`
    - Existing mechanics: `docs/mechanics_changes_from_base.md`
-   - QoL follow-up work: `docs/qol_handoff.md`
+   - QoL follow-up work: `docs/qol_handoff.md`,
+     `docs/qol_research_report.md`
    - Data rebalance history: `docs/manifest.md`
    - Build/release status: `docs/build.md`, `docs/validation_report.md`
 
@@ -71,6 +73,8 @@ python scripts\generate_dev_index.py --rom pokegold
   jumping to labels/banks.
 - Use `docs/codex_review_playbook.md` for reviews, bug hunts, and finding
   severity/risk classes.
+- Use `docs/bug_hunt_master_playbook.md` when the prompt asks for a broad,
+  exhaustive, release-facing, or "bug could be anywhere" investigation.
 - Use `docs/boss_ai_spec.md` before changing boss decisions, switch/item logic,
   prediction, timing, or AI memory.
 - Use `docs/balance_intent.md`, `docs/evolution_policy.md`, and

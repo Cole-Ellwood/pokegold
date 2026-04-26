@@ -25,7 +25,8 @@ the journey.
 | Weak Pokemon, stats, learnsets, evolutions, roles | `docs/agent_navigation/subsystems/pokemon_balance.md` | Trust generated audit rows as final design judgment. |
 | QoL, maps, NPC text, Repel, Pokemon Center, Day-Care services | `docs/agent_navigation/subsystems/qol_map_scripts.md` | Remove preparation pressure under the name of convenience. |
 | Build outputs, generated docs, checksums, release files | `docs/agent_navigation/source_output_ownership.md`, `docs/build.md` | Hand-edit `.gbc`, `.o`, `.map`, `.sym`, or generated docs. |
-| Reviews or bug hunts | `docs/codex_review_playbook.md` | Start with broad source search before routing the risk. |
+| Broad or exhaustive bug hunts | `docs/bug_hunt_master_playbook.md`, `docs/codex_review_playbook.md` | Start with broad source search before routing the risk. |
+| Narrow reviews or known-risk bug hunts | `docs/codex_review_playbook.md`, then `docs/agent_navigation/task_router.md` | Skip source-owner and verification-floor selection. |
 | Half-remembered custom mechanic | `docs/agent_navigation/custom_terms.md` | Search only one spelling. |
 
 ## Roadmap Snapshot Rule

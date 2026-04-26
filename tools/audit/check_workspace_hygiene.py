@@ -8,39 +8,44 @@ import re
 import subprocess
 import sys
 from collections import defaultdict
+from dataclasses import dataclass
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
 
-BUCKET_ORDER = (
-    "rom-linker-outputs",
-    "object-outputs",
-    "generated-graphics",
-    "tool-binaries",
-    "toolchain-downloads",
-    "python-caches",
-    "local-scratch",
-    "workspace-scratch",
-    "release-artifacts",
-    "emulator-state",
-    "patch-outputs",
-    "other-ignored",
+
+@dataclass(frozen=True)
+class Bucket:
+    name: str
+    description: str
+    tracked_artifact: bool = False
+
+
+BUCKETS = (
+    Bucket("rom-linker-outputs", "Root ROMs plus .map/.sym linker truth.", True),
+    Bucket("object-outputs", "RGBDS intermediate .o files.", True),
+    Bucket(
+        "generated-graphics",
+        "Generated gfx/*.1bpp/*.2bpp/*.lz/*.gbcpal/*.dimensions files.",
+    ),
+    Bucket("tool-binaries", "Compiled helper binaries under tools/."),
+    Bucket("toolchain-downloads", "Repo-local RGBDS binaries or downloaded archives."),
+    Bucket("python-caches", "Python __pycache__ or .pyc output."),
+    Bucket(
+        "local-scratch",
+        ".local investigation, temporary, dependency, or probe output.",
+        True,
+    ),
+    Bucket("workspace-scratch", "workspace/ scratch or archived local work.", True),
+    Bucket("release-artifacts", "dist/ outputs.", True),
+    Bucket("emulator-state", "Save/state files from emulator runs.", True),
+    Bucket("patch-outputs", "Patch artifacts.", True),
+    Bucket("other-ignored", "Ignored files that do not match a known family yet."),
 )
 
-BUCKET_DESCRIPTIONS = {
-    "rom-linker-outputs": "Root ROMs plus .map/.sym linker truth.",
-    "object-outputs": "RGBDS intermediate .o files.",
-    "generated-graphics": "Generated gfx/*.1bpp/*.2bpp/*.lz/*.gbcpal/*.dimensions files.",
-    "tool-binaries": "Compiled helper binaries under tools/.",
-    "toolchain-downloads": "Repo-local RGBDS binaries or downloaded archives.",
-    "python-caches": "Python __pycache__ or .pyc output.",
-    "local-scratch": ".local investigation, temporary, dependency, or probe output.",
-    "workspace-scratch": "workspace/ scratch or archived local work.",
-    "release-artifacts": "dist/ outputs.",
-    "emulator-state": "Save/state files from emulator runs.",
-    "patch-outputs": "Patch artifacts.",
-    "other-ignored": "Ignored files that do not match a known family yet.",
+TRACKED_ARTIFACT_BUCKETS = {
+    bucket.name for bucket in BUCKETS if bucket.tracked_artifact
 }
 
 
@@ -145,11 +150,46 @@ def unignored_untracked_lines() -> list[str]:
     return result.stdout.splitlines()
 
 
+def tracked_artifact_paths() -> list[str]:
+    result = run_git(["ls-files"])
+    if result.returncode != 0:
+        raise RuntimeError(result.stderr.strip() or "git ls-files failed")
+    return [
+        path
+        for path in result.stdout.splitlines()
+        if classify(path) in TRACKED_ARTIFACT_BUCKETS
+    ]
+
+
+def group_by_bucket(paths: list[str]) -> dict[str, list[str]]:
+    buckets: dict[str, list[str]] = defaultdict(list)
+    for path in paths:
+        buckets[classify(path)].append(path)
+    return buckets
+
+
 def print_samples(paths: list[str], limit: int) -> None:
     for path in paths[:limit]:
         print(f"      - {path}")
     if len(paths) > limit:
         print(f"      - ... {len(paths) - limit} more")
+
+
+def print_bucket_report(
+    title: str,
+    paths: list[str],
+    sample_limit: int,
+) -> dict[str, list[str]]:
+    print(f"{title}: {len(paths)}")
+    buckets = group_by_bucket(paths)
+    for bucket in BUCKETS:
+        bucket_paths = buckets.get(bucket.name, [])
+        if not bucket_paths:
+            continue
+        print(f"  {bucket.name}: {len(bucket_paths)}")
+        print(f"    {bucket.description}")
+        print_samples(bucket_paths, sample_limit)
+    return buckets
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -168,13 +208,10 @@ def main(argv: list[str] | None = None) -> int:
         status = short_status_lines()
         unignored = unignored_untracked_lines()
         ignored = clean_ignored_paths()
+        tracked_artifacts = tracked_artifact_paths()
     except RuntimeError as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1
-
-    buckets: dict[str, list[str]] = defaultdict(list)
-    for path in ignored:
-        buckets[classify(path)].append(path)
 
     print("Workspace hygiene summary")
     print("=========================")
@@ -193,17 +230,16 @@ def main(argv: list[str] | None = None) -> int:
     if unignored:
         print_samples(unignored, args.samples)
 
-    print()
-    print(f"Ignored cleanup candidates from dry run: {len(ignored)}")
-    for bucket in BUCKET_ORDER:
-        paths = buckets.get(bucket, [])
-        if not paths:
-            continue
-        print(f"  {bucket}: {len(paths)}")
-        print(f"    {BUCKET_DESCRIPTIONS[bucket]}")
-        print_samples(paths, args.samples)
+    print_bucket_report("Tracked artifact/scratch paths", tracked_artifacts, args.samples)
 
-    unknown = buckets.get("other-ignored", [])
+    print()
+    ignored_buckets = print_bucket_report(
+        "Ignored cleanup candidates from dry run",
+        ignored,
+        args.samples,
+    )
+
+    unknown = ignored_buckets.get("other-ignored", [])
     if unknown:
         print()
         print("Review other-ignored paths before treating the clutter map as complete.")

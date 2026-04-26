@@ -9,6 +9,7 @@ import re
 import subprocess
 import sys
 import tempfile
+from collections.abc import Callable
 from pathlib import Path
 
 
@@ -352,23 +353,54 @@ def check_helper_entrypoint(errors: list[str]) -> None:
         print("PASS: helper-doc entrypoint is present")
 
 
-def check_generated_index(errors: list[str]) -> None:
-    committed_path = ROOT / "docs/generated/dev_index.md"
-    generator = ROOT / "scripts/generate_dev_index.py"
+def process_output(proc: subprocess.CompletedProcess[str]) -> str:
+    return proc.stderr.strip() or proc.stdout.strip() or f"exit {proc.returncode}"
+
+
+def display_path(path: Path) -> str:
+    try:
+        return path.relative_to(ROOT).as_posix()
+    except ValueError:
+        return path.as_posix()
+
+
+def preview_diff(fromfile: str, tofile: str, expected: str, actual: str) -> str:
+    diff = difflib.unified_diff(
+        expected.splitlines(),
+        actual.splitlines(),
+        fromfile=fromfile,
+        tofile=tofile,
+        lineterm="",
+    )
+    return "\n".join(list(diff)[:40])
+
+
+def check_generated_file(
+    errors: list[str],
+    *,
+    committed_path: Path,
+    generator: Path,
+    output_name: str,
+    generator_args: tuple[str, ...],
+    normalize: Callable[[str], str],
+    missing_message: str,
+    regenerate_message: str,
+    stale_message: str,
+    pass_message: str,
+) -> None:
     if not committed_path.exists() or not generator.exists():
-        errors.append("cannot check generated index freshness; index or generator is missing")
+        errors.append(missing_message)
         return
 
     tmp_root = ROOT / ".local" / "tmp"
     tmp_root.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(dir=tmp_root) as tmp:
-        out_path = Path(tmp) / "dev_index.md"
+        out_path = Path(tmp) / output_name
         proc = subprocess.run(
             [
                 sys.executable,
                 str(generator),
-                "--rom",
-                "pokegold",
+                *generator_args,
                 "--out",
                 str(out_path),
             ],
@@ -379,85 +411,52 @@ def check_generated_index(errors: list[str]) -> None:
             check=False,
         )
         if proc.returncode != 0:
-            errors.append(
-                "failed to regenerate docs/generated/dev_index.md for comparison: "
-                + (proc.stderr.strip() or proc.stdout.strip() or f"exit {proc.returncode}")
-            )
+            errors.append(f"{regenerate_message}: {process_output(proc)}")
             return
 
-        committed = normalize_dev_index(committed_path.read_text(encoding="utf-8"))
-        regenerated = normalize_dev_index(out_path.read_text(encoding="utf-8"))
+        committed = normalize(committed_path.read_text(encoding="utf-8"))
+        regenerated = normalize(out_path.read_text(encoding="utf-8"))
         if committed != regenerated:
-            diff = list(
-                difflib.unified_diff(
-                    committed.splitlines(),
-                    regenerated.splitlines(),
-                    fromfile="docs/generated/dev_index.md",
-                    tofile="regenerated dev_index.md",
-                    lineterm="",
-                )
+            preview = preview_diff(
+                display_path(committed_path),
+                f"regenerated {output_name}",
+                committed,
+                regenerated,
             )
-            preview = "\n".join(diff[:40])
-            errors.append(
-                "docs/generated/dev_index.md is stale relative to current linker outputs"
-                + (f"\n{preview}" if preview else "")
-            )
+            errors.append(stale_message + (f"\n{preview}" if preview else ""))
             return
 
-    print("PASS: generated dev index matches current linker outputs")
+    print(pass_message)
+
+
+def check_generated_index(errors: list[str]) -> None:
+    check_generated_file(
+        errors,
+        committed_path=ROOT / "docs/generated/dev_index.md",
+        generator=ROOT / "scripts/generate_dev_index.py",
+        output_name="dev_index.md",
+        generator_args=("--rom", "pokegold"),
+        normalize=normalize_dev_index,
+        missing_message="cannot check generated index freshness; index or generator is missing",
+        regenerate_message="failed to regenerate docs/generated/dev_index.md for comparison",
+        stale_message="docs/generated/dev_index.md is stale relative to current linker outputs",
+        pass_message="PASS: generated dev index matches current linker outputs",
+    )
 
 
 def check_generated_balance_audit(errors: list[str]) -> None:
-    committed_path = ROOT / "docs/generated/balance_audit.md"
-    generator = ROOT / "scripts/generate_balance_audit.py"
-    if not committed_path.exists() or not generator.exists():
-        errors.append("cannot check generated balance audit freshness; audit or generator is missing")
-        return
-
-    tmp_root = ROOT / ".local" / "tmp"
-    tmp_root.mkdir(parents=True, exist_ok=True)
-    with tempfile.TemporaryDirectory(dir=tmp_root) as tmp:
-        out_path = Path(tmp) / "balance_audit.md"
-        proc = subprocess.run(
-            [
-                sys.executable,
-                str(generator),
-                "--out",
-                str(out_path),
-            ],
-            cwd=ROOT,
-            text=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            check=False,
-        )
-        if proc.returncode != 0:
-            errors.append(
-                "failed to regenerate docs/generated/balance_audit.md for comparison: "
-                + (proc.stderr.strip() or proc.stdout.strip() or f"exit {proc.returncode}")
-            )
-            return
-
-        committed = normalize_balance_audit(committed_path.read_text(encoding="utf-8"))
-        regenerated = normalize_balance_audit(out_path.read_text(encoding="utf-8"))
-        if committed != regenerated:
-            diff = list(
-                difflib.unified_diff(
-                    committed.splitlines(),
-                    regenerated.splitlines(),
-                    fromfile="docs/generated/balance_audit.md",
-                    tofile="regenerated balance_audit.md",
-                    lineterm="",
-                )
-            )
-            preview = "\n".join(diff[:40])
-            errors.append(
-                "docs/generated/balance_audit.md is stale relative to current Pokemon data"
-                + (f"\n{preview}" if preview else "")
-            )
-            return
-
-    print("PASS: generated balance audit matches current Pokemon data")
+    check_generated_file(
+        errors,
+        committed_path=ROOT / "docs/generated/balance_audit.md",
+        generator=ROOT / "scripts/generate_balance_audit.py",
+        output_name="balance_audit.md",
+        generator_args=(),
+        normalize=normalize_balance_audit,
+        missing_message="cannot check generated balance audit freshness; audit or generator is missing",
+        regenerate_message="failed to regenerate docs/generated/balance_audit.md for comparison",
+        stale_message="docs/generated/balance_audit.md is stale relative to current Pokemon data",
+        pass_message="PASS: generated balance audit matches current Pokemon data",
+    )
 
 
 def check_python_command_paths(errors: list[str]) -> None:

@@ -6,18 +6,24 @@ hunt the ROM hack. It assumes the reviewer has no prior conversation context.
 ## Fast Start
 
 1. Read `docs/codex_context.md` for the objective and fairness rules.
-2. Read `docs/project_map.md` to route the task to the right source area.
-3. Read `docs/generated/dev_index.md` for current labels, anchors, and memory
+2. For broad or exhaustive bug hunts, read
+   `docs/bug_hunt_master_playbook.md` before choosing a subsystem.
+3. Read `docs/project_map.md` to route the task to the right source area.
+4. Read `docs/generated/dev_index.md` for current labels, anchors, and memory
    pressure.
-4. For Boss AI or battle work, read `docs/boss_ai_spec.md`.
+5. For Boss AI or battle work, read `docs/boss_ai_spec.md`.
    For post-release-safety boss AI trace/tuning work, also read
    `docs/boss_ai_post_patch_notes.md`.
-5. For existing mechanics, read `docs/mechanics_changes_from_base.md`.
-6. For release/data scope, read `docs/manifest.md` and
+6. For existing mechanics, read `docs/mechanics_changes_from_base.md`.
+7. For release/data scope, read `docs/manifest.md` and
    `docs/RELEASE_NOTES.md`.
 
 Do not start with broad source searches unless these docs fail to identify the
 right subsystem.
+
+For "a bug could be anywhere" prompts, the master playbook owns the exhaustive
+startup, search discipline, subsystem passes, and broad command floor. This file
+owns review stance, severity, and report shape.
 
 ## Review North Star
 

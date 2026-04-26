@@ -7,6 +7,8 @@ hack without drifting from the project intent.
 
 - `docs/codex_context.md`: project intent. QoL should remove tedium, not
   decisions, and must not trivialize boss preparation.
+- `docs/qol_research_report.md`: durable research backing for the QoL boundary;
+  use it for policy judgment, not as source truth.
 - `docs/project_map.md`: routing guide for source areas.
 - `docs/generated/dev_index.md`: source anchors and memory pressure. Treat ROM0,
   WRAM0, WRAMX, HRAM, and tight ROMX banks as scarce.

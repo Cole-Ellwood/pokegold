@@ -8,6 +8,7 @@ scratch paths first.
 | Path | Contains | Trust level | Notes |
 | --- | --- | --- | --- |
 | `docs/agent_navigation/start_card.md` | One-screen lane picker for broad prompts. | Routing only. | Use at session start after `docs/README.md`. |
+| `docs/bug_hunt_master_playbook.md` | Exhaustive bug-hunt startup, subsystem passes, search discipline, and command floor. | Review workflow. | Use for broad, release-facing, or "bug could be anywhere" prompts. |
 | `docs/agent_navigation/navigation_health_check.md` | Navigation acceptance criteria and smoke routes. | Routing QA. | Use before expanding, pruning, or closing navigation work. |
 | `docs/agent_navigation/doc_roles.md` | Ownership rules for documentation facts. | Routing only. | Use before adding duplicate routing prose. |
 | `docs/project_roadmap.md` | Workstreams, statuses, blockers, next moves. | Current planning index. | Update when a workstream changes. |

@@ -53,9 +53,11 @@ For a concise change history over base Gold, read:
 1. Read `docs/codex_context.md` for the project objective.
 2. Read `docs/codex_review_playbook.md` for review stance, risk classes, and
    report format.
-3. Use `docs/generated/dev_index.md` for current labels, source anchors, tight
+3. For broad, exhaustive, release-facing, or "bug could be anywhere" prompts,
+   read `docs/bug_hunt_master_playbook.md` before subsystem search.
+4. Use `docs/generated/dev_index.md` for current labels, source anchors, tight
    banks, and free ROMX ranges.
-4. Run focused audits from `tools/audit/` when relevant.
+5. Run focused audits from `tools/audit/` when relevant.
 
 High-risk bug areas:
 
@@ -134,8 +136,8 @@ Do not use these as canonical gameplay-edit sources:
   with `scripts/generate_dev_index.py`.
 - `.local/`, `dist/`, `outbox/`, `workspace/`: local analysis, release outputs,
   scratch work, or copied artifacts.
-- `workspace/scratch/review/`,
-  `workspace/scratch/type_passives_dropin/`: archived legacy scratch trees.
+- `workspace/`: ignored scratch if present. The 2026-04-26 organization follow-up
+  found no durable facts there and removed the stale `sprint12.patch` snapshot.
 - `*.gbc`, `*.o`, `*.map`, `*.sym`: build/linker outputs; do not edit by hand.
 
 Search output or scratch paths only when the task explicitly concerns artifacts,

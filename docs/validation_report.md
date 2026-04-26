@@ -22,7 +22,12 @@ Date: 2026-04-25
 - `python tools/audit/check_battle_math_safety.py` : PASS
 
 ## Release metadata sync
-- `dist/checksums.txt` and regenerated BPS artifacts are intentionally not committed on the source cleanup branch.
+- `dist/checksums.txt` and `dist/pokegold-data-rebalance.bps` are tracked
+  release artifacts on this branch. Treat them as historical release output
+  unless the release workflow is rerun.
+- 2026-04-26 organization check: the BPS hash matches `dist/checksums.txt`, but
+  `.local/roms/pokegold-data-rebalance.gbc` no longer matches the older hacked
+  ROM hash listed there.
 - `roms.sha1` was not updated because a full compare/release artifact pass was not run.
 - `docs/RELEASE_NOTES.md` scope updated to include mechanics/AI/script changes.
 - `docs/manifest.md` explicitly marked as data-layer-only historical manifest.

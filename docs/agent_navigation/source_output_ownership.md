@@ -105,6 +105,24 @@ anything.
 - no deletion or relocation was performed because the noise is currently
   explainable and build/index/tooling assumptions still depend on root outputs.
 
+2026-04-26 follow-up organization result:
+
+- the root QoL research report moved to `docs/qol_research_report.md`; it is
+  durable policy research, not root/build truth;
+- the old ignored sprint12 patch under workspace scratch was a 183 KB legacy
+  gameplay patch snapshot; both `git apply --check` and
+  `git apply --reverse --check` failed against current source, so current
+  source/git history own the truth. It was deleted along with empty `workspace/`
+  directories;
+- `.local/` remains local scratch/dependency/probe output. Current top-level
+  families include trace probes, PyBoy dependencies, ROM baselines/roundtrips,
+  temporary outputs, and verification artifacts. Do not delete it without naming
+  exact paths and trace/release impact;
+- `dist/checksums.txt` and `dist/pokegold-data-rebalance.bps` are tracked release
+  artifacts. The BPS hash matches `dist/checksums.txt`; the `.local/roms`
+  hacked-ROM hash does not, so treat `dist/` as a historical release pair until a
+  release workflow refreshes it.
+
 ## Current Build Output Families
 
 | Family | Examples | Use |
