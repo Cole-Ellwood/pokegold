@@ -16,17 +16,43 @@ MANIFEST = ROOT / "audit" / "boss_ai_trace" / "live_capture_manifest.json"
 
 ALLOWED_STATUSES = {"FINISHED", "IN PROGRESS", "UNTOUCHED"}
 EXPECTED_BOSSES = {
+    "Falkner": "audit/boss_ai_trace/falkner_live.txt",
+    "Bugsy": "audit/boss_ai_trace/bugsy_live.txt",
+    "Whitney": "audit/boss_ai_trace/whitney_live.txt",
     "Morty": "audit/boss_ai_trace/morty_live.txt",
+    "Chuck": "audit/boss_ai_trace/chuck_live.txt",
     "Jasmine": "audit/boss_ai_trace/jasmine_live.txt",
+    "Pryce": "audit/boss_ai_trace/pryce_live.txt",
     "Clair": "audit/boss_ai_trace/clair_live.txt",
+    "Brock": "audit/boss_ai_trace/brock_live.txt",
+    "Misty": "audit/boss_ai_trace/misty_live.txt",
+    "Lt. Surge": "audit/boss_ai_trace/lt_surge_live.txt",
+    "Erika": "audit/boss_ai_trace/erika_live.txt",
+    "Janine": "audit/boss_ai_trace/janine_live.txt",
+    "Sabrina": "audit/boss_ai_trace/sabrina_live.txt",
+    "Blaine": "audit/boss_ai_trace/blaine_live.txt",
+    "Blue": "audit/boss_ai_trace/blue_live.txt",
     "Koga": "audit/boss_ai_trace/koga_live.txt",
     "Champion Lance": "audit/boss_ai_trace/champion_lance_live.txt",
     "Shared switch-loop": "audit/boss_ai_trace/shared_switch_loop_live.txt",
 }
 EXPECTED_CAPTURE_IDS = {
+    "Falkner": "falkner",
+    "Bugsy": "bugsy",
+    "Whitney": "whitney",
     "Morty": "morty",
+    "Chuck": "chuck",
     "Jasmine": "jasmine",
+    "Pryce": "pryce",
     "Clair": "clair",
+    "Brock": "brock",
+    "Misty": "misty",
+    "Lt. Surge": "lt_surge",
+    "Erika": "erika",
+    "Janine": "janine",
+    "Sabrina": "sabrina",
+    "Blaine": "blaine",
+    "Blue": "blue",
     "Koga": "koga",
     "Champion Lance": "champion_lance",
     "Shared switch-loop": "shared_switch_loop",
@@ -334,7 +360,7 @@ def main() -> int:
             fail(f"{boss}: live capture file exists but ledger still says UNTOUCHED")
 
     print("Boss AI live capture ledger audit passed.")
-    print("Priority live captures:")
+    print("Tracked live captures:")
     for boss in EXPECTED_BOSSES:
         status, path_text = found[boss]
         print(f"  - {boss}: {status} ({path_text})")

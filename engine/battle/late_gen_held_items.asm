@@ -17,22 +17,26 @@ ApplyLateGenDamageStatsItemMods_Far:
 	ret
 
 .ApplyChoiceBandBoost:
+	push hl
 	push bc
 	callfar GetUserItem
 	ld a, b
-	cp HELD_CHOICE_BAND
 	pop bc
+	pop hl
+	cp HELD_CHOICE_BAND
 	ret nz
 	ld a, CHOICE_STAT_NUM
 	ld d, CHOICE_STAT_DEN
 	jp .ApplyFractionToHL
 
 .ApplyChoiceSpecsBoost:
+	push hl
 	push bc
 	callfar GetUserItem
 	ld a, b
-	cp HELD_CHOICE_SPECS
 	pop bc
+	pop hl
+	cp HELD_CHOICE_SPECS
 	ret nz
 	ld a, CHOICE_STAT_NUM
 	ld d, CHOICE_STAT_DEN
@@ -196,7 +200,31 @@ ApplyLateGenDamageMultipliers_Far:
 	jp .ApplyDamageQuotientMultiplier
 
 .expert_belt
+	push bc
+	push de
+	ldh a, [hQuotient + 0]
+	ld b, a
+	ldh a, [hQuotient + 1]
+	ld c, a
+	ldh a, [hQuotient + 2]
+	ld d, a
+	ldh a, [hQuotient + 3]
+	ld e, a
+	push bc
+	push de
 	callfar BattleCheckTypeMatchup
+	pop de
+	pop bc
+	ld a, b
+	ldh [hQuotient + 0], a
+	ld a, c
+	ldh [hQuotient + 1], a
+	ld a, d
+	ldh [hQuotient + 2], a
+	ld a, e
+	ldh [hQuotient + 3], a
+	pop de
+	pop bc
 	ld a, [wTypeMatchup]
 	cp EFFECTIVE + 1
 	ret c
@@ -474,6 +502,9 @@ FocusPunch_CheckLostFocus_Far:
 	ret
 
 DittoMetalPowder_Far:
+	call TypePassive_GetEffectiveMoveCategory_Far
+	cp SPECIAL
+	ret nc
 	ld a, MON_SPECIES
 	call BattlePartyAttr
 	ldh a, [hBattleTurn]

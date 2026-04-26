@@ -28,9 +28,9 @@ Current verified evidence:
 - `python tools\audit\check_boss_ai_live_capture_ledger.py` accepts Morty as
   `FINISHED`.
 - The live excerpt has manifest-matching trace hashes:
-  `trace_rom_sha256=639680604270248FEC0FF9DDD92205C75FC2B01858FD1A365FBF51623DC66C29`
+  `trace_rom_sha256=22A7B125A1567AB030715B85C67F3B0B606F757316547DF7C1C21D672C9F98C5`
   and
-  `trace_symbols_sha256=73A70E9C9ADB65840DBD05C9B9049BFF288AF0D2C1EFA22DE375CA773CCE777B`.
+  `trace_symbols_sha256=8ACBFAA166CBE157D15466AAB27DFD49DCD64109E55F9198B998728903C8806D`.
 - The decision fields are nonzero:
   `top_moves=HYPNOSIS:1,CURSE:20,NIGHT_SHADE:20`, `chosen=HYPNOSIS`,
   `chosen_id=95`, `plan_id=2`, `plan_confidence=72`, and

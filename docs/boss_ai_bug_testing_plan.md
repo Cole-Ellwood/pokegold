@@ -31,7 +31,7 @@ Current implementation status:
 | Live capture ledger audit | `FINISHED` | `python tools\audit\check_boss_ai_live_capture_ledger.py` passes. |
 | Live capture manifest | `FINISHED` | `audit/boss_ai_trace/live_capture_manifest.json` defines boss capture commands. |
 | Live capture batch runner | `FINISHED` | `python tools\trace\boss_ai_trace_batch.py` dry-run reports missing save-states and uses manifest preflights before capture. |
-| Boss-position live emulator/debugger captures | `IN PROGRESS` | Morty's current trace-ROM chosen-move proof is complete (`chosen_id=95` in `audit/boss_ai_trace/morty_live.txt`); Jasmine/Clair/Koga/Lance/shared switch-loop still need save-states or manual debugger positions. |
+| Boss-position live emulator/debugger captures | `IN PROGRESS` | Morty and Jasmine have current trace-ROM chosen-move proof (`chosen_id=95` in `audit/boss_ai_trace/morty_live.txt`; `chosen_id=85` in `audit/boss_ai_trace/jasmine_live.txt`); every other gym leader plus Koga/Lance/shared switch-loop still need save-states or manual debugger positions. |
 
 Preserve these constraints while implementing tests:
 
@@ -397,10 +397,12 @@ Smoke artifact:
 ## Manual Playtest Matrix
 
 Status: `IN PROGRESS` for boss-position live emulator/debugger captures. Morty's
-first proof capsule is complete on the current trace ROM, with nonzero
-`chosen_id` in `audit/boss_ai_trace/morty_live.txt`; Jasmine/Clair/Koga/Lance/
-shared switch-loop captures remain open. Capture tooling and the live-capture
-ledger are `FINISHED`.
+first proof capsule and Jasmine's Olivine Gym proof are complete on the current
+trace ROM, with nonzero `chosen_id` values in
+`audit/boss_ai_trace/morty_live.txt` and
+`audit/boss_ai_trace/jasmine_live.txt`; every other gym leader plus
+Koga/Lance/shared switch-loop captures remain open. Capture tooling and the
+live-capture ledger are `FINISHED`.
 
 Use `pokegold_trace.gbc` for all scenarios. Save excerpts under
 `audit/boss_ai_trace/`.
@@ -512,8 +514,8 @@ Shared Perish Song scenario:
 ## Review Checklist
 
 Status: `FINISHED` for the static/release audit sweep. Live emulator/debugger
-coverage is `IN PROGRESS`: Morty's current chosen-move capture is complete, and
-the remaining priority captures are still open.
+coverage is `IN PROGRESS`: Morty's and Jasmine's current chosen-move captures
+are complete, and the remaining priority captures are still open.
 
 Before accepting the tests:
 
@@ -544,7 +546,7 @@ Acceptance criteria:
 - All audits pass.
 - Normal and trace ROMs link without overflow.
 - `wBossAIStateEnd` remains before `wEventFlags`.
-- Trace excerpts exist for Morty, Jasmine, Clair, Koga, and Lance.
+- Trace excerpts exist for all tracked gym leaders plus Koga and Lance.
 - Any failed scenario is recorded with the exact boss, turn, public state, trace
   fields, and candidate fix.
 

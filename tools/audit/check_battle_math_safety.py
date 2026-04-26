@@ -178,6 +178,82 @@ def require_count_at_least(
     )
 
 
+def audit_late_gen_damage_multiplier_scratch_state() -> list[Issue]:
+    issues: list[Issue] = []
+
+    for label, held_effect in (
+        (".ApplyChoiceBandBoost", "HELD_CHOICE_BAND"),
+        (".ApplyChoiceSpecsBoost", "HELD_CHOICE_SPECS"),
+    ):
+        require_text(
+            LATE_GEN_HELD_ITEMS,
+            (
+                f"{label}:\n"
+                "\tpush hl\n"
+                "\tpush bc\n"
+                "\tcallfar GetUserItem\n"
+                "\tld a, b\n"
+                "\tpop bc\n"
+                "\tpop hl\n"
+                f"\tcp {held_effect}\n"
+                "\tret nz"
+            ),
+            issues,
+            f"{label} must preserve attacker stat pointer in hl around GetUserItem",
+        )
+
+    require_text(
+        LATE_GEN_HELD_ITEMS,
+        (
+            ".expert_belt\n"
+            "\tpush bc\n"
+            "\tpush de\n"
+            "\tldh a, [hQuotient + 0]\n"
+            "\tld b, a\n"
+            "\tldh a, [hQuotient + 1]\n"
+            "\tld c, a\n"
+            "\tldh a, [hQuotient + 2]\n"
+            "\tld d, a\n"
+            "\tldh a, [hQuotient + 3]\n"
+            "\tld e, a\n"
+            "\tpush bc\n"
+            "\tpush de\n"
+            "\tcallfar BattleCheckTypeMatchup\n"
+            "\tpop de\n"
+            "\tpop bc\n"
+            "\tld a, b\n"
+            "\tldh [hQuotient + 0], a\n"
+            "\tld a, c\n"
+            "\tldh [hQuotient + 1], a\n"
+            "\tld a, d\n"
+            "\tldh [hQuotient + 2], a\n"
+            "\tld a, e\n"
+            "\tldh [hQuotient + 3], a\n"
+            "\tpop de\n"
+            "\tpop bc\n"
+            "\tld a, [wTypeMatchup]\n"
+            "\tcp EFFECTIVE + 1"
+        ),
+        issues,
+        "Expert Belt must preserve pending damage in hQuotient around BattleCheckTypeMatchup",
+    )
+
+    require_text(
+        LATE_GEN_HELD_ITEMS,
+        (
+            "DittoMetalPowder_Far:\n"
+            "\tcall TypePassive_GetEffectiveMoveCategory_Far\n"
+            "\tcp SPECIAL\n"
+            "\tret nc\n"
+            "\tld a, MON_SPECIES"
+        ),
+        issues,
+        "Metal Powder must only boost physical Defense, not Special Defense",
+    )
+
+    return issues
+
+
 def audit_dynamic_category_consumers() -> list[Issue]:
     issues: list[Issue] = []
 
@@ -247,6 +323,7 @@ def main() -> int:
     for path in iter_asm_files():
         issues.extend(scan_file(path))
     issues.extend(audit_dynamic_category_consumers())
+    issues.extend(audit_late_gen_damage_multiplier_scratch_state())
 
     if issues:
         print("Battle math safety audit FAILED.", file=sys.stderr)
@@ -260,6 +337,7 @@ def main() -> int:
     print("Battle math safety audit passed.")
     print(f"Scanned {len(iter_asm_files())} ASM files.")
     print("Dynamic category consumers use the effective-category helpers.")
+    print("Late-gen item stat/damage hooks preserve live battle math state and category gates.")
     return 0
 
 

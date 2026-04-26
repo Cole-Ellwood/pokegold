@@ -52,13 +52,27 @@ edits should make old knowledge incomplete, not create unfair walls.
 
 ## Trace Priority Overlay
 
-Live trace priority currently focuses on:
+Live trace tracking now names every gym leader, plus the remaining priority
+non-gym scenarios:
 
 | Boss/scenario | Ledger output |
 | --- | --- |
+| Falkner | `audit/boss_ai_trace/falkner_live.txt` |
+| Bugsy | `audit/boss_ai_trace/bugsy_live.txt` |
+| Whitney | `audit/boss_ai_trace/whitney_live.txt` |
 | Morty | `audit/boss_ai_trace/morty_live.txt` |
+| Chuck | `audit/boss_ai_trace/chuck_live.txt` |
 | Jasmine | `audit/boss_ai_trace/jasmine_live.txt` |
+| Pryce | `audit/boss_ai_trace/pryce_live.txt` |
 | Clair | `audit/boss_ai_trace/clair_live.txt` |
+| Brock | `audit/boss_ai_trace/brock_live.txt` |
+| Misty | `audit/boss_ai_trace/misty_live.txt` |
+| Lt. Surge | `audit/boss_ai_trace/lt_surge_live.txt` |
+| Erika | `audit/boss_ai_trace/erika_live.txt` |
+| Janine | `audit/boss_ai_trace/janine_live.txt` |
+| Sabrina | `audit/boss_ai_trace/sabrina_live.txt` |
+| Blaine | `audit/boss_ai_trace/blaine_live.txt` |
+| Blue | `audit/boss_ai_trace/blue_live.txt` |
 | Koga | `audit/boss_ai_trace/koga_live.txt` |
 | Champion Lance | `audit/boss_ai_trace/champion_lance_live.txt` |
 | Shared switch-loop | `audit/boss_ai_trace/shared_switch_loop_live.txt` |
@@ -69,8 +83,8 @@ proof for any row.
 ## Review Shortcuts
 
 ```powershell
-rg -n "^(MortyGroup|JasmineGroup|ClairGroup|KogaGroup|ChampionGroup|RedGroup):" data\trainers\parties.asm
-rg -n "\b(MORTY|JASMINE|CLAIR|KOGA|CHAMPION|RED)\b" data\trainers\ai_tiers.asm data\trainers\attributes.asm constants
+rg -n "^(FalknerGroup|BugsyGroup|WhitneyGroup|MortyGroup|ChuckGroup|JasmineGroup|PryceGroup|ClairGroup|BrockGroup|MistyGroup|LtSurgeGroup|ErikaGroup|JanineGroup|SabrinaGroup|BlaineGroup|BlueGroup|KogaGroup|ChampionGroup|RedGroup):" data\trainers\parties.asm
+rg -n "\b(FALKNER|BUGSY|WHITNEY|MORTY|CHUCK|JASMINE|PRYCE|CLAIR|BROCK|MISTY|LT_SURGE|ERIKA|JANINE|SABRINA|BLAINE|BLUE|KOGA|CHAMPION|RED)\b" data\trainers\ai_tiers.asm data\trainers\attributes.asm constants
 ```
 
 ## Verification

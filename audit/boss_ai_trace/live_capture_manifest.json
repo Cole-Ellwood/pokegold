@@ -1,12 +1,36 @@
 {
   "version": 1,
   "trace_rom": "pokegold_trace.gbc",
-  "trace_rom_sha256": "639680604270248FEC0FF9DDD92205C75FC2B01858FD1A365FBF51623DC66C29",
+  "trace_rom_sha256": "22A7B125A1567AB030715B85C67F3B0B606F757316547DF7C1C21D672C9F98C5",
   "trace_symbols": "pokegold_trace.sym",
-  "trace_symbols_sha256": "73A70E9C9ADB65840DBD05C9B9049BFF288AF0D2C1EFA22DE375CA773CCE777B",
+  "trace_symbols_sha256": "8ACBFAA166CBE157D15466AAB27DFD49DCD64109E55F9198B998728903C8806D",
   "default_watch_frames": 600,
   "default_poll_every": 1,
   "captures": [
+    {
+      "id": "falkner",
+      "boss": "Falkner",
+      "status": "UNTOUCHED",
+      "save_state": "",
+      "out": "audit/boss_ai_trace/falkner_live.txt",
+      "notes": "early-tier gym leader opener; accuracy/speed pressure; no adaptive lead"
+    },
+    {
+      "id": "bugsy",
+      "boss": "Bugsy",
+      "status": "UNTOUCHED",
+      "save_state": "",
+      "out": "audit/boss_ai_trace/bugsy_live.txt",
+      "notes": "early-tier gym leader pressure; Bug/Flying role bias; no adaptive lead"
+    },
+    {
+      "id": "whitney",
+      "boss": "Whitney",
+      "status": "UNTOUCHED",
+      "save_state": "",
+      "out": "audit/boss_ai_trace/whitney_live.txt",
+      "notes": "early-tier gym leader pressure; normal-type tempo and setup checks; no adaptive lead"
+    },
     {
       "id": "morty",
       "boss": "Morty",
@@ -21,12 +45,30 @@
       "notes": "live Morty decision after public-threat cursor fixes; chosen move observed on the current trace ROM"
     },
     {
-      "id": "jasmine",
-      "boss": "Jasmine",
+      "id": "chuck",
+      "boss": "Chuck",
       "status": "UNTOUCHED",
       "save_state": "",
+      "out": "audit/boss_ai_trace/chuck_live.txt",
+      "notes": "mid-tier adaptive-lead gym leader; Fighting role bias and setup pressure"
+    },
+    {
+      "id": "jasmine",
+      "boss": "Jasmine",
+      "status": "FINISHED",
+      "save_state": ".local/tmp/boss_state_factory/jasmine_chosen_frame_5060.state",
+      "stop_after_first_capture": true,
+      "require_chosen_move": true,
       "out": "audit/boss_ai_trace/jasmine_live.txt",
       "notes": "first-turn Spikes; status fail gates; Spikes+Roar; +2 setup punish"
+    },
+    {
+      "id": "pryce",
+      "boss": "Pryce",
+      "status": "UNTOUCHED",
+      "save_state": "",
+      "out": "audit/boss_ai_trace/pryce_live.txt",
+      "notes": "late-tier adaptive-lead gym leader; Ice/Ground role bias and weather/setup planning"
     },
     {
       "id": "clair",
@@ -35,6 +77,70 @@
       "save_state": "",
       "out": "audit/boss_ai_trace/clair_live.txt",
       "notes": "first-turn Spikes; Thunder Wave fail gates; Spikes+Roar; +2 setup punish"
+    },
+    {
+      "id": "brock",
+      "boss": "Brock",
+      "status": "UNTOUCHED",
+      "save_state": "",
+      "out": "audit/boss_ai_trace/brock_live.txt",
+      "notes": "late-tier adaptive-lead Kanto gym leader; Rock/Ground pressure and switch reasoning"
+    },
+    {
+      "id": "misty",
+      "boss": "Misty",
+      "status": "UNTOUCHED",
+      "save_state": "",
+      "out": "audit/boss_ai_trace/misty_live.txt",
+      "notes": "late-tier adaptive-lead Kanto gym leader; Water pressure and public threat handling"
+    },
+    {
+      "id": "lt_surge",
+      "boss": "Lt. Surge",
+      "status": "UNTOUCHED",
+      "save_state": "",
+      "out": "audit/boss_ai_trace/lt_surge_live.txt",
+      "notes": "late-tier adaptive-lead Kanto gym leader; Electric pressure and immunity-aware play"
+    },
+    {
+      "id": "erika",
+      "boss": "Erika",
+      "status": "UNTOUCHED",
+      "save_state": "",
+      "out": "audit/boss_ai_trace/erika_live.txt",
+      "notes": "late-tier adaptive-lead Kanto gym leader; Grass status/recovery pressure"
+    },
+    {
+      "id": "janine",
+      "boss": "Janine",
+      "status": "UNTOUCHED",
+      "save_state": "",
+      "out": "audit/boss_ai_trace/janine_live.txt",
+      "notes": "late-tier adaptive-lead Kanto gym leader; Poison status fail gates and setup denial"
+    },
+    {
+      "id": "sabrina",
+      "boss": "Sabrina",
+      "status": "UNTOUCHED",
+      "save_state": "",
+      "out": "audit/boss_ai_trace/sabrina_live.txt",
+      "notes": "late-tier adaptive-lead Kanto gym leader; Psychic pressure and public threat handling"
+    },
+    {
+      "id": "blaine",
+      "boss": "Blaine",
+      "status": "UNTOUCHED",
+      "save_state": "",
+      "out": "audit/boss_ai_trace/blaine_live.txt",
+      "notes": "late-tier adaptive-lead Kanto gym leader; Fire pressure and weather/setup reasoning"
+    },
+    {
+      "id": "blue",
+      "boss": "Blue",
+      "status": "UNTOUCHED",
+      "save_state": "",
+      "out": "audit/boss_ai_trace/blue_live.txt",
+      "notes": "late-tier adaptive-lead Kanto gym leader; mixed-team switch and public threat reasoning"
     },
     {
       "id": "koga",

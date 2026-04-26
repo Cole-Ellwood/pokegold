@@ -446,6 +446,7 @@ FindEnemyMonsWithASuperEffectiveMove:
 	and c
 	jr z, .next
 
+	ld e, 0
 	push hl
 	push bc
 	; for move on mon:

@@ -284,6 +284,38 @@ def audit_revealed_coverage(boss: str, wram: str) -> None:
     )
 
 
+def audit_public_threat_keeps_species_fallback(boss: str) -> None:
+    public_threat = top_block(boss, "BossAI_PlayerHasPublicThreatVsEnemy")
+    require_order(
+        public_threat,
+        [
+            "call BossAI_HasRevealedSuperEffectiveMove",
+            "jr c, .yes",
+            "ld hl, wPlayerUsedMoves",
+            "jr z, .public_type_fallback",
+            ".used_move_loop",
+            "jr z, .public_type_fallback",
+            "dec d",
+            "jr nz, .used_move_loop",
+            "jr .public_type_fallback",
+            ".no",
+            "and a",
+            "ret",
+            ".yes_pop_hl",
+            "pop hl",
+            ".yes",
+            "scf",
+            "ret",
+            ".public_type_fallback",
+            "ld a, [wBattleMonType1]",
+            "call BossAI_CheckPlayerMoveTypeMatchupVsEnemyNoItem",
+            "ld a, [wBattleMonType2]",
+            "call BossAI_CheckPlayerMoveTypeMatchupVsEnemyNoItem",
+        ],
+        "public threat wrapper keeps active species typing after revealed-move scan",
+    )
+
+
 def audit_switch_loop(boss: str) -> None:
     switch_entry = top_block(boss, "BossAI_SwitchOrTryItem")
     require_order(
@@ -1100,6 +1132,33 @@ def audit_setup_and_phazing(boss: str) -> None:
     require_not_contains(boost_setup, "EFFECT_RAIN_DANCE", "boost-only setup classifier")
     require_not_contains(boost_setup, "EFFECT_SUNNY_DAY", "boost-only setup classifier")
 
+    plan_setup = top_block(boss, "BossAI_IsSetupEffect")
+    require_order(
+        plan_setup,
+        [
+            "EFFECT_DRAGON_DANCE",
+            "EFFECT_CALM_MIND",
+            "EFFECT_QUIVER_DANCE",
+            "EFFECT_RAIN_DANCE",
+            "EFFECT_SUNNY_DAY",
+            "EFFECT_ATTACK_UP",
+        ],
+        "shared setup classifier includes weather setup effects",
+    )
+
+    current_setup = top_block(boss, "BossAI_IsCurrentEnemySetupMove")
+    require_order(
+        current_setup,
+        [
+            "wEnemyMoveStruct + MOVE_EFFECT",
+            "EFFECT_CURSE",
+            "jp BossAI_IsSetupEffect",
+            "call BossAI_EnemyIsGhostType",
+            "jr c, .no",
+        ],
+        "current setup classifier handles non-Ghost Curse without poisoning shared helper",
+    )
+
     revealed_anti_setup = local_block(boss, ".PlayerHasRevealedAntiSetup", ".ApplyRampMoveBias")
     require_order(
         revealed_anti_setup,
@@ -1160,7 +1219,7 @@ def audit_setup_and_phazing(boss: str) -> None:
             "cp 50",
             "cp EFFECT_SPIKES",
             "jr z, .switch_candidate",
-            "call BossAI_IsSetupEffect",
+            "call BossAI_IsCurrentEnemySetupMove",
             "jr nc, .check_accuracy",
             ".switch_candidate",
             "call .IsUnderPressure",
@@ -1860,6 +1919,22 @@ def audit_legacy_switch_state_restoration(items: str, switch: str) -> None:
         "legacy resist switch scan uses real party species",
     )
 
+    require_order(
+        top_block(switch, "FindEnemyMonsWithASuperEffectiveMove"),
+        [
+            "ld d, 0",
+            "ld e, 0",
+            ".loop",
+            "ld a, b",
+            "and c",
+            "jr z, .next",
+            "ld e, 0",
+            "push hl",
+            "push bc",
+        ],
+        "legacy super-effective switch scan resets per-candidate result",
+    )
+
 
 def audit_no_battle_core_boss_labels(core: str, boss: str) -> None:
     if 'SECTION "Battle Core"' in boss or 'BANK("Battle Core")' in boss:
@@ -1912,6 +1987,7 @@ def main() -> int:
     core = load(CORE)
 
     audit_revealed_coverage(boss, wram)
+    audit_public_threat_keeps_species_fallback(boss)
     audit_switch_loop(boss)
     audit_revenge_denial_uses_public_seen_species(boss)
     audit_revealed_priority_pressure(boss)
@@ -1941,6 +2017,7 @@ def main() -> int:
     print("Checked invariants:")
     for name in (
         "per-species revealed coverage",
+        "public threat fallback after revealed-move scan",
         "source-weighted plausible threat confidence",
         "plausible threat source and seen-bench restoration",
         "public perish-count escape switching",
@@ -1962,6 +2039,8 @@ def main() -> int:
         "Imperial Scales pressure discount",
         "public +2 setup denial",
         "revealed anti-setup avoidance",
+        "shared weather setup planning",
+        "current non-Ghost Curse setup planning",
         "Spikes/setup projection overread floor",
         "Poison contact retaliation risk",
         "Spikes plus phazing pressure response",

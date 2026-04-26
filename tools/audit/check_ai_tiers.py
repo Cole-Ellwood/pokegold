@@ -8,6 +8,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 AI_TIERS_FILE = ROOT / "data" / "trainers" / "ai_tiers.asm"
+LEADERS_FILE = ROOT / "data" / "trainers" / "leaders.asm"
 MOVE_AI_FILE = ROOT / "engine" / "battle" / "ai" / "move.asm"
 BOSS_AI_FILE = ROOT / "engine" / "battle" / "ai" / "boss.asm"
 TRAINER_ATTRIBUTES_FILE = ROOT / "engine" / "battle" / "read_trainer_attributes.asm"
@@ -21,6 +22,17 @@ JOHTO_LEADERS = {
     ("JASMINE", "JASMINE1"),
     ("PRYCE", "PRYCE1"),
     ("CLAIR", "CLAIR1"),
+}
+
+KANTO_LEADERS = {
+    ("BROCK", "BROCK1"),
+    ("MISTY", "MISTY1"),
+    ("LT_SURGE", "LT_SURGE1"),
+    ("ERIKA", "ERIKA1"),
+    ("JANINE", "JANINE1"),
+    ("SABRINA", "SABRINA1"),
+    ("BLAINE", "BLAINE1"),
+    ("BLUE", "BLUE1"),
 }
 
 RIVAL1_IDS = {
@@ -84,6 +96,7 @@ ADAPTIVE_LEAD_TARGETS = {
 
 TARGETS = (
     JOHTO_LEADERS
+    | KANTO_LEADERS
     | {("RIVAL1", trainer_id) for trainer_id in RIVAL1_IDS}
     | {("RIVAL2", trainer_id) for trainer_id in RIVAL2_IDS}
     | ELITE_FOUR_AND_CHAMPION
@@ -98,6 +111,7 @@ ENTRY_RE = re.compile(
 PAIR_ENTRY_RE = re.compile(
     r"^\s*db\s+([A-Z0-9_]+)\s*,\s*([A-Z0-9_]+)\s*(?:;.*)?$"
 )
+CLASS_ENTRY_RE = re.compile(r"^\s*db\s+([A-Z0-9_]+|-1)\s*(?:;.*)?$")
 
 
 def parse_pair_map(text: str, label: str) -> set[tuple[str, str]]:
@@ -127,9 +141,42 @@ def parse_pair_map(text: str, label: str) -> set[tuple[str, str]]:
     raise SystemExit(1)
 
 
+def parse_class_list(text: str, label: str) -> list[str]:
+    in_list = False
+    classes: list[str] = []
+    for raw_line in text.splitlines():
+        line = raw_line.strip()
+        if line == f"{label}:":
+            in_list = True
+            continue
+        if not in_list:
+            continue
+        if not line or line.startswith(";"):
+            continue
+        if line.endswith(":"):
+            return classes
+        match = CLASS_ENTRY_RE.match(raw_line)
+        if not match:
+            print(
+                f"ERROR: malformed {label} entry: {raw_line}",
+                file=sys.stderr,
+            )
+            raise SystemExit(1)
+        value = match.group(1)
+        if value == "-1":
+            return classes
+        classes.append(value)
+
+    print(f"ERROR: could not locate terminated {label}.", file=sys.stderr)
+    raise SystemExit(1)
+
+
 def main() -> int:
     if not AI_TIERS_FILE.exists():
         print(f"ERROR: missing file: {AI_TIERS_FILE}", file=sys.stderr)
+        return 1
+    if not LEADERS_FILE.exists():
+        print(f"ERROR: missing file: {LEADERS_FILE}", file=sys.stderr)
         return 1
     if not MOVE_AI_FILE.exists():
         print(f"ERROR: missing file: {MOVE_AI_FILE}", file=sys.stderr)
@@ -142,6 +189,41 @@ def main() -> int:
         return 1
 
     ai_tiers_text = AI_TIERS_FILE.read_text(encoding="utf-8")
+    leaders_text = LEADERS_FILE.read_text(encoding="utf-8")
+
+    johto_leader_classes = {trainer_class for trainer_class, _trainer_id in JOHTO_LEADERS}
+    kanto_leader_classes = {trainer_class for trainer_class, _trainer_id in KANTO_LEADERS}
+    e4_champion_red_classes = {
+        trainer_class
+        for trainer_class, _trainer_id in ELITE_FOUR_AND_CHAMPION | POSTGAME_BOSSES
+    }
+    gym_leaders_table = set(parse_class_list(leaders_text, "GymLeaders"))
+    kanto_gym_leaders_table = set(parse_class_list(leaders_text, "KantoGymLeaders"))
+
+    missing_johto = sorted(johto_leader_classes - gym_leaders_table)
+    missing_kanto = sorted(kanto_leader_classes - kanto_gym_leaders_table)
+    unexpected_kanto = sorted(kanto_gym_leaders_table - kanto_leader_classes)
+    allowed_gym_leaders = johto_leader_classes | e4_champion_red_classes
+    unexpected_johto_table = sorted(gym_leaders_table - allowed_gym_leaders)
+    if missing_johto or missing_kanto or unexpected_kanto or unexpected_johto_table:
+        if missing_johto:
+            print("ERROR: data/trainers/leaders.asm GymLeaders missing Johto leaders:", file=sys.stderr)
+            for trainer_class in missing_johto:
+                print(f"  - {trainer_class}", file=sys.stderr)
+        if missing_kanto:
+            print("ERROR: data/trainers/leaders.asm KantoGymLeaders missing Kanto leaders:", file=sys.stderr)
+            for trainer_class in missing_kanto:
+                print(f"  - {trainer_class}", file=sys.stderr)
+        if unexpected_kanto:
+            print("ERROR: unexpected KantoGymLeaders entries:", file=sys.stderr)
+            for trainer_class in unexpected_kanto:
+                print(f"  - {trainer_class}", file=sys.stderr)
+        if unexpected_johto_table:
+            print("ERROR: unexpected GymLeaders entries:", file=sys.stderr)
+            for trainer_class in unexpected_johto_table:
+                print(f"  - {trainer_class}", file=sys.stderr)
+        return 1
+
     entries: dict[tuple[str, str], str] = {}
     for raw_line in ai_tiers_text.splitlines():
         line = raw_line.strip()

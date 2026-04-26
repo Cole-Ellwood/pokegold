@@ -2186,38 +2186,7 @@ BossAI_ApplyMoveModel:
 	ret
 
 .IsSetupMove
-	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
-	cp EFFECT_DRAGON_DANCE
-	jr z, .setup_yes
-	cp EFFECT_CALM_MIND
-	jr z, .setup_yes
-	cp EFFECT_QUIVER_DANCE
-	jr z, .setup_yes
-	cp EFFECT_RAIN_DANCE
-	jr z, .setup_yes
-	cp EFFECT_SUNNY_DAY
-	jr z, .setup_yes
-	cp EFFECT_CURSE
-	jr z, .check_curse_setup
-	cp EFFECT_ATTACK_UP
-	jr c, .setup_no
-	cp EFFECT_EVASION_UP + 1
-	jr c, .setup_yes
-	cp EFFECT_ATTACK_UP_2
-	jr c, .setup_no
-	cp EFFECT_EVASION_UP_2 + 1
-	jr c, .setup_yes
-	jr .setup_no
-.check_curse_setup
-	call BossAI_EnemyIsGhostType
-	jr c, .setup_no
-	jr .setup_yes
-.setup_no
-	and a
-	ret
-.setup_yes
-	scf
-	ret
+	jp BossAI_IsCurrentEnemySetupMove
 
 BossAI_EnemyIsGhostType:
 	ld a, [wEnemyMonType1]
@@ -2590,13 +2559,13 @@ BossAI_PlayerHasPublicThreatVsEnemy:
 	ld hl, wPlayerUsedMoves
 	ld a, [hl]
 	and a
-	jr z, .unknown_moves
+	jr z, .public_type_fallback
 	ld d, NUM_MOVES
 
 .used_move_loop
 	ld a, [hli]
 	and a
-	jr z, .no
+	jr z, .public_type_fallback
 	push hl
 	dec a
 	ld hl, Moves + MOVE_POWER
@@ -2618,6 +2587,7 @@ BossAI_PlayerHasPublicThreatVsEnemy:
 	pop hl
 	dec d
 	jr nz, .used_move_loop
+	jr .public_type_fallback
 
 .no
 	and a
@@ -2629,7 +2599,7 @@ BossAI_PlayerHasPublicThreatVsEnemy:
 	scf
 	ret
 
-.unknown_moves
+.public_type_fallback
 	ld a, [wBattleMonType1]
 	ld c, a
 	call BossAI_CheckPlayerMoveTypeMatchupVsEnemyNoItem
@@ -4406,6 +4376,10 @@ BossAI_IsSetupEffect:
 	jr z, .yes
 	cp EFFECT_QUIVER_DANCE
 	jr z, .yes
+	cp EFFECT_RAIN_DANCE
+	jr z, .yes
+	cp EFFECT_SUNNY_DAY
+	jr z, .yes
 	cp EFFECT_ATTACK_UP
 	jr c, .no
 	cp EFFECT_EVASION_UP + 1
@@ -4419,6 +4393,22 @@ BossAI_IsSetupEffect:
 	ret
 .yes
 	scf
+	ret
+
+BossAI_IsCurrentEnemySetupMove:
+	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
+	cp EFFECT_CURSE
+	jr z, .curse
+	jp BossAI_IsSetupEffect
+
+.curse
+	call BossAI_EnemyIsGhostType
+	jr c, .no
+	scf
+	ret
+
+.no
+	and a
 	ret
 
 BossAI_IsStatusEffect:
@@ -4995,8 +4985,7 @@ BossAI_ApplyPlanMoveBias:
 	ret z
 	cp BOSS_PLAN_SETUP_SWEEP
 	jr nz, .check_status
-	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
-	call BossAI_IsSetupEffect
+	call BossAI_IsCurrentEnemySetupMove
 	ret nc
 	ld a, 2
 	jp BossAI_EncourageScoreHL
@@ -5310,8 +5299,7 @@ BossAI_EvaluateActionLookahead:
 	ld b, a
 
 .check_setup
-	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
-	call BossAI_IsSetupEffect
+	call BossAI_IsCurrentEnemySetupMove
 	jr nc, .check_scout
 	ld a, [wBossAIPlanId]
 	cp BOSS_PLAN_SETUP_SWEEP
@@ -5390,9 +5378,8 @@ BossAI_ApplyMultiTurnProjection:
 	call .AddDownsideByA
 
 .check_setup
-	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
 	push bc
-	call BossAI_IsSetupEffect
+	call BossAI_IsCurrentEnemySetupMove
 	pop bc
 	jr nc, .check_scout
 	call .IsUnderPressure
@@ -5456,7 +5443,7 @@ BossAI_ApplyMultiTurnProjection:
 	cp EFFECT_SPIKES
 	jr z, .switch_candidate
 	push bc
-	call BossAI_IsSetupEffect
+	call BossAI_IsCurrentEnemySetupMove
 	pop bc
 	jr nc, .check_accuracy
 
