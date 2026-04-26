@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import difflib
+import json
 import re
 import subprocess
 import sys
@@ -71,6 +72,8 @@ REQUIRED_PATHS = (
     "docs/manifest.md",
     "docs/RELEASE_NOTES.md",
     "docs/build.md",
+    "audit/boss_ai_trace/live_capture_ledger.md",
+    "audit/boss_ai_trace/live_capture_manifest.json",
     "scripts/generate_dev_index.py",
     "scripts/generate_balance_audit.py",
     "tools/audit/check_release_smoke.py",
@@ -115,8 +118,9 @@ REQUIRED_PATHS = (
 )
 
 OBJECTIVE_PHRASES = (
-    "fair but very hard",
-    "Boss fights are the centerpiece",
+    "First-Playthrough Promise",
+    "The goal is restored uncertainty",
+    "being small in Johto again",
     "without cheating",
     "Fairness is non-negotiable",
     "Quality-of-life changes support the main game",
@@ -595,6 +599,64 @@ def check_agent_navigation_contract(errors: list[str]) -> None:
         print("PASS: agent navigation contract is intact")
 
 
+def check_trace_manifest_doc_sync(errors: list[str]) -> None:
+    manifest_path = ROOT / "audit/boss_ai_trace/live_capture_manifest.json"
+    roadmap = read_repo_text("docs/project_roadmap.md")
+    ledger = read_repo_text("audit/boss_ai_trace/live_capture_ledger.md")
+    trace_doc = read_repo_text("docs/boss_ai_trace_capture.md")
+
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        errors.append(f"audit/boss_ai_trace/live_capture_manifest.json invalid JSON: {exc}")
+        return
+    if not isinstance(manifest, dict):
+        errors.append("audit/boss_ai_trace/live_capture_manifest.json root must be an object")
+        return
+
+    trace_rom = manifest.get("trace_rom")
+    trace_hash = manifest.get("trace_rom_sha256")
+    symbols = manifest.get("trace_symbols")
+    symbols_hash = manifest.get("trace_symbols_sha256")
+    missing = [
+        key
+        for key, value in (
+            ("trace_rom", trace_rom),
+            ("trace_rom_sha256", trace_hash),
+            ("trace_symbols", symbols),
+            ("trace_symbols_sha256", symbols_hash),
+        )
+        if not isinstance(value, str) or not value
+    ]
+    if missing:
+        errors.append(
+            "audit/boss_ai_trace/live_capture_manifest.json missing trace basis fields: "
+            + ", ".join(missing)
+        )
+        return
+
+    assert isinstance(trace_rom, str)
+    assert isinstance(trace_hash, str)
+    assert isinstance(symbols, str)
+    assert isinstance(symbols_hash, str)
+
+    expected_snippets = (
+        ("docs/project_roadmap.md", roadmap, trace_hash),
+        ("audit/boss_ai_trace/live_capture_ledger.md", ledger, "pins the current trace ROM and symbol SHA256 hashes"),
+        ("audit/boss_ai_trace/live_capture_ledger.md", ledger, "`trace_rom`, `trace_rom_sha256`, `trace_symbols`, and `trace_symbols_sha256`"),
+        ("docs/boss_ai_trace_capture.md", trace_doc, "The manifest pins the trace ROM and symbol file by SHA256."),
+        ("docs/boss_ai_trace_capture.md", trace_doc, "Formatted live excerpts include `trace_rom`, `trace_rom_sha256`,"),
+        ("docs/boss_ai_trace_capture.md", trace_doc, trace_rom),
+        ("docs/boss_ai_trace_capture.md", trace_doc, symbols),
+    )
+    for path, text, snippet in expected_snippets:
+        if snippet not in text:
+            errors.append(f"{path} missing trace-manifest sync snippet: {snippet}")
+
+    if not any("trace-manifest sync" in error or "live_capture_manifest" in error for error in errors):
+        print("PASS: trace capture docs match pinned manifest basis")
+
+
 def main() -> int:
     errors: list[str] = []
     check_required_paths(errors)
@@ -607,6 +669,7 @@ def main() -> int:
     check_boss_ai_budget_doc(errors)
     check_qol_handoff_status(errors)
     check_agent_navigation_contract(errors)
+    check_trace_manifest_doc_sync(errors)
 
     if errors:
         for error in errors:

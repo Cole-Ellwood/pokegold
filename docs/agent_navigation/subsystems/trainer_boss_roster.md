@@ -6,6 +6,10 @@ Red, Kanto leader, trainer party, boss item, or AI tier.
 This is a routing matrix. For exact current teams, items, levels, moves, and
 trainer type, inspect `data/trainers/parties.asm`.
 
+Boss roster promise: major trainers should feel scary because they can really
+beat a knowledgeable player while still obeying public, readable rules. Party
+edits should make old knowledge incomplete, not create unfair walls.
+
 ## Core Source Surfaces
 
 | Need | Go to |

@@ -2,6 +2,11 @@
 
 This is a disassembly of Pokémon Gold and Pokémon Silver.
 
+This checkout is also a custom Pokemon Gold hack. For hack intent, routing, and
+current work policy, start at `docs/README.md`. Its core promise is to make
+Pokemon Gold feel unknown and dangerous again for a veteran player: scary
+leaders, useful strange Pokemon, and QoL that respects the journey.
+
 It builds the following ROMs:
 
 - Pokemon - Gold Version (UE) [C][!].gbc `sha1: d8b8a3600a465308c9953dfa04f0081c05bdcb94`

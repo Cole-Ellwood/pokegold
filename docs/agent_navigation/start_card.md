@@ -7,9 +7,13 @@ launcher, not source truth.
 ## First Thirty Seconds
 
 1. Read `docs/README.md` for precedence.
-2. Read `docs/codex_context.md` for the fair-hard Pokemon Gold promise.
+2. Read `docs/codex_context.md` for the First-Playthrough Promise.
 3. Read `docs/project_roadmap.md` for current workstreams and blockers.
 4. Pick a lane below.
+
+Memory hook: restore the feeling of being small in Johto again. Bosses can beat
+you without cheating, weak Pokemon can surprise you, and QoL should not dissolve
+the journey.
 
 ## Pick A Lane
 

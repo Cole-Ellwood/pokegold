@@ -3,6 +3,11 @@
 Audience: future Codex/helper agents. Purpose: keep weak-Pokemon review findings
 out of chat history and in a durable queue.
 
+First-Playthrough Promise lens: backlog entries matter because the player should
+not already know which Pokemon are worthless. Resolve weak or strange species by
+creating real discovery, role identity, or documented intentional gimmicks, not
+by quietly accepting old solved assumptions.
+
 ## How To Use
 
 1. Regenerate `docs/generated/balance_audit.md`.

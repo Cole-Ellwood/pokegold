@@ -16,6 +16,17 @@ The source still wins for exact implementation facts. This file records human
 intent. If the source and this file disagree, either update the source or mark
 the intent as stale instead of silently trusting either one.
 
+## First-Playthrough Balance Promise
+
+Balance exists to make old Pokemon knowledge incomplete again. Do not buff weak
+Pokemon just to make numbers bigger. Give forgotten, strange, or historically
+bad Pokemon a reason to make a veteran player hesitate, experiment, and ask
+"could this actually work?"
+
+A good buff creates discovery pressure: the player recognizes the Pokemon, but
+cannot rely on the old solved tier list to dismiss it. A bad buff only inflates
+stats, erases identity, or makes early Johto trivial.
+
 ## Required Balance Workflow
 
 1. Read `docs/codex_context.md` for the project objective.

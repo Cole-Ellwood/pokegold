@@ -4,6 +4,10 @@ Purpose: make future Codex/helper sessions find the right project surface fast
 without changing ROM behavior. This folder is a routing layer only. It is not
 source truth for mechanics, addresses, stats, trainer data, or build outputs.
 
+Global project hook: preserve the First-Playthrough Promise. The hack is Pokemon
+Gold made unknown and scary again for a veteran player, not generic hard mode,
+competitive Gen 2, or pure modernization.
+
 Read this after `docs/project_roadmap.md` when a session needs to decide where
 to work next, or when the prompt is broad enough that a helper might otherwise
 start with a full-repo search.

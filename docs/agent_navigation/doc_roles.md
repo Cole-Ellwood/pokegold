@@ -8,7 +8,7 @@ future sessions from adding the same routing fact in five places.
 | Doc | Owns | Does not own |
 | --- | --- | --- |
 | `docs/README.md` | Required read order, truth precedence, global routing contract. | Detailed subsystem routes or current workstream status. |
-| `docs/codex_context.md` | Project intent, fair-hard promise, design rules, done criteria. | Current file locations beyond first-read routing. |
+| `docs/codex_context.md` | Project intent, First-Playthrough Promise, design rules, done criteria. | Current file locations beyond first-read routing. |
 | `docs/project_map.md` | Canonical source areas and broad task-to-source map. | Workstream status, blockers, or detailed subsystem checklists. |
 | `docs/project_roadmap.md` | Current workstreams, urgency, status, evidence, blockers, next moves. | Exact source facts that must come from source/generated outputs. |
 | `docs/agent_navigation/` | Fast routing, source-zone classification, verification floors, artifact lookup, glossary, micro-indexes. | Gameplay truth, balance decisions, exact addresses, or generated facts. |

@@ -17,6 +17,17 @@ hack without drifting from the project intent.
 The worktree may already be dirty. Do not revert unrelated user or previous
 Codex changes. Do not edit generated ROM/linker artifacts by hand.
 
+## First-Playthrough QoL Boundary
+
+QoL exists to let the player stay immersed in scary, unknown Johto, not to make
+the journey frictionless. Remove menu pain, unclear service discovery, and
+needless repetition. Preserve preparation, route pressure, resource decisions,
+and the slight old-game texture that makes the world feel larger than the
+player.
+
+If a convenience makes a veteran stop respecting routes, bosses, items, or team
+prep, it works against the hack even when it feels modern.
+
 ## Current Status And Recommended Order
 
 Already implemented low-risk QoL in this handoff:

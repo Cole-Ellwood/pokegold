@@ -7,6 +7,11 @@ Baseline commit: `060d4accd7c0d01b1697ac97e7d7e2da72e3646b`
 
 This document describes mechanics-level changes only (battle systems, rules, item behavior, AI behavior, progression systems, and evolution logic).
 
+Intent lens: these mechanics serve the First-Playthrough Promise. They should
+make old Pokemon knowledge useful but incomplete, create readable danger, and
+support scary boss fights without hidden-information cheating. Do not read this
+file as a mandate for modernization by itself.
+
 Excluded on purpose:
 - Base stat edits
 - Move power/PP/accuracy/type roster balancing details

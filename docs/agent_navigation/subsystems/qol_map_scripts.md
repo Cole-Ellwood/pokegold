@@ -3,6 +3,10 @@
 Use this when the task mentions QoL, friction, Day-Care service text, Repel,
 Pokemon Center timing, NPC text, map scripts, specials, or event routing.
 
+QoL promise: remove needless friction so the player can stay in the journey.
+Do not remove the preparation, route pressure, or old-game texture that helps
+Johto feel bigger than the player.
+
 ## Fast Route
 
 | Need | Go to |

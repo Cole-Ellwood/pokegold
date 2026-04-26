@@ -33,9 +33,37 @@ Before changing gameplay code, read these in order:
 
 ## North Star
 
-This hack should make Pokemon Gold feel like a fair but very hard version of the
-base game. Boss fights are the centerpiece: gym leaders, rival fights, the Elite
-Four, Champion, and Red should push the player hard without cheating.
+This hack should make Pokemon Gold feel like being small in Johto again: the
+world is familiar, but not solved; old knowledge helps, but it is incomplete;
+gym leaders, rivals, the Elite Four, Champion, and Red can scare the player
+because losing is real.
+
+The elevator pitch: Pokemon Gold rebuilt to recreate first-playthrough fear for
+someone who can no longer unknow Pokemon. The game stays Gen 2 in texture, but
+bosses fight like prepared human opponents, weak Pokemon can surprise the
+player, and conveniences remove tedium without removing the journey's pressure.
+
+## First-Playthrough Promise
+
+The deep goal is not "hard mode" or "competitive Gen 2."
+The goal is restored uncertainty.
+
+Design for the feeling of a first Pokemon playthrough:
+
+- The world should feel bigger than the player.
+- Gym leaders should be scary because they can win, not because they cheat.
+- Bosses must be able to win without cheating.
+- A veteran's knowledge should remain useful but should not put the whole game
+  on autopilot.
+- Forgotten or strange Pokemon should make the player ask "could this work?"
+  again.
+- QoL should respect the player's time and hands, not erase preparation,
+  resource tension, or the old-game texture that makes Johto feel like Johto.
+
+Use this test before approving a gameplay change: does it help a knowledgeable
+player feel discovery, danger, and respect for the world again? If it only makes
+the ROM harder, cleaner, faster, or more modern without serving that feeling,
+it is not automatically aligned with the project.
 
 ## Design Priorities
 
@@ -64,7 +92,9 @@ Four, Champion, and Red should push the player hard without cheating.
 4. Weak Pokemon should become usable.
    - Buffs should create real team-building options for Pokemon that were poor in
      the base game.
-   - Buffs may be bold, but should still serve the fair-difficulty goal.
+   - Buffs may be bold, but should still serve the restored-uncertainty goal:
+     old tier-list knowledge should stop being complete, and odd picks should
+     have real teeth.
 
 ## Default Decision Rule
 

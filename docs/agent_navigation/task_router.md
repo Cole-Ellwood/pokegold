@@ -7,6 +7,11 @@ The goal is not to describe the whole project. The goal is to prevent a future
 helper from searching the whole project when one row already names the right
 surface.
 
+Routing invariant: every lane serves the First-Playthrough Promise. Boss AI,
+balance, mechanics, and QoL should restore uncertainty for a veteran player,
+not drift into generic hard mode, pure competitive tuning, or convenience that
+erases the journey.
+
 | User request clue | Read first | Primary source surface | Verify with | Avoid starting in |
 | --- | --- | --- | --- | --- |
 | "boss AI", "trainer AI", "leader is cheating", "switch logic", "major trainer difficulty" | `docs/agent_navigation/subsystems/trainer_boss_roster.md`, `docs/boss_ai_spec.md`, `docs/boss_ai_bug_testing_plan.md`, `docs/boss_ai_post_patch_notes.md` | `engine/battle/ai/boss.asm`, `engine/battle/ai/items.asm`, `engine/battle/ai/switch.asm`, `engine/battle/core.asm`, `data/trainers/ai_tiers.asm`, `data/trainers/parties.asm` | `python tools\audit\check_boss_ai_no_cheat.py`, `python tools\audit\check_boss_ai_gating.py`, `python tools\audit\check_boss_ai_trace_invariants.py`, `python tools\audit\check_boss_ai_memory_budget.py` | Broad `engine/` search before reading the Boss AI docs. |
@@ -20,7 +25,7 @@ surface.
 | "graphics", "sprite", "pic", "tileset", "palette" | `docs/project_map.md`, `docs/generated/dev_index.md` | `gfx/`, `data/sprites/`, `data/tilesets.asm`, `gfx/pics_gold.asm` | Build both ROMs; visual check if possible | Assuming graphics are code-free when pointer tables or bank layout may move. |
 | "audio", "music", "cry", "sfx" | `docs/project_map.md`, `docs/generated/dev_index.md` | `audio/`, `audio.asm`, `constants/music_constants.asm`, `constants/sfx_constants.asm` | Build both ROMs; audio/manual gap note if not played | Large audio edits in tight banks without checking generated index. |
 | "build", "release", "checksum", "up to date" | `docs/agent_navigation/source_output_ownership.md`, `docs/build.md`, `docs/validation_report.md`, `docs/generated/dev_index.md` | `Makefile`, `roms.sha1`, linker outputs, `tools/` | WSL `make` command in `docs/build.md`, `python tools\audit\check_docs_navigation.py` | Declaring build blocked before checking WSL and repo-local RGBDS. |
-| "docs", "roadmap", "organize", "beautiful", "10/10", "workspace hygiene", "physical clutter", "future sessions" | `docs/agent_navigation/README.md`, `docs/agent_navigation/subsystems/checkpoint_handoff.md`, `docs/README.md`, `docs/project_roadmap.md`, `outbox/repo_10_10_polish_prompt.md` | `docs/`, `audit/`, `outbox/`; build layout only with explicit approval | `python tools\audit\check_docs_navigation.py`, `git diff --check` | Touching gameplay source, deleting ignored outputs, or relocating build products while in a docs/workspace-hygiene pass. |
+| "docs", "roadmap", "organize", "beautiful", "10/10", "workspace hygiene", "physical clutter", "future sessions" | `docs/agent_navigation/README.md`, `docs/agent_navigation/subsystems/checkpoint_handoff.md`, `docs/README.md`, `docs/project_roadmap.md`, `outbox/repo_10_10_polish_prompt.md` | `docs/`, `audit/`, `outbox/`; build layout only with explicit approval | `python tools\audit\check_workspace_hygiene.py`, `python tools\audit\check_docs_navigation.py`, `git diff --check` | Touching gameplay source, deleting ignored outputs, or relocating build products while in a docs/workspace-hygiene pass. |
 | custom mechanic name, unfamiliar term, half-remembered feature | `docs/agent_navigation/custom_terms.md`, `docs/mechanics_changes_from_base.md` | Depends on term route. | Verification matrix row for the target subsystem. | Broad source search before trying known spelling variants. |
 
 ## Search Escalation

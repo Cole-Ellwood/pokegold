@@ -3,6 +3,13 @@
 Date: 2026-02-14
 Applies to: Gym Leaders, Rival encounters, Elite Four, Champion
 
+## Encounter Promise
+
+Major trainers should recreate first-playthrough fear: the player can lose, the
+leader has a plan, and the fight reveals that old knowledge is useful but not
+complete. Do not author bosses as unfair walls, deterministic puzzles, or raw
+stat checks. Author them as prepared opponents inside readable Gen 2 rules.
+
 ## Acceptance Checklist (Required for Every Major Trainer)
 
 - [ ] All mons have 4 moves filled (`no NO_MOVE`).

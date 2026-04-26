@@ -3,6 +3,10 @@
 Use this when the task is about weak Pokemon, stats, typing, learnsets,
 evolutions, species roles, or balance review.
 
+Balance promise: make familiar Pokemon worth rediscovering. The player should
+not be able to rely on the old solved tier list to dismiss weak or strange
+species, but buffs should preserve identity and avoid trivializing early Johto.
+
 ## Fast Route
 
 | Need | Go to |

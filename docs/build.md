@@ -9,6 +9,10 @@
   Before declaring builds blocked, check WSL: `bash -lc 'command -v make'`.
   In this checkout, WSL provides `/usr/bin/make`.
 
+Build verification proves assembly/link status, not the First-Playthrough
+Promise. Do not treat a successful build as proof that bosses feel fair,
+Pokemon roles create discovery, or QoL preserves journey pressure.
+
 ## Baseline identity (clean pret/pokegold Gold)
 - SHA1: `d8b8a3600a465308c9953dfa04f0081c05bdcb94`
 - SHA256: `fb0016d27b1e5374e1ec9fcad60e6628d8646103b5313ca683417f52b97e7e4e`

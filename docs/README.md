@@ -5,10 +5,20 @@ READ THIS FIRST in new Codex/helper sessions before broad source search.
 Audience: future Codex/helper agents, not human readers. Optimize for source
 navigation, implementation safety, and drift detection.
 
+## Core Promise
+
+First-Playthrough Promise: this hack exists to make Pokemon Gold feel unknown
+and dangerous again for a player who already knows Pokemon. Do not treat it as
+generic hard mode, competitive Gen 2, or modernization for its own sake. Every
+boss, balance, mechanics, QoL, and review decision should preserve the feeling
+that Johto is bigger than the player, gym leaders can be scary because the
+player can lose, and old knowledge is useful but incomplete.
+
 ## Required Read Order
 
 1. `docs/README.md`: helper-doc routing and precedence.
-2. `docs/codex_context.md`: project intent, design constraints, done criteria.
+2. `docs/codex_context.md`: First-Playthrough Promise, design constraints,
+   done criteria.
 3. `docs/project_map.md`: task-to-source routing.
 4. `docs/project_roadmap.md`: current project workstreams and future-session
    status board.
@@ -52,6 +62,9 @@ python scripts\generate_dev_index.py --rom pokegold
 - Use `docs/agent_navigation/README.md` when the prompt is broad, when a future
   helper needs an `O(1)` task route, or when classifying source/generated/scratch
   paths before editing.
+- Use `docs/agent_navigation/source_output_ownership.md` and
+  `python tools\audit\check_workspace_hygiene.py` for repo polish, raw-folder
+  clutter, ignored build outputs, or "10/10 workspace" prompts.
 - Use `docs/agent_navigation/doc_roles.md` before adding routing facts that
   might duplicate existing docs.
 - Use `docs/generated/dev_index.md` before memory-sensitive edits or when

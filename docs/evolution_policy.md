@@ -3,6 +3,11 @@
 Audience: future Codex/helper agents. Purpose: make evolution edits explicit
 before balance work treats a Pokemon as forgotten or intentionally standalone.
 
+Intent lens: evolution changes must serve the First-Playthrough Promise. A
+removed or altered evolution should create discovery and a real standalone role,
+not accidentally strand a familiar Pokemon as weak clutter or inflate it until
+progression tension disappears.
+
 ## Source Rule
 
 Evolution rules live in `data/pokemon/evos_attacks.asm`. Each species block

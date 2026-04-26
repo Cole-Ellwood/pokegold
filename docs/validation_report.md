@@ -29,3 +29,6 @@ Date: 2026-04-25
 
 ## Known residual risk
 - No full emulator playthrough is automated in this repository; progression softlock and pacing validation still depend on manual playtesting.
+- No automated check can fully validate the First-Playthrough Promise: restored
+  uncertainty, scary-but-fair bosses, surprising weak-Pokemon roles, and QoL
+  that preserves journey pressure still require play experience.

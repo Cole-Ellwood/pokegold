@@ -10,6 +10,11 @@ This build is no longer data-only. It includes:
 - Progression/script additions (TM Tutor, Move Reminder, gym voucher rewards)
 - Evolution flow changes (branching level-evolution choice handling)
 
+Design promise: this release candidate is aimed at restoring first-playthrough
+fear for a veteran player, not just raising difficulty. Bosses should feel
+dangerous without hidden knowledge, weak Pokemon should invite rediscovery, and
+QoL should reduce tedium without dissolving the journey.
+
 Detailed mechanics summary:
 - `docs/mechanics_changes_from_base.md`
 

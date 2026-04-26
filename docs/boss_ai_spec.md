@@ -9,6 +9,18 @@ Target behavior: **"absurdly strong but non-cheating"**.
 
 AI wins by legal inference and good risk management, not hidden knowledge.
 
+## First-Playthrough Boss Promise
+
+Bosses exist to restore the childhood feeling that a gym leader might actually
+beat you. They should feel prepared, observant, and dangerous, but never
+clairvoyant. The player should lose because a leader played the public board
+well, punished autopilot, or made a risky line credible, not because the ROM
+read hidden party data or current-turn input.
+
+The goal is scary Johto, not competitive perfection. Prefer readable pressure,
+probabilistic prediction, and role identity over deterministic scripts or
+omniscient counterplay.
+
 ## AI Tiers
 
 ### Early Tier (Badges 1-3)

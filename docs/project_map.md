@@ -25,11 +25,12 @@ source-truth rules explicit even when that makes the prose less human-friendly.
 
 ## Objective Check
 
-The hack is a fair but very hard version of Pokemon Gold. Boss fights are the
+The hack exists to recreate first-playthrough fear for someone who already knows
+Pokemon. Johto should feel familiar but unsolved: boss fights are the
 centerpiece, AI must not cheat with hidden information, QoL must remove tedium
 without removing decisions, and weak Pokemon buffs should create real team
-options. Read `docs/codex_context.md` before mechanics, balance, AI, or
-progression changes.
+options that make old tier-list knowledge incomplete. Read
+`docs/codex_context.md` before mechanics, balance, AI, or progression changes.
 
 For a concise change history over base Gold, read:
 

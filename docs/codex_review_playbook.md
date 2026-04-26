@@ -19,13 +19,21 @@ hunt the ROM hack. It assumes the reviewer has no prior conversation context.
 Do not start with broad source searches unless these docs fail to identify the
 right subsystem.
 
+## Review North Star
+
+Review against the First-Playthrough Promise: the hack should make Johto feel
+unknown and dangerous again for a player who already knows Pokemon. Bugs include
+ordinary crashes and data mistakes, but also changes that turn restored
+uncertainty into cheap difficulty, solved optimization, or frictionless
+modernization.
+
 ## Review Stance
 
 Lead with concrete findings. A useful finding has:
 
 - exact file and line;
 - why the behavior is wrong or risky;
-- why it matters to the fair-but-hard hack goal;
+- why it matters to restored uncertainty, fair fear, or Gen 2 texture;
 - a concrete fix direction;
 - confidence and severity.
 
