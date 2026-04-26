@@ -277,6 +277,12 @@ def open_pyboy(args: argparse.Namespace):
     return pyboy
 
 
+def disable_realtime(pyboy) -> None:
+    set_speed = getattr(pyboy, "set_emulation_speed", None)
+    if set_speed is not None:
+        set_speed(0)
+
+
 def load_state_if_requested(pyboy, args: argparse.Namespace) -> None:
     if args.save_state:
         if not args.save_state.exists():
@@ -288,6 +294,7 @@ def load_state_if_requested(pyboy, args: argparse.Namespace) -> None:
 def capture_wram(args: argparse.Namespace, symbols: dict[str, Symbol]) -> dict[str, list[int]]:
     pyboy = open_pyboy(args)
     try:
+        disable_realtime(pyboy)
         load_state_if_requested(pyboy, args)
 
         if args.frames:
@@ -315,6 +322,7 @@ def watch_wram(
     frame = 0
     capture_index = 0
     try:
+        disable_realtime(pyboy)
         load_state_if_requested(pyboy, args)
 
         while frame <= args.watch_frames:

@@ -34,6 +34,14 @@ def rel_or_abs(path_text: str) -> Path:
     return ROOT / path
 
 
+def display_path(path: Path) -> str:
+    resolved = path.resolve()
+    try:
+        return str(resolved.relative_to(ROOT)).replace("\\", "/")
+    except ValueError:
+        return str(resolved)
+
+
 def sha256_file(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as fh:
@@ -233,6 +241,27 @@ def print_probe_failure(probe_cmd: list[str], proc: subprocess.CompletedProcess[
             print(f"    {line}")
 
 
+def print_missing_state_hint(
+    manifest_path: Path,
+    entry: dict[str, Any],
+    trace_rom: Path | None,
+    trace_symbols: Path | None,
+) -> None:
+    print(
+        "  next: set this capture's save_state in "
+        f"{display_path(manifest_path)} before capture"
+    )
+    probe_cmd = build_state_probe_command(
+        entry,
+        Path("path/to/candidate.state"),
+        trace_rom,
+        trace_symbols,
+    )
+    if probe_cmd is not None:
+        print("  preflight required before READY:")
+        print(f"    {command_for_display(probe_cmd)}")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run Boss AI trace captures from a manifest.")
     parser.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)
@@ -284,6 +313,7 @@ def main() -> int:
             missing_state += 1
             status = "MISSING_STATE"
             print(f"{entry['id']}: {status} {command_for_display(cmd)}")
+            print_missing_state_hint(args.manifest, entry, trace_rom, trace_symbols)
             if args.strict:
                 fail(f"{entry['id']}: missing save-state")
             skipped += 1

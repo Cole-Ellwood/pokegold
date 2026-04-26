@@ -11,6 +11,7 @@ the currently blocked Morty proof capsule.
 | Batch capture inputs | `audit/boss_ai_trace/live_capture_manifest.json` |
 | Capture command behavior | `docs/boss_ai_trace_capture.md` |
 | Candidate state preflight | `tools/trace/boss_ai_trace_state_probe.py` |
+| Morty missing-state checklist | `audit/boss_ai_trace/morty_state_needed_2026-04-26.md` |
 | Post-patch behavior targets | `docs/boss_ai_post_patch_notes.md` |
 | Current blocker narrative | `audit/boss_ai_trace/morty_proof_capsule_attempt_2026-04-26.md` |
 | Capture helper code | `tools/trace/boss_ai_trace_capture.py`, `tools/trace/boss_ai_trace_batch.py` |
