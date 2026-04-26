@@ -9,6 +9,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 AI_TIERS_FILE = ROOT / "data" / "trainers" / "ai_tiers.asm"
 MOVE_AI_FILE = ROOT / "engine" / "battle" / "ai" / "move.asm"
+BOSS_AI_FILE = ROOT / "engine" / "battle" / "ai" / "boss.asm"
 TRAINER_ATTRIBUTES_FILE = ROOT / "engine" / "battle" / "read_trainer_attributes.asm"
 
 JOHTO_LEADERS = {
@@ -61,6 +62,26 @@ POSTGAME_BOSSES = {
     ("RED", "RED1"),
 }
 
+ADAPTIVE_LEAD_TARGETS = {
+    ("CHUCK", "CHUCK1"),
+    ("JASMINE", "JASMINE1"),
+    ("PRYCE", "PRYCE1"),
+    ("CLAIR", "CLAIR1"),
+    ("WILL", "WILL1"),
+    ("BRUNO", "BRUNO1"),
+    ("KOGA", "KOGA1"),
+    ("KAREN", "KAREN1"),
+    ("CHAMPION", "LANCE"),
+    ("BROCK", "BROCK1"),
+    ("MISTY", "MISTY1"),
+    ("LT_SURGE", "LT_SURGE1"),
+    ("ERIKA", "ERIKA1"),
+    ("JANINE", "JANINE1"),
+    ("SABRINA", "SABRINA1"),
+    ("BLAINE", "BLAINE1"),
+    ("BLUE", "BLUE1"),
+}
+
 TARGETS = (
     JOHTO_LEADERS
     | {("RIVAL1", trainer_id) for trainer_id in RIVAL1_IDS}
@@ -74,6 +95,36 @@ NONZERO_TIERS = {"AI_TIER_EARLY", "AI_TIER_MID", "AI_TIER_LATE"}
 ENTRY_RE = re.compile(
     r"^\s*db\s+([A-Z0-9_]+)\s*,\s*([A-Z0-9_]+)\s*,\s*([A-Z0-9_]+)\s*(?:;.*)?$"
 )
+PAIR_ENTRY_RE = re.compile(
+    r"^\s*db\s+([A-Z0-9_]+)\s*,\s*([A-Z0-9_]+)\s*(?:;.*)?$"
+)
+
+
+def parse_pair_map(text: str, label: str) -> set[tuple[str, str]]:
+    in_map = False
+    pairs: set[tuple[str, str]] = set()
+    for raw_line in text.splitlines():
+        line = raw_line.strip()
+        if line == f"{label}:":
+            in_map = True
+            continue
+        if not in_map:
+            continue
+        if not line or line.startswith(";"):
+            continue
+        if re.match(r"^\s*db\s+0\b", raw_line):
+            return pairs
+        match = PAIR_ENTRY_RE.match(raw_line)
+        if not match:
+            print(
+                f"ERROR: malformed {label} entry: {raw_line}",
+                file=sys.stderr,
+            )
+            raise SystemExit(1)
+        pairs.add(match.groups())
+
+    print(f"ERROR: could not locate terminated {label}.", file=sys.stderr)
+    raise SystemExit(1)
 
 
 def main() -> int:
@@ -83,12 +134,16 @@ def main() -> int:
     if not MOVE_AI_FILE.exists():
         print(f"ERROR: missing file: {MOVE_AI_FILE}", file=sys.stderr)
         return 1
+    if not BOSS_AI_FILE.exists():
+        print(f"ERROR: missing file: {BOSS_AI_FILE}", file=sys.stderr)
+        return 1
     if not TRAINER_ATTRIBUTES_FILE.exists():
         print(f"ERROR: missing file: {TRAINER_ATTRIBUTES_FILE}", file=sys.stderr)
         return 1
 
+    ai_tiers_text = AI_TIERS_FILE.read_text(encoding="utf-8")
     entries: dict[tuple[str, str], str] = {}
-    for raw_line in AI_TIERS_FILE.read_text(encoding="utf-8").splitlines():
+    for raw_line in ai_tiers_text.splitlines():
         line = raw_line.strip()
         if not line or line.startswith(";"):
             continue
@@ -121,6 +176,47 @@ def main() -> int:
         for (trainer_class, trainer_id), tier in zero_or_unknown:
             print(f"  - {trainer_class}, {trainer_id} -> {tier}", file=sys.stderr)
         return 1
+
+    adaptive_leads = parse_pair_map(ai_tiers_text, "AdaptiveLeadMap")
+    missing_adaptive = sorted(ADAPTIVE_LEAD_TARGETS - adaptive_leads)
+    extra_adaptive = sorted(adaptive_leads - ADAPTIVE_LEAD_TARGETS)
+    if missing_adaptive or extra_adaptive:
+        if missing_adaptive:
+            print("ERROR: missing AdaptiveLeadMap entries:", file=sys.stderr)
+            for trainer_class, trainer_id in missing_adaptive:
+                print(f"  - {trainer_class}, {trainer_id}", file=sys.stderr)
+        if extra_adaptive:
+            print("ERROR: unexpected AdaptiveLeadMap entries:", file=sys.stderr)
+            for trainer_class, trainer_id in extra_adaptive:
+                print(f"  - {trainer_class}, {trainer_id}", file=sys.stderr)
+        return 1
+
+    boss_ai_text = BOSS_AI_FILE.read_text(encoding="utf-8")
+    adaptive_match = re.search(
+        r"\.ShouldUseAdaptiveLeadForTrainer:(?P<body>.*?)\.FindFirstAliveOTMon:",
+        boss_ai_text,
+        flags=re.DOTALL,
+    )
+    if not adaptive_match:
+        print("ERROR: could not locate adaptive lead trainer gate.", file=sys.stderr)
+        return 1
+    adaptive_body = adaptive_match.group("body")
+    if "AdaptiveLeadMap" not in adaptive_body:
+        print("ERROR: adaptive lead gate must read AdaptiveLeadMap.", file=sys.stderr)
+        return 1
+    if "callfar IsGymLeader" in adaptive_body:
+        print(
+            "ERROR: adaptive lead policy must be table-driven, not IsGymLeader-driven.",
+            file=sys.stderr,
+        )
+        return 1
+    for trainer_class in ("FALKNER", "WHITNEY", "BUGSY", "MORTY", "RED"):
+        if f"cp {trainer_class}" in adaptive_body:
+            print(
+                f"ERROR: adaptive lead gate still hard-codes {trainer_class}.",
+                file=sys.stderr,
+            )
+            return 1
 
     move_ai_text = MOVE_AI_FILE.read_text(encoding="utf-8")
     if "Temporary safety path: Rival1" in move_ai_text:
@@ -158,6 +254,7 @@ def main() -> int:
         "Tier counts: "
         + ", ".join(f"{tier}={count}" for tier, count in by_tier.items())
     )
+    print(f"Adaptive lead entries covered: {len(adaptive_leads)}")
     print("Mapped trainer class/id pairs:")
     for (trainer_class, trainer_id), tier in sorted(entries.items()):
         if (trainer_class, trainer_id) not in TARGETS:

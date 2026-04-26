@@ -139,10 +139,22 @@ def audit_revealed_coverage(boss: str, wram: str) -> None:
     )
 
     compute_plausible = top_block(boss, "BossAI_ComputePlayerPlausibleTypeMask")
-    require_contains(
+    require_order(
         compute_plausible,
+        [
+            "call BossAI_ClearPlausibleMask",
+            "call BossAI_AddPublicSTABThreatsToMask",
+            "call BossAI_AddRevealedDamagingTypesToMask",
+            "call BossAI_AddSpeciesAndPreEvolutionMovesToMask",
+        ],
+        "public threat mask source ordering",
+    )
+
+    stab = top_block(boss, "BossAI_AddPublicSTABThreatsToMask")
+    require_contains(
+        stab,
         "call BossAI_SetPlausibleAndLikelyMaskBit",
-        "STAB likely plausible threat source",
+        "STAB likely/plausible threat source",
     )
 
     compute_risk = top_block(boss, "BossAI_ComputeSwitchCandidateRisk")

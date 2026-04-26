@@ -131,25 +131,29 @@ MaybePickAdaptiveEnemyLead:
 	ret
 
 .ShouldUseAdaptiveLeadForTrainer:
-	callfar IsGymLeader
-	ret nc
-
 	ld a, [wOtherTrainerClass]
-	cp FALKNER
-	jr z, .disabled
-	cp WHITNEY
-	jr z, .disabled
-	cp BUGSY
-	jr z, .disabled
-	cp MORTY
-	jr z, .disabled
-	cp RED
-	jr z, .disabled
-	scf
-	ret
-
-.disabled
 	and a
+	ret z
+	ld b, a
+	ld a, [wOtherTrainerID]
+	ld c, a
+	ld hl, AdaptiveLeadMap
+.loop
+	ld a, [hli]
+	and a
+	ret z
+	cp b
+	jr nz, .next
+	ld a, [hli]
+	cp c
+	jr z, .enabled
+	jr .loop
+.next
+	inc hl
+	jr .loop
+
+.enabled
+	scf
 	ret
 
 .FindFirstAliveOTMon:
@@ -2773,17 +2777,7 @@ BossAI_ComputePlayerPlausibleTypeMask:
 	ld [wBossAIPlausibleTypeMaskLevel], a
 	call BossAI_ClearPlausibleMask
 
-	ld a, [wBattleMonType1]
-	call BossAI_SetPlausibleAndLikelyMaskBit
-	ld a, [wBattleMonType2]
-	ld c, a
-	ld a, [wBattleMonType1]
-	cp c
-	jr z, .skip_stab2
-	ld a, c
-	call BossAI_SetPlausibleAndLikelyMaskBit
-.skip_stab2
-
+	call BossAI_AddPublicSTABThreatsToMask
 	call BossAI_AddRevealedDamagingTypesToMask
 	ld a, [wBossAITemp]
 	call BossAI_AddSpeciesAndPreEvolutionMovesToMask
@@ -2795,6 +2789,18 @@ IF DEF(BOSS_AI_TRACE)
 	ld bc, 4
 	call CopyBytes
 ENDC
+	ret
+
+BossAI_AddPublicSTABThreatsToMask:
+	ld a, [wBattleMonType1]
+	call BossAI_SetPlausibleAndLikelyMaskBit
+	ld a, [wBattleMonType2]
+	ld c, a
+	ld a, [wBattleMonType1]
+	cp c
+	ret z
+	ld a, c
+	call BossAI_SetPlausibleAndLikelyMaskBit
 	ret
 
 BossAI_ClearPlausibleMask:
@@ -2969,25 +2975,11 @@ BossAI_AddSpeciesAndPreEvolutionMovesToMask:
 	ld [wBossAITemp2], a
 
 .loop
-	ld a, [wCurPartySpecies]
-	ld [wCurSpecies], a
-	call GetBaseData
-	call BossAI_AddBaseTMHMMovesToMask
-	ld a, [wCurPartySpecies]
-	call BossAI_AddSpeciesLevelUpMovesToMask
-	ld a, [wBossAITemp2]
-	and a
-	jr nz, .skip_likely_levelup
-	ld a, [wCurPartySpecies]
-	call BossAI_AddSpeciesLevelUpMovesToLikelyMask
-.skip_likely_levelup
-	ld a, [wCurPartySpecies]
-	call BossAI_AddSpeciesEggMovesToMask
-	callfar GetPreEvolution
-	jr nc, .restore
-	ld a, 1
-	ld [wBossAITemp2], a
-	jr .loop
+	call BossAI_LoadPublicThreatSourceSpecies
+	call BossAI_AddCurrentSpeciesSpeculativeMoveThreats
+	call BossAI_AddCurrentSpeciesLikelyMoveThreats
+	call BossAI_AdvanceToPreEvolutionThreatSource
+	jr c, .loop
 
 .restore
 	ld a, [wBossAITemp5]
@@ -2995,6 +2987,36 @@ BossAI_AddSpeciesAndPreEvolutionMovesToMask:
 	ld a, [wBossAITemp4]
 	ld [wCurSpecies], a
 	call GetBaseData
+	ret
+
+BossAI_LoadPublicThreatSourceSpecies:
+	ld a, [wCurPartySpecies]
+	ld [wCurSpecies], a
+	call GetBaseData
+	ret
+
+BossAI_AddCurrentSpeciesSpeculativeMoveThreats:
+	call BossAI_AddBaseTMHMMovesToMask
+	ld a, [wCurPartySpecies]
+	call BossAI_AddSpeciesLevelUpMovesToMask
+	ld a, [wCurPartySpecies]
+	call BossAI_AddSpeciesEggMovesToMask
+	ret
+
+BossAI_AddCurrentSpeciesLikelyMoveThreats:
+	ld a, [wBossAITemp2]
+	and a
+	ret nz
+	ld a, [wCurPartySpecies]
+	call BossAI_AddSpeciesLevelUpMovesToLikelyMask
+	ret
+
+BossAI_AdvanceToPreEvolutionThreatSource:
+	callfar GetPreEvolution
+	ret nc
+	ld a, 1
+	ld [wBossAITemp2], a
+	scf
 	ret
 
 BossAI_AddBaseTMHMMovesToMask:
