@@ -12,6 +12,9 @@
       "boss": "Morty",
       "status": "UNTOUCHED",
       "save_state": "",
+      "preflight": {
+        "expect": "morty"
+      },
       "out": "audit/boss_ai_trace/morty_live.txt",
       "notes": "revealed coverage species isolation; status fail gates; +2 setup Haze"
     },

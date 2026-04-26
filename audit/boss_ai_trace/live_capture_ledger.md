@@ -18,9 +18,10 @@ Tooling status:
 | Trace symbol address printout | `FINISHED` | `python tools\trace\boss_ai_trace_capture.py --symbols-only` |
 | One-shot WRAM reader | `FINISHED` | `audit/boss_ai_trace/trace_helper_smoke.txt` |
 | Polling watch mode | `FINISHED` | `audit/boss_ai_trace/trace_watch_smoke.txt` |
+| State/RAM candidate probe | `FINISHED` | `python tools\trace\boss_ai_trace_state_probe.py --rom .local\do_now_morty_current\morty_live_attempt\pokegold_trace.gbc --boot-continue --expect-morty --strict` rejects raw stale Morty scratch RAM with `morty_candidate=FAIL`; the probe also rejects current-ROM debugger-warp states when copied SRAM has impossible active-player HP such as `64000/64000`. |
 | Ledger audit | `FINISHED` | `python tools\audit\check_boss_ai_live_capture_ledger.py` |
-| Capture manifest | `FINISHED` | `audit/boss_ai_trace/live_capture_manifest.json` pins the current trace ROM and symbol SHA256 hashes. |
-| Batch dry-run | `FINISHED` | `python tools\trace\boss_ai_trace_batch.py` reports missing save-states. |
+| Capture manifest | `FINISHED` | `audit/boss_ai_trace/live_capture_manifest.json` pins the current trace ROM and symbol SHA256 hashes and owns the Morty `preflight.expect` guard. |
+| Batch dry-run | `FINISHED` | `python tools\trace\boss_ai_trace_batch.py` reports missing save-states and uses manifest preflights before capture. |
 | Morty proof-capsule attempt | `FINISHED` | `audit/boss_ai_trace/morty_proof_capsule_attempt_2026-04-26.md` documents why no valid live proof was produced. |
 | Boss-position save-states | `UNTOUCHED` | No Morty/Jasmine/Clair/Koga/Lance save-state paths recorded yet. |
 

@@ -83,6 +83,7 @@ REQUIRED_PATHS = (
     "tools/audit/check_boss_items_present.py",
     "tools/audit/check_boss_moves_complete.py",
     "tools/audit/check_battle_math_safety.py",
+    "tools/trace/boss_ai_trace_state_probe.py",
     "main.asm",
     "engine/battle/ai/boss.asm",
     "engine/battle/core.asm",
@@ -618,6 +619,7 @@ def check_trace_manifest_doc_sync(errors: list[str]) -> None:
     trace_hash = manifest.get("trace_rom_sha256")
     symbols = manifest.get("trace_symbols")
     symbols_hash = manifest.get("trace_symbols_sha256")
+    captures = manifest.get("captures")
     missing = [
         key
         for key, value in (
@@ -635,6 +637,24 @@ def check_trace_manifest_doc_sync(errors: list[str]) -> None:
         )
         return
 
+    if not isinstance(captures, list):
+        errors.append("audit/boss_ai_trace/live_capture_manifest.json missing captures list")
+        return
+    morty_entry = next(
+        (
+            entry
+            for entry in captures
+            if isinstance(entry, dict) and entry.get("id") == "morty"
+        ),
+        None,
+    )
+    if not isinstance(morty_entry, dict):
+        errors.append("audit/boss_ai_trace/live_capture_manifest.json missing morty capture entry")
+        return
+    preflight = morty_entry.get("preflight")
+    if not isinstance(preflight, dict) or preflight.get("expect") != "morty":
+        errors.append("audit/boss_ai_trace/live_capture_manifest.json missing Morty preflight.expect=morty")
+
     assert isinstance(trace_rom, str)
     assert isinstance(trace_hash, str)
     assert isinstance(symbols, str)
@@ -646,6 +666,9 @@ def check_trace_manifest_doc_sync(errors: list[str]) -> None:
         ("audit/boss_ai_trace/live_capture_ledger.md", ledger, "`trace_rom`, `trace_rom_sha256`, `trace_symbols`, and `trace_symbols_sha256`"),
         ("docs/boss_ai_trace_capture.md", trace_doc, "The manifest pins the trace ROM and symbol file by SHA256."),
         ("docs/boss_ai_trace_capture.md", trace_doc, "Formatted live excerpts include `trace_rom`, `trace_rom_sha256`,"),
+        ("docs/boss_ai_trace_capture.md", trace_doc, "preflight.expect"),
+        ("audit/boss_ai_trace/live_capture_ledger.md", ledger, "preflight.expect"),
+        ("docs/project_roadmap.md", roadmap, "preflight.expect = morty"),
         ("docs/boss_ai_trace_capture.md", trace_doc, trace_rom),
         ("docs/boss_ai_trace_capture.md", trace_doc, symbols),
     )

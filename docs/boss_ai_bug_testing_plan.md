@@ -23,7 +23,7 @@ Current implementation status:
 | Live capture ledger | `FINISHED` | `audit/boss_ai_trace/live_capture_ledger.md` tracks boss-position capture status. |
 | Live capture ledger audit | `FINISHED` | `python tools\audit\check_boss_ai_live_capture_ledger.py` passes. |
 | Live capture manifest | `FINISHED` | `audit/boss_ai_trace/live_capture_manifest.json` defines boss capture commands. |
-| Live capture batch runner | `FINISHED` | `python tools\trace\boss_ai_trace_batch.py` dry-run reports missing save-states. |
+| Live capture batch runner | `FINISHED` | `python tools\trace\boss_ai_trace_batch.py` dry-run reports missing save-states and uses manifest preflights before capture. |
 | Boss-position live emulator/debugger captures | `UNTOUCHED` | Requires save-states or manual debugger positions at boss AI decision points. |
 
 Preserve these constraints while implementing tests:
@@ -315,6 +315,17 @@ Dry-run all configured live captures:
 ```powershell
 python tools\trace\boss_ai_trace_batch.py
 ```
+
+Probe a Morty candidate state before adding it to the manifest:
+
+```powershell
+python tools\trace\boss_ai_trace_state_probe.py --save-state path\to\before_morty_decision.state --expect-morty --strict
+```
+
+Keep the `morty` manifest entry's `preflight.expect = morty` field. The batch
+runner uses that field to reject stale Morty/Ecruteak states before capture.
+The probe must reject both missing Morty object context and impossible active
+player data such as copied SRAM showing `hp=64000/64000`.
 
 Run captures with available save-states:
 

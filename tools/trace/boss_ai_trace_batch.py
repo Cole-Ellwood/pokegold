@@ -15,7 +15,11 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_MANIFEST = ROOT / "audit" / "boss_ai_trace" / "live_capture_manifest.json"
 CAPTURE_HELPER = ROOT / "tools" / "trace" / "boss_ai_trace_capture.py"
+STATE_PROBE = ROOT / "tools" / "trace" / "boss_ai_trace_state_probe.py"
 ALLOWED_STATUSES = {"FINISHED", "IN PROGRESS", "UNTOUCHED"}
+PREFLIGHT_EXPECT_FLAGS = {
+    "morty": "--expect-morty",
+}
 
 
 def fail(message: str) -> None:
@@ -106,6 +110,22 @@ def validate_capture(entry: dict[str, Any], index: int) -> None:
         not isinstance(entry["poll_every"], int) or entry["poll_every"] <= 0
     ):
         fail(f"capture {entry['id']}: `poll_every` must be a positive integer")
+    preflight = entry.get("preflight")
+    if preflight is None:
+        return
+    if not isinstance(preflight, dict):
+        fail(f"capture {entry['id']}: `preflight` must be an object")
+    expect = preflight.get("expect")
+    if expect not in PREFLIGHT_EXPECT_FLAGS:
+        fail(
+            f"capture {entry['id']}: unsupported preflight expectation "
+            f"`{expect}`"
+        )
+    if entry["id"] != expect:
+        fail(
+            f"capture {entry['id']}: preflight expectation `{expect}` "
+            "must match capture id"
+        )
 
 
 def validate_capture_ids(captures: list[Any], selected: set[str]) -> None:
@@ -168,11 +188,60 @@ def command_for_display(cmd: list[str]) -> str:
     return " ".join(f'"{part}"' if " " in part else part for part in cmd)
 
 
+def build_state_probe_command(
+    entry: dict[str, Any],
+    save_state: Path,
+    trace_rom: Path | None,
+    trace_symbols: Path | None,
+) -> list[str] | None:
+    preflight = entry.get("preflight")
+    if preflight is None:
+        return None
+    if not isinstance(preflight, dict):
+        fail(f"capture {entry['id']}: `preflight` must be an object")
+    expect = preflight.get("expect")
+    flag = PREFLIGHT_EXPECT_FLAGS.get(str(expect))
+    if flag is None:
+        fail(f"capture {entry['id']}: unsupported preflight expectation `{expect}`")
+
+    cmd = [
+        sys.executable,
+        str(STATE_PROBE),
+        "--save-state",
+        str(save_state),
+        flag,
+        "--strict",
+    ]
+    if trace_rom is not None:
+        cmd.extend(["--rom", str(trace_rom)])
+    if trace_symbols is not None:
+        cmd.extend(["--symbols", str(trace_symbols)])
+    return cmd
+
+
+def print_probe_failure(probe_cmd: list[str], proc: subprocess.CompletedProcess[str]) -> None:
+    print(f"  probe: {command_for_display(probe_cmd)}")
+    output = (proc.stdout or "").strip()
+    error = (proc.stderr or "").strip()
+    if output:
+        print("  probe stdout:")
+        for line in output.splitlines():
+            print(f"    {line}")
+    if error:
+        print("  probe stderr:")
+        for line in error.splitlines():
+            print(f"    {line}")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run Boss AI trace captures from a manifest.")
     parser.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)
     parser.add_argument("--execute", action="store_true", help="run captures with existing save-states")
-    parser.add_argument("--strict", action="store_true", help="fail if any manifest entry lacks a save-state")
+    parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="fail if any manifest entry lacks a save-state or has an invalid preflight",
+    )
     parser.add_argument("--only", action="append", default=[], help="capture id to include; may be repeated")
     args = parser.parse_args()
 
@@ -192,6 +261,7 @@ def main() -> int:
     ran = 0
     skipped = 0
     missing_state = 0
+    invalid_state = 0
 
     for index, raw_entry in enumerate(captures, start=1):
         assert isinstance(raw_entry, dict)
@@ -219,6 +289,26 @@ def main() -> int:
             skipped += 1
             continue
 
+        assert save_state is not None
+        probe_cmd = build_state_probe_command(entry, save_state, trace_rom, trace_symbols)
+        if probe_cmd is not None:
+            proc = subprocess.run(
+                probe_cmd,
+                cwd=ROOT,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+            )
+            if proc.returncode != 0:
+                invalid_state += 1
+                print(f"{entry['id']}: INVALID_STATE {command_for_display(cmd)}")
+                print_probe_failure(probe_cmd, proc)
+                if args.strict or args.execute:
+                    fail(f"{entry['id']}: state probe failed")
+                skipped += 1
+                continue
+
         if not args.execute:
             print(f"{entry['id']}: READY {command_for_display(cmd)}")
             skipped += 1
@@ -228,7 +318,10 @@ def main() -> int:
         subprocess.run(cmd, cwd=ROOT, check=True)
         ran += 1
 
-    print(f"summary: ran={ran} skipped={skipped} missing_state={missing_state}")
+    print(
+        f"summary: ran={ran} skipped={skipped} "
+        f"missing_state={missing_state} invalid_state={invalid_state}"
+    )
     return 0
 
 

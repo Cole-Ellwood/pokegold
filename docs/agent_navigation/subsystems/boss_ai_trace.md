@@ -10,6 +10,7 @@ the currently blocked Morty proof capsule.
 | Current live-capture status | `audit/boss_ai_trace/live_capture_ledger.md` |
 | Batch capture inputs | `audit/boss_ai_trace/live_capture_manifest.json` |
 | Capture command behavior | `docs/boss_ai_trace_capture.md` |
+| Candidate state preflight | `tools/trace/boss_ai_trace_state_probe.py` |
 | Post-patch behavior targets | `docs/boss_ai_post_patch_notes.md` |
 | Current blocker narrative | `audit/boss_ai_trace/morty_proof_capsule_attempt_2026-04-26.md` |
 | Capture helper code | `tools/trace/boss_ai_trace_capture.py`, `tools/trace/boss_ai_trace_batch.py` |
@@ -42,7 +43,9 @@ Not enough by itself:
 
 `MEGAURGENT-001` is blocked because no valid current-ROM Morty boss-position
 PyBoy state is recorded. The old scratch RAM can place the player near Morty but
-does not load a usable Morty object table or boss decision trace.
+either fails to load a usable Morty object table on boot-continue, or reaches
+Morty only through a debugger warp with impossible copied party data
+(`hp=64000/64000`). That is a useful route-finding clue, not boss decision proof.
 
 Do not mark Morty finished until `audit/boss_ai_trace/morty_live.txt` exists and
 `python tools\audit\check_boss_ai_live_capture_ledger.py` accepts it.
@@ -51,17 +54,25 @@ Do not mark Morty finished until `audit/boss_ai_trace/morty_live.txt` exists and
 
 1. Build or identify the current trace ROM and symbols.
 2. Create a boss-position save-state at a decision point.
-3. Add the state path to the matching entry in
-   `audit/boss_ai_trace/live_capture_manifest.json`.
-4. Run a targeted capture:
+3. Probe the candidate state before trusting it:
+
+```powershell
+python tools\trace\boss_ai_trace_state_probe.py --save-state path\to\before_morty_decision.state --expect-morty --strict
+```
+
+4. Add the state path to the matching entry in
+   `audit/boss_ai_trace/live_capture_manifest.json`. Keep the `morty` entry's
+   `preflight.expect = morty` guard.
+5. Run a targeted capture. The batch runner preflights Morty states with the
+   manifest-owned strict probe before reporting `READY` or writing live output:
 
 ```powershell
 python tools\trace\boss_ai_trace_batch.py --execute --only morty
 python tools\audit\check_boss_ai_live_capture_ledger.py
 ```
 
-5. Update `audit/boss_ai_trace/live_capture_ledger.md`.
-6. Update `docs/project_roadmap.md` only after the evidence exists.
+6. Update `audit/boss_ai_trace/live_capture_ledger.md`.
+7. Update `docs/project_roadmap.md` only after the evidence exists.
 
 ## Priority IDs
 

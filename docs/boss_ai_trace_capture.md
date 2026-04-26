@@ -46,6 +46,35 @@ Use `--symbols-only` for debugger addresses. If a PyBoy save-state is available
 at a boss AI decision point, pass it with `--save-state` and write the formatted
 WRAM excerpt with `--out`.
 
+Before treating a save-state or battery-RAM sidecar as boss-position proof,
+probe it:
+
+```powershell
+python tools\trace\boss_ai_trace_state_probe.py --save-state path\to\before_morty_decision.state --expect-morty --strict
+```
+
+For old scratch ROM folders that rely on a `.gbc.ram` sidecar, use:
+
+```powershell
+python tools\trace\boss_ai_trace_state_probe.py --rom .local\path\to\pokegold_trace.gbc --boot-continue --expect-morty --strict
+```
+
+Do not accept a Morty candidate unless the probe prints `morty_candidate=PASS`.
+`map=04:07` and `coords=x=5,y=2` are not enough by themselves; a failed
+`morty_map_object_missing` verdict means the state has Ecruteak Gym coordinates
+but no usable Morty object/battle context.
+
+The probe also prints `player_active`. Treat impossible active-player values as
+fatal. A current-ROM debugger warp using copied stale SRAM reached Morty's map
+object, but the copied party had `hp=64000/64000`, collapsed to `00/0` in the
+battle intro, and was rejected as `player_party_invalid`. A boss-position state
+must have both the boss context and a sane active player Pokemon.
+
+The manifest owns this requirement with `preflight.expect = morty`. The batch
+runner turns that manifest field into the same strict probe before printing
+`READY` or running capture. A bad Morty state is `INVALID_STATE`, not live
+proof.
+
 Formatted live excerpts include `trace_rom`, `trace_rom_sha256`,
 `trace_symbols`, and `trace_symbols_sha256` header fields. The ledger audit
 checks those fields for any row marked `FINISHED`, so every accepted capture is
@@ -77,6 +106,10 @@ Configured batch captures live in:
 The manifest pins the trace ROM and symbol file by SHA256. If you rebuild
 `pokegold_trace.gbc` or `pokegold_trace.sym`, update those hashes before using
 the batch runner or ledger audit.
+
+The `morty` entry must keep its `preflight.expect` field set to `morty`.
+Do not remove it just to make a dry-run print `READY`; that field is the guard
+against stale Ecruteak Gym RAM being mistaken for boss proof.
 
 Dry-run the configured captures:
 

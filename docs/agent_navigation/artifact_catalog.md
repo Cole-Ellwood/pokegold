@@ -16,6 +16,7 @@ scratch paths first.
 | `docs/agent_navigation/source_output_ownership.md` | Source/generated/output ownership map. | Routing only. | Use before editing build artifacts or generated files. |
 | `docs/agent_navigation/custom_terms.md` | Search glossary for custom mechanics and symbols. | Routing only. | Use when the feature name is remembered imprecisely. |
 | `tools/audit/check_workspace_hygiene.py` | Read-only ignored-clutter classifier. | Audit helper. | Use before proposing workspace cleanup or output relocation. |
+| `tools/trace/boss_ai_trace_state_probe.py` | PyBoy state/RAM preflight for live Boss AI captures. | Probe helper. | Use before adding a candidate state to the live-capture manifest. |
 | `audit/boss_ai_trace/live_capture_ledger.md` | Live Boss AI trace status ledger. | Evidence ledger. | Priority rows must not be marked finished without real capture files. |
 | `audit/boss_ai_trace/live_capture_manifest.json` | Trace batch manifest. | Tool input. | Add states only when they match the current trace ROM. |
 | `audit/boss_ai_trace/morty_proof_capsule_attempt_2026-04-26.md` | Blocked Morty proof attempt and unblock recipe. | Negative evidence. | Shows why old RAM was not accepted as proof. |

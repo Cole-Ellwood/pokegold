@@ -31,6 +31,9 @@ EXPECTED_CAPTURE_IDS = {
     "Champion Lance": "champion_lance",
     "Shared switch-loop": "shared_switch_loop",
 }
+EXPECTED_PREFLIGHTS = {
+    "Morty": "morty",
+}
 REQUIRED_TOOLING_ARTIFACTS = (
     "audit/boss_ai_trace/trace_helper_smoke.txt",
     "audit/boss_ai_trace/trace_watch_smoke.txt",
@@ -223,6 +226,20 @@ def audit_manifest(expected_rows: dict[str, tuple[str, str]]) -> dict[str, str]:
         for key in ("notes", "save_state"):
             if key in entry and not isinstance(entry[key], str):
                 fail(f"manifest capture {boss}: `{key}` must be a string")
+        preflight = entry.get("preflight")
+        expected_preflight = EXPECTED_PREFLIGHTS.get(boss)
+        if expected_preflight is None:
+            if preflight is not None:
+                fail(f"manifest capture {boss}: unexpected preflight object")
+        else:
+            if not isinstance(preflight, dict):
+                fail(f"manifest capture {boss}: missing required preflight object")
+            expect = preflight.get("expect")
+            if expect != expected_preflight:
+                fail(
+                    f"manifest capture {boss}: expected preflight "
+                    f"`{expected_preflight}`, found `{expect}`"
+                )
         found[boss] = entry
 
     missing = sorted(set(EXPECTED_BOSSES) - set(found))
