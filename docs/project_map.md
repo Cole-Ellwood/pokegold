@@ -12,6 +12,11 @@ source-truth rules explicit even when that makes the prose less human-friendly.
   precedence for future Codex/helper sessions.
 - `docs/codex_context.md`: objective, design rules, and done criteria. If another
   helper doc conflicts with project intent, this file wins.
+- `docs/project_roadmap.md`: current project work board with future-session
+  statuses, blockers, evidence, and next ideas.
+- `docs/agent_navigation/README.md`: optimized agent routing layer for task
+  classification, source-zone ownership, verification floors, and artifact
+  lookup.
 - `docs/codex_review_playbook.md`: review and bug-hunt workflow.
 - `docs/generated/dev_index.md`: generated bank/address/source lookup and memory
   pressure report. Do not hand-edit it.
@@ -39,6 +44,8 @@ For a concise change history over base Gold, read:
   evolutions, level-up move counts, TM counts, and reliable STAB checks.
 - `docs/manifest.md`: historical data-layer rebalance manifest.
 - `docs/RELEASE_NOTES.md`: release-level summary.
+- `docs/project_roadmap.md`: current workstreams, statuses, blockers, and
+  future-session next moves.
 
 ## Bug Hunt Route
 
@@ -140,3 +147,26 @@ the highest authority for exact implementation facts. Use
 `docs/generated/dev_index.md` as the generated navigation mirror of those
 outputs. Use hand-authored helper docs for project intent, workflow, and review
 policy, and update them when they drift from source or generated truth.
+
+## Agent Navigation Layer
+
+`docs/agent_navigation/` is the fast routing layer for future sessions:
+
+- `docs/agent_navigation/README.md`: navigation contract and complexity budget.
+- `docs/agent_navigation/start_card.md`: one-screen lane picker for broad
+  prompts.
+- `docs/agent_navigation/doc_roles.md`: ownership rules for where new
+  documentation facts belong.
+- `docs/agent_navigation/navigation_health_check.md`: acceptance criteria for
+  expanding, pruning, or completing navigation work, plus smoke routes for
+  common prompt shapes.
+- `docs/agent_navigation/task_router.md`: task clue to docs/source/checks route.
+- `docs/agent_navigation/source_output_ownership.md`: source/generated/output
+  ownership and edit policy by path class.
+- `docs/agent_navigation/verification_matrix.md`: minimum checks by change kind.
+- `docs/agent_navigation/artifact_catalog.md`: durable evidence and scratch
+  boundary map.
+- `docs/agent_navigation/custom_terms.md`: glossary for custom mechanics search
+  terms and spelling traps.
+- `docs/agent_navigation/subsystems/`: micro-indexes for Boss AI trace, Pokemon
+  balance, trainer/boss rosters, QoL/map scripts, and checkpoint/handoff flow.

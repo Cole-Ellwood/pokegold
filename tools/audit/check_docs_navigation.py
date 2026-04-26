@@ -13,10 +13,11 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 
-HELPER_DOCS = (
+CORE_HELPER_DOCS = (
     "docs/README.md",
     "docs/codex_context.md",
     "docs/project_map.md",
+    "docs/project_roadmap.md",
     "docs/codex_review_playbook.md",
     "docs/boss_ai_spec.md",
     "docs/qol_handoff.md",
@@ -25,6 +26,38 @@ HELPER_DOCS = (
     "docs/buff_backlog.md",
     "docs/generated/dev_index.md",
     "docs/generated/balance_audit.md",
+)
+
+REQUIRED_AGENT_NAVIGATION_DOCS = (
+    "docs/agent_navigation/README.md",
+    "docs/agent_navigation/start_card.md",
+    "docs/agent_navigation/doc_roles.md",
+    "docs/agent_navigation/navigation_health_check.md",
+    "docs/agent_navigation/task_router.md",
+    "docs/agent_navigation/source_output_ownership.md",
+    "docs/agent_navigation/verification_matrix.md",
+    "docs/agent_navigation/artifact_catalog.md",
+    "docs/agent_navigation/custom_terms.md",
+    "docs/agent_navigation/subsystems/boss_ai_trace.md",
+    "docs/agent_navigation/subsystems/trainer_boss_roster.md",
+    "docs/agent_navigation/subsystems/pokemon_balance.md",
+    "docs/agent_navigation/subsystems/qol_map_scripts.md",
+    "docs/agent_navigation/subsystems/checkpoint_handoff.md",
+)
+
+
+def discover_agent_navigation_docs() -> tuple[str, ...]:
+    nav_root = ROOT / "docs" / "agent_navigation"
+    if not nav_root.exists():
+        return ()
+    return tuple(
+        sorted(path.relative_to(ROOT).as_posix() for path in nav_root.rglob("*.md"))
+    )
+
+
+HELPER_DOCS = (
+    *CORE_HELPER_DOCS,
+    *tuple(sorted(set(REQUIRED_AGENT_NAVIGATION_DOCS) | set(discover_agent_navigation_docs()))),
 )
 
 REQUIRED_PATHS = (
@@ -133,6 +166,55 @@ OPTIONAL_LOCAL_PATH_PREFIXES = (
     "workspace",
 )
 
+PLANNED_MISSING_ARTIFACTS = (
+    "audit/boss_ai_trace/morty_live.txt",
+    "audit/boss_ai_trace/jasmine_live.txt",
+    "audit/boss_ai_trace/clair_live.txt",
+    "audit/boss_ai_trace/koga_live.txt",
+    "audit/boss_ai_trace/champion_lance_live.txt",
+    "audit/boss_ai_trace/shared_switch_loop_live.txt",
+)
+
+AGENT_NAVIGATION_CONTRACT_SNIPPETS = {
+    "docs/agent_navigation/start_card.md": (
+        "## First Thirty Seconds",
+        "## Pick A Lane",
+        "## Minimum Safe Stop",
+        "docs/agent_navigation/navigation_health_check.md",
+        "python tools\\audit\\check_docs_navigation.py",
+    ),
+    "docs/agent_navigation/README.md": (
+        "## Complexity Budget",
+        "## Navigation Contract",
+        "## Subsystem Micro-Indexes",
+        "docs/agent_navigation/start_card.md",
+        "docs/agent_navigation/navigation_health_check.md",
+    ),
+    "docs/agent_navigation/doc_roles.md": (
+        "## Role Matrix",
+        "## Where To Put New Information",
+        "## Duplication Rule",
+        "docs/project_roadmap.md",
+        "docs/generated/dev_index.md",
+    ),
+    "docs/agent_navigation/navigation_health_check.md": (
+        "## Acceptance Criteria",
+        "## Expansion Rules",
+        "## Pruning Rules",
+        "## Smoke Route Table",
+        "continue making it beautiful",
+        "is Morty boss AI proven?",
+        "what owns pokegold.sym?",
+        "without broad source search",
+    ),
+    "docs/project_roadmap.md": (
+        "| NAV-001 | `REFERENCE` | Agent navigation beauty pass | `COMPLETE` |",
+        "Follow-up simplification folded the fresh-session dry run into `docs/agent_navigation/navigation_health_check.md`",
+        "merged path classification into `docs/agent_navigation/source_output_ownership.md`",
+        "`tools/audit/check_docs_navigation.py` now auto-discovers `docs/agent_navigation/**/*.md`",
+    ),
+}
+
 
 def normalize_lines(text: str) -> str:
     return "\n".join(text.splitlines()) + "\n"
@@ -183,6 +265,10 @@ def is_optional_local_path_ref(ref: str) -> bool:
     )
 
 
+def is_planned_missing_artifact_ref(ref: str) -> bool:
+    return ref in PLANNED_MISSING_ARTIFACTS
+
+
 def read_repo_text(path: str) -> str:
     return (ROOT / path).read_text(encoding="utf-8")
 
@@ -215,6 +301,8 @@ def check_backtick_references(errors: list[str]) -> None:
             continue
         for ref in sorted(backtick_path_refs(helper_path)):
             if is_optional_local_path_ref(ref):
+                continue
+            if is_planned_missing_artifact_ref(ref):
                 continue
             if not (ROOT / ref).exists():
                 missing.append((helper, ref))
@@ -493,6 +581,20 @@ def check_qol_handoff_status(errors: list[str]) -> None:
         print("PASS: QoL handoff current/remaining status matches source")
 
 
+def check_agent_navigation_contract(errors: list[str]) -> None:
+    missing: list[tuple[str, str]] = []
+    for path, snippets in AGENT_NAVIGATION_CONTRACT_SNIPPETS.items():
+        text = read_repo_text(path)
+        for snippet in snippets:
+            if snippet not in text:
+                missing.append((path, snippet))
+
+    for path, snippet in missing:
+        errors.append(f"{path} missing agent-navigation contract snippet: {snippet!r}")
+    if not missing:
+        print("PASS: agent navigation contract is intact")
+
+
 def main() -> int:
     errors: list[str] = []
     check_required_paths(errors)
@@ -504,6 +606,7 @@ def main() -> int:
     check_python_command_paths(errors)
     check_boss_ai_budget_doc(errors)
     check_qol_handoff_status(errors)
+    check_agent_navigation_contract(errors)
 
     if errors:
         for error in errors:

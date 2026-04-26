@@ -10,8 +10,14 @@ navigation, implementation safety, and drift detection.
 1. `docs/README.md`: helper-doc routing and precedence.
 2. `docs/codex_context.md`: project intent, design constraints, done criteria.
 3. `docs/project_map.md`: task-to-source routing.
-4. `docs/generated/dev_index.md`: current banks, labels, source anchors, memory.
-5. Task-specific docs:
+4. `docs/project_roadmap.md`: current project workstreams and future-session
+   status board.
+5. `docs/agent_navigation/start_card.md`: one-screen lane picker for broad or
+   ambiguous prompts.
+6. `docs/agent_navigation/README.md`: constant-time task routing, source-zone
+   classification, verification matrix, and durable artifact catalog.
+7. `docs/generated/dev_index.md`: current banks, labels, source anchors, memory.
+8. Task-specific docs:
    - Boss AI / trainer difficulty: `docs/boss_ai_spec.md`,
      `docs/boss_ai_bug_testing_plan.md`
    - Review / bug hunt: `docs/codex_review_playbook.md`
@@ -41,6 +47,13 @@ python scripts\generate_dev_index.py --rom pokegold
 - Start any mechanics, balance, AI, progression, or QoL task with
   `docs/codex_context.md`.
 - Use `docs/project_map.md` to choose source areas before broad `rg` searches.
+- Use `docs/project_roadmap.md` before inventing new project plans; update it
+  when work completes, gets stuck, gains useful ideas, or remains untouched.
+- Use `docs/agent_navigation/README.md` when the prompt is broad, when a future
+  helper needs an `O(1)` task route, or when classifying source/generated/scratch
+  paths before editing.
+- Use `docs/agent_navigation/doc_roles.md` before adding routing facts that
+  might duplicate existing docs.
 - Use `docs/generated/dev_index.md` before memory-sensitive edits or when
   jumping to labels/banks.
 - Use `docs/codex_review_playbook.md` for reviews, bug hunts, and finding

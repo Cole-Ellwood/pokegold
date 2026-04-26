@@ -21,9 +21,11 @@ Before changing gameplay code, read these in order:
 1. `docs/README.md` for helper-doc routing and truth precedence.
 2. `docs/codex_context.md` for project intent.
 3. `docs/project_map.md` for task routing and canonical source locations.
-4. `docs/generated/dev_index.md` for current banks, labels, source anchors, and
+4. `docs/agent_navigation/README.md` for constant-time task routing, source-zone
+   classification, and verification floors.
+5. `docs/generated/dev_index.md` for current banks, labels, source anchors, and
    memory pressure.
-5. Relevant spec/change docs, especially:
+6. Relevant spec/change docs, especially:
    - `docs/boss_ai_spec.md`
    - `docs/codex_review_playbook.md`
    - `docs/mechanics_changes_from_base.md`

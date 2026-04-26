@@ -21,6 +21,7 @@ Tooling status:
 | Ledger audit | `FINISHED` | `python tools\audit\check_boss_ai_live_capture_ledger.py` |
 | Capture manifest | `FINISHED` | `audit/boss_ai_trace/live_capture_manifest.json` |
 | Batch dry-run | `FINISHED` | `python tools\trace\boss_ai_trace_batch.py` reports missing save-states. |
+| Morty proof-capsule attempt | `FINISHED` | `audit/boss_ai_trace/morty_proof_capsule_attempt_2026-04-26.md` documents why no valid live proof was produced. |
 | Boss-position save-states | `UNTOUCHED` | No Morty/Jasmine/Clair/Koga/Lance save-state paths recorded yet. |
 
 Priority boss live captures:
