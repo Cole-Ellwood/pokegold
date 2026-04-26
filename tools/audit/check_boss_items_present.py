@@ -24,6 +24,7 @@ TARGET_GROUPS = {
     "KarenGroup",
     "KogaGroup",
     "ChampionGroup",
+    "RedGroup",
     "Rival1Group",
     "Rival2Group",
 }

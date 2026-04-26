@@ -57,11 +57,16 @@ ELITE_FOUR_AND_CHAMPION = {
     ("CHAMPION", "LANCE"),
 }
 
+POSTGAME_BOSSES = {
+    ("RED", "RED1"),
+}
+
 TARGETS = (
     JOHTO_LEADERS
     | {("RIVAL1", trainer_id) for trainer_id in RIVAL1_IDS}
     | {("RIVAL2", trainer_id) for trainer_id in RIVAL2_IDS}
     | ELITE_FOUR_AND_CHAMPION
+    | POSTGAME_BOSSES
 )
 
 NONZERO_TIERS = {"AI_TIER_EARLY", "AI_TIER_MID", "AI_TIER_LATE"}
