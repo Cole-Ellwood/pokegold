@@ -70,6 +70,26 @@ object, but the copied party had `hp=64000/64000`, collapsed to `00/0` in the
 battle intro, and was rejected as `player_party_invalid`. A boss-position state
 must have both the boss context and a sane active player Pokemon.
 
+## Morty Attempt Lessons
+
+These details saved the 2026-04-26 follow-up from false proof:
+
+- Morty's map object is object index 2, not 1. `object_const_def` starts map
+  object constants at 2, and `maps/EcruteakGym.asm` puts Morty in
+  `map_object_2`.
+- Loaded object structs are `$28` bytes wide. Using `$29` shifts later object
+  reads and makes valid object data look broken.
+- A candidate state can pass the Morty map/object preflight and still fail as
+  live proof. It must also reach a battle decision where at least one Boss AI
+  trace field is nonzero.
+- If PyBoy driving seems to hang, check whether the script is simply running at
+  real-time speed. After `load_state`, call `pyboy.set_emulation_speed(0)` in
+  scratch drivers, and write progress to a file under `.local/tmp/` when the
+  shell will not return buffered output until process exit.
+- When a battle stalls before a trace appears, save a screenshot/BMP from the
+  current frame. The Morty scratch attempt looked close until the screen showed
+  broken player state during send-out.
+
 The manifest owns this requirement with `preflight.expect = morty`. The batch
 runner turns that manifest field into the same strict probe before printing
 `READY` or running capture. A bad Morty state is `INVALID_STATE`, not live

@@ -53,17 +53,19 @@ Do not mark Morty finished until `audit/boss_ai_trace/morty_live.txt` exists and
 ## Capture Path
 
 1. Build or identify the current trace ROM and symbols.
-2. Create a boss-position save-state at a decision point.
-3. Probe the candidate state before trusting it:
+2. Read `docs/boss_ai_trace_capture.md` section `Morty Attempt Lessons` before
+   making new PyBoy scratch states.
+3. Create a boss-position save-state at a decision point.
+4. Probe the candidate state before trusting it:
 
 ```powershell
 python tools\trace\boss_ai_trace_state_probe.py --save-state path\to\before_morty_decision.state --expect-morty --strict
 ```
 
-4. Add the state path to the matching entry in
+5. Add the state path to the matching entry in
    `audit/boss_ai_trace/live_capture_manifest.json`. Keep the `morty` entry's
    `preflight.expect = morty` guard.
-5. Run a targeted capture. The batch runner preflights Morty states with the
+6. Run a targeted capture. The batch runner preflights Morty states with the
    manifest-owned strict probe before reporting `READY` or writing live output:
 
 ```powershell
@@ -71,8 +73,8 @@ python tools\trace\boss_ai_trace_batch.py --execute --only morty
 python tools\audit\check_boss_ai_live_capture_ledger.py
 ```
 
-6. Update `audit/boss_ai_trace/live_capture_ledger.md`.
-7. Update `docs/project_roadmap.md` only after the evidence exists.
+7. Update `audit/boss_ai_trace/live_capture_ledger.md`.
+8. Update `docs/project_roadmap.md` only after the evidence exists.
 
 ## Priority IDs
 
