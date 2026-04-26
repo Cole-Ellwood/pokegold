@@ -154,6 +154,118 @@ Key source anchors:
 - `engine/battle/ai/switch.asm`: legacy enemy switch scoring helpers. Boss
   model code should prefer boss-safe wrappers in `engine/battle/ai/boss.asm`.
 
+## Player Knowledge Model Quick Trace
+
+Use this route for questions about how boss AI knows, remembers, or infers
+player Pokemon and player moves. The important distinction is that boss AI
+tracks exact seen species, but it tracks player move knowledge mostly as threat
+types, not as hidden exact moves.
+
+Send-out path:
+
+- `engine/battle/core.asm`: `BattleMonEntrance` calls `NewBattleMonStatus`.
+- `NewBattleMonStatus` clears the active-mon `wPlayerUsedMoves` list, then calls
+  `BossAI_RecordPlayerSpecies`.
+- `engine/battle/ai/boss.asm`: `BossAI_RecordPlayerSpecies` appends only the
+  active `wBattleMonSpecies` to `wBossAISeenPlayerSpecies`.
+
+Visible move reveal path:
+
+- `engine/battle/used_move_text.asm`: `UsedMoveText` updates `wPlayerUsedMoves`
+  only when a player move is visibly used, then calls
+  `BossAI_RecordRevealedPlayerMove`.
+- `BossAI_RecordRevealedPlayerMove` finds the active species slot with
+  `BossAI_GetActiveSpeciesRevealedMaskPointer`.
+- `BossAI_AddRevealedMoveToSpeciesMask` stores the revealed damaging move type
+  in that species' 4-byte mask. Hidden Power sets
+  `BOSS_AI_PLAUSIBLE_HP_RISK_BIT`; status moves are not stored as threat types.
+- Runtime storage is `wBossAIRevealedMovesBitmap`: six 4-byte per-seen-species
+  revealed type masks. The old spare bytes in that reserve include
+  `wBossAILikelyTypeMaskCache`, a 4-byte active-species confidence mask.
+
+Plausible move inference path:
+
+- `BossAI_ApplyMoveModel` and `BossAI_SwitchOrTryItem` both call
+  `BossAI_ComputePlayerPlausibleTypeMask` before using plausible player threat
+  knowledge.
+- `BossAI_ComputePlayerPlausibleTypeMask` builds `wBossAIPlausibleTypeMaskCache`
+  from public active species facts: current STAB types, per-species revealed
+  damaging move types, active-species and pre-evolution-chain legal TM/HM
+  learnability, active-species and pre-evolution-chain level-up moves at or
+  below `wBattleMonLevel`, and active-species and pre-evolution-chain egg moves.
+- The companion `wBossAILikelyTypeMaskCache` marks higher-confidence threats:
+  STAB, revealed damaging move types, and current-species level-up moves at or
+  below `wBattleMonLevel`. TM/HM coverage, egg moves, and pre-evolution-only
+  moves remain possible but are weighted as speculative coverage.
+- `BossAI_AddMoveIdToPlausibleMask` ignores non-damaging moves, ignores
+  damaging moves below `BOSS_AI_PLAUSIBLE_MIN_POWER`, stores regular damaging
+  moves by type, and stores Hidden Power as the special HP risk bit.
+- `BossAI_GetPrimaryThreatType`, `BossAI_ShouldScout`,
+  `BossAI_RefineSwitchCandidateForPlausibleRisk`, and
+  `BossAI_ApplyPlausibleRiskToSwitchConfidence` are the main consumers.
+- Switch risk scans likely threats at the normal tier weight and scans
+  possible-only threats at half that weight. Possible-only threats can still
+  drive scouting or matter on 4x matchups, but they should not dominate the same
+  way as revealed, STAB, or current-level-up threats.
+
+Review rule: a fresh switch-in may justify species/level/type/legal-learnset
+plausible threat inference, but it must not justify reading the player's actual
+unrevealed four move slots, hidden party slots, held items, or private stats.
+
+### Plausible Threat Edit Map
+
+Use this map before changing player-move inference or switch-risk behavior. It
+captures the boundaries that are easy to forget mid-edit.
+
+Core mental model:
+
+- `wBossAIPlausibleTypeMaskCache` means "this damaging type is legal enough to
+  respect."
+- `wBossAILikelyTypeMaskCache` means "this damaging type is a higher-confidence
+  threat."
+- Likely must be a subset of possible. Revealed damaging move types and STAB go
+  into both masks. Current-species level-up moves at or below `wBattleMonLevel`
+  go into both masks. TM/HM coverage, egg moves, and pre-evolution-only moves go
+  into possible only.
+- Hidden Power uses `BOSS_AI_PLAUSIBLE_HP_RISK_BIT`; treat possible-only Hidden
+  Power as scout pressure, not the same panic level as revealed or likely HP.
+
+State and cache rules:
+
+- `BossAI_RecordRevealedPlayerMove` invalidates
+  `wBossAIPlausibleTypeMaskSpecies` and `wBossAIPlausibleTypeMaskLevel`, so the
+  next consumer recomputes both possible and likely masks.
+- `BossAI_ClearPlausibleMask` must clear both masks together.
+- `BossAI_AddSpeciesAndPreEvolutionMovesToMask` temporarily mutates
+  `wCurPartySpecies`, `wCurSpecies`, and base data while walking pre-evolutions;
+  it must restore the active species and call `GetBaseData` before returning.
+- Avoid using `wBossAITemp3` across helper calls inside switch-candidate
+  refinement; that byte also holds the current best switch candidate. Prefer
+  stack preservation for tiny one-byte saves in nested plausible-risk helpers.
+
+Review traps:
+
+- Do not read `wBattleMonMoves`, `wBattleMonPP`, `wBattleMonItem`, player party
+  structs, or current input to make boss decisions. The legal source for
+  unrevealed move inference is public species/level plus move tables.
+- Do not return early from level-up learnset scans just because one move is above
+  the active level; learnsets may not be sorted the way the shortcut assumes.
+- If new code is inserted into `BossAI_ComputeSwitchCandidateRisk`, recheck local
+  `jr` ranges. This function is large enough that short branches can silently
+  become link-time failures.
+- If a helper changes `hBattleTurn` for type-matchup simulation, restore it on
+  every exit path.
+
+Fast verification for this area:
+
+```powershell
+python tools\audit\check_boss_ai_no_cheat.py
+python tools\audit\check_boss_ai_gating.py
+python tools\audit\check_boss_ai_trace_invariants.py
+python tools\audit\check_boss_ai_memory_budget.py
+python tools\audit\check_docs_navigation.py
+```
+
 ## Legacy AI Scoring Interaction
 
 Current implementation: boss trainers skip the normal AI scoring layers in

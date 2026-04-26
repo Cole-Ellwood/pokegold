@@ -1,0 +1,39 @@
+Jasmine trace/audit excerpt
+
+Trainer data:
+- `data/trainers/ai_tiers.asm`: JASMINE1 is `AI_TIER_MID`.
+- `data/trainers/parties.asm`: Magneton leads with Spikes and Thunder Wave,
+  Forretress has Toxic, Steelix has Roar, and Vaporeon has Haze.
+
+First-turn Spikes:
+- Magneton's Spikes reaches `.ApplySpikesLayerBias` at layer 1.
+- `BossAI_IncrementTurnsElapsed` makes the first scoring turn read as
+  `wBossAITurnsElapsed == 1`.
+- `.spikes_layer1` treats values below 2 as the high lead-bias case unless
+  `.EnemyUnderPressure` forces the safer baseline branch.
+- Result: first-turn Spikes is favored as a lead plan, but not greedily pushed
+  under immediate public pressure.
+
+Status fail gates:
+- Thunder Wave is discouraged against visible Electric types, already-statused
+  targets, and Safeguard.
+- Toxic is discouraged against visible Poison or Steel types, already-statused
+  targets, and Safeguard.
+- These checks happen before generic status encouragement.
+
+Spikes plus phazing:
+- Steelix's Roar has `EFFECT_FORCE_SWITCH`.
+- `.ApplyPhazingPlanBias` requires Spikes on the player side, no current KO
+  line, then either public +2 setup or repeated-switch pressure.
+- Result: after Magneton establishes Spikes, Steelix has a public reason to
+  Roar setup or repeated switching.
+
++2 setup punish:
+- Vaporeon's Haze has `EFFECT_RESET_STATS`.
+- Steelix's Roar has `EFFECT_FORCE_SWITCH`.
+- Either denial move receives +8 when the player has public +2 Attack, Special
+  Attack, Speed, or Evasion and Jasmine lacks an immediate KO.
+
+Result:
+- Jasmine passes first-turn Spikes, status fail gates, Spikes+Roar response,
+  and +2 setup punishment by source-path trace.

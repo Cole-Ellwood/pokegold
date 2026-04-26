@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "default_watch_frames": 600,
+  "default_poll_every": 1,
+  "captures": [
+    {
+      "id": "morty",
+      "boss": "Morty",
+      "status": "UNTOUCHED",
+      "save_state": "",
+      "out": "audit/boss_ai_trace/morty_live.txt",
+      "notes": "revealed coverage species isolation; status fail gates; +2 setup Haze"
+    },
+    {
+      "id": "jasmine",
+      "boss": "Jasmine",
+      "status": "UNTOUCHED",
+      "save_state": "",
+      "out": "audit/boss_ai_trace/jasmine_live.txt",
+      "notes": "first-turn Spikes; status fail gates; Spikes+Roar; +2 setup punish"
+    },
+    {
+      "id": "clair",
+      "boss": "Clair",
+      "status": "UNTOUCHED",
+      "save_state": "",
+      "out": "audit/boss_ai_trace/clair_live.txt",
+      "notes": "first-turn Spikes; Thunder Wave fail gates; Spikes+Roar; +2 setup punish"
+    },
+    {
+      "id": "koga",
+      "boss": "Koga",
+      "status": "UNTOUCHED",
+      "save_state": "",
+      "out": "audit/boss_ai_trace/koga_live.txt",
+      "notes": "first-turn Spikes; Toxic fail gates; +2 setup Haze"
+    },
+    {
+      "id": "champion_lance",
+      "boss": "Champion Lance",
+      "status": "UNTOUCHED",
+      "save_state": "",
+      "out": "audit/boss_ai_trace/champion_lance_live.txt",
+      "notes": "non-KO Hyper Beam avoidance; Spikes+Roar; immunity pivot preference"
+    },
+    {
+      "id": "shared_switch_loop",
+      "boss": "Shared switch-loop",
+      "status": "UNTOUCHED",
+      "save_state": "",
+      "out": "audit/boss_ai_trace/shared_switch_loop_live.txt",
+      "notes": "A->B->A loop penalty and public emergency exceptions"
+    }
+  ]
+}

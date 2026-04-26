@@ -104,9 +104,18 @@ Damage multipliers/passives:
 - Ghost attacker vs statused defender:
   - Half: `21/20`
   - Full: `11/10`
-- Dragon attacker on super-effective hit:
-  - Half: `21/20`
-  - Full: `11/10`
+- Dragon's Majesty:
+  - Dragon attackers treat type-chart immunities as resistances (`0x` -> `0.5x`).
+  - Applies only to damaging, non-fixed-damage moves.
+- Imperial Scales:
+  - Dragon defenders reduce non-super-effective, non-fixed-damage hits.
+  - Half reduction: `2/3`
+  - Full reduction: `1/2`
+- Dragon-only Outrage category exception:
+  - `DRAGONBREATH` stays special because Dragon is a special type.
+  - `OUTRAGE` stays Dragon-type, but for Dragon users it uses the physical damage category when current Attack is greater than current Special Attack.
+  - Ties and non-Dragon users keep `OUTRAGE` special.
+  - The same category decision is used for damage stats, Reflect/Light Screen, critical stat checks, Choice Band/Specs, Muscle Band/Wise Glasses, Bug/Water passive reductions, Counter, and Mirror Coat.
 - Ground defender on super-effective hit taken:
   - Half reduction: `19/20`
   - Full reduction: `9/10`
@@ -205,11 +214,16 @@ Files:
 - `engine/battle/menu.asm`
 - `engine/battle/core.asm`
 - `engine/battle/ai/items.asm`
+- `engine/menus/options_menu.asm`
+- `data/default_options.asm`
 
 Changes:
 - In non-link trainer battles, Pack is removed from the menu (menu is FIGHT / PKMN / RUN).
 - Attempting Pack from trainer battle route is blocked.
 - Enemy trainer bag item usage is disabled in trainer battles.
+- Battle style is forced to Set: the switch prompt after an opposing KO is never
+  offered, default options set the Set bit, and the Options menu displays Set
+  without toggling back to Shift.
 
 ### 1.7 Additional Battle Rule/Bugfix Changes
 
@@ -287,10 +301,18 @@ Files:
 
 Changes:
 - Boss AI tracks seen player species and revealed player moves.
-- Builds plausible threat type mask from:
+- Builds a possible threat type mask from:
   - currently seen species typing
   - revealed damaging moves
   - public TM/HM learnability possibilities
+  - active-species and pre-evolution-chain level-up moves
+  - active-species and pre-evolution-chain egg moves
+- Builds a likely threat type mask from:
+  - currently seen species typing
+  - revealed damaging moves
+  - current-species level-up moves at or below the active level
+- Switch-risk scoring gives likely threats full tier weight and possible-only
+  threats reduced speculative weight.
 - Includes scout flow (Protect/Substitute preference when scouting trigger is active).
 
 ### 2.5 Generic AI Bugfixes and Upgrades

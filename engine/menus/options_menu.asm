@@ -229,30 +229,6 @@ Options_BattleScene:
 
 Options_BattleStyle:
 	ld hl, wOptions
-	ldh a, [hJoyPressed]
-	bit B_PAD_LEFT, a
-	jr nz, .LeftPressed
-	bit B_PAD_RIGHT, a
-	jr z, .NonePressed
-	bit BATTLE_SHIFT, [hl]
-	jr nz, .ToggleShift
-	jr .ToggleSet
-
-.LeftPressed:
-	bit BATTLE_SHIFT, [hl]
-	jr z, .ToggleSet
-	jr .ToggleShift
-
-.NonePressed:
-	bit BATTLE_SHIFT, [hl]
-	jr nz, .ToggleSet
-
-.ToggleShift:
-	res BATTLE_SHIFT, [hl]
-	ld de, .Shift
-	jr .Display
-
-.ToggleSet:
 	set BATTLE_SHIFT, [hl]
 	ld de, .Set
 

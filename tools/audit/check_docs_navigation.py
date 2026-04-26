@@ -20,17 +20,26 @@ HELPER_DOCS = (
     "docs/codex_review_playbook.md",
     "docs/boss_ai_spec.md",
     "docs/qol_handoff.md",
+    "docs/balance_intent.md",
+    "docs/evolution_policy.md",
+    "docs/buff_backlog.md",
     "docs/generated/dev_index.md",
+    "docs/generated/balance_audit.md",
 )
 
 REQUIRED_PATHS = (
     *HELPER_DOCS,
     "docs/boss_ai_spec.md",
     "docs/mechanics_changes_from_base.md",
+    "docs/balance_intent.md",
+    "docs/evolution_policy.md",
+    "docs/buff_backlog.md",
+    "docs/generated/balance_audit.md",
     "docs/manifest.md",
     "docs/RELEASE_NOTES.md",
     "docs/build.md",
     "scripts/generate_dev_index.py",
+    "scripts/generate_balance_audit.py",
     "tools/audit/check_release_smoke.py",
     "tools/audit/check_ai_tiers.py",
     "tools/audit/check_boss_ai_gating.py",
@@ -117,12 +126,24 @@ PATHLIKE_EXTENSIONS = (
     ".txt",
 )
 
+OPTIONAL_LOCAL_PATH_PREFIXES = (
+    ".local",
+    "dist",
+    "outbox",
+    "workspace",
+)
+
 
 def normalize_lines(text: str) -> str:
     return "\n".join(text.splitlines()) + "\n"
 
 
 def normalize_dev_index(text: str) -> str:
+    text = normalize_lines(text)
+    return re.sub(r"^Generated: .*$", "Generated: <date>", text, flags=re.MULTILINE)
+
+
+def normalize_balance_audit(text: str) -> str:
     text = normalize_lines(text)
     return re.sub(r"^Generated: .*$", "Generated: <date>", text, flags=re.MULTILINE)
 
@@ -156,6 +177,12 @@ def backtick_path_refs(path: Path) -> set[str]:
     return refs
 
 
+def is_optional_local_path_ref(ref: str) -> bool:
+    return ref in OPTIONAL_LOCAL_PATH_PREFIXES or ref.startswith(
+        tuple(prefix + "/" for prefix in OPTIONAL_LOCAL_PATH_PREFIXES)
+    )
+
+
 def read_repo_text(path: str) -> str:
     return (ROOT / path).read_text(encoding="utf-8")
 
@@ -187,6 +214,8 @@ def check_backtick_references(errors: list[str]) -> None:
         if not helper_path.exists():
             continue
         for ref in sorted(backtick_path_refs(helper_path)):
+            if is_optional_local_path_ref(ref):
+                continue
             if not (ROOT / ref).exists():
                 missing.append((helper, ref))
     for helper, ref in missing:
@@ -283,6 +312,59 @@ def check_generated_index(errors: list[str]) -> None:
             return
 
     print("PASS: generated dev index matches current linker outputs")
+
+
+def check_generated_balance_audit(errors: list[str]) -> None:
+    committed_path = ROOT / "docs/generated/balance_audit.md"
+    generator = ROOT / "scripts/generate_balance_audit.py"
+    if not committed_path.exists() or not generator.exists():
+        errors.append("cannot check generated balance audit freshness; audit or generator is missing")
+        return
+
+    tmp_root = ROOT / ".local" / "tmp"
+    tmp_root.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(dir=tmp_root) as tmp:
+        out_path = Path(tmp) / "balance_audit.md"
+        proc = subprocess.run(
+            [
+                sys.executable,
+                str(generator),
+                "--out",
+                str(out_path),
+            ],
+            cwd=ROOT,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        if proc.returncode != 0:
+            errors.append(
+                "failed to regenerate docs/generated/balance_audit.md for comparison: "
+                + (proc.stderr.strip() or proc.stdout.strip() or f"exit {proc.returncode}")
+            )
+            return
+
+        committed = normalize_balance_audit(committed_path.read_text(encoding="utf-8"))
+        regenerated = normalize_balance_audit(out_path.read_text(encoding="utf-8"))
+        if committed != regenerated:
+            diff = list(
+                difflib.unified_diff(
+                    committed.splitlines(),
+                    regenerated.splitlines(),
+                    fromfile="docs/generated/balance_audit.md",
+                    tofile="regenerated balance_audit.md",
+                    lineterm="",
+                )
+            )
+            preview = "\n".join(diff[:40])
+            errors.append(
+                "docs/generated/balance_audit.md is stale relative to current Pokemon data"
+                + (f"\n{preview}" if preview else "")
+            )
+            return
+
+    print("PASS: generated balance audit matches current Pokemon data")
 
 
 def check_python_command_paths(errors: list[str]) -> None:
@@ -418,6 +500,7 @@ def main() -> int:
     check_objective_text(errors)
     check_helper_entrypoint(errors)
     check_generated_index(errors)
+    check_generated_balance_audit(errors)
     check_python_command_paths(errors)
     check_boss_ai_budget_doc(errors)
     check_qol_handoff_status(errors)

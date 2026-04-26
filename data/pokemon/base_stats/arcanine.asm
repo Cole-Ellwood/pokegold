@@ -1,7 +1,7 @@
 	db ARCANINE ; 059
 	db 120, 115,  80,  90, 130,  80
 	;   hp  atk  def  spd  sat  sdf
-	db FIRE, FIRE ; type
+	db FIRE, DRAGON ; type
 	db 75 ; catch rate
 	db 213 ; base exp
 	db BURNT_BERRY, BURNT_BERRY ; items

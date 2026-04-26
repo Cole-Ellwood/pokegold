@@ -12,8 +12,12 @@ navigation, implementation safety, and drift detection.
 3. `docs/project_map.md`: task-to-source routing.
 4. `docs/generated/dev_index.md`: current banks, labels, source anchors, memory.
 5. Task-specific docs:
-   - Boss AI / trainer difficulty: `docs/boss_ai_spec.md`
+   - Boss AI / trainer difficulty: `docs/boss_ai_spec.md`,
+     `docs/boss_ai_bug_testing_plan.md`
    - Review / bug hunt: `docs/codex_review_playbook.md`
+   - Pokemon balance intent: `docs/balance_intent.md`,
+     `docs/evolution_policy.md`, `docs/buff_backlog.md`,
+     `docs/generated/balance_audit.md`
    - Existing mechanics: `docs/mechanics_changes_from_base.md`
    - QoL follow-up work: `docs/qol_handoff.md`
    - Data rebalance history: `docs/manifest.md`
@@ -43,8 +47,21 @@ python scripts\generate_dev_index.py --rom pokegold
   severity/risk classes.
 - Use `docs/boss_ai_spec.md` before changing boss decisions, switch/item logic,
   prediction, timing, or AI memory.
+- Use `docs/balance_intent.md`, `docs/evolution_policy.md`, and
+  `docs/buff_backlog.md` before changing Pokemon stats, learnsets, types, or
+  evolutions.
 - Use `docs/qol_handoff.md` before proposing or implementing QoL work; it marks
   already-implemented QoL separately from remaining candidates.
+
+## Build Tip For Codex On Windows
+
+If PowerShell says `make` is unavailable, check WSL before declaring builds
+blocked. In this workspace, the WSL `bash` command can run GNU Make even though
+`make` is not on the PowerShell `PATH`.
+
+See `docs/build.md` for the exact WSL command pattern, especially the explicit
+repo-local RGBDS `.exe` variables needed when building from WSL against this
+Windows checkout.
 
 ## Always Verify
 
@@ -56,3 +73,10 @@ python tools\audit\check_docs_navigation.py
 
 Run task-relevant audits from `tools/audit/` before finalizing source changes.
 Do not edit `.gbc`, `.o`, `.map`, `.sym`, or generated index output by hand.
+
+Regenerate the source-derived balance audit after Pokemon stat, learnset, type,
+or evolution edits:
+
+```powershell
+python scripts\generate_balance_audit.py
+```

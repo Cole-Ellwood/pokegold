@@ -23,7 +23,9 @@ The source cleanup branch intentionally does not commit regenerated ROM/BPS arti
 
 ## Validation status
 - Source audits: release smoke, boss AI, trainer tier, item/move completeness, and battle math checks pass.
-- Build pipeline: not rerun in this Codex PowerShell session because `make` is not on `PATH`.
+- Build pipeline: PowerShell does not have `make` on `PATH`, but WSL `make`
+  works in this checkout with explicit repo-local RGBDS `.exe` variables; Gold
+  and Silver normal ROM builds passed on 2026-04-25.
 - Report: `docs/validation_report.md`
 
 ## Notes

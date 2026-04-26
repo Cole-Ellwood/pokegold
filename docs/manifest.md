@@ -148,6 +148,11 @@ It is no longer a complete release manifest for the current project state.
 - `KOFFING`: `POISON/POISON -> POISON/DARK`
 - `WEEZING`: `POISON/POISON -> POISON/DARK`
 
+### Dragon package
+
+- `ARCANINE`: `FIRE/FIRE -> FIRE/DRAGON`
+- `GYARADOS`: `WATER/FLYING -> WATER/DRAGON`
+
 ### Batch 3
 
 - `BAYLEEF`: `GRASS/GRASS -> GRASS/NORMAL`
@@ -157,6 +162,16 @@ It is no longer a complete release manifest for the current project state.
 - `MEGANIUM` level-up: `Lv51 SAFEGUARD -> Lv51 EARTHQUAKE`
 - `TYPHLOSION` level-up: `Lv45 SWIFT -> Lv45 THUNDERPUNCH`
 - `FERALIGATR` level-up: `Lv47 SCREECH -> Lv47 CRUNCH`
+
+### Dragon package
+
+- `DRATINI`: add `Lv32 DRAGONBREATH`; keeps `Lv50 OUTRAGE`
+- `DRAGONAIR`: add `Lv32 DRAGONBREATH`; keeps `Lv56 OUTRAGE`
+- `DRAGONITE`: add `Lv32 DRAGONBREATH`; keeps `Lv61 OUTRAGE`
+- `GYARADOS`: `Lv35 TWISTER -> Lv35 DRAGONBREATH`; add `Lv50 OUTRAGE`
+- `ARCANINE`: add `Lv42 DRAGONBREATH`, `Lv55 OUTRAGE`
+- `AMPHAROS`: keeps `Lv42 DRAGONBREATH`; add `Lv57 OUTRAGE`
+- `KINGDRA`: add `Lv40 DRAGONBREATH`, `Lv55 OUTRAGE`
 
 ### Batch 3
 

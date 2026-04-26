@@ -1,0 +1,49 @@
+Shared edge validation: revealed coverage and switching
+
+Trace ROM anchors:
+- `wBossAIRevealedMovesBitmap`: 01:d748 in `pokegold_trace.sym`
+- `wBossAITraceRiskFlags`: 01:d785 in `pokegold_trace.sym`
+
+Revealed coverage does not transfer across player species:
+- State layout: `ram/wram.asm` stores `wBossAISeenPlayerSpecies` followed by
+  `wBossAIRevealedMovesBitmap`, documented as six 4-byte per-seen-species
+  revealed type masks.
+- Record path: `BossAI_RecordRevealedPlayerMove` calls
+  `BossAI_GetActiveSpeciesRevealedMaskPointer` before setting a revealed
+  damaging type bit.
+- Read path: `BossAI_HasRevealedSuperEffectiveMove` also calls
+  `BossAI_GetActiveSpeciesRevealedMaskPointer` before testing revealed type
+  bits against the current enemy.
+- Result: a revealed Ice Punch or equivalent coverage bit belongs to the active
+  player species slot. When the player changes to a different species, the read
+  pointer changes, so the previous species' coverage does not transfer.
+
+A->B->A switch-loop penalty:
+- `BossAI_NeedsLoopPenalty` first checks the proposed switch target encoded in
+  `wEnemySwitchMonParam`, then falls back to the current-mon loop check.
+- If the proposed target is the same 1-based index as
+  `wBossAILastSwitchedOut`, the loop penalty path is entered.
+- The penalty is waived only by public emergency exceptions:
+  imminent KO prevention, public immunity pivot opportunity, or ace timing.
+- Result: a normal A->B->A pivot loop now penalizes the return switch rather
+  than only noticing the current mon.
+
+Immunity pivot preference:
+- `BossAI_RefineSwitchCandidateForPlausibleRisk` replaces the initial switch
+  only when the scanned candidate is more than the existing two-point margin
+  better.
+- Before tuning, a non-immune primary-threat tie-break of +2 could tie the
+  replacement threshold and fail to replace a merely neutral first candidate.
+- The tuning changes that non-immune adjustment to +3 in
+  `.ApplyPrimaryThreatImmunityTieBreak`.
+- Result: when the primary public threat type makes one candidate immune and
+  another candidate neutral, the immune candidate now clears the existing
+  replacement threshold.
+
+Constraint check:
+- No hidden player moves are consulted.
+- No save-wide chaos or overprediction state is used.
+- No probability simulator or private exact damage/speed decision knowledge is
+  added.
+- No Battle Core bank 0f hook is added.
+- No persistent state is added to the temporary boss AI block.

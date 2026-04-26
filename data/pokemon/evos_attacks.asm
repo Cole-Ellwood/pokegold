@@ -800,9 +800,11 @@ ArcanineEvosAttacks:
 	db 1, TAKE_DOWN
 	db 1, FLAME_WHEEL
 	db 36, AGILITY
+	db 42, DRAGONBREATH
 	db 42, EXTREMESPEED
 	db 45, FLAMETHROWER
 	db 50, CRUNCH
+	db 55, OUTRAGE
 	db 0 ; no more level-up moves
 
 PoliwagEvosAttacks:
@@ -1048,6 +1050,7 @@ GolemEvosAttacks:
 	db 40, EXPLOSION
 	db 0 ; no more level-up moves
 PonytaEvosAttacks:
+	db EVOLVE_LEVEL, 40, RAPIDASH
 	db 0 ; no more evolutions
 	db 1, TACKLE
 	db 4, GROWL
@@ -1177,6 +1180,7 @@ DodrioEvosAttacks:
 	db 47, AGILITY
 	db 0 ; no more level-up moves
 SeelEvosAttacks:
+	db EVOLVE_LEVEL, 34, DEWGONG
 	db 0 ; no more evolutions
 	db 1, HEADBUTT
 	db 5, GROWL
@@ -1524,6 +1528,7 @@ WeezingEvosAttacks:
 	db 40, SLUDGE_BOMB
 	db 0 ; no more level-up moves
 RhyhornEvosAttacks:
+	db EVOLVE_LEVEL, 42, RHYDON
 	db 0 ; no more evolutions
 	db 1, HORN_ATTACK
 	db 1, TAIL_WHIP
@@ -1785,9 +1790,10 @@ GyaradosEvosAttacks:
 	db 20, BITE
 	db 25, DRAGON_RAGE
 	db 30, LEER
-	db 35, TWISTER
+	db 35, DRAGONBREATH
 	db 40, HYDRO_PUMP
 	db 45, DRAGON_DANCE
+	db 50, OUTRAGE
 	db 50, HYPER_BEAM
 	db 0 ; no more level-up moves
 
@@ -2007,12 +2013,14 @@ DratiniEvosAttacks:
 	db 15, TWISTER
 	db 22, DRAGON_RAGE
 	db 29, SLAM
+	db 32, DRAGONBREATH
 	db 36, AGILITY
 	db 43, SAFEGUARD
 	db 50, OUTRAGE
 	db 57, HYPER_BEAM
 	db 0 ; no more level-up moves
 DragonairEvosAttacks:
+	db EVOLVE_LEVEL, 55, DRAGONITE
 	db 0 ; no more evolutions
 	db 1, WRAP
 	db 1, LEER
@@ -2022,6 +2030,7 @@ DragonairEvosAttacks:
 	db 15, TWISTER
 	db 22, DRAGON_RAGE
 	db 29, SLAM
+	db 32, DRAGONBREATH
 	db 38, AGILITY
 	db 47, SAFEGUARD
 	db 56, OUTRAGE
@@ -2038,6 +2047,7 @@ DragoniteEvosAttacks:
 	db 15, TWISTER
 	db 22, DRAGON_RAGE
 	db 29, SLAM
+	db 32, DRAGONBREATH
 	db 38, AGILITY
 	db 47, SAFEGUARD
 	db 55, WING_ATTACK
@@ -2325,6 +2335,7 @@ CrobatEvosAttacks:
 	db 40, HAZE
 	db 0 ; no more level-up moves
 ChinchouEvosAttacks:
+	db EVOLVE_LEVEL, 27, LANTURN
 	db 0 ; no more evolutions
 	db 1, BUBBLE
 	db 1, THUNDER_WAVE
@@ -2469,6 +2480,7 @@ AmpharosEvosAttacks:
 	db 27, HEAL_BELL
 	db 30, THUNDERPUNCH
 	db 42, DRAGONBREATH
+	db 57, OUTRAGE
 	db 57, THUNDER
 	db 0 ; no more level-up moves
 
@@ -3072,8 +3084,10 @@ KingdraEvosAttacks:
 	db 8, SMOKESCREEN
 	db 22, WATER_GUN
 	db 29, TWISTER
+	db 40, DRAGONBREATH
 	db 40, DRAGON_DANCE
 	db 51, HYDRO_PUMP
+	db 55, OUTRAGE
 	db 0 ; no more level-up moves
 
 PhanpyEvosAttacks:
@@ -3158,6 +3172,7 @@ HitmontopEvosAttacks:
 	db 39, TRIPLE_KICK
 	db 0 ; no more level-up moves
 SmoochumEvosAttacks:
+	db EVOLVE_LEVEL, 30, JYNX
 	db 0 ; no more evolutions
 	db 1, TACKLE
 	db 1, LICK

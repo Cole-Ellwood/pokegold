@@ -1,0 +1,32 @@
+Clair trace/audit excerpt
+
+Trainer data:
+- `data/trainers/ai_tiers.asm`: CLAIR1 is `AI_TIER_LATE`.
+- `data/trainers/parties.asm`: Gligar leads with Spikes, Donphan has Roar,
+  Steelix has Roar, Dragonair has Thunder Wave.
+
+First-turn Spikes:
+- Gligar's lead Spikes enters the same layer-1 scoring path as other hazard
+  leads.
+- On the first scoring turn, `wBossAITurnsElapsed < 2` gives the high lead
+  bias only if `.EnemyUnderPressure` does not detect immediate public danger.
+
+Status fail gates:
+- Dragonair's Thunder Wave is discouraged against visible Electric types,
+  already-statused targets, and Safeguard.
+- The fail gate applies before generic status encouragement.
+
+Spikes plus phazing:
+- Donphan and Steelix both carry Roar.
+- With Spikes active on the player side, `.ApplyPhazingPlanBias` gives Roar +8
+  when the player is publicly at +2 setup or has repeated-switch pressure.
+- This is public-state based; no hidden future switch prediction is added.
+
++2 setup punish:
+- Donphan/Steelix Roar satisfies the force-switch denial branch.
+- Public +2 Attack, Special Attack, Speed, or Evasion is enough to trigger the
+  setup-punish bias when no KO line exists.
+
+Result:
+- Clair passes first-turn Spikes, status fail gates, Spikes+Roar pressure, and
+  +2 setup punishment by source-path trace.

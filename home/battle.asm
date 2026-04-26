@@ -255,3 +255,11 @@ PushLYOverrides::
 	ld a, (wLYOverridesEnd - wLYOverrides) / TILE_SIZE
 	ld [wRequested2bppSize], a
 	ret
+
+Battle_GetEffectiveMoveCategory::
+	farcall TypePassive_GetEffectiveMoveCategory_Far
+	ret
+
+Battle_GetLastCounterMoveCategory::
+	farcall TypePassive_GetLastCounterMoveCategory_Far
+	ret

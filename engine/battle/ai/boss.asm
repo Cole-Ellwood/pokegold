@@ -5,6 +5,7 @@ BossAI_IncrementTurnsElapsed:
 	ld hl, wBossAITurnsElapsed
 	inc [hl]
 	ld hl, wBossAIPlanPhase
+	res 7, [hl]
 	inc [hl]
 	ld a, [wBossAIPendingPlayerSwitchCount]
 	and a
@@ -220,18 +221,79 @@ BossAI_RecordRevealedPlayerMove:
 	ld a, [wPlayerMoveStruct + MOVE_ANIM]
 	and a
 	ret z
-	dec a
-	ld c, a
-	ld b, 0
+	ld b, a
 
+	push bc
+	call BossAI_GetActiveSpeciesRevealedMaskPointer
+	pop bc
+	ret nc
+	ld a, b
+	call BossAI_AddRevealedMoveToSpeciesMask
+	xor a
+	ld [wBossAIPlausibleTypeMaskSpecies], a
+	ld [wBossAIPlausibleTypeMaskLevel], a
+	ret
+
+BossAI_GetActiveSpeciesRevealedMaskPointer:
+	call BossAI_GetActiveSpeciesSeenIndex
+	and a
+	jr z, .no_species
+	dec a
+	add a
+	add a
+	ld e, a
+	ld d, 0
 	ld hl, wBossAIRevealedMovesBitmap
-	ld a, c
+	add hl, de
+	scf
+	ret
+
+.no_species
+	and a
+	ret
+
+BossAI_AddRevealedMoveToSpeciesMask:
+	and a
+	ret z
+	ld [wBossAITemp], a
+	ld a, l
+	ld [wBossAITemp2], a
+	ld a, h
+	ld [wBossAITemp3], a
+
+	ld a, [wBossAITemp]
+	dec a
+	ld hl, Moves + MOVE_EFFECT
+	call GetMoveAttr
+	cp EFFECT_HIDDEN_POWER
+	jr nz, .check_power
+	ld a, BOSS_AI_PLAUSIBLE_HP_RISK_BIT
+	jr BossAI_SetRevealedSpeciesMaskBit
+
+.check_power
+	ld a, [wBossAITemp]
+	dec a
+	ld hl, Moves + MOVE_POWER
+	call GetMoveAttr
+	and a
+	ret z
+	ld a, [wBossAITemp]
+	dec a
+	ld hl, Moves + MOVE_TYPE
+	call GetMoveAttr
+
+BossAI_SetRevealedSpeciesMaskBit:
+	ld c, a
 	and %11111000
 	srl a
 	srl a
 	srl a
 	ld e, a
 	ld d, 0
+	ld a, [wBossAITemp2]
+	ld l, a
+	ld a, [wBossAITemp3]
+	ld h, a
 	add hl, de
 
 	ld a, c
@@ -250,9 +312,6 @@ BossAI_RecordRevealedPlayerMove:
 	ld a, [hl]
 	or d
 	ld [hl], a
-	xor a
-	ld [wBossAIPlausibleTypeMaskSpecies], a
-	ld [wBossAIPlausibleTypeMaskLevel], a
 	ret
 
 BossAI_ApplyMoveModel:
@@ -269,6 +328,9 @@ BossAI_ApplyMoveModel:
 	ld a, [de]
 	and a
 	ret z
+	ld a, [hl]
+	cp 80
+	jr nc, .next
 	push bc
 	push de
 	push hl
@@ -276,6 +338,7 @@ BossAI_ApplyMoveModel:
 	pop hl
 	pop de
 	pop bc
+.next
 	inc hl
 	inc de
 	dec c
@@ -348,14 +411,23 @@ BossAI_ApplyMoveModel:
 	call .DiscourageByTierWeight
 
 .skip_setup
+	call .UtilityMoveWouldFailPublicly
+	jr nc, .skip_utility_fail
+	ld a, 24
+	call BossAI_DiscourageScoreHL
+
+.skip_utility_fail
 	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
 	ld hl, BossAIStatusEffects
 	ld de, 1
 	call IsInArray
 	jr nc, .skip_status
-	ld a, [wBattleMonStatus]
-	and a
-	jr nz, .skip_status
+	call .StatusMoveWouldFailPublicly
+	jr nc, .status_ok
+	ld a, 24
+	call BossAI_DiscourageScoreHL
+	jr .skip_status
+.status_ok
 	ld c, 4
 	call .EncourageByTierWeight
 	ld a, [wBossAITurnsElapsed]
@@ -365,7 +437,9 @@ BossAI_ApplyMoveModel:
 	call .DiscourageByTierWeight
 
 .skip_status
+	call .ApplySetupPunishBias
 	call .ApplySpikesLayerBias
+	call .ApplyPhazingPlanBias
 	call .ApplyLegacyRoleBiasIfNeeded
 	call BossAI_ApplyPlanMoveBias
 	call BossAI_ApplyScoutMoveBias
@@ -386,6 +460,296 @@ BossAI_ApplyMoveModel:
 .risk
 	ld c, 6
 	call .DiscourageByTierWeight
+	ret
+
+.StatusMoveWouldFailPublicly
+	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
+	cp EFFECT_LEECH_SEED
+	jp z, .check_leech
+	cp EFFECT_PARALYZE
+	jr z, .check_paralyze
+	cp EFFECT_CONFUSE
+	jr z, .check_confuse
+	cp EFFECT_POISON
+	jp z, .check_poison
+	cp EFFECT_TOXIC
+	jp z, .check_poison
+	cp EFFECT_SLEEP
+	jr z, .check_primary_status
+	and a
+	ret
+
+.UtilityMoveWouldFailPublicly
+	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
+	cp EFFECT_LIGHT_SCREEN
+	jr z, .check_light_screen
+	cp EFFECT_REFLECT
+	jr z, .check_reflect
+	cp EFFECT_SUBSTITUTE
+	jr z, .check_substitute
+	cp EFFECT_PROTECT
+	jr z, .check_protect
+	cp EFFECT_HEAL
+	jr z, .check_heal
+	cp EFFECT_MORNING_SUN
+	jr z, .check_heal
+	cp EFFECT_SYNTHESIS
+	jr z, .check_heal
+	cp EFFECT_MOONLIGHT
+	jr z, .check_heal
+	and a
+	ret
+
+.check_light_screen
+	ld a, [wEnemyScreens]
+	bit SCREENS_LIGHT_SCREEN, a
+	jp nz, .status_fail
+	and a
+	ret
+
+.check_reflect
+	ld a, [wEnemyScreens]
+	bit SCREENS_REFLECT, a
+	jp nz, .status_fail
+	and a
+	ret
+
+.check_substitute
+	ld a, [wEnemySubStatus4]
+	bit SUBSTATUS_SUBSTITUTE, a
+	jp nz, .status_fail
+	call AICheckEnemyQuarterHP
+	jp nc, .status_fail
+	and a
+	ret
+
+.check_protect
+	ld a, [wEnemySubStatus4]
+	bit SUBSTATUS_SUBSTITUTE, a
+	jp nz, .status_fail
+	and a
+	ret
+
+.check_heal
+	call AICheckEnemyMaxHP
+	jp c, .status_fail
+	and a
+	ret
+
+.check_primary_status
+	call .PrimaryStatusBlocked
+	ret
+
+.check_paralyze
+	call .PrimaryStatusBlocked
+	ret c
+	call .EnemyStatusMoveTypeMissesPlayer
+	ret
+
+.check_confuse
+	ld a, [wPlayerSubStatus4]
+	bit SUBSTATUS_SUBSTITUTE, a
+	jp nz, .status_fail
+	ld a, [wPlayerScreens]
+	bit SCREENS_SAFEGUARD, a
+	jp nz, .status_fail
+	ld a, [wPlayerSubStatus3]
+	bit SUBSTATUS_CONFUSED, a
+	jp nz, .status_fail
+	and a
+	ret
+
+.EnemyStatusMoveTypeMissesPlayer
+; Status scripts that run through type matchup, such as Thunder Wave or Glare,
+; fail only on real type-chart immunities. Dragon's Majesty is damage-only.
+	push bc
+	push de
+	push hl
+	ldh a, [hBattleTurn]
+	push af
+	ld a, 1
+	ldh [hBattleTurn], a
+	ld a, [wEnemyMoveStruct + MOVE_TYPE]
+	ld d, a
+	ld a, [wBattleMonType1]
+	ld b, a
+	ld a, [wBattleMonType2]
+	ld c, a
+	ld hl, TypeMatchups
+
+.status_type_loop
+	ld a, BANK(TypeMatchups)
+	call GetFarByte
+	inc hl
+	cp -1
+	jr z, .status_type_ok
+	cp -2
+	jr nz, .status_type_match_move
+	ld a, BATTLE_VARS_SUBSTATUS1_OPP
+	call GetBattleVar
+	bit SUBSTATUS_IDENTIFIED, a
+	jr nz, .status_type_ok
+	jr .status_type_loop
+
+.status_type_match_move
+	cp d
+	jr nz, .status_type_skip
+	ld a, BANK(TypeMatchups)
+	call GetFarByte
+	inc hl
+	cp b
+	jr z, .status_type_check_multiplier
+	cp c
+	jr z, .status_type_check_multiplier
+	inc hl
+	jr .status_type_loop
+
+.status_type_skip
+	inc hl
+	inc hl
+	jr .status_type_loop
+
+.status_type_check_multiplier
+	ld a, BANK(TypeMatchups)
+	call GetFarByte
+	inc hl
+	and a
+	jr z, .status_type_fail
+	jr .status_type_loop
+
+.status_type_ok
+	pop af
+	ldh [hBattleTurn], a
+	pop hl
+	pop de
+	pop bc
+	and a
+	ret
+
+.status_type_fail
+	pop af
+	ldh [hBattleTurn], a
+	pop hl
+	pop de
+	pop bc
+	scf
+	ret
+
+.check_poison
+	call .PrimaryStatusBlocked
+	ret c
+	ld a, [wBattleMonType1]
+	cp POISON
+	jr z, .status_fail
+	cp STEEL
+	jr z, .status_fail
+	ld a, [wBattleMonType2]
+	cp POISON
+	jr z, .status_fail
+	cp STEEL
+	jr z, .status_fail
+	and a
+	ret
+
+.check_leech
+	ld a, [wPlayerSubStatus4]
+	bit SUBSTATUS_SUBSTITUTE, a
+	jr nz, .status_fail
+	bit SUBSTATUS_LEECH_SEED, a
+	jr nz, .status_fail
+	ld a, [wBattleMonType1]
+	cp GRASS
+	jr z, .status_fail
+	ld a, [wBattleMonType2]
+	cp GRASS
+	jr z, .status_fail
+	and a
+	ret
+
+.PrimaryStatusBlocked
+	ld a, [wPlayerSubStatus4]
+	bit SUBSTATUS_SUBSTITUTE, a
+	jr nz, .status_fail
+	ld a, [wBattleMonStatus]
+	and a
+	jr nz, .status_fail
+	ld a, [wPlayerScreens]
+	bit SCREENS_SAFEGUARD, a
+	jr nz, .status_fail
+	and a
+	ret
+
+.status_fail
+	scf
+	ret
+
+.ApplySetupPunishBias
+	call .PlayerHasMajorSetupBoost
+	ret nc
+	call .HasKOLine
+	ret c
+	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
+	cp EFFECT_FORCE_SWITCH
+	jr z, .setup_punish
+	cp EFFECT_RESET_STATS
+	jr z, .setup_punish
+	cp EFFECT_ENCORE
+	ret nz
+.setup_punish
+	ld a, 8
+	jp BossAI_EncourageScoreHL
+
+.ApplyPhazingPlanBias
+	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
+	cp EFFECT_FORCE_SWITCH
+	ret nz
+	call .HasKOLine
+	ret c
+	ld a, [wPlayerScreens]
+	and SCREENS_SPIKES_MASK
+	ret z
+	call .PlayerHasMajorSetupBoost
+	jr c, .phaze_good
+	call .PlayerHasRepeatedSwitchPressure
+	ret nc
+.phaze_good
+	ld a, 8
+	jp BossAI_EncourageScoreHL
+
+.PlayerHasMajorSetupBoost
+	ld a, [wPlayerStatLevels + ATTACK]
+	cp BASE_STAT_LEVEL + 2
+	jr nc, .setup_seen
+	ld a, [wPlayerStatLevels + SP_ATTACK]
+	cp BASE_STAT_LEVEL + 2
+	jr nc, .setup_seen
+	ld a, [wPlayerStatLevels + SPEED]
+	cp BASE_STAT_LEVEL + 2
+	jr nc, .setup_seen
+	ld a, [wPlayerStatLevels + EVASION]
+	cp BASE_STAT_LEVEL + 2
+	jr nc, .setup_seen
+	and a
+	ret
+.setup_seen
+	scf
+	ret
+
+.PlayerHasRepeatedSwitchPressure
+	ld a, [wBossAITurnsElapsed]
+	and a
+	ret z
+	ld c, a
+	ld a, [wBossAIPlayerSwitchCount]
+	and a
+	ret z
+	add a
+	cp c
+	jr c, .no_switch_pressure
+	scf
+	ret
+.no_switch_pressure
+	and a
 	ret
 
 .ApplySpikesLayerBias
@@ -409,14 +773,17 @@ BossAI_ApplyMoveModel:
 
 .spikes_layer1
 ; Good lead/pivot punishment baseline.
+	call .EnemyUnderPressure
+	jr c, .spikes_l1_baseline
 	ld a, [wBossAITurnsElapsed]
-	and a
-	jr z, .spikes_l1_high
+	cp 2
+	jr c, .spikes_l1_high
 	push hl
 	call BossAI_PredictPlayerSwitch
 	pop hl
 	cp 40
 	jr nc, .spikes_l1_high
+.spikes_l1_baseline
 	ld c, 4
 	call .EncourageByTierWeight
 	ret
@@ -470,9 +837,6 @@ BossAI_ApplyMoveModel:
 	ret
 
 .ApplyLegacyRoleBiasIfNeeded
-	ld a, [wBossAITier]
-	cp AI_TIER_LATE
-	ret z
 	jr .ApplyRoleBias
 
 .ApplyRoleBias
@@ -1064,6 +1428,9 @@ BossAI_FindFirstAliveSwitchCandidate:
 	ret
 
 BossAI_PlayerHasPublicThreatVsEnemy:
+	call BossAI_HasRevealedSuperEffectiveMove
+	jr c, .yes
+
 	ld hl, wPlayerUsedMoves
 	ld a, [hl]
 	and a
@@ -1216,6 +1583,7 @@ BossAI_CheckTypeMatchupNoItem:
 	ld a, BANK(TypeMatchups)
 	call GetFarByte
 	inc hl
+	call BossAI_ApplyDragonsMajestyNoItem
 	ldh [hMultiplicand + 2], a
 	ld a, [wTypeMatchup]
 	ldh [hMultiplier], a
@@ -1234,6 +1602,38 @@ BossAI_CheckTypeMatchupNoItem:
 	pop bc
 	pop de
 	pop hl
+	ret
+
+BossAI_ApplyDragonsMajestyNoItem:
+; Mirror Dragon's Majesty for boss type-only heuristics. These callers model
+; damaging type pressure without peeking at held items, so a Dragon attacker
+; treats a type-chart immunity as a resistance just like real damage does.
+	and a
+	ret nz
+	push hl
+	ldh a, [hBattleTurn]
+	and a
+	jr z, .player_user
+	ld hl, wEnemyMonType1
+	jr .got_user_types
+
+.player_user
+	ld hl, wBattleMonType1
+
+.got_user_types
+	ld a, [hli]
+	cp DRAGON
+	jr z, .has_dragon
+	ld a, [hl]
+	cp DRAGON
+	jr z, .has_dragon
+	pop hl
+	xor a
+	ret
+
+.has_dragon
+	pop hl
+	ld a, NOT_VERY_EFFECTIVE
 	ret
 
 BossAI_CurrentEnemyMoveHasKOPressure:
@@ -1310,13 +1710,31 @@ BossAI_CurrentEnemyMovePressureScore:
 	jr z, .stab_bonus
 	ld a, [wEnemyMonType2]
 	cp c
-	jr nz, .cap
+	jr nz, .imperial_scales
 
 .stab_bonus
 	inc b
-	jr .cap
+	jr .imperial_scales
 
 .resisted
+	ld a, b
+	and a
+	jr z, .done
+	dec b
+	jr .imperial_scales
+
+.imperial_scales
+	ld a, [wTypeMatchup]
+	cp EFFECTIVE + 1
+	jr nc, .cap
+	ld a, [wBattleMonType1]
+	cp DRAGON
+	jr z, .dragon_defender
+	ld a, [wBattleMonType2]
+	cp DRAGON
+	jr nz, .cap
+
+.dragon_defender
 	ld a, b
 	and a
 	jr z, .done
@@ -1363,6 +1781,7 @@ BossAI_PublicEnemyFaster:
 	ld a, [wBaseSpeed]
 	cp b
 	jr c, .enemy_not_faster
+	jr z, .enemy_not_faster
 
 .enemy_faster
 	pop af
@@ -1469,6 +1888,13 @@ BossAI_NeedsLoopPenalty:
 	ld a, [wBossAISwitchCooldown]
 	and a
 	jr z, .no_penalty
+	ld a, [wEnemySwitchMonParam]
+	and $f
+	inc a
+	ld b, a
+	ld a, [wBossAILastSwitchedOut]
+	cp b
+	jr z, .check_exceptions
 	ld a, [wCurOTMon]
 	inc a
 	ld b, a
@@ -1476,6 +1902,7 @@ BossAI_NeedsLoopPenalty:
 	cp b
 	jr nz, .no_penalty
 
+.check_exceptions
 	call BossAI_IsImminentKOPrevention
 	jr c, .no_penalty
 	call BossAI_IsImmunityPivotOpportunity
@@ -1783,61 +2210,86 @@ BossAI_PredictPlayerSwitch:
 	ret
 
 BossAI_HasRevealedSuperEffectiveMove:
-	ld hl, wBossAIRevealedMovesBitmap
-	ld b, 1 ; move id
-
-.byte_loop
-	ld a, b
-	cp NUM_ATTACKS + 1
+	call BossAI_GetActiveSpeciesRevealedMaskPointer
 	jr nc, .no
+	ld a, l
+	ld [wBossAITemp4], a
+	ld a, h
+	ld [wBossAITemp5], a
+
+	ld hl, BossAI_PlausibleThreatTypes
+.type_loop
 	ld a, [hli]
-	ld d, a
-	ld e, 8
-
-.bit_loop
-	ld a, b
-	cp NUM_ATTACKS + 1
-	jr nc, .no
-	ld a, d
-	and 1
-	jr z, .next_bit
-
-	push bc
-	push de
+	cp -1
+	jr z, .hidden_power
+	ld c, a
 	push hl
-	ld a, b
-	dec a
-	ld hl, Moves + MOVE_POWER
-	call GetMoveAttr
-	and a
-	jr z, .restore
-	inc hl
-	call GetMoveByte
+	call BossAI_TestRevealedSpeciesMaskBit
+	pop hl
+	jr nc, .type_loop
+	push hl
+	ld a, c
 	call BossAI_CheckPlayerMoveTypeMatchupVsEnemyNoItem
+	pop hl
 	ld a, [wTypeMatchup]
 	cp EFFECTIVE + 1
-	jr c, .restore
-	pop hl
-	pop de
-	pop bc
+	jr c, .type_loop
 	scf
 	ret
 
-.restore
+.hidden_power
+	ld c, BOSS_AI_PLAUSIBLE_HP_RISK_BIT
+	call BossAI_TestRevealedSpeciesMaskBit
+	jr nc, .no
+	ld hl, BossAIHiddenPowerThreatTypes
+.hp_loop
+	ld a, [hli]
+	cp -1
+	jr z, .no
+	push hl
+	call BossAI_CheckPlayerMoveTypeMatchupVsEnemyNoItem
 	pop hl
-	pop de
-	pop bc
-
-.next_bit
-	ld a, d
-	srl a
-	ld d, a
-	inc b
-	dec e
-	jr nz, .bit_loop
-	jr .byte_loop
+	ld a, [wTypeMatchup]
+	cp EFFECTIVE + 1
+	jr c, .hp_loop
+	scf
+	ret
 
 .no
+	and a
+	ret
+
+BossAI_TestRevealedSpeciesMaskBit:
+	ld a, c
+	and %11111000
+	srl a
+	srl a
+	srl a
+	ld e, a
+	ld d, 0
+	ld a, [wBossAITemp4]
+	ld l, a
+	ld a, [wBossAITemp5]
+	ld h, a
+	add hl, de
+	ld a, c
+	and %00000111
+	ld e, a
+	ld d, 1
+.test_loop
+	ld a, e
+	and a
+	jr z, .test
+	sla d
+	dec e
+	jr .test_loop
+.test
+	ld a, [hl]
+	and d
+	jr z, .not_set
+	scf
+	ret
+.not_set
 	and a
 	ret
 
@@ -1961,16 +2413,24 @@ BossAI_SelectPlanIfNeeded:
 	and a
 	jr nz, .adapt
 	call .ChooseInitialPlan
+	ld hl, wBossAIPlanPhase
+	set 7, [hl]
 	jr .trace
 
 .adapt
+	ld hl, wBossAIPlanPhase
+	bit 7, [hl]
+	jr nz, .trace
 	call .AdaptPlan
+	ld hl, wBossAIPlanPhase
+	set 7, [hl]
 
 .trace
 IF DEF(BOSS_AI_TRACE)
 	ld a, [wBossAIPlanId]
 	ld [wBossAITracePlanId], a
 	ld a, [wBossAIPlanPhase]
+	and $7f
 	ld [wBossAITracePlanPhase], a
 	ld a, [wBossAIPlanConfidence]
 	ld [wBossAITracePlanConfidence], a
@@ -2314,58 +2774,19 @@ BossAI_ComputePlayerPlausibleTypeMask:
 	call BossAI_ClearPlausibleMask
 
 	ld a, [wBattleMonType1]
-	call BossAI_SetPlausibleMaskBit
+	call BossAI_SetPlausibleAndLikelyMaskBit
 	ld a, [wBattleMonType2]
 	ld c, a
 	ld a, [wBattleMonType1]
 	cp c
 	jr z, .skip_stab2
 	ld a, c
-	call BossAI_SetPlausibleMaskBit
+	call BossAI_SetPlausibleAndLikelyMaskBit
 .skip_stab2
 
 	call BossAI_AddRevealedDamagingTypesToMask
-
 	ld a, [wBossAITemp]
-	ld [wCurSpecies], a
-	call GetBaseData
-	ld hl, wBaseTMHM
-	ld b, 1
-	ld c, 1
-	ld d, NUM_TM_HM
-.tm_loop
-	ld a, d
-	and a
-	jr z, .add_learnset_moves
-	ld a, [hl]
-	and b
-	jr z, .next_tm
-	push bc
-	push de
-	push hl
-	ld a, c
-	ld [wTempTMHM], a
-	predef GetTMHMMove
-	ld a, [wTempTMHM]
-	call BossAI_AddMoveIdToPlausibleMask
-	pop hl
-	pop de
-	pop bc
-.next_tm
-	inc c
-	sla b
-	jr nz, .bit_ok
-	ld b, 1
-	inc hl
-.bit_ok
-	dec d
-	jr .tm_loop
-
-.add_learnset_moves
-	ld a, [wBossAITemp]
-	call BossAI_AddSpeciesLevelUpMovesToMask
-	ld a, [wBossAITemp]
-	call BossAI_AddSpeciesEggMovesToMask
+	call BossAI_AddSpeciesAndPreEvolutionMovesToMask
 
 .done
 IF DEF(BOSS_AI_TRACE)
@@ -2382,66 +2803,39 @@ BossAI_ClearPlausibleMask:
 	ld [hli], a
 	ld [hli], a
 	ld [hli], a
+	ld [hli], a
+	ld hl, wBossAILikelyTypeMaskCache
+	ld [hli], a
+	ld [hli], a
+	ld [hli], a
 	ld [hl], a
 	ret
 
 BossAI_AddRevealedDamagingTypesToMask:
-	ld hl, wBossAIRevealedMovesBitmap
-	ld b, 1
-.byte_loop
-	ld a, b
-	cp NUM_ATTACKS + 1
+	call BossAI_GetActiveSpeciesRevealedMaskPointer
 	ret nc
-	ld a, [hli]
-	ld d, a
-	ld e, 8
-.bit_loop
-	ld a, b
-	cp NUM_ATTACKS + 1
-	ret nc
-	ld a, d
-	and 1
-	jr z, .next_bit
-	push bc
-	push de
 	push hl
-	ld a, b
-	call BossAI_AddRevealedMoveToPlausibleMask
+	ld de, wBossAIPlausibleTypeMaskCache
+	ld b, 4
+.copy_possible_loop
+	ld a, [de]
+	or [hl]
+	ld [de], a
+	inc hl
+	inc de
+	dec b
+	jr nz, .copy_possible_loop
 	pop hl
-	pop de
-	pop bc
-.next_bit
-	ld a, d
-	srl a
-	ld d, a
-	inc b
-	dec e
-	jr nz, .bit_loop
-	jr .byte_loop
-
-BossAI_AddRevealedMoveToPlausibleMask:
-	ld b, a
-	dec a
-	ld hl, Moves + MOVE_EFFECT
-	call GetMoveAttr
-	cp EFFECT_HIDDEN_POWER
-	jr nz, .check_power
-	ld a, BOSS_AI_PLAUSIBLE_HP_RISK_BIT
-	call BossAI_SetPlausibleMaskBit
-	ret
-
-.check_power
-	ld a, b
-	dec a
-	ld hl, Moves + MOVE_POWER
-	call GetMoveAttr
-	and a
-	ret z
-	ld a, b
-	dec a
-	ld hl, Moves + MOVE_TYPE
-	call GetMoveAttr
-	call BossAI_SetPlausibleMaskBit
+	ld de, wBossAILikelyTypeMaskCache
+	ld b, 4
+.copy_likely_loop
+	ld a, [de]
+	or [hl]
+	ld [de], a
+	inc hl
+	inc de
+	dec b
+	jr nz, .copy_likely_loop
 	ret
 
 BossAI_AddMoveIdToPlausibleMask:
@@ -2473,6 +2867,42 @@ BossAI_AddMoveIdToPlausibleMask:
 	call BossAI_SetPlausibleMaskBit
 	ret
 
+BossAI_AddMoveIdToLikelyMask:
+	and a
+	ret z
+	ld b, a
+	dec a
+	ld hl, Moves + MOVE_EFFECT
+	call GetMoveAttr
+	cp EFFECT_HIDDEN_POWER
+	jr nz, .check_power
+	ld a, BOSS_AI_PLAUSIBLE_HP_RISK_BIT
+	call BossAI_SetLikelyMaskBit
+	ret
+
+.check_power
+	ld a, b
+	dec a
+	ld hl, Moves + MOVE_POWER
+	call GetMoveAttr
+	and a
+	ret z
+	cp BOSS_AI_PLAUSIBLE_MIN_POWER
+	ret c
+	ld a, b
+	dec a
+	ld hl, Moves + MOVE_TYPE
+	call GetMoveAttr
+	call BossAI_SetLikelyMaskBit
+	ret
+
+BossAI_SetPlausibleAndLikelyMaskBit:
+	push af
+	call BossAI_SetPlausibleMaskBit
+	pop af
+	call BossAI_SetLikelyMaskBit
+	ret
+
 BossAI_SetPlausibleMaskBit:
 	ld c, a
 	and %11111000
@@ -2499,6 +2929,106 @@ BossAI_SetPlausibleMaskBit:
 	or d
 	ld [hl], a
 	ret
+
+BossAI_SetLikelyMaskBit:
+	ld c, a
+	and %11111000
+	srl a
+	srl a
+	srl a
+	ld e, a
+	ld d, 0
+	ld hl, wBossAILikelyTypeMaskCache
+	add hl, de
+	ld a, c
+	and %00000111
+	ld e, a
+	ld d, 1
+.mask_loop
+	ld a, e
+	and a
+	jr z, .set
+	sla d
+	dec e
+	jr .mask_loop
+.set
+	ld a, [hl]
+	or d
+	ld [hl], a
+	ret
+
+BossAI_AddSpeciesAndPreEvolutionMovesToMask:
+	and a
+	ret z
+	ld [wBossAITemp4], a
+	ld a, [wCurPartySpecies]
+	ld [wBossAITemp5], a
+	ld a, [wBossAITemp4]
+	ld [wCurPartySpecies], a
+	xor a
+	ld [wBossAITemp2], a
+
+.loop
+	ld a, [wCurPartySpecies]
+	ld [wCurSpecies], a
+	call GetBaseData
+	call BossAI_AddBaseTMHMMovesToMask
+	ld a, [wCurPartySpecies]
+	call BossAI_AddSpeciesLevelUpMovesToMask
+	ld a, [wBossAITemp2]
+	and a
+	jr nz, .skip_likely_levelup
+	ld a, [wCurPartySpecies]
+	call BossAI_AddSpeciesLevelUpMovesToLikelyMask
+.skip_likely_levelup
+	ld a, [wCurPartySpecies]
+	call BossAI_AddSpeciesEggMovesToMask
+	callfar GetPreEvolution
+	jr nc, .restore
+	ld a, 1
+	ld [wBossAITemp2], a
+	jr .loop
+
+.restore
+	ld a, [wBossAITemp5]
+	ld [wCurPartySpecies], a
+	ld a, [wBossAITemp4]
+	ld [wCurSpecies], a
+	call GetBaseData
+	ret
+
+BossAI_AddBaseTMHMMovesToMask:
+	ld hl, wBaseTMHM
+	ld b, 1
+	ld c, 1
+	ld d, NUM_TM_HM
+.tm_loop
+	ld a, d
+	and a
+	ret z
+	ld a, [hl]
+	and b
+	jr z, .next_tm
+	push bc
+	push de
+	push hl
+	ld a, c
+	ld [wTempTMHM], a
+	predef GetTMHMMove
+	ld a, [wTempTMHM]
+	call BossAI_AddMoveIdToPlausibleMask
+	pop hl
+	pop de
+	pop bc
+.next_tm
+	inc c
+	sla b
+	jr nz, .bit_ok
+	ld b, 1
+	inc hl
+.bit_ok
+	dec d
+	jr .tm_loop
 
 BossAI_AddSpeciesLevelUpMovesToMask:
 	and a
@@ -2541,11 +3071,70 @@ BossAI_AddSpeciesLevelUpMovesToMask:
 	ld b, a
 	ld a, [wBattleMonLevel]
 	cp b
-	ret c
+	jr c, .skip_move
 	inc hl
 	ld a, BANK("Evolutions and Attacks")
 	call GetFarByte
 	call BossAI_AddMoveIdToPlausibleMask
+	inc hl
+	jr .move_loop
+
+.skip_move
+	inc hl
+	inc hl
+	jr .move_loop
+
+BossAI_AddSpeciesLevelUpMovesToLikelyMask:
+	and a
+	ret z
+	dec a
+	ld c, a
+	ld b, 0
+	ld hl, EvosAttacksPointers
+	add hl, bc
+	add hl, bc
+	ld a, BANK(EvosAttacksPointers)
+	call GetFarWord
+
+.skip_evos
+	ld a, BANK("Evolutions and Attacks")
+	call GetFarByte
+	and a
+	jr z, .moves
+	cp EVOLVE_STAT
+	jr z, .skip_stat_evo
+	inc hl
+	inc hl
+	inc hl
+	jr .skip_evos
+
+.skip_stat_evo
+	inc hl
+	inc hl
+	inc hl
+	inc hl
+	jr .skip_evos
+
+.moves
+	inc hl ; skip the no-more-evolutions marker
+.move_loop
+	ld a, BANK("Evolutions and Attacks")
+	call GetFarByte
+	and a
+	ret z
+	ld b, a
+	ld a, [wBattleMonLevel]
+	cp b
+	jr c, .skip_move
+	inc hl
+	ld a, BANK("Evolutions and Attacks")
+	call GetFarByte
+	call BossAI_AddMoveIdToLikelyMask
+	inc hl
+	jr .move_loop
+
+.skip_move
+	inc hl
 	inc hl
 	jr .move_loop
 
@@ -2579,6 +3168,37 @@ BossAI_TestPlausibleMaskBit:
 	ld e, a
 	ld d, 0
 	ld hl, wBossAIPlausibleTypeMaskCache
+	add hl, de
+	ld a, c
+	and %00000111
+	ld e, a
+	ld d, 1
+.test_loop
+	ld a, e
+	and a
+	jr z, .test
+	sla d
+	dec e
+	jr .test_loop
+.test
+	ld a, [hl]
+	and d
+	jr z, .not_set
+	scf
+	ret
+.not_set
+	and a
+	ret
+
+BossAI_TestLikelyMaskBit:
+	ld c, a
+	and %11111000
+	srl a
+	srl a
+	srl a
+	ld e, a
+	ld d, 0
+	ld hl, wBossAILikelyTypeMaskCache
 	add hl, de
 	ld a, c
 	and %00000111
@@ -3189,7 +3809,28 @@ BossAI_GetPrimaryThreatType:
 	xor a
 	ld d, a
 	ld e, a
-.p_loop
+.likely_loop
+	ld a, [hli]
+	cp -1
+	jr z, .possible
+	ld b, a
+	push hl
+	ld a, b
+	call BossAI_TestLikelyMaskBit
+	pop hl
+	jr nc, .likely_loop
+	ld a, b
+	call BossAI_GetTypeThreatSeverityVsEnemyMon
+	cp d
+	jr c, .likely_loop
+	ld d, a
+	ld a, b
+	ld e, a
+	jr .likely_loop
+
+.possible
+	ld hl, BossAI_PlausibleThreatTypes
+.possible_loop
 	ld a, [hli]
 	cp -1
 	jr z, .hp_fallback
@@ -3198,23 +3839,34 @@ BossAI_GetPrimaryThreatType:
 	ld a, b
 	call BossAI_TestPlausibleMaskBit
 	pop hl
-	jr nc, .p_loop
+	jr nc, .possible_loop
+	push hl
+	ld a, b
+	call BossAI_TestLikelyMaskBit
+	pop hl
+	jr c, .possible_loop
 	ld a, b
 	call BossAI_GetTypeThreatSeverityVsEnemyMon
+	cp 3
+	jr c, .possible_loop
 	cp d
-	jr c, .p_loop
+	jr c, .possible_loop
 	ld d, a
 	ld a, b
 	ld e, a
-	jr .p_loop
+	jr .possible_loop
 
 .hp_fallback
+	ld a, BOSS_AI_PLAUSIBLE_HP_RISK_BIT
+	call BossAI_TestLikelyMaskBit
+	jr c, .scan_hidden_power
 	ld a, d
 	and a
 	jr nz, .done
 	ld a, BOSS_AI_PLAUSIBLE_HP_RISK_BIT
 	call BossAI_TestPlausibleMaskBit
 	jr nc, .none
+.scan_hidden_power
 	ld hl, BossAIHiddenPowerThreatTypes
 .hp_loop
 	ld a, [hli]
@@ -3254,7 +3906,7 @@ BossAI_GetRevealedMoveThreatTypeAndSeverity:
 	cp EFFECT_HIDDEN_POWER
 	jr nz, .check_power
 	ld a, BOSS_AI_PLAUSIBLE_HP_RISK_BIT
-	call BossAI_SetPlausibleMaskBit
+	call BossAI_SetPlausibleAndLikelyMaskBit
 	and a
 	ret
 
@@ -3305,6 +3957,13 @@ BossAI_GetTierPlausibleRiskWeight:
 	ld a, BOSS_AI_PLAUSIBLE_RISK_WEIGHT_TIER_MID
 	ret z
 	ld a, BOSS_AI_PLAUSIBLE_RISK_WEIGHT_TIER_EARLY
+	ret
+
+BossAI_GetSpeculativePlausibleRiskWeight:
+	call BossAI_GetTierPlausibleRiskWeight
+	srl a
+	ret nz
+	inc a
 	ret
 
 BossAI_GetScoutRollThreshold:
@@ -3513,9 +4172,9 @@ BossAI_ComputeSwitchCandidateRisk:
 	add hl, bc
 	ld a, [hl]
 	and a
-	jr z, .hard_risk
+	jp z, .hard_risk
 	cp $ff
-	jr z, .hard_risk
+	jp z, .hard_risk
 	ld [wCurSpecies], a
 	call GetBaseData
 
@@ -3536,7 +4195,25 @@ BossAI_ComputeSwitchCandidateRisk:
 	call BossAI_GetTierPlausibleRiskWeight
 	ld d, a
 	ld hl, BossAI_PlausibleThreatTypes
-.mask_loop
+.likely_mask_loop
+	ld a, [hli]
+	cp -1
+	jr z, .possible_mask_risk
+	ld c, a
+	push hl
+	ld a, c
+	call BossAI_TestLikelyMaskBit
+	pop hl
+	jr nc, .likely_mask_loop
+	ld a, c
+	call .AddTypeRisk
+	jr .likely_mask_loop
+
+.possible_mask_risk
+	call BossAI_GetSpeculativePlausibleRiskWeight
+	ld d, a
+	ld hl, BossAI_PlausibleThreatTypes
+.possible_mask_loop
 	ld a, [hli]
 	cp -1
 	jr z, .hp_risk
@@ -3545,15 +4222,37 @@ BossAI_ComputeSwitchCandidateRisk:
 	ld a, c
 	call BossAI_TestPlausibleMaskBit
 	pop hl
-	jr nc, .mask_loop
+	jr nc, .possible_mask_loop
+	push hl
+	ld a, c
+	call BossAI_TestLikelyMaskBit
+	pop hl
+	jr c, .possible_mask_loop
 	ld a, c
 	call .AddTypeRisk
-	jr .mask_loop
+	jr .possible_mask_loop
 
 .hp_risk
 	ld a, BOSS_AI_PLAUSIBLE_HP_RISK_BIT
+	call BossAI_TestLikelyMaskBit
+	jr nc, .possible_hp_risk
+	call BossAI_GetTierPlausibleRiskWeight
+	ld d, a
+	call .AddHiddenPowerTypeRisk
+
+.possible_hp_risk
+	ld a, BOSS_AI_PLAUSIBLE_HP_RISK_BIT
+	call BossAI_TestLikelyMaskBit
+	jr c, .immunity_tiebreak
+	ld a, BOSS_AI_PLAUSIBLE_HP_RISK_BIT
 	call BossAI_TestPlausibleMaskBit
-	jr nc, .done
+	jr nc, .immunity_tiebreak
+	call BossAI_GetSpeculativePlausibleRiskWeight
+	ld d, a
+	call .AddHiddenPowerTypeRisk
+	jr .immunity_tiebreak
+
+.AddHiddenPowerTypeRisk
 	ld hl, BossAIHiddenPowerThreatTypes
 	ld e, 0
 .hp_loop
@@ -3573,6 +4272,10 @@ BossAI_ComputeSwitchCandidateRisk:
 	ld a, b
 	add e
 	ld b, a
+	ret
+
+.immunity_tiebreak
+	call .ApplyPrimaryThreatImmunityTieBreak
 
 .done
 	ld a, b
@@ -3583,6 +4286,39 @@ BossAI_ComputeSwitchCandidateRisk:
 
 .hard_risk
 	ld a, 99
+	ret
+
+.ApplyPrimaryThreatImmunityTieBreak
+	ld a, [wBossAITemp]
+	push af
+	push bc
+	call BossAI_GetPrimaryThreatType
+	jr nc, .restore_no_penalty
+	ld c, a
+	ldh a, [hBattleTurn]
+	push af
+	xor a
+	ldh [hBattleTurn], a
+	ld a, c
+	ld hl, wBaseType1
+	call BossAI_CheckTypeMatchupNoItem
+	pop af
+	ldh [hBattleTurn], a
+	ld a, [wTypeMatchup]
+	and a
+	jr z, .restore_no_penalty
+	pop bc
+	ld a, b
+	add 3
+	ld b, a
+	pop af
+	ld [wBossAITemp], a
+	ret
+
+.restore_no_penalty
+	pop bc
+	pop af
+	ld [wBossAITemp], a
 	ret
 
 .AddTypeRisk

@@ -30,6 +30,13 @@ For a concise change history over base Gold, read:
 
 - `docs/mechanics_changes_from_base.md`: mechanics, AI, progression, evolution,
   and runtime-state changes.
+- `docs/balance_intent.md`: species-level balance intent, unresolved role gaps,
+  and review heuristics.
+- `docs/evolution_policy.md`: evolution removals, standalone policy, and current
+  unresolved evolution decisions.
+- `docs/buff_backlog.md`: weak-Pokemon follow-up queue.
+- `docs/generated/balance_audit.md`: generated source audit for stats,
+  evolutions, level-up move counts, TM counts, and reliable STAB checks.
 - `docs/manifest.md`: historical data-layer rebalance manifest.
 - `docs/RELEASE_NOTES.md`: release-level summary.
 
@@ -45,6 +52,7 @@ For a concise change history over base Gold, read:
 High-risk bug areas:
 
 - Boss AI fairness and timing: `docs/boss_ai_spec.md`,
+  `docs/boss_ai_bug_testing_plan.md`,
   `engine/battle/ai/boss.asm`, `engine/battle/core.asm`, `ram/wram.asm`.
 - Shared battle mechanics: `engine/battle/core.asm`,
   `engine/battle/effect_commands.asm`,
@@ -62,7 +70,7 @@ High-risk bug areas:
 | Boss AI or major-trainer difficulty | `docs/boss_ai_spec.md`, `engine/battle/ai/`, `data/trainers/ai_tiers.asm`, `data/trainers/parties.asm` |
 | Battle mechanics or move effects | `engine/battle/core.asm`, `engine/battle/effect_commands.asm`, `engine/battle/move_effects`, `constants/battle_constants.asm` |
 | Moves | `data/moves/moves.asm`, `data/moves/effects.asm`, `data/moves/effects_pointers.asm`, `data/moves/contact_flags.asm`, `constants/move_constants.asm` |
-| Pokemon stats, types, learnsets, evolutions | `data/pokemon/base_stats/`, `data/pokemon/base_stats.asm`, `data/pokemon/evos_attacks.asm`, `constants/pokemon_constants.asm` |
+| Pokemon stats, types, learnsets, evolutions | `docs/balance_intent.md`, `docs/evolution_policy.md`, `docs/buff_backlog.md`, `docs/generated/balance_audit.md`, `data/pokemon/base_stats/`, `data/pokemon/base_stats.asm`, `data/pokemon/evos_attacks.asm`, `constants/pokemon_constants.asm` |
 | Trainers and parties | `data/trainers/parties.asm`, `data/trainers/attributes.asm`, `data/trainers/ai_tiers.asm` |
 | Maps, events, specials, QoL scripts | `maps/`, `data/maps/`, `engine/events/`, `data/events/special_pointers.asm`, `engine/overworld/` |
 | Items and held items | `data/items/`, `engine/items/`, `engine/battle/late_gen_held_items.asm` |
@@ -97,7 +105,10 @@ python tools\audit\check_docs_navigation.py
 python tools\audit\check_release_smoke.py
 python tools\audit\check_boss_ai_no_cheat.py
 python tools\audit\check_boss_ai_gating.py
+python tools\audit\check_boss_ai_trace_invariants.py
+python tools\audit\check_boss_ai_memory_budget.py
 python tools\audit\check_battle_math_safety.py
+python scripts\generate_balance_audit.py
 ```
 
 After a successful build changes `pokegold.map` or `pokegold.sym`, refresh the

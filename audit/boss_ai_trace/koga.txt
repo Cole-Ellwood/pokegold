@@ -1,0 +1,34 @@
+Koga trace/audit excerpt
+
+Trainer data:
+- `data/trainers/ai_tiers.asm`: KOGA1 is `AI_TIER_LATE`.
+- `data/trainers/parties.asm`: Ariados leads with Spikes and Toxic,
+  Tentacruel has Haze, Muk has Curse and Toxic, Umbreon has Toxic, and Crobat
+  has Hyper Beam.
+
+First-turn Spikes:
+- Ariados' lead Spikes reaches the layer-1 Spikes bias.
+- On the first scoring turn, the high lead bias applies only when Ariados is
+  not under immediate public pressure.
+- Under pressure, the branch drops to baseline instead of overcommitting to
+  hazards.
+
+Status fail gates:
+- Ariados, Muk, Umbreon, and Crobat Toxic are discouraged against visible
+  Poison or Steel types, already-statused targets, and Safeguard.
+- The fail gate is public-only and does not inspect hidden party information.
+
++2 setup punish:
+- Tentacruel's Haze has `EFFECT_RESET_STATS`.
+- Public +2 Attack, Special Attack, Speed, or Evasion triggers the setup-punish
+  path, giving Haze +8 when Koga lacks an immediate KO.
+- Muk's own Curse is not treated as player setup knowledge; the denial check is
+  driven by the public player stat levels.
+
+Hyper Beam note:
+- Crobat's Hyper Beam is not in the Champion role branch. The required
+  non-KO Hyper Beam avoidance check is therefore recorded under Lance.
+
+Result:
+- Koga passes first-turn Spikes, Toxic fail gates, and +2 setup Haze punishment
+  by source-path trace.

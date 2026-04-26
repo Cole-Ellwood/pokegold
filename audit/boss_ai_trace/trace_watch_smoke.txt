@@ -1,0 +1,15 @@
+boss=smoke
+frame=0
+capture_index=1
+notes=watch mode zero snapshot smoke; not a battle-decision capture
+top_moves=NO_MOVE:0,NO_MOVE:0,NO_MOVE:0
+chosen=NO_MOVE
+chosen_id=0
+switch_confidence=0
+plan_id=0
+plan_phase=0
+plan_confidence=0
+plausible_mask=00 00 00 00
+risk_flags=00 (none)
+lookahead_bonus_top=0,0,0
+revealed_masks=00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00

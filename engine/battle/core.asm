@@ -960,7 +960,14 @@ Battle_PlayerFirst:
 	xor a
 	ld [wEnemyGoesFirst], a
 	call SetEnemyTurn
+	ld a, [wBattlePlayerAction]
+	and a
+	jr nz, .skip_switch_item
 	callfar AI_SwitchOrTryItem
+	jr .got_switch_item_result
+.skip_switch_item
+	and a
+.got_switch_item_result
 	push af
 	call PlayerTurn_EndOpponentProtectEndureDestinyBond
 	pop bc
@@ -3374,31 +3381,7 @@ LoadEnemyMonToSwitchTo:
 	ret
 
 CheckWhetherToAskSwitch:
-	ld a, [wBattleHasJustStarted]
-	dec a
-	jp z, .return_nc
-	ld a, [wPartyCount]
-	dec a
-	jp z, .return_nc
-	ld a, [wLinkMode]
-	and a
-	jp nz, .return_nc
-	ld a, [wOptions]
-	bit BATTLE_SHIFT, a
-	jr nz, .return_nc
-	ld a, [wCurPartyMon]
-	push af
-	ld a, [wCurBattleMon]
-	ld [wCurPartyMon], a
-	farcall CheckCurPartyMonFainted
-	pop bc
-	ld a, b
-	ld [wCurPartyMon], a
-	jr c, .return_nc
-	scf
-	ret
-
-.return_nc
+; Forced Set mode: never offer a free switch after the opponent loses a mon.
 	and a
 	ret
 

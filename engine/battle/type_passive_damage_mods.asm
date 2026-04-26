@@ -1,3 +1,46 @@
+TypePassive_ApplyDragonsMajestyMultiplier_Far:
+; Dragon's Majesty: Dragon attackers treat type-chart immunities as resistances.
+; input/output: c = type matchup multiplier
+	ld a, c
+	cp NO_EFFECT
+	ret nz
+	push bc
+	push de
+	call .CurrentMoveHasDragonsMajesty
+	pop de
+	pop bc
+	ret z
+	ld c, NOT_VERY_EFFECTIVE
+	ret
+
+.CurrentMoveHasDragonsMajesty
+	call TypePassive_GetCurrentMovePower_Far
+	and a
+	ret z
+
+	call TypePassive_GetCurrentMoveEffect_Far
+	cp EFFECT_SUPER_FANG
+	ret z
+	cp EFFECT_STATIC_DAMAGE
+	ret z
+	cp EFFECT_LEVEL_DAMAGE
+	ret z
+	cp EFFECT_PSYWAVE
+	ret z
+	cp EFFECT_COUNTER
+	ret z
+	cp EFFECT_MIRROR_COAT
+	ret z
+	cp EFFECT_BIDE
+	ret z
+	cp EFFECT_FUTURE_SIGHT
+	ret z
+
+	ld a, DRAGON
+	call TypePassive_GetUserTypeContribution_Far
+	and a
+	ret
+
 TypePassive_ApplyDamageModifiers_Far:
 ; Apply locked Type Passive V1 damage modifiers.
 	ld hl, wCurDamage
@@ -63,17 +106,17 @@ TypePassive_ApplyDamageModifiers_Far:
 .after_ghost
 	ld a, [wTypeMatchup]
 	cp EFFECTIVE + 1
-	jr c, .after_dragon
+	jr nc, .after_dragon
 	ld a, DRAGON
-	call .GetUserTypeContribution
+	call .GetOpponentTypeContribution
 	and a
 	jr z, .after_dragon
 	cp 2
-	ld a, 21
-	ld d, 20
+	ld a, 2
+	ld d, 3
 	jr nz, .apply_dragon
-	ld a, 11
-	ld d, 10
+	ld a, 1
+	ld d, 2
 .apply_dragon
 	call .ApplyCurDamageFraction
 
@@ -112,7 +155,7 @@ TypePassive_ApplyDamageModifiers_Far:
 	call .ApplyCurDamageFraction
 
 .after_rock
-	call .GetCurrentMoveType
+	call TypePassive_GetEffectiveMoveCategory_Far
 	cp SPECIAL
 	jr nc, .after_bug
 	ld a, BUG
@@ -129,7 +172,7 @@ TypePassive_ApplyDamageModifiers_Far:
 	call .ApplyCurDamageFraction
 
 .after_bug
-	call .GetCurrentMoveType
+	call TypePassive_GetEffectiveMoveCategory_Far
 	cp SPECIAL
 	jr c, .after_water
 	ld a, WATER
@@ -439,6 +482,122 @@ TypePassive_GetCurrentMoveType_Far:
 	ld hl, wEnemyMoveStruct + MOVE_TYPE
 .got_type
 	ld a, [hl]
+	ret
+
+TypePassive_GetEffectiveMoveCategory_Far::
+; Dragon-only exception: Outrage is physical if the user's current Attack
+; is greater than its current Special Attack. Ties remain special.
+	push hl
+	push de
+	push bc
+	call TypePassive_GetCurrentMoveType_Far
+	ld e, a
+	ld hl, wPlayerMoveStruct + MOVE_ANIM
+	ldh a, [hBattleTurn]
+	and a
+	jr z, .got_anim
+	ld hl, wEnemyMoveStruct + MOVE_ANIM
+.got_anim
+	ld a, [hl]
+	cp OUTRAGE
+	jr nz, .done
+	ld a, DRAGON
+	call TypePassive_GetUserTypeContribution_Far
+	and a
+	jr z, .done
+	call .UserAttackGreaterThanSpAtk
+	jr nc, .done
+	ld e, NORMAL
+.done
+	ld a, e
+	pop bc
+	pop de
+	pop hl
+	ret
+
+.UserAttackGreaterThanSpAtk:
+	ld hl, wPlayerAttack
+	ld de, wPlayerSpAtk
+	ldh a, [hBattleTurn]
+	and a
+	jr z, .got_stats
+	ld hl, wEnemyAttack
+	ld de, wEnemySpAtk
+.got_stats
+	ld a, [de]
+	cp [hl]
+	jr c, .yes
+	jr nz, .no
+	inc hl
+	inc de
+	ld a, [de]
+	cp [hl]
+	jr c, .yes
+.no
+	and a
+	ret
+.yes
+	scf
+	ret
+
+TypePassive_GetLastCounterMoveCategory_Far::
+; Counter/Mirror Coat use the previous opponent move loaded in wStringBuffer1.
+; Apply the same Dragon-only Outrage category exception from the attacker side.
+	push hl
+	push de
+	push bc
+	ld a, [wStringBuffer1 + MOVE_TYPE]
+	ld e, a
+	ld a, [wStringBuffer1 + MOVE_ANIM]
+	cp OUTRAGE
+	jr nz, .done
+	call .LastCounterAttackerIsDragon
+	jr z, .done
+	call .LastCounterAttackerAttackGreaterThanSpAtk
+	jr nc, .done
+	ld e, NORMAL
+.done
+	ld a, e
+	pop bc
+	pop de
+	pop hl
+	ret
+
+.LastCounterAttackerIsDragon:
+	ld hl, wEnemyMonType1
+	ldh a, [hBattleTurn]
+	and a
+	jr z, .got_types
+	ld hl, wBattleMonType1
+.got_types
+	ld a, DRAGON
+	call TypePassive_GetTypeContributionFromHL_Far
+	and a
+	ret
+
+.LastCounterAttackerAttackGreaterThanSpAtk:
+	ld hl, wEnemyAttack
+	ld de, wEnemySpAtk
+	ldh a, [hBattleTurn]
+	and a
+	jr z, .got_stats
+	ld hl, wPlayerAttack
+	ld de, wPlayerSpAtk
+.got_stats
+	ld a, [de]
+	cp [hl]
+	jr c, .yes
+	jr nz, .no
+	inc hl
+	inc de
+	ld a, [de]
+	cp [hl]
+	jr c, .yes
+.no
+	and a
+	ret
+.yes
+	scf
 	ret
 
 TypePassive_GetCurrentMovePower_Far:

@@ -39,3 +39,24 @@ Build the current source with the normal Gold target before running these manual
 - Expected:
   - Full Steel passive: recoil is `0`.
   - Half Steel passive: recoil is multiplied by `0.5`.
+
+## 7) Dragon's Majesty immunity conversion
+- Use a Dragon-typed attacker with a damaging, non-fixed-damage move that normally hits a type immunity.
+- Expected:
+  - Type-chart immunity is treated as one resistance (`0x -> 0.5x`).
+  - Stacked matchups still combine normally; for example Electric vs Ground/Flying resolves to neutral.
+  - Fixed-damage moves and non-type-chart immunities are not bypassed.
+
+## 8) Imperial Scales damage reduction
+- Hit a Dragon-typed defender with non-fixed-damage moves that are not finally super-effective.
+- Expected:
+  - Full Dragon passive: incoming damage is multiplied by `1/2`.
+  - Half Dragon passive: incoming damage is multiplied by `2/3`.
+  - Finally super-effective hits are not reduced.
+
+## 9) Dragon Outrage category exception
+- Use `OUTRAGE` with a Dragon-typed attacker whose current Attack is higher than current Special Attack.
+- Expected:
+  - `OUTRAGE` uses Attack, Defense, Reflect, physical critical stat checks, physical item boosts, and Counter.
+  - If Attack is tied with or lower than Special Attack, or the user is not Dragon-typed, `OUTRAGE` stays special and uses Light Screen, special item boosts, and Mirror Coat.
+  - `DRAGONBREATH` remains special.

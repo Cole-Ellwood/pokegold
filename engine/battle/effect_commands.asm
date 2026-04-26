@@ -814,7 +814,7 @@ BattleCommand_CheckObedience:
 
 .Print:
 	call StdBattleTextbox
-	jp .EndDisobedience
+	jr .EndDisobedience
 
 .UseInstead:
 ; Can't use another move if the monster only has one!
@@ -1337,7 +1337,7 @@ BattleCommand_Stab:
 	ld b, a
 ; If the target is immune to the move, treat it as a miss and calculate the damage as 0
 	ld a, [hl]
-	and a
+	call BattleCommand_ApplyDragonsMajestyMultiplier
 	jr nz, .NotImmune
 	inc a
 	ld [wAttackMissed], a
@@ -1398,11 +1398,29 @@ BattleCommand_Stab:
 	call BattleCheckTypeMatchup
 	ld a, [wTypeMatchup]
 	ld b, a
+	and a
+	jr nz, .not_immune
+	call ResetDamage
+	inc a
+	ld [wAttackMissed], a
+
+.not_immune
 	ld a, [wTypeModifier]
 	and STAB_DAMAGE
 	or b
 	ld [wTypeModifier], a
 	farcall TypePassive_ApplyDamageModifiers_Far
+	ret
+
+BattleCommand_ApplyDragonsMajestyMultiplier:
+; input/output: a = type matchup multiplier
+	and a
+	ret nz
+	push bc
+	ld c, a
+	farcall TypePassive_ApplyDragonsMajestyMultiplier_Far
+	ld a, c
+	pop bc
 	ret
 
 BattleCheckTypeMatchup:
@@ -1416,11 +1434,14 @@ BattleCheckTypeMatchup:
 	ld a, BATTLE_VARS_MOVE_TYPE
 	call GetBattleVar
 	pop hl
+	set 7, a
 CheckTypeMatchup:
 	push hl
 	push de
 	push bc
 	ld d, a
+	ld e, a
+	res 7, d
 	ld b, [hl]
 	inc hl
 	ld c, [hl]
@@ -1475,6 +1496,7 @@ CheckTypeMatchup:
 	ldh [hMultiplicand + 0], a
 	ldh [hMultiplicand + 1], a
 	ld a, [hli]
+	call CheckTypeMatchup_ApplyDragonsMajestyMultiplier
 	ldh [hMultiplicand + 2], a
 	ld a, [wTypeMatchup]
 	ldh [hMultiplier], a
@@ -1494,6 +1516,13 @@ CheckTypeMatchup:
 	pop de
 	pop hl
 	ret
+
+CheckTypeMatchup_ApplyDragonsMajestyMultiplier:
+	and a
+	ret nz
+	bit 7, e
+	ret z
+	jp BattleCommand_ApplyDragonsMajestyMultiplier
 
 BattleCommand_ResetTypeMatchup:
 ; Reset the type matchup multiplier to 1.0, if the type matchup is not 0.
@@ -1570,19 +1599,19 @@ BattleCommand_DamageVariation:
 
 BattleCommand_CheckHit:
 	call .DreamEater
-	jp z, .Miss
+	jr z, .Miss
 
 	call .Protect
-	jp nz, .Miss
+	jr nz, .Miss
 
 	call .DrainSub
-	jp z, .Miss
+	jr z, .Miss
 
 	call .LockOn
 	ret nz
 
 	call .FlyDigMoves
-	jp nz, .Miss
+	jr nz, .Miss
 
 	farcall TypePassive_TryDarkStatusShield_Far
 	jr c, .Miss
@@ -2399,8 +2428,6 @@ BattleCommand_CheckFaint:
 	jp EndMoveEffect
 
 BattleCommand_BuildOpponentRage:
-	jp .start
-
 .start
 	ld a, [wAttackMissed]
 	and a
@@ -2482,7 +2509,7 @@ PlayerAttackDamage:
 	ld d, a
 	ret z
 
-	ld a, [hl]
+	call Battle_GetEffectiveMoveCategory
 	cp SPECIAL
 	jr nc, .special
 
@@ -2638,7 +2665,7 @@ EnemyAttackDamage:
 	and a
 	ret z
 
-	ld a, [hl]
+	call Battle_GetEffectiveMoveCategory
 	cp SPECIAL
 	jr nc, .special
 
@@ -2887,7 +2914,12 @@ ConfusionDamageCalc:
 	call Divide
 
 .DoneItem:
+	ld a, [wIsConfusionDamage]
+	and a
+	jr nz, .DoneLateGenItem
 	callfar ApplyLateGenDamageMultipliers_Far
+
+.DoneLateGenItem
 ; Critical hits
 	call .CriticalMultiplier
 
@@ -3544,17 +3576,17 @@ BattleCommand_Poison:
 	ld hl, DoesntAffectText
 	ld a, [wTypeModifier]
 	and EFFECTIVENESS_MASK
-	jp z, .failed
+	jr z, .failed
 
 	call CheckIfTargetIsPoisonType
-	jp z, .failed
+	jr z, .failed
 
 	ld a, BATTLE_VARS_STATUS_OPP
 	call GetBattleVar
 	ld b, a
 	ld hl, AlreadyPoisonedText
 	and 1 << PSN
-	jp nz, .failed
+	jr nz, .failed
 
 	call GetOpponentItem
 	ld a, b
@@ -3986,10 +4018,10 @@ RaiseStat:
 .got_stat_levels
 	ld a, [wAttackMissed]
 	and a
-	jp nz, .stat_raise_failed
+	jr nz, .stat_raise_failed
 	ld a, [wEffectFailed]
 	and a
-	jp nz, .stat_raise_failed
+	jr nz, .stat_raise_failed
 	ld a, [wLoweredStat]
 	and $f
 	ld c, a
@@ -3999,7 +4031,7 @@ RaiseStat:
 	inc b
 	ld a, MAX_STAT_LEVEL
 	cp b
-	jp c, .cant_raise_stat
+	jr c, .cant_raise_stat
 	ld a, [wLoweredStat]
 	and $f0
 	jr z, .got_num_stages
@@ -4038,7 +4070,7 @@ RaiseStat:
 	jr nz, .not_already_max
 	ld a, [hl]
 	sbc HIGH(MAX_STAT_VALUE)
-	jp z, .stats_already_max
+	jr z, .stats_already_max
 .not_already_max
 	ldh a, [hBattleTurn]
 	and a
@@ -4176,7 +4208,7 @@ BattleCommand_StatDown:
 	add hl, bc
 	ld b, [hl]
 	dec b
-	jp z, .CantLower
+	jr z, .CantLower
 
 ; Sharply lower the stat if applicable.
 	ld a, [wLoweredStat]
@@ -4872,8 +4904,7 @@ BattleCommand_ForceSwitch:
 	ld hl, DraggedOutText
 	call StdBattleTextbox
 
-	ld hl, SpikesDamage
-	jp CallBattleCore
+	jp .apply_forced_switch_spikes
 
 .switch_fail
 	jp .fail
@@ -4970,8 +5001,13 @@ BattleCommand_ForceSwitch:
 	ld hl, DraggedOutText
 	call StdBattleTextbox
 
+	jr .apply_forced_switch_spikes
+
+.apply_forced_switch_spikes
 	ld hl, SpikesDamage
-	jp CallBattleCore
+	call BattleCommand_SwitchTurn
+	call CallBattleCore
+	jp BattleCommand_SwitchTurn
 
 .switch_fail2
 	jr .fail
@@ -5044,7 +5080,7 @@ BattleCommand_EndLoop:
 	ld a, BATTLE_VARS_SUBSTATUS3
 	call GetBattleVarAddr
 	bit SUBSTATUS_IN_LOOP, [hl]
-	jp nz, .in_loop
+	jr nz, .in_loop
 	set SUBSTATUS_IN_LOOP, [hl]
 	ld a, BATTLE_VARS_MOVE_EFFECT
 	call GetBattleVarAddr
@@ -5075,17 +5111,17 @@ BattleCommand_EndLoop:
 	jr nz, .check_ot_beat_up
 	ld a, [wPartyCount]
 	cp 1
-	jp z, .only_one_beatup
+	jr z, .only_one_beatup
 	dec a
 	jr .double_hit
 
 .check_ot_beat_up
 	ld a, [wBattleMode]
 	cp WILD_BATTLE
-	jp z, .only_one_beatup
+	jr z, .only_one_beatup
 	ld a, [wOTPartyCount]
 	cp 1
-	jp z, .only_one_beatup
+	jr z, .only_one_beatup
 	dec a
 	jr .double_hit
 
@@ -5877,7 +5913,7 @@ BattleCommand_Heal:
 	pop bc
 	pop de
 	pop hl
-	jp z, .hp_full
+	jr z, .hp_full
 	ld a, b
 	cp REST
 	jr nz, .not_rest

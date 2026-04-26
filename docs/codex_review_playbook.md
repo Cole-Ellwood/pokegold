@@ -10,6 +10,8 @@ hunt the ROM hack. It assumes the reviewer has no prior conversation context.
 3. Read `docs/generated/dev_index.md` for current labels, anchors, and memory
    pressure.
 4. For Boss AI or battle work, read `docs/boss_ai_spec.md`.
+   For post-release-safety boss AI trace/tuning work, also read
+   `docs/boss_ai_post_patch_notes.md`.
 5. For existing mechanics, read `docs/mechanics_changes_from_base.md`.
 6. For release/data scope, read `docs/manifest.md` and
    `docs/RELEASE_NOTES.md`.
@@ -60,6 +62,14 @@ If no issues are found, say so directly and name the remaining test gaps.
   helper before it can run under `wBossAITier != 0`.
 - Any exact-stat use is either battle resolution, ordinary AI, or explicitly
   documented as a known remaining boss-estimator risk.
+- For plausible player move inference, check both masks: possible threats live
+  in `wBossAIPlausibleTypeMaskCache`, higher-confidence threats live in
+  `wBossAILikelyTypeMaskCache`.
+- Revealed damaging moves, STAB, and current-species level-up moves should be
+  likely. TM/HM coverage, egg moves, and pre-evolution-only moves should remain
+  possible-only unless there is a deliberate documented reason.
+- Possible-only coverage should not be weighted like revealed, STAB, or
+  current-level-up threats in switch-risk code.
 
 Important files: `engine/battle/ai/boss.asm`, `engine/battle/ai/move.asm`,
 `engine/battle/ai/scoring.asm`, `engine/battle/ai/items.asm`,
@@ -92,10 +102,23 @@ python tools\audit\check_release_smoke.py
 python tools\audit\check_ai_tiers.py
 python tools\audit\check_boss_ai_gating.py
 python tools\audit\check_boss_ai_no_cheat.py
+python tools\audit\check_boss_ai_trace_invariants.py
+python tools\audit\check_boss_ai_memory_budget.py
 python tools\audit\check_boss_items_present.py
 python tools\audit\check_boss_moves_complete.py
 python tools\audit\check_battle_math_safety.py
 python scripts\generate_dev_index.py --rom pokegold --out .local\out\dev_index_check.md
+```
+
+For Boss AI work, build both normal ROMs and a trace Gold ROM before trusting
+the audits:
+
+```powershell
+bash -lc 'make -j4 RGBASM=rgbds-1.0.1/rgbasm.exe RGBLINK=rgbds-1.0.1/rgblink.exe RGBFIX=rgbds-1.0.1/rgbfix.exe RGBGFX=rgbds-1.0.1/rgbgfx.exe pokegold.gbc pokesilver.gbc'
+```
+
+```powershell
+bash -lc 'rgbds-1.0.1/rgbasm.exe -Weverything -Wtruncation=1 -Q8 -P includes.asm -D _GOLD -D BOSS_AI_TRACE -o main_gold_trace.o main.asm && rgbds-1.0.1/rgbasm.exe -Weverything -Wtruncation=1 -Q8 -P includes.asm -D _GOLD -D BOSS_AI_TRACE -o ram_gold_trace.o ram.asm && rgbds-1.0.1/rgblink.exe -Weverything -Wtruncation=1 -l layout.link -n pokegold_trace.sym -m pokegold_trace.map -o pokegold_trace.gbc audio_gold.o home_gold.o main_gold_trace.o ram_gold_trace.o data/text/common_gold.o data/maps/map_data_gold.o data/pokemon/egg_moves_gold.o data/pokemon/evos_attacks_gold.o engine/movie/credits_gold.o engine/overworld/events_gold.o gfx/misc_gold.o gfx/sprites_gold.o gfx/tilesets_gold.o data/pokemon/dex_entries_gold.o gfx/pics_gold.o && rgbds-1.0.1/rgbfix.exe -Weverything -cjsv -k 01 -l 0x33 -m MBC3+TIMER+RAM+BATTERY -r 3 -p 0 -t POKEMON_GLD -i AAUE pokegold_trace.gbc && tools/stadium pokegold_trace.gbc'
 ```
 
 If `make` is unavailable but RGBDS tools are present, a narrow Gold rebuild may

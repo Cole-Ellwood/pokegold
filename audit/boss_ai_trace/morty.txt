@@ -1,0 +1,37 @@
+Morty trace/audit excerpt
+
+Trainer data:
+- `data/trainers/ai_tiers.asm`: MORTY1 is `AI_TIER_MID`.
+- `data/trainers/parties.asm`: Haunter has Hypnosis, Misdreavus has Toxic,
+  Gengar has Spikes, and the final Haunter has Haze.
+
+Status fail gates:
+- Hypnosis uses the sleep fail path.
+- Toxic uses the poison/toxic fail path.
+- Visible fail states discouraged by `BossAI_ApplyMoveModel`:
+  existing player status, Safeguard for primary status, Poison typing, and
+  Steel typing for Toxic.
+- Observed score path: `StatusMoveWouldFailPublicly` returns carry, then the
+  move is discouraged by 24 before normal status encouragement can matter.
+
+Spikes:
+- Gengar's Spikes reaches `.ApplySpikesLayerBias`.
+- At layer 1, immediate public pressure takes the baseline branch; otherwise
+  `wBossAITurnsElapsed < 2` receives the high first-scoring-turn bias.
+- Morty does not add hidden foresight to decide whether Spikes is safe.
+
++2 setup punish:
+- The final Haunter's Haze has `EFFECT_RESET_STATS`.
+- Public +2 Attack, Special Attack, Speed, or Evasion satisfies
+  `.PlayerHasMajorSetupBoost`.
+- If Morty does not already have a KO line, Haze receives the +8 denial bias.
+
+Revealed coverage:
+- Morty's public-threat and switch-risk paths read the active player species'
+  revealed type mask only.
+- A coverage move revealed by one player species does not contaminate the next
+  player species slot.
+
+Result:
+- Morty passes the required status-gate, per-species revealed-coverage, Spikes,
+  and +2 setup-denial checks by source-path trace.

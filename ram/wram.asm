@@ -2552,7 +2552,9 @@ wBossAIPlausibleTypeMaskLevel:: db
 wBossAIPlausibleTypeMaskCache:: ds 4
 wBossAISeenPlayerSpeciesCount:: db
 wBossAISeenPlayerSpecies:: ds PARTY_LENGTH
-wBossAIRevealedMovesBitmap:: ds 32
+wBossAIRevealedMovesBitmap:: ds PARTY_LENGTH * 4 ; six 4-byte per-seen-species revealed type masks
+wBossAILikelyTypeMaskCache:: ds 4
+wBossAIRevealedMovesBitmapSpare:: ds 4
 wBossAIScorePtr:: dw
 wBossAISavedEnemyMoveStruct:: ds MOVE_LENGTH
 wBossAITemp:: db

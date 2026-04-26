@@ -1,0 +1,65 @@
+Boss AI trace/audit validation summary
+
+Build basis:
+- `pokegold_trace.gbc` exists from the post-tuning RGBDS rebuild.
+- Trace WRAM symbols are present in `pokegold_trace.sym`:
+  `wBossAITraceTopMoves` at 01:d776, `wBossAITraceTopScores` at 01:d779,
+  `wBossAITraceChosenMove` at 01:d77c, and
+  `wBossAITraceRiskFlags` at 01:d785.
+
+Capture note:
+- The repo currently has trace WRAM fields but no scripted battle-driver harness.
+- These files are trace/audit excerpts from the rebuilt trace ROM symbols,
+  trainer data, and boss AI score paths. They are not full battle transcripts.
+- Full live captures still require an emulator/debugger that can read the WRAM
+  symbols at boss AI decision points, as described in
+  `docs/boss_ai_trace_capture.md`.
+
+Priority bosses covered:
+- Morty: `audit/boss_ai_trace/morty.txt`
+- Jasmine: `audit/boss_ai_trace/jasmine.txt`
+- Clair: `audit/boss_ai_trace/clair.txt`
+- Koga: `audit/boss_ai_trace/koga.txt`
+- Lance: `audit/boss_ai_trace/champion_lance.txt`
+- Shared edge checks: `audit/boss_ai_trace/shared_revealed_switching.txt`
+
+Required checks:
+- Revealed coverage does not transfer across player species: validated by the
+  per-species `wBossAIRevealedMovesBitmap` indexing path.
+- A->B->A switch-loop penalty works: validated by the target-mon check in
+  `BossAI_NeedsLoopPenalty`, with emergency exception gates intact.
+- First-turn Spikes behaves correctly: validated by layer-1 Spikes scoring;
+  turn 1 receives high lead bias only when the enemy is not under immediate
+  public pressure.
+- Status fail gates work: validated for sleep, paralysis, poison/toxic, Leech
+  Seed, existing status, and Safeguard public fail states.
+- Lance avoids non-KO Hyper Beam: validated in the Champion role branch.
+- Spikes+phazing responds to switching/setup: validated by the Spikes screen
+  and repeated-switch/setup gates before the Roar encouragement.
+- +2 setup is punished: validated by public Attack, Special Attack, Speed, and
+  Evasion +2 checks feeding Haze, Roar, and Encore-style denial.
+- Immunity pivots beat neutral pivots when public threat type supports it:
+  tuning applied so a non-immune candidate receives +3 primary-threat risk,
+  clearing the existing "best + 2" replacement threshold.
+
+Tuning applied:
+- `engine/battle/ai/boss.asm`, `.ApplyPrimaryThreatImmunityTieBreak`:
+  changed the non-immune public primary-threat risk adjustment from `add 2` to
+  `add 3`. This is intentionally narrow: it does not add hidden foresight,
+  persistent temporary-block state, a simulator, or exact private damage/speed
+  knowledge.
+
+Audit commands run after regeneration:
+- `python scripts\generate_dev_index.py --rom pokegold --out docs\generated\dev_index.md`
+- `python tools\audit\check_boss_ai_no_cheat.py`
+- `python tools\audit\check_boss_ai_gating.py`
+- `python tools\audit\check_ai_tiers.py`
+- `python tools\audit\check_boss_items_present.py`
+- `python tools\audit\check_boss_moves_complete.py`
+- `python tools\audit\check_battle_math_safety.py`
+- `python tools\audit\check_release_smoke.py`
+- `python tools\audit\check_docs_navigation.py`
+- `git diff --check`
+
+Result:
+- All listed audits passed.

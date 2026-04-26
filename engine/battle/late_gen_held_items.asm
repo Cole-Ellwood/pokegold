@@ -1,7 +1,6 @@
 ApplyLateGenDamageStatsItemMods_Far:
 	push af
-	ld a, BATTLE_VARS_MOVE_TYPE
-	call GetBattleVar
+	call TypePassive_GetEffectiveMoveCategory_Far
 	cp SPECIAL
 	jr nc, .special
 	call .ApplyChoiceBandBoost
@@ -181,8 +180,7 @@ ApplyLateGenDamageMultipliers_Far:
 	ret
 
 .muscle_band
-	ld a, BATTLE_VARS_MOVE_TYPE
-	call GetBattleVar
+	call TypePassive_GetEffectiveMoveCategory_Far
 	cp SPECIAL
 	ret nc
 	ld a, MUSCLE_BAND_NUM
@@ -190,8 +188,7 @@ ApplyLateGenDamageMultipliers_Far:
 	jp .ApplyDamageQuotientMultiplier
 
 .wise_glasses
-	ld a, BATTLE_VARS_MOVE_TYPE
-	call GetBattleVar
+	call TypePassive_GetEffectiveMoveCategory_Far
 	cp SPECIAL
 	ret c
 	ld a, WISE_GLASSES_NUM
@@ -552,7 +549,7 @@ CheckDamageStatsCritical_Far:
 	ldh a, [hBattleTurn]
 	and a
 	jr nz, .enemy
-	ld a, [wPlayerMoveStructType]
+	call TypePassive_GetEffectiveMoveCategory_Far
 	cp SPECIAL
 ; special
 	ld a, [wPlayerSAtkLevel]
@@ -566,7 +563,7 @@ CheckDamageStatsCritical_Far:
 	jr .end
 
 .enemy
-	ld a, [wEnemyMoveStructType]
+	call TypePassive_GetEffectiveMoveCategory_Far
 	cp SPECIAL
 ; special
 	ld a, [wEnemySAtkLevel]

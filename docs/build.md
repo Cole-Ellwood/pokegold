@@ -5,7 +5,9 @@
 - Date refreshed: 2026-04-25
 - Required build tools: `make`, `gcc`, `python`, and RGBDS.
 - Release patch tooling: `flips`.
-- Windows note: this Codex PowerShell session did not have `make` on `PATH`; use MSYS2/Git Bash or another shell with `make` available.
+- Windows note: this Codex PowerShell session may not have `make` on `PATH`.
+  Before declaring builds blocked, check WSL: `bash -lc 'command -v make'`.
+  In this checkout, WSL provides `/usr/bin/make`.
 
 ## Baseline identity (clean pret/pokegold Gold)
 - SHA1: `d8b8a3600a465308c9953dfa04f0081c05bdcb94`
@@ -17,6 +19,20 @@ make tidy
 make -j2
 make DEBUG=1 compare
 ```
+
+## Codex Windows/WSL command pattern
+When running from a Codex PowerShell session in this Windows checkout, use WSL
+`make` with explicit repo-local RGBDS Windows executables. Do not rely on
+`RGBDS=rgbds-1.0.1/` from WSL, because the Makefile will look for extensionless
+Linux binaries like `rgbds-1.0.1/rgbasm`.
+
+```powershell
+bash -lc 'cd "/mnt/c/Users/lolno/Downloads/pokemon gold hack" && make -j4 RGBASM=rgbds-1.0.1/rgbasm.exe RGBLINK=rgbds-1.0.1/rgblink.exe RGBFIX=rgbds-1.0.1/rgbfix.exe RGBGFX=rgbds-1.0.1/rgbgfx.exe pokegold.gbc pokesilver.gbc'
+```
+
+Known-good verification on 2026-04-25:
+- `pokegold.gbc` built successfully with the command pattern above.
+- `pokesilver.gbc` built successfully with the command pattern above.
 
 ## Release artifact workflow
 ```bash

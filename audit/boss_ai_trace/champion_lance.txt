@@ -1,0 +1,43 @@
+Champion Lance trace/audit excerpt
+
+Trainer data:
+- `data/trainers/ai_tiers.asm`: CHAMPION/LANCE is `AI_TIER_LATE`.
+- `data/trainers/parties.asm`: Gligar leads with Spikes, Steelix has Roar, and
+  Gyarados has Hyper Beam.
+
+First-turn Spikes:
+- Gligar's lead Spikes uses `.ApplySpikesLayerBias`.
+- At layer 1, `wBossAITurnsElapsed < 2` gives high first-scoring-turn bias
+  unless `.EnemyUnderPressure` detects immediate public pressure.
+
+Lance avoids non-KO Hyper Beam:
+- Lance reaches the `.champion` role branch.
+- When the current move has `EFFECT_HYPER_BEAM`, `.HasKOLine` is checked.
+- If Hyper Beam does not have a KO line, the move is discouraged by the late
+  tier role weight.
+- Result: Gyarados' Hyper Beam is not favored as a neutral non-KO option.
+
+Spikes plus phazing:
+- Steelix's Roar has `EFFECT_FORCE_SWITCH`.
+- With Spikes active, Roar receives +8 when public +2 setup or repeated-switch
+  pressure is present and Lance lacks an immediate KO.
+
++2 setup punish:
+- Public +2 Attack, Special Attack, Speed, or Evasion feeds both
+  `.ApplySetupPunishBias` and the Spikes+phazing branch.
+- Steelix Roar is the Lance denial move for this priority check.
+
+Immunity pivot preference:
+- Public primary-threat type comes from `BossAI_GetPrimaryThreatType`.
+- Switch candidate risk now adds +3 to non-immune candidates in
+  `.ApplyPrimaryThreatImmunityTieBreak`.
+- Because `BossAI_RefineSwitchCandidateForPlausibleRisk` rejects replacement at
+  only an equal two-point margin, +3 is the minimum narrow tuning that lets an
+  immune candidate beat a neutral candidate.
+- Example public case: an Electric primary threat makes Ground-type Lance
+  candidates eligible as immunity pivots over merely neutral candidates.
+
+Result:
+- Lance passes first-turn Spikes, non-KO Hyper Beam avoidance, Spikes+Roar
+  response, +2 setup punishment, and immunity-pivot preference by source-path
+  trace.

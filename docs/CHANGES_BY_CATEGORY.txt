@@ -122,11 +122,24 @@ GENERATED: 2026-02-12
 - `KOFFING`: `POISON/POISON -> POISON/DARK`
 - `WEEZING`: `POISON/POISON -> POISON/DARK`
 
+### Dragon package
+- `ARCANINE`: `FIRE/FIRE -> FIRE/DRAGON`
+- `GYARADOS`: `WATER/FLYING -> WATER/DRAGON`
+
 ### Batch 3
 - `BAYLEEF`: `GRASS/GRASS -> GRASS/NORMAL`
 
 
 ## Learnsets
+### Dragon package
+- `DRATINI`: add `Lv32 DRAGONBREATH`; keeps `Lv50 OUTRAGE`
+- `DRAGONAIR`: add `Lv32 DRAGONBREATH`; keeps `Lv56 OUTRAGE`
+- `DRAGONITE`: add `Lv32 DRAGONBREATH`; keeps `Lv61 OUTRAGE`
+- `GYARADOS`: `Lv35 TWISTER -> Lv35 DRAGONBREATH`; add `Lv50 OUTRAGE`
+- `ARCANINE`: add `Lv42 DRAGONBREATH`, `Lv55 OUTRAGE`
+- `AMPHAROS`: keeps `Lv42 DRAGONBREATH`; add `Lv57 OUTRAGE`
+- `KINGDRA`: add `Lv40 DRAGONBREATH`, `Lv55 OUTRAGE`
+
 ### Batch 3
 - `BAYLEEF` level-up: `Lv17 SUBSTITUTE absent -> present`, `Lv17 LEECH_SEED absent -> present`, `Lv17 GIGA_DRAIN absent -> present`, `Lv21 SOLARBEAM absent -> present`
 - `QUILAVA` level-up: `Lv20 FLAMETHROWER absent -> present`
