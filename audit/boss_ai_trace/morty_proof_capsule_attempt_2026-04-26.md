@@ -43,6 +43,11 @@ Why this is blocked:
 - Follow-up debugger-warp probe against the current root ROM rejects the copied
   SRAM basis with
   `player_party_invalid:active_max_hp_implausible=64000|active_hp_implausible=64000`.
+- A scratch-only WRAM repair of the active party (`hp=220/220`, plausible stats
+  and moves) made the debugger-warp state pass the stricter preflight, but
+  driving the battle still stalled in the send-out sequence at `Go! TOTODILE!`
+  before any Boss AI trace field became nonzero. This was not added to the
+  manifest.
 
 Do not treat existing source-path excerpts in `audit/boss_ai_trace/morty.txt` as
 the same thing. They support the design, but `MEGAURGENT-001` requires real
