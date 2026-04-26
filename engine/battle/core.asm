@@ -8825,12 +8825,6 @@ CopyBackpic:
 	jr nz, .outer_loop
 	ret
 
-ChrisBackpic:
-INCBIN "gfx/player/chris_back.2bpp.lz"
-
-DudeBackpic:
-INCBIN "gfx/battle/dude.2bpp.lz"
-
 BattleStartMessage:
 	ld a, [wBattleMode]
 	dec a
