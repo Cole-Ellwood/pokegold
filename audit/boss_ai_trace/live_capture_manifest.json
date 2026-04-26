@@ -1,5 +1,9 @@
 {
   "version": 1,
+  "trace_rom": "pokegold_trace.gbc",
+  "trace_rom_sha256": "8936A6D90D98FCDE36CF0F66BA734BA812A057B1668F4B7F82A2831EF488594E",
+  "trace_symbols": "pokegold_trace.sym",
+  "trace_symbols_sha256": "2042A961ABF381447C69D533C378675EEEBA80970357BEF10F9AF6A893EADC46",
   "default_watch_frames": 600,
   "default_poll_every": 1,
   "captures": [

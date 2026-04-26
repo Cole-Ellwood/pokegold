@@ -46,6 +46,11 @@ Use `--symbols-only` for debugger addresses. If a PyBoy save-state is available
 at a boss AI decision point, pass it with `--save-state` and write the formatted
 WRAM excerpt with `--out`.
 
+Formatted live excerpts include `trace_rom`, `trace_rom_sha256`,
+`trace_symbols`, and `trace_symbols_sha256` header fields. The ledger audit
+checks those fields for any row marked `FINISHED`, so every accepted capture is
+tied back to the exact trace ROM and symbol file that produced it.
+
 To poll for decision changes from a boss-position save-state:
 
 ```powershell
@@ -68,6 +73,10 @@ python tools\audit\check_boss_ai_live_capture_ledger.py
 
 Configured batch captures live in:
 - `audit/boss_ai_trace/live_capture_manifest.json`
+
+The manifest pins the trace ROM and symbol file by SHA256. If you rebuild
+`pokegold_trace.gbc` or `pokegold_trace.sym`, update those hashes before using
+the batch runner or ledger audit.
 
 Dry-run the configured captures:
 

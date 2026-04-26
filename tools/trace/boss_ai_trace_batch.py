@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import subprocess
 import sys
@@ -29,6 +30,14 @@ def rel_or_abs(path_text: str) -> Path:
     return ROOT / path
 
 
+def sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as fh:
+        for chunk in iter(lambda: fh.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest().upper()
+
+
 def load_manifest(path: Path) -> dict[str, Any]:
     if not path.exists():
         fail(f"missing manifest: {path}")
@@ -51,6 +60,36 @@ def as_int(data: dict[str, Any], key: str, default: int) -> int:
     return value
 
 
+def optional_manifest_path(data: dict[str, Any], key: str) -> Path | None:
+    value = data.get(key, "")
+    if value == "":
+        return None
+    if not isinstance(value, str):
+        fail(f"{key} must be a string")
+    return rel_or_abs(value)
+
+
+def validate_manifest_hash(data: dict[str, Any], path_key: str, hash_key: str) -> Path | None:
+    path = optional_manifest_path(data, path_key)
+    if path is None:
+        return None
+    if not path.exists():
+        fail(f"{path_key} points to a missing file: {path}")
+
+    expected = data.get(hash_key, "")
+    if expected == "":
+        return path
+    if not isinstance(expected, str):
+        fail(f"{hash_key} must be a string")
+    actual = sha256_file(path)
+    if actual.upper() != expected.upper():
+        fail(
+            f"{path_key} hash mismatch for {path}: "
+            f"expected {expected.upper()}, found {actual}"
+        )
+    return path
+
+
 def validate_capture(entry: dict[str, Any], index: int) -> None:
     for key in ("id", "boss", "status", "out", "notes"):
         if not isinstance(entry.get(key), str):
@@ -69,10 +108,37 @@ def validate_capture(entry: dict[str, Any], index: int) -> None:
         fail(f"capture {entry['id']}: `poll_every` must be a positive integer")
 
 
+def validate_capture_ids(captures: list[Any], selected: set[str]) -> None:
+    ids: set[str] = set()
+    duplicates: set[str] = set()
+    for index, raw_entry in enumerate(captures, start=1):
+        if not isinstance(raw_entry, dict):
+            fail(f"capture #{index}: entry must be an object")
+        validate_capture(raw_entry, index)
+        capture_id = raw_entry["id"]
+        if capture_id in ids:
+            duplicates.add(capture_id)
+        ids.add(capture_id)
+
+    if duplicates:
+        fail("duplicate capture ids: " + ", ".join(sorted(duplicates)))
+
+    unknown = selected - ids
+    if unknown:
+        fail(
+            "unknown capture id(s) for --only: "
+            + ", ".join(sorted(unknown))
+            + "; available ids: "
+            + ", ".join(sorted(ids))
+        )
+
+
 def build_command(
     entry: dict[str, Any],
     default_watch_frames: int,
     default_poll_every: int,
+    trace_rom: Path | None,
+    trace_symbols: Path | None,
 ) -> list[str]:
     cmd = [
         sys.executable,
@@ -88,6 +154,10 @@ def build_command(
         "--out",
         str(rel_or_abs(entry["out"])),
     ]
+    if trace_rom is not None:
+        cmd.extend(["--rom", str(trace_rom)])
+    if trace_symbols is not None:
+        cmd.extend(["--symbols", str(trace_symbols)])
     save_state = entry.get("save_state", "")
     if save_state:
         cmd.extend(["--save-state", str(rel_or_abs(save_state))])
@@ -109,17 +179,22 @@ def main() -> int:
     manifest = load_manifest(args.manifest)
     default_watch_frames = as_int(manifest, "default_watch_frames", 600)
     default_poll_every = as_int(manifest, "default_poll_every", 1)
+    trace_rom = validate_manifest_hash(manifest, "trace_rom", "trace_rom_sha256")
+    trace_symbols = validate_manifest_hash(
+        manifest,
+        "trace_symbols",
+        "trace_symbols_sha256",
+    )
     captures = manifest["captures"]
 
     selected = set(args.only)
+    validate_capture_ids(captures, selected)
     ran = 0
     skipped = 0
     missing_state = 0
 
     for index, raw_entry in enumerate(captures, start=1):
-        if not isinstance(raw_entry, dict):
-            fail(f"capture #{index}: entry must be an object")
-        validate_capture(raw_entry, index)
+        assert isinstance(raw_entry, dict)
         entry: dict[str, Any] = raw_entry
         if selected and entry["id"] not in selected:
             continue
@@ -127,7 +202,13 @@ def main() -> int:
         save_state_text = entry.get("save_state", "")
         save_state = rel_or_abs(save_state_text) if save_state_text else None
         state_exists = bool(save_state and save_state.exists())
-        cmd = build_command(entry, default_watch_frames, default_poll_every)
+        cmd = build_command(
+            entry,
+            default_watch_frames,
+            default_poll_every,
+            trace_rom,
+            trace_symbols,
+        )
 
         if not state_exists:
             missing_state += 1

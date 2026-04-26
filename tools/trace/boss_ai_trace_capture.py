@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import logging
 import sys
 import warnings
@@ -36,6 +37,20 @@ RISK_FLAGS = (
     (2, "scout-pivot-switch"),
 )
 
+METADATA_KEYS = (
+    "trace_rom",
+    "trace_rom_sha256",
+    "trace_symbols",
+    "trace_symbols_sha256",
+    "boss",
+    "turn",
+    "enemy",
+    "player",
+    "frame",
+    "capture_index",
+    "notes",
+)
+
 
 @dataclass(frozen=True)
 class Symbol:
@@ -46,6 +61,24 @@ class Symbol:
 def fail(message: str) -> None:
     print(f"ERROR: {message}", file=sys.stderr)
     raise SystemExit(1)
+
+
+def display_path(path: Path) -> str:
+    resolved = path.resolve()
+    try:
+        return str(resolved.relative_to(ROOT)).replace("\\", "/")
+    except ValueError:
+        return str(resolved)
+
+
+def sha256_file(path: Path) -> str:
+    if not path.exists():
+        fail(f"missing file for SHA256: {path}")
+    digest = hashlib.sha256()
+    with path.open("rb") as fh:
+        for chunk in iter(lambda: fh.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest().upper()
 
 
 def parse_symbols(path: Path) -> dict[str, Symbol]:
@@ -136,6 +169,14 @@ def decode_risk_flags(value: int) -> str:
     return ",".join(active) if active else "none"
 
 
+def format_metadata_lines(metadata: dict[str, str]) -> list[str]:
+    lines: list[str] = []
+    for key in METADATA_KEYS:
+        if metadata.get(key):
+            lines.append(f"{key}={metadata[key]}")
+    return lines
+
+
 def format_capture(
     values: dict[str, list[int]],
     move_names: dict[int, str],
@@ -150,10 +191,7 @@ def format_capture(
     for move, score in zip(top_moves, top_scores):
         top_pairs.append(f"{decode_move(move, move_names)}:{score}")
 
-    lines: list[str] = []
-    for key in ("boss", "turn", "enemy", "player", "frame", "capture_index", "notes"):
-        if metadata.get(key):
-            lines.append(f"{key}={metadata[key]}")
+    lines = format_metadata_lines(metadata)
 
     lines.extend(
         [
@@ -302,11 +340,15 @@ def watch_wram(
         pyboy.stop(save=False)
 
     if not captures:
-        return (
-            "no_captures=true\n"
-            f"watched_frames={args.watch_frames}\n"
-            "notes=no nonzero Boss AI trace field changes were observed\n"
+        lines = format_metadata_lines(metadata)
+        lines.extend(
+            [
+                "no_captures=true",
+                f"watched_frames={args.watch_frames}",
+                "notes=no nonzero Boss AI trace field changes were observed",
+            ]
         )
+        return "\n".join(lines) + "\n"
 
     return "\n---\n".join(captures) + "\n"
 
@@ -341,6 +383,15 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def build_trace_basis_metadata(args: argparse.Namespace) -> dict[str, str]:
+    return {
+        "trace_rom": display_path(args.rom),
+        "trace_rom_sha256": sha256_file(args.rom),
+        "trace_symbols": display_path(args.symbols),
+        "trace_symbols_sha256": sha256_file(args.symbols),
+    }
+
+
 def main() -> int:
     parser = build_parser()
     args = parser.parse_args()
@@ -353,13 +404,14 @@ def main() -> int:
         return 0
 
     move_names = parse_move_names(MOVE_CONSTANTS)
-    metadata = {
+    metadata = build_trace_basis_metadata(args)
+    metadata.update({
         "boss": args.boss,
         "turn": args.turn,
         "enemy": args.enemy,
         "player": args.player,
         "notes": args.notes,
-    }
+    })
     if args.watch_frames:
         write_or_print(watch_wram(args, symbols, move_names, metadata), args.out)
     else:

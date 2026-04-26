@@ -18,6 +18,13 @@ SCAN_ROOTS = [
     ROOT / "home",
 ]
 
+HOME_BATTLE = ROOT / "home" / "battle.asm"
+EFFECT_COMMANDS = ROOT / "engine" / "battle" / "effect_commands.asm"
+LATE_GEN_HELD_ITEMS = ROOT / "engine" / "battle" / "late_gen_held_items.asm"
+TYPE_PASSIVES = ROOT / "engine" / "battle" / "type_passive_damage_mods.asm"
+COUNTER_EFFECT = ROOT / "engine" / "battle" / "move_effects" / "counter.asm"
+MIRROR_COAT_EFFECT = ROOT / "engine" / "battle" / "move_effects" / "mirror_coat.asm"
+
 SCRATCH_SIZES = {
     "hMultiplicand": 3,
     "hProduct": 4,
@@ -137,21 +144,122 @@ def iter_asm_files() -> list[Path]:
     return files
 
 
+def require_text(path: Path, needle: str, issues: list[Issue], reason: str) -> None:
+    if not path.exists():
+        issues.append(Issue(path=path, lineno=1, line="", reason="required file is missing"))
+        return
+    text = path.read_text(encoding="utf-8", errors="replace")
+    if needle in text:
+        return
+    issues.append(Issue(path=path, lineno=1, line="", reason=reason))
+
+
+def require_count_at_least(
+    path: Path,
+    needle: str,
+    minimum: int,
+    issues: list[Issue],
+    reason: str,
+) -> None:
+    if not path.exists():
+        issues.append(Issue(path=path, lineno=1, line="", reason="required file is missing"))
+        return
+    text = path.read_text(encoding="utf-8", errors="replace")
+    count = text.count(needle)
+    if count >= minimum:
+        return
+    issues.append(
+        Issue(
+            path=path,
+            lineno=1,
+            line="",
+            reason=f"{reason} (found {count}, expected at least {minimum})",
+        )
+    )
+
+
+def audit_dynamic_category_consumers() -> list[Issue]:
+    issues: list[Issue] = []
+
+    require_text(
+        HOME_BATTLE,
+        "Battle_GetEffectiveMoveCategory::\n\tfarcall TypePassive_GetEffectiveMoveCategory_Far",
+        issues,
+        "missing home wrapper for current effective move category",
+    )
+    require_text(
+        HOME_BATTLE,
+        "Battle_GetLastCounterMoveCategory::\n\tfarcall TypePassive_GetLastCounterMoveCategory_Far",
+        issues,
+        "missing home wrapper for last-counter effective move category",
+    )
+    require_text(
+        TYPE_PASSIVES,
+        "TypePassive_GetEffectiveMoveCategory_Far::",
+        issues,
+        "missing current effective category helper",
+    )
+    require_text(
+        TYPE_PASSIVES,
+        "TypePassive_GetLastCounterMoveCategory_Far::",
+        issues,
+        "missing last-counter effective category helper",
+    )
+    require_count_at_least(
+        TYPE_PASSIVES,
+        "cp OUTRAGE",
+        2,
+        issues,
+        "Dragon-only Outrage exception must be applied to current and last-counter categories",
+    )
+    require_count_at_least(
+        EFFECT_COMMANDS,
+        "call Battle_GetEffectiveMoveCategory",
+        2,
+        issues,
+        "player and enemy damage-stat paths must use effective category wrapper",
+    )
+    require_count_at_least(
+        LATE_GEN_HELD_ITEMS,
+        "call TypePassive_GetEffectiveMoveCategory_Far",
+        5,
+        issues,
+        "held-item stat and damage category checks must use effective category helper",
+    )
+    require_text(
+        COUNTER_EFFECT,
+        "call Battle_GetLastCounterMoveCategory",
+        issues,
+        "Counter must use last-counter effective category wrapper",
+    )
+    require_text(
+        MIRROR_COAT_EFFECT,
+        "call Battle_GetLastCounterMoveCategory",
+        issues,
+        "Mirror Coat must use last-counter effective category wrapper",
+    )
+
+    return issues
+
+
 def main() -> int:
     issues: list[Issue] = []
     for path in iter_asm_files():
         issues.extend(scan_file(path))
+    issues.extend(audit_dynamic_category_consumers())
 
     if issues:
-        print("Battle math scratch-register audit FAILED.", file=sys.stderr)
+        print("Battle math safety audit FAILED.", file=sys.stderr)
         for issue in issues:
             rel = issue.path.relative_to(ROOT)
             print(f"{rel}:{issue.lineno}: {issue.reason}", file=sys.stderr)
-            print(f"  {issue.line}", file=sys.stderr)
+            if issue.line:
+                print(f"  {issue.line}", file=sys.stderr)
         return 1
 
-    print("Battle math scratch-register audit passed.")
+    print("Battle math safety audit passed.")
     print(f"Scanned {len(iter_asm_files())} ASM files.")
+    print("Dynamic category consumers use the effective-category helpers.")
     return 0
 
 

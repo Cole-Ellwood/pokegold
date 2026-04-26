@@ -19,10 +19,14 @@ Tooling status:
 | One-shot WRAM reader | `FINISHED` | `audit/boss_ai_trace/trace_helper_smoke.txt` |
 | Polling watch mode | `FINISHED` | `audit/boss_ai_trace/trace_watch_smoke.txt` |
 | Ledger audit | `FINISHED` | `python tools\audit\check_boss_ai_live_capture_ledger.py` |
-| Capture manifest | `FINISHED` | `audit/boss_ai_trace/live_capture_manifest.json` |
+| Capture manifest | `FINISHED` | `audit/boss_ai_trace/live_capture_manifest.json` pins the current trace ROM and symbol SHA256 hashes. |
 | Batch dry-run | `FINISHED` | `python tools\trace\boss_ai_trace_batch.py` reports missing save-states. |
 | Morty proof-capsule attempt | `FINISHED` | `audit/boss_ai_trace/morty_proof_capsule_attempt_2026-04-26.md` documents why no valid live proof was produced. |
 | Boss-position save-states | `UNTOUCHED` | No Morty/Jasmine/Clair/Koga/Lance save-state paths recorded yet. |
+
+Any boss row promoted to `FINISHED` must point to a capture excerpt with
+`trace_rom`, `trace_rom_sha256`, `trace_symbols`, and `trace_symbols_sha256`
+headers matching `audit/boss_ai_trace/live_capture_manifest.json`.
 
 Priority boss live captures:
 
