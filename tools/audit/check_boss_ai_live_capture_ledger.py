@@ -122,6 +122,27 @@ def has_nonzero_trace_value(text: str) -> bool:
     return False
 
 
+def has_decision_trace_value(text: str) -> bool:
+    for match in re.finditer(r"chosen_id=(\d+)", text):
+        if int(match.group(1)):
+            return True
+    for line in text.splitlines():
+        if not line.startswith("top_moves="):
+            continue
+        entries = line.split("=", 1)[1].split(",")
+        for entry in entries:
+            move = entry.split(":", 1)[0].strip()
+            if move and move != "NO_MOVE" and not move.startswith("#00"):
+                return True
+    for match in re.finditer(r"switch_confidence=(\d+)", text):
+        if int(match.group(1)):
+            return True
+    for match in re.finditer(r"risk_flags=([0-9a-fA-F]{2})", text):
+        if int(match.group(1), 16):
+            return True
+    return False
+
+
 def parse_key_values(block: str) -> dict[str, str]:
     fields: dict[str, str] = {}
     for raw in block.splitlines():
@@ -160,6 +181,8 @@ def audit_finished_live_file(
         fail(f"{boss}: finished live capture still reports no captures")
     if not has_nonzero_trace_value(text):
         fail(f"{boss}: finished live capture has no nonzero trace evidence")
+    if not has_decision_trace_value(text):
+        fail(f"{boss}: finished live capture has only plan-level trace evidence")
 
 
 def audit_manifest(expected_rows: dict[str, tuple[str, str]]) -> dict[str, str]:

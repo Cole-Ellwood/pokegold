@@ -19,6 +19,7 @@ GUARDED_ENTRYPOINTS = {
     "BossAI_IncrementTurnsElapsed",
     "BossAI_RecordPlayerSwitch",
     "BossAI_RecordPlayerSpecies",
+    "BossAI_RecordPlayerFaint",
     "BossAI_RecordRevealedPlayerMove",
     "BossAI_ApplyMoveModel",
     "BossAI_SelectMove",

@@ -22,6 +22,27 @@ NormalHit:
 	kingsrock
 	endmove
 
+FocusPunch:
+	checkobedience
+	focuspunch
+	usedmovetext
+	doturn
+	critical
+	damagestats
+	damagecalc
+	stab
+	damagevariation
+	checkhit
+	moveanim
+	failuretext
+	applydamage
+	criticaltext
+	supereffectivetext
+	checkfaint
+	buildopponentrage
+	kingsrock
+	endmove
+
 DoSleep:
 	checkobedience
 	usedmovetext

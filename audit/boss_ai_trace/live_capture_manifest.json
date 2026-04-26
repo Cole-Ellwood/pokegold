@@ -1,22 +1,24 @@
 {
   "version": 1,
   "trace_rom": "pokegold_trace.gbc",
-  "trace_rom_sha256": "8936A6D90D98FCDE36CF0F66BA734BA812A057B1668F4B7F82A2831EF488594E",
+  "trace_rom_sha256": "639680604270248FEC0FF9DDD92205C75FC2B01858FD1A365FBF51623DC66C29",
   "trace_symbols": "pokegold_trace.sym",
-  "trace_symbols_sha256": "2042A961ABF381447C69D533C378675EEEBA80970357BEF10F9AF6A893EADC46",
+  "trace_symbols_sha256": "73A70E9C9ADB65840DBD05C9B9049BFF288AF0D2C1EFA22DE375CA773CCE777B",
   "default_watch_frames": 600,
   "default_poll_every": 1,
   "captures": [
     {
       "id": "morty",
       "boss": "Morty",
-      "status": "UNTOUCHED",
-      "save_state": "",
+      "status": "FINISHED",
+      "save_state": ".local/tmp/morty_issue_cycle8/chosen_frame_3086.state",
+      "stop_after_first_capture": true,
+      "require_chosen_move": true,
       "preflight": {
         "expect": "morty"
       },
       "out": "audit/boss_ai_trace/morty_live.txt",
-      "notes": "revealed coverage species isolation; status fail gates; +2 setup Haze"
+      "notes": "live Morty decision after public-threat cursor fixes; chosen move observed on the current trace ROM"
     },
     {
       "id": "jasmine",

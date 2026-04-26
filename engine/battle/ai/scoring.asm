@@ -328,7 +328,7 @@ AI_Smart_EffectHandlers:
 	dbw EFFECT_RAZOR_WIND,       AI_Smart_RazorWind
 	dbw EFFECT_SUPER_FANG,       AI_Smart_SuperFang
 	dbw EFFECT_TRAP_TARGET,      AI_Smart_TrapTarget
-	dbw EFFECT_UNUSED_2B,        AI_Smart_Unused2B
+	dbw EFFECT_FOCUS_PUNCH,      AI_Smart_FocusPunch
 	dbw EFFECT_CONFUSE,          AI_Smart_Confuse
 	dbw EFFECT_SP_DEF_UP_2,      AI_Smart_SpDefenseUp2
 	dbw EFFECT_REFLECT,          AI_Smart_Reflect
@@ -1026,7 +1026,6 @@ AI_Smart_TrapTarget:
 	ret
 
 AI_Smart_RazorWind:
-AI_Smart_Unused2B:
 	ld a, [wEnemySubStatus1]
 	bit SUBSTATUS_PERISH, a
 	jr z, .no_perish_count
@@ -1076,6 +1075,23 @@ AI_Smart_Unused2B:
 	ld a, [hl]
 	add 6
 	ld [hl], a
+	ret
+
+AI_Smart_FocusPunch:
+	ld a, [wBattleMonStatus]
+	and SLP_MASK
+	jr nz, .opening
+	ld a, [wBattleMonStatus]
+	bit FRZ, a
+	jr nz, .opening
+	ld a, [wPlayerSubStatus4]
+	bit SUBSTATUS_RECHARGE, a
+	jp z, AIDiscourageMove
+
+.opening
+	call AI_50_50
+	ret c
+	dec [hl]
 	ret
 
 AI_Smart_Confuse:

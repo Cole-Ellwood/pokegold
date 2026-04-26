@@ -42,6 +42,16 @@ only visible in generated audit output.
 | `DITTO` | Locked as an Imposter-style gimmick with `100/48/48/48/48/48` stats. | Playtest switch-in reliability and boss abuse risk. |
 | `SMEARGLE` | Locked as a fast Sketch toolkit with `90/45/75/110/45/75` stats. | Audit practical move acquisition. |
 | `WOBBUFFET` | Locked as a high-HP reactive trap with `220/33/65/33/33/65` stats. | Playtest AI/player fairness. |
+| `LEDIAN` | Upgraded into a fast Bug/Flying screen passer with real Bug/Flying attacks; Bugsy now showcases it instead of another early Spikes/Rapid Spin shell. | Watch early Bugsy pacing. |
+| `SUDOWOODO` | Upgraded into a slow Rock wall with usable special bulk plus Spikes/Roar role access; Chuck/Brock now use it as non-Onix Rock utility. | Watch whether two boss uses feel distinct enough. |
+| `JYNX` | Upgraded into a frail fast Ice/Psychic sleep breaker and assigned to Sabrina as Starmie replacement. | Watch Lovely Kiss swinginess. |
+| `LANTURN` | Upgraded into a bulky Water/Electric pivot with real special pressure and Ice Beam access; Misty now uses it instead of Kingdra. | Watch broad Water-type power creep. |
+| `MANTINE` | Upgraded into a Water/Flying special wall with Rapid Spin, Haze, and Hydro Pump; Clair now uses it instead of Donphan. | Watch whether Rapid Spin reads naturally enough. |
+| `DEWGONG` | Upgraded into an Ice/Water utility spinner with Encore/Haze; Pryce now uses it instead of Starmie. | Watch midgame defensive pacing. |
+| `POLITOED` | Upgraded into a rain support Water with better mixed bulk; Misty now uses it instead of Cloyster. | Watch rain-team redundancy with Lapras. |
+| `QWILFISH` | Upgraded into a faster Poison/Water Spikes trade piece; Janine now uses it instead of Ariados. | Watch Explosion pressure. |
+| `CORSOLA` | Upgraded into a sturdier Rock/Water Recover spinner; Brock now uses it instead of Donphan. | Watch late Rock-team stall pacing. |
+| `ELECTRODE` | Added Rapid Spin access so Electric teams can clear hazards without importing Donphan. | Watch if the fastest spinner is too clean. |
 
 ## High Priority
 
@@ -53,7 +63,6 @@ _No active high-priority entries after the resolved evolution and gimmick pass._
 | --- | --- | --- | --- |
 | `FARFETCH_D` | Buffed Attack helps, but reliable STAB is still modest for a standalone final. | Confirm Stick availability or improve Flying/Normal access. | needs review |
 | `ARIADOS` | Bulky enough to have a role, but low speed and modest attack can still feel flat. | Add stronger Bug/Poison identity or document as bulky status utility. | needs review |
-| `LEDIAN` | Has stats, but Bug/Flying attacking value can lag without strong reliable STAB. | Confirm support role or improve Bug/Fighting-style coverage. | needs review |
 | `YANMA` | Fast-ish Bug/Flying with questionable STAB quality. | Confirm speed/offense role or improve level-up attack access. | needs review |
 | `DELIBIRD` | Present-only identity historically weak; current stats are better but role still unclear. | Decide whether it is a special tank, utility pick, or joke mon. | needs review |
 
@@ -62,12 +71,8 @@ _No active high-priority entries after the resolved evolution and gimmick pass._
 | Pokemon | Watch Reason | Status |
 | --- | --- | --- |
 | `DUNSPARCE` | Current source is much lower than an earlier rebalance snapshot; may be intentional, but needs confirmation. | needs review |
-| `SUDOWOODO` | Current source is much lower than an earlier rebalance snapshot; slow Rock roles are easy to over- or under-tune. | needs review |
 | `TOGETIC` | Current source differs sharply from earlier high-speed physical concept. | needs review |
-| `JYNX` | Current source differs sharply from earlier mixed/specially bulky concept. | needs review |
-| `LANTURN` | Current source differs from earlier bulky special attacker concept. | needs review |
 | `GLIGAR` | Current source differs from earlier bulky Ground/Flying concept. | needs review |
-| `MANTINE` | Current source differs from earlier faster mixed concept. | needs review |
 | `QUAGSIRE` | Current source differs from earlier bulky mixed attacker concept. | needs review |
 | `VENOMOTH` | Current source differs from earlier very fast concept. | needs review |
 

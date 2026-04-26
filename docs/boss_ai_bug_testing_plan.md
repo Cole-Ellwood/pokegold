@@ -1,5 +1,12 @@
 # Boss AI Bug Testing Implementation Plan
 
+## Boss AI Cognition Mode
+
+Use wild hypotheses to design sharp tests. If a boss line seems terrifying, ask
+what trace, invariant, or save-state would prove it is legal instead of lucky or
+clairvoyant. The tests are the fence around the crazy thinking, not a reason to
+stop thinking crazy.
+
 Purpose: turn the post-patch Boss AI validation plan into repeatable bug tests.
 This is an implementation guide for future Codex/helper sessions. It does not
 authorize new Boss AI features.
@@ -24,11 +31,17 @@ Current implementation status:
 | Live capture ledger audit | `FINISHED` | `python tools\audit\check_boss_ai_live_capture_ledger.py` passes. |
 | Live capture manifest | `FINISHED` | `audit/boss_ai_trace/live_capture_manifest.json` defines boss capture commands. |
 | Live capture batch runner | `FINISHED` | `python tools\trace\boss_ai_trace_batch.py` dry-run reports missing save-states and uses manifest preflights before capture. |
-| Boss-position live emulator/debugger captures | `UNTOUCHED` | Requires save-states or manual debugger positions at boss AI decision points. |
+| Boss-position live emulator/debugger captures | `IN PROGRESS` | Morty's current trace-ROM chosen-move proof is complete (`chosen_id=95` in `audit/boss_ai_trace/morty_live.txt`); Jasmine/Clair/Koga/Lance/shared switch-loop still need save-states or manual debugger positions. |
 
 Preserve these constraints while implementing tests:
 
-- No hidden foresight implementation.
+- No broad hidden foresight implementation outside Haki. The only allowed
+  exception is a future once-per-battle Haki branch that follows
+  `docs/boss_ai_spec.md`: deliberately unfair hidden/current-turn reading,
+  traced, spent once, and quarantined from normal Boss AI memory.
+- Haki must be invisible to the player. Developer trace may prove it fired, but
+  battle text, animations, icons, field markers, and special visible states may
+  not reveal it.
 - No save-wide chaos or overprediction score.
 - No probability simulator.
 - No Battle Core bank `0f` hooks.
@@ -50,12 +63,21 @@ Required behaviors:
 - Revealed coverage does not transfer across player species.
 - A->B->A switch-loop penalty applies unless a public emergency exception
   applies.
+- Public Perish Song escape can override KO-stay and switch-loop reluctance only
+  from the boss's own perish substatus/count.
 - First-turn Spikes gets lead bias only when not under immediate public pressure.
 - Status moves are discouraged into visible fail states.
+- Full-Dark active players with an unconsumed Dark shield make shield-eligible
+  status and utility effects visible fail states; consumed shields and half-Dark
+  odds are not hard-failed.
+- Non-KO contact moves into visible Poison defenders are soft-discouraged when
+  Poison retaliation can actually status the enemy.
 - Lance avoids non-KO Hyper Beam.
 - Spikes plus Roar/Whirlwind responds to repeated switching or public setup.
 - Public +2 setup is punished by denial moves when no immediate KO exists.
 - Immunity pivots beat neutral pivots when the public threat type supports it.
+- Exact revealed player priority moves count as public speed-breaking pressure
+  only after the active player has shown them.
 
 ## Deliverables
 
@@ -110,13 +132,29 @@ Assertions to implement:
 - `BossAI_NeedsLoopPenalty` checks the proposed target in
   `wEnemySwitchMonParam` before or alongside the current-mon loop check.
 - `BossAI_NeedsLoopPenalty` still has exception calls for imminent KO
-  prevention, immunity pivot opportunity, and ace timing.
+  prevention, public Perish Song escape, immunity pivot opportunity, and ace
+  timing.
+- `BossAI_SwitchOrTryItem` checks `BossAI_EnemyPerishEscapeUrgent` before
+  `BossAI_HasAnyKOMove`, so a ticking Perish count can bypass the KO-stay gate.
+- `BossAI_EnemyPerishEscapeUrgent` reads `wEnemySubStatus1` /
+  `wEnemyPerishCount`, treats counts `1` and `2` as urgent, and never reads
+  player hidden state.
 - `.spikes_layer1` compares `wBossAITurnsElapsed` with `2`, not `0` or `1`.
 - `.spikes_layer1` checks `.EnemyUnderPressure` before taking the high lead
   bias.
 - `.StatusMoveWouldFailPublicly` covers `EFFECT_SLEEP`, `EFFECT_PARALYZE`,
   `EFFECT_CONFUSE`, `EFFECT_POISON`, `EFFECT_TOXIC`, and
   `EFFECT_LEECH_SEED`.
+- `.StatusMoveWouldFailPublicly` calls the Dark shield helper before generic
+  status encouragement, and that helper only hard-fails full-Dark active
+  players with `wPlayerDarkShieldConsumed == 0`.
+- `.UtilityMoveWouldFailPublicly` calls the Dark shield helper for public
+  shield-eligible utility effects such as Disable, Encore, Spite, Attract, Mean
+  Look, Nightmare, force-switch effects, and stat-down ranges.
+- `.ApplyPoisonContactRiskBias` uses candidate move contact flags, player
+  active Poison typing, current type matchup, enemy status/types/Safeguard, and
+  a KO-line exception. It must not read hidden player items, bench moves, or
+  current-turn player intent.
 - Paralysis status fail checks use real type-chart immunity, such as Thunder
   Wave into Ground or Glare into Ghost, instead of treating Electric targets as
   paralysis-immune.
@@ -127,8 +165,18 @@ Assertions to implement:
   public fail states.
 - `.UtilityMoveWouldFailPublicly` heavily discourages already-active Reflect or
   Light Screen, Substitute while already behind a Substitute or too low on HP,
-  Protect while already behind a Substitute, and healing moves while already at
-  full HP.
+  Protect while already behind a Substitute, Disable with no public last counter
+  move or an already-disabled player, Encore with no public last move or an
+  already-encored player, Mean Look / Spider Web into a publicly already-trapped
+  player, Dream Eater into visible player Substitute or a non-sleeping player,
+  Nightmare into visible player Substitute, a non-sleeping player, or an
+  already-nightmared player, and healing moves while already at full HP.
+- Disable/Encore public fail gates must not inspect hidden player move slots or
+  hidden PP. Those exact legality checks are Haki-only if they are ever used for
+  boss decisions.
+- Mean Look / Spider Web public fail gates must not inspect hidden reserve
+  availability or last-mon legality. Damaging partial-trap effects are not
+  equivalent because their damage can still be useful.
 - The status fail path discourages before generic status encouragement can
   dominate.
 - `.ApplySetupPunishBias` checks public `BASE_STAT_LEVEL + 2` for Attack,
@@ -139,6 +187,55 @@ Assertions to implement:
   setup or repeated-switch pressure.
 - `BossAI_CurrentEnemyMovePressureScore` discounts non-super-effective pressure
   into visible Dragon defenders to mirror Imperial Scales.
+- `BossAI_PlayerHasRevealedPriorityThreat` scans only `wPlayerUsedMoves`,
+  checks `EFFECT_PRIORITY_HIT`, type matchup, known defensive item nullification,
+  and coarse enemy HP bands, and feeds both immediate pressure and lookahead
+  pressure. `BossAI_ComputeSwitchCandidateRisk` separately checks
+  half-HP-or-lower switch candidates against exact revealed priority using the
+  candidate's base typing and own HP.
+- `.ApplyRevealedProtectCommitmentRisk` scans only exact visible
+  `wPlayerUsedMoves` for `EFFECT_PROTECT` and discourages Selfdestruct / Hyper
+  Beam commitment lines without using current-turn input.
+- `.ApplyRevealedRecoveryDenialBias` scans only exact visible
+  `wPlayerUsedMoves` for recovery effects, requires the active player to be
+  below full HP, refuses to override KO lines, and only rewards Toxic, Leech
+  Seed, or force-switch moves after public fail gates pass.
+- `.ApplyRevealedFastEncoreAvoidance` scans only exact visible
+  `wPlayerUsedMoves` for `EFFECT_ENCORE`, refuses to run while the player is
+  already encored, targets only recovery / Protect / Substitute / setup-style
+  boss moves, and discourages them only when `BossAI_PublicEnemyFaster` says the
+  boss does not move first. It must not read current-turn input, hidden move
+  slots, or hidden PP.
+- `.ApplyRevealedDestinyBondAvoidance` scans only exact visible
+  `wPlayerUsedMoves` for `EFFECT_DESTINY_BOND`, requires a KO-pressure boss
+  candidate, requires the active player to be visibly at quarter HP or lower,
+  and discourages the KO only when `BossAI_PublicEnemyFaster` says the boss does
+  not move first. It must not read current-turn input, hidden move slots, hidden
+  PP, or hidden reserves.
+- `.ApplyLastMoveEncoreTrapBias` reads only `wLastPlayerMove`, rejects empty /
+  Struggle / Encore / Mirror Move cases, resolves that previous move's public
+  effect, and rewards Encore only for Protect/Detect or recovery when public
+  fail gates pass and `BossAI_PublicEnemyFaster` says the boss should move
+  first. It must not read current-turn input, hidden move slots, or hidden PP.
+- `.ApplyRevealedCounterCoatAvoidance` scans only exact visible
+  `wPlayerUsedMoves` for Counter or Mirror Coat effects, checks the boss
+  candidate's effective physical/special category, refuses to override KO lines,
+  requires public matchup to be nonzero, and discourages only matching non-KO
+  damaging moves. It must not read current-turn input or hidden player moves.
+- `.ApplyRevealedAntiSetupAvoidance` scans only exact visible
+  `wPlayerUsedMoves` for `EFFECT_RESET_STATS` or `EFFECT_FORCE_SWITCH`, checks a
+  boost-only setup classifier, refuses to override KO lines, and discourages
+  only non-KO boost setup. The boost classifier must not include Rain Dance or
+  Sunny Day.
+- `.ApplyRevealedSelfdestructProtectBias` scans only exact visible
+  `wPlayerUsedMoves` for `EFFECT_SELFDESTRUCT`, requires Protect/Detect as the
+  boss candidate, checks public utility fail gates, requires the active player to
+  be half HP or lower, and refuses the scout line if the boss has any public KO
+  move. It must not read current-turn input, hidden player moves, or hidden PP.
+- Shared single-effect revealed scans should route through
+  `.PlayerHasRevealedEffectA`. The invariant audit must keep proving that helper
+  uses only `wPlayerUsedMoves`, `Moves + MOVE_EFFECT`, existing scratch bytes,
+  and score-pointer-preserving calls.
 - The Champion role branch discourages `EFFECT_HYPER_BEAM` after `.HasKOLine`
   fails.
 - `.ApplyPrimaryThreatImmunityTieBreak` exists and the non-immune adjustment is
@@ -299,8 +396,11 @@ Smoke artifact:
 
 ## Manual Playtest Matrix
 
-Status: `UNTOUCHED` for boss-position live emulator/debugger captures.
-Capture tooling and the live-capture ledger are `FINISHED`.
+Status: `IN PROGRESS` for boss-position live emulator/debugger captures. Morty's
+first proof capsule is complete on the current trace ROM, with nonzero
+`chosen_id` in `audit/boss_ai_trace/morty_live.txt`; Jasmine/Clair/Koga/Lance/
+shared switch-loop captures remain open. Capture tooling and the live-capture
+ledger are `FINISHED`.
 
 Use `pokegold_trace.gbc` for all scenarios. Save excerpts under
 `audit/boss_ai_trace/`.
@@ -352,8 +452,16 @@ Jasmine:
   already-confused, already-seeded, and Safeguard states against Thunder
   Wave/Glare/Toxic/Confuse Ray/Leech Seed.
 - Set enemy Reflect, Light Screen, Substitute, low HP, and Substitute+Protect
-  states, plus full HP with a healing move. Confirm the corresponding utility
-  moves are heavily discouraged.
+  states, plus full HP with a healing move. Set the player behind Substitute
+  against Dream Eater and Nightmare, including a sleeping target behind
+  Substitute. Set already-active Nightmare too. Confirm the corresponding
+  utility moves are heavily discouraged.
+- Test Disable when the player is already disabled, when no public last counter
+  move exists, and when the public last counter move is Struggle. Test Encore
+  when the player is already encored, when no public last move exists, and when
+  the public last move is Struggle, Encore, or Mirror Move. Test Mean Look /
+  Spider Web when the player already has public `SUBSTATUS_CANT_RUN`, and keep
+  Wrap-style damaging trap moves out of that full-fail expectation.
 - Set Spikes, then repeatedly switch or set up to +2. Confirm Steelix Roar is
   encouraged.
 
@@ -369,6 +477,9 @@ Koga:
 
 - Test Ariados first-turn Spikes with and without public pressure.
 - Test Toxic into Poison, Steel, already-statused, and Safeguard states.
+- Test contact moves into half-Poison and full-Poison active defenders. Confirm
+  non-KO contact is penalized, KO pressure remains allowed, and already-statused
+  or Poison/Steel enemy attackers are not penalized.
 - Set public +2 setup. Confirm Tentacruel Haze is encouraged when no KO line
   exists.
 
@@ -390,10 +501,19 @@ Shared switch-loop scenario:
 - Repeat with an imminent KO or public immunity pivot opportunity and confirm
   the exception can waive the penalty.
 
+Shared Perish Song scenario:
+
+- Put the boss active under public Perish Song with `wEnemyPerishCount` at `2`
+  or `1` and a legal switch target available.
+- Confirm the boss can consider switching even if the active mon has KO pressure.
+- Confirm count `3` does not trigger the urgent escape bonus, and count `0` does
+  not produce a bogus late switch request.
+
 ## Review Checklist
 
 Status: `FINISHED` for the static/release audit sweep. Live emulator/debugger
-captures remain `UNTOUCHED`.
+coverage is `IN PROGRESS`: Morty's current chosen-move capture is complete, and
+the remaining priority captures are still open.
 
 Before accepting the tests:
 

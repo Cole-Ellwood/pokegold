@@ -118,6 +118,14 @@ def validate_capture(entry: dict[str, Any], index: int) -> None:
         not isinstance(entry["poll_every"], int) or entry["poll_every"] <= 0
     ):
         fail(f"capture {entry['id']}: `poll_every` must be a positive integer")
+    if "stop_after_first_capture" in entry and not isinstance(
+        entry["stop_after_first_capture"], bool
+    ):
+        fail(f"capture {entry['id']}: `stop_after_first_capture` must be a boolean")
+    if "require_chosen_move" in entry and not isinstance(
+        entry["require_chosen_move"], bool
+    ):
+        fail(f"capture {entry['id']}: `require_chosen_move` must be a boolean")
     preflight = entry.get("preflight")
     if preflight is None:
         return
@@ -189,6 +197,10 @@ def build_command(
     save_state = entry.get("save_state", "")
     if save_state:
         cmd.extend(["--save-state", str(rel_or_abs(save_state))])
+    if entry.get("stop_after_first_capture", False):
+        cmd.append("--stop-after-first-capture")
+    if entry.get("require_chosen_move", False):
+        cmd.append("--require-chosen-move")
     return cmd
 
 

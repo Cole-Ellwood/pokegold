@@ -231,15 +231,16 @@ def trace_signature(values: dict[str, list[int]]) -> tuple[int, ...]:
 
 
 def has_decision_values(values: dict[str, list[int]]) -> bool:
-    fields = (
-        "wBossAITraceTopMoves",
-        "wBossAITraceTopScores",
-        "wBossAITraceChosenMove",
-        "wBossAITraceSwitchConfidence",
-        "wBossAITracePlanId",
-        "wBossAITraceRiskFlags",
+    return (
+        values["wBossAITraceChosenMove"][0] != 0
+        or any(values["wBossAITraceTopMoves"])
+        or values["wBossAITraceSwitchConfidence"][0] != 0
+        or values["wBossAITraceRiskFlags"][0] != 0
     )
-    return any(any(values[name]) for name in fields)
+
+
+def has_completed_move_decision(values: dict[str, list[int]]) -> bool:
+    return values["wBossAITraceChosenMove"][0] != 0
 
 
 def read_trace_values(pyboy, symbols: dict[str, Symbol]) -> dict[str, list[int]]:
@@ -328,9 +329,14 @@ def watch_wram(
         while frame <= args.watch_frames:
             values = read_trace_values(pyboy, symbols)
             signature = trace_signature(values)
+            has_capture_values = (
+                has_completed_move_decision(values)
+                if args.require_chosen_move
+                else has_decision_values(values)
+            )
             if (
                 signature != last_signature
-                and (args.include_zero_snapshots or has_decision_values(values))
+                and (args.include_zero_snapshots or has_capture_values)
             ):
                 capture_index += 1
                 capture_meta = dict(metadata)
@@ -338,6 +344,8 @@ def watch_wram(
                 capture_meta["capture_index"] = str(capture_index)
                 captures.append(format_capture(values, move_names, capture_meta).rstrip())
                 last_signature = signature
+                if args.stop_after_first_capture:
+                    break
 
             if frame == args.watch_frames:
                 break
@@ -348,6 +356,11 @@ def watch_wram(
         pyboy.stop(save=False)
 
     if not captures:
+        if args.require_chosen_move:
+            fail(
+                "no completed move-decision capture observed "
+                f"within {args.watch_frames} watched frames"
+            )
         lines = format_metadata_lines(metadata)
         lines.extend(
             [
@@ -381,6 +394,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--watch-frames", type=int, default=0)
     parser.add_argument("--poll-every", type=int, default=1)
     parser.add_argument("--include-zero-snapshots", action="store_true")
+    parser.add_argument("--stop-after-first-capture", action="store_true")
+    parser.add_argument(
+        "--require-chosen-move",
+        action="store_true",
+        help="watch until a completed move choice is traced",
+    )
     parser.add_argument("--symbols-only", action="store_true")
     parser.add_argument("--out", type=Path)
     parser.add_argument("--boss", default="")

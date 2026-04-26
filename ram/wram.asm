@@ -2554,7 +2554,8 @@ wBossAISeenPlayerSpeciesCount:: db
 wBossAISeenPlayerSpecies:: ds PARTY_LENGTH
 wBossAIRevealedMovesBitmap:: ds PARTY_LENGTH * 4 ; six 4-byte per-seen-species revealed type masks
 wBossAILikelyTypeMaskCache:: ds 4
-wBossAIRevealedMovesBitmapSpare:: ds 4
+wBossAISeenPlayerAliveMask:: db ; bit per seen species slot, set while publicly not fainted
+wBossAIRevealedMovesBitmapSpare:: ds 3
 wBossAIScorePtr:: dw
 wBossAISavedEnemyMoveStruct:: ds MOVE_LENGTH
 wBossAITemp:: db

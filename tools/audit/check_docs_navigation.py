@@ -394,8 +394,15 @@ def check_generated_file(
 
     tmp_root = ROOT / ".local" / "tmp"
     tmp_root.mkdir(parents=True, exist_ok=True)
-    with tempfile.TemporaryDirectory(dir=tmp_root) as tmp:
-        out_path = Path(tmp) / output_name
+    with tempfile.NamedTemporaryFile(
+        dir=tmp_root,
+        prefix="doc_nav_",
+        suffix=f"_{output_name}",
+        delete=False,
+    ) as temp_file:
+        out_path = Path(temp_file.name)
+
+    try:
         proc = subprocess.run(
             [
                 sys.executable,
@@ -425,6 +432,11 @@ def check_generated_file(
             )
             errors.append(stale_message + (f"\n{preview}" if preview else ""))
             return
+    finally:
+        try:
+            out_path.unlink(missing_ok=True)
+        except OSError:
+            pass
 
     print(pass_message)
 

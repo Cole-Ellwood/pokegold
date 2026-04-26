@@ -111,7 +111,7 @@ AREAS: tuple[Area, ...] = (
     ),
     Area(
         title="Boss AI and trainer difficulty",
-        intent="Human-like major fights, no hidden-information cheating.",
+        intent="Human-like major fights, no hidden-information cheating outside authored Haki.",
         paths=(
             "engine/battle/ai/boss.asm",
             "engine/battle/ai/move.asm",
@@ -666,6 +666,10 @@ def build_markdown(
 ) -> str:
     lines: list[str] = [
         "# Developer ROM Index",
+        "",
+        "Boss AI cognition note: if you are here for the Boss AI loop, think "
+        "wildly in the journal before changing source; this index is the hard "
+        "memory/bank reality check for those ideas.",
         "",
         f"Generated: {date.today().isoformat()}",
         f"ROM target: `{rom}`",

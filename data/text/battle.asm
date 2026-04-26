@@ -900,6 +900,11 @@ ItFailedText:
 	text "It failed!"
 	prompt
 
+LostFocusText:
+	text "<USER>"
+	line "lost focus!"
+	prompt
+
 DidntAffect1Text:
 	text "It didn't affect"
 	line "<TARGET>!"

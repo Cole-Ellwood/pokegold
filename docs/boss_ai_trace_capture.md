@@ -1,15 +1,24 @@
 # Boss AI Trace Capture
 
+## Boss AI Cognition Mode
+
+Traces are how strange boss ideas earn trust. Stare at the position, imagine the
+meanest fair human line, journal the branch, then use this document to capture
+whether the ROM actually chose for legal reasons.
+
 ## Canonical Trace Build Command
 
-Use this command for Boss AI trace builds:
+The capture tools default to `pokegold_trace.gbc` and `pokegold_trace.sym`.
+When those exact artifacts need to be refreshed, use the explicit trace rebuild:
 
 ```bash
-make -j4 RGBDS=rgbds-1.0.1/ pokegold.gbc DEFINES="-D BOSS_AI_TRACE"
+bash -lc 'rgbds-1.0.1/rgbasm.exe -Weverything -Wtruncation=1 -Q8 -P includes.asm -D _GOLD -D BOSS_AI_TRACE -o main_gold_trace.o main.asm && rgbds-1.0.1/rgbasm.exe -Weverything -Wtruncation=1 -Q8 -P includes.asm -D _GOLD -D BOSS_AI_TRACE -o ram_gold_trace.o ram.asm && rgbds-1.0.1/rgblink.exe -Weverything -Wtruncation=1 -l layout.link -n pokegold_trace.sym -m pokegold_trace.map -o pokegold_trace.gbc audio_gold.o home_gold.o main_gold_trace.o ram_gold_trace.o data/text/common_gold.o data/maps/map_data_gold.o data/pokemon/egg_moves_gold.o data/pokemon/evos_attacks_gold.o engine/movie/credits_gold.o engine/overworld/events_gold.o gfx/misc_gold.o gfx/sprites_gold.o gfx/tilesets_gold.o data/pokemon/dex_entries_gold.o gfx/pics_gold.o && rgbds-1.0.1/rgbfix.exe -Weverything -cjsv -k 01 -l 0x33 -m MBC3+TIMER+RAM+BATTERY -r 3 -p 0 -t POKEMON_GLD -i AAUE pokegold_trace.gbc && tools/stadium pokegold_trace.gbc'
 ```
 
 Build interface note:
-- `Makefile` now appends `DEFINES` to `RGBASMFLAGS`, so the command above is the canonical trace entrypoint.
+- `Makefile` appends `DEFINES` to `RGBASMFLAGS`, but `make ... pokegold.gbc
+  DEFINES="-D BOSS_AI_TRACE"` refreshes the normal-named ROM, not the
+  capture-tool default `pokegold_trace.gbc`.
 
 ## Where Trace Output Appears (Actual Behavior)
 
@@ -80,12 +89,32 @@ These details saved the 2026-04-26 follow-up from false proof:
 - Loaded object structs are `$28` bytes wide. Using `$29` shifts later object
   reads and makes valid object data look broken.
 - A candidate state can pass the Morty map/object preflight and still fail as
-  live proof. It must also reach a battle decision where at least one Boss AI
-  trace field is nonzero.
+  live proof. For completed move-decision proof, `plan_id` alone is not enough;
+  prefer `chosen_id != 0`, with nonzero top moves as the weaker useful signal.
+- The original Morty route was not player move selection. From
+  `.local/tmp/free_roam_morty_cycle3/morty_battle_sane_no_trace_step_043.state`,
+  press `A` four times with 45-frame waits, then continue in the same PyBoy
+  process. The plan-only breadcrumb is
+  `.local/tmp/morty_issue_cycle4/a_taps_trace_frame_0161.state`. The later
+  delta-263 state reached top moves but not an accepted chosen move on the
+  current stricter proof gate.
+- The accepted Morty proof state is
+  `.local/tmp/morty_issue_cycle8/chosen_frame_3086.state`. It was generated
+  from the repaired current-basis Morty state after fixing two cursor bugs in
+  `engine/battle/ai/boss.asm`: `BossAI_CheckTypeMatchupNoItem` must preserve
+  the TypeMatchups table cursor around multiply/divide work, and
+  `BossAI_GetTypeThreatSeverityVsEnemyMon` must preserve the plausible-threat
+  list cursor around the known-defense adjustment helper.
 - If PyBoy driving seems to hang, check whether the script is simply running at
   real-time speed. After `load_state`, call `pyboy.set_emulation_speed(0)` in
   scratch drivers, and write progress to a file under `.local/tmp/` when the
   shell will not return buffered output until process exit.
+- Do not use the frame-161 Morty state as final manifest proof. It is a
+  plan-only snapshot with `plan_id=2`/`plan_confidence=72` but zero
+  top-move/chosen-move fields. Use it as a diagnostic breadcrumb.
+- Do not use the delta-263 state as final proof either. It was the useful wrong
+  turn: top moves existed, but the accepted tooling requires a nonzero chosen
+  move. The current manifest records the cycle8 chosen state instead.
 - When a battle stalls before a trace appears, save a screenshot/BMP from the
   current frame. The Morty scratch attempt looked close until the screen showed
   broken player state during send-out.
@@ -95,10 +124,25 @@ runner turns that manifest field into the same strict probe before printing
 `READY` or running capture. A bad Morty state is `INVALID_STATE`, not live
 proof.
 
+If the dry-run reports `INVALID_STATE` only because PyBoy cannot import from
+`.local\pydeps` or those dependency folders are access-denied in a sandbox,
+rerun the preflight with dependency access before judging the state. On
+2026-04-26, the same Morty manifest entry reported `READY` once the batch runner
+could read the local PyBoy dependency folders.
+
+The capture helper disables PyBoy real-time pacing before state load and watch
+loops. If an inline scratch driver imports `boss_ai_trace_state_probe.py` with
+`importlib`, register the module in `sys.modules` before `exec_module`; otherwise
+the `@dataclass` decorator can fail under Python 3.14.
+
 Formatted live excerpts include `trace_rom`, `trace_rom_sha256`,
 `trace_symbols`, and `trace_symbols_sha256` header fields. The ledger audit
 checks those fields for any row marked `FINISHED`, so every accepted capture is
 tied back to the exact trace ROM and symbol file that produced it.
+
+When `--require-chosen-move` is used, a watch that never observes nonzero
+`chosen_id` must exit nonzero instead of writing a `no_captures=true` file as
+if the run succeeded.
 
 To poll for decision changes from a boss-position save-state:
 

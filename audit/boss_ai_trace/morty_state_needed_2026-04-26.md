@@ -1,82 +1,94 @@
 # Morty State Needed - 2026-04-26
 
-Purpose: unblock `MEGAURGENT-001` without mistaking stale scratch RAM for live
-Boss AI proof.
+Purpose: record the Morty live Boss AI trace unblock without mistaking stale
+scratch RAM for live Boss AI proof.
 
-This file is not evidence that Morty is proven. It names the exact runtime
-artifact still missing.
+This file began as the missing-state checklist. It is now the accepted-state
+note for the first live proof capsule.
 
-## Current Search Result
+## Current Accepted Proof
 
-This command found no PyBoy `.state` files under the usual trace/audit/scratch
-areas during this free-roam cycle:
+Morty is `FINISHED` for `MEGAURGENT-001`. The accepted live capture is:
 
-```powershell
-rg --files .local audit outbox | rg "(?i)\.state$"
+```text
+audit/boss_ai_trace/morty_live.txt
 ```
 
-Many `.gbc.ram` sidecars exist under `.local/`, especially
-`.local/do_now_morty_current/` and `.local/boss_ai_trace_probe/`. Those are route
-and failure clues, not accepted proof. Existing notes show they either miss a
-usable Morty context or carry invalid copied player data such as impossible
-active HP.
+The accepted PyBoy state is:
 
-## Required Artifact
-
-Provide or create a PyBoy-compatible save-state made against the current
-`pokegold_trace.gbc` / `pokegold_trace.sym` basis pinned in
-`audit/boss_ai_trace/live_capture_manifest.json`.
-
-The state should be at a Morty battle decision point, not merely:
-
-- Ecruteak Gym coordinates;
-- a loaded Morty map object before battle;
-- the battle intro;
-- a sidecar `.gbc.ram` file copied beside a ROM.
-
-Minimum requirements:
-
-- `wBattleMode` is in trainer battle context for Morty, or the strict probe can
-  otherwise prove the expected Morty context.
-- The active player Pokemon has sane species, level, HP, and max HP.
-- The state can advance far enough for Boss AI trace fields to become nonzero
-  during capture.
-- The trace ROM and symbol hashes match the manifest.
-
-Probe before trusting it:
-
-```powershell
-python tools\trace\boss_ai_trace_state_probe.py --save-state path\to\before_morty_decision.state --expect-morty --strict
+```text
+.local/tmp/morty_issue_cycle8/chosen_frame_3086.state
 ```
 
-A `morty_candidate=PASS` result is necessary, but still not sufficient. The
-capture must also produce nonzero Boss AI trace fields.
+Current verified evidence:
+
+- `python tools\trace\boss_ai_trace_state_probe.py --save-state .local\tmp\morty_issue_cycle8\chosen_frame_3086.state --expect-morty --strict` passes.
+- `python tools\trace\boss_ai_trace_batch.py --execute --only morty` writes
+  `audit/boss_ai_trace/morty_live.txt`.
+- `python tools\audit\check_boss_ai_live_capture_ledger.py` accepts Morty as
+  `FINISHED`.
+- The live excerpt has manifest-matching trace hashes:
+  `trace_rom_sha256=639680604270248FEC0FF9DDD92205C75FC2B01858FD1A365FBF51623DC66C29`
+  and
+  `trace_symbols_sha256=73A70E9C9ADB65840DBD05C9B9049BFF288AF0D2C1EFA22DE375CA773CCE777B`.
+- The decision fields are nonzero:
+  `top_moves=HYPNOSIS:1,CURSE:20,NIGHT_SHADE:20`, `chosen=HYPNOSIS`,
+  `chosen_id=95`, `plan_id=2`, `plan_confidence=72`, and
+  `plausible_mask=33 02 20 8a`.
+
+## What Actually Fixed It
+
+The wrong turn was thinking the driver needed more input after top moves
+appeared. The stricter proof gate was right: top moves alone were not a
+completed move decision.
+
+The live blocker was source-level cursor corruption in public-threat reads:
+
+- `BossAI_CheckTypeMatchupNoItem` used `hl` as the `TypeMatchups` table cursor,
+  then called math helpers that clobbered it before the scan loop continued.
+- `BossAI_GetTypeThreatSeverityVsEnemyMon` returned through
+  `BossAI_AdjustThreatSeverityForEnemyKnownDefense` without preserving the
+  plausible-threat list cursor in `hl`.
+
+`engine/battle/ai/boss.asm` now preserves those cursors, and
+`tools/audit/check_boss_ai_trace_invariants.py` has static guards for both
+hazards.
+
+## Historical Breadcrumbs
+
+Ignored `.local/tmp` states are real. Plain `rg --files` respects ignore rules,
+so use this when local scratch states matter:
+
+```powershell
+rg --files --no-ignore .local audit outbox | rg "(?i)\.state$"
+```
+
+Useful but non-final states:
+
+```text
+.local/tmp/free_roam_morty_cycle3/morty_battle_sane_no_trace_step_043.state
+.local/tmp/morty_issue_cycle4/a_taps_trace_frame_0161.state
+.local/tmp/morty_issue_cycle4/a_taps_completed_trace_delta_263.state
+```
+
+The first state is a sane Morty trainer battle before trace fields are written.
+The frame-161 state is plan-only: `plan_id=2`, `plan_confidence=72`, and no
+move choice. The delta-263 state reached top moves, but the current proof gate
+requires nonzero `chosen_id`; do not use it as final proof.
 
 ## Capture Path
 
-1. Add the accepted save-state path to the `morty` entry in
-   `audit/boss_ai_trace/live_capture_manifest.json`.
-2. Confirm the batch runner reaches `READY`:
+Run the current proof capsule:
 
 ```powershell
 python tools\trace\boss_ai_trace_batch.py --only morty
-```
-
-3. Capture Morty only:
-
-```powershell
 python tools\trace\boss_ai_trace_batch.py --execute --only morty
-```
-
-4. Validate the ledger:
-
-```powershell
 python tools\audit\check_boss_ai_live_capture_ledger.py
 ```
 
-5. Update `audit/boss_ai_trace/live_capture_ledger.md` and
-   `docs/project_roadmap.md` only after `audit/boss_ai_trace/morty_live.txt`
-   exists and the ledger audit accepts it.
+If rebuilding trace artifacts, update
+`audit/boss_ai_trace/live_capture_manifest.json` hashes before using the batch
+runner or ledger audit.
 
 ## Do Not Repeat
 
@@ -85,5 +97,7 @@ python tools\audit\check_boss_ai_live_capture_ledger.py
   output prettier.
 - Do not count `audit/boss_ai_trace/morty.txt` as live proof; it is source-path
   evidence, not a boss-position capture.
+- Do not promote plan-only or top-move-only evidence. Morty's accepted proof has
+  nonzero `chosen_id`.
 - Do not accept a state that stalls in send-out or shows broken player HP such
   as `00/0` or `64000/64000`.

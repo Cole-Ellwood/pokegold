@@ -42,8 +42,18 @@ DontSwitch:
 	call AI_TryItem
 	ret
 
-SwitchOften:
+AI_CheckAbleToSwitchPreserveCurSpecies:
+	ld a, [wCurSpecies]
+	push af
 	callfar CheckAbleToSwitch
+	pop af
+	ld [wCurSpecies], a
+	and a
+	call nz, GetBaseData
+	ret
+
+SwitchOften:
+	call AI_CheckAbleToSwitchPreserveCurSpecies
 	ld a, [wEnemySwitchMonParam]
 	and $f0
 	jp z, DontSwitch
@@ -78,7 +88,7 @@ SwitchOften:
 	jp AI_TrySwitch
 
 SwitchRarely:
-	callfar CheckAbleToSwitch
+	call AI_CheckAbleToSwitchPreserveCurSpecies
 	ld a, [wEnemySwitchMonParam]
 	and $f0
 	jp z, DontSwitch
@@ -112,7 +122,7 @@ SwitchRarely:
 	jp AI_TrySwitch
 
 SwitchSometimes:
-	callfar CheckAbleToSwitch
+	call AI_CheckAbleToSwitchPreserveCurSpecies
 	ld a, [wEnemySwitchMonParam]
 	and $f0
 	jp z, DontSwitch

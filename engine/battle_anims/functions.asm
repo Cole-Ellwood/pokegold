@@ -2319,7 +2319,7 @@ BattleAnimFunction_MoveUp:
 	ret
 
 BattleAnimFunction_Sound:
-; Moves object back and forth in one of three angles using a sine behavior and disappear after 8 frames. Used in Growl, Snore and Kinesis
+; Moves object back and forth in one of three angles using a sine behavior and disappear after 8 frames. Used in Growl and Snore.
 ; Obj Param: Used to define object angle. How much to increase from base frameset, which is hardcoded as BATTLE_ANIM_FRAMESET_SOUND_1
 	call BattleAnim_AnonJumptable
 .anon_dw

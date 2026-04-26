@@ -860,7 +860,6 @@ KadabraEvosAttacks:
 	db EVOLVE_LEVEL, 38, ALAKAZAM
 	db 0 ; no more evolutions
 	db 1, TELEPORT
-	db 1, KINESIS
 	db 1, CONFUSION
 	db 16, CONFUSION
 	db 18, DISABLE
@@ -874,7 +873,6 @@ KadabraEvosAttacks:
 AlakazamEvosAttacks:
 	db 0 ; no more evolutions
 	db 1, TELEPORT
-	db 1, KINESIS
 	db 1, CONFUSION
 	db 16, CONFUSION
 	db 18, DISABLE
@@ -1198,8 +1196,11 @@ DewgongEvosAttacks:
 	db 5, GROWL
 	db 16, AURORA_BEAM
 	db 21, REST
+	db 28, RAPID_SPIN
 	db 32, TAKE_DOWN
+	db 36, ENCORE
 	db 43, ICE_BEAM
+	db 51, HAZE
 	db 0 ; no more level-up moves
 
 GrimerEvosAttacks:
@@ -1393,6 +1394,7 @@ ElectrodeEvosAttacks:
 	db 23, SELFDESTRUCT
 	db 29, ROLLOUT
 	db 34, LIGHT_SCREEN
+	db 36, RAPID_SPIN
 	db 40, SWIFT
 	db 44, EXPLOSION
 	db 48, MIRROR_COAT
@@ -1718,6 +1720,7 @@ JynxEvosAttacks:
 	db 21, DOUBLESLAP
 	db 25, ICE_PUNCH
 	db 35, MEAN_LOOK
+	db 37, ICE_BEAM
 	db 41, PSYCHIC_M
 	db 51, PERISH_SONG
 	db 57, BLIZZARD
@@ -2288,9 +2291,11 @@ LedianEvosAttacks:
 	db 1, SUPERSONIC
 	db 8, SUPERSONIC
 	db 15, COMET_PUNCH
+	db 20, LEECH_LIFE
 	db 24, LIGHT_SCREEN
 	db 24, REFLECT
 	db 24, QUIVER_DANCE
+	db 30, WING_ATTACK
 	db 33, BATON_PASS
 	db 42, SWIFT
 	db 48, DOUBLE_EDGE
@@ -2358,6 +2363,7 @@ LanturnEvosAttacks:
 	db 17, WATER_GUN
 	db 25, SPARK
 	db 33, THUNDERBOLT
+	db 41, ICE_BEAM
 	db 45, CALM_MIND
 	db 53, HYDRO_PUMP
 	db 0 ; no more level-up moves
@@ -2531,7 +2537,9 @@ SudowoodoEvosAttacks:
 	db 10, CURSE
 	db 19, LOW_KICK
 	db 28, ROCK_SLIDE
+	db 34, SPIKES
 	db 37, IRON_HEAD
+	db 43, ROAR
 	db 46, SLAM
 	db 0 ; no more level-up moves
 
@@ -2851,6 +2859,7 @@ QwilfishEvosAttacks:
 	db 19, WATER_GUN
 	db 28, PIN_MISSILE
 	db 37, SLUDGE_BOMB
+	db 43, EXPLOSION
 	db 46, HYDRO_PUMP
 	db 0 ; no more level-up moves
 
@@ -3034,9 +3043,12 @@ MantineEvosAttacks:
 	db 10, SUPERSONIC
 	db 18, BUBBLEBEAM
 	db 25, TAKE_DOWN
+	db 28, RAPID_SPIN
 	db 32, AGILITY
+	db 36, HAZE
 	db 40, WING_ATTACK
 	db 49, CONFUSE_RAY
+	db 52, HYDRO_PUMP
 	db 0 ; no more level-up moves
 
 SkarmoryEvosAttacks:

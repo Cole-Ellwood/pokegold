@@ -695,6 +695,8 @@ ParsePlayerAction:
 .encored
 	call SetPlayerTurn
 	callfar UpdateMoveData
+	ld hl, wPlayerSubStatus2
+	res SUBSTATUS_FOCUS_PUNCH, [hl]
 	xor a
 	ld [wPlayerCharging], a
 	ld a, [wPlayerMoveStruct + MOVE_EFFECT]
@@ -2663,6 +2665,7 @@ HandlePlayerMonFaint:
 	jp DoubleSwitch
 
 UpdateFaintedPlayerMon:
+	callfar BossAI_RecordPlayerFaint
 	ld a, [wCurBattleMon]
 	ld c, a
 	ld hl, wBattleParticipantsNotFainted
@@ -5841,6 +5844,8 @@ ParseEnemyAction:
 	call EnforceEnemyHeldMoveRestrictions
 	call SetEnemyTurn
 	callfar UpdateMoveData
+	ld hl, wEnemySubStatus2
+	res SUBSTATUS_FOCUS_PUNCH, [hl]
 	call CheckEnemyLockedIn
 	jr nz, .raging
 	xor a
@@ -6164,14 +6169,8 @@ LoadEnemyMon:
 	jr c, .GenerateDVs ; try again
 
 .Magikarp:
-; These filters are untranslated.
-; They expect at wMagikarpLength a 2-byte value in mm,
-; but the value is in feet and inches (one byte each).
-
-; The first filter is supposed to make very large Magikarp even rarer,
-; by targeting those 1600 mm (= 5'3") or larger.
-; After the conversion to feet, it is unable to target any,
-; since the largest possible Magikarp is 5'3", and $0503 = 1283 mm.
+; Extra filters make very large Magikarp rarer and Lake of Rage Magikarp larger.
+; CalcMagikarpLength stores feet in wMagikarpLength and inches in the next byte.
 	ld a, [wTempEnemyMonSpecies]
 	cp MAGIKARP
 	jr nz, .Happiness
@@ -6181,57 +6180,48 @@ LoadEnemyMon:
 	ld bc, wPlayerID
 	callfar CalcMagikarpLength
 
-; No reason to keep going if length > 1536 mm (i.e. if HIGH(length) > 6 feet)
+; Only 5-foot Magikarp can hit the very-large filters below.
 	ld a, [wMagikarpLength]
-	cp HIGH(1536) ; should be "cp 5", since 1536 mm = 5'0", but HIGH(1536) = 6
+	cp 5
 	jr nz, .CheckMagikarpArea
 
 ; 5% chance of skipping both size checks
 	call Random
 	cp 5 percent
 	jr c, .CheckMagikarpArea
-; Try again if length >= 1616 mm (i.e. if LOW(length) >= 4 inches)
+; Try again if length is at least 5'4"
 	ld a, [wMagikarpLength + 1]
-	cp LOW(1616) ; should be "cp 4", since 1616 mm = 5'4", but LOW(1616) = 80
+	cp 4
 	jr nc, .GenerateDVs
 
 ; 20% chance of skipping this check
 	call Random
 	cp 20 percent - 1
 	jr c, .CheckMagikarpArea
-; Try again if length >= 1600 mm (i.e. if LOW(length) >= 3 inches)
+; Try again if length is at least 5'3"
 	ld a, [wMagikarpLength + 1]
-	cp LOW(1600) ; should be "cp 3", since 1600 mm = 5'3", but LOW(1600) = 64
+	cp 3
 	jr nc, .GenerateDVs
 
 .CheckMagikarpArea:
-; The "jr z" checks are supposed to be "jr nz".
-
-; Instead, all maps in GROUP_LAKE_OF_RAGE (Mahogany area)
-; and Routes 20 and 44 are treated as Lake of Rage.
-
-; This also means Lake of Rage Magikarp can be smaller than ones
-; caught elsewhere rather than the other way around.
-
-; Intended behavior enforces a minimum size at Lake of Rage.
-; The real behavior prevents a minimum size in the Lake of Rage area.
-
-; Moreover, due to the check not being translated to feet+inches, all Magikarp
-; smaller than 4'0" may be caught by the filter, a lot more than intended.
 	ld a, [wMapGroup]
 	cp GROUP_LAKE_OF_RAGE
-	jr z, .Happiness
+	jr nz, .Happiness
 	ld a, [wMapNumber]
 	cp MAP_LAKE_OF_RAGE
-	jr z, .Happiness
+	jr nz, .Happiness
 ; 40% chance of not flooring
 	call Random
 	cp 39 percent + 1
 	jr c, .Happiness
-; Try again if length < 1024 mm (i.e. if HIGH(length) < 3 feet)
+; Try again if length < 1024 mm (about 3'4")
 	ld a, [wMagikarpLength]
-	cp HIGH(1024) ; should be "cp 3", since 1024 mm = 3'4", but HIGH(1024) = 4
+	cp 3
 	jr c, .GenerateDVs ; try again
+	jr nz, .Happiness
+	ld a, [wMagikarpLength + 1]
+	cp 4
+	jp c, .GenerateDVs ; try again
 
 ; Finally done with DVs
 

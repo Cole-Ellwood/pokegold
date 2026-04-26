@@ -1,5 +1,7 @@
 # Developer ROM Index
 
+Boss AI cognition note: if you are here for the Boss AI loop, think wildly in the journal before changing source; this index is the hard memory/bank reality check for those ideas.
+
 Generated: 2026-04-26
 ROM target: `pokegold`
 
@@ -24,24 +26,24 @@ Read `docs/README.md` first for helper-doc routing, then `docs/codex_context.md`
 - Start here: `docs/README.md`, `docs/codex_context.md`, `docs/codex_review_playbook.md`, `docs/project_map.md`, `docs/boss_ai_spec.md`, `docs/generated/dev_index.md`, `scripts/generate_dev_index.py`
 
 ### Boss AI and trainer difficulty
-- Intent: Human-like major fights, no hidden-information cheating.
+- Intent: Human-like major fights, no hidden-information cheating outside authored Haki.
 - Start here: `engine/battle/ai/boss.asm`, `engine/battle/ai/move.asm`, `engine/battle/ai/scoring.asm`, `engine/battle/ai/items.asm`, `engine/battle/ai/switch.asm`, `engine/battle/core.asm`, `engine/battle/used_move_text.asm`, `engine/battle/read_trainer_attributes.asm`, `data/trainers/ai_tiers.asm`, `data/trainers/parties.asm`, `data/trainers/attributes.asm`, `constants/battle_constants.asm`
-- Anchors: `BossAI_IncrementTurnsElapsed` (0e:553b, `engine/battle/ai/boss.asm:1`); `BossAI_RecordPlayerSwitch` (0e:5564, `engine/battle/ai/boss.asm:26`); `BossAI_SelectMove` (0e:5b9b, `engine/battle/ai/boss.asm:1085`); `BossAI_SwitchOrTryItem` (0e:5c86, `engine/battle/ai/boss.asm:1272`); `BossAI_ComputeSwitchConfidence` (0e:610c, `engine/battle/ai/boss.asm:2099`); `BossAI_PredictPlayerSwitch` (0e:6179, `engine/battle/ai/boss.asm:2162`); `BossAI_RecordRevealedPlayerMove` (0e:564c, `engine/battle/ai/boss.asm:220`); `BossAI_CurrentEnemyMoveHasKOPressure` (0e:5e9b, `engine/battle/ai/boss.asm:1643`); `BossAI_CurrentEnemyMovePressureScore` (0e:5ec3, `engine/battle/ai/boss.asm:1676`); `BossAI_PlayerHasPublicThreatVsEnemy` (0e:5d76, `engine/battle/ai/boss.asm:1434`); `BossAI_PublicEnemyFaster` (0e:5f31, `engine/battle/ai/boss.asm:1762`); `BossAI_CheckAbleToSwitchSafe` (0e:5d2c, `engine/battle/ai/boss.asm:1378`); `BossAI_RefineSwitchCandidateForPlausibleRisk` (0e:6c0d, `engine/battle/ai/boss.asm:4107`); `BossAI_ApplyPlausibleRiskToSwitchConfidence` (0e:6dc4, `engine/battle/ai/boss.asm:4392`)
+- Anchors: `BossAI_IncrementTurnsElapsed` (0e:5561, `engine/battle/ai/boss.asm:1`); `BossAI_RecordPlayerSwitch` (0e:558a, `engine/battle/ai/boss.asm:26`); `BossAI_SelectMove` (0e:631a, `engine/battle/ai/boss.asm:2235`); `BossAI_SwitchOrTryItem` (0e:6405, `engine/battle/ai/boss.asm:2422`); `BossAI_ComputeSwitchConfidence` (0e:6b35, `engine/battle/ai/boss.asm:3739`); `BossAI_PredictPlayerSwitch` (0e:6bb5, `engine/battle/ai/boss.asm:3812`); `BossAI_RecordRevealedPlayerMove` (0e:56c6, `engine/battle/ai/boss.asm:290`); `BossAI_CurrentEnemyMoveHasKOPressure` (0e:6691, `engine/battle/ai/boss.asm:2870`); `BossAI_CurrentEnemyMovePressureScore` (0e:66b9, `engine/battle/ai/boss.asm:2903`); `BossAI_PlayerHasPublicThreatVsEnemy` (0e:64fa, `engine/battle/ai/boss.asm:2586`); `BossAI_PublicEnemyFaster` (0e:68e3, `engine/battle/ai/boss.asm:3326`); `BossAI_CheckAbleToSwitchSafe` (0e:64b0, `engine/battle/ai/boss.asm:2530`); `BossAI_RefineSwitchCandidateForPlausibleRisk` (0e:7757, `engine/battle/ai/boss.asm:5949`); `BossAI_ApplyPlausibleRiskToSwitchConfidence` (0e:798b, `engine/battle/ai/boss.asm:6321`)
 
 ### Battle mechanics
 - Intent: Shared damage, status, switching, item, and turn-flow rules.
 - Start here: `engine/battle/core.asm`, `engine/battle/effect_commands.asm`, `engine/battle/type_passive_damage_mods.asm`, `engine/battle/late_gen_held_items.asm`, `engine/battle/move_effects`, `constants/battle_constants.asm`
-- Anchors: `TypePassive_ApplyDamageModifiers_Far` (0b:738f, `engine/battle/type_passive_damage_mods.asm:44`); `TypePassive_TryDarkStatusShield_Far` (0b:791c, `engine/battle/type_passive_damage_mods.asm:1057`); `TypePassive_MaybePoisonRetaliation_Far` (0b:796b, `engine/battle/type_passive_damage_mods.asm:1118`); `ApplyLateGenDamageMultipliers_Far` (0b:6fa6, `engine/battle/late_gen_held_items.asm:164`); `HandleLateGenAfterHitEffects_Far` (0b:7041, `engine/battle/late_gen_held_items.asm:261`); `TryActivateDittoImposter` (01:79b8, `engine/battle/ditto_imposter.asm:1`)
+- Anchors: `TypePassive_ApplyDamageModifiers_Far` (0b:73db, `engine/battle/type_passive_damage_mods.asm:44`); `TypePassive_TryDarkStatusShield_Far` (0b:7968, `engine/battle/type_passive_damage_mods.asm:1057`); `TypePassive_MaybePoisonRetaliation_Far` (0b:79b7, `engine/battle/type_passive_damage_mods.asm:1118`); `ApplyLateGenDamageMultipliers_Far` (0b:6fa6, `engine/battle/late_gen_held_items.asm:164`); `HandleLateGenAfterHitEffects_Far` (0b:7041, `engine/battle/late_gen_held_items.asm:261`); `TryActivateDittoImposter` (01:79b8, `engine/battle/ditto_imposter.asm:1`)
 
 ### Moves
 - Intent: Move stats, effects, descriptions, contact flags, and animations.
 - Start here: `data/moves/moves.asm`, `data/moves/effects.asm`, `data/moves/effects_pointers.asm`, `data/moves/contact_flags.asm`, `data/moves/descriptions.asm`, `constants/move_constants.asm`
-- Anchors: `Moves` (10:5af6, `data/moves/moves.asm:14`); `MoveEffects` (09:7510, `data/moves/effects.asm:3`); `MoveContactFlags` (0b:7ade, `data/moves/contact_flags.asm:4`); `Spikes` (09:7a19, `data/moves/effects.asm:1504`); `RapidSpin` (09:7aee, `data/moves/effects.asm:1751`)
+- Anchors: `Moves` (10:5af6, `data/moves/moves.asm:14`); `MoveEffects` (09:7510, `data/moves/effects.asm:3`); `MoveContactFlags` (0b:7b2a, `data/moves/contact_flags.asm:4`); `Spikes` (09:7a2c, `data/moves/effects.asm:1525`); `RapidSpin` (09:7b01, `data/moves/effects.asm:1772`)
 
 ### Items and held items
 - Intent: Item data, descriptions, pockets, marts, and battle held effects.
 - Start here: `data/items/attributes.asm`, `data/items/descriptions.asm`, `data/items/names.asm`, `data/items/marts.asm`, `engine/items`, `engine/battle/late_gen_held_items.asm`
-- Anchors: `ItemAttributes` (01:68d5, `data/items/attributes.asm:8`); `ItemDescriptions` (6e:4000, `data/items/descriptions.asm:1`); `ItemNames` (6c:4000, `data/items/names.asm:1`); `IsChoiceHeldEffect_Far` (0b:72ef, `engine/battle/late_gen_held_items.asm:719`); `IsMoveBlockedByAssaultVest_Far` (0b:72f8, `engine/battle/late_gen_held_items.asm:727`)
+- Anchors: `ItemAttributes` (01:68d5, `data/items/attributes.asm:8`); `ItemDescriptions` (6e:4000, `data/items/descriptions.asm:1`); `ItemNames` (6c:4000, `data/items/names.asm:1`); `IsChoiceHeldEffect_Far` (0b:733b, `engine/battle/late_gen_held_items.asm:766`); `IsMoveBlockedByAssaultVest_Far` (0b:7344, `engine/battle/late_gen_held_items.asm:774`)
 
 ### Pokemon data and weak-Pokemon buffs
 - Intent: Base stats, types, level-up moves, evolutions, egg moves, and names.
@@ -73,7 +75,7 @@ Read `docs/README.md` first for helper-doc routing, then `docs/codex_context.md`
 | Region | Used | Free | Banks |
 | --- | ---: | ---: | ---: |
 | ROM0 | 16166 | 218 |  |
-| ROMX | 1153775 | 926993 | 127 |
+| ROMX | 1156955 | 923813 | 127 |
 | SRAM | 31697 | 1071 | 4 |
 | WRAM0 | 4047 | 49 |  |
 | WRAMX | 4096 | 0 |  |
@@ -110,9 +112,9 @@ Bank numbers in this table are hexadecimal.
 | ROMX | 1b | 0 |
 | ROMX | 1e | 0 |
 | WRAMX | 01 | 0 |
-| ROMX | 0d | 1 |
 | ROMX | 1c | 1 |
 | ROMX | 1f | 1 |
+| ROMX | 0d | 3 |
 | ROMX | 1a | 4 |
 | ROMX | 16 | 48 |
 | WRAM0 | 00 | 49 |
@@ -149,11 +151,11 @@ Use these as candidates when moving optional code or data out of tight banks.
 | --- | --- | --- | ---: | --- | --- |
 | `Home` | ROM0 | 00:0150-3ffd | 16046 | ROM0 00 | `home.asm`, `home/array.asm`, `home/audio.asm`, `home/battle.asm`, +49 more |
 | `bankB` | ROMX | 0b:4000-4d9f | 3488 | ROMX 0b | `engine/battle/ai/redundant.asm`, `engine/battle/trainer_huds.asm`, `engine/events/move_deleter.asm`, `engine/events/move_reminder.asm`, +7 more |
-| `Late Gen Held Items` | ROMX | 0b:6eaf-7bdb | 3373 |  | `engine/battle/late_gen_held_items.asm`, `engine/battle/type_passive_damage_mods.asm`, `main.asm` |
-| `Effect Commands` | ROMX | 0d:4000-7ffe | 16383 | ROMX 0d | `engine/battle/effect_commands.asm`, `engine/battle/used_move_text.asm`, `main.asm` |
-| `Enemy Trainers` | ROMX | 0e:4000-722b | 12844 | ROMX 0e | `engine/battle/ai/boss.asm`, `engine/battle/ai/items.asm`, `engine/battle/ai/scoring.asm`, `engine/battle/read_trainer_attributes.asm`, +1 more |
-| `Battle Core` | ROMX | 0f:4000-7b9a | 15259 | ROMX 0f | `engine/battle/core.asm`, `main.asm` |
-| `Evolutions and Attacks` | ROMX | 10:6893-7f6c | 5850 | ROMX 10 | `data/pokemon/evos_attacks.asm`, `data/pokemon/evos_attacks_pointers.asm` |
+| `Late Gen Held Items` | ROMX | 0b:6eaf-7c27 | 3449 |  | `engine/battle/late_gen_held_items.asm`, `engine/battle/type_passive_damage_mods.asm`, `main.asm` |
+| `Effect Commands` | ROMX | 0d:4000-7ffc | 16381 | ROMX 0d | `engine/battle/effect_commands.asm`, `engine/battle/used_move_text.asm`, `main.asm` |
+| `Enemy Trainers` | ROMX | 0e:4000-7df2 | 15859 | ROMX 0e | `engine/battle/ai/boss.asm`, `engine/battle/ai/items.asm`, `engine/battle/ai/scoring.asm`, `engine/battle/read_trainer_attributes.asm`, +1 more |
+| `Battle Core` | ROMX | 0f:4000-7bb6 | 15287 | ROMX 0f | `engine/battle/core.asm`, `main.asm` |
+| `Evolutions and Attacks` | ROMX | 10:6893-7f84 | 5874 | ROMX 10 | `data/pokemon/evos_attacks.asm`, `data/pokemon/evos_attacks_pointers.asm` |
 | `Maps` | ROMX | 25:4000-65f8 | 9721 | ROMX 25 | `data/maps/attributes.asm`, `data/maps/blocks.asm`, `data/maps/map_data.asm`, `data/maps/maps.asm`, +2 more |
 | `Events` | ROMX | 25:65f9-7d99 | 6049 | ROMX 25 | `data/wild/bug_contest_mons.asm`, `engine/events/trainer_scripts.asm`, `engine/overworld/cmd_queue.asm`, `engine/overworld/events.asm`, +1 more |
 | `Audio` | ROMX | 3a:4000-5491 | 5266 | ROMX 3a | `audio.asm`, `audio/cry_pointers.asm`, `audio/engine.asm`, `audio/music/nothing.asm`, +3 more |
@@ -163,7 +165,7 @@ Use these as candidates when moving optional code or data out of tight banks.
 | `Sound Effects` | ROMX | 3c:4941-6746 | 7686 | ROMX 3c | `audio.asm`, `audio/sfx.asm` |
 | `Cries` | ROMX | 3c:6747-7f75 | 6191 | ROMX 3c | `audio.asm`, `audio/cries.asm`, `data/pokemon/cries.asm` |
 | `Songs 4` | ROMX | 3d:4000-7ef2 | 16115 | ROMX 3d | `audio.asm`, `audio/music/aftertherivalfight.asm`, `audio/music/azaleatown.asm`, `audio/music/bugcatchingcontest.asm`, +34 more |
-| `Standard Scripts` | ROMX | 40:4000-62c4 | 8901 | ROMX 40 | `data/text/battle.asm`, `engine/events/std_scripts.asm`, `main.asm` |
+| `Standard Scripts` | ROMX | 40:4000-62d3 | 8916 | ROMX 40 | `data/text/battle.asm`, `engine/events/std_scripts.asm`, `main.asm` |
 | `Phone Scripts` | ROMX | 41:4000-614c | 8525 | ROMX 41 | `data/phone/text/bike_shop.asm`, `data/phone/text/bill.asm`, `data/phone/text/elm.asm`, `data/phone/text/mom.asm`, +9 more |
 | `Map Scripts 1` | ROMX | 42:4000-5dc9 | 7626 | ROMX 42 | `data/maps/scripts.asm`, `maps/BurnedTower1F.asm`, `maps/BurnedTowerB1F.asm`, `maps/DiglettsCave.asm`, +19 more |
 | `Map Scripts 2` | ROMX | 43:4000-7197 | 12696 | ROMX 43 | `data/maps/scripts.asm`, `maps/NationalPark.asm`, `maps/NationalParkBugContest.asm`, `maps/RadioTower1F.asm`, +4 more |
@@ -202,40 +204,40 @@ Use these as candidates when moving optional code or data out of tight banks.
 
 | Label | Address | Source |
 | --- | --- | --- |
-| `BossAI_IncrementTurnsElapsed` | 0e:553b | `engine/battle/ai/boss.asm:1` |
-| `BossAI_RecordPlayerSwitch` | 0e:5564 | `engine/battle/ai/boss.asm:26` |
-| `BossAI_SelectMove` | 0e:5b9b | `engine/battle/ai/boss.asm:1085` |
-| `BossAI_SwitchOrTryItem` | 0e:5c86 | `engine/battle/ai/boss.asm:1272` |
-| `BossAI_ComputeSwitchConfidence` | 0e:610c | `engine/battle/ai/boss.asm:2099` |
-| `BossAI_PredictPlayerSwitch` | 0e:6179 | `engine/battle/ai/boss.asm:2162` |
-| `BossAI_RecordRevealedPlayerMove` | 0e:564c | `engine/battle/ai/boss.asm:220` |
-| `BossAI_CurrentEnemyMoveHasKOPressure` | 0e:5e9b | `engine/battle/ai/boss.asm:1643` |
-| `BossAI_CurrentEnemyMovePressureScore` | 0e:5ec3 | `engine/battle/ai/boss.asm:1676` |
-| `BossAI_PlayerHasPublicThreatVsEnemy` | 0e:5d76 | `engine/battle/ai/boss.asm:1434` |
-| `BossAI_PublicEnemyFaster` | 0e:5f31 | `engine/battle/ai/boss.asm:1762` |
-| `BossAI_CheckAbleToSwitchSafe` | 0e:5d2c | `engine/battle/ai/boss.asm:1378` |
-| `BossAI_RefineSwitchCandidateForPlausibleRisk` | 0e:6c0d | `engine/battle/ai/boss.asm:4107` |
-| `BossAI_ApplyPlausibleRiskToSwitchConfidence` | 0e:6dc4 | `engine/battle/ai/boss.asm:4392` |
-| `BossAITierMap` | 0e:7187 | `data/trainers/ai_tiers.asm:1` |
+| `BossAI_IncrementTurnsElapsed` | 0e:5561 | `engine/battle/ai/boss.asm:1` |
+| `BossAI_RecordPlayerSwitch` | 0e:558a | `engine/battle/ai/boss.asm:26` |
+| `BossAI_SelectMove` | 0e:631a | `engine/battle/ai/boss.asm:2235` |
+| `BossAI_SwitchOrTryItem` | 0e:6405 | `engine/battle/ai/boss.asm:2422` |
+| `BossAI_ComputeSwitchConfidence` | 0e:6b35 | `engine/battle/ai/boss.asm:3739` |
+| `BossAI_PredictPlayerSwitch` | 0e:6bb5 | `engine/battle/ai/boss.asm:3812` |
+| `BossAI_RecordRevealedPlayerMove` | 0e:56c6 | `engine/battle/ai/boss.asm:290` |
+| `BossAI_CurrentEnemyMoveHasKOPressure` | 0e:6691 | `engine/battle/ai/boss.asm:2870` |
+| `BossAI_CurrentEnemyMovePressureScore` | 0e:66b9 | `engine/battle/ai/boss.asm:2903` |
+| `BossAI_PlayerHasPublicThreatVsEnemy` | 0e:64fa | `engine/battle/ai/boss.asm:2586` |
+| `BossAI_PublicEnemyFaster` | 0e:68e3 | `engine/battle/ai/boss.asm:3326` |
+| `BossAI_CheckAbleToSwitchSafe` | 0e:64b0 | `engine/battle/ai/boss.asm:2530` |
+| `BossAI_RefineSwitchCandidateForPlausibleRisk` | 0e:7757 | `engine/battle/ai/boss.asm:5949` |
+| `BossAI_ApplyPlausibleRiskToSwitchConfidence` | 0e:798b | `engine/battle/ai/boss.asm:6321` |
+| `BossAITierMap` | 0e:7d4e | `data/trainers/ai_tiers.asm:1` |
 | `CheckPlayerMoveTypeMatchups` | 0d:4a79 | `engine/battle/ai/switch.asm:1` |
-| `AICompareSpeed` | 0e:523a | `engine/battle/ai/scoring.asm:2657` |
-| `AIDamageCalc` | 0e:53ef | `engine/battle/ai/scoring.asm:3017` |
-| `TypePassive_ApplyDamageModifiers_Far` | 0b:738f | `engine/battle/type_passive_damage_mods.asm:44` |
-| `TypePassive_TryDarkStatusShield_Far` | 0b:791c | `engine/battle/type_passive_damage_mods.asm:1057` |
-| `TypePassive_MaybePoisonRetaliation_Far` | 0b:796b | `engine/battle/type_passive_damage_mods.asm:1118` |
+| `AICompareSpeed` | 0e:5260 | `engine/battle/ai/scoring.asm:2673` |
+| `AIDamageCalc` | 0e:5415 | `engine/battle/ai/scoring.asm:3033` |
+| `TypePassive_ApplyDamageModifiers_Far` | 0b:73db | `engine/battle/type_passive_damage_mods.asm:44` |
+| `TypePassive_TryDarkStatusShield_Far` | 0b:7968 | `engine/battle/type_passive_damage_mods.asm:1057` |
+| `TypePassive_MaybePoisonRetaliation_Far` | 0b:79b7 | `engine/battle/type_passive_damage_mods.asm:1118` |
 | `ApplyLateGenDamageMultipliers_Far` | 0b:6fa6 | `engine/battle/late_gen_held_items.asm:164` |
 | `HandleLateGenAfterHitEffects_Far` | 0b:7041 | `engine/battle/late_gen_held_items.asm:261` |
 | `TryActivateDittoImposter` | 01:79b8 | `engine/battle/ditto_imposter.asm:1` |
 | `Moves` | 10:5af6 | `data/moves/moves.asm:14` |
 | `MoveEffects` | 09:7510 | `data/moves/effects.asm:3` |
-| `MoveContactFlags` | 0b:7ade | `data/moves/contact_flags.asm:4` |
-| `Spikes` | 09:7a19 | `data/moves/effects.asm:1504` |
-| `RapidSpin` | 09:7aee | `data/moves/effects.asm:1751` |
+| `MoveContactFlags` | 0b:7b2a | `data/moves/contact_flags.asm:4` |
+| `Spikes` | 09:7a2c | `data/moves/effects.asm:1525` |
+| `RapidSpin` | 09:7b01 | `data/moves/effects.asm:1772` |
 | `ItemAttributes` | 01:68d5 | `data/items/attributes.asm:8` |
 | `ItemDescriptions` | 6e:4000 | `data/items/descriptions.asm:1` |
 | `ItemNames` | 6c:4000 | `data/items/names.asm:1` |
-| `IsChoiceHeldEffect_Far` | 0b:72ef | `engine/battle/late_gen_held_items.asm:719` |
-| `IsMoveBlockedByAssaultVest_Far` | 0b:72f8 | `engine/battle/late_gen_held_items.asm:727` |
+| `IsChoiceHeldEffect_Far` | 0b:733b | `engine/battle/late_gen_held_items.asm:766` |
+| `IsMoveBlockedByAssaultVest_Far` | 0b:7344 | `engine/battle/late_gen_held_items.asm:774` |
 | `BaseData` | 14:5bb8 | `data/pokemon/base_stats.asm:21` |
 | `EvosAttacksPointers` | 10:6893 | `data/pokemon/evos_attacks_pointers.asm:3` |
 | `EggMovePointers` | 08:79fe | `data/pokemon/egg_move_pointers.asm:1` |

@@ -1,5 +1,13 @@
 # Helper Docs Entrypoint
 
+## Boss AI Cognition Mode
+
+If this session is about Boss AI, read every linked doc with permission to think
+wildly on paper: terrifying legal reads, sacrifice lines, bluffs, counterbluffs,
+and ugly battle trees are welcome in the journal. Source changes stay narrow,
+public-information-only outside explicitly authored Haki branches,
+memory-budgeted, and verified.
+
 READ THIS FIRST in new Codex/helper sessions before broad source search.
 
 Audience: future Codex/helper agents, not human readers. Optimize for source

@@ -57,7 +57,7 @@ The goal is to prove common prompts still route without broad source search:
 | Prompt shape | First route | Next files | Expected answer shape |
 | --- | --- | --- | --- |
 | "continue making it beautiful" | `docs/agent_navigation/start_card.md` | `docs/agent_navigation/navigation_health_check.md`, `docs/agent_navigation/doc_roles.md`, `docs/project_roadmap.md`, `docs/agent_navigation/verification_matrix.md` | Stay docs-only, change roadmap only if a workstream changes, run docs navigation and whitespace checks. |
-| "is Morty boss AI proven?" | `docs/agent_navigation/subsystems/boss_ai_trace.md` | `audit/boss_ai_trace/live_capture_ledger.md`, `audit/boss_ai_trace/morty_proof_capsule_attempt_2026-04-26.md` | Answer no: static audits exist, but live proof is blocked on a current boss-position state. |
+| "is Morty boss AI proven?" | `docs/agent_navigation/subsystems/boss_ai_trace.md` | `audit/boss_ai_trace/live_capture_ledger.md`, `audit/boss_ai_trace/live_capture_manifest.json`, `audit/boss_ai_trace/morty_state_needed_2026-04-26.md` | Answer yes for the first live proof capsule: current trace-ROM proof has nonzero `chosen_id=95`; other bosses still need captures. |
 | "what owns pokegold.sym?" | `docs/agent_navigation/source_output_ownership.md` | `docs/build.md`, `docs/generated/dev_index.md` | Read `.sym` as linker truth; never hand-edit it. |
 
 If any route requires broad source search as the first action, either fix the

@@ -264,6 +264,7 @@ HandleLateGenAfterHitEffects_Far:
 	or [hl]
 	ret z
 
+	call FocusPunch_TryBreak_Far
 	call .MaybePopAirBalloon
 	call .MaybeApplyRockyHelmetRecoil
 
@@ -424,6 +425,52 @@ HandleLateGenAfterHitEffects_Far:
 	pop de
 	pop bc
 	pop hl
+	ret
+
+FocusPunch_TryBreak_Far:
+	ld a, [wAttackMissed]
+	and a
+	ret nz
+	ld a, [wCurDamage]
+	ld b, a
+	ld a, [wCurDamage + 1]
+	or b
+	ret z
+	ldh a, [hBattleTurn]
+	and a
+	jr z, .player_attacking
+	ld a, [wCurPlayerMove]
+	jr .got_target_move
+
+.player_attacking
+	ld a, [wCurEnemyMove]
+
+.got_target_move
+	cp FOCUS_PUNCH
+	ret nz
+	ld a, BATTLE_VARS_SUBSTATUS2_OPP
+	call GetBattleVarAddr
+	set SUBSTATUS_FOCUS_PUNCH, [hl]
+	ret
+
+FocusPunch_CheckLostFocus_Far:
+	ld a, BATTLE_VARS_SUBSTATUS2
+	call GetBattleVarAddr
+	bit SUBSTATUS_FOCUS_PUNCH, [hl]
+	ret z
+	res SUBSTATUS_FOCUS_PUNCH, [hl]
+	ld a, TRUE
+	ld [wAttackMissed], a
+	ld hl, LostFocusText
+	call StdBattleTextbox
+	ld a, [wBattleScriptBufferAddress]
+	ld l, a
+	ld a, [wBattleScriptBufferAddress + 1]
+	ld h, a
+	ld a, endmove_command
+	ld [hli], a
+	ld [hli], a
+	ld [hl], a
 	ret
 
 DittoMetalPowder_Far:

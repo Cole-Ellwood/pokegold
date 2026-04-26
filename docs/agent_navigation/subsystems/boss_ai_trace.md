@@ -1,7 +1,7 @@
 # Boss AI Trace Micro-Index
 
-Use this when the task asks for live proof, trace captures, Boss AI evidence, or
-the currently blocked Morty proof capsule.
+Use this when the task asks for live proof, trace captures, Boss AI evidence,
+Morty proof status, or remaining boss-position capture gaps.
 
 ## Fast Route
 
@@ -11,9 +11,9 @@ the currently blocked Morty proof capsule.
 | Batch capture inputs | `audit/boss_ai_trace/live_capture_manifest.json` |
 | Capture command behavior | `docs/boss_ai_trace_capture.md` |
 | Candidate state preflight | `tools/trace/boss_ai_trace_state_probe.py` |
-| Morty missing-state checklist | `audit/boss_ai_trace/morty_state_needed_2026-04-26.md` |
+| Morty state/proof notes | `audit/boss_ai_trace/morty_state_needed_2026-04-26.md` |
 | Post-patch behavior targets | `docs/boss_ai_post_patch_notes.md` |
-| Current blocker narrative | `audit/boss_ai_trace/morty_proof_capsule_attempt_2026-04-26.md` |
+| Earlier blocked proof attempt | `audit/boss_ai_trace/morty_proof_capsule_attempt_2026-04-26.md` |
 | Capture helper code | `tools/trace/boss_ai_trace_capture.py`, `tools/trace/boss_ai_trace_batch.py` |
 | Ledger audit | `tools/audit/check_boss_ai_live_capture_ledger.py` |
 
@@ -40,23 +40,27 @@ Not enough by itself:
 - a trace helper symbol printout;
 - a batch dry-run that reports `MISSING_STATE`.
 
-## Current Blocker
+## Current Status
 
-`MEGAURGENT-001` is blocked because no valid current-ROM Morty boss-position
-PyBoy state is recorded. The old scratch RAM can place the player near Morty but
-either fails to load a usable Morty object table on boot-continue, or reaches
-Morty only through a debugger warp with impossible copied party data
-(`hp=64000/64000`). That is a useful route-finding clue, not boss decision proof.
+Morty is `FINISHED` for the first live proof capsule. The accepted current-ROM
+artifact is `audit/boss_ai_trace/morty_live.txt`, produced from
+`.local/tmp/morty_issue_cycle8/chosen_frame_3086.state`; it has
+`chosen_id=95`, `top_moves=HYPNOSIS:1,CURSE:20,NIGHT_SHADE:20`, `plan_id=2`,
+and manifest-matching trace ROM/symbol hashes.
 
-Do not mark Morty finished until `audit/boss_ai_trace/morty_live.txt` exists and
-`python tools\audit\check_boss_ai_live_capture_ledger.py` accepts it.
+Remaining live-proof gaps are Jasmine, Clair, Koga, Champion Lance, Red if
+added to the manifest later, and the shared switch-loop scenario. Do not mark
+any of those finished from static audits, source excerpts, old `.local/` RAM,
+or a dry-run alone.
 
 ## Capture Path
 
 1. Build or identify the current trace ROM and symbols.
 2. Read `docs/boss_ai_trace_capture.md` section `Morty Attempt Lessons` before
-   making new PyBoy scratch states.
-3. Create a boss-position save-state at a decision point.
+   trusting old PyBoy scratch states. The cycle4 frame-161 and delta-263 states
+   are historical clues, not current proof.
+3. Create a boss-position save-state at a decision point for the unfinished
+   boss/scenario.
 4. Probe the candidate state before trusting it:
 
 ```powershell
@@ -64,13 +68,13 @@ python tools\trace\boss_ai_trace_state_probe.py --save-state path\to\before_mort
 ```
 
 5. Add the state path to the matching entry in
-   `audit/boss_ai_trace/live_capture_manifest.json`. Keep the `morty` entry's
-   `preflight.expect = morty` guard.
-6. Run a targeted capture. The batch runner preflights Morty states with the
-   manifest-owned strict probe before reporting `READY` or writing live output:
+   `audit/boss_ai_trace/live_capture_manifest.json`. Keep any scenario-specific
+   `preflight.expect` guard.
+6. Run a targeted capture. The batch runner preflights guarded states before
+   reporting `READY` or writing live output:
 
 ```powershell
-python tools\trace\boss_ai_trace_batch.py --execute --only morty
+python tools\trace\boss_ai_trace_batch.py --execute --only jasmine
 python tools\audit\check_boss_ai_live_capture_ledger.py
 ```
 

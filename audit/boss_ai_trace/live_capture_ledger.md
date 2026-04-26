@@ -22,8 +22,8 @@ Tooling status:
 | Ledger audit | `FINISHED` | `python tools\audit\check_boss_ai_live_capture_ledger.py` |
 | Capture manifest | `FINISHED` | `audit/boss_ai_trace/live_capture_manifest.json` pins the current trace ROM and symbol SHA256 hashes and owns the Morty `preflight.expect` guard. |
 | Batch dry-run | `FINISHED` | `python tools\trace\boss_ai_trace_batch.py` reports missing save-states and uses manifest preflights before capture. |
-| Morty proof-capsule attempt | `FINISHED` | `audit/boss_ai_trace/morty_proof_capsule_attempt_2026-04-26.md` documents why no valid live proof was produced. |
-| Boss-position save-states | `UNTOUCHED` | No Morty/Jasmine/Clair/Koga/Lance save-state paths recorded yet. |
+| Morty proof-capsule attempt | `FINISHED` | `audit/boss_ai_trace/morty_proof_capsule_attempt_2026-04-26.md` records the earlier negative attempt and why old RAM was not accepted as proof. |
+| Boss-position save-states | `IN PROGRESS` | Morty's recorded state `.local/tmp/morty_issue_cycle8/chosen_frame_3086.state` passes strict Morty preflight and produced a completed chosen-move excerpt; Jasmine/Clair/Koga/Lance save-state paths are still unrecorded. |
 
 Any boss row promoted to `FINISHED` must point to a capture excerpt with
 `trace_rom`, `trace_rom_sha256`, `trace_symbols`, and `trace_symbols_sha256`
@@ -33,7 +33,7 @@ Priority boss live captures:
 
 | Boss | Status | Required live checks | Output path |
 | --- | --- | --- | --- |
-| Morty | `UNTOUCHED` | revealed coverage species isolation; status fail gates; +2 setup Haze | `audit/boss_ai_trace/morty_live.txt` |
+| Morty | `FINISHED` | strict state preflight passes; current trace ROM excerpt has `chosen_id=95`, `top_moves=HYPNOSIS:1,CURSE:20,NIGHT_SHADE:20`, and `plan_id=2` | `audit/boss_ai_trace/morty_live.txt` |
 | Jasmine | `UNTOUCHED` | first-turn Spikes; status fail gates; Spikes+Roar; +2 setup punish | `audit/boss_ai_trace/jasmine_live.txt` |
 | Clair | `UNTOUCHED` | first-turn Spikes; Thunder Wave fail gates; Spikes+Roar; +2 setup punish | `audit/boss_ai_trace/clair_live.txt` |
 | Koga | `UNTOUCHED` | first-turn Spikes; Toxic fail gates; +2 setup Haze | `audit/boss_ai_trace/koga_live.txt` |

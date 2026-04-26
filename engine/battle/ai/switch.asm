@@ -200,8 +200,7 @@ CheckAbleToSwitch:
 
 	ld a, [wEnemyAISwitchScore]
 	add $30 ; maximum chance
-	ld [wEnemySwitchMonParam], a
-	ret
+	jr .store_switch_param
 
 .not_2
 	call FindAliveEnemyMons
@@ -216,8 +215,7 @@ CheckAbleToSwitch:
 
 	ld a, b
 	add $30 ; maximum chance
-	ld [wEnemySwitchMonParam], a
-	ret
+	jr .store_switch_param
 
 .no_perish
 	call CheckPlayerMoveTypeMatchups
@@ -252,8 +250,7 @@ CheckAbleToSwitch:
 
 	ld a, b
 	add $10
-	ld [wEnemySwitchMonParam], a
-	ret
+	jr .store_switch_param
 
 .not_2_again
 	ld c, $10
@@ -266,8 +263,7 @@ CheckAbleToSwitch:
 .okay
 	ld a, b
 	add c
-	ld [wEnemySwitchMonParam], a
-	ret
+	jr .store_switch_param
 
 .no_last_counter_move
 	call CheckPlayerMoveTypeMatchups
@@ -286,6 +282,7 @@ CheckAbleToSwitch:
 
 	ld a, [wEnemyAISwitchScore]
 	add $10
+.store_switch_param
 	ld [wEnemySwitchMonParam], a
 	ret
 
@@ -545,7 +542,7 @@ FindEnemyMonsWithASuperEffectiveMove:
 
 FindEnemyMonsThatResistPlayer:
 	push bc
-	ld hl, wOTPartyCount
+	ld hl, wOTPartySpecies
 	ld b, 1 << (PARTY_LENGTH - 1)
 	ld c, 0
 

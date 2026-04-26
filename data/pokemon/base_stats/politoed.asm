@@ -1,5 +1,5 @@
 	db POLITOED ; 186
-	db  90,  60,  60,  70, 110, 100
+	db 100,  70,  80,  85, 115, 105
 	;   hp  atk  def  spd  sat  sdf
 	db WATER, WATER ; type
 	db 45 ; catch rate

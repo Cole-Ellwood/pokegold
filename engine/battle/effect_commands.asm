@@ -5467,8 +5467,9 @@ BattleCommand_Charge:
 	text_far _BattleDugText
 	text_end
 
-BattleCommand_Unused3C:
-; effect0x3c
+BattleCommand_FocusPunch:
+; focuspunch
+	farcall FocusPunch_CheckLostFocus_Far
 	ret
 
 BattleCommand_TrapTarget:

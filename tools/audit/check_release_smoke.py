@@ -138,6 +138,35 @@ def main() -> int:
     require_text(ROOT / "data/events/special_pointers.asm", "add_special MoveReminder")
     print("PASS: core module integration checks")
 
+    require_text(ROOT / "home/region.asm", "\tld a, [wPlayerMapY]\n\tadd $4\n\tld e, a")
+    print("PASS: overworld XY compare offset check")
+
+    require_text(
+        ROOT / "engine/pokemon/move_mon.asm",
+        "\tld a, MON_LEVEL\n\tcall GetPartyParamLocation\n\tld a, [hl]\n\tld [wCurPartyLevel], a",
+    )
+    print("PASS: NPC trade stat recompute level check")
+
+    require_text(
+        ROOT / "engine/link/link.asm",
+        "\tld de, wLinkOTMail\n\tld bc, wLinkOTMailEnd - wLinkOTMail\n\tcall CopyBytes",
+    )
+    print("PASS: link trade mail receive bounds check")
+
+    require_text(
+        ROOT / "engine/battle/core.asm",
+        "\tld a, [wMagikarpLength]\n\tcp 5\n\tjr nz, .CheckMagikarpArea",
+    )
+    require_text(
+        ROOT / "engine/battle/core.asm",
+        "\tld a, [wMapGroup]\n\tcp GROUP_LAKE_OF_RAGE\n\tjr nz, .Happiness",
+    )
+    require_text(
+        ROOT / "engine/battle/core.asm",
+        "\tld a, [wMagikarpLength]\n\tcp 3\n\tjr c, .GenerateDVs ; try again\n\tjr nz, .Happiness\n\tld a, [wMagikarpLength + 1]\n\tcp 4",
+    )
+    print("PASS: wild Magikarp size gate checks")
+
     print("ALL RELEASE SMOKE CHECKS PASSED")
     return 0
 
