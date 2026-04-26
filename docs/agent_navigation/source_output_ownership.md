@@ -66,6 +66,45 @@ outputs, or change `Makefile` output paths just to make the tree look tidy.
 First prove which artifacts are expected, which are stale scratch, and which
 tools/docs assume the current layout.
 
+## 10/10 Workspace Criteria
+
+Organization is 10/10 when every visible top-level family has an obvious role:
+source, hand-authored docs, generated docs, build/linker output, release output,
+or local scratch.
+
+Cleanliness is 10/10 when `git status --short --branch` tells the source truth
+quickly, ignored output is classified instead of scary, and no cleanup command
+is needed just to understand the repo.
+
+Future-agent navigation is 10/10 when a broad polish prompt routes here before
+any destructive cleanup, and when a future helper can explain why the raw
+assembly checkout is noisy without touching gameplay or build products.
+
+## Hygiene Audit Helper
+
+Use this read-only classifier before proposing cleanup:
+
+```powershell
+python tools\audit\check_workspace_hygiene.py
+```
+
+It wraps `git clean -ndX` into artifact families and also reports tracked source
+status plus unignored untracked files. It does not delete, move, or rewrite
+anything.
+
+2026-04-26 no-churn audit result:
+
+- tracked source was clean on branch `codex/cleanup-gsc-rebalance-split`;
+- `git clean -ndX` reported 4247 ignored cleanup candidates;
+- the largest families were generated graphics outputs (`.2bpp`, `.gbcpal`,
+  `.2bpp.lz`, `.dimensions`, `.1bpp`) and expected RGBDS outputs;
+- root normal/debug/trace `.gbc`, `.map`, and `.sym` files were present and
+  should stay in place unless a user approves an output-layout plan;
+- `.local/` held probe/dependency/temp outputs, `workspace/` held scratch review
+  material, and `dist/` held release artifacts;
+- no deletion or relocation was performed because the noise is currently
+  explainable and build/index/tooling assumptions still depend on root outputs.
+
 ## Current Build Output Families
 
 | Family | Examples | Use |

@@ -1,7 +1,7 @@
-# compiled objects
+# RGBDS object outputs. Rebuild; never hand-edit.
 *.o
 
-# compiled graphics
+# Generated graphics outputs from source PNG/palette data.
 *.1bpp
 *.2bpp
 *.lz
@@ -9,27 +9,27 @@
 *.dimensions
 *.sgb.tilemap
 
-# compiled roms
+# Built ROM and patch outputs. Root .gbc files are build products.
 *.gbc
 *.gb
 *.patch
 
-# rgbds extras
+# RGBDS linker outputs. .map/.sym are read-only address truth.
 *.map
 *.sym
 
-# tool binaries
+# Repo-local toolchain downloads and compiled helper binaries.
 *.exe
 rgbds-1.0.1/
 rgbds-win64.zip
 rgbds-win64*.zip
 rgbds-*/
 
-# precompiled python
+# Python cache outputs.
 *.pyc
 *$py.class
 
-# save game files
+# Emulator save/state files.
 *.sgm
 *.sav
 *.rtc
@@ -37,7 +37,8 @@ rgbds-*/
 *.sa*
 *.sg1
 
-# repo hygiene: ROM/emulator artifacts
+# Local scratch and release output families. Do not broaden these patterns unless
+# the path is documented as scratch/output in docs/agent_navigation/source_output_ownership.md.
 .local/
 dist/*.gb
 dist/*.gbc
