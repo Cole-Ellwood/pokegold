@@ -54,6 +54,18 @@ For documentation-only beauty passes, stay in `docs/`, `audit/`, and `outbox/`
 unless the user explicitly asks for tooling support. Do not clean, reset, or
 rewrite unrelated dirty worktree changes.
 
+## Workspace Hygiene Rule
+
+Ignored build/linker outputs can make the raw folder feel noisy. That noise is
+not automatically a defect: root `.gbc`, `.map`, and `.sym` files are part of
+the proven build/index workflow, and object files may be normal RGBDS byproducts.
+
+For a 10/10 cleanliness pass, start from
+`outbox/repo_10_10_polish_prompt.md`. Do not delete ignored files, relocate
+outputs, or change `Makefile` output paths just to make the tree look tidy.
+First prove which artifacts are expected, which are stale scratch, and which
+tools/docs assume the current layout.
+
 ## Current Build Output Families
 
 | Family | Examples | Use |
