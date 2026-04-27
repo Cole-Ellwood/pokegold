@@ -53,6 +53,7 @@ only visible in generated audit output.
 | `CORSOLA` | Upgraded into a sturdier Rock/Water Recover spinner; Brock now uses it instead of Donphan. | Watch late Rock-team stall pacing. |
 | `ELECTRODE` | Added Rapid Spin access so Electric teams can clear hazards without importing Donphan. | Watch if the fastest spinner is too clean. |
 | `DELIBIRD` | Upgraded from Present-only into an Ice/Flying utility wall with Icy Wind, Aurora Beam, Agility, Wing Attack, Haze, and late Blizzard. | Watch Silver Ice Path catch feel and Pokefan Colin's level 32 Delibird. |
+| `FARFETCH_D` | Moved into a provisional Stick-backed crit attacker role: wild Farfetch'd now commonly carry Stick, learn Wing Attack at level 23, and Stick's item text names its critical-ratio effect. | Playtest Route 38 catch feel and Bird Keeper Jose/Perry trainer showcases. |
 
 ## High Priority
 
@@ -62,7 +63,6 @@ _No active high-priority entries after the resolved evolution and gimmick pass._
 
 | Pokemon | Why It Is Suspicious | Likely Fix Paths | Status |
 | --- | --- | --- | --- |
-| `FARFETCH_D` | Buffed Attack helps, but reliable STAB is still modest for a standalone final. | Confirm Stick availability or improve Flying/Normal access. | needs review |
 | `ARIADOS` | Bulky enough to have a role, but low speed and modest attack can still feel flat. | Add stronger Bug/Poison identity or document as bulky status utility. | needs review |
 | `YANMA` | Fast-ish Bug/Flying with questionable STAB quality. | Confirm speed/offense role or improve level-up attack access. | needs review |
 

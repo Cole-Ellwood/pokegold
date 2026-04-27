@@ -25,11 +25,10 @@ species, but buffs should preserve identity and avoid trivializing early Johto.
 High priority is intentionally empty in `docs/buff_backlog.md`. Do not promote a
 medium-priority Pokemon just to keep the queue visually busy.
 
-Medium-priority review starts with:
+Medium-priority review now starts with:
 
 | Pokemon | First question |
 | --- | --- |
-| `FARFETCH_D` | Is Stick availability or Flying/Normal STAB strong enough for a standalone final? |
 | `ARIADOS` | Is bulky status utility real in play, or does low Speed leave it flat? |
 | `YANMA` | Does current Speed/offense make the Bug/Flying role worth using? |
 

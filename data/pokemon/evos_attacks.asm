@@ -1144,6 +1144,7 @@ FarfetchDEvosAttacks:
 	db 7, SAND_ATTACK
 	db 13, LEER
 	db 19, FURY_ATTACK
+	db 23, WING_ATTACK
 	db 25, SWORDS_DANCE
 	db 31, SLASH
 	db 40, FALSE_SWIPE

@@ -2,7 +2,7 @@
 
 Boss AI cognition note: if you are here for the Boss AI loop, think wildly in the journal before changing source; this index is the hard memory/bank reality check for those ideas.
 
-Generated: 2026-04-26
+Generated: 2026-04-27
 ROM target: `pokegold`
 
 Generated from `layout.link`, assembly sources, `pokegold.map`, and `pokegold.sym`.
@@ -75,7 +75,7 @@ Read `docs/README.md` first for helper-doc routing, then `docs/codex_context.md`
 | Region | Used | Free | Banks |
 | --- | ---: | ---: | ---: |
 | ROM0 | 16131 | 253 |  |
-| ROMX | 1157976 | 922792 | 127 |
+| ROMX | 1157980 | 922788 | 127 |
 | SRAM | 31697 | 1071 | 4 |
 | WRAM0 | 4047 | 49 |  |
 | WRAMX | 4096 | 0 |  |
@@ -155,7 +155,7 @@ Use these as candidates when moving optional code or data out of tight banks.
 | `Effect Commands` | ROMX | 0d:4000-7ffe | 16383 | ROMX 0d | `engine/battle/effect_commands.asm`, `engine/battle/used_move_text.asm`, `main.asm` |
 | `Enemy Trainers` | ROMX | 0e:4000-7dd6 | 15831 | ROMX 0e | `engine/battle/ai/boss.asm`, `engine/battle/ai/items.asm`, `engine/battle/ai/scoring.asm`, `engine/battle/read_trainer_attributes.asm`, +1 more |
 | `Battle Core` | ROMX | 0f:4000-7bb6 | 15287 | ROMX 0f | `engine/battle/core.asm`, `main.asm` |
-| `Evolutions and Attacks` | ROMX | 10:6893-7f92 | 5888 | ROMX 10 | `data/pokemon/evos_attacks.asm`, `data/pokemon/evos_attacks_pointers.asm` |
+| `Evolutions and Attacks` | ROMX | 10:6893-7f94 | 5890 | ROMX 10 | `data/pokemon/evos_attacks.asm`, `data/pokemon/evos_attacks_pointers.asm` |
 | `Maps` | ROMX | 25:4000-65f8 | 9721 | ROMX 25 | `data/maps/attributes.asm`, `data/maps/blocks.asm`, `data/maps/map_data.asm`, `data/maps/maps.asm`, +2 more |
 | `Events` | ROMX | 25:65f9-7d99 | 6049 | ROMX 25 | `data/wild/bug_contest_mons.asm`, `engine/events/trainer_scripts.asm`, `engine/overworld/cmd_queue.asm`, `engine/overworld/events.asm`, +1 more |
 | `Audio` | ROMX | 3a:4000-5491 | 5266 | ROMX 3a | `audio.asm`, `audio/cry_pointers.asm`, `audio/engine.asm`, `audio/music/nothing.asm`, +3 more |

@@ -1,6 +1,6 @@
 # Generated Balance Audit
 
-Generated: 2026-04-26T18:52:01
+Generated: 2026-04-27T07:22:52
 Baseline ref: `060d4accd7c0d01b1697ac97e7d7e2da72e3646b`
 
 Do not hand-edit this file. Regenerate it with:
@@ -61,7 +61,7 @@ _No rows._
 | 5 | `VENOMOTH` | `current-final`, `watch-bst-final`, `low-and-unbuffed-vs-baseline`, `large-bst-regression-vs-baseline` | 470 | 550 | -80 | 70/65/60/100/100/75 | HP-40, Spe-50, SpA+10 | BUG/POISON | - | - | 11 | 23 | SLUDGE_BOMB (POISON 90bp 100%) | SOLARBEAM (GRASS 180bp 100%) |
 | 5 | `QUAGSIRE` | `current-final`, `watch-bst-final`, `low-and-unbuffed-vs-baseline`, `large-bst-regression-vs-baseline` | 475 | 560 | -85 | 120/100/85/35/70/65 | HP-25, Atk-25, SpA-35 | WATER/GROUND | - | - | 6 | 31 | EARTHQUAKE (GROUND 100bp 100%) | HYPER_BEAM (NORMAL 180bp 90%) |
 | 4 | `GLIGAR` | `current-final`, `low-and-unbuffed-vs-baseline`, `large-bst-regression-vs-baseline` | 490 | 590 | -100 | 85/95/125/85/35/65 | HP-40, Def-10, SpD-50 | GROUND/FLYING | - | - | 8 | 25 | WING_ATTACK (FLYING 80bp 100%) | IRON_TAIL (STEEL 130bp 75%) |
-| 3 | `FARFETCH_D` | `current-final`, `low-bst-final` | 425 | 352 | 73 | 60/130/55/60/58/62 | HP+8, Atk+65 | NORMAL/FLYING | - | - | 7 | 24 | SLASH (NORMAL 70bp 100%) | IRON_TAIL (STEEL 130bp 75%) |
+| 3 | `FARFETCH_D` | `current-final`, `low-bst-final` | 425 | 352 | 73 | 60/130/55/60/58/62 | HP+8, Atk+65 | NORMAL/FLYING | - | - | 8 | 24 | WING_ATTACK (FLYING 80bp 100%) | IRON_TAIL (STEEL 130bp 75%) |
 | 3 | `DUGTRIO` | `current-final`, `low-bst-final` | 445 | 405 | 40 | 35/110/50/130/50/70 | Atk+30, Spe+10 | GROUND/GROUND | - | - | 10 | 22 | EARTHQUAKE (GROUND 100bp 100%) | HYPER_BEAM (NORMAL 180bp 90%) |
 | 3 | `GRANBULL` | `current-final`, `watch-bst-final`, `low-and-unbuffed-vs-baseline` | 450 | 450 | 0 | 90/120/75/45/60/60 | +0 | NORMAL/NORMAL | - | - | 10 | 32 | HYPER_BEAM (NORMAL 180bp 90%) | HYPER_BEAM (NORMAL 180bp 90%) |
 | 3 | `ARIADOS` | `current-final`, `watch-bst-final`, `low-and-unbuffed-vs-baseline` | 460 | 485 | -25 | 110/90/100/40/60/60 | Atk-25 | BUG/POISON | - | - | 8 | 22 | SLUDGE_BOMB (POISON 90bp 100%) | SOLARBEAM (GRASS 180bp 100%) |
