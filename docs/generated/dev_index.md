@@ -75,7 +75,7 @@ Read `docs/README.md` first for helper-doc routing, then `docs/codex_context.md`
 | Region | Used | Free | Banks |
 | --- | ---: | ---: | ---: |
 | ROM0 | 16124 | 260 |  |
-| ROMX | 1157982 | 922786 | 127 |
+| ROMX | 1157964 | 922804 | 127 |
 | SRAM | 31697 | 1071 | 4 |
 | WRAM0 | 4047 | 49 |  |
 | WRAMX | 4096 | 0 |  |
@@ -170,7 +170,7 @@ Use these as candidates when moving optional code or data out of tight banks.
 | `Map Scripts 1` | ROMX | 42:4000-5e01 | 7682 | ROMX 42 | `data/maps/scripts.asm`, `maps/BurnedTower1F.asm`, `maps/BurnedTowerB1F.asm`, `maps/DiglettsCave.asm`, +19 more |
 | `Map Scripts 2` | ROMX | 43:4000-7197 | 12696 | ROMX 43 | `data/maps/scripts.asm`, `maps/NationalPark.asm`, `maps/NationalParkBugContest.asm`, `maps/RadioTower1F.asm`, +4 more |
 | `Map Scripts 3` | ROMX | 44:4000-70ca | 12491 | ROMX 44 | `data/maps/scripts.asm`, `maps/OlivineLighthouse1F.asm`, `maps/OlivineLighthouse2F.asm`, `maps/OlivineLighthouse3F.asm`, +15 more |
-| `Map Scripts 4` | ROMX | 45:4000-6f59 | 12122 | ROMX 45 | `data/maps/scripts.asm`, `maps/IlexForest.asm`, `maps/MahoganyMart1F.asm`, `maps/TeamRocketBaseB1F.asm`, +2 more |
+| `Map Scripts 4` | ROMX | 45:4000-6f47 | 12104 | ROMX 45 | `data/maps/scripts.asm`, `maps/IlexForest.asm`, `maps/MahoganyMart1F.asm`, `maps/TeamRocketBaseB1F.asm`, +2 more |
 | `Map Scripts 5` | ROMX | 46:4000-636f | 9072 | ROMX 46 | `data/maps/scripts.asm`, `maps/GoldenrodDeptStoreB1F.asm`, `maps/GoldenrodUnderground.asm`, `maps/GoldenrodUndergroundSwitchRoomEntrances.asm`, +10 more |
 | `Map Scripts 6` | ROMX | 47:4000-49e0 | 2529 | ROMX 47 | `data/maps/scripts.asm`, `maps/DarkCaveBlackthornEntrance.asm`, `maps/DarkCaveVioletEntrance.asm`, `maps/DragonsDen1F.asm`, +14 more |
 | `Map Scripts 7` | ROMX | 48:4000-65b7 | 9656 | ROMX 48 | `data/maps/scripts.asm`, `maps/AzaleaTown.asm`, `maps/CherrygroveCity.asm`, `maps/CianwoodCity.asm`, +3 more |

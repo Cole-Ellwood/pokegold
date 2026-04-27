@@ -742,11 +742,6 @@ RocketBaseLanceElectrodeDoneText:
 	cont "any need for it."
 	done
 
-RocketBaseReceivedHM06Text: ; unreferenced
-	text "<PLAYER> received"
-	line "TM56."
-	done
-
 RocketBaseLanceWhirlpoolText:
 	text "The WHIRL KIT can"
 	line "clear whirlpools."
