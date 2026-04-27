@@ -351,14 +351,55 @@ def check_bug_contest_exit_flow() -> None:
     )
 
 
-def check_trainer_objects_use_trainer_scripts() -> None:
+def parse_map_label_first_code(path: Path) -> dict[str, str]:
+    lines = path.read_text(encoding="utf-8").splitlines()
+    labels: dict[str, str] = {}
+    label_pat = re.compile(r"^([A-Za-z0-9_.]+):\s*$")
+    for index, line in enumerate(lines):
+        label_match = label_pat.match(line)
+        if not label_match:
+            continue
+        for next_line in lines[index + 1 : index + 6]:
+            code = next_line.split(";", 1)[0].strip()
+            if code:
+                labels[label_match.group(1)] = code
+                break
+    return labels
+
+
+def check_map_event_script_shapes() -> None:
     for path in sorted((ROOT / "maps").glob("*.asm")):
+        labels = parse_map_label_first_code(path)
         for line_no, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
-            if not line.lstrip().startswith("object_event"):
+            stripped = line.lstrip()
+            if stripped.startswith("object_event"):
+                parts = [part.strip() for part in line.split(",")]
+                if len(parts) < 13:
+                    continue
+                event_type = parts[9]
+                label = parts[11]
+                first_code = labels.get(label, "")
+                if event_type == "OBJECTTYPE_TRAINER" and not first_code.startswith("trainer "):
+                    fail(
+                        f"{path.relative_to(ROOT)}:{line_no}: "
+                        f"trainer object points at non-trainer script {label}"
+                    )
+                if event_type == "OBJECTTYPE_ITEMBALL" and not first_code.startswith("itemball"):
+                    fail(
+                        f"{path.relative_to(ROOT)}:{line_no}: "
+                        f"itemball object points at non-itemball script {label}"
+                    )
                 continue
-            if "OBJECTTYPE_TRAINER" not in line or "ObjectEvent" not in line:
+
+            if not stripped.startswith("bg_event") or "BGEVENT_ITEM" not in line:
                 continue
-            fail(f"{path.relative_to(ROOT)}:{line_no}: trainer object points at generic ObjectEvent")
+            parts = [part.strip() for part in line.split(",")]
+            if len(parts) < 4:
+                continue
+            label = parts[3]
+            first_code = labels.get(label, "")
+            if not first_code.startswith("hiddenitem"):
+                fail(f"{path.relative_to(ROOT)}:{line_no}: hidden item points at non-hiddenitem script {label}")
 
 
 def parse_map_itemball_labels(path: Path) -> dict[str, str]:
@@ -522,8 +563,8 @@ def main() -> int:
     check_bug_contest_exit_flow()
     print("PASS: Bug Contest exit flow checks")
 
-    check_trainer_objects_use_trainer_scripts()
-    print("PASS: trainer object script-pointer checks")
+    check_map_event_script_shapes()
+    print("PASS: map event script-shape checks")
 
     check_itemball_event_cross_swaps()
     print("PASS: itemball event cross-swap checks")
