@@ -63,7 +63,7 @@ _No active high-priority entries after the resolved evolution and gimmick pass._
 
 | Pokemon | Why It Is Suspicious | Likely Fix Paths | Status |
 | --- | --- | --- | --- |
-| `ARIADOS` | Bulky enough to have a role, but low speed and modest attack can still feel flat. | Add stronger Bug/Poison identity or document as bulky status utility. | needs review |
+| `ARIADOS` | Bulky enough to have a role, but low speed and modest attack can still feel flat. 2026-04-27 fixed its out-of-order `FURY_SWIPES` row; role question remains. | Add stronger Bug/Poison identity or document as bulky status utility. | needs review |
 | `YANMA` | Fast-ish Bug/Flying with questionable STAB quality. | Confirm speed/offense role or improve level-up attack access. | needs review |
 
 ## Lower Priority Watchlist

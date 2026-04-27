@@ -181,6 +181,12 @@ It is no longer a complete release manifest for the current project state.
 - `TOTODILE` level-up: `Lv13 WATER_GUN -> Lv13 SURF`
 - `CROCONAW` level-up: `Lv28 SCARY_FACE -> Lv28 CROSS_CHOP`
 
+### Level-up order cleanup
+
+- Reordered 24 level-up rows back into increasing-level order without changing
+  any move levels or move identities. This restores the table invariant used by
+  `FillMoves` when generating a Pokemon's current moves from species and level.
+
 ## Scope note
 
 - This document covers only data-layer diffs.

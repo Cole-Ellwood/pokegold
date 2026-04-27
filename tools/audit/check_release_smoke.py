@@ -83,6 +83,57 @@ def parse_levelup_block(path: Path, label: str) -> dict[str, int]:
     return {}
 
 
+def check_levelup_move_order(path: Path) -> None:
+    current_label: str | None = None
+    in_moves = False
+    previous_level: int | None = None
+    previous_line: int | None = None
+    label_pat = re.compile(r"^([A-Za-z0-9_]+EvosAttacks):\s*$")
+    move_pat = re.compile(r"^db\s+(\d+),\s*[A-Z0-9_]+\b")
+
+    for line_no, raw in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        label_match = label_pat.match(raw)
+        if label_match:
+            current_label = label_match.group(1)
+            in_moves = False
+            previous_level = None
+            previous_line = None
+            continue
+
+        if current_label is None:
+            continue
+
+        code = raw.split(";", 1)[0].strip()
+        if not code:
+            continue
+
+        if code.startswith("db 0"):
+            if in_moves:
+                current_label = None
+                in_moves = False
+            else:
+                in_moves = True
+                previous_level = None
+                previous_line = None
+            continue
+
+        if not in_moves:
+            continue
+
+        move_match = move_pat.match(code)
+        if not move_match:
+            continue
+
+        level = int(move_match.group(1))
+        if previous_level is not None and level < previous_level:
+            fail(
+                f"{current_label}: level-up moves descend at line {line_no}: "
+                f"Lv{level} follows Lv{previous_level} from line {previous_line}"
+            )
+        previous_level = level
+        previous_line = line_no
+
+
 def require_text(path: Path, needle: str) -> None:
     text = path.read_text(encoding="utf-8")
     if needle not in text:
@@ -201,6 +252,9 @@ def main() -> int:
     print("PASS: starter final evolution stat/type checks")
 
     evos_path = ROOT / "data/pokemon/evos_attacks.asm"
+    check_levelup_move_order(evos_path)
+    print("PASS: level-up move order checks")
+
     expected_level_moves = {
         "MeganiumEvosAttacks": {"HEAL_BELL": 33, "SOLARBEAM": 41},
         "TyphlosionEvosAttacks": {"FIRE_BLAST": 37, "ANCIENTPOWER": 45},
