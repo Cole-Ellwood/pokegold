@@ -402,20 +402,42 @@ def check_map_event_script_shapes() -> None:
                 fail(f"{path.relative_to(ROOT)}:{line_no}: hidden item points at non-hiddenitem script {label}")
 
 
-def check_coord_events_use_counted_scene_scripts() -> None:
+def parse_map_scene_scripts(path: Path) -> set[str]:
     scene_script_pat = re.compile(r"^\s*scene_script\s+[^,]+,\s*([A-Z0-9_]+)\b")
+    scene_scripts: set[str] = set()
+    for raw in path.read_text(encoding="utf-8").splitlines():
+        code = raw.split(";", 1)[0]
+        scene_script_match = scene_script_pat.match(code)
+        if scene_script_match:
+            scene_scripts.add(scene_script_match.group(1))
+    return scene_scripts
+
+
+def parse_map_attribute_labels(path: Path) -> dict[str, str]:
+    attr_pat = re.compile(r"^\s*map_attributes\s+([A-Za-z0-9_]+),\s*([A-Z0-9_]+),")
+    labels: dict[str, str] = {}
+    for raw in path.read_text(encoding="utf-8").splitlines():
+        match = attr_pat.match(raw)
+        if match:
+            label, map_constant = match.groups()
+            labels[map_constant] = label
+    if not labels:
+        fail(f"could not parse map attributes from {path}")
+    return labels
+
+
+def is_literal_scene_id(scene: str) -> bool:
+    return re.fullmatch(r"(?:\d+|\$[0-9a-fA-F]+)", scene) is not None
+
+
+def check_coord_events_use_counted_scene_scripts() -> None:
     coord_event_pat = re.compile(r"^\s*coord_event\s+[^,]+,\s*[^,]+,\s*([A-Z0-9_]+)\s*,")
 
     for path in sorted((ROOT / "maps").glob("*.asm")):
-        scene_scripts: set[str] = set()
+        scene_scripts = parse_map_scene_scripts(path)
         coord_events: list[tuple[int, str]] = []
         for line_no, raw in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
             code = raw.split(";", 1)[0]
-            scene_script_match = scene_script_pat.match(code)
-            if scene_script_match:
-                scene_scripts.add(scene_script_match.group(1))
-                continue
-
             coord_event_match = coord_event_pat.match(code)
             if coord_event_match:
                 coord_events.append((line_no, coord_event_match.group(1)))
@@ -425,6 +447,48 @@ def check_coord_events_use_counted_scene_scripts() -> None:
                 fail(
                     f"{path.relative_to(ROOT)}:{line_no}: coord_event uses {scene}, "
                     "but the map scene table does not count it with scene_script"
+                )
+
+
+def check_scene_setting_commands_use_counted_scene_scripts() -> None:
+    map_labels = parse_map_attribute_labels(ROOT / "data/maps/attributes.asm")
+    map_scene_scripts = {
+        path.stem: parse_map_scene_scripts(path)
+        for path in sorted((ROOT / "maps").glob("*.asm"))
+    }
+    setscene_pat = re.compile(r"^\s*setscene\s+([^\s,;]+)")
+    setmapscene_pat = re.compile(r"^\s*setmapscene\s+([A-Z0-9_]+),\s*([^\s,;]+)")
+    script_paths = [
+        *sorted((ROOT / "maps").glob("*.asm")),
+        *sorted((ROOT / "engine").rglob("*.asm")),
+        *sorted((ROOT / "data").rglob("*.asm")),
+    ]
+
+    for path in script_paths:
+        for line_no, raw in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            code = raw.split(";", 1)[0]
+            setscene_match = setscene_pat.match(code)
+            if setscene_match and path.parent == ROOT / "maps":
+                scene = setscene_match.group(1)
+                if not is_literal_scene_id(scene) and scene not in map_scene_scripts.get(path.stem, set()):
+                    fail(
+                        f"{path.relative_to(ROOT)}:{line_no}: setscene uses {scene}, "
+                        "but this map does not count it with scene_script"
+                    )
+
+            setmapscene_match = setmapscene_pat.match(code)
+            if not setmapscene_match:
+                continue
+            map_constant, scene = setmapscene_match.groups()
+            if is_literal_scene_id(scene):
+                continue
+            target_label = map_labels.get(map_constant)
+            if target_label is None:
+                fail(f"{path.relative_to(ROOT)}:{line_no}: setmapscene uses unknown map {map_constant}")
+            if scene not in map_scene_scripts.get(target_label, set()):
+                fail(
+                    f"{path.relative_to(ROOT)}:{line_no}: setmapscene sets {map_constant} to {scene}, "
+                    "but the target map does not count that scene with scene_script"
                 )
 
 
@@ -724,6 +788,9 @@ def main() -> int:
 
     check_coord_events_use_counted_scene_scripts()
     print("PASS: coord-event scene-table checks")
+
+    check_scene_setting_commands_use_counted_scene_scripts()
+    print("PASS: scene-setting command scene-table checks")
 
     check_object_constants_match_object_events()
     print("PASS: object constant count checks")
