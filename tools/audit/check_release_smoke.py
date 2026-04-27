@@ -351,6 +351,16 @@ def check_bug_contest_exit_flow() -> None:
     )
 
 
+def check_trainer_objects_use_trainer_scripts() -> None:
+    for path in sorted((ROOT / "maps").glob("*.asm")):
+        for line_no, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            if not line.lstrip().startswith("object_event"):
+                continue
+            if "OBJECTTYPE_TRAINER" not in line or "ObjectEvent" not in line:
+                continue
+            fail(f"{path.relative_to(ROOT)}:{line_no}: trainer object points at generic ObjectEvent")
+
+
 def main() -> int:
     moves = parse_moves(ROOT / "data/moves/moves.asm")
     expected_moves = {
@@ -451,6 +461,9 @@ def main() -> int:
 
     check_bug_contest_exit_flow()
     print("PASS: Bug Contest exit flow checks")
+
+    check_trainer_objects_use_trainer_scripts()
+    print("PASS: trainer object script-pointer checks")
 
     require_ordered_text(
         ROOT / "engine/events/tm_tutor.asm",
