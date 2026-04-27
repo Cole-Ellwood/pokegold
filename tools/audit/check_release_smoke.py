@@ -268,6 +268,20 @@ def check_documented_gold_silver_bugfixes() -> None:
     )
 
 
+def check_no_stale_reward_receipt_texts() -> None:
+    stale_receipt_pat = re.compile(
+        r"^(?P<label>[A-Za-z0-9_]*Received(?:TM|HM)[A-Za-z0-9_]*):\s*;\s*unreferenced\b"
+    )
+    stale: list[str] = []
+    for path in sorted((ROOT / "maps").glob("*.asm")):
+        for line_no, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            match = stale_receipt_pat.match(line)
+            if match:
+                stale.append(f"{path.relative_to(ROOT)}:{line_no}:{match.group('label')}")
+    if stale:
+        fail("stale unreferenced reward receipt text labels: " + ", ".join(stale))
+
+
 def main() -> int:
     moves = parse_moves(ROOT / "data/moves/moves.asm")
     expected_moves = {
@@ -353,6 +367,9 @@ def main() -> int:
 
     check_documented_gold_silver_bugfixes()
     print("PASS: documented Gold/Silver bugfix checks")
+
+    check_no_stale_reward_receipt_texts()
+    print("PASS: stale reward receipt text checks")
 
     require_ordered_text(
         ROOT / "engine/events/tm_tutor.asm",
