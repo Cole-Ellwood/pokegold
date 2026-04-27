@@ -22,7 +22,8 @@ scratch paths first.
 | `tools/trace/boss_ai_trace_state_probe.py` | PyBoy state/RAM preflight for live Boss AI captures. | Probe helper. | Use before adding a candidate state to the live-capture manifest. |
 | `audit/boss_ai_trace/live_capture_ledger.md` | Live Boss AI trace status ledger. | Evidence ledger. | Priority rows must not be marked finished without real capture files. |
 | `audit/boss_ai_trace/live_capture_manifest.json` | Trace batch manifest. | Tool input. | Add states only when they match the current trace ROM. |
-| `audit/boss_ai_trace/morty_live.txt` | Current Morty live chosen-move proof. | Live emulator evidence. | First proof capsule; has current trace hashes and `chosen_id=95`. |
+| `tools/trace/boss_ai_state_factory.py` | PyBoy state factory for real trainer live captures. | Tooling. | Use `--all --update-manifest` to regenerate trainer decision states through real map scripts. |
+| `audit/boss_ai_trace/morty_live.txt` | Current Morty live chosen-move proof. | Live emulator evidence. | First proof capsule; has current trace hashes and `chosen_id=101`. |
 | `audit/boss_ai_trace/morty_proof_capsule_attempt_2026-04-26.md` | Blocked Morty proof attempt and unblock recipe. | Negative evidence. | Shows why old RAM was not accepted as proof. |
 | `docs/agent_navigation/subsystems/` | Micro-indexes for high-friction workstreams. | Routing only. | Use after task classification, before broad search. |
 | `outbox/boss_ai_new_thinker_prompt.md` | Paste-ready prompt for the next deep Boss AI design/proof session. | Handoff prompt. | Use after Morty proof when choosing live proof, Haki planning, public-imagination review, or cheap-difficulty audit work. |
@@ -45,7 +46,7 @@ Good:
 
 - "Audit X passed against current source."
 - "Build reported both ROMs up to date."
-- "Trace batch found missing states and ran zero captures."
+- "Trace batch found one missing synthetic scenario and all real trainer states ready."
 - "Manual emulator validation was not performed."
 
 Bad:

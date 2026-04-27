@@ -55,6 +55,68 @@ Use `--symbols-only` for debugger addresses. If a PyBoy save-state is available
 at a boss AI decision point, pass it with `--save-state` and write the formatted
 WRAM excerpt with `--out`.
 
+## Live State Factory Easy Path
+
+Use this path for real trainer live proof before inventing any battle-RAM
+stitching. The factory only edits overworld/story state enough to enter the
+real map room, then it talks to the trainer and lets that trainer's own
+`loadtrainer` / `startbattle` script create battle RAM.
+
+Generate all supported trainer decision states and write their paths into the
+manifest:
+
+```powershell
+python tools\trace\boss_ai_state_factory.py --all --update-manifest
+```
+
+Generate one trainer only:
+
+```powershell
+python tools\trace\boss_ai_state_factory.py --boss clair --update-manifest
+```
+
+The factory writes:
+
+- decision states under `.local/tmp/boss_state_factory/*_chosen_frame_*.state`
+- per-route logs under `.local/tmp/boss_state_factory/*_state_factory.log`
+- `.local/tmp/boss_state_factory/manifest_hints.json`
+
+The route table lives in `tools/trace/boss_ai_state_factory.py`. Each route is
+deliberately small: manifest id, map constant, player tile in front of the
+leader, trainer class/id, event flags to clear or set, and optional scene bytes
+for maps that would otherwise run an entry cutscene. If a new trainer is added,
+copy an existing `BossRoute` and use the map script's real `object_event` and
+`loadtrainer` line as source truth.
+
+Then dry-run the manifest:
+
+```powershell
+python tools\trace\boss_ai_trace_batch.py
+```
+
+If the target row is `READY`, run the capture:
+
+```powershell
+python tools\trace\boss_ai_trace_batch.py --execute --only clair
+```
+
+Or run every ready manifest row:
+
+```powershell
+python tools\trace\boss_ai_trace_batch.py --execute
+```
+
+Only promote a manifest/ledger row to `FINISHED` after the matching
+`audit/boss_ai_trace/*_live.txt` exists and has nonzero `chosen_id`. The
+factory's `--update-manifest` option intentionally does not promote status; it
+only fills `save_state`, `stop_after_first_capture`, and
+`require_chosen_move`.
+
+As of 2026-04-26, the factory supports all real trainer rows currently in the
+manifest: the 16 gym leaders, Koga, and Champion Lance. It does not generate
+the `shared_switch_loop` scenario, because that needs a synthetic repeated
+switch setup rather than a single map trainer.
+
 Before treating a save-state or battery-RAM sidecar as boss-position proof,
 probe it:
 
@@ -98,13 +160,15 @@ These details saved the 2026-04-26 follow-up from false proof:
   `.local/tmp/morty_issue_cycle4/a_taps_trace_frame_0161.state`. The later
   delta-263 state reached top moves but not an accepted chosen move on the
   current stricter proof gate.
-- The accepted Morty proof state is
-  `.local/tmp/morty_issue_cycle8/chosen_frame_3086.state`. It was generated
-  from the repaired current-basis Morty state after fixing two cursor bugs in
-  `engine/battle/ai/boss.asm`: `BossAI_CheckTypeMatchupNoItem` must preserve
-  the TypeMatchups table cursor around multiply/divide work, and
-  `BossAI_GetTypeThreatSeverityVsEnemyMon` must preserve the plausible-threat
-  list cursor around the known-defense adjustment helper.
+- The first accepted Morty proof state was
+  `.local/tmp/morty_issue_cycle8/chosen_frame_3086.state`. The current manifest
+  uses the regenerable real-script factory state
+  `.local/tmp/boss_state_factory/morty_chosen_frame_5646.state`. Both depend on
+  the repaired cursor bugs in `engine/battle/ai/boss.asm`:
+  `BossAI_CheckTypeMatchupNoItem` must preserve the TypeMatchups table cursor
+  around multiply/divide work, and `BossAI_GetTypeThreatSeverityVsEnemyMon`
+  must preserve the plausible-threat list cursor around the known-defense
+  adjustment helper.
 - If PyBoy driving seems to hang, check whether the script is simply running at
   real-time speed. After `load_state`, call `pyboy.set_emulation_speed(0)` in
   scratch drivers, and write progress to a file under `.local/tmp/` when the
@@ -114,7 +178,7 @@ These details saved the 2026-04-26 follow-up from false proof:
   top-move/chosen-move fields. Use it as a diagnostic breadcrumb.
 - Do not use the delta-263 state as final proof either. It was the useful wrong
   turn: top moves existed, but the accepted tooling requires a nonzero chosen
-  move. The current manifest records the cycle8 chosen state instead.
+  move. The current manifest records the factory chosen state instead.
 - When a battle stalls before a trace appears, save a screenshot/BMP from the
   current frame. The Morty scratch attempt looked close until the screen showed
   broken player state during send-out.
@@ -194,19 +258,23 @@ For the post-release-safety boss AI patch, read
 checks added by the patch and the manual RGBDS build fallback used when `make`
 is unavailable.
 
-Capture at least one full battle trace for each target:
-- Falkner
-- Whitney
-- Morty
-- Elite Four (at minimum one member; preferred all four)
-- Champion (Lance)
+Current first-decision live proof status:
+- all 16 gym leaders: captured
+- Koga: captured
+- Champion Lance: captured
+- shared switch-loop: still needs a dedicated scenario fixture
 
-Post-patch priority set:
+The all-trainer captures are smoke proof that the current trace ROM reaches the
+Boss AI decision path through real map scripts and records a nonzero chosen
+move. They are not exhaustive proof for every behavior branch below.
+
+Post-patch priority scenarios still worth richer targeted captures:
 - Morty
 - Jasmine
 - Clair
 - Koga
-- Champion (Lance)
+- Champion Lance
+- shared switch-loop
 
 Post-patch scenarios to capture:
 - revealed Ice Punch or equivalent coverage does not transfer to another player
@@ -226,8 +294,8 @@ Save excerpts under:
 - `audit/boss_ai_trace/<boss>.txt`
 
 Recommended filenames:
-- `audit/boss_ai_trace/falkner.txt`
-- `audit/boss_ai_trace/whitney.txt`
-- `audit/boss_ai_trace/morty.txt`
-- `audit/boss_ai_trace/e4_will.txt` (or per-member variants)
-- `audit/boss_ai_trace/champion_lance.txt`
+- `audit/boss_ai_trace/falkner_live.txt`
+- `audit/boss_ai_trace/whitney_live.txt`
+- `audit/boss_ai_trace/morty_live.txt`
+- `audit/boss_ai_trace/koga_live.txt`
+- `audit/boss_ai_trace/champion_lance_live.txt`

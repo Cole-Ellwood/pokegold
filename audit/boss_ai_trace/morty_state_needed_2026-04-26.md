@@ -17,12 +17,12 @@ audit/boss_ai_trace/morty_live.txt
 The accepted PyBoy state is:
 
 ```text
-.local/tmp/morty_issue_cycle8/chosen_frame_3086.state
+.local/tmp/boss_state_factory/morty_chosen_frame_5646.state
 ```
 
 Current verified evidence:
 
-- `python tools\trace\boss_ai_trace_state_probe.py --save-state .local\tmp\morty_issue_cycle8\chosen_frame_3086.state --expect-morty --strict` passes.
+- `python tools\trace\boss_ai_trace_state_probe.py --save-state .local\tmp\boss_state_factory\morty_chosen_frame_5646.state --expect-morty --strict` passes.
 - `python tools\trace\boss_ai_trace_batch.py --execute --only morty` writes
   `audit/boss_ai_trace/morty_live.txt`.
 - `python tools\audit\check_boss_ai_live_capture_ledger.py` accepts Morty as
@@ -32,8 +32,8 @@ Current verified evidence:
   and
   `trace_symbols_sha256=8ACBFAA166CBE157D15466AAB27DFD49DCD64109E55F9198B998728903C8806D`.
 - The decision fields are nonzero:
-  `top_moves=HYPNOSIS:1,CURSE:20,NIGHT_SHADE:20`, `chosen=HYPNOSIS`,
-  `chosen_id=95`, `plan_id=2`, `plan_confidence=72`, and
+  `top_moves=CURSE:20,NIGHT_SHADE:20,HYPNOSIS:37`, `chosen=NIGHT_SHADE`,
+  `chosen_id=101`, `plan_id=2`, `plan_confidence=72`, and
   `plausible_mask=33 02 20 8a`.
 
 ## What Actually Fixed It
@@ -54,6 +54,11 @@ The live blocker was source-level cursor corruption in public-threat reads:
 `tools/audit/check_boss_ai_trace_invariants.py` has static guards for both
 hazards.
 
+The later all-trainer state factory replaced the older cycle8 Morty state in
+the manifest. It reaches Ecruteak Gym through real map setup, talks to Morty,
+lets `loadtrainer MORTY, MORTY1` / `startbattle` create battle state, and saves
+only after `wBossAITraceChosenMove != 0`.
+
 ## Historical Breadcrumbs
 
 Ignored `.local/tmp` states are real. Plain `rg --files` respects ignore rules,
@@ -69,12 +74,15 @@ Useful but non-final states:
 .local/tmp/free_roam_morty_cycle3/morty_battle_sane_no_trace_step_043.state
 .local/tmp/morty_issue_cycle4/a_taps_trace_frame_0161.state
 .local/tmp/morty_issue_cycle4/a_taps_completed_trace_delta_263.state
+.local/tmp/morty_issue_cycle8/chosen_frame_3086.state
 ```
 
 The first state is a sane Morty trainer battle before trace fields are written.
 The frame-161 state is plan-only: `plan_id=2`, `plan_confidence=72`, and no
 move choice. The delta-263 state reached top moves, but the current proof gate
-requires nonzero `chosen_id`; do not use it as final proof.
+requires nonzero `chosen_id`; do not use it as final proof. The cycle8 state
+was the first accepted completed proof, but the manifest now uses the
+regenerable real-script factory state instead.
 
 ## Capture Path
 

@@ -14,9 +14,10 @@ All 16 gym leaders are now covered by the roster-level Boss AI audits:
 - Boss AI gating/no-cheat/source invariants
 - memory budget
 
-Morty and Jasmine currently have completed live chosen-move trace captures. The
-other gym leaders need real PyBoy-compatible decision-point save-states before
-they can be called live-proven.
+All 16 gym leaders now have current trace-ROM live chosen-move captures
+produced from real map/script-created battles. The remaining manifest live gap
+is `shared_switch_loop`, which is a scenario fixture rather than a trainer
+standing on a map.
 
 ## Audit Tightening Done In This Pass
 
@@ -44,9 +45,9 @@ Follow-up tightening added a source-truth cross-check against
 engine's own `GymLeaders` / `KantoGymLeaders` tables agree with the Boss AI
 coverage set.
 
-The live-capture ledger and manifest were also expanded from a small priority
-set to explicit rows for every gym leader. Most rows are still `UNTOUCHED`;
-this is intentional evidence hygiene, not a claim that live testing happened.
+The live-capture ledger and manifest were expanded from a small priority set to
+explicit rows for every gym leader, then filled with factory-generated
+decision-point states after the Jasmine route proved the method.
 
 Follow-up verification added and then tightened
 `tools/audit/check_gym_leader_wiring.py`. This checks all 16 gym leader map
@@ -106,8 +107,9 @@ cross-floor Blackthorn Gym sweep.
 A scratch battery-save probe also tested whether existing `.sav` files could
 unblock live captures. Only `pokegold.sav` loaded as a real game save when
 copied to PyBoy's expected `.gbc.ram` name, and it resumed on Route 29 with one
-level-11 party mon. That is useful as a possible early-game bootstrap, but it
-is not a gym-leader decision state.
+level-11 party mon. The state factory now uses that save as the sane player
+party bootstrap, then warps into the real leader room and lets the leader's
+own map script create battle state.
 
 ## Commands Run
 
@@ -125,7 +127,9 @@ python tools\audit\check_gym_leader_wiring.py
 python tools\audit\check_release_smoke.py
 python tools\audit\check_battle_math_safety.py
 python tools\trace\boss_ai_trace_batch.py
-python tools\trace\boss_ai_trace_batch.py --execute --only morty
+python tools\trace\boss_ai_state_factory.py --all --update-manifest
+python tools\trace\boss_ai_trace_batch.py
+python tools\trace\boss_ai_trace_batch.py --execute
 python tools\audit\check_boss_ai_live_capture_ledger.py
 python scripts\generate_dev_index.py --rom pokegold
 python tools\audit\check_docs_navigation.py
@@ -192,27 +196,25 @@ scratch save probe:
   result: not usable as a current gym-leader live-capture state
 
 trace batch dry-run:
-  Morty: READY
-  Jasmine: READY
-  Other 14 gym-leader live rows: MISSING_STATE until real decision states exist
-  Koga: MISSING_STATE
-  Champion Lance: MISSING_STATE
+  all 16 gym leaders: READY
+  Koga: READY
+  Champion Lance: READY
   Shared switch-loop: MISSING_STATE
-  summary: ran=0 skipped=19 missing_state=17 invalid_state=0
+  summary: ran=0 skipped=19 missing_state=1 invalid_state=0
 
 trace batch execution:
-  Morty: RUN
-  wrote audit/boss_ai_trace/morty_live.txt
-  Jasmine: RUN
-  wrote audit/boss_ai_trace/jasmine_live.txt
+  all 16 gym leaders: RUN
+  Koga: RUN
+  Champion Lance: RUN
+  wrote matching audit/boss_ai_trace/*_live.txt files
+  Shared switch-loop: MISSING_STATE
+  summary: ran=18 skipped=1 missing_state=1 invalid_state=0
 
 live capture ledger:
   PASS
-  Morty: FINISHED
-  Jasmine: FINISHED
-  Other 14 gym leaders: UNTOUCHED
-  Koga: UNTOUCHED
-  Champion Lance: UNTOUCHED
+  all 16 gym leaders: FINISHED
+  Koga: FINISHED
+  Champion Lance: FINISHED
   Shared switch-loop: UNTOUCHED
 
 check_docs_navigation.py:
@@ -228,28 +230,29 @@ git diff --check:
 
 | Leader | Tier | Adaptive lead | Source/audit status | Live status |
 | --- | --- | --- | --- | --- |
-| Falkner | `AI_TIER_EARLY` | no | `PASS` | `MISSING_STATE`; `audit/boss_ai_trace/falkner_live.txt` |
-| Bugsy | `AI_TIER_EARLY` | no | `PASS` | `MISSING_STATE`; `audit/boss_ai_trace/bugsy_live.txt` |
-| Whitney | `AI_TIER_EARLY` | no | `PASS` | `MISSING_STATE`; `audit/boss_ai_trace/whitney_live.txt` |
+| Falkner | `AI_TIER_EARLY` | no | `PASS` | `FINISHED`; `audit/boss_ai_trace/falkner_live.txt` |
+| Bugsy | `AI_TIER_EARLY` | no | `PASS` | `FINISHED`; `audit/boss_ai_trace/bugsy_live.txt` |
+| Whitney | `AI_TIER_EARLY` | no | `PASS` | `FINISHED`; `audit/boss_ai_trace/whitney_live.txt` |
 | Morty | `AI_TIER_MID` | no | `PASS` | `FINISHED`; `audit/boss_ai_trace/morty_live.txt` |
-| Chuck | `AI_TIER_MID` | yes | `PASS` | `MISSING_STATE`; `audit/boss_ai_trace/chuck_live.txt` |
-| Jasmine | `AI_TIER_MID` | yes | `PASS` | `FINISHED`; `audit/boss_ai_trace/jasmine_live.txt`; state `.local/tmp/boss_state_factory/jasmine_chosen_frame_5060.state` |
-| Pryce | `AI_TIER_LATE` | yes | `PASS` | `MISSING_STATE`; `audit/boss_ai_trace/pryce_live.txt` |
-| Clair | `AI_TIER_LATE` | yes | `PASS` | `MISSING_STATE`; `audit/boss_ai_trace/clair_live.txt` |
-| Brock | `AI_TIER_LATE` | yes | `PASS` | `MISSING_STATE`; `audit/boss_ai_trace/brock_live.txt` |
-| Misty | `AI_TIER_LATE` | yes | `PASS` | `MISSING_STATE`; `audit/boss_ai_trace/misty_live.txt` |
-| Lt. Surge | `AI_TIER_LATE` | yes | `PASS` | `MISSING_STATE`; `audit/boss_ai_trace/lt_surge_live.txt` |
-| Erika | `AI_TIER_LATE` | yes | `PASS` | `MISSING_STATE`; `audit/boss_ai_trace/erika_live.txt` |
-| Janine | `AI_TIER_LATE` | yes | `PASS` | `MISSING_STATE`; `audit/boss_ai_trace/janine_live.txt` |
-| Sabrina | `AI_TIER_LATE` | yes | `PASS` | `MISSING_STATE`; `audit/boss_ai_trace/sabrina_live.txt` |
-| Blaine | `AI_TIER_LATE` | yes | `PASS` | `MISSING_STATE`; `audit/boss_ai_trace/blaine_live.txt` |
-| Blue | `AI_TIER_LATE` | yes | `PASS` | `MISSING_STATE`; `audit/boss_ai_trace/blue_live.txt` |
+| Chuck | `AI_TIER_MID` | yes | `PASS` | `FINISHED`; `audit/boss_ai_trace/chuck_live.txt` |
+| Jasmine | `AI_TIER_MID` | yes | `PASS` | `FINISHED`; `audit/boss_ai_trace/jasmine_live.txt` |
+| Pryce | `AI_TIER_LATE` | yes | `PASS` | `FINISHED`; `audit/boss_ai_trace/pryce_live.txt` |
+| Clair | `AI_TIER_LATE` | yes | `PASS` | `FINISHED`; `audit/boss_ai_trace/clair_live.txt` |
+| Brock | `AI_TIER_LATE` | yes | `PASS` | `FINISHED`; `audit/boss_ai_trace/brock_live.txt` |
+| Misty | `AI_TIER_LATE` | yes | `PASS` | `FINISHED`; `audit/boss_ai_trace/misty_live.txt` |
+| Lt. Surge | `AI_TIER_LATE` | yes | `PASS` | `FINISHED`; `audit/boss_ai_trace/lt_surge_live.txt` |
+| Erika | `AI_TIER_LATE` | yes | `PASS` | `FINISHED`; `audit/boss_ai_trace/erika_live.txt` |
+| Janine | `AI_TIER_LATE` | yes | `PASS` | `FINISHED`; `audit/boss_ai_trace/janine_live.txt` |
+| Sabrina | `AI_TIER_LATE` | yes | `PASS` | `FINISHED`; `audit/boss_ai_trace/sabrina_live.txt` |
+| Blaine | `AI_TIER_LATE` | yes | `PASS` | `FINISHED`; `audit/boss_ai_trace/blaine_live.txt` |
+| Blue | `AI_TIER_LATE` | yes | `PASS` | `FINISHED`; `audit/boss_ai_trace/blue_live.txt` |
 
 ## Do Not Overclaim
 
-`PASS` in the table means the current source and audit suite say the leader is
-covered by the Boss AI tiering/party legality/invariant checks. It does not
-mean a live emulator capture exists.
+`PASS` in the source/audit column means the current source and audit suite say
+the leader is covered by the Boss AI tiering/party legality/invariant checks.
+`FINISHED` in the live column means a current trace-ROM excerpt exists with
+nonzero `chosen_id`.
 
 The current hard live-proof standard is still:
 
@@ -261,9 +264,9 @@ The current hard live-proof standard is still:
 
 ## Next Best Work
 
-Get real decision-point save-states in gym order if the goal is complete
-all-leader live coverage. The current `pokegold.sav` can bootstrap the
-factory-driven Jasmine route through real map setup. If prioritizing risk
-instead of route order, Clair is now the most valuable next gym capture because
-it covers Spikes, public status fail gates, phazing, and public +2 setup
-denial after Jasmine.
+The all-trainer smoke proof is now complete. The next live work is either:
+
+- build the `shared_switch_loop` scenario fixture;
+- add Red to the manifest and the factory route if Red becomes a live target;
+- create richer per-boss scenario states, because these captures prove first
+  decision execution, not every branch named in the design notes.

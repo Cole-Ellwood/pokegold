@@ -31,7 +31,7 @@ Current implementation status:
 | Live capture ledger audit | `FINISHED` | `python tools\audit\check_boss_ai_live_capture_ledger.py` passes. |
 | Live capture manifest | `FINISHED` | `audit/boss_ai_trace/live_capture_manifest.json` defines boss capture commands. |
 | Live capture batch runner | `FINISHED` | `python tools\trace\boss_ai_trace_batch.py` dry-run reports missing save-states and uses manifest preflights before capture. |
-| Boss-position live emulator/debugger captures | `IN PROGRESS` | Morty and Jasmine have current trace-ROM chosen-move proof (`chosen_id=95` in `audit/boss_ai_trace/morty_live.txt`; `chosen_id=85` in `audit/boss_ai_trace/jasmine_live.txt`); every other gym leader plus Koga/Lance/shared switch-loop still need save-states or manual debugger positions. |
+| Boss-position live emulator/debugger captures | `IN PROGRESS` | All 16 gym leaders plus Koga and Champion Lance have current trace-ROM first-decision chosen-move proof under `audit/boss_ai_trace/*_live.txt`; `shared_switch_loop` still needs a dedicated scenario fixture. |
 
 Preserve these constraints while implementing tests:
 
@@ -396,13 +396,11 @@ Smoke artifact:
 
 ## Manual Playtest Matrix
 
-Status: `IN PROGRESS` for boss-position live emulator/debugger captures. Morty's
-first proof capsule and Jasmine's Olivine Gym proof are complete on the current
-trace ROM, with nonzero `chosen_id` values in
-`audit/boss_ai_trace/morty_live.txt` and
-`audit/boss_ai_trace/jasmine_live.txt`; every other gym leader plus
-Koga/Lance/shared switch-loop captures remain open. Capture tooling and the
-live-capture ledger are `FINISHED`.
+Status: `IN PROGRESS` for boss-position live emulator/debugger captures. All 16
+gym leaders plus Koga and Champion Lance have current trace-ROM first-decision
+chosen-move proof under `audit/boss_ai_trace/*_live.txt`. The remaining open
+manifest row is `shared_switch_loop`, which needs a dedicated repeated-switch
+scenario fixture. Capture tooling and the live-capture ledger are `FINISHED`.
 
 Use `pokegold_trace.gbc` for all scenarios. Save excerpts under
 `audit/boss_ai_trace/`.
@@ -416,6 +414,12 @@ Dry-run all configured live captures:
 
 ```powershell
 python tools\trace\boss_ai_trace_batch.py
+```
+
+Generate or refresh real trainer decision states:
+
+```powershell
+python tools\trace\boss_ai_state_factory.py --all --update-manifest
 ```
 
 Probe a Morty candidate state before adding it to the manifest:
@@ -514,8 +518,9 @@ Shared Perish Song scenario:
 ## Review Checklist
 
 Status: `FINISHED` for the static/release audit sweep. Live emulator/debugger
-coverage is `IN PROGRESS`: Morty's and Jasmine's current chosen-move captures
-are complete, and the remaining priority captures are still open.
+coverage is `IN PROGRESS`: all real trainer rows currently in the manifest have
+first-decision chosen-move captures, and the shared switch-loop fixture remains
+open.
 
 Before accepting the tests:
 

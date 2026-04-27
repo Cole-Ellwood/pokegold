@@ -9,6 +9,7 @@ Morty proof status, or remaining boss-position capture gaps.
 | --- | --- |
 | Current live-capture status | `audit/boss_ai_trace/live_capture_ledger.md` |
 | Batch capture inputs | `audit/boss_ai_trace/live_capture_manifest.json` |
+| Live trainer state factory | `tools/trace/boss_ai_state_factory.py` |
 | Capture command behavior | `docs/boss_ai_trace_capture.md` |
 | Candidate state preflight | `tools/trace/boss_ai_trace_state_probe.py` |
 | Morty state/proof notes | `audit/boss_ai_trace/morty_state_needed_2026-04-26.md` |
@@ -43,22 +44,16 @@ Not enough by itself:
 
 ## Current Status
 
-Morty is `FINISHED` for the first live proof capsule. The accepted current-ROM
-artifact is `audit/boss_ai_trace/morty_live.txt`, produced from
-`.local/tmp/morty_issue_cycle8/chosen_frame_3086.state`; it has
-`chosen_id=95`, `top_moves=HYPNOSIS:1,CURSE:20,NIGHT_SHADE:20`, `plan_id=2`,
-and manifest-matching trace ROM/symbol hashes.
+All 16 gym leaders plus Koga and Champion Lance are `FINISHED` for first-turn
+live chosen-move proof on the current trace ROM. Their accepted artifacts are
+the matching `audit/boss_ai_trace/*_live.txt` files, produced from
+`.local/tmp/boss_state_factory/*_chosen_frame_*.state`, and each has nonzero
+`chosen_id` plus manifest-matching trace ROM/symbol hashes.
 
-Jasmine is also `FINISHED`. The accepted current-ROM artifact is
-`audit/boss_ai_trace/jasmine_live.txt`, produced from
-`.local/tmp/boss_state_factory/jasmine_chosen_frame_5060.state`; it has
-`chosen_id=85`, `top_moves=THUNDERBOLT:17,THUNDER_WAVE:17,LIGHT_SCREEN:20`,
-`plan_id=3`, and manifest-matching trace ROM/symbol hashes.
-
-Remaining live-proof gaps are every other gym leader except Morty and Jasmine,
-Koga, Champion Lance, Red if added to the manifest later, and the shared
-switch-loop scenario. Do not mark any of those finished from static audits,
-source excerpts, old `.local/` RAM, or a dry-run alone.
+The remaining live-proof gap in the current manifest is `shared_switch_loop`.
+It is not a single map trainer, so the trainer state factory does not generate
+it. Red is not currently in the manifest; add a manifest row and a factory route
+only if that capture becomes a real target.
 
 ## Capture Path
 
@@ -66,19 +61,28 @@ source excerpts, old `.local/` RAM, or a dry-run alone.
 2. Read `docs/boss_ai_trace_capture.md` section `Morty Attempt Lessons` before
    trusting old PyBoy scratch states. The cycle4 frame-161 and delta-263 states
    are historical clues, not current proof.
-3. Create a boss-position save-state at a decision point for the unfinished
-   boss/scenario.
-4. For Morty candidates, probe the state before trusting it:
+3. For real trainers, use the state factory before writing scratch drivers:
+
+```powershell
+python tools\trace\boss_ai_state_factory.py --all --update-manifest
+```
+
+   For one trainer, use `--boss <manifest_id> --update-manifest`.
+   The factory reaches the real map room and lets the trainer's own
+   `loadtrainer` / `startbattle` script create battle RAM.
+4. Create a separate boss-position/scenario save-state for unfinished
+   non-trainer scenarios.
+5. For Morty candidates, probe the state before trusting it:
 
 ```powershell
 python tools\trace\boss_ai_trace_state_probe.py --save-state path\to\before_morty_decision.state --expect-morty --strict
 ```
 
-5. Add the state path to the matching entry in
+6. Add the state path to the matching entry in
    `audit/boss_ai_trace/live_capture_manifest.json`. Keep any scenario-specific
    `preflight.expect` guard. Do not invent `--expect-morty` for non-Morty
    captures; the batch runner owns whatever preflight exists in the manifest.
-6. Run a targeted capture. The batch runner preflights guarded states before
+7. Run a targeted capture. The batch runner preflights guarded states before
    reporting `READY` or writing live output:
 
 ```powershell
@@ -86,8 +90,8 @@ python tools\trace\boss_ai_trace_batch.py --execute --only jasmine
 python tools\audit\check_boss_ai_live_capture_ledger.py
 ```
 
-7. Update `audit/boss_ai_trace/live_capture_ledger.md`.
-8. Update `docs/project_roadmap.md` only after the evidence exists.
+8. Update `audit/boss_ai_trace/live_capture_ledger.md`.
+9. Update `docs/project_roadmap.md` only after the evidence exists.
 
 ## Priority IDs
 

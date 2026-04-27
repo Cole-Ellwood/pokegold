@@ -308,6 +308,7 @@ public information.
 
 ```powershell
 python tools\trace\boss_ai_trace_capture.py --symbols-only
+python tools\trace\boss_ai_state_factory.py --all --update-manifest
 python tools\trace\boss_ai_trace_batch.py
 python tools\trace\boss_ai_trace_batch.py --execute --only <capture_id>
 python tools\audit\check_boss_ai_live_capture_ledger.py
@@ -324,7 +325,9 @@ For other bosses or scenarios, add the candidate to
 `audit/boss_ai_trace/live_capture_manifest.json` and let the batch runner enforce
 whatever `preflight.expect` guard exists for that capture. Old `.local/` RAM, a
 dry-run that reports `MISSING_STATE`, or a symbol dump is not live proof. Do not
-mark Morty/Jasmine/Clair/Koga/Lance/Red proven from static audits alone.
+mark Morty/Jasmine/Clair/Koga/Lance/Red proven from static audits alone. As of
+2026-04-26, the factory covers all real trainer rows in the manifest; the
+remaining manifest gap is the synthetic shared switch-loop scenario.
 
 ## Battle Mechanics Pass
 
