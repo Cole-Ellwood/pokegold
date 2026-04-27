@@ -448,6 +448,11 @@ def normalize_event_token(text: str) -> str:
     return re.sub(r"[^A-Z0-9]", "", text.upper())
 
 
+def is_legacy_tm_itemball_slot(label: str, event: str) -> bool:
+    # Use raw names; normalized words like MountMortar contain "TM" across letters.
+    return "_TM_" in event or re.search(r"TM[A-Z0-9]", label) is not None
+
+
 def check_itemball_event_cross_swaps() -> None:
     for path in sorted((ROOT / "maps").glob("*.asm")):
         itemball_labels = parse_map_itemball_labels(path)
@@ -492,10 +497,9 @@ def check_non_tm_itemball_event_names() -> None:
                 continue
             item_token = normalize_event_token(item)
             event_token = normalize_event_token(event)
-            label_token = normalize_event_token(label)
             if item_token in event_token:
                 continue
-            if "TM" in event_token or "TM" in label_token:
+            if is_legacy_tm_itemball_slot(label, event):
                 continue
             fail(
                 f"{path.relative_to(ROOT)}:{line_no}: "
