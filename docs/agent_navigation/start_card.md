@@ -19,8 +19,9 @@ the journey.
 
 | If the prompt is about | Go next | Do not do |
 | --- | --- | --- |
+| Broad improvement: "make the app better", "make the game better", "do what matters" | `docs/agent_navigation/important_improvement_menu.md`, then one matching router row or subsystem micro-index | Turn the menu into a grab bag or start novelty work before checking trust/proof gaps. |
 | Project organization, future-session usability, docs beauty | `docs/agent_navigation/README.md`, `docs/agent_navigation/doc_roles.md` | Touch ROM behavior or generated files. |
-| Boss AI live proof, trace states, Morty/Jasmine/Clair/Koga/Lance/Red evidence | `docs/agent_navigation/subsystems/boss_ai_trace.md` | Count static audits or old `.local/` RAM as live proof. |
+| Boss AI live proof, trace states, gym-leader/Koga/Lance/Red evidence | `docs/agent_navigation/subsystems/boss_ai_trace.md` | Count static audits or old `.local/` RAM as live proof. |
 | Trainer parties, boss tiers, major trainer rosters | `docs/agent_navigation/subsystems/trainer_boss_roster.md` | Mix trainer-party legality with species learnset legality unless asked. |
 | Weak Pokemon, stats, learnsets, evolutions, roles | `docs/agent_navigation/subsystems/pokemon_balance.md` | Trust generated audit rows as final design judgment. |
 | QoL, maps, NPC text, Repel, Pokemon Center, Day-Care services | `docs/agent_navigation/subsystems/qol_map_scripts.md` | Remove preparation pressure under the name of convenience. |
@@ -28,6 +29,21 @@ the journey.
 | Broad or exhaustive bug hunts | `docs/bug_hunt_master_playbook.md`, `docs/codex_review_playbook.md` | Start with broad source search before routing the risk. |
 | Narrow reviews or known-risk bug hunts | `docs/codex_review_playbook.md`, then `docs/agent_navigation/task_router.md` | Skip source-owner and verification-floor selection. |
 | Half-remembered custom mechanic | `docs/agent_navigation/custom_terms.md` | Search only one spelling. |
+
+## Docs-Only Organization Mode
+
+Use this mode when the user wants the project easier for future AI sessions and
+does not ask for gameplay changes.
+
+1. Run `git status --short --branch`.
+2. Read `docs/agent_navigation/README.md`,
+   `docs/agent_navigation/subsystems/checkpoint_handoff.md`, and
+   `docs/agent_navigation/navigation_health_check.md`.
+3. Edit only hand-authored docs, `audit/` evidence notes, or `outbox/`
+   handoffs.
+4. Leave source, generated docs, build outputs, and unrelated dirty files alone.
+5. Close with `python tools\audit\check_navigation_floor.py` and a status note
+   naming any pre-existing dirty files outside the pass.
 
 ## Roadmap Snapshot Rule
 
@@ -38,6 +54,12 @@ roadmap lookup.
 ## Minimum Safe Stop
 
 For a docs-only navigation pass:
+
+```powershell
+python tools\audit\check_navigation_floor.py
+```
+
+This wraps the three checks future sessions otherwise retype:
 
 ```powershell
 python tools\audit\check_docs_navigation.py

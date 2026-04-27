@@ -1,0 +1,92 @@
+#!/usr/bin/env python3
+"""Run the low-risk navigation readiness floor for future Codex sessions."""
+
+from __future__ import annotations
+
+import argparse
+import subprocess
+import sys
+from dataclasses import dataclass
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[2]
+
+
+@dataclass(frozen=True)
+class Check:
+    name: str
+    command: tuple[str, ...]
+    required: bool = True
+
+
+def run_check(check: Check) -> int:
+    print()
+    print(f"== {check.name} ==")
+    print(" ".join(check.command))
+    proc = subprocess.run(
+        check.command,
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    if proc.stdout:
+        print(proc.stdout, end="" if proc.stdout.endswith("\n") else "\n")
+    if proc.stderr:
+        print(proc.stderr, end="" if proc.stderr.endswith("\n") else "\n", file=sys.stderr)
+    if proc.returncode != 0:
+        level = "FAIL" if check.required else "WARN"
+        print(f"{level}: {check.name} exited {proc.returncode}")
+    return proc.returncode
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description=(
+            "Run the docs/navigation floor: helper-doc audit, whitespace check, "
+            "and dirty-state report."
+        )
+    )
+    parser.add_argument(
+        "--workspace-hygiene",
+        action="store_true",
+        help="also run the read-only ignored-clutter classifier",
+    )
+    args = parser.parse_args(argv)
+
+    checks = [
+        Check(
+            "docs navigation audit",
+            (sys.executable, "tools/audit/check_docs_navigation.py"),
+        ),
+        Check("whitespace diff check", ("git", "diff", "--check")),
+        Check("dirty-state report", ("git", "status", "--short", "--branch"), required=False),
+    ]
+    if args.workspace_hygiene:
+        checks.append(
+            Check(
+                "workspace hygiene classifier",
+                (sys.executable, "tools/audit/check_workspace_hygiene.py", "--samples", "2"),
+                required=False,
+            )
+        )
+
+    required_failures = [
+        check.name
+        for check in checks
+        if run_check(check) != 0 and check.required
+    ]
+    if required_failures:
+        print()
+        print("Navigation floor failed: " + ", ".join(required_failures))
+        return 1
+
+    print()
+    print("Navigation floor passed. Dirty-state output is informational.")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

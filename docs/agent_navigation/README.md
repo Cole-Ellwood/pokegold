@@ -12,6 +12,24 @@ Read this after `docs/project_roadmap.md` when a session needs to decide where
 to work next, or when the prompt is broad enough that a helper might otherwise
 start with a full-repo search.
 
+## Cold Jump Packet
+
+For a fresh AI session, the useful packet is small:
+
+1. `docs/README.md` for precedence and fast jump modes.
+2. `docs/codex_context.md` for the project promise.
+3. `docs/project_roadmap.md` for live workstreams.
+4. `docs/agent_navigation/start_card.md` for lane choice.
+5. One matching row in `docs/agent_navigation/task_router.md` or one matching
+   micro-index under `docs/agent_navigation/subsystems/`.
+
+For vague improvement prompts like "make the app better in an important way",
+use `docs/agent_navigation/important_improvement_menu.md` before choosing the
+one lane to execute.
+
+Do not read every helper doc just to prove diligence. The point of this folder
+is to stop the session from turning orientation into work.
+
 ## Complexity Budget
 
 Use the smallest lookup that answers the current question:
@@ -100,5 +118,6 @@ Read these only when the router points at the matching area:
 | File | Use for |
 | --- | --- |
 | `docs/agent_navigation/start_card.md` | One-screen lane picker and minimum safe stop. |
+| `docs/agent_navigation/important_improvement_menu.md` | Broad "make it better" inspiration map and note discipline before choosing one lane. |
 | `docs/agent_navigation/doc_roles.md` | Ownership rules for where new documentation facts belong. |
 | `docs/agent_navigation/navigation_health_check.md` | Acceptance criteria and smoke routes for expanding, pruning, or completing navigation work. |

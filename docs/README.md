@@ -49,6 +49,22 @@ player can lose, and old knowledge is useful but incomplete.
    - Data rebalance history: `docs/manifest.md`
    - Build/release status: `docs/build.md`, `docs/validation_report.md`
 
+## Fast Jump Modes
+
+Use the full read order when the task is ambiguous or gameplay-facing. When the
+prompt is about project organization, future AI usability, workspace hygiene, or
+making the repo easier to jump through, stay in the navigation track:
+
+1. `docs/agent_navigation/start_card.md`
+2. `docs/agent_navigation/README.md`
+3. `docs/agent_navigation/subsystems/checkpoint_handoff.md`
+4. `docs/agent_navigation/navigation_health_check.md`
+5. `docs/project_roadmap.md`
+
+That mode may edit hand-authored docs, audit notes, or `outbox/` handoffs. It
+must not touch ROM behavior, generated docs, linker/build outputs, or unrelated
+dirty files.
+
 ## Truth Precedence
 
 1. Current source files and linker outputs (`pokegold.map`, `pokegold.sym`).
@@ -104,6 +120,12 @@ Windows checkout.
 ## Always Verify
 
 Run the doc navigation audit after helper-doc or navigation changes:
+
+```powershell
+python tools\audit\check_navigation_floor.py
+```
+
+For lower-level debugging, the wrapped command is:
 
 ```powershell
 python tools\audit\check_docs_navigation.py

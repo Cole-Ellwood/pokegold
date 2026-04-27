@@ -17,6 +17,7 @@ scratch paths first.
 | `docs/generated/balance_audit.md` | Generated Pokemon data audit. | Generated data mirror. | Regenerate through `scripts/generate_balance_audit.py`. |
 | `docs/agent_navigation/source_output_ownership.md` | Source/generated/output ownership map. | Routing only. | Use before editing build artifacts or generated files. |
 | `docs/agent_navigation/custom_terms.md` | Search glossary for custom mechanics and symbols. | Routing only. | Use when the feature name is remembered imprecisely. |
+| `tools/audit/check_navigation_floor.py` | One-command docs/navigation readiness floor. | Audit helper. | Runs docs navigation, whitespace diff check, and dirty-state report; add `--workspace-hygiene` for clutter classification. |
 | `tools/audit/check_workspace_hygiene.py` | Read-only ignored-clutter classifier. | Audit helper. | Use before proposing workspace cleanup or output relocation. |
 | `tools/trace/boss_ai_trace_state_probe.py` | PyBoy state/RAM preflight for live Boss AI captures. | Probe helper. | Use before adding a candidate state to the live-capture manifest. |
 | `audit/boss_ai_trace/live_capture_ledger.md` | Live Boss AI trace status ledger. | Evidence ledger. | Priority rows must not be marked finished without real capture files. |
@@ -24,6 +25,7 @@ scratch paths first.
 | `audit/boss_ai_trace/morty_live.txt` | Current Morty live chosen-move proof. | Live emulator evidence. | First proof capsule; has current trace hashes and `chosen_id=95`. |
 | `audit/boss_ai_trace/morty_proof_capsule_attempt_2026-04-26.md` | Blocked Morty proof attempt and unblock recipe. | Negative evidence. | Shows why old RAM was not accepted as proof. |
 | `docs/agent_navigation/subsystems/` | Micro-indexes for high-friction workstreams. | Routing only. | Use after task classification, before broad search. |
+| `outbox/boss_ai_new_thinker_prompt.md` | Paste-ready prompt for the next deep Boss AI design/proof session. | Handoff prompt. | Use after Morty proof when choosing live proof, Haki planning, public-imagination review, or cheap-difficulty audit work. |
 | `outbox/` | Self-contained handoff files. | Handoff only. | Use when context is tight or another session/model needs one file. |
 
 ## Scratch And Output Zones

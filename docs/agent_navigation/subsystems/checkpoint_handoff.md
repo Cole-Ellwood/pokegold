@@ -23,6 +23,39 @@ future helpers need a clean stopping point.
 5. If the user asks for a checkpoint, split by logical ownership rather than by
    whichever files happen to be dirty.
 
+## Docs-Only Organization Protocol
+
+Use this when the user asks to make the project easier for future AI sessions,
+especially when source files are already dirty.
+
+Allowed surfaces:
+
+- `docs/`, except `docs/generated/`;
+- `audit/` evidence notes when the pass is documenting real proof or blocked
+  proof;
+- `outbox/` handoff prompts or session packets.
+
+Forbidden surfaces without explicit approval:
+
+- ROM behavior source in `engine/`, `data/`, `maps/`, `home/`, `ram/`,
+  `constants/`, `macros/`, `audio/`, or `gfx/`;
+- generated docs under `docs/generated/`;
+- build/linker outputs such as `.gbc`, `.o`, `.map`, and `.sym`;
+- destructive cleanup of ignored files or unrelated scratch folders.
+
+Close the pass by recording:
+
+- files this session changed;
+- checks run;
+- source/generated/build outputs deliberately untouched;
+- dirty files that were already present or outside the docs-only lane.
+
+Use the one-command floor when the pass is docs/navigation-only:
+
+```powershell
+python tools\audit\check_navigation_floor.py
+```
+
 ## Commit Boundary Hints
 
 Good commit slices:
@@ -65,4 +98,3 @@ Every stopping point should answer:
 
 Do not present a checkpoint as cleaner than it is. A beautiful handoff is one
 where the next helper can trust the map, including the warnings.
-

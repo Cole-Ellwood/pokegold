@@ -83,7 +83,9 @@ REQUIRED_PATHS = (
     "tools/audit/check_boss_ai_no_cheat.py",
     "tools/audit/check_boss_items_present.py",
     "tools/audit/check_boss_moves_complete.py",
+    "tools/audit/bug_hunt_triage.py",
     "tools/audit/check_battle_math_safety.py",
+    "tools/audit/check_navigation_floor.py",
     "tools/trace/boss_ai_trace_state_probe.py",
     "main.asm",
     "engine/battle/ai/boss.asm",
@@ -168,14 +170,26 @@ PATHLIKE_EXTENSIONS = (
 OPTIONAL_LOCAL_PATH_PREFIXES = (
     ".local",
     "dist",
-    "outbox",
     "workspace",
 )
 
 PLANNED_MISSING_ARTIFACTS = (
+    "audit/boss_ai_trace/falkner_live.txt",
+    "audit/boss_ai_trace/bugsy_live.txt",
+    "audit/boss_ai_trace/whitney_live.txt",
     "audit/boss_ai_trace/morty_live.txt",
+    "audit/boss_ai_trace/chuck_live.txt",
     "audit/boss_ai_trace/jasmine_live.txt",
+    "audit/boss_ai_trace/pryce_live.txt",
     "audit/boss_ai_trace/clair_live.txt",
+    "audit/boss_ai_trace/brock_live.txt",
+    "audit/boss_ai_trace/misty_live.txt",
+    "audit/boss_ai_trace/lt_surge_live.txt",
+    "audit/boss_ai_trace/erika_live.txt",
+    "audit/boss_ai_trace/janine_live.txt",
+    "audit/boss_ai_trace/sabrina_live.txt",
+    "audit/boss_ai_trace/blaine_live.txt",
+    "audit/boss_ai_trace/blue_live.txt",
     "audit/boss_ai_trace/koga_live.txt",
     "audit/boss_ai_trace/champion_lance_live.txt",
     "audit/boss_ai_trace/shared_switch_loop_live.txt",
@@ -185,11 +199,13 @@ AGENT_NAVIGATION_CONTRACT_SNIPPETS = {
     "docs/agent_navigation/start_card.md": (
         "## First Thirty Seconds",
         "## Pick A Lane",
+        "## Docs-Only Organization Mode",
         "## Minimum Safe Stop",
+        "python tools\\audit\\check_navigation_floor.py",
         "docs/agent_navigation/navigation_health_check.md",
-        "python tools\\audit\\check_docs_navigation.py",
     ),
     "docs/agent_navigation/README.md": (
+        "## Cold Jump Packet",
         "## Complexity Budget",
         "## Navigation Contract",
         "## Subsystem Micro-Indexes",
@@ -209,6 +225,7 @@ AGENT_NAVIGATION_CONTRACT_SNIPPETS = {
         "## Pruning Rules",
         "## Smoke Route Table",
         "continue making it beautiful",
+        "make the project easier for future AI to jump around",
         "is Morty boss AI proven?",
         "what owns pokegold.sym?",
         "without broad source search",
@@ -217,6 +234,7 @@ AGENT_NAVIGATION_CONTRACT_SNIPPETS = {
         "| NAV-001 | `REFERENCE` | Agent navigation beauty pass | `COMPLETE` |",
         "Follow-up simplification folded the fresh-session dry run into `docs/agent_navigation/navigation_health_check.md`",
         "merged path classification into `docs/agent_navigation/source_output_ownership.md`",
+        "one-command navigation floor",
         "`tools/audit/check_docs_navigation.py` now auto-discovers `docs/agent_navigation/**/*.md`",
     ),
 }
@@ -691,6 +709,72 @@ def check_trace_manifest_doc_sync(errors: list[str]) -> None:
         print("PASS: trace capture docs match pinned manifest basis")
 
 
+def check_bug_hunt_playbook_precision(errors: list[str]) -> None:
+    playbook = read_repo_text("docs/bug_hunt_master_playbook.md")
+    matrix = read_repo_text("docs/agent_navigation/verification_matrix.md")
+    router = read_repo_text("docs/agent_navigation/task_router.md")
+    trace_index = read_repo_text("docs/agent_navigation/subsystems/boss_ai_trace.md")
+
+    for path, text in (
+        ("docs/bug_hunt_master_playbook.md", playbook),
+        ("docs/agent_navigation/verification_matrix.md", matrix),
+        ("docs/agent_navigation/task_router.md", router),
+    ):
+        if "candidate.state --expect-morty" in text:
+            errors.append(
+                f"{path} uses Morty-specific strict probe as a generic live-proof command"
+            )
+
+    expected_snippets = (
+        (
+            "docs/bug_hunt_master_playbook.md",
+            playbook,
+            "For Morty candidates only, run the Morty-specific strict preflight",
+        ),
+        (
+            "docs/bug_hunt_master_playbook.md",
+            playbook,
+            "python tools\\audit\\bug_hunt_triage.py",
+        ),
+        (
+            "docs/agent_navigation/task_router.md",
+            router,
+            "python tools\\audit\\bug_hunt_triage.py",
+        ),
+        (
+            "docs/bug_hunt_master_playbook.md",
+            playbook,
+            "python scripts\\generate_balance_audit.py --out .local\\tmp\\balance_audit_check.md",
+        ),
+        (
+            "docs/bug_hunt_master_playbook.md",
+            playbook,
+            "If the build changes `.map` or `.sym` outputs",
+        ),
+        (
+            "docs/agent_navigation/verification_matrix.md",
+            matrix,
+            "Morty-only strict probe",
+        ),
+        (
+            "docs/agent_navigation/task_router.md",
+            router,
+            "Morty-only strict probe when the candidate is Morty",
+        ),
+        (
+            "docs/agent_navigation/subsystems/boss_ai_trace.md",
+            trace_index,
+            "Do not invent `--expect-morty` for non-Morty",
+        ),
+    )
+    for path, text, snippet in expected_snippets:
+        if snippet not in text:
+            errors.append(f"{path} missing bug-hunt precision snippet: {snippet}")
+
+    if not any("bug-hunt precision" in error or "Morty-specific strict probe" in error for error in errors):
+        print("PASS: bug-hunt playbook command precision is guarded")
+
+
 def main() -> int:
     errors: list[str] = []
     check_required_paths(errors)
@@ -704,6 +788,7 @@ def main() -> int:
     check_qol_handoff_status(errors)
     check_agent_navigation_contract(errors)
     check_trace_manifest_doc_sync(errors)
+    check_bug_hunt_playbook_precision(errors)
 
     if errors:
         for error in errors:
