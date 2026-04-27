@@ -361,6 +361,19 @@ def check_trainer_objects_use_trainer_scripts() -> None:
             fail(f"{path.relative_to(ROOT)}:{line_no}: trainer object points at generic ObjectEvent")
 
 
+def check_burned_tower_itemball_flags() -> None:
+    require_ordered_text(
+        ROOT / "maps/BurnedTower1F.asm",
+        (
+            "\titemball BURN_HEAL, 1",
+            "\titemball X_SPEED, 1",
+            "BurnedTower1FBurnHeal, EVENT_BURNED_TOWER_1F_BURN_HEAL",
+            "BurnedTower1FXSpeed, EVENT_BURNED_TOWER_1F_X_SPEED",
+        ),
+        "Burned Tower item balls use matching persistence flags",
+    )
+
+
 def main() -> int:
     moves = parse_moves(ROOT / "data/moves/moves.asm")
     expected_moves = {
@@ -464,6 +477,9 @@ def main() -> int:
 
     check_trainer_objects_use_trainer_scripts()
     print("PASS: trainer object script-pointer checks")
+
+    check_burned_tower_itemball_flags()
+    print("PASS: Burned Tower itemball flag checks")
 
     require_ordered_text(
         ROOT / "engine/events/tm_tutor.asm",
