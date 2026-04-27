@@ -73,7 +73,9 @@ ChangeHappiness:
 	ld d, 0
 	add hl, de
 	ld a, [hl]
-	cp $64 ; why not $80?
+	; Positive happiness deltas stay below 100; negative deltas assemble as
+	; two's-complement bytes, so this branches on the table entry's sign.
+	cp 100
 	pop de
 
 	ld a, [de]
