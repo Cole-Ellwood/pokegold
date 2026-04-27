@@ -3455,7 +3455,11 @@ BossAI_NeedsLoopPenalty:
 	jr nz, .no_penalty
 
 .check_exceptions
-	call BossAI_IsImminentKOPrevention
+; Public threat creates many normal switch candidates. Only a real emergency
+; should waive the anti-loop penalty, or A->B->A pivots never pay the cost.
+	call AICheckEnemyQuarterHP
+	jr nc, .no_penalty
+	call BossAI_ShouldRespectPotentialPlayerRevenge
 	jr c, .no_penalty
 	call BossAI_EnemyPerishEscapeUrgent
 	jr c, .no_penalty

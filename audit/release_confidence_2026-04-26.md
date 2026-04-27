@@ -6,6 +6,11 @@ Purpose: prove the current dirty checkout still has the core source, AI,
 navigation, and build guarantees expected by the helper docs. This is not manual
 playtest proof.
 
+2026-04-27 supersession note: later Boss AI trace work refreshed the trace ROM
+basis, regenerated real-trainer states, and completed the `shared_switch_loop`
+fixture. Treat `audit/boss_ai_trace/live_capture_ledger.md` as current proof
+truth.
+
 ## Scope
 
 Covered dirty gameplay surfaces visible at session start:
@@ -34,7 +39,7 @@ All commands were run from `C:\Users\lolno\Downloads\pokemon gold hack` on
 | `python tools\audit\check_boss_ai_gating.py` | PASS: guarded Boss AI entrypoints intact. |
 | `python tools\audit\check_boss_ai_trace_invariants.py` | PASS: trace invariants intact, including cursor preservation, public fail gates, switch-loop pressure, and known item/passive tactical reasoning. |
 | `python tools\audit\check_boss_ai_memory_budget.py` | PASS: Enemy Trainers bank `normal=0e:4000-7dd1`, `trace=0e:4000-7ee3`; Boss AI WRAM `normal_free=65`, `trace_free=46`. |
-| `python tools\audit\check_boss_ai_live_capture_ledger.py` | PASS: Morty and Jasmine `FINISHED`; remaining gym leaders plus Koga, Champion Lance, and shared switch-loop remain `UNTOUCHED`. |
+| `python tools\audit\check_boss_ai_live_capture_ledger.py` | PASS at snapshot time: Morty and Jasmine were `FINISHED`. Superseded on 2026-04-27: all current manifest rows are now `FINISHED`, including `shared_switch_loop`. |
 | `python tools\audit\check_docs_navigation.py` | PASS: all doc navigation checks passed; generated dev index and balance audit match current outputs/data. |
 | `bash -lc 'cd "/mnt/c/Users/lolno/Downloads/pokemon gold hack" && make -j4 RGBASM=rgbds-1.0.1/rgbasm.exe RGBLINK=rgbds-1.0.1/rgblink.exe RGBFIX=rgbds-1.0.1/rgbfix.exe RGBGFX=rgbds-1.0.1/rgbgfx.exe pokegold.gbc pokesilver.gbc'` | PASS: `pokegold.gbc` and `pokesilver.gbc` reported up to date. |
 
@@ -42,15 +47,15 @@ All commands were run from `C:\Users\lolno\Downloads\pokemon gold hack` on
 
 - Source/audit evidence: automated checks above.
 - Build evidence: WSL make reported both normal ROM targets up to date.
-- Live trace evidence: ledger recognizes current Morty and Jasmine proofs.
+- Live trace evidence: snapshot recognized Morty and Jasmine proofs; current
+  ledger now recognizes all manifest rows, including `shared_switch_loop`.
 - Manual emulator evidence: not performed in this pass.
 
 ## Remaining Uncertainty
 
-- This pass does not prove boss feel beyond the already captured Morty and
-  Jasmine live decisions.
-- Remaining gym leaders, Koga, Champion Lance, and shared switch-loop live
-  captures are still missing.
+- This snapshot did not prove boss feel beyond the then-captured Morty and
+  Jasmine live decisions. Later trace work completed the current manifest
+  proof floor, but manual boss-feel playtesting remains separate.
 - QoL changes still need manual emulator feel checks where the roadmap names
   them, especially Repel renewal accept/decline flow.
 - No checkpoint, staging, or commit was requested.

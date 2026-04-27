@@ -107,15 +107,25 @@ python tools\trace\boss_ai_trace_batch.py --execute
 ```
 
 Only promote a manifest/ledger row to `FINISHED` after the matching
-`audit/boss_ai_trace/*_live.txt` exists and has nonzero `chosen_id`. The
-factory's `--update-manifest` option intentionally does not promote status; it
-only fills `save_state`, `stop_after_first_capture`, and
-`require_chosen_move`.
+`audit/boss_ai_trace/*_live.txt` exists and has nonzero decision evidence. Real
+trainer first-decision rows should have nonzero `chosen_id`; switch-only
+scenario rows like `shared_switch_loop` may instead use nonzero
+`switch_confidence` plus `switch_context`. The factory's `--update-manifest`
+option intentionally does not promote status; it only fills `save_state`,
+`stop_after_first_capture`, and `require_chosen_move`, and it should not
+downgrade an already-finished row.
 
 As of 2026-04-26, the factory supports all real trainer rows currently in the
 manifest: the 16 gym leaders, Koga, and Champion Lance. It does not generate
 the `shared_switch_loop` scenario, because that needs a synthetic repeated
 switch setup rather than a single map trainer.
+
+For `shared_switch_loop`, use:
+
+```powershell
+python tools\trace\boss_ai_shared_switch_loop_fixture.py --update-manifest
+python tools\trace\boss_ai_trace_batch.py --execute --only shared_switch_loop
+```
 
 Before treating a save-state or battery-RAM sidecar as boss-position proof,
 probe it:
@@ -262,7 +272,7 @@ Current first-decision live proof status:
 - all 16 gym leaders: captured
 - Koga: captured
 - Champion Lance: captured
-- shared switch-loop: still needs a dedicated scenario fixture
+- shared switch-loop: captured with a dedicated switch-confidence fixture
 
 The all-trainer captures are smoke proof that the current trace ROM reaches the
 Boss AI decision path through real map scripts and records a nonzero chosen
@@ -274,7 +284,6 @@ Post-patch priority scenarios still worth richer targeted captures:
 - Clair
 - Koga
 - Champion Lance
-- shared switch-loop
 
 Post-patch scenarios to capture:
 - revealed Ice Punch or equivalent coverage does not transfer to another player

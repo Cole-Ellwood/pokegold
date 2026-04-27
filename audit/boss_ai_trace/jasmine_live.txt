@@ -1,7 +1,7 @@
 trace_rom=pokegold_trace.gbc
-trace_rom_sha256=22A7B125A1567AB030715B85C67F3B0B606F757316547DF7C1C21D672C9F98C5
+trace_rom_sha256=40EF63CE2AE4DCAE791A9417CDC996B1C4A153ACA6E2B7FC101FC58DA22508EE
 trace_symbols=pokegold_trace.sym
-trace_symbols_sha256=8ACBFAA166CBE157D15466AAB27DFD49DCD64109E55F9198B998728903C8806D
+trace_symbols_sha256=A79D709AADBAD64D8E57CD81EBAD6D692C9FA70BC9271FA33702498CBD480E5A
 boss=Jasmine
 frame=0
 capture_index=1
@@ -17,3 +17,4 @@ plausible_mask=33 02 20 8a
 risk_flags=00 (none)
 lookahead_bonus_top=18,18,18
 revealed_masks=00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+switch_context=param=00,index=01,last_out=00,cooldown=00,cur_ot=00

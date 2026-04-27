@@ -344,8 +344,19 @@ def audit_switch_loop(boss: str) -> None:
         ],
         "switch loop proposed-target check",
     )
+    require_order(
+        block,
+        [
+            "call AICheckEnemyQuarterHP",
+            "jr nc, .no_penalty",
+            "call BossAI_ShouldRespectPotentialPlayerRevenge",
+            "jr c, .no_penalty",
+        ],
+        "switch loop narrow emergency exception",
+    )
+    if "call BossAI_IsImminentKOPrevention" in block:
+        fail("switch loop exception must not use broad imminent-KO predicate")
     for call in (
-        "call BossAI_IsImminentKOPrevention",
         "call BossAI_EnemyPerishEscapeUrgent",
         "call BossAI_IsImmunityPivotOpportunity",
         "call BossAI_AceTimingHook",

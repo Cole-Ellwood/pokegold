@@ -44,16 +44,17 @@ Not enough by itself:
 
 ## Current Status
 
-All 16 gym leaders plus Koga and Champion Lance are `FINISHED` for first-turn
-live chosen-move proof on the current trace ROM. Their accepted artifacts are
-the matching `audit/boss_ai_trace/*_live.txt` files, produced from
-`.local/tmp/boss_state_factory/*_chosen_frame_*.state`, and each has nonzero
-`chosen_id` plus manifest-matching trace ROM/symbol hashes.
+All current manifest rows are `FINISHED`. The 16 gym leaders plus Koga and
+Champion Lance have first-turn live chosen-move proof on the current trace ROM.
+Their accepted artifacts are the matching `audit/boss_ai_trace/*_live.txt`
+files, produced from `.local/tmp/boss_state_factory/*_chosen_frame_*.state`,
+and each has nonzero `chosen_id` plus manifest-matching trace ROM/symbol
+hashes.
 
-The remaining live-proof gap in the current manifest is `shared_switch_loop`.
-It is not a single map trainer, so the trainer state factory does not generate
-it. Red is not currently in the manifest; add a manifest row and a factory route
-only if that capture becomes a real target.
+`shared_switch_loop` is covered separately by
+`tools/trace/boss_ai_shared_switch_loop_fixture.py`, because it is not a single
+map trainer. Red is not currently in the manifest; add a manifest row and a
+factory route only if that capture becomes a real target.
 
 ## Capture Path
 

@@ -15,9 +15,9 @@ All 16 gym leaders are now covered by the roster-level Boss AI audits:
 - memory budget
 
 All 16 gym leaders now have current trace-ROM live chosen-move captures
-produced from real map/script-created battles. The remaining manifest live gap
-is `shared_switch_loop`, which is a scenario fixture rather than a trainer
-standing on a map.
+produced from real map/script-created battles. The separate
+`shared_switch_loop` scenario fixture is tracked in
+`audit/boss_ai_trace/live_capture_ledger.md`.
 
 ## Audit Tightening Done In This Pass
 
@@ -266,7 +266,6 @@ The current hard live-proof standard is still:
 
 The all-trainer smoke proof is now complete. The next live work is either:
 
-- build the `shared_switch_loop` scenario fixture;
 - add Red to the manifest and the factory route if Red becomes a live target;
 - create richer per-boss scenario states, because these captures prove first
   decision execution, not every branch named in the design notes.

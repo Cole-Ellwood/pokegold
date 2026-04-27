@@ -31,7 +31,7 @@ Current implementation status:
 | Live capture ledger audit | `FINISHED` | `python tools\audit\check_boss_ai_live_capture_ledger.py` passes. |
 | Live capture manifest | `FINISHED` | `audit/boss_ai_trace/live_capture_manifest.json` defines boss capture commands. |
 | Live capture batch runner | `FINISHED` | `python tools\trace\boss_ai_trace_batch.py` dry-run reports missing save-states and uses manifest preflights before capture. |
-| Boss-position live emulator/debugger captures | `IN PROGRESS` | All 16 gym leaders plus Koga and Champion Lance have current trace-ROM first-decision chosen-move proof under `audit/boss_ai_trace/*_live.txt`; `shared_switch_loop` still needs a dedicated scenario fixture. |
+| Boss-position live emulator/debugger captures | `FINISHED` for current manifest floor | All 16 gym leaders plus Koga and Champion Lance have current trace-ROM first-decision chosen-move proof under `audit/boss_ai_trace/*_live.txt`; `shared_switch_loop` has a dedicated switch-confidence fixture at `audit/boss_ai_trace/shared_switch_loop_live.txt`. |
 
 Preserve these constraints while implementing tests:
 
@@ -396,11 +396,12 @@ Smoke artifact:
 
 ## Manual Playtest Matrix
 
-Status: `IN PROGRESS` for boss-position live emulator/debugger captures. All 16
-gym leaders plus Koga and Champion Lance have current trace-ROM first-decision
-chosen-move proof under `audit/boss_ai_trace/*_live.txt`. The remaining open
-manifest row is `shared_switch_loop`, which needs a dedicated repeated-switch
-scenario fixture. Capture tooling and the live-capture ledger are `FINISHED`.
+Status: `FINISHED` for the current manifest's boss-position live
+emulator/debugger floor. All 16 gym leaders plus Koga and Champion Lance have
+current trace-ROM first-decision chosen-move proof under
+`audit/boss_ai_trace/*_live.txt`. `shared_switch_loop` has a dedicated
+repeated-switch fixture under `audit/boss_ai_trace/shared_switch_loop_live.txt`.
+Capture tooling and the live-capture ledger are `FINISHED`.
 
 Use `pokegold_trace.gbc` for all scenarios. Save excerpts under
 `audit/boss_ai_trace/`.
@@ -517,10 +518,10 @@ Shared Perish Song scenario:
 
 ## Review Checklist
 
-Status: `FINISHED` for the static/release audit sweep. Live emulator/debugger
-coverage is `IN PROGRESS`: all real trainer rows currently in the manifest have
-first-decision chosen-move captures, and the shared switch-loop fixture remains
-open.
+Status: `FINISHED` for the static/release audit sweep and current manifest live
+emulator/debugger floor: all real trainer rows currently in the manifest have
+first-decision chosen-move captures, and the shared switch-loop fixture has
+switch-confidence proof.
 
 Before accepting the tests:
 

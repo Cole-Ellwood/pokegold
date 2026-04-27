@@ -340,7 +340,9 @@ Required behavior checks:
 - Alakazam reveals Ice Punch, then another player species enters; the revealed
   Ice threat must not transfer globally.
 - Boss switches A->B, then considers B->A; loop penalty should apply unless
-  imminent KO prevention, immunity pivot, or ace timing applies.
+  low current HP, public revenge pressure, own Perish Song escape, public
+  immunity pivot, or ace timing applies. Generic public type pressure alone
+  should not waive it.
 - Spikes lead on the actual first scoring turn; hazard bias should be high only
   when public pressure is not immediate.
 - Toxic, Thunder Wave, Confuse Ray, sleep, and Leech Seed should be heavily

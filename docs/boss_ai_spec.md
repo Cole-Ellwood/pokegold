@@ -851,6 +851,10 @@ hidden party information:
 - `BossAI_EnemyPerishEscapeUrgent`: public own-side Perish Song escape guard
   for `wEnemyPerishCount` `1` or `2`; it can override KO-stay and switch-loop
   reluctance without reading hidden player state.
+- `BossAI_NeedsLoopPenalty`: A->B->A switch-loop guard. The loop penalty is
+  waived for low current HP, public revenge pressure, own Perish Song escape,
+  public immunity pivots, or ace timing; generic public type pressure alone is
+  not enough to waive the cost.
 - `BossAI_SeenBenchThreatScore`: public seen-species STAB pressure estimate
   excluding the current active bait and publicly fainted seen species; legal
   only for species already revealed in the current battle.

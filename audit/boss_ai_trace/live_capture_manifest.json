@@ -1,9 +1,9 @@
 {
   "version": 1,
   "trace_rom": "pokegold_trace.gbc",
-  "trace_rom_sha256": "22A7B125A1567AB030715B85C67F3B0B606F757316547DF7C1C21D672C9F98C5",
+  "trace_rom_sha256": "40EF63CE2AE4DCAE791A9417CDC996B1C4A153ACA6E2B7FC101FC58DA22508EE",
   "trace_symbols": "pokegold_trace.sym",
-  "trace_symbols_sha256": "8ACBFAA166CBE157D15466AAB27DFD49DCD64109E55F9198B998728903C8806D",
+  "trace_symbols_sha256": "A79D709AADBAD64D8E57CD81EBAD6D692C9FA70BC9271FA33702498CBD480E5A",
   "default_watch_frames": 600,
   "default_poll_every": 1,
   "captures": [
@@ -193,10 +193,14 @@
     {
       "id": "shared_switch_loop",
       "boss": "Shared switch-loop",
-      "status": "UNTOUCHED",
-      "save_state": "",
+      "status": "FINISHED",
+      "save_state": ".local/tmp/boss_state_factory/shared_switch_loop_frame_200.state",
       "out": "audit/boss_ai_trace/shared_switch_loop_live.txt",
-      "notes": "A->B->A loop penalty and public emergency exceptions"
+      "notes": "synthetic Jasmine battle context; public Earthquake pressure proposes returning to the last switched-out mon; confidence 80 beats Jasmine's 74 threshold but loses to the 84 anti-loop threshold",
+      "watch_frames": 180,
+      "poll_every": 1,
+      "stop_after_first_capture": true,
+      "require_chosen_move": false
     }
   ]
 }

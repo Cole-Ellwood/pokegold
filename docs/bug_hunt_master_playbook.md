@@ -326,8 +326,9 @@ For other bosses or scenarios, add the candidate to
 whatever `preflight.expect` guard exists for that capture. Old `.local/` RAM, a
 dry-run that reports `MISSING_STATE`, or a symbol dump is not live proof. Do not
 mark Morty/Jasmine/Clair/Koga/Lance/Red proven from static audits alone. As of
-2026-04-26, the factory covers all real trainer rows in the manifest; the
-remaining manifest gap is the synthetic shared switch-loop scenario.
+2026-04-27, the factory covers all real trainer rows in the manifest, and the
+synthetic shared switch-loop scenario has a separate fixture script and live
+trace artifact.
 
 ## Battle Mechanics Pass
 

@@ -22,9 +22,10 @@ Tooling status:
 | Ledger audit | `FINISHED` | `python tools\audit\check_boss_ai_live_capture_ledger.py` |
 | Capture manifest | `FINISHED` | `audit/boss_ai_trace/live_capture_manifest.json` pins the current trace ROM and symbol SHA256 hashes and owns the Morty `preflight.expect` guard. |
 | Batch dry-run | `FINISHED` | `python tools\trace\boss_ai_trace_batch.py` reports missing save-states and uses manifest preflights before capture. |
-| Live trainer state factory | `FINISHED` | `python tools\trace\boss_ai_state_factory.py --all --update-manifest` generates real map/script-created decision states for every trainer row in the manifest except the synthetic shared switch-loop scenario. |
+| Live trainer state factory | `FINISHED` | `python tools\trace\boss_ai_state_factory.py --all --update-manifest` generates real map/script-created decision states for every real trainer row in the manifest. |
 | Morty proof-capsule attempt | `FINISHED` | `audit/boss_ai_trace/morty_proof_capsule_attempt_2026-04-26.md` records the earlier negative attempt and why old RAM was not accepted as proof. |
-| Trainer boss-position save-states | `FINISHED` | `.local/tmp/boss_state_factory/*_chosen_frame_*.state` contains real map/script-created first-decision states for all 16 gym leaders, Koga, and Champion Lance. Shared switch-loop still needs a separate scenario fixture. |
+| Trainer boss-position save-states | `FINISHED` | `.local/tmp/boss_state_factory/*_chosen_frame_*.state` contains real map/script-created first-decision states for all 16 gym leaders, Koga, and Champion Lance. |
+| Shared switch-loop fixture | `FINISHED` | `tools/trace/boss_ai_shared_switch_loop_fixture.py --update-manifest` writes `.local/tmp/boss_state_factory/shared_switch_loop_frame_200.state` from a real Jasmine battle state, then verifies `switch_confidence=80`, proposed target `2`, last switched-out `2`, cooldown `2`, switch index `0`, and threshold `74 -> 84`. |
 
 Any boss row promoted to `FINISHED` must point to a capture excerpt with
 `trace_rom`, `trace_rom_sha256`, `trace_symbols`, and `trace_symbols_sha256`
@@ -52,7 +53,7 @@ Gym-leader and priority boss live captures:
 | Blue | `FINISHED` | `chosen_id=85`, `top_moves=THUNDERBOLT:16,ICE_BEAM:20,TRI_ATTACK:38`, `plan_id=3` | `audit/boss_ai_trace/blue_live.txt` |
 | Koga | `FINISHED` | `chosen_id=188`, `top_moves=SLUDGE_BOMB:17,CURSE:18,TOXIC:28`, `plan_id=2` | `audit/boss_ai_trace/koga_live.txt` |
 | Champion Lance | `FINISHED` | `chosen_id=200`, `top_moves=OUTRAGE:17,EARTHQUAKE:20,FIRE_BLAST:20`, `plan_id=3` | `audit/boss_ai_trace/champion_lance_live.txt` |
-| Shared switch-loop | `UNTOUCHED` | A->B->A loop penalty and public emergency exceptions | `audit/boss_ai_trace/shared_switch_loop_live.txt` |
+| Shared switch-loop | `FINISHED` | `switch_confidence=80`; `switch_context=param=31,index=00,last_out=02,cooldown=02,cur_ot=00`; confidence beats Jasmine's normal `74` switch threshold but loses to the anti-loop `84` threshold | `audit/boss_ai_trace/shared_switch_loop_live.txt` |
 
 Recommended command once a boss-position PyBoy state exists:
 

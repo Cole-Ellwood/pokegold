@@ -24,7 +24,10 @@ A->B->A switch-loop penalty:
 - If the proposed target is the same 1-based index as
   `wBossAILastSwitchedOut`, the loop penalty path is entered.
 - The penalty is waived only by public emergency exceptions:
-  imminent KO prevention, public immunity pivot opportunity, or ace timing.
+  low current HP, public revenge pressure, own Perish Song escape, public
+  immunity pivot opportunity, or ace timing. Generic public type pressure is
+  not enough by itself; otherwise the same signal that creates a normal switch
+  candidate would also waive the anti-loop cost.
 - Result: a normal A->B->A pivot loop now penalizes the return switch rather
   than only noticing the current mon.
 

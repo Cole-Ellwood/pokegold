@@ -13,6 +13,7 @@ scratch paths first.
 | `docs/agent_navigation/navigation_health_check.md` | Navigation acceptance criteria and smoke routes. | Routing QA. | Use before expanding, pruning, or closing navigation work. |
 | `docs/agent_navigation/doc_roles.md` | Ownership rules for documentation facts. | Routing only. | Use before adding duplicate routing prose. |
 | `docs/project_roadmap.md` | Workstreams, statuses, blockers, next moves. | Current planning index. | Update when a workstream changes. |
+| `docs/project_completion_todo.md` | Current proof/feel sweep todo list with double-check states. | Execution checklist. | Mark finished items `DONE_NEEDS_DOUBLE_CHECK` until the named second pass is complete. |
 | `docs/generated/dev_index.md` | Generated banks, labels, memory pressure, source anchors. | Generated navigation truth. | Regenerate only through `scripts/generate_dev_index.py`. |
 | `docs/generated/balance_audit.md` | Generated Pokemon data audit. | Generated data mirror. | Regenerate through `scripts/generate_balance_audit.py`. |
 | `docs/agent_navigation/source_output_ownership.md` | Source/generated/output ownership map. | Routing only. | Use before editing build artifacts or generated files. |

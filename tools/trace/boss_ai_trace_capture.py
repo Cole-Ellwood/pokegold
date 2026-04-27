@@ -31,6 +31,14 @@ TRACE_FIELDS: tuple[tuple[str, int], ...] = (
     ("wBossAIRevealedMovesBitmap", 24),
 )
 
+CONTEXT_FIELDS: tuple[tuple[str, int], ...] = (
+    ("wEnemySwitchMonParam", 1),
+    ("wEnemySwitchMonIndex", 1),
+    ("wBossAILastSwitchedOut", 1),
+    ("wBossAISwitchCooldown", 1),
+    ("wCurOTMon", 1),
+)
+
 RISK_FLAGS = (
     (0, "plausible-risk-or-scout-trigger"),
     (1, "scout-move-chosen"),
@@ -123,7 +131,11 @@ def parse_move_names(path: Path) -> dict[int, str]:
 
 
 def require_symbols(symbols: dict[str, Symbol]) -> None:
-    missing = [name for name, _size in TRACE_FIELDS if name not in symbols]
+    missing = [
+        name
+        for name, _size in TRACE_FIELDS + CONTEXT_FIELDS
+        if name not in symbols
+    ]
     if missing:
         fail("missing required trace symbols: " + ", ".join(missing))
 
@@ -206,6 +218,14 @@ def format_capture(
             f"risk_flags={risk_flags:02x} ({decode_risk_flags(risk_flags)})",
             f"lookahead_bonus_top={','.join(str(v) for v in values['wBossAITraceLookaheadBonusTop'])}",
             f"revealed_masks={hex_bytes(values['wBossAIRevealedMovesBitmap'])}",
+            (
+                "switch_context="
+                f"param={values['wEnemySwitchMonParam'][0]:02x},"
+                f"index={values['wEnemySwitchMonIndex'][0]:02x},"
+                f"last_out={values['wBossAILastSwitchedOut'][0]:02x},"
+                f"cooldown={values['wBossAISwitchCooldown'][0]:02x},"
+                f"cur_ot={values['wCurOTMon'][0]:02x}"
+            ),
         ]
     )
     return "\n".join(lines) + "\n"
@@ -213,7 +233,7 @@ def format_capture(
 
 def format_symbols(symbols: dict[str, Symbol]) -> str:
     lines = ["Boss AI trace symbols:"]
-    for name, size in TRACE_FIELDS:
+    for name, size in TRACE_FIELDS + CONTEXT_FIELDS:
         symbol = symbols[name]
         if size == 1:
             lines.append(f"{name}={format_addr(symbol)}")
@@ -246,7 +266,7 @@ def has_completed_move_decision(values: dict[str, list[int]]) -> bool:
 def read_trace_values(pyboy, symbols: dict[str, Symbol]) -> dict[str, list[int]]:
     return {
         name: read_range(pyboy, symbols[name], size)
-        for name, size in TRACE_FIELDS
+        for name, size in TRACE_FIELDS + CONTEXT_FIELDS
     }
 
 
