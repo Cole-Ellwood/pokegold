@@ -402,6 +402,33 @@ def check_map_event_script_shapes() -> None:
                 fail(f"{path.relative_to(ROOT)}:{line_no}: hidden item points at non-hiddenitem script {label}")
 
 
+def check_object_constants_match_object_events() -> None:
+    const_pat = re.compile(r"^\s*const\s+[A-Z0-9_]+\b")
+    for path in sorted((ROOT / "maps").glob("*.asm")):
+        lines = path.read_text(encoding="utf-8").splitlines()
+        in_object_consts = False
+        object_consts = 0
+        object_events = 0
+        for line in lines:
+            stripped = line.strip()
+            if stripped == "object_const_def":
+                in_object_consts = True
+                continue
+            if in_object_consts:
+                if const_pat.match(line):
+                    object_consts += 1
+                    continue
+                if stripped and not stripped.startswith(";"):
+                    in_object_consts = False
+            if line.lstrip().startswith("object_event"):
+                object_events += 1
+        if object_consts and object_consts != object_events:
+            fail(
+                f"{path.relative_to(ROOT)}: object_const_def has {object_consts} constants "
+                f"for {object_events} object_event rows"
+            )
+
+
 def parse_map_itemball_labels(path: Path) -> dict[str, str]:
     lines = path.read_text(encoding="utf-8").splitlines()
     labels: dict[str, str] = {}
@@ -565,6 +592,9 @@ def main() -> int:
 
     check_map_event_script_shapes()
     print("PASS: map event script-shape checks")
+
+    check_object_constants_match_object_events()
+    print("PASS: object constant count checks")
 
     check_itemball_event_cross_swaps()
     print("PASS: itemball event cross-swap checks")
