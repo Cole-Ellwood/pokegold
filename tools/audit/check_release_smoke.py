@@ -282,6 +282,18 @@ def check_no_stale_reward_receipt_texts() -> None:
         fail("stale unreferenced reward receipt text labels: " + ", ".join(stale))
 
 
+def check_phone_delete_guard_refreshes_flags() -> None:
+    require_ordered_text(
+        ROOT / "engine/phone/phone.asm",
+        (
+            "CheckCanDeletePhoneNumber:",
+            "\tld a, c\n\tcall GetCallerTrainerClass\n\tld a, c\n\tand a\n\tret nz",
+            "\tcp PHONECONTACT_MOM\n\tret z\n\tcp PHONECONTACT_ELM\n\tret z",
+        ),
+        "Pokegear phone deletion refreshes trainer-class flags",
+    )
+
+
 def main() -> int:
     moves = parse_moves(ROOT / "data/moves/moves.asm")
     expected_moves = {
@@ -370,6 +382,9 @@ def main() -> int:
 
     check_no_stale_reward_receipt_texts()
     print("PASS: stale reward receipt text checks")
+
+    check_phone_delete_guard_refreshes_flags()
+    print("PASS: phone deletion guard flag check")
 
     require_ordered_text(
         ROOT / "engine/events/tm_tutor.asm",
