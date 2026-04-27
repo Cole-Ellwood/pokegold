@@ -75,7 +75,7 @@ Read `docs/README.md` first for helper-doc routing, then `docs/codex_context.md`
 | Region | Used | Free | Banks |
 | --- | ---: | ---: | ---: |
 | ROM0 | 16124 | 260 |  |
-| ROMX | 1156897 | 923871 | 127 |
+| ROMX | 1156902 | 923866 | 127 |
 | SRAM | 31697 | 1071 | 4 |
 | WRAM0 | 4047 | 49 |  |
 | WRAMX | 4096 | 0 |  |
@@ -196,7 +196,7 @@ Use these as candidates when moving optional code or data out of tight banks.
 | `Map Scripts 27` | ROMX | 5d:4000-5e38 | 7737 | ROMX 5d | `data/maps/scripts.asm`, `maps/CianwoodGym.asm`, `maps/CianwoodLugiaSpeechHouse.asm`, `maps/CianwoodPharmacy.asm`, +13 more |
 | `Map Scripts 28` | ROMX | 5e:4000-6aca | 10955 | ROMX 5e | `data/maps/scripts.asm`, `maps/CeladonCafe.asm`, `maps/CeladonDeptStore1F.asm`, `maps/CeladonDeptStore2F.asm`, +19 more |
 | `Map Scripts 29` | ROMX | 5f:4000-51d6 | 4567 | ROMX 5f | `data/maps/scripts.asm`, `maps/Route2Gate.asm`, `maps/Route2NuggetHouse.asm`, `maps/TrainerHouse1F.asm`, +7 more |
-| `Map Scripts 30` | ROMX | 60:4000-6665 | 9830 | ROMX 60 | `data/maps/scripts.asm`, `maps/DayOfWeekSiblingsHouse.asm`, `maps/ElmsHouse.asm`, `maps/ElmsLab.asm`, +6 more |
+| `Map Scripts 30` | ROMX | 60:4000-666a | 9835 | ROMX 60 | `data/maps/scripts.asm`, `maps/DayOfWeekSiblingsHouse.asm`, `maps/ElmsHouse.asm`, `maps/ElmsLab.asm`, +6 more |
 | `Map Scripts 31` | ROMX | 61:4000-5921 | 6434 | ROMX 61 | `data/maps/scripts.asm`, `maps/CopycatsHouse1F.asm`, `maps/CopycatsHouse2F.asm`, `maps/FightingDojo.asm`, +10 more |
 | `Map Scripts 32` | ROMX | 62:4000-4ead | 3758 | ROMX 62 | `data/maps/scripts.asm`, `maps/CherrygroveEvolutionSpeechHouse.asm`, `maps/CherrygroveGymSpeechHouse.asm`, `maps/CherrygroveMart.asm`, +5 more |
 

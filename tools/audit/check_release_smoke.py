@@ -402,6 +402,32 @@ def check_map_event_script_shapes() -> None:
                 fail(f"{path.relative_to(ROOT)}:{line_no}: hidden item points at non-hiddenitem script {label}")
 
 
+def check_coord_events_use_counted_scene_scripts() -> None:
+    scene_script_pat = re.compile(r"^\s*scene_script\s+[^,]+,\s*([A-Z0-9_]+)\b")
+    coord_event_pat = re.compile(r"^\s*coord_event\s+[^,]+,\s*[^,]+,\s*([A-Z0-9_]+)\s*,")
+
+    for path in sorted((ROOT / "maps").glob("*.asm")):
+        scene_scripts: set[str] = set()
+        coord_events: list[tuple[int, str]] = []
+        for line_no, raw in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            code = raw.split(";", 1)[0]
+            scene_script_match = scene_script_pat.match(code)
+            if scene_script_match:
+                scene_scripts.add(scene_script_match.group(1))
+                continue
+
+            coord_event_match = coord_event_pat.match(code)
+            if coord_event_match:
+                coord_events.append((line_no, coord_event_match.group(1)))
+
+        for line_no, scene in coord_events:
+            if scene not in scene_scripts:
+                fail(
+                    f"{path.relative_to(ROOT)}:{line_no}: coord_event uses {scene}, "
+                    "but the map scene table does not count it with scene_script"
+                )
+
+
 def check_object_constants_match_object_events() -> None:
     const_pat = re.compile(r"^\s*const\s+[A-Z0-9_]+\b")
     for path in sorted((ROOT / "maps").glob("*.asm")):
@@ -695,6 +721,9 @@ def main() -> int:
 
     check_map_event_script_shapes()
     print("PASS: map event script-shape checks")
+
+    check_coord_events_use_counted_scene_scripts()
+    print("PASS: coord-event scene-table checks")
 
     check_object_constants_match_object_events()
     print("PASS: object constant count checks")

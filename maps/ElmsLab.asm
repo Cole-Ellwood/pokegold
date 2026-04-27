@@ -14,7 +14,7 @@ ElmsLab_MapScripts:
 	scene_script ElmsLabNoop3Scene,   SCENE_ELMSLAB_MEET_OFFICER
 	scene_script ElmsLabNoop4Scene,   SCENE_ELMSLAB_UNUSED
 	scene_script ElmsLabNoop5Scene,   SCENE_ELMSLAB_AIDE_GIVES_POTION
-	scene_const SCENE_ELMSLAB_AIDE_GIVES_POKE_BALLS
+	scene_script ElmsLabNoop6Scene,   SCENE_ELMSLAB_AIDE_GIVES_POKE_BALLS
 
 	def_callbacks
 
@@ -35,6 +35,9 @@ ElmsLabNoop4Scene:
 	end
 
 ElmsLabNoop5Scene:
+	end
+
+ElmsLabNoop6Scene:
 	end
 
 ElmsLabWalkUpToElmScript:
