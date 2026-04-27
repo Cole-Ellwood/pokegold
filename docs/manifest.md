@@ -191,6 +191,10 @@ It is no longer a complete release manifest for the current project state.
 
 - `ARIADOS` level-up: add `Lv22 SPIKES`; `Lv43 SPIDER_WEB -> Lv37 SPIDER_WEB`.
 
+### Yanma utility pass
+
+- `YANMA` level-up: `Lv19 LEECH_LIFE -> Lv17 LEECH_LIFE`.
+
 ## Scope note
 
 - This document covers only data-layer diffs.

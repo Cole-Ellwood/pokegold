@@ -260,6 +260,7 @@ def main() -> int:
         "TyphlosionEvosAttacks": {"FIRE_BLAST": 37, "ANCIENTPOWER": 45},
         "FeraligatrEvosAttacks": {"DRAGON_DANCE": 38, "HYDRO_PUMP": 45},
         "AriadosEvosAttacks": {"SPIKES": 22, "SPIDER_WEB": 37},
+        "YanmaEvosAttacks": {"LEECH_LIFE": 17, "WING_ATTACK": 25},
     }
     for label, checks in expected_level_moves.items():
         learned = parse_levelup_block(evos_path, label)

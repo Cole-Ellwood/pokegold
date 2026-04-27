@@ -25,16 +25,14 @@ species, but buffs should preserve identity and avoid trivializing early Johto.
 High priority is intentionally empty in `docs/buff_backlog.md`. Do not promote a
 medium-priority Pokemon just to keep the queue visually busy.
 
-Medium-priority review now starts with:
-
-| Pokemon | First question |
-| --- | --- |
-| `YANMA` | Does current Speed/offense make the Bug/Flying role worth using? |
+Medium-priority review is currently empty after the Farfetch'd, Ariados, and
+Yanma source passes.
 
 `ARIADOS` now has provisional slow hazard-trapper intent in
-`docs/balance_intent.md`; its remaining questions are playtest follow-ups, not
-the next source-balance lane. Lower-priority watchlist and generated
-high-signal rows live in `docs/buff_backlog.md` and
+`docs/balance_intent.md`, and `YANMA` now has provisional fast physical
+Bug/Flying disruptor intent there. Their remaining questions are playtest
+follow-ups, not the next source-balance lane. Lower-priority watchlist and
+generated high-signal rows live in `docs/buff_backlog.md` and
 `docs/generated/balance_audit.md`. Treat generated rows as hints, not verdicts.
 
 ## Decision Destinations

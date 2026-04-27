@@ -55,6 +55,7 @@ only visible in generated audit output.
 | `DELIBIRD` | Upgraded from Present-only into an Ice/Flying utility wall with Icy Wind, Aurora Beam, Agility, Wing Attack, Haze, and late Blizzard. | Watch Silver Ice Path catch feel and Pokefan Colin's level 32 Delibird. |
 | `FARFETCH_D` | Moved into a provisional Stick-backed crit attacker role: wild Farfetch'd now commonly carry Stick, learn Wing Attack at level 23, and Stick's item text names its critical-ratio effect. | Playtest Route 38 catch feel and Bird Keeper Jose/Perry trainer showcases. |
 | `ARIADOS` | Moved into a provisional slow hazard-trapper role: evolved Ariados now learns Spikes at level 22 and gets Spider Web by level 37, matching Koga's level-40 utility showcase without relying on reminder-only level 1 Spikes. | Playtest evolved Spinarak between level 22 and 37, plus Koga's trap/hazard turn feel. |
+| `YANMA` | Moved into a provisional fast physical Bug/Flying disruptor role: Leech Life is now level 17 so Schoolboy Alan's first Yanma and a trained Route 35 catch show Bug STAB before Wing Attack at level 25. | Playtest Route 35 catch feel and Schoolboy Alan's level 17/25 Yanma showcases. |
 
 ## High Priority
 
@@ -62,9 +63,7 @@ _No active high-priority entries after the resolved evolution and gimmick pass._
 
 ## Medium Priority
 
-| Pokemon | Why It Is Suspicious | Likely Fix Paths | Status |
-| --- | --- | --- | --- |
-| `YANMA` | Fast-ish Bug/Flying with questionable STAB quality. | Confirm speed/offense role or improve level-up attack access. | needs review |
+_No active medium-priority entries after the Yanma source pass._
 
 ## Lower Priority Watchlist
 
