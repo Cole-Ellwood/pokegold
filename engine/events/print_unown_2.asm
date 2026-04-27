@@ -1,5 +1,5 @@
 RotateUnownFrontpic:
-; something to do with Unown printer
+; Rotate each tile and reorder the 7x7 frontpic for printer output.
 	push de
 	xor a ; BANK(sScratch)
 	call OpenSRAM
@@ -11,7 +11,7 @@ RotateUnownFrontpic:
 	push bc
 	ld de, wPrintedUnownTileSource
 	call .Copy
-	call .Rotate
+	call .RotateTile
 	ld hl, UnownPrinter_GBPrinterRectangle
 	pop bc
 	add hl, bc
@@ -53,20 +53,20 @@ RotateUnownFrontpic:
 	jr nz, .loop_copy
 	ret
 
-.Rotate:
+.RotateTile:
 	ld hl, wPrintedUnownTileDest
 	ld e, %10000000
 	ld d, 8
 .loop_decompress
 	push hl
 	ld hl, wPrintedUnownTileSource
-	call .CountSetBit
+	call .PackColumnByte
 	pop hl
 	ld a, b
 	ld [hli], a
 	push hl
 	ld hl, wPrintedUnownTileSource + 1
-	call .CountSetBit
+	call .PackColumnByte
 	pop hl
 	ld a, b
 	ld [hli], a
@@ -75,10 +75,10 @@ RotateUnownFrontpic:
 	jr nz, .loop_decompress
 	ret
 
-.CountSetBit:
+.PackColumnByte:
 	ld b, 0
 	ld c, 8
-.loop_count
+.loop_pack
 	ld a, [hli]
 	and e
 	jr z, .clear
@@ -92,7 +92,7 @@ RotateUnownFrontpic:
 	rr b
 	inc hl
 	dec c
-	jr nz, .loop_count
+	jr nz, .loop_pack
 	ret
 
 UnownPrinter_GBPrinterRectangle:
