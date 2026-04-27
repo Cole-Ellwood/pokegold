@@ -177,13 +177,10 @@ GetTMHMName::
 	ld a, [wNamedObjectIndex]
 	push af
 
-; Former HMs are numbered as TM51-TM57.
-	scf
-	push af
+; Former HMs share the TM prefix and are numbered TM51-TM57.
 	ld hl, .TMText
 	ld bc, .TMTextEnd - .TMText
 
-.copy
 	ld de, wStringBuffer1
 	call CopyBytes
 
@@ -194,12 +191,7 @@ GetTMHMName::
 	callfar GetTMHMNumber
 	pop de
 
-; Former HMs keep their sequential TM numbers.
-	pop af
 	ld a, c
-	jr c, .not_hm
-	sub NUM_TMS
-.not_hm
 
 ; Divide and mod by 10 to get the top and bottom digits respectively
 	ld b, '0'
