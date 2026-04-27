@@ -37,7 +37,6 @@ and the evidence path has been updated.
 Before this sweep can be called closed:
 
 - `python tools\audit\check_release_smoke.py`
-- `python tools\audit\check_docs_navigation.py`
 - `python tools\audit\check_boss_ai_live_capture_ledger.py`
 - `git diff --check`
 - WSL Gold/Silver build if any source file changed:
@@ -45,6 +44,10 @@ Before this sweep can be called closed:
 ```powershell
 bash -lc 'cd "/mnt/c/Users/lolno/Downloads/pokemon gold hack" && make -j4 RGBASM=rgbds-1.0.1/rgbasm.exe RGBLINK=rgbds-1.0.1/rgblink.exe RGBFIX=rgbds-1.0.1/rgbfix.exe RGBGFX=rgbds-1.0.1/rgbgfx.exe pokegold.gbc pokesilver.gbc'
 ```
+- `python scripts\generate_dev_index.py --rom pokegold` after any source build
+  that changes and keeps linker outputs.
+- `python tools\audit\check_docs_navigation.py` after the generated index is
+  refreshed.
 
 Record any manual emulator gap plainly. Do not convert source/audit evidence
 into a claim of playtest proof.
