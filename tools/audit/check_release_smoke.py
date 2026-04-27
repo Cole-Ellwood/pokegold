@@ -444,6 +444,22 @@ def parse_map_itemball_labels(path: Path) -> dict[str, str]:
     return labels
 
 
+def parse_map_hiddenitem_labels(path: Path) -> dict[str, tuple[str, str]]:
+    labels: dict[str, tuple[str, str]] = {}
+    label_pat = re.compile(r"^([A-Za-z0-9_]+):\s*$")
+    hiddenitem_pat = re.compile(r"^\s*hiddenitem\s+([A-Z0-9_]+),\s*(EVENT_[A-Z0-9_]+)\b")
+    current_label: str | None = None
+    for line in path.read_text(encoding="utf-8").splitlines():
+        label_match = label_pat.match(line)
+        if label_match:
+            current_label = label_match.group(1)
+            continue
+        hiddenitem_match = hiddenitem_pat.match(line)
+        if hiddenitem_match and current_label:
+            labels[current_label] = (hiddenitem_match.group(1), hiddenitem_match.group(2))
+    return labels
+
+
 def normalize_event_token(text: str) -> str:
     return re.sub(r"[^A-Z0-9]", "", text.upper())
 
@@ -518,6 +534,49 @@ def check_non_tm_itemball_event_names() -> None:
                 f"{path.relative_to(ROOT)}:{line_no}: "
                 f"itemball {label} gives {item} but uses stale-looking flag {event}"
             )
+
+
+def check_map_item_label_names() -> None:
+    for path in sorted((ROOT / "maps").glob("*.asm")):
+        itemball_labels = parse_map_itemball_labels(path)
+        hiddenitem_labels = parse_map_hiddenitem_labels(path)
+        for line_no, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            stripped = line.lstrip()
+            if stripped.startswith("object_event") and "OBJECTTYPE_ITEMBALL" in line:
+                parts = [part.strip() for part in line.split(",")]
+                if len(parts) < 13:
+                    continue
+                label = parts[11]
+                event = parts[12]
+                item = itemball_labels.get(label)
+                if not item or is_legacy_tm_itemball_slot(label, event):
+                    continue
+                if normalize_event_token(item) not in normalize_event_token(label):
+                    fail(
+                        f"{path.relative_to(ROOT)}:{line_no}: "
+                        f"itemball label {label} does not name {item}"
+                    )
+                continue
+            if not stripped.startswith("bg_event") or "BGEVENT_ITEM" not in line:
+                continue
+            parts = [part.strip() for part in line.split(",")]
+            if len(parts) < 4:
+                continue
+            label = parts[3]
+            hiddenitem = hiddenitem_labels.get(label)
+            if not hiddenitem:
+                continue
+            item, event = hiddenitem
+            if normalize_event_token(item) not in normalize_event_token(label):
+                fail(
+                    f"{path.relative_to(ROOT)}:{line_no}: "
+                    f"hidden item label {label} does not name {item}"
+                )
+            if normalize_event_token(item) not in normalize_event_token(event):
+                fail(
+                    f"{path.relative_to(ROOT)}:{line_no}: "
+                    f"hidden item {label} gives {item} but uses stale-looking flag {event}"
+                )
 
 
 def check_burned_tower_itemball_flags() -> None:
@@ -645,6 +704,9 @@ def main() -> int:
 
     check_itemball_guard_classifier_edges()
     print("PASS: itemball guard classifier edge checks")
+
+    check_map_item_label_names()
+    print("PASS: map item label/name checks")
 
     check_non_tm_itemball_event_names()
     print("PASS: non-TM itemball flag/name checks")
