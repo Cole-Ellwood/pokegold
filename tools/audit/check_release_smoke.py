@@ -453,6 +453,19 @@ def is_legacy_tm_itemball_slot(label: str, event: str) -> bool:
     return "_TM_" in event or re.search(r"TM[A-Z0-9]", label) is not None
 
 
+def check_itemball_guard_classifier_edges() -> None:
+    if is_legacy_tm_itemball_slot(
+        "MountMortar1FOutsideGuardSpec",
+        "EVENT_MOUNT_MORTAR_1F_OUTSIDE_REVIVE",
+    ):
+        fail("itemball TM-slot classifier treats MountMortar as a legacy TM slot")
+    if not is_legacy_tm_itemball_slot(
+        "GoldenrodUndergroundWarehouseTMSleepTalk",
+        "EVENT_GOLDENROD_UNDERGROUND_WAREHOUSE_TM_SLEEP_TALK",
+    ):
+        fail("itemball TM-slot classifier misses a legacy TM reward slot")
+
+
 def check_itemball_event_cross_swaps() -> None:
     for path in sorted((ROOT / "maps").glob("*.asm")):
         itemball_labels = parse_map_itemball_labels(path)
@@ -629,6 +642,9 @@ def main() -> int:
 
     check_itemball_event_cross_swaps()
     print("PASS: itemball event cross-swap checks")
+
+    check_itemball_guard_classifier_edges()
+    print("PASS: itemball guard classifier edge checks")
 
     check_non_tm_itemball_event_names()
     print("PASS: non-TM itemball flag/name checks")
