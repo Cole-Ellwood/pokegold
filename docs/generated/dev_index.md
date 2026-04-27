@@ -75,7 +75,7 @@ Read `docs/README.md` first for helper-doc routing, then `docs/codex_context.md`
 | Region | Used | Free | Banks |
 | --- | ---: | ---: | ---: |
 | ROM0 | 16124 | 260 |  |
-| ROMX | 1157546 | 923222 | 127 |
+| ROMX | 1157043 | 923725 | 127 |
 | SRAM | 31697 | 1071 | 4 |
 | WRAM0 | 4047 | 49 |  |
 | WRAMX | 4096 | 0 |  |
@@ -176,7 +176,7 @@ Use these as candidates when moving optional code or data out of tight banks.
 | `Map Scripts 7` | ROMX | 48:4000-65b7 | 9656 | ROMX 48 | `data/maps/scripts.asm`, `maps/AzaleaTown.asm`, `maps/CherrygroveCity.asm`, `maps/CianwoodCity.asm`, +3 more |
 | `Map Scripts 8` | ROMX | 49:4000-5f50 | 8017 | ROMX 49 | `data/maps/scripts.asm`, `maps/BlackthornCity.asm`, `maps/EcruteakCity.asm`, `maps/LakeOfRage.asm`, +3 more |
 | `Map Scripts 9` | ROMX | 4a:4000-6017 | 8216 | ROMX 4a | `data/maps/scripts.asm`, `maps/Route26.asm`, `maps/Route27.asm`, `maps/Route28.asm`, +3 more |
-| `Map Scripts 10` | ROMX | 4b:4000-69b5 | 10678 | ROMX 4b | `data/maps/scripts.asm`, `maps/Route32.asm`, `maps/Route33.asm`, `maps/Route34.asm`, +2 more |
+| `Map Scripts 10` | ROMX | 4b:4000-67be | 10175 | ROMX 4b | `data/maps/scripts.asm`, `maps/Route32.asm`, `maps/Route33.asm`, `maps/Route34.asm`, +2 more |
 | `Map Scripts 11` | ROMX | 4c:4000-5f25 | 7974 | ROMX 4c | `data/maps/scripts.asm`, `maps/Route37.asm`, `maps/Route38.asm`, `maps/Route39.asm`, +3 more |
 | `Map Scripts 12` | ROMX | 4d:4000-5e59 | 7770 | ROMX 4d | `data/maps/scripts.asm`, `maps/PewterCity.asm`, `maps/Route2.asm`, `maps/Route43.asm`, +3 more |
 | `Map Scripts 13` | ROMX | 4e:4000-6173 | 8564 | ROMX 4e | `data/maps/scripts.asm`, `maps/CeladonCity.asm`, `maps/CinnabarIsland.asm`, `maps/FuchsiaCity.asm`, +11 more |

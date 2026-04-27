@@ -57,12 +57,6 @@ Route32CooltrainerMContinueScene:
 	closetext
 	end
 
-.GoToSproutTower: ; unreferenced
-	writetext Route32CooltrainerMText_UnusedSproutTower
-	waitbutton
-	closetext
-	end
-
 .GiveMiracleSeed:
 	writetext Route32CooltrainerMText_HaveThisSeed
 	promptbutton
@@ -465,21 +459,6 @@ Route32CooltrainerMText_AideIsWaiting:
 	line "CENTER."
 	done
 
-Route32CooltrainerMText_UnusedSproutTower:
-	text "Have you gone to"
-	line "SPROUT TOWER?"
-
-	para "If you ever visit"
-	line "VIOLET CITY, "
-
-	para "they'll expect you"
-	line "to train there."
-
-	para "That's basic for"
-	line "trainers. Go to"
-	cont "SPROUT TOWER!"
-	done
-
 Route32CooltrainerMText_VioletGym:
 	text "Have you gone to"
 	line "the #MON GYM?"
@@ -586,45 +565,6 @@ FisherRalphAfterText:
 
 	para "#MON are life-"
 	line "long friends!"
-	done
-
-Route32UnusedFisher1SeenText: ; unreferenced
-	text "I keep catching"
-	line "the same #MON…"
-
-	para "Maybe a battle"
-	line "will turn things"
-	cont "around for me."
-	done
-
-Route32UnusedFisher1BeatenText: ; unreferenced
-	text "Nothing ever goes"
-	line "right for me now…"
-	done
-
-Route32UnusedFisher1AfterText: ; unreferenced
-	text "How come the guy"
-	line "next to me catches"
-	cont "good #MON?"
-	done
-
-Route32UnusedFisher2SeenText: ; unreferenced
-	text "Heh, I'm on a roll"
-	line "today. How about a"
-	cont "battle, kid?"
-	done
-
-Route32UnusedFisher2BeatenText: ; unreferenced
-	text "Oof. I wasn't"
-	line "lucky that time."
-	done
-
-Route32UnusedFisher2AfterText: ; unreferenced
-	text "You have to have a"
-	line "good ROD if you"
-
-	para "want to catch good"
-	line "#MON."
 	done
 
 FisherHenrySeenText:
@@ -738,12 +678,6 @@ BirdKeeperPeterAfterText:
 	text "I should train"
 	line "again at the GYM"
 	cont "in VIOLET CITY."
-	done
-
-Route32UnusedText: ; unreferenced
-	text "The fishermen"
-	line "yelled at me for"
-	cont "bugging them…"
 	done
 
 Text_RoarIntro:
