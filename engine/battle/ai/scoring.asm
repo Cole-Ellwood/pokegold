@@ -98,8 +98,8 @@ AI_Setup:
 	cp EFFECT_EVASION_UP + 1
 	jr c, .statup
 
-;	cp EFFECT_ATTACK_DOWN - 1
-	jr z, .checkmove
+	cp EFFECT_ATTACK_DOWN
+	jr c, .checkmove
 	cp EFFECT_EVASION_DOWN + 1
 	jr c, .statdown
 
@@ -108,8 +108,8 @@ AI_Setup:
 	cp EFFECT_EVASION_UP_2 + 1
 	jr c, .statup
 
-;	cp EFFECT_ATTACK_DOWN_2 - 1
-	jr z, .checkmove
+	cp EFFECT_ATTACK_DOWN_2
+	jr c, .checkmove
 	cp EFFECT_EVASION_DOWN_2 + 1
 	jr c, .statdown
 

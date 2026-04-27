@@ -23,6 +23,13 @@ AI_ITEMS = ROOT / "engine" / "battle" / "ai" / "items.asm"
 AI_SWITCH = ROOT / "engine" / "battle" / "ai" / "switch.asm"
 TM_TUTOR = ROOT / "engine" / "events" / "tm_tutor.asm"
 ITEM_ATTRIBUTES = ROOT / "data" / "items" / "attributes.asm"
+ASM_SCAN_ROOTS = (
+    ROOT / "constants",
+    ROOT / "data",
+    ROOT / "engine",
+    ROOT / "home",
+    ROOT / "maps",
+)
 
 TOP_LABEL_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*:{1,2}\s*(?:;.*)?$")
 LOCAL_LABEL_RE = re.compile(r"^\.[A-Za-z_][A-Za-z0-9_]*:?\s*(?:;.*)?$")
@@ -32,6 +39,8 @@ HELD_COMPARE_RE = re.compile(r"\bcp\s+HELD_[A-Z0-9_]+")
 CONVERT_HELD_EFFECT_RE = re.compile(
     r"\b(GetItemHeldEffect|GetUserItem|GetOpponentItem|BossAI_GetEnemyHeldEffect)\b"
 )
+COMMENTED_FLAG_REFRESH_RE = re.compile(r"^\s*;\s*(?:and\s+a|or\s+a|cp\s+[^;]+|bit\s+[^;]+)\s*(?:;.*)?$")
+FLAG_CONSUMER_RE = re.compile(r"^\s*(?:ret|jr|jp|call)\s+(?:z|nz|c|nc)\b")
 
 SUSPICIOUS_DUPLICATE_COMMANDS = {
     "effectchance",
@@ -491,6 +500,35 @@ def audit_known_rejected_leads(leads: list[Lead]) -> str:
     return f"rejected-lead sentinels checked={checked}"
 
 
+def audit_commented_flag_refreshes(leads: list[Lead]) -> str:
+    checked = 0
+    for root in ASM_SCAN_ROOTS:
+        for path in sorted(root.rglob("*.asm")):
+            lines = read_text(path).splitlines()
+            for index, raw in enumerate(lines):
+                if COMMENTED_FLAG_REFRESH_RE.match(raw) is None:
+                    continue
+                for next_index in range(index + 1, len(lines)):
+                    code = strip_comment(lines[next_index]).strip()
+                    if not code:
+                        continue
+                    if FLAG_CONSUMER_RE.match(code):
+                        checked += 1
+                        add_lead(
+                            leads,
+                            2,
+                            path,
+                            index + 1,
+                            "commented-out flag refresh before conditional control flow",
+                            "A disabled flag-setting instruction next to a flag-sensitive branch is easy to turn into stale-flag logic.",
+                            f"`{raw.strip()}` before `{code}`",
+                            "Trace the intended return/branch convention; either restore the flag refresh or remove the stale commented instruction.",
+                        )
+                    break
+
+    return f"commented flag-refresh sentinels checked={checked}"
+
+
 def audit_tm_tutor_cur_item_restore(leads: list[Lead]) -> str:
     text = read_text(TM_TUTOR)
     block = next((candidate for candidate in top_blocks(TM_TUTOR) if candidate.label == "TMTutorTeachAnyTM"), None)
@@ -537,6 +575,7 @@ def run_triage() -> tuple[list[Lead], list[str]]:
         audit_boss_setup_classifiers(leads),
         audit_base_data_restore_patterns(leads),
         audit_known_rejected_leads(leads),
+        audit_commented_flag_refreshes(leads),
         audit_tm_tutor_cur_item_restore(leads),
     ]
     leads.sort(key=lambda lead: (lead.priority, lead.path.as_posix(), lead.lineno, lead.title))
