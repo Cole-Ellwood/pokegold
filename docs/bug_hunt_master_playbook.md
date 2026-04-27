@@ -557,6 +557,13 @@ specific source path before broadening. Current lead families include duplicate
 move-effect commands, raw held-effect compares, Boss AI base-data restore leaks,
 reopened rejected leads, commented-out flag refreshes, TM Tutor `wCurItem`
 restore leaks, and memory loads that may branch on stale `z`/`nz` flags.
+After editing the triage heuristics, run:
+
+```powershell
+python tools\audit\bug_hunt_triage.py --self-test
+```
+
+Then run the normal triage command.
 
 Then build both ROMs:
 

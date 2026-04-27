@@ -619,6 +619,67 @@ def audit_memory_load_flag_branches(leads: list[Lead]) -> str:
     return f"memory-load flag branches checked={checked}"
 
 
+def find_memory_load_branch(codes: list[str]) -> int | None:
+    for index in range(len(codes) - 1):
+        if MEMORY_A_LOAD_RE.match(codes[index]) and ZN_BRANCH_RE.match(codes[index + 1]):
+            return index
+    return None
+
+
+def run_self_test() -> int:
+    cases = (
+        (
+            "move reorder stale battle-mode flags",
+            (
+                "\tcall .copy_move",
+                "\tld a, [wBattleMode]",
+                "\tjr z, .swap_moves",
+            ),
+            True,
+        ),
+        (
+            "seconds helper stale minute flags",
+            (
+                "\tld a, [wHoursSince]",
+                "\tand a",
+                "\tjr nz, GetTimeElapsed_ExceedsUnitLimit",
+                "\tld a, [wMinutesSince]",
+                "\tjr nz, GetTimeElapsed_ExceedsUnitLimit",
+            ),
+            True,
+        ),
+        (
+            "side-selection return-value idiom",
+            (
+                "\tld a, [wMonType]",
+                "\tand a",
+                "\tld a, [wPartyCount]",
+                "\tjr z, .next_mon",
+            ),
+            False,
+        ),
+    )
+
+    failures: list[str] = []
+    for name, lines, should_flag in cases:
+        codes = [strip_comment(line).strip() for line in lines]
+        load_index = find_memory_load_branch(codes)
+        if load_index is None:
+            failures.append(f"{name}: no memory-load branch pair found")
+            continue
+        flagged = stale_flag_reason_before_load(codes, load_index) is not None
+        if flagged != should_flag:
+            failures.append(f"{name}: expected flagged={should_flag}, got {flagged}")
+
+    if failures:
+        for failure in failures:
+            print(f"FAIL: {failure}")
+        return 1
+
+    print("Self-test passed: stale flag heuristic catches known regressions without flagging the side-selection idiom.")
+    return 0
+
+
 def run_triage() -> tuple[list[Lead], list[str]]:
     leads: list[Lead] = []
     checked = [
@@ -643,7 +704,15 @@ def main(argv: list[str] | None = None) -> int:
         default=25,
         help="maximum ranked leads to print (default: 25)",
     )
+    parser.add_argument(
+        "--self-test",
+        action="store_true",
+        help="run small regression examples for the triage heuristics",
+    )
     args = parser.parse_args(argv)
+
+    if args.self_test:
+        return run_self_test()
 
     try:
         leads, checked = run_triage()
