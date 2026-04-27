@@ -361,6 +361,53 @@ def check_trainer_objects_use_trainer_scripts() -> None:
             fail(f"{path.relative_to(ROOT)}:{line_no}: trainer object points at generic ObjectEvent")
 
 
+def parse_map_itemball_labels(path: Path) -> dict[str, str]:
+    lines = path.read_text(encoding="utf-8").splitlines()
+    labels: dict[str, str] = {}
+    label_pat = re.compile(r"^([A-Za-z0-9_]+):\s*$")
+    itemball_pat = re.compile(r"^\s*itemball\s+([A-Z0-9_]+)\b")
+    for index, line in enumerate(lines[:-1]):
+        label_match = label_pat.match(line)
+        if not label_match:
+            continue
+        itemball_match = itemball_pat.match(lines[index + 1])
+        if itemball_match:
+            labels[label_match.group(1)] = itemball_match.group(1)
+    return labels
+
+
+def normalize_event_token(text: str) -> str:
+    return re.sub(r"[^A-Z0-9]", "", text.upper())
+
+
+def check_itemball_event_cross_swaps() -> None:
+    for path in sorted((ROOT / "maps").glob("*.asm")):
+        itemball_labels = parse_map_itemball_labels(path)
+        rows: list[tuple[int, str, str, str]] = []
+        for line_no, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            if not line.lstrip().startswith("object_event") or "OBJECTTYPE_ITEMBALL" not in line:
+                continue
+            parts = [part.strip() for part in line.split(",")]
+            if len(parts) < 13:
+                continue
+            label = parts[11]
+            event = parts[12]
+            item = itemball_labels.get(label)
+            if item and event.startswith("EVENT_"):
+                rows.append((line_no, label, item, event))
+        for index, (line_a, label_a, item_a, event_a) in enumerate(rows):
+            item_a_token = normalize_event_token(item_a)
+            event_a_token = normalize_event_token(event_a)
+            for line_b, label_b, item_b, event_b in rows[index + 1 :]:
+                item_b_token = normalize_event_token(item_b)
+                event_b_token = normalize_event_token(event_b)
+                if item_a_token in event_b_token and item_b_token in event_a_token:
+                    fail(
+                        f"{path.relative_to(ROOT)}:{line_a}/{line_b}: "
+                        f"itemball flags look swapped between {label_a} and {label_b}"
+                    )
+
+
 def check_burned_tower_itemball_flags() -> None:
     require_ordered_text(
         ROOT / "maps/BurnedTower1F.asm",
@@ -477,6 +524,9 @@ def main() -> int:
 
     check_trainer_objects_use_trainer_scripts()
     print("PASS: trainer object script-pointer checks")
+
+    check_itemball_event_cross_swaps()
+    print("PASS: itemball event cross-swap checks")
 
     check_burned_tower_itemball_flags()
     print("PASS: Burned Tower itemball flag checks")
