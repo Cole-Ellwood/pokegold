@@ -33,17 +33,17 @@ Read `docs/README.md` first for helper-doc routing, then `docs/codex_context.md`
 ### Battle mechanics
 - Intent: Shared damage, status, switching, item, and turn-flow rules.
 - Start here: `engine/battle/core.asm`, `engine/battle/effect_commands.asm`, `engine/battle/type_passive_damage_mods.asm`, `engine/battle/late_gen_held_items.asm`, `engine/battle/move_effects`, `constants/battle_constants.asm`
-- Anchors: `TypePassive_ApplyDamageModifiers_Far` (0b:73d2, `engine/battle/type_passive_damage_mods.asm:44`); `TypePassive_TryDarkStatusShield_Far` (0b:795f, `engine/battle/type_passive_damage_mods.asm:1057`); `TypePassive_MaybePoisonRetaliation_Far` (0b:79ae, `engine/battle/type_passive_damage_mods.asm:1118`); `ApplyLateGenDamageMultipliers_Far` (0b:6f77, `engine/battle/late_gen_held_items.asm:168`); `HandleLateGenAfterHitEffects_Far` (0b:7032, `engine/battle/late_gen_held_items.asm:289`); `TryActivateDittoImposter` (01:79b8, `engine/battle/ditto_imposter.asm:1`)
+- Anchors: `TypePassive_ApplyDamageModifiers_Far` (0b:73cf, `engine/battle/type_passive_damage_mods.asm:44`); `TypePassive_TryDarkStatusShield_Far` (0b:795c, `engine/battle/type_passive_damage_mods.asm:1057`); `TypePassive_MaybePoisonRetaliation_Far` (0b:79ab, `engine/battle/type_passive_damage_mods.asm:1118`); `ApplyLateGenDamageMultipliers_Far` (0b:6f74, `engine/battle/late_gen_held_items.asm:168`); `HandleLateGenAfterHitEffects_Far` (0b:702f, `engine/battle/late_gen_held_items.asm:289`); `TryActivateDittoImposter` (01:79b8, `engine/battle/ditto_imposter.asm:1`)
 
 ### Moves
 - Intent: Move stats, effects, descriptions, contact flags, and animations.
 - Start here: `data/moves/moves.asm`, `data/moves/effects.asm`, `data/moves/effects_pointers.asm`, `data/moves/contact_flags.asm`, `data/moves/descriptions.asm`, `constants/move_constants.asm`
-- Anchors: `Moves` (10:5af6, `data/moves/moves.asm:14`); `MoveEffects` (09:7510, `data/moves/effects.asm:3`); `MoveContactFlags` (0b:7b21, `data/moves/contact_flags.asm:4`); `Spikes` (09:7a2c, `data/moves/effects.asm:1525`); `RapidSpin` (09:7b01, `data/moves/effects.asm:1772`)
+- Anchors: `Moves` (10:5af6, `data/moves/moves.asm:14`); `MoveEffects` (09:7510, `data/moves/effects.asm:3`); `MoveContactFlags` (0b:7b1e, `data/moves/contact_flags.asm:4`); `Spikes` (09:7a2c, `data/moves/effects.asm:1525`); `RapidSpin` (09:7b01, `data/moves/effects.asm:1772`)
 
 ### Items and held items
 - Intent: Item data, descriptions, pockets, marts, and battle held effects.
 - Start here: `data/items/attributes.asm`, `data/items/descriptions.asm`, `data/items/names.asm`, `data/items/marts.asm`, `engine/items`, `engine/battle/late_gen_held_items.asm`
-- Anchors: `ItemAttributes` (01:68d5, `data/items/attributes.asm:8`); `ItemDescriptions` (6e:4000, `data/items/descriptions.asm:1`); `ItemNames` (6c:4000, `data/items/names.asm:1`); `IsChoiceHeldEffect_Far` (0b:7332, `engine/battle/late_gen_held_items.asm:797`); `IsMoveBlockedByAssaultVest_Far` (0b:733b, `engine/battle/late_gen_held_items.asm:805`)
+- Anchors: `ItemAttributes` (01:68d5, `data/items/attributes.asm:8`); `ItemDescriptions` (6e:4000, `data/items/descriptions.asm:1`); `ItemNames` (6c:4000, `data/items/names.asm:1`); `IsChoiceHeldEffect_Far` (0b:732f, `engine/battle/late_gen_held_items.asm:797`); `IsMoveBlockedByAssaultVest_Far` (0b:7338, `engine/battle/late_gen_held_items.asm:805`)
 
 ### Pokemon data and weak-Pokemon buffs
 - Intent: Base stats, types, level-up moves, evolutions, egg moves, and names.
@@ -53,7 +53,7 @@ Read `docs/README.md` first for helper-doc routing, then `docs/codex_context.md`
 ### Maps, events, and QoL scripts
 - Intent: Map scripts, specials, NPC events, progression, tutors, and reminders.
 - Start here: `maps`, `data/maps`, `data/events/special_pointers.asm`, `engine/events/move_reminder.asm`, `engine/events/tm_tutor.asm`, `engine/overworld`
-- Anchors: `Special` (03:422b, `engine/events/specials.asm:1`); `SpecialsPointers` (03:4239, `data/events/special_pointers.asm:14`); `MoveReminder` (0b:4451, `engine/events/move_reminder.asm:8`); `TMTutorTeachAnyTM` (0b:4bf5, `engine/events/tm_tutor.asm:1`)
+- Anchors: `Special` (03:422b, `engine/events/specials.asm:1`); `SpecialsPointers` (03:4239, `data/events/special_pointers.asm:14`); `MoveReminder` (0b:4451, `engine/events/move_reminder.asm:8`); `TMTutorTeachAnyTM` (0b:4bf2, `engine/events/tm_tutor.asm:1`)
 
 ### RAM, saves, and temporary battle state
 - Intent: WRAM, SRAM, VRAM, HRAM, save data, and low-memory pressure points.
@@ -75,7 +75,7 @@ Read `docs/README.md` first for helper-doc routing, then `docs/codex_context.md`
 | Region | Used | Free | Banks |
 | --- | ---: | ---: | ---: |
 | ROM0 | 16124 | 260 |  |
-| ROMX | 1157845 | 922923 | 127 |
+| ROMX | 1157842 | 922926 | 127 |
 | SRAM | 31697 | 1071 | 4 |
 | WRAM0 | 4047 | 49 |  |
 | WRAMX | 4096 | 0 |  |
@@ -150,8 +150,8 @@ Use these as candidates when moving optional code or data out of tight banks.
 | Section | Region | Bank/range | Size | Layout constraint | Source hints |
 | --- | --- | --- | ---: | --- | --- |
 | `Home` | ROM0 | 00:0150-3fd3 | 16004 | ROM0 00 | `home.asm`, `home/array.asm`, `home/audio.asm`, `home/battle.asm`, +49 more |
-| `bankB` | ROMX | 0b:4000-4d6c | 3437 | ROMX 0b | `engine/battle/ai/redundant.asm`, `engine/battle/trainer_huds.asm`, `engine/events/move_deleter.asm`, `engine/events/move_reminder.asm`, +7 more |
-| `Late Gen Held Items` | ROMX | 0b:6e7c-7c1e | 3491 |  | `engine/battle/late_gen_held_items.asm`, `engine/battle/type_passive_damage_mods.asm`, `main.asm` |
+| `bankB` | ROMX | 0b:4000-4d69 | 3434 | ROMX 0b | `engine/battle/ai/redundant.asm`, `engine/battle/trainer_huds.asm`, `engine/events/move_deleter.asm`, `engine/events/move_reminder.asm`, +7 more |
+| `Late Gen Held Items` | ROMX | 0b:6e79-7c1b | 3491 |  | `engine/battle/late_gen_held_items.asm`, `engine/battle/type_passive_damage_mods.asm`, `main.asm` |
 | `Effect Commands` | ROMX | 0d:4000-7ffe | 16383 | ROMX 0d | `engine/battle/effect_commands.asm`, `engine/battle/used_move_text.asm`, `main.asm` |
 | `Enemy Trainers` | ROMX | 0e:4000-7dda | 15835 | ROMX 0e | `engine/battle/ai/boss.asm`, `engine/battle/ai/items.asm`, `engine/battle/ai/scoring.asm`, `engine/battle/read_trainer_attributes.asm`, +1 more |
 | `Battle Core` | ROMX | 0f:4000-7bb6 | 15287 | ROMX 0f | `engine/battle/core.asm`, `main.asm` |
@@ -222,29 +222,29 @@ Use these as candidates when moving optional code or data out of tight banks.
 | `CheckPlayerMoveTypeMatchups` | 0d:4a79 | `engine/battle/ai/switch.asm:1` |
 | `AICompareSpeed` | 0e:5264 | `engine/battle/ai/scoring.asm:2673` |
 | `AIDamageCalc` | 0e:5419 | `engine/battle/ai/scoring.asm:3033` |
-| `TypePassive_ApplyDamageModifiers_Far` | 0b:73d2 | `engine/battle/type_passive_damage_mods.asm:44` |
-| `TypePassive_TryDarkStatusShield_Far` | 0b:795f | `engine/battle/type_passive_damage_mods.asm:1057` |
-| `TypePassive_MaybePoisonRetaliation_Far` | 0b:79ae | `engine/battle/type_passive_damage_mods.asm:1118` |
-| `ApplyLateGenDamageMultipliers_Far` | 0b:6f77 | `engine/battle/late_gen_held_items.asm:168` |
-| `HandleLateGenAfterHitEffects_Far` | 0b:7032 | `engine/battle/late_gen_held_items.asm:289` |
+| `TypePassive_ApplyDamageModifiers_Far` | 0b:73cf | `engine/battle/type_passive_damage_mods.asm:44` |
+| `TypePassive_TryDarkStatusShield_Far` | 0b:795c | `engine/battle/type_passive_damage_mods.asm:1057` |
+| `TypePassive_MaybePoisonRetaliation_Far` | 0b:79ab | `engine/battle/type_passive_damage_mods.asm:1118` |
+| `ApplyLateGenDamageMultipliers_Far` | 0b:6f74 | `engine/battle/late_gen_held_items.asm:168` |
+| `HandleLateGenAfterHitEffects_Far` | 0b:702f | `engine/battle/late_gen_held_items.asm:289` |
 | `TryActivateDittoImposter` | 01:79b8 | `engine/battle/ditto_imposter.asm:1` |
 | `Moves` | 10:5af6 | `data/moves/moves.asm:14` |
 | `MoveEffects` | 09:7510 | `data/moves/effects.asm:3` |
-| `MoveContactFlags` | 0b:7b21 | `data/moves/contact_flags.asm:4` |
+| `MoveContactFlags` | 0b:7b1e | `data/moves/contact_flags.asm:4` |
 | `Spikes` | 09:7a2c | `data/moves/effects.asm:1525` |
 | `RapidSpin` | 09:7b01 | `data/moves/effects.asm:1772` |
 | `ItemAttributes` | 01:68d5 | `data/items/attributes.asm:8` |
 | `ItemDescriptions` | 6e:4000 | `data/items/descriptions.asm:1` |
 | `ItemNames` | 6c:4000 | `data/items/names.asm:1` |
-| `IsChoiceHeldEffect_Far` | 0b:7332 | `engine/battle/late_gen_held_items.asm:797` |
-| `IsMoveBlockedByAssaultVest_Far` | 0b:733b | `engine/battle/late_gen_held_items.asm:805` |
+| `IsChoiceHeldEffect_Far` | 0b:732f | `engine/battle/late_gen_held_items.asm:797` |
+| `IsMoveBlockedByAssaultVest_Far` | 0b:7338 | `engine/battle/late_gen_held_items.asm:805` |
 | `BaseData` | 14:5bb8 | `data/pokemon/base_stats.asm:21` |
 | `EvosAttacksPointers` | 10:6893 | `data/pokemon/evos_attacks_pointers.asm:3` |
 | `EggMovePointers` | 08:79fe | `data/pokemon/egg_move_pointers.asm:1` |
 | `Special` | 03:422b | `engine/events/specials.asm:1` |
 | `SpecialsPointers` | 03:4239 | `data/events/special_pointers.asm:14` |
 | `MoveReminder` | 0b:4451 | `engine/events/move_reminder.asm:8` |
-| `TMTutorTeachAnyTM` | 0b:4bf5 | `engine/events/tm_tutor.asm:1` |
+| `TMTutorTeachAnyTM` | 0b:4bf2 | `engine/events/tm_tutor.asm:1` |
 | `wBattleMode` | 01:d116 | `ram/wram.asm:2107` |
 | `wEnemyMon` | 01:d0ef | `ram/wram.asm:2100` |
 | `wBattleMon` | 00:cafc | `ram/wram.asm:747` |
