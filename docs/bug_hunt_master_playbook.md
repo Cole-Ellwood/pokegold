@@ -521,7 +521,9 @@ Before relabeling an old issue, read durable evidence through
   from a specific dirty checkout. Treat each entry as a lead until current
   source recheck proves it open, resolved, or stale.
 - `docs/bugs_and_glitches.md` records original Gold/Silver bugs and Crystal-era
-  fixes. It is historical fix documentation, not the current romhack bug queue.
+  fixes. It is historical fix documentation, not the current romhack bug queue;
+  `python tools\audit\check_release_smoke.py` guards the source fixes that this
+  checkout keeps from that file.
 - `audit/boss_ai_trace/live_capture_ledger.md` owns live Boss AI proof status.
   Do not promote a boss/scenario from `UNTOUCHED` without a current capture file
   and a passing ledger audit.

@@ -222,6 +222,52 @@ def parse_equ(path: Path, name: str) -> int:
     return 0
 
 
+def check_documented_gold_silver_bugfixes() -> None:
+    require_ordered_text(
+        ROOT / "data/text/common_3.asm",
+        (
+            "_CoinCaseCountText::",
+            '\ttext "Coins:"',
+            "\ttext_end",
+        ),
+        "Coin Case count text terminates without fallthrough",
+    )
+    require_ordered_text(
+        ROOT / "engine/events/halloffame.asm",
+        (
+            "HallOfFame::",
+            "\tld a, [wSavedAtLeastOnce]\n\tand a\n\tjr nz, .saved",
+            "\tfarcall ErasePreviousSave\n.saved",
+        ),
+        "Hall of Fame clears previous save before first-save entry",
+    )
+    require_text(
+        ROOT / "engine/events/lucky_number.asm",
+        "\tcp NUM_BOXES\n\tjr c, .BoxesLoop",
+    )
+    require_text(
+        ROOT / "data/text/battle.asm",
+        'PresentFailedText:\n\ttext "<TARGET>"\n\tline "refused the gift!"',
+    )
+    require_ordered_text(
+        ROOT / "engine/events/overworld.asm",
+        (
+            ".TrySurf:",
+            "\tcall CheckDirection\n\tjr c, .cannotsurf",
+            "\tfarcall CheckFacingObject\n\tjr c, .cannotsurf",
+        ),
+        "Surf checks facing object before starting",
+    )
+    require_text(
+        ROOT / "data/maps/maps.asm",
+        "\tmap CeruleanGym, TILESET_PORT, INDOOR, LANDMARK_CERULEAN_CITY, MUSIC_GYM, TRUE, PALETTE_DAY, FISHGROUP_NONE",
+    )
+    require_text(
+        ROOT / "maps/Route15.asm",
+        'Route15SignText:\n\ttext "ROUTE 15"',
+    )
+
+
 def main() -> int:
     moves = parse_moves(ROOT / "data/moves/moves.asm")
     expected_moves = {
@@ -304,6 +350,9 @@ def main() -> int:
         "\tld a, [wMagikarpLength]\n\tcp 3\n\tjr c, .GenerateDVs ; try again\n\tjr nz, .Happiness\n\tld a, [wMagikarpLength + 1]\n\tcp 4",
     )
     print("PASS: wild Magikarp size gate checks")
+
+    check_documented_gold_silver_bugfixes()
+    print("PASS: documented Gold/Silver bugfix checks")
 
     require_ordered_text(
         ROOT / "engine/events/tm_tutor.asm",
