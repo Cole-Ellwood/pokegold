@@ -2325,8 +2325,9 @@ AriadosEvosAttacks:
 	db 1, SPIKES
 	db 10, FURY_SWIPES
 	db 17, NIGHT_SHADE
+	db 22, SPIKES
 	db 25, LEECH_LIFE
-	db 43, SPIDER_WEB
+	db 37, SPIDER_WEB
 	db 0 ; no more level-up moves
 CrobatEvosAttacks:
 	db 0 ; no more evolutions

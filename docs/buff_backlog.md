@@ -54,6 +54,7 @@ only visible in generated audit output.
 | `ELECTRODE` | Added Rapid Spin access so Electric teams can clear hazards without importing Donphan. | Watch if the fastest spinner is too clean. |
 | `DELIBIRD` | Upgraded from Present-only into an Ice/Flying utility wall with Icy Wind, Aurora Beam, Agility, Wing Attack, Haze, and late Blizzard. | Watch Silver Ice Path catch feel and Pokefan Colin's level 32 Delibird. |
 | `FARFETCH_D` | Moved into a provisional Stick-backed crit attacker role: wild Farfetch'd now commonly carry Stick, learn Wing Attack at level 23, and Stick's item text names its critical-ratio effect. | Playtest Route 38 catch feel and Bird Keeper Jose/Perry trainer showcases. |
+| `ARIADOS` | Moved into a provisional slow hazard-trapper role: evolved Ariados now learns Spikes at level 22 and gets Spider Web by level 37, matching Koga's level-40 utility showcase without relying on reminder-only level 1 Spikes. | Playtest evolved Spinarak between level 22 and 37, plus Koga's trap/hazard turn feel. |
 
 ## High Priority
 
@@ -63,7 +64,6 @@ _No active high-priority entries after the resolved evolution and gimmick pass._
 
 | Pokemon | Why It Is Suspicious | Likely Fix Paths | Status |
 | --- | --- | --- | --- |
-| `ARIADOS` | Bulky enough to have a role, but low speed and modest attack can still feel flat. 2026-04-27 fixed its out-of-order `FURY_SWIPES` row; role question remains. | Add stronger Bug/Poison identity or document as bulky status utility. | needs review |
 | `YANMA` | Fast-ish Bug/Flying with questionable STAB quality. | Confirm speed/offense role or improve level-up attack access. | needs review |
 
 ## Lower Priority Watchlist

@@ -187,6 +187,10 @@ It is no longer a complete release manifest for the current project state.
   any move levels or move identities. This restores the table invariant used by
   `FillMoves` when generating a Pokemon's current moves from species and level.
 
+### Ariados utility pass
+
+- `ARIADOS` level-up: add `Lv22 SPIKES`; `Lv43 SPIDER_WEB -> Lv37 SPIDER_WEB`.
+
 ## Scope note
 
 - This document covers only data-layer diffs.
