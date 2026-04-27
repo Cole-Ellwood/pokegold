@@ -316,6 +316,41 @@ def check_elapsed_seconds_helper_refreshes_minute_flags() -> None:
     )
 
 
+def check_bug_contest_exit_flow() -> None:
+    require_ordered_text(
+        ROOT / "engine/events/misc_scripts.asm",
+        (
+            "Script_AbortBugContest:",
+            "\tcheckflag ENGINE_BUG_CONTEST_TIMER\n\tiffalse .finish",
+            "\tsetflag ENGINE_DAILY_BUG_CONTEST\n\tspecial ContestReturnMons",
+            ".finish\n\tend",
+        ),
+        "Bug Contest abort returns held party mons",
+    )
+    require_ordered_text(
+        ROOT / "engine/events/std_scripts.asm",
+        (
+            "BugContestResultsScript:",
+            "\tclearflag ENGINE_BUG_CONTEST_TIMER",
+            "\tspecial BugContestJudging",
+            "BugContestResults_FinishUp:",
+            "\tcheckevent EVENT_LEFT_MONS_WITH_CONTEST_OFFICER\n\tiffalse BugContestResults_DidNotLeaveMons",
+            "\twritetext ContestResults_ReturnPartyText\n\twaitbutton\n\tspecial ContestReturnMons",
+            "BugContestResults_DidNotLeaveMons:\n\tspecial CheckPartyFullAfterContest",
+        ),
+        "Bug Contest results restore party before caught-mon placement",
+    )
+    require_ordered_text(
+        ROOT / "engine/overworld/events.asm",
+        (
+            "WarpToSpawnPoint::",
+            "\tres STATUSFLAGS2_SAFARI_GAME_F, [hl]",
+            "\tres STATUSFLAGS2_BUG_CONTEST_TIMER_F, [hl]",
+        ),
+        "field-move spawn warp clears Bug Contest timer",
+    )
+
+
 def main() -> int:
     moves = parse_moves(ROOT / "data/moves/moves.asm")
     expected_moves = {
@@ -413,6 +448,9 @@ def main() -> int:
 
     check_elapsed_seconds_helper_refreshes_minute_flags()
     print("PASS: elapsed seconds helper flag check")
+
+    check_bug_contest_exit_flow()
+    print("PASS: Bug Contest exit flow checks")
 
     require_ordered_text(
         ROOT / "engine/events/tm_tutor.asm",
