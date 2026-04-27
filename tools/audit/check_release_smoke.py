@@ -476,6 +476,33 @@ def check_itemball_event_cross_swaps() -> None:
                     )
 
 
+def check_non_tm_itemball_event_names() -> None:
+    for path in sorted((ROOT / "maps").glob("*.asm")):
+        itemball_labels = parse_map_itemball_labels(path)
+        for line_no, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            if not line.lstrip().startswith("object_event") or "OBJECTTYPE_ITEMBALL" not in line:
+                continue
+            parts = [part.strip() for part in line.split(",")]
+            if len(parts) < 13:
+                continue
+            label = parts[11]
+            event = parts[12]
+            item = itemball_labels.get(label)
+            if not item or not event.startswith("EVENT_"):
+                continue
+            item_token = normalize_event_token(item)
+            event_token = normalize_event_token(event)
+            label_token = normalize_event_token(label)
+            if item_token in event_token:
+                continue
+            if "TM" in event_token or "TM" in label_token:
+                continue
+            fail(
+                f"{path.relative_to(ROOT)}:{line_no}: "
+                f"itemball {label} gives {item} but uses stale-looking flag {event}"
+            )
+
+
 def check_burned_tower_itemball_flags() -> None:
     require_ordered_text(
         ROOT / "maps/BurnedTower1F.asm",
@@ -598,6 +625,9 @@ def main() -> int:
 
     check_itemball_event_cross_swaps()
     print("PASS: itemball event cross-swap checks")
+
+    check_non_tm_itemball_event_names()
+    print("PASS: non-TM itemball flag/name checks")
 
     check_burned_tower_itemball_flags()
     print("PASS: Burned Tower itemball flag checks")
