@@ -1,6 +1,6 @@
 # Generated Balance Audit
 
-Generated: 2026-04-26T13:22:35
+Generated: 2026-04-26T18:52:01
 Baseline ref: `060d4accd7c0d01b1697ac97e7d7e2da72e3646b`
 
 Do not hand-edit this file. Regenerate it with:
@@ -95,7 +95,6 @@ _No rows._
 | 1 | `SKARMORY` | `current-final`, `watch-bst-final` | 475 | 465 | 10 | 75/80/140/70/40/70 | HP+10 | STEEL/FLYING | - | - | 7 | 22 | FLY (FLYING 70bp 100%) | FLY (FLYING 70bp 100%) |
 | 1 | `BEEDRILL` | `current-final`, `watch-bst-final` | 480 | 385 | 95 | 75/120/40/120/45/80 | HP+10, Atk+40, Spe+45 | BUG/POISON | - | - | 7 | 21 | SLUDGE_BOMB (POISON 90bp 100%) | HYPER_BEAM (NORMAL 180bp 90%) |
 | 1 | `PERSIAN` | `current-final`, `watch-bst-final` | 485 | 440 | 45 | 65/110/60/115/70/65 | Atk+40, SpA+5 | NORMAL/NORMAL | - | - | 8 | 30 | HYPER_BEAM (NORMAL 180bp 90%) | HYPER_BEAM (NORMAL 180bp 90%) |
-| 1 | `DELIBIRD` | `current-final`, `thin-levelset` | 490 | 330 | 160 | 100/55/45/75/65/150 | HP+55, SpD+105 | ICE/FLYING | - | - | 1 | 22 | BLIZZARD (ICE 120bp 85%) | BLIZZARD (ICE 120bp 85%) |
 | 1 | `SUDOWOODO` | `current-final`, `weak-reliable-stab` | 510 | 550 | -40 | 90/125/145/45/30/75 | HP-40, Atk-25, Spe+15, SpD+10 | ROCK/ROCK | - | - | 9 | 29 | ROCK_SLIDE (ROCK 75bp 90%) | EARTHQUAKE (GROUND 100bp 100%) |
 | 1 | `SCIZOR` | `current-final`, `weak-reliable-stab` | 520 | 500 | 20 | 70/130/120/65/55/80 | Def+20 | BUG/STEEL | - | - | 10 | 25 | STEEL_WING (STEEL 70bp 90%) | HYPER_BEAM (NORMAL 180bp 90%) |
 | 1 | `SHUCKLE` | `current-final`, `weak-reliable-stab` | 545 | 585 | -40 | 60/10/230/5/10/230 | HP-40 | BUG/ROCK | - | - | 7 | 25 | ROLLOUT (ROCK 30bp 90%) | EARTHQUAKE (GROUND 100bp 100%) |
@@ -104,6 +103,7 @@ _No rows._
 | 0 | `SMEARGLE` | `current-final`, `documented-gimmick` | 440 | 250 | 190 | 90/45/75/110/45/75 | HP+35, Atk+25, Def+40, Spe+35, SpA+25, SpD+30 | NORMAL/NORMAL | - | - | 10 | 0 | - | - |
 | 0 | `WOBBUFFET` | `current-final`, `documented-gimmick` | 449 | 405 | 44 | 220/33/65/33/33/65 | HP+30, Def+7, SpD+7 | PSYCHIC_TYPE/PSYCHIC_TYPE | - | - | 4 | 0 | - | - |
 | 0 | `CLEFABLE` | `current-final` | 490 | 473 | 17 | 120/50/90/45/85/100 | HP+25, Atk-20, Def+17, Spe-15, SpD+10 | NORMAL/NORMAL | - | - | 9 | 38 | HYPER_BEAM (NORMAL 180bp 90%) | SOLARBEAM (GRASS 180bp 100%) |
+| 0 | `DELIBIRD` | `current-final` | 490 | 330 | 160 | 100/55/45/75/65/150 | HP+55, SpD+105 | ICE/FLYING | - | - | 8 | 22 | BLIZZARD (ICE 120bp 85%) | BLIZZARD (ICE 120bp 85%) |
 | 0 | `MAGCARGO` | `current-final` | 490 | 410 | 80 | 80/80/120/30/100/80 | HP+30, Atk+30, SpA+20 | FIRE/ROCK | - | - | 10 | 22 | FIRE_BLAST (FIRE 140bp 85%) | HYPER_BEAM (NORMAL 180bp 90%) |
 | 0 | `PARASECT` | `current-final` | 490 | 405 | 85 | 90/130/80/30/80/80 | HP+30, Atk+35, SpA+20 | BUG/GRASS | - | - | 10 | 25 | SOLARBEAM (GRASS 180bp 100%) | SOLARBEAM (GRASS 180bp 100%) |
 | 0 | `FURRET` | `current-final` | 494 | 501 | -7 | 85/100/64/90/100/55 | HP-45, Atk-26, Def-16, Spe+50, SpA+55, SpD-25 | NORMAL/NORMAL | - | - | 9 | 33 | HYPER_BEAM (NORMAL 180bp 90%) | HYPER_BEAM (NORMAL 180bp 90%) |

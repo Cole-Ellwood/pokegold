@@ -42,9 +42,10 @@ Read these files in order:
 5. `docs/agent_navigation/start_card.md`
 6. `docs/agent_navigation/README.md`
 7. `docs/agent_navigation/task_router.md`
-8. `docs/agent_navigation/verification_matrix.md`
-9. `docs/codex_review_playbook.md`
-10. `docs/generated/dev_index.md`
+8. `docs/agent_navigation/artifact_catalog.md`
+9. `docs/agent_navigation/verification_matrix.md`
+10. `docs/codex_review_playbook.md`
+11. `docs/generated/dev_index.md`
 
 Before touching source, write down the investigation frame in the scratch notes
 or final report:
@@ -52,6 +53,7 @@ or final report:
 - target subsystem or broad-lane route;
 - source-truth files;
 - generated/output files that must not be edited;
+- durable evidence artifacts to inspect before scratch paths;
 - relevant audit commands;
 - build expectation;
 - manual or live-proof gaps that automation cannot cover.
@@ -307,10 +309,22 @@ public information.
 ```powershell
 python tools\trace\boss_ai_trace_capture.py --symbols-only
 python tools\trace\boss_ai_trace_batch.py
+python tools\trace\boss_ai_trace_batch.py --execute --only <capture_id>
 python tools\audit\check_boss_ai_live_capture_ledger.py
 ```
 
-Do not mark Morty/Jasmine/Clair/Koga/Lance/Red proven from static audits alone.
+For Morty candidates only, run the Morty-specific strict preflight before
+trusting the state:
+
+```powershell
+python tools\trace\boss_ai_trace_state_probe.py --save-state path\to\before_morty_decision.state --expect-morty --strict
+```
+
+For other bosses or scenarios, add the candidate to
+`audit/boss_ai_trace/live_capture_manifest.json` and let the batch runner enforce
+whatever `preflight.expect` guard exists for that capture. Old `.local/` RAM, a
+dry-run that reports `MISSING_STATE`, or a symbol dump is not live proof. Do not
+mark Morty/Jasmine/Clair/Koga/Lance/Red proven from static audits alone.
 
 ## Battle Mechanics Pass
 
@@ -477,22 +491,46 @@ Check:
 - `docs/project_map.md` routes broad work correctly.
 - `docs/agent_navigation/task_router.md` has a row for the prompt shape.
 - `docs/agent_navigation/verification_matrix.md` has an audit floor.
+- `docs/agent_navigation/doc_roles.md` owns where new routing facts belong.
+- `docs/agent_navigation/navigation_health_check.md` still describes the
+  acceptance criteria for navigation changes.
+- `docs/agent_navigation/artifact_catalog.md` names durable evidence before
+  scratch or `.local/` paths.
 - `docs/generated/dev_index.md` was regenerated only through its script.
 - Any stale helper-doc claim is corrected or reported.
 
 Minimum commands:
 
 ```powershell
-python tools\audit\check_docs_navigation.py
-git diff --check
+python tools\audit\check_navigation_floor.py
 ```
+
+Use `python tools\audit\check_navigation_floor.py --workspace-hygiene` only when
+the task includes raw-folder clutter, output ownership, or cleanup planning.
+
+## Historical Findings And Evidence Artifacts
+
+Before relabeling an old issue, read durable evidence through
+`docs/agent_navigation/artifact_catalog.md`.
+
+- `docs/bug_hunt_labeled_findings_2026-04-26.md` is a bug-hunt evidence ledger
+  from a specific dirty checkout. Treat each entry as a lead until current
+  source recheck proves it open, resolved, or stale.
+- `docs/bugs_and_glitches.md` records original Gold/Silver bugs and Crystal-era
+  fixes. It is historical fix documentation, not the current romhack bug queue.
+- `audit/boss_ai_trace/live_capture_ledger.md` owns live Boss AI proof status.
+  Do not promote a boss/scenario from `UNTOUCHED` without a current capture file
+  and a passing ledger audit.
+- If a finding changes status, cite the current file/line evidence and command
+  output that changed your mind. Do not edit ledgers to make counts look tidy.
 
 ## Broad Bug Hunt Command Floor
 
 For a broad review where no narrower matrix row is enough, run:
 
 ```powershell
-python tools\audit\check_docs_navigation.py
+python tools\audit\check_navigation_floor.py
+python tools\audit\bug_hunt_triage.py
 python tools\audit\check_release_smoke.py
 python tools\audit\check_ai_tiers.py
 python tools\audit\check_boss_items_present.py
@@ -503,9 +541,13 @@ python tools\audit\check_boss_ai_trace_invariants.py
 python tools\audit\check_boss_ai_memory_budget.py
 python tools\audit\check_boss_ai_live_capture_ledger.py
 python tools\audit\check_battle_math_safety.py
-python scripts\generate_balance_audit.py
+python scripts\generate_balance_audit.py --out .local\tmp\balance_audit_check.md
 git diff --check
 ```
+
+Treat `bug_hunt_triage.py` as a lead printer, not a proof gate. If it reports
+nothing, keep hunting by invariant; if it reports a lead, prove or reject the
+specific source path before broadening.
 
 Then build both ROMs:
 
@@ -516,12 +558,22 @@ bash -lc 'cd "/mnt/c/Users/lolno/Downloads/pokemon gold hack" && make -j4 RGBASM
 If source did not change, a build may report "up to date." Record that exact
 fact. Do not turn it into gameplay validation.
 
+If the build changes `.map` or `.sym` outputs, refresh the generated navigation
+mirror and rerun the navigation floor:
+
+```powershell
+python scripts\generate_dev_index.py --rom pokegold
+python tools\audit\check_navigation_floor.py
+```
+
 ## Finding Standard
 
 Every finding should include:
 
 - severity: `P0`, `P1`, `P2`, or `P3`;
 - exact file and line;
+- current source basis: branch, dirty-state summary, and whether the finding is
+  new, historical, reopened, or resolved in current source;
 - observed invariant break;
 - user-visible or design-visible consequence;
 - concrete fix direction;

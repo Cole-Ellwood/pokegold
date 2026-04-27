@@ -31,9 +31,7 @@ Medium-priority review starts with:
 | --- | --- |
 | `FARFETCH_D` | Is Stick availability or Flying/Normal STAB strong enough for a standalone final? |
 | `ARIADOS` | Is bulky status utility real in play, or does low Speed leave it flat? |
-| `LEDIAN` | Does it have a real support role despite no reliable generated STAB flag? |
 | `YANMA` | Does current Speed/offense make the Bug/Flying role worth using? |
-| `DELIBIRD` | Is it a special tank, utility pick, or intentional joke identity? |
 
 Lower-priority watchlist and generated high-signal rows live in
 `docs/buff_backlog.md` and `docs/generated/balance_audit.md`. Treat generated
@@ -53,8 +51,8 @@ rows as hints, not verdicts.
 Use exact species labels before broad searches:
 
 ```powershell
-rg -n -C 4 "FARFETCH_D|ARIADOS|LEDIAN|YANMA|DELIBIRD" docs data constants
-rg -n "^(FarfetchDEvosAttacks|AriadosEvosAttacks|LedianEvosAttacks|YanmaEvosAttacks|DelibirdEvosAttacks):" data/pokemon/evos_attacks.asm
+rg -n -C 4 "FARFETCH_D|ARIADOS|YANMA" docs data constants
+rg -n "^(FarfetchDEvosAttacks|AriadosEvosAttacks|YanmaEvosAttacks):" data/pokemon/evos_attacks.asm
 ```
 
 For base stats, jump to one file:

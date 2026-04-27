@@ -120,6 +120,7 @@ python tools\audit\check_boss_ai_trace_invariants.py
 python tools\audit\check_boss_ai_memory_budget.py
 python tools\audit\check_boss_items_present.py
 python tools\audit\check_boss_moves_complete.py
+python tools\audit\check_cheap_difficulty.py
 python tools\audit\check_battle_math_safety.py
 python scripts\generate_dev_index.py --rom pokegold --out .local\out\dev_index_check.md
 ```

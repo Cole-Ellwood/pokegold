@@ -52,6 +52,7 @@ only visible in generated audit output.
 | `QWILFISH` | Upgraded into a faster Poison/Water Spikes trade piece; Janine now uses it instead of Ariados. | Watch Explosion pressure. |
 | `CORSOLA` | Upgraded into a sturdier Rock/Water Recover spinner; Brock now uses it instead of Donphan. | Watch late Rock-team stall pacing. |
 | `ELECTRODE` | Added Rapid Spin access so Electric teams can clear hazards without importing Donphan. | Watch if the fastest spinner is too clean. |
+| `DELIBIRD` | Upgraded from Present-only into an Ice/Flying utility wall with Icy Wind, Aurora Beam, Agility, Wing Attack, Haze, and late Blizzard. | Watch Silver Ice Path catch feel and Pokefan Colin's level 32 Delibird. |
 
 ## High Priority
 
@@ -64,7 +65,6 @@ _No active high-priority entries after the resolved evolution and gimmick pass._
 | `FARFETCH_D` | Buffed Attack helps, but reliable STAB is still modest for a standalone final. | Confirm Stick availability or improve Flying/Normal access. | needs review |
 | `ARIADOS` | Bulky enough to have a role, but low speed and modest attack can still feel flat. | Add stronger Bug/Poison identity or document as bulky status utility. | needs review |
 | `YANMA` | Fast-ish Bug/Flying with questionable STAB quality. | Confirm speed/offense role or improve level-up attack access. | needs review |
-| `DELIBIRD` | Present-only identity historically weak; current stats are better but role still unclear. | Decide whether it is a special tank, utility pick, or joke mon. | needs review |
 
 ## Lower Priority Watchlist
 
