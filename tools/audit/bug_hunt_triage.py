@@ -41,6 +41,12 @@ CONVERT_HELD_EFFECT_RE = re.compile(
 )
 COMMENTED_FLAG_REFRESH_RE = re.compile(r"^\s*;\s*(?:and\s+a|or\s+a|cp\s+[^;]+|bit\s+[^;]+)\s*(?:;.*)?$")
 FLAG_CONSUMER_RE = re.compile(r"^\s*(?:ret|jr|jp|call)\s+(?:z|nz|c|nc)\b")
+MEMORY_A_LOAD_RE = re.compile(r"^\s*ld\s+a,\s*\[[^\]]+\]\s*$")
+ZN_BRANCH_RE = re.compile(r"^\s*(?:ret|jr|jp|call)\s+(?:z|nz)\b")
+FLAG_SETTER_RE = re.compile(r"^\s*(?:cp|and|or|xor|sub|sbc|add|adc|dec|inc|bit)\b")
+FLAG_FLOW_BARRIER_RE = re.compile(
+    r"^\s*(?:call|farcall|callfar)\b|^\s*(?:ret|jr|jp)\s+(?:z|nz|c|nc)\b"
+)
 
 SUSPICIOUS_DUPLICATE_COMMANDS = {
     "effectchance",
@@ -174,6 +180,10 @@ def add_lead(
             next_step=next_step,
         )
     )
+
+
+def is_label(code: str) -> bool:
+    return TOP_LABEL_RE.match(code) is not None or LOCAL_LABEL_RE.match(code) is not None
 
 
 def audit_move_effect_scripts(leads: list[Lead]) -> str:
@@ -567,6 +577,48 @@ def audit_tm_tutor_cur_item_restore(leads: list[Lead]) -> str:
     return "TM Tutor wCurItem restore checked"
 
 
+def stale_flag_reason_before_load(codes: list[str], load_index: int) -> str | None:
+    for previous in range(load_index - 1, max(-1, load_index - 8), -1):
+        code = codes[previous].strip()
+        if not code:
+            continue
+        if is_label(code):
+            return "no nearby flag setter before the load"
+        if FLAG_FLOW_BARRIER_RE.match(code):
+            return f"flag state crosses `{code}` before the load"
+        if FLAG_SETTER_RE.match(code):
+            return None
+    return "no nearby flag setter before the load"
+
+
+def audit_memory_load_flag_branches(leads: list[Lead]) -> str:
+    checked = 0
+    for root in ASM_SCAN_ROOTS:
+        for path in sorted(root.rglob("*.asm")):
+            lines = read_text(path).splitlines()
+            codes = [strip_comment(line).strip() for line in lines]
+            for index in range(len(codes) - 1):
+                code = codes[index]
+                next_code = codes[index + 1]
+                if MEMORY_A_LOAD_RE.match(code) is None or ZN_BRANCH_RE.match(next_code) is None:
+                    continue
+                checked += 1
+                reason = stale_flag_reason_before_load(codes, index)
+                if reason is None:
+                    continue
+                add_lead(
+                    leads,
+                    2,
+                    path,
+                    index + 1,
+                    "memory load followed by conditional branch without local flag refresh",
+                    "`ld a, [addr]` does not update flags; this branch may be reading an older comparison.",
+                    f"{lines[index].strip()} / {lines[index + 1].strip()} ({reason})",
+                    "Trace the intended condition. If the loaded value is the condition, insert `and a`; if the old flags are intentional, add a narrow comment or teach this scanner the idiom.",
+                )
+    return f"memory-load flag branches checked={checked}"
+
+
 def run_triage() -> tuple[list[Lead], list[str]]:
     leads: list[Lead] = []
     checked = [
@@ -577,6 +629,7 @@ def run_triage() -> tuple[list[Lead], list[str]]:
         audit_known_rejected_leads(leads),
         audit_commented_flag_refreshes(leads),
         audit_tm_tutor_cur_item_restore(leads),
+        audit_memory_load_flag_branches(leads),
     ]
     leads.sort(key=lambda lead: (lead.priority, lead.path.as_posix(), lead.lineno, lead.title))
     return leads, checked
