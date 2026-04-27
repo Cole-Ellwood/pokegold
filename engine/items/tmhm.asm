@@ -360,13 +360,11 @@ TMHM_DisplayPocketItems:
 	call PlaceString
 	pop hl
 	pop bc
-	ld a, c
 	push bc
 	ld bc, SCREEN_WIDTH + 9
 	add hl, bc
 	ld [hl], '×'
 	inc hl
-	ld a, '0' ; why are we doing this?
 	pop bc
 	push bc
 	ld a, b
