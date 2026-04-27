@@ -75,7 +75,7 @@ Read `docs/README.md` first for helper-doc routing, then `docs/codex_context.md`
 | Region | Used | Free | Banks |
 | --- | ---: | ---: | ---: |
 | ROM0 | 16124 | 260 |  |
-| ROMX | 1157964 | 922804 | 127 |
+| ROMX | 1157838 | 922930 | 127 |
 | SRAM | 31697 | 1071 | 4 |
 | WRAM0 | 4047 | 49 |  |
 | WRAMX | 4096 | 0 |  |
@@ -172,19 +172,19 @@ Use these as candidates when moving optional code or data out of tight banks.
 | `Map Scripts 3` | ROMX | 44:4000-70ca | 12491 | ROMX 44 | `data/maps/scripts.asm`, `maps/OlivineLighthouse1F.asm`, `maps/OlivineLighthouse2F.asm`, `maps/OlivineLighthouse3F.asm`, +15 more |
 | `Map Scripts 4` | ROMX | 45:4000-6f47 | 12104 | ROMX 45 | `data/maps/scripts.asm`, `maps/IlexForest.asm`, `maps/MahoganyMart1F.asm`, `maps/TeamRocketBaseB1F.asm`, +2 more |
 | `Map Scripts 5` | ROMX | 46:4000-636f | 9072 | ROMX 46 | `data/maps/scripts.asm`, `maps/GoldenrodDeptStoreB1F.asm`, `maps/GoldenrodUnderground.asm`, `maps/GoldenrodUndergroundSwitchRoomEntrances.asm`, +10 more |
-| `Map Scripts 6` | ROMX | 47:4000-49e0 | 2529 | ROMX 47 | `data/maps/scripts.asm`, `maps/DarkCaveBlackthornEntrance.asm`, `maps/DarkCaveVioletEntrance.asm`, `maps/DragonsDen1F.asm`, +14 more |
+| `Map Scripts 6` | ROMX | 47:4000-49c8 | 2505 | ROMX 47 | `data/maps/scripts.asm`, `maps/DarkCaveBlackthornEntrance.asm`, `maps/DarkCaveVioletEntrance.asm`, `maps/DragonsDen1F.asm`, +14 more |
 | `Map Scripts 7` | ROMX | 48:4000-65b7 | 9656 | ROMX 48 | `data/maps/scripts.asm`, `maps/AzaleaTown.asm`, `maps/CherrygroveCity.asm`, `maps/CianwoodCity.asm`, +3 more |
 | `Map Scripts 8` | ROMX | 49:4000-5f50 | 8017 | ROMX 49 | `data/maps/scripts.asm`, `maps/BlackthornCity.asm`, `maps/EcruteakCity.asm`, `maps/LakeOfRage.asm`, +3 more |
 | `Map Scripts 9` | ROMX | 4a:4000-6017 | 8216 | ROMX 4a | `data/maps/scripts.asm`, `maps/Route26.asm`, `maps/Route27.asm`, `maps/Route28.asm`, +3 more |
-| `Map Scripts 10` | ROMX | 4b:4000-69c7 | 10696 | ROMX 4b | `data/maps/scripts.asm`, `maps/Route32.asm`, `maps/Route33.asm`, `maps/Route34.asm`, +2 more |
+| `Map Scripts 10` | ROMX | 4b:4000-69b5 | 10678 | ROMX 4b | `data/maps/scripts.asm`, `maps/Route32.asm`, `maps/Route33.asm`, `maps/Route34.asm`, +2 more |
 | `Map Scripts 11` | ROMX | 4c:4000-5f25 | 7974 | ROMX 4c | `data/maps/scripts.asm`, `maps/Route37.asm`, `maps/Route38.asm`, `maps/Route39.asm`, +3 more |
 | `Map Scripts 12` | ROMX | 4d:4000-5e59 | 7770 | ROMX 4d | `data/maps/scripts.asm`, `maps/PewterCity.asm`, `maps/Route2.asm`, `maps/Route43.asm`, +3 more |
 | `Map Scripts 13` | ROMX | 4e:4000-6173 | 8564 | ROMX 4e | `data/maps/scripts.asm`, `maps/CeladonCity.asm`, `maps/CinnabarIsland.asm`, `maps/FuchsiaCity.asm`, +11 more |
 | `Map Scripts 14` | ROMX | 4f:4000-64b1 | 9394 | ROMX 4f | `data/maps/scripts.asm`, `maps/CeruleanCity.asm`, `maps/LavenderTown.asm`, `maps/Route11.asm`, +8 more |
 | `Map Scripts 15` | ROMX | 50:4000-58ec | 6381 | ROMX 50 | `data/maps/scripts.asm`, `maps/Route10North.asm`, `maps/Route10South.asm`, `maps/Route23.asm`, +6 more |
-| `Map Scripts 16` | ROMX | 51:4000-5e27 | 7720 | ROMX 51 | `data/maps/scripts.asm`, `maps/MahoganyGym.asm`, `maps/MahoganyPokecenter1F.asm`, `maps/MahoganyRedGyaradosSpeechHouse.asm`, +12 more |
+| `Map Scripts 16` | ROMX | 51:4000-5dfd | 7678 | ROMX 51 | `data/maps/scripts.asm`, `maps/MahoganyGym.asm`, `maps/MahoganyPokecenter1F.asm`, `maps/MahoganyRedGyaradosSpeechHouse.asm`, +12 more |
 | `Map Scripts 17` | ROMX | 52:4000-5ccd | 7374 | ROMX 52 | `data/maps/scripts.asm`, `maps/DanceTheater.asm`, `maps/EcruteakGym.asm`, `maps/EcruteakItemfinderHouse.asm`, +5 more |
-| `Map Scripts 18` | ROMX | 53:4000-5e72 | 7795 | ROMX 53 | `data/maps/scripts.asm`, `maps/BlackthornDragonSpeechHouse.asm`, `maps/BlackthornEmysHouse.asm`, `maps/BlackthornGym1F.asm`, +12 more |
+| `Map Scripts 18` | ROMX | 53:4000-5e48 | 7753 | ROMX 53 | `data/maps/scripts.asm`, `maps/BlackthornDragonSpeechHouse.asm`, `maps/BlackthornEmysHouse.asm`, `maps/BlackthornGym1F.asm`, +12 more |
 | `Map Scripts 19` | ROMX | 54:4000-5aa2 | 6819 | ROMX 54 | `data/maps/scripts.asm`, `maps/BillsHouse.asm`, `maps/CeruleanGym.asm`, `maps/CeruleanGymBadgeSpeechHouse.asm`, +8 more |
 | `Map Scripts 20` | ROMX | 55:4000-55a3 | 5540 | ROMX 55 | `data/maps/scripts.asm`, `maps/AzaleaGym.asm`, `maps/AzaleaMart.asm`, `maps/AzaleaPokecenter1F.asm`, +2 more |
 | `Map Scripts 21` | ROMX | 56:4000-75d9 | 13786 | ROMX 56 | `data/maps/scripts.asm`, `maps/EarlsPokemonAcademy.asm`, `maps/Route32Pokecenter1F.asm`, `maps/Route32RuinsOfAlphGate.asm`, +9 more |

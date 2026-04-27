@@ -154,11 +154,6 @@ DragonShrineRisingBadgeExplanationText:
 	cont "gave you earlier."
 	done
 
-Text_ReceivedTM24: ; unreferenced
-	text "<PLAYER> received"
-	line "TM VOUCHER."
-	done
-
 ClairText_DescribeDragonbreathDragonDen:
 	text "Redeem that TM"
 	line "VOUCHER at the"

@@ -270,11 +270,6 @@ BlackthornGymClairText_YouKeptMeWaiting:
 	line "VOUCHER."
 	done
 
-BlackthornGymText_ReceivedTM24: ; unreferenced
-	text "<PLAYER> received"
-	line "TM VOUCHER."
-	done
-
 BlackthornGymClairText_DescribeTM24:
 	text "Redeem it at the"
 	line "TM TUTOR for"

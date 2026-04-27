@@ -307,11 +307,6 @@ RockSmashGuyText2:
 	cont "have this."
 	done
 
-Text_ReceivedTM08: ; unreferenced
-	text "<PLAYER> received"
-	line "TM08."
-	done
-
 RockSmashGuyText3:
 	text "That happens to be"
 	line "ROCK SMASH."

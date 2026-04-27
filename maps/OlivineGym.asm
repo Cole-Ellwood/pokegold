@@ -145,11 +145,6 @@ Jasmine_BadgeSpeech:
 	line "this TM VOUCHER…"
 	done
 
-Text_ReceivedTM09: ; unreferenced
-	text "<PLAYER> received"
-	line "TM VOUCHER."
-	done
-
 Jasmine_IronTailSpeech:
 	text "…That voucher can"
 	line "be exchanged for"
