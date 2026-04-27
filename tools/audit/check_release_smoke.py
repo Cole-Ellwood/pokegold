@@ -426,6 +426,19 @@ def parse_map_attribute_labels(path: Path) -> dict[str, str]:
     return labels
 
 
+def parse_map_dimensions(path: Path) -> dict[str, tuple[int, int]]:
+    map_const_pat = re.compile(r"^\s*map_const\s+([A-Z0-9_]+),\s*(\d+),\s*(\d+)")
+    dimensions: dict[str, tuple[int, int]] = {}
+    for raw in path.read_text(encoding="utf-8").splitlines():
+        match = map_const_pat.match(raw)
+        if match:
+            map_constant, width_blocks, height_blocks = match.groups()
+            dimensions[map_constant] = (int(width_blocks) * 2, int(height_blocks) * 2)
+    if not dimensions:
+        fail(f"could not parse map dimensions from {path}")
+    return dimensions
+
+
 def is_literal_scene_id(scene: str) -> bool:
     return re.fullmatch(r"(?:\d+|\$[0-9a-fA-F]+)", scene) is not None
 
@@ -490,6 +503,73 @@ def check_scene_setting_commands_use_counted_scene_scripts() -> None:
                     f"{path.relative_to(ROOT)}:{line_no}: setmapscene sets {map_constant} to {scene}, "
                     "but the target map does not count that scene with scene_script"
                 )
+
+
+def check_map_event_coordinates_within_bounds() -> None:
+    map_labels = parse_map_attribute_labels(ROOT / "data/maps/attributes.asm")
+    label_to_map = {label: map_constant for map_constant, label in map_labels.items()}
+    map_dimensions = parse_map_dimensions(ROOT / "constants/map_constants.asm")
+    event_pats = (
+        ("warp_event", re.compile(r"^\s*warp_event\s+(-?\d+),\s*(-?\d+),")),
+        ("coord_event", re.compile(r"^\s*coord_event\s+(-?\d+),\s*(-?\d+),")),
+        ("bg_event", re.compile(r"^\s*bg_event\s+(-?\d+),\s*(-?\d+),")),
+        ("object_event", re.compile(r"^\s*object_event\s+(-?\d+),\s*(-?\d+),")),
+    )
+
+    for path in sorted((ROOT / "maps").glob("*.asm")):
+        map_constant = label_to_map.get(path.stem)
+        if map_constant is None:
+            fail(f"{path.relative_to(ROOT)}: no map_attributes row for this map script")
+        dimensions = map_dimensions.get(map_constant)
+        if dimensions is None:
+            fail(f"{path.relative_to(ROOT)}: no map_const dimensions for {map_constant}")
+        width, height = dimensions
+        for line_no, raw in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            code = raw.split(";", 1)[0]
+            for event_type, event_pat in event_pats:
+                match = event_pat.match(code)
+                if not match:
+                    continue
+                x_coord, y_coord = (int(value) for value in match.groups())
+                if not (0 <= x_coord < width and 0 <= y_coord < height):
+                    fail(
+                        f"{path.relative_to(ROOT)}:{line_no}: {event_type} at "
+                        f"{x_coord},{y_coord} is outside {width}x{height}"
+                    )
+
+
+def check_warp_events_target_existing_warps() -> None:
+    map_labels = parse_map_attribute_labels(ROOT / "data/maps/attributes.asm")
+    warp_pat = re.compile(r"^\s*warp_event\s+-?\d+,\s*-?\d+,\s*([A-Z0-9_]+),\s*(-?\d+)\b")
+    warp_counts: dict[str, int] = {}
+    warp_targets: list[tuple[Path, int, str, int]] = []
+
+    for path in sorted((ROOT / "maps").glob("*.asm")):
+        warp_count = 0
+        for line_no, raw in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            code = raw.split(";", 1)[0]
+            match = warp_pat.match(code)
+            if not match:
+                continue
+            target_map, target_warp = match.groups()
+            warp_count += 1
+            warp_targets.append((path, line_no, target_map, int(target_warp)))
+        warp_counts[path.stem] = warp_count
+
+    for path, line_no, target_map, target_warp in warp_targets:
+        target_label = map_labels.get(target_map)
+        if target_label is None:
+            fail(f"{path.relative_to(ROOT)}:{line_no}: warp_event targets unknown map {target_map}")
+        target_warp_count = warp_counts.get(target_label)
+        if target_warp_count is None:
+            fail(f"{path.relative_to(ROOT)}:{line_no}: warp_event targets missing map file {target_label}")
+        if target_warp == -1:
+            continue
+        if not (1 <= target_warp <= target_warp_count):
+            fail(
+                f"{path.relative_to(ROOT)}:{line_no}: warp_event targets {target_map} "
+                f"warp {target_warp}, but valid warps are 1..{target_warp_count}"
+            )
 
 
 def check_object_constants_match_object_events() -> None:
@@ -791,6 +871,12 @@ def main() -> int:
 
     check_scene_setting_commands_use_counted_scene_scripts()
     print("PASS: scene-setting command scene-table checks")
+
+    check_map_event_coordinates_within_bounds()
+    print("PASS: map event coordinate bounds checks")
+
+    check_warp_events_target_existing_warps()
+    print("PASS: warp target index checks")
 
     check_object_constants_match_object_events()
     print("PASS: object constant count checks")
