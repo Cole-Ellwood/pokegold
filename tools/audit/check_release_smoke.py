@@ -294,6 +294,16 @@ def check_phone_delete_guard_refreshes_flags() -> None:
     )
 
 
+def check_move_reorder_refreshes_battle_mode_flags() -> None:
+    require_ordered_text(
+        ROOT / "engine/pokemon/mon_menu.asm",
+        (
+            "\tcall .copy_move\n\tld a, [wBattleMode]\n\tand a\n\tjr z, .swap_moves",
+        ),
+        "Move reorder tests battle mode with fresh flags",
+    )
+
+
 def main() -> int:
     moves = parse_moves(ROOT / "data/moves/moves.asm")
     expected_moves = {
@@ -385,6 +395,9 @@ def main() -> int:
 
     check_phone_delete_guard_refreshes_flags()
     print("PASS: phone deletion guard flag check")
+
+    check_move_reorder_refreshes_battle_mode_flags()
+    print("PASS: move reorder battle-mode flag check")
 
     require_ordered_text(
         ROOT / "engine/events/tm_tutor.asm",

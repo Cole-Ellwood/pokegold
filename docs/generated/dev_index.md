@@ -75,7 +75,7 @@ Read `docs/README.md` first for helper-doc routing, then `docs/codex_context.md`
 | Region | Used | Free | Banks |
 | --- | ---: | ---: | ---: |
 | ROM0 | 16124 | 260 |  |
-| ROMX | 1157843 | 922925 | 127 |
+| ROMX | 1157844 | 922924 | 127 |
 | SRAM | 31697 | 1071 | 4 |
 | WRAM0 | 4047 | 49 |  |
 | WRAMX | 4096 | 0 |  |

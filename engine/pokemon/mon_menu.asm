@@ -1032,6 +1032,7 @@ MoveScreenLoop:
 	add hl, bc
 	call .copy_move
 	ld a, [wBattleMode]
+	and a
 	jr z, .swap_moves
 	ld hl, wBattleMonMoves
 	ld bc, wBattleMonStructEnd - wBattleMon
