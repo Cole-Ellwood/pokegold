@@ -271,6 +271,7 @@ GetSecondsSinceIfLessThan60: ; unreferenced
 	and a
 	jr nz, GetTimeElapsed_ExceedsUnitLimit
 	ld a, [wMinutesSince]
+	and a
 	jr nz, GetTimeElapsed_ExceedsUnitLimit
 	ld a, [wSecondsSince]
 	ret

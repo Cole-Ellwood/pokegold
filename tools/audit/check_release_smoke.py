@@ -304,6 +304,18 @@ def check_move_reorder_refreshes_battle_mode_flags() -> None:
     )
 
 
+def check_elapsed_seconds_helper_refreshes_minute_flags() -> None:
+    require_ordered_text(
+        ROOT / "engine/overworld/time.asm",
+        (
+            "GetSecondsSinceIfLessThan60:",
+            "\tld a, [wMinutesSince]\n\tand a\n\tjr nz, GetTimeElapsed_ExceedsUnitLimit",
+            "\tld a, [wSecondsSince]\n\tret",
+        ),
+        "Seconds elapsed helper tests minutes with fresh flags",
+    )
+
+
 def main() -> int:
     moves = parse_moves(ROOT / "data/moves/moves.asm")
     expected_moves = {
@@ -398,6 +410,9 @@ def main() -> int:
 
     check_move_reorder_refreshes_battle_mode_flags()
     print("PASS: move reorder battle-mode flag check")
+
+    check_elapsed_seconds_helper_refreshes_minute_flags()
+    print("PASS: elapsed seconds helper flag check")
 
     require_ordered_text(
         ROOT / "engine/events/tm_tutor.asm",
