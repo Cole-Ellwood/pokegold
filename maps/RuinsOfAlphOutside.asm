@@ -76,17 +76,6 @@ TrainerPsychicNathan:
 	closetext
 	end
 
-TrainerSuperNerdEricUnused: ; unreferenced
-	trainer SUPER_NERD, ERIC_UNUSED, EVENT_BEAT_SUPER_NERD_ERIC_UNUSED, SuperNerdEricUnusedSeenText, SuperNerdEricUnusedBeatenText, 0, .Script
-
-.Script:
-	endifjustbattled
-	opentext
-	writetext SuperNerdEricUnusedAfterBattleText
-	waitbutton
-	closetext
-	end
-
 RuinsOfAlphOutsideMysteryChamberSign:
 	jumptext RuinsOfAlphOutsideMysteryChamberSignText
 
@@ -140,37 +129,6 @@ RuinsOfAlphOutsideScientistText:
 	para "I know! Let me up-"
 	line "grade your #-"
 	cont "DEX. Follow me."
-	done
-
-SuperNerdEricUnusedSeenText:
-	text "What do you want?"
-	line "I'm studying--"
-	cont "don't disturb me!"
-	done
-
-SuperNerdEricUnusedBeatenText:
-	text "Sorry…"
-	line "I'm frustrated by"
-
-	para "our lack of real"
-	line "understanding…"
-	done
-
-SuperNerdEricUnusedAfterBattleText:
-	text "The RUINS are from"
-	line "about 1500 years"
-	cont "ago."
-
-	para "Nobody knows who"
-	line "built them."
-
-	para "It's also not"
-	line "known if the #-"
-	cont "MON statues have"
-	cont "any meaning."
-
-	para "It's all one big"
-	line "mystery…"
 	done
 
 PsychicNathanSeenText:
