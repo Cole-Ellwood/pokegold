@@ -2685,6 +2685,41 @@ AICompareSpeed:
 	pop bc
 	ret
 
+MACRO ai_check_hp_fraction
+; \1 = HP address (e.g. wBattleMonHP)
+; \2 = number of left shifts (1 = half, 2 = quarter)
+; \3 = registers to push/pop ("hl" or "hl_de_bc")
+IF !STRCMP(\3, "hl_de_bc")
+	push hl
+	push de
+	push bc
+ELSE
+	push hl
+ENDC
+	ld hl, \1
+	ld b, [hl]
+	inc hl
+	ld c, [hl]
+REPT \2
+	sla c
+	rl b
+ENDR
+	inc hl
+	inc hl
+	ld a, [hld]
+	cp c
+	ld a, [hl]
+	sbc b
+IF !STRCMP(\3, "hl_de_bc")
+	pop bc
+	pop de
+	pop hl
+ELSE
+	pop hl
+ENDC
+	ret
+ENDM
+
 AICheckPlayerMaxHP:
 	push hl
 	push de
@@ -2728,84 +2763,16 @@ AICheckMaxHP:
 	ret
 
 AICheckPlayerHalfHP:
-	push hl
-	ld hl, wBattleMonHP
-	ld b, [hl]
-	inc hl
-	ld c, [hl]
-	sla c
-	rl b
-	inc hl
-	inc hl
-	ld a, [hld]
-	cp c
-	ld a, [hl]
-	sbc b
-	pop hl
-	ret
+	ai_check_hp_fraction wBattleMonHP, 1, "hl"
 
 AICheckEnemyHalfHP:
-	push hl
-	push de
-	push bc
-	ld hl, wEnemyMonHP
-	ld b, [hl]
-	inc hl
-	ld c, [hl]
-	sla c
-	rl b
-	inc hl
-	inc hl
-	ld a, [hld]
-	cp c
-	ld a, [hl]
-	sbc b
-	pop bc
-	pop de
-	pop hl
-	ret
+	ai_check_hp_fraction wEnemyMonHP, 1, "hl_de_bc"
 
 AICheckEnemyQuarterHP:
-	push hl
-	push de
-	push bc
-	ld hl, wEnemyMonHP
-	ld b, [hl]
-	inc hl
-	ld c, [hl]
-	sla c
-	rl b
-	sla c
-	rl b
-	inc hl
-	inc hl
-	ld a, [hld]
-	cp c
-	ld a, [hl]
-	sbc b
-	pop bc
-	pop de
-	pop hl
-	ret
+	ai_check_hp_fraction wEnemyMonHP, 2, "hl_de_bc"
 
 AICheckPlayerQuarterHP:
-	push hl
-	ld hl, wBattleMonHP
-	ld b, [hl]
-	inc hl
-	ld c, [hl]
-	sla c
-	rl b
-	sla c
-	rl b
-	inc hl
-	inc hl
-	ld a, [hld]
-	cp c
-	ld a, [hl]
-	sbc b
-	pop hl
-	ret
+	ai_check_hp_fraction wBattleMonHP, 2, "hl"
 
 AIHasMoveEffect:
 ; Return carry if the enemy has move b.

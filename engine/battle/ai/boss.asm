@@ -2304,6 +2304,11 @@ ENDC
 	cp $ff
 	jr z, .choose_best
 
+; Pick best vs. second-best move based on score gap.
+; Gap >= 6: 90% best (230/256)
+; Gap >= 3: 75% best (192/256)
+; Gap <  3: 60% best (154/256)
+; Keeps boss decisions weighted but non-deterministic.
 	ld a, b
 	sub e
 	cp 6
@@ -2446,6 +2451,10 @@ ENDC
 	cp c
 	jr c, .stay
 
+; Switch probability based on confidence margin (b - c).
+; Margin >= 20: 90% switch (230/256)
+; Margin >= 10: 75% switch (192/256)
+; Margin <  10: 55% switch (141/256)
 	sub c
 	ld d, a
 	cp 20
