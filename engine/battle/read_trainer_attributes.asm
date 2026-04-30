@@ -70,6 +70,7 @@ LoadBossAITier:
 	call ClearBossAIState
 	xor a
 	ld [wBossAITier], a
+	ld [wBossAITierWeightRow], a
 
 	ld a, [wTrainerClass]
 	and a
@@ -82,7 +83,7 @@ LoadBossAITier:
 .loop
 	ld a, [hli]
 	and a
-	ret z
+	jr z, .tier_done
 	cp b
 	jr nz, .next
 
@@ -92,8 +93,10 @@ LoadBossAITier:
 
 	ld a, [hli]
 	ld [wBossAITier], a
-.done
-	ret
+	; default weight row = tier - 1 (EARLY=0, MID=1, LATE=2); ramp map may override.
+	dec a
+	ld [wBossAITierWeightRow], a
+	jr .tier_done
 
 .skip_tier
 	inc hl
@@ -103,6 +106,34 @@ LoadBossAITier:
 	inc hl
 	inc hl
 	jr .loop
+
+.tier_done
+	ld a, [wBossAITier]
+	and a
+	ret z
+	; b/c still hold class/id from tier lookup.
+	ld hl, BossAITierRampMap
+.ramp_loop
+	ld a, [hli]
+	and a
+	ret z
+	cp b
+	jr nz, .ramp_next
+	ld a, [hli]
+	cp c
+	jr nz, .ramp_skip
+	ld a, [hl]
+	ld [wBossAITierWeightRow], a
+	ret
+
+.ramp_skip
+	inc hl
+	jr .ramp_loop
+
+.ramp_next
+	inc hl
+	inc hl
+	jr .ramp_loop
 
 ClearBossAIState:
 	ld hl, wBossAITier

@@ -218,5 +218,9 @@ ENDM
 	const movement_player_turbo_step_up   ; $5a
 	const movement_player_turbo_step_left ; $5b
 	const movement_player_turbo_step_right ; $5c
+	const movement_player_medium_step_down ; $5d
+	const movement_player_medium_step_up   ; $5e
+	const movement_player_medium_step_left ; $5f
+	const movement_player_medium_step_right ; $60
 
 DEF NUM_MOVEMENT_CMDS EQU const_value

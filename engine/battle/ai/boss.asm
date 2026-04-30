@@ -303,6 +303,7 @@ BossAI_RecordRevealedPlayerMove:
 	ret nc
 	ld a, b
 	call BossAI_AddRevealedMoveToSpeciesMask
+	call BossAI_MirrorPlayerUsedMovesToSpeciesSlot
 	xor a
 	ld [wBossAIPlausibleTypeMaskSpecies], a
 	ld [wBossAIPlausibleTypeMaskLevel], a
@@ -324,6 +325,82 @@ BossAI_GetActiveSpeciesRevealedMaskPointer:
 
 .no_species
 	and a
+	ret
+
+BossAI_LoadPlayerUsedMovesForActiveSpecies:
+; Replace NewBattleMonStatus's blanket clear of wPlayerUsedMoves: keep boss AI
+; memory of moves the entering active mon has used earlier this fight, so
+; switching out and back in does not erase that memory. Falls back to the
+; original zero behavior for non-boss fights and first-time encounters.
+	xor a
+	ld hl, wPlayerUsedMoves
+	ld [hli], a
+	ld [hli], a
+	ld [hli], a
+	ld [hl], a
+	ld a, [wBossAITier]
+	and a
+	ret z
+	call BossAI_GetActiveSpeciesUsedMovesPointer
+	ret nc
+	ld de, wPlayerUsedMoves
+	ld c, NUM_MOVES
+.copy_loop
+	ld a, [hli]
+	ld [de], a
+	inc de
+	dec c
+	jr nz, .copy_loop
+	ret
+
+BossAI_MirrorPlayerUsedMovesToSpeciesSlot:
+	push bc
+	call BossAI_GetActiveSpeciesUsedMovesPointer
+	pop bc
+	ret nc
+	ld de, wPlayerUsedMoves
+	ld c, NUM_MOVES
+.copy_loop
+	ld a, [de]
+	ld [hli], a
+	inc de
+	dec c
+	jr nz, .copy_loop
+	ret
+
+BossAI_GetActiveSpeciesUsedMovesPointer:
+; Scan-only (no auto-append) lookup for the active mon's slot in
+; wBossAISpeciesUsedMoves. CF set with hl pointing at the slot; CF clear with
+; hl unchanged when the species is not (yet) in the seen list.
+	ld a, [wBattleMonSpecies]
+	and a
+	jr z, .no_species
+	ld b, a
+	ld a, [wBossAISeenPlayerSpeciesCount]
+	and a
+	jr z, .no_species
+	ld c, a
+	ld hl, wBossAISeenPlayerSpecies
+	ld e, 0
+.find_loop
+	ld a, [hli]
+	cp b
+	jr z, .found
+	inc e
+	dec c
+	jr nz, .find_loop
+.no_species
+	and a
+	ret
+.found
+	ld a, e
+	add a
+	add a
+	ld c, a
+	ld b, 0
+	ld hl, wBossAISpeciesUsedMoves
+	add hl, bc
+	scf
 	ret
 
 BossAI_GetMoveAttr:
@@ -518,11 +595,6 @@ BossAI_ApplyMoveModel:
 .status_ok
 	ld c, 4
 	call .EncourageByTierWeight
-	ld a, [wBossAITurnsElapsed]
-	cp 5
-	jr c, .skip_status
-	ld c, 4
-	call .DiscourageByTierWeight
 
 .skip_status
 	call .ApplySetupPunishBias
@@ -551,6 +623,7 @@ BossAI_ApplyMoveModel:
 	call .ApplyRevealedFastEncoreAvoidance
 	call .ApplyLastMoveEncoreTrapBias
 	call .ApplyRevealedSelfdestructProtectBias
+	call .ApplyRevealedSleepPreemptBias
 	call BossAI_ApplyScoutMoveBias
 	call BossAI_ApplyRepeatPenalty
 
@@ -1428,6 +1501,10 @@ BossAI_ApplyMoveModel:
 	jp .PlayerHasRevealedEffectA
 
 .ApplyMercyRefusalBias
+; Prediction-driven non-damaging pick when a KO is available against a low-HP
+; player. Fires only when BossAI_PredictPlayerSwitch is high enough that a
+; setup/Spikes/status play actually beats the KO; the encourage magnitude is
+; capped so the KO still wins roughly 9 times out of 10 even when this fires.
 	ld a, [wBossAITier]
 	cp AI_TIER_LATE
 	ret c
@@ -1444,7 +1521,12 @@ BossAI_ApplyMoveModel:
 	call BossAI_HasAnyKOMove
 	pop hl
 	ret nc
-	ld a, 4
+	push hl
+	call BossAI_PredictPlayerSwitch
+	pop hl
+	cp 60
+	ret c
+	ld a, 2
 	jp BossAI_EncourageScoreHL
 
 .MercyRefusalCandidate
@@ -1740,6 +1822,29 @@ BossAI_ApplyMoveModel:
 .PlayerHasRevealedSelfdestruct
 	ld a, EFFECT_SELFDESTRUCT
 	jp .PlayerHasRevealedEffectA
+
+.ApplyRevealedSleepPreemptBias
+	ld a, [wBossAITier]
+	cp AI_TIER_MID
+	ret c
+	ld a, [wEnemyMonStatus]
+	and SLP_MASK
+	ret nz
+	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
+	cp EFFECT_SUBSTITUTE
+	jr z, .candidate
+	cp EFFECT_SAFEGUARD
+	ret nz
+.candidate
+	call .UtilityMoveWouldFailPublicly
+	ret c
+	ld a, EFFECT_SLEEP
+	call .PlayerHasRevealedEffectA
+	ret nc
+	call BossAI_PublicEnemyFaster
+	ret c
+	ld a, 5
+	jp BossAI_EncourageScoreHL
 
 .CandidateMoveMatchupVsBaseTypes
 	ldh a, [hBattleTurn]
@@ -2121,8 +2226,8 @@ BossAI_ApplyMoveModel:
 
 .GetTierWeight
 	ld hl, BossAITierWeights
-	ld a, [wBossAITier]
-	dec a
+	ld a, [wBossAITierWeightRow]
+	and a
 	jr z, .got_tier
 .tier_loop
 	ld de, 7
@@ -6575,9 +6680,14 @@ ENDC
 
 BossAITierWeights:
 ; ko, denyko, tempo, setup, status, role, risk
-	db 4, 2, 1, 1, 1, 1, 2 ; early
-	db 5, 3, 2, 2, 1, 1, 2 ; mid
-	db 7, 4, 4, 2, 2, 3, 1 ; late
+; rows 0..2 mirror AI_TIER_EARLY/MID/LATE; rows 3..4 are sub-tier bumps used by
+; BossAITierRampMap to ramp specific early-tier trainers toward MID without
+; flipping the tier value (which would also enable MID-only feature gates).
+	db 4, 2, 1, 1, 1, 1, 2 ; row 0: early
+	db 5, 3, 2, 2, 1, 1, 2 ; row 1: mid
+	db 7, 4, 4, 2, 2, 3, 1 ; row 2: late
+	db 5, 2, 1, 1, 1, 1, 2 ; row 3: early +25% (one delta column raised toward mid)
+	db 5, 3, 1, 1, 1, 1, 2 ; row 4: early +50% (two delta columns raised toward mid)
 
 BossAIDenyKOEffects:
 	db EFFECT_SLEEP

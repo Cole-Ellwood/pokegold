@@ -262,6 +262,17 @@ RestorePartyMonMail:
 	call CopyBytes
 	jp CloseSRAM
 
+ClearPartyMonMail:
+	ld hl, sPartyMail
+	ld bc, MAIL_STRUCT_LENGTH
+	call AddNTimes
+	ld a, BANK(sPartyMail)
+	call OpenSRAM
+	xor a
+	ld bc, MAIL_STRUCT_LENGTH
+	call ByteFill
+	jp CloseSRAM
+
 DeletePartyMonMail:
 	ld a, BANK(sPartyMail)
 	call OpenSRAM

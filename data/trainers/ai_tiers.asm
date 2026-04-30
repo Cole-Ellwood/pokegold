@@ -48,6 +48,14 @@ BossAITierMap:
 	db RED, RED1, AI_TIER_LATE
 	db 0 ; end
 
+BossAITierRampMap:
+; class, trainer id, BossAITierWeights row index (overrides default tier->row mapping)
+; Used to ramp specific early-tier trainers toward MID without flipping their
+; AI tier (which would also enable MID-only feature gates).
+	db BUGSY, BUGSY1, 3 ; ~25% toward mid
+	db WHITNEY, WHITNEY1, 4 ; ~50% toward mid
+	db 0 ; end
+
 AdaptiveLeadMap:
 ; class, trainer id
 	db CHUCK, CHUCK1

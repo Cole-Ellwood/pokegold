@@ -9,6 +9,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
+MART_TERMINATORS = {"-1", "CANCEL"}
 
 
 def fail(msg: str) -> None:
@@ -171,6 +172,17 @@ def parse_item_constants(path: Path) -> dict[str, int]:
         value += 1
     fail(f"could not parse item constants from {path}")
     return {}
+
+
+def parse_item_tokens(path: Path) -> set[str]:
+    tokens = set(parse_item_constants(path))
+    machine_pat = re.compile(r"^\s*add_(tm|hm)\s+([A-Z0-9_]+)\b")
+    for line in path.read_text(encoding="utf-8").splitlines():
+        m = machine_pat.match(line)
+        if m:
+            prefix, move = m.groups()
+            tokens.add(f"{prefix.upper()}_{move}")
+    return tokens
 
 
 def parse_item_names(path: Path) -> dict[int, str]:
@@ -762,6 +774,138 @@ def check_burned_tower_itemball_flags() -> None:
     )
 
 
+def asm_code(raw: str) -> str:
+    return raw.split(";", 1)[0].strip()
+
+
+def parse_mart_pointer_labels(lines: list[str]) -> list[str]:
+    labels: list[str] = []
+    in_table = False
+    pointer_pat = re.compile(r"^dw\s+([A-Za-z0-9_]+)\b")
+    for raw in lines:
+        code = asm_code(raw)
+        if code == "Marts:":
+            in_table = True
+            continue
+        if not in_table:
+            continue
+        if code.startswith("assert_table_length"):
+            return labels
+        m = pointer_pat.match(code)
+        if m:
+            labels.append(m.group(1))
+    return labels
+
+
+def find_mart_inventory_issues(text: str, valid_items: set[str], source_label: str) -> list[str]:
+    lines = text.splitlines()
+    label_pat = re.compile(r"^([A-Za-z0-9_]+):\s*$")
+    db_pat = re.compile(r"^db\s+([^,\s]+)\b")
+    mart_labels = parse_mart_pointer_labels(lines)
+    label_positions: dict[str, int] = {}
+    label_order: list[tuple[str, int]] = []
+    issues: list[str] = []
+
+    for index, raw in enumerate(lines):
+        m = label_pat.match(asm_code(raw))
+        if not m:
+            continue
+        label = m.group(1)
+        label_positions[label] = index
+        label_order.append((label, index))
+
+    if not mart_labels:
+        issues.append(f"{source_label}: no Marts pointer table found")
+    if "DefaultMart" in label_positions:
+        mart_labels.append("DefaultMart")
+
+    for label in mart_labels:
+        start = label_positions.get(label)
+        if start is None:
+            issues.append(f"{source_label}: Marts table points at missing label {label}")
+            continue
+
+        end = len(lines)
+        for _, next_index in label_order:
+            if next_index > start:
+                end = next_index
+                break
+
+        declared_count: int | None = None
+        item_count = 0
+        saw_terminator = False
+        terminator_line: int | None = None
+        for line_no, raw in enumerate(lines[start + 1 : end], start + 2):
+            code = asm_code(raw)
+            if not code:
+                continue
+            m = db_pat.match(code)
+            if not m:
+                continue
+            token = m.group(1)
+            if declared_count is None:
+                if not token.isdigit():
+                    issues.append(f"{source_label}:{line_no}: {label}: missing numeric mart item count")
+                    break
+                declared_count = int(token)
+                continue
+            if token in MART_TERMINATORS:
+                if saw_terminator:
+                    issues.append(f"{source_label}:{line_no}: {label}: duplicate mart terminator")
+                saw_terminator = True
+                terminator_line = line_no
+                continue
+            if saw_terminator:
+                issues.append(
+                    f"{source_label}:{line_no}: {label}: item after terminator {token}; "
+                    "mart readers stop at the terminator"
+                )
+                continue
+            if token not in valid_items:
+                issues.append(f"{source_label}:{line_no}: {label}: unknown mart item {token}")
+            item_count += 1
+
+        if declared_count is None:
+            issues.append(f"{source_label}: {label}: missing mart item count")
+            continue
+        if terminator_line is None:
+            issues.append(f"{source_label}: {label}: missing mart terminator")
+        if item_count != declared_count:
+            issues.append(
+                f"{source_label}: {label}: declared {declared_count} items, "
+                f"but {item_count} appear before the terminator"
+            )
+
+    return issues
+
+
+def check_mart_inventory_fixture(valid_items: set[str]) -> None:
+    malformed_fixture = """Marts:
+\ttable_width 2
+\tdw BrokenMart
+\tassert_table_length NUM_MARTS
+
+BrokenMart:
+\tdb 1 ; # items
+\tdb POTION
+\tdb CANCEL ; end
+\tdb ANTIDOTE
+"""
+    fixture_issues = find_mart_inventory_issues(malformed_fixture, valid_items, "malformed mart fixture")
+    if not any("item after terminator ANTIDOTE" in issue for issue in fixture_issues):
+        fail("malformed mart fixture did not catch item after CANCEL/db -1")
+
+
+def check_mart_inventory_tables(valid_items: set[str]) -> None:
+    issues = find_mart_inventory_issues(
+        (ROOT / "data/items/marts.asm").read_text(encoding="utf-8"),
+        valid_items,
+        "data/items/marts.asm",
+    )
+    if issues:
+        fail("mart inventory table audit failed: " + "; ".join(issues))
+
+
 def main() -> int:
     moves = parse_moves(ROOT / "data/moves/moves.asm")
     expected_moves = {
@@ -895,6 +1039,13 @@ def main() -> int:
 
     check_burned_tower_itemball_flags()
     print("PASS: Burned Tower itemball flag checks")
+
+    item_tokens = parse_item_tokens(ROOT / "constants/item_constants.asm")
+    check_mart_inventory_fixture(item_tokens)
+    print("PASS: malformed mart fixture catches item after terminator")
+
+    check_mart_inventory_tables(item_tokens)
+    print("PASS: mart inventory table checks")
 
     require_ordered_text(
         ROOT / "engine/events/tm_tutor.asm",

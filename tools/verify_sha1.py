@@ -35,7 +35,7 @@ def main() -> int:
         print("usage: verify_sha1.py <manifest>", file=sys.stderr)
         return 2
 
-    manifest_path = Path(sys.argv[1])
+    manifest_path = Path(sys.argv[1]).resolve()
     if not manifest_path.exists():
         print(f"error: manifest not found: {manifest_path}", file=sys.stderr)
         return 2
@@ -47,6 +47,8 @@ def main() -> int:
             continue
         expected, rel_path = parsed
         file_path = Path(rel_path)
+        if not file_path.is_absolute():
+            file_path = manifest_path.parent / file_path
         if not file_path.exists():
             print(f"{rel_path}: MISSING")
             failures += 1

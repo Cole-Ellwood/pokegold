@@ -1,6 +1,6 @@
 CHANGES BY CATEGORY
 GENERATED FROM docs/manifest.md
-GENERATED: 2026-02-12
+GENERATED: 2026-04-28
 
 ## Moves
 ### Batch 3
@@ -146,3 +146,14 @@ GENERATED: 2026-02-12
 - `TYPHLOSION` level-up: `Lv37 FIRE_BLAST absent -> present`
 - `TOTODILE` level-up: `Lv13 WATER_GUN -> Lv13 SURF`
 - `CROCONAW` level-up: `Lv28 SCARY_FACE -> Lv28 CROSS_CHOP`
+
+### Level-up order cleanup
+- Reordered 24 level-up rows back into increasing-level order without changing
+  any move levels or move identities. This restores the table invariant used by
+  `FillMoves` when generating a Pokemon's current moves from species and level.
+
+### Ariados utility pass
+- `ARIADOS` level-up: add `Lv22 SPIKES`; `Lv43 SPIDER_WEB -> Lv37 SPIDER_WEB`.
+
+### Yanma utility pass
+- `YANMA` level-up: `Lv19 LEECH_LIFE -> Lv17 LEECH_LIFE`.

@@ -3951,11 +3951,8 @@ rept 4
 	ld [hli], a
 endr
 	ld [hl], a
-	ld hl, wPlayerUsedMoves
-	ld [hli], a
-	ld [hli], a
-	ld [hli], a
-	ld [hl], a
+	callfar BossAI_LoadPlayerUsedMovesForActiveSpecies
+	xor a
 	ld [wPlayerDisableCount], a
 	ld [wPlayerFuryCutterCount], a
 	ld [wPlayerProtectCount], a

@@ -225,9 +225,18 @@ def main() -> int:
         return 1
 
     entries: dict[tuple[str, str], str] = {}
+    in_tier_map = False
     for raw_line in ai_tiers_text.splitlines():
         line = raw_line.strip()
+        if line == "BossAITierMap:":
+            in_tier_map = True
+            continue
+        if not in_tier_map:
+            continue
         if not line or line.startswith(";"):
+            continue
+        if re.match(r"^\s*db\s+0\b", raw_line):
+            in_tier_map = False
             continue
         match = ENTRY_RE.match(raw_line)
         if not match:

@@ -2563,6 +2563,8 @@ wBossAITemp2:: db
 wBossAITemp3:: db
 wBossAITemp4:: db
 wBossAITemp5:: db
+wBossAITierWeightRow:: db ; row index into BossAITierWeights; defaults to wBossAITier - 1, overridable per-trainer
+wBossAISpeciesUsedMoves:: ds PARTY_LENGTH * NUM_MOVES ; per-seen-species mirror of wPlayerUsedMoves; preserved across same-fight switches
 IF DEF(BOSS_AI_TRACE)
 wBossAITraceTopMoves:: ds 3
 wBossAITraceTopScores:: ds 3

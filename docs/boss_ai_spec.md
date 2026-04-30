@@ -171,7 +171,7 @@ implementation, each Haki flavor needs a developer-only record:
 Current design records cost no WRAM. A source patch may add persistent state
 only after checking `docs/generated/dev_index.md` and rerunning the memory
 budget audit. The current Boss AI reserve is 140 bytes; current measured use is
-75 / 65 bytes normal and 94 / 46 bytes with `BOSS_AI_TRACE`.
+100 / 40 bytes normal and 119 / 21 bytes with `BOSS_AI_TRACE`.
 
 Initial flavor roster, grounded in current trainer parties except where an entry
 explicitly marks a future move requirement. Early Johto leaders Falkner, Bugsy,
@@ -641,8 +641,11 @@ types, not as hidden exact moves.
 Send-out path:
 
 - `engine/battle/core.asm`: `BattleMonEntrance` calls `NewBattleMonStatus`.
-- `NewBattleMonStatus` clears the active-mon `wPlayerUsedMoves` list, then calls
-  `BossAI_RecordPlayerSpecies`.
+- `NewBattleMonStatus` calls `BossAI_LoadPlayerUsedMovesForActiveSpecies` to
+  populate `wPlayerUsedMoves` with the entering active mon's per-species memory
+  (preserved across same-fight switches via `wBossAISpeciesUsedMoves`); the
+  helper falls back to the original blanket-zero behavior outside boss fights
+  and on first-time encounters. It then calls `BossAI_RecordPlayerSpecies`.
 - `engine/battle/ai/boss.asm`: `BossAI_RecordPlayerSpecies` appends only the
   active `wBattleMonSpecies` to `wBossAISeenPlayerSpecies` and marks that seen
   species slot alive in `wBossAISeenPlayerAliveMask`.
@@ -661,11 +664,18 @@ Visible move reveal path:
 - `BossAI_AddRevealedMoveToSpeciesMask` stores the revealed damaging move type
   in that species' 4-byte mask. Hidden Power sets
   `BOSS_AI_PLAUSIBLE_HP_RISK_BIT`; status moves are not stored as threat types.
+- After the bitmap update, `BossAI_MirrorPlayerUsedMovesToSpeciesSlot` copies
+  the active `wPlayerUsedMoves` list into the matching slot of
+  `wBossAISpeciesUsedMoves`, keeping the per-species mirror in sync with each
+  visible move use.
 - Runtime storage is `wBossAIRevealedMovesBitmap`: six 4-byte per-seen-species
   revealed type masks. The old spare bytes around that reserve include
   `wBossAILikelyTypeMaskCache`, a 4-byte active-species confidence mask,
   `wBossAISeenPlayerAliveMask`, a 1-byte public alive mask for seen species
-  slots, and 3 bytes of spare reserve.
+  slots, and 3 bytes of spare reserve. Adjacent to the reserve, after the temp
+  bytes, lives `wBossAITierWeightRow` (1 byte; ramp index into
+  `BossAITierWeights`) and `wBossAISpeciesUsedMoves`
+  (`PARTY_LENGTH * NUM_MOVES = 24` bytes).
 
 Plausible move inference path:
 
@@ -882,10 +892,10 @@ Reserved block:
 - Reserved size: `140` bytes, enforced by
   `ds 140 - (wBossAIStateEnd - wBossAITier)`.
 - Current normal build: `wBossAITier = 01:d72b`,
-  `wBossAIStateEnd = 01:d776`, so normal state uses `75` bytes and leaves `65`
+  `wBossAIStateEnd = 01:d78f`, so normal state uses `100` bytes and leaves `40`
   reserved bytes.
 - Current trace field set adds `19` bytes under `BOSS_AI_TRACE`, so trace state
-  would use `94` bytes and leave `46` reserved bytes.
+  would use `119` bytes and leave `21` reserved bytes.
 
 Adding 2-3 bytes to this block is acceptable in principle, but every change must
 still be build-verified because WRAMX overall has no free unreserved space.

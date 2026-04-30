@@ -17,10 +17,10 @@ ROOT = Path(__file__).resolve().parents[2]
 
 CORE_HELPER_DOCS = (
     "docs/README.md",
-    "docs/codex_context.md",
+    "docs/project_context.md",
     "docs/project_map.md",
     "docs/project_roadmap.md",
-    "docs/codex_review_playbook.md",
+    "docs/review_playbook.md",
     "docs/boss_ai_spec.md",
     "docs/qol_handoff.md",
     "docs/balance_intent.md",
@@ -145,7 +145,6 @@ PATH_PREFIXES = (
     "home/",
     "macros/",
     "maps/",
-    "outbox/",
     "ram/",
     "rgbds-1.0.1/",
     "scripts/",
@@ -168,7 +167,10 @@ PATHLIKE_EXTENSIONS = (
 )
 
 OPTIONAL_LOCAL_PATH_PREFIXES = (
+    ".claude_handoffs",
+    "claude_handoffs",
     ".local",
+    "local",
     "dist",
     "workspace",
 )
@@ -337,14 +339,14 @@ def check_backtick_references(errors: list[str]) -> None:
 
 
 def check_objective_text(errors: list[str]) -> None:
-    context_path = ROOT / "docs/codex_context.md"
+    context_path = ROOT / "docs/project_context.md"
     if not context_path.exists():
-        errors.append("missing docs/codex_context.md for objective validation")
+        errors.append("missing docs/project_context.md for objective validation")
         return
     context = context_path.read_text(encoding="utf-8")
     missing = [phrase for phrase in OBJECTIVE_PHRASES if phrase not in context]
     for phrase in missing:
-        errors.append(f"missing objective phrase in docs/codex_context.md: {phrase!r}")
+        errors.append(f"missing objective phrase in docs/project_context.md: {phrase!r}")
     if not missing:
         print("PASS: core objective phrases are present")
 

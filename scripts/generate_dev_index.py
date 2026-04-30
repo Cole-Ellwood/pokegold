@@ -100,8 +100,8 @@ AREAS: tuple[Area, ...] = (
         intent="Project intent, review order, bug-hunt checklist, and generated lookup.",
         paths=(
             "docs/README.md",
-            "docs/codex_context.md",
-            "docs/codex_review_playbook.md",
+            "docs/project_context.md",
+            "docs/review_playbook.md",
             "docs/project_map.md",
             "docs/boss_ai_spec.md",
             "docs/generated/dev_index.md",
@@ -680,7 +680,7 @@ def build_markdown(
         "Bank numbers are hexadecimal unless noted otherwise.",
         "",
         "Read `docs/README.md` first for helper-doc routing, then "
-        "`docs/codex_context.md` for design intent. This file is for "
+        "`docs/project_context.md` for design intent. This file is for "
         "navigation and memory planning only; it does not add anything to the ROM.",
         "",
         "## How To Use This Index",

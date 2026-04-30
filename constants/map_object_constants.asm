@@ -276,6 +276,8 @@ DEF NUM_FACINGS EQU const_value
 
 ; OBJECT_WALKING vector class for the player-only turbo movement commands.
 DEF STEP_PLAYER_TURBO_VECTOR EQU 3 ; packed OBJECT_WALKING vector class
+DEF STEP_PLAYER_MEDIUM_F EQU 4
+DEF STEP_PLAYER_MEDIUM_MASK EQU 1 << STEP_PLAYER_MEDIUM_F
 
 ; DoPlayerMovement.DoStep arguments (see engine/overworld/player_movement.asm)
 	const_def
@@ -288,4 +290,5 @@ DEF STEP_PLAYER_TURBO_VECTOR EQU 3 ; packed OBJECT_WALKING vector class
 	const STEP_BACK_LEDGE    ; 6
 	const STEP_WALK_IN_PLACE ; 7
 	const STEP_PLAYER_TURBO  ; 8
+	const STEP_PLAYER_MEDIUM ; 9
 DEF NUM_STEPS EQU const_value

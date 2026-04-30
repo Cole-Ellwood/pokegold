@@ -11,25 +11,46 @@ import sys
 
 
 CATEGORY_RE = re.compile(r"^##\s+(.+?)\s*$")
-BATCH_RE = re.compile(r"^###\s+Batch\s+(\d+)\s*$")
+SECTION_RE = re.compile(r"^###\s+(.+?)\s*$")
 
 
 @dataclass
-class BatchSection:
-    number: int
+class ChangeSection:
+    heading: str
     bullets: list[str]
 
 
 @dataclass
 class CategorySection:
     heading: str
-    batches: list[BatchSection]
+    sections: list[ChangeSection]
+
+
+def section_bullets(lines: list[str], start: int) -> tuple[list[str], int]:
+    bullets: list[str] = []
+    in_bullet = False
+    j = start
+
+    while j < len(lines):
+        current_line = lines[j]
+        if current_line.startswith("### ") or current_line.startswith("## "):
+            break
+        if current_line.lstrip().startswith("- "):
+            bullets.append(current_line.rstrip())
+            in_bullet = True
+        elif in_bullet and current_line.startswith((" ", "\t")) and current_line.strip():
+            bullets.append(current_line.rstrip())
+        elif current_line.strip():
+            in_bullet = False
+        j += 1
+
+    return bullets, j
 
 
 def parse_manifest(lines: list[str]) -> tuple[list[CategorySection], bool, bool]:
     categories: list[CategorySection] = []
     found_category = False
-    found_batch = False
+    found_section = False
     current_category: CategorySection | None = None
     i = 0
 
@@ -38,32 +59,25 @@ def parse_manifest(lines: list[str]) -> tuple[list[CategorySection], bool, bool]
         category_match = CATEGORY_RE.match(line)
         if category_match:
             found_category = True
-            current_category = CategorySection(heading=f"## {category_match.group(1)}", batches=[])
+            current_category = CategorySection(heading=f"## {category_match.group(1)}", sections=[])
             categories.append(current_category)
             i += 1
             continue
 
-        batch_match = BATCH_RE.match(line)
-        if batch_match:
-            found_batch = True
-            batch_number = int(batch_match.group(1))
-            bullets: list[str] = []
-            j = i + 1
-            while j < len(lines):
-                current_line = lines[j]
-                if current_line.startswith("### ") or current_line.startswith("## "):
-                    break
-                if current_line.lstrip().startswith("- "):
-                    bullets.append(current_line.rstrip())
-                j += 1
-            if current_category is not None:
-                current_category.batches.append(BatchSection(number=batch_number, bullets=bullets))
+        section_match = SECTION_RE.match(line)
+        if section_match:
+            found_section = True
+            bullets, j = section_bullets(lines, i + 1)
+            if current_category is not None and bullets:
+                current_category.sections.append(
+                    ChangeSection(heading=f"### {section_match.group(1)}", bullets=bullets)
+                )
             i = j
             continue
 
         i += 1
 
-    return categories, found_category, found_batch
+    return categories, found_category, found_section
 
 
 def build_output(categories: list[CategorySection], generated_on: str) -> str:
@@ -75,12 +89,12 @@ def build_output(categories: list[CategorySection], generated_on: str) -> str:
     ]
 
     for category in categories:
-        if not category.batches:
+        if not category.sections:
             continue
         output_lines.append(category.heading)
-        for batch in sorted(category.batches, key=lambda item: item.number):
-            output_lines.append(f"### Batch {batch.number}")
-            output_lines.extend(batch.bullets)
+        for section in category.sections:
+            output_lines.append(section.heading)
+            output_lines.extend(section.bullets)
             output_lines.append("")
         output_lines.append("")
 
@@ -97,13 +111,13 @@ def main() -> int:
         return 1
 
     lines = manifest_path.read_text(encoding="utf-8").splitlines()
-    categories, found_category, found_batch = parse_manifest(lines)
+    categories, found_category, found_section = parse_manifest(lines)
 
     if not found_category:
         print("error: no top-level '## ' category headings found in docs/manifest.md", file=sys.stderr)
         return 1
-    if not found_batch:
-        print("error: no '### Batch N' sections found in docs/manifest.md", file=sys.stderr)
+    if not found_section:
+        print("error: no '### ' change sections found in docs/manifest.md", file=sys.stderr)
         return 1
 
     output_text = build_output(categories, date.today().isoformat())

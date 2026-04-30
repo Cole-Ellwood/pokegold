@@ -28,9 +28,11 @@ The source cleanup branch intentionally does not commit regenerated ROM/BPS arti
 
 ## Validation status
 - Source audits: release smoke, boss AI, trainer tier, item/move completeness, and battle math checks pass.
+- Goldenrod Dept. Store inventory is fixed: release smoke now guards every mart inventory count, item token, and terminator.
 - Build pipeline: PowerShell does not have `make` on `PATH`, but WSL `make`
   works in this checkout with explicit repo-local RGBDS `.exe` variables; Gold
   and Silver normal ROM builds passed on 2026-04-25.
+- Proof boundary: this validates source invariants and normal Gold/Silver assembly, not regenerated BPS/checksum freshness or full-playthrough progression, pacing, and feel.
 - Report: `docs/validation_report.md`
 
 ## Notes

@@ -347,6 +347,8 @@ GetStepVector:
 	ld hl, OBJECT_WALKING
 	add hl, bc
 	ld a, [hl]
+	bit STEP_PLAYER_MEDIUM_F, a
+	jr nz, .player_medium
 	and %00001111
 	add a
 	add a
@@ -360,6 +362,57 @@ GetStepVector:
 	inc hl
 	ld a, [hli]
 	ld h, [hl]
+	ret
+
+.player_medium
+	and %00000011
+	ld e, a
+	ld hl, OBJECT_STEP_DURATION
+	add hl, bc
+	ld a, [hl]
+	cp 6
+	jr z, .two_pixels
+	cp 1
+	jr z, .two_pixels
+	ld d, 3
+	jr .got_medium_speed
+
+.two_pixels
+	ld d, 2
+
+.got_medium_speed
+	ld a, e
+	ld h, d
+	ld d, 0
+	ld e, 0
+	cp DOWN
+	jr z, .medium_down
+	cp UP
+	jr z, .medium_up
+	cp LEFT
+	jr z, .medium_left
+	ld d, h
+	jr .medium_done
+
+.medium_down
+	ld e, h
+	jr .medium_done
+
+.medium_up
+	ld a, h
+	cpl
+	inc a
+	ld e, a
+	jr .medium_done
+
+.medium_left
+	ld a, h
+	cpl
+	inc a
+	ld d, a
+
+.medium_done
+	ld a, 6
 	ret
 
 StepVectors:

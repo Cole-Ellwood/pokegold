@@ -1,6 +1,6 @@
 # Validation Report
 
-Date: 2026-04-25
+Date: 2026-04-28
 
 ## Build and artifact checks
 - PowerShell `make` lookup : BLOCKED in this Codex PowerShell session (`make` is not on `PATH`)
@@ -9,7 +9,7 @@ Date: 2026-04-25
 - `make -j4 ... pokesilver.gbc` via WSL with explicit repo-local RGBDS `.exe` tools : PASS
 - `make gold silver gold_debug silver_debug` : NOT RUN as a single target group
 - `make DEBUG=1 compare` : NOT RUN
-- BPS roundtrip: NOT RUN
+- BPS roundtrip: PASS
 
 ## Automated gameplay/config audits
 - `python tools/audit/check_docs_navigation.py` : PASS
@@ -22,13 +22,18 @@ Date: 2026-04-25
 - `python tools/audit/check_battle_math_safety.py` : PASS
 
 ## Release metadata sync
-- `dist/checksums.txt` and `dist/pokegold-data-rebalance.bps` are tracked
-  release artifacts on this branch. Treat them as historical release output
-  unless the release workflow is rerun.
-- 2026-04-26 organization check: the BPS hash matches `dist/checksums.txt`, but
-  `.local/roms/pokegold-data-rebalance.gbc` no longer matches the older hacked
-  ROM hash listed there.
-- `roms.sha1` was not updated because a full compare/release artifact pass was not run.
+- 2026-04-28 BPS refresh: `dist/pokegold-data-rebalance.bps` was regenerated
+  from `.local/roms/pokegold-baseline.gbc` to the current source-built
+  `pokegold.gbc`.
+- `dist/checksums.txt` now matches the current clean baseline, hacked Gold ROM,
+  and BPS patch hashes.
+- The ignored local release/play copies
+  `.local/roms/pokegold-data-rebalance.gbc`,
+  `.local/roms/pokegold-data-rebalance-play.gbc`,
+  `.local/roms/pokegold-release.gbc`, and the BPS roundtrip output
+  `.local/roms/pokegold-roundtrip-current.gbc` all match current `pokegold.gbc`.
+- `roms.sha1` was not updated because this was a BPS package refresh, not a
+  full compare/debug/VC artifact pass.
 - `docs/RELEASE_NOTES.md` scope updated to include mechanics/AI/script changes.
 - `docs/manifest.md` explicitly marked as data-layer-only historical manifest.
 

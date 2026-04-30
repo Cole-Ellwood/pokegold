@@ -529,6 +529,8 @@ MonMailAction:
 	jr nc, .BagIsFull
 	call GetPartyItemLocation
 	ld [hl], $0
+	ld a, [wCurPartyMon]
+	farcall ClearPartyMonMail
 	call GetCurNickname
 	ld hl, .MailDetachedText
 	call MenuTextboxBackup

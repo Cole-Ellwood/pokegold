@@ -298,7 +298,7 @@ DoPlayerMovement::
 	ret
 
 .walk
-	ld a, STEP_BIKE
+	ld a, STEP_PLAYER_MEDIUM
 	call .DoStep
 	scf
 	ret
@@ -470,6 +470,7 @@ DoPlayerMovement::
 	dw .BackJumpStep
 	dw .FinishFacing
 	dw .PlayerTurboStep
+	dw .PlayerMediumStep
 	assert_table_length NUM_STEPS
 
 .SlowStep:
@@ -517,6 +518,11 @@ DoPlayerMovement::
 	db movement_player_turbo_step_up
 	db movement_player_turbo_step_left
 	db movement_player_turbo_step_right
+.PlayerMediumStep:
+	db movement_player_medium_step_down
+	db movement_player_medium_step_up
+	db movement_player_medium_step_left
+	db movement_player_medium_step_right
 
 .StandInPlace:
 	ld a, 0

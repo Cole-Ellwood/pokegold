@@ -94,6 +94,10 @@ MovementPointers:
 	dw Movement_player_turbo_step_up    ; 5a
 	dw Movement_player_turbo_step_left  ; 5b
 	dw Movement_player_turbo_step_right ; 5c
+	dw Movement_player_medium_step_down ; 5d
+	dw Movement_player_medium_step_up   ; 5e
+	dw Movement_player_medium_step_left ; 5f
+	dw Movement_player_medium_step_right ; 60
 	assert_table_length NUM_MOVEMENT_CMDS
 
 Movement_teleport_from:
@@ -498,6 +502,22 @@ Movement_player_turbo_step_left:
 
 Movement_player_turbo_step_right:
 	ld a, STEP_PLAYER_TURBO_VECTOR << 2 | RIGHT
+	jp NormalStep
+
+Movement_player_medium_step_down:
+	ld a, STEP_PLAYER_MEDIUM_MASK | (STEP_BIKE << 2) | DOWN
+	jp NormalStep
+
+Movement_player_medium_step_up:
+	ld a, STEP_PLAYER_MEDIUM_MASK | (STEP_BIKE << 2) | UP
+	jp NormalStep
+
+Movement_player_medium_step_left:
+	ld a, STEP_PLAYER_MEDIUM_MASK | (STEP_BIKE << 2) | LEFT
+	jp NormalStep
+
+Movement_player_medium_step_right:
+	ld a, STEP_PLAYER_MEDIUM_MASK | (STEP_BIKE << 2) | RIGHT
 	jp NormalStep
 
 Movement_turn_away_down:
