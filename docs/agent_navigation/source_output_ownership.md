@@ -19,7 +19,8 @@ open two classifiers for the same decision.
 | `docs/generated/` | Generated docs | Do not hand-edit; regenerate. | Generated mirror of source/linker truth. |
 | `docs/agent_navigation/` | Agent routing layer | Safe for organization passes. | Routing only; never overrides source or generated truth. |
 | `audit/` | Evidence and audit artifacts | Edit when documenting real evidence or blocked attempts. | Evidence, not implementation truth. |
-| `outbox/` | Handoff artifacts | Safe for self-contained handoffs. | Communication artifact. |
+| `decisions/`, `journal/` | Durable judgment calls and session diaries | Edit when recording reversible architecture choices or per-session observations. | Tracked durable communication. |
+| `.claude_handoffs/` | Per-session handoff prompts (gitignored) | Write when ending a long task; not tracked. | Local communication only. |
 | `.local/`, `workspace/` | Scratch, local deps, probes, temporary outputs | Do not treat as canonical without an explicit task. | Scratch/archive only. |
 | `dist/`, `*.gbc`, `*.o`, `*.map`, `*.sym` | Build/release outputs | Do not edit by hand. | Outputs; `.map`/`.sym` are read-only linker truth. |
 
@@ -35,7 +36,7 @@ open two classifiers for the same decision.
 | `docs/generated/balance_audit.md` | Generated balance mirror | No. | Regenerate with `scripts/generate_balance_audit.py`. |
 | `docs/`, except `docs/generated/` | Agent/human docs | Yes. | `python tools\audit\check_docs_navigation.py`, `git diff --check`. |
 | `audit/` | Evidence and audit artifacts | Yes, when documenting real evidence or blocked attempts. | Matching audit tool if one exists. |
-| `outbox/` | Handoff artifacts | Yes. | Manual review; usually docs navigation if paths are referenced elsewhere. |
+| `decisions/`, `journal/` | Durable judgment/observation logs | Yes, sparingly. | Manual review; usually docs navigation if paths are referenced elsewhere. |
 | `Makefile`, `layout.link` | Build/link ownership | Yes, only for build/layout tasks. | Build both ROMs; regenerate dev index if linker outputs change. |
 | `pokegold.gbc`, `pokesilver.gbc`, debug/trace `.gbc` | Built ROM outputs | No. | Build commands in `docs/build.md`. |
 | `*.o` | Build object outputs | No. | Rebuild. |
@@ -48,11 +49,11 @@ open two classifiers for the same decision.
 
 If a file is generated, edit the generator or source. If a file is output, run
 the build or release process. If a file is scratch, copy only the durable fact
-into `docs/`, `audit/`, or `outbox/` and say where it came from.
+into `docs/`, `audit/`, `decisions/`, or `journal/` and say where it came from.
 
-For documentation-only beauty passes, stay in `docs/`, `audit/`, and `outbox/`
-unless the user explicitly asks for tooling support. Do not clean, reset, or
-rewrite unrelated dirty worktree changes.
+For documentation-only beauty passes, stay in `docs/`, `audit/`, `decisions/`,
+and `journal/` unless the user explicitly asks for tooling support. Do not
+clean, reset, or rewrite unrelated dirty worktree changes.
 
 ## Workspace Hygiene Rule
 
@@ -60,11 +61,29 @@ Ignored build/linker outputs can make the raw folder feel noisy. That noise is
 not automatically a defect: root `.gbc`, `.map`, and `.sym` files are part of
 the proven build/index workflow, and object files may be normal RGBDS byproducts.
 
-For a 10/10 cleanliness pass, start from
-`outbox/repo_10_10_polish_prompt.md`. Do not delete ignored files, relocate
-outputs, or change `Makefile` output paths just to make the tree look tidy.
-First prove which artifacts are expected, which are stale scratch, and which
-tools/docs assume the current layout.
+For a 10/10 cleanliness pass, do not delete ignored files, relocate outputs,
+or change `Makefile` output paths just to make the tree look tidy. First prove
+which artifacts are expected, which are stale scratch, and which tools/docs
+assume the current layout.
+
+## Source-History Sediment Rule
+
+Do not treat `unused`, `beta`, or `debug` filenames as deletion proof. This
+codebase intentionally assembles some historical or unreferenced material:
+examples include beta map blocks in `data/maps/blocks.asm`, beta map scripts and
+attributes, unused Johto tileset data in `gfx/tilesets.asm`, debug room source,
+and old text/data tables included from `main.asm` or nearby engine files.
+
+Before proposing source deletion, check the include/table owners first:
+
+```powershell
+rg -n "unused|beta|debug" main.asm data/maps gfx engine maps
+rg -n "INCLUDE|INCBIN" main.asm data/maps/scripts.asm data/maps/maps.asm data/maps/attributes.asm data/maps/blocks.asm gfx/tilesets.asm
+```
+
+Deleting assembled-but-unreferenced sediment needs a real removal plan: source
+reference proof, map/symbol diff, Gold/Silver build, release smoke, and a reason
+beyond making folder browsing look cleaner.
 
 ## 10/10 Workspace Criteria
 
@@ -118,10 +137,12 @@ anything.
   families include trace probes, PyBoy dependencies, ROM baselines/roundtrips,
   temporary outputs, and verification artifacts. Do not delete it without naming
   exact paths and trace/release impact;
-- `dist/checksums.txt` and `dist/pokegold-data-rebalance.bps` are tracked release
-  artifacts. The BPS hash matches `dist/checksums.txt`; the `.local/roms`
-  hacked-ROM hash does not, so treat `dist/` as a historical release pair until a
-  release workflow refreshes it.
+- 2026-04-28 BPS release refresh: `dist/checksums.txt` and
+  `dist/pokegold-data-rebalance.bps` match the current source-built
+  `pokegold.gbc`; the local data-rebalance, data-rebalance-play, release, and
+  roundtrip ROM copies under `.local/roms/` all match that same ROM.
+  `roms.sha1`, debug ROM hashes, and VC patch outputs were left outside this
+  scoped BPS package refresh.
 
 ## Current Build Output Families
 

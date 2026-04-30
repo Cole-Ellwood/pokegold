@@ -12,7 +12,7 @@ Johto feel bigger than the player.
 | Need | Go to |
 | --- | --- |
 | QoL policy and remaining candidates | `docs/qol_handoff.md` |
-| Project guardrails | `docs/codex_context.md` |
+| Project guardrails | `docs/project_context.md` |
 | Map/script source routing | `docs/project_map.md`, `docs/generated/dev_index.md` |
 | Map scripts | `maps/` |
 | Map attributes/data | `data/maps/` |

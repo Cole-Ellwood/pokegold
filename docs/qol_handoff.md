@@ -5,7 +5,7 @@ hack without drifting from the project intent.
 
 ## Read First
 
-- `docs/codex_context.md`: project intent. QoL should remove tedium, not
+- `docs/project_context.md`: project intent. QoL should remove tedium, not
   decisions, and must not trivialize boss preparation.
 - `docs/qol_research_report.md`: durable research backing for the QoL boundary;
   use it for policy judgment, not as source truth.
@@ -225,7 +225,7 @@ or story progression.
 - If linker outputs change and are kept, refresh:
   - `python scripts\generate_dev_index.py --rom pokegold`
 - Check `git diff --stat` and inspect the actual diff before final response.
-- Do not include `.gbc`, `.o`, `.map`, `.sym`, `dist/`, `.local/`, `outbox/`, or
+- Do not include `.gbc`, `.o`, `.map`, `.sym`, `dist/`, `.local/`, or
   scratch artifacts unless explicitly requested.
 
 ## Suggested First Batch

@@ -11,7 +11,9 @@ future helpers need a clean stopping point.
 | Helper-doc entrypoint | `docs/README.md` |
 | Verification floors | `docs/agent_navigation/verification_matrix.md` |
 | Durable evidence | `docs/agent_navigation/artifact_catalog.md` |
-| Prior handoff pattern | `outbox/` |
+| Per-session handoff prompt | `.claude_handoffs/YYYY-MM-DD-HHMM-<slug>.md` (gitignored) |
+| Reversible judgment notes | `decisions/` |
+| Per-session diary observations | `journal/` |
 | Current dirty state | `git status --short --branch` |
 
 ## Dirty Worktree Protocol
@@ -33,7 +35,9 @@ Allowed surfaces:
 - `docs/`, except `docs/generated/`;
 - `audit/` evidence notes when the pass is documenting real proof or blocked
   proof;
-- `outbox/` handoff prompts or session packets.
+- `decisions/` for reversible judgment notes;
+- `journal/` for per-session diary observations;
+- `.claude_handoffs/` for per-session handoff prompts (gitignored).
 
 Forbidden surfaces without explicit approval:
 
@@ -75,7 +79,7 @@ Weak commit slices:
 ## Handoff File Shape
 
 When context is tight or another session needs one artifact, write a markdown
-file under `outbox/` with:
+file under `.claude_handoffs/YYYY-MM-DD-HHMM-<slug>.md` (gitignored) with:
 
 - current branch and dirty status;
 - user request and nonfunctional/functionality boundary;

@@ -29,7 +29,7 @@ stats, erases identity, or makes early Johto trivial.
 
 ## Required Balance Workflow
 
-1. Read `docs/codex_context.md` for the project objective.
+1. Read `docs/project_context.md` for the project objective.
 2. Read this file for species-level intent rules and unresolved design gaps.
 3. Read `docs/evolution_policy.md` before judging any unevolved-looking Pokemon.
 4. Regenerate and inspect `docs/generated/balance_audit.md`:

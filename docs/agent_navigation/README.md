@@ -17,7 +17,7 @@ start with a full-repo search.
 For a fresh AI session, the useful packet is small:
 
 1. `docs/README.md` for precedence and fast jump modes.
-2. `docs/codex_context.md` for the project promise.
+2. `docs/project_context.md` for the project promise.
 3. `docs/project_roadmap.md` for live workstreams.
 4. `docs/agent_navigation/start_card.md` for lane choice.
 5. One matching row in `docs/agent_navigation/task_router.md` or one matching

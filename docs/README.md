@@ -25,7 +25,7 @@ player can lose, and old knowledge is useful but incomplete.
 ## Required Read Order
 
 1. `docs/README.md`: helper-doc routing and precedence.
-2. `docs/codex_context.md`: First-Playthrough Promise, design constraints,
+2. `docs/project_context.md`: First-Playthrough Promise, design constraints,
    done criteria.
 3. `docs/project_map.md`: task-to-source routing.
 4. `docs/project_roadmap.md`: current project workstreams and future-session
@@ -38,7 +38,7 @@ player can lose, and old knowledge is useful but incomplete.
 8. Task-specific docs:
    - Boss AI / trainer difficulty: `docs/boss_ai_spec.md`,
      `docs/boss_ai_bug_testing_plan.md`
-   - Review / bug hunt: `docs/codex_review_playbook.md`,
+   - Review / bug hunt: `docs/review_playbook.md`,
      `docs/bug_hunt_master_playbook.md`
    - Pokemon balance intent: `docs/balance_intent.md`,
      `docs/evolution_policy.md`, `docs/buff_backlog.md`,
@@ -61,9 +61,9 @@ making the repo easier to jump through, stay in the navigation track:
 4. `docs/agent_navigation/navigation_health_check.md`
 5. `docs/project_roadmap.md`
 
-That mode may edit hand-authored docs, audit notes, or `outbox/` handoffs. It
-must not touch ROM behavior, generated docs, linker/build outputs, or unrelated
-dirty files.
+That mode may edit hand-authored docs, audit notes, `decisions/` entries, or
+`journal/` entries. It must not touch ROM behavior, generated docs,
+linker/build outputs, or unrelated dirty files.
 
 ## Truth Precedence
 
@@ -81,7 +81,7 @@ python scripts\generate_dev_index.py --rom pokegold
 ## Task Routing
 
 - Start any mechanics, balance, AI, progression, or QoL task with
-  `docs/codex_context.md`.
+  `docs/project_context.md`.
 - Use `docs/project_map.md` to choose source areas before broad `rg` searches.
 - Use `docs/project_roadmap.md` before inventing new project plans; update it
   when work completes, gets stuck, gains useful ideas, or remains untouched.
@@ -95,7 +95,7 @@ python scripts\generate_dev_index.py --rom pokegold
   might duplicate existing docs.
 - Use `docs/generated/dev_index.md` before memory-sensitive edits or when
   jumping to labels/banks.
-- Use `docs/codex_review_playbook.md` for reviews, bug hunts, and finding
+- Use `docs/review_playbook.md` for reviews, bug hunts, and finding
   severity/risk classes.
 - Use `docs/bug_hunt_master_playbook.md` when the prompt asks for a broad,
   exhaustive, release-facing, or "bug could be anywhere" investigation.

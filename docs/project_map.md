@@ -10,14 +10,14 @@ source-truth rules explicit even when that makes the prose less human-friendly.
 
 - `docs/README.md`: helper-doc entrypoint, read order, and source-truth
   precedence for future Codex/helper sessions.
-- `docs/codex_context.md`: objective, design rules, and done criteria. If another
+- `docs/project_context.md`: objective, design rules, and done criteria. If another
   helper doc conflicts with project intent, this file wins.
 - `docs/project_roadmap.md`: current project work board with future-session
   statuses, blockers, evidence, and next ideas.
 - `docs/agent_navigation/README.md`: optimized agent routing layer for task
   classification, source-zone ownership, verification floors, and artifact
   lookup.
-- `docs/codex_review_playbook.md`: review and bug-hunt workflow.
+- `docs/review_playbook.md`: review and bug-hunt workflow.
 - `docs/generated/dev_index.md`: generated bank/address/source lookup and memory
   pressure report. Do not hand-edit it.
 - `scripts/generate_dev_index.py`: regenerates the dev index after linker outputs
@@ -30,7 +30,7 @@ Pokemon. Johto should feel familiar but unsolved: boss fights are the
 centerpiece, AI must not cheat with hidden information, QoL must remove tedium
 without removing decisions, and weak Pokemon buffs should create real team
 options that make old tier-list knowledge incomplete. Read
-`docs/codex_context.md` before mechanics, balance, AI, or progression changes.
+`docs/project_context.md` before mechanics, balance, AI, or progression changes.
 
 For a concise change history over base Gold, read:
 
@@ -50,8 +50,8 @@ For a concise change history over base Gold, read:
 
 ## Bug Hunt Route
 
-1. Read `docs/codex_context.md` for the project objective.
-2. Read `docs/codex_review_playbook.md` for review stance, risk classes, and
+1. Read `docs/project_context.md` for the project objective.
+2. Read `docs/review_playbook.md` for review stance, risk classes, and
    report format.
 3. For broad, exhaustive, release-facing, or "bug could be anywhere" prompts,
    read `docs/bug_hunt_master_playbook.md` before subsystem search.
@@ -134,8 +134,8 @@ Do not use these as canonical gameplay-edit sources:
 
 - `docs/generated/dev_index.md`: generated from linker/source outputs; refresh
   with `scripts/generate_dev_index.py`.
-- `.local/`, `dist/`, `outbox/`, `workspace/`: local analysis, release outputs,
-  scratch work, or copied artifacts.
+- `.local/`, `dist/`, `workspace/`: local analysis, release outputs, scratch
+  work, or copied artifacts.
 - `workspace/`: ignored scratch if present. The 2026-04-26 organization follow-up
   found no durable facts there and removed the stale `sprint12.patch` snapshot.
 - `*.gbc`, `*.o`, `*.map`, `*.sym`: build/linker outputs; do not edit by hand.

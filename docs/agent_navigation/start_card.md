@@ -7,7 +7,7 @@ launcher, not source truth.
 ## First Thirty Seconds
 
 1. Read `docs/README.md` for precedence.
-2. Read `docs/codex_context.md` for the First-Playthrough Promise.
+2. Read `docs/project_context.md` for the First-Playthrough Promise.
 3. Read `docs/project_roadmap.md` for current workstreams and blockers.
 4. Pick a lane below.
 
@@ -26,8 +26,8 @@ the journey.
 | Weak Pokemon, stats, learnsets, evolutions, roles | `docs/agent_navigation/subsystems/pokemon_balance.md` | Trust generated audit rows as final design judgment. |
 | QoL, maps, NPC text, Repel, Pokemon Center, Day-Care services | `docs/agent_navigation/subsystems/qol_map_scripts.md` | Remove preparation pressure under the name of convenience. |
 | Build outputs, generated docs, checksums, release files | `docs/agent_navigation/source_output_ownership.md`, `docs/build.md` | Hand-edit `.gbc`, `.o`, `.map`, `.sym`, or generated docs. |
-| Broad or exhaustive bug hunts | `docs/bug_hunt_master_playbook.md`, `docs/codex_review_playbook.md` | Start with broad source search before routing the risk. |
-| Narrow reviews or known-risk bug hunts | `docs/codex_review_playbook.md`, then `docs/agent_navigation/task_router.md` | Skip source-owner and verification-floor selection. |
+| Broad or exhaustive bug hunts | `docs/bug_hunt_master_playbook.md`, `docs/review_playbook.md` | Start with broad source search before routing the risk. |
+| Narrow reviews or known-risk bug hunts | `docs/review_playbook.md`, then `docs/agent_navigation/task_router.md` | Skip source-owner and verification-floor selection. |
 | Half-remembered custom mechanic | `docs/agent_navigation/custom_terms.md` | Search only one spelling. |
 
 ## Docs-Only Organization Mode
@@ -39,8 +39,8 @@ does not ask for gameplay changes.
 2. Read `docs/agent_navigation/README.md`,
    `docs/agent_navigation/subsystems/checkpoint_handoff.md`, and
    `docs/agent_navigation/navigation_health_check.md`.
-3. Edit only hand-authored docs, `audit/` evidence notes, or `outbox/`
-   handoffs.
+3. Edit only hand-authored docs, `audit/` evidence notes, `decisions/` entries,
+   or `journal/` entries.
 4. Leave source, generated docs, build outputs, and unrelated dirty files alone.
 5. Close with `python tools\audit\check_navigation_floor.py` and a status note
    naming any pre-existing dirty files outside the pass.

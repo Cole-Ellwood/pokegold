@@ -5,7 +5,7 @@ hunt the ROM hack. It assumes the reviewer has no prior conversation context.
 
 ## Fast Start
 
-1. Read `docs/codex_context.md` for the objective and fairness rules.
+1. Read `docs/project_context.md` for the objective and fairness rules.
 2. For broad or exhaustive bug hunts, read
    `docs/bug_hunt_master_playbook.md` before choosing a subsystem.
 3. Read `docs/project_map.md` to route the task to the right source area.

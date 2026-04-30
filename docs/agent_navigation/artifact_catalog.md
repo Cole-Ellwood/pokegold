@@ -27,8 +27,9 @@ scratch paths first.
 | `audit/boss_ai_trace/morty_live.txt` | Current Morty live chosen-move proof. | Live emulator evidence. | First proof capsule; has current trace hashes and `chosen_id=101`. |
 | `audit/boss_ai_trace/morty_proof_capsule_attempt_2026-04-26.md` | Blocked Morty proof attempt and unblock recipe. | Negative evidence. | Shows why old RAM was not accepted as proof. |
 | `docs/agent_navigation/subsystems/` | Micro-indexes for high-friction workstreams. | Routing only. | Use after task classification, before broad search. |
-| `outbox/boss_ai_new_thinker_prompt.md` | Paste-ready prompt for the next deep Boss AI design/proof session. | Handoff prompt. | Use after Morty proof when choosing live proof, Haki planning, public-imagination review, or cheap-difficulty audit work. |
-| `outbox/` | Self-contained handoff files. | Handoff only. | Use when context is tight or another session/model needs one file. |
+| `decisions/` | Dated reversible-judgment notes. | Tracked durable record. | Write a short file when making a project-shape call future helpers might revisit. |
+| `journal/` | Per-session diary observations. | Tracked durable record. | Use for surprising findings or feel notes that don't belong in the roadmap. |
+| `.claude_handoffs/` | Per-session handoff prompts. | Local only (gitignored). | Write when ending a long task and the next session needs a self-contained start. |
 
 ## Scratch And Output Zones
 

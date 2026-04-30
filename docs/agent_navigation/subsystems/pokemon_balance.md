@@ -11,7 +11,7 @@ species, but buffs should preserve identity and avoid trivializing early Johto.
 
 | Need | Go to |
 | --- | --- |
-| Project balance rules | `docs/codex_context.md`, `docs/balance_intent.md` |
+| Project balance rules | `docs/project_context.md`, `docs/balance_intent.md` |
 | Evolution policy | `docs/evolution_policy.md` |
 | Durable weak-Pokemon queue | `docs/buff_backlog.md` |
 | Generated source-derived audit | `docs/generated/balance_audit.md` |

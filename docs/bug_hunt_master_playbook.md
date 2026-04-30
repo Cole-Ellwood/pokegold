@@ -36,7 +36,7 @@ git status --short --branch
 Read these files in order:
 
 1. `docs/README.md`
-2. `docs/codex_context.md`
+2. `docs/project_context.md`
 3. `docs/project_map.md`
 4. `docs/project_roadmap.md`
 5. `docs/agent_navigation/start_card.md`
@@ -44,7 +44,7 @@ Read these files in order:
 7. `docs/agent_navigation/task_router.md`
 8. `docs/agent_navigation/artifact_catalog.md`
 9. `docs/agent_navigation/verification_matrix.md`
-10. `docs/codex_review_playbook.md`
+10. `docs/review_playbook.md`
 11. `docs/generated/dev_index.md`
 
 Before touching source, write down the investigation frame in the scratch notes
@@ -339,7 +339,7 @@ Read:
 
 - `docs/mechanics_changes_from_base.md`
 - `docs/agent_navigation/custom_terms.md`
-- `docs/codex_review_playbook.md`
+- `docs/review_playbook.md`
 
 Inspect:
 
@@ -430,7 +430,7 @@ Read:
 - `docs/qol_handoff.md`
 - `docs/qol_research_report.md`
 - `docs/agent_navigation/subsystems/qol_map_scripts.md`
-- `docs/codex_context.md`
+- `docs/project_context.md`
 
 Inspect:
 
@@ -627,6 +627,7 @@ A bug hunt is not done until the final report names:
 - manual emulator/playtest/trace gaps;
 - dirty worktree changes that pre-existed the session and were preserved.
 
-If context is running low, write a self-contained handoff under `outbox/` with
-the exact read order, commands already run, findings, unresolved leads, and
-which files are safe or unsafe to touch next.
+If context is running low, write a self-contained handoff under
+`.claude_handoffs/YYYY-MM-DD-HHMM-<slug>.md` (gitignored) with the exact read
+order, commands already run, findings, unresolved leads, and which files are
+safe or unsafe to touch next.

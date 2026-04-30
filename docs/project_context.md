@@ -19,7 +19,7 @@ this one.
 Before changing gameplay code, read these in order:
 
 1. `docs/README.md` for helper-doc routing and truth precedence.
-2. `docs/codex_context.md` for project intent.
+2. `docs/project_context.md` for project intent.
 3. `docs/project_map.md` for task routing and canonical source locations.
 4. `docs/agent_navigation/README.md` for constant-time task routing, source-zone
    classification, and verification floors.
@@ -27,7 +27,7 @@ Before changing gameplay code, read these in order:
    memory pressure.
 6. Relevant spec/change docs, especially:
    - `docs/boss_ai_spec.md`
-   - `docs/codex_review_playbook.md`
+   - `docs/review_playbook.md`
    - `docs/mechanics_changes_from_base.md`
    - `docs/manifest.md`
 
@@ -184,7 +184,7 @@ damages the feel of Pokemon Gold, adapt it instead of copying it directly.
 
 ## Review Defaults
 
-- Use `docs/codex_review_playbook.md` for bug hunts and code reviews.
+- Use `docs/review_playbook.md` for bug hunts and code reviews.
 - Look for violations of project intent first, not just crashes.
 - For Boss AI, review timing, hidden-information reads, legacy scoring helpers,
   and WRAM budget before reviewing tactical strength.
