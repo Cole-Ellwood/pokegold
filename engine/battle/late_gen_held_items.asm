@@ -1,4 +1,6 @@
-ApplyLateGenDamageStatsItemMods_Far:
+ApplyLateGenDamageStatsItemMods_Far::
+; Reach via ROM0 thunk ApplyLateGenDamageStatsItemMods — direct callfar
+; would clobber hl (the input/output attack stat) with this function's address.
 	push af
 	call TypePassive_GetEffectiveMoveCategory_Far
 	cp SPECIAL
@@ -544,10 +546,11 @@ DittoMetalPowder_Far:
 	ld bc, MAX_STAT_VALUE
 	ret
 
-SpeciesItemBoost_Far:
+SpeciesItemBoost_Far::
 ; Return in hl the stat value at hl.
 ; If the attacking monster is species b or c and
 ; it's holding item d, double it.
+; Reach via ROM0 thunk SpeciesItemBoost — direct callfar would clobber hl.
 	ld a, [hli]
 	ld l, [hl]
 	ld h, a

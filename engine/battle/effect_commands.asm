@@ -2570,7 +2570,7 @@ PlayerAttackDamage:
 	call ThickClubBoost
 
 .done
-	callfar ApplyLateGenDamageStatsItemMods_Far
+	call ApplyLateGenDamageStatsItemMods
 	push hl
 	callfar DittoMetalPowder_Far
 	pop hl
@@ -2635,7 +2635,7 @@ ThickClubBoost:
 	ld b, CUBONE
 	ld c, MAROWAK
 	ld d, THICK_CLUB
-	callfar SpeciesItemBoost_Far
+	call SpeciesItemBoost
 	pop de
 	pop bc
 	ret
@@ -2650,7 +2650,7 @@ LightBallBoost:
 	ld b, PIKACHU
 	ld c, PIKACHU
 	ld d, LIGHT_BALL
-	callfar SpeciesItemBoost_Far
+	call SpeciesItemBoost
 	pop de
 	pop bc
 	ret
@@ -2723,7 +2723,7 @@ EnemyAttackDamage:
 	call ThickClubBoost
 
 .done
-	callfar ApplyLateGenDamageStatsItemMods_Far
+	call ApplyLateGenDamageStatsItemMods
 	push hl
 	callfar DittoMetalPowder_Far
 	pop hl

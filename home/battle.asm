@@ -263,3 +263,15 @@ Battle_GetEffectiveMoveCategory::
 Battle_GetLastCounterMoveCategory::
 	farcall TypePassive_GetLastCounterMoveCategory_Far
 	ret
+
+SpeciesItemBoost::
+; hl-preserving bridge to SpeciesItemBoost_Far. callfar would clobber hl
+; with the target address before entry; homecall keeps the caller's hl.
+	homecall SpeciesItemBoost_Far
+	ret
+
+ApplyLateGenDamageStatsItemMods::
+; Same hl-preserving bridge for ApplyLateGenDamageStatsItemMods_Far —
+; the function reads/writes hl as the attack stat value.
+	homecall ApplyLateGenDamageStatsItemMods_Far
+	ret
