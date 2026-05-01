@@ -176,6 +176,12 @@ OPTIONAL_LOCAL_PATH_PREFIXES = (
 )
 
 PLANNED_MISSING_ARTIFACTS = (
+    # Boss AI index hardening follow-ups (see docs/agent_navigation/subsystems/
+    # boss_ai_index_hardening.md). check_boss_ai_index_lines.py is item D
+    # (planned audit); generate_boss_ai_index.py is the rejected-generator
+    # option discussed and explicitly NOT being built.
+    "scripts/generate_boss_ai_index.py",
+    "tools/audit/check_boss_ai_index_lines.py",
     "audit/boss_ai_trace/falkner_live.txt",
     "audit/boss_ai_trace/bugsy_live.txt",
     "audit/boss_ai_trace/whitney_live.txt",
@@ -261,8 +267,12 @@ def clean_ref(raw: str) -> str | None:
     ref = ref.replace("\\", "/")
     if not ref or " " in ref or "*" in ref:
         return None
+    if "..." in ref:
+        # Placeholder/grammar syntax (e.g. `engine/battle/ai/...:NNN`), not a real ref.
+        return None
+    # Strip line suffixes: `:NNN`, `:NNN-MMM` (range), or `:NNN,MMM,...` (comma list).
     ref = re.sub(
-        r"^(.+\.(?:asm|exe|link|map|md|py|sha1|sym|txt)):\d+$",
+        r"^(.+\.(?:asm|exe|link|map|md|py|sha1|sym|txt)):\d+(?:[-,]\d+)*$",
         r"\1",
         ref,
     )
@@ -270,8 +280,10 @@ def clean_ref(raw: str) -> str | None:
         return None
     if ref.startswith(PATH_PREFIXES):
         return ref.rstrip("/")
-    if ref.endswith(PATHLIKE_EXTENSIONS):
+    if "/" in ref and ref.endswith(PATHLIKE_EXTENSIONS):
         return ref
+    # Bare filenames (no slash) are colloquial prose in this codebase. Real
+    # root-level artifacts like pokegold.map are covered by REQUIRED_PATHS.
     return None
 
 
