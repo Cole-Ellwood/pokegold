@@ -30,6 +30,14 @@ DEF RESERVED_GAME_VERSION EQU 4
 DEF SAVE_CHECK_VALUE_1 EQU 99
 DEF SAVE_CHECK_VALUE_2 EQU 127
 
+; Save layout version. Bump when any field under wPlayerData*/wPokemonData/
+; wCurMapData/wOptions is added/removed/resized/reordered, or when the Save/
+; Backup Save N SRAM sections are reorganized. $FF means "legacy save predating
+; this marker" and is accepted only by v1 to absorb existing dev/playtest saves
+; on first deploy. v2+ must NOT keep the $FF accept path; only the current
+; version and explicitly-migrated previous versions are valid.
+DEF SAVE_FORMAT_VERSION EQU 1
+
 ; RTC halted check value
 DEF RTC_HALT_VALUE EQU $1234
 

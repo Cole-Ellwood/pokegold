@@ -373,12 +373,14 @@ EraseHallOfFame:
 	jp CloseSRAM
 
 ValidateSave:
-	ld a, BANK(sCheckValue1) ; aka BANK(sCheckValue2)
+	ld a, BANK(sCheckValue1) ; aka BANK(sCheckValue2), BANK(sSaveFormatVersion)
 	call OpenSRAM
 	ld a, SAVE_CHECK_VALUE_1
 	ld [sCheckValue1], a
 	ld a, SAVE_CHECK_VALUE_2
 	ld [sCheckValue2], a
+	ld a, SAVE_FORMAT_VERSION
+	ld [sSaveFormatVersion], a
 	jp CloseSRAM
 
 SaveOptions:
@@ -435,12 +437,14 @@ SaveChecksum:
 	ret
 
 ValidateBackupSave:
-	ld a, BANK(sBackupCheckValue1) ; aka BANK(sBackupCheckValue2)
+	ld a, BANK(sBackupCheckValue1) ; aka BANK(sBackupCheckValue2), BANK(sBackupSaveFormatVersion)
 	call OpenSRAM
 	ld a, SAVE_CHECK_VALUE_1
 	ld [sBackupCheckValue1], a
 	ld a, SAVE_CHECK_VALUE_2
 	ld [sBackupCheckValue2], a
+	ld a, SAVE_FORMAT_VERSION
+	ld [sBackupSaveFormatVersion], a
 	call CloseSRAM
 	ret
 
@@ -622,7 +626,7 @@ TryLoadSaveData:
 INCLUDE "data/default_options.asm"
 
 CheckPrimarySaveFile:
-	ld a, BANK(sCheckValue1) ; aka BANK(sCheckValue2)
+	ld a, BANK(sCheckValue1) ; aka BANK(sCheckValue2), BANK(sSaveFormatVersion)
 	call OpenSRAM
 	ld a, [sCheckValue1]
 	cp SAVE_CHECK_VALUE_1
@@ -630,6 +634,12 @@ CheckPrimarySaveFile:
 	ld a, [sCheckValue2]
 	cp SAVE_CHECK_VALUE_2
 	jr nz, .nope
+	ld a, [sSaveFormatVersion]
+	cp SAVE_FORMAT_VERSION
+	jr z, .version_ok
+	cp $ff ; legacy save predating the marker; v2+ must remove this
+	jr nz, .nope
+.version_ok
 	ld hl, sOptions
 	ld de, wOptions
 	ld bc, wOptionsEnd - wOptions
@@ -644,7 +654,7 @@ CheckPrimarySaveFile:
 	ret
 
 CheckBackupSaveFile:
-	ld a, BANK(sBackupCheckValue1) ; aka BANK(sBackupCheckValue2)
+	ld a, BANK(sBackupCheckValue1) ; aka BANK(sBackupCheckValue2), BANK(sBackupSaveFormatVersion)
 	call OpenSRAM
 	ld a, [sBackupCheckValue1]
 	cp SAVE_CHECK_VALUE_1
@@ -652,6 +662,12 @@ CheckBackupSaveFile:
 	ld a, [sBackupCheckValue2]
 	cp SAVE_CHECK_VALUE_2
 	jr nz, .nope
+	ld a, [sBackupSaveFormatVersion]
+	cp SAVE_FORMAT_VERSION
+	jr z, .version_ok
+	cp $ff ; legacy save predating the marker; v2+ must remove this
+	jr nz, .nope
+.version_ok
 	ld hl, sBackupOptions
 	ld de, wOptions
 	ld bc, wOptionsEnd - wOptions

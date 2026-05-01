@@ -2,7 +2,7 @@
 
 Boss AI cognition note: if you are here for the Boss AI loop, think wildly in the journal before changing source; this index is the hard memory/bank reality check for those ideas.
 
-Generated: 2026-04-30
+Generated: 2026-05-01
 ROM target: `pokegold`
 
 Generated from `layout.link`, assembly sources, `pokegold.map`, and `pokegold.sym`.
@@ -63,7 +63,7 @@ Read `docs/README.md` first for helper-doc routing, then `docs/project_context.m
 ### Graphics
 - Intent: Pokemon pics, trainer pics, sprites, tilesets, palettes, and UI art.
 - Start here: `gfx`, `data/sprites`, `data/tilesets.asm`, `gfx/pics_gold.asm`
-- Anchors: `PokemonPicPointers` (12:4000, `data/pokemon/pic_pointers.asm:3`); `TrainerPicPointers` (20:4000, `data/trainers/pic_pointers.asm:3`); `Tilesets` (05:56be, `data/tilesets.asm:13`)
+- Anchors: `PokemonPicPointers` (12:4000, `data/pokemon/pic_pointers.asm:3`); `TrainerPicPointers` (20:4000, `data/trainers/pic_pointers.asm:3`); `Tilesets` (05:56de, `data/tilesets.asm:13`)
 
 ### Audio
 - Intent: Music, cries, sound effects, engine data, and song banks.
@@ -75,8 +75,8 @@ Read `docs/README.md` first for helper-doc routing, then `docs/project_context.m
 | Region | Used | Free | Banks |
 | --- | ---: | ---: | ---: |
 | ROM0 | 16148 | 236 |  |
-| ROMX | 1157216 | 923552 | 127 |
-| SRAM | 31697 | 1071 | 4 |
+| ROMX | 1157248 | 923520 | 127 |
+| SRAM | 31699 | 1069 | 4 |
 | WRAM0 | 4047 | 49 |  |
 | WRAMX | 4096 | 0 |  |
 | HRAM | 127 | 0 |  |
@@ -251,7 +251,7 @@ Use these as candidates when moving optional code or data out of tight banks.
 | `hROMBank` | 00:ff9f | `ram/hram.asm:26` |
 | `PokemonPicPointers` | 12:4000 | `data/pokemon/pic_pointers.asm:3` |
 | `TrainerPicPointers` | 20:4000 | `data/trainers/pic_pointers.asm:3` |
-| `Tilesets` | 05:56be | `data/tilesets.asm:13` |
+| `Tilesets` | 05:56de | `data/tilesets.asm:13` |
 | `Music` | 3a:506e | `audio/music_pointers.asm:3` |
 | `SFX` | 3a:525e | `audio/sfx_pointers.asm:1` |
 | `Cries` | 3a:5192 | `audio/cry_pointers.asm:1` |

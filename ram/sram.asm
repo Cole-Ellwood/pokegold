@@ -102,6 +102,7 @@ sGameDataEnd::
 sChecksum:: dw
 
 sCheckValue2:: db ; loaded with SAVE_CHECK_VALUE_2, used to check save corruption
+sSaveFormatVersion:: db ; loaded with SAVE_FORMAT_VERSION; $FF means legacy save predating the marker
 
 
 SECTION "Active Box", SRAM
@@ -171,5 +172,6 @@ sBackupCheckValue1:: db ; loaded with SAVE_CHECK_VALUE_1, used to check save cor
 sBackupCurMapData:: ds wCurMapDataEnd - wCurMapData
 sBackupChecksum:: dw
 sBackupCheckValue2:: db ; loaded with SAVE_CHECK_VALUE_2, used to check save corruption
+sBackupSaveFormatVersion:: db ; loaded with SAVE_FORMAT_VERSION; $FF means legacy save
 
 ENDSECTION

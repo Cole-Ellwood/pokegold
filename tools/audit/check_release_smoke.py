@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -1427,8 +1428,28 @@ def main() -> int:
         )
     print("PASS: QoL script flow checks")
 
+    check_save_format_version()
+
     print("ALL RELEASE SMOKE CHECKS PASSED")
     return 0
+
+
+def check_save_format_version() -> None:
+    proc = subprocess.run(
+        [sys.executable, str(ROOT / "tools/audit/check_save_format_version.py")],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    if proc.stdout:
+        print(proc.stdout, end="" if proc.stdout.endswith("\n") else "\n")
+    if proc.stderr:
+        print(proc.stderr, end="" if proc.stderr.endswith("\n") else "\n", file=sys.stderr)
+    if proc.returncode != 0:
+        fail("save format version audit failed")
+    print("PASS: save format version audit")
 
 
 if __name__ == "__main__":
