@@ -1824,6 +1824,10 @@ BossAI_ApplyMoveModel:
 	jp .PlayerHasRevealedEffectA
 
 .ApplyRevealedSleepPreemptBias
+; Encourage Substitute / Safeguard when the player has revealed a sleep move
+; AND the boss is publicly faster — both Sub and Safeguard need to resolve
+; before the sleep move to actually preempt it. From a slower boss they fizzle
+; (the sleep lands first, so the boss is asleep before the utility move runs).
 	ld a, [wBossAITier]
 	cp AI_TIER_MID
 	ret c
@@ -1842,7 +1846,7 @@ BossAI_ApplyMoveModel:
 	call .PlayerHasRevealedEffectA
 	ret nc
 	call BossAI_PublicEnemyFaster
-	ret c
+	ret nc
 	ld a, 5
 	jp BossAI_EncourageScoreHL
 
