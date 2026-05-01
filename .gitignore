@@ -42,6 +42,7 @@ rgbds-*/
 .local/
 .claude/
 .claude_handoffs/
+.rebalance_chain/
 *-backup
 dist/*.gb
 dist/*.gbc

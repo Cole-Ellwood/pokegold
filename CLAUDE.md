@@ -16,17 +16,18 @@ Non-obvious traps in this repo. Project intent and source layout live in `docs/R
 If a generated file looks wrong, fix the source or generator and rebuild. Editing the artifact will be overwritten on the next regen.
 
 ## After source changes
-- If labels move, banks shift, or new exports appear, regenerate the dev index:
+- After **any** successful build that links, regenerate the dev index:
   ```
   python scripts/generate_dev_index.py --rom pokegold
   ```
-  Audits read bank/free-space figures from `docs/generated/dev_index.md`; stale figures lead to wrong decisions about where to place code or data.
+  Don't try to predict when it's needed. Audits like `tools/audit/check_boss_ai_memory_budget.py` read bank/free-space figures out of `docs/generated/dev_index.md` (e.g. `| Enemy Trainers | ROMX | 0e:4000-7e06 | 15879 |`). Any added or removed assembled bytes change those figures, even when no new global symbol is exported. The cost of regenerating when not strictly required is one git diff line. The cost of skipping when required is an audit failure and a round trip.
 - Balance/stats/evos/level-up move/TM data changes: also regen `docs/generated/balance_audit.md` via `scripts/generate_balance_audit.py`.
 
 ## RGBDS / asm pitfalls
 - `Label:` is local to its source file; `Label::` is exported and reachable from other banks. Never silently downgrade `::` to `:` — cross-bank references will fail to link.
 - ROM banks are `$4000` bytes (16 KiB). A routine or table that grows past its bank's free space is a link-time failure, not a runtime warning. Check `Tight Banks` and `Largest ROMX Free Ranges` in `docs/generated/dev_index.md` before adding bytes.
 - Cross-bank calls require `farcall` / `callfar` (or equivalent helpers). Plain `call` only reaches the current bank or ROM0 — calling a `::` label in another bank with `call` will assemble but jump to garbage.
+- `callfar` / `farcall` macros expand to `ld hl, \1; ld a, BANK(\1); rst FarCall` — they **destroy the caller's `hl`** before the target function runs. If the target reads `hl` as input, this is a bug. Three valid patterns: (1) `push hl; callfar X; pop hl` if hl just needs preserving across the call; (2) ROM0 thunk via `homecall` (which preserves hl) when X needs hl as in/out; (3) pass via `bc`/`de` and reconstruct inside (callfar preserves bc/de, only clobbers hl/a). This caused the April 2026 one-shot damage bug — `SpeciesItemBoost_Far` and `ApplyLateGenDamageStatsItemMods_Far` were called via `callfar` while `BattleCommand_DamageStats` expected hl to be the attack-stat pointer; the fix is the ROM0 thunks in `home/battle.asm`.
 - `assert` lines in tables and macros catch bounds/length mismatches at link time. Don't delete them to make the build pass — fix the underlying mismatch.
 - `INCLUDE "..."` paths are case-sensitive. Big data tables here use *different* layouts — don't assume a single pattern: `BaseData` chains one `INCLUDE` per Pokemon (`data/pokemon/base_stats/<species>.asm`); `Moves` is one file of inline `move` macro calls (`data/moves/moves.asm`); `EvosAttacks` is one file of inline per-species labels with `db` rows (`data/pokemon/evos_attacks.asm`). Adding an entry usually requires touching the matching constant in `constants/`, the master table or its include set in `data/`, and any pointer table that indexes it.
 
@@ -37,7 +38,13 @@ If a generated file looks wrong, fix the source or generator and rebuild. Editin
 
 ## Workflow
 
-When the user describes a task, do not start coding. First, list the files you'd need to read and why. Wait for the user's confirmation before reading or editing anything.
+This repo runs on a senior-dev / CEO contract. The user does not code; they have gameplay taste. You drive everything technical without gating on confirmation.
+
+- **Decide and execute.** Don't list files and wait. Don't ask "want me to do X?" when X is the obvious next step. Read what you need, make the call, do the work.
+- **Full git authority.** Commit, push, open PRs without confirmation when you judge the work is ready. The exception is **merging to master** — that's a release event for this hack; surface it instead of doing it.
+- **Drive release passes.** When prerequisites are green (audits pass, ROM is stable), kick off the release pass yourself: `dist/*` regen, `roms.sha1` refresh, `validation_report.md` entry, etc. Use the user as a playtest resource when you need human eyes on the ROM.
+- **Pushback protocol.** Soft pushback (state your view, defer to user) on **gameplay taste** — fairness, feel, fun, role of a Pokemon, trainer difficulty. Hard pushback (refuse to ship) on **technical correctness** — broken builds, save-format breakage, known-broken code, security issues. The user explicitly does not want a yes-man on technical calls.
+- **Confirm before destructive irreversible actions only.** Force-push, `rm -rf`, save-format changes that ship to a public release, deleting branches with unmerged work, etc. Local builds, audits, edits, commits, normal pushes, PR creation — just do them.
 
 ## Session handoff
 

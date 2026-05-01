@@ -31,8 +31,10 @@ When running from a Codex PowerShell session in this Windows checkout, use WSL
 Linux binaries like `rgbds-1.0.1/rgbasm`.
 
 ```powershell
-bash -lc 'cd "/mnt/c/Users/lolno/Downloads/pokemon gold hack" && make -j4 RGBASM=rgbds-1.0.1/rgbasm.exe RGBLINK=rgbds-1.0.1/rgblink.exe RGBFIX=rgbds-1.0.1/rgbfix.exe RGBGFX=rgbds-1.0.1/rgbgfx.exe pokegold.gbc pokesilver.gbc'
+bash -lc 'cd "/mnt/c/Users/lolno/Downloads/pokemon gold hack" && make -j4 PYTHON=python3 RGBASM=rgbds-1.0.1/rgbasm.exe RGBLINK=rgbds-1.0.1/rgblink.exe RGBFIX=rgbds-1.0.1/rgbfix.exe RGBGFX=rgbds-1.0.1/rgbgfx.exe pokegold.gbc pokesilver.gbc'
 ```
+
+`PYTHON=python3` is required: WSL Ubuntu has no `python` symlink, only `python3`. Without the override, `make tidy` and `make compare` fail with `python: No such file or directory`.
 
 Known-good verification on 2026-04-25:
 - `pokegold.gbc` built successfully with the command pattern above.
@@ -43,5 +45,7 @@ Known-good verification on 2026-04-25:
 flips --create --bps .local/roms/pokegold-baseline.gbc pokegold.gbc dist/pokegold-data-rebalance.bps
 flips --apply dist/pokegold-data-rebalance.bps .local/roms/pokegold-baseline.gbc .local/roms/pokegold-roundtrip-current.gbc
 ```
+
+**`flips` is not installed in this environment.** As of 2026-04-30, `which flips` returns not found in both Windows shell and WSL bash on this checkout. Install it before any `dist/*` BPS regen — `tools/make_patch.exe` exists in the repo but produces VC patches, not BPS, and is not a substitute. Per `docs/RELEASE_NOTES.md` source-cleanup branch policy, regenerated ROM/BPS artifacts aren't committed on cleanup branches anyway, so deferring to a release pass is the normal path.
 
 Release ROMs, patches, and checksum summaries are generated artifacts. Keep them out of ordinary source cleanup commits unless cutting a release.
