@@ -107,6 +107,7 @@ Read these only when the router points at the matching area:
 
 | File | Use for |
 | --- | --- |
+| `docs/agent_navigation/subsystems/boss_ai_logic.md` | Where each Boss AI behavior lives in source: scoring gates, switch heuristics, plausible-move inference, plan/role state, tier ramp, WRAM map. |
 | `docs/agent_navigation/subsystems/boss_ai_trace.md` | Boss AI live proof, trace states, capture ledger, and proof standards. |
 | `docs/agent_navigation/subsystems/trainer_boss_roster.md` | Trainer/boss AI tier lookup, party labels, and live trace priority overlay. |
 | `docs/agent_navigation/subsystems/pokemon_balance.md` | Weak-Pokemon triage, generated balance audit use, and intent registry updates. |
