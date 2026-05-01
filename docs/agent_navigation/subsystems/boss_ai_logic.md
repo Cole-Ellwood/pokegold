@@ -14,6 +14,30 @@ trainers run boss AI at all*, use
 
 Avoid grepping `engine/` cold. Pick the right row below first.
 
+## Pitfalls (read before editing boss AI source)
+
+- `callfar` / `farcall` destroys caller's `hl` before the target runs. If a
+  Boss AI helper takes `hl` as input, it must be called via a ROM0 homecall
+  thunk (precedent: `SpeciesItemBoost_Far`,
+  `ApplyLateGenDamageStatsItemMods_Far` in `home/battle.asm`).
+- Boss AI is gated by `wBossAITier != 0`. When tier is 0, the overlay must
+  do nothing — vanilla AI behavior must remain bit-identical. Anything that
+  fires unconditionally is a bug.
+- No private-info reads outside the spent Haki branch. The AI may only read
+  what the player has revealed: sent out, used a move, KO'd, or what the
+  public type chart implies. `tools/audit/check_boss_ai_no_cheat.py` is the
+  verification floor.
+- WRAM reserve is **140 bytes hard** (`ram/wram.asm:2582`). Adding fields
+  requires checking `Boss AI WRAM Reserve` in `docs/generated/dev_index.md`
+  AND running `tools/audit/check_boss_ai_memory_budget.py`.
+- Score saturation: scores ≥79 are treated as "blocked" by `SelectMove`
+  (saturated by `BossAI_DiscourageScoreHL`). Adding a further "discourage"
+  pass expecting it to push a move below other already-discouraged moves
+  will be a no-op. See commit `542ef2e2` for the saturation patch.
+- Line numbers in this index are hand-maintained. After a non-trivial
+  `boss.asm` edit, re-grep the labels you're using before trusting them,
+  or run `tools/audit/check_boss_ai_index_lines.py`.
+
 ## Source Files At A Glance
 
 | File | Lines | Role |
@@ -46,6 +70,19 @@ fire from Battle Core.
 ## Behavior → Source Map
 
 All paths under `engine/battle/ai/boss.asm` unless noted.
+
+### Data Ownership At A Glance
+
+| Concern | Lives in |
+| --- | --- |
+| Vanilla AI effect lists (`useful_moves`, `risky_effects`, `stall_moves`, etc.) | `data/battle/ai/*.asm` (consumed by `engine/battle/ai/scoring.asm`) |
+| Boss AI effect tables (`BossAIDenyKOEffects`, `BossAIStatusEffects`, `BossAIRiskyEffects`) | bottom of `engine/battle/ai/boss.asm` |
+| Per-boss role-effect tables (`BossAIChuckRoleEffects` etc.) | bottom of `engine/battle/ai/boss.asm` |
+| Per-trainer tier (class+id → EARLY/MID/LATE) | `BossAITierMap:1` in `data/trainers/ai_tiers.asm`; consumed by `LoadBossAITier:69` in `engine/battle/read_trainer_attributes.asm` |
+| Per-class tier-weight-row override | `BossAITierRampMap:51` in `data/trainers/ai_tiers.asm` (default = `tier - 1`, set at `LoadBossAITier:97-98`) |
+| Tier weight table (rows indexed by tier-weight-row) | `BossAITierWeights:6693` in `engine/battle/ai/boss.asm` |
+| Plausible-threat type table | `BossAI_PlausibleThreatTypes:6581` in `engine/battle/ai/boss.asm` |
+| Trainer attributes (base reward, AI flags) — separate concern, do not confuse with tier | `data/trainers/attributes.asm` (consumed at `engine/battle/read_trainer_attributes.asm:67`) |
 
 ### Memory: per-battle state record/access
 
