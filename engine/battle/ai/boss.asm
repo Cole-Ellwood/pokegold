@@ -2260,11 +2260,19 @@ BossAI_ApplyMoveModel:
 	ret
 
 .DiscourageScoreByA
+; Saturate at 79 to mirror BossAI_DiscourageScoreHL: scores 80+ mean "blocked"
+; in BossAI_SelectMove (cp 80 in the first-pass scan), so an unsaturated
+; discourage chain on a high score could either flip a candidate from "scored"
+; to "blocked" mid-chain or wrap past 255 and look highly preferred.
 	and a
 	ret z
 	ld e, a
 .discourage_loop
+	ld a, [hl]
+	cp 79
+	jr nc, .discourage_done
 	inc [hl]
+.discourage_done
 	dec e
 	jr nz, .discourage_loop
 	ret
