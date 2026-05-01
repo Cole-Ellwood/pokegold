@@ -24,7 +24,7 @@ Avoid grepping `engine/` cold. Pick the right row below first.
 | `engine/battle/ai/items.asm` | ~860 | `AI_SwitchOrTryItem` dispatcher (`SwitchOften` / `SwitchRarely` / `SwitchSometimes`), `AI_TryItem`, `EnemyUsed*` item routines. Vanilla path — Boss AI hooks in via `BossAI_SwitchOrTryItem`. |
 | `engine/battle/ai/move.asm` | ~220 | Move-pick dispatcher. Where `BossAI_ApplyMoveModel` and `BossAI_SelectMove` are called from. |
 | `engine/battle/ai/redundant.asm` | ~200 | Move-redundancy avoidance helpers. |
-| `data/battle/ai/*.asm` | small | Effect lists Boss AI consults: `useful_moves`, `stall_moves`, `risky_effects`, `residual_moves`, `encore_moves`, `status_only_effects`, `constant_damage_effects`, `reckless_moves`, `rain_dance_moves`, `sunny_day_moves`. |
+| `data/battle/ai/*.asm` | small | Effect lists for the **vanilla** AI scoring layer (`useful_moves`, `stall_moves`, `risky_effects`, `residual_moves`, `encore_moves`, `status_only_effects`, `constant_damage_effects`, `reckless_moves`, `rain_dance_moves`, `sunny_day_moves`). Boss AI inherits their effect because vanilla scoring runs first, but consumers are in `scoring.asm`, not `boss.asm`. Boss AI's own effect tables are inline at the bottom of `boss.asm` (`BossAIDenyKOEffects`, `BossAIStatusEffects`, `BossAIRiskyEffects`, role-effect tables). |
 
 ## Activation And Per-Turn Hooks
 
@@ -230,7 +230,9 @@ layer.
 | --- | --- |
 | Pick or refresh plan | `BossAI_SelectPlanIfNeeded:4244` |
 | Find a party mon by role tag | `BossAI_FindPartyMonByRole:4419` |
-| Per-boss role-effect tables | `BossAIChuckRoleEffects:6729`, `BossAIJasmineRoleEffects:6735`, `BossAIPryceRoleEffects:6741`, `BossAIClairRoleEffects:6750`, `BossAIWillRoleEffects:6758`, `BossAIBrunoRoleEffects:6765`, `BossAIKarenRoleEffects:6771`, `BossAIKogaRoleEffects:6780`, `BossAIChampionRoleEffects:6788` |
+| Per-boss role-bias dispatcher (reads `wTrainerClass`, jumps to per-boss branch) | `.ApplyRoleBias:2075` (under `BossAI_ApplyMoveModel`) |
+| Per-boss scoring branches | `.falkner:2109`, `.rival:2101`, `.chuck:2123`, `.jasmine:2130`, `.pryce:2141`, `.clair:2150`, `.will:2157`, `.bruno:2164`, `.karen:2171`, `.koga:2178`, `.champion:2187` |
+| Per-boss role-effect tables (consumed by the branches above) | `BossAIChuckRoleEffects:6729`, `BossAIJasmineRoleEffects:6735`, `BossAIPryceRoleEffects:6741`, `BossAIClairRoleEffects:6750`, `BossAIWillRoleEffects:6758`, `BossAIBrunoRoleEffects:6765`, `BossAIKarenRoleEffects:6771`, `BossAIKogaRoleEffects:6780`, `BossAIChampionRoleEffects:6788` |
 
 ### Effect classifiers
 
@@ -264,7 +266,7 @@ layer.
 | Tier value | `wBossAITier`, set in `engine/battle/read_trainer_attributes.asm:72,95` |
 | Tier weight row | `wBossAITierWeightRow`, set at `read_trainer_attributes.asm:73,98,126` |
 | Weight table | `BossAITierWeights:6693` (in `engine/battle/ai/boss.asm`) |
-| Per-trainer tier ramp map | `BossAITierRampMap` — see comment at `boss.asm:6696` |
+| Per-trainer tier ramp map | `BossAITierRampMap:51` in `data/trainers/ai_tiers.asm` (consumer: `read_trainer_attributes.asm:115`; design comment: `boss.asm:6696`) |
 | Roll thresholds | `BossAI_GetScoutRollThreshold:5950`, `BossAI_GetTierPlausibleRiskWeight:5931` |
 
 ### Scout / repeat tracking
