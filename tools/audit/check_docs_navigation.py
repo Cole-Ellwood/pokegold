@@ -177,11 +177,9 @@ OPTIONAL_LOCAL_PATH_PREFIXES = (
 
 PLANNED_MISSING_ARTIFACTS = (
     # Boss AI index hardening follow-ups (see docs/agent_navigation/subsystems/
-    # boss_ai_index_hardening.md). check_boss_ai_index_lines.py is item D
-    # (planned audit); generate_boss_ai_index.py is the rejected-generator
-    # option discussed and explicitly NOT being built.
+    # boss_ai_index_hardening.md). generate_boss_ai_index.py is the
+    # rejected-generator option discussed and explicitly NOT being built.
     "scripts/generate_boss_ai_index.py",
-    "tools/audit/check_boss_ai_index_lines.py",
     "audit/boss_ai_trace/falkner_live.txt",
     "audit/boss_ai_trace/bugsy_live.txt",
     "audit/boss_ai_trace/whitney_live.txt",
