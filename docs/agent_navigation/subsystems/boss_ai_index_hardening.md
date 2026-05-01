@@ -9,11 +9,11 @@ here. Tick items off as they land; prune sections that turn out wrong.
 
 ## Status
 
-- [ ] **A. Commit working-tree refinement** to the index (already drafted, uncommitted).
-- [ ] **B. Add a pitfalls block at the top of the index.**
-- [ ] **C. Add an effect-table / data-ownership clarification table.**
-- [ ] **D. Write `tools/audit/check_boss_ai_index_lines.py`** to catch line-number drift.
-- [ ] **E. Add a scoped `ApplyMoveModel` inner-label section** (only after D lands).
+- [x] **A. Commit working-tree refinement** to the index — landed in `a5e55c75`.
+- [x] **B. Add a pitfalls block at the top of the index** — landed in `cbc40041`.
+- [x] **C. Add an effect-table / data-ownership clarification table** — landed in `cbc40041`.
+- [x] **D. Write `tools/audit/check_boss_ai_index_lines.py`** to catch line-number drift — landed in `eb529985`.
+- [ ] **E. Add a scoped `ApplyMoveModel` inner-label section** (now unblocked by D).
 
 ## A. Commit working-tree refinement
 
