@@ -112,6 +112,9 @@ PAIR_ENTRY_RE = re.compile(
     r"^\s*db\s+([A-Z0-9_]+)\s*,\s*([A-Z0-9_]+)\s*(?:;.*)?$"
 )
 CLASS_ENTRY_RE = re.compile(r"^\s*db\s+([A-Z0-9_]+|-1)\s*(?:;.*)?$")
+RAMP_ENTRY_RE = re.compile(
+    r"^\s*db\s+([A-Z0-9_]+)\s*,\s*([A-Z0-9_]+)\s*,\s*([0-9]+)\s*(?:;.*)?$"
+)
 
 
 def parse_pair_map(text: str, label: str) -> set[tuple[str, str]]:
@@ -139,6 +142,49 @@ def parse_pair_map(text: str, label: str) -> set[tuple[str, str]]:
 
     print(f"ERROR: could not locate terminated {label}.", file=sys.stderr)
     raise SystemExit(1)
+
+
+def parse_ramp_map(text: str, label: str) -> list[tuple[str, str, int]]:
+    in_map = False
+    entries: list[tuple[str, str, int]] = []
+    for raw_line in text.splitlines():
+        line = raw_line.strip()
+        if line == f"{label}:":
+            in_map = True
+            continue
+        if not in_map:
+            continue
+        if not line or line.startswith(";"):
+            continue
+        if re.match(r"^\s*db\s+0\b", raw_line):
+            return entries
+        match = RAMP_ENTRY_RE.match(raw_line)
+        if not match:
+            print(f"ERROR: malformed {label} entry: {raw_line}", file=sys.stderr)
+            raise SystemExit(1)
+        cls, tid, row = match.groups()
+        entries.append((cls, tid, int(row)))
+
+    print(f"ERROR: could not locate terminated {label}.", file=sys.stderr)
+    raise SystemExit(1)
+
+
+def count_tier_weight_rows(boss_text: str) -> int:
+    in_table = False
+    rows = 0
+    for raw_line in boss_text.splitlines():
+        line = raw_line.strip()
+        if line in ("BossAITierWeights:", "BossAITierWeights::"):
+            in_table = True
+            continue
+        if not in_table:
+            continue
+        code = raw_line.split(";", 1)[0].strip()
+        if code.endswith(":") and not code.startswith("."):
+            return rows
+        if code.startswith("db "):
+            rows += 1
+    return rows
 
 
 def parse_class_list(text: str, label: str) -> list[str]:
@@ -268,6 +314,46 @@ def main() -> int:
             print(f"  - {trainer_class}, {trainer_id} -> {tier}", file=sys.stderr)
         return 1
 
+    boss_ai_text = BOSS_AI_FILE.read_text(encoding="utf-8")
+    num_weight_rows = count_tier_weight_rows(boss_ai_text)
+    if num_weight_rows == 0:
+        print("ERROR: could not locate BossAITierWeights table.", file=sys.stderr)
+        return 1
+
+    ramp_entries = parse_ramp_map(ai_tiers_text, "BossAITierRampMap")
+    seen_ramp: set[tuple[str, str]] = set()
+    for cls, tid, row in ramp_entries:
+        pair = (cls, tid)
+        if pair in seen_ramp:
+            print(
+                f"ERROR: BossAITierRampMap entry duplicated: {cls}, {tid}",
+                file=sys.stderr,
+            )
+            return 1
+        seen_ramp.add(pair)
+        if row >= num_weight_rows:
+            print(
+                f"ERROR: BossAITierRampMap entry {cls}, {tid} row {row} "
+                f">= BossAITierWeights row count {num_weight_rows} "
+                f"(out-of-range row reads garbage weights).",
+                file=sys.stderr,
+            )
+            return 1
+        if pair not in entries:
+            print(
+                f"ERROR: BossAITierRampMap entry {cls}, {tid} is not in "
+                f"BossAITierMap (ramp would never apply: tier check returns first).",
+                file=sys.stderr,
+            )
+            return 1
+        if entries[pair] not in NONZERO_TIERS:
+            print(
+                f"ERROR: BossAITierRampMap entry {cls}, {tid} maps to non-boss "
+                f"tier {entries[pair]} in BossAITierMap (ramp won't apply).",
+                file=sys.stderr,
+            )
+            return 1
+
     adaptive_leads = parse_pair_map(ai_tiers_text, "AdaptiveLeadMap")
     missing_adaptive = sorted(ADAPTIVE_LEAD_TARGETS - adaptive_leads)
     extra_adaptive = sorted(adaptive_leads - ADAPTIVE_LEAD_TARGETS)
@@ -282,7 +368,6 @@ def main() -> int:
                 print(f"  - {trainer_class}, {trainer_id}", file=sys.stderr)
         return 1
 
-    boss_ai_text = BOSS_AI_FILE.read_text(encoding="utf-8")
     adaptive_match = re.search(
         r"\.ShouldUseAdaptiveLeadForTrainer:(?P<body>.*?)\.FindFirstAliveOTMon:",
         boss_ai_text,
@@ -346,6 +431,10 @@ def main() -> int:
         + ", ".join(f"{tier}={count}" for tier, count in by_tier.items())
     )
     print(f"Adaptive lead entries covered: {len(adaptive_leads)}")
+    print(
+        f"Tier ramp entries covered: {len(ramp_entries)} "
+        f"(BossAITierWeights rows: {num_weight_rows})"
+    )
     print("Mapped trainer class/id pairs:")
     for (trainer_class, trainer_id), tier in sorted(entries.items()):
         if (trainer_class, trainer_id) not in TARGETS:
