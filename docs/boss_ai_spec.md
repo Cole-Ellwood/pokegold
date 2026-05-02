@@ -19,335 +19,185 @@ AI wins by legal inference and good risk management, not hidden knowledge.
 
 ## Haki Exception Contract
 
-Haki is the only intentional exception to the no-cheat rule. It is pure
-cheating by design: one unfair, dramatic intervention per battle. The
-discipline is not making Haki fair; the discipline is quarantining it so the
-rest of Boss AI stays fair.
+Haki is the only intentional exception to the no-cheat rule. It is one
+unfair, dramatic intervention per battle, available to 19 named bosses. The
+discipline is not making Haki fair; the discipline is **quarantining** it so
+the rest of Boss AI stays public-information-only.
 
-Current source has no broad Haki implementation. If one is added later, it
-should be powerful but explicitly fenced:
+Hard rules:
 
-- One activation per battle, cleared by `ClearBossAIState` and traceable when
-  `BOSS_AI_TRACE` is enabled. A top-end flavor may define a short hidden
-  duration such as three turns, but that duration is part of the single Haki
-  activation and needs an explicit counter/state budget.
-- Player-invisible. No Haki text, animation, icon, aura, field marker, special
-  status, or other in-game tell. The player may see only an ordinary-looking
-  boss action or normal battle outcome.
-- Late-tier or deliberately authored major bosses only. Stronger bosses may get
-  wider, meaner, more unique Haki powers, because Haki is their ace.
-- May read current-turn player intent, selected move, hidden move details, hidden
-  switch target, hidden party/item facts, or other private player state while
-  spending the exception.
-- May control the current turn's random outcomes, such as crit, miss, damage
-  range, or secondary-effect rolls, if the flavor is explicitly an RNG Haki.
-  Prefer choosing among outcomes that could normally occur so the field still
-  looks ordinary.
-- May permanently learn a compact hidden fact if the flavor is explicitly a
-  permanent-info Haki. This must be byte-budgeted, traced, and stored as the
-  smallest useful derived fact, not as copied player party data by default.
-- May be overpowered and unfair. Do not weaken Haki toward normal fairness; keep
-  it scarce, authored, invisible, traced for developers, and quarantined.
-- Should be comically broken when it fires: an activation should guarantee a
-  positive boss momentum swing unless there is no invisible, ordinary-looking
-  way to cash the cheat.
-- Should fire at a dramatic hinge, not for routine score optimization.
-- Default forget rule: do not persist hidden knowledge after the Haki decision.
-  Permanent-info Haki is the named exception and must document the exact compact
-  fact, lifetime, and forget/reset rule.
-- Must not become generic global omniscience, invisible always-on AI, illegal
-  move/item execution, or a general bypass around normal battle rules. RNG
-  control, post-input choice, multi-turn power, and permanent info are allowed
-  only inside the authored Haki flavor that spent the activation.
-- Must leave trace evidence that the Haki flag was spent and which broad reason
-  caused the unfair intervention.
+- **One activation per battle.** Cleared by `ClearBossAIState`. Trace fields
+  under `BOSS_AI_TRACE` must record the fire.
+- **Player-invisible.** No text, animation, palette, aura, status, weather,
+  screen, or impossible visible outcome. The player only ever sees an
+  ordinary-looking move from the boss.
+- **Late-tier or major bosses only.** Falkner, Bugsy, and Whitney
+  intentionally have no Haki; their Boss AI must stay legal and
+  public-information-only so the early game teaches the rulebook before
+  loopholes appear.
+- **One trigger, one fire, one outcome.** No "fires on hinge A *or* hinge
+  B" tuning. New trainer = new entry; no shared smart helpers.
 
-Implementation caution: `BossAI_SelectMove` runs before player input. A Haki
-move-choice override would need a deliberate post-input override path with fresh
-trace and legality checks. A narrower first source route, if approved, is still
-`BossAI_SwitchOrTryItem` because that hook already runs after
-`ParsePlayerAction`. Outside the spent Haki branch, current-turn player intent
-and hidden player data remain forbidden.
+## The Single Haki Type: Oracle
 
-## Haki Fire Gate Design
+Every Haki leader uses the same Haki shape. On the first turn the leader's
+ace mon is active, the boss runs move scoring with the player's locked-in
+action as known input. The boss reads the player's selected move
+(post-`ParsePlayerAction`), scores the ace's moves with that information,
+picks the chosen move, sets the spent flag, and returns. Haki does not
+switch or use items.
 
-This is a design contract, not an implementation. Haki should not be a generic
-score boost or panic button. It should fire only when a public battle hinge
-becomes worth answering with one illegal lever.
+If the ace is never sent out (the player sweeps the rest of the team
+first), Haki goes unspent. This is correct — Haki is a specific moment,
+not a generic boost.
 
-Required shape:
+Per-leader identity (Morty's Destiny Bond moment, Karen's Pursuit punish,
+Lance's Hyper Beam pivot, etc.) lives in the **ace's moveset and Boss AI
+scoring**, not in bespoke Haki predicates. Authoring discipline: the ace's
+4 moves should already contain the right answers; Oracle just supplies the
+input read that lets normal scoring pick the right one.
 
-- Public hinge first: visible board state must already show a major tempo,
-  revenge, setup, ace-preservation, trap, or endgame crisis.
-- One illegal lever: the Haki flavor may use exactly the private read,
-  post-input choice, RNG control, temporary duration, or permanent-info scar it
-  is authored to use.
-- High decision delta: the private answer must change the action bucket, not
-  merely improve chip or routine HP conservation.
-- Guaranteed momentum: spending Haki should produce a clear positive swing for
-  the boss. If the cheat would only make the score a little nicer, save it.
-- Boss identity: the cheat should express that trainer's personality and team
-  plan, such as Morty seeing death, Lance preserving Dragons, Karen punishing
-  safe play, or Red silently denying the highest-swing line.
-- Cheapness veto: do not spend Haki on routine optimization, turn-1 dominance
-  unless explicitly authored, already-winning positions, already-hopeless delay,
-  or lines the normal Boss AI would already choose confidently.
-- Memory quarantine: default Haki facts die immediately. If a permanent-info or
-  multi-turn Haki keeps state, the state must be named, compact, reset by battle
-  cleanup, and forbidden to leak into ordinary public-inference memory.
+### Per-Leader Roster
 
-Trace should prove the Haki activation was spent, which flavor fired, which
-illegal lever was used, what public hinge justified it, what state or RNG scope
-it touched, and what response bucket it changed.
+Falkner, Bugsy, and Whitney are intentionally absent.
 
-### Haki Power Ladder And Invisibility
+| Leader | Ace | Ace level | Iconic move on ace |
+| --- | --- | --- | --- |
+| Morty | Gengar | 26 | Destiny Bond |
+| Chuck | Poliwrath | 34 | Focus Punch |
+| Jasmine | Steelix | 34 | Earthquake |
+| Pryce | Piloswine | 34 | Earthquake |
+| Clair | Dragonite | 39 | Outrage |
+| Will | Xatu | 43 | Future Sight |
+| Koga | Crobat | 44 | Hyper Beam |
+| Bruno | Machamp | 46 | Cross Chop |
+| Karen | Houndoom | 47 | Crunch |
+| Lance | Dragonite | 50 | Hyper Beam |
+| Brock | Golem | 60 | Earthquake |
+| Misty | Starmie | 63 | Hydro Pump |
+| Lt. Surge | Raichu | 65 | Cross Chop |
+| Erika | Victreebel | 64 | Sludge Bomb |
+| Janine | Venomoth | 64 | Sleep Powder |
+| Sabrina | Alakazam | 67 | Psychic |
+| Blaine | Magmar | 65 | Fire Blast |
+| Blue | Arcanine | 70 | Outrage |
+| Red | Pikachu | 81 | ExtremeSpeed |
 
-Haki is a hidden ace, not a visible form change. Its power should scale with the
-boss:
+Ace selection rule: **highest-level party member.** On tied highest level,
+the later party slot wins. This rule is explicit so the implementation can
+identify the ace deterministically without a per-leader marker.
 
-- Authored mid-boss Haki: one hidden bool or category read, such as lethal
-  current attack, committed switch, setup greed, or item dependence. It chooses
-  one ordinary-looking response.
-- Late gym / Elite Four Haki: one boss-flavored private packet, such as current
-  action plus hidden active item/move category, committed switch target, or one
-  scoped RNG outcome. It still spends once and normally discards the facts after
-  the response.
-- Lance / Blue-level Haki: one activation may be a full-turn board cheat, a
-  brief domain packet, a compact private-info scar, or a current-turn RNG
-  sovereignty packet. It may feel impossible, but it must still leave no
-  player-visible Haki tell and no accidental normal-memory leak.
-- Red-level Haki is the ceiling by a clear margin. `HAKI_RED_SILENT_CHECKMATE`
-  is allowed to last exactly three hidden turns under one activation and may
-  combine post-input choice, one compact scar, and one legal-looking Fate claim.
-  Other bosses scale downward from this; none should equal Red's full package.
+The "iconic move on ace" column is descriptive, not load-bearing — Oracle
+doesn't gate on a specific move. It documents the authored fantasy so
+future roster changes can preserve identity.
 
-Haki power classes:
+## Hook Site
 
-- `Oracle`: reads a hidden/current-turn fact and chooses after seeing it.
-- `Fate`: controls one turn's possible RNG outcomes.
-- `Scar`: permanently learns one compact hidden fact or role clue.
-- `Dominion`: lasts for a short authored window, such as three turns, under one
-  spent Haki activation.
-- `Refusal`: denies the player the obvious reward, such as refusing a sack, safe
-  revenge entry, or baited KO.
+One hook covers Oracle Haki entirely.
 
-For `Fate` Haki, prefer selecting from outcomes the battle system could have
-rolled naturally. A player can believe "bad luck"; they must not see a rule that
-cannot happen without Haki.
+**Haki dispatch** — top of `BossAI_SwitchOrTryItem`, after
+`ParsePlayerAction` has populated player intent and before normal
+KO-pressure early returns. The dispatch:
 
-Forbidden player-facing Haki tells:
+1. Returns immediately if `wHakiSpent != 0`.
+2. Returns immediately if the active boss mon is not the trainer's ace
+   (per the ace selection rule above).
+3. Returns immediately if this is not the ace's first turn active in the
+   battle.
+4. Reads the player's locked move via `wCurPlayerMove` (or equivalent
+   post-`ParsePlayerAction` slot).
+5. Calls Boss AI move scoring with the locked move available as known
+   input.
+6. Writes the chosen move via `wCurEnemyMove` / `wCurEnemyMoveNum`.
+7. Sets `wHakiSpent`, writes trace fields, returns nonzero with carry
+   clear.
 
-- Battle text that names or hints at Haki.
-- Unique animations, palettes, icons, weather, screens, stat auras, or special
-  field states caused only by Haki.
-- Impossible visible battle rules that prove the cheat happened.
-- Later behavior that proves an unbudgeted or exact hidden fact leaked into
-  normal AI memory.
+Implementation rules:
 
-Debug trace may expose Haki for developer proof. The ROM experience may not.
+- Inherit caller safety gates. Haki must not run in link/wild battles.
+- Never store the player's selected move, exact damage, hidden item,
+  hidden party facts, or other private facts outside explicit trace
+  fields.
+- The "first turn active" check needs a per-battle bit recording whether
+  the ace has been seen alive in a previous turn. Reuse existing
+  active-mon tracking if available; otherwise add 1 byte.
 
-### Developer-Only Haki Flavor Records
+## Trace Contract
 
-Do not start by building a generic Haki engine. Before any source
-implementation, each Haki flavor needs a developer-only record:
+Under `BOSS_AI_TRACE`, every Haki fire writes one trace line:
 
-- Trainer gate: exact trainer class/id, tier, and optional active-mon gate.
-- Power class: micro read, action packet, domain packet, or final-boss packet.
-- Public hinge: the visible crisis that makes spending the ace dramatic.
-- Private read: the hidden/current-turn facts this flavor may read while
-  spending Haki.
-- Illegal lever class: `Oracle`, `Fate`, `Scar`, `Dominion`, `Refusal`, or a
-  named combination for final bosses.
-- Duration and state: one-turn default, short counter, or permanent compact fact
-  with exact WRAM/trace fields.
-- Legal response bucket: ordinary-looking move, switch, item, or refusal lines
-  the boss may choose.
-- RNG scope, if any: crit, miss, damage roll, secondary effect, or other
-  current-turn random outcome.
-- Player-visible tell veto: what would reveal Haki and is therefore banned.
-- Trace reason id: compact developer-only reason bucket.
-- Forget rule: which private facts must die immediately after the response.
+```
+haki_fired turn=N trainer=<class>:<id> ace=<species> chosen_move=<move>
+```
 
-Current design records cost no WRAM. A source patch may add persistent state
-only after checking `docs/generated/dev_index.md` and rerunning the memory
-budget audit. The current Boss AI reserve is 140 bytes; current measured use is
-100 / 40 bytes normal and 119 / 21 bytes with `BOSS_AI_TRACE`.
+This makes captured traces self-documenting. Future agents reading
+`audit/boss_ai_trace/*_live.txt` can see exactly which boss decision was
+input-aware vs public-information-only.
 
-Initial flavor roster, grounded in current trainer parties except where an entry
-explicitly marks a future move requirement. Early Johto leaders Falkner, Bugsy,
-and Whitney intentionally do not have Haki; their Boss AI should stay legal and
-public-information-only.
+## Runtime State Cost
 
-- Morty, `HAKI_MORTY_DEAD_MANS_HAND`: lethal-into-Ghost read; response bucket is
-  legal Destiny Bond or the nastiest normal death-tax line. No text or palette
-  cue.
-- Chuck, `HAKI_CHUCK_FOCUS_PUNCH_READ`: solely a Focus Punch prediction Haki.
-  It may read whether the committed player action will interrupt Focus Punch or
-  gives Chuck a switch, item, heal, status, or setup window. The only Haki
-  response bucket is legal Focus Punch; it must not improve Mach Punch,
-  DynamicPunch, Hypnosis, Roar, Focus Band trades, or generic revenge play.
-  Source note: Focus Punch now uses the former Kinesis slot, and Chuck carries
-  it on Sudowoodo, Hitmontop, Hitmonlee, and Poliwrath only.
-- Jasmine, `HAKI_JASMINE_LOCKED_DOOR`: current pressure packet for contact,
-  super-effective hit, setup, or spin/removal line; response bucket is Protect,
-  Explosion, Roar, Whirlwind, Thunder Wave, or a resist pivot.
-- Pryce, `HAKI_PRYCE_COLD_COUNT`: escape-turn read for heal, setup, switch, or
-  safe attack; response bucket is Encore, Roar, Explosion, Thunder Wave, Rest,
-  or coverage that freezes the escape route shut.
-- Clair, `HAKI_CLAIR_ROYAL_BLOOD`: anti-Dragon packet for Ice/Dragon/Rock
-  pressure, hesitation, or resist pivot; response bucket is preserve Dragon,
-  Agility, Thunder Wave, Outrage, or phazing.
-- Rival, `HAKI_RIVAL_SPITE_LEDGER`: vendetta packet for the player's best answer
-  to his starter/core; response bucket is Pursuit, Destiny Bond, Alakazam
-  coverage, Crobat pressure, or starter setup/coverage.
-- Will, `HAKI_WILL_FALSE_FUTURE`: action packet for attack, switch, item,
-  setup, or status; response bucket is Reflect, Confuse Ray, Future Sight,
-  coverage, Protect/Toxic/Explosion support, or Houndoom Pursuit/Sunny Day.
-- Bruno, `HAKI_BRUNO_RING_GENERAL`: trade-shape packet for KO, wall pivot,
-  resist pivot, or revenge threat; response bucket is Mach Punch, Rock Slide,
-  Meditate, Cross Chop, Reversal posture, Pursuit, or an intentional sack.
-- Koga, `HAKI_KOGA_POISON_PATENT`: hidden cleanse/item/status-plan packet;
-  response bucket is Toxic only when it sticks, Spider Web trapping, Haze,
-  Curse/Rest, Umbreon pursuit or confusion, Nidoking coverage, or Crobat Hyper
-  Beam.
-- Janine, `HAKI_JANINE_HEIRLOOM_VENOM`: inherited poison Haki tuned for her
-  faster late-game roster; response bucket is Toxic only when it sticks, Spikes,
-  Haze, Curse/Rest, Sleep Powder, Explosion, or Nidoking/Weezing/Venomoth
-  coverage.
-- Karen, `HAKI_KAREN_BAD_FAITH`: safest-line read for switch, heal, setup,
-  status, or kill; response bucket is Pursuit, Destiny Bond, Roar, Sunny Day,
-  Toxic/confusion, or Houndoom/Tyranitar punishment.
-- Lance, `HAKI_LANCE_DRAGON_KINGS_PRIVILEGE`: anti-Dragon kill/neuter packet
-  plus wincon-preservation read; response bucket is preserve Dragonite/Gyarados,
-  accept a trade, Dragon Dance, Outrage, Rain Dance, Hyper Beam, or phazing.
-- Brock, `HAKI_BROCK_FOSSIL_LOCK`: Water/Grass/Fighting setup or removal packet;
-  response bucket is Protect, Recover, Curse, Explosion, Swords Dance, Roar, or
-  Aerodactyl pressure.
-- Misty, `HAKI_MISTY_TIDE_CLAIM`: Electric/Grass revenge, water-resist pivot,
-  or heal/setup read; response bucket is Rain Dance, Hypnosis, Thunder Wave,
-  Rest, Rapid Spin, or coverage.
-- Lt. Surge, `HAKI_SURGE_CIRCUIT_BREAKER`: Ground answer, heal, or setup packet;
-  response bucket is Air Balloon Magneton pressure, Light Screen, Thunder Wave,
-  Quick Attack, coverage, or Explosion.
-- Erika, `HAKI_ERIKA_GARDEN_TRAP`: Fire/Flying/Ice pressure, status immunity,
-  or setup greed read; response bucket is Sleep Powder, Leech Seed, Encore,
-  Sunny Day, Synthesis, Swords Dance, or Explosion.
-- Sabrina, `HAKI_SABRINA_FUTURE_COURT`: physical/special/status/switch packet;
-  response bucket is screens, Encore, Lovely Kiss, Perish Song, Baton Pass,
-  Morning Sun, or Choice Specs coverage.
-- Blaine, `HAKI_BLAINE_FLASHPOINT`: Water/Rock/Ground revenge or setup packet;
-  response bucket is Sunny Day, Safeguard, Confuse Ray, Quick Attack /
-  Extremespeed, Roar, or surprise coverage.
-- Blue, `HAKI_BLUE_CHAMPIONS_ANSWER`: six-role counter packet for committed
-  action plus switch target category; response bucket is the one team member
-  that turns the line, including Choice Band pressure, Porygon2 coverage,
-  Gyarados setup, Rhydon Roar, or Arcanine priority/Roar.
-- Red, `HAKI_RED_SILENT_CHECKMATE`: final-boss ceiling and strongest Haki by a
-  clear margin. One activation opens exactly three hidden turns. Across that
-  window Red may choose after seeing committed action categories, keep one
-  compact hidden role scar, and claim one legal-looking RNG outcome. The response
-  bucket is ordinary-looking move, switch, item denial, safe-entry denial,
-  preserve-ace line, or forced momentum conversion of the player's highest-swing
-  line. No speech, no marker, no mercy.
+The Haki feature adds one byte (or two if first-turn detection needs its
+own slot) to the existing Boss AI WRAM reserve:
 
-This roster is not permission to implement all flavors at once. Source should
-land one flavor at a time with trace proof, memory proof, and no player-visible
-tell.
+- `wHakiSpent` — 1 byte. Non-zero once per battle after Haki has fired.
+  Cleared by `ClearBossAIState`.
+- `wHakiAceFirstTurnSeen` — 1 byte (optional). Non-zero after the ace has
+  been the active mon for at least one turn. Used to enforce the
+  "first turn active" gate. May be omitted if existing active-mon turn
+  counters already cover this.
 
-### First Source Prototype Recommendation
+Under `BOSS_AI_TRACE`, one additional byte (`wHakiTraceMove`) records the
+chosen move for trace capture.
 
-Use Lance's `HAKI_LANCE_DRAGON_KINGS_PRIVILEGE` as the first source plumbing
-prototype unless the cycle is specifically proving post-input move overrides.
-Morty's `HAKI_MORTY_DEAD_MANS_HAND` is the stronger myth, but it asks the first
-implementation to solve move override legality, trace/chosen-move consistency,
-Destiny Bond timing, PP/disable gates, and lethal-read boundaries all at once.
+For exact addresses and current free-byte counts, see the Runtime State
+Budget section below.
 
-Lance's Haki fits the existing post-input switch/refusal surface better:
+## Implementation Order
 
-- Call only from `BossAI_SwitchOrTryItem` after player action is committed.
-- Gate to `CHAMPION, LANCE`, late tier, Haki unused, and a visible Dragon plan
-  hinge such as active Dragonite/Gyarados at meaningful risk.
-- Private read may ask whether the committed action is an anti-Dragon kill or
-  neuter line, and whether preserving the Dragon wincon beats taking the trade.
-- Response bucket is ordinary battle behavior: keep the current mon in, switch
-  to an already-alive legal teammate, accept a sack/trade, or raise/lower switch
-  confidence. No special text, animation, aura, or field state.
-- The private move/category and any reserve clue must not be written into normal
-  Boss AI memory. Trace may record only a compact Haki reason id and response
-  bucket.
+Land Haki one leader at a time, with trace proof, audit-script clean-up,
+and release-smoke verification between each:
 
-Do not implement this as a compiled all-boss Haki table. The first source patch
-should be one hand-authored flavor with one Haki-used flag, trace proof, memory
-budget proof, and no Battle Core hook.
+1. **Morty** (Gengar's first turn) — cleanest first prototype. Gengar's
+   moveset makes the input-read-then-rescore behavior visibly distinct:
+   with Haki, Gengar fires Destiny Bond on lethal incoming; without, it
+   picks a normal coverage move. Easy to confirm in trace.
+2. **Lance** (Dragonite's first turn) — second test. Champion-tier
+   trainer-class gating exercises the `CHAMPION:LANCE` constant pair
+   (different gating shape than gym leaders).
+3. **One mid-tier leader** (Misty or Surge suggested) — proves the
+   ace-detection logic works for trainers whose ace recently changed.
+4. Remaining 16 leaders may be added in any order once these three are
+   stable.
 
-### Mercy Refusal Candidate
+Do not implement this as a compiled all-leader Haki table on day one.
+Each leader needs trace proof, memory proof, no player-visible tell, and
+a release-smoke check, before the next one ships.
 
-`Mercy Refusal` is a high-value Haki fantasy, but not the first source patch.
-The boss reads that the player is offering bait, a doomed active mon, a sack
-line, or a nonthreatening correction, then refuses the obvious KO/switch and
-chooses setup, status, phazing, trap pressure, weather, hazards, or another
-ordinary-looking punish.
+## Post-Input Oracle Move Override Contract
 
-Useful split:
-
-- Fair public version: if the active player mon is visibly doomed and has no
-  public threat, normal Boss AI may value setup/status/phazing over a low-value
-  KO without using Haki.
-- Haki version: after player action is committed, the boss may spend Haki to
-  confirm the current line is bait, sack, heal/item, weak chip, setup, or switch
-  target bait, then choose the non-KO punish bucket.
-
-Current fair implementation:
-
-- `engine/battle/ai/boss.asm`, `.ApplyMercyRefusalBias`.
-- Late tier only.
-- Candidate must be non-damaging setup, live Spikes, or publicly valid status.
-- Player active must be visibly at quarter HP or lower.
-- Boss must not be under public pressure.
-- Boss must already have a KO-pressure move available.
-- The result is only a small score encouragement. It does not force the line,
-  read the player's input, or inspect hidden reserve data.
-
-Implementation caution: most Mercy Refusal variants are post-input move
-overrides. They need the same legality and trace discipline as Morty's move
-Haki: no `BossAI_SelectMove` peeking, no hidden fact persistence, no false trace
-chosen move, and no "the boss now knows this player move/item forever" leak.
-
-Prototype caution: Morty's "Dead Man's Hand" is a strong first Haki spec
-candidate but a delicate source patch. It is a move-choice Haki, so do not
-implement it by letting `BossAI_SelectMove` peek at player input or by hiding it
-as a normal score tweak. If approved, it needs a deliberately named post-input
-override path after `ParsePlayerAction` and before enemy move execution. That
-path may spend Haki, write a legal move such as `DESTINY_BOND` into
-`wCurEnemyMove` / `wCurEnemyMoveNum`, update trace honestly, then return without
-switching or using an item so normal `DoEnemyTurn` execution and battle-rule
-checks still apply.
-
-### Post-Input Haki Move Override Contract
-
-A move-choice Haki such as Morty's "Dead Man's Hand" must be implemented as an
-explicit post-input override, not as normal move scoring.
+The Oracle dispatch must follow the same legality discipline as any
+move-choice cheat.
 
 Allowed shape:
 
-- Call only from the post-input window, currently at the top of
-  `BossAI_SwitchOrTryItem` after `BossAI_SelectPlanIfNeeded` /
-  `BossAI_ComputePlayerPlausibleTypeMask` and before normal KO-pressure early
-  returns.
-- Inherit the caller's safety gates. The override must not run in link/wild
-  battles or while enemy lock, trapping, or wrap checks have already rejected
-  action changes.
+- Call only from the post-input window at the top of
+  `BossAI_SwitchOrTryItem`, after `BossAI_SelectPlanIfNeeded` /
+  `BossAI_ComputePlayerPlausibleTypeMask` and before normal KO-pressure
+  early returns.
+- Inherit the caller's safety gates. The override must not run in
+  link/wild battles or while enemy lock, trapping, or wrap checks have
+  already rejected action changes.
 - Return zero with carry clear for no Haki; return nonzero with carry clear
-  after writing a legal Haki move. Never return carry for a move override,
-  because carry means switch/item to battle flow.
+  after writing a chosen move. Never return carry, because carry means
+  switch/item to battle flow.
 - Gate on player action already being locked, such as
   `wBattlePlayerAction == BATTLEPLAYERACTION_USEMOVE`, and keep current-turn
   reads inside the spent Haki branch only.
-- For Destiny Bond-style Haki, require legal timing such as
+- For Destiny Bond-style Oracle plays, require legal timing such as
   `wEnemyGoesFirst != 0`; Haki may not make Destiny Bond retroactive.
-- On override, write `wCurEnemyMove` / `wCurEnemyMoveNum`, spend Haki before
-  returning, update trace chosen-move/Haki reason fields, and keep
-  chosen-move/repeat memory consistent with the actual move.
+- On override, write `wCurEnemyMove` / `wCurEnemyMoveNum`, set `wHakiSpent`
+  before returning, update trace fields, and keep chosen-move/repeat memory
+  consistent with the actual move.
 - Do not store the selected player move, exact damage, hidden item, hidden
   party facts, or other private facts anywhere outside explicit trace/Haki
   reason fields.
@@ -430,6 +280,15 @@ Current public trade traps:
   effect, and the existing public matchup pipeline. It must not inspect the
   player's current-turn choice, hidden moves/items, hidden reserves, RNG futures,
   or exact future damage rolls.
+- `engine/battle/ai/boss.asm`, `.ApplyMercyRefusalBias`.
+- Late tier only. The boss may slightly favor non-damaging setup, live Spikes,
+  or publicly valid status when the active player is visibly at quarter HP or
+  lower, the boss is not under public pressure, and the boss already has a
+  KO-pressure move available. Result is a small score encouragement only; it
+  does not force the line.
+- This is legal because it uses only public active HP bands and the boss's
+  own KO-pressure availability. It must not read the player's selected move,
+  hidden reserves, hidden items, or RNG futures.
 
 ## Decision Breadth And Play Budget
 
