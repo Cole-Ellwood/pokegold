@@ -477,10 +477,26 @@ BossAI_SetRevealedSpeciesMaskBit:
 	ld [hl], a
 	ret
 
+BossAI_ResetTurnCaches:
+; Clear the per-AI-tick memo caches consumed by the cached helpers
+; (HasAnyKOMove / PlayerHasPublicThreatVsEnemy / PlayerHasRevealedPriorityThreat
+; / PredictPlayerSwitch / GetPrimaryThreatType). Inputs to each are stable
+; within one tick; first call computes, the rest read from cache. Saves
+; ~50 type-chart walks per LATE-tier move-pick. Sentinel is $ff for all
+; five — the GetPrimaryThreatType wrapper distinguishes "no threat" via a
+; separate $20+ band since real type ids cap at $1b.
+	ld a, $ff
+	ld [wBossAIHasKOMoveCache], a
+	ld [wBossAIPublicThreatCache], a
+	ld [wBossAIRevealedPriorityCache], a
+	ld [wBossAIPrimaryThreatCache], a
+	ret
+
 BossAI_ApplyMoveModel:
 	ld a, [wBossAITier]
 	and a
 	ret z
+	call BossAI_ResetTurnCaches
 	call BossAI_SelectPlanIfNeeded
 	call BossAI_ComputePlayerPlausibleTypeMask
 
@@ -563,7 +579,7 @@ BossAI_ApplyMoveModel:
 	call .EncourageByTierWeight
 
 .skip_tempo
-	call .IsSetupMove
+	call BossAI_IsCurrentEnemySetupMove
 	jr nc, .skip_setup
 	call .EnemyUnderPressure
 	jr c, .unsafe_setup
@@ -604,7 +620,7 @@ BossAI_ApplyMoveModel:
 	call .ApplyBatonPassBias
 	call .ApplyRevealedAntiSetupAvoidance
 	call .ApplyRampMoveBias
-	call .ApplyLegacyRoleBiasIfNeeded
+	call .ApplyRoleBias
 	call BossAI_ApplyPlanMoveBias
 	call .ApplyChargeMoveBias
 	call .ApplyPoisonContactRiskBias
@@ -1532,7 +1548,7 @@ BossAI_ApplyMoveModel:
 .MercyRefusalCandidate
 	call .UtilityMoveWouldFailPublicly
 	jr c, .mercy_no
-	call .IsSetupMove
+	call BossAI_IsCurrentEnemySetupMove
 	ret c
 	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
 	cp EFFECT_SPIKES
@@ -1728,7 +1744,7 @@ BossAI_ApplyMoveModel:
 	jp BossAI_DiscourageScoreHL
 
 .EncorePunishableCommitmentMove
-	call .IsSetupMove
+	call BossAI_IsCurrentEnemySetupMove
 	ret c
 	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
 	cp EFFECT_PROTECT
@@ -2069,9 +2085,6 @@ BossAI_ApplyMoveModel:
 	call .DiscourageByTierWeight
 	ret
 
-.ApplyLegacyRoleBiasIfNeeded
-	jr .ApplyRoleBias
-
 .ApplyRoleBias
 	ld a, [wTrainerClass]
 	cp FALKNER
@@ -2302,9 +2315,6 @@ BossAI_ApplyMoveModel:
 	and a
 	ret
 
-.IsSetupMove
-	jp BossAI_IsCurrentEnemySetupMove
-
 BossAI_EnemyIsGhostType:
 	ld a, [wEnemyMonType1]
 	cp GHOST
@@ -2333,7 +2343,7 @@ ENDC
 	call BossAI_ApplyLookaheadToTopMoveCandidates
 
 IF DEF(BOSS_AI_TRACE)
-	call BossAI_TraceTopMoves
+	farcall BossAI_TraceTopMoves
 ENDC
 
 	ld hl, wEnemyAIMoveScores
@@ -2514,6 +2524,7 @@ BossAI_SwitchOrTryItem:
 	ld a, [wBossAITier]
 	and a
 	ret z
+	call BossAI_ResetTurnCaches
 	call BossAI_SelectPlanIfNeeded
 	call BossAI_ComputePlayerPlausibleTypeMask
 
@@ -2679,6 +2690,22 @@ BossAI_FindFirstAliveSwitchCandidate:
 	ret
 
 BossAI_PlayerHasPublicThreatVsEnemy:
+	ld a, [wBossAIPublicThreatCache]
+	inc a
+	jr z, .miss
+	dec a
+	rrca
+	ret
+.miss
+	call BossAI_PlayerHasPublicThreatVsEnemyUncached
+	push af
+	sbc a, a
+	and 1
+	ld [wBossAIPublicThreatCache], a
+	pop af
+	ret
+
+BossAI_PlayerHasPublicThreatVsEnemyUncached:
 	call BossAI_HasRevealedSuperEffectiveMove
 	jr c, .yes
 
@@ -2752,6 +2779,22 @@ BossAI_PlayerHasPublicThreatVsEnemy:
 	jr .no
 
 BossAI_PlayerHasRevealedPriorityThreat:
+	ld a, [wBossAIRevealedPriorityCache]
+	inc a
+	jr z, .miss
+	dec a
+	rrca
+	ret
+.miss
+	call BossAI_PlayerHasRevealedPriorityThreatUncached
+	push af
+	sbc a, a
+	and 1
+	ld [wBossAIRevealedPriorityCache], a
+	pop af
+	ret
+
+BossAI_PlayerHasRevealedPriorityThreatUncached:
 	ld hl, wPlayerUsedMoves
 	ld c, NUM_MOVES
 .loop
@@ -3910,6 +3953,10 @@ BossAI_ComputeSwitchConfidence:
 	ret
 
 BossAI_PredictPlayerSwitch:
+; Not separately memoized: its two heavy internal calls
+; (PlayerHasPublicThreatVsEnemy, HasRevealedSuperEffectiveMove via the cached
+; public threat helper) hit the per-tick cache, so this routine's per-call
+; cost is already collapsed.
 	ld a, 10
 	ld [wBossAITemp], a
 
@@ -4055,6 +4102,22 @@ BossAI_TestRevealedSpeciesMaskBit:
 	ret
 
 BossAI_HasAnyKOMove:
+	ld a, [wBossAIHasKOMoveCache]
+	inc a
+	jr z, .miss
+	dec a
+	rrca
+	ret
+.miss
+	call BossAI_HasAnyKOMoveUncached
+	push af
+	sbc a, a
+	and 1
+	ld [wBossAIHasKOMoveCache], a
+	pop af
+	ret
+
+BossAI_HasAnyKOMoveUncached:
 	call BossAI_SaveEnemyMoveStruct
 	call BossAI_EnemyChoiceLockedMove
 	jr nc, .scan_all_moves
@@ -4534,6 +4597,165 @@ BossAI_IsCurrentEnemySetupMove:
 .curse
 	call BossAI_EnemyIsGhostType
 	jr c, .no
+	scf
+	ret
+
+.no
+	and a
+	ret
+
+BossAI_SetupBoostHasFurtherValue:
+; Returns carry if the targeted stat for the current setup move is below
+; MAX_STAT_LEVEL on the active enemy mon (i.e., further boosting is still
+; useful). Multi-stat boosts return carry if ANY of the relevant stats can
+; still rise. Weather (Rain Dance / Sunny Day) and Focus Energy always
+; return carry. Used to gate SETUP_SWEEP plan setup encouragement.
+	push hl
+	push bc
+	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
+
+	cp EFFECT_RAIN_DANCE
+	jp z, .yes
+	cp EFFECT_SUNNY_DAY
+	jp z, .yes
+	cp EFFECT_FOCUS_ENERGY
+	jp z, .yes
+	cp EFFECT_DRAGON_DANCE
+	jp z, .check_atk_or_spd
+	cp EFFECT_CALM_MIND
+	jp z, .check_satk_or_sdef
+	cp EFFECT_QUIVER_DANCE
+	jp z, .check_quiver_dance
+	cp EFFECT_CURSE
+	jp z, .check_curse
+
+; Speed boosts get a tighter rule than other stats. Speed is binary in effect
+; — once you outspeed the player by a safe margin, more Speed buys nothing —
+; and three stages (~2.5x) is enough to catch even very slow setup mons up
+; against very fast players. So cap encouragement at +3 stage and stop early
+; if we already outspeed.
+	cp EFFECT_SPEED_UP
+	jr z, .check_speed
+	cp EFFECT_SPEED_UP_2
+	jr z, .check_speed
+
+; Single-stat _UP_2 variants come first because their range is higher
+; than the _UP range and we want to catch them before the consecutive _UP
+; comparisons.
+	cp EFFECT_ATTACK_UP_2
+	jr c, .check_single_up
+	cp EFFECT_EVASION_UP_2 + 1
+	jr c, .single_up_2
+
+.check_single_up
+	cp EFFECT_ATTACK_UP
+	jr c, .no
+	cp EFFECT_EVASION_UP + 1
+	jr c, .single_up
+	jr .no
+
+.single_up
+	sub EFFECT_ATTACK_UP
+	jr .index_stat
+
+.single_up_2
+	sub EFFECT_ATTACK_UP_2
+
+.index_stat
+	ld c, a
+	ld b, 0
+	ld hl, wEnemyAtkLevel
+	add hl, bc
+	ld a, [hl]
+	cp MAX_STAT_LEVEL
+	jr c, .yes
+	jr .no
+
+.check_speed
+; Hard cap at +3 stage. Stat-level encoding is base 7, so +3 = 10.
+	ld a, [wEnemySpdLevel]
+	cp 10
+	jr nc, .no
+; If the enemy already outspeeds the active player mon, an Agility / Speed
+; boost flips no race. Stop encouraging.
+; AICompareSpeed lives in the AI Scoring section now (separate bank); cross
+; via farcall. Safe because the helper takes no hl input.
+	farcall AICompareSpeed
+	jr c, .no
+	jr .yes
+
+.check_atk_or_spd
+	ld a, [wEnemyAtkLevel]
+	cp MAX_STAT_LEVEL
+	jr c, .yes
+	ld a, [wEnemySpdLevel]
+	cp MAX_STAT_LEVEL
+	jr c, .yes
+	jr .no
+
+.check_satk_or_sdef
+	ld a, [wEnemySAtkLevel]
+	cp MAX_STAT_LEVEL
+	jr c, .yes
+	ld a, [wEnemySDefLevel]
+	cp MAX_STAT_LEVEL
+	jr c, .yes
+	jr .no
+
+.check_quiver_dance
+	ld a, [wEnemySAtkLevel]
+	cp MAX_STAT_LEVEL
+	jr c, .yes
+	ld a, [wEnemySDefLevel]
+	cp MAX_STAT_LEVEL
+	jr c, .yes
+	ld a, [wEnemySpdLevel]
+	cp MAX_STAT_LEVEL
+	jr c, .yes
+	jr .no
+
+.check_curse
+; Non-Ghost Curse boosts Atk and Def (and lowers Spd, which we ignore here
+; — we just want to know if the boost still has stat-cap headroom).
+	ld a, [wEnemyAtkLevel]
+	cp MAX_STAT_LEVEL
+	jr c, .yes
+	ld a, [wEnemyDefLevel]
+	cp MAX_STAT_LEVEL
+	jr c, .yes
+	jr .no
+
+.yes
+	pop bc
+	pop hl
+	scf
+	ret
+
+.no
+	pop bc
+	pop hl
+	and a
+	ret
+
+BossAI_SetupTurnIsAffordable:
+; Returns carry if spending another turn on setup is affordable based on
+; turns this mon has already spent on the field and current HP.
+;   turn 0:        always affordable (mon just entered, no damage yet)
+;   turn 1, full HP: affordable (player turn was wasted / trivial)
+;   turn 1, < full:  not affordable (took a real hit, attack instead)
+;   turn 2+:        never affordable (too many free turns spent setting up)
+; Applies uniformly to all setup effects, including Speed boosts: if you
+; haven't flipped the matchup in two turns, more setup just bleeds you out.
+	ld a, [wEnemyTurnsTaken]
+	and a
+	jr z, .yes
+	cp 2
+	jr nc, .no
+	call AICheckEnemyMaxHP
+	jr c, .yes
+	jr .no
+
+.yes
 	scf
 	ret
 
@@ -5434,6 +5656,27 @@ BossAI_EvaluateActionLookahead:
 	ld a, [wBossAIPlanId]
 	cp BOSS_PLAN_SETUP_SWEEP
 	jr nz, .check_scout
+; Stop encouraging more boosts once a KO is already available — extra setup
+; just wastes turns and burn/sandstorm chip while the player free-hits.
+	push bc
+	call BossAI_HasAnyKOMove
+	pop bc
+	jr c, .check_scout
+; Stop encouraging the move when the targeted stat is already at MAX_STAT_LEVEL.
+; Without this the AI loops Agility/Swords Dance to +6 and then keeps trying.
+	push bc
+	call BossAI_SetupBoostHasFurtherValue
+	pop bc
+	jr nc, .check_scout
+; Spamming setup past turn 0 means sitting in damage range while the player
+; free-hits. Showdown bot literature converges on "use a boosting move
+; *once*". Allow turn-0 setup unconditionally (no info yet, mon is fresh),
+; allow turn-1 setup only at full HP (player whiffed / switched / chipped
+; trivially), and refuse setup encouragement from turn 2 onward.
+	push bc
+	call BossAI_SetupTurnIsAffordable
+	pop bc
+	jr nc, .check_scout
 	ld a, b
 	add 3
 	ld b, a
@@ -5659,6 +5902,28 @@ BossAI_ClampSignedLookaheadDelta:
 	ret
 
 BossAI_GetPrimaryThreatType:
+; Cache encoding: $ff = uncomputed; $20+ = no threat; 0..$1f = found type id.
+; Real type ids cap at DARK ($1b), so $20 is a safe "no threat" sentinel.
+	ld a, [wBossAIPrimaryThreatCache]
+	cp $ff
+	jr z, .miss
+	cp $20
+	ret nc
+	scf
+	ret
+.miss
+	call BossAI_GetPrimaryThreatTypeUncached
+	jr c, .miss_yes
+	ld a, $20
+	ld [wBossAIPrimaryThreatCache], a
+	xor a
+	ret
+.miss_yes
+	ld [wBossAIPrimaryThreatCache], a
+	scf
+	ret
+
+BossAI_GetPrimaryThreatTypeUncached:
 	ld d, 0
 	ld e, 0
 	ld hl, wPlayerUsedMoves
@@ -6605,90 +6870,9 @@ BossAIHiddenPowerThreatTypes:
 	db ELECTRIC
 	db -1
 
-IF DEF(BOSS_AI_TRACE)
-BossAI_TraceTopMoves:
-	ld a, [wBossAITier]
-	and a
-	ret z
-
-	ld hl, wBossAITraceTopMoves
-	xor a
-	ld [hli], a
-	ld [hli], a
-	ld [hl], a
-	ld hl, wBossAITraceTopScores
-	ld a, $ff
-	ld [hli], a
-	ld [hli], a
-	ld [hl], a
-
-	ld hl, wEnemyAIMoveScores
-	ld de, wEnemyMonMoves
-	ld c, NUM_MOVES
-.loop
-	ld a, [de]
-	and a
-	ret z
-	ld b, a ; move id
-	ld a, [hl]
-	cp 80
-	jr nc, .next
-	push de
-	call .InsertCandidate
-	pop de
-.next
-	inc hl
-	inc de
-	dec c
-	jr nz, .loop
-	ret
-
-.InsertCandidate
-	ld d, a ; candidate score
-	ld a, [wBossAITraceTopScores]
-	cp d
-	jr c, .check_second
-	jr z, .check_second
-	ld a, [wBossAITraceTopScores + 1]
-	ld [wBossAITraceTopScores + 2], a
-	ld a, [wBossAITraceTopMoves + 1]
-	ld [wBossAITraceTopMoves + 2], a
-	ld a, [wBossAITraceTopScores]
-	ld [wBossAITraceTopScores + 1], a
-	ld a, [wBossAITraceTopMoves]
-	ld [wBossAITraceTopMoves + 1], a
-	ld a, d
-	ld [wBossAITraceTopScores], a
-	ld a, b
-	ld [wBossAITraceTopMoves], a
-	ret
-
-.check_second
-	ld a, [wBossAITraceTopScores + 1]
-	cp d
-	jr c, .check_third
-	jr z, .check_third
-	ld a, [wBossAITraceTopScores + 1]
-	ld [wBossAITraceTopScores + 2], a
-	ld a, [wBossAITraceTopMoves + 1]
-	ld [wBossAITraceTopMoves + 2], a
-	ld a, d
-	ld [wBossAITraceTopScores + 1], a
-	ld a, b
-	ld [wBossAITraceTopMoves + 1], a
-	ret
-
-.check_third
-	ld a, [wBossAITraceTopScores + 2]
-	cp d
-	ret c
-	ret z
-	ld a, d
-	ld [wBossAITraceTopScores + 2], a
-	ld a, b
-	ld [wBossAITraceTopMoves + 2], a
-	ret
-ENDC
+; BossAI_TraceTopMoves moved to engine/battle/ai/boss_trace_topmoves.asm
+; (own SECTION) so the trace build doesn't push the "Enemy Trainers" bank
+; over its 16 KB ceiling. Caller below uses farcall.
 
 BossAITierWeights:
 ; ko, denyko, tempo, setup, status, role, risk

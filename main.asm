@@ -168,9 +168,18 @@ INCLUDE "engine/battle/ditto_imposter.asm"
 SECTION "Enemy Trainers", ROMX
 
 INCLUDE "engine/battle/ai/items.asm"
-INCLUDE "engine/battle/ai/scoring.asm"
 INCLUDE "engine/battle/ai/boss.asm"
 INCLUDE "engine/battle/read_trainer_attributes.asm"
+
+
+SECTION "AI Scoring", ROMX
+
+INCLUDE "engine/battle/ai/scoring.asm"
+
+
+SECTION "Boss AI Trace", ROMX
+
+INCLUDE "engine/battle/ai/boss_trace_topmoves.asm"
 
 
 SECTION "Enemy Trainer Parties", ROMX

@@ -2565,6 +2565,15 @@ wBossAITemp4:: db
 wBossAITemp5:: db
 wBossAITierWeightRow:: db ; row index into BossAITierWeights; defaults to wBossAITier - 1, overridable per-trainer
 wBossAISpeciesUsedMoves:: ds PARTY_LENGTH * NUM_MOVES ; per-seen-species mirror of wPlayerUsedMoves; preserved across same-fight switches
+; Per-tick memo caches; cleared at the top of BossAI_ApplyMoveModel and
+; BossAI_SwitchOrTryItem via BossAI_ResetTurnCaches. Each helper checks its
+; cache byte and only recomputes on miss. Inputs to all five helpers are
+; stable within one AI tick (player HP / used moves / revealed mask / enemy
+; moves / choice lock all frozen across the ApplyMoveModel + SelectMove pair).
+wBossAIHasKOMoveCache:: db          ; $ff = uncomputed, 0 = no, 1 = yes
+wBossAIPublicThreatCache:: db       ; $ff = uncomputed, 0 = no, 1 = yes
+wBossAIRevealedPriorityCache:: db   ; $ff = uncomputed, 0 = no, 1 = yes
+wBossAIPrimaryThreatCache:: db      ; $ff = uncomputed, $20 = no threat, else type id
 IF DEF(BOSS_AI_TRACE)
 wBossAITraceTopMoves:: ds 3
 wBossAITraceTopScores:: ds 3

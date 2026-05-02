@@ -36,7 +36,7 @@ DEF SAVE_CHECK_VALUE_2 EQU 127
 ; this marker" and is accepted only by v1 to absorb existing dev/playtest saves
 ; on first deploy. v2+ must NOT keep the $FF accept path; only the current
 ; version and explicitly-migrated previous versions are valid.
-DEF SAVE_FORMAT_VERSION EQU 1
+DEF SAVE_FORMAT_VERSION EQU 2
 
 ; RTC halted check value
 DEF RTC_HALT_VALUE EQU $1234

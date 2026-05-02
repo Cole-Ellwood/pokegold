@@ -10,6 +10,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 BOSS = ROOT / "engine" / "battle" / "ai" / "boss.asm"
+BOSS_TRACE_TOPMOVES = ROOT / "engine" / "battle" / "ai" / "boss_trace_topmoves.asm"
 ITEMS = ROOT / "engine" / "battle" / "ai" / "items.asm"
 SWITCH = ROOT / "engine" / "battle" / "ai" / "switch.asm"
 WRAM = ROOT / "ram" / "wram.asm"
@@ -285,7 +286,9 @@ def audit_revealed_coverage(boss: str, wram: str) -> None:
 
 
 def audit_public_threat_keeps_species_fallback(boss: str) -> None:
-    public_threat = top_block(boss, "BossAI_PlayerHasPublicThreatVsEnemy")
+    # The public symbol is now a thin per-tick cache wrapper; the real scan logic
+    # lives in the *Uncached helper. Behavior asserted here is unchanged.
+    public_threat = top_block(boss, "BossAI_PlayerHasPublicThreatVsEnemyUncached")
     require_order(
         public_threat,
         [
@@ -429,7 +432,8 @@ def audit_revenge_denial_uses_public_seen_species(boss: str) -> None:
 
 
 def audit_revealed_priority_pressure(boss: str) -> None:
-    helper = top_block(boss, "BossAI_PlayerHasRevealedPriorityThreat")
+    # Cache wrapper is at the public symbol; scan logic lives in the *Uncached.
+    helper = top_block(boss, "BossAI_PlayerHasRevealedPriorityThreatUncached")
     require_order(
         helper,
         [
@@ -697,7 +701,7 @@ def audit_last_move_encore_trap_bias(boss: str) -> None:
     require_order(
         encore_commitment,
         [
-            "call .IsSetupMove",
+            "call BossAI_IsCurrentEnemySetupMove",
             "ret c",
             "cp EFFECT_PROTECT",
             "cp EFFECT_SUBSTITUTE",
@@ -1676,7 +1680,7 @@ def audit_item_and_passive_reasoning(boss: str) -> None:
     mercy_candidate = local_block(move_model, ".MercyRefusalCandidate", ".ApplyChoiceFirstLockRegret")
     for needle in (
         "call .UtilityMoveWouldFailPublicly",
-        "call .IsSetupMove",
+        "call BossAI_IsCurrentEnemySetupMove",
         "EFFECT_SPIKES",
         "SCREENS_SPIKES_MASK",
         "BossAIStatusEffects",
@@ -1757,7 +1761,10 @@ def audit_baton_pass_requires_living_bench(boss: str) -> None:
 
 
 def audit_trace_top_moves_preserves_pointer(boss: str) -> None:
-    trace = top_block(boss, "BossAI_TraceTopMoves")
+    # BossAI_TraceTopMoves was lifted to its own SECTION/file so the bank can
+    # hold the per-tick cache wrappers; read its source file directly.
+    trace_source = BOSS_TRACE_TOPMOVES.read_text(encoding="utf-8")
+    trace = top_block(trace_source, "BossAI_TraceTopMoves")
     require_order(
         trace,
         [

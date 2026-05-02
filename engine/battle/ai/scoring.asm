@@ -2670,7 +2670,7 @@ AI_Smart_Thunder:
 	inc [hl]
 	ret
 
-AICompareSpeed:
+AICompareSpeed::
 ; Return carry if enemy is faster than player.
 
 	push bc
