@@ -53,7 +53,7 @@ Moves:
 	move THRASH,       EFFECT_RAMPAGE,           120, NORMAL,       100, 20,   0
 	move DOUBLE_EDGE,  EFFECT_RECOIL_HIT,        130, NORMAL,       100, 15,   0
 	move TAIL_WHIP,    EFFECT_DEFENSE_DOWN,        0, NORMAL,       100, 30,   0
-	move POISON_STING, EFFECT_POISON_HIT,         30, POISON,       100, 35,  30
+	move POISON_STING, EFFECT_POISON_HIT,         40, POISON,       100, 35,  30
 	move TWINEEDLE,    EFFECT_POISON_MULTI_HIT,   45, BUG,          100, 20,  20
 	move PIN_MISSILE,  EFFECT_MULTI_HIT,          25, BUG,          100, 20,   0
 	move LEER,         EFFECT_DEFENSE_DOWN,        0, NORMAL,       100, 30,   0
