@@ -485,8 +485,19 @@ TypePassive_GetCurrentMoveType_Far:
 	ret
 
 TypePassive_GetEffectiveMoveCategory_Far::
+; Returns a TYPE constant in `a`. Callers compare against `SPECIAL` to derive
+; the move's effective category: physical types are < SPECIAL (19) and special
+; types are >= SPECIAL. The type-constant ordering in `constants/type_constants.asm`
+; is therefore load-bearing — reordering or renumbering types will silently
+; misclassify every move that flows through this function. Callers using this
+; convention: boss.asm, effect_commands.asm, late_gen_held_items.asm, and
+; the bug-defender / water-defender passive checks in this file.
+;
 ; Dragon-only exception: Outrage is physical if the user's current Attack
-; is greater than its current Special Attack. Ties remain special.
+; is greater than its current Special Attack. Ties remain special. The swap
+; is implemented by returning NORMAL (a physical-tier type constant) instead
+; of the actual move type when the condition fires; callers only read the
+; physical-vs-special bucket, never the type identity, so this is safe.
 	push hl
 	push de
 	push bc
@@ -1117,6 +1128,8 @@ TypePassive_TryMindShield_Far:
 
 TypePassive_MaybePoisonRetaliation_Far:
 ; Poison passive: on contact damaging hit, defender may poison attacker.
+; Skip if the defender is behind a Substitute — the Sub absorbed the
+; contact, the attacker never touched the Pokemon's poison.
 	ld hl, wCurDamage
 	ld a, [hli]
 	or [hl]
@@ -1124,6 +1137,11 @@ TypePassive_MaybePoisonRetaliation_Far:
 
 	call TypePassive_IsCurrentMoveContact_Far
 	ret nc
+
+	ld a, BATTLE_VARS_SUBSTATUS4_OPP
+	farcall GetBattleVar
+	bit SUBSTATUS_SUBSTITUTE, a
+	ret nz
 
 	call TypePassive_IsCurrentMoveStatus_Far
 	ret z
@@ -1274,7 +1292,7 @@ GetFailureResultText_Far:
 	and EFFECTIVENESS_MASK
 	jr z, .got_text
 	ld a, BATTLE_VARS_MOVE_EFFECT
-	farcall GetBattleVar
+	call GetBattleVar
 	cp EFFECT_FUTURE_SIGHT
 	ld hl, ButItFailedText
 	ld de, ItFailedText
@@ -1286,12 +1304,12 @@ GetFailureResultText_Far:
 	jr nz, .got_text
 	ld hl, UnaffectedText
 .got_text
-	call FailText_CheckOpponentProtect_Far
+	call FailText_CheckOpponentProtect
 	xor a
 	ld [wCriticalHit], a
 
 	ld a, BATTLE_VARS_MOVE_EFFECT
-	farcall GetBattleVar
+	call GetBattleVar
 	cp EFFECT_JUMP_KICK
 	ret nz
 
@@ -1329,15 +1347,5 @@ endr
 .do_enemy
 	farcall DoEnemyDamage
 	ret
-
-FailText_CheckOpponentProtect_Far:
-	ld a, BATTLE_VARS_SUBSTATUS1_OPP
-	farcall GetBattleVar
-	bit SUBSTATUS_PROTECT, a
-	jr z, .not_protected
-	ld h, d
-	ld l, e
-.not_protected
-	jp StdBattleTextbox
 
 INCLUDE "data/moves/contact_flags.asm"

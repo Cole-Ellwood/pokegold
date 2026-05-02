@@ -317,12 +317,18 @@ HandleLateGenAfterHitEffects_Far:
 	jp StdBattleTextbox
 
 .MaybeApplyRockyHelmetRecoil:
+; Skip if the contact landed on the holder's Substitute — the Sub absorbed
+; the hit, the attacker never touched the Helmet.
 	callfar GetOpponentItem
 	ld a, b
 	cp HELD_ROCKY_HELMET
 	ret nz
 	call TypePassive_IsCurrentMoveContact_Far
 	ret nc
+	ld a, BATTLE_VARS_SUBSTATUS4_OPP
+	farcall GetBattleVar
+	bit SUBSTATUS_SUBSTITUTE, a
+	ret nz
 	ld a, ROCKY_HELMET_DEN
 	call .GetUserMaxHPDividedByA
 	ld a, b
