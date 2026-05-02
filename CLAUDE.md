@@ -31,6 +31,95 @@ If a generated file looks wrong, fix the source or generator and rebuild. Editin
 - `assert` lines in tables and macros catch bounds/length mismatches at link time. Don't delete them to make the build pass — fix the underlying mismatch.
 - `INCLUDE "..."` paths are case-sensitive. Big data tables here use *different* layouts — don't assume a single pattern: `BaseData` chains one `INCLUDE` per Pokemon (`data/pokemon/base_stats/<species>.asm`); `Moves` is one file of inline `move` macro calls (`data/moves/moves.asm`); `EvosAttacks` is one file of inline per-species labels with `db` rows (`data/pokemon/evos_attacks.asm`). Adding an entry usually requires touching the matching constant in `constants/`, the master table or its include set in `data/`, and any pointer table that indexes it.
 
+## Stat math (don't conflate base with computed)
+
+Battle uses the **computed** stat, not the base stat. Stat boost stages
+multiply the computed stat. Confusing the two has cost a debug session;
+write the formula down before doing back-of-envelope reasoning.
+
+- Computed (non-HP) stat = `floor((2 * base + IV + EV/4) * level / 100) + 5`.
+- Computed HP            = `floor((2 * base + IV + EV/4) * level / 100) + level + 10`.
+- IV range: 0..15. EV range: 0..65535 (per stat). DVs/STAT_EXPs are this hack's
+  in-game labels; the math is the same.
+
+Stat-stage multipliers (Gen 2; applied to the computed stat):
+
+  | Stage | Multiplier | Stage | Multiplier |
+  | ---:  | :---       | ---:  | :---       |
+  | +1    | 1.5×       | -1    | 0.66×      |
+  | +2    | 2.0×       | -2    | 0.5×       |
+  | +3    | 2.5×       | -3    | 0.4×       |
+  | +4    | 3.0×       | -4    | 0.33×      |
+  | +5    | 3.5×       | -5    | 0.28×      |
+  | +6    | 4.0×       | -6    | 0.25×      |
+
+The `wEnemySpdLevel` / `wEnemyAtkLevel` / etc. WRAM bytes use a base-7
+encoding: `BASE_STAT_LEVEL = 7 = +0`, so `+N` is `7 + N` and `-N` is `7 - N`.
+`MAX_STAT_LEVEL = 13 = +6`. **Don't read these as the multiplier directly.**
+
+### Trap: a low-base mon at +N is faster/stronger than a high-base mon at +0,
+### all else equal — the boost multiplies the +5 constant and the IV/EV
+### contribution too, not just `base * 2`.
+
+Worked example, level 50, max IV (15), 0 EVs:
+
+  - Base 50 at +0 Speed:   `(2*50  + 15) * 50/100 + 5 = 62`
+  - Base 50 at +2 Speed:   `62 * 2.0 = 124`
+  - Base 100 at +0 Speed: `(2*100 + 15) * 50/100 + 5 = 112`
+
+So the "50-base at +2 ≈ 100-base at +0" intuition is wrong by ~10–15 Speed
+at typical levels (the +5 constant doubles, and the IV+EV contribution
+doubles). The base-50-at-+2 mon is the FASTER one.
+
+### Speed-affecting moves in this hack
+
+  - `AGILITY` — `EFFECT_ATTACK_UP_2` family (the `_UP_2` suffix means
+    +2 stages, not +2 to multiplier). Single-stat: +2 Speed per use.
+  - `DRAGON_DANCE` — `EFFECT_DRAGON_DANCE`. Combo: +1 Atk, +1 Spe.
+  - `QUIVER_DANCE` — `EFFECT_QUIVER_DANCE`. Combo: +1 SpA, +1 SpD, +1 Spe.
+  - There is no +1-stage-only Speed move. Agility is the only Speed-only
+    boost; everything else that touches Speed also boosts another stat.
+  - This means a "no Agility" rule equivalently bans the only single-stat
+    +Speed move. Combo moves like Dragon Dance go through the non-Speed
+    setup-value path because the Atk side carries weight independently.
+
+### Rule-of-thumb design implications
+
+- A +1 stage (×1.5) on a fast mon (base 90+) usually doesn't change the
+  matchup — they already outspeed.
+- A +2 stage (×2.0) on a medium mon (base 60–89) usually flips the
+  matchup — they were losing the speed tier and now win it.
+- A +4 stage (×3.0) on a slow mon (base ≤ 59) is the threshold to flip
+  most matchups — single Agility (×2.0 from a low base) often still
+  isn't enough.
+
+### Boss AI Speed-cap rule (shipped 2026-05-02)
+
+`BossAI_SetupBoostHasFurtherValue .check_speed` enforces a base-Speed-tiered
+cap before encouraging Agility. The cap predicate is "stop boosting once
+`wEnemySpdLevel >= cap`," which allows a single move from below the cap
+even if it overshoots — same turn cost, more value, no perversity.
+
+  | Base Speed | Cap stage | Agilities allowed in practice |
+  | --- | --- | --- |
+  | ≥ 90    | +1 | 1 (first lands at +2, ≥ cap → blocks further) |
+  | 60 – 89 | +2 | 1 (first lands at +2, = cap) |
+  | ≤ 59    | +3 | 2 (first +2 < cap, second pushes to +4 which trips it) |
+
+Caps +1 and +2 produce the SAME in-game behavior with Agility-only movepool;
+the rule's effective discrimination is "≤59 base gets a second Agility, the
+rest get one." That's intentional — the design insight is "one ×2.0 boost
+is plenty for any mon; only genuinely slow mons need a second to flip the
+matchup." See `engine/battle/ai/boss.asm` `.check_speed`.
+
+If a +1-stage Speed-only move is ever added, the +1 vs +2 caps will start
+to differentiate (a +1 move lands at +1, equal to the fast-band cap → still
+1 use; medium band can take two +1 moves before hitting +2). The cap shape
+already tolerates this without a rewrite. Combo moves (Dragon Dance,
+Quiver Dance) bypass `.check_speed` and go through `.check_atk_or_spd` /
+`.check_quiver_dance` because their non-Speed components carry weight on
+their own.
+
 ## RAM rules
 - `ram/` is high-caution. WRAM and SRAM offsets are part of the save format; reordering or resizing fields will silently misalign old saves on load. The only integrity guards are the `SAVE_CHECK_VALUE_1`/`_2` magic bytes (`constants/misc_constants.asm:30-31`, validated in `engine/menus/save.asm`) — these detect "is this a save?" not "does this save match this build." There is no save-format version marker and no migration code anywhere in the repo. Treat this as a known gap worth addressing before first public release.
 - WRAMX is bank-switched. Boss AI state lives in WRAMX bank 1 with a fixed reserve budget — see `Boss AI WRAM Reserve` in `docs/generated/dev_index.md` before adding bytes there.

@@ -4649,10 +4649,10 @@ BossAI_SetupBoostHasFurtherValue:
 
 .check_single_up
 	cp EFFECT_ATTACK_UP
-	jr c, .no
+	jp c, .no
 	cp EFFECT_EVASION_UP + 1
 	jr c, .single_up
-	jr .no
+	jp .no
 
 .single_up
 	sub EFFECT_ATTACK_UP
@@ -4672,9 +4672,31 @@ BossAI_SetupBoostHasFurtherValue:
 	jr .no
 
 .check_speed
-; Hard cap at +3 stage. Stat-level encoding is base 7, so +3 = 10.
+; Tier the cap by base Speed. The only Speed-only boost in this hack is
+; AGILITY (+2 stages), so caps +1 and +2 both yield 1 Agility max in
+; practice; the differentiation is mostly slow vs. fast. See CLAUDE.md
+; "Stat math" gotcha for the multiplier table and reasoning.
+;   base >= 90  -> cap +1  (one Agility max)
+;   base 60..89 -> cap +2  (one Agility max)
+;   base <= 59  -> cap +3  (two Agilities max — first lands at +2 < cap,
+;                           second pushes to +4 which trips the cap)
+; Stat-level encoding is base 7 (BASE_STAT_LEVEL), so cap stage N
+; corresponds to byte BASE_STAT_LEVEL + N. wEnemyMonBaseStats is the
+; current enemy mon's base-stat snapshot loaded at send-out; offset 3
+; (STAT_SPD - 1) is base Speed.
+	push de
+	ld a, [wEnemyMonBaseStats + STAT_SPD - 1]
+	cp 90
+	ld d, BASE_STAT_LEVEL + 1
+	jr nc, .have_speed_cap
+	cp 60
+	ld d, BASE_STAT_LEVEL + 2
+	jr nc, .have_speed_cap
+	ld d, BASE_STAT_LEVEL + 3
+.have_speed_cap
 	ld a, [wEnemySpdLevel]
-	cp 10
+	cp d
+	pop de
 	jr nc, .no
 ; If the enemy already outspeeds the active player mon, an Agility / Speed
 ; boost flips no race. Stop encouraging.
