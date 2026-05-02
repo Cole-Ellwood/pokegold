@@ -1,154 +1,262 @@
-# Gotchas
+# CLAUDE.md
 
-Non-obvious traps in this repo. Project intent and source layout live in `docs/README.md`, `docs/project_map.md`, and `docs/agent_navigation/source_output_ownership.md` — read those for orientation, not this file.
+## What this project is
+
+Pokémon Gold/Silver ROM hack built on top of the pret/pokegold disassembly.
+`pokegold` = Gold ROM (primary), `pokesilver` = Silver. The user is the
+gameplay-design lead and the playtest seat; he does not code. All technical
+work — architecture, asm, banking, audits, git, releases — is delegated to
+you. He runs Claude from both CLI and the desktop app, so context portability
+matters; this file is the single source of truth that auto-loads.
+
+The hack's design themes (these scope what changes are in-scope):
+- **Boss AI overlay** for trainer fights — human-like decision-making, no
+  hidden-information cheating outside authored "Haki." Lives in
+  `engine/battle/ai/`, uses WRAMX bank 1 with a budget.
+- **Progression-based pacing** — EXP scaling and wild level spread are tied
+  to a single `GetProgressionLevelCap` (`engine/pokemon/experience.asm`).
+- **Late-gen mechanics** — Choice items, Assault Vest, 3-layer Spikes,
+  Ditto Imposter, type-passive damage mods. Lives in
+  `engine/battle/late_gen_held_items.asm`,
+  `engine/battle/type_passive_damage_mods.asm`.
+- **Rebalanced base stats / movesets / trainer rosters** — see
+  `docs/balance_intent.md`, `docs/buff_backlog.md`.
+
+Source orientation, not this file: `docs/README.md`, `docs/project_map.md`,
+`docs/agent_navigation/source_output_ownership.md`.
+
+## North Star: First-Playthrough Promise
+
+The hack exists to make Pokémon Gold feel unknown and dangerous again for a
+veteran player. **Not** generic hard mode. **Not** competitive Gen 2. **Not**
+modernization for its own sake. The deep goal is *restored uncertainty*.
+
+Test before approving any gameplay change: does it help a knowledgeable
+player feel discovery, danger, and respect for the world again? If it only
+makes the ROM harder, cleaner, faster, or more modern without serving that
+feeling, it is not automatically aligned.
+
+Concrete corollaries:
+- **Bosses win without cheating.** No hidden-info reads (unrevealed party,
+  unrevealed moves, private stats, current-turn input, RNG manipulation).
+  Public info only: seen species, revealed moves, public TM/level-up
+  learnability. Haki = explicitly authored once-per-battle exceptions only.
+- **Old tier-list knowledge should stop being complete.** Forgotten/strange
+  Pokémon should make the player hesitate and ask "could this actually
+  work?" Buffs give distinct roles, not flat stat bumps.
+- **QoL removes tedium, never decisions.** Never trivializes boss prep,
+  resource tension, or team-building stakes.
+- **Stay Gen 2 in texture.** If a modern behavior helps but damages feel,
+  adapt rather than copy.
+- **Difficulty comes from smarter opponents, better teams, meaningful
+  mechanics.** Not from forced grinding or cheap surprises.
+
+Full statement: `docs/project_context.md`. Balance corollary:
+`docs/balance_intent.md`. Roadmap of active workstreams:
+`docs/project_roadmap.md`.
 
 ## Build & verification
-- Build path on Windows is WSL with explicit Windows RGBDS `.exe` binaries — see `docs/build.md` for the exact `bash -lc '...'` invocation. Native Windows `make` is not on PATH here.
-- ROM identity is checked by SHA1 (`roms.sha1`, `tools/verify_sha1.py`, `make compare`). A green build is not proof of a correct ROM — only the SHA1 compare is.
-- For non-trivial changes, run the relevant scripts in `tools/audit/` before reporting work done. They are the verification floor, not optional.
+
+Native Windows `make` is not on PATH. Build through WSL with explicit
+Windows RGBDS `.exe` binaries:
+
+```bash
+wsl -e bash -lc 'cd "/mnt/c/Users/lolno/Downloads/pokemon gold hack" && make -j4 PYTHON=python3 RGBASM=rgbds-1.0.1/rgbasm.exe RGBLINK=rgbds-1.0.1/rgblink.exe RGBFIX=rgbds-1.0.1/rgbfix.exe RGBGFX=rgbds-1.0.1/rgbgfx.exe pokegold.gbc'
+```
+
+`PYTHON=python3` is required (WSL Ubuntu has no `python` symlink). A green
+build only proves "it links." ROM identity is verified by SHA1
+(`roms.sha1`, `tools/verify_sha1.py`, `make compare`).
+
+For non-trivial changes, run relevant scripts in `tools/audit/` before
+reporting work done. The verification floor, not optional. The most useful:
+- `check_release_smoke.py` — broad release sanity
+- `check_farcall_hl_clobber.py` — farcall hl-input check
+- `check_navigation_floor.py` — docs/dev_index integrity
+- `check_boss_ai_*.py` — boss AI invariants
+
+After **any** successful build that links, regenerate the dev index:
+```bash
+python scripts/generate_dev_index.py --rom pokegold
+```
+Audits read bank/free-space figures from `docs/generated/dev_index.md`. The
+cost of regenerating when not strictly required is one git diff line; the
+cost of skipping when required is an audit failure and a round trip.
+
+Balance/stats/evos/level-up/TM data changes: also regen
+`docs/generated/balance_audit.md` via `scripts/generate_balance_audit.py`.
 
 ## Never hand-edit these
+
 - `docs/generated/*.md` — regenerated from source.
 - `dist/` (`*.bps` patches, `checksums.txt`) — regenerated by build/release.
 - `*.gbc`, `*.map`, `*.sym`, `*.o` — linker/build outputs.
-- `pokegold.gbc.apr26-backup` and anything in `.local/` or `workspace/` — scratch.
+- `pokegold.gbc.apr26-backup`, anything in `.local/` or `workspace/` — scratch.
 
-If a generated file looks wrong, fix the source or generator and rebuild. Editing the artifact will be overwritten on the next regen.
+If a generated file looks wrong, fix the source or generator and rebuild.
 
-## After source changes
-- After **any** successful build that links, regenerate the dev index:
-  ```
-  python scripts/generate_dev_index.py --rom pokegold
-  ```
-  Don't try to predict when it's needed. Audits like `tools/audit/check_boss_ai_memory_budget.py` read bank/free-space figures out of `docs/generated/dev_index.md` (e.g. `| Enemy Trainers | ROMX | 0e:4000-7e06 | 15879 |`). Any added or removed assembled bytes change those figures, even when no new global symbol is exported. The cost of regenerating when not strictly required is one git diff line. The cost of skipping when required is an audit failure and a round trip.
-- Balance/stats/evos/level-up move/TM data changes: also regen `docs/generated/balance_audit.md` via `scripts/generate_balance_audit.py`.
+## Project layout quirks
 
-## RGBDS / asm pitfalls
-- `Label:` is local to its source file; `Label::` is exported and reachable from other banks. Never silently downgrade `::` to `:` — cross-bank references will fail to link.
-- ROM banks are `$4000` bytes (16 KiB). A routine or table that grows past its bank's free space is a link-time failure, not a runtime warning. Check `Tight Banks` and `Largest ROMX Free Ranges` in `docs/generated/dev_index.md` before adding bytes.
-- Cross-bank calls require `farcall` / `callfar` (or equivalent helpers). Plain `call` only reaches the current bank or ROM0 — calling a `::` label in another bank with `call` will assemble but jump to garbage.
-- `callfar` / `farcall` macros expand to `ld hl, \1; ld a, BANK(\1); rst FarCall` — they **destroy the caller's `hl`** before the target function runs. If the target reads `hl` as input, this is a bug. Three valid patterns: (1) `push hl; callfar X; pop hl` if hl just needs preserving across the call; (2) ROM0 thunk via `homecall` (which preserves hl) when X needs hl as in/out; (3) pass via `bc`/`de` and reconstruct inside (callfar preserves bc/de, only clobbers hl/a). This caused the April 2026 one-shot damage bug — `SpeciesItemBoost_Far` and `ApplyLateGenDamageStatsItemMods_Far` were called via `callfar` while `BattleCommand_DamageStats` expected hl to be the attack-stat pointer; the fix is the ROM0 thunks in `home/battle.asm`.
-- `assert` lines in tables and macros catch bounds/length mismatches at link time. Don't delete them to make the build pass — fix the underlying mismatch.
-- `INCLUDE "..."` paths are case-sensitive. Big data tables here use *different* layouts — don't assume a single pattern: `BaseData` chains one `INCLUDE` per Pokemon (`data/pokemon/base_stats/<species>.asm`); `Moves` is one file of inline `move` macro calls (`data/moves/moves.asm`); `EvosAttacks` is one file of inline per-species labels with `db` rows (`data/pokemon/evos_attacks.asm`). Adding an entry usually requires touching the matching constant in `constants/`, the master table or its include set in `data/`, and any pointer table that indexes it.
+- **Big data tables use different layouts.** `BaseData` chains one `INCLUDE`
+  per Pokémon (`data/pokemon/base_stats/<species>.asm`). `Moves` is one file
+  of inline `move` macro calls. `EvosAttacks` is one file of inline per-
+  species labels. Adding an entry usually requires touching: a constant in
+  `constants/`, the master table in `data/`, and any pointer table that
+  indexes it.
+- `INCLUDE "..."` paths are case-sensitive.
+- Trainer parties live in `data/trainers/parties.asm`, AI tiers in
+  `data/trainers/ai_tiers.asm`, attributes in `data/trainers/attributes.asm`.
+
+## RGBDS / asm gotchas
+
+- **`Label:` is local to its file; `Label::` is exported across banks.**
+  Never silently downgrade `::` to `:` — cross-bank refs fail to link.
+- **ROM banks are `$4000` bytes (16 KiB).** Growth past free space is a
+  link-time failure. Check `Tight Banks` in `docs/generated/dev_index.md`
+  before adding bytes.
+- **Cross-bank calls use `farcall` / `callfar`.** Plain `call` only reaches
+  the current bank or ROM0 — calling a `::` label in another bank with
+  `call` will assemble but jump to garbage.
+- **`farcall` clobbers caller's `hl` BEFORE the target runs.** The macro
+  expands to `ld hl, target; ld a, BANK(target); rst FarCall`. If target
+  reads hl as input, this is a bug. Three valid patterns: (1) push/pop hl
+  if hl just needs preserving; (2) ROM0 thunk via `homecall` (preserves
+  hl) when target needs hl as in/out; (3) pass hl via bc/de and reconstruct
+  inside. The April 2026 one-shot damage bug and May 2026 rival 1 softlock
+  both came from this. Audit: `tools/audit/check_farcall_hl_clobber.py`.
+- **`farcall` does NOT preserve target's `a` either.** After farcall,
+  caller's `a` = target's exit `c`, not target's `a` (see
+  `home/farcall.asm:13-28` — the trailing `ld a, [wFarCallBC + 1]; ld c, a;
+  ret` clobbers target's a). For a-return cross-bank functions: mirror the
+  value into `c` at every `ret` in the target (cheap: one `ld c, a` per
+  ret), OR return via HRAM, OR use a HOME thunk that stashes the result.
+  The May 2026 wild-level-floor no-op came from this — `farcall
+  GetProgressionLevelCap` was reading target_c instead of the cap. Not
+  audited; spot-check by reading target's exit `c`.
+- **`assert` lines in tables/macros catch bounds at link time.** Don't
+  delete them to make the build pass — fix the underlying mismatch.
 
 ## Stat math (don't conflate base with computed)
 
 Battle uses the **computed** stat, not the base stat. Stat boost stages
-multiply the computed stat. Confusing the two has cost a debug session;
-write the formula down before doing back-of-envelope reasoning.
+multiply the computed stat. Confusing the two has cost a debug session.
 
-- Computed (non-HP) stat = `floor((2 * base + IV + EV/4) * level / 100) + 5`.
-- Computed HP            = `floor((2 * base + IV + EV/4) * level / 100) + level + 10`.
-- IV range: 0..15. EV range: 0..65535 (per stat). DVs/STAT_EXPs are this hack's
-  in-game labels; the math is the same.
+- Computed (non-HP) = `floor((2*base + IV + EV/4) * level / 100) + 5`.
+- Computed HP        = `floor((2*base + IV + EV/4) * level / 100) + level + 10`.
+- IV range 0..15, EV range 0..65535 per stat.
 
-Stat-stage multipliers (Gen 2; applied to the computed stat):
+Stat-stage multipliers (Gen 2): +1=×1.5, +2=×2.0, +3=×2.5, +4=×3.0, +5=×3.5,
++6=×4.0; -1=×0.66, -2=×0.5, -3=×0.4, -4=×0.33, -5=×0.28, -6=×0.25.
 
-  | Stage | Multiplier | Stage | Multiplier |
-  | ---:  | :---       | ---:  | :---       |
-  | +1    | 1.5×       | -1    | 0.66×      |
-  | +2    | 2.0×       | -2    | 0.5×       |
-  | +3    | 2.5×       | -3    | 0.4×       |
-  | +4    | 3.0×       | -4    | 0.33×      |
-  | +5    | 3.5×       | -5    | 0.28×      |
-  | +6    | 4.0×       | -6    | 0.25×      |
+`wEnemySpdLevel` etc. uses base-7 encoding: `BASE_STAT_LEVEL = 7 = +0`,
+`MAX_STAT_LEVEL = 13 = +6`. **Don't read the byte as the multiplier.**
 
-The `wEnemySpdLevel` / `wEnemyAtkLevel` / etc. WRAM bytes use a base-7
-encoding: `BASE_STAT_LEVEL = 7 = +0`, so `+N` is `7 + N` and `-N` is `7 - N`.
-`MAX_STAT_LEVEL = 13 = +6`. **Don't read these as the multiplier directly.**
-
-### Trap: a low-base mon at +N is faster/stronger than a high-base mon at +0,
-### all else equal — the boost multiplies the +5 constant and the IV/EV
-### contribution too, not just `base * 2`.
-
-Worked example, level 50, max IV (15), 0 EVs:
-
-  - Base 50 at +0 Speed:   `(2*50  + 15) * 50/100 + 5 = 62`
-  - Base 50 at +2 Speed:   `62 * 2.0 = 124`
-  - Base 100 at +0 Speed: `(2*100 + 15) * 50/100 + 5 = 112`
-
-So the "50-base at +2 ≈ 100-base at +0" intuition is wrong by ~10–15 Speed
-at typical levels (the +5 constant doubles, and the IV+EV contribution
-doubles). The base-50-at-+2 mon is the FASTER one.
+**Trap**: a low-base mon at +N is faster/stronger than a high-base mon at
++0, because the boost multiplies the +5 constant and the IV/EV contribution
+too. Base 50 at +2 Speed beats base 100 at +0 Speed at level 50.
 
 ### Speed-affecting moves in this hack
-
-  - `AGILITY` — `EFFECT_ATTACK_UP_2` family (the `_UP_2` suffix means
-    +2 stages, not +2 to multiplier). Single-stat: +2 Speed per use.
-  - `DRAGON_DANCE` — `EFFECT_DRAGON_DANCE`. Combo: +1 Atk, +1 Spe.
-  - `QUIVER_DANCE` — `EFFECT_QUIVER_DANCE`. Combo: +1 SpA, +1 SpD, +1 Spe.
-  - There is no +1-stage-only Speed move. Agility is the only Speed-only
-    boost; everything else that touches Speed also boosts another stat.
-  - This means a "no Agility" rule equivalently bans the only single-stat
-    +Speed move. Combo moves like Dragon Dance go through the non-Speed
-    setup-value path because the Atk side carries weight independently.
-
-### Rule-of-thumb design implications
-
-- A +1 stage (×1.5) on a fast mon (base 90+) usually doesn't change the
-  matchup — they already outspeed.
-- A +2 stage (×2.0) on a medium mon (base 60–89) usually flips the
-  matchup — they were losing the speed tier and now win it.
-- A +4 stage (×3.0) on a slow mon (base ≤ 59) is the threshold to flip
-  most matchups — single Agility (×2.0 from a low base) often still
-  isn't enough.
+- `AGILITY` (+2 Spe) is the ONLY single-stat +Speed move.
+- `DRAGON_DANCE` = +1 Atk, +1 Spe. `QUIVER_DANCE` = +1 SpA, +1 SpD, +1 Spe.
+- A "no Agility" rule equivalently bans the only single-stat +Speed move.
+- Combo moves bypass `.check_speed` and route through `.check_atk_or_spd`
+  / `.check_quiver_dance` because their non-Speed components carry weight.
 
 ### Boss AI Speed-cap rule (shipped 2026-05-02)
+`BossAI_SetupBoostHasFurtherValue .check_speed`:
 
-`BossAI_SetupBoostHasFurtherValue .check_speed` enforces a base-Speed-tiered
-cap before encouraging Agility. The cap predicate is "stop boosting once
-`wEnemySpdLevel >= cap`," which allows a single move from below the cap
-even if it overshoots — same turn cost, more value, no perversity.
+| Base Speed | Cap stage | Agilities used in practice |
+| --- | --- | --- |
+| ≥ 90 | +1 | 1 |
+| 60–89 | +2 | 1 |
+| ≤ 59 | +3 | 2 |
 
-  | Base Speed | Cap stage | Agilities allowed in practice |
-  | --- | --- | --- |
-  | ≥ 90    | +1 | 1 (first lands at +2, ≥ cap → blocks further) |
-  | 60 – 89 | +2 | 1 (first lands at +2, = cap) |
-  | ≤ 59    | +3 | 2 (first +2 < cap, second pushes to +4 which trips it) |
-
-Caps +1 and +2 produce the SAME in-game behavior with Agility-only movepool;
-the rule's effective discrimination is "≤59 base gets a second Agility, the
-rest get one." That's intentional — the design insight is "one ×2.0 boost
-is plenty for any mon; only genuinely slow mons need a second to flip the
-matchup." See `engine/battle/ai/boss.asm` `.check_speed`.
-
-If a +1-stage Speed-only move is ever added, the +1 vs +2 caps will start
-to differentiate (a +1 move lands at +1, equal to the fast-band cap → still
-1 use; medium band can take two +1 moves before hitting +2). The cap shape
-already tolerates this without a rewrite. Combo moves (Dragon Dance,
-Quiver Dance) bypass `.check_speed` and go through `.check_atk_or_spd` /
-`.check_quiver_dance` because their non-Speed components carry weight on
-their own.
+The effective discrimination is "≤59 base gets a second Agility, the rest
+get one." See `engine/battle/ai/boss.asm` `.check_speed`.
 
 ## RAM rules
-- `ram/` is high-caution. WRAM and SRAM offsets are part of the save format; reordering or resizing fields will silently misalign old saves on load. The only integrity guards are the `SAVE_CHECK_VALUE_1`/`_2` magic bytes (`constants/misc_constants.asm:30-31`, validated in `engine/menus/save.asm`) — these detect "is this a save?" not "does this save match this build." There is no save-format version marker and no migration code anywhere in the repo. Treat this as a known gap worth addressing before first public release.
-- WRAMX is bank-switched. Boss AI state lives in WRAMX bank 1 with a fixed reserve budget — see `Boss AI WRAM Reserve` in `docs/generated/dev_index.md` before adding bytes there.
-- `hROMBank` (HRAM) shadows the current ROM bank. Bank-switch helpers maintain it; bypassing them desyncs the shadow and breaks subsequent `farcall`s.
+
+- `ram/` is high-caution. WRAM/SRAM offsets are part of the save format.
+  Reordering or resizing fields will silently misalign old saves. There's
+  a `SAVE_FORMAT_VERSION` marker but **no migration code anywhere**. Treat
+  save-format changes shipping to public release as a user-approval item.
+- WRAMX is bank-switched. Boss AI state lives in WRAMX bank 1 with a fixed
+  reserve budget — see `Boss AI WRAM Reserve` in `docs/generated/dev_index.md`
+  before adding bytes.
+- `hROMBank` (HRAM) shadows the current ROM bank. Bank-switch helpers
+  maintain it; bypassing them desyncs the shadow and breaks subsequent
+  `farcall`s.
+
+## In-progress / recently shipped
+
+- **Wild encounter level spread (shipped 2026-05-02, needs playtest).**
+  `engine/overworld/wildmons.asm` `RaiseWildLevelForProgression` rewritten:
+  spreads wild levels around a progression-driven center via biased random
+  offset, instead of the old hard floor. Variance ±3 if center < 16, else
+  ±5. Center is `cap-6` from `GetProgressionLevelCap` (or 65 post-Blue, with
+  Mt. Silver always ≥65). Pre-Rival 1 stage added — `GetProgressionLevelCap`
+  returns 9 when 0 badges AND `EVENT_GAVE_MYSTERY_EGG_TO_ELM` is clear.
+  Distribution tables `OffsetTable_3` and `OffsetTable_5` are the only knobs
+  if the curve needs sharpening or flattening. Playtest row:
+  `docs/manual_qa_backlog.md` line 75.
+- **EXP cap fix (shipped 2026-05-02, commit `1f5fd6af`).** Same register-
+  clobber shape as the wild-floor bug. Don't stash the level in `d` before
+  calling `GetProgressionLevelCap` — it does `ld de, EVENT_BEAT_BLUE`
+  internally.
 
 ## Workflow
 
-This repo runs on a senior-dev / CEO contract. The user has gameplay taste and the playtest seat; he does not code. All technical decisions, git, and release execution are delegated to you. The Codex prompt-drafting workflow is not used here — you are the sole executor.
+The repo runs on a senior-dev / CEO contract. The user has gameplay taste
+and the playtest seat; he does not code. All technical decisions, git, and
+release execution are delegated to you. The Codex prompt-drafting workflow
+is **not** used here — you are the sole executor.
 
 ### Authority
-- All technical decisions: architecture, file layout, audits, build steps, refactor scope, naming, asm/banking, doc edits, audit script changes.
-- Full git: commit, push, open PRs without confirmation when the work is ready.
-- Drive release passes: when audits are green, kick off `dist/*` regen, `roms.sha1` refresh, `validation_report.md` updates without waiting to be asked.
-- Reorganize working files (CLAUDE.md, docs structure, etc.) without asking.
+- All technical decisions: architecture, file layout, audits, build steps,
+  refactor scope, naming, asm/banking, doc edits, audit script changes.
+- Full git: commit, push, open PRs without confirmation when the work is
+  ready.
+- Drive release passes: when audits are green, kick off `dist/*` regen,
+  `roms.sha1` refresh, `validation_report.md` updates without asking.
+- Reorganize working files (CLAUDE.md, docs structure) without asking.
 
 ### What to escalate
-- **Gameplay taste decisions** — Pokemon stats, movesets, types, trainer rosters, level curves, encounter rates, item placement, dialogue, anything a player notices as design. Frame the ask as a taste call.
-- **Playtest tasks** — when human eyes on the ROM are needed, ask for a specific scenario ("can you fight Whitney with a level-18 Geodude and tell me if she still wipes you?").
-- **Save-format changes shipping to public release.** Repo has no save-format version marker; old saves break silently.
+- **Gameplay taste decisions** — Pokémon stats, movesets, types, trainer
+  rosters, level curves, encounter rates, item placement, dialogue. Frame
+  the ask as a taste call.
+- **Playtest tasks** — when human eyes on the ROM are needed, ask for a
+  specific scenario.
+- **Save-format changes shipping to public release.**
 - **Merging to master.** Release event for this hack.
-- **Truly destructive irreversible actions.** Force-push to master, `rm -rf` outside scratch, deleting branches with unmerged work.
+- **Truly destructive irreversible actions.** Force-push to master,
+  `rm -rf` outside scratch, deleting branches with unmerged work.
 
-Everything else: decide and execute. The test is "is this on the escalation list?" — not "is this structural?"
+Everything else: decide and execute. The test is "is this on the
+escalation list?" — not "is this structural?"
 
 ### Pushback protocol
-- **Soft pushback on gameplay taste.** State your view, defer to the user. His domain: fairness, feel, fun, role of a Pokemon, trainer difficulty.
-- **Hard pushback on technical correctness.** Refuse to ship broken builds, save-format breakage, known-broken code, security issues, demonstrably wrong technical decisions. The user explicitly does not want a yes-man on tech. When you're right, hold the line — explain once cleanly, and if he insists, do what he asked.
+- **Soft pushback on gameplay taste.** State your view, defer to the user.
+  His domain: fairness, feel, fun, role of a Pokémon, trainer difficulty.
+- **Hard pushback on technical correctness.** Refuse to ship broken builds,
+  save-format breakage, known-broken code, demonstrably wrong technical
+  decisions. The user explicitly does not want a yes-man on tech. When
+  you're right, hold the line — explain once cleanly, and if he insists,
+  do what he asked.
 
-Verify before acting (re-read what the change touches, consider edges, run the audit on risky changes). Verifying is checking the work, not asking permission — both racing past errors and bouncing back to confirm are failures.
+Verify before acting. Verifying is checking, not asking permission — both
+racing past errors and bouncing back to confirm are failures.
+
+## Honesty
+
+- If you don't know something, say "I don't know" or "I'd need to read X
+  to know." Don't guess and present as fact.
+- Don't claim a change worked without verifying. Verification = re-read
+  the edited file, run the relevant audit, or build. "I edited the file"
+  is not verification.
+- If you catch yourself writing a confident summary of something you
+  didn't actually check, stop and check it.
+- Don't hedge to seem humble. State technical conclusions plainly;
+  calibrated uncertainty is a stated position, not hedging.
 
 ## Session handoff
 
@@ -158,11 +266,7 @@ Recommend ending the session and starting fresh when:
 - The task has shifted from how the session started
 - A long task is complete and the next task is unrelated
 
-When you recommend a handoff, produce a paste-ready prompt covering current state, specific file paths the next session needs (not "the relevant files"), decisions not yet in committed code or CLAUDE.md, and anything to remember or avoid. Skip narrative recap of what was tried and discarded. Save to `.claude_handoffs/YYYY-MM-DD-HHMM-<slug>.md` (create the dir if missing; add `.claude_handoffs/` to `.gitignore` if needed) and print it in chat.
-
-## Honesty
-
-- If you don't know something about this codebase, say "I don't know" or "I'd need to read X to know." Do not guess and present the guess as fact.
-- Do not claim a change worked without verifying it. Verification means: re-read the edited file, run the relevant audit script, or build. "I edited the file" is not verification that the edit is correct.
-- If you catch yourself writing a confident summary of something you didn't actually check, stop and check it before sending.
-- Don't hedge to seem humble. State technical conclusions plainly; calibrated uncertainty ("I'm 60/40 on it") is a stated position, not hedging.
+Save handoff to `.claude_handoffs/YYYY-MM-DD-HHMM-<slug>.md` (create dir
++ add to `.gitignore` if needed). Cover current state, specific file
+paths, decisions not yet in committed code or CLAUDE.md, anything to
+remember/avoid. Skip narrative recap of what was tried and discarded.
