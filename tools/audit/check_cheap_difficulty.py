@@ -261,11 +261,15 @@ def check_johto_curve(targeted: dict[tuple[str, int], Entry], failures: list[str
 
     for index, (previous, current) in enumerate(zip(max_levels, max_levels[1:]), start=2):
         delta = current - previous
-        if delta > 6:
+        # Mid-Johto (Chuck/Jasmine/Pryce) shares a flat 34 cap because the three
+        # gyms are reachable in any order; the Morty->Chuck step is intentionally
+        # the segment's full ramp (26->34 = 8) so the EXP cap can plateau across
+        # the segment. Tighten back if the segment design changes.
+        if delta > 8:
             fail(failures, f"johto_gym_level_jump_too_large|badge_index={index}|{previous}->{current}|delta={delta}")
         if delta < -1:
             fail(failures, f"johto_gym_level_drop_too_large|badge_index={index}|{previous}->{current}|delta={delta}")
-    if max_levels and max_levels[0] > 12:
+    if max_levels and max_levels[0] > 14:
         fail(failures, f"falkner_peak_too_high|peak={max_levels[0]}")
     if max_levels and max_levels[-1] > 40:
         fail(failures, f"clair_peak_too_high|peak={max_levels[-1]}")

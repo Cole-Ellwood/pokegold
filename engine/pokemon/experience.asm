@@ -218,7 +218,7 @@ GetProgressionLevelCap::
 	ret
 
 .NextJohtoGymCaps:
-	db 11 ; before Falkner
+	db 14 ; before Falkner
 	db 17 ; before Bugsy
 	db 21 ; before Whitney
 	db 26 ; before Morty
@@ -234,12 +234,16 @@ ApplyProgressionExpScaling::
 ; - 0.1x EXP at or above the cap
 	push de
 	push hl
-	ld a, MON_LEVEL
-	call GetPartyParamLocation
-	ld d, [hl]
+; Load cap first; GetProgressionLevelCap clobbers d/e via internal `ld de, ...`,
+; so we must not stash the level in d before calling it.
 	call GetProgressionLevelCap
 	and a
 	jr z, .done
+	ld b, a
+	ld a, MON_LEVEL
+	call GetPartyParamLocation
+	ld d, [hl]
+	ld a, b
 	cp d
 	jr z, .above_cap
 	jr c, .above_cap
