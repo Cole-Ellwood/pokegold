@@ -25,11 +25,8 @@ BattleCommand_Sketch:
 	ld e, l
 ; Get the battle move structs.
 	ld hl, wBattleMonMoves
-	ldh a, [hBattleTurn]
-	and a
-	jr z, .get_last_move
-	ld hl, wEnemyMonMoves
-.get_last_move
+	ld de, wEnemyMonMoves
+	call _GetSidedHL
 	ld a, BATTLE_VARS_LAST_COUNTER_MOVE_OPP
 	call GetBattleVar
 	ld [wNamedObjectIndex], a

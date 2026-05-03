@@ -384,7 +384,87 @@ section.)
   4. **STATUS open count math.** Updated from "7 open + 2 partial" to "6 open + 3 partial" — TD-003 moved from open into partial.
 - **Verifier check:** From this branch tip, `python3 tools/audit/check_layout_orgs.py` should print `Layout pins OK: $12:$4000 -> Pic Pointers, ...` and exit 0. `cat docs/layout_pins.md | head -20` should show the doc title and the "Five pins" section. `grep -c "EXPECTED_PINS = (" tools/audit/check_layout_orgs.py` should return 1; the tuple should have exactly 5 entries. If layout.link is later modified to add/move/remove a pin, the audit should FAIL until both the audit's `EXPECTED_PINS` and `docs/layout_pins.md` are updated to match.
 
+## 2026-05-03 — TD-005 — claimed (Pattern 3)
 
+- **Agent / session:** Opus 4.7 (1M context) / claude-kind-swanson-ae5a65
+- **State:** claimed
+- **Branch / commit:** claude/kind-swanson-ae5a65 @ 350e6b20
+- **Files touched:** tech_debt/EVIDENCE/td_005_pattern3_sites.md, tools/audit/_td005_pattern3_enum.py (none yet for source)
+- **Summary:** Starting TD-005 Pattern 3 (`hBattleTurn` side-branch subroutine extraction). Enumeration done — strict pre-load shape has 27 sites (not 100+ as estimated in original FIX_PROPOSALS; the post-test branch-and-rejoin shape barely exists). 12 sites land in canary bank 0x0d (Effect Commands + move_effects/), 9 in 0x0e (Late Gen Held Items / Type Passive), 5 in 0x0f (Battle Core), 1 in non-tight bank. Plan: add 7-byte `_GetSidedHL` helper to `home/battle_vars.asm` (ROM0, 236 free), per-site savings 2 bytes, net +47 bytes recovered with 24 in canary 0x0d. Convert effect_commands.asm:1917 first as smoke-test for measurement; if predicted -2 bytes confirmed in `.map` diff, proceed to bulk-convert all 27 sites. Skipping `engine/pokemon/experience.asm` per prior partial entry (user WIP).
+- **Verification run:** N/A (claim only)
+- **Bytes recovered (if applicable):** TBD — projected +47 net (54 site savings - 7 helper)
+- **Bank impact (if applicable):** ROM0 (helper +7), bank 0x0d (-24), 0x0e (-18), 0x0f (-10), 0x3e_2 (-2)
+- **Issues / followups:** Below the FIX_PROPOSALS "Updated 2026-05-02" 100-byte stop-and-re-evaluate threshold (47 net, not 150-450 as scoped). Same call as Pattern 1 partial — bytes that land in tight bank 0x0d are the strategic win, not the headline number. Decision recorded here so future agents see the threshold was crossed deliberately.
+- **Verifier check:** Look for the matching `done:` / `partial:` / `blocked:` entry below.
+
+## 2026-05-03 — TD-005 — partial (Pattern 3 closed; Pattern 2 still open)
+
+- **Agent / session:** Opus 4.7 (1M context) / claude-kind-swanson-ae5a65
+- **State:** partial
+- **Branch / commit:** claude/kind-swanson-ae5a65 @ pending
+- **Files touched:** home/battle_vars.asm; engine/battle/effect_commands.asm; engine/battle/late_gen_held_items.asm; engine/battle/type_passive_damage_mods.asm; engine/battle/core.asm; engine/battle/hidden_power.asm; engine/battle/move_effects/{bide,conversion2,frustration,mimic,return,sketch}.asm; tech_debt/EVIDENCE/td_005_pattern3_sites.md (new); tools/audit/_td005_pattern3_enum.py (new); docs/generated/dev_index.md, docs/generated/balance_audit.md (regen); tech_debt/AGENT_LOG.md, tech_debt/STATUS.md.
+- **Summary:** Pattern 3 (`hBattleTurn` side-branch) closed via shared `_GetSidedHL` helper at the bottom of `home/battle_vars.asm` (ROM0, 7 bytes: `ldh a, [hBattleTurn] :: and a :: ret z :: ld h, d :: ld l, e :: ret`). Strict enumeration found 27 candidate sites (not 100+ as the original FIX_PROPOSALS estimated; the textbook post-test branch-and-rejoin shape barely exists in this codebase — the dominant shape is **pre-load + jr-z-skip**). 26 of 27 sites converted (player addr in `hl`, enemy addr in `de`, replace 6-line idiom with 3-line `ld hl :: ld de :: call _GetSidedHL`). 1 site deliberately skipped: `engine/battle/type_passive_damage_mods.asm:506` (the OUTRAGE branch in `TypePassive_GetCurrentMoveCategory_Far`) has a live `e` value set immediately before the side-branch (`ld e, a`) and read at `.done`; preserving `e` would require `push de`/`pop de` (+2 bytes) wiping the savings, so that site stays as inline branch. **45 bytes net recovered** (helper +7 in ROM0; 26 sites × −2 in ROMX = −52). The strategic value is the **+24 bytes free in canary bank 0x0d** (Effect Commands), which moves from 6 → 30 free per regenerated dev_index — well above the canary threshold. Pattern 1 closed in prior session; Pattern 2 (multiply/divide thunk) still gated on user WIP in `engine/pokemon/experience.asm`.
+- **Verification run:**
+  - `make pokegold.gbc` → PASS (links green)
+  - `make compare` → SKIPPED (deliberate ROM-byte change; not the floor for TD-005 per FIX_PROPOSALS Updated 2026-05-02)
+  - `python3 tools/audit/check_release_smoke.py` → PASS
+  - `python3 tools/audit/check_battle_math_safety.py` → PASS
+  - `python3 tools/audit/check_save_format_version.py` → PASS
+  - `python3 tools/audit/check_tech_debt_freshness.py` → PASS
+  - `python3 scripts/generate_dev_index.py --rom pokegold` → PASS, regenerated; tight-banks list updated (0x0d: 6 → 30 free)
+  - `python3 scripts/generate_balance_audit.py` → PASS, regenerated (was pre-existing-stale, addressed as courtesy — no balance changes in this session)
+  - `python3 tools/audit/check_navigation_floor.py` → 4 PRE-EXISTING FAILS (`docs/review_playbook.md` rgbds-1.0.1/*.exe and tools/stadium.exe path checks; same WSL/git path-translation environment issues called out in prior 2026-05-03 partial entries). All other docs-navigation checks PASS including the freshly-regen'd balance_audit.
+  - `python3 tools/audit/_td005_pattern3_enum.py` → `Total sites: 1` (the deliberately-skipped type_passive_damage_mods.asm:506)
+  - `.map` section size diffs (before → after):
+    - `Effect Commands` (bank 0x0d): $3ffa → $3fe2 = **−24 bytes** (12 sites)
+    - `Late Gen Held Items` (bank 0x0e, contains both late_gen_held_items + type_passive): $0d84 → $0d74 = **−16 bytes** (8 sites)
+    - `Battle Core` (bank 0x0f): $3bb7 → $3bad = **−10 bytes** (5 sites)
+    - `bank3E_2` (hidden_power): $0904 → $0902 = **−2 bytes** (1 site)
+    - ROM0: 16148 used → 16155 used = **+7 bytes** (helper)
+    - **Net: −45 bytes**
+- **Bytes recovered:** 45 bytes net (52 ROMX − 7 ROM0)
+- **Bank impact:**
+  - ROMX 0x0d: 6 free → **30 free** (+24, strategic canary relief — bank 0x0d remains in tight-banks list but at healthy headroom)
+  - ROMX 0x0e: 568 free → 584 free (+16)
+  - ROMX 0x0f: ~580 free → ~590 free (+10)
+  - ROMX 0x3e_2: not tight, +2 free
+  - ROM0: 236 free → 229 free (−7, helper added)
+- **Issues / followups:**
+  1. **Pattern 2 (multiply/divide thunk)** still open — gated on user WIP in `engine/pokemon/experience.asm` per the prior 2026-05-03 partial entry. Defer until user un-blocks or WIP lands.
+  2. **27th Pattern 3 site** (`type_passive_damage_mods.asm:506`) deliberately skipped due to live `e` register. The strict enumerator (`tools/audit/_td005_pattern3_enum.py`) reports `Total sites: 1` after this session, matching this skip. The site is correct as-is; converting would be a 0-byte refactor (push/pop wipes the saving).
+  3. **Inverse-shape sites not enumerated.** The strict regex requires `ld hl, wPlayer*/wBattle*` first. Sites with `ld hl, wEnemy*` first (like `GetOpponentItem` at `effect_commands.asm:6443` and `TypePassive_IsOpponentSafeguarded_Far` at `type_passive_damage_mods.asm:681`) follow the same logical pattern but with addresses swapped. The `_GetSidedHL` helper handles them too — the conversion is `ld hl, wEnemyXXX :: ld de, wBattleXXX :: call _GetSidedHL` (same shape, mirrored semantics: helper returns the address you want on player turn). Could be a future Pattern 3.5 follow-up; estimated ~5-8 additional sites at −2 bytes each. Not critical now — bank 0x0d has 30 free, no pressure.
+  4. **Multi-pointer sites** (e.g., `.UserAttackGreaterThanSpAtk` in `type_passive_damage_mods.asm`) where both `hl` and `de` swap together need a different helper (4-input). Out of scope; not enumerated.
+  5. **`docs/generated/balance_audit.md` was stale before this session.** Regenerated as a courtesy (`scripts/generate_balance_audit.py`) — no Pokemon data changes in this session, but the regen lands the file fresh so future agents don't trip on the same nav-floor failure.
+  6. **TD-001 close-out path:** per the prior 2026-05-03 partial, TD-001 stays `partial` until TD-005 P2/P3 close, TD-009a executes, and pic-bank guard ships. This session closes Pattern 3, leaving Pattern 2 + TD-009a + pic-bank guard as the remaining gate.
+- **Verifier check:** From this branch tip:
+  - `grep -c '^_GetSidedHL::' home/battle_vars.asm` → 1 (helper exists exactly once)
+  - `grep -rn 'call _GetSidedHL' --include='*.asm' | wc -l` → 26 (number of converted sites)
+  - `python3 tools/audit/_td005_pattern3_enum.py | grep '^Total sites:'` → `Total sites: 1` (the deliberately-skipped site at type_passive_damage_mods.asm:506)
+  - `.map` `Effect Commands` section size should be `$3fe2` (or smaller if other size-affecting changes have landed); `Late Gen Held Items` `$0d74`; `Battle Core` `$3bad`. ROM0 used should be 16155.
+  - dev_index.md tight-banks should show `ROMX 0d: 30 free` (was 6 in ADDENDUM 2026-05-03 snapshot).
+
+## 2026-05-03 — TD-A13 — done (39 boss.asm cross-bank calls thunked)
+
+(TD-A### — codebase finding tracked in `TECH_DEBT_REPORT_ADDENDUM.md`,
+no STATUS row by design. This log entry is for chronological trail
+only.)
+
+- **Agent / session:** Opus 4.7 (1M context) / claude-kind-swanson-ae5a65
+- **State:** done
+- **Branch / commit:** claude/kind-swanson-ae5a65 @ f2e18554 (merged into great-germain 2026-05-03)
+- **Files touched:** engine/battle/ai/boss.asm; CLAUDE.md (caveat note); docs/generated/dev_index.md (regen)
+- **Summary:** Closed TD-A13. 7 intra-bank thunks at the bottom of boss.asm wrap `farcall` to each AI scoring helper (in bank 0x0b) with `push hl :: pop hl` to defeat the farcall hl-clobber. 39 plain-call sites in boss.asm converted to `call X_HL`. `tools/audit/check_cross_bank_call.py` now PASS (was 39 hits). +63 bytes in bank 0x0e (568 → 521 free, still healthy). Behavior change: boss AI no longer runs garbage at 0x0e:$7xxx; scoring helpers now actually execute. Statistically extremely unlikely the prior garbage execution was load-bearing for boss decisions, but boss AI **may visibly play differently** in playtest. Trace ROM verification deferred — `audit/boss_ai_trace/*` manifest checksums pinned to old SHA, separate workstream.
+- **Audit on merge into great-germain (2026-05-03):**
+  - Read all 7 thunk targets: 6 are HP-check (`AICheckPlayerMaxHP` family) returning via carry flag; 1 (`AIGetEnemyMove`) returns via side-effect write to `wEnemyMoveStruct`. None return useful info via `hl`. `push hl :: pop hl` bracketing is correct.
+  - Carry flag survives the farcall epilogue (none of the instructions in `home/farcall.asm:13-28` or `Bankswitch` touch flags).
+  - All 39 call-site conversions are byte-identical (`call AIxxx` and `call AIxxx_HL` are both 3-byte `call`).
+  - 13 `AICheckEnemyQuarterHP` + 6 `AIGetEnemyMove` + 5 `AICheckPlayerQuarterHP` + 5 `AICheckPlayerHalfHP` + 5 `AICheckEnemyHalfHP` + 4 `AICheckEnemyMaxHP` + 1 `AICheckPlayerMaxHP` = 39 ✓.
+- **Bytes recovered:** N/A (correctness fix; +63 bytes in 0x0e for thunks).
+- **Bank impact:** 0x0e: 568 → 521 free (-47 net after thunks; some other size-shaping in this commit too).
+- **Issues / followups:**
+  1. `check_cross_bank_call.py` still NOT promoted to release-smoke floor. CLAUDE.md updated with the trace ROM caveat in this commit. Promotion gated on trace pipeline re-run.
+  2. **Behavior change for playtest.** With this fix, boss AI runs the scoring code it was supposed to run. If a player who'd been beating the prior build notices bosses suddenly choosing better moves, that's expected.
+- **Verifier check:** `python3 tools/audit/check_cross_bank_call.py` → PASS (0 hits in `engine/battle/ai/boss.asm`). `grep -c '^[A-Z][A-Za-z]*_HL:$' engine/battle/ai/boss.asm` → 7 (the 7 thunks). `grep -c 'call AI[A-Za-z]*_HL$' engine/battle/ai/boss.asm` → 39.
 
 ## 2026-05-03 — TD-008 — claimed
 

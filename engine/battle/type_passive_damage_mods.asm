@@ -209,11 +209,8 @@ TypePassive_ApplyDamageModifiers_Far:
 
 .GetCurrentMoveType:
 	ld hl, wPlayerMoveStruct + MOVE_TYPE
-	ldh a, [hBattleTurn]
-	and a
-	jr z, .got_type
-	ld hl, wEnemyMoveStruct + MOVE_TYPE
-.got_type
+	ld de, wEnemyMoveStruct + MOVE_TYPE
+	call _GetSidedHL
 	ld a, [hl]
 	ret
 
@@ -263,11 +260,8 @@ TypePassive_ApplyDamageModifiers_Far:
 .GetUserTypeContribution:
 	ld b, a
 	ld hl, wBattleMonType1
-	ldh a, [hBattleTurn]
-	and a
-	jr z, .got_user_types
-	ld hl, wEnemyMonType1
-.got_user_types
+	ld de, wEnemyMonType1
+	call _GetSidedHL
 	ld a, b
 	jr .GetTypeContributionFromHL
 
@@ -476,11 +470,8 @@ TypePassive_GetOpponentTypeContribution_Far:
 
 TypePassive_GetCurrentMoveType_Far:
 	ld hl, wPlayerMoveStruct + MOVE_TYPE
-	ldh a, [hBattleTurn]
-	and a
-	jr z, .got_type
-	ld hl, wEnemyMoveStruct + MOVE_TYPE
-.got_type
+	ld de, wEnemyMoveStruct + MOVE_TYPE
+	call _GetSidedHL
 	ld a, [hl]
 	ret
 
@@ -613,21 +604,15 @@ TypePassive_GetLastCounterMoveCategory_Far::
 
 TypePassive_GetCurrentMovePower_Far:
 	ld hl, wPlayerMoveStruct + MOVE_POWER
-	ldh a, [hBattleTurn]
-	and a
-	jr z, .got_power
-	ld hl, wEnemyMoveStruct + MOVE_POWER
-.got_power
+	ld de, wEnemyMoveStruct + MOVE_POWER
+	call _GetSidedHL
 	ld a, [hl]
 	ret
 
 TypePassive_GetCurrentMoveEffect_Far:
 	ld hl, wPlayerMoveStruct + MOVE_EFFECT
-	ldh a, [hBattleTurn]
-	and a
-	jr z, .got_effect
-	ld hl, wEnemyMoveStruct + MOVE_EFFECT
-.got_effect
+	ld de, wEnemyMoveStruct + MOVE_EFFECT
+	call _GetSidedHL
 	ld a, [hl]
 	ret
 
@@ -690,11 +675,8 @@ TypePassive_IsOpponentSafeguarded_Far:
 
 TypePassive_IsUserSafeguarded_Far:
 	ld hl, wPlayerScreens
-	ldh a, [hBattleTurn]
-	and a
-	jr z, .got_screens
-	ld hl, wEnemyScreens
-.got_screens
+	ld de, wEnemyScreens
+	call _GetSidedHL
 	bit SCREENS_SAFEGUARD, [hl]
 	ret
 

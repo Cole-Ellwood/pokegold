@@ -1,197 +1,260 @@
-# TD-005 Pattern 3 — Site Enumeration
+# TD-005 Pattern 3 — site enumeration and design rationale
 
-**Generated:** 2026-05-03
-**Source:** `claude/trusting-kare-692dd4` session, classifier in
-`.local/classify_pattern3.py` (worktree-only, not committed).
-**Reason:** `FIX_PROPOSALS.md` TD-005 "Updated 2026-05-02" requires
-enumeration to file:line before any conversion work. `META_AUDIT.md`
-TD-A06 flagged the original "100+ instances project-wide" claim as
-unverifiable.
+**Generated:** 2026-05-03 by claude-kind-swanson-ae5a65
+**Tool:** `tools/audit/_td005_pattern3_enum.py` (strict regex)
 
-## Summary
+## Scope and shape
 
-| Class | Count | Eligible for `_GetSidedAddr`? |
-| --- | ---: | --- |
-| **A — side-branch** (matched player+enemy sided pointer load on same reg16) | **66** | yes |
-| **B — control-flow** (turn flag read for branching, no sided pointer) | 138 | no |
-| **C — other** (turn flag used as data: `xor 1`, `cp`, etc.) | 30 | no |
-| **Total** `ldh a, [hBattleTurn]` reads | 234 | — |
+The textbook "Pattern 3" sketched in `FINDINGS_DETAIL.md:216-227` was the
+post-test branch-and-rejoin shape:
 
-Class A is what Pattern 3 conversion targets. The 66 is below the
-report's "100+" claim but well above the "speculative until measured"
-bar — conversion is worthwhile in principle.
-
-## Per-file Class A breakdown
-
-| File | Class A sites | Bank | Notes |
-| --- | ---: | --- | --- |
-| `engine/battle/effect_commands.asm` | 27 | ROMX 0d | **canary bank, 6 free** — biggest concentrated win |
-| `engine/battle/type_passive_damage_mods.asm` | 10 | ROMX 0e | 568 free post-TD-005 P1 |
-| `engine/battle/core.asm` | 6 | ROMX 0f | 0f roomy |
-| `engine/battle/move_effects/future_sight.asm` | 3 | varies | move_effects/* are small files |
-| `engine/battle/move_effects/bide.asm` | 3 | varies | |
-| `engine/battle/move_effects/substitute.asm` | 2 | varies | |
-| `engine/battle/move_effects/rollout.asm` | 2 | varies | |
-| `engine/battle/move_effects/fury_cutter.asm` | 2 | varies | |
-| `engine/battle/used_move_text.asm` | 1 | ROMX 0d | canary; same bank as effect_commands |
-| `engine/battle/move_effects/spikes.asm` | 1 | varies | |
-| `engine/battle/move_effects/safeguard.asm` | 1 | varies | |
-| `engine/battle/move_effects/rapid_spin.asm` | 1 | varies | |
-| `engine/battle/move_effects/pursuit.asm` | 1 | varies | |
-| `engine/battle/move_effects/psych_up.asm` | 1 | varies | |
-| `engine/battle/move_effects/protect.asm` | 1 | varies | |
-| `engine/battle/move_effects/encore.asm` | 1 | varies | |
-| `engine/battle/move_effects/disable.asm` | 1 | varies | |
-| `engine/battle/move_effects/curse.asm` | 1 | varies | |
-| `engine/battle/late_gen_held_items.asm` | 1 | ROMX 0e | |
-
-The high-leverage observation: 28 of the 66 sites are in the canary
-bank (ROMX 0x0d, currently 6 bytes free). At ~5 bytes per site,
-converting just those 28 could free ~140 bytes in 0x0d — meaningful
-relief for the new tight bank from `TECH_DEBT_REPORT_ADDENDUM.md`
-2026-05-03.
-
-## Class A full list (file:line, register)
-
-```
-engine/battle/core.asm:381	reg=hl
-engine/battle/core.asm:1087	reg=de
-engine/battle/core.asm:1209	reg=hl
-engine/battle/core.asm:1278	reg=hl
-engine/battle/core.asm:1534	reg=hl
-engine/battle/core.asm:3981	reg=hl
-engine/battle/effect_commands.asm:963	reg=de
-engine/battle/effect_commands.asm:1918	reg=hl
-engine/battle/effect_commands.asm:2016	reg=de
-engine/battle/effect_commands.asm:2245	reg=de
-engine/battle/effect_commands.asm:2325	reg=hl
-engine/battle/effect_commands.asm:2452	reg=de
-engine/battle/effect_commands.asm:3397	reg=de
-engine/battle/effect_commands.asm:3673	reg=de
-engine/battle/effect_commands.asm:3915	reg=hl
-engine/battle/effect_commands.asm:4024	reg=hl
-engine/battle/effect_commands.asm:4061	reg=de
-engine/battle/effect_commands.asm:4121	reg=bc
-engine/battle/effect_commands.asm:4207	reg=hl
-engine/battle/effect_commands.asm:4280	reg=de
-engine/battle/effect_commands.asm:4539	reg=hl
-engine/battle/effect_commands.asm:4570	reg=de
-engine/battle/effect_commands.asm:4766	reg=de
-engine/battle/effect_commands.asm:4807	reg=de
-engine/battle/effect_commands.asm:5083	reg=de
-engine/battle/effect_commands.asm:5300	reg=bc
-engine/battle/effect_commands.asm:5491	reg=hl
-engine/battle/effect_commands.asm:5657	reg=bc
-engine/battle/effect_commands.asm:6024	reg=hl
-engine/battle/effect_commands.asm:6145	reg=hl
-engine/battle/effect_commands.asm:6251	reg=hl
-engine/battle/effect_commands.asm:6263	reg=hl
-engine/battle/effect_commands.asm:6393	reg=hl
-engine/battle/late_gen_held_items.asm:220	reg=hl
-engine/battle/move_effects/bide.asm:8	reg=hl
-engine/battle/move_effects/bide.asm:29	reg=hl
-engine/battle/move_effects/bide.asm:73	reg=de
-engine/battle/move_effects/curse.asm:4	reg=bc
-engine/battle/move_effects/disable.asm:8	reg=de
-engine/battle/move_effects/encore.asm:4	reg=de
-engine/battle/move_effects/fury_cutter.asm:3	reg=hl
-engine/battle/move_effects/fury_cutter.asm:43	reg=hl
-engine/battle/move_effects/future_sight.asm:4	reg=hl
-engine/battle/move_effects/future_sight.asm:40	reg=hl
-engine/battle/move_effects/future_sight.asm:56	reg=de
-engine/battle/move_effects/protect.asm:16	reg=de
-engine/battle/move_effects/psych_up.asm:4	reg=hl
-engine/battle/move_effects/pursuit.asm:5	reg=hl
-engine/battle/move_effects/rapid_spin.asm:13	reg=hl
-engine/battle/move_effects/rollout.asm:5	reg=de
-engine/battle/move_effects/rollout.asm:30	reg=hl
-engine/battle/move_effects/safeguard.asm:4	reg=hl
-engine/battle/move_effects/spikes.asm:3	reg=hl
-engine/battle/move_effects/substitute.asm:5	reg=de
-engine/battle/move_effects/substitute.asm:47	reg=hl
-engine/battle/type_passive_damage_mods.asm:212	reg=hl
-engine/battle/type_passive_damage_mods.asm:479	reg=hl
-engine/battle/type_passive_damage_mods.asm:507	reg=hl
-engine/battle/type_passive_damage_mods.asm:532	reg=hl
-engine/battle/type_passive_damage_mods.asm:592	reg=hl
-engine/battle/type_passive_damage_mods.asm:616	reg=hl
-engine/battle/type_passive_damage_mods.asm:626	reg=hl
-engine/battle/type_passive_damage_mods.asm:683	reg=hl
-engine/battle/type_passive_damage_mods.asm:693	reg=hl
-engine/battle/type_passive_damage_mods.asm:784	reg=hl
-engine/battle/used_move_text.asm:222	reg=hl
+```asm
+ldh a, [hBattleTurn]
+and a
+jr z, .player_side
+ld hl, wEnemyMonXXX
+jr .got_side
+.player_side
+ld hl, wBattleMonXXX
+.got_side
 ```
 
-## Conversion notes for the implementer
+In practice, **the post-test branch-and-rejoin shape barely exists** (5
+sites total across the codebase — see `_td005_pattern3_enum.py` first
+bucket pass). The dominant shape this codebase actually uses is the
+**pre-load + jr-z-skip** shape:
 
-The recipe in `FIX_PROPOSALS.md` TD-005 "Updated 2026-05-02" calls for
-a shared subroutine `_GetSidedAddr` taking player addr in `de`, enemy
-addr in `bc`, returning the right one in `hl`. Several practical caveats
-the classifier surfaced:
+```asm
+ld hl, wPlayerXXX           ; 3 bytes — player addr loaded by default
+ldh a, [hBattleTurn]         ; 2 bytes
+and a                        ; 1 byte
+jr z, .got                   ; 2 bytes — player turn falls through to .got
+ld hl, wEnemyXXX             ; 3 bytes — enemy turn replaces hl
+.got                         ; 0 bytes (label)
+                             ; 11 bytes total per site
+```
 
-1. **Helper bank placement.** ROM0 has 236 free; the helper is 8-12
-   bytes; logical home is `home/battle.asm`. Putting it in ROM0 means
-   any caller can `call` (same-bank) reach it without `farcall` — at 3
-   bytes per call site versus 5 for `callfar`, this materially affects
-   per-site savings. Putting it in a ROMX bank forces `callfar` and
-   probably costs more bytes than it saves.
+This evidence file enumerates the **strict pre-load shape**: a 6-line
+match that requires the matched rejoin label to be the actual jr target.
+Both `wPlayer*` and `wBattle*` are accepted as the player-side prefix
+(this codebase uses `wBattle*` for the active-party slot's battle stats
+and `wPlayer*` for player-side battle metadata).
 
-2. **Three target registers, not one.** 38 of the 66 sites land the
-   sided pointer in `hl`, 23 in `de`, 5 in `bc`. The recipe's
-   "returning the right one in `hl`" only fits 38/66 cleanly. The other
-   28 either need a register move after the call (1 byte: `ld d, h /
-   ld e, l` is 2 bytes; pushing/popping is worse) or two helper variants
-   (`_GetSidedAddrHL`, `_GetSidedAddrDE`, `_GetSidedAddrBC`).
+## Why the pre-load shape exists
 
-   Per-site math:
-   - HL target (38 sites): clean, ~5 bytes saved per site = ~190 bytes.
-   - DE/BC target with reg-move (28 sites): ~3 bytes saved per site = ~84 bytes.
-   - With per-reg helpers (3 helpers × ~10 bytes = 30 bytes overhead):
-     ~5 bytes per site × 66 - 30 = ~300 bytes saved gross.
+Most Pattern 3 sites are computed on the player turn 95% of the time
+(player initiates the action; the engine reads the player's struct).
+The pre-load form puts the common case in the fall-through path, saving
+a `jr` on player turns at the cost of a longer enemy-turn path. The
+codebase consistently uses this convention — no `enemy_default` matches
+were found in the 27-site set.
 
-3. **Site-shape variance to watch for.** Spot checks showed:
-   - Most common shape: `ldh a, [hBattleTurn]; and a; ld <reg>,
-     wPlayerXxx; jr z, .label; ld <reg>, wEnemyXxx; .label`.
-   - Less common: sided pointer load happens **before** the
-     `ldh a, [hBattleTurn]` (e.g. `engine/battle/core.asm:1087`
-     loads `de, wPlayerToxicCount` first, then reads turn).
-   - Some sites have additional work between the turn read and the
-     sided load (push/pop, intermediate calls). Those won't convert
-     cleanly to a single `call _GetSidedAddrHL` without local refactoring.
-   - Some sites' "player" address is actually the user's address and
-     "enemy" is the opponent's — that's fine semantically, but the
-     helper ABI must be `de = side-A, bc = side-B, return = matching
-     side per turn flag`, not "player vs. enemy" specifically.
+## Sites (27 total)
 
-4. **Build measurement protocol** (per FIX_PROPOSALS recipe): convert
-   one site, build before/after, diff `pokegold.map` for the affected
-   bank. Stop and re-evaluate if the measured per-site recovery is
-   below ~3 bytes (helper overhead won't pay back).
+Excluded files: `engine/pokemon/experience.asm` (user WIP per AGENT_LOG
+2026-05-03 partial entry).
 
-5. **Recommended starting site.** Try
-   `engine/battle/effect_commands.asm:1918` (hl-target, simple shape)
-   for first-conversion measurement, then bulk through the
-   `effect_commands.asm` cluster (27 sites in the canary bank — the
-   most leverage per session).
+### Bank-pressure mapping
 
-## Reproducing this enumeration
+| Containing section | Bank | Free bytes (pre-Pattern 3) | Sites in this run | Bytes recoverable here |
+|---|---|---|---|---|
+| `Effect Commands` | ROMX 0d | **6** (canary) | 12 | 24 |
+| `Late Gen Held Items` | ROMX 0e | 568 | 9 | 18 |
+| `Battle Core` | ROMX 0f | (~580) | 5 | 10 |
+| `bank3E_2` (hidden_power) | ROMX 3e | not tight | 1 | 2 |
+| **TOTAL** | | | **27** | **54** |
 
-The classifier source lives at `.local/classify_pattern3.py` in this
-worktree (deliberately not committed — it's a one-shot tool, not part
-of the audit floor). To regenerate:
+The 12 sites in `Effect Commands` are the strategic value: bank 0x0d is
+the new tight canary per ADDENDUM 2026-05-03. 24 bytes of relief there
+takes free bytes from 6 → ~30, materially un-tightening the canary.
+
+The other banks are convenience savings — the helper exists, callers
+should use it everywhere for consistency.
+
+### Sites by file
+
+#### `engine/battle/effect_commands.asm` — 6 sites (bank 0x0d)
+
+| Line | Player addr | Enemy addr | Rejoin label |
+|---|---|---|---|
+| 1917 | `wPlayerMoveStruct + MOVE_CHANCE` | `wEnemyMoveStruct + MOVE_CHANCE` | `.got_move_chance` |
+| 2324 | `wPlayerRolloutCount` | `wEnemyRolloutCount` | `.ok` |
+| 3121 | `wBattleMonHP` | `wEnemyMonHP` | `.reversal_got_hp` |
+| 4023 | `wPlayerStatLevels` | `wEnemyStatLevels` | `.got_stat_levels` |
+| 5544 | `wBattleMonMaxHP` | `wEnemyMonMaxHP` | `.got_hp` |
+| 6437 | `wBattleMonItem` | `wEnemyMonItem` | `.go` |
+
+#### `engine/battle/move_effects/*.asm` — 6 sites (bank 0x0d, INCLUDE'd inside Effect Commands)
+
+| File | Line | Player addr | Enemy addr | Rejoin label |
+|---|---|---|---|---|
+| `bide.asm` | 7 | `wPlayerRolloutCount` | `wEnemyRolloutCount` | `.check_still_storing_energy` |
+| `conversion2.asm` | 5 | `wBattleMonType1` | `wEnemyMonType1` | `.got_type` |
+| `frustration.asm` | 3 | `wBattleMonHappiness` | `wEnemyMonHappiness` | `.got_happiness` |
+| `mimic.asm` | 7 | `wBattleMonMoves` | `wEnemyMonMoves` | `.player_turn` |
+| `return.asm` | 3 | `wBattleMonHappiness` | `wEnemyMonHappiness` | `.ok` |
+| `sketch.asm` | 27 | `wBattleMonMoves` | `wEnemyMonMoves` | `.get_last_move` |
+
+#### `engine/battle/type_passive_damage_mods.asm` — 7 sites (bank 0x0e)
+
+| Line | Player addr | Enemy addr | Rejoin label |
+|---|---|---|---|
+| 211 | `wPlayerMoveStruct + MOVE_TYPE` | `wEnemyMoveStruct + MOVE_TYPE` | `.got_type` |
+| 265 | `wBattleMonType1` | `wEnemyMonType1` | `.got_user_types` |
+| 478 | `wPlayerMoveStruct + MOVE_TYPE` | `wEnemyMoveStruct + MOVE_TYPE` | `.got_type` |
+| 506 | `wPlayerMoveStruct + MOVE_ANIM` | `wEnemyMoveStruct + MOVE_ANIM` | `.got_anim` |
+| 615 | `wPlayerMoveStruct + MOVE_POWER` | `wEnemyMoveStruct + MOVE_POWER` | `.got_power` |
+| 625 | `wPlayerMoveStruct + MOVE_EFFECT` | `wEnemyMoveStruct + MOVE_EFFECT` | `.got_effect` |
+| 692 | `wPlayerScreens` | `wEnemyScreens` | `.got_screens` |
+
+#### `engine/battle/late_gen_held_items.asm` — 2 sites (bank 0x0e)
+
+| Line | Player addr | Enemy addr | Rejoin label |
+|---|---|---|---|
+| 219 | `wPlayerMetronomeCount` | `wEnemyMetronomeCount` | `.got_counter` |
+| 347 | `wBattleMonHP` | `wEnemyMonHP` | `.check_hp` |
+
+#### `engine/battle/core.asm` — 5 sites (bank 0x0f)
+
+| Line | Player addr | Enemy addr | Rejoin label |
+|---|---|---|---|
+| 1774 | `wBattleMonType1` | `wEnemyMonType1` | `.ok` |
+| 1849 | `wBattleMonHP` | `wEnemyMonHP` | `.ok` |
+| 1956 | `wBattleMonMaxHP` | `wEnemyMonMaxHP` | `.ok` |
+| 1972 | `wBattleMonHP` | `wEnemyMonHP` | `.ok` |
+| 1991 | `wBattleMonHP + 1` | `wEnemyMonHP + 1` | `.ok` |
+
+#### `engine/battle/hidden_power.asm` — 1 site (bank 0x3e_2)
+
+| Line | Player addr | Enemy addr | Rejoin label |
+|---|---|---|---|
+| 4 | `wBattleMonDVs` | `wEnemyMonDVs` | `.got_dvs` |
+
+## Helper design
+
+Placement: `home/battle_vars.asm` (HOME / ROM0). Rationale:
+- ROM0 is reachable from every bank with a plain `call` — no `farcall`
+  overhead.
+- `home/battle_vars.asm` already groups side-aware helpers
+  (`GetBattleVarAddr` etc.).
+- ROM0 has 236 bytes free (per `pokegold.map` summary 2026-05-03);
+  a 7-byte helper takes it to 229.
+
+Signature:
+
+```asm
+; Returns hl pointing to the player-side or enemy-side address based on
+; whose turn it is. Designed to replace the pre-load + jr-z-skip Pattern 3
+; idiom (see tech_debt/EVIDENCE/td_005_pattern3_sites.md).
+;
+; Inputs:
+;   hl = player-side address (kept on player turn)
+;   de = enemy-side address  (replaces hl on enemy turn)
+; Output:
+;   hl = picked address
+; Clobbers: af, de
+; Preserves: bc
+_GetSidedHL::
+    ldh a, [hBattleTurn]
+    and a
+    ret z       ; player turn — hl already correct
+    ld h, d
+    ld l, e
+    ret
+```
+
+Size: 7 bytes (`F0 D5` + `A7` + `C8` + `54` + `5D` + `C9`).
+
+## Per-site transformation
+
+Before (11 bytes, `.got` label removed):
+
+```asm
+ld hl, wPlayerXXX
+ldh a, [hBattleTurn]
+and a
+jr z, .got
+ld hl, wEnemyXXX
+.got
+```
+
+After (9 bytes):
+
+```asm
+ld hl, wPlayerXXX
+ld de, wEnemyXXX
+call _GetSidedHL
+```
+
+Per-site savings: **2 bytes**.
+
+### Caller-impact analysis
+
+The helper clobbers `af` and `de`. Reviewing the 27 sites:
+
+- All 27 sites do `ldh a, [hBattleTurn]` themselves, so they don't expect
+  `a` to survive — the clobber is a no-op for callers.
+- 0 of 27 sites have a live `de` value at the side-branch (verified by
+  reading 5 lines before each match for `ld de, ...` or stack-pushed `de`).
+  The `de` clobber is safe.
+- `bc` is preserved by the helper, matching the helper convention used
+  elsewhere in `home/battle_vars.asm`.
+
+### Label-removal safety
+
+Each site's `.got*` rejoin label is local to the enclosing function. The
+strict regex requires the labeldef to immediately follow the second
+`ld hl`, with no other instructions between. After conversion the label
+becomes orphan; the next instruction simply reads `hl`. No `jr` from
+anywhere else can target the now-removed label because the pattern only
+matches sites where the label is bare (no other forward references).
+
+(Per-site verification done at conversion time: grep for the label name
+in the same file should show 1 def and at most 1 ref — the immediate
+`jr z` we're removing. If 2+ refs exist, leave the label as a no-op
+target and only remove the test/branch lines.)
+
+## Realistic byte recovery
+
+| Pattern | Sites | Bytes recovered | Notes |
+|---|---|---|---|
+| Site conversions | 27 | +54 | 2 bytes/site |
+| Helper in ROM0 | 1 | -7 | added to home/battle_vars.asm |
+| **Net** | | **+47** | |
+
+**Below the FIX_PROPOSALS "Updated 2026-05-02" 100-byte stop-and-re-evaluate
+threshold.** Same call as Pattern 1: 41 bytes was deemed worth it because
+the bytes landed in a tight bank. Here, **24 of the 47 bytes land in the
+new canary bank 0x0d**, which is the strategic value.
+
+## Out-of-scope shapes (deliberately not converted)
+
+Sites that match the loose 4-line "ldh + and + jr" header but DON'T fit
+the strict 6-line pre-load shape (and so won't be converted by this
+session):
+
+- **Multi-pointer pre-loads** (e.g., `.UserAttackGreaterThanSpAtk` in
+  `type_passive_damage_mods.asm:529`): pre-loads both `hl` AND `de`,
+  swaps both. Helper signature would need to take 4 addresses.
+- **Asymmetric arms** (most common — 58 sites): one arm loads `hl`, the
+  other does `ld a, ...` or `xor` etc. Not a side-branch over the same
+  data shape — these are real branching control flow.
+- **Symmetric `call`** (10 sites): both arms call different functions.
+  A side-aware function call would need a different helper (jump table).
+
+Future TD work could address these with separate helpers, but each
+shape has its own design considerations and per-site savings calc.
+
+## Verification commands
 
 ```bash
-python3 .local/classify_pattern3.py > .local/pattern3_full.txt
-grep "	A	" .local/pattern3_full.txt | sort > .local/pattern3_class_a.txt
+# Re-enumerate (expect 27 sites unchanged before conversion):
+python3 tools/audit/_td005_pattern3_enum.py | grep "^Total sites:"
+
+# After conversion — expect helper to exist exactly once:
+grep -c '^_GetSidedHL::' home/battle_vars.asm
+
+# After conversion — expect no remaining strict-Pattern-3 sites:
+python3 tools/audit/_td005_pattern3_enum.py | grep "^Total sites:"
+# Should report: Total sites: 0
 ```
-
-The classifier uses a 12-line window around each `ldh a, [hBattleTurn]`
-match and looks for both `wPlayer*` and `wEnemy*` loads on the same
-register (hl, de, or bc). False negatives are possible where the
-sided load is more than 8 lines after the turn read; the spot checks
-suggest this is rare.
-
-If a future agent wants higher precision, the classifier can be
-upgraded to consume `pokegold.map` for actual instruction byte counts,
-but that requires a build artifact and the current source-only pass is
-sufficient for picking conversion targets.

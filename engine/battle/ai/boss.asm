@@ -530,7 +530,7 @@ BossAI_ApplyMoveModel:
 	ld a, l
 	ld [wBossAIScorePtr + 1], a
 	ld a, [de]
-	call AIGetEnemyMove
+	call AIGetEnemyMove_HL
 
 	xor a
 	ld [wBossAIMoveChoiceReady], a
@@ -792,7 +792,7 @@ BossAI_ApplyMoveModel:
 	ld a, [wEnemySubStatus4]
 	bit SUBSTATUS_SUBSTITUTE, a
 	jp nz, .status_fail
-	call AICheckEnemyQuarterHP
+	call AICheckEnemyQuarterHP_HL
 	jp nc, .status_fail
 	and a
 	ret
@@ -933,7 +933,7 @@ BossAI_ApplyMoveModel:
 	ret
 
 .check_heal
-	call AICheckEnemyMaxHP
+	call AICheckEnemyMaxHP_HL
 	jp c, .status_fail
 	and a
 	ret
@@ -1313,7 +1313,7 @@ BossAI_ApplyMoveModel:
 	ret z
 	call .HasKOLine
 	ret c
-	call AICheckEnemyQuarterHP
+	call AICheckEnemyQuarterHP_HL
 	ret c
 	ld a, 6
 	jp BossAI_DiscourageScoreHL
@@ -1329,7 +1329,7 @@ BossAI_ApplyMoveModel:
 	ld a, [wTypeMatchup]
 	and a
 	ret z
-	call AICheckEnemyMaxHP
+	call AICheckEnemyMaxHP_HL
 	ret c
 	ld a, 2
 	jp BossAI_EncourageScoreHL
@@ -1342,7 +1342,7 @@ BossAI_ApplyMoveModel:
 	ld a, [wEnemyMonStatus]
 	and a
 	ret nz
-	call AICheckEnemyMaxHP
+	call AICheckEnemyMaxHP_HL
 	ret c
 	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
 	cp EFFECT_PROTECT
@@ -1368,7 +1368,7 @@ BossAI_ApplyMoveModel:
 	ld a, [wBossAITier]
 	cp AI_TIER_MID
 	ret c
-	call AICheckEnemyQuarterHP
+	call AICheckEnemyQuarterHP_HL
 	ret c
 	call .HasKOLine
 	ret c
@@ -1390,7 +1390,7 @@ BossAI_ApplyMoveModel:
 	ret z
 	call .HasKOLine
 	ret nc
-	call AICheckPlayerQuarterHP
+	call AICheckPlayerQuarterHP_HL
 	ret c
 	ld a, EFFECT_DESTINY_BOND
 	call .PlayerHasRevealedEffectA
@@ -1529,7 +1529,7 @@ BossAI_ApplyMoveModel:
 	ret nz
 	call .MercyRefusalCandidate
 	ret nc
-	call AICheckPlayerQuarterHP
+	call AICheckPlayerQuarterHP_HL
 	ret c
 	call .EnemyUnderPressure
 	ret c
@@ -1675,7 +1675,7 @@ BossAI_ApplyMoveModel:
 	ret c
 	call .PlayerHasRevealedRecovery
 	ret nc
-	call AICheckPlayerMaxHP
+	call AICheckPlayerMaxHP_HL
 	ret c
 	call .HasKOLine
 	ret c
@@ -1824,7 +1824,7 @@ BossAI_ApplyMoveModel:
 	ret nz
 	call .UtilityMoveWouldFailPublicly
 	ret c
-	call AICheckPlayerHalfHP
+	call AICheckPlayerHalfHP_HL
 	ret c
 	push hl
 	call BossAI_HasAnyKOMove
@@ -2291,7 +2291,7 @@ BossAI_ApplyMoveModel:
 	ret
 
 .EnemyUnderPressure
-	call AICheckEnemyQuarterHP
+	call AICheckEnemyQuarterHP_HL
 	jr nc, .pressure_yes
 	call BossAI_PlayerHasRevealedPriorityThreat
 	jr c, .pressure_yes
@@ -2640,7 +2640,7 @@ BossAI_CheckAbleToSwitchSafe:
 	ret nc
 	call BossAI_PlayerHasPublicThreatVsEnemy
 	jr c, .high_confidence
-	call AICheckEnemyQuarterHP
+	call AICheckEnemyQuarterHP_HL
 	ret c
 	ld b, $20
 	jr .store
@@ -2828,9 +2828,9 @@ BossAI_PlayerHasRevealedPriorityThreatUncached:
 	ld a, e
 	call BossAI_EnemyKnownItemNullifiesThreatType
 	jr c, .next
-	call AICheckEnemyQuarterHP
+	call AICheckEnemyQuarterHP_HL
 	jr nc, .yes_pop
-	call AICheckEnemyHalfHP
+	call AICheckEnemyHalfHP_HL
 	jr c, .next
 	ld a, d
 	cp 80
@@ -3011,9 +3011,9 @@ BossAI_CurrentEnemyMoveHasKOPressure:
 	ld d, a
 	and a
 	jr z, .no
-	call AICheckPlayerQuarterHP
+	call AICheckPlayerQuarterHP_HL
 	jr nc, .low_hp
-	call AICheckPlayerHalfHP
+	call AICheckPlayerHalfHP_HL
 	jr nc, .half_hp
 	ld a, d
 	cp 4
@@ -3147,9 +3147,9 @@ BossAI_CurrentEnemyMoveScoredPower:
 	ret
 
 .reversal_power
-	call AICheckEnemyQuarterHP
+	call AICheckEnemyQuarterHP_HL
 	jr nc, .reversal_high
-	call AICheckEnemyHalfHP
+	call AICheckEnemyHalfHP_HL
 	jr nc, .reversal_mid
 	jr .raw_power
 
@@ -3302,7 +3302,7 @@ BossAI_ApplyPlayerDefensivePassivePressure:
 
 .ice
 	push bc
-	call AICheckPlayerHalfHP
+	call AICheckPlayerHalfHP_HL
 	pop bc
 	ret nc
 	ld a, ICE
@@ -3626,7 +3626,7 @@ BossAI_NeedsLoopPenalty:
 .check_exceptions
 ; Public threat creates many normal switch candidates. Only a real emergency
 ; should waive the anti-loop penalty, or A->B->A pivots never pay the cost.
-	call AICheckEnemyQuarterHP
+	call AICheckEnemyQuarterHP_HL
 	jr nc, .no_penalty
 	call BossAI_ShouldRespectPotentialPlayerRevenge
 	jr c, .no_penalty
@@ -3645,7 +3645,7 @@ BossAI_NeedsLoopPenalty:
 	ret
 
 BossAI_IsImminentKOPrevention:
-	call AICheckEnemyQuarterHP
+	call AICheckEnemyQuarterHP_HL
 	jr nc, .yes
 	call BossAI_PlayerHasPublicThreatVsEnemy
 	jr c, .yes
@@ -3687,13 +3687,13 @@ BossAI_ShouldRespectPotentialPlayerRevenge:
 	cp 3
 	jr c, .check_seen_revenge
 
-	call AICheckEnemyHalfHP
+	call AICheckEnemyHalfHP_HL
 	jr nc, .yes
 	call BossAI_HasRevealedSuperEffectiveMove
 	jr c, .yes
 	call BossAI_IsSuspiciousSwitchIn
 	jr nc, .no
-	call AICheckEnemyQuarterHP
+	call AICheckEnemyQuarterHP_HL
 	jr nc, .yes
 
 .check_seen_revenge
@@ -3717,7 +3717,7 @@ BossAI_ShouldRespectPotentialPlayerRevenge:
 	jr nc, .seen_yes
 	cp 10
 	jr c, .seen_no
-	call AICheckEnemyHalfHP
+	call AICheckEnemyHalfHP_HL
 	jr nc, .seen_yes
 .seen_no
 	and a
@@ -3866,9 +3866,9 @@ BossAI_AceTimingHook:
 	cp 5
 	jr nc, .yes
 
-	call AICheckEnemyHalfHP
+	call AICheckEnemyHalfHP_HL
 	jr nc, .yes
-	call AICheckPlayerHalfHP
+	call AICheckPlayerHalfHP_HL
 	jr nc, .yes
 
 .no
@@ -3903,7 +3903,7 @@ BossAI_ComputeSwitchConfidence:
 .store_ko_discount
 	ld [wBossAISwitchConfidence], a
 .no_ko_discount
-	call AICheckEnemyQuarterHP
+	call AICheckEnemyQuarterHP_HL
 	jr c, .no_hp_bonus
 	ld a, [wBossAISwitchConfidence]
 	add 10
@@ -3981,7 +3981,7 @@ BossAI_PredictPlayerSwitch:
 	ld [wBossAITemp], a
 
 .switch_rate_done
-	call AICheckPlayerQuarterHP
+	call AICheckPlayerQuarterHP_HL
 	jr c, .hp_done
 	ld a, [wBossAITemp]
 	add 20
@@ -4121,7 +4121,7 @@ BossAI_HasAnyKOMoveUncached:
 	call BossAI_SaveEnemyMoveStruct
 	call BossAI_EnemyChoiceLockedMove
 	jr nc, .scan_all_moves
-	call AIGetEnemyMove
+	call AIGetEnemyMove_HL
 	ld a, [wEnemyMoveStruct + MOVE_POWER]
 	and a
 	jr z, .no
@@ -4139,7 +4139,7 @@ BossAI_HasAnyKOMoveUncached:
 	jr z, .no
 	push bc
 	push de
-	call AIGetEnemyMove
+	call AIGetEnemyMove_HL
 	ld a, [wEnemyMoveStruct + MOVE_POWER]
 	and a
 	jr z, .next
@@ -4511,7 +4511,7 @@ BossAI_FindPartyMonByRole:
 	push hl
 	push de
 	push bc
-	call AIGetEnemyMove
+	call AIGetEnemyMove_HL
 	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
 	ld c, a
 	ld a, [wTempByteValue]
@@ -4773,7 +4773,7 @@ BossAI_SetupTurnIsAffordable:
 	jr z, .yes
 	cp 2
 	jr nc, .no
-	call AICheckEnemyMaxHP
+	call AICheckEnemyMaxHP_HL
 	jr c, .yes
 	jr .no
 
@@ -5622,7 +5622,7 @@ BossAI_EvaluateActionLookahead:
 	push hl
 	push de
 	push bc
-	call AIGetEnemyMove
+	call AIGetEnemyMove_HL
 	ld b, 0 ; upside
 	ld c, 0 ; downside
 
@@ -5631,9 +5631,9 @@ BossAI_EvaluateActionLookahead:
 	jr z, .check_setup
 	call BossAI_CurrentEnemyMovePressureScore
 	ld d, a
-	call AICheckPlayerQuarterHP
+	call AICheckPlayerQuarterHP_HL
 	jr nc, .low_hp
-	call AICheckPlayerHalfHP
+	call AICheckPlayerHalfHP_HL
 	jr nc, .half_hp
 	ld a, d
 	cp 4
@@ -5871,7 +5871,7 @@ BossAI_ApplyMultiTurnProjection:
 
 .IsUnderPressure
 	push bc
-	call AICheckEnemyQuarterHP
+	call AICheckEnemyQuarterHP_HL
 	jr nc, .pressure_yes
 	call BossAI_PlayerHasRevealedPriorityThreat
 	jr c, .pressure_yes
@@ -6335,7 +6335,7 @@ BossAI_MarkScoutedIfScoutMove:
 	ld a, [wCurEnemyMove]
 	and a
 	ret z
-	call AIGetEnemyMove
+	call AIGetEnemyMove_HL
 	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
 	cp EFFECT_PROTECT
 	jr z, .mark
@@ -6815,7 +6815,7 @@ BossAI_ApplyPlanSwitchBias:
 	ret
 
 BossAI_ShouldSackInsteadOfSwitch:
-	call AICheckEnemyQuarterHP
+	call AICheckEnemyQuarterHP_HL
 	jr c, .no
 	call BossAI_HasAnyKOMove
 	jr c, .no
@@ -7004,3 +7004,63 @@ BossAIRiskyEffects:
 	db EFFECT_HYPER_BEAM
 	db EFFECT_BELLY_DRUM
 	db -1
+
+; AI Scoring helpers live in bank 0x0b ("AI Scoring"). boss.asm itself
+; lives in bank 0x0e ("Enemy Trainers"), so a plain `call AIxxx` from
+; boss.asm to a scoring helper resolves at offset $7xxx in bank 0x0e
+; (garbage). `farcall` would clobber `hl` before the target runs (per
+; CLAUDE.md), and many boss.asm callers need `hl` preserved across the
+; call (e.g., `jp BossAI_*ScoreHL`).
+;
+; These intra-bank thunks live alongside boss.asm in bank 0x0e, so plain
+; `call AIxxx_HL` from boss.asm reaches them. Each thunk wraps `farcall`
+; to the bank-0x0b target with `push hl` / `pop hl` so caller's hl is
+; preserved end-to-end. Each thunk is 9 bytes; 7 thunks = 63 bytes in
+; bank 0x0e. ROM0 was too tight for these (Home section had 13 bytes
+; free; the 229 ROM0-free is fragmented across rst-handler gaps).
+;
+; Rationale: `tools/audit/check_cross_bank_call.py` flagged 39 plain-call
+; sites in boss.asm targeting scoring.asm; this is the same class as
+; the May 2026 cross-bank softlock (commit 2593278d).
+
+AIGetEnemyMove_HL:
+	push hl
+	farcall AIGetEnemyMove
+	pop hl
+	ret
+
+AICheckEnemyQuarterHP_HL:
+	push hl
+	farcall AICheckEnemyQuarterHP
+	pop hl
+	ret
+
+AICheckEnemyHalfHP_HL:
+	push hl
+	farcall AICheckEnemyHalfHP
+	pop hl
+	ret
+
+AICheckEnemyMaxHP_HL:
+	push hl
+	farcall AICheckEnemyMaxHP
+	pop hl
+	ret
+
+AICheckPlayerQuarterHP_HL:
+	push hl
+	farcall AICheckPlayerQuarterHP
+	pop hl
+	ret
+
+AICheckPlayerHalfHP_HL:
+	push hl
+	farcall AICheckPlayerHalfHP
+	pop hl
+	ret
+
+AICheckPlayerMaxHP_HL:
+	push hl
+	farcall AICheckPlayerMaxHP
+	pop hl
+	ret

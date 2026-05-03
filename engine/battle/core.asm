@@ -1772,11 +1772,8 @@ HandleWeather:
 	ret nz
 
 	ld hl, wBattleMonType1
-	ldh a, [hBattleTurn]
-	and a
-	jr z, .ok
-	ld hl, wEnemyMonType1
-.ok
+	ld de, wEnemyMonType1
+	call _GetSidedHL
 	ld a, [hli]
 	cp ROCK
 	ret z
@@ -1847,11 +1844,8 @@ SubtractHPFromUser:
 
 SubtractHP:
 	ld hl, wBattleMonHP
-	ldh a, [hBattleTurn]
-	and a
-	jr z, .ok
-	ld hl, wEnemyMonHP
-.ok
+	ld de, wEnemyMonHP
+	call _GetSidedHL
 	inc hl
 	ld a, [hl]
 	ld [wHPBuffer2], a
@@ -1954,11 +1948,8 @@ GetMaxHP:
 ; output: bc, wHPBuffer1
 
 	ld hl, wBattleMonMaxHP
-	ldh a, [hBattleTurn]
-	and a
-	jr z, .ok
-	ld hl, wEnemyMonMaxHP
-.ok
+	ld de, wEnemyMonMaxHP
+	call _GetSidedHL
 	ld a, [hli]
 	ld [wHPBuffer1 + 1], a
 	ld b, a
@@ -1970,11 +1961,8 @@ GetMaxHP:
 
 GetHalfHP: ; unreferenced
 	ld hl, wBattleMonHP
-	ldh a, [hBattleTurn]
-	and a
-	jr z, .ok
-	ld hl, wEnemyMonHP
-.ok
+	ld de, wEnemyMonHP
+	call _GetSidedHL
 	ld a, [hli]
 	ld b, a
 	ld a, [hli]
@@ -1989,11 +1977,8 @@ GetHalfHP: ; unreferenced
 
 CheckUserHasEnoughHP:
 	ld hl, wBattleMonHP + 1
-	ldh a, [hBattleTurn]
-	and a
-	jr z, .ok
-	ld hl, wEnemyMonHP + 1
-.ok
+	ld de, wEnemyMonHP + 1
+	call _GetSidedHL
 	ld a, c
 	sub [hl]
 	dec hl

@@ -1,11 +1,8 @@
 BattleCommand_FrustrationPower:
 	push bc
 	ld hl, wBattleMonHappiness
-	ldh a, [hBattleTurn]
-	and a
-	jr z, .got_happiness
-	ld hl, wEnemyMonHappiness
-.got_happiness
+	ld de, wEnemyMonHappiness
+	call _GetSidedHL
 	ld a, $ff
 	sub [hl]
 	ldh [hMultiplicand + 2], a

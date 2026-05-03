@@ -3,11 +3,8 @@ BattleCommand_Conversion2:
 	and a
 	jr nz, .failed
 	ld hl, wBattleMonType1
-	ldh a, [hBattleTurn]
-	and a
-	jr z, .got_type
-	ld hl, wEnemyMonType1
-.got_type
+	ld de, wEnemyMonType1
+	call _GetSidedHL
 	ld a, BATTLE_VARS_LAST_COUNTER_MOVE_OPP
 	call GetBattleVar
 	and a
