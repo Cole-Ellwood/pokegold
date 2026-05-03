@@ -683,6 +683,12 @@ the largest single recovery and is safely outside SRAM.
 
 **Severity:** MEDIUM. **Order:** 1 (quick win).
 
+> **STATUS: blocked → recipe corrected.** See "Updated 2026-05-02"
+> subsection below. The original recipe is unsafe; do not execute it.
+> Cross-references: `AGENT_LOG.md` 2026-05-03 01:55 UTC blocked entry,
+> `TECH_DEBT_REPORT_ADDENDUM.md` TD-010 supersession, `META_AUDIT.md`
+> TD-A01.
+
 ### Approach
 
 Edit `.gitignore`:
@@ -720,6 +726,79 @@ on next commit. No silent failure.
 ### Estimated effort
 
 10 minutes.
+
+### Updated 2026-05-02 by claude-adoring-curie-e2563e
+
+The original recipe is **wrong and unsafe**. The "non-existent paths"
+listed in step 1 all exist as real ignored content in the **main repo**;
+the original audit was conducted from a worktree (which carries no
+untracked content). Executing step 1 as written would push ~1.2 MB of
+vendored RGBDS binaries into untracked status — the toolchain
+`CLAUDE.md`'s build command depends on. The duplicate-pattern analysis
+in step 2 is also inverted. Full evidence: `AGENT_LOG.md` blocked entry
+2026-05-03 01:55 UTC; `TECH_DEBT_REPORT_ADDENDUM.md` TD-010
+supersession.
+
+#### Corrected recipe (use this, not the original)
+
+Edit `.gitignore`:
+
+1. **Delete line 54** (`*.sav`) — true duplicate of line 34 in the
+   emulator block.
+2. **Delete line 55** (`*.rtc`) — true duplicate of line 35 in the
+   emulator block.
+3. **Move line 56** (`*.state`) into the emulator block (between
+   current lines 32 and 38) so global state-file coverage stays intact.
+   Don't just delete it — it has no global duplicate.
+4. **Optionally** delete lines 50-52 (`dist/*.sav`, `dist/*.rtc`,
+   `dist/*.state`) since the globals cover them. Defensive is fine —
+   recommend leaving the dist scope.
+
+**Do not** delete entries for `rgbds-1.0.1/`, `rgbds-win64.zip`,
+`rgbds-win64*.zip`, `rgbds-*/`, `.local/`, `.claude_handoffs/`, or
+`.rebalance_chain/`. Those are correct and back real ignored content.
+
+#### Corrected verification
+
+From the **main repo root** (not a worktree):
+
+```bash
+git status --ignored 2>&1 | grep -E "rgbds-1\.0\.1|rgbds-win64|\.local|\.claude_handoffs|\.rebalance_chain"
+# All five paths must still appear under "Ignored files" — confirms
+# the dangerous step 1 of the original recipe was NOT executed.
+
+git status
+# After the corrected steps 1-3: no previously-ignored files now
+# tracked, no previously-tracked files now ignored.
+
+git diff .gitignore
+# Should show 2 deletions (lines 54-55) and 1 move (line 56 → emulator
+# block). No other changes.
+```
+
+#### Corrected risk
+
+**LOW**, same as original. The corrected scope is small and the
+verification above catches the failure mode (accidentally executing
+the original step 1).
+
+#### Corrected estimated effort
+
+5 minutes (smaller scope than original 10 minutes).
+
+#### Done criteria
+
+After executing the corrected recipe:
+1. Update `STATUS.md` TD-010 row from `blocked` to `done`.
+2. Append `done:` entry to `AGENT_LOG.md` with the corrected scope's
+   diff.
+3. Append a new dated entry in `TECH_DEBT_REPORT_ADDENDUM.md` linking
+   the close-out.
+
+**Alternative path:** if the corrected scope feels too small to bother
+with, mark TD-010 `accepted` (intentional debt — the entries are
+correct as-is, "cruft" was the wrong frame). User approval needed for
+`accepted`.
 
 ---
 
