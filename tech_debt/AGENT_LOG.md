@@ -275,6 +275,91 @@ For a worked example, see the TD-010 blocked entry below.
   4. **TD-004 sequencing implication.** Original FIX_PROPOSALS recommended-order put TD-004 after TD-005 because boss.asm split was assumed to need bank headroom. With 0x0e at 568 free, that dependency is gone. TD-004 can be planned independently. Recommend leaving its rank in FIX_PROPOSALS unchanged for now (it's still HIGH effort, multi-session) but note the unblock.
 - **Verifier check:** From this branch tip, the dev_index "Tight Banks And Regions" table should match (or be lighter than) the snapshot in ADDENDUM 2026-05-03. Quick checks: `grep -c '^| ROMX | 0d ' docs/generated/dev_index.md` → 1 (0x0d still tight). `grep -c '^| ROMX | 0e ' docs/generated/dev_index.md` → 0 (0x0e dropped out of tight-banks list; if it returns 1, regression — re-read this addendum). `grep -c '^| ROMX | 16 ' docs/generated/dev_index.md` → 1 (newly tight). `grep -c '^| WRAM0 | 00 ' docs/generated/dev_index.md` → 1 (newly tight).
 
+## 2026-05-03 — TD-001 — partial (pic-bank pressure guard shipped)
 
+- **Agent / session:** Opus 4.7 (1M context) / claude-trusting-kare-692dd4
+- **State:** partial
+- **Branch / commit:** claude/trusting-kare-692dd4 @ pending
+- **Files touched:** tools/audit/check_pic_bank_pressure.py (new), tools/audit/data/pic_bank_baseline.json (new)
+- **Summary:** Shipped one of TD-001's three remaining concrete deliverables: the pic-bank pressure guard called for in `FIX_PROPOSALS.md` TD-001 Approach #3 (and re-confirmed in the "Updated 2026-05-03" subsection). Reads the "Tight Banks And Regions" table from `docs/generated/dev_index.md`, compares the 8 known pic banks (12, 15, 17, 1a, 1b, 1c, 1e, 1f) against a JSON baseline, FAILs if any drops below baseline. `--update` refreshes the baseline. Initial baseline recorded matches the 2026-05-03 dev_index snapshot ($12=0, $15=0, $17=0, $1a=4, $1b=0, $1c=1, $1e=0, $1f=1). The audit is a *cushion* check (catches encroachment); the link itself catches actual overflow.
+- **Verification run:**
+  - First run with no baseline → FAIL with instructive `--update` message (expected).
+  - `--update` → wrote baseline JSON.
+  - Re-run → PASS with summary of bank free counts.
+  - Tampered baseline (set 1c=5 manually, then re-ran) → FAIL with `$1c: 5 free baseline -> 1 free now (-4)` + instructive message. Restored baseline via `--update`.
+  - `python3 tools/audit/check_tech_debt_freshness.py` → PASS.
+- **Bytes recovered:** N/A (tooling addition; protects future bytes).
+- **Bank impact:** N/A (no source code change).
+- **Issues / followups:**
+  1. **Audit floor placement.** Not added to `check_release_smoke.py` yet — per `FIX_PROPOSALS.md` and CLAUDE.md, the explicit promotion to release-smoke floor is a separate decision (similar to how `check_cross_bank_call.py` is currently diagnostic-only with 39 known hits). Recommend running it before any sprite-size change as a pre-commit check.
+  2. **TD-001 remaining items after this session:** TD-005 Pattern 2 (gated on user WIP in `experience.asm`) and TD-005 Pattern 3 (enumeration shipped this session — see next AGENT_LOG entry; conversion still open), and TD-009a (gated on user OK for vblank/intro_menu/events dead-write removal). Pic-bank guard is now off the list.
+  3. **Bank 0x1a inclusion.** ADDENDUM 2026-05-03 lists 0x1a at 4 free as a pic-adjacent bank; original FIX_PROPOSALS list (12/15/17/1b/1c/1e/1f) didn't include 1a. Audit guards all 8 conservatively; if 0x1a isn't truly pic data, the extra coverage is harmless (the `--update` workflow handles deliberate slack changes).
+- **Verifier check:** From this branch tip, `ls tools/audit/check_pic_bank_pressure.py tools/audit/data/pic_bank_baseline.json` should show both files. `python3 tools/audit/check_pic_bank_pressure.py` should print `Pic-bank pressure OK: ...` and exit 0. `cat tools/audit/data/pic_bank_baseline.json` should match the 2026-05-03 snapshot ($12=0, $15=0, $17=0, $1a=4, $1b=0, $1c=1, $1e=0, $1f=1). If a future sprite change drops any bank's free count, the audit FAILs and points the agent at `--update`.
 
+## 2026-05-03 — TD-005 — partial (Pattern 3 enumeration shipped; conversion still open)
+
+- **Agent / session:** Opus 4.7 (1M context) / claude-trusting-kare-692dd4
+- **State:** partial
+- **Branch / commit:** claude/trusting-kare-692dd4 @ pending
+- **Files touched:** tech_debt/EVIDENCE/td_005_pattern3_sites.md (new)
+- **Summary:** Closed the precursor step for TD-005 Pattern 3 called for in `FIX_PROPOSALS.md` "Updated 2026-05-02" (and `META_AUDIT.md` TD-A06). Wrote a Python classifier (kept in `.local/`, not committed) that walks all `.asm`, finds every `ldh a, [hBattleTurn]`, and classifies each site by shape using a 12-line context window. Output: 234 total reads → **66 Class A** (side-branch eligible), 138 Class B (control-flow only), 30 Class C (turn-flag-as-data). Class A is below the report's "100+" claim but well above the "speculative until measured" bar. Per-file Class A breakdown: 27 in `effect_commands.asm` (canary bank 0x0d, 6 free), 10 in `type_passive_damage_mods.asm`, 6 in `core.asm`, balance scattered. The 27 in 0x0d are the highest-leverage cluster — converting that group alone could relieve the canary bank by ~140 bytes if per-site savings hit the recipe's ~5-byte target. Spot-checked 4 classifier outputs against actual source: 100% match on the spot sample.
+- **Verification run:**
+  - `python3 .local/classify_pattern3.py | head -5` → reports 234/66/138/30 split (matches recipe expectations).
+  - Spot checks on `engine/battle/core.asm:381` (Class A, hl), `core.asm:1087` (Class A, de), `home/battle.asm:39` (Class B, control flow), `core.asm:1326` (Class C, `xor 1` toggle) → all classifications correct.
+  - `python3 tools/audit/check_tech_debt_freshness.py` → PASS.
+- **Bytes recovered:** N/A (enumeration only; conversion is the byte-recovery step and is not in this session's scope).
+- **Bank impact:** N/A.
+- **Issues / followups:**
+  1. **Conversion still open.** Pattern 3 itself is not closed by this entry — the `_GetSidedAddr` helper still needs to be written and call sites converted. The evidence file documents the implementer caveats (helper bank placement, three target registers not one, site-shape variance, recommended starting site).
+  2. **Helper-bank-placement caveat is real.** ROM0 has 236 free; the helper is ~8-12 bytes; logical home is `home/battle.asm`. Putting it in a ROMX bank forces `callfar` per site (5 bytes per site = ate the savings). This decision needs to be made explicit before converting.
+  3. **Three target registers (hl/de/bc) not one.** Recipe assumes return-in-hl. 38/66 sites use hl; 23 use de; 5 use bc. Either three helpers or a register-move tail per non-hl site. Evidence file analyzes both options.
+  4. **Classifier is one-shot.** Lives in `.local/classify_pattern3.py`, not committed. Reproduce instructions are in the evidence file. If a future agent needs to refresh the count, the classifier is 60 lines of Python.
+  5. **TD-005 stays partial.** Pattern 1 closed in prior session (-41 bytes); Pattern 2 still gated on user WIP in `experience.asm`; Pattern 3 enumeration done but conversion open. STATUS row updated with the new sub-state.
+- **Verifier check:** From this branch tip, `ls tech_debt/EVIDENCE/td_005_pattern3_sites.md` should exist. `wc -l tech_debt/EVIDENCE/td_005_pattern3_sites.md` should be ~150-180 lines. The Class A list inside should have exactly 66 file:line entries. `grep -c "	A	"` of the classifier output (regenerated locally) should still report 66 (or close — small drift is normal as battle code evolves).
+
+## 2026-05-03 — TD-A14 — done (navigation_floor build-artifact carveout)
+
+(TD-A### — codebase finding tracked in `TECH_DEBT_REPORT_ADDENDUM.md`,
+no STATUS row by design. This log entry is for chronological trail
+only; the canonical state lives in the ADDENDUM entry's "State"
+section.)
+
+- **Agent / session:** Opus 4.7 (1M context) / claude-trusting-kare-692dd4
+- **State:** done
+- **Branch / commit:** claude/trusting-kare-692dd4 @ pending
+- **Files touched:** tools/audit/check_docs_navigation.py, docs/generated/balance_audit.md (regen)
+- **Summary:** Patched `check_docs_navigation.py` to downgrade build-artifact (`pokegold.map`/`pokegold.sym`/`tools/stadium.exe`) and vendored-toolchain (`rgbds-1.0.1/*`) absences from FAIL to WARN. Added `BUILD_ARTIFACT_PATHS` set, `VENDORED_TOOLCHAIN_PREFIXES` tuple, `is_build_artifact_or_toolchain_ref()` helper. Both `check_required_paths()` and `check_backtick_references()` use the new helper. `check_generated_index()` skips the dev_index regen comparison when `pokegold.map` is absent. Also regenerated `docs/generated/balance_audit.md` to clear an unrelated staleness FAIL surfacing alongside.
+- **Verification run:**
+  - `python3 tools/audit/check_docs_navigation.py` → ALL DOC NAVIGATION CHECKS PASSED (4 WARNs for missing build-artifacts, none promoted to errors).
+  - `python3 tools/audit/check_navigation_floor.py` → "Navigation floor passed."
+  - `python3 tools/audit/check_tech_debt_freshness.py` → PASS.
+- **Bytes recovered:** N/A (audit-only).
+- **Bank impact:** N/A.
+- **Issues / followups:**
+  1. **From main repo with a build,** the audit will still validate dev_index freshness and verify build artifacts exist. Behavior change is scoped to the worktree-without-build path.
+  2. **balance_audit.md regen** captured drift that pre-existed this session (DUNSPARCE/TOGETIC/VENOMOTH/QUAGSIRE rows); not a behavior change introduced by my edits.
+- **Verifier check:** From a worktree without `pokegold.map`/`pokegold.sym`, `python3 tools/audit/check_navigation_floor.py` should exit 0 with "Navigation floor passed." From main repo after a build, it should still pass and validate dev_index freshness (the WARN-only path triggers solely on missing artifacts).
+
+## 2026-05-03 — TD-A15 — done (47 orphan Beta*.blk files removed)
+
+(TD-A### — codebase finding tracked in `TECH_DEBT_REPORT_ADDENDUM.md`,
+no STATUS row by design. This log entry is for chronological trail
+only; the canonical state lives in the ADDENDUM entry's "State"
+section.)
+
+- **Agent / session:** Opus 4.7 (1M context) / claude-trusting-kare-692dd4
+- **State:** done
+- **Branch / commit:** claude/trusting-kare-692dd4 @ pending
+- **Files touched:** maps/unused/Beta*.blk (47 deletions), maps/unused/ (now empty, removed from filesystem).
+- **Summary:** `git rm maps/unused/Beta*.blk` removed all 47 orphan binary files left behind by TD-007's source-side label cleanup. Reference safety verified pre-deletion via `grep -rn '<filename>' --include='*.asm'` for each of the 47 — zero hits. The `.blk` files were the entire content of `maps/unused/`; the directory itself is now gone. 5,854 bytes of file content removed from the working tree (~47 KB in disk-block padding).
+- **Verification run:**
+  - `git status --short | grep -c '^D '` → 47 (matches expected count).
+  - `ls maps/unused/Beta*.blk 2>&1` → "No such file or directory" (gone).
+  - `grep -rn 'maps/unused' --include='*.asm' --include='*.md' --include='*.py' --include='*.link'` → only AGENT_LOG / ADDENDUM self-references remain (this entry, the TD-007 done entry's followup #2, the TD-A15 ADDENDUM entry).
+  - `python3 tools/audit/check_tech_debt_freshness.py` → PASS.
+- **Bytes recovered:** N/A from ROM perspective (TD-007 already recovered the 5,854 ROM bytes by deleting the source-side INCBIN lines). Disk-only cleanup of orphan binaries.
+- **Bank impact:** N/A.
+- **Issues / followups:**
+  1. **TD-007 followup #2 closed.** That followup said "47 files, ~5,854 bytes on disk. Reversible: re-adding the label + INCBIN line restores the data. If repo cleanup wants to also drop the `.blk` files, that's a separate small commit. Recommend leaving until/unless a release pass." This entry is that small commit. Reversibility now via `git show <pre-deletion-commit>:maps/unused/<filename>.blk` if anyone ever wants the data back.
+- **Verifier check:** `ls maps/unused/ 2>&1` → "No such file or directory" (or empty if a future agent recreated the dir for other reasons). `git log --diff-filter=D --name-only` should show the 47 deletions in this branch's commit history once committed.
 

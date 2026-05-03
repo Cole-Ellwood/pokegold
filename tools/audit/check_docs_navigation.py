@@ -175,6 +175,26 @@ OPTIONAL_LOCAL_PATH_PREFIXES = (
     "workspace",
 )
 
+# Paths that exist only after a successful build or toolchain install.
+# Worktrees never carry these; main-repo developers see them after running
+# `make pokegold.gbc` (build artifacts) or once the vendored RGBDS is
+# downloaded (`rgbds-1.0.1/`). Missing these is a build/setup problem, not
+# a docs/navigation problem — this audit shouldn't fail on them.
+BUILD_ARTIFACT_PATHS = frozenset({
+    "pokegold.map",
+    "pokegold.sym",
+    "pokegold.gbc",
+    "pokesilver.map",
+    "pokesilver.sym",
+    "pokesilver.gbc",
+    "tools/stadium.exe",
+})
+
+VENDORED_TOOLCHAIN_PREFIXES = (
+    "rgbds-1.0.1/",
+    "rgbds-1.0.1\\",
+)
+
 PLANNED_MISSING_ARTIFACTS = (
     # Boss AI index hardening follow-ups (see docs/agent_navigation/subsystems/
     # boss_ai_index_hardening.md). generate_boss_ai_index.py is the
@@ -305,6 +325,16 @@ def is_planned_missing_artifact_ref(ref: str) -> bool:
     return ref in PLANNED_MISSING_ARTIFACTS
 
 
+def is_build_artifact_or_toolchain_ref(ref: str) -> bool:
+    """Refs that appear in REQUIRED_PATHS or helper-doc backticks but only
+    exist after a build (artifacts) or toolchain install (vendored RGBDS).
+    Worktrees never carry these; a missing entry means "no build yet" /
+    "toolchain unpacked elsewhere," not a docs drift."""
+    if ref in BUILD_ARTIFACT_PATHS:
+        return True
+    return ref.startswith(VENDORED_TOOLCHAIN_PREFIXES)
+
+
 def read_repo_text(path: str) -> str:
     return (ROOT / path).read_text(encoding="utf-8")
 
@@ -322,15 +352,29 @@ def section(text: str, start_marker: str, end_marker: str | None = None) -> str 
 
 
 def check_required_paths(errors: list[str]) -> None:
-    missing = [path for path in REQUIRED_PATHS if not (ROOT / path).exists()]
-    for path in missing:
+    hard_missing: list[str] = []
+    soft_missing: list[str] = []
+    for path in REQUIRED_PATHS:
+        if (ROOT / path).exists():
+            continue
+        if is_build_artifact_or_toolchain_ref(path):
+            soft_missing.append(path)
+        else:
+            hard_missing.append(path)
+    for path in hard_missing:
         errors.append(f"missing required navigation path: {path}")
-    if not missing:
+    for path in soft_missing:
+        # Build artifacts and vendored toolchain are environmental, not
+        # docs drift. Surface as WARN so the signal isn't lost, but don't
+        # fail the audit — the build/setup audits cover this category.
+        print(f"WARN: build artifact or vendored toolchain missing: {path}")
+    if not hard_missing:
         print("PASS: required helper docs and important paths exist")
 
 
 def check_backtick_references(errors: list[str]) -> None:
     missing: list[tuple[str, str]] = []
+    soft_missing: list[tuple[str, str]] = []
     for helper in HELPER_DOCS:
         helper_path = ROOT / helper
         if not helper_path.exists():
@@ -340,10 +384,18 @@ def check_backtick_references(errors: list[str]) -> None:
                 continue
             if is_planned_missing_artifact_ref(ref):
                 continue
-            if not (ROOT / ref).exists():
+            if (ROOT / ref).exists():
+                continue
+            if is_build_artifact_or_toolchain_ref(ref):
+                soft_missing.append((helper, ref))
+            else:
                 missing.append((helper, ref))
     for helper, ref in missing:
         errors.append(f"broken helper-doc path reference in {helper}: {ref}")
+    for helper, ref in soft_missing:
+        print(
+            f"WARN: helper-doc references build artifact or vendored toolchain in {helper}: {ref}"
+        )
     if not missing:
         print("PASS: helper-doc path references resolve")
 
@@ -472,6 +524,15 @@ def check_generated_file(
 
 
 def check_generated_index(errors: list[str]) -> None:
+    # dev_index regen needs pokegold.map; skip cleanly if not built yet.
+    map_path = ROOT / "pokegold.map"
+    if not map_path.exists():
+        print(
+            "WARN: skipping dev_index freshness check: pokegold.map not built "
+            "(run `make pokegold.gbc` from main repo, then regen with "
+            "`python3 scripts/generate_dev_index.py --rom pokegold`)"
+        )
+        return
     check_generated_file(
         errors,
         committed_path=ROOT / "docs/generated/dev_index.md",

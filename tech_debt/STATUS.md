@@ -11,11 +11,11 @@ blocked, what's done.
 
 | ID | Sev | State | Last entry | Notes |
 |----|-----|-------|------------|-------|
-| TD-001 | CRIT | partial | 2026-05-03 | re-evaluated 2026-05-03; bank-pressure picture refreshed in ADDENDUM 2026-05-03 — 0x0e no longer canary (568 free), 0x0d (Effect Commands, 6 free) is new tight battle bank; remaining work: TD-005 P2/P3, TD-009a, pic-bank guard |
+| TD-001 | CRIT | partial | 2026-05-03 | re-evaluated 2026-05-03; bank-pressure picture refreshed in ADDENDUM 2026-05-03 — 0x0e no longer canary (568 free), 0x0d (Effect Commands, 6 free) is new tight battle bank; pic-bank guard shipped 2026-05-03 (`tools/audit/check_pic_bank_pressure.py`); remaining work: TD-005 P2 + P3 (P3 enumerated 2026-05-03, conversion still open), TD-009a |
 | TD-002 | CRIT | pending-trigger | — | gated on `SAVE_FORMAT_VERSION` bump |
 | TD-003 | CRIT | open | — | release-gated; partial fix possible after TD-005 |
 | TD-004 | HIGH | open | — | do **after** TD-005 (needs bank headroom) |
-| TD-005 | HIGH | partial | 2026-05-03 | Pattern 1 closed (41 bytes recovered in bank 0e); Patterns 2 (gated on user WIP in experience.asm) and 3 (enumeration TBD) remain |
+| TD-005 | HIGH | partial | 2026-05-03 | Pattern 1 closed (41 bytes recovered in bank 0e); Pattern 2 gated on user WIP in experience.asm; Pattern 3 enumerated 2026-05-03 (66 Class A sites in `tech_debt/EVIDENCE/td_005_pattern3_sites.md`, 27 of which sit in canary bank 0x0d) — conversion to `_GetSidedAddr` still open |
 | TD-006 | HIGH | open | — | escalation on values **and** names |
 | TD-007 | MED | **done** | 2026-05-03 | 47 Beta\*_Blocks pruned; 5,854 bytes recovered (banks 0x2a +3500, 0x2b +2259, 0x37 +95). SHA1/dist update needs user playtest |
 | TD-008 | MED | open | — | research current RGBDS version first |
