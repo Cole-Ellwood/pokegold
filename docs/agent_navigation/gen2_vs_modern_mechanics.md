@@ -517,13 +517,10 @@ For any move-presence question, the authoritative file is
 - **Encore**: locks target into last move for `(BattleRandom & 3) + 3`
   turns = **3..6 turns**. `engine/battle/move_effects/encore.asm:40-45`.
   (Plan referenced "3..7" — source is 3..6.)
-- **Outrage**: 90 BP, DRAGON, 100% acc, 15 PP per
-  `data/moves/moves.asm:216` *in this branch's source*. A pending bump
-  to 100 BP exists on a sibling branch (commit `0509658a` on worktree
-  `distracted-pasteur-fb2080`); not in this checkout. Always read
-  `data/moves/moves.asm` directly before quoting BP. Outrage rampage is
-  2-3 turns then confuse, vanilla mechanic.
-  <!-- audit:noqa stale-claims — deliberate cross-reference to a sibling-branch artifact -->
+- **Outrage**: 100 BP, DRAGON, 100% acc, 15 PP per
+  `data/moves/moves.asm:216`. Always read `data/moves/moves.asm` directly
+  before quoting BP. Outrage rampage is 2-3 turns then confuse, vanilla
+  mechanic.
 
 - **Earthquake / Magnitude / Fissure** all hit Dig users
   (`engine/battle/effect_commands.asm:1735-1740, 1789-1798`). Gust and
