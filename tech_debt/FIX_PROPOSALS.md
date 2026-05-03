@@ -16,6 +16,8 @@ Pick the lowest-numbered open item whose verification floor you can meet
 in your session. Quick wins first to recover bytes for the byte-tight
 banks; structural work last; release-gated items wait.
 
+### Original order (2026-05-02)
+
 | # | ID | Severity | Why this position |
 |---|----|----------|-------------------|
 | 1 | TD-010 | MEDIUM | Trivial, no risk, demonstrates workflow |
@@ -31,6 +33,34 @@ banks; structural work last; release-gated items wait.
 | 11 | TD-001 | CRITICAL | Re-evaluate after #4, #6 done — strategic, not localized |
 | 12 | TD-002 | CRITICAL | Release-gated (waits for SAVE_FORMAT_VERSION bump) |
 | 13 | TD-003 | CRITICAL | Release-gated; partial fix possible after TD-005 byte recovery |
+
+### Updated 2026-05-02 — current ranking
+
+After closing TD-010 and disputing TD-011, plus splitting TD-009 into
+TD-009a (HRAM, escalation-gated) and TD-009b (WRAM, release-gated):
+
+| # | ID | State | Severity | Why this position |
+|---|----|-------|----------|-------------------|
+| — | TD-010 | **done** | MED | closed via corrected recipe; ADDENDUM 2026-05-02 |
+| — | TD-011 | **disputed** | LOW | script IS used by docs/manifest.md; ADDENDUM 2026-05-02. Skip. |
+| — | TD-009a | **escalation** | MED | dead-write removal needed; ADDENDUM 2026-05-02. Wait for user OK. |
+| 1 | TD-005 | open | HIGH | byte-recovery lever (now scoped 150-450 bytes per "Updated 2026-05-02"); relieves TD-001 |
+| 2 | TD-007 | open | MED | selective pruning of tight banks; relieves TD-001. Beta blocks first. |
+| 3 | TD-006 | open | HIGH | constants naming; gameplay-side escalation on values AND names |
+| 4 | TD-004 | open | HIGH | structural boss.asm split; do AFTER TD-005 frees bank space |
+| 5 | TD-013 | open | LOW * | EXP cleanup; SHA1 must match (see "Updated 2026-05-02"). * effective MEDIUM per ADDENDUM |
+| 6 | TD-012 | open | LOW | optional Makefile shell-hack cleanup |
+| 7 | TD-008 | open | MED | RGBDS upgrade; research current version first ("Updated 2026-05-02") |
+| 8 | TD-001 | open | CRIT | re-evaluate after TD-005 + TD-007 close — strategic, not localized |
+| 9 | TD-009b | open | MED | WRAM unused fields; release-gated alongside TD-002 (next save-format bump) |
+| 10 | TD-002 | pending-trigger | CRIT | release-gated (waits for SAVE_FORMAT_VERSION bump) |
+| 11 | TD-003 | open | CRIT | release-gated; partial fix (audit + comments) possible without bump |
+
+Quick wins were front-loaded in the original order to "demonstrate
+workflow." The workflow is now demonstrated (TD-010 closed via
+ADDENDUM-corrected recipe, TD-011 disputed). Remaining ranking
+prioritizes byte recovery (TD-001 pressure) over readability /
+structural / release-gated work.
 
 ---
 
