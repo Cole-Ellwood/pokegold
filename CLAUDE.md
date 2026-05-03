@@ -25,6 +25,19 @@ The hack's design themes (these scope what changes are in-scope):
 Source orientation, not this file: `docs/README.md`, `docs/project_map.md`,
 `docs/agent_navigation/source_output_ownership.md`.
 
+## Read this before any mechanics decision
+
+This project is Gen 2. Modern Pokemon mechanics (per-move phys/special
+split, abilities, natures, Fairy type, Gen 4+ moves, modern items) are NOT
+the rules here. Before proposing or evaluating any mechanics, balance, AI,
+moveset, item, or stat decision, read:
+
+- `docs/agent_navigation/gen2_vs_modern_mechanics.md`
+
+It is the single source of truth for "is this how Gen 2 / this hack
+actually works, or am I leaking modern Pokemon priors?" If something in
+that doc is wrong, fix the doc — do not work around it.
+
 ## North Star: First-Playthrough Promise
 
 The hack exists to make Pokémon Gold feel unknown and dangerous again for a

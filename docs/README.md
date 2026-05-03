@@ -24,18 +24,21 @@ player can lose, and old knowledge is useful but incomplete.
 
 ## Required Read Order
 
-1. `docs/README.md`: helper-doc routing and precedence.
-2. `docs/project_context.md`: First-Playthrough Promise, design constraints,
+1. `docs/agent_navigation/gen2_vs_modern_mechanics.md`: Gen 2 mechanics
+   reference — read before any mechanics, balance, AI, moveset, item, or
+   stat claim, to prevent modern-Pokemon prior bleed.
+2. `docs/README.md`: helper-doc routing and precedence.
+3. `docs/project_context.md`: First-Playthrough Promise, design constraints,
    done criteria.
-3. `docs/project_map.md`: task-to-source routing.
-4. `docs/project_roadmap.md`: current project workstreams and future-session
+4. `docs/project_map.md`: task-to-source routing.
+5. `docs/project_roadmap.md`: current project workstreams and future-session
    status board.
-5. `docs/agent_navigation/start_card.md`: one-screen lane picker for broad or
+6. `docs/agent_navigation/start_card.md`: one-screen lane picker for broad or
    ambiguous prompts.
-6. `docs/agent_navigation/README.md`: constant-time task routing, source-zone
+7. `docs/agent_navigation/README.md`: constant-time task routing, source-zone
    classification, verification matrix, and durable artifact catalog.
-7. `docs/generated/dev_index.md`: current banks, labels, source anchors, memory.
-8. Task-specific docs:
+8. `docs/generated/dev_index.md`: current banks, labels, source anchors, memory.
+9. Task-specific docs:
    - Boss AI / trainer difficulty: `docs/boss_ai_spec.md`,
      `docs/boss_ai_bug_testing_plan.md`
    - Review / bug hunt: `docs/review_playbook.md`,
