@@ -1,6 +1,9 @@
 # Tech Debt Report — Addendum
 
 **Created:** 2026-05-02
+
+<!-- audit:noqa-file stale-claims — append-only dated session log; freshness enforced by tools/audit/check_tech_debt_freshness.py -->
+
 **Purpose:** Corrections, supersessions, and additions to
 `TECH_DEBT_REPORT.md`. The report itself is **immutable** per project
 rule; this file exists to handle the cases where a finding turns out to

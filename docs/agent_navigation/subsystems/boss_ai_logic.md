@@ -39,7 +39,8 @@ Avoid grepping `engine/` cold. Pick the right row below first.
   or run `tools/audit/check_boss_ai_index_lines.py`.
 - LATE-tier visible per-turn lag was a known issue: not bloat in any one
   heuristic, but the same yes/no questions answered many times per turn from
-  inside the lookahead loop. **Phase 1 shipped 2026-05-02** — per-tick
+  inside the lookahead loop. **Phase 1 shipped (commit `476b8087`)** —
+  per-tick
   memoization of `HasAnyKOMove`, `PlayerHasPublicThreatVsEnemy`,
   `PlayerHasRevealedPriorityThreat`, `GetPrimaryThreatType` (4 cache bytes
   inside the existing WRAM reserve, reset at `ApplyMoveModel` and

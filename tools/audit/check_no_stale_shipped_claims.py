@@ -35,8 +35,15 @@ Use it for deliberate cross-references to side-branch artifacts and for
 historical session logs whose original SHA got rebased away. Always
 annotate the marker with the reason and (when known) the new canonical SHA.
 
+Verdict tags:
+  FAIL  — `missing-commit` (cited SHA doesn't resolve) or `stale-commit`
+          (cited SHA isn't on dev tip). Returns exit 1.
+  WARN  — `date-only` (date claim with no commit cite — cite the commit
+          for verifiability or strip the date to remove rot surface),
+          `future-date` (typo or placeholder). Returns exit 0.
+
 Exit codes:
-  0 — every cited commit is on dev tip; no future-dated claims
+  0 — every cited commit is on dev tip; warnings allowed
   1 — at least one cited commit is missing from dev or doesn't resolve
 """
 from __future__ import annotations
@@ -76,6 +83,12 @@ COMMIT_REF_RE = re.compile(r"\bcommit\s+`?(?P<hash>[0-9a-f]{7,40})`?")
 # logs whose commit hashes got rebased under a different SHA. Annotate with
 # the new SHA when known.
 NOQA_RE = re.compile(r"audit:noqa(?:\s+stale-claims)?\b", re.IGNORECASE)
+# File-scope exemption: drop `<!-- audit:noqa-file stale-claims -->` anywhere
+# in the first 20 lines of a doc that is by-design date-anchored (living
+# index docs, status boards, session-log addenda). These have their own
+# freshness contract — usually `tools/audit/check_tech_debt_freshness.py`.
+NOQA_FILE_RE = re.compile(r"audit:noqa-file(?:\s+stale-claims)?\b", re.IGNORECASE)
+NOQA_FILE_HEADER_LINES = 20
 
 
 @dataclass
@@ -191,9 +204,12 @@ def scan(files: list[Path], dev_tip: str, today: _dt.date) -> list[Finding]:
             print(f"WARN: could not read {path}: {exc}", file=sys.stderr)
             continue
         lines = text.splitlines()
+        if any(NOQA_FILE_RE.search(l) for l in lines[:NOQA_FILE_HEADER_LINES]):
+            continue
         for lineno, line in enumerate(lines, 1):
             if _noqa_in_block(lines, lineno):
                 continue
+            line_has_commit_ref = bool(COMMIT_REF_RE.search(line))
             for m in DATE_CLAIM_RE.finditer(line):
                 claim_date = _parse_iso_date(m["date"])
                 if claim_date is None:
@@ -209,6 +225,22 @@ def scan(files: list[Path], dev_tip: str, today: _dt.date) -> list[Finding]:
                             explanation=(
                                 f"claim is dated {m['date']} but today is "
                                 f"{today.isoformat()} — typo or placeholder?"
+                            ),
+                        )
+                    )
+                elif not line_has_commit_ref:
+                    findings.append(
+                        Finding(
+                            path=path,
+                            lineno=lineno,
+                            line=_excerpt(line),
+                            kind="date-only",
+                            detail=f"{m['verb'].lower()} {m['date']}",
+                            explanation=(
+                                f"date-anchored claim with no `commit XYZ` "
+                                f"cite on the same line — cite the commit "
+                                f"(verifiable) or strip the date (no rot "
+                                f"surface)."
                             ),
                         )
                     )
@@ -260,12 +292,12 @@ def main() -> int:
         return 0
 
     hard_fails = [f for f in findings if f.kind in ("missing-commit", "stale-commit")]
-    soft_warns = [f for f in findings if f.kind == "future-date"]
+    soft_warns = [f for f in findings if f.kind in ("future-date", "date-only")]
 
     print("Stale shipped-claims audit findings.")
     print(f"  scanned {len(files)} .md files; dev tip: {dev_tip[:12]}")
     print(
-        f"  {len(hard_fails)} cited-commit failure(s), {len(soft_warns)} future-date warning(s)"
+        f"  {len(hard_fails)} cited-commit failure(s), {len(soft_warns)} warning(s)"
     )
     print()
     print("These are candidates for human review, not auto-fix targets.")
@@ -273,14 +305,19 @@ def main() -> int:
     print("cherry-picked under a different commit hash. Verify each before editing.")
     print()
 
+    tags = {
+        "missing-commit": "FAIL",
+        "stale-commit": "FAIL",
+        "future-date": "WARN",
+        "date-only": "WARN",
+    }
     by_file: dict[Path, list[Finding]] = {}
     for f in findings:
         by_file.setdefault(f.path, []).append(f)
     for path in sorted(by_file):
         rel = path.relative_to(ROOT)
         for f in by_file[path]:
-            tag = {"missing-commit": "FAIL", "stale-commit": "FAIL", "future-date": "WARN"}[f.kind]
-            print(f"  [{tag}] {rel}:{f.lineno}  {f.kind} ({f.detail})")
+            print(f"  [{tags[f.kind]}] {rel}:{f.lineno}  {f.kind} ({f.detail})")
             print(f"         line: {f.line}")
             print(f"         {f.explanation}")
             print()

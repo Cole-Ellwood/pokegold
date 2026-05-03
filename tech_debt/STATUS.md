@@ -2,6 +2,8 @@
 
 **Updated:** 2026-05-03 (Pattern 3 close)
 
+<!-- audit:noqa-file stale-claims — by-design date-anchored index doc; freshness enforced by tools/audit/check_tech_debt_freshness.py -->
+
 Projection of `AGENT_LOG.md` for fast lookup. The log is the
 authoritative audit trail; this table is the index. Read this **first**
 in any session — it tells you what's open, what's claimed, what's
