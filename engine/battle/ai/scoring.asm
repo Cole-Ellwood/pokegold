@@ -230,7 +230,7 @@ AI_Types:
 	jr .checkmove
 
 .immune
-	call AIDiscourageMove
+	call AIBlockMove
 	jr .checkmove
 
 
@@ -3119,7 +3119,7 @@ AI_Status:
 	jr nz, .checkmove
 
 .immune
-	call AIDiscourageMove
+	call AIBlockMove
 	jr .checkmove
 
 
@@ -3198,6 +3198,21 @@ AI_None:
 AIDiscourageMove:
 	ld a, [hl]
 	add 10
+	ld [hl], a
+	ret
+
+AIBlockMove:
+; Push the score at [hl] up to BossAI's "blocked" threshold (80) so the move
+; is treated as a non-option in BossAI_SelectMove's first-pass scan. Used by
+; AI_Types/AI_Status .immune branches: vanilla's +10 nudge left immune moves
+; competitive with discouraged-but-real moves and let bosses pick them
+; (Falkner Pidgeotto vs FLYING → Mud Slap for 0 damage). Secondary effects
+; on a _HIT variant don't apply through type immunity in Gen 2 anyway, so an
+; immune attacking move is strictly wasted.
+	ld a, [hl]
+	cp 80
+	ret nc
+	ld a, 80
 	ld [hl], a
 	ret
 
