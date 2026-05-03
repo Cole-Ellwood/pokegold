@@ -1304,7 +1304,22 @@ GetFailureResultText_Far:
 	jr nz, .got_text
 	ld hl, UnaffectedText
 .got_text
-	call FailText_CheckOpponentProtect
+	; Inlined FailText_CheckOpponentProtect body. The same body lives at
+	; effect_commands.asm:2279 for that section's bank-0d callers; this
+	; copy serves bank-0e callers because plain `call` cannot cross banks.
+	; (Earlier code did `call FailText_CheckOpponentProtect` here, which
+	; assembles but jumps to garbage at runtime — caused a softlock on
+	; type-immune hits like Tackle vs a Ghost-type defender.)
+	; GetBattleVar / StdBattleTextbox both live in HOME and preserve hl,
+	; so the swap-hl-with-de pattern works correctly with plain `call`.
+	ld a, BATTLE_VARS_SUBSTATUS1_OPP
+	call GetBattleVar
+	bit SUBSTATUS_PROTECT, a
+	jr z, .ftcop_no_protect
+	ld h, d
+	ld l, e
+.ftcop_no_protect
+	call StdBattleTextbox
 	xor a
 	ld [wCriticalHit], a
 

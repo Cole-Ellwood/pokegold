@@ -2277,6 +2277,10 @@ BattleCommand_BideFailText:
 	jp PrintButItFailed
 
 FailText_CheckOpponentProtect:
+; Body is duplicated inline at type_passive_damage_mods.asm:1307 (`.got_text`
+; in `GetFailureResultText_Far`) so that bank-0e caller can reach it without
+; a cross-bank `call` (which assembles but jumps to garbage). If you change
+; this body, update that copy too — they must stay in sync.
 	ld a, BATTLE_VARS_SUBSTATUS1_OPP
 	call GetBattleVar
 	bit SUBSTATUS_PROTECT, a

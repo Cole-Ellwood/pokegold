@@ -38,7 +38,7 @@ Read `docs/README.md` first for helper-doc routing, then `docs/project_context.m
 ### Moves
 - Intent: Move stats, effects, descriptions, contact flags, and animations.
 - Start here: `data/moves/moves.asm`, `data/moves/effects.asm`, `data/moves/effects_pointers.asm`, `data/moves/contact_flags.asm`, `data/moves/descriptions.asm`, `constants/move_constants.asm`
-- Anchors: `Moves` (10:5af6, `data/moves/moves.asm:14`); `MoveEffects` (09:7510, `data/moves/effects.asm:3`); `MoveContactFlags` (0e:7cca, `data/moves/contact_flags.asm:4`); `Spikes` (09:7a2c, `data/moves/effects.asm:1525`); `RapidSpin` (09:7b01, `data/moves/effects.asm:1772`)
+- Anchors: `Moves` (10:5af6, `data/moves/moves.asm:14`); `MoveEffects` (09:7510, `data/moves/effects.asm:3`); `MoveContactFlags` (0e:7cd5, `data/moves/contact_flags.asm:4`); `Spikes` (09:7a2c, `data/moves/effects.asm:1525`); `RapidSpin` (09:7b01, `data/moves/effects.asm:1772`)
 
 ### Items and held items
 - Intent: Item data, descriptions, pockets, marts, and battle held effects.
@@ -75,7 +75,7 @@ Read `docs/README.md` first for helper-doc routing, then `docs/project_context.m
 | Region | Used | Free | Banks |
 | --- | ---: | ---: | ---: |
 | ROM0 | 16148 | 236 |  |
-| ROMX | 1151713 | 929055 | 127 |
+| ROMX | 1151724 | 929044 | 127 |
 | SRAM | 31699 | 1069 | 4 |
 | WRAM0 | 4047 | 49 |  |
 | WRAMX | 4096 | 0 |  |
@@ -153,7 +153,7 @@ Use these as candidates when moving optional code or data out of tight banks.
 | `bankB` | ROMX | 0b:4000-4d69 | 3434 | ROMX 0b | `engine/battle/ai/redundant.asm`, `engine/battle/trainer_huds.asm`, `engine/events/move_deleter.asm`, `engine/events/move_reminder.asm`, +7 more |
 | `Effect Commands` | ROMX | 0d:4000-7ff9 | 16378 | ROMX 0d | `engine/battle/effect_commands.asm`, `engine/battle/used_move_text.asm`, `main.asm` |
 | `Enemy Trainers` | ROMX | 0e:4000-704e | 12367 | ROMX 0e | `engine/battle/ai/boss.asm`, `engine/battle/ai/items.asm`, `engine/battle/read_trainer_attributes.asm`, `main.asm` |
-| `Late Gen Held Items` | ROMX | 0e:704f-7dc7 | 3449 |  | `engine/battle/late_gen_held_items.asm`, `engine/battle/type_passive_damage_mods.asm`, `main.asm` |
+| `Late Gen Held Items` | ROMX | 0e:704f-7dd2 | 3460 |  | `engine/battle/late_gen_held_items.asm`, `engine/battle/type_passive_damage_mods.asm`, `main.asm` |
 | `Battle Core` | ROMX | 0f:4000-7bb6 | 15287 | ROMX 0f | `engine/battle/core.asm`, `main.asm` |
 | `Evolutions and Attacks` | ROMX | 10:6893-7f96 | 5892 | ROMX 10 | `data/pokemon/evos_attacks.asm`, `data/pokemon/evos_attacks_pointers.asm` |
 | `Maps` | ROMX | 25:4000-65f8 | 9721 | ROMX 25 | `data/maps/attributes.asm`, `data/maps/blocks.asm`, `data/maps/map_data.asm`, `data/maps/maps.asm`, +2 more |
@@ -230,7 +230,7 @@ Use these as candidates when moving optional code or data out of tight banks.
 | `TryActivateDittoImposter` | 01:7a13 | `engine/battle/ditto_imposter.asm:1` |
 | `Moves` | 10:5af6 | `data/moves/moves.asm:14` |
 | `MoveEffects` | 09:7510 | `data/moves/effects.asm:3` |
-| `MoveContactFlags` | 0e:7cca | `data/moves/contact_flags.asm:4` |
+| `MoveContactFlags` | 0e:7cd5 | `data/moves/contact_flags.asm:4` |
 | `Spikes` | 09:7a2c | `data/moves/effects.asm:1525` |
 | `RapidSpin` | 09:7b01 | `data/moves/effects.asm:1772` |
 | `ItemAttributes` | 01:6930 | `data/items/attributes.asm:8` |
