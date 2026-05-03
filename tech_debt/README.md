@@ -102,6 +102,7 @@ You cannot:
 | `FIX_PROPOSALS.md` | Recipe per finding; ranked order | Editable; preserve history with "Updated YYYY-MM-DD" subsections |
 | `AGENT_LOG.md` | Append-only record of agent work | Append-only |
 | `META_AUDIT.md` | Periodic audit of this folder itself; lists defects in the workstream | Mutable; supersedable |
+| `CHANGELOG.md` | Meta-changes to the folder (addenda, audits, workflow tweaks) | Append-only |
 
 ## Recommended order
 

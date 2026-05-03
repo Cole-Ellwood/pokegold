@@ -9,63 +9,70 @@ identified.
 
 ---
 
-## Entry format
+## Entry formats
 
-Use this exact template. Copy, fill, append.
+Two templates. Pick by finding severity / fix scope.
+
+### Minimal — for LOW or quick-win MEDIUM findings
+
+Use when: single-file edit, no audit fallout, no bytes/bank impact,
+no follow-ups. Most TD-010, TD-011 -class fixes.
 
 ```markdown
 ## YYYY-MM-DD HH:MM — TD-### — <state>
 
-- **Agent / session:** <model name + session marker, e.g. "Opus 4.6 / sonnet-claude-zen-kilby-de2004">
+- **Agent / branch:** <model + branch @ short SHA>
+- **Files touched:** <list, or "(none yet)" for `claimed`>
+- **Summary:** <1-2 sentences>
+- **Verification:** `<cmd>` → PASS/FAIL; `<cmd>` → PASS/FAIL
+- **Verifier check:** <one line — how to independently re-confirm>
+```
+
+### Full — for HIGH+ findings, or any fix with bytes/bank/follow-ups
+
+Use when: byte-recovery work (TD-005), structural refactor (TD-004),
+boss AI changes, save-format work (TD-009b), or anything blocked.
+
+```markdown
+## YYYY-MM-DD HH:MM — TD-### — <state>
+
+- **Agent / session:** <model + session marker>
 - **State:** claimed | done | partial | blocked | accepted | disputed | pending-trigger
-- **Branch / commit:** <branch name @ short SHA, or "uncommitted">
-- **Files touched:** <comma-separated list, or "(none yet)">
-- **Summary:** <1-3 sentences of what was done or attempted>
+- **Branch / commit:** <branch @ short SHA, or "uncommitted">
+- **Files touched:** <list>
+- **Summary:** <1-3 sentences>
 - **Verification run:**
-  - `<command>` → <PASS / FAIL / N/A> <(any notable output)>
-  - `<command>` → <PASS / FAIL / N/A>
+  - `<command>` → PASS / FAIL / N/A <(notable output)>
+  - `<command>` → PASS / FAIL / N/A
 - **Bytes recovered (if applicable):** <number, or N/A>
-- **Bank impact (if applicable):** <which bank's free count changed, before/after>
-- **Issues / followups:** <anything not done, deferred, or surfaced for human>
-- **Verifier check:** <how a future agent can independently confirm the fix; usually a re-run of the verification commands>
+- **Bank impact (if applicable):** <which bank changed, before/after>
+- **Issues / followups:** <anything deferred or surfaced for human>
+- **Verifier check:** <how a future agent can independently confirm>
 ```
 
 ### State definitions
 
 - **claimed** — agent is starting work; appended at session start to claim the finding so two agents don't collide.
 - **done** — fix implemented, full verification floor passed, finding closed.
-- **partial** — fix partially implemented (e.g. macros defined but not all sites replaced); next agent can continue. Include exactly where to pick up.
-- **blocked** — agent stopped; cannot proceed without input or because a dependency isn't met. Surface to human.
-- **accepted** — finding is intentionally left as debt. Requires human approval (note who approved and when).
-- **disputed** — agent believes the finding is wrong, stale, or already false. Provide evidence; human reconciles.
-- **pending-trigger** — finding is gated on an external event (e.g. TD-002 waits for `SAVE_FORMAT_VERSION` bump). Log this once to indicate awareness; don't re-log on every session.
+- **partial** — fix partially implemented; next agent can continue. Include where to pick up.
+- **blocked** — agent stopped; cannot proceed without input. Surface to human.
+- **accepted** — finding intentionally left as debt. Requires human approval.
+- **disputed** — agent believes the finding is wrong; provide evidence.
+- **pending-trigger** — finding gated on an external event. Log once.
 
----
+### Update STATUS.md in the same commit
 
-## Example entry (illustrative — delete the example block once real entries exist)
+Whenever you append a terminal entry (`done` / `blocked` / `accepted` /
+`disputed` / `partial` / `pending-trigger`), edit `STATUS.md` in the
+**same commit** — set the `State` cell, set the `Last entry` cell to
+this entry's timestamp, and add a one-line note if context is needed.
+Don't update STATUS for `claimed` entries (too churny).
 
-```markdown
-## 2026-05-03 14:22 — TD-010 — done
-
-- **Agent / session:** Opus 4.6 / claude-zen-kilby-de2004
-- **State:** done
-- **Branch / commit:** claude/td-010-gitignore @ abc1234
-- **Files touched:** .gitignore
-- **Summary:** Removed 6 entries for non-existent paths and 3 duplicate save-state lines from `.gitignore`. Kept `dist/*.gb` defensively (per FIX_PROPOSALS recommendation).
-- **Verification run:**
-  - `git status` → PASS (no previously-ignored files now tracked)
-  - `ls -la rgbds-1.0.1/ .local/ .claude_handoffs/ .rebalance_chain/` → PASS (all four absent, removal of their gitignore entries is safe)
-- **Bytes recovered:** N/A
-- **Bank impact:** N/A
-- **Issues / followups:** None.
-- **Verifier check:** `git log -p .gitignore` shows the diff; `grep -n 'rgbds-1.0.1' .gitignore` returns empty.
-```
+For a worked example, see the TD-010 blocked entry below.
 
 ---
 
 ## Real entries below (append here)
-
-<!-- No agent has logged work yet. First agent to take a finding starts here. -->
 
 ## 2026-05-03 01:52 UTC — TD-010 — claimed
 
