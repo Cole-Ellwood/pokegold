@@ -11,6 +11,21 @@ between dates.
 
 ## 2026-05-02
 
+- **`485a90ff`** — TD-011 disputed (script generates
+  `docs/CHANGES_BY_CATEGORY.txt` per `docs/manifest.md`; original "no
+  refs" claim was wrong). TD-009a escalation needed (`hUnusedByte`
+  and `hUnusedBackup` have 4 dead writes the original "No refs" audit
+  missed; deletion safe but crosses into vblank.asm and other engine
+  files). STATUS, ADDENDUM, FIX_PROPOSALS, AGENT_LOG all updated.
+- **`0f2b90bd`** — TD-010 closed via corrected recipe. Deleted .gitignore
+  lines 54-55 (true `*.sav`/`*.rtc` duplicates of lines 34-35); moved
+  line 56 `*.state` into emulator block. Did NOT touch the
+  `rgbds-1.0.1/`/`.local/`/etc. entries the original recipe
+  incorrectly flagged as "non-existent." First real finding closed.
+- **`5f5d81fc`** — Slim AGENT_LOG template (META_AUDIT item 10);
+  CHANGELOG.md added.
+- **`bb23e2d6`** — Freshness audit added at
+  `tools/audit/check_tech_debt_freshness.py` (META_AUDIT item 7).
 - **`d6ac595d`** — TD-005 / TD-009 / TD-013 verification floors tightened
   via `FIX_PROPOSALS.md` "Updated 2026-05-02" subsections (META_AUDIT
   TD-A03, A04, A05). TD-005 byte-recovery target dropped from "500-700"
