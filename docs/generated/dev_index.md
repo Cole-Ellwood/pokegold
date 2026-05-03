@@ -48,7 +48,7 @@ Read `docs/README.md` first for helper-doc routing, then `docs/project_context.m
 ### Pokemon data and weak-Pokemon buffs
 - Intent: Base stats, types, level-up moves, evolutions, egg moves, and names.
 - Start here: `data/pokemon/base_stats.asm`, `data/pokemon/base_stats`, `data/pokemon/evos_attacks.asm`, `data/pokemon/evos_attacks_pointers.asm`, `data/pokemon/egg_moves.asm`, `constants/pokemon_constants.asm`
-- Anchors: `BaseData` (14:5bba, `data/pokemon/base_stats.asm:21`); `EvosAttacksPointers` (10:6893, `data/pokemon/evos_attacks_pointers.asm:3`); `EggMovePointers` (08:79fe, `data/pokemon/egg_move_pointers.asm:1`)
+- Anchors: `BaseData` (14:5bd4, `data/pokemon/base_stats.asm:21`); `EvosAttacksPointers` (10:6893, `data/pokemon/evos_attacks_pointers.asm:3`); `EggMovePointers` (08:79fe, `data/pokemon/egg_move_pointers.asm:1`)
 
 ### Maps, events, and QoL scripts
 - Intent: Map scripts, specials, NPC events, progression, tutors, and reminders.
@@ -75,7 +75,7 @@ Read `docs/README.md` first for helper-doc routing, then `docs/project_context.m
 | Region | Used | Free | Banks |
 | --- | ---: | ---: | ---: |
 | ROM0 | 16155 | 229 |  |
-| ROMX | 1151735 | 929033 | 127 |
+| ROMX | 1151858 | 928910 | 127 |
 | SRAM | 31699 | 1069 | 4 |
 | WRAM0 | 4047 | 49 |  |
 | WRAMX | 4096 | 0 |  |
@@ -238,7 +238,7 @@ Use these as candidates when moving optional code or data out of tight banks.
 | `ItemNames` | 6c:4000 | `data/items/names.asm:1` |
 | `IsChoiceHeldEffect_Far` | 0e:7509 | `engine/battle/late_gen_held_items.asm:761` |
 | `IsMoveBlockedByAssaultVest_Far` | 0e:7512 | `engine/battle/late_gen_held_items.asm:769` |
-| `BaseData` | 14:5bba | `data/pokemon/base_stats.asm:21` |
+| `BaseData` | 14:5bd4 | `data/pokemon/base_stats.asm:21` |
 | `EvosAttacksPointers` | 10:6893 | `data/pokemon/evos_attacks_pointers.asm:3` |
 | `EggMovePointers` | 08:79fe | `data/pokemon/egg_move_pointers.asm:1` |
 | `Special` | 03:422b | `engine/events/specials.asm:1` |
