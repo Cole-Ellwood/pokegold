@@ -15,7 +15,7 @@ blocked, what's done.
 | TD-002 | CRIT | pending-trigger | — | gated on `SAVE_FORMAT_VERSION` bump |
 | TD-003 | CRIT | open | — | release-gated; partial fix possible after TD-005 |
 | TD-004 | HIGH | open | — | do **after** TD-005 (needs bank headroom) |
-| TD-005 | HIGH | open | — | byte-recovery lever; see "Updated 2026-05-02" in FIX_PROPOSALS |
+| TD-005 | HIGH | partial | 2026-05-03 | Pattern 1 closed (41 bytes recovered in bank 0e); Patterns 2 (gated on user WIP in experience.asm) and 3 (enumeration TBD) remain |
 | TD-006 | HIGH | open | — | escalation on values **and** names |
 | TD-007 | MED | open | — | selective in tight banks only |
 | TD-008 | MED | open | — | research current RGBDS version first |

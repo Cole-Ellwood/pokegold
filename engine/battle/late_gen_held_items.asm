@@ -19,85 +19,50 @@ ApplyLateGenDamageStatsItemMods_Far::
 	ret
 
 .ApplyChoiceBandBoost:
-	push hl
-	push bc
-	callfar GetUserItem
-	ld a, b
-	pop bc
-	pop hl
-	cp HELD_CHOICE_BAND
+	ld a, HELD_CHOICE_BAND
+	call _CheckUserItemEquals
 	ret nz
 	ld a, CHOICE_STAT_NUM
 	ld d, CHOICE_STAT_DEN
 	jp .ApplyFractionToHL
 
 .ApplyChoiceSpecsBoost:
-	push hl
-	push bc
-	callfar GetUserItem
-	ld a, b
-	pop bc
-	pop hl
-	cp HELD_CHOICE_SPECS
+	ld a, HELD_CHOICE_SPECS
+	call _CheckUserItemEquals
 	ret nz
 	ld a, CHOICE_STAT_NUM
 	ld d, CHOICE_STAT_DEN
 	jp .ApplyFractionToHL
 
 .ApplyAssaultVestBoostToDefense:
-	push hl
-	push bc
-	callfar GetOpponentItem
-	ld a, b
-	cp HELD_ASSAULT_VEST
-	pop bc
-	pop hl
+	ld a, HELD_ASSAULT_VEST
+	call _CheckOpponentItemEquals
 	ret nz
 	ld a, ASSAULT_VEST_SPD_NUM
 	ld d, ASSAULT_VEST_SPD_DEN
 	jp .ApplyFractionToBC
 
 .ApplyEvioliteDefenseBoost:
-	push hl
-	push bc
-	callfar GetOpponentItem
-	ld a, b
-	cp HELD_EVOLITE
-	jr nz, .no_boost_def
+	ld a, HELD_EVOLITE
+	call _CheckOpponentItemEquals
+	ret nz
 	call .GetOpponentSpecies
 	call .SpeciesCanEvolve
-	jr z, .no_boost_def
-	pop bc
-	pop hl
+	ret z
 	ld a, EVOLITE_DEF_NUM
 	ld d, EVOLITE_DEF_DEN
 	jp .ApplyFractionToBC
 
-.no_boost_def
-	pop bc
-	pop hl
-	ret
-
 .ApplyEvioliteSpDefBoost:
-	push hl
-	push bc
-	callfar GetOpponentItem
-	ld a, b
-	cp HELD_EVOLITE
-	jr nz, .no_boost_spd
+	ld a, HELD_EVOLITE
+	call _CheckOpponentItemEquals
+	ret nz
 	call .GetOpponentSpecies
 	call .SpeciesCanEvolve
-	jr z, .no_boost_spd
-	pop bc
-	pop hl
+	ret z
 	ld a, EVOLITE_SPD_NUM
 	ld d, EVOLITE_SPD_DEN
 	jp .ApplyFractionToBC
-
-.no_boost_spd
-	pop bc
-	pop hl
-	ret
 
 .GetOpponentSpecies:
 	ldh a, [hBattleTurn]
@@ -308,9 +273,8 @@ HandleLateGenAfterHitEffects_Far:
 	ret
 
 .MaybePopAirBalloon:
-	callfar GetOpponentItem
-	ld a, b
-	cp HELD_AIR_BALLOON
+	ld a, HELD_AIR_BALLOON
+	call _CheckOpponentItemEquals
 	ret nz
 	call .ClearOpponentHeldItem
 	ld hl, BattleText_AirBalloonPopped
@@ -319,9 +283,8 @@ HandleLateGenAfterHitEffects_Far:
 .MaybeApplyRockyHelmetRecoil:
 ; Skip if the contact landed on the holder's Substitute — the Sub absorbed
 ; the hit, the attacker never touched the Helmet.
-	callfar GetOpponentItem
-	ld a, b
-	cp HELD_ROCKY_HELMET
+	ld a, HELD_ROCKY_HELMET
+	call _CheckOpponentItemEquals
 	ret nz
 	call TypePassive_IsCurrentMoveContact_Far
 	ret nc
@@ -341,9 +304,8 @@ HandleLateGenAfterHitEffects_Far:
 	jp StdBattleTextbox
 
 .MaybeApplyShellBellHeal:
-	callfar GetUserItem
-	ld a, b
-	cp HELD_SHELL_BELL
+	ld a, HELD_SHELL_BELL
+	call _CheckUserItemEquals
 	ret nz
 	ld hl, wCurDamage
 	ld b, [hl]
@@ -364,9 +326,8 @@ HandleLateGenAfterHitEffects_Far:
 	ret
 
 .MaybeApplyLifeOrbRecoil:
-	callfar GetUserItem
-	ld a, b
-	cp HELD_LIFE_ORB
+	ld a, HELD_LIFE_ORB
+	call _CheckUserItemEquals
 	ret nz
 	ld a, LIFE_ORB_RECOIL_DEN
 	call .GetUserMaxHPDividedByA
@@ -873,4 +834,29 @@ GetSixthMaxHP_Far:
 	jr nz, .end
 	inc c
 .end
+	ret
+
+_CheckUserItemEquals:
+; Input:  a = item-effect constant to check
+; Output: zf set if user holds an item with that effect, nz otherwise
+; Preserves hl, bc; clobbers a (still equals input on return)
+	push hl
+	push bc
+	push af
+	callfar GetUserItem
+	jr _CheckItemEquals_finish
+
+_CheckOpponentItemEquals:
+; Input:  a = item-effect constant to check
+; Output: zf set if opponent holds an item with that effect, nz otherwise
+; Preserves hl, bc; clobbers a (still equals input on return)
+	push hl
+	push bc
+	push af
+	callfar GetOpponentItem
+_CheckItemEquals_finish:
+	pop af
+	cp b
+	pop bc
+	pop hl
 	ret

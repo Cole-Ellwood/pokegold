@@ -167,3 +167,45 @@ For a worked example, see the TD-010 blocked entry below.
 - **Summary:** TD-009a's recipe assumes `hUnusedByte` and `hUnusedBackup` truly have no references. They have **dead writes**: `engine/overworld/events.asm:804`, `home/vblank.asm:147-148`, `engine/menus/intro_menu.asm:39-40`, `engine/menus/intro_menu.asm:45-46`. Field deletion alone won't compile. Recovery requires also removing those four write sites — touches vblank.asm (every-frame hot path), intro_menu.asm, events.asm. Technically safe, but escalating to user before executing because the scope crossed beyond `ram/hram.asm`.
 - **Verification:** `grep -rn 'hUnusedByte\|hUnusedBackup' --include='*.asm'` → returned 5 hits (2 declarations + 4 writes) instead of the expected 2 declarations only.
 - **Verifier check:** `grep -rn 'ldh \[hUnused' --include='*.asm'` should still return 4 matches until the writes are removed; if the count drops to 0, TD-009a has been completed and STATUS should be flipped to `done`.
+
+## 2026-05-03 — TD-005 — claimed
+
+- **Agent / session:** Opus 4.7 (1M context) / claude-compassionate-hugle-c80944
+- **State:** claimed
+- **Branch / commit:** claude/compassionate-hugle-c80944 @ ac99b056
+- **Files touched:** (none yet)
+- **Summary:** Starting TD-005 Pattern 1 (item-check subroutine extraction). First-conversion measurement plan: snapshot pokegold.gbc/.map as `.before`, add `_CheckUserItemEquals` helper at the end of `engine/battle/late_gen_held_items.asm` (bank 0e, 527 free bytes), convert ChoiceBand site (lines 21-32) only, rebuild, diff `.map` for "Late Gen Held Items" section size delta. Build was unblockable until this session's `ac99b056` fixed a pre-existing `FailText_CheckOpponentProtect_Far` link error.
+- **Verification run:** N/A (claim only)
+- **Bytes recovered (if applicable):** TBD via measurement
+- **Bank impact (if applicable):** Bank 0e (Late Gen Held Items section)
+- **Issues / followups:** Helper signature differs from FIX_PROPOSALS recipe ("input via `b`"). `b` doesn't survive `GetUserItem` (which writes the actual item there), so input is via `a` instead. Documented design notes in this entry's commit message and in the partial/done entry.
+- **Verifier check:** Look for the matching `partial:` / `done:` / `blocked:` entry below.
+
+## 2026-05-03 — TD-005 — partial (Pattern 1 closed; Patterns 2 and 3 open)
+
+- **Agent / session:** Opus 4.7 (1M context) / claude-compassionate-hugle-c80944
+- **State:** partial
+- **Branch / commit:** claude/compassionate-hugle-c80944 @ pending
+- **Files touched:** engine/battle/late_gen_held_items.asm, tools/audit/check_battle_math_safety.py, docs/generated/dev_index.md, tech_debt/AGENT_LOG.md, tech_debt/STATUS.md
+- **Summary:** Pattern 1 (item-check boilerplate) converted via two shared subroutines `_CheckUserItemEquals` / `_CheckOpponentItemEquals` (sharing a tail `_CheckItemEquals_finish`) at the bottom of `late_gen_held_items.asm`. 9 callsites converted: ChoiceBand, ChoiceSpecs (User push/pop); AssaultVest, Eviolite_Def, Eviolite_SpD (Opponent push/pop, dual-exit sites collapsed onto `ret nz`/`ret z` which let `.no_boost_def` and `.no_boost_spd` labels be deleted); AirBalloon, RockyHelmet (Opponent no-pop); ShellBell, LifeOrb (User no-pop). Skipped 3 callfar sites that don't fit the pattern: `ApplyLateGenDamageMultipliers_Far` (multi-way dispatch on actual item value, not a single-item check) and 2 `[hl]`-style outliers (METAL_POWDER comparison via `ld a, [hl]`, GetItemHeldEffect). Also updated `tools/audit/check_battle_math_safety.py` to accept either the original push/pop pattern OR the helper pattern at ChoiceBand/ChoiceSpecs callsites, and to verify `_CheckUserItemEquals` itself preserves hl/bc — added `require_one_of` helper for that.
+- **Verification run:**
+  - `make pokegold.gbc` → PASS (links green)
+  - `make compare` → SKIPPED (deliberate ROM-byte change; not the floor for TD-005 per FIX_PROPOSALS Updated 2026-05-02)
+  - `python3 tools/audit/check_release_smoke.py` → PASS
+  - `python3 tools/audit/check_battle_math_safety.py` → PASS (after audit update for new pattern)
+  - `python3 tools/audit/check_save_format_version.py` → PASS
+  - `python3 scripts/generate_dev_index.py --rom pokegold` → PASS, regenerated
+  - `python3 tools/audit/check_navigation_floor.py` → 2 PRE-EXISTING FAILS (`tools/stadium.exe` path in `docs/review_playbook.md`; whitespace diff check exits 128 due to WSL/git path translation). Both unrelated to this change.
+  - `python3 tools/audit/check_tech_debt_freshness.py` → PASS
+  - `.map` bank-size diff: `Late Gen Held Items` section $704f-$7df0 (3490 bytes) → $704f-$7dc7 (3449 bytes). **Net: -41 bytes.**
+- **Bytes recovered:** 41 bytes
+- **Bank impact:** Bank 0e — `Late Gen Held Items` section: 3490 → 3449 bytes. Bank 0e free space (per regenerated `dev_index.md`): was 527 bytes, now 568 bytes (+41).
+- **Issues / followups:**
+  1. **Pattern 1 measured at 41 bytes**, below the FIX_PROPOSALS "Updated 2026-05-02" `<100 byte stop-and-re-evaluate` trigger. After re-evaluation, decided to proceed: 41 bytes in tight bank 0e is real and useful, refactor cost (8 mechanical edits + 23-byte helper block) is small. Decision noted here so future agents understand the threshold was crossed deliberately, not ignored.
+  2. **Helper signature deviates from FIX_PROPOSALS recipe.** Recipe said input via `b`; that conflicts with `GetUserItem` itself writing `b`. Input is via `a` instead, with internal push/pop preserving hl, bc, and the target value (push af before callfar). Documented in inline comments at the helper definition.
+  3. **Pattern 2 (multiply/divide thunk)** not attempted this session: would touch `engine/pokemon/experience.asm`, which is on the user's no-touch WIP list per the handoff. Defer until WIP lands or user un-blocks.
+  4. **Pattern 3 (`hBattleTurn` side-branch)** not attempted: enumeration step not done. Initial grep found 234 `ldh a, [hBattleTurn]` candidates across 49 files — needs filtering down to the actual side-branch pattern before per-site work.
+  5. **Pre-session build break** at `engine/battle/effect_commands.asm:2280` (`FailText_CheckOpponentProtect_Far` undefined) was fixed in this session's commit `ac99b056` so any TD work needing a build floor would be possible. That fix is unrelated to TD-005 and lives in its own commit.
+- **Verifier check:** From this branch tip, `grep -c '^_CheckUserItemEquals:\|^_CheckOpponentItemEquals:\|^_CheckItemEquals_finish:' engine/battle/late_gen_held_items.asm` should return 3. `grep -c 'callfar GetUserItem\|callfar GetOpponentItem' engine/battle/late_gen_held_items.asm` should return 4 (the helper pair counts as 2; `ApplyLateGenDamageMultipliers_Far` and the 2 `[hl]`-style outliers account for the remaining hits — 2 not 3 because METAL_POWDER's site is `callfar GetOpponentItem` followed by `ld a, [hl]`, and `.GetItemHeldEffect` uses `callfar GetUserItem` followed by `ld a, [hl]`). The Late Gen Held Items section in `pokegold.map` should be `<= $0d79` bytes if rebuilt without further changes.
+
+

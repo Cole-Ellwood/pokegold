@@ -154,6 +154,16 @@ def require_text(path: Path, needle: str, issues: list[Issue], reason: str) -> N
     issues.append(Issue(path=path, lineno=1, line="", reason=reason))
 
 
+def require_one_of(path: Path, needles: tuple[str, ...], issues: list[Issue], reason: str) -> None:
+    if not path.exists():
+        issues.append(Issue(path=path, lineno=1, line="", reason="required file is missing"))
+        return
+    text = path.read_text(encoding="utf-8", errors="replace")
+    if any(needle in text for needle in needles):
+        return
+    issues.append(Issue(path=path, lineno=1, line="", reason=reason))
+
+
 def require_count_at_least(
     path: Path,
     needle: str,
@@ -181,25 +191,68 @@ def require_count_at_least(
 def audit_late_gen_damage_multiplier_scratch_state() -> list[Issue]:
     issues: list[Issue] = []
 
+    # Either inline (push hl + push bc around callfar GetUserItem) or via
+    # the _CheckUserItemEquals helper, which preserves hl and bc internally.
     for label, held_effect in (
         (".ApplyChoiceBandBoost", "HELD_CHOICE_BAND"),
         (".ApplyChoiceSpecsBoost", "HELD_CHOICE_SPECS"),
     ):
+        inline_pattern = (
+            f"{label}:\n"
+            "\tpush hl\n"
+            "\tpush bc\n"
+            "\tcallfar GetUserItem\n"
+            "\tld a, b\n"
+            "\tpop bc\n"
+            "\tpop hl\n"
+            f"\tcp {held_effect}\n"
+            "\tret nz"
+        )
+        helper_pattern = (
+            f"{label}:\n"
+            f"\tld a, {held_effect}\n"
+            "\tcall _CheckUserItemEquals\n"
+            "\tret nz"
+        )
+        require_one_of(
+            LATE_GEN_HELD_ITEMS,
+            (inline_pattern, helper_pattern),
+            issues,
+            f"{label} must preserve attacker stat pointer in hl around GetUserItem",
+        )
+
+    # If the helper is in use, audit it directly: hl and bc must be preserved
+    # across the cross-bank GetUserItem call.
+    text = LATE_GEN_HELD_ITEMS.read_text(encoding="utf-8", errors="replace") if LATE_GEN_HELD_ITEMS.exists() else ""
+    if "_CheckUserItemEquals:" in text:
         require_text(
             LATE_GEN_HELD_ITEMS,
             (
-                f"{label}:\n"
+                "_CheckUserItemEquals:\n"
+                "; Input:  a = item-effect constant to check\n"
+                "; Output: zf set if user holds an item with that effect, nz otherwise\n"
+                "; Preserves hl, bc; clobbers a (still equals input on return)\n"
                 "\tpush hl\n"
                 "\tpush bc\n"
+                "\tpush af\n"
                 "\tcallfar GetUserItem\n"
-                "\tld a, b\n"
-                "\tpop bc\n"
-                "\tpop hl\n"
-                f"\tcp {held_effect}\n"
-                "\tret nz"
+                "\tjr _CheckItemEquals_finish"
             ),
             issues,
-            f"{label} must preserve attacker stat pointer in hl around GetUserItem",
+            "_CheckUserItemEquals must preserve hl and bc across callfar GetUserItem",
+        )
+        require_text(
+            LATE_GEN_HELD_ITEMS,
+            (
+                "_CheckItemEquals_finish:\n"
+                "\tpop af\n"
+                "\tcp b\n"
+                "\tpop bc\n"
+                "\tpop hl\n"
+                "\tret"
+            ),
+            issues,
+            "_CheckItemEquals_finish must restore caller's bc and hl before returning",
         )
 
     require_text(
