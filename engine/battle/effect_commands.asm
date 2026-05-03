@@ -2277,8 +2277,14 @@ BattleCommand_BideFailText:
 	jp PrintButItFailed
 
 FailText_CheckOpponentProtect:
-	farcall FailText_CheckOpponentProtect_Far
-	ret
+	ld a, BATTLE_VARS_SUBSTATUS1_OPP
+	call GetBattleVar
+	bit SUBSTATUS_PROTECT, a
+	jr z, .not_protected
+	ld h, d
+	ld l, e
+.not_protected
+	jp StdBattleTextbox
 
 BattleCommand_CriticalText:
 ; Prints the message for critical hits or one-hit KOs.
