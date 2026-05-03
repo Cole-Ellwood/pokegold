@@ -332,10 +332,10 @@ BattleCommand_CheckTurn:
 	ret z
 
 	call BattleRandom
-	ld c, a
+	push af                     ; preserve random across farcall (§3.3 — c is clobbered)
 	farcall TypePassive_GetUserParalysisFailThreshold_Far
-	ld b, a
-	ld a, c
+	ld b, a                     ; b = threshold (target mirrors a -> c)
+	pop af                      ; a = random
 	cp b
 	ret nc
 
@@ -584,10 +584,10 @@ CheckEnemyTurn:
 	ret z
 
 	call BattleRandom
-	ld c, a
+	push af                     ; preserve random across farcall (§3.3 — c is clobbered)
 	farcall TypePassive_GetUserParalysisFailThreshold_Far
-	ld b, a
-	ld a, c
+	ld b, a                     ; b = threshold (target mirrors a -> c)
+	pop af                      ; a = random
 	cp b
 	ret nc
 

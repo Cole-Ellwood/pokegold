@@ -771,15 +771,24 @@ TypePassive_GetOpponentDarkShieldFlagAddr_Far:
 
 TypePassive_GetUserParalysisFailThreshold_Far:
 ; Baseline 25%, Fighting half 20%, Fighting full 15%.
+; Mirrors a -> c at every ret so `farcall` callers receive the threshold
+; via the a/c passthrough (§3.3 — caller's a after farcall = target's c).
 	ld a, FIGHTING
 	call TypePassive_GetUserTypeContribution_Far
-	and a
-	ld a, 25 percent
-	ret z
 	cp 2
+	jr z, .full
+	and a
+	jr z, .baseline
 	ld a, 20 percent
-	ret nz
+	ld c, a
+	ret
+.baseline
+	ld a, 25 percent
+	ld c, a
+	ret
+.full
 	ld a, 15 percent
+	ld c, a
 	ret
 
 ApplyPrzEffectOnSpeed_Far:
