@@ -1,6 +1,6 @@
 # Status board
 
-**Updated:** 2026-05-03
+**Updated:** 2026-05-03 (Pattern 3 close)
 
 Projection of `AGENT_LOG.md` for fast lookup. The log is the
 authoritative audit trail; this table is the index. Read this **first**
@@ -11,11 +11,11 @@ blocked, what's done.
 
 | ID | Sev | State | Last entry | Notes |
 |----|-----|-------|------------|-------|
-| TD-001 | CRIT | partial | 2026-05-03 | re-evaluated 2026-05-03; bank-pressure picture refreshed in ADDENDUM 2026-05-03 — 0x0e no longer canary (568 free), 0x0d (Effect Commands, 6 free) is new tight battle bank; remaining work: TD-005 P2/P3, TD-009a, pic-bank guard |
+| TD-001 | CRIT | partial | 2026-05-03 | re-evaluated 2026-05-03; bank-pressure picture refreshed in ADDENDUM 2026-05-03 — 0x0e no longer canary (568 free), 0x0d (Effect Commands) was 6 free → **30 free after Pattern 3** (canary relief); remaining work: TD-005 P2, TD-009a, pic-bank guard |
 | TD-002 | CRIT | pending-trigger | — | gated on `SAVE_FORMAT_VERSION` bump |
 | TD-003 | CRIT | open | — | release-gated; partial fix possible after TD-005 |
 | TD-004 | HIGH | open | — | do **after** TD-005 (needs bank headroom) |
-| TD-005 | HIGH | partial | 2026-05-03 | Pattern 1 closed (41 bytes recovered in bank 0e); Patterns 2 (gated on user WIP in experience.asm) and 3 (enumeration TBD) remain |
+| TD-005 | HIGH | partial | 2026-05-03 | Patterns 1 + 3 closed (41 + 45 = 86 bytes net recovered; 24 of those in canary bank 0x0d, taking it from 6 → 30 free). Pattern 2 (multiply/divide thunk) still gated on user WIP in `engine/pokemon/experience.asm`. See `tech_debt/EVIDENCE/td_005_pattern3_sites.md` |
 | TD-006 | HIGH | open | — | escalation on values **and** names |
 | TD-007 | MED | **done** | 2026-05-03 | 47 Beta\*_Blocks pruned; 5,854 bytes recovered (banks 0x2a +3500, 0x2b +2259, 0x37 +95). SHA1/dist update needs user playtest |
 | TD-008 | MED | open | — | research current RGBDS version first |

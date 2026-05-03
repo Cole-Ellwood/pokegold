@@ -111,3 +111,18 @@ BattleVarLocations:
 	dw wLastPlayerCounterMove,     wLastEnemyCounterMove
 	dw wLastPlayerMove,            wLastEnemyMove
 	assert_table_length NUM_BATTLE_VAR_LOCATION_PAIRS
+
+_GetSidedHL::
+; Return hl = player-side or enemy-side address based on whose turn it is.
+; Replaces the pre-load + jr-z-skip Pattern 3 idiom; see
+; tech_debt/EVIDENCE/td_005_pattern3_sites.md.
+; Inputs:  hl = player addr (kept on player turn)
+;          de = enemy addr  (replaces hl on enemy turn)
+; Output:  hl = picked addr
+; Clobbers: af, de.  Preserves: bc.
+	ldh a, [hBattleTurn]
+	and a
+	ret z
+	ld h, d
+	ld l, e
+	ret

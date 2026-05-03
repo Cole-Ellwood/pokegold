@@ -5,11 +5,8 @@ BattleCommand_StoreEnergy:
 	ret z
 
 	ld hl, wPlayerRolloutCount
-	ldh a, [hBattleTurn]
-	and a
-	jr z, .check_still_storing_energy
-	ld hl, wEnemyRolloutCount
-.check_still_storing_energy
+	ld de, wEnemyRolloutCount
+	call _GetSidedHL
 	dec [hl]
 	jr nz, .still_storing
 
