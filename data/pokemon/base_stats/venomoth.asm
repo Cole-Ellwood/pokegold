@@ -1,5 +1,5 @@
 	db VENOMOTH ; 049
-	db  70,  65,  60, 100, 100,  75
+	db 110,  80,  60, 100, 100, 150
 	;   hp  atk  def  spd  sat  sdf
 	db BUG, POISON ; type
 	db 75 ; catch rate

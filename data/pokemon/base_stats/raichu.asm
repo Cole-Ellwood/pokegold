@@ -1,6 +1,6 @@
 	db RAICHU ; 026
 
-	db  80, 110,  55, 110, 125,  80
+	db  80, 110,  55, 110, 125, 110
 	;   hp  atk  def  spd  sat  sdf
 
 	db ELECTRIC, FIGHTING ; type

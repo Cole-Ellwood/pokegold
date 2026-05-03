@@ -1,6 +1,6 @@
 	db ALAKAZAM ; 065
 
-	db 60, 50, 45, 120, 135, 100
+	db 60, 50, 45, 120, 150, 130
 	;   hp  atk  def  spd  sat  sdf
 
 	db PSYCHIC_TYPE, PSYCHIC_TYPE ; type

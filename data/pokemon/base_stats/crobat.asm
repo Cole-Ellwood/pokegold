@@ -1,5 +1,5 @@
 	db CROBAT ; 169
-	db 100,  90,  80, 130,  70,  80
+	db 100, 120, 105, 130,  70,  80
 	;   hp  atk  def  spd  sat  sdf
 	db POISON, FLYING ; type
 	db 90 ; catch rate
