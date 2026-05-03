@@ -151,3 +151,19 @@ For a worked example, see the TD-010 blocked entry below.
 - **Summary:** Executed `FIX_PROPOSALS.md` TD-010 "Updated 2026-05-02" corrected recipe. Deleted lines 54-55 (`*.sav`, `*.rtc` — true duplicates of lines 34-35 in the emulator block). Moved `*.state` from line 56 into the emulator block as a new line 39. Did **not** touch the `rgbds-1.0.1/`, `rgbds-win64*`, `.local/`, `.claude_handoffs/`, `.rebalance_chain/` entries (the original recipe wanted those deleted; ADDENDUM TD-010 supersession explains why that's wrong).
 - **Verification:** `git diff .gitignore` → PASS (clean +1/-3 diff matching corrected scope); `ls ../../../{rgbds-1.0.1,.local,.claude_handoffs,.rebalance_chain}` (main repo) → PASS (all still present and gitignored).
 - **Verifier check:** `grep -c '^\*\.sav$\|^\*\.rtc$' .gitignore` should return 1 each (only the emulator-block entry survives); `grep -c '^\*\.state$' .gitignore` should return 1 (moved into emulator block); `git ls-files --others --ignored --exclude-standard | head` from main repo should still list the rgbds binaries and scratch dirs as ignored.
+
+## 2026-05-02 — TD-011 — disputed
+
+- **Agent / branch:** Opus 4.7 (1M context) / claude-unruffled-khayyam-35aa2d @ pending
+- **Files touched:** tech_debt/TECH_DEBT_REPORT_ADDENDUM.md, tech_debt/FIX_PROPOSALS.md, tech_debt/STATUS.md (no source code changes)
+- **Summary:** TD-011's "no references in docs/" claim is wrong. `docs/manifest.md:6` cites `scripts/export_changes_by_category.py` as the generator for `docs/CHANGES_BY_CATEGORY.txt`, which exists. The script is in active use — deleting it would silently break the next changelog regeneration. Logged disputed; ADDENDUM and FIX_PROPOSALS updated.
+- **Verification:** `grep -n export_changes_by_category docs/manifest.md` → returns line 6 with the generator citation; `ls docs/CHANGES_BY_CATEGORY.txt` → file exists.
+- **Verifier check:** `grep -rn 'export_changes_by_category' --include='*.md'` should return ≥1 hit in `docs/manifest.md`; if it doesn't, the docs-side reference has been removed and the dispute may need re-evaluation.
+
+## 2026-05-02 — TD-009a — escalation needed (not blocked, scope expanded)
+
+- **Agent / branch:** Opus 4.7 (1M context) / claude-unruffled-khayyam-35aa2d @ pending
+- **Files touched:** tech_debt/TECH_DEBT_REPORT_ADDENDUM.md, tech_debt/STATUS.md (no source code changes)
+- **Summary:** TD-009a's recipe assumes `hUnusedByte` and `hUnusedBackup` truly have no references. They have **dead writes**: `engine/overworld/events.asm:804`, `home/vblank.asm:147-148`, `engine/menus/intro_menu.asm:39-40`, `engine/menus/intro_menu.asm:45-46`. Field deletion alone won't compile. Recovery requires also removing those four write sites — touches vblank.asm (every-frame hot path), intro_menu.asm, events.asm. Technically safe, but escalating to user before executing because the scope crossed beyond `ram/hram.asm`.
+- **Verification:** `grep -rn 'hUnusedByte\|hUnusedBackup' --include='*.asm'` → returned 5 hits (2 declarations + 4 writes) instead of the expected 2 declarations only.
+- **Verifier check:** `grep -rn 'ldh \[hUnused' --include='*.asm'` should still return 4 matches until the writes are removed; if the count drops to 0, TD-009a has been completed and STATUS should be flipped to `done`.

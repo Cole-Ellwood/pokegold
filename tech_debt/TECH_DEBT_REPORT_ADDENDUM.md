@@ -144,6 +144,112 @@ TD-009 "Updated 2026-05-02" subsection requires:
 
 ---
 
+## 2026-05-02 — TD-011 disputed (script is in active use)
+
+**Source:** discovery while preparing to execute TD-011 per the
+new STATUS workflow; meta-audit follow-up.
+
+**Disputes:** `TECH_DEBT_REPORT.md` TD-011 ("Likely-unused script
+`scripts/export_changes_by_category.py`"); `FINDINGS_DETAIL.md` TD-011.
+
+### Why the finding is wrong
+
+The original audit checked references in:
+- `tools/audit/`
+- `scripts/`
+- `Makefile`
+- `.github/workflows/`
+- `docs/`
+
+and concluded "no references in docs/." But `docs/manifest.md` line 6
+says verbatim:
+
+> `docs/CHANGES_BY_CATEGORY.txt` is generated from this file by
+> `scripts/export_changes_by_category.py`.
+
+And `docs/CHANGES_BY_CATEGORY.txt` exists. The script is part of the
+changelog generation pipeline. Deleting it would silently break the
+next changelog regeneration.
+
+The original audit's `grep -rn 'export_changes_by_category' --include='*.md'`
+must have either skipped `docs/manifest.md` or the manifest reference
+post-dates the audit. Either way, the finding's recommendation is
+unsafe.
+
+### Recommended state
+
+Mark TD-011 `disputed` in STATUS. The script is **not** unused.
+
+If a future work item wants to consolidate the two changelog scripts
+(`export_changes_from_manifest.py` and `export_changes_by_category.py`)
+into one tool, that's a different finding and belongs in a new
+TD-A### entry — not in TD-011.
+
+---
+
+## 2026-05-02 — TD-009a dead-writes scope correction
+
+**Source:** discovery while preparing to execute TD-009a per
+`FIX_PROPOSALS.md` TD-009 "Updated 2026-05-02"; meta-audit follow-up.
+
+**Corrects:** `FINDINGS_DETAIL.md` TD-009 line 412-413 ("`hUnusedByte`
+... No refs" / "`hUnusedBackup` ... No refs").
+
+### Why the "No refs" claim is wrong
+
+`hUnusedByte` and `hUnusedBackup` both have **writes** in the live
+engine code, even though the original audit marked them "No refs":
+
+- `hUnusedByte`: 1 write at `engine/overworld/events.asm:804`
+  (`ldh [hUnusedByte], a` — zeros the byte after a menu return).
+- `hUnusedBackup`: 3 writes:
+  - `home/vblank.asm:148` (saves `hSeconds` to it during vblank)
+  - `engine/menus/intro_menu.asm:40` (saves `rLY` during player-ID RNG)
+  - `engine/menus/intro_menu.asm:46` (same, second pass)
+
+The `wUnusedMusicF9Flag` finding in TD-009 explicitly noted "writes
+only ... write-only flag, also dead" — the same write-only-no-reads
+audit lens **wasn't** applied to these two HRAM fields. The "No refs"
+marker reflects a read-search only, missing the writes.
+
+### Implication for the deletion recipe
+
+Removing the field declarations alone (`hUnusedByte:: db` at line 31,
+`hUnusedBackup:: db` at line 157) would break compilation: the
+`ldh [n8], a` writes still resolve symbol names at link time. To
+actually recover the 2 HRAM bytes, the writes must also be removed:
+
+| File | Line | Code to remove |
+|------|------|----------------|
+| `engine/overworld/events.asm` | 804 | `ldh [hUnusedByte], a` |
+| `home/vblank.asm` | 147-148 | `ldh a, [hSeconds]` + `ldh [hUnusedBackup], a` (2 lines; the read is dead too) |
+| `engine/menus/intro_menu.asm` | 39-40 | `ldh a, [rLY]` + `ldh [hUnusedBackup], a` |
+| `engine/menus/intro_menu.asm` | 45-46 | `ldh a, [rLY]` + `ldh [hUnusedBackup], a` |
+
+All four sites are dead writes (and their associated reads target
+side-effect-free registers/HRAM). Removal is technically safe but the
+work crosses into:
+
+- **vblank.asm** — every-frame hot path, even dead-store removal
+  warrants careful review.
+- **intro_menu.asm** — startup/RNG init code.
+- **events.asm** — menu handling.
+
+### Recommended posture
+
+- HRAM is at **0 bytes free** per TD-001. Recovering 2 bytes is
+  genuinely valuable.
+- The fix is technically safe but touches three engine files for a
+  micro-recovery. Risk/reward is dominated by review cost.
+- **Escalate to user** before executing. Frame as: "TD-009a is real
+  but bigger than the original recipe — touches vblank.asm. 2 HRAM
+  bytes + ~10 ROM bytes recoverable. Do you want it done?"
+
+Until escalated, leave TD-009a `open` with this addendum entry as
+the standing context.
+
+---
+
 ## How this file is structured
 
 - **Append-only.** Never edit a prior entry. Add a new dated entry if

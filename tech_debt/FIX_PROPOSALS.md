@@ -967,6 +967,11 @@ correct as-is, "cruft" was the wrong frame). User approval needed for
 
 **Severity:** LOW. **Order:** 2 (quick win).
 
+> **STATUS: disputed.** The script `scripts/export_changes_by_category.py`
+> is **not** unused — it generates `docs/CHANGES_BY_CATEGORY.txt` per
+> `docs/manifest.md` line 6. See `TECH_DEBT_REPORT_ADDENDUM.md` 2026-05-02
+> entry. Do **not** execute the original recipe.
+
 ### Approach
 
 1. Final confirmation no references:
