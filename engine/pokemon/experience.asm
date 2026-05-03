@@ -172,11 +172,16 @@ CalcExpAtLevel:
 	jp Multiply
 
 GetProgressionLevelCap::
-; Returns the current progression cap in a.
+; Returns the current progression cap in a AND c.
+; - Before Rival 1 / mystery egg returned: pre-rival cap (low, for level-5 starter).
 ; - Before 8 Johto badges: strongest mon at the next Johto gym.
 ; - At 8 badges: Lance cap.
 ; - After first League clear: Blue cap.
 ; - After beating Blue: Red cap.
+;
+; The mirror of `a` into `c` is required for cross-bank callers via
+; `farcall`, which loses target's `a` but preserves target's `c`. See
+; `home/farcall.asm` — after farcall, caller's `a` equals target's exit `c`.
 	ld de, EVENT_BEAT_BLUE
 	ld b, CHECK_FLAG
 	call EventFlagAction
@@ -197,24 +202,48 @@ GetProgressionLevelCap::
 	ld a, [wNumSetBits]
 	cp NUM_JOHTO_BADGES
 	jr nc, .lance_cap
+	and a
+	jr nz, .badge_table_lookup
 
+	; Zero badges. Distinguish "right after starter, Rival 1 still ahead"
+	; from "Rival 1 fought, on the way to Falkner". We use
+	; EVENT_GAVE_MYSTERY_EGG_TO_ELM as the cutoff: it's set in ElmsLab right
+	; after the player returns post-Rival-1 with the egg. Clear during
+	; Routes 29/30 / Cherrygrove / Mr Pokemon's House traversal with a
+	; level-5 starter; set thereafter.
+	ld de, EVENT_GAVE_MYSTERY_EGG_TO_ELM
+	ld b, CHECK_FLAG
+	call EventFlagAction
+	ld a, c
+	and a
+	jr nz, .badge_table_lookup    ; egg given → continue to pre-Falkner row
+	ld a, 9                       ; pre-rival cap (yields wild floor of 3)
+	ld c, a
+	ret
+
+.badge_table_lookup
+	ld a, [wNumSetBits]
 	ld e, a
 	ld d, 0
 	ld hl, .NextJohtoGymCaps
 	add hl, de
 	ld a, [hl]
+	ld c, a
 	ret
 
 .lance_cap
 	ld a, 50
+	ld c, a
 	ret
 
 .blue_cap
 	ld a, 69
+	ld c, a
 	ret
 
 .red_cap
 	ld a, 81
+	ld c, a
 	ret
 
 .NextJohtoGymCaps:

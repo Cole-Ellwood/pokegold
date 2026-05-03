@@ -363,13 +363,36 @@ ChooseWildEncounter:
 	ret
 
 RaiseWildLevelForProgression:
-; Raise low wild levels so each progression stage has a practical training floor.
-; Keeps existing higher levels unchanged.
+; Spread wild levels around a progression-driven center, biased low.
+;
+; The center is the same value the original "floor" produced:
+;   - 65 if EVENT_BEAT_BLUE is set (post-League).
+;   - max(1, GetProgressionLevelCap - 6) otherwise.
+;   - Always at least 65 inside Mt. Silver.
+;
+; Variance:
+;   - center < 16 (pre-Rival 1 through pre-Whitney): ±3.
+;   - center >= 16 (pre-Morty onward, plus everything post-Lance): ±5.
+;
+; The offset is rolled from a probability table biased toward lower offsets
+; — you'll see center-or-lower more often than center+N. The final level is
+; max(table_level, clamp(center+offset, >= 2)) so that naturally-high routes
+; (Mt. Silver) keep their table values while low-table routes get the spread.
+;
+; Notes:
+;   - GetProgressionLevelCap returns the cap in BOTH a and c. The mirror in
+;     c is required for cross-bank callers via farcall, which loses target's
+;     a (see `home/farcall.asm`).
+;   - EventFlagAction clobbers de and sets c = flag bit; capture c before
+;     `pop bc` overwrites it.
+;
+; In:  b = wild table level (with surf bonus already applied).
+; Out: b = spread level.
 	push af
 	push de
 	push hl
-	call .GetMtSilverWildFloor
-	ld e, a
+
+	; --- Compute center in a ---
 	push bc
 	ld de, EVENT_BEAT_BLUE
 	ld b, CHECK_FLAG
@@ -377,33 +400,72 @@ RaiseWildLevelForProgression:
 	ld a, c
 	pop bc
 	and a
-	jr z, .use_progression_cap_floor
-	ld a, 65
-	jr .got_floor
+	jr nz, .blue_beaten
 
-.use_progression_cap_floor
 	push bc
 	farcall GetProgressionLevelCap
 	pop bc
 	and a
-	jr z, .got_floor
+	jr z, .have_event_center
 	sub 6
-	jr nc, .got_floor
+	jr nc, .have_event_center
 	ld a, 1
+	jr .have_event_center
 
-.got_floor
-	cp e
-	jr nc, .use_floor
-	ld a, e
+.blue_beaten
+	ld a, 65
 
-.use_floor
-	and a
-	jr z, .done
-	ld d, a
-	ld a, b
-	cp d
-	jr nc, .done
-	ld b, d
+.have_event_center
+	; Take max with Mt. Silver floor of 65.
+	push bc
+	ld c, a
+	call .GetMtSilverWildFloor
+	cp c
+	jr c, .keep_event_center
+	ld c, a
+.keep_event_center
+	ld a, c
+	pop bc
+
+	; --- Pick variance: ±3 if center < 16, else ±5 ---
+	ld d, a                       ; d = center (saved across the variance check)
+	cp 16
+	ld hl, .OffsetTable_3
+	jr c, .got_table
+	ld hl, .OffsetTable_5
+.got_table
+	; --- Roll biased offset using the chosen table ---
+	push bc                       ; save b = table level
+	push de                       ; save d = center
+	call .RollOffsetFromTable     ; a = signed offset in [-N..+N]
+	pop de                        ; restore d = center
+	pop bc                        ; restore b = table level
+
+	; --- target = center + signed offset (with underflow clamp) ---
+	bit 7, a
+	jr nz, .neg_offset
+	add d                         ; positive: a = center + offset
+	jr .clamp_min
+.neg_offset
+	cpl
+	inc a                         ; a = |offset|
+	ld e, a
+	ld a, d                       ; a = center
+	sub e                         ; a = center - |offset|
+	jr nc, .clamp_min
+	xor a                         ; underflow → 0, will get clamped to 2
+
+.clamp_min
+	; Floor target at 2 so we never produce level 0 or 1 wilds.
+	cp 2
+	jr nc, .target_ok
+	ld a, 2
+.target_ok
+
+	; --- b = max(b, target) ---
+	cp b
+	jr c, .done                   ; target < b → keep table level
+	ld b, a
 
 .done
 	pop hl
@@ -426,6 +488,64 @@ RaiseWildLevelForProgression:
 .silver_cave
 	ld a, 65
 	ret
+
+.RollOffsetFromTable:
+; In:  hl -> table of (threshold, offset) pairs, terminated by threshold=0
+;      sentinel. Threshold is the exclusive upper bound of the random byte
+;      that selects the offset; rows are walked in order.
+; Out: a = signed offset.
+; Preserves bc, de, hl.
+	push bc
+	push de
+	push hl
+	call Random
+	ld c, a
+	pop hl
+.row_loop
+	ld a, [hli]
+	and a
+	jr z, .got_row                ; sentinel — always take this row
+	cp c
+	jr c, .next_row               ; threshold < random → advance
+	jr z, .next_row               ; threshold == random → advance (exclusive bound)
+.got_row
+	ld a, [hl]
+	pop de
+	pop bc
+	ret
+.next_row
+	inc hl
+	jr .row_loop
+
+.OffsetTable_3:
+; Cumulative thresholds for the ±3 spread. Each entry is (exclusive
+; upper-bound, signed offset). Rolled byte selects the first row whose
+; threshold is greater than the byte. Approximate distribution:
+;   -3:16% / -2:20% / -1:22% / 0:18% / +1:14% / +2:7% / +3:3%.
+	db  41, -3
+	db  92, -2
+	db 148, -1
+	db 195,  0
+	db 231, +1
+	db 249, +2
+	db   0, +3                    ; sentinel — covers the residual
+
+.OffsetTable_5:
+; Cumulative thresholds for the ±5 spread. Same shape, wider tail.
+; Approximate distribution:
+;   -5:11% / -4:12% / -3:13% / -2:13% / -1:12% / 0:11% /
+;   +1:10% / +2:8% / +3:5% / +4:3% / +5:2%.
+	db  28, -5
+	db  59, -4
+	db  92, -3
+	db 125, -2
+	db 156, -1
+	db 184,  0
+	db 209, +1
+	db 229, +2
+	db 242, +3
+	db 250, +4
+	db   0, +5                    ; sentinel
 
 INCLUDE "data/wild/probabilities.asm"
 

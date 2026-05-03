@@ -275,3 +275,16 @@ ApplyLateGenDamageStatsItemMods::
 ; the function reads/writes hl as the attack stat value.
 	homecall ApplyLateGenDamageStatsItemMods_Far
 	ret
+
+FailText_CheckOpponentProtect::
+; In HOME so callers across banks can reach it via plain `call` without
+; the farcall macro clobbering hl (the fail-text pointer). Body uses only
+; HOME-banked GetBattleVar / StdBattleTextbox, so no bank switch is needed.
+	ld a, BATTLE_VARS_SUBSTATUS1_OPP
+	call GetBattleVar
+	bit SUBSTATUS_PROTECT, a
+	jr z, .not_protected
+	ld h, d
+	ld l, e
+.not_protected
+	jp StdBattleTextbox

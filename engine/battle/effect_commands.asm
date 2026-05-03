@@ -2276,10 +2276,6 @@ BattleCommand_BideFailText:
 	jp z, PrintDoesntAffect
 	jp PrintButItFailed
 
-FailText_CheckOpponentProtect:
-	farcall FailText_CheckOpponentProtect_Far
-	ret
-
 BattleCommand_CriticalText:
 ; Prints the message for critical hits or one-hit KOs.
 
