@@ -64,7 +64,7 @@ This is **not a single fix**. It's a strategic constraint. Address by:
 ### Verification
 
 ```bash
-python scripts/generate_dev_index.py --rom pokegold
+python3 scripts/generate_dev_index.py --rom pokegold
 # Re-read docs/generated/dev_index.md Memory Summary; tight banks must
 # show > 16 bytes free across the board, ideally > 64.
 make compare   # ROM SHA1 must match roms.sha1
@@ -116,8 +116,8 @@ When triggered:
 ### Verification
 
 ```bash
-python tools/audit/check_save_format_version.py
-python tools/audit/check_release_smoke.py
+python3 tools/audit/check_save_format_version.py
+python3 tools/audit/check_release_smoke.py
 make compare
 ```
 
@@ -176,7 +176,7 @@ Options 2-3 require understanding upstream Stadium 2 behavior.
 ### Verification
 
 ```bash
-python tools/audit/check_layout_orgs.py
+python3 tools/audit/check_layout_orgs.py
 make compare
 # If Stadium 2 support matters: physically test on hardware/emulator
 # with Stadium 2 transfer.
@@ -256,12 +256,12 @@ Proposed split:
 ```bash
 make pokegold.gbc                    # must link
 make compare                          # SHA1 must match
-python scripts/generate_dev_index.py --rom pokegold
-python tools/audit/check_release_smoke.py
-python tools/audit/check_boss_ai_no_cheat.py
-python tools/audit/check_boss_ai_trace_invariants.py
-python tools/audit/check_boss_ai_memory_budget.py
-python tools/audit/check_farcall_hl_clobber.py
+python3 scripts/generate_dev_index.py --rom pokegold
+python3 tools/audit/check_release_smoke.py
+python3 tools/audit/check_boss_ai_no_cheat.py
+python3 tools/audit/check_boss_ai_trace_invariants.py
+python3 tools/audit/check_boss_ai_memory_budget.py
+python3 tools/audit/check_farcall_hl_clobber.py
 ```
 
 ROM SHA1 must be **identical** post-split (refactor only, no behavior
@@ -383,9 +383,9 @@ sites have local labels (`.player`, `.got`) collision risk — use `\@`
 ```bash
 make pokegold.gbc
 make compare    # SHA1 MUST MATCH — macro replacement is refactor-only
-python scripts/generate_dev_index.py --rom pokegold
-python tools/audit/check_release_smoke.py
-python tools/audit/check_battle_math_safety.py
+python3 scripts/generate_dev_index.py --rom pokegold
+python3 tools/audit/check_release_smoke.py
+python3 tools/audit/check_battle_math_safety.py
 ```
 
 If SHA1 doesn't match: **stop**. The macro changed behavior somewhere.
@@ -556,8 +556,8 @@ Verify gym order against existing trainer order constants
 ```bash
 make pokegold.gbc
 make compare    # SHA1 MUST MATCH — naming-only refactor
-python tools/audit/check_release_smoke.py
-python tools/audit/check_battle_math_safety.py
+python3 tools/audit/check_release_smoke.py
+python3 tools/audit/check_battle_math_safety.py
 ```
 
 ### Risk
@@ -620,10 +620,10 @@ Varies by bank. High-priority targets:
 make pokegold.gbc
 # SHA1 will NOT match — code is being deleted. That's expected for this
 # finding only. Update roms.sha1 only after verification.
-python scripts/generate_dev_index.py --rom pokegold
+python3 scripts/generate_dev_index.py --rom pokegold
 # Confirm tight bank free-byte count went UP, not down.
-python tools/audit/check_release_smoke.py
-python tools/audit/check_workspace_hygiene.py
+python3 tools/audit/check_release_smoke.py
+python3 tools/audit/check_workspace_hygiene.py
 ```
 
 This is the **one finding where SHA1 changes are expected**. Record the
@@ -738,8 +738,8 @@ make pokegold.gbc
 make compare    # SHA1 may shift slightly if WRAM layout changes affect
                 # any code that uses absolute WRAM addresses — most code
                 # uses labels, so usually no shift.
-python tools/audit/check_save_format_version.py    # MUST PASS
-python tools/audit/check_release_smoke.py
+python3 tools/audit/check_save_format_version.py    # MUST PASS
+python3 tools/audit/check_release_smoke.py
 ```
 
 Plus playtest: load an existing save, save again, confirm no corruption.
@@ -987,7 +987,7 @@ correct as-is, "cruft" was the wrong frame). User approval needed for
 git status
 make pokegold.gbc    # build still works (it shouldn't have depended
                      # on this script)
-python tools/audit/check_workspace_hygiene.py
+python3 tools/audit/check_workspace_hygiene.py
 ```
 
 ### Risk
@@ -1105,8 +1105,8 @@ make pokegold.gbc
 make compare    # SHA1 may shift if instruction count changes — that's
                 # expected, but verify EXP curves haven't changed by
                 # spot-checking a few level-up XP values.
-python tools/audit/check_battle_math_safety.py
-python tools/audit/check_release_smoke.py
+python3 tools/audit/check_battle_math_safety.py
+python3 tools/audit/check_release_smoke.py
 ```
 
 Plus: in-emulator spot check — start a fresh game, confirm the level-up

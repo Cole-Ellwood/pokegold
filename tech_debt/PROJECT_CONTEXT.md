@@ -90,7 +90,7 @@ are the gates a finding must pass before being marked `done:` in
 After **any** successful build that links, regenerate the dev index:
 
 ```bash
-python scripts/generate_dev_index.py --rom pokegold
+python3 scripts/generate_dev_index.py --rom pokegold
 ```
 
 Audits read bank/free-space figures from `docs/generated/dev_index.md`.
@@ -99,7 +99,7 @@ Skipping the regen produces phantom audit failures.
 For balance/stat/evolution/level-up/TM data changes also regenerate:
 
 ```bash
-python scripts/generate_balance_audit.py
+python3 scripts/generate_balance_audit.py
 ```
 
 ## Critical gotchas (the ones that have cost real time)
