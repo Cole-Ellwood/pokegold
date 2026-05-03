@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 scripts/inject_asm_guide.py"
+          }
+        ]
+      }
+    ]
+  }
+}
