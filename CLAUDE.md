@@ -151,8 +151,11 @@ below are a reminder list, not the canonical reference.
   hl) when target needs hl as in/out; (3) pass hl via bc/de and reconstruct
   inside. The April 2026 one-shot damage bug and May 2026 rival 1 softlock
   both came from this. See `docs/asm_authoring_guide.md` §3.2 for the three
-  valid patterns. No automated audit yet — class-2 audit is on the backlog;
-  for now, manual check on every new `farcall` whose target reads hl.
+  valid patterns. Audited by `tools/audit/check_farcall_hl_clobber.py`
+  (in the release-smoke floor): hl-input functions are auto-discovered by
+  a `; Reach via ROM0 thunk ...` marker comment in the function header.
+  When adding a new hl-input function, add the marker so the audit picks
+  it up.
 - **`farcall` does NOT preserve target's `a` either.** After farcall,
   caller's `a` = target's exit `c`, not target's `a` (see
   `home/farcall.asm:13-28` — the trailing `ld a, [wFarCallBC + 1]; ld c, a;

@@ -1430,6 +1430,7 @@ def main() -> int:
 
     check_save_format_version()
     check_no_stale_shipped_claims()
+    check_farcall_hl_clobber()
 
     print("ALL RELEASE SMOKE CHECKS PASSED")
     return 0
@@ -1459,6 +1460,10 @@ def check_save_format_version() -> None:
 
 def check_no_stale_shipped_claims() -> None:
     _run_subaudit("check_no_stale_shipped_claims.py", "no stale shipped claims")
+
+
+def check_farcall_hl_clobber() -> None:
+    _run_subaudit("check_farcall_hl_clobber.py", "farcall hl-clobber")
 
 
 if __name__ == "__main__":
