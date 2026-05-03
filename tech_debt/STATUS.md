@@ -64,3 +64,23 @@ churny. Other agents check by reading the log directly.
 
 When the open count reaches **0** (or all remaining are `accepted` /
 `pending-trigger`), the folder's job is done per `README.md`.
+
+## Drift check
+
+Run before claiming any finding:
+
+```bash
+python3 tools/audit/check_tech_debt_freshness.py
+```
+
+This catches:
+- Stale `path/to/file.ext:NN` citations in the immutable docs.
+- Orphan rows in this STATUS table (TD-### present here but not in
+  `TECH_DEBT_REPORT.md`, or vice versa).
+- ADDENDUM entries not cross-referenced from STATUS notes.
+- STATUS state out of sync with the latest terminal `AGENT_LOG` entry.
+
+Exit 0 = fresh. Exit 1 = drift; the script prints the offending
+references. Fix the source/cite or update STATUS/FIX_PROPOSALS/ADDENDUM
+per the workflow. Never edit `TECH_DEBT_REPORT.md` or
+`FINDINGS_DETAIL.md`.
