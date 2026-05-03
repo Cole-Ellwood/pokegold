@@ -694,6 +694,15 @@ ChooseLevelEvolutionSpecies:
 	ret
 
 .canceled
+; Tell the player they deferred a choice — otherwise the menu just closes
+; silently and they may not connect a future re-prompt to this one.
+	ld a, [wCurPartyMon]
+	ld hl, wPartyMonNicknames
+	call GetNickname
+	call CopyName1
+	ld hl, StoppedEvolvingText
+	call PrintText
+	call ClearTilemap
 	and a
 	ret
 

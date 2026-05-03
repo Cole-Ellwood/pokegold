@@ -48,7 +48,7 @@ Read `docs/README.md` first for helper-doc routing, then `docs/project_context.m
 ### Pokemon data and weak-Pokemon buffs
 - Intent: Base stats, types, level-up moves, evolutions, egg moves, and names.
 - Start here: `data/pokemon/base_stats.asm`, `data/pokemon/base_stats`, `data/pokemon/evos_attacks.asm`, `data/pokemon/evos_attacks_pointers.asm`, `data/pokemon/egg_moves.asm`, `constants/pokemon_constants.asm`
-- Anchors: `BaseData` (14:5be9, `data/pokemon/base_stats.asm:21`); `EvosAttacksPointers` (10:6893, `data/pokemon/evos_attacks_pointers.asm:3`); `EggMovePointers` (08:79fe, `data/pokemon/egg_move_pointers.asm:1`)
+- Anchors: `BaseData` (14:5be9, `data/pokemon/base_stats.asm:21`); `EvosAttacksPointers` (10:68a8, `data/pokemon/evos_attacks_pointers.asm:3`); `EggMovePointers` (08:79fe, `data/pokemon/egg_move_pointers.asm:1`)
 
 ### Maps, events, and QoL scripts
 - Intent: Map scripts, specials, NPC events, progression, tutors, and reminders.
@@ -75,7 +75,7 @@ Read `docs/README.md` first for helper-doc routing, then `docs/project_context.m
 | Region | Used | Free | Banks |
 | --- | ---: | ---: | ---: |
 | ROM0 | 16155 | 229 |  |
-| ROMX | 1151879 | 928889 | 127 |
+| ROMX | 1151900 | 928868 | 127 |
 | SRAM | 31699 | 1069 | 4 |
 | WRAM0 | 4047 | 49 |  |
 | WRAMX | 4096 | 0 |  |
@@ -155,7 +155,7 @@ Use these as candidates when moving optional code or data out of tight banks.
 | `Enemy Trainers` | ROMX | 0e:4000-708d | 12430 | ROMX 0e | `engine/battle/ai/boss.asm`, `engine/battle/ai/items.asm`, `engine/battle/read_trainer_attributes.asm`, `main.asm` |
 | `Late Gen Held Items` | ROMX | 0e:708e-7e01 | 3444 |  | `engine/battle/late_gen_held_items.asm`, `engine/battle/type_passive_damage_mods.asm`, `main.asm` |
 | `Battle Core` | ROMX | 0f:4000-7bac | 15277 | ROMX 0f | `engine/battle/core.asm`, `main.asm` |
-| `Evolutions and Attacks` | ROMX | 10:6893-7f96 | 5892 | ROMX 10 | `data/pokemon/evos_attacks.asm`, `data/pokemon/evos_attacks_pointers.asm` |
+| `Evolutions and Attacks` | ROMX | 10:68a8-7fab | 5892 | ROMX 10 | `data/pokemon/evos_attacks.asm`, `data/pokemon/evos_attacks_pointers.asm` |
 | `Maps` | ROMX | 25:4000-65f8 | 9721 | ROMX 25 | `data/maps/attributes.asm`, `data/maps/blocks.asm`, `data/maps/map_data.asm`, `data/maps/maps.asm`, +2 more |
 | `Events` | ROMX | 25:65f9-7d99 | 6049 | ROMX 25 | `data/wild/bug_contest_mons.asm`, `engine/events/trainer_scripts.asm`, `engine/overworld/cmd_queue.asm`, `engine/overworld/events.asm`, +1 more |
 | `Audio` | ROMX | 3a:4000-5491 | 5266 | ROMX 3a | `audio.asm`, `audio/cry_pointers.asm`, `audio/engine.asm`, `audio/music/nothing.asm`, +3 more |
@@ -239,7 +239,7 @@ Use these as candidates when moving optional code or data out of tight banks.
 | `IsChoiceHeldEffect_Far` | 0e:7509 | `engine/battle/late_gen_held_items.asm:761` |
 | `IsMoveBlockedByAssaultVest_Far` | 0e:7512 | `engine/battle/late_gen_held_items.asm:769` |
 | `BaseData` | 14:5be9 | `data/pokemon/base_stats.asm:21` |
-| `EvosAttacksPointers` | 10:6893 | `data/pokemon/evos_attacks_pointers.asm:3` |
+| `EvosAttacksPointers` | 10:68a8 | `data/pokemon/evos_attacks_pointers.asm:3` |
 | `EggMovePointers` | 08:79fe | `data/pokemon/egg_move_pointers.asm:1` |
 | `Special` | 03:422b | `engine/events/specials.asm:1` |
 | `SpecialsPointers` | 03:4239 | `data/events/special_pointers.asm:14` |
