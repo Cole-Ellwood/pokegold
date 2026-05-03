@@ -13,7 +13,7 @@ blocked, what's done.
 |----|-----|-------|------------|-------|
 | TD-001 | CRIT | partial | 2026-05-03 | re-evaluated 2026-05-03; bank-pressure picture refreshed in ADDENDUM 2026-05-03 — 0x0e no longer canary (568 free), 0x0d (Effect Commands, 6 free) is new tight battle bank; pic-bank guard shipped 2026-05-03 (`tools/audit/check_pic_bank_pressure.py`); remaining work: TD-005 P2 + P3 (P3 enumerated 2026-05-03, conversion still open), TD-009a |
 | TD-002 | CRIT | pending-trigger | — | gated on `SAVE_FORMAT_VERSION` bump |
-| TD-003 | CRIT | open | — | release-gated; partial fix possible after TD-005 |
+| TD-003 | CRIT | partial | 2026-05-03 | Option 1 + Option 2 shipped 2026-05-03 (`tools/audit/check_layout_orgs.py` validates 5 known pins; `docs/layout_pins.md` documents each pin's purpose). Option 3 (Stadium 2 relocation) remains release-gated — needs hardware/emulator verification |
 | TD-004 | HIGH | open | — | do **after** TD-005 (needs bank headroom) |
 | TD-005 | HIGH | partial | 2026-05-03 | Pattern 1 closed (41 bytes recovered in bank 0e); Pattern 2 gated on user WIP in experience.asm; Pattern 3 enumerated 2026-05-03 (66 Class A sites in `tech_debt/EVIDENCE/td_005_pattern3_sites.md`, 27 of which sit in canary bank 0x0d) — conversion to `_GetSidedAddr` still open |
 | TD-006 | HIGH | open | — | escalation on values **and** names |
@@ -60,7 +60,7 @@ churny. Other agents check by reading the log directly.
 
 ## Open count
 
-7 open + 2 partial + 2 done + 1 disputed + 1 pending-trigger = 13 total
+6 open + 3 partial + 2 done + 1 disputed + 1 pending-trigger = 13 total
 (matches `TECH_DEBT_REPORT.md` index).
 
 When the open count reaches **0** (or all remaining are `accepted` /

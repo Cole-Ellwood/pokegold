@@ -237,6 +237,42 @@ is the worst-case failure — you wouldn't know until a player tried it.
 - Option 3 (relocation + verification): multi-session, requires hardware
   testing.
 
+### Updated 2026-05-03 by claude-trusting-kare-692dd4
+
+Option 1 and Option 2 shipped this session. TD-003 moves from `open` to
+`partial`.
+
+- **Option 1 (audit) — done.** `tools/audit/check_layout_orgs.py` parses
+  `layout.link`, extracts all (bank, address, following-section) tuples,
+  and compares against `EXPECTED_PINS` — currently 5 entries
+  (`$12:$4000 → Pic Pointers`, `$1f:$4000 → Unown Pic Pointers`,
+  `$2e:$6300 → bank2E`, `$31:$7a40 → bank31`,
+  `$7f:$7df8 → Stadium 2 Checksums`). FAIL with side-by-side diff if
+  the layout drifts. PASS verified plus drift simulation (moved Stadium
+  pin → correctly detected).
+- **Option 2 (documentation) — done.** `docs/layout_pins.md` covers
+  each pin's source declaration, what it backs, why it's pinned, and
+  what breaks downstream if removed. Cross-references TD-003 in
+  `tech_debt/`.
+
+**Option 3 still release-gated.** Stadium 2 relocation — confirming
+whether Stadium 2 reads checksums via fixed ROM offset or bank-mapped
+address — requires hardware/emulator testing on a Stadium 2 transfer.
+Not closeable without that environment.
+
+The audit's verification floor for any future intentional pin change:
+update `EXPECTED_PINS` in the audit AND `docs/layout_pins.md` in the
+same change. The audit's fail-mode message instructs the reviewer
+explicitly.
+
+#### Done criteria for full close
+
+When Option 3 is dispositioned (either Stadium 2 verifies it doesn't
+need the fixed offset and the pin gets removed, OR Stadium 2 testing
+confirms the pin must stay and TD-003 moves to `accepted`), the finding
+fully closes. Until then, `partial` is the steady state — Option 1
+catches accidental drift; Option 2 documents the intentional contract.
+
 ---
 
 ## TD-004 — Split `boss.asm`

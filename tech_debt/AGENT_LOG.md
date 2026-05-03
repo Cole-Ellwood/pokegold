@@ -363,3 +363,24 @@ section.)
   1. **TD-007 followup #2 closed.** That followup said "47 files, ~5,854 bytes on disk. Reversible: re-adding the label + INCBIN line restores the data. If repo cleanup wants to also drop the `.blk` files, that's a separate small commit. Recommend leaving until/unless a release pass." This entry is that small commit. Reversibility now via `git show <pre-deletion-commit>:maps/unused/<filename>.blk` if anyone ever wants the data back.
 - **Verifier check:** `ls maps/unused/ 2>&1` → "No such file or directory" (or empty if a future agent recreated the dir for other reasons). `git log --diff-filter=D --name-only` should show the 47 deletions in this branch's commit history once committed.
 
+## 2026-05-03 — TD-003 — partial (Option 1 audit + Option 2 docs shipped)
+
+- **Agent / session:** Opus 4.7 (1M context) / claude-trusting-kare-692dd4
+- **State:** partial
+- **Branch / commit:** claude/trusting-kare-692dd4 @ pending
+- **Files touched:** tools/audit/check_layout_orgs.py (new), docs/layout_pins.md (new), tech_debt/STATUS.md, tech_debt/FIX_PROPOSALS.md (Updated 2026-05-03 subsection), tech_debt/AGENT_LOG.md (this entry)
+- **Summary:** Closed Option 1 (audit) and Option 2 (docs) of TD-003's three-option recipe. The 5 documented `org` pins in `layout.link` ($12:$4000 → Pic Pointers, $1f:$4000 → Unown Pic Pointers, $2e:$6300 → bank2E, $31:$7a40 → bank31, $7f:$7df8 → Stadium 2 Checksums) are now contract-checked: any drift FAILs the audit with a side-by-side diff and points the reviewer at the docs file. Caught a parser bug during dev (was attributing SRAM `org` directives to ROMX 0x7f because the parser didn't reset `current_bank` on non-ROMX region headers); fixed with `NON_ROMX_REGION_RE`. **Option 3 (Stadium 2 relocation) remains release-gated** — it needs hardware/emulator verification of whether Stadium 2 reads checksums via fixed ROM offset or bank-mapped address. TD-003 stays `partial` as the steady state until Option 3 dispositions one way or the other.
+- **Verification run:**
+  - `python3 tools/audit/check_layout_orgs.py` → PASS (5 pins detected, all match expected).
+  - Drift simulation: moved Stadium 2 pin from `$7df8` to `$7e00` in layout.link → audit correctly FAILed with "Expected `ROMX $7f $7df8 -> 'Stadium 2 Checksums'`; Found `ROMX $7f $7e00 -> 'Stadium 2 Checksums'`". Restored.
+  - Re-PASS confirmed post-restore.
+  - `python3 tools/audit/check_tech_debt_freshness.py` → PASS.
+- **Bytes recovered:** N/A (audit-only deliverable; no source/ROM byte change).
+- **Bank impact:** N/A (no relocations).
+- **Issues / followups:**
+  1. **Audit not promoted to release-smoke floor yet.** Same posture as `check_pic_bank_pressure.py` — the audit exists and works; explicit promotion to `check_release_smoke.py` (or `check_navigation_floor.py`) is a separate decision per the same logic CLAUDE.md applies to `check_cross_bank_call.py`. Recommend running pre-commit on any layout.link change.
+  2. **Parser robustness.** Initially the audit attributed SRAM `org` directives (e.g., `org $a600` for "SRAM Bank 0") to the previous ROMX bank context. Fixed by adding NON_ROMX_REGION_RE that resets `current_bank` to None when entering ROM0/WRAM0/WRAMX/SRAM/VRAM/HRAM regions. Worth keeping an eye on if RGBDS layout.link syntax evolves.
+  3. **Option 3 (relocation) close-out path.** When the user has a Stadium 2 setup and wants to verify the read-mode (fixed-offset vs. bank-mapped), the test is: (a) build a ROM with the checksum section moved to a different bank (still at offset that maps to the same ROM offset 0x1ffdf8), (b) attempt Stadium 2 import, (c) confirm whether it works. If it works → pin can be relaxed; if it doesn't → pin must stay and TD-003 moves to `accepted`. Until that test happens, partial is the right state.
+  4. **STATUS open count math.** Updated from "7 open + 2 partial" to "6 open + 3 partial" — TD-003 moved from open into partial.
+- **Verifier check:** From this branch tip, `python3 tools/audit/check_layout_orgs.py` should print `Layout pins OK: $12:$4000 -> Pic Pointers, ...` and exit 0. `cat docs/layout_pins.md | head -20` should show the doc title and the "Five pins" section. `grep -c "EXPECTED_PINS = (" tools/audit/check_layout_orgs.py` should return 1; the tuple should have exactly 5 entries. If layout.link is later modified to add/move/remove a pin, the audit should FAIL until both the audit's `EXPECTED_PINS` and `docs/layout_pins.md` are updated to match.
+
