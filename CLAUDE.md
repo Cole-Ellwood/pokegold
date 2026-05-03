@@ -219,22 +219,18 @@ get one." See `engine/battle/ai/boss.asm` `.check_speed`.
   maintain it; bypassing them desyncs the shadow and breaks subsequent
   `farcall`s.
 
-## In-progress / recently shipped
+## Recent work
 
-- **Wild encounter level spread (shipped 2026-05-02, needs playtest).**
-  `engine/overworld/wildmons.asm` `RaiseWildLevelForProgression` rewritten:
-  spreads wild levels around a progression-driven center via biased random
-  offset, instead of the old hard floor. Variance ±3 if center < 16, else
-  ±5. Center is `cap-6` from `GetProgressionLevelCap` (or 65 post-Blue, with
-  Mt. Silver always ≥65). Pre-Rival 1 stage added — `GetProgressionLevelCap`
-  returns 9 when 0 badges AND `EVENT_GAVE_MYSTERY_EGG_TO_ELM` is clear.
-  Distribution tables `OffsetTable_3` and `OffsetTable_5` are the only knobs
-  if the curve needs sharpening or flattening. Playtest row:
-  `docs/manual_qa_backlog.md` line 75.
-- **EXP cap fix (shipped 2026-05-02, commit `1f5fd6af`).** Same register-
-  clobber shape as the wild-floor bug. Don't stash the level in `d` before
-  calling `GetProgressionLevelCap` — it does `ld de, EVENT_BEAT_BLUE`
-  internally.
+For a list of what changed lately, run `git log codex/cleanup-gsc-rebalance-split`.
+This section used to enumerate "shipped on YYYY-MM-DD" entries with commit
+hashes; that pattern silently rotted (work moved to side branches, was
+rebased, was reverted) and had agents quoting stale claims as ground truth
+twice in one day. The audit `tools/audit/check_no_stale_shipped_claims.py`
+now flags any date- or commit-anchored claim in tracked .md files whose
+cited commit isn't an ancestor of the dev tip.
+
+Design intent for individual functions belongs at the function header in
+source (where it stays in sync with the code), not in this file.
 
 ## Workflow
 
