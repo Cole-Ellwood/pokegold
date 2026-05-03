@@ -27,24 +27,51 @@ ground truth that lets future agents check past agents' work — answering
 
 ## Workflow
 
-1. Read `PROJECT_CONTEXT.md` if you don't already have project context loaded.
-2. Open `TECH_DEBT_REPORT.md` — pick a finding by ID (TD-001..TD-013).
-3. Open `FIX_PROPOSALS.md` — find the matching proposal. Read the recipe and
-   the verification commands.
-4. Open `AGENT_LOG.md` — confirm no other agent has claimed or completed this
-   finding. If "claimed" but stale (>24h with no progress), you may take it.
-5. Append a `claimed:` entry to `AGENT_LOG.md` before starting (one line —
+1. **Read `STATUS.md` first.** It's the projection of `AGENT_LOG.md` — open
+   findings, who's working on what, what's blocked. Skip findings whose
+   STATUS row shows `done`, `accepted`, `claimed` (recent), `blocked`, or
+   `disputed`. Read `META_AUDIT.md` if this is your first session here.
+2. Read `PROJECT_CONTEXT.md` if you don't already have project context
+   loaded (auto-loaded inside Claude Code via `CLAUDE.md`).
+3. Open `TECH_DEBT_REPORT.md` — pick an open finding by ID (TD-001..TD-013).
+4. Open `FIX_PROPOSALS.md` — find the matching proposal. Read the recipe,
+   the verification commands, and any "Updated YYYY-MM-DD" subsections
+   (later updates supersede the original recipe for that finding).
+5. Open `AGENT_LOG.md` — confirm STATUS is current (the log is the
+   authoritative trail; STATUS is the projection).
+6. Append a `claimed:` entry to `AGENT_LOG.md` before starting (one line —
    ID, your session marker, timestamp).
-6. Execute the fix. Run every verification command listed in the proposal.
+7. Execute the fix. Run every verification command listed in the proposal.
    Re-read the edited file(s) — "I edited it" is not verification.
-7. Append a `done:` entry to `AGENT_LOG.md` with the standard format
-   (template at the top of that file).
-8. Stop. Hand off. Do not chain into the next finding in the same session
+8. Append a terminal entry to `AGENT_LOG.md` (`done:` / `partial:` /
+   `blocked:`) with the standard format (template at the top of that
+   file). **In the same commit, update `STATUS.md`** to reflect the new
+   terminal state.
+9. Stop. Hand off. Do not chain into the next finding in the same session
    unless explicitly instructed.
 
 If you discover the proposal is wrong, the fix is harder than scoped, or the
 work uncovers a deeper issue: **stop**, log a `blocked:` entry explaining
 what you found, and surface to the human. Do not silently expand scope.
+
+### Handling blocked / disputed findings
+
+A finding marked `blocked` or `disputed` in `STATUS.md` exists because a
+prior agent identified the proposal as wrong, the dependency as missing,
+or the premise as false. **Do not re-attempt** the finding without one
+of these:
+
+- The user has explicitly un-blocked it in conversation, **or**
+- `FIX_PROPOSALS.md` shows an "Updated YYYY-MM-DD" subsection for that
+  TD-### addressing the block (the corrective recipe is the new
+  contract), **or**
+- `TECH_DEBT_REPORT_ADDENDUM.md` exists and supersedes the original
+  finding with revised guidance.
+
+If you believe a blocked finding has been resolved by external work
+(e.g. the underlying file changed) and want to re-attempt, log a
+`reopen-request:` entry with evidence and surface to the human. Don't
+just claim it.
 
 ## Authority
 
@@ -67,11 +94,14 @@ You cannot:
 | File | Purpose | Mutability |
 |------|---------|-----------|
 | `README.md` | This file — orientation + workflow | Editable for clarity |
+| `STATUS.md` | Current state of every TD-###; read first | Edit on every terminal AGENT_LOG entry |
 | `PROJECT_CONTEXT.md` | What the hack is, where code lives, build & verify | Editable as project evolves |
 | `TECH_DEBT_REPORT.md` | The 13 findings by severity | **IMMUTABLE** |
+| `TECH_DEBT_REPORT_ADDENDUM.md` | Corrections/additions to the report (created when first needed) | Append-only |
 | `FINDINGS_DETAIL.md` | Raw evidence backing each finding | **IMMUTABLE** |
-| `FIX_PROPOSALS.md` | Recipe per finding; ranked order | Editable; preserve history |
+| `FIX_PROPOSALS.md` | Recipe per finding; ranked order | Editable; preserve history with "Updated YYYY-MM-DD" subsections |
 | `AGENT_LOG.md` | Append-only record of agent work | Append-only |
+| `META_AUDIT.md` | Periodic audit of this folder itself; lists defects in the workstream | Mutable; supersedable |
 
 ## Recommended order
 
