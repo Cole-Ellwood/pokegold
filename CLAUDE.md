@@ -85,9 +85,15 @@ For non-trivial changes, run relevant scripts in `tools/audit/` before
 reporting work done. The verification floor, not optional. The most useful:
 - `check_release_smoke.py` — broad release sanity
 - `check_cross_bank_call.py` — plain `call` to a label in a different bank
-  (the May 2026 type-immunity softlock class). Currently FAIL with 39
-  known-hits in `engine/battle/ai/boss.asm`; treat as diagnostic until
-  those are fixed, then promote to release-smoke floor.
+  (the May 2026 type-immunity softlock class). Was FAIL with 39 known-hits
+  in `engine/battle/ai/boss.asm`; **fixed 2026-05-03** via 7 hl-preserving
+  thunks (`AIxxx_HL`) at the bottom of `boss.asm` that wrap `farcall` to
+  the bank-0x0b scoring helpers. Audit now PASS. Promotion to release-smoke
+  floor is **gated on trace-ROM verification** — the fix changes
+  pokegold_trace.gbc bytes; manifest hashes (`audit/boss_ai_trace/live_capture_manifest.json`)
+  need refreshing and captures need re-running to confirm boss AI behavior
+  was not relying on the broken cross-bank call's garbage execution. Run
+  the trace pipeline + update the manifest before promoting this audit.
 - `check_navigation_floor.py` — docs/dev_index integrity
 - `check_boss_ai_*.py` — boss AI invariants
 
