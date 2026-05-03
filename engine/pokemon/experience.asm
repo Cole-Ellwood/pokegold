@@ -257,10 +257,14 @@ GetProgressionLevelCap::
 	db 39 ; before Clair
 
 ApplyProgressionExpScaling::
-; Apply global EXP pacing:
-; - 1.3x EXP when at least 3 levels below the current progression cap
-; - 1x EXP when close to the cap
-; - 0.1x EXP at or above the cap
+; Apply global EXP pacing.
+; Pre-Rival-1 (EVENT_GAVE_MYSTERY_EGG_TO_ELM clear):
+;   - 1.3x EXP when at least 3 levels below the cap
+;   - 1x EXP when close to the cap (within 2)
+;   - 0.1x EXP at or above the cap
+; Post-Rival-1 (egg returned to Elm, persists for the rest of the game):
+;   - 2x EXP under the cap (Falkner-grind relief)
+;   - 0.1x EXP at or above the cap
 	push de
 	push hl
 ; Load cap first; GetProgressionLevelCap clobbers d/e via internal `ld de, ...`,
@@ -276,19 +280,42 @@ ApplyProgressionExpScaling::
 	cp d
 	jr z, .above_cap
 	jr c, .above_cap
+
+; Under cap. Pick multiplier based on Rival-1 progress.
+; EventFlagAction clobbers d; preserve b (cap) and d (level).
+	push bc
+	push de
+	ld de, EVENT_GAVE_MYSTERY_EGG_TO_ELM
+	ld b, CHECK_FLAG
+	call EventFlagAction
+	ld a, c
+	pop de
+	pop bc
+	and a
+	jr nz, .scale_2x
+
+; Pre-Rival-1: 1.3x with a 3-level "near cap" softening zone at 1x.
+	ld a, b
 	sub d
 	cp 3
 	jr c, .done
+	ld a, 13
+	jr .apply_scale
 
-; 1.3x EXP (13/10), clamped to 0xffff.
+.scale_2x
+; Post-Rival-1: 2x flat under cap. No softening — the .above_cap branch
+; hard-gates progression at the cap line.
+	ld a, 20
+
+.apply_scale
+; Multiply the low 16 bits of hProduct by (a/10), clamp to 0xffff.
+	ldh [hMultiplier], a
 	xor a
 	ldh [hMultiplicand + 0], a
 	ldh a, [hProduct + 2]
 	ldh [hMultiplicand + 1], a
 	ldh a, [hProduct + 3]
 	ldh [hMultiplicand + 2], a
-	ld a, 13
-	ldh [hMultiplier], a
 	call Multiply
 	ld a, 10
 	ldh [hDivisor], a
