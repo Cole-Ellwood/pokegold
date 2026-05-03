@@ -1429,14 +1429,15 @@ def main() -> int:
     print("PASS: QoL script flow checks")
 
     check_save_format_version()
+    check_no_stale_shipped_claims()
 
     print("ALL RELEASE SMOKE CHECKS PASSED")
     return 0
 
 
-def check_save_format_version() -> None:
+def _run_subaudit(script: str, label: str) -> None:
     proc = subprocess.run(
-        [sys.executable, str(ROOT / "tools/audit/check_save_format_version.py")],
+        [sys.executable, str(ROOT / "tools/audit" / script)],
         cwd=ROOT,
         text=True,
         stdout=subprocess.PIPE,
@@ -1448,8 +1449,16 @@ def check_save_format_version() -> None:
     if proc.stderr:
         print(proc.stderr, end="" if proc.stderr.endswith("\n") else "\n", file=sys.stderr)
     if proc.returncode != 0:
-        fail("save format version audit failed")
-    print("PASS: save format version audit")
+        fail(f"{label} audit failed")
+    print(f"PASS: {label} audit")
+
+
+def check_save_format_version() -> None:
+    _run_subaudit("check_save_format_version.py", "save format version")
+
+
+def check_no_stale_shipped_claims() -> None:
+    _run_subaudit("check_no_stale_shipped_claims.py", "no stale shipped claims")
 
 
 if __name__ == "__main__":

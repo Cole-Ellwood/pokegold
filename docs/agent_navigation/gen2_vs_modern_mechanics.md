@@ -523,6 +523,8 @@ For any move-presence question, the authoritative file is
   `distracted-pasteur-fb2080`); not in this checkout. Always read
   `data/moves/moves.asm` directly before quoting BP. Outrage rampage is
   2-3 turns then confuse, vanilla mechanic.
+  <!-- audit:noqa stale-claims — deliberate cross-reference to a sibling-branch artifact -->
+
 - **Earthquake / Magnitude / Fissure** all hit Dig users
   (`engine/battle/effect_commands.asm:1735-1740, 1789-1798`). Gust and
   Twister and Whirlwind and Thunder hit Fly users
