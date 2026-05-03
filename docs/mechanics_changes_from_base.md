@@ -276,9 +276,10 @@ Changes:
   - status value
   - role/plan bias
   - risk penalties
-- Added plan system (`TEMPO_PRESSURE`, `STATUS_CHOKE`, `SETUP_SWEEP`, `WALLBREAK_THEN_CLEAN`, `ENDGAME_PROTECT`, `ANTI_SETUP_DENIAL`) with adaptation over turns.
+- Added plan system (`BOSS_PLAN_TEMPO_PRESSURE`, `BOSS_PLAN_STATUS_CHOKE`, `BOSS_PLAN_SETUP_SWEEP`, `BOSS_PLAN_WALLBREAK_THEN_CLEAN`, `BOSS_PLAN_ENDGAME_PROTECT`, `BOSS_PLAN_ANTI_SETUP_DENIAL`) with adaptation over turns.
 - Added probabilistic best-vs-second-best move pick to avoid deterministic patterns.
 - Added mid/late lookahead scoring on top move candidates.
+- Setup-move encouragement (`BossAI_SetupBoostHasFurtherValue.check_speed`) caps Speed boosts by the booster's base Speed: base ≥90 caps at +1 stage, base 60–89 caps at +2, base ≤59 caps at +3 (the only band that permits a second Agility). Already-outspeeding the player short-circuits further encouragement regardless of cap.
 
 ### 2.3 Boss Switching Logic
 
