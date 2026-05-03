@@ -410,6 +410,85 @@ between, until you trust the macro. Then bulk-replace.
 500-700 bytes total. Banks 0x0d and 0x0e benefit most. Re-check tight
 bank table after this finding closes.
 
+### Updated 2026-05-02 by claude-adoring-curie-e2563e
+
+The original "500-700 bytes recovered" headline doesn't survive
+arithmetic — see `META_AUDIT.md` TD-A05. Three correctable mistakes:
+
+1. **Macros don't shrink ROM, subroutines do.** A `MACRO` expansion
+   emits the same bytes per call site as inline code. Pattern 1
+   (item-check) as written is a macro; recovery is **~0 bytes**, not
+   ~96. To get real recovery, the pattern needs to become a `call`
+   to a shared subroutine (which adds ~3 bytes per site for the call,
+   minus the boilerplate length per site).
+2. **Pattern 2 (multiply/divide) thunk math is optimistic.** The
+   per-site savings of "~30 bytes" assumed the thunk replaces all
+   operand-loading boilerplate. In practice the operands vary per
+   site, so the thunk only replaces the chained
+   `Multiply`+`Divide`+result-copy steps. Realistic per-site recovery:
+   ~10-20 bytes.
+3. **Pattern 3 (`hBattleTurn` side-branch) is unenumerated.** The
+   "100+ instances project-wide" claim has no file:line list (see
+   `META_AUDIT.md` TD-A06). Recovery is real if converted to a shared
+   subroutine, speculative until measured.
+
+#### Corrected scope and approach
+
+- **Pattern 1:** convert to a shared **subroutine** in the same bank
+  as `late_gen_held_items.asm` (currently bank 0x0e — tight; verify
+  free space first). Define `_CheckHeldItem` taking the item constant
+  in `b`, returning `z` if matched. Each site becomes ~5 bytes
+  (`ld b, HELD_X` + `call _CheckHeldItem` + `ret nz`). Per-site
+  savings: ~8-10 bytes. 12 sites × 9 = ~108 bytes.
+- **Pattern 2:** `MultiplyThenDivide` thunk in ROM0 (verify ROM0
+  fullness first per `dev_index.md`). Per-site savings: ~10-20 bytes.
+  18 sites × ~15 = ~180-360 bytes.
+- **Pattern 3:** before doing any work, **enumerate the actual sites**
+  via `grep -rn 'ldh a, \[hBattleTurn\]' --include='*.asm' | wc -l`.
+  Record the list to `tech_debt/EVIDENCE/td_005_pattern3_sites.md` (new
+  file). Then convert to a shared subroutine `_GetSidedAddr` taking
+  player addr in `de`, enemy addr in `bc`, returning the right one in
+  `hl`. Per-site savings: ~5 bytes if enumeration confirms the rough
+  count.
+
+#### Realistic byte-recovery target
+
+**150-450 bytes total**, with the actual number measured at first
+conversion. Drop the headline "500-700 bytes" — that was wishful.
+
+#### Mandatory measurement step (new)
+
+After converting the **first** site of any pattern:
+1. Build before and after (`pokegold.gbc.before`, `pokegold.gbc.after`).
+2. Diff the `.map` file's bank-size summary — the actual ROM byte
+   delta is the only ground truth.
+3. Multiply by remaining-site count for a projection. Stop and
+   re-evaluate if projection is < 100 bytes — the refactor cost
+   probably outweighs the savings.
+
+#### Verification floor (unchanged)
+
+`make compare` SHA1 match is **not** required for TD-005 (this finding
+deliberately changes ROM contents to recover bytes). Replace SHA1
+match with: build succeeds, audit suite green, and `dev_index.md`
+shows tight banks gained free space.
+
+If SHA1 was the floor: subroutine extraction would be impossible
+(call-site bytes shift). The original "SHA1 MUST MATCH" line in the
+Verification section above is **wrong for this finding** and should
+be ignored. Use map-file bank-size diffing as the verification
+mechanism instead.
+
+#### Done criteria
+
+After all three patterns converted:
+1. Update `STATUS.md` TD-005 row to `done`, with measured byte total
+   in `Notes`.
+2. `AGENT_LOG.md` `done:` entry includes the byte measurement table
+   (per-pattern, per-site).
+3. `tech_debt/EVIDENCE/td_005_pattern3_sites.md` exists if pattern 3
+   was attempted.
+
 ---
 
 ## TD-006 — Name the magic numbers
@@ -676,6 +755,88 @@ the largest single recovery and is safely outside SRAM.
 ### Estimated effort
 
 1 session (verify each field, delete, build, audit, playtest one save).
+
+### Updated 2026-05-02 by claude-adoring-curie-e2563e
+
+The original verification floor ("playtest one save") underplays
+save-format risk. See `META_AUDIT.md` TD-A03 and
+`TECH_DEBT_REPORT_ADDENDUM.md` TD-009 risk reframe. Per `CLAUDE.md`:
+"Save-format changes shipping to public release are an escalation
+item." The corrections below split the work and tighten verification.
+
+#### Why the original recipe is risky
+
+Removing `ds N` from a WRAM field shifts every subsequent field's
+offset by N bytes. Even if the deleted field is not SRAM-mirrored,
+**any downstream SRAM-mirrored field gets misaligned** — silent
+corruption of existing saves with no migration code in the project.
+
+The original recipe's "check ram/sram.asm — most fields are outside
+the SRAM region, so deletion is safe" is true only for the deleted
+field itself. It does not address downstream shift.
+
+#### Corrected scope: split into TD-009a (safe) and TD-009b (gated)
+
+**TD-009a — HRAM-only deletions, safe:**
+- `hUnusedByte` (`ram/hram.asm:31`)
+- `hUnusedBackup` (`ram/hram.asm:157`)
+
+HRAM is not save-mirrored. These two are safe to delete with the
+original verification floor (build + audit + smoke playtest). 2 bytes
+recovered. Quick win.
+
+**TD-009b — WRAM deletions, escalation-gated:**
+
+All `wUnused*` fields in `ram/wram.asm`. For each, before deletion:
+
+1. Locate the field's line in `ram/wram.asm`.
+2. Check whether **any subsequent line** is SRAM-mirrored. The
+   SRAM-mirrored regions are defined by `ram/sram.asm` mirror
+   structures (`MEMORY_BACKUP_*` and similar) — read that file end
+   to end before judging.
+3. If **any** SRAM-mirrored field appears below the deletion target:
+   **escalate to user**. Do not delete. The 24-byte `wUnusedMapBuffer`
+   at line 272-273 is upstream of significant WRAM content and almost
+   certainly upstream of SRAM mirrors — assume it needs escalation.
+4. If no SRAM-mirrored field appears below: deletion is layout-safe,
+   but proceed only after running the audit suite and confirming a
+   layout-equivalence check (see verification below).
+
+#### Corrected verification (replaces original "playtest one save")
+
+```bash
+# Layout-equivalence: WRAM addresses of SRAM-mirrored fields must
+# not change. If sram.asm uses absolute address pinning (ds at fixed
+# org), this is automatic; otherwise compute via .map file.
+make pokegold.gbc
+make compare    # SHA1 may shift if any code uses absolute WRAM
+                # addresses; that's a red flag, not "expected"
+python3 tools/audit/check_save_format_version.py    # MUST PASS
+python3 tools/audit/check_release_smoke.py
+python3 tools/audit/check_workspace_hygiene.py
+
+# Diff before/after .map files for SRAM-mirrored field addresses:
+diff <(grep -E 'wOptions|wPlayer|wPokedexCaught|wPokedexSeen' \
+        pokegold.before.map) \
+     <(grep -E 'wOptions|wPlayer|wPokedexCaught|wPokedexSeen' \
+        pokegold.after.map)
+# Empty diff required.
+```
+
+Plus playtest on a copy of a real save: load existing, play 5 minutes,
+save, reload, confirm party/items/badges/options unchanged.
+
+#### Done criteria
+
+- TD-009a (HRAM) can be marked `done` with the corrected verification.
+- TD-009b (WRAM) requires user-escalation per field. Most likely
+  marked `accepted` for the larger fields (24-byte `wUnusedMapBuffer`)
+  unless a future save-format-version bump (see TD-002) absorbs the
+  layout change.
+
+Drop TD-009 from rank #3. New ordering suggestion: TD-009a stays at
+rank #3 (quick win, 2 bytes); TD-009b moves to release-gated alongside
+TD-002 (next save-format bump opportunity).
 
 ---
 
@@ -961,6 +1122,56 @@ spot check pass. Escalate to user if anything looks off.
 ### Estimated effort
 
 1 session.
+
+### Updated 2026-05-02 by claude-adoring-curie-e2563e
+
+The original verification floor — "SHA1 may shift, spot-check L5, L10,
+L20" — is too weak for a balance-critical formula. See `META_AUDIT.md`
+TD-A04 and `TECH_DEBT_REPORT_ADDENDUM.md` TD-013 severity revision.
+
+#### Severity revision
+
+`TECH_DEBT_REPORT.md` classifies TD-013 as LOW (low maintenance
+burden). Under a two-axis read (burden × correctness risk), TD-013 is
+low-burden + high-risk = effective MEDIUM. Treat the verification
+floor as MEDIUM even though the immutable report says LOW.
+
+#### Corrected verification floor: SHA1 match required
+
+A "cleanup" of `CalcExpAtLevel` that changes ROM bytes has, by
+definition, changed the EXP formula. Spot-checks at L5/L10/L20 will
+miss:
+- Discontinuities in the cubic term at high levels (L60+)
+- Rounding boundaries (e.g. L37, L88) that shift due to operation
+  reordering
+- Edge cases at level transitions
+
+The only deterministic check is **SHA1 match** between the original
+ROM and the refactored ROM. If `make compare` fails, the cleanup
+changed behavior. Stop and surface.
+
+This means: Option A (extract `DoSquare` helper) is only viable if
+the helper can be inlined or expanded such that the resulting bytes
+match the original. Often this isn't possible. If it isn't, **don't
+do the refactor** — leave the stack-arithmetic code as-is. Cleanup
+is not worth the risk to a balance-critical formula.
+
+Option B (restructure to use HRAM intermediates) almost certainly
+shifts ROM bytes and should not be attempted under this corrected
+floor.
+
+#### Done criteria
+
+After Option A attempt:
+1. `make compare` SHA1 match — REQUIRED.
+2. If SHA1 doesn't match: revert the changes, mark TD-013 `accepted`
+   with note "deferred — cannot refactor without ROM diff; not worth
+   risk to EXP formula." User approval needed for `accepted`.
+3. If SHA1 matches: full audit suite passes; mark `done`.
+
+Drop the in-emulator spot-check requirement — SHA1 match makes it
+redundant. Save it for cases where SHA1 can't be the floor (e.g.
+TD-005, TD-007 which deliberately change ROM bytes).
 
 ---
 
