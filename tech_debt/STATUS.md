@@ -17,7 +17,7 @@ blocked, what's done.
 | TD-004 | HIGH | open | — | do **after** TD-005 (needs bank headroom) |
 | TD-005 | HIGH | partial | 2026-05-03 | Pattern 1 closed (41 bytes recovered in bank 0e); Patterns 2 (gated on user WIP in experience.asm) and 3 (enumeration TBD) remain |
 | TD-006 | HIGH | open | — | escalation on values **and** names |
-| TD-007 | MED | open | — | selective in tight banks only |
+| TD-007 | MED | **done** | 2026-05-03 | 47 Beta\*_Blocks pruned; 5,854 bytes recovered (banks 0x2a +3500, 0x2b +2259, 0x37 +95). SHA1/dist update needs user playtest |
 | TD-008 | MED | open | — | research current RGBDS version first |
 | TD-009 | MED | open | 2026-05-02 (escalation) | TD-009a needs user approval — dead writes expand scope to vblank.asm, intro_menu.asm, events.asm; see ADDENDUM |
 | TD-010 | MED | **done** | 2026-05-02 | corrected recipe executed; see ADDENDUM and AGENT_LOG done entry |
@@ -60,8 +60,8 @@ churny. Other agents check by reading the log directly.
 
 ## Open count
 
-10 open + 1 done + 1 disputed + 1 pending-trigger = 13 total (matches
-`TECH_DEBT_REPORT.md` index).
+8 open + 1 partial + 2 done + 1 disputed + 1 pending-trigger = 13 total
+(matches `TECH_DEBT_REPORT.md` index).
 
 When the open count reaches **0** (or all remaining are `accepted` /
 `pending-trigger`), the folder's job is done per `README.md`.

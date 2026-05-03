@@ -208,4 +208,54 @@ For a worked example, see the TD-010 blocked entry below.
   5. **Pre-session build break** at `engine/battle/effect_commands.asm:2280` (`FailText_CheckOpponentProtect_Far` undefined) was fixed in this session's commit `ac99b056` so any TD work needing a build floor would be possible. That fix is unrelated to TD-005 and lives in its own commit.
 - **Verifier check:** From this branch tip, `grep -c '^_CheckUserItemEquals:\|^_CheckOpponentItemEquals:\|^_CheckItemEquals_finish:' engine/battle/late_gen_held_items.asm` should return 3. `grep -c 'callfar GetUserItem\|callfar GetOpponentItem' engine/battle/late_gen_held_items.asm` should return 4 (the helper pair counts as 2; `ApplyLateGenDamageMultipliers_Far` and the 2 `[hl]`-style outliers account for the remaining hits — 2 not 3 because METAL_POWDER's site is `callfar GetOpponentItem` followed by `ld a, [hl]`, and `.GetItemHeldEffect` uses `callfar GetUserItem` followed by `ld a, [hl]`). The Late Gen Held Items section in `pokegold.map` should be `<= $0d79` bytes if rebuilt without further changes.
 
+## 2026-05-03 — TD-007 — claimed
+
+- **Agent / session:** Opus 4.7 (1M context) / claude-compassionate-hugle-c80944
+- **State:** claimed
+- **Branch / commit:** claude/compassionate-hugle-c80944 @ 23d96d65
+- **Files touched:** (none yet)
+- **Summary:** Starting TD-007 selective label pruning. Scope: 47 unique `Beta*_Blocks` labels in `data/maps/blocks.asm`, all marked `; unreferenced`, all verified to have exactly 1 ref (the definition itself). Each has its own INCBIN to `maps/unused/Beta*.blk`; total INCBIN bytes: 5,854. The data lives in `Map Blocks 1` (bank 0x2a, currently 85 free), `Map Blocks 2` (bank 0x2b, 166 free), and bank 0x37 — the first two are tight per the dev_index. Plan: delete only the source-side label + INCBIN lines (47 blocks), leave the `.blk` files in `maps/unused/` for reversibility. Will measure section size deltas via `.map` diff before/after.
+- **Verification run:** N/A (claim only)
+- **Bytes recovered (if applicable):** TBD via measurement — projected ~5,854 bytes
+- **Bank impact (if applicable):** Banks 0x2a, 0x2b, 0x37 (mostly the first two)
+- **Issues / followups:** Not deleting the `.blk` files themselves — that's a related but separate cleanup. SHA1 will shift by design (per FIX_PROPOSALS, TD-007 is the one finding where SHA1 update is expected). Per recipe, escalate the SHA1 update to the user before touching `roms.sha1`.
+- **Verifier check:** Look for the matching `done:` / `partial:` / `blocked:` entry below.
+
+## 2026-05-03 — TD-007 — done (Beta\*_Blocks pruning; SHA1 update deferred to user)
+
+- **Agent / session:** Opus 4.7 (1M context) / claude-compassionate-hugle-c80944
+- **State:** done
+- **Branch / commit:** claude/compassionate-hugle-c80944 @ pending
+- **Files touched:** data/maps/blocks.asm, docs/generated/dev_index.md, tech_debt/AGENT_LOG.md, tech_debt/STATUS.md
+- **Summary:** Removed 47 unique `Beta*_Blocks` label + INCBIN pairs from `data/maps/blocks.asm` (all marked `; unreferenced`, all verified to have exactly 1 ref = the definition itself). Used a Python filter that recognizes the 3-line block pattern (label + INCBIN + blank separator) and deletes them atomically; collapsed any 3+ blank-line runs back to 2. Left the `.blk` files in `maps/unused/` for reversibility — deleting source data files is a separate cleanup outside TD-007 scope. **5,854 bytes recovered** across three Map Blocks sections, exact match to the pre-build projection (sum of all `.blk` file sizes).
+- **Verification run:**
+  - `make pokegold.gbc` → PASS (links green)
+  - `make compare` → SKIPPED (deliberate ROM-byte change; per FIX_PROPOSALS this is the one finding where SHA1 update is expected)
+  - `python3 tools/audit/check_release_smoke.py` → PASS
+  - `python3 tools/audit/check_battle_math_safety.py` → PASS
+  - `python3 tools/audit/check_save_format_version.py` → PASS
+  - `python3 tools/audit/check_workspace_hygiene.py` → PASS (from Windows Git Bash; the WSL run fails on git path translation, environmental not a regression)
+  - `python3 scripts/generate_dev_index.py --rom pokegold` → regenerated, tight-banks list updated (banks 0x2a and 0x2b dropped out entirely)
+  - `python3 tools/audit/check_navigation_floor.py` → 2 pre-existing FAILS (stadium.exe path in `docs/review_playbook.md`; whitespace diff env error from WSL/git). Unrelated.
+  - `python3 tools/audit/check_tech_debt_freshness.py` → PASS
+  - `.map` section size diffs (before → after):
+    - `Map Blocks 1` (bank 0x2a): $3fab → $31ff = **-3,500 bytes**
+    - `Map Blocks 2` (bank 0x2b): $3f5a → $3687 = **-2,259 bytes**
+    - `Map Blocks 3` (bank 0x37): $1773 → $1714 = **-95 bytes**
+    - Sum: 5,854 bytes (matches projection exactly)
+- **Bytes recovered:** 5,854 bytes
+- **Bank impact:**
+  - Bank 0x2a free: 85 → 3,585 bytes (was tightest in tight-banks list)
+  - Bank 0x2b free: 166 → 2,425 bytes (was second-tightest map bank)
+  - Bank 0x37 free: was already spacious (~10,000 free), gained 95 bytes
+  - Both 0x2a and 0x2b dropped out of the dev_index tight-banks list entirely
+- **Issues / followups:**
+  1. **`roms.sha1` and `dist/checksums.txt` stale.** Per FIX_PROPOSALS TD-007 recipe: "Record the new SHA1 in `roms.sha1` only after a build verifies and at least one manual playtest confirms gameplay parity. Escalate the SHA1 update to the human." Skipped — needs user playtest + approval. Both files predate this commit's intentional ROM byte change (and several earlier intentional changes — `roms.sha1` is the upstream pret/pokegold baseline; `dist/checksums.txt` was last refreshed before commits like 1f5fd6af and 65c5296f). A combined SHA1/checksums refresh after user playtest will close this gap.
+  2. **`.blk` source files in `maps/unused/` left intact.** 47 files, ~5,854 bytes on disk. Reversible: re-adding the label + INCBIN line restores the data. If repo cleanup wants to also drop the `.blk` files, that's a separate small commit. Recommend leaving until/unless a release pass.
+  3. **Strategic implication for TD-001 / TD-004.** Banks 0x2a and 0x2b are no longer tight, meaning sections currently in bank 0x0e (e.g. `engine/battle/type_passive_damage_mods.asm`, `engine/battle/late_gen_held_items.asm`) could potentially be relocated there to relieve bank 0x0e for the boss.asm split (TD-004). The 41 bytes Pattern 1 freed in bank 0x0e is not enough headroom on its own. Re-evaluation of TD-001's bank-pressure table and TD-004's bank assumptions is now warranted.
+  4. **Pic banks (0x12, 0x15, 0x17, 0x1b, 0x1c, 0x1e, 0x1f) remain at 0-1 byte free.** TD-007 didn't touch those — they're pic data, not source labels. The `data/maps/blocks.asm` cleanup doesn't affect them. Future TD-007 work, if any, should target pic data via a different mechanism (already noted in the original FIX_PROPOSALS).
+- **Verifier check:** From this branch tip, `grep -c '^Beta' data/maps/blocks.asm` should return 0. `wc -l data/maps/blocks.asm` should be ~857 (was 998). After a full rebuild, `pokegold.map` Section sizes for `Map Blocks 1`/`2`/`3` should be `$31ff`/`$3687`/`$1714` (or smaller if other size-affecting changes have landed). The `maps/unused/Beta*.blk` files should still exist on disk (47 files).
+
+
+
 
