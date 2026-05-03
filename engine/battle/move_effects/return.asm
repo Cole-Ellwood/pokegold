@@ -1,11 +1,8 @@
 BattleCommand_HappinessPower:
 	push bc
 	ld hl, wBattleMonHappiness
-	ldh a, [hBattleTurn]
-	and a
-	jr z, .ok
-	ld hl, wEnemyMonHappiness
-.ok
+	ld de, wEnemyMonHappiness
+	call _GetSidedHL
 	xor a
 	ldh [hMultiplicand + 0], a
 	ldh [hMultiplicand + 1], a

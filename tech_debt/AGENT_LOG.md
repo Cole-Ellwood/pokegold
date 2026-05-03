@@ -275,6 +275,222 @@ For a worked example, see the TD-010 blocked entry below.
   4. **TD-004 sequencing implication.** Original FIX_PROPOSALS recommended-order put TD-004 after TD-005 because boss.asm split was assumed to need bank headroom. With 0x0e at 568 free, that dependency is gone. TD-004 can be planned independently. Recommend leaving its rank in FIX_PROPOSALS unchanged for now (it's still HIGH effort, multi-session) but note the unblock.
 - **Verifier check:** From this branch tip, the dev_index "Tight Banks And Regions" table should match (or be lighter than) the snapshot in ADDENDUM 2026-05-03. Quick checks: `grep -c '^| ROMX | 0d ' docs/generated/dev_index.md` → 1 (0x0d still tight). `grep -c '^| ROMX | 0e ' docs/generated/dev_index.md` → 0 (0x0e dropped out of tight-banks list; if it returns 1, regression — re-read this addendum). `grep -c '^| ROMX | 16 ' docs/generated/dev_index.md` → 1 (newly tight). `grep -c '^| WRAM0 | 00 ' docs/generated/dev_index.md` → 1 (newly tight).
 
+## 2026-05-03 — TD-001 — partial (pic-bank pressure guard shipped)
+
+- **Agent / session:** Opus 4.7 (1M context) / claude-trusting-kare-692dd4
+- **State:** partial
+- **Branch / commit:** claude/trusting-kare-692dd4 @ pending
+- **Files touched:** tools/audit/check_pic_bank_pressure.py (new), tools/audit/data/pic_bank_baseline.json (new)
+- **Summary:** Shipped one of TD-001's three remaining concrete deliverables: the pic-bank pressure guard called for in `FIX_PROPOSALS.md` TD-001 Approach #3 (and re-confirmed in the "Updated 2026-05-03" subsection). Reads the "Tight Banks And Regions" table from `docs/generated/dev_index.md`, compares the 8 known pic banks (12, 15, 17, 1a, 1b, 1c, 1e, 1f) against a JSON baseline, FAILs if any drops below baseline. `--update` refreshes the baseline. Initial baseline recorded matches the 2026-05-03 dev_index snapshot ($12=0, $15=0, $17=0, $1a=4, $1b=0, $1c=1, $1e=0, $1f=1). The audit is a *cushion* check (catches encroachment); the link itself catches actual overflow.
+- **Verification run:**
+  - First run with no baseline → FAIL with instructive `--update` message (expected).
+  - `--update` → wrote baseline JSON.
+  - Re-run → PASS with summary of bank free counts.
+  - Tampered baseline (set 1c=5 manually, then re-ran) → FAIL with `$1c: 5 free baseline -> 1 free now (-4)` + instructive message. Restored baseline via `--update`.
+  - `python3 tools/audit/check_tech_debt_freshness.py` → PASS.
+- **Bytes recovered:** N/A (tooling addition; protects future bytes).
+- **Bank impact:** N/A (no source code change).
+- **Issues / followups:**
+  1. **Audit floor placement.** Not added to `check_release_smoke.py` yet — per `FIX_PROPOSALS.md` and CLAUDE.md, the explicit promotion to release-smoke floor is a separate decision (similar to how `check_cross_bank_call.py` is currently diagnostic-only with 39 known hits). Recommend running it before any sprite-size change as a pre-commit check.
+  2. **TD-001 remaining items after this session:** TD-005 Pattern 2 (gated on user WIP in `experience.asm`) and TD-005 Pattern 3 (enumeration shipped this session — see next AGENT_LOG entry; conversion still open), and TD-009a (gated on user OK for vblank/intro_menu/events dead-write removal). Pic-bank guard is now off the list.
+  3. **Bank 0x1a inclusion.** ADDENDUM 2026-05-03 lists 0x1a at 4 free as a pic-adjacent bank; original FIX_PROPOSALS list (12/15/17/1b/1c/1e/1f) didn't include 1a. Audit guards all 8 conservatively; if 0x1a isn't truly pic data, the extra coverage is harmless (the `--update` workflow handles deliberate slack changes).
+- **Verifier check:** From this branch tip, `ls tools/audit/check_pic_bank_pressure.py tools/audit/data/pic_bank_baseline.json` should show both files. `python3 tools/audit/check_pic_bank_pressure.py` should print `Pic-bank pressure OK: ...` and exit 0. `cat tools/audit/data/pic_bank_baseline.json` should match the 2026-05-03 snapshot ($12=0, $15=0, $17=0, $1a=4, $1b=0, $1c=1, $1e=0, $1f=1). If a future sprite change drops any bank's free count, the audit FAILs and points the agent at `--update`.
+
+## 2026-05-03 — TD-005 — partial (Pattern 3 enumeration shipped; conversion still open)
+
+- **Agent / session:** Opus 4.7 (1M context) / claude-trusting-kare-692dd4
+- **State:** partial
+- **Branch / commit:** claude/trusting-kare-692dd4 @ pending
+- **Files touched:** tech_debt/EVIDENCE/td_005_pattern3_sites.md (new)
+- **Summary:** Closed the precursor step for TD-005 Pattern 3 called for in `FIX_PROPOSALS.md` "Updated 2026-05-02" (and `META_AUDIT.md` TD-A06). Wrote a Python classifier (kept in `.local/`, not committed) that walks all `.asm`, finds every `ldh a, [hBattleTurn]`, and classifies each site by shape using a 12-line context window. Output: 234 total reads → **66 Class A** (side-branch eligible), 138 Class B (control-flow only), 30 Class C (turn-flag-as-data). Class A is below the report's "100+" claim but well above the "speculative until measured" bar. Per-file Class A breakdown: 27 in `effect_commands.asm` (canary bank 0x0d, 6 free), 10 in `type_passive_damage_mods.asm`, 6 in `core.asm`, balance scattered. The 27 in 0x0d are the highest-leverage cluster — converting that group alone could relieve the canary bank by ~140 bytes if per-site savings hit the recipe's ~5-byte target. Spot-checked 4 classifier outputs against actual source: 100% match on the spot sample.
+- **Verification run:**
+  - `python3 .local/classify_pattern3.py | head -5` → reports 234/66/138/30 split (matches recipe expectations).
+  - Spot checks on `engine/battle/core.asm:381` (Class A, hl), `core.asm:1087` (Class A, de), `home/battle.asm:39` (Class B, control flow), `core.asm:1326` (Class C, `xor 1` toggle) → all classifications correct.
+  - `python3 tools/audit/check_tech_debt_freshness.py` → PASS.
+- **Bytes recovered:** N/A (enumeration only; conversion is the byte-recovery step and is not in this session's scope).
+- **Bank impact:** N/A.
+- **Issues / followups:**
+  1. **Conversion still open.** Pattern 3 itself is not closed by this entry — the `_GetSidedAddr` helper still needs to be written and call sites converted. The evidence file documents the implementer caveats (helper bank placement, three target registers not one, site-shape variance, recommended starting site).
+  2. **Helper-bank-placement caveat is real.** ROM0 has 236 free; the helper is ~8-12 bytes; logical home is `home/battle.asm`. Putting it in a ROMX bank forces `callfar` per site (5 bytes per site = ate the savings). This decision needs to be made explicit before converting.
+  3. **Three target registers (hl/de/bc) not one.** Recipe assumes return-in-hl. 38/66 sites use hl; 23 use de; 5 use bc. Either three helpers or a register-move tail per non-hl site. Evidence file analyzes both options.
+  4. **Classifier is one-shot.** Lives in `.local/classify_pattern3.py`, not committed. Reproduce instructions are in the evidence file. If a future agent needs to refresh the count, the classifier is 60 lines of Python.
+  5. **TD-005 stays partial.** Pattern 1 closed in prior session (-41 bytes); Pattern 2 still gated on user WIP in `experience.asm`; Pattern 3 enumeration done but conversion open. STATUS row updated with the new sub-state.
+- **Verifier check:** From this branch tip, `ls tech_debt/EVIDENCE/td_005_pattern3_sites.md` should exist. `wc -l tech_debt/EVIDENCE/td_005_pattern3_sites.md` should be ~150-180 lines. The Class A list inside should have exactly 66 file:line entries. `grep -c "	A	"` of the classifier output (regenerated locally) should still report 66 (or close — small drift is normal as battle code evolves).
+
+## 2026-05-03 — TD-A14 — done (navigation_floor build-artifact carveout)
+
+(TD-A### — codebase finding tracked in `TECH_DEBT_REPORT_ADDENDUM.md`,
+no STATUS row by design. This log entry is for chronological trail
+only; the canonical state lives in the ADDENDUM entry's "State"
+section.)
+
+- **Agent / session:** Opus 4.7 (1M context) / claude-trusting-kare-692dd4
+- **State:** done
+- **Branch / commit:** claude/trusting-kare-692dd4 @ pending
+- **Files touched:** tools/audit/check_docs_navigation.py, docs/generated/balance_audit.md (regen)
+- **Summary:** Patched `check_docs_navigation.py` to downgrade build-artifact (`pokegold.map`/`pokegold.sym`/`tools/stadium.exe`) and vendored-toolchain (`rgbds-1.0.1/*`) absences from FAIL to WARN. Added `BUILD_ARTIFACT_PATHS` set, `VENDORED_TOOLCHAIN_PREFIXES` tuple, `is_build_artifact_or_toolchain_ref()` helper. Both `check_required_paths()` and `check_backtick_references()` use the new helper. `check_generated_index()` skips the dev_index regen comparison when `pokegold.map` is absent. Also regenerated `docs/generated/balance_audit.md` to clear an unrelated staleness FAIL surfacing alongside.
+- **Verification run:**
+  - `python3 tools/audit/check_docs_navigation.py` → ALL DOC NAVIGATION CHECKS PASSED (4 WARNs for missing build-artifacts, none promoted to errors).
+  - `python3 tools/audit/check_navigation_floor.py` → "Navigation floor passed."
+  - `python3 tools/audit/check_tech_debt_freshness.py` → PASS.
+- **Bytes recovered:** N/A (audit-only).
+- **Bank impact:** N/A.
+- **Issues / followups:**
+  1. **From main repo with a build,** the audit will still validate dev_index freshness and verify build artifacts exist. Behavior change is scoped to the worktree-without-build path.
+  2. **balance_audit.md regen** captured drift that pre-existed this session (DUNSPARCE/TOGETIC/VENOMOTH/QUAGSIRE rows); not a behavior change introduced by my edits.
+- **Verifier check:** From a worktree without `pokegold.map`/`pokegold.sym`, `python3 tools/audit/check_navigation_floor.py` should exit 0 with "Navigation floor passed." From main repo after a build, it should still pass and validate dev_index freshness (the WARN-only path triggers solely on missing artifacts).
+
+## 2026-05-03 — TD-A15 — done (47 orphan Beta*.blk files removed)
+
+(TD-A### — codebase finding tracked in `TECH_DEBT_REPORT_ADDENDUM.md`,
+no STATUS row by design. This log entry is for chronological trail
+only; the canonical state lives in the ADDENDUM entry's "State"
+section.)
+
+- **Agent / session:** Opus 4.7 (1M context) / claude-trusting-kare-692dd4
+- **State:** done
+- **Branch / commit:** claude/trusting-kare-692dd4 @ pending
+- **Files touched:** maps/unused/Beta*.blk (47 deletions), maps/unused/ (now empty, removed from filesystem).
+- **Summary:** `git rm maps/unused/Beta*.blk` removed all 47 orphan binary files left behind by TD-007's source-side label cleanup. Reference safety verified pre-deletion via `grep -rn '<filename>' --include='*.asm'` for each of the 47 — zero hits. The `.blk` files were the entire content of `maps/unused/`; the directory itself is now gone. 5,854 bytes of file content removed from the working tree (~47 KB in disk-block padding).
+- **Verification run:**
+  - `git status --short | grep -c '^D '` → 47 (matches expected count).
+  - `ls maps/unused/Beta*.blk 2>&1` → "No such file or directory" (gone).
+  - `grep -rn 'maps/unused' --include='*.asm' --include='*.md' --include='*.py' --include='*.link'` → only AGENT_LOG / ADDENDUM self-references remain (this entry, the TD-007 done entry's followup #2, the TD-A15 ADDENDUM entry).
+  - `python3 tools/audit/check_tech_debt_freshness.py` → PASS.
+- **Bytes recovered:** N/A from ROM perspective (TD-007 already recovered the 5,854 ROM bytes by deleting the source-side INCBIN lines). Disk-only cleanup of orphan binaries.
+- **Bank impact:** N/A.
+- **Issues / followups:**
+  1. **TD-007 followup #2 closed.** That followup said "47 files, ~5,854 bytes on disk. Reversible: re-adding the label + INCBIN line restores the data. If repo cleanup wants to also drop the `.blk` files, that's a separate small commit. Recommend leaving until/unless a release pass." This entry is that small commit. Reversibility now via `git show <pre-deletion-commit>:maps/unused/<filename>.blk` if anyone ever wants the data back.
+- **Verifier check:** `ls maps/unused/ 2>&1` → "No such file or directory" (or empty if a future agent recreated the dir for other reasons). `git log --diff-filter=D --name-only` should show the 47 deletions in this branch's commit history once committed.
+
+## 2026-05-03 — TD-003 — partial (Option 1 audit + Option 2 docs shipped)
+
+- **Agent / session:** Opus 4.7 (1M context) / claude-trusting-kare-692dd4
+- **State:** partial
+- **Branch / commit:** claude/trusting-kare-692dd4 @ pending
+- **Files touched:** tools/audit/check_layout_orgs.py (new), docs/layout_pins.md (new), tech_debt/STATUS.md, tech_debt/FIX_PROPOSALS.md (Updated 2026-05-03 subsection), tech_debt/AGENT_LOG.md (this entry)
+- **Summary:** Closed Option 1 (audit) and Option 2 (docs) of TD-003's three-option recipe. The 5 documented `org` pins in `layout.link` ($12:$4000 → Pic Pointers, $1f:$4000 → Unown Pic Pointers, $2e:$6300 → bank2E, $31:$7a40 → bank31, $7f:$7df8 → Stadium 2 Checksums) are now contract-checked: any drift FAILs the audit with a side-by-side diff and points the reviewer at the docs file. Caught a parser bug during dev (was attributing SRAM `org` directives to ROMX 0x7f because the parser didn't reset `current_bank` on non-ROMX region headers); fixed with `NON_ROMX_REGION_RE`. **Option 3 (Stadium 2 relocation) remains release-gated** — it needs hardware/emulator verification of whether Stadium 2 reads checksums via fixed ROM offset or bank-mapped address. TD-003 stays `partial` as the steady state until Option 3 dispositions one way or the other.
+- **Verification run:**
+  - `python3 tools/audit/check_layout_orgs.py` → PASS (5 pins detected, all match expected).
+  - Drift simulation: moved Stadium 2 pin from `$7df8` to `$7e00` in layout.link → audit correctly FAILed with "Expected `ROMX $7f $7df8 -> 'Stadium 2 Checksums'`; Found `ROMX $7f $7e00 -> 'Stadium 2 Checksums'`". Restored.
+  - Re-PASS confirmed post-restore.
+  - `python3 tools/audit/check_tech_debt_freshness.py` → PASS.
+- **Bytes recovered:** N/A (audit-only deliverable; no source/ROM byte change).
+- **Bank impact:** N/A (no relocations).
+- **Issues / followups:**
+  1. **Audit not promoted to release-smoke floor yet.** Same posture as `check_pic_bank_pressure.py` — the audit exists and works; explicit promotion to `check_release_smoke.py` (or `check_navigation_floor.py`) is a separate decision per the same logic CLAUDE.md applies to `check_cross_bank_call.py`. Recommend running pre-commit on any layout.link change.
+  2. **Parser robustness.** Initially the audit attributed SRAM `org` directives (e.g., `org $a600` for "SRAM Bank 0") to the previous ROMX bank context. Fixed by adding NON_ROMX_REGION_RE that resets `current_bank` to None when entering ROM0/WRAM0/WRAMX/SRAM/VRAM/HRAM regions. Worth keeping an eye on if RGBDS layout.link syntax evolves.
+  3. **Option 3 (relocation) close-out path.** When the user has a Stadium 2 setup and wants to verify the read-mode (fixed-offset vs. bank-mapped), the test is: (a) build a ROM with the checksum section moved to a different bank (still at offset that maps to the same ROM offset 0x1ffdf8), (b) attempt Stadium 2 import, (c) confirm whether it works. If it works → pin can be relaxed; if it doesn't → pin must stay and TD-003 moves to `accepted`. Until that test happens, partial is the right state.
+  4. **STATUS open count math.** Updated from "7 open + 2 partial" to "6 open + 3 partial" — TD-003 moved from open into partial.
+- **Verifier check:** From this branch tip, `python3 tools/audit/check_layout_orgs.py` should print `Layout pins OK: $12:$4000 -> Pic Pointers, ...` and exit 0. `cat docs/layout_pins.md | head -20` should show the doc title and the "Five pins" section. `grep -c "EXPECTED_PINS = (" tools/audit/check_layout_orgs.py` should return 1; the tuple should have exactly 5 entries. If layout.link is later modified to add/move/remove a pin, the audit should FAIL until both the audit's `EXPECTED_PINS` and `docs/layout_pins.md` are updated to match.
+
+## 2026-05-03 — TD-005 — claimed (Pattern 3)
+
+- **Agent / session:** Opus 4.7 (1M context) / claude-kind-swanson-ae5a65
+- **State:** claimed
+- **Branch / commit:** claude/kind-swanson-ae5a65 @ 350e6b20
+- **Files touched:** tech_debt/EVIDENCE/td_005_pattern3_sites.md, tools/audit/_td005_pattern3_enum.py (none yet for source)
+- **Summary:** Starting TD-005 Pattern 3 (`hBattleTurn` side-branch subroutine extraction). Enumeration done — strict pre-load shape has 27 sites (not 100+ as estimated in original FIX_PROPOSALS; the post-test branch-and-rejoin shape barely exists). 12 sites land in canary bank 0x0d (Effect Commands + move_effects/), 9 in 0x0e (Late Gen Held Items / Type Passive), 5 in 0x0f (Battle Core), 1 in non-tight bank. Plan: add 7-byte `_GetSidedHL` helper to `home/battle_vars.asm` (ROM0, 236 free), per-site savings 2 bytes, net +47 bytes recovered with 24 in canary 0x0d. Convert effect_commands.asm:1917 first as smoke-test for measurement; if predicted -2 bytes confirmed in `.map` diff, proceed to bulk-convert all 27 sites. Skipping `engine/pokemon/experience.asm` per prior partial entry (user WIP).
+- **Verification run:** N/A (claim only)
+- **Bytes recovered (if applicable):** TBD — projected +47 net (54 site savings - 7 helper)
+- **Bank impact (if applicable):** ROM0 (helper +7), bank 0x0d (-24), 0x0e (-18), 0x0f (-10), 0x3e_2 (-2)
+- **Issues / followups:** Below the FIX_PROPOSALS "Updated 2026-05-02" 100-byte stop-and-re-evaluate threshold (47 net, not 150-450 as scoped). Same call as Pattern 1 partial — bytes that land in tight bank 0x0d are the strategic win, not the headline number. Decision recorded here so future agents see the threshold was crossed deliberately.
+- **Verifier check:** Look for the matching `done:` / `partial:` / `blocked:` entry below.
+
+## 2026-05-03 — TD-005 — partial (Pattern 3 closed; Pattern 2 still open)
+
+- **Agent / session:** Opus 4.7 (1M context) / claude-kind-swanson-ae5a65
+- **State:** partial
+- **Branch / commit:** claude/kind-swanson-ae5a65 @ pending
+- **Files touched:** home/battle_vars.asm; engine/battle/effect_commands.asm; engine/battle/late_gen_held_items.asm; engine/battle/type_passive_damage_mods.asm; engine/battle/core.asm; engine/battle/hidden_power.asm; engine/battle/move_effects/{bide,conversion2,frustration,mimic,return,sketch}.asm; tech_debt/EVIDENCE/td_005_pattern3_sites.md (new); tools/audit/_td005_pattern3_enum.py (new); docs/generated/dev_index.md, docs/generated/balance_audit.md (regen); tech_debt/AGENT_LOG.md, tech_debt/STATUS.md.
+- **Summary:** Pattern 3 (`hBattleTurn` side-branch) closed via shared `_GetSidedHL` helper at the bottom of `home/battle_vars.asm` (ROM0, 7 bytes: `ldh a, [hBattleTurn] :: and a :: ret z :: ld h, d :: ld l, e :: ret`). Strict enumeration found 27 candidate sites (not 100+ as the original FIX_PROPOSALS estimated; the textbook post-test branch-and-rejoin shape barely exists in this codebase — the dominant shape is **pre-load + jr-z-skip**). 26 of 27 sites converted (player addr in `hl`, enemy addr in `de`, replace 6-line idiom with 3-line `ld hl :: ld de :: call _GetSidedHL`). 1 site deliberately skipped: `engine/battle/type_passive_damage_mods.asm:506` (the OUTRAGE branch in `TypePassive_GetCurrentMoveCategory_Far`) has a live `e` value set immediately before the side-branch (`ld e, a`) and read at `.done`; preserving `e` would require `push de`/`pop de` (+2 bytes) wiping the savings, so that site stays as inline branch. **45 bytes net recovered** (helper +7 in ROM0; 26 sites × −2 in ROMX = −52). The strategic value is the **+24 bytes free in canary bank 0x0d** (Effect Commands), which moves from 6 → 30 free per regenerated dev_index — well above the canary threshold. Pattern 1 closed in prior session; Pattern 2 (multiply/divide thunk) still gated on user WIP in `engine/pokemon/experience.asm`.
+- **Verification run:**
+  - `make pokegold.gbc` → PASS (links green)
+  - `make compare` → SKIPPED (deliberate ROM-byte change; not the floor for TD-005 per FIX_PROPOSALS Updated 2026-05-02)
+  - `python3 tools/audit/check_release_smoke.py` → PASS
+  - `python3 tools/audit/check_battle_math_safety.py` → PASS
+  - `python3 tools/audit/check_save_format_version.py` → PASS
+  - `python3 tools/audit/check_tech_debt_freshness.py` → PASS
+  - `python3 scripts/generate_dev_index.py --rom pokegold` → PASS, regenerated; tight-banks list updated (0x0d: 6 → 30 free)
+  - `python3 scripts/generate_balance_audit.py` → PASS, regenerated (was pre-existing-stale, addressed as courtesy — no balance changes in this session)
+  - `python3 tools/audit/check_navigation_floor.py` → 4 PRE-EXISTING FAILS (`docs/review_playbook.md` rgbds-1.0.1/*.exe and tools/stadium.exe path checks; same WSL/git path-translation environment issues called out in prior 2026-05-03 partial entries). All other docs-navigation checks PASS including the freshly-regen'd balance_audit.
+  - `python3 tools/audit/_td005_pattern3_enum.py` → `Total sites: 1` (the deliberately-skipped type_passive_damage_mods.asm:506)
+  - `.map` section size diffs (before → after):
+    - `Effect Commands` (bank 0x0d): $3ffa → $3fe2 = **−24 bytes** (12 sites)
+    - `Late Gen Held Items` (bank 0x0e, contains both late_gen_held_items + type_passive): $0d84 → $0d74 = **−16 bytes** (8 sites)
+    - `Battle Core` (bank 0x0f): $3bb7 → $3bad = **−10 bytes** (5 sites)
+    - `bank3E_2` (hidden_power): $0904 → $0902 = **−2 bytes** (1 site)
+    - ROM0: 16148 used → 16155 used = **+7 bytes** (helper)
+    - **Net: −45 bytes**
+- **Bytes recovered:** 45 bytes net (52 ROMX − 7 ROM0)
+- **Bank impact:**
+  - ROMX 0x0d: 6 free → **30 free** (+24, strategic canary relief — bank 0x0d remains in tight-banks list but at healthy headroom)
+  - ROMX 0x0e: 568 free → 584 free (+16)
+  - ROMX 0x0f: ~580 free → ~590 free (+10)
+  - ROMX 0x3e_2: not tight, +2 free
+  - ROM0: 236 free → 229 free (−7, helper added)
+- **Issues / followups:**
+  1. **Pattern 2 (multiply/divide thunk)** still open — gated on user WIP in `engine/pokemon/experience.asm` per the prior 2026-05-03 partial entry. Defer until user un-blocks or WIP lands.
+  2. **27th Pattern 3 site** (`type_passive_damage_mods.asm:506`) deliberately skipped due to live `e` register. The strict enumerator (`tools/audit/_td005_pattern3_enum.py`) reports `Total sites: 1` after this session, matching this skip. The site is correct as-is; converting would be a 0-byte refactor (push/pop wipes the saving).
+  3. **Inverse-shape sites not enumerated.** The strict regex requires `ld hl, wPlayer*/wBattle*` first. Sites with `ld hl, wEnemy*` first (like `GetOpponentItem` at `effect_commands.asm:6443` and `TypePassive_IsOpponentSafeguarded_Far` at `type_passive_damage_mods.asm:681`) follow the same logical pattern but with addresses swapped. The `_GetSidedHL` helper handles them too — the conversion is `ld hl, wEnemyXXX :: ld de, wBattleXXX :: call _GetSidedHL` (same shape, mirrored semantics: helper returns the address you want on player turn). Could be a future Pattern 3.5 follow-up; estimated ~5-8 additional sites at −2 bytes each. Not critical now — bank 0x0d has 30 free, no pressure.
+  4. **Multi-pointer sites** (e.g., `.UserAttackGreaterThanSpAtk` in `type_passive_damage_mods.asm`) where both `hl` and `de` swap together need a different helper (4-input). Out of scope; not enumerated.
+  5. **`docs/generated/balance_audit.md` was stale before this session.** Regenerated as a courtesy (`scripts/generate_balance_audit.py`) — no Pokemon data changes in this session, but the regen lands the file fresh so future agents don't trip on the same nav-floor failure.
+  6. **TD-001 close-out path:** per the prior 2026-05-03 partial, TD-001 stays `partial` until TD-005 P2/P3 close, TD-009a executes, and pic-bank guard ships. This session closes Pattern 3, leaving Pattern 2 + TD-009a + pic-bank guard as the remaining gate.
+- **Verifier check:** From this branch tip:
+  - `grep -c '^_GetSidedHL::' home/battle_vars.asm` → 1 (helper exists exactly once)
+  - `grep -rn 'call _GetSidedHL' --include='*.asm' | wc -l` → 26 (number of converted sites)
+  - `python3 tools/audit/_td005_pattern3_enum.py | grep '^Total sites:'` → `Total sites: 1` (the deliberately-skipped site at type_passive_damage_mods.asm:506)
+  - `.map` `Effect Commands` section size should be `$3fe2` (or smaller if other size-affecting changes have landed); `Late Gen Held Items` `$0d74`; `Battle Core` `$3bad`. ROM0 used should be 16155.
+  - dev_index.md tight-banks should show `ROMX 0d: 30 free` (was 6 in ADDENDUM 2026-05-03 snapshot).
+
+## 2026-05-03 — TD-A13 — done (39 boss.asm cross-bank calls thunked)
+
+(TD-A### — codebase finding tracked in `TECH_DEBT_REPORT_ADDENDUM.md`,
+no STATUS row by design. This log entry is for chronological trail
+only.)
+
+- **Agent / session:** Opus 4.7 (1M context) / claude-kind-swanson-ae5a65
+- **State:** done
+- **Branch / commit:** claude/kind-swanson-ae5a65 @ f2e18554 (merged into great-germain 2026-05-03)
+- **Files touched:** engine/battle/ai/boss.asm; CLAUDE.md (caveat note); docs/generated/dev_index.md (regen)
+- **Summary:** Closed TD-A13. 7 intra-bank thunks at the bottom of boss.asm wrap `farcall` to each AI scoring helper (in bank 0x0b) with `push hl :: pop hl` to defeat the farcall hl-clobber. 39 plain-call sites in boss.asm converted to `call X_HL`. `tools/audit/check_cross_bank_call.py` now PASS (was 39 hits). +63 bytes in bank 0x0e (568 → 521 free, still healthy). Behavior change: boss AI no longer runs garbage at 0x0e:$7xxx; scoring helpers now actually execute. Statistically extremely unlikely the prior garbage execution was load-bearing for boss decisions, but boss AI **may visibly play differently** in playtest. Trace ROM verification deferred — `audit/boss_ai_trace/*` manifest checksums pinned to old SHA, separate workstream.
+- **Audit on merge into great-germain (2026-05-03):**
+  - Read all 7 thunk targets: 6 are HP-check (`AICheckPlayerMaxHP` family) returning via carry flag; 1 (`AIGetEnemyMove`) returns via side-effect write to `wEnemyMoveStruct`. None return useful info via `hl`. `push hl :: pop hl` bracketing is correct.
+  - Carry flag survives the farcall epilogue (none of the instructions in `home/farcall.asm:13-28` or `Bankswitch` touch flags).
+  - All 39 call-site conversions are byte-identical (`call AIxxx` and `call AIxxx_HL` are both 3-byte `call`).
+  - 13 `AICheckEnemyQuarterHP` + 6 `AIGetEnemyMove` + 5 `AICheckPlayerQuarterHP` + 5 `AICheckPlayerHalfHP` + 5 `AICheckEnemyHalfHP` + 4 `AICheckEnemyMaxHP` + 1 `AICheckPlayerMaxHP` = 39 ✓.
+- **Bytes recovered:** N/A (correctness fix; +63 bytes in 0x0e for thunks).
+- **Bank impact:** 0x0e: 568 → 521 free (-47 net after thunks; some other size-shaping in this commit too).
+- **Issues / followups:**
+  1. `check_cross_bank_call.py` still NOT promoted to release-smoke floor. CLAUDE.md updated with the trace ROM caveat in this commit. Promotion gated on trace pipeline re-run.
+  2. **Behavior change for playtest.** With this fix, boss AI runs the scoring code it was supposed to run. If a player who'd been beating the prior build notices bosses suddenly choosing better moves, that's expected.
+- **Verifier check:** `python3 tools/audit/check_cross_bank_call.py` → PASS (0 hits in `engine/battle/ai/boss.asm`). `grep -c '^[A-Z][A-Za-z]*_HL:$' engine/battle/ai/boss.asm` → 7 (the 7 thunks). `grep -c 'call AI[A-Za-z]*_HL$' engine/battle/ai/boss.asm` → 39.
+
+## 2026-05-03 — TD-008 — claimed
+
+- **Agent / session:** Opus 4.7 (1M context) / claude-great-germain-2c8cb8
+- **Scope:** Research-only step. Read RGBDS changelog from v1.0.1 to current stable, pin a target version, write `tech_debt/EVIDENCE/td_008_rgbds_changelog.md` and an `Updated 2026-05-03` subsection in `FIX_PROPOSALS.md` TD-008. Does NOT execute the upgrade (separate session).
 
 
+## 2026-05-03 — TD-008 — partial (research step shipped; upgrade gated on upstream)
 
+- **Agent / session:** Opus 4.7 (1M context) / claude-great-germain-2c8cb8
+- **State:** partial
+- **Branch / commit:** claude/great-germain-2c8cb8 @ pending
+- **Files touched:** tech_debt/EVIDENCE/td_008_rgbds_changelog.md (new), tech_debt/FIX_PROPOSALS.md (added "Updated 2026-05-03" subsection to TD-008), tech_debt/STATUS.md (note refreshed), tech_debt/AGENT_LOG.md (this entry)
+- **Summary:** Closed step 1 of TD-008's recipe ("Pick target version. Read the RGBDS changelog…"). Headline finding: **the current pin (`v1.0.1`, vendored as `rgbds-1.0.1/`) IS the current upstream stable.** Released 2026-01-01; latest tag on `gbdev/rgbds`. The original recipe assumed v1.7+ existed by 2026 — wrong assumption. RGBDS pivoted to SemVer at v1.0.0 (2025-11-01); v1.0.1 is a backwards-compatible patch over it. `master` HEAD is 170 commits ahead of v1.0.1 but untagged (lexer refactors + fuzzing UB fixes; no surface-level syntax shift). Verified the codebase has none of v1.0.0's removed forms (`ldio`, `ld [c]`, `ldh [$xx]` short-form) and none of its `-Weverything`-warning deprecations (`STRIN`/`STRRIN`/`STRSUB`/`CHARSUB`, `rgbfix -O`). Project's `Makefile` runs `-Weverything` without `-Wno-obsolete`, so a clean v1.0.1 build is implicit confirmation. **No upgrade is currently available; "upgrade RGBDS" is a no-op.** TD-008 re-scoped from "do the upgrade" to "watch for next upstream release"; the FIX_PROPOSALS Updated subsection routes the future trigger by SemVer (patch / minor / major).
+- **Verification run:**
+  - `curl -sL 'https://api.github.com/repos/gbdev/rgbds/releases?per_page=100'` → confirmed v1.0.1 (2026-01-01) is the latest tagged release.
+  - `curl -sL 'https://api.github.com/repos/gbdev/rgbds/compare/v1.0.1...master'` → ahead_by=170, behind_by=0; HEAD `f0161b41` (2026-04-29).
+  - `https://rgbds.gbdev.io/` → docs default route is v1.0.1; "master" is a separate dropdown entry.
+  - Codebase greps (all returned 0 hits): `\bldio\b`, `^\s*ld\s+\[c\]\s*,\s*a|^\s*ld\s+a\s*,\s*\[c\]`, `ldh\s+\[\$[0-9a-fA-F]{2}\]`, `\b(STRIN|STRRIN|STRSUB|CHARSUB)\b`.
+  - `python3 tools/audit/check_tech_debt_freshness.py` → PASS (file refs, TD-### IDs, ADDENDUM cross-links all consistent).
+  - `python3 tools/audit/check_release_smoke.py` → see commit run.
+- **Bytes recovered:** N/A (research-only).
+- **Bank impact:** N/A.
+- **Issues / followups:**
+  1. **`rgbdscheck.asm` floor is loose.** Permits any `__RGBDS_MAJOR__ >= 1` including hypothetical v2.0.0 that may remove forms we depend on. Suggested pre-emptive tightening (small, separate from TD-008): add an `IF __RGBDS_MAJOR__ > 1 :: fail …` upper bound. Documented in the FIX_PROPOSALS "Updated 2026-05-03" subsection. Pickable as a ~10-minute follow-up when a future session has WSL build access to confirm the `fail` message renders correctly. **Not** worth filing as a new TD-### — too small.
+  2. **TD-008 partial vs. open vs. accepted.** Setting it `partial` signals "research stage done, action stage waits on upstream trigger" — closer to truth than `open`. If a future agent prefers "accepted (watch item)" semantics, that's also defensible; `partial` is the conservative choice that keeps it visible in the open-count math.
+  3. **STATUS open count math.** Was "6 open + 3 partial + 2 done + 1 disputed + 1 pending-trigger = 13 total." TD-008 moves from `open` to `partial`, so the new math is "5 open + 4 partial + 2 done + 1 disputed + 1 pending-trigger = 13 total."
+  4. **Vendored toolchain folder rename.** When the trigger fires and we adopt v1.0.x+1, the rename `rgbds-1.0.1/` → `rgbds-X.Y.Z/` is a multi-touch operation. Reference list in evidence file's "Where the v1.0.1 pin lives in this repo" section — five load-bearing touch points plus historical journal entries (immutable, leave alone).
+- **Verifier check:** From this branch tip, `ls tech_debt/EVIDENCE/td_008_rgbds_changelog.md` should exist (~150-200 lines). `grep -c "Updated 2026-05-03 by claude-great-germain-2c8cb8" tech_debt/FIX_PROPOSALS.md` should return 1, in the TD-008 section. `python3 tools/audit/check_tech_debt_freshness.py` should PASS. If a future session re-runs the GitHub API queries and v1.0.1 is no longer the latest tag, the evidence file's "Headline finding" needs to be revisited — that's the upstream trigger.

@@ -1915,11 +1915,8 @@ BattleCommand_EffectChance:
 
 	push hl
 	ld hl, wPlayerMoveStruct + MOVE_CHANCE
-	ldh a, [hBattleTurn]
-	and a
-	jr z, .got_move_chance
-	ld hl, wEnemyMoveStruct + MOVE_CHANCE
-.got_move_chance
+	ld de, wEnemyMoveStruct + MOVE_CHANCE
+	call _GetSidedHL
 
 	ld a, [hl]
 	sub 100 percent
@@ -2322,11 +2319,8 @@ BattleCommand_CriticalText:
 
 BattleCommand_StartLoop:
 	ld hl, wPlayerRolloutCount
-	ldh a, [hBattleTurn]
-	and a
-	jr z, .ok
-	ld hl, wEnemyRolloutCount
-.ok
+	ld de, wEnemyRolloutCount
+	call _GetSidedHL
 	xor a
 	ld [hl], a
 	ret
@@ -3119,11 +3113,8 @@ BattleCommand_ConstantDamage:
 
 .reversal
 	ld hl, wBattleMonHP
-	ldh a, [hBattleTurn]
-	and a
-	jr z, .reversal_got_hp
-	ld hl, wEnemyMonHP
-.reversal_got_hp
+	ld de, wEnemyMonHP
+	call _GetSidedHL
 	xor a
 	ldh [hDividend], a
 	ldh [hMultiplicand + 0], a
@@ -4021,11 +4012,8 @@ RaiseStat:
 	ld a, b
 	ld [wLoweredStat], a
 	ld hl, wPlayerStatLevels
-	ldh a, [hBattleTurn]
-	and a
-	jr z, .got_stat_levels
-	ld hl, wEnemyStatLevels
-.got_stat_levels
+	ld de, wEnemyStatLevels
+	call _GetSidedHL
 	ld a, [wAttackMissed]
 	and a
 	jr nz, .stat_raise_failed
@@ -5542,11 +5530,8 @@ INCLUDE "engine/battle/move_effects/focus_energy.asm"
 
 BattleCommand_Recoil:
 	ld hl, wBattleMonMaxHP
-	ldh a, [hBattleTurn]
-	and a
-	jr z, .got_hp
-	ld hl, wEnemyMonMaxHP
-.got_hp
+	ld de, wEnemyMonMaxHP
+	call _GetSidedHL
 	ld a, BATTLE_VARS_MOVE_ANIM
 	call GetBattleVar
 	ld d, a
@@ -6435,11 +6420,8 @@ CheckHiddenOpponent:
 GetUserItem:
 ; Return the effect of the user's item in bc, and its id at hl.
 	ld hl, wBattleMonItem
-	ldh a, [hBattleTurn]
-	and a
-	jr z, .go
-	ld hl, wEnemyMonItem
-.go
+	ld de, wEnemyMonItem
+	call _GetSidedHL
 	ld b, [hl]
 	jp GetItemHeldEffect
 

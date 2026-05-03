@@ -5,11 +5,8 @@ BattleCommand_Mimic:
 	and a
 	jr nz, .fail
 	ld hl, wBattleMonMoves
-	ldh a, [hBattleTurn]
-	and a
-	jr z, .player_turn
-	ld hl, wEnemyMonMoves
-.player_turn
+	ld de, wEnemyMonMoves
+	call _GetSidedHL
 	call CheckHiddenOpponent
 	jr nz, .fail
 	ld a, BATTLE_VARS_LAST_COUNTER_MOVE_OPP

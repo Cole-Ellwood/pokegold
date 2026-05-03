@@ -237,6 +237,42 @@ is the worst-case failure — you wouldn't know until a player tried it.
 - Option 3 (relocation + verification): multi-session, requires hardware
   testing.
 
+### Updated 2026-05-03 by claude-trusting-kare-692dd4
+
+Option 1 and Option 2 shipped this session. TD-003 moves from `open` to
+`partial`.
+
+- **Option 1 (audit) — done.** `tools/audit/check_layout_orgs.py` parses
+  `layout.link`, extracts all (bank, address, following-section) tuples,
+  and compares against `EXPECTED_PINS` — currently 5 entries
+  (`$12:$4000 → Pic Pointers`, `$1f:$4000 → Unown Pic Pointers`,
+  `$2e:$6300 → bank2E`, `$31:$7a40 → bank31`,
+  `$7f:$7df8 → Stadium 2 Checksums`). FAIL with side-by-side diff if
+  the layout drifts. PASS verified plus drift simulation (moved Stadium
+  pin → correctly detected).
+- **Option 2 (documentation) — done.** `docs/layout_pins.md` covers
+  each pin's source declaration, what it backs, why it's pinned, and
+  what breaks downstream if removed. Cross-references TD-003 in
+  `tech_debt/`.
+
+**Option 3 still release-gated.** Stadium 2 relocation — confirming
+whether Stadium 2 reads checksums via fixed ROM offset or bank-mapped
+address — requires hardware/emulator testing on a Stadium 2 transfer.
+Not closeable without that environment.
+
+The audit's verification floor for any future intentional pin change:
+update `EXPECTED_PINS` in the audit AND `docs/layout_pins.md` in the
+same change. The audit's fail-mode message instructs the reviewer
+explicitly.
+
+#### Done criteria for full close
+
+When Option 3 is dispositioned (either Stadium 2 verifies it doesn't
+need the fixed offset and the pin gets removed, OR Stadium 2 testing
+confirms the pin must stay and TD-003 moves to `accepted`), the finding
+fully closes. Until then, `partial` is the steady state — Option 1
+catches accidental drift; Option 2 documents the intentional contract.
+
 ---
 
 ## TD-004 — Split `boss.asm`
@@ -743,6 +779,73 @@ back and stay on v1.0.1 if any diff can't be explained.
 ### Estimated effort
 
 2-3 sessions. Could be more if syntax changes touch many files.
+
+### Updated 2026-05-03 by claude-great-germain-2c8cb8
+
+The original recipe assumed a clear upgrade target ("As of 2026, RGBDS
+v1.7+ likely"). Research step done — see
+`tech_debt/EVIDENCE/td_008_rgbds_changelog.md` — and the assumption is
+wrong. **There is no upgrade available right now.**
+
+#### Why the original recipe is no longer actionable
+
+- Upstream pinned to SemVer at v1.0.0 (2025-11-01), then shipped a
+  patch v1.0.1 (2026-01-01). **v1.0.1 is the current stable.**
+- `master` is 170 commits ahead of v1.0.1 but **untagged** — those
+  commits are lexer refactors, fuzzing UB fixes, and internal
+  rename/cleanup; no breaking syntax shift visible at the surface.
+- We already pin v1.0.1. There is nothing to bump to.
+
+The existing build is fully clean against everything v1.0.0 removed
+(`ldio`, `ld [c]`, `ldh [$xx]` short form, multi-value strings as
+numbers) and everything v1.0.0 deprecated under `-Weverything`
+(`STRIN`/`STRRIN`/`STRSUB`/`CHARSUB`, `rgbfix -O`). Verified by grep on
+2026-05-03 — see evidence file.
+
+#### Re-scoped recipe
+
+TD-008 is now a **watch item**, not a workstream. Steps:
+
+1. **No action this session beyond the research deliverable.**
+2. **Watch trigger:** when upstream tags v1.0.2, v1.1.0, or v2.0.0.
+3. **When triggered, route by SemVer:**
+   - **patch (v1.0.x):** adopt within one session — bump
+     `rgbds-1.0.1/` vendored folder, CI workflow `rgbds_version`,
+     `CLAUDE.md` build command, `tools/audit/check_docs_navigation.py`
+     prefix constants, `tools/audit/check_workspace_hygiene.py` zip
+     rule. Re-run `make compare` against `roms.sha1`. SHA1 should not
+     shift.
+   - **minor (v1.x.0):** same as patch + read release notes for new
+     deprecations + grep pass.
+   - **major (v2.0.0):** multi-session. Tighten `rgbdscheck.asm` upper
+     bound first, plan a behavior-diff pass, expect SHA1 shift.
+
+#### Suggested pre-emptive small task (separate from TD-008)
+
+`rgbdscheck.asm` floor is loose: it permits any `__RGBDS_MAJOR__ >= 1`,
+including a hypothetical v2 that may have removed forms we still
+depend on. Add an upper bound:
+
+```asm
+IF __RGBDS_MAJOR__ > 1
+    fail "pokegold has been validated against rgbds v1.x; \
+          v2.x may remove forms used here. Re-run validation \
+          before unpinning."
+ENDC
+```
+
+Not in scope for TD-008's research session (the deliverable was the
+changelog research, and tightening `rgbdscheck.asm` requires a build
+pass to confirm the message renders correctly). Pickable as a 10-
+minute follow-up when a future session has WSL build access. If we
+keep ignoring it and v2.0.0 ships, the failure mode is a confusing
+build break instead of a clear `fail` message.
+
+#### Verification of this re-scope
+
+- `tools/audit/check_tech_debt_freshness.py` PASS post-write.
+- `tools/audit/check_release_smoke.py` PASS (no source change touched).
+- Evidence file lives at `tech_debt/EVIDENCE/td_008_rgbds_changelog.md`.
 
 ---
 

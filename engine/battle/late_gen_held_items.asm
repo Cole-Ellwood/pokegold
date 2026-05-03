@@ -217,11 +217,8 @@ ApplyLateGenDamageMultipliers_Far:
 
 .GetUserMetronomeCount:
 	ld hl, wPlayerMetronomeCount
-	ldh a, [hBattleTurn]
-	and a
-	jr z, .got_counter
-	ld hl, wEnemyMetronomeCount
-.got_counter
+	ld de, wEnemyMetronomeCount
+	call _GetSidedHL
 	ld a, [hl]
 	ret
 
@@ -345,11 +342,8 @@ HandleLateGenAfterHitEffects_Far:
 
 .UserStillAlive:
 	ld hl, wBattleMonHP
-	ldh a, [hBattleTurn]
-	and a
-	jr z, .check_hp
-	ld hl, wEnemyMonHP
-.check_hp
+	ld de, wEnemyMonHP
+	call _GetSidedHL
 	ld a, [hli]
 	or [hl]
 	ret
