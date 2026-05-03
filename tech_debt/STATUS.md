@@ -20,7 +20,7 @@ blocked, what's done.
 | TD-007 | MED | open | — | selective in tight banks only |
 | TD-008 | MED | open | — | research current RGBDS version first |
 | TD-009 | MED | open | — | save-format risk; see "Updated 2026-05-02" in FIX_PROPOSALS |
-| TD-010 | MED | **blocked** | 2026-05-03 01:55 UTC | finding wrong; see ADDENDUM and "Updated 2026-05-02" in FIX_PROPOSALS |
+| TD-010 | MED | **done** | 2026-05-02 | corrected recipe executed; see ADDENDUM and AGENT_LOG done entry |
 | TD-011 | LOW | open | — | quick win |
 | TD-012 | LOW | open | — | optional polish |
 | TD-013 | LOW * | open | — | * mis-ranked; see ADDENDUM. Severity is effectively MEDIUM (EXP curve risk) |
@@ -60,7 +60,8 @@ churny. Other agents check by reading the log directly.
 
 ## Open count
 
-12 open + 1 blocked = 13 total (matches `TECH_DEBT_REPORT.md` index).
+11 open + 1 done + 1 pending-trigger = 13 total (matches
+`TECH_DEBT_REPORT.md` index).
 
 When the open count reaches **0** (or all remaining are `accepted` /
 `pending-trigger`), the folder's job is done per `README.md`.

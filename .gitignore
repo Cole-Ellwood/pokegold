@@ -36,6 +36,7 @@ rgbds-*/
 *.sn*
 *.sa*
 *.sg1
+*.state
 
 # Local scratch and release output families. Do not broaden these patterns unless
 # the path is documented as scratch/output in docs/agent_navigation/source_output_ownership.md.
@@ -51,6 +52,3 @@ dist/*.sav
 dist/*.rtc
 dist/*.state
 dist/*.zip
-*.sav
-*.rtc
-*.state
