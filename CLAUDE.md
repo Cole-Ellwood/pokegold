@@ -84,7 +84,10 @@ build only proves "it links." ROM identity is verified by SHA1
 For non-trivial changes, run relevant scripts in `tools/audit/` before
 reporting work done. The verification floor, not optional. The most useful:
 - `check_release_smoke.py` — broad release sanity
-- `check_farcall_hl_clobber.py` — farcall hl-input check
+- `check_cross_bank_call.py` — plain `call` to a label in a different bank
+  (the May 2026 type-immunity softlock class). Currently FAIL with 39
+  known-hits in `engine/battle/ai/boss.asm`; treat as diagnostic until
+  those are fixed, then promote to release-smoke floor.
 - `check_navigation_floor.py` — docs/dev_index integrity
 - `check_boss_ai_*.py` — boss AI invariants
 
@@ -122,6 +125,11 @@ If a generated file looks wrong, fix the source or generator and rebuild.
 
 ## RGBDS / asm gotchas
 
+`docs/asm_authoring_guide.md` is the long-form source of truth (~935 lines,
+auto-injected at session start via `scripts/inject_asm_guide.py` per
+`.claude/settings.json`). Read it before writing any `.asm`. The bullets
+below are a reminder list, not the canonical reference.
+
 - **`Label:` is local to its file; `Label::` is exported across banks.**
   Never silently downgrade `::` to `:` — cross-bank refs fail to link.
 - **ROM banks are `$4000` bytes (16 KiB).** Growth past free space is a
@@ -136,7 +144,9 @@ If a generated file looks wrong, fix the source or generator and rebuild.
   if hl just needs preserving; (2) ROM0 thunk via `homecall` (preserves
   hl) when target needs hl as in/out; (3) pass hl via bc/de and reconstruct
   inside. The April 2026 one-shot damage bug and May 2026 rival 1 softlock
-  both came from this. Audit: `tools/audit/check_farcall_hl_clobber.py`.
+  both came from this. See `docs/asm_authoring_guide.md` §3.2 for the three
+  valid patterns. No automated audit yet — class-2 audit is on the backlog;
+  for now, manual check on every new `farcall` whose target reads hl.
 - **`farcall` does NOT preserve target's `a` either.** After farcall,
   caller's `a` = target's exit `c`, not target's `a` (see
   `home/farcall.asm:13-28` — the trailing `ld a, [wFarCallBC + 1]; ld c, a;
