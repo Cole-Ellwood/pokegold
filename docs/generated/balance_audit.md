@@ -1,6 +1,6 @@
 # Generated Balance Audit
 
-Generated: 2026-05-03T15:08:24
+Generated: 2026-05-03T16:18:35
 Baseline ref: `060d4accd7c0d01b1697ac97e7d7e2da72e3646b`
 
 Do not hand-edit this file. Regenerate it with:
@@ -104,7 +104,6 @@ _No rows._
 | 0 | `FURRET` | `current-final` | 494 | 501 | -7 | 85/100/64/90/100/55 | HP-45, Atk-26, Def-16, Spe+50, SpA+55, SpD-25 | NORMAL/NORMAL | - | - | 9 | 33 | HYPER_BEAM (NORMAL 180bp 90%) | HYPER_BEAM (NORMAL 180bp 90%) |
 | 0 | `GRANBULL` | `current-final` | 495 | 450 | 45 | 90/120/120/45/60/60 | Def+45 | NORMAL/NORMAL | - | - | 10 | 32 | HYPER_BEAM (NORMAL 180bp 90%) | HYPER_BEAM (NORMAL 180bp 90%) |
 | 0 | `UNOWN` | `current-final`, `documented-gimmick` | 496 | 496 | 0 | 148/102/48/48/102/48 | +0 | PSYCHIC_TYPE/PSYCHIC_TYPE | - | - | 1 | 0 | - | - |
-| 0 | `BELLOSSOM` | `current-final` | 500 | 480 | 20 | 85/80/85/60/90/100 | HP+10, Spe+10 | GRASS/GRASS | - | - | 8 | 20 | SOLARBEAM (GRASS 180bp 100%) | SOLARBEAM (GRASS 180bp 100%) |
 | 0 | `DODRIO` | `current-final` | 500 | 460 | 40 | 80/110/70/120/60/60 | HP+20, Spe+20 | NORMAL/FLYING | - | - | 10 | 20 | HYPER_BEAM (NORMAL 180bp 90%) | HYPER_BEAM (NORMAL 180bp 90%) |
 | 0 | `FORRETRESS` | `current-final` | 500 | 545 | -45 | 90/90/140/40/60/80 | HP-15, Atk-70, SpD+40 | BUG/STEEL | - | - | 9 | 24 | IRON_HEAD (STEEL 80bp 100%) | SELFDESTRUCT (NORMAL 200bp 100%) |
 | 0 | `MILTANK` | `current-final` | 500 | 480 | 20 | 105/80/105/100/40/70 | HP-20, Atk-30, Def-30, Spe+60, SpD+40 | NORMAL/NORMAL | - | - | 9 | 37 | HYPER_BEAM (NORMAL 180bp 90%) | HYPER_BEAM (NORMAL 180bp 90%) |
@@ -127,6 +126,7 @@ _No rows._
 | 0 | `MR__MIME` | `current-final` | 520 | 460 | 60 | 40/45/65/90/100/180 | SpD+60 | PSYCHIC_TYPE/PSYCHIC_TYPE | - | - | 11 | 31 | DREAM_EATER (PSYCHIC_TYPE 100bp 100%) | SOLARBEAM (GRASS 180bp 100%) |
 | 0 | `TANGELA` | `current-final` | 520 | 435 | 85 | 130/55/115/60/100/60 | HP+65, SpD+20 | GRASS/GRASS | - | - | 10 | 24 | SOLARBEAM (GRASS 180bp 100%) | SOLARBEAM (GRASS 180bp 100%) |
 | 0 | `ARBOK` | `current-final` | 523 | 538 | -15 | 100/85/99/80/80/79 | HP-20, Def-10, SpA+15 | POISON/DARK | - | - | 10 | 22 | SLUDGE_BOMB (POISON 90bp 100%) | HYPER_BEAM (NORMAL 180bp 90%) |
+| 0 | `BELLOSSOM` | `current-final` | 525 | 480 | 45 | 85/60/85/80/115/100 | HP+10, Atk-20, Spe+30, SpA+25 | GRASS/GRASS | - | - | 8 | 20 | SOLARBEAM (GRASS 180bp 100%) | SOLARBEAM (GRASS 180bp 100%) |
 | 0 | `GOLDUCK` | `current-final` | 525 | 500 | 25 | 80/82/78/85/120/80 | SpA+25 | WATER/WATER | - | - | 11 | 32 | HYDRO_PUMP (WATER 120bp 80%) | HYPER_BEAM (NORMAL 180bp 90%) |
 | 0 | `KABUTOPS` | `current-final` | 525 | 495 | 30 | 60/125/115/90/65/70 | Atk+10, Def+10, Spe+10 | ROCK/WATER | - | - | 8 | 27 | SURF (WATER 95bp 100%) | HYPER_BEAM (NORMAL 180bp 90%) |
 | 0 | `OMASTAR` | `current-final` | 525 | 495 | 30 | 80/80/125/55/115/70 | HP+10, Atk+20 | ROCK/WATER | - | - | 10 | 24 | HYDRO_PUMP (WATER 120bp 80%) | HYPER_BEAM (NORMAL 180bp 90%) |

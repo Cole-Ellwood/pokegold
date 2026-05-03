@@ -1,5 +1,5 @@
 	db BELLOSSOM ; 182
-	db  85,  80,  85,  60,  90, 100
+	db  85,  60,  85,  80, 115, 100
 	;   hp  atk  def  spd  sat  sdf
 	db GRASS, GRASS ; type
 	db 45 ; catch rate
