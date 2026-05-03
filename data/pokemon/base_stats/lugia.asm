@@ -1,6 +1,6 @@
 	db LUGIA ; 249
 
-	db 106,  90, 130, 110,  90, 154
+	db 116, 100, 140, 120, 100, 164
 	;   hp  atk  def  spd  sat  sdf
 
 	db PSYCHIC_TYPE, FLYING ; type

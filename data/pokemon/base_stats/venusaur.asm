@@ -1,6 +1,6 @@
 	db VENUSAUR ; 003
 
-	db  80,  82,  83,  80, 100, 100
+	db  95,  97,  98,  95, 115, 115
 	;   hp  atk  def  spd  sat  sdf
 
 	db GRASS, POISON ; type
