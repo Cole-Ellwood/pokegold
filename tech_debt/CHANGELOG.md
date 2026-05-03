@@ -11,6 +11,11 @@ between dates.
 
 ## 2026-05-02
 
+- **`c969c9ba`** — `FIX_PROPOSALS.md` recommended-order table refreshed.
+  Preserved original 2026-05-02 ranking; appended "Updated 2026-05-02"
+  table reflecting TD-010 done, TD-011 disputed, TD-009 split into
+  TD-009a/TD-009b. New queue head is TD-005 (real byte recovery, scope
+  corrected) → TD-007 → TD-006 → TD-004.
 - **`485a90ff`** — TD-011 disputed (script generates
   `docs/CHANGES_BY_CATEGORY.txt` per `docs/manifest.md`; original "no
   refs" claim was wrong). TD-009a escalation needed (`hUnusedByte`
