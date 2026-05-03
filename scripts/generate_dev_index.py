@@ -13,6 +13,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 EXCLUDED_DIRS = {
+    ".claude",
     ".git",
     ".local",
     "__pycache__",
