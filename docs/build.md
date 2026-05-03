@@ -40,12 +40,26 @@ Known-good verification on 2026-04-25:
 - `pokegold.gbc` built successfully with the command pattern above.
 - `pokesilver.gbc` built successfully with the command pattern above.
 
-## Release artifact workflow
+## Release artifact workflow (retired)
+
+The `dist/` BPS distribution channel was retired 2026-05-03. The
+artifacts (`dist/pokegold-data-rebalance.bps`, `dist/checksums.txt`)
+were removed because the `flips` tool that generated them is no longer
+available in this environment, so the channel could not be kept fresh.
+Stale BPS patches that would produce a non-current ROM are worse than
+no patches.
+
+If you set up a new release pipeline, the prior recipe was:
+
 ```bash
 flips --create --bps .local/roms/pokegold-baseline.gbc pokegold.gbc dist/pokegold-data-rebalance.bps
 flips --apply dist/pokegold-data-rebalance.bps .local/roms/pokegold-baseline.gbc .local/roms/pokegold-roundtrip-current.gbc
 ```
 
-**`flips` is not installed in this environment.** As of 2026-04-30, `which flips` returns not found in both Windows shell and WSL bash on this checkout. Install it before any `dist/*` BPS regen — `tools/make_patch.exe` exists in the repo but produces VC patches, not BPS, and is not a substitute. Per `docs/RELEASE_NOTES.md` source-cleanup branch policy, regenerated ROM/BPS artifacts aren't committed on cleanup branches anyway, so deferring to a release pass is the normal path.
+`tools/make_patch.exe` produces VC patches, not BPS, and is not a
+substitute. Pick a tool, recreate `dist/`, and update CLAUDE.md's
+"Never hand-edit these" note + this section.
 
-Release ROMs, patches, and checksum summaries are generated artifacts. Keep them out of ordinary source cleanup commits unless cutting a release.
+Release ROMs, patches, and checksum summaries remain generated
+artifacts. Keep them out of ordinary source cleanup commits unless
+cutting a release.

@@ -37,7 +37,7 @@ scratch paths first.
 | --- | --- | --- |
 | `.local/` | Local deps, emulator RAM, scratch probes, temporary outputs. | Useful for investigation, not canonical proof by itself. |
 | `workspace/` | Scratch/archive workspaces. | Search only when explicitly relevant. |
-| `dist/` | Built/release outputs. | Do not edit by hand; tracked release artifacts can exist there. |
+| `dist/` | (retired 2026-05-03) Was the BPS distribution channel; removed because `flips` is no longer available. | Do not recreate without a fresh BPS toolchain — see `docs/build.md` "Release artifact workflow (retired)". |
 | `*.gbc`, `*.o`, `*.map`, `*.sym` | Build/linker outputs. | Read `.map`/`.sym` as truth; do not hand-edit any output. |
 
 ## Evidence Rule
