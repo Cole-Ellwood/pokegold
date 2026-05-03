@@ -4,9 +4,12 @@
 pokegold hack. Read end-to-end before writing a single instruction. If a
 fact here conflicts with what you "remember" about the Z80, this doc wins.
 
-This guide is loaded into every session via a SessionStart hook
-(`scripts/inject_asm_guide.py`). If you find an error in it, fix the
-source file and the next session inherits the fix.
+This guide is the long-form reference. A SessionStart hook
+(`scripts/inject_asm_guide.py`) auto-injects §0 (critical rules), §6
+(verification floor), and a TOC of the remaining sections with line
+ranges. Read other sections on demand when the work calls for them.
+If you find an error in any section, fix the source file and the next
+session inherits the fix.
 
 Companion files (treat as authoritative for their domains):
 - `CLAUDE.md` — workflow, build, escalation, stat-math source of truth.
