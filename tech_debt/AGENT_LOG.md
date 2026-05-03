@@ -384,3 +384,33 @@ section.)
   4. **STATUS open count math.** Updated from "7 open + 2 partial" to "6 open + 3 partial" — TD-003 moved from open into partial.
 - **Verifier check:** From this branch tip, `python3 tools/audit/check_layout_orgs.py` should print `Layout pins OK: $12:$4000 -> Pic Pointers, ...` and exit 0. `cat docs/layout_pins.md | head -20` should show the doc title and the "Five pins" section. `grep -c "EXPECTED_PINS = (" tools/audit/check_layout_orgs.py` should return 1; the tuple should have exactly 5 entries. If layout.link is later modified to add/move/remove a pin, the audit should FAIL until both the audit's `EXPECTED_PINS` and `docs/layout_pins.md` are updated to match.
 
+
+
+## 2026-05-03 — TD-008 — claimed
+
+- **Agent / session:** Opus 4.7 (1M context) / claude-great-germain-2c8cb8
+- **Scope:** Research-only step. Read RGBDS changelog from v1.0.1 to current stable, pin a target version, write `tech_debt/EVIDENCE/td_008_rgbds_changelog.md` and an `Updated 2026-05-03` subsection in `FIX_PROPOSALS.md` TD-008. Does NOT execute the upgrade (separate session).
+
+
+## 2026-05-03 — TD-008 — partial (research step shipped; upgrade gated on upstream)
+
+- **Agent / session:** Opus 4.7 (1M context) / claude-great-germain-2c8cb8
+- **State:** partial
+- **Branch / commit:** claude/great-germain-2c8cb8 @ pending
+- **Files touched:** tech_debt/EVIDENCE/td_008_rgbds_changelog.md (new), tech_debt/FIX_PROPOSALS.md (added "Updated 2026-05-03" subsection to TD-008), tech_debt/STATUS.md (note refreshed), tech_debt/AGENT_LOG.md (this entry)
+- **Summary:** Closed step 1 of TD-008's recipe ("Pick target version. Read the RGBDS changelog…"). Headline finding: **the current pin (`v1.0.1`, vendored as `rgbds-1.0.1/`) IS the current upstream stable.** Released 2026-01-01; latest tag on `gbdev/rgbds`. The original recipe assumed v1.7+ existed by 2026 — wrong assumption. RGBDS pivoted to SemVer at v1.0.0 (2025-11-01); v1.0.1 is a backwards-compatible patch over it. `master` HEAD is 170 commits ahead of v1.0.1 but untagged (lexer refactors + fuzzing UB fixes; no surface-level syntax shift). Verified the codebase has none of v1.0.0's removed forms (`ldio`, `ld [c]`, `ldh [$xx]` short-form) and none of its `-Weverything`-warning deprecations (`STRIN`/`STRRIN`/`STRSUB`/`CHARSUB`, `rgbfix -O`). Project's `Makefile` runs `-Weverything` without `-Wno-obsolete`, so a clean v1.0.1 build is implicit confirmation. **No upgrade is currently available; "upgrade RGBDS" is a no-op.** TD-008 re-scoped from "do the upgrade" to "watch for next upstream release"; the FIX_PROPOSALS Updated subsection routes the future trigger by SemVer (patch / minor / major).
+- **Verification run:**
+  - `curl -sL 'https://api.github.com/repos/gbdev/rgbds/releases?per_page=100'` → confirmed v1.0.1 (2026-01-01) is the latest tagged release.
+  - `curl -sL 'https://api.github.com/repos/gbdev/rgbds/compare/v1.0.1...master'` → ahead_by=170, behind_by=0; HEAD `f0161b41` (2026-04-29).
+  - `https://rgbds.gbdev.io/` → docs default route is v1.0.1; "master" is a separate dropdown entry.
+  - Codebase greps (all returned 0 hits): `\bldio\b`, `^\s*ld\s+\[c\]\s*,\s*a|^\s*ld\s+a\s*,\s*\[c\]`, `ldh\s+\[\$[0-9a-fA-F]{2}\]`, `\b(STRIN|STRRIN|STRSUB|CHARSUB)\b`.
+  - `python3 tools/audit/check_tech_debt_freshness.py` → PASS (file refs, TD-### IDs, ADDENDUM cross-links all consistent).
+  - `python3 tools/audit/check_release_smoke.py` → see commit run.
+- **Bytes recovered:** N/A (research-only).
+- **Bank impact:** N/A.
+- **Issues / followups:**
+  1. **`rgbdscheck.asm` floor is loose.** Permits any `__RGBDS_MAJOR__ >= 1` including hypothetical v2.0.0 that may remove forms we depend on. Suggested pre-emptive tightening (small, separate from TD-008): add an `IF __RGBDS_MAJOR__ > 1 :: fail …` upper bound. Documented in the FIX_PROPOSALS "Updated 2026-05-03" subsection. Pickable as a ~10-minute follow-up when a future session has WSL build access to confirm the `fail` message renders correctly. **Not** worth filing as a new TD-### — too small.
+  2. **TD-008 partial vs. open vs. accepted.** Setting it `partial` signals "research stage done, action stage waits on upstream trigger" — closer to truth than `open`. If a future agent prefers "accepted (watch item)" semantics, that's also defensible; `partial` is the conservative choice that keeps it visible in the open-count math.
+  3. **STATUS open count math.** Was "6 open + 3 partial + 2 done + 1 disputed + 1 pending-trigger = 13 total." TD-008 moves from `open` to `partial`, so the new math is "5 open + 4 partial + 2 done + 1 disputed + 1 pending-trigger = 13 total."
+  4. **Vendored toolchain folder rename.** When the trigger fires and we adopt v1.0.x+1, the rename `rgbds-1.0.1/` → `rgbds-X.Y.Z/` is a multi-touch operation. Reference list in evidence file's "Where the v1.0.1 pin lives in this repo" section — five load-bearing touch points plus historical journal entries (immutable, leave alone).
+- **Verifier check:** From this branch tip, `ls tech_debt/EVIDENCE/td_008_rgbds_changelog.md` should exist (~150-200 lines). `grep -c "Updated 2026-05-03 by claude-great-germain-2c8cb8" tech_debt/FIX_PROPOSALS.md` should return 1, in the TD-008 section. `python3 tools/audit/check_tech_debt_freshness.py` should PASS. If a future session re-runs the GitHub API queries and v1.0.1 is no longer the latest tag, the evidence file's "Headline finding" needs to be revisited — that's the upstream trigger.

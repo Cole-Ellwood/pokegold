@@ -18,7 +18,7 @@ blocked, what's done.
 | TD-005 | HIGH | partial | 2026-05-03 | Pattern 1 closed (41 bytes recovered in bank 0e); Pattern 2 gated on user WIP in experience.asm; Pattern 3 enumerated 2026-05-03 (66 Class A sites in `tech_debt/EVIDENCE/td_005_pattern3_sites.md`, 27 of which sit in canary bank 0x0d) — conversion to `_GetSidedAddr` still open |
 | TD-006 | HIGH | open | — | escalation on values **and** names |
 | TD-007 | MED | **done** | 2026-05-03 | 47 Beta\*_Blocks pruned; 5,854 bytes recovered (banks 0x2a +3500, 0x2b +2259, 0x37 +95). SHA1/dist update needs user playtest |
-| TD-008 | MED | open | — | research current RGBDS version first |
+| TD-008 | MED | partial | 2026-05-03 | research step shipped (`tech_debt/EVIDENCE/td_008_rgbds_changelog.md`); current pin v1.0.1 IS upstream's latest stable, **no upgrade available now** — re-scoped to watch-item gated on next upstream release (see FIX_PROPOSALS "Updated 2026-05-03") |
 | TD-009 | MED | open | 2026-05-02 (escalation) | TD-009a needs user approval — dead writes expand scope to vblank.asm, intro_menu.asm, events.asm; see ADDENDUM |
 | TD-010 | MED | **done** | 2026-05-02 | corrected recipe executed; see ADDENDUM and AGENT_LOG done entry |
 | TD-011 | LOW | **disputed** | 2026-05-02 | script IS used by docs/manifest.md; see ADDENDUM |
@@ -60,7 +60,7 @@ churny. Other agents check by reading the log directly.
 
 ## Open count
 
-6 open + 3 partial + 2 done + 1 disputed + 1 pending-trigger = 13 total
+5 open + 4 partial + 2 done + 1 disputed + 1 pending-trigger = 13 total
 (matches `TECH_DEBT_REPORT.md` index).
 
 When the open count reaches **0** (or all remaining are `accepted` /
