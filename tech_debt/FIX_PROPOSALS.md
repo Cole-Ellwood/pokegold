@@ -113,6 +113,19 @@ hot-path function. Run the full audit suite, not just the smoke test.
 - Section relocation (if needed): 2-3 sessions including verification.
 - Pic-bank guard script: 1 session.
 
+### Updated 2026-05-03 — bank pressure refresh after TD-005 P1 + TD-007
+
+The 2026-05-02 approach assumed bank 0x0e was the canary at 6 bytes free. Per ADDENDUM 2026-05-03, that's no longer true: 0x0e is now at 568 free (drifted before report time + 41 from TD-005 P1). The new canary is ROMX 0x0d (Effect Commands, 6 free). See ADDENDUM for the full delta and updated relocation targets.
+
+**Revised approach:**
+
+1. **Continue byte recovery via remaining levers.** TD-005 Pattern 2 (multiply/divide thunk) and Pattern 3 (`hBattleTurn` side-branch) are the largest open levers. Pattern 2 is gated on user WIP in `engine/pokemon/experience.asm`; Pattern 3 needs site enumeration (234 candidates → filter to actual side-branch shape, write to `tech_debt/EVIDENCE/td_005_pattern3_sites.md`). TD-009a (HRAM dead-write removal, 2 bytes) is the smallest live lever and is gated on user OK.
+2. **Skip bank-0x0e relocations.** Original Approach #2 (move `late_gen_held_items.asm` / `type_passive_damage_mods.asm` to ROMX 0x0a or 0x0d) is no longer needed. 0x0e has 568 bytes free; 0x0d is the new canary so relocating *into* 0x0d is the wrong direction.
+3. **Pic-bank guard still applies.** Approach #3 unchanged. Pic banks (0x12, 0x15, 0x17, 0x1b, 0x1c, 0x1e, 0x1f) all at 0-1 free; growth in any single Pokemon sprite size silently breaks link. Add `tools/audit/check_pic_bank_pressure.py`.
+4. **Watch new tight regions.** WRAM0 at 49 free, ROMX 0x16 at 48 free. Both newly entered the tight-banks list. Not action items today, but flag if future findings touch global WRAM or that bank.
+
+**Re-evaluation closure:** TD-001 stays `partial` as a strategic monitoring item until the open byte-recovery levers (TD-005 P2/P3, TD-009a) close and the pic-bank guard lands. After those, the bank-pressure picture stabilizes and TD-001 can move to `accepted` (intentionally monitored — not actively fixable beyond byte recovery).
+
 ---
 
 ## TD-002 — Legacy save format v1→v2 cleanup

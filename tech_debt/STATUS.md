@@ -1,6 +1,6 @@
 # Status board
 
-**Updated:** 2026-05-02
+**Updated:** 2026-05-03
 
 Projection of `AGENT_LOG.md` for fast lookup. The log is the
 authoritative audit trail; this table is the index. Read this **first**
@@ -11,7 +11,7 @@ blocked, what's done.
 
 | ID | Sev | State | Last entry | Notes |
 |----|-----|-------|------------|-------|
-| TD-001 | CRIT | open | — | strategic; depends on TD-005 + TD-007 closing first |
+| TD-001 | CRIT | partial | 2026-05-03 | re-evaluated 2026-05-03; bank-pressure picture refreshed in ADDENDUM 2026-05-03 — 0x0e no longer canary (568 free), 0x0d (Effect Commands, 6 free) is new tight battle bank; remaining work: TD-005 P2/P3, TD-009a, pic-bank guard |
 | TD-002 | CRIT | pending-trigger | — | gated on `SAVE_FORMAT_VERSION` bump |
 | TD-003 | CRIT | open | — | release-gated; partial fix possible after TD-005 |
 | TD-004 | HIGH | open | — | do **after** TD-005 (needs bank headroom) |
@@ -60,7 +60,7 @@ churny. Other agents check by reading the log directly.
 
 ## Open count
 
-8 open + 1 partial + 2 done + 1 disputed + 1 pending-trigger = 13 total
+7 open + 2 partial + 2 done + 1 disputed + 1 pending-trigger = 13 total
 (matches `TECH_DEBT_REPORT.md` index).
 
 When the open count reaches **0** (or all remaining are `accepted` /

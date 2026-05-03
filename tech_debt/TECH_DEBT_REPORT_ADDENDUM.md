@@ -250,6 +250,73 @@ the standing context.
 
 ---
 
+## 2026-05-03 — TD-001 snapshot refresh after TD-005 P1 + TD-007
+
+**Source:** `AGENT_LOG.md` partial entry "2026-05-03 — TD-005 — partial" and done entry "2026-05-03 — TD-007 — done"; meta-audit `META_AUDIT.md` TD-A07 (snapshot data in immutable doc).
+
+**Refreshes:** `TECH_DEBT_REPORT.md` TD-001 bank table + strategic framing.
+
+### Why a refresh
+
+Per META_AUDIT TD-A07, the TD-001 bank table is point-in-time data in an immutable doc — by design it goes stale, and the addendum mechanism is the only way to update guidance without violating the immutability rule. As of 2026-05-03 the snapshot has drifted enough that the original strategic framing is misleading.
+
+### Snapshot delta
+
+Bank-pressure picture per `docs/generated/dev_index.md` (Generated: 2026-05-03):
+
+| Bank/Region | Original report (2026-05-02) | Current (2026-05-03) | Note |
+|---|---:|---:|---|
+| HRAM 00 | 0 | 0 | unchanged |
+| ROMX 0d (Effect Commands) | 6 | 6 | unchanged — **new canary** |
+| ROMX 0e (Enemy Trainers + Late Gen Held Items) | 6\* | 568 | drifted before report time + 41 from TD-005 P1; **dropped out of tight-banks list** |
+| ROMX 12 / 15 / 17 / 1b / 1e (pic data) | 0 | 0 | unchanged |
+| ROMX 1c (pic data) | 1 | 1 | unchanged |
+| ROMX 1f (Unown pic pointers) | 1 | 1 | unchanged |
+| ROMX 1a (pic data) | 4 | 4 | unchanged |
+| WRAMX 01 (boss AI reserve) | 0 | 0 | unchanged |
+| ROMX 16 | (not listed) | 48 | **newly tight** |
+| WRAM0 00 | (not listed) | 49 | **newly tight** |
+| ROMX 2a (Map Blocks 1) | 85 | 3,585 | +3,500 from TD-007; dropped out |
+| ROMX 2b (Map Blocks 2) | 166 | 2,425 | +2,259 from TD-007; dropped out |
+
+\*The original "6 free" for ROMX 0e was already inaccurate at report time per META_AUDIT TD-A07 (the dev_index data the report compiled from predated 2026-05-02). The actual figure pre-TD-005 P1 was 527 free per AGENT_LOG.
+
+### What this changes
+
+1. **Bank 0x0e is no longer the canary.** The original report's framing — "any non-trivial boss AI edit risks link failure" — was wrong at report time and is now substantially wrong. 568 bytes free in 0x0e is comfortable headroom for normal growth.
+
+2. **ROMX 0x0d (Effect Commands) is the new tight battle bank** at 6 free. Any growth in `engine/battle/effect_commands.asm` or `engine/battle/used_move_text.asm` has nowhere to go. Treat 0x0d as the old 0x0e was treated.
+
+3. **TD-004 (boss.asm split) is no longer bank-pressure-gated.** With 568 free in 0x0e, a structural split that adds modest interfile overhead (helper labels, section seams) is feasible without prerequisite section relocation. The split is still warranted on readability/maintenance grounds, but the sequencing dependency on TD-005 closing first is now relaxed.
+
+4. **Section relocation off bank 0x0e is no longer required.** Original Approach #2 in `FIX_PROPOSALS.md` TD-001 (move `late_gen_held_items.asm` / `type_passive_damage_mods.asm` out of 0x0e to ROMX 0x0a or 0x0d) is unnecessary while 0x0e has room. Skip unless 0x0e re-tightens.
+
+5. **Pic banks unchanged** — 0x12 / 0x15 / 0x17 / 0x1b / 0x1c / 0x1e / 0x1f all still at 0-1 free. Original Approach #3 (pre-commit guard via `tools/audit/check_pic_bank_pressure.py`) still applies and is the only remaining concrete fix in TD-001's recipe that hasn't been addressed by other findings.
+
+6. **Two new tight regions** to be aware of:
+   - **WRAM0 (49 free)** — global wram is finite. Any new always-resident state has 49 bytes max before pressure.
+   - **ROMX 0x16 (48 free)** — battle engine adjacent. Watch for growth.
+
+### Updated relocation candidates (if pressure shifts again)
+
+Original TD-001 recipe pointed to ROMX 0x0a / 0x0d as relocation targets. As of 2026-05-03:
+- **ROMX 0x0d at 6 free** — DO NOT relocate into. It is now the canary.
+- **ROMX 0x0a not in tight-banks list** — likely roomy, but pic-adjacent; verify before relocating.
+- **Best relocation targets** (per dev_index "Largest ROMX Free Ranges"): banks 13, 22, 27, 28, 29, 2c, 2d, 2f, 34, 35, 58, 63, 67, 6f are entirely free (16,384 bytes each). Banks 2c-2f are most natural for code/data adjacency to existing battle-region banks.
+
+### Verification
+
+```bash
+python3 scripts/generate_dev_index.py --rom pokegold
+# Re-read docs/generated/dev_index.md "Tight Banks And Regions" — banks listed there are the canon.
+```
+
+The dev_index is regenerated on every build that changes linker outputs; it is the authoritative current state, not this addendum. This addendum captures the strategic interpretation as of 2026-05-03 — the data underneath will continue to drift.
+
+The corrected approach is in `FIX_PROPOSALS.md` TD-001 "Updated 2026-05-03" subsection. STATUS notes for TD-001 reference this addendum.
+
+---
+
 ## How this file is structured
 
 - **Append-only.** Never edit a prior entry. Add a new dated entry if

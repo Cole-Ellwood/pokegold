@@ -256,6 +256,25 @@ For a worked example, see the TD-010 blocked entry below.
   4. **Pic banks (0x12, 0x15, 0x17, 0x1b, 0x1c, 0x1e, 0x1f) remain at 0-1 byte free.** TD-007 didn't touch those — they're pic data, not source labels. The `data/maps/blocks.asm` cleanup doesn't affect them. Future TD-007 work, if any, should target pic data via a different mechanism (already noted in the original FIX_PROPOSALS).
 - **Verifier check:** From this branch tip, `grep -c '^Beta' data/maps/blocks.asm` should return 0. `wc -l data/maps/blocks.asm` should be ~857 (was 998). After a full rebuild, `pokegold.map` Section sizes for `Map Blocks 1`/`2`/`3` should be `$31ff`/`$3687`/`$1714` (or smaller if other size-affecting changes have landed). The `maps/unused/Beta*.blk` files should still exist on disk (47 files).
 
+## 2026-05-03 06:22 UTC — TD-001 — partial (re-evaluation: snapshot refresh)
+
+- **Agent / session:** Opus 4.7 (1M context) / claude-nice-lamarr-f8a7e2
+- **State:** partial
+- **Branch / commit:** claude/nice-lamarr-f8a7e2 @ pending
+- **Files touched:** tech_debt/TECH_DEBT_REPORT_ADDENDUM.md, tech_debt/FIX_PROPOSALS.md, tech_debt/STATUS.md, tech_debt/AGENT_LOG.md (this entry)
+- **Summary:** TD-001 re-evaluation per FIX_PROPOSALS Original-order rank #11 ("re-evaluate after byte-recovery items"). Doc-only output; no source code changes. The bank-pressure snapshot in TECH_DEBT_REPORT.md (2026-05-02) is substantially stale — META_AUDIT TD-A07 already flagged it as point-in-time data in an immutable doc. Bank 0x0e went from a reported "6 free" → current 568 free (drifted before report time + 41 from TD-005 P1 this session). The original framing — "0x0e is the canary, boss AI edits risk link failure" — is no longer true. The new canary is ROMX 0x0d (Effect Commands) at 6 free. TD-004 (boss split) is no longer bank-pressure-gated. Section relocations off 0x0e are no longer required. Pic banks (12/15/17/1b/1c/1e/1f) unchanged at 0-1 free; original pic-bank-guard recommendation still applies. Two new tight regions surfaced: WRAM0 (49 free) and ROMX 0x16 (48 free). Updated guidance committed in ADDENDUM 2026-05-03 + FIX_PROPOSALS "Updated 2026-05-03" subsection. Finding stays `partial` as a strategic monitoring item until TD-005 P2/P3, TD-009a, and pic-bank guard close.
+- **Verification run:**
+  - `python3 tools/audit/check_tech_debt_freshness.py` → PASS (5 ADDENDUM entries cross-linked, 13 TD-### IDs consistent across REPORT/STATUS, file refs OK)
+  - dev_index.md regeneration: not run — already fresh from this session's prior TD-005/TD-007 work (Generated: 2026-05-03).
+- **Bytes recovered:** N/A (doc-only; addendum captures cumulative bank deltas from prior sessions for context)
+- **Bank impact:** N/A (doc-only)
+- **Issues / followups:**
+  1. The original TD-001 table in TECH_DEBT_REPORT.md remains immutable per project rule. Future agents must read ADDENDUM 2026-05-03 alongside the report to get the current picture. Same supersession pattern as TD-010 / TD-013 / TD-009 / TD-011 / TD-009a.
+  2. **ROMX 0x0d at 6 free is the new "watch this bank" item.** If future work touches `engine/battle/effect_commands.asm` or `engine/battle/used_move_text.asm`, a pre-edit bank-free check is required. Pre-edit recipe: `grep -A1 'ROMX | 0d' docs/generated/dev_index.md` to confirm free-byte count, then estimate edit byte impact.
+  3. **Close-out path for TD-001:** when TD-005 P2/P3 complete (or are accepted as debt) AND TD-009a executes (or accepted) AND the pic-bank guard ships, TD-001 can move to `accepted` — intentionally monitored via dev_index regeneration on every build, no longer an actionable backlog item.
+  4. **TD-004 sequencing implication.** Original FIX_PROPOSALS recommended-order put TD-004 after TD-005 because boss.asm split was assumed to need bank headroom. With 0x0e at 568 free, that dependency is gone. TD-004 can be planned independently. Recommend leaving its rank in FIX_PROPOSALS unchanged for now (it's still HIGH effort, multi-session) but note the unblock.
+- **Verifier check:** From this branch tip, the dev_index "Tight Banks And Regions" table should match (or be lighter than) the snapshot in ADDENDUM 2026-05-03. Quick checks: `grep -c '^| ROMX | 0d ' docs/generated/dev_index.md` → 1 (0x0d still tight). `grep -c '^| ROMX | 0e ' docs/generated/dev_index.md` → 0 (0x0e dropped out of tight-banks list; if it returns 1, regression — re-read this addendum). `grep -c '^| ROMX | 16 ' docs/generated/dev_index.md` → 1 (newly tight). `grep -c '^| WRAM0 | 00 ' docs/generated/dev_index.md` → 1 (newly tight).
+
 
 
 
