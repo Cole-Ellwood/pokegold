@@ -22,7 +22,7 @@ are recommended for TD-A### addendum entries if the user agrees.
 | AG-03 | MED | `check_cross_bank_call.py` failing with 39 known hits in `boss.asm` | `engine/battle/ai/boss.asm` |
 | AG-04 | LOW | **SHIPPED** — `tools/audit/check_ld_a_zero.py` added; codemod applied at 40 SAFE sites (per-flag Z/C dataflow analysis); 32 flag-preserving sites correctly preserved | `tools/audit/check_ld_a_zero.py` |
 | AG-05 | LOW | **SHIPPED** — `tools/audit/check_cp_zero.py` added; codemod applied at 9 SAFE sites (forward N-flag dataflow); 1 UNSAFE site at `home/map_objects.asm:24` preserved (label boundary at `.loop`) | `tools/audit/check_cp_zero.py` |
-| AG-06 | INFO | Inline bank-switch (`ld [rROMB], a`) instead of `rst Bankswitch` (~25 sites) | `home/audio.asm`, `home/text.asm`, `home/battle.asm` |
+| AG-06 | INFO | **DOCUMENTED** — audio sites are intentional perf (UpdateSound is in the vblank path); header comment in `home/audio.asm` now explains the trade-off and tells future readers not to codemod. Text/battle 4 sites (cold path) still candidate for `rst Bankswitch` conversion in a no-rush pass. | `home/audio.asm`, `home/text.asm`, `home/battle.asm` |
 
 **REVISION HISTORY**
 - 2026-05-03 first draft — claimed no live `farcall` bugs.
@@ -552,12 +552,23 @@ are colder paths where the trade is less obvious.
 **Estimated recovery if all converted:** ~25 × 4 = 100 bytes,
 distributed across ROM0. Not in tight banks per TD-001 dev_index.
 
-**Recommendation.** **Not promoting.** The pattern is correct; the
-guide rule is about the *shadow-desync* footgun, which these sites
-avoid. If audio perf is the reason, that's worth a code comment
-("`rst Bankswitch` is too slow for the audio inner loop") so the
-next reader doesn't "fix" it. If perf isn't the reason, the
-text/battle sites could be converted in a no-rush cleanup pass.
+**Recommendation.** **Not promoting** as a codemod.
+
+**Status (2026-05-04):** **DOCUMENTED.** Header comment added to
+`home/audio.asm` explaining that the inline bank-switch pattern is
+intentional — `UpdateSound` is in the vblank-driven audio update
+path, the entry points each pay two switches (in + restore), and the
+~6-cycle-per-switch dispatch overhead of `rst Bankswitch` would
+compound across the per-frame audio budget. The comment also notes
+that the inline form correctly maintains the `hROMBank` shadow so it
+does not trip the §4.6 footgun, and tells future readers not to
+codemod the audio sites.
+
+**Remaining open thread:** the 4 cold-path sites at
+`home/text.asm:680, 690` and `home/battle.asm:167, 177`
+(`FarCopyRadioText`) are still candidates for `rst Bankswitch`
+conversion — perf reason doesn't apply there, ~16 bytes recoverable.
+Deferred to a no-rush cleanup pass.
 
 ---
 
@@ -603,10 +614,11 @@ If the user wants to act on this:
 6. **AG-03** — fix the 39 boss.asm cross-bank calls. Larger scope,
    sequenced after TD-005 has freed bank headroom. Promotes
    `check_cross_bank_call.py` to release-smoke floor on completion.
-7. **AG-06** — leave alone unless audio gets refactored or text/battle
-   inlines hit profiling attention. Add a comment to audio sites
-   explaining the perf reason (if that is the reason — confirm with
-   the user).
+7. **AG-06** — audio comment SHIPPED 2026-05-04 (perf reason confirmed
+   via `home/vblank.asm` calling UpdateSound on every frame; header
+   comment in `home/audio.asm` documents the design intent). Leave
+   audio inlines alone. Text/battle 4 cold-path sites still
+   convertible to `rst Bankswitch` in a no-rush pass (~16 bytes).
 
 ---
 

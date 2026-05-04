@@ -1,4 +1,18 @@
 ; Audio interfaces.
+;
+; The bank-switch sequences below inline `ldh [hROMBank], a` + `ld
+; [rROMB], a` instead of routing through `rst Bankswitch`. The trade is
+; ~4 bytes per site of ROM for ~6 cycles per switch saved on the rst
+; dispatch round-trip. UpdateSound runs every vblank (see
+; `home/vblank.asm`) and the entry points each pay two switches (in +
+; restore), so the cycle cost compounds across the per-frame audio
+; budget.
+;
+; Do NOT codemod these to `rst Bankswitch` (asm-guide §4.6). The inline
+; form correctly maintains the `hROMBank` HRAM shadow by writing both
+; `hROMBank` and `rROMB`, so it doesn't trip the shadow-desync footgun
+; §4.6 warns against — the shape is intentional. See AG-06 in
+; `tech_debt/ASM_GUIDE_AUDIT_2026-05-03.md` for the full audit.
 
 InitSound::
 	push hl
