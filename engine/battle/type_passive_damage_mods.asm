@@ -630,7 +630,7 @@ TypePassive_IsCurrentMoveStatus_Far:
 TypePassive_IsCurrentMoveContact_Far:
 ; return carry if current move makes contact.
 	ld a, BATTLE_VARS_MOVE_ANIM
-	farcall GetBattleVar
+	call GetBattleVar  ; HOME-bank target; plain call avoids the §3.3 farcall a/c-passthrough
 	and a
 	jr z, .not_contact
 	cp NUM_ATTACKS + 1
@@ -1015,17 +1015,19 @@ TypePassive_IsDarkShieldEligibleEffect_Far:
 	cp EFFECT_EVASION_DOWN_2
 	jr z, .yes
 	xor a
+	ld c, a            ; mirror a -> c so callfar callers reading `a` see 0 (§3.3)
 	ret
 
 .yes
 	ld a, 1
-	and a
+	and a              ; clear carry, set NZ from a=1 (function contract: nz = eligible)
+	ld c, a            ; mirror a -> c so callfar callers reading `a` see 1 (§3.3)
 	ret
 
 TypePassive_StatusMoveLikelyAffectsOpponent_Far:
 ; return nz if this status move is likely to have effect on target.
 	ld a, BATTLE_VARS_SUBSTATUS4_OPP
-	farcall GetBattleVar
+	call GetBattleVar  ; HOME-bank target; plain call avoids the §3.3 farcall a/c-passthrough
 	bit SUBSTATUS_SUBSTITUTE, a
 	jr nz, .blocked
 
@@ -1135,7 +1137,7 @@ TypePassive_MaybePoisonRetaliation_Far:
 	ret nc
 
 	ld a, BATTLE_VARS_SUBSTATUS4_OPP
-	farcall GetBattleVar
+	call GetBattleVar  ; HOME-bank target; plain call avoids the §3.3 farcall a/c-passthrough
 	bit SUBSTATUS_SUBSTITUTE, a
 	ret nz
 

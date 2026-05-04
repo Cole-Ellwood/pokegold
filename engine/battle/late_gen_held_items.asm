@@ -297,7 +297,7 @@ HandleLateGenAfterHitEffects_Far:
 	call TypePassive_IsCurrentMoveContact_Far
 	ret nc
 	ld a, BATTLE_VARS_SUBSTATUS4_OPP
-	farcall GetBattleVar
+	call GetBattleVar  ; HOME-bank target; plain call avoids the §3.3 farcall a/c-passthrough
 	bit SUBSTATUS_SUBSTITUTE, a
 	ret nz
 	ld a, ROCKY_HELMET_DEN
