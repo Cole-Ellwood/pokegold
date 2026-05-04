@@ -2,7 +2,7 @@
 
 Boss AI cognition note: if you are here for the Boss AI loop, think wildly in the journal before changing source; this index is the hard memory/bank reality check for those ideas.
 
-Generated: 2026-05-03
+Generated: 2026-05-04
 ROM target: `pokegold`
 
 Generated from `layout.link`, assembly sources, `pokegold.map`, and `pokegold.sym`.
@@ -33,12 +33,12 @@ Read `docs/README.md` first for helper-doc routing, then `docs/project_context.m
 ### Battle mechanics
 - Intent: Shared damage, status, switching, item, and turn-flow rules.
 - Start here: `engine/battle/core.asm`, `engine/battle/effect_commands.asm`, `engine/battle/type_passive_damage_mods.asm`, `engine/battle/late_gen_held_items.asm`, `engine/battle/move_effects`, `constants/battle_constants.asm`
-- Anchors: `TypePassive_ApplyDamageModifiers_Far` (0e:75c4, `engine/battle/type_passive_damage_mods.asm:44`); `TypePassive_TryDarkStatusShield_Far` (0e:7b4c, `engine/battle/type_passive_damage_mods.asm:1059`); `TypePassive_MaybePoisonRetaliation_Far` (0e:7b9b, `engine/battle/type_passive_damage_mods.asm:1120`); `ApplyLateGenDamageMultipliers_Far` (0e:7159, `engine/battle/late_gen_held_items.asm:146`); `HandleLateGenAfterHitEffects_Far` (0e:7212, `engine/battle/late_gen_held_items.asm:264`); `TryActivateDittoImposter` (01:7a13, `engine/battle/ditto_imposter.asm:1`)
+- Anchors: `TypePassive_ApplyDamageModifiers_Far` (0e:75c4, `engine/battle/type_passive_damage_mods.asm:44`); `TypePassive_TryDarkStatusShield_Far` (0e:7b4e, `engine/battle/type_passive_damage_mods.asm:1064`); `TypePassive_MaybePoisonRetaliation_Far` (0e:7b9d, `engine/battle/type_passive_damage_mods.asm:1125`); `ApplyLateGenDamageMultipliers_Far` (0e:7159, `engine/battle/late_gen_held_items.asm:146`); `HandleLateGenAfterHitEffects_Far` (0e:7212, `engine/battle/late_gen_held_items.asm:264`); `TryActivateDittoImposter` (01:7a13, `engine/battle/ditto_imposter.asm:1`)
 
 ### Moves
 - Intent: Move stats, effects, descriptions, contact flags, and animations.
 - Start here: `data/moves/moves.asm`, `data/moves/effects.asm`, `data/moves/effects_pointers.asm`, `data/moves/contact_flags.asm`, `data/moves/descriptions.asm`, `constants/move_constants.asm`
-- Anchors: `Moves` (10:5af6, `data/moves/moves.asm:14`); `MoveEffects` (09:7510, `data/moves/effects.asm:3`); `MoveContactFlags` (0e:7d0d, `data/moves/contact_flags.asm:4`); `Spikes` (09:7a2c, `data/moves/effects.asm:1525`); `RapidSpin` (09:7b01, `data/moves/effects.asm:1772`)
+- Anchors: `Moves` (10:5af6, `data/moves/moves.asm:14`); `MoveEffects` (09:7510, `data/moves/effects.asm:3`); `MoveContactFlags` (0e:7d0f, `data/moves/contact_flags.asm:4`); `Spikes` (09:7a2c, `data/moves/effects.asm:1525`); `RapidSpin` (09:7b01, `data/moves/effects.asm:1772`)
 
 ### Items and held items
 - Intent: Item data, descriptions, pockets, marts, and battle held effects.
@@ -75,7 +75,7 @@ Read `docs/README.md` first for helper-doc routing, then `docs/project_context.m
 | Region | Used | Free | Banks |
 | --- | ---: | ---: | ---: |
 | ROM0 | 16155 | 229 |  |
-| ROMX | 1151926 | 928842 | 127 |
+| ROMX | 1151928 | 928840 | 127 |
 | SRAM | 31699 | 1069 | 4 |
 | WRAM0 | 4047 | 49 |  |
 | WRAMX | 4096 | 0 |  |
@@ -153,7 +153,7 @@ Use these as candidates when moving optional code or data out of tight banks.
 | `bankB` | ROMX | 0b:4000-4d69 | 3434 | ROMX 0b | `engine/battle/ai/redundant.asm`, `engine/battle/trainer_huds.asm`, `engine/events/move_deleter.asm`, `engine/events/move_reminder.asm`, +7 more |
 | `Effect Commands` | ROMX | 0d:4000-7fe8 | 16361 | ROMX 0d | `engine/battle/effect_commands.asm`, `engine/battle/used_move_text.asm`, `main.asm` |
 | `Enemy Trainers` | ROMX | 0e:4000-708d | 12430 | ROMX 0e | `engine/battle/ai/boss.asm`, `engine/battle/ai/items.asm`, `engine/battle/read_trainer_attributes.asm`, `main.asm` |
-| `Late Gen Held Items` | ROMX | 0e:708e-7e0a | 3453 |  | `engine/battle/late_gen_held_items.asm`, `engine/battle/type_passive_damage_mods.asm`, `main.asm` |
+| `Late Gen Held Items` | ROMX | 0e:708e-7e0c | 3455 |  | `engine/battle/late_gen_held_items.asm`, `engine/battle/type_passive_damage_mods.asm`, `main.asm` |
 | `Battle Core` | ROMX | 0f:4000-7bae | 15279 | ROMX 0f | `engine/battle/core.asm`, `main.asm` |
 | `Evolutions and Attacks` | ROMX | 10:68a8-7fab | 5892 | ROMX 10 | `data/pokemon/evos_attacks.asm`, `data/pokemon/evos_attacks_pointers.asm` |
 | `Maps` | ROMX | 25:4000-65f8 | 9721 | ROMX 25 | `data/maps/attributes.asm`, `data/maps/blocks.asm`, `data/maps/map_data.asm`, `data/maps/maps.asm`, +2 more |
@@ -223,14 +223,14 @@ Use these as candidates when moving optional code or data out of tight banks.
 | `AICompareSpeed` | 0b:7b28 | `engine/battle/ai/scoring.asm:2673` |
 | `AIDamageCalc` | 0b:7cdd | `engine/battle/ai/scoring.asm:3000` |
 | `TypePassive_ApplyDamageModifiers_Far` | 0e:75c4 | `engine/battle/type_passive_damage_mods.asm:44` |
-| `TypePassive_TryDarkStatusShield_Far` | 0e:7b4c | `engine/battle/type_passive_damage_mods.asm:1059` |
-| `TypePassive_MaybePoisonRetaliation_Far` | 0e:7b9b | `engine/battle/type_passive_damage_mods.asm:1120` |
+| `TypePassive_TryDarkStatusShield_Far` | 0e:7b4e | `engine/battle/type_passive_damage_mods.asm:1064` |
+| `TypePassive_MaybePoisonRetaliation_Far` | 0e:7b9d | `engine/battle/type_passive_damage_mods.asm:1125` |
 | `ApplyLateGenDamageMultipliers_Far` | 0e:7159 | `engine/battle/late_gen_held_items.asm:146` |
 | `HandleLateGenAfterHitEffects_Far` | 0e:7212 | `engine/battle/late_gen_held_items.asm:264` |
 | `TryActivateDittoImposter` | 01:7a13 | `engine/battle/ditto_imposter.asm:1` |
 | `Moves` | 10:5af6 | `data/moves/moves.asm:14` |
 | `MoveEffects` | 09:7510 | `data/moves/effects.asm:3` |
-| `MoveContactFlags` | 0e:7d0d | `data/moves/contact_flags.asm:4` |
+| `MoveContactFlags` | 0e:7d0f | `data/moves/contact_flags.asm:4` |
 | `Spikes` | 09:7a2c | `data/moves/effects.asm:1525` |
 | `RapidSpin` | 09:7b01 | `data/moves/effects.asm:1772` |
 | `ItemAttributes` | 01:6930 | `data/items/attributes.asm:8` |

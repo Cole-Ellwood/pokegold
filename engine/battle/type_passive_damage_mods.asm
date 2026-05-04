@@ -513,6 +513,9 @@ TypePassive_GetEffectiveMoveCategory_Far::
 .done
 	ld a, e
 	pop bc
+	ld c, a            ; mirror a -> c so callers via Battle_GetEffectiveMoveCategory
+	                   ; (farcall) see the category in a (§3.3 a/c passthrough). Safe:
+	                   ; same-bank callers consume a immediately and don't read c.
 	pop de
 	pop hl
 	ret
@@ -561,6 +564,8 @@ TypePassive_GetLastCounterMoveCategory_Far::
 .done
 	ld a, e
 	pop bc
+	ld c, a            ; mirror a -> c (§3.3 farcall passthrough); see sister
+	                   ; TypePassive_GetEffectiveMoveCategory_Far .done for rationale.
 	pop de
 	pop hl
 	ret

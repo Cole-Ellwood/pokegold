@@ -18,7 +18,7 @@ are recommended for TD-A### addendum entries if the user agrees.
 | **AG-07** | **CRIT** | **Paralysis fail check is dead — `farcall` a-clobber bug, paralyzed Pokémon never miss a turn** | `engine/battle/effect_commands.asm:334-340, 586-592` |
 | AG-01 | HIGH | No automated audit for `farcall` `hl`-clobber (§3.2) | `tools/audit/` (gap) |
 | AG-02 | HIGH | No automated audit for `farcall` return-`a` clobber (§3.3) — **discovered AG-07 on second pass** | `tools/audit/` (gap) |
-| **AG-08** | **HIGH** | **Latent §3.3 bug in `Battle_GetEffectiveMoveCategory` — caller never sees the move category in `a`; currently masked by accidental `c < 19` at all call sites** | `home/battle.asm:259-261`, `engine/battle/type_passive_damage_mods.asm:478-518` |
+| **AG-08** | **HIGH** | **FIXED 2026-05-04** — Latent §3.3 bug in `Battle_GetEffectiveMoveCategory` — caller never sees the move category in `a`; was masked by accidental `c < 19` at all call sites. Option A applied to both targets (mirror `a -> c` before pop chain). | `engine/battle/type_passive_damage_mods.asm:513-520, 564-571` |
 | AG-03 | MED | `check_cross_bank_call.py` failing with 39 known hits in `boss.asm` | `engine/battle/ai/boss.asm` |
 | AG-04 | LOW | `ld a, 0` style instead of `xor a` (~70 sites) | engine, home, audio |
 | AG-05 | LOW | `cp 0` style instead of `and a` (8 sites) | menus, overworld, items |
@@ -131,7 +131,21 @@ Trickier than AG-01 because of the carry-clear idiom — but doable.
 
 ### AG-08 — Latent §3.3 bug in `Battle_GetEffectiveMoveCategory`
 
-**Status:** Currently asymptomatic. Same shape as AG-07; only escapes
+**Status:** **FIXED 2026-05-04.** Option A (mirror `a -> c` at the
+shared `.done` exit) applied to both
+`TypePassive_GetEffectiveMoveCategory_Far` and
+`TypePassive_GetLastCounterMoveCategory_Far`. Net +4 bytes of code,
+both within bank headroom. The home wrapper text and same-bank caller
+shape are unchanged, so `check_battle_math_safety.py`'s
+`require_text` invariants continue to pass without loosening.
+Verified: pokegold + pokesilver rebuilt, SHAs refreshed in
+`roms.sha1`, `check_release_smoke.py` (modulo pre-existing FAILs
+unrelated to this work), `check_battle_math_safety.py`,
+`check_farcall_hl_clobber.py` all pass.
+
+**(Original finding preserved below for the audit trail.)**
+
+Currently asymptomatic. Same shape as AG-07; only escapes
 manifesting because all callers happen to have `c < SPECIAL` at the
 call site, so the `cp SPECIAL; jr nc` dispatch routes correctly
 anyway. Will fire the moment any caller passes `c >= 19`.
