@@ -17,7 +17,7 @@ are recommended for TD-A### addendum entries if the user agrees.
 |----|-----|-------|----------|
 | **AG-07** | **CRIT** | **Paralysis fail check is dead — `farcall` a-clobber bug, paralyzed Pokémon never miss a turn** | `engine/battle/effect_commands.asm:334-340, 586-592` |
 | AG-01 | HIGH | No automated audit for `farcall` `hl`-clobber (§3.2) | `tools/audit/` (gap) |
-| AG-02 | HIGH | No automated audit for `farcall` return-`a` clobber (§3.3) — **discovered AG-07 on second pass** | `tools/audit/` (gap) |
+| AG-02 | HIGH | **SHIPPED 2026-05-04** — `tools/audit/check_farcall_a_clobber.py` added; surfaced 5 latent live bugs (4× GetBattleVar farcall callers, 1× TypePassive_IsDarkShieldEligibleEffect_Far) | `tools/audit/check_farcall_a_clobber.py` |
 | **AG-08** | **HIGH** | **FIXED 2026-05-04** — Latent §3.3 bug in `Battle_GetEffectiveMoveCategory` — caller never sees the move category in `a`; was masked by accidental `c < 19` at all call sites. Option A applied to both targets (mirror `a -> c` before pop chain). | `engine/battle/type_passive_damage_mods.asm:513-520, 564-571` |
 | AG-03 | MED | `check_cross_bank_call.py` failing with 39 known hits in `boss.asm` | `engine/battle/ai/boss.asm` |
 | AG-04 | LOW | `ld a, 0` style instead of `xor a` (~70 sites) | engine, home, audio |
