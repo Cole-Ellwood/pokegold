@@ -162,7 +162,7 @@ FillTitleScreenPals:
 	ld bc, 5 * TILEMAP_WIDTH
 	ld a, 4
 	call ByteFill
-	ld a, 0
+	xor a
 	ldh [rVBK], a
 	ret
 

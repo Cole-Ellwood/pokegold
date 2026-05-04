@@ -20,7 +20,7 @@ are recommended for TD-A### addendum entries if the user agrees.
 | AG-02 | HIGH | **SHIPPED 2026-05-04** — `tools/audit/check_farcall_a_clobber.py` added; surfaced 5 latent live bugs (4× GetBattleVar farcall callers, 1× TypePassive_IsDarkShieldEligibleEffect_Far) | `tools/audit/check_farcall_a_clobber.py` |
 | **AG-08** | **HIGH** | **FIXED 2026-05-04** — Latent §3.3 bug in `Battle_GetEffectiveMoveCategory` — caller never sees the move category in `a`; was masked by accidental `c < 19` at all call sites. Option A applied to both targets (mirror `a -> c` before pop chain). | `engine/battle/type_passive_damage_mods.asm:513-520, 564-571` |
 | AG-03 | MED | `check_cross_bank_call.py` failing with 39 known hits in `boss.asm` | `engine/battle/ai/boss.asm` |
-| AG-04 | LOW | `ld a, 0` style instead of `xor a` (~70 sites) | engine, home, audio |
+| AG-04 | LOW | **SHIPPED** — `tools/audit/check_ld_a_zero.py` added; codemod applied at 40 SAFE sites (per-flag Z/C dataflow analysis); 32 flag-preserving sites correctly preserved | `tools/audit/check_ld_a_zero.py` |
 | AG-05 | LOW | `cp 0` style instead of `and a` (8 sites) | menus, overworld, items |
 | AG-06 | INFO | Inline bank-switch (`ld [rROMB], a`) instead of `rst Bankswitch` (~25 sites) | `home/audio.asm`, `home/text.asm`, `home/battle.asm` |
 
@@ -438,12 +438,32 @@ the audit script itself.
 
 ## LOW — style / size
 
-### AG-04 — `ld a, 0` instead of `xor a` (~70 sites)
+### AG-04 — `ld a, 0` instead of `xor a` (73 sites originally)
+
+**Status:** **SHIPPED.** `tools/audit/check_ld_a_zero.py` added,
+classifier-plus-codemod applied. 40 SAFE sites rewritten to `xor a`;
+32 sites correctly classified UNSAFE and preserved (mostly
+`ld a, 0; adc r` 16-bit-pointer-add idioms and `ld a, 0; jr cc`
+flag-preserving patterns); 1 INDETERMINATE site preserved
+(`home/video.asm:42`, inside a `rept` block where the walk runs out of
+budget). Audit promoted to the release-smoke floor so future drift is
+caught. Net ~40 bytes recovered, distributed across 24 files / many
+banks; per-bank impact small (1-3 bytes typical).
 
 Guide §3.9 / Appendix B: `ld a, 0` is 2 bytes / 2 cycles; `xor a` is
-1 byte / 1 cycle and clears flags identically (sets Z, clears N/H/C).
+1 byte / 1 cycle. The replacement is **NOT** flag-equivalent — `xor a`
+sets Z=1 and clears N/H/C, while `ld a, 0` preserves all four flags.
+Mechanical replacement therefore needs per-site safety analysis: walk
+forward from each site, track which of {Z, C} are still alive
+(unkilled), and treat the site as SAFE only if both are overwritten
+before any flag reader runs (or if an unconditional control transfer or
+flag-clobbering call/farcall ends the dependency). The `check_ld_a_zero.py`
+audit implements exactly this dataflow.
+
+**(Original finding preserved below for the audit trail.)**
+
 The codebase prefers `xor a` consistently in newer code; the
-remaining `ld a, 0` sites are mostly inherited from upstream pret.
+remaining `ld a, 0` sites were mostly inherited from upstream pret.
 
 **Sample sites** (~70 total, not exhaustively listed):
 - `engine/movie/credits.asm:10, 508, 543, 553`
@@ -457,18 +477,6 @@ remaining `ld a, 0` sites are mostly inherited from upstream pret.
 - `home/print_num.asm:330`
 - `audio/engine.asm:928, 986, 989`
 - (and ~50 more in tilesets, items, RTC, menus, overworld, etc.)
-
-**Impact.** ~70 bytes recoverable across the ROM. Bytes go back to
-the bank they live in, not pooled — so per-bank impact is small (1-3
-bytes typical). For tight banks (TD-001), even small recovery is
-worth doing; for the rest it's just style consistency.
-
-**Recommendation.** A single mechanical pass would be safe (`xor a`
-is functionally identical except it also clears C, which is fine
-when the next instruction sets flags or doesn't depend on C). I'd
-script it as a regex-replacement audit script so future drift is
-caught. **Not promoting** unless the user wants the consistency win
-— this isn't a correctness issue.
 
 ### AG-05 — `cp 0` instead of `and a` (8 sites)
 

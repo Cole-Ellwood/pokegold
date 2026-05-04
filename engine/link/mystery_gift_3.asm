@@ -81,7 +81,7 @@ InitMysteryGiftLayout:
 	inc a
 	ld [hl], a
 	hlcoord 3, 1
-	ld a, 0
+	xor a
 	call .Load15GFX
 	hlcoord 3, 2
 	ld a, $f

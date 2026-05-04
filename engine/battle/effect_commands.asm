@@ -1996,7 +1996,7 @@ BattleCommand_LowerSub:
 .rollout_rampage
 	ld a, [wSomeoneIsRampaging]
 	and a
-	ld a, 0
+	xor a
 	ld [wSomeoneIsRampaging], a
 	ret
 
@@ -3079,7 +3079,7 @@ BattleCommand_ConstantDamage:
 	cp b
 	jr nc, .psywave_loop
 	ld b, a
-	ld a, 0
+	xor a
 	jr .got_power
 
 .super_fang

@@ -243,7 +243,7 @@ GetTrainerPic:
 	ret z
 	cp NUM_TRAINER_CLASSES + 1
 	ret nc
-	ld a, 0
+	xor a
 	call WaitBGMap
 	xor a
 	ldh [hBGMapMode], a

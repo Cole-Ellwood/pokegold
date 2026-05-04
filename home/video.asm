@@ -139,7 +139,7 @@ UpdateBGMap::
 	hlcoord 0, 0, wAttrmap
 	call .update
 
-	ld a, 0
+	xor a
 	ldh [rVBK], a
 	ret
 

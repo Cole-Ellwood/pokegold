@@ -3,7 +3,7 @@
 ClearUnusedMapBuffer::
 	ld hl, wUnusedMapBuffer
 	ld bc, wUnusedMapBufferEnd - wUnusedMapBuffer
-	ld a, 0
+	xor a
 	call ByteFill
 	ret
 
@@ -1105,7 +1105,7 @@ GetMapScreenCoords::
 LoadBlockData::
 	ld hl, wOverworldMapBlocks
 	ld bc, wOverworldMapBlocksEnd - wOverworldMapBlocks
-	ld a, 0
+	xor a
 	call ByteFill
 	call ChangeMap
 	call FillMapConnections

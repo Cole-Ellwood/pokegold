@@ -1602,7 +1602,7 @@ FullRestoreEffect:
 	ld [wPartyMenuActionText], a
 	call ItemActionTextWaitButton
 	call UseDisposableItem
-	ld a, 0
+	xor a
 	ret
 
 BitterBerryEffect:
@@ -1673,7 +1673,7 @@ ItemRestoreHP:
 	ld [wPartyMenuActionText], a
 	call ItemActionTextWaitButton
 	call UseDisposableItem
-	ld a, 0
+	xor a
 	ret
 
 HealHP_SFX_GFX:

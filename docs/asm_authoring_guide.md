@@ -416,6 +416,19 @@ These don't break anything but they're tells that the model isn't
 modeling flag side effects correctly — which is also what causes the
 dangerous bugs. Treat them as a smell.
 
+The sister case — `ld a, 0` (2 bytes) instead of `xor a` (1 byte) — has
+the same shape: `xor a` clears `Z`, `N`, `H`, `C` and sets `Z=1`, while
+`ld a, 0` preserves all four flags. The replacement is safe IFF no
+subsequent flag-reading instruction depends on a pre-`ld a, 0` `Z` or
+`C`. Audited by `tools/audit/check_ld_a_zero.py` (release-smoke floor):
+the audit walks forward from each site, kills `Z`/`C` on encountered
+flag-clobberers, and flags as SAFE only if both flags are overwritten
+before any reader runs (or if an unconditional control transfer or
+flag-clobbering call/farcall ends the dependency). UNSAFE sites stay as
+`ld a, 0` — they're flag-preserving on purpose, typically the
+`ld a, 0; adc h` 16-bit-pointer-add idiom or `ld a, 0; jr cc` from
+flags set upstream.
+
 ### 3.10 Endianness when loading pointers from memory
 
 `dw Foo` in memory is `LOW(Foo), HIGH(Foo)` (low byte at lower address).

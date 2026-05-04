@@ -86,7 +86,7 @@ IntroScene1:
 
 	xor a
 	call ByteFill
-	ld a, 0
+	xor a
 	ldh [rVBK], a
 	call Intro_ResetLYOverrides
 	ld de, vTiles2 tile $00
@@ -795,7 +795,7 @@ IntroScene10:
 	ld a, $00
 	ld [hli], a
 	call EnableLCD
-	ld a, 0
+	xor a
 	call DrawIntroCharizardGraphic
 
 	ld a, $80

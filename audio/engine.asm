@@ -925,7 +925,7 @@ HandleTrackVibrato:
 	ld a, e
 	sub d
 	jr nc, .no_carry
-	ld a, 0
+	xor a
 	jr .no_carry
 
 .down

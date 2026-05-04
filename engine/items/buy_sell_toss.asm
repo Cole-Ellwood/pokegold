@@ -65,7 +65,7 @@ BuySellToss_InterpretJoypad:
 	ret
 
 .a
-	ld a, 0
+	xor a
 	scf
 	ret
 

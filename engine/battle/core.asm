@@ -7905,7 +7905,7 @@ StartBattle:
 	ld [wTempBattleMonSpecies], a
 	ld [wBattleMenuCursorPosition], a
 	farcall PlayBattleMusic
-	ld a, 0
+	xor a
 	ld [wSpriteUpdatesEnabled], a
 	call ShowLinkBattleParticipants
 	farcall ClearBattleRAM

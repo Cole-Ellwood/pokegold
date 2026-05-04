@@ -505,7 +505,7 @@ GetCreditsPalette:
 	call .GetPalAddress
 
 	push hl
-	ld a, 0
+	xor a
 	call .UpdatePals
 	pop hl
 	ld a, 8
