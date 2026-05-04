@@ -24,7 +24,7 @@ blocked, what's done.
 | TD-009 | MED | open | 2026-05-02 (escalation) | TD-009a needs user approval — dead writes expand scope to vblank.asm, intro_menu.asm, events.asm; see ADDENDUM |
 | TD-010 | MED | **done** | 2026-05-02 | corrected recipe executed; see ADDENDUM and AGENT_LOG done entry |
 | TD-011 | LOW | **disputed** | 2026-05-02 | script IS used by docs/manifest.md; see ADDENDUM |
-| TD-012 | LOW | open | — | optional polish |
+| TD-012 | LOW | **done** | 2026-05-04 | 3 Makefile shell hacks (`cp -f`, `cat $^ > $@`, `tr -d '\\000'`) replaced with cross-platform Python helpers (`tools/copy_file.py`, `tools/concat_files.py`, `tools/strip_nulls.py`); SHA1 unchanged across all 6 ROM/patch outputs. |
 | TD-013 | LOW * | open | — | * mis-ranked; see ADDENDUM. Severity is effectively MEDIUM (EXP curve risk) |
 
 ## State definitions (mirrors AGENT_LOG.md)
@@ -62,7 +62,7 @@ churny. Other agents check by reading the log directly.
 
 ## Open count
 
-5 open + 4 partial + 2 done + 1 disputed + 1 pending-trigger = 13 total
+4 open + 4 partial + 3 done + 1 disputed + 1 pending-trigger = 13 total
 (matches `TECH_DEBT_REPORT.md` index).
 
 When the open count reaches **0** (or all remaining are `accepted` /

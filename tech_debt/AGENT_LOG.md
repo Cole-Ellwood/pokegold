@@ -494,3 +494,16 @@ only.)
   3. **STATUS open count math.** Was "6 open + 3 partial + 2 done + 1 disputed + 1 pending-trigger = 13 total." TD-008 moves from `open` to `partial`, so the new math is "5 open + 4 partial + 2 done + 1 disputed + 1 pending-trigger = 13 total."
   4. **Vendored toolchain folder rename.** When the trigger fires and we adopt v1.0.x+1, the rename `rgbds-1.0.1/` → `rgbds-X.Y.Z/` is a multi-touch operation. Reference list in evidence file's "Where the v1.0.1 pin lives in this repo" section — five load-bearing touch points plus historical journal entries (immutable, leave alone).
 - **Verifier check:** From this branch tip, `ls tech_debt/EVIDENCE/td_008_rgbds_changelog.md` should exist (~150-200 lines). `grep -c "Updated 2026-05-03 by claude-great-germain-2c8cb8" tech_debt/FIX_PROPOSALS.md` should return 1, in the TD-008 section. `python3 tools/audit/check_tech_debt_freshness.py` should PASS. If a future session re-runs the GitHub API queries and v1.0.1 is no longer the latest tag, the evidence file's "Headline finding" needs to be revisited — that's the upstream trigger.
+
+
+## 2026-05-04 — TD-012 — done
+
+- **Agent / session:** Opus 4.7 (1M context) / claude/romantic-meitner-314fb1
+- **State:** done
+- **Files touched:** Makefile (lines 248-249, 279-281, 353-354), tools/copy_file.py (new), tools/concat_files.py (new), tools/strip_nulls.py (new), tech_debt/STATUS.md (TD-012 row + open-count line)
+- **Summary:** Replaced 3 Makefile shell hacks with cross-platform Python helpers per FIX_PROPOSALS TD-012 recipe. (1) `cp -f $^ $@` for back-sprite Gold/Silver duplication → `python3 tools/copy_file.py $^ $@`. (2) `cat $^ > $@` for intro fire-tile binary concat → `python3 tools/concat_files.py $@ $^`. (3) `tr -d '\000' < $< > $@` for SGB border tilemap null-strip → `python3 tools/strip_nulls.py $< $@`. Each helper is ~15 lines of stdlib Python with a docstring, an argv-shape check, and the minimum I/O.
+- **Verification run:** Clean rebuild from scratch then `python3 tools/verify_sha1.py roms.sha1` → all 6 outputs (`pokegold.gbc`, `pokesilver.gbc`, `pokegold_debug.gbc`, `pokesilver_debug.gbc`, `pokegold.patch`, `pokesilver.patch`) match the committed manifest. Byte-for-byte identical to the pre-change build, which was the gating verification per the FIX_PROPOSALS recipe.
+- **Bytes recovered:** N/A (build-pipeline tooling, not source).
+- **Bank impact:** N/A.
+- **Issues / followups:** None. The Python helpers are explicit about what they do (single-file copy, ordered binary concat, byte filter) — clearer at the Makefile site than the bash trio they replaced. Future Makefile shell hacks should default to the `tools/*.py` form.
+- **Verifier check:** `python3 tools/verify_sha1.py roms.sha1` passes after a clean rebuild. `grep -E 'cp -f|cat \$\^ > \$@|tr.*-d.*\000' Makefile` returns 0 hits.

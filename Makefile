@@ -245,8 +245,8 @@ gfx/trainers/%.2bpp: gfx/trainers/%.png gfx/trainers/%.gbcpal
 	$(RGBGFX) $(RGBGFXFLAGS) --colors gbc:$(word 2,$^) -o $@ $<
 
 # A few back sprites have different compression settings for Gold and Silver
-gfx/pokemon/%/back_gold.2bpp: gfx/pokemon/%/back.2bpp ; cp -f $^ $@
-gfx/pokemon/%/back_silver.2bpp: gfx/pokemon/%/back.2bpp ; cp -f $^ $@
+gfx/pokemon/%/back_gold.2bpp: gfx/pokemon/%/back.2bpp ; $(PYTHON) tools/copy_file.py $^ $@
+gfx/pokemon/%/back_silver.2bpp: gfx/pokemon/%/back.2bpp ; $(PYTHON) tools/copy_file.py $^ $@
 
 # Egg does not have a back sprite, so it only uses egg.gbcpal
 gfx/pokemon/egg/egg.2bpp: gfx/pokemon/egg/egg.png gfx/pokemon/egg/egg.gbcpal
@@ -276,9 +276,9 @@ gfx/pokemon/porygon2/normal.gbcpal: tools/gbcpal += --reverse
 gfx/trainers/swimmer_m.gbcpal: tools/gbcpal += --reverse
 
 gfx/intro/fire.2bpp: tools/gfx += --remove-whitespace
-gfx/intro/fire1.2bpp: gfx/intro/charizard1.2bpp gfx/intro/charizard2_top.2bpp gfx/intro/space.2bpp ; cat $^ > $@
-gfx/intro/fire2.2bpp: gfx/intro/charizard2_bottom.2bpp gfx/intro/charizard3.2bpp ; cat $^ > $@
-gfx/intro/fire3.2bpp: gfx/intro/fire.2bpp gfx/intro/unused_blastoise_venusaur.2bpp ; cat $^ > $@
+gfx/intro/fire1.2bpp: gfx/intro/charizard1.2bpp gfx/intro/charizard2_top.2bpp gfx/intro/space.2bpp ; $(PYTHON) tools/concat_files.py $@ $^
+gfx/intro/fire2.2bpp: gfx/intro/charizard2_bottom.2bpp gfx/intro/charizard3.2bpp ; $(PYTHON) tools/concat_files.py $@ $^
+gfx/intro/fire3.2bpp: gfx/intro/fire.2bpp gfx/intro/unused_blastoise_venusaur.2bpp ; $(PYTHON) tools/concat_files.py $@ $^
 
 gfx/new_game/shrink1.2bpp: RGBGFXFLAGS += --columns
 gfx/new_game/shrink2.2bpp: RGBGFXFLAGS += --columns
@@ -350,8 +350,8 @@ gfx/font/unused_bold_font.1bpp: tools/gfx += --trim-whitespace
 
 gfx/sgb/gold_border.2bpp: tools/gfx += --trim-whitespace
 gfx/sgb/silver_border.2bpp: tools/gfx += --trim-whitespace
-gfx/sgb/gold_border.sgb.tilemap: gfx/sgb/gold_border.bin ; tr < $< -d '\000' > $@
-gfx/sgb/silver_border.sgb.tilemap: gfx/sgb/silver_border.bin ; tr < $< -d '\000' > $@
+gfx/sgb/gold_border.sgb.tilemap: gfx/sgb/gold_border.bin ; $(PYTHON) tools/strip_nulls.py $< $@
+gfx/sgb/silver_border.sgb.tilemap: gfx/sgb/silver_border.bin ; $(PYTHON) tools/strip_nulls.py $< $@
 
 
 ### Catch-all graphics rules
