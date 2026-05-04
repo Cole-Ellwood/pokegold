@@ -169,8 +169,13 @@ below are a reminder list, not the canonical reference.
   value into `c` at every `ret` in the target (cheap: one `ld c, a` per
   ret), OR return via HRAM, OR use a HOME thunk that stashes the result.
   The May 2026 wild-level-floor no-op came from this — `farcall
-  GetProgressionLevelCap` was reading target_c instead of the cap. Not
-  audited; spot-check by reading target's exit `c`.
+  GetProgressionLevelCap` was reading target_c instead of the cap.
+  Audited by `tools/audit/check_farcall_a_clobber.py` (in the
+  release-smoke floor as of 2026-05-04): walks back from each `ret`
+  through c-untouching instructions for an `ld c, a` mirror; flags
+  farcall sites where target is UNSAFE and the caller consumes `a`
+  post-farcall. First fire surfaced 5 latent live bugs in battle code
+  (commit `13a6e3a3`).
 - **`assert` lines in tables/macros catch bounds at link time.** Don't
   delete them to make the build pass — fix the underlying mismatch.
 
