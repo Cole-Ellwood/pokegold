@@ -23,10 +23,15 @@ BattleCommand_Sketch:
 	call UserPartyAttr
 	ld d, h
 	ld e, l
-; Get the battle move structs.
+; Get the battle move structs. push/pop de preserves the user-party-moveset
+; pointer just stashed in de (lines above) from _GetSidedHL's de clobber;
+; .user_trainer's `add hl, de` further down reads it as the destination for
+; the persistent moveset write.
+	push de
 	ld hl, wBattleMonMoves
 	ld de, wEnemyMonMoves
 	call _GetSidedHL
+	pop de
 	ld a, BATTLE_VARS_LAST_COUNTER_MOVE_OPP
 	call GetBattleVar
 	ld [wNamedObjectIndex], a

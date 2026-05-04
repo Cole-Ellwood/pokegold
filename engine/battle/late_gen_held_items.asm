@@ -1,7 +1,17 @@
 ApplyLateGenDamageStatsItemMods_Far::
 ; Reach via ROM0 thunk ApplyLateGenDamageStatsItemMods — direct callfar
 ; would clobber hl (the input/output attack stat) with this function's address.
+;
+; push/pop de preserves caller's d = move BP across the boost helpers, which
+; clobber d via `ld d, *_DEN` to set up the denominator parameter for
+; .ApplyFractionToHL/BC. PlayerAttackDamage / EnemyAttackDamage carry d=BP
+; through .done into this chain and damagecalc consumes it; without the
+; preservation, Choice Band / Choice Specs / Assault Vest / Eviolite holders
+; propagate d=2 (the *_DEN value) into damagecalc, dealing roughly 1/30 of
+; intended damage. Latent since 80c2d5c6, masked previously by GetUserItem's
+; own d-clobber (fixed 44ca3b29).
 	push af
+	push de
 	call TypePassive_GetEffectiveMoveCategory_Far
 	cp SPECIAL
 	jr nc, .special
@@ -15,6 +25,7 @@ ApplyLateGenDamageStatsItemMods_Far::
 	call .ApplyEvioliteSpDefBoost
 
 .done
+	pop de
 	pop af
 	ret
 

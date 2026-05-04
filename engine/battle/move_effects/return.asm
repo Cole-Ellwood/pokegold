@@ -1,5 +1,9 @@
 BattleCommand_HappinessPower:
+; push de preserves caller's e (= attacker level set by damagestats); see
+; BattleCommand_FrustrationPower header for the full mechanism. Stack discipline
+; must match LoadHappinessPower's pop de / pop bc exit.
 	push bc
+	push de
 	ld hl, wBattleMonHappiness
 	ld de, wEnemyMonHappiness
 	call _GetSidedHL
