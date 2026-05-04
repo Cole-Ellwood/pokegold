@@ -6419,9 +6419,16 @@ CheckHiddenOpponent:
 
 GetUserItem:
 ; Return the effect of the user's item in bc, and its id at hl.
+; push/pop de is load-bearing: PlayerAttackDamage/EnemyAttackDamage carry the
+; move BP in `d` through .done's ApplyLateGenDamageStatsItemMods chain that
+; lands here, and `ld de, wEnemyMonItem` below would clobber d to $D0
+; (HIGH(wEnemyMonItem)) — propagating wrong BP into BattleCommand_DamageCalc.
+; Pre-TD-005 Pattern 3 (commit 3f00da81), the inline turn-check didn't touch de.
+	push de
 	ld hl, wBattleMonItem
 	ld de, wEnemyMonItem
 	call _GetSidedHL
+	pop de
 	ld b, [hl]
 	jp GetItemHeldEffect
 

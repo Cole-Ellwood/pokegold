@@ -75,7 +75,7 @@ Read `docs/README.md` first for helper-doc routing, then `docs/project_context.m
 | Region | Used | Free | Banks |
 | --- | ---: | ---: | ---: |
 | ROM0 | 16155 | 229 |  |
-| ROMX | 1151915 | 928853 | 127 |
+| ROMX | 1151917 | 928851 | 127 |
 | SRAM | 31699 | 1069 | 4 |
 | WRAM0 | 4047 | 49 |  |
 | WRAMX | 4096 | 0 |  |
@@ -115,7 +115,7 @@ Bank numbers in this table are hexadecimal.
 | ROMX | 1c | 1 |
 | ROMX | 1f | 1 |
 | ROMX | 1a | 4 |
-| ROMX | 0d | 30 |
+| ROMX | 0d | 28 |
 | ROMX | 16 | 48 |
 | WRAM0 | 00 | 49 |
 | ROMX | 20 | 64 |
@@ -151,7 +151,7 @@ Use these as candidates when moving optional code or data out of tight banks.
 | --- | --- | --- | ---: | --- | --- |
 | `Home` | ROM0 | 00:0150-3ff2 | 16035 | ROM0 00 | `home.asm`, `home/array.asm`, `home/audio.asm`, `home/battle.asm`, +49 more |
 | `bankB` | ROMX | 0b:4000-4d69 | 3434 | ROMX 0b | `engine/battle/ai/redundant.asm`, `engine/battle/trainer_huds.asm`, `engine/events/move_deleter.asm`, `engine/events/move_reminder.asm`, +7 more |
-| `Effect Commands` | ROMX | 0d:4000-7fe1 | 16354 | ROMX 0d | `engine/battle/effect_commands.asm`, `engine/battle/used_move_text.asm`, `main.asm` |
+| `Effect Commands` | ROMX | 0d:4000-7fe3 | 16356 | ROMX 0d | `engine/battle/effect_commands.asm`, `engine/battle/used_move_text.asm`, `main.asm` |
 | `Enemy Trainers` | ROMX | 0e:4000-708d | 12430 | ROMX 0e | `engine/battle/ai/boss.asm`, `engine/battle/ai/items.asm`, `engine/battle/read_trainer_attributes.asm`, `main.asm` |
 | `Late Gen Held Items` | ROMX | 0e:708e-7e08 | 3451 |  | `engine/battle/late_gen_held_items.asm`, `engine/battle/type_passive_damage_mods.asm`, `main.asm` |
 | `Battle Core` | ROMX | 0f:4000-7bac | 15277 | ROMX 0f | `engine/battle/core.asm`, `main.asm` |

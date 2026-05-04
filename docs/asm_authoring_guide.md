@@ -27,7 +27,8 @@ Companion files (treat as authoritative for their domains):
 | **Cross-bank calls MUST use `farcall` / `callfar` / `homecall`.** A bare `call` to a label in another ROMX bank silently jumps to whatever is paged in. | The single most common load-bearing mistake. §3.4. |
 | **`farcall` clobbers caller's `hl` BEFORE the target runs.** Macro expands to `ld a, BANK :: ld hl, target :: rst FarCall`. | Shipped twice in this repo (April 2026 one-shot damage; May 2026 rival 1 softlock). §3.2. |
 | **After `farcall`, caller's `a` = target's exit `c`, NOT target's exit `a`.** See `home/farcall.asm:13-28`. | Shipped May 2026 wild-floor no-op. §3.3. |
-| **Memory is little-endian.** `dw Foo` writes `LOW(Foo)` then `HIGH(Foo)`. Pointer-load idiom: `ld a, [hli] :: ld h, [hl] :: ld l, a` — **LO byte first**. | §3.10. |
+| **Register-preservation is a transitive contract.** Refactoring a function to clobber more registers can break callers many frames away who silently relied on the old behavior. | Shipped 2026-05-03 (TD-005 Pattern 3): `_GetSidedHL` extraction broke `GetUserItem`'s `de` preservation, every physical move dealt 5× damage. §3.13. |
+| **Memory is little-endian** for `dw` directives, **but battle-engine stat fields are runtime-populated big-endian** (HIGH at offset+0; see `macros/ram.asm:35`). The two need different load idioms. | §3.10. |
 | **HRAM/IO uses `ldh`, not `ld`.** `ldh [rXX], a` is 2 bytes / 3 cycles vs 3 bytes / 4 for `ld [$FFxx], a`. RGBDS will NOT auto-pick. | Style consistency + size. §1.4. |
 | Stat math: **base ≠ computed.** `wBattleMonSpeed` is the computed stat. Stat-stage bytes use **base-7 encoding** (`BASE_STAT_LEVEL = 7 = +0`). | Confusing the two has cost a debug session. CLAUDE.md is source of truth. |
 | `ram/` is high-caution. **Reordering or resizing WRAM/SRAM fields silently misaligns old saves; there is no migration code in this repo.** | Save-format bumps shipping to public release require user approval. |
@@ -435,6 +436,27 @@ dangerous bugs. Treat them as a smell.
 stack. The asymmetry is only when reading a 16-bit value from arbitrary
 memory through `hl`.
 
+**Exception — battle-engine stat fields are big-endian.** Despite RGBDS
+`dw` emitting LOW-then-HIGH for static data, the runtime that populates
+Pokemon stat fields in `wBattleMon`, `wEnemyMon`, `wPlayerStats`,
+`wEnemyStats` writes them HIGH-then-LOW. The macro definition flags this
+with an inline comment (`macros/ram.asm:35`: `\1Stats:: ; big endian`).
+The stat-load idiom is therefore the *opposite* of the pointer cookbook
+above:
+
+```asm
+; Stat load (big-endian: HIGH at offset+0)
+    ld hl, wEnemyMonDefense
+    ld a, [hli]      ; a = HIGH
+    ld b, a          ; b = HIGH
+    ld c, [hl]       ; c = LOW
+```
+
+`TruncateHL_BC` (`engine/battle/effect_commands.asm:2590`) and the rest
+of the damage plumbing assume `b=high, c=low`. Using the §3.10
+little-endian load idiom on a stat field silently swaps the bytes — won't
+fail until a stat exceeds 255 or you compare against an 8-bit value.
+
 ### 3.11 Hand-rolling something `home/` already provides
 
 `home/` has small, well-named helpers for almost every common operation:
@@ -471,6 +493,85 @@ INCLUDE "data/moves/effects.asm"
 ```
 
 The build runs through WSL (CLAUDE.md). Lowercase, real paths.
+
+### 3.13 Silent register-clobber regressions from helper extraction
+
+`farcall` clobbers (§3.2 / §3.3) are the obvious cases — direct, at the
+call site, easy to spot. The harder class is when you replace **inline
+code** with `call <Helper>` and the helper's clobber set is wider than
+the inline pattern's. That difference can silently break callers that
+sit many frames above the conversion site.
+
+The TD-005 Pattern 3 refactor (commit `3f00da81`) hit this. It
+converted
+
+```asm
+; before — touches a, hl, f
+ld hl, wPlayerX
+ldh a, [hBattleTurn]
+and a
+jr z, .got
+ld hl, wEnemyX
+.got
+```
+
+to
+
+```asm
+; after — touches a, hl, f, AND de
+ld hl, wPlayerX
+ld de, wEnemyX
+call _GetSidedHL
+```
+
+at 26 sites. The helper is documented as "Clobbers: af, de" — and
+that's the new contract. But one site (`GetUserItem` in
+`engine/battle/effect_commands.asm`) sits at the bottom of a deep call
+chain rooted in `PlayerAttackDamage`, which carries the move's BP in
+`d` across that chain (see §5.12). The chain:
+
+```
+PlayerAttackDamage / EnemyAttackDamage     (d = move BP, load-bearing)
+  └─ .done: call ApplyLateGenDamageStatsItemMods
+       └─ homecall ApplyLateGenDamageStatsItemMods_Far
+            └─ call .ApplyChoiceBandBoost
+                 └─ call _CheckUserItemEquals
+                      └─ callfar GetUserItem
+                           └─ ld de, wEnemyMonItem  ← d now $D0 (= 208)
+                           └─ call _GetSidedHL      ← doesn't restore de
+```
+
+`d` got overwritten with `HIGH(wEnemyMonItem) = $D0 = 208`. Every
+physical move's BP arrived at `BattleCommand_DamageCalc` as 208 instead
+of (Tackle) 40 / (Rock Throw) 50, and damage came out ~5× too high.
+
+`BattleCommand_DamageCalc` itself was correct — the formula was running
+on a corrupted input. Probes inside DamageCalc said the math was wrong
+because the OUTPUT was wrong; only when probes captured the INPUTS
+(`b`, `c`, `d`, `e` at DamageCalc entry) did the bug surface.
+
+**Defenses:**
+
+1. **Treat register-preservation as a transitive contract.** When you
+   refactor a function to clobber additional registers, the audit must
+   extend to *transitive* callers — anything in a call chain that
+   passes through this site, not just direct callers. The bug here
+   was 6 frames deep from the consumer.
+2. **The damage-stat path is the highest-value chain to check.**
+   `PlayerAttackDamage` / `EnemyAttackDamage` exit with `b=atk`,
+   `c=def`, `d=BP`, `e=level` and `BattleCommand_DamageCalc` consumes
+   them — see §5.12. Any function reachable from `.done` (item mods,
+   crit checks, type-effective lookups, late-gen multipliers) must
+   preserve those registers, or push/pop at the call site.
+3. **When you fix this class, document the preservation requirement at
+   the function header**, not at the conversion site. Future readers
+   can't tell a bare `push de` from gratuitous defensive code unless
+   the comment explains why.
+4. **A `_Far` audit (AG-02 in `tech_debt/ASM_GUIDE_AUDIT_2026-05-03.md`)
+   would not catch this** — this is not a `farcall` a-clobber, it's a
+   transitive `de`-clobber from a regular `call`. A separate scanner
+   would need to walk call graphs and look for live-register conflicts
+   with documented clobber sets.
 
 ## 4) Best practices used in this codebase
 
@@ -805,6 +906,71 @@ macros in `macros/data.asm`: `dab`, `dbw`, `dwb`, `dn` (nybbles), `dba`.
 Always written in caps in modern style: `BANK(...)`, `LOW(...)`,
 `HIGH(...)`, `DEF`.
 
+### 5.11 The math UNION — hMultiplicand / hQuotient / hDividend aliasing
+
+`ram/hram.asm:60-79` declares the multiply/divide scratch as a UNION,
+so the names point at the *same* 5-byte HRAM block:
+
+```
+offset:  0     1     2     3     4
+         ┌─────┬─────┬─────┬─────┬─────┐
+         │ b0  │ b1  │ b2  │ b3  │     │   hDividend (4 bytes)
+         │ b0  │ b1  │ b2  │ b3  │     │   hQuotient  (alias of hDividend)
+         │ b0  │ b1  │ b2  │ b3  │     │   hProduct   (alias of hDividend)
+         │     │ b0  │ b1  │ b2  │     │   hMultiplicand (offset +1, 3 bytes)
+         │     │     │     │     │  x  │   hDivisor / hMultiplier / hRemainder
+         └─────┴─────┴─────┴─────┴─────┘
+```
+
+Hold this in your head when reading `BattleCommand_DamageCalc`
+(`engine/battle/effect_commands.asm:2790`) or any chain of
+Multiply/Divide:
+
+- Multiply writes to `hProduct`, which **overwrites `hDividend` in
+  place**. The next Divide consumes that result with no re-staging.
+- `hQuotient[3]` is the same byte as `hDividend[3]`. The `inc [hl]` "+ 2"
+  step in DamageCalc works because of this alias — `hl` points at
+  hDividend[3] from the prior Divide call, and reading/writing it is
+  reading/writing hQuotient[3].
+- `hMultiplicand` starts at offset +1, NOT 0. After zeroing
+  hDividend[0..2], hMultiplicand = `[hDividend[1], hDividend[2],
+  hDividend[3]]` = small numbers fit only in byte 2.
+- `hDivisor` and `hMultiplier` are the same byte. `ld [hl], c` after a
+  Multiply both stages a divisor for the next Divide *and* destroys the
+  old multiplier — usually intentional in tight code like DamageCalc.
+
+The home thunks `Multiply::` / `Divide::` (`home/math.asm:27-49`) push/pop
+`hl` and `bc` around the call, so register inputs the caller staged
+before the call survive — only HRAM gets clobbered.
+
+### 5.12 Register-passing across the move-script dispatcher
+
+The move-script dispatcher (`.ReadMoveEffectCommand`,
+`engine/battle/effect_commands.asm:81`) reads opcodes from
+`wBattleScriptBuffer`, looks them up in `BattleCommandPointers`, and
+`call`s the resulting handler. The dispatcher **preserves bc/de/hl
+across the lookup** (push/pop bc around the index calculation,
+`GetFarWord` doesn't touch bc), so adjacent script commands can hand
+each other values via registers.
+
+The damage path leans on this. `damagestats` (BattleCommand_DamageStats
+→ PlayerAttackDamage / EnemyAttackDamage) exits with:
+
+  - `b` = attacker stat (8-bit, post-`TruncateHL_BC`)
+  - `c` = defender stat (8-bit)
+  - `d` = move BP
+  - `e` = attacker level
+
+`damagecalc` (BattleCommand_DamageCalc) consumes them. The two commands
+always run back-to-back in move scripts (`data/moves/effects.asm:10-11`
+and 30+ similar pairs). There is no re-staging — the registers are the
+contract.
+
+**Implication for new command insertions:** any command added between
+`damagestats` and `damagecalc` must preserve `bc` and `de`, or damage
+breaks. Most other BattleCommand_* handlers don't have register-level
+neighbors to worry about, but the damage path does.
+
 ## 6) Verification floor
 
 Before reporting "asm change done":
@@ -845,6 +1011,26 @@ In order:
    scripting, Crystal-only NPCs/maps).
 6. Ask the user. He has gameplay taste, not z80 fluency, but he can
    tell you which existing system is the analogue you should be copying.
+
+### When a formula's output is wrong, probe its inputs before its body
+
+The trap: a function computes the wrong answer, so you read the
+function and verify every step. Every step is correct. You're stuck.
+
+The escape: probe the function's INPUTS at the consumption site, not
+its outputs. Source data being correct (e.g., `data/moves/moves.asm`
+shows Tackle BP=40) doesn't mean the consumed value is correct — a
+register clobber upstream may have replaced the value before the
+consumer saw it. The May 2026 Falkner damage bug took a full session
+of staring at a clean `BattleCommand_DamageCalc` because the bug was
+that `d` (move BP) had been clobbered to `$D0=208` six function frames
+earlier; DamageCalc was computing the right answer for the wrong
+input. See §3.13.
+
+When the diff between expected and actual is a clean integer ratio
+(2×, 5×, etc.), suspect the input has been swapped for a fixed wrong
+value, not that the math is off. Multiplying by a constant is the
+shape of "wrong scalar somewhere," not "wrong formula."
 
 ## Appendix A — RGBDS-isms glossary
 
