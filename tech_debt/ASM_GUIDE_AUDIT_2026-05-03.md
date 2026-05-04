@@ -15,11 +15,11 @@ are recommended for TD-A### addendum entries if the user agrees.
 
 | ID | Sev | Title | Location |
 |----|-----|-------|----------|
-| **AG-07** | **CRIT** | **Paralysis fail check is dead — `farcall` a-clobber bug, paralyzed Pokémon never miss a turn** | `engine/battle/effect_commands.asm:334-340, 586-592` |
-| AG-01 | HIGH | No automated audit for `farcall` `hl`-clobber (§3.2) | `tools/audit/` (gap) |
+| **AG-07** | **CRIT** | **FIXED** (commit `769d6dd4`) — Paralysis fail check is dead; `farcall` a-clobber bug, paralyzed Pokémon never miss a turn. Both target restructure + caller `push af` / `pop af` swap shipped. | `engine/battle/effect_commands.asm:334-340, 586-592` |
+| AG-01 | HIGH | **SHIPPED** (commit `d68c6488`) — `tools/audit/check_farcall_hl_clobber.py` landed from WIP and added to release-smoke floor; auto-discovers hl-input functions via the `; Reach via ROM0 thunk ...` marker comment. | `tools/audit/check_farcall_hl_clobber.py` |
 | AG-02 | HIGH | **SHIPPED** (audit `d5b8b6a3`, fixes `13a6e3a3`, promote-to-floor `17937d94`) — `tools/audit/check_farcall_a_clobber.py` added; surfaced 5 latent live bugs (4× GetBattleVar farcall callers, 1× TypePassive_IsDarkShieldEligibleEffect_Far) | `tools/audit/check_farcall_a_clobber.py` |
 | **AG-08** | **HIGH** | **FIXED** (commit `a6a00ea8`) — Latent §3.3 bug in `Battle_GetEffectiveMoveCategory` — caller never sees the move category in `a`; was masked by accidental `c < 19` at all call sites. Option A applied to both targets (mirror `a -> c` before pop chain). | `engine/battle/type_passive_damage_mods.asm:513-520, 564-571` |
-| AG-03 | MED | `check_cross_bank_call.py` failing with 39 known hits in `boss.asm` | `engine/battle/ai/boss.asm` |
+| AG-03 | MED | **PARTIAL** (thunk fix `f2e18554`) — 39 cross-bank `call`s in `boss.asm` routed through 7 hl-preserving `AIxxx_HL` wrappers that `farcall` the bank-0x0b scoring helpers; audit now PASSes. Promotion to release-smoke floor gated on trace-ROM manifest refresh + capture re-run. | `engine/battle/ai/boss.asm` |
 | AG-04 | LOW | **SHIPPED** — `tools/audit/check_ld_a_zero.py` added; codemod applied at 40 SAFE sites (per-flag Z/C dataflow analysis); 32 flag-preserving sites correctly preserved | `tools/audit/check_ld_a_zero.py` |
 | AG-05 | LOW | **SHIPPED** — `tools/audit/check_cp_zero.py` added; codemod applied at 9 SAFE sites (forward N-flag dataflow); 1 UNSAFE site at `home/map_objects.asm:24` preserved (label boundary at `.loop`) | `tools/audit/check_cp_zero.py` |
 | AG-06 | INFO | **SHIPPED** (audio doc `92a187a5`, cold-path conversion `8e93a627`) — audio sites DOCUMENTED as intentional perf (header comment in `home/audio.asm`); 4 cold-path text/battle sites converted to `rst Bankswitch` (`TextCommand_FAR` in `home/text.asm`, `FarCopyRadioText` in `home/battle.asm`) — 16 bytes recovered, ROM SHAs refreshed. | `home/audio.asm`, `home/text.asm`, `home/battle.asm` |
@@ -47,6 +47,8 @@ checked clean" at the end.
 ## HIGH — process gaps
 
 ### AG-01 — No automated audit for `farcall` `hl`-clobber (§3.2)
+
+**Status:** **SHIPPED** (commit `d68c6488`). `tools/audit/check_farcall_hl_clobber.py` landed from WIP and is now in the release-smoke floor. The audit auto-discovers hl-input functions via a `; Reach via ROM0 thunk ...` marker comment in the function header. The gap analysis below is preserved for context.
 
 **Why this matters.** Per CLAUDE.md, this exact bug class shipped
 twice in 6 weeks (April 2026 one-shot damage; May 2026 rival 1
@@ -255,6 +257,8 @@ caught mechanically — strong argument for promoting AG-02.
 
 ### AG-07 — Paralysis fail check is dead; paralyzed Pokémon never miss a turn
 
+**Status:** **FIXED** (commit `769d6dd4`). Both halves of the combined fix shipped — target restructured to do `cp 2` before clobbering `a` and to mirror `a -> c` at every `ret`, callers swapped from broken `ld c, a` / `ld a, c` to `push af` / `pop af` around the farcall. Paralysis miss-a-turn now fires at the intended 25% / 20% / 15% rates.
+
 **Sites:** `engine/battle/effect_commands.asm:334-340` (player check)
 and `engine/battle/effect_commands.asm:586-592` (enemy check). Same
 shape both places. Introduced in commit `80c2d5c6` ("battle: add
@@ -345,7 +349,7 @@ also moot because the whole check is short-circuited.
   that audit only touched `engine/pokemon/experience.asm`. The same
   bug class lives here, untouched.
 
-**Fix shipped in this branch.** Combined fix for both bugs:
+**Fix shipped in this branch** (commit `769d6dd4`). Combined fix for both bugs:
 
 1. **Target restructured** at
    `engine/battle/type_passive_damage_mods.asm:790-810`: do `cp 2`
@@ -408,6 +412,8 @@ auto-confirm by checking that target's exit `c` is intentional).
 ## MEDIUM — known but un-actioned
 
 ### AG-03 — `check_cross_bank_call.py` failing with 39 known hits in `boss.asm`
+
+**Status:** **PARTIAL** (thunk fix `f2e18554`). The 39 plain-`call`-cross-bank sites in `boss.asm` have been routed through 7 hl-preserving `AIxxx_HL` wrappers at the bottom of `boss.asm` that `farcall` the bank-0x0b scoring helpers. The audit now PASSes. Promotion to release-smoke floor remains gated on trace-ROM manifest refresh (`audit/boss_ai_trace/live_capture_manifest.json`) and capture re-run, because the fix changes `pokegold_trace.gbc` bytes and boss AI behavior could have been relying on the broken cross-bank call's garbage execution. The gap analysis below predates the thunk fix and is preserved for context.
 
 Already documented in CLAUDE.md `Build & verification` section:
 *"Currently FAIL with 39 known-hits in `engine/battle/ai/boss.asm`;
