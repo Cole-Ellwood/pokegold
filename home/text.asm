@@ -676,8 +676,7 @@ TextCommand_FAR::
 	ld d, a
 	ld a, [hli]
 
-	ldh [hROMBank], a
-	ld [rROMB], a
+	rst Bankswitch
 
 	push hl
 	ld h, d
@@ -686,8 +685,7 @@ TextCommand_FAR::
 	pop hl
 
 	pop af
-	ldh [hROMBank], a
-	ld [rROMB], a
+	rst Bankswitch
 	ret
 
 TextCommand_BCD::

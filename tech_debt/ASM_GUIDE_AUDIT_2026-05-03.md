@@ -22,7 +22,7 @@ are recommended for TD-A### addendum entries if the user agrees.
 | AG-03 | MED | `check_cross_bank_call.py` failing with 39 known hits in `boss.asm` | `engine/battle/ai/boss.asm` |
 | AG-04 | LOW | **SHIPPED** — `tools/audit/check_ld_a_zero.py` added; codemod applied at 40 SAFE sites (per-flag Z/C dataflow analysis); 32 flag-preserving sites correctly preserved | `tools/audit/check_ld_a_zero.py` |
 | AG-05 | LOW | **SHIPPED** — `tools/audit/check_cp_zero.py` added; codemod applied at 9 SAFE sites (forward N-flag dataflow); 1 UNSAFE site at `home/map_objects.asm:24` preserved (label boundary at `.loop`) | `tools/audit/check_cp_zero.py` |
-| AG-06 | INFO | **DOCUMENTED** — audio sites are intentional perf (UpdateSound is in the vblank path); header comment in `home/audio.asm` now explains the trade-off and tells future readers not to codemod. Text/battle 4 sites (cold path) still candidate for `rst Bankswitch` conversion in a no-rush pass. | `home/audio.asm`, `home/text.asm`, `home/battle.asm` |
+| AG-06 | INFO | **SHIPPED 2026-05-04** — audio sites DOCUMENTED as intentional perf (header comment in `home/audio.asm`); 4 cold-path text/battle sites converted to `rst Bankswitch` (`TextCommand_FAR` in `home/text.asm`, `FarCopyRadioText` in `home/battle.asm`) — 16 bytes recovered, ROM SHAs refreshed. | `home/audio.asm`, `home/text.asm`, `home/battle.asm` |
 
 **REVISION HISTORY**
 - 2026-05-03 first draft — claimed no live `farcall` bugs.
@@ -564,11 +564,17 @@ that the inline form correctly maintains the `hROMBank` shadow so it
 does not trip the §4.6 footgun, and tells future readers not to
 codemod the audio sites.
 
-**Remaining open thread:** the 4 cold-path sites at
-`home/text.asm:680, 690` and `home/battle.asm:167, 177`
-(`FarCopyRadioText`) are still candidates for `rst Bankswitch`
-conversion — perf reason doesn't apply there, ~16 bytes recoverable.
-Deferred to a no-rush cleanup pass.
+**Cold-path conversion (2026-05-04):** **SHIPPED.** The 4 cold-path
+sites at `home/text.asm` (`TextCommand_FAR`, both set + restore) and
+`home/battle.asm` (`FarCopyRadioText`, both set + restore) were
+converted from inline `ldh [hROMBank], a; ld [rROMB], a` to
+`rst Bankswitch`. Bankswitch handler at `home/header.asm:11-15` is
+byte-equivalent to the inline pattern (same `a`-preservation, same
+`hROMBank` shadow update, same `rROMB` write), and the same idiom is
+already used elsewhere in `home/battle.asm` (`StdBattleTextbox`,
+`GetBattleAnimPointer`). Net: 16 bytes recovered (4 sites × 4 bytes),
+4 ROM SHAs refreshed in `roms.sha1`, 2 .patch SHAs unchanged
+(delta-stable — vc and main shifted identically).
 
 ---
 
@@ -614,11 +620,11 @@ If the user wants to act on this:
 6. **AG-03** — fix the 39 boss.asm cross-bank calls. Larger scope,
    sequenced after TD-005 has freed bank headroom. Promotes
    `check_cross_bank_call.py` to release-smoke floor on completion.
-7. **AG-06** — audio comment SHIPPED 2026-05-04 (perf reason confirmed
-   via `home/vblank.asm` calling UpdateSound on every frame; header
-   comment in `home/audio.asm` documents the design intent). Leave
-   audio inlines alone. Text/battle 4 cold-path sites still
-   convertible to `rst Bankswitch` in a no-rush pass (~16 bytes).
+7. **AG-06** — fully closed 2026-05-04. Audio comment shipped (perf
+   reason confirmed via `home/vblank.asm` calling UpdateSound on every
+   frame; header comment in `home/audio.asm` documents the design
+   intent — leave audio inlines alone). 4 cold-path text/battle sites
+   converted to `rst Bankswitch` in the same wave (16 bytes recovered).
 
 ---
 
