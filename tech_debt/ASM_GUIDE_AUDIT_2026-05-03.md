@@ -18,6 +18,7 @@ are recommended for TD-A### addendum entries if the user agrees.
 | **AG-07** | **CRIT** | **Paralysis fail check is dead — `farcall` a-clobber bug, paralyzed Pokémon never miss a turn** | `engine/battle/effect_commands.asm:334-340, 586-592` |
 | AG-01 | HIGH | No automated audit for `farcall` `hl`-clobber (§3.2) | `tools/audit/` (gap) |
 | AG-02 | HIGH | No automated audit for `farcall` return-`a` clobber (§3.3) — **discovered AG-07 on second pass** | `tools/audit/` (gap) |
+| **AG-08** | **HIGH** | **Latent §3.3 bug in `Battle_GetEffectiveMoveCategory` — caller never sees the move category in `a`; currently masked by accidental `c < 19` at all call sites** | `home/battle.asm:259-261`, `engine/battle/type_passive_damage_mods.asm:478-518` |
 | AG-03 | MED | `check_cross_bank_call.py` failing with 39 known hits in `boss.asm` | `engine/battle/ai/boss.asm` |
 | AG-04 | LOW | `ld a, 0` style instead of `xor a` (~70 sites) | engine, home, audio |
 | AG-05 | LOW | `cp 0` style instead of `and a` (8 sites) | menus, overworld, items |
@@ -25,13 +26,18 @@ are recommended for TD-A### addendum entries if the user agrees.
 
 **REVISION HISTORY**
 - 2026-05-03 first draft — claimed no live `farcall` bugs.
-- 2026-05-03 second pass (this revision) — found AG-07. The first pass
-  delegated the audit to a subagent that hallucinated a target's body
-  and missed the paralysis bug. Rerunning the audit directly via a
-  Python pattern-scan on the 780 farcall sites, then verifying each
-  hit by reading source, surfaced the live bug. Lesson: don't trust
-  subagent farcall analysis without verifying every claim against
-  source.
+- 2026-05-03 second pass — found AG-07. The first pass delegated the
+  audit to a subagent that hallucinated a target's body and missed
+  the paralysis bug. Rerunning the audit directly via a Python
+  pattern-scan on the 780 farcall sites, then verifying each hit by
+  reading source, surfaced the live bug. Lesson: don't trust subagent
+  farcall analysis without verifying every claim against source.
+- 2026-05-03 third pass (this revision) — found AG-08 while tracing
+  the Falkner damage-inflation bug. Same shape as AG-07; currently
+  benign because all callers happen to pass `c < SPECIAL` at the call
+  site, so `cp SPECIAL; jr nc` routes correctly anyway. Promoting
+  the §3.3 audit (AG-02) would catch both AG-07 and AG-08
+  mechanically — strong signal that AG-02 should ship.
 
 Several guide pitfalls were checked and found clean — see "What was
 checked clean" at the end.
@@ -122,6 +128,112 @@ catch this class without tooling.
 3. Suggest fix: add `ld c, a` before each `ret` in the target.
 
 Trickier than AG-01 because of the carry-clear idiom — but doable.
+
+### AG-08 — Latent §3.3 bug in `Battle_GetEffectiveMoveCategory`
+
+**Status:** Currently asymptomatic. Same shape as AG-07; only escapes
+manifesting because all callers happen to have `c < SPECIAL` at the
+call site, so the `cp SPECIAL; jr nc` dispatch routes correctly
+anyway. Will fire the moment any caller passes `c >= 19`.
+
+**Sites:**
+- Wrapper: `home/battle.asm:259-261`
+  ```asm
+  Battle_GetEffectiveMoveCategory::
+      farcall TypePassive_GetEffectiveMoveCategory_Far
+      ret
+  ```
+- Target: `engine/battle/type_passive_damage_mods.asm:478-518`
+  ```asm
+  TypePassive_GetEffectiveMoveCategory_Far::
+      push hl
+      push de
+      push bc                ; saves caller's bc on entry
+      ; ... compute move category in e ...
+  .done
+      ld a, e                ; intent: return category in a
+      pop bc                 ; ❌ restores c to entry value
+      pop de
+      pop hl
+      ret                    ; ❌ exit c is entry c, NOT category
+  ```
+- Cross-bank callers of the wrapper:
+  - `engine/battle/effect_commands.asm:2516` (PlayerAttackDamage)
+  - `engine/battle/effect_commands.asm:2672` (EnemyAttackDamage)
+
+**Why it's broken (mechanism):** per `home/farcall.asm:13-28` (and
+guide §3.3), after `farcall` the caller's `a` = target's exit `c`.
+The target's `pop bc` restores `c` to whatever was on the stack from
+the matching `push bc` at entry — i.e., the caller's pre-call `c`.
+So the farcall passthrough delivers `c -> a` of caller's *own* `c`,
+not the move category.
+
+**Why it's currently benign:** PlayerAttackDamage / EnemyAttackDamage
+both reach this farcall with `c` set to the defender's defense low
+byte (an 8-bit stat, typically < 256, often < 19) OR to the move
+effect byte (set by `DoMove` at `effect_commands.asm:55`, preserved
+through the script dispatcher's `push bc / pop bc`). Many move
+effects are < SPECIAL=19 (NORMAL_HIT=0, SLEEP_HIT, POISON_HIT,
+etc.). Those route to `.physical` regardless of which value is in
+`a` — accidentally correct for physical-typed moves.
+
+The bug surfaces when:
+- A caller has `c >= 19` at the call site, AND
+- The move's actual category disagrees with the routing the wrong-`a`
+  comparison produces.
+
+For physical moves with effect byte ≥ 19 (e.g. EFFECT_DRAGON_DANCE =
+0x82, but that's a status move so doesn't reach DamageStats), or when
+`c` has been clobbered by a recent BattleCommand_* handler that left
+junk in it, the `cp SPECIAL; jr nc, .special` would silently route a
+physical move through `.special` (wEnemyMonSpclDef instead of
+wEnemyMonDefense), or vice versa.
+
+**The audit is currently load-bearing-wrong.** `tools/audit/check_battle_math_safety.py:314-318`
+hardcodes the literal text `"Battle_GetEffectiveMoveCategory::\n\tfarcall TypePassive_GetEffectiveMoveCategory_Far"`
+as a require_text invariant. The cleanest fix (option A: mirror
+`a -> c` at every `ret` in the target) doesn't change the wrapper, so
+the audit doesn't break — but if anyone reaches for option C
+(switching the wrapper to `homecall` to dodge the passthrough
+entirely), the audit will reject the fix. The audit text should be
+loosened to allow either form.
+
+**Recommendation (PROMOTE).** Fix shape, mirroring AG-07's resolution:
+
+```asm
+; type_passive_damage_mods.asm:478-518
+TypePassive_GetEffectiveMoveCategory_Far::
+    push hl
+    push de
+    push bc
+    ; ... existing logic ...
+.done
+    ld a, e
+    ld c, a            ; ✅ mirror a -> c so farcall passthrough works
+    pop hl             ; (drop bc/de/hl — note we no longer pop into bc)
+    ; ...
+    ret
+```
+
+Or — equivalently — change the home wrapper to `homecall`:
+```asm
+Battle_GetEffectiveMoveCategory::
+    homecall TypePassive_GetEffectiveMoveCategory_Far
+    ret
+```
+`homecall` doesn't go through `rst FarCall`, so `a` survives intact.
+Either fix works. Option A keeps the function safe even if a third
+caller is added later that uses `farcall` directly; option C is one
+line and matches the existing `SpeciesItemBoost` / `ApplyLateGenDamageStatsItemMods`
+home wrappers (`home/battle.asm:267-277`).
+
+`Battle_GetLastCounterMoveCategory` (`home/battle.asm:263-265`) has
+**identical shape** wrapping `TypePassive_GetLastCounterMoveCategory_Far`
+(`type_passive_damage_mods.asm:545-566`), with a sister `pop bc; ret`
+exit. Same fix applies. Both functions should be patched together.
+
+If the §3.3 audit (AG-02) ships, both AG-07 and AG-08 would be
+caught mechanically — strong argument for promoting AG-02.
 
 ---
 
