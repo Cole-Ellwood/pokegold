@@ -17,12 +17,12 @@ are recommended for TD-A### addendum entries if the user agrees.
 |----|-----|-------|----------|
 | **AG-07** | **CRIT** | **Paralysis fail check is dead — `farcall` a-clobber bug, paralyzed Pokémon never miss a turn** | `engine/battle/effect_commands.asm:334-340, 586-592` |
 | AG-01 | HIGH | No automated audit for `farcall` `hl`-clobber (§3.2) | `tools/audit/` (gap) |
-| AG-02 | HIGH | **SHIPPED 2026-05-04** — `tools/audit/check_farcall_a_clobber.py` added; surfaced 5 latent live bugs (4× GetBattleVar farcall callers, 1× TypePassive_IsDarkShieldEligibleEffect_Far) | `tools/audit/check_farcall_a_clobber.py` |
-| **AG-08** | **HIGH** | **FIXED 2026-05-04** — Latent §3.3 bug in `Battle_GetEffectiveMoveCategory` — caller never sees the move category in `a`; was masked by accidental `c < 19` at all call sites. Option A applied to both targets (mirror `a -> c` before pop chain). | `engine/battle/type_passive_damage_mods.asm:513-520, 564-571` |
+| AG-02 | HIGH | **SHIPPED** (audit `d5b8b6a3`, fixes `13a6e3a3`, promote-to-floor `17937d94`) — `tools/audit/check_farcall_a_clobber.py` added; surfaced 5 latent live bugs (4× GetBattleVar farcall callers, 1× TypePassive_IsDarkShieldEligibleEffect_Far) | `tools/audit/check_farcall_a_clobber.py` |
+| **AG-08** | **HIGH** | **FIXED** (commit `a6a00ea8`) — Latent §3.3 bug in `Battle_GetEffectiveMoveCategory` — caller never sees the move category in `a`; was masked by accidental `c < 19` at all call sites. Option A applied to both targets (mirror `a -> c` before pop chain). | `engine/battle/type_passive_damage_mods.asm:513-520, 564-571` |
 | AG-03 | MED | `check_cross_bank_call.py` failing with 39 known hits in `boss.asm` | `engine/battle/ai/boss.asm` |
 | AG-04 | LOW | **SHIPPED** — `tools/audit/check_ld_a_zero.py` added; codemod applied at 40 SAFE sites (per-flag Z/C dataflow analysis); 32 flag-preserving sites correctly preserved | `tools/audit/check_ld_a_zero.py` |
 | AG-05 | LOW | **SHIPPED** — `tools/audit/check_cp_zero.py` added; codemod applied at 9 SAFE sites (forward N-flag dataflow); 1 UNSAFE site at `home/map_objects.asm:24` preserved (label boundary at `.loop`) | `tools/audit/check_cp_zero.py` |
-| AG-06 | INFO | **SHIPPED 2026-05-04** — audio sites DOCUMENTED as intentional perf (header comment in `home/audio.asm`); 4 cold-path text/battle sites converted to `rst Bankswitch` (`TextCommand_FAR` in `home/text.asm`, `FarCopyRadioText` in `home/battle.asm`) — 16 bytes recovered, ROM SHAs refreshed. | `home/audio.asm`, `home/text.asm`, `home/battle.asm` |
+| AG-06 | INFO | **SHIPPED** (audio doc `92a187a5`, cold-path conversion `8e93a627`) — audio sites DOCUMENTED as intentional perf (header comment in `home/audio.asm`); 4 cold-path text/battle sites converted to `rst Bankswitch` (`TextCommand_FAR` in `home/text.asm`, `FarCopyRadioText` in `home/battle.asm`) — 16 bytes recovered, ROM SHAs refreshed. | `home/audio.asm`, `home/text.asm`, `home/battle.asm` |
 
 **REVISION HISTORY**
 - 2026-05-03 first draft — claimed no live `farcall` bugs.
@@ -131,8 +131,8 @@ Trickier than AG-01 because of the carry-clear idiom — but doable.
 
 ### AG-08 — Latent §3.3 bug in `Battle_GetEffectiveMoveCategory`
 
-**Status:** **FIXED 2026-05-04.** Option A (mirror `a -> c` at the
-shared `.done` exit) applied to both
+**Status:** **FIXED** (commit `a6a00ea8`). Option A (mirror `a -> c`
+at the shared `.done` exit) applied to both
 `TypePassive_GetEffectiveMoveCategory_Far` and
 `TypePassive_GetLastCounterMoveCategory_Far`. Net +4 bytes of code,
 both within bank headroom. The home wrapper text and same-bank caller
