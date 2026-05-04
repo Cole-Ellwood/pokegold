@@ -561,7 +561,7 @@ _ExitMenu::
 	dec [hl]
 	call RestoreOverworldMapTiles
 	ld a, [wSpriteUpdatesEnabled]
-	cp 0
+	and a
 	ret z
 	call ReloadPalettes
 	ret

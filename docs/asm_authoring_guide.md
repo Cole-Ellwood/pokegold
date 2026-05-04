@@ -416,6 +416,14 @@ These don't break anything but they're tells that the model isn't
 modeling flag side effects correctly — which is also what causes the
 dangerous bugs. Treat them as a smell.
 
+The `cp 0` → `and a` rewrite is safe whenever no `daa` reads the post-
+site `N`/`H` flags before another flag-touching op overwrites them
+(`cp 0` sets `N=1, H=0`; `and a` sets `N=0, H=1`; `Z` and `C` are
+identical). Audited by `tools/audit/check_cp_zero.py` (release-smoke
+floor): the audit walks forward from each site and flags as SAFE only
+if any flag-killer (arith/logic/shift/`call`-class) runs before any
+`daa`, or if an unconditional control transfer ends fall-through.
+
 The sister case — `ld a, 0` (2 bytes) instead of `xor a` (1 byte) — has
 the same shape: `xor a` clears `Z`, `N`, `H`, `C` and sets `Z=1`, while
 `ld a, 0` preserves all four flags. The replacement is safe IFF no

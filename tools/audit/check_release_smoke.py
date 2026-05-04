@@ -1433,6 +1433,7 @@ def main() -> int:
     check_farcall_hl_clobber()
     check_farcall_a_clobber()
     check_ld_a_zero()
+    check_cp_zero()
 
     print("ALL RELEASE SMOKE CHECKS PASSED")
     return 0
@@ -1474,6 +1475,10 @@ def check_farcall_a_clobber() -> None:
 
 def check_ld_a_zero() -> None:
     _run_subaudit("check_ld_a_zero.py", "ld a, 0 -> xor a")
+
+
+def check_cp_zero() -> None:
+    _run_subaudit("check_cp_zero.py", "cp 0 -> and a")
 
 
 if __name__ == "__main__":

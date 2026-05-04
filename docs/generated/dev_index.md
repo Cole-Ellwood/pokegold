@@ -38,7 +38,7 @@ Read `docs/README.md` first for helper-doc routing, then `docs/project_context.m
 ### Moves
 - Intent: Move stats, effects, descriptions, contact flags, and animations.
 - Start here: `data/moves/moves.asm`, `data/moves/effects.asm`, `data/moves/effects_pointers.asm`, `data/moves/contact_flags.asm`, `data/moves/descriptions.asm`, `constants/move_constants.asm`
-- Anchors: `Moves` (10:5af6, `data/moves/moves.asm:14`); `MoveEffects` (09:750d, `data/moves/effects.asm:3`); `MoveContactFlags` (0e:7d05, `data/moves/contact_flags.asm:4`); `Spikes` (09:7a29, `data/moves/effects.asm:1525`); `RapidSpin` (09:7afe, `data/moves/effects.asm:1772`)
+- Anchors: `Moves` (10:5af6, `data/moves/moves.asm:14`); `MoveEffects` (09:750c, `data/moves/effects.asm:3`); `MoveContactFlags` (0e:7d05, `data/moves/contact_flags.asm:4`); `Spikes` (09:7a28, `data/moves/effects.asm:1525`); `RapidSpin` (09:7afd, `data/moves/effects.asm:1772`)
 
 ### Items and held items
 - Intent: Item data, descriptions, pockets, marts, and battle held effects.
@@ -75,7 +75,7 @@ Read `docs/README.md` first for helper-doc routing, then `docs/project_context.m
 | Region | Used | Free | Banks |
 | --- | ---: | ---: | ---: |
 | ROM0 | 16149 | 235 |  |
-| ROMX | 1151884 | 928884 | 127 |
+| ROMX | 1151875 | 928893 | 127 |
 | SRAM | 31699 | 1069 | 4 |
 | WRAM0 | 4047 | 49 |  |
 | WRAMX | 4096 | 0 |  |
@@ -229,10 +229,10 @@ Use these as candidates when moving optional code or data out of tight banks.
 | `HandleLateGenAfterHitEffects_Far` | 0e:7212 | `engine/battle/late_gen_held_items.asm:264` |
 | `TryActivateDittoImposter` | 01:7a10 | `engine/battle/ditto_imposter.asm:1` |
 | `Moves` | 10:5af6 | `data/moves/moves.asm:14` |
-| `MoveEffects` | 09:750d | `data/moves/effects.asm:3` |
+| `MoveEffects` | 09:750c | `data/moves/effects.asm:3` |
 | `MoveContactFlags` | 0e:7d05 | `data/moves/contact_flags.asm:4` |
-| `Spikes` | 09:7a29 | `data/moves/effects.asm:1525` |
-| `RapidSpin` | 09:7afe | `data/moves/effects.asm:1772` |
+| `Spikes` | 09:7a28 | `data/moves/effects.asm:1525` |
+| `RapidSpin` | 09:7afd | `data/moves/effects.asm:1772` |
 | `ItemAttributes` | 01:692e | `data/items/attributes.asm:8` |
 | `ItemDescriptions` | 6e:4000 | `data/items/descriptions.asm:1` |
 | `ItemNames` | 6c:4000 | `data/items/names.asm:1` |

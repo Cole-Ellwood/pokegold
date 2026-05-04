@@ -21,7 +21,7 @@ are recommended for TD-A### addendum entries if the user agrees.
 | **AG-08** | **HIGH** | **FIXED 2026-05-04** — Latent §3.3 bug in `Battle_GetEffectiveMoveCategory` — caller never sees the move category in `a`; was masked by accidental `c < 19` at all call sites. Option A applied to both targets (mirror `a -> c` before pop chain). | `engine/battle/type_passive_damage_mods.asm:513-520, 564-571` |
 | AG-03 | MED | `check_cross_bank_call.py` failing with 39 known hits in `boss.asm` | `engine/battle/ai/boss.asm` |
 | AG-04 | LOW | **SHIPPED** — `tools/audit/check_ld_a_zero.py` added; codemod applied at 40 SAFE sites (per-flag Z/C dataflow analysis); 32 flag-preserving sites correctly preserved | `tools/audit/check_ld_a_zero.py` |
-| AG-05 | LOW | `cp 0` style instead of `and a` (8 sites) | menus, overworld, items |
+| AG-05 | LOW | **SHIPPED** — `tools/audit/check_cp_zero.py` added; codemod applied at 9 SAFE sites (forward N-flag dataflow); 1 UNSAFE site at `home/map_objects.asm:24` preserved (label boundary at `.loop`) | `tools/audit/check_cp_zero.py` |
 | AG-06 | INFO | Inline bank-switch (`ld [rROMB], a`) instead of `rst Bankswitch` (~25 sites) | `home/audio.asm`, `home/text.asm`, `home/battle.asm` |
 
 **REVISION HISTORY**
@@ -478,23 +478,39 @@ remaining `ld a, 0` sites were mostly inherited from upstream pret.
 - `audio/engine.asm:928, 986, 989`
 - (and ~50 more in tilesets, items, RTC, menus, overworld, etc.)
 
-### AG-05 — `cp 0` instead of `and a` (8 sites)
+### AG-05 — `cp 0` instead of `and a` (10 sites originally)
 
-Guide §3.9 / Appendix B: `cp 0` is 2 bytes; `and a` is 1 byte.
-Identical Z-flag effect.
+**Status:** **SHIPPED.** `tools/audit/check_cp_zero.py` added,
+classifier-plus-codemod applied. 9 SAFE sites rewritten to `and a`;
+1 site correctly classified UNSAFE and preserved
+(`home/map_objects.asm:24` — the walk crosses the `.loop` label which
+is also a back-edge target from `jr nz, .loop`, so other entry points
+could carry different flag state). Audit promoted to the release-smoke
+floor.
 
-**All 8 sites:**
-- `home/map_objects.asm:24`
-- `engine/menus/start_menu.asm:525`
-- `engine/menus/menu.asm:564`
-- `engine/smallflag.asm:56`
-- `engine/items/item_effects.asm:1642`
-- `engine/overworld/player_movement.asm:232, 550, 798`
+Guide §3.9: `cp 0` is 2 bytes / 2 cycles; `and a` is 1 byte / 1 cycle.
+Z and C are identical between the two; N and H differ (`cp 0` sets
+N=1, H=0; `and a` sets N=0, H=1). Only `daa` reads N/H, and `daa`
+appears only in `home/audio.asm` and `engine/games/slot_machine.asm` —
+neither contains a `cp 0` site, so the substitution is universally
+safe in this codebase. The audit's forward walk (N-only dataflow,
+`daa`-as-reader, arith/shift/call as N-killers, label boundary as
+UNSAFE-conservatively) still runs on every build to catch future drift.
 
-**Impact.** 8 bytes total. Trivial.
+**(Original finding preserved below for the audit trail.)**
 
-**Recommendation.** Same as AG-04 — script a regex check, mechanical
-fix. **Not promoting** unless the user wants the style win.
+Initial finding listed 8 sites; full audit found 10 once `cp $0` /
+`cp $00` syntactic variants were included.
+
+**All 10 sites:**
+- `home/map_objects.asm:24`             — UNSAFE (label boundary)
+- `engine/menus/start_menu.asm:525`     — SAFE
+- `engine/menus/menu.asm:564`           — SAFE
+- `engine/smallflag.asm:56`             — SAFE
+- `engine/items/item_effects.asm:1642`  — SAFE
+- `engine/overworld/player_movement.asm:232, 550, 798` — SAFE
+- `engine/printer/printer_serial.asm:199` (`cp $0`) — SAFE
+- `engine/pokemon/mon_menu.asm:623` (`cp $0`) — SAFE
 
 ---
 
