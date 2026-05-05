@@ -176,3 +176,97 @@ In effort order:
 - Read the `5e9b785f` and `44ca3b29` commit diffs in full to understand what was fixed
 - Confirmed user's save isn't the cause: fresh new game reproduces the bug
 - Set up `pokegold_debug.sav` as a clone of `pokegold.sav` (backup at `pokegold_debug.sav.bak`) so debug ROM testing uses the same save state
+
+---
+
+## Continuation 2026-05-04 evening — probe ROM built and tested
+
+Built a probe ROM that replaces `BattleCommand_DamageCalc` body with code that writes `d` directly to `wCurDamage` and returns:
+
+```asm
+BattleCommand_DamageCalc:
+	xor a
+	ld [wCurDamage], a
+	ld a, d
+	ld [wCurDamage + 1], a
+	ld a, 1
+	and a
+	ret
+```
+
+**Probe artifacts (paths absolute from main repo):**
+- Probe branch: `claude/probe-d-damagecalc-2026-05-04` at commit `08c02370` ("PROBE: damagecalc writes d to wCurDamage and returns (NOT FOR MERGE)"). Should be pushed before handoff so receiver can see it.
+- Probe ROM: `C:\Users\lolno\Downloads\pokemon gold hack\pokegold-probe-d-at-damagecalc.gbc` (SHA `d34f832565398ff0d1ccc9a16556a10a9884b2cb`)
+- Probe save: `C:\Users\lolno\Downloads\pokemon gold hack\pokegold-probe-d-at-damagecalc.sav` (clone of `pokegold.sav`)
+- Original `pokegold.gbc` preserved intact, still verifies against `roms.sha1` (SHA `20851907a83912f207d7a48408f821bdf9ed5052`)
+
+User loaded probe in **VBA (Visual Boy Advance)**, played through, took two save states:
+- `C:\Users\lolno\Downloads\pokemon gold hack\debug1.sgm` — start of turn 1
+- `C:\Users\lolno\Downloads\pokemon gold hack\debug2.sgm` — start of turn 2
+
+### Save state parsing — partial progress, blocked on offset disambiguation
+
+VBA `.sgm` files are **gzip-compressed** (`1f 8b 08 00...` magic). Decompresses to **115952 bytes** for both files.
+
+Found three `05 4a 9c 60 a7 a3 ff` party-signature occurrences (wPartyCount=5 + species 74,156,96,167,163 + terminator) in `debug1.sgm` at file offsets:
+- `0x09464`
+- `0x0ac06`
+- `0x15d9e`
+
+Tried first occurrence as anchor: matched `wPartyCount=$DA22` at file offset `0x09464` → inferred WRAM `$D000` base = `0x08A42` → computed `wCurDamage` at file offset `0x08B83`. Reading those bytes returned `39 00`, and the entire surrounding region (`$D000-$DFFF` view) is `39 00 39 00 39 00 ...` repeating. **That's not real WRAM** — likely VRAM tile data, OAM, or a CGB BIOS init pattern that happens to coincidentally contain the party signature.
+
+The 3 party-signature occurrences strongly suggest VBA dumps the cart's MBC3 SRAM (which contains the player's saved party data in two save slots — primary + backup) and active WRAM separately. The `0x09464` hit is in one of the SRAM dumps; one of the OTHER two offsets (`0x0ac06` or `0x15d9e`) is the live WRAM where `wCurDamage` actually lives.
+
+### What the receiver should do (in order)
+
+1. **Disambiguate which file offset is active WRAM.** For each of the 3 party-signature offsets, treat it as the wPartyCount anchor, compute the implied WRAM `$D000` base, and dump bytes around `$D000-$DFFF`. Active WRAM will have varied data (player coords, battle state, tilemap pointers, etc.); SRAM dumps will only have stat-shaped party data and zero padding outside the save fields. The active-WRAM offset is the one where the `$D000-$DFFF` dump looks "live."
+2. **Read `wCurDamage` at the correct offset in `debug2.sgm`.** debug2 is start of turn 2, so the probe's write of `d` from turn 1's attack should be there (assuming `wCurDamage` isn't zeroed between turns — it might be by the next move's `BattleCommand_DamageStats → ResetDamage`, in which case neither save state will show the value and we need to re-take state DURING turn 1's attack animation).
+3. **The wCurDamage value tells us the answer:**
+   - Low byte = `40` (`$28`) → BP correct at damagecalc entry. Bug is downstream of damagecalc — investigate damagecalc body, type/STAB modifiers, or output processing. New investigation track.
+   - Low byte = `208` (`$D0`) → BP corrupted to HIGH(wEnemyMonItem). Hunt the unfixed `_GetSidedHL`-style clobber upstream of damagecalc.
+   - Low byte = `210` (`$D2`) → BP corrupted to HIGH(wEnemyMonMaxHP). Different upstream clobber.
+   - Low byte = `2` → boost helper d=`*_DEN` leaked despite the `5e9b785f` wrapper push/pop. Wrapper fix is incomplete.
+   - Some other value → use it to narrow.
+4. **If both save states show `wCurDamage = 0` or stale** — `wCurDamage` was reset between attack and save. Ask user to take a save state DURING the damage animation (pause emulator mid-animation, save state, resume). OR change the probe to write `d` to a non-cleared location like `wPlayerName[8]` or some unused HRAM byte. The "Files of interest" section at the top of this doc lists symbols.
+5. **Once `d` is known, locate the clobber site.** Trace upstream from damagecalc through `EnemyAttackDamage`. The "Audited code paths" section above lists what was already verified clean. Suspects in the "What's NOT been verified" section: full `CheckDamageStatsCritical_Far` body (only no-crit early-return path was checked), move-script dispatcher between `damagestats` and `damagecalc`, move-data-load path that fills `wEnemyMoveStruct`. AG-03's 39 cross-bank `call` sites in `boss.asm` are thunked but trainer-AI code paths might still have unaudited `de` clobbers if any reach into damagestats.
+6. **Apply the fix** (push/pop de or equivalent) at the unfixed site. Build a normal (non-probe) ROM. Verify damage is correct. Commit fix on `claude/romantic-meitner-314fb1` (the durable investigation branch), NOT on the probe branch.
+7. **Restore probe state when done:** delete the probe ROM file or rebuild the regular ROM over it. The probe branch can be left as-is — it's labeled `NOT FOR MERGE` in commit `08c02370`.
+
+### Parsing the .sgm format — code stub the receiver can extend
+
+```python
+import gzip
+with gzip.open('debug2.sgm', 'rb') as f:
+    data = f.read()  # 115952 bytes
+
+party_sig = bytes([0x05, 0x4a, 0x9c, 0x60, 0xa7, 0xa3, 0xff])
+positions = [i for i in range(len(data) - len(party_sig)) if data[i:i+len(party_sig)] == party_sig]
+# positions = [0x09464, 0x0ac06, 0x15d9e] for both debug1 and debug2
+
+for pos in positions:
+    BASE = pos - 0xA22  # wPartyCount is at $DA22 = $D000 + $0A22
+    # Dump $D130-$D170 to see if this region looks like live WRAM
+    region = data[BASE + 0x130 : BASE + 0x170]
+    # If region is all `39 00 39 00...` → not WRAM, skip.
+    # If region has varied data → this is active WRAM. Read wCurDamage at BASE + 0x141.
+    print(f'pos 0x{pos:05x} → BASE 0x{BASE:05x} → wCurDamage region {region[:16].hex()}')
+```
+
+The receiver can also try other anchor symbols. The pokegold.sym file has every WRAM symbol's address; pick one that's known to vary (like `wPlayerXCoord`, `wMapNumber`, `hBattleTurn`, `wBattleMonHP`).
+
+### Probe ROM rebuild instructions (if receiver needs to modify probe)
+
+```bash
+# from main repo path
+git checkout claude/probe-d-damagecalc-2026-05-04
+# edit engine/battle/effect_commands.asm at the BattleCommand_DamageCalc probe body
+wsl -e bash -lc 'cd "/mnt/c/Users/lolno/Downloads/pokemon gold hack" && make -j4 PYTHON=python3 RGBASM=rgbds-1.0.1/rgbasm.exe RGBLINK=rgbds-1.0.1/rgblink.exe RGBFIX=rgbds-1.0.1/rgbfix.exe RGBGFX=rgbds-1.0.1/rgbgfx.exe pokegold.gbc'
+# pokegold.gbc is now the probe build. Move/rename:
+mv pokegold.gbc pokegold-probe-d-at-damagecalc.gbc  # or whatever new name
+# IMPORTANT: switch back BEFORE running anything else, because pokegold.gbc on probe branch ≠ verified pokegold.gbc
+git checkout claude/romantic-meitner-314fb1
+# rebuild verified pokegold.gbc:
+wsl -e bash -lc 'cd "/mnt/c/Users/lolno/Downloads/pokemon gold hack" && make ... pokegold.gbc'
+# verify SHA matches roms.sha1 to confirm restore
+python tools/verify_sha1.py roms.sha1
+```
