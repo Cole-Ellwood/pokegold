@@ -10,9 +10,29 @@ ApplyLateGenDamageStatsItemMods_Far::
 ; propagate d=2 (the *_DEN value) into damagecalc, dealing roughly 1/30 of
 ; intended damage. Latent since 80c2d5c6, masked previously by GetUserItem's
 ; own d-clobber (fixed 44ca3b29).
+;
+; push/pop bc preserves caller's c = defender def low byte across the
+; in-bank `call TypePassive_GetEffectiveMoveCategory_Far`. The AG-08 fix
+; (a6a00ea8) added `ld c, a` after `pop bc` in that function's `.done` to
+; mirror the move-type byte into `c` for cross-bank farcallers (per the
+; farcall a-passthrough rule in `home/farcall.asm:13-28`). The AG-08 commit
+; claimed same-bank callers were unaffected because they consume `a`
+; immediately via `cp SPECIAL`. That's true for `a`, but `c` is also
+; load-bearing here: PlayerAttackDamage / EnemyAttackDamage carry
+; bc = wXxxMonDefense bytes through this function into TruncateHL_BC.
+; Without bc preservation, c gets overwritten with the move-type byte
+; (= 0 for NORMAL-type moves like Tackle), TruncateHL_BC outputs c = 0,
+; and ConfusionDamageCalc's div-by-zero safety (`ld c, 1`) divides
+; damage by 1 instead of the real defense, dealing ~9× intended damage.
+; Stab's 1.5× brings it to ~13×; user-visible as "5x physical damage"
+; against early-game wilds. Same root cause as the farcall-a-clobber
+; class — fix shape is push/pop the load-bearing register at the call
+; site, not change the target's contract.
 	push af
 	push de
+	push bc
 	call TypePassive_GetEffectiveMoveCategory_Far
+	pop bc
 	cp SPECIAL
 	jr nc, .special
 	call .ApplyChoiceBandBoost
@@ -476,7 +496,17 @@ FocusPunch_CheckLostFocus_Far:
 	ret
 
 DittoMetalPowder_Far:
+; push/pop bc preserves caller's c = wXxxMonDefense.low across the
+; in-bank `call TypePassive_GetEffectiveMoveCategory_Far`. Same root cause
+; as the AG-08 c-mirror clobber documented at the top of
+; ApplyLateGenDamageStatsItemMods_Far: callers (PlayerAttackDamage /
+; EnemyAttackDamage .done) carry bc = defender def through this callfar
+; into TruncateHL_BC. Without preservation, c gets the move-type byte
+; (= 0 for NORMAL moves), TruncateHL_BC outputs c = 0, and
+; ConfusionDamageCalc's div-by-zero safety inflates damage ~9x.
+	push bc
 	call TypePassive_GetEffectiveMoveCategory_Far
+	pop bc
 	cp SPECIAL
 	ret nc
 	ld a, MON_SPECIES
