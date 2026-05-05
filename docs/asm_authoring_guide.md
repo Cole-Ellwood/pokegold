@@ -1123,10 +1123,15 @@ Before reporting "asm change done":
      `engine/battle/type_passive_damage_mods.asm` (§3.14).
 3. **If you touched battle-code register ABI** (added a write at
    function exit, refactored a clobber set, changed a `farcall` to
-   `call`), run `python -m tools.damage_debugger.full_chain_v2`. The
-   Pidgey-Tackle-vs-Cyndaquil synth must produce `wCurDamage = 4`.
-   Any other value means a clobber escaped your function-level audit
-   (§3.13, §3.14).
+   `call`), run `python -m tools.damage_debugger.clobber_smoke`. It
+   runs three scenarios — physical no-items, physical critical,
+   special no-items — and expects `wCurDamage` in a known range for
+   each. Any FAIL means a clobber escaped your function-level audit
+   (§3.13, §3.14). The single-scenario `full_chain_v2` is still
+   useful for focused investigation but `clobber_smoke` is the floor.
+   Coverage today is partial (no items, no type-effectiveness, no
+   DamageVariation); extend `SCENARIOS` in `clobber_smoke.py` to
+   cover branches your change touched.
 4. Regenerate `docs/generated/dev_index.md` after **any** successful
    build (`python scripts/generate_dev_index.py --rom pokegold`).
 5. If you touched balance tables, regenerate
