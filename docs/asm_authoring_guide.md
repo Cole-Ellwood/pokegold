@@ -28,6 +28,7 @@ Companion files (treat as authoritative for their domains):
 | **`farcall` clobbers caller's `hl` BEFORE the target runs.** Macro expands to `ld a, BANK :: ld hl, target :: rst FarCall`. | Shipped twice in this repo (April 2026 one-shot damage; May 2026 rival 1 softlock). §3.2. |
 | **After `farcall`, caller's `a` = target's exit `c`, NOT target's exit `a`.** See `home/farcall.asm:13-28`. | Shipped May 2026 wild-floor no-op. §3.3. |
 | **Register-preservation is a transitive contract.** Refactoring a function to clobber more registers can break callers many frames away who silently relied on the old behavior. | Shipped in commit `44ca3b29` (TD-005 Pattern 3): `_GetSidedHL` extraction broke `GetUserItem`'s `de` preservation, every physical move dealt 5× damage. §3.13. |
+| **Adding a register write at function exit (e.g. `ld c, a` mirror) silently breaks in-bank callers whose `c` is load-bearing post-dispatch.** "Caller consumes `a` immediately and ignores `c`" is locally true but globally wrong: caller's `bc` may carry through to OUTER caller's `TruncateHL_BC`. | Shipped May 2026: AG-08's `ld c, a` mirror in `TypePassive_GetEffectiveMoveCategory_Far` clobbered defender def low byte at two same-bank call sites in `late_gen_held_items.asm`, dealing ~5× physical damage on every wild encounter. §3.14. |
 | **Memory is little-endian** for `dw` directives, **but battle-engine stat fields are runtime-populated big-endian** (HIGH at offset+0; see `macros/ram.asm:35`). The two need different load idioms. | §3.10. |
 | **HRAM/IO uses `ldh`, not `ld`.** `ldh [rXX], a` is 2 bytes / 3 cycles vs 3 bytes / 4 for `ld [$FFxx], a`. RGBDS will NOT auto-pick. | Style consistency + size. §1.4. |
 | Stat math: **base ≠ computed.** `wBattleMonSpeed` is the computed stat. Stat-stage bytes use **base-7 encoding** (`BASE_STAT_LEVEL = 7 = +0`). | Confusing the two has cost a debug session. CLAUDE.md is source of truth. |
@@ -594,6 +595,121 @@ because the OUTPUT was wrong; only when probes captured the INPUTS
    would need to walk call graphs and look for live-register conflicts
    with documented clobber sets.
 
+### 3.14 ABI-changing fixes silently break in-bank callers (the AG-08 c-mirror trap)
+
+Sister class to §3.13. There the helper extraction *added* clobbers
+the inline pattern didn't have. Here the fix *added a register write
+at function exit*, changing the function's exit ABI and silently
+breaking in-bank callers.
+
+The May 2026 5× physical damage bug (found by the synth damage
+debugger in `tools/damage_debugger/`) was this pattern. The AG-08
+fix (see `tech_debt/ASM_GUIDE_AUDIT_2026-05-03.md`) added a
+one-byte `ld c, a` mirror to the
+`.done` block of `TypePassive_GetEffectiveMoveCategory_Far` so
+cross-bank farcallers (via the `Battle_GetEffectiveMoveCategory` home
+thunk) would see the move-category byte in `a` after the §3.3
+a/c-passthrough rule swallows the target's exit `a`:
+
+```asm
+TypePassive_GetEffectiveMoveCategory_Far::
+    push hl :: push de :: push bc
+    ; ... computes category in e ...
+.done
+    ld a, e
+    pop bc
+    ld c, a            ; <-- AG-08 fix: mirror a -> c for farcallers
+    pop de
+    pop hl
+    ret
+```
+
+The fix's commit body explicitly justified it as safe for same-bank
+callers:
+
+> Same-bank callers (6 in `late_gen_held_items.asm`) consume `a`
+> immediately via `cp SPECIAL` and never read `c` post-call -- the
+> new `c = category` assignment is invisible to them.
+
+True for `a`. **Wrong about `c`**, because two of those callers carry
+`bc = wXxxMonDefense` (defender's def, low byte in `c`) THROUGH the
+function and into `TruncateHL_BC` after the dispatch:
+
+```
+EnemyAttackDamage / PlayerAttackDamage     (bc = defender def)
+  └─ .done: call ApplyLateGenDamageStatsItemMods       ← in-bank caller
+       └─ homecall ApplyLateGenDamageStatsItemMods_Far
+            └─ call TypePassive_GetEffectiveMoveCategory_Far
+                 └─ ld c, a   ← clobbers caller's c with type byte (= 0 for NORMAL)
+       ; bc still corrupted in caller's frame
+       callfar DittoMetalPowder_Far                     ← in-bank caller (same bug)
+            └─ call TypePassive_GetEffectiveMoveCategory_Far  ← same clobber
+       call TruncateHL_BC      ← outputs c = 0 (was 9 for Cyndaquil def)
+       ret
+ConfusionDamageCalc:
+    ld a, c :: and a :: jr nz, .ok :: ld c, 1   ← div-by-zero safety: c=1
+    ; formula divides by 1 instead of 9 → ~9× damage
+Stab × 1.5 → ~13×, then random 0.85-1.0 → user sees ~16-18 dmg.
+```
+
+**The function-level audit said safe. The system-level reality was
+~5× damage on every wild encounter for two months.**
+
+Why every existing audit missed this:
+- `check_farcall_a_clobber.py`: this is a same-bank `call`, not
+  `farcall`. Out of scope.
+- `check_farcall_hl_clobber.py`: same — wrong macro class.
+- `check_battle_math_safety.py`: structural invariants; doesn't
+  reason about register liveness.
+- "Caller consumes `a` immediately": locally true, audit-friendly,
+  globally wrong. The post-dispatch code reading `c` was 4-6 frames
+  outside the call site.
+
+**Defenses:**
+
+1. **When a fix adds a register write at function exit, list every
+   in-bank caller and trace each through to its OUTER caller's first
+   read of the touched register.** The §3.13 transitive-contract
+   rule applies in reverse here: the contract is what the EXIT now
+   guarantees, and any caller that previously relied on the old
+   weaker contract is now broken.
+2. **The damage-stat path is the highest-value chain.** Same as
+   §3.13: anything reachable from `PlayerAttackDamage.done` /
+   `EnemyAttackDamage.done` (item mods, Ditto, type-passive,
+   late-gen multipliers) must preserve `b`/`c`/`d`/`e` end-to-end.
+   See §5.12 for the dispatcher contract.
+3. **Fix shape that worked for both AG-07 and this**: `push X` /
+   `pop X` at the call site, NOT change the target's contract.
+   Preserves the new ABI for cross-bank farcallers AND the old
+   in-bank caller behavior. +2 bytes per site.
+4. **Run `tools/damage_debugger/full_chain_v2.py` before declaring
+   any ABI-touching battle-code fix safe.** Synth scenario seeds
+   WRAM, calls `BattleCommand_DamageStats` → `DamageCalc` → `Stab`,
+   compares final `wCurDamage` to a Python oracle. Pidgey-Tackle-vs-
+   Cyndaquil should produce 4 (vanilla 1.5× STAB on base 3). Anything
+   ≥10 means a clobber escaped the audit.
+5. **`tools/audit/check_typepassive_c_mirror.py`** lists in-bank
+   callers of `TypePassive_Get*Category_Far` and flags any not
+   protected by `push bc` / `pop bc` AND not in the `KNOWN_SAFE`
+   table. Promote to release-smoke once the fix lands on main.
+
+**Recurrence map** (the AG-NN class — every one was the same shape):
+
+| Commit | What broke | What fixed |
+|---|---|---|
+| `44ca3b29` | `_GetSidedHL` extraction added `ld de, ...` clobbers | push/pop de in GetUserItem |
+| `5e9b785f` | 4 more transitive `de`-clobbers from same refactor | push/pop de at each site |
+| `769d6dd4` | AG-07 paralysis check on farcall a-clobber | restructure to use `c` from passthrough |
+| `a6a00ea8` | AG-08 latent farcall a-clobber in move-category helpers | `ld c, a` mirror at exit (this fix's caller bug) |
+| (AG-02 batch) | 5 farcall a-clobbers from the AG-02 audit's first fire | farcall→call where target is HOME |
+| `ac769ca5` | The `ld c, a` mirror itself broke 2 in-bank callers (`ApplyLateGenDamageStatsItemMods_Far`, `DittoMetalPowder_Far`) | push/pop bc at each call site |
+
+**The pattern is unmistakable.** Any new function in
+`engine/battle/late_gen_held_items.asm` or
+`engine/battle/type_passive_damage_mods.asm` that reads `bc`/`de` as
+input is a candidate for this audit class. Run the damage debugger
+before merging.
+
 ## 4) Best practices used in this codebase
 
 ### 4.1 Document register inputs and outputs at the function header
@@ -1002,11 +1118,20 @@ Before reporting "asm change done":
    - `check_navigation_floor.py` if you touched docs.
    - `check_boss_ai_*.py` if you touched `engine/battle/ai/`.
    - `check_save_format_version.py` if you touched `ram/`.
-3. Regenerate `docs/generated/dev_index.md` after **any** successful
+   - `check_typepassive_c_mirror.py` if you touched
+     `engine/battle/late_gen_held_items.asm` or
+     `engine/battle/type_passive_damage_mods.asm` (§3.14).
+3. **If you touched battle-code register ABI** (added a write at
+   function exit, refactored a clobber set, changed a `farcall` to
+   `call`), run `python -m tools.damage_debugger.full_chain_v2`. The
+   Pidgey-Tackle-vs-Cyndaquil synth must produce `wCurDamage = 4`.
+   Any other value means a clobber escaped your function-level audit
+   (§3.13, §3.14).
+4. Regenerate `docs/generated/dev_index.md` after **any** successful
    build (`python scripts/generate_dev_index.py --rom pokegold`).
-4. If you touched balance tables, regenerate
+5. If you touched balance tables, regenerate
    `docs/generated/balance_audit.md`.
-5. For parity-preserving changes, `make compare` must still match
+6. For parity-preserving changes, `make compare` must still match
    `roms.sha1` (`d8b8a3600a465308c9953dfa04f0081c05bdcb94` for Gold UE,
    `49b163f7e57702bc939d642a18f591de55d92dae` for Silver UE).
 

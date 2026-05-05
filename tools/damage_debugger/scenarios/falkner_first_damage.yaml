@@ -1,0 +1,10 @@
+name: falkner_first_damage
+rom: pokegold_trace
+state: .local/tmp/boss_state_factory/falkner_chosen_frame_4655.state
+target: BattleCommand_DamageCalc
+max_frames: 1200
+setup_buttons: [a, a, a, a, a, a, a, a]
+notes: |
+  Loads the boss state factory's Falkner mid-decision capture and presses A
+  several times to advance the AI's chosen move into damage execution.
+  If BattleCommand_DamageCalc fires, we capture the per-instruction trace.
