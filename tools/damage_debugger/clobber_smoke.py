@@ -43,9 +43,9 @@ from typing import Callable
 
 from pyboy import PyBoy
 
+from .paths import find_rom, find_sym
 from .safe_call import call_function_safe, read_be_u16_banked, write_byte_banked
 
-ROOT = Path("C:/Users/lolno/Downloads/pokemon gold hack")
 LOG_PATH = (
     Path(__file__).resolve().parents[2]
     / "audit"
@@ -274,13 +274,12 @@ def seed_special_eviolite_spd(pyboy, syms):
 # the ~16-24 zone still trips. Special-side scenarios use bigger stats and
 # show the boost explicitly.
 #
-# Note on the two Eviolite-on-evolvable scenarios: today they XFAIL because
-# `.SpeciesCanEvolve` (engine/battle/late_gen_held_items.asm:106) clobbers
-# `bc` and `hl` without push/pop. The bc-clobber propagates into
-# TruncateHL_BC -> ConfusionDamageCalc, and the hl-clobber propagates into
-# the attack stat -- the same recurrence shape as the AG-08 c-clobber
-# (sec 3.14). Damage today: physical_eviolite_def~13, special_eviolite_spd
-# ~241. After the asm fix lands, drop xfail and tighten to 2-5 / 6-12.
+# Note on the two Eviolite-on-evolvable scenarios: discovered as XFAIL when
+# this expansion landed -- `.SpeciesCanEvolve` clobbered `bc` and `hl`
+# without push/pop, propagating ~3x and ~25x damage spikes through
+# TruncateHL_BC. Fixed by push/pop bc/hl at the call site (engine/battle/
+# late_gen_held_items.asm:81 and :92), same shape as the AG-08 c-clobber
+# fix (sec 3.14).
 SCENARIOS = [
     Scenario(
         "physical_no_items", seed_physical_no_items, 3, 5,
@@ -297,11 +296,6 @@ SCENARIOS = [
     Scenario(
         "physical_eviolite_def", seed_physical_eviolite_def, 2, 5,
         "Eviolite on defender (Cyndaquil can evolve) -> def * 3/2 -> ~3.",
-        xfail=True,
-        xfail_reason=(
-            "SpeciesCanEvolve clobbers bc/hl without push/pop -- propagates as "
-            "~3x damage spike. See spawned task for fix. Drop xfail when fixed."
-        ),
     ),
     Scenario(
         "special_no_items", seed_special_no_items, 11, 16,
@@ -318,11 +312,6 @@ SCENARIOS = [
     Scenario(
         "special_eviolite_spd", seed_special_eviolite_spd, 6, 12,
         "Eviolite on defender (Pidgey can evolve) -> spdef * 3/2 -> ~9.",
-        xfail=True,
-        xfail_reason=(
-            "Same SpeciesCanEvolve bc/hl clobber as physical_eviolite_def; "
-            "propagates much harder on special path (atk and def both bad)."
-        ),
     ),
 ]
 
@@ -439,8 +428,10 @@ def main() -> int:
         fh.write(msg + "\n")
         fh.flush()
 
-    rom = ROOT / "pokegold_debug.gbc"
-    sym = ROOT / "pokegold_debug.sym"
+    # find_rom/find_sym walk up from this file to find the ROM/sym pair --
+    # works inside .claude/worktrees/* and at the project root.
+    rom = find_rom("pokegold_debug")
+    sym = find_sym("pokegold_debug")
     syms = parse_sym(sym)
 
     log(f"clobber_smoke: running {len(SCENARIOS)} scenarios against {rom.name}")
