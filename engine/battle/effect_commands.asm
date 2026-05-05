@@ -2788,6 +2788,18 @@ HitSelfInConfusion:
 	ret
 
 BattleCommand_DamageCalc:
+; PROBE 2026-05-04: replaced body with "displayed damage = d at entry". This
+; isolates whether d (= BP) is correct when damagecalc starts. Original body
+; preserved in git as the prior commit. Restore by reverting this commit.
+	xor a
+	ld [wCurDamage], a
+	ld a, d
+	ld [wCurDamage + 1], a
+	ld a, 1
+	and a
+	ret
+
+BattleCommand_DamageCalc_OriginalBody:
 ; Return a damage value for move power d, player level e, enemy defense c and player attack b.
 
 ; Return 1 if successful, else 0.
