@@ -396,25 +396,14 @@ def _type_passive_modifiers(
 
     # Branch 2: FIRE move + user below 1/3 HP → 6/5 monotype, 11/10 dual.
     #
-    # KNOWN ROM BUG (found by Tier 2.2 Hypothesis fuzz, 2026-05-05): the
-    # asm's `.GetUserHPAndMax` (engine/battle/type_passive_damage_mods.asm:322)
-    # clobbers `d` between reading MaxHP[0] and MaxHP[1]:
-    #     ld a, [de]      ; a = MaxHP[hi]
-    #     ld d, a         ; d = MaxHP[hi]; ALSO overwrites high byte of de
-    #     inc de          ; de now points at $00(low+1) -- ROM low addr
-    #     ld a, [de]      ; reads ROM[$000F] (=0) instead of MaxHP[lo]
-    #     ld e, a         ; e = 0 always (for MaxHP < 256)
-    # Net effect: `IsUserBelowOneThirdHP` reads MaxHP as
-    # `(MaxHP[hi] << 8) | 0`, which equals 0 for any MaxHP < 256. The
-    # comparison `3*HP < 0` is then never true, so the function always
-    # returns "not below." The FIRE-low-HP boost NEVER fires in practice.
-    #
-    # Oracle mirrors this bug by default (`pristine=False`): skip the
-    # branch so fuzz stays green against the as-shipped ROM. Pass
-    # `pristine=True` (used by `find.py`'s --bug mode) to model the
-    # AS-INTENDED behavior; the diff against the as-shipped ROM then
-    # surfaces the bug as a divergence at the TypePassive bucket.
-    if pristine and inp.move_type == FIRE and inp.attacker_below_third_hp:
+    # The .GetUserHPAndMax / .GetOpponentHPAndMax d-clobber bug that
+    # historically gated this branch (found by Tier 2.2 fuzz, 2026-05-05)
+    # was fixed in this same session via push-af around the high-byte
+    # save. Oracle now applies Branch 2 unconditionally to match the
+    # fixed ROM. The `pristine` parameter is kept on `predict_damage` /
+    # `predict_damage_trace` for backwards compatibility with `find.py`'s
+    # --bug repro; it's a no-op here today.
+    if inp.move_type == FIRE and inp.attacker_below_third_hp:
         c = _type_contribution(FIRE, inp.attacker_types)
         if c == 2:
             dmg = _apply_fraction(dmg, 6, 5)
@@ -475,17 +464,9 @@ def _type_passive_modifiers(
     # Branch 9: opponent above 1/2 HP + defender ICE contribution
     # → resist 19/20 mono, 39/40 dual.
     #
-    # KNOWN ROM BUG (same recurrence as Branch 2): the asm's
-    # `.GetOpponentHPAndMax` (line 342) has the identical d-clobber as
-    # `.GetUserHPAndMax`. `IsOpponentAboveHalfHP` therefore compares
-    # current HP against `MaxHP[hi]<<8 | 0` >> 1 = MaxHP[hi]<<7. For
-    # MaxHP < 256 (most realistic battles), this evaluates as 0, and
-    # any HP > 0 is "above half." For the fuzz harness today we mirror
-    # the buggy reading: with our seed setting opponent HP=10, MaxHP=10
-    # the buggy comparison gives "above half" -- but the same seed with
-    # opponent HP=0 gives "not above" (HP > MaxHP[hi]<<7 = 0 is false).
-    # Oracle reproduces the on-ROM behavior exactly to keep fuzz green;
-    # bug fix is a separate (escalated) decision.
+    # The .GetOpponentHPAndMax d-clobber that historically made this
+    # branch non-deterministic was fixed in the same session as the
+    # Branch 2 fix. Oracle now matches the fixed ROM directly.
     if inp.opponent_above_half_hp:
         c = _type_contribution(ICE, inp.defender_types)
         if c == 2:

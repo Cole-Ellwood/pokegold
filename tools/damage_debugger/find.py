@@ -311,10 +311,12 @@ def _known_bugs() -> dict[str, tuple[str, BattleInputs, callable]]:
         _seed_inputs(pyboy, syms, hp_inp)
 
     bugs["hp_d_clobber"] = (
-        "FIRE-low-HP TypePassive boost never fires due to "
+        "FIRE-low-HP TypePassive boost. Originally broken by a d-clobber in "
         "engine/battle/type_passive_damage_mods.asm:322 .GetUserHPAndMax "
-        "d-clobber. Oracle currently mirrors the buggy behavior; pass --bug "
-        "hp_d_clobber after fixing the asm to confirm the fix.",
+        "(found by Tier 2.2 fuzz, 2026-05-05). Fixed via push/pop af around "
+        "the high-byte read in the same session. This entry is kept as a "
+        "regression guard: a passing run (no divergence) proves the fix is "
+        "still in place.",
         hp_inp,
         seed_hp,
     )

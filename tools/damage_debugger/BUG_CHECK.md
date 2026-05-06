@@ -338,3 +338,52 @@ two undocumented Stab-side oracle gaps (`DoWeatherModifiers`,
 - 2 ROM bugs identified by the harness this session
   (HP-d-clobber + DM-hl-clobber), both escalated, both pending user
   review. Audit doc captures the full picture.
+
+## 2026-05-05 — both ROM bugs fixed; oracle pristine-flag retired
+
+User approved fixing both bugs via `/go fix it`. Both shipped this
+session.
+
+### DM-hl-clobber fix
+
+`engine/battle/effect_commands.asm:1499` — added `push hl` / `pop hl`
+around `call CheckTypeMatchup_ApplyDragonsMajestyMultiplier`.
+Verification:
+- 50k fuzz counterexample (NORMAL/DRAGON crit GROUND vs GHOST/GROUND):
+  rom=21 oracle=21 (was rom=19).
+- clobber_smoke 8/8 PASS, fuzz @ 5000 PASS, release_smoke +
+  cross_bank_call + farcall_hl/a_clobber audits all PASS.
+
+### HP-d-clobber fix
+
+`engine/battle/type_passive_damage_mods.asm:322` and `:342` — replaced
+the `ld d, a; inc de; ld a, [de]; ld e, a` pattern (which clobbers
+de's high byte before the second read) with a `push af`-protected
+sequence that reads MaxHP_low first, then restores MaxHP_high. Both
+`.GetUserHPAndMax` and `.GetOpponentHPAndMax` updated.
+
+Verification: `find --bug hp_d_clobber` reports rom=14 oracle=14
+("No bug"). Branch 2 (FIRE-low-HP boost) and Branch 9
+(ICE-above-half-HP resist) now fire correctly.
+
+### Oracle cleanup
+
+The `pristine` parameter on `predict_damage` / `predict_damage_trace`
+was the temporary mirror for the d-clobber bug. With the asm fixed,
+oracle's default mode now matches the as-shipped ROM directly. The
+parameter signature is kept for backwards compatibility but no
+longer gates any branch.
+
+Branch 2 docstring updated to reflect the fix. Branch 9 docstring
+updated similarly. `find.py`'s `hp_d_clobber` entry repurposed as a
+regression guard.
+
+### Final state (after both fixes)
+
+- `oracle.py` self-test: 8/8 match paper math.
+- `clobber_smoke`: 8/8 PASS.
+- `fuzz` at 5000: PASS, no divergence.
+- `find --bug hp_d_clobber`: PASS, no divergence (regression guard
+  active).
+- 2 ROM bugs found AND fixed AND verified by the harness this
+  session. Round-trip complete.
