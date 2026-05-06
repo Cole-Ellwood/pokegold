@@ -35,24 +35,24 @@ Gym-leader and priority boss live captures:
 
 | Boss | Status | Required live checks | Output path |
 | --- | --- | --- | --- |
-| Falkner | `FINISHED` | `chosen_id=17`, `top_moves=WING_ATTACK:19,QUICK_ATTACK:19,MUD_SLAP:20`, `plan_id=3` | `audit/boss_ai_trace/falkner_live.txt` |
-| Bugsy | `FINISHED` | `chosen_id=40`, `top_moves=TOXIC:19,POISON_STING:20,GIGA_DRAIN:20`, `plan_id=3` | `audit/boss_ai_trace/bugsy_live.txt` |
-| Whitney | `FINISHED` | `chosen_id=104`, `top_moves=DOUBLE_TEAM:17,THUNDER_WAVE:19,DOUBLESLAP:20`, `plan_id=3` | `audit/boss_ai_trace/whitney_live.txt` |
-| Morty | `FINISHED` | strict state preflight passes; current trace ROM excerpt has `chosen_id=101`, `top_moves=CURSE:20,NIGHT_SHADE:20,HYPNOSIS:37`, and `plan_id=2` | `audit/boss_ai_trace/morty_live.txt` |
-| Chuck | `FINISHED` | `chosen_id=136`, `top_moves=HI_JUMP_KICK:19,ROCK_SLIDE:20,FORESIGHT:20`, `plan_id=2` | `audit/boss_ai_trace/chuck_live.txt` |
-| Jasmine | `FINISHED` | real Olivine Gym battle has `chosen_id=85`, `top_moves=THUNDERBOLT:17,THUNDER_WAVE:17,LIGHT_SCREEN:20`, and `plan_id=3` | `audit/boss_ai_trace/jasmine_live.txt` |
-| Pryce | `FINISHED` | `chosen_id=58`, `top_moves=ICE_BEAM:17,SURF:20,EXPLOSION:21`, `plan_id=2` | `audit/boss_ai_trace/pryce_live.txt` |
-| Clair | `FINISHED` | `chosen_id=92`, `top_moves=TOXIC:18,EARTHQUAKE:20,WING_ATTACK:20`, `plan_id=3` | `audit/boss_ai_trace/clair_live.txt` |
-| Brock | `FINISHED` | `chosen_id=57`, `top_moves=SURF:20,ICE_BEAM:20,PROTECT:20`, `plan_id=3` | `audit/boss_ai_trace/brock_live.txt` |
-| Misty | `FINISHED` | `chosen_id=57`, `top_moves=HYPNOSIS:19,SURF:20,ICE_BEAM:20`, `plan_id=3` | `audit/boss_ai_trace/misty_live.txt` |
-| Lt. Surge | `FINISHED` | `chosen_id=85`, `top_moves=THUNDERBOLT:16,THUNDER_WAVE:18,EXPLOSION:21`, `plan_id=3` | `audit/boss_ai_trace/lt_surge_live.txt` |
-| Erika | `FINISHED` | `chosen_id=202`, `top_moves=GIGA_DRAIN:16,STUN_SPORE:19,REFLECT:20`, `plan_id=3` | `audit/boss_ai_trace/erika_live.txt` |
-| Janine | `FINISHED` | `chosen_id=57`, `top_moves=SLUDGE_BOMB:20,SURF:20,EXPLOSION:21`, `plan_id=2` | `audit/boss_ai_trace/janine_live.txt` |
-| Sabrina | `FINISHED` | `chosen_id=58`, `top_moves=ICE_BEAM:20,PSYCHIC_M:20,PERISH_SONG:20`, `plan_id=3` | `audit/boss_ai_trace/sabrina_live.txt` |
-| Blaine | `FINISHED` | `chosen_id=174`, `top_moves=CURSE:20,FLAMETHROWER:20,ROCK_SLIDE:20`, `plan_id=3` | `audit/boss_ai_trace/blaine_live.txt` |
-| Blue | `FINISHED` | `chosen_id=85`, `top_moves=THUNDERBOLT:16,ICE_BEAM:20,TRI_ATTACK:38`, `plan_id=3` | `audit/boss_ai_trace/blue_live.txt` |
-| Koga | `FINISHED` | `chosen_id=188`, `top_moves=SLUDGE_BOMB:17,CURSE:18,TOXIC:28`, `plan_id=2` | `audit/boss_ai_trace/koga_live.txt` |
-| Champion Lance | `FINISHED` | `chosen_id=200`, `top_moves=OUTRAGE:17,EARTHQUAKE:20,FIRE_BLAST:20`, `plan_id=3` | `audit/boss_ai_trace/champion_lance_live.txt` |
+| Falkner | `FINISHED` | `chosen_id=33`, `top_moves=TACKLE:20,SAND_ATTACK:20,GUST:20`, `plan_id=1` | `audit/boss_ai_trace/falkner_live.txt` |
+| Bugsy | `FINISHED` | `chosen_id=40`, `top_moves=POISON_STING:20,GIGA_DRAIN:20,TOXIC:20`, `plan_id=1` | `audit/boss_ai_trace/bugsy_live.txt` |
+| Whitney | `FINISHED` | `chosen_id=227`, `top_moves=ENCORE:20,THUNDER_WAVE:20,DOUBLE_TEAM:20`, `plan_id=1` | `audit/boss_ai_trace/whitney_live.txt` |
+| Morty | `FINISHED` | strict state preflight passes; current trace ROM excerpt has `chosen_id=138`, `top_moves=DREAM_EATER:20,CURSE:20,NIGHT_SHADE:20`, and `plan_id=1` | `audit/boss_ai_trace/morty_live.txt` |
+| Chuck | `FINISHED` | `chosen_id=157`, `top_moves=ROCK_SLIDE:20,FOCUS_PUNCH:20,ROAR:20`, `plan_id=1` | `audit/boss_ai_trace/chuck_live.txt` |
+| Jasmine | `FINISHED` | real Olivine Gym battle has `chosen_id=85`, `top_moves=THUNDERBOLT:20,THUNDER_WAVE:20,LIGHT_SCREEN:20`, and `plan_id=1` | `audit/boss_ai_trace/jasmine_live.txt` |
+| Pryce | `FINISHED` | `chosen_id=57`, `top_moves=SURF:20,ICE_BEAM:20,ENCORE:20`, `plan_id=4` | `audit/boss_ai_trace/pryce_live.txt` |
+| Clair | `FINISHED` | `chosen_id=89`, `top_moves=EARTHQUAKE:20,WING_ATTACK:20,TOXIC:20`, `plan_id=4` | `audit/boss_ai_trace/clair_live.txt` |
+| Brock | `FINISHED` | `chosen_id=157`, `top_moves=RECOVER:20,ROCK_SLIDE:20,TOXIC:20`, `plan_id=4` | `audit/boss_ai_trace/brock_live.txt` |
+| Misty | `FINISHED` | `chosen_id=95`, `top_moves=HYPNOSIS:20,SURF:20,ICE_BEAM:20`, `plan_id=4` | `audit/boss_ai_trace/misty_live.txt` |
+| Lt. Surge | `FINISHED` | `chosen_id=85`, `top_moves=THUNDERBOLT:20,CROSS_CHOP:20,RAZOR_LEAF:20`, `plan_id=4` | `audit/boss_ai_trace/lt_surge_live.txt` |
+| Erika | `FINISHED` | `chosen_id=241`, `top_moves=SUNNY_DAY:20,SYNTHESIS:20,SOLARBEAM:20`, `plan_id=4` | `audit/boss_ai_trace/erika_live.txt` |
+| Janine | `FINISHED` | `chosen_id=188`, `top_moves=SLUDGE_BOMB:20,SURF:20,EXPLOSION:20`, `plan_id=4` | `audit/boss_ai_trace/janine_live.txt` |
+| Sabrina | `FINISHED` | `chosen_id=115`, `top_moves=REFLECT:20,ENCORE:20,PSYCHIC_M:20`, `plan_id=4` | `audit/boss_ai_trace/sabrina_live.txt` |
+| Blaine | `FINISHED` | `chosen_id=126`, `top_moves=FIRE_BLAST:20,CONFUSE_RAY:20,SAFEGUARD:20`, `plan_id=4` | `audit/boss_ai_trace/blaine_live.txt` |
+| Blue | `FINISHED` | `chosen_id=38`, `top_moves=DOUBLE_EDGE:20,STEEL_WING:20,QUICK_ATTACK:20`, `plan_id=4` | `audit/boss_ai_trace/blue_live.txt` |
+| Koga | `FINISHED` | `chosen_id=92`, `top_moves=TOXIC:20,GIGA_DRAIN:20,SPIDER_WEB:20`, `plan_id=4` | `audit/boss_ai_trace/koga_live.txt` |
+| Champion Lance | `FINISHED` | `chosen_id=89`, `top_moves=EARTHQUAKE:20,WING_ATTACK:20,TOXIC:20`, `plan_id=4` | `audit/boss_ai_trace/champion_lance_live.txt` |
 | Shared switch-loop | `FINISHED` | `switch_confidence=80`; `switch_context=param=31,index=00,last_out=02,cooldown=02,cur_ot=00`; confidence beats Jasmine's normal `74` switch threshold but loses to the anti-loop `84` threshold | `audit/boss_ai_trace/shared_switch_loop_live.txt` |
 
 Recommended command once a boss-position PyBoy state exists:

@@ -1,20 +1,20 @@
 trace_rom=pokegold_trace.gbc
-trace_rom_sha256=40EF63CE2AE4DCAE791A9417CDC996B1C4A153ACA6E2B7FC101FC58DA22508EE
+trace_rom_sha256=ECE0411C1730CD3720D1E0DC05653949ABBA2E8375800FBBA0ED1F7A86F5B040
 trace_symbols=pokegold_trace.sym
-trace_symbols_sha256=A79D709AADBAD64D8E57CD81EBAD6D692C9FA70BC9271FA33702498CBD480E5A
+trace_symbols_sha256=C9C0469A9045C15906BAFE2A334927D8A13E7E818FF51CA11885AAE17B022F8E
 boss=Chuck
 frame=0
 capture_index=1
 notes=mid-tier adaptive-lead gym leader; Fighting role bias and setup pressure
-top_moves=HI_JUMP_KICK:19,ROCK_SLIDE:20,FORESIGHT:20
-chosen=HI_JUMP_KICK
-chosen_id=136
+top_moves=ROCK_SLIDE:20,FOCUS_PUNCH:20,ROAR:20
+chosen=ROCK_SLIDE
+chosen_id=157
 switch_confidence=0
-plan_id=2
+plan_id=1
 plan_phase=0
-plan_confidence=72
+plan_confidence=2
 plausible_mask=33 02 20 8a
 risk_flags=00 (none)
 lookahead_bonus_top=18,18,18
 revealed_masks=00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
-switch_context=param=00,index=03,last_out=00,cooldown=00,cur_ot=02
+switch_context=param=00,index=01,last_out=00,cooldown=00,cur_ot=00

@@ -17,23 +17,23 @@ audit/boss_ai_trace/morty_live.txt
 The accepted PyBoy state is:
 
 ```text
-.local/tmp/boss_state_factory/morty_chosen_frame_5646.state
+.local/tmp/boss_state_factory/morty_chosen_frame_5466.state
 ```
 
 Current verified evidence:
 
-- `python tools\trace\boss_ai_trace_state_probe.py --save-state .local\tmp\boss_state_factory\morty_chosen_frame_5646.state --expect-morty --strict` passes.
+- `python tools\trace\boss_ai_trace_state_probe.py --save-state .local\tmp\boss_state_factory\morty_chosen_frame_5466.state --expect-morty --strict` passes.
 - `python tools\trace\boss_ai_trace_batch.py --execute --only morty` writes
   `audit/boss_ai_trace/morty_live.txt`.
 - `python tools\audit\check_boss_ai_live_capture_ledger.py` accepts Morty as
   `FINISHED`.
 - The live excerpt has manifest-matching trace hashes:
-  `trace_rom_sha256=22A7B125A1567AB030715B85C67F3B0B606F757316547DF7C1C21D672C9F98C5`
+  `trace_rom_sha256=ECE0411C1730CD3720D1E0DC05653949ABBA2E8375800FBBA0ED1F7A86F5B040`
   and
-  `trace_symbols_sha256=8ACBFAA166CBE157D15466AAB27DFD49DCD64109E55F9198B998728903C8806D`.
+  `trace_symbols_sha256=C9C0469A9045C15906BAFE2A334927D8A13E7E818FF51CA11885AAE17B022F8E`.
 - The decision fields are nonzero:
-  `top_moves=CURSE:20,NIGHT_SHADE:20,HYPNOSIS:37`, `chosen=NIGHT_SHADE`,
-  `chosen_id=101`, `plan_id=2`, `plan_confidence=72`, and
+  `top_moves=DREAM_EATER:20,CURSE:20,NIGHT_SHADE:20`, `chosen=DREAM_EATER`,
+  `chosen_id=138`, `plan_id=1`, `plan_confidence=2`, and
   `plausible_mask=33 02 20 8a`.
 
 ## What Actually Fixed It
