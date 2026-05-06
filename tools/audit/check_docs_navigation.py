@@ -224,6 +224,8 @@ PLANNED_MISSING_ARTIFACTS = (
     # roadmap row references them ahead of existence so future sessions can
     # find the plan from the index.
     "tools/boss_ai_debugger",
+    "engine/battle/ai/PLATFORM_API.md",
+    "engine/battle/ai/POLICY_DESIGN.md",
 )
 
 AGENT_NAVIGATION_CONTRACT_SNIPPETS = {
