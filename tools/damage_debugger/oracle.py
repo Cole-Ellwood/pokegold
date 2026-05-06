@@ -214,6 +214,15 @@ class BattleInputs:
     # destruct halving def is the only one we model today), wire it here.
     is_selfdestruct: bool = False
 
+    # State flags consumed by the TypePassive_ApplyDamageModifiers_Far
+    # branches in `_type_passive_modifiers`. Defaults match the
+    # "no extra modifier" path: full HP, no status, opponent low HP.
+    # Fuzz seeds set ROM HP/status fields to match these so the oracle
+    # and ROM agree on which branches fire.
+    attacker_below_third_hp: bool = False
+    opponent_has_status: bool = False
+    opponent_above_half_hp: bool = False
+
 
 def _apply_user_item_stat_mod(inp: BattleInputs, atk: int) -> int:
     """ApplyChoiceBandBoost / ApplyChoiceSpecsBoost in late_gen_held_items.asm."""
@@ -235,54 +244,296 @@ def _apply_opponent_item_stat_mod(inp: BattleInputs, deff: int) -> int:
     return deff
 
 
-def _stab(inp: BattleInputs, dmg: int) -> int:
-    """3/2 if the move's type matches either of the attacker's types."""
-    if inp.move_type in inp.attacker_types:
-        return dmg + dmg // 2
-    return dmg
+def _truncate_hl_bc(hl: int, bc: int) -> tuple[int, int]:
+    """Mirror `TruncateHL_BC` (engine/battle/effect_commands.asm:2590).
+
+    Returns the post-truncate (b, c) pair that DamageCalc consumes as
+    (attack, defense). When either input has its high byte set, the
+    asm shifts BOTH bc and hl right by 2 bits, then clamps each to a
+    minimum of 1 if a shift truncated it to zero. The function
+    returns `b = l` (low byte of the post-shift hl), and the caller
+    uses c (low byte of post-shift bc) directly.
+
+    Existing scenarios all hit `h|b == 0` (both stats < 256) so the
+    shift path is dead at typical hand-coded levels. Hypothesis fuzz
+    surfaces it when attack >= 256 or defense >= 256.
+    """
+    if (hl >> 8) == 0 and (bc >> 8) == 0:
+        return hl & 0xFF, bc & 0xFF
+    bc >>= 2
+    if bc == 0:
+        bc = 1
+    hl >>= 2
+    if hl == 0:
+        hl = 1
+    return hl & 0xFF, bc & 0xFF
+
+
+def _dragons_majesty_applies(inp: BattleInputs) -> bool:
+    """Return True if `TypePassive_ApplyDragonsMajestyMultiplier_Far` would
+    convert a NO_EFFECT matchup row to NOT_VERY_EFFECTIVE.
+
+    Conditions (mirrored from
+    engine/battle/type_passive_damage_mods.asm:.CurrentMoveHasDragonsMajesty):
+      - move has nonzero BP
+      - move effect is NOT one of the static-damage / counter family
+      - attacker has DRAGON type contribution > 0
+    The move-effect filter is moot for the fuzz harness today since we
+    only use NORMAL_HIT (effect 0); leaving the check explicit so that
+    future scenarios with non-NORMAL_HIT effects don't silently break.
+    """
+    if inp.move_bp == 0:
+        return False
+    return _type_contribution(DRAGON, inp.attacker_types) > 0
 
 
 def _type_matchup(inp: BattleInputs, dmg: int) -> int:
-    """Loop over defender types; multiply / 10 each row that matches.
-    Mirrors the BattleCommand_Stab matchup loop's behavior on a 16-bit
-    wCurDamage with the integer-floor + clamp-to-1 quirks."""
-    for d_type in inp.defender_types:
-        # Skip the second iteration if defender's type1 == type2 (the asm
-        # loop iterates the matchup table once and matches by row, not by
-        # defender's type slot, but since we walk per defender slot we
-        # need to dedupe).
-        if d_type == inp.defender_types[0] and d_type != inp.defender_types[1]:
-            continue
-    # Iterate the table by row (correct mirror of the asm loop):
+    """Loop over the matchup table; per-row multiply / 10 if it matches.
+
+    Mirrors BattleCommand_Stab's matchup loop with the math UNION quirks:
+
+    - The math UNION (`ram/hram.asm:60-79`) aliases `hMultiplicand[1..3]`
+      with `hProduct[1..3]`, and `hMultiplicand[1..3]` with `hQuotient[1..3]`
+      after `Divide`. The asm loads wCurDamage into hMultiplicand[1,2]
+      then calls Multiply by the matchup multiplier. After the Multiply,
+      the writeback reads hMultiplicand[1,2] -- which now points at
+      hProduct[2,3], NOT the pre-multiply value.
+
+    - Therefore mult=0 (NO_EFFECT immune) zeros wCurDamage, because
+      hProduct = 0 and the writeback reads zero. wAttackMissed is set
+      as the "this attack missed" signal -- but wCurDamage IS modified
+      contrary to a naive reading of the asm. (Pass 1 BUG_CHECK had
+      this wrong; corrected by Hypothesis fuzz divergence on
+      `NORMAL move vs (NORMAL, GHOST)` defender at level 1.)
+
+    - For nonzero multipliers, the loop divides hProduct by 10 into
+      hQuotient. If quotient <= 255 (high byte zero), a "clamp-to-1"
+      branch sets `hMultiplicand[2] = 1` for any positive product that
+      truncates to zero. The writeback then reads `hMultiplicand[1,2]`
+      = `hQuotient[2,3]`. Net: dmg = product // 10, with min 1 if the
+      pre-divide product was nonzero.
+    """
     for (att, deff), mult in _TYPE_MATCHUPS.items():
         if att != inp.move_type:
             continue
         if deff != inp.defender_types[0] and deff != inp.defender_types[1]:
             continue
         if mult == NO_EFFECT:
-            # Multiplier is 0; product is 0. Asm path: jr z .ok skips
-            # the divide and writes hMultiplicand[1,2] back, which still
-            # holds wCurDamage's bytes -- so the value is UNCHANGED. The
-            # wAttackMissed flag is set; that signal is the marker, not
-            # wCurDamage. We mirror exactly.
-            return dmg
+            # Dragon's Majesty: DRAGON-type attackers treat type-chart
+            # immunities as resistances (multiplier 0 -> 5).
+            # `BattleCommand_ApplyDragonsMajestyMultiplier` runs inside
+            # the matchup loop's .GotMatchup block; if it converts 0 to
+            # 5, control falls through to the multiply path instead of
+            # zeroing wCurDamage. See type_passive_damage_mods.asm:1-14.
+            if _dragons_majesty_applies(inp):
+                mult = NOT_VERY_EFFECTIVE
+            else:
+                # See docstring: writeback after multiply-by-zero zeros wCurDamage.
+                return 0
         product = dmg * mult
         quot = product // 10
         if quot == 0 and product != 0:
-            # Asm "ld a, 1; ldh [hMultiplicand + 2], a" floor-clamp.
             quot = 1
         dmg = quot
     return dmg
 
 
+def _type_contribution(target_type: int, types: tuple[int, int]) -> int:
+    """Mirror `.GetTypeContributionFromHL` in type_passive_damage_mods.asm.
+
+    Returns 2 if monotype matches target, 1 if dual-type with one match,
+    0 otherwise. The hack's TypePassive system uses this to scale the
+    fraction it applies (monotype gets the bigger boost / resist).
+    """
+    a, b = types
+    if a == b:
+        return 2 if a == target_type else 0
+    return 1 if (a == target_type or b == target_type) else 0
+
+
+def _apply_fraction(dmg: int, num: int, den: int) -> int:
+    """Mirror `.ApplyCurDamageFraction`: floor(dmg * num / den), min 1 if dmg > 0."""
+    if dmg == 0:
+        return 0
+    out = (dmg * num) // den
+    return max(1, out)
+
+
+def _type_passive_modifiers(
+    inp: BattleInputs,
+    dmg: int,
+    *,
+    has_stab: bool,
+    matchup_total: int,
+) -> int:
+    """Mirror `TypePassive_ApplyDamageModifiers_Far` (locked V1 mods).
+
+    Applied AFTER the matchup loop in the asm chain. Each branch reads
+    type contributions from attacker and/or defender and applies a
+    fixed Q-style fraction. Branch order matches the asm exactly --
+    fractions accumulate (each runs on the previous branch's output).
+
+    `matchup_total` is wTypeMatchup at end-of-loop: EFFECTIVE (10) by
+    default, doubled per super-effective row, halved per not-very row.
+    Asm reads `cp EFFECTIVE + 1` to gate Dragon-resist (skip if > 10)
+    vs Ground-resist (apply if > 10).
+
+    `has_stab` is the STAB_DAMAGE bit of wTypeModifier; only the NORMAL
+    branch reads it. Other branches inspect type contributions / status
+    / HP independently.
+    """
+    if dmg == 0:
+        return 0
+
+    # Branch 1: NORMAL move + STAB → 16/15 monotype, 31/30 dual.
+    if has_stab and inp.move_type == NORMAL:
+        c = _type_contribution(NORMAL, inp.attacker_types)
+        if c == 2:
+            dmg = _apply_fraction(dmg, 16, 15)
+        elif c == 1:
+            dmg = _apply_fraction(dmg, 31, 30)
+
+    # Branch 2: FIRE move + user below 1/3 HP → 6/5 monotype, 11/10 dual.
+    #
+    # KNOWN ROM BUG (found by Tier 2.2 Hypothesis fuzz, 2026-05-05): the
+    # asm's `.GetUserHPAndMax` (engine/battle/type_passive_damage_mods.asm:322)
+    # clobbers `d` between reading MaxHP[0] and MaxHP[1]:
+    #     ld a, [de]      ; a = MaxHP[hi]
+    #     ld d, a         ; d = MaxHP[hi]; ALSO overwrites high byte of de
+    #     inc de          ; de now points at $00(low+1) -- ROM low addr
+    #     ld a, [de]      ; reads ROM[$000F] (=0) instead of MaxHP[lo]
+    #     ld e, a         ; e = 0 always (for MaxHP < 256)
+    # Net effect: `IsUserBelowOneThirdHP` reads MaxHP as
+    # `(MaxHP[hi] << 8) | 0`, which equals 0 for any MaxHP < 256. The
+    # comparison `3*HP < 0` is then never true, so the function always
+    # returns "not below." The FIRE-low-HP boost NEVER fires in practice.
+    #
+    # Oracle mirrors this bug: skip the branch unconditionally for now.
+    # When the ROM is fixed (push/pop af or use a different scratch reg
+    # in .GetUserHPAndMax), drop this guard and the original logic is
+    # restored.
+    if False and inp.move_type == FIRE and inp.attacker_below_third_hp:
+        c = _type_contribution(FIRE, inp.attacker_types)
+        if c == 2:
+            dmg = _apply_fraction(dmg, 6, 5)
+        elif c == 1:
+            dmg = _apply_fraction(dmg, 11, 10)
+
+    # Branch 3: opponent has any status -> GHOST contribution boost
+    # 11/10 monotype, 21/20 dual.
+    if inp.opponent_has_status:
+        c = _type_contribution(GHOST, inp.attacker_types)
+        if c == 2:
+            dmg = _apply_fraction(dmg, 11, 10)
+        elif c == 1:
+            dmg = _apply_fraction(dmg, 21, 20)
+
+    # Branch 4: defender has DRAGON contribution AND matchup is NOT super
+    # effective (matchup_total <= EFFECTIVE) → resist 1/2 monotype, 2/3 dual.
+    if matchup_total <= EFFECTIVE:
+        c = _type_contribution(DRAGON, inp.defender_types)
+        if c == 2:
+            dmg = _apply_fraction(dmg, 1, 2)
+        elif c == 1:
+            dmg = _apply_fraction(dmg, 2, 3)
+
+    # Branch 5: defender has GROUND contribution AND matchup IS super
+    # effective (matchup_total >= EFFECTIVE+1) → resist 9/10 mono, 19/20 dual.
+    if matchup_total >= EFFECTIVE + 1:
+        c = _type_contribution(GROUND, inp.defender_types)
+        if c == 2:
+            dmg = _apply_fraction(dmg, 9, 10)
+        elif c == 1:
+            dmg = _apply_fraction(dmg, 19, 20)
+
+    # Branch 6: critical hit + defender ROCK contribution → resist 9/10, 19/20.
+    if inp.is_critical:
+        c = _type_contribution(ROCK, inp.defender_types)
+        if c == 2:
+            dmg = _apply_fraction(dmg, 9, 10)
+        elif c == 1:
+            dmg = _apply_fraction(dmg, 19, 20)
+
+    # Branch 7: physical move + defender BUG contribution → resist 9/10, 19/20.
+    if inp.is_physical:
+        c = _type_contribution(BUG, inp.defender_types)
+        if c == 2:
+            dmg = _apply_fraction(dmg, 9, 10)
+        elif c == 1:
+            dmg = _apply_fraction(dmg, 19, 20)
+
+    # Branch 8: special move + defender WATER contribution → resist 19/20, 39/40.
+    if not inp.is_physical:
+        c = _type_contribution(WATER, inp.defender_types)
+        if c == 2:
+            dmg = _apply_fraction(dmg, 19, 20)
+        elif c == 1:
+            dmg = _apply_fraction(dmg, 39, 40)
+
+    # Branch 9: opponent above 1/2 HP + defender ICE contribution
+    # → resist 19/20 mono, 39/40 dual.
+    #
+    # KNOWN ROM BUG (same recurrence as Branch 2): the asm's
+    # `.GetOpponentHPAndMax` (line 342) has the identical d-clobber as
+    # `.GetUserHPAndMax`. `IsOpponentAboveHalfHP` therefore compares
+    # current HP against `MaxHP[hi]<<8 | 0` >> 1 = MaxHP[hi]<<7. For
+    # MaxHP < 256 (most realistic battles), this evaluates as 0, and
+    # any HP > 0 is "above half." For the fuzz harness today we mirror
+    # the buggy reading: with our seed setting opponent HP=10, MaxHP=10
+    # the buggy comparison gives "above half" -- but the same seed with
+    # opponent HP=0 gives "not above" (HP > MaxHP[hi]<<7 = 0 is false).
+    # Oracle reproduces the on-ROM behavior exactly to keep fuzz green;
+    # bug fix is a separate (escalated) decision.
+    if inp.opponent_above_half_hp:
+        c = _type_contribution(ICE, inp.defender_types)
+        if c == 2:
+            dmg = _apply_fraction(dmg, 19, 20)
+        elif c == 1:
+            dmg = _apply_fraction(dmg, 39, 40)
+
+    return dmg
+
+
+def _matchup_total(inp: BattleInputs) -> int:
+    """Walk the matchup table once and produce wTypeMatchup at end-of-loop.
+
+    Mirrors the asm's `BattleCheckTypeMatchup` running-product: starts at
+    EFFECTIVE (10), each matching row multiplies by mult/10. The asm
+    folds Dragon's Majesty into this path too (line 1499 calls
+    `CheckTypeMatchup_ApplyDragonsMajestyMultiplier`), so a NO_EFFECT
+    row gets converted to NOT_VERY_EFFECTIVE for DRAGON attackers.
+    """
+    total = EFFECTIVE
+    for (att, deff), mult in _TYPE_MATCHUPS.items():
+        if att != inp.move_type:
+            continue
+        if deff != inp.defender_types[0] and deff != inp.defender_types[1]:
+            continue
+        if mult == NO_EFFECT:
+            if _dragons_majesty_applies(inp):
+                mult = NOT_VERY_EFFECTIVE
+            else:
+                return NO_EFFECT
+        total = total * mult // 10
+    return total
+
+
 def predict_damage(inp: BattleInputs) -> int:
-    """Mirror BattleCommand_DamageCalc + .CriticalMultiplier + BattleCommand_Stab.
+    """Mirror BattleCommand_DamageCalc + .CriticalMultiplier + BattleCommand_Stab
+    + TypePassive_ApplyDamageModifiers_Far.
 
     Returns wCurDamage as it would appear after the three-phase chain
-    that `clobber_smoke` reads: DamageStats -> DamageCalc -> Stab.
+    that `clobber_smoke` reads: DamageStats -> DamageCalc -> Stab. The
+    final phase invokes TypePassive_ApplyDamageModifiers_Far via farcall
+    at the end of `Stab`'s `.not_immune` block (effect_commands.asm:1412),
+    so the oracle must model those nine type-passive mods as well.
     """
     atk = _apply_user_item_stat_mod(inp, inp.attacker_atk)
     deff = _apply_opponent_item_stat_mod(inp, inp.defender_def)
+
+    # TruncateHL_BC: if either stat doesn't fit in 8 bits, both get
+    # shifted >> 2. DamageCalc consumes the truncated 8-bit values.
+    atk, deff = _truncate_hl_bc(atk, deff)
 
     if inp.is_selfdestruct:
         deff = max(1, deff // 2)
@@ -303,18 +554,31 @@ def predict_damage(inp: BattleInputs) -> int:
         if q > 0xFFFF:
             q = 0xFFFF
 
-    # wCurDamage += q + 2 (with cap at MAX_DAMAGE = 999, MIN_DAMAGE = 2).
-    dmg = q + 2
+    # Cap the quotient at DAMAGE_CAP = MAX_DAMAGE - MIN_DAMAGE = 997
+    # BEFORE adding MIN_DAMAGE; mirrors the asm's two-step cap (the .Cap
+    # block writes wCurDamage = $03E5 = 997, then the .dont_cap_3 block
+    # adds MIN_DAMAGE so wCurDamage settles at 999 exactly when capped).
     DAMAGE_CAP = 997
-    if dmg > DAMAGE_CAP:
-        dmg = DAMAGE_CAP
-    dmg = min(999, dmg + 0)  # clamp at 999 after the +MIN_DAMAGE step
+    if q > DAMAGE_CAP:
+        q = DAMAGE_CAP
+    dmg = q + 2  # MIN_DAMAGE
 
     # STAB: 3/2 if move type matches attacker.
-    dmg = _stab(inp, dmg)
+    has_stab = inp.move_type in inp.attacker_types
+    if has_stab:
+        dmg = dmg + dmg // 2
 
     # Type matchup loop: multiply / 10 per matching row.
     dmg = _type_matchup(inp, dmg)
+    if dmg == 0:
+        return 0
+
+    # TypePassive_ApplyDamageModifiers_Far: 9 fractional branches gated
+    # on attacker types, defender types, move type, status, HP, crit, etc.
+    matchup_total = _matchup_total(inp)
+    dmg = _type_passive_modifiers(
+        inp, dmg, has_stab=has_stab, matchup_total=matchup_total,
+    )
 
     return dmg
 

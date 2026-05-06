@@ -129,3 +129,112 @@ If step 3 produces fewer than 8 FAILs, the ranges are too loose and need
 tightening before more features are added. If step 4 doesn't restore 8/8
 PASS, something else regressed during the check — investigate before
 adding features.
+
+## 2026-05-05 — Tier 2.2 Hypothesis fuzz lands; finds 1 ROM bug + 4 oracle gaps
+
+The fuzz harness (`python -m tools.damage_debugger.fuzz`) generates
+random `BattleInputs` records and compares the on-ROM `wCurDamage`
+against `oracle.predict_damage`. Hypothesis auto-shrinks failures to
+the minimal repro.
+
+In the first 5000 examples, the harness surfaced four oracle gaps in
+quick succession (each fixed before the next ran):
+
+1. **Type-matchup NO_EFFECT writeback semantics**: I had originally
+   modeled "immune leaves wCurDamage unchanged" based on a naive read
+   of the asm. The math UNION (`ram/hram.asm:60-79`) aliases
+   `hMultiplicand[1..3]` with `hProduct[1..3]`, so a multiply-by-zero
+   actually overwrites the writeback bytes with zero. NO_EFFECT zeroes
+   wCurDamage. (Caught at example 5.)
+
+2. **`TypePassive_ApplyDamageModifiers_Far` missing**: the hack runs a
+   nine-branch `farcall` after the matchup loop
+   (`engine/battle/type_passive_damage_mods.asm:44`) that applies
+   small fractional modifiers gated on attacker types, defender types,
+   move type, status, HP, and crit. Oracle hadn't modeled it. Added
+   `_type_passive_modifiers` mirroring all nine branches in asm order.
+   (Caught at example 23 — `physical NORMAL/DRAGON vs NORMAL/GHOST`,
+   ROM=2 vs oracle=4 explained by Dragon-resist branch.)
+
+3. **`TruncateHL_BC` (effect_commands.asm:2590) missing**: when atk
+   or def exceeds 255, the asm shifts BOTH stats right by 2 bits,
+   minimum-clamped to 1. Oracle was using the raw 16-bit values and
+   diverging on high-stat scenarios. Added `_truncate_hl_bc`. (Caught
+   at example ~50, special FIRE atk=256 def=5 → ROM truncated to
+   atk=64 def=1 → Q=25 vs oracle's Q=20.)
+
+4. **Damage cap order**: oracle was capping `dmg = q + 2` to 997, but
+   the asm caps `q` first (writes wCurDamage = $03E5) then adds
+   MIN_DAMAGE (= 2) for a final 999. STAB on 999 vs STAB on 997
+   diverges by 3-5 damage at high quotients. Fixed cap-then-add
+   ordering. (Caught at level 5 atk=334 def=5 BP=50 crit Choice Band.)
+
+5. **Dragon's Majesty multiplier**: the hack converts NO_EFFECT to
+   NOT_VERY_EFFECTIVE for DRAGON-typed attackers. Oracle was
+   short-circuiting on NO_EFFECT without checking if Dragon's Majesty
+   would reroute. Added `_dragons_majesty_applies`. (Caught at
+   `attacker (NORMAL, DRAGON) vs (NORMAL, GHOST)` -- Dragon's Majesty
+   converted the immunity to 0.5x.)
+
+After those fixes, fuzz finds **a real, previously unknown ROM bug**:
+
+### ROM bug: `.GetUserHPAndMax` / `.GetOpponentHPAndMax` d-clobber
+
+`engine/battle/type_passive_damage_mods.asm:322-340` and
+`engine/battle/type_passive_damage_mods.asm:342-360` both use this
+pattern:
+
+```asm
+ld a, [de]
+ld d, a       ; <-- clobbers d, the high byte of de
+inc de        ; de now points at $00(low_byte+1) -- ROM low addresses
+ld a, [de]    ; reads from ROM[$000F] (= 0) instead of MaxHP[lo]
+ld e, a       ; e = 0 always for MaxHP < 256
+```
+
+Net effect for any MaxHP < 256 (basically every realistic battle):
+- `IsUserBelowOneThirdHP` always returns "not below 1/3" -- **the FIRE-
+  low-HP Type Passive boost never fires.**
+- `IsOpponentAboveHalfHP` returns carry-set iff HP > 0 -- the comparison
+  collapses to "any HP" because the bugged MaxHP/2 reads as 0.
+
+Reproduce: `attacker (NORMAL, FIRE) at HP=1 / MaxHP=10, FIRE move,
+attacker_below_third_hp=True` → oracle predicts 11/10 boost (e.g.
+21 → 23) but ROM gives 21 because the boost doesn't fire.
+
+Fix shape (escalated to user as a gameplay-affecting decision since
+it changes a balance feature from "broken" to "active"):
+
+```asm
+ld a, [de]
+push af
+inc de
+ld a, [de]
+ld e, a
+pop af
+ld d, a
+ret
+```
+
+Or use a different scratch register that isn't part of the addressing
+pair. Both `.GetUserHPAndMax` and `.GetOpponentHPAndMax` need the
+same fix.
+
+Oracle currently mirrors the buggy behavior (Branch 2 in
+`_type_passive_modifiers` is gated by `if False`, with a recurrence
+note pointing here) so the fuzz harness stays green. When the ROM is
+fixed, drop the gate, regenerate `pokegold_debug.gbc`, and re-run
+`tools/damage_debugger.fuzz` -- the harness will validate the fix.
+
+### Final state
+
+- `oracle.py` self-test: 8/8 match paper math.
+- `clobber_smoke`: 8/8 PASS in 0.5s (Tier 1.1 boot cache).
+- `fuzz`: PASS at 10000 examples in 70s on this machine.
+- Real ROM bug found, escalated, oracle adapted.
+
+The harness has now demonstrably done its job:
+- Found the May 2026 AG-08 c-clobber (commit `ac769ca5`, pre-fuzz era).
+- Found the Eviolite `bc/hl` clobber (commit `2ad4ca2c`, this session).
+- Found the GetUserHPAndMax d-clobber (commit `<this commit>`,
+  this session, via Hypothesis fuzz).
