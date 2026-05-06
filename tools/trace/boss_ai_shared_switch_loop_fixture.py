@@ -18,13 +18,14 @@ from tools.trace import boss_ai_state_factory as factory
 from tools.trace import boss_ai_trace_capture as capture
 
 
-DEFAULT_BASE_STATE = ROOT / ".local" / "tmp" / "boss_state_factory" / "jasmine_chosen_frame_5060.state"
+DEFAULT_BASE_STATE = ROOT / ".local" / "tmp" / "boss_state_factory" / "jasmine_chosen_frame_4520.state"
 DEFAULT_OUT = ROOT / ".local" / "tmp" / "boss_state_factory" / "shared_switch_loop_frame_200.state"
 DEFAULT_LOG = ROOT / ".local" / "tmp" / "boss_state_factory" / "shared_switch_loop_fixture.log"
 MANIFEST = ROOT / "audit" / "boss_ai_trace" / "live_capture_manifest.json"
 EARTHQUAKE = 0x59
 JASMINE_SWITCH_THRESHOLD_WITHOUT_LOOP = 74
 ANTI_LOOP_PENALTY = 10
+PARTYMON_STRUCT_LENGTH = 0x30
 
 
 def fail(message: str) -> None:
@@ -44,6 +45,18 @@ def write_word(pyboy, symbols: dict[str, capture.Symbol], name: str, value: int)
     symbol = symbols[name]
     factory.write_byte(pyboy, symbol, (value >> 8) & 0xFF)
     factory.write_byte(pyboy, capture.Symbol(symbol.bank, symbol.address + 1), value & 0xFF)
+
+
+def write_party_hp(
+    pyboy,
+    symbols: dict[str, capture.Symbol],
+    zero_based_index: int,
+    value: int,
+) -> None:
+    symbol = symbols["wOTPartyMon1HP"]
+    address = symbol.address + zero_based_index * PARTYMON_STRUCT_LENGTH
+    factory.write_byte(pyboy, capture.Symbol(symbol.bank, address), (value >> 8) & 0xFF)
+    factory.write_byte(pyboy, capture.Symbol(symbol.bank, address + 1), value & 0xFF)
 
 
 def read_word(pyboy, symbols: dict[str, capture.Symbol], name: str) -> int:
@@ -75,6 +88,8 @@ def prepare_repeated_switch_state(pyboy, symbols: dict[str, capture.Symbol]) -> 
     factory.write_one(pyboy, symbols, "wLastPlayerCounterMove", 0)
     write_word(pyboy, symbols, "wEnemyMonHP", max_hp)
     write_word(pyboy, symbols, "wOTPartyMon2HP", 100)
+    for party_index in (2, 3, 4):
+        write_party_hp(pyboy, symbols, party_index, 0)
     zero_trace(pyboy, symbols)
 
 
@@ -190,6 +205,7 @@ def main() -> int:
         f"advance_frames={args.advance_frames}",
         *observed,
         "setup=cur_ot=0,last_switched_out=2,cooldown=2,public_move=EARTHQUAKE,enemy_hp=full",
+        "party_setup=only last-switched-out backup remains available",
     ]
     args.log.parent.mkdir(parents=True, exist_ok=True)
     args.log.write_text("\n".join(log_lines) + "\n", encoding="utf-8")

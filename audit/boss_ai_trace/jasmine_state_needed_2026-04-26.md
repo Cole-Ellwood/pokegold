@@ -15,7 +15,7 @@ audit/boss_ai_trace/jasmine_live.txt
 The accepted PyBoy state is:
 
 ```text
-.local/tmp/boss_state_factory/jasmine_chosen_frame_5060.state
+.local/tmp/boss_state_factory/jasmine_chosen_frame_4520.state
 ```
 
 Current verified evidence:
@@ -23,17 +23,17 @@ Current verified evidence:
 - `python tools\trace\boss_ai_trace_batch.py --only jasmine` reports `READY`.
 - `python tools\trace\boss_ai_trace_batch.py --execute --only jasmine` writes
   `audit/boss_ai_trace/jasmine_live.txt`.
-- `python tools\trace\boss_ai_trace_state_probe.py --save-state .local\tmp\boss_state_factory\jasmine_chosen_frame_5060.state --objects 4 --object-structs 3`
+- `python tools\trace\boss_ai_trace_state_probe.py --save-state .local\tmp\boss_state_factory\jasmine_chosen_frame_4520.state --objects 4 --object-structs 3`
   shows `battle_mode=2`, `other_trainer=class=06,id=01`, `map=01:02`, and
   Jasmine loaded as object struct 1.
 - The live excerpt has manifest-matching trace hashes:
-  `trace_rom_sha256=22A7B125A1567AB030715B85C67F3B0B606F757316547DF7C1C21D672C9F98C5`
+  `trace_rom_sha256=ECE0411C1730CD3720D1E0DC05653949ABBA2E8375800FBBA0ED1F7A86F5B040`
   and
-  `trace_symbols_sha256=8ACBFAA166CBE157D15466AAB27DFD49DCD64109E55F9198B998728903C8806D`.
+  `trace_symbols_sha256=C9C0469A9045C15906BAFE2A334927D8A13E7E818FF51CA11885AAE17B022F8E`.
 - The decision fields are nonzero:
-  `top_moves=THUNDERBOLT:17,THUNDER_WAVE:17,LIGHT_SCREEN:20`,
-  `chosen=THUNDERBOLT`, `chosen_id=85`, `plan_id=3`,
-  `plan_confidence=76`, and `plausible_mask=33 02 20 8a`.
+  `top_moves=THUNDERBOLT:20,THUNDER_WAVE:20,LIGHT_SCREEN:20`,
+  `chosen=THUNDERBOLT`, `chosen_id=85`, `plan_id=1`,
+  `plan_confidence=2`, and `plausible_mask=33 02 20 8a`.
 
 ## What Was Verified
 

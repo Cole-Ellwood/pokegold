@@ -88,6 +88,11 @@ for maps that would otherwise run an entry cutscene. If a new trainer is added,
 copy an existing `BossRoute` and use the map script's real `object_event` and
 `loadtrainer` line as source truth.
 
+Some routes also carry route-specific input timing when the adaptive-lead roll
+needs a stable manifest opener. `--input-wait-frames` overrides that default for
+scratch probing, but the normal `--all --update-manifest` path should use the
+route defaults.
+
 Then dry-run the manifest:
 
 ```powershell
@@ -173,7 +178,7 @@ These details saved the 2026-04-26 follow-up from false proof:
 - The first accepted Morty proof state was
   `.local/tmp/morty_issue_cycle8/chosen_frame_3086.state`. The current manifest
   uses the regenerable real-script factory state
-  `.local/tmp/boss_state_factory/morty_chosen_frame_5646.state`. Both depend on
+  `.local/tmp/boss_state_factory/morty_chosen_frame_5466.state`. Both depend on
   the repaired cursor bugs in `engine/battle/ai/boss.asm`:
   `BossAI_CheckTypeMatchupNoItem` must preserve the TypeMatchups table cursor
   around multiply/divide work, and `BossAI_GetTypeThreatSeverityVsEnemyMon`

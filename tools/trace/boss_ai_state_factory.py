@@ -73,6 +73,7 @@ class BossRoute:
     set_events: tuple[str, ...] = ()
     scene_values: tuple[tuple[str, int], ...] = ()
     prime_buttons: tuple[str, ...] = ("up", "a")
+    input_wait_frames: int = 45
     max_a_presses: int = 120
     clear_badges: bool = True
 
@@ -159,6 +160,7 @@ ROUTES: dict[str, BossRoute] = {
             "EVENT_GOT_TM23_IRON_TAIL",
         ),
         set_events=("EVENT_JASMINE_RETURNED_TO_GYM",),
+        input_wait_frames=30,
     ),
     "pryce": BossRoute(
         capture_id="pryce",
@@ -642,16 +644,21 @@ def drive_to_chosen_move(
     log: list[str],
     frame: int,
 ) -> RunResult:
+    input_wait_frames = (
+        route.input_wait_frames
+        if args.input_wait_frames == 0
+        else args.input_wait_frames
+    )
     for button_name in route.prime_buttons:
-        press(pyboy, button_name, args.input_wait_frames)
-        frame += args.input_wait_frames
+        press(pyboy, button_name, input_wait_frames)
+        frame += input_wait_frames
         log.append(watch_line(pyboy, symbols, frame, f"PRIME_{button_name.upper()}"))
 
     last_signature: tuple[int, ...] | None = None
     max_presses = args.max_a_presses or route.max_a_presses
     for step in range(max_presses):
-        press(pyboy, "a", args.input_wait_frames)
-        frame += args.input_wait_frames
+        press(pyboy, "a", input_wait_frames)
+        frame += input_wait_frames
         values = capture.read_trace_values(pyboy, symbols)
         signature = capture.trace_signature(values)
         chosen = values["wBossAITraceChosenMove"][0]
@@ -734,7 +741,12 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="write generated save-state paths into the manifest; does not promote status",
     )
-    parser.add_argument("--input-wait-frames", type=int, default=45)
+    parser.add_argument(
+        "--input-wait-frames",
+        type=int,
+        default=0,
+        help="frames to wait after each input; 0 uses each route default",
+    )
     parser.add_argument(
         "--max-a-presses",
         type=int,
@@ -766,6 +778,8 @@ def run_route(
         f"ROM_SOURCE {capture.display_path(args.rom)}",
         f"ROM_WORK {capture.display_path(work_rom)}",
         f"BATTERY_SAVE {capture.display_path(args.battery_save)}",
+        "INPUT_WAIT_FRAMES "
+        f"{route.input_wait_frames if args.input_wait_frames == 0 else args.input_wait_frames}",
     ]
     pyboy = open_pyboy(work_rom)
     try:
@@ -800,8 +814,8 @@ def run_route(
 
 def main() -> int:
     args = build_parser().parse_args()
-    if args.input_wait_frames <= 0:
-        fail("--input-wait-frames must be positive")
+    if args.input_wait_frames < 0:
+        fail("--input-wait-frames must be 0 or positive")
     if args.max_a_presses < 0:
         fail("--max-a-presses must be 0 or positive")
     if args.log_every <= 0:
