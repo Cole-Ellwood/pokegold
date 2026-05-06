@@ -43,6 +43,7 @@ from typing import Callable
 
 from pyboy import PyBoy
 
+from .boot_cache import BootStateCache
 from .paths import find_rom, find_sym
 from .safe_call import call_function_safe, read_be_u16_banked, write_byte_banked
 
@@ -332,10 +333,12 @@ class HookSnapshot:
     sp: int
 
 
-def _install_hooks(pyboy, syms: dict, snapshots: list[HookSnapshot]) -> list[str]:
+def _install_hooks(pyboy, syms: dict, snapshots: list[HookSnapshot]) -> list[tuple[int, int]]:
     """Install entry/exit hooks at the targets in HOOK_TARGETS that exist in
-    the sym table. Returns the list of installed labels (for log header)."""
-    installed: list[str] = []
+    the sym table. Returns the (bank, addr) pairs that were registered, so
+    the caller can deregister them when the scenario finishes (the shared-
+    PyBoy boot-cache pattern needs hooks scoped to the scenario)."""
+    installed: list[tuple[int, int]] = []
     seq_counter = [0]
 
     def _make_cb(label: str):
@@ -360,8 +363,20 @@ def _install_hooks(pyboy, syms: dict, snapshots: list[HookSnapshot]) -> list[str
         if s is None:
             continue
         pyboy.hook_register(s[0], s[1], _make_cb(label), None)
-        installed.append(f"${s[0]:02x}:{s[1]:04x} {label}")
+        installed.append((s[0], s[1]))
     return installed
+
+
+def _deregister_hooks(pyboy, hooks: list[tuple[int, int]]) -> None:
+    for bank, addr in hooks:
+        try:
+            pyboy.hook_deregister(bank, addr)
+        except Exception:
+            # PyBoy's hook table is a flat dict per (bank, addr); if a
+            # deregister fails because it was already cleared (unlikely
+            # given paired register/deregister), swallow rather than
+            # cascade -- the next scenario re-registers regardless.
+            pass
 
 
 def _read_byte(pyboy, name, syms):
@@ -379,33 +394,44 @@ def _read_byte(pyboy, name, syms):
     return int(pyboy.memory[addr])
 
 
-def run_scenario(scenario: Scenario, syms: dict, rom_path: Path) -> tuple[int, list[HookSnapshot], dict]:
-    pyboy = PyBoy(str(rom_path), window="null", sound=False, log_level="ERROR")
-    pyboy.set_emulation_speed(0)
-    pyboy.tick(240, False, False)
+def run_scenario(
+    scenario: Scenario,
+    syms: dict,
+    cache: BootStateCache,
+) -> tuple[int, list[HookSnapshot], dict]:
+    """Run one scenario against the cache's shared PyBoy.
+
+    `cache.restore(pyboy)` rewinds to the post-boot snapshot in ~10ms
+    instead of booting + ticking 240 frames per scenario (~1s). Hooks
+    are scoped to this scenario only -- registered now, deregistered
+    after the damage read so the next scenario starts hook-clean.
+    """
+    pyboy = cache.restore()
 
     snapshots: list[HookSnapshot] = []
-    _install_hooks(pyboy, syms, snapshots)
+    hooks = _install_hooks(pyboy, syms, snapshots)
 
-    scenario.seed(pyboy, syms)
+    try:
+        scenario.seed(pyboy, syms)
 
-    # Capture seed-state for diagnostics: post-seed byte values that
-    # determine which item branches fire. Rendered only on FAIL.
-    seed_state = {
-        "wBattleMonItem": _read_byte(pyboy, "wBattleMonItem", syms),
-        "wEnemyMonItem": _read_byte(pyboy, "wEnemyMonItem", syms),
-        "wBattleMonSpecies": _read_byte(pyboy, "wBattleMonSpecies", syms),
-        "wEnemyMonSpecies": _read_byte(pyboy, "wEnemyMonSpecies", syms),
-        "hBattleTurn": _read_byte(pyboy, "hBattleTurn", syms),
-        "wCriticalHit": _read_byte(pyboy, "wCriticalHit", syms),
-    }
+        # Capture seed-state for diagnostics: post-seed byte values that
+        # determine which item branches fire. Rendered only on FAIL.
+        seed_state = {
+            "wBattleMonItem": _read_byte(pyboy, "wBattleMonItem", syms),
+            "wEnemyMonItem": _read_byte(pyboy, "wEnemyMonItem", syms),
+            "wBattleMonSpecies": _read_byte(pyboy, "wBattleMonSpecies", syms),
+            "wEnemyMonSpecies": _read_byte(pyboy, "wEnemyMonSpecies", syms),
+            "hBattleTurn": _read_byte(pyboy, "hBattleTurn", syms),
+            "wCriticalHit": _read_byte(pyboy, "wCriticalHit", syms),
+        }
 
-    cd_sym = syms["wCurDamage"]
-    for fn in ("BattleCommand_DamageStats", "BattleCommand_DamageCalc", "BattleCommand_Stab"):
-        call_function_safe(pyboy, syms, fn)
+        cd_sym = syms["wCurDamage"]
+        for fn in ("BattleCommand_DamageStats", "BattleCommand_DamageCalc", "BattleCommand_Stab"):
+            call_function_safe(pyboy, syms, fn)
 
-    damage = read_be_u16_banked(pyboy, cd_sym[1], cd_sym[0])
-    pyboy.stop(save=False)
+        damage = read_be_u16_banked(pyboy, cd_sym[1], cd_sym[0])
+    finally:
+        _deregister_hooks(pyboy, hooks)
     return damage, snapshots, seed_state
 
 
@@ -449,27 +475,37 @@ def main() -> int:
     log(f"{'scenario':<26s} {'damage':>7s} {'expected':>10s}  result  notes")
     log("-" * 110)
 
+    # Boot ONE PyBoy, snapshot it, then load_state per scenario instead of
+    # constructing a new emulator each time. Drops 8-scenario wall-clock
+    # from ~10s to ~1s and unblocks the Hypothesis fuzz workload (Tier 2.2)
+    # which needs hundreds of restores per second.
+    cache = BootStateCache(rom)
+    cache.prime()
+
     failures: list[tuple[Scenario, int, list[HookSnapshot], dict]] = []
     xfailures: list[tuple[Scenario, int, list[HookSnapshot], dict]] = []
     xpasses: list[tuple[Scenario, int]] = []
-    for sc in SCENARIOS:
-        damage, snapshots, seed_state = run_scenario(sc, syms, rom)
-        ok = sc.expected_low <= damage <= sc.expected_high
-        if ok and sc.xfail:
-            result = "XPASS"
-            xpasses.append((sc, damage))
-        elif ok:
-            result = "PASS"
-        elif sc.xfail:
-            result = "XFAIL"
-            xfailures.append((sc, damage, snapshots, seed_state))
-        else:
-            result = "FAIL"
-            failures.append((sc, damage, snapshots, seed_state))
-        log(
-            f"{sc.name:<26s} {damage:>7d} "
-            f"{f'{sc.expected_low}-{sc.expected_high}':>10s}  {result:>5s}  {sc.note}"
-        )
+    try:
+        for sc in SCENARIOS:
+            damage, snapshots, seed_state = run_scenario(sc, syms, cache)
+            ok = sc.expected_low <= damage <= sc.expected_high
+            if ok and sc.xfail:
+                result = "XPASS"
+                xpasses.append((sc, damage))
+            elif ok:
+                result = "PASS"
+            elif sc.xfail:
+                result = "XFAIL"
+                xfailures.append((sc, damage, snapshots, seed_state))
+            else:
+                result = "FAIL"
+                failures.append((sc, damage, snapshots, seed_state))
+            log(
+                f"{sc.name:<26s} {damage:>7d} "
+                f"{f'{sc.expected_low}-{sc.expected_high}':>10s}  {result:>5s}  {sc.note}"
+            )
+    finally:
+        cache.stop()
 
     log()
 
