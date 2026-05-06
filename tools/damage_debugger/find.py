@@ -245,6 +245,7 @@ def format_report(
     lines.append(f"          user_item={inp.user_item:#04x} opponent_item={inp.opponent_item:#04x}")
     lines.append(f"          weather={inp.weather:#04x} move_effect={inp.move_effect:#04x} "
                  f"johto_badges={inp.johto_badges:#04x} kanto_badges={inp.kanto_badges:#04x}")
+    lines.append(f"          initial_cur_damage={inp.initial_cur_damage}")
     lines.append("")
     lines.append(f"  step-by-step (ROM | oracle):")
     for d in diffs:

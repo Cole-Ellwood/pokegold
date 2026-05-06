@@ -166,6 +166,7 @@ def battle_inputs_strategy(draw) -> BattleInputs:
         move_effect=move_effect,
         johto_badges=johto_badges,
         kanto_badges=kanto_badges,
+        initial_cur_damage=draw(st.sampled_from([0, 0, 0, 0x00FF, 0x0100])),
     )
 
 
@@ -285,7 +286,10 @@ def _seed_inputs(pyboy, syms, inp: BattleInputs) -> None:
 def _run_one(pyboy, syms, inp: BattleInputs) -> int:
     _seed_inputs(pyboy, syms, inp)
     cd_sym = syms["wCurDamage"]
-    for fn in ("BattleCommand_DamageStats", "BattleCommand_DamageCalc", "BattleCommand_Stab"):
+    call_function_safe(pyboy, syms, "BattleCommand_DamageStats")
+    if inp.initial_cur_damage:
+        write_be_u16(pyboy, "wCurDamage", syms, inp.initial_cur_damage)
+    for fn in ("BattleCommand_DamageCalc", "BattleCommand_Stab"):
         call_function_safe(pyboy, syms, fn)
     return read_be_u16_banked(pyboy, cd_sym[1], cd_sym[0])
 
@@ -465,6 +469,12 @@ def _reference_corpus() -> list[BattleInputs]:
             attacker_atk=55, defender_def=45,
             attacker_types=(GRASS, POISON), defender_types=(WATER, GROUND),
             weather=WEATHER_RAIN, move_effect=EFFECT_SOLARBEAM,
+        ),
+        BattleInputs(
+            attacker_level=50, move_bp=60, move_type=NORMAL, is_physical=True,
+            attacker_atk=80, defender_def=70,
+            attacker_types=(NORMAL, NORMAL), defender_types=(FIRE, FIRE),
+            initial_cur_damage=0x0100,
         ),
         BattleInputs(
             attacker_level=5, move_bp=40, move_type=FIRE, is_physical=False,

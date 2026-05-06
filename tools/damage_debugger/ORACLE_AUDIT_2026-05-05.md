@@ -185,8 +185,8 @@ Oracle reproduces the formula correctly EXCEPT:
 | 2820-2823 | `xor a; ld [wIsConfusionDamage], a` — entry to `BattleCommand_DamageCalc` (vs `ConfusionDamageCalc`) zeros the confusion-damage flag | **Not modeled.** Confusion-damage path entirely outside oracle scope. |
 | 2879-2920 | `TypeBoostItems` loop — Charcoal +10% FIRE, Mystic Water +10% WATER, etc. | **Not modeled.** Documented as a TODO in `oracle.py:25-27` but no fuzz scenario triggers it. |
 | 2924 | `callfar ApplyLateGenDamageMultipliers_Far` — Muscle Band, Wise Glasses, Expert Belt, Metronome, Life Orb post-quotient modifiers | **Not modeled.** Documented as a TODO in `oracle.py:23-24`. |
-| 2935-2978 | Cap-add-MIN_DAMAGE block. Adds incoming `wCurDamage` to the freshly computed quotient for multi-hit accumulation | **Not modeled.** Oracle assumes `wCurDamage = 0` entering DamageCalc; this is true for our seed but breaks for multi-hit moves. |
-| 2935-2939 | `ld b, [hl] ; ldh a, [hQuotient+3] ; add b` reads `[wCurDamage]` (high byte of big-endian) and adds to `hQuotient+3` (LOW byte of quotient). Looks endian-mismatched if `wCurDamage` is nonzero. | **Worth verifying.** For our seed (wCurDamage=0 entering), this is harmless. If wCurDamage is ever nonzero entering DamageCalc (multi-hit), this could be a separate ROM bug. Did not investigate further — flagging for follow-up. |
+| 2935-2978 | Cap-add-MIN_DAMAGE block. Adds incoming `wCurDamage` to the freshly computed quotient for multi-hit accumulation | **Modeled as of 2026-05-06 M1.** `BattleInputs.initial_cur_damage` lets fuzz/probes seed nonzero incoming damage before DamageCalc. |
+| 2935-2939 | `ld b, [hl] ; ldh a, [hQuotient+3] ; add b` reads `[wCurDamage]` (high byte of big-endian) and adds to `hQuotient+3` (LOW byte of quotient). Looks endian-mismatched if `wCurDamage` is nonzero. | **Confirmed ROM bug as of 2026-05-06 M1.** `python -m tools.damage_debugger.cap_add_probe` shows incoming `$0100` produces ROM/current-asm damage 289 vs intended 288. Current oracle/fuzz model the shipped asm so coverage stays green; gameplay fix deferred. |
 | 3013-3034 | `.CriticalMultiplier` — `sla` + `rl` doubles `hQuotient[2..3]`, caps at $FFFF on carry | **Modeled correctly.** |
 
 The Q-formula computation lines 2838-2876 (`(2L/5+2)*BP*atk/def/50`) is
@@ -271,9 +271,10 @@ branches). The gaps are clearly enumerated above and split into:
 - **Documented gaps**: TypeBoostItems, ApplyLateGenDamageMultipliers_Far,
   HandleLateGenAfterHitEffects_Far, DamageVariation, STRUGGLE,
   Foresight-substatus, the two HP-d-clobber bug-mirrors.
-- **Undocumented gaps surfaced today**: `wCurDamage` non-zero on entry to
-  DamageCalc, `EFFECT_MULTI_HIT`/`EFFECT_CONVERSION` BP=0 bypass, the
-  cap-add block endian question. `DoWeatherModifiers` and
+- **Undocumented gaps surfaced today**: `EFFECT_MULTI_HIT`/`EFFECT_CONVERSION`
+  BP=0 bypass. `wCurDamage` non-zero on entry to DamageCalc is now modeled,
+  and the cap-add block endian question is confirmed as a ROM bug by M1.
+  `DoWeatherModifiers` and
   `DoBadgeTypeBoosts` were on this list when the audit was written; both
   were closed by H3 on 2026-05-06.
 

@@ -155,3 +155,41 @@ Bug found in debugger itself:
 
 Open:
 - Run final H3 verification floor and commit.
+
+## M1 -- cap-add endian investigation
+
+Active item: M1, cap-add endian investigation.
+
+Changed:
+- Added `tools/damage_debugger/cap_add_probe.py`.
+- Added `BattleInputs.initial_cur_damage`.
+- Added `oracle.predict_damagecalc_only` and a model switch for current-asm
+  vs intended endian-neutral accumulation.
+- Extended `fuzz.py` to seed nonzero `wCurDamage` between DamageStats and
+  DamageCalc for synthetic multi-hit coverage.
+- Documented the finding in BUG_CHECK and ORACLE_AUDIT.
+
+Debugger self-check:
+- `cap_add_probe` fails if ROM DamageCalc output matches neither the current
+  asm model nor the intended model.
+- Fuzz worker self-check now includes a `$0100` initial damage case.
+
+Commands run:
+- `python -m tools.damage_debugger.oracle`
+- `python -m tools.damage_debugger.cap_add_probe`
+- `python -m tools.damage_debugger.fuzz --self-check-workers=2`
+- `python -m tools.damage_debugger.fuzz --max-examples=100 --workers=1`
+- `python -m tools.damage_debugger.fuzz --max-examples=100 --workers=2`
+- `python -m tools.damage_debugger.clobber_smoke`
+- `python -m compileall -q tools\damage_debugger`
+
+Bug found in debugger/ROM:
+- ROM bug confirmed: `BattleCommand_DamageCalc` adds
+  `high(wCurDamage)` twice when incoming `wCurDamage >= $0100`. Example:
+  incoming `$0100` gives ROM/current-asm 289 vs intended 288.
+- Debugger gap closed: oracle/fuzz previously had no nonzero incoming
+  `wCurDamage` axis.
+
+Open:
+- Do not fix ROM under this roadmap item; gameplay-affecting fix needs
+  explicit approval. Run final M1 verification floor and commit.

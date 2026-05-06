@@ -16,6 +16,7 @@ broke same-bank callers in `engine/battle/late_gen_held_items.asm` whose
 | `python -m tools.damage_debugger.fuzz --max=1000 --workers=4` | Hypothesis ROM-vs-oracle fuzz. Each worker owns a PyBoy boot cache and a deterministic seed partition. |
 | `python -m tools.damage_debugger.fuzz --self-check-workers=4` | Debugger self-check: runs a fixed corpus single-process and multi-process, then asserts identical ROM/oracle results. |
 | `python -m tools.damage_debugger.find <scenario>` | Bucket-locates ROM-vs-oracle divergence across DamageStats / DamageCalc / Stab / TypeMatchup / TypePassive. |
+| `python -m tools.damage_debugger.cap_add_probe` | Classifies the DamageCalc nonzero-`wCurDamage` accumulation path against current-asm and intended endian-neutral models. |
 | `python -m tools.damage_debugger.precommit_check --self-test` | Self-test for the Claude `PreToolUse` git-commit gate that runs `clobber_smoke` when damage-chain asm is being committed. |
 | `python -m tools.damage_debugger.full_chain_v2` | Focused single-scenario investigation. Pidgey-Tackle-vs-Cyndaquil chain with per-step damage logging. |
 | `python -m tools.damage_debugger.trace_chain` | Deep register-state trace at every key hook in the chain. Use when `clobber_smoke` flags a regression and you want the full per-hook snapshot. |
@@ -58,7 +59,8 @@ and boot cache; PyBoy is never shared across processes.
 
 The generated axes include base stats, move type/category, crits, held
 items, TypePassive HP/status flags, weather, SolarBeam's rain modifier,
-and matching badge type boosts.
+matching badge type boosts, and a synthetic nonzero `wCurDamage` entry
+axis for the DamageCalc cap-add path.
 
 The default base seed is deterministic. Worker `i` runs with
 `base_seed + i`, so a failing worker report can be reproduced by rerunning
@@ -131,6 +133,7 @@ Active:
 - `oracle.py` -- Python damage oracle and oracle self-test
 - `find.py` -- bucketed ROM-vs-oracle divergence diagnostic
 - `minimize.py` -- single-axis ddmin for load-bearing BattleInputs fields
+- `cap_add_probe.py` -- M1 DamageCalc nonzero-wCurDamage accumulation classifier
 - `precommit_check.py` -- Claude PreToolUse git-commit smoke gate
 - `full_chain_v2.py` -- single-scenario chain runner with step-by-step damage
 - `trace_chain.py` -- deep per-hook register snapshot

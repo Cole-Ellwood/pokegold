@@ -491,3 +491,45 @@ Remaining risk:
   still-documented gaps around nonzero `wCurDamage` entering DamageCalc,
   BP=0 multi-hit/conversion bypasses, or later DamageVariation/after-hit
   effects.
+
+## 2026-05-06 — M1 cap-add endian investigation
+
+Roadmap item: M1, cap-add endian investigation.
+
+Change:
+- Added `tools.damage_debugger.cap_add_probe`.
+- Added `BattleInputs.initial_cur_damage` so the debugger can seed a
+  synthetic multi-hit-style nonzero `wCurDamage` between DamageStats and
+  DamageCalc.
+- Added `oracle.predict_damagecalc_only`, with a switch for the current
+  shipped asm behavior vs the likely intended endian-neutral accumulation.
+- Extended `fuzz.py` to include the synthetic nonzero-`wCurDamage` axis and
+  a fixed worker self-check case at `$0100`.
+
+Finding:
+- The ROM matches current asm behavior, not intended endian-neutral behavior.
+- Incoming `wCurDamage = $0100` before DamageCalc yields:
+  - ROM: 289
+  - current-asm model: 289
+  - intended model: 288
+- Root cause is the audit-suspected line sequence at
+  `engine/battle/effect_commands.asm:2939`: the high byte of
+  `wCurDamage` is added to `hQuotient+3` before the full 16-bit incoming
+  damage is added, so incoming damage >= 256 gets an extra
+  `high(wCurDamage)` added.
+
+Disposition:
+- Documented as a real ROM bug, but not fixed here because changing it would
+  alter gameplay behavior for high-damage multi-hit accumulation. The oracle
+  models the shipped asm by default so fuzz remains a regression guard for
+  debugger/ROM agreement.
+
+Verification:
+- `python -m tools.damage_debugger.cap_add_probe` — PASS/classified:
+  `$0000` and `$00ff` match both models; `$0100` matches current asm only.
+- `python -m tools.damage_debugger.oracle` — PASS, 11/11 oracle self-tests.
+- `python -m tools.damage_debugger.fuzz --self-check-workers=2` — PASS,
+  ten-case corpus including `$0100` initial damage.
+- `python -m tools.damage_debugger.fuzz --max-examples=100 --workers=1` — PASS.
+- `python -m tools.damage_debugger.fuzz --max-examples=100 --workers=2` — PASS.
+- `python -m tools.damage_debugger.clobber_smoke` — PASS, 11/11 scenarios.

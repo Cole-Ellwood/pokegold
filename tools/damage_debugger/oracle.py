@@ -67,6 +67,8 @@ WEATHER_SANDSTORM = 3
 
 # Move effects from constants/move_effect_constants.asm.
 EFFECT_NORMAL_HIT = 0
+EFFECT_MULTI_HIT = 29
+EFFECT_CONVERSION = 30
 EFFECT_SOLARBEAM = 151
 
 # Item IDs that participate in the damage-chain stat mods.
@@ -245,6 +247,11 @@ class BattleInputs:
     link_mode: int = 0
     battle_turn: int = 0
 
+    # Synthetic multi-hit/cap-add probe axis. Normal move scripts enter
+    # DamageCalc with zero damage after DamageStats; multi-hit accumulation
+    # can enter with a nonzero wCurDamage from a prior hit.
+    initial_cur_damage: int = 0
+
 
 def _apply_user_item_stat_mod(inp: BattleInputs, atk: int) -> int:
     """ApplyChoiceBandBoost / ApplyChoiceSpecsBoost in late_gen_held_items.asm."""
@@ -289,6 +296,80 @@ def _truncate_hl_bc(hl: int, bc: int) -> tuple[int, int]:
     if hl == 0:
         hl = 1
     return hl & 0xFF, bc & 0xFF
+
+
+def _damagecalc_quotient(inp: BattleInputs) -> int | None:
+    """DamageCalc quotient before cap/add/MIN_DAMAGE.
+
+    Returns None when BattleCommand_DamageCalc would early-return before
+    touching wCurDamage (BP=0 outside the multi-hit/conversion bypass).
+    """
+    atk = _apply_user_item_stat_mod(inp, inp.attacker_atk)
+    deff = _apply_opponent_item_stat_mod(inp, inp.defender_def)
+    atk, deff = _truncate_hl_bc(atk, deff)
+
+    if inp.is_selfdestruct:
+        deff = max(1, deff // 2)
+
+    if inp.move_bp == 0 and inp.move_effect not in {EFFECT_MULTI_HIT, EFFECT_CONVERSION}:
+        return None
+
+    q = (2 * inp.attacker_level) // 5 + 2
+    q = q * inp.move_bp
+    q = q * atk
+    q = q // max(1, deff)
+    q = q // 50
+
+    if inp.is_critical:
+        q *= 2
+        if q > 0xFFFF:
+            q = 0xFFFF
+    return q
+
+
+def _finish_damagecalc(
+    q: int | None,
+    *,
+    initial_cur_damage: int = 0,
+    emulate_cap_add_endian_bug: bool = True,
+) -> int:
+    """Finish BattleCommand_DamageCalc from quotient to wCurDamage.
+
+    `emulate_cap_add_endian_bug=True` mirrors the current asm exactly:
+    before adding the full incoming `wCurDamage`, it also adds
+    `wCurDamage`'s high byte to `hQuotient+3` (the low byte). For incoming
+    damage >= 256 this produces `initial + quotient + high(initial) + 2`.
+    Passing False models the likely intended endian-neutral accumulation.
+    """
+    if q is None:
+        return initial_cur_damage & 0xFFFF
+
+    DAMAGE_CAP = 997
+    initial_cur_damage &= 0xFFFF
+    adjusted_q = q
+    if emulate_cap_add_endian_bug:
+        adjusted_q += initial_cur_damage >> 8
+    if adjusted_q > DAMAGE_CAP:
+        return 999
+
+    total = adjusted_q + initial_cur_damage
+    if total > DAMAGE_CAP:
+        total = DAMAGE_CAP
+    return total + 2
+
+
+def predict_damagecalc_only(
+    inp: BattleInputs,
+    *,
+    initial_cur_damage: int = 0,
+    emulate_cap_add_endian_bug: bool = True,
+) -> int:
+    """Predict wCurDamage immediately after BattleCommand_DamageCalc."""
+    return _finish_damagecalc(
+        _damagecalc_quotient(inp),
+        initial_cur_damage=initial_cur_damage,
+        emulate_cap_add_endian_bug=emulate_cap_add_endian_bug,
+    )
 
 
 def _dragons_majesty_applies(inp: BattleInputs) -> bool:
@@ -614,40 +695,7 @@ def predict_damage(inp: BattleInputs, *, pristine: bool = False) -> int:
     at the end of `Stab`'s `.not_immune` block (effect_commands.asm:1412),
     so the oracle must model those nine type-passive mods as well.
     """
-    atk = _apply_user_item_stat_mod(inp, inp.attacker_atk)
-    deff = _apply_opponent_item_stat_mod(inp, inp.defender_def)
-
-    # TruncateHL_BC: if either stat doesn't fit in 8 bits, both get
-    # shifted >> 2. DamageCalc consumes the truncated 8-bit values.
-    atk, deff = _truncate_hl_bc(atk, deff)
-
-    if inp.is_selfdestruct:
-        deff = max(1, deff // 2)
-
-    if inp.move_bp == 0:
-        return 0
-
-    # Level term: floor(2*L / 5) + 2.
-    q = (2 * inp.attacker_level) // 5 + 2
-    q = q * inp.move_bp
-    q = q * atk
-    q = q // max(1, deff)  # asm has a min-1 clamp on def
-    q = q // 50
-
-    # Crit doubles the pre-additive quotient.
-    if inp.is_critical:
-        q *= 2
-        if q > 0xFFFF:
-            q = 0xFFFF
-
-    # Cap the quotient at DAMAGE_CAP = MAX_DAMAGE - MIN_DAMAGE = 997
-    # BEFORE adding MIN_DAMAGE; mirrors the asm's two-step cap (the .Cap
-    # block writes wCurDamage = $03E5 = 997, then the .dont_cap_3 block
-    # adds MIN_DAMAGE so wCurDamage settles at 999 exactly when capped).
-    DAMAGE_CAP = 997
-    if q > DAMAGE_CAP:
-        q = DAMAGE_CAP
-    dmg = q + 2  # MIN_DAMAGE
+    dmg = predict_damagecalc_only(inp, initial_cur_damage=inp.initial_cur_damage)
 
     # BattleCommand_Stab first applies weather and badge type boosts to the
     # current damage, then applies STAB.
@@ -693,29 +741,12 @@ def predict_damage_trace(inp: BattleInputs, *, pristine: bool = False) -> list[t
     """
     trace: list[tuple[str, int]] = [("DamageStats", 0)]
 
-    atk = _apply_user_item_stat_mod(inp, inp.attacker_atk)
-    deff = _apply_opponent_item_stat_mod(inp, inp.defender_def)
-    atk, deff = _truncate_hl_bc(atk, deff)
-    if inp.is_selfdestruct:
-        deff = max(1, deff // 2)
-
-    if inp.move_bp == 0:
+    q = _damagecalc_quotient(inp)
+    if q is None:
         trace.extend([("DamageCalc", 0), ("Stab", 0), ("TypeMatchup", 0), ("TypePassive", 0)])
         return trace
 
-    q = (2 * inp.attacker_level) // 5 + 2
-    q = q * inp.move_bp
-    q = q * atk
-    q = q // max(1, deff)
-    q = q // 50
-    if inp.is_critical:
-        q *= 2
-        if q > 0xFFFF:
-            q = 0xFFFF
-    DAMAGE_CAP = 997
-    if q > DAMAGE_CAP:
-        q = DAMAGE_CAP
-    dmg = q + 2
+    dmg = _finish_damagecalc(q, initial_cur_damage=inp.initial_cur_damage)
     trace.append(("DamageCalc", dmg))
 
     dmg = _apply_weather_modifiers(inp, dmg)
