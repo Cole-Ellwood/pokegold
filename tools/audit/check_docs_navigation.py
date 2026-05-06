@@ -219,6 +219,11 @@ PLANNED_MISSING_ARTIFACTS = (
     "audit/boss_ai_trace/koga_live.txt",
     "audit/boss_ai_trace/champion_lance_live.txt",
     "audit/boss_ai_trace/shared_switch_loop_live.txt",
+    # Boss AI policy-layer rebuild (see docs/boss_ai_rebuild_plan.md, BOSSAI-003).
+    # Tooling directory + design docs to be created during the rebuild; the
+    # roadmap row references them ahead of existence so future sessions can
+    # find the plan from the index.
+    "tools/boss_ai_debugger",
 )
 
 AGENT_NAVIGATION_CONTRACT_SNIPPETS = {
