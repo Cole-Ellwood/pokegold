@@ -238,3 +238,103 @@ The harness has now demonstrably done its job:
 - Found the Eviolite `bc/hl` clobber (commit `2ad4ca2c`, this session).
 - Found the GetUserHPAndMax d-clobber (commit `<this commit>`,
   this session, via Hypothesis fuzz).
+
+## 2026-05-05 — 50k fuzz finds a second ROM bug
+
+Pass A from the 2026-05-05 oracle bug-test handoff. Ran fuzz at
+`--max-examples=50000`. Hypothesis surfaced this counterexample at
+~6 minutes wall-clock:
+
+```
+inputs: attacker_level=3, move_bp=27, move_type=GROUND, is_physical=True,
+        attacker_atk=62, defender_def=5,
+        attacker_types=(NORMAL, DRAGON), defender_types=(GHOST, GROUND),
+        is_critical=True
+rom_damage=19, oracle_damage=21
+```
+
+### ROM bug: `CheckTypeMatchup.Yup` hl-clobber via Dragon's Majesty farcall
+
+`engine/battle/effect_commands.asm:1493-1512` — the running-product
+matchup loop's `.Yup` block does `call CheckTypeMatchup_ApplyDragonsMajestyMultiplier`
+without `push hl`. That call chains into `BattleCommand_ApplyDragonsMajestyMultiplier`
+(line 1415-1424) which `farcall`s `TypePassive_ApplyDragonsMajestyMultiplier_Far`.
+Per the asm guide §3.2, `farcall` clobbers caller's `hl`. The matchup
+loop then continues with `hl` pointing at random stack memory.
+
+Trace (probe5):
+
+```
+Yup #1: hl=0x4e92 — real (GROUND, GHOST, mult=NO_EFFECT) row in TypeMatchups
+Yup #2: hl=0xdfd5 — STACK garbage (wStackTop=$dfff)
+Yup #3: hl=0xdfe1 — STACK garbage
+End: wTypeMatchup = 85 (instead of intended 5)
+```
+
+In TypePassive, `wTypeMatchup = 85` makes Branch 5 (GROUND-super-eff
+resist) fire when it shouldn't, dropping damage from 21 → 19 via the
+19/20 dual-GROUND fraction.
+
+### Fires when
+
+Both conditions:
+1. The matchup row would have mult `NO_EFFECT` (NORMAL→GHOST,
+   ELECTRIC→GROUND, POISON→STEEL, GROUND→FLYING/GHOST, PSYCHIC→DARK,
+   GHOST→NORMAL/STEEL, FIGHTING→GHOST).
+2. Attacker has DRAGON contribution > 0 (so Dragon's Majesty re-routes
+   instead of returning early).
+
+The neighboring per-row matchup loop in `BattleCommand_Stab.GotMatchup`
+(line 1331-1390) handles this safely — it has `push hl` at line 1332.
+Only `CheckTypeMatchup.Yup` is missing the save.
+
+### Severity
+
+Damage against type-immunity defenders by DRAGON-contribution attackers
+is **non-deterministic** — the corrupted hl reads stack memory whose
+contents depend on prior call history. Real-world examples:
+Dragonite/Salamence using ELECTRIC vs GROUND (NVE via DM in spec, but
+ROM reads garbage); any DRAGON dual-type using NORMAL/POISON/etc vs the
+matching immunity defender.
+
+### Fix shape
+
+```asm
+.Yup:
+    xor a
+    ldh [hDividend + 0], a
+    ldh [hMultiplicand + 0], a
+    ldh [hMultiplicand + 1], a
+    ld a, [hli]
+    push hl                                ; <-- add
+    call CheckTypeMatchup_ApplyDragonsMajestyMultiplier
+    pop hl                                 ; <-- add
+    ldh [hMultiplicand + 2], a
+    ...
+```
+
+**Don't ship.** The HP-d-clobber fix from earlier in this session is
+still pending user review for the same reason — both bugs change a
+balance-affecting mechanic from "broken" to "active." Escalate.
+
+### Disposition
+
+Oracle currently models the as-intended math (matchup_total = 5 for
+NVE-via-DM). The 50k fuzz divergence is a positive signal: when this
+ROM bug is fixed, fuzz on this counterexample will report PASS and the
+divergence will go away. Until then, leave as-is — it's a permanent
+regression guard.
+
+Audit report covering all phases of the chain
+(`tools/damage_debugger/ORACLE_AUDIT_2026-05-05.md`) lists this plus
+two undocumented Stab-side oracle gaps (`DoWeatherModifiers`,
+`DoBadgeTypeBoosts`).
+
+### Final state (after this pass)
+
+- `oracle.py` self-test: 8/8 match paper math.
+- `clobber_smoke`: 8/8 PASS.
+- `fuzz` at 50k: 1 divergence (this ROM bug).
+- 2 ROM bugs identified by the harness this session
+  (HP-d-clobber + DM-hl-clobber), both escalated, both pending user
+  review. Audit doc captures the full picture.

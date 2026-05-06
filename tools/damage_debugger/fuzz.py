@@ -151,7 +151,7 @@ def _seed_inputs(pyboy, syms, inp: BattleInputs) -> None:
         "wCurEnemyMove", "wCurPlayerMove",
     ):
         write_byte(pyboy, byte_field, syms, 0)
-    write_byte(pyboy, "wTypeMatchup", syms, 0x10)
+    write_byte(pyboy, "wTypeMatchup", syms, 10)  # EFFECTIVE per battle_constants.asm
     write_be_u16(pyboy, "wCurDamage", syms, 0)
     for stage in ("Atk", "Def", "Spd", "SAtk", "SDef"):
         write_byte(pyboy, f"wPlayer{stage}Level", syms, 7)
