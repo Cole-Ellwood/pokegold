@@ -1124,14 +1124,16 @@ Before reporting "asm change done":
 3. **If you touched battle-code register ABI** (added a write at
    function exit, refactored a clobber set, changed a `farcall` to
    `call`), run `python -m tools.damage_debugger.clobber_smoke`. It
-   runs three scenarios — physical no-items, physical critical,
-   special no-items — and expects `wCurDamage` in a known range for
-   each. Any FAIL means a clobber escaped your function-level audit
-   (§3.13, §3.14). The single-scenario `full_chain_v2` is still
-   useful for focused investigation but `clobber_smoke` is the floor.
-   Coverage today is partial (no items, no type-effectiveness, no
-   DamageVariation); extend `SCENARIOS` in `clobber_smoke.py` to
-   cover branches your change touched.
+   runs the hand-curated damage-chain scenarios and expects
+   `wCurDamage` in a known range for each. Any FAIL means a clobber
+   escaped your function-level audit (§3.13, §3.14). The single-scenario
+   `full_chain_v2` is still useful for focused investigation but
+   `clobber_smoke` is the floor. For oracle/fuzz changes, also run
+   `python -m tools.damage_debugger.oracle`,
+   `python -m tools.damage_debugger.fuzz --self-check-workers=2`, and
+   representative fuzz in both single-worker and multi-worker modes.
+   Coverage today is partial (no DamageVariation); extend `SCENARIOS`
+   in `clobber_smoke.py` to cover branches your change touched.
 4. Regenerate `docs/generated/dev_index.md` after **any** successful
    build (`python scripts/generate_dev_index.py --rom pokegold`).
 5. If you touched balance tables, regenerate

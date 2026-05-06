@@ -13,6 +13,9 @@ broke same-bank callers in `engine/battle/late_gen_held_items.asm` whose
 | Tool | Use when |
 | --- | --- |
 | `python -m tools.damage_debugger.clobber_smoke` | **§6 verification floor** -- runs every battle-engine ABI-touching change through. Multi-scenario regression harness. Exits 0 on pass. |
+| `python -m tools.damage_debugger.fuzz --max=1000 --workers=4` | Hypothesis ROM-vs-oracle fuzz. Each worker owns a PyBoy boot cache and a deterministic seed partition. |
+| `python -m tools.damage_debugger.fuzz --self-check-workers=4` | Debugger self-check: runs a fixed corpus single-process and multi-process, then asserts identical ROM/oracle results. |
+| `python -m tools.damage_debugger.find <scenario>` | Bucket-locates ROM-vs-oracle divergence across DamageStats / DamageCalc / Stab / TypeMatchup / TypePassive. |
 | `python -m tools.damage_debugger.full_chain_v2` | Focused single-scenario investigation. Pidgey-Tackle-vs-Cyndaquil chain with per-step damage logging. |
 | `python -m tools.damage_debugger.trace_chain` | Deep register-state trace at every key hook in the chain. Use when `clobber_smoke` flags a regression and you want the full per-hook snapshot. |
 | `python -m tools.damage_debugger.repro_pidgey` | Original repro driver for the May 2026 c-clobber bug. Kept as a known-good reference scenario. |
@@ -44,6 +47,26 @@ To add a new scenario: write a `seed_*` function and append a
 `Scenario(...)` to `SCENARIOS`. Pick `expected_low/high` loose enough to
 absorb integer-floor noise but tight enough to catch a 4-10x clobber-
 class spike.
+
+## Fuzz multiprocessing
+
+`fuzz.py` compares generated `BattleInputs` against
+`oracle.predict_damage`. `--workers N` splits the example budget across
+N spawned Python processes. Each process creates its own PyBoy instance
+and boot cache; PyBoy is never shared across processes.
+
+The default base seed is deterministic. Worker `i` runs with
+`base_seed + i`, so a failing worker report can be reproduced by rerunning
+with `--workers 1 --seed <reported-seed>` and the same per-worker
+`--max-examples` budget.
+
+Before trusting worker-mode changes, run:
+
+```powershell
+python -m tools.damage_debugger.fuzz --self-check-workers=2
+python -m tools.damage_debugger.fuzz --max-examples=20 --workers=1
+python -m tools.damage_debugger.fuzz --max-examples=20 --workers=2
+```
 
 ## The HRAM sentinel trick (safe_call.py)
 
@@ -81,6 +104,10 @@ up from the worktree to find ROM/sym), so it works the same in a
 Active:
 
 - `clobber_smoke.py` -- multi-scenario regression harness (the §6 floor entry point)
+- `fuzz.py` -- Hypothesis ROM-vs-oracle fuzz, with multiprocessing worker mode
+- `oracle.py` -- Python damage oracle and oracle self-test
+- `find.py` -- bucketed ROM-vs-oracle divergence diagnostic
+- `minimize.py` -- single-axis ddmin for load-bearing BattleInputs fields
 - `full_chain_v2.py` -- single-scenario chain runner with step-by-step damage
 - `trace_chain.py` -- deep per-hook register snapshot
 - `repro_pidgey.py` -- original c-clobber repro
@@ -111,3 +138,7 @@ floor for any change to battle-code register ABI. Sister static audit:
 `tools/audit/check_typepassive_c_mirror.py` -- both belong in any
 release-smoke run involving `engine/battle/late_gen_held_items.asm` or
 `engine/battle/type_passive_damage_mods.asm`.
+
+For oracle/fuzz changes, run `python -m tools.damage_debugger.oracle`,
+`python -m tools.damage_debugger.fuzz --self-check-workers=2`, and a
+representative fuzz budget in both `--workers=1` and `--workers>1` modes.

@@ -387,3 +387,37 @@ regression guard.
   active).
 - 2 ROM bugs found AND fixed AND verified by the harness this
   session. Round-trip complete.
+
+## 2026-05-06 — H1 multiprocessing fuzz worker mode
+
+Roadmap item: H1, multi-process fuzz parallelization.
+
+Change:
+- Added `--workers N` to `tools.damage_debugger.fuzz`.
+- Split the Hypothesis example budget across spawned Python worker
+  processes. Each worker owns its own PyBoy instance and boot cache.
+- Added deterministic per-worker seeds (`base_seed + worker_id`) so a
+  failing worker report can be reproduced.
+- Added `--self-check-workers N`, a debugger self-check that runs a fixed
+  six-case corpus once in-process and once split across workers, then
+  compares the exact `(ROM damage, oracle damage, ok)` tuple per case.
+- Fixed a debugger hygiene bug in the existing single-process path: the
+  fuzz cache was not explicitly stopped, causing Windows/PyBoy shutdown
+  to print repeated `Error in sys.excepthook` noise after an otherwise
+  passing fuzz run.
+
+Verification:
+- `python -m tools.damage_debugger.oracle` — PASS, 8/8 oracle self-tests.
+- `python -m tools.damage_debugger.clobber_smoke` — PASS, 8/8 scenarios.
+- `python -m tools.damage_debugger.fuzz --self-check-workers=2` — PASS,
+  six-case corpus equivalent between single-process and two-worker runs.
+- `python -m tools.damage_debugger.fuzz --max-examples=20 --workers=1 --verbose`
+  — PASS.
+- `python -m tools.damage_debugger.fuzz --max-examples=20 --workers=2 --verbose`
+  — PASS.
+- `python -m tools.damage_debugger.fuzz --max-examples=40 --workers=4` — PASS.
+
+Remaining risk:
+- The verification budget here proves worker plumbing and representative
+  fuzz behavior, not the roadmap's eventual 50k/8-worker performance target.
+  Run the larger budget before release delivery.
