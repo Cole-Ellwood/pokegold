@@ -48,6 +48,60 @@ These functions implement decisions and scoring. They are the part the user desc
 
 Estimated split: ~70% of `boss.asm` is policy code (~4500-5000 lines).
 
+## Foundational design pillar: mixed strategy, not pure-optimal
+
+Pokemon is a hidden-information game — closer to poker than chess. A boss AI that always picks the argmax of its scoring function is **structurally exploitable**: the player models the AI as deterministic and counter-plays for free. This is the dominant reason vanilla Gen 2 AI feels easy. The rebuild must fix this at the structural level, not as one heuristic among many.
+
+The decision-making is two layers, distinct mechanisms:
+
+### Layer A — EV-based scoring with near-tie mix
+
+Scores all candidate moves with the heuristic system. Picks via:
+- If gap from top score to second exceeds `EV_THRESHOLD` (~20% of top), play top.
+- If multiple moves are within `EV_THRESHOLD`, sample from a softmax weighted by score, with a counter-switch denial bonus added to moves that punish the player's likely safe switch-in.
+
+Handles ~90% of decisions. Pure-Gameboy-implementable: ~30 lines in `BossAI_SelectMove` plus the bonus computation. The mixing prevents trivial-determinism exploits ("Pidgeot always switches in safely against my Earthquake user") because the mix tilts toward Stone Edge when Pidgeot is revealed.
+
+### Layer B — Strategic-deception override, corpus-driven
+
+Layer A handles "near-EV-tie" mixing but cannot capture **dominant-move spots where the deception equity exceeds the EV cost** — the Thunderbolt-into-Ground class. That's a multi-turn meta-strategic decision: the bluff this turn is worth its zero-EV cost only because of how the player's mental model has been shaped over previous turns.
+
+Layer B is a small override system, separate from Layer A's scoring. Each corpus entry pairs `(current state + recent history features, right-move-this-turn)`. History features the corpus captures:
+
+- How many of AI's last N moves were the same dominant pick.
+- How many times the player has switched in response to AI's last N moves.
+- Whether the player's revealed counter to AI's preferred move has come in safely already.
+- Tempo delta (HP advantage shifting over turns).
+- Whether AI has used a "test" move (probing for hidden info) yet this battle.
+
+User tags scenarios from replays as "AI should have bluffed here." The pre-history is captured automatically (the tool has the replay); Layer B trains a pattern-matcher (nearest-neighbor over corpus features, or a small interpretable rule-set) that fires on matching state shapes during play. When Layer B fires, AI overrides Layer A's pick with a bluff move at small probability — the bluff frequency is tunable per-leader.
+
+This is *the* class of decision that is genuinely hard to encode as a single-turn heuristic. The corpus-with-history-features mechanism is the right tool because the user's judgment is the only ground truth for "this is a deception-worthy spot."
+
+### Why this stays north-star-compatible
+
+- **No hidden-info reads.** History features only count *AI's own past moves* and *the player's observable responses* — both public. No peeking at unrevealed party members or PP counters.
+- **Heuristics still readable.** Layer A heuristics are still plain scoring rules anchored to POLICY_DESIGN.md. Layer B's pattern-matcher cites its corpus entries: "this state matches turn 4 of the 2026-06-12 Whitney bluff scenario; AI is bluffing at 30% per the corpus tag." Auditable.
+- **Each leader has personality.** Falkner is risk-averse (small EV_THRESHOLD, low Layer B firing rate). Whitney is conservative + punishing (high counter-switch bonus). Clair is aggressive (broad mixing, willing to bluff). Personality is per-leader parameters anchored to flavor.
+- **Player can learn the patterns.** "Whitney bluffs more when ahead on HP" is a learnable read. The mix is conditional on game state, not random noise. Mastery comes from reading the leader's *style*.
+
+### Implementation reality
+
+On SM83:
+- Layer A: ~30-line addition to `BossAI_SelectMove`. Counter-switch bonus is a few hundred bytes per leader.
+- Layer B: a feature extractor (~50-100 bytes) that reads history features into a struct, plus a pattern-matcher table (~256 bytes per leader for the corpus-derived rules). Layer B fires at small probability when its conditions match; the rest of the time it's a no-op.
+
+Memory budget concern is real (WRAMX bank 1 already tight per `check_boss_ai_memory_budget.py`). Layer B's history feature struct must fit within the existing budget; the pattern-matcher tables can live in ROM (regenerated from corpus as part of the build).
+
+### Trace pipeline implications
+
+Once AI is stochastic, deterministic single-frame "AI picked move X" captures stop being a complete description. Two adaptations needed:
+
+- **Seeded-RNG repro**: each `audit/boss_ai_trace/*_live.txt` capture pins a `BattleRandom` seed so the trace is reproducible.
+- **Distribution capture**: each capture also records the score distribution + tie set + Layer B activation (if any) + sampled move. Audits verify "AI was sampling from the right set with the right Layer B state" rather than "AI picked the right move."
+
+Lean toward distribution capture — it's the right abstraction for stochastic AI. Existing per-leader live captures need to be re-run after the rebuild lands; this is part of Step 4's regression check anyway.
+
 ## Methodology: interview-driven design
 
 The current heuristics are bad because no single design philosophy anchors them. The rebuild fixes this by inverting the order: **philosophy first, heuristics second.**
@@ -169,12 +223,25 @@ The rebuild is verified the same way the existing boss AI is verified, plus the 
 
 The rebuild does not bump `SAVE_FORMAT_VERSION` (it touches `engine/battle/ai/`, not `ram/`). No save-format escalation needed.
 
-## Open questions for the user before Step 1 starts
+## Decisions locked in (2026-05-05)
 
-1. **Time budget.** Is this a focused 4-week sprint, or a multi-month project iterated alongside other work? The phasing scales either way; ETA changes.
-2. **Existing heuristics worth saving.** Are there any specific decisions the current AI gets right that you want preserved through the rebuild? List them in advance — they become anchor scenarios in Step 4's regression check.
-3. **Tool ordering.** Tool Phase 1 (CLI scoring inspector) is needed *during* the rebuild's Step 4 (trace regression check) — judging without it means reading raw scoring through manual probes. Should we do Tool Phase 1 *before* Step 3 (heuristic synthesis), so it's ready when Step 4 starts?
-4. **Haki scope.** Per BOSSAI-001, Haki has a design contract but no source implementation. Does the rebuild implement Haki, or stay strict-public-info and defer Haki to a follow-up? Recommendation: defer. Build the strict-public-info policy first; Haki is a known once-per-battle authored exception layer that adds on top, not in the middle.
+- **Time budget**: 4-week focused sprint. Damage debugger continues in parallel only for the cheap items (H1 multi-process fuzz, H3 weather/badges); deeper damage-debugger work pauses until rebuild v1 ships.
+- **Start**: next session kicks off Step 1 (platform/policy audit).
+- **Layer architecture**: Layer A (EV-based scoring + near-tie mix) + Layer B (corpus-driven strategic-deception override). See "Foundational design pillar" above.
+- **Haki scope**: deferred past initial rebuild. Build strict-public-info policy first; Haki rides on top later as authored once-per-battle exceptions.
+
+## Open questions still to answer during Step 1 / Step 2
+
+1. **Existing heuristics worth saving.** Are there specific decisions the current AI gets right that should be preserved through the rebuild? Surface during Step 1 audit; capture in Step 4 trace-regression check as anchor scenarios.
+2. **Tool ordering.** Tool Phase 1 (CLI scoring inspector) is needed *during* Step 4 (trace regression check). My recommendation: build Tool Phase 1 *before* Step 3 (heuristic synthesis) so it's ready when Step 4 starts. Confirm during Step 1 audit when we know the platform API surface.
+
+## Out-of-scope for v1 — captured for v2
+
+These are good ideas but explicitly defer past v1 to protect the 4-week budget. Track here so they don't drop off the floor.
+
+- **RL-trained Layer B (the "RL-ROM" idea).** Repurpose damage-debugger's PyBoy + boot-cache infrastructure as a headless battle simulator. Random team generator (respecting gym-leader-tier constraints) + thousands of self-play or vs-human battles + Layer B parameter optimizer (genetic algorithm / random search / Bayesian opt) + outcome scoring (win/loss/HP/turns) + user-override layer for tagging good/bad decisions to shape the fitness function. Estimated 2-3 weeks of work on top of v1. **Decision criterion: ship v1 with corpus-only Layer B; if corpus training feels insufficient after playtesting, scope this in as v2.**
+- **Cross-leader policy transfer.** If Whitney's Layer B corpus has 50 entries and Falkner's has 5, can Falkner's pattern-matcher borrow from Whitney's where features overlap? Risk: leader personalities blur; gain: faster onboarding for under-judged leaders. Defer until v1 reveals whether this matters.
+- **Live-play in-the-loop training.** GUI lets you pause a real battle mid-turn, judge AI's pick, save to corpus. Higher engagement than replay-based judging but also more cumbersome. Tool Phase 4-ish addition; evaluate after Phase 3 GUI lands.
 
 ## What changes in the doc tree as this lands
 
