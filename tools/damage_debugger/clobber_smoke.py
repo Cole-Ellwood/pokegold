@@ -63,6 +63,10 @@ CHOICE_SPECS_ID = 0x81
 ASSAULT_VEST_ID = 0x89
 EVOLITE_ID = 0x93
 
+WEATHER_RAIN = 1
+WEATHER_SUN = 2
+VOLCANOBADGE_MASK = 1 << 6
+
 
 @dataclass
 class Scenario:
@@ -166,7 +170,7 @@ def _zero_meta(pyboy, syms):
         "wCriticalHit", "wTypeModifier", "wAttackMissed", "wIsConfusionDamage",
         "wEffectFailed", "wEnemyScreens", "wPlayerScreens", "wBattleMonStatus",
         "wEnemyMonStatus", "wBattleWeather", "wJohtoBadges", "wKantoBadges",
-        "wCurEnemyMove", "wCurPlayerMove",
+        "wCurEnemyMove", "wCurPlayerMove", "wLinkMode",
     ):
         write_byte(pyboy, byte_field, syms, 0)
     write_byte(pyboy, "wTypeMatchup", syms, 0x10)
@@ -266,6 +270,24 @@ def seed_special_eviolite_spd(pyboy, syms):
     write_byte(pyboy, "wEnemyMonItem", syms, EVOLITE_ID)
 
 
+def seed_special_sun_fire(pyboy, syms):
+    """Cyndaquil Ember vs Pidgey under sun -> weather 1.5x before STAB."""
+    _seed_cyndaquil_attacks_pidgey_with_ember(pyboy, syms)
+    write_byte(pyboy, "wBattleWeather", syms, WEATHER_SUN)
+
+
+def seed_special_rain_fire(pyboy, syms):
+    """Cyndaquil Ember vs Pidgey under rain -> weather 0.5x before STAB."""
+    _seed_cyndaquil_attacks_pidgey_with_ember(pyboy, syms)
+    write_byte(pyboy, "wBattleWeather", syms, WEATHER_RAIN)
+
+
+def seed_special_fire_badge(pyboy, syms):
+    """Cyndaquil Ember vs Pidgey with VolcanoBadge -> damage + damage/8 before STAB."""
+    _seed_cyndaquil_attacks_pidgey_with_ember(pyboy, syms)
+    write_byte(pyboy, "wKantoBadges", syms, VOLCANOBADGE_MASK)
+
+
 # Ranges are loose enough to absorb DamageVariation-free integer noise but
 # tight enough that a 4-10x clobber-class regression always trips them.
 #
@@ -313,6 +335,18 @@ SCENARIOS = [
     Scenario(
         "special_eviolite_spd", seed_special_eviolite_spd, 6, 12,
         "Eviolite on defender (Pidgey can evolve) -> spdef * 3/2 -> ~9.",
+    ),
+    Scenario(
+        "special_sun_fire", seed_special_sun_fire, 17, 22,
+        "Sun boosts FIRE damage 1.5x before STAB.",
+    ),
+    Scenario(
+        "special_rain_fire", seed_special_rain_fire, 5, 8,
+        "Rain halves FIRE damage before STAB.",
+    ),
+    Scenario(
+        "special_fire_badge", seed_special_fire_badge, 13, 17,
+        "VolcanoBadge adds damage/8 before STAB on player FIRE move.",
     ),
 ]
 

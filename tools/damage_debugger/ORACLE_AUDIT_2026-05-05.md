@@ -12,8 +12,9 @@ file:line references for every gap and every divergence.
   Dragon's Majesty fires, then continues reading the matchup table from
   random stack memory. See "ROM BUG: CheckTypeMatchup hl-clobber" below.
 - **Two undocumented oracle gaps in Stab** (DoWeatherModifiers,
-  DoBadgeTypeBoosts) — both farcalls run between `.go` and `.SkipStab` and
-  modify `wCurDamage`. Oracle doesn't model either.
+  DoBadgeTypeBoosts) were found in this audit. **Closed 2026-05-06 (H3):**
+  the oracle and fuzz seed now model both, with deterministic clobber-smoke
+  scenarios for sun, rain, and VolcanoBadge.
 - **One small fuzz-seed bug** that's harmless today: writes `0x10` (=16)
   for "EFFECTIVE" but `EFFECTIVE = 10`.
 - TypePassive's 9-branch logic in the oracle is line-by-line correct.
@@ -199,8 +200,8 @@ Oracle reproduces this phase EXCEPT:
 | --- | --- | --- |
 | 1227-1228 | `cp STRUGGLE; ret z` — STRUGGLE bypasses Stab (and the TypePassive farcall) entirely | **Not modeled.** Documented as a known gap in oracle.py docstring. Benign because the fuzz seed always uses move ID 0x21 (Tackle), but if future scenarios use STRUGGLE this will surface. |
 | 1255 | `ld [wCurType], a` — writes the move type to `wCurType`, which **aliases** `wTypeMatchup` (ram/wram.asm:2185-2200, multiple `::` labels at the same address) | **Not modeled.** Harmless because `BattleCheckTypeMatchup` always re-initializes `wTypeMatchup = EFFECTIVE` before using it. Worth knowing about: the probe trace shows wTypeMatchup transition `16 → 4 → 10 → 5 → corrupt → 85` due to this alias. |
-| 1260 | `farcall DoWeatherModifiers` — rain/sun weather damage modifiers | **NOT MODELED — UNDOCUMENTED GAP.** Multiplies `wCurDamage` by a weather-table-derived factor (`/ 10`). Fuzz seed zeroes `wBattleWeather` so this is currently a no-op, but any real battle has nonzero weather state. |
-| 1267 | `farcall DoBadgeTypeBoosts` — player-side badge boost (1.125× damage if player has matching badge for move type) | **NOT MODELED — UNDOCUMENTED GAP.** Returns early if `wLinkMode != 0` or `hBattleTurn != 0` (player turn only). Adds `damage / 8` (rounding floor) when matching badge bit set. Fuzz seeds `wJohtoBadges = 0` and `wKantoBadges = 0` so this is currently a no-op, but any post-gym real battle has badges. |
+| 1260 | `farcall DoWeatherModifiers` — rain/sun weather damage modifiers | **Modeled as of 2026-05-06 H3.** Oracle scans type modifiers before move-effect modifiers, matching asm order; fuzz seeds `wBattleWeather`; clobber_smoke covers sun/rain FIRE cases. |
+| 1267 | `farcall DoBadgeTypeBoosts` — player-side badge boost (1.125× damage if player has matching badge for move type) | **Modeled as of 2026-05-06 H3.** Oracle honors `wLinkMode == 0`, player turn only, Johto+Kanto badge bit order, `max(1, damage // 8)`, and `$ffff` cap; fuzz seeds matching badge bits; clobber_smoke covers VolcanoBadge. |
 | 1311-1319 | Foresight bypass — `cp -2` marker followed by `bit SUBSTATUS_IDENTIFIED, a` to skip the post-marker rows (NORMAL→GHOST, FIGHTING→GHOST) | **Not modeled** in the per-row matchup loop or in `_matchup_total`. Oracle includes those entries in `_TYPE_MATCHUPS` unconditionally. Not currently a divergence because fuzz seeds `wEnemySubStatus1` zero (= no Foresight), but if a scenario sets it the GHOST-immunity bypass will mismatch. |
 | 1338-1344 | `BattleCommand_ApplyDragonsMajestyMultiplier` here, with `push hl` at line 1332 protecting hl across the call. **THIS path is hl-safe**, unlike `CheckTypeMatchup.Yup`. | **Modeled correctly via `_dragons_majesty_applies`.** |
 | 1398 | `call BattleCheckTypeMatchup` — recomputes `wTypeMatchup` as a running product. Has the hl-clobber ROM bug (see top of doc). | **Oracle's `_matchup_total` models the as-intended math, not the buggy ROM behavior.** |
@@ -270,10 +271,11 @@ branches). The gaps are clearly enumerated above and split into:
 - **Documented gaps**: TypeBoostItems, ApplyLateGenDamageMultipliers_Far,
   HandleLateGenAfterHitEffects_Far, DamageVariation, STRUGGLE,
   Foresight-substatus, the two HP-d-clobber bug-mirrors.
-- **Undocumented gaps surfaced today**: `DoWeatherModifiers`,
-  `DoBadgeTypeBoosts`, `wCurDamage` non-zero on entry to DamageCalc,
-  `EFFECT_MULTI_HIT`/`EFFECT_CONVERSION` BP=0 bypass, the cap-add block
-  endian question.
+- **Undocumented gaps surfaced today**: `wCurDamage` non-zero on entry to
+  DamageCalc, `EFFECT_MULTI_HIT`/`EFFECT_CONVERSION` BP=0 bypass, the
+  cap-add block endian question. `DoWeatherModifiers` and
+  `DoBadgeTypeBoosts` were on this list when the audit was written; both
+  were closed by H3 on 2026-05-06.
 
 For Pass C (extending fuzz to cover gaps), the highest-leverage axes are
 weather and badges — both fire in real Gen 2 battles, and both are

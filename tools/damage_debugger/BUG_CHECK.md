@@ -452,3 +452,42 @@ Verification:
 Remaining risk:
 - This guards Claude Code Bash-tool commits. A manual Git commit outside
   Claude Code will not run this hook unless a separate Git hook is installed.
+
+## 2026-05-06 — H3 weather + badge oracle/fuzz axes
+
+Roadmap item: H3, Pass C weather + badges.
+
+Change:
+- Added weather fields to `BattleInputs` and modeled `DoWeatherModifiers`
+  in `oracle.py`:
+  - rain boosts WATER by 15/10 and halves FIRE;
+  - sun boosts FIRE by 15/10 and halves WATER;
+  - rain halves SolarBeam-effect moves only when no weather type row matched.
+- Added badge fields to `BattleInputs` and modeled `DoBadgeTypeBoosts`:
+  player turn only, `wLinkMode == 0`, Johto badge bits followed by Kanto
+  badge bits, matching move type, add `max(1, damage // 8)` capped at `$ffff`.
+- Extended `fuzz.py` to generate weather and matching-badge axes and seed
+  `wBattleWeather`, `wJohtoBadges`, `wKantoBadges`, `wLinkMode`, and the
+  move-effect byte.
+- Added deterministic clobber-smoke scenarios:
+  - `special_sun_fire`: FIRE move under sun, ROM/oracle damage 19.
+  - `special_rain_fire`: FIRE move under rain, ROM/oracle damage 6.
+  - `special_fire_badge`: FIRE move with VolcanoBadge, ROM/oracle damage 15.
+- Updated `find.py` scenario mapping and report output for the new axes.
+- Updated `ORACLE_AUDIT_2026-05-05.md` to mark the weather/badge gaps closed.
+
+Verification:
+- `python -m tools.damage_debugger.oracle` — PASS, 11/11 oracle self-tests.
+- `python -m tools.damage_debugger.clobber_smoke` — PASS, 11/11 scenarios.
+- `python -m tools.damage_debugger.fuzz --self-check-workers=2` — PASS,
+  nine-case corpus equivalent between single-process and two-worker runs.
+- `python -m tools.damage_debugger.fuzz --max-examples=100 --workers=1` — PASS.
+- `python -m tools.damage_debugger.fuzz --max-examples=100 --workers=2` — PASS.
+- `python -m tools.damage_debugger.find special_sun_fire` — PASS, no divergence.
+- `python -m tools.damage_debugger.find special_fire_badge` — PASS, no divergence.
+
+Remaining risk:
+- H3 covers the weather/badge modifier routines themselves. It does not close
+  still-documented gaps around nonzero `wCurDamage` entering DamageCalc,
+  BP=0 multi-hit/conversion bypasses, or later DamageVariation/after-hit
+  effects.

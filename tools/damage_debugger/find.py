@@ -243,6 +243,8 @@ def format_report(
     lines.append(f"          attacker_types={inp.attacker_types} "
                  f"defender_types={inp.defender_types}")
     lines.append(f"          user_item={inp.user_item:#04x} opponent_item={inp.opponent_item:#04x}")
+    lines.append(f"          weather={inp.weather:#04x} move_effect={inp.move_effect:#04x} "
+                 f"johto_badges={inp.johto_badges:#04x} kanto_badges={inp.kanto_badges:#04x}")
     lines.append("")
     lines.append(f"  step-by-step (ROM | oracle):")
     for d in diffs:
@@ -388,6 +390,27 @@ def _scenario_to_inputs(sc: Scenario) -> BattleInputs:
             attacker_types=(_oracle.FIRE, _oracle.FIRE),
             defender_types=(_oracle.NORMAL, _oracle.FLYING),
             opponent_item=_oracle.HELD_EVOLITE, can_evolve_defender=True,
+        ),
+        "special_sun_fire": BattleInputs(
+            attacker_level=5, move_bp=40, move_type=_oracle.FIRE, is_physical=False,
+            attacker_atk=11, defender_def=5,
+            attacker_types=(_oracle.FIRE, _oracle.FIRE),
+            defender_types=(_oracle.NORMAL, _oracle.FLYING),
+            weather=_oracle.WEATHER_SUN,
+        ),
+        "special_rain_fire": BattleInputs(
+            attacker_level=5, move_bp=40, move_type=_oracle.FIRE, is_physical=False,
+            attacker_atk=11, defender_def=5,
+            attacker_types=(_oracle.FIRE, _oracle.FIRE),
+            defender_types=(_oracle.NORMAL, _oracle.FLYING),
+            weather=_oracle.WEATHER_RAIN,
+        ),
+        "special_fire_badge": BattleInputs(
+            attacker_level=5, move_bp=40, move_type=_oracle.FIRE, is_physical=False,
+            attacker_atk=11, defender_def=5,
+            attacker_types=(_oracle.FIRE, _oracle.FIRE),
+            defender_types=(_oracle.NORMAL, _oracle.FLYING),
+            kanto_badges=1 << 6,
         ),
     }
     if sc.name not in table:

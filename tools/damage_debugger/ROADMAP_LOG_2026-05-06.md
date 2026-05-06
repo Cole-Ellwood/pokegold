@@ -111,3 +111,47 @@ Bug found in debugger itself:
 
 Open:
 - Run final H2 verification floor and commit.
+
+## H3 -- weather + badge oracle/fuzz axes
+
+Active item: H3, Pass C weather + badges.
+
+Changed:
+- Added weather, move-effect, badge, link-mode, and battle-turn fields to
+  `BattleInputs`.
+- Modeled `DoWeatherModifiers` in `oracle.py`, including type rows taking
+  precedence over the rain + SolarBeam move-effect row.
+- Modeled `DoBadgeTypeBoosts` in `oracle.py`, including player-turn and
+  link-mode gates, Johto/Kanto bit order, min-1 boost, and `$ffff` cap.
+- Extended `fuzz.py` to generate and seed weather/badge axes.
+- Added three deterministic `clobber_smoke` scenarios:
+  `special_sun_fire`, `special_rain_fire`, and `special_fire_badge`.
+- Registered those scenarios in `find.py` and exposed weather/badge fields
+  in the human report.
+- Marked the weather/badge audit gaps closed in
+  `ORACLE_AUDIT_2026-05-05.md`.
+
+Debugger self-check:
+- Oracle self-test now includes exact expected values for sun, rain, and
+  VolcanoBadge.
+- `clobber_smoke` now fails if ROM behavior for those three reference
+  scenarios diverges from the documented ranges.
+- Fuzz worker self-check corpus now includes weather, SolarBeam-in-rain,
+  and badge cases.
+
+Commands run:
+- `python -m tools.damage_debugger.oracle`
+- `python -m tools.damage_debugger.clobber_smoke`
+- `python -m tools.damage_debugger.fuzz --self-check-workers=2`
+- `python -m tools.damage_debugger.fuzz --max-examples=100 --workers=1`
+- `python -m tools.damage_debugger.fuzz --max-examples=100 --workers=2`
+- `python -m tools.damage_debugger.find special_sun_fire`
+- `python -m tools.damage_debugger.find special_fire_badge`
+
+Bug found in debugger itself:
+- The oracle audit had correctly identified weather/badges as gaps; no new
+  ROM bug appeared. The debugger bug was incomplete modeling/seed coverage,
+  now fixed.
+
+Open:
+- Run final H3 verification floor and commit.

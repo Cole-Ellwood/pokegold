@@ -56,6 +56,10 @@ class spike.
 N spawned Python processes. Each process creates its own PyBoy instance
 and boot cache; PyBoy is never shared across processes.
 
+The generated axes include base stats, move type/category, crits, held
+items, TypePassive HP/status flags, weather, SolarBeam's rain modifier,
+and matching badge type boosts.
+
 The default base seed is deterministic. Worker `i` runs with
 `base_seed + i`, so a failing worker report can be reproduced by rerunning
 with `--workers 1 --seed <reported-seed>` and the same per-worker

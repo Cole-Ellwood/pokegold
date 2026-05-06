@@ -54,9 +54,20 @@ PHYSICAL_MAX = 0x09  # Inclusive: NORMAL..STEEL.
 
 # Effectiveness encoding from constants/battle_constants.asm.
 SUPER_EFFECTIVE = 20
+MORE_EFFECTIVE = 15
 EFFECTIVE = 10
 NOT_VERY_EFFECTIVE = 5
 NO_EFFECT = 0
+
+# Weather values from constants/battle_constants.asm.
+WEATHER_NONE = 0
+WEATHER_RAIN = 1
+WEATHER_SUN = 2
+WEATHER_SANDSTORM = 3
+
+# Move effects from constants/move_effect_constants.asm.
+EFFECT_NORMAL_HIT = 0
+EFFECT_SOLARBEAM = 151
 
 # Item IDs that participate in the damage-chain stat mods.
 HELD_NONE = 0x00
@@ -223,6 +234,17 @@ class BattleInputs:
     opponent_has_status: bool = False
     opponent_above_half_hp: bool = False
 
+    # BattleCommand_Stab pre-STAB modifiers. Fuzz seeds these fields into
+    # wBattleWeather, wJohtoBadges, wKantoBadges, wLinkMode, and the move
+    # struct effect byte. The fuzz convention is player turn (`hBattleTurn=0`)
+    # unless `battle_turn` is explicitly set.
+    weather: int = WEATHER_NONE
+    move_effect: int = EFFECT_NORMAL_HIT
+    johto_badges: int = 0
+    kanto_badges: int = 0
+    link_mode: int = 0
+    battle_turn: int = 0
+
 
 def _apply_user_item_stat_mod(inp: BattleInputs, atk: int) -> int:
     """ApplyChoiceBandBoost / ApplyChoiceSpecsBoost in late_gen_held_items.asm."""
@@ -357,6 +379,87 @@ def _apply_fraction(dmg: int, num: int, den: int) -> int:
         return 0
     out = (dmg * num) // den
     return max(1, out)
+
+
+def _apply_scaled_by_10(dmg: int, mult: int) -> int:
+    """Mirror DoWeatherModifiers' multiply/divide-by-10 helper."""
+    product = dmg * mult
+    out = product // 10
+    if out > 0xFFFF:
+        return 0xFFFF
+    if out == 0 and product != 0:
+        return 1
+    return out
+
+
+_WEATHER_TYPE_MODIFIERS = (
+    (WEATHER_RAIN, WATER, MORE_EFFECTIVE),
+    (WEATHER_RAIN, FIRE, NOT_VERY_EFFECTIVE),
+    (WEATHER_SUN, FIRE, MORE_EFFECTIVE),
+    (WEATHER_SUN, WATER, NOT_VERY_EFFECTIVE),
+)
+
+_WEATHER_MOVE_MODIFIERS = (
+    (WEATHER_RAIN, EFFECT_SOLARBEAM, NOT_VERY_EFFECTIVE),
+)
+
+
+def _apply_weather_modifiers(inp: BattleInputs, dmg: int) -> int:
+    """Mirror DoWeatherModifiers.
+
+    The asm scans WeatherTypeModifiers first and returns after the first
+    match. WeatherMoveModifiers (currently Rain + SolarBeam) are checked
+    only if no type row matched.
+    """
+    for weather, move_type, mult in _WEATHER_TYPE_MODIFIERS:
+        if inp.weather == weather and inp.move_type == move_type:
+            return _apply_scaled_by_10(dmg, mult)
+    for weather, move_effect, mult in _WEATHER_MOVE_MODIFIERS:
+        if inp.weather == weather and inp.move_effect == move_effect:
+            return _apply_scaled_by_10(dmg, mult)
+    return dmg
+
+
+_BADGE_TYPE_BOOSTS = (
+    FLYING,
+    BUG,
+    NORMAL,
+    GHOST,
+    STEEL,
+    FIGHTING,
+    ICE,
+    DRAGON,
+    ROCK,
+    WATER,
+    ELECTRIC,
+    GRASS,
+    POISON,
+    PSYCHIC_TYPE,
+    FIRE,
+    GROUND,
+)
+
+
+def _badge_boost_applies(inp: BattleInputs) -> bool:
+    if inp.link_mode != 0:
+        return False
+    if inp.battle_turn != 0:
+        return False
+    badge_bits = (inp.kanto_badges << 8) | inp.johto_badges
+    for index, move_type in enumerate(_BADGE_TYPE_BOOSTS):
+        if badge_bits & (1 << index) and inp.move_type == move_type:
+            return True
+    return False
+
+
+def _apply_badge_type_boost(inp: BattleInputs, dmg: int) -> int:
+    """Mirror DoBadgeTypeBoosts: add max(1, damage // 8), capped at $ffff."""
+    if not _badge_boost_applies(inp):
+        return dmg
+    boost = dmg // 8
+    if boost == 0:
+        boost = 1
+    return min(0xFFFF, dmg + boost)
 
 
 def _type_passive_modifiers(
@@ -546,6 +649,11 @@ def predict_damage(inp: BattleInputs, *, pristine: bool = False) -> int:
         q = DAMAGE_CAP
     dmg = q + 2  # MIN_DAMAGE
 
+    # BattleCommand_Stab first applies weather and badge type boosts to the
+    # current damage, then applies STAB.
+    dmg = _apply_weather_modifiers(inp, dmg)
+    dmg = _apply_badge_type_boost(inp, dmg)
+
     # STAB: 3/2 if move type matches attacker.
     has_stab = inp.move_type in inp.attacker_types
     if has_stab:
@@ -609,6 +717,9 @@ def predict_damage_trace(inp: BattleInputs, *, pristine: bool = False) -> list[t
         q = DAMAGE_CAP
     dmg = q + 2
     trace.append(("DamageCalc", dmg))
+
+    dmg = _apply_weather_modifiers(inp, dmg)
+    dmg = _apply_badge_type_boost(inp, dmg)
 
     has_stab = inp.move_type in inp.attacker_types
     if has_stab:
@@ -730,6 +841,36 @@ def _self_test() -> list[tuple[str, int, int]]:
             attacker_atk=11, defender_def=5,
             attacker_types=CYNDAQUIL_TYPES, defender_types=PIDGEY_TYPES,
             opponent_item=HELD_EVOLITE, can_evolve_defender=True,
+        ),
+    ))
+
+    cases.append((
+        "special_sun_fire", 19,
+        BattleInputs(
+            attacker_level=5, move_bp=40, move_type=FIRE, is_physical=False,
+            attacker_atk=11, defender_def=5,
+            attacker_types=CYNDAQUIL_TYPES, defender_types=PIDGEY_TYPES,
+            weather=WEATHER_SUN,
+        ),
+    ))
+
+    cases.append((
+        "special_rain_fire", 6,
+        BattleInputs(
+            attacker_level=5, move_bp=40, move_type=FIRE, is_physical=False,
+            attacker_atk=11, defender_def=5,
+            attacker_types=CYNDAQUIL_TYPES, defender_types=PIDGEY_TYPES,
+            weather=WEATHER_RAIN,
+        ),
+    ))
+
+    cases.append((
+        "special_fire_badge", 15,
+        BattleInputs(
+            attacker_level=5, move_bp=40, move_type=FIRE, is_physical=False,
+            attacker_atk=11, defender_def=5,
+            attacker_types=CYNDAQUIL_TYPES, defender_types=PIDGEY_TYPES,
+            kanto_badges=1 << 6,
         ),
     ))
 

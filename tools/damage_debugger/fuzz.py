@@ -49,6 +49,8 @@ from .oracle import (
     DARK,
     DRAGON,
     ELECTRIC,
+    EFFECT_NORMAL_HIT,
+    EFFECT_SOLARBEAM,
     FIGHTING,
     FIRE,
     FLYING,
@@ -67,6 +69,9 @@ from .oracle import (
     ROCK,
     STEEL,
     WATER,
+    WEATHER_NONE,
+    WEATHER_RAIN,
+    WEATHER_SUN,
     BUG,
     predict_damage,
 )
@@ -81,6 +86,22 @@ ALL_TYPES = (
 PHYSICAL_TYPES = tuple(t for t in ALL_TYPES if t <= PHYSICAL_MAX)
 SPECIAL_TYPES = tuple(t for t in ALL_TYPES if t > PHYSICAL_MAX)
 DEFAULT_WORKER_SEED = 0xDAD02026
+
+
+BADGE_TYPE_ORDER = (
+    FLYING, BUG, NORMAL, GHOST, STEEL, FIGHTING, ICE, DRAGON,
+    ROCK, WATER, ELECTRIC, GRASS, POISON, PSYCHIC_TYPE, FIRE, GROUND,
+)
+
+
+def _badge_bits_for_type(move_type: int) -> tuple[int, int]:
+    for index, badge_type in enumerate(BADGE_TYPE_ORDER):
+        if badge_type != move_type:
+            continue
+        if index < 8:
+            return 1 << index, 0
+        return 0, 1 << (index - 8)
+    return 0, 0
 
 
 # --- Hypothesis strategies ---------------------------------------------------
@@ -109,6 +130,16 @@ def battle_inputs_strategy(draw) -> BattleInputs:
         draw(st.sampled_from([HELD_NONE, HELD_ASSAULT_VEST])) if not is_physical
         else HELD_NONE
     )
+    weather = draw(st.sampled_from([WEATHER_NONE, WEATHER_RAIN, WEATHER_SUN]))
+    move_effect = (
+        EFFECT_SOLARBEAM
+        if weather == WEATHER_RAIN and draw(st.booleans())
+        else EFFECT_NORMAL_HIT
+    )
+    if draw(st.booleans()):
+        johto_badges, kanto_badges = _badge_bits_for_type(move_type)
+    else:
+        johto_badges, kanto_badges = 0, 0
 
     return BattleInputs(
         attacker_level=draw(st.integers(min_value=1, max_value=100)),
@@ -131,6 +162,10 @@ def battle_inputs_strategy(draw) -> BattleInputs:
         attacker_below_third_hp=draw(st.booleans()),
         opponent_has_status=draw(st.booleans()),
         opponent_above_half_hp=draw(st.booleans()),
+        weather=weather,
+        move_effect=move_effect,
+        johto_badges=johto_badges,
+        kanto_badges=kanto_badges,
     )
 
 
@@ -149,9 +184,13 @@ def _seed_inputs(pyboy, syms, inp: BattleInputs) -> None:
         "wCriticalHit", "wTypeModifier", "wAttackMissed", "wIsConfusionDamage",
         "wEffectFailed", "wEnemyScreens", "wPlayerScreens", "wBattleMonStatus",
         "wEnemyMonStatus", "wBattleWeather", "wJohtoBadges", "wKantoBadges",
-        "wCurEnemyMove", "wCurPlayerMove",
+        "wCurEnemyMove", "wCurPlayerMove", "wLinkMode",
     ):
         write_byte(pyboy, byte_field, syms, 0)
+    write_byte(pyboy, "wBattleWeather", syms, inp.weather)
+    write_byte(pyboy, "wJohtoBadges", syms, inp.johto_badges)
+    write_byte(pyboy, "wKantoBadges", syms, inp.kanto_badges)
+    write_byte(pyboy, "wLinkMode", syms, inp.link_mode)
     write_byte(pyboy, "wTypeMatchup", syms, 10)  # EFFECTIVE per battle_constants.asm
     write_be_u16(pyboy, "wCurDamage", syms, 0)
     for stage in ("Atk", "Def", "Spd", "SAtk", "SDef"):
@@ -229,7 +268,7 @@ def _seed_inputs(pyboy, syms, inp: BattleInputs) -> None:
     move_id = 0x21  # arbitrary stable ID -- not used in the path
     for offset, val in [
         (0, move_id),
-        (1, 0x00),         # effect = NORMAL_HIT
+        (1, inp.move_effect),
         (2, inp.move_bp),
         (3, inp.move_type),
         (4, 0xFF),         # accuracy
@@ -238,7 +277,7 @@ def _seed_inputs(pyboy, syms, inp: BattleInputs) -> None:
     ]:
         write_byte_banked(pyboy, pm[1] + offset, val, pm[0])
     write_byte(pyboy, "wCurPlayerMove", syms, move_id)
-    write_byte(pyboy, "hBattleTurn", syms, 0)
+    write_byte(pyboy, "hBattleTurn", syms, inp.battle_turn)
     if inp.is_critical:
         write_byte(pyboy, "wCriticalHit", syms, 1)
 
@@ -414,6 +453,24 @@ def _reference_corpus() -> list[BattleInputs]:
             attacker_atk=20, defender_def=10,
             attacker_types=(FIRE, FIRE), defender_types=(NORMAL, NORMAL),
             attacker_below_third_hp=True,
+        ),
+        BattleInputs(
+            attacker_level=5, move_bp=40, move_type=FIRE, is_physical=False,
+            attacker_atk=11, defender_def=5,
+            attacker_types=(FIRE, FIRE), defender_types=(NORMAL, FLYING),
+            weather=WEATHER_SUN,
+        ),
+        BattleInputs(
+            attacker_level=18, move_bp=60, move_type=GRASS, is_physical=False,
+            attacker_atk=55, defender_def=45,
+            attacker_types=(GRASS, POISON), defender_types=(WATER, GROUND),
+            weather=WEATHER_RAIN, move_effect=EFFECT_SOLARBEAM,
+        ),
+        BattleInputs(
+            attacker_level=5, move_bp=40, move_type=FIRE, is_physical=False,
+            attacker_atk=11, defender_def=5,
+            attacker_types=(FIRE, FIRE), defender_types=(NORMAL, FLYING),
+            kanto_badges=1 << 6,
         ),
         BattleInputs(
             attacker_level=12, move_bp=55, move_type=ICE, is_physical=False,
