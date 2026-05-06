@@ -1,5 +1,16 @@
 # Boss AI RL Training Plan (v2 — RL-ROM)
 
+> **STATUS: SHELVED 2026-05-05.** Do not start work on the v2 RL training
+> simulator until the user explicitly resumes. See
+> [boss_ai_design_conversation_2026-05-05.md](boss_ai_design_conversation_2026-05-05.md)
+> — the simpler architecture surfaced there (algorithmic moveset priors +
+> unified scoring) likely obviates the need for v2 RL training entirely
+> (playtest tuning likely sufficient). The simulator infrastructure has
+> standalone value for future work (regression testing, AI vs AI tournament
+> mode); could resurrect for that purpose independently of priors-tuning.
+> Active focus has shifted to fully building out the damage debugger
+> (`tools/damage_debugger/`).
+
 **Status — 2026-05-05.** Plan documented. Not yet started — gated on v1 boss AI rebuild (BOSSAI-003) shipping. Decisions locked via interview pass 2026-05-05.
 
 This file is the canonical plan for the v2 RL training simulator. It supersedes the paragraph in `docs/boss_ai_rebuild_plan.md` ("Out-of-scope for v1 — captured for v2"). v1 ships with corpus-only Layer B; once corpus coverage proves insufficient after playtesting, this plan kicks off.

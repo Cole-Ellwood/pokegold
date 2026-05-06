@@ -1,5 +1,14 @@
 # Boss AI Rebuild Plan
 
+> **STATUS: SHELVED 2026-05-05.** Do not start work on this rebuild until
+> the user explicitly resumes. See
+> [boss_ai_design_conversation_2026-05-05.md](boss_ai_design_conversation_2026-05-05.md)
+> for the design conversation that surfaced a simpler architecture
+> (algorithmic moveset priors + unified scoring function + no CFR/RL) that
+> should be evaluated before committing to the Layer A + Layer B plan
+> documented below. Active focus has shifted to fully building out the
+> damage debugger (`tools/damage_debugger/`).
+
 **Status — 2026-05-05.** Diagnosis and plan documented. Not yet started. Next concrete action is Step 1 (platform/policy audit) in a future session.
 
 This file is the canonical plan for the boss AI rebuild project. It supersedes incremental improvements to `engine/battle/ai/boss.asm` for the policy layer; the platform layer is untouched by the rebuild and continues to evolve under existing workstreams (BOSSAI-001 trace proof, AG-NN audit pass, etc.).
