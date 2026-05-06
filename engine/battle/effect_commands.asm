@@ -1496,7 +1496,11 @@ CheckTypeMatchup:
 	ldh [hMultiplicand + 0], a
 	ldh [hMultiplicand + 1], a
 	ld a, [hli]
+	push hl                        ; CheckTypeMatchup_ApplyDragonsMajestyMultiplier
 	call CheckTypeMatchup_ApplyDragonsMajestyMultiplier
+	pop hl                         ; chains into a farcall (§3.2) that clobbers hl;
+	                               ; without push/pop, the matchup loop's table
+	                               ; pointer reads stack garbage on subsequent rows.
 	ldh [hMultiplicand + 2], a
 	ld a, [wTypeMatchup]
 	ldh [hMultiplier], a

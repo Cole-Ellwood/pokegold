@@ -75,7 +75,7 @@ Read `docs/README.md` first for helper-doc routing, then `docs/project_context.m
 | Region | Used | Free | Banks |
 | --- | ---: | ---: | ---: |
 | ROM0 | 16133 | 251 |  |
-| ROMX | 1151987 | 928781 | 127 |
+| ROMX | 1151989 | 928779 | 127 |
 | SRAM | 31699 | 1069 | 4 |
 | WRAM0 | 4047 | 49 |  |
 | WRAMX | 4096 | 0 |  |
@@ -115,7 +115,7 @@ Bank numbers in this table are hexadecimal.
 | ROMX | 1c | 1 |
 | ROMX | 1f | 1 |
 | ROMX | 1a | 4 |
-| ROMX | 0d | 25 |
+| ROMX | 0d | 23 |
 | ROMX | 16 | 48 |
 | WRAM0 | 00 | 49 |
 | ROMX | 20 | 64 |
@@ -151,7 +151,7 @@ Use these as candidates when moving optional code or data out of tight banks.
 | --- | --- | --- | ---: | --- | --- |
 | `Home` | ROM0 | 00:0150-3fdc | 16013 | ROM0 00 | `home.asm`, `home/array.asm`, `home/audio.asm`, `home/battle.asm`, +49 more |
 | `bankB` | ROMX | 0b:4000-4d69 | 3434 | ROMX 0b | `engine/battle/ai/redundant.asm`, `engine/battle/trainer_huds.asm`, `engine/events/move_deleter.asm`, `engine/events/move_reminder.asm`, +7 more |
-| `Effect Commands` | ROMX | 0d:4000-7fe6 | 16359 | ROMX 0d | `engine/battle/effect_commands.asm`, `engine/battle/used_move_text.asm`, `main.asm` |
+| `Effect Commands` | ROMX | 0d:4000-7fe8 | 16361 | ROMX 0d | `engine/battle/effect_commands.asm`, `engine/battle/used_move_text.asm`, `main.asm` |
 | `Enemy Trainers` | ROMX | 0e:4000-70f1 | 12530 | ROMX 0e | `engine/battle/ai/boss.asm`, `engine/battle/ai/items.asm`, `engine/battle/read_trainer_attributes.asm`, `main.asm` |
 | `Late Gen Held Items` | ROMX | 0e:70f2-7e72 | 3457 |  | `engine/battle/late_gen_held_items.asm`, `engine/battle/type_passive_damage_mods.asm`, `main.asm` |
 | `Battle Core` | ROMX | 0f:4000-7bad | 15278 | ROMX 0f | `engine/battle/core.asm`, `main.asm` |
@@ -219,7 +219,7 @@ Use these as candidates when moving optional code or data out of tight banks.
 | `BossAI_RefineSwitchCandidateForPlausibleRisk` | 0e:69db | `engine/battle/ai/boss.asm:6431` |
 | `BossAI_ApplyPlausibleRiskToSwitchConfidence` | 0e:6c0f | `engine/battle/ai/boss.asm:6803` |
 | `BossAITierMap` | 0e:7046 | `data/trainers/ai_tiers.asm:1` |
-| `CheckPlayerMoveTypeMatchups` | 0d:4a79 | `engine/battle/ai/switch.asm:1` |
+| `CheckPlayerMoveTypeMatchups` | 0d:4a7b | `engine/battle/ai/switch.asm:1` |
 | `AICompareSpeed` | 0b:7b28 | `engine/battle/ai/scoring.asm:2673` |
 | `AIDamageCalc` | 0b:7cdd | `engine/battle/ai/scoring.asm:3000` |
 | `TypePassive_ApplyDamageModifiers_Far` | 0e:7631 | `engine/battle/type_passive_damage_mods.asm:44` |
