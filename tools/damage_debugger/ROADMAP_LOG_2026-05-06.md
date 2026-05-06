@@ -78,3 +78,36 @@ Open:
   references in `.claude_handoffs` / `docs\manual_qa_backlog.md` against
   `codex/cleanup-gsc-rebalance-split`; not edited under damage-debugger
   scope. H1-specific checks and `check_navigation_floor.py` pass.
+
+## H2 -- Claude pre-commit smoke hook
+
+Active item: H2, pre-commit smoke hook.
+
+Changed:
+- Added `tools/damage_debugger/precommit_check.py`.
+- Wired `.claude/settings.json` `PreToolUse` for Bash commands to run the
+  checker before Claude executes `git commit`.
+- The checker runs `clobber_smoke` only when the pending commit touches
+  `engine/battle/late_gen_held_items.asm` or
+  `engine/battle/type_passive_damage_mods.asm`.
+- Added a temp-repo self-test that covers non-commit skip, untouched-file
+  skip, touched-file smoke execution, and touched-file smoke failure blocking.
+
+Debugger self-check:
+- `python -m tools.damage_debugger.precommit_check --self-test` fails if
+  the hook runs smoke for untouched files, skips smoke for touched target
+  files, or fails to propagate a smoke failure.
+
+Commands run:
+- `python -m tools.damage_debugger.precommit_check --self-test`
+- `python -c "import json; json.load(open('.claude/settings.json', encoding='utf-8')); print('settings json ok')"`
+- `python -m compileall -q tools\damage_debugger`
+- `{"tool_input":{"command":"git status"}} | python -m tools.damage_debugger.precommit_check`
+- `{"tool_input":{"command":"git commit -m test"}} | python -m tools.damage_debugger.precommit_check --dry-run`
+- `python3 -c "import pyboy; print('pyboy ok')"`
+
+Bug found in debugger itself:
+- None in the existing debugger. H2 adds the missing gate.
+
+Open:
+- Run final H2 verification floor and commit.

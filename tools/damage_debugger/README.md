@@ -16,6 +16,7 @@ broke same-bank callers in `engine/battle/late_gen_held_items.asm` whose
 | `python -m tools.damage_debugger.fuzz --max=1000 --workers=4` | Hypothesis ROM-vs-oracle fuzz. Each worker owns a PyBoy boot cache and a deterministic seed partition. |
 | `python -m tools.damage_debugger.fuzz --self-check-workers=4` | Debugger self-check: runs a fixed corpus single-process and multi-process, then asserts identical ROM/oracle results. |
 | `python -m tools.damage_debugger.find <scenario>` | Bucket-locates ROM-vs-oracle divergence across DamageStats / DamageCalc / Stab / TypeMatchup / TypePassive. |
+| `python -m tools.damage_debugger.precommit_check --self-test` | Self-test for the Claude `PreToolUse` git-commit gate that runs `clobber_smoke` when damage-chain asm is being committed. |
 | `python -m tools.damage_debugger.full_chain_v2` | Focused single-scenario investigation. Pidgey-Tackle-vs-Cyndaquil chain with per-step damage logging. |
 | `python -m tools.damage_debugger.trace_chain` | Deep register-state trace at every key hook in the chain. Use when `clobber_smoke` flags a regression and you want the full per-hook snapshot. |
 | `python -m tools.damage_debugger.repro_pidgey` | Original repro driver for the May 2026 c-clobber bug. Kept as a known-good reference scenario. |
@@ -68,6 +69,24 @@ python -m tools.damage_debugger.fuzz --max-examples=20 --workers=1
 python -m tools.damage_debugger.fuzz --max-examples=20 --workers=2
 ```
 
+## Claude pre-commit gate
+
+`.claude/settings.json` wires `tools.damage_debugger.precommit_check` into
+Claude Code's `PreToolUse` hook for Bash commands. The script reads the
+hook JSON from stdin and only acts on `git commit` commands.
+
+If the pending commit touches either damage-chain ABI-sensitive file,
+the hook runs `python -m tools.damage_debugger.clobber_smoke` and blocks
+the commit tool call when smoke fails:
+
+- `engine/battle/late_gen_held_items.asm`
+- `engine/battle/type_passive_damage_mods.asm`
+
+Run `python -m tools.damage_debugger.precommit_check --self-test` after
+changing this hook. The self-test creates a temporary Git repository and
+checks non-commit skip, untouched-file skip, touched-file smoke execution,
+and touched-file smoke failure propagation.
+
 ## The HRAM sentinel trick (safe_call.py)
 
 `call_function_safe` runs an arbitrary function under PyBoy by:
@@ -108,6 +127,7 @@ Active:
 - `oracle.py` -- Python damage oracle and oracle self-test
 - `find.py` -- bucketed ROM-vs-oracle divergence diagnostic
 - `minimize.py` -- single-axis ddmin for load-bearing BattleInputs fields
+- `precommit_check.py` -- Claude PreToolUse git-commit smoke gate
 - `full_chain_v2.py` -- single-scenario chain runner with step-by-step damage
 - `trace_chain.py` -- deep per-hook register snapshot
 - `repro_pidgey.py` -- original c-clobber repro

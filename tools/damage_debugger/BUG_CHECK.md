@@ -421,3 +421,34 @@ Remaining risk:
 - The verification budget here proves worker plumbing and representative
   fuzz behavior, not the roadmap's eventual 50k/8-worker performance target.
   Run the larger budget before release delivery.
+
+## 2026-05-06 — H2 Claude PreToolUse clobber smoke gate
+
+Roadmap item: H2, pre-commit smoke hook.
+
+Change:
+- Added `tools.damage_debugger.precommit_check`.
+- Wired `.claude/settings.json` `PreToolUse` for Bash commands to run the
+  checker before Claude executes shell commands.
+- The checker skips non-commit commands, inspects the pending commit's
+  staged files (plus `git commit -a` tracked changes and explicit target
+  pathspecs), and runs `clobber_smoke` only when the commit touches:
+  - `engine/battle/late_gen_held_items.asm`
+  - `engine/battle/type_passive_damage_mods.asm`
+- Added `--self-test`, which creates a temporary Git repository and verifies
+  the hook's decision logic without touching the real repo index.
+
+Verification:
+- `python -m tools.damage_debugger.precommit_check --self-test` — PASS.
+  Covered non-commit skip, untouched-file skip, touched-file smoke execution,
+  and touched-file smoke failure propagation.
+- `{"tool_input":{"command":"git status"}} | python -m tools.damage_debugger.precommit_check`
+  — PASS, skipped.
+- `{"tool_input":{"command":"git commit -m test"}} | python -m tools.damage_debugger.precommit_check --dry-run`
+  — PASS, skipped because no target damage-chain asm was staged.
+- `.claude/settings.json` parsed as JSON.
+- `python -m compileall -q tools\damage_debugger` — PASS.
+
+Remaining risk:
+- This guards Claude Code Bash-tool commits. A manual Git commit outside
+  Claude Code will not run this hook unless a separate Git hook is installed.
