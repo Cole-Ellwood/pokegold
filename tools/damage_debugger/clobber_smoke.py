@@ -419,6 +419,13 @@ def _format_snapshot(s: HookSnapshot) -> str:
 
 
 def main() -> int:
+    # Windows native Python defaults stdout to cp1252; any non-ASCII glyph in
+    # a Scenario.note (em-dash, arrow, section symbol) crashes mid-print and
+    # leaves a partial log. Force UTF-8 so future scenario authors don't have
+    # to police their notes character-by-character.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+
     LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
     fh = open(LOG_PATH, "w", encoding="utf-8", buffering=1)
 
@@ -429,12 +436,16 @@ def main() -> int:
         fh.flush()
 
     # find_rom/find_sym walk up from this file to find the ROM/sym pair --
-    # works inside .claude/worktrees/* and at the project root.
+    # works inside .claude/worktrees/* and at the project root. If a worktree
+    # never built its own pokegold_debug.gbc, the search silently falls back
+    # to an ancestor (the main repo). Printing the absolute path makes that
+    # fallback visible -- otherwise a stale upstream ROM looks like a real
+    # regression. Saw this in the 2026-05-05 harness bug-check pass.
     rom = find_rom("pokegold_debug")
     sym = find_sym("pokegold_debug")
     syms = parse_sym(sym)
 
-    log(f"clobber_smoke: running {len(SCENARIOS)} scenarios against {rom.name}")
+    log(f"clobber_smoke: running {len(SCENARIOS)} scenarios against {rom}")
     log(f"{'scenario':<26s} {'damage':>7s} {'expected':>10s}  result  notes")
     log("-" * 110)
 
