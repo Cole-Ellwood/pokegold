@@ -1,3 +1,10 @@
+; ============================================================
+; Region: State tracking
+; Concern: Turn counter, switch counter, seen-species bitmap, alive bitmap
+; Layer: PLATFORM
+; Original lines: 143
+; ============================================================
+; ai-layer: PLATFORM
 BossAI_IncrementTurnsElapsed:
 	ld a, [wBossAITier]
 	and a
@@ -23,6 +30,7 @@ BossAI_IncrementTurnsElapsed:
 	call BossAI_DecaySwitchCooldown
 	ret
 
+; ai-layer: PLATFORM
 BossAI_RecordPlayerSwitch:
 	ld a, [wBossAITier]
 	and a
@@ -34,6 +42,7 @@ BossAI_RecordPlayerSwitch:
 	inc [hl]
 	ret
 
+; ai-layer: PLATFORM
 BossAI_RecordPlayerSpecies:
 	ld a, [wBossAITier]
 	and a
@@ -81,6 +90,7 @@ BossAI_RecordPlayerSpecies:
 	inc [hl]
 	ret
 
+; ai-layer: PLATFORM
 BossAI_RecordPlayerFaint:
 	ld a, [wBossAITier]
 	and a
@@ -111,6 +121,7 @@ BossAI_RecordPlayerFaint:
 	call BossAI_ClearSeenPlayerAliveBit
 	ret
 
+; ai-layer: PLATFORM
 BossAI_SetSeenPlayerAliveBit:
 	push bc
 	call BossAI_SeenPlayerSpeciesBitFromC
@@ -120,6 +131,7 @@ BossAI_SetSeenPlayerAliveBit:
 	pop bc
 	ret
 
+; ai-layer: PLATFORM
 BossAI_ClearSeenPlayerAliveBit:
 	push bc
 	call BossAI_SeenPlayerSpeciesBitFromC
@@ -130,6 +142,7 @@ BossAI_ClearSeenPlayerAliveBit:
 	pop bc
 	ret
 
+; ai-layer: PLATFORM
 BossAI_SeenPlayerSpeciesBitFromC:
 	ld a, c
 	and a
@@ -142,6 +155,13 @@ BossAI_SeenPlayerSpeciesBitFromC:
 	jr nz, .loop
 	ret
 
+; ============================================================
+; Region: Adaptive lead
+; Concern: Pre-battle weighted opener for selected trainers
+; Layer: POLICY
+; Original lines: 144
+; ============================================================
+; ai-layer: POLICY
 MaybePickAdaptiveEnemyLead:
 ; Blind weighted opener for selected major trainers:
 ; prefer default lead, but allow two alternate alive options.
@@ -287,6 +307,13 @@ MaybePickAdaptiveEnemyLead:
 	scf
 	ret
 
+; ============================================================
+; Region: Public-info plumbing
+; Concern: Revealed-moves bitmap, used-moves mirror, move-attribute reads
+; Layer: PLATFORM
+; Original lines: 189
+; ============================================================
+; ai-layer: PLATFORM
 BossAI_RecordRevealedPlayerMove:
 	ld a, [wBossAITier]
 	and a
@@ -309,6 +336,7 @@ BossAI_RecordRevealedPlayerMove:
 	ld [wBossAIPlausibleTypeMaskLevel], a
 	ret
 
+; ai-layer: PLATFORM
 BossAI_GetActiveSpeciesRevealedMaskPointer:
 	call BossAI_GetActiveSpeciesSeenIndex
 	and a
@@ -327,6 +355,7 @@ BossAI_GetActiveSpeciesRevealedMaskPointer:
 	and a
 	ret
 
+; ai-layer: PLATFORM
 BossAI_LoadPlayerUsedMovesForActiveSpecies:
 ; Replace NewBattleMonStatus's blanket clear of wPlayerUsedMoves: keep boss AI
 ; memory of moves the entering active mon has used earlier this fight, so
@@ -353,6 +382,7 @@ BossAI_LoadPlayerUsedMovesForActiveSpecies:
 	jr nz, .copy_loop
 	ret
 
+; ai-layer: PLATFORM
 BossAI_MirrorPlayerUsedMovesToSpeciesSlot:
 	push bc
 	call BossAI_GetActiveSpeciesUsedMovesPointer
@@ -368,6 +398,7 @@ BossAI_MirrorPlayerUsedMovesToSpeciesSlot:
 	jr nz, .copy_loop
 	ret
 
+; ai-layer: PLATFORM
 BossAI_GetActiveSpeciesUsedMovesPointer:
 ; Scan-only (no auto-append) lookup for the active mon's slot in
 ; wBossAISpeciesUsedMoves. CF set with hl pointing at the slot; CF clear with
@@ -403,6 +434,7 @@ BossAI_GetActiveSpeciesUsedMovesPointer:
 	scf
 	ret
 
+; ai-layer: PLATFORM
 BossAI_GetMoveAttr:
 	push bc
 	ld bc, MOVE_LENGTH
@@ -411,10 +443,12 @@ BossAI_GetMoveAttr:
 	pop bc
 	ret
 
+; ai-layer: PLATFORM
 BossAI_GetMoveByte:
 	ld a, BANK(Moves)
 	jp GetFarByte
 
+; ai-layer: PLATFORM
 BossAI_AddRevealedMoveToSpeciesMask:
 	and a
 	ret z
@@ -445,6 +479,7 @@ BossAI_AddRevealedMoveToSpeciesMask:
 	ld hl, Moves + MOVE_TYPE
 	call BossAI_GetMoveAttr
 
+; ai-layer: PLATFORM
 BossAI_SetRevealedSpeciesMaskBit:
 	ld c, a
 	and %11111000
@@ -477,6 +512,13 @@ BossAI_SetRevealedSpeciesMaskBit:
 	ld [hl], a
 	ret
 
+; ============================================================
+; Region: Per-tick cache reset
+; Concern: Sentinel writes to per-tick Boss AI cache bytes
+; Layer: PLATFORM
+; Original lines: 14
+; ============================================================
+; ai-layer: PLATFORM
 BossAI_ResetTurnCaches:
 ; Clear the per-AI-tick memo caches consumed by the cached helpers
 ; (HasAnyKOMove / PlayerHasPublicThreatVsEnemy / PlayerHasRevealedPriorityThreat
@@ -492,6 +534,13 @@ BossAI_ResetTurnCaches:
 	ld [wBossAIPrimaryThreatCache], a
 	ret
 
+; ============================================================
+; Region: Move-scoring overlay
+; Concern: BossAI_ApplyMoveModel gates and scoring heuristics
+; Layer: POLICY
+; Original lines: 1823
+; ============================================================
+; ai-layer: POLICY
 BossAI_ApplyMoveModel:
 	ld a, [wBossAITier]
 	and a
@@ -2315,6 +2364,13 @@ BossAI_ApplyMoveModel:
 	and a
 	ret
 
+; ============================================================
+; Region: Ghost helper
+; Concern: Enemy Ghost typing probe for setup and Curse logic
+; Layer: POLICY
+; Original lines: 12
+; ============================================================
+; ai-layer: POLICY
 BossAI_EnemyIsGhostType:
 	ld a, [wEnemyMonType1]
 	cp GHOST
@@ -2328,6 +2384,13 @@ BossAI_EnemyIsGhostType:
 	scf
 	ret
 
+; ============================================================
+; Region: Move pick
+; Concern: Two-pass best/second-best selection and tier dice
+; Layer: POLICY
+; Original lines: 191
+; ============================================================
+; ai-layer: POLICY
 BossAI_SelectMove:
 	xor a
 	ld [wBossAIMoveChoiceReady], a
@@ -2520,6 +2583,13 @@ ENDC
 	pop bc
 	ret
 
+; ============================================================
+; Region: Switch dispatch
+; Concern: Boss switch/item dispatch, candidate scan, confidence dice
+; Layer: POLICY
+; Original lines: 168
+; ============================================================
+; ai-layer: POLICY
 BossAI_SwitchOrTryItem:
 	ld a, [wBossAITier]
 	and a
@@ -2611,6 +2681,7 @@ ENDC
 	pop af
 	jp AI_TryItem
 
+; ai-layer: POLICY
 BossAI_OnSwitchExecuted:
 	ld a, [wBossAITier]
 	and a
@@ -2625,6 +2696,7 @@ BossAI_OnSwitchExecuted:
 	ld [wBossAILastChosenMove], a
 	ret
 
+; ai-layer: POLICY
 BossAI_DecaySwitchCooldown:
 	ld a, [wBossAISwitchCooldown]
 	and a
@@ -2633,6 +2705,7 @@ BossAI_DecaySwitchCooldown:
 	ld [wBossAISwitchCooldown], a
 	ret
 
+; ai-layer: POLICY
 BossAI_CheckAbleToSwitchSafe:
 	xor a
 	ld [wEnemySwitchMonParam], a
@@ -2654,6 +2727,7 @@ BossAI_CheckAbleToSwitchSafe:
 	ld [wEnemySwitchMonParam], a
 	ret
 
+; ai-layer: POLICY
 BossAI_FindFirstAliveSwitchCandidate:
 	ld a, [wOTPartyCount]
 	cp 2
@@ -2689,6 +2763,13 @@ BossAI_FindFirstAliveSwitchCandidate:
 	and a
 	ret
 
+; ============================================================
+; Region: Threat caches (active)
+; Concern: Public-threat and revealed-priority cache wrappers
+; Layer: PLATFORM
+; Original lines: 165
+; ============================================================
+; ai-layer: PLATFORM
 BossAI_PlayerHasPublicThreatVsEnemy:
 	ld a, [wBossAIPublicThreatCache]
 	inc a
@@ -2705,6 +2786,7 @@ BossAI_PlayerHasPublicThreatVsEnemy:
 	pop af
 	ret
 
+; ai-layer: PLATFORM
 BossAI_PlayerHasPublicThreatVsEnemyUncached:
 	call BossAI_HasRevealedSuperEffectiveMove
 	jr c, .yes
@@ -2778,6 +2860,7 @@ BossAI_PlayerHasPublicThreatVsEnemyUncached:
 	jr nc, .yes
 	jr .no
 
+; ai-layer: PLATFORM
 BossAI_PlayerHasRevealedPriorityThreat:
 	ld a, [wBossAIRevealedPriorityCache]
 	inc a
@@ -2794,6 +2877,7 @@ BossAI_PlayerHasRevealedPriorityThreat:
 	pop af
 	ret
 
+; ai-layer: PLATFORM
 BossAI_PlayerHasRevealedPriorityThreatUncached:
 	ld hl, wPlayerUsedMoves
 	ld c, NUM_MOVES
@@ -2855,6 +2939,13 @@ BossAI_PlayerHasRevealedPriorityThreatUncached:
 	scf
 	ret
 
+; ============================================================
+; Region: Type-matchup (no item)
+; Concern: No-item type-matchup wrappers and Dragon's Majesty overlay
+; Layer: PLATFORM
+; Original lines: 150
+; ============================================================
+; ai-layer: PLATFORM
 BossAI_CheckPlayerMoveTypeMatchupVsEnemyNoItem:
 	push bc
 	ld c, a
@@ -2870,6 +2961,7 @@ BossAI_CheckPlayerMoveTypeMatchupVsEnemyNoItem:
 	pop bc
 	ret
 
+; ai-layer: PLATFORM
 BossAI_CheckPlayerMoveTypeMatchupVsBaseNoItem:
 	push bc
 	ld c, a
@@ -2885,6 +2977,7 @@ BossAI_CheckPlayerMoveTypeMatchupVsBaseNoItem:
 	pop bc
 	ret
 
+; ai-layer: PLATFORM
 BossAI_CheckEnemyMoveTypeMatchupVsPlayerNoItem:
 	push bc
 	ldh a, [hBattleTurn]
@@ -2899,6 +2992,7 @@ BossAI_CheckEnemyMoveTypeMatchupVsPlayerNoItem:
 	pop bc
 	ret
 
+; ai-layer: PLATFORM
 BossAI_CheckTypeMatchupNoItem:
 	push hl
 	push de
@@ -2974,6 +3068,7 @@ BossAI_CheckTypeMatchupNoItem:
 	pop hl
 	ret
 
+; ai-layer: PLATFORM
 BossAI_ApplyDragonsMajestyNoItem:
 ; Mirror Dragon's Majesty for boss type-only heuristics. These callers model
 ; damaging type pressure without peeking at held items, so a Dragon attacker
@@ -3006,6 +3101,13 @@ BossAI_ApplyDragonsMajestyNoItem:
 	ld a, NOT_VERY_EFFECTIVE
 	ret
 
+; ============================================================
+; Region: Pressure scoring
+; Concern: KO pressure, scored power, and known modifier stack
+; Layer: POLICY
+; Original lines: 352
+; ============================================================
+; ai-layer: POLICY
 BossAI_CurrentEnemyMoveHasKOPressure:
 	call BossAI_CurrentEnemyMovePressureScore
 	ld d, a
@@ -3039,6 +3141,7 @@ BossAI_CurrentEnemyMoveHasKOPressure:
 	scf
 	ret
 
+; ai-layer: POLICY
 BossAI_CurrentEnemyMovePressureScore:
 	call BossAI_CurrentEnemyMoveScoredPower
 	and a
@@ -3128,6 +3231,7 @@ BossAI_CurrentEnemyMovePressureScore:
 	xor a
 	ret
 
+; ai-layer: POLICY
 BossAI_CurrentEnemyMoveScoredPower:
 	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
 	cp EFFECT_SOLARBEAM
@@ -3165,12 +3269,14 @@ BossAI_CurrentEnemyMoveScoredPower:
 	ld a, [wEnemyMoveStruct + MOVE_POWER]
 	ret
 
+; ai-layer: POLICY
 BossAI_ApplyEnemyKnownPressureModifiers:
 	call BossAI_ApplyEnemyHeldItemPressure
 	call BossAI_ApplyEnemyOffensivePassivePressure
 	call BossAI_ApplyPlayerDefensivePassivePressure
 	ret
 
+; ai-layer: POLICY
 BossAI_ApplyEnemyHeldItemPressure:
 	call BossAI_GetEnemyHeldEffect
 	cp HELD_LIFE_ORB
@@ -3232,6 +3338,7 @@ BossAI_ApplyEnemyHeldItemPressure:
 	inc b
 	ret
 
+; ai-layer: POLICY
 BossAI_ApplyEnemyOffensivePassivePressure:
 	ld a, [wEnemyMoveStruct + MOVE_TYPE]
 	cp NORMAL
@@ -3265,6 +3372,7 @@ BossAI_ApplyEnemyOffensivePassivePressure:
 	inc b
 	ret
 
+; ai-layer: POLICY
 BossAI_ApplyPlayerDefensivePassivePressure:
 	ld a, PSYCHIC_TYPE
 	call BossAI_PlayerTypeContribution
@@ -3312,6 +3420,7 @@ BossAI_ApplyPlayerDefensivePassivePressure:
 	call BossAI_DecPressureB
 	ret
 
+; ai-layer: POLICY
 BossAI_DecPressureB:
 	ld a, b
 	and a
@@ -3319,6 +3428,7 @@ BossAI_DecPressureB:
 	dec b
 	ret
 
+; ai-layer: POLICY
 BossAI_EnemyBelowOneThirdHP:
 	push hl
 	push de
@@ -3358,6 +3468,13 @@ BossAI_EnemyBelowOneThirdHP:
 	scf
 	ret
 
+; ============================================================
+; Region: Move category + type contribution
+; Concern: Move category, accuracy risk, and type-contribution helpers
+; Layer: PLATFORM
+; Original lines: 103
+; ============================================================
+; ai-layer: PLATFORM
 BossAI_CurrentEnemyMoveCategory:
 	push hl
 	push de
@@ -3376,6 +3493,7 @@ BossAI_CurrentEnemyMoveCategory:
 	pop hl
 	ret
 
+; ai-layer: PLATFORM
 BossAI_CurrentEnemyMoveAccuracyRisky:
 	push bc
 	ld a, [wEnemyMoveStruct + MOVE_ACC]
@@ -3400,6 +3518,7 @@ BossAI_CurrentEnemyMoveAccuracyRisky:
 	and a
 	ret
 
+; ai-layer: PLATFORM
 BossAI_CurrentMoveDarkShieldEligible:
 	push hl
 	push de
@@ -3419,13 +3538,16 @@ BossAI_CurrentMoveDarkShieldEligible:
 	and a
 	ret
 
+; ai-layer: PLATFORM
 BossAI_PlayerTypeContribution:
 	ld hl, wBattleMonType1
 	jr BossAI_TypeContributionAtHL
 
+; ai-layer: PLATFORM
 BossAI_EnemyTypeContribution:
 	ld hl, wEnemyMonType1
 
+; ai-layer: PLATFORM
 BossAI_TypeContributionAtHL:
 	push bc
 	ld b, a
@@ -3462,6 +3584,13 @@ BossAI_TypeContributionAtHL:
 	pop bc
 	ret
 
+; ============================================================
+; Region: Public-faster (speed)
+; Concern: Public speed predicate with known Choice Scarf handling
+; Layer: POLICY
+; Original lines: 63
+; ============================================================
+; ai-layer: POLICY
 BossAI_PublicEnemyFaster:
 	push hl
 	push de
@@ -3526,6 +3655,13 @@ BossAI_PublicEnemyFaster:
 	and a
 	ret
 
+; ============================================================
+; Region: Switch threshold + loop penalty
+; Concern: Tier threshold, per-class deltas, and loop-penalty gates
+; Layer: POLICY
+; Original lines: 117
+; ============================================================
+; ai-layer: POLICY
 BossAI_GetSwitchThreshold:
 	ld a, [wBossAITier]
 	cp AI_TIER_LATE
@@ -3605,6 +3741,7 @@ BossAI_GetSwitchThreshold:
 	ld a, 95
 	ret
 
+; ai-layer: POLICY
 BossAI_NeedsLoopPenalty:
 	ld a, [wBossAISwitchCooldown]
 	and a
@@ -3644,6 +3781,13 @@ BossAI_NeedsLoopPenalty:
 	and a
 	ret
 
+; ============================================================
+; Region: Switch reason predicates
+; Concern: KO-prevention, Perish escape, and revenge-respect predicates
+; Layer: POLICY
+; Original lines: 81
+; ============================================================
+; ai-layer: POLICY
 BossAI_IsImminentKOPrevention:
 	call AICheckEnemyQuarterHP_HL
 	jr nc, .yes
@@ -3657,6 +3801,7 @@ BossAI_IsImminentKOPrevention:
 	scf
 	ret
 
+; ai-layer: POLICY
 BossAI_EnemyPerishEscapeUrgent:
 	ld a, [wEnemySubStatus1]
 	bit SUBSTATUS_PERISH, a
@@ -3672,6 +3817,7 @@ BossAI_EnemyPerishEscapeUrgent:
 	and a
 	ret
 
+; ai-layer: POLICY
 BossAI_ShouldRespectPotentialPlayerRevenge:
 ; Carry if the player is likely to threaten a fast revenge KO line.
 	call BossAI_PublicEnemyFaster
@@ -3726,11 +3872,19 @@ BossAI_ShouldRespectPotentialPlayerRevenge:
 	scf
 	ret
 
+; ============================================================
+; Region: Switch-in classifiers
+; Concern: Scarf-swing stub, suspicious switch-in, immunity-pivot checks
+; Layer: POLICY
+; Original lines: 107
+; ============================================================
+; ai-layer: POLICY
 BossAI_IsScarfSwingPossible:
 ; Do not infer unrevealed player Choice Scarf from private speed values.
 	and a
 	ret
 
+; ai-layer: POLICY
 BossAI_IsSuspiciousSwitchIn:
 ; Carry when the fresh switch-in looks like a coverage/pivot line instead of natural STAB pressure.
 	ld a, [wBossAITurnsElapsed]
@@ -3772,6 +3926,7 @@ BossAI_IsSuspiciousSwitchIn:
 	scf
 	ret
 
+; ai-layer: POLICY
 BossAI_IsImmunityPivotOpportunity:
 	ld a, [wLastPlayerCounterMove]
 	and a
@@ -3834,6 +3989,13 @@ BossAI_IsImmunityPivotOpportunity:
 	and a
 	ret
 
+; ============================================================
+; Region: Ace timing + switch confidence
+; Concern: Ace timing hook and switch-confidence calculation
+; Layer: POLICY
+; Original lines: 117
+; ============================================================
+; ai-layer: POLICY
 BossAI_AceTimingHook:
 	ld a, [wBossAITier]
 	cp AI_TIER_LATE
@@ -3879,6 +4041,7 @@ BossAI_AceTimingHook:
 	scf
 	ret
 
+; ai-layer: POLICY
 BossAI_ComputeSwitchConfidence:
 	ld a, [wEnemySwitchMonParam]
 	and $f0
@@ -3952,6 +4115,13 @@ BossAI_ComputeSwitchConfidence:
 	ld a, 99
 	ret
 
+; ============================================================
+; Region: Predict-player-switch + revealed-SE-move
+; Concern: Player switch prediction and revealed super-effective probe
+; Layer: POLICY
+; Original lines: 114
+; ============================================================
+; ai-layer: POLICY
 BossAI_PredictPlayerSwitch:
 ; Not separately memoized: its two heavy internal calls
 ; (PlayerHasPublicThreatVsEnemy, HasRevealedSuperEffectiveMove via the cached
@@ -4010,6 +4180,7 @@ BossAI_PredictPlayerSwitch:
 	ld a, 80
 	ret
 
+; ai-layer: POLICY
 BossAI_HasRevealedSuperEffectiveMove:
 	call BossAI_GetActiveSpeciesRevealedMaskPointer
 	jr nc, .no
@@ -4067,6 +4238,13 @@ BossAI_HasRevealedSuperEffectiveMove:
 	and a
 	ret
 
+; ============================================================
+; Region: Cache misses (passive)
+; Concern: Revealed-species bit test and uncached KO-move probe
+; Layer: PLATFORM
+; Original lines: 94
+; ============================================================
+; ai-layer: PLATFORM
 BossAI_TestRevealedSpeciesMaskBit:
 	ld a, c
 	and %11111000
@@ -4101,6 +4279,7 @@ BossAI_TestRevealedSpeciesMaskBit:
 	and a
 	ret
 
+; ai-layer: PLATFORM
 BossAI_HasAnyKOMove:
 	ld a, [wBossAIHasKOMoveCache]
 	inc a
@@ -4117,6 +4296,7 @@ BossAI_HasAnyKOMove:
 	pop af
 	ret
 
+; ai-layer: PLATFORM
 BossAI_HasAnyKOMoveUncached:
 	call BossAI_SaveEnemyMoveStruct
 	call BossAI_EnemyChoiceLockedMove
@@ -4161,6 +4341,13 @@ BossAI_HasAnyKOMoveUncached:
 	and a
 	ret
 
+; ============================================================
+; Region: Held-item helpers
+; Concern: Held-effect reads, Choice-lock probes, and move-struct save/restore
+; Layer: PLATFORM
+; Original lines: 57
+; ============================================================
+; ai-layer: PLATFORM
 BossAI_GetEnemyHeldEffect:
 	push bc
 	ld a, [wEnemyMonItem]
@@ -4170,6 +4357,7 @@ BossAI_GetEnemyHeldEffect:
 	pop bc
 	ret
 
+; ai-layer: PLATFORM
 BossAI_EnemyChoiceLockedMove:
 	ld a, [wEnemyChoiceLockedMove]
 	and a
@@ -4185,6 +4373,7 @@ BossAI_EnemyChoiceLockedMove:
 	and a
 	ret
 
+; ai-layer: PLATFORM
 BossAI_IsChoiceHeldEffect:
 	cp HELD_CHOICE_BAND
 	ret z
@@ -4193,6 +4382,7 @@ BossAI_IsChoiceHeldEffect:
 	cp HELD_CHOICE_SCARF
 	ret
 
+; ai-layer: PLATFORM
 BossAI_SaveEnemyMoveStruct:
 	push hl
 	push de
@@ -4206,6 +4396,7 @@ BossAI_SaveEnemyMoveStruct:
 	pop hl
 	ret
 
+; ai-layer: PLATFORM
 BossAI_RestoreEnemyMoveStruct:
 	push hl
 	push de
@@ -4219,6 +4410,13 @@ BossAI_RestoreEnemyMoveStruct:
 	pop hl
 	ret
 
+; ============================================================
+; Region: Bench threat score
+; Concern: Seen bench threat scoring
+; Layer: POLICY
+; Original lines: 81
+; ============================================================
+; ai-layer: POLICY
 BossAI_SeenBenchThreatScore:
 	ld a, [wBossAISeenPlayerSpeciesCount]
 	and a
@@ -4300,10 +4498,17 @@ BossAI_SeenBenchThreatScore:
 	xor a
 	ret
 
+; ============================================================
+; Region: Plan selection
+; Concern: Initial/adaptive plan selection and decay
+; Layer: POLICY
+; Original lines: 178
+; ============================================================
 DEF BOSS_ROLE_SETUP EQU 0
 DEF BOSS_ROLE_STATUS EQU 1
 DEF BOSS_ROLE_DENIAL EQU 2
 
+; ai-layer: POLICY
 BossAI_SelectPlanIfNeeded:
 	ld a, [wBossAITier]
 	and a
@@ -4479,6 +4684,13 @@ ENDC
 	scf
 	ret
 
+; ============================================================
+; Region: Party-by-role
+; Concern: Find party mon by role tag
+; Layer: POLICY
+; Original lines: 83
+; ============================================================
+; ai-layer: POLICY
 BossAI_FindPartyMonByRole:
 	ld [wTempByteValue], a
 	ld a, [wOTPartyCount]
@@ -4562,6 +4774,13 @@ BossAI_FindPartyMonByRole:
 	and a
 	ret
 
+; ============================================================
+; Region: Setup / status / denial classifiers
+; Concern: Setup, status, denial, and affordability classifiers
+; Layer: POLICY
+; Original lines: 246
+; ============================================================
+; ai-layer: POLICY
 BossAI_IsSetupEffect:
 	cp EFFECT_DRAGON_DANCE
 	jr z, .yes
@@ -4588,6 +4807,7 @@ BossAI_IsSetupEffect:
 	scf
 	ret
 
+; ai-layer: POLICY
 BossAI_IsCurrentEnemySetupMove:
 	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
 	cp EFFECT_CURSE
@@ -4604,6 +4824,7 @@ BossAI_IsCurrentEnemySetupMove:
 	and a
 	ret
 
+; ai-layer: POLICY
 BossAI_SetupBoostHasFurtherValue:
 ; Returns carry if the targeted stat for the current setup move is below
 ; MAX_STAT_LEVEL on the active enemy mon (i.e., further boosting is still
@@ -4759,6 +4980,7 @@ BossAI_SetupBoostHasFurtherValue:
 	and a
 	ret
 
+; ai-layer: POLICY
 BossAI_SetupTurnIsAffordable:
 ; Returns carry if spending another turn on setup is affordable based on
 ; turns this mon has already spent on the field and current HP.
@@ -4785,6 +5007,7 @@ BossAI_SetupTurnIsAffordable:
 	and a
 	ret
 
+; ai-layer: POLICY
 BossAI_IsStatusEffect:
 	push hl
 	push de
@@ -4795,6 +5018,7 @@ BossAI_IsStatusEffect:
 	pop hl
 	ret
 
+; ai-layer: POLICY
 BossAI_IsDenialEffect:
 	cp EFFECT_FORCE_SWITCH
 	jr z, .yes
@@ -4808,6 +5032,13 @@ BossAI_IsDenialEffect:
 	scf
 	ret
 
+; ============================================================
+; Region: Seen-species index
+; Concern: Active species to seen-species slot lookup
+; Layer: PLATFORM
+; Original lines: 43
+; ============================================================
+; ai-layer: PLATFORM
 BossAI_GetActiveSpeciesSeenIndex:
 	ld a, [wBattleMonSpecies]
 	and a
@@ -4852,6 +5083,13 @@ BossAI_GetActiveSpeciesSeenIndex:
 	xor a
 	ret
 
+; ============================================================
+; Region: Plausible / likely type-mask construction
+; Concern: Plausible and likely move-type mask construction and tests
+; Layer: MIXED
+; Original lines: 500
+; ============================================================
+; ai-layer: MIXED
 BossAI_ComputePlayerPlausibleTypeMask:
 	ld a, [wBossAITier]
 	and a
@@ -4892,6 +5130,7 @@ IF DEF(BOSS_AI_TRACE)
 ENDC
 	ret
 
+; ai-layer: MIXED
 BossAI_AddPublicSTABThreatsToMask:
 	ld a, [wBattleMonType1]
 	call BossAI_SetPlausibleAndLikelyMaskBit
@@ -4904,6 +5143,7 @@ BossAI_AddPublicSTABThreatsToMask:
 	call BossAI_SetPlausibleAndLikelyMaskBit
 	ret
 
+; ai-layer: MIXED
 BossAI_ClearPlausibleMask:
 	ld hl, wBossAIPlausibleTypeMaskCache
 	xor a
@@ -4918,6 +5158,7 @@ BossAI_ClearPlausibleMask:
 	ld [hl], a
 	ret
 
+; ai-layer: MIXED
 BossAI_AddRevealedDamagingTypesToMask:
 	call BossAI_GetActiveSpeciesRevealedMaskPointer
 	ret nc
@@ -4945,6 +5186,7 @@ BossAI_AddRevealedDamagingTypesToMask:
 	jr nz, .copy_likely_loop
 	ret
 
+; ai-layer: MIXED
 BossAI_AddMoveIdToPlausibleMask:
 	and a
 	ret z
@@ -4974,6 +5216,7 @@ BossAI_AddMoveIdToPlausibleMask:
 	call BossAI_SetPlausibleMaskBit
 	ret
 
+; ai-layer: MIXED
 BossAI_AddMoveIdToLikelyMask:
 	and a
 	ret z
@@ -5003,6 +5246,7 @@ BossAI_AddMoveIdToLikelyMask:
 	call BossAI_SetLikelyMaskBit
 	ret
 
+; ai-layer: MIXED
 BossAI_SetPlausibleAndLikelyMaskBit:
 	push af
 	call BossAI_SetPlausibleMaskBit
@@ -5010,6 +5254,7 @@ BossAI_SetPlausibleAndLikelyMaskBit:
 	call BossAI_SetLikelyMaskBit
 	ret
 
+; ai-layer: MIXED
 BossAI_SetPlausibleMaskBit:
 	ld c, a
 	and %11111000
@@ -5037,6 +5282,7 @@ BossAI_SetPlausibleMaskBit:
 	ld [hl], a
 	ret
 
+; ai-layer: MIXED
 BossAI_SetLikelyMaskBit:
 	ld c, a
 	and %11111000
@@ -5064,6 +5310,7 @@ BossAI_SetLikelyMaskBit:
 	ld [hl], a
 	ret
 
+; ai-layer: MIXED
 BossAI_AddSpeciesAndPreEvolutionMovesToMask:
 	and a
 	ret z
@@ -5093,12 +5340,14 @@ BossAI_AddSpeciesAndPreEvolutionMovesToMask:
 	call nz, GetBaseData
 	ret
 
+; ai-layer: MIXED
 BossAI_LoadPublicThreatSourceSpecies:
 	ld a, [wCurPartySpecies]
 	ld [wCurSpecies], a
 	call GetBaseData
 	ret
 
+; ai-layer: MIXED
 BossAI_AddCurrentSpeciesSpeculativeMoveThreats:
 	call BossAI_AddBaseTMHMMovesToMask
 	ld a, [wCurPartySpecies]
@@ -5107,6 +5356,7 @@ BossAI_AddCurrentSpeciesSpeculativeMoveThreats:
 	call BossAI_AddSpeciesEggMovesToMask
 	ret
 
+; ai-layer: MIXED
 BossAI_AddCurrentSpeciesLikelyMoveThreats:
 	ld a, [wBossAITemp2]
 	and a
@@ -5115,6 +5365,7 @@ BossAI_AddCurrentSpeciesLikelyMoveThreats:
 	call BossAI_AddSpeciesLevelUpMovesToLikelyMask
 	ret
 
+; ai-layer: MIXED
 BossAI_AdvanceToPreEvolutionThreatSource:
 	callfar GetPreEvolution
 	ret nc
@@ -5123,6 +5374,7 @@ BossAI_AdvanceToPreEvolutionThreatSource:
 	scf
 	ret
 
+; ai-layer: MIXED
 BossAI_AddBaseTMHMMovesToMask:
 	ld hl, wBaseTMHM
 	ld b, 1
@@ -5156,6 +5408,7 @@ BossAI_AddBaseTMHMMovesToMask:
 	dec d
 	jr .tm_loop
 
+; ai-layer: MIXED
 BossAI_AddSpeciesLevelUpMovesToMask:
 	and a
 	ret z
@@ -5212,6 +5465,7 @@ BossAI_AddSpeciesLevelUpMovesToMask:
 	inc hl
 	jr .move_loop
 
+; ai-layer: MIXED
 BossAI_AddSpeciesLevelUpMovesToLikelyMask:
 	and a
 	ret z
@@ -5268,6 +5522,7 @@ BossAI_AddSpeciesLevelUpMovesToLikelyMask:
 	inc hl
 	jr .move_loop
 
+; ai-layer: MIXED
 BossAI_AddSpeciesEggMovesToMask:
 	and a
 	ret z
@@ -5291,6 +5546,7 @@ BossAI_AddSpeciesEggMovesToMask:
 	inc hl
 	jr .loop
 
+; ai-layer: MIXED
 BossAI_TestPlausibleMaskBit:
 	ld c, a
 	and %11111000
@@ -5322,6 +5578,7 @@ BossAI_TestPlausibleMaskBit:
 	and a
 	ret
 
+; ai-layer: MIXED
 BossAI_TestLikelyMaskBit:
 	ld c, a
 	and %11111000
@@ -5353,6 +5610,13 @@ BossAI_TestLikelyMaskBit:
 	and a
 	ret
 
+; ============================================================
+; Region: Plan move bias
+; Concern: Plan-driven move-score adjustments
+; Layer: POLICY
+; Original lines: 55
+; ============================================================
+; ai-layer: POLICY
 BossAI_ApplyPlanMoveBias:
 	ld a, [wBossAIPlanId]
 	and a
@@ -5409,6 +5673,13 @@ BossAI_ApplyPlanMoveBias:
 	ld a, 2
 	jp BossAI_EncourageScoreHL
 
+; ============================================================
+; Region: Scout / repeat biases
+; Concern: Scout-pivot bias and same-move repeat penalty
+; Layer: POLICY
+; Original lines: 38
+; ============================================================
+; ai-layer: POLICY
 BossAI_ApplyScoutMoveBias:
 	push hl
 	call BossAI_ShouldScout
@@ -5428,6 +5699,7 @@ BossAI_ApplyScoutMoveBias:
 .apply
 	jp BossAI_EncourageScoreHL
 
+; ai-layer: POLICY
 BossAI_ApplyRepeatPenalty:
 	ld a, [wBossAIRepeatCount]
 	cp 2
@@ -5448,6 +5720,13 @@ BossAI_ApplyRepeatPenalty:
 	ld a, BOSS_AI_REPEAT_PENALTY
 	jp BossAI_DiscourageScoreHL
 
+; ============================================================
+; Region: Score read/write
+; Concern: Score pointer, set, encourage, and discourage helpers
+; Layer: PLATFORM
+; Original lines: 42
+; ============================================================
+; ai-layer: PLATFORM
 BossAI_LoadScorePointer:
 	push af
 	ld a, [wBossAIScorePtr]
@@ -5457,11 +5736,13 @@ BossAI_LoadScorePointer:
 	pop af
 	ret
 
+; ai-layer: PLATFORM
 BossAI_SetScoreHL:
 	call BossAI_LoadScorePointer
 	ld [hl], a
 	ret
 
+; ai-layer: PLATFORM
 BossAI_EncourageScoreHL:
 	call BossAI_LoadScorePointer
 	and a
@@ -5476,6 +5757,7 @@ BossAI_EncourageScoreHL:
 	jr nz, .enc_loop
 	ret
 
+; ai-layer: PLATFORM
 BossAI_DiscourageScoreHL:
 	call BossAI_LoadScorePointer
 	and a
@@ -5491,6 +5773,13 @@ BossAI_DiscourageScoreHL:
 	jr nz, .disc_loop
 	ret
 
+; ============================================================
+; Region: Lookahead orchestration
+; Concern: Top-move candidate lookahead and score delta application
+; Layer: POLICY
+; Original lines: 117
+; ============================================================
+; ai-layer: POLICY
 BossAI_ApplyLookaheadToTopMoveCandidates:
 	ld a, [wBossAITier]
 	cp BOSS_AI_LOOKAHEAD_ENABLE_TIER_MIN
@@ -5586,6 +5875,7 @@ ENDC
 	pop af
 	ret
 
+; ai-layer: POLICY
 BossAI_ApplySignedDeltaToScore:
 	bit 7, a
 	jr z, .positive
@@ -5609,6 +5899,13 @@ BossAI_ApplySignedDeltaToScore:
 	ld [hl], a
 	ret
 
+; ============================================================
+; Region: Lookahead body + multi-turn projection
+; Concern: Action lookahead body and future-turn projection helpers
+; Layer: POLICY
+; Original lines: 294
+; ============================================================
+; ai-layer: POLICY
 BossAI_EvaluateActionLookahead:
 	ld a, [wBossAITier]
 	and a
@@ -5758,6 +6055,7 @@ BossAI_EvaluateActionLookahead:
 	pop hl
 	ret
 
+; ai-layer: POLICY
 BossAI_ApplyMultiTurnProjection:
 ; Adds a rolling, tier-based future projection onto upside/downside (b/c).
 ; This keeps lookahead reactive each turn while extending the planning horizon.
@@ -5904,6 +6202,13 @@ BossAI_ApplyMultiTurnProjection:
 	ld c, a
 	ret
 
+; ============================================================
+; Region: Signed-delta clamp
+; Concern: Signed lookahead delta clamp
+; Layer: POLICY
+; Original lines: 18
+; ============================================================
+; ai-layer: POLICY
 BossAI_ClampSignedLookaheadDelta:
 	bit 7, a
 	jr z, .clamp_pos
@@ -5923,6 +6228,13 @@ BossAI_ClampSignedLookaheadDelta:
 	ld a, BOSS_AI_LOOKAHEAD_BONUS_CAP
 	ret
 
+; ============================================================
+; Region: Primary threat type
+; Concern: Cached primary threat type resolution
+; Layer: POLICY
+; Original lines: 154
+; ============================================================
+; ai-layer: POLICY
 BossAI_GetPrimaryThreatType:
 ; Cache encoding: $ff = uncomputed; $20+ = no threat; 0..$1f = found type id.
 ; Real type ids cap at DARK ($1b), so $20 is a safe "no threat" sentinel.
@@ -5945,6 +6257,7 @@ BossAI_GetPrimaryThreatType:
 	scf
 	ret
 
+; ai-layer: POLICY
 BossAI_GetPrimaryThreatTypeUncached:
 	ld d, 0
 	ld e, 0
@@ -6078,6 +6391,13 @@ BossAI_GetPrimaryThreatTypeUncached:
 	and a
 	ret
 
+; ============================================================
+; Region: Threat severity + item nullifies
+; Concern: Threat severity scoring and known defensive item nullification
+; Layer: POLICY
+; Original lines: 136
+; ============================================================
+; ai-layer: POLICY
 BossAI_GetRevealedMoveThreatTypeAndSeverity:
 	and a
 	ret z
@@ -6110,6 +6430,7 @@ BossAI_GetRevealedMoveThreatTypeAndSeverity:
 	scf
 	ret
 
+; ai-layer: POLICY
 BossAI_GetTypeThreatSeverityVsEnemyMon:
 	push hl
 	ld c, a
@@ -6137,6 +6458,7 @@ BossAI_GetTypeThreatSeverityVsEnemyMon:
 	pop hl
 	ret
 
+; ai-layer: POLICY
 BossAI_AdjustThreatSeverityForEnemyKnownDefense:
 ; input: c = public threat type, b = severity. output: a = adjusted severity.
 	ld a, c
@@ -6166,6 +6488,7 @@ BossAI_AdjustThreatSeverityForEnemyKnownDefense:
 	ld a, b
 	ret
 
+; ai-layer: POLICY
 BossAI_EnemyKnownItemNullifiesThreatType:
 	cp GROUND
 	jr nz, .no
@@ -6179,6 +6502,7 @@ BossAI_EnemyKnownItemNullifiesThreatType:
 	and a
 	ret
 
+; ai-layer: POLICY
 BossAI_DecThreatSeverityB:
 	ld a, b
 	and a
@@ -6186,6 +6510,7 @@ BossAI_DecThreatSeverityB:
 	dec b
 	ret
 
+; ai-layer: POLICY
 BossAI_EnemySpeciesCanEvolve:
 	ld a, [wEnemyMonSpecies]
 	and a
@@ -6215,6 +6540,13 @@ BossAI_EnemySpeciesCanEvolve:
 	and a
 	ret
 
+; ============================================================
+; Region: Tier-roll thresholds
+; Concern: Tier-weighted plausible, speculative, and scout thresholds
+; Layer: POLICY
+; Original lines: 31
+; ============================================================
+; ai-layer: POLICY
 BossAI_GetTierPlausibleRiskWeight:
 	ld a, [wBossAITier]
 	cp AI_TIER_LATE
@@ -6227,6 +6559,7 @@ BossAI_GetTierPlausibleRiskWeight:
 	ld a, BOSS_AI_PLAUSIBLE_RISK_WEIGHT_TIER_EARLY
 	ret
 
+; ai-layer: POLICY
 BossAI_GetSpeculativePlausibleRiskWeight:
 	call BossAI_GetTierPlausibleRiskWeight
 	srl a
@@ -6234,6 +6567,7 @@ BossAI_GetSpeculativePlausibleRiskWeight:
 	inc a
 	ret
 
+; ai-layer: POLICY
 BossAI_GetScoutRollThreshold:
 	ld a, [wBossAITier]
 	cp AI_TIER_LATE
@@ -6246,6 +6580,13 @@ BossAI_GetScoutRollThreshold:
 	ld a, BOSS_AI_SCOUT_PROB_TIER_EARLY
 	ret
 
+; ============================================================
+; Region: Scouted bitmap
+; Concern: Active-species scouted bitmap and scout decision
+; Layer: PLATFORM
+; Original lines: 67
+; ============================================================
+; ai-layer: PLATFORM
 BossAI_GetActiveSpeciesSeenBit:
 	call BossAI_GetActiveSpeciesSeenIndex
 	and a
@@ -6265,6 +6606,7 @@ BossAI_GetActiveSpeciesSeenBit:
 	scf
 	ret
 
+; ai-layer: PLATFORM
 BossAI_IsActiveSpeciesScouted:
 	call BossAI_GetActiveSpeciesSeenBit
 	ret nc
@@ -6278,6 +6620,7 @@ BossAI_IsActiveSpeciesScouted:
 	and a
 	ret
 
+; ai-layer: PLATFORM
 BossAI_SetActiveSpeciesScouted:
 	call BossAI_GetActiveSpeciesSeenBit
 	ret nc
@@ -6287,6 +6630,7 @@ BossAI_SetActiveSpeciesScouted:
 	ld [wBossAIScoutedMask], a
 	ret
 
+; ai-layer: PLATFORM
 BossAI_ShouldScout:
 	call BossAI_IsActiveSpeciesScouted
 	jr c, .no
@@ -6313,6 +6657,13 @@ ENDC
 	and a
 	ret
 
+; ============================================================
+; Region: Repeat tracker
+; Concern: Same-move repeat tracker and scout marking hook
+; Layer: PLATFORM
+; Original lines: 36
+; ============================================================
+; ai-layer: PLATFORM
 BossAI_UpdateRepeatTracker:
 	ld a, [wCurEnemyMove]
 	ld b, a
@@ -6331,6 +6682,7 @@ BossAI_UpdateRepeatTracker:
 	ld [wBossAIRepeatCount], a
 	ret
 
+; ai-layer: PLATFORM
 BossAI_MarkScoutedIfScoutMove:
 	ld a, [wCurEnemyMove]
 	and a
@@ -6350,6 +6702,13 @@ IF DEF(BOSS_AI_TRACE)
 ENDC
 	ret
 
+; ============================================================
+; Region: Switch-candidate risk refinement
+; Concern: Candidate risk scoring and plausible-risk tie-breaks
+; Layer: POLICY
+; Original lines: 372
+; ============================================================
+; ai-layer: POLICY
 BossAI_RefineSwitchCandidateForPlausibleRisk:
 	ld a, [wEnemySwitchMonParam]
 	and $f
@@ -6432,6 +6791,7 @@ BossAI_RefineSwitchCandidateForPlausibleRisk:
 	ld [wEnemySwitchMonParam], a
 	ret
 
+; ai-layer: POLICY
 BossAI_ComputeSwitchCandidateRisk:
 	ld c, a
 	ld a, [wCurSpecies]
@@ -6722,6 +7082,13 @@ BossAI_ComputeSwitchCandidateRisk:
 	xor a
 	ret
 
+; ============================================================
+; Region: Switch-confidence finalization
+; Concern: Plausible-risk confidence, plan switch bias, sack/wincon gates
+; Layer: POLICY
+; Original lines: 131
+; ============================================================
+; ai-layer: POLICY
 BossAI_ApplyPlausibleRiskToSwitchConfidence:
 	ld a, b
 	ld [wBossAISwitchConfidence], a
@@ -6774,6 +7141,7 @@ BossAI_ApplyPlausibleRiskToSwitchConfidence:
 	ld a, 99
 	ret
 
+; ai-layer: POLICY
 BossAI_ApplyPlanSwitchBias:
 	ld a, [wBossAIPlanId]
 	and a
@@ -6814,6 +7182,7 @@ BossAI_ApplyPlanSwitchBias:
 	ld a, 99
 	ret
 
+; ai-layer: POLICY
 BossAI_ShouldSackInsteadOfSwitch:
 	call AICheckEnemyQuarterHP_HL
 	jr c, .no
@@ -6831,6 +7200,7 @@ BossAI_ShouldSackInsteadOfSwitch:
 	and a
 	ret
 
+; ai-layer: POLICY
 BossAI_IsSwitchingIntoWinconRisk:
 	ld a, [wEnemySwitchMonParam]
 	and $f
@@ -6854,6 +7224,13 @@ BossAI_IsSwitchingIntoWinconRisk:
 	scf
 	ret
 
+; ============================================================
+; Region: Mark scout pivot
+; Concern: Scout-pivot marking after switch execution
+; Layer: POLICY
+; Original lines: 10
+; ============================================================
+; ai-layer: POLICY
 BossAI_MaybeMarkScoutPivot:
 	call BossAI_ShouldScout
 	ret nc
@@ -6865,6 +7242,13 @@ IF DEF(BOSS_AI_TRACE)
 ENDC
 	ret
 
+; ============================================================
+; Region: Static data tables
+; Concern: Plausible threats, tier weights, status/role/risky effect tables
+; Layer: DATA
+; Original lines: 139
+; ============================================================
+; ai-layer: DATA
 BossAI_PlausibleThreatTypes:
 	db NORMAL
 	db FIGHTING
@@ -6885,6 +7269,7 @@ BossAI_PlausibleThreatTypes:
 	db DARK
 	db -1
 
+; ai-layer: DATA
 BossAIHiddenPowerThreatTypes:
 	db GROUND
 	db ICE
@@ -6896,6 +7281,7 @@ BossAIHiddenPowerThreatTypes:
 ; (own SECTION) so the trace build doesn't push the "Enemy Trainers" bank
 ; over its 16 KB ceiling. Caller below uses farcall.
 
+; ai-layer: DATA
 BossAITierWeights:
 ; ko, denyko, tempo, setup, status, role, risk
 ; rows 0..2 mirror AI_TIER_EARLY/MID/LATE; rows 3..4 are sub-tier bumps used by
@@ -6907,6 +7293,7 @@ BossAITierWeights:
 	db 5, 2, 1, 1, 1, 1, 2 ; row 3: early +25% (one delta column raised toward mid)
 	db 5, 3, 1, 1, 1, 1, 2 ; row 4: early +50% (two delta columns raised toward mid)
 
+; ai-layer: DATA
 BossAIDenyKOEffects:
 	db EFFECT_SLEEP
 	db EFFECT_PARALYZE
@@ -6923,6 +7310,7 @@ BossAIDenyKOEffects:
 	db EFFECT_FORCE_SWITCH
 	db -1
 
+; ai-layer: DATA
 BossAIStatusEffects:
 	db EFFECT_SLEEP
 	db EFFECT_PARALYZE
@@ -6932,18 +7320,21 @@ BossAIStatusEffects:
 	db EFFECT_LEECH_SEED
 	db -1
 
+; ai-layer: DATA
 BossAIChuckRoleEffects:
 	db EFFECT_SLEEP
 	db EFFECT_LOCK_ON
 	db EFFECT_PRIORITY_HIT
 	db -1
 
+; ai-layer: DATA
 BossAIJasmineRoleEffects:
 	db EFFECT_PARALYZE
 	db EFFECT_PROTECT
 	db EFFECT_RAIN_DANCE
 	db -1
 
+; ai-layer: DATA
 BossAIPryceRoleEffects:
 	db EFFECT_SPEED_DOWN_HIT
 	db EFFECT_FORCE_SWITCH
@@ -6953,6 +7344,7 @@ BossAIPryceRoleEffects:
 	db EFFECT_MOONLIGHT
 	db -1
 
+; ai-layer: DATA
 BossAIClairRoleEffects:
 	db EFFECT_PARALYZE
 	db EFFECT_SPEED_UP
@@ -6961,6 +7353,7 @@ BossAIClairRoleEffects:
 	db EFFECT_RAIN_DANCE
 	db -1
 
+; ai-layer: DATA
 BossAIWillRoleEffects:
 	db EFFECT_SLEEP
 	db EFFECT_REFLECT
@@ -6968,12 +7361,14 @@ BossAIWillRoleEffects:
 	db EFFECT_FUTURE_SIGHT
 	db -1
 
+; ai-layer: DATA
 BossAIBrunoRoleEffects:
 	db EFFECT_PRIORITY_HIT
 	db EFFECT_FORESIGHT
 	db EFFECT_PROTECT
 	db -1
 
+; ai-layer: DATA
 BossAIKarenRoleEffects:
 	db EFFECT_SLEEP
 	db EFFECT_CONFUSE
@@ -6983,6 +7378,7 @@ BossAIKarenRoleEffects:
 	db EFFECT_FORCE_SWITCH
 	db -1
 
+; ai-layer: DATA
 BossAIKogaRoleEffects:
 	db EFFECT_TOXIC
 	db EFFECT_SPIKES
@@ -6991,6 +7387,7 @@ BossAIKogaRoleEffects:
 	db EFFECT_CONFUSE
 	db -1
 
+; ai-layer: DATA
 BossAIChampionRoleEffects:
 	db EFFECT_PARALYZE
 	db EFFECT_RAIN_DANCE
@@ -6998,6 +7395,7 @@ BossAIChampionRoleEffects:
 	db EFFECT_FORCE_SWITCH
 	db -1
 
+; ai-layer: DATA
 BossAIRiskyEffects:
 	db EFFECT_SELFDESTRUCT
 	db EFFECT_RECOIL_HIT
@@ -7005,6 +7403,12 @@ BossAIRiskyEffects:
 	db EFFECT_BELLY_DRUM
 	db -1
 
+; ============================================================
+; Region: Cross-bank _HL thunks
+; Concern: HL-preserving farcall thunks into the AI Scoring bank
+; Layer: THUNK
+; Original lines: 59
+; ============================================================
 ; AI Scoring helpers live in bank 0x0b ("AI Scoring"). boss.asm itself
 ; lives in bank 0x0e ("Enemy Trainers"), so a plain `call AIxxx` from
 ; boss.asm to a scoring helper resolves at offset $7xxx in bank 0x0e
@@ -7023,42 +7427,49 @@ BossAIRiskyEffects:
 ; sites in boss.asm targeting scoring.asm; this is the same class as
 ; the May 2026 cross-bank softlock (commit 2593278d).
 
+; ai-layer: THUNK
 AIGetEnemyMove_HL:
 	push hl
 	farcall AIGetEnemyMove
 	pop hl
 	ret
 
+; ai-layer: THUNK
 AICheckEnemyQuarterHP_HL:
 	push hl
 	farcall AICheckEnemyQuarterHP
 	pop hl
 	ret
 
+; ai-layer: THUNK
 AICheckEnemyHalfHP_HL:
 	push hl
 	farcall AICheckEnemyHalfHP
 	pop hl
 	ret
 
+; ai-layer: THUNK
 AICheckEnemyMaxHP_HL:
 	push hl
 	farcall AICheckEnemyMaxHP
 	pop hl
 	ret
 
+; ai-layer: THUNK
 AICheckPlayerQuarterHP_HL:
 	push hl
 	farcall AICheckPlayerQuarterHP
 	pop hl
 	ret
 
+; ai-layer: THUNK
 AICheckPlayerHalfHP_HL:
 	push hl
 	farcall AICheckPlayerHalfHP
 	pop hl
 	ret
 
+; ai-layer: THUNK
 AICheckPlayerMaxHP_HL:
 	push hl
 	farcall AICheckPlayerMaxHP
