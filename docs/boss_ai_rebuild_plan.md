@@ -62,36 +62,52 @@ Scores all candidate moves with the heuristic system. Picks via:
 
 Handles ~90% of decisions. Pure-Gameboy-implementable: ~30 lines in `BossAI_SelectMove` plus the bonus computation. The mixing prevents trivial-determinism exploits ("Pidgeot always switches in safely against my Earthquake user") because the mix tilts toward Stone Edge when Pidgeot is revealed.
 
-### Layer B — Strategic-deception override, corpus-driven
+### Layer B — Online regret-minimization (the "safe vs crazy" tracker)
 
-Layer A handles "near-EV-tie" mixing but cannot capture **dominant-move spots where the deception equity exceeds the EV cost** — the Thunderbolt-into-Ground class. That's a multi-turn meta-strategic decision: the bluff this turn is worth its zero-EV cost only because of how the player's mental model has been shaped over previous turns.
+Layer A handles "near-EV-tie" mixing but cannot capture **dominant-move spots where the deception equity exceeds the EV cost** — the Thunderbolt-into-Ground class. The bluff this turn is worth its zero-EV cost only because of how the player's mental model has been shaped over previous turns.
 
-Layer B is a small override system, separate from Layer A's scoring. Each corpus entry pairs `(current state + recent history features, right-move-this-turn)`. History features the corpus captures:
+Layer B is a per-battle adaptive bluff-frequency system based on **counterfactual regret minimization** (the algorithmic foundation behind modern poker AI), specialized to Pokemon. Per turn:
 
-- How many of AI's last N moves were the same dominant pick.
-- How many times the player has switched in response to AI's last N moves.
-- Whether the player's revealed counter to AI's preferred move has come in safely already.
-- Tempo delta (HP advantage shifting over turns).
-- Whether AI has used a "test" move (probing for hidden info) yet this battle.
+1. AI picks per Layer A (the "safe play"). Identifies a "crazy play candidate" — the structurally-relevant alternative for this state class (e.g., "switch into the Electric-type predicting Flying-switch" vs "EQ the Typhlosion in front of you").
+2. Player commits their response.
+3. AI evaluates: *if I had picked the crazy play, what would the outcome have been against the response the player just made?* — using the existing scoring system, no new infrastructure.
+4. Compute regret = `counterfactual_outcome - actual_outcome`. Positive regret means the crazy play would have been better; the player exploited AI's predictability.
+5. Update accumulated regret with exponential smoothing (avoids wild swings on a single noisy turn).
+6. Adjust per-battle bluff frequency: high regret → bluff frequency rises; negative regret → bluff frequency drops.
+7. On AI's next decision: roll `BattleRandom`; if below current bluff frequency, override Layer A with the crazy play candidate.
 
-User tags scenarios from replays as "AI should have bluffed here." The pre-history is captured automatically (the tool has the replay); Layer B trains a pattern-matcher (nearest-neighbor over corpus features, or a small interpretable rule-set) that fires on matching state shapes during play. When Layer B fires, AI overrides Layer A's pick with a bluff move at small probability — the bluff frequency is tunable per-leader.
+**Convergence story** — this matches the player's intuition exactly: *"player constantly acts like you'll never bluff which increases odds to bluff."* The algorithm is Nash-equilibrium-seeking in real time. If player exploits → regret accumulates → AI bluffs more → some bluffs land → player can't safely exploit → adjusts → regret stops accumulating → bluff frequency stabilizes at whatever rate keeps the player honest.
 
-This is *the* class of decision that is genuinely hard to encode as a single-turn heuristic. The corpus-with-history-features mechanism is the right tool because the user's judgment is the only ground truth for "this is a deception-worthy spot."
+**Per-battle state** (4 bytes WRAMX): `regret_count: i16`, `bluff_freq: u8`, `last_alt_pick: u8`.
+
+**Per-turn cost**: ~200-300 bytes of asm. The hard-looking step (counterfactual evaluation) is free — it's a second invocation of the existing scoring code on the alternative move against the player's now-revealed response.
+
+**Per-leader personality** lives in the priors: cold-start `bluff_freq` (Falkner 5%, Whitney 8%, Clair 15%), regret-update step size, max-bluff-frequency cap (e.g., 30%). Tunable; defines the leader's flavor.
+
+### Where the corpus comes back in
+
+Layer B's regret-minimization handles *frequency* (how often to bluff). It does not by itself answer *what is the crazy play candidate for this state?* That structural question — defining the safe/crazy pair per state class — is where user-tagged corpus entries from playtests still earn their keep:
+
+- Corpus tags scenarios as `(state class, defines crazy-play pair)`. E.g., "when AI's mon has a coverage move that's strictly worse than its STAB but threatens a specific switch-in, the crazy play is the coverage move."
+- During play, Layer B's "what's the crazy play candidate?" lookup uses the corpus rules.
+- Frequency stays online and adaptive; structural identification stays user-shaped.
+
+This is the right division of labor: humans define *what counts as a bluff* (structural taste), the algorithm decides *how often to bluff* (online optimization).
 
 ### Why this stays north-star-compatible
 
-- **No hidden-info reads.** History features only count *AI's own past moves* and *the player's observable responses* — both public. No peeking at unrevealed party members or PP counters.
-- **Heuristics still readable.** Layer A heuristics are still plain scoring rules anchored to POLICY_DESIGN.md. Layer B's pattern-matcher cites its corpus entries: "this state matches turn 4 of the 2026-06-12 Whitney bluff scenario; AI is bluffing at 30% per the corpus tag." Auditable.
-- **Each leader has personality.** Falkner is risk-averse (small EV_THRESHOLD, low Layer B firing rate). Whitney is conservative + punishing (high counter-switch bonus). Clair is aggressive (broad mixing, willing to bluff). Personality is per-leader parameters anchored to flavor.
-- **Player can learn the patterns.** "Whitney bluffs more when ahead on HP" is a learnable read. The mix is conditional on game state, not random noise. Mastery comes from reading the leader's *style*.
+- **No hidden-info reads.** Regret signals only use AI's own past moves and the player's observable responses — both public. No peeking at unrevealed party members or PP counters.
+- **Heuristics still readable.** Layer A heuristics are plain scoring rules anchored to POLICY_DESIGN.md. Layer B's regret state is a 4-byte struct any auditor can dump: "AI's accumulated regret is +28, bluff frequency is 14%, last roll was 87 (no bluff)." Auditable.
+- **Each leader has personality.** Falkner is risk-averse (low cold-start bluff frequency, small max cap). Whitney is conservative + punishing (high counter-switch bonus in Layer A, slow regret response). Clair is aggressive (high cold-start bluff frequency, fast regret adaptation). Personality is per-leader parameters anchored to flavor.
+- **Player can learn the patterns.** "Clair bluffs sooner when ahead on HP because her cold-start bluff frequency is higher" is a learnable read. The system isn't random noise — bluff frequency is a deterministic function of accumulated regret. Mastery comes from reading the leader's *style*.
 
 ### Implementation reality
 
 On SM83:
 - Layer A: ~30-line addition to `BossAI_SelectMove`. Counter-switch bonus is a few hundred bytes per leader.
-- Layer B: a feature extractor (~50-100 bytes) that reads history features into a struct, plus a pattern-matcher table (~256 bytes per leader for the corpus-derived rules). Layer B fires at small probability when its conditions match; the rest of the time it's a no-op.
+- Layer B: per-battle 4-byte WRAMX state (`regret_count`, `bluff_freq`, `last_alt_pick`, padding). ~200-300 bytes of asm: regret-update routine (called after player's response resolves), bluff-decision routine (called inside `BossAI_SelectMove`). The crazy-play-candidate lookup table (corpus-derived structural rules) lives in ROM, regenerated as part of the build.
 
-Memory budget concern is real (WRAMX bank 1 already tight per `check_boss_ai_memory_budget.py`). Layer B's history feature struct must fit within the existing budget; the pattern-matcher tables can live in ROM (regenerated from corpus as part of the build).
+Memory budget concern is small (WRAMX bank 1 is tight per `check_boss_ai_memory_budget.py`, but 4 bytes per active battle is well within slack). The corpus-derived structural-rule table lives in ROM where the budget is bank-by-bank rather than reserved.
 
 ### Trace pipeline implications
 
