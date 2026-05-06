@@ -365,6 +365,7 @@ def _type_passive_modifiers(
     *,
     has_stab: bool,
     matchup_total: int,
+    pristine: bool = False,
 ) -> int:
     """Mirror `TypePassive_ApplyDamageModifiers_Far` (locked V1 mods).
 
@@ -408,11 +409,12 @@ def _type_passive_modifiers(
     # comparison `3*HP < 0` is then never true, so the function always
     # returns "not below." The FIRE-low-HP boost NEVER fires in practice.
     #
-    # Oracle mirrors this bug: skip the branch unconditionally for now.
-    # When the ROM is fixed (push/pop af or use a different scratch reg
-    # in .GetUserHPAndMax), drop this guard and the original logic is
-    # restored.
-    if False and inp.move_type == FIRE and inp.attacker_below_third_hp:
+    # Oracle mirrors this bug by default (`pristine=False`): skip the
+    # branch so fuzz stays green against the as-shipped ROM. Pass
+    # `pristine=True` (used by `find.py`'s --bug mode) to model the
+    # AS-INTENDED behavior; the diff against the as-shipped ROM then
+    # surfaces the bug as a divergence at the TypePassive bucket.
+    if pristine and inp.move_type == FIRE and inp.attacker_below_third_hp:
         c = _type_contribution(FIRE, inp.attacker_types)
         if c == 2:
             dmg = _apply_fraction(dmg, 6, 5)
@@ -518,7 +520,7 @@ def _matchup_total(inp: BattleInputs) -> int:
     return total
 
 
-def predict_damage(inp: BattleInputs) -> int:
+def predict_damage(inp: BattleInputs, *, pristine: bool = False) -> int:
     """Mirror BattleCommand_DamageCalc + .CriticalMultiplier + BattleCommand_Stab
     + TypePassive_ApplyDamageModifiers_Far.
 
@@ -578,9 +580,79 @@ def predict_damage(inp: BattleInputs) -> int:
     matchup_total = _matchup_total(inp)
     dmg = _type_passive_modifiers(
         inp, dmg, has_stab=has_stab, matchup_total=matchup_total,
+        pristine=pristine,
     )
 
     return dmg
+
+
+def predict_damage_trace(inp: BattleInputs, *, pristine: bool = False) -> list[tuple[str, int]]:
+    """Like `predict_damage`, but returns wCurDamage at each step boundary.
+
+    Used by the Tier 3.5 `find` CLI to bucket-locate divergence between
+    ROM execution and oracle prediction. Step names match the asm's
+    top-level labels so the diff readout is self-explanatory:
+
+        ('DamageStats',  0)             # ResetDamage zeros wCurDamage
+        ('DamageCalc',   q + 2)         # post-Q, post-crit, post-cap, +MIN_DAMAGE
+        ('Stab',         post-STAB)     # +50% if move type matches attacker
+        ('TypeMatchup',  post-matchup)  # /10 multiply per matching row
+        ('TypePassive',  final)         # 9 fractional V1 modifiers
+
+    When ROM and oracle agree at step N but diverge at step N+1, the
+    bug lives in the asm code that runs between those labels.
+    """
+    trace: list[tuple[str, int]] = [("DamageStats", 0)]
+
+    atk = _apply_user_item_stat_mod(inp, inp.attacker_atk)
+    deff = _apply_opponent_item_stat_mod(inp, inp.defender_def)
+    atk, deff = _truncate_hl_bc(atk, deff)
+    if inp.is_selfdestruct:
+        deff = max(1, deff // 2)
+
+    if inp.move_bp == 0:
+        trace.extend([("DamageCalc", 0), ("Stab", 0), ("TypeMatchup", 0), ("TypePassive", 0)])
+        return trace
+
+    q = (2 * inp.attacker_level) // 5 + 2
+    q = q * inp.move_bp
+    q = q * atk
+    q = q // max(1, deff)
+    q = q // 50
+    if inp.is_critical:
+        q *= 2
+        if q > 0xFFFF:
+            q = 0xFFFF
+    DAMAGE_CAP = 997
+    if q > DAMAGE_CAP:
+        q = DAMAGE_CAP
+    dmg = q + 2
+    trace.append(("DamageCalc", dmg))
+
+    has_stab = inp.move_type in inp.attacker_types
+    if has_stab:
+        dmg = dmg + dmg // 2
+    # In the asm, STAB and the matchup loop both happen inside
+    # BattleCommand_Stab. We expose them as separate buckets here so a
+    # divergence at the matchup step is distinguishable from a STAB-side
+    # bug. The on-ROM trace can hook the matchup .end label to read
+    # wCurDamage at the same boundary.
+    pre_matchup = dmg
+    dmg = _type_matchup(inp, dmg)
+    trace.append(("Stab", pre_matchup))
+    trace.append(("TypeMatchup", dmg))
+
+    if dmg == 0:
+        trace.append(("TypePassive", 0))
+        return trace
+
+    matchup_total = _matchup_total(inp)
+    dmg = _type_passive_modifiers(
+        inp, dmg, has_stab=has_stab, matchup_total=matchup_total,
+        pristine=pristine,
+    )
+    trace.append(("TypePassive", dmg))
+    return trace
 
 
 # ---------------------------------------------------------------------------
