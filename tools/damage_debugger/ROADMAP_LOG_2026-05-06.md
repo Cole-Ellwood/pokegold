@@ -242,3 +242,41 @@ Bug found in debugger itself:
 
 Open:
 - Commit H4.
+
+## M2 -- reusable hook instrumentation in find.py
+
+Active item: M2, promote the "HL + memory at hook" probe pattern.
+
+Changed:
+- Added `--instrument-hook <symbol>` to `find.py`.
+- Added reusable hook recording for CPU registers plus
+  `mem[HL-2..HL]` on every hit.
+- Added text and JSON instrumentation output.
+- Added `--bug dm_hl_clobber` as the supported repro for the historical
+  `CheckTypeMatchup.Yup` HL-clobber bug.
+- Extended `find --self-test` with a `CheckTypeMatchup.Yup` instrumentation
+  assertion.
+
+Debugger self-check:
+- The self-test fails if the DM repro does not produce exactly one real
+  `GROUND -> GHOST` type-table row (`$04 $08 $00`) or if the hook window
+  points into stack memory.
+- Invalid hook names return exit code 2.
+
+Commands run:
+- `python -m compileall -q tools\damage_debugger`
+- `python -m tools.damage_debugger.clobber_smoke`
+- `python -m tools.damage_debugger.oracle`
+- `python -m tools.damage_debugger.find --self-test`
+- `python -m tools.damage_debugger.find --bug dm_hl_clobber --instrument-hook CheckTypeMatchup.Yup`
+- `python -m tools.damage_debugger.find --bug dm_hl_clobber --instrument-hook CheckTypeMatchup.Yup --json`
+- `python -m tools.damage_debugger.find special_super_effective --instrument-hook NoSuch.Symbol`
+- `python tools\audit\check_navigation_floor.py`
+- `git diff --check`
+
+Bug found in debugger itself:
+- None new in M2. This promotes the existing probe pattern into maintained
+  tooling.
+
+Open:
+- Run final M2 verification floor and commit.

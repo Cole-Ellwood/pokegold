@@ -299,7 +299,11 @@ and after-hit effects.
   with TypesLoop / SkipType / Next / Nope filtered out.
 - `_oracle_audit_probe5.py` — captures CPU `hl` register and the bytes
   at `(hl-2, hl-1, hl)` at every `CheckTypeMatchup.Yup` hit. This is
-  what surfaced the hl-clobber bug.
+  what surfaced the hl-clobber bug. **Promoted in M2 on 2026-05-06:**
+  `find.py --instrument-hook <symbol>` now captures this pattern as
+  supported tooling.
 
-These were ad-hoc but encode useful instrumentation patterns. Promote the
-"hl + memory at hook" pattern into the main `find` CLI if it gets reused.
+These were ad-hoc but encode useful instrumentation patterns. The
+`_oracle_audit_probe5.py` pattern is now supported by `find.py`; leave the
+remaining probes untracked unless their patterns are promoted by a later
+roadmap item.

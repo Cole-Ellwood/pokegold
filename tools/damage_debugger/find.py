@@ -27,9 +27,13 @@ Modes:
     python -m tools.damage_debugger.find --json <scenario_name>
         Same as above, JSON-formatted for AI-loop consumption.
 
+    python -m tools.damage_debugger.find --bug dm_hl_clobber --instrument-hook CheckTypeMatchup.Yup
+        Also capture CPU registers plus mem[HL-2..HL] at each hook hit.
+
     python -m tools.damage_debugger.find --self-test
         Assert the mid-Stab hook boundaries still bucket type-effectiveness
-        scenarios correctly.
+        scenarios correctly, and assert the DM hl-clobber repro's hook
+        window shows one real type-table row instead of stack garbage.
 
 The "first divergent step" is the diagnostic: when ROM and oracle agree
 at step N but disagree at step N+1, the bug is in the asm code that
@@ -64,7 +68,10 @@ from .clobber_smoke import (
 )
 from .oracle import (
     BattleInputs,
+    DRAGON,
     FIRE,
+    GHOST,
+    GROUND,
     NORMAL,
     predict_damage_trace,
 )
@@ -77,6 +84,126 @@ from .safe_call import call_function_safe, read_be_u16_banked
 def _read_wcurdamage(pyboy, syms) -> int:
     s = syms["wCurDamage"]
     return read_be_u16_banked(pyboy, s[1], s[0])
+
+
+@dataclass
+class InstrumentHit:
+    seq: int
+    symbol: str
+    bank: int
+    pc: int
+    a: int
+    f: int
+    b: int
+    c: int
+    d: int
+    e: int
+    h: int
+    l: int
+    sp: int
+    hl: int
+    window_start: int
+    window: list[int]
+
+
+@dataclass
+class InstrumentReport:
+    hook: str
+    bank: int
+    address: int
+    hits: list[InstrumentHit]
+    call_failures: list[str]
+
+
+class HookRecorder:
+    """Reusable single-symbol hook recorder for focused debugger probes."""
+
+    def __init__(self, pyboy, syms: dict, symbol: str):
+        if symbol not in syms:
+            raise KeyError(symbol)
+        self.pyboy = pyboy
+        self.symbol = symbol
+        self.bank, self.address = syms[symbol]
+        self.hits: list[InstrumentHit] = []
+        self._installed = False
+
+    def install(self) -> None:
+        def cb(_):
+            self.capture()
+
+        self.pyboy.hook_register(self.bank, self.address, cb, None)
+        self._installed = True
+
+    def close(self) -> None:
+        if not self._installed:
+            return
+        try:
+            self.pyboy.hook_deregister(self.bank, self.address)
+        finally:
+            self._installed = False
+
+    def capture(self) -> None:
+        rf = self.pyboy.register_file
+        h = int(rf.H) if hasattr(rf, "H") else (int(rf.HL) >> 8) & 0xFF
+        l = int(rf.L) if hasattr(rf, "L") else int(rf.HL) & 0xFF
+        hl = ((h << 8) | l) & 0xFFFF
+        window_start = (hl - 2) & 0xFFFF
+        window = [int(self.pyboy.memory[(window_start + i) & 0xFFFF]) for i in range(3)]
+        self.hits.append(InstrumentHit(
+            seq=len(self.hits) + 1,
+            symbol=self.symbol,
+            bank=self.bank,
+            pc=int(rf.PC),
+            a=int(rf.A),
+            f=int(rf.F),
+            b=int(rf.B),
+            c=int(rf.C),
+            d=int(rf.D),
+            e=int(rf.E),
+            h=h,
+            l=l,
+            sp=int(rf.SP),
+            hl=hl,
+            window_start=window_start,
+            window=window,
+        ))
+
+
+FIND_CHAIN = (
+    "BattleCommand_DamageStats",
+    "BattleCommand_DamageCalc",
+    "BattleCommand_Stab",
+)
+
+
+def run_instrumented_hook(pyboy, syms, seed_callable, hook_symbol: str) -> InstrumentReport:
+    """Run the normal find chain while recording one hook symbol.
+
+    This promotes the old probe5 pattern: each hit captures CPU registers
+    plus the three bytes at [hl-2, hl-1, hl], which makes table-pointer
+    clobbers visible without adding a custom one-off script.
+    """
+    recorder = HookRecorder(pyboy, syms, hook_symbol)
+    recorder.install()
+    call_failures: list[str] = []
+    try:
+        seed_callable(pyboy, syms)
+        for fn in FIND_CHAIN:
+            ticks, returned, post_pc = call_function_safe(pyboy, syms, fn)
+            if not returned:
+                call_failures.append(
+                    f"{fn} did not reach the HRAM sentinel within {ticks} ticks "
+                    f"(PC=${post_pc:04x})"
+                )
+    finally:
+        recorder.close()
+    return InstrumentReport(
+        hook=hook_symbol,
+        bank=recorder.bank,
+        address=recorder.address,
+        hits=recorder.hits,
+        call_failures=call_failures,
+    )
 
 
 def run_rom_trace(pyboy, syms, seed_callable) -> list[tuple[str, int]]:
@@ -268,6 +395,46 @@ def report_to_dict(name: str, inp: BattleInputs, diffs: list[StepDiff],
     }
 
 
+def _format_instrument_hit(hit: InstrumentHit) -> str:
+    window = " ".join(f"${b:02x}" for b in hit.window)
+    row = (
+        f"row=(att=${hit.window[0]:02x}, def=${hit.window[1]:02x}, mult=${hit.window[2]:02x})"
+        if len(hit.window) == 3 else "row=(unavailable)"
+    )
+    return (
+        f"  #{hit.seq:<3d} PC=${hit.pc:04x} "
+        f"A={hit.a:02x} F={hit.f:02x} "
+        f"BC={hit.b:02x}{hit.c:02x} DE={hit.d:02x}{hit.e:02x} "
+        f"HL=${hit.hl:04x} SP=${hit.sp:04x} "
+        f"mem[HL-2..HL]@${hit.window_start:04x}={window} {row}"
+    )
+
+
+def format_instrument_report(report: InstrumentReport) -> str:
+    lines = [
+        "",
+        f"instrument-hook: {report.hook} @ ${report.bank:02x}:{report.address:04x} "
+        f"hits={len(report.hits)}",
+    ]
+    for failure in report.call_failures:
+        lines.append(f"  call warning: {failure}")
+    if not report.hits:
+        lines.append("  (hook did not fire)")
+    else:
+        lines.extend(_format_instrument_hit(hit) for hit in report.hits)
+    return "\n".join(lines)
+
+
+def instrument_report_to_dict(report: InstrumentReport) -> dict:
+    return {
+        "hook": report.hook,
+        "bank": report.bank,
+        "address": report.address,
+        "hits": [asdict(hit) for hit in report.hits],
+        "call_failures": report.call_failures,
+    }
+
+
 # --- Known-bug repros --------------------------------------------------------
 
 def _known_bugs() -> dict[str, tuple[str, BattleInputs, callable]]:
@@ -301,6 +468,27 @@ def _known_bugs() -> dict[str, tuple[str, BattleInputs, callable]]:
         "still in place.",
         hp_inp,
         seed_hp,
+    )
+
+    dm_inp = BattleInputs(
+        attacker_level=3, move_bp=27, move_type=GROUND, is_physical=True,
+        attacker_atk=62, defender_def=5,
+        attacker_types=(NORMAL, DRAGON), defender_types=(GHOST, GROUND),
+        is_critical=True,
+    )
+
+    def seed_dm(pyboy, syms):
+        _seed_inputs(pyboy, syms, dm_inp)
+
+    bugs["dm_hl_clobber"] = (
+        "Dragon's Majesty immunity reroute in CheckTypeMatchup.Yup. This "
+        "was originally broken by an hl-clobber across "
+        "CheckTypeMatchup_ApplyDragonsMajestyMultiplier, making the matchup "
+        "loop read stack garbage after the first hit. Fixed via push/pop hl; "
+        "kept as a regression guard and as the reference case for "
+        "--instrument-hook CheckTypeMatchup.Yup.",
+        dm_inp,
+        seed_dm,
     )
     return bugs
 
@@ -466,13 +654,30 @@ def _self_test() -> int:
                     print(f"  divergence {d.step}: ROM={d.rom} oracle={d.oracle}")
             else:
                 print(f"{name}: ok")
+
+        _desc, _inp, dm_seed = _known_bugs()["dm_hl_clobber"]
+        pyboy = cache.restore()
+        dm_report = run_instrumented_hook(pyboy, syms, dm_seed, "CheckTypeMatchup.Yup")
+        expected_window = [GROUND, GHOST, 0]
+        matching_hits = [hit for hit in dm_report.hits if hit.window == expected_window]
+        stack_hits = [hit for hit in dm_report.hits if 0xDF00 <= hit.hl <= 0xDFFF]
+        if len(dm_report.hits) != 1 or not matching_hits or stack_hits or dm_report.call_failures:
+            failures += 1
+            print("dm_hl_clobber instrument-hook: FAIL")
+            print(f"  hits={len(dm_report.hits)} matching_expected={len(matching_hits)}")
+            for failure in dm_report.call_failures:
+                print(f"  call failure: {failure}")
+            for hit in dm_report.hits:
+                print(_format_instrument_hit(hit))
+        else:
+            print("dm_hl_clobber instrument-hook: ok")
     finally:
         cache.stop()
 
     if failures:
         print(f"\n{failures} find self-test scenario(s) failed")
         return 1
-    print(f"\nall {len(expected_steps)} find self-test scenarios passed")
+    print(f"\nall {len(expected_steps)} bucket checks and instrument-hook check passed")
     return 0
 
 
@@ -484,6 +689,8 @@ def main(argv: list[str] | None = None) -> int:
                         help="Run a known-bug repro (try: hp_d_clobber)")
     parser.add_argument("--json", action="store_true",
                         help="JSON output for AI-loop consumption")
+    parser.add_argument("--instrument-hook", metavar="SYMBOL", default=None,
+                        help="Capture registers and mem[HL-2..HL] every time SYMBOL fires")
     parser.add_argument("--list", action="store_true",
                         help="List available scenarios and known bugs")
     parser.add_argument("--self-test", action="store_true",
@@ -534,11 +741,34 @@ def main(argv: list[str] | None = None) -> int:
     rom = find_rom("pokegold_debug")
     sym = find_sym("pokegold_debug")
     syms = parse_sym(sym)
+    if args.instrument_hook is not None and args.instrument_hook not in syms:
+        print(
+            f"unknown hook symbol {args.instrument_hook!r}; "
+            f"check {sym.name} or run against a freshly built .sym",
+            file=sys.stderr,
+        )
+        return 2
+
     cache = BootStateCache(rom)
     cache.prime()
     pyboy = cache.restore()
 
     rom_trace = run_rom_trace(pyboy, syms, seed)
+    instrument_report = None
+    if args.instrument_hook is not None:
+        pyboy_instrument = cache.restore()
+        try:
+            instrument_report = run_instrumented_hook(
+                pyboy_instrument, syms, seed, args.instrument_hook
+            )
+        except KeyError:
+            cache.stop()
+            print(
+                f"unknown hook symbol {args.instrument_hook!r}; "
+                f"check {sym.name} or run against a freshly built .sym",
+                file=sys.stderr,
+            )
+            return 2
     # When running a known-bug repro, score the oracle in "pristine" mode
     # (model the AS-INTENDED behavior, ignore the documented ROM bugs)
     # so the diff actually surfaces the bug as a divergence. For regular
@@ -555,10 +785,15 @@ def main(argv: list[str] | None = None) -> int:
     if args.json:
         report = report_to_dict(scenario_name, inp, diffs,
                                 final_rom=final_rom, final_oracle=final_oracle)
+        if instrument_report is not None:
+            report["instrumentation"] = instrument_report_to_dict(instrument_report)
         print(json.dumps(report, indent=2))
     else:
-        print(format_report(scenario_name, inp, diffs,
-                            final_rom=final_rom, final_oracle=final_oracle))
+        text = format_report(scenario_name, inp, diffs,
+                             final_rom=final_rom, final_oracle=final_oracle)
+        if instrument_report is not None:
+            text += format_instrument_report(instrument_report)
+        print(text)
 
     cache.stop()
     # Exit nonzero if there's a divergence -- so this can run as a CI gate.

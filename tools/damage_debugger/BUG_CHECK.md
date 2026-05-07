@@ -598,3 +598,46 @@ Remaining risk:
   across all call sites.
 - After-hit scenarios are isolated state checks, not full move-script
   integration tests. They cover the handler side effects that H4 targeted.
+
+## 2026-05-06 — M2 reusable hook instrumentation in find.py
+
+Roadmap item: M2, promote the "HL + memory at hook" probe pattern into
+supported `find.py` tooling.
+
+Change:
+- Added `--instrument-hook <symbol>` to `tools.damage_debugger.find`.
+- Added a reusable hook recorder that captures CPU registers and the
+  three bytes at `mem[HL-2..HL]` on every hook hit.
+- Text output now prints per-hit PC, registers, HL, SP, and the memory
+  window; JSON output includes the same data under `instrumentation`.
+- Added `--bug dm_hl_clobber`, the Dragon's Majesty
+  `CheckTypeMatchup.Yup` regression guard from the 2026-05-05 audit.
+- Extended `find --self-test` so it asserts the DM repro produces exactly
+  one `CheckTypeMatchup.Yup` hit on the real `GROUND -> GHOST` type-table
+  row (`$04 $08 $00`) and no stack-window hits.
+
+Debugger self-check:
+- `python -m tools.damage_debugger.find --self-test` now fails if the
+  instrumented hook misses, points at stack memory, loses the HL window,
+  or if the existing Stab/TypeMatchup bucket checks regress.
+- Invalid hook names return exit code 2 before running the scenario.
+
+Verification:
+- `python -m compileall -q tools\damage_debugger` — PASS.
+- `python -m tools.damage_debugger.clobber_smoke` — PASS, 18/18 scenarios.
+- `python -m tools.damage_debugger.oracle` — PASS, 14/14 self-tests.
+- `python -m tools.damage_debugger.find --self-test` — PASS.
+- `python -m tools.damage_debugger.find --bug dm_hl_clobber --instrument-hook CheckTypeMatchup.Yup`
+  — PASS. Output shows one hit at `CheckTypeMatchup.Yup` with
+  `mem[HL-2..HL]=$04 $08 $00`, matching the pre-fix probe's first real
+  row and no stack garbage hits.
+- `python -m tools.damage_debugger.find --bug dm_hl_clobber --instrument-hook CheckTypeMatchup.Yup --json`
+  — PASS, JSON contains the instrumentation payload.
+- `python -m tools.damage_debugger.find special_super_effective --instrument-hook NoSuch.Symbol`
+  — exit 2 as expected.
+- `python tools\audit\check_navigation_floor.py` — PASS.
+- `git diff --check` — PASS.
+
+Remaining risk:
+- `--instrument-hook` records one symbol per run. That matches the M2 probe
+  use case; multi-hook workflows can build on the same `HookRecorder` later.
