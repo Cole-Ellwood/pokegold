@@ -718,3 +718,52 @@ Remaining risk:
   H4 scenario set too slow. `BattleCommand_Stab` still covers the primary
   matchup loop, and M2 `--instrument-hook CheckTypeMatchup.Yup` remains the
   focused diagnostic for that path.
+
+## 2026-05-06 — M4 Tenet-style trace export
+
+Roadmap item: M4, Tenet-format omniscient trace.
+
+Change:
+- Added `tools.damage_debugger.tenet_writer`.
+- Exports existing `tracer.Tracer` frames as JSONL records with:
+  - `schema = damage-debugger.tenet-jsonl.v1`
+  - raw Tenet delta syntax in `tenet`
+  - structured `events` for register deltas and watched-memory writes
+- Supports boot traces and scenario-backed traces, for example tracing
+  `BattleCommand_Stab` while running `special_super_effective`.
+- Supports optional raw `.tenet` text output with one Tenet delta line per
+  instruction frame.
+- Added `.gitignore` rules for generated trace outputs under
+  `audit/damage_debugger/`.
+
+Debugger self-check:
+- `python -m tools.damage_debugger.tenet_writer --self-test` uses synthetic
+  frames and fails if the raw Tenet syntax, JSONL schema, memory-write event
+  shape, target query helper, empty-trace failure, or bad-watch failure
+  behavior regresses.
+
+Verification:
+- `python -m tools.damage_debugger.tracer` — PASS before M4, confirming the
+  existing per-PC hook path captured VBlank frames.
+- `python -m tools.damage_debugger.clobber_smoke` — PASS before M4, 18/18
+  scenarios.
+- `python -m compileall -q tools\damage_debugger` — PASS.
+- `python -m tools.damage_debugger.tenet_writer --self-test` — PASS.
+- `python -m tools.damage_debugger.tenet_writer --scenario special_super_effective --target BattleCommand_Stab --output "$env:TEMP\dd_stab_tenet.jsonl" --text-output "$env:TEMP\dd_stab_tenet.tenet"`
+  — PASS, wrote 1299 records and 26 watched-memory events.
+- Shape check on the JSONL output — PASS:
+  1299 records, schema `damage-debugger.tenet-jsonl.v1`, raw `tenet` field
+  present, and 3 `wCurDamage` events. The writes were:
+  - `BattleCommand_Stab.stab+0x15`: `$0009 -> $000d`
+  - `BattleCommand_Stab.ok+0x6`: `$000d -> $001a`
+  - `BattleCommand_Stab.ok+0x6`: `$001a -> $0034`
+- Invalid target / invalid `--max-frames` checks return failure before
+  writing a trace.
+
+Remaining risk:
+- PyBoy exposes instruction hooks and watched-memory snapshots, not true
+  per-instruction memory read/write callbacks. `tenet_writer` therefore
+  records writes as watch-list deltas. This is sufficient for the roadmap's
+  `wCurDamage` query workflow, but it is not a full bus-accurate Tenet trace.
+- The raw Tenet line follows the published delta syntax, but loading SM83 in
+  the Tenet viewer would still require a custom Tenet architecture definition.

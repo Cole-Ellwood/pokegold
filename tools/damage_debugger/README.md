@@ -20,6 +20,7 @@ broke same-bank callers in `engine/battle/late_gen_held_items.asm` whose
 | `python -m tools.damage_debugger.find --bug dm_hl_clobber --instrument-hook CheckTypeMatchup.Yup` | Focused hook instrumentation: captures registers plus `mem[HL-2..HL]` at every hook hit. |
 | `python -m tools.damage_debugger.taint --self-test` | SM83 byte-level taint tracker self-test for register, memory, stack, ALU, and sink propagation. |
 | `python -m tools.damage_debugger.coverage --write` | Per-PC coverage report for smoke scenarios; writes `audit/damage_debugger/coverage.md`. |
+| `python -m tools.damage_debugger.tenet_writer --scenario special_super_effective --target BattleCommand_Stab --output audit/damage_debugger/stab_tenet.jsonl` | Tenet-style delta trace export. JSONL records carry raw Tenet syntax plus structured events for `jq`/Python queries. |
 | `python -m tools.damage_debugger.cap_add_probe` | Classifies the DamageCalc nonzero-`wCurDamage` accumulation path against current-asm and intended endian-neutral models. |
 | `python -m tools.damage_debugger.precommit_check --self-test` | Self-test for the Claude `PreToolUse` git-commit gate that runs `clobber_smoke` when damage-chain asm is being committed. |
 | `python -m tools.damage_debugger.full_chain_v2` | Focused single-scenario investigation. Pidgey-Tackle-vs-Cyndaquil chain with per-step damage logging. |
@@ -105,6 +106,28 @@ changing this hook. The self-test creates a temporary Git repository and
 checks non-commit skip, untouched-file skip, touched-file smoke execution,
 and touched-file smoke failure propagation.
 
+## Tenet JSONL trace export
+
+`tenet_writer.py` adapts `tracer.Tracer` frames into the public Tenet
+delta-line syntax documented by Markus Gaasedelen's Tenet project
+(`reg=0x...`, `mw=0xADDR:BYTES`, `pc=0x...`). The supported file format
+is JSONL: each record includes the raw Tenet line under `tenet` plus
+structured `events` so command-line queries do not need an IDA/Tenet
+viewer or a custom SM83 architecture file.
+
+Common checks:
+
+```powershell
+python -m tools.damage_debugger.tenet_writer --self-test
+python -m tools.damage_debugger.tenet_writer --scenario special_super_effective --target BattleCommand_Stab --output audit\damage_debugger\stab_tenet.jsonl
+jq -c ".events[] | select(.target == \"wCurDamage\")" audit\damage_debugger\stab_tenet.jsonl
+```
+
+The self-test is synthetic and fails if the JSONL schema, raw Tenet
+syntax, memory-write event shape, target query helper, empty-trace
+failure, or bad-watch failure behavior regresses. Generated `.jsonl` and
+`.tenet` traces under `audit/damage_debugger/` are ignored local outputs.
+
 ## The HRAM sentinel trick (safe_call.py)
 
 `call_function_safe` runs an arbitrary function under PyBoy by:
@@ -151,6 +174,7 @@ Active:
 - `trace_chain.py` -- deep per-hook register snapshot
 - `taint.py` -- SM83 byte-level taint propagation over tracer frames
 - `coverage.py` -- per-PC smoke-scenario coverage report
+- `tenet_writer.py` -- Tenet-style JSONL trace export and target-event query helper
 - `repro_pidgey.py` -- original c-clobber repro
 - `safe_call.py` -- HRAM-sentinel function runner
 - `synth.py` -- SynthBattle dataclass + scenario installer

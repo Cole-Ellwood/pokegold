@@ -343,3 +343,40 @@ Bug found in debugger itself:
 
 Open:
 - Run final M3 verification floor and commit.
+
+## M4 -- Tenet-format trace export
+
+Active item: M4, Tenet-style omniscient trace export.
+
+Changed:
+- Added `tools/damage_debugger/tenet_writer.py`.
+- Wrapped existing `tracer.Tracer` frames in JSONL records that carry raw
+  Tenet delta syntax plus structured register and watched-memory events.
+- Added scenario-backed tracing, so a known smoke scenario can run while a
+  single damage-path function is traced.
+- Added optional raw `.tenet` text output.
+- Ignored generated `audit/damage_debugger/*.jsonl` and `*.tenet` trace
+  outputs.
+
+Debugger self-check:
+- `tenet_writer --self-test` verifies raw Tenet syntax, JSONL schema,
+  memory-write event shape, target-event query helper, text output,
+  empty-trace rejection, and bad-watch-size rejection.
+
+Commands run:
+- `python -m tools.damage_debugger.tracer`
+- `python -m tools.damage_debugger.clobber_smoke`
+- `python -m compileall -q tools\damage_debugger`
+- `python -m tools.damage_debugger.tenet_writer --self-test`
+- `python -m tools.damage_debugger.tenet_writer --scenario special_super_effective --target BattleCommand_Stab --output "$env:TEMP\dd_stab_tenet.jsonl" --text-output "$env:TEMP\dd_stab_tenet.tenet"`
+- JSON shape check over `$env:TEMP\dd_stab_tenet.jsonl`
+- Invalid target and invalid `--max-frames` failure checks
+
+Bug found in debugger itself:
+- The first M4 draft imported `clobber_smoke` at module import time, causing
+  the pure `--self-test` path to emit PyBoy's SDL warning and depend on
+  emulator imports. Scenario imports are now lazy, so the schema self-check is
+  emulator-independent.
+
+Open:
+- Run final M4 verification floor and commit.

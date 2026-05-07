@@ -40,6 +40,8 @@ rgbds-*/
 
 # Damage debugger harness run logs (regenerated each invocation).
 audit/damage_debugger/*.log
+audit/damage_debugger/*.jsonl
+audit/damage_debugger/*.tenet
 
 # Local scratch and release output families. Do not broaden these patterns unless
 # the path is documented as scratch/output in docs/agent_navigation/source_output_ownership.md.

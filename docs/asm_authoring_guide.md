@@ -1135,6 +1135,9 @@ Before reporting "asm change done":
    `clobber_smoke` now covers type-effectiveness, DamageVariation range,
    and late-gen after-hit HP effects, but you should still extend
    `SCENARIOS` for any newly touched damage branch or side effect.
+   For trace/export tooling changes, run the tool's self-test (for example
+   `python -m tools.damage_debugger.tenet_writer --self-test`) plus one
+   ROM-backed scenario trace and validate the emitted schema/query shape.
 4. Regenerate `docs/generated/dev_index.md` after **any** successful
    build (`python scripts/generate_dev_index.py --rom pokegold`).
 5. If you touched balance tables, regenerate
