@@ -503,38 +503,44 @@ Change:
 - Added `BattleInputs.initial_cur_damage` so the debugger can seed a
   synthetic multi-hit-style nonzero `wCurDamage` between DamageStats and
   DamageCalc.
-- Added `oracle.predict_damagecalc_only`, with a switch for the current
-  shipped asm behavior vs the likely intended endian-neutral accumulation.
+- Added `oracle.predict_damagecalc_only`, with a compatibility switch for the
+  historical shipped asm behavior vs the intended endian-neutral accumulation.
 - Extended `fuzz.py` to include the synthetic nonzero-`wCurDamage` axis and
   a fixed worker self-check case at `$0100`.
+- After explicit approval to make the gameplay-affecting fix, removed the
+  erroneous high-byte pre-add from `BattleCommand_DamageCalc`.
+- Updated `cap_add_probe` so it now fails if the historical high-byte
+  extra-add behavior reappears.
 
 Finding:
-- The ROM matches current asm behavior, not intended endian-neutral behavior.
-- Incoming `wCurDamage = $0100` before DamageCalc yields:
+- The original ROM matched the historical buggy asm behavior, not intended
+  endian-neutral behavior.
+- Before the fix, incoming `wCurDamage = $0100` before DamageCalc yielded:
   - ROM: 289
-  - current-asm model: 289
+  - buggy-old-asm model: 289
   - intended model: 288
-- Root cause is the audit-suspected line sequence at
-  `engine/battle/effect_commands.asm:2939`: the high byte of
-  `wCurDamage` is added to `hQuotient+3` before the full 16-bit incoming
-  damage is added, so incoming damage >= 256 gets an extra
-  `high(wCurDamage)` added.
+- Root cause was the audit-suspected line sequence in
+  `engine/battle/effect_commands.asm`: the high byte of `wCurDamage` was
+  added to `hQuotient+3` before the full 16-bit incoming damage was added,
+  so incoming damage >= 256 got an extra `high(wCurDamage)` added.
 
 Disposition:
-- Documented as a real ROM bug, but not fixed here because changing it would
-  alter gameplay behavior for high-damage multi-hit accumulation. The oracle
-  models the shipped asm by default so fuzz remains a regression guard for
-  debugger/ROM agreement.
+- Fixed. The oracle now models the intended endian-neutral accumulation by
+  default, while `emulate_cap_add_endian_bug=True` remains available only for
+  historical probe comparison.
+- The regression fixture now distinguishes fixed behavior from the old bug:
+  incoming `$0100` gives ROM/intended 288 and buggy-old-asm 289.
 
 Verification:
 - `python -m tools.damage_debugger.cap_add_probe` — PASS/classified:
-  `$0000` and `$00ff` match both models; `$0100` matches current asm only.
-- `python -m tools.damage_debugger.oracle` — PASS, 11/11 oracle self-tests.
+  `$0000` and `$00ff` match both models; `$0100` matches intended behavior.
+- `python -m tools.damage_debugger.oracle` — PASS, 14/14 oracle self-tests.
 - `python -m tools.damage_debugger.fuzz --self-check-workers=2` — PASS,
-  ten-case corpus including `$0100` initial damage.
-- `python -m tools.damage_debugger.fuzz --max-examples=100 --workers=1` — PASS.
-- `python -m tools.damage_debugger.fuzz --max-examples=100 --workers=2` — PASS.
-- `python -m tools.damage_debugger.clobber_smoke` — PASS, 11/11 scenarios.
+  fixed corpus case now reports 460/460 instead of the old 461/461.
+- `python -m tools.damage_debugger.fuzz --max-examples=500 --workers=1` — PASS.
+- `python -m tools.damage_debugger.fuzz --max-examples=500 --workers=2` — PASS.
+- `python -m tools.damage_debugger.fuzz --max-examples=5000 --workers=4` — PASS.
+- `python -m tools.damage_debugger.clobber_smoke` — PASS, 18/18 scenarios.
 
 ## 2026-05-06 — H4 type-effectiveness, DamageVariation, after-hit scenarios
 

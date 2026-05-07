@@ -334,15 +334,16 @@ def _finish_damagecalc(
     q: int | None,
     *,
     initial_cur_damage: int = 0,
-    emulate_cap_add_endian_bug: bool = True,
+    emulate_cap_add_endian_bug: bool = False,
 ) -> int:
     """Finish BattleCommand_DamageCalc from quotient to wCurDamage.
 
-    `emulate_cap_add_endian_bug=True` mirrors the current asm exactly:
-    before adding the full incoming `wCurDamage`, it also adds
-    `wCurDamage`'s high byte to `hQuotient+3` (the low byte). For incoming
-    damage >= 256 this produces `initial + quotient + high(initial) + 2`.
-    Passing False models the likely intended endian-neutral accumulation.
+    The fixed ROM uses endian-neutral accumulation:
+    `initial + quotient + MIN_DAMAGE`, capped at 999.
+
+    `emulate_cap_add_endian_bug=True` is retained for the M1 regression
+    probe's historical comparison. The old asm added `wCurDamage`'s high
+    byte to `hQuotient+3` before the full 16-bit add.
     """
     if q is None:
         return initial_cur_damage & 0xFFFF
@@ -365,7 +366,7 @@ def predict_damagecalc_only(
     inp: BattleInputs,
     *,
     initial_cur_damage: int = 0,
-    emulate_cap_add_endian_bug: bool = True,
+    emulate_cap_add_endian_bug: bool = False,
 ) -> int:
     """Predict wCurDamage immediately after BattleCommand_DamageCalc."""
     return _finish_damagecalc(

@@ -24,7 +24,7 @@ broke same-bank callers in `engine/battle/late_gen_held_items.asm` whose
 | `python -m tools.damage_debugger.tenet_writer --scenario special_super_effective --target BattleCommand_Stab --output audit/damage_debugger/stab_tenet.jsonl` | Tenet-style delta trace export. JSONL records carry raw Tenet syntax plus structured events for `jq`/Python queries. |
 | `python -m tools.damage_debugger.replay --scenario physical_no_items --watch wCurDamage --json` | Snapshot-ring replay: stop when a watched symbol changes, rewind to the pre-change save-state, and verify the transition replays. |
 | `python tools/audit/balance_diff.py --output audit/damage_debugger/damage_heatmap.md` | Oracle-backed damage delta heatmap for learned moves and supported modifier variants. |
-| `python -m tools.damage_debugger.cap_add_probe` | Classifies the DamageCalc nonzero-`wCurDamage` accumulation path against current-asm and intended endian-neutral models. |
+| `python -m tools.damage_debugger.cap_add_probe` | Regression-checks the fixed DamageCalc nonzero-`wCurDamage` accumulation path against the historical buggy model. |
 | `python -m tools.damage_debugger.precommit_check --self-test` | Self-test for the Claude `PreToolUse` git-commit gate that runs `clobber_smoke` when damage-chain asm is being committed. |
 | `python -m tools.damage_debugger.full_chain_v2` | Focused single-scenario investigation. Pidgey-Tackle-vs-Cyndaquil chain with per-step damage logging. |
 | `python -m tools.damage_debugger.trace_chain` | Deep register-state trace at every key hook in the chain. Use when `clobber_smoke` flags a regression and you want the full per-hook snapshot. |

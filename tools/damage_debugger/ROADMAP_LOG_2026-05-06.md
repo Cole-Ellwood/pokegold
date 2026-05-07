@@ -163,15 +163,21 @@ Active item: M1, cap-add endian investigation.
 Changed:
 - Added `tools/damage_debugger/cap_add_probe.py`.
 - Added `BattleInputs.initial_cur_damage`.
-- Added `oracle.predict_damagecalc_only` and a model switch for current-asm
-  vs intended endian-neutral accumulation.
+- Added `oracle.predict_damagecalc_only` and a historical-model switch for
+  buggy-old-asm vs intended endian-neutral accumulation.
 - Extended `fuzz.py` to seed nonzero `wCurDamage` between DamageStats and
   DamageCalc for synthetic multi-hit coverage.
 - Documented the finding in BUG_CHECK and ORACLE_AUDIT.
+- After explicit approval to fix the gameplay bug, removed the erroneous
+  high-byte pre-add from `BattleCommand_DamageCalc`.
+- Updated the oracle default and `cap_add_probe` so the fixed behavior is the
+  release expectation and the old behavior is retained only as a historical
+  comparison model.
 
 Debugger self-check:
-- `cap_add_probe` fails if ROM DamageCalc output matches neither the current
-  asm model nor the intended model.
+- `cap_add_probe` fails if ROM DamageCalc output matches neither model, and
+  also fails if incoming `$0100` still matches the historical buggy-old-asm
+  model.
 - Fuzz worker self-check now includes a `$0100` initial damage case.
 
 Commands run:
@@ -184,15 +190,17 @@ Commands run:
 - `python -m compileall -q tools\damage_debugger`
 
 Bug found in debugger/ROM:
-- ROM bug confirmed: `BattleCommand_DamageCalc` adds
+- ROM bug confirmed and fixed: `BattleCommand_DamageCalc` previously added
   `high(wCurDamage)` twice when incoming `wCurDamage >= $0100`. Example:
-  incoming `$0100` gives ROM/current-asm 289 vs intended 288.
+  before the fix, incoming `$0100` gave ROM/buggy-old-asm 289 vs intended
+  288; after the fix it gives ROM/intended 288 vs buggy-old-asm 289.
 - Debugger gap closed: oracle/fuzz previously had no nonzero incoming
   `wCurDamage` axis.
 
 Open:
-- Do not fix ROM under this roadmap item; gameplay-affecting fix needs
-  explicit approval. Run final M1 verification floor and commit.
+- No M1-specific open issue remains. The gameplay-affecting fix was made
+  after explicit approval and is now guarded by `cap_add_probe`, oracle
+  self-tests, worker self-checks, and fuzz.
 
 ## H4 -- type-effectiveness, DamageVariation, after-hit scenarios
 

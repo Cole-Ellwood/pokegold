@@ -1,15 +1,14 @@
-"""Probe DamageCalc's nonzero-wCurDamage accumulation path.
+"""Regression probe for DamageCalc's nonzero-wCurDamage accumulation path.
 
 M1 roadmap item. The audit flagged an endian-looking quirk in
 BattleCommand_DamageCalc's cap/add block: it adds the high byte of incoming
-`wCurDamage` to `hQuotient+3` before adding the full incoming damage. This
-probe classifies the shipped ROM against two models:
+`wCurDamage` to `hQuotient+3` before adding the full incoming damage. That
+bug is fixed; this probe now guards the fixed ROM against two models:
 
-- current-asm: `initial + quotient + high(initial) + MIN_DAMAGE`
-- intended:    `initial + quotient + MIN_DAMAGE`
+- buggy-old-asm: `initial + quotient + high(initial) + MIN_DAMAGE`
+- intended:      `initial + quotient + MIN_DAMAGE`
 
-The command exits 0 when the ROM matches one of those models and exits 1
-only when the debugger cannot classify the result.
+The command exits 0 only when the high-byte extra-add is absent.
 """
 
 from __future__ import annotations
@@ -46,15 +45,15 @@ PROBE_INPUT = BattleInputs(
 class CapAddResult:
     initial: int
     rom: int
-    current_asm: int
+    buggy_old_asm: int
     intended: int
 
     @property
     def classification(self) -> str:
-        if self.rom == self.current_asm == self.intended:
+        if self.rom == self.buggy_old_asm == self.intended:
             return "both"
-        if self.rom == self.current_asm:
-            return "current-asm"
+        if self.rom == self.buggy_old_asm:
+            return "buggy-old-asm"
         if self.rom == self.intended:
             return "intended"
         return "unknown"
@@ -71,7 +70,7 @@ def run_case(cache: BootStateCache, syms: dict, initial_cur_damage: int) -> CapA
     return CapAddResult(
         initial=initial_cur_damage,
         rom=rom,
-        current_asm=predict_damagecalc_only(
+        buggy_old_asm=predict_damagecalc_only(
             PROBE_INPUT,
             initial_cur_damage=initial_cur_damage,
             emulate_cap_add_endian_bug=True,
@@ -99,25 +98,26 @@ def main() -> int:
         cache.stop()
 
     print("cap-add probe: BattleCommand_DamageCalc with incoming wCurDamage")
-    print(f"{'initial':>8s} {'ROM':>6s} {'current':>8s} {'intended':>9s}  classification")
+    print(f"{'initial':>8s} {'ROM':>6s} {'buggy':>8s} {'intended':>9s}  classification")
     unknown = False
     high_byte_bug_present = False
     for result in results:
         print(
             f"${result.initial:04x} {result.rom:>6d} "
-            f"{result.current_asm:>8d} {result.intended:>9d}  {result.classification}"
+            f"{result.buggy_old_asm:>8d} {result.intended:>9d}  {result.classification}"
         )
         unknown = unknown or result.classification == "unknown"
-        if result.initial >= 0x0100 and result.classification == "current-asm":
+        if result.initial >= 0x0100 and result.classification == "buggy-old-asm":
             high_byte_bug_present = True
 
     if unknown:
         print("\ncap-add probe: FAIL -- ROM matched neither model")
         return 1
     if high_byte_bug_present:
-        print("\ncap-add probe: BUG PRESENT -- high byte is added twice for incoming damage >= 256")
+        print("\ncap-add probe: FAIL -- high byte is still added twice for incoming damage >= 256")
+        return 1
     else:
-        print("\ncap-add probe: no high-byte extra-add observed")
+        print("\ncap-add probe: PASS -- no high-byte extra-add observed")
     return 0
 
 
