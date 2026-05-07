@@ -641,3 +641,41 @@ Verification:
 Remaining risk:
 - `--instrument-hook` records one symbol per run. That matches the M2 probe
   use case; multi-hook workflows can build on the same `HookRecorder` later.
+
+## 2026-05-06 — H5 SM83 taint tracker
+
+Roadmap item: H5, SM83 byte-level taint tracker.
+
+Change:
+- Added `tools.damage_debugger.taint`.
+- Implemented byte-level taint state for A/F/B/C/D/E/H/L and memory.
+- Added propagation for the SM83 data movement, direct/indirect memory,
+  HRAM, stack, ALU, rotate/shift, flag, and common control-flow opcodes
+  used by the damage path.
+- Added `analyze_tracer(...)`, which consumes a populated
+  `tracer.Tracer` instruction/frame stream and returns taint findings.
+- Added sink reporting for memory ranges such as `wCurDamage`.
+- Added JSON report output for the synthetic fixture path.
+
+Debugger self-check:
+- `python -m tools.damage_debugger.taint --self-test` fails if taint no
+  longer propagates through register copies, `[hl]` memory loads/stores,
+  stack push/pop, ALU combination, the `analyze_tracer` bridge, or memory
+  sink reporting.
+- `python -m tools.damage_debugger.taint --json-self-test` fails if the
+  JSON shape lacks a sink finding.
+
+Verification:
+- `python -m compileall -q tools\damage_debugger` — PASS.
+- `python -m tools.damage_debugger.taint --self-test` — PASS.
+- `python -m tools.damage_debugger.taint --json-self-test` — PASS.
+- `python -m tools.damage_debugger.tracer` — PASS, captured VBlank frames
+  through the existing per-instruction hook path.
+- `python -m tools.damage_debugger.clobber_smoke` — PASS, 18/18 scenarios.
+- `python -m tools.damage_debugger.find --self-test` — PASS.
+
+Remaining risk:
+- H5 records label/PC origins and sink instructions; source file/line
+  rendering still depends on a future source-map layer.
+- Unsupported opcodes are counted and clear known destinations rather than
+  preserving stale taint. Add handlers as new traced functions demand them.

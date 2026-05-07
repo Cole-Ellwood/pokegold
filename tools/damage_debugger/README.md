@@ -18,6 +18,7 @@ broke same-bank callers in `engine/battle/late_gen_held_items.asm` whose
 | `python -m tools.damage_debugger.find <scenario>` | Bucket-locates ROM-vs-oracle divergence across DamageStats / DamageCalc / Stab / TypeMatchup / TypePassive. |
 | `python -m tools.damage_debugger.find --self-test` | Debugger self-check for the mid-Stab hook boundaries used by type-effectiveness diagnostics. |
 | `python -m tools.damage_debugger.find --bug dm_hl_clobber --instrument-hook CheckTypeMatchup.Yup` | Focused hook instrumentation: captures registers plus `mem[HL-2..HL]` at every hook hit. |
+| `python -m tools.damage_debugger.taint --self-test` | SM83 byte-level taint tracker self-test for register, memory, stack, ALU, and sink propagation. |
 | `python -m tools.damage_debugger.cap_add_probe` | Classifies the DamageCalc nonzero-`wCurDamage` accumulation path against current-asm and intended endian-neutral models. |
 | `python -m tools.damage_debugger.precommit_check --self-test` | Self-test for the Claude `PreToolUse` git-commit gate that runs `clobber_smoke` when damage-chain asm is being committed. |
 | `python -m tools.damage_debugger.full_chain_v2` | Focused single-scenario investigation. Pidgey-Tackle-vs-Cyndaquil chain with per-step damage logging. |
@@ -147,6 +148,7 @@ Active:
 - `precommit_check.py` -- Claude PreToolUse git-commit smoke gate
 - `full_chain_v2.py` -- single-scenario chain runner with step-by-step damage
 - `trace_chain.py` -- deep per-hook register snapshot
+- `taint.py` -- SM83 byte-level taint propagation over tracer frames
 - `repro_pidgey.py` -- original c-clobber repro
 - `safe_call.py` -- HRAM-sentinel function runner
 - `synth.py` -- SynthBattle dataclass + scenario installer

@@ -280,3 +280,36 @@ Bug found in debugger itself:
 
 Open:
 - Run final M2 verification floor and commit.
+
+## H5 -- SM83 taint tracker
+
+Active item: H5, byte-level taint over tracer frames.
+
+Changed:
+- Added `tools/damage_debugger/taint.py`.
+- Implemented register/memory taint state, memory sink findings, and an
+  `analyze_tracer(...)` bridge for populated `tracer.Tracer` streams.
+- Covered common SM83 data-movement, memory, stack, ALU, rotate/shift,
+  flag, and control-flow opcodes used by damage-path traces.
+- Added CLI self-tests and JSON self-test output.
+- Documented the new tool in README and BUG_CHECK.
+
+Debugger self-check:
+- Synthetic fixtures fail if taint propagation breaks across register
+  copies, `[hl]` memory, stack push/pop, ALU combination, tracer bridging,
+  or sink reporting.
+
+Commands run:
+- `python -m compileall -q tools\damage_debugger`
+- `python -m tools.damage_debugger.taint --self-test`
+- `python -m tools.damage_debugger.taint --json-self-test`
+- `python -m tools.damage_debugger.tracer`
+- `python -m tools.damage_debugger.clobber_smoke`
+- `python -m tools.damage_debugger.find --self-test`
+
+Bug found in debugger itself:
+- None new in H5. This adds the root-cause propagation layer that later
+  traced failures can use.
+
+Open:
+- Run final H5 verification floor and commit.
