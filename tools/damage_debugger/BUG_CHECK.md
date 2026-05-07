@@ -877,3 +877,50 @@ Remaining risk:
 - `clobber_smoke.parse_sym` remains as a compatibility wrapper because
   several active tools still consume the old `dict[name] = (bank, address)`
   shape. The parser implementation is now centralized in `symbols.py`.
+
+## 2026-05-06 — L4 snapshot-ring replay
+
+Roadmap item: L4, snapshot-ring time-travel replay.
+
+Decision:
+- Still useful in the PyBoy-based harness because D1 has not replaced the
+  workflow with SameBoy/BGB GDB watchpoints.
+- Implemented narrowly: the tool watches a symbol during a supported
+  `clobber_smoke` scenario, keeps a bounded ring of save-states, stops on
+  the first watched-value change, reloads the pre-change state, and verifies
+  that replaying the same tick window reproduces the post-change PC and watch
+  bytes.
+
+Change:
+- Added `tools.damage_debugger.replay`.
+- Added `SnapshotRing`, `Snapshot`, and `WatchHit` structures.
+- Added `call_until_watch_change(...)`, which mirrors the HRAM-sentinel call
+  setup from `safe_call.py` while sampling save-states between tick windows.
+- Added text and JSON CLI output.
+- Bad capacity / bad watch symbol checks fail before booting PyBoy.
+
+Debugger self-check:
+- `python -m tools.damage_debugger.replay --self-test` is pure and fails if
+  ring capacity enforcement or bounded eviction regresses.
+- ROM-backed replay fails unless the pre-change snapshot can be reloaded and
+  replayed into the same watched bytes.
+
+Verification:
+- `python -m compileall -q tools\damage_debugger` — PASS.
+- `python -m tools.damage_debugger.replay --self-test` — PASS.
+- `python -m tools.damage_debugger.replay --scenario physical_no_items --watch wCurDamage`
+  — PASS: `wCurDamage` changed in `BattleCommand_DamageCalc`, `0000 -> 0003`,
+  replay verified.
+- `python -m tools.damage_debugger.replay --scenario physical_no_items --watch wCurDamage --json`
+  — PASS: JSON includes `function`, pre/post PCs, old/new bytes, ring depth,
+  and `replay_verified = true`.
+- `python -m tools.damage_debugger.replay --scenario physical_no_items --watch NoSuchSymbol`
+  — fails before emulator startup.
+- `python -m tools.damage_debugger.replay --capacity 0` — fails before emulator
+  startup.
+
+Remaining risk:
+- This is a sampled tick-window replay, not a CPU-instruction reverse
+  debugger. With PyBoy's public API the minimum practical step is the tick
+  window used by the harness (`2` ticks by default). For exact instruction
+  watchpoints, D1's GDB-stub pilot would still be the stronger foundation.

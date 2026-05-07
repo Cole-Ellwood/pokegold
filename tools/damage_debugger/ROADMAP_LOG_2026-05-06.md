@@ -464,3 +464,36 @@ Bug found in debugger itself:
 
 Open:
 - Run final L1-L3 navigation/diff checks and commit.
+
+## L4 -- snapshot-ring replay
+
+Active item: L4, snapshot-ring time-travel replay.
+
+Changed:
+- Added `tools/damage_debugger/replay.py`.
+- Implemented a bounded save-state ring around safe function calls.
+- Added watch-symbol change detection for `clobber_smoke` scenarios.
+- Added replay verification by reloading the pre-change snapshot and ticking
+  the same window to reproduce the post-change PC/watch bytes.
+- Added text/JSON CLI output and documented the tool in README/BUG_CHECK.
+
+Debugger self-check:
+- `replay --self-test` covers bounded ring behavior without PyBoy.
+- ROM-backed replay requires `replay_verified=True`, so the save/load replay
+  path is checked directly.
+
+Commands run:
+- `python -m compileall -q tools\damage_debugger`
+- `python -m tools.damage_debugger.replay --self-test`
+- `python -m tools.damage_debugger.replay --scenario physical_no_items --watch wCurDamage`
+- `python -m tools.damage_debugger.replay --scenario physical_no_items --watch wCurDamage --json`
+- `python -m tools.damage_debugger.replay --scenario physical_no_items --watch NoSuchSymbol`
+- `python -m tools.damage_debugger.replay --capacity 0`
+
+Bug found in debugger itself:
+- Initial bad-input paths imported `BootStateCache` before validating capacity
+  or watch-symbol existence, causing PyBoy startup/warnings for failures that
+  should be cheap. Validation now happens before emulator import.
+
+Open:
+- Run final L4 smoke/navigation/diff checks and commit.

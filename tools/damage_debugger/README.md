@@ -22,6 +22,7 @@ broke same-bank callers in `engine/battle/late_gen_held_items.asm` whose
 | `python -m tools.damage_debugger.taint --self-test` | SM83 byte-level taint tracker self-test for register, memory, stack, ALU, and sink propagation. |
 | `python -m tools.damage_debugger.coverage --write` | Per-PC coverage report for smoke scenarios; writes `audit/damage_debugger/coverage.md`. |
 | `python -m tools.damage_debugger.tenet_writer --scenario special_super_effective --target BattleCommand_Stab --output audit/damage_debugger/stab_tenet.jsonl` | Tenet-style delta trace export. JSONL records carry raw Tenet syntax plus structured events for `jq`/Python queries. |
+| `python -m tools.damage_debugger.replay --scenario physical_no_items --watch wCurDamage --json` | Snapshot-ring replay: stop when a watched symbol changes, rewind to the pre-change save-state, and verify the transition replays. |
 | `python -m tools.damage_debugger.cap_add_probe` | Classifies the DamageCalc nonzero-`wCurDamage` accumulation path against current-asm and intended endian-neutral models. |
 | `python -m tools.damage_debugger.precommit_check --self-test` | Self-test for the Claude `PreToolUse` git-commit gate that runs `clobber_smoke` when damage-chain asm is being committed. |
 | `python -m tools.damage_debugger.full_chain_v2` | Focused single-scenario investigation. Pidgey-Tackle-vs-Cyndaquil chain with per-step damage logging. |
@@ -176,6 +177,7 @@ Active:
 - `taint.py` -- SM83 byte-level taint propagation over tracer frames
 - `coverage.py` -- per-PC smoke-scenario coverage report
 - `tenet_writer.py` -- Tenet-style JSONL trace export and target-event query helper
+- `replay.py` -- PyBoy snapshot-ring watch replay for smoke scenarios
 - `repro_pidgey.py` -- original c-clobber repro
 - `safe_call.py` -- HRAM-sentinel function runner
 - `synth.py` -- SynthBattle dataclass + scenario installer
