@@ -767,3 +767,61 @@ Remaining risk:
   `wCurDamage` query workflow, but it is not a full bus-accurate Tenet trace.
 - The raw Tenet line follows the published delta syntax, but loading SM83 in
   the Tenet viewer would still require a custom Tenet architecture definition.
+
+## 2026-05-06 — M5 Pass D negative-control redo
+
+Roadmap item: M5, negative control re-do.
+
+Fixture:
+- Temporarily removed the top-level `push bc` / `pop bc` pair around
+  `call TypePassive_GetEffectiveMoveCategory_Far` in
+  `ApplyLateGenDamageStatsItemMods_Far`.
+- Rebuilt `pokegold_debug.gbc` from that deliberately broken source.
+- Restored the source immediately after the failure evidence, rebuilt the
+  clean debug ROM, and regenerated `docs/generated/dev_index.md`.
+
+Debugger self-check:
+- The fixture is a supported negative control for the debugger itself: if
+  this historical AG-08 c-clobber shape does not fail smoke and bucket-locate
+  in `find.py`, the harness has regressed.
+
+Broken-ROM result:
+- `python -m tools.damage_debugger.clobber_smoke` exited 1.
+- 13/18 current scenarios failed. The original first eight scenarios all
+  failed, matching the 2026-05-05 footprint:
+
+| scenario | clean | broken fixture | result |
+| --- | ---: | ---: | --- |
+| physical_no_items | 4 | 16 | FAIL |
+| physical_critical | 6 | 31 | FAIL |
+| physical_choice_band | 4 | 24 | FAIL |
+| physical_eviolite_def | 3 | 16 | FAIL |
+| special_no_items | 13 | 4 | FAIL |
+| special_choice_specs | 18 | 6 | FAIL |
+| special_assault_vest | 10 | 4 | FAIL |
+| special_eviolite_spd | 10 | 4 | FAIL |
+
+- H3/H4 scenarios also caught the fixture:
+  `special_sun_fire`, `special_rain_fire`, `special_fire_badge`,
+  `special_super_effective`, and `special_super_effective_variation` failed.
+  Immunity and after-hit-only scenarios stayed PASS because they do not depend
+  on the clobbered defender-stat byte in the same way.
+- `python -m tools.damage_debugger.find physical_no_items` exited 1 and
+  bucket-located the first divergence at `DamageCalc`:
+  ROM 11 vs oracle 3, final ROM 16 vs oracle 4.
+- `python -m tools.damage_debugger.find --json physical_no_items` reported
+  the same `first_divergence.step = DamageCalc`.
+
+Clean-ROM restore:
+- After restoring the `push bc` / `pop bc` pair and rebuilding,
+  `python -m tools.damage_debugger.clobber_smoke` returned to 18/18 PASS.
+- `python -m tools.damage_debugger.find physical_no_items` returned to
+  ROM 4 / oracle 4 with no divergence.
+- `git diff -- engine/battle/late_gen_held_items.asm` was empty.
+- `git diff -- docs/generated/dev_index.md` was empty.
+
+Remaining risk:
+- The negative control proves the harness still catches and bucket-locates
+  the historical AG-08 class. It does not add a new synthetic test runner that
+  mutates asm automatically; M5 remains a documented manual fixture because
+  it requires rebuilding a deliberately broken ROM.

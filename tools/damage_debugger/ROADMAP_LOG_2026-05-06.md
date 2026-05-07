@@ -380,3 +380,42 @@ Bug found in debugger itself:
 
 Open:
 - Run final M4 verification floor and commit.
+
+## M5 -- Pass D negative-control redo
+
+Active item: M5, negative control re-do.
+
+Changed:
+- No shipped code change.
+- Temporarily removed the AG-08 `push bc` / `pop bc` preservation pair in
+  `ApplyLateGenDamageStatsItemMods_Far`.
+- Rebuilt the deliberately broken debug ROM, captured smoke/find failure
+  evidence, restored the source, rebuilt the clean debug ROM, and regenerated
+  `docs/generated/dev_index.md`.
+- Documented the check in `BUG_CHECK.md`.
+
+Debugger self-check:
+- Historical AG-08 fixture must fail `clobber_smoke` and bucket-locate in
+  `find.py`; clean restore must return to PASS/no-divergence.
+
+Commands run:
+- Temporary `apply_patch` removing `push bc` / `pop bc`
+- `wsl -e bash -lc 'cd "/mnt/c/Users/lolno/Downloads/pokemon gold hack" && make -j4 PYTHON=python3 RGBASM=rgbds-1.0.1/rgbasm.exe RGBLINK=rgbds-1.0.1/rgblink.exe RGBFIX=rgbds-1.0.1/rgbfix.exe RGBGFX=rgbds-1.0.1/rgbgfx.exe gold_debug'`
+- `python -m tools.damage_debugger.clobber_smoke`
+- `python -m tools.damage_debugger.find physical_no_items`
+- `python -m tools.damage_debugger.find --json physical_no_items`
+- Temporary `apply_patch` restoring `push bc` / `pop bc`
+- WSL `gold_debug` rebuild again
+- `python scripts/generate_dev_index.py --rom pokegold`
+- `python -m tools.damage_debugger.clobber_smoke`
+- `python -m tools.damage_debugger.find physical_no_items`
+- `git diff -- engine\battle\late_gen_held_items.asm`
+- `git diff -- docs\generated\dev_index.md`
+
+Bug found in debugger itself:
+- None. The fixture still trips the harness. Current expanded smoke catches
+  13/18 scenarios; the historical first eight all fail with the expected
+  footprint.
+
+Open:
+- Run final M5 doc/navigation checks and commit.
