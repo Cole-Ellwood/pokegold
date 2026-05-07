@@ -494,6 +494,11 @@ def _reference_corpus() -> list[BattleInputs]:
             attacker_types=(ROCK, GROUND), defender_types=(FIRE, BUG),
             user_item=HELD_CHOICE_BAND, is_critical=True,
         ),
+        BattleInputs(
+            attacker_level=2, move_bp=20, move_type=FIGHTING, is_physical=True,
+            attacker_atk=25, defender_def=5,
+            attacker_types=(DRAGON, FIGHTING), defender_types=(GHOST, DARK),
+        ),
     ]
 
 

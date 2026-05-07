@@ -88,7 +88,6 @@ HELD_EVOLITE = 0x93
 _TYPE_MATCHUPS: dict[tuple[int, int], int] = {
     (NORMAL, ROCK): NOT_VERY_EFFECTIVE,
     (NORMAL, STEEL): NOT_VERY_EFFECTIVE,
-    (NORMAL, GHOST): NO_EFFECT,
     (NORMAL, PSYCHIC_TYPE): NOT_VERY_EFFECTIVE,  # Hack's tweak; keeps doc accurate
     (FIRE, FIRE): NOT_VERY_EFFECTIVE,
     (FIRE, WATER): NOT_VERY_EFFECTIVE,
@@ -130,7 +129,6 @@ _TYPE_MATCHUPS: dict[tuple[int, int], int] = {
     (ICE, FIRE): NOT_VERY_EFFECTIVE,
     (FIGHTING, NORMAL): SUPER_EFFECTIVE,
     (FIGHTING, ICE): SUPER_EFFECTIVE,
-    (FIGHTING, GHOST): NO_EFFECT,
     (FIGHTING, FLYING): NOT_VERY_EFFECTIVE,
     (FIGHTING, PSYCHIC_TYPE): NOT_VERY_EFFECTIVE,
     (FIGHTING, ROCK): SUPER_EFFECTIVE,
@@ -196,6 +194,11 @@ _TYPE_MATCHUPS: dict[tuple[int, int], int] = {
     (STEEL, ROCK): SUPER_EFFECTIVE,
     (STEEL, STEEL): NOT_VERY_EFFECTIVE,
     (STEEL, FIGHTING): NOT_VERY_EFFECTIVE,
+    # Foresight-section Ghost immunity rows. When the target is not
+    # identified, the ROM applies these after the main chart rows; order
+    # matters because each row floors after multiplying.
+    (NORMAL, GHOST): NO_EFFECT,
+    (FIGHTING, GHOST): NO_EFFECT,
 }
 
 
@@ -928,6 +931,15 @@ def _self_test() -> list[tuple[str, int, int]]:
             attacker_level=2, move_bp=40, move_type=NORMAL, is_physical=True,
             attacker_atk=6, defender_def=9,
             attacker_types=PIDGEY_TYPES, defender_types=(GHOST, GHOST),
+        ),
+    ))
+
+    cases.append((
+        "dragon_fighting_ghost_dark_order", 9,
+        BattleInputs(
+            attacker_level=2, move_bp=20, move_type=FIGHTING, is_physical=True,
+            attacker_atk=25, defender_def=5,
+            attacker_types=(DRAGON, FIGHTING), defender_types=(GHOST, DARK),
         ),
     ))
 

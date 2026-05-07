@@ -584,3 +584,40 @@ Bug found in debugger itself:
 
 Open:
 - Commit the documentation note.
+
+## Post-review debugger guardrail fixes
+
+Active item: reviewer-found debugger correctness holes.
+
+Changed:
+- Moved the oracle's Foresight-section Ghost immunity rows to the same order
+  the ROM scans in `data/types/type_matchups.asm`.
+- Added a deterministic Dragon's Majesty + FIGHTING vs GHOST/DARK case to
+  `oracle.py` and the fuzz worker self-check corpus.
+- Changed `taint.py` to replay trace frames by dynamic sequence order.
+- Changed `precommit_check.py` to recognize short option clusters like
+  `git commit -am`.
+
+Debugger self-check:
+- Oracle self-test fails if the type-order case regresses from 9.
+- Fuzz worker self-check proves ROM/oracle agreement for the same case.
+- Taint self-test fails if repeated-PC frames collapse to one static PC.
+- Precommit self-test fails if `git commit -am` skips an unstaged guarded
+  damage-chain file.
+
+Commands run:
+- `python -m compileall -q tools\damage_debugger`
+- `python -m tools.damage_debugger.oracle`
+- `python -m tools.damage_debugger.taint --self-test`
+- `python -m tools.damage_debugger.precommit_check --self-test`
+- `python -m tools.damage_debugger.fuzz --self-check-workers=2`
+- `python -m tools.damage_debugger.clobber_smoke`
+- `python -m tools.damage_debugger.fuzz --max-examples=500 --workers=4`
+
+Bug found in debugger itself:
+- All three review findings were valid debugger bugs: one false oracle
+  divergence risk, one taint misattribution risk, and one skipped smoke-gate
+  risk.
+
+Open:
+- No review-fix item remains open after the final diff/navigation checks pass.

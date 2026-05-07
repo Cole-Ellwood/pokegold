@@ -205,10 +205,10 @@ class TaintEngine:
         instructions: Iterable[Instruction],
         frames: Iterable[FrameLike],
     ) -> TaintReport:
-        by_pc = {(frame.bank, frame.pc): frame for frame in frames}
-        for instr in instructions:
-            frame = by_pc.get((instr.bank, instr.pc))
-            if frame is None:
+        by_pc = {(instr.bank, instr.pc): instr for instr in instructions}
+        for frame in sorted(frames, key=lambda f: int(f.seq)):
+            instr = by_pc.get((frame.bank, frame.pc))
+            if instr is None:
                 continue
             self.step(instr, frame)
         return self.report
@@ -628,6 +628,20 @@ def _self_test() -> int:
     if len(report.findings) != 1 or "source:b" not in report.findings[0].taint:
         failures.append("ALU taint combine failed")
 
+    # Repeated PC: dynamic frames must be replayed in seq order. A static
+    # PC dictionary loses the first write and only reports the last frame.
+    instrs = [
+        _ins(0x1400, 0x22),                    # ld [hli], a
+    ]
+    frames = [
+        _frame(0, 0x1400, A=0x99, HL=0xD141),
+        _frame(1, 0x1400, A=0x99, HL=0xD142),
+    ]
+    report = _run_fixture(instrs, frames, source_reg="a", sink=Sink("wCurDamage", 0xD141, 2))
+    finding_addrs = [finding.address for finding in report.findings]
+    if finding_addrs != [0xD141, 0xD142]:
+        failures.append("dynamic repeated-PC replay order failed")
+
     if failures:
         print("taint self-test: FAIL")
         for failure in failures:
@@ -635,7 +649,7 @@ def _self_test() -> int:
         return 1
 
     print("taint self-test: PASS")
-    print("  register copies, [hl] memory, stack round-trip, ALU combine, and sinks")
+    print("  register copies, [hl] memory, stack round-trip, ALU combine, repeated PCs, and sinks")
     return 0
 
 

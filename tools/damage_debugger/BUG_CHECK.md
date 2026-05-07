@@ -1017,3 +1017,41 @@ Verification:
 Result:
 - No additional debugger/oracle fixes were needed.
 - Multiprocessing worker mode remained equivalent at release scale.
+
+## 2026-05-06 — post-review debugger guardrail fixes
+
+Goal: close three reviewer-found debugger correctness holes without changing
+ROM behavior.
+
+Fixes:
+- Oracle type matchup order now matches `data/types/type_matchups.asm` for
+  the Foresight-section Ghost immunity rows. This matters when Dragon's
+  Majesty converts `NO_EFFECT` to resistance and another defender type also
+  has a matching row; the ROM floors after each row, so order can change the
+  result.
+- Fuzz worker self-check now includes the regression case:
+  DRAGON/FIGHTING attacker, FIGHTING move, GHOST/DARK defender. ROM and
+  oracle both report 9 damage.
+- Taint replay now processes trace frames by dynamic `seq` order instead of
+  static disassembly order keyed by PC, preserving loops and repeated PCs.
+- Pre-commit command parsing now treats short option clusters such as
+  `git commit -am "msg"` as all-tracked commits.
+
+Debugger self-checks:
+- `oracle.py` has a deterministic `dragon_fighting_ghost_dark_order` case.
+- `fuzz --self-check-workers=2` proves that case against the ROM in both
+  single-worker and multi-worker execution.
+- `taint --self-test` includes a repeated-PC sink-write fixture.
+- `precommit_check --self-test` includes an unstaged guarded file committed
+  through `git commit -am`.
+
+Verification:
+- `python -m compileall -q tools\damage_debugger` — PASS.
+- `python -m tools.damage_debugger.oracle` — PASS, 15/15 self-tests.
+- `python -m tools.damage_debugger.taint --self-test` — PASS.
+- `python -m tools.damage_debugger.precommit_check --self-test` — PASS.
+- `python -m tools.damage_debugger.fuzz --self-check-workers=2` — PASS,
+  11-case corpus including the new 9/9 type-order case.
+- `python -m tools.damage_debugger.clobber_smoke` — PASS, 18/18 scenarios.
+- `python -m tools.damage_debugger.fuzz --max-examples=500 --workers=4` —
+  PASS, no divergence.

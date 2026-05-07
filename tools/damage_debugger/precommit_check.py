@@ -72,7 +72,16 @@ def command_requests_all_tracked(command: str) -> bool:
     tokens = _split_command(command)
     if "commit" not in tokens:
         return False
-    return any(token in {"-a", "--all"} for token in tokens)
+    for token in tokens[tokens.index("commit") + 1:]:
+        if token == "--":
+            return False
+        if token == "--all":
+            return True
+        if token.startswith("--"):
+            continue
+        if token.startswith("-") and "a" in token[1:]:
+            return True
+    return False
 
 
 def extract_command_from_event(stdin_text: str, explicit_command: str | None) -> str:
@@ -212,6 +221,15 @@ def _self_test() -> int:
         ) == 0
         assert not calls_file.exists(), "untouched target path ran smoke"
         subprocess.run(["git", "commit", "-m", "docs"], cwd=repo, check=True, stdout=subprocess.DEVNULL)
+
+        _write(repo / "engine/battle/type_passive_damage_mods.asm", "all tracked\n")
+        assert run_hook(
+            repo=repo,
+            command='git commit -am "damage all tracked"',
+            smoke_command=smoke_ok,
+        ) == 0
+        assert calls_file.read_text(encoding="utf-8") == "ran", "git commit -am target did not run smoke"
+        calls_file.unlink()
 
         _write(repo / "engine/battle/late_gen_held_items.asm", "changed\n")
         subprocess.run(["git", "add", "engine/battle/late_gen_held_items.asm"], cwd=repo, check=True)
