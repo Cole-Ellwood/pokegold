@@ -554,3 +554,25 @@ Bug found in debugger itself:
 
 Open:
 - Run final doc/navigation checks and commit the documented closure.
+
+## Post-roadmap fuzz stress pass
+
+Active item: post-delivery confidence check.
+
+Changed:
+- No debugger code changes.
+- Documented the larger fuzz pass in BUG_CHECK.
+
+Debugger self-check:
+- Large multiprocessing fuzz pass itself: ROM-vs-oracle agreement over
+  50,000 generated examples.
+
+Commands run:
+- `python -m tools.damage_debugger.fuzz --max-examples=5000 --workers=4`
+- `python -m tools.damage_debugger.fuzz --max-examples=50000 --workers=8`
+
+Bug found in debugger itself:
+- None. Both runs passed with no divergence.
+
+Open:
+- Commit the documentation note.

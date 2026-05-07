@@ -996,3 +996,18 @@ Remaining risk:
 - Exact hardware watchpoints still require a future SameBoy/BGB/GDB-style
   foundation. The shipped PyBoy replay tool is sampled by tick window, not a
   bus-accurate reverse debugger.
+
+## 2026-05-06 — post-roadmap fuzz stress pass
+
+Goal: close the remaining debugger-confidence risk by running the larger
+representative fuzz budget after all roadmap work landed.
+
+Verification:
+- `python -m tools.damage_debugger.fuzz --max-examples=5000 --workers=4` —
+  PASS, no ROM-vs-oracle divergence.
+- `python -m tools.damage_debugger.fuzz --max-examples=50000 --workers=8` —
+  PASS, no ROM-vs-oracle divergence.
+
+Result:
+- No additional debugger/oracle fixes were needed.
+- Multiprocessing worker mode remained equivalent at release scale.
