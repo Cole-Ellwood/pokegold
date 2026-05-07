@@ -419,3 +419,48 @@ Bug found in debugger itself:
 
 Open:
 - Run final M5 doc/navigation checks and commit.
+
+## L1-L3 -- cleanup
+
+Active item: L1-L3 cleanup.
+
+Changed:
+- Removed the no-op `pristine` oracle parameter and all active call sites.
+- Changed `clobber_smoke.parse_sym` to use `symbols.SymbolTable`.
+- Added `SymbolTable.as_legacy_dict()` for active callers that still expect
+  `name -> (bank, address)`.
+- Added `clobber_smoke --self-test` for symbol-table-backed diagnostic
+  rendering.
+- Hook snapshots now carry the ROM bank and render `Label+0xNN` PCs in
+  failure diagnostics.
+- Checked for `_oracle_audit_probe*.py`; none were present, so no probe files
+  were deleted or ignored.
+- Updated README, BUG_CHECK, and ORACLE_AUDIT docs.
+
+Debugger self-check:
+- `clobber_smoke --self-test` fails if L2 symbol rendering regresses.
+- Existing oracle/find/minimize/fuzz checks cover the removed L1 API surface.
+
+Commands run:
+- `rg "pristine" tools\damage_debugger`
+- `rg "parse_sym" tools\damage_debugger docs -n`
+- `Get-ChildItem tools\damage_debugger -Force -Filter '_oracle_audit_probe*.py'`
+- `python -m compileall -q tools\damage_debugger`
+- `python -m tools.damage_debugger.clobber_smoke --self-test`
+- `python -m tools.damage_debugger.oracle`
+- `python -m tools.damage_debugger.find --self-test`
+- `python -m tools.damage_debugger.clobber_smoke`
+- `python -m tools.damage_debugger.minimize --bug hp_d_clobber`
+- `python -m tools.damage_debugger.find physical_no_items`
+- `python -m tools.damage_debugger.find --bug hp_d_clobber`
+- `python -m tools.damage_debugger.fuzz --self-check-workers=2`
+- `python -m tools.damage_debugger.fuzz --max-examples=100 --workers=1`
+- `python -m tools.damage_debugger.fuzz --max-examples=100 --workers=2`
+
+Bug found in debugger itself:
+- The first L2 self-test still imported PyBoy because `clobber_smoke` imported
+  `BootStateCache` at module load time. Made that import lazy so the symbol
+  rendering self-test is emulator-independent.
+
+Open:
+- Run final L1-L3 navigation/diff checks and commit.

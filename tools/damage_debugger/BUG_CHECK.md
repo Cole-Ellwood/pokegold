@@ -372,8 +372,9 @@ Verification: `find --bug hp_d_clobber` reports rom=14 oracle=14
 The `pristine` parameter on `predict_damage` / `predict_damage_trace`
 was the temporary mirror for the d-clobber bug. With the asm fixed,
 oracle's default mode now matches the as-shipped ROM directly. The
-parameter signature is kept for backwards compatibility but no
-longer gates any branch.
+parameter briefly stayed as backwards-compatibility plumbing but no
+longer gated any branch; L1 cleanup later removed it from the public
+oracle API entirely.
 
 Branch 2 docstring updated to reflect the fix. Branch 9 docstring
 updated similarly. `find.py`'s `hp_d_clobber` entry repurposed as a
@@ -825,3 +826,54 @@ Remaining risk:
   the historical AG-08 class. It does not add a new synthetic test runner that
   mutates asm automatically; M5 remains a documented manual fixture because
   it requires rebuilding a deliberately broken ROM.
+
+## 2026-05-06 — L1-L3 cleanup
+
+Roadmap items: L1 drop no-op `pristine`, L2 symbol-table swap, L3 probe
+cleanup.
+
+Change:
+- Removed the no-op `pristine` parameter from `oracle.predict_damage`,
+  `oracle.predict_damage_trace`, `find.py`, and `minimize.py`.
+- Added `SymbolTable.as_legacy_dict()` and changed
+  `clobber_smoke.parse_sym` to use the maintained symbol parser rather than
+  its old ad hoc parser.
+- Added `python -m tools.damage_debugger.clobber_smoke --self-test`, a
+  synthetic check that fails if symbol-table-backed diagnostic rendering
+  stops producing `Label+0xNN` output.
+- Hook snapshots now retain the ROM bank and render diagnostic PCs as
+  `$BB:AAAA (Label+0xNN)` when a symbol table is available.
+- Checked for `tools/damage_debugger/_oracle_audit_probe*.py`; none were
+  present in this worktree, so L3 required no delete or ignore rule.
+- Updated `ORACLE_AUDIT_2026-05-05.md` to remove stale `pristine` gap text.
+
+Debugger self-check:
+- `clobber_smoke --self-test` covers the L2 rendering path without booting an
+  emulator.
+- `oracle`, `find --self-test`, `minimize --bug hp_d_clobber`, and fuzz
+  worker checks cover the L1 API cleanup across the active callers.
+
+Verification:
+- `rg "pristine" tools\damage_debugger` — only historical BUG_CHECK prose
+  remains; no runtime call sites.
+- `python -m compileall -q tools\damage_debugger` — PASS.
+- `python -m tools.damage_debugger.clobber_smoke --self-test` — PASS.
+- `python -m tools.damage_debugger.oracle` — PASS, 14/14 self-tests.
+- `python -m tools.damage_debugger.find --self-test` — PASS.
+- `python -m tools.damage_debugger.clobber_smoke` — PASS, 18/18 scenarios.
+- `python -m tools.damage_debugger.minimize --bug hp_d_clobber` — PASS,
+  reports the fixed repro no longer satisfies the divergence predicate.
+- `python -m tools.damage_debugger.find physical_no_items` — PASS, no
+  divergence.
+- `python -m tools.damage_debugger.find --bug hp_d_clobber` — PASS, no
+  divergence.
+- `python -m tools.damage_debugger.fuzz --self-check-workers=2` — PASS.
+- `python -m tools.damage_debugger.fuzz --max-examples=100 --workers=1` —
+  PASS.
+- `python -m tools.damage_debugger.fuzz --max-examples=100 --workers=2` —
+  PASS.
+
+Remaining risk:
+- `clobber_smoke.parse_sym` remains as a compatibility wrapper because
+  several active tools still consume the old `dict[name] = (bank, address)`
+  shape. The parser implementation is now centralized in `symbols.py`.

@@ -769,13 +769,7 @@ def main(argv: list[str] | None = None) -> int:
                 file=sys.stderr,
             )
             return 2
-    # When running a known-bug repro, score the oracle in "pristine" mode
-    # (model the AS-INTENDED behavior, ignore the documented ROM bugs)
-    # so the diff actually surfaces the bug as a divergence. For regular
-    # scenario runs the oracle stays in default (bug-mirroring) mode so
-    # no false positives appear.
-    pristine = args.bug is not None
-    oracle_trace = predict_damage_trace(inp, pristine=pristine)
+    oracle_trace = predict_damage_trace(inp)
     diffs = diff_traces(rom_trace, oracle_trace)
 
     final_rom = next((v for n, v in rom_trace if n == "TypePassive"), rom_trace[-1][1])

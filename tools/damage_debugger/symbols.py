@@ -65,6 +65,13 @@ class SymbolTable:
     def get(self, name: str) -> Symbol | None:
         return self._by_name.get(name)
 
+    def as_legacy_dict(self) -> dict[str, tuple[int, int]]:
+        """Return the old damage-debugger shape: name -> (bank, address)."""
+        return {
+            name: (symbol.bank, symbol.address)
+            for name, symbol in self._by_name.items()
+        }
+
     def render(self, bank: int, addr: int) -> str:
         """Render (bank, addr) as 'Label+0xNN' or '$BB:AAAA' if no nearby label."""
         items = self._by_bank.get(bank)

@@ -41,11 +41,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
 
-from pyboy import PyBoy
-
-from .boot_cache import BootStateCache
 from .paths import find_rom, find_sym
 from .safe_call import call_function_safe, read_be_u16_banked, write_byte_banked
+from .symbols import Symbol, SymbolTable
 
 LOG_PATH = (
     Path(__file__).resolve().parents[2]
@@ -141,18 +139,7 @@ HOOK_TARGETS: list[tuple[str, str]] = [
 
 
 def parse_sym(p: Path) -> dict:
-    out = {}
-    for line in p.read_text(encoding="utf-8", errors="replace").splitlines():
-        s = line.split(";", 1)[0].strip()
-        parts = s.split()
-        if len(parts) < 2 or ":" not in parts[0]:
-            continue
-        try:
-            b, a = parts[0].split(":", 1)
-            out[parts[1]] = (int(b, 16), int(a, 16))
-        except ValueError:
-            continue
-    return out
+    return SymbolTable.load(p).as_legacy_dict()
 
 
 def write_byte(pyboy, name, syms, value):
@@ -510,6 +497,7 @@ SCENARIOS = [
 class HookSnapshot:
     label: str
     seq: int
+    bank: int
     pc: int
     a: int
     f: int
@@ -530,13 +518,14 @@ def _install_hooks(pyboy, syms: dict, snapshots: list[HookSnapshot]) -> list[tup
     installed: list[tuple[int, int]] = []
     seq_counter = [0]
 
-    def _make_cb(label: str):
+    def _make_cb(label: str, bank: int):
         def cb(_):
             rf = pyboy.register_file
             seq_counter[0] += 1
             snapshots.append(HookSnapshot(
                 label=label,
                 seq=seq_counter[0],
+                bank=bank,
                 pc=int(rf.PC),
                 a=int(rf.A), f=int(rf.F),
                 b=int(rf.B), c=int(rf.C),
@@ -551,7 +540,7 @@ def _install_hooks(pyboy, syms: dict, snapshots: list[HookSnapshot]) -> list[tup
         s = syms.get(sym_name)
         if s is None:
             continue
-        pyboy.hook_register(s[0], s[1], _make_cb(label), None)
+        pyboy.hook_register(s[0], s[1], _make_cb(label, s[0]), None)
         installed.append((s[0], s[1]))
     return installed
 
@@ -636,16 +625,56 @@ def run_scenario(
     return damage, snapshots, seed_state, check_failures
 
 
-def _format_snapshot(s: HookSnapshot) -> str:
+def _format_snapshot(s: HookSnapshot, symbols: SymbolTable | None = None) -> str:
+    pc = f"${s.bank:02x}:{s.pc:04x}"
+    if symbols is not None:
+        pc = f"{pc} ({symbols.render(s.bank, s.pc)})"
     return (
-        f"  #{s.seq:3d} {s.label:24s} PC=${s.pc:04x} "
+        f"  #{s.seq:3d} {s.label:24s} PC={pc} "
         f"A={s.a:02x} F={s.f:02x} "
         f"BC={s.b:02x}{s.c:02x} DE={s.d:02x}{s.e:02x} "
         f"HL={s.h:02x}{s.l:02x} SP=${s.sp:04x}"
     )
 
 
-def main() -> int:
+def _self_test() -> int:
+    table = SymbolTable([
+        Symbol(bank=1, address=0x4000, name="Fixture"),
+        Symbol(bank=1, address=0x4002, name="Fixture.next"),
+    ])
+    legacy = table.as_legacy_dict()
+    assert legacy["Fixture"] == (1, 0x4000)
+    snap = HookSnapshot(
+        label="FixtureHook",
+        seq=1,
+        bank=1,
+        pc=0x4003,
+        a=1,
+        f=0,
+        b=2,
+        c=3,
+        d=4,
+        e=5,
+        h=0xC0,
+        l=0xAF,
+        sp=0xDFFE,
+    )
+    rendered = _format_snapshot(snap, symbols=table)
+    assert "Fixture.next+0x1" in rendered
+    assert "PC=$01:4003" in rendered
+    print("clobber_smoke self-test: PASS")
+    return 0
+
+
+def main(argv: list[str] | None = None) -> int:
+    if argv is None:
+        argv = sys.argv[1:]
+    if argv == ["--self-test"]:
+        return _self_test()
+    if argv:
+        print("usage: python -m tools.damage_debugger.clobber_smoke [--self-test]", file=sys.stderr)
+        return 2
+
     # Windows native Python defaults stdout to cp1252; any non-ASCII glyph in
     # a Scenario.note (em-dash, arrow, section symbol) crashes mid-print and
     # leaves a partial log. Force UTF-8 so future scenario authors don't have
@@ -670,7 +699,8 @@ def main() -> int:
     # regression. Saw this in the 2026-05-05 harness bug-check pass.
     rom = find_rom("pokegold_debug")
     sym = find_sym("pokegold_debug")
-    syms = parse_sym(sym)
+    symbol_table = SymbolTable.load(sym)
+    syms = symbol_table.as_legacy_dict()
 
     name_width = max(26, *(len(sc.name) for sc in SCENARIOS))
     log(f"clobber_smoke: running {len(SCENARIOS)} scenarios against {rom}")
@@ -681,6 +711,8 @@ def main() -> int:
     # constructing a new emulator each time. Drops 8-scenario wall-clock
     # from ~10s to ~1s and unblocks the Hypothesis fuzz workload (Tier 2.2)
     # which needs hundreds of restores per second.
+    from .boot_cache import BootStateCache
+
     cache = BootStateCache(rom)
     cache.prime()
 
@@ -736,13 +768,13 @@ def main() -> int:
         log("      A clobber-class regression likely escaped function-level audits.")
         log("      See docs/asm_authoring_guide.md sec 3.14 for the recurrence pattern.")
         log()
-        _emit_diagnostic_traces(failures, log, prefix="FAIL")
+        _emit_diagnostic_traces(failures, log, prefix="FAIL", symbols=symbol_table)
         return 1
 
     if xfailures:
         # All non-xfail scenarios passed; emit traces for the xfail ones so the
         # user has the diagnostic handy when picking up the underlying fix.
-        _emit_diagnostic_traces(xfailures, log, prefix="XFAIL")
+        _emit_diagnostic_traces(xfailures, log, prefix="XFAIL", symbols=symbol_table)
         non_xfail = len(SCENARIOS) - len(xfailures)
         log(f"PASS: all {non_xfail} non-xfail scenarios within expected ranges.")
         log(f"      ({len(xfailures)} xfail above remain known-bug; not blocking.)")
@@ -752,7 +784,13 @@ def main() -> int:
     return 0
 
 
-def _emit_diagnostic_traces(items, log, *, prefix: str) -> None:
+def _emit_diagnostic_traces(
+    items,
+    log,
+    *,
+    prefix: str,
+    symbols: SymbolTable | None = None,
+) -> None:
     for sc, damage, snapshots, seed_state, check_failures in items:
         log(f"=== diagnostic trace for {prefix} scenario: {sc.name} (damage={damage}) ===")
         log(f"    expected {sc.expected_low}-{sc.expected_high}; {sc.note}")
@@ -768,7 +806,7 @@ def _emit_diagnostic_traces(items, log, *, prefix: str) -> None:
             continue
         log(f"    {len(snapshots)} hook hits along the chain:")
         for snap in snapshots:
-            log(_format_snapshot(snap))
+            log(_format_snapshot(snap, symbols=symbols))
         log()
     log("Reading the trace:")
     log("  - DStats_entry            : caller hands off bc/de/hl into the chain")

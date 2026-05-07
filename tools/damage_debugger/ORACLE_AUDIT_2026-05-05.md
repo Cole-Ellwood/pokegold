@@ -213,8 +213,8 @@ order with correct fractions. Confirmed by hand against:
 
 - Branch 1 (NORMAL+STAB): line 51-69 — `if has_stab and move_type==NORMAL`,
   `c == 2 → 16/15`, `c == 1 → 31/30`. ✓
-- Branch 2 (FIRE-low-HP): line 71-87 — gated by `pristine` flag on the
-  oracle side, mirrors known `IsUserBelowOneThirdHP` ROM bug. ✓
+- Branch 2 (FIRE-low-HP): line 71-87 — applies directly now that the
+  `IsUserBelowOneThirdHP` ROM bug is fixed. ✓
 - Branch 3 (GHOST-status): line 89-104 — checks `.GetOpponentStatus`
   nonzero, defender GHOST contribution. ✓
 - Branch 4 (DRAGON-resist): line 106-121 — gated by `wTypeMatchup <= 10`,
@@ -230,7 +230,6 @@ order with correct fractions. Confirmed by hand against:
   defender WATER contribution. ✓
 - Branch 9 (ICE-above-half): line 191-205 — gated by
   `IsOpponentAboveHalfHP` carry-set, defender ICE contribution. ✓
-  (Same `pristine` mirror gate as Branch 2.)
 
 The 9 branch bodies are line-by-line correct. The Pass A counterexample's
 TypePassive *logic* was right; the divergence was a corrupted

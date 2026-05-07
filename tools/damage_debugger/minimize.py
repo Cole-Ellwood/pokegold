@@ -84,17 +84,12 @@ DEFAULTS = BattleInputs(
 def divergence_predicate(
     cache: BootStateCache,
     syms: dict,
-    *,
-    pristine: bool = True,
 ) -> Callable[[BattleInputs], bool]:
     """Build a predicate that returns True if `inp` diverges from oracle.
 
-    `pristine=True` is the default for known-bug repros: the oracle
-    models the as-INTENDED behavior, so the predicate fires when the
-    ROM's bug-bearing path produces a different value. Pass
-    `pristine=False` when minimizing a fresh fuzz-found divergence
-    (fuzz scores the bug-mirroring oracle, so a true ROM regression
-    is what's left).
+    Known-bug repros that are already fixed should not diverge; in that
+    case the minimizer reports that the initial inputs do not satisfy the
+    predicate.
     """
     def predicate(inp: BattleInputs) -> bool:
         pyboy = cache.restore()
@@ -104,7 +99,7 @@ def divergence_predicate(
                    "BattleCommand_Stab"):
             call_function_safe(pyboy, syms, fn)
         rom_damage = read_be_u16_banked(pyboy, cd[1], cd[0])
-        oracle_damage = predict_damage(inp, pristine=pristine)
+        oracle_damage = predict_damage(inp)
         return rom_damage != oracle_damage
     return predicate
 
@@ -172,9 +167,6 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Minimize a BattleInputs to its load-bearing axes")
     parser.add_argument("--bug", default=None,
                         help="Known-bug name to minimize (try: hp_d_clobber)")
-    parser.add_argument("--no-pristine", action="store_true",
-                        help="Score against bug-mirroring oracle (use when minimizing "
-                        "a freshly-found fuzz divergence; default models AS-INTENDED)")
     args = parser.parse_args(argv)
 
     if hasattr(sys.stdout, "reconfigure"):
@@ -195,7 +187,7 @@ def main(argv: list[str] | None = None) -> int:
     cache = BootStateCache(rom)
     cache.prime()
 
-    predicate = divergence_predicate(cache, syms, pristine=not args.no_pristine)
+    predicate = divergence_predicate(cache, syms)
     minimal, story = minimize(inp, predicate)
 
     print(f"original: {inp}\n")

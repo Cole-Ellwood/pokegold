@@ -13,6 +13,7 @@ broke same-bank callers in `engine/battle/late_gen_held_items.asm` whose
 | Tool | Use when |
 | --- | --- |
 | `python -m tools.damage_debugger.clobber_smoke` | **§6 verification floor** -- runs every battle-engine ABI-touching change through. Multi-scenario regression harness. Exits 0 on pass. |
+| `python -m tools.damage_debugger.clobber_smoke --self-test` | Debugger self-check for symbol-table-backed diagnostic rendering. |
 | `python -m tools.damage_debugger.fuzz --max=1000 --workers=4` | Hypothesis ROM-vs-oracle fuzz. Each worker owns a PyBoy boot cache and a deterministic seed partition. |
 | `python -m tools.damage_debugger.fuzz --self-check-workers=4` | Debugger self-check: runs a fixed corpus single-process and multi-process, then asserts identical ROM/oracle results. |
 | `python -m tools.damage_debugger.find <scenario>` | Bucket-locates ROM-vs-oracle divergence across DamageStats / DamageCalc / Stab / TypeMatchup / TypePassive. |

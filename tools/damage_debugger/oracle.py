@@ -552,7 +552,6 @@ def _type_passive_modifiers(
     *,
     has_stab: bool,
     matchup_total: int,
-    pristine: bool = False,
 ) -> int:
     """Mirror `TypePassive_ApplyDamageModifiers_Far` (locked V1 mods).
 
@@ -587,9 +586,7 @@ def _type_passive_modifiers(
     # historically gated this branch (found by Tier 2.2 fuzz, 2026-05-05)
     # was fixed in this same session via push-af around the high-byte
     # save. Oracle now applies Branch 2 unconditionally to match the
-    # fixed ROM. The `pristine` parameter is kept on `predict_damage` /
-    # `predict_damage_trace` for backwards compatibility with `find.py`'s
-    # --bug repro; it's a no-op here today.
+    # fixed ROM.
     if inp.move_type == FIRE and inp.attacker_below_third_hp:
         c = _type_contribution(FIRE, inp.attacker_types)
         if c == 2:
@@ -688,7 +685,7 @@ def _matchup_total(inp: BattleInputs) -> int:
     return total
 
 
-def predict_damage(inp: BattleInputs, *, pristine: bool = False) -> int:
+def predict_damage(inp: BattleInputs) -> int:
     """Mirror BattleCommand_DamageCalc + .CriticalMultiplier + BattleCommand_Stab
     + TypePassive_ApplyDamageModifiers_Far.
 
@@ -720,13 +717,12 @@ def predict_damage(inp: BattleInputs, *, pristine: bool = False) -> int:
     matchup_total = _matchup_total(inp)
     dmg = _type_passive_modifiers(
         inp, dmg, has_stab=has_stab, matchup_total=matchup_total,
-        pristine=pristine,
     )
 
     return dmg
 
 
-def predict_damage_trace(inp: BattleInputs, *, pristine: bool = False) -> list[tuple[str, int]]:
+def predict_damage_trace(inp: BattleInputs) -> list[tuple[str, int]]:
     """Like `predict_damage`, but returns wCurDamage at each step boundary.
 
     Used by the Tier 3.5 `find` CLI to bucket-locate divergence between
@@ -775,7 +771,6 @@ def predict_damage_trace(inp: BattleInputs, *, pristine: bool = False) -> list[t
     matchup_total = _matchup_total(inp)
     dmg = _type_passive_modifiers(
         inp, dmg, has_stab=has_stab, matchup_total=matchup_total,
-        pristine=pristine,
     )
     trace.append(("TypePassive", dmg))
     return trace
