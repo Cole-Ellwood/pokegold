@@ -965,3 +965,34 @@ Remaining risk:
   not a battle simulator.
 - The default run is capped at 50,000 base combinations for responsiveness.
   Use `--full` for exhaustive enumeration.
+
+## 2026-05-06 — D1-D4 deferred/foundation decisions
+
+Roadmap items: D1 SameBoy/BGB GDB-stub pilot, D2 hot-patch ROM iteration,
+D3 cross-emulator parity runner, D4 native-language harness.
+
+Decision:
+- D1: deferred. No local `sameboy`/`bgb` command or repo-local binary was
+  found, and the completed PyBoy-based tools now cover the near-term
+  watch/query workflows (`taint`, `tenet_writer`, `replay`). Starting an
+  emulator migration here would be an unbounded foundation swap, not a
+  damage-debugger shipping requirement.
+- D2: skipped. Rebuilds are not the bottleneck for the completed roadmap; the
+  hot paths are oracle/fuzz/replay execution, and H1 multiprocessing plus
+  boot-cache reuse address those.
+- D3: deferred. No PyBoy emulation bug surfaced during the roadmap
+  verification; cross-emulator parity should wait until D1 produces a usable
+  second-emulator harness or a concrete emulation discrepancy appears.
+- D4: rejected for this roadmap. The Python harness is already parallelized
+  and covered by self-tests; a Rust/C port would add substantial maintenance
+  risk without a demonstrated bottleneck.
+
+Verification:
+- `Get-Command sameboy, SameBoy, bgb, BGB -ErrorAction SilentlyContinue` —
+  no local commands found.
+- Repo-local search for `*sameboy*` / `*bgb*` binaries — no candidates found.
+
+Remaining risk:
+- Exact hardware watchpoints still require a future SameBoy/BGB/GDB-style
+  foundation. The shipped PyBoy replay tool is sampled by tick window, not a
+  bus-accurate reverse debugger.

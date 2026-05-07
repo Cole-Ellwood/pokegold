@@ -530,3 +530,27 @@ Bug found in debugger itself:
 
 Open:
 - Run final L5 smoke/navigation/diff checks and commit.
+
+## D1-D4 -- deferred/foundation decisions
+
+Active item: D1-D4 deferred/foundation items.
+
+Changed:
+- No code changes.
+- Documented D1-D4 decisions in BUG_CHECK.
+
+Debugger self-check:
+- Not applicable; these items were explicitly closed/deferred rather than
+  implemented. The completed PyBoy tools remain covered by their own
+  self-tests and the release-smoke floor.
+
+Commands run:
+- `Get-Command sameboy, SameBoy, bgb, BGB -ErrorAction SilentlyContinue`
+- Repo-local recursive search for `*sameboy*` / `*bgb*` files
+- `git status --short`
+
+Bug found in debugger itself:
+- None.
+
+Open:
+- Run final doc/navigation checks and commit the documented closure.
