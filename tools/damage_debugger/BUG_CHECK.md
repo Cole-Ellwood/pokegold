@@ -679,3 +679,42 @@ Remaining risk:
   rendering still depends on a future source-map layer.
 - Unsupported opcodes are counted and clear known destinations rather than
   preserving stale taint. Add handlers as new traced functions demand them.
+
+## 2026-05-06 — M3 per-PC coverage report
+
+Roadmap item: M3, coverage report.
+
+Change:
+- Added `tools.damage_debugger.coverage`.
+- Walks selected damage-path functions with `disasm.walk_function`, installs
+  a PyBoy hook at every instruction PC, runs all `clobber_smoke` scenarios,
+  and records per-function hit PCs.
+- Writes `audit/damage_debugger/coverage.md`.
+- Supports JSON summary output and `--fail-under` threshold checks.
+- Default target set covers the practical smoke surface:
+  `BattleCommand_DamageStats`, `BattleCommand_DamageCalc`,
+  `BattleCommand_Stab`, `BattleCommand_DamageVariation`,
+  `ApplyLateGenDamageStatsItemMods_Far`,
+  `TypePassive_ApplyDamageModifiers_Far`, and
+  `HandleLateGenAfterHitEffects_Far`.
+
+Debugger self-check:
+- `python -m tools.damage_debugger.coverage --self-test` fails if the
+  Markdown table shape, JSON totals, missed-PC section, or threshold failure
+  behavior regresses.
+
+Verification:
+- `python -m compileall -q tools\damage_debugger` — PASS.
+- `python -m tools.damage_debugger.coverage --self-test` — PASS.
+- `python -m tools.damage_debugger.coverage --write audit\damage_debugger\coverage.md --json`
+  — PASS, wrote report and JSON summary. Total default coverage:
+  276/350 PCs (78.9%).
+- `python -m tools.damage_debugger.coverage --fail-under 99 --target BattleCommand_DamageCalc`
+  — exit 1 as expected.
+
+Remaining risk:
+- `CheckTypeMatchup` is targetable explicitly, but omitted from the default
+  report because per-PC hooks inside its long type-table loop make the full
+  H4 scenario set too slow. `BattleCommand_Stab` still covers the primary
+  matchup loop, and M2 `--instrument-hook CheckTypeMatchup.Yup` remains the
+  focused diagnostic for that path.

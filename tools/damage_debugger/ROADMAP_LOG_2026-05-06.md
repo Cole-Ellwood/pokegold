@@ -313,3 +313,33 @@ Bug found in debugger itself:
 
 Open:
 - Run final H5 verification floor and commit.
+
+## M3 -- coverage report
+
+Active item: M3, per-PC smoke-scenario coverage report.
+
+Changed:
+- Added `tools/damage_debugger/coverage.py`.
+- Added Markdown report generation at `audit/damage_debugger/coverage.md`.
+- Added JSON summary output and `--fail-under` threshold handling.
+- Added synthetic self-tests for output shape, JSON totals, missed-PC
+  rendering, and threshold failure behavior.
+
+Debugger self-check:
+- `coverage --self-test` fails if report schema or threshold behavior breaks.
+
+Commands run:
+- `python -m compileall -q tools\damage_debugger`
+- `python -m tools.damage_debugger.coverage --self-test`
+- `python -m tools.damage_debugger.coverage --write audit\damage_debugger\coverage.md --json`
+- `python -m tools.damage_debugger.coverage --fail-under 99 --target BattleCommand_DamageCalc`
+
+Bug found in debugger itself:
+- The initial default target set included `CheckTypeMatchup`; per-PC hooks in
+  its long type-table loop made the full H4 scenario set exceed the command
+  timeout. M3 now keeps `CheckTypeMatchup` explicitly targetable but omits it
+  from the default report, relying on Stab coverage plus M2's focused hook
+  instrumentation for that path.
+
+Open:
+- Run final M3 verification floor and commit.
