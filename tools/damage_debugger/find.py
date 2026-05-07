@@ -27,6 +27,10 @@ Modes:
     python -m tools.damage_debugger.find --json <scenario_name>
         Same as above, JSON-formatted for AI-loop consumption.
 
+    python -m tools.damage_debugger.find --self-test
+        Assert the mid-Stab hook boundaries still bucket type-effectiveness
+        scenarios correctly.
+
 The "first divergent step" is the diagnostic: when ROM and oracle agree
 at step N but disagree at step N+1, the bug is in the asm code that
 runs between those labels.
@@ -35,7 +39,7 @@ Buckets and their on-ROM hook labels (wCurDamage read at each):
 
     DamageStats   : after BattleCommand_DamageStats
     DamageCalc    : after BattleCommand_DamageCalc (post-Q + +MIN_DAMAGE)
-    Stab          : pre-matchup, post-STAB (read at matchup loop entry)
+    Stab          : pre-matchup, post-STAB (BattleCommand_Stab.SkipStab)
     TypeMatchup   : after the matchup loop, before TypePassive farcall
     TypePassive   : final, after TypePassive_ApplyDamageModifiers_Far
 
@@ -51,20 +55,17 @@ import argparse
 import json
 import sys
 from dataclasses import asdict, dataclass
-from pathlib import Path
 
 from .boot_cache import BootStateCache
 from .clobber_smoke import (
     SCENARIOS,
     Scenario,
-    _read_byte,
     parse_sym,
 )
 from .oracle import (
     BattleInputs,
     FIRE,
     NORMAL,
-    predict_damage,
     predict_damage_trace,
 )
 from .paths import find_rom, find_sym
@@ -73,17 +74,6 @@ from .safe_call import call_function_safe, read_be_u16_banked
 
 # --- ROM-side per-step trace -------------------------------------------------
 
-# Step boundaries we capture wCurDamage at. Order matches the
-# `oracle.predict_damage_trace` step list so a position-by-position diff
-# is meaningful.
-STEP_HOOKS = [
-    # ("step name",       sym to hook (entry), measure point)
-    # We don't hook a label and read at hook; we read wCurDamage right
-    # after each top-level call_function_safe completes. The matchup-end
-    # bucket needs a hook because it's mid-Stab.
-]
-
-
 def _read_wcurdamage(pyboy, syms) -> int:
     s = syms["wCurDamage"]
     return read_be_u16_banked(pyboy, s[1], s[0])
@@ -91,13 +81,13 @@ def _read_wcurdamage(pyboy, syms) -> int:
 
 def run_rom_trace(pyboy, syms, seed_callable) -> list[tuple[str, int]]:
     """Run the seed + 3-phase chain, capturing wCurDamage at each top-level
-    boundary AND at the matchup-loop end inside Stab.
+    boundary and at two mid-Stab boundaries.
 
-    Inside `BattleCommand_Stab`, hook the `.end` label so we can read
-    wCurDamage AFTER the matchup loop but BEFORE the TypePassive farcall.
-    Without this hook, we'd only see the post-TypePassive value and lose
-    the ability to bucket-distinguish "matchup wrong" from "TypePassive
-    wrong."
+    Inside `BattleCommand_Stab`, hook `.SkipStab` to read wCurDamage
+    after STAB/weather/badge work but before the matchup loop, and hook
+    `.end` to read after the matchup loop but before the TypePassive
+    farcall. Without both hooks, type-effective scenarios can be
+    misbucketed as STAB bugs even when final ROM/oracle damage agrees.
     """
     seed_callable(pyboy, syms)
 
@@ -105,23 +95,20 @@ def run_rom_trace(pyboy, syms, seed_callable) -> list[tuple[str, int]]:
     pre_matchup_dmg = [None]
     matchup_end_dmg = [None]
 
-    # Hook `.stab` (== STAB block entry) and `.end` (== matchup loop end)
-    # of BattleCommand_Stab. Both are local labels resolved through the
-    # sym table.
-    sym_stab_block = syms.get("BattleCommand_Stab.stab")
+    # Hook `.SkipStab` (pre-matchup after the optional STAB block) and
+    # `.end` (matchup-loop end). Both are local labels resolved through
+    # the sym table.
+    sym_skip_stab = syms.get("BattleCommand_Stab.SkipStab")
     sym_end = syms.get("BattleCommand_Stab.end")
 
-    def cb_stab(_):
-        # `.stab` block fires when STAB applies, so wCurDamage at entry
-        # is pre-STAB. We don't actually need this -- DamageCalc's
-        # post-state IS the pre-STAB value. So skip.
-        pass
+    def cb_skip_stab(_):
+        pre_matchup_dmg[0] = _read_wcurdamage(pyboy, syms)
 
     def cb_end(_):
         matchup_end_dmg[0] = _read_wcurdamage(pyboy, syms)
 
-    if sym_stab_block:
-        pyboy.hook_register(sym_stab_block[0], sym_stab_block[1], cb_stab, None)
+    if sym_skip_stab:
+        pyboy.hook_register(sym_skip_stab[0], sym_skip_stab[1], cb_skip_stab, None)
     if sym_end:
         pyboy.hook_register(sym_end[0], sym_end[1], cb_end, None)
 
@@ -134,9 +121,9 @@ def run_rom_trace(pyboy, syms, seed_callable) -> list[tuple[str, int]]:
             call_function_safe(pyboy, syms, fn)
             trace.append((step_name, _read_wcurdamage(pyboy, syms)))
     finally:
-        if sym_stab_block:
+        if sym_skip_stab:
             try:
-                pyboy.hook_deregister(sym_stab_block[0], sym_stab_block[1])
+                pyboy.hook_deregister(sym_skip_stab[0], sym_skip_stab[1])
             except Exception:
                 pass
         if sym_end:
@@ -152,22 +139,14 @@ def run_rom_trace(pyboy, syms, seed_callable) -> list[tuple[str, int]]:
     rom_damage_stats = trace[0][1]
     rom_damage_calc = trace[1][1]
     rom_final = trace[2][1]
+    rom_pre_matchup = pre_matchup_dmg[0] if pre_matchup_dmg[0] is not None else rom_damage_calc
     rom_matchup_end = matchup_end_dmg[0] if matchup_end_dmg[0] is not None else rom_final
 
-    # Pre-matchup ROM bucket = wCurDamage right before the matchup loop
-    # iterates. The .end hook fires AFTER the loop, so for the
-    # "Stab" bucket we approximate as the post-DamageCalc + post-STAB
-    # value -- which is what the oracle's "Stab" bucket also is. STAB
-    # is applied BEFORE the matchup loop, so reading wCurDamage at .end
-    # already includes STAB. We do not have a clean pre-matchup hook;
-    # leaving "Stab" approximated as "DamageCalc + maybe STAB" -- if a
-    # divergence shows up in this bucket, drop down to the
-    # `.SkipStab` label hook for finer granularity.
     return [
         ("DamageStats", rom_damage_stats),
         ("DamageCalc",  rom_damage_calc),
-        ("Stab",        rom_matchup_end),  # post-STAB, post-matchup
-        ("TypeMatchup", rom_matchup_end),  # same hook today; refine later
+        ("Stab",        rom_pre_matchup),
+        ("TypeMatchup", rom_matchup_end),
         ("TypePassive", rom_final),
     ]
 
@@ -413,13 +392,88 @@ def _scenario_to_inputs(sc: Scenario) -> BattleInputs:
             defender_types=(_oracle.NORMAL, _oracle.FLYING),
             kanto_badges=1 << 6,
         ),
+        "special_super_effective": BattleInputs(
+            attacker_level=5, move_bp=40, move_type=_oracle.FIRE, is_physical=False,
+            attacker_atk=11, defender_def=5,
+            attacker_types=(_oracle.FIRE, _oracle.FIRE),
+            defender_types=(_oracle.GRASS, _oracle.BUG),
+        ),
+        "special_not_very_effective": BattleInputs(
+            attacker_level=5, move_bp=40, move_type=_oracle.FIRE, is_physical=False,
+            attacker_atk=11, defender_def=5,
+            attacker_types=(_oracle.FIRE, _oracle.FIRE),
+            defender_types=(_oracle.WATER, _oracle.FIRE),
+        ),
+        "physical_immune": BattleInputs(
+            attacker_level=2, move_bp=40, move_type=_oracle.NORMAL, is_physical=True,
+            attacker_atk=6, defender_def=9,
+            attacker_types=(_oracle.NORMAL, _oracle.FLYING),
+            defender_types=(_oracle.GHOST, _oracle.GHOST),
+        ),
     }
     if sc.name not in table:
         raise KeyError(
-            f"scenario {sc.name!r} has no oracle inputs registered. Add it to "
-            f"_scenario_to_inputs in find.py."
+            f"scenario {sc.name!r} has no three-phase oracle inputs registered. "
+            f"Add it to _scenario_to_inputs in find.py if it runs the normal "
+            f"DamageStats -> DamageCalc -> Stab chain."
         )
     return table[sc.name]
+
+
+def _self_test() -> int:
+    """Debugger self-check for the mid-Stab hook boundaries.
+
+    These cases fail if `.SkipStab` is not hooked correctly: final damage
+    may still match, but the Stab and TypeMatchup buckets get swapped or
+    collapsed and the diagnostic points at the wrong asm site.
+    """
+    expected_steps = {
+        "special_super_effective": {"Stab": 13, "TypeMatchup": 52, "TypePassive": 52},
+        "special_not_very_effective": {"Stab": 13, "TypeMatchup": 3, "TypePassive": 2},
+        "physical_immune": {"Stab": 4, "TypeMatchup": 0, "TypePassive": 0},
+    }
+
+    rom = find_rom("pokegold_debug")
+    sym = find_sym("pokegold_debug")
+    syms = parse_sym(sym)
+    cache = BootStateCache(rom)
+    cache.prime()
+
+    failures = 0
+    try:
+        by_name = {sc.name: sc for sc in SCENARIOS}
+        for name, expected in expected_steps.items():
+            sc = by_name[name]
+            inp = _scenario_to_inputs(sc)
+            pyboy = cache.restore()
+            rom_trace = run_rom_trace(pyboy, syms, sc.seed)
+            oracle_trace = predict_damage_trace(inp)
+            diffs = diff_traces(rom_trace, oracle_trace)
+
+            rom_by_step = {step: value for step, value in rom_trace}
+            mismatches = [
+                f"{step}: expected ROM {want}, got {rom_by_step.get(step)}"
+                for step, want in expected.items()
+                if rom_by_step.get(step) != want
+            ]
+            divergences = [d for d in diffs if d.diverged]
+            if mismatches or divergences:
+                failures += 1
+                print(f"{name}: FAIL")
+                for msg in mismatches:
+                    print(f"  {msg}")
+                for d in divergences:
+                    print(f"  divergence {d.step}: ROM={d.rom} oracle={d.oracle}")
+            else:
+                print(f"{name}: ok")
+    finally:
+        cache.stop()
+
+    if failures:
+        print(f"\n{failures} find self-test scenario(s) failed")
+        return 1
+    print(f"\nall {len(expected_steps)} find self-test scenarios passed")
+    return 0
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -432,17 +486,27 @@ def main(argv: list[str] | None = None) -> int:
                         help="JSON output for AI-loop consumption")
     parser.add_argument("--list", action="store_true",
                         help="List available scenarios and known bugs")
+    parser.add_argument("--self-test", action="store_true",
+                        help="Run debugger self-checks for the find bucket hooks")
     args = parser.parse_args(argv)
 
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
+
+    if args.self_test:
+        return _self_test()
 
     bugs = _known_bugs()
 
     if args.list:
         print("scenarios:")
         for sc in SCENARIOS:
-            print(f"  {sc.name}")
+            try:
+                _scenario_to_inputs(sc)
+                suffix = ""
+            except KeyError:
+                suffix = " (no three-phase oracle trace)"
+            print(f"  {sc.name}{suffix}")
         print("known bugs:")
         for name, (desc, _, _) in bugs.items():
             print(f"  --bug {name}")

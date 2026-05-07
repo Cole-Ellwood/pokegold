@@ -25,11 +25,11 @@ Coverage today:
     special_choice_specs       — Choice Specs on attacker → spatk * 3/2.
     special_assault_vest       — Assault Vest on defender → spdef * 3/2.
     special_eviolite_spd       — Eviolite on defender → spdef * 3/2.
+    type-effectiveness         — super-effective, resisted, immune rows.
+    damage variation           — final 0.85-1.0 random multiplier range.
+    late-gen after-hit effects — Rocky Helmet, Shell Bell, Life Orb HP effects.
 
 Uncovered (any could ship a clobber undetected — extend SCENARIOS):
-    Type-effective (super-effective / not-very-effective).
-    DamageVariation (final 0.85-1.0 random multiplier).
-    HandleLateGenAfterHitEffects_Far (Rocky Helmet, Life Orb).
     ApplyLateGenDamageMultipliers_Far (Muscle Band, Wise Glasses, Expert
     Belt, Metronome, Life Orb post-quotient mods).
 """
@@ -37,7 +37,7 @@ Uncovered (any could ship a clobber undetected — extend SCENARIOS):
 from __future__ import annotations
 
 import sys
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
 
@@ -62,10 +62,28 @@ CHOICE_BAND_ID = 0x74
 CHOICE_SPECS_ID = 0x81
 ASSAULT_VEST_ID = 0x89
 EVOLITE_ID = 0x93
+LIFE_ORB_ID = 0x46
+SHELL_BELL_ID = 0x95
+ROCKY_HELMET_ID = 0x99
+
+NORMAL_TYPE = 0x00
+BUG_TYPE = 0x07
+GHOST_TYPE = 0x08
+FIRE_TYPE = 0x14
+WATER_TYPE = 0x15
+GRASS_TYPE = 0x16
 
 WEATHER_RAIN = 1
 WEATHER_SUN = 2
 VOLCANOBADGE_MASK = 1 << 6
+
+DEFAULT_CHAIN = (
+    "BattleCommand_DamageStats",
+    "BattleCommand_DamageCalc",
+    "BattleCommand_Stab",
+)
+
+PostCheck = Callable[[object, dict], tuple[bool, str]]
 
 
 @dataclass
@@ -75,6 +93,10 @@ class Scenario:
     expected_low: int
     expected_high: int
     note: str = ""
+    chain: tuple[str, ...] = DEFAULT_CHAIN
+    post_check: PostCheck | None = None
+    call_budget: int = 4800
+    allow_nonreturn: bool = False
     # When True, an out-of-range damage is rendered as XFAIL (known-failure)
     # rather than FAIL, and does NOT influence the harness exit code. Use for
     # scenarios that surface a discovered-but-not-yet-fixed bug. Once the bug
@@ -106,6 +128,15 @@ HOOK_TARGETS: list[tuple[str, str]] = [
     ("TruncateHL_BC", "Truncate_entry"),
     ("TruncateHL_BC.done", "Truncate_done"),
     ("CheckDamageStatsCritical_Far", "CDSC_far_entry"),
+    ("BattleCommand_Stab", "Stab_entry"),
+    ("BattleCommand_Stab.end", "TypeMatchup_done"),
+    ("BattleCommand_DamageVariation", "DVariation_entry"),
+    ("BattleCommand_DamageVariation.loop", "DVariation_loop"),
+    ("HandleLateGenAfterHitEffects_Far", "AfterHit_entry"),
+    ("HandleLateGenAfterHitEffects_Far.MaybeApplyRockyHelmetRecoil", "AfterHit_rocky"),
+    ("HandleLateGenAfterHitEffects_Far.MaybeApplyShellBellHeal", "AfterHit_shell"),
+    ("HandleLateGenAfterHitEffects_Far.MaybeApplyLifeOrbRecoil", "AfterHit_life"),
+    ("HandleLateGenAfterHitEffects_Far.done", "AfterHit_done"),
 ]
 
 
@@ -171,6 +202,10 @@ def _zero_meta(pyboy, syms):
         "wEffectFailed", "wEnemyScreens", "wPlayerScreens", "wBattleMonStatus",
         "wEnemyMonStatus", "wBattleWeather", "wJohtoBadges", "wKantoBadges",
         "wCurEnemyMove", "wCurPlayerMove", "wLinkMode",
+        "wPlayerSubStatus1", "wPlayerSubStatus2", "wPlayerSubStatus3",
+        "wPlayerSubStatus4", "wPlayerSubStatus5",
+        "wEnemySubStatus1", "wEnemySubStatus2", "wEnemySubStatus3",
+        "wEnemySubStatus4", "wEnemySubStatus5",
     ):
         write_byte(pyboy, byte_field, syms, 0)
     write_byte(pyboy, "wTypeMatchup", syms, 0x10)
@@ -178,6 +213,28 @@ def _zero_meta(pyboy, syms):
     for stage in ("Atk", "Def", "Spd", "SAtk", "SDef"):
         write_byte(pyboy, f"wPlayer{stage}Level", syms, 7)
         write_byte(pyboy, f"wEnemy{stage}Level", syms, 7)
+
+
+def _read_be_u16(pyboy, name, syms) -> int | None:
+    s = syms.get(name)
+    if s is None:
+        return None
+    return read_be_u16_banked(pyboy, s[1], s[0])
+
+
+def _expect_u16s(expected: dict[str, int]) -> PostCheck:
+    def check(pyboy, syms) -> tuple[bool, str]:
+        mismatches: list[str] = []
+        seen: list[str] = []
+        for name, want in expected.items():
+            got = _read_be_u16(pyboy, name, syms)
+            seen.append(f"{name}={got}")
+            if got != want:
+                mismatches.append(f"{name}: expected {want}, got {got}")
+        if mismatches:
+            return False, "; ".join(mismatches)
+        return True, ", ".join(seen)
+    return check
 
 
 def _seed_pidgey_attacks_cyndaquil_with_tackle(pyboy, syms):
@@ -288,6 +345,63 @@ def seed_special_fire_badge(pyboy, syms):
     write_byte(pyboy, "wKantoBadges", syms, VOLCANOBADGE_MASK)
 
 
+def seed_special_super_effective(pyboy, syms):
+    """Cyndaquil Ember vs a GRASS/BUG defender -> two FIRE super-effective rows."""
+    _seed_cyndaquil_attacks_pidgey_with_ember(pyboy, syms)
+    write_byte(pyboy, "wEnemyMonType1", syms, GRASS_TYPE)
+    write_byte(pyboy, "wEnemyMonType2", syms, BUG_TYPE)
+
+
+def seed_special_not_very_effective(pyboy, syms):
+    """Cyndaquil Ember vs a WATER/FIRE defender -> two resisted FIRE rows."""
+    _seed_cyndaquil_attacks_pidgey_with_ember(pyboy, syms)
+    write_byte(pyboy, "wEnemyMonType1", syms, WATER_TYPE)
+    write_byte(pyboy, "wEnemyMonType2", syms, FIRE_TYPE)
+
+
+def seed_physical_immune(pyboy, syms):
+    """Pidgey Tackle vs a GHOST/GHOST defender -> NORMAL immunity zeros damage."""
+    _seed_pidgey_attacks_cyndaquil_with_tackle(pyboy, syms)
+    write_byte(pyboy, "wBattleMonType1", syms, GHOST_TYPE)
+    write_byte(pyboy, "wBattleMonType2", syms, GHOST_TYPE)
+
+
+def _seed_player_tackle_afterhit_base(pyboy, syms, *, cur_damage: int = 16):
+    """Player-side contact hit state for isolated after-hit effect checks."""
+    _seed_cyndaquil_attacks_pidgey_with_ember(pyboy, syms)
+    pm = syms["wPlayerMoveStruct"]
+    # Tackle is a contact move; the handler checks the move id through
+    # BATTLE_VARS_MOVE_ANIM, not the attacker's type.
+    for offset, val in [(0, 0x21), (1, 0x00), (2, 40), (3, NORMAL_TYPE), (4, 0xFF), (5, 35), (6, 0)]:
+        write_byte_banked(pyboy, pm[1] + offset, val, pm[0])
+    write_byte(pyboy, "wCurPlayerMove", syms, 0x21)
+    write_byte(pyboy, "hBattleTurn", syms, 0)
+    write_be_u16(pyboy, "wCurDamage", syms, cur_damage)
+    write_be_u16(pyboy, "wBattleMonHP", syms, 30)
+    write_be_u16(pyboy, "wBattleMonMaxHP", syms, 30)
+    write_be_u16(pyboy, "wEnemyMonHP", syms, 30)
+    write_be_u16(pyboy, "wEnemyMonMaxHP", syms, 30)
+
+
+def seed_afterhit_rocky_helmet(pyboy, syms):
+    """Opponent Rocky Helmet recoils the player by maxHP/6 after contact."""
+    _seed_player_tackle_afterhit_base(pyboy, syms)
+    write_byte(pyboy, "wEnemyMonItem", syms, ROCKY_HELMET_ID)
+
+
+def seed_afterhit_shell_bell(pyboy, syms):
+    """Player Shell Bell heals max(1, wCurDamage/8) after a damaging hit."""
+    _seed_player_tackle_afterhit_base(pyboy, syms)
+    write_be_u16(pyboy, "wBattleMonHP", syms, 10)
+    write_byte(pyboy, "wBattleMonItem", syms, SHELL_BELL_ID)
+
+
+def seed_afterhit_life_orb(pyboy, syms):
+    """Player Life Orb recoils the user by maxHP/10 after a damaging hit."""
+    _seed_player_tackle_afterhit_base(pyboy, syms)
+    write_byte(pyboy, "wBattleMonItem", syms, LIFE_ORB_ID)
+
+
 # Ranges are loose enough to absorb DamageVariation-free integer noise but
 # tight enough that a 4-10x clobber-class regression always trips them.
 #
@@ -347,6 +461,47 @@ SCENARIOS = [
     Scenario(
         "special_fire_badge", seed_special_fire_badge, 13, 17,
         "VolcanoBadge adds damage/8 before STAB on player FIRE move.",
+    ),
+    Scenario(
+        "special_super_effective", seed_special_super_effective, 50, 54,
+        "FIRE vs GRASS/BUG runs two super-effective type rows -> 52.",
+    ),
+    Scenario(
+        "special_not_very_effective", seed_special_not_very_effective, 1, 3,
+        "FIRE vs WATER/FIRE runs two resisted type rows plus WATER special resist -> 2.",
+    ),
+    Scenario(
+        "physical_immune", seed_physical_immune, 0, 0,
+        "NORMAL Tackle into GHOST/GHOST must zero wCurDamage.",
+    ),
+    Scenario(
+        "special_super_effective_variation", seed_special_super_effective, 44, 52,
+        "Same super-effective FIRE case after DamageVariation; final RNG multiplier stays 0.85-1.0.",
+        chain=DEFAULT_CHAIN + ("BattleCommand_DamageVariation",),
+    ),
+    Scenario(
+        "afterhit_rocky_helmet", seed_afterhit_rocky_helmet, 16, 16,
+        "Isolated after-hit handler: contact into Rocky Helmet subtracts player maxHP/6.",
+        chain=("HandleLateGenAfterHitEffects_Far",),
+        post_check=_expect_u16s({"wBattleMonHP": 25, "wEnemyMonHP": 30}),
+        call_budget=500,
+        allow_nonreturn=True,
+    ),
+    Scenario(
+        "afterhit_shell_bell", seed_afterhit_shell_bell, 16, 16,
+        "Isolated after-hit handler: Shell Bell heals player by wCurDamage/8.",
+        chain=("HandleLateGenAfterHitEffects_Far",),
+        post_check=_expect_u16s({"wBattleMonHP": 12, "wEnemyMonHP": 30}),
+        call_budget=500,
+        allow_nonreturn=True,
+    ),
+    Scenario(
+        "afterhit_life_orb", seed_afterhit_life_orb, 16, 16,
+        "Isolated after-hit handler: Life Orb subtracts player maxHP/10.",
+        chain=("HandleLateGenAfterHitEffects_Far",),
+        post_check=_expect_u16s({"wBattleMonHP": 27, "wEnemyMonHP": 30}),
+        call_budget=500,
+        allow_nonreturn=True,
     ),
 ]
 
@@ -432,7 +587,7 @@ def run_scenario(
     scenario: Scenario,
     syms: dict,
     cache: BootStateCache,
-) -> tuple[int, list[HookSnapshot], dict]:
+) -> tuple[int, list[HookSnapshot], dict, list[str]]:
     """Run one scenario against the cache's shared PyBoy.
 
     `cache.restore(pyboy)` rewinds to the post-boot snapshot in ~10ms
@@ -459,14 +614,26 @@ def run_scenario(
             "wCriticalHit": _read_byte(pyboy, "wCriticalHit", syms),
         }
 
+        check_failures: list[str] = []
         cd_sym = syms["wCurDamage"]
-        for fn in ("BattleCommand_DamageStats", "BattleCommand_DamageCalc", "BattleCommand_Stab"):
-            call_function_safe(pyboy, syms, fn)
+        for fn in scenario.chain:
+            ticks, returned, post_pc = call_function_safe(pyboy, syms, fn, budget=scenario.call_budget)
+            if not returned:
+                seed_state[f"{fn}.post_pc"] = f"${post_pc:04x}"
+                if not scenario.allow_nonreturn:
+                    check_failures.append(
+                        f"{fn} did not reach the HRAM sentinel within {ticks} ticks"
+                    )
 
         damage = read_be_u16_banked(pyboy, cd_sym[1], cd_sym[0])
+        if scenario.post_check is not None:
+            ok, detail = scenario.post_check(pyboy, syms)
+            seed_state["post_check"] = detail
+            if not ok:
+                check_failures.append(detail)
     finally:
         _deregister_hooks(pyboy, hooks)
-    return damage, snapshots, seed_state
+    return damage, snapshots, seed_state, check_failures
 
 
 def _format_snapshot(s: HookSnapshot) -> str:
@@ -505,8 +672,9 @@ def main() -> int:
     sym = find_sym("pokegold_debug")
     syms = parse_sym(sym)
 
+    name_width = max(26, *(len(sc.name) for sc in SCENARIOS))
     log(f"clobber_smoke: running {len(SCENARIOS)} scenarios against {rom}")
-    log(f"{'scenario':<26s} {'damage':>7s} {'expected':>10s}  result  notes")
+    log(f"{'scenario':<{name_width}s} {'damage':>7s} {'expected':>10s}  result  notes")
     log("-" * 110)
 
     # Boot ONE PyBoy, snapshot it, then load_state per scenario instead of
@@ -516,13 +684,13 @@ def main() -> int:
     cache = BootStateCache(rom)
     cache.prime()
 
-    failures: list[tuple[Scenario, int, list[HookSnapshot], dict]] = []
-    xfailures: list[tuple[Scenario, int, list[HookSnapshot], dict]] = []
+    failures: list[tuple[Scenario, int, list[HookSnapshot], dict, list[str]]] = []
+    xfailures: list[tuple[Scenario, int, list[HookSnapshot], dict, list[str]]] = []
     xpasses: list[tuple[Scenario, int]] = []
     try:
         for sc in SCENARIOS:
-            damage, snapshots, seed_state = run_scenario(sc, syms, cache)
-            ok = sc.expected_low <= damage <= sc.expected_high
+            damage, snapshots, seed_state, check_failures = run_scenario(sc, syms, cache)
+            ok = sc.expected_low <= damage <= sc.expected_high and not check_failures
             if ok and sc.xfail:
                 result = "XPASS"
                 xpasses.append((sc, damage))
@@ -530,12 +698,12 @@ def main() -> int:
                 result = "PASS"
             elif sc.xfail:
                 result = "XFAIL"
-                xfailures.append((sc, damage, snapshots, seed_state))
+                xfailures.append((sc, damage, snapshots, seed_state, check_failures))
             else:
                 result = "FAIL"
-                failures.append((sc, damage, snapshots, seed_state))
+                failures.append((sc, damage, snapshots, seed_state, check_failures))
             log(
-                f"{sc.name:<26s} {damage:>7d} "
+                f"{sc.name:<{name_width}s} {damage:>7d} "
                 f"{f'{sc.expected_low}-{sc.expected_high}':>10s}  {result:>5s}  {sc.note}"
             )
     finally:
@@ -556,9 +724,11 @@ def main() -> int:
 
     if xfailures:
         log(f"XFAIL: {len(xfailures)} scenario(s) failed as expected (known bug).")
-        for sc, damage, _snaps, _seed in xfailures:
+        for sc, damage, _snaps, _seed, check_failures in xfailures:
             log(f"  - {sc.name}: damage={damage} (expected {sc.expected_low}-{sc.expected_high})")
             log(f"      reason: {sc.xfail_reason}")
+            for failure in check_failures:
+                log(f"      self-check: {failure}")
         log()
 
     if failures:
@@ -583,12 +753,16 @@ def main() -> int:
 
 
 def _emit_diagnostic_traces(items, log, *, prefix: str) -> None:
-    for sc, damage, snapshots, seed_state in items:
+    for sc, damage, snapshots, seed_state, check_failures in items:
         log(f"=== diagnostic trace for {prefix} scenario: {sc.name} (damage={damage}) ===")
         log(f"    expected {sc.expected_low}-{sc.expected_high}; {sc.note}")
         log(f"    seed: " + ", ".join(
             f"{k}={v}" for k, v in seed_state.items() if v is not None
         ))
+        if check_failures:
+            log("    debugger self-check failures:")
+            for failure in check_failures:
+                log(f"      - {failure}")
         if not snapshots:
             log("    (no hook snapshots -- symbols missing from sym table)")
             continue
@@ -602,6 +776,9 @@ def _emit_diagnostic_traces(items, log, *, prefix: str) -> None:
     log("  - TPCat_entry/.done       : the AG-08 c-mirror site")
     log("  - Truncate_entry/.done    : if c flips between ALGDS_far_done and Truncate_done,")
     log("                              that's the sec 3.14 c-clobber footprint")
+    log("  - TypeMatchup_done        : post-type-effectiveness boundary inside Stab")
+    log("  - DVariation_*            : final 0.85-1.0 random multiplier path")
+    log("  - AfterHit_*              : Rocky Helmet / Shell Bell / Life Orb side effects")
     log("  - EnemyAtkDmg_done        : final c value just before ConfusionDamageCalc")
     log()
 

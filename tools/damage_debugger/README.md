@@ -16,6 +16,7 @@ broke same-bank callers in `engine/battle/late_gen_held_items.asm` whose
 | `python -m tools.damage_debugger.fuzz --max=1000 --workers=4` | Hypothesis ROM-vs-oracle fuzz. Each worker owns a PyBoy boot cache and a deterministic seed partition. |
 | `python -m tools.damage_debugger.fuzz --self-check-workers=4` | Debugger self-check: runs a fixed corpus single-process and multi-process, then asserts identical ROM/oracle results. |
 | `python -m tools.damage_debugger.find <scenario>` | Bucket-locates ROM-vs-oracle divergence across DamageStats / DamageCalc / Stab / TypeMatchup / TypePassive. |
+| `python -m tools.damage_debugger.find --self-test` | Debugger self-check for the mid-Stab hook boundaries used by type-effectiveness diagnostics. |
 | `python -m tools.damage_debugger.cap_add_probe` | Classifies the DamageCalc nonzero-`wCurDamage` accumulation path against current-asm and intended endian-neutral models. |
 | `python -m tools.damage_debugger.precommit_check --self-test` | Self-test for the Claude `PreToolUse` git-commit gate that runs `clobber_smoke` when damage-chain asm is being committed. |
 | `python -m tools.damage_debugger.full_chain_v2` | Focused single-scenario investigation. Pidgey-Tackle-vs-Cyndaquil chain with per-step damage logging. |
@@ -25,7 +26,7 @@ broke same-bank callers in `engine/battle/late_gen_held_items.asm` whose
 ## Scenario format (clobber_smoke.py)
 
 Each `Scenario` is a `(name, seed_callable, expected_low, expected_high,
-note, [xfail])` record. The runner:
+note, [chain], [post_check], [xfail])` record. The runner:
 
 1. Boots a fresh PyBoy on `pokegold_debug.gbc` (240 frames -- enough to
    pass init/RAM-clear).
@@ -34,10 +35,16 @@ note, [xfail])` record. The runner:
    per-scenario list.
 3. Calls the seed callable: writes WRAM/HRAM to populate the scenario
    (mons, stats, move, item, turn).
-4. Calls `BattleCommand_DamageStats`, `BattleCommand_DamageCalc`,
-   `BattleCommand_Stab` in sequence via `safe_call.call_function_safe`.
+4. Calls the scenario's chain via `safe_call.call_function_safe`. The
+   default chain is `BattleCommand_DamageStats`,
+   `BattleCommand_DamageCalc`, `BattleCommand_Stab`; H4 scenarios also
+   exercise `BattleCommand_DamageVariation` and isolated
+   `HandleLateGenAfterHitEffects_Far` paths.
 5. Reads `wCurDamage` and asserts `expected_low <= damage <=
    expected_high`.
+6. Runs any `post_check` assertions. After-hit scenarios use this to
+   verify HP side effects (Rocky Helmet, Shell Bell, Life Orb), not only
+   that the handler exits.
 
 On FAIL, the captured register snapshots from every hook are dumped to
 the log so the clobber's location is visible without re-tracing. On
@@ -47,8 +54,10 @@ fixed bug), the same diagnostic is emitted but the harness still exits
 
 To add a new scenario: write a `seed_*` function and append a
 `Scenario(...)` to `SCENARIOS`. Pick `expected_low/high` loose enough to
-absorb integer-floor noise but tight enough to catch a 4-10x clobber-
-class spike.
+absorb integer-floor or RNG noise but tight enough to catch a 4-10x
+clobber-class spike. If the feature's correctness is visible outside
+`wCurDamage`, add a `post_check` so the debugger fails when that state is
+wrong.
 
 ## Fuzz multiprocessing
 

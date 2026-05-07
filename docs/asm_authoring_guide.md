@@ -1132,8 +1132,9 @@ Before reporting "asm change done":
    `python -m tools.damage_debugger.oracle`,
    `python -m tools.damage_debugger.fuzz --self-check-workers=2`, and
    representative fuzz in both single-worker and multi-worker modes.
-   Coverage today is partial (no DamageVariation); extend `SCENARIOS`
-   in `clobber_smoke.py` to cover branches your change touched.
+   `clobber_smoke` now covers type-effectiveness, DamageVariation range,
+   and late-gen after-hit HP effects, but you should still extend
+   `SCENARIOS` for any newly touched damage branch or side effect.
 4. Regenerate `docs/generated/dev_index.md` after **any** successful
    build (`python scripts/generate_dev_index.py --rom pokegold`).
 5. If you touched balance tables, regenerate

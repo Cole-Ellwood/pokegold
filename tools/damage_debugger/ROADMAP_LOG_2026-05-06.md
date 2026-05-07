@@ -193,3 +193,52 @@ Bug found in debugger/ROM:
 Open:
 - Do not fix ROM under this roadmap item; gameplay-affecting fix needs
   explicit approval. Run final M1 verification floor and commit.
+
+## H4 -- type-effectiveness, DamageVariation, after-hit scenarios
+
+Active item: H4, deterministic coverage for type rows plus smoke coverage
+for DamageVariation and late-gen after-hit effects.
+
+Changed:
+- Extended `clobber_smoke.Scenario` with optional per-scenario call chains,
+  HP/state post-checks, call budgets, and an explicit allowance for handlers
+  that apply side effects before entering battle text/HUD loops.
+- Added smoke scenarios for FIRE super-effective, resisted, and NORMAL
+  immune type rows.
+- Added a DamageVariation range scenario after the super-effective chain.
+- Added isolated after-hit scenarios for Rocky Helmet, Shell Bell, and Life
+  Orb with HP post-checks.
+- Added oracle self-test cases for the deterministic type rows.
+- Fixed `find.py`'s Stab bucket hook to read at
+  `BattleCommand_Stab.SkipStab` instead of reusing the post-matchup value.
+- Added `python -m tools.damage_debugger.find --self-test`.
+
+Debugger self-check:
+- `clobber_smoke` fails on after-hit HP-state mismatches.
+- `find --self-test` fails if Stab / TypeMatchup / TypePassive bucket
+  boundaries are miswired.
+
+Commands run:
+- `python -m tools.damage_debugger.clobber_smoke` before H4 edits.
+- `python -m tools.damage_debugger.oracle`
+- `python -m compileall -q tools\damage_debugger`
+- `python -m tools.damage_debugger.clobber_smoke`
+- `python -m tools.damage_debugger.find special_super_effective`
+- `python -m tools.damage_debugger.find special_not_very_effective`
+- `python -m tools.damage_debugger.find physical_immune`
+- `python -m tools.damage_debugger.find --list`
+- `python -m tools.damage_debugger.find --json special_super_effective`
+- `python -m tools.damage_debugger.find --self-test`
+- `python -m tools.damage_debugger.fuzz --self-check-workers=2`
+- `python -m tools.damage_debugger.fuzz --max-examples=100 --workers=1`
+- `python -m tools.damage_debugger.fuzz --max-examples=100 --workers=2`
+- `python tools\audit\check_navigation_floor.py`
+- `git diff --check`
+
+Bug found in debugger itself:
+- `find.py` previously reported false Stab divergences for type-effective
+  scenarios because it used the matchup-end hook as both the Stab and
+  TypeMatchup bucket.
+
+Open:
+- Commit H4.

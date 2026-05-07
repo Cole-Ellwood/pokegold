@@ -102,14 +102,15 @@ notes character-by-character.
 
 - No coverage for type-effective branches (super-effective, not-very-
   effective, immune). A clobber on the type-matchup loop in
-  `BattleCommand_Stab` would not be caught by current scenarios. (Pass 2
-  feature #1.)
+  `BattleCommand_Stab` would not be caught by current scenarios. (Closed
+  by H4 on 2026-05-06.)
 - No coverage for `BattleCommand_DamageVariation` (the final 0.85-1.0
   random multiplier). Each scenario currently runs at fixed RNG. A
   clobber that survives integer truncation but corrupts the variation
-  path is invisible. (Pass 2 feature #2.)
+  path is invisible. (Closed by H4 range coverage on 2026-05-06.)
 - No coverage for `HandleLateGenAfterHitEffects_Far` (Rocky Helmet, Life
-  Orb, Shell Bell). Whole second damage chain.
+  Orb, Shell Bell). Whole second damage chain. (Closed by H4 HP
+  side-effect coverage on 2026-05-06.)
 - Range setting is hand-picked, not formula-derived. A future Python
   oracle would let scenarios specify expected damage as exact, not
   range. (Dream feature #4.)
@@ -533,3 +534,67 @@ Verification:
 - `python -m tools.damage_debugger.fuzz --max-examples=100 --workers=1` — PASS.
 - `python -m tools.damage_debugger.fuzz --max-examples=100 --workers=2` — PASS.
 - `python -m tools.damage_debugger.clobber_smoke` — PASS, 11/11 scenarios.
+
+## 2026-05-06 — H4 type-effectiveness, DamageVariation, after-hit scenarios
+
+Roadmap item: H4, type-effectiveness + DamageVariation +
+AfterHitEffects scenarios.
+
+Change:
+- Extended `clobber_smoke.Scenario` with an optional call chain, post-check
+  hook, call budget, and explicit non-return allowance for handlers that
+  tail into battle text/HUD loops after applying their side effects.
+- Added deterministic type-effectiveness smoke scenarios:
+  - `special_super_effective`: FIRE vs GRASS/BUG, ROM/oracle damage 52.
+  - `special_not_very_effective`: FIRE vs WATER/FIRE, ROM/oracle damage 2.
+  - `physical_immune`: NORMAL vs GHOST/GHOST, ROM/oracle damage 0.
+- Added `special_super_effective_variation`, which runs
+  `BattleCommand_DamageVariation` after the normal damage chain and asserts
+  the final damage remains in the 0.85-1.0 range.
+- Added isolated `HandleLateGenAfterHitEffects_Far` smoke scenarios with HP
+  post-checks:
+  - `afterhit_rocky_helmet`: player HP 30 -> 25.
+  - `afterhit_shell_bell`: player HP 10 -> 12.
+  - `afterhit_life_orb`: player HP 30 -> 27.
+- Added exact oracle self-test cases for the deterministic type-effectiveness
+  scenarios.
+- Fixed a `find.py` debugger bug: the Stab bucket was reading the
+  post-matchup value from `BattleCommand_Stab.end`, so type-effectiveness
+  scenarios falsely reported Stab divergence while final damage matched.
+  `find.py` now hooks `BattleCommand_Stab.SkipStab` for the pre-matchup
+  bucket and has `--self-test` coverage for the bucket boundaries.
+
+Debugger self-check:
+- `clobber_smoke` now fails if after-hit HP state is wrong, not only if
+  `wCurDamage` is out of range.
+- `python -m tools.damage_debugger.find --self-test` fails if Stab,
+  TypeMatchup, and TypePassive buckets collapse or point at the wrong label.
+
+Verification:
+- `python -m tools.damage_debugger.clobber_smoke` — PASS before H4, 11/11.
+- `python -m tools.damage_debugger.oracle` — PASS, 14/14 oracle self-tests.
+- `python -m tools.damage_debugger.clobber_smoke` — PASS, 18/18 scenarios.
+- `python -m tools.damage_debugger.find special_super_effective` — PASS,
+  no divergence.
+- `python -m tools.damage_debugger.find special_not_very_effective` — PASS,
+  no divergence.
+- `python -m tools.damage_debugger.find physical_immune` — PASS, no
+  divergence.
+- `python -m tools.damage_debugger.find --self-test` — PASS.
+- `python -m tools.damage_debugger.find --json special_super_effective` —
+  PASS, JSON shape includes all five trace buckets and no divergence.
+- `python -m tools.damage_debugger.fuzz --self-check-workers=2` — PASS.
+- `python -m tools.damage_debugger.fuzz --max-examples=100 --workers=1` —
+  PASS.
+- `python -m tools.damage_debugger.fuzz --max-examples=100 --workers=2` —
+  PASS.
+- `python -m compileall -q tools\damage_debugger` — PASS.
+- `python tools\audit\check_navigation_floor.py` — PASS.
+- `git diff --check` — PASS.
+
+Remaining risk:
+- DamageVariation remains range-checked rather than exactly oracle-modeled
+  because the debugger does not yet seed the battle RNG deterministically
+  across all call sites.
+- After-hit scenarios are isolated state checks, not full move-script
+  integration tests. They cover the handler side effects that H4 targeted.

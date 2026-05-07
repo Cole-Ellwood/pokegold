@@ -269,8 +269,10 @@ phases (DamageCalc base formula, Stab matchup loop, all 9 TypePassive
 branches). The gaps are clearly enumerated above and split into:
 
 - **Documented gaps**: TypeBoostItems, ApplyLateGenDamageMultipliers_Far,
-  HandleLateGenAfterHitEffects_Far, DamageVariation, STRUGGLE,
-  Foresight-substatus, the two HP-d-clobber bug-mirrors.
+  STRUGGLE, Foresight-substatus, the two HP-d-clobber bug-mirrors.
+  H4 on 2026-05-06 added smoke coverage for DamageVariation's ROM range
+  and `HandleLateGenAfterHitEffects_Far` HP side effects, but those remain
+  outside the exact point oracle.
 - **Undocumented gaps surfaced today**: `EFFECT_MULTI_HIT`/`EFFECT_CONVERSION`
   BP=0 bypass. `wCurDamage` non-zero on entry to DamageCalc is now modeled,
   and the cap-add block endian question is confirmed as a ROM bug by M1.
@@ -278,10 +280,11 @@ branches). The gaps are clearly enumerated above and split into:
   `DoBadgeTypeBoosts` were on this list when the audit was written; both
   were closed by H3 on 2026-05-06.
 
-For Pass C (extending fuzz to cover gaps), the highest-leverage axes are
-weather and badges — both fire in real Gen 2 battles, and both are
-~10% damage swings. After those two are wired into the strategy and
-seed, expect new divergences.
+For Pass C (extending fuzz to cover gaps), weather and badges were the
+highest-leverage oracle axes and are now modeled. H4 also added
+deterministic ROM-vs-oracle scenarios for super-effective, resisted, and
+immune type rows, plus smoke-only range/state checks for DamageVariation
+and after-hit effects.
 
 ## Probe scripts kept in this directory (untracked)
 

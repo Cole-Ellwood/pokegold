@@ -17,11 +17,14 @@ truth. Cross-verify any "the formula is X" assumption against
 `engine/battle/effect_commands.asm` before changing this file.
 
 Scope: damage chain only (DamageCalc + Stab + late-gen item-stat
-mods + crit + type matchup). Excluded for now and tracked as TODOs:
-- DamageVariation (final 0.85-1.0 random multiplier) -- predict a
-  range instead of a point until we wire RNG seeding.
+mods + crit + type matchup). Excluded from exact oracle prediction for
+now and tracked as TODOs:
+- DamageVariation (final 0.85-1.0 random multiplier) -- clobber_smoke
+  covers the ROM range, but the oracle still predicts the pre-variation
+  point until we wire deterministic RNG seeding.
 - HandleLateGenAfterHitEffects_Far (Rocky Helmet, Life Orb, Shell
-  Bell) -- second damage chain after the hit lands.
+  Bell) -- clobber_smoke covers the HP side effects, but the oracle still
+  predicts only the main damage chain.
 - TypeBoostItems (e.g. Charcoal +10% FIRE) -- ApplyLateGenDamageMultipliers
   consumes them, but no current scenario exercises one. Add when
   needed by Tier 2.3.
@@ -902,6 +905,33 @@ def _self_test() -> list[tuple[str, int, int]]:
             attacker_atk=11, defender_def=5,
             attacker_types=CYNDAQUIL_TYPES, defender_types=PIDGEY_TYPES,
             kanto_badges=1 << 6,
+        ),
+    ))
+
+    cases.append((
+        "special_super_effective", 52,
+        BattleInputs(
+            attacker_level=5, move_bp=40, move_type=FIRE, is_physical=False,
+            attacker_atk=11, defender_def=5,
+            attacker_types=CYNDAQUIL_TYPES, defender_types=(GRASS, BUG),
+        ),
+    ))
+
+    cases.append((
+        "special_not_very_effective", 2,
+        BattleInputs(
+            attacker_level=5, move_bp=40, move_type=FIRE, is_physical=False,
+            attacker_atk=11, defender_def=5,
+            attacker_types=CYNDAQUIL_TYPES, defender_types=(WATER, FIRE),
+        ),
+    ))
+
+    cases.append((
+        "physical_immune", 0,
+        BattleInputs(
+            attacker_level=2, move_bp=40, move_type=NORMAL, is_physical=True,
+            attacker_atk=6, defender_def=9,
+            attacker_types=PIDGEY_TYPES, defender_types=(GHOST, GHOST),
         ),
     ))
 
