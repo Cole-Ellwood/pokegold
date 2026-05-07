@@ -497,3 +497,36 @@ Bug found in debugger itself:
 
 Open:
 - Run final L4 smoke/navigation/diff checks and commit.
+
+## L5 -- damage delta heatmap
+
+Active item: L5, damage delta heatmap.
+
+Changed:
+- Added `tools/audit/balance_diff.py`.
+- Reused `scripts/generate_balance_audit.py` parsers for source-derived
+  species, move, type, evolution, level-up, and TM data.
+- Compared neutral oracle damage against Choice Band/Specs, Assault Vest,
+  Eviolite, FIRE/WATER weather, and matching badge variants.
+- Added Markdown and JSON output with schema `damage-delta-heatmap.v1`.
+- Generated `audit/damage_debugger/damage_heatmap.md`.
+- Documented the tool in README and BUG_CHECK.
+
+Debugger self-check:
+- `balance_diff --self-test` verifies parser integration, oracle integration,
+  Markdown schema, JSON schema, and a filtered FIRE fixture.
+
+Commands run:
+- `python -m compileall -q tools\audit tools\damage_debugger scripts\generate_balance_audit.py`
+- `python tools\audit\balance_diff.py --self-test`
+- `python tools\audit\balance_diff.py --output audit\damage_debugger\damage_heatmap.md --json-output "$env:TEMP\damage_heatmap.json"`
+- JSON shape check over `$env:TEMP\damage_heatmap.json`
+- `python tools\audit\balance_diff.py --attackers NO_SUCH --output "$env:TEMP\bad_heatmap.md"`
+
+Bug found in debugger itself:
+- The first script version could not import `scripts.generate_balance_audit`
+  when run directly from `tools/audit`. Added repo-root path setup before the
+  parser import.
+
+Open:
+- Run final L5 smoke/navigation/diff checks and commit.

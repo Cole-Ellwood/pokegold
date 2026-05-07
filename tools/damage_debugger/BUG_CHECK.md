@@ -924,3 +924,44 @@ Remaining risk:
   debugger. With PyBoy's public API the minimum practical step is the tick
   window used by the harness (`2` ticks by default). For exact instruction
   watchpoints, D1's GDB-stub pilot would still be the stronger foundation.
+
+## 2026-05-06 — L5 damage delta heatmap
+
+Roadmap item: L5, damage delta heatmap.
+
+Change:
+- Added `tools/audit/balance_diff.py`.
+- Reuses the repo parsers from `scripts/generate_balance_audit.py` for base
+  stats, move data, type categories, evolution data, level-up moves, and TMs.
+- Uses `tools.damage_debugger.oracle.predict_damage` to compare a neutral
+  baseline against supported modifier variants:
+  Choice Band/Specs, Assault Vest, Eviolite when the defender can evolve,
+  FIRE/WATER weather swings, and matching badge boosts.
+- Writes Markdown and optional JSON with schema
+  `damage-delta-heatmap.v1`.
+- Generated `audit/damage_debugger/damage_heatmap.md` with the default capped
+  run.
+
+Debugger self-check:
+- `python tools\audit\balance_diff.py --self-test` runs a filtered
+  Cyndaquil/Pidgey fixture through the real parsers and oracle, then verifies
+  Markdown and JSON output shape.
+
+Verification:
+- `python -m compileall -q tools\audit tools\damage_debugger scripts\generate_balance_audit.py`
+  — PASS.
+- `python tools\audit\balance_diff.py --self-test` — PASS.
+- `python tools\audit\balance_diff.py --output audit\damage_debugger\damage_heatmap.md --json-output "$env:TEMP\damage_heatmap.json"`
+  — PASS; wrote 50,000 base combos and 146,354 variant rows, truncated by the
+  default cap.
+- JSON shape check — PASS: schema `damage-delta-heatmap.v1`, 40 top-delta
+  rows, and 17 type summaries.
+- `python tools\audit\balance_diff.py --attackers NO_SUCH --output "$env:TEMP\bad_heatmap.md"`
+  — fails cleanly before writing a report.
+
+Remaining risk:
+- The heatmap uses a deterministic max-DV/no-stat-exp level proxy, not exact
+  party stat calculation. It is an audit surface for comparing damage deltas,
+  not a battle simulator.
+- The default run is capped at 50,000 base combinations for responsiveness.
+  Use `--full` for exhaustive enumeration.
