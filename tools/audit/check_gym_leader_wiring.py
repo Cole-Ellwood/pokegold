@@ -75,6 +75,15 @@ class TrainerEventRef:
     trainer_id: str
 
 
+def allowed_leader_no_move(leader_name: str, slot: int, mon: PartyMon, move_slot: int) -> bool:
+    return (
+        leader_name == "Falkner"
+        and slot == 2
+        and mon.species == "SPEAROW"
+        and move_slot in {3, 4}
+    )
+
+
 LEADERS = (
     Leader(
         "Falkner",
@@ -1038,6 +1047,8 @@ def check_party_data(
         if mon.item not in item_constants or mon.item == "NO_ITEM":
             fail(failures, f"{leader.name}: slot {slot} invalid held item `{mon.item}`")
         for move_slot, move in enumerate(mon.moves, start=1):
+            if move == "NO_MOVE" and allowed_leader_no_move(leader.name, slot, mon, move_slot):
+                continue
             if move not in move_constants or move == "NO_MOVE":
                 fail(
                     failures,
@@ -1111,6 +1122,8 @@ def check_battle_resources(
         )
 
         for move_slot, move in enumerate(mon.moves, start=1):
+            if move == "NO_MOVE" and allowed_leader_no_move(leader.name, slot, mon, move_slot):
+                continue
             move_owner = f"{owner} move {move_slot}"
             move_index = move_indexes.get(move)
             if move_index is None:

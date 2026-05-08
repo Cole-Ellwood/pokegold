@@ -1,24 +1,214 @@
-# Boss AI RL Training Plan (v2 — RL-ROM)
+# Boss AI Preference Training Plan (RLHF-ish Lab)
 
-> **STATUS: SHELVED 2026-05-05.** Do not start work on the v2 RL training
-> simulator until the user explicitly resumes. See
-> [boss_ai_design_conversation_2026-05-05.md](boss_ai_design_conversation_2026-05-05.md)
-> — the simpler architecture surfaced there (algorithmic moveset priors +
-> unified scoring) likely obviates the need for v2 RL training entirely
-> (playtest tuning likely sufficient). The simulator infrastructure has
-> standalone value for future work (regression testing, AI vs AI tournament
-> mode); could resurrect for that purpose independently of priors-tuning.
-> Active focus has shifted to fully building out the damage debugger
-> (`tools/damage_debugger/`).
+> **STATUS: VERSION A IMPLEMENTED 2026-05-08.** Version A, the
+> preference-labeler MVP, exists under `tools/boss_ai_preference/`. Version B
+> simulator/optimizer work remains optional and should wait until labels exist.
+> This doc is the canonical roadmap for the RLHF-ish idea and supersedes the
+> original v2 RL-ROM-first plan archived below.
 
-**Status — 2026-05-05.** Plan documented. Not yet started — gated on v1 boss AI rebuild (BOSSAI-003) shipping. Decisions locked via interview pass 2026-05-05.
-
-This file is the canonical plan for the v2 RL training simulator. It supersedes the paragraph in `docs/boss_ai_rebuild_plan.md` ("Out-of-scope for v1 — captured for v2"). v1 ships with corpus-only Layer B; once corpus coverage proves insufficient after playtesting, this plan kicks off.
+**Decision locked — 2026-05-08.** Build **Version A, the preference labeler,**
+before any simulator or optimizer. The goal is not to make a black-box boss AI.
+The goal is to let the user teach the project what "smart, fair, scary, cheap,
+too robotic, or stylish" means in concrete public-info battle states. Those
+labels become a durable taste corpus and a regression oracle whether or not a
+later optimizer ever ships.
 
 Related reading:
-- `docs/boss_ai_rebuild_plan.md` — v1 rebuild (Layer A + corpus-driven Layer B online CFR). Read this first.
-- `tools/damage_debugger/` — infrastructure pattern this reuses (PyBoy + boot cache + `safe_call.py`).
-- `audit/boss_ai_trace/*_live.txt` — per-leader live captures, the regression suite for trained agents.
+- `docs/project_roadmap.md` — BOSSAI-004 now tracks this side app.
+- `docs/boss_ai_design_conversation_2026-05-05.md` — explains why the simpler
+  unified-scoring architecture should stay the likely mainline boss-AI rebuild.
+- `docs/boss_ai_rebuild_plan.md` — archived full rebuild plan; useful context,
+  not a prerequisite for the labeler MVP.
+- `tools/damage_debugger/` — infrastructure pattern to reuse when the app needs
+  ROM-backed fixtures, hooks, boot cache, or `safe_call.py`.
+- `audit/boss_ai_trace/*_live.txt` — eventual source of real boss-decision
+  states, after the fixture-backed MVP exists.
+
+## Implementation status
+
+Version A shipped on 2026-05-08:
+
+- `tools/boss_ai_preference/` contains the fixture loader, JSONL label writer,
+  Markdown/JSON report generator, source-derived player threat availability
+  report, CLI, and local stdlib web UI.
+- `tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json` contains
+  20 public-info fixtures across Johto, Kanto, Koga, Champion Lance, and Blue.
+- `tools/audit/check_boss_ai_preference.py` validates fixture count, label
+  persistence, duplicate/conflict reporting, threat availability, voucher/tutor
+  gating, Old Rod/Surf encounter timing, simple gift/static sources,
+  four-revealed-move slot blocking, bad switch-in suppression, and Markdown
+  report coverage.
+- `audit/boss_ai_preference/latest_report.md` and `.json` are generated report
+  artifacts. `threat_availability_report.md` and `.json` are the generated
+  player-threat map. They currently show one user pairwise preference if the
+  local label file is present.
+
+Run it:
+
+```powershell
+python -m tools.boss_ai_preference serve --host 127.0.0.1 --port 8765
+python -m tools.boss_ai_preference threat-report
+```
+
+## Final product shape
+
+This is a fun side app first and a training system second. It should feel like
+playing "AI coach" for the boss brain:
+
+1. The app shows a public-info battle state.
+2. It lists legal boss actions with readable explanations.
+3. The user ranks or tags the actions.
+4. The app saves the label as JSON.
+5. A report shows what the labels imply for scoring weights, personality
+   choices, and regression disagreements.
+
+The important constraint: every saved judgment must be explainable and portable
+back into readable scoring logic or asm tables. If a trained artifact cannot
+explain why it prefers an action, it does not land.
+
+## Version A — preference labeler MVP (ship first)
+
+Version A has no optimizer, no self-play league, and no ROM AI rewrite. It is
+the narrowest useful version:
+
+- Load curated battle-state fixtures from JSON.
+- Show only public information: visible species, HP bands, revealed moves,
+  known items/weather/status, turn count, and public learnability priors.
+- List legal boss actions: moves, switch candidates, and "try item" only when
+  the real boss context allows it.
+- Display the current scorer's explanation if one exists; otherwise display the
+  raw fixture/action fields without inventing confidence.
+- Let the user label actions as `best`, `good`, `bad`, `cheap`, `scary_good`,
+  or `needs_context`.
+- Save every label with fixture id, action id, user tag, optional note, timestamp,
+  and tool version.
+- Produce a Markdown/JSON report: label counts, top disagreements, and candidate
+  weight changes for human review.
+
+MVP done means the user can label 20-50 states in one sitting and the repo gains
+a reviewable corpus. Nothing auto-lands into ROM from Version A.
+
+## Version B — RLHF-ish lab (later)
+
+Version B is the fun experiment layer after labels exist. It can be useful, but
+it should grow out of Version A's corpus instead of replacing it.
+
+- Compare two candidate policies on the same labeled fixture set.
+- Fit small readable scoring weights against labels.
+- Generate fresh scenarios from trace captures or controlled PyBoy state
+  factories.
+- Run AI-vs-AI tournaments for regression and entertainment.
+- Try an optimizer over a fixed, readable policy class.
+- Surface disagreements back to the labeler before any result is trusted.
+
+Still out of scope: deep learning, opaque policy blobs, giant auto-generated asm
+tables, or "the optimizer says so" as a reason to land behavior.
+
+## Why this is not useless
+
+The scarce resource is taste, not compute. Battle simulators can optimize win
+rate; they cannot know when a win feels cheap, when a bluff feels earned, or when
+a boss should preserve its ace because that is the personality of the fight.
+
+The preference corpus remains valuable even if Version B never happens:
+
+- It becomes a regression suite for future boss-AI changes.
+- It turns vague taste into concrete examples.
+- It gives Codex sessions stable evidence instead of asking the user to re-argue
+  the same design calls.
+- It can guide the simple unified-scoring rebuild just as well as a later
+  optimizer.
+
+## Phasing
+
+### Phase 0 — schema and fixture slice
+
+Define the fixture schema and hand-author a tiny set of representative states:
+obvious best move, risky switch, hidden coverage threat, "cheap" punish, and
+leader-personality choice.
+
+Output: schema doc plus 10-20 fixtures.
+
+### Phase 1 — labeler MVP
+
+Build the local side app or CLI-backed web view. It reads fixtures, shows legal
+actions, records labels, and writes the first report.
+
+Output: `tools/boss_ai_preference/`, label JSON, report command.
+
+### Phase 2 — scoring inspector
+
+Connect labels to the current boss AI or the simplified future scorer. The app
+should show where the scorer agrees/disagrees with the user's labels and why.
+
+Output: disagreement report; no auto-edits.
+
+### Phase 3 — readable weight fitting
+
+Fit small weights against the labeled corpus and produce proposed diffs or
+parameter tables for review. The proposal must name the examples it improves and
+the examples it worsens.
+
+Output: candidate weights + tradeoff report.
+
+### Phase 4 — simulator/tournament lab (optional)
+
+Reuse damage-debugger/PyBoy patterns to generate fresh battle states and run
+policy comparisons. This is where the old "RL-ROM" infrastructure becomes useful
+as a lab, not as the first deliverable.
+
+Output: generated fixtures, tournament report, expanded corpus.
+
+### Phase 5 — optimizer/training (optional)
+
+Run an optimizer only over a fixed, readable policy class. Optimizer output must
+round-trip through the labeler and trace regression before landing.
+
+Output: reviewed params, never an opaque trained model.
+
+## Data shape
+
+Suggested label record:
+
+```json
+{
+  "fixture_id": "whitney_miltank_vs_geodude_turn3",
+  "state_version": 1,
+  "action_id": "switch_clefable",
+  "label": "scary_good",
+  "rank": 1,
+  "note": "Preserves Miltank and punishes the obvious Rock switch-in.",
+  "created_at": "2026-05-08T00:00:00Z",
+  "tool_version": "boss-ai-preference-v0"
+}
+```
+
+The fixture schema should keep state separate from labels so the same state can
+be re-labeled, compared across policies, or regenerated from trace tooling.
+
+## Verification floor
+
+For Version A:
+
+1. Fixture schema loads cleanly.
+2. Labeler can write and re-read labels without data loss.
+3. Report command includes every label and flags duplicate/conflicting labels.
+4. Docs navigation check passes.
+
+For later versions:
+
+1. Any policy/weight proposal includes agreement and disagreement examples.
+2. No ROM behavior lands without trace/audit checks from the boss-AI rebuild
+   lane.
+3. Any simulator-generated state records its seed and source so results are
+   reviewable.
+
+## Archived original RL-ROM plan
+
+The sections below are retained as historical design material from 2026-05-05.
+They are no longer the current ordering. Do not start with the headless
+simulator, population, reward, and optimizer unless Version A already exists and
+the user explicitly resumes the lab path.
 
 ---
 

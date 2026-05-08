@@ -2820,6 +2820,7 @@ SteelixEvosAttacks:
 	db 27, RAGE
 	db 30, IRON_HEAD
 	db 35, DRAGON_DANCE
+	db 38, OUTRAGE
 	db 40, IRON_TAIL
 	db 0 ; no more level-up moves
 

@@ -1,15 +1,17 @@
 # Boss AI Rebuild Plan
 
-> **STATUS: SHELVED 2026-05-05.** Do not start work on this rebuild until
-> the user explicitly resumes. See
-> [boss_ai_design_conversation_2026-05-05.md](boss_ai_design_conversation_2026-05-05.md)
-> for the design conversation that surfaced a simpler architecture
-> (algorithmic moveset priors + unified scoring function + no CFR/RL) that
-> should be evaluated before committing to the Layer A + Layer B plan
-> documented below. Active focus has shifted to fully building out the
-> damage debugger (`tools/damage_debugger/`).
+> **STATUS: COMPLETED VIA SIMPLER CURRENT-SOURCE PATH 2026-05-08.** The
+> archived Layer A + Layer B rewrite below was not implemented. Source review
+> found that current `boss.asm` already contains the accepted unified
+> public-info scorer components, so BOSSAI-003 completed by documenting the
+> platform/policy seam, formalizing policy design, adding a fixture-backed
+> decision debugger, and adding a policy-contract audit.
 
-**Status — 2026-05-05.** Diagnosis and plan documented. Not yet started. Next concrete action is Step 1 (platform/policy audit) in a future session.
+**Status — 2026-05-08.** BOSSAI-003 complete. Current artifacts:
+`engine/battle/ai/PLATFORM_API.md`, `engine/battle/ai/POLICY_DESIGN.md`,
+`tools/boss_ai_debugger/`, and `tools/audit/check_boss_ai_policy_contract.py`.
+Future behavior work should be evidence-driven through BOSSAI-004 labels and
+the debugger, not a speculative wholesale rewrite.
 
 This file is the canonical plan for the boss AI rebuild project. It supersedes incremental improvements to `engine/battle/ai/boss.asm` for the policy layer; the platform layer is untouched by the rebuild and continues to evolve under existing workstreams (BOSSAI-001 trace proof, AG-NN audit pass, etc.).
 
@@ -19,6 +21,25 @@ Related reading:
 - `docs/boss_ai_trace_capture.md` — trace pipeline used as the rebuild's regression suite.
 - `audit/boss_ai_trace/*_live.txt` — captured first-decision behavior for every gym leader + Koga + Champion Lance. **These become the regression suite.**
 - `engine/battle/ai/boss.asm` — the file under rebuild. 7144 lines, 160 top-level functions, 482 internal labels.
+- `tools/boss_ai_debugger/` — fixture-backed Phase-1 scoring inspector and judgment recorder.
+- `tools/boss_ai_preference/` — BOSSAI-004 labeler and preference corpus.
+
+## 2026-05-08 completion note
+
+The source did not match the stale premise that no central architecture existed.
+It already had the core pieces of the simpler design:
+
+- public plausible threat masks from visible species, revealed moves, and public
+  learnability
+- plan id/confidence selection
+- top-candidate lookahead
+- stochastic best-vs-second move choice
+- switch prediction, scouting, repeat penalties, and switch-loop penalties
+- plausible-risk switch candidate refinement
+
+That makes the minimal appropriate fix a contract/debugger completion, not a
+large asm replacement. The Layer A/Layer B material below is retained as
+historical design context.
 
 ---
 
@@ -264,7 +285,7 @@ The rebuild does not bump `SAVE_FORMAT_VERSION` (it touches `engine/battle/ai/`,
 
 These are good ideas but explicitly defer past v1 to protect the 4-week budget. Track here so they don't drop off the floor.
 
-- **RL-trained Layer B (the "RL-ROM" idea).** Repurpose damage-debugger's PyBoy + boot-cache infrastructure as a headless battle simulator. Random team generator (respecting gym-leader-tier constraints) + thousands of self-play or vs-human battles + Layer B parameter optimizer (genetic algorithm / random search / Bayesian opt) + outcome scoring (win/loss/HP/turns) + user-override layer for tagging good/bad decisions to shape the fitness function. Estimated 2-3 weeks of work on top of v1. **Decision criterion: ship v1 with corpus-only Layer B; if corpus training feels insufficient after playtesting, scope this in as v2.**
+- **Preference-training side app (BOSSAI-004).** The old RL-ROM simulator-first idea is superseded by `docs/boss_ai_rl_training_plan.md`: build a preference labeler first, then consider simulator/tournament/optimizer work only after labels exist. This remains out of scope for the v1 source rebuild, but it can be resumed independently as side-app tooling because Version A collects corpus/taste data rather than rewriting the ROM policy.
 - **Cross-leader policy transfer.** If Whitney's Layer B corpus has 50 entries and Falkner's has 5, can Falkner's pattern-matcher borrow from Whitney's where features overlap? Risk: leader personalities blur; gain: faster onboarding for under-judged leaders. Defer until v1 reveals whether this matters.
 - **Live-play in-the-loop training.** GUI lets you pause a real battle mid-turn, judge AI's pick, save to corpus. Higher engagement than replay-based judging but also more cumbersome. Tool Phase 4-ish addition; evaluate after Phase 3 GUI lands.
 

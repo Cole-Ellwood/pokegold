@@ -74,9 +74,10 @@ N spawned Python processes. Each process creates its own PyBoy instance
 and boot cache; PyBoy is never shared across processes.
 
 The generated axes include base stats, move type/category, crits, held
-items, TypePassive HP/status flags, weather, SolarBeam's rain modifier,
-matching badge type boosts, and a synthetic nonzero `wCurDamage` entry
-axis for the DamageCalc cap-add path.
+items, TypeBoostItems, late-gen post-quotient item multipliers,
+TypePassive HP/status flags, weather, SolarBeam's rain modifier, matching
+badge type boosts, and a synthetic nonzero `wCurDamage` entry axis for
+the DamageCalc cap-add path.
 
 The default base seed is deterministic. Worker `i` runs with
 `base_seed + i`, so a failing worker report can be reproduced by rerunning
@@ -97,12 +98,14 @@ python -m tools.damage_debugger.fuzz --max-examples=20 --workers=2
 Claude Code's `PreToolUse` hook for Bash commands. The script reads the
 hook JSON from stdin and only acts on `git commit` commands.
 
-If the pending commit touches either damage-chain ABI-sensitive file,
+If the pending commit touches a damage-chain ABI-sensitive file,
 the hook runs `python -m tools.damage_debugger.clobber_smoke` and blocks
 the commit tool call when smoke fails:
 
+- `engine/battle/effect_commands.asm`
 - `engine/battle/late_gen_held_items.asm`
 - `engine/battle/type_passive_damage_mods.asm`
+- `home/farcall.asm`
 
 Run `python -m tools.damage_debugger.precommit_check --self-test` after
 changing this hook. The self-test creates a temporary Git repository and

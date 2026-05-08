@@ -117,6 +117,14 @@ before asserting any matchup; do not work from training-data memory of
 "the Gen 2 type chart". The Foresight-only matchups are the second
 block, after the `db -2` sentinel.
 
+**Boss AI / preference-labeling caution.** Do not turn a general "threat"
+word into a false type claim. Example: Geodude's Magnitude is a real public
+damage threat into Miltank if Miltank locks into low-value Rollout, but Ground
+is **neutral** into Normal, not super-effective. The correct lesson is
+"neutral but meaningful damage while locked into a bad first Rollout hit", not
+"super-effective Ground risk". Always check `data/types/type_matchups.asm`
+before using `super-effective`, `resists`, or `immune` in Boss AI reasoning.
+
 **THIS HACK has 15 deliberate matchup tweaks** committed in
 `daba6006` (`balance: 15 type-chart tweaks for restored uncertainty`).
 The tweaks are not telegraphed in-game. List, with vanilla-Gen-2 →

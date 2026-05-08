@@ -1055,3 +1055,45 @@ Verification:
 - `python -m tools.damage_debugger.clobber_smoke` — PASS, 18/18 scenarios.
 - `python -m tools.damage_debugger.fuzz --max-examples=500 --workers=4` —
   PASS, no divergence.
+
+## 2026-05-07 — DamageCalc item multiplier oracle/fuzz closure
+
+Goal: close the remaining exact-oracle gaps inside `BattleCommand_DamageCalc`
+for the vanilla `TypeBoostItems` loop and the hack's
+`ApplyLateGenDamageMultipliers_Far` post-quotient held-item path.
+
+Change:
+- `oracle.py` now models type-boost items as item-ID-to-move-type rows with
+  the shared `120/100` quotient multiplier.
+- `oracle.py` now models Muscle Band, Wise Glasses, Expert Belt, Metronome,
+  and Life Orb main-chain damage multipliers in the same order as the asm:
+  after type-boost items and before critical hits.
+- `BattleInputs.metronome_count` seeds the user-side Metronome item counter.
+- `fuzz.py` now generates species-agnostic damage-chain held items and keeps
+  Eviolite in the deterministic smoke path because it depends on live
+  evolution data.
+- `clobber_smoke` added deterministic scenarios for Black Belt, Muscle Band,
+  Wise Glasses, Expert Belt, Metronome, and Life Orb main damage.
+
+Verification:
+- `python -m compileall -q tools\damage_debugger` — PASS.
+- `python -m tools.damage_debugger.oracle` — PASS, 21/21 self-tests.
+- `python -m tools.damage_debugger.clobber_smoke` — PASS, 24/24 scenarios.
+- `python -m tools.damage_debugger.fuzz --self-check-workers=2` — PASS,
+  16-case corpus equivalent between single-process and two-worker runs.
+- `python -m tools.damage_debugger.fuzz --max-examples=200 --workers=4` —
+  PASS, no divergence.
+- `python -m tools.damage_debugger.find physical_type_boost_item` — PASS,
+  all buckets matched ROM/oracle at 41.
+- `python -m tools.damage_debugger.find special_expert_belt` — PASS,
+  DamageCalc bucket matched 41 and TypeMatchup/TypePassive matched 82.
+- `python -m tools.damage_debugger.find --self-test` — PASS, now includes
+  five bucket checks plus the DM instrument-hook check.
+- `python tools\audit\check_navigation_floor.py` — PASS.
+- `git diff --check` — PASS.
+
+Remaining risk:
+- DamageVariation remains range-checked rather than exactly oracle-modeled.
+- After-hit effects remain HP side-effect smoke checks rather than part of
+  `oracle.predict_damage`.
+- STRUGGLE and Foresight-substatus are still documented oracle gaps.
