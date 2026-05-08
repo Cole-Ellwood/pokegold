@@ -58,9 +58,32 @@ from .oracle import (
     GRASS,
     GROUND,
     HELD_ASSAULT_VEST,
+    HELD_BLACKBELT_I,
+    HELD_BLACKGLASSES,
+    HELD_DRAGON_FANG,
+    HELD_DRAGON_SCALE,
+    HELD_CHARCOAL,
     HELD_CHOICE_BAND,
     HELD_CHOICE_SPECS,
+    HELD_EXPERT_BELT,
+    HELD_HARD_STONE,
+    HELD_LIFE_ORB,
+    HELD_MAGNET,
+    HELD_METRONOME,
+    HELD_METAL_COAT,
+    HELD_MIRACLE_SEED,
+    HELD_MUSCLE_BAND,
+    HELD_NEVERMELTICE,
     HELD_NONE,
+    HELD_PINK_BOW,
+    HELD_POISON_BARB,
+    HELD_SHARP_BEAK,
+    HELD_SILVERPOWDER,
+    HELD_SOFT_SAND,
+    HELD_SPELL_TAG,
+    HELD_MYSTIC_WATER,
+    HELD_TWISTEDSPOON,
+    HELD_WISE_GLASSES,
     ICE,
     NORMAL,
     PHYSICAL_MAX,
@@ -93,6 +116,26 @@ BADGE_TYPE_ORDER = (
     ROCK, WATER, ELECTRIC, GRASS, POISON, PSYCHIC_TYPE, FIRE, GROUND,
 )
 
+TYPE_BOOST_ITEM_FOR_TYPE = {
+    NORMAL: HELD_PINK_BOW,
+    FIGHTING: HELD_BLACKBELT_I,
+    FLYING: HELD_SHARP_BEAK,
+    POISON: HELD_POISON_BARB,
+    GROUND: HELD_SOFT_SAND,
+    ROCK: HELD_HARD_STONE,
+    BUG: HELD_SILVERPOWDER,
+    GHOST: HELD_SPELL_TAG,
+    STEEL: HELD_METAL_COAT,
+    FIRE: HELD_CHARCOAL,
+    WATER: HELD_MYSTIC_WATER,
+    GRASS: HELD_MIRACLE_SEED,
+    ELECTRIC: HELD_MAGNET,
+    PSYCHIC_TYPE: HELD_TWISTEDSPOON,
+    ICE: HELD_NEVERMELTICE,
+    DRAGON: HELD_DRAGON_FANG,
+    DARK: HELD_BLACKGLASSES,
+}
+
 
 def _badge_bits_for_type(move_type: int) -> tuple[int, int]:
     for index, badge_type in enumerate(BADGE_TYPE_ORDER):
@@ -118,14 +161,30 @@ def battle_inputs_strategy(draw) -> BattleInputs:
     defender_t1 = draw(st.sampled_from(ALL_TYPES))
     defender_t2 = draw(st.sampled_from(ALL_TYPES))
 
-    # Items: only Choice Band/Specs and Assault Vest are species-agnostic.
-    # Eviolite needs a curated species list (.SpeciesCanEvolve check) --
-    # the hand-coded scenarios cover that axis at fixed stats; deferred for
-    # the fuzz harness until we generate (species, can_evolve) pairs.
+    # Eviolite needs a curated species list (.SpeciesCanEvolve check), so
+    # it stays in clobber_smoke. The other damage-chain items are
+    # species-agnostic and can be fuzzed directly.
+    type_boost_item = TYPE_BOOST_ITEM_FOR_TYPE[move_type]
     if is_physical:
-        user_item = draw(st.sampled_from([HELD_NONE, HELD_CHOICE_BAND]))
+        user_item = draw(st.sampled_from([
+            HELD_NONE,
+            HELD_CHOICE_BAND,
+            HELD_MUSCLE_BAND,
+            HELD_EXPERT_BELT,
+            HELD_LIFE_ORB,
+            HELD_METRONOME,
+            type_boost_item,
+        ]))
     else:
-        user_item = draw(st.sampled_from([HELD_NONE, HELD_CHOICE_SPECS]))
+        user_item = draw(st.sampled_from([
+            HELD_NONE,
+            HELD_CHOICE_SPECS,
+            HELD_WISE_GLASSES,
+            HELD_EXPERT_BELT,
+            HELD_LIFE_ORB,
+            HELD_METRONOME,
+            type_boost_item,
+        ]))
     opponent_item = (
         draw(st.sampled_from([HELD_NONE, HELD_ASSAULT_VEST])) if not is_physical
         else HELD_NONE
@@ -167,6 +226,7 @@ def battle_inputs_strategy(draw) -> BattleInputs:
         johto_badges=johto_badges,
         kanto_badges=kanto_badges,
         initial_cur_damage=draw(st.sampled_from([0, 0, 0, 0x00FF, 0x0100])),
+        metronome_count=draw(st.integers(min_value=0, max_value=8)),
     )
 
 
@@ -186,6 +246,7 @@ def _seed_inputs(pyboy, syms, inp: BattleInputs) -> None:
         "wEffectFailed", "wEnemyScreens", "wPlayerScreens", "wBattleMonStatus",
         "wEnemyMonStatus", "wBattleWeather", "wJohtoBadges", "wKantoBadges",
         "wCurEnemyMove", "wCurPlayerMove", "wLinkMode",
+        "wPlayerMetronomeCount", "wEnemyMetronomeCount",
     ):
         write_byte(pyboy, byte_field, syms, 0)
     write_byte(pyboy, "wBattleWeather", syms, inp.weather)
@@ -279,6 +340,8 @@ def _seed_inputs(pyboy, syms, inp: BattleInputs) -> None:
         write_byte_banked(pyboy, pm[1] + offset, val, pm[0])
     write_byte(pyboy, "wCurPlayerMove", syms, move_id)
     write_byte(pyboy, "hBattleTurn", syms, inp.battle_turn)
+    metronome_label = "wPlayerMetronomeCount" if inp.battle_turn == 0 else "wEnemyMetronomeCount"
+    write_byte(pyboy, metronome_label, syms, inp.metronome_count)
     if inp.is_critical:
         write_byte(pyboy, "wCriticalHit", syms, 1)
 
@@ -493,6 +556,36 @@ def _reference_corpus() -> list[BattleInputs]:
             attacker_atk=320, defender_def=280,
             attacker_types=(ROCK, GROUND), defender_types=(FIRE, BUG),
             user_item=HELD_CHOICE_BAND, is_critical=True,
+        ),
+        BattleInputs(
+            attacker_level=50, move_bp=60, move_type=FIGHTING, is_physical=True,
+            attacker_atk=90, defender_def=70,
+            attacker_types=(WATER, WATER), defender_types=(FIRE, WATER),
+            user_item=HELD_BLACKBELT_I,
+        ),
+        BattleInputs(
+            attacker_level=50, move_bp=60, move_type=FIRE, is_physical=False,
+            attacker_atk=90, defender_def=70,
+            attacker_types=(WATER, WATER), defender_types=(NORMAL, FLYING),
+            user_item=HELD_WISE_GLASSES,
+        ),
+        BattleInputs(
+            attacker_level=50, move_bp=60, move_type=FIRE, is_physical=False,
+            attacker_atk=90, defender_def=70,
+            attacker_types=(WATER, WATER), defender_types=(GRASS, NORMAL),
+            user_item=HELD_EXPERT_BELT,
+        ),
+        BattleInputs(
+            attacker_level=50, move_bp=60, move_type=FIRE, is_physical=False,
+            attacker_atk=90, defender_def=70,
+            attacker_types=(WATER, WATER), defender_types=(NORMAL, FLYING),
+            user_item=HELD_METRONOME, metronome_count=3,
+        ),
+        BattleInputs(
+            attacker_level=50, move_bp=60, move_type=FIRE, is_physical=False,
+            attacker_atk=90, defender_def=70,
+            attacker_types=(WATER, WATER), defender_types=(NORMAL, FLYING),
+            user_item=HELD_LIFE_ORB,
         ),
         BattleInputs(
             attacker_level=2, move_bp=20, move_type=FIGHTING, is_physical=True,

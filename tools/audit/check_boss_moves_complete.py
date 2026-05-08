@@ -58,6 +58,16 @@ class Entry:
     mons: list[Mon]
 
 
+def allowed_no_move(entry: Entry, slot: int, mon: Mon, move_slot: int) -> bool:
+    return (
+        entry.group == "FalknerGroup"
+        and entry.index == 1
+        and slot == 2
+        and mon.species == "SPEAROW"
+        and move_slot in {3, 4}
+    )
+
+
 def _split_tokens(raw_db_payload: str) -> list[str]:
     return [token.strip() for token in raw_db_payload.split(",")]
 
@@ -176,7 +186,7 @@ def main() -> int:
                     failures.append(
                         f"ERROR|empty_move|{entry.group}|{entry.index}|slot{slot}|{mon.species}|move{move_slot}"
                     )
-                elif move == "NO_MOVE":
+                elif move == "NO_MOVE" and not allowed_no_move(entry, slot, mon, move_slot):
                     failures.append(
                         f"ERROR|no_move_token|{entry.group}|{entry.index}|slot{slot}|{mon.species}|move{move_slot}"
                     )

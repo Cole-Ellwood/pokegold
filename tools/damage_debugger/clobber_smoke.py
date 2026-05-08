@@ -25,13 +25,11 @@ Coverage today:
     special_choice_specs       — Choice Specs on attacker → spatk * 3/2.
     special_assault_vest       — Assault Vest on defender → spdef * 3/2.
     special_eviolite_spd       — Eviolite on defender → spdef * 3/2.
+    item damage multipliers    — TypeBoostItems, Muscle Band, Wise Glasses,
+                                 Expert Belt, Metronome, Life Orb.
     type-effectiveness         — super-effective, resisted, immune rows.
     damage variation           — final 0.85-1.0 random multiplier range.
     late-gen after-hit effects — Rocky Helmet, Shell Bell, Life Orb HP effects.
-
-Uncovered (any could ship a clobber undetected — extend SCENARIOS):
-    ApplyLateGenDamageMultipliers_Far (Muscle Band, Wise Glasses, Expert
-    Belt, Metronome, Life Orb post-quotient mods).
 """
 
 from __future__ import annotations
@@ -61,11 +59,17 @@ CHOICE_SPECS_ID = 0x81
 ASSAULT_VEST_ID = 0x89
 EVOLITE_ID = 0x93
 LIFE_ORB_ID = 0x46
+BLACKBELT_ID = 0x62
+EXPERT_BELT_ID = 0x8D
+MUSCLE_BAND_ID = 0x8E
+WISE_GLASSES_ID = 0x91
 SHELL_BELL_ID = 0x95
 ROCKY_HELMET_ID = 0x99
+METRONOME_ITEM_ID = 0x9A
 
 NORMAL_TYPE = 0x00
 BUG_TYPE = 0x07
+FIGHTING_TYPE = 0x01
 GHOST_TYPE = 0x08
 FIRE_TYPE = 0x14
 WATER_TYPE = 0x15
@@ -189,6 +193,7 @@ def _zero_meta(pyboy, syms):
         "wEffectFailed", "wEnemyScreens", "wPlayerScreens", "wBattleMonStatus",
         "wEnemyMonStatus", "wBattleWeather", "wJohtoBadges", "wKantoBadges",
         "wCurEnemyMove", "wCurPlayerMove", "wLinkMode",
+        "wPlayerMetronomeCount", "wEnemyMetronomeCount",
         "wPlayerSubStatus1", "wPlayerSubStatus2", "wPlayerSubStatus3",
         "wPlayerSubStatus4", "wPlayerSubStatus5",
         "wEnemySubStatus1", "wEnemySubStatus2", "wEnemySubStatus3",
@@ -332,6 +337,94 @@ def seed_special_fire_badge(pyboy, syms):
     write_byte(pyboy, "wKantoBadges", syms, VOLCANOBADGE_MASK)
 
 
+def _seed_player_item_multiplier_case(
+    pyboy,
+    syms,
+    *,
+    item_id: int,
+    move_type: int,
+    is_physical: bool,
+    defender_type1: int = NORMAL_TYPE,
+    defender_type2: int = NORMAL_TYPE,
+    metronome_count: int = 0,
+):
+    """Player-side level-50 neutral seed for DamageCalc item multipliers."""
+    _seed_cyndaquil_lvl5(pyboy, syms, slot="Battle")
+    _seed_pidgey_lvl2(pyboy, syms, slot="Enemy")
+    _zero_meta(pyboy, syms)
+
+    write_byte(pyboy, "wBattleMonLevel", syms, 50)
+    write_byte(pyboy, "wBattleMonType1", syms, WATER_TYPE)
+    write_byte(pyboy, "wBattleMonType2", syms, WATER_TYPE)
+    write_byte(pyboy, "wBattleMonItem", syms, item_id)
+    write_byte(pyboy, "wEnemyMonType1", syms, defender_type1)
+    write_byte(pyboy, "wEnemyMonType2", syms, defender_type2)
+    write_byte(pyboy, "wPlayerMetronomeCount", syms, metronome_count)
+
+    if is_physical:
+        write_be_u16(pyboy, "wBattleMonAttack", syms, 90)
+        write_be_u16(pyboy, "wPlayerAttack", syms, 90)
+        write_be_u16(pyboy, "wEnemyMonDefense", syms, 70)
+        write_be_u16(pyboy, "wEnemyDefense", syms, 70)
+    else:
+        write_be_u16(pyboy, "wBattleMonSpclAtk", syms, 90)
+        write_be_u16(pyboy, "wPlayerSpAtk", syms, 90)
+        write_be_u16(pyboy, "wEnemyMonSpclDef", syms, 70)
+        write_be_u16(pyboy, "wEnemySpDef", syms, 70)
+
+    pm = syms["wPlayerMoveStruct"]
+    for offset, val in [(0, 0x21), (1, 0x00), (2, 60), (3, move_type), (4, 0xFF), (5, 25), (6, 0)]:
+        write_byte_banked(pyboy, pm[1] + offset, val, pm[0])
+    write_byte(pyboy, "wCurPlayerMove", syms, 0x21)
+    write_byte(pyboy, "hBattleTurn", syms, 0)
+
+
+def seed_physical_type_boost_item(pyboy, syms):
+    """Black Belt on a neutral FIGHTING move -> quotient * 120/100."""
+    _seed_player_item_multiplier_case(
+        pyboy, syms, item_id=BLACKBELT_ID, move_type=FIGHTING_TYPE,
+        is_physical=True, defender_type1=FIRE_TYPE, defender_type2=WATER_TYPE,
+    )
+
+
+def seed_physical_muscle_band(pyboy, syms):
+    """Muscle Band on a neutral physical move -> quotient * 11/10."""
+    _seed_player_item_multiplier_case(
+        pyboy, syms, item_id=MUSCLE_BAND_ID, move_type=FIGHTING_TYPE,
+        is_physical=True, defender_type1=FIRE_TYPE, defender_type2=WATER_TYPE,
+    )
+
+
+def seed_special_wise_glasses(pyboy, syms):
+    """Wise Glasses on a neutral special move -> quotient * 11/10."""
+    _seed_player_item_multiplier_case(
+        pyboy, syms, item_id=WISE_GLASSES_ID, move_type=FIRE_TYPE, is_physical=False,
+    )
+
+
+def seed_special_expert_belt(pyboy, syms):
+    """Expert Belt on a super-effective special move -> quotient * 6/5."""
+    _seed_player_item_multiplier_case(
+        pyboy, syms, item_id=EXPERT_BELT_ID, move_type=FIRE_TYPE,
+        is_physical=False, defender_type1=GRASS_TYPE, defender_type2=NORMAL_TYPE,
+    )
+
+
+def seed_special_metronome_item(pyboy, syms):
+    """Metronome item count 3 -> quotient * 16/10."""
+    _seed_player_item_multiplier_case(
+        pyboy, syms, item_id=METRONOME_ITEM_ID, move_type=FIRE_TYPE,
+        is_physical=False, metronome_count=3,
+    )
+
+
+def seed_special_life_orb_damage(pyboy, syms):
+    """Life Orb on the main damage chain -> quotient * 13/10."""
+    _seed_player_item_multiplier_case(
+        pyboy, syms, item_id=LIFE_ORB_ID, move_type=FIRE_TYPE, is_physical=False,
+    )
+
+
 def seed_special_super_effective(pyboy, syms):
     """Cyndaquil Ember vs a GRASS/BUG defender -> two FIRE super-effective rows."""
     _seed_cyndaquil_attacks_pidgey_with_ember(pyboy, syms)
@@ -448,6 +541,30 @@ SCENARIOS = [
     Scenario(
         "special_fire_badge", seed_special_fire_badge, 13, 17,
         "VolcanoBadge adds damage/8 before STAB on player FIRE move.",
+    ),
+    Scenario(
+        "physical_type_boost_item", seed_physical_type_boost_item, 40, 42,
+        "Black Belt boosts matching FIGHTING damage quotient by 120/100.",
+    ),
+    Scenario(
+        "physical_muscle_band", seed_physical_muscle_band, 37, 39,
+        "Muscle Band boosts physical damage quotient by 11/10.",
+    ),
+    Scenario(
+        "special_wise_glasses", seed_special_wise_glasses, 37, 39,
+        "Wise Glasses boosts special damage quotient by 11/10.",
+    ),
+    Scenario(
+        "special_expert_belt", seed_special_expert_belt, 81, 83,
+        "Expert Belt boosts super-effective damage quotient by 6/5 before matchup.",
+    ),
+    Scenario(
+        "special_metronome_item", seed_special_metronome_item, 53, 55,
+        "Metronome item count 3 boosts damage quotient by 16/10.",
+    ),
+    Scenario(
+        "special_life_orb_damage", seed_special_life_orb_damage, 43, 45,
+        "Life Orb boosts main damage quotient by 13/10.",
     ),
     Scenario(
         "special_super_effective", seed_special_super_effective, 50, 54,

@@ -621,3 +621,47 @@ Bug found in debugger itself:
 
 Open:
 - No review-fix item remains open after the final diff/navigation checks pass.
+
+## 2026-05-07 -- DamageCalc item multiplier oracle/fuzz closure
+
+Active item: close remaining exact-oracle gaps in DamageCalc item multipliers.
+
+Changed:
+- Modeled `TypeBoostItems` in `oracle.py` with item-ID rows and the 120/100
+  quotient multiplier.
+- Modeled `ApplyLateGenDamageMultipliers_Far` in `oracle.py`: Muscle Band,
+  Wise Glasses, Expert Belt, Metronome, and Life Orb main damage.
+- Added `BattleInputs.metronome_count` and seeded wPlayer/wEnemy Metronome
+  counters in fuzz.
+- Extended fuzz item generation to species-agnostic damage-chain items while
+  leaving Eviolite in deterministic smoke coverage.
+- Added six `clobber_smoke` scenarios covering Black Belt, Muscle Band, Wise
+  Glasses, Expert Belt, Metronome, and Life Orb main damage.
+- Registered the new normal-chain smoke scenarios in `find.py` so bucketed
+  ROM-vs-oracle diagnostics work on the new item paths.
+- Updated README, BUG_CHECK, and ORACLE_AUDIT docs to remove the stale gap.
+
+Debugger self-check:
+- Oracle self-test now fails if the item-multiplier expected values drift.
+- `clobber_smoke` now exercises the post-quotient item paths that were
+  previously listed as uncovered.
+- Fuzz worker self-check corpus includes item multiplier cases and proves
+  single-worker vs multi-worker agreement.
+
+Commands run:
+- `python -m compileall -q tools\damage_debugger`
+- `python -m tools.damage_debugger.oracle`
+- `python -m tools.damage_debugger.clobber_smoke`
+- `python -m tools.damage_debugger.fuzz --self-check-workers=2`
+- `python -m tools.damage_debugger.fuzz --max-examples=200 --workers=4`
+- `python -m tools.damage_debugger.find physical_type_boost_item`
+- `python -m tools.damage_debugger.find special_expert_belt`
+- `python -m tools.damage_debugger.find --self-test`
+
+Bug found in debugger itself:
+- No ROM bug surfaced. The debugger gap was incomplete oracle/fuzz coverage
+  for already-shipped item multiplier behavior.
+
+Open:
+- No item-multiplier-specific open issue remains after final navigation and
+  diff checks passed.

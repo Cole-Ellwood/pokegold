@@ -499,7 +499,7 @@ def _scenario_to_inputs(sc: Scenario) -> BattleInputs:
     """Map a clobber_smoke Scenario to BattleInputs for the oracle.
 
     The hand-coded Scenario.seed callables don't carry their oracle-level
-    inputs as data -- they're imperative WRAM writes. For the eight
+    inputs as data -- they're imperative WRAM writes. For registered
     pre-canned scenarios we copy from the known table; future scenarios
     that want to use `find` directly should attach a `.inputs` field.
     """
@@ -580,6 +580,49 @@ def _scenario_to_inputs(sc: Scenario) -> BattleInputs:
             defender_types=(_oracle.NORMAL, _oracle.FLYING),
             kanto_badges=1 << 6,
         ),
+        "physical_type_boost_item": BattleInputs(
+            attacker_level=50, move_bp=60, move_type=_oracle.FIGHTING, is_physical=True,
+            attacker_atk=90, defender_def=70,
+            attacker_types=(_oracle.WATER, _oracle.WATER),
+            defender_types=(_oracle.FIRE, _oracle.WATER),
+            user_item=_oracle.HELD_BLACKBELT_I,
+        ),
+        "physical_muscle_band": BattleInputs(
+            attacker_level=50, move_bp=60, move_type=_oracle.FIGHTING, is_physical=True,
+            attacker_atk=90, defender_def=70,
+            attacker_types=(_oracle.WATER, _oracle.WATER),
+            defender_types=(_oracle.FIRE, _oracle.WATER),
+            user_item=_oracle.HELD_MUSCLE_BAND,
+        ),
+        "special_wise_glasses": BattleInputs(
+            attacker_level=50, move_bp=60, move_type=_oracle.FIRE, is_physical=False,
+            attacker_atk=90, defender_def=70,
+            attacker_types=(_oracle.WATER, _oracle.WATER),
+            defender_types=(_oracle.NORMAL, _oracle.NORMAL),
+            user_item=_oracle.HELD_WISE_GLASSES,
+        ),
+        "special_expert_belt": BattleInputs(
+            attacker_level=50, move_bp=60, move_type=_oracle.FIRE, is_physical=False,
+            attacker_atk=90, defender_def=70,
+            attacker_types=(_oracle.WATER, _oracle.WATER),
+            defender_types=(_oracle.GRASS, _oracle.NORMAL),
+            user_item=_oracle.HELD_EXPERT_BELT,
+        ),
+        "special_metronome_item": BattleInputs(
+            attacker_level=50, move_bp=60, move_type=_oracle.FIRE, is_physical=False,
+            attacker_atk=90, defender_def=70,
+            attacker_types=(_oracle.WATER, _oracle.WATER),
+            defender_types=(_oracle.NORMAL, _oracle.NORMAL),
+            user_item=_oracle.HELD_METRONOME,
+            metronome_count=3,
+        ),
+        "special_life_orb_damage": BattleInputs(
+            attacker_level=50, move_bp=60, move_type=_oracle.FIRE, is_physical=False,
+            attacker_atk=90, defender_def=70,
+            attacker_types=(_oracle.WATER, _oracle.WATER),
+            defender_types=(_oracle.NORMAL, _oracle.NORMAL),
+            user_item=_oracle.HELD_LIFE_ORB,
+        ),
         "special_super_effective": BattleInputs(
             attacker_level=5, move_bp=40, move_type=_oracle.FIRE, is_physical=False,
             attacker_atk=11, defender_def=5,
@@ -616,6 +659,8 @@ def _self_test() -> int:
     collapsed and the diagnostic points at the wrong asm site.
     """
     expected_steps = {
+        "physical_type_boost_item": {"Stab": 41, "TypeMatchup": 41, "TypePassive": 41},
+        "special_expert_belt": {"Stab": 41, "TypeMatchup": 82, "TypePassive": 82},
         "special_super_effective": {"Stab": 13, "TypeMatchup": 52, "TypePassive": 52},
         "special_not_very_effective": {"Stab": 13, "TypeMatchup": 3, "TypePassive": 2},
         "physical_immune": {"Stab": 4, "TypeMatchup": 0, "TypePassive": 0},

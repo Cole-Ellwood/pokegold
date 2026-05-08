@@ -1,0 +1,524 @@
+{
+  "schema_version": 1,
+  "fixtures": [
+    {
+      "id": "falkner_pidgeotto_vs_geodude_rock_risk",
+      "leader": "Falkner",
+      "turn": 3,
+      "tags": ["early_gym", "hidden_coverage", "ace_preservation"],
+      "training_focus": "Do not treat a visible type advantage as complete safety when a common early Rock threat is public-plausible.",
+      "baseline_action_id": "move_gust",
+      "state": {
+        "boss": {
+          "active": {"species": "Pidgeotto", "level": 12, "hp": "72%", "status": "none", "item": "Sharp Beak", "revealed_moves": ["Tackle", "Gust"], "role": "lead pressure"},
+          "bench": ["Spearow", "Noctowl"]
+        },
+        "player": {
+          "active": {"species": "Geodude", "level": 12, "hp": "86%", "status": "none", "revealed_moves": ["Tackle", "Defense Curl"], "public_priors": ["Rock Throw plausible", "Magnitude plausible"]},
+          "seen_party": ["Geodude", "Chikorita"]
+        },
+        "field": {"weather": "none", "screens": "none"},
+        "public_notes": ["Geodude walls Flying damage but may threaten Rock damage.", "Falkner should still feel like an early leader, not a mind reader."]
+      },
+      "actions": [
+        {"id": "move_gust", "kind": "move", "name": "Gust", "explanation": "Safe visible STAB into Geodude's resistance; likely low damage.", "public_tradeoff": "Looks normal, but ignores the public Rock-risk prior."},
+        {"id": "move_sand_attack", "kind": "move", "name": "Sand Attack", "explanation": "Reduces future Rock-risk without pretending to know the player's exact move.", "public_tradeoff": "Annoying but fair if used sparingly."},
+        {"id": "switch_noctowl", "kind": "switch", "name": "Switch to Noctowl", "explanation": "Preserves Pidgeotto but does not solve Rock weakness cleanly.", "public_tradeoff": "May be too passive for Falkner."}
+      ]
+    },
+    {
+      "id": "bugsy_scyther_vs_quilava_fire_pressure",
+      "leader": "Bugsy",
+      "turn": 2,
+      "tags": ["setup", "tempo", "super_effective_pressure"],
+      "training_focus": "Teach when a boss should stop setting up because a publicly revealed threat already has tempo.",
+      "baseline_action_id": "move_swords_dance",
+      "state": {
+        "boss": {
+          "active": {"species": "Scyther", "level": 17, "hp": "81%", "status": "none", "item": "Silverpowder", "revealed_moves": ["Quick Attack", "Wing Attack"], "role": "ace"},
+          "bench": ["Ariados", "Ledian"]
+        },
+        "player": {
+          "active": {"species": "Quilava", "level": 17, "hp": "69%", "status": "none", "revealed_moves": ["Ember", "Quick Attack"], "public_priors": ["Fire STAB likely remains available"]},
+          "seen_party": ["Quilava", "Geodude"]
+        },
+        "field": {"weather": "none", "screens": "none"},
+        "public_notes": ["Fire pressure is revealed, so Swords Dance has real risk.", "Bugsy should still look bold, not suicidal."]
+      },
+      "actions": [
+        {"id": "move_wing_attack", "kind": "move", "name": "Wing Attack", "explanation": "Cash damage before Quilava can punish Scyther.", "public_tradeoff": "Straightforward tempo play."},
+        {"id": "move_quick_attack", "kind": "move", "name": "Quick Attack", "explanation": "Priority chip if Scyther is trying to avoid a low-HP race.", "public_tradeoff": "Weak if Quilava is not in range."},
+        {"id": "move_swords_dance", "kind": "move", "name": "Swords Dance", "explanation": "Potentially scary if Quilava cannot punish, but Fire pressure is visible.", "public_tradeoff": "May feel like a throw if Ember is obvious."},
+        {"id": "switch_ledian", "kind": "switch", "name": "Switch to Ledian", "explanation": "Preserves Scyther but switches into the same Fire pressure.", "public_tradeoff": "Probably too defensive and not useful."}
+      ]
+    },
+    {
+      "id": "whitney_miltank_vs_geodude_rollout_temptation",
+      "leader": "Whitney",
+      "turn": 5,
+      "tags": ["ace_preservation", "cheapness", "setup_lock"],
+      "training_focus": "Separate iconic pressure from bad Rollout locking when Rock/Ground danger is public.",
+      "baseline_action_id": "move_rollout",
+      "state": {
+        "boss": {
+          "active": {"species": "Miltank", "level": 21, "hp": "92%", "status": "none", "item": "Mint Berry", "revealed_moves": ["Body Slam", "Milk Drink", "Rollout"], "role": "ace"},
+          "bench": ["Clefairy", "Girafarig"]
+        },
+        "player": {
+          "active": {"species": "Geodude", "level": 20, "hp": "78%", "status": "none", "revealed_moves": ["Rock Throw", "Defense Curl"], "public_priors": ["Magnitude plausible"]},
+          "seen_party": ["Geodude", "Bayleef"]
+        },
+        "field": {"weather": "none", "screens": "none"},
+        "public_notes": ["Rollout is Whitney-flavored but locks the ace.", "Body Slam paralysis pressure is visible and explainable."]
+      },
+      "actions": [
+        {"id": "move_body_slam", "kind": "move", "name": "Body Slam", "explanation": "Keeps pressure without locking Miltank into a bad sequence.", "public_tradeoff": "Less iconic but safer."},
+        {"id": "move_rollout", "kind": "move", "name": "Rollout", "explanation": "Iconic snowball line, but Rock resistance and Magnitude risk are public.", "public_tradeoff": "May be exciting or too robotic depending on taste."},
+        {"id": "move_milk_drink", "kind": "move", "name": "Milk Drink", "explanation": "Preserves the ace while scouting whether Geodude has real damage.", "public_tradeoff": "Can feel cheap if spammed at high HP."},
+        {"id": "switch_girafarig", "kind": "switch", "name": "Switch to Girafarig", "explanation": "Avoids Ground risk, but gives up Miltank's pressure.", "public_tradeoff": "A rare switch may feel smart; repeated switches may not."}
+      ]
+    },
+    {
+      "id": "whitney_clefairy_vs_bayleef_encore_window",
+      "leader": "Whitney",
+      "turn": 1,
+      "tags": ["status", "setup_denial", "early_gym"],
+      "training_focus": "Capture whether early utility moves should punish setup attempts or just take simple damage.",
+      "baseline_action_id": "move_double_team",
+      "state": {
+        "boss": {
+          "active": {"species": "Clefairy", "level": 19, "hp": "100%", "status": "none", "item": "Evolite", "revealed_moves": [], "role": "utility lead"},
+          "bench": ["Girafarig", "Miltank"]
+        },
+        "player": {
+          "active": {"species": "Bayleef", "level": 20, "hp": "100%", "status": "none", "revealed_moves": ["Reflect"], "public_priors": ["Razor Leaf likely", "Synthesis plausible"]},
+          "seen_party": ["Bayleef"]
+        },
+        "field": {"weather": "none", "screens": "player Reflect available but not active"},
+        "public_notes": ["Encore can punish a support turn without hidden info.", "Double Team can feel cheap if it is the default opener."]
+      },
+      "actions": [
+        {"id": "move_encore", "kind": "move", "name": "Encore", "explanation": "Targets a likely support pattern if Bayleef reveals it.", "public_tradeoff": "Smart when timed; bad if blind-spammed."},
+        {"id": "move_thunder_wave", "kind": "move", "name": "Thunder Wave", "explanation": "Reliable speed control into a bulky starter.", "public_tradeoff": "Strong, readable early utility."},
+        {"id": "move_double_team", "kind": "move", "name": "Double Team", "explanation": "Raises evasion before the player has shown a punish.", "public_tradeoff": "High risk of feeling cheap."},
+        {"id": "move_doubleslap", "kind": "move", "name": "DoubleSlap", "explanation": "Simple chip that preserves the tutorial-like tone.", "public_tradeoff": "May be too weak to feel prepared."}
+      ]
+    },
+    {
+      "id": "morty_gengar_vs_kadabra_destiny_bond",
+      "leader": "Morty",
+      "turn": 4,
+      "tags": ["sacrifice", "status", "ace_preservation"],
+      "training_focus": "Decide when Destiny Bond is scary-good versus cheap or wasteful.",
+      "baseline_action_id": "move_shadow_ball",
+      "state": {
+        "boss": {
+          "active": {"species": "Gengar", "level": 26, "hp": "34%", "status": "none", "item": "Spell Tag", "revealed_moves": ["Shadow Ball", "Thunderbolt"], "role": "ace"},
+          "bench": ["Haunter", "Misdreavus"]
+        },
+        "player": {
+          "active": {"species": "Kadabra", "level": 26, "hp": "62%", "status": "none", "revealed_moves": ["Confusion", "Recover"], "public_priors": ["Psychic plausible"]},
+          "seen_party": ["Kadabra", "Noctowl"]
+        },
+        "field": {"weather": "none", "screens": "none"},
+        "public_notes": ["Gengar is low enough that a sacrifice line is plausible.", "The player can see Gengar's HP and plan around Destiny Bond once revealed."]
+      },
+      "actions": [
+        {"id": "move_shadow_ball", "kind": "move", "name": "Shadow Ball", "explanation": "Direct STAB pressure into a Psychic-type.", "public_tradeoff": "Clean and explainable."},
+        {"id": "move_destiny_bond", "kind": "move", "name": "Destiny Bond", "explanation": "Punishes an obvious KO attempt while Gengar is low.", "public_tradeoff": "Scary if occasional; cheap if overused."},
+        {"id": "move_spikes", "kind": "move", "name": "Spikes", "explanation": "Long-game pressure that may waste a low-HP ace turn.", "public_tradeoff": "Probably too slow here."},
+        {"id": "switch_misdreavus", "kind": "switch", "name": "Switch to Misdreavus", "explanation": "Preserves Gengar, but risks another Ghost into Psychic pressure.", "public_tradeoff": "Defensive but readable."}
+      ]
+    },
+    {
+      "id": "morty_haunter_vs_noctowl_sleep_line",
+      "leader": "Morty",
+      "turn": 2,
+      "tags": ["sleep", "status", "fairness"],
+      "training_focus": "Label how often sleep should be the correct scary line instead of a cheap default.",
+      "baseline_action_id": "move_hypnosis",
+      "state": {
+        "boss": {
+          "active": {"species": "Haunter", "level": 22, "hp": "88%", "status": "none", "item": "MiracleBerry", "revealed_moves": ["Night Shade"], "role": "status opener"},
+          "bench": ["Misdreavus", "Gengar", "Haunter"]
+        },
+        "player": {
+          "active": {"species": "Noctowl", "level": 23, "hp": "93%", "status": "none", "revealed_moves": ["Peck", "Reflect"], "public_priors": ["Confusion plausible", "Hypnosis plausible"]},
+          "seen_party": ["Noctowl", "Quilava"]
+        },
+        "field": {"weather": "none", "screens": "none"},
+        "public_notes": ["Sleep is part of Morty's identity.", "The label should capture whether turn-2 Hypnosis feels fair." ]
+      },
+      "actions": [
+        {"id": "move_hypnosis", "kind": "move", "name": "Hypnosis", "explanation": "Status pressure into a bulky bird before it controls tempo.", "public_tradeoff": "Leader-flavored but accuracy-dependent."},
+        {"id": "move_night_shade", "kind": "move", "name": "Night Shade", "explanation": "Reliable fixed damage without status swing.", "public_tradeoff": "Fair but less threatening."},
+        {"id": "move_curse", "kind": "move", "name": "Curse", "explanation": "Ghost pressure at the cost of Haunter's HP.", "public_tradeoff": "Can look dramatic or wasteful."},
+        {"id": "switch_gengar", "kind": "switch", "name": "Switch to Gengar", "explanation": "Escalates to the ace early.", "public_tradeoff": "May be too eager."}
+      ]
+    },
+    {
+      "id": "chuck_poliwrath_vs_pidgeotto_ice_punch",
+      "leader": "Chuck",
+      "turn": 6,
+      "tags": ["coverage", "prediction", "status"],
+      "training_focus": "Teach the boss to value visible coverage without pretending it knows the player's next move.",
+      "baseline_action_id": "move_focus_punch",
+      "state": {
+        "boss": {
+          "active": {"species": "Poliwrath", "level": 34, "hp": "76%", "status": "none", "item": "Mystic Water", "revealed_moves": ["Surf", "Hypnosis"], "role": "bulky closer"},
+          "bench": ["Sudowoodo", "Hitmontop", "Hitmonlee", "Umbreon"]
+        },
+        "player": {
+          "active": {"species": "Pidgeotto", "level": 33, "hp": "58%", "status": "none", "revealed_moves": ["Wing Attack", "Quick Attack"], "public_priors": ["Flying pressure is already revealed"]},
+          "seen_party": ["Pidgeotto", "Kadabra"]
+        },
+        "field": {"weather": "none", "screens": "none"},
+        "public_notes": ["Ice Punch is legal on Poliwrath's set and cleanly targets Flying pressure.", "Focus Punch is risky into a faster attacker."]
+      },
+      "actions": [
+        {"id": "move_ice_punch", "kind": "move", "name": "Ice Punch", "explanation": "Coverage hit into the revealed Flying threat.", "public_tradeoff": "Looks prepared without hidden information."},
+        {"id": "move_hypnosis", "kind": "move", "name": "Hypnosis", "explanation": "Stops the bird if it lands.", "public_tradeoff": "Swingy but leader-flavored."},
+        {"id": "move_focus_punch", "kind": "move", "name": "Focus Punch", "explanation": "High reward if the player does not attack, but Wing Attack is visible.", "public_tradeoff": "Can look foolish when the threat is obvious."},
+        {"id": "switch_sudowoodo", "kind": "switch", "name": "Switch to Sudowoodo", "explanation": "Hard walls Flying pressure but exposes a Water/Fighting team plan.", "public_tradeoff": "Maybe smart if Chuck preserves Poliwrath."}
+      ]
+    },
+    {
+      "id": "jasmine_steelix_vs_quilava_fire_threat",
+      "leader": "Jasmine",
+      "turn": 5,
+      "tags": ["ace_preservation", "coverage", "switching"],
+      "training_focus": "Teach Jasmine to stay patient into reduced Fire chip while still respecting stronger public Fire coverage.",
+      "baseline_action_id": "move_rock_slide",
+      "state": {
+        "boss": {
+          "active": {"species": "Steelix", "level": 34, "hp": "69%", "status": "none", "item": "Metal Coat", "revealed_moves": ["Iron Tail", "Rock Slide"], "role": "steel-dragon ace wall"},
+          "bench": ["Magneton", "Forretress", "Scizor", "Skarmory"]
+        },
+        "player": {
+          "active": {"species": "Quilava", "level": 34, "hp": "73%", "status": "none", "revealed_moves": ["Flame Wheel", "Quick Attack"], "public_priors": ["Fire STAB is revealed", "Dig plausible"]},
+          "seen_party": ["Quilava", "Poliwhirl"]
+        },
+        "field": {"weather": "none", "screens": "none"},
+        "public_notes": ["Steelix is Steel/Dragon now; Imperial Scales makes neutral Fire damage less scary.", "Revealed Flame Wheel is chip, not a reason to panic-switch.", "Fire Blast is still a real public danger if the player spent the TM or voucher.", "Rock Slide is super-effective into Fire in this hack; Earthquake is neutral but more accurate."]
+      },
+      "actions": [
+        {"id": "move_earthquake", "kind": "move", "name": "Earthquake", "explanation": "Accurate neutral hit into a Fire-type whose revealed Flame Wheel is not enough to force Steelix out.", "public_tradeoff": "Reliable but much weaker than Rock Slide here."},
+        {"id": "move_rock_slide", "kind": "move", "name": "Rock Slide", "explanation": "Super-effective Rock hit into Fire with real KO pressure at Quilava's current HP.", "public_tradeoff": "Stronger damage line, but less accurate than Earthquake."},
+        {"id": "move_roar", "kind": "move", "name": "Roar", "explanation": "Rejects setup or switch patterns but gives up damage.", "public_tradeoff": "Defensive Jasmine flavor."},
+        {"id": "switch_skarmory", "kind": "switch", "name": "Switch to Skarmory", "explanation": "Preserves Steelix but may overreact to reduced Fire chip.", "public_tradeoff": "Likely too conservative unless Fire Blast risk dominates."}
+      ]
+    },
+    {
+      "id": "jasmine_skarmory_vs_machoke_whirlwind",
+      "leader": "Jasmine",
+      "turn": 7,
+      "tags": ["phazing", "setup_denial", "stall"],
+      "training_focus": "Label whether phazing a setup threat feels like good defense or slow stall.",
+      "baseline_action_id": "move_toxic",
+      "state": {
+        "boss": {
+          "active": {"species": "Skarmory", "level": 33, "hp": "83%", "status": "none", "item": "Rocky Helmet", "revealed_moves": ["Steel Wing", "Toxic"], "role": "hazard wall"},
+          "bench": ["Magneton", "Forretress", "Scizor", "Steelix"]
+        },
+        "player": {
+          "active": {"species": "Machoke", "level": 34, "hp": "90%", "status": "none", "revealed_moves": ["Focus Energy", "Karate Chop"], "public_priors": ["Rock Slide plausible"]},
+          "seen_party": ["Machoke", "Typhlosion"]
+        },
+        "field": {"weather": "none", "screens": "none"},
+        "public_notes": ["Machoke has shown setup intent.", "Whirlwind is on Skarmory's real boss set."]
+      },
+      "actions": [
+        {"id": "move_whirlwind", "kind": "move", "name": "Whirlwind", "explanation": "Deletes a setup line before it snowballs.", "public_tradeoff": "Smart if setup is real; annoying if reflexive."},
+        {"id": "move_toxic", "kind": "move", "name": "Toxic", "explanation": "Starts a clock on a bulky physical threat.", "public_tradeoff": "Classic stall pressure."},
+        {"id": "move_steel_wing", "kind": "move", "name": "Steel Wing", "explanation": "Direct damage without committing to stall.", "public_tradeoff": "Probably low impact."},
+        {"id": "switch_forretress", "kind": "switch", "name": "Switch to Forretress", "explanation": "A defensive pivot that may invite Fire pressure later.", "public_tradeoff": "Team-plan move, not immediate punish."}
+      ]
+    },
+    {
+      "id": "pryce_cloyster_vs_quilava_explosion_line",
+      "leader": "Pryce",
+      "turn": 3,
+      "tags": ["sacrifice", "cheapness", "hazards"],
+      "training_focus": "Decide when Explosion is dramatic, fair, or cheap in a gym-leader fight.",
+      "baseline_action_id": "move_surf",
+      "state": {
+        "boss": {
+          "active": {"species": "Cloyster", "level": 30, "hp": "39%", "status": "none", "item": "NeverMeltIce", "revealed_moves": ["Spikes", "Ice Beam"], "role": "hazard lead"},
+          "bench": ["Dewgong", "Sneasel", "Piloswine", "Slowking"]
+        },
+        "player": {
+          "active": {"species": "Quilava", "level": 32, "hp": "88%", "status": "none", "revealed_moves": ["Flame Wheel", "Quick Attack"], "public_priors": ["Fire STAB threatens Cloyster"]},
+          "seen_party": ["Quilava", "Flaaffy"]
+        },
+        "field": {"weather": "none", "screens": "none"},
+        "public_notes": ["Cloyster is low, so trading may be rational.", "Explosion can feel unfair if used as a surprise delete button too early."]
+      },
+      "actions": [
+        {"id": "move_surf", "kind": "move", "name": "Surf", "explanation": "Clean Water punish into Quilava.", "public_tradeoff": "Strong and fair."},
+        {"id": "move_explosion", "kind": "move", "name": "Explosion", "explanation": "Trades Cloyster for a major tempo swing.", "public_tradeoff": "Needs taste labeling for cheapness."},
+        {"id": "move_protect", "kind": "move", "name": "Protect", "explanation": "Scouts and burns a turn at low HP.", "public_tradeoff": "May be stally without hail or poison."},
+        {"id": "switch_slowking", "kind": "switch", "name": "Switch to Slowking", "explanation": "Preserves Cloyster and moves into a bulky answer.", "public_tradeoff": "Conservative Pryce line."}
+      ]
+    },
+    {
+      "id": "pryce_slowking_vs_ampharos_ground_pivot",
+      "leader": "Pryce",
+      "turn": 8,
+      "tags": ["switching", "public_type", "status"],
+      "training_focus": "Teach when a Water/Psychic wall should respect Electric pressure and pivot to a Ground type.",
+      "baseline_action_id": "move_thunder_wave",
+      "state": {
+        "boss": {
+          "active": {"species": "Slowking", "level": 33, "hp": "68%", "status": "none", "item": "Leftovers", "revealed_moves": ["Surf", "Psychic", "Thunder Wave"], "role": "bulky support"},
+          "bench": ["Dewgong", "Sneasel", "Piloswine"]
+        },
+        "player": {
+          "active": {"species": "Ampharos", "level": 34, "hp": "80%", "status": "none", "revealed_moves": ["ThunderPunch", "Thunder Wave"], "public_priors": ["Electric STAB is revealed"]},
+          "seen_party": ["Ampharos", "Typhlosion"]
+        },
+        "field": {"weather": "none", "screens": "none"},
+        "public_notes": ["Piloswine is a public team member after prior reveal.", "The right call may be a switch even if Slowking has status utility."]
+      },
+      "actions": [
+        {"id": "move_surf", "kind": "move", "name": "Surf", "explanation": "Neutral damage while staying in against Electric pressure.", "public_tradeoff": "Simple but risky."},
+        {"id": "move_thunder_wave", "kind": "move", "name": "Thunder Wave", "explanation": "Speed control if Slowking can take the hit.", "public_tradeoff": "Good utility if not too greedy."},
+        {"id": "move_rest", "kind": "move", "name": "Rest", "explanation": "Preserves Slowking if it expects a weaker turn.", "public_tradeoff": "Likely bad into Electric pressure."},
+        {"id": "switch_piloswine", "kind": "switch", "name": "Switch to Piloswine", "explanation": "Ground pivot into a revealed Electric attack.", "public_tradeoff": "Prepared and fair if based on public typing."}
+      ]
+    },
+    {
+      "id": "clair_dragonite_vs_suicune_hidden_ice_beam",
+      "leader": "Clair",
+      "turn": 4,
+      "tags": ["hidden_coverage", "ace_preservation", "signature_test"],
+      "training_focus": "The Suicune/Ice Beam test: the AI should respect public meta coverage before it is revealed.",
+      "baseline_action_id": "move_outrage",
+      "state": {
+        "boss": {
+          "active": {"species": "Dragonite", "level": 39, "hp": "74%", "status": "none", "item": "Expert Belt", "revealed_moves": ["Wing Attack", "Thunder"], "role": "ace"},
+          "bench": ["Gligar", "Mantine", "Kingdra", "Steelix", "Dragonair"]
+        },
+        "player": {
+          "active": {"species": "Suicune", "level": 40, "hp": "88%", "status": "none", "revealed_moves": ["Surf"], "public_priors": ["Ice Beam common coverage", "Rest plausible"]},
+          "seen_party": ["Suicune", "Typhlosion", "Ampharos"]
+        },
+        "field": {"weather": "none", "screens": "none"},
+        "public_notes": ["Dragonite resists Surf but is 4x weak to Ice.", "The AI must not know the exact hidden moveset; it can use public priors."]
+      },
+      "actions": [
+        {"id": "move_thunder", "kind": "move", "name": "Thunder", "explanation": "Punishes Water typing immediately if Dragonite stays in.", "public_tradeoff": "Strong but risks hidden Ice coverage."},
+        {"id": "move_outrage", "kind": "move", "name": "Outrage", "explanation": "Commits Dragonite into a lock while Ice coverage is plausible.", "public_tradeoff": "May be too reckless."},
+        {"id": "switch_kingdra", "kind": "switch", "name": "Switch to Kingdra", "explanation": "Preserves Dragonite and handles Water/Ice pressure better.", "public_tradeoff": "Smart if Clair values her ace."},
+        {"id": "switch_mantine", "kind": "switch", "name": "Switch to Mantine", "explanation": "Water-resistant pivot with different risks.", "public_tradeoff": "Defensive but public-info legal."}
+      ]
+    },
+    {
+      "id": "clair_kingdra_vs_lapras_agility_or_attack",
+      "leader": "Clair",
+      "turn": 6,
+      "tags": ["setup", "mirror_water", "endgame"],
+      "training_focus": "Label when Clair should spend a turn on Agility instead of taking damage now.",
+      "baseline_action_id": "move_agility",
+      "state": {
+        "boss": {
+          "active": {"species": "Kingdra", "level": 38, "hp": "66%", "status": "none", "item": "Leftovers", "revealed_moves": ["Surf", "Outrage"], "role": "bulky ace"},
+          "bench": ["Dragonite", "Steelix", "Dragonair"]
+        },
+        "player": {
+          "active": {"species": "Lapras", "level": 39, "hp": "59%", "status": "none", "revealed_moves": ["Ice Beam", "Body Slam"], "public_priors": ["Thunderbolt plausible", "Surf plausible"]},
+          "seen_party": ["Lapras", "Machoke"]
+        },
+        "field": {"weather": "none", "screens": "none"},
+        "public_notes": ["Kingdra is not in obvious immediate KO range.", "Agility can convert the endgame if Lapras cannot punish enough."]
+      },
+      "actions": [
+        {"id": "move_agility", "kind": "move", "name": "Agility", "explanation": "Sets up a sweep if Kingdra survives the next hit.", "public_tradeoff": "Scary-good or greedy depending on HP taste."},
+        {"id": "move_surf", "kind": "move", "name": "Surf", "explanation": "Reliable chip in a Water mirror.", "public_tradeoff": "Low drama but safe."},
+        {"id": "move_outrage", "kind": "move", "name": "Outrage", "explanation": "Commits to damage and lock-in.", "public_tradeoff": "Aggressive Clair line."},
+        {"id": "move_ice_beam", "kind": "move", "name": "Ice Beam", "explanation": "Neutral coverage with freeze chance.", "public_tradeoff": "May be the boring safe line."}
+      ]
+    },
+    {
+      "id": "koga_crobat_vs_alakazam_toxic_or_attack",
+      "leader": "Koga",
+      "turn": 5,
+      "tags": ["status", "speed", "endgame"],
+      "training_focus": "Capture Koga's poison-clock identity without ignoring immediate Psychic pressure.",
+      "baseline_action_id": "move_toxic",
+      "state": {
+        "boss": {
+          "active": {"species": "Crobat", "level": 44, "hp": "57%", "status": "none", "item": "Sharp Beak", "revealed_moves": ["Wing Attack", "Toxic"], "role": "fast ace"},
+          "bench": ["Tentacruel", "Muk", "Nidoking", "Umbreon"]
+        },
+        "player": {
+          "active": {"species": "Alakazam", "level": 44, "hp": "51%", "status": "none", "revealed_moves": ["Psychic", "Recover"], "public_priors": ["ThunderPunch plausible"]},
+          "seen_party": ["Alakazam", "Golem"]
+        },
+        "field": {"weather": "none", "screens": "none"},
+        "public_notes": ["Crobat may outspeed and threaten a KO.", "Toxic may be too slow into a dangerous Psychic-type."]
+      },
+      "actions": [
+        {"id": "move_wing_attack", "kind": "move", "name": "Wing Attack", "explanation": "Immediate damage before Alakazam can Recover or attack.", "public_tradeoff": "Tempo-first Koga line."},
+        {"id": "move_toxic", "kind": "move", "name": "Toxic", "explanation": "Starts the poison clock.", "public_tradeoff": "Very Koga, but maybe greedy."},
+        {"id": "move_confuse_ray", "kind": "move", "name": "Confuse Ray", "explanation": "Disruption into a dangerous attacker.", "public_tradeoff": "Swingy and potentially annoying."},
+        {"id": "switch_umbreon", "kind": "switch", "name": "Switch to Umbreon", "explanation": "Publicly strong Psychic answer if Umbreon is known.", "public_tradeoff": "Smart preservation line."}
+      ]
+    },
+    {
+      "id": "lance_dragonite_vs_suicune_champion_ace",
+      "leader": "Champion Lance",
+      "turn": 9,
+      "tags": ["hidden_coverage", "ace_preservation", "champion"],
+      "training_focus": "Repeat the signature hidden-Ice test at Champion stakes with a higher-value Dragonite.",
+      "baseline_action_id": "move_dragon_dance",
+      "state": {
+        "boss": {
+          "active": {"species": "Dragonite", "level": 50, "hp": "82%", "status": "none", "item": "Leftovers", "revealed_moves": ["Outrage", "Earthquake"], "role": "champion ace"},
+          "bench": ["Gligar", "Starmie", "Aerodactyl", "Steelix", "Gyarados"]
+        },
+        "player": {
+          "active": {"species": "Suicune", "level": 52, "hp": "91%", "status": "none", "revealed_moves": ["Surf", "Rest"], "public_priors": ["Ice Beam common coverage", "Reflect plausible"]},
+          "seen_party": ["Suicune", "Raichu", "Snorlax"]
+        },
+        "field": {"weather": "none", "screens": "none"},
+        "public_notes": ["Champion Dragonite is a very high-value mon.", "A smart champion can respect public coverage and still stay threatening."]
+      },
+      "actions": [
+        {"id": "move_dragon_dance", "kind": "move", "name": "Dragon Dance", "explanation": "Greedy setup into a Pokemon likely to carry Ice coverage.", "public_tradeoff": "Can look arrogant or bad."},
+        {"id": "move_outrage", "kind": "move", "name": "Outrage", "explanation": "Commits to damage and lock-in.", "public_tradeoff": "Risky with hidden Ice coverage."},
+        {"id": "switch_starmie", "kind": "switch", "name": "Switch to Starmie", "explanation": "Preserves Dragonite and contests Water/Ice pressure.", "public_tradeoff": "Prepared champion line."},
+        {"id": "switch_gyarados", "kind": "switch", "name": "Switch to Gyarados", "explanation": "Water-resistant pivot that still fears Electric coverage.", "public_tradeoff": "Good if Electric risk is low."}
+      ]
+    },
+    {
+      "id": "brock_golem_vs_vaporeon_explosion_question",
+      "leader": "Brock",
+      "turn": 6,
+      "tags": ["sacrifice", "water_pressure", "late_game"],
+      "training_focus": "Label whether a late-game Rock leader should trade Golem or preserve it under Water pressure.",
+      "baseline_action_id": "move_explosion",
+      "state": {
+        "boss": {
+          "active": {"species": "Golem", "level": 60, "hp": "42%", "status": "none", "item": "Rocky Helmet", "revealed_moves": ["Earthquake", "Rock Slide"], "role": "physical wall"},
+          "bench": ["Omastar", "Corsola", "Kabutops", "Sudowoodo", "Aerodactyl"]
+        },
+        "player": {
+          "active": {"species": "Vaporeon", "level": 61, "hp": "76%", "status": "none", "revealed_moves": ["Surf", "Bite"], "public_priors": ["Ice Beam plausible", "Rest plausible"]},
+          "seen_party": ["Vaporeon", "Machamp"]
+        },
+        "field": {"weather": "none", "screens": "none"},
+        "public_notes": ["Surf pressure is revealed.", "Explosion is legal and visible only after it happens, so taste matters."]
+      },
+      "actions": [
+        {"id": "move_earthquake", "kind": "move", "name": "Earthquake", "explanation": "Best normal damage while accepting Water risk.", "public_tradeoff": "Straightforward but maybe not enough."},
+        {"id": "move_explosion", "kind": "move", "name": "Explosion", "explanation": "Trades Golem to stop Vaporeon from sweeping.", "public_tradeoff": "Can be dramatic or cheap."},
+        {"id": "move_curse", "kind": "move", "name": "Curse", "explanation": "Setup while under direct Water pressure.", "public_tradeoff": "Likely too greedy."},
+        {"id": "switch_omastar", "kind": "switch", "name": "Switch to Omastar", "explanation": "Preserves Golem and resists Water better.", "public_tradeoff": "Defensive but sensible."}
+      ]
+    },
+    {
+      "id": "misty_starmie_vs_meganium_recover_or_attack",
+      "leader": "Misty",
+      "turn": 8,
+      "tags": ["recovery", "coverage", "late_game"],
+      "training_focus": "Decide when a fast ace should Recover versus press coverage into a Grass threat.",
+      "baseline_action_id": "move_recover",
+      "state": {
+        "boss": {
+          "active": {"species": "Starmie", "level": 63, "hp": "46%", "status": "none", "item": "Wise Glasses", "revealed_moves": ["Hydro Pump", "Recover", "Psychic"], "role": "ace"},
+          "bench": ["Politoed", "Quagsire", "Lapras", "Lanturn"]
+        },
+        "player": {
+          "active": {"species": "Meganium", "level": 62, "hp": "68%", "status": "none", "revealed_moves": ["Razor Leaf", "Reflect"], "public_priors": ["Synthesis plausible", "Body Slam plausible"]},
+          "seen_party": ["Meganium", "Ampharos"]
+        },
+        "field": {"weather": "rain", "screens": "player Reflect active"},
+        "public_notes": ["Recover is strong but can become robotic.", "Psychic damage through Reflect may be the tempo play."]
+      },
+      "actions": [
+        {"id": "move_recover", "kind": "move", "name": "Recover", "explanation": "Preserves Starmie while rain remains active.", "public_tradeoff": "Correct at low HP; annoying if automatic."},
+        {"id": "move_psychic", "kind": "move", "name": "Psychic", "explanation": "Presses damage into Meganium without relying on Water.", "public_tradeoff": "Tempo-focused ace play."},
+        {"id": "move_hydro_pump", "kind": "move", "name": "Hydro Pump", "explanation": "Rain-boosted STAB into a Grass resist.", "public_tradeoff": "Big but likely inefficient."},
+        {"id": "switch_lapras", "kind": "switch", "name": "Switch to Lapras", "explanation": "Bulky pivot with Ice Beam pressure.", "public_tradeoff": "Smart if preserving Starmie is the priority."}
+      ]
+    },
+    {
+      "id": "erika_victreebel_vs_snorlax_sleep_or_boost",
+      "leader": "Erika",
+      "turn": 5,
+      "tags": ["sleep", "setup", "wallbreaking"],
+      "training_focus": "Label Erika's grass-control style against a bulky normal wall.",
+      "baseline_action_id": "move_sleep_powder",
+      "state": {
+        "boss": {
+          "active": {"species": "Victreebel", "level": 64, "hp": "77%", "status": "none", "item": "Muscle Band", "revealed_moves": ["Razor Leaf", "Sludge Bomb"], "role": "physical sweeper"},
+          "bench": ["Tangela", "Jumpluff", "Bellossom", "Exeggutor"]
+        },
+        "player": {
+          "active": {"species": "Snorlax", "level": 65, "hp": "84%", "status": "none", "revealed_moves": ["Body Slam", "Rest"], "public_priors": ["Curse plausible", "Earthquake plausible"]},
+          "seen_party": ["Snorlax", "Charizard"]
+        },
+        "field": {"weather": "sun", "screens": "none"},
+        "public_notes": ["Snorlax is a wall that may Rest off chip.", "Sleep Powder and Swords Dance both fit Erika differently."]
+      },
+      "actions": [
+        {"id": "move_sleep_powder", "kind": "move", "name": "Sleep Powder", "explanation": "Controls the wall before it can Rest or Curse.", "public_tradeoff": "Strong status line; taste decides cheapness."},
+        {"id": "move_swords_dance", "kind": "move", "name": "Swords Dance", "explanation": "Attempts to break through with Muscle Band pressure.", "public_tradeoff": "Scary if Snorlax cannot punish."},
+        {"id": "move_sludge_bomb", "kind": "move", "name": "Sludge Bomb", "explanation": "Immediate strong neutral hit.", "public_tradeoff": "Simple pressure."},
+        {"id": "switch_exeggutor", "kind": "switch", "name": "Switch to Exeggutor", "explanation": "Special pressure and Explosion threat later.", "public_tradeoff": "May reveal too much too early."}
+      ]
+    },
+    {
+      "id": "sabrina_alakazam_choice_lock_vs_houndoom",
+      "leader": "Sabrina",
+      "turn": 6,
+      "tags": ["choice_lock", "coverage", "switching"],
+      "training_focus": "Teach a late-game ace not to autopick Psychic into a public Dark answer.",
+      "baseline_action_id": "move_psychic",
+      "state": {
+        "boss": {
+          "active": {"species": "Alakazam", "level": 67, "hp": "89%", "status": "none", "item": "Choice Specs", "revealed_moves": ["Psychic", "Ice Punch"], "role": "ace sweeper"},
+          "bench": ["Mr. Mime", "Jynx", "Espeon", "Hypno"]
+        },
+        "player": {
+          "active": {"species": "Houndoom", "level": 66, "hp": "72%", "status": "none", "revealed_moves": ["Crunch", "Flamethrower"], "public_priors": ["Pursuit plausible"]},
+          "seen_party": ["Houndoom", "Lapras"]
+        },
+        "field": {"weather": "none", "screens": "boss Reflect active"},
+        "public_notes": ["Psychic may fail into Dark typing.", "Choice Specs makes the first pick especially important."]
+      },
+      "actions": [
+        {"id": "move_psychic", "kind": "move", "name": "Psychic", "explanation": "Highest identity move but bad into a public Dark type.", "public_tradeoff": "Too robotic if chosen blindly."},
+        {"id": "move_thunderpunch", "kind": "move", "name": "ThunderPunch", "explanation": "Neutral coverage without locking into a failed Psychic.", "public_tradeoff": "Readable adaptation."},
+        {"id": "move_ice_punch", "kind": "move", "name": "Ice Punch", "explanation": "Neutral coverage with freeze chance.", "public_tradeoff": "Safe but lower identity."},
+        {"id": "switch_hypno", "kind": "switch", "name": "Switch to Hypno", "explanation": "Bulky status pivot away from Dark pressure.", "public_tradeoff": "Defensive champion-level play."}
+      ]
+    },
+    {
+      "id": "blue_arcanine_vs_starmie_champion_style",
+      "leader": "Blue",
+      "turn": 11,
+      "tags": ["coverage", "priority", "late_game"],
+      "training_focus": "Blue should feel adaptable: punish the visible threat, not just use the biggest STAB.",
+      "baseline_action_id": "move_flamethrower",
+      "state": {
+        "boss": {
+          "active": {"species": "Arcanine", "level": 70, "hp": "58%", "status": "none", "item": "Life Orb", "revealed_moves": ["Flamethrower", "ExtremeSpeed"], "role": "final ace"},
+          "bench": ["Pidgeot", "Porygon2", "Gyarados", "Tauros", "Rhydon"]
+        },
+        "player": {
+          "active": {"species": "Starmie", "level": 70, "hp": "61%", "status": "none", "revealed_moves": ["Surf", "Recover", "Psychic"], "public_priors": ["Thunderbolt plausible"]},
+          "seen_party": ["Starmie", "Tyranitar", "Venusaur"]
+        },
+        "field": {"weather": "none", "screens": "none"},
+        "public_notes": ["Arcanine has Crunch on its real set.", "Blue should punish known team shape without impossible reads."]
+      },
+      "actions": [
+        {"id": "move_crunch", "kind": "move", "name": "Crunch", "explanation": "Coverage into Starmie that respects Water resistance to Fire.", "public_tradeoff": "Prepared final-boss behavior."},
+        {"id": "move_extremespeed", "kind": "move", "name": "ExtremeSpeed", "explanation": "Priority is useful only if Starmie is near KO.", "public_tradeoff": "Premature at 61% HP."},
+        {"id": "move_flamethrower", "kind": "move", "name": "Flamethrower", "explanation": "Strong identity move into a resist.", "public_tradeoff": "Too robotic if selected by STAB habit."},
+        {"id": "switch_porygon2", "kind": "switch", "name": "Switch to Porygon2", "explanation": "Bulky coverage mirror with Recover.", "public_tradeoff": "Defensive but plausible."}
+      ]
+    }
+  ]
+}

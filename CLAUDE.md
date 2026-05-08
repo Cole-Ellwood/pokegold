@@ -286,6 +286,16 @@ escalation list?" — not "is this structural?"
 Verify before acting. Verifying is checking, not asking permission — both
 racing past errors and bouncing back to confirm are failures.
 
+### Human-facing tools
+- When building review tools, side apps, or dashboards, optimize the UI for
+  the human decision being made, not for exposing raw internal data. If the
+  first version shows JSON, logs, or technical fields, consider whether a
+  labeled summary, comparison view, or guided workflow would better serve the
+  user.
+- When a task shifts from implementation into product/design iteration, pause
+  briefly to restate the current goal and the latest preferred workflow before
+  continuing.
+
 ## Honesty
 
 - If you don't know something, say "I don't know" or "I'd need to read X

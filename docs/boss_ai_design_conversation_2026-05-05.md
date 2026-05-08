@@ -1,12 +1,11 @@
-# Boss AI Rebuild Design Conversation — 2026-05-05 (SHELVED)
+# Boss AI Rebuild Design Conversation — 2026-05-05 (RESOLVED 2026-05-08)
 
-> **STATUS: SHELVED 2026-05-05.** Do not start work on the boss AI rebuild
-> (BOSSAI-003) or RL training simulator (BOSSAI-004) until the user explicitly
-> resumes them. Active focus has shifted to fully building out the damage
-> debugger (`tools/damage_debugger/`). User wants more time to think about
-> whether a full rebuild is the right approach — the design conversation
-> below surfaced a much simpler architecture that may be the actual right
-> path when work resumes.
+> **STATUS: RESOLVED 2026-05-08.** BOSSAI-004 Version A is implemented as the
+> preference-labeler side app. BOSSAI-003 is complete via the simpler
+> current-source path: keep the audited public-info scorer, document the
+> platform/policy seam, add policy design docs, and add a fixture-backed
+> decision debugger. The archived full rewrite below remains context, not the
+> active plan.
 
 ## What this doc captures
 
@@ -15,11 +14,31 @@ and ended with the user shelving the rebuild for further thought. This file
 preserves the architectural ideas, the open questions, and the recommended
 path so the next session opening this work can pick up cold.
 
-The two existing plan docs — `docs/boss_ai_rebuild_plan.md` (v1 Layer A +
-Layer B CFR) and `docs/boss_ai_rl_training_plan.md` (v2 RL training
-simulator) — remain on disk as the most-recently-locked plans, but should
-be **re-evaluated against the simpler architecture below before committing
-to either.** Both carry SHELVED banners pointing here.
+`docs/boss_ai_rebuild_plan.md` remains on disk as the archived v1 Layer A +
+Layer B CFR plan and should be re-evaluated against the simpler architecture
+below before implementation. `docs/boss_ai_rl_training_plan.md` has since
+been finalized as the BOSSAI-004 preference-labeler-first plan; it is still
+shelved for implementation, but no longer points future work at a full
+RL-ROM simulator first.
+
+## 2026-05-08 BOSSAI-004 update
+
+The user liked the RLHF-ish idea as a fun experiment, but did not want to
+build useless infrastructure. The finalized direction is:
+
+- **Version A first:** a preference labeler over public-info battle-state
+  fixtures. It records the user's taste calls as JSON and reports scorer
+  disagreements.
+- **Version B later:** an optional simulator/optimizer lab only after labels
+  exist.
+- **No black box:** trained output must stay explainable and portable back to
+  readable scoring logic or asm tables.
+
+This update became implementation, not just planning: `tools/boss_ai_preference/`
+ships the labeler MVP, and `tools/boss_ai_debugger/` uses that fixture corpus as
+the Phase-1 decision debugger. BOSSAI-003 accepted the simpler current-source
+architecture because `boss.asm` already contains the key public-info scorer
+components.
 
 ## Core insight (the load-bearing one)
 
@@ -87,7 +106,8 @@ Hits ~92-95% of the bar. **Recommended option as of 2026-05-05.**
 ### Option C — Full original plan (~6-8 weeks)
 
 The full Layer A + Layer B (CFR) + v2 RL training plan as captured in
-`docs/boss_ai_rebuild_plan.md` and `docs/boss_ai_rl_training_plan.md`.
+`docs/boss_ai_rebuild_plan.md` and the archived lower section of
+`docs/boss_ai_rl_training_plan.md`.
 
 CFR is intellectually elegant (real-time Nash-equilibrium-seeking) but
 probably overkill for a campaign playthrough against a single human. RL
@@ -227,10 +247,9 @@ User does not write code, asm, or Python at any point.
 2. **CFR / Layer B scope.** Probably drop — pattern detector captures most
    of its value cheaper. User may want CFR's theoretical rigor for specific
    high-stakes leaders (Lance, Red); decide on revisit.
-3. **v2 RL training scope.** Probably drop — playtest tuning is cheaper.
-   The simulator infrastructure has standalone value for future work
-   (regression testing, AI vs AI tournament mode); could resurrect for
-   that purpose independently of priors-tuning.
+3. **Preference training scope.** No longer "probably drop." BOSSAI-004 is
+   finalized as a preference-labeler-first side app. The old simulator idea
+   stays useful only as Version B, after labels exist.
 4. **Per-leader personality structure.** Taste calls deferred to the
    Step 2 interview. User wants to think about each leader's vibe before
    locking specifics.
@@ -285,21 +304,21 @@ the policy layer. That's a separate planning session.
 
 1. Re-read this doc end-to-end first.
 2. Decide whether Option A, B, C, or some new fourth option is the path.
-3. Re-read `docs/boss_ai_rebuild_plan.md` and
-   `docs/boss_ai_rl_training_plan.md` only if Option C is in play;
-   otherwise treat them as superseded by the simpler architecture above.
+3. Re-read `docs/boss_ai_rebuild_plan.md` only if Option C is in play.
+   Re-read `docs/boss_ai_rl_training_plan.md` whenever BOSSAI-004 is in play;
+   it is now the finalized preference-labeler roadmap.
 4. If Option B is confirmed, the work is:
    - Update `docs/boss_ai_rebuild_plan.md` to reflect the unified scoring
      architecture (drop Layer A/B framing entirely)
-   - Mark `docs/boss_ai_rl_training_plan.md` as deferred-indefinitely
-     unless v2 RL specifically resumes
+   - Keep `docs/boss_ai_rl_training_plan.md` on the preference-labeler-first
+     path; do not revert it to the old simulator-first plan
    - Roadmap update: BOSSAI-003 urgency → DO NOW, status notes refreshed
 5. Then start Phase 1 (platform split + interview).
 
 ## Related docs
 
 - [boss_ai_rebuild_plan.md](boss_ai_rebuild_plan.md) — v1 Layer A + Layer B plan (SHELVED, points here)
-- [boss_ai_rl_training_plan.md](boss_ai_rl_training_plan.md) — v2 RL plan (SHELVED, points here)
+- [boss_ai_rl_training_plan.md](boss_ai_rl_training_plan.md) — BOSSAI-004 preference-training plan (FINALIZED / SHELVED-FOR-IMPLEMENTATION)
 - [boss_ai_spec.md](boss_ai_spec.md) — older 811-line design doc; still relevant for the platform layer (state tracking, anti-cheat boundaries)
 - `audit/boss_ai_trace/*_live.txt` — per-leader live captures (the regression suite for any rebuild)
 - `engine/battle/ai/boss.asm` — the 7144-line file under future rebuild
