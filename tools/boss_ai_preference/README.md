@@ -77,8 +77,8 @@ Default report outputs:
 Threat availability report limits are explicit. It parses wild grass,
 Surf-gated water, fishing tables by rod tier, simple `givepoke` gifts/prizes,
 listed static encounters, level-up moves, base-stat TM/HM compatibility, direct
-TM map rewards, and the Day-Care voucher tutor. It does not yet fully
-route-model breeding, trades, roaming RNG, or prerequisite-heavy statics.
+TM map rewards, and badge-gated map access. It does not yet fully route-model
+breeding, trades, roaming RNG, or prerequisite-heavy statics.
 
 ## Scope
 

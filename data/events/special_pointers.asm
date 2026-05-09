@@ -128,5 +128,4 @@ SpecialsPointers::
 	add_special InitialSetDSTFlag
 	add_special InitialClearDSTFlag
 	add_special MrChrono
-	add_special TMTutorTeachAnyTM
 	add_special UnusedDummySpecial ; unused

@@ -956,7 +956,6 @@ def main() -> int:
     print("PASS: key learnset checks")
 
     require_text(ROOT / "main.asm", 'INCLUDE "engine/events/move_reminder.asm"')
-    require_text(ROOT / "main.asm", 'INCLUDE "engine/events/tm_tutor.asm"')
     require_text(ROOT / "main.asm", 'INCLUDE "engine/battle/ai/boss.asm"')
     require_text(ROOT / "data/events/special_pointers.asm", "add_special MoveReminder")
     print("PASS: core module integration checks")
@@ -1047,18 +1046,6 @@ def main() -> int:
 
     check_mart_inventory_tables(item_tokens)
     print("PASS: mart inventory table checks")
-
-    require_ordered_text(
-        ROOT / "engine/events/tm_tutor.asm",
-        (
-            "TMTutorTeachAnyTM:",
-            "\tld a, [wCurItem]\n\tpush af\n\tld a, NO_ITEM\n\tld [wCurItem], a\n\tfarcall TeachTMHM\n\tjr c, .taught_restore_cur_item",
-            "\tpop af\n\tld [wCurItem], a\n\tld a, 2\n\tld [wScriptVar], a",
-            ".taught_restore_cur_item\n\tpop af\n\tld [wCurItem], a\n.taught\n\tld a, 1",
-        ),
-        "TM Tutor selected-item restore",
-    )
-    print("PASS: TM Tutor item-state restore check")
 
     item_constants = parse_item_constants(ROOT / "constants/item_constants.asm")
     item_names = parse_item_names(ROOT / "data/items/names.asm")
@@ -1335,7 +1322,6 @@ def main() -> int:
 
     item_desc_path = ROOT / "data/items/descriptions.asm"
     for label, first_line, second_line in (
-        ("TMVoucherDesc", "Redeem at DAY-CARE", "for 3 TM lessons."),
         ("ChoiceBandDesc", "Raises ATTACK;", "locks move. (HOLD)"),
         ("ChoiceSpecsDesc", "Raises SPCL.ATK;", "locks move. (HOLD)"),
         ("ChoiceScarfDesc", "Raises SPEED;", "locks move. (HOLD)"),
@@ -1350,11 +1336,11 @@ def main() -> int:
         )
     require_text(
         ROOT / "maps/DayCare.asm",
-        'DayCareServicePamphletText:\n\ttext "DAY-CARE SERVICES"\n\tline "TM TUTOR:"\n\tcont "1 VOUCHER buys"\n\tcont "3 TM lessons."',
+        'DayCareServicePamphletText:\n\ttext "DAY-CARE SERVICES"\n\tline "We raise #MON"\n\tcont "for busy TRAINERS."',
     )
     require_text(
         ROOT / "maps/Route34.asm",
-        'DayCareSignText:\n\ttext "DAY-CARE"\n\n\tpara "Raise #MON,"\n\tline "TM lessons and"\n\tcont "old moves inside."',
+        'DayCareSignText:\n\ttext "DAY-CARE"\n\n\tpara "Raise #MON and"\n\tline "remember old"\n\tcont "moves inside."',
     )
     require_ordered_text(
         ROOT / "maps/EarlsPokemonAcademy.asm",

@@ -34,8 +34,8 @@ Version A shipped on 2026-05-08:
 - `tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json` contains
   20 public-info fixtures across Johto, Kanto, Koga, Champion Lance, and Blue.
 - `tools/audit/check_boss_ai_preference.py` validates fixture count, label
-  persistence, duplicate/conflict reporting, threat availability, voucher/tutor
-  gating, Old Rod/Surf encounter timing, simple gift/static sources,
+  persistence, duplicate/conflict reporting, threat availability, TM reward
+  timing, Old Rod/Surf encounter timing, simple gift/static sources,
   four-revealed-move slot blocking, bad switch-in suppression, and Markdown
   report coverage.
 - `audit/boss_ai_preference/latest_report.md` and `.json` are generated report

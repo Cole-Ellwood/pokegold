@@ -54,7 +54,7 @@ BlackthornGymClairScript:
 	iftrue .AfterVoucherReward
 	writetext BlackthornGymClairText_YouKeptMeWaiting
 	promptbutton
-	verbosegiveitem TM_VOUCHER
+	verbosegiveitem TM_OUTRAGE
 	iffalse .BagFull
 	setevent EVENT_GOT_TM24_DRAGONBREATH
 	writetext BlackthornGymClairText_DescribeTM24
@@ -70,7 +70,7 @@ BlackthornGymClairScript:
 	iftrue .CheckDragonFang
 	writetext BlackthornGymClairText_YouKeptMeWaiting
 	promptbutton
-	verbosegiveitem TM_VOUCHER
+	verbosegiveitem TM_OUTRAGE
 	iffalse .BagFull
 	setevent EVENT_GOT_TM24_DRAGONBREATH
 	writetext BlackthornGymClairText_DescribeTM24
@@ -95,7 +95,7 @@ BlackthornGymClairScript:
 	iftrue .GotVoucher
 	writetext BlackthornGymClairText_YouKeptMeWaiting
 	promptbutton
-	verbosegiveitem TM_VOUCHER
+	verbosegiveitem TM_OUTRAGE
 	iffalse .BagFull
 	setevent EVENT_GOT_TM24_DRAGONBREATH
 	writetext BlackthornGymClairText_DescribeTM24
@@ -266,16 +266,14 @@ BlackthornGymClairText_YouKeptMeWaiting:
 	line "proven yourself to"
 	cont "me."
 
-	para "Take this TM"
-	line "VOUCHER."
+	para "Take this TM."
 	done
 
 BlackthornGymClairText_DescribeTM24:
-	text "Redeem it at the"
-	line "TM TUTOR for"
-	cont "lessons."
+	text "That TM is"
+	line "OUTRAGE."
 
-	para "Use those lessons"
+	para "Use its power"
 	line "to sharpen your"
 	cont "battle style."
 	done

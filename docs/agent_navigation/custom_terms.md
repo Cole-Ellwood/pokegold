@@ -38,7 +38,6 @@ feature category.
 
 | Search terms | Route |
 | --- | --- |
-| TM Tutor, TM Voucher, tutor credits, lesson credits | `engine/events/tm_tutor.asm`, `maps/DayCare.asm`, `data/events/special_pointers.asm` |
 | Move Reminder, relearn flow, page size | `engine/events/move_reminder.asm`, `maps/DayCare.asm` |
 | branching evolution choice menu | `engine/pokemon/evolve.asm`, `docs/evolution_policy.md` |
 | FAST text speed default | `data/default_options.asm`, `docs/qol_handoff.md` |
@@ -54,5 +53,3 @@ feature category.
 | Choice lock | `wPlayerChoiceLockedMove`, `wEnemyChoiceLockedMove`, `IsChoiceHeldEffect_Far` |
 | Metronome item | `METRONOME_ITEM`, `wPlayerMetronomeMove`, `wPlayerMetronomeCount` |
 | Boss trace | `BOSS_AI_TRACE`, `wBossAITrace`, `live_capture_manifest` |
-| TM Voucher | `TM_VOUCHER`, `wTMTutorCredits`, `TMTutor` |
-

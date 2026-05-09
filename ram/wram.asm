@@ -2462,8 +2462,8 @@ wTradeFlags:: flag_array NUM_NPC_TRADES
 
 wMooMooBerries:: db
 wUndergroundSwitchPositions:: db
-wTMTutorBadgesCounted:: db ; RESERVED_UNUSED: keep byte allocated for WRAM layout stability
-wTMTutorCredits:: db
+wTMTutorBadgesCounted:: ds 1 ; RESERVED_UNUSED
+wTMTutorCredits:: ds 1 ; RESERVED_UNUSED
 
 	ds 12
 
@@ -2527,7 +2527,7 @@ wFastShip1FSceneID::                              db
 wFastShipB1FSceneID::                             db
 wMountMoonSquareSceneID::                         db
 
-wTMTutorTMHMBackup:: ds NUM_TMS + NUM_HMS
+wTMTutorTMHMBackup:: ds NUM_TMS + NUM_HMS ; RESERVED_UNUSED
 
 ; Boss AI battle runtime state must live in WRAMX bank 1 because battle code
 ; reads/writes it directly without WRAM bank switching.

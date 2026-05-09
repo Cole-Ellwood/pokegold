@@ -41,7 +41,7 @@ AzaleaGymBugsyScript:
 	setevent EVENT_BEAT_BUG_CATCHER_JOSH
 	writetext BugsyText_HiveBadgeSpeech
 	promptbutton
-	verbosegiveitem TM_VOUCHER
+	verbosegiveitem TM_LEECH_LIFE
 	iffalse .NoRoomForVoucher
 	setevent EVENT_GOT_TM49_FURY_CUTTER
 	writetext BugsyText_FuryCutterSpeech
@@ -197,19 +197,16 @@ BugsyText_HiveBadgeSpeech:
 	para "outside"
 	line "of battle too."
 
-	para "Here, take this TM"
-	line "VOUCHER too."
+	para "Here, take this"
+	line "TM too."
 	done
 
 BugsyText_FuryCutterSpeech:
-	text "That TM VOUCHER is"
-	line "proof of your"
-	cont "technique."
+	text "That TM is"
+	line "LEECH LIFE."
 
-	para "Trade it to the TM"
-	line "TUTOR for lessons,"
-	cont "then test your"
-	cont "ideas in battle."
+	para "It drains HP while"
+	line "it damages the foe."
 
 	para "Keep researching."
 	line "You'll find plenty"

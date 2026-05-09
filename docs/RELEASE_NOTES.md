@@ -7,7 +7,7 @@ This build is no longer data-only. It includes:
 - Data rebalance (stats, moves, types, learnsets, trainers, wilds, items)
 - Battle mechanics additions (type passives, late-gen held effects, hazard rework)
 - Boss AI and trainer AI tiering logic
-- Progression/script additions (TM Tutor, Move Reminder, gym voucher rewards)
+- Progression/script additions (Move Reminder, direct gym TM rewards)
 - Evolution flow changes (branching level-evolution choice handling)
 
 Design promise: this release candidate is aimed at restoring first-playthrough

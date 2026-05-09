@@ -109,8 +109,8 @@ TrainerBugCatcherWade1:
 Route31MailRecipientScript:
 	faceplayer
 	opentext
-	checkevent EVENT_GOT_TM50_NIGHTMARE
-	iftrue .DescribeNightmare
+	checkevent EVENT_GOT_TM_REST_FROM_ROUTE31
+	iftrue .DescribeRest
 	checkevent EVENT_GOT_KENYA
 	iftrue .TryGiveKenya
 	writetext Text_Route31SleepyMan
@@ -132,11 +132,11 @@ Route31MailRecipientScript:
 	writetext Text_Route31ReadingMail
 	promptbutton
 	setevent EVENT_GAVE_KENYA
-	verbosegiveitem TM_NIGHTMARE
+	verbosegiveitem TM_REST
 	iffalse .NoRoomForItems
-	setevent EVENT_GOT_TM50_NIGHTMARE
-.DescribeNightmare:
-	writetext Text_Route31DescribeNightmare
+	setevent EVENT_GOT_TM_REST_FROM_ROUTE31
+.DescribeRest:
+	writetext Text_Route31DescribeRest
 	waitbutton
 .NoRoomForItems:
 	closetext
@@ -275,20 +275,16 @@ Text_Route31ReadingMail:
 	line "to have this!"
 	done
 
-Text_Route31DescribeNightmare:
-	text "TM50 is NIGHTMARE."
+Text_Route31DescribeRest:
+	text "TM44 is REST."
 
-	para "It's a wicked move"
-	line "that steadily cuts"
+	para "It restores HP,"
+	line "then makes the"
+	cont "#MON sleep."
 
-	para "the HP of a sleep-"
-	line "ing enemy."
-
-	para "Ooooh…"
-	line "That's scary…"
-
-	para "I don't want to"
-	line "have bad dreams."
+	para "That sounds nice,"
+	line "but don't nap too"
+	cont "long out there."
 	done
 
 Text_Route31WrongMail:

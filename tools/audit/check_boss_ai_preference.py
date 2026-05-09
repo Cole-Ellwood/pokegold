@@ -72,7 +72,7 @@ def main() -> int:
     bugsy_checkpoint = checkpoint_for_leader("Bugsy")
     bugsy_quilava_moves = legal_moves_for_species("QUILAVA", bugsy_checkpoint)
     if "FIRE_BLAST" in bugsy_quilava_moves:
-        raise SystemExit("Bugsy checkpoint must not treat voucher-only Fire Blast as available")
+        raise SystemExit("Bugsy checkpoint must not treat unavailable Fire Blast as available")
     if "EMBER" not in bugsy_quilava_moves:
         raise SystemExit("Bugsy checkpoint should source Quilava Ember from level-up data")
 
@@ -96,11 +96,9 @@ def main() -> int:
 
     whitney_quilava_moves = legal_moves_for_species("QUILAVA", checkpoint_for_leader("Whitney"))
     if "FIRE_BLAST" not in whitney_quilava_moves:
-        raise SystemExit("Whitney checkpoint should expose Quilava Fire Blast after Goldenrod/tutor access")
-    if not (
-        {"tm_available", "voucher_limited"} & set(whitney_quilava_moves["FIRE_BLAST"])
-    ):
-        raise SystemExit("Whitney Fire Blast should name direct TM or voucher-limited access")
+        raise SystemExit("Whitney checkpoint should expose Quilava Fire Blast after Goldenrod TM access")
+    if "tm_available" not in set(whitney_quilava_moves["FIRE_BLAST"]):
+        raise SystemExit("Whitney Fire Blast should name direct TM access")
 
     bugsy_threats = build_threat_report([bugsy])["fixture_threats"][bugsy["id"]]
     threat_by_move = {threat["move_id"]: threat for threat in bugsy_threats}
