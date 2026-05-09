@@ -42,7 +42,7 @@ MahoganyGymPryceScript:
 	setevent EVENT_BEAT_BOARDER_DOUGLAS
 	writetext PryceText_GlacierBadgeSpeech
 	promptbutton
-	verbosegiveitem TM_VOUCHER
+	verbosegiveitem TM_BLIZZARD
 	iffalse MahoganyGym_NoRoomForIcyWind
 	setevent EVENT_GOT_TM16_ICY_WIND
 	writetext PryceText_IcyWindSpeech
@@ -206,15 +206,13 @@ PryceText_GlacierBadgeSpeech:
 	line "WHIRL KIT clear"
 	cont "real whirlpools."
 
-	para "And this TM"
-	line "VOUCHER is my"
-	cont "gift to you."
+	para "And this TM is my"
+	line "gift to you."
 	done
 
 PryceText_IcyWindSpeech:
-	text "Redeem that TM"
-	line "VOUCHER for tutor"
-	cont "lessons."
+	text "That TM is"
+	line "BLIZZARD."
 
 	para "A wise trainer"
 	line "chooses techniques"

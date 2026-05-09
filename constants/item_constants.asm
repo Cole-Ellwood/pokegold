@@ -120,7 +120,7 @@
 	const EVERSTONE    ; 70
 	const SPELL_TAG    ; 71
 	const RAGECANDYBAR ; 72
-	const TM_VOUCHER   ; 73
+	const ITEM_73      ; 73
 	const CHOICE_BAND  ; 74
 	const MIRACLE_SEED ; 75
 	const THICK_CLUB   ; 76
@@ -226,11 +226,11 @@ DEF TM01 EQU const_value
 	add_tm TOXIC        ; c5
 	add_tm ZAP_CANNON   ; c6
 	add_tm ROCK_SMASH   ; c7
-	add_tm PSYCH_UP     ; c8
+	add_tm WING_ATTACK  ; c8
 	add_tm HIDDEN_POWER ; c9
 	add_tm SUNNY_DAY    ; ca
 	add_tm SWEET_SCENT  ; cb
-	add_tm SNORE        ; cc
+	add_tm LEECH_LIFE   ; cc
 	add_tm BLIZZARD     ; cd
 	add_tm HYPER_BEAM   ; ce
 	add_tm ICY_WIND     ; cf
@@ -257,18 +257,18 @@ DEF TM01 EQU const_value
 	add_tm SLUDGE_BOMB  ; e4
 	add_tm SANDSTORM    ; e5
 	add_tm FIRE_BLAST   ; e6
-	add_tm SWIFT        ; e7
+	add_tm DOUBLE_EDGE  ; e7
 	add_tm DEFENSE_CURL ; e8
 	add_tm THUNDERPUNCH ; e9
 	add_tm DREAM_EATER  ; ea
-	add_tm DETECT       ; eb
+	add_tm FOCUS_PUNCH  ; eb
 	add_tm REST         ; ec
 	add_tm ATTRACT      ; ed
 	add_tm THIEF        ; ee
 	add_tm STEEL_WING   ; ef
 	add_tm FIRE_PUNCH   ; f0
 	add_tm FURY_CUTTER  ; f1
-	add_tm NIGHTMARE    ; f2
+	add_tm OUTRAGE      ; f2
 DEF NUM_TMS EQU __tmhm_value__ - 1
 
 MACRO add_hm

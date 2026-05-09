@@ -359,14 +359,14 @@ LEADER_BADGE_FLAGS = {
 }
 
 LEADER_REWARDS = {
-    "FALKNER": ("EVENT_GOT_TM31_MUD_SLAP", "TM_VOUCHER"),
-    "BUGSY": ("EVENT_GOT_TM49_FURY_CUTTER", "TM_VOUCHER"),
-    "WHITNEY": ("EVENT_GOT_TM45_ATTRACT", "TM_VOUCHER"),
-    "MORTY": ("EVENT_GOT_TM30_SHADOW_BALL", "TM_VOUCHER"),
-    "CHUCK": ("EVENT_GOT_TM01_DYNAMICPUNCH", "TM_VOUCHER"),
-    "JASMINE": ("EVENT_GOT_TM23_IRON_TAIL", "TM_VOUCHER"),
-    "PRYCE": ("EVENT_GOT_TM16_ICY_WIND", "TM_VOUCHER"),
-    "CLAIR": ("EVENT_GOT_TM24_DRAGONBREATH", "TM_VOUCHER"),
+    "FALKNER": ("EVENT_GOT_TM31_MUD_SLAP", "TM_WING_ATTACK"),
+    "BUGSY": ("EVENT_GOT_TM49_FURY_CUTTER", "TM_LEECH_LIFE"),
+    "WHITNEY": ("EVENT_GOT_TM45_ATTRACT", "TM_DOUBLE_EDGE"),
+    "MORTY": ("EVENT_GOT_TM30_SHADOW_BALL", "TM_SHADOW_BALL"),
+    "CHUCK": ("EVENT_GOT_TM01_DYNAMICPUNCH", ("TM_DYNAMICPUNCH", "TM_FOCUS_PUNCH")),
+    "JASMINE": ("EVENT_GOT_TM23_IRON_TAIL", "TM_IRON_TAIL"),
+    "PRYCE": ("EVENT_GOT_TM16_ICY_WIND", "TM_BLIZZARD"),
+    "CLAIR": ("EVENT_GOT_TM24_DRAGONBREATH", "TM_OUTRAGE"),
     "ERIKA": ("EVENT_GOT_TM19_GIGA_DRAIN", "TM_GIGA_DRAIN"),
     "JANINE": ("EVENT_GOT_TM06_TOXIC", "TM_TOXIC"),
 }
@@ -1142,16 +1142,19 @@ def check_battle_resources(
 
     reward = LEADER_REWARDS.get(leader.trainer_class)
     if reward is not None:
-        _reward_event, reward_item = reward
-        check_item_resource(
-            f"{leader.name} reward",
-            reward_item,
-            item_indexes,
-            item_attribute_count,
-            item_name_count,
-            item_description_count,
-            failures,
-        )
+        _reward_event, reward_items = reward
+        if isinstance(reward_items, str):
+            reward_items = (reward_items,)
+        for reward_item in reward_items:
+            check_item_resource(
+                f"{leader.name} reward",
+                reward_item,
+                item_indexes,
+                item_attribute_count,
+                item_name_count,
+                item_description_count,
+                failures,
+            )
 
 
 def check_map_resources(
@@ -1378,15 +1381,18 @@ def check_leader_aftermath(
     if reward is None:
         return
 
-    reward_event, reward_item = reward
+    reward_event, reward_items = reward
+    if isinstance(reward_items, str):
+        reward_items = (reward_items,)
     if reward_event not in event_constants:
         fail(failures, f"{leader.name}: reward event constant is missing: {reward_event}")
-    if reward_item not in item_constants:
-        fail(failures, f"{leader.name}: reward item constant is missing: {reward_item}")
+    for reward_item in reward_items:
+        if reward_item not in item_constants:
+            fail(failures, f"{leader.name}: reward item constant is missing: {reward_item}")
 
     reward_snippets = [
         f"checkevent {reward_event}",
-        f"verbosegiveitem {reward_item}",
+        *(f"verbosegiveitem {reward_item}" for reward_item in reward_items),
         f"setevent {reward_event}",
     ]
     for snippet in reward_snippets:

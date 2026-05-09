@@ -555,8 +555,8 @@ Treat `bug_hunt_triage.py` as a lead printer, not a proof gate. If it reports
 nothing, keep hunting by invariant; if it reports a lead, prove or reject the
 specific source path before broadening. Current lead families include duplicate
 move-effect commands, raw held-effect compares, Boss AI base-data restore leaks,
-reopened rejected leads, commented-out flag refreshes, TM Tutor `wCurItem`
-restore leaks, and memory loads that may branch on stale `z`/`nz` flags.
+reopened rejected leads, commented-out flag refreshes, and memory loads that
+may branch on stale `z`/`nz` flags.
 After editing the triage heuristics, run:
 
 ```powershell

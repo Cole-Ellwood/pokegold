@@ -215,16 +215,15 @@ AREAS: tuple[Area, ...] = (
     ),
     Area(
         title="Maps, events, and QoL scripts",
-        intent="Map scripts, specials, NPC events, progression, tutors, and reminders.",
+        intent="Map scripts, specials, NPC events, progression, and reminders.",
         paths=(
             "maps",
             "data/maps",
             "data/events/special_pointers.asm",
             "engine/events/move_reminder.asm",
-            "engine/events/tm_tutor.asm",
             "engine/overworld",
         ),
-        symbols=("Special", "SpecialsPointers", "MoveReminder", "TMTutorTeachAnyTM"),
+        symbols=("Special", "SpecialsPointers", "MoveReminder"),
     ),
     Area(
         title="RAM, saves, and temporary battle state",

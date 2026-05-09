@@ -114,7 +114,7 @@ ItemNames::
 	li "EVERSTONE"
 	li "SPELL TAG"
 	li "RAGECANDYBAR"
-	li "TM VOUCHER"
+	li "?"
 	li "CHOICE BAND"
 	li "MIRACLE SEED"
 	li "THICK CLUB"
