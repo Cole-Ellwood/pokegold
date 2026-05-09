@@ -3993,6 +3993,35 @@ BattleCommand_EvasionUp2:
 	ld b, $10 | EVASION
 	jr BattleCommand_StatUp
 
+BattleCommand_BestAttackUp:
+; Boost ATTACK if user's current Atk >= SpA, else boost SP_ATTACK.
+; Mirrors the Atk-vs-SpA category swap in TypePassive_GetEffectiveMoveCategory_Far
+; (used to make Outrage physical for high-Atk Dragons). Ties go to ATTACK.
+; Stat fields are big-endian 2-byte computed (macros/ram.asm:35).
+	ld b, ATTACK
+	ld hl, wPlayerAttack
+	ld de, wPlayerSpAtk
+	ldh a, [hBattleTurn]
+	and a
+	jr z, .got_stats
+	ld hl, wEnemyAttack
+	ld de, wEnemySpAtk
+.got_stats
+	ld a, [de]
+	cp [hl]
+	jr c, .done
+	jr nz, .upgrade
+	inc hl
+	inc de
+	ld a, [de]
+	cp [hl]
+	jr c, .done
+	jr z, .done
+.upgrade
+	ld b, SP_ATTACK
+.done
+	jr BattleCommand_StatUp
+
 BattleCommand_StatUp:
 	call RaiseStat
 	ld a, [wFailedMessage]

@@ -33,7 +33,7 @@ Read `docs/README.md` first for helper-doc routing, then `docs/project_context.m
 ### Battle mechanics
 - Intent: Shared damage, status, switching, item, and turn-flow rules.
 - Start here: `engine/battle/core.asm`, `engine/battle/effect_commands.asm`, `engine/battle/type_passive_damage_mods.asm`, `engine/battle/late_gen_held_items.asm`, `engine/battle/move_effects`, `constants/battle_constants.asm`
-- Anchors: `TypePassive_ApplyDamageModifiers_Far` (0e:7643, `engine/battle/type_passive_damage_mods.asm:44`); `TypePassive_TryDarkStatusShield_Far` (0e:7bcd, `engine/battle/type_passive_damage_mods.asm:1070`); `TypePassive_MaybePoisonRetaliation_Far` (0e:7c1c, `engine/battle/type_passive_damage_mods.asm:1131`); `ApplyLateGenDamageMultipliers_Far` (0e:71d9, `engine/battle/late_gen_held_items.asm:183`); `HandleLateGenAfterHitEffects_Far` (0e:7292, `engine/battle/late_gen_held_items.asm:301`); `TryActivateDittoImposter` (01:7a10, `engine/battle/ditto_imposter.asm:1`)
+- Anchors: `TypePassive_ApplyDamageModifiers_Far` (0e:7643, `engine/battle/type_passive_damage_mods.asm:44`); `TypePassive_TryDarkStatusShield_Far` (0e:7bcd, `engine/battle/type_passive_damage_mods.asm:1070`); `TypePassive_MaybePoisonRetaliation_Far` (0e:7c1c, `engine/battle/type_passive_damage_mods.asm:1131`); `ApplyLateGenDamageMultipliers_Far` (0e:71d9, `engine/battle/late_gen_held_items.asm:183`); `HandleLateGenAfterHitEffects_Far` (0e:7292, `engine/battle/late_gen_held_items.asm:301`); `TryActivateDittoImposter` (01:7a12, `engine/battle/ditto_imposter.asm:1`)
 
 ### Moves
 - Intent: Move stats, effects, descriptions, contact flags, and animations.
@@ -75,7 +75,7 @@ Read `docs/README.md` first for helper-doc routing, then `docs/project_context.m
 | Region | Used | Free | Banks |
 | --- | ---: | ---: | ---: |
 | ROM0 | 16133 | 251 |  |
-| ROMX | 1150545 | 930223 | 127 |
+| ROMX | 1150584 | 930184 | 127 |
 | SRAM | 31699 | 1069 | 4 |
 | WRAM0 | 4047 | 49 |  |
 | WRAMX | 4096 | 0 |  |
@@ -114,8 +114,8 @@ Bank numbers in this table are hexadecimal.
 | WRAMX | 01 | 0 |
 | ROMX | 1c | 1 |
 | ROMX | 1f | 1 |
+| ROMX | 0d | 2 |
 | ROMX | 1a | 4 |
-| ROMX | 0d | 39 |
 | ROMX | 10 | 46 |
 | ROMX | 16 | 48 |
 | WRAM0 | 00 | 49 |
@@ -151,7 +151,7 @@ Use these as candidates when moving optional code or data out of tight banks.
 | --- | --- | --- | ---: | --- | --- |
 | `Home` | ROM0 | 00:0150-3fdc | 16013 | ROM0 00 | `home.asm`, `home/array.asm`, `home/audio.asm`, `home/battle.asm`, +49 more |
 | `bankB` | ROMX | 0b:4000-4cdf | 3296 | ROMX 0b | `engine/battle/ai/redundant.asm`, `engine/battle/trainer_huds.asm`, `engine/events/move_deleter.asm`, `engine/events/move_reminder.asm`, +6 more |
-| `Effect Commands` | ROMX | 0d:4000-7fd8 | 16345 | ROMX 0d | `engine/battle/effect_commands.asm`, `engine/battle/used_move_text.asm`, `main.asm` |
+| `Effect Commands` | ROMX | 0d:4000-7ffd | 16382 | ROMX 0d | `engine/battle/effect_commands.asm`, `engine/battle/used_move_text.asm`, `main.asm` |
 | `Enemy Trainers` | ROMX | 0e:4000-7103 | 12548 | ROMX 0e | `engine/battle/ai/boss.asm`, `engine/battle/ai/items.asm`, `engine/battle/read_trainer_attributes.asm`, `main.asm` |
 | `Late Gen Held Items` | ROMX | 0e:7104-7e88 | 3461 |  | `engine/battle/late_gen_held_items.asm`, `engine/battle/type_passive_damage_mods.asm`, `main.asm` |
 | `Battle Core` | ROMX | 0f:4000-7bad | 15278 | ROMX 0f | `engine/battle/core.asm`, `main.asm` |
@@ -227,7 +227,7 @@ Use these as candidates when moving optional code or data out of tight banks.
 | `TypePassive_MaybePoisonRetaliation_Far` | 0e:7c1c | `engine/battle/type_passive_damage_mods.asm:1131` |
 | `ApplyLateGenDamageMultipliers_Far` | 0e:71d9 | `engine/battle/late_gen_held_items.asm:183` |
 | `HandleLateGenAfterHitEffects_Far` | 0e:7292 | `engine/battle/late_gen_held_items.asm:301` |
-| `TryActivateDittoImposter` | 01:7a10 | `engine/battle/ditto_imposter.asm:1` |
+| `TryActivateDittoImposter` | 01:7a12 | `engine/battle/ditto_imposter.asm:1` |
 | `Moves` | 10:5af6 | `data/moves/moves.asm:14` |
 | `MoveEffects` | 09:750c | `data/moves/effects.asm:3` |
 | `MoveContactFlags` | 0e:7d8b | `data/moves/contact_flags.asm:4` |
