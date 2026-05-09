@@ -9,41 +9,22 @@ CianwoodPhotoStudio_MapScripts:
 CianwoodPhotoStudioFishingGuruScript:
 	faceplayer
 	opentext
-	writetext CianwoodPhotoStudioFishingGuruText_Question
-	yesorno
-	iffalse .Refused
-	writetext CianwoodPhotoStudioFishingGuruText_Yes
-	waitbutton
-	special PhotoStudio
+	writetext CianwoodPhotoStudioFishingGuruText
 	waitbutton
 	closetext
 	end
 
-.Refused:
-	writetext CianwoodPhotoStudioFishingGuruText_No
-	waitbutton
-	closetext
-	end
+CianwoodPhotoStudioFishingGuruText:
+	text "Sorry."
+	line "The PHOTO STUDIO"
+	cont "is closed today."
 
-CianwoodPhotoStudioFishingGuruText_Question:
-	text "You have magnifi-"
-	line "cent #MON with"
-	cont "you."
+	para "Film is hard to"
+	line "get this far out."
 
-	para "How about a photo"
-	line "for a souvenir?"
-	done
-
-CianwoodPhotoStudioFishingGuruText_Yes:
-	text "OK! Big smile now!"
-	done
-
-CianwoodPhotoStudioFishingGuruText_No:
-	text "Oh, that's too"
-	line "bad. I thought it"
-
-	para "would be a great"
-	line "memento…"
+	para "I still keep the"
+	line "lamps ready, just"
+	cont "in case."
 	done
 
 CianwoodPhotoStudio_MapEvents:

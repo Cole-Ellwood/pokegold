@@ -75,7 +75,7 @@ Read `docs/README.md` first for helper-doc routing, then `docs/project_context.m
 | Region | Used | Free | Banks |
 | --- | ---: | ---: | ---: |
 | ROM0 | 16067 | 317 |  |
-| ROMX | 1145097 | 935671 | 127 |
+| ROMX | 1144929 | 935839 | 127 |
 | SRAM | 31699 | 1069 | 4 |
 | WRAM0 | 4047 | 49 |  |
 | WRAMX | 4096 | 0 |  |
@@ -169,7 +169,7 @@ Use these as candidates when moving optional code or data out of tight banks.
 | `Phone Scripts` | ROMX | 41:4000-614c | 8525 | ROMX 41 | `data/phone/text/bike_shop.asm`, `data/phone/text/bill.asm`, `data/phone/text/elm.asm`, `data/phone/text/mom.asm`, +9 more |
 | `Map Scripts 1` | ROMX | 42:4000-5dd9 | 7642 | ROMX 42 | `data/maps/scripts.asm`, `maps/BurnedTower1F.asm`, `maps/BurnedTowerB1F.asm`, `maps/DiglettsCave.asm`, +19 more |
 | `Map Scripts 2` | ROMX | 43:4000-7197 | 12696 | ROMX 43 | `data/maps/scripts.asm`, `maps/NationalPark.asm`, `maps/NationalParkBugContest.asm`, `maps/RadioTower1F.asm`, +4 more |
-| `Map Scripts 3` | ROMX | 44:4000-6fb0 | 12209 | ROMX 44 | `data/maps/scripts.asm`, `maps/OlivineLighthouse1F.asm`, `maps/OlivineLighthouse2F.asm`, `maps/OlivineLighthouse3F.asm`, +15 more |
+| `Map Scripts 3` | ROMX | 44:4000-6f80 | 12161 | ROMX 44 | `data/maps/scripts.asm`, `maps/OlivineLighthouse1F.asm`, `maps/OlivineLighthouse2F.asm`, `maps/OlivineLighthouse3F.asm`, +15 more |
 | `Map Scripts 4` | ROMX | 45:4000-6f47 | 12104 | ROMX 45 | `data/maps/scripts.asm`, `maps/IlexForest.asm`, `maps/MahoganyMart1F.asm`, `maps/TeamRocketBaseB1F.asm`, +2 more |
 | `Map Scripts 5` | ROMX | 46:4000-636f | 9072 | ROMX 46 | `data/maps/scripts.asm`, `maps/GoldenrodDeptStoreB1F.asm`, `maps/GoldenrodUnderground.asm`, `maps/GoldenrodUndergroundSwitchRoomEntrances.asm`, +10 more |
 | `Map Scripts 6` | ROMX | 47:4000-49a3 | 2468 | ROMX 47 | `data/maps/scripts.asm`, `maps/DarkCaveBlackthornEntrance.asm`, `maps/DarkCaveVioletEntrance.asm`, `maps/DragonsDen1F.asm`, +14 more |
@@ -193,8 +193,8 @@ Use these as candidates when moving optional code or data out of tight banks.
 | `Map Scripts 24` | ROMX | 5a:4000-5f84 | 8069 | ROMX 5a | `data/maps/scripts.asm`, `maps/BrunosRoom.asm`, `maps/HallOfFame.asm`, `maps/IndigoPlateauPokecenter1F.asm`, +10 more |
 | `Map Scripts 25` | ROMX | 5b:4000-695c | 10589 | ROMX 5b | `data/maps/scripts.asm`, `maps/FastShip1F.asm`, `maps/FastShipB1F.asm`, `maps/FastShipCabins_NNW_NNE_NE.asm`, +9 more |
 | `Map Scripts 26` | ROMX | 5c:4000-5608 | 5641 | ROMX 5c | `data/maps/scripts.asm`, `maps/BillsOlderSistersHouse.asm`, `maps/Colosseum.asm`, `maps/FuchsiaGym.asm`, +11 more |
-| `Map Scripts 27` | ROMX | 5d:4000-5e37 | 7736 | ROMX 5d | `data/maps/scripts.asm`, `maps/CianwoodGym.asm`, `maps/CianwoodLugiaSpeechHouse.asm`, `maps/CianwoodPharmacy.asm`, +13 more |
-| `Map Scripts 28` | ROMX | 5e:4000-6aca | 10955 | ROMX 5e | `data/maps/scripts.asm`, `maps/CeladonCafe.asm`, `maps/CeladonDeptStore1F.asm`, `maps/CeladonDeptStore2F.asm`, +19 more |
+| `Map Scripts 27` | ROMX | 5d:4000-5e06 | 7687 | ROMX 5d | `data/maps/scripts.asm`, `maps/CianwoodGym.asm`, `maps/CianwoodLugiaSpeechHouse.asm`, `maps/CianwoodPharmacy.asm`, +13 more |
+| `Map Scripts 28` | ROMX | 5e:4000-6a83 | 10884 | ROMX 5e | `data/maps/scripts.asm`, `maps/CeladonCafe.asm`, `maps/CeladonDeptStore1F.asm`, `maps/CeladonDeptStore2F.asm`, +19 more |
 | `Map Scripts 29` | ROMX | 5f:4000-51d6 | 4567 | ROMX 5f | `data/maps/scripts.asm`, `maps/Route2Gate.asm`, `maps/Route2NuggetHouse.asm`, `maps/TrainerHouse1F.asm`, +7 more |
 | `Map Scripts 30` | ROMX | 60:4000-666a | 9835 | ROMX 60 | `data/maps/scripts.asm`, `maps/DayOfWeekSiblingsHouse.asm`, `maps/ElmsHouse.asm`, `maps/ElmsLab.asm`, +6 more |
 | `Map Scripts 31` | ROMX | 61:4000-5921 | 6434 | ROMX 61 | `data/maps/scripts.asm`, `maps/CopycatsHouse1F.asm`, `maps/CopycatsHouse2F.asm`, `maps/FightingDojo.asm`, +10 more |

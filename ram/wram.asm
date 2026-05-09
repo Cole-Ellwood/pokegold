@@ -123,8 +123,8 @@ wMapTimeOfDay:: db
 
 	ds 3
 
-; was wPrinterConnectionOpen + wPrinterOpcode (GB Printer subsystem removed);
-; placeholder preserves WRAM offsets of subsequent fields.
+; GB Printer state bytes removed; placeholder preserves WRAM offsets of
+; subsequent fields.
 	ds 2
 wPrevDexEntry:: db
 wDisableTextAcceleration:: db
