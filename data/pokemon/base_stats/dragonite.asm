@@ -1,6 +1,6 @@
 	db DRAGONITE ; 149
 
-	db 121, 134,  95,  20, 130, 100
+	db 121, 134,  95,  70, 110, 100
 	;   hp  atk  def  spd  sat  sdf
 
 	db DRAGON, FLYING ; type

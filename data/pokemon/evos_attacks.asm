@@ -215,7 +215,7 @@ BeedrillEvosAttacks:
 	db 20, TWINEEDLE
 	db 25, SLUDGE_BOMB
 	db 33, DOUBLE_EDGE
-	db 38, DRAGON_DANCE
+	db 38, SWORDS_DANCE
 	db 0 ; no more level-up moves
 
 PidgeyEvosAttacks:
@@ -799,6 +799,7 @@ ArcanineEvosAttacks:
 	db 1, LEER
 	db 1, TAKE_DOWN
 	db 1, FLAME_WHEEL
+	db 35, DRAGON_DANCE
 	db 36, AGILITY
 	db 42, DRAGONBREATH
 	db 42, EXTREMESPEED
@@ -1349,7 +1350,7 @@ KrabbyEvosAttacks:
 	db 1, BUBBLE
 	db 5, LEER
 	db 12, VICEGRIP
-	db 16, DRAGON_DANCE
+	db 16, HARDEN
 	db 21, SUBMISSION
 	db 27, GUILLOTINE
 	db 34, PROTECT
@@ -1791,14 +1792,15 @@ MagikarpEvosAttacks:
 GyaradosEvosAttacks:
 	db 0 ; no more evolutions
 	db 1, THRASH
+	db 1, TWISTER
 	db 20, BITE
 	db 25, DRAGON_RAGE
 	db 30, LEER
-	db 35, DRAGONBREATH
+	db 32, DRAGONBREATH
+	db 35, DRAGON_DANCE
 	db 40, HYDRO_PUMP
-	db 45, DRAGON_DANCE
-	db 50, OUTRAGE
 	db 50, HYPER_BEAM
+	db 55, OUTRAGE
 	db 0 ; no more level-up moves
 
 LaprasEvosAttacks:
@@ -1952,7 +1954,7 @@ AerodactylEvosAttacks:
 	db 1, WING_ATTACK
 	db 8, AGILITY
 	db 15, BITE
-	db 22, DRAGON_DANCE
+	db 22, SCARY_FACE
 	db 29, ANCIENTPOWER
 	db 36, DOUBLE_EDGE
 	db 40, HYPER_BEAM
@@ -2013,14 +2015,15 @@ DratiniEvosAttacks:
 	db 0 ; no more evolutions
 	db 1, WRAP
 	db 1, LEER
+	db 1, TWISTER
 	db 8, THUNDER_WAVE
-	db 15, TWISTER
 	db 22, DRAGON_RAGE
 	db 29, SLAM
 	db 32, DRAGONBREATH
+	db 35, DRAGON_DANCE
 	db 36, AGILITY
 	db 43, SAFEGUARD
-	db 50, OUTRAGE
+	db 55, OUTRAGE
 	db 57, HYPER_BEAM
 	db 0 ; no more level-up moves
 DragonairEvosAttacks:
@@ -2035,9 +2038,10 @@ DragonairEvosAttacks:
 	db 22, DRAGON_RAGE
 	db 29, SLAM
 	db 32, DRAGONBREATH
+	db 35, DRAGON_DANCE
 	db 38, AGILITY
 	db 47, SAFEGUARD
-	db 56, OUTRAGE
+	db 55, OUTRAGE
 	db 65, HYPER_BEAM
 	db 0 ; no more level-up moves
 
@@ -2052,10 +2056,11 @@ DragoniteEvosAttacks:
 	db 22, DRAGON_RAGE
 	db 29, SLAM
 	db 32, DRAGONBREATH
+	db 35, DRAGON_DANCE
 	db 38, AGILITY
 	db 47, SAFEGUARD
 	db 55, WING_ATTACK
-	db 61, OUTRAGE
+	db 55, OUTRAGE
 	db 75, HYPER_BEAM
 	db 0 ; no more level-up moves
 
@@ -2213,7 +2218,7 @@ FeraligatrEvosAttacks:
 	db 13, WATER_GUN
 	db 21, BITE
 	db 28, SCARY_FACE
-	db 38, DRAGON_DANCE
+	db 38, SLASH
 	db 45, HYDRO_PUMP
 	db 0 ; no more level-up moves
 
@@ -2482,13 +2487,15 @@ AmpharosEvosAttacks:
 	db 1, GROWL
 	db 1, THUNDERSHOCK
 	db 1, THUNDER_WAVE
+	db 1, TWISTER
 	db 9, THUNDERSHOCK
 	db 18, THUNDER_WAVE
 	db 27, COTTON_SPORE
 	db 27, HEAL_BELL
 	db 30, THUNDERPUNCH
-	db 42, DRAGONBREATH
-	db 57, OUTRAGE
+	db 32, DRAGONBREATH
+	db 35, DRAGON_DANCE
+	db 55, OUTRAGE
 	db 57, THUNDER
 	db 0 ; no more level-up moves
 
@@ -2640,12 +2647,16 @@ YanmaEvosAttacks:
 	db 0 ; no more evolutions
 	db 1, TACKLE
 	db 1, FORESIGHT
+	db 1, TWISTER
 	db 7, QUICK_ATTACK
 	db 13, DOUBLE_TEAM
 	db 17, LEECH_LIFE
 	db 25, WING_ATTACK
 	db 31, SLEEP_POWDER
+	db 32, DRAGONBREATH
+	db 35, DRAGON_DANCE
 	db 37, SWIFT
+	db 55, OUTRAGE
 	db 0 ; no more level-up moves
 
 WooperEvosAttacks:
@@ -2814,14 +2825,16 @@ SteelixEvosAttacks:
 	db 0 ; no more evolutions
 	db 1, TACKLE
 	db 1, SCREECH
+	db 1, TWISTER
 	db 10, BIND
 	db 14, ROCK_THROW
 	db 23, HARDEN
 	db 27, RAGE
 	db 30, IRON_HEAD
+	db 32, DRAGONBREATH
 	db 35, DRAGON_DANCE
-	db 38, OUTRAGE
 	db 40, IRON_TAIL
+	db 55, OUTRAGE
 	db 0 ; no more level-up moves
 
 SnubbullEvosAttacks:
@@ -3103,11 +3116,12 @@ KingdraEvosAttacks:
 	db 1, SMOKESCREEN
 	db 1, LEER
 	db 1, WATER_GUN
+	db 1, TWISTER
 	db 8, SMOKESCREEN
 	db 22, WATER_GUN
 	db 29, TWISTER
-	db 40, DRAGONBREATH
-	db 40, DRAGON_DANCE
+	db 32, DRAGONBREATH
+	db 35, DRAGON_DANCE
 	db 51, HYDRO_PUMP
 	db 55, OUTRAGE
 	db 0 ; no more level-up moves
@@ -3156,7 +3170,7 @@ StantlerEvosAttacks:
 	db 8, LEER
 	db 15, HYPNOSIS
 	db 23, STOMP
-	db 25, DRAGON_DANCE
+	db 25, SAND_ATTACK
 	db 31, DOUBLE_EDGE
 	db 0 ; no more level-up moves
 

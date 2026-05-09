@@ -1,9 +1,9 @@
 	db YANMA ; 193
 
-	db  85, 110,  60,  95,  50,  80
+	db  70,  90,  60,  95,  90,  80
 	;   hp  atk  def  spd  sat  sdf
 
-	db BUG, FLYING ; type
+	db BUG, DRAGON ; type
 	db 75 ; catch rate
 	db 147 ; base exp
 	db NO_ITEM, NO_ITEM ; items
