@@ -332,11 +332,13 @@ TypePassive_ApplyDamageModifiers_Far:
 	ld b, a
 	ld a, [hl]
 	ld c, a
-	ld a, [de]
-	ld d, a
-	inc de
-	ld a, [de]
+	ld a, [de]                ; Save MaxHP_high to stack so the read of MaxHP_low
+	push af                   ; doesn't have to wait for `ld d, a` (which would
+	inc de                    ; clobber de's high byte and cause `inc de` to
+	ld a, [de]                ; wrap into ROM at $00xx).
 	ld e, a
+	pop af
+	ld d, a
 	ret
 
 .GetOpponentHPAndMax:
@@ -352,11 +354,13 @@ TypePassive_ApplyDamageModifiers_Far:
 	ld b, a
 	ld a, [hl]
 	ld c, a
-	ld a, [de]
-	ld d, a
+	ld a, [de]                ; See .GetUserHPAndMax above for why this uses
+	push af                   ; push/pop af instead of `ld d, a` upfront.
 	inc de
 	ld a, [de]
 	ld e, a
+	pop af
+	ld d, a
 	ret
 
 .IsUserBelowOneThirdHP:

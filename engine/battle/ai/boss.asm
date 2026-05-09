@@ -3259,14 +3259,92 @@ BossAI_CurrentEnemyMoveScoredPower:
 
 .reversal_high
 	ld a, 100
-	ret
+	jr .scale
 
 .reversal_mid
 	ld a, 70
-	ret
+	jr .scale
 
 .raw_power
 	ld a, [wEnemyMoveStruct + MOVE_POWER]
+.scale
+	jp BossAI_ScaleMovePowerByBaseStatRatio
+
+BossAI_ScaleMovePowerByBaseStatRatio:
+; Scale raw move power by attacker_base/defender_base ratio on the
+; relevant stat axis. PHYSICAL uses Atk/Def; SPECIAL uses SpA/SpD.
+; Both sides use base stats only (public info — no player IV/EV reads).
+; Stage and held-item multipliers are NOT applied here yet; that layer
+; lands in a follow-up using computed stats (stat modifiers multiply
+; the COMPUTED stat including the +5 floor and IV/EV term, so they
+; must be applied in computed-stat space, not via base × multiplier).
+;
+; Input:  a = raw power (0 means status — returned as-is)
+; Output: a = stat-scaled power, clamped to 0..255
+; Clobbers: bc, de, hl, HRAM math UNION
+	and a
+	ret z
+	ld c, a
+
+	call BossAI_CurrentEnemyMoveCategory
+	cp SPECIAL  ; carry set if PHYSICAL, clear if SPECIAL
+	push af
+
+	ld a, [wEnemyMonSpecies]
+	ld [wCurSpecies], a
+	call GetBaseData
+	pop af
+	push af
+	ld a, [wCurBaseData + BASE_ATK]
+	jr c, .got_atk
+	ld a, [wCurBaseData + BASE_SAT]
+.got_atk
+	ld d, a
+
+	ld a, [wBattleMonSpecies]
+	ld [wCurSpecies], a
+	call GetBaseData
+	pop af
+	ld a, [wCurBaseData + BASE_DEF]
+	jr c, .got_def
+	ld a, [wCurBaseData + BASE_SDF]
+.got_def
+	and a
+	jr z, .div_zero
+	ld b, a
+
+	xor a
+	ldh [hMultiplicand + 0], a
+	ldh [hMultiplicand + 1], a
+	ld a, d
+	ldh [hMultiplicand + 2], a
+	ld a, c
+	ldh [hMultiplier], a
+	call Multiply
+
+	ld a, b
+	ldh [hDivisor], a
+	ld b, 4
+	call Divide
+
+	ldh a, [hQuotient + 0]
+	or a
+	jr nz, .clamp_max
+	ldh a, [hQuotient + 1]
+	or a
+	jr nz, .clamp_max
+	ldh a, [hQuotient + 2]
+	or a
+	jr nz, .clamp_max
+	ldh a, [hQuotient + 3]
+	ret
+
+.clamp_max
+	ld a, 255
+	ret
+
+.div_zero
+	ld a, c
 	ret
 
 ; ai-layer: POLICY

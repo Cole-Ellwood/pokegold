@@ -1496,7 +1496,11 @@ CheckTypeMatchup:
 	ldh [hMultiplicand + 0], a
 	ldh [hMultiplicand + 1], a
 	ld a, [hli]
+	push hl                        ; CheckTypeMatchup_ApplyDragonsMajestyMultiplier
 	call CheckTypeMatchup_ApplyDragonsMajestyMultiplier
+	pop hl                         ; chains into a farcall (§3.2) that clobbers hl;
+	                               ; without push/pop, the matchup loop's table
+	                               ; pointer reads stack garbage on subsequent rows.
 	ldh [hMultiplicand + 2], a
 	ld a, [wTypeMatchup]
 	ldh [hMultiplier], a
@@ -2933,19 +2937,7 @@ DEF MIN_DAMAGE EQU 2
 DEF DAMAGE_CAP EQU MAX_DAMAGE - MIN_DAMAGE
 
 	ld hl, wCurDamage
-	ld b, [hl]
-	ldh a, [hQuotient + 3]
-	add b
-	ldh [hQuotient + 3], a
-	jr nc, .dont_cap_1
 
-	ldh a, [hQuotient + 2]
-	inc a
-	ldh [hQuotient + 2], a
-	and a
-	jr z, .Cap
-
-.dont_cap_1
 	ldh a, [hQuotient]
 	ld b, a
 	ldh a, [hQuotient + 1]
