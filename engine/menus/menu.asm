@@ -215,7 +215,6 @@ _ScrollingMenuJoypad::
 	jr .loopRTC
 
 .pressed
-	vc_hook Forbid_printing_photo_studio
 	call _2DMenuInterpretJoypad
 	jp c, .done
 	ld a, [w2DMenuFlags1]
@@ -245,7 +244,6 @@ Menu_WasButtonPressed:
 	and a
 	ret z
 	scf
-	vc_hook Forbid_printing_PC_Box
 	ret
 
 _2DMenuInterpretJoypad:

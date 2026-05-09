@@ -46,25 +46,9 @@ ReadAnyMail:
 .loop
 	call GetJoypad
 	ldh a, [hJoyPressed]
-	and PAD_A | PAD_B | PAD_START
+	and PAD_A | PAD_B
 	jr z, .loop
-	vc_patch Forbid_printing_mail
-if DEF(_GOLD_VC) || DEF(_SILVER_VC)
-	and NO_INPUT
-else
-	and PAD_START
-endc
-	vc_patch_end
-	jr nz, .pressed_start
 	ret
-
-.pressed_start
-	ld a, [wJumptableIndex]
-	push af
-	callfar PrintMailAndExit ; printer
-	pop af
-	ld [wJumptableIndex], a
-	jr .loop
 
 .LoadGFX:
 	ld h, d

@@ -123,8 +123,9 @@ wMapTimeOfDay:: db
 
 	ds 3
 
-wPrinterConnectionOpen:: db
-wPrinterOpcode:: db
+; was wPrinterConnectionOpen + wPrinterOpcode (GB Printer subsystem removed);
+; placeholder preserves WRAM offsets of subsequent fields.
+	ds 2
 wPrevDexEntry:: db
 wDisableTextAcceleration:: db
 wPCItemsCursor:: db
@@ -409,42 +410,6 @@ SECTION UNION "Overworld Map", WRAM0
 
 ; decompress buffer in wram
 wDecompressScratch:: ds 40 tiles
-
-
-SECTION UNION "Overworld Map", WRAM0
-
-; GB Printer data
-wGameboyPrinterRAM::
-wGameboyPrinter2bppSource:: ds 40 tiles
-wGameboyPrinter2bppSourceEnd::
-wUnusedGameboyPrinterSafeCancelFlag:: db
-wPrinterRowIndex:: db
-
-; Printer data
-wPrinterData:: ds 4
-wPrinterChecksum:: dw
-wPrinterHandshake:: db
-wPrinterStatusFlags::
-; bit 7: set if error 1 (battery low)
-; bit 6: set if error 4 (too hot or cold)
-; bit 5: set if error 3 (paper jammed or empty)
-; if this and the previous byte are both $ff: error 2 (connection error)
-	db
-
-wHandshakeFrameDelay:: db
-wPrinterSerialFrameDelay:: db
-wPrinterSendByteOffset:: dw
-wPrinterSendByteCounter:: dw
-
-; tilemap backup?
-wPrinterTilemapBuffer:: ds SCREEN_AREA
-wPrinterStatus:: db
-	ds 1
-; High nibble is for margin before the image, low nibble is for after.
-wPrinterMargins:: db
-wPrinterExposureTime:: db
-	ds 16
-wGameboyPrinterRAMEnd::
 
 
 SECTION UNION "Overworld Map", WRAM0
@@ -1216,7 +1181,6 @@ wHallOfFameMonCounter::
 wTradeDialog::
 	db
 wFrameCounter2::
-wPrinterQueueLength::
 wUnusedSGB1eColorOffset::
 	db
 ENDU
@@ -1461,19 +1425,6 @@ wMovementBufferObject:: db
 wUnusedMovementBufferBank:: db
 wUnusedMovementBufferPointer:: dw
 wMovementBuffer:: ds 55
-
-NEXTU
-; box printing
-wWhichBoxMonToPrint:: db
-wFinishedPrintingBox:: db
-wAddrOfBoxToPrint:: dw
-wBankOfBoxToPrint:: db
-wWhichBoxToPrint:: db
-
-NEXTU
-; Unown printing
-wPrintedUnownTileSource:: ds 1 tiles
-wPrintedUnownTileDest:: ds 1 tiles
 
 NEXTU
 ; trainer HUD data
@@ -2296,12 +2247,8 @@ wTextboxFlags::
 ; bit 1: when unset, no text delay
 	db
 wGBPrinterBrightness::
-; bit 0-6: brightness
-;   lightest: $00
-;   lighter:  $20
-;   normal:   $40 (default)
-;   darker:   $60
-;   darkest:  $7F
+; GB Printer subsystem removed; symbol kept as a save-format anchor.
+; Nothing reads or writes this byte; default_options.asm zero-fills it.
 	db
 wOptions2::
 ; bit 0: menu account off/on
