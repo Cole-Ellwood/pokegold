@@ -2107,7 +2107,7 @@ DragonDance:
 	checkobedience
 	usedmovetext
 	doturn
-	attackup
+	bestattackup
 	lowersub
 	statupanim
 	raisesub
