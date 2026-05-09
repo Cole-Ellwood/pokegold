@@ -104,9 +104,13 @@ OverworldTownMap:
 	ret
 
 UnownPrinter:
-	call FadeToMenu
-	farcall _UnownPrinter
-	call ExitAllMenus
+; GB Printer subsystem removed; NPC dialog still calls this special.
+; Keep the entry as a no-op so map scripts continue to build and run.
+	ret
+
+PhotoStudio:
+; Cianwood Photo Studio: GB Printer subsystem removed. Stub keeps
+; map script intact; NPC dialogue cleanup is a follow-up taste call.
 	ret
 
 DisplayLinkRecord:
@@ -446,8 +450,10 @@ Diploma:
 	ret
 
 PrintDiploma:
+; GB Printer subsystem removed. Redirect the Graphic Artist's "print"
+; branch to the on-screen diploma viewer so the NPC still has an effect.
 	call FadeToMenu
-	farcall _PrintDiploma
+	farcall _Diploma
 	call ExitAllMenus
 	ret
 
