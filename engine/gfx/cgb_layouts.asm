@@ -60,7 +60,7 @@ CGBLayoutJumptable:
 	dw _CGB_PlayerOrMonFrontpicPals
 	dw _CGB_TradeTube
 	dw _CGB_TrainerOrMonFrontpicPals
-	dw _CGB_MysteryGift
+	dw _CGB_Unused1D
 	dw _CGB_Unused1E
 	dw _CGB_Pokedex_5x5
 	assert_table_length NUM_SCGB_LAYOUTS
@@ -857,15 +857,9 @@ _CGB_TrainerOrMonFrontpicPals:
 	call ApplyPals
 	ret
 
-_CGB_MysteryGift:
-	ld hl, .MysteryGiftPalette
-	ld de, wBGPals1
-	ld bc, 1 palettes
-	call CopyBytes
-	call ApplyPals
+_CGB_Unused1D:
+	ld hl, PalPacket_Diploma + 1
+	call CopyFourPalettes
 	call WipeAttrmap
 	call ApplyAttrmap
 	ret
-
-.MysteryGiftPalette:
-INCLUDE "gfx/mystery_gift/mystery_gift.pal"

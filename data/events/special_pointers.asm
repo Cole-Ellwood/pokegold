@@ -31,9 +31,9 @@ SpecialsPointers::
 	add_special Colosseum
 	add_special TimeCapsule
 	add_special CableClubCheckWhichChris
-	add_special CheckMysteryGift
-	add_special GetMysteryGiftItem
-	add_special UnlockMysteryGift
+	add_special UnusedLinkFeatureSpecial1
+	add_special UnusedLinkFeatureSpecial2
+	add_special UnusedLinkFeatureSpecial3
 
 ; Map events
 	add_special BugContestJudging
