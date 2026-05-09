@@ -75,7 +75,7 @@ Read `docs/README.md` first for helper-doc routing, then `docs/project_context.m
 | Region | Used | Free | Banks |
 | --- | ---: | ---: | ---: |
 | ROM0 | 16067 | 317 |  |
-| ROMX | 1145000 | 935768 | 127 |
+| ROMX | 1144929 | 935839 | 127 |
 | SRAM | 31699 | 1069 | 4 |
 | WRAM0 | 4047 | 49 |  |
 | WRAMX | 4096 | 0 |  |
@@ -194,7 +194,7 @@ Use these as candidates when moving optional code or data out of tight banks.
 | `Map Scripts 25` | ROMX | 5b:4000-695c | 10589 | ROMX 5b | `data/maps/scripts.asm`, `maps/FastShip1F.asm`, `maps/FastShipB1F.asm`, `maps/FastShipCabins_NNW_NNE_NE.asm`, +9 more |
 | `Map Scripts 26` | ROMX | 5c:4000-5608 | 5641 | ROMX 5c | `data/maps/scripts.asm`, `maps/BillsOlderSistersHouse.asm`, `maps/Colosseum.asm`, `maps/FuchsiaGym.asm`, +11 more |
 | `Map Scripts 27` | ROMX | 5d:4000-5e06 | 7687 | ROMX 5d | `data/maps/scripts.asm`, `maps/CianwoodGym.asm`, `maps/CianwoodLugiaSpeechHouse.asm`, `maps/CianwoodPharmacy.asm`, +13 more |
-| `Map Scripts 28` | ROMX | 5e:4000-6aca | 10955 | ROMX 5e | `data/maps/scripts.asm`, `maps/CeladonCafe.asm`, `maps/CeladonDeptStore1F.asm`, `maps/CeladonDeptStore2F.asm`, +19 more |
+| `Map Scripts 28` | ROMX | 5e:4000-6a83 | 10884 | ROMX 5e | `data/maps/scripts.asm`, `maps/CeladonCafe.asm`, `maps/CeladonDeptStore1F.asm`, `maps/CeladonDeptStore2F.asm`, +19 more |
 | `Map Scripts 29` | ROMX | 5f:4000-51d6 | 4567 | ROMX 5f | `data/maps/scripts.asm`, `maps/Route2Gate.asm`, `maps/Route2NuggetHouse.asm`, `maps/TrainerHouse1F.asm`, +7 more |
 | `Map Scripts 30` | ROMX | 60:4000-666a | 9835 | ROMX 60 | `data/maps/scripts.asm`, `maps/DayOfWeekSiblingsHouse.asm`, `maps/ElmsHouse.asm`, `maps/ElmsLab.asm`, +6 more |
 | `Map Scripts 31` | ROMX | 61:4000-5921 | 6434 | ROMX 61 | `data/maps/scripts.asm`, `maps/CopycatsHouse1F.asm`, `maps/CopycatsHouse2F.asm`, `maps/FightingDojo.asm`, +10 more |

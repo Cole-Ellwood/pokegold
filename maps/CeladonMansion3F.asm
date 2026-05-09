@@ -57,12 +57,6 @@ GameFreakGraphicArtistScript:
 	closetext
 	end
 
-.CancelPrinting: ; unreferenced
-	writetext GameFreakGraphicArtistErrorText
-	waitbutton
-	closetext
-	end
-
 GameFreakProgrammerScript:
 	jumptextfaceplayer GameFreakProgrammerText
 
@@ -106,8 +100,8 @@ GameFreakGameDesignerPauseForDiplomaText:
 
 GameFreakGameDesignerAfterDiplomaText:
 	text "The GRAPHIC ARTIST"
-	line "will print out a"
-	cont "DIPLOMA for you."
+	line "has a DIPLOMA"
+	cont "ready for you."
 
 	para "You should go show"
 	line "it off."
@@ -127,20 +121,14 @@ GameFreakGraphicArtistPrintDiplomaText:
 	para "Oh, you completed"
 	line "your #DEX?"
 
-	para "Want me to print"
-	line "out your DIPLOMA?"
+	para "Want to see your"
+	line "DIPLOMA?"
 	done
 
 GameFreakGraphicArtistRefusedText:
 	text "Give me a shout if"
-	line "you want your"
-	cont "DIPLOMA printed."
-	done
-
-GameFreakGraphicArtistErrorText:
-	text "Something's wrong."
-	line "I'll have to can-"
-	cont "cel printing."
+	line "you want to see"
+	cont "your DIPLOMA."
 	done
 
 GameFreakProgrammerText:
