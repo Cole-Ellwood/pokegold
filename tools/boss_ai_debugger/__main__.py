@@ -9,14 +9,23 @@ from tools.boss_ai_preference.data import (
     DEFAULT_FIXTURES_PATH,
     DEFAULT_JSON_REPORT_PATH,
     DEFAULT_LABELS_PATH,
+    DEFAULT_PREFERENCES_PATH,
     DEFAULT_REPORT_PATH,
     PreferenceDataError,
     append_label,
     fixture_map,
     load_fixtures,
+    load_labels,
+    load_preferences,
     write_report,
 )
 
+from .regression import (
+    evaluate_corpus,
+    exit_code_for_result,
+    format_summary,
+    write_json_report,
+)
 from .scorer import format_inspection, inspect_fixture
 
 
@@ -24,9 +33,13 @@ def path_arg(value: str) -> Path:
     return Path(value)
 
 
-def add_common_paths(parser: argparse.ArgumentParser) -> None:
+def add_common_paths(
+    parser: argparse.ArgumentParser,
+    *,
+    labels_default: Path = DEFAULT_LABELS_PATH,
+) -> None:
     parser.add_argument("--fixtures", type=path_arg, default=DEFAULT_FIXTURES_PATH)
-    parser.add_argument("--labels", type=path_arg, default=DEFAULT_LABELS_PATH)
+    parser.add_argument("--labels", type=path_arg, default=labels_default)
 
 
 def _load_fixture(fixtures_path: Path, fixture_id: str) -> dict:
@@ -85,6 +98,29 @@ def cmd_report(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_regress(args: argparse.Namespace) -> int:
+    if args.threshold < 0 or args.threshold > 1:
+        raise PreferenceDataError("threshold must be between 0 and 1")
+
+    fixtures = load_fixtures(args.fixtures)
+    labels = load_preferences(args.labels, fixtures=fixtures)
+    rank_labels = (
+        load_labels(DEFAULT_LABELS_PATH, fixtures=fixtures)
+        if args.include_rank_labels
+        else None
+    )
+    result = evaluate_corpus(
+        fixtures,
+        labels,
+        args.threshold,
+        rank_labels=rank_labels,
+    )
+    print(format_summary(result, quiet=args.quiet))
+    if args.json_out != "":
+        write_json_report(result, Path(args.json_out))
+    return exit_code_for_result(result)
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="python -m tools.boss_ai_debugger")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -113,6 +149,14 @@ def build_parser() -> argparse.ArgumentParser:
     report_cmd.add_argument("--out", type=path_arg, default=DEFAULT_REPORT_PATH)
     report_cmd.add_argument("--json-out", type=path_arg, default=DEFAULT_JSON_REPORT_PATH)
     report_cmd.set_defaults(func=cmd_report)
+
+    regress_cmd = subparsers.add_parser("regress")
+    add_common_paths(regress_cmd, labels_default=DEFAULT_PREFERENCES_PATH)
+    regress_cmd.add_argument("--threshold", type=float, default=0.80)
+    regress_cmd.add_argument("--json-out", default="")
+    regress_cmd.add_argument("--include-rank-labels", action="store_true")
+    regress_cmd.add_argument("--quiet", action="store_true")
+    regress_cmd.set_defaults(func=cmd_regress)
     return parser
 
 

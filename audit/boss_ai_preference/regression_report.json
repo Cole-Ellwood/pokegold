@@ -1,0 +1,50 @@
+{
+  "agreement_rate": 0.4,
+  "disagreements": [
+    {
+      "action_a_id": "move_gust",
+      "action_b_id": "move_sand_attack",
+      "fixture_id": "falkner_pidgeotto_vs_geodude_rock_risk",
+      "label_choice": "b_better",
+      "label_note": "both options are close, debuffs are normally weak but gust only does less than 10% so the chip is almost worthless. however multiple sand attacks would be worse, as geodude can switch out to remove all debuffs, so like 3 sand attacks cost 3 turns and geodude switches on turn to remove all debuffs. so sand attack then gust. switching to noctowl is interesting because noctowl can use special attacks to do more damage, but its not worth taking so much damage from geodude. better to sadn attack to weaken geodude then spam gust until you die for safe switch ",
+      "scorer_choice": "a_better",
+      "scorer_scores": {
+        "move_gust": 51,
+        "move_sand_attack": 50
+      }
+    },
+    {
+      "action_a_id": "move_swords_dance",
+      "action_b_id": "move_wing_attack",
+      "fixture_id": "bugsy_scyther_vs_quilava_fire_pressure",
+      "label_choice": "a_better",
+      "label_note": "if quilava is faster then wing attack is better, because otherwise it just goes ember > swords dance > ember and we die\n\nbut if scyther is faster, then it goes swords dance > ember > wing attack KOs. \n\nsince wing attack without a boost doesnt Ko quilava, we have to take an ember either way. swords dancing first still kills quilava in 2 turns, taking only one ember, and leaves us with +2",
+      "scorer_choice": "b_better",
+      "scorer_scores": {
+        "move_swords_dance": 52,
+        "move_wing_attack": 57
+      }
+    },
+    {
+      "action_a_id": "move_rollout",
+      "action_b_id": "move_body_slam",
+      "fixture_id": "whitney_miltank_vs_geodude_rollout_temptation",
+      "label_choice": "b_better",
+      "label_note": "both moves are good, and roll out is iconic. but since geodude has high defense and resists roll out, its best to body slam for extra damage and paralysis chance. once geodude is paralyzed, then switching to roll out is fine",
+      "scorer_choice": "a_better",
+      "scorer_scores": {
+        "move_body_slam": 42,
+        "move_rollout": 43
+      }
+    }
+  ],
+  "generated_at": "2026-05-09T21:05:57+00:00",
+  "schema_version": 1,
+  "skipped": {
+    "both_good": 1,
+    "other_better": 1
+  },
+  "strict_agreement_count": 2,
+  "strict_label_count": 5,
+  "threshold": 0.8
+}
