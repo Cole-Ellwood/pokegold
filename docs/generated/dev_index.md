@@ -58,7 +58,7 @@ Read `docs/README.md` first for helper-doc routing, then `docs/project_context.m
 ### RAM, saves, and temporary battle state
 - Intent: WRAM, SRAM, VRAM, HRAM, save data, and low-memory pressure points.
 - Start here: `ram/wram.asm`, `ram/sram.asm`, `ram/vram.asm`, `ram/hram.asm`
-- Anchors: `wBattleMode` (01:d116, `ram/wram.asm:2107`); `wEnemyMon` (01:d0ef, `ram/wram.asm:2100`); `wBattleMon` (00:cafc, `ram/wram.asm:747`); `hROMBank` (00:ff9f, `ram/hram.asm:26`)
+- Anchors: `wBattleMode` (01:d116, `ram/wram.asm:2058`); `wEnemyMon` (01:d0ef, `ram/wram.asm:2051`); `wBattleMon` (00:cafc, `ram/wram.asm:712`); `hROMBank` (00:ff9f, `ram/hram.asm:26`)
 
 ### Graphics
 - Intent: Pokemon pics, trainer pics, sprites, tilesets, palettes, and UI art.
@@ -244,9 +244,9 @@ Use these as candidates when moving optional code or data out of tight banks.
 | `Special` | 03:422b | `engine/events/specials.asm:1` |
 | `SpecialsPointers` | 03:4239 | `data/events/special_pointers.asm:14` |
 | `MoveReminder` | 0b:4451 | `engine/events/move_reminder.asm:8` |
-| `wBattleMode` | 01:d116 | `ram/wram.asm:2107` |
-| `wEnemyMon` | 01:d0ef | `ram/wram.asm:2100` |
-| `wBattleMon` | 00:cafc | `ram/wram.asm:747` |
+| `wBattleMode` | 01:d116 | `ram/wram.asm:2058` |
+| `wEnemyMon` | 01:d0ef | `ram/wram.asm:2051` |
+| `wBattleMon` | 00:cafc | `ram/wram.asm:712` |
 | `hROMBank` | 00:ff9f | `ram/hram.asm:26` |
 | `PokemonPicPointers` | 12:4000 | `data/pokemon/pic_pointers.asm:3` |
 | `TrainerPicPointers` | 20:4000 | `data/trainers/pic_pointers.asm:3` |
