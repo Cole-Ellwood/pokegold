@@ -681,7 +681,6 @@ BossAI_ApplyMoveModel:
 	call .ApplyRevealedDestinyBondAvoidance
 	call .ApplyCounterCoatTradeBias
 	call .ApplyRevealedCounterCoatAvoidance
-	call .ApplyMercyRefusalBias
 	call .ApplyChoiceFirstLockRegret
 	call .ApplyRevealedProtectCommitmentRisk
 	call .ApplyRevealedRecoveryDenialBias
@@ -1564,62 +1563,6 @@ BossAI_ApplyMoveModel:
 	ld a, EFFECT_MIRROR_COAT
 .counter_coat_trap_scan
 	jp .PlayerHasRevealedEffectA
-
-.ApplyMercyRefusalBias
-; Prediction-driven non-damaging pick when a KO is available against a low-HP
-; player. Fires only when BossAI_PredictPlayerSwitch is high enough that a
-; setup/Spikes/status play actually beats the KO; the encourage magnitude is
-; capped so the KO still wins roughly 9 times out of 10 even when this fires.
-	ld a, [wBossAITier]
-	cp AI_TIER_LATE
-	ret c
-	ld a, [wEnemyMoveStruct + MOVE_POWER]
-	and a
-	ret nz
-	call .MercyRefusalCandidate
-	ret nc
-	call AICheckPlayerQuarterHP_HL
-	ret c
-	call .EnemyUnderPressure
-	ret c
-	push hl
-	call BossAI_HasAnyKOMove
-	pop hl
-	ret nc
-	push hl
-	call BossAI_PredictPlayerSwitch
-	pop hl
-	cp 60
-	ret c
-	ld a, 2
-	jp BossAI_EncourageScoreHL
-
-.MercyRefusalCandidate
-	call .UtilityMoveWouldFailPublicly
-	jr c, .mercy_no
-	call BossAI_IsCurrentEnemySetupMove
-	ret c
-	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
-	cp EFFECT_SPIKES
-	jr z, .mercy_spikes
-	ld hl, BossAIStatusEffects
-	ld de, 1
-	call IsInArray
-	jr nc, .mercy_no
-	call .StatusMoveWouldFailPublicly
-	jr c, .mercy_no
-	scf
-	ret
-.mercy_spikes
-	ld a, [wPlayerScreens]
-	and SCREENS_SPIKES_MASK
-	cp 3
-	jr nc, .mercy_no
-	scf
-	ret
-.mercy_no
-	and a
-	ret
 
 .ApplyChoiceFirstLockRegret
 	ld a, [wEnemyMoveStruct + MOVE_POWER]

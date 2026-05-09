@@ -96,11 +96,6 @@ Implemented behavior:
   speed says the boss should move first, Encore gets a stronger trap
   encouragement after public fail gates pass. This does not read the player's
   current-turn choice, hidden move list, hidden PP, or hidden party.
-- Late bosses now have a small public Mercy Refusal bias: when the player
-  active is visibly at quarter HP or lower, the boss is not under public
-  pressure, and the boss already has a KO-pressure move, publicly valid setup,
-  Spikes, or status can receive a small non-KO encouragement. This punishes sack
-  bait without reading the player's current turn or hidden reserves.
 - Mid and late bosses now have a public Destiny Bond trade-window bias. If a
   Destiny Bond user is visibly at quarter HP or lower, has no KO line, is
   publicly faster, and the active player has a public threat, Destiny Bond gets
@@ -186,14 +181,12 @@ Important anchors:
 - `.PlayerHasRevealedAntiSetup`
 - `.ApplyRevealedSelfdestructProtectBias`
 - `.PlayerHasRevealedSelfdestruct`
-- `.ApplyMercyRefusalBias`
 - `BossAI_CurrentEnemyMoveScoredPower`
 - `BossAI_ShouldRespectPotentialPlayerRevenge`
 - `BossAI_EnemyPerishEscapeUrgent`
 - `BossAI_SeenBenchThreatScore`
 - `BossAI_RecordPlayerFaint`
 - `wBossAISeenPlayerAliveMask`
-- `.MercyRefusalCandidate`
 - `.ApplyChoiceFirstLockRegret`
 - `.SeenSpeciesChoiceLockRisk`
 - `.ApplySetupPunishBias`

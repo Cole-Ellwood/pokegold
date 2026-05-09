@@ -1427,7 +1427,6 @@ def audit_item_and_passive_reasoning(boss: str) -> None:
             "call .ApplyDestinyBondTradeBias",
             "call .ApplyRevealedDestinyBondAvoidance",
             "call .ApplyCounterCoatTradeBias",
-            "call .ApplyMercyRefusalBias",
             "call .ApplyChoiceFirstLockRegret",
             "call BossAI_CurrentEnemyMoveAccuracyRisky",
         ],
@@ -1535,7 +1534,7 @@ def audit_item_and_passive_reasoning(boss: str) -> None:
         "Air Balloon threat nullifier uses held effect",
     )
 
-    destiny = local_block(move_model, ".ApplyDestinyBondTradeBias", ".ApplyMercyRefusalBias")
+    destiny = local_block(move_model, ".ApplyDestinyBondTradeBias", ".ApplyRevealedDestinyBondAvoidance")
     require_order(
         destiny,
         [
@@ -1599,7 +1598,7 @@ def audit_item_and_passive_reasoning(boss: str) -> None:
         "Counter/Mirror Coat public trade-window gates",
     )
 
-    countercoat_seen = local_block(move_model, ".PlayerHasRevealedCounterCoatCategory", ".ApplyMercyRefusalBias")
+    countercoat_seen = local_block(move_model, ".PlayerHasRevealedCounterCoatCategory", ".ApplyRevealedCounterCoatAvoidance")
     for needle in (
         "wPlayerUsedMoves",
         "Moves + MOVE_POWER",
@@ -1615,7 +1614,7 @@ def audit_item_and_passive_reasoning(boss: str) -> None:
         [
             "call .ApplyCounterCoatTradeBias",
             "call .ApplyRevealedCounterCoatAvoidance",
-            "call .ApplyMercyRefusalBias",
+            "call .ApplyChoiceFirstLockRegret",
         ],
         "revealed Counter/Mirror Coat avoidance hook",
     )
@@ -1645,7 +1644,7 @@ def audit_item_and_passive_reasoning(boss: str) -> None:
     countercoat_trap = local_block(
         move_model,
         ".PlayerHasRevealedCounterCoatTrap",
-        ".ApplyMercyRefusalBias",
+        ".ApplyChoiceFirstLockRegret",
     )
     require_order(
         countercoat_trap,
@@ -1660,33 +1659,6 @@ def audit_item_and_passive_reasoning(boss: str) -> None:
         ],
         "revealed Counter/Mirror Coat trap scan uses shared public effect helper",
     )
-
-    mercy = local_block(move_model, ".ApplyMercyRefusalBias", ".MercyRefusalCandidate")
-    require_order(
-        mercy,
-        [
-            "wBossAITier",
-            "AI_TIER_LATE",
-            "wEnemyMoveStruct + MOVE_POWER",
-            "call .MercyRefusalCandidate",
-            "call AICheckPlayerQuarterHP",
-            "call .EnemyUnderPressure",
-            "call BossAI_HasAnyKOMove",
-            "jp BossAI_EncourageScoreHL",
-        ],
-        "public Mercy Refusal gates",
-    )
-
-    mercy_candidate = local_block(move_model, ".MercyRefusalCandidate", ".ApplyChoiceFirstLockRegret")
-    for needle in (
-        "call .UtilityMoveWouldFailPublicly",
-        "call BossAI_IsCurrentEnemySetupMove",
-        "EFFECT_SPIKES",
-        "SCREENS_SPIKES_MASK",
-        "BossAIStatusEffects",
-        "call .StatusMoveWouldFailPublicly",
-    ):
-        require_contains(mercy_candidate, needle, "public Mercy Refusal candidate filter")
 
     choice_commit = local_block(move_model, ".ApplyChoiceFirstLockRegret", ".SeenSpeciesChoiceLockRisk")
     require_order(
@@ -2069,7 +2041,6 @@ def main() -> int:
         "revealed Destiny Bond KO avoidance",
         "Counter/Mirror Coat public trade-window bias",
         "revealed Counter/Mirror Coat avoidance",
-        "public Mercy Refusal sack-punish bias",
         "Choice first-lock public counterplay risk",
         "Reversal/Flail public HP-band pressure",
         "known item and passive tactical reasoning",

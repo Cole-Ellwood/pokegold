@@ -280,15 +280,6 @@ Current public trade traps:
   effect, and the existing public matchup pipeline. It must not inspect the
   player's current-turn choice, hidden moves/items, hidden reserves, RNG futures,
   or exact future damage rolls.
-- `engine/battle/ai/boss.asm`, `.ApplyMercyRefusalBias`.
-- Late tier only. The boss may slightly favor non-damaging setup, live Spikes,
-  or publicly valid status when the active player is visibly at quarter HP or
-  lower, the boss is not under public pressure, and the boss already has a
-  KO-pressure move available. Result is a small score encouragement only; it
-  does not force the line.
-- This is legal because it uses only public active HP bands and the boss's
-  own KO-pressure availability. It must not read the player's selected move,
-  hidden reserves, hidden items, or RNG futures.
 
 ## Decision Breadth And Play Budget
 
