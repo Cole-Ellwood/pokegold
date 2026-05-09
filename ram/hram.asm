@@ -43,7 +43,7 @@ hInMenu:: db
 
 	ds 1
 
-; was hPrinter (GB Printer subsystem removed); placeholder preserves HRAM offsets
+; GB Printer flag byte removed; placeholder preserves HRAM offsets
 	ds 1
 hGraphicStartTile:: db
 hMoveMon:: db
