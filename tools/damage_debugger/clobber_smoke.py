@@ -1,33 +1,37 @@
 """Multi-scenario clobber regression harness.
 
-Runs several damage-path scenarios and checks that wCurDamage matches an
-expected range. The point isn't precision — it's catching CLOBBER-CLASS
-bugs (§3.14, §3.13), which manifest as 5-10x damage spikes when a
-register carrying defender def, move BP, or attacker atk gets overwritten
-mid-chain. The c-clobber that shipped May 2026 turned wCurDamage from 4
-into 16 — exactly the kind of jump these range checks catch.
+Runs damage-path scenarios and checks that wCurDamage matches an expected
+range. The point isn't precision — it's catching CLOBBER-CLASS bugs (§3.13,
+§3.14), which manifest as 5-10x damage spikes when a register carrying
+defender def, move BP, or attacker atk gets overwritten mid-chain. The
+c-clobber that shipped May 2026 turned wCurDamage from 4 into 16 — exactly
+the kind of jump these range checks catch.
 
 Usage:
     python -m tools.damage_debugger.clobber_smoke
 
 Exit code: 0 if every scenario lands inside [expected_low, expected_high];
-nonzero otherwise.
+nonzero otherwise. On FAIL, the failing scenario's register snapshot at
+each instrumented entry/exit (`ALGDS_far_entry`, `ALGDS_far_done`,
+`Truncate_done`, etc.) is dumped to the log so the clobber's location can
+be read off the trace instead of bisected.
 
 Coverage today:
-    physical_no_items   — ALGDS_Far -> ApplyChoiceBandBoost (no-op),
-                          -> ApplyEvioliteDefenseBoost (no-op).
-                          The exact path that just shipped the c-clobber.
-    physical_critical   — Same chain + wCriticalHit=1 hits .CriticalMultiplier.
-    special_no_items    — ALGDS_Far -> ApplyChoiceSpecsBoost (no-op),
-                          -> ApplyAssaultVestBoostToDefense (no-op),
-                          -> ApplyEvioliteSpDefBoost (no-op).
+    physical_no_items          — no-op item branches (the clobber's path).
+    physical_critical          — same chain + wCriticalHit=1.
+    physical_choice_band       — Choice Band on attacker → atk * 3/2.
+    physical_eviolite_def      — Eviolite on defender (can-evolve) → def * 3/2.
+    special_no_items           — special branch through ALGDS.
+    special_choice_specs       — Choice Specs on attacker → spatk * 3/2.
+    special_assault_vest       — Assault Vest on defender → spdef * 3/2.
+    special_eviolite_spd       — Eviolite on defender → spdef * 3/2.
+    type-effectiveness         — super-effective, resisted, immune rows.
+    damage variation           — final 0.85-1.0 random multiplier range.
+    late-gen after-hit effects — Rocky Helmet, Shell Bell, Life Orb HP effects.
 
-Uncovered (any could ship a clobber undetected — extend this file):
-    Items present (Choice Band, Eviolite, Assault Vest, Choice Specs).
-      Need item-id setup + species-can-evolve check for Eviolite.
-    Type-effective (super-effective / not-very-effective).
-    DamageVariation (final 0.85-1.0 random multiplier).
-    HandleLateGenAfterHitEffects_Far (Rocky Helmet, Life Orb).
+Uncovered (any could ship a clobber undetected — extend SCENARIOS):
+    ApplyLateGenDamageMultipliers_Far (Muscle Band, Wise Glasses, Expert
+    Belt, Metronome, Life Orb post-quotient mods).
 """
 
 from __future__ import annotations
@@ -37,17 +41,47 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
 
-from pyboy import PyBoy
-
+from .paths import find_rom, find_sym
 from .safe_call import call_function_safe, read_be_u16_banked, write_byte_banked
+from .symbols import Symbol, SymbolTable
 
-ROOT = Path("C:/Users/lolno/Downloads/pokemon gold hack")
 LOG_PATH = (
     Path(__file__).resolve().parents[2]
     / "audit"
     / "damage_debugger"
     / "clobber_smoke.log"
 )
+
+
+# Item IDs used by item-present scenarios. Item IDs live in
+# constants/item_constants.asm and are listed in HEX in the comments
+# (CHOICE_BAND ; 74 means 0x74, not decimal 74).
+CHOICE_BAND_ID = 0x74
+CHOICE_SPECS_ID = 0x81
+ASSAULT_VEST_ID = 0x89
+EVOLITE_ID = 0x93
+LIFE_ORB_ID = 0x46
+SHELL_BELL_ID = 0x95
+ROCKY_HELMET_ID = 0x99
+
+NORMAL_TYPE = 0x00
+BUG_TYPE = 0x07
+GHOST_TYPE = 0x08
+FIRE_TYPE = 0x14
+WATER_TYPE = 0x15
+GRASS_TYPE = 0x16
+
+WEATHER_RAIN = 1
+WEATHER_SUN = 2
+VOLCANOBADGE_MASK = 1 << 6
+
+DEFAULT_CHAIN = (
+    "BattleCommand_DamageStats",
+    "BattleCommand_DamageCalc",
+    "BattleCommand_Stab",
+)
+
+PostCheck = Callable[[object, dict], tuple[bool, str]]
 
 
 @dataclass
@@ -57,21 +91,55 @@ class Scenario:
     expected_low: int
     expected_high: int
     note: str = ""
+    chain: tuple[str, ...] = DEFAULT_CHAIN
+    post_check: PostCheck | None = None
+    call_budget: int = 4800
+    allow_nonreturn: bool = False
+    # When True, an out-of-range damage is rendered as XFAIL (known-failure)
+    # rather than FAIL, and does NOT influence the harness exit code. Use for
+    # scenarios that surface a discovered-but-not-yet-fixed bug. Once the bug
+    # ships a fix, drop the flag so an actual passing scenario is required.
+    xfail: bool = False
+    xfail_reason: str = ""
+
+
+# Hooks fired during scenario execution; captured snapshots are emitted on
+# FAIL so a clobber's location is obvious rather than bisected. These are
+# the same key entry/exit points trace_chain.py uses for focused debugging.
+HOOK_TARGETS: list[tuple[str, str]] = [
+    ("BattleCommand_DamageStats", "DStats_entry"),
+    ("EnemyAttackDamage", "EnemyAtkDmg_entry"),
+    ("EnemyAttackDamage.done", "EnemyAtkDmg_done"),
+    ("PlayerAttackDamage", "PlayerAtkDmg_entry"),
+    ("PlayerAttackDamage.done", "PlayerAtkDmg_done"),
+    ("ApplyLateGenDamageStatsItemMods", "ALGDS_thunk_entry"),
+    ("ApplyLateGenDamageStatsItemMods_Far", "ALGDS_far_entry"),
+    ("ApplyLateGenDamageStatsItemMods_Far.done", "ALGDS_far_done"),
+    ("ApplyLateGenDamageStatsItemMods_Far.ApplyChoiceBandBoost", "ALGDS_choice_band"),
+    ("ApplyLateGenDamageStatsItemMods_Far.ApplyChoiceSpecsBoost", "ALGDS_choice_specs"),
+    ("ApplyLateGenDamageStatsItemMods_Far.ApplyAssaultVestBoostToDefense", "ALGDS_assault_vest"),
+    ("ApplyLateGenDamageStatsItemMods_Far.ApplyEvioliteDefenseBoost", "ALGDS_eviolite_def"),
+    ("ApplyLateGenDamageStatsItemMods_Far.ApplyEvioliteSpDefBoost", "ALGDS_eviolite_spd"),
+    ("DittoMetalPowder_Far", "DMP_entry"),
+    ("TypePassive_GetEffectiveMoveCategory_Far", "TPCat_entry"),
+    ("TypePassive_GetEffectiveMoveCategory_Far.done", "TPCat_done"),
+    ("TruncateHL_BC", "Truncate_entry"),
+    ("TruncateHL_BC.done", "Truncate_done"),
+    ("CheckDamageStatsCritical_Far", "CDSC_far_entry"),
+    ("BattleCommand_Stab", "Stab_entry"),
+    ("BattleCommand_Stab.end", "TypeMatchup_done"),
+    ("BattleCommand_DamageVariation", "DVariation_entry"),
+    ("BattleCommand_DamageVariation.loop", "DVariation_loop"),
+    ("HandleLateGenAfterHitEffects_Far", "AfterHit_entry"),
+    ("HandleLateGenAfterHitEffects_Far.MaybeApplyRockyHelmetRecoil", "AfterHit_rocky"),
+    ("HandleLateGenAfterHitEffects_Far.MaybeApplyShellBellHeal", "AfterHit_shell"),
+    ("HandleLateGenAfterHitEffects_Far.MaybeApplyLifeOrbRecoil", "AfterHit_life"),
+    ("HandleLateGenAfterHitEffects_Far.done", "AfterHit_done"),
+]
 
 
 def parse_sym(p: Path) -> dict:
-    out = {}
-    for line in p.read_text(encoding="utf-8", errors="replace").splitlines():
-        s = line.split(";", 1)[0].strip()
-        parts = s.split()
-        if len(parts) < 2 or ":" not in parts[0]:
-            continue
-        try:
-            b, a = parts[0].split(":", 1)
-            out[parts[1]] = (int(b, 16), int(a, 16))
-        except ValueError:
-            continue
-    return out
+    return SymbolTable.load(p).as_legacy_dict()
 
 
 def write_byte(pyboy, name, syms, value):
@@ -120,7 +188,11 @@ def _zero_meta(pyboy, syms):
         "wCriticalHit", "wTypeModifier", "wAttackMissed", "wIsConfusionDamage",
         "wEffectFailed", "wEnemyScreens", "wPlayerScreens", "wBattleMonStatus",
         "wEnemyMonStatus", "wBattleWeather", "wJohtoBadges", "wKantoBadges",
-        "wCurEnemyMove", "wCurPlayerMove",
+        "wCurEnemyMove", "wCurPlayerMove", "wLinkMode",
+        "wPlayerSubStatus1", "wPlayerSubStatus2", "wPlayerSubStatus3",
+        "wPlayerSubStatus4", "wPlayerSubStatus5",
+        "wEnemySubStatus1", "wEnemySubStatus2", "wEnemySubStatus3",
+        "wEnemySubStatus4", "wEnemySubStatus5",
     ):
         write_byte(pyboy, byte_field, syms, 0)
     write_byte(pyboy, "wTypeMatchup", syms, 0x10)
@@ -128,6 +200,28 @@ def _zero_meta(pyboy, syms):
     for stage in ("Atk", "Def", "Spd", "SAtk", "SDef"):
         write_byte(pyboy, f"wPlayer{stage}Level", syms, 7)
         write_byte(pyboy, f"wEnemy{stage}Level", syms, 7)
+
+
+def _read_be_u16(pyboy, name, syms) -> int | None:
+    s = syms.get(name)
+    if s is None:
+        return None
+    return read_be_u16_banked(pyboy, s[1], s[0])
+
+
+def _expect_u16s(expected: dict[str, int]) -> PostCheck:
+    def check(pyboy, syms) -> tuple[bool, str]:
+        mismatches: list[str] = []
+        seen: list[str] = []
+        for name, want in expected.items():
+            got = _read_be_u16(pyboy, name, syms)
+            seen.append(f"{name}={got}")
+            if got != want:
+                mismatches.append(f"{name}: expected {want}, got {got}")
+        if mismatches:
+            return False, "; ".join(mismatches)
+        return True, ", ".join(seen)
+    return check
 
 
 def _seed_pidgey_attacks_cyndaquil_with_tackle(pyboy, syms):
@@ -150,17 +244,7 @@ def _seed_pidgey_attacks_cyndaquil_with_tackle(pyboy, syms):
     write_byte(pyboy, "hBattleTurn", syms, 1)  # Enemy turn
 
 
-def seed_physical_no_items(pyboy, syms):
-    _seed_pidgey_attacks_cyndaquil_with_tackle(pyboy, syms)
-
-
-def seed_physical_critical(pyboy, syms):
-    _seed_pidgey_attacks_cyndaquil_with_tackle(pyboy, syms)
-    write_byte(pyboy, "wCriticalHit", syms, 1)
-
-
-def seed_special_no_items(pyboy, syms):
-    """Cyndaquil lvl 5 attacks Pidgey lvl 2 with Ember (FIRE special, BP 40)."""
+def _seed_cyndaquil_attacks_pidgey_with_ember(pyboy, syms):
     _seed_cyndaquil_lvl5(pyboy, syms, slot="Battle")
     _seed_pidgey_lvl2(pyboy, syms, slot="Enemy")
     write_be_u16(pyboy, "wPlayerAttack", syms, 10)
@@ -180,6 +264,146 @@ def seed_special_no_items(pyboy, syms):
     write_byte(pyboy, "hBattleTurn", syms, 0)  # Player turn
 
 
+def seed_physical_no_items(pyboy, syms):
+    _seed_pidgey_attacks_cyndaquil_with_tackle(pyboy, syms)
+
+
+def seed_physical_critical(pyboy, syms):
+    _seed_pidgey_attacks_cyndaquil_with_tackle(pyboy, syms)
+    write_byte(pyboy, "wCriticalHit", syms, 1)
+
+
+def seed_physical_choice_band(pyboy, syms):
+    """Pidgey Tackle vs Cyndaquil with Choice Band on attacker → atk * 3/2."""
+    _seed_pidgey_attacks_cyndaquil_with_tackle(pyboy, syms)
+    # Attacker is Enemy (Pidgey); Choice Band hooks via _CheckUserItemEquals.
+    write_byte(pyboy, "wEnemyMonItem", syms, CHOICE_BAND_ID)
+
+
+def seed_physical_eviolite_def(pyboy, syms):
+    """Pidgey Tackle vs Cyndaquil with Eviolite on defender → def * 3/2.
+
+    Cyndaquil (155) evolves into Quilava → .SpeciesCanEvolve is true."""
+    _seed_pidgey_attacks_cyndaquil_with_tackle(pyboy, syms)
+    # Defender is Player (Cyndaquil); Eviolite hooks via _CheckOpponentItemEquals.
+    write_byte(pyboy, "wBattleMonItem", syms, EVOLITE_ID)
+
+
+def seed_special_no_items(pyboy, syms):
+    """Cyndaquil lvl 5 attacks Pidgey lvl 2 with Ember (FIRE special, BP 40)."""
+    _seed_cyndaquil_attacks_pidgey_with_ember(pyboy, syms)
+
+
+def seed_special_choice_specs(pyboy, syms):
+    """Cyndaquil Ember vs Pidgey with Choice Specs on attacker → spatk * 3/2."""
+    _seed_cyndaquil_attacks_pidgey_with_ember(pyboy, syms)
+    write_byte(pyboy, "wBattleMonItem", syms, CHOICE_SPECS_ID)
+
+
+def seed_special_assault_vest(pyboy, syms):
+    """Cyndaquil Ember vs Pidgey with Assault Vest on defender → spdef * 3/2."""
+    _seed_cyndaquil_attacks_pidgey_with_ember(pyboy, syms)
+    write_byte(pyboy, "wEnemyMonItem", syms, ASSAULT_VEST_ID)
+
+
+def seed_special_eviolite_spd(pyboy, syms):
+    """Cyndaquil Ember vs Pidgey with Eviolite on defender → spdef * 3/2.
+
+    Pidgey (16) evolves into Pidgeotto → .SpeciesCanEvolve is true."""
+    _seed_cyndaquil_attacks_pidgey_with_ember(pyboy, syms)
+    write_byte(pyboy, "wEnemyMonItem", syms, EVOLITE_ID)
+
+
+def seed_special_sun_fire(pyboy, syms):
+    """Cyndaquil Ember vs Pidgey under sun -> weather 1.5x before STAB."""
+    _seed_cyndaquil_attacks_pidgey_with_ember(pyboy, syms)
+    write_byte(pyboy, "wBattleWeather", syms, WEATHER_SUN)
+
+
+def seed_special_rain_fire(pyboy, syms):
+    """Cyndaquil Ember vs Pidgey under rain -> weather 0.5x before STAB."""
+    _seed_cyndaquil_attacks_pidgey_with_ember(pyboy, syms)
+    write_byte(pyboy, "wBattleWeather", syms, WEATHER_RAIN)
+
+
+def seed_special_fire_badge(pyboy, syms):
+    """Cyndaquil Ember vs Pidgey with VolcanoBadge -> damage + damage/8 before STAB."""
+    _seed_cyndaquil_attacks_pidgey_with_ember(pyboy, syms)
+    write_byte(pyboy, "wKantoBadges", syms, VOLCANOBADGE_MASK)
+
+
+def seed_special_super_effective(pyboy, syms):
+    """Cyndaquil Ember vs a GRASS/BUG defender -> two FIRE super-effective rows."""
+    _seed_cyndaquil_attacks_pidgey_with_ember(pyboy, syms)
+    write_byte(pyboy, "wEnemyMonType1", syms, GRASS_TYPE)
+    write_byte(pyboy, "wEnemyMonType2", syms, BUG_TYPE)
+
+
+def seed_special_not_very_effective(pyboy, syms):
+    """Cyndaquil Ember vs a WATER/FIRE defender -> two resisted FIRE rows."""
+    _seed_cyndaquil_attacks_pidgey_with_ember(pyboy, syms)
+    write_byte(pyboy, "wEnemyMonType1", syms, WATER_TYPE)
+    write_byte(pyboy, "wEnemyMonType2", syms, FIRE_TYPE)
+
+
+def seed_physical_immune(pyboy, syms):
+    """Pidgey Tackle vs a GHOST/GHOST defender -> NORMAL immunity zeros damage."""
+    _seed_pidgey_attacks_cyndaquil_with_tackle(pyboy, syms)
+    write_byte(pyboy, "wBattleMonType1", syms, GHOST_TYPE)
+    write_byte(pyboy, "wBattleMonType2", syms, GHOST_TYPE)
+
+
+def _seed_player_tackle_afterhit_base(pyboy, syms, *, cur_damage: int = 16):
+    """Player-side contact hit state for isolated after-hit effect checks."""
+    _seed_cyndaquil_attacks_pidgey_with_ember(pyboy, syms)
+    pm = syms["wPlayerMoveStruct"]
+    # Tackle is a contact move; the handler checks the move id through
+    # BATTLE_VARS_MOVE_ANIM, not the attacker's type.
+    for offset, val in [(0, 0x21), (1, 0x00), (2, 40), (3, NORMAL_TYPE), (4, 0xFF), (5, 35), (6, 0)]:
+        write_byte_banked(pyboy, pm[1] + offset, val, pm[0])
+    write_byte(pyboy, "wCurPlayerMove", syms, 0x21)
+    write_byte(pyboy, "hBattleTurn", syms, 0)
+    write_be_u16(pyboy, "wCurDamage", syms, cur_damage)
+    write_be_u16(pyboy, "wBattleMonHP", syms, 30)
+    write_be_u16(pyboy, "wBattleMonMaxHP", syms, 30)
+    write_be_u16(pyboy, "wEnemyMonHP", syms, 30)
+    write_be_u16(pyboy, "wEnemyMonMaxHP", syms, 30)
+
+
+def seed_afterhit_rocky_helmet(pyboy, syms):
+    """Opponent Rocky Helmet recoils the player by maxHP/6 after contact."""
+    _seed_player_tackle_afterhit_base(pyboy, syms)
+    write_byte(pyboy, "wEnemyMonItem", syms, ROCKY_HELMET_ID)
+
+
+def seed_afterhit_shell_bell(pyboy, syms):
+    """Player Shell Bell heals max(1, wCurDamage/8) after a damaging hit."""
+    _seed_player_tackle_afterhit_base(pyboy, syms)
+    write_be_u16(pyboy, "wBattleMonHP", syms, 10)
+    write_byte(pyboy, "wBattleMonItem", syms, SHELL_BELL_ID)
+
+
+def seed_afterhit_life_orb(pyboy, syms):
+    """Player Life Orb recoils the user by maxHP/10 after a damaging hit."""
+    _seed_player_tackle_afterhit_base(pyboy, syms)
+    write_byte(pyboy, "wBattleMonItem", syms, LIFE_ORB_ID)
+
+
+# Ranges are loose enough to absorb DamageVariation-free integer noise but
+# tight enough that a 4-10x clobber-class regression always trips them.
+#
+# Note on physical_choice_band: at lvl 2 vs lvl 5 the Gen 2 damage formula's
+# integer floor masks the +50% atk boost (atk=6 vs atk=9 both round to dmg
+# 4 post-STAB). The range stays tight (3-7) so a clobber escalating into
+# the ~16-24 zone still trips. Special-side scenarios use bigger stats and
+# show the boost explicitly.
+#
+# Note on the two Eviolite-on-evolvable scenarios: discovered as XFAIL when
+# this expansion landed -- `.SpeciesCanEvolve` clobbered `bc` and `hl`
+# without push/pop, propagating ~3x and ~25x damage spikes through
+# TruncateHL_BC. Fixed by push/pop bc/hl at the call site (engine/battle/
+# late_gen_held_items.asm:81 and :92), same shape as the AG-08 c-clobber
+# fix (sec 3.14).
 SCENARIOS = [
     Scenario(
         "physical_no_items", seed_physical_no_items, 3, 5,
@@ -187,32 +411,277 @@ SCENARIOS = [
     ),
     Scenario(
         "physical_critical", seed_physical_critical, 5, 8,
-        "Same + wCriticalHit=1 → .CriticalMultiplier doubles the pre-+2 quotient (1*2+2=4 → Stab x1.5 = 6).",
+        "Same + wCriticalHit=1 -> pre-Stab quotient * 2.",
+    ),
+    Scenario(
+        "physical_choice_band", seed_physical_choice_band, 3, 7,
+        "Choice Band on attacker -> atk * 3/2 (formula floor masks visible delta at this level).",
+    ),
+    Scenario(
+        "physical_eviolite_def", seed_physical_eviolite_def, 2, 5,
+        "Eviolite on defender (Cyndaquil can evolve) -> def * 3/2 -> ~3.",
     ),
     Scenario(
         "special_no_items", seed_special_no_items, 11, 16,
         "Cyndaquil Ember vs Pidgey. Routes through ALGDS Special branch.",
     ),
+    Scenario(
+        "special_choice_specs", seed_special_choice_specs, 16, 24,
+        "Choice Specs on attacker -> spatk * 3/2 -> ~19.",
+    ),
+    Scenario(
+        "special_assault_vest", seed_special_assault_vest, 6, 12,
+        "Assault Vest on defender -> spdef * 3/2 -> ~9.",
+    ),
+    Scenario(
+        "special_eviolite_spd", seed_special_eviolite_spd, 6, 12,
+        "Eviolite on defender (Pidgey can evolve) -> spdef * 3/2 -> ~9.",
+    ),
+    Scenario(
+        "special_sun_fire", seed_special_sun_fire, 17, 22,
+        "Sun boosts FIRE damage 1.5x before STAB.",
+    ),
+    Scenario(
+        "special_rain_fire", seed_special_rain_fire, 5, 8,
+        "Rain halves FIRE damage before STAB.",
+    ),
+    Scenario(
+        "special_fire_badge", seed_special_fire_badge, 13, 17,
+        "VolcanoBadge adds damage/8 before STAB on player FIRE move.",
+    ),
+    Scenario(
+        "special_super_effective", seed_special_super_effective, 50, 54,
+        "FIRE vs GRASS/BUG runs two super-effective type rows -> 52.",
+    ),
+    Scenario(
+        "special_not_very_effective", seed_special_not_very_effective, 1, 3,
+        "FIRE vs WATER/FIRE runs two resisted type rows plus WATER special resist -> 2.",
+    ),
+    Scenario(
+        "physical_immune", seed_physical_immune, 0, 0,
+        "NORMAL Tackle into GHOST/GHOST must zero wCurDamage.",
+    ),
+    Scenario(
+        "special_super_effective_variation", seed_special_super_effective, 44, 52,
+        "Same super-effective FIRE case after DamageVariation; final RNG multiplier stays 0.85-1.0.",
+        chain=DEFAULT_CHAIN + ("BattleCommand_DamageVariation",),
+    ),
+    Scenario(
+        "afterhit_rocky_helmet", seed_afterhit_rocky_helmet, 16, 16,
+        "Isolated after-hit handler: contact into Rocky Helmet subtracts player maxHP/6.",
+        chain=("HandleLateGenAfterHitEffects_Far",),
+        post_check=_expect_u16s({"wBattleMonHP": 25, "wEnemyMonHP": 30}),
+        call_budget=500,
+        allow_nonreturn=True,
+    ),
+    Scenario(
+        "afterhit_shell_bell", seed_afterhit_shell_bell, 16, 16,
+        "Isolated after-hit handler: Shell Bell heals player by wCurDamage/8.",
+        chain=("HandleLateGenAfterHitEffects_Far",),
+        post_check=_expect_u16s({"wBattleMonHP": 12, "wEnemyMonHP": 30}),
+        call_budget=500,
+        allow_nonreturn=True,
+    ),
+    Scenario(
+        "afterhit_life_orb", seed_afterhit_life_orb, 16, 16,
+        "Isolated after-hit handler: Life Orb subtracts player maxHP/10.",
+        chain=("HandleLateGenAfterHitEffects_Far",),
+        post_check=_expect_u16s({"wBattleMonHP": 27, "wEnemyMonHP": 30}),
+        call_budget=500,
+        allow_nonreturn=True,
+    ),
 ]
 
 
-def run_scenario(scenario: Scenario, syms: dict, rom_path: Path) -> int:
-    pyboy = PyBoy(str(rom_path), window="null", sound=False, log_level="ERROR")
-    pyboy.set_emulation_speed(0)
-    pyboy.tick(240, False, False)
+@dataclass
+class HookSnapshot:
+    label: str
+    seq: int
+    bank: int
+    pc: int
+    a: int
+    f: int
+    b: int
+    c: int
+    d: int
+    e: int
+    h: int
+    l: int
+    sp: int
 
-    scenario.seed(pyboy, syms)
 
-    cd_sym = syms["wCurDamage"]
-    for fn in ("BattleCommand_DamageStats", "BattleCommand_DamageCalc", "BattleCommand_Stab"):
-        call_function_safe(pyboy, syms, fn)
+def _install_hooks(pyboy, syms: dict, snapshots: list[HookSnapshot]) -> list[tuple[int, int]]:
+    """Install entry/exit hooks at the targets in HOOK_TARGETS that exist in
+    the sym table. Returns the (bank, addr) pairs that were registered, so
+    the caller can deregister them when the scenario finishes (the shared-
+    PyBoy boot-cache pattern needs hooks scoped to the scenario)."""
+    installed: list[tuple[int, int]] = []
+    seq_counter = [0]
 
-    damage = read_be_u16_banked(pyboy, cd_sym[1], cd_sym[0])
-    pyboy.stop(save=False)
-    return damage
+    def _make_cb(label: str, bank: int):
+        def cb(_):
+            rf = pyboy.register_file
+            seq_counter[0] += 1
+            snapshots.append(HookSnapshot(
+                label=label,
+                seq=seq_counter[0],
+                bank=bank,
+                pc=int(rf.PC),
+                a=int(rf.A), f=int(rf.F),
+                b=int(rf.B), c=int(rf.C),
+                d=int(rf.D), e=int(rf.E),
+                h=int(rf.H) if hasattr(rf, "H") else (int(rf.HL) >> 8) & 0xFF,
+                l=int(rf.L) if hasattr(rf, "L") else int(rf.HL) & 0xFF,
+                sp=int(rf.SP),
+            ))
+        return cb
+
+    for sym_name, label in HOOK_TARGETS:
+        s = syms.get(sym_name)
+        if s is None:
+            continue
+        pyboy.hook_register(s[0], s[1], _make_cb(label, s[0]), None)
+        installed.append((s[0], s[1]))
+    return installed
 
 
-def main() -> int:
+def _deregister_hooks(pyboy, hooks: list[tuple[int, int]]) -> None:
+    for bank, addr in hooks:
+        try:
+            pyboy.hook_deregister(bank, addr)
+        except Exception:
+            # PyBoy's hook table is a flat dict per (bank, addr); if a
+            # deregister fails because it was already cleared (unlikely
+            # given paired register/deregister), swallow rather than
+            # cascade -- the next scenario re-registers regardless.
+            pass
+
+
+def _read_byte(pyboy, name, syms):
+    s = syms.get(name)
+    if s is None:
+        return None
+    addr, bank = s[1], s[0]
+    if 0xD000 <= addr <= 0xDFFF and bank:
+        old = int(pyboy.memory[0xFF70])
+        pyboy.memory[0xFF70] = bank
+        try:
+            return int(pyboy.memory[addr])
+        finally:
+            pyboy.memory[0xFF70] = old
+    return int(pyboy.memory[addr])
+
+
+def run_scenario(
+    scenario: Scenario,
+    syms: dict,
+    cache: BootStateCache,
+) -> tuple[int, list[HookSnapshot], dict, list[str]]:
+    """Run one scenario against the cache's shared PyBoy.
+
+    `cache.restore(pyboy)` rewinds to the post-boot snapshot in ~10ms
+    instead of booting + ticking 240 frames per scenario (~1s). Hooks
+    are scoped to this scenario only -- registered now, deregistered
+    after the damage read so the next scenario starts hook-clean.
+    """
+    pyboy = cache.restore()
+
+    snapshots: list[HookSnapshot] = []
+    hooks = _install_hooks(pyboy, syms, snapshots)
+
+    try:
+        scenario.seed(pyboy, syms)
+
+        # Capture seed-state for diagnostics: post-seed byte values that
+        # determine which item branches fire. Rendered only on FAIL.
+        seed_state = {
+            "wBattleMonItem": _read_byte(pyboy, "wBattleMonItem", syms),
+            "wEnemyMonItem": _read_byte(pyboy, "wEnemyMonItem", syms),
+            "wBattleMonSpecies": _read_byte(pyboy, "wBattleMonSpecies", syms),
+            "wEnemyMonSpecies": _read_byte(pyboy, "wEnemyMonSpecies", syms),
+            "hBattleTurn": _read_byte(pyboy, "hBattleTurn", syms),
+            "wCriticalHit": _read_byte(pyboy, "wCriticalHit", syms),
+        }
+
+        check_failures: list[str] = []
+        cd_sym = syms["wCurDamage"]
+        for fn in scenario.chain:
+            ticks, returned, post_pc = call_function_safe(pyboy, syms, fn, budget=scenario.call_budget)
+            if not returned:
+                seed_state[f"{fn}.post_pc"] = f"${post_pc:04x}"
+                if not scenario.allow_nonreturn:
+                    check_failures.append(
+                        f"{fn} did not reach the HRAM sentinel within {ticks} ticks"
+                    )
+
+        damage = read_be_u16_banked(pyboy, cd_sym[1], cd_sym[0])
+        if scenario.post_check is not None:
+            ok, detail = scenario.post_check(pyboy, syms)
+            seed_state["post_check"] = detail
+            if not ok:
+                check_failures.append(detail)
+    finally:
+        _deregister_hooks(pyboy, hooks)
+    return damage, snapshots, seed_state, check_failures
+
+
+def _format_snapshot(s: HookSnapshot, symbols: SymbolTable | None = None) -> str:
+    pc = f"${s.bank:02x}:{s.pc:04x}"
+    if symbols is not None:
+        pc = f"{pc} ({symbols.render(s.bank, s.pc)})"
+    return (
+        f"  #{s.seq:3d} {s.label:24s} PC={pc} "
+        f"A={s.a:02x} F={s.f:02x} "
+        f"BC={s.b:02x}{s.c:02x} DE={s.d:02x}{s.e:02x} "
+        f"HL={s.h:02x}{s.l:02x} SP=${s.sp:04x}"
+    )
+
+
+def _self_test() -> int:
+    table = SymbolTable([
+        Symbol(bank=1, address=0x4000, name="Fixture"),
+        Symbol(bank=1, address=0x4002, name="Fixture.next"),
+    ])
+    legacy = table.as_legacy_dict()
+    assert legacy["Fixture"] == (1, 0x4000)
+    snap = HookSnapshot(
+        label="FixtureHook",
+        seq=1,
+        bank=1,
+        pc=0x4003,
+        a=1,
+        f=0,
+        b=2,
+        c=3,
+        d=4,
+        e=5,
+        h=0xC0,
+        l=0xAF,
+        sp=0xDFFE,
+    )
+    rendered = _format_snapshot(snap, symbols=table)
+    assert "Fixture.next+0x1" in rendered
+    assert "PC=$01:4003" in rendered
+    print("clobber_smoke self-test: PASS")
+    return 0
+
+
+def main(argv: list[str] | None = None) -> int:
+    if argv is None:
+        argv = sys.argv[1:]
+    if argv == ["--self-test"]:
+        return _self_test()
+    if argv:
+        print("usage: python -m tools.damage_debugger.clobber_smoke [--self-test]", file=sys.stderr)
+        return 2
+
+    # Windows native Python defaults stdout to cp1252; any non-ASCII glyph in
+    # a Scenario.note (em-dash, arrow, section symbol) crashes mid-print and
+    # leaves a partial log. Force UTF-8 so future scenario authors don't have
+    # to police their notes character-by-character.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+
     LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
     fh = open(LOG_PATH, "w", encoding="utf-8", buffering=1)
 
@@ -222,36 +691,134 @@ def main() -> int:
         fh.write(msg + "\n")
         fh.flush()
 
-    rom = ROOT / "pokegold_debug.gbc"
-    sym = ROOT / "pokegold_debug.sym"
-    syms = parse_sym(sym)
+    # find_rom/find_sym walk up from this file to find the ROM/sym pair --
+    # works inside .claude/worktrees/* and at the project root. If a worktree
+    # never built its own pokegold_debug.gbc, the search silently falls back
+    # to an ancestor (the main repo). Printing the absolute path makes that
+    # fallback visible -- otherwise a stale upstream ROM looks like a real
+    # regression. Saw this in the 2026-05-05 harness bug-check pass.
+    rom = find_rom("pokegold_debug")
+    sym = find_sym("pokegold_debug")
+    symbol_table = SymbolTable.load(sym)
+    syms = symbol_table.as_legacy_dict()
 
-    log(f"clobber_smoke: running {len(SCENARIOS)} scenarios against {rom.name}")
-    log(f"{'scenario':<22s} {'damage':>7s} {'expected':>10s}  result  notes")
+    name_width = max(26, *(len(sc.name) for sc in SCENARIOS))
+    log(f"clobber_smoke: running {len(SCENARIOS)} scenarios against {rom}")
+    log(f"{'scenario':<{name_width}s} {'damage':>7s} {'expected':>10s}  result  notes")
     log("-" * 110)
 
-    failures = []
-    for sc in SCENARIOS:
-        damage = run_scenario(sc, syms, rom)
-        ok = sc.expected_low <= damage <= sc.expected_high
-        result = "PASS" if ok else "FAIL"
-        log(
-            f"{sc.name:<22s} {damage:>7d} "
-            f"{f'{sc.expected_low}-{sc.expected_high}':>10s}  {result:>4s}  {sc.note}"
-        )
-        if not ok:
-            failures.append((sc, damage))
+    # Boot ONE PyBoy, snapshot it, then load_state per scenario instead of
+    # constructing a new emulator each time. Drops 8-scenario wall-clock
+    # from ~10s to ~1s and unblocks the Hypothesis fuzz workload (Tier 2.2)
+    # which needs hundreds of restores per second.
+    from .boot_cache import BootStateCache
+
+    cache = BootStateCache(rom)
+    cache.prime()
+
+    failures: list[tuple[Scenario, int, list[HookSnapshot], dict, list[str]]] = []
+    xfailures: list[tuple[Scenario, int, list[HookSnapshot], dict, list[str]]] = []
+    xpasses: list[tuple[Scenario, int]] = []
+    try:
+        for sc in SCENARIOS:
+            damage, snapshots, seed_state, check_failures = run_scenario(sc, syms, cache)
+            ok = sc.expected_low <= damage <= sc.expected_high and not check_failures
+            if ok and sc.xfail:
+                result = "XPASS"
+                xpasses.append((sc, damage))
+            elif ok:
+                result = "PASS"
+            elif sc.xfail:
+                result = "XFAIL"
+                xfailures.append((sc, damage, snapshots, seed_state, check_failures))
+            else:
+                result = "FAIL"
+                failures.append((sc, damage, snapshots, seed_state, check_failures))
+            log(
+                f"{sc.name:<{name_width}s} {damage:>7d} "
+                f"{f'{sc.expected_low}-{sc.expected_high}':>10s}  {result:>5s}  {sc.note}"
+            )
+    finally:
+        cache.stop()
 
     log()
+
+    # XPASS = scenario tagged xfail but actually passing. The bug got fixed
+    # and the tag is stale.
+    if xpasses:
+        log(f"XPASS: {len(xpasses)} scenario(s) tagged xfail are now passing.")
+        log("       Drop the xfail flag in SCENARIOS so a real regression would FAIL.")
+        for sc, damage in xpasses:
+            log(f"  - {sc.name} (damage={damage}, range {sc.expected_low}-{sc.expected_high})")
+            if sc.xfail_reason:
+                log(f"      tagged because: {sc.xfail_reason}")
+        log()
+
+    if xfailures:
+        log(f"XFAIL: {len(xfailures)} scenario(s) failed as expected (known bug).")
+        for sc, damage, _snaps, _seed, check_failures in xfailures:
+            log(f"  - {sc.name}: damage={damage} (expected {sc.expected_low}-{sc.expected_high})")
+            log(f"      reason: {sc.xfail_reason}")
+            for failure in check_failures:
+                log(f"      self-check: {failure}")
+        log()
+
     if failures:
-        log(f"FAIL: {len(failures)}/{len(SCENARIOS)} scenario(s) produced unexpected damage.")
+        log(f"FAIL: {len(failures)} scenario(s) produced unexpected damage.")
         log("      A clobber-class regression likely escaped function-level audits.")
-        log("      See docs/asm_authoring_guide.md §3.14 for the recurrence pattern.")
+        log("      See docs/asm_authoring_guide.md sec 3.14 for the recurrence pattern.")
+        log()
+        _emit_diagnostic_traces(failures, log, prefix="FAIL", symbols=symbol_table)
         return 1
 
-    log(f"PASS: all {len(SCENARIOS)} scenarios within expected damage ranges.")
-    log("      No clobber-class regression detected on the covered paths.")
+    if xfailures:
+        # All non-xfail scenarios passed; emit traces for the xfail ones so the
+        # user has the diagnostic handy when picking up the underlying fix.
+        _emit_diagnostic_traces(xfailures, log, prefix="XFAIL", symbols=symbol_table)
+        non_xfail = len(SCENARIOS) - len(xfailures)
+        log(f"PASS: all {non_xfail} non-xfail scenarios within expected ranges.")
+        log(f"      ({len(xfailures)} xfail above remain known-bug; not blocking.)")
+    else:
+        log(f"PASS: all {len(SCENARIOS)} scenarios within expected damage ranges.")
+        log("      No clobber-class regression detected on the covered paths.")
     return 0
+
+
+def _emit_diagnostic_traces(
+    items,
+    log,
+    *,
+    prefix: str,
+    symbols: SymbolTable | None = None,
+) -> None:
+    for sc, damage, snapshots, seed_state, check_failures in items:
+        log(f"=== diagnostic trace for {prefix} scenario: {sc.name} (damage={damage}) ===")
+        log(f"    expected {sc.expected_low}-{sc.expected_high}; {sc.note}")
+        log(f"    seed: " + ", ".join(
+            f"{k}={v}" for k, v in seed_state.items() if v is not None
+        ))
+        if check_failures:
+            log("    debugger self-check failures:")
+            for failure in check_failures:
+                log(f"      - {failure}")
+        if not snapshots:
+            log("    (no hook snapshots -- symbols missing from sym table)")
+            continue
+        log(f"    {len(snapshots)} hook hits along the chain:")
+        for snap in snapshots:
+            log(_format_snapshot(snap, symbols=symbols))
+        log()
+    log("Reading the trace:")
+    log("  - DStats_entry            : caller hands off bc/de/hl into the chain")
+    log("  - ALGDS_far_entry/.done   : item-mod chain enter/exit (bc/de must round-trip)")
+    log("  - TPCat_entry/.done       : the AG-08 c-mirror site")
+    log("  - Truncate_entry/.done    : if c flips between ALGDS_far_done and Truncate_done,")
+    log("                              that's the sec 3.14 c-clobber footprint")
+    log("  - TypeMatchup_done        : post-type-effectiveness boundary inside Stab")
+    log("  - DVariation_*            : final 0.85-1.0 random multiplier path")
+    log("  - AfterHit_*              : Rocky Helmet / Shell Bell / Life Orb side effects")
+    log("  - EnemyAtkDmg_done        : final c value just before ConfusionDamageCalc")
+    log()
 
 
 if __name__ == "__main__":

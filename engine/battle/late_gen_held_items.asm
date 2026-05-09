@@ -78,7 +78,19 @@ ApplyLateGenDamageStatsItemMods_Far::
 	call _CheckOpponentItemEquals
 	ret nz
 	call .GetOpponentSpecies
+; push/pop hl, bc preserves caller's hl = attacker stat and bc = defender def
+; across .SpeciesCanEvolve, which clobbers both via `ld c, a; ld b, 0` and
+; `ld hl, EvosAttacksPointers`. Without preservation, .ApplyFractionToBC
+; below operates on (defender species - 1) instead of defender def, and the
+; attacker stat in hl is replaced by an EvosAttacksPointers entry — same
+; recurrence shape as the AG-08 c-clobber (sec 3.14). Surfaced by
+; tools/damage_debugger/clobber_smoke.py's eviolite scenarios reporting
+; ~3x and ~25x damage spikes on physical/special paths respectively.
+	push hl
+	push bc
 	call .SpeciesCanEvolve
+	pop bc
+	pop hl
 	ret z
 	ld a, EVOLITE_DEF_NUM
 	ld d, EVOLITE_DEF_DEN
@@ -89,7 +101,12 @@ ApplyLateGenDamageStatsItemMods_Far::
 	call _CheckOpponentItemEquals
 	ret nz
 	call .GetOpponentSpecies
+; See .ApplyEvioliteDefenseBoost above for the bc/hl preservation rationale.
+	push hl
+	push bc
 	call .SpeciesCanEvolve
+	pop bc
+	pop hl
 	ret z
 	ld a, EVOLITE_SPD_NUM
 	ld d, EVOLITE_SPD_DEN
