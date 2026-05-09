@@ -2,16 +2,14 @@
 	const_def
 	const MAINMENU_NEW_GAME ; 0
 	const MAINMENU_CONTINUE ; 1
-	const MAINMENU_MYSTERY  ; 2
 
 	; MainMenu.Strings and MainMenu.Jumptable indexes
 	const_def
 	const MAINMENUITEM_CONTINUE     ; 0
 	const MAINMENUITEM_NEW_GAME     ; 1
 	const MAINMENUITEM_OPTION       ; 2
-	const MAINMENUITEM_MYSTERY_GIFT ; 3
 IF DEF(_DEBUG)
-	const MAINMENUITEM_DEBUG_ROOM   ; 4
+	const MAINMENUITEM_DEBUG_ROOM   ; 3
 ENDC
 
 MainMenu:
@@ -69,7 +67,6 @@ ENDC
 	db "CONTINUE@"
 	db "NEW GAME@"
 	db "OPTION@"
-	db "MYSTERY GIFT@"
 IF DEF(_DEBUG)
 	db "DEBUG ROOM@"
 ENDC
@@ -79,7 +76,6 @@ ENDC
 	dw Continue
 	dw NewGame
 	dw Option
-	dw MysteryGift
 IF DEF(_DEBUG)
 	dw DebugRoom
 ENDC
@@ -103,17 +99,6 @@ IF DEF(_DEBUG)
 ENDC
 	db -1
 
-	; MAINMENU_MYSTERY
-	db 4 + DEF(_DEBUG)
-	db MAINMENUITEM_CONTINUE
-	db MAINMENUITEM_NEW_GAME
-	db MAINMENUITEM_OPTION
-	db MAINMENUITEM_MYSTERY_GIFT
-IF DEF(_DEBUG)
-	db MAINMENUITEM_DEBUG_ROOM
-ENDC
-	db -1
-
 MainMenu_GetWhichMenu:
 	nop
 	nop
@@ -125,18 +110,7 @@ MainMenu_GetWhichMenu:
 	ret
 
 .next
-	ldh a, [hCGB]
-	cp TRUE
 	ld a, MAINMENU_CONTINUE
-	ret nz
-	ld a, BANK(sNumDailyMysteryGiftPartnerIDs)
-	call OpenSRAM
-	ld a, [sNumDailyMysteryGiftPartnerIDs]
-	cp -1 ; locked?
-	call CloseSRAM
-	ld a, MAINMENU_CONTINUE
-	ret z
-	ld a, MAINMENU_MYSTERY
 	ret
 
 MainMenuJoypadLoop:
@@ -267,12 +241,6 @@ ClearTilemapEtc:
 	call LoadFontsExtra
 	call LoadStandardFont
 	call ClearWindowData
-	ret
-
-MysteryGift:
-	call UpdateTime
-	farcall DoMysteryGiftIfDayHasPassed
-	farcall DoMysteryGift
 	ret
 
 Option:

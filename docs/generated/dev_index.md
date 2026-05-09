@@ -33,7 +33,7 @@ Read `docs/README.md` first for helper-doc routing, then `docs/project_context.m
 ### Battle mechanics
 - Intent: Shared damage, status, switching, item, and turn-flow rules.
 - Start here: `engine/battle/core.asm`, `engine/battle/effect_commands.asm`, `engine/battle/type_passive_damage_mods.asm`, `engine/battle/late_gen_held_items.asm`, `engine/battle/move_effects`, `constants/battle_constants.asm`
-- Anchors: `TypePassive_ApplyDamageModifiers_Far` (0e:7643, `engine/battle/type_passive_damage_mods.asm:44`); `TypePassive_TryDarkStatusShield_Far` (0e:7bcd, `engine/battle/type_passive_damage_mods.asm:1070`); `TypePassive_MaybePoisonRetaliation_Far` (0e:7c1c, `engine/battle/type_passive_damage_mods.asm:1131`); `ApplyLateGenDamageMultipliers_Far` (0e:71d9, `engine/battle/late_gen_held_items.asm:183`); `HandleLateGenAfterHitEffects_Far` (0e:7292, `engine/battle/late_gen_held_items.asm:301`); `TryActivateDittoImposter` (01:7a12, `engine/battle/ditto_imposter.asm:1`)
+- Anchors: `TypePassive_ApplyDamageModifiers_Far` (0e:7643, `engine/battle/type_passive_damage_mods.asm:44`); `TypePassive_TryDarkStatusShield_Far` (0e:7bcd, `engine/battle/type_passive_damage_mods.asm:1070`); `TypePassive_MaybePoisonRetaliation_Far` (0e:7c1c, `engine/battle/type_passive_damage_mods.asm:1131`); `ApplyLateGenDamageMultipliers_Far` (0e:71d9, `engine/battle/late_gen_held_items.asm:183`); `HandleLateGenAfterHitEffects_Far` (0e:7292, `engine/battle/late_gen_held_items.asm:301`); `TryActivateDittoImposter` (01:79c1, `engine/battle/ditto_imposter.asm:1`)
 
 ### Moves
 - Intent: Move stats, effects, descriptions, contact flags, and animations.
@@ -43,7 +43,7 @@ Read `docs/README.md` first for helper-doc routing, then `docs/project_context.m
 ### Items and held items
 - Intent: Item data, descriptions, pockets, marts, and battle held effects.
 - Start here: `data/items/attributes.asm`, `data/items/descriptions.asm`, `data/items/names.asm`, `data/items/marts.asm`, `engine/items`, `engine/battle/late_gen_held_items.asm`
-- Anchors: `ItemAttributes` (01:692e, `data/items/attributes.asm:8`); `ItemDescriptions` (6e:4000, `data/items/descriptions.asm:1`); `ItemNames` (6c:4000, `data/items/names.asm:1`); `IsChoiceHeldEffect_Far` (0e:758a, `engine/battle/late_gen_held_items.asm:819`); `IsMoveBlockedByAssaultVest_Far` (0e:7593, `engine/battle/late_gen_held_items.asm:827`)
+- Anchors: `ItemAttributes` (01:68dd, `data/items/attributes.asm:8`); `ItemDescriptions` (6e:4000, `data/items/descriptions.asm:1`); `ItemNames` (6c:4000, `data/items/names.asm:1`); `IsChoiceHeldEffect_Far` (0e:758a, `engine/battle/late_gen_held_items.asm:819`); `IsMoveBlockedByAssaultVest_Far` (0e:7593, `engine/battle/late_gen_held_items.asm:827`)
 
 ### Pokemon data and weak-Pokemon buffs
 - Intent: Base stats, types, level-up moves, evolutions, egg moves, and names.
@@ -58,12 +58,12 @@ Read `docs/README.md` first for helper-doc routing, then `docs/project_context.m
 ### RAM, saves, and temporary battle state
 - Intent: WRAM, SRAM, VRAM, HRAM, save data, and low-memory pressure points.
 - Start here: `ram/wram.asm`, `ram/sram.asm`, `ram/vram.asm`, `ram/hram.asm`
-- Anchors: `wBattleMode` (01:d116, `ram/wram.asm:2058`); `wEnemyMon` (01:d0ef, `ram/wram.asm:2051`); `wBattleMon` (00:cafc, `ram/wram.asm:712`); `hROMBank` (00:ff9f, `ram/hram.asm:26`)
+- Anchors: `wBattleMode` (01:d116, `ram/wram.asm:2014`); `wEnemyMon` (01:d0ef, `ram/wram.asm:2007`); `wBattleMon` (00:cafc, `ram/wram.asm:669`); `hROMBank` (00:ff9f, `ram/hram.asm:26`)
 
 ### Graphics
 - Intent: Pokemon pics, trainer pics, sprites, tilesets, palettes, and UI art.
 - Start here: `gfx`, `data/sprites`, `data/tilesets.asm`, `gfx/pics_gold.asm`
-- Anchors: `PokemonPicPointers` (12:4000, `data/pokemon/pic_pointers.asm:3`); `TrainerPicPointers` (20:4000, `data/trainers/pic_pointers.asm:3`); `Tilesets` (05:56dd, `data/tilesets.asm:13`)
+- Anchors: `PokemonPicPointers` (12:4000, `data/pokemon/pic_pointers.asm:3`); `TrainerPicPointers` (20:4000, `data/trainers/pic_pointers.asm:3`); `Tilesets` (05:56aa, `data/tilesets.asm:13`)
 
 ### Audio
 - Intent: Music, cries, sound effects, engine data, and song banks.
@@ -75,7 +75,7 @@ Read `docs/README.md` first for helper-doc routing, then `docs/project_context.m
 | Region | Used | Free | Banks |
 | --- | ---: | ---: | ---: |
 | ROM0 | 16067 | 317 |  |
-| ROMX | 1144929 | 935839 | 127 |
+| ROMX | 1140545 | 940223 | 127 |
 | SRAM | 31699 | 1069 | 4 |
 | WRAM0 | 4047 | 49 |  |
 | WRAMX | 4096 | 0 |  |
@@ -150,7 +150,7 @@ Use these as candidates when moving optional code or data out of tight banks.
 | Section | Region | Bank/range | Size | Layout constraint | Source hints |
 | --- | --- | --- | ---: | --- | --- |
 | `Home` | ROM0 | 00:0150-3f9a | 15947 | ROM0 00 | `home.asm`, `home/array.asm`, `home/audio.asm`, `home/battle.asm`, +48 more |
-| `bankB` | ROMX | 0b:4000-4cdf | 3296 | ROMX 0b | `engine/battle/ai/redundant.asm`, `engine/battle/trainer_huds.asm`, `engine/events/move_deleter.asm`, `engine/events/move_reminder.asm`, +6 more |
+| `bankB` | ROMX | 0b:4000-4bb2 | 2995 | ROMX 0b | `engine/battle/ai/redundant.asm`, `engine/battle/trainer_huds.asm`, `engine/events/move_deleter.asm`, `engine/events/move_reminder.asm`, +5 more |
 | `Effect Commands` | ROMX | 0d:4000-7ffd | 16382 | ROMX 0d | `engine/battle/effect_commands.asm`, `engine/battle/used_move_text.asm`, `main.asm` |
 | `Enemy Trainers` | ROMX | 0e:4000-7103 | 12548 | ROMX 0e | `engine/battle/ai/boss.asm`, `engine/battle/ai/items.asm`, `engine/battle/read_trainer_attributes.asm`, `main.asm` |
 | `Late Gen Held Items` | ROMX | 0e:7104-7e88 | 3461 |  | `engine/battle/late_gen_held_items.asm`, `engine/battle/type_passive_damage_mods.asm`, `main.asm` |
@@ -188,14 +188,14 @@ Use these as candidates when moving optional code or data out of tight banks.
 | `Map Scripts 19` | ROMX | 54:4000-5aa2 | 6819 | ROMX 54 | `data/maps/scripts.asm`, `maps/BillsHouse.asm`, `maps/CeruleanGym.asm`, `maps/CeruleanGymBadgeSpeechHouse.asm`, +8 more |
 | `Map Scripts 20` | ROMX | 55:4000-5567 | 5480 | ROMX 55 | `data/maps/scripts.asm`, `maps/AzaleaGym.asm`, `maps/AzaleaMart.asm`, `maps/AzaleaPokecenter1F.asm`, +2 more |
 | `Map Scripts 21` | ROMX | 56:4000-756e | 13679 | ROMX 56 | `data/maps/scripts.asm`, `maps/EarlsPokemonAcademy.asm`, `maps/Route32Pokecenter1F.asm`, `maps/Route32RuinsOfAlphGate.asm`, +9 more |
-| `Map Scripts 22` | ROMX | 57:4000-72b5 | 12982 | ROMX 57 | `data/maps/scripts.asm`, `maps/BillsFamilysHouse.asm`, `maps/DayCare.asm`, `maps/GoldenrodBikeShop.asm`, +17 more |
+| `Map Scripts 22` | ROMX | 57:4000-727a | 12923 | ROMX 57 | `data/maps/scripts.asm`, `maps/BillsFamilysHouse.asm`, `maps/DayCare.asm`, `maps/GoldenrodBikeShop.asm`, +17 more |
 | `Map Scripts 23` | ROMX | 59:4000-5fc6 | 8135 | ROMX 59 | `data/maps/scripts.asm`, `maps/BluesHouse.asm`, `maps/OaksLab.asm`, `maps/PokemonFanClub.asm`, +11 more |
 | `Map Scripts 24` | ROMX | 5a:4000-5f84 | 8069 | ROMX 5a | `data/maps/scripts.asm`, `maps/BrunosRoom.asm`, `maps/HallOfFame.asm`, `maps/IndigoPlateauPokecenter1F.asm`, +10 more |
 | `Map Scripts 25` | ROMX | 5b:4000-695c | 10589 | ROMX 5b | `data/maps/scripts.asm`, `maps/FastShip1F.asm`, `maps/FastShipB1F.asm`, `maps/FastShipCabins_NNW_NNE_NE.asm`, +9 more |
-| `Map Scripts 26` | ROMX | 5c:4000-5608 | 5641 | ROMX 5c | `data/maps/scripts.asm`, `maps/BillsOlderSistersHouse.asm`, `maps/Colosseum.asm`, `maps/FuchsiaGym.asm`, +11 more |
+| `Map Scripts 26` | ROMX | 5c:4000-54dc | 5341 | ROMX 5c | `data/maps/scripts.asm`, `maps/BillsOlderSistersHouse.asm`, `maps/Colosseum.asm`, `maps/FuchsiaGym.asm`, +11 more |
 | `Map Scripts 27` | ROMX | 5d:4000-5e06 | 7687 | ROMX 5d | `data/maps/scripts.asm`, `maps/CianwoodGym.asm`, `maps/CianwoodLugiaSpeechHouse.asm`, `maps/CianwoodPharmacy.asm`, +13 more |
 | `Map Scripts 28` | ROMX | 5e:4000-6a83 | 10884 | ROMX 5e | `data/maps/scripts.asm`, `maps/CeladonCafe.asm`, `maps/CeladonDeptStore1F.asm`, `maps/CeladonDeptStore2F.asm`, +19 more |
-| `Map Scripts 29` | ROMX | 5f:4000-51d6 | 4567 | ROMX 5f | `data/maps/scripts.asm`, `maps/Route2Gate.asm`, `maps/Route2NuggetHouse.asm`, `maps/TrainerHouse1F.asm`, +7 more |
+| `Map Scripts 29` | ROMX | 5f:4000-51b4 | 4533 | ROMX 5f | `data/maps/scripts.asm`, `maps/Route2Gate.asm`, `maps/Route2NuggetHouse.asm`, `maps/TrainerHouse1F.asm`, +7 more |
 | `Map Scripts 30` | ROMX | 60:4000-666a | 9835 | ROMX 60 | `data/maps/scripts.asm`, `maps/DayOfWeekSiblingsHouse.asm`, `maps/ElmsHouse.asm`, `maps/ElmsLab.asm`, +6 more |
 | `Map Scripts 31` | ROMX | 61:4000-5921 | 6434 | ROMX 61 | `data/maps/scripts.asm`, `maps/CopycatsHouse1F.asm`, `maps/CopycatsHouse2F.asm`, `maps/FightingDojo.asm`, +10 more |
 | `Map Scripts 32` | ROMX | 62:4000-4ead | 3758 | ROMX 62 | `data/maps/scripts.asm`, `maps/CherrygroveEvolutionSpeechHouse.asm`, `maps/CherrygroveGymSpeechHouse.asm`, `maps/CherrygroveMart.asm`, +5 more |
@@ -220,20 +220,20 @@ Use these as candidates when moving optional code or data out of tight banks.
 | `BossAI_ApplyPlausibleRiskToSwitchConfidence` | 0e:6c21 | `engine/battle/ai/boss.asm:7180` |
 | `BossAITierMap` | 0e:7058 | `data/trainers/ai_tiers.asm:1` |
 | `CheckPlayerMoveTypeMatchups` | 0d:4a7b | `engine/battle/ai/switch.asm:1` |
-| `AICompareSpeed` | 0b:7a9e | `engine/battle/ai/scoring.asm:2673` |
-| `AIDamageCalc` | 0b:7c53 | `engine/battle/ai/scoring.asm:3000` |
+| `AICompareSpeed` | 0b:7932 | `engine/battle/ai/scoring.asm:2673` |
+| `AIDamageCalc` | 0b:7ae7 | `engine/battle/ai/scoring.asm:3000` |
 | `TypePassive_ApplyDamageModifiers_Far` | 0e:7643 | `engine/battle/type_passive_damage_mods.asm:44` |
 | `TypePassive_TryDarkStatusShield_Far` | 0e:7bcd | `engine/battle/type_passive_damage_mods.asm:1070` |
 | `TypePassive_MaybePoisonRetaliation_Far` | 0e:7c1c | `engine/battle/type_passive_damage_mods.asm:1131` |
 | `ApplyLateGenDamageMultipliers_Far` | 0e:71d9 | `engine/battle/late_gen_held_items.asm:183` |
 | `HandleLateGenAfterHitEffects_Far` | 0e:7292 | `engine/battle/late_gen_held_items.asm:301` |
-| `TryActivateDittoImposter` | 01:7a12 | `engine/battle/ditto_imposter.asm:1` |
+| `TryActivateDittoImposter` | 01:79c1 | `engine/battle/ditto_imposter.asm:1` |
 | `Moves` | 10:5aaf | `data/moves/moves.asm:14` |
 | `MoveEffects` | 09:750c | `data/moves/effects.asm:3` |
 | `MoveContactFlags` | 0e:7d8b | `data/moves/contact_flags.asm:4` |
 | `Spikes` | 09:7a28 | `data/moves/effects.asm:1525` |
 | `RapidSpin` | 09:7afd | `data/moves/effects.asm:1772` |
-| `ItemAttributes` | 01:692e | `data/items/attributes.asm:8` |
+| `ItemAttributes` | 01:68dd | `data/items/attributes.asm:8` |
 | `ItemDescriptions` | 6e:4000 | `data/items/descriptions.asm:1` |
 | `ItemNames` | 6c:4000 | `data/items/names.asm:1` |
 | `IsChoiceHeldEffect_Far` | 0e:758a | `engine/battle/late_gen_held_items.asm:819` |
@@ -244,13 +244,13 @@ Use these as candidates when moving optional code or data out of tight banks.
 | `Special` | 03:422b | `engine/events/specials.asm:1` |
 | `SpecialsPointers` | 03:4239 | `data/events/special_pointers.asm:14` |
 | `MoveReminder` | 0b:4451 | `engine/events/move_reminder.asm:8` |
-| `wBattleMode` | 01:d116 | `ram/wram.asm:2058` |
-| `wEnemyMon` | 01:d0ef | `ram/wram.asm:2051` |
-| `wBattleMon` | 00:cafc | `ram/wram.asm:712` |
+| `wBattleMode` | 01:d116 | `ram/wram.asm:2014` |
+| `wEnemyMon` | 01:d0ef | `ram/wram.asm:2007` |
+| `wBattleMon` | 00:cafc | `ram/wram.asm:669` |
 | `hROMBank` | 00:ff9f | `ram/hram.asm:26` |
 | `PokemonPicPointers` | 12:4000 | `data/pokemon/pic_pointers.asm:3` |
 | `TrainerPicPointers` | 20:4000 | `data/trainers/pic_pointers.asm:3` |
-| `Tilesets` | 05:56dd | `data/tilesets.asm:13` |
+| `Tilesets` | 05:56aa | `data/tilesets.asm:13` |
 | `Music` | 3a:506d | `audio/music_pointers.asm:3` |
 | `SFX` | 3a:525d | `audio/sfx_pointers.asm:1` |
 | `Cries` | 3a:5191 | `audio/cry_pointers.asm:1` |

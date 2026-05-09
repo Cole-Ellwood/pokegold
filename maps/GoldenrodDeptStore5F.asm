@@ -102,21 +102,7 @@ GoldenrodDeptStore5FReceptionistScript:
 	end
 
 Carrie:
-	faceplayer
-	opentext
-	special GameboyCheck
-	ifnotequal GBCHECK_CGB, .NotGBC
-	writetext GoldenrodDeptStore5FCarrieMysteryGiftExplanationText
-	waitbutton
-	closetext
-	special UnlockMysteryGift
-	end
-
-.NotGBC:
-	writetext GoldenrodDeptStore5FCarrieMysteryGiftRequiresGBCText
-	waitbutton
-	closetext
-	end
+	jumptextfaceplayer GoldenrodDeptStore5FCarrieText
 
 GoldenrodDeptStore5FLassScript:
 	jumptextfaceplayer GoldenrodDeptStore5FLassText
@@ -173,18 +159,13 @@ GoldenrodDeptStore5FReceptionistThereAreTMsPerfectForMonText:
 	line "your #MON."
 	done
 
-GoldenrodDeptStore5FCarrieMysteryGiftExplanationText:
-	text "MYSTERY GIFT."
+GoldenrodDeptStore5FCarrieText:
+	text "They sell so many"
+	line "different things"
+	cont "here."
 
-	para "With just a"
-	line "little beep, you"
-	cont "get a gift."
-	done
-
-GoldenrodDeptStore5FCarrieMysteryGiftRequiresGBCText:
-	text "The MYSTERY GIFT"
-	line "option requires a"
-	cont "Game Boy Color."
+	para "I always check"
+	line "every floor."
 	done
 
 GoldenrodDeptStore5FLassText:
