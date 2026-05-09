@@ -1,6 +1,6 @@
 # Generated Balance Audit
 
-Generated: 2026-05-09T12:25:21
+Generated: 2026-05-09T13:55:39
 Baseline ref: `060d4accd7c0d01b1697ac97e7d7e2da72e3646b`
 
 Do not hand-edit this file. Regenerate it with:
@@ -61,11 +61,11 @@ _No rows._
 | 4 | `GLIGAR` | `current-final`, `low-and-unbuffed-vs-baseline`, `large-bst-regression-vs-baseline` | 490 | 590 | -100 | 85/95/125/85/35/65 | HP-40, Def-10, SpD-50 | GROUND/FLYING | - | - | 8 | 23 | WING_ATTACK (FLYING 80bp 100%) | IRON_TAIL (STEEL 130bp 75%) |
 | 3 | `FARFETCH_D` | `current-final`, `low-bst-final` | 425 | 352 | 73 | 60/130/55/60/58/62 | HP+8, Atk+65 | NORMAL/FLYING | - | - | 8 | 22 | DOUBLE_EDGE (NORMAL 130bp 100%) | DOUBLE_EDGE (NORMAL 130bp 100%) |
 | 3 | `DUGTRIO` | `current-final`, `low-bst-final` | 445 | 405 | 40 | 35/110/50/130/50/70 | Atk+30, Spe+10 | GROUND/GROUND | - | - | 10 | 21 | EARTHQUAKE (GROUND 100bp 100%) | HYPER_BEAM (NORMAL 180bp 90%) |
+| 3 | `YANMA` | `current-final`, `watch-bst-final`, `low-and-unbuffed-vs-baseline` | 455 | 495 | -40 | 70/80/60/85/85/75 | HP+5, Atk-45, Def+15, Spe-55, SpA+10, SpD+30 | BUG/DRAGON | - | - | 12 | 21 | OUTRAGE (DRAGON 100bp 100%) | SOLARBEAM (GRASS 180bp 100%) |
 | 3 | `ARIADOS` | `current-final`, `watch-bst-final`, `low-and-unbuffed-vs-baseline` | 460 | 485 | -25 | 110/90/100/40/60/60 | Atk-25 | BUG/POISON | - | - | 9 | 22 | SLUDGE_BOMB (POISON 90bp 100%) | SOLARBEAM (GRASS 180bp 100%) |
 | 3 | `HITMONLEE` | `current-final`, `watch-bst-final`, `low-and-unbuffed-vs-baseline` | 470 | 535 | -65 | 50/120/53/102/35/110 | Atk-30, Spe-35 | FIGHTING/FIGHTING | - | - | 11 | 20 | FOCUS_PUNCH (FIGHTING 150bp 100%) | FOCUS_PUNCH (FIGHTING 150bp 100%) |
 | 3 | `GIRAFARIG` | `current-final`, `watch-bst-final`, `low-and-unbuffed-vs-baseline` | 482 | 505 | -23 | 70/80/65/112/90/65 | HP+30, Atk-40, Spe+27, SpA-40 | NORMAL/PSYCHIC_TYPE | - | - | 10 | 25 | DREAM_EATER (PSYCHIC_TYPE 100bp 100%) | EARTHQUAKE (GROUND 100bp 100%) |
 | 3 | `STANTLER` | `current-final`, `watch-bst-final`, `low-and-unbuffed-vs-baseline` | 485 | 550 | -65 | 73/115/62/85/85/65 | HP-35, Atk-20, Def-20, Spe+25, SpD-15 | NORMAL/NORMAL | - | - | 6 | 23 | DOUBLE_EDGE (NORMAL 130bp 100%) | DOUBLE_EDGE (NORMAL 130bp 100%) |
-| 3 | `YANMA` | `current-final`, `watch-bst-final`, `low-and-unbuffed-vs-baseline` | 485 | 495 | -10 | 70/90/60/95/90/80 | HP+5, Atk-35, Def+15, Spe-45, SpA+15, SpD+35 | BUG/DRAGON | - | - | 12 | 21 | OUTRAGE (DRAGON 100bp 100%) | SOLARBEAM (GRASS 180bp 100%) |
 | 2 | `HITMONTOP` | `current-final`, `large-bst-regression-vs-baseline` | 505 | 615 | -110 | 110/85/95/70/35/110 | HP+60, Atk-80, SpA-30, SpD-60 | FIGHTING/FIGHTING | - | - | 8 | 20 | FOCUS_PUNCH (FIGHTING 150bp 100%) | FOCUS_PUNCH (FIGHTING 150bp 100%) |
 | 2 | `JUMPLUFF` | `current-final`, `large-bst-regression-vs-baseline` | 510 | 620 | -110 | 110/55/70/135/55/85 | HP+25, Atk-50, Spe-15, SpA-70 | GRASS/FLYING | - | - | 13 | 20 | SOLARBEAM (GRASS 180bp 100%) | SOLARBEAM (GRASS 180bp 100%) |
 | 2 | `SLOWBRO` | `current-final`, `large-bst-regression-vs-baseline` | 510 | 690 | -180 | 115/75/110/30/100/80 | HP-20, Def-80, SpD-80 | WATER/PSYCHIC_TYPE | - | - | 12 | 34 | DREAM_EATER (PSYCHIC_TYPE 100bp 100%) | HYPER_BEAM (NORMAL 180bp 90%) |
