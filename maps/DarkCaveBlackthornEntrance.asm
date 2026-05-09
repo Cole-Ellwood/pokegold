@@ -28,7 +28,7 @@ DarkCaveBlackthornEntrancePharmacistScript:
 DarkCaveBlackthornEntranceRevive:
 	itemball REVIVE
 
-DarkCaveBlackthornEntranceTMSnore:
+DarkCaveBlackthornEntranceChoiceScarf:
 	itemball CHOICE_SCARF
 
 DarkCaveBlackthornEntrancePharmacistText1:
@@ -73,4 +73,4 @@ DarkCaveBlackthornEntrance_MapEvents:
 	def_object_events
 	object_event  7,  3, SPRITE_PHARMACIST, SPRITEMOVEDATA_SPINRANDOM_SLOW, 0, 0, -1, -1, 0, OBJECTTYPE_SCRIPT, 0, DarkCaveBlackthornEntrancePharmacistScript, -1
 	object_event 21, 24, SPRITE_POKE_BALL, SPRITEMOVEDATA_STILL, 0, 0, -1, -1, 0, OBJECTTYPE_ITEMBALL, 0, DarkCaveBlackthornEntranceRevive, EVENT_DARK_CAVE_BLACKTHORN_ENTRANCE_REVIVE
-	object_event  7, 22, SPRITE_POKE_BALL, SPRITEMOVEDATA_STILL, 0, 0, -1, -1, 0, OBJECTTYPE_ITEMBALL, 0, DarkCaveBlackthornEntranceTMSnore, EVENT_DARK_CAVE_BLACKTHORN_ENTRANCE_TM_SNORE
+	object_event  7, 22, SPRITE_POKE_BALL, SPRITEMOVEDATA_STILL, 0, 0, -1, -1, 0, OBJECTTYPE_ITEMBALL, 0, DarkCaveBlackthornEntranceChoiceScarf, EVENT_DARK_CAVE_BLACKTHORN_ENTRANCE_CHOICE_SCARF

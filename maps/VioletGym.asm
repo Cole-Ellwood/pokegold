@@ -38,7 +38,7 @@ VioletGymFalknerScript:
 	specialphonecall SPECIALCALL_ASSISTANT
 	writetext FalknerZephyrBadgeText
 	promptbutton
-	verbosegiveitem TM_VOUCHER
+	verbosegiveitem TM_WING_ATTACK
 	iffalse .NoRoomForVoucher
 	setevent EVENT_GOT_TM31_MUD_SLAP
 	writetext FalknerTMMudSlapText
@@ -162,20 +162,12 @@ FalknerZephyrBadgeText:
 	para "use FLASH in"
 	line "dark places."
 
-	para "Take this TM"
-	line "VOUCHER too."
+	para "Take this TM too."
 	done
 
 FalknerTMMudSlapText:
-	text "That TM VOUCHER"
-	line "can be redeemed"
-	cont "for lessons."
-
-	para "You'll find the TM"
-	line "TUTOR by the DAY-"
-	cont "CARE on ROUTE 34,"
-	cont "just outside"
-	cont "GOLDENROD."
+	text "That TM is"
+	line "WING ATTACK."
 
 	para "Train well, and"
 	line "make every lesson"

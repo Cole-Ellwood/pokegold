@@ -21,7 +21,6 @@ MOVE_EFFECTS = ROOT / "data" / "moves" / "effects.asm"
 BOSS_AI = ROOT / "engine" / "battle" / "ai" / "boss.asm"
 AI_ITEMS = ROOT / "engine" / "battle" / "ai" / "items.asm"
 AI_SWITCH = ROOT / "engine" / "battle" / "ai" / "switch.asm"
-TM_TUTOR = ROOT / "engine" / "events" / "tm_tutor.asm"
 ITEM_ATTRIBUTES = ROOT / "data" / "items" / "attributes.asm"
 ASM_SCAN_ROOTS = (
     ROOT / "constants",
@@ -539,44 +538,6 @@ def audit_commented_flag_refreshes(leads: list[Lead]) -> str:
     return f"commented flag-refresh sentinels checked={checked}"
 
 
-def audit_tm_tutor_cur_item_restore(leads: list[Lead]) -> str:
-    text = read_text(TM_TUTOR)
-    block = next((candidate for candidate in top_blocks(TM_TUTOR) if candidate.label == "TMTutorTeachAnyTM"), None)
-    if block is None:
-        add_lead(
-            leads,
-            2,
-            TM_TUTOR,
-            1,
-            "TM Tutor helper missing",
-            "TM Tutor state restoration cannot be checked without TMTutorTeachAnyTM.",
-            "TMTutorTeachAnyTM label not found",
-            "Restore the helper or remove this check if the feature was intentionally deleted.",
-        )
-        return "TM Tutor state check failed=missing helper"
-
-    required = (
-        "ld a, [wCurItem]\n\tpush af\n\tld a, NO_ITEM\n\tld [wCurItem], a\n\tfarcall TeachTMHM",
-        "pop af\n\tld [wCurItem], a\n\tld a, 2\n\tld [wScriptVar], a",
-        ".taught_restore_cur_item\n\tpop af\n\tld [wCurItem], a",
-    )
-    for needle in required:
-        if needle not in text:
-            add_lead(
-                leads,
-                2,
-                TM_TUTOR,
-                block.start,
-                "TM Tutor may leak synthetic no-consume item state",
-                "The tutor temporarily sets wCurItem to NO_ITEM to avoid TM consumption; both success and failure paths must restore the selected TM item.",
-                f"missing pattern: {needle.splitlines()[0]}",
-                "Restore wCurItem on every return after the NO_ITEM substitution and rerun check_release_smoke.py.",
-            )
-            break
-
-    return "TM Tutor wCurItem restore checked"
-
-
 def stale_flag_reason_before_load(codes: list[str], load_index: int) -> str | None:
     for previous in range(load_index - 1, max(-1, load_index - 8), -1):
         code = codes[previous].strip()
@@ -689,7 +650,6 @@ def run_triage() -> tuple[list[Lead], list[str]]:
         audit_base_data_restore_patterns(leads),
         audit_known_rejected_leads(leads),
         audit_commented_flag_refreshes(leads),
-        audit_tm_tutor_cur_item_restore(leads),
         audit_memory_load_flag_branches(leads),
     ]
     leads.sort(key=lambda lead: (lead.priority, lead.path.as_posix(), lead.lineno, lead.title))

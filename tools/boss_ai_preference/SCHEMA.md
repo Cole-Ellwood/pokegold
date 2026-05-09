@@ -51,13 +51,13 @@ Likelihood buckets are deliberately coarse:
 - `99%`: revealed or forced by public fixture evidence.
 - `75%`: natural STAB/core level-up move.
 - `50%`: natural non-STAB level-up move, pre-evo move, or direct TM access.
-- `25%`: legal but limited, optional, or voucher-gated.
+- `25%`: legal but optional, low-confidence, or otherwise limited.
 - `0%`: unavailable or blocked by a four-revealed-move set.
 
 Common source tags include `revealed`, `level_up`, `pre_evo_level_up`,
-`tm_available`, `voucher_limited`, `grass_encounter`, `surf_encounter`,
-`old_rod_fishing`, `good_rod_fishing`, `super_rod_fishing`, `gift_or_prize:*`,
-and `static_encounter:*`.
+`tm_available`, `grass_encounter`, `surf_encounter`, `old_rod_fishing`,
+`good_rod_fishing`, `super_rod_fishing`, `gift_or_prize:*`, and
+`static_encounter:*`.
 
 For seen-party switch threats, `switch_fit` is separate from move likelihood.
 It is `reasonable`, `risky`, `bad`, or `unknown` based on revealed boss damage

@@ -32,7 +32,7 @@ OlivineGymJasmineScript:
 	iftrue .GotIronTail
 	writetext Jasmine_BadgeSpeech
 	promptbutton
-	verbosegiveitem TM_VOUCHER
+	verbosegiveitem TM_IRON_TAIL
 	iffalse .NoRoomForVoucher
 	setevent EVENT_GOT_TM23_IRON_TAIL
 	writetext Jasmine_IronTailSpeech
@@ -142,13 +142,12 @@ Jasmine_BadgeSpeech:
 	cont "DEFENSE."
 
 	para "…Um… Please take"
-	line "this TM VOUCHER…"
+	line "this TM…"
 	done
 
 Jasmine_IronTailSpeech:
-	text "…That voucher can"
-	line "be exchanged for"
-	cont "tutor lessons."
+	text "…That TM is"
+	line "IRON TAIL."
 
 	para "…Please choose"
 	line "moves that suit"

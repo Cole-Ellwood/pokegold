@@ -150,14 +150,13 @@ DragonShrineRisingBadgeExplanationText:
 	line "question."
 
 	para "Make good use of"
-	line "the TM VOUCHER I"
-	cont "gave you earlier."
+	line "the TM I gave"
+	cont "you earlier."
 	done
 
-ClairText_DescribeDragonbreathDragonDen:
-	text "Redeem that TM"
-	line "VOUCHER at the"
-	cont "tutor for lessons."
+ClairText_DescribeOutrageDragonDen:
+	text "That TM is"
+	line "OUTRAGE."
 	done
 
 ClairText_CollectedAllBadges:

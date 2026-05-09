@@ -209,7 +209,7 @@
       "available_species_count": 33,
       "badges_before": 0,
       "direct_tm_moves": [
-        "Nightmare"
+        "Rest"
       ],
       "event_files": [
         "ElmsLab.asm"
@@ -221,9 +221,6 @@
       "rod_tiers": [],
       "static_files": [],
       "surf_available": false,
-      "tm_tutor_available": false,
-      "voucher_lessons_before": 0,
-      "vouchers_before": 0,
       "wild_map_count": 8
     },
     {
@@ -536,7 +533,7 @@
       "available_species_count": 50,
       "badges_before": 1,
       "direct_tm_moves": [
-        "Nightmare",
+        "Rest",
         "Roar"
       ],
       "event_files": [
@@ -551,9 +548,6 @@
       ],
       "static_files": [],
       "surf_available": false,
-      "tm_tutor_available": false,
-      "voucher_lessons_before": 3,
-      "vouchers_before": 1,
       "wild_map_count": 13
     },
     {
@@ -1012,7 +1006,7 @@
         "Fire Blast",
         "Frustration",
         "Headbutt",
-        "Nightmare",
+        "Rest",
         "Return",
         "Roar",
         "Rock Smash",
@@ -1033,9 +1027,6 @@
       ],
       "static_files": [],
       "surf_available": false,
-      "tm_tutor_available": true,
-      "voucher_lessons_before": 6,
-      "vouchers_before": 2,
       "wild_map_count": 18
     },
     {
@@ -1578,7 +1569,7 @@
         "Fire Blast",
         "Frustration",
         "Headbutt",
-        "Nightmare",
+        "Rest",
         "Return",
         "Roar",
         "Rock Smash",
@@ -1601,9 +1592,6 @@
         "Route36.asm"
       ],
       "surf_available": false,
-      "tm_tutor_available": true,
-      "voucher_lessons_before": 9,
-      "vouchers_before": 3,
       "wild_map_count": 21
     },
     {
@@ -2467,16 +2455,16 @@
       "badges_before": 4,
       "direct_tm_moves": [
         "Blizzard",
+        "Double Edge",
         "Fire Blast",
         "Frustration",
         "Headbutt",
         "Hidden Power",
-        "Nightmare",
+        "Rest",
         "Return",
         "Roar",
         "Rock Smash",
         "Sludge Bomb",
-        "Snore",
         "Sunny Day",
         "Sweet Scent",
         "Thunder"
@@ -2491,7 +2479,7 @@
       "leader": "Chuck",
       "level_cap": 34,
       "notes": [
-        "Mid-Johto order is flexible; voucher count uses the conservative four-prior-gym floor."
+        "Mid-Johto order is flexible; checkpoint assumes four prior badges."
       ],
       "rod_tiers": [
         "old",
@@ -2505,9 +2493,6 @@
         "TeamRocketBaseB2F.asm"
       ],
       "surf_available": true,
-      "tm_tutor_available": true,
-      "voucher_lessons_before": 12,
-      "vouchers_before": 4,
       "wild_map_count": 34
     },
     {
@@ -3377,16 +3362,16 @@
       "badges_before": 4,
       "direct_tm_moves": [
         "Blizzard",
+        "Double Edge",
         "Fire Blast",
         "Frustration",
         "Headbutt",
         "Hidden Power",
-        "Nightmare",
+        "Rest",
         "Return",
         "Roar",
         "Rock Smash",
         "Sludge Bomb",
-        "Snore",
         "Sunny Day",
         "Sweet Scent",
         "Thunder"
@@ -3401,7 +3386,7 @@
       "leader": "Jasmine",
       "level_cap": 34,
       "notes": [
-        "Mid-Johto order is flexible; voucher count uses the conservative four-prior-gym floor."
+        "Mid-Johto order is flexible; checkpoint assumes four prior badges."
       ],
       "rod_tiers": [
         "old",
@@ -3415,9 +3400,6 @@
         "TeamRocketBaseB2F.asm"
       ],
       "surf_available": true,
-      "tm_tutor_available": true,
-      "voucher_lessons_before": 12,
-      "vouchers_before": 4,
       "wild_map_count": 34
     },
     {
@@ -4287,16 +4269,16 @@
       "badges_before": 4,
       "direct_tm_moves": [
         "Blizzard",
+        "Double Edge",
         "Fire Blast",
         "Frustration",
         "Headbutt",
         "Hidden Power",
-        "Nightmare",
+        "Rest",
         "Return",
         "Roar",
         "Rock Smash",
         "Sludge Bomb",
-        "Snore",
         "Sunny Day",
         "Sweet Scent",
         "Thunder"
@@ -4311,7 +4293,7 @@
       "leader": "Pryce",
       "level_cap": 34,
       "notes": [
-        "Mid-Johto order is flexible; voucher count uses the conservative four-prior-gym floor."
+        "Mid-Johto order is flexible; checkpoint assumes four prior badges."
       ],
       "rod_tiers": [
         "old",
@@ -4325,9 +4307,6 @@
         "TeamRocketBaseB2F.asm"
       ],
       "surf_available": true,
-      "tm_tutor_available": true,
-      "voucher_lessons_before": 12,
-      "vouchers_before": 4,
       "wild_map_count": 34
     },
     {
@@ -5403,16 +5382,16 @@
       "badges_before": 7,
       "direct_tm_moves": [
         "Blizzard",
+        "Double Edge",
         "Fire Blast",
         "Frustration",
         "Headbutt",
         "Hidden Power",
-        "Nightmare",
+        "Rest",
         "Return",
         "Roar",
         "Rock Smash",
         "Sludge Bomb",
-        "Snore",
         "Sunny Day",
         "Sweet Scent",
         "Thunder"
@@ -5439,9 +5418,6 @@
         "TeamRocketBaseB2F.asm"
       ],
       "surf_available": true,
-      "tm_tutor_available": true,
-      "voucher_lessons_before": 21,
-      "vouchers_before": 7,
       "wild_map_count": 43
     },
     {
@@ -6680,18 +6656,18 @@
       "badges_before": 8,
       "direct_tm_moves": [
         "Blizzard",
+        "Double Edge",
         "Earthquake",
         "Fire Blast",
         "Frustration",
         "Headbutt",
         "Hidden Power",
-        "Nightmare",
+        "Rest",
         "Return",
         "Roar",
         "Rock Smash",
         "Sandstorm",
         "Sludge Bomb",
-        "Snore",
         "Solarbeam",
         "Sunny Day",
         "Sweet Scent",
@@ -6719,9 +6695,6 @@
         "TeamRocketBaseB2F.asm"
       ],
       "surf_available": true,
-      "tm_tutor_available": true,
-      "voucher_lessons_before": 24,
-      "vouchers_before": 8,
       "wild_map_count": 362
     },
     {
@@ -7948,18 +7921,18 @@
       "badges_before": 8,
       "direct_tm_moves": [
         "Blizzard",
+        "Double Edge",
         "Earthquake",
         "Fire Blast",
         "Frustration",
         "Headbutt",
         "Hidden Power",
-        "Nightmare",
+        "Rest",
         "Return",
         "Roar",
         "Rock Smash",
         "Sandstorm",
         "Sludge Bomb",
-        "Snore",
         "Solarbeam",
         "Sunny Day",
         "Sweet Scent",
@@ -7987,9 +7960,6 @@
         "TeamRocketBaseB2F.asm"
       ],
       "surf_available": true,
-      "tm_tutor_available": true,
-      "voucher_lessons_before": 24,
-      "vouchers_before": 8,
       "wild_map_count": 362
     },
     {
@@ -9297,29 +9267,36 @@
       "direct_tm_moves": [
         "Blizzard",
         "Curse",
+        "Double Edge",
         "Double Team",
         "Dream Eater",
+        "Dynamicpunch",
         "Earthquake",
         "Fire Blast",
+        "Focus Punch",
         "Frustration",
         "Giga Drain",
         "Headbutt",
         "Hidden Power",
         "Hyper Beam",
-        "Nightmare",
+        "Iron Tail",
+        "Leech Life",
+        "Outrage",
         "Psychic",
+        "Rest",
         "Return",
         "Roar",
         "Rock Smash",
         "Sandstorm",
+        "Shadow Ball",
         "Sludge Bomb",
-        "Snore",
         "Solarbeam",
         "Steel Wing",
         "Sunny Day",
         "Sweet Scent",
         "Thunder",
         "Toxic",
+        "Wing Attack",
         "Zap Cannon"
       ],
       "event_files": [
@@ -9348,9 +9325,6 @@
         "VermilionCity.asm"
       ],
       "surf_available": true,
-      "tm_tutor_available": true,
-      "voucher_lessons_before": 24,
-      "vouchers_before": 8,
       "wild_map_count": 362
     },
     {
@@ -10658,29 +10632,36 @@
       "direct_tm_moves": [
         "Blizzard",
         "Curse",
+        "Double Edge",
         "Double Team",
         "Dream Eater",
+        "Dynamicpunch",
         "Earthquake",
         "Fire Blast",
+        "Focus Punch",
         "Frustration",
         "Giga Drain",
         "Headbutt",
         "Hidden Power",
         "Hyper Beam",
-        "Nightmare",
+        "Iron Tail",
+        "Leech Life",
+        "Outrage",
         "Psychic",
+        "Rest",
         "Return",
         "Roar",
         "Rock Smash",
         "Sandstorm",
+        "Shadow Ball",
         "Sludge Bomb",
-        "Snore",
         "Solarbeam",
         "Steel Wing",
         "Sunny Day",
         "Sweet Scent",
         "Thunder",
         "Toxic",
+        "Wing Attack",
         "Zap Cannon"
       ],
       "event_files": [
@@ -10709,9 +10690,6 @@
         "VermilionCity.asm"
       ],
       "surf_available": true,
-      "tm_tutor_available": true,
-      "voucher_lessons_before": 24,
-      "vouchers_before": 8,
       "wild_map_count": 362
     },
     {
@@ -12019,29 +11997,36 @@
       "direct_tm_moves": [
         "Blizzard",
         "Curse",
+        "Double Edge",
         "Double Team",
         "Dream Eater",
+        "Dynamicpunch",
         "Earthquake",
         "Fire Blast",
+        "Focus Punch",
         "Frustration",
         "Giga Drain",
         "Headbutt",
         "Hidden Power",
         "Hyper Beam",
-        "Nightmare",
+        "Iron Tail",
+        "Leech Life",
+        "Outrage",
         "Psychic",
+        "Rest",
         "Return",
         "Roar",
         "Rock Smash",
         "Sandstorm",
+        "Shadow Ball",
         "Sludge Bomb",
-        "Snore",
         "Solarbeam",
         "Steel Wing",
         "Sunny Day",
         "Sweet Scent",
         "Thunder",
         "Toxic",
+        "Wing Attack",
         "Zap Cannon"
       ],
       "event_files": [
@@ -12070,9 +12055,6 @@
         "VermilionCity.asm"
       ],
       "surf_available": true,
-      "tm_tutor_available": true,
-      "voucher_lessons_before": 24,
-      "vouchers_before": 8,
       "wild_map_count": 362
     },
     {
@@ -13387,29 +13369,36 @@
       "direct_tm_moves": [
         "Blizzard",
         "Curse",
+        "Double Edge",
         "Double Team",
         "Dream Eater",
+        "Dynamicpunch",
         "Earthquake",
         "Fire Blast",
+        "Focus Punch",
         "Frustration",
         "Giga Drain",
         "Headbutt",
         "Hidden Power",
         "Hyper Beam",
-        "Nightmare",
+        "Iron Tail",
+        "Leech Life",
+        "Outrage",
         "Psychic",
+        "Rest",
         "Return",
         "Roar",
         "Rock Smash",
         "Sandstorm",
+        "Shadow Ball",
         "Sludge Bomb",
-        "Snore",
         "Solarbeam",
         "Steel Wing",
         "Sunny Day",
         "Sweet Scent",
         "Thunder",
         "Toxic",
+        "Wing Attack",
         "Zap Cannon"
       ],
       "event_files": [
@@ -13438,9 +13427,6 @@
         "VermilionCity.asm"
       ],
       "surf_available": true,
-      "tm_tutor_available": true,
-      "voucher_lessons_before": 24,
-      "vouchers_before": 8,
       "wild_map_count": 362
     },
     {
@@ -14748,29 +14734,36 @@
       "direct_tm_moves": [
         "Blizzard",
         "Curse",
+        "Double Edge",
         "Double Team",
         "Dream Eater",
+        "Dynamicpunch",
         "Earthquake",
         "Fire Blast",
+        "Focus Punch",
         "Frustration",
         "Giga Drain",
         "Headbutt",
         "Hidden Power",
         "Hyper Beam",
-        "Nightmare",
+        "Iron Tail",
+        "Leech Life",
+        "Outrage",
         "Psychic",
+        "Rest",
         "Return",
         "Roar",
         "Rock Smash",
         "Sandstorm",
+        "Shadow Ball",
         "Sludge Bomb",
-        "Snore",
         "Solarbeam",
         "Steel Wing",
         "Sunny Day",
         "Sweet Scent",
         "Thunder",
         "Toxic",
+        "Wing Attack",
         "Zap Cannon"
       ],
       "event_files": [
@@ -14799,9 +14792,6 @@
         "VermilionCity.asm"
       ],
       "surf_available": true,
-      "tm_tutor_available": true,
-      "voucher_lessons_before": 24,
-      "vouchers_before": 8,
       "wild_map_count": 362
     },
     {
@@ -16110,29 +16100,36 @@
       "direct_tm_moves": [
         "Blizzard",
         "Curse",
+        "Double Edge",
         "Double Team",
         "Dream Eater",
+        "Dynamicpunch",
         "Earthquake",
         "Fire Blast",
+        "Focus Punch",
         "Frustration",
         "Giga Drain",
         "Headbutt",
         "Hidden Power",
         "Hyper Beam",
-        "Nightmare",
+        "Iron Tail",
+        "Leech Life",
+        "Outrage",
         "Psychic",
+        "Rest",
         "Return",
         "Roar",
         "Rock Smash",
         "Sandstorm",
+        "Shadow Ball",
         "Sludge Bomb",
-        "Snore",
         "Solarbeam",
         "Steel Wing",
         "Sunny Day",
         "Sweet Scent",
         "Thunder",
         "Toxic",
+        "Wing Attack",
         "Zap Cannon"
       ],
       "event_files": [
@@ -16161,9 +16158,6 @@
         "VermilionCity.asm"
       ],
       "surf_available": true,
-      "tm_tutor_available": true,
-      "voucher_lessons_before": 24,
-      "vouchers_before": 8,
       "wild_map_count": 362
     },
     {
@@ -17471,29 +17465,36 @@
       "direct_tm_moves": [
         "Blizzard",
         "Curse",
+        "Double Edge",
         "Double Team",
         "Dream Eater",
+        "Dynamicpunch",
         "Earthquake",
         "Fire Blast",
+        "Focus Punch",
         "Frustration",
         "Giga Drain",
         "Headbutt",
         "Hidden Power",
         "Hyper Beam",
-        "Nightmare",
+        "Iron Tail",
+        "Leech Life",
+        "Outrage",
         "Psychic",
+        "Rest",
         "Return",
         "Roar",
         "Rock Smash",
         "Sandstorm",
+        "Shadow Ball",
         "Sludge Bomb",
-        "Snore",
         "Solarbeam",
         "Steel Wing",
         "Sunny Day",
         "Sweet Scent",
         "Thunder",
         "Toxic",
+        "Wing Attack",
         "Zap Cannon"
       ],
       "event_files": [
@@ -17522,9 +17523,6 @@
         "VermilionCity.asm"
       ],
       "surf_available": true,
-      "tm_tutor_available": true,
-      "voucher_lessons_before": 24,
-      "vouchers_before": 8,
       "wild_map_count": 362
     },
     {
@@ -18844,29 +18842,36 @@
       "direct_tm_moves": [
         "Blizzard",
         "Curse",
+        "Double Edge",
         "Double Team",
         "Dream Eater",
+        "Dynamicpunch",
         "Earthquake",
         "Fire Blast",
+        "Focus Punch",
         "Frustration",
         "Giga Drain",
         "Headbutt",
         "Hidden Power",
         "Hyper Beam",
-        "Nightmare",
+        "Iron Tail",
+        "Leech Life",
+        "Outrage",
         "Psychic",
+        "Rest",
         "Return",
         "Roar",
         "Rock Smash",
         "Sandstorm",
+        "Shadow Ball",
         "Sludge Bomb",
-        "Snore",
         "Solarbeam",
         "Steel Wing",
         "Sunny Day",
         "Sweet Scent",
         "Thunder",
         "Toxic",
+        "Wing Attack",
         "Zap Cannon"
       ],
       "event_files": [
@@ -18895,9 +18900,6 @@
         "VermilionCity.asm"
       ],
       "surf_available": true,
-      "tm_tutor_available": true,
-      "voucher_lessons_before": 24,
-      "vouchers_before": 8,
       "wild_map_count": 362
     }
   ],
@@ -18919,12 +18921,12 @@
         "move": "Surf",
         "move_id": "SURF",
         "reasons": [
-          "revealed in the public fixture state"
+          "revealed in the public fixture state",
+          "fixture-attested but not derivable from ROM at this checkpoint"
         ],
         "severity": "chip",
         "sources": [
-          "revealed",
-          "voucher_limited"
+          "revealed"
         ],
         "species": "Starmie",
         "switch_fit": null
@@ -18951,8 +18953,7 @@
         "sources": [
           "level_up",
           "revealed",
-          "tm_available",
-          "voucher_limited"
+          "tm_available"
         ],
         "species": "Starmie",
         "switch_fit": null
@@ -19023,8 +19024,7 @@
         ],
         "severity": "meaningful",
         "sources": [
-          "tm_available",
-          "voucher_limited"
+          "tm_available"
         ],
         "species": "Starmie",
         "switch_fit": null
@@ -19049,8 +19049,7 @@
         ],
         "severity": "chip",
         "sources": [
-          "tm_available",
-          "voucher_limited"
+          "tm_available"
         ],
         "species": "Starmie",
         "switch_fit": null
@@ -19075,36 +19074,48 @@
         ],
         "severity": "chip",
         "sources": [
-          "tm_available",
-          "voucher_limited"
+          "tm_available"
         ],
         "species": "Starmie",
         "switch_fit": null
       },
       {
-        "bucket": "25%",
+        "bucket": "75%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 28,
-          "label": "about 24-28%",
-          "low_percent": 24,
+          "high_percent": 80,
+          "label": "about 68-80%",
+          "low_percent": 68,
           "target": "Arcanine",
           "target_hp": "58%"
         },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 25,
-        "move": "Waterfall",
-        "move_id": "WATERFALL",
+        "entry_risk": {
+          "damage": {
+            "basis": "rough estimate",
+            "high_percent": 24,
+            "label": "about 20-24%",
+            "low_percent": 20,
+            "target": "Tyranitar",
+            "target_hp": "100%"
+          },
+          "fit": "reasonable",
+          "move": "Flamethrower",
+          "reason": "reasonable switch into revealed boss damage"
+        },
+        "immediacy": "switch",
+        "likelihood": 75,
+        "move": "Rock Slide",
+        "move_id": "ROCK_SLIDE",
         "reasons": [
-          "legal through limited TM Voucher tutor credits"
+          "natural level-up STAB/core move by this checkpoint"
         ],
-        "severity": "chip",
+        "severity": "lethal",
         "sources": [
-          "voucher_limited"
+          "level_up",
+          "pre_evo_level_up"
         ],
-        "species": "Starmie",
-        "switch_fit": null
+        "species": "Tyranitar",
+        "switch_fit": "reasonable"
       }
     ],
     "brock_golem_vs_vaporeon_explosion_question": [
@@ -19112,9 +19123,9 @@
         "bucket": "99%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 169,
-          "label": "about 143-169%",
-          "low_percent": 143,
+          "high_percent": 160,
+          "label": "about 136-160%",
+          "low_percent": 136,
           "target": "Golem",
           "target_hp": "42%"
         },
@@ -19124,12 +19135,12 @@
         "move": "Surf",
         "move_id": "SURF",
         "reasons": [
-          "revealed in the public fixture state"
+          "revealed in the public fixture state",
+          "fixture-attested but not derivable from ROM at this checkpoint"
         ],
         "severity": "lethal",
         "sources": [
-          "revealed",
-          "voucher_limited"
+          "revealed"
         ],
         "species": "Vaporeon",
         "switch_fit": null
@@ -19165,9 +19176,9 @@
         "bucket": "75%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 211,
-          "label": "about 179-211%",
-          "low_percent": 179,
+          "high_percent": 201,
+          "label": "about 170-201%",
+          "low_percent": 170,
           "target": "Golem",
           "target_hp": "42%"
         },
@@ -19190,9 +19201,9 @@
         "bucket": "75%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 90,
-          "label": "about 77-90%",
-          "low_percent": 77,
+          "high_percent": 86,
+          "label": "about 73-86%",
+          "low_percent": 73,
           "target": "Golem",
           "target_hp": "42%"
         },
@@ -19215,9 +19226,9 @@
         "bucket": "50%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 70,
-          "label": "about 60-70%",
-          "low_percent": 60,
+          "high_percent": 67,
+          "label": "about 57-67%",
+          "low_percent": 57,
           "target": "Golem",
           "target_hp": "42%"
         },
@@ -19231,8 +19242,7 @@
         ],
         "severity": "lethal",
         "sources": [
-          "tm_available",
-          "voucher_limited"
+          "tm_available"
         ],
         "species": "Vaporeon",
         "switch_fit": null
@@ -19241,9 +19251,9 @@
         "bucket": "50%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 39,
-          "label": "about 33-39%",
-          "low_percent": 33,
+          "high_percent": 37,
+          "label": "about 31-37%",
+          "low_percent": 31,
           "target": "Golem",
           "target_hp": "42%"
         },
@@ -19263,54 +19273,67 @@
         "switch_fit": null
       },
       {
-        "bucket": "25%",
+        "bucket": "50%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 141,
-          "label": "about 120-141%",
-          "low_percent": 120,
+          "high_percent": 32,
+          "label": "about 27-32%",
+          "low_percent": 27,
           "target": "Golem",
           "target_hp": "42%"
         },
         "entry_risk": null,
         "immediacy": "active",
-        "likelihood": 25,
-        "move": "Waterfall",
-        "move_id": "WATERFALL",
+        "likelihood": 50,
+        "move": "Iron Tail",
+        "move_id": "IRON_TAIL",
         "reasons": [
-          "legal through limited TM Voucher tutor credits"
+          "direct TM source is available by this checkpoint"
         ],
-        "severity": "lethal",
+        "severity": "chip",
         "sources": [
-          "voucher_limited"
+          "tm_available"
         ],
         "species": "Vaporeon",
         "switch_fit": null
       },
       {
-        "bucket": "25%",
+        "bucket": "75%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 34,
-          "label": "about 29-34%",
-          "low_percent": 29,
+          "high_percent": 91,
+          "label": "about 77-91%",
+          "low_percent": 77,
           "target": "Golem",
           "target_hp": "42%"
         },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 25,
-        "move": "Iron Tail",
-        "move_id": "IRON_TAIL",
+        "entry_risk": {
+          "damage": {
+            "basis": "rough estimate",
+            "high_percent": 33,
+            "label": "about 27-33%",
+            "low_percent": 27,
+            "target": "Machamp",
+            "target_hp": "100%"
+          },
+          "fit": "risky",
+          "move": "Earthquake",
+          "reason": "risky switch into revealed boss damage"
+        },
+        "immediacy": "switch",
+        "likelihood": 75,
+        "move": "Cross Chop",
+        "move_id": "CROSS_CHOP",
         "reasons": [
-          "legal through limited TM Voucher tutor credits"
+          "natural level-up STAB/core move by this checkpoint"
         ],
-        "severity": "chip",
+        "severity": "lethal",
         "sources": [
-          "voucher_limited"
+          "level_up",
+          "pre_evo_level_up"
         ],
-        "species": "Vaporeon",
-        "switch_fit": null
+        "species": "Machamp",
+        "switch_fit": "risky"
       }
     ],
     "bugsy_scyther_vs_quilava_fire_pressure": [
@@ -19345,9 +19368,9 @@
         "bucket": "99%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 14,
-          "label": "about 11-14%",
-          "low_percent": 11,
+          "high_percent": 12,
+          "label": "about 9-12%",
+          "low_percent": 9,
           "target": "Scyther",
           "target_hp": "81%"
         },
@@ -19357,7 +19380,8 @@
         "move": "Quick Attack",
         "move_id": "QUICK_ATTACK",
         "reasons": [
-          "revealed in the public fixture state"
+          "revealed in the public fixture state",
+          "fixture-attested but not derivable from ROM at this checkpoint"
         ],
         "severity": "chip",
         "sources": [
@@ -19370,9 +19394,9 @@
         "bucket": "75%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 107,
-          "label": "about 91-107%",
-          "low_percent": 91,
+          "high_percent": 102,
+          "label": "about 86-102%",
+          "low_percent": 86,
           "target": "Scyther",
           "target_hp": "81%"
         },
@@ -19460,46 +19484,21 @@
         "switch_fit": null
       },
       {
-        "bucket": "25%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 32,
-          "label": "about 27-32%",
-          "low_percent": 27,
-          "target": "Poliwrath",
-          "target_hp": "76%"
-        },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 25,
-        "move": "Fly",
-        "move_id": "FLY",
-        "reasons": [
-          "legal through limited TM Voucher tutor credits"
-        ],
-        "severity": "chip",
-        "sources": [
-          "voucher_limited"
-        ],
-        "species": "Pidgeotto",
-        "switch_fit": null
-      },
-      {
         "bucket": "75%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 75,
-          "label": "about 63-75%",
-          "low_percent": 63,
+          "high_percent": 73,
+          "label": "about 61-73%",
+          "low_percent": 61,
           "target": "Poliwrath",
           "target_hp": "76%"
         },
         "entry_risk": {
           "damage": {
             "basis": "rough estimate",
-            "high_percent": 65,
-            "label": "about 54-65%",
-            "low_percent": 54,
+            "high_percent": 63,
+            "label": "about 53-63%",
+            "low_percent": 53,
             "target": "Kadabra",
             "target_hp": "100%"
           },
@@ -19517,80 +19516,6 @@
         "severity": "major",
         "sources": [
           "level_up"
-        ],
-        "species": "Kadabra",
-        "switch_fit": "bad"
-      },
-      {
-        "bucket": "25%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 92,
-          "label": "about 78-92%",
-          "low_percent": 78,
-          "target": "Poliwrath",
-          "target_hp": "76%"
-        },
-        "entry_risk": {
-          "damage": {
-            "basis": "rough estimate",
-            "high_percent": 65,
-            "label": "about 54-65%",
-            "low_percent": 54,
-            "target": "Kadabra",
-            "target_hp": "100%"
-          },
-          "fit": "bad",
-          "move": "Surf",
-          "reason": "bad switch into revealed boss damage"
-        },
-        "immediacy": "switch",
-        "likelihood": 25,
-        "move": "Dream Eater",
-        "move_id": "DREAM_EATER",
-        "reasons": [
-          "legal through limited TM Voucher tutor credits"
-        ],
-        "severity": "lethal",
-        "sources": [
-          "voucher_limited"
-        ],
-        "species": "Kadabra",
-        "switch_fit": "bad"
-      },
-      {
-        "bucket": "25%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 82,
-          "label": "about 69-82%",
-          "low_percent": 69,
-          "target": "Poliwrath",
-          "target_hp": "76%"
-        },
-        "entry_risk": {
-          "damage": {
-            "basis": "rough estimate",
-            "high_percent": 65,
-            "label": "about 54-65%",
-            "low_percent": 54,
-            "target": "Kadabra",
-            "target_hp": "100%"
-          },
-          "fit": "bad",
-          "move": "Surf",
-          "reason": "bad switch into revealed boss damage"
-        },
-        "immediacy": "switch",
-        "likelihood": 25,
-        "move": "Psychic",
-        "move_id": "PSYCHIC_M",
-        "reasons": [
-          "legal through limited TM Voucher tutor credits"
-        ],
-        "severity": "lethal",
-        "sources": [
-          "voucher_limited"
         ],
         "species": "Kadabra",
         "switch_fit": "bad"
@@ -19613,12 +19538,12 @@
         "move": "Surf",
         "move_id": "SURF",
         "reasons": [
-          "revealed in the public fixture state"
+          "revealed in the public fixture state",
+          "fixture-attested but not derivable from ROM at this checkpoint"
         ],
         "severity": "chip",
         "sources": [
-          "revealed",
-          "voucher_limited"
+          "revealed"
         ],
         "species": "Suicune",
         "switch_fit": null
@@ -19643,58 +19568,7 @@
         ],
         "severity": "lethal",
         "sources": [
-          "tm_available",
-          "voucher_limited"
-        ],
-        "species": "Suicune",
-        "switch_fit": null
-      },
-      {
-        "bucket": "25%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 54,
-          "label": "about 46-54%",
-          "low_percent": 46,
-          "target": "Dragonite",
-          "target_hp": "74%"
-        },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 25,
-        "move": "Icy Wind",
-        "move_id": "ICY_WIND",
-        "reasons": [
-          "legal through limited TM Voucher tutor credits"
-        ],
-        "severity": "meaningful",
-        "sources": [
-          "voucher_limited"
-        ],
-        "species": "Suicune",
-        "switch_fit": null
-      },
-      {
-        "bucket": "25%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 25,
-          "label": "about 21-25%",
-          "low_percent": 21,
-          "target": "Dragonite",
-          "target_hp": "74%"
-        },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 25,
-        "move": "Hyper Beam",
-        "move_id": "HYPER_BEAM",
-        "reasons": [
-          "legal through limited TM Voucher tutor credits"
-        ],
-        "severity": "chip",
-        "sources": [
-          "voucher_limited"
+          "tm_available"
         ],
         "species": "Suicune",
         "switch_fit": null
@@ -19732,45 +19606,7 @@
         "severity": "chip",
         "sources": [
           "pre_evo_level_up",
-          "tm_available",
-          "voucher_limited"
-        ],
-        "species": "Ampharos",
-        "switch_fit": "reasonable"
-      },
-      {
-        "bucket": "25%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 27,
-          "label": "about 23-27%",
-          "low_percent": 23,
-          "target": "Dragonite",
-          "target_hp": "74%"
-        },
-        "entry_risk": {
-          "damage": {
-            "basis": "rough estimate",
-            "high_percent": 16,
-            "label": "about 13-16%",
-            "low_percent": 13,
-            "target": "Ampharos",
-            "target_hp": "100%"
-          },
-          "fit": "reasonable",
-          "move": "Wing Attack",
-          "reason": "reasonable switch into revealed boss damage"
-        },
-        "immediacy": "switch",
-        "likelihood": 25,
-        "move": "Zap Cannon",
-        "move_id": "ZAP_CANNON",
-        "reasons": [
-          "legal through limited TM Voucher tutor credits"
-        ],
-        "severity": "chip",
-        "sources": [
-          "voucher_limited"
+          "tm_available"
         ],
         "species": "Ampharos",
         "switch_fit": "reasonable"
@@ -19781,9 +19617,9 @@
         "bucket": "99%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 24,
-          "label": "about 20-24%",
-          "low_percent": 20,
+          "high_percent": 23,
+          "label": "about 19-23%",
+          "low_percent": 19,
           "target": "Kingdra",
           "target_hp": "66%"
         },
@@ -19833,8 +19669,8 @@
         "bucket": "50%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 30,
-          "label": "about 25-30%",
+          "high_percent": 29,
+          "label": "about 25-29%",
           "low_percent": 25,
           "target": "Kingdra",
           "target_hp": "66%"
@@ -19849,58 +19685,7 @@
         ],
         "severity": "chip",
         "sources": [
-          "tm_available",
-          "voucher_limited"
-        ],
-        "species": "Lapras",
-        "switch_fit": null
-      },
-      {
-        "bucket": "25%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 32,
-          "label": "about 27-32%",
-          "low_percent": 27,
-          "target": "Kingdra",
-          "target_hp": "66%"
-        },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 25,
-        "move": "Dragonbreath",
-        "move_id": "DRAGONBREATH",
-        "reasons": [
-          "legal through limited TM Voucher tutor credits"
-        ],
-        "severity": "chip",
-        "sources": [
-          "voucher_limited"
-        ],
-        "species": "Lapras",
-        "switch_fit": null
-      },
-      {
-        "bucket": "25%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 30,
-          "label": "about 25-30%",
-          "low_percent": 25,
-          "target": "Kingdra",
-          "target_hp": "66%"
-        },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 25,
-        "move": "Hyper Beam",
-        "move_id": "HYPER_BEAM",
-        "reasons": [
-          "legal through limited TM Voucher tutor credits"
-        ],
-        "severity": "chip",
-        "sources": [
-          "voucher_limited"
+          "tm_available"
         ],
         "species": "Lapras",
         "switch_fit": null
@@ -19911,9 +19696,9 @@
         "bucket": "99%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 50,
-          "label": "about 42-50%",
-          "low_percent": 42,
+          "high_percent": 53,
+          "label": "about 45-53%",
+          "low_percent": 45,
           "target": "Victreebel",
           "target_hp": "77%"
         },
@@ -19948,7 +19733,7 @@
         "sources": [
           "level_up",
           "revealed",
-          "voucher_limited"
+          "tm_available"
         ],
         "species": "Snorlax",
         "switch_fit": null
@@ -19957,9 +19742,9 @@
         "bucket": "75%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 120,
-          "label": "about 102-120%",
-          "low_percent": 102,
+          "high_percent": 128,
+          "label": "about 108-128%",
+          "low_percent": 108,
           "target": "Victreebel",
           "target_hp": "77%"
         },
@@ -19974,8 +19759,7 @@
         "severity": "lethal",
         "sources": [
           "level_up",
-          "tm_available",
-          "voucher_limited"
+          "tm_available"
         ],
         "species": "Snorlax",
         "switch_fit": null
@@ -19984,9 +19768,9 @@
         "bucket": "75%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 47,
-          "label": "about 40-47%",
-          "low_percent": 40,
+          "high_percent": 50,
+          "label": "about 42-50%",
+          "low_percent": 42,
           "target": "Victreebel",
           "target_hp": "77%"
         },
@@ -20001,8 +19785,7 @@
         "severity": "meaningful",
         "sources": [
           "level_up",
-          "tm_available",
-          "voucher_limited"
+          "tm_available"
         ],
         "species": "Snorlax",
         "switch_fit": null
@@ -20011,9 +19794,9 @@
         "bucket": "75%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 28,
-          "label": "about 23-28%",
-          "low_percent": 23,
+          "high_percent": 29,
+          "label": "about 25-29%",
+          "low_percent": 25,
           "target": "Victreebel",
           "target_hp": "77%"
         },
@@ -20052,8 +19835,32 @@
         ],
         "severity": "lethal",
         "sources": [
-          "tm_available",
-          "voucher_limited"
+          "tm_available"
+        ],
+        "species": "Snorlax",
+        "switch_fit": null
+      },
+      {
+        "bucket": "50%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 92,
+          "label": "about 78-92%",
+          "low_percent": 78,
+          "target": "Victreebel",
+          "target_hp": "77%"
+        },
+        "entry_risk": null,
+        "immediacy": "active",
+        "likelihood": 50,
+        "move": "Double Edge",
+        "move_id": "DOUBLE_EDGE",
+        "reasons": [
+          "direct TM source is available by this checkpoint"
+        ],
+        "severity": "lethal",
+        "sources": [
+          "tm_available"
         ],
         "species": "Snorlax",
         "switch_fit": null
@@ -20078,34 +19885,7 @@
         ],
         "severity": "major",
         "sources": [
-          "tm_available",
-          "voucher_limited"
-        ],
-        "species": "Snorlax",
-        "switch_fit": null
-      },
-      {
-        "bucket": "50%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 45,
-          "label": "about 38-45%",
-          "low_percent": 38,
-          "target": "Victreebel",
-          "target_hp": "77%"
-        },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 50,
-        "move": "Earthquake",
-        "move_id": "EARTHQUAKE",
-        "reasons": [
-          "direct TM source is available by this checkpoint"
-        ],
-        "severity": "meaningful",
-        "sources": [
-          "tm_available",
-          "voucher_limited"
+          "tm_available"
         ],
         "species": "Snorlax",
         "switch_fit": null
@@ -20261,8 +20041,8 @@
         "bucket": "75%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 28,
-          "label": "about 23-28%",
+          "high_percent": 27,
+          "label": "about 23-27%",
           "low_percent": 23,
           "target": "Skarmory",
           "target_hp": "83%"
@@ -20303,86 +20083,121 @@
         ],
         "severity": "major",
         "sources": [
-          "tm_available",
-          "voucher_limited"
+          "tm_available"
         ],
         "species": "Machoke",
         "switch_fit": null
       },
       {
-        "bucket": "25%",
+        "bucket": "75%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 39,
-          "label": "about 33-39%",
-          "low_percent": 33,
+          "high_percent": 101,
+          "label": "about 86-101%",
+          "low_percent": 86,
           "target": "Skarmory",
           "target_hp": "83%"
         },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 25,
-        "move": "Fire Punch",
-        "move_id": "FIRE_PUNCH",
+        "entry_risk": {
+          "damage": {
+            "basis": "rough estimate",
+            "high_percent": 17,
+            "label": "about 14-17%",
+            "low_percent": 14,
+            "target": "Typhlosion",
+            "target_hp": "100%"
+          },
+          "fit": "reasonable",
+          "move": "Steel Wing",
+          "reason": "reasonable switch into revealed boss damage"
+        },
+        "immediacy": "switch",
+        "likelihood": 75,
+        "move": "Flame Wheel",
+        "move_id": "FLAME_WHEEL",
         "reasons": [
-          "legal through limited TM Voucher tutor credits"
+          "natural level-up STAB/core move by this checkpoint"
         ],
-        "severity": "meaningful",
+        "severity": "lethal",
         "sources": [
-          "voucher_limited"
+          "level_up"
         ],
-        "species": "Machoke",
-        "switch_fit": null
+        "species": "Typhlosion",
+        "switch_fit": "reasonable"
       },
       {
-        "bucket": "25%",
+        "bucket": "75%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 39,
-          "label": "about 33-39%",
-          "low_percent": 33,
+          "high_percent": 87,
+          "label": "about 73-87%",
+          "low_percent": 73,
           "target": "Skarmory",
           "target_hp": "83%"
         },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 25,
-        "move": "Thunderpunch",
-        "move_id": "THUNDERPUNCH",
+        "entry_risk": {
+          "damage": {
+            "basis": "rough estimate",
+            "high_percent": 17,
+            "label": "about 14-17%",
+            "low_percent": 14,
+            "target": "Typhlosion",
+            "target_hp": "100%"
+          },
+          "fit": "reasonable",
+          "move": "Steel Wing",
+          "reason": "reasonable switch into revealed boss damage"
+        },
+        "immediacy": "switch",
+        "likelihood": 75,
+        "move": "Ember",
+        "move_id": "EMBER",
         "reasons": [
-          "legal through limited TM Voucher tutor credits"
+          "natural level-up STAB/core move by this checkpoint"
         ],
-        "severity": "meaningful",
+        "severity": "lethal",
         "sources": [
-          "voucher_limited"
+          "level_up"
         ],
-        "species": "Machoke",
-        "switch_fit": null
+        "species": "Typhlosion",
+        "switch_fit": "reasonable"
       },
       {
-        "bucket": "25%",
+        "bucket": "50%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 37,
-          "label": "about 31-37%",
-          "low_percent": 31,
+          "high_percent": 231,
+          "label": "about 196-231%",
+          "low_percent": 196,
           "target": "Skarmory",
           "target_hp": "83%"
         },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 25,
-        "move": "Dynamicpunch",
-        "move_id": "DYNAMICPUNCH",
+        "entry_risk": {
+          "damage": {
+            "basis": "rough estimate",
+            "high_percent": 17,
+            "label": "about 14-17%",
+            "low_percent": 14,
+            "target": "Typhlosion",
+            "target_hp": "100%"
+          },
+          "fit": "reasonable",
+          "move": "Steel Wing",
+          "reason": "reasonable switch into revealed boss damage"
+        },
+        "immediacy": "switch",
+        "likelihood": 50,
+        "move": "Fire Blast",
+        "move_id": "FIRE_BLAST",
         "reasons": [
-          "legal through limited TM Voucher tutor credits"
+          "direct TM source is available by this checkpoint"
         ],
-        "severity": "meaningful",
+        "severity": "lethal",
         "sources": [
-          "voucher_limited"
+          "tm_available"
         ],
-        "species": "Machoke",
-        "switch_fit": null
+        "species": "Typhlosion",
+        "switch_fit": "reasonable"
       }
     ],
     "jasmine_steelix_vs_quilava_fire_threat": [
@@ -20468,8 +20283,8 @@
         "bucket": "75%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 26,
-          "label": "about 21-26%",
+          "high_percent": 25,
+          "label": "about 21-25%",
           "low_percent": 21,
           "target": "Steelix",
           "target_hp": "69%"
@@ -20494,9 +20309,9 @@
         "bucket": "50%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 70,
-          "label": "about 59-70%",
-          "low_percent": 59,
+          "high_percent": 69,
+          "label": "about 58-69%",
+          "low_percent": 58,
           "target": "Steelix",
           "target_hp": "69%"
         },
@@ -20510,8 +20325,7 @@
         ],
         "severity": "lethal",
         "sources": [
-          "tm_available",
-          "voucher_limited"
+          "tm_available"
         ],
         "species": "Quilava",
         "switch_fit": null
@@ -20540,8 +20354,7 @@
         "sources": [
           "level_up",
           "pre_evo_level_up",
-          "revealed",
-          "voucher_limited"
+          "revealed"
         ],
         "species": "Alakazam",
         "switch_fit": null
@@ -20645,79 +20458,118 @@
         "switch_fit": null
       },
       {
-        "bucket": "25%",
+        "bucket": "75%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 91,
-          "label": "about 77-91%",
-          "low_percent": 77,
+          "high_percent": 56,
+          "label": "about 48-56%",
+          "low_percent": 48,
           "target": "Crobat",
           "target_hp": "57%"
         },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 25,
-        "move": "Zap Cannon",
-        "move_id": "ZAP_CANNON",
+        "entry_risk": {
+          "damage": {
+            "basis": "rough estimate",
+            "high_percent": 12,
+            "label": "about 10-12%",
+            "low_percent": 10,
+            "target": "Golem",
+            "target_hp": "100%"
+          },
+          "fit": "reasonable",
+          "move": "Wing Attack",
+          "reason": "reasonable switch into revealed boss damage"
+        },
+        "immediacy": "switch",
+        "likelihood": 75,
+        "move": "Rock Throw",
+        "move_id": "ROCK_THROW",
         "reasons": [
-          "legal through limited TM Voucher tutor credits"
+          "natural level-up STAB/core move by this checkpoint"
         ],
-        "severity": "lethal",
+        "severity": "meaningful",
         "sources": [
-          "voucher_limited"
+          "level_up",
+          "pre_evo_level_up"
         ],
-        "species": "Alakazam",
-        "switch_fit": null
+        "species": "Golem",
+        "switch_fit": "reasonable"
       },
       {
-        "bucket": "25%",
+        "bucket": "75%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 70,
-          "label": "about 59-70%",
-          "low_percent": 59,
+          "high_percent": 34,
+          "label": "about 28-34%",
+          "low_percent": 28,
           "target": "Crobat",
           "target_hp": "57%"
         },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 25,
-        "move": "Ice Punch",
-        "move_id": "ICE_PUNCH",
+        "entry_risk": {
+          "damage": {
+            "basis": "rough estimate",
+            "high_percent": 12,
+            "label": "about 10-12%",
+            "low_percent": 10,
+            "target": "Golem",
+            "target_hp": "100%"
+          },
+          "fit": "reasonable",
+          "move": "Wing Attack",
+          "reason": "reasonable switch into revealed boss damage"
+        },
+        "immediacy": "switch",
+        "likelihood": 75,
+        "move": "Rollout",
+        "move_id": "ROLLOUT",
         "reasons": [
-          "legal through limited TM Voucher tutor credits"
+          "natural level-up STAB/core move by this checkpoint"
         ],
-        "severity": "lethal",
+        "severity": "chip",
         "sources": [
-          "voucher_limited"
+          "level_up",
+          "pre_evo_level_up"
         ],
-        "species": "Alakazam",
-        "switch_fit": null
+        "species": "Golem",
+        "switch_fit": "reasonable"
       },
       {
-        "bucket": "25%",
+        "bucket": "50%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 70,
-          "label": "about 59-70%",
-          "low_percent": 59,
+          "high_percent": 176,
+          "label": "about 149-176%",
+          "low_percent": 149,
           "target": "Crobat",
           "target_hp": "57%"
         },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 25,
-        "move": "Thunderpunch",
-        "move_id": "THUNDERPUNCH",
+        "entry_risk": {
+          "damage": {
+            "basis": "rough estimate",
+            "high_percent": 12,
+            "label": "about 10-12%",
+            "low_percent": 10,
+            "target": "Golem",
+            "target_hp": "100%"
+          },
+          "fit": "reasonable",
+          "move": "Wing Attack",
+          "reason": "reasonable switch into revealed boss damage"
+        },
+        "immediacy": "switch",
+        "likelihood": 50,
+        "move": "Explosion",
+        "move_id": "EXPLOSION",
         "reasons": [
-          "legal through limited TM Voucher tutor credits"
+          "natural level-up move by this checkpoint"
         ],
         "severity": "lethal",
         "sources": [
-          "voucher_limited"
+          "level_up",
+          "pre_evo_level_up"
         ],
-        "species": "Alakazam",
-        "switch_fit": null
+        "species": "Golem",
+        "switch_fit": "reasonable"
       }
     ],
     "lance_dragonite_vs_suicune_champion_ace": [
@@ -20737,12 +20589,12 @@
         "move": "Surf",
         "move_id": "SURF",
         "reasons": [
-          "revealed in the public fixture state"
+          "revealed in the public fixture state",
+          "fixture-attested but not derivable from ROM at this checkpoint"
         ],
         "severity": "chip",
         "sources": [
-          "revealed",
-          "voucher_limited"
+          "revealed"
         ],
         "species": "Suicune",
         "switch_fit": null
@@ -20761,7 +20613,7 @@
         "severity": "support",
         "sources": [
           "revealed",
-          "voucher_limited"
+          "tm_available"
         ],
         "species": "Suicune",
         "switch_fit": null
@@ -20786,33 +20638,7 @@
         ],
         "severity": "lethal",
         "sources": [
-          "tm_available",
-          "voucher_limited"
-        ],
-        "species": "Suicune",
-        "switch_fit": null
-      },
-      {
-        "bucket": "25%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 51,
-          "label": "about 43-51%",
-          "low_percent": 43,
-          "target": "Dragonite",
-          "target_hp": "82%"
-        },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 25,
-        "move": "Icy Wind",
-        "move_id": "ICY_WIND",
-        "reasons": [
-          "legal through limited TM Voucher tutor credits"
-        ],
-        "severity": "meaningful",
-        "sources": [
-          "voucher_limited"
+          "tm_available"
         ],
         "species": "Suicune",
         "switch_fit": null
@@ -20830,15 +20656,15 @@
         "entry_risk": {
           "damage": {
             "basis": "rough estimate",
-            "high_percent": 37,
-            "label": "about 31-37%",
-            "low_percent": 31,
+            "high_percent": 55,
+            "label": "about 47-55%",
+            "low_percent": 47,
             "target": "Snorlax",
             "target_hp": "100%"
           },
-          "fit": "risky",
-          "move": "Earthquake",
-          "reason": "risky switch into revealed boss damage"
+          "fit": "bad",
+          "move": "Outrage",
+          "reason": "bad switch into revealed boss damage"
         },
         "immediacy": "switch",
         "likelihood": 50,
@@ -20849,122 +20675,10 @@
         ],
         "severity": "major",
         "sources": [
-          "tm_available",
-          "voucher_limited"
+          "tm_available"
         ],
         "species": "Snorlax",
-        "switch_fit": "risky"
-      },
-      {
-        "bucket": "25%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 51,
-          "label": "about 43-51%",
-          "low_percent": 43,
-          "target": "Dragonite",
-          "target_hp": "82%"
-        },
-        "entry_risk": {
-          "damage": {
-            "basis": "rough estimate",
-            "high_percent": 37,
-            "label": "about 31-37%",
-            "low_percent": 31,
-            "target": "Snorlax",
-            "target_hp": "100%"
-          },
-          "fit": "risky",
-          "move": "Earthquake",
-          "reason": "risky switch into revealed boss damage"
-        },
-        "immediacy": "switch",
-        "likelihood": 25,
-        "move": "Ice Punch",
-        "move_id": "ICE_PUNCH",
-        "reasons": [
-          "legal through limited TM Voucher tutor credits"
-        ],
-        "severity": "meaningful",
-        "sources": [
-          "voucher_limited"
-        ],
-        "species": "Snorlax",
-        "switch_fit": "risky"
-      },
-      {
-        "bucket": "25%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 49,
-          "label": "about 41-49%",
-          "low_percent": 41,
-          "target": "Dragonite",
-          "target_hp": "82%"
-        },
-        "entry_risk": {
-          "damage": {
-            "basis": "rough estimate",
-            "high_percent": 37,
-            "label": "about 31-37%",
-            "low_percent": 31,
-            "target": "Snorlax",
-            "target_hp": "100%"
-          },
-          "fit": "risky",
-          "move": "Earthquake",
-          "reason": "risky switch into revealed boss damage"
-        },
-        "immediacy": "switch",
-        "likelihood": 25,
-        "move": "Hyper Beam",
-        "move_id": "HYPER_BEAM",
-        "reasons": [
-          "legal through limited TM Voucher tutor credits"
-        ],
-        "severity": "meaningful",
-        "sources": [
-          "voucher_limited"
-        ],
-        "species": "Snorlax",
-        "switch_fit": "risky"
-      },
-      {
-        "bucket": "25%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 38,
-          "label": "about 32-38%",
-          "low_percent": 32,
-          "target": "Dragonite",
-          "target_hp": "82%"
-        },
-        "entry_risk": {
-          "damage": {
-            "basis": "rough estimate",
-            "high_percent": 37,
-            "label": "about 31-37%",
-            "low_percent": 31,
-            "target": "Snorlax",
-            "target_hp": "100%"
-          },
-          "fit": "risky",
-          "move": "Earthquake",
-          "reason": "risky switch into revealed boss damage"
-        },
-        "immediacy": "switch",
-        "likelihood": 25,
-        "move": "Icy Wind",
-        "move_id": "ICY_WIND",
-        "reasons": [
-          "legal through limited TM Voucher tutor credits"
-        ],
-        "severity": "meaningful",
-        "sources": [
-          "voucher_limited"
-        ],
-        "species": "Snorlax",
-        "switch_fit": "risky"
+        "switch_fit": "bad"
       }
     ],
     "misty_starmie_vs_meganium_recover_or_attack": [
@@ -20972,9 +20686,9 @@
         "bucket": "99%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 59,
-          "label": "about 50-59%",
-          "low_percent": 50,
+          "high_percent": 57,
+          "label": "about 49-57%",
+          "low_percent": 49,
           "target": "Starmie",
           "target_hp": "46%"
         },
@@ -21019,9 +20733,9 @@
         "bucket": "75%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 149,
-          "label": "about 126-149%",
-          "low_percent": 126,
+          "high_percent": 71,
+          "label": "about 60-71%",
+          "low_percent": 60,
           "target": "Starmie",
           "target_hp": "46%"
         },
@@ -21037,8 +20751,7 @@
         "sources": [
           "level_up",
           "pre_evo_level_up",
-          "tm_available",
-          "voucher_limited"
+          "tm_available"
         ],
         "species": "Meganium",
         "switch_fit": null
@@ -21047,9 +20760,9 @@
         "bucket": "50%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 63,
-          "label": "about 54-63%",
-          "low_percent": 54,
+          "high_percent": 62,
+          "label": "about 52-62%",
+          "low_percent": 52,
           "target": "Starmie",
           "target_hp": "46%"
         },
@@ -21064,8 +20777,57 @@
         "severity": "lethal",
         "sources": [
           "pre_evo_level_up",
-          "tm_available",
-          "voucher_limited"
+          "tm_available"
+        ],
+        "species": "Meganium",
+        "switch_fit": null
+      },
+      {
+        "bucket": "50%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 28,
+          "label": "about 23-28%",
+          "low_percent": 23,
+          "target": "Starmie",
+          "target_hp": "46%"
+        },
+        "entry_risk": null,
+        "immediacy": "active",
+        "likelihood": 50,
+        "move": "Earthquake",
+        "move_id": "EARTHQUAKE",
+        "reasons": [
+          "direct TM source is available by this checkpoint"
+        ],
+        "severity": "chip",
+        "sources": [
+          "tm_available"
+        ],
+        "species": "Meganium",
+        "switch_fit": null
+      },
+      {
+        "bucket": "50%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 25,
+          "label": "about 21-25%",
+          "low_percent": 21,
+          "target": "Starmie",
+          "target_hp": "46%"
+        },
+        "entry_risk": null,
+        "immediacy": "active",
+        "likelihood": 50,
+        "move": "Hyper Beam",
+        "move_id": "HYPER_BEAM",
+        "reasons": [
+          "direct TM source is available by this checkpoint"
+        ],
+        "severity": "chip",
+        "sources": [
+          "tm_available"
         ],
         "species": "Meganium",
         "switch_fit": null
@@ -21074,23 +20836,23 @@
         "bucket": "75%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 141,
-          "label": "about 120-141%",
-          "low_percent": 120,
+          "high_percent": 137,
+          "label": "about 116-137%",
+          "low_percent": 116,
           "target": "Starmie",
           "target_hp": "46%"
         },
         "entry_risk": {
           "damage": {
             "basis": "rough estimate",
-            "high_percent": 33,
-            "label": "about 28-33%",
-            "low_percent": 28,
+            "high_percent": 32,
+            "label": "about 27-32%",
+            "low_percent": 27,
             "target": "Ampharos",
             "target_hp": "100%"
           },
           "fit": "risky",
-          "move": "Psychic",
+          "move": "Hydro Pump",
           "reason": "risky switch into revealed boss damage"
         },
         "immediacy": "switch",
@@ -21104,8 +20866,7 @@
         "sources": [
           "level_up",
           "pre_evo_level_up",
-          "tm_available",
-          "voucher_limited"
+          "tm_available"
         ],
         "species": "Ampharos",
         "switch_fit": "risky"
@@ -21114,23 +20875,23 @@
         "bucket": "75%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 89,
-          "label": "about 75-89%",
-          "low_percent": 75,
+          "high_percent": 86,
+          "label": "about 73-86%",
+          "low_percent": 73,
           "target": "Starmie",
           "target_hp": "46%"
         },
         "entry_risk": {
           "damage": {
             "basis": "rough estimate",
-            "high_percent": 33,
-            "label": "about 28-33%",
-            "low_percent": 28,
+            "high_percent": 32,
+            "label": "about 27-32%",
+            "low_percent": 27,
             "target": "Ampharos",
             "target_hp": "100%"
           },
           "fit": "risky",
-          "move": "Psychic",
+          "move": "Hydro Pump",
           "reason": "risky switch into revealed boss damage"
         },
         "immediacy": "switch",
@@ -21142,83 +20903,7 @@
         ],
         "severity": "lethal",
         "sources": [
-          "level_up",
-          "voucher_limited"
-        ],
-        "species": "Ampharos",
-        "switch_fit": "risky"
-      },
-      {
-        "bucket": "75%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 59,
-          "label": "about 50-59%",
-          "low_percent": 50,
-          "target": "Starmie",
-          "target_hp": "46%"
-        },
-        "entry_risk": {
-          "damage": {
-            "basis": "rough estimate",
-            "high_percent": 33,
-            "label": "about 28-33%",
-            "low_percent": 28,
-            "target": "Ampharos",
-            "target_hp": "100%"
-          },
-          "fit": "risky",
-          "move": "Psychic",
-          "reason": "risky switch into revealed boss damage"
-        },
-        "immediacy": "switch",
-        "likelihood": 75,
-        "move": "Outrage",
-        "move_id": "OUTRAGE",
-        "reasons": [
-          "natural level-up STAB/core move by this checkpoint"
-        ],
-        "severity": "lethal",
-        "sources": [
           "level_up"
-        ],
-        "species": "Ampharos",
-        "switch_fit": "risky"
-      },
-      {
-        "bucket": "75%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 49,
-          "label": "about 42-49%",
-          "low_percent": 42,
-          "target": "Starmie",
-          "target_hp": "46%"
-        },
-        "entry_risk": {
-          "damage": {
-            "basis": "rough estimate",
-            "high_percent": 33,
-            "label": "about 28-33%",
-            "low_percent": 28,
-            "target": "Ampharos",
-            "target_hp": "100%"
-          },
-          "fit": "risky",
-          "move": "Psychic",
-          "reason": "risky switch into revealed boss damage"
-        },
-        "immediacy": "switch",
-        "likelihood": 75,
-        "move": "Thundershock",
-        "move_id": "THUNDERSHOCK",
-        "reasons": [
-          "natural level-up STAB/core move by this checkpoint"
-        ],
-        "severity": "lethal",
-        "sources": [
-          "level_up",
-          "pre_evo_level_up"
         ],
         "species": "Ampharos",
         "switch_fit": "risky"
@@ -21292,131 +20977,6 @@
         "severity": "chip",
         "sources": [
           "level_up"
-        ],
-        "species": "Kadabra",
-        "switch_fit": null
-      },
-      {
-        "bucket": "25%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 90,
-          "label": "about 76-90%",
-          "low_percent": 76,
-          "target": "Gengar",
-          "target_hp": "34%"
-        },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 25,
-        "move": "Thief",
-        "move_id": "THIEF",
-        "reasons": [
-          "legal through limited TM Voucher tutor credits"
-        ],
-        "severity": "lethal",
-        "sources": [
-          "voucher_limited"
-        ],
-        "species": "Kadabra",
-        "switch_fit": null
-      },
-      {
-        "bucket": "25%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 79,
-          "label": "about 66-79%",
-          "low_percent": 66,
-          "target": "Gengar",
-          "target_hp": "34%"
-        },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 25,
-        "move": "Shadow Ball",
-        "move_id": "SHADOW_BALL",
-        "reasons": [
-          "legal through limited TM Voucher tutor credits"
-        ],
-        "severity": "lethal",
-        "sources": [
-          "voucher_limited"
-        ],
-        "species": "Kadabra",
-        "switch_fit": null
-      },
-      {
-        "bucket": "25%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 52,
-          "label": "about 44-52%",
-          "low_percent": 44,
-          "target": "Gengar",
-          "target_hp": "34%"
-        },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 25,
-        "move": "Zap Cannon",
-        "move_id": "ZAP_CANNON",
-        "reasons": [
-          "legal through limited TM Voucher tutor credits"
-        ],
-        "severity": "lethal",
-        "sources": [
-          "voucher_limited"
-        ],
-        "species": "Kadabra",
-        "switch_fit": null
-      },
-      {
-        "bucket": "25%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 39,
-          "label": "about 32-39%",
-          "low_percent": 32,
-          "target": "Gengar",
-          "target_hp": "34%"
-        },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 25,
-        "move": "Fire Punch",
-        "move_id": "FIRE_PUNCH",
-        "reasons": [
-          "legal through limited TM Voucher tutor credits"
-        ],
-        "severity": "lethal",
-        "sources": [
-          "voucher_limited"
-        ],
-        "species": "Kadabra",
-        "switch_fit": null
-      },
-      {
-        "bucket": "25%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 39,
-          "label": "about 32-39%",
-          "low_percent": 32,
-          "target": "Gengar",
-          "target_hp": "34%"
-        },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 25,
-        "move": "Ice Punch",
-        "move_id": "ICE_PUNCH",
-        "reasons": [
-          "legal through limited TM Voucher tutor credits"
-        ],
-        "severity": "lethal",
-        "sources": [
-          "voucher_limited"
         ],
         "species": "Kadabra",
         "switch_fit": null
@@ -21495,106 +21055,6 @@
         "switch_fit": null
       },
       {
-        "bucket": "25%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 131,
-          "label": "about 111-131%",
-          "low_percent": 111,
-          "target": "Haunter",
-          "target_hp": "88%"
-        },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 25,
-        "move": "Thief",
-        "move_id": "THIEF",
-        "reasons": [
-          "legal through limited TM Voucher tutor credits"
-        ],
-        "severity": "lethal",
-        "sources": [
-          "voucher_limited"
-        ],
-        "species": "Noctowl",
-        "switch_fit": null
-      },
-      {
-        "bucket": "25%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 51,
-          "label": "about 42-51%",
-          "low_percent": 42,
-          "target": "Haunter",
-          "target_hp": "88%"
-        },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 25,
-        "move": "Fly",
-        "move_id": "FLY",
-        "reasons": [
-          "legal through limited TM Voucher tutor credits"
-        ],
-        "severity": "meaningful",
-        "sources": [
-          "voucher_limited"
-        ],
-        "species": "Noctowl",
-        "switch_fit": null
-      },
-      {
-        "bucket": "25%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 38,
-          "label": "about 31-38%",
-          "low_percent": 31,
-          "target": "Haunter",
-          "target_hp": "88%"
-        },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 25,
-        "move": "Dream Eater",
-        "move_id": "DREAM_EATER",
-        "reasons": [
-          "legal through limited TM Voucher tutor credits"
-        ],
-        "severity": "meaningful",
-        "sources": [
-          "voucher_limited"
-        ],
-        "species": "Noctowl",
-        "switch_fit": null
-      },
-      {
-        "bucket": "25%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 35,
-          "label": "about 29-35%",
-          "low_percent": 29,
-          "target": "Haunter",
-          "target_hp": "88%"
-        },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 25,
-        "move": "Steel Wing",
-        "move_id": "STEEL_WING",
-        "reasons": [
-          "legal through limited TM Voucher tutor credits"
-        ],
-        "severity": "meaningful",
-        "sources": [
-          "voucher_limited"
-        ],
-        "species": "Noctowl",
-        "switch_fit": null
-      },
-      {
         "bucket": "75%",
         "damage": {
           "basis": "rough estimate",
@@ -21630,6 +21090,81 @@
         ],
         "species": "Quilava",
         "switch_fit": "risky"
+      },
+      {
+        "bucket": "75%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 60,
+          "label": "about 51-60%",
+          "low_percent": 51,
+          "target": "Haunter",
+          "target_hp": "88%"
+        },
+        "entry_risk": {
+          "damage": {
+            "basis": "fixed-damage move",
+            "high_percent": 29,
+            "label": "about 29%",
+            "low_percent": 29,
+            "target": "Quilava",
+            "target_hp": "100%"
+          },
+          "fit": "risky",
+          "move": "Night Shade",
+          "reason": "risky switch into revealed boss damage"
+        },
+        "immediacy": "switch",
+        "likelihood": 75,
+        "move": "Ember",
+        "move_id": "EMBER",
+        "reasons": [
+          "natural level-up STAB/core move by this checkpoint"
+        ],
+        "severity": "meaningful",
+        "sources": [
+          "level_up",
+          "pre_evo_level_up"
+        ],
+        "species": "Quilava",
+        "switch_fit": "risky"
+      },
+      {
+        "bucket": "50%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 160,
+          "label": "about 135-160%",
+          "low_percent": 135,
+          "target": "Haunter",
+          "target_hp": "88%"
+        },
+        "entry_risk": {
+          "damage": {
+            "basis": "fixed-damage move",
+            "high_percent": 29,
+            "label": "about 29%",
+            "low_percent": 29,
+            "target": "Quilava",
+            "target_hp": "100%"
+          },
+          "fit": "risky",
+          "move": "Night Shade",
+          "reason": "risky switch into revealed boss damage"
+        },
+        "immediacy": "switch",
+        "likelihood": 50,
+        "move": "Fire Blast",
+        "move_id": "FIRE_BLAST",
+        "reasons": [
+          "direct TM source is available by this checkpoint"
+        ],
+        "severity": "lethal",
+        "sources": [
+          "tm_available"
+        ],
+        "species": "Quilava",
+        "switch_fit": "risky"
       }
     ],
     "pryce_cloyster_vs_quilava_explosion_line": [
@@ -21637,9 +21172,9 @@
         "bucket": "99%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 52,
-          "label": "about 43-52%",
-          "low_percent": 43,
+          "high_percent": 50,
+          "label": "about 42-50%",
+          "low_percent": 42,
           "target": "Cloyster",
           "target_hp": "39%"
         },
@@ -21690,9 +21225,9 @@
         "bucket": "75%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 83,
-          "label": "about 70-83%",
-          "low_percent": 70,
+          "high_percent": 80,
+          "label": "about 67-80%",
+          "low_percent": 67,
           "target": "Cloyster",
           "target_hp": "39%"
         },
@@ -21715,9 +21250,9 @@
         "bucket": "75%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 46,
-          "label": "about 38-46%",
-          "low_percent": 38,
+          "high_percent": 43,
+          "label": "about 37-43%",
+          "low_percent": 37,
           "target": "Cloyster",
           "target_hp": "39%"
         },
@@ -21741,9 +21276,9 @@
         "bucket": "50%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 120,
-          "label": "about 101-120%",
-          "low_percent": 101,
+          "high_percent": 116,
+          "label": "about 98-116%",
+          "low_percent": 98,
           "target": "Cloyster",
           "target_hp": "39%"
         },
@@ -21757,8 +21292,7 @@
         ],
         "severity": "lethal",
         "sources": [
-          "tm_available",
-          "voucher_limited"
+          "tm_available"
         ],
         "species": "Quilava",
         "switch_fit": null
@@ -21767,9 +21301,9 @@
         "bucket": "50%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 89,
-          "label": "about 75-89%",
-          "low_percent": 75,
+          "high_percent": 86,
+          "label": "about 73-86%",
+          "low_percent": 73,
           "target": "Cloyster",
           "target_hp": "39%"
         },
@@ -21792,9 +21326,9 @@
         "bucket": "75%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 74,
-          "label": "about 62-74%",
-          "low_percent": 62,
+          "high_percent": 72,
+          "label": "about 61-72%",
+          "low_percent": 61,
           "target": "Cloyster",
           "target_hp": "39%"
         },
@@ -21830,9 +21364,9 @@
         "bucket": "50%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 215,
-          "label": "about 183-215%",
-          "low_percent": 183,
+          "high_percent": 210,
+          "label": "about 178-210%",
+          "low_percent": 178,
           "target": "Cloyster",
           "target_hp": "39%"
         },
@@ -21858,8 +21392,7 @@
         ],
         "severity": "lethal",
         "sources": [
-          "tm_available",
-          "voucher_limited"
+          "tm_available"
         ],
         "species": "Flaaffy",
         "switch_fit": "bad"
@@ -21870,9 +21403,9 @@
         "bucket": "99%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 71,
-          "label": "about 60-71%",
-          "low_percent": 60,
+          "high_percent": 69,
+          "label": "about 58-69%",
+          "low_percent": 58,
           "target": "Slowking",
           "target_hp": "68%"
         },
@@ -21887,8 +21420,7 @@
         "severity": "lethal",
         "sources": [
           "level_up",
-          "revealed",
-          "voucher_limited"
+          "revealed"
         ],
         "species": "Ampharos",
         "switch_fit": null
@@ -21917,9 +21449,9 @@
         "bucket": "75%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 38,
-          "label": "about 32-38%",
-          "low_percent": 32,
+          "high_percent": 36,
+          "label": "about 31-36%",
+          "low_percent": 31,
           "target": "Slowking",
           "target_hp": "68%"
         },
@@ -21943,9 +21475,9 @@
         "bucket": "50%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 109,
-          "label": "about 93-109%",
-          "low_percent": 93,
+          "high_percent": 106,
+          "label": "about 90-106%",
+          "low_percent": 90,
           "target": "Slowking",
           "target_hp": "68%"
         },
@@ -21959,58 +21491,7 @@
         ],
         "severity": "lethal",
         "sources": [
-          "tm_available",
-          "voucher_limited"
-        ],
-        "species": "Ampharos",
-        "switch_fit": null
-      },
-      {
-        "bucket": "25%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 93,
-          "label": "about 78-93%",
-          "low_percent": 78,
-          "target": "Slowking",
-          "target_hp": "68%"
-        },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 25,
-        "move": "Zap Cannon",
-        "move_id": "ZAP_CANNON",
-        "reasons": [
-          "legal through limited TM Voucher tutor credits"
-        ],
-        "severity": "lethal",
-        "sources": [
-          "voucher_limited"
-        ],
-        "species": "Ampharos",
-        "switch_fit": null
-      },
-      {
-        "bucket": "25%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 25,
-          "label": "about 20-25%",
-          "low_percent": 20,
-          "target": "Slowking",
-          "target_hp": "68%"
-        },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 25,
-        "move": "Hyper Beam",
-        "move_id": "HYPER_BEAM",
-        "reasons": [
-          "legal through limited TM Voucher tutor credits"
-        ],
-        "severity": "chip",
-        "sources": [
-          "voucher_limited"
+          "tm_available"
         ],
         "species": "Ampharos",
         "switch_fit": null
@@ -22169,8 +21650,7 @@
         ],
         "severity": "major",
         "sources": [
-          "tm_available",
-          "voucher_limited"
+          "tm_available"
         ],
         "species": "Houndoom",
         "switch_fit": null
@@ -22195,8 +21675,7 @@
         ],
         "severity": "meaningful",
         "sources": [
-          "tm_available",
-          "voucher_limited"
+          "tm_available"
         ],
         "species": "Houndoom",
         "switch_fit": null
@@ -22205,24 +21684,23 @@
         "bucket": "50%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 54,
-          "label": "about 45-54%",
-          "low_percent": 45,
+          "high_percent": 49,
+          "label": "about 41-49%",
+          "low_percent": 41,
           "target": "Alakazam",
           "target_hp": "89%"
         },
         "entry_risk": null,
         "immediacy": "active",
         "likelihood": 50,
-        "move": "Sludge Bomb",
-        "move_id": "SLUDGE_BOMB",
+        "move": "Shadow Ball",
+        "move_id": "SHADOW_BALL",
         "reasons": [
           "direct TM source is available by this checkpoint"
         ],
         "severity": "meaningful",
         "sources": [
-          "tm_available",
-          "voucher_limited"
+          "tm_available"
         ],
         "species": "Houndoom",
         "switch_fit": null
@@ -22269,8 +21747,7 @@
         ],
         "severity": "chip",
         "sources": [
-          "level_up",
-          "voucher_limited"
+          "level_up"
         ],
         "species": "Bayleef",
         "switch_fit": null
@@ -22321,108 +21798,7 @@
         ],
         "severity": "chip",
         "sources": [
-          "tm_available",
-          "voucher_limited"
-        ],
-        "species": "Bayleef",
-        "switch_fit": null
-      },
-      {
-        "bucket": "25%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 74,
-          "label": "about 62-74%",
-          "low_percent": 62,
-          "target": "Clefairy",
-          "target_hp": "100%"
-        },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 25,
-        "move": "Solarbeam",
-        "move_id": "SOLARBEAM",
-        "reasons": [
-          "legal through limited TM Voucher tutor credits"
-        ],
-        "severity": "major",
-        "sources": [
-          "voucher_limited"
-        ],
-        "species": "Bayleef",
-        "switch_fit": null
-      },
-      {
-        "bucket": "25%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 45,
-          "label": "about 38-45%",
-          "low_percent": 38,
-          "target": "Clefairy",
-          "target_hp": "100%"
-        },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 25,
-        "move": "Iron Tail",
-        "move_id": "IRON_TAIL",
-        "reasons": [
-          "legal through limited TM Voucher tutor credits"
-        ],
-        "severity": "meaningful",
-        "sources": [
-          "voucher_limited"
-        ],
-        "species": "Bayleef",
-        "switch_fit": null
-      },
-      {
-        "bucket": "25%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 29,
-          "label": "about 24-29%",
-          "low_percent": 24,
-          "target": "Clefairy",
-          "target_hp": "100%"
-        },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 25,
-        "move": "Strength",
-        "move_id": "STRENGTH",
-        "reasons": [
-          "legal through limited TM Voucher tutor credits"
-        ],
-        "severity": "chip",
-        "sources": [
-          "voucher_limited"
-        ],
-        "species": "Bayleef",
-        "switch_fit": null
-      },
-      {
-        "bucket": "25%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 26,
-          "label": "about 21-26%",
-          "low_percent": 21,
-          "target": "Clefairy",
-          "target_hp": "100%"
-        },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 25,
-        "move": "Cut",
-        "move_id": "CUT",
-        "reasons": [
-          "legal through limited TM Voucher tutor credits"
-        ],
-        "severity": "chip",
-        "sources": [
-          "voucher_limited"
+          "tm_available"
         ],
         "species": "Bayleef",
         "switch_fit": null
@@ -22469,8 +21845,7 @@
         "severity": "support",
         "sources": [
           "level_up",
-          "revealed",
-          "voucher_limited"
+          "revealed"
         ],
         "species": "Geodude",
         "switch_fit": null
@@ -22499,93 +21874,6 @@
         ],
         "species": "Geodude",
         "switch_fit": null
-      },
-      {
-        "bucket": "25%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 44,
-          "label": "about 36-44%",
-          "low_percent": 36,
-          "target": "Miltank",
-          "target_hp": "92%"
-        },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 25,
-        "move": "Dynamicpunch",
-        "move_id": "DYNAMICPUNCH",
-        "reasons": [
-          "legal through limited TM Voucher tutor credits"
-        ],
-        "severity": "meaningful",
-        "sources": [
-          "voucher_limited"
-        ],
-        "species": "Geodude",
-        "switch_fit": null
-      },
-      {
-        "bucket": "25%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 32,
-          "label": "about 27-32%",
-          "low_percent": 27,
-          "target": "Miltank",
-          "target_hp": "92%"
-        },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 25,
-        "move": "Earthquake",
-        "move_id": "EARTHQUAKE",
-        "reasons": [
-          "legal through limited TM Voucher tutor credits"
-        ],
-        "severity": "chip",
-        "sources": [
-          "voucher_limited"
-        ],
-        "species": "Geodude",
-        "switch_fit": null
-      },
-      {
-        "bucket": "25%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 74,
-          "label": "about 63-74%",
-          "low_percent": 63,
-          "target": "Miltank",
-          "target_hp": "92%"
-        },
-        "entry_risk": {
-          "damage": {
-            "basis": "rough estimate",
-            "high_percent": 40,
-            "label": "about 33-40%",
-            "low_percent": 33,
-            "target": "Bayleef",
-            "target_hp": "100%"
-          },
-          "fit": "bad",
-          "move": "Body Slam",
-          "reason": "bad switch into revealed boss damage"
-        },
-        "immediacy": "switch",
-        "likelihood": 25,
-        "move": "Solarbeam",
-        "move_id": "SOLARBEAM",
-        "reasons": [
-          "legal through limited TM Voucher tutor credits"
-        ],
-        "severity": "major",
-        "sources": [
-          "voucher_limited"
-        ],
-        "species": "Bayleef",
-        "switch_fit": "bad"
       }
     ]
   },
@@ -22608,7 +21896,6 @@
     "data/wild/*.asm",
     "data/maps/maps.asm",
     "maps/*.asm",
-    "engine/pokemon/experience.asm",
-    "maps/DayCare.asm"
+    "engine/pokemon/experience.asm"
   ]
 }

@@ -128,7 +128,7 @@ ItemEffects:
 	dw NoEffect            ; EVERSTONE
 	dw NoEffect            ; SPELL_TAG
 	dw RestoreHPEffect     ; RAGECANDYBAR
-	dw NoEffect            ; TM_VOUCHER
+	dw NoEffect            ; ITEM_73
 	dw NoEffect            ; CHOICE_BAND
 	dw NoEffect            ; MIRACLE_SEED
 	dw NoEffect            ; THICK_CLUB

@@ -19,7 +19,6 @@ EVOS_POINTERS_PATH = ROOT / "data" / "pokemon" / "evos_attacks_pointers.asm"
 ITEM_CONSTANTS_PATH = ROOT / "constants" / "item_constants.asm"
 POKEMON_CONSTANTS_PATH = ROOT / "constants" / "pokemon_constants.asm"
 EXPERIENCE_PATH = ROOT / "engine" / "pokemon" / "experience.asm"
-DAY_CARE_PATH = ROOT / "maps" / "DayCare.asm"
 MAP_METADATA_PATH = ROOT / "data" / "maps" / "maps.asm"
 MAPS_DIR = ROOT / "maps"
 WILD_DIR = ROOT / "data" / "wild"
@@ -32,7 +31,6 @@ STAB_FLOOR_BY_SOURCE = {
     "level_up": 75,
     "pre_evo_level_up": 50,
     "tm_available": 50,
-    "voucher_limited": 25,
 }
 
 
@@ -42,8 +40,6 @@ class Checkpoint:
     leader: str
     level_cap: int
     badges_before: int
-    vouchers_before: int
-    tm_tutor_available: bool
     wild_maps: tuple[str, ...]
     direct_tm_files: tuple[str, ...]
     rod_tiers: tuple[str, ...] = ()
@@ -179,8 +175,6 @@ CHECKPOINTS = (
         "Falkner",
         14,
         0,
-        0,
-        False,
         PRE_FALKNER_MAPS,
         EARLY_TM_FILES,
         event_files=PRE_FALKNER_EVENT_FILES,
@@ -190,8 +184,6 @@ CHECKPOINTS = (
         "Bugsy",
         17,
         1,
-        1,
-        False,
         PRE_BUGSY_MAPS,
         PRE_BUGSY_TM_FILES,
         rod_tiers=OLD_ROD,
@@ -202,8 +194,6 @@ CHECKPOINTS = (
         "Whitney",
         21,
         2,
-        2,
-        True,
         PRE_WHITNEY_MAPS,
         PRE_WHITNEY_TM_FILES,
         rod_tiers=OLD_ROD,
@@ -214,8 +204,6 @@ CHECKPOINTS = (
         "Morty",
         26,
         3,
-        3,
-        True,
         PRE_MORTY_MAPS,
         PRE_MORTY_TM_FILES,
         rod_tiers=OLD_ROD,
@@ -227,8 +215,6 @@ CHECKPOINTS = (
         "Chuck",
         34,
         4,
-        4,
-        True,
         MID_JOHTO_MAPS,
         MID_JOHTO_TM_FILES,
         rod_tiers=GOOD_ROD,
@@ -236,7 +222,7 @@ CHECKPOINTS = (
         static_files=MID_JOHTO_STATIC_FILES,
         surf_available=True,
         notes=(
-            "Mid-Johto order is flexible; voucher count uses the conservative four-prior-gym floor.",
+            "Mid-Johto order is flexible; checkpoint assumes four prior badges.",
         ),
     ),
     Checkpoint(
@@ -244,8 +230,6 @@ CHECKPOINTS = (
         "Jasmine",
         34,
         4,
-        4,
-        True,
         MID_JOHTO_MAPS,
         MID_JOHTO_TM_FILES,
         rod_tiers=GOOD_ROD,
@@ -253,7 +237,7 @@ CHECKPOINTS = (
         static_files=MID_JOHTO_STATIC_FILES,
         surf_available=True,
         notes=(
-            "Mid-Johto order is flexible; voucher count uses the conservative four-prior-gym floor.",
+            "Mid-Johto order is flexible; checkpoint assumes four prior badges.",
         ),
     ),
     Checkpoint(
@@ -261,8 +245,6 @@ CHECKPOINTS = (
         "Pryce",
         34,
         4,
-        4,
-        True,
         MID_JOHTO_MAPS,
         MID_JOHTO_TM_FILES,
         rod_tiers=GOOD_ROD,
@@ -270,7 +252,7 @@ CHECKPOINTS = (
         static_files=MID_JOHTO_STATIC_FILES,
         surf_available=True,
         notes=(
-            "Mid-Johto order is flexible; voucher count uses the conservative four-prior-gym floor.",
+            "Mid-Johto order is flexible; checkpoint assumes four prior badges.",
         ),
     ),
     Checkpoint(
@@ -278,8 +260,6 @@ CHECKPOINTS = (
         "Clair",
         39,
         7,
-        7,
-        True,
         PRE_CLAIR_MAPS,
         PRE_CLAIR_TM_FILES,
         rod_tiers=GOOD_ROD,
@@ -292,8 +272,6 @@ CHECKPOINTS = (
         "Champion Lance",
         50,
         8,
-        8,
-        True,
         ("ALL_NON_SILVER",),
         PRE_CHAMPION_TM_FILES,
         rod_tiers=GOOD_ROD,
@@ -306,8 +284,6 @@ CHECKPOINTS = (
         "Koga",
         50,
         8,
-        8,
-        True,
         ("ALL_NON_SILVER",),
         PRE_CHAMPION_TM_FILES,
         rod_tiers=GOOD_ROD,
@@ -320,8 +296,6 @@ CHECKPOINTS = (
         "Brock",
         60,
         8,
-        8,
-        True,
         ("ALL_NON_SILVER",),
         ("ALL",),
         rod_tiers=SUPER_ROD,
@@ -334,8 +308,6 @@ CHECKPOINTS = (
         "Misty",
         63,
         8,
-        8,
-        True,
         ("ALL_NON_SILVER",),
         ("ALL",),
         rod_tiers=SUPER_ROD,
@@ -348,8 +320,6 @@ CHECKPOINTS = (
         "Lt. Surge",
         65,
         8,
-        8,
-        True,
         ("ALL_NON_SILVER",),
         ("ALL",),
         rod_tiers=SUPER_ROD,
@@ -362,8 +332,6 @@ CHECKPOINTS = (
         "Erika",
         64,
         8,
-        8,
-        True,
         ("ALL_NON_SILVER",),
         ("ALL",),
         rod_tiers=SUPER_ROD,
@@ -376,8 +344,6 @@ CHECKPOINTS = (
         "Janine",
         64,
         8,
-        8,
-        True,
         ("ALL_NON_SILVER",),
         ("ALL",),
         rod_tiers=SUPER_ROD,
@@ -390,8 +356,6 @@ CHECKPOINTS = (
         "Sabrina",
         67,
         8,
-        8,
-        True,
         ("ALL_NON_SILVER",),
         ("ALL",),
         rod_tiers=SUPER_ROD,
@@ -404,8 +368,6 @@ CHECKPOINTS = (
         "Blaine",
         65,
         8,
-        8,
-        True,
         ("ALL_NON_SILVER",),
         ("ALL",),
         rod_tiers=SUPER_ROD,
@@ -418,8 +380,6 @@ CHECKPOINTS = (
         "Blue",
         69,
         16,
-        8,
-        True,
         ("ALL_NON_SILVER",),
         ("ALL",),
         rod_tiers=SUPER_ROD,
@@ -561,12 +521,6 @@ def legal_moves_for_species(species: str, checkpoint: Checkpoint) -> dict[str, l
     for move in tmhm_learnsets().get(species, set()):
         if move in direct_tms:
             moves[move].add("tm_available")
-        if (
-            checkpoint.tm_tutor_available
-            and checkpoint.vouchers_before > 0
-            and daycare_tutor_is_any_tm()
-        ):
-            moves[move].add("voucher_limited")
     return {move: sorted(sources) for move, sources in sorted(moves.items())}
 
 
@@ -602,8 +556,6 @@ def likelihood_for_move(
         return 50, ["legal via pre-evolution level-up path"]
     if "tm_available" in sources:
         return 50, ["direct TM source is available by this checkpoint"]
-    if "voucher_limited" in sources:
-        return 25, ["legal through limited TM Voucher tutor credits"]
     return 25, ["legal but optional or low-confidence source"]
 
 
@@ -721,9 +673,6 @@ def build_threat_report(fixtures: list[dict[str, Any]]) -> dict[str, Any]:
                 "leader": checkpoint.leader,
                 "level_cap": checkpoint.level_cap,
                 "badges_before": checkpoint.badges_before,
-                "vouchers_before": checkpoint.vouchers_before,
-                "voucher_lessons_before": checkpoint.vouchers_before * 3,
-                "tm_tutor_available": checkpoint.tm_tutor_available,
                 "rod_tiers": list(checkpoint.rod_tiers),
                 "surf_available": checkpoint.surf_available,
                 "event_files": list(checkpoint.event_files),
@@ -755,7 +704,6 @@ def build_threat_report(fixtures: list[dict[str, Any]]) -> dict[str, Any]:
             "data/maps/maps.asm",
             "maps/*.asm",
             "engine/pokemon/experience.asm",
-            "maps/DayCare.asm",
         ],
         "known_limits": [
             "Route reachability is a conservative checkpoint list, not a pathfinder.",
@@ -778,7 +726,7 @@ def render_threat_markdown(report: dict[str, Any]) -> str:
         "- `99%`: revealed or forced by public fixture evidence.",
         "- `75%`: natural STAB/core level-up move.",
         "- `50%`: natural non-STAB level-up move, pre-evo move, or direct TM access.",
-        "- `25%`: legal but limited, optional, or voucher-gated.",
+        "- `25%`: legal but optional or low-confidence.",
         "- `0%`: unavailable or blocked by a four-revealed-move set.",
         "",
         "## Known Limits",
@@ -789,9 +737,7 @@ def render_threat_markdown(report: dict[str, Any]) -> str:
     for checkpoint in report["checkpoints"]:
         lines.append(
             f"- `{checkpoint['id']}` ({checkpoint['leader']}): cap "
-            f"{checkpoint['level_cap']}, vouchers before {checkpoint['vouchers_before']} "
-            f"({checkpoint['voucher_lessons_before']} lesson credits), "
-            f"tutor {'available' if checkpoint['tm_tutor_available'] else 'not reachable'}, "
+            f"{checkpoint['level_cap']}, badges before {checkpoint['badges_before']}, "
             f"rods {checkpoint['rod_tiers'] or ['none']}, "
             f"surf {'available' if checkpoint['surf_available'] else 'not usable'}, "
             f"{checkpoint['available_species_count']} available/current-public species, "
@@ -1209,16 +1155,6 @@ def pokemon_constants() -> list[str]:
                 break
             constants.append(name)
     return constants
-
-
-@lru_cache(maxsize=1)
-def daycare_tutor_is_any_tm() -> bool:
-    text = DAY_CARE_PATH.read_text(encoding="utf-8")
-    return (
-        "special TMTutorTeachAnyTM" in text
-        and "takeitem TM_VOUCHER" in text
-        and "addval 3" in text
-    )
 
 
 def normalize_id(value: str) -> str:

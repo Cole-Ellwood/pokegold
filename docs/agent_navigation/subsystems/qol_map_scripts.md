@@ -27,8 +27,8 @@ Already implemented:
 - FAST text speed for new games.
 - Move Reminder page size `4`.
 - Bicycle auto-register after receipt when no valid item is already registered.
-- Custom item / TM Voucher description cleanup.
-- Route 34 / Day-Care service text for TM Tutor and Move Reminder discovery.
+- Custom held-item description cleanup.
+- Route 34 / Day-Care service text for Move Reminder discovery.
 - Pokemon Center pause trimming that preserves the same heal flow.
 - Repel renewal prompt with Max Repel, Super Repel, Repel priority.
 - Constrained HM-slot relief: seven key items handle field use while badge/story

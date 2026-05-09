@@ -336,24 +336,28 @@ Changes:
 
 ## 3) Progression / Overworld Mechanics
 
-### 3.1 TM Tutor Credit Economy
+### 3.1 Gym TM Rewards
 
 Files:
-- `engine/events/tm_tutor.asm`
-- `maps/DayCare.asm`
-- `constants/event_flags.asm`
-- `ram/wram.asm`
-- `data/events/special_pointers.asm`
+- `maps/VioletGym.asm`
+- `maps/AzaleaGym.asm`
+- `maps/GoldenrodGym.asm`
+- `maps/EcruteakGym.asm`
+- `maps/CianwoodGym.asm`
+- `maps/OlivineGym.asm`
+- `maps/MahoganyGym.asm`
+- `maps/BlackthornGym1F.asm`
 
 Mechanic:
-- New TM Tutor at Day Care area.
-- One-time unlock fee: `1000` money (`EVENT_TM_TUTOR_UNLOCKED`).
-- `TM_VOUCHER` can be redeemed for 3 tutor lesson credits.
-- Teaching uses the TM move-selection UI, including former HM slots, but does
-  not consume actual TM inventory.
-- Credit decreases only on successful learn.
-- Credits are stored (`wTMTutorCredits`) and capped to 99.
-- Backup/restore buffer used to preserve true TM/HM inventory during tutor flow (`wTMTutorTMHMBackup`).
+- Johto gym rewards follow the direct TM pattern:
+  - Falkner: `TM_WING_ATTACK`
+  - Bugsy: `TM_LEECH_LIFE`
+  - Whitney: `TM_DOUBLE_EDGE`
+  - Morty: `TM_SHADOW_BALL`
+  - Chuck: `TM_DYNAMICPUNCH` and `TM_FOCUS_PUNCH`
+  - Jasmine: `TM_IRON_TAIL`
+  - Pryce: `TM_BLIZZARD`
+  - Clair: `TM_OUTRAGE`
 
 ### 3.2 Move Reminder
 
@@ -369,18 +373,7 @@ Mechanic:
 - Already-known moves and duplicates are filtered out.
 - Paged move list UI (`NEXT` / `CANCEL`) supports larger candidate sets.
 
-### 3.3 Gym Reward Economy Shift
-
-Files:
-- `maps/VioletGym.asm`
-- `maps/AzaleaGym.asm`
-- `maps/BlackthornGym1F.asm`
-
-Mechanic:
-- Selected gym reward scripts now grant `TM_VOUCHER` instead of direct TM items.
-- Voucher is consumed by TM Tutor for lesson credits.
-
-### 3.4 HM Field Tools And Former HMs As TMs
+### 3.3 HM Field Tools And Former HMs As TMs
 
 Files:
 - `constants/item_constants.asm`
@@ -389,7 +382,6 @@ Files:
 - `engine/events/overworld.asm`
 - `engine/items/item_effects.asm`
 - `engine/items/tmhm.asm`
-- `engine/events/tm_tutor.asm`
 - HM reward map scripts in `maps/`
 
 Mechanic:
@@ -418,8 +410,6 @@ Mechanic:
   the replacement tools rather than "Pokemon must know the HM" wording.
 - The seven tools fit exactly in the existing key-item pocket budget: 25
   key-item attributes for `MAX_KEY_ITEMS = 25`.
-- TM Tutor uses `NO_ITEM` as its no-consume sentinel and can offer the former HM
-  move slots without consuming or mutating true TM inventory.
 
 ## 4) Evolution Mechanics
 
@@ -443,11 +433,12 @@ Added runtime state for new mechanics:
 - Dark shield consumed flags.
 - Choice lock states.
 - Metronome tracking states.
-- TM Tutor credits and TM/HM backup buffer.
+- Reserved bytes that preserve the removed move-tutor layout.
 - Full Boss AI state block (+ optional trace block under `BOSS_AI_TRACE`).
 
 Build integration:
-- New modules included for boss AI, late-gen held items, type passive logic, move reminder, and TM tutor.
+- New modules included for boss AI, late-gen held items, type passive logic,
+  and move reminder.
 - `Makefile` now supports extra assembler defines via `DEFINES`, enabling optional debug trace builds (for example `-D BOSS_AI_TRACE`).
 
 ## Appendix A: Mechanics-Relevant Files Touched
@@ -481,7 +472,6 @@ Build integration:
 - `engine/battle/type_passive_damage_mods.asm`
 - `engine/battle/used_move_text.asm`
 - `engine/events/move_reminder.asm`
-- `engine/events/tm_tutor.asm`
 - `engine/pokemon/evolve.asm`
 - `main.asm`
 - `maps/DayCare.asm`

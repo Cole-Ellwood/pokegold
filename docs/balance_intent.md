@@ -107,6 +107,13 @@ unresolved weak Pokemon from the high-signal queue.
 - Falkner's Spearow intentionally has only `PECK` and `FURY_ATTACK`; slots 3-4
   stay `NO_MOVE`. This is a specific first-gym taste call, not permission for
   incomplete boss movesets elsewhere.
+- The TM reward table intentionally retires five niche TMs (`PSYCH_UP`,
+  `SNORE`, `SWIFT`, `DETECT`, `NIGHTMARE`) and reuses their slots for
+  `WING_ATTACK`, `LEECH_LIFE`, `DOUBLE_EDGE`, `FOCUS_PUNCH`, and `OUTRAGE`.
+  This keeps the vanilla-style "leader gives a TM" rhythm while letting each
+  Johto reward match the leader's type identity. Chuck is the exception and
+  gives both `DYNAMICPUNCH` and `FOCUS_PUNCH` because the Fighting reward theme
+  needs the existing TM01 plus the new TM43 slot.
 
 ## Manual Intent Registry
 

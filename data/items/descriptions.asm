@@ -115,7 +115,7 @@ ItemDescriptions:
 	dw EverStoneDesc
 	dw SpellTagDesc
 	dw RageCandyBarDesc
-	dw TMVoucherDesc
+	dw Item73Desc
 	dw ChoiceBandDesc
 	dw MiracleSeedDesc
 	dw ThickClubDesc
@@ -704,9 +704,8 @@ RageCandyBarDesc:
 	db   "Restores #MON"
 	next "HP by 20.@"
 
-TMVoucherDesc:
-	db   "Redeem at DAY-CARE"
-	next "for 3 TM lessons.@"
+Item73Desc:
+	db   "?@"
 
 ChoiceBandDesc:
 	db   "Raises ATTACK;"
