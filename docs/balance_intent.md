@@ -102,6 +102,12 @@ unresolved weak Pokemon from the high-signal queue.
   context if the boss supplies level, item, move timing, or team support. Record
   that explicitly.
 
+## Boss Roster Intent Notes
+
+- Falkner's Spearow intentionally has only `PECK` and `FURY_ATTACK`; slots 3-4
+  stay `NO_MOVE`. This is a specific first-gym taste call, not permission for
+  incomplete boss movesets elsewhere.
+
 ## Manual Intent Registry
 
 Add locked/provisional rows here as balance decisions are made.

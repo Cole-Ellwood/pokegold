@@ -6541,9 +6541,19 @@ BossAI_AdjustThreatSeverityForEnemyKnownDefense:
 ; input: c = public threat type, b = severity. output: a = adjusted severity.
 	ld a, c
 	call BossAI_EnemyKnownItemNullifiesThreatType
-	jr nc, .assault_vest
+	jr nc, .dragon
 	xor a
 	ret
+
+.dragon
+	ld a, [wTypeMatchup]
+	cp EFFECTIVE + 1
+	jr nc, .assault_vest
+	ld a, DRAGON
+	call BossAI_EnemyTypeContribution
+	and a
+	jr z, .assault_vest
+	call BossAI_DecThreatSeverityB
 
 .assault_vest
 	call BossAI_GetEnemyHeldEffect

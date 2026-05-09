@@ -25,9 +25,6 @@ now and tracked as TODOs:
 - HandleLateGenAfterHitEffects_Far (Rocky Helmet, Life Orb, Shell
   Bell) -- clobber_smoke covers the HP side effects, but the oracle still
   predicts only the main damage chain.
-- TypeBoostItems (e.g. Charcoal +10% FIRE) -- ApplyLateGenDamageMultipliers
-  consumes them, but no current scenario exercises one. Add when
-  needed by Tier 2.3.
 """
 
 from __future__ import annotations
@@ -74,12 +71,36 @@ EFFECT_MULTI_HIT = 29
 EFFECT_CONVERSION = 30
 EFFECT_SOLARBEAM = 151
 
-# Item IDs that participate in the damage-chain stat mods.
+# Item IDs that participate in the damage chain.
 HELD_NONE = 0x00
+HELD_LIFE_ORB = 0x46
+HELD_SOFT_SAND = 0x4C
+HELD_SHARP_BEAK = 0x4D
+HELD_POISON_BARB = 0x51
+HELD_SILVERPOWDER = 0x58
+HELD_MYSTIC_WATER = 0x5F
+HELD_TWISTEDSPOON = 0x60
+HELD_BLACKBELT_I = 0x62
+HELD_BLACKGLASSES = 0x66
+HELD_PINK_BOW = 0x68
+HELD_NEVERMELTICE = 0x6B
+HELD_MAGNET = 0x6C
+HELD_SPELL_TAG = 0x71
 HELD_CHOICE_BAND = 0x74
+HELD_MIRACLE_SEED = 0x75
+HELD_HARD_STONE = 0x7D
 HELD_CHOICE_SPECS = 0x81
 HELD_ASSAULT_VEST = 0x89
+HELD_CHARCOAL = 0x8A
+HELD_EXPERT_BELT = 0x8D
+HELD_MUSCLE_BAND = 0x8E
+HELD_METAL_COAT = 0x8F
+HELD_DRAGON_FANG = 0x90
+HELD_WISE_GLASSES = 0x91
 HELD_EVOLITE = 0x93
+HELD_DRAGON_SCALE = 0x97
+HELD_METRONOME = 0x9A
+HELD_POLKADOT_BOW = 0xAA
 
 # Mirrors data/types/type_matchups.asm. Multiplier is the "*=" column
 # in 5/10/20 encoding (NO_EFFECT, NOT_VERY, SUPER). Default 10 when
@@ -258,6 +279,10 @@ class BattleInputs:
     # can enter with a nonzero wCurDamage from a prior hit.
     initial_cur_damage: int = 0
 
+    # ApplyLateGenDamageMultipliers_Far reads this when the user holds
+    # Metronome. The counter is already side-selected by the ROM helper.
+    metronome_count: int = 0
+
 
 def _apply_user_item_stat_mod(inp: BattleInputs, atk: int) -> int:
     """ApplyChoiceBandBoost / ApplyChoiceSpecsBoost in late_gen_held_items.asm."""
@@ -326,10 +351,63 @@ def _damagecalc_quotient(inp: BattleInputs) -> int | None:
     q = q // max(1, deff)
     q = q // 50
 
+    q = _apply_type_boost_item(inp, q)
+    q = _apply_late_gen_damage_multiplier(inp, q)
+
     if inp.is_critical:
         q *= 2
         if q > 0xFFFF:
             q = 0xFFFF
+    return q
+
+
+_TYPE_BOOST_ITEM_TYPES = {
+    HELD_PINK_BOW: NORMAL,
+    HELD_POLKADOT_BOW: NORMAL,
+    HELD_BLACKBELT_I: FIGHTING,
+    HELD_SHARP_BEAK: FLYING,
+    HELD_POISON_BARB: POISON,
+    HELD_SOFT_SAND: GROUND,
+    HELD_HARD_STONE: ROCK,
+    HELD_SILVERPOWDER: BUG,
+    HELD_SPELL_TAG: GHOST,
+    HELD_CHARCOAL: FIRE,
+    HELD_MYSTIC_WATER: WATER,
+    HELD_MIRACLE_SEED: GRASS,
+    HELD_MAGNET: ELECTRIC,
+    HELD_TWISTEDSPOON: PSYCHIC_TYPE,
+    HELD_NEVERMELTICE: ICE,
+    HELD_DRAGON_FANG: DRAGON,
+    HELD_DRAGON_SCALE: DRAGON,
+    HELD_BLACKGLASSES: DARK,
+    HELD_METAL_COAT: STEEL,
+}
+
+
+def _apply_type_boost_item(inp: BattleInputs, q: int) -> int:
+    """Mirror the TypeBoostItems loop in BattleCommand_DamageCalc."""
+    if _TYPE_BOOST_ITEM_TYPES.get(inp.user_item) != inp.move_type:
+        return q
+    return q * 120 // 100
+
+
+def _apply_late_gen_damage_multiplier(inp: BattleInputs, q: int) -> int:
+    """Mirror ApplyLateGenDamageMultipliers_Far.
+
+    This operates on hQuotient after the vanilla type-boost item loop and
+    before the critical-hit multiplier.
+    """
+    if inp.user_item == HELD_MUSCLE_BAND:
+        return q * 11 // 10 if inp.is_physical else q
+    if inp.user_item == HELD_WISE_GLASSES:
+        return q * 11 // 10 if not inp.is_physical else q
+    if inp.user_item == HELD_EXPERT_BELT:
+        return q * 6 // 5 if _matchup_total(inp) >= EFFECTIVE + 1 else q
+    if inp.user_item == HELD_METRONOME:
+        numerator = min(10 + inp.metronome_count * 2, 20)
+        return q * numerator // 10
+    if inp.user_item == HELD_LIFE_ORB:
+        return q * 13 // 10
     return q
 
 
@@ -904,6 +982,66 @@ def _self_test() -> list[tuple[str, int, int]]:
             attacker_atk=11, defender_def=5,
             attacker_types=CYNDAQUIL_TYPES, defender_types=PIDGEY_TYPES,
             kanto_badges=1 << 6,
+        ),
+    ))
+
+    cases.append((
+        "physical_type_boost_item", 41,
+        BattleInputs(
+            attacker_level=50, move_bp=60, move_type=FIGHTING, is_physical=True,
+            attacker_atk=90, defender_def=70,
+            attacker_types=(WATER, WATER), defender_types=(FIRE, WATER),
+            user_item=HELD_BLACKBELT_I,
+        ),
+    ))
+
+    cases.append((
+        "physical_muscle_band", 38,
+        BattleInputs(
+            attacker_level=50, move_bp=60, move_type=FIGHTING, is_physical=True,
+            attacker_atk=90, defender_def=70,
+            attacker_types=(WATER, WATER), defender_types=(FIRE, WATER),
+            user_item=HELD_MUSCLE_BAND,
+        ),
+    ))
+
+    cases.append((
+        "special_wise_glasses", 38,
+        BattleInputs(
+            attacker_level=50, move_bp=60, move_type=FIRE, is_physical=False,
+            attacker_atk=90, defender_def=70,
+            attacker_types=(WATER, WATER), defender_types=PIDGEY_TYPES,
+            user_item=HELD_WISE_GLASSES,
+        ),
+    ))
+
+    cases.append((
+        "special_expert_belt", 82,
+        BattleInputs(
+            attacker_level=50, move_bp=60, move_type=FIRE, is_physical=False,
+            attacker_atk=90, defender_def=70,
+            attacker_types=(WATER, WATER), defender_types=(GRASS, NORMAL),
+            user_item=HELD_EXPERT_BELT,
+        ),
+    ))
+
+    cases.append((
+        "special_metronome_item", 54,
+        BattleInputs(
+            attacker_level=50, move_bp=60, move_type=FIRE, is_physical=False,
+            attacker_atk=90, defender_def=70,
+            attacker_types=(WATER, WATER), defender_types=PIDGEY_TYPES,
+            user_item=HELD_METRONOME, metronome_count=3,
+        ),
+    ))
+
+    cases.append((
+        "special_life_orb_damage", 44,
+        BattleInputs(
+            attacker_level=50, move_bp=60, move_type=FIRE, is_physical=False,
+            attacker_atk=90, defender_def=70,
+            attacker_types=(WATER, WATER), defender_types=PIDGEY_TYPES,
+            user_item=HELD_LIFE_ORB,
         ),
     ))
 

@@ -1,0 +1,366 @@
+{
+  "conflicts": [],
+  "disagreements": [
+    {
+      "baseline_action_id": "move_gust",
+      "best_action_ids": [],
+      "disagrees_with_baseline": true,
+      "fixture_id": "falkner_pidgeotto_vs_geodude_rock_risk",
+      "label_count": 0,
+      "leader": "Falkner",
+      "preference_count": 1,
+      "tags": [
+        "early_gym",
+        "hidden_coverage",
+        "ace_preservation"
+      ],
+      "training_focus": "Do not treat a visible type advantage as complete safety when a common early Rock threat is public-plausible."
+    },
+    {
+      "baseline_action_id": "move_rollout",
+      "best_action_ids": [],
+      "disagrees_with_baseline": true,
+      "fixture_id": "whitney_miltank_vs_geodude_rollout_temptation",
+      "label_count": 0,
+      "leader": "Whitney",
+      "preference_count": 1,
+      "tags": [
+        "ace_preservation",
+        "cheapness",
+        "setup_lock"
+      ],
+      "training_focus": "Separate iconic pressure from bad Rollout locking when Rock/Ground danger is public."
+    },
+    {
+      "baseline_action_id": "move_focus_punch",
+      "best_action_ids": [],
+      "disagrees_with_baseline": true,
+      "fixture_id": "chuck_poliwrath_vs_pidgeotto_ice_punch",
+      "label_count": 0,
+      "leader": "Chuck",
+      "preference_count": 1,
+      "tags": [
+        "coverage",
+        "prediction",
+        "status"
+      ],
+      "training_focus": "Teach the boss to value visible coverage without pretending it knows the player's next move."
+    }
+  ],
+  "feedback_fixture_count": 7,
+  "fixture_count": 20,
+  "fixtures": [
+    {
+      "baseline_action_id": "move_gust",
+      "best_action_ids": [],
+      "disagrees_with_baseline": true,
+      "fixture_id": "falkner_pidgeotto_vs_geodude_rock_risk",
+      "label_count": 0,
+      "leader": "Falkner",
+      "preference_count": 1,
+      "tags": [
+        "early_gym",
+        "hidden_coverage",
+        "ace_preservation"
+      ],
+      "training_focus": "Do not treat a visible type advantage as complete safety when a common early Rock threat is public-plausible."
+    },
+    {
+      "baseline_action_id": "move_swords_dance",
+      "best_action_ids": [],
+      "disagrees_with_baseline": false,
+      "fixture_id": "bugsy_scyther_vs_quilava_fire_pressure",
+      "label_count": 0,
+      "leader": "Bugsy",
+      "preference_count": 1,
+      "tags": [
+        "setup",
+        "tempo",
+        "super_effective_pressure"
+      ],
+      "training_focus": "Teach when a boss should stop setting up because a publicly revealed threat already has tempo."
+    },
+    {
+      "baseline_action_id": "move_rollout",
+      "best_action_ids": [],
+      "disagrees_with_baseline": true,
+      "fixture_id": "whitney_miltank_vs_geodude_rollout_temptation",
+      "label_count": 0,
+      "leader": "Whitney",
+      "preference_count": 1,
+      "tags": [
+        "ace_preservation",
+        "cheapness",
+        "setup_lock"
+      ],
+      "training_focus": "Separate iconic pressure from bad Rollout locking when Rock/Ground danger is public."
+    },
+    {
+      "baseline_action_id": "move_double_team",
+      "best_action_ids": [],
+      "disagrees_with_baseline": false,
+      "fixture_id": "whitney_clefairy_vs_bayleef_encore_window",
+      "label_count": 0,
+      "leader": "Whitney",
+      "preference_count": 1,
+      "tags": [
+        "status",
+        "setup_denial",
+        "early_gym"
+      ],
+      "training_focus": "Capture whether early utility moves should punish setup attempts or just take simple damage."
+    },
+    {
+      "baseline_action_id": "move_shadow_ball",
+      "best_action_ids": [],
+      "disagrees_with_baseline": false,
+      "fixture_id": "morty_gengar_vs_kadabra_destiny_bond",
+      "label_count": 0,
+      "leader": "Morty",
+      "preference_count": 1,
+      "tags": [
+        "sacrifice",
+        "status",
+        "ace_preservation"
+      ],
+      "training_focus": "Decide when Destiny Bond is scary-good versus cheap or wasteful."
+    },
+    {
+      "baseline_action_id": "move_hypnosis",
+      "best_action_ids": [],
+      "disagrees_with_baseline": false,
+      "fixture_id": "morty_haunter_vs_noctowl_sleep_line",
+      "label_count": 0,
+      "leader": "Morty",
+      "preference_count": 1,
+      "tags": [
+        "sleep",
+        "status",
+        "fairness"
+      ],
+      "training_focus": "Label how often sleep should be the correct scary line instead of a cheap default."
+    },
+    {
+      "baseline_action_id": "move_focus_punch",
+      "best_action_ids": [],
+      "disagrees_with_baseline": true,
+      "fixture_id": "chuck_poliwrath_vs_pidgeotto_ice_punch",
+      "label_count": 0,
+      "leader": "Chuck",
+      "preference_count": 1,
+      "tags": [
+        "coverage",
+        "prediction",
+        "status"
+      ],
+      "training_focus": "Teach the boss to value visible coverage without pretending it knows the player's next move."
+    },
+    {
+      "baseline_action_id": "move_rock_slide",
+      "best_action_ids": [],
+      "disagrees_with_baseline": false,
+      "fixture_id": "jasmine_steelix_vs_quilava_fire_threat",
+      "label_count": 0,
+      "leader": "Jasmine",
+      "preference_count": 0,
+      "tags": [
+        "ace_preservation",
+        "coverage",
+        "switching"
+      ],
+      "training_focus": "Teach Jasmine to stay patient into reduced Fire chip while still respecting stronger public Fire coverage."
+    },
+    {
+      "baseline_action_id": "move_toxic",
+      "best_action_ids": [],
+      "disagrees_with_baseline": false,
+      "fixture_id": "jasmine_skarmory_vs_machoke_whirlwind",
+      "label_count": 0,
+      "leader": "Jasmine",
+      "preference_count": 0,
+      "tags": [
+        "phazing",
+        "setup_denial",
+        "stall"
+      ],
+      "training_focus": "Label whether phazing a setup threat feels like good defense or slow stall."
+    },
+    {
+      "baseline_action_id": "move_surf",
+      "best_action_ids": [],
+      "disagrees_with_baseline": false,
+      "fixture_id": "pryce_cloyster_vs_quilava_explosion_line",
+      "label_count": 0,
+      "leader": "Pryce",
+      "preference_count": 0,
+      "tags": [
+        "sacrifice",
+        "cheapness",
+        "hazards"
+      ],
+      "training_focus": "Decide when Explosion is dramatic, fair, or cheap in a gym-leader fight."
+    },
+    {
+      "baseline_action_id": "move_thunder_wave",
+      "best_action_ids": [],
+      "disagrees_with_baseline": false,
+      "fixture_id": "pryce_slowking_vs_ampharos_ground_pivot",
+      "label_count": 0,
+      "leader": "Pryce",
+      "preference_count": 0,
+      "tags": [
+        "switching",
+        "public_type",
+        "status"
+      ],
+      "training_focus": "Teach when a Water/Psychic wall should respect Electric pressure and pivot to a Ground type."
+    },
+    {
+      "baseline_action_id": "move_outrage",
+      "best_action_ids": [],
+      "disagrees_with_baseline": false,
+      "fixture_id": "clair_dragonite_vs_suicune_hidden_ice_beam",
+      "label_count": 0,
+      "leader": "Clair",
+      "preference_count": 0,
+      "tags": [
+        "hidden_coverage",
+        "ace_preservation",
+        "signature_test"
+      ],
+      "training_focus": "The Suicune/Ice Beam test: the AI should respect public meta coverage before it is revealed."
+    },
+    {
+      "baseline_action_id": "move_agility",
+      "best_action_ids": [],
+      "disagrees_with_baseline": false,
+      "fixture_id": "clair_kingdra_vs_lapras_agility_or_attack",
+      "label_count": 0,
+      "leader": "Clair",
+      "preference_count": 0,
+      "tags": [
+        "setup",
+        "mirror_water",
+        "endgame"
+      ],
+      "training_focus": "Label when Clair should spend a turn on Agility instead of taking damage now."
+    },
+    {
+      "baseline_action_id": "move_toxic",
+      "best_action_ids": [],
+      "disagrees_with_baseline": false,
+      "fixture_id": "koga_crobat_vs_alakazam_toxic_or_attack",
+      "label_count": 0,
+      "leader": "Koga",
+      "preference_count": 0,
+      "tags": [
+        "status",
+        "speed",
+        "endgame"
+      ],
+      "training_focus": "Capture Koga's poison-clock identity without ignoring immediate Psychic pressure."
+    },
+    {
+      "baseline_action_id": "move_dragon_dance",
+      "best_action_ids": [],
+      "disagrees_with_baseline": false,
+      "fixture_id": "lance_dragonite_vs_suicune_champion_ace",
+      "label_count": 0,
+      "leader": "Champion Lance",
+      "preference_count": 0,
+      "tags": [
+        "hidden_coverage",
+        "ace_preservation",
+        "champion"
+      ],
+      "training_focus": "Repeat the signature hidden-Ice test at Champion stakes with a higher-value Dragonite."
+    },
+    {
+      "baseline_action_id": "move_explosion",
+      "best_action_ids": [],
+      "disagrees_with_baseline": false,
+      "fixture_id": "brock_golem_vs_vaporeon_explosion_question",
+      "label_count": 0,
+      "leader": "Brock",
+      "preference_count": 0,
+      "tags": [
+        "sacrifice",
+        "water_pressure",
+        "late_game"
+      ],
+      "training_focus": "Label whether a late-game Rock leader should trade Golem or preserve it under Water pressure."
+    },
+    {
+      "baseline_action_id": "move_recover",
+      "best_action_ids": [],
+      "disagrees_with_baseline": false,
+      "fixture_id": "misty_starmie_vs_meganium_recover_or_attack",
+      "label_count": 0,
+      "leader": "Misty",
+      "preference_count": 0,
+      "tags": [
+        "recovery",
+        "coverage",
+        "late_game"
+      ],
+      "training_focus": "Decide when a fast ace should Recover versus press coverage into a Grass threat."
+    },
+    {
+      "baseline_action_id": "move_sleep_powder",
+      "best_action_ids": [],
+      "disagrees_with_baseline": false,
+      "fixture_id": "erika_victreebel_vs_snorlax_sleep_or_boost",
+      "label_count": 0,
+      "leader": "Erika",
+      "preference_count": 0,
+      "tags": [
+        "sleep",
+        "setup",
+        "wallbreaking"
+      ],
+      "training_focus": "Label Erika's grass-control style against a bulky normal wall."
+    },
+    {
+      "baseline_action_id": "move_psychic",
+      "best_action_ids": [],
+      "disagrees_with_baseline": false,
+      "fixture_id": "sabrina_alakazam_choice_lock_vs_houndoom",
+      "label_count": 0,
+      "leader": "Sabrina",
+      "preference_count": 0,
+      "tags": [
+        "choice_lock",
+        "coverage",
+        "switching"
+      ],
+      "training_focus": "Teach a late-game ace not to autopick Psychic into a public Dark answer."
+    },
+    {
+      "baseline_action_id": "move_flamethrower",
+      "best_action_ids": [],
+      "disagrees_with_baseline": false,
+      "fixture_id": "blue_arcanine_vs_starmie_champion_style",
+      "label_count": 0,
+      "leader": "Blue",
+      "preference_count": 0,
+      "tags": [
+        "coverage",
+        "priority",
+        "late_game"
+      ],
+      "training_focus": "Blue should feel adaptable: punish the visible threat, not just use the biggest STAB."
+    }
+  ],
+  "label_count": 0,
+  "label_counts": {},
+  "labeled_fixture_count": 0,
+  "preference_count": 7,
+  "preference_counts": {
+    "a_better": 3,
+    "b_better": 2,
+    "both_good": 1,
+    "other_better": 1
+  },
+  "preferenced_fixture_count": 7,
+  "tool_version": "boss-ai-preference-v0"
+}

@@ -22,8 +22,10 @@ from pathlib import Path
 
 
 TARGET_PATHS = frozenset({
+    "engine/battle/effect_commands.asm",
     "engine/battle/late_gen_held_items.asm",
     "engine/battle/type_passive_damage_mods.asm",
+    "home/farcall.asm",
 })
 
 DEFAULT_SMOKE_COMMAND = [
@@ -189,8 +191,8 @@ def _self_test() -> int:
         subprocess.run(["git", "config", "user.name", "damage precommit test"], cwd=repo, check=True)
 
         _write(repo / "README.md", "base\n")
-        _write(repo / "engine/battle/late_gen_held_items.asm", "base\n")
-        _write(repo / "engine/battle/type_passive_damage_mods.asm", "base\n")
+        for target in TARGET_PATHS:
+            _write(repo / target, "base\n")
         subprocess.run(["git", "add", "."], cwd=repo, check=True)
         subprocess.run(["git", "commit", "-m", "base"], cwd=repo, check=True, stdout=subprocess.DEVNULL)
 
@@ -222,7 +224,7 @@ def _self_test() -> int:
         assert not calls_file.exists(), "untouched target path ran smoke"
         subprocess.run(["git", "commit", "-m", "docs"], cwd=repo, check=True, stdout=subprocess.DEVNULL)
 
-        _write(repo / "engine/battle/type_passive_damage_mods.asm", "all tracked\n")
+        _write(repo / "engine/battle/effect_commands.asm", "all tracked\n")
         assert run_hook(
             repo=repo,
             command='git commit -am "damage all tracked"',

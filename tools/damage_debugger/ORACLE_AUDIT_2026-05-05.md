@@ -183,8 +183,8 @@ Oracle reproduces the formula correctly EXCEPT:
 | --- | --- | --- |
 | 2809-2813 | `EFFECT_MULTI_HIT` and `EFFECTABLE_CONVERSION` bypass the `BP == 0` early-return | **Not modeled.** Oracle treats `move_bp == 0` as 0 damage unconditionally. |
 | 2820-2823 | `xor a; ld [wIsConfusionDamage], a` — entry to `BattleCommand_DamageCalc` (vs `ConfusionDamageCalc`) zeros the confusion-damage flag | **Not modeled.** Confusion-damage path entirely outside oracle scope. |
-| 2879-2920 | `TypeBoostItems` loop — Charcoal +10% FIRE, Mystic Water +10% WATER, etc. | **Not modeled.** Documented as a TODO in `oracle.py:25-27` but no fuzz scenario triggers it. |
-| 2924 | `callfar ApplyLateGenDamageMultipliers_Far` — Muscle Band, Wise Glasses, Expert Belt, Metronome, Life Orb post-quotient modifiers | **Not modeled.** Documented as a TODO in `oracle.py:23-24`. |
+| 2879-2920 | `TypeBoostItems` loop — Charcoal +10% FIRE, Mystic Water +10% WATER, etc. | **Modeled as of 2026-05-07.** Oracle maps item IDs to the matching move type and applies the shared 120/100 quotient multiplier before late-gen damage multipliers and critical hits. `clobber_smoke` covers a Black Belt / FIGHTING case. |
+| 2924 | `callfar ApplyLateGenDamageMultipliers_Far` — Muscle Band, Wise Glasses, Expert Belt, Metronome, Life Orb post-quotient modifiers | **Modeled as of 2026-05-07.** Oracle covers physical/special gates, Expert Belt's `wTypeMatchup >= EFFECTIVE + 1` gate, Metronome's capped count-derived numerator, and Life Orb's main-chain 13/10 boost. `clobber_smoke` covers all five item paths. |
 | 2935-2978 | Cap-add-MIN_DAMAGE block. Adds incoming `wCurDamage` to the freshly computed quotient for multi-hit accumulation | **Modeled as of 2026-05-06 M1.** `BattleInputs.initial_cur_damage` lets fuzz/probes seed nonzero incoming damage before DamageCalc. |
 | 2935-2939 | Historical bug: `ld b, [hl] ; ldh a, [hQuotient+3] ; add b` read `[wCurDamage]` (high byte of big-endian) and added it to `hQuotient+3` (LOW byte of quotient). | **Fixed after roadmap by explicit approval.** `python -m tools.damage_debugger.cap_add_probe` now shows incoming `$0100` produces ROM/intended damage 288 vs buggy-old-asm 289. Oracle/fuzz default to the fixed endian-neutral accumulation. |
 | 3013-3034 | `.CriticalMultiplier` — `sla` + `rl` doubles `hQuotient[2..3]`, caps at $FFFF on carry | **Modeled correctly.** |
@@ -267,8 +267,10 @@ The oracle is line-by-line correct against the asm for the *modeled*
 phases (DamageCalc base formula, Stab matchup loop, all 9 TypePassive
 branches). The gaps are clearly enumerated above and split into:
 
-- **Documented gaps**: TypeBoostItems, ApplyLateGenDamageMultipliers_Far,
-  STRUGGLE, Foresight-substatus, the two HP-d-clobber bug-mirrors.
+- **Documented gaps**: STRUGGLE and Foresight-substatus.
+  TypeBoostItems and ApplyLateGenDamageMultipliers_Far were closed on
+  2026-05-07; the two HP-d-clobber bug-mirrors are now fixed source
+  behavior and regression-guarded.
   H4 on 2026-05-06 added smoke coverage for DamageVariation's ROM range
   and `HandleLateGenAfterHitEffects_Far` HP side effects, but those remain
   outside the exact point oracle.

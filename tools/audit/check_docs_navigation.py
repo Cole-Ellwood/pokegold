@@ -81,14 +81,20 @@ REQUIRED_PATHS = (
     "tools/audit/check_ai_tiers.py",
     "tools/audit/check_boss_ai_gating.py",
     "tools/audit/check_boss_ai_no_cheat.py",
+    "tools/audit/check_boss_ai_preference.py",
+    "tools/audit/check_boss_ai_policy_contract.py",
     "tools/audit/check_boss_items_present.py",
     "tools/audit/check_boss_moves_complete.py",
     "tools/audit/bug_hunt_triage.py",
     "tools/audit/check_battle_math_safety.py",
     "tools/audit/check_navigation_floor.py",
     "tools/trace/boss_ai_trace_state_probe.py",
+    "tools/boss_ai_preference",
+    "tools/boss_ai_debugger",
     "main.asm",
     "engine/battle/ai/boss.asm",
+    "engine/battle/ai/PLATFORM_API.md",
+    "engine/battle/ai/POLICY_DESIGN.md",
     "engine/battle/core.asm",
     "engine/battle/effect_commands.asm",
     "engine/battle/type_passive_damage_mods.asm",
@@ -219,13 +225,6 @@ PLANNED_MISSING_ARTIFACTS = (
     "audit/boss_ai_trace/koga_live.txt",
     "audit/boss_ai_trace/champion_lance_live.txt",
     "audit/boss_ai_trace/shared_switch_loop_live.txt",
-    # Boss AI policy-layer rebuild (see docs/boss_ai_rebuild_plan.md, BOSSAI-003).
-    # Tooling directory + design docs to be created during the rebuild; the
-    # roadmap row references them ahead of existence so future sessions can
-    # find the plan from the index.
-    "tools/boss_ai_debugger",
-    "engine/battle/ai/PLATFORM_API.md",
-    "engine/battle/ai/POLICY_DESIGN.md",
 )
 
 AGENT_NAVIGATION_CONTRACT_SNIPPETS = {
