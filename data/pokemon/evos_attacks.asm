@@ -258,6 +258,7 @@ PidgeotEvosAttacks:
 	db 23, WHIRLWIND
 	db 29, WING_ATTACK
 	db 33, BODY_SLAM
+	db 36, TWISTER
 	db 37, RECOVER
 	db 47, HEAL_BELL
 	db 0 ; no more level-up moves
@@ -1978,6 +1979,7 @@ ArticunoEvosAttacks:
 	db 0 ; no more evolutions
 	db 1, GUST
 	db 1, POWDER_SNOW
+	db 1, TWISTER
 	db 13, MIST
 	db 25, AGILITY
 	db 37, MIND_READER
@@ -2339,6 +2341,7 @@ CrobatEvosAttacks:
 	db 1, SCREECH
 	db 1, LEECH_LIFE
 	db 1, SUPERSONIC
+	db 1, TWISTER
 	db 6, SUPERSONIC
 	db 12, BITE
 	db 19, CONFUSE_RAY
@@ -3066,6 +3069,7 @@ MantineEvosAttacks:
 	db 10, SUPERSONIC
 	db 18, BUBBLEBEAM
 	db 25, TAKE_DOWN
+	db 25, TWISTER
 	db 28, RAPID_SPIN
 	db 32, AGILITY
 	db 36, HAZE

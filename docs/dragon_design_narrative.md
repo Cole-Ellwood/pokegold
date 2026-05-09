@@ -120,9 +120,11 @@ but did not fit the "rare elite type" goal at 615 BST.
 | Clair gives TM_OUTRAGE in Dragon's Den | done | `maps/DragonsDenB1F.asm` (per step-3 trainer-roster diffs) |
 | Outrage level-up at L55 on every Dragon | TODO | `data/pokemon/evos_attacks.asm` |
 | Dragon Dance level-up at L30+ on every Dragon | partial — Steelix L35 done; Dratini line, Kingdra, Gyarados, Ampharos, Yanma TBD | `data/pokemon/evos_attacks.asm` |
-| Twister at L1 on every Dragon (knows on catch/evolve) | TODO | `data/pokemon/evos_attacks.asm` |
-| Dragonbreath in L30s on every Dragon | TODO | `data/pokemon/evos_attacks.asm` |
-| Non-Dragon Twister/Dragonbreath access set to "uncommon" density | TODO — currently TM24 is universal | `data/pokemon/base_stats/*.asm` |
+| Twister at L1 on every Dragon (knows on catch/evolve) | done | `data/pokemon/evos_attacks.asm` |
+| Dragonbreath at L32 on every Dragon | done | `data/pokemon/evos_attacks.asm` |
+| Non-Dragon Twister access ("uncommon" density) | done — 6 species: Horsea, Seadra (existing) + Articuno L1, Crobat L1, Pidgeot L36, Mantine L25 | `data/pokemon/evos_attacks.asm` |
+| Non-Dragon Dragonbreath TM access ("uncommon" density) | done — 23 species (~10%): existing 13 + Articuno, Suicune, Cloyster, Magneton, Dewgong, Arbok, Vaporeon, Raikou, Entei, Mewtwo, Houndoom; plus Ampharos and Yanma added (Dragon-types that lacked TM access despite level-up learn) | `data/pokemon/base_stats/*.asm` |
+| Non-Dragon access vetting — every learner has SpA usable for Special Dragonbreath/Twister | done — Skarmory, Onix, Snorlax, Tauros, Kangaskhan, Dunsparce dropped from candidates because their physical-attacker stat lines made the move wasted | — |
 | Audit script enforcing all of the above | TODO | new `tools/audit/check_dragon_holy_moves.py` |
 | Clair roster all-Dragon, no non-Dragon filler | TODO | `data/trainers/parties.asm` |
 | Lance roster all-Dragon, more intimidating than Clair, kill the Gligar copy-paste | TODO | `data/trainers/parties.asm` |
