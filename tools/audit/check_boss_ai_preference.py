@@ -39,10 +39,8 @@ from tools.boss_ai_preference.threat_availability import (
 
 def main() -> int:
     fixtures = load_fixtures()
-    if len(fixtures) < 10:
-        raise SystemExit("expected at least 10 Boss AI preference fixtures")
-    if len(fixtures) > 20:
-        raise SystemExit("MVP fixture set should stay small enough to review")
+    if len(fixtures) != 50:
+        raise SystemExit("expected current 50-fixture Boss AI preference corpus")
 
     first = fixtures[0]
     first_action = first["actions"][0]
@@ -145,6 +143,17 @@ def main() -> int:
         raise SystemExit("direct TM parser should include Victory Road TM_EARTHQUAKE itemball")
     if "Route27.asm" not in direct_sources.get("SOLARBEAM", []):
         raise SystemExit("direct TM parser should include Route 27 TM_SOLARBEAM itemball")
+    if "GoldenrodDeptStore5F.asm" not in direct_sources.get("THUNDERPUNCH", []):
+        raise SystemExit("direct TM parser should include Goldenrod mart TM_THUNDERPUNCH")
+    if "GoldenrodDeptStore5F.asm" not in direct_sources.get("FIRE_PUNCH", []):
+        raise SystemExit("direct TM parser should include Goldenrod mart TM_FIRE_PUNCH")
+    if "GoldenrodDeptStore5F.asm" not in direct_sources.get("ICE_PUNCH", []):
+        raise SystemExit("direct TM parser should include Goldenrod mart TM_ICE_PUNCH")
+    if "CeladonDeptStore3F.asm" not in direct_sources.get("HIDDEN_POWER", []):
+        raise SystemExit("direct TM parser should include Celadon mart TM_HIDDEN_POWER")
+    whitney_tms = direct_tm_moves_for_checkpoint(checkpoint_for_leader("Whitney"))
+    if not {"THUNDERPUNCH", "FIRE_PUNCH", "ICE_PUNCH"} <= whitney_tms:
+        raise SystemExit("Whitney checkpoint should include Goldenrod purchasable TM punches")
     champion_tms = direct_tm_moves_for_checkpoint(checkpoint_for_leader("Champion Lance"))
     if not {"EARTHQUAKE", "SOLARBEAM"} <= champion_tms:
         raise SystemExit("Champion checkpoint should include pre-League item-ball TM rewards")

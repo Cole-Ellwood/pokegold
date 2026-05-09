@@ -17,11 +17,13 @@ BASE_STATS_DIR = ROOT / "data" / "pokemon" / "base_stats"
 EVOS_ATTACKS_PATH = ROOT / "data" / "pokemon" / "evos_attacks.asm"
 EVOS_POINTERS_PATH = ROOT / "data" / "pokemon" / "evos_attacks_pointers.asm"
 ITEM_CONSTANTS_PATH = ROOT / "constants" / "item_constants.asm"
+MART_CONSTANTS_PATH = ROOT / "constants" / "mart_constants.asm"
 POKEMON_CONSTANTS_PATH = ROOT / "constants" / "pokemon_constants.asm"
 EXPERIENCE_PATH = ROOT / "engine" / "pokemon" / "experience.asm"
 MAP_METADATA_PATH = ROOT / "data" / "maps" / "maps.asm"
 MAPS_DIR = ROOT / "maps"
 WILD_DIR = ROOT / "data" / "wild"
+MARTS_PATH = ROOT / "data" / "items" / "marts.asm"
 DEFAULT_THREAT_REPORT_PATH = ROOT / "audit" / "boss_ai_preference" / "threat_availability_report.md"
 DEFAULT_THREAT_JSON_PATH = ROOT / "audit" / "boss_ai_preference" / "threat_availability_report.json"
 
@@ -702,12 +704,14 @@ def build_threat_report(fixtures: list[dict[str, Any]]) -> dict[str, Any]:
             "data/pokemon/base_stats/*.asm",
             "data/wild/*.asm",
             "data/maps/maps.asm",
+            "data/items/marts.asm",
+            "constants/mart_constants.asm",
             "maps/*.asm",
             "engine/pokemon/experience.asm",
         ],
         "known_limits": [
             "Route reachability is a conservative checkpoint list, not a pathfinder.",
-            "Wild grass, Surf-gated water, fishing tables, givepoke gifts/prizes, and listed static encounters are parsed; breeding, trades, roaming RNG, and prerequisite-heavy statics are not fully route-modeled yet.",
+            "Wild grass, Surf-gated water, fishing tables, givepoke gifts/prizes, listed static encounters, direct TM scripts, and mart TM tables are parsed; breeding, trades, roaming RNG, and prerequisite-heavy statics are not fully route-modeled yet.",
             "Likelihood buckets are review buckets, not measured player behavior.",
         ],
         "checkpoints": checkpoints,
@@ -1011,7 +1015,80 @@ def direct_tm_sources() -> dict[str, list[str]]:
             move = tm_items.get(match.group(1))
             if move is not None:
                 sources[move].append(path.name)
-    return {move: sorted(files) for move, files in sources.items()}
+    for move, source_files in mart_tm_sources().items():
+        sources[move].extend(source_files)
+    return {move: sorted(set(files)) for move, files in sources.items()}
+
+
+@lru_cache(maxsize=1)
+def mart_tm_sources() -> dict[str, list[str]]:
+    tm_items = tm_item_moves()
+    mart_labels = mart_labels_by_constant()
+    mart_tms = tm_items_by_mart_label()
+    sources: dict[str, list[str]] = defaultdict(list)
+    pattern = re.compile(r"\bpokemart\s+MARTTYPE_[A-Z0-9_]+,\s*(MART_[A-Z0-9_]+)")
+    for path in MAPS_DIR.glob("*.asm"):
+        for line in path.read_text(encoding="utf-8").splitlines():
+            match = pattern.search(line)
+            if not match:
+                continue
+            label = mart_labels.get(match.group(1))
+            if label is None:
+                continue
+            for tm_item in mart_tms.get(label, set()):
+                move = tm_items.get(tm_item)
+                if move is not None:
+                    sources[move].append(path.name)
+    return {move: sorted(set(files)) for move, files in sources.items()}
+
+
+@lru_cache(maxsize=1)
+def mart_labels_by_constant() -> dict[str, str]:
+    constants = mart_constants()
+    labels: list[str] = []
+    in_table = False
+    for line in MARTS_PATH.read_text(encoding="utf-8").splitlines():
+        if line.startswith("Marts:"):
+            in_table = True
+            continue
+        if not in_table:
+            continue
+        if "assert_table_length NUM_MARTS" in line:
+            break
+        match = re.match(r"\s*dw\s+(Mart[A-Za-z0-9_]+)", line)
+        if match:
+            labels.append(match.group(1))
+    return dict(zip(constants, labels, strict=True))
+
+
+@lru_cache(maxsize=1)
+def mart_constants() -> tuple[str, ...]:
+    constants: list[str] = []
+    pattern = re.compile(r"^\s*const\s+(MART_[A-Z0-9_]+)")
+    for line in MART_CONSTANTS_PATH.read_text(encoding="utf-8").splitlines():
+        match = pattern.match(line)
+        if match:
+            constants.append(match.group(1))
+    return tuple(constants)
+
+
+@lru_cache(maxsize=1)
+def tm_items_by_mart_label() -> dict[str, set[str]]:
+    rows: dict[str, set[str]] = defaultdict(set)
+    current_label: str | None = None
+    label_pattern = re.compile(r"^(Mart[A-Za-z0-9_]+):")
+    tm_pattern = re.compile(r"^\s*db\s+(TM_[A-Z0-9_]+)\b")
+    for line in MARTS_PATH.read_text(encoding="utf-8").splitlines():
+        label = label_pattern.match(line)
+        if label:
+            current_label = label.group(1)
+            continue
+        if current_label is None:
+            continue
+        tm = tm_pattern.match(line)
+        if tm:
+            rows[current_label].add(tm.group(1))
+    return rows
 
 
 def direct_tm_moves_for_checkpoint(checkpoint: Checkpoint) -> set[str]:
