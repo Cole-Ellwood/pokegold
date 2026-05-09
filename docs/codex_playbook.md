@@ -197,7 +197,7 @@ fresh Codex session, run.
 ### Task 3.1 — Mystery Gift removal (cleanup roadmap step 2/3)
 
 ```
-/goal remove the Mystery Gift subsystem from the hack and reclaim its ROM/RAM/SRAM. read docs/codex_playbook.md §1 (bug-check methodology) and §3.1 (this task) end-to-end before starting; ship one PR's worth of work to dev tip with the bug-check Findings report in the final merge commit body.
+/goal remove the Mystery Gift subsystem from the hack and reclaim its ROM/RAM/SRAM. read docs/codex_playbook.md §1 (bug-check methodology) and §3.1 (this task) end-to-end before starting; execute Step 0 (dependency audit) AND Step 1 (deletion + save-format-stable cleanup) in this one pass — do not stop between them. ship one PR's worth of work to dev tip with the bug-check Findings report (including the dependency audit) in the final merge commit body.
 ```
 
 **Background.** The Mystery Gift subsystem was originally a Game-Boy-link
@@ -208,13 +208,13 @@ workstreams. Print/Photo (step 1/3) shipped at `2365eab1`/`8cb0fc2a`/
 `4f3b058b` and is the working pattern; X items (step 3/3) is queued and
 will reuse the same skeleton.
 
-**Step 0 — dependency audit (do this BEFORE deleting anything).**
+**Step 0 — dependency audit (do this FIRST, then proceed to Step 1).**
 Surface the surface area. The print/photo audit at the top of
 `.claude_handoffs/2026-05-09-1400-feature-cleanup-roadmap.md` is the
 shape: a categorized list of every file / symbol / map script / save
-field / audit reference, with one-line annotations. Stop after the
-audit; do not delete on this pass. The user reviews before greenlighting
-deletion. Output the audit as a markdown report.
+field / audit reference, with one-line annotations. The audit informs
+the Step 1 deletion plan and is included in the final Findings report;
+do not gate on user review between Step 0 and Step 1.
 
 Files known to exist (audit will find more):
 - `engine/link/mystery_gift.asm`, `mystery_gift_2.asm`, `mystery_gift_3.asm`,
@@ -233,8 +233,8 @@ Files known to exist (audit will find more):
 - `vc/pokegold.patch.template` / `vc/pokesilver.patch.template` —
   search for any `Forbid_*` or `Mystery_*` patch refs (per §1.3)
 
-**Step 1 — deletion order (after user approves audit).** Same shape as
-print/photo:
+**Step 1 — deletion order (informed by the Step 0 audit).** Same shape
+as print/photo:
 1. Detach all callers (main menu entries, special handlers, map scripts,
    audit references). Stub or remove. Each commit builds clean.
 2. Delete engine/audio/gfx/constants files. Remove INCLUDEs from
@@ -265,8 +265,8 @@ keep-labels approach is zero-risk on fingerprint. **Default to
 keep-labels** unless the user explicitly wants the rename.
 
 **Acceptance criteria:**
-- [ ] Surface audit posted as a separate review artifact before
-      deletion. User approves.
+- [ ] Dependency audit included in the Findings report (final merge
+      commit body).
 - [ ] Mystery Gift menu entry no longer appears in the main menu.
 - [ ] No orphan `MysteryGift*` / `sMysteryGift*` symbols remain in source
       (grep returns zero hits except the deletion commits' contexts).
@@ -295,7 +295,7 @@ keep-labels** unless the user explicitly wants the rename.
 ### Task 3.2 — X items removal (cleanup roadmap step 3/3)
 
 ```
-/goal remove the 7 battle-only stat-boost items (X Attack, X Defend, X Speed, X Special, X Accuracy, Dire Hit, Guard Spec) from the hack. read docs/codex_playbook.md §1 (bug-check methodology) and §3.2 (this task) end-to-end before starting; the bag is disabled in trainer battles in this hack (gate at engine/battle/core.asm:4813-4825) so these items are genuine orphans. ship one PR's worth of work to dev tip with the bug-check Findings report in the final merge commit body.
+/goal remove the 7 battle-only stat-boost items (X Attack, X Defend, X Speed, X Special, X Accuracy, Dire Hit, Guard Spec) from the hack. read docs/codex_playbook.md §1 (bug-check methodology) and §3.2 (this task) end-to-end before starting; the bag is disabled in trainer battles in this hack (gate at engine/battle/core.asm:4813-4825) so these items are genuine orphans. execute Step 0 (dependency audit) AND Step 1 (deletion) in this one pass — do not stop between them. ship one PR's worth of work to dev tip with the bug-check Findings report (including the dependency audit) in the final merge commit body.
 ```
 
 **Background.** The bag is SFX-rejected in trainer battles in this
@@ -334,7 +334,8 @@ saves. Use the placeholder pattern. After: any save with an X item in
 inventory loads as `RESERVED_UNUSED` (an empty slot).
 
 **Acceptance criteria:**
-- [ ] Surface audit posted before deletion.
+- [ ] Dependency audit included in the Findings report (final merge
+      commit body).
 - [ ] All 7 X items unreachable in marts / NPCs / overworld pickups.
 - [ ] Item-ID layout unchanged: each removed item now `RESERVED_UNUSED`.
 - [ ] 4-ROM build clean. `roms.sha1` bumped.
