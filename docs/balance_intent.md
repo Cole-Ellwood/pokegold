@@ -115,6 +115,17 @@ unresolved weak Pokemon from the high-signal queue.
   gives both `DYNAMICPUNCH` and `FOCUS_PUNCH` because the Fighting reward theme
   needs the existing TM01 plus the new TM43 slot.
 
+## Dragon Roster Design
+
+Dragon-type mechanics (typing, learnsets, "holy moves" Outrage and
+Dragon Dance, anti-Dragon counter-moves Twister and Dragonbreath,
+Clair/Lance trainer narrative) live in their own doc:
+`docs/dragon_design_narrative.md`.
+
+That doc is the source of truth for any Dragon-related change. Read it
+before editing a Dragon-type's stats, learnset, evolution, TM list,
+held items, encounter table, or Clair/Lance trainer rosters.
+
 ## Manual Intent Registry
 
 Add locked/provisional rows here as balance decisions are made.

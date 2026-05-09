@@ -943,7 +943,7 @@ def main() -> int:
     expected_level_moves = {
         "MeganiumEvosAttacks": {"HEAL_BELL": 33, "SOLARBEAM": 41},
         "TyphlosionEvosAttacks": {"FIRE_BLAST": 37, "ANCIENTPOWER": 45},
-        "FeraligatrEvosAttacks": {"DRAGON_DANCE": 38, "HYDRO_PUMP": 45},
+        "FeraligatrEvosAttacks": {"SLASH": 38, "HYDRO_PUMP": 45},
         "AriadosEvosAttacks": {"SPIKES": 22, "SPIDER_WEB": 37},
         "YanmaEvosAttacks": {"LEECH_LIFE": 17, "WING_ATTACK": 25},
     }
