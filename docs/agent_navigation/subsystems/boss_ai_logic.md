@@ -147,8 +147,8 @@ All paths under `engine/battle/ai/boss.asm` unless noted.
 | Per-boss role-effect tables (`BossAIChuckRoleEffects` etc.) | bottom of `engine/battle/ai/boss.asm` |
 | Per-trainer tier (class+id → EARLY/MID/LATE) | `BossAITierMap:1` in `data/trainers/ai_tiers.asm`; consumed by `LoadBossAITier:69` in `engine/battle/read_trainer_attributes.asm` |
 | Per-class tier-weight-row override | `BossAITierRampMap:51` in `data/trainers/ai_tiers.asm` (default = `tier - 1`, set at `LoadBossAITier:97-98`) |
-| Tier weight table (rows indexed by tier-weight-row) | `BossAITierWeights:7363` in `engine/battle/ai/boss.asm` |
-| Plausible-threat type table | `BossAI_PlausibleThreatTypes:7330` in `engine/battle/ai/boss.asm` |
+| Tier weight table (rows indexed by tier-weight-row) | `BossAITierWeights:7373` in `engine/battle/ai/boss.asm` |
+| Plausible-threat type table | `BossAI_PlausibleThreatTypes:7340` in `engine/battle/ai/boss.asm` |
 | Trainer attributes (base reward, AI flags) — separate concern, do not confuse with tier | `data/trainers/attributes.asm` (consumed at `engine/battle/read_trainer_attributes.asm:67`) |
 
 ### Memory: per-battle state record/access
@@ -171,7 +171,7 @@ slot), plus a per-species mirror of `wPlayerUsedMoves`.
 
 | Need | Label / line |
 | --- | --- |
-| Slot index for active species | `BossAI_GetActiveSpeciesSeenIndex:5120`, `BossAI_GetActiveSpeciesSeenBit:6668` |
+| Slot index for active species | `BossAI_GetActiveSpeciesSeenIndex:5120`, `BossAI_GetActiveSpeciesSeenBit:6678` |
 | Pointer to active species' revealed-type mask | `BossAI_GetActiveSpeciesRevealedMaskPointer:340` |
 | Load per-species used-moves into vanilla `wPlayerUsedMoves` | `BossAI_LoadPlayerUsedMovesForActiveSpecies:359` |
 | Mirror current `wPlayerUsedMoves` back to species slot | `BossAI_MirrorPlayerUsedMovesToSpeciesSlot:386` |
@@ -204,8 +204,8 @@ keyed on species + level.
 | Per-source contribution | `BossAI_AddCurrentSpeciesSpeculativeMoveThreats:5429`, `BossAI_AddCurrentSpeciesLikelyMoveThreats:5438` |
 | Move-source pools | `BossAI_AddBaseTMHMMovesToMask:5456`, `BossAI_AddSpeciesLevelUpMovesToMask:5490`, `BossAI_AddSpeciesLevelUpMovesToLikelyMask:5547`, `BossAI_AddSpeciesEggMovesToMask:5604` |
 | Test bits | `BossAI_TestPlausibleMaskBit:5628`, `BossAI_TestLikelyMaskBit:5660` |
-| Risk weight per tier | `BossAI_GetTierPlausibleRiskWeight:6628`, `BossAI_GetSpeculativePlausibleRiskWeight:6641` |
-| Static type tables | `BossAI_PlausibleThreatTypes:7330`, `BossAIHiddenPowerThreatTypes:7351` |
+| Risk weight per tier | `BossAI_GetTierPlausibleRiskWeight:6638`, `BossAI_GetSpeculativePlausibleRiskWeight:6651` |
+| Static type tables | `BossAI_PlausibleThreatTypes:7340`, `BossAIHiddenPowerThreatTypes:7361` |
 
 ### Move scoring overlay (`BossAI_ApplyMoveModel`)
 
@@ -312,13 +312,13 @@ layer.
 
 | Need | Label / line |
 | --- | --- |
-| Refine candidate set | `BossAI_RefineSwitchCandidateForPlausibleRisk:6790` |
-| Per-candidate risk score | `BossAI_ComputeSwitchCandidateRisk:6873` |
-| Apply to confidence | `BossAI_ApplyPlausibleRiskToSwitchConfidence:7170` |
-| Plan bias on switch | `BossAI_ApplyPlanSwitchBias:7223` |
-| Sack-instead-of-switch | `BossAI_ShouldSackInsteadOfSwitch:7264` |
-| Wincon protection | `BossAI_IsSwitchingIntoWinconRisk:7282` |
-| Mark scout pivot | `BossAI_MaybeMarkScoutPivot:7312` |
+| Refine candidate set | `BossAI_RefineSwitchCandidateForPlausibleRisk:6800` |
+| Per-candidate risk score | `BossAI_ComputeSwitchCandidateRisk:6883` |
+| Apply to confidence | `BossAI_ApplyPlausibleRiskToSwitchConfidence:7180` |
+| Plan bias on switch | `BossAI_ApplyPlanSwitchBias:7233` |
+| Sack-instead-of-switch | `BossAI_ShouldSackInsteadOfSwitch:7274` |
+| Wincon protection | `BossAI_IsSwitchingIntoWinconRisk:7292` |
+| Mark scout pivot | `BossAI_MaybeMarkScoutPivot:7322` |
 | Public bench threat score | `BossAI_SeenBenchThreatScore:4498` |
 
 ### Held-item / Choice locking
@@ -336,7 +336,7 @@ layer.
 | Find a party mon by role tag | `BossAI_FindPartyMonByRole:4772` |
 | Per-boss role-bias dispatcher (reads `wTrainerClass`, jumps to per-boss branch) | `.ApplyRoleBias:2137` (under `BossAI_ApplyMoveModel`) |
 | Per-boss scoring branches | `.falkner:2171`, `.rival:2163`, `.chuck:2185`, `.jasmine:2192`, `.pryce:2203`, `.clair:2212`, `.will:2219`, `.bruno:2226`, `.karen:2233`, `.koga:2240`, `.champion:2249` |
-| Per-boss role-effect tables (consumed by the branches above) | `BossAIChuckRoleEffects:7402`, `BossAIJasmineRoleEffects:7409`, `BossAIPryceRoleEffects:7416`, `BossAIClairRoleEffects:7426`, `BossAIWillRoleEffects:7435`, `BossAIBrunoRoleEffects:7443`, `BossAIKarenRoleEffects:7450`, `BossAIKogaRoleEffects:7460`, `BossAIChampionRoleEffects:7469` |
+| Per-boss role-effect tables (consumed by the branches above) | `BossAIChuckRoleEffects:7412`, `BossAIJasmineRoleEffects:7419`, `BossAIPryceRoleEffects:7426`, `BossAIClairRoleEffects:7436`, `BossAIWillRoleEffects:7445`, `BossAIBrunoRoleEffects:7453`, `BossAIKarenRoleEffects:7460`, `BossAIKogaRoleEffects:7470`, `BossAIChampionRoleEffects:7479` |
 
 ### Effect classifiers
 
@@ -349,9 +349,9 @@ layer.
 | Risky accuracy? | `BossAI_CurrentEnemyMoveAccuracyRisky:3575` |
 | Dark-shield eligible? | `BossAI_CurrentMoveDarkShieldEligible:3600` |
 | Ghost-type enemy? | `BossAI_EnemyIsGhostType:2374` |
-| Species can evolve | `BossAI_EnemySpeciesCanEvolve:6592` |
-| Known item nullifies threat type | `BossAI_EnemyKnownItemNullifiesThreatType:6570` |
-| Static effect tables | `BossAIDenyKOEffects:7375`, `BossAIStatusEffects:7392`, `BossAIRiskyEffects:7477` |
+| Species can evolve | `BossAI_EnemySpeciesCanEvolve:6602` |
+| Known item nullifies threat type | `BossAI_EnemyKnownItemNullifiesThreatType:6580` |
+| Static effect tables | `BossAIDenyKOEffects:7385`, `BossAIStatusEffects:7402`, `BossAIRiskyEffects:7487` |
 
 ### Lookahead / multi-turn projection
 
@@ -369,26 +369,26 @@ layer.
 | --- | --- |
 | Tier value | `wBossAITier`, set in `engine/battle/read_trainer_attributes.asm:72,95` |
 | Tier weight row | `wBossAITierWeightRow`, set at `read_trainer_attributes.asm:73,98,126` |
-| Weight table | `BossAITierWeights:7363` (in `engine/battle/ai/boss.asm`) |
+| Weight table | `BossAITierWeights:7373` (in `engine/battle/ai/boss.asm`) |
 | Per-trainer tier ramp map | `BossAITierRampMap:51` in `data/trainers/ai_tiers.asm` (consumer: `read_trainer_attributes.asm:115`; design comment: `boss.asm:7056`) |
-| Roll thresholds | `BossAI_GetScoutRollThreshold:6649`, `BossAI_GetTierPlausibleRiskWeight:6628` |
+| Roll thresholds | `BossAI_GetScoutRollThreshold:6659`, `BossAI_GetTierPlausibleRiskWeight:6638` |
 
 ### Scout / repeat tracking
 
 | Need | Label / line |
 | --- | --- |
-| Has active species been scouted? | `BossAI_IsActiveSpeciesScouted:6688` |
-| Mark scouted | `BossAI_SetActiveSpeciesScouted:6702` |
-| Decide to scout | `BossAI_ShouldScout:6712` |
-| Same-move repeat counter | `BossAI_UpdateRepeatTracker:6745` |
-| Mark scouted if scout move | `BossAI_MarkScoutedIfScoutMove:6764` |
+| Has active species been scouted? | `BossAI_IsActiveSpeciesScouted:6698` |
+| Mark scouted | `BossAI_SetActiveSpeciesScouted:6712` |
+| Decide to scout | `BossAI_ShouldScout:6722` |
+| Same-move repeat counter | `BossAI_UpdateRepeatTracker:6755` |
+| Mark scouted if scout move | `BossAI_MarkScoutedIfScoutMove:6774` |
 
 ### Helpers used everywhere
 
 | Need | Label / line |
 | --- | --- |
 | Read move attribute / byte | `BossAI_GetMoveAttr:438`, `BossAI_GetMoveByte:447` |
-| Decrement pressure / severity counters | `BossAI_DecPressureB:3502`, `BossAI_DecThreatSeverityB:6584` |
+| Decrement pressure / severity counters | `BossAI_DecPressureB:3502`, `BossAI_DecThreatSeverityB:6594` |
 
 ## Boss AI WRAM Block
 
