@@ -519,6 +519,786 @@
         {"id": "move_flamethrower", "kind": "move", "name": "Flamethrower", "explanation": "Strong identity move into a resist.", "public_tradeoff": "Too robotic if selected by STAB habit."},
         {"id": "switch_porygon2", "kind": "switch", "name": "Switch to Porygon2", "explanation": "Bulky coverage mirror with Recover.", "public_tradeoff": "Defensive but plausible."}
       ]
+    },
+    {
+      "id": "falkner_pidgey_vs_charmander_mud_slap_chip",
+      "leader": "Falkner",
+      "turn": 1,
+      "tags": ["early_gym", "accuracy_debuff", "tutorial"],
+      "training_focus": "Decide whether annoying-but-fair chip beats clean tempo when neither side is threatened.",
+      "baseline_action_id": "move_tackle",
+      "state": {
+        "boss": {
+          "active": {"species": "Pidgey", "level": 9, "hp": "100%", "status": "none", "item": "none", "revealed_moves": [], "role": "chip lead"},
+          "bench": ["Pidgeotto", "Spearow"]
+        },
+        "player": {
+          "active": {"species": "Charmander", "level": 11, "hp": "100%", "status": "none", "revealed_moves": ["Scratch", "Ember"], "public_priors": ["Metal Claw plausible"]},
+          "seen_party": ["Charmander"]
+        },
+        "field": {"weather": "none", "screens": "none"},
+        "public_notes": ["Falkner is the first leader; over-tuned chip lines feel cheap.", "Charmander outspeeds Pidgey here."]
+      },
+      "actions": [
+        {"id": "move_tackle", "kind": "move", "name": "Tackle", "explanation": "Plain damage to keep tempo before Charmander Embers.", "public_tradeoff": "Straightforward, leader-appropriate."},
+        {"id": "move_mud_slap", "kind": "move", "name": "Mud-Slap", "explanation": "Drops Charmander accuracy to make Ember miss.", "public_tradeoff": "Annoying-but-legal; can feel cheap on turn 1."},
+        {"id": "move_sand_attack", "kind": "move", "name": "Sand-Attack", "explanation": "Same idea as Mud-Slap with no chip.", "public_tradeoff": "Pure debuff first turn reads as stalling."},
+        {"id": "switch_pidgeotto", "kind": "switch", "name": "Switch to Pidgeotto", "explanation": "Brings the ace out early to handle Ember pressure.", "public_tradeoff": "Burns the lead's role in turn 1."}
+      ]
+    },
+    {
+      "id": "falkner_dodrio_vs_pikachu_drill_peck_or_pursuit",
+      "leader": "Falkner",
+      "turn": 4,
+      "tags": ["speed", "predict_switch", "ace_pressure"],
+      "training_focus": "Should Falkner's late-roster Dodrio commit STAB or punish a likely switch with Pursuit?",
+      "baseline_action_id": "move_drill_peck",
+      "state": {
+        "boss": {
+          "active": {"species": "Dodrio", "level": 14, "hp": "78%", "status": "none", "item": "Sharp Beak", "revealed_moves": ["Pursuit"], "role": "fast cleanup"},
+          "bench": ["Pidgey"]
+        },
+        "player": {
+          "active": {"species": "Pikachu", "level": 13, "hp": "44%", "status": "paralyzed", "revealed_moves": ["Thundershock", "Thunder Wave"], "public_priors": ["Quick Attack plausible"]},
+          "seen_party": ["Pikachu", "Geodude", "Bellsprout"]
+        },
+        "field": {"weather": "none", "screens": "none"},
+        "public_notes": ["Pikachu paralyzed Dodrio last turn (revealed).", "Geodude in seen party is a clean Electric answer; switch is publicly plausible."]
+      },
+      "actions": [
+        {"id": "move_drill_peck", "kind": "move", "name": "Drill Peck", "explanation": "Best damage if Pikachu stays in.", "public_tradeoff": "Whiffs against Geodude if the player switches."},
+        {"id": "move_pursuit", "kind": "move", "name": "Pursuit", "explanation": "Doubled damage if Pikachu switches; weak otherwise.", "public_tradeoff": "Reads as smart only if the switch case is real."},
+        {"id": "move_quick_attack", "kind": "move", "name": "Quick Attack", "explanation": "Priority chip if Pikachu is near KO.", "public_tradeoff": "Worse than Drill Peck unless paralysis already triggered fully."},
+        {"id": "switch_pidgey", "kind": "switch", "name": "Switch to Pidgey", "explanation": "Preserves Dodrio for a later matchup.", "public_tradeoff": "Throws tempo when the kill is right here."}
+      ]
+    },
+    {
+      "id": "bugsy_scyther_vs_geodude_safe_swords_dance",
+      "leader": "Bugsy",
+      "turn": 2,
+      "tags": ["setup", "safe_setup", "ace"],
+      "training_focus": "Confirm setup is correct when the visible matchup actually allows it (mirror to the unsafe-SD fixture).",
+      "baseline_action_id": "move_swords_dance",
+      "state": {
+        "boss": {
+          "active": {"species": "Scyther", "level": 17, "hp": "100%", "status": "none", "item": "Silverpowder", "revealed_moves": ["Quick Attack", "Wing Attack"], "role": "ace"},
+          "bench": ["Ariados", "Ledian"]
+        },
+        "player": {
+          "active": {"species": "Geodude", "level": 16, "hp": "92%", "status": "none", "revealed_moves": ["Tackle", "Defense Curl"], "public_priors": ["Magnitude plausible", "Rock Throw plausible but slow"]},
+          "seen_party": ["Geodude"]
+        },
+        "field": {"weather": "none", "screens": "none"},
+        "public_notes": ["Scyther outspeeds Geodude.", "Geodude's revealed damage cannot threaten Scyther this turn.", "Even Magnitude needs an awkward roll to cleanly KO Scyther."]
+      },
+      "actions": [
+        {"id": "move_wing_attack", "kind": "move", "name": "Wing Attack", "explanation": "Direct STAB into a Rock-resist; minimal damage.", "public_tradeoff": "Wastes a setup window."},
+        {"id": "move_swords_dance", "kind": "move", "name": "Swords Dance", "explanation": "Doubles Atk before Geodude can punish.", "public_tradeoff": "Should read as scary-good here."},
+        {"id": "move_quick_attack", "kind": "move", "name": "Quick Attack", "explanation": "Priority chip while ahead in HP.", "public_tradeoff": "Surrenders the free SD turn."},
+        {"id": "switch_ariados", "kind": "switch", "name": "Switch to Ariados", "explanation": "Hazard pivot off the ace.", "public_tradeoff": "Burns Scyther's safe setup."}
+      ]
+    },
+    {
+      "id": "bugsy_butterfree_vs_pidgey_sleep_powder_or_psybeam",
+      "leader": "Bugsy",
+      "turn": 1,
+      "tags": ["sleep", "status", "speed"],
+      "training_focus": "Sleep is a leader-flavored opener; rate when it is correct vs cheap vs simply slower than damage.",
+      "baseline_action_id": "move_sleep_powder",
+      "state": {
+        "boss": {
+          "active": {"species": "Butterfree", "level": 16, "hp": "100%", "status": "none", "item": "Mental Herb", "revealed_moves": [], "role": "status opener"},
+          "bench": ["Scyther", "Beedrill"]
+        },
+        "player": {
+          "active": {"species": "Pidgey", "level": 17, "hp": "100%", "status": "none", "revealed_moves": ["Quick Attack"], "public_priors": ["Gust plausible"]},
+          "seen_party": ["Pidgey", "Bayleef"]
+        },
+        "field": {"weather": "none", "screens": "none"},
+        "public_notes": ["Butterfree outspeeds Pidgey.", "Sleep is a known Butterfree set; using it on turn 1 is reasonable but accuracy-dependent."]
+      },
+      "actions": [
+        {"id": "move_sleep_powder", "kind": "move", "name": "Sleep Powder", "explanation": "Disables Pidgey for 1-3 turns; sets up Beedrill or Scyther later.", "public_tradeoff": "Strong leader identity, ~75% accuracy."},
+        {"id": "move_psybeam", "kind": "move", "name": "Psybeam", "explanation": "Direct damage with confusion chance.", "public_tradeoff": "Reliable but trades away the sleep advantage."},
+        {"id": "move_stun_spore", "kind": "move", "name": "Stun Spore", "explanation": "Speed control on a slower opponent does little here.", "public_tradeoff": "Wrong status given the speed tier."},
+        {"id": "switch_scyther", "kind": "switch", "name": "Switch to Scyther", "explanation": "Lead with the ace immediately.", "public_tradeoff": "Throws away Butterfree's signature line."}
+      ]
+    },
+    {
+      "id": "whitney_miltank_vs_machop_attract_or_body_slam",
+      "leader": "Whitney",
+      "turn": 2,
+      "tags": ["status", "cheapness", "gender_dependency"],
+      "training_focus": "Attract is iconic but only legal-information correct against a male. Capture when it is bold play vs cheap.",
+      "baseline_action_id": "move_attract",
+      "state": {
+        "boss": {
+          "active": {"species": "Miltank", "level": 21, "hp": "85%", "status": "none", "item": "Mint Berry", "revealed_moves": ["Stomp", "Milk Drink"], "role": "ace"},
+          "bench": ["Clefairy", "Girafarig"]
+        },
+        "player": {
+          "active": {"species": "Machop", "level": 20, "hp": "76%", "status": "none", "revealed_moves": ["Karate Chop", "Leer"], "public_priors": ["Low Kick plausible"]},
+          "seen_party": ["Machop", "Bayleef"]
+        },
+        "field": {"weather": "none", "screens": "none"},
+        "public_notes": ["Machop's gender is publicly known once it appears (sprite/gender symbol).", "Assume male here.", "Attract halves opposing turn output but sets up nothing on its own."]
+      },
+      "actions": [
+        {"id": "move_body_slam", "kind": "move", "name": "Body Slam", "explanation": "Best STAB damage and paralysis chance.", "public_tradeoff": "Clean and explainable."},
+        {"id": "move_attract", "kind": "move", "name": "Attract", "explanation": "Disables half of Machop's turns; iconic Whitney move.", "public_tradeoff": "Can feel cheap if reflexive."},
+        {"id": "move_rollout", "kind": "move", "name": "Rollout", "explanation": "Snowball if uncontested; weak first turn.", "public_tradeoff": "Locks the ace; bad against Fighting STAB."},
+        {"id": "move_stomp", "kind": "move", "name": "Stomp", "explanation": "Less damage than Body Slam but flinch chance.", "public_tradeoff": "Fine but strictly worse than Body Slam given Body Slam is also revealed."}
+      ]
+    },
+    {
+      "id": "morty_misdreavus_vs_typhlosion_perish_song",
+      "leader": "Morty",
+      "turn": 5,
+      "tags": ["phazing_alt", "endgame_pressure", "switching"],
+      "training_focus": "Capture whether Perish Song reads as scary chess or stall when the player is set up.",
+      "baseline_action_id": "move_perish_song",
+      "state": {
+        "boss": {
+          "active": {"species": "Misdreavus", "level": 24, "hp": "63%", "status": "none", "item": "Spell Tag", "revealed_moves": ["Confuse Ray"], "role": "control"},
+          "bench": ["Gengar"]
+        },
+        "player": {
+          "active": {"species": "Typhlosion", "level": 28, "hp": "84%", "status": "none", "revealed_moves": ["Flame Wheel", "Swift"], "public_priors": ["Sunny Day plausible"]},
+          "seen_party": ["Typhlosion", "Pidgeotto"]
+        },
+        "field": {"weather": "none", "screens": "none"},
+        "public_notes": ["Typhlosion has +1 Atk from a previous Curse-style trade.", "Perish Song forces a switch race within 3 turns."]
+      },
+      "actions": [
+        {"id": "move_perish_song", "kind": "move", "name": "Perish Song", "explanation": "Forces Typhlosion off in 3 turns; resets the boost.", "public_tradeoff": "Smart at endgame; cheap if used reflexively early."},
+        {"id": "move_confuse_ray", "kind": "move", "name": "Confuse Ray", "explanation": "Random damage at the cost of self-hits.", "public_tradeoff": "Already revealed and underwhelming alone."},
+        {"id": "move_psywave", "kind": "move", "name": "Psywave", "explanation": "Variable damage; rarely closes a kill.", "public_tradeoff": "Filler when better lines exist."},
+        {"id": "switch_gengar", "kind": "switch", "name": "Switch to Gengar", "explanation": "Pivots to the ace into Fire pressure.", "public_tradeoff": "Throws Misdreavus into Fire chip first."}
+      ]
+    },
+    {
+      "id": "chuck_primeape_vs_machoke_intimidate_psych_up",
+      "leader": "Chuck",
+      "turn": 3,
+      "tags": ["mirror_fighting", "boost_steal", "ace_pressure"],
+      "training_focus": "When does Psych Up against a setup mon feel like prepared play vs awkward gimmick?",
+      "baseline_action_id": "move_cross_chop",
+      "state": {
+        "boss": {
+          "active": {"species": "Primeape", "level": 32, "hp": "67%", "status": "none", "item": "Black Belt", "revealed_moves": ["Cross Chop", "Rage"], "role": "fast attacker"},
+          "bench": ["Poliwrath", "Hitmontop"]
+        },
+        "player": {
+          "active": {"species": "Machoke", "level": 33, "hp": "100%", "status": "none", "revealed_moves": ["Bulk Up", "Karate Chop"], "public_priors": ["Rock Slide plausible"]},
+          "seen_party": ["Machoke", "Quilava"]
+        },
+        "field": {"weather": "none", "screens": "none"},
+        "public_notes": ["Machoke used Bulk Up turn 1 and Karate Chop turn 2 (revealed).", "Psych Up copies the +1/+1 onto Primeape."]
+      },
+      "actions": [
+        {"id": "move_cross_chop", "kind": "move", "name": "Cross Chop", "explanation": "High-crit damage right now.", "public_tradeoff": "Best raw damage; Machoke still threatens back."},
+        {"id": "move_psych_up", "kind": "move", "name": "Psych Up", "explanation": "Steals Machoke's +1/+1 setup.", "public_tradeoff": "Smart only if next turn pays off; otherwise wasted."},
+        {"id": "move_rage", "kind": "move", "name": "Rage", "explanation": "Builds Atk per hit taken.", "public_tradeoff": "Slow ramp under direct pressure."},
+        {"id": "switch_poliwrath", "kind": "switch", "name": "Switch to Poliwrath", "explanation": "Bulky pivot that resets the Bulk Up advantage.", "public_tradeoff": "Loses Primeape's tempo."}
+      ]
+    },
+    {
+      "id": "chuck_machamp_vs_alakazam_rock_slide_or_low_kick",
+      "leader": "Chuck",
+      "turn": 1,
+      "tags": ["coverage", "speed_disadvantage", "weight_dependency"],
+      "training_focus": "Capture how the AI should weigh a coverage move vs a STAB move whose damage scales with weight.",
+      "baseline_action_id": "move_rock_slide",
+      "state": {
+        "boss": {
+          "active": {"species": "Machamp", "level": 34, "hp": "100%", "status": "none", "item": "Focus Band", "revealed_moves": [], "role": "ace"},
+          "bench": ["Poliwrath", "Hitmontop"]
+        },
+        "player": {
+          "active": {"species": "Alakazam", "level": 32, "hp": "100%", "status": "none", "revealed_moves": ["Psychic", "Recover"], "public_priors": ["Thunderpunch plausible"]},
+          "seen_party": ["Alakazam", "Pidgeotto"]
+        },
+        "field": {"weather": "none", "screens": "none"},
+        "public_notes": ["Alakazam outspeeds Machamp.", "Low Kick base power scales with target weight; Alakazam is light, so Low Kick is weak.", "Rock Slide is super-effective into Pidgeotto on the public seen-party list."]
+      },
+      "actions": [
+        {"id": "move_rock_slide", "kind": "move", "name": "Rock Slide", "explanation": "Coverage into Pidgeotto next; respectable into Alakazam too.", "public_tradeoff": "Not STAB; flinch chance."},
+        {"id": "move_low_kick", "kind": "move", "name": "Low Kick", "explanation": "STAB but Alakazam is too light for full damage.", "public_tradeoff": "Looks STAB-pilled if blindly chosen."},
+        {"id": "move_cross_chop", "kind": "move", "name": "Cross Chop", "explanation": "High-crit STAB even with the weight problem irrelevant here.", "public_tradeoff": "80% accuracy; clean fallback."},
+        {"id": "move_foresight", "kind": "move", "name": "Foresight", "explanation": "Removes Ghost immunity; pointless against Psychic.", "public_tradeoff": "Wrong tool."}
+      ]
+    },
+    {
+      "id": "jasmine_magneton_vs_quilava_thunder_wave_or_bolt",
+      "leader": "Jasmine",
+      "turn": 2,
+      "tags": ["status", "speed_control", "type_advantage"],
+      "training_focus": "Is Thunder Wave correct when the user is faster, or is direct Thunder damage strictly better?",
+      "baseline_action_id": "move_thunder_wave",
+      "state": {
+        "boss": {
+          "active": {"species": "Magneton", "level": 31, "hp": "100%", "status": "none", "item": "Magnet", "revealed_moves": ["Thunder Wave"], "role": "speed control"},
+          "bench": ["Steelix", "Skarmory"]
+        },
+        "player": {
+          "active": {"species": "Quilava", "level": 33, "hp": "82%", "status": "none", "revealed_moves": ["Flame Wheel", "Quick Attack"], "public_priors": ["Dig plausible"]},
+          "seen_party": ["Quilava", "Flaaffy"]
+        },
+        "field": {"weather": "none", "screens": "none"},
+        "public_notes": ["Magneton is slower than Quilava.", "Steelix in the back resists Fire and Ground via the hack's Steel/Dragon retype.", "Thunder Wave halves Quilava's speed and lets Magneton outspeed."]
+      },
+      "actions": [
+        {"id": "move_thunder_wave", "kind": "move", "name": "Thunder Wave", "explanation": "Flips the speed tier and enables follow-up damage.", "public_tradeoff": "Trades a turn of damage for tempo."},
+        {"id": "move_thunderbolt", "kind": "move", "name": "Thunderbolt", "explanation": "Direct damage now.", "public_tradeoff": "Quilava is faster; this is a one-shot trade."},
+        {"id": "move_lock_on", "kind": "move", "name": "Lock-On", "explanation": "Combos with Zap Cannon next turn.", "public_tradeoff": "Two-turn setup under fire pressure."},
+        {"id": "switch_steelix", "kind": "switch", "name": "Switch to Steelix", "explanation": "Pivots to a Fire-resistant ace.", "public_tradeoff": "Burns Magneton's role too early."}
+      ]
+    },
+    {
+      "id": "pryce_piloswine_vs_typhlosion_amnesia_or_attack",
+      "leader": "Pryce",
+      "turn": 4,
+      "tags": ["setup", "ace_pressure", "fire_threat"],
+      "training_focus": "Decide whether to set up SpD against a Fire opponent or just race the kill.",
+      "baseline_action_id": "move_amnesia",
+      "state": {
+        "boss": {
+          "active": {"species": "Piloswine", "level": 32, "hp": "78%", "status": "none", "item": "Quick Claw", "revealed_moves": ["Earthquake", "Take Down"], "role": "ace"},
+          "bench": ["Cloyster", "Sneasel"]
+        },
+        "player": {
+          "active": {"species": "Typhlosion", "level": 33, "hp": "62%", "status": "none", "revealed_moves": ["Flamethrower", "Swift"], "public_priors": ["Earthquake plausible if TM was spent"]},
+          "seen_party": ["Typhlosion", "Flaaffy"]
+        },
+        "field": {"weather": "none", "screens": "none"},
+        "public_notes": ["Flamethrower is revealed; Piloswine 4x weak to Fire.", "Amnesia raises SpD to make Flamethrower survivable, but two turns of damage may already be lethal."]
+      },
+      "actions": [
+        {"id": "move_earthquake", "kind": "move", "name": "Earthquake", "explanation": "Best damage line right now.", "public_tradeoff": "Race; may not KO before the second Flamethrower."},
+        {"id": "move_amnesia", "kind": "move", "name": "Amnesia", "explanation": "Doubles SpD to survive multiple Flamethrowers.", "public_tradeoff": "Setup under direct super-effective damage; high risk."},
+        {"id": "move_take_down", "kind": "move", "name": "Take Down", "explanation": "Strong physical hit with recoil.", "public_tradeoff": "Less than Earthquake; recoil compounds."},
+        {"id": "switch_cloyster", "kind": "switch", "name": "Switch to Cloyster", "explanation": "Cloyster also dislikes Fire but can hazard-stack.", "public_tradeoff": "Bad pivot; Cloyster shares the weakness."}
+      ]
+    },
+    {
+      "id": "clair_kingdra_vs_dragonair_dragon_dance_mirror",
+      "leader": "Clair",
+      "turn": 2,
+      "tags": ["setup", "mirror_dragon", "endgame"],
+      "training_focus": "Mirror match: when does the boss DD before the player DDs vs preempt with damage?",
+      "baseline_action_id": "move_dragon_dance",
+      "state": {
+        "boss": {
+          "active": {"species": "Kingdra", "level": 41, "hp": "92%", "status": "none", "item": "Dragon Fang", "revealed_moves": ["Surf"], "role": "ace"},
+          "bench": ["Dragonite", "Gyarados", "Steelix"]
+        },
+        "player": {
+          "active": {"species": "Dragonair", "level": 39, "hp": "100%", "status": "none", "revealed_moves": ["Outrage"], "public_priors": ["Dragon Dance plausible", "Thunder Wave plausible"]},
+          "seen_party": ["Dragonair", "Ampharos"]
+        },
+        "field": {"weather": "none", "screens": "none"},
+        "public_notes": ["Outrage is publicly Dragon-only in this hack; Dragonair is a real Dragon.", "Kingdra outspeeds non-DD Dragonair; player DD flips that.", "Dragon Dance in this hack boosts SpA on Kingdra (smart-attack mechanic) since SpA > Atk."]
+      },
+      "actions": [
+        {"id": "move_dragon_dance", "kind": "move", "name": "Dragon Dance", "explanation": "Boosts SpA + Spe on Kingdra; preempts a Dragonair DD race.", "public_tradeoff": "Setup before Dragonair commits to Outrage is smart; after is robotic."},
+        {"id": "move_surf", "kind": "move", "name": "Surf", "explanation": "Direct STAB; resisted by Dragonair.", "public_tradeoff": "Tempo move that respects the resist."},
+        {"id": "move_smokescreen", "kind": "move", "name": "Smokescreen", "explanation": "Drops Outrage accuracy.", "public_tradeoff": "Annoying but legal; can read as cheap."},
+        {"id": "switch_steelix", "kind": "switch", "name": "Switch to Steelix", "explanation": "Tanks Outrage with the Steel/Dragon retype.", "public_tradeoff": "Defensive pivot; gives up Kingdra DD setup window."}
+      ]
+    },
+    {
+      "id": "clair_gyarados_vs_ampharos_rest_or_attack",
+      "leader": "Clair",
+      "turn": 5,
+      "tags": ["recovery", "ace_preservation", "endgame"],
+      "training_focus": "Should a low-HP ace Rest if there's a clean kill turn available?",
+      "baseline_action_id": "move_hydro_pump",
+      "state": {
+        "boss": {
+          "active": {"species": "Gyarados", "level": 40, "hp": "27%", "status": "none", "item": "Mystic Water", "revealed_moves": ["Hydro Pump", "Bite", "Dragon Dance"], "role": "ace"},
+          "bench": ["Kingdra", "Dragonite"]
+        },
+        "player": {
+          "active": {"species": "Ampharos", "level": 41, "hp": "44%", "status": "none", "revealed_moves": ["Thunderpunch"], "public_priors": ["Thunder Wave plausible"]},
+          "seen_party": ["Ampharos", "Quilava"]
+        },
+        "field": {"weather": "none", "screens": "none"},
+        "public_notes": ["Hydro Pump KOs 44% Ampharos.", "Rest restores HP but sleeps for 2 turns; Ampharos can Thunderpunch twice and KO."]
+      },
+      "actions": [
+        {"id": "move_hydro_pump", "kind": "move", "name": "Hydro Pump", "explanation": "Likely KOs Ampharos right now.", "public_tradeoff": "80% accuracy; clean win if it hits."},
+        {"id": "move_dragon_dance", "kind": "move", "name": "Dragon Dance", "explanation": "Boosts Atk + Spe; doesn't help Hydro Pump.", "public_tradeoff": "Low HP setup is fragile."},
+        {"id": "move_rest", "kind": "move", "name": "Rest", "explanation": "Heals but sleeps; Ampharos KOs across the sleep window.", "public_tradeoff": "Wrong call when a KO is available now."},
+        {"id": "switch_kingdra", "kind": "switch", "name": "Switch to Kingdra", "explanation": "Preserves Gyarados; eats one Thunderpunch on switch in.", "public_tradeoff": "Conservative but loses the immediate kill."}
+      ]
+    },
+    {
+      "id": "will_xatu_vs_typhlosion_psychic_or_confuse_ray",
+      "leader": "Will",
+      "turn": 1,
+      "tags": ["e4", "opener_choice", "status"],
+      "training_focus": "When does an E4 opener prefer status disruption vs direct damage?",
+      "baseline_action_id": "move_confuse_ray",
+      "state": {
+        "boss": {
+          "active": {"species": "Xatu", "level": 42, "hp": "100%", "status": "none", "item": "Twisted Spoon", "revealed_moves": [], "role": "lead"},
+          "bench": ["Slowbro", "Exeggutor", "Jynx", "Xatu"]
+        },
+        "player": {
+          "active": {"species": "Typhlosion", "level": 45, "hp": "100%", "status": "none", "revealed_moves": ["Flamethrower", "Earthquake", "Quick Attack"], "public_priors": ["Thunderpunch plausible"]},
+          "seen_party": ["Typhlosion", "Lapras", "Ampharos", "Heracross", "Steelix", "Kadabra"]
+        },
+        "field": {"weather": "none", "screens": "none"},
+        "public_notes": ["Xatu outspeeds Typhlosion.", "Confuse Ray + Future Sight is Will's signature line.", "Flamethrower deals serious damage; one neutral hit alone may not end Xatu."]
+      },
+      "actions": [
+        {"id": "move_psychic", "kind": "move", "name": "Psychic", "explanation": "Strong direct STAB into Typhlosion.", "public_tradeoff": "Loses the disruption identity but takes tempo."},
+        {"id": "move_confuse_ray", "kind": "move", "name": "Confuse Ray", "explanation": "Sets up Future Sight reads and saves Xatu HP.", "public_tradeoff": "Iconic but accuracy/coin-flip on the player turn."},
+        {"id": "move_future_sight", "kind": "move", "name": "Future Sight", "explanation": "Telegraphs damage in 3 turns; pairs with Confuse Ray.", "public_tradeoff": "Bad alone without disruption around it."},
+        {"id": "switch_jynx", "kind": "switch", "name": "Switch to Jynx", "explanation": "Lovely Kiss into Typhlosion is publicly known.", "public_tradeoff": "Burns Xatu's lead role on turn 1."}
+      ]
+    },
+    {
+      "id": "will_slowbro_vs_houndoom_amnesia_or_surf",
+      "leader": "Will",
+      "turn": 3,
+      "tags": ["setup", "dark_threat", "ace_preservation"],
+      "training_focus": "Setup against a Dark/Crunch threat that ignores Amnesia is a specific trap; capture the misread.",
+      "baseline_action_id": "move_amnesia",
+      "state": {
+        "boss": {
+          "active": {"species": "Slowbro", "level": 41, "hp": "78%", "status": "none", "item": "Leftovers", "revealed_moves": ["Surf", "Body Slam"], "role": "bulky"},
+          "bench": ["Xatu", "Exeggutor", "Jynx"]
+        },
+        "player": {
+          "active": {"species": "Houndoom", "level": 44, "hp": "100%", "status": "none", "revealed_moves": ["Crunch"], "public_priors": ["Flamethrower plausible", "Pursuit plausible"]},
+          "seen_party": ["Houndoom", "Espeon", "Snorlax"]
+        },
+        "field": {"weather": "none", "screens": "none"},
+        "public_notes": ["Crunch is a physical Dark move in this hack.", "Slowbro Amnesia raises SpD; doesn't help against physical Crunch.", "Public meta knowledge: Houndoom is the prototypical Slowbro counter."]
+      },
+      "actions": [
+        {"id": "move_amnesia", "kind": "move", "name": "Amnesia", "explanation": "Boosts SpD; useless against physical Crunch.", "public_tradeoff": "Trap line; reads as bot-style setup."},
+        {"id": "move_surf", "kind": "move", "name": "Surf", "explanation": "Best damage Slowbro has into Houndoom.", "public_tradeoff": "Won't OHKO; trades to take a Crunch."},
+        {"id": "move_body_slam", "kind": "move", "name": "Body Slam", "explanation": "Paralysis chance into a fast threat.", "public_tradeoff": "Probably second-best move here."},
+        {"id": "switch_xatu", "kind": "switch", "name": "Switch to Xatu", "explanation": "Pivots to a faster mon; eats a Crunch on the way in.", "public_tradeoff": "Conservative ace-preservation play."}
+      ]
+    },
+    {
+      "id": "will_jynx_vs_machamp_lovely_kiss_or_psychic",
+      "leader": "Will",
+      "turn": 2,
+      "tags": ["sleep", "fighting_pressure", "speed"],
+      "training_focus": "Sleep into a Fighting-type with Rock coverage: sleep-first or kill-first?",
+      "baseline_action_id": "move_lovely_kiss",
+      "state": {
+        "boss": {
+          "active": {"species": "Jynx", "level": 41, "hp": "100%", "status": "none", "item": "Pink Bow", "revealed_moves": [], "role": "wallbreaker"},
+          "bench": ["Xatu", "Slowbro", "Exeggutor"]
+        },
+        "player": {
+          "active": {"species": "Machamp", "level": 43, "hp": "84%", "status": "none", "revealed_moves": ["Cross Chop", "Rock Slide"], "public_priors": ["Earthquake plausible"]},
+          "seen_party": ["Machamp", "Houndoom"]
+        },
+        "field": {"weather": "none", "screens": "none"},
+        "public_notes": ["Jynx outspeeds Machamp.", "Lovely Kiss = sleep with high accuracy; Psychic is Jynx's main damage line but Machamp resists Psychic less than expected via Fighting typing.", "One Cross Chop can KO Jynx if it lands; sleep delays it."]
+      },
+      "actions": [
+        {"id": "move_lovely_kiss", "kind": "move", "name": "Lovely Kiss", "explanation": "Disables Machamp for several turns.", "public_tradeoff": "75% accuracy; high reward."},
+        {"id": "move_psychic", "kind": "move", "name": "Psychic", "explanation": "Direct damage; less impact on Fighting/Steel-resists.", "public_tradeoff": "Single-turn pressure."},
+        {"id": "move_ice_punch", "kind": "move", "name": "Ice Punch", "explanation": "Coverage into Houndoom in the back.", "public_tradeoff": "Wrong target this turn."},
+        {"id": "move_body_slam", "kind": "move", "name": "Body Slam", "explanation": "Paralysis chance.", "public_tradeoff": "Lower damage and Jynx is fragile to Rock Slide."}
+      ]
+    },
+    {
+      "id": "koga_forretress_vs_typhlosion_spikes_or_explosion",
+      "leader": "Koga",
+      "turn": 1,
+      "tags": ["e4", "hazards", "sacrifice"],
+      "training_focus": "Hazard-set is Koga-canonical, but Explosion as a turn-1 trade is rarely correct. Capture the difference.",
+      "baseline_action_id": "move_spikes",
+      "state": {
+        "boss": {
+          "active": {"species": "Forretress", "level": 43, "hp": "100%", "status": "none", "item": "Rocky Helmet", "revealed_moves": [], "role": "hazard lead"},
+          "bench": ["Crobat", "Ariados", "Venomoth", "Muk"]
+        },
+        "player": {
+          "active": {"species": "Typhlosion", "level": 45, "hp": "100%", "status": "none", "revealed_moves": ["Flamethrower"], "public_priors": ["Earthquake plausible"]},
+          "seen_party": ["Typhlosion", "Lapras", "Heracross"]
+        },
+        "field": {"weather": "none", "screens": "none"},
+        "public_notes": ["Spikes is Forretress' signature.", "Explosion turn-1 is a major trade; the team behind needs the hazard-free turn it buys."]
+      },
+      "actions": [
+        {"id": "move_spikes", "kind": "move", "name": "Spikes", "explanation": "Sets up the layer Koga's whole team benefits from.", "public_tradeoff": "Iconic, fair, slow."},
+        {"id": "move_explosion", "kind": "move", "name": "Explosion", "explanation": "Sacrifices Forretress for a tempo swing.", "public_tradeoff": "Cheap-feeling on turn 1 with full HP."},
+        {"id": "move_protect", "kind": "move", "name": "Protect", "explanation": "Scouts Typhlosion's move.", "public_tradeoff": "Wastes the lead's hazard role."},
+        {"id": "switch_crobat", "kind": "switch", "name": "Switch to Crobat", "explanation": "Brings the ace out immediately.", "public_tradeoff": "Throws away the hazard turn entirely."}
+      ]
+    },
+    {
+      "id": "koga_ariados_vs_quilava_spider_web_or_attack",
+      "leader": "Koga",
+      "turn": 2,
+      "tags": ["trap", "switch_denial", "ace_pressure"],
+      "training_focus": "Spider Web prevents switching but gives up damage; capture when trap is correct.",
+      "baseline_action_id": "move_spider_web",
+      "state": {
+        "boss": {
+          "active": {"species": "Ariados", "level": 41, "hp": "73%", "status": "none", "item": "Pink Bow", "revealed_moves": ["Sludge Bomb"], "role": "trap"},
+          "bench": ["Crobat", "Forretress", "Venomoth"]
+        },
+        "player": {
+          "active": {"species": "Quilava", "level": 45, "hp": "63%", "status": "none", "revealed_moves": ["Flame Wheel", "Quick Attack"], "public_priors": ["Earthquake plausible if TM spent"]},
+          "seen_party": ["Quilava", "Lapras", "Heracross"]
+        },
+        "field": {"weather": "none", "screens": "none"},
+        "public_notes": ["Lapras and Heracross both threaten Ariados.", "Spider Web traps Quilava and lets Ariados Toxic next turn while Crobat finishes."]
+      },
+      "actions": [
+        {"id": "move_spider_web", "kind": "move", "name": "Spider Web", "explanation": "Locks Quilava in for status pressure.", "public_tradeoff": "Pays off only if follow-up status lands."},
+        {"id": "move_sludge_bomb", "kind": "move", "name": "Sludge Bomb", "explanation": "Best raw damage from Ariados.", "public_tradeoff": "Quilava outdamages back."},
+        {"id": "move_toxic", "kind": "move", "name": "Toxic", "explanation": "Status pressure without trapping first.", "public_tradeoff": "Player switches out and loses the toxic."},
+        {"id": "switch_crobat", "kind": "switch", "name": "Switch to Crobat", "explanation": "Pivots to ace; eats Flame Wheel on the way in.", "public_tradeoff": "Throws away Ariados' trap role."}
+      ]
+    },
+    {
+      "id": "bruno_machamp_vs_alakazam_rock_slide_or_cross_chop",
+      "leader": "Bruno",
+      "turn": 1,
+      "tags": ["e4", "coverage_choice", "speed_disadvantage"],
+      "training_focus": "Two strong damage options with different accuracy/spread tradeoffs into a faster Psychic threat.",
+      "baseline_action_id": "move_cross_chop",
+      "state": {
+        "boss": {
+          "active": {"species": "Machamp", "level": 46, "hp": "100%", "status": "none", "item": "Black Belt", "revealed_moves": [], "role": "ace"},
+          "bench": ["Hitmonchan", "Hitmonlee", "Hitmontop", "Onix"]
+        },
+        "player": {
+          "active": {"species": "Alakazam", "level": 45, "hp": "100%", "status": "none", "revealed_moves": ["Psychic", "Recover"], "public_priors": ["Thunder Punch plausible"]},
+          "seen_party": ["Alakazam", "Snorlax", "Skarmory"]
+        },
+        "field": {"weather": "none", "screens": "none"},
+        "public_notes": ["Alakazam outspeeds Machamp by a large margin.", "Cross Chop has 80% accuracy and high crit; Rock Slide is 90% with flinch chance."]
+      },
+      "actions": [
+        {"id": "move_cross_chop", "kind": "move", "name": "Cross Chop", "explanation": "Best damage if it lands.", "public_tradeoff": "80% accuracy; whiffing into Psychic loses the round."},
+        {"id": "move_rock_slide", "kind": "move", "name": "Rock Slide", "explanation": "More reliable damage with flinch chance.", "public_tradeoff": "Lower damage but better expected value."},
+        {"id": "move_foresight", "kind": "move", "name": "Foresight", "explanation": "Removes Ghost immunity; Alakazam isn't Ghost.", "public_tradeoff": "Wrong tool here."},
+        {"id": "move_vital_throw", "kind": "move", "name": "Vital Throw", "explanation": "Negative-priority STAB, never misses.", "public_tradeoff": "Way less damage; only correct if Cross Chop accuracy is the deciding fear."}
+      ]
+    },
+    {
+      "id": "bruno_hitmonlee_vs_skarmory_high_jump_kick_or_brick_break",
+      "leader": "Bruno",
+      "turn": 2,
+      "tags": ["e4", "recoil", "type_advantage"],
+      "training_focus": "Big damage with crash recoil vs safe damage when the matchup is otherwise winning.",
+      "baseline_action_id": "move_hi_jump_kick",
+      "state": {
+        "boss": {
+          "active": {"species": "Hitmonlee", "level": 44, "hp": "84%", "status": "none", "item": "Focus Band", "revealed_moves": ["Hi Jump Kick"], "role": "fast attacker"},
+          "bench": ["Machamp", "Hitmonchan", "Hitmontop"]
+        },
+        "player": {
+          "active": {"species": "Skarmory", "level": 45, "hp": "63%", "status": "none", "revealed_moves": ["Drill Peck", "Steel Wing"], "public_priors": ["Whirlwind plausible"]},
+          "seen_party": ["Skarmory", "Alakazam"]
+        },
+        "field": {"weather": "none", "screens": "none"},
+        "public_notes": ["Hi Jump Kick crashes for 50% of Hitmonlee's HP if it misses or is blocked.", "Whirlwind would phaze Hitmonlee out and reset HJK reads.", "Brick Break breaks screens and never crashes."]
+      },
+      "actions": [
+        {"id": "move_hi_jump_kick", "kind": "move", "name": "Hi Jump Kick", "explanation": "Highest damage available; crashes if Whirlwind triggers or it misses.", "public_tradeoff": "All-or-nothing; bold."},
+        {"id": "move_brick_break", "kind": "move", "name": "Brick Break", "explanation": "Reliable damage; no recoil.", "public_tradeoff": "Less damage but never throws."},
+        {"id": "move_swagger", "kind": "move", "name": "Swagger", "explanation": "Boosts Skarmory's Atk + confusion.", "public_tradeoff": "Skarmory's Atk is already terrifying with Drill Peck."},
+        {"id": "switch_machamp", "kind": "switch", "name": "Switch to Machamp", "explanation": "Bulkier into Drill Peck risk.", "public_tradeoff": "Loses Hitmonlee's speed advantage."}
+      ]
+    },
+    {
+      "id": "bruno_onix_vs_typhlosion_sandstorm_or_explosion",
+      "leader": "Bruno",
+      "turn": 4,
+      "tags": ["e4", "weather_chip", "sacrifice"],
+      "training_focus": "Sandstorm gives long-game chip but Onix at low HP could trade. Capture taste for slow vs fast finish.",
+      "baseline_action_id": "move_sandstorm",
+      "state": {
+        "boss": {
+          "active": {"species": "Onix", "level": 43, "hp": "31%", "status": "none", "item": "Hard Stone", "revealed_moves": ["Rock Slide", "Sandstorm"], "role": "wall"},
+          "bench": ["Machamp", "Hitmontop"]
+        },
+        "player": {
+          "active": {"species": "Typhlosion", "level": 45, "hp": "61%", "status": "none", "revealed_moves": ["Flamethrower", "Earthquake"], "public_priors": []},
+          "seen_party": ["Typhlosion", "Lapras"]
+        },
+        "field": {"weather": "none", "screens": "none"},
+        "public_notes": ["Earthquake KOs Onix at 31%.", "Sandstorm chips Typhlosion every turn but only if the field stays Onix-up.", "Explosion KOs Typhlosion outright."]
+      },
+      "actions": [
+        {"id": "move_sandstorm", "kind": "move", "name": "Sandstorm", "explanation": "Long-game chip if Onix survives.", "public_tradeoff": "Onix dies first; sand stays but the chip lands on Typhlosion only if it's still in."},
+        {"id": "move_rock_slide", "kind": "move", "name": "Rock Slide", "explanation": "Best non-trade damage.", "public_tradeoff": "Slow under super-effective return fire."},
+        {"id": "move_explosion", "kind": "move", "name": "Explosion", "explanation": "Trades Onix for Typhlosion.", "public_tradeoff": "Tempo swing if Lapras is the player's only follow-up."},
+        {"id": "switch_machamp", "kind": "switch", "name": "Switch to Machamp", "explanation": "Bulky pivot into Earthquake risk.", "public_tradeoff": "Wastes Onix's last turn entirely."}
+      ]
+    },
+    {
+      "id": "karen_houndoom_vs_alakazam_pursuit_or_flamethrower",
+      "leader": "Karen",
+      "turn": 1,
+      "tags": ["e4", "predict_switch", "coverage"],
+      "training_focus": "Pursuit pays off only if the player switches; Flamethrower is the safe direct line. Capture when prediction is fair.",
+      "baseline_action_id": "move_pursuit",
+      "state": {
+        "boss": {
+          "active": {"species": "Houndoom", "level": 47, "hp": "100%", "status": "none", "item": "Black Glasses", "revealed_moves": [], "role": "ace"},
+          "bench": ["Umbreon", "Vileplume", "Murkrow", "Gengar"]
+        },
+        "player": {
+          "active": {"species": "Alakazam", "level": 47, "hp": "100%", "status": "none", "revealed_moves": ["Psychic"], "public_priors": ["Thunder Punch plausible"]},
+          "seen_party": ["Alakazam", "Heracross", "Snorlax"]
+        },
+        "field": {"weather": "none", "screens": "none"},
+        "public_notes": ["Heracross is in the seen party and is a hard counter to Houndoom.", "Switch is publicly plausible.", "Pursuit doubles damage on switching targets."]
+      },
+      "actions": [
+        {"id": "move_pursuit", "kind": "move", "name": "Pursuit", "explanation": "Doubled damage if Alakazam switches; weak otherwise.", "public_tradeoff": "Smart if the switch read is real."},
+        {"id": "move_flamethrower", "kind": "move", "name": "Flamethrower", "explanation": "Strong damage either way.", "public_tradeoff": "Safer baseline."},
+        {"id": "move_crunch", "kind": "move", "name": "Crunch", "explanation": "Direct STAB Dark hit.", "public_tradeoff": "Same as Flamethrower-tier baseline."},
+        {"id": "switch_murkrow", "kind": "switch", "name": "Switch to Murkrow", "explanation": "Faster Pursuit user; loses Houndoom's lead role.", "public_tradeoff": "Awkward turn-1 burn."}
+      ]
+    },
+    {
+      "id": "karen_umbreon_vs_dragonite_curse_or_toxic",
+      "leader": "Karen",
+      "turn": 3,
+      "tags": ["e4", "stall", "setup"],
+      "training_focus": "Curse turns Umbreon into a slow tank; Toxic times out a Dragon. Capture when slow stall feels strong vs robotic.",
+      "baseline_action_id": "move_curse",
+      "state": {
+        "boss": {
+          "active": {"species": "Umbreon", "level": 46, "hp": "92%", "status": "none", "item": "Leftovers", "revealed_moves": ["Confuse Ray", "Faint Attack"], "role": "wall"},
+          "bench": ["Houndoom", "Vileplume", "Murkrow"]
+        },
+        "player": {
+          "active": {"species": "Dragonite", "level": 48, "hp": "100%", "status": "none", "revealed_moves": ["Outrage"], "public_priors": ["Hyper Beam plausible", "Thunder plausible"]},
+          "seen_party": ["Dragonite", "Lapras"]
+        },
+        "field": {"weather": "none", "screens": "none"},
+        "public_notes": ["Outrage is publicly Dragon-only; Dragonite locks for 2-3 turns.", "Curse on Umbreon raises Atk + Def while lowering Spe; over 3-4 turns it threatens KOs.", "Toxic on Dragonite is a clean long-term clock."]
+      },
+      "actions": [
+        {"id": "move_curse", "kind": "move", "name": "Curse", "explanation": "Sets up a slow Umbreon into a Dragon.", "public_tradeoff": "Pays off only over 4+ turns."},
+        {"id": "move_toxic", "kind": "move", "name": "Toxic", "explanation": "Times out Dragonite while Outrage burns turns.", "public_tradeoff": "Clean stall if Umbreon survives the lock."},
+        {"id": "move_faint_attack", "kind": "move", "name": "Faint Attack", "explanation": "Weak STAB but never misses.", "public_tradeoff": "Underwhelming damage by itself."},
+        {"id": "switch_vileplume", "kind": "switch", "name": "Switch to Vileplume", "explanation": "Sleep Powder pivot.", "public_tradeoff": "Outrage hits Vileplume hard on entry."}
+      ]
+    },
+    {
+      "id": "karen_gengar_vs_snorlax_destiny_bond_or_thunderbolt",
+      "leader": "Karen",
+      "turn": 5,
+      "tags": ["e4", "sacrifice", "endgame"],
+      "training_focus": "Destiny Bond on the last leader's last mon: scary-good gauntlet seal, or cheap reflex?",
+      "baseline_action_id": "move_destiny_bond",
+      "state": {
+        "boss": {
+          "active": {"species": "Gengar", "level": 47, "hp": "44%", "status": "none", "item": "Spell Tag", "revealed_moves": ["Shadow Ball", "Thunderbolt"], "role": "ace"},
+          "bench": []
+        },
+        "player": {
+          "active": {"species": "Snorlax", "level": 49, "hp": "63%", "status": "none", "revealed_moves": ["Body Slam", "Earthquake"], "public_priors": ["Crunch plausible"]},
+          "seen_party": ["Snorlax"]
+        },
+        "field": {"weather": "none", "screens": "none"},
+        "public_notes": ["Karen has no bench; Gengar is the last mon.", "Destiny Bond + a faster Snorlax KO trades both.", "Thunderbolt is weak into Snorlax (high SpD)."]
+      },
+      "actions": [
+        {"id": "move_destiny_bond", "kind": "move", "name": "Destiny Bond", "explanation": "Trades both mons; ends the run if Snorlax was Gengar's only answer.", "public_tradeoff": "Endgame DB is rated scary-good in design."},
+        {"id": "move_thunderbolt", "kind": "move", "name": "Thunderbolt", "explanation": "Direct damage but Snorlax is bulky on the special side.", "public_tradeoff": "Probably too slow."},
+        {"id": "move_shadow_ball", "kind": "move", "name": "Shadow Ball", "explanation": "Less effective into Normal types.", "public_tradeoff": "Wrong move in this matchup."},
+        {"id": "move_curse", "kind": "move", "name": "Curse", "explanation": "Paranoid setup; halves Gengar HP.", "public_tradeoff": "Wastes the last turn."}
+      ]
+    },
+    {
+      "id": "lance_dragonite_vs_aerodactyl_thunder_or_outrage",
+      "leader": "Champion Lance",
+      "turn": 2,
+      "tags": ["champion", "type_choice", "ace_pressure"],
+      "training_focus": "Lance's Dragonite chooses between super-effective Thunder and STAB Outrage into a Rock/Flying threat.",
+      "baseline_action_id": "move_outrage",
+      "state": {
+        "boss": {
+          "active": {"species": "Dragonite", "level": 50, "hp": "92%", "status": "none", "item": "Expert Belt", "revealed_moves": [], "role": "ace"},
+          "bench": ["Gyarados", "Charizard", "Aerodactyl", "Dragonite", "Dragonite"]
+        },
+        "player": {
+          "active": {"species": "Aerodactyl", "level": 50, "hp": "100%", "status": "none", "revealed_moves": ["Rock Slide"], "public_priors": ["AncientPower plausible"]},
+          "seen_party": ["Aerodactyl", "Vaporeon", "Zapdos"]
+        },
+        "field": {"weather": "none", "screens": "none"},
+        "public_notes": ["Thunder hits Aerodactyl 4x.", "Outrage is publicly Dragon-only and locks for 2-3 turns.", "Aerodactyl outspeeds Dragonite slightly."]
+      },
+      "actions": [
+        {"id": "move_thunder", "kind": "move", "name": "Thunder", "explanation": "4x super-effective into Aerodactyl.", "public_tradeoff": "70% accuracy; KO if it lands."},
+        {"id": "move_outrage", "kind": "move", "name": "Outrage", "explanation": "Best STAB; locks Dragonite for 2-3 turns.", "public_tradeoff": "Lock is risky if Vaporeon comes in next."},
+        {"id": "move_fire_blast", "kind": "move", "name": "Fire Blast", "explanation": "Coverage that doesn't lock; hits Steel/Bug switches.", "public_tradeoff": "Weak into Aerodactyl directly."},
+        {"id": "switch_aerodactyl", "kind": "switch", "name": "Switch to Aerodactyl (mirror)", "explanation": "Mirror match takes Rock Slide chip.", "public_tradeoff": "Throws Dragonite's tempo on turn 2."}
+      ]
+    },
+    {
+      "id": "lance_aerodactyl_vs_porygon2_rock_slide_or_ancient_power",
+      "leader": "Champion Lance",
+      "turn": 4,
+      "tags": ["champion", "coverage", "setup_chance"],
+      "training_focus": "AncientPower has a setup chance baked in; Rock Slide is reliable. Capture when the gimmick stat-up is correct.",
+      "baseline_action_id": "move_rock_slide",
+      "state": {
+        "boss": {
+          "active": {"species": "Aerodactyl", "level": 47, "hp": "67%", "status": "none", "item": "Sharp Beak", "revealed_moves": ["Wing Attack"], "role": "fast attacker"},
+          "bench": ["Dragonite", "Dragonite", "Dragonite", "Charizard", "Gyarados"]
+        },
+        "player": {
+          "active": {"species": "Porygon2", "level": 49, "hp": "78%", "status": "none", "revealed_moves": ["Tri Attack", "Recover"], "public_priors": ["Ice Beam plausible", "Thunderbolt plausible"]},
+          "seen_party": ["Porygon2", "Suicune", "Tyranitar"]
+        },
+        "field": {"weather": "none", "screens": "none"},
+        "public_notes": ["Porygon2 outspeeds Aerodactyl in this matchup.", "AncientPower has a 10% chance to raise all stats.", "Tyranitar in the back can resist most Aerodactyl coverage."]
+      },
+      "actions": [
+        {"id": "move_rock_slide", "kind": "move", "name": "Rock Slide", "explanation": "Reliable damage with flinch chance.", "public_tradeoff": "Best baseline."},
+        {"id": "move_ancient_power", "kind": "move", "name": "AncientPower", "explanation": "Same type as Rock Slide with the all-stats-up gimmick.", "public_tradeoff": "Gimmick payoff is rare; underwhelming default."},
+        {"id": "move_hyper_beam", "kind": "move", "name": "Hyper Beam", "explanation": "Big single-turn damage; recharge next turn.", "public_tradeoff": "Tyranitar comes in free on the recharge."},
+        {"id": "switch_dragonite", "kind": "switch", "name": "Switch to Dragonite", "explanation": "Bulky pivot into Tri Attack chip.", "public_tradeoff": "Wastes Aerodactyl's speed advantage."}
+      ]
+    },
+    {
+      "id": "lance_charizard_vs_milotic_fire_blast_or_solarbeam",
+      "leader": "Champion Lance",
+      "turn": 3,
+      "tags": ["champion", "weather_setup", "stab_choice"],
+      "training_focus": "Sun setup sequencing: Solarbeam without Sunny Day is a 2-turn move; Fire Blast is direct.",
+      "baseline_action_id": "move_fire_blast",
+      "state": {
+        "boss": {
+          "active": {"species": "Charizard", "level": 47, "hp": "84%", "status": "none", "item": "Charcoal", "revealed_moves": ["Wing Attack"], "role": "coverage attacker"},
+          "bench": ["Dragonite", "Dragonite", "Dragonite", "Gyarados", "Aerodactyl"]
+        },
+        "player": {
+          "active": {"species": "Milotic", "level": 48, "hp": "92%", "status": "none", "revealed_moves": ["Surf"], "public_priors": ["Recover plausible", "Ice Beam plausible"]},
+          "seen_party": ["Milotic", "Snorlax"]
+        },
+        "field": {"weather": "none", "screens": "none"},
+        "public_notes": ["Solarbeam without Sun is a 2-turn move; Surf interrupts.", "Fire Blast is a single-turn line but resisted.", "Sunny Day on this turn would set up a Solarbeam follow-up but eats two turns total."]
+      },
+      "actions": [
+        {"id": "move_fire_blast", "kind": "move", "name": "Fire Blast", "explanation": "Direct STAB, resisted but immediate.", "public_tradeoff": "Single-turn pressure."},
+        {"id": "move_solarbeam", "kind": "move", "name": "SolarBeam", "explanation": "Super-effective; Surf interrupts the charge.", "public_tradeoff": "Suicidal without Sun setup."},
+        {"id": "move_sunny_day", "kind": "move", "name": "Sunny Day", "explanation": "Sets up Solarbeam to be 1-turn next.", "public_tradeoff": "Two-turn plan under direct pressure."},
+        {"id": "move_wing_attack", "kind": "move", "name": "Wing Attack", "explanation": "Already revealed; weak into Milotic.", "public_tradeoff": "Underwhelming filler."}
+      ]
+    },
+    {
+      "id": "red_pikachu_vs_dragonite_thunderbolt_or_quick_attack",
+      "leader": "Red",
+      "turn": 1,
+      "tags": ["post_game", "speed_priority", "type_advantage"],
+      "training_focus": "Pikachu's iconic priority vs the bigger STAB hit when both are publicly known and the matchup is winning.",
+      "baseline_action_id": "move_thunderbolt",
+      "state": {
+        "boss": {
+          "active": {"species": "Pikachu", "level": 81, "hp": "100%", "status": "none", "item": "Light Ball", "revealed_moves": [], "role": "lead"},
+          "bench": ["Espeon", "Snorlax", "Venusaur", "Charizard", "Blastoise"]
+        },
+        "player": {
+          "active": {"species": "Dragonite", "level": 80, "hp": "100%", "status": "none", "revealed_moves": ["Outrage"], "public_priors": ["Thunder plausible", "Hyper Beam plausible"]},
+          "seen_party": ["Dragonite", "Lapras", "Tyranitar"]
+        },
+        "field": {"weather": "none", "screens": "none"},
+        "public_notes": ["Pikachu outspeeds Dragonite.", "Light Ball doubles Pikachu's special damage.", "Thunderbolt likely 2HKOs Dragonite; Quick Attack is chip."]
+      },
+      "actions": [
+        {"id": "move_thunderbolt", "kind": "move", "name": "Thunderbolt", "explanation": "Best damage with Light Ball.", "public_tradeoff": "Optimal first hit."},
+        {"id": "move_quick_attack", "kind": "move", "name": "Quick Attack", "explanation": "Priority chip when Pikachu doesn't need it.", "public_tradeoff": "Wastes the speed advantage."},
+        {"id": "move_thunder", "kind": "move", "name": "Thunder", "explanation": "Higher damage but 70% accuracy.", "public_tradeoff": "Variance over a clean Thunderbolt."},
+        {"id": "switch_blastoise", "kind": "switch", "name": "Switch to Blastoise", "explanation": "Trades Pikachu's tempo to set up later.", "public_tradeoff": "No reason to give up the lead role."}
+      ]
+    },
+    {
+      "id": "red_snorlax_vs_alakazam_amnesia_or_body_slam",
+      "leader": "Red",
+      "turn": 2,
+      "tags": ["post_game", "setup", "wallbreak_resist"],
+      "training_focus": "Amnesia under Psychic pressure: when does the Curse-line setup beat direct trade?",
+      "baseline_action_id": "move_amnesia",
+      "state": {
+        "boss": {
+          "active": {"species": "Snorlax", "level": 82, "hp": "84%", "status": "none", "item": "Leftovers", "revealed_moves": ["Body Slam"], "role": "wallbreaker"},
+          "bench": ["Pikachu", "Espeon", "Venusaur", "Charizard", "Blastoise"]
+        },
+        "player": {
+          "active": {"species": "Alakazam", "level": 80, "hp": "62%", "status": "none", "revealed_moves": ["Psychic", "Recover"], "public_priors": ["Fire Punch plausible"]},
+          "seen_party": ["Alakazam", "Tyranitar"]
+        },
+        "field": {"weather": "none", "screens": "none"},
+        "public_notes": ["Alakazam is faster.", "Body Slam at +0 chips; Psychic deals real damage.", "Amnesia at +2 SpD makes Psychic a chip move."]
+      },
+      "actions": [
+        {"id": "move_amnesia", "kind": "move", "name": "Amnesia", "explanation": "Doubles SpD; trivializes Psychic.", "public_tradeoff": "Setup on a slow mon under direct pressure is strong if it survives."},
+        {"id": "move_body_slam", "kind": "move", "name": "Body Slam", "explanation": "Direct chip with paralysis chance.", "public_tradeoff": "Trades but doesn't fix the Psychic pressure."},
+        {"id": "move_curse", "kind": "move", "name": "Curse", "explanation": "Atk+Def setup but Psychic ignores Def.", "public_tradeoff": "Wrong dimension of bulk."},
+        {"id": "move_self_destruct", "kind": "move", "name": "Self-Destruct", "explanation": "Trade Snorlax for Alakazam.", "public_tradeoff": "Cheap-feeling on Red's bulkiest mon."}
+      ]
+    },
+    {
+      "id": "red_charizard_vs_starmie_fire_blast_or_wing_attack",
+      "leader": "Red",
+      "turn": 3,
+      "tags": ["post_game", "stab_choice", "type_disadvantage"],
+      "training_focus": "Fire Blast vs Wing Attack into a Water/Psychic threat: STAB strength vs neutral coverage.",
+      "baseline_action_id": "move_fire_blast",
+      "state": {
+        "boss": {
+          "active": {"species": "Charizard", "level": 80, "hp": "92%", "status": "none", "item": "Charcoal", "revealed_moves": ["Wing Attack"], "role": "coverage attacker"},
+          "bench": ["Pikachu", "Espeon", "Snorlax", "Venusaur", "Blastoise"]
+        },
+        "player": {
+          "active": {"species": "Starmie", "level": 80, "hp": "100%", "status": "none", "revealed_moves": ["Surf"], "public_priors": ["Thunder plausible", "Recover plausible", "Psychic plausible"]},
+          "seen_party": ["Starmie", "Heracross"]
+        },
+        "field": {"weather": "none", "screens": "none"},
+        "public_notes": ["Starmie outspeeds Charizard.", "Fire Blast is resisted by Water; Wing Attack is neutral but lower base power.", "Surf threatens Charizard 2x."]
+      },
+      "actions": [
+        {"id": "move_fire_blast", "kind": "move", "name": "Fire Blast", "explanation": "Strong STAB but resisted.", "public_tradeoff": "Often the wrong call into Water."},
+        {"id": "move_wing_attack", "kind": "move", "name": "Wing Attack", "explanation": "Neutral hit; weaker base power.", "public_tradeoff": "Cleaner expected damage into a Water type."},
+        {"id": "move_slash", "kind": "move", "name": "Slash", "explanation": "High crit chance, neutral.", "public_tradeoff": "Comparable to Wing Attack."},
+        {"id": "switch_pikachu", "kind": "switch", "name": "Switch to Pikachu", "explanation": "Thunderbolt into Starmie hits hard.", "public_tradeoff": "Burns Charizard's turn but optimal threat alignment."}
+      ]
+    },
+    {
+      "id": "lance_dragonite_vs_steelix_fire_blast_or_thunder",
+      "leader": "Champion Lance",
+      "turn": 5,
+      "tags": ["champion", "coverage_choice", "hack_specific_typing"],
+      "training_focus": "In this hack Steelix is Steel/Dragon (resists Dragon and Thunder, 4x weak to Fire). Capture whether the AI picks the type that actually works.",
+      "baseline_action_id": "move_thunder",
+      "state": {
+        "boss": {
+          "active": {"species": "Dragonite", "level": 50, "hp": "78%", "status": "none", "item": "Dragon Fang", "revealed_moves": ["Outrage", "Wing Attack"], "role": "third ace"},
+          "bench": []
+        },
+        "player": {
+          "active": {"species": "Steelix", "level": 50, "hp": "100%", "status": "none", "revealed_moves": ["Earthquake", "Rock Slide"], "public_priors": ["Iron Tail plausible", "Roar plausible"]},
+          "seen_party": ["Steelix"]
+        },
+        "field": {"weather": "none", "screens": "none"},
+        "public_notes": ["Steelix is Steel/Dragon in this hack (see docs/dragon_design_narrative.md).", "Thunder is resisted; Fire Blast is 4x super-effective.", "Outrage is publicly Dragon-only and hits Steelix neutrally because of the Dragon typing, not weak."]
+      },
+      "actions": [
+        {"id": "move_thunder", "kind": "move", "name": "Thunder", "explanation": "Default coverage choice if the AI doesn't know Steelix is Steel/Dragon.", "public_tradeoff": "Resisted; major bot tell if chosen."},
+        {"id": "move_fire_blast", "kind": "move", "name": "Fire Blast", "explanation": "4x super-effective into Steelix's hack typing.", "public_tradeoff": "Best damage by a wide margin if the AI knows the typing."},
+        {"id": "move_outrage", "kind": "move", "name": "Outrage", "explanation": "STAB; locks for 2-3 turns and Steelix has no second mon.", "public_tradeoff": "Lock irrelevant in a 1-on-1; reasonable damage."},
+        {"id": "move_wing_attack", "kind": "move", "name": "Wing Attack", "explanation": "Already revealed; doubly resisted.", "public_tradeoff": "Wrong move."}
+      ]
     }
   ]
 }

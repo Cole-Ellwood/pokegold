@@ -26,3 +26,20 @@ python -m tools.boss_ai_debugger judge --fixture-id clair_dragonite_vs_suicune_h
 
 The scoring rules are deliberately small and readable. They are a review aid,
 not a model checkpoint and not a source of automatic ROM edits.
+
+Run the pairwise preference regression:
+
+```powershell
+python -m tools.boss_ai_debugger regress
+```
+
+Write a structured regression report:
+
+```powershell
+python -m tools.boss_ai_debugger regress --json-out audit/boss_ai_preference/regression_report.json
+```
+
+The regression command compares strict pairwise labels from
+`tools/boss_ai_preference/labels/boss_ai_pairwise_preferences.jsonl` against
+`score_action`. Non-strict labels such as `both_good`, `both_bad`,
+`other_better`, and `needs_context` are counted as skipped.
