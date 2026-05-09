@@ -74,8 +74,8 @@ Read `docs/README.md` first for helper-doc routing, then `docs/project_context.m
 
 | Region | Used | Free | Banks |
 | --- | ---: | ---: | ---: |
-| ROM0 | 16133 | 251 |  |
-| ROMX | 1150182 | 930586 | 127 |
+| ROM0 | 16067 | 317 |  |
+| ROMX | 1145097 | 935671 | 127 |
 | SRAM | 31699 | 1069 | 4 |
 | WRAM0 | 4047 | 49 |  |
 | WRAMX | 4096 | 0 |  |
@@ -149,7 +149,7 @@ Use these as candidates when moving optional code or data out of tight banks.
 
 | Section | Region | Bank/range | Size | Layout constraint | Source hints |
 | --- | --- | --- | ---: | --- | --- |
-| `Home` | ROM0 | 00:0150-3fdc | 16013 | ROM0 00 | `home.asm`, `home/array.asm`, `home/audio.asm`, `home/battle.asm`, +49 more |
+| `Home` | ROM0 | 00:0150-3f9a | 15947 | ROM0 00 | `home.asm`, `home/array.asm`, `home/audio.asm`, `home/battle.asm`, +48 more |
 | `bankB` | ROMX | 0b:4000-4cdf | 3296 | ROMX 0b | `engine/battle/ai/redundant.asm`, `engine/battle/trainer_huds.asm`, `engine/events/move_deleter.asm`, `engine/events/move_reminder.asm`, +6 more |
 | `Effect Commands` | ROMX | 0d:4000-7ffd | 16382 | ROMX 0d | `engine/battle/effect_commands.asm`, `engine/battle/used_move_text.asm`, `main.asm` |
 | `Enemy Trainers` | ROMX | 0e:4000-7103 | 12548 | ROMX 0e | `engine/battle/ai/boss.asm`, `engine/battle/ai/items.asm`, `engine/battle/read_trainer_attributes.asm`, `main.asm` |
@@ -161,9 +161,9 @@ Use these as candidates when moving optional code or data out of tight banks.
 | `Audio` | ROMX | 3a:4000-5490 | 5265 | ROMX 3a | `audio.asm`, `audio/cry_pointers.asm`, `audio/engine.asm`, `audio/music/nothing.asm`, +3 more |
 | `Songs 1` | ROMX | 3a:5491-7fb5 | 11045 | ROMX 3a | `audio.asm`, `audio/music/championbattle.asm`, `audio/music/darkcave.asm`, `audio/music/elmslab.asm`, +12 more |
 | `Songs 2` | ROMX | 3b:4000-7ef4 | 16117 | ROMX 3b | `audio.asm`, `audio/music/bicycle.asm`, `audio/music/contestresults.asm`, `audio/music/dancinghall.asm`, +29 more |
-| `Songs 3` | ROMX | 3c:4000-4940 | 2369 | ROMX 3c | `audio.asm`, `audio/music/evolution.asm`, `audio/music/halloffame.asm`, `audio/music/healpokemon.asm`, +3 more |
-| `Sound Effects` | ROMX | 3c:4941-6746 | 7686 | ROMX 3c | `audio.asm`, `audio/sfx.asm` |
-| `Cries` | ROMX | 3c:6747-7f75 | 6191 | ROMX 3c | `audio.asm`, `audio/cries.asm`, `data/pokemon/cries.asm` |
+| `Songs 3` | ROMX | 3c:4000-47fc | 2045 | ROMX 3c | `audio.asm`, `audio/music/evolution.asm`, `audio/music/halloffame.asm`, `audio/music/healpokemon.asm`, +2 more |
+| `Sound Effects` | ROMX | 3c:47fd-6602 | 7686 | ROMX 3c | `audio.asm`, `audio/sfx.asm` |
+| `Cries` | ROMX | 3c:6603-7e31 | 6191 | ROMX 3c | `audio.asm`, `audio/cries.asm`, `data/pokemon/cries.asm` |
 | `Songs 4` | ROMX | 3d:4000-7ef2 | 16115 | ROMX 3d | `audio.asm`, `audio/music/aftertherivalfight.asm`, `audio/music/azaleatown.asm`, `audio/music/bugcatchingcontest.asm`, +34 more |
 | `Standard Scripts` | ROMX | 40:4000-62d3 | 8916 | ROMX 40 | `data/text/battle.asm`, `engine/events/std_scripts.asm`, `main.asm` |
 | `Phone Scripts` | ROMX | 41:4000-614c | 8525 | ROMX 41 | `data/phone/text/bike_shop.asm`, `data/phone/text/bill.asm`, `data/phone/text/elm.asm`, `data/phone/text/mom.asm`, +9 more |

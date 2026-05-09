@@ -91,7 +91,6 @@ INCLUDE "engine/events/money.asm"
 INCLUDE "data/items/marts.asm"
 INCLUDE "engine/events/mom.asm"
 INCLUDE "engine/events/daycare.asm"
-INCLUDE "engine/events/print_unown.asm"
 INCLUDE "engine/link/mystery_gift_gfx.asm"
 INCLUDE "engine/pokemon/breeding.asm"
 
@@ -238,8 +237,6 @@ INCLUDE "data/pokemon/unused_pic_banks.asm"
 
 SECTION "bank21", ROMX
 
-INCLUDE "engine/printer/printer_serial.asm"
-INCLUDE "engine/printer/printer.asm"
 INCLUDE "gfx/battle_anims.asm"
 INCLUDE "engine/events/halloffame.asm"
 
@@ -303,7 +300,6 @@ INCLUDE "engine/battle_anims/helpers.asm"
 SECTION "bank38", ROMX
 
 INCLUDE "engine/events/diploma.asm"
-INCLUDE "engine/events/print_unown_2.asm"
 INCLUDE "engine/games/card_flip.asm"
 INCLUDE "engine/games/unown_puzzle.asm"
 INCLUDE "engine/games/memory_game.asm"
@@ -393,7 +389,6 @@ INCLUDE "data/items/descriptions.asm"
 
 SECTION "bank70", ROMX
 
-INCLUDE "engine/printer/print_party.asm"
 IF DEF(_DEBUG)
 INCLUDE "engine/debug/debug_room.asm"
 ENDC
