@@ -12,8 +12,10 @@ Scope: boss AI release-safety patch and trace/tuning follow-up
 
 ## Implemented Patch Summary
 
-The release-safety patch was implemented in `engine/battle/ai/boss.asm` with no
-new boss WRAM fields, SRAM fields, HRAM fields, or Battle Core bank `0f` hooks.
+The release-safety patch is now split across `engine/battle/ai/boss_platform.asm`,
+`engine/battle/ai/boss_policy_move.asm`, `engine/battle/ai/boss_policy_switch.asm`,
+`engine/battle/ai/boss_data.asm`, and `engine/battle/ai/boss_thunks.asm` with no new boss WRAM fields, SRAM
+fields, HRAM fields, or Battle Core bank `0f` hooks.
 
 Implemented behavior:
 
@@ -284,7 +286,7 @@ python tools\audit\check_boss_moves_complete.py
 python tools\audit\check_battle_math_safety.py
 python tools\audit\check_release_smoke.py
 python tools\audit\check_docs_navigation.py
-git diff --check -- engine/battle/ai/boss.asm ram/wram.asm docs/generated/dev_index.md
+git diff --check -- engine/battle/ai/boss_platform.asm engine/battle/ai/boss_policy_move.asm engine/battle/ai/boss_policy_switch.asm engine/battle/ai/boss_data.asm engine/battle/ai/boss_thunks.asm ram/wram.asm docs/generated/dev_index.md
 ```
 
 ## Manual Build Fallback

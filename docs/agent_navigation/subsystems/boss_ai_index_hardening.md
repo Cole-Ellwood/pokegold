@@ -1,7 +1,7 @@
 # Boss AI Index Hardening — Plan
 
 Scope: improvements to `docs/agent_navigation/subsystems/boss_ai_logic.md` so it
-stays accurate as `engine/battle/ai/boss.asm` evolves and so future sessions
+stays accurate as the split Boss AI source under `engine/battle/ai/` evolves and so future sessions
 hit fewer foot-guns when editing boss AI.
 
 This is a planning doc, not the index itself. Don't ship gameplay changes from
@@ -22,14 +22,15 @@ edits, all worth landing as one commit:
 
 1. `data/battle/ai/*.asm` row in the source-files table now says those lists
    feed **vanilla** scoring (consumers in `scoring.asm`), and points at the
-   inline boss-AI effect tables at the bottom of `boss.asm`. Closes a real
+   inline boss-AI effect tables in the split Boss AI source. Closes a real
    misread risk: the prior phrasing implied editing those data files would
    change boss behavior directly.
 2. New row "Per-boss role-bias dispatcher" pointing to `.ApplyRoleBias:2075`
    and a per-boss branch row listing `.falkner:2109`, `.rival:2101`, ... ,
    `.champion:2187`. Previously you'd have to grep.
 3. `BossAITierRampMap` row now names the actual file/line:
-   `data/trainers/ai_tiers.asm:51`. Was "see comment at `boss.asm:6696`".
+   `data/trainers/ai_tiers.asm:51`. The old index only pointed at a
+   monolith-local comment.
 
 Effort: trivial. Risk: none — docs only.
 
@@ -63,7 +64,7 @@ Sketch (insert above "Source Files At A Glance"):
   expecting it to push a move below other already-discouraged moves will be
   a no-op. See `542ef2e2` for the saturation patch.
 - Line numbers in this index are hand-maintained. After a non-trivial
-  `boss.asm` edit, re-grep the labels you're using before trusting them
+  Boss AI source edit, re-grep the labels you're using before trusting them
   (or run the index audit, once it exists — item D below).
 ```
 
@@ -85,22 +86,22 @@ own subsection just above it):
 | Concern | Lives in |
 | --- | --- |
 | Vanilla AI effect lists (`useful_moves`, `risky_effects`, `stall_moves`, etc.) | `data/battle/ai/*.asm` (consumed by `engine/battle/ai/scoring.asm`) |
-| Boss AI effect tables (`BossAIDenyKOEffects`, `BossAIStatusEffects`, `BossAIRiskyEffects`) | bottom of `engine/battle/ai/boss.asm` |
-| Per-boss role-effect tables (`BossAIChuckRoleEffects` etc.) | bottom of `engine/battle/ai/boss.asm` |
+| Boss AI effect tables (`BossAIDenyKOEffects`, `BossAIStatusEffects`, `BossAIRiskyEffects`) | `engine/battle/ai/boss_data.asm` |
+| Per-boss role-effect tables (`BossAIChuckRoleEffects` etc.) | `engine/battle/ai/boss_data.asm` |
 | Per-trainer tier (class+id → EARLY/MID/LATE) | `BossAITierMap:1` in `data/trainers/ai_tiers.asm`; consumed by `LoadBossAITier:69` in `engine/battle/read_trainer_attributes.asm` |
 | Per-class tier-weight-row override | `BossAITierRampMap:51` in `data/trainers/ai_tiers.asm` (default = `tier - 1`, set at `LoadBossAITier:97-98`) |
-| Tier weight table (rows indexed by tier-weight-row) | `BossAITierWeights:6693` in `engine/battle/ai/boss.asm` |
-| Plausible-threat type table | `BossAI_PlausibleThreatTypes:6581` in `engine/battle/ai/boss.asm` |
+| Tier weight table (rows indexed by tier-weight-row) | `BossAITierWeights:1689` in `engine/battle/ai/boss_data.asm` |
+| Plausible-threat type table | `BossAI_PlausibleThreatTypes:1656` in `engine/battle/ai/boss_data.asm` |
 | Trainer attributes (base reward, AI flags) — separate concern, do not confuse with tier | `data/trainers/attributes.asm` (consumed at `engine/battle/read_trainer_attributes.asm:67`) |
 ```
 
 Effort: ~10 lines. Risk: low. Will need a one-line follow-up if the boss-AI
-inline tables ever move out of `boss.asm`.
+inline tables ever move again.
 
 ## D. Index line-number drift audit
 
 The biggest structural weakness today: every line number in the index is
-hand-typed, and `boss.asm` shifts on most edits. The pending working-tree
+hand-typed, and Boss AI source shifts on most edits. The pending working-tree
 diff already chases drift. We will keep doing this forever unless we mechanize.
 
 **Two options considered:**
@@ -112,7 +113,7 @@ diff already chases drift. We will keep doing this forever unless we mechanize.
   same maintenance burden, harder to read.
 - **Audit.** Parse every `Label:NNNN` and `\.local:NNNN` reference in the
   index, then verify each one resolves to that exact line in
-  `engine/battle/ai/boss.asm` (and other named files). On drift, fail with
+  the split Boss AI source under `engine/battle/ai/` (and other named files). On drift, fail with
   a diff hint: "Index says `BossAI_GetSwitchThreshold:3486`, source says
   `:3492`. Update line." **Recommend this.**
 
@@ -121,7 +122,7 @@ Sketch: `tools/audit/check_boss_ai_index_lines.py`, ~80 lines.
 - Walk every backtick-wrapped reference in `boss_ai_logic.md` matching
   `` `(?:\.)?[A-Za-z_][\w]*:(\d+)` `` — i.e. **single-line, label-anchored**.
   Split on a leading file path (`engine/battle/ai/...:NNN` vs bare `:NNN`
-  which defaults to `boss.asm`).
+  which defaults to the split Boss AI source).
 - For each, open the source file, read the line, confirm the line starts
   with the label.
 - Local labels (`.foo:NNNN`) must appear within their declared parent
@@ -180,7 +181,7 @@ Risk: low after D. Without D, this risks bit-rotting silently.
   what a gate even does. The cross-reference at the bottom of the index is
   the right call.
 - **Don't add a "recent changes" section** to the index. That's what
-  `git log -- engine/battle/ai/boss.asm` is for. A doc-side recent-changes
+  `git log -- engine/battle/ai/` is for. A doc-side recent-changes
   list will rot inside a week.
 - **Don't auto-generate the index from source comments.** Tried in spirit
   by the "generator" option above; same reason it doesn't work — the
@@ -192,7 +193,7 @@ Risk: low after D. Without D, this risks bit-rotting silently.
 1. **A** (commit pending refinement). Clears the working tree.
 2. **B** (pitfalls block). Standalone, low-risk.
 3. **C** (data-ownership table). Standalone, low-risk.
-4. **D** (audit script). Pays for itself the next time `boss.asm` shifts.
+4. **D** (audit script). Pays for itself the next time Boss AI source shifts.
 5. **E** (scoped `ApplyMoveModel` labels). Only after D.
 
 A–C can be one commit if the diffs stay small. D is its own commit. E is

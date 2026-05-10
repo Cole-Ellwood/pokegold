@@ -85,7 +85,7 @@ If no issues are found, say so directly and name the remaining test gaps.
 - Possible-only coverage should not be weighted like revealed, STAB, or
   current-level-up threats in switch-risk code.
 
-Important files: `engine/battle/ai/boss.asm`, `engine/battle/ai/move.asm`,
+Important files: `engine/battle/ai/`, `engine/battle/ai/move.asm`,
 `engine/battle/ai/scoring.asm`, `engine/battle/ai/items.asm`,
 `engine/battle/ai/switch.asm`, `engine/battle/core.asm`,
 `engine/battle/used_move_text.asm`, `engine/battle/read_trainer_attributes.asm`,

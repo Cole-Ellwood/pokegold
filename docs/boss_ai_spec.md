@@ -252,18 +252,18 @@ Scoring components:
 
 Current public trade traps:
 
-- `engine/battle/ai/boss.asm`, `.ApplyDestinyBondTradeBias`.
+- `engine/battle/ai/boss_platform.asm:1419`, `.ApplyDestinyBondTradeBias`.
 - Mid/late bosses may value Destiny Bond when the boss is visibly at quarter HP
   or lower, has no KO line, the active player has a public threat, and the boss
   is publicly faster.
 - This is a pressure read, not input reading. It must not inspect the player's
   selected move, hidden moves/items, hidden reserves, damage rolls, or RNG.
-- `engine/battle/ai/boss.asm`, `.ApplyRevealedDestinyBondAvoidance`.
+- `engine/battle/ai/boss_platform.asm:1439`, `.ApplyRevealedDestinyBondAvoidance`.
 - Mid/late bosses may penalize KO-pressure moves into the active player after
   that active player has exactly revealed Destiny Bond, is visibly at quarter HP
   or lower, and public base-speed logic says the boss does not move first. This
   is delayed public move memory, not current-turn intent reading.
-- `engine/battle/ai/boss.asm`, `.ApplyCounterCoatTradeBias`.
+- `engine/battle/ai/boss_platform.asm:1458`, `.ApplyCounterCoatTradeBias`.
 - Mid/late bosses may value Counter or Mirror Coat when the active player has
   already revealed a damaging move of the matching public type category, the
   boss has no KO line, the active player has public threat, the boss is not
@@ -271,7 +271,7 @@ Current public trade traps:
 - The Counter/Mirror Coat model uses revealed move type category only. It must
   not call effective-category helpers that inspect hidden player stats, and it
   must not inspect the player's selected move this turn.
-- `engine/battle/ai/boss.asm`, `BossAI_CurrentEnemyMoveScoredPower`.
+- `engine/battle/ai/boss_policy_move.asm:875`, `BossAI_CurrentEnemyMoveScoredPower`.
 - Flail/Reversal store `MOVE_POWER = 1` until their battle effect rewrites
   power from the user's HP. Boss scoring treats the boss's own public HP bands
   as pressure thresholds instead: at quarter HP or lower they score as high
@@ -349,7 +349,7 @@ Goal: prevent repetitive pivot loops while preserving smart tactical switching.
 
 ### Current public revenge denial
 
-Current implementation: `engine/battle/ai/boss.asm`,
+Current implementation: `engine/battle/ai/boss_policy_switch.asm:170`,
 `BossAI_ShouldRespectPotentialPlayerRevenge`.
 
 When a boss has a KO-pressure move, `BossAI_SwitchOrTryItem` normally stays in
@@ -374,7 +374,7 @@ items, hidden exact moves, or current-turn player intent.
 
 ### Current public Perish Song escape
 
-Current implementation: `engine/battle/ai/boss.asm`,
+Current implementation: `engine/battle/ai/boss_policy_switch.asm:154`,
 `BossAI_EnemyPerishEscapeUrgent`.
 
 When the boss's own active mon is publicly under Perish Song and
@@ -414,7 +414,7 @@ Prediction method:
 
 ### Current switch prediction formula
 
-Current implementation: `engine/battle/ai/boss.asm`, `BossAI_PredictPlayerSwitch`.
+Current implementation: `engine/battle/ai/boss_policy_switch.asm:474`, `BossAI_PredictPlayerSwitch`.
 
 The routine starts from a baseline of `10`, then applies only observed/public
 state:
@@ -479,7 +479,7 @@ Key source anchors:
 - `engine/battle/read_trainer_attributes.asm`: `LoadBossAITier`,
   `ClearBossAIState`.
 - `engine/battle/ai/switch.asm`: legacy enemy switch scoring helpers. Boss
-  model code should prefer boss-safe wrappers in `engine/battle/ai/boss.asm`.
+  model code should prefer boss-safe wrappers in `engine/battle/ai/boss_platform.asm`.
 
 ## Player Knowledge Model Quick Trace
 
@@ -496,7 +496,7 @@ Send-out path:
   (preserved across same-fight switches via `wBossAISpeciesUsedMoves`); the
   helper falls back to the original blanket-zero behavior outside boss fights
   and on first-time encounters. It then calls `BossAI_RecordPlayerSpecies`.
-- `engine/battle/ai/boss.asm`: `BossAI_RecordPlayerSpecies` appends only the
+- `engine/battle/ai/boss_platform.asm:53`: `BossAI_RecordPlayerSpecies` appends only the
   active `wBattleMonSpecies` to `wBossAISeenPlayerSpecies` and marks that seen
   species slot alive in `wBossAISeenPlayerAliveMask`.
 - `engine/battle/core.asm`: `UpdateFaintedPlayerMon` calls

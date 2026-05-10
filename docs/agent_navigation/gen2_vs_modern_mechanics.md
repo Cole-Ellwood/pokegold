@@ -156,7 +156,7 @@ so Foresight does not lift it.
 
 Boss AI reads the chart at runtime via the shared damage path; matchup
 scoring auto-adapts. There are no hardcoded matchup assumptions in
-`engine/battle/ai/boss.asm` for the 15 edits.
+`engine/battle/ai/` for the 15 edits.
 
 ## 3. Stats system: DVs, Stat Exp, no natures
 
@@ -687,7 +687,7 @@ turn-order resolution).
 
 (Boss AI Speed-stage cap by base Speed band is a separate rule: see
 [CLAUDE.md](../../CLAUDE.md) "Boss AI Speed-cap rule" and
-`engine/battle/ai/boss.asm` `.check_speed`. ≥90 base = +1 cap, 60-89
+`engine/battle/ai/boss_policy_switch.asm` `.check_speed`. ≥90 base = +1 cap, 60-89
 = +2, ≤59 = +3.)
 
 ## 14. Type passive system (HACK-SPECIFIC, no vanilla analog)
@@ -778,7 +778,7 @@ about a deviation, read that file.
 | Outrage | DRAGON physical when user's Atk > SpA | § 1, § 9 | `engine/battle/type_passive_damage_mods.asm` |
 | Burn / paralysis | Fighting-type-tuned penalties | § 5 | `engine/battle/type_passive_damage_mods.asm` |
 | Trainer battles | Pack disabled; Set forced; AI bag use disabled | (see mechanics doc) | `engine/battle/menu.asm`, `engine/battle/core.asm` |
-| Boss AI | Tiered, weighted, public-info-only | (see boss spec) | `engine/battle/ai/boss.asm`, `docs/boss_ai_spec.md` |
+| Boss AI | Tiered, weighted, public-info-only | (see boss spec) | `engine/battle/ai/`, `docs/boss_ai_spec.md` |
 | Sub vs contact | Contact passives skip when Sub absorbed (commit `65c5296f`) | § 6 | `engine/battle/type_passive_damage_mods.asm` |
 
 For any of these, the rule is the same: **read the source**, not your

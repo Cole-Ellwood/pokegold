@@ -956,7 +956,14 @@ def main() -> int:
     print("PASS: key learnset checks")
 
     require_text(ROOT / "main.asm", 'INCLUDE "engine/events/move_reminder.asm"')
-    require_text(ROOT / "main.asm", 'INCLUDE "engine/battle/ai/boss.asm"')
+    for include in (
+        'INCLUDE "engine/battle/ai/boss_platform.asm"',
+        'INCLUDE "engine/battle/ai/boss_policy_move.asm"',
+        'INCLUDE "engine/battle/ai/boss_policy_switch.asm"',
+        'INCLUDE "engine/battle/ai/boss_data.asm"',
+        'INCLUDE "engine/battle/ai/boss_thunks.asm"',
+    ):
+        require_text(ROOT / "main.asm", include)
     require_text(ROOT / "data/events/special_pointers.asm", "add_special MoveReminder")
     print("PASS: core module integration checks")
 

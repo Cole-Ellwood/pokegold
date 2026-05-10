@@ -6,7 +6,13 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 
-BOSS = ROOT / "engine" / "battle" / "ai" / "boss.asm"
+BOSS_FILES = (
+    ROOT / "engine" / "battle" / "ai" / "boss_platform.asm",
+    ROOT / "engine" / "battle" / "ai" / "boss_policy_move.asm",
+    ROOT / "engine" / "battle" / "ai" / "boss_policy_switch.asm",
+    ROOT / "engine" / "battle" / "ai" / "boss_data.asm",
+    ROOT / "engine" / "battle" / "ai" / "boss_thunks.asm",
+)
 CONSTANTS = ROOT / "constants" / "battle_constants.asm"
 PLATFORM_API = ROOT / "engine" / "battle" / "ai" / "PLATFORM_API.md"
 POLICY_DESIGN = ROOT / "engine" / "battle" / "ai" / "POLICY_DESIGN.md"
@@ -66,7 +72,7 @@ def require_contains(text: str, needle: str, label: str, errors: list[str]) -> N
 
 def main() -> int:
     errors: list[str] = []
-    boss = read(BOSS)
+    boss = "\n".join(read(path) for path in BOSS_FILES)
     constants = read(CONSTANTS)
     platform = read(PLATFORM_API)
     policy = read(POLICY_DESIGN)
@@ -76,7 +82,7 @@ def main() -> int:
             errors.append(f"missing required path: {path.relative_to(ROOT)}")
 
     for needle in REQUIRED_BOSS_LABELS:
-        require_contains(boss, needle, "boss.asm architecture", errors)
+        require_contains(boss, needle, "boss AI split architecture", errors)
     for needle in REQUIRED_CONSTANTS:
         require_contains(constants, needle, "battle_constants.asm policy constants", errors)
     for needle in REQUIRED_POLICY_SNIPPETS:

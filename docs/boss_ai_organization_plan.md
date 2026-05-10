@@ -1,11 +1,13 @@
-# Boss AI Organization Plan — `engine/battle/ai/boss.asm`
+# Boss AI Organization Plan — split Boss AI source
 
-> **Status — 2026-05-05.** Planning doc only. No asm changes proposed for
-> *this* doc to land. Boss AI rebuild (BOSSAI-003) and v2 RL training
-> (BOSSAI-004) are SHELVED; this work is independent and is about making
-> the *existing* 7066-line file navigable, simplifiable, and (where safe)
-> optimizable. It is the prerequisite for any future tier-3 reorganization
-> work the user green-lights.
+> **Status — RESOLVED.** Option C shipped: the former monolithic Boss AI
+> source is split into `boss_platform.asm`, `boss_policy_move.asm`,
+> `boss_policy_switch.asm`, `boss_data.asm`, and `boss_thunks.asm` while
+> preserving original byte order for `make compare`. Boss AI rebuild
+> (BOSSAI-003) and v2 RL training (BOSSAI-004) remain SHELVED.
+>
+> Historical planning below is preserved for context; §3 is now an archive of
+> the resolved organization decision, not a pending recommendation.
 >
 > Source frozen at: dev tip `f438afae` (worktree `lucid-bartik-93f5ff`,
 > branch `claude/lucid-bartik-93f5ff` tracking
@@ -317,10 +319,10 @@ audit failures goes to zero; reorganizing boss.asm becomes free of
 Defer behind: §3 organization decision. The generator's output format
 depends on whether boss.asm stays one file or gets split.
 
-## §3 Organization proposals
+## §3 Organization proposals — RESOLVED
 
-Three options, ranked by cost. All preserve the linker-visible
-`BossAI_*` exports and the byte-for-byte trace captures.
+Option C is the shipped organization. The alternatives below are preserved as
+planning history. The linker-visible `BossAI_*` exports remain stable.
 
 ### Option A — Banner comments only (lowest cost, recommended first step)
 
@@ -416,9 +418,11 @@ Cons:
 Defer behind: Option A landing first; user explicit approval of the
 reorder; trace-capture refresh budget.
 
-### Option C — Split boss.asm into multiple files (highest cost)
+### Option C — Split boss.asm into multiple files (SHIPPED)
 
-Split the file along the platform/policy seam into:
+The shipped split uses five files in the `Enemy Trainers` SECTION. The split
+preserves original byte order for `make compare`, so `boss_data.asm` carries the
+late policy/data tail instead of only independent static data. Original proposal:
 
 - `engine/battle/ai/boss_platform.asm` (~1850 lines): regions in §1.1's
   platform set.
@@ -456,15 +460,22 @@ Cons:
   `engine/battle/ai/boss.asm`. Need updating.
 - Same trace-capture and `make compare` concerns as Option B.
 
-Defer behind: Option A and Option B landing first; user explicit
-approval; audit-update budget.
+Shipped result:
+- `engine/battle/ai/boss_platform.asm` — opening state/public-info platform
+  code plus the first move-policy block, kept together to preserve byte order.
+- `engine/battle/ai/boss_policy_move.asm` — move-pick, switch entry,
+  threat-cache, pressure, type, and speed policy block.
+- `engine/battle/ai/boss_policy_switch.asm` — switch predicates, confidence,
+  prediction, held-item, plan, and mask block.
+- `engine/battle/ai/boss_data.asm` — late policy, lookahead, threat, scout,
+  switch refinement, and data tail.
+- `engine/battle/ai/boss_thunks.asm` — the HL-preserving cross-bank thunks,
+  still in bank `0e`.
 
 ### Recommendation
 
-Land Option A (banners + layer tags) as a self-contained PR. After it
-lands and `boss_ai_logic.md` is regenerated, **stop and check with the
-user before going further.** Options B and C are bigger surface-area
-changes that should not be bundled.
+Resolved: Option C is the current source layout. Future simplification and
+optimization proposals in §4–§7 remain separate, unshipped work.
 
 ## §4 Simplification opportunities
 

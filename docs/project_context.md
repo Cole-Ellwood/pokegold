@@ -174,7 +174,7 @@ damages the feel of Pokemon Gold, adapt it instead of copying it directly.
   read.
 - Boss trainers should use the boss model rather than legacy move scoring. If a
   legacy scoring helper is re-enabled for boss tiers, inspect both
-  `engine/battle/ai/scoring.asm` and `engine/battle/ai/boss.asm` for hidden
+  `engine/battle/ai/scoring.asm` and `engine/battle/ai/` for hidden
   information reads.
 - For data changes, check the pointer table and the data table together.
 - For map or script changes, check the map script bank and any special function
