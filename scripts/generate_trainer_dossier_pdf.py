@@ -334,6 +334,7 @@ class RivalFight:
     location: str           # full location string for header subtitle
     shared_party: list[Mon]
     starter_variants: list[Mon]    # always exactly 3 (Bayleef/Quilava/Croconaw)
+    hp_type: str | None = None
 
 @dataclass
 class BaseStats:
@@ -502,14 +503,6 @@ def load_trainers() -> list[Trainer]:
     dvs = load_trainer_dvs()
     out: list[Trainer] = []
 
-    def _hp_type_for(group: str) -> str | None:
-        klass = group_to_class(group)
-        if klass not in dvs:
-            return None
-        atk, defn, _spd, _spc = dvs[klass]
-        idx = ((atk & 3) << 2) | (defn & 3)
-        return HP_TYPE_TABLE[idx]
-
     def _build(name, group, badge_or_slot, type_theme, location):
         return Trainer(
             display_name=name,
@@ -518,7 +511,7 @@ def load_trainers() -> list[Trainer]:
             type_theme=type_theme,
             location=location,
             party=_parse_group_block(text, group),
-            hp_type=_hp_type_for(group),
+            hp_type=resolve_hp_type_for_group(group, dvs),
         )
 
     for name, group, _gymno, type_theme, location, badge in JOHTO_GYMS:
@@ -533,6 +526,7 @@ def load_trainers() -> list[Trainer]:
 def load_rival_fights() -> list[RivalFight]:
     """All seven Silver fights, with starter branches collapsed per fight."""
     text = PARTIES.read_text(encoding="utf-8")
+    dvs = load_trainer_dvs()
     out: list[RivalFight] = []
     for group, fight_idx, fight_no, label, location in RIVAL_FIGHTS:
         parties = _parse_group_blocks(text, group)
@@ -549,7 +543,7 @@ def load_rival_fights() -> list[RivalFight]:
         starters = [b[-1] for b in branches]
         # Sanity: assert non-starter slots are identical across branches.
         for b in branches[1:]:
-            if [m.species for m in b[:-1]] != [m.species for m in shared]:
+            if b[:-1] != shared:
                 raise ValueError(
                     f"{group} fight {fight_idx}: non-starter slots differ "
                     f"between starter branches; assumption broken"
@@ -560,6 +554,7 @@ def load_rival_fights() -> list[RivalFight]:
             location=location,
             shared_party=shared,
             starter_variants=starters,
+            hp_type=resolve_hp_type_for_group(group, dvs),
         ))
     return out
 
@@ -645,6 +640,18 @@ def load_trainer_dvs() -> dict[str, tuple[int, int, int, int]]:
         atk, defn, spd, spc, klass = m.groups()
         out[klass] = (int(atk), int(defn), int(spd), int(spc))
     return out
+
+
+def resolve_hp_type_for_group(
+    group: str,
+    dvs: dict[str, tuple[int, int, int, int]],
+) -> str | None:
+    klass = group_to_class(group)
+    if klass not in dvs:
+        return None
+    atk, defn, _spd, _spc = dvs[klass]
+    idx = ((atk & 3) << 2) | (defn & 3)
+    return HP_TYPE_TABLE[idx]
 
 
 # ------------------------------------------------------- base_stats parser
@@ -983,7 +990,7 @@ def render_rival_fight(c: canvas.Canvas, f: RivalFight, top_y: float) -> float:
             cur_y -= card_h + CARD_GAP_Y
         x = MARGIN + col * (col_w_2 + col_gap)
         bs = load_base_stats(mon.species)
-        draw_card(c, x, cur_y - card_h, col_w_2, card_h, mon, bs)
+        draw_card(c, x, cur_y - card_h, col_w_2, card_h, mon, bs, hp_type=f.hp_type)
     if f.shared_party:
         cur_y -= card_h + CARD_GAP_Y
 
@@ -1007,7 +1014,7 @@ def render_rival_fight(c: canvas.Canvas, f: RivalFight, top_y: float) -> float:
     for i, mon in enumerate(f.starter_variants):
         x = MARGIN + i * (col_w_3 + col_gap)
         bs = load_base_stats(mon.species)
-        draw_card(c, x, cur_y - card_h, col_w_3, card_h, mon, bs)
+        draw_card(c, x, cur_y - card_h, col_w_3, card_h, mon, bs, hp_type=f.hp_type)
     cur_y -= card_h + 16
     return cur_y
 

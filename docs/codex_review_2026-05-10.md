@@ -1,3 +1,5 @@
+<!-- audit:noqa-file stale-claims -->
+
 # Codex review request — Claude session 2026-05-10
 
 Trainer-roster + species rebalance pass with one tooling extension and one
