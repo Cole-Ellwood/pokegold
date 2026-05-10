@@ -1,10 +1,19 @@
 #!/usr/bin/env python3
-"""Generate a Pokemon Showdown-style PDF of every gym leader + Elite 4 + Champion team.
+"""Generate a Pokemon Showdown-style PDF of every notable trainer team.
 
-This is a player-facing reference doc, not a dev artifact. The PDF includes,
-for each trainer in challenge order:
+This is a player-facing reference doc, not a dev artifact. The PDF covers:
 
-  - Trainer header with type theme, badge / E4 slot, and location
+  - Johto gym leaders (8)
+  - Elite Four + Champion (5)
+  - Kanto gym leaders (8)
+  - Silver — every Rival fight, with the three starter-pick branches
+  - Team Rocket admins (Petrel / Proton / Ariana / Archer) — Mahogany +
+    Radio Tower fights, no grunts
+  - Red — Mt. Silver Summit
+
+Each trainer is rendered with:
+
+  - Header with type theme, badge / fight slot, and location
   - Per-Pokemon card (Showdown team-builder style) with:
       * Name, level, held item
       * Type pills (Showdown colour palette)
@@ -28,10 +37,10 @@ Usage (from repo root, Windows or WSL):
     python scripts/generate_trainer_dossier_pdf.py
 
 The script auto-resolves repo root from its own location, so it works from any
-cwd. There is no config or CLI flag — the trainer list (Johto gyms, Elite 4 +
-Champion, Kanto gyms) is hard-coded near the top of this file. Edit the three
-trainer-meta lists (JOHTO_GYMS / ELITE_FOUR / KANTO_GYMS) if a future hack
-adds or reorders gyms.
+cwd. There is no config or CLI flag — the trainer list is hard-coded near the
+top of this file. Edit the meta lists (JOHTO_GYMS / ELITE_FOUR / KANTO_GYMS /
+RIVAL_FIGHTS / ROCKET_ADMINS / RED_FIGHT) if a future hack adds or reorders
+trainers.
 
 When to re-run:
   - Any party change in data/trainers/parties.asm for the listed trainers.
@@ -89,6 +98,47 @@ KANTO_GYMS = [
     ("Blaine",    "BlaineGroup",   15, "Fire",     "Seafoam Islands", "Volcano Badge"),
     ("Blue",      "BlueGroup",     16, "Various",  "Viridian City",   "Earth Badge"),
 ]
+
+# Rival (Silver) fights. Each entry is a single fight; for each one the parties
+# file holds three consecutive trainer entries (one per starter the player picked).
+# Convention: parties.asm entry order is (1) Bayleef line / (2) Quilava line /
+# (3) Croconaw line, which corresponds to player picking Totodile / Chikorita /
+# Cyndaquil respectively (Silver always picks the type-advantageous starter).
+# fight_no is the global index across both groups, used in the fight title.
+RIVAL_FIGHTS = [
+    # (group_name, fight_idx_in_group, fight_no, label, location)
+    ("Rival1Group", 1, 1, "Cherrygrove City",        "Cherrygrove City — intro scout"),
+    ("Rival1Group", 2, 2, "Azalea Town",             "Azalea Town — outside Slowpoke Well"),
+    ("Rival1Group", 3, 3, "Burned Tower",            "Burned Tower 1F"),
+    ("Rival1Group", 4, 4, "Goldenrod Underground",   "Underground Path — Switch Room"),
+    ("Rival1Group", 5, 5, "Victory Road",            "Victory Road — pre-Lance"),
+    ("Rival2Group", 1, 6, "Mt. Moon Square",         "Mt. Moon — post-Lance, first Kanto fight"),
+    ("Rival2Group", 2, 7, "Indigo Plateau",          "Indigo Plateau Pokecenter 1F — pre-Mt. Silver"),
+]
+
+# Team Rocket admins. Vanilla GS doesn't print Petrel/Proton/Ariana/Archer names
+# in script text; the names below are the HGSS-canonical attributions, inferred
+# from signature Pokemon and dialog ("I'm a fortress" → Petrel) and confirmed
+# against fight order. If wrong, edit this table — nothing else relies on it.
+ROCKET_ADMINS = [
+    # (group, member_idx, admin_name, fight_label, location, type_theme)
+    ("ExecutiveMGroup", 4, "Proton", "Mahogany Hideout B3F",
+        "Team Rocket Hideout — Mahogany Town, B3F", "Poison"),
+    ("ExecutiveFGroup", 2, "Ariana", "Mahogany Hideout B2F",
+        "Team Rocket Hideout — Mahogany Town, B2F", "Poison"),
+    ("ExecutiveMGroup", 3, "Petrel", "Radio Tower 5F (disguised)",
+        "Goldenrod Radio Tower 5F — disguised as the Director", "Poison"),
+    ("ExecutiveMGroup", 1, "Archer", "Radio Tower 5F",
+        "Goldenrod Radio Tower 5F — Rocket leader", "Dark"),
+    ("ExecutiveFGroup", 1, "Ariana", "Radio Tower 5F",
+        "Goldenrod Radio Tower 5F — second confrontation", "Poison"),
+    ("ExecutiveMGroup", 2, "Petrel", "Radio Tower 4F",
+        "Goldenrod Radio Tower 4F — \"I'm the Rocket fortress\"", "Poison"),
+]
+
+# Red — the Champion at Mt. Silver Summit. Single fight.
+RED_FIGHT = ("RedGroup", 1, "Red", "Mt. Silver Summit",
+             "Mt. Silver — Silver Cave, Summit", "Various")
 
 TYPE_COLORS = {
     "Normal":   "#A8A878",
@@ -266,6 +316,24 @@ class Trainer:
     party: list[Mon]
     hp_type: str | None = None  # resolved Hidden Power type, e.g. "Fire"
 
+
+@dataclass
+class RivalFight:
+    """One Silver fight, with the three starter-pick branches collapsed.
+
+    shared_party holds the 0..5 mons that are identical across all three
+    starter branches; starter_variants holds the three sixth-slot Pokemon
+    (one per player starter pick), in the order:
+      [Bayleef line, Quilava line, Croconaw line]
+    which corresponds to the player having picked Totodile / Chikorita /
+    Cyndaquil respectively (Silver always picks the type counter).
+    """
+    fight_no: int           # 1..7 across both Rival1Group and Rival2Group
+    label: str              # "Cherrygrove City"
+    location: str           # full location string for header subtitle
+    shared_party: list[Mon]
+    starter_variants: list[Mon]    # always exactly 3 (Bayleef/Quilava/Croconaw)
+
 @dataclass
 class BaseStats:
     hp: int
@@ -278,22 +346,13 @@ class BaseStats:
 
 # ---------------------------------------------------------- parties.asm parser
 
-def _parse_group_block(text: str, group_name: str) -> list[Mon]:
-    """Parse the FIRST trainer entry inside a Group label."""
-    # Find the label
-    m = re.search(rf"^{re.escape(group_name)}:\s*$", text, re.MULTILINE)
-    if not m:
-        raise ValueError(f"group not found: {group_name}")
-    start = m.end()
-    # Trainer block: from `db "<NAME>@", TRAINERTYPE_*` to `db -1 ; end`
-    block_re = re.compile(
-        r'db\s+"[^"]*@",\s*TRAINERTYPE_(\w+)\s*\n(.*?)\n\s*db\s+-1\s*;\s*end',
-        re.DOTALL,
-    )
-    bm = block_re.search(text, start)
-    if not bm:
-        raise ValueError(f"trainer block not found in {group_name}")
-    ttype, body = bm.group(1), bm.group(2)
+_BLOCK_RE = re.compile(
+    r'db\s+"[^"]*@",\s*TRAINERTYPE_(\w+)\s*\n(.*?)\n\s*db\s+-1\s*;\s*end',
+    re.DOTALL,
+)
+
+
+def _parse_trainer_body(ttype: str, body: str) -> list[Mon]:
     party: list[Mon] = []
     for line in body.splitlines():
         line = line.strip()
@@ -332,6 +391,34 @@ def _parse_group_block(text: str, group_name: str) -> list[Mon]:
     return party
 
 
+def _parse_group_blocks(text: str, group_name: str) -> list[list[Mon]]:
+    """All trainer entries inside a Group label, in source order."""
+    m = re.search(rf"^{re.escape(group_name)}:\s*$", text, re.MULTILINE)
+    if not m:
+        raise ValueError(f"group not found: {group_name}")
+    start = m.end()
+    # Bound the search to the next *Group: label so we don't bleed into the
+    # next group's entries.
+    next_m = re.search(r"^\w+Group:\s*$", text[start:], re.MULTILINE)
+    end = start + next_m.start() if next_m else len(text)
+    region = text[start:end]
+    return [
+        _parse_trainer_body(bm.group(1), bm.group(2))
+        for bm in _BLOCK_RE.finditer(region)
+    ]
+
+
+def _parse_group_block(text: str, group_name: str, member_idx: int = 1) -> list[Mon]:
+    """The Nth (1-based) trainer entry inside a Group label."""
+    parties = _parse_group_blocks(text, group_name)
+    if not (1 <= member_idx <= len(parties)):
+        raise ValueError(
+            f"member {member_idx} out of range for {group_name} "
+            f"(has {len(parties)} entries)"
+        )
+    return parties[member_idx - 1]
+
+
 def load_trainers() -> list[Trainer]:
     text = PARTIES.read_text(encoding="utf-8")
     dvs = load_trainer_dvs()
@@ -365,6 +452,74 @@ def load_trainers() -> list[Trainer]:
     return out
 
 
+def load_rival_fights() -> list[RivalFight]:
+    """All seven Silver fights, with starter branches collapsed per fight."""
+    text = PARTIES.read_text(encoding="utf-8")
+    out: list[RivalFight] = []
+    for group, fight_idx, fight_no, label, location in RIVAL_FIGHTS:
+        parties = _parse_group_blocks(text, group)
+        # Each fight is three consecutive entries (Bayleef/Quilava/Croconaw).
+        base = (fight_idx - 1) * 3
+        if base + 3 > len(parties):
+            raise ValueError(
+                f"{group} fight {fight_idx} needs entries {base+1}..{base+3} "
+                f"but only {len(parties)} present"
+            )
+        branches = parties[base:base + 3]
+        # Starter is always the LAST mon; non-starter mons are identical.
+        shared = branches[0][:-1]
+        starters = [b[-1] for b in branches]
+        # Sanity: assert non-starter slots are identical across branches.
+        for b in branches[1:]:
+            if [m.species for m in b[:-1]] != [m.species for m in shared]:
+                raise ValueError(
+                    f"{group} fight {fight_idx}: non-starter slots differ "
+                    f"between starter branches; assumption broken"
+                )
+        out.append(RivalFight(
+            fight_no=fight_no,
+            label=label,
+            location=location,
+            shared_party=shared,
+            starter_variants=starters,
+        ))
+    return out
+
+
+def load_rocket_admins() -> list[Trainer]:
+    """The six Team Rocket admin (non-grunt) fights, in challenge order."""
+    text = PARTIES.read_text(encoding="utf-8")
+    out: list[Trainer] = []
+    for group, member_idx, admin_name, fight_label, location, type_theme in ROCKET_ADMINS:
+        party = _parse_group_block(text, group, member_idx=member_idx)
+        out.append(Trainer(
+            display_name=admin_name,
+            group_name=group,
+            badge_or_title=fight_label,
+            type_theme=type_theme,
+            location=location,
+            party=party,
+            hp_type=None,  # admins don't run Hidden Power in this hack
+        ))
+    return out
+
+
+def load_red() -> Trainer:
+    """The Red fight at Mt. Silver Summit."""
+    text = PARTIES.read_text(encoding="utf-8")
+    group, member_idx, name, fight_label, location, type_theme = RED_FIGHT
+    party = _parse_group_block(text, group, member_idx=member_idx)
+    return Trainer(
+        display_name=name,
+        group_name=group,
+        badge_or_title=fight_label,
+        type_theme=type_theme,
+        location=location,
+        party=party,
+        hp_type=None,
+    )
+
+
 # Hidden Power type resolution -------------------------------------------------
 
 # In Gen 2: HP type = ((atk_DV & 3) << 2) | (def_DV & 3), indexed into:
@@ -381,6 +536,8 @@ HP_TYPE_TABLE = [
 _GROUP_TO_CLASS_OVERRIDE = {
     "LtSurgeGroup": "LT_SURGE",
     "ChampionGroup": "CHAMPION",
+    "ExecutiveMGroup": "EXECUTIVEM",
+    "ExecutiveFGroup": "EXECUTIVEF",
 }
 
 
@@ -690,6 +847,116 @@ def render_trainer(c: canvas.Canvas, t: Trainer, top_y: float) -> float:
     return cur_y
 
 
+# ---- Rival fight rendering ---------------------------------------------------
+
+# In Gen 2, Silver always picks the type-counter starter to whatever the player
+# chose. Parties.asm orders the three branches Bayleef / Quilava / Croconaw
+# (Silver's mon), which corresponds to the player having picked Totodile /
+# Chikorita / Cyndaquil respectively.
+PLAYER_PICKS = [
+    "If you picked TOTODILE",
+    "If you picked CHIKORITA",
+    "If you picked CYNDAQUIL",
+]
+
+
+def draw_rival_fight_header(c: canvas.Canvas, x, y, w, h, f: RivalFight) -> None:
+    color = TYPE_COLORS["Dark"]   # Silver leans dark/anti-hero in this hack
+    c.setFillColor(_hex(color))
+    c.roundRect(x, y, w, h, 8, fill=1, stroke=0)
+
+    c.setFillColor(colors.white)
+    c.setFont("Helvetica-Bold", 18)
+    c.drawString(x + 14, y + h - 22, f"SILVER  ·  FIGHT {f.fight_no}")
+
+    c.setFont("Helvetica", 9)
+    sub = [f.label, f.location]
+    c.drawString(x + 14, y + 8, "  •  ".join(sub))
+
+    # Right pill: shared mons + 1 (the starter-variant slot)
+    party_label = f"{len(f.shared_party) + 1} POKÉMON"
+    pill_h = 14
+    pw = c.stringWidth(party_label, "Helvetica-Bold", 8.5) + 14
+    pill_y = y + (h - pill_h) / 2
+    c.setFillColor(colors.white)
+    c.roundRect(x + w - pw - 14, pill_y, pw, pill_h, 7, fill=1, stroke=0)
+    c.setFillColor(_hex(color))
+    c.setFont("Helvetica-Bold", 8.5)
+    c.drawString(x + w - pw - 14 + 7, pill_y + 4, party_label)
+
+
+def render_rival_fight(c: canvas.Canvas, f: RivalFight, top_y: float) -> float:
+    """Render one rival fight: shared mons in 2-col + starter variants in 3-col."""
+    HEADER_H = 44
+    draw_rival_fight_header(c, MARGIN, top_y - HEADER_H,
+                            PAGE_W - 2 * MARGIN, HEADER_H, f)
+    cur_y = top_y - HEADER_H - 8
+
+    avail_w = PAGE_W - 2 * MARGIN
+    col_gap = 10
+    col_w_2 = (avail_w - col_gap) / 2.0
+    col_w_3 = (avail_w - 2 * col_gap) / 3.0
+    card_h = 128
+
+    # Shared mons (2-col)
+    for i, mon in enumerate(f.shared_party):
+        col = i % 2
+        if col == 0 and i > 0:
+            cur_y -= card_h + CARD_GAP_Y
+        x = MARGIN + col * (col_w_2 + col_gap)
+        bs = load_base_stats(mon.species)
+        draw_card(c, x, cur_y - card_h, col_w_2, card_h, mon, bs)
+    if f.shared_party:
+        cur_y -= card_h + CARD_GAP_Y
+
+    # Starter-slot subheader band
+    cur_y -= 4
+    c.setFillColor(TEXT_MUTED)
+    c.setFont("Helvetica-Bold", 8.5)
+    c.drawString(MARGIN, cur_y - 9,
+                 "STARTER SLOT — Silver always picks the type-counter starter")
+    cur_y -= 16
+
+    # "If you picked X" labels in a row
+    for i, pick in enumerate(PLAYER_PICKS):
+        x = MARGIN + i * (col_w_3 + col_gap)
+        c.setFillColor(TEXT_MUTED)
+        c.setFont("Helvetica-Bold", 7.5)
+        c.drawString(x, cur_y - 9, pick)
+    cur_y -= 14
+
+    # Three starter cards (3-col)
+    for i, mon in enumerate(f.starter_variants):
+        x = MARGIN + i * (col_w_3 + col_gap)
+        bs = load_base_stats(mon.species)
+        draw_card(c, x, cur_y - card_h, col_w_3, card_h, mon, bs)
+    cur_y -= card_h + 16
+    return cur_y
+
+
+def render_rivals_section(c: canvas.Canvas,
+                          fights: list[RivalFight],
+                          cur_y: float) -> float:
+    if cur_y < PAGE_H - MARGIN - 30:
+        cur_y -= 14
+    draw_section_title(c, cur_y, "SILVER — RIVAL FIGHTS",
+                       "Seven encounters from Cherrygrove City to Indigo Plateau. "
+                       "The sixth slot varies with your starter pick.")
+    cur_y -= 36
+    for f in fights:
+        shared_rows = (len(f.shared_party) + 1) // 2
+        needed = (44 + 8
+                  + shared_rows * 128 + max(0, shared_rows - 1) * CARD_GAP_Y
+                  + 4 + 16    # starter-slot subheader band
+                  + 14        # pick-label row
+                  + 128 + 16)  # variant cards + bottom gap
+        if not fits(cur_y, needed):
+            c.showPage()
+            cur_y = PAGE_H - MARGIN
+        cur_y = render_rival_fight(c, f, cur_y)
+    return cur_y
+
+
 def fits(top_y: float, needed_h: float) -> bool:
     return top_y - needed_h >= MARGIN
 
@@ -723,7 +990,8 @@ def draw_cover_page(c: canvas.Canvas):
     c.drawString(MARGIN, PAGE_H - 1.6 * inch - 36, "Hack — Trainer Dossier")
     c.setFillColor(colors.white)
     c.setFont("Helvetica", 12)
-    c.drawString(MARGIN, PAGE_H - 1.6 * inch - 60, "Gym Leaders, Elite Four & Champion teams")
+    c.drawString(MARGIN, PAGE_H - 1.6 * inch - 60,
+                 "Gym Leaders · Elite Four · Champion · Rival · Team Rocket Admins · Red")
     c.setFont("Helvetica-Oblique", 10)
     c.setFillColor(_hex("#A0A6B0"))
     c.drawString(MARGIN, PAGE_H - 1.6 * inch - 80,
@@ -788,6 +1056,26 @@ def main() -> None:
     cur_y = render_section(c, "KANTO GYM LEADERS",
                            "Post-game gauntlet across Kanto.",
                            trainers[13:], cur_y)
+
+    # Silver — rival fights (with starter-branch handling)
+    c.showPage()
+    cur_y = PAGE_H - MARGIN
+    cur_y = render_rivals_section(c, load_rival_fights(), cur_y)
+
+    # Team Rocket admins (no grunts)
+    c.showPage()
+    cur_y = PAGE_H - MARGIN
+    cur_y = render_section(c, "TEAM ROCKET ADMINS",
+                           "Six non-grunt fights — Petrel, Proton, Ariana, Archer "
+                           "across Mahogany Hideout and Goldenrod Radio Tower.",
+                           load_rocket_admins(), cur_y)
+
+    # Red
+    c.showPage()
+    cur_y = PAGE_H - MARGIN
+    cur_y = render_section(c, "MT. SILVER — RED",
+                           "The hidden Champion. Single fight, Silver Cave summit.",
+                           [load_red()], cur_y)
 
     # add page numbers
     # (reportlab doesn't make this trivial mid-build; we re-open by adding an overlay
