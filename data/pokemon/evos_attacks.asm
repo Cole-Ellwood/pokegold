@@ -2180,6 +2180,7 @@ TyphlosionEvosAttacks:
 	db 12, EMBER
 	db 21, QUICK_ATTACK
 	db 31, FLAME_WHEEL
+	db 36, DOUBLE_EDGE
 	db 37, FIRE_BLAST
 	db 45, ANCIENTPOWER
 	db 0 ; no more level-up moves

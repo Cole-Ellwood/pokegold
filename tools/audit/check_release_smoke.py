@@ -924,8 +924,8 @@ def main() -> int:
     print("PASS: key move table checks")
 
     expected_species = {
-        "meganium.asm": ([110, 82, 100, 80, 83, 100], ("GRASS", "GRASS")),
-        "typhlosion.asm": ([78, 84, 78, 100, 130, 85], ("FIRE", "NORMAL")),
+        "meganium.asm": ([130, 75, 107, 60, 83, 100], ("GRASS", "GRASS")),
+        "typhlosion.asm": ([78, 99, 78, 100, 130, 70], ("FIRE", "NORMAL")),
         "feraligatr.asm": ([85, 105, 100, 87, 95, 83], ("WATER", "FIGHTING")),
     }
     for filename, (expected_stats, expected_types) in expected_species.items():
