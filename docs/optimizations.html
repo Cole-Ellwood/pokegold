@@ -1,0 +1,1530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Optimization Findings — pokemon gold hack</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; max-width: 1100px; margin: 1em auto; padding: 0 1em; line-height: 1.5; color: #1a1a1a; }
+  h1 { border-bottom: 2px solid #333; padding-bottom: 0.3em; }
+  h2 { border-bottom: 1px solid #ccc; padding-bottom: 0.2em; margin-top: 2em; }
+  h3 { margin-top: 1.4em; }
+  article.finding { border-left: 4px solid #888; padding: 0.5em 1em; margin: 1em 0; background: #fafafa; }
+  article.finding[data-cat="speed"]    { border-color: #d97706; }
+  article.finding[data-cat="size"]     { border-color: #059669; }
+  article.finding[data-cat="lines"]    { border-color: #7c3aed; }
+  article.finding[data-cat="llm-read"] { border-color: #2563eb; }
+  .meta { font-size: 0.85em; color: #555; margin: 0.2em 0 0.4em 0; }
+  .meta span { display: inline-block; padding: 0.1em 0.5em; margin-right: 0.3em; background: #eee; border-radius: 3px; }
+  .meta .cat { font-weight: bold; text-transform: uppercase; }
+  .ref { font-family: ui-monospace, Consolas, monospace; font-size: 0.85em; color: #444; margin: 0.2em 0; }
+  details { margin: 0.4em 0; }
+  summary { cursor: pointer; font-weight: bold; }
+  ul.dirs li { font-family: ui-monospace, Consolas, monospace; font-size: 0.9em; }
+  pre { background: #f3f4f6; padding: 0.7em; overflow-x: auto; font-size: 0.85em; }
+  code { background: #f3f4f6; padding: 0.05em 0.3em; border-radius: 3px; font-size: 0.9em; }
+  .save-risk { background: #fee2e2; color: #991b1b; padding: 0.1em 0.5em; border-radius: 3px; font-weight: bold; }
+  .conf-low { color: #b91c1c; font-weight: bold; }
+  .conf-med { color: #92400e; font-weight: bold; }
+  .conf-high { color: #166534; font-weight: bold; }
+  nav.toc ol { columns: 2; column-gap: 2em; }
+</style>
+</head>
+<body>
+
+<h1>Optimization Findings — pokemon gold hack</h1>
+<p>Append-cumulative log of read-only optimization audit passes. Each session adds findings without overwriting prior ones. The deliverable is this HTML; chat output is just a status summary. Future sessions: read this file first, dedup by <code>file:line</code> ref before logging, append a new <code>&lt;section id="session-..."&gt;</code> at the bottom.</p>
+
+<section id="status">
+<h2>Status</h2>
+
+<h3>Directories visited (cumulative)</h3>
+<ul class="dirs">
+  <li><code>home/</code> — sampled: array, audio, battle, compare, copy, farcall, flag, header, math, random</li>
+  <li><code>engine/battle/ai/</code> — sampled: boss_thunks</li>
+  <li><code>engine/battle/core.asm</code> — full label scan, head + tail (232 labels, 0 SECTION, 8892 lines) [sessions #2, #3]</li>
+  <li><code>engine/battle/effect_commands.asm</code> — full label scan (206 labels, 0 SECTION, 6660 lines) [sessions #3, #4]</li>
+  <li><code>engine/battle/late_gen_held_items.asm</code> — head + structure (16 labels, 0 SECTION, comment-quality exemplar) [session #4]</li>
+  <li><code>tools/damage_debugger/legacy/</code> — DEFINITIVE import grep: zero <code>from tools.damage_debugger.legacy</code> hits across tools/ and scripts/. Sole HTML self-reference (this file). [session #4 — confirms F-001]</li>
+  <li><code>home/sine.asm</code> — full file (10L, Cosine confirmed dead via whole-tree grep) [session #5]</li>
+  <li><code>engine/battle/move_effects/return.asm</code>, <code>frustration.asm</code> — full files (corroborate F-008 documentation style) [session #5]</li>
+  <li>full-tree grep: <code>ld a, 0</code> sites (30+ in head_limit, likely 50-100+ total) [session #5]</li>
+  <li><code>tools/audit/check_ld_a_zero.py</code> — full file (353L) — fully-built codemod with flag-tracking [session #6]</li>
+  <li><code>engine/battle/type_passive_damage_mods.asm</code> — lines 1-450 + label scan (34 labels, 1368L) [sessions #6, #7]</li>
+  <li><code>tools/audit/check_release_smoke.py</code> — confirmed F-010 is wired (line 1427 calls <code>check_ld_a_zero()</code>) [session #7]</li>
+  <li><code>engine/battle/ai/scoring.asm</code> — head + label count (112 labels, 3247L); first 60 labels mapped (AI_Basic, AI_Setup, AI_Types, AI_Offensive, AI_Smart, AI_Smart_&lt;Effect&gt; jump-table family) [sessions #7, #8]</li>
+  <li>full-tree grep: <code>; TODO|; FIXME|; HACK|; XXX</code> — zero hits. Codebase hygiene is strong; no rotted intent markers to chase. [session #8]</li>
+  <li>F-011 typo concern (session #7) RESOLVED via re-read of lines 100-208 — symmetric "mono lighter / dual stronger" pattern is intentional across all 5 defender-side blocks [session #8]</li>
+  <li><code>engine/battle/ai/move.asm</code> — full file (220L) [session #9]</li>
+  <li><code>engine/battle/ai/redundant.asm</code> — full file (200L) [session #10]</li>
+  <li><code>engine/battle/ai/switch.asm:1-499</code> — <code>CheckPlayerMoveTypeMatchups</code>, <code>CheckAbleToSwitch</code>, <code>FindAliveEnemyMons</code>, <code>FindEnemyMonsImmuneToLastCounterMove</code>, <code>FindAliveEnemyMonsWithASuperEffectiveMove</code>, <code>FindEnemyMonsWithASuperEffectiveMove</code>; structurally sound; documentation-gap consistent with core.asm/effect_commands.asm pattern [sessions #11, #12]</li>
+  <li><code>engine/battle/ai/items.asm:1-120</code> — head — <code>AI_SwitchOrTryItem</code>, <code>SwitchOften</code>/<code>SwitchRarely</code>/<code>SwitchSometimes</code> trio (near-identical scaffolds, but per-branch probabilities differ; likely not worth helper extraction) [session #13]</li>
+  <li>full-tree multiline grep: <code>push X / pop X</code> no-op pairs — zero matches across all asm. Strong hygiene. [session #13]</li>
+  <li><code>tools/{concat_files,copy_file,rm_files,strip_nulls}.py</code> — full files (25-28L each, 106L total) — Makefile cross-platform shims, textbook clean [session #14]</li>
+  <li><code>scripts/</code> directory inventory — 6 generators: <code>generate_dev_index.py</code> (29kb), <code>generate_balance_audit.py</code> (20kb), <code>generate_boss_ai_index.py</code> (4kb), <code>inject_asm_guide.py</code> (3kb), <code>export_changes_by_category.py</code> (4kb), <code>export_changes_from_manifest.py</code> (3kb) [session #14]</li>
+  <li><code>scripts/inject_asm_guide.py</code> — full file (110L) — SessionStart hook for asm guide TOC injection [session #15]</li>
+  <li><code>home/text.asm</code> — verified 4 unreferenced labels via whole-tree grep, byte counts refined to 10+1+5+11=27 bytes total [sessions #16, #17]</li>
+  <li><code>home/menu.asm</code> — verified 3 unreferenced labels (Menu_DummyFunction, PlaceGenericTwoOptionBox, GetNthMenuStrings), bytes 1+5+9=15 total [session #18]</li>
+  <li><code>home/map.asm</code> — verified 6 unreferenced labels, total 35 bytes; orphaned text-data labels BGEventText/CoordinatesEventText transitively dead (+12 bytes) → 47 bytes [sessions #19, #20]</li>
+  <li><code>home/audio.asm</code> — verified 2 unreferenced labels (FadeOutToMusic, PlaceBCDNumberSprite), bytes 6+55=61 + WRAM save-format-risk note [session #20]</li>
+  <li><code>home/{init,fade,joypad,pokemon,serial,trainers,window,video,time,gfx,map_objects,sprite_anims,battle}.asm</code> — 20 unreferenced labels confirmed dead (whole-tree grep, including Timer/SetCarryFlag disambiguation against hardware.inc) [session #21]</li>
+  <li><code>home/predef.asm</code> — full file (53L) — Predef dispatcher with undocumented ret-to-target trampoline [session #22]</li>
+  <li><code>macros/predef.asm</code> + <code>macros/asserts.asm</code> — full files (18L + 87L) [session #23]</li>
+  <li><code>macros/code.asm</code> — full file (90L) [session #24]</li>
+  <li><code>engine/events/specials.asm:1-50</code> + <code>data/events/special_pointers.asm</code> grep — head + Unused* dispatcher entries [session #25]</li>
+  <li><code>home/sram.asm</code> — full file (24L) — clever cross-call RTC-latch coordination; well-commented [session #26]</li>
+  <li><code>home/print_text.asm</code> — full file (131L) — surfaced leftover save/restore from a commented-out instruction in PrintLetterDelay [session #27]</li>
+  <li><code>macros/scripts/battle_commands.asm</code> — head sampled — clean command-ID definition file, plain `MACRO command` is another instance of the F-022 convention question [session #29]</li>
+  <li><code>home/string.asm</code> — full file (35L) — InitString/InitName uses an undocumented hl↔de swap via <code>pop bc / ld l,e / ld h,d / pop de</code> in the <code>.blank</code> path; marginal note, not promoted to a finding [session #30]</li>
+  <li><strong>Loop wound down at session #31</strong> per prompt instruction "stop when context tightens, not when 'done.'" Find-rate plateaued at 0-1 small findings/session for sessions #26-30. Re-invoke <code>/loop</code> in a fresh session to resume — pick up from "directories pending" below.</li>
+  <li><code>tools/damage_debugger/legacy/</code> — file inventory only (21 files / 3,450 LOC)</li>
+  <li><code>docs/generated/dev_index.md</code> — read for bank/region pressure</li>
+  <li>full-tree grep: <code>; unreferenced</code> markers (200+ hits across asm)</li>
+  <li>full-tree grep: <code>ld a, [$FFxx]</code> / <code>ld [$FFxx], a</code> anti-patterns — none found (codebase already uses <code>ldh</code>)</li>
+</ul>
+
+<h3>Directories pending (resume here next session)</h3>
+<ul class="dirs">
+  <li><code>engine/battle/core.asm</code> (8892L) — full label scan complete (sessions #2, #3); deep-pass for dead code / speed still pending</li>
+  <li><code>engine/battle/effect_commands.asm</code> (6660L) — full label scan complete (sessions #3, #4); deep-pass on damage-formula region (lines 2794-3028) and status-effect family (3448-3902) pending</li>
+  <li><code>engine/battle/late_gen_held_items.asm</code> — full file deep-pass for any speed/dead-code findings (head sampled session #4 — well-documented)</li>
+  <li><code>engine/battle/ai/boss_policy_move.asm</code> (5148L) — already region-organized; spot-check only</li>
+  <li><code>engine/battle/ai/boss_policy_switch.asm</code></li>
+  <li><code>engine/battle/ai/scoring.asm</code> (3247L)</li>
+  <li><code>engine/battle/late_gen_held_items.asm</code> — known bug-prone (AG-08 c-mirror trap)</li>
+  <li><code>engine/battle/type_passive_damage_mods.asm</code> (1368L)</li>
+  <li><code>engine/battle/move_effects/</code> (~70 files, mostly small)</li>
+  <li><code>engine/pokemon/</code> (experience, evolve, breeding, stats)</li>
+  <li><code>tools/damage_debugger/</code> active modules — 24 files</li>
+  <li><code>tools/audit/</code> — 33 files (largest: check_boss_ai_trace_invariants 2068L, check_gym_leader_wiring 1591L)</li>
+  <li><code>macros/</code> — likely thin pickings (assembler dialect)</li>
+  <li><code>data/</code> — large but mostly tables; targeted spot-checks for dead pointer tables</li>
+  <li><code>ram/</code> — <span class="save-risk">SAVE-FORMAT-RISK</span>: only flag, do not propose mutation</li>
+  <li><code>home/</code> remainder: copy_name, decompress, joypad, lcd, menu, names, palettes, pokedex_flags, pokemon, predef, print_*, queue_script, region, scrolling_menu, serial, sine, sprite_*, sram, stone_queue, string, text, tilemap, time, time_palettes, trainers, vblank, video, window</li>
+</ul>
+
+<h3>Counters</h3>
+<p><strong>25 findings</strong> across <strong>31 sessions</strong> (loop wound down at session #31). By category: 10 size, 10 llm-read, 1 speed, 3 lines, 1 correctness. Sessions #26-30 yielded 0-1 small findings each — clear find-rate plateau on the territory scanned.</p>
+
+<h3>Top highlights to date (cumulative)</h3>
+<p>Strongest cross-cutting finding clusters, ordered by cost-to-impact ratio:</p>
+<ol>
+  <li><strong>HOME-bank dead-code cleanup PR</strong> — <a href="#F-2026-05-10-016">F-016</a> + <a href="#F-2026-05-10-017">F-017</a> + <a href="#F-2026-05-10-018">F-018</a> + <a href="#F-2026-05-10-019">F-019</a> + <a href="#F-2026-05-10-020">F-020</a> + <a href="#F-2026-05-10-009">F-009</a> + <a href="#F-2026-05-10-025">F-025</a>. ~30+ confirmed-dead labels across 11 files in HOME, ~350-650 bytes saved, low risk. One ship-ready PR. Save-format-risk subset (wUnusedBCDNumber) flagged separately for user gate.</li>
+  <li><a href="#F-2026-05-10-001">F-001</a> — <code>tools/damage_debugger/legacy/</code> is 3,450 LOC of dead Python. Whole-tree import grep confirmed (session #4). Delete-and-update-memory candidate.</li>
+  <li><a href="#F-2026-05-10-010">F-010</a> — <code>tools/audit/check_ld_a_zero.py</code> is a fully-built codemod already wired into release_smoke. The 30+ <code>ld a, 0</code> sites are likely all flag-preserving on purpose; the audit catches drift. Run it once to confirm "currently optimal."</li>
+  <li><a href="#F-2026-05-10-005">F-005</a> + <a href="#F-2026-05-10-021">F-021</a> + <a href="#F-2026-05-10-008">F-008</a> — <strong>Documentation rewrites</strong>: <code>home/farcall.asm</code> (most-cited gotcha class, 2 shipped bugs), <code>home/predef.asm</code> (undocumented ret-to-target trampoline), and the convention to mirror <code>late_gen_held_items.asm</code>'s register-clobber rationale style across core.asm/effect_commands.asm. All comment-only, byte-identical builds.</li>
+  <li><a href="#F-2026-05-10-006">F-006</a> + <a href="#F-2026-05-10-007">F-007</a> + <a href="#F-2026-05-10-003">F-003</a> — <strong>Mega-asm region maps</strong>: pre-baked region annotations for core.asm (8892L) and effect_commands.asm (6660L) using the boss_policy_move.asm template. ~50 region banners total, no code movement, byte-identical build, saves tool calls per LLM traversal.</li>
+  <li><a href="#F-2026-05-10-011">F-011</a> — <code>TypePassive_ApplyDamageModifiers_Far</code> has 9 near-identical "apply X% boost" blocks (NORMAL/FIRE/GHOST/DRAGON/GROUND/ROCK/BUG/WATER/ICE). 4-byte-per-type lookup table + helper saves ~90 bytes in bank 0e (currently 2 free). Verify with damage_debugger.oracle.</li>
+  <li><a href="#F-2026-05-10-013">F-013</a> — Latent infinite loop in <code>AIChooseMove .DecrementScores</code> documented in source (line 128). 6-byte defensive guard at function entry resolves it.</li>
+</ol>
+</section>
+
+<section id="conventions">
+<h2>Conventions</h2>
+<p>Each finding has a stable id <code>F-YYYY-MM-DD-NNN</code> for cross-session anchoring.</p>
+<dl>
+  <dt><strong>category</strong></dt><dd>speed (cycles) / size (bytes) / lines (LOC) / llm-read (machine readability)</dd>
+  <dt><strong>ref</strong></dt><dd><code>file:line</code> for grounding. Multi-file findings list each.</dd>
+  <dt><strong>impact</strong></dt><dd>Estimated gain in concrete units.</dd>
+  <dt><strong>risk</strong></dt><dd>Likelihood of breakage if applied naively.</dd>
+  <dt><strong>confidence</strong></dt><dd>How sure the auditor is. Low confidence = needs verification before action.</dd>
+  <dt><strong>save-risk flag</strong></dt><dd>Yellow-flag any change that would touch <code>ram/</code> or bump <code>SAVE_FORMAT_VERSION</code>.</dd>
+</dl>
+<p><strong>Dedup rule:</strong> future sessions search by file:line ref before logging. If a finding already exists, add a <code>&lt;details&gt;</code> "Update YYYY-MM-DD" inside the existing article rather than creating a new one.</p>
+</section>
+
+<section id="session-2026-05-10-1">
+<h2>Session 2026-05-10 (#1)</h2>
+<p>Branch <code>claude/youthful-curran-a44fad</code>; dev tip <code>dc2079e7</code> on <code>codex/cleanup-gsc-rebalance-split</code>.</p>
+<p>Scope: <code>home/</code> headers, dev_index sanity, asm <code>; unreferenced</code> sweep, file-size inventory, sample of <code>engine/battle/ai/</code> thunks, sample of farcall infrastructure.</p>
+
+<article class="finding" id="F-2026-05-10-001" data-cat="size">
+  <header>
+    <h3>F-2026-05-10-001 — Legacy damage_debugger directory is dead Python</h3>
+    <p class="meta">
+      <span class="cat">size</span>
+      <span>impact: 3,450 LOC removed</span>
+      <span>risk: low</span>
+      <span class="conf-high">confidence: high (upgraded session #4)</span>
+    </p>
+    <p class="ref">tools/damage_debugger/legacy/ — 21 files: boot_continue.py (124L), boot_smoke.py (36L), boss_drive.py (109L), boss_drive_v2.py (106L), boss_drive_v3.py (159L), disasm_smoke.py (40L), drive_battle_v2.py (172L), drive_to_battle.py (177L), force_wild_battle.py (160L), full_chain.py (276L), full_sweep.py (285L), inspect_boss_state.py (133L), live_probe.py (171L), probe_inspect.py (84L), sgm_decoder.py (192L), stab_isolation.py (227L), stats_isolation.py (213L), stats_item_sweep.py (201L), survey_savs.py (114L), sweeper.py (351L), validate_emulator.py (120L)</p>
+    <p class="ref"><strong>Confirmation grep (session #4):</strong> <code>from tools\.damage_debugger\.legacy|damage_debugger\.legacy\.|import.*damage_debugger\.legacy</code> → zero matches in production code (the only hits are inside docs/optimizations.html itself, the audit log).</p>
+  </header>
+  <details open>
+    <summary>What's suboptimal</summary>
+    <p>3,450 lines of superseded Python. Active harness lives at <code>tools/damage_debugger/{oracle,fuzz,clobber_smoke,boot_cache,find,...}.py</code>. The user's auto-memory <code>reference_damage_debugger.md</code> currently mentions "24 active modules + 21 legacy" — the legacy count is treated as "tracked but not removed."</p>
+    <p>Grep for the path <code>tools[/\\]damage_debugger[/\\]legacy</code> across the codebase returned matches in 5 files only: <code>tools/damage_debugger/symbols.py</code>, <code>tools/damage_debugger/clobber_smoke.py</code>, <code>tools/audit/check_release_smoke.py</code>, <code>tools/audit/check_boss_ai_trace_invariants.py</code>, <code>tools/audit/bug_hunt_triage.py</code>. These are likely skip-list or path-exclusion mentions, not imports.</p>
+  </details>
+  <details>
+    <summary>Suggested change</summary>
+    <ol>
+      <li>Run <code>grep -rn 'from tools.damage_debugger.legacy' tools/ scripts/</code> and <code>grep -rn 'damage_debugger\.legacy\.' tools/ scripts/</code> to confirm zero imports.</li>
+      <li>Inspect the 5 mention sites above; if they're path-exclusion logic ("skip files under legacy/"), they can stay or be retired with the directory.</li>
+      <li>Delete <code>tools/damage_debugger/legacy/</code> wholesale.</li>
+      <li>Update <code>reference_damage_debugger.md</code> auto-memory to drop the "21 legacy" mention.</li>
+    </ol>
+  </details>
+  <details>
+    <summary>Impact / risk / confidence</summary>
+    <p><strong>Impact:</strong> 3,450 LOC removed; clearer harness inventory; future sessions don't waste reads scanning archaeological scripts when looking for active functionality.</p>
+    <p><strong>Risk:</strong> Low if grep confirms no production imports. Medium if user has personal manual workflows like <code>python -m tools.damage_debugger.legacy.&lt;X&gt;</code>. <strong>Worth one user-question check before deletion.</strong></p>
+    <p><strong>Confidence:</strong> Medium-high. Verified by file inventory + memory note. Pending import-grep confirmation.</p>
+  </details>
+</article>
+
+<article class="finding" id="F-2026-05-10-002" data-cat="size">
+  <header>
+    <h3>F-2026-05-10-002 — <code>; unreferenced</code> label sweep (TD-007 already tracked)</h3>
+    <p class="meta">
+      <span class="cat">size</span>
+      <span>impact: variable (100s–1000s of bytes per pass)</span>
+      <span>risk: medium</span>
+      <span class="conf-low">confidence: low (per-label)</span>
+      <span class="save-risk">save-format-risk if RAM</span>
+    </p>
+    <p class="ref">200+ files across the asm tree — already tracked at <code>tech_debt/FIX_PROPOSALS.md:674</code> (TD-007), <code>tech_debt/META_AUDIT.md:57</code> (claimed ~419 markers). Sample sites: <code>home/math.asm:51</code> (SubtractAbsolute), <code>home/flag.asm:105,125</code> (CheckBPressedDebug, CheckFieldDebug), <code>home/text.asm:128,169,571,841</code>, <code>engine/debug/color_picker.asm:35</code> (DebugColorPicker — entire feature), <code>audio/cries.asm:467,1085,1095,1105</code>, <code>engine/tilesets/tileset_anims.asm:1,7,78,92,130,145,223,286,778</code>, <code>ram/wram.asm:829</code> (wSafariMonAngerCount).</p>
+  </header>
+  <details>
+    <summary>What's suboptimal</summary>
+    <p>200+ <code>; unreferenced</code> markers exist across asm sources. ROM banks 12, 15, 17, 1b, 1e have <strong>0 free bytes</strong> per <code>docs/generated/dev_index.md:108-114</code> — bank pressure is real.</p>
+    <p>Per <code>tech_debt/FIX_PROPOSALS.md:716</code>: "the <code>; unreferenced</code> annotation is sometimes wrong — a label may be reached via dynamic dispatch (jump tables, predef) and the annotation is a stale heuristic." So a naive mass-removal would break things.</p>
+  </details>
+  <details>
+    <summary>Suggested change</summary>
+    <p>Pick a low-risk subdirectory and pass it. Per-pass workflow:</p>
+    <ol>
+      <li>Pick one file at a time. Highest-confidence candidates (no dynamic dispatch into them):
+        <ul>
+          <li><code>engine/debug/color_picker.asm:35</code> — entry <code>DebugColorPicker</code> + 6 internal markers; entire debug ROM feature gated.</li>
+          <li><code>audio/cries.asm:1085–1105</code> — Cry_Unused_Ch5/Ch6/Ch8 explicitly named "Unused".</li>
+          <li><code>engine/movie/intro.asm:422,722,1161</code> — Intro_UnusedInitAerodactyl, Intro_DummyFunction, Copy128Tiles.</li>
+          <li><code>engine/tilesets/tileset_anims.asm</code> — UnusedTilesetAnim1..5, ScrollTileUpDown.</li>
+          <li><code>engine/items/item_effects.asm:1023,1027,1891,1898,2639,2643,2647,2701,2705</code> — Ball missed/dodged text + bike messages from Gen 1.</li>
+          <li><code>engine/items/tmhm.asm:407,456</code> — PlaceMoveNameAfterTMHMName, VerboseReceiveTMHM.</li>
+        </ul>
+      </li>
+      <li>Verify each candidate label is truly dead via <code>grep -rn '&lt;LabelName&gt;' .</code> across the whole tree (not just <code>--include='*.asm'</code> — also catches Python tooling that dispatches by name).</li>
+      <li>Build, then check <code>pokegold.sym</code> for the label name; if rgblink resolved a reference somewhere, the marker is wrong.</li>
+      <li>Delete only after both checks pass.</li>
+    </ol>
+  </details>
+  <details>
+    <summary>Impact / risk / confidence</summary>
+    <p><strong>Impact:</strong> Per-label varies from a handful of bytes (a 4-byte string label) to multi-kilobyte (DebugColorPicker family is several KB). Could free a tight bank.</p>
+    <p><strong>Risk:</strong> Medium per-label. False-positive markers exist; tools/audit/_td005_pattern3_enum.py and the existing TD process should mediate.</p>
+    <p><strong><span class="save-risk">SAVE-FORMAT-RISK:</span></strong> any of the unreferenced WRAM fields (<code>wSafariMonAngerCount</code> at <code>ram/wram.asm:829</code> is the one this session caught) cannot be removed without bumping <code>SAVE_FORMAT_VERSION</code> and consulting the user — removal shifts every later WRAM offset. Per CLAUDE.md, <code>ram/</code> changes shipping to public release require user approval. <strong>Do not propose RAM removals from this finding without explicit user gate.</strong></p>
+    <p><strong>Confidence:</strong> Low per-label; high that the <em>class</em> of opportunity exists.</p>
+  </details>
+</article>
+
+<article class="finding" id="F-2026-05-10-003" data-cat="llm-read">
+  <header>
+    <h3>F-2026-05-10-003 — Mega-asm files lack topic-region annotations</h3>
+    <p class="meta">
+      <span class="cat">llm-read</span>
+      <span>impact: high (per-session tool-call savings)</span>
+      <span>risk: none (Phase A) / medium (Phase B)</span>
+      <span class="conf-high">confidence: high</span>
+    </p>
+    <p class="ref">engine/battle/core.asm (8892L), engine/battle/effect_commands.asm (6660L), engine/battle_anims/functions.asm (4337L), engine/battle/ai/scoring.asm (3247L), engine/overworld/map_objects.asm (3038L), engine/items/item_effects.asm (2915L), engine/battle_anims/bg_effects.asm (2868L), engine/pokegear/pokegear.asm (2858L), home/map.asm (2650L), engine/pokedex/pokedex.asm (2548L), engine/link/link.asm (2508L), engine/pokemon/bills_pc.asm (2466L)</p>
+  </header>
+  <details>
+    <summary>What's suboptimal</summary>
+    <p>Files >2000 lines force LLMs into Read offset/limit patterns and cost multiple tool calls to traverse. <code>engine/battle/ai/boss_policy_move.asm</code> (5148L) was already reorganized per <code>docs/boss_ai_organization_plan.md</code> using topic-region annotations:</p>
+    <pre>; ============================================================
+; engine/&lt;path&gt;.asm — &lt;subsystem&gt;
+; Split out of &lt;origin&gt; per docs/&lt;plan&gt;.md §N
+; ...
+; Region: &lt;name&gt;
+; Concern: &lt;what this region does&gt;
+; Layer: &lt;policy/scoring/dispatch/etc.&gt;
+; Original lines: NN
+; ============================================================</pre>
+    <p>That convention has not propagated to the older battle-engine files which are larger and arguably more important to read fluidly (core.asm, effect_commands.asm). See <code>engine/battle/ai/boss_thunks.asm:1-30</code> for a clean template.</p>
+  </details>
+  <details>
+    <summary>Suggested change</summary>
+    <p>Two-phase approach:</p>
+    <ol>
+      <li><strong>Phase A (low risk, high LLM payoff):</strong> Add topic-region <em>comment headers</em> at each functional boundary in core.asm and effect_commands.asm. No code movement; pure annotation. Build is byte-identical (comments don't compile). Future LLM Read calls can target a region by line range.</li>
+      <li><strong>Phase B (later, higher risk):</strong> If banks become tight, split into multiple .asm files via <code>INCLUDE</code> — but this requires bank/section reorganization and full audits.</li>
+    </ol>
+    <p>For Phase A, the existing pattern in <code>boss_policy_move.asm</code> + <code>boss_thunks.asm</code> is the template. Don't re-design.</p>
+    <p>Order of attack (highest leverage first): core.asm → effect_commands.asm → scoring.asm → home/map.asm.</p>
+  </details>
+  <details>
+    <summary>Impact / risk / confidence</summary>
+    <p><strong>Impact:</strong> High for LLM productivity. core.asm is read in nearly every battle-engine task. A region map saves ≥1 tool call per traversal and reduces context burn.</p>
+    <p><strong>Risk:</strong> None for Phase A (comments only). ROM size unchanged.</p>
+    <p><strong>Confidence:</strong> High that the issue is real; high that Phase A is safe; medium on whether Phase B is ever worth the bank-juggling cost.</p>
+  </details>
+</article>
+
+<article class="finding" id="F-2026-05-10-004" data-cat="llm-read">
+  <header>
+    <h3>F-2026-05-10-004 — <code>; ai-layer:</code> marker convention is partially adopted</h3>
+    <p class="meta">
+      <span class="cat">llm-read</span>
+      <span>impact: medium</span>
+      <span>risk: low (comments only)</span>
+      <span class="conf-med">confidence: medium</span>
+    </p>
+    <p class="ref">167 occurrences across 5 files: <code>engine/battle/ai/boss_policy_move.asm</code> (77), <code>engine/battle/ai/boss_platform.asm</code> (54), <code>engine/battle/ai/boss_policy_switch.asm</code> (21), <code>engine/battle/ai/boss_thunks.asm</code> (7), <code>engine/battle/late_gen_held_items.asm</code> (2). Notably absent: <code>engine/battle/ai/move.asm</code>, <code>scoring.asm</code>, <code>switch.asm</code>, <code>items.asm</code>, <code>read_trainer_attributes.asm</code>.</p>
+  </header>
+  <details>
+    <summary>What's suboptimal</summary>
+    <p>The <code>; ai-layer: &lt;THUNK|POLICY|SCORING|...&gt;</code> marker is used in boss_*.asm to tag function layer for navigation. Sibling AI files in the same bank don't use it. Either the marker is meant to be boss-AI-only (and should be documented as such), or it should expand for grep-able subsystem traversal.</p>
+  </details>
+  <details>
+    <summary>Suggested change</summary>
+    <p>Decide convention scope.</p>
+    <ul>
+      <li><strong>If boss-AI-only:</strong> add a one-line note to <code>docs/asm_authoring_guide.md</code> §3 cookbook and to <code>boss_thunks.asm:1-30</code> template explaining "marker reserved for boss-AI cross-bank routing." Then leave the four other AI files alone.</li>
+      <li><strong>If broader:</strong> extend to the four AI files (move.asm, scoring.asm, switch.asm, items.asm) and add a lightweight <code>tools/audit/check_ai_layer_marker_present.py</code> that flags AI-bank functions missing a marker.</li>
+    </ul>
+    <p>Recommend the boss-AI-only path — broader adoption inflates comment density without proportional payoff for the simpler files.</p>
+  </details>
+  <details>
+    <summary>Impact / risk / confidence</summary>
+    <p><strong>Impact:</strong> Medium — better grep-ability when navigating AI subsystem. ROM-byte impact zero.</p>
+    <p><strong>Risk:</strong> Low (comments).</p>
+    <p><strong>Confidence:</strong> Medium on prescription; high that inconsistency exists.</p>
+  </details>
+</article>
+
+<article class="finding" id="F-2026-05-10-005" data-cat="llm-read">
+  <header>
+    <h3>F-2026-05-10-005 — <code>home/farcall.asm</code> doesn't document the gotchas it causes</h3>
+    <p class="meta">
+      <span class="cat">llm-read</span>
+      <span>impact: high (most-cited gotcha class)</span>
+      <span>risk: none (comments only)</span>
+      <span class="conf-high">confidence: high</span>
+    </p>
+    <p class="ref">home/farcall.asm:1-31</p>
+  </header>
+  <details open>
+    <summary>What's suboptimal</summary>
+    <p>This 31-line file is the source-of-truth for the most-cited gotcha class in CLAUDE.md (asm guide §3.2 hl-clobber, §3.3 a-clobber). Two shipped bugs traced to misunderstandings of it (April 2026 one-shot damage; May 2026 wild-floor no-op). Two audit scripts exist for the class (<code>tools/audit/check_farcall_hl_clobber.py</code>, <code>check_farcall_a_clobber.py</code>) — both in the release-smoke floor.</p>
+    <p>Despite that, the file's own header is just:</p>
+    <pre>FarCall_hl::
+; Call a:hl.
+; Preserves other registers.</pre>
+    <p>The "preserves other registers" claim is misleading: <code>a</code> is clobbered (caller's a after farcall = target's exit c due to lines 13-16 + 24-27), and the caller's <code>hl</code> is gone — killed by the macro's pre-call <code>ld a, BANK :: ld hl, target</code> before the target ever runs.</p>
+  </details>
+  <details>
+    <summary>Suggested change</summary>
+    <p>Replace the 3-line header with a full register-ABI and trap-class block. Comment-only — build byte-identical.</p>
+    <pre>; FarCall_hl::
+; Cross-bank call dispatcher invoked via `rst FarCall` (rst $08).
+;
+; ENTRY (set by `farcall`/`callfar` macros at the call site,
+;        BEFORE this routine runs — so caller's a/hl are gone):
+;   a  = BANK(target)
+;   hl = target address
+; EXIT (back at the caller after target returns):
+;   a  = TARGET'S EXIT c       ; NOT target's exit a — see note below
+;   hl = clobbered             ; set by the macro before `rst FarCall`
+;   bc = target's exit bc      ; preserved through wFarCallBC stash
+;   de = target's exit de
+;   f  = target's exit f
+;
+; Why a is clobbered post-call: lines 13-16 stash target's b/c into
+; wFarCallBC; the trailing `ld a, [wFarCallBC + 1] :: ld c, a` at
+; lines 26-27 leaves caller's a == target's exit c.
+;
+; Why hl is clobbered pre-call: the `farcall` macro expands to
+;   ld a, BANK(\1) :: ld hl, \1 :: rst FarCall
+; If the target reads hl as input, this is a bug.
+;
+; Three valid call patterns:
+;   1. push hl :: farcall TARGET :: pop hl
+;        if hl just needs preserving across the call.
+;   2. ROM0 `homecall` thunk
+;        if target needs hl as input AND output.
+;   3. Pass hl via bc/de and reconstruct inside the target.
+;
+; For a-return cross-bank functions in the target:
+;   - mirror a into c at every ret in the target (one `ld c, a` per
+;     ret), or
+;   - return via HRAM, or
+;   - use a HOME thunk that stashes the result.
+;
+; Audited by:
+;   tools/audit/check_farcall_hl_clobber.py  ; release-smoke floor
+;   tools/audit/check_farcall_a_clobber.py   ; release-smoke floor
+;
+; See also: docs/asm_authoring_guide.md §3.2, §3.3, CLAUDE.md
+; "RGBDS / asm gotchas" section.</pre>
+  </details>
+  <details>
+    <summary>Impact / risk / confidence</summary>
+    <p><strong>Impact:</strong> High. The source-of-truth file should self-document its trap class. An LLM reading <code>home/farcall.asm</code> currently has to back-reference CLAUDE.md plus the asm guide plus two audit scripts to learn what the function actually does to caller registers.</p>
+    <p><strong>Risk:</strong> None. Comments only. Build byte-identical.</p>
+    <p><strong>Confidence:</strong> High. Behavior verified against the file content lines 1-31 and against CLAUDE.md / asm guide cross-refs.</p>
+  </details>
+</article>
+
+</section>
+
+<section id="session-2026-05-10-27">
+<h2>Session 2026-05-10 (#27)</h2>
+<p>Same branch / dev tip. Scope: <code>home/print_text.asm</code> (131L).</p>
+
+<article class="finding" id="F-2026-05-10-025" data-cat="size">
+  <header>
+    <h3>F-2026-05-10-025 — <code>PrintLetterDelay</code> has dead save/restore plumbing for a commented-out instruction</h3>
+    <p class="meta">
+      <span class="cat">size</span>
+      <span>impact: ~3-5 bytes saved in HOME (also lighter cycle count)</span>
+      <span>risk: low (verify by tracing — the load/store-back IS a no-op now)</span>
+      <span class="conf-med">confidence: medium-high</span>
+    </p>
+    <p class="ref">home/print_text.asm:25-32, 76-77.</p>
+  </header>
+  <details>
+    <summary>What's suboptimal</summary>
+    <p>The flow:</p>
+    <pre>; lines 25-31
+    ld hl, hOAMUpdate
+    ld a, [hl]          ; read hOAMUpdate
+    push af             ; save it on the stack
+
+; orginally turned oam update off...   &lt;- comment, sic typo "orginally"
+;	ld a, 1                            &lt;- commented out
+    ld [hl], a          ; write a back (but a is unchanged → no-op now)
+
+    ; ... the actual delay logic ...
+
+; lines 76-77
+.end
+    pop af              ; restore the saved value (still equal to current)
+    ldh [hOAMUpdate], a ; write it back to hOAMUpdate (no-op)</pre>
+    <p>The original intent was: save hOAMUpdate, set it to <code>1</code> (or some specific value), do the delay logic, restore. With <code>ld a, 1</code> commented out, the value is never changed. So:</p>
+    <ul>
+      <li>Line 27 <code>push af</code> stores the same value that's already in <code>[hl]</code>.</li>
+      <li>Line 31 <code>ld [hl], a</code> writes the value back to where it was read from.</li>
+      <li>Line 76 <code>pop af</code> restores the unchanged value.</li>
+      <li>Line 77 <code>ldh [hOAMUpdate], a</code> writes it back to the same address.</li>
+    </ul>
+    <p>If the commented-out <code>ld a, 1</code> line was intentionally disabled (i.e., the code is meant to NOT touch hOAMUpdate), then the save/restore plumbing is leftover scaffolding that can be deleted entirely — saves a few bytes and skips a few cycles per text-letter delay (which runs many times per battle/cutscene).</p>
+  </details>
+  <details>
+    <summary>Suggested change</summary>
+    <p>Three options, ranked by safety:</p>
+    <ol>
+      <li><strong>Verify intent:</strong> <code>git blame home/print_text.asm</code> on lines 29-30 and check the commit that commented out <code>ld a, 1</code>. If the commit was "removed because oam-disable broke something," the comment is correct and the plumbing should be cleaned up. If the commit was "TODO restore later" or similar, leave it as-is.</li>
+      <li><strong>If intent confirmed (cleanup):</strong> remove lines 25-31 (<code>ld hl, hOAMUpdate</code> through <code>ld [hl], a</code>) and lines 76-77 (<code>pop af / ldh [hOAMUpdate], a</code>). Saves ~5-7 bytes in HOME + ~5-10 cycles per call (which fires for every printed letter).</li>
+      <li><strong>If intent unclear:</strong> add a clarifying comment at line 29 explaining why the original was disabled. Comment-only.</li>
+    </ol>
+    <p>Bonus: typo "orginally" → "originally" in the line-29 comment.</p>
+  </details>
+  <details>
+    <summary>Impact / risk / confidence</summary>
+    <p><strong>Impact:</strong> 5-7 bytes ROM HOME, plus measurable cycles in a hot path (text rendering). Combined with F-016 cluster, the HOME cleanup grows.</p>
+    <p><strong>Risk:</strong> Low IF intent is "remove oam-disable for good." Higher if the commented-out line should actually be restored — verify via git blame before acting.</p>
+    <p><strong>Confidence:</strong> Medium-high that the current code is dead plumbing (the trace is clear). Medium on whether the right fix is "remove" vs "restore." git blame settles it.</p>
+  </details>
+</article>
+
+</section>
+
+<section id="session-2026-05-10-25">
+<h2>Session 2026-05-10 (#25)</h2>
+<p>Same branch / dev tip. Scope: <code>engine/events/specials.asm</code> head + <code>SpecialsPointers</code> dispatch table.</p>
+
+<article class="finding" id="F-2026-05-10-024" data-cat="lines">
+  <header>
+    <h3>F-2026-05-10-024 — Unused specials should share a no-op body, but pointer-table entries must stay (script-compat)</h3>
+    <p class="meta">
+      <span class="cat">lines</span>
+      <span>impact: ~12 bytes ROM (3 duplicate "noop-with-script-var-clear" bodies → one shared)</span>
+      <span>risk: low for body dedup; <span class="save-risk">SCRIPT-COMPAT-RISK</span> if pointer-table entries are removed</span>
+      <span class="conf-high">confidence: high</span>
+    </p>
+    <p class="ref">engine/events/specials.asm:18 (UnusedDummySpecial), :21-23 (UnusedLinkFeatureSpecial1/2/3 — 3 labels falling through to one body), :43 (UnusedSetSeenMon); referenced by <code>data/events/special_pointers.asm:34-36, 77, 131</code>.</p>
+  </header>
+  <details>
+    <summary>What's suboptimal</summary>
+    <p>The 3 <code>UnusedLinkFeatureSpecialN</code> labels already fall through to a single shared 4-byte body (<code>xor a / ld [wScriptVar], a / ret</code>) at lines 21-26 — so they share. Good.</p>
+    <p>But <code>UnusedDummySpecial</code> at line 18 is a separate 1-byte <code>ret</code>, and <code>UnusedSetSeenMon</code> at line 43 is its own 5-byte body. <strong>If the design intent is "these specials should be no-ops if the dispatcher hits them"</strong>, all 5 unused labels could share one no-op body (or two: one that clears wScriptVar, one that doesn't), saving the duplicate bytes.</p>
+    <p>Concrete win: rename the bodies, or have <code>UnusedSetSeenMon</code> + <code>UnusedDummySpecial</code> fall through to <code>UnusedLinkFeatureSpecial</code>'s shared body. Saves ~6-12 bytes depending on intent.</p>
+  </details>
+  <details>
+    <summary>Suggested change</summary>
+    <ol>
+      <li>Body-dedup: have <code>UnusedSetSeenMon</code> just be a label on the existing <code>UnusedLinkFeatureSpecial</code> body (or its own minimal <code>ret</code>). Saves ~6 bytes.</li>
+      <li><strong><span class="save-risk">SCRIPT-COMPAT-RISK:</span></strong> Do <strong>NOT</strong> remove the corresponding entries from <code>data/events/special_pointers.asm</code>. <code>SpecialsPointers</code> is indexed by script-special id (a numerical constant in scripts and likely save data). Removing entries renumbers every subsequent special, which breaks: (a) any script in the codebase that references a later special by id, and (b) potentially any save-game data if specials are persisted by id. Per CLAUDE.md, save-format risk requires user approval.</li>
+      <li>The cleanest pattern is "consolidate handler bodies, keep table entries pointing to the consolidated handler" — like a `_NoOpSpecial:: ret` shared by all unused entries.</li>
+    </ol>
+  </details>
+  <details>
+    <summary>Impact / risk / confidence</summary>
+    <p><strong>Impact:</strong> Small (~6-12 bytes ROM). The big lesson here is the SCRIPT-COMPAT-RISK callout — pointer tables indexed by ID can't be casually trimmed.</p>
+    <p><strong>Risk:</strong> Low for body dedup. High if anyone tries to remove pointer-table entries naively.</p>
+    <p><strong>Confidence:</strong> High.</p>
+  </details>
+</article>
+
+</section>
+
+<section id="session-2026-05-10-23">
+<h2>Session 2026-05-10 (#23)</h2>
+<p>Same branch / dev tip. Scope: <code>macros/predef.asm</code>, <code>macros/asserts.asm</code>.</p>
+
+<article class="finding" id="F-2026-05-10-022" data-cat="llm-read">
+  <header>
+    <h3>F-2026-05-10-022 — <code>end_water_wildmons</code> macro is missing the <code>?</code> modifier (asymmetric with siblings)</h3>
+    <p class="meta">
+      <span class="cat">llm-read</span>
+      <span>impact: small (latent re-definition error if file is ever included twice)</span>
+      <span>risk: low (1-character fix)</span>
+      <span class="conf-high">confidence: high</span>
+    </p>
+    <p class="ref">macros/asserts.asm:82 (<code>MACRO end_water_wildmons</code>) vs the convention used at :60 (<code>MACRO? def_grass_wildmons</code>), :68 (<code>MACRO? end_grass_wildmons</code>), :74 (<code>MACRO? def_water_wildmons</code>).</p>
+  </header>
+  <details>
+    <summary>What's suboptimal</summary>
+    <p>3 of the 4 wildmon table-bookend macros use <code>MACRO?</code> (RGBDS optional-macro form, no error on redefinition). The fourth, <code>end_water_wildmons</code>, uses plain <code>MACRO</code>. Likely a typo — water and grass are otherwise symmetric.</p>
+    <p>Practical effect today: <code>macros/asserts.asm</code> probably isn't included multiple times (only once via <code>macros/scripts/maps.asm</code> or similar), so the asymmetry is latent. But the convention for the rest of the file is uniform <code>MACRO?</code> use; the asymmetric form is the kind of thing future-Claude would notice and either:
+      <ul>
+        <li>"fix" by adding the <code>?</code> assuming typo (correct outcome) — but with no clear confidence;</li>
+        <li>or assume it's intentional and write code around it.</li>
+      </ul>
+    </p>
+    <p>Either path costs a thinking cycle that the consistent form would save.</p>
+  </details>
+  <details>
+    <summary>Suggested change</summary>
+    <p>Change line 82 to <code>MACRO? end_water_wildmons</code> to match the sibling forms. 1-character fix.</p>
+  </details>
+  <details>
+    <summary>Impact / risk / confidence</summary>
+    <p><strong>Impact:</strong> Small per-occurrence; consistency wins are cheap and add up.</p>
+    <p><strong>Risk:</strong> Low. If the asymmetry is intentional, it's not documented as such — the consistent form is safer.</p>
+    <p><strong>Confidence:</strong> High that it's an inconsistency; high that the consistent form is correct.</p>
+  </details>
+  <details>
+    <summary>Update 2026-05-10 (session #24) — broader pattern: 3 inconsistencies across 2 files</summary>
+    <p>Sampling <code>macros/code.asm</code> in session #24 surfaced two more sites that use plain <code>MACRO</code> while their file siblings use <code>MACRO?</code>:</p>
+    <ul>
+      <li><code>macros/code.asm:13</code> — <code>MACRO jumptable</code> (siblings <code>lb</code>, <code>ln</code>, <code>maskbits</code> all use <code>MACRO?</code>)</li>
+      <li><code>macros/code.asm:45</code> — <code>MACRO calc_sine_wave</code> (same)</li>
+      <li><code>macros/asserts.asm:82</code> — <code>MACRO end_water_wildmons</code> (siblings use <code>MACRO?</code>)</li>
+    </ul>
+    <p>So the question is no longer "is this a typo" — it's <strong>"what's the convention?"</strong>. Three plausible interpretations:</p>
+    <ol>
+      <li><strong>All should be <code>MACRO?</code></strong> — defensive against double-include. Minimum 3 single-character fixes.</li>
+      <li><strong>"Critical / never redefine" macros use plain <code>MACRO</code></strong> — but the candidates (<code>jumptable</code>, <code>calc_sine_wave</code>, <code>end_water_wildmons</code>) don't share an obvious "more critical" property over their siblings. <code>jumptable</code> is widely used; the others aren't.</li>
+      <li><strong>Drift</strong> — the convention is supposed to be <code>MACRO?</code> everywhere but the project never noticed the asymmetric uses.</li>
+    </ol>
+    <p>Recommend: pick interpretation 1, normalize all macros to <code>MACRO?</code>, add a one-line note to <code>docs/asm_authoring_guide.md</code> §Appendix A explaining the convention. Resolves the question for all future macro additions.</p>
+  </details>
+</article>
+
+<article class="finding" id="F-2026-05-10-023" data-cat="llm-read">
+  <header>
+    <h3>F-2026-05-10-023 — <code>lda_predef</code>'s <code>/3</code> magic number is undocumented</h3>
+    <p class="meta">
+      <span class="cat">llm-read</span>
+      <span>impact: small but recurring — every time someone reads this macro</span>
+      <span>risk: none (comment-only)</span>
+      <span class="conf-high">confidence: high</span>
+    </p>
+    <p class="ref">macros/predef.asm:6 (<code>ld a, (\1Predef - PredefPointers) / 3</code>).</p>
+  </header>
+  <details>
+    <summary>What's suboptimal</summary>
+    <p>The <code>/3</code> divisor is the predef-table entry width — each entry in <code>PredefPointers</code> is 3 bytes (1 bank byte + 2 address bytes, or similar). The macro converts an address-offset within the table into a predef ID by dividing by entry width. Without the comment, future-Claude reading <code>lda_predef</code> doesn't know whether <code>3</code> is meaningful or a magic number to be confused about.</p>
+  </details>
+  <details>
+    <summary>Suggested change</summary>
+    <p>Replace the comment <code>; Some functions load the predef id // without immediately calling Predef.</code> with a slightly fuller block:</p>
+    <pre>MACRO? lda_predef
+; Compute the predef id for \1 and load it into a, without
+; calling Predef. Used by sites that batch a predef call with
+; other setup (e.g. set up other regs first, then `call Predef`
+; explicitly).
+;
+; The /3 divisor is the predef-table entry width — each entry
+; in `PredefPointers` is 3 bytes (see data/predef_pointers.asm).
+    ld a, (\1Predef - PredefPointers) / 3
+ENDM</pre>
+    <p>Alternative: define a constant <code>PREDEF_POINTER_WIDTH EQU 3</code> in <code>constants/</code> and use it here. Same readability, but adds a dependency.</p>
+  </details>
+  <details>
+    <summary>Impact / risk / confidence</summary>
+    <p><strong>Impact:</strong> Small. Saves 1-2 minutes of confusion per future read of this macro. Compounds over time.</p>
+    <p><strong>Risk:</strong> None. Comments only.</p>
+    <p><strong>Confidence:</strong> High that the divisor IS the entry width; verifiable by reading <code>data/predef_pointers.asm</code>.</p>
+  </details>
+</article>
+
+</section>
+
+<section id="session-2026-05-10-22">
+<h2>Session 2026-05-10 (#22)</h2>
+<p>Same branch / dev tip. Pivoting away from HOME dead-code vein. Scope: <code>home/predef.asm</code>, the predef dispatcher hub.</p>
+
+<article class="finding" id="F-2026-05-10-021" data-cat="llm-read">
+  <header>
+    <h3>F-2026-05-10-021 — <code>Predef</code> dispatcher uses undocumented ret-to-target trampoline</h3>
+    <p class="meta">
+      <span class="cat">llm-read</span>
+      <span>impact: medium (Predef is read in any cross-bank dispatch question)</span>
+      <span>risk: none (comments only)</span>
+      <span class="conf-high">confidence: high</span>
+    </p>
+    <p class="ref">home/predef.asm:1-52 — <code>Predef::</code> at line 1, ret-to-target trick at lines 19-34, <code>.Return:</code> trampoline at line 36.</p>
+  </header>
+  <details>
+    <summary>What's suboptimal</summary>
+    <p>The Predef dispatcher uses a clever <strong>ret-to-target</strong> + <strong>ret-to-Return-handler</strong> trampoline pattern, but the only existing comment is <code>; Instead of directly calling stuff, push it to the stack in reverse.</code> at line 16. That hints at the trick but doesn't explain the stack discipline.</p>
+    <p>The mechanism:</p>
+    <ol>
+      <li>Line 19-20: push <code>.Return</code> address on the stack (will be hit AFTER the predef target returns).</li>
+      <li>Line 23-27: push the predef target's address.</li>
+      <li>Line 30-33: load the caller's hl from <code>wPredefHL</code> (so the target sees hl as input).</li>
+      <li>Line 34: <code>ret</code> — pops the predef target's address into PC, jumping to the target with hl set up.</li>
+      <li>Target eventually <code>ret</code>s, which pops <code>.Return</code> into PC.</li>
+      <li>Line 36+: <code>.Return</code> stashes the target's exit hl back into wPredefHL, restores caller's bank, then loads hl back from wPredefHL and returns to caller.</li>
+    </ol>
+    <p>Net effect: caller's hl is forwarded as input to the target; target's exit hl is forwarded as output to caller; bank is correctly restored between target and caller.</p>
+    <p>For an LLM reading this cold, the stack juggling looks weirdly indirect. It only makes sense once you've simulated 3 stack frames mentally. The function-header claim "Preserves bc, de, hl and f" is true but doesn't explain the mechanism.</p>
+  </details>
+  <details>
+    <summary>Suggested change</summary>
+    <p>Replace the brief 3-line header with a fuller explanation of the trampoline. Comment-only — build byte-identical.</p>
+    <pre>Predef::
+; Call predefined function a, with hl as input/output.
+;
+; ENTRY:
+;   a  = predef ID (consumed; no longer needed after dispatch)
+;   hl = input pointer (forwarded to target)
+; EXIT:
+;   hl = target's exit hl (return value, possibly modified)
+;   bc, de, f = preserved (target may stomp them — see note)
+;
+; MECHANISM (ret-to-target trampoline; non-obvious):
+;   1. Save caller's bank, switch to GetPredefPointer's bank.
+;   2. GetPredefPointer reads the (bank, address) pair from the
+;      predef table indexed by `a`, stashes the address in
+;      wPredefAddress and the input hl in wPredefHL. Returns
+;      with bank set to the target's bank.
+;   3. Push `.Return` onto the stack (will execute AFTER the
+;      target's ret).
+;   4. Push the target's address onto the stack.
+;   5. Restore hl from wPredefHL (so the target sees its input).
+;   6. ret pops the target's address into PC — we jump to the
+;      target with caller's hl preserved.
+;   7. Target eventually rets, popping `.Return` into PC.
+;   8. `.Return` stashes target's exit hl into wPredefHL,
+;      pops the saved bank, then reloads exit hl from wPredefHL
+;      and returns to caller.
+;
+; The two-stage trampoline avoids needing to call the target
+; directly (which would put a return address from THIS frame on
+; the stack and complicate the bank-restore sequence).
+;
+; bc, de preservation: the comment claims this but it actually
+; relies on the TARGET preserving them. Predef itself doesn't
+; push/pop bc or de. Real-world targets are well-behaved so
+; this works empirically; calling a target that clobbers bc
+; or de would surface as a caller bug.</pre>
+  </details>
+  <details>
+    <summary>Impact / risk / confidence</summary>
+    <p><strong>Impact:</strong> Medium. Predef is the dispatch hub for all <code>predef</code>-style cross-bank calls in the engine. Future-Claude reads this when investigating any predef-related bug or wiring up new predef entries. The current minimal header forces a stack-trace-by-hand exercise.</p>
+    <p><strong>Risk:</strong> None. Comments only.</p>
+    <p><strong>Confidence:</strong> High that the mechanism described is what the code does (verified by reading lines 1-52). Medium-high that the bc/de preservation caveat is correct (Predef itself doesn't touch them; relies on target). A future deep-dive could verify by examining a few targets.</p>
+  </details>
+</article>
+
+</section>
+
+<section id="session-2026-05-10-21">
+<h2>Session 2026-05-10 (#21)</h2>
+<p>Same branch / dev tip. Scope: batch-verify the remaining <code>home/</code> unreferenced labels from the session #1 inventory.</p>
+
+<article class="finding" id="F-2026-05-10-020" data-cat="size">
+  <header>
+    <h3>F-2026-05-10-020 — 20 more <code>home/</code> labels confirmed dead via whole-tree grep</h3>
+    <p class="meta">
+      <span class="cat">size</span>
+      <span>impact: ~200-500 bytes saved in HOME (per-label byte counts unverified)</span>
+      <span>risk: low (whole-tree grep is conclusive for each label)</span>
+      <span class="conf-high">confidence: high (dead-status); medium (exact byte savings)</span>
+    </p>
+    <p class="ref">20 labels across 13 files:
+      <code>home/init.asm:166</code> (FillBGMap_l),
+      <code>home/fade.asm:3</code> (TimeOfDayFade),
+      <code>home/joypad.asm:264</code> (JoyTitleScreenInput),
+      <code>home/pokemon.asm:207</code> (GetNthMove),
+      <code>home/serial.asm:271</code> (Serial_SyncAndExchangeNybble), <code>:393</code> (SetBitsForTimeCapsuleRequestIfNotLinked),
+      <code>home/trainers.asm:206</code> (CheckTrainerFlag),
+      <code>home/window.asm:95</code> (SetCarryFlag),
+      <code>home/video.asm:388</code> (Video_DummyFunction), <code>:391</code> (EnableSpriteDisplay),
+      <code>home/time.asm:3</code> (Timer), <code>:252</code> (ClearRTCStatus),
+      <code>home/gfx.asm:3</code> (FarDecompressBufferedPic), <code>:260</code> (DuplicateGet2bpp),
+      <code>home/map_objects.asm:303</code> (CopyMapObjectStruct), <code>:365</code> (DeleteFollowerMapObject), <code>:577</code> (SetVramState_SpriteUpdatesDisabled), <code>:582</code> (ResetVramState_SpriteUpdatesDisabled),
+      <code>home/sprite_anims.asm:17</code> (ReinitSpriteAnimFrame),
+      <code>home/battle.asm:18</code> (GetDexNumber).
+    </p>
+  </header>
+  <details>
+    <summary>What's suboptimal</summary>
+    <p>20 more dead labels in HOME bank, in addition to the 9 covered by F-016 + F-017 + F-018 + F-019. Each is marked <code>; unreferenced</code> and confirmed via whole-tree grep returning only the source label (with <code>Timer</code> and <code>SetCarryFlag</code> disambiguated against <code>constants/hardware.inc</code> comments — only the home/ source is the actual symbol).</p>
+  </details>
+  <details>
+    <summary>Suggested change</summary>
+    <ol>
+      <li>Read each label's body to get exact byte counts. Estimated range per label: 1-100 bytes. Most likely cluster: 5-30 bytes for typical handlers.</li>
+      <li>Bundle ALL into the unified HOME cleanup PR — combined estimate ~200-500 bytes saved.</li>
+      <li>Several names (<code>Timer</code>, <code>FarDecompressBufferedPic</code>, <code>Serial_*</code>) are likely larger handlers worth separate sanity-check via Read before deletion.</li>
+      <li>One label is <code>:</code> (single-colon, local) — <code>DeleteFollowerMapObject:</code> at <code>map_objects.asm:365</code>. Confirm dead-status holds for non-exported labels too (whole-tree grep already covered this).</li>
+    </ol>
+  </details>
+  <details>
+    <summary>Impact / risk / confidence</summary>
+    <p><strong>Impact:</strong> 200-500 bytes ROM HOME (rough estimate; needs per-label Read pass to nail).</p>
+    <p><strong>Risk:</strong> Low. Same tier of confidence as F-016/F-017/F-018/F-019: bare-word whole-tree grep, source <code>; unreferenced</code> markers, no dynamic dispatch concerns for these specific labels (handler-shaped names, not jumptable entries).</p>
+    <p><strong>Confidence:</strong> High that they're dead; medium on exact byte savings until per-label Read pass.</p>
+    <p>Concrete bulk instance of <a href="#F-2026-05-10-002">F-002</a>. With F-016+F-017+F-018+F-019+F-020, the user has an end-to-end dead-code-in-HOME inventory: 31+ labels, 11 files, ~350-650 bytes total. One PR.</p>
+  </details>
+</article>
+
+</section>
+
+<section id="session-2026-05-10-20">
+<h2>Session 2026-05-10 (#20)</h2>
+<p>Same branch / dev tip. Scope: confirm F-018 orphaned text-data follow-up; verify <code>home/audio.asm</code> 2 unreferenced labels.</p>
+
+<article class="finding" id="F-2026-05-10-019" data-cat="size">
+  <header>
+    <h3>F-2026-05-10-019 — 2 unreferenced audio utilities in <code>home/audio.asm</code> (one is large)</h3>
+    <p class="meta">
+      <span class="cat">size</span>
+      <span>impact: ~61 bytes ROM (6+55) + 1 byte WRAM if save-format bumps</span>
+      <span>risk: low for ROM removal; <span class="save-risk">SAVE-FORMAT-RISK</span> for the WRAM byte</span>
+      <span class="conf-high">confidence: high</span>
+    </p>
+    <p class="ref">home/audio.asm:276 (FadeOutToMusic, 6 bytes), :457 (PlaceBCDNumberSprite, ~55 bytes). Whole-tree grep returns only the source labels.</p>
+  </header>
+  <details>
+    <summary>What's suboptimal</summary>
+    <ul>
+      <li><strong>FadeOutToMusic</strong> (line 276-279, 6 bytes): <code>ld a, 4 / ld [wMusicFade], a / ret</code>. Mirror of <code>FadeInToMusic</code> at line 281 (live) without the fade-in flag bit. Pre-Gen 2 vestige; Gen 2 uses <code>FadeToMapMusic</code> at line 295 for the typical fade-out flow.</li>
+      <li><strong>PlaceBCDNumberSprite</strong> (line 457-483, ~55 bytes): "Places a BCD number at the upper center of the screen." Reads <code>wUnusedBCDNumber</code>, writes 4 OAM sprite slots. ~55 bytes of OAM-construction code. Unused since pre-Gen 2.</li>
+    </ul>
+  </details>
+  <details>
+    <summary>Suggested change</summary>
+    <ol>
+      <li>Delete both labels and their bodies. ROM cleanup: ~61 bytes saved in HOME.</li>
+      <li><strong><span class="save-risk">SAVE-FORMAT-RISK:</span></strong> <code>PlaceBCDNumberSprite</code> reads <code>wUnusedBCDNumber</code>. Removing the function alone is safe; removing the WRAM byte itself shifts subsequent WRAM offsets and breaks save compatibility. Per CLAUDE.md, <code>ram/</code> changes shipping to public release require user approval. Recommend: delete the function NOW (61 bytes ROM safe), defer the 1-byte WRAM removal to a future <code>SAVE_FORMAT_VERSION</code> bump, mark <code>wUnusedBCDNumber</code> with a "removed function — see commit" note.</li>
+      <li>Bundle ROM-side change with F-016 / F-017 / F-018 in a single HOME-cleanup PR.</li>
+    </ol>
+  </details>
+  <details>
+    <summary>Impact / risk / confidence</summary>
+    <p><strong>Impact:</strong> 61 bytes ROM (low-risk, immediate). +1 byte WRAM (save-format-gated, deferrable).</p>
+    <p><strong>Risk:</strong> Low for ROM. SAVE-FORMAT-RISK gate documented above for the WRAM byte.</p>
+    <p><strong>Confidence:</strong> High on the labels being dead.</p>
+  </details>
+</article>
+
+</section>
+
+<section id="session-2026-05-10-19">
+<h2>Session 2026-05-10 (#19)</h2>
+<p>Same branch / dev tip. Scope: verify 6 unreferenced labels in <code>home/map.asm</code>.</p>
+
+<article class="finding" id="F-2026-05-10-018" data-cat="size">
+  <header>
+    <h3>F-2026-05-10-018 — 6 unreferenced map utilities in <code>home/map.asm</code> are confirmed dead</h3>
+    <p class="meta">
+      <span class="cat">size</span>
+      <span>impact: ~35 bytes saved in HOME (conservative — excludes orphaned text data)</span>
+      <span>risk: low for handlers; medium for orphaned text data labels</span>
+      <span class="conf-high">confidence: high (handlers); medium (associated text)</span>
+    </p>
+    <p class="ref">home/map.asm:735 (CheckUnknownMap), :1515 (BGEvent), :1522 (CoordinatesEvent), :1718 (ClearBGMapBuffer), :2416 (GetMapAttributesBank), :2510 (Map_DummyFunction). Whole-tree grep for each bare label returns only the source label — no production callers, not even tracked in tech_debt this time.</p>
+  </header>
+  <details>
+    <summary>What's suboptimal</summary>
+    <ul>
+      <li><strong>CheckUnknownMap</strong> (line 735-741, 9 bytes): three-way <code>cp INDOOR/GATE/ENVIRONMENT_5</code> environment classifier. Used by nothing.</li>
+      <li><strong>BGEvent</strong> (line 1515-1516, 3 bytes): single <code>jumptext BGEventText</code>. The data label <code>BGEventText</code> at line 1518 needs separate dead-check before removal.</li>
+      <li><strong>CoordinatesEvent</strong> (line 1522-1523, 3 bytes): single <code>jumptext CoordinatesEventText</code>. Same caveat — CoordinatesEventText data label needs separate verification.</li>
+      <li><strong>ClearBGMapBuffer</strong> (line 1718-1723, 11 bytes): <code>ld hl, wBGMapBuffer / ld bc, len / xor a / call ByteFill / ret</code>. Cleanup helper for a tilemap buffer; never called.</li>
+      <li><strong>GetMapAttributesBank</strong> (line 2416-2420, 8 bytes): wrapper that loads <code>wMapGroup</code>/<code>wMapNumber</code> into b/c then falls through to <code>GetAnyMapAttributesBank</code>. The live <code>GetAnyMapAttributesBank</code> at line 2421 has its own callers; the wrapper is the dead piece.</li>
+      <li><strong>Map_DummyFunction</strong> (line 2510-2511, 1 byte): bare <code>ret</code>. Stub.</li>
+    </ul>
+    <p>This file isn't tracked in tech_debt/FINDINGS_DETAIL.md the way text.asm and menu.asm are — the audit caught additional candidates in <code>map.asm</code>.</p>
+  </details>
+  <details>
+    <summary>Suggested change</summary>
+    <ol>
+      <li>Delete the 6 handler labels and their bodies. <code>GetMapAttributesBank</code>'s 4 instructions can go cleanly because <code>GetAnyMapAttributesBank</code> at line 2421 is its own entry point.</li>
+      <li>For <code>BGEvent</code>/<code>CoordinatesEvent</code>: also grep for <code>BGEventText</code> and <code>CoordinatesEventText</code> separately — if those data labels are also unreferenced (likely, since their only known caller was the handlers being deleted), remove them too. Adds ~12 bytes to the saved total.</li>
+      <li>Bundle into the F-016 + F-017 cleanup PR for a unified "HOME bank dead-code sweep" — combined ~77 bytes saved (or more if BGEventText/CoordinatesEventText also dead).</li>
+    </ol>
+  </details>
+  <details>
+    <summary>Impact / risk / confidence</summary>
+    <p><strong>Impact:</strong> 35 bytes conservative; up to ~50 if the orphaned text data labels are also dead.</p>
+    <p><strong>Risk:</strong> Low for the 6 handlers (whole-tree grep conclusive). Medium for the data labels until separately verified — they could be referenced by the text engine via constants or the predef table.</p>
+    <p><strong>Confidence:</strong> High on handlers; medium on the BGEventText/CoordinatesEventText follow-up. Concrete instance of <a href="#F-2026-05-10-002">F-002</a>.</p>
+  </details>
+  <details>
+    <summary>Update 2026-05-10 (session #20) — orphaned text-data labels confirmed transitively dead</summary>
+    <p>Whole-tree grep for <code>BGEventText</code> and <code>CoordinatesEventText</code> returns only their source declarations + the <code>jumptext</code> calls inside the dead handlers (<code>BGEvent</code>, <code>CoordinatesEvent</code>). No external production caller. So once the handlers are deleted, these data labels become orphaned and can also be removed.</p>
+    <p><strong>Refined byte count for this finding:</strong> 35 (handlers) + 12 (orphaned text data: ~6 bytes each for <code>text_far _Foo / text_end</code>) = <strong>~47 bytes total</strong> for map.asm cleanup.</p>
+    <p><strong>Combined HOME cleanup PR (F-016 + F-017 + F-018 + F-019): ~150 bytes</strong>. Significant in a region with 317 bytes free fragmented across rst-handler gaps.</p>
+  </details>
+</article>
+
+</section>
+
+<section id="session-2026-05-10-18">
+<h2>Session 2026-05-10 (#18)</h2>
+<p>Same branch / dev tip. Scope: verify 3 known unreferenced labels in <code>home/menu.asm</code>.</p>
+
+<article class="finding" id="F-2026-05-10-017" data-cat="size">
+  <header>
+    <h3>F-2026-05-10-017 — 3 unreferenced menu utilities in <code>home/menu.asm</code> are confirmed dead</h3>
+    <p class="meta">
+      <span class="cat">size</span>
+      <span>impact: 15 bytes saved in HOME (1+5+9 = byte-by-byte verified)</span>
+      <span>risk: low (whole-tree grep is conclusive)</span>
+      <span class="conf-high">confidence: high</span>
+    </p>
+    <p class="ref">home/menu.asm:298 (Menu_DummyFunction), :388 (PlaceGenericTwoOptionBox), :682 (GetNthMenuStrings). Whole-tree grep returns only the source labels and tech_debt/ tracking docs — no production callers.</p>
+  </header>
+  <details>
+    <summary>What's suboptimal</summary>
+    <ul>
+      <li><strong>Menu_DummyFunction</strong> (line 298-299, 1 byte): bare <code>ret</code>. Stub function with no real body.</li>
+      <li><strong>PlaceGenericTwoOptionBox</strong> (line 388-390, 5 bytes): <code>call LoadMenuHeader / jr InterpretTwoOptionMenu</code>. Generic two-option dispatcher; superseded by the specialized <code>PlaceYesNoBox</code> at line 385 which is the live caller.</li>
+      <li><strong>GetNthMenuStrings</strong> (line 682-689, 9 bytes): walker for menu-data-pointer table strings. Was a generalized accessor; superseded by <code>MenuJumptable</code> at line 691 (the live equivalent that uses similar table-walking but with jump dispatch instead of string return).</li>
+    </ul>
+    <p>Already tracked at <code>tech_debt/FINDINGS_DETAIL.md:334-336</code> and <code>TECH_DEBT_REPORT.md:162-163</code>.</p>
+  </details>
+  <details>
+    <summary>Suggested change</summary>
+    <p>Same playbook as F-016: delete the three labels and their bodies, verify build, update tech_debt tracking. Bundle with F-016 in a single "HOME bank dead-code cleanup" PR for a combined ~42-byte HOME savings.</p>
+  </details>
+  <details>
+    <summary>Impact / risk / confidence</summary>
+    <p><strong>Impact:</strong> 15 bytes in HOME. Combined with F-016 = 42 bytes — meaningful in a 317-byte-free region.</p>
+    <p><strong>Risk:</strong> Low. Bare-word whole-tree grep returned zero production callers; explicit <code>; unreferenced</code> markers; tech_debt has been tracking these.</p>
+    <p><strong>Confidence:</strong> High. Concrete instance of <a href="#F-2026-05-10-002">F-002</a>, same tier as F-016.</p>
+  </details>
+</article>
+
+</section>
+
+<section id="session-2026-05-10-16">
+<h2>Session 2026-05-10 (#16)</h2>
+<p>Same branch / dev tip. Scope: verify the 4 known unreferenced labels in <code>home/text.asm</code>.</p>
+
+<article class="finding" id="F-2026-05-10-016" data-cat="size">
+  <header>
+    <h3>F-2026-05-10-016 — 4 unreferenced text-handling labels in <code>home/text.asm</code> are confirmed dead</h3>
+    <p class="meta">
+      <span class="cat">size</span>
+      <span>impact: ~27 bytes saved in HOME (space-tight) — refined session #17</span>
+      <span>risk: low (whole-tree grep is conclusive)</span>
+      <span class="conf-high">confidence: high</span>
+    </p>
+    <p class="ref">home/text.asm:128 (GameFreakText), :169 (DummyChar), :571 (PokeFluteTerminator), :841 (TextCommand_CRY). Whole-tree grep for each bare word returns only the source label and tech_debt/ tracking docs — no production callers, no jump-table references, no Python tooling references.</p>
+  </header>
+  <details>
+    <summary>What's suboptimal</summary>
+    <p>4 dead-code instances in HOME bank (ROM0 has 317 free bytes per dev_index, fragmented across rst-handler gaps):</p>
+    <ul>
+      <li><strong>GameFreakText</strong> (line 128-130, ~10 bytes): Japanese "GAMEFREAK!" greeting text + terminator. Pre-localization vestige.</li>
+      <li><strong>DummyChar</strong> (line 169-172, 1 byte): single <code>pop de</code> that falls through to <code>NextChar</code>. The <code>pop de</code> only runs if reached via the unreferenced label — so it's dead too.</li>
+      <li><strong>PokeFluteTerminator</strong> (lines 571-576, 5 bytes): <code>ld hl, .stop / ret / .stop: text_end</code>. Pre-Gen 2 Pokeflute text terminator. Confirmed session #17.</li>
+      <li><strong>TextCommand_CRY</strong> (lines 841-851, 11 bytes): <code>push de / ld e, [hl] / inc hl / ld d, [hl] / call PlayMonCry / pop de / pop hl / pop bc / ret</code>. Text command for cry-playing — Gen 2 uses a different text-command jump-table entry. Confirmed session #17.</li>
+    </ul>
+    <p>Already tracked at <code>tech_debt/FINDINGS_DETAIL.md:341-344</code> and <code>tech_debt/TECH_DEBT_REPORT.md:164-165</code>.</p>
+  </details>
+  <details>
+    <summary>Suggested change</summary>
+    <ol>
+      <li>Delete the four labels and their associated bodies. <code>DummyChar</code>'s <code>pop de</code> is dead-fallthrough — remove the label and the instruction; <code>NextChar</code> remains reachable from <code>PlaceNextChar</code>'s <code>jr nz, CheckDict</code> chain (line 163, the live caller).</li>
+      <li>Verify by running build + checking <code>pokegold.sym</code> for any of the four label names. If rgblink resolved a reference somewhere, the marker is wrong (extremely unlikely given the bare-word grep).</li>
+      <li>Update <code>tech_debt/FINDINGS_DETAIL.md</code> to mark these as resolved.</li>
+    </ol>
+  </details>
+  <details>
+    <summary>Impact / risk / confidence</summary>
+    <p><strong>Impact:</strong> 27 bytes in HOME (10 GameFreakText + 1 DummyChar + 5 PokeFluteTerminator + 11 TextCommand_CRY). Refined session #17 with byte-by-byte verification.</p>
+    <p><strong>Risk:</strong> Low. Bare-word whole-tree grep returned zero production references for each label. tech_debt/ has been tracking these as removable for a while.</p>
+    <p><strong>Confidence:</strong> High. This is a clean F-002 instance — the cleanest tier of unreferenced labels (no false-positive marker risk, no dynamic dispatch, no Python or jump-table indirection).</p>
+    <p>Concrete instance of <a href="#F-2026-05-10-002">F-002</a>; promoted as its own finding because the 4 labels in this file are individually confirmed and bundled removable in one PR.</p>
+  </details>
+</article>
+
+</section>
+
+<section id="session-2026-05-10-15">
+<h2>Session 2026-05-10 (#15)</h2>
+<p>Same branch / dev tip. Scope: deep-pass <code>scripts/inject_asm_guide.py</code> — the SessionStart hook that injects asm-guide TOC at session start (CLAUDE.md citation).</p>
+
+<article class="finding" id="F-2026-05-10-015" data-cat="llm-read">
+  <header>
+    <h3>F-2026-05-10-015 — <code>inject_asm_guide.py</code> section discovery is brittle to heading-style changes</h3>
+    <p class="meta">
+      <span class="cat">llm-read</span>
+      <span>impact: silent SessionStart degradation if guide headings get renamed</span>
+      <span>risk: low (small script, easy to fix)</span>
+      <span class="conf-med">confidence: medium</span>
+    </p>
+    <p class="ref">scripts/inject_asm_guide.py:46-50 (<code>find_section(prefix)</code> uses <code>title.startswith(prefix)</code>); :75-76 (calls with <code>"0)"</code> and <code>"6)"</code> as the magic prefixes).</p>
+  </header>
+  <details>
+    <summary>What's suboptimal</summary>
+    <p>The script extracts §0 (critical rules) and §6 (verification floor) from <code>docs/asm_authoring_guide.md</code> using literal prefix matching:</p>
+    <pre>def find_section(prefix):
+    for title, s, e in h2:
+        if title.startswith(prefix):
+            return title, s, e
+    return None
+...
+sec0 = find_section("0)")
+sec6 = find_section("6)")</pre>
+    <p>Today the guide's <code>##</code> headings are <code>## 0) If you only read one section, read this</code> and <code>## 6) Verification floor</code>, so the prefixes match. But if a future edit renames the heading to <code>## Section 0: ...</code> or <code>## §0 — ...</code>, <code>find_section("0)")</code> returns None silently and the SessionStart hook drops the load-bearing rules into the void without error.</p>
+    <p>The wrapper text injected ("Below: the always-true critical rules (§0)...") still claims they're there, so future-Claude reads a misleading promise about content that's actually absent. Worst case: the hook silently degrades and a session writes asm without seeing the §0 critical rules (e.g., the farcall hl/a clobber traps, the Label:: vs Label: rule).</p>
+  </details>
+  <details>
+    <summary>Suggested change</summary>
+    <p>Two safe fixes:</p>
+    <ol>
+      <li><strong>Fail loud:</strong> if <code>find_section("0)")</code> returns None, raise instead of silently skipping the section. Surface the bug at session-start time, not three commits later when someone notices missing rules.</li>
+      <li><strong>Anchor differently:</strong> add HTML-comment markers in the guide (<code>&lt;!-- §0:start --&gt;</code> / <code>&lt;!-- §0:end --&gt;</code>) and have the hook key on those instead of heading prefixes. More robust but requires guide edits.</li>
+    </ol>
+    <p>Variant 1 is the minimum: 4 lines added, no behavior change while the prefixes still match, but loud failure when they don't.</p>
+  </details>
+  <details>
+    <summary>Impact / risk / confidence</summary>
+    <p><strong>Impact:</strong> Silent SessionStart degradation is exactly the failure mode the project's "no stale shipped claims" audit was built to catch (per <code>tools/audit/check_no_stale_shipped_claims.py</code>). Same shape: code claims content is present, content has rotted, no surface signal.</p>
+    <p><strong>Risk:</strong> Low. Variant 1 is a defensive guard at the script entry point.</p>
+    <p><strong>Confidence:</strong> Medium. The brittleness is real; whether it's worth fixing depends on how often <code>asm_authoring_guide.md</code> headings get edited. <code>git log docs/asm_authoring_guide.md | grep -c '##'</code> would tell us empirically.</p>
+  </details>
+</article>
+
+</section>
+
+<section id="session-2026-05-10-10">
+<h2>Session 2026-05-10 (#10)</h2>
+<p>Same branch / dev tip. Scope: <code>engine/battle/ai/redundant.asm</code> full read.</p>
+
+<article class="finding" id="F-2026-05-10-014" data-cat="lines">
+  <header>
+    <h3>F-2026-05-10-014 — 11 near-identical bit-check handlers in <code>redundant.asm</code> could fold into the dispatch table</h3>
+    <p class="meta">
+      <span class="cat">lines</span>
+      <span>impact: ~30 bytes saved + ~30 LOC reduction in bank 0b</span>
+      <span>risk: medium (AI dispatch refactor; verify boss-AI-no-cheat doesn't depend on dispatch shape)</span>
+      <span class="conf-med">confidence: medium</span>
+    </p>
+    <p class="ref">engine/battle/ai/redundant.asm:49-156 (11 handlers: <code>.LightScreen</code>, <code>.Mist</code>, <code>.FocusEnergy</code>, <code>.Transform</code>, <code>.Reflect</code>, <code>.Substitute</code>, <code>.LeechSeed</code>, <code>.Encore</code>, <code>.MeanLook</code>, <code>.Foresight</code>, <code>.PerishSong</code>, <code>.Safeguard</code>, <code>.Swagger</code>); dispatch table at <code>:16-47</code>.</p>
+  </header>
+  <details>
+    <summary>What's suboptimal</summary>
+    <p>The 11 simple handlers all match the same shape:</p>
+    <pre>.HandlerName:
+    ld a, [wXxxScreens or wXxxSubStatus4 etc.]
+    bit BIT_NAME, a
+    ret</pre>
+    <p>Each is 6 bytes (3 for <code>ld a, [w...]</code> + 2 for <code>bit n, a</code> + 1 for <code>ret</code>). 11 × 6 = 66 bytes inline. Plus the dispatch entries in <code>.Moves</code> point to each unique label.</p>
+    <p>The dispatch table <code>.Moves</code> at line 16-47 already encodes (effect_const, target_addr) tuples. Could be extended to (effect_const, wram_addr, bit_number) for the bit-check entries, with a single generic "bit-check handler" replacing the 11 specialized ones.</p>
+  </details>
+  <details>
+    <summary>Suggested change</summary>
+    <p>Two-tier dispatch table:</p>
+    <pre>.Moves:
+    ; Tier 1: simple bit-check entries — 5 bytes each
+    db EFFECT_LIGHT_SCREEN
+    dw wEnemyScreens
+    db SCREENS_LIGHT_SCREEN
+    db -2  ; sentinel for "use generic bit-check handler"
+    ; ... 10 more 5-byte entries ...
+    db -1  ; end of bit-check tier
+    ; Tier 2: complex entries fall through to dbw form (existing)
+    dbw EFFECT_SNORE,         .Snore
+    dbw EFFECT_SLEEP_TALK,    .SleepTalk
+    ...</pre>
+    <p>Add a 6-byte generic handler at the top of <code>AI_Redundant</code>:</p>
+    <pre>.GenericBitCheck:
+    ld a, [hli]      ; lo of wram addr
+    ld h, [hl]
+    ld l, a
+    ld a, [hl]       ; load wram byte
+    bit B_FROM_TABLE, a  ; (need to encode bit n in a register first)
+    ret</pre>
+    <p>Saves ~30 bytes (11 × 6 byte handlers - 5 byte table entries × 11 - 6 byte generic = -22 in code, +(5 vs 3 byte table entry) × 11 = +22 in data → net ~22 bytes inline reduction; need to verify exact byte arithmetic).</p>
+    <p>Alternative simpler approach: leave the small handlers but factor the common <code>ld a, [w]; bit n, a; ret</code> into a macro for source-level density without byte savings. Pure llm-read win.</p>
+  </details>
+  <details>
+    <summary>Impact / risk / confidence</summary>
+    <p><strong>Impact:</strong> ~22-30 bytes saved + 11 fewer entry-point labels in <code>AI_Redundant</code>. Bank 0b is presumably less tight than 0e but still benefits.</p>
+    <p><strong>Risk:</strong> Medium. AI dispatch is a hot path; refactoring the table format requires testing boss-AI behavior. Run <code>tools/audit/check_boss_ai_no_cheat.py</code> + <code>check_boss_ai_policy_contract.py</code> after the change. The simpler macro-only alternative carries near-zero risk.</p>
+    <p><strong>Confidence:</strong> Medium. Saving estimate is approximate; need careful byte-counting of the encoded form vs. inline. Easy to validate by drafting both forms in a scratch file.</p>
+  </details>
+</article>
+
+</section>
+
+<section id="session-2026-05-10-9">
+<h2>Session 2026-05-10 (#9)</h2>
+<p>Same branch / dev tip. Cadence dropped to 60s. Scope: <code>engine/battle/ai/move.asm</code> full read (220 lines).</p>
+
+<article class="finding" id="F-2026-05-10-013" data-cat="speed">
+  <header>
+    <h3>F-2026-05-10-013 — Latent infinite loop in <code>AIChooseMove .DecrementScores</code> if enemy has no moves</h3>
+    <p class="meta">
+      <span class="cat">correctness / speed</span>
+      <span>impact: hangs the battle engine in a never-reached edge case</span>
+      <span>risk: low to fix (small defensive guard)</span>
+      <span class="conf-high">confidence: high (already documented in source)</span>
+    </p>
+    <p class="ref">engine/battle/ai/move.asm:122-143 (<code>.DecrementScores</code> and <code>.DecrementNextScore</code>); the comment at line 128 reads <code>; If the enemy has no moves, this will infinite.</code></p>
+  </header>
+  <details>
+    <summary>What's suboptimal</summary>
+    <p>The score-decrementer is structured as nested loops:</p>
+    <pre>.DecrementScores:
+    ld hl, wEnemyAIMoveScores
+    ld de, wEnemyMonMoves
+    ld c, NUM_MOVES
+.DecrementNextScore:
+    ; If the enemy has no moves, this will infinite.
+    ld a, [de]
+    inc de
+    and a
+    jr z, .DecrementScores      ; ← resets hl/de/c, restarts forever if all moves are 0
+    dec [hl]
+    jr z, .PickLowestScoreMoves
+    inc hl
+    dec c
+    jr z, .DecrementScores
+    jr .DecrementNextScore</pre>
+    <p>The "skip empty move" branch jumps back to <code>.DecrementScores</code> which re-initializes the cursors. If <code>wEnemyMonMoves[0..3]</code> are all zero (corrupt enemy mon, all four moves disabled and 0-PP'd to 80, etc.), the function never exits.</p>
+    <p>In normal play this is unreachable — disabled-move and 0-PP scoring sets entries to 80 (not 0), and any reachable enemy has at least one move. But it's an explicit hazard documented in source.</p>
+  </details>
+  <details>
+    <summary>Suggested change</summary>
+    <p>Add an entry-time guard. Cheapest version (~6 bytes):</p>
+    <pre>AIChooseMove:
+    ld a, [wBattleMode]
+    dec a
+    ret z
+    ld a, [wLinkMode]
+    and a
+    ret nz
+    farcall CheckEnemyLockedIn
+    ret nz
+    ; NEW: bail if enemy mon has no usable moves at all.
+    ld a, [wEnemyMonMoves]
+    and a
+    ret z</pre>
+    <p>Or, more robust (handles all-PP-0 with non-zero move slots): walk wEnemyMonPP, OR all four PP bytes (masked), <code>ret z</code> if zero. Slightly larger but covers both shapes of the bug.</p>
+    <p>Alternative: rewrite <code>.DecrementScores</code> to count loop iterations and break after one full pass with no decrement, but that's a heavier change.</p>
+  </details>
+  <details>
+    <summary>Impact / risk / confidence</summary>
+    <p><strong>Impact:</strong> Edge-case correctness. Hang would manifest as a frozen battle (no input response). Probability is low in normal play — but in a hack with custom moves/items the surface area for "all moves zeroed" can grow.</p>
+    <p><strong>Risk:</strong> Low for the entry-time guard (defensive code at function entry, well-known pattern). The line-128 comment is the original author's own warning, so the guard formalizes intent.</p>
+    <p><strong>Confidence:</strong> High that the loop is theoretically infinite; high that the guard fix is correct. Worth noting: there's no test/audit that exercises this path. If the user wants belt-and-suspenders, a damage-debugger scenario could be added that constructs an all-zero-moves enemy and asserts no hang.</p>
+  </details>
+</article>
+
+</section>
+
+<section id="session-2026-05-10-7">
+<h2>Session 2026-05-10 (#7)</h2>
+<p>Same branch / dev tip. Scope: confirm F-010 audit-wiring follow-up, finish type_passive lines 150-450, sample scoring.asm head.</p>
+
+<article class="finding" id="F-2026-05-10-012" data-cat="size">
+  <header>
+    <h3>F-2026-05-10-012 — Identical 32-line type-contribution helper duplicated in type_passive_damage_mods.asm</h3>
+    <p class="meta">
+      <span class="cat">size</span>
+      <span>impact: 32 lines / ~50 bytes saved in bank 0e (currently 2 free)</span>
+      <span>risk: low (mechanical de-dup, both forms in same file/bank)</span>
+      <span class="conf-high">confidence: high (byte-by-byte verified)</span>
+    </p>
+    <p class="ref">engine/battle/type_passive_damage_mods.asm:227-258 (<code>.GetTypeContributionFromHL</code> — local-scope nested under <code>TypePassive_ApplyDamageModifiers_Far</code>) vs :414-445 (<code>TypePassive_GetTypeContributionFromHL_Far</code> — exported, presumably cross-bank entry).</p>
+  </header>
+  <details>
+    <summary>What's suboptimal</summary>
+    <p>The two bodies are byte-identical:</p>
+    <pre>; lines 227-258 (.GetTypeContributionFromHL, local)
+; lines 414-445 (TypePassive_GetTypeContributionFromHL_Far, exported)
+; Both:
+    ld b, a
+    ld a, [hli]
+    ld c, a
+    ld a, [hl]
+    cp c
+    jr nz, .dual
+    ld a, c
+    cp b
+    jr z, .full
+    xor a
+    ret
+.dual
+    ld a, c
+    cp b
+    jr z, .half
+    ld a, [hl]
+    cp b
+    jr z, .half
+    xor a
+    ret
+.half
+    ld a, 1
+    ret
+.full
+    ld a, 2
+    ret</pre>
+    <p>Same input contract (<code>a</code> = type constant, <code>hl</code> → type1/type2 pointer), same output (<code>a</code> ∈ {0, 1, 2}), same instructions. Bank 0e at 2 free bytes per dev_index, so duplication actively hurts.</p>
+  </details>
+  <details>
+    <summary>Suggested change</summary>
+    <p>Three options, ranked by risk:</p>
+    <ol>
+      <li><strong>Best — collapse to one body, two labels:</strong> place both labels on the same address. <code>TypePassive_GetTypeContributionFromHL_Far::</code> at the address, <code>.GetTypeContributionFromHL</code> as a local alias above it (or just delete the local label and have the inner callers use the exported one — they're in the same bank so a plain <code>call TypePassive_GetTypeContributionFromHL_Far</code> works). Saves ~50 bytes (32 instructions × 1.5 bytes avg) plus the <code>.dual/.half/.full</code> trampolines.</li>
+      <li><strong>Compromise — local jumps to far:</strong> change <code>.GetTypeContributionFromHL</code> to a single <code>jp TypePassive_GetTypeContributionFromHL_Far</code>. Adds 3 bytes, removes ~50. Net saves ~47.</li>
+      <li><strong>Worst — leave duplicated:</strong> only valid if there's a profile-grounded reason the duplication helps (none visible).</li>
+    </ol>
+    <p>Verify with the damage debugger oracle since this is in the type-matchup chain (per CLAUDE.md "don't hand-roll Gen-2 damage math").</p>
+  </details>
+  <details>
+    <summary>Impact / risk / confidence</summary>
+    <p><strong>Impact:</strong> ~50 bytes in tight bank 0e. Symbolic boost: identical-looking duplicates are a maintenance hazard — if a bug is fixed in one and not the other, you get the AG-NN class of inconsistency.</p>
+    <p><strong>Risk:</strong> Low. Both bodies are in the same bank, same file, same I/O contract. Damage debugger oracle covers the type-matchup path; verify there.</p>
+    <p><strong>Confidence:</strong> High. Source lines diffed character-by-character.</p>
+  </details>
+</article>
+
+</section>
+
+<section id="session-2026-05-10-6">
+<h2>Session 2026-05-10 (#6)</h2>
+<p>Same branch / dev tip. Scope: read <code>check_ld_a_zero.py</code> to operationalize F-010; sample <code>type_passive_damage_mods.asm</code> for copy-paste finding.</p>
+
+<article class="finding" id="F-2026-05-10-011" data-cat="lines">
+  <header>
+    <h3>F-2026-05-10-011 — <code>TypePassive_ApplyDamageModifiers_Far</code> has 6+ near-identical "apply X% boost" blocks</h3>
+    <p class="meta">
+      <span class="cat">lines</span>
+      <span>impact: ~50-80 LOC + ~25-40 ROM bytes in bank 0e (already past tight)</span>
+      <span>risk: medium (refactor of damage-affecting code; needs damage_debugger.oracle verify)</span>
+      <span class="conf-med">confidence: medium (head only; need full-file read to nail the helper signature)</span>
+    </p>
+    <p class="ref">engine/battle/type_passive_damage_mods.asm:44-200+ (TypePassive_ApplyDamageModifiers_Far + per-type blocks <code>.after_normal</code>, <code>.after_fire</code>, <code>.after_ghost</code>, <code>.after_dragon</code>, <code>.after_ground</code>, <code>.after_rock</code>, etc.)</p>
+  </header>
+  <details>
+    <summary>What's suboptimal</summary>
+    <p>Each per-type passive check after its gate executes the same 8-line "apply X% damage based on single-or-double type contribution" pattern:</p>
+    <pre>    cp 2
+    ld a, NUM_FOR_DOUBLE
+    ld d, DEN_FOR_DOUBLE
+    jr nz, .apply_X
+    ld a, NUM_FOR_SINGLE
+    ld d, DEN_FOR_SINGLE
+.apply_X
+    call .ApplyCurDamageFraction</pre>
+    <p>That pattern is repeated 6+ times across NORMAL/FIRE/GHOST/DRAGON/GROUND/ROCK (and possibly more in the unread tail). Total inline cost: 6 × 8 lines = 48+ lines, at ~2-3 bytes per simple instruction = ~120-180 bytes in bank 0e (which is at 2 bytes free per dev_index).</p>
+    <p>The gates differ per type (STAB check, HP-fraction check, opponent-status check, type-effectiveness check, etc.) — so a fully data-driven loop won't fit. But the post-gate boilerplate is uniform and could be a 4-line helper that takes the type+constants as arguments.</p>
+  </details>
+  <details>
+    <summary>Suggested change</summary>
+    <p>Two viable shapes:</p>
+    <ol>
+      <li><strong>Helper (low risk):</strong> add a per-type helper <code>.ApplyTypePassiveBoost</code> that takes the type in <code>e</code> (or via stack), looks up (NUM1, DEN1, NUM2, DEN2) from a 4-byte-per-type table indexed by e, and falls into <code>.ApplyCurDamageFraction</code>. Each per-type block becomes ~3 lines (set up the type byte, load the per-type-specific gate-passing condition, call the helper) instead of ~12.</li>
+      <li><strong>Inline macro (zero-risk for damage math, byte-neutral):</strong> Use a RGBDS macro <code>type_passive_apply_fraction TYPE, NUM_SINGLE, DEN_SINGLE, NUM_DOUBLE, DEN_DOUBLE</code> that expands to the existing 8 lines. Bytes unchanged but the source halves visually and adds new types in one line each. Pure llm-read win.</li>
+    </ol>
+    <p>Verify either change with <code>python -m tools.damage_debugger.oracle</code> + <code>tools.damage_debugger.clobber_smoke</code> before shipping — this is in the damage path and the audit floor (per <code>docs/asm_authoring_guide.md</code> §6) requires it. The user memory <code>feedback_use_damage_debugger_dont_hand_calc.md</code> applies hard here.</p>
+  </details>
+  <details>
+    <summary>Impact / risk / confidence</summary>
+    <p><strong>Impact:</strong> Helper shape: 50-80 LOC + 25-40 bytes in bank 0e (per dev_index, this bank is at 2 bytes free). Macro shape: 0 bytes, ~50% LOC reduction in the file's most-read section.</p>
+    <p><strong>Risk:</strong> Medium for helper (real refactor in damage path — must verify with oracle/fuzz). Low for macro shape.</p>
+    <p><strong>Confidence:</strong> Medium. I read the head (lines 1-150) but the full file is 1368 lines — the trailing per-type-passive logic might have variations (different gate predicates, different anti-immunity overrides) that complicate the helper. Future session needs to scan lines 150-1368 before designing the exact helper signature.</p>
+  </details>
+  <details>
+    <summary>Update 2026-05-10 (session #7) — full block list (lines 44-208), confidence raised to medium-high</summary>
+    <p>Read lines 150-450. The full block list in <code>TypePassive_ApplyDamageModifiers_Far</code> is <strong>9 per-type blocks</strong>: NORMAL (44-69), FIRE (70-88), GHOST (89-105), DRAGON (106-122), GROUND (123-139), ROCK (140-156), BUG (157-173), WATER (174-190), ICE (191-208). Each gate is different (STAB / user-HP-low / opponent-status / type-effectiveness / move-category / opponent-HP-high) but the post-gate "apply X% boost" pattern is identical.</p>
+    <p>Total inline boilerplate: 9 × 8 = 72 lines of near-duplicate code. Common helper <code>.ApplyCurDamageFraction</code> at lines 279-320 already exists (it just takes <code>a</code>=numerator, <code>d</code>=denominator).</p>
+    <p>The variation table per type is just (NUM_DOUBLE, DEN_DOUBLE, NUM_SINGLE, DEN_SINGLE) per type:</p>
+    <pre>type     NUM_2  DEN_2   NUM_1  DEN_1
+NORMAL    16     15      31     30
+FIRE       6      5      11     10
+GHOST     11     10      21     20
+DRAGON     1      2       2      3
+GROUND     9     10      19     20
+ROCK       9     10      19     20
+BUG        9     10      19     20
+WATER     19     20      39     40
+ICE       19     20      39     40</pre>
+    <p>That's a 4-byte-per-type table = 36 bytes for 9 entries, plus a small lookup helper (~10-15 bytes), replacing 72 lines × ~2 bytes/line ≈ 144 bytes of inline. <strong>Net saves ~90 bytes in bank 0e</strong>.</p>
+    <p><strong>Confidence:</strong> medium-high (was medium). Helper signature is now nailed: take type byte in <code>a</code>, look up 4-byte tuple from a table, pick double/single based on prior contribution check, fall through to <code>.ApplyCurDamageFraction</code>.</p>
+    <p><strong>Risk note:</strong> several of the table rows have the same numbers (GROUND/ROCK/BUG share 9/10 + 19/20; WATER/ICE share 19/20 + 39/40) — verify per-type by re-reading lines 123-208 before refactoring; the apparent symmetry might mask a typo in one of the existing blocks worth investigating independently.</p>
+  </details>
+  <details>
+    <summary>Update 2026-05-10 (session #8) — typo concern dissolved; symmetry is design intent</summary>
+    <p>Re-read lines 100-208 byte-by-byte. The "mono < dual" multiplier ratio is consistent across <strong>all 5 defender-side blocks</strong>:</p>
+    <pre>type     mono(2)   dual(1)    delta
+DRAGON    2/3       1/2        dual is stronger reduction
+GROUND    19/20     9/10       same
+ROCK      19/20     9/10       same  (gate: critical hits only)
+BUG       19/20     9/10       same  (gate: physical moves only)
+WATER     39/40     19/20      same  (gate: special moves only)
+ICE       39/40     19/20      same  (gate: opponent above 1/2 HP)</pre>
+    <p>Direction is consistent: monotype defenders take <em>less</em> reduction than dual-type defenders for these passive effects. Initially read as a typo (intuition: monotype DRAGON should resist non-effective hits more than dual DRAGON). But across 5 independent blocks with separate gates and per-type fraction values, the pattern repeats exactly. <strong>Not a typo — design intent.</strong></p>
+    <p>The user-side blocks (NORMAL STAB at lines 51-69; FIRE pinch boost at lines 70-88; GHOST status-bonus at lines 89-105) have the opposite direction — monotype attacker gets <em>bigger</em> boost than dual-type. So user-side and opponent-side blocks have inverted contribution-to-multiplier mappings, intentionally.</p>
+    <p>F-011's helper signature is unaffected — the 4-byte tuple just lives in a per-type table. Confidence stays medium-high.</p>
+  </details>
+</article>
+
+</section>
+
+<section id="session-2026-05-10-5">
+<h2>Session 2026-05-10 (#5)</h2>
+<p>Same branch / dev tip. Scope: vary the lens — looking for actual speed/dead-code wins. 6 of 8 prior findings were llm-read; this session adds 1 size + 1 speed.</p>
+
+<article class="finding" id="F-2026-05-10-009" data-cat="size">
+  <header>
+    <h3>F-2026-05-10-009 — <code>Cosine::</code> in home/sine.asm is provably dead</h3>
+    <p class="meta">
+      <span class="cat">size</span>
+      <span>impact: ~3 bytes (2 + fallthrough overhead) in HOME (tight)</span>
+      <span>risk: low (whole-tree grep is conclusive for this label)</span>
+      <span class="conf-high">confidence: high</span>
+    </p>
+    <p class="ref">home/sine.asm:1 (<code>Cosine:: ; unreferenced</code>); whole-tree <code>grep '\bCosine\b'</code> matches only this file itself.</p>
+  </header>
+  <details>
+    <summary>What's suboptimal</summary>
+    <p>The function is:</p>
+    <pre>Cosine:: ; unreferenced
+; a = d * cos(a * pi/32)
+    add %010000 ; cos(x) = sin(x + pi/2)
+    ; fallthrough
+Sine::
+; a = d * sin(a * pi/32)
+    ld e, a
+    homecall _Sine
+    ret</pre>
+    <p>Whole-tree grep for the bare word <code>Cosine</code> returns one file: <code>home/sine.asm</code> itself. No call site, no jump-table reference, no Python tooling references it by name. The <code>; unreferenced</code> annotation is correct for this label (unlike many in F-002 where dynamic dispatch may hide a real caller).</p>
+    <p>HOME is one of the tightest regions per <code>docs/generated/dev_index.md</code> (ROM0 has 317 free bytes total but fragmented across rst-handler gaps).</p>
+  </details>
+  <details>
+    <summary>Suggested change</summary>
+    <p>Delete the <code>Cosine::</code> label and the <code>add %010000</code> instruction. The <code>; cos(x) = sin(x + pi/2)</code> comment can stay as a one-line preamble to <code>Sine::</code> for the rare future case someone asks "where's cosine?". Net change: ~3 bytes saved in HOME (the <code>add %010000</code> is 2 bytes; removing the export label saves it from the symbol table).</p>
+  </details>
+  <details>
+    <summary>Impact / risk / confidence</summary>
+    <p><strong>Impact:</strong> Small (~3 bytes) but in HOME, where every byte counts.</p>
+    <p><strong>Risk:</strong> Low. The label is <code>::</code> exported, but no other file references it — confirmed across .asm, .py, and the whole tree. Risk only emerges if a future feature wants Cosine; in that case, restoring 3 bytes is trivial.</p>
+    <p><strong>Confidence:</strong> High. This is one of the cleanest <code>; unreferenced</code> entries in F-002's catalog — a self-contained 2-instruction function with a clean grep result.</p>
+    <p>This is a high-confidence instance of <a href="#F-2026-05-10-002">F-002</a>; surfaces as its own finding because it's the cleanest case, smaller than the F-002 batch process needs.</p>
+  </details>
+</article>
+
+<article class="finding" id="F-2026-05-10-010" data-cat="speed">
+  <header>
+    <h3>F-2026-05-10-010 — <code>ld a, 0</code> sites should be <code>xor a</code> where flag-safe</h3>
+    <p class="meta">
+      <span class="cat">speed</span>
+      <span>impact: 1 byte + 1 cycle per site × ~50-100 sites</span>
+      <span>risk: medium per-site (xor a clobbers flags; ld a, 0 doesn't)</span>
+      <span class="conf-med">confidence: medium</span>
+    </p>
+    <p class="ref">Whole-tree <code>grep -nE '^\s+ld a, 0\s*$'</code> hits 30+ in the truncated head; existing audit at <code>tools/audit/check_ld_a_zero.py</code>. Sample sites: <code>home/print_num.asm:330</code>, <code>home/video.asm:42</code>, <code>home/map.asm:1885</code>, <code>home/pokedex_flags.asm:12</code>, <code>engine/battle/effect_commands.asm:2379, 3042, 3095</code>, <code>engine/items/item_effects.asm:384, 1622, 1647</code>, <code>engine/tilesets/tileset_anims.asm:395, 517, 535, 587</code>, <code>engine/menus/trainer_card.asm:508</code>.</p>
+  </header>
+  <details>
+    <summary>What's suboptimal</summary>
+    <p>SM83: <code>ld a, 0</code> is 2 bytes / 8 cycles. <code>xor a</code> is 1 byte / 4 cycles. The substitution saves 1 byte + 4 cycles per site. The catch: <code>xor a</code> updates the f register (sets Z, clears N/H/C); <code>ld a, 0</code> leaves f untouched. So substitution is only safe when the next instruction either uses the new flags as intended (if the surrounding code sets up <code>cp</code> or <code>jr z</code> against zero, <code>xor a</code> may even let you delete a redundant compare) or doesn't read flags at all.</p>
+    <p>The presence of <code>tools/audit/check_ld_a_zero.py</code> in the audit inventory tells me this class is already known to the project. Worth confirming whether it's wired into release-smoke and whether it produces a per-site safety verdict or just a list.</p>
+  </details>
+  <details>
+    <summary>Suggested change</summary>
+    <ol>
+      <li>Read <code>tools/audit/check_ld_a_zero.py</code> — does it just count, or does it identify flag-safe sites?</li>
+      <li>If it identifies safe sites: convert each one. Estimate 50-100+ ROM bytes savings, distributed across many banks.</li>
+      <li>If it just counts: write a small helper that, per <code>ld a, 0</code> site, checks the next 1-3 instructions. Safe substitutions are: next instruction is <code>ldh [hSomething], a</code>, <code>ld [wSomething], a</code>, <code>ld X, a</code>, or another <code>ld a, ...</code> reload. Unsafe: any instruction that reads flags (<code>jr z/nz/c/nc</code>, <code>jp z/nz/c/nc</code>, <code>ret z/nz/c/nc</code>, conditional <code>call</code>).</li>
+      <li>Note that some sites in the list (e.g. <code>engine/movie/credits.asm:543, 553</code>) may be in cold paths where the optimization isn't worth the diff churn — risk-benefit per file.</li>
+    </ol>
+  </details>
+  <details>
+    <summary>Impact / risk / confidence</summary>
+    <p><strong>Impact:</strong> 50-100 bytes ROM total estimate (1 byte × ~50-100 safe sites). HOME and tight banks (12, 15, 17, 1b, 1e at 0 free per dev_index) benefit most when their files are touched.</p>
+    <p><strong>Risk:</strong> Medium per-site without flag analysis. Low if the existing audit gates safe-vs-unsafe.</p>
+    <p><strong>Confidence:</strong> Medium. Need to read the audit script to know how automated the detection is.</p>
+  </details>
+  <details>
+    <summary>Update 2026-05-10 (session #6) — audit IS a full codemod; F-010 reclassified as high-confidence low-risk</summary>
+    <p>Read <code>tools/audit/check_ld_a_zero.py</code>. It's a fully-built flag-tracking codemod, not just a counter. Specifically:</p>
+    <ul>
+      <li><strong>Forward-walks each <code>ld a, 0</code> site</strong> tracking Z-alive and C-alive bits. UNSAFE if any subsequent flag-reading instruction (<code>jr z/nz/c/nc</code>, <code>adc</code>, <code>sbc</code>, <code>rla/rra</code>, <code>rl/rr r</code>, <code>daa</code>, <code>ccf</code>) fires while the corresponding flag is still alive. SAFE once both Z and C are overwritten by intervening instructions, or on unconditional control transfer (<code>jp/jr</code> uncond, <code>ret/reti</code>). UNSAFE on a label boundary (other paths might branch in). INDETERMINATE after a 16-step walk budget (treated as keep).</li>
+      <li><strong>Has a <code>; keep</code> allowlist marker</strong> for sites where the engineer wants to keep the flag-preserving form deliberately.</li>
+      <li><strong>Supports <code>--apply</code></strong> which rewrites every SAFE site in place, preserving indent and trailing comment.</li>
+      <li><strong>Doubles as a drift catch:</strong> after the codemod ships, the audit fails if any new SAFE site appears.</li>
+    </ul>
+    <p><strong>Reclassification:</strong> impact still ~50-100 bytes; <strong>risk drops to low</strong> (audit's flag analysis is sound; SAFE-site rewrites are byte-neutral semantics-wise); <strong>confidence raises to high</strong>.</p>
+    <p><strong>Operational shape (not for me to run — read-only audit):</strong> the user (or a separate non-readonly task) runs <code>python -m tools.audit.check_ld_a_zero --list</code> to see classifications, then <code>--apply</code> to do the codemod, then commits with a "no-build" tag (the diff is byte-neutral per the codemod design — <code>xor a</code> matches <code>ld a, 0</code> in resulting A, only smaller).</p>
+    <p><strong>Audit wiring follow-up question:</strong> is this audit currently in <code>tools/audit/check_release_smoke.py</code>'s floor? If yes, drift is automatically caught. If no, adding it is the cheapest way to keep this finding closed forever.</p>
+  </details>
+  <details>
+    <summary>Update 2026-05-10 (session #7) — release-smoke wiring CONFIRMED; finding may already be clean</summary>
+    <p><code>tools/audit/check_release_smoke.py:1427</code> calls <code>check_ld_a_zero()</code>. The audit is in the release-smoke floor. So if the codebase currently builds and passes release-smoke, every `ld a, 0` site is either UNSAFE (flag-preserving on purpose), INDETERMINATE (kept by default), or has a `; keep` marker.</p>
+    <p><strong>Implication:</strong> the 30+ `ld a, 0` hits I noted in session #5 are likely all flag-preserving on purpose. <strong>F-010 may already be optimal</strong> — there's no remaining low-hanging fruit. The finding's residual value is documentation: this class of optimization is already automated.</p>
+    <p><strong>To confirm:</strong> next time someone runs the audit, log the full output as the floor count. If the count is positive (SAFE > 0), there's still cleanup; if zero, declare F-010 closed.</p>
+    <p><strong>Reclassification:</strong> impact "0 to 50-100 bytes pending audit-run confirmation"; risk low; confidence high <em>that the class is well-managed</em>; the "do this" action item is "run the audit and trust the result."</p>
+  </details>
+</article>
+
+</section>
+
+<section id="session-2026-05-10-4">
+<h2>Session 2026-05-10 (#4)</h2>
+<p>Same branch / dev tip. Scope: confirm F-001 import-grep (definitive), finish effect_commands.asm tail labels, sample <code>late_gen_held_items.asm</code> head.</p>
+
+<article class="finding" id="F-2026-05-10-008" data-cat="llm-read">
+  <header>
+    <h3>F-2026-05-10-008 — <code>late_gen_held_items.asm</code> is the documentation-quality exemplar; promote its style</h3>
+    <p class="meta">
+      <span class="cat">llm-read</span>
+      <span>impact: high (template for the rest of the battle engine)</span>
+      <span>risk: none (referencing it is free)</span>
+      <span class="conf-high">confidence: high</span>
+    </p>
+    <p class="ref">engine/battle/late_gen_held_items.asm:1-30 (ApplyLateGenDamageStatsItemMods_Far header — d-clobber + bc-clobber rationale), :81-88 (Eviolite hl/bc preservation rationale tying back to AG-08), :104 (cross-reference back to :81), and the <code>; Reach via ROM0 thunk</code> marker on line 2 (audit hook for <code>tools/audit/check_farcall_hl_clobber.py</code>).</p>
+  </header>
+  <details open>
+    <summary>What's good (so future-Claude knows what to copy)</summary>
+    <p>This file's headers don't just say "what" — they say <strong>why this push/pop is here, what bug shape would surface without it, which audit caught it, and which prior commit context tells the story</strong>. Sample (lines 1-30):</p>
+    <pre>ApplyLateGenDamageStatsItemMods_Far::
+; Reach via ROM0 thunk ApplyLateGenDamageStatsItemMods — direct callfar
+; would clobber hl (the input/output attack stat) ...
+;
+; push/pop de preserves caller's d = move BP across the boost helpers,
+; which clobber d via `ld d, *_DEN` ...
+; PlayerAttackDamage / EnemyAttackDamage carry d=BP through .done into
+; this chain ... without the preservation, Choice Band/Specs/AV/Eviolite
+; holders propagate d=2 into damagecalc, dealing roughly 1/30 of intended
+; damage. Latent since 80c2d5c6, masked previously by GetUserItem's own
+; d-clobber (fixed 44ca3b29).
+;
+; push/pop bc preserves caller's c = defender def low byte across the
+; in-bank `call TypePassive_GetEffectiveMoveCategory_Far`. The AG-08 fix
+; (a6a00ea8) added `ld c, a` after `pop bc` ... same-bank callers ...
+; bc = wXxxMonDefense bytes through this function into TruncateHL_BC.
+; Without bc preservation, c gets overwritten ... ConfusionDamageCalc's
+; div-by-zero safety divides by 1 instead of the real defense, dealing
+; ~9× intended damage. Stab's 1.5× brings it to ~13×; user-visible as
+; "5x physical damage" against early-game wilds.</pre>
+    <p>This is the standard the rest of the battle engine should aspire to. Specifically:</p>
+    <ul>
+      <li><strong>Register clobber rationale at every push/pop site</strong> — ties the local push to the upstream caller's invariant.</li>
+      <li><strong>Bug-shape narrative</strong> — what number the user would see when this gets removed (~9× damage, etc.).</li>
+      <li><strong>Commit-anchor context</strong> — references prior fix commits (44ca3b29, 80c2d5c6, a6a00ea8) so future-Claude can <code>git show</code> the change history.</li>
+      <li><strong>Audit cross-reference</strong> — names the audit script that caught it.</li>
+    </ul>
+  </details>
+  <details>
+    <summary>Suggested change</summary>
+    <p>This is meta — not a code change to this file, but a directive for the rest of the codebase:</p>
+    <ol>
+      <li>Add a one-line pointer in <code>docs/asm_authoring_guide.md</code> §3 (the gotchas chapter) saying: "for register-preservation rationale, see <code>engine/battle/late_gen_held_items.asm:1-30</code> for the canonical comment style."</li>
+      <li>When implementing <a href="#F-2026-05-10-005">F-005</a> (farcall.asm header rewrite), use this file as the model for tone and depth — not just register tables, but the bug-shape narrative.</li>
+      <li>When new push/pop sites are added in core.asm or effect_commands.asm to fix register-clobber bugs, require the commenter to write a similar paragraph at the call site, including the bug shape that would re-emerge if the push/pop is later removed by a refactor.</li>
+    </ol>
+    <p>Note that the <code>; Reach via ROM0 thunk</code> marker on line 2 is the existing audit hook keyed by <code>tools/audit/check_farcall_hl_clobber.py</code>. This convention is documented in CLAUDE.md but not adopted broadly outside this file. Counting markers project-wide would make a useful follow-up audit.</p>
+  </details>
+  <details>
+    <summary>Impact / risk / confidence</summary>
+    <p><strong>Impact:</strong> High. The "AG-NN transitive clobber" pattern (per user memory <code>feedback_ag_nn_clobber_class.md</code>) keeps recurring because the lessons aren't preserved at the call site. This file demonstrates the cure. Documenting the convention amplifies it.</p>
+    <p><strong>Risk:</strong> None.</p>
+    <p><strong>Confidence:</strong> High.</p>
+  </details>
+  <details>
+    <summary>Update 2026-05-10 (session #5) — corroboration from move_effects/</summary>
+    <p>Two more files exhibit the same documentation-quality pattern: <code>engine/battle/move_effects/frustration.asm:1-7</code> (push/pop de rationale tied to damagecalc consuming e=level, with the 5x-damage bug shape narrated) and <code>engine/battle/move_effects/return.asm:1-4</code> (cross-references frustration.asm for the full mechanism). So the convention is wider than just <code>late_gen_held_items.asm</code> — it's an established style in the move-effects layer. The recommendation in this finding stands: extend to core.asm and effect_commands.asm where push/pop rationale is currently absent.</p>
+  </details>
+  <details>
+    <summary>Update 2026-05-10 (session #12) — same gap in <code>engine/battle/ai/</code> non-boss files</summary>
+    <p>Sessions 9-12 scanned <code>move.asm</code> (220L), <code>redundant.asm</code> (200L), <code>switch.asm:1-499</code>, and the head of <code>scoring.asm</code>. The non-boss AI files (move/scoring/switch/items/redundant — distinct from the well-documented <code>boss_*.asm</code> 5-file partition) follow the same documentation gap as core.asm and effect_commands.asm: clean code, minimal in-source register-ABI documentation, no push/pop rationale.</p>
+    <p>Concrete examples: <code>switch.asm:289 FindAliveEnemyMons</code> uses a non-obvious bit-mask iteration (<code>b</code> = ascending position bit, <code>c</code> = accumulator, <code>d</code> = mon count, <code>e</code> = cursor). No header explains the convention. <code>switch.asm:289-337</code> body would benefit from a 4-line header documenting "input: wOTPartyCount + wOTPartyMon1HP, wCurOTMon to skip; output: c = bitmask of alive non-current mons, carry set on only-one-or-none."</p>
+    <p>The recommendation extends: <em>once the canonical comment style is documented in <code>docs/asm_authoring_guide.md</code> §3 (per F-008), apply it across <code>engine/battle/ai/</code> non-boss files in addition to core/effect_commands</em>. Boss files already follow the convention (sessions #1, #4 — boss_thunks.asm, late_gen_held_items.asm, frustration.asm, return.asm).</p>
+  </details>
+</article>
+
+</section>
+
+<section id="session-2026-05-10-3">
+<h2>Session 2026-05-10 (#3)</h2>
+<p>Same branch / dev tip. Scope: finish core.asm tail label scan; start <code>effect_commands.asm</code>.</p>
+
+<article class="finding" id="F-2026-05-10-007" data-cat="llm-read">
+  <header>
+    <h3>F-2026-05-10-007 — <code>effect_commands.asm</code> mirrors core.asm's structural opacity</h3>
+    <p class="meta">
+      <span class="cat">llm-read</span>
+      <span>impact: high (move-script dispatcher is the second-most-read battle file)</span>
+      <span>risk: none (Phase A) / medium (Phase B)</span>
+      <span class="conf-high">confidence: high</span>
+    </p>
+    <p class="ref">engine/battle/effect_commands.asm:1 — 6660 lines, 206 top-level labels, 0 SECTION directives, 0 <code>; ===</code> region headers.</p>
+  </header>
+  <details>
+    <summary>What's suboptimal</summary>
+    <p>Same shape as <a href="#F-2026-05-10-006">F-006</a>: undifferentiated blob, no region map, no in-source navigation. This file holds the move-script command dispatcher (<code>BattleCommand_*</code> leaves), the Gen-2 damage formula (<code>BattleCommand_DamageCalc</code> at line 2794), the type-matchup gate (line 1426), and the stat-change family (<code>BattleCommand_AttackUp</code>...<code>EvasionDown2</code>, lines 3940+). All read constantly during balance and AI work.</p>
+  </details>
+  <details>
+    <summary>Suggested change — concrete region map for effect_commands.asm (head, lines 1–4170)</summary>
+    <pre>; Region: Move dispatcher entry              (DoPlayerTurn .. DoMove)               lines    1- 120
+; Region: Pre-execution gates                 (CheckTurn .. CheckEnemyTurn)          lines  121- 647
+; Region: Obedience + sleep-only              (BattleCommand_CheckObedience ..)      lines  648- 953
+; Region: Per-turn bookkeeping                (BattleCommand_DoTurn ..)              lines  955-1097
+; Region: Critical hit + STAB                 (BattleCommand_Critical .. Stab)       lines 1129-1413
+; Region: Type matchup                        (BattleCheckTypeMatchup ..)            lines 1426-1552
+; Region: Damage variation + hit/miss check   (DamageVariation .. CheckHit)          lines 1554-1912
+; Region: Effect chance + sub frame           (EffectChance .. RaiseSub)             lines 1914-2173
+; Region: Apply damage + super-effective text (ApplyDamage .. SuperEffectiveText)    lines 2175-2349
+; Region: Faint check + rage builder          (CheckFaint .. RageDamage)             lines 2351-2500
+; Region: Damage-stat selection               (DamageStats .. EnemyAttackDamage)     lines 2502-2747
+; Region: DAMAGE FORMULA CORE                 (BattleCommand_DamageCalc ..)          lines 2794-3028
+; Region: Constant damage (Seismic Toss etc.) (BattleCommand_ConstantDamage)         lines 3030-3197
+; Region: Anim helpers + apply damage to side (DefrostOpponent .. DoSubstituteDamage) lines 3199-3430
+; Region: Status inflictors                   (UpdateMoveData .. ParalyzeTarget)     lines 3432-3939
+; Region: Stat changes (Up family)            (BattleCommand_AttackUp ..)            lines 3940-4123
+; Region: Stat changes (Down family)          (MinimizeDropSub .. DownN)             lines 4125-...
+; ... (remainder pending)</pre>
+    <p>The damage-formula region (2794-3028) is particularly worth its own banner — that's where <em>any</em> damage-balance question lands, and it's currently anchored only by the <code>BattleCommand_DamageCalc</code> label.</p>
+  </details>
+  <details>
+    <summary>Update 2026-05-10 (session #4) — tail-half region map (lines 4170–6660)</summary>
+    <pre>; Region: Stat changes (Down family)            (BattleCommand_*Down* .. StatDown)   lines 4154-4325
+; Region: Mist + stat-change text + helpers      (CheckMist .. GetStatName)           lines 4326-4509
+; Region: Stat multipliers + AllStatsUp + LowerStat (StatLevelMultipliers .. LowerStat) lines 4510-4614
+; Region: TriStatusChance + Curl + sub helpers   (TriStatusChance .. LowerSubNoAnim)  lines 4615-4662
+; Region: Calc Player/Enemy/Battle stats         (CalcPlayerStats .. CalcBattleStats) lines 4663-4772
+; Region: Rampage (Outrage/Thrash/PetalDance)    (CheckRampage .. Rampage)            lines 4773-4834
+; Region: ForceSwitch (Roar/Whirlwind)           (BattleCommand_ForceSwitch ..)       lines 4835-5217
+; Region: FakeOut + Flinch + HeldFlinch + OHKO   (FakeOut .. OHKO)                    lines 5218-5344
+; Region: Charge + FocusPunch + TrapTarget       (CheckCharge .. TrapTarget)          lines 5345-5551
+; Region: Recoil + Confuse + Paralyze            (Recoil .. Paralyze)                 lines 5552-5788
+; Region: Type-check + double-damage (Fly/Underground) (CheckMoveTypeMatchesTarget ..) lines 5789-5881
+; Region: ResetStats + Heal                      (BattleCommand_ResetStats .. Heal)   lines 5882-5994
+; Region: Fail texts + clear/reset state         (ButItFailed .. ResetActorDisable)   lines 5995-6026
+; Region: Screen + paralyze/sub helpers          (BattleCommand_Screen .. ResetTurn)  lines 6027-6164
+; Region: ArenaTrap + Defrost + Unused5D + Safeguard (ArenaTrap .. CheckSafeguard)    lines 6165-6290
+; Region: Time-based heal (Morn/Day/Nite)        (HealMorn .. TimeBasedHealContinue)  lines 6291-6396
+; Region: Misc damage helpers                    (DoubleMinimizeDamage .. CheckHidden) lines 6397-6440
+; Region: GetUserItem / GetOpponentItem          (GetUserItem .. GetItemHeldEffect)   lines 6441-6486
+; Region: Battle-anim helpers                    (AnimateCurrentMove* .. AppearUser*) lines 6487-6660</pre>
+    <p>effect_commands.asm region map is now complete end-to-end. Phase A pass would add ~36 region banners total + 1 file-head TOC = ~250 comment lines into 6660. Build byte-identical.</p>
+  </details>
+  <details>
+    <summary>Impact / risk / confidence</summary>
+    <p><strong>Impact:</strong> High. Touched by every balance / AI / item-effect task. A region banner saves ≥1 tool call per traversal.</p>
+    <p><strong>Risk:</strong> None for Phase A (comments only).</p>
+    <p><strong>Confidence:</strong> High that the issue is real; line ranges above derived from the head-half label scan.</p>
+  </details>
+</article>
+
+</section>
+
+<section id="session-2026-05-10-2">
+<h2>Session 2026-05-10 (#2)</h2>
+<p>Same branch / dev tip. Scope: <code>engine/battle/core.asm</code> structural scan (head, tail, full label inventory).</p>
+
+<article class="finding" id="F-2026-05-10-006" data-cat="llm-read">
+  <header>
+    <h3>F-2026-05-10-006 — <code>core.asm</code> has 232 labels, 0 SECTION directives, 0 region headers</h3>
+    <p class="meta">
+      <span class="cat">llm-read</span>
+      <span>impact: high (per-task tool-call savings on the most-read battle file)</span>
+      <span>risk: none (Phase A) / medium (Phase B)</span>
+      <span class="conf-high">confidence: high</span>
+    </p>
+    <p class="ref">engine/battle/core.asm:1 (file header is one line: <code>; Core components of the battle engine.</code>); 8892 lines total; <code>grep -cE '^[A-Za-z_][A-Za-z0-9_]*::?$'</code> → 232 labels; <code>grep -cE '^SECTION '</code> → 0; <code>grep -cE '^; ==='</code> → 0.</p>
+  </header>
+  <details open>
+    <summary>What's suboptimal</summary>
+    <p>core.asm is the most-read battle-engine file (DoBattle, BattleTurn, ResidualDamage, all damage-flow code, faint handling, switching, weather, type matchups). It ships as a single linker-section blob (the SECTION directive is in <code>main.asm</code>'s INCLUDE chain, not here) with 232 functional labels and zero in-file region markers. An LLM reading "what handles weather damage?" must scan all 232 labels or grep blindly.</p>
+    <p>Concrete pain: in session #1 I had to <code>grep -nE '^[A-Za-z_]+:'</code> and read the output to figure out the file's structure. That's a tool call I shouldn't need.</p>
+  </details>
+  <details>
+    <summary>Suggested change — concrete region map for core.asm</summary>
+    <p>Phase A (comment-only, byte-identical build). Insert region headers at these line ranges, derived from the label scan:</p>
+    <pre>; Region: Battle bootstrap and turn flow         (DoBattle .. BattleTurn)        lines    3-213
+; Region: Faint detection                         (HasAnyoneFainted ..)            lines  263-330
+; Region: Stat-up / berserk / flee                (HandleBerserkGene ..)           lines  332-417
+; Region: Move-order / priority / lock-in         (DetermineMoveOrder ..)          lines  435-910
+; Region: Get move data                           (GetMoveEffect ..)               lines  911-921
+; Region: Turn execution                          (Battle_EnemyFirst ..)           lines  922-1054
+; Region: Between-turn residual effects           (ResidualDamage .. HandleScreens) lines 1057-1736
+; Region: Weather                                 (HandleWeather ..)               lines 1737-1834
+; Region: HP arithmetic helpers                   (SubtractHP* .. GetMaxHP)        lines 1836-1986
+; Region: HP bar UI                               (UpdateHPBar*)                   lines 2042-2060
+; Region: Faint flow                              (HandleEnemyMonFaint ..)         lines 2061-2350
+; Region: Trainer-victory + money + music         (WinTrainerBattle ..)            lines 2402-2615
+; Region: Player faint flow                       (HandlePlayerMonFaint ..)        lines 2616-2872
+; Region: Lost battle                             (LostBattle ..)                  lines 2874-2992
+; Region: Send-out animation                      (MonFaintedAnimation ..)         lines 2934-3036
+; Region: Enemy switching                         (ForceEnemySwitch ..)            lines 3037-3194
+; Region: Type matchup scoring                    (LookUpTheEffectiveness ..)      lines 3195-3340
+; Region: Switch-mon load + offer                 (LoadEnemyMonToSwitchTo ..)      lines 3342-3423
+; Region: Mon init + DV/shiny + send-out          (NewEnemyMonStatus ..)           lines 3476-3963
+; ... (remainder pending — sample showed file ends at IsLinkBattle line 8884+)</pre>
+    <p>Use the <code>boss_thunks.asm:1-30</code> template (band of <code>; ====</code> + <code>; Region:</code> + <code>; Concern:</code>). Each region adds 5–7 comment lines; total ~150 comment lines into an 8892-line file. No code movement. Build is byte-identical.</p>
+    <p>Bonus: at the file head, replace the one-line <code>; Core components of the battle engine.</code> with a 20–30-line table of contents listing region names + entry-point labels + line ranges. That's the "directories visited" pattern but in-source — future-Claude opens the file and gets a navigable map in the first Read window.</p>
+  </details>
+  <details>
+    <summary>Impact / risk / confidence</summary>
+    <p><strong>Impact:</strong> High. core.asm is read in nearly every battle-engine task. A region map saves ≥1 tool call per traversal and makes line-range Read calls (e.g. <code>Read offset=1737 limit=100</code> for "weather code only") well-targeted instead of guesses.</p>
+    <p><strong>Risk:</strong> None for Phase A (comments only). ROM size unchanged.</p>
+    <p><strong>Confidence:</strong> High that the issue is real and the remedy is safe. Line ranges above were derived from the label scan but the trailing region (lines 3964–8892) needs a second pass to fill in — the file is too large for one Read.</p>
+    <p>This is a concrete instance of <a href="#F-2026-05-10-003">F-2026-05-10-003</a>; that finding covered the class, this one covers core.asm specifically with a pre-baked map.</p>
+  </details>
+  <details>
+    <summary>Update 2026-05-10 (session #3) — tail-half region map (lines 3964–8892)</summary>
+    <pre>; Region: Spikes + Pursuit-on-switch        (SpikesDamage .. PursuitSwitch)        lines 3971-4112
+; Region: Held-item triggers + healing       (HandleHealingItems .. UseConfusionHeal) lines 4125-4355
+; Region: Stat-boosting held items           (HandleStatBoostingHeldItems ..)       lines 4356-4439
+; Region: HUD update + draw                  (UpdateBattleHUDs .. UpdateHPPal)      lines 4440-4750
+; Region: Battle menu UI                     (BattleMenu .. CheckAmuletCoin)        lines 4755-5191
+; Region: Move selection screen              (MoveSelectionScreen .. MoveInfoBox)   lines 5192-5722
+; Region: Enemy-action parser + lock-in      (ParseEnemyAction ..)                  lines 5723-5901
+; Region: Link send/receive action           (LinkBattleSendReceiveAction)          lines 5902-5968
+; Region: LoadEnemyMon (wild/trainer init)   (LoadEnemyMon ..)                      lines 5969-6448
+; Region: Unown letter + trainer slide-in    (CheckUnownLetter ..)                  lines 6449-6568
+; Region: Computed-stat math                 (ApplyStatusEffectOn* .. BoostStat)    lines 6569-6772
+; Region: Battle font/HP-bar load + textbox  (_LoadBattleFontsHPBar ..)             lines 6774-6802
+; Region: _BattleRandom (battle PRNG)        (_BattleRandom)                        lines 6803-6870
+; Region: Battle anim play-if-visible        (Call_PlayBattleAnim ..)               lines 6871-6899
+; Region: Experience + boost text            (GiveExperiencePoints ..)              lines 6900-7344
+; Region: Exp bar fill/animate               (AnimateExpBar .. PlaceExpBar)         lines 7345-7782
+; Region: Battle pic backpic/frontpic        (GetBattleMonBackpic ..)               lines 7813-7882
+; Region: StartBattle + enemy init           (StartBattle .. InitEnemyWildmon)      lines 7883-8054
+; Region: ExitBattle + PayDay                (ExitBattle .. CheckPayDay)            lines 8093-8175
+; Region: Link battle participants display   (ShowLinkBattleParticipantsAfterEnd ..) lines 8176-8364
+; Region: Roam mons                          (BattleEnd_HandleRoamMons ..)          lines 8365-8455
+; Region: Link battle record                 (AddLastLinkBattleToLinkRecord ..)     lines 8466-8670
+; Region: Battle display init + backpic copy (InitBattleDisplay .. CopyBackpic)     lines 8671-8808
+; Region: BattleStartMessage + link helpers  (BattleStartMessage .. IsLinkBattle)   lines 8809-8892</pre>
+    <p>core.asm region map is now complete end-to-end. Implementation as a single Phase A pass would add ~24 region banners + 1 file-head TOC = ~150 comment lines into 8892. Build byte-identical.</p>
+  </details>
+</article>
+
+</section>
+
+</body>
+</html>
