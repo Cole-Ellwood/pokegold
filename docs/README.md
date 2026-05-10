@@ -143,3 +143,13 @@ or evolution edits:
 ```powershell
 python scripts\generate_balance_audit.py
 ```
+
+Regenerate the player-facing trainer dossier PDF (gym leaders + Elite 4 +
+Champion teams, Pokemon Showdown style — name, level, item, full moveset, base
+stats with bars) after edits to `data/trainers/parties.asm` for any boss
+trainer or after relevant base-stat edits. Output is `docs/trainer_dossier.pdf`.
+
+```powershell
+python -m pip install reportlab Pillow   # one-time install
+python scripts\generate_trainer_dossier_pdf.py
+```

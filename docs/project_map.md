@@ -22,6 +22,11 @@ source-truth rules explicit even when that makes the prose less human-friendly.
   pressure report. Do not hand-edit it.
 - `scripts/generate_dev_index.py`: regenerates the dev index after linker outputs
   change.
+- `scripts/generate_trainer_dossier_pdf.py`: regenerates `docs/trainer_dossier.pdf`,
+  the player-facing Pokemon Showdown-style PDF of gym leaders + E4 + Champion
+  teams (parties + base stats parsed live from source). Run after edits to
+  `data/trainers/parties.asm` for boss trainers or relevant base-stat changes.
+  Requires `reportlab` and `Pillow` (`python -m pip install reportlab Pillow`).
 
 ## Objective Check
 
