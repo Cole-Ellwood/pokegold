@@ -240,11 +240,11 @@ Top-level entry and named scoring helpers:
 
 Public-failure gates inside `ApplyMoveModel` (search by local label):
 
-- `.UtilityMoveWouldFailPublicly` (`engine/battle/ai/boss_platform.asm:794`) — Substitute, Light Screen, Reflect, Protect, Disable, Encore, Mean Look, Dream Eater, Nightmare, Rain/Sunny Day with weather already up.
-- `.StatusMoveWouldFailPublicly` (`engine/battle/ai/boss_platform.asm:774`) — already-statused target, Safeguard, etc.
-- `.DarkShieldBlocksStatusEffect` (`engine/battle/ai/boss_platform.asm:934`), `.DarkShieldBlocksUtilityEffect` (`engine/battle/ai/boss_platform.asm:950`) — full-Dark player passive shield gating.
-- `.EnemyStatusMoveTypeMissesPlayer` (`engine/battle/ai/boss_platform.asm:1019`) — Thunder Wave into Ground, Glare into Ghost, Toxic into Poison/Steel.
-- `.HeldItemMoveBlocked` (`engine/battle/ai/boss_platform.asm:717`), `.AssaultVestBlocksCurrentMove` (`engine/battle/ai/boss_platform.asm:744`) — own held-item legality.
+- `.UtilityMoveWouldFailPublicly` (`engine/battle/ai/boss_platform.asm:792`) — Substitute, Light Screen, Reflect, Protect, Disable, Encore, Mean Look, Dream Eater, Nightmare, Rain/Sunny Day with weather already up.
+- `.StatusMoveWouldFailPublicly` (`engine/battle/ai/boss_platform.asm:772`) — already-statused target, Safeguard, etc.
+- `.DarkShieldBlocksStatusEffect` (`engine/battle/ai/boss_platform.asm:932`), `.DarkShieldBlocksUtilityEffect` (`engine/battle/ai/boss_platform.asm:948`) — full-Dark player passive shield gating.
+- `.EnemyStatusMoveTypeMissesPlayer` (`engine/battle/ai/boss_platform.asm:1017`) — Thunder Wave into Ground, Glare into Ghost, Toxic into Poison/Steel.
+- `.HeldItemMoveBlocked` (`engine/battle/ai/boss_platform.asm:715`), `.AssaultVestBlocksCurrentMove` (`engine/battle/ai/boss_platform.asm:742`) — own held-item legality.
 
 For the full current behavior list (one-line each, with rationale), read
 `docs/boss_ai_post_patch_notes.md` § *Implemented Patch Summary*.
@@ -343,8 +343,8 @@ layer.
 | --- | --- |
 | Pick or refresh plan | `BossAI_SelectPlanIfNeeded` (`engine/battle/ai/boss_policy_switch.asm:861`) |
 | Find a party mon by role tag | `BossAI_FindPartyMonByRole` (`engine/battle/ai/boss_policy_switch.asm:1043`) |
-| Per-boss role-bias dispatcher (reads `wTrainerClass`, jumps to per-boss branch) | `.ApplyRoleBias` (`engine/battle/ai/boss_platform.asm:2087`) (under `BossAI_ApplyMoveModel`) |
-| Per-boss scoring branches | `.falkner` (`engine/battle/ai/boss_platform.asm:2121`), `.rival` (`engine/battle/ai/boss_platform.asm:2113`), `.chuck` (`engine/battle/ai/boss_platform.asm:2135`), `.jasmine` (`engine/battle/ai/boss_platform.asm:2142`), `.pryce` (`engine/battle/ai/boss_platform.asm:2153`), `.clair` (`engine/battle/ai/boss_platform.asm:2162`), `.will` (`engine/battle/ai/boss_platform.asm:2169`), `.bruno` (`engine/battle/ai/boss_platform.asm:2176`), `.karen` (`engine/battle/ai/boss_platform.asm:2183`), `.koga` (`engine/battle/ai/boss_platform.asm:2190`), `.champion` (`engine/battle/ai/boss_platform.asm:2199`) |
+| Per-boss role-bias dispatcher (reads `wTrainerClass`, jumps to per-boss branch) | `.ApplyRoleBias` (`engine/battle/ai/boss_platform.asm:2042`) (under `BossAI_ApplyMoveModel`) |
+| Per-boss scoring branches | `.falkner` (`engine/battle/ai/boss_platform.asm:2076`), `.rival` (`engine/battle/ai/boss_platform.asm:2068`), `.chuck` (`engine/battle/ai/boss_platform.asm:2090`), `.jasmine` (`engine/battle/ai/boss_platform.asm:2097`), `.pryce` (`engine/battle/ai/boss_platform.asm:2108`), `.clair` (`engine/battle/ai/boss_platform.asm:2117`), `.will` (`engine/battle/ai/boss_platform.asm:2124`), `.bruno` (`engine/battle/ai/boss_platform.asm:2131`), `.karen` (`engine/battle/ai/boss_platform.asm:2138`), `.koga` (`engine/battle/ai/boss_platform.asm:2145`), `.champion` (`engine/battle/ai/boss_platform.asm:2154`) |
 | Per-boss role-effect tables (consumed by the branches above) | `BossAIChuckRoleEffects` (`engine/battle/ai/boss_data.asm:1728`), `BossAIJasmineRoleEffects` (`engine/battle/ai/boss_data.asm:1735`), `BossAIPryceRoleEffects` (`engine/battle/ai/boss_data.asm:1742`), `BossAIClairRoleEffects` (`engine/battle/ai/boss_data.asm:1752`), `BossAIWillRoleEffects` (`engine/battle/ai/boss_data.asm:1761`), `BossAIBrunoRoleEffects` (`engine/battle/ai/boss_data.asm:1769`), `BossAIKarenRoleEffects` (`engine/battle/ai/boss_data.asm:1776`), `BossAIKogaRoleEffects` (`engine/battle/ai/boss_data.asm:1786`), `BossAIChampionRoleEffects` (`engine/battle/ai/boss_data.asm:1795`) |
 
 ### Effect classifiers

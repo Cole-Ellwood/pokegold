@@ -682,8 +682,6 @@ BossAI_ApplyMoveModel:
 	call .ApplyPoisonContactRiskBias
 	call .ApplyDarkShieldChanceBias
 	call .ApplyLifeOrbRecoilBias
-	call .ApplyShellBellSustainBias
-	call .ApplyGrassRegrowthBias
 	call .ApplyDestinyBondTradeBias
 	call .ApplyRevealedDestinyBondAvoidance
 	call .ApplyCounterCoatTradeBias
@@ -1373,49 +1371,6 @@ BossAI_ApplyMoveModel:
 	ld a, 6
 	jp BossAI_DiscourageScoreHL
 
-.ApplyShellBellSustainBias
-	call BossAI_GetEnemyHeldEffect
-	cp HELD_SHELL_BELL
-	ret nz
-	ld a, [wEnemyMoveStruct + MOVE_POWER]
-	and a
-	ret z
-	call BossAI_CheckEnemyMoveTypeMatchupVsPlayerNoItem
-	ld a, [wTypeMatchup]
-	and a
-	ret z
-	call AICheckEnemyMaxHP_HL
-	ret c
-	ld a, 2
-	jp BossAI_EncourageScoreHL
-
-.ApplyGrassRegrowthBias
-	ld a, GRASS
-	call BossAI_EnemyTypeContribution
-	and a
-	ret z
-	ld a, [wEnemyMonStatus]
-	and a
-	ret nz
-	call AICheckEnemyMaxHP_HL
-	ret c
-	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
-	cp EFFECT_PROTECT
-	jr z, .regrowth_good
-	cp EFFECT_SUBSTITUTE
-	jr z, .regrowth_good
-	cp EFFECT_HEAL
-	jr z, .regrowth_good
-	cp EFFECT_MORNING_SUN
-	jr z, .regrowth_good
-	cp EFFECT_SYNTHESIS
-	jr z, .regrowth_good
-	cp EFFECT_MOONLIGHT
-	ret nz
-.regrowth_good
-	ld a, 2
-	jp BossAI_EncourageScoreHL
-
 .ApplyDestinyBondTradeBias
 	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
 	cp EFFECT_DESTINY_BOND
@@ -1588,7 +1543,7 @@ BossAI_ApplyMoveModel:
 	push hl
 	call BossAI_PredictPlayerSwitch
 	pop hl
-	cp 40
+	cp 60
 	ret c
 	call .SeenSpeciesChoiceLockRisk
 	and a
