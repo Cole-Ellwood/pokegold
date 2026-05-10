@@ -1139,6 +1139,7 @@ MagnetonEvosAttacks:
 	db 30, SWIFT
 	db 34, THUNDERBOLT
 	db 38, ZAP_CANNON
+	db 42, EXPLOSION
 	db 0 ; no more level-up moves
 
 FarfetchDEvosAttacks:

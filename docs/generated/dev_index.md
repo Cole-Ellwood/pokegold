@@ -75,7 +75,7 @@ Read `docs/README.md` first for helper-doc routing, then `docs/project_context.m
 | Region | Used | Free | Banks |
 | --- | ---: | ---: | ---: |
 | ROM0 | 16067 | 317 |  |
-| ROMX | 1140382 | 940386 | 127 |
+| ROMX | 1140384 | 940384 | 127 |
 | SRAM | 31699 | 1069 | 4 |
 | WRAM0 | 4047 | 49 |  |
 | WRAMX | 4096 | 0 |  |
@@ -155,7 +155,7 @@ Use these as candidates when moving optional code or data out of tight banks.
 | `Enemy Trainers` | ROMX | 0e:4000-7056 | 12375 | ROMX 0e | `engine/battle/ai/boss_platform.asm`, `engine/battle/ai/boss_policy_move.asm`, `engine/battle/ai/boss_policy_switch.asm`, `engine/battle/ai/boss_thunks.asm`, +3 more |
 | `Late Gen Held Items` | ROMX | 0e:7057-7ddb | 3461 |  | `engine/battle/late_gen_held_items.asm`, `engine/battle/type_passive_damage_mods.asm`, `main.asm` |
 | `Battle Core` | ROMX | 0f:4000-7bad | 15278 | ROMX 0f | `engine/battle/core.asm`, `main.asm` |
-| `Evolutions and Attacks` | ROMX | 10:6861-7f94 | 5940 | ROMX 10 | `data/pokemon/evos_attacks.asm`, `data/pokemon/evos_attacks_pointers.asm` |
+| `Evolutions and Attacks` | ROMX | 10:6861-7f96 | 5942 | ROMX 10 | `data/pokemon/evos_attacks.asm`, `data/pokemon/evos_attacks_pointers.asm` |
 | `Maps` | ROMX | 25:4000-65f8 | 9721 | ROMX 25 | `data/maps/attributes.asm`, `data/maps/blocks.asm`, `data/maps/map_data.asm`, `data/maps/maps.asm`, +2 more |
 | `Events` | ROMX | 25:65f9-7d99 | 6049 | ROMX 25 | `data/wild/bug_contest_mons.asm`, `engine/events/trainer_scripts.asm`, `engine/overworld/cmd_queue.asm`, `engine/overworld/events.asm`, +1 more |
 | `Audio` | ROMX | 3a:4000-5490 | 5265 | ROMX 3a | `audio.asm`, `audio/cry_pointers.asm`, `audio/engine.asm`, `audio/music/nothing.asm`, +3 more |
