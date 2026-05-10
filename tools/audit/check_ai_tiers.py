@@ -10,7 +10,13 @@ ROOT = Path(__file__).resolve().parents[2]
 AI_TIERS_FILE = ROOT / "data" / "trainers" / "ai_tiers.asm"
 LEADERS_FILE = ROOT / "data" / "trainers" / "leaders.asm"
 MOVE_AI_FILE = ROOT / "engine" / "battle" / "ai" / "move.asm"
-BOSS_AI_FILE = ROOT / "engine" / "battle" / "ai" / "boss.asm"
+BOSS_AI_FILES = (
+    ROOT / "engine" / "battle" / "ai" / "boss_platform.asm",
+    ROOT / "engine" / "battle" / "ai" / "boss_policy_move.asm",
+    ROOT / "engine" / "battle" / "ai" / "boss_policy_switch.asm",
+    ROOT / "engine" / "battle" / "ai" / "boss_data.asm",
+    ROOT / "engine" / "battle" / "ai" / "boss_thunks.asm",
+)
 TRAINER_ATTRIBUTES_FILE = ROOT / "engine" / "battle" / "read_trainer_attributes.asm"
 
 JOHTO_LEADERS = {
@@ -227,9 +233,10 @@ def main() -> int:
     if not MOVE_AI_FILE.exists():
         print(f"ERROR: missing file: {MOVE_AI_FILE}", file=sys.stderr)
         return 1
-    if not BOSS_AI_FILE.exists():
-        print(f"ERROR: missing file: {BOSS_AI_FILE}", file=sys.stderr)
-        return 1
+    for boss_ai_file in BOSS_AI_FILES:
+        if not boss_ai_file.exists():
+            print(f"ERROR: missing file: {boss_ai_file}", file=sys.stderr)
+            return 1
     if not TRAINER_ATTRIBUTES_FILE.exists():
         print(f"ERROR: missing file: {TRAINER_ATTRIBUTES_FILE}", file=sys.stderr)
         return 1
@@ -314,7 +321,9 @@ def main() -> int:
             print(f"  - {trainer_class}, {trainer_id} -> {tier}", file=sys.stderr)
         return 1
 
-    boss_ai_text = BOSS_AI_FILE.read_text(encoding="utf-8")
+    boss_ai_text = "\n".join(
+        boss_ai_file.read_text(encoding="utf-8") for boss_ai_file in BOSS_AI_FILES
+    )
     num_weight_rows = count_tier_weight_rows(boss_ai_text)
     if num_weight_rows == 0:
         print("ERROR: could not locate BossAITierWeights table.", file=sys.stderr)

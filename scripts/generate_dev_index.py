@@ -114,7 +114,11 @@ AREAS: tuple[Area, ...] = (
         title="Boss AI and trainer difficulty",
         intent="Human-like major fights, no hidden-information cheating outside authored Haki.",
         paths=(
-            "engine/battle/ai/boss.asm",
+            "engine/battle/ai/boss_platform.asm",
+            "engine/battle/ai/boss_policy_move.asm",
+            "engine/battle/ai/boss_policy_switch.asm",
+            "engine/battle/ai/boss_data.asm",
+            "engine/battle/ai/boss_thunks.asm",
             "engine/battle/ai/move.asm",
             "engine/battle/ai/scoring.asm",
             "engine/battle/ai/items.asm",

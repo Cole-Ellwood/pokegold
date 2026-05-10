@@ -7,7 +7,13 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
-BOSS_FILE = ROOT / "engine" / "battle" / "ai" / "boss.asm"
+BOSS_FILES = [
+    ROOT / "engine" / "battle" / "ai" / "boss_platform.asm",
+    ROOT / "engine" / "battle" / "ai" / "boss_policy_move.asm",
+    ROOT / "engine" / "battle" / "ai" / "boss_policy_switch.asm",
+    ROOT / "engine" / "battle" / "ai" / "boss_data.asm",
+    ROOT / "engine" / "battle" / "ai" / "boss_thunks.asm",
+]
 CALLSITE_FILES = [
     ROOT / "engine" / "battle" / "core.asm",
     ROOT / "engine" / "battle" / "ai" / "move.asm",
@@ -81,7 +87,9 @@ def guard_present(lines: list[str], start_idx: int) -> bool:
 
 def audit_entrypoint_guards() -> list[str]:
     errs: list[str] = []
-    lines = load_lines(BOSS_FILE)
+    lines: list[str] = []
+    for path in BOSS_FILES:
+        lines.extend(load_lines(path))
     labels = find_labels(lines)
     for name in sorted(GUARDED_ENTRYPOINTS):
         if name not in labels:
@@ -111,7 +119,7 @@ def audit_callsites() -> list[str]:
 
 
 def main() -> int:
-    required = [BOSS_FILE, *CALLSITE_FILES]
+    required = [*BOSS_FILES, *CALLSITE_FILES]
     missing = [p for p in required if not p.exists()]
     if missing:
         print("ERROR: missing required files:", file=sys.stderr)

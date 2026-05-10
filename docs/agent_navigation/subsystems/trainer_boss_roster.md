@@ -19,7 +19,7 @@ edits should make old knowledge incomplete, not create unfair walls.
 | Trainer attributes and base AI flags | `data/trainers/attributes.asm` |
 | Party pointer order | `data/trainers/party_pointers.asm` |
 | Trainer constants and IDs | `constants/trainer_constants.asm`, `constants/trainer_data_constants.asm` |
-| Boss AI implementation | `engine/battle/ai/boss.asm` |
+| Boss AI implementation | `engine/battle/ai/` |
 | Boss AI activation | `engine/battle/read_trainer_attributes.asm`, `engine/battle/start_battle.asm` |
 
 ## Boss AI Tier Map

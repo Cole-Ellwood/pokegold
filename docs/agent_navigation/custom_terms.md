@@ -29,8 +29,8 @@ feature category.
 | Search terms | Route |
 | --- | --- |
 | Boss AI tier, `AI_TIER_EARLY`, `AI_TIER_MID`, `AI_TIER_LATE` | `data/trainers/ai_tiers.asm`, `constants/trainer_data_constants.asm` |
-| no-cheat, hidden information, current-turn input | `docs/boss_ai_spec.md`, `engine/battle/ai/boss.asm` |
-| scout move, scout pivot, plausible risk | `engine/battle/ai/boss.asm`, `docs/boss_ai_trace_capture.md` |
+| no-cheat, hidden information, current-turn input | `docs/boss_ai_spec.md`, `engine/battle/ai/` |
+| scout move, scout pivot, plausible risk | `engine/battle/ai/`, `docs/boss_ai_trace_capture.md` |
 | live capture, trace ROM, `BOSS_AI_TRACE` | `docs/agent_navigation/subsystems/boss_ai_trace.md` |
 | gym scout dossier | `docs/project_roadmap.md` row `BOSSAI-002` |
 

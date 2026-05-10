@@ -63,7 +63,7 @@ High-risk bug areas:
 
 - Boss AI fairness and timing: `docs/boss_ai_spec.md`,
   `docs/boss_ai_bug_testing_plan.md`,
-  `engine/battle/ai/boss.asm`, `engine/battle/core.asm`, `ram/wram.asm`.
+  `engine/battle/ai/`, `engine/battle/core.asm`, `ram/wram.asm`.
 - Shared battle mechanics: `engine/battle/core.asm`,
   `engine/battle/effect_commands.asm`,
   `engine/battle/type_passive_damage_mods.asm`,

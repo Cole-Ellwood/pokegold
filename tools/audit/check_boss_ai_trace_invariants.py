@@ -9,7 +9,13 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
-BOSS = ROOT / "engine" / "battle" / "ai" / "boss.asm"
+BOSS_FILES = (
+    ROOT / "engine" / "battle" / "ai" / "boss_platform.asm",
+    ROOT / "engine" / "battle" / "ai" / "boss_policy_move.asm",
+    ROOT / "engine" / "battle" / "ai" / "boss_policy_switch.asm",
+    ROOT / "engine" / "battle" / "ai" / "boss_data.asm",
+    ROOT / "engine" / "battle" / "ai" / "boss_thunks.asm",
+)
 BOSS_TRACE_TOPMOVES = ROOT / "engine" / "battle" / "ai" / "boss_trace_topmoves.asm"
 ITEMS = ROOT / "engine" / "battle" / "ai" / "items.asm"
 SWITCH = ROOT / "engine" / "battle" / "ai" / "switch.asm"
@@ -38,6 +44,10 @@ def load(path: Path) -> str:
     if not path.exists():
         fail(f"missing required file: {path.relative_to(ROOT)}")
     return path.read_text(encoding="utf-8", errors="replace")
+
+
+def load_boss_source() -> str:
+    return "\n".join(load(path) for path in BOSS_FILES)
 
 
 def code_lines(text: str) -> list[str]:
@@ -1928,7 +1938,7 @@ def audit_legacy_switch_state_restoration(items: str, switch: str) -> None:
 
 def audit_no_battle_core_boss_labels(core: str, boss: str) -> None:
     if 'SECTION "Battle Core"' in boss or 'BANK("Battle Core")' in boss:
-        fail("boss.asm must not define or bank into Battle Core")
+        fail("Boss AI split source must not define or bank into Battle Core")
     for line in code_lines(core):
         stripped = line.strip()
         if TOP_LABEL_RE.match(stripped) and stripped.startswith("BossAI_"):
@@ -1967,7 +1977,7 @@ def audit_constants(constants: str) -> None:
 
 
 def main() -> int:
-    boss = load(BOSS)
+    boss = load_boss_source()
     items = load(ITEMS)
     switch = load(SWITCH)
     wram = load(WRAM)

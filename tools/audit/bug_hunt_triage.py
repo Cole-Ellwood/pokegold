@@ -18,7 +18,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 
 MOVE_EFFECTS = ROOT / "data" / "moves" / "effects.asm"
-BOSS_AI = ROOT / "engine" / "battle" / "ai" / "boss.asm"
+BOSS_AI_SURFACE = ROOT / "engine" / "battle" / "ai"
+BOSS_AI_FILES = (
+    BOSS_AI_SURFACE / "boss_platform.asm",
+    BOSS_AI_SURFACE / "boss_policy_move.asm",
+    BOSS_AI_SURFACE / "boss_policy_switch.asm",
+    BOSS_AI_SURFACE / "boss_data.asm",
+    BOSS_AI_SURFACE / "boss_thunks.asm",
+)
 AI_ITEMS = ROOT / "engine" / "battle" / "ai" / "items.asm"
 AI_SWITCH = ROOT / "engine" / "battle" / "ai" / "switch.asm"
 ITEM_ATTRIBUTES = ROOT / "data" / "items" / "attributes.asm"
@@ -158,6 +165,25 @@ def find_label_line(path: Path, label: str) -> int:
     return 1
 
 
+def read_boss_ai_text() -> str:
+    return "\n".join(read_text(path) for path in BOSS_AI_FILES)
+
+
+def boss_ai_blocks() -> list[AsmBlock]:
+    blocks: list[AsmBlock] = []
+    for path in BOSS_AI_FILES:
+        blocks.extend(top_blocks(path))
+    return blocks
+
+
+def find_boss_ai_label_line(label: str) -> tuple[Path, int]:
+    for path in BOSS_AI_FILES:
+        line = find_label_line(path, label)
+        if line != 1:
+            return path, line
+    return BOSS_AI_SURFACE, 1
+
+
 def add_lead(
     leads: list[Lead],
     priority: int,
@@ -290,15 +316,16 @@ def audit_raw_held_effect_compares(leads: list[Lead]) -> str:
 
 
 def audit_boss_setup_classifiers(leads: list[Lead]) -> str:
-    boss = read_text(BOSS_AI)
-    setup = next((block for block in top_blocks(BOSS_AI) if block.label == "BossAI_IsSetupEffect"), None)
-    current = next((block for block in top_blocks(BOSS_AI) if block.label == "BossAI_IsCurrentEnemySetupMove"), None)
+    boss = read_boss_ai_text()
+    blocks = boss_ai_blocks()
+    setup = next((block for block in blocks if block.label == "BossAI_IsSetupEffect"), None)
+    current = next((block for block in blocks if block.label == "BossAI_IsCurrentEnemySetupMove"), None)
 
     if setup is None:
         add_lead(
             leads,
             2,
-            BOSS_AI,
+            BOSS_AI_SURFACE,
             1,
             "missing shared setup classifier",
             "Boss AI plan/role code needs one effect-only setup classifier to avoid drift.",
@@ -313,7 +340,7 @@ def audit_boss_setup_classifiers(leads: list[Lead]) -> str:
             add_lead(
                 leads,
                 2,
-                BOSS_AI,
+                setup.path,
                 setup.start,
                 "weather setup missing from shared setup classifier",
                 "Weather is scored as setup locally; plan/role projection should not forget it.",
@@ -324,7 +351,7 @@ def audit_boss_setup_classifiers(leads: list[Lead]) -> str:
         add_lead(
             leads,
             2,
-            BOSS_AI,
+            setup.path,
             setup.start,
             "type-dependent Curse leaked into effect-only setup classifier",
             "Ghost Curse and non-Ghost Curse have different behavior; the effect-only helper cannot classify both safely.",
@@ -336,7 +363,7 @@ def audit_boss_setup_classifiers(leads: list[Lead]) -> str:
         add_lead(
             leads,
             2,
-            BOSS_AI,
+            setup.path,
             setup.start,
             "missing current-move setup classifier",
             "Current move scoring needs a type-aware wrapper for non-Ghost Curse.",
@@ -350,7 +377,7 @@ def audit_boss_setup_classifiers(leads: list[Lead]) -> str:
                 add_lead(
                     leads,
                     2,
-                    BOSS_AI,
+                    current.path,
                     current.start,
                     "current-move setup classifier lost a required branch",
                     "Curse setup handling is only safe when the wrapper checks typing and delegates other effects.",
@@ -363,14 +390,14 @@ def audit_boss_setup_classifiers(leads: list[Lead]) -> str:
         "BossAI_EvaluateActionLookahead",
         "BossAI_ApplyMultiTurnProjection",
     ):
-        block = next((candidate for candidate in top_blocks(BOSS_AI) if candidate.label == label), None)
+        block = next((candidate for candidate in blocks if candidate.label == label), None)
         if block is None:
             continue
         if "BossAI_IsSetupEffect" in block.text and "BossAI_IsCurrentEnemySetupMove" not in block.text:
             add_lead(
                 leads,
                 2,
-                BOSS_AI,
+                block.path,
                 block.start,
                 f"{label} uses effect-only setup helper on current move",
                 "Current move scoring can know enemy type, so it should handle non-Ghost Curse correctly.",
@@ -383,7 +410,7 @@ def audit_boss_setup_classifiers(leads: list[Lead]) -> str:
 
 def audit_base_data_restore_patterns(leads: list[Lead]) -> str:
     checked = 0
-    for block in top_blocks(BOSS_AI):
+    for block in boss_ai_blocks():
         text = block.text
         direct_mutation = re.search(r"\bcall\s+GetBaseData\b", text) is not None
         delegated_mutation = "call BossAI_LoadPublicThreatSourceSpecies" in text
@@ -409,7 +436,7 @@ def audit_base_data_restore_patterns(leads: list[Lead]) -> str:
             add_lead(
                 leads,
                 2,
-                BOSS_AI,
+                block.path,
                 block.start,
                 f"{block.label} mutates base-data species without obvious restore",
                 "Boss AI helpers that inspect candidate species can poison global base-data mirrors for later scoring.",
@@ -493,13 +520,14 @@ def audit_known_rejected_leads(leads: list[Lead]) -> str:
     attrs = read_text(ITEM_ATTRIBUTES)
     if re.search(r"item_attribute\s+[^;\n]*HELD_PREVENT_POISON", attrs):
         checked += 1
-        poison_bias = local_block(read_text(BOSS_AI), ".ApplyPoisonContactRiskBias", ".ApplyDarkShieldChanceBias")
+        poison_bias = local_block(read_boss_ai_text(), ".ApplyPoisonContactRiskBias", ".ApplyDarkShieldChanceBias")
         if "HELD_PREVENT_POISON" not in poison_bias:
+            poison_path, poison_line = find_boss_ai_label_line(".ApplyPoisonContactRiskBias")
             add_lead(
                 leads,
                 2,
-                BOSS_AI,
-                find_label_line(BOSS_AI, ".ApplyPoisonContactRiskBias"),
+                poison_path,
+                poison_line,
                 "poison-contact AI ignores a newly assigned poison-prevention item",
                 "The mechanic checks HELD_PREVENT_POISON; if an item now owns that effect, Boss AI contact-risk modeling should too.",
                 "data/items/attributes.asm assigns HELD_PREVENT_POISON",

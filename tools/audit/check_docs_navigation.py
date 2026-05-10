@@ -92,7 +92,11 @@ REQUIRED_PATHS = (
     "tools/boss_ai_preference",
     "tools/boss_ai_debugger",
     "main.asm",
-    "engine/battle/ai/boss.asm",
+    "engine/battle/ai/boss_platform.asm",
+    "engine/battle/ai/boss_policy_move.asm",
+    "engine/battle/ai/boss_policy_switch.asm",
+    "engine/battle/ai/boss_data.asm",
+    "engine/battle/ai/boss_thunks.asm",
     "engine/battle/ai/PLATFORM_API.md",
     "engine/battle/ai/POLICY_DESIGN.md",
     "engine/battle/core.asm",
@@ -202,10 +206,6 @@ VENDORED_TOOLCHAIN_PREFIXES = (
 )
 
 PLANNED_MISSING_ARTIFACTS = (
-    # Boss AI index hardening follow-ups (see docs/agent_navigation/subsystems/
-    # boss_ai_index_hardening.md). generate_boss_ai_index.py is the
-    # rejected-generator option discussed and explicitly NOT being built.
-    "scripts/generate_boss_ai_index.py",
     "audit/boss_ai_trace/falkner_live.txt",
     "audit/boss_ai_trace/bugsy_live.txt",
     "audit/boss_ai_trace/whitney_live.txt",

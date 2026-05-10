@@ -1,7 +1,7 @@
 # Boss AI File Split — Codex Task Spec
 
 > Split `engine/battle/ai/boss.asm` (currently ~7508 lines after MercyRefusal
-> removal at `commit 8089199f`) into the 5 files specified in
+> removal) into the 5 files specified in
 > [`docs/boss_ai_organization_plan.md`](boss_ai_organization_plan.md) §3
 > Option C. All 5 files stay in the same `Enemy Trainers` SECTION (bank `0e`).
 > Bank layout, intra-bank `call` reachability, ROM bytes — unchanged.
