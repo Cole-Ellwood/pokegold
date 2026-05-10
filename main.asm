@@ -162,7 +162,11 @@ INCLUDE "engine/battle/ditto_imposter.asm"
 SECTION "Enemy Trainers", ROMX
 
 INCLUDE "engine/battle/ai/items.asm"
-; Boss AI fragments are included in original emitted order.
+; Boss AI source is split by concern across boss_platform.asm /
+; boss_policy_move.asm / boss_policy_switch.asm. The INCLUDE+PURGE pairs
+; below replay each file's regions in original ROM byte order via
+; BOSSAI_EMIT_<name> guards (preserves byte-identity).
+; See docs/boss_ai_organization_plan.md §3 "EMIT-guard convention".
 DEF BOSSAI_EMIT_PLATFORM_STATE_TRACKING EQU 1
 INCLUDE "engine/battle/ai/boss_platform.asm"
 PURGE BOSSAI_EMIT_PLATFORM_STATE_TRACKING
