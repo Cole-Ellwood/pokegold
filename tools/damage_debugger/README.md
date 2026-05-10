@@ -19,6 +19,7 @@ broke same-bank callers in `engine/battle/late_gen_held_items.asm` whose
 | `python -m tools.damage_debugger.find <scenario>` | Bucket-locates ROM-vs-oracle divergence across DamageStats / DamageCalc / Stab / TypeMatchup / TypePassive. |
 | `python -m tools.damage_debugger.find --self-test` | Debugger self-check for the mid-Stab hook boundaries used by type-effectiveness diagnostics. |
 | `python -m tools.damage_debugger.find --bug dm_hl_clobber --instrument-hook CheckTypeMatchup.Yup` | Focused hook instrumentation: captures registers plus `mem[HL-2..HL]` at every hook hit. |
+| `python -m tools.damage_debugger.matchup CROBAT:44 ALAKAZAM:44 WING_ATTACK --user-item sharp_beak` | Quick source-table-backed damage query for one attacker, defender, move, items, grind profile, and HP percent. |
 | `python -m tools.damage_debugger.taint --self-test` | SM83 byte-level taint tracker self-test for register, memory, stack, ALU, and sink propagation. |
 | `python -m tools.damage_debugger.coverage --write` | Per-PC coverage report for smoke scenarios; writes `audit/damage_debugger/coverage.md`. |
 | `python -m tools.damage_debugger.tenet_writer --scenario special_super_effective --target BattleCommand_Stab --output audit/damage_debugger/stab_tenet.jsonl` | Tenet-style delta trace export. JSONL records carry raw Tenet syntax plus structured events for `jq`/Python queries. |
