@@ -65,6 +65,7 @@ ROOT = Path(__file__).resolve().parents[1]
 PARTIES = ROOT / "data" / "trainers" / "parties.asm"
 BASE_STATS_DIR = ROOT / "data" / "pokemon" / "base_stats"
 TRAINER_DVS = ROOT / "data" / "trainers" / "dvs.asm"
+EVOS_ATTACKS = ROOT / "data" / "pokemon" / "evos_attacks.asm"
 OUT_PDF = ROOT / "docs" / "trainer_dossier.pdf"
 
 # ---------------------------------------------------------------- meta tables
@@ -352,6 +353,83 @@ _BLOCK_RE = re.compile(
 )
 
 
+# Level-up move computation -- needed for TRAINERTYPE_NORMAL and TRAINERTYPE_ITEM
+# trainers that don't list explicit moves. The engine fills these in by walking
+# the species' EvosAttacks level-up table; see engine/pokemon/evolve.asm:484
+# `FillMoves`. Algorithm: walk entries in source order, learn each move at
+# lvl <= current; if 4 slots full, FIFO-evict the oldest (engine's `ShiftMoves`).
+# Skip duplicates.
+
+_LEVELUP_CACHE: dict[str, list[tuple[int, str]]] = {}
+_EVOS_TEXT: str | None = None
+
+
+def _evos_text() -> str:
+    global _EVOS_TEXT
+    if _EVOS_TEXT is None:
+        _EVOS_TEXT = EVOS_ATTACKS.read_text(encoding="utf-8")
+    return _EVOS_TEXT
+
+
+def _species_to_evos_label(species: str) -> str:
+    if species == "MR__MIME": return "MrMimeEvosAttacks"
+    if species == "HO_OH": return "HoOhEvosAttacks"
+    if species == "FARFETCH_D": return "FarfetchDEvosAttacks"
+    if species == "NIDORAN_F": return "NidoranFEvosAttacks"
+    if species == "NIDORAN_M": return "NidoranMEvosAttacks"
+    if species == "PORYGON2": return "Porygon2EvosAttacks"
+    return "".join(p.capitalize() for p in species.split("_") if p) + "EvosAttacks"
+
+
+_LEVELUP_LINE_RE = re.compile(r"^\s*db\s+(\d+),\s*([A-Z][A-Z0-9_]*)\s*(?:;.*)?$")
+
+
+def _load_levelup_table(species: str) -> list[tuple[int, str]]:
+    """Parse the species' EvosAttacks block into [(level, move), ...].
+
+    Skips evolution-marker lines (`db EVOLVE_*, ..., SPECIES`) because their
+    first arg is a constant name, not a number, so the regex won't match. Also
+    skips the `db 0` sentinels that terminate the evolutions / level-up lists
+    (no comma → no match)."""
+    if species in _LEVELUP_CACHE:
+        return _LEVELUP_CACHE[species]
+    text = _evos_text()
+    label = _species_to_evos_label(species)
+    m = re.search(rf"^{re.escape(label)}:\s*$", text, re.MULTILINE)
+    if not m:
+        raise ValueError(f"EvosAttacks label not found: {label}")
+    start = m.end()
+    next_m = re.search(r"^\w+EvosAttacks:\s*$", text[start:], re.MULTILINE)
+    end = start + next_m.start() if next_m else len(text)
+    moves: list[tuple[int, str]] = []
+    for line in text[start:end].splitlines():
+        ml = _LEVELUP_LINE_RE.match(line)
+        if not ml:
+            continue
+        level = int(ml.group(1))
+        move = ml.group(2)
+        moves.append((level, move))
+    _LEVELUP_CACHE[species] = moves
+    return moves
+
+
+def compute_levelup_moves(species: str, level: int) -> list[str]:
+    """Return the four moves a wild-style mon of this species would have at
+    this level. Mirrors engine/pokemon/evolve.asm:484 FillMoves.
+    Always returns exactly 4 entries, padded with NO_MOVE."""
+    slots: list[str] = []
+    for lvl, mv in _load_levelup_table(species):
+        if lvl > level or mv in slots:
+            continue
+        if len(slots) < 4:
+            slots.append(mv)
+        else:
+            slots = slots[1:] + [mv]   # FIFO evict oldest
+    while len(slots) < 4:
+        slots.append("NO_MOVE")
+    return slots
+
+
 def _parse_trainer_body(ttype: str, body: str) -> list[Mon]:
     party: list[Mon] = []
     for line in body.splitlines():
@@ -381,12 +459,12 @@ def _parse_trainer_body(ttype: str, body: str) -> list[Mon]:
             level = int(parts[0])
             species = parts[1]
             item = parts[2]
-            moves = ["NO_MOVE"] * 4
+            moves = compute_levelup_moves(species, level)
         else:  # NORMAL
             level = int(parts[0])
             species = parts[1]
             item = "NO_ITEM"
-            moves = ["NO_MOVE"] * 4
+            moves = compute_levelup_moves(species, level)
         party.append(Mon(species=species, level=level, item=item, moves=moves))
     return party
 
