@@ -95,7 +95,6 @@ REQUIRED_PATHS = (
     "engine/battle/ai/boss_platform.asm",
     "engine/battle/ai/boss_policy_move.asm",
     "engine/battle/ai/boss_policy_switch.asm",
-    "engine/battle/ai/boss_data.asm",
     "engine/battle/ai/boss_thunks.asm",
     "engine/battle/ai/PLATFORM_API.md",
     "engine/battle/ai/POLICY_DESIGN.md",

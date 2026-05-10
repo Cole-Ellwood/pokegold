@@ -11,7 +11,6 @@ BOSS_FILES = [
     ROOT / "engine" / "battle" / "ai" / "boss_platform.asm",
     ROOT / "engine" / "battle" / "ai" / "boss_policy_move.asm",
     ROOT / "engine" / "battle" / "ai" / "boss_policy_switch.asm",
-    ROOT / "engine" / "battle" / "ai" / "boss_data.asm",
     ROOT / "engine" / "battle" / "ai" / "boss_thunks.asm",
 ]
 CALLSITE_FILES = [

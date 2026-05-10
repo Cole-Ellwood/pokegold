@@ -117,7 +117,6 @@ AREAS: tuple[Area, ...] = (
             "engine/battle/ai/boss_platform.asm",
             "engine/battle/ai/boss_policy_move.asm",
             "engine/battle/ai/boss_policy_switch.asm",
-            "engine/battle/ai/boss_data.asm",
             "engine/battle/ai/boss_thunks.asm",
             "engine/battle/ai/move.asm",
             "engine/battle/ai/scoring.asm",

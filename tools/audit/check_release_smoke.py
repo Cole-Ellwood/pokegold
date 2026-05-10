@@ -960,7 +960,6 @@ def main() -> int:
         'INCLUDE "engine/battle/ai/boss_platform.asm"',
         'INCLUDE "engine/battle/ai/boss_policy_move.asm"',
         'INCLUDE "engine/battle/ai/boss_policy_switch.asm"',
-        'INCLUDE "engine/battle/ai/boss_data.asm"',
         'INCLUDE "engine/battle/ai/boss_thunks.asm"',
     ):
         require_text(ROOT / "main.asm", include)
