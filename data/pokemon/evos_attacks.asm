@@ -2562,7 +2562,6 @@ PolitoedEvosAttacks:
 	db 1, DOUBLESLAP
 	db 1, PERISH_SONG
 	db 27, RAIN_DANCE
-	db 35, QUIVER_DANCE
 	db 38, HYDRO_PUMP
 	db 43, ICE_BEAM
 	db 0 ; no more level-up moves
@@ -2657,7 +2656,7 @@ YanmaEvosAttacks:
 	db 25, WING_ATTACK
 	db 31, SLEEP_POWDER
 	db 32, DRAGONBREATH
-	db 35, DRAGON_DANCE
+	db 35, QUIVER_DANCE
 	db 37, SWIFT
 	db 55, OUTRAGE
 	db 0 ; no more level-up moves
@@ -2914,8 +2913,10 @@ HeracrossEvosAttacks:
 	db 6, HORN_ATTACK
 	db 12, ENDURE
 	db 19, FURY_ATTACK
+	db 25, FOCUS_ENERGY
 	db 27, COUNTER
 	db 35, TAKE_DOWN
+	db 40, CROSS_CHOP
 	db 44, REVERSAL
 	db 54, MEGAHORN
 	db 0 ; no more level-up moves

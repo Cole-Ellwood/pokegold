@@ -1,6 +1,6 @@
 	db MUK ; 089
 
-	db 120, 105, 120, 50, 65, 100
+	db 120,  85, 120, 50, 65, 100
 	;   hp  atk  def  spd  sat  sdf
 
 	db POISON, POISON ; type
