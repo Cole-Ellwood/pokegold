@@ -78,14 +78,30 @@ class MatchupResult:
     user_grind: str
     defender_grind: str
     defender_hp_percent: int
+    attacker_types: tuple[str, str]
+    defender_types: tuple[str, str]
     attacker_stat: int
     defender_stat: int
+    attacker_max_hp: int
+    attacker_current_hp: int
     defender_max_hp: int
     defender_current_hp: int
+    move_bp: int
+    move_type_name: str
     is_physical: bool
     battle_turn: str
     weather: str
     is_critical: bool
+    attacker_below_third_hp: bool
+    opponent_has_status: bool
+    opponent_above_half_hp: bool
+    attacker_can_evolve: bool
+    defender_can_evolve: bool
+    johto_badges: int
+    kanto_badges: int
+    link_mode: int
+    initial_cur_damage: int
+    metronome_count: int
     damage_low: int
     damage_high: int
     crit_low: int
@@ -103,6 +119,27 @@ _ITEM_NAMES: dict[int, str] | None = None
 _ITEM_CONSTANTS: dict[str, int] | None = None
 _CAN_EVOLVE: dict[str, bool] | None = None
 _MOVE_DISPLAY_NAMES: dict[str, str] | None = None
+_MOVE_ALIASES: dict[str, str] | None = None
+
+ALL_DAMAGE_TYPE_VALUES = {
+    oracle.NORMAL,
+    oracle.FIGHTING,
+    oracle.FLYING,
+    oracle.POISON,
+    oracle.GROUND,
+    oracle.ROCK,
+    oracle.BUG,
+    oracle.GHOST,
+    oracle.STEEL,
+    oracle.FIRE,
+    oracle.WATER,
+    oracle.GRASS,
+    oracle.ELECTRIC,
+    oracle.PSYCHIC_TYPE,
+    oracle.ICE,
+    oracle.DRAGON,
+    oracle.DARK,
+}
 
 
 def _normalize_name(value: str) -> str:
@@ -119,6 +156,13 @@ def _read(path: Path) -> list[str]:
 
 def _asm_int(value: str) -> int:
     return int("0x" + value[1:], 16) if value.startswith("$") else int(value, 0)
+
+
+def _arg_int(value: str) -> int:
+    try:
+        return _asm_int(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(f"invalid integer '{value}'") from exc
 
 
 def _parse_const_values(path: Path) -> dict[str, int]:
@@ -169,6 +213,15 @@ def _add_lookup(lookup: dict[str, int], alias: str, item_id: int) -> None:
     if previous is not None and previous != item_id:
         return
     lookup[key] = item_id
+
+
+def _add_move_alias(aliases: dict[str, str], alias: str, move_name: str) -> None:
+    key = _normalize_name(alias)
+    previous = aliases.get(key)
+    if previous is not None and previous != move_name:
+        aliases[key] = ""
+        return
+    aliases[key] = move_name
 
 
 def _load_base_stats() -> dict[str, BaseStatsRow]:
@@ -320,19 +373,29 @@ def _load_can_evolve() -> dict[str, bool]:
     global _CAN_EVOLVE
     if _CAN_EVOLVE is not None:
         return _CAN_EVOLVE
-    species_order = [
-        name
-        for name, item_id in sorted(
-            _parse_const_values(ROOT / "constants/pokemon_constants.asm").items(),
-            key=lambda pair: pair[1],
-        )
-        if item_id > 0
-    ]
+    species_order: list[str] = []
+    in_species_constants = False
+    for raw in _read(ROOT / "constants/pokemon_constants.asm"):
+        code = raw.split(";", 1)[0].strip()
+        if code.startswith("const_def 1"):
+            in_species_constants = True
+            continue
+        if not in_species_constants:
+            continue
+        if code.startswith("DEF NUM_POKEMON"):
+            break
+        m = re.match(r"const\s+([A-Z0-9_]+)\b", code)
+        if m:
+            species_order.append(m.group(1))
     labels = [
         re.match(r"\s*dw\s+([A-Za-z0-9_]+EvosAttacks)\b", line).group(1)
         for line in _read(ROOT / "data/pokemon/evos_attacks_pointers.asm")
         if re.match(r"\s*dw\s+([A-Za-z0-9_]+EvosAttacks)\b", line)
     ]
+    if len(labels) != len(species_order):
+        raise InputError(
+            f"evolution pointer/species mismatch: {len(labels)} pointers for {len(species_order)} species"
+        )
     label_to_species = dict(zip(labels, species_order))
     out: dict[str, bool] = {species: False for species in species_order}
     current_label: str | None = None
@@ -384,6 +447,19 @@ def _load_move_display_names() -> dict[str, str]:
     return out
 
 
+def _load_move_aliases() -> dict[str, str]:
+    global _MOVE_ALIASES
+    if _MOVE_ALIASES is not None:
+        return _MOVE_ALIASES
+    aliases: dict[str, str] = {}
+    for move_name in _load_moves():
+        _add_move_alias(aliases, move_name, move_name)
+    for move_name, display_name in _load_move_display_names().items():
+        _add_move_alias(aliases, display_name, move_name)
+    _MOVE_ALIASES = aliases
+    return aliases
+
+
 def compute_stat(base: int, level: int, iv: int, statexp_term: int, is_hp: bool) -> int:
     """Gen 2 stat formula used for player/trainer profile inputs."""
     inner = ((base + iv) * 2 + statexp_term) * level // 100
@@ -411,6 +487,69 @@ def _profile(role: str, grind: str) -> tuple[int, int]:
     if role == "trainer":
         return TRAINER_IV_STATEEXP
     return GRINDS[grind]
+
+
+def _resolve_move(value: str) -> str:
+    aliases = _load_move_aliases()
+    key = _normalize_name(value)
+    if key in aliases:
+        move_name = aliases[key]
+        if move_name:
+            return move_name
+        raise InputError(f"ambiguous move '{value}'")
+    collapsed = _collapse_key(value)
+    matches = [(alias, move_name) for alias, move_name in aliases.items() if alias.replace("_", "") == collapsed]
+    move_names = {move_name for _, move_name in matches if move_name}
+    if len(move_names) == 1:
+        return move_names.pop()
+    if matches:
+        raise InputError(f"ambiguous move '{value}': {', '.join(sorted(alias for alias, _ in matches))}")
+    raise InputError(f"unknown move '{value}'")
+
+
+def _resolve_type_name(value: str) -> str:
+    types = _load_type_constants()
+    key = _normalize_name(value)
+    if key == "PSYCHIC":
+        key = "PSYCHIC_TYPE"
+    if key in types and types[key] in ALL_DAMAGE_TYPE_VALUES:
+        return key
+    collapsed = key.replace("_TYPE", "").replace("_", "")
+    matches = [
+        name
+        for name, type_id in types.items()
+        if type_id in ALL_DAMAGE_TYPE_VALUES and name.replace("_TYPE", "").replace("_", "") == collapsed
+    ]
+    if len(matches) == 1:
+        return matches[0]
+    if matches:
+        raise InputError(f"ambiguous type '{value}': {', '.join(sorted(matches))}")
+    raise InputError(f"unknown type '{value}'")
+
+
+def _resolve_type_pair(value: str | None, default_a: str, default_b: str) -> tuple[str, str]:
+    if value is None:
+        return default_a, default_b
+    parts = [part.strip() for part in re.split(r"[,/]", value) if part.strip()]
+    if len(parts) == 1:
+        type_name = _resolve_type_name(parts[0])
+        return type_name, type_name
+    if len(parts) == 2:
+        return _resolve_type_name(parts[0]), _resolve_type_name(parts[1])
+    raise InputError(f"bad type pair '{value}': expected TYPE or TYPE,TYPE")
+
+
+def _resolve_current_hp(exact_hp: int | None, percent: int, max_hp: int, label: str) -> int:
+    if exact_hp is None:
+        return max(1, max_hp * percent // 100)
+    if not 1 <= exact_hp <= max_hp:
+        raise InputError(f"{label} current HP must be 1-{max_hp}, got {exact_hp}")
+    return exact_hp
+
+
+def _validate_range(value: int, label: str, low: int, high: int) -> None:
+    if not low <= value <= high:
+        raise InputError(f"{label} must be {low}-{high}, got {value}")
 
 
 def _resolve_item(value: str) -> int:
@@ -457,8 +596,6 @@ def _weather_to_int(weather: str) -> int:
     constants = _load_weather_constants()
     if weather == "none":
         return constants["WEATHER_NONE"]
-    if weather == "hail":
-        return constants["WEATHER_NONE"]
     key = f"WEATHER_{weather.upper()}"
     if key not in constants:
         raise InputError(f"unknown weather '{weather}'")
@@ -474,12 +611,13 @@ def _turn_to_int(turn: str, attacker_role: str) -> tuple[int, str]:
 def _is_physical_move(
     move: MoveRow,
     attacker: BaseStatsRow,
+    attacker_types: tuple[str, str],
     level: int,
     iv: int,
     statexp: int,
     types: dict[str, int],
 ) -> bool:
-    if move.name == "OUTRAGE" and types["DRAGON"] in (types[attacker.type_a], types[attacker.type_b]):
+    if move.name == "OUTRAGE" and types["DRAGON"] in (types[attacker_types[0]], types[attacker_types[1]]):
         atk = compute_stat(attacker.atk, level, iv, statexp, is_hp=False)
         sat = compute_stat(attacker.sat, level, iv, statexp, is_hp=False)
         return atk > sat
@@ -502,42 +640,68 @@ def run_matchup(args: argparse.Namespace) -> MatchupResult:
 
     attacker = _parse_pokemon_arg(args.attacker, "trainer", base_stats)
     defender = _parse_pokemon_arg(args.defender, "player", base_stats)
-    move_name = _resolve_name(args.move, moves, "move")
+    move_name = _resolve_move(args.move)
     move = moves[move_name]
     atk_row = base_stats[attacker.species]
     def_row = base_stats[defender.species]
     atk_iv, atk_statexp = _profile(attacker.role, args.user_grind)
     def_iv, def_statexp = _profile(defender.role, args.defender_grind)
-    is_physical = _is_physical_move(move, atk_row, attacker.level, atk_iv, atk_statexp, types)
+    attacker_types = _resolve_type_pair(args.attacker_types, atk_row.type_a, atk_row.type_b)
+    defender_types = _resolve_type_pair(args.defender_types, def_row.type_a, def_row.type_b)
+    move_type_name = _resolve_type_name(args.move_type) if args.move_type else move.type_name
+    if args.category == "physical":
+        is_physical = True
+    elif args.category == "special":
+        is_physical = False
+    else:
+        is_physical = _is_physical_move(move, atk_row, attacker_types, attacker.level, atk_iv, atk_statexp, types)
+        if args.move_type:
+            is_physical = types[move_type_name] <= oracle.PHYSICAL_MAX
+    move_bp = args.move_bp if args.move_bp is not None else move.bp
 
-    attacker_stat = compute_stat(atk_row.atk if is_physical else atk_row.sat, attacker.level, atk_iv, atk_statexp, False)
-    defender_stat = compute_stat(def_row.def_ if is_physical else def_row.sdf, defender.level, def_iv, def_statexp, False)
+    attacker_stat = args.attacker_stat if args.attacker_stat is not None else compute_stat(
+        atk_row.atk if is_physical else atk_row.sat, attacker.level, atk_iv, atk_statexp, False
+    )
+    defender_stat = args.defender_stat if args.defender_stat is not None else compute_stat(
+        def_row.def_ if is_physical else def_row.sdf, defender.level, def_iv, def_statexp, False
+    )
+    attacker_max_hp = compute_stat(atk_row.hp, attacker.level, atk_iv, atk_statexp, True)
     defender_max_hp = compute_stat(def_row.hp, defender.level, def_iv, def_statexp, True)
-    defender_current_hp = max(1, defender_max_hp * args.defender_hp // 100)
+    attacker_current_hp = _resolve_current_hp(args.attacker_current_hp, args.attacker_hp, attacker_max_hp, "attacker")
+    defender_current_hp = _resolve_current_hp(args.defender_current_hp, args.defender_hp, defender_max_hp, "defender")
     user_item = _resolve_item(args.user_item)
     opponent_item = _resolve_item(args.opponent_item)
     battle_turn_int, battle_turn = _turn_to_int(args.turn, attacker.role)
     can_evolve = _load_can_evolve()
+    attacker_can_evolve = can_evolve.get(attacker.species, False) if args.attacker_can_evolve is None else args.attacker_can_evolve
+    defender_can_evolve = can_evolve.get(defender.species, False) if args.defender_can_evolve is None else args.defender_can_evolve
 
     inp = BattleInputs(
         attacker_level=attacker.level,
-        move_bp=move.bp,
-        move_type=types[move.type_name],
+        move_bp=move_bp,
+        move_type=types[move_type_name],
         is_physical=is_physical,
         attacker_atk=attacker_stat,
         defender_def=defender_stat,
-        attacker_types=(types[atk_row.type_a], types[atk_row.type_b]),
-        defender_types=(types[def_row.type_a], types[def_row.type_b]),
+        attacker_types=(types[attacker_types[0]], types[attacker_types[1]]),
+        defender_types=(types[defender_types[0]], types[defender_types[1]]),
         user_item=user_item,
         opponent_item=opponent_item,
-        can_evolve_attacker=can_evolve.get(attacker.species, False),
-        can_evolve_defender=can_evolve.get(defender.species, False),
+        can_evolve_attacker=attacker_can_evolve,
+        can_evolve_defender=defender_can_evolve,
         is_critical=args.crit,
         is_selfdestruct=move.effect == "EFFECT_SELFDESTRUCT",
+        attacker_below_third_hp=args.attacker_below_third_hp or attacker_current_hp * 3 <= attacker_max_hp,
+        opponent_has_status=args.opponent_status,
         opponent_above_half_hp=defender_current_hp * 2 > defender_max_hp,
         weather=_weather_to_int(args.weather),
         move_effect=effects[move.effect],
+        johto_badges=args.johto_badges,
+        kanto_badges=args.kanto_badges,
+        link_mode=args.link_mode,
         battle_turn=battle_turn_int,
+        initial_cur_damage=args.initial_cur_damage,
+        metronome_count=args.metronome_count,
     )
     damage_low, damage_high = _damage_range(predict_damage(inp))
     crit_low, crit_high = _damage_range(predict_damage(replace(inp, is_critical=True)))
@@ -559,14 +723,30 @@ def run_matchup(args: argparse.Namespace) -> MatchupResult:
         user_grind=args.user_grind,
         defender_grind=args.defender_grind,
         defender_hp_percent=args.defender_hp,
+        attacker_types=attacker_types,
+        defender_types=defender_types,
         attacker_stat=attacker_stat,
         defender_stat=defender_stat,
+        attacker_max_hp=attacker_max_hp,
+        attacker_current_hp=attacker_current_hp,
         defender_max_hp=defender_max_hp,
         defender_current_hp=defender_current_hp,
+        move_bp=move_bp,
+        move_type_name=move_type_name,
         is_physical=is_physical,
         battle_turn=battle_turn,
         weather=args.weather,
         is_critical=args.crit,
+        attacker_below_third_hp=inp.attacker_below_third_hp,
+        opponent_has_status=inp.opponent_has_status,
+        opponent_above_half_hp=inp.opponent_above_half_hp,
+        attacker_can_evolve=attacker_can_evolve,
+        defender_can_evolve=defender_can_evolve,
+        johto_badges=args.johto_badges,
+        kanto_badges=args.kanto_badges,
+        link_mode=args.link_mode,
+        initial_cur_damage=args.initial_cur_damage,
+        metronome_count=args.metronome_count,
         damage_low=damage_low,
         damage_high=damage_high,
         crit_low=crit_low,
@@ -616,6 +796,21 @@ def format_text(result: MatchupResult) -> str:
             f"(full HP: {_pct(result.crit_low, result.defender_max_hp)}-{_pct(result.crit_high, result.defender_max_hp)}%, "
             f"current: {_pct(result.crit_low, result.defender_current_hp)}-{_pct(result.crit_high, result.defender_current_hp)}%)"
         )
+    state_bits = []
+    if result.attacker_below_third_hp:
+        state_bits.append("attacker <= 1/3 HP")
+    if result.opponent_has_status:
+        state_bits.append("defender statused")
+    if result.metronome_count:
+        state_bits.append(f"metronome count {result.metronome_count}")
+    if result.initial_cur_damage:
+        state_bits.append(f"initial damage {result.initial_cur_damage}")
+    if result.johto_badges or result.kanto_badges or result.link_mode:
+        state_bits.append(
+            f"badges J:{result.johto_badges:#04x} K:{result.kanto_badges:#04x} link:{result.link_mode:#04x}"
+        )
+    if state_bits:
+        lines.append(f"  state: {'; '.join(state_bits)}")
     if result.trace:
         lines.append("  trace:")
         lines.extend(f"    {step}: {damage}" for step, damage in result.trace)
@@ -634,27 +829,43 @@ def format_json(result: MatchupResult) -> str:
                 "level": result.attacker.level,
                 "role": result.attacker.role,
                 "atk_stat": result.attacker_stat,
-                "types": _types_for(result.attacker_row),
+                "types": list(result.attacker_types),
+                "max_hp": result.attacker_max_hp,
+                "current_hp": result.attacker_current_hp,
             },
             "defender": {
                 "species": result.defender.species,
                 "level": result.defender.level,
                 "role": result.defender.role,
                 "def_stat": result.defender_stat,
-                "types": _types_for(result.defender_row),
+                "types": list(result.defender_types),
                 "max_hp": result.defender_max_hp,
                 "current_hp": result.defender_current_hp,
             },
             "move": {
                 "name": result.move.name,
-                "bp": result.move.bp,
-                "type": result.move.type_name,
+                "bp": result.move_bp,
+                "type": result.move_type_name,
+                "source_bp": result.move.bp,
+                "source_type": result.move.type_name,
                 "is_physical": result.is_physical,
             },
             "items": {"user": result.user_item_constant, "opponent": result.opponent_item_constant},
             "weather": result.weather,
             "crit": result.is_critical,
             "battle_turn": result.battle_turn,
+            "state": {
+                "attacker_below_third_hp": result.attacker_below_third_hp,
+                "opponent_has_status": result.opponent_has_status,
+                "opponent_above_half_hp": result.opponent_above_half_hp,
+                "attacker_can_evolve": result.attacker_can_evolve,
+                "defender_can_evolve": result.defender_can_evolve,
+                "johto_badges": result.johto_badges,
+                "kanto_badges": result.kanto_badges,
+                "link_mode": result.link_mode,
+                "initial_cur_damage": result.initial_cur_damage,
+                "metronome_count": result.metronome_count,
+            },
         },
         "result": {
             "damage_low": result.damage_low,
@@ -689,9 +900,28 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--opponent-item", default="none", help="Defender item name or HELD_* alias")
     parser.add_argument("--user-grind", choices=sorted(GRINDS), default="mid")
     parser.add_argument("--defender-grind", choices=sorted(GRINDS), default="mid")
+    parser.add_argument("--attacker-hp", type=int, default=100, metavar="PERCENT")
     parser.add_argument("--defender-hp", type=int, default=100, metavar="PERCENT")
+    parser.add_argument("--attacker-current-hp", type=_arg_int, metavar="HP")
+    parser.add_argument("--defender-current-hp", type=_arg_int, metavar="HP")
+    parser.add_argument("--attacker-stat", type=_arg_int, help="Exact attack/special-attack stat consumed by damage")
+    parser.add_argument("--defender-stat", type=_arg_int, help="Exact defense/special-defense stat consumed by damage")
+    parser.add_argument("--attacker-types", help="Exact attacker type pair: TYPE or TYPE,TYPE")
+    parser.add_argument("--defender-types", help="Exact defender type pair: TYPE or TYPE,TYPE")
+    parser.add_argument("--move-bp", type=_arg_int, help="Exact effective move base power")
+    parser.add_argument("--move-type", help="Exact effective move type")
+    parser.add_argument("--category", choices=("auto", "physical", "special"), default="auto")
+    parser.add_argument("--attacker-below-third-hp", action="store_true", help="Force the Fire low-HP passive flag")
+    parser.add_argument("--opponent-status", action="store_true", help="Defender has any major status")
+    parser.add_argument("--metronome-count", type=_arg_int, default=0)
+    parser.add_argument("--initial-cur-damage", type=_arg_int, default=0)
+    parser.add_argument("--johto-badges", type=_arg_int, default=0, metavar="MASK")
+    parser.add_argument("--kanto-badges", type=_arg_int, default=0, metavar="MASK")
+    parser.add_argument("--link-mode", type=_arg_int, default=0, metavar="VALUE")
+    parser.add_argument("--attacker-can-evolve", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--defender-can-evolve", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--crit", action="store_true", help="Force critical-hit damage")
-    parser.add_argument("--weather", choices=("none", "rain", "sun", "sandstorm", "hail"), default="none")
+    parser.add_argument("--weather", choices=("none", "rain", "sun", "sandstorm"), default="none")
     parser.add_argument("--turn", choices=("auto", "player", "enemy"), default="auto")
     parser.add_argument("--json", action="store_true", help="Emit stable JSON output")
     parser.add_argument("--trace", action="store_true", help="Show oracle step-boundary damage")
@@ -705,8 +935,21 @@ def _validate_args(args: argparse.Namespace) -> None:
     missing = [name for name in ("attacker", "defender", "move") if getattr(args, name) is None]
     if missing:
         raise InputError(f"missing required argument(s): {', '.join(missing)}")
+    if not 1 <= args.attacker_hp <= 100:
+        raise InputError("--attacker-hp must be 1-100")
     if not 1 <= args.defender_hp <= 100:
         raise InputError("--defender-hp must be 1-100")
+    if args.move_bp is not None:
+        _validate_range(args.move_bp, "--move-bp", 0, 255)
+    if args.attacker_stat is not None:
+        _validate_range(args.attacker_stat, "--attacker-stat", 1, 999)
+    if args.defender_stat is not None:
+        _validate_range(args.defender_stat, "--defender-stat", 1, 999)
+    _validate_range(args.metronome_count, "--metronome-count", 0, 5)
+    _validate_range(args.initial_cur_damage, "--initial-cur-damage", 0, 0xFFFF)
+    _validate_range(args.johto_badges, "--johto-badges", 0, 0xFF)
+    _validate_range(args.kanto_badges, "--kanto-badges", 0, 0xFF)
+    _validate_range(args.link_mode, "--link-mode", 0, 0xFF)
 
 
 def _run_case(argv: Sequence[str], expected: tuple[int, int]) -> None:
@@ -726,11 +969,14 @@ def run_self_test() -> int:
     moves = _load_moves()
     items = _load_held_item_constants()
     types = _load_type_constants()
+    can_evolve = _load_can_evolve()
     assert base["CROBAT"] == BaseStatsRow("CROBAT", 100, 120, 105, 130, 70, 80, "POISON", "FLYING")
     assert moves["WING_ATTACK"].bp == 80 and moves["WING_ATTACK"].type_name == "FLYING"
     assert items["SHARP_BEAK"] == oracle.HELD_SHARP_BEAK
     assert items["HELD_SHARP_BEAK"] == oracle.HELD_SHARP_BEAK
     assert types["PSYCHIC_TYPE"] == oracle.PSYCHIC_TYPE
+    assert can_evolve["SQUIRTLE"] is True
+    assert can_evolve["AMPHAROS"] is False
 
     cases = (
         (
@@ -741,6 +987,13 @@ def run_self_test() -> int:
         (("SUICUNE:42:player", "DRAGONITE:42:trainer", "SURF", "--user-grind", "max"), (18, 22)),
         (("AMPHAROS:40:trainer", "PILOSWINE:40:trainer", "THUNDER"), (33, 39)),
         (("MACHAMP:50:trainer", "BLASTOISE:50:trainer", "KARATE_CHOP", "--user-item", "choice_band"), (87, 103)),
+        (("ALAKAZAM:44:trainer", "CROBAT:44:player", "Psychic"), (59, 70)),
+        (("CHARIZARD:50:trainer", "VENUSAUR:50:player", "FLAMETHROWER", "--attacker-current-hp", "50"), (106, 125)),
+        (("MACHAMP:50:trainer", "BLASTOISE:50:trainer", "KARATE_CHOP", "--user-item", "metronome", "--metronome-count", "3"), (91, 108)),
+        (("AMPHAROS:40:trainer", "PILOSWINE:40:player", "HIDDEN_POWER", "--move-type", "Ice", "--move-bp", "70", "--category", "special"), (21, 25)),
+        (("GENGAR:50:trainer", "BLASTOISE:50:trainer", "SHADOW_BALL", "--opponent-status"), (54, 64)),
+        (("PIKACHU:20:player", "SQUIRTLE:20:trainer", "TACKLE", "--turn", "player", "--johto-badges", "0x4"), (15, 18)),
+        (("PIKACHU:20:trainer", "SQUIRTLE:20:trainer", "TACKLE", "--opponent-item", "eviolite"), (7, 9)),
     )
     for argv, expected in cases:
         _run_case(argv, expected)
