@@ -480,6 +480,103 @@ Shipped result after repartition:
 - `engine/battle/ai/boss_thunks.asm` — the HL-preserving cross-bank thunks,
   still in bank `0e`.
 
+### EMIT-guard convention (the trick that makes the seam work)
+
+The shipped repartition uses an unusual pattern that future contributors
+need to understand before editing `main.asm` or adding new boss-AI code.
+
+**The decoupling.** In a normal RGBDS layout, the order regions appear in
+ROM is identical to the order they appear in source files. That's a
+problem here: organizing files by *concern* (platform vs policy) and
+preserving the pre-split ROM byte order are two different orderings.
+You can have one or the other, not both, with a normal include.
+
+The shipped pattern decouples them. Each region inside a `boss_*.asm`
+file is wrapped in a `BOSSAI_EMIT_<region>` guard. Only the region whose
+guard is active emits during a given INCLUDE pass. `main.asm` then
+INCLUDEs each file *multiple times*, setting one guard per pass, in the
+exact ROM order.
+
+**Concrete shape.** `main.asm` around line 167 looks like:
+
+```
+DEF BOSSAI_EMIT_PLATFORM_STATE_TRACKING EQU 1
+INCLUDE "engine/battle/ai/boss_platform.asm"   ; emits state-tracking only
+PURGE BOSSAI_EMIT_PLATFORM_STATE_TRACKING
+
+DEF BOSSAI_EMIT_MOVE_ADAPTIVE_LEAD EQU 1
+INCLUDE "engine/battle/ai/boss_policy_move.asm"  ; emits adaptive-lead only
+PURGE BOSSAI_EMIT_MOVE_ADAPTIVE_LEAD
+
+DEF BOSSAI_EMIT_PLATFORM_PUBLIC_INFO EQU 1
+INCLUDE "engine/battle/ai/boss_platform.asm"   ; back to platform
+PURGE BOSSAI_EMIT_PLATFORM_PUBLIC_INFO
+
+... ~30 more INCLUDE+PURGE pairs ...
+```
+
+Inside each file:
+
+```
+if DEF(BOSSAI_EMIT_PLATFORM_STATE_TRACKING)
+; ============================================================
+; Region: State tracking
+...
+BossAI_IncrementTurnsElapsed:
+    ...
+endc
+```
+
+The assembler reads the file every time, but only the region whose
+guard is active actually contributes bytes. Every other region is
+skipped silently.
+
+**Adding a new region.** If you write a new `BossAI_*` function or new
+`.ApplyXxxBias` module:
+
+1. Decide which file it belongs in (platform vs policy_move vs
+   policy_switch — use the layer rules from §1.1).
+2. Wrap the new region in `if DEF(BOSSAI_EMIT_<name>)` /
+   `endc` with a matching guard name.
+3. Add an `INCLUDE`/`PURGE` pair to `main.asm` at the slot in ROM
+   order where the new region should emit.
+4. Build with `make compare` to confirm ROM bytes match expectations
+   (or, if you intentionally added bytes, that the new bytes are
+   where you expect).
+
+**Common pitfalls.**
+
+- **Adding a region to a file but not main.asm.** The region exists in
+  source but never emits to ROM — silently dead code. Always pair file
+  edit with main.asm edit.
+- **Two regions with the same guard name.** The assembler emits both,
+  in source order, the first time the guard is active. Probably not
+  what you want. Use unique guard names.
+- **Trying to read file size as a measure of code size.** `wc -l
+  boss_policy_move.asm` is the sum of all region sizes regardless of
+  emission order. Not meaningful. Count regions inside guards
+  individually.
+- **Assuming order inside a file matters.** It doesn't, except as a
+  readability choice. ROM order is set by `main.asm`'s
+  INCLUDE/PURGE sequence, not by where a region sits in its file.
+- **Touching a thunk's SECTION assignment.** Thunks must stay in bank
+  `0e` (`Enemy Trainers` SECTION). The cross-bank fix at
+  `commit f2e18554` depends on this; moving a thunk to a different
+  SECTION silently breaks the bank `0e` callers' reachability.
+
+**Why this pattern instead of physically reordering files.** A normal
+file-partition split would have forced one of these two compromises:
+either each file is internally ordered by ROM position (no clean
+intra-file organization by concern) or ROM bytes shift (breaks `make
+compare` byte-identity, requires trace-capture refresh, surfaces every
+audit that depends on bank `0e` byte layout). The EMIT-guard pattern
+gives both: each file is internally organized however the author
+wants, AND ROM bytes stay byte-identical.
+
+The cost is `main.asm` complexity (~30 INCLUDE+PURGE pairs instead of
+1 INCLUDE) and the cognitive load of the convention itself. Both are
+acceptable for the seam clarity gained.
+
 ### Recommendation
 
 Resolved: Option C is the current source layout. Future simplification and
