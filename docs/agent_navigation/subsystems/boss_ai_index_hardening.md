@@ -86,12 +86,12 @@ own subsection just above it):
 | Concern | Lives in |
 | --- | --- |
 | Vanilla AI effect lists (`useful_moves`, `risky_effects`, `stall_moves`, etc.) | `data/battle/ai/*.asm` (consumed by `engine/battle/ai/scoring.asm`) |
-| Boss AI effect tables (`BossAIDenyKOEffects`, `BossAIStatusEffects`, `BossAIRiskyEffects`) | `engine/battle/ai/boss_data.asm` |
-| Per-boss role-effect tables (`BossAIChuckRoleEffects` etc.) | `engine/battle/ai/boss_data.asm` |
+| Boss AI effect tables (`BossAIDenyKOEffects`, `BossAIStatusEffects`, `BossAIRiskyEffects`) | `engine/battle/ai/boss_policy_move.asm` |
+| Per-boss role-effect tables (`BossAIChuckRoleEffects` etc.) | `engine/battle/ai/boss_policy_move.asm` |
 | Per-trainer tier (class+id → EARLY/MID/LATE) | `BossAITierMap:1` in `data/trainers/ai_tiers.asm`; consumed by `LoadBossAITier:69` in `engine/battle/read_trainer_attributes.asm` |
 | Per-class tier-weight-row override | `BossAITierRampMap:51` in `data/trainers/ai_tiers.asm` (default = `tier - 1`, set at `LoadBossAITier:97-98`) |
-| Tier weight table (rows indexed by tier-weight-row) | `BossAITierWeights:1689` in `engine/battle/ai/boss_data.asm` |
-| Plausible-threat type table | `BossAI_PlausibleThreatTypes:1656` in `engine/battle/ai/boss_data.asm` |
+| Tier weight table (rows indexed by tier-weight-row) | `BossAITierWeights:5026` in `engine/battle/ai/boss_policy_move.asm` |
+| Plausible-threat type table | `BossAI_PlausibleThreatTypes:1194` in `engine/battle/ai/boss_platform.asm` |
 | Trainer attributes (base reward, AI flags) — separate concern, do not confuse with tier | `data/trainers/attributes.asm` (consumed at `engine/battle/read_trainer_attributes.asm:67`) |
 ```
 

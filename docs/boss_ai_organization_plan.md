@@ -1,9 +1,11 @@
 # Boss AI Organization Plan — split Boss AI source
 
-> **Status — RESOLVED.** Option C shipped: the former monolithic Boss AI
-> source is split into `boss_platform.asm`, `boss_policy_move.asm`,
-> `boss_policy_switch.asm`, `boss_data.asm`, and `boss_thunks.asm` while
-> preserving original byte order for `make compare`. Boss AI rebuild
+> **Status — RESOLVED.** Option C shipped and repartitioned: the former
+> monolithic Boss AI source is split into `boss_platform.asm`,
+> `boss_policy_move.asm`, `boss_policy_switch.asm`, and
+> `boss_thunks.asm`; `boss_data.asm` was folded after the static tables
+> moved to their owner files. `main.asm` includes guarded fragments in
+> original byte order so `make compare` remains byte-identical. Boss AI rebuild
 > (BOSSAI-003) and v2 RL training (BOSSAI-004) remain SHELVED.
 >
 > Historical planning below is preserved for context; §3 is now an archive of
@@ -418,11 +420,14 @@ Cons:
 Defer behind: Option A landing first; user explicit approval of the
 reorder; trace-capture refresh budget.
 
-### Option C — Split boss.asm into multiple files (SHIPPED)
+### Option C — Split boss.asm into multiple files (SHIPPED + REPARTITIONED)
 
-The shipped split uses five files in the `Enemy Trainers` SECTION. The split
-preserves original byte order for `make compare`, so `boss_data.asm` carries the
-late policy/data tail instead of only independent static data. Original proposal:
+The shipped split now uses four emitted Boss AI files in the `Enemy Trainers`
+SECTION. The repartition folds `boss_data.asm`: no independent static data
+remained after no-cheat tables moved to platform code and policy tables moved
+to their owner policy code. `main.asm` includes guarded fragments from the
+concern-owned files in original byte order for `make compare`. Original
+proposal:
 
 - `engine/battle/ai/boss_platform.asm` (~1850 lines): regions in §1.1's
   platform set.
@@ -430,12 +435,14 @@ late policy/data tail instead of only independent static data. Original proposal
   pick + plan/role.
 - `engine/battle/ai/boss_policy_switch.asm` (~2100 lines): switch
   dispatch + candidate refinement + confidence + lookahead.
-- `engine/battle/ai/boss_data.asm` (~140 lines): static tables.
+- `engine/battle/ai/boss_data.asm` (~140 lines): static tables, folded if
+  empty.
 - `engine/battle/ai/boss_thunks.asm` (~60 lines): cross-bank `_HL`
   thunks. (Kept in `Enemy Trainers` SECTION — must stay in bank `0e`.)
 
-`main.asm:171` becomes 5 INCLUDE lines instead of 1. All five files are
-included in the same `Enemy Trainers` SECTION so the bank layout and
+`main.asm:171` becomes guarded INCLUDE fragments instead of 1 monolithic
+include. All four emitted files are included in the same `Enemy Trainers`
+SECTION so the bank layout and
 intra-bank `call` reachability are unchanged. (If a thunk were placed in
 a different SECTION it would silently break the cross-bank fix.)
 
@@ -460,15 +467,16 @@ Cons:
   `engine/battle/ai/boss.asm`. Need updating.
 - Same trace-capture and `make compare` concerns as Option B.
 
-Shipped result:
-- `engine/battle/ai/boss_platform.asm` — opening state/public-info platform
-  code plus the first move-policy block, kept together to preserve byte order.
-- `engine/battle/ai/boss_policy_move.asm` — move-pick, switch entry,
-  threat-cache, pressure, type, and speed policy block.
-- `engine/battle/ai/boss_policy_switch.asm` — switch predicates, confidence,
-  prediction, held-item, plan, and mask block.
-- `engine/battle/ai/boss_data.asm` — late policy, lookahead, threat, scout,
-  switch refinement, and data tail.
+Shipped result after repartition:
+- `engine/battle/ai/boss_platform.asm` — platform-owned guarded fragments:
+  state/public-info plumbing, passive caches, held-item helpers, type-matchup
+  machinery, structural masks, score/scout I/O, and no-cheat tables.
+- `engine/battle/ai/boss_policy_move.asm` — move-policy guarded fragments:
+  adaptive lead, move scoring, move pick, active threat policy, plan/role,
+  lookahead, threat/scout policy, and policy-owned tables.
+- `engine/battle/ai/boss_policy_switch.asm` — switch-policy guarded fragments:
+  switch dispatch, switch reason/classifier gates, confidence, candidate risk
+  refinement, and confidence finalization.
 - `engine/battle/ai/boss_thunks.asm` — the HL-preserving cross-bank thunks,
   still in bank `0e`.
 

@@ -23,7 +23,6 @@ BOSS_AI_FILES = (
     BOSS_AI_SURFACE / "boss_platform.asm",
     BOSS_AI_SURFACE / "boss_policy_move.asm",
     BOSS_AI_SURFACE / "boss_policy_switch.asm",
-    BOSS_AI_SURFACE / "boss_data.asm",
     BOSS_AI_SURFACE / "boss_thunks.asm",
 )
 AI_ITEMS = ROOT / "engine" / "battle" / "ai" / "items.asm"
