@@ -1426,6 +1426,7 @@ def main() -> int:
     check_farcall_a_clobber()
     check_ld_a_zero()
     check_cp_zero()
+    check_matchup_cli()
 
     print("ALL RELEASE SMOKE CHECKS PASSED")
     return 0
@@ -1471,6 +1472,10 @@ def check_ld_a_zero() -> None:
 
 def check_cp_zero() -> None:
     _run_subaudit("check_cp_zero.py", "cp 0 -> and a")
+
+
+def check_matchup_cli() -> None:
+    _run_subaudit("check_matchup_cli.py", "damage matchup CLI")
 
 
 if __name__ == "__main__":

@@ -2,7 +2,7 @@
 
 Boss AI cognition note: if you are here for the Boss AI loop, think wildly in the journal before changing source; this index is the hard memory/bank reality check for those ideas.
 
-Generated: 2026-05-09
+Generated: 2026-05-10
 ROM target: `pokegold`
 
 Generated from `layout.link`, assembly sources, `pokegold.map`, and `pokegold.sym`.
