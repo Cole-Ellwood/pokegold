@@ -22,7 +22,7 @@ TrainerClassDVs:
 	dn  7,  8,  8,  8 ; MISTY
 	dn  9,  8,  8,  8 ; LT_SURGE
 	dn  9,  8,  8,  8 ; SCIENTIST
-	dn  7,  8,  8,  8 ; ERIKA
+	dn 14,  8,  8,  8 ; ERIKA — atk DV 14 yields HP Fire (type 8) for Bellossom; def=8 keeps def-mod-4=0. Computed Atk goes up ~4 points per mon at her levels but none of her team runs physical attacks except Exeggutor's Explosion, so the side effect is essentially free
 	dn  9,  8,  8,  8 ; YOUNGSTER
 	dn  9,  8,  8,  8 ; SCHOOLBOY
 	dn  9,  8,  8,  8 ; BIRD_KEEPER

@@ -518,6 +518,7 @@ NinetalesEvosAttacks:
 	db 1, SAFEGUARD
 	db 31, FLAMETHROWER
 	db 38, CALM_MIND
+	db 40, PSYCHIC_M
 	db 43, MORNING_SUN
 	db 48, FIRE_BLAST
 	db 0 ; no more level-up moves
@@ -1311,6 +1312,7 @@ OnixEvosAttacks:
 	db 14, ROCK_THROW
 	db 20, SPIKES
 	db 27, RAGE
+	db 30, ROCK_SLIDE
 	db 36, SANDSTORM
 	db 40, SLAM
 	db 0 ; no more level-up moves
@@ -1340,6 +1342,7 @@ HypnoEvosAttacks:
 	db 10, DISABLE
 	db 16, TOXIC
 	db 18, CONFUSION
+	db 22, SEISMIC_TOSS
 	db 25, HEADBUTT
 	db 33, DREAM_EATER
 	db 39, PSYCHIC_M

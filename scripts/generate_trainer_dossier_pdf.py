@@ -55,6 +55,7 @@ from reportlab.pdfgen import canvas
 ROOT = Path(__file__).resolve().parents[1]
 PARTIES = ROOT / "data" / "trainers" / "parties.asm"
 BASE_STATS_DIR = ROOT / "data" / "pokemon" / "base_stats"
+TRAINER_DVS = ROOT / "data" / "trainers" / "dvs.asm"
 OUT_PDF = ROOT / "docs" / "trainer_dossier.pdf"
 
 # ---------------------------------------------------------------- meta tables
@@ -263,6 +264,7 @@ class Trainer:
     type_theme: str
     location: str
     party: list[Mon]
+    hp_type: str | None = None  # resolved Hidden Power type, e.g. "Fire"
 
 @dataclass
 class BaseStats:
@@ -332,14 +334,81 @@ def _parse_group_block(text: str, group_name: str) -> list[Mon]:
 
 def load_trainers() -> list[Trainer]:
     text = PARTIES.read_text(encoding="utf-8")
+    dvs = load_trainer_dvs()
     out: list[Trainer] = []
 
-    for name, group, gymno, type_theme, location, badge in JOHTO_GYMS:
-        out.append(Trainer(name, group, badge, type_theme, location, _parse_group_block(text, group)))
+    def _hp_type_for(group: str) -> str | None:
+        klass = group_to_class(group)
+        if klass not in dvs:
+            return None
+        atk, defn, _spd, _spc = dvs[klass]
+        idx = ((atk & 3) << 2) | (defn & 3)
+        return HP_TYPE_TABLE[idx]
+
+    def _build(name, group, badge_or_slot, type_theme, location):
+        return Trainer(
+            display_name=name,
+            group_name=group,
+            badge_or_title=badge_or_slot,
+            type_theme=type_theme,
+            location=location,
+            party=_parse_group_block(text, group),
+            hp_type=_hp_type_for(group),
+        )
+
+    for name, group, _gymno, type_theme, location, badge in JOHTO_GYMS:
+        out.append(_build(name, group, badge, type_theme, location))
     for name, group, slot, type_theme, location in ELITE_FOUR:
-        out.append(Trainer(name, group, slot, type_theme, location, _parse_group_block(text, group)))
-    for name, group, gymno, type_theme, location, badge in KANTO_GYMS:
-        out.append(Trainer(name, group, badge, type_theme, location, _parse_group_block(text, group)))
+        out.append(_build(name, group, slot, type_theme, location))
+    for name, group, _gymno, type_theme, location, badge in KANTO_GYMS:
+        out.append(_build(name, group, badge, type_theme, location))
+    return out
+
+
+# Hidden Power type resolution -------------------------------------------------
+
+# In Gen 2: HP type = ((atk_DV & 3) << 2) | (def_DV & 3), indexed into:
+HP_TYPE_TABLE = [
+    "Fighting", "Flying", "Poison", "Ground",
+    "Rock", "Bug", "Ghost", "Steel",
+    "Fire", "Water", "Grass", "Electric",
+    "Psychic", "Ice", "Dragon", "Dark",
+]
+
+# Group label -> trainer-class constant in dvs.asm.
+# Most map by stripping "Group" and uppercasing; LtSurgeGroup needs the
+# underscore between LT and SURGE, ChampionGroup is LANCE-but-class-CHAMPION.
+_GROUP_TO_CLASS_OVERRIDE = {
+    "LtSurgeGroup": "LT_SURGE",
+    "ChampionGroup": "CHAMPION",
+}
+
+
+def group_to_class(group: str) -> str:
+    if group in _GROUP_TO_CLASS_OVERRIDE:
+        return _GROUP_TO_CLASS_OVERRIDE[group]
+    base = group.removesuffix("Group")
+    # CamelCase -> SNAKE_CASE: insert _ before each interior uppercase
+    out = []
+    for i, ch in enumerate(base):
+        if i > 0 and ch.isupper() and not base[i - 1].isupper():
+            out.append("_")
+        out.append(ch.upper())
+    return "".join(out)
+
+
+def load_trainer_dvs() -> dict[str, tuple[int, int, int, int]]:
+    """Parse data/trainers/dvs.asm into {class_name: (atk, def, spd, spc)}."""
+    text = TRAINER_DVS.read_text(encoding="utf-8")
+    out: dict[str, tuple[int, int, int, int]] = {}
+    # Lines look like: `dn 14, 8, 8, 8 ; ERIKA — comment`
+    line_re = re.compile(
+        r"^\s*dn\s+(\d+),\s*(\d+),\s*(\d+),\s*(\d+)\s*;\s*([A-Z][A-Z0-9_]*)",
+        re.MULTILINE,
+    )
+    for m in line_re.finditer(text):
+        atk, defn, spd, spc, klass = m.groups()
+        out[klass] = (int(atk), int(defn), int(spd), int(spc))
     return out
 
 
@@ -444,7 +513,7 @@ def draw_stat_row(c: canvas.Canvas, x, y, label, value, max_value, w_total=180, 
     c.drawRightString(x + w_total, y, str(value))
 
 
-def draw_card(c: canvas.Canvas, x, y, w, h, mon: Mon, bs: BaseStats):
+def draw_card(c: canvas.Canvas, x, y, w, h, mon: Mon, bs: BaseStats, hp_type: str | None = None):
     # card background + border
     c.setFillColor(CARD_BG)
     c.setStrokeColor(ACCENT_LINE)
@@ -510,8 +579,15 @@ def draw_card(c: canvas.Canvas, x, y, w, h, mon: Mon, bs: BaseStats):
         if mv == "NO_MOVE":
             continue
         label = title_case_move(mv)
+        c.setFillColor(TEXT_DARK)
         c.circle(body_left + 3, line_y + 3, 1.4, fill=1, stroke=0)
         c.drawString(body_left + 8, line_y, label)
+        if mv == "HIDDEN_POWER" and hp_type:
+            text_w = c.stringWidth(label, "Helvetica", 8.5)
+            draw_type_pill(c, body_left + 8 + text_w + 4, line_y - 1, hp_type, font_size=6, h=9)
+            # Restore canvas font/fill state so subsequent move lines aren't bold-on-color.
+            c.setFont("Helvetica", 8.5)
+            c.setFillColor(TEXT_DARK)
         line_y -= 10
 
     # Stats header
@@ -608,7 +684,7 @@ def render_trainer(c: canvas.Canvas, t: Trainer, top_y: float) -> float:
             cur_y -= card_h + CARD_GAP_Y
         x = MARGIN + col * (col_w + col_gap)
         bs = load_base_stats(mon.species)
-        draw_card(c, x, cur_y - card_h, col_w, card_h, mon, bs)
+        draw_card(c, x, cur_y - card_h, col_w, card_h, mon, bs, hp_type=t.hp_type)
     # advance past last row of cards
     cur_y -= card_h + 16
     return cur_y
