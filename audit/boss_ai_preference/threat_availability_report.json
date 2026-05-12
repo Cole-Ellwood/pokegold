@@ -5993,6 +5993,7 @@
         },
         {
           "sources": [
+            "fixture_public_species",
             "static_encounter:UnionCaveB2F.asm"
           ],
           "species": "Lapras"
@@ -6017,7 +6018,7 @@
         },
         {
           "sources": [
-            "level_evolution"
+            "fixture_public_species"
           ],
           "species": "Machamp"
         },
@@ -6113,12 +6114,6 @@
             "grass_encounter"
           ],
           "species": "Metapod"
-        },
-        {
-          "sources": [
-            "fixture_public_species"
-          ],
-          "species": "Milotic"
         },
         {
           "sources": [
@@ -6514,7 +6509,7 @@
         },
         {
           "sources": [
-            "level_evolution"
+            "fixture_public_species"
           ],
           "species": "Starmie"
         },
@@ -6734,7 +6729,7 @@
           "species": "Zubat"
         }
       ],
-      "available_species_count": 205,
+      "available_species_count": 204,
       "badges_before": 8,
       "direct_tm_moves": [
         "Blizzard",
@@ -19464,9 +19459,9 @@
         "bucket": "99%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 185,
-          "label": "about 156-185%",
-          "low_percent": 156,
+          "high_percent": 148,
+          "label": "about 125-148%",
+          "low_percent": 125,
           "target": "Hitmonlee",
           "target_hp": "84%"
         },
@@ -19490,9 +19485,9 @@
         "bucket": "99%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 30,
-          "label": "about 25-30%",
-          "low_percent": 25,
+          "high_percent": 24,
+          "label": "about 20-24%",
+          "low_percent": 20,
           "target": "Hitmonlee",
           "target_hp": "84%"
         },
@@ -19517,9 +19512,9 @@
         "bucket": "75%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 86,
-          "label": "about 72-86%",
-          "low_percent": 72,
+          "high_percent": 69,
+          "label": "about 58-69%",
+          "low_percent": 58,
           "target": "Hitmonlee",
           "target_hp": "84%"
         },
@@ -19531,7 +19526,7 @@
         "reasons": [
           "natural level-up STAB/core move by this checkpoint"
         ],
-        "severity": "lethal",
+        "severity": "meaningful",
         "sources": [
           "level_up"
         ],
@@ -19542,9 +19537,9 @@
         "bucket": "50%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 137,
-          "label": "about 116-137%",
-          "low_percent": 116,
+          "high_percent": 110,
+          "label": "about 93-110%",
+          "low_percent": 93,
           "target": "Hitmonlee",
           "target_hp": "84%"
         },
@@ -19567,9 +19562,9 @@
         "bucket": "50%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 34,
-          "label": "about 29-34%",
-          "low_percent": 29,
+          "high_percent": 27,
+          "label": "about 23-27%",
+          "low_percent": 23,
           "target": "Hitmonlee",
           "target_hp": "84%"
         },
@@ -19592,9 +19587,47 @@
         "bucket": "75%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 310,
-          "label": "about 264-310%",
-          "low_percent": 264,
+          "high_percent": 331,
+          "label": "about 281-331%",
+          "low_percent": 281,
+          "target": "Hitmonlee",
+          "target_hp": "84%"
+        },
+        "entry_risk": {
+          "damage": {
+            "basis": "rough estimate",
+            "high_percent": 33,
+            "label": "about 28-33%",
+            "low_percent": 28,
+            "target": "Alakazam",
+            "target_hp": "100%"
+          },
+          "fit": "risky",
+          "move": "Hi Jump Kick",
+          "reason": "risky switch into revealed boss damage"
+        },
+        "immediacy": "switch",
+        "likelihood": 75,
+        "move": "Future Sight",
+        "move_id": "FUTURE_SIGHT",
+        "reasons": [
+          "natural level-up STAB/core move by this checkpoint"
+        ],
+        "severity": "lethal",
+        "sources": [
+          "level_up",
+          "pre_evo_level_up"
+        ],
+        "species": "Alakazam",
+        "switch_fit": "risky"
+      },
+      {
+        "bucket": "75%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 249,
+          "label": "about 211-249%",
+          "low_percent": 211,
           "target": "Hitmonlee",
           "target_hp": "84%"
         },
@@ -19631,47 +19664,9 @@
         "bucket": "75%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 276,
-          "label": "about 234-276%",
-          "low_percent": 234,
-          "target": "Hitmonlee",
-          "target_hp": "84%"
-        },
-        "entry_risk": {
-          "damage": {
-            "basis": "rough estimate",
-            "high_percent": 33,
-            "label": "about 28-33%",
-            "low_percent": 28,
-            "target": "Alakazam",
-            "target_hp": "100%"
-          },
-          "fit": "risky",
-          "move": "Hi Jump Kick",
-          "reason": "risky switch into revealed boss damage"
-        },
-        "immediacy": "switch",
-        "likelihood": 75,
-        "move": "Future Sight",
-        "move_id": "FUTURE_SIGHT",
-        "reasons": [
-          "natural level-up STAB/core move by this checkpoint"
-        ],
-        "severity": "lethal",
-        "sources": [
-          "level_up",
-          "pre_evo_level_up"
-        ],
-        "species": "Alakazam",
-        "switch_fit": "risky"
-      },
-      {
-        "bucket": "75%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 225,
-          "label": "about 190-225%",
-          "low_percent": 190,
+          "high_percent": 180,
+          "label": "about 153-180%",
+          "low_percent": 153,
           "target": "Hitmonlee",
           "target_hp": "84%"
         },
@@ -19757,9 +19752,9 @@
         "bucket": "75%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 99,
-          "label": "about 84-99%",
-          "low_percent": 84,
+          "high_percent": 146,
+          "label": "about 124-146%",
+          "low_percent": 124,
           "target": "Machamp",
           "target_hp": "100%"
         },
@@ -19771,7 +19766,7 @@
         "reasons": [
           "natural level-up STAB/core move by this checkpoint"
         ],
-        "severity": "major",
+        "severity": "lethal",
         "sources": [
           "level_up",
           "pre_evo_level_up"
@@ -19912,9 +19907,9 @@
         "bucket": "99%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 84,
-          "label": "about 71-84%",
-          "low_percent": 71,
+          "high_percent": 62,
+          "label": "about 52-62%",
+          "low_percent": 52,
           "target": "Onix",
           "target_hp": "31%"
         },
@@ -19938,9 +19933,9 @@
         "bucket": "99%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 53,
-          "label": "about 44-53%",
-          "low_percent": 44,
+          "high_percent": 46,
+          "label": "about 38-46%",
+          "low_percent": 38,
           "target": "Onix",
           "target_hp": "31%"
         },
@@ -19964,9 +19959,9 @@
         "bucket": "75%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 122,
-          "label": "about 103-122%",
-          "low_percent": 103,
+          "high_percent": 91,
+          "label": "about 77-91%",
+          "low_percent": 77,
           "target": "Onix",
           "target_hp": "31%"
         },
@@ -19990,9 +19985,9 @@
         "bucket": "75%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 53,
-          "label": "about 44-53%",
-          "low_percent": 44,
+          "high_percent": 39,
+          "label": "about 32-39%",
+          "low_percent": 32,
           "target": "Onix",
           "target_hp": "31%"
         },
@@ -20016,9 +20011,9 @@
         "bucket": "75%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 44,
-          "label": "about 37-44%",
-          "low_percent": 37,
+          "high_percent": 32,
+          "label": "about 28-32%",
+          "low_percent": 28,
           "target": "Onix",
           "target_hp": "31%"
         },
@@ -20042,9 +20037,9 @@
         "bucket": "50%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 67,
-          "label": "about 57-67%",
-          "low_percent": 57,
+          "high_percent": 58,
+          "label": "about 49-58%",
+          "low_percent": 49,
           "target": "Onix",
           "target_hp": "31%"
         },
@@ -20067,9 +20062,9 @@
         "bucket": "50%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 66,
-          "label": "about 56-66%",
-          "low_percent": 56,
+          "high_percent": 49,
+          "label": "about 42-49%",
+          "low_percent": 42,
           "target": "Onix",
           "target_hp": "31%"
         },
@@ -20092,9 +20087,9 @@
         "bucket": "50%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 53,
-          "label": "about 44-53%",
-          "low_percent": 44,
+          "high_percent": 46,
+          "label": "about 38-46%",
+          "low_percent": 38,
           "target": "Onix",
           "target_hp": "31%"
         },
@@ -20114,15 +20109,15 @@
         "switch_fit": null
       }
     ],
-    "bugsy_butterfree_vs_pidgey_sleep_powder_or_psybeam": [
+    "bugsy_ariados_vs_pidgey_toxic_or_attack": [
       {
         "bucket": "99%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 19,
-          "label": "about 16-19%",
-          "low_percent": 16,
-          "target": "Butterfree",
+          "high_percent": 10,
+          "label": "about 8-10%",
+          "low_percent": 8,
+          "target": "Ariados",
           "target_hp": "100%"
         },
         "entry_risk": null,
@@ -20137,31 +20132,6 @@
         "sources": [
           "level_up",
           "revealed"
-        ],
-        "species": "Pidgey",
-        "switch_fit": null
-      },
-      {
-        "bucket": "75%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 39,
-          "label": "about 32-39%",
-          "low_percent": 32,
-          "target": "Butterfree",
-          "target_hp": "100%"
-        },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 75,
-        "move": "Gust",
-        "move_id": "GUST",
-        "reasons": [
-          "natural level-up STAB/core move by this checkpoint"
-        ],
-        "severity": "meaningful",
-        "sources": [
-          "level_up"
         ],
         "species": "Pidgey",
         "switch_fit": null
@@ -20331,15 +20301,166 @@
         "switch_fit": "risky"
       }
     ],
-    "chuck_machamp_vs_alakazam_rock_slide_or_low_kick": [
+    "chuck_hitmonlee_vs_machoke_hi_jump_kick_or_rock_slide": [
       {
         "bucket": "99%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 98,
-          "label": "about 83-98%",
-          "low_percent": 83,
-          "target": "Machamp",
+          "high_percent": 62,
+          "label": "about 52-62%",
+          "low_percent": 52,
+          "target": "Hitmonlee",
+          "target_hp": "67%"
+        },
+        "entry_risk": null,
+        "immediacy": "active",
+        "likelihood": 99,
+        "move": "Karate Chop",
+        "move_id": "KARATE_CHOP",
+        "reasons": [
+          "revealed in the public fixture state"
+        ],
+        "severity": "meaningful",
+        "sources": [
+          "level_up",
+          "pre_evo_level_up",
+          "revealed"
+        ],
+        "species": "Machoke",
+        "switch_fit": null
+      },
+      {
+        "bucket": "99%",
+        "damage": null,
+        "entry_risk": null,
+        "immediacy": "active",
+        "likelihood": 99,
+        "move": "Bulk Up",
+        "move_id": "BULK_UP",
+        "reasons": [
+          "revealed in the public fixture state",
+          "fixture-attested but not derivable from ROM at this checkpoint"
+        ],
+        "severity": "support",
+        "sources": [
+          "revealed"
+        ],
+        "species": "Machoke",
+        "switch_fit": null
+      },
+      {
+        "bucket": "75%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 54,
+          "label": "about 46-54%",
+          "low_percent": 46,
+          "target": "Hitmonlee",
+          "target_hp": "67%"
+        },
+        "entry_risk": null,
+        "immediacy": "active",
+        "likelihood": 75,
+        "move": "Vital Throw",
+        "move_id": "VITAL_THROW",
+        "reasons": [
+          "natural level-up STAB/core move by this checkpoint"
+        ],
+        "severity": "meaningful",
+        "sources": [
+          "level_up",
+          "pre_evo_level_up"
+        ],
+        "species": "Machoke",
+        "switch_fit": null
+      },
+      {
+        "bucket": "75%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 40,
+          "label": "about 34-40%",
+          "low_percent": 34,
+          "target": "Hitmonlee",
+          "target_hp": "67%"
+        },
+        "entry_risk": null,
+        "immediacy": "active",
+        "likelihood": 75,
+        "move": "Low Kick",
+        "move_id": "LOW_KICK",
+        "reasons": [
+          "natural level-up STAB/core move by this checkpoint"
+        ],
+        "severity": "meaningful",
+        "sources": [
+          "level_up",
+          "pre_evo_level_up"
+        ],
+        "species": "Machoke",
+        "switch_fit": null
+      },
+      {
+        "bucket": "75%",
+        "damage": {
+          "basis": "fixed-damage move",
+          "high_percent": 33,
+          "label": "about 33%",
+          "low_percent": 33,
+          "target": "Hitmonlee",
+          "target_hp": "67%"
+        },
+        "entry_risk": null,
+        "immediacy": "active",
+        "likelihood": 75,
+        "move": "Seismic Toss",
+        "move_id": "SEISMIC_TOSS",
+        "reasons": [
+          "natural level-up STAB/core move by this checkpoint"
+        ],
+        "severity": "chip",
+        "sources": [
+          "level_up",
+          "pre_evo_level_up"
+        ],
+        "species": "Machoke",
+        "switch_fit": null
+      },
+      {
+        "bucket": "50%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 37,
+          "label": "about 31-37%",
+          "low_percent": 31,
+          "target": "Hitmonlee",
+          "target_hp": "67%"
+        },
+        "entry_risk": null,
+        "immediacy": "active",
+        "likelihood": 50,
+        "move": "Headbutt",
+        "move_id": "HEADBUTT",
+        "reasons": [
+          "direct TM source is available by this checkpoint"
+        ],
+        "severity": "meaningful",
+        "sources": [
+          "tm_available"
+        ],
+        "species": "Machoke",
+        "switch_fit": null
+      }
+    ],
+    "chuck_poliwrath_vs_alakazam_hypnosis_or_ice_punch": [
+      {
+        "bucket": "99%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 86,
+          "label": "about 73-86%",
+          "low_percent": 73,
+          "target": "Poliwrath",
           "target_hp": "100%"
         },
         "entry_risk": null,
@@ -20381,10 +20502,10 @@
         "bucket": "75%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 87,
-          "label": "about 73-87%",
-          "low_percent": 73,
-          "target": "Machamp",
+          "high_percent": 116,
+          "label": "about 98-116%",
+          "low_percent": 98,
+          "target": "Poliwrath",
           "target_hp": "100%"
         },
         "entry_risk": null,
@@ -20395,7 +20516,7 @@
         "reasons": [
           "natural level-up STAB/core move by this checkpoint"
         ],
-        "severity": "major",
+        "severity": "lethal",
         "sources": [
           "level_up"
         ],
@@ -20406,10 +20527,10 @@
         "bucket": "75%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 73,
-          "label": "about 61-73%",
-          "low_percent": 61,
-          "target": "Machamp",
+          "high_percent": 63,
+          "label": "about 53-63%",
+          "low_percent": 53,
+          "target": "Poliwrath",
           "target_hp": "100%"
         },
         "entry_risk": null,
@@ -20420,7 +20541,7 @@
         "reasons": [
           "natural level-up STAB/core move by this checkpoint"
         ],
-        "severity": "major",
+        "severity": "meaningful",
         "sources": [
           "level_up"
         ],
@@ -20431,10 +20552,10 @@
         "bucket": "75%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 55,
-          "label": "about 46-55%",
-          "low_percent": 46,
-          "target": "Machamp",
+          "high_percent": 49,
+          "label": "about 41-49%",
+          "low_percent": 41,
+          "target": "Poliwrath",
           "target_hp": "100%"
         },
         "entry_risk": null,
@@ -20456,60 +20577,10 @@
         "bucket": "50%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 27,
-          "label": "about 23-27%",
-          "low_percent": 23,
-          "target": "Machamp",
-          "target_hp": "100%"
-        },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 50,
-        "move": "Fire Punch",
-        "move_id": "FIRE_PUNCH",
-        "reasons": [
-          "direct TM source is available by this checkpoint"
-        ],
-        "severity": "chip",
-        "sources": [
-          "tm_available"
-        ],
-        "species": "Alakazam",
-        "switch_fit": null
-      },
-      {
-        "bucket": "50%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 27,
-          "label": "about 23-27%",
-          "low_percent": 23,
-          "target": "Machamp",
-          "target_hp": "100%"
-        },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 50,
-        "move": "Ice Punch",
-        "move_id": "ICE_PUNCH",
-        "reasons": [
-          "direct TM source is available by this checkpoint"
-        ],
-        "severity": "chip",
-        "sources": [
-          "tm_available"
-        ],
-        "species": "Alakazam",
-        "switch_fit": null
-      },
-      {
-        "bucket": "50%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 27,
-          "label": "about 23-27%",
-          "low_percent": 23,
-          "target": "Machamp",
+          "high_percent": 49,
+          "label": "about 41-49%",
+          "low_percent": 41,
+          "target": "Poliwrath",
           "target_hp": "100%"
         },
         "entry_risk": null,
@@ -20520,12 +20591,41 @@
         "reasons": [
           "direct TM source is available by this checkpoint"
         ],
-        "severity": "chip",
+        "severity": "meaningful",
         "sources": [
           "tm_available"
         ],
         "species": "Alakazam",
         "switch_fit": null
+      },
+      {
+        "bucket": "75%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 37,
+          "label": "about 31-37%",
+          "low_percent": 31,
+          "target": "Poliwrath",
+          "target_hp": "100%"
+        },
+        "entry_risk": {
+          "fit": "unknown",
+          "reason": "no revealed damaging boss move to judge the switch-in"
+        },
+        "immediacy": "switch",
+        "likelihood": 75,
+        "move": "Wing Attack",
+        "move_id": "WING_ATTACK",
+        "reasons": [
+          "natural level-up STAB/core move by this checkpoint"
+        ],
+        "severity": "meaningful",
+        "sources": [
+          "level_up",
+          "pre_evo_level_up"
+        ],
+        "species": "Pidgeotto",
+        "switch_fit": "unknown"
       }
     ],
     "chuck_poliwrath_vs_pidgeotto_ice_punch": [
@@ -20587,9 +20687,9 @@
         "bucket": "75%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 73,
-          "label": "about 61-73%",
-          "low_percent": 61,
+          "high_percent": 107,
+          "label": "about 91-107%",
+          "low_percent": 91,
           "target": "Poliwrath",
           "target_hp": "76%"
         },
@@ -20613,7 +20713,7 @@
         "reasons": [
           "natural level-up STAB/core move by this checkpoint"
         ],
-        "severity": "major",
+        "severity": "lethal",
         "sources": [
           "level_up"
         ],
@@ -20621,381 +20721,16 @@
         "switch_fit": "bad"
       }
     ],
-    "chuck_primeape_vs_machoke_intimidate_psych_up": [
+    "clair_dragonair_vs_ampharos_thunder_or_wave": [
       {
         "bucket": "99%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 31,
-          "label": "about 25-31%",
-          "low_percent": 25,
-          "target": "Primeape",
-          "target_hp": "67%"
-        },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 99,
-        "move": "Karate Chop",
-        "move_id": "KARATE_CHOP",
-        "reasons": [
-          "revealed in the public fixture state"
-        ],
-        "severity": "chip",
-        "sources": [
-          "level_up",
-          "pre_evo_level_up",
-          "revealed"
-        ],
-        "species": "Machoke",
-        "switch_fit": null
-      },
-      {
-        "bucket": "99%",
-        "damage": null,
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 99,
-        "move": "Bulk Up",
-        "move_id": "BULK_UP",
-        "reasons": [
-          "revealed in the public fixture state",
-          "fixture-attested but not derivable from ROM at this checkpoint"
-        ],
-        "severity": "support",
-        "sources": [
-          "revealed"
-        ],
-        "species": "Machoke",
-        "switch_fit": null
-      },
-      {
-        "bucket": "75%",
-        "damage": {
-          "basis": "fixed-damage move",
-          "high_percent": 30,
-          "label": "about 30%",
-          "low_percent": 30,
-          "target": "Primeape",
-          "target_hp": "67%"
-        },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 75,
-        "move": "Seismic Toss",
-        "move_id": "SEISMIC_TOSS",
-        "reasons": [
-          "natural level-up STAB/core move by this checkpoint"
-        ],
-        "severity": "chip",
-        "sources": [
-          "level_up",
-          "pre_evo_level_up"
-        ],
-        "species": "Machoke",
-        "switch_fit": null
-      },
-      {
-        "bucket": "75%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 27,
-          "label": "about 23-27%",
-          "low_percent": 23,
-          "target": "Primeape",
-          "target_hp": "67%"
-        },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 75,
-        "move": "Vital Throw",
-        "move_id": "VITAL_THROW",
-        "reasons": [
-          "natural level-up STAB/core move by this checkpoint"
-        ],
-        "severity": "chip",
-        "sources": [
-          "level_up",
-          "pre_evo_level_up"
-        ],
-        "species": "Machoke",
-        "switch_fit": null
-      },
-      {
-        "bucket": "50%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 48,
-          "label": "about 41-48%",
-          "low_percent": 41,
-          "target": "Primeape",
-          "target_hp": "67%"
-        },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 50,
-        "move": "Fire Blast",
-        "move_id": "FIRE_BLAST",
-        "reasons": [
-          "direct TM source is available by this checkpoint"
-        ],
-        "severity": "meaningful",
-        "sources": [
-          "tm_available"
-        ],
-        "species": "Machoke",
-        "switch_fit": null
-      },
-      {
-        "bucket": "50%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 26,
-          "label": "about 22-26%",
-          "low_percent": 22,
-          "target": "Primeape",
-          "target_hp": "67%"
-        },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 50,
-        "move": "Fire Punch",
-        "move_id": "FIRE_PUNCH",
-        "reasons": [
-          "direct TM source is available by this checkpoint"
-        ],
-        "severity": "chip",
-        "sources": [
-          "tm_available"
-        ],
-        "species": "Machoke",
-        "switch_fit": null
-      },
-      {
-        "bucket": "50%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 26,
-          "label": "about 22-26%",
-          "low_percent": 22,
-          "target": "Primeape",
-          "target_hp": "67%"
-        },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 50,
-        "move": "Ice Punch",
-        "move_id": "ICE_PUNCH",
-        "reasons": [
-          "direct TM source is available by this checkpoint"
-        ],
-        "severity": "chip",
-        "sources": [
-          "tm_available"
-        ],
-        "species": "Machoke",
-        "switch_fit": null
-      },
-      {
-        "bucket": "50%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 26,
-          "label": "about 22-26%",
-          "low_percent": 22,
-          "target": "Primeape",
-          "target_hp": "67%"
-        },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 50,
-        "move": "Thunderpunch",
-        "move_id": "THUNDERPUNCH",
-        "reasons": [
-          "direct TM source is available by this checkpoint"
-        ],
-        "severity": "chip",
-        "sources": [
-          "tm_available"
-        ],
-        "species": "Machoke",
-        "switch_fit": null
-      }
-    ],
-    "clair_dragonite_vs_suicune_hidden_ice_beam": [
-      {
-        "bucket": "99%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 11,
-          "label": "about 9-11%",
-          "low_percent": 9,
-          "target": "Dragonite",
-          "target_hp": "74%"
-        },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 99,
-        "move": "Surf",
-        "move_id": "SURF",
-        "reasons": [
-          "revealed in the public fixture state",
-          "fixture-attested but not derivable from ROM at this checkpoint"
-        ],
-        "severity": "chip",
-        "sources": [
-          "revealed"
-        ],
-        "species": "Suicune",
-        "switch_fit": null
-      },
-      {
-        "bucket": "50%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 113,
-          "label": "about 95-113%",
-          "low_percent": 95,
-          "target": "Dragonite",
-          "target_hp": "74%"
-        },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 50,
-        "move": "Blizzard",
-        "move_id": "BLIZZARD",
-        "reasons": [
-          "direct TM source is available by this checkpoint"
-        ],
-        "severity": "lethal",
-        "sources": [
-          "tm_available"
-        ],
-        "species": "Suicune",
-        "switch_fit": null
-      },
-      {
-        "bucket": "75%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 48,
-          "label": "about 41-48%",
-          "low_percent": 41,
-          "target": "Dragonite",
-          "target_hp": "74%"
-        },
-        "entry_risk": {
-          "damage": {
-            "basis": "rough estimate",
-            "high_percent": 16,
-            "label": "about 13-16%",
-            "low_percent": 13,
-            "target": "Ampharos",
-            "target_hp": "100%"
-          },
-          "fit": "reasonable",
-          "move": "Wing Attack",
-          "reason": "reasonable switch into revealed boss damage"
-        },
-        "immediacy": "switch",
-        "likelihood": 75,
-        "move": "Dragonbreath",
-        "move_id": "DRAGONBREATH",
-        "reasons": [
-          "natural level-up STAB/core move by this checkpoint"
-        ],
-        "severity": "meaningful",
-        "sources": [
-          "level_up"
-        ],
-        "species": "Ampharos",
-        "switch_fit": "reasonable"
-      },
-      {
-        "bucket": "75%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 34,
-          "label": "about 28-34%",
-          "low_percent": 28,
-          "target": "Dragonite",
-          "target_hp": "74%"
-        },
-        "entry_risk": {
-          "damage": {
-            "basis": "rough estimate",
-            "high_percent": 16,
-            "label": "about 13-16%",
-            "low_percent": 13,
-            "target": "Ampharos",
-            "target_hp": "100%"
-          },
-          "fit": "reasonable",
-          "move": "Wing Attack",
-          "reason": "reasonable switch into revealed boss damage"
-        },
-        "immediacy": "switch",
-        "likelihood": 75,
-        "move": "Twister",
-        "move_id": "TWISTER",
-        "reasons": [
-          "natural level-up STAB/core move by this checkpoint"
-        ],
-        "severity": "chip",
-        "sources": [
-          "level_up"
-        ],
-        "species": "Ampharos",
-        "switch_fit": "reasonable"
-      },
-      {
-        "bucket": "50%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 31,
-          "label": "about 26-31%",
-          "low_percent": 26,
-          "target": "Dragonite",
-          "target_hp": "74%"
-        },
-        "entry_risk": {
-          "damage": {
-            "basis": "rough estimate",
-            "high_percent": 16,
-            "label": "about 13-16%",
-            "low_percent": 13,
-            "target": "Ampharos",
-            "target_hp": "100%"
-          },
-          "fit": "reasonable",
-          "move": "Wing Attack",
-          "reason": "reasonable switch into revealed boss damage"
-        },
-        "immediacy": "switch",
-        "likelihood": 50,
-        "move": "Thunder",
-        "move_id": "THUNDER",
-        "reasons": [
-          "legal via pre-evolution level-up path"
-        ],
-        "severity": "chip",
-        "sources": [
-          "pre_evo_level_up",
-          "tm_available"
-        ],
-        "species": "Ampharos",
-        "switch_fit": "reasonable"
-      }
-    ],
-    "clair_gyarados_vs_ampharos_rest_or_attack": [
-      {
-        "bucket": "99%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 23,
-          "label": "about 19-23%",
-          "low_percent": 19,
-          "target": "Gyarados",
-          "target_hp": "27%"
+          "high_percent": 14,
+          "label": "about 11-14%",
+          "low_percent": 11,
+          "target": "Dragonair",
+          "target_hp": "64%"
         },
         "entry_risk": null,
         "immediacy": "active",
@@ -21018,11 +20753,11 @@
         "bucket": "75%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 56,
-          "label": "about 47-56%",
-          "low_percent": 47,
-          "target": "Gyarados",
-          "target_hp": "27%"
+          "high_percent": 90,
+          "label": "about 76-90%",
+          "low_percent": 76,
+          "target": "Dragonair",
+          "target_hp": "64%"
         },
         "entry_risk": null,
         "immediacy": "active",
@@ -21043,11 +20778,11 @@
         "bucket": "75%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 38,
-          "label": "about 32-38%",
-          "low_percent": 32,
-          "target": "Gyarados",
-          "target_hp": "27%"
+          "high_percent": 61,
+          "label": "about 51-61%",
+          "low_percent": 51,
+          "target": "Dragonair",
+          "target_hp": "64%"
         },
         "entry_risk": null,
         "immediacy": "active",
@@ -21057,38 +20792,102 @@
         "reasons": [
           "natural level-up STAB/core move by this checkpoint"
         ],
-        "severity": "lethal",
+        "severity": "meaningful",
         "sources": [
           "level_up"
         ],
         "species": "Ampharos",
+        "switch_fit": null
+      }
+    ],
+    "clair_dragonair_vs_suicune_hidden_ice_beam": [
+      {
+        "bucket": "99%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 14,
+          "label": "about 11-14%",
+          "low_percent": 11,
+          "target": "Dragonair",
+          "target_hp": "74%"
+        },
+        "entry_risk": null,
+        "immediacy": "active",
+        "likelihood": 99,
+        "move": "Surf",
+        "move_id": "SURF",
+        "reasons": [
+          "revealed in the public fixture state",
+          "fixture-attested but not derivable from ROM at this checkpoint"
+        ],
+        "severity": "chip",
+        "sources": [
+          "revealed"
+        ],
+        "species": "Suicune",
         "switch_fit": null
       },
       {
         "bucket": "50%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 35,
-          "label": "about 29-35%",
-          "low_percent": 29,
-          "target": "Gyarados",
-          "target_hp": "27%"
+          "high_percent": 95,
+          "label": "about 80-95%",
+          "low_percent": 80,
+          "target": "Dragonair",
+          "target_hp": "74%"
         },
         "entry_risk": null,
         "immediacy": "active",
         "likelihood": 50,
-        "move": "Thunder",
-        "move_id": "THUNDER",
+        "move": "Blizzard",
+        "move_id": "BLIZZARD",
         "reasons": [
-          "legal via pre-evolution level-up path"
+          "direct TM source is available by this checkpoint"
         ],
         "severity": "lethal",
         "sources": [
-          "pre_evo_level_up",
           "tm_available"
         ],
-        "species": "Ampharos",
+        "species": "Suicune",
         "switch_fit": null
+      },
+      {
+        "bucket": "75%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 80,
+          "label": "about 68-80%",
+          "low_percent": 68,
+          "target": "Dragonair",
+          "target_hp": "74%"
+        },
+        "entry_risk": {
+          "damage": {
+            "basis": "rough estimate",
+            "high_percent": 101,
+            "label": "about 86-101%",
+            "low_percent": 86,
+            "target": "Ampharos",
+            "target_hp": "100%"
+          },
+          "fit": "bad",
+          "move": "Outrage",
+          "reason": "bad switch into revealed boss damage"
+        },
+        "immediacy": "switch",
+        "likelihood": 75,
+        "move": "Dragonbreath",
+        "move_id": "DRAGONBREATH",
+        "reasons": [
+          "natural level-up STAB/core move by this checkpoint"
+        ],
+        "severity": "lethal",
+        "sources": [
+          "level_up"
+        ],
+        "species": "Ampharos",
+        "switch_fit": "bad"
       }
     ],
     "clair_kingdra_vs_dragonair_dragon_dance_mirror": [
@@ -21096,9 +20895,9 @@
         "bucket": "99%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 84,
-          "label": "about 71-84%",
-          "low_percent": 71,
+          "high_percent": 91,
+          "label": "about 77-91%",
+          "low_percent": 77,
           "target": "Kingdra",
           "target_hp": "92%"
         },
@@ -21122,9 +20921,9 @@
         "bucket": "75%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 52,
-          "label": "about 44-52%",
-          "low_percent": 44,
+          "high_percent": 56,
+          "label": "about 47-56%",
+          "low_percent": 47,
           "target": "Kingdra",
           "target_hp": "92%"
         },
@@ -21148,9 +20947,9 @@
         "bucket": "75%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 34,
-          "label": "about 29-34%",
-          "low_percent": 29,
+          "high_percent": 37,
+          "label": "about 31-37%",
+          "low_percent": 31,
           "target": "Kingdra",
           "target_hp": "92%"
         },
@@ -21162,7 +20961,7 @@
         "reasons": [
           "natural level-up STAB/core move by this checkpoint"
         ],
-        "severity": "chip",
+        "severity": "meaningful",
         "sources": [
           "level_up",
           "pre_evo_level_up"
@@ -21174,9 +20973,9 @@
         "bucket": "75%",
         "damage": {
           "basis": "fixed-damage move",
-          "high_percent": 30,
-          "label": "about 30%",
-          "low_percent": 30,
+          "high_percent": 31,
+          "label": "about 31%",
+          "low_percent": 31,
           "target": "Kingdra",
           "target_hp": "92%"
         },
@@ -21200,18 +20999,18 @@
         "bucket": "75%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 52,
-          "label": "about 44-52%",
-          "low_percent": 44,
+          "high_percent": 59,
+          "label": "about 50-59%",
+          "low_percent": 50,
           "target": "Kingdra",
           "target_hp": "92%"
         },
         "entry_risk": {
           "damage": {
             "basis": "rough estimate",
-            "high_percent": 14,
-            "label": "about 12-14%",
-            "low_percent": 12,
+            "high_percent": 13,
+            "label": "about 11-13%",
+            "low_percent": 11,
             "target": "Ampharos",
             "target_hp": "100%"
           },
@@ -21237,18 +21036,18 @@
         "bucket": "75%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 36,
-          "label": "about 30-36%",
-          "low_percent": 30,
+          "high_percent": 40,
+          "label": "about 34-40%",
+          "low_percent": 34,
           "target": "Kingdra",
           "target_hp": "92%"
         },
         "entry_risk": {
           "damage": {
             "basis": "rough estimate",
-            "high_percent": 14,
-            "label": "about 12-14%",
-            "low_percent": 12,
+            "high_percent": 13,
+            "label": "about 11-13%",
+            "low_percent": 11,
             "target": "Ampharos",
             "target_hp": "100%"
           },
@@ -21274,18 +21073,18 @@
         "bucket": "50%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 33,
-          "label": "about 27-33%",
-          "low_percent": 27,
+          "high_percent": 37,
+          "label": "about 31-37%",
+          "low_percent": 31,
           "target": "Kingdra",
           "target_hp": "92%"
         },
         "entry_risk": {
           "damage": {
             "basis": "rough estimate",
-            "high_percent": 14,
-            "label": "about 12-14%",
-            "low_percent": 12,
+            "high_percent": 13,
+            "label": "about 11-13%",
+            "low_percent": 11,
             "target": "Ampharos",
             "target_hp": "100%"
           },
@@ -21300,7 +21099,7 @@
         "reasons": [
           "legal via pre-evolution level-up path"
         ],
-        "severity": "chip",
+        "severity": "meaningful",
         "sources": [
           "pre_evo_level_up",
           "tm_available"
@@ -21309,13 +21108,13 @@
         "switch_fit": "reasonable"
       }
     ],
-    "clair_kingdra_vs_lapras_agility_or_attack": [
+    "clair_kingdra_vs_lapras_dragon_dance_or_attack": [
       {
         "bucket": "99%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 23,
-          "label": "about 19-23%",
+          "high_percent": 22,
+          "label": "about 19-22%",
           "low_percent": 19,
           "target": "Kingdra",
           "target_hp": "66%"
@@ -21340,8 +21139,8 @@
         "bucket": "99%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 13,
-          "label": "about 10-13%",
+          "high_percent": 12,
+          "label": "about 10-12%",
           "low_percent": 10,
           "target": "Kingdra",
           "target_hp": "66%"
@@ -21366,9 +21165,9 @@
         "bucket": "50%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 29,
-          "label": "about 25-29%",
-          "low_percent": 25,
+          "high_percent": 28,
+          "label": "about 23-28%",
+          "low_percent": 23,
           "target": "Kingdra",
           "target_hp": "66%"
         },
@@ -21588,127 +21387,58 @@
         "switch_fit": null
       }
     ],
-    "falkner_dodrio_vs_pikachu_drill_peck_or_pursuit": [
+    "falkner_pidgeotto_vs_charmander_sand_attack_or_gust": [
       {
         "bucket": "99%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 54,
-          "label": "about 46-54%",
-          "low_percent": 46,
-          "target": "Dodrio",
-          "target_hp": "78%"
+          "high_percent": 25,
+          "label": "about 20-25%",
+          "low_percent": 20,
+          "target": "Pidgeotto",
+          "target_hp": "100%"
         },
         "entry_risk": null,
         "immediacy": "active",
         "likelihood": 99,
-        "move": "Thundershock",
-        "move_id": "THUNDERSHOCK",
+        "move": "Ember",
+        "move_id": "EMBER",
         "reasons": [
           "revealed in the public fixture state"
-        ],
-        "severity": "meaningful",
-        "sources": [
-          "level_up",
-          "pre_evo_level_up",
-          "revealed"
-        ],
-        "species": "Pikachu",
-        "switch_fit": null
-      },
-      {
-        "bucket": "99%",
-        "damage": null,
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 99,
-        "move": "Thunder Wave",
-        "move_id": "THUNDER_WAVE",
-        "reasons": [
-          "revealed in the public fixture state"
-        ],
-        "severity": "support",
-        "sources": [
-          "level_up",
-          "pre_evo_level_up",
-          "revealed"
-        ],
-        "species": "Pikachu",
-        "switch_fit": null
-      },
-      {
-        "bucket": "75%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 54,
-          "label": "about 46-54%",
-          "low_percent": 46,
-          "target": "Dodrio",
-          "target_hp": "78%"
-        },
-        "entry_risk": {
-          "damage": {
-            "basis": "rough estimate",
-            "high_percent": 27,
-            "label": "about 22-27%",
-            "low_percent": 22,
-            "target": "Geodude",
-            "target_hp": "100%"
-          },
-          "fit": "risky",
-          "move": "Pursuit",
-          "reason": "risky switch into revealed boss damage"
-        },
-        "immediacy": "switch",
-        "likelihood": 75,
-        "move": "Rock Throw",
-        "move_id": "ROCK_THROW",
-        "reasons": [
-          "natural level-up STAB/core move by this checkpoint"
-        ],
-        "severity": "meaningful",
-        "sources": [
-          "level_up"
-        ],
-        "species": "Geodude",
-        "switch_fit": "risky"
-      },
-      {
-        "bucket": "75%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 27,
-          "label": "about 23-27%",
-          "low_percent": 23,
-          "target": "Dodrio",
-          "target_hp": "78%"
-        },
-        "entry_risk": {
-          "damage": {
-            "basis": "rough estimate",
-            "high_percent": 25,
-            "label": "about 20-25%",
-            "low_percent": 20,
-            "target": "Bellsprout",
-            "target_hp": "100%"
-          },
-          "fit": "risky",
-          "move": "Pursuit",
-          "reason": "risky switch into revealed boss damage"
-        },
-        "immediacy": "switch",
-        "likelihood": 75,
-        "move": "Vine Whip",
-        "move_id": "VINE_WHIP",
-        "reasons": [
-          "natural level-up STAB/core move by this checkpoint"
         ],
         "severity": "chip",
         "sources": [
-          "level_up"
+          "level_up",
+          "revealed"
         ],
-        "species": "Bellsprout",
-        "switch_fit": "risky"
+        "species": "Charmander",
+        "switch_fit": null
+      },
+      {
+        "bucket": "99%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 15,
+          "label": "about 12-15%",
+          "low_percent": 12,
+          "target": "Pidgeotto",
+          "target_hp": "100%"
+        },
+        "entry_risk": null,
+        "immediacy": "active",
+        "likelihood": 99,
+        "move": "Scratch",
+        "move_id": "SCRATCH",
+        "reasons": [
+          "revealed in the public fixture state"
+        ],
+        "severity": "chip",
+        "sources": [
+          "level_up",
+          "revealed"
+        ],
+        "species": "Charmander",
+        "switch_fit": null
       }
     ],
     "falkner_pidgeotto_vs_geodude_rock_risk": [
@@ -21783,58 +21513,152 @@
         "switch_fit": null
       }
     ],
-    "falkner_pidgey_vs_charmander_mud_slap_chip": [
+    "falkner_pidgeotto_vs_pikachu_gust_or_quick_attack": [
       {
         "bucket": "99%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 55,
-          "label": "about 45-55%",
-          "low_percent": 45,
-          "target": "Pidgey",
-          "target_hp": "100%"
+          "high_percent": 75,
+          "label": "about 62-75%",
+          "low_percent": 62,
+          "target": "Pidgeotto",
+          "target_hp": "78%"
         },
         "entry_risk": null,
         "immediacy": "active",
         "likelihood": 99,
-        "move": "Ember",
-        "move_id": "EMBER",
+        "move": "Thundershock",
+        "move_id": "THUNDERSHOCK",
         "reasons": [
           "revealed in the public fixture state"
         ],
-        "severity": "meaningful",
+        "severity": "major",
         "sources": [
           "level_up",
+          "pre_evo_level_up",
           "revealed"
         ],
-        "species": "Charmander",
+        "species": "Pikachu",
         "switch_fit": null
       },
       {
         "bucket": "99%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 28,
-          "label": "about 21-28%",
-          "low_percent": 21,
-          "target": "Pidgey",
-          "target_hp": "100%"
-        },
+        "damage": null,
         "entry_risk": null,
         "immediacy": "active",
         "likelihood": 99,
-        "move": "Scratch",
-        "move_id": "SCRATCH",
+        "move": "Thunder Wave",
+        "move_id": "THUNDER_WAVE",
         "reasons": [
           "revealed in the public fixture state"
         ],
-        "severity": "chip",
+        "severity": "support",
         "sources": [
           "level_up",
+          "pre_evo_level_up",
           "revealed"
         ],
-        "species": "Charmander",
+        "species": "Pikachu",
         "switch_fit": null
+      },
+      {
+        "bucket": "50%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 25,
+          "label": "about 20-25%",
+          "low_percent": 20,
+          "target": "Pidgeotto",
+          "target_hp": "78%"
+        },
+        "entry_risk": null,
+        "immediacy": "active",
+        "likelihood": 50,
+        "move": "Quick Attack",
+        "move_id": "QUICK_ATTACK",
+        "reasons": [
+          "natural level-up move by this checkpoint"
+        ],
+        "severity": "chip",
+        "sources": [
+          "level_up"
+        ],
+        "species": "Pikachu",
+        "switch_fit": null
+      },
+      {
+        "bucket": "75%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 80,
+          "label": "about 68-80%",
+          "low_percent": 68,
+          "target": "Pidgeotto",
+          "target_hp": "78%"
+        },
+        "entry_risk": {
+          "damage": {
+            "basis": "rough estimate",
+            "high_percent": 8,
+            "label": "about 5-8%",
+            "low_percent": 5,
+            "target": "Geodude",
+            "target_hp": "100%"
+          },
+          "fit": "reasonable",
+          "move": "Quick Attack",
+          "reason": "reasonable switch into revealed boss damage"
+        },
+        "immediacy": "switch",
+        "likelihood": 75,
+        "move": "Rock Throw",
+        "move_id": "ROCK_THROW",
+        "reasons": [
+          "natural level-up STAB/core move by this checkpoint"
+        ],
+        "severity": "lethal",
+        "sources": [
+          "level_up"
+        ],
+        "species": "Geodude",
+        "switch_fit": "reasonable"
+      },
+      {
+        "bucket": "75%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 38,
+          "label": "about 30-38%",
+          "low_percent": 30,
+          "target": "Pidgeotto",
+          "target_hp": "78%"
+        },
+        "entry_risk": {
+          "damage": {
+            "basis": "rough estimate",
+            "high_percent": 25,
+            "label": "about 20-25%",
+            "low_percent": 20,
+            "target": "Bellsprout",
+            "target_hp": "100%"
+          },
+          "fit": "risky",
+          "move": "Quick Attack",
+          "reason": "risky switch into revealed boss damage"
+        },
+        "immediacy": "switch",
+        "likelihood": 75,
+        "move": "Vine Whip",
+        "move_id": "VINE_WHIP",
+        "reasons": [
+          "natural level-up STAB/core move by this checkpoint"
+        ],
+        "severity": "meaningful",
+        "sources": [
+          "level_up"
+        ],
+        "species": "Bellsprout",
+        "switch_fit": "risky"
       }
     ],
     "jasmine_magneton_vs_quilava_thunder_wave_or_bolt": [
@@ -21842,9 +21666,9 @@
         "bucket": "99%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 103,
-          "label": "about 87-103%",
-          "low_percent": 87,
+          "high_percent": 110,
+          "label": "about 93-110%",
+          "low_percent": 93,
           "target": "Magneton",
           "target_hp": "100%"
         },
@@ -21858,7 +21682,7 @@
         ],
         "severity": "lethal",
         "sources": [
-          "pre_evo_level_up",
+          "level_up",
           "revealed"
         ],
         "species": "Quilava",
@@ -21868,8 +21692,8 @@
         "bucket": "99%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 5,
-          "label": "about 4-5%",
+          "high_percent": 6,
+          "label": "about 4-6%",
           "low_percent": 4,
           "target": "Magneton",
           "target_hp": "100%"
@@ -21895,9 +21719,9 @@
         "bucket": "75%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 160,
-          "label": "about 136-160%",
-          "low_percent": 136,
+          "high_percent": 171,
+          "label": "about 145-171%",
+          "low_percent": 145,
           "target": "Magneton",
           "target_hp": "100%"
         },
@@ -21911,7 +21735,8 @@
         ],
         "severity": "lethal",
         "sources": [
-          "level_up"
+          "level_up",
+          "pre_evo_level_up"
         ],
         "species": "Quilava",
         "switch_fit": null
@@ -21920,9 +21745,9 @@
         "bucket": "75%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 84,
-          "label": "about 72-84%",
-          "low_percent": 72,
+          "high_percent": 90,
+          "label": "about 76-90%",
+          "low_percent": 76,
           "target": "Magneton",
           "target_hp": "100%"
         },
@@ -21946,9 +21771,9 @@
         "bucket": "50%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 234,
-          "label": "about 198-234%",
-          "low_percent": 198,
+          "high_percent": 249,
+          "label": "about 211-249%",
+          "low_percent": 211,
           "target": "Magneton",
           "target_hp": "100%"
         },
@@ -21971,9 +21796,9 @@
         "bucket": "50%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 80,
-          "label": "about 67-80%",
-          "low_percent": 67,
+          "high_percent": 85,
+          "label": "about 72-85%",
+          "low_percent": 72,
           "target": "Magneton",
           "target_hp": "100%"
         },
@@ -21999,9 +21824,9 @@
         "bucket": "50%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 46,
-          "label": "about 39-46%",
-          "low_percent": 39,
+          "high_percent": 49,
+          "label": "about 42-49%",
+          "low_percent": 42,
           "target": "Magneton",
           "target_hp": "100%"
         },
@@ -22027,9 +21852,9 @@
         "bucket": "50%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 29,
-          "label": "about 24-29%",
-          "low_percent": 24,
+          "high_percent": 31,
+          "label": "about 26-31%",
+          "low_percent": 26,
           "target": "Magneton",
           "target_hp": "100%"
         },
@@ -22286,7 +22111,7 @@
         ],
         "severity": "chip",
         "sources": [
-          "pre_evo_level_up",
+          "level_up",
           "revealed"
         ],
         "species": "Quilava",
@@ -22339,7 +22164,8 @@
         ],
         "severity": "meaningful",
         "sources": [
-          "level_up"
+          "level_up",
+          "pre_evo_level_up"
         ],
         "species": "Quilava",
         "switch_fit": null
@@ -22393,6 +22219,215 @@
           "tm_available"
         ],
         "species": "Quilava",
+        "switch_fit": null
+      }
+    ],
+    "karen_crobat_vs_dragonite_toxic_or_attack": [
+      {
+        "bucket": "99%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 56,
+          "label": "about 47-56%",
+          "low_percent": 47,
+          "target": "Crobat",
+          "target_hp": "92%"
+        },
+        "entry_risk": null,
+        "immediacy": "active",
+        "likelihood": 99,
+        "move": "Outrage",
+        "move_id": "OUTRAGE",
+        "reasons": [
+          "revealed in the public fixture state"
+        ],
+        "severity": "meaningful",
+        "sources": [
+          "level_up",
+          "pre_evo_level_up",
+          "revealed",
+          "tm_available"
+        ],
+        "species": "Dragonite",
+        "switch_fit": null
+      },
+      {
+        "bucket": "75%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 45,
+          "label": "about 38-45%",
+          "low_percent": 38,
+          "target": "Crobat",
+          "target_hp": "92%"
+        },
+        "entry_risk": null,
+        "immediacy": "active",
+        "likelihood": 75,
+        "move": "Wing Attack",
+        "move_id": "WING_ATTACK",
+        "reasons": [
+          "natural level-up STAB/core move by this checkpoint"
+        ],
+        "severity": "meaningful",
+        "sources": [
+          "level_up",
+          "tm_available"
+        ],
+        "species": "Dragonite",
+        "switch_fit": null
+      },
+      {
+        "bucket": "75%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 36,
+          "label": "about 30-36%",
+          "low_percent": 30,
+          "target": "Crobat",
+          "target_hp": "92%"
+        },
+        "entry_risk": null,
+        "immediacy": "active",
+        "likelihood": 75,
+        "move": "Dragonbreath",
+        "move_id": "DRAGONBREATH",
+        "reasons": [
+          "natural level-up STAB/core move by this checkpoint"
+        ],
+        "severity": "meaningful",
+        "sources": [
+          "level_up",
+          "pre_evo_level_up"
+        ],
+        "species": "Dragonite",
+        "switch_fit": null
+      },
+      {
+        "bucket": "75%",
+        "damage": {
+          "basis": "fixed-damage move",
+          "high_percent": 26,
+          "label": "about 26%",
+          "low_percent": 26,
+          "target": "Crobat",
+          "target_hp": "92%"
+        },
+        "entry_risk": null,
+        "immediacy": "active",
+        "likelihood": 75,
+        "move": "Dragon Rage",
+        "move_id": "DRAGON_RAGE",
+        "reasons": [
+          "natural level-up STAB/core move by this checkpoint"
+        ],
+        "severity": "chip",
+        "sources": [
+          "level_up",
+          "pre_evo_level_up"
+        ],
+        "species": "Dragonite",
+        "switch_fit": null
+      },
+      {
+        "bucket": "50%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 95,
+          "label": "about 80-95%",
+          "low_percent": 80,
+          "target": "Crobat",
+          "target_hp": "92%"
+        },
+        "entry_risk": null,
+        "immediacy": "active",
+        "likelihood": 50,
+        "move": "Blizzard",
+        "move_id": "BLIZZARD",
+        "reasons": [
+          "direct TM source is available by this checkpoint"
+        ],
+        "severity": "lethal",
+        "sources": [
+          "tm_available"
+        ],
+        "species": "Dragonite",
+        "switch_fit": null
+      },
+      {
+        "bucket": "50%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 95,
+          "label": "about 80-95%",
+          "low_percent": 80,
+          "target": "Crobat",
+          "target_hp": "92%"
+        },
+        "entry_risk": null,
+        "immediacy": "active",
+        "likelihood": 50,
+        "move": "Thunder",
+        "move_id": "THUNDER",
+        "reasons": [
+          "direct TM source is available by this checkpoint"
+        ],
+        "severity": "lethal",
+        "sources": [
+          "tm_available"
+        ],
+        "species": "Dragonite",
+        "switch_fit": null
+      },
+      {
+        "bucket": "50%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 80,
+          "label": "about 68-80%",
+          "low_percent": 68,
+          "target": "Crobat",
+          "target_hp": "92%"
+        },
+        "entry_risk": null,
+        "immediacy": "active",
+        "likelihood": 50,
+        "move": "Zap Cannon",
+        "move_id": "ZAP_CANNON",
+        "reasons": [
+          "direct TM source is available by this checkpoint"
+        ],
+        "severity": "major",
+        "sources": [
+          "tm_available"
+        ],
+        "species": "Dragonite",
+        "switch_fit": null
+      },
+      {
+        "bucket": "50%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 67,
+          "label": "about 57-67%",
+          "low_percent": 57,
+          "target": "Crobat",
+          "target_hp": "92%"
+        },
+        "entry_risk": null,
+        "immediacy": "active",
+        "likelihood": 50,
+        "move": "Hyper Beam",
+        "move_id": "HYPER_BEAM",
+        "reasons": [
+          "legal via pre-evolution level-up path"
+        ],
+        "severity": "meaningful",
+        "sources": [
+          "pre_evo_level_up",
+          "tm_available"
+        ],
+        "species": "Dragonite",
         "switch_fit": null
       }
     ],
@@ -22733,6 +22768,34 @@
         "bucket": "75%",
         "damage": {
           "basis": "rough estimate",
+          "high_percent": 423,
+          "label": "about 359-423%",
+          "low_percent": 359,
+          "target": "Houndoom",
+          "target_hp": "100%"
+        },
+        "entry_risk": {
+          "fit": "unknown",
+          "reason": "no revealed damaging boss move to judge the switch-in"
+        },
+        "immediacy": "switch",
+        "likelihood": 75,
+        "move": "Cross Chop",
+        "move_id": "CROSS_CHOP",
+        "reasons": [
+          "natural level-up STAB/core move by this checkpoint"
+        ],
+        "severity": "lethal",
+        "sources": [
+          "level_up"
+        ],
+        "species": "Heracross",
+        "switch_fit": "unknown"
+      },
+      {
+        "bucket": "75%",
+        "damage": {
+          "basis": "rough estimate",
           "high_percent": 300,
           "label": "about 254-300%",
           "low_percent": 254,
@@ -22785,242 +22848,6 @@
         ],
         "species": "Heracross",
         "switch_fit": "unknown"
-      },
-      {
-        "bucket": "75%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 126,
-          "label": "about 107-126%",
-          "low_percent": 107,
-          "target": "Houndoom",
-          "target_hp": "100%"
-        },
-        "entry_risk": {
-          "fit": "unknown",
-          "reason": "no revealed damaging boss move to judge the switch-in"
-        },
-        "immediacy": "switch",
-        "likelihood": 75,
-        "move": "Body Slam",
-        "move_id": "BODY_SLAM",
-        "reasons": [
-          "natural level-up STAB/core move by this checkpoint"
-        ],
-        "severity": "lethal",
-        "sources": [
-          "level_up"
-        ],
-        "species": "Snorlax",
-        "switch_fit": "unknown"
-      }
-    ],
-    "karen_umbreon_vs_dragonite_curse_or_toxic": [
-      {
-        "bucket": "99%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 47,
-          "label": "about 39-47%",
-          "low_percent": 39,
-          "target": "Umbreon",
-          "target_hp": "92%"
-        },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 99,
-        "move": "Outrage",
-        "move_id": "OUTRAGE",
-        "reasons": [
-          "revealed in the public fixture state"
-        ],
-        "severity": "meaningful",
-        "sources": [
-          "level_up",
-          "pre_evo_level_up",
-          "revealed",
-          "tm_available"
-        ],
-        "species": "Dragonite",
-        "switch_fit": null
-      },
-      {
-        "bucket": "75%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 37,
-          "label": "about 31-37%",
-          "low_percent": 31,
-          "target": "Umbreon",
-          "target_hp": "92%"
-        },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 75,
-        "move": "Wing Attack",
-        "move_id": "WING_ATTACK",
-        "reasons": [
-          "natural level-up STAB/core move by this checkpoint"
-        ],
-        "severity": "meaningful",
-        "sources": [
-          "level_up",
-          "tm_available"
-        ],
-        "species": "Dragonite",
-        "switch_fit": null
-      },
-      {
-        "bucket": "50%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 62,
-          "label": "about 53-62%",
-          "low_percent": 53,
-          "target": "Umbreon",
-          "target_hp": "92%"
-        },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 50,
-        "move": "Dynamicpunch",
-        "move_id": "DYNAMICPUNCH",
-        "reasons": [
-          "direct TM source is available by this checkpoint"
-        ],
-        "severity": "meaningful",
-        "sources": [
-          "tm_available"
-        ],
-        "species": "Dragonite",
-        "switch_fit": null
-      },
-      {
-        "bucket": "50%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 55,
-          "label": "about 47-55%",
-          "low_percent": 47,
-          "target": "Umbreon",
-          "target_hp": "92%"
-        },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 50,
-        "move": "Hyper Beam",
-        "move_id": "HYPER_BEAM",
-        "reasons": [
-          "legal via pre-evolution level-up path"
-        ],
-        "severity": "meaningful",
-        "sources": [
-          "pre_evo_level_up",
-          "tm_available"
-        ],
-        "species": "Dragonite",
-        "switch_fit": null
-      },
-      {
-        "bucket": "50%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 40,
-          "label": "about 34-40%",
-          "low_percent": 34,
-          "target": "Umbreon",
-          "target_hp": "92%"
-        },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 50,
-        "move": "Double Edge",
-        "move_id": "DOUBLE_EDGE",
-        "reasons": [
-          "direct TM source is available by this checkpoint"
-        ],
-        "severity": "meaningful",
-        "sources": [
-          "tm_available"
-        ],
-        "species": "Dragonite",
-        "switch_fit": null
-      },
-      {
-        "bucket": "50%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 40,
-          "label": "about 34-40%",
-          "low_percent": 34,
-          "target": "Umbreon",
-          "target_hp": "92%"
-        },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 50,
-        "move": "Iron Tail",
-        "move_id": "IRON_TAIL",
-        "reasons": [
-          "direct TM source is available by this checkpoint"
-        ],
-        "severity": "meaningful",
-        "sources": [
-          "tm_available"
-        ],
-        "species": "Dragonite",
-        "switch_fit": null
-      },
-      {
-        "bucket": "50%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 37,
-          "label": "about 31-37%",
-          "low_percent": 31,
-          "target": "Umbreon",
-          "target_hp": "92%"
-        },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 50,
-        "move": "Slam",
-        "move_id": "SLAM",
-        "reasons": [
-          "natural level-up move by this checkpoint"
-        ],
-        "severity": "meaningful",
-        "sources": [
-          "level_up",
-          "pre_evo_level_up"
-        ],
-        "species": "Dragonite",
-        "switch_fit": null
-      },
-      {
-        "bucket": "50%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 31,
-          "label": "about 26-31%",
-          "low_percent": 26,
-          "target": "Umbreon",
-          "target_hp": "92%"
-        },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 50,
-        "move": "Fire Blast",
-        "move_id": "FIRE_BLAST",
-        "reasons": [
-          "direct TM source is available by this checkpoint"
-        ],
-        "severity": "chip",
-        "sources": [
-          "tm_available"
-        ],
-        "species": "Dragonite",
-        "switch_fit": null
       }
     ],
     "koga_ariados_vs_quilava_spider_web_or_attack": [
@@ -23028,9 +22855,9 @@
         "bucket": "99%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 79,
-          "label": "about 67-79%",
-          "low_percent": 67,
+          "high_percent": 81,
+          "label": "about 68-81%",
+          "low_percent": 68,
           "target": "Ariados",
           "target_hp": "73%"
         },
@@ -23044,7 +22871,7 @@
         ],
         "severity": "lethal",
         "sources": [
-          "pre_evo_level_up",
+          "level_up",
           "revealed"
         ],
         "species": "Quilava",
@@ -23055,8 +22882,8 @@
         "damage": {
           "basis": "rough estimate",
           "high_percent": 10,
-          "label": "about 7-10%",
-          "low_percent": 7,
+          "label": "about 8-10%",
+          "low_percent": 8,
           "target": "Ariados",
           "target_hp": "73%"
         },
@@ -23081,9 +22908,9 @@
         "bucket": "75%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 122,
-          "label": "about 104-122%",
-          "low_percent": 104,
+          "high_percent": 126,
+          "label": "about 107-126%",
+          "low_percent": 107,
           "target": "Ariados",
           "target_hp": "73%"
         },
@@ -23107,9 +22934,9 @@
         "bucket": "75%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 67,
-          "label": "about 56-67%",
-          "low_percent": 56,
+          "high_percent": 68,
+          "label": "about 58-68%",
+          "low_percent": 58,
           "target": "Ariados",
           "target_hp": "73%"
         },
@@ -23133,9 +22960,9 @@
         "bucket": "50%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 180,
-          "label": "about 152-180%",
-          "low_percent": 152,
+          "high_percent": 188,
+          "label": "about 159-188%",
+          "low_percent": 159,
           "target": "Ariados",
           "target_hp": "73%"
         },
@@ -23158,9 +22985,9 @@
         "bucket": "50%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 33,
-          "label": "about 27-33%",
-          "low_percent": 27,
+          "high_percent": 34,
+          "label": "about 28-34%",
+          "low_percent": 28,
           "target": "Ariados",
           "target_hp": "73%"
         },
@@ -23183,23 +23010,23 @@
         "bucket": "75%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 90,
-          "label": "about 76-90%",
-          "low_percent": 76,
+          "high_percent": 92,
+          "label": "about 78-92%",
+          "low_percent": 78,
           "target": "Ariados",
           "target_hp": "73%"
         },
         "entry_risk": {
           "damage": {
             "basis": "rough estimate",
-            "high_percent": 18,
-            "label": "about 15-18%",
-            "low_percent": 15,
+            "high_percent": 15,
+            "label": "about 13-15%",
+            "low_percent": 13,
             "target": "Lapras",
             "target_hp": "100%"
           },
           "fit": "reasonable",
-          "move": "Sludge Bomb",
+          "move": "Leech Life",
           "reason": "reasonable switch into revealed boss damage"
         },
         "immediacy": "switch",
@@ -23220,38 +23047,246 @@
         "bucket": "75%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 71,
-          "label": "about 61-71%",
-          "low_percent": 61,
+          "high_percent": 81,
+          "label": "about 68-81%",
+          "low_percent": 68,
           "target": "Ariados",
           "target_hp": "73%"
         },
         "entry_risk": {
           "damage": {
             "basis": "rough estimate",
-            "high_percent": 18,
-            "label": "about 15-18%",
-            "low_percent": 15,
-            "target": "Lapras",
+            "high_percent": 13,
+            "label": "about 11-13%",
+            "low_percent": 11,
+            "target": "Heracross",
             "target_hp": "100%"
           },
           "fit": "reasonable",
-          "move": "Sludge Bomb",
+          "move": "Leech Life",
           "reason": "reasonable switch into revealed boss damage"
         },
         "immediacy": "switch",
         "likelihood": 75,
-        "move": "Ice Beam",
-        "move_id": "ICE_BEAM",
+        "move": "Cross Chop",
+        "move_id": "CROSS_CHOP",
+        "reasons": [
+          "natural level-up STAB/core move by this checkpoint"
+        ],
+        "severity": "lethal",
+        "sources": [
+          "level_up"
+        ],
+        "species": "Heracross",
+        "switch_fit": "reasonable"
+      }
+    ],
+    "koga_ariados_vs_typhlosion_spikes_or_toxic": [
+      {
+        "bucket": "99%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 176,
+          "label": "about 149-176%",
+          "low_percent": 149,
+          "target": "Ariados",
+          "target_hp": "100%"
+        },
+        "entry_risk": null,
+        "immediacy": "active",
+        "likelihood": 99,
+        "move": "Flamethrower",
+        "move_id": "FLAMETHROWER",
+        "reasons": [
+          "revealed in the public fixture state"
+        ],
+        "severity": "lethal",
+        "sources": [
+          "pre_evo_level_up",
+          "revealed"
+        ],
+        "species": "Typhlosion",
+        "switch_fit": null
+      },
+      {
+        "bucket": "75%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 258,
+          "label": "about 219-258%",
+          "low_percent": 219,
+          "target": "Ariados",
+          "target_hp": "100%"
+        },
+        "entry_risk": null,
+        "immediacy": "active",
+        "likelihood": 75,
+        "move": "Fire Blast",
+        "move_id": "FIRE_BLAST",
+        "reasons": [
+          "natural level-up STAB/core move by this checkpoint"
+        ],
+        "severity": "lethal",
+        "sources": [
+          "level_up",
+          "tm_available"
+        ],
+        "species": "Typhlosion",
+        "switch_fit": null
+      },
+      {
+        "bucket": "75%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 112,
+          "label": "about 95-112%",
+          "low_percent": 95,
+          "target": "Ariados",
+          "target_hp": "100%"
+        },
+        "entry_risk": null,
+        "immediacy": "active",
+        "likelihood": 75,
+        "move": "Flame Wheel",
+        "move_id": "FLAME_WHEEL",
+        "reasons": [
+          "natural level-up STAB/core move by this checkpoint"
+        ],
+        "severity": "lethal",
+        "sources": [
+          "level_up",
+          "pre_evo_level_up"
+        ],
+        "species": "Typhlosion",
+        "switch_fit": null
+      },
+      {
+        "bucket": "75%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 93,
+          "label": "about 78-93%",
+          "low_percent": 78,
+          "target": "Ariados",
+          "target_hp": "100%"
+        },
+        "entry_risk": null,
+        "immediacy": "active",
+        "likelihood": 75,
+        "move": "Ember",
+        "move_id": "EMBER",
         "reasons": [
           "natural level-up STAB/core move by this checkpoint"
         ],
         "severity": "major",
         "sources": [
+          "level_up",
+          "pre_evo_level_up"
+        ],
+        "species": "Typhlosion",
+        "switch_fit": null
+      },
+      {
+        "bucket": "75%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 59,
+          "label": "about 50-59%",
+          "low_percent": 50,
+          "target": "Ariados",
+          "target_hp": "100%"
+        },
+        "entry_risk": null,
+        "immediacy": "active",
+        "likelihood": 75,
+        "move": "Double Edge",
+        "move_id": "DOUBLE_EDGE",
+        "reasons": [
+          "natural level-up STAB/core move by this checkpoint"
+        ],
+        "severity": "meaningful",
+        "sources": [
+          "level_up",
+          "tm_available"
+        ],
+        "species": "Typhlosion",
+        "switch_fit": null
+      },
+      {
+        "bucket": "50%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 139,
+          "label": "about 118-139%",
+          "low_percent": 118,
+          "target": "Ariados",
+          "target_hp": "100%"
+        },
+        "entry_risk": null,
+        "immediacy": "active",
+        "likelihood": 50,
+        "move": "Fire Punch",
+        "move_id": "FIRE_PUNCH",
+        "reasons": [
+          "direct TM source is available by this checkpoint"
+        ],
+        "severity": "lethal",
+        "sources": [
+          "tm_available"
+        ],
+        "species": "Typhlosion",
+        "switch_fit": null
+      },
+      {
+        "bucket": "50%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 47,
+          "label": "about 39-47%",
+          "low_percent": 39,
+          "target": "Ariados",
+          "target_hp": "100%"
+        },
+        "entry_risk": null,
+        "immediacy": "active",
+        "likelihood": 50,
+        "move": "Thunderpunch",
+        "move_id": "THUNDERPUNCH",
+        "reasons": [
+          "legal via pre-evolution level-up path"
+        ],
+        "severity": "meaningful",
+        "sources": [
+          "pre_evo_level_up",
+          "tm_available"
+        ],
+        "species": "Typhlosion",
+        "switch_fit": null
+      },
+      {
+        "bucket": "50%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 37,
+          "label": "about 31-37%",
+          "low_percent": 31,
+          "target": "Ariados",
+          "target_hp": "100%"
+        },
+        "entry_risk": null,
+        "immediacy": "active",
+        "likelihood": 50,
+        "move": "Ancientpower",
+        "move_id": "ANCIENTPOWER",
+        "reasons": [
+          "natural level-up move by this checkpoint"
+        ],
+        "severity": "meaningful",
+        "sources": [
           "level_up"
         ],
-        "species": "Lapras",
-        "switch_fit": "reasonable"
+        "species": "Typhlosion",
+        "switch_fit": null
       }
     ],
     "koga_crobat_vs_alakazam_toxic_or_attack": [
@@ -23306,9 +23341,9 @@
         "bucket": "75%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 55,
-          "label": "about 46-55%",
-          "low_percent": 46,
+          "high_percent": 83,
+          "label": "about 70-83%",
+          "low_percent": 70,
           "target": "Crobat",
           "target_hp": "57%"
         },
@@ -23320,7 +23355,7 @@
         "reasons": [
           "natural level-up STAB/core move by this checkpoint"
         ],
-        "severity": "meaningful",
+        "severity": "lethal",
         "sources": [
           "level_up",
           "pre_evo_level_up"
@@ -23456,229 +23491,16 @@
         "switch_fit": null
       }
     ],
-    "koga_forretress_vs_typhlosion_spikes_or_explosion": [
+    "lance_ampharos_vs_porygon2_thunder_or_dragon_dance": [
       {
         "bucket": "99%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 274,
-          "label": "about 233-274%",
-          "low_percent": 233,
-          "target": "Forretress",
-          "target_hp": "100%"
-        },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 99,
-        "move": "Flamethrower",
-        "move_id": "FLAMETHROWER",
-        "reasons": [
-          "revealed in the public fixture state"
-        ],
-        "severity": "lethal",
-        "sources": [
-          "pre_evo_level_up",
-          "revealed"
-        ],
-        "species": "Typhlosion",
-        "switch_fit": null
-      },
-      {
-        "bucket": "75%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 403,
-          "label": "about 342-403%",
-          "low_percent": 342,
-          "target": "Forretress",
-          "target_hp": "100%"
-        },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 75,
-        "move": "Fire Blast",
-        "move_id": "FIRE_BLAST",
-        "reasons": [
-          "natural level-up STAB/core move by this checkpoint"
-        ],
-        "severity": "lethal",
-        "sources": [
-          "level_up",
-          "tm_available"
-        ],
-        "species": "Typhlosion",
-        "switch_fit": null
-      },
-      {
-        "bucket": "75%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 175,
-          "label": "about 149-175%",
-          "low_percent": 149,
-          "target": "Forretress",
-          "target_hp": "100%"
-        },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 75,
-        "move": "Flame Wheel",
-        "move_id": "FLAME_WHEEL",
-        "reasons": [
-          "natural level-up STAB/core move by this checkpoint"
-        ],
-        "severity": "lethal",
-        "sources": [
-          "level_up",
-          "pre_evo_level_up"
-        ],
-        "species": "Typhlosion",
-        "switch_fit": null
-      },
-      {
-        "bucket": "75%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 149,
-          "label": "about 126-149%",
-          "low_percent": 126,
-          "target": "Forretress",
-          "target_hp": "100%"
-        },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 75,
-        "move": "Ember",
-        "move_id": "EMBER",
-        "reasons": [
-          "natural level-up STAB/core move by this checkpoint"
-        ],
-        "severity": "lethal",
-        "sources": [
-          "level_up",
-          "pre_evo_level_up"
-        ],
-        "species": "Typhlosion",
-        "switch_fit": null
-      },
-      {
-        "bucket": "50%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 219,
-          "label": "about 186-219%",
-          "low_percent": 186,
-          "target": "Forretress",
-          "target_hp": "100%"
-        },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 50,
-        "move": "Fire Punch",
-        "move_id": "FIRE_PUNCH",
-        "reasons": [
-          "direct TM source is available by this checkpoint"
-        ],
-        "severity": "lethal",
-        "sources": [
-          "tm_available"
-        ],
-        "species": "Typhlosion",
-        "switch_fit": null
-      },
-      {
-        "bucket": "50%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 36,
-          "label": "about 31-36%",
-          "low_percent": 31,
-          "target": "Forretress",
-          "target_hp": "100%"
-        },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 50,
-        "move": "Thunderpunch",
-        "move_id": "THUNDERPUNCH",
-        "reasons": [
-          "legal via pre-evolution level-up path"
-        ],
-        "severity": "meaningful",
-        "sources": [
-          "pre_evo_level_up",
-          "tm_available"
-        ],
-        "species": "Typhlosion",
-        "switch_fit": null
-      },
-      {
-        "bucket": "75%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 72,
-          "label": "about 61-72%",
-          "low_percent": 61,
-          "target": "Forretress",
-          "target_hp": "100%"
-        },
-        "entry_risk": {
-          "fit": "unknown",
-          "reason": "no revealed damaging boss move to judge the switch-in"
-        },
-        "immediacy": "switch",
-        "likelihood": 75,
-        "move": "Hydro Pump",
-        "move_id": "HYDRO_PUMP",
-        "reasons": [
-          "natural level-up STAB/core move by this checkpoint"
-        ],
-        "severity": "major",
-        "sources": [
-          "level_up"
-        ],
-        "species": "Lapras",
-        "switch_fit": "unknown"
-      },
-      {
-        "bucket": "75%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 31,
-          "label": "about 26-31%",
-          "low_percent": 26,
-          "target": "Forretress",
-          "target_hp": "100%"
-        },
-        "entry_risk": {
-          "fit": "unknown",
-          "reason": "no revealed damaging boss move to judge the switch-in"
-        },
-        "immediacy": "switch",
-        "likelihood": 75,
-        "move": "Water Gun",
-        "move_id": "WATER_GUN",
-        "reasons": [
-          "natural level-up STAB/core move by this checkpoint"
-        ],
-        "severity": "chip",
-        "sources": [
-          "level_up"
-        ],
-        "species": "Lapras",
-        "switch_fit": "unknown"
-      }
-    ],
-    "lance_aerodactyl_vs_porygon2_rock_slide_or_ancient_power": [
-      {
-        "bucket": "99%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 18,
-          "label": "about 15-18%",
-          "low_percent": 15,
-          "target": "Aerodactyl",
-          "target_hp": "67%"
+          "high_percent": 24,
+          "label": "about 20-24%",
+          "low_percent": 20,
+          "target": "Ampharos",
+          "target_hp": "88%"
         },
         "entry_risk": null,
         "immediacy": "active",
@@ -23721,301 +23543,17 @@
         "bucket": "50%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 90,
-          "label": "about 76-90%",
-          "low_percent": 76,
-          "target": "Aerodactyl",
-          "target_hp": "67%"
+          "high_percent": 72,
+          "label": "about 61-72%",
+          "low_percent": 61,
+          "target": "Ampharos",
+          "target_hp": "88%"
         },
         "entry_risk": null,
         "immediacy": "active",
         "likelihood": 50,
         "move": "Blizzard",
         "move_id": "BLIZZARD",
-        "reasons": [
-          "direct TM source is available by this checkpoint"
-        ],
-        "severity": "lethal",
-        "sources": [
-          "tm_available"
-        ],
-        "species": "Porygon2",
-        "switch_fit": null
-      },
-      {
-        "bucket": "50%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 90,
-          "label": "about 76-90%",
-          "low_percent": 76,
-          "target": "Aerodactyl",
-          "target_hp": "67%"
-        },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 50,
-        "move": "Thunder",
-        "move_id": "THUNDER",
-        "reasons": [
-          "direct TM source is available by this checkpoint"
-        ],
-        "severity": "lethal",
-        "sources": [
-          "tm_available"
-        ],
-        "species": "Porygon2",
-        "switch_fit": null
-      },
-      {
-        "bucket": "50%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 76,
-          "label": "about 65-76%",
-          "low_percent": 65,
-          "target": "Aerodactyl",
-          "target_hp": "67%"
-        },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 50,
-        "move": "Zap Cannon",
-        "move_id": "ZAP_CANNON",
-        "reasons": [
-          "natural level-up move by this checkpoint"
-        ],
-        "severity": "lethal",
-        "sources": [
-          "level_up",
-          "pre_evo_level_up"
-        ],
-        "species": "Porygon2",
-        "switch_fit": null
-      },
-      {
-        "bucket": "50%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 25,
-          "label": "about 21-25%",
-          "low_percent": 21,
-          "target": "Aerodactyl",
-          "target_hp": "67%"
-        },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 50,
-        "move": "Psybeam",
-        "move_id": "PSYBEAM",
-        "reasons": [
-          "natural level-up move by this checkpoint"
-        ],
-        "severity": "chip",
-        "sources": [
-          "level_up",
-          "pre_evo_level_up"
-        ],
-        "species": "Porygon2",
-        "switch_fit": null
-      },
-      {
-        "bucket": "75%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 108,
-          "label": "about 91-108%",
-          "low_percent": 91,
-          "target": "Aerodactyl",
-          "target_hp": "67%"
-        },
-        "entry_risk": {
-          "damage": {
-            "basis": "rough estimate",
-            "high_percent": 15,
-            "label": "about 13-15%",
-            "low_percent": 13,
-            "target": "Tyranitar",
-            "target_hp": "100%"
-          },
-          "fit": "reasonable",
-          "move": "Wing Attack",
-          "reason": "reasonable switch into revealed boss damage"
-        },
-        "immediacy": "switch",
-        "likelihood": 75,
-        "move": "Rock Slide",
-        "move_id": "ROCK_SLIDE",
-        "reasons": [
-          "natural level-up STAB/core move by this checkpoint"
-        ],
-        "severity": "lethal",
-        "sources": [
-          "level_up"
-        ],
-        "species": "Tyranitar",
-        "switch_fit": "reasonable"
-      },
-      {
-        "bucket": "75%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 50,
-          "label": "about 42-50%",
-          "low_percent": 42,
-          "target": "Aerodactyl",
-          "target_hp": "67%"
-        },
-        "entry_risk": {
-          "damage": {
-            "basis": "rough estimate",
-            "high_percent": 15,
-            "label": "about 13-15%",
-            "low_percent": 13,
-            "target": "Tyranitar",
-            "target_hp": "100%"
-          },
-          "fit": "reasonable",
-          "move": "Wing Attack",
-          "reason": "reasonable switch into revealed boss damage"
-        },
-        "immediacy": "switch",
-        "likelihood": 75,
-        "move": "Crunch",
-        "move_id": "CRUNCH",
-        "reasons": [
-          "natural level-up STAB/core move by this checkpoint"
-        ],
-        "severity": "meaningful",
-        "sources": [
-          "level_up"
-        ],
-        "species": "Tyranitar",
-        "switch_fit": "reasonable"
-      }
-    ],
-    "lance_charizard_vs_milotic_fire_blast_or_solarbeam": [
-      {
-        "bucket": "99%",
-        "damage": null,
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 99,
-        "move": "Surf",
-        "move_id": "SURF",
-        "reasons": [
-          "revealed in the public fixture state",
-          "fixture-attested but not derivable from ROM at this checkpoint"
-        ],
-        "severity": "support",
-        "sources": [
-          "revealed"
-        ],
-        "species": "Milotic",
-        "switch_fit": null
-      },
-      {
-        "bucket": "75%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 45,
-          "label": "about 38-45%",
-          "low_percent": 38,
-          "target": "Charizard",
-          "target_hp": "84%"
-        },
-        "entry_risk": {
-          "damage": {
-            "basis": "rough estimate",
-            "high_percent": 29,
-            "label": "about 25-29%",
-            "low_percent": 25,
-            "target": "Snorlax",
-            "target_hp": "100%"
-          },
-          "fit": "risky",
-          "move": "Wing Attack",
-          "reason": "risky switch into revealed boss damage"
-        },
-        "immediacy": "switch",
-        "likelihood": 75,
-        "move": "Body Slam",
-        "move_id": "BODY_SLAM",
-        "reasons": [
-          "natural level-up STAB/core move by this checkpoint"
-        ],
-        "severity": "meaningful",
-        "sources": [
-          "level_up"
-        ],
-        "species": "Snorlax",
-        "switch_fit": "risky"
-      },
-      {
-        "bucket": "75%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 42,
-          "label": "about 36-42%",
-          "low_percent": 36,
-          "target": "Charizard",
-          "target_hp": "84%"
-        },
-        "entry_risk": {
-          "damage": {
-            "basis": "rough estimate",
-            "high_percent": 29,
-            "label": "about 25-29%",
-            "low_percent": 25,
-            "target": "Snorlax",
-            "target_hp": "100%"
-          },
-          "fit": "risky",
-          "move": "Wing Attack",
-          "reason": "risky switch into revealed boss damage"
-        },
-        "immediacy": "switch",
-        "likelihood": 75,
-        "move": "Headbutt",
-        "move_id": "HEADBUTT",
-        "reasons": [
-          "natural level-up STAB/core move by this checkpoint"
-        ],
-        "severity": "meaningful",
-        "sources": [
-          "level_up",
-          "tm_available"
-        ],
-        "species": "Snorlax",
-        "switch_fit": "risky"
-      },
-      {
-        "bucket": "50%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 77,
-          "label": "about 65-77%",
-          "low_percent": 65,
-          "target": "Charizard",
-          "target_hp": "84%"
-        },
-        "entry_risk": {
-          "damage": {
-            "basis": "rough estimate",
-            "high_percent": 29,
-            "label": "about 25-29%",
-            "low_percent": 25,
-            "target": "Snorlax",
-            "target_hp": "100%"
-          },
-          "fit": "risky",
-          "move": "Wing Attack",
-          "reason": "risky switch into revealed boss damage"
-        },
-        "immediacy": "switch",
-        "likelihood": 50,
-        "move": "Double Edge",
-        "move_id": "DOUBLE_EDGE",
         "reasons": [
           "direct TM source is available by this checkpoint"
         ],
@@ -24023,159 +23561,48 @@
         "sources": [
           "tm_available"
         ],
-        "species": "Snorlax",
-        "switch_fit": "risky"
+        "species": "Porygon2",
+        "switch_fit": null
       },
       {
         "bucket": "50%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 53,
-          "label": "about 45-53%",
-          "low_percent": 45,
-          "target": "Charizard",
-          "target_hp": "84%"
+          "high_percent": 93,
+          "label": "about 79-93%",
+          "low_percent": 79,
+          "target": "Ampharos",
+          "target_hp": "88%"
         },
         "entry_risk": {
           "damage": {
             "basis": "rough estimate",
-            "high_percent": 29,
-            "label": "about 25-29%",
-            "low_percent": 25,
-            "target": "Snorlax",
+            "high_percent": 41,
+            "label": "about 35-41%",
+            "low_percent": 35,
+            "target": "Tyranitar",
             "target_hp": "100%"
           },
-          "fit": "risky",
-          "move": "Wing Attack",
-          "reason": "risky switch into revealed boss damage"
+          "fit": "bad",
+          "move": "Thunder",
+          "reason": "bad switch into revealed boss damage"
         },
         "immediacy": "switch",
         "likelihood": 50,
-        "move": "Thunder",
-        "move_id": "THUNDER",
+        "move": "Earthquake",
+        "move_id": "EARTHQUAKE",
         "reasons": [
           "direct TM source is available by this checkpoint"
         ],
-        "severity": "meaningful",
+        "severity": "lethal",
         "sources": [
           "tm_available"
         ],
-        "species": "Snorlax",
-        "switch_fit": "risky"
-      },
-      {
-        "bucket": "50%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 48,
-          "label": "about 40-48%",
-          "low_percent": 40,
-          "target": "Charizard",
-          "target_hp": "84%"
-        },
-        "entry_risk": {
-          "damage": {
-            "basis": "rough estimate",
-            "high_percent": 29,
-            "label": "about 25-29%",
-            "low_percent": 25,
-            "target": "Snorlax",
-            "target_hp": "100%"
-          },
-          "fit": "risky",
-          "move": "Wing Attack",
-          "reason": "risky switch into revealed boss damage"
-        },
-        "immediacy": "switch",
-        "likelihood": 50,
-        "move": "Rollout",
-        "move_id": "ROLLOUT",
-        "reasons": [
-          "natural level-up move by this checkpoint"
-        ],
-        "severity": "meaningful",
-        "sources": [
-          "level_up"
-        ],
-        "species": "Snorlax",
-        "switch_fit": "risky"
-      },
-      {
-        "bucket": "50%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 34,
-          "label": "about 29-34%",
-          "low_percent": 29,
-          "target": "Charizard",
-          "target_hp": "84%"
-        },
-        "entry_risk": {
-          "damage": {
-            "basis": "rough estimate",
-            "high_percent": 29,
-            "label": "about 25-29%",
-            "low_percent": 25,
-            "target": "Snorlax",
-            "target_hp": "100%"
-          },
-          "fit": "risky",
-          "move": "Wing Attack",
-          "reason": "risky switch into revealed boss damage"
-        },
-        "immediacy": "switch",
-        "likelihood": 50,
-        "move": "Thunderpunch",
-        "move_id": "THUNDERPUNCH",
-        "reasons": [
-          "direct TM source is available by this checkpoint"
-        ],
-        "severity": "chip",
-        "sources": [
-          "tm_available"
-        ],
-        "species": "Snorlax",
-        "switch_fit": "risky"
-      },
-      {
-        "bucket": "50%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 26,
-          "label": "about 23-26%",
-          "low_percent": 23,
-          "target": "Charizard",
-          "target_hp": "84%"
-        },
-        "entry_risk": {
-          "damage": {
-            "basis": "rough estimate",
-            "high_percent": 29,
-            "label": "about 25-29%",
-            "low_percent": 25,
-            "target": "Snorlax",
-            "target_hp": "100%"
-          },
-          "fit": "risky",
-          "move": "Wing Attack",
-          "reason": "risky switch into revealed boss damage"
-        },
-        "immediacy": "switch",
-        "likelihood": 50,
-        "move": "Blizzard",
-        "move_id": "BLIZZARD",
-        "reasons": [
-          "direct TM source is available by this checkpoint"
-        ],
-        "severity": "chip",
-        "sources": [
-          "tm_available"
-        ],
-        "species": "Snorlax",
-        "switch_fit": "risky"
+        "species": "Tyranitar",
+        "switch_fit": "bad"
       }
     ],
-    "lance_dragonite_vs_aerodactyl_thunder_or_outrage": [
+    "lance_dragonite_vs_aerodactyl_outrage_or_dragon_dance": [
       {
         "bucket": "99%",
         "damage": {
@@ -24393,7 +23820,7 @@
         "switch_fit": "unknown"
       }
     ],
-    "lance_dragonite_vs_steelix_fire_blast_or_thunder": [
+    "lance_dragonite_vs_steelix_earthquake_or_outrage": [
       {
         "bucket": "99%",
         "damage": {
@@ -24410,11 +23837,11 @@
         "move": "Rock Slide",
         "move_id": "ROCK_SLIDE",
         "reasons": [
-          "revealed in the public fixture state",
-          "fixture-attested but not derivable from ROM at this checkpoint"
+          "revealed in the public fixture state"
         ],
         "severity": "meaningful",
         "sources": [
+          "pre_evo_level_up",
           "revealed"
         ],
         "species": "Steelix",
@@ -24632,6 +24059,496 @@
         "switch_fit": "bad"
       }
     ],
+    "lance_kingdra_vs_starmie_dragon_dance_or_attack": [
+      {
+        "bucket": "99%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 7,
+          "label": "about 6-7%",
+          "low_percent": 6,
+          "target": "Kingdra",
+          "target_hp": "84%"
+        },
+        "entry_risk": null,
+        "immediacy": "active",
+        "likelihood": 99,
+        "move": "Surf",
+        "move_id": "SURF",
+        "reasons": [
+          "revealed in the public fixture state",
+          "fixture-attested but not derivable from ROM at this checkpoint"
+        ],
+        "severity": "chip",
+        "sources": [
+          "revealed"
+        ],
+        "species": "Starmie",
+        "switch_fit": null
+      },
+      {
+        "bucket": "99%",
+        "damage": null,
+        "entry_risk": null,
+        "immediacy": "active",
+        "likelihood": 99,
+        "move": "Recover",
+        "move_id": "RECOVER",
+        "reasons": [
+          "revealed in the public fixture state"
+        ],
+        "severity": "support",
+        "sources": [
+          "level_up",
+          "pre_evo_level_up",
+          "revealed"
+        ],
+        "species": "Starmie",
+        "switch_fit": null
+      },
+      {
+        "bucket": "75%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 29,
+          "label": "about 25-29%",
+          "low_percent": 25,
+          "target": "Kingdra",
+          "target_hp": "84%"
+        },
+        "entry_risk": null,
+        "immediacy": "active",
+        "likelihood": 75,
+        "move": "Psychic",
+        "move_id": "PSYCHIC_M",
+        "reasons": [
+          "natural level-up STAB/core move by this checkpoint"
+        ],
+        "severity": "chip",
+        "sources": [
+          "level_up"
+        ],
+        "species": "Starmie",
+        "switch_fit": null
+      },
+      {
+        "bucket": "50%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 26,
+          "label": "about 21-26%",
+          "low_percent": 21,
+          "target": "Kingdra",
+          "target_hp": "84%"
+        },
+        "entry_risk": null,
+        "immediacy": "active",
+        "likelihood": 50,
+        "move": "Thunder",
+        "move_id": "THUNDER",
+        "reasons": [
+          "direct TM source is available by this checkpoint"
+        ],
+        "severity": "chip",
+        "sources": [
+          "tm_available"
+        ],
+        "species": "Starmie",
+        "switch_fit": null
+      },
+      {
+        "bucket": "50%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 25,
+          "label": "about 21-25%",
+          "low_percent": 21,
+          "target": "Kingdra",
+          "target_hp": "84%"
+        },
+        "entry_risk": null,
+        "immediacy": "active",
+        "likelihood": 50,
+        "move": "Blizzard",
+        "move_id": "BLIZZARD",
+        "reasons": [
+          "direct TM source is available by this checkpoint"
+        ],
+        "severity": "chip",
+        "sources": [
+          "tm_available"
+        ],
+        "species": "Starmie",
+        "switch_fit": null
+      },
+      {
+        "bucket": "75%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 26,
+          "label": "about 22-26%",
+          "low_percent": 22,
+          "target": "Kingdra",
+          "target_hp": "84%"
+        },
+        "entry_risk": {
+          "damage": {
+            "basis": "rough estimate",
+            "high_percent": 25,
+            "label": "about 21-25%",
+            "low_percent": 21,
+            "target": "Snorlax",
+            "target_hp": "100%"
+          },
+          "fit": "risky",
+          "move": "Surf",
+          "reason": "risky switch into revealed boss damage"
+        },
+        "immediacy": "switch",
+        "likelihood": 75,
+        "move": "Body Slam",
+        "move_id": "BODY_SLAM",
+        "reasons": [
+          "natural level-up STAB/core move by this checkpoint"
+        ],
+        "severity": "chip",
+        "sources": [
+          "level_up"
+        ],
+        "species": "Snorlax",
+        "switch_fit": "risky"
+      },
+      {
+        "bucket": "75%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 25,
+          "label": "about 21-25%",
+          "low_percent": 21,
+          "target": "Kingdra",
+          "target_hp": "84%"
+        },
+        "entry_risk": {
+          "damage": {
+            "basis": "rough estimate",
+            "high_percent": 25,
+            "label": "about 21-25%",
+            "low_percent": 21,
+            "target": "Snorlax",
+            "target_hp": "100%"
+          },
+          "fit": "risky",
+          "move": "Surf",
+          "reason": "risky switch into revealed boss damage"
+        },
+        "immediacy": "switch",
+        "likelihood": 75,
+        "move": "Headbutt",
+        "move_id": "HEADBUTT",
+        "reasons": [
+          "natural level-up STAB/core move by this checkpoint"
+        ],
+        "severity": "chip",
+        "sources": [
+          "level_up",
+          "tm_available"
+        ],
+        "species": "Snorlax",
+        "switch_fit": "risky"
+      },
+      {
+        "bucket": "50%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 45,
+          "label": "about 38-45%",
+          "low_percent": 38,
+          "target": "Kingdra",
+          "target_hp": "84%"
+        },
+        "entry_risk": {
+          "damage": {
+            "basis": "rough estimate",
+            "high_percent": 25,
+            "label": "about 21-25%",
+            "low_percent": 21,
+            "target": "Snorlax",
+            "target_hp": "100%"
+          },
+          "fit": "risky",
+          "move": "Surf",
+          "reason": "risky switch into revealed boss damage"
+        },
+        "immediacy": "switch",
+        "likelihood": 50,
+        "move": "Double Edge",
+        "move_id": "DOUBLE_EDGE",
+        "reasons": [
+          "direct TM source is available by this checkpoint"
+        ],
+        "severity": "meaningful",
+        "sources": [
+          "tm_available"
+        ],
+        "species": "Snorlax",
+        "switch_fit": "risky"
+      }
+    ],
+    "lance_yanma_vs_lapras_sleep_powder_or_quiver_dance": [
+      {
+        "bucket": "99%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 17,
+          "label": "about 14-17%",
+          "low_percent": 14,
+          "target": "Yanma",
+          "target_hp": "100%"
+        },
+        "entry_risk": null,
+        "immediacy": "active",
+        "likelihood": 99,
+        "move": "Surf",
+        "move_id": "SURF",
+        "reasons": [
+          "revealed in the public fixture state",
+          "fixture-attested but not derivable from ROM at this checkpoint"
+        ],
+        "severity": "chip",
+        "sources": [
+          "revealed"
+        ],
+        "species": "Lapras",
+        "switch_fit": null
+      },
+      {
+        "bucket": "75%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 106,
+          "label": "about 89-106%",
+          "low_percent": 89,
+          "target": "Yanma",
+          "target_hp": "100%"
+        },
+        "entry_risk": null,
+        "immediacy": "active",
+        "likelihood": 75,
+        "move": "Ice Beam",
+        "move_id": "ICE_BEAM",
+        "reasons": [
+          "natural level-up STAB/core move by this checkpoint"
+        ],
+        "severity": "lethal",
+        "sources": [
+          "level_up"
+        ],
+        "species": "Lapras",
+        "switch_fit": null
+      },
+      {
+        "bucket": "50%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 132,
+          "label": "about 112-132%",
+          "low_percent": 112,
+          "target": "Yanma",
+          "target_hp": "100%"
+        },
+        "entry_risk": null,
+        "immediacy": "active",
+        "likelihood": 50,
+        "move": "Blizzard",
+        "move_id": "BLIZZARD",
+        "reasons": [
+          "direct TM source is available by this checkpoint"
+        ],
+        "severity": "lethal",
+        "sources": [
+          "tm_available"
+        ],
+        "species": "Lapras",
+        "switch_fit": null
+      },
+      {
+        "bucket": "50%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 35,
+          "label": "about 30-35%",
+          "low_percent": 30,
+          "target": "Yanma",
+          "target_hp": "100%"
+        },
+        "entry_risk": null,
+        "immediacy": "active",
+        "likelihood": 50,
+        "move": "Double Edge",
+        "move_id": "DOUBLE_EDGE",
+        "reasons": [
+          "direct TM source is available by this checkpoint"
+        ],
+        "severity": "meaningful",
+        "sources": [
+          "tm_available"
+        ],
+        "species": "Lapras",
+        "switch_fit": null
+      },
+      {
+        "bucket": "75%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 97,
+          "label": "about 82-97%",
+          "low_percent": 82,
+          "target": "Yanma",
+          "target_hp": "100%"
+        },
+        "entry_risk": {
+          "damage": {
+            "basis": "rough estimate",
+            "high_percent": 16,
+            "label": "about 13-16%",
+            "low_percent": 13,
+            "target": "Machamp",
+            "target_hp": "100%"
+          },
+          "fit": "reasonable",
+          "move": "Giga Drain",
+          "reason": "reasonable switch into revealed boss damage"
+        },
+        "immediacy": "switch",
+        "likelihood": 75,
+        "move": "Cross Chop",
+        "move_id": "CROSS_CHOP",
+        "reasons": [
+          "natural level-up STAB/core move by this checkpoint"
+        ],
+        "severity": "major",
+        "sources": [
+          "level_up",
+          "pre_evo_level_up"
+        ],
+        "species": "Machamp",
+        "switch_fit": "reasonable"
+      },
+      {
+        "bucket": "75%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 64,
+          "label": "about 54-64%",
+          "low_percent": 54,
+          "target": "Yanma",
+          "target_hp": "100%"
+        },
+        "entry_risk": {
+          "damage": {
+            "basis": "rough estimate",
+            "high_percent": 16,
+            "label": "about 13-16%",
+            "low_percent": 13,
+            "target": "Machamp",
+            "target_hp": "100%"
+          },
+          "fit": "reasonable",
+          "move": "Giga Drain",
+          "reason": "reasonable switch into revealed boss damage"
+        },
+        "immediacy": "switch",
+        "likelihood": 75,
+        "move": "Karate Chop",
+        "move_id": "KARATE_CHOP",
+        "reasons": [
+          "natural level-up STAB/core move by this checkpoint"
+        ],
+        "severity": "meaningful",
+        "sources": [
+          "level_up",
+          "pre_evo_level_up"
+        ],
+        "species": "Machamp",
+        "switch_fit": "reasonable"
+      },
+      {
+        "bucket": "75%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 57,
+          "label": "about 48-57%",
+          "low_percent": 48,
+          "target": "Yanma",
+          "target_hp": "100%"
+        },
+        "entry_risk": {
+          "damage": {
+            "basis": "rough estimate",
+            "high_percent": 16,
+            "label": "about 13-16%",
+            "low_percent": 13,
+            "target": "Machamp",
+            "target_hp": "100%"
+          },
+          "fit": "reasonable",
+          "move": "Giga Drain",
+          "reason": "reasonable switch into revealed boss damage"
+        },
+        "immediacy": "switch",
+        "likelihood": 75,
+        "move": "Vital Throw",
+        "move_id": "VITAL_THROW",
+        "reasons": [
+          "natural level-up STAB/core move by this checkpoint"
+        ],
+        "severity": "meaningful",
+        "sources": [
+          "level_up",
+          "pre_evo_level_up"
+        ],
+        "species": "Machamp",
+        "switch_fit": "reasonable"
+      },
+      {
+        "bucket": "75%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 40,
+          "label": "about 34-40%",
+          "low_percent": 34,
+          "target": "Yanma",
+          "target_hp": "100%"
+        },
+        "entry_risk": {
+          "damage": {
+            "basis": "rough estimate",
+            "high_percent": 16,
+            "label": "about 13-16%",
+            "low_percent": 13,
+            "target": "Machamp",
+            "target_hp": "100%"
+          },
+          "fit": "reasonable",
+          "move": "Giga Drain",
+          "reason": "reasonable switch into revealed boss damage"
+        },
+        "immediacy": "switch",
+        "likelihood": 75,
+        "move": "Low Kick",
+        "move_id": "LOW_KICK",
+        "reasons": [
+          "natural level-up STAB/core move by this checkpoint"
+        ],
+        "severity": "meaningful",
+        "sources": [
+          "level_up",
+          "pre_evo_level_up"
+        ],
+        "species": "Machamp",
+        "switch_fit": "reasonable"
+      }
+    ],
     "misty_starmie_vs_meganium_recover_or_attack": [
       {
         "bucket": "99%",
@@ -24737,9 +24654,9 @@
         "bucket": "50%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 28,
-          "label": "about 23-28%",
-          "low_percent": 23,
+          "high_percent": 26,
+          "label": "about 21-26%",
+          "low_percent": 21,
           "target": "Starmie",
           "target_hp": "46%"
         },
@@ -24748,31 +24665,6 @@
         "likelihood": 50,
         "move": "Earthquake",
         "move_id": "EARTHQUAKE",
-        "reasons": [
-          "direct TM source is available by this checkpoint"
-        ],
-        "severity": "chip",
-        "sources": [
-          "tm_available"
-        ],
-        "species": "Meganium",
-        "switch_fit": null
-      },
-      {
-        "bucket": "50%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 25,
-          "label": "about 21-25%",
-          "low_percent": 21,
-          "target": "Starmie",
-          "target_hp": "46%"
-        },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 50,
-        "move": "Hyper Beam",
-        "move_id": "HYPER_BEAM",
         "reasons": [
           "direct TM source is available by this checkpoint"
         ],
@@ -24849,6 +24741,44 @@
         "likelihood": 75,
         "move": "Thunderpunch",
         "move_id": "THUNDERPUNCH",
+        "reasons": [
+          "natural level-up STAB/core move by this checkpoint"
+        ],
+        "severity": "lethal",
+        "sources": [
+          "level_up",
+          "tm_available"
+        ],
+        "species": "Ampharos",
+        "switch_fit": "risky"
+      },
+      {
+        "bucket": "75%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 57,
+          "label": "about 49-57%",
+          "low_percent": 49,
+          "target": "Starmie",
+          "target_hp": "46%"
+        },
+        "entry_risk": {
+          "damage": {
+            "basis": "rough estimate",
+            "high_percent": 32,
+            "label": "about 27-32%",
+            "low_percent": 27,
+            "target": "Ampharos",
+            "target_hp": "100%"
+          },
+          "fit": "risky",
+          "move": "Hydro Pump",
+          "reason": "risky switch into revealed boss damage"
+        },
+        "immediacy": "switch",
+        "likelihood": 75,
+        "move": "Outrage",
+        "move_id": "OUTRAGE",
         "reasons": [
           "natural level-up STAB/core move by this checkpoint"
         ],
@@ -25057,37 +24987,12 @@
         "switch_fit": null
       },
       {
-        "bucket": "50%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 35,
-          "label": "about 29-35%",
-          "low_percent": 29,
-          "target": "Haunter",
-          "target_hp": "88%"
-        },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 50,
-        "move": "Psychic",
-        "move_id": "PSYCHIC_M",
-        "reasons": [
-          "natural level-up move by this checkpoint"
-        ],
-        "severity": "meaningful",
-        "sources": [
-          "level_up"
-        ],
-        "species": "Noctowl",
-        "switch_fit": null
-      },
-      {
         "bucket": "75%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 111,
-          "label": "about 93-111%",
-          "low_percent": 93,
+          "high_percent": 71,
+          "label": "about 60-71%",
+          "low_percent": 60,
           "target": "Haunter",
           "target_hp": "88%"
         },
@@ -25106,12 +25011,12 @@
         },
         "immediacy": "switch",
         "likelihood": 75,
-        "move": "Flamethrower",
-        "move_id": "FLAMETHROWER",
+        "move": "Flame Wheel",
+        "move_id": "FLAME_WHEEL",
         "reasons": [
           "natural level-up STAB/core move by this checkpoint"
         ],
-        "severity": "lethal",
+        "severity": "major",
         "sources": [
           "level_up"
         ],
@@ -25369,7 +25274,7 @@
         ],
         "severity": "lethal",
         "sources": [
-          "pre_evo_level_up",
+          "level_up",
           "revealed"
         ],
         "species": "Quilava",
@@ -25422,7 +25327,8 @@
         ],
         "severity": "lethal",
         "sources": [
-          "level_up"
+          "level_up",
+          "pre_evo_level_up"
         ],
         "species": "Quilava",
         "switch_fit": null
@@ -25610,9 +25516,9 @@
         "bucket": "99%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 15,
-          "label": "about 12-15%",
-          "low_percent": 12,
+          "high_percent": 18,
+          "label": "about 15-18%",
+          "low_percent": 15,
           "target": "Piloswine",
           "target_hp": "78%"
         },
@@ -25736,9 +25642,9 @@
         "bucket": "50%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 33,
-          "label": "about 28-33%",
-          "low_percent": 28,
+          "high_percent": 39,
+          "label": "about 33-39%",
+          "low_percent": 33,
           "target": "Piloswine",
           "target_hp": "78%"
         },
@@ -25750,7 +25656,7 @@
         "reasons": [
           "direct TM source is available by this checkpoint"
         ],
-        "severity": "chip",
+        "severity": "meaningful",
         "sources": [
           "tm_available"
         ],
@@ -25883,14 +25789,440 @@
         "switch_fit": null
       }
     ],
-    "red_charizard_vs_starmie_fire_blast_or_wing_attack": [
+    "red_blastoise_vs_tyranitar_surf_or_mirror_coat": [
       {
         "bucket": "99%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 96,
-          "label": "about 82-96%",
-          "low_percent": 82,
+          "high_percent": 36,
+          "label": "about 30-36%",
+          "low_percent": 30,
+          "target": "Blastoise",
+          "target_hp": "76%"
+        },
+        "entry_risk": null,
+        "immediacy": "active",
+        "likelihood": 99,
+        "move": "Rock Slide",
+        "move_id": "ROCK_SLIDE",
+        "reasons": [
+          "revealed in the public fixture state"
+        ],
+        "severity": "meaningful",
+        "sources": [
+          "level_up",
+          "pre_evo_level_up",
+          "revealed"
+        ],
+        "species": "Tyranitar",
+        "switch_fit": null
+      },
+      {
+        "bucket": "99%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 29,
+          "label": "about 25-29%",
+          "low_percent": 25,
+          "target": "Blastoise",
+          "target_hp": "76%"
+        },
+        "entry_risk": null,
+        "immediacy": "active",
+        "likelihood": 99,
+        "move": "Crunch",
+        "move_id": "CRUNCH",
+        "reasons": [
+          "revealed in the public fixture state"
+        ],
+        "severity": "chip",
+        "sources": [
+          "level_up",
+          "pre_evo_level_up",
+          "revealed"
+        ],
+        "species": "Tyranitar",
+        "switch_fit": null
+      },
+      {
+        "bucket": "50%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 57,
+          "label": "about 49-57%",
+          "low_percent": 49,
+          "target": "Blastoise",
+          "target_hp": "76%"
+        },
+        "entry_risk": null,
+        "immediacy": "active",
+        "likelihood": 50,
+        "move": "Hyper Beam",
+        "move_id": "HYPER_BEAM",
+        "reasons": [
+          "legal via pre-evolution level-up path"
+        ],
+        "severity": "meaningful",
+        "sources": [
+          "pre_evo_level_up",
+          "tm_available"
+        ],
+        "species": "Tyranitar",
+        "switch_fit": null
+      },
+      {
+        "bucket": "50%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 48,
+          "label": "about 41-48%",
+          "low_percent": 41,
+          "target": "Blastoise",
+          "target_hp": "76%"
+        },
+        "entry_risk": null,
+        "immediacy": "active",
+        "likelihood": 50,
+        "move": "Focus Punch",
+        "move_id": "FOCUS_PUNCH",
+        "reasons": [
+          "direct TM source is available by this checkpoint"
+        ],
+        "severity": "meaningful",
+        "sources": [
+          "tm_available"
+        ],
+        "species": "Tyranitar",
+        "switch_fit": null
+      },
+      {
+        "bucket": "50%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 41,
+          "label": "about 35-41%",
+          "low_percent": 35,
+          "target": "Blastoise",
+          "target_hp": "76%"
+        },
+        "entry_risk": null,
+        "immediacy": "active",
+        "likelihood": 50,
+        "move": "Double Edge",
+        "move_id": "DOUBLE_EDGE",
+        "reasons": [
+          "direct TM source is available by this checkpoint"
+        ],
+        "severity": "meaningful",
+        "sources": [
+          "tm_available"
+        ],
+        "species": "Tyranitar",
+        "switch_fit": null
+      },
+      {
+        "bucket": "50%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 39,
+          "label": "about 32-39%",
+          "low_percent": 32,
+          "target": "Blastoise",
+          "target_hp": "76%"
+        },
+        "entry_risk": null,
+        "immediacy": "active",
+        "likelihood": 50,
+        "move": "Thrash",
+        "move_id": "THRASH",
+        "reasons": [
+          "natural level-up move by this checkpoint"
+        ],
+        "severity": "meaningful",
+        "sources": [
+          "level_up",
+          "pre_evo_level_up"
+        ],
+        "species": "Tyranitar",
+        "switch_fit": null
+      },
+      {
+        "bucket": "50%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 32,
+          "label": "about 27-32%",
+          "low_percent": 27,
+          "target": "Blastoise",
+          "target_hp": "76%"
+        },
+        "entry_risk": null,
+        "immediacy": "active",
+        "likelihood": 50,
+        "move": "Dynamicpunch",
+        "move_id": "DYNAMICPUNCH",
+        "reasons": [
+          "direct TM source is available by this checkpoint"
+        ],
+        "severity": "chip",
+        "sources": [
+          "tm_available"
+        ],
+        "species": "Tyranitar",
+        "switch_fit": null
+      },
+      {
+        "bucket": "50%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 32,
+          "label": "about 27-32%",
+          "low_percent": 27,
+          "target": "Blastoise",
+          "target_hp": "76%"
+        },
+        "entry_risk": null,
+        "immediacy": "active",
+        "likelihood": 50,
+        "move": "Earthquake",
+        "move_id": "EARTHQUAKE",
+        "reasons": [
+          "natural level-up move by this checkpoint"
+        ],
+        "severity": "chip",
+        "sources": [
+          "level_up",
+          "pre_evo_level_up",
+          "tm_available"
+        ],
+        "species": "Tyranitar",
+        "switch_fit": null
+      }
+    ],
+    "red_blastoise_vs_zapdos_mirror_coat_or_blizzard": [
+      {
+        "bucket": "99%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 84,
+          "label": "about 71-84%",
+          "low_percent": 71,
+          "target": "Blastoise",
+          "target_hp": "88%"
+        },
+        "entry_risk": null,
+        "immediacy": "active",
+        "likelihood": 99,
+        "move": "Thunderbolt",
+        "move_id": "THUNDERBOLT",
+        "reasons": [
+          "revealed in the public fixture state"
+        ],
+        "severity": "major",
+        "sources": [
+          "level_up",
+          "revealed"
+        ],
+        "species": "Zapdos",
+        "switch_fit": null
+      },
+      {
+        "bucket": "75%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 41,
+          "label": "about 34-41%",
+          "low_percent": 34,
+          "target": "Blastoise",
+          "target_hp": "88%"
+        },
+        "entry_risk": null,
+        "immediacy": "active",
+        "likelihood": 75,
+        "move": "Drill Peck",
+        "move_id": "DRILL_PECK",
+        "reasons": [
+          "natural level-up STAB/core move by this checkpoint"
+        ],
+        "severity": "meaningful",
+        "sources": [
+          "level_up"
+        ],
+        "species": "Zapdos",
+        "switch_fit": null
+      },
+      {
+        "bucket": "75%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 36,
+          "label": "about 30-36%",
+          "low_percent": 30,
+          "target": "Blastoise",
+          "target_hp": "88%"
+        },
+        "entry_risk": null,
+        "immediacy": "active",
+        "likelihood": 75,
+        "move": "Thundershock",
+        "move_id": "THUNDERSHOCK",
+        "reasons": [
+          "natural level-up STAB/core move by this checkpoint"
+        ],
+        "severity": "meaningful",
+        "sources": [
+          "level_up"
+        ],
+        "species": "Zapdos",
+        "switch_fit": null
+      },
+      {
+        "bucket": "50%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 106,
+          "label": "about 90-106%",
+          "low_percent": 90,
+          "target": "Blastoise",
+          "target_hp": "88%"
+        },
+        "entry_risk": null,
+        "immediacy": "active",
+        "likelihood": 50,
+        "move": "Thunder",
+        "move_id": "THUNDER",
+        "reasons": [
+          "direct TM source is available by this checkpoint"
+        ],
+        "severity": "lethal",
+        "sources": [
+          "tm_available"
+        ],
+        "species": "Zapdos",
+        "switch_fit": null
+      },
+      {
+        "bucket": "50%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 89,
+          "label": "about 75-89%",
+          "low_percent": 75,
+          "target": "Blastoise",
+          "target_hp": "88%"
+        },
+        "entry_risk": null,
+        "immediacy": "active",
+        "likelihood": 50,
+        "move": "Zap Cannon",
+        "move_id": "ZAP_CANNON",
+        "reasons": [
+          "direct TM source is available by this checkpoint"
+        ],
+        "severity": "lethal",
+        "sources": [
+          "tm_available"
+        ],
+        "species": "Zapdos",
+        "switch_fit": null
+      },
+      {
+        "bucket": "50%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 44,
+          "label": "about 37-44%",
+          "low_percent": 37,
+          "target": "Blastoise",
+          "target_hp": "88%"
+        },
+        "entry_risk": null,
+        "immediacy": "active",
+        "likelihood": 50,
+        "move": "Hyper Beam",
+        "move_id": "HYPER_BEAM",
+        "reasons": [
+          "direct TM source is available by this checkpoint"
+        ],
+        "severity": "meaningful",
+        "sources": [
+          "tm_available"
+        ],
+        "species": "Zapdos",
+        "switch_fit": null
+      },
+      {
+        "bucket": "50%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 30,
+          "label": "about 25-30%",
+          "low_percent": 25,
+          "target": "Blastoise",
+          "target_hp": "88%"
+        },
+        "entry_risk": null,
+        "immediacy": "active",
+        "likelihood": 50,
+        "move": "Wing Attack",
+        "move_id": "WING_ATTACK",
+        "reasons": [
+          "direct TM source is available by this checkpoint"
+        ],
+        "severity": "chip",
+        "sources": [
+          "tm_available"
+        ],
+        "species": "Zapdos",
+        "switch_fit": null
+      },
+      {
+        "bucket": "75%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 29,
+          "label": "about 25-29%",
+          "low_percent": 25,
+          "target": "Blastoise",
+          "target_hp": "88%"
+        },
+        "entry_risk": {
+          "damage": {
+            "basis": "rough estimate",
+            "high_percent": 34,
+            "label": "about 29-34%",
+            "low_percent": 29,
+            "target": "Starmie",
+            "target_hp": "100%"
+          },
+          "fit": "risky",
+          "move": "Surf",
+          "reason": "risky switch into revealed boss damage"
+        },
+        "immediacy": "switch",
+        "likelihood": 75,
+        "move": "Psychic",
+        "move_id": "PSYCHIC_M",
+        "reasons": [
+          "natural level-up STAB/core move by this checkpoint"
+        ],
+        "severity": "chip",
+        "sources": [
+          "level_up",
+          "tm_available"
+        ],
+        "species": "Starmie",
+        "switch_fit": "risky"
+      }
+    ],
+    "red_charizard_vs_starmie_sunny_day_or_switch": [
+      {
+        "bucket": "99%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 102,
+          "label": "about 87-102%",
+          "low_percent": 87,
           "target": "Charizard",
           "target_hp": "92%"
         },
@@ -25914,9 +26246,9 @@
         "bucket": "75%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 122,
-          "label": "about 104-122%",
-          "low_percent": 104,
+          "high_percent": 130,
+          "label": "about 110-130%",
+          "low_percent": 110,
           "target": "Charizard",
           "target_hp": "92%"
         },
@@ -25940,9 +26272,9 @@
         "bucket": "75%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 67,
-          "label": "about 57-67%",
-          "low_percent": 57,
+          "high_percent": 72,
+          "label": "about 61-72%",
+          "low_percent": 61,
           "target": "Charizard",
           "target_hp": "92%"
         },
@@ -25954,7 +26286,7 @@
         "reasons": [
           "natural level-up STAB/core move by this checkpoint"
         ],
-        "severity": "meaningful",
+        "severity": "major",
         "sources": [
           "level_up",
           "pre_evo_level_up"
@@ -25966,9 +26298,9 @@
         "bucket": "75%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 46,
-          "label": "about 39-46%",
-          "low_percent": 39,
+          "high_percent": 49,
+          "label": "about 41-49%",
+          "low_percent": 41,
           "target": "Charizard",
           "target_hp": "92%"
         },
@@ -25992,9 +26324,9 @@
         "bucket": "50%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 81,
-          "label": "about 69-81%",
-          "low_percent": 69,
+          "high_percent": 87,
+          "label": "about 74-87%",
+          "low_percent": 74,
           "target": "Charizard",
           "target_hp": "92%"
         },
@@ -26017,9 +26349,9 @@
         "bucket": "50%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 68,
-          "label": "about 57-68%",
-          "low_percent": 57,
+          "high_percent": 73,
+          "label": "about 62-73%",
+          "low_percent": 62,
           "target": "Charizard",
           "target_hp": "92%"
         },
@@ -26031,7 +26363,7 @@
         "reasons": [
           "direct TM source is available by this checkpoint"
         ],
-        "severity": "meaningful",
+        "severity": "major",
         "sources": [
           "tm_available"
         ],
@@ -26042,9 +26374,9 @@
         "bucket": "50%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 51,
-          "label": "about 43-51%",
-          "low_percent": 43,
+          "high_percent": 55,
+          "label": "about 46-55%",
+          "low_percent": 46,
           "target": "Charizard",
           "target_hp": "92%"
         },
@@ -26067,9 +26399,9 @@
         "bucket": "50%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 51,
-          "label": "about 43-51%",
-          "low_percent": 43,
+          "high_percent": 55,
+          "label": "about 47-55%",
+          "low_percent": 47,
           "target": "Charizard",
           "target_hp": "92%"
         },
@@ -26089,7 +26421,7 @@
         "switch_fit": null
       }
     ],
-    "red_pikachu_vs_dragonite_thunderbolt_or_quick_attack": [
+    "red_pikachu_vs_dragonite_thunderbolt_or_extremespeed": [
       {
         "bucket": "99%",
         "damage": {
@@ -26299,14 +26631,14 @@
         "switch_fit": null
       }
     ],
-    "red_snorlax_vs_alakazam_amnesia_or_body_slam": [
+    "red_snorlax_vs_alakazam_curse_or_body_slam": [
       {
         "bucket": "99%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 33,
-          "label": "about 28-33%",
-          "low_percent": 28,
+          "high_percent": 39,
+          "label": "about 34-39%",
+          "low_percent": 34,
           "target": "Snorlax",
           "target_hp": "84%"
         },
@@ -26318,7 +26650,7 @@
         "reasons": [
           "revealed in the public fixture state"
         ],
-        "severity": "chip",
+        "severity": "meaningful",
         "sources": [
           "level_up",
           "pre_evo_level_up",
@@ -26352,9 +26684,9 @@
         "bucket": "75%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 30,
-          "label": "about 25-30%",
-          "low_percent": 25,
+          "high_percent": 53,
+          "label": "about 45-53%",
+          "low_percent": 45,
           "target": "Snorlax",
           "target_hp": "84%"
         },
@@ -26363,6 +26695,32 @@
         "likelihood": 75,
         "move": "Future Sight",
         "move_id": "FUTURE_SIGHT",
+        "reasons": [
+          "natural level-up STAB/core move by this checkpoint"
+        ],
+        "severity": "meaningful",
+        "sources": [
+          "level_up",
+          "pre_evo_level_up"
+        ],
+        "species": "Alakazam",
+        "switch_fit": null
+      },
+      {
+        "bucket": "75%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 28,
+          "label": "about 24-28%",
+          "low_percent": 24,
+          "target": "Snorlax",
+          "target_hp": "84%"
+        },
+        "entry_risk": null,
+        "immediacy": "active",
+        "likelihood": 75,
+        "move": "Psybeam",
+        "move_id": "PSYBEAM",
         "reasons": [
           "natural level-up STAB/core move by this checkpoint"
         ],
@@ -26378,9 +26736,9 @@
         "bucket": "50%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 37,
-          "label": "about 31-37%",
-          "low_percent": 31,
+          "high_percent": 44,
+          "label": "about 37-44%",
+          "low_percent": 37,
           "target": "Snorlax",
           "target_hp": "84%"
         },
@@ -26403,9 +26761,9 @@
         "bucket": "50%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 30,
-          "label": "about 25-30%",
-          "low_percent": 25,
+          "high_percent": 35,
+          "label": "about 30-35%",
+          "low_percent": 30,
           "target": "Snorlax",
           "target_hp": "84%"
         },
@@ -26417,7 +26775,7 @@
         "reasons": [
           "direct TM source is available by this checkpoint"
         ],
-        "severity": "chip",
+        "severity": "meaningful",
         "sources": [
           "tm_available"
         ],
@@ -26428,9 +26786,9 @@
         "bucket": "50%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 26,
-          "label": "about 22-26%",
-          "low_percent": 22,
+          "high_percent": 31,
+          "label": "about 27-31%",
+          "low_percent": 27,
           "target": "Snorlax",
           "target_hp": "84%"
         },
@@ -26453,9 +26811,9 @@
         "bucket": "50%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 25,
-          "label": "about 21-25%",
-          "low_percent": 21,
+          "high_percent": 29,
+          "label": "about 25-29%",
+          "low_percent": 25,
           "target": "Snorlax",
           "target_hp": "84%"
         },
@@ -26473,44 +26831,6 @@
         ],
         "species": "Alakazam",
         "switch_fit": null
-      },
-      {
-        "bucket": "75%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 29,
-          "label": "about 25-29%",
-          "low_percent": 25,
-          "target": "Snorlax",
-          "target_hp": "84%"
-        },
-        "entry_risk": {
-          "damage": {
-            "basis": "rough estimate",
-            "high_percent": 21,
-            "label": "about 18-21%",
-            "low_percent": 18,
-            "target": "Tyranitar",
-            "target_hp": "100%"
-          },
-          "fit": "reasonable",
-          "move": "Body Slam",
-          "reason": "reasonable switch into revealed boss damage"
-        },
-        "immediacy": "switch",
-        "likelihood": 75,
-        "move": "Rock Slide",
-        "move_id": "ROCK_SLIDE",
-        "reasons": [
-          "natural level-up STAB/core move by this checkpoint"
-        ],
-        "severity": "chip",
-        "sources": [
-          "level_up",
-          "pre_evo_level_up"
-        ],
-        "species": "Tyranitar",
-        "switch_fit": "reasonable"
       }
     ],
     "sabrina_alakazam_choice_lock_vs_houndoom": [
@@ -27064,15 +27384,15 @@
         "switch_fit": "risky"
       }
     ],
-    "will_jynx_vs_machamp_lovely_kiss_or_psychic": [
+    "will_alakazam_vs_machamp_psychic_or_coverage": [
       {
         "bucket": "99%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 142,
-          "label": "about 120-142%",
-          "low_percent": 120,
-          "target": "Jynx",
+          "high_percent": 91,
+          "label": "about 77-91%",
+          "low_percent": 77,
+          "target": "Alakazam",
           "target_hp": "100%"
         },
         "entry_risk": null,
@@ -27083,7 +27403,7 @@
         "reasons": [
           "revealed in the public fixture state"
         ],
-        "severity": "lethal",
+        "severity": "major",
         "sources": [
           "level_up",
           "pre_evo_level_up",
@@ -27096,10 +27416,10 @@
         "bucket": "99%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 60,
-          "label": "about 50-60%",
-          "low_percent": 50,
-          "target": "Jynx",
+          "high_percent": 38,
+          "label": "about 31-38%",
+          "low_percent": 31,
+          "target": "Alakazam",
           "target_hp": "100%"
         },
         "entry_risk": null,
@@ -27122,10 +27442,10 @@
         "bucket": "75%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 96,
-          "label": "about 81-96%",
-          "low_percent": 81,
-          "target": "Jynx",
+          "high_percent": 61,
+          "label": "about 51-61%",
+          "low_percent": 51,
+          "target": "Alakazam",
           "target_hp": "100%"
         },
         "entry_risk": null,
@@ -27136,7 +27456,7 @@
         "reasons": [
           "natural level-up STAB/core move by this checkpoint"
         ],
-        "severity": "major",
+        "severity": "meaningful",
         "sources": [
           "level_up",
           "pre_evo_level_up"
@@ -27148,10 +27468,10 @@
         "bucket": "75%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 83,
-          "label": "about 71-83%",
-          "low_percent": 71,
-          "target": "Jynx",
+          "high_percent": 53,
+          "label": "about 45-53%",
+          "low_percent": 45,
+          "target": "Alakazam",
           "target_hp": "100%"
         },
         "entry_risk": null,
@@ -27162,7 +27482,7 @@
         "reasons": [
           "natural level-up STAB/core move by this checkpoint"
         ],
-        "severity": "major",
+        "severity": "meaningful",
         "sources": [
           "level_up",
           "pre_evo_level_up"
@@ -27174,10 +27494,10 @@
         "bucket": "75%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 60,
-          "label": "about 50-60%",
-          "low_percent": 50,
-          "target": "Jynx",
+          "high_percent": 39,
+          "label": "about 32-39%",
+          "low_percent": 32,
+          "target": "Alakazam",
           "target_hp": "100%"
         },
         "entry_risk": null,
@@ -27200,10 +27520,10 @@
         "bucket": "75%",
         "damage": {
           "basis": "fixed-damage move",
-          "high_percent": 36,
-          "label": "about 36%",
-          "low_percent": 36,
-          "target": "Jynx",
+          "high_percent": 39,
+          "label": "about 39%",
+          "low_percent": 39,
+          "target": "Alakazam",
           "target_hp": "100%"
         },
         "entry_risk": null,
@@ -27226,10 +27546,10 @@
         "bucket": "50%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 176,
-          "label": "about 150-176%",
-          "low_percent": 150,
-          "target": "Jynx",
+          "high_percent": 113,
+          "label": "about 95-113%",
+          "low_percent": 95,
+          "target": "Alakazam",
           "target_hp": "100%"
         },
         "entry_risk": null,
@@ -27251,23 +27571,24 @@
         "bucket": "50%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 130,
-          "label": "about 110-130%",
-          "low_percent": 110,
-          "target": "Jynx",
+          "high_percent": 101,
+          "label": "about 85-101%",
+          "low_percent": 85,
+          "target": "Alakazam",
           "target_hp": "100%"
         },
         "entry_risk": null,
         "immediacy": "active",
         "likelihood": 50,
-        "move": "Submission",
-        "move_id": "SUBMISSION",
+        "move": "Earthquake",
+        "move_id": "EARTHQUAKE",
         "reasons": [
-          "legal via pre-evolution level-up path"
+          "natural level-up move by this checkpoint"
         ],
         "severity": "lethal",
         "sources": [
-          "pre_evo_level_up"
+          "level_up",
+          "tm_available"
         ],
         "species": "Machamp",
         "switch_fit": null
@@ -27493,14 +27814,14 @@
         "switch_fit": "reasonable"
       }
     ],
-    "will_xatu_vs_typhlosion_psychic_or_confuse_ray": [
+    "will_xatu_vs_typhlosion_psychic_or_future_sight": [
       {
         "bucket": "99%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 58,
-          "label": "about 48-58%",
-          "low_percent": 48,
+          "high_percent": 55,
+          "label": "about 47-55%",
+          "low_percent": 47,
           "target": "Xatu",
           "target_hp": "100%"
         },
@@ -27524,9 +27845,9 @@
         "bucket": "99%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 10,
-          "label": "about 8-10%",
-          "low_percent": 8,
+          "high_percent": 12,
+          "label": "about 10-12%",
+          "low_percent": 10,
           "target": "Xatu",
           "target_hp": "100%"
         },
@@ -27577,9 +27898,9 @@
         "bucket": "75%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 84,
-          "label": "about 71-84%",
-          "low_percent": 71,
+          "high_percent": 81,
+          "label": "about 68-81%",
+          "low_percent": 68,
           "target": "Xatu",
           "target_hp": "100%"
         },
@@ -27604,8 +27925,34 @@
         "damage": {
           "basis": "rough estimate",
           "high_percent": 36,
-          "label": "about 30-36%",
-          "low_percent": 30,
+          "label": "about 31-36%",
+          "low_percent": 31,
+          "target": "Xatu",
+          "target_hp": "100%"
+        },
+        "entry_risk": null,
+        "immediacy": "active",
+        "likelihood": 75,
+        "move": "Double Edge",
+        "move_id": "DOUBLE_EDGE",
+        "reasons": [
+          "natural level-up STAB/core move by this checkpoint"
+        ],
+        "severity": "meaningful",
+        "sources": [
+          "level_up",
+          "tm_available"
+        ],
+        "species": "Typhlosion",
+        "switch_fit": null
+      },
+      {
+        "bucket": "75%",
+        "damage": {
+          "basis": "rough estimate",
+          "high_percent": 35,
+          "label": "about 29-35%",
+          "low_percent": 29,
           "target": "Xatu",
           "target_hp": "100%"
         },
@@ -27629,9 +27976,9 @@
         "bucket": "75%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 30,
-          "label": "about 26-30%",
-          "low_percent": 26,
+          "high_percent": 29,
+          "label": "about 25-29%",
+          "low_percent": 25,
           "target": "Xatu",
           "target_hp": "100%"
         },
@@ -27655,9 +28002,9 @@
         "bucket": "50%",
         "damage": {
           "basis": "rough estimate",
-          "high_percent": 61,
-          "label": "about 52-61%",
-          "low_percent": 52,
+          "high_percent": 58,
+          "label": "about 49-58%",
+          "low_percent": 49,
           "target": "Xatu",
           "target_hp": "100%"
         },
@@ -27672,31 +28019,6 @@
         "severity": "meaningful",
         "sources": [
           "pre_evo_level_up",
-          "tm_available"
-        ],
-        "species": "Typhlosion",
-        "switch_fit": null
-      },
-      {
-        "bucket": "50%",
-        "damage": {
-          "basis": "rough estimate",
-          "high_percent": 46,
-          "label": "about 38-46%",
-          "low_percent": 38,
-          "target": "Xatu",
-          "target_hp": "100%"
-        },
-        "entry_risk": null,
-        "immediacy": "active",
-        "likelihood": 50,
-        "move": "Fire Punch",
-        "move_id": "FIRE_PUNCH",
-        "reasons": [
-          "direct TM source is available by this checkpoint"
-        ],
-        "severity": "meaningful",
-        "sources": [
           "tm_available"
         ],
         "species": "Typhlosion",

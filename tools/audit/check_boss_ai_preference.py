@@ -11,6 +11,7 @@ if str(ROOT) not in sys.path:
 
 from tools.damage_debugger import oracle as damage_oracle
 from tools.boss_ai_preference.data import (
+    PreferenceDataError,
     append_label,
     build_report,
     load_fixtures,
@@ -19,11 +20,36 @@ from tools.boss_ai_preference.data import (
     render_markdown_report,
     save_preference,
 )
+from tools.boss_ai_preference.active_queue import build_active_queue
+from tools.boss_ai_preference.boss_team import (
+    attach_boss_teams,
+    boss_team_for_fixture,
+    boss_team_source_for_fixture,
+    party_for_fixture,
+    species_key,
+)
+from tools.boss_ai_preference.counterfactuals import build_counterfactual_report
 from tools.boss_ai_preference.damage_estimates import (
     attach_damage_estimates,
     estimate_move_damage,
     oracle_item_id,
     pokemon_data,
+)
+from tools.boss_ai_preference.features import build_feature_report
+from tools.boss_ai_preference.final_report import build_final_report
+from tools.boss_ai_preference.lessons import build_lesson_report
+from tools.boss_ai_preference.plan_queue import build_coach_report, build_plan_queue
+from tools.boss_ai_preference.plans import generate_plan_cards, generated_plan_ids_by_fixture
+from tools.boss_ai_preference.proposals import build_proposal_report
+from tools.boss_ai_preference.reward_model import build_reward_model_report
+from tools.boss_ai_preference.rollouts import project_plan
+from tools.boss_ai_preference.trajectory_data import (
+    build_trajectory_report,
+    demonstration_action_ids_for_fixture,
+    load_plan_demonstrations,
+    load_trajectory_preferences,
+    save_plan_demonstration,
+    save_trajectory_preference,
 )
 from tools.boss_ai_preference.threat_availability import (
     available_species_for_checkpoint,
@@ -39,12 +65,140 @@ from tools.boss_ai_preference.threat_availability import (
 
 def main() -> int:
     fixtures = load_fixtures()
-    if len(fixtures) != 50:
-        raise SystemExit("expected current 50-fixture Boss AI preference corpus")
-
+    if len(fixtures) != 53:
+        raise SystemExit("expected current 53-fixture Boss AI preference corpus")
+    missing_bench_state = [
+        fixture["id"]
+        for fixture in fixtures
+        if "bench_state" not in fixture.get("state", {}).get("boss", {})
+    ]
+    if missing_bench_state:
+        raise SystemExit(f"expected every fixture to include bench_state: {missing_bench_state[:3]}")
+    for fixture in fixtures:
+        boss = fixture["state"]["boss"]
+        bench_species = list(boss.get("bench", []))
+        state_species = [row.get("species") for row in boss.get("bench_state", [])]
+        if state_species != bench_species:
+            raise SystemExit(f"expected bench_state to match bench order for {fixture['id']}")
+    stale_party_members = []
+    for fixture in fixtures:
+        party = party_for_fixture(fixture)
+        if party is None:
+            stale_party_members.append(f"{fixture['id']}: no exact source party")
+            continue
+        source_species = {species_key(mon.species) for mon in party.mons}
+        boss = fixture["state"]["boss"]
+        active = boss.get("active", {})
+        fixture_species = [active.get("species"), *boss.get("bench", [])]
+        missing_species = [
+            species
+            for species in fixture_species
+            if species and species_key(str(species)) not in source_species
+        ]
+        if missing_species:
+            missing_list = ", ".join(str(species) for species in missing_species)
+            stale_party_members.append(f"{fixture['id']}: {missing_list}")
+    if stale_party_members:
+        sample = "; ".join(stale_party_members[:5])
+        raise SystemExit(f"expected fixture boss species to come from source parties: {sample}")
+    real_preferences = load_preferences(fixtures=fixtures)
+    if len(real_preferences) < 17:
+        raise SystemExit("expected current pairwise preference corpus to be present")
     first = fixtures[0]
     first_action = first["actions"][0]
     second_action = first["actions"][1]
+    first_team = boss_team_for_fixture(first)
+    if not first_team or not all("moves" in member for member in first_team):
+        raise SystemExit("expected source-backed boss team rows with move lists")
+    if first_team[1]["species"] != "Spearow" or first_team[1]["hp"] != "100%":
+        raise SystemExit("expected boss team enrichment to consume bench_state rows")
+    first_team_source = boss_team_source_for_fixture(first)
+    if not first_team_source["exact"] or not first_team_source["hash"]:
+        raise SystemExit("expected source-derived boss team rows to have an exact hash anchor")
+    enriched_first = attach_boss_teams([first])[0]
+    if "boss_team" not in enriched_first or "boss_team_source" not in enriched_first:
+        raise SystemExit("expected fixture API enrichment to attach boss_team")
+    slowking = next(
+        fixture for fixture in fixtures if fixture["id"] == "pryce_slowking_vs_ampharos_ground_pivot"
+    )
+    if "move_psychic" not in demonstration_action_ids_for_fixture(slowking):
+        raise SystemExit("expected missing-plan builder actions to include Slowking source Psychic")
+
+    feature_report = build_feature_report(fixtures)
+    if feature_report["action_count"] != sum(len(fixture["actions"]) for fixture in fixtures):
+        raise SystemExit("expected feature report to cover every fixture action")
+    if "kind_switch" not in feature_report["feature_support"]:
+        raise SystemExit("expected feature report to include switch action features")
+
+    active_queue = build_active_queue(fixtures, [], real_preferences, trace_dir=Path("missing"), limit=5)
+    if active_queue["returned_count"] != 5:
+        raise SystemExit("expected active queue smoke report to return requested candidates")
+    if not active_queue["candidates"][0]["reasons"]:
+        raise SystemExit("expected active queue candidates to explain their priority")
+
+    first_plans = generate_plan_cards(first)
+    if len(first_plans) < 2:
+        raise SystemExit("expected plan generator to create at least two plan cards")
+    if any(not plan.get("stop_conditions") for plan in first_plans):
+        raise SystemExit("expected every generated plan card to include stop conditions")
+    if any(len(plan.get("projection", [])) != plan.get("horizon") for plan in first_plans):
+        raise SystemExit("expected every generated plan card to project its full horizon")
+    if not any(row.get("projected") for plan in first_plans for row in plan.get("projection", [])):
+        raise SystemExit("expected plan projections to include inferred follow-up turns")
+    rollout = project_plan(first, first_plans[0])
+    if "player_hidden_moves_not_facts" not in first_plans[0].get("public_info_constraints", []):
+        raise SystemExit("expected generated plans to mark hidden player moves as non-facts")
+    if set(rollout["player_move_buckets"]) != {"revealed", "plausible", "impossible", "unknown_slots"}:
+        raise SystemExit("expected rollout player moves to be bucketed by public-info status")
+
+    plan_queue = build_plan_queue(
+        fixtures,
+        [],
+        real_preferences,
+        [],
+        [],
+        trace_dir=Path("missing"),
+        limit=5,
+    )
+    if plan_queue["returned_count"] != 5:
+        raise SystemExit("expected plan queue smoke report to return requested candidates")
+    if not plan_queue["candidates"][0]["plans"]:
+        raise SystemExit("expected plan queue candidates to include plan cards")
+
+    coach_report = build_coach_report(
+        fixtures,
+        [],
+        real_preferences,
+        [],
+        [],
+        trace_dir=Path("missing"),
+        limit=5,
+    )
+    if coach_report["plan_queue"]["returned_count"] != 5:
+        raise SystemExit("expected coach report to include plan queue candidates")
+
+    counterfactual_report = build_counterfactual_report(
+        fixtures,
+        [],
+        real_preferences,
+        limit=6,
+    )
+    if counterfactual_report["generated_count"] != 6:
+        raise SystemExit("expected counterfactual smoke report to generate variants")
+
+    lesson_report = build_lesson_report(fixtures, [], real_preferences, [])
+    lesson_ids = {lesson["lesson_id"] for lesson in lesson_report["lessons"]}
+    if "sleep_pressure_clause_gated" not in lesson_ids:
+        raise SystemExit("expected lesson report to derive Sleep Clause lesson")
+
+    reward_report = build_reward_model_report(fixtures, real_preferences, epochs=20)
+    if reward_report["strict_example_count"] == 0:
+        raise SystemExit("expected reward model to fit strict pairwise examples")
+
+    proposal_report = build_proposal_report(fixtures, [], real_preferences, [])
+    if not proposal_report["proposals"]:
+        raise SystemExit("expected proposal report to generate review candidates")
+
     annotated = attach_damage_estimates([first])
     first_estimate = annotated[0]["actions"][0].get("damage_estimate")
     if not first_estimate or "%" not in first_estimate["label"]:
@@ -217,11 +371,17 @@ def main() -> int:
         preferences_path = Path(tmp) / "preferences.jsonl"
         threat_report_path = Path(tmp) / "threat_report.md"
         threat_json_path = Path(tmp) / "threat_report.json"
+        trajectories_path = Path(tmp) / "trajectories.jsonl"
+        demonstrations_path = Path(tmp) / "demonstrations.jsonl"
         append_label(
             fixture_id=first["id"],
             action_id=first_action["id"],
             label="best",
             rank=1,
+            confidence="medium",
+            public_info_scope="public_only",
+            lesson_type="weight_hint",
+            condition_tags=["survives_one_hit", "target_can_punish"],
             note="audit smoke label",
             labels_path=labels_path,
         )
@@ -267,21 +427,49 @@ def main() -> int:
                 first_action["id"]: ["too_passive"],
                 second_action["id"]: ["reduces_risk"],
             },
+            confidence="high",
+            public_info_scope="public_only",
+            lesson_type="sequence_policy",
+            condition_tags=["if_user_faster", "survives_one_hit"],
+            counterfactual_group="audit_boundary_group",
+            holdout=False,
+            source_team_hash="audit-team-hash",
             note="audit swapped-order replacement preference",
             preferences_path=preferences_path,
         )
+        try:
+            save_preference(
+                fixture_id=first["id"],
+                action_a_id=first_action["id"],
+                action_b_id=second_action["id"],
+                choice="both_good",
+                confidence="certain",
+                preferences_path=Path(tmp) / "invalid_preferences.jsonl",
+            )
+        except PreferenceDataError:
+            pass
+        else:
+            raise SystemExit("expected invalid V2 confidence to fail validation")
         labels = load_labels(labels_path, fixtures=fixtures)
         preferences = load_preferences(preferences_path, fixtures=fixtures)
         report = build_report(fixtures, labels, preferences)
         markdown = render_markdown_report(report)
         if len(labels) != 2:
             raise SystemExit("expected audit smoke labels to round-trip")
+        if labels[0]["condition_tags"] != ["survives_one_hit", "target_can_punish"]:
+            raise SystemExit("expected V2 label condition tags to round-trip")
         if len(preferences) != 1:
             raise SystemExit("expected audit smoke preference to round-trip")
         if preferences[0]["choice"] != "a_better":
             raise SystemExit("expected repeated pairwise preference save to replace old row")
         if preferences[0]["action_tags"][second_action["id"]] != ["reduces_risk"]:
             raise SystemExit("expected audit replacement action tags to round-trip")
+        if preferences[0]["lesson_type"] != "sequence_policy":
+            raise SystemExit("expected V2 preference lesson type to round-trip")
+        if preferences[0]["condition_tags"] != ["if_user_faster", "survives_one_hit"]:
+            raise SystemExit("expected V2 preference condition tags to round-trip")
+        if preferences[0]["source_team_hash"] != "audit-team-hash":
+            raise SystemExit("expected V2 source team hash to round-trip")
         if not report["conflicts"]:
             raise SystemExit("expected duplicate/conflicting labels to be flagged")
         if report["preference_count"] != 1:
@@ -299,6 +487,85 @@ def main() -> int:
             raise SystemExit("expected threat report markdown to include checkpoint rows")
         if not threat_json_path.exists():
             raise SystemExit("expected threat report JSON to be written")
+
+        temp_plan_ids = generated_plan_ids_by_fixture([first])
+        temp_plans = generate_plan_cards(first)
+        save_trajectory_preference(
+            fixture_id=first["id"],
+            trajectory_a_id=temp_plans[0]["id"],
+            trajectory_b_id=temp_plans[1]["id"],
+            choice="a_better",
+            horizon=3,
+            confidence="medium",
+            public_info_scope="public_only",
+            lesson_type="sequence_policy",
+            condition_tags=["survives_one_hit"],
+            branch_tags=["if_player_switches_rescore"],
+            comparison_scope="selected_plan_over_all_shown",
+            compared_plan_ids=[plan["id"] for plan in temp_plans[:2]],
+            note="audit trajectory smoke preference",
+            trajectories_path=trajectories_path,
+            known_plan_ids_by_fixture=temp_plan_ids,
+        )
+        save_plan_demonstration(
+            fixture_id=first["id"],
+            demonstration_id="audit_demo_plan",
+            horizon=3,
+            steps=[
+                {"turn": 1, "action_id": first_action["id"]},
+                {"turn": 2, "action_id": second_action["id"]},
+            ],
+            condition_tags=["do_once_only"],
+            human_summary="audit missing-plan smoke demo",
+            demonstrations_path=demonstrations_path,
+        )
+        try:
+            save_trajectory_preference(
+                fixture_id=first["id"],
+                trajectory_a_id=temp_plans[0]["id"],
+                trajectory_b_id=temp_plans[1]["id"],
+                choice="a_better",
+                horizon=6,
+                trajectories_path=Path(tmp) / "invalid_trajectories.jsonl",
+                known_plan_ids_by_fixture=temp_plan_ids,
+            )
+        except PreferenceDataError:
+            pass
+        else:
+            raise SystemExit("expected invalid trajectory horizon to fail validation")
+        trajectories = load_trajectory_preferences(
+            trajectories_path,
+            fixtures=fixtures,
+            known_plan_ids_by_fixture=temp_plan_ids,
+        )
+        demonstrations = load_plan_demonstrations(demonstrations_path, fixtures=fixtures)
+        trajectory_report = build_trajectory_report(fixtures, trajectories, demonstrations)
+        if len(trajectories) != 1:
+            raise SystemExit("expected trajectory preference to round-trip")
+        if trajectories[0]["branch_tags"] != ["if_player_switches_rescore"]:
+            raise SystemExit("expected trajectory branch tags to round-trip")
+        if trajectories[0]["comparison_scope"] != "selected_plan_over_all_shown":
+            raise SystemExit("expected trajectory comparison scope to round-trip")
+        if not trajectories[0].get("source_team_hash") or not trajectories[0].get("fixture_state_hash"):
+            raise SystemExit("expected trajectory rows to store source freshness hashes")
+        if len(demonstrations) != 1:
+            raise SystemExit("expected plan demonstration to round-trip")
+        if not demonstrations[0].get("source_team_hash") or not demonstrations[0].get("fixture_state_hash"):
+            raise SystemExit("expected demonstrations to store source freshness hashes")
+        if trajectory_report["trajectory_count"] != 1 or trajectory_report["demonstration_count"] != 1:
+            raise SystemExit("expected trajectory report to count saved rows")
+        final_report = build_final_report(
+            fixtures,
+            labels,
+            preferences,
+            [],
+            trajectories,
+            demonstrations,
+        )
+        if "top_plan_pairs_are_fully_labeled" not in final_report["gates"]:
+            raise SystemExit("expected final readiness report to include plan-pair gate")
+        if final_report["party_anchor_report"]["missing_exact_count"]:
+            raise SystemExit("expected final report to find exact trainer-party anchors")
 
     print(
         "Boss AI preference audit passed: "

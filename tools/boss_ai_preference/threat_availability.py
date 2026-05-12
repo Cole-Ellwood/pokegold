@@ -905,6 +905,11 @@ def map_fish_groups() -> dict[str, str]:
 
 
 @lru_cache(maxsize=1)
+def fish_lines() -> tuple[str, ...]:
+    return tuple((WILD_DIR / "fish.asm").read_text(encoding="utf-8").splitlines())
+
+
+@lru_cache(maxsize=1)
 def fish_species_by_group_and_rod() -> dict[tuple[str, str], set[tuple[str, int]]]:
     rows: dict[tuple[str, str], set[tuple[str, int]]] = defaultdict(set)
     time_groups = time_fish_groups()
@@ -913,7 +918,7 @@ def fish_species_by_group_and_rod() -> dict[tuple[str, str], set[tuple[str, int]
     label_pattern = re.compile(r"^\s*\.([A-Za-z0-9_]+)_(Old|Good|Super):")
     species_pattern = re.compile(r"^\s*db\s+[^,]+,\s*([A-Z0-9_]+)\s*,\s*(\d+)")
     time_pattern = re.compile(r"^\s*db\s+[^,]+,\s*time_group\s+(\d+)")
-    for line in (WILD_DIR / "fish.asm").read_text(encoding="utf-8").splitlines():
+    for line in fish_lines():
         if line.startswith("TimeFishGroups:"):
             break
         label = label_pattern.match(line)
@@ -948,7 +953,7 @@ def time_fish_groups() -> dict[int, set[tuple[str, int]]]:
     pattern = re.compile(
         r"^\s*db\s+([A-Z0-9_]+)\s*,\s*(\d+)\s*,\s*([A-Z0-9_]+)\s*,\s*(\d+)\s*;\s*(\d+)"
     )
-    for line in (WILD_DIR / "fish.asm").read_text(encoding="utf-8").splitlines():
+    for line in fish_lines():
         match = pattern.match(line)
         if not match:
             continue
@@ -968,16 +973,38 @@ def gift_species_for_checkpoint(checkpoint: Checkpoint) -> dict[str, set[str]]:
 
 
 @lru_cache(maxsize=1)
-def givepoke_sources() -> tuple[tuple[str, int, str], ...]:
-    rows: list[tuple[str, int, str]] = []
-    pattern = re.compile(r"\bgivepoke\s+([A-Z0-9_]+)\s*,\s*(\d+)")
+def map_script_sources() -> dict[str, tuple[tuple[str, ...], ...]]:
+    rows: dict[str, list[tuple[str, ...]]] = {
+        "givepoke": [],
+        "static": [],
+        "direct_tm": [],
+        "mart": [],
+    }
+    givepoke_pattern = re.compile(r"\bgivepoke\s+([A-Z0-9_]+)\s*,\s*(\d+)")
+    static_pattern = re.compile(r"\bloadwildmon\s+([A-Z0-9_]+)\s*,\s*(\d+)")
+    direct_tm_pattern = re.compile(r"\b(?:verbosegiveitem|giveitem|itemball)\s+(TM_[A-Z0-9_]+)")
+    mart_pattern = re.compile(r"\bpokemart\s+MARTTYPE_[A-Z0-9_]+,\s*(MART_[A-Z0-9_]+)")
     for path in MAPS_DIR.glob("*.asm"):
         for line in path.read_text(encoding="utf-8").splitlines():
-            match = pattern.search(line)
-            if match:
+            if match := givepoke_pattern.search(line):
                 species, level = match.groups()
-                rows.append((species, int(level), path.name))
-    return tuple(rows)
+                rows["givepoke"].append((species, level, path.name))
+            if match := static_pattern.search(line):
+                species, level = match.groups()
+                rows["static"].append((species, level, path.name))
+            if match := direct_tm_pattern.search(line):
+                rows["direct_tm"].append((match.group(1), path.name))
+            if match := mart_pattern.search(line):
+                rows["mart"].append((match.group(1), path.name))
+    return {key: tuple(value) for key, value in rows.items()}
+
+
+@lru_cache(maxsize=1)
+def givepoke_sources() -> tuple[tuple[str, int, str], ...]:
+    return tuple(
+        (species, int(level), source_file)
+        for species, level, source_file in map_script_sources()["givepoke"]
+    )
 
 
 def static_species_for_checkpoint(checkpoint: Checkpoint) -> dict[str, set[str]]:
@@ -991,30 +1018,20 @@ def static_species_for_checkpoint(checkpoint: Checkpoint) -> dict[str, set[str]]
 
 @lru_cache(maxsize=1)
 def static_encounter_sources() -> tuple[tuple[str, int, str], ...]:
-    rows: list[tuple[str, int, str]] = []
-    pattern = re.compile(r"\bloadwildmon\s+([A-Z0-9_]+)\s*,\s*(\d+)")
-    for path in MAPS_DIR.glob("*.asm"):
-        for line in path.read_text(encoding="utf-8").splitlines():
-            match = pattern.search(line)
-            if match:
-                species, level = match.groups()
-                rows.append((species, int(level), path.name))
-    return tuple(rows)
+    return tuple(
+        (species, int(level), source_file)
+        for species, level, source_file in map_script_sources()["static"]
+    )
 
 
 @lru_cache(maxsize=1)
 def direct_tm_sources() -> dict[str, list[str]]:
     tm_items = tm_item_moves()
     sources: dict[str, list[str]] = defaultdict(list)
-    pattern = re.compile(r"\b(?:verbosegiveitem|giveitem|itemball)\s+(TM_[A-Z0-9_]+)")
-    for path in MAPS_DIR.glob("*.asm"):
-        for line in path.read_text(encoding="utf-8").splitlines():
-            match = pattern.search(line)
-            if not match:
-                continue
-            move = tm_items.get(match.group(1))
-            if move is not None:
-                sources[move].append(path.name)
+    for tm_item, source_file in map_script_sources()["direct_tm"]:
+        move = tm_items.get(tm_item)
+        if move is not None:
+            sources[move].append(source_file)
     for move, source_files in mart_tm_sources().items():
         sources[move].extend(source_files)
     return {move: sorted(set(files)) for move, files in sources.items()}
@@ -1026,19 +1043,14 @@ def mart_tm_sources() -> dict[str, list[str]]:
     mart_labels = mart_labels_by_constant()
     mart_tms = tm_items_by_mart_label()
     sources: dict[str, list[str]] = defaultdict(list)
-    pattern = re.compile(r"\bpokemart\s+MARTTYPE_[A-Z0-9_]+,\s*(MART_[A-Z0-9_]+)")
-    for path in MAPS_DIR.glob("*.asm"):
-        for line in path.read_text(encoding="utf-8").splitlines():
-            match = pattern.search(line)
-            if not match:
-                continue
-            label = mart_labels.get(match.group(1))
-            if label is None:
-                continue
-            for tm_item in mart_tms.get(label, set()):
-                move = tm_items.get(tm_item)
-                if move is not None:
-                    sources[move].append(path.name)
+    for mart_constant, source_file in map_script_sources()["mart"]:
+        label = mart_labels.get(mart_constant)
+        if label is None:
+            continue
+        for tm_item in mart_tms.get(label, set()):
+            move = tm_items.get(tm_item)
+            if move is not None:
+                sources[move].append(source_file)
     return {move: sorted(set(files)) for move, files in sources.items()}
 
 

@@ -1,0 +1,1467 @@
+{
+  "candidate_count": 72,
+  "candidates": [
+    {
+      "candidate_id": "lance_yanma_vs_lapras_sleep_powder_or_quiver_dance",
+      "existing_preference": {
+        "action_a_id": "move_sleep_powder",
+        "action_b_id": "move_quiver_dance",
+        "action_tags": {
+          "move_quiver_dance": [
+            "too_greedy"
+          ],
+          "move_sleep_powder": [
+            "calculated_risk",
+            "scary_pressure",
+            "uses_public_info"
+          ]
+        },
+        "choice": "a_better",
+        "condition_tags": [
+          "setup_after_sleep_lands",
+          "sleep_clause_free",
+          "sleep_miss_risk_accepted",
+          "target_not_statused"
+        ],
+        "confidence": "medium",
+        "created_at": "2026-05-12T03:22:26+00:00",
+        "fixture_id": "lance_yanma_vs_lapras_sleep_powder_or_quiver_dance",
+        "lesson_type": "sequence_policy",
+        "note": "Same pattern as Erika: Sleep Powder first, then use the sleep turn to Quiver Dance, then attack with Giga Drain. If Lapras wakes up and Sleep Clause is free, Sleep Powder can be reapplied before continuing pressure.",
+        "preferred_action_id": "move_sleep_powder",
+        "public_info_scope": "public_only",
+        "reason_tags": [],
+        "source_team_hash": "baea92b836fc8f2e",
+        "state_version": 2,
+        "tool_version": "boss-ai-preference-v0"
+      },
+      "fixture_id": "lance_yanma_vs_lapras_sleep_powder_or_quiver_dance",
+      "leader": "Champion Lance",
+      "priority": 12,
+      "rank": 1,
+      "reasons": [
+        "current scorer top two actions are close (margin 1)",
+        "current scorer disagrees with an existing strict user preference (b_better vs a_better)"
+      ],
+      "source": "fixture",
+      "teaches": [
+        "hard_rule",
+        "sequence_policy"
+      ],
+      "top_actions": [
+        {
+          "action_id": "move_quiver_dance",
+          "contributions": [
+            {
+              "delta": 50,
+              "reason": "neutral action floor",
+              "rule": "base"
+            },
+            {
+              "delta": 7,
+              "reason": "move uses public coverage or visible punish",
+              "rule": "coverage"
+            },
+            {
+              "delta": 2,
+              "reason": "late-game leaders should value cleaner decisions",
+              "rule": "late_game_stakes"
+            }
+          ],
+          "kind": "move",
+          "name": "Quiver Dance",
+          "score": 59
+        },
+        {
+          "action_id": "move_sleep_powder",
+          "contributions": [
+            {
+              "delta": 50,
+              "reason": "neutral action floor",
+              "rule": "base"
+            },
+            {
+              "delta": 1,
+              "reason": "fixture baseline action for comparison",
+              "rule": "baseline"
+            },
+            {
+              "delta": 5,
+              "reason": "status/control move matches boss identity",
+              "rule": "status_identity"
+            },
+            {
+              "delta": 2,
+              "reason": "late-game leaders should value cleaner decisions",
+              "rule": "late_game_stakes"
+            }
+          ],
+          "kind": "move",
+          "name": "Sleep Powder",
+          "score": 58
+        }
+      ]
+    },
+    {
+      "candidate_id": "erika_victreebel_vs_snorlax_sleep_or_boost",
+      "existing_preference": null,
+      "fixture_id": "erika_victreebel_vs_snorlax_sleep_or_boost",
+      "leader": "Erika",
+      "priority": 10,
+      "rank": 2,
+      "reasons": [
+        "current scorer has modest uncertainty (margin 5)",
+        "no pairwise preference has been recorded for this comparison",
+        "Erika has no current preference feedback"
+      ],
+      "source": "fixture",
+      "teaches": [
+        "hard_rule",
+        "sequence_policy"
+      ],
+      "top_actions": [
+        {
+          "action_id": "move_swords_dance",
+          "contributions": [
+            {
+              "delta": 50,
+              "reason": "neutral action floor",
+              "rule": "base"
+            },
+            {
+              "delta": 6,
+              "reason": "setup move matches a boss plan",
+              "rule": "setup_identity"
+            },
+            {
+              "delta": 12,
+              "reason": "public text describes a real setup window",
+              "rule": "setup_window"
+            }
+          ],
+          "kind": "move",
+          "name": "Swords Dance",
+          "score": 68
+        },
+        {
+          "action_id": "move_sludge_bomb",
+          "contributions": [
+            {
+              "delta": 50,
+              "reason": "neutral action floor",
+              "rule": "base"
+            },
+            {
+              "delta": 5,
+              "reason": "move takes tempo instead of waiting",
+              "rule": "tempo_damage"
+            },
+            {
+              "delta": 8,
+              "reason": "damage estimate can KO the target",
+              "rule": "ko_possible"
+            }
+          ],
+          "kind": "move",
+          "name": "Sludge Bomb",
+          "score": 63
+        }
+      ]
+    },
+    {
+      "candidate_id": "pryce_slowking_vs_ampharos_ground_pivot",
+      "existing_preference": {
+        "action_a_id": "move_thunder_wave",
+        "action_b_id": "move_surf",
+        "action_tags": {
+          "move_surf": [
+            "misses_public_threat"
+          ],
+          "move_thunder_wave": [
+            "reduces_risk"
+          ],
+          "switch_piloswine": [
+            "reduces_risk",
+            "uses_public_info"
+          ]
+        },
+        "choice": "other_better",
+        "created_at": "2026-05-10T03:15:53+00:00",
+        "fixture_id": "pryce_slowking_vs_ampharos_ground_pivot",
+        "note": "piloswine cant be immune to ampharos due to dragon's majesty, but resists it then threatens ampharos with ground coverage. save slowking for better matchup. thunder wave is MAYBE ok if slowking would live a hit to neuter a giant threat in a dragon",
+        "preferred_action_id": "switch_piloswine",
+        "reason_tags": [],
+        "source_team_hash": "1fac09d6d2eadff5",
+        "state_version": 2,
+        "tool_version": "boss-ai-preference-v0"
+      },
+      "fixture_id": "pryce_slowking_vs_ampharos_ground_pivot",
+      "leader": "Pryce",
+      "priority": 10,
+      "rank": 3,
+      "reasons": [
+        "current scorer top two actions are close (margin 2)",
+        "existing preference says the compared pair omitted the best action"
+      ],
+      "source": "fixture",
+      "teaches": [
+        "switch_policy",
+        "weight_hint"
+      ],
+      "top_actions": [
+        {
+          "action_id": "switch_piloswine",
+          "contributions": [
+            {
+              "delta": 50,
+              "reason": "neutral action floor",
+              "rule": "base"
+            },
+            {
+              "delta": 8,
+              "reason": "switch addresses a public risk in this fixture",
+              "rule": "public_switch"
+            }
+          ],
+          "kind": "switch",
+          "name": "Switch to Piloswine",
+          "score": 58
+        },
+        {
+          "action_id": "move_thunder_wave",
+          "contributions": [
+            {
+              "delta": 50,
+              "reason": "neutral action floor",
+              "rule": "base"
+            },
+            {
+              "delta": 1,
+              "reason": "fixture baseline action for comparison",
+              "rule": "baseline"
+            },
+            {
+              "delta": 5,
+              "reason": "status/control move matches boss identity",
+              "rule": "status_identity"
+            }
+          ],
+          "kind": "move",
+          "name": "Thunder Wave",
+          "score": 56
+        }
+      ]
+    },
+    {
+      "candidate_id": "will_slowbro_vs_houndoom_amnesia_or_surf",
+      "existing_preference": null,
+      "fixture_id": "will_slowbro_vs_houndoom_amnesia_or_surf",
+      "leader": "Will",
+      "priority": 10,
+      "rank": 4,
+      "reasons": [
+        "current scorer has modest uncertainty (margin 5)",
+        "no pairwise preference has been recorded for this comparison",
+        "Will has no current preference feedback"
+      ],
+      "source": "fixture",
+      "teaches": [
+        "ace_preservation",
+        "sequence_policy"
+      ],
+      "top_actions": [
+        {
+          "action_id": "switch_houndoom",
+          "contributions": [
+            {
+              "delta": 50,
+              "reason": "neutral action floor",
+              "rule": "base"
+            },
+            {
+              "delta": 8,
+              "reason": "switch addresses a public risk in this fixture",
+              "rule": "public_switch"
+            },
+            {
+              "delta": 4,
+              "reason": "action text preserves a high-value mon",
+              "rule": "preserve_value"
+            }
+          ],
+          "kind": "switch",
+          "name": "Switch to Houndoom",
+          "score": 62
+        },
+        {
+          "action_id": "move_psychic",
+          "contributions": [
+            {
+              "delta": 50,
+              "reason": "neutral action floor",
+              "rule": "base"
+            },
+            {
+              "delta": 7,
+              "reason": "move uses public coverage or visible punish",
+              "rule": "coverage"
+            }
+          ],
+          "kind": "move",
+          "name": "Psychic",
+          "score": 57
+        }
+      ]
+    },
+    {
+      "candidate_id": "bugsy_ariados_vs_pidgey_toxic_or_attack",
+      "existing_preference": null,
+      "fixture_id": "bugsy_ariados_vs_pidgey_toxic_or_attack",
+      "leader": "Bugsy",
+      "priority": 9,
+      "rank": 5,
+      "reasons": [
+        "current scorer top two actions are close (margin 1)",
+        "no pairwise preference has been recorded for this comparison",
+        "Bugsy is still under-covered"
+      ],
+      "source": "fixture",
+      "teaches": [
+        "weight_hint"
+      ],
+      "top_actions": [
+        {
+          "action_id": "move_toxic",
+          "contributions": [
+            {
+              "delta": 50,
+              "reason": "neutral action floor",
+              "rule": "base"
+            },
+            {
+              "delta": 1,
+              "reason": "fixture baseline action for comparison",
+              "rule": "baseline"
+            },
+            {
+              "delta": 5,
+              "reason": "status/control move matches boss identity",
+              "rule": "status_identity"
+            }
+          ],
+          "kind": "move",
+          "name": "Toxic",
+          "score": 56
+        },
+        {
+          "action_id": "move_giga_drain",
+          "contributions": [
+            {
+              "delta": 50,
+              "reason": "neutral action floor",
+              "rule": "base"
+            },
+            {
+              "delta": 5,
+              "reason": "move takes tempo instead of waiting",
+              "rule": "tempo_damage"
+            }
+          ],
+          "kind": "move",
+          "name": "Giga Drain",
+          "score": 55
+        }
+      ]
+    },
+    {
+      "candidate_id": "bugsy_scyther_vs_quilava_fire_pressure",
+      "existing_preference": {
+        "action_a_id": "move_swords_dance",
+        "action_b_id": "move_wing_attack",
+        "action_tags": {
+          "move_swords_dance": [
+            "calculated_risk",
+            "scary_pressure",
+            "uses_public_info"
+          ],
+          "move_wing_attack": [
+            "reduces_risk",
+            "uses_public_info"
+          ]
+        },
+        "choice": "a_better",
+        "created_at": "2026-05-08T04:57:24+00:00",
+        "fixture_id": "bugsy_scyther_vs_quilava_fire_pressure",
+        "note": "if quilava is faster then wing attack is better, because otherwise it just goes ember > swords dance > ember and we die\n\nbut if scyther is faster, then it goes swords dance > ember > wing attack KOs. \n\nsince wing attack without a boost doesnt Ko quilava, we have to take an ember either way. swords dancing first still kills quilava in 2 turns, taking only one ember, and leaves us with +2",
+        "preferred_action_id": "move_swords_dance",
+        "reason_tags": [],
+        "source_team_hash": "46b4d9a237f8721b",
+        "state_version": 2,
+        "tool_version": "boss-ai-preference-v0"
+      },
+      "fixture_id": "bugsy_scyther_vs_quilava_fire_pressure",
+      "leader": "Bugsy",
+      "priority": 9,
+      "rank": 6,
+      "reasons": [
+        "current scorer top two actions are close (margin 2)",
+        "Bugsy is still under-covered"
+      ],
+      "source": "fixture",
+      "teaches": [
+        "sequence_policy",
+        "weight_hint"
+      ],
+      "top_actions": [
+        {
+          "action_id": "move_swords_dance",
+          "contributions": [
+            {
+              "delta": 50,
+              "reason": "neutral action floor",
+              "rule": "base"
+            },
+            {
+              "delta": 1,
+              "reason": "fixture baseline action for comparison",
+              "rule": "baseline"
+            },
+            {
+              "delta": 6,
+              "reason": "setup move matches a boss plan",
+              "rule": "setup_identity"
+            },
+            {
+              "delta": 12,
+              "reason": "public text describes a real setup window",
+              "rule": "setup_window"
+            },
+            {
+              "delta": -10,
+              "reason": "public pressure makes setup risky",
+              "rule": "setup_risk"
+            }
+          ],
+          "kind": "move",
+          "name": "Swords Dance",
+          "score": 59
+        },
+        {
+          "action_id": "move_wing_attack",
+          "contributions": [
+            {
+              "delta": 50,
+              "reason": "neutral action floor",
+              "rule": "base"
+            },
+            {
+              "delta": 7,
+              "reason": "move uses public coverage or visible punish",
+              "rule": "coverage"
+            }
+          ],
+          "kind": "move",
+          "name": "Wing Attack",
+          "score": 57
+        }
+      ]
+    },
+    {
+      "candidate_id": "clair_dragonair_vs_suicune_hidden_ice_beam",
+      "existing_preference": {
+        "action_a_id": "move_outrage",
+        "action_b_id": "move_thunder",
+        "action_tags": {
+          "move_outrage": [
+            "misses_public_threat"
+          ],
+          "move_thunder": [
+            "misses_public_threat"
+          ],
+          "switch_kingdra": [
+            "reduces_risk"
+          ]
+        },
+        "choice": "other_better",
+        "created_at": "2026-05-10T03:36:16+00:00",
+        "fixture_id": "clair_dragonair_vs_suicune_hidden_ice_beam",
+        "note": "think about it like this: without ice coverage, the player will switch out suicune because it cannot touch dragonair at all. so if they stay in its solely to go for ice and threaten dragonair ",
+        "preferred_action_id": "switch_kingdra",
+        "reason_tags": [],
+        "source_team_hash": "4665ea4f0fb1bfad",
+        "state_version": 2,
+        "tool_version": "boss-ai-preference-v0"
+      },
+      "fixture_id": "clair_dragonair_vs_suicune_hidden_ice_beam",
+      "leader": "Clair",
+      "priority": 9,
+      "rank": 7,
+      "reasons": [
+        "current scorer has modest uncertainty (margin 4)",
+        "existing preference says the compared pair omitted the best action"
+      ],
+      "source": "fixture",
+      "teaches": [
+        "ace_preservation",
+        "scout_policy",
+        "switch_policy"
+      ],
+      "top_actions": [
+        {
+          "action_id": "switch_kingdra",
+          "contributions": [
+            {
+              "delta": 50,
+              "reason": "neutral action floor",
+              "rule": "base"
+            },
+            {
+              "delta": 8,
+              "reason": "switch addresses a public risk in this fixture",
+              "rule": "public_switch"
+            },
+            {
+              "delta": 4,
+              "reason": "action text preserves a high-value mon",
+              "rule": "preserve_value"
+            },
+            {
+              "delta": 10,
+              "reason": "public hidden-coverage prior favors preserving the exposed mon",
+              "rule": "hidden_coverage_respect"
+            }
+          ],
+          "kind": "switch",
+          "name": "Switch to Kingdra",
+          "score": 72
+        },
+        {
+          "action_id": "switch_mantine",
+          "contributions": [
+            {
+              "delta": 50,
+              "reason": "neutral action floor",
+              "rule": "base"
+            },
+            {
+              "delta": 8,
+              "reason": "switch addresses a public risk in this fixture",
+              "rule": "public_switch"
+            },
+            {
+              "delta": 10,
+              "reason": "public hidden-coverage prior favors preserving the exposed mon",
+              "rule": "hidden_coverage_respect"
+            }
+          ],
+          "kind": "switch",
+          "name": "Switch to Mantine",
+          "score": 68
+        }
+      ]
+    },
+    {
+      "candidate_id": "red_snorlax_vs_alakazam_curse_or_body_slam",
+      "existing_preference": null,
+      "fixture_id": "red_snorlax_vs_alakazam_curse_or_body_slam",
+      "leader": "Red",
+      "priority": 9,
+      "rank": 8,
+      "reasons": [
+        "current scorer top two actions are close (margin 2)",
+        "no pairwise preference has been recorded for this comparison",
+        "Red has no current preference feedback"
+      ],
+      "source": "fixture",
+      "teaches": [
+        "sequence_policy"
+      ],
+      "top_actions": [
+        {
+          "action_id": "move_body_slam",
+          "contributions": [
+            {
+              "delta": 50,
+              "reason": "neutral action floor",
+              "rule": "base"
+            },
+            {
+              "delta": 1,
+              "reason": "fixture baseline action for comparison",
+              "rule": "baseline"
+            },
+            {
+              "delta": 5,
+              "reason": "move takes tempo instead of waiting",
+              "rule": "tempo_damage"
+            }
+          ],
+          "kind": "move",
+          "name": "Body Slam",
+          "score": 56
+        },
+        {
+          "action_id": "move_rest",
+          "contributions": [
+            {
+              "delta": 50,
+              "reason": "neutral action floor",
+              "rule": "base"
+            },
+            {
+              "delta": 4,
+              "reason": "recovery preserves a key boss mon",
+              "rule": "preserve_value"
+            }
+          ],
+          "kind": "move",
+          "name": "Rest",
+          "score": 54
+        }
+      ]
+    },
+    {
+      "candidate_id": "sabrina_alakazam_choice_lock_vs_houndoom",
+      "existing_preference": null,
+      "fixture_id": "sabrina_alakazam_choice_lock_vs_houndoom",
+      "leader": "Sabrina",
+      "priority": 9,
+      "rank": 9,
+      "reasons": [
+        "current scorer top two actions are close (margin 0)",
+        "no pairwise preference has been recorded for this comparison",
+        "Sabrina has no current preference feedback"
+      ],
+      "source": "fixture",
+      "teaches": [
+        "switch_policy"
+      ],
+      "top_actions": [
+        {
+          "action_id": "move_psychic",
+          "contributions": [
+            {
+              "delta": 50,
+              "reason": "neutral action floor",
+              "rule": "base"
+            },
+            {
+              "delta": 1,
+              "reason": "fixture baseline action for comparison",
+              "rule": "baseline"
+            },
+            {
+              "delta": 7,
+              "reason": "move uses public coverage or visible punish",
+              "rule": "coverage"
+            }
+          ],
+          "kind": "move",
+          "name": "Psychic",
+          "score": 58
+        },
+        {
+          "action_id": "switch_hypno",
+          "contributions": [
+            {
+              "delta": 50,
+              "reason": "neutral action floor",
+              "rule": "base"
+            },
+            {
+              "delta": 8,
+              "reason": "switch addresses a public risk in this fixture",
+              "rule": "public_switch"
+            }
+          ],
+          "kind": "switch",
+          "name": "Switch to Hypno",
+          "score": 58
+        }
+      ]
+    },
+    {
+      "candidate_id": "bugsy_scyther_vs_geodude_safe_swords_dance",
+      "existing_preference": null,
+      "fixture_id": "bugsy_scyther_vs_geodude_safe_swords_dance",
+      "leader": "Bugsy",
+      "priority": 8,
+      "rank": 10,
+      "reasons": [
+        "current scorer top two actions are close (margin 1)",
+        "no pairwise preference has been recorded for this comparison",
+        "Bugsy is still under-covered"
+      ],
+      "source": "fixture",
+      "teaches": [
+        "sequence_policy"
+      ],
+      "top_actions": [
+        {
+          "action_id": "move_swords_dance",
+          "contributions": [
+            {
+              "delta": 50,
+              "reason": "neutral action floor",
+              "rule": "base"
+            },
+            {
+              "delta": 1,
+              "reason": "fixture baseline action for comparison",
+              "rule": "baseline"
+            },
+            {
+              "delta": 6,
+              "reason": "setup move matches a boss plan",
+              "rule": "setup_identity"
+            }
+          ],
+          "kind": "move",
+          "name": "Swords Dance",
+          "score": 57
+        },
+        {
+          "action_id": "move_quick_attack",
+          "contributions": [
+            {
+              "delta": 50,
+              "reason": "neutral action floor",
+              "rule": "base"
+            },
+            {
+              "delta": 6,
+              "reason": "priority can answer a low-HP race",
+              "rule": "priority"
+            }
+          ],
+          "kind": "move",
+          "name": "Quick Attack",
+          "score": 56
+        }
+      ]
+    },
+    {
+      "candidate_id": "chuck_poliwrath_vs_pidgeotto_ice_punch",
+      "existing_preference": {
+        "action_a_id": "move_focus_punch",
+        "action_b_id": "move_ice_punch",
+        "action_tags": {
+          "move_focus_punch": [
+            "too_greedy"
+          ],
+          "move_ice_punch": [
+            "uses_public_info"
+          ],
+          "switch_sudowoodo": [
+            "keeps_tempo",
+            "reduces_risk",
+            "uses_public_info"
+          ]
+        },
+        "choice": "other_better",
+        "created_at": "2026-05-08T05:29:25+00:00",
+        "fixture_id": "chuck_poliwrath_vs_pidgeotto_ice_punch",
+        "note": "focus punch is a straight up terrible move. the player is highly likely to attack here. ice punch is a really good move here, high damage and chance to kill. however an even better play is saving your HP when you have a rock type in the back to wall a flying normal type with huge defense",
+        "preferred_action_id": "switch_sudowoodo",
+        "reason_tags": [],
+        "source_team_hash": "2e5d2b0e376a161b",
+        "state_version": 2,
+        "tool_version": "boss-ai-preference-v0"
+      },
+      "fixture_id": "chuck_poliwrath_vs_pidgeotto_ice_punch",
+      "leader": "Chuck",
+      "priority": 8,
+      "rank": 11,
+      "reasons": [
+        "current scorer top two actions are close (margin 2)",
+        "existing preference says the compared pair omitted the best action",
+        "Chuck is still under-covered"
+      ],
+      "source": "fixture",
+      "teaches": [
+        "switch_policy",
+        "weight_hint"
+      ],
+      "top_actions": [
+        {
+          "action_id": "move_ice_punch",
+          "contributions": [
+            {
+              "delta": 50,
+              "reason": "neutral action floor",
+              "rule": "base"
+            },
+            {
+              "delta": 7,
+              "reason": "move uses public coverage or visible punish",
+              "rule": "coverage"
+            },
+            {
+              "delta": 8,
+              "reason": "damage estimate can KO the target",
+              "rule": "ko_possible"
+            }
+          ],
+          "kind": "move",
+          "name": "Ice Punch",
+          "score": 65
+        },
+        {
+          "action_id": "move_focus_punch",
+          "contributions": [
+            {
+              "delta": 50,
+              "reason": "neutral action floor",
+              "rule": "base"
+            },
+            {
+              "delta": 1,
+              "reason": "fixture baseline action for comparison",
+              "rule": "baseline"
+            },
+            {
+              "delta": 12,
+              "reason": "damage estimate confirms the target is KOed",
+              "rule": "ko_confirmed"
+            }
+          ],
+          "kind": "move",
+          "name": "Focus Punch",
+          "score": 63
+        }
+      ]
+    },
+    {
+      "candidate_id": "jasmine_steelix_vs_quilava_fire_threat",
+      "existing_preference": {
+        "action_a_id": "move_rock_slide",
+        "action_b_id": "move_earthquake",
+        "action_tags": {
+          "move_earthquake": [],
+          "move_rock_slide": []
+        },
+        "choice": "a_better",
+        "created_at": "2026-05-10T02:59:52+00:00",
+        "fixture_id": "jasmine_steelix_vs_quilava_fire_threat",
+        "note": "not much to say, higher expected damage and chance to KO",
+        "preferred_action_id": "move_rock_slide",
+        "reason_tags": [],
+        "source_team_hash": "4c154220e85dd41b",
+        "state_version": 2,
+        "tool_version": "boss-ai-preference-v0"
+      },
+      "fixture_id": "jasmine_steelix_vs_quilava_fire_threat",
+      "leader": "Jasmine",
+      "priority": 8,
+      "rank": 12,
+      "reasons": [
+        "current scorer has modest uncertainty (margin 4)",
+        "contains 1 rare feature(s) in the current corpus"
+      ],
+      "source": "fixture",
+      "teaches": [
+        "ace_preservation",
+        "switch_policy"
+      ],
+      "top_actions": [
+        {
+          "action_id": "move_rock_slide",
+          "contributions": [
+            {
+              "delta": 50,
+              "reason": "neutral action floor",
+              "rule": "base"
+            },
+            {
+              "delta": 1,
+              "reason": "fixture baseline action for comparison",
+              "rule": "baseline"
+            },
+            {
+              "delta": 7,
+              "reason": "move uses public coverage or visible punish",
+              "rule": "coverage"
+            },
+            {
+              "delta": 8,
+              "reason": "damage estimate can KO the target",
+              "rule": "ko_possible"
+            }
+          ],
+          "kind": "move",
+          "name": "Rock Slide",
+          "score": 66
+        },
+        {
+          "action_id": "switch_skarmory",
+          "contributions": [
+            {
+              "delta": 50,
+              "reason": "neutral action floor",
+              "rule": "base"
+            },
+            {
+              "delta": 8,
+              "reason": "switch addresses a public risk in this fixture",
+              "rule": "public_switch"
+            },
+            {
+              "delta": 4,
+              "reason": "action text preserves a high-value mon",
+              "rule": "preserve_value"
+            }
+          ],
+          "kind": "switch",
+          "name": "Switch to Skarmory",
+          "score": 62
+        }
+      ]
+    },
+    {
+      "candidate_id": "karen_crobat_vs_dragonite_toxic_or_attack",
+      "existing_preference": null,
+      "fixture_id": "karen_crobat_vs_dragonite_toxic_or_attack",
+      "leader": "Karen",
+      "priority": 8,
+      "rank": 13,
+      "reasons": [
+        "current scorer top two actions are close (margin 1)",
+        "no pairwise preference has been recorded for this comparison",
+        "Karen has no current preference feedback"
+      ],
+      "source": "fixture",
+      "teaches": [
+        "weight_hint"
+      ],
+      "top_actions": [
+        {
+          "action_id": "move_toxic",
+          "contributions": [
+            {
+              "delta": 50,
+              "reason": "neutral action floor",
+              "rule": "base"
+            },
+            {
+              "delta": 1,
+              "reason": "fixture baseline action for comparison",
+              "rule": "baseline"
+            },
+            {
+              "delta": 5,
+              "reason": "status/control move matches boss identity",
+              "rule": "status_identity"
+            }
+          ],
+          "kind": "move",
+          "name": "Toxic",
+          "score": 56
+        },
+        {
+          "action_id": "move_wing_attack",
+          "contributions": [
+            {
+              "delta": 50,
+              "reason": "neutral action floor",
+              "rule": "base"
+            },
+            {
+              "delta": 5,
+              "reason": "move takes tempo instead of waiting",
+              "rule": "tempo_damage"
+            }
+          ],
+          "kind": "move",
+          "name": "Wing Attack",
+          "score": 55
+        }
+      ]
+    },
+    {
+      "candidate_id": "lance_dragonite_vs_suicune_champion_ace",
+      "existing_preference": {
+        "action_a_id": "move_dragon_dance",
+        "action_b_id": "move_outrage",
+        "action_tags": {
+          "move_dragon_dance": [
+            "calculated_risk",
+            "scary_pressure"
+          ],
+          "move_outrage": [
+            "keeps_tempo",
+            "reduces_risk"
+          ]
+        },
+        "choice": "needs_context",
+        "created_at": "2026-05-10T12:50:38+00:00",
+        "fixture_id": "lance_dragonite_vs_suicune_champion_ace",
+        "note": "Genuinely ambiguous because hidden Ice coverage flips every move's value here. Dragon Dance is amazing if Suicune doesn't have Ice (with DD, Outrage's 3HKO becomes a 2HKO so no turn really lost setting up), but +2 Dragonite walks into a 4x Ice OHKO if it does. Outrage chips ~30% AND probes for Ice - if Suicune has it, the next turn reveals it; if not, that's safe chip to weaken Suicune for the rest of Lance's team. The current roster changes the upstream answer: instead of old Aerodactyl/Starmie pivots, Lance can scout or preserve through Kingdra, Gyarados, Steelix, Ampharos, or Yanma depending on public coverage risk. If forced at this moment, Outrage still tilts ahead for chip + information value, but the choice stays needs_context because the deeper lesson is ace timing and pivot selection before Dragonite is exposed.",
+        "preferred_action_id": null,
+        "reason_tags": [],
+        "source_team_hash": "baea92b836fc8f2e",
+        "state_version": 2,
+        "tool_version": "boss-ai-preference-v0"
+      },
+      "fixture_id": "lance_dragonite_vs_suicune_champion_ace",
+      "leader": "Champion Lance",
+      "priority": 8,
+      "rank": 14,
+      "reasons": [
+        "current scorer top two actions are close (margin 0)"
+      ],
+      "source": "fixture",
+      "teaches": [
+        "ace_preservation",
+        "scout_policy"
+      ],
+      "top_actions": [
+        {
+          "action_id": "switch_kingdra",
+          "contributions": [
+            {
+              "delta": 50,
+              "reason": "neutral action floor",
+              "rule": "base"
+            },
+            {
+              "delta": 8,
+              "reason": "switch addresses a public risk in this fixture",
+              "rule": "public_switch"
+            },
+            {
+              "delta": 4,
+              "reason": "action text preserves a high-value mon",
+              "rule": "preserve_value"
+            },
+            {
+              "delta": 10,
+              "reason": "public hidden-coverage prior favors preserving the exposed mon",
+              "rule": "hidden_coverage_respect"
+            },
+            {
+              "delta": 2,
+              "reason": "late-game leaders should value cleaner decisions",
+              "rule": "late_game_stakes"
+            }
+          ],
+          "kind": "switch",
+          "name": "Switch to Kingdra",
+          "score": 74
+        },
+        {
+          "action_id": "switch_steelix",
+          "contributions": [
+            {
+              "delta": 50,
+              "reason": "neutral action floor",
+              "rule": "base"
+            },
+            {
+              "delta": 8,
+              "reason": "switch addresses a public risk in this fixture",
+              "rule": "public_switch"
+            },
+            {
+              "delta": 4,
+              "reason": "action text preserves a high-value mon",
+              "rule": "preserve_value"
+            },
+            {
+              "delta": 10,
+              "reason": "public hidden-coverage prior favors preserving the exposed mon",
+              "rule": "hidden_coverage_respect"
+            },
+            {
+              "delta": 2,
+              "reason": "late-game leaders should value cleaner decisions",
+              "rule": "late_game_stakes"
+            }
+          ],
+          "kind": "switch",
+          "name": "Switch to Steelix",
+          "score": 74
+        }
+      ]
+    },
+    {
+      "candidate_id": "chuck_poliwrath_vs_alakazam_hypnosis_or_ice_punch",
+      "existing_preference": null,
+      "fixture_id": "chuck_poliwrath_vs_alakazam_hypnosis_or_ice_punch",
+      "leader": "Chuck",
+      "priority": 7,
+      "rank": 15,
+      "reasons": [
+        "current scorer top two actions are close (margin 1)",
+        "no pairwise preference has been recorded for this comparison",
+        "Chuck is still under-covered"
+      ],
+      "source": "fixture",
+      "teaches": [
+        "hard_rule"
+      ],
+      "top_actions": [
+        {
+          "action_id": "move_ice_punch",
+          "contributions": [
+            {
+              "delta": 50,
+              "reason": "neutral action floor",
+              "rule": "base"
+            },
+            {
+              "delta": 7,
+              "reason": "move uses public coverage or visible punish",
+              "rule": "coverage"
+            }
+          ],
+          "kind": "move",
+          "name": "Ice Punch",
+          "score": 57
+        },
+        {
+          "action_id": "move_hypnosis",
+          "contributions": [
+            {
+              "delta": 50,
+              "reason": "neutral action floor",
+              "rule": "base"
+            },
+            {
+              "delta": 1,
+              "reason": "fixture baseline action for comparison",
+              "rule": "baseline"
+            },
+            {
+              "delta": 5,
+              "reason": "status/control move matches boss identity",
+              "rule": "status_identity"
+            }
+          ],
+          "kind": "move",
+          "name": "Hypnosis",
+          "score": 56
+        }
+      ]
+    },
+    {
+      "candidate_id": "koga_ariados_vs_typhlosion_spikes_or_toxic",
+      "existing_preference": null,
+      "fixture_id": "koga_ariados_vs_typhlosion_spikes_or_toxic",
+      "leader": "Koga",
+      "priority": 7,
+      "rank": 16,
+      "reasons": [
+        "current scorer top two actions are close (margin 1)",
+        "no pairwise preference has been recorded for this comparison",
+        "Koga is still under-covered"
+      ],
+      "source": "fixture",
+      "teaches": [
+        "weight_hint"
+      ],
+      "top_actions": [
+        {
+          "action_id": "move_toxic",
+          "contributions": [
+            {
+              "delta": 50,
+              "reason": "neutral action floor",
+              "rule": "base"
+            },
+            {
+              "delta": 5,
+              "reason": "status/control move matches boss identity",
+              "rule": "status_identity"
+            }
+          ],
+          "kind": "move",
+          "name": "Toxic",
+          "score": 55
+        },
+        {
+          "action_id": "switch_tentacruel",
+          "contributions": [
+            {
+              "delta": 50,
+              "reason": "neutral action floor",
+              "rule": "base"
+            },
+            {
+              "delta": 4,
+              "reason": "action text preserves a high-value mon",
+              "rule": "preserve_value"
+            }
+          ],
+          "kind": "switch",
+          "name": "Switch to Tentacruel",
+          "score": 54
+        }
+      ]
+    },
+    {
+      "candidate_id": "morty_haunter_vs_noctowl_sleep_line",
+      "existing_preference": {
+        "action_a_id": "move_hypnosis",
+        "action_b_id": "move_night_shade",
+        "action_tags": {
+          "move_hypnosis": [
+            "keeps_tempo",
+            "scary_pressure"
+          ],
+          "move_night_shade": [
+            "too_passive"
+          ]
+        },
+        "choice": "a_better",
+        "created_at": "2026-05-08T05:23:46+00:00",
+        "fixture_id": "morty_haunter_vs_noctowl_sleep_line",
+        "note": "never worry about being cheap, its a legal play. sleep is broken, do it.",
+        "preferred_action_id": "move_hypnosis",
+        "reason_tags": [],
+        "source_team_hash": "042a5c8eb1814c3d",
+        "state_version": 2,
+        "tool_version": "boss-ai-preference-v0"
+      },
+      "fixture_id": "morty_haunter_vs_noctowl_sleep_line",
+      "leader": "Morty",
+      "priority": 7,
+      "rank": 17,
+      "reasons": [
+        "current scorer top two actions are close (margin 0)"
+      ],
+      "source": "fixture",
+      "teaches": [
+        "hard_rule",
+        "weight_hint"
+      ],
+      "top_actions": [
+        {
+          "action_id": "move_curse",
+          "contributions": [
+            {
+              "delta": 50,
+              "reason": "neutral action floor",
+              "rule": "base"
+            },
+            {
+              "delta": 6,
+              "reason": "setup move matches a boss plan",
+              "rule": "setup_identity"
+            }
+          ],
+          "kind": "move",
+          "name": "Curse",
+          "score": 56
+        },
+        {
+          "action_id": "move_hypnosis",
+          "contributions": [
+            {
+              "delta": 50,
+              "reason": "neutral action floor",
+              "rule": "base"
+            },
+            {
+              "delta": 1,
+              "reason": "fixture baseline action for comparison",
+              "rule": "baseline"
+            },
+            {
+              "delta": 5,
+              "reason": "status/control move matches boss identity",
+              "rule": "status_identity"
+            }
+          ],
+          "kind": "move",
+          "name": "Hypnosis",
+          "score": 56
+        }
+      ]
+    },
+    {
+      "candidate_id": "morty_misdreavus_vs_typhlosion_perish_song",
+      "existing_preference": null,
+      "fixture_id": "morty_misdreavus_vs_typhlosion_perish_song",
+      "leader": "Morty",
+      "priority": 7,
+      "rank": 18,
+      "reasons": [
+        "current scorer top two actions are close (margin 3)",
+        "no pairwise preference has been recorded for this comparison"
+      ],
+      "source": "fixture",
+      "teaches": [
+        "switch_policy"
+      ],
+      "top_actions": [
+        {
+          "action_id": "switch_gengar",
+          "contributions": [
+            {
+              "delta": 50,
+              "reason": "neutral action floor",
+              "rule": "base"
+            },
+            {
+              "delta": 8,
+              "reason": "switch addresses a public risk in this fixture",
+              "rule": "public_switch"
+            }
+          ],
+          "kind": "switch",
+          "name": "Switch to Gengar",
+          "score": 58
+        },
+        {
+          "action_id": "move_confuse_ray",
+          "contributions": [
+            {
+              "delta": 50,
+              "reason": "neutral action floor",
+              "rule": "base"
+            },
+            {
+              "delta": 5,
+              "reason": "status/control move matches boss identity",
+              "rule": "status_identity"
+            }
+          ],
+          "kind": "move",
+          "name": "Confuse Ray",
+          "score": 55
+        }
+      ]
+    },
+    {
+      "candidate_id": "pryce_piloswine_vs_typhlosion_amnesia_or_attack",
+      "existing_preference": null,
+      "fixture_id": "pryce_piloswine_vs_typhlosion_amnesia_or_attack",
+      "leader": "Pryce",
+      "priority": 7,
+      "rank": 19,
+      "reasons": [
+        "current scorer top two actions are close (margin 1)",
+        "no pairwise preference has been recorded for this comparison"
+      ],
+      "source": "fixture",
+      "teaches": [
+        "sequence_policy"
+      ],
+      "top_actions": [
+        {
+          "action_id": "move_earthquake",
+          "contributions": [
+            {
+              "delta": 50,
+              "reason": "neutral action floor",
+              "rule": "base"
+            },
+            {
+              "delta": 7,
+              "reason": "move uses public coverage or visible punish",
+              "rule": "coverage"
+            }
+          ],
+          "kind": "move",
+          "name": "Earthquake",
+          "score": 57
+        },
+        {
+          "action_id": "move_amnesia",
+          "contributions": [
+            {
+              "delta": 50,
+              "reason": "neutral action floor",
+              "rule": "base"
+            },
+            {
+              "delta": 1,
+              "reason": "fixture baseline action for comparison",
+              "rule": "baseline"
+            },
+            {
+              "delta": 5,
+              "reason": "move takes tempo instead of waiting",
+              "rule": "tempo_damage"
+            }
+          ],
+          "kind": "move",
+          "name": "Amnesia",
+          "score": 56
+        }
+      ]
+    },
+    {
+      "candidate_id": "whitney_miltank_vs_geodude_rollout_temptation",
+      "existing_preference": {
+        "action_a_id": "move_rollout",
+        "action_b_id": "move_body_slam",
+        "action_tags": {
+          "move_body_slam": [
+            "reduces_risk",
+            "uses_public_info"
+          ],
+          "move_rollout": [
+            "too_greedy"
+          ]
+        },
+        "choice": "b_better",
+        "created_at": "2026-05-08T05:02:59+00:00",
+        "fixture_id": "whitney_miltank_vs_geodude_rollout_temptation",
+        "note": "both moves are good, and roll out is iconic. but since geodude has high defense and resists roll out, its best to body slam for extra damage and paralysis chance. once geodude is paralyzed, then switching to roll out is fine",
+        "preferred_action_id": "move_body_slam",
+        "reason_tags": [],
+        "source_team_hash": "84218adf57f8e42f",
+        "state_version": 2,
+        "tool_version": "boss-ai-preference-v0"
+      },
+      "fixture_id": "whitney_miltank_vs_geodude_rollout_temptation",
+      "leader": "Whitney",
+      "priority": 7,
+      "rank": 20,
+      "reasons": [
+        "current scorer has modest uncertainty (margin 8)"
+      ],
+      "source": "fixture",
+      "teaches": [
+        "ace_preservation",
+        "sequence_policy"
+      ],
+      "top_actions": [
+        {
+          "action_id": "switch_girafarig",
+          "contributions": [
+            {
+              "delta": 50,
+              "reason": "neutral action floor",
+              "rule": "base"
+            },
+            {
+              "delta": 8,
+              "reason": "switch addresses a public risk in this fixture",
+              "rule": "public_switch"
+            }
+          ],
+          "kind": "switch",
+          "name": "Switch to Girafarig",
+          "score": 58
+        },
+        {
+          "action_id": "move_body_slam",
+          "contributions": [
+            {
+              "delta": 50,
+              "reason": "neutral action floor",
+              "rule": "base"
+            }
+          ],
+          "kind": "move",
+          "name": "Body Slam",
+          "score": 50
+        }
+      ]
+    }
+  ],
+  "generated_at": "2026-05-12T10:56:59+00:00",
+  "returned_count": 20
+}

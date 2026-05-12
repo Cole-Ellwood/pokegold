@@ -83,6 +83,11 @@ Pairwise preference records are JSONL rows in
   "action_b_id": "move_wing_attack",
   "choice": "b_better",
   "preferred_action_id": "move_wing_attack",
+  "confidence": "high",
+  "public_info_scope": "public_only",
+  "lesson_type": "weight_hint",
+  "condition_tags": ["target_can_punish", "threat_revealed"],
+  "holdout": false,
   "reason_tags": [],
   "action_tags": {
     "move_swords_dance": ["too_greedy", "misses_public_threat"],
@@ -98,6 +103,24 @@ Pairwise preference records are JSONL rows in
 records write `action_tags` so each compared move can carry separate feedback.
 Saving the same `fixture_id` + `action_a_id` + `action_b_id` again replaces the
 older preference row.
+
+V2 metadata fields are optional and old rows remain valid:
+
+- `confidence`: `low`, `medium`, or `high`.
+- `public_info_scope`: `public_only`, `public_plus_common_meta`,
+  `hidden_info_rejected`, or `needs_source_check`.
+- `lesson_type`: `hard_rule`, `weight_hint`, `sequence_policy`,
+  `switch_policy`, `scout_policy`, `personality_style`, `schema_only`,
+  `fixture_bug`, `stale_direct_action`, or `needs_context`.
+- `condition_tags`: readable predicates such as `if_user_faster`,
+  `survives_one_hit`, `sleep_clause_occupied`, or
+  `hidden_coverage_plausible`.
+- `counterfactual_group`: optional family id for generated boundary variants.
+- `holdout`: optional boolean; `true` excludes the row from fitting and keeps
+  it for evaluation.
+- `source_team_hash`: optional hash of the relevant team/moveset source.
+- `stale_reason`: optional explanation when a direct action id no longer maps
+  cleanly after team changes.
 
 Allowed pairwise choices:
 
@@ -120,17 +143,101 @@ Allowed reason tags:
 - `too_passive`
 - `calculated_risk`
 
+Multi-turn trajectory preference rows are JSONL records in
+`labels/boss_ai_trajectory_preferences.jsonl`:
+
+```json
+{
+  "schema_version": 1,
+  "fixture_id": "bugsy_scyther_vs_quilava_fire_pressure",
+  "trajectory_a_id": "plan_bugsy_scyther_vs_quilava_fire_pressure_setup_once_then_attack_move_swords_dance_move_wing_attack",
+  "trajectory_b_id": "plan_bugsy_scyther_vs_quilava_fire_pressure_attack_now_move_wing_attack_move_wing_attack",
+  "choice": "a_better",
+  "preferred_trajectory_id": "plan_bugsy_scyther_vs_quilava_fire_pressure_setup_once_then_attack_move_swords_dance_move_wing_attack",
+  "horizon": 3,
+  "confidence": "medium",
+  "public_info_scope": "public_only",
+  "lesson_type": "sequence_policy",
+  "condition_tags": ["boss_faster", "survives_one_hit"],
+  "branch_tags": ["if_player_switches_rescore"],
+  "holdout": false,
+  "comparison_scope": "selected_plan_over_all_shown",
+  "compared_plan_ids": [
+    "plan_bugsy_scyther_vs_quilava_fire_pressure_setup_once_then_attack_move_swords_dance_move_wing_attack",
+    "plan_bugsy_scyther_vs_quilava_fire_pressure_attack_now_move_wing_attack_move_wing_attack"
+  ],
+  "source_team_hash": "current-party-hash",
+  "fixture_state_hash": "current-fixture-hash",
+  "note": "Setup is good only if it changes the next damage race.",
+  "created_at": "2026-05-11T00:00:00+00:00",
+  "tool_version": "boss-ai-preference-v0"
+}
+```
+
+Allowed trajectory choices:
+
+- `a_better`
+- `b_better`
+- `both_good`
+- `both_bad`
+- `depends`
+- `neither_best_plan_missing`
+- `upstream_state_issue`
+- `needs_context`
+
+Plan cards are generated review candidates, not ROM scripts. Each generated
+plan must include a `shape`, `goal`, `horizon`, `steps`, `branch_rules`,
+`stop_conditions`, `rationale`, and rollout assumptions. Player-side rollout
+data must keep moves in `revealed`, `plausible`, `impossible`, and `unknown`
+buckets; unrevealed player moves are never facts.
+
+Coach Mode may save multiple trajectory rows from one click. Selecting a plan
+card means that plan beats every other shown plan. `both_good`, `depends`,
+`needs_context`, and `neither_best_plan_missing` apply to every shown pair.
+`comparison_scope` and `compared_plan_ids` record that scope so later reports do
+not treat one narrow pair as "best among all."
+
+`source_team_hash` and `fixture_state_hash` are source freshness anchors. Reports
+flag rows stale when current trainer-party or fixture/action state no longer
+matches the hash stored with the label.
+
+Missing-plan demonstrations are JSONL records in
+`labels/boss_ai_plan_demonstrations.jsonl`:
+
+```json
+{
+  "schema_version": 1,
+  "fixture_id": "brock_golem_vs_vaporeon_explosion_question",
+  "demonstration_id": "demo_sack_or_explode_for_clean_omastar",
+  "horizon": 3,
+  "steps": [
+    {"turn": 1, "action_id": "move_explosion"},
+    {"turn": 2, "action_id": "switch_omastar", "actor": "boss_next_mon"}
+  ],
+  "near_tie_with": ["plan_hard_switch_omastar"],
+  "condition_tags": ["sack_for_clean_switch"],
+  "human_summary": "Explosion and switching are close; vary them instead of always attacking.",
+  "source_team_hash": "current-party-hash",
+  "fixture_state_hash": "current-fixture-hash",
+  "created_at": "2026-05-11T00:00:00+00:00",
+  "tool_version": "boss-ai-preference-v0"
+}
+```
+
 Single-action label records are still supported as JSONL rows in
 `labels/boss_ai_labels.jsonl`:
 
 ```json
 {
-  "fixture_id": "clair_dragonite_vs_suicune_hidden_ice_beam",
+  "fixture_id": "clair_dragonair_vs_suicune_hidden_ice_beam",
   "state_version": 1,
   "action_id": "switch_kingdra",
   "label": "best",
   "rank": 1,
-  "note": "Preserves Dragonite against public Ice Beam risk.",
+  "confidence": "medium",
+  "lesson_type": "switch_policy",
+  "condition_tags": ["hidden_coverage_plausible", "preserve_ace"],
+  "note": "Pivots to Kingdra against public Ice Beam risk.",
   "created_at": "2026-05-08T00:00:00+00:00",
   "tool_version": "boss-ai-preference-v0"
 }
@@ -144,3 +251,40 @@ Allowed labels:
 - `cheap`
 - `scary_good`
 - `needs_context`
+
+Structured lesson records are optional JSONL rows in
+`labels/boss_ai_lessons.jsonl`. The lesson report also derives candidate
+lessons directly from pairwise notes when this file is absent:
+
+```json
+{
+  "lesson_id": "resisted_ramp_lock_opener",
+  "source_preference_ids": [
+    "whitney_miltank_vs_geodude_rollout_temptation:move_rollout:move_body_slam"
+  ],
+  "status": "candidate",
+  "lesson_type": "hard_rule",
+  "applies_to": {
+    "move_properties": ["ramp_lock"],
+    "target_properties": ["resists_move", "physically_bulky"],
+    "excluded_when": ["ko_confirmed", "target_paralyzed", "already_locked"]
+  },
+  "expected_direction": "discourage",
+  "rom_target": "engine/battle/ai/scoring.asm",
+  "human_summary": "Do not start a resisted ramp-lock sequence when it does not KO and the target can punish or switch."
+}
+```
+
+Allowed lesson statuses:
+
+- `candidate`
+- `accepted`
+- `rejected`
+- `needs_more_labels`
+
+Allowed expected directions:
+
+- `encourage`
+- `discourage`
+- `mixed`
+- `review`

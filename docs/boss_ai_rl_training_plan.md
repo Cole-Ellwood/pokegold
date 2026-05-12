@@ -19,6 +19,9 @@ Related reading:
   unified-scoring architecture should stay the likely mainline boss-AI rebuild.
 - `docs/boss_ai_rebuild_plan.md` — archived full rebuild plan; useful context,
   not a prerequisite for the labeler MVP.
+- `docs/boss_ai_rlhf_v2_implementation_plan.md` — proposed Version B/V2
+  implementation plan: active query queue, structured lessons, counterfactual
+  fixtures, offline preference model, and proposal reports.
 - `tools/damage_debugger/` — infrastructure pattern to reuse when the app needs
   ROM-backed fixtures, hooks, boot cache, or `safe_call.py`.
 - `audit/boss_ai_trace/*_live.txt` — eventual source of real boss-decision
@@ -93,6 +96,8 @@ a reviewable corpus. Nothing auto-lands into ROM from Version A.
 Version B is the fun experiment layer after labels exist. It can be useful, but
 it should grow out of Version A's corpus instead of replacing it.
 
+- Current proposed implementation: see
+  `docs/boss_ai_rlhf_v2_implementation_plan.md`.
 - Compare two candidate policies on the same labeled fixture set.
 - Fit small readable scoring weights against labels.
 - Generate fresh scenarios from trace captures or controlled PyBoy state

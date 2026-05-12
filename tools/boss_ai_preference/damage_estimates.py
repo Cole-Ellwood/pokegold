@@ -359,19 +359,36 @@ def species_can_evolve(species: str) -> bool:
     label = species_label(species)
     if not label:
         return False
-    in_species = False
+    return species_can_evolve_by_label().get(label, False)
+
+
+@lru_cache(maxsize=1)
+def species_can_evolve_by_label() -> dict[str, bool]:
+    result: dict[str, bool] = {}
+    current_label: str | None = None
+    can_evolve = False
+    label_pattern = re.compile(r"^([A-Za-z0-9_]+)EvosAttacks:")
     for line in EVOS_ATTACKS_PATH.read_text(encoding="utf-8").splitlines():
-        if line.startswith(f"{label}EvosAttacks:"):
-            in_species = True
+        label_match = label_pattern.match(line)
+        if label_match:
+            if current_label is not None:
+                result[current_label] = can_evolve
+            current_label = label_match.group(1)
+            can_evolve = False
             continue
-        if not in_species:
+        if current_label is None:
             continue
         stripped = line.strip()
         if stripped.startswith("db 0 ; no more evolutions"):
-            return False
+            result[current_label] = can_evolve
+            current_label = None
+            can_evolve = False
+            continue
         if stripped.startswith("db EVOLVE_"):
-            return True
-    return False
+            can_evolve = True
+    if current_label is not None:
+        result[current_label] = can_evolve
+    return result
 
 
 def species_label(species: str) -> str:
@@ -484,5 +501,11 @@ def pokemon_data(species: str) -> PokemonData | None:
     )
 
 
+SPECIES_SLUG_ALIASES = {
+    "mr_mime": "mr__mime",
+}
+
+
 def species_slug(species: str) -> str:
-    return species.lower().replace(".", "").replace("'", "").replace(" ", "_")
+    slug = species.lower().replace(".", "").replace("'", "").replace(" ", "_")
+    return SPECIES_SLUG_ALIASES.get(slug, slug)

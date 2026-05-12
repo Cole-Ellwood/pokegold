@@ -48,6 +48,28 @@ ALLOWED_REASON_TAGS = (
     "calculated_risk",
 )
 
+ALLOWED_CONFIDENCE = ("low", "medium", "high")
+ALLOWED_PUBLIC_INFO_SCOPES = (
+    "public_only",
+    "public_plus_common_meta",
+    "hidden_info_rejected",
+    "needs_source_check",
+)
+ALLOWED_LESSON_TYPES = (
+    "hard_rule",
+    "weight_hint",
+    "sequence_policy",
+    "switch_policy",
+    "scout_policy",
+    "personality_style",
+    "schema_only",
+    "fixture_bug",
+    "stale_direct_action",
+    "needs_context",
+)
+
+V2_OPTIONAL_TEXT_FIELDS = ("counterfactual_group", "source_team_hash", "stale_reason")
+
 
 class PreferenceDataError(ValueError):
     """Raised when fixtures or labels do not match the tool's data contract."""
@@ -95,8 +117,13 @@ def validate_fixture_data(data: Any) -> list[str]:
         for key in ("leader", "state", "actions"):
             if key not in fixture:
                 errors.append(f"{prefix}: missing {key}")
-        if not isinstance(fixture.get("state"), dict):
+        state = fixture.get("state")
+        if not isinstance(state, dict):
             errors.append(f"{prefix}: state must be an object")
+        else:
+            boss = state.get("boss")
+            if isinstance(boss, dict):
+                errors.extend(validate_boss_bench_state(boss, f"{prefix}.state.boss"))
 
         actions = fixture.get("actions")
         if not isinstance(actions, list) or not actions:
@@ -126,6 +153,40 @@ def validate_fixture_data(data: Any) -> list[str]:
         baseline_action_id = fixture.get("baseline_action_id")
         if baseline_action_id is not None and baseline_action_id not in seen_action_ids:
             errors.append(f"{prefix}: baseline_action_id {baseline_action_id!r} is not an action")
+    return errors
+
+
+def validate_boss_bench_state(boss: dict[str, Any], prefix: str) -> list[str]:
+    if "bench_state" not in boss:
+        return []
+
+    errors: list[str] = []
+    bench = boss.get("bench", [])
+    bench_species = [member for member in bench if isinstance(member, str)] if isinstance(bench, list) else []
+    bench_state = boss.get("bench_state")
+    if not isinstance(bench_state, list):
+        return [f"{prefix}.bench_state must be a list"]
+
+    state_species: list[str] = []
+    for index, row in enumerate(bench_state):
+        row_prefix = f"{prefix}.bench_state[{index}]"
+        if not isinstance(row, dict):
+            errors.append(f"{row_prefix}: row must be an object")
+            continue
+        species = row.get("species")
+        hp = row.get("hp")
+        status = row.get("status")
+        if not isinstance(species, str) or not species:
+            errors.append(f"{row_prefix}: missing species")
+        else:
+            state_species.append(species)
+        if not isinstance(hp, str) or not hp:
+            errors.append(f"{row_prefix}: missing hp")
+        if not isinstance(status, str) or not status:
+            errors.append(f"{row_prefix}: missing status")
+
+    if bench_species and state_species != bench_species:
+        errors.append(f"{prefix}.bench_state species must match bench order")
     return errors
 
 
@@ -227,13 +288,15 @@ def normalize_label_record(
     if not isinstance(created_at, str) or not created_at:
         raise PreferenceDataError(f"{source}: missing created_at")
 
+    state_version = normalize_state_version(record.get("state_version", 1), source)
     normalized = dict(record)
     normalized["fixture_id"] = fixture_id
     normalized["action_id"] = action_id
     normalized["label"] = label
     normalized["rank"] = rank
     normalized["note"] = note
-    normalized.setdefault("state_version", 1)
+    normalized["state_version"] = state_version
+    apply_v2_metadata(normalized, record, source)
     normalized.setdefault("tool_version", TOOL_VERSION)
     return normalized
 
@@ -327,15 +390,7 @@ def normalize_preference_record(
     if not isinstance(created_at, str) or not created_at:
         raise PreferenceDataError(f"{source}: missing created_at")
 
-    state_version = record.get("state_version", 1)
-    if isinstance(state_version, bool):
-        raise PreferenceDataError(f"{source}: state_version must be an integer")
-    try:
-        state_version = int(state_version)
-    except (TypeError, ValueError) as exc:
-        raise PreferenceDataError(f"{source}: state_version must be an integer") from exc
-    if state_version < 1:
-        raise PreferenceDataError(f"{source}: state_version must be >= 1")
+    state_version = normalize_state_version(record.get("state_version", 1), source)
 
     normalized = dict(record)
     normalized["fixture_id"] = fixture_id
@@ -347,8 +402,21 @@ def normalize_preference_record(
     normalized["reason_tags"] = reason_tags
     normalized["action_tags"] = action_tags
     normalized["note"] = note
+    apply_v2_metadata(normalized, record, source)
     normalized.setdefault("tool_version", TOOL_VERSION)
     return normalized
+
+
+def normalize_state_version(value: Any, source: str) -> int:
+    if isinstance(value, bool):
+        raise PreferenceDataError(f"{source}: state_version must be an integer")
+    try:
+        state_version = int(value)
+    except (TypeError, ValueError) as exc:
+        raise PreferenceDataError(f"{source}: state_version must be an integer") from exc
+    if state_version < 1:
+        raise PreferenceDataError(f"{source}: state_version must be >= 1")
+    return state_version
 
 
 def normalize_reason_tags(value: Any, source: str, field_name: str) -> list[str]:
@@ -380,6 +448,134 @@ def normalize_action_tags(
     return dict(sorted(normalized.items()))
 
 
+def normalize_text_tags(value: Any, source: str, field_name: str) -> list[str]:
+    if value is None:
+        return []
+    if not isinstance(value, list) or any(not isinstance(tag, str) for tag in value):
+        raise PreferenceDataError(f"{source}: {field_name} must be a list of text tags")
+    normalized: list[str] = []
+    for tag in value:
+        stripped = tag.strip()
+        if not stripped:
+            raise PreferenceDataError(f"{source}: {field_name} cannot contain blank tags")
+        if any(ord(character) < 32 for character in stripped):
+            raise PreferenceDataError(f"{source}: {field_name} cannot contain control characters")
+        normalized.append(stripped)
+    return sorted(set(normalized))
+
+
+def apply_optional_enum(
+    normalized: dict[str, Any],
+    record: dict[str, Any],
+    source: str,
+    field_name: str,
+    allowed_values: tuple[str, ...],
+) -> None:
+    value = record.get(field_name)
+    if value is None or value == "":
+        normalized.pop(field_name, None)
+        return
+    if value not in allowed_values:
+        raise PreferenceDataError(
+            f"{source}: {field_name} must be one of {', '.join(allowed_values)}"
+        )
+    normalized[field_name] = value
+
+
+def apply_optional_text(
+    normalized: dict[str, Any],
+    record: dict[str, Any],
+    source: str,
+    field_name: str,
+) -> None:
+    value = record.get(field_name)
+    if value is None or value == "":
+        normalized.pop(field_name, None)
+        return
+    if not isinstance(value, str):
+        raise PreferenceDataError(f"{source}: {field_name} must be text")
+    if any(ord(character) < 32 for character in value):
+        raise PreferenceDataError(f"{source}: {field_name} cannot contain control characters")
+    normalized[field_name] = value
+
+
+def apply_v2_metadata(
+    normalized: dict[str, Any],
+    record: dict[str, Any],
+    source: str,
+) -> None:
+    apply_optional_enum(
+        normalized,
+        record,
+        source,
+        "confidence",
+        ALLOWED_CONFIDENCE,
+    )
+    apply_optional_enum(
+        normalized,
+        record,
+        source,
+        "public_info_scope",
+        ALLOWED_PUBLIC_INFO_SCOPES,
+    )
+    apply_optional_enum(
+        normalized,
+        record,
+        source,
+        "lesson_type",
+        ALLOWED_LESSON_TYPES,
+    )
+
+    if "condition_tags" in record:
+        normalized["condition_tags"] = normalize_text_tags(
+            record.get("condition_tags"),
+            source,
+            "condition_tags",
+        )
+    else:
+        normalized.pop("condition_tags", None)
+
+    if "holdout" in record:
+        holdout = record.get("holdout")
+        if not isinstance(holdout, bool):
+            raise PreferenceDataError(f"{source}: holdout must be true or false")
+        normalized["holdout"] = holdout
+    else:
+        normalized.pop("holdout", None)
+
+    for field_name in V2_OPTIONAL_TEXT_FIELDS:
+        apply_optional_text(normalized, record, source, field_name)
+
+
+def build_v2_metadata(
+    *,
+    confidence: str | None = None,
+    public_info_scope: str | None = None,
+    lesson_type: str | None = None,
+    condition_tags: list[str] | None = None,
+    counterfactual_group: str | None = None,
+    holdout: bool | None = None,
+    source_team_hash: str | None = None,
+    stale_reason: str | None = None,
+) -> dict[str, Any]:
+    metadata: dict[str, Any] = {}
+    for field_name, value in (
+        ("confidence", confidence),
+        ("public_info_scope", public_info_scope),
+        ("lesson_type", lesson_type),
+        ("counterfactual_group", counterfactual_group),
+        ("source_team_hash", source_team_hash),
+        ("stale_reason", stale_reason),
+    ):
+        if value is not None and value != "":
+            metadata[field_name] = value
+    if condition_tags:
+        metadata["condition_tags"] = condition_tags
+    if holdout is not None:
+        metadata["holdout"] = holdout
+    return metadata
+
+
 def append_label(
     *,
     fixture_id: str,
@@ -387,20 +583,39 @@ def append_label(
     label: str,
     rank: int | None = None,
     note: str = "",
+    confidence: str | None = None,
+    public_info_scope: str | None = None,
+    lesson_type: str | None = None,
+    condition_tags: list[str] | None = None,
+    counterfactual_group: str | None = None,
+    holdout: bool | None = None,
+    source_team_hash: str | None = None,
+    stale_reason: str | None = None,
     fixtures_path: Path = DEFAULT_FIXTURES_PATH,
     labels_path: Path = DEFAULT_LABELS_PATH,
 ) -> dict[str, Any]:
     fixtures = load_fixtures(fixtures_path)
     known_fixtures = fixture_map(fixtures)
+    metadata = build_v2_metadata(
+        confidence=confidence,
+        public_info_scope=public_info_scope,
+        lesson_type=lesson_type,
+        condition_tags=condition_tags,
+        counterfactual_group=counterfactual_group,
+        holdout=holdout,
+        source_team_hash=source_team_hash,
+        stale_reason=stale_reason,
+    )
     record = {
         "fixture_id": fixture_id,
-        "state_version": 1,
+        "state_version": 2 if metadata else 1,
         "action_id": action_id,
         "label": label,
         "rank": rank,
         "note": note,
         "created_at": datetime.now(UTC).replace(microsecond=0).isoformat(),
         "tool_version": TOOL_VERSION,
+        **metadata,
     }
     normalized = normalize_label_record(record, known_fixtures, "new label")
     labels_path.parent.mkdir(parents=True, exist_ok=True)
@@ -419,14 +634,32 @@ def save_preference(
     reason_tags: list[str] | None = None,
     action_tags: dict[str, list[str]] | None = None,
     note: str = "",
+    confidence: str | None = None,
+    public_info_scope: str | None = None,
+    lesson_type: str | None = None,
+    condition_tags: list[str] | None = None,
+    counterfactual_group: str | None = None,
+    holdout: bool | None = None,
+    source_team_hash: str | None = None,
+    stale_reason: str | None = None,
     fixtures_path: Path = DEFAULT_FIXTURES_PATH,
     preferences_path: Path = DEFAULT_PREFERENCES_PATH,
 ) -> dict[str, Any]:
     fixtures = load_fixtures(fixtures_path)
     known_fixtures = fixture_map(fixtures)
+    metadata = build_v2_metadata(
+        confidence=confidence,
+        public_info_scope=public_info_scope,
+        lesson_type=lesson_type,
+        condition_tags=condition_tags,
+        counterfactual_group=counterfactual_group,
+        holdout=holdout,
+        source_team_hash=source_team_hash,
+        stale_reason=stale_reason,
+    )
     record = {
         "fixture_id": fixture_id,
-        "state_version": 1,
+        "state_version": 2 if metadata else 1,
         "action_a_id": action_a_id,
         "action_b_id": action_b_id,
         "choice": choice,
@@ -436,6 +669,7 @@ def save_preference(
         "note": note,
         "created_at": datetime.now(UTC).replace(microsecond=0).isoformat(),
         "tool_version": TOOL_VERSION,
+        **metadata,
     }
     normalized = normalize_preference_record(record, known_fixtures, "new preference")
     preferences_path.parent.mkdir(parents=True, exist_ok=True)

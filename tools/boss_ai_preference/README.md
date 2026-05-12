@@ -4,15 +4,17 @@ Version A of BOSSAI-004: a small preference-labeling side app for public-info
 boss battle states.
 
 Mechanics reminder for future scoring work: read
+`docs/agent_navigation/hack_mechanics_reference.md` and
 `docs/agent_navigation/gen2_vs_modern_mechanics.md` before turning preference
 notes into type-chart claims. In particular, Magnitude is neutral into Miltank;
-the Whitney Rollout label is about bad lock-in against meaningful damage, not
-super-effective Ground damage.
+Dragon's Majesty turns a Dragon attacker's type-chart immunity result into a
+resistance for damage and no-item Boss AI matchup scoring; the Whitney Rollout
+label is about bad lock-in against meaningful damage, not a super-effective
+Ground hit.
 
-The default browser flow is pairwise: compare the current baseline boss action
-against a plausible alternative, then choose which option uses public info,
-keeps tempo, creates scary pressure, or fits the boss style. The older
-single-action labels remain supported for explicit audit notes.
+The default browser flow is now Coach Mode: pick a generated 3-5 turn plan card
+or mark that the best plan is missing. The older pairwise and single-action
+flows remain available under the Data tab for direct move labels and audit notes.
 
 Reason tags are attached to each action separately. For example, in Falkner's
 `Gust` versus `Sand Attack` fixture, you can tag `Gust` as `too_passive` and
@@ -31,6 +33,10 @@ Seen-party switch threats also get a separate switch-fit check from revealed
 boss damage, so a likely move on a bad switch-in does not look like immediate
 active pressure.
 
+Coach snapshots also attach source-derived boss team rows from
+`data/trainers/parties.asm`, so the boss side can show its own full party,
+items, and move sets while the player side remains public-info bucketed.
+
 ## Commands
 
 Validate fixtures and labels:
@@ -48,7 +54,7 @@ python -m tools.boss_ai_preference serve --host 127.0.0.1 --port 8765
 Record a label without the browser:
 
 ```powershell
-python -m tools.boss_ai_preference label --fixture-id clair_dragonite_vs_suicune_hidden_ice_beam --action-id switch_kingdra --label best --rank 1 --note "Preserves Dragonite against public Ice Beam risk."
+python -m tools.boss_ai_preference label --fixture-id clair_dragonair_vs_suicune_hidden_ice_beam --action-id switch_kingdra --label best --rank 1 --note "Pivots to Kingdra against public Ice Beam risk."
 ```
 
 Record a pairwise preference without the browser:
@@ -61,18 +67,60 @@ Saving the same fixture/action pair again replaces the older row, even if the
 left/right display order changed. This keeps the solo review file focused on
 your latest judgment.
 
+## Label quality
+
+After roster or moveset changes, refresh fixtures before treating labels as
+training signal. Keep compared actions legal for the current boss moveset, and
+prefer paired examples when a move is conditional: one fixture where the move is
+good and one where it is bad. If the real lesson is upstream team selection or
+ace timing rather than the current move choice, use `needs_context` and say so
+in the note.
+
 Write reports:
 
 ```powershell
 python -m tools.boss_ai_preference report
 python -m tools.boss_ai_preference threat-report
+python -m tools.boss_ai_preference feature-report
+python -m tools.boss_ai_preference active-queue
+python -m tools.boss_ai_preference plan-queue
+python -m tools.boss_ai_preference trajectory-report
+python -m tools.boss_ai_preference coach-report
+python -m tools.boss_ai_preference generate-counterfactuals --dry-run
+python -m tools.boss_ai_preference lesson-report
+python -m tools.boss_ai_preference fit-model
+python -m tools.boss_ai_preference propose
+python -m tools.boss_ai_preference final-report
 ```
+
+`lesson-report`, `fit-model`, and `propose` include Coach Mode trajectory rows
+by default. Use `--no-include-trajectories` for a legacy action-only check.
 
 Default report outputs:
 - `audit/boss_ai_preference/latest_report.md`
 - `audit/boss_ai_preference/latest_report.json`
 - `audit/boss_ai_preference/threat_availability_report.md`
 - `audit/boss_ai_preference/threat_availability_report.json`
+- `audit/boss_ai_preference/feature_report.md`
+- `audit/boss_ai_preference/feature_report.json`
+- `audit/boss_ai_preference/active_queue.md`
+- `audit/boss_ai_preference/active_queue.json`
+- `audit/boss_ai_preference/plan_queue.md`
+- `audit/boss_ai_preference/plan_queue.json`
+- `audit/boss_ai_preference/trajectory_report.md`
+- `audit/boss_ai_preference/trajectory_report.json`
+- `audit/boss_ai_preference/coach_report.md`
+- `audit/boss_ai_preference/coach_report.json`
+- `audit/boss_ai_preference/final_report.md`
+- `audit/boss_ai_preference/final_report.json`
+- `audit/boss_ai_preference/counterfactuals.md`
+- `audit/boss_ai_preference/counterfactuals.json`
+- `audit/boss_ai_preference/lesson_report.md`
+- `audit/boss_ai_preference/lesson_report.json`
+- `audit/boss_ai_preference/reward_model_report.md`
+- `audit/boss_ai_preference/reward_model_report.json`
+- `audit/boss_ai_preference/proposals.md`
+- `audit/boss_ai_preference/proposals.json`
 
 Threat availability report limits are explicit. It parses wild grass,
 Surf-gated water, fishing tables by rod tier, simple `givepoke` gifts/prizes,
@@ -82,6 +130,11 @@ breeding, trades, roaming RNG, or prerequisite-heavy statics.
 
 ## Scope
 
-This tool does not optimize weights, run self-play, or edit ROM behavior. Its
-job is to collect durable user taste preferences that can later drive the boss
-AI debugger, scorer, and optional optimizer.
+V2 adds active-query ranking, portable lesson reports, counterfactual fixture
+families, a tiny offline pairwise model over readable features, and a multi-turn
+Coach UI for plan and trajectory labels. These tools produce review reports and
+candidate proposals only. They do not auto-edit ROM behavior; source changes
+remain manual and auditable.
+
+The Coach UI implementation is tracked in
+`docs/boss_ai_multiturn_coach_ui_plan.md`.

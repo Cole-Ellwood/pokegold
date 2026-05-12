@@ -45,10 +45,85 @@
         "status"
       ],
       "training_focus": "Teach the boss to value visible coverage without pretending it knows the player's next move."
+    },
+    {
+      "baseline_action_id": "move_surf",
+      "best_action_ids": [],
+      "disagrees_with_baseline": true,
+      "fixture_id": "pryce_cloyster_vs_quilava_explosion_line",
+      "label_count": 0,
+      "leader": "Pryce",
+      "preference_count": 1,
+      "tags": [
+        "sacrifice",
+        "cheapness",
+        "hazards"
+      ],
+      "training_focus": "Decide when Explosion is dramatic, fair, or cheap in a gym-leader fight."
+    },
+    {
+      "baseline_action_id": "move_thunder_wave",
+      "best_action_ids": [],
+      "disagrees_with_baseline": true,
+      "fixture_id": "pryce_slowking_vs_ampharos_ground_pivot",
+      "label_count": 0,
+      "leader": "Pryce",
+      "preference_count": 1,
+      "tags": [
+        "switching",
+        "public_type",
+        "status"
+      ],
+      "training_focus": "Teach when a Water/Psychic wall should respect Electric pressure and pivot to a Ground type."
+    },
+    {
+      "baseline_action_id": "move_outrage",
+      "best_action_ids": [],
+      "disagrees_with_baseline": true,
+      "fixture_id": "clair_dragonair_vs_suicune_hidden_ice_beam",
+      "label_count": 0,
+      "leader": "Clair",
+      "preference_count": 1,
+      "tags": [
+        "hidden_coverage",
+        "ace_preservation",
+        "signature_test"
+      ],
+      "training_focus": "The Suicune/Ice Beam test: the AI should respect public meta coverage before it is revealed."
+    },
+    {
+      "baseline_action_id": "move_toxic",
+      "best_action_ids": [],
+      "disagrees_with_baseline": true,
+      "fixture_id": "koga_crobat_vs_alakazam_toxic_or_attack",
+      "label_count": 0,
+      "leader": "Koga",
+      "preference_count": 1,
+      "tags": [
+        "status",
+        "speed",
+        "endgame"
+      ],
+      "training_focus": "Capture Koga's poison-clock identity without ignoring immediate Psychic pressure."
+    },
+    {
+      "baseline_action_id": "move_recover",
+      "best_action_ids": [],
+      "disagrees_with_baseline": true,
+      "fixture_id": "misty_starmie_vs_meganium_recover_or_attack",
+      "label_count": 0,
+      "leader": "Misty",
+      "preference_count": 1,
+      "tags": [
+        "recovery",
+        "coverage",
+        "late_game"
+      ],
+      "training_focus": "Decide when a fast ace should Recover versus press coverage into a Grass threat."
     }
   ],
-  "feedback_fixture_count": 7,
-  "fixture_count": 20,
+  "feedback_fixture_count": 18,
+  "fixture_count": 53,
   "fixtures": [
     {
       "baseline_action_id": "move_gust",
@@ -162,7 +237,7 @@
       "fixture_id": "jasmine_steelix_vs_quilava_fire_threat",
       "label_count": 0,
       "leader": "Jasmine",
-      "preference_count": 0,
+      "preference_count": 1,
       "tags": [
         "ace_preservation",
         "coverage",
@@ -177,7 +252,7 @@
       "fixture_id": "jasmine_skarmory_vs_machoke_whirlwind",
       "label_count": 0,
       "leader": "Jasmine",
-      "preference_count": 0,
+      "preference_count": 1,
       "tags": [
         "phazing",
         "setup_denial",
@@ -188,11 +263,11 @@
     {
       "baseline_action_id": "move_surf",
       "best_action_ids": [],
-      "disagrees_with_baseline": false,
+      "disagrees_with_baseline": true,
       "fixture_id": "pryce_cloyster_vs_quilava_explosion_line",
       "label_count": 0,
       "leader": "Pryce",
-      "preference_count": 0,
+      "preference_count": 1,
       "tags": [
         "sacrifice",
         "cheapness",
@@ -203,11 +278,11 @@
     {
       "baseline_action_id": "move_thunder_wave",
       "best_action_ids": [],
-      "disagrees_with_baseline": false,
+      "disagrees_with_baseline": true,
       "fixture_id": "pryce_slowking_vs_ampharos_ground_pivot",
       "label_count": 0,
       "leader": "Pryce",
-      "preference_count": 0,
+      "preference_count": 1,
       "tags": [
         "switching",
         "public_type",
@@ -218,11 +293,11 @@
     {
       "baseline_action_id": "move_outrage",
       "best_action_ids": [],
-      "disagrees_with_baseline": false,
-      "fixture_id": "clair_dragonite_vs_suicune_hidden_ice_beam",
+      "disagrees_with_baseline": true,
+      "fixture_id": "clair_dragonair_vs_suicune_hidden_ice_beam",
       "label_count": 0,
       "leader": "Clair",
-      "preference_count": 0,
+      "preference_count": 1,
       "tags": [
         "hidden_coverage",
         "ace_preservation",
@@ -231,28 +306,28 @@
       "training_focus": "The Suicune/Ice Beam test: the AI should respect public meta coverage before it is revealed."
     },
     {
-      "baseline_action_id": "move_agility",
+      "baseline_action_id": "move_dragon_dance",
       "best_action_ids": [],
       "disagrees_with_baseline": false,
-      "fixture_id": "clair_kingdra_vs_lapras_agility_or_attack",
+      "fixture_id": "clair_kingdra_vs_lapras_dragon_dance_or_attack",
       "label_count": 0,
       "leader": "Clair",
-      "preference_count": 0,
+      "preference_count": 1,
       "tags": [
         "setup",
         "mirror_water",
         "endgame"
       ],
-      "training_focus": "Label when Clair should spend a turn on Agility instead of taking damage now."
+      "training_focus": "Label when Clair should spend a turn on Dragon Dance instead of taking damage now."
     },
     {
       "baseline_action_id": "move_toxic",
       "best_action_ids": [],
-      "disagrees_with_baseline": false,
+      "disagrees_with_baseline": true,
       "fixture_id": "koga_crobat_vs_alakazam_toxic_or_attack",
       "label_count": 0,
       "leader": "Koga",
-      "preference_count": 0,
+      "preference_count": 1,
       "tags": [
         "status",
         "speed",
@@ -267,13 +342,14 @@
       "fixture_id": "lance_dragonite_vs_suicune_champion_ace",
       "label_count": 0,
       "leader": "Champion Lance",
-      "preference_count": 0,
+      "preference_count": 1,
       "tags": [
         "hidden_coverage",
         "ace_preservation",
-        "champion"
+        "champion",
+        "current_lance_roster"
       ],
-      "training_focus": "Repeat the signature hidden-Ice test at Champion stakes with a higher-value Dragonite."
+      "training_focus": "Lance's current Dragon-heavy roster decides whether Dragonite should set up, chip, or pivot around public Ice coverage."
     },
     {
       "baseline_action_id": "move_explosion",
@@ -282,7 +358,7 @@
       "fixture_id": "brock_golem_vs_vaporeon_explosion_question",
       "label_count": 0,
       "leader": "Brock",
-      "preference_count": 0,
+      "preference_count": 1,
       "tags": [
         "sacrifice",
         "water_pressure",
@@ -293,11 +369,11 @@
     {
       "baseline_action_id": "move_recover",
       "best_action_ids": [],
-      "disagrees_with_baseline": false,
+      "disagrees_with_baseline": true,
       "fixture_id": "misty_starmie_vs_meganium_recover_or_attack",
       "label_count": 0,
       "leader": "Misty",
-      "preference_count": 0,
+      "preference_count": 1,
       "tags": [
         "recovery",
         "coverage",
@@ -349,18 +425,523 @@
         "late_game"
       ],
       "training_focus": "Blue should feel adaptable: punish the visible threat, not just use the biggest STAB."
+    },
+    {
+      "baseline_action_id": "move_sand_attack",
+      "best_action_ids": [],
+      "disagrees_with_baseline": false,
+      "fixture_id": "falkner_pidgeotto_vs_charmander_sand_attack_or_gust",
+      "label_count": 0,
+      "leader": "Falkner",
+      "preference_count": 0,
+      "tags": [
+        "early_gym",
+        "accuracy_debuff",
+        "tutorial"
+      ],
+      "training_focus": "First-leader Pidgeotto should weigh one accuracy debuff against honest chip when Fire pressure is public."
+    },
+    {
+      "baseline_action_id": "move_gust",
+      "best_action_ids": [],
+      "disagrees_with_baseline": false,
+      "fixture_id": "falkner_pidgeotto_vs_pikachu_gust_or_quick_attack",
+      "label_count": 0,
+      "leader": "Falkner",
+      "preference_count": 0,
+      "tags": [
+        "speed",
+        "predict_switch",
+        "ace_pressure"
+      ],
+      "training_focus": "Should Falkner finish a weakened Pikachu with direct pressure or spend a turn reducing Electric risk?"
+    },
+    {
+      "baseline_action_id": "move_swords_dance",
+      "best_action_ids": [],
+      "disagrees_with_baseline": false,
+      "fixture_id": "bugsy_scyther_vs_geodude_safe_swords_dance",
+      "label_count": 0,
+      "leader": "Bugsy",
+      "preference_count": 0,
+      "tags": [
+        "setup",
+        "safe_setup",
+        "ace"
+      ],
+      "training_focus": "Confirm setup is correct when the visible matchup actually allows it (mirror to the unsafe-SD fixture)."
+    },
+    {
+      "baseline_action_id": "move_toxic",
+      "best_action_ids": [],
+      "disagrees_with_baseline": false,
+      "fixture_id": "bugsy_ariados_vs_pidgey_toxic_or_attack",
+      "label_count": 0,
+      "leader": "Bugsy",
+      "preference_count": 0,
+      "tags": [
+        "status",
+        "tempo",
+        "early"
+      ],
+      "training_focus": "Bugsy's opener should decide between Toxic pressure, weak chip, and preserving Ariados when a Flying threat is public."
+    },
+    {
+      "baseline_action_id": "move_attract",
+      "best_action_ids": [],
+      "disagrees_with_baseline": false,
+      "fixture_id": "whitney_miltank_vs_machop_attract_or_body_slam",
+      "label_count": 0,
+      "leader": "Whitney",
+      "preference_count": 0,
+      "tags": [
+        "status",
+        "cheapness",
+        "gender_dependency"
+      ],
+      "training_focus": "Attract is iconic but only legal-information correct against a male. Capture when it is bold play vs cheap."
+    },
+    {
+      "baseline_action_id": "move_perish_song",
+      "best_action_ids": [],
+      "disagrees_with_baseline": false,
+      "fixture_id": "morty_misdreavus_vs_typhlosion_perish_song",
+      "label_count": 0,
+      "leader": "Morty",
+      "preference_count": 0,
+      "tags": [
+        "phazing_alt",
+        "endgame_pressure",
+        "switching"
+      ],
+      "training_focus": "Capture whether Perish Song reads as scary chess or stall when the player is set up."
+    },
+    {
+      "baseline_action_id": "move_hi_jump_kick",
+      "best_action_ids": [],
+      "disagrees_with_baseline": false,
+      "fixture_id": "chuck_hitmonlee_vs_machoke_hi_jump_kick_or_rock_slide",
+      "label_count": 0,
+      "leader": "Chuck",
+      "preference_count": 0,
+      "tags": [
+        "mirror_fighting",
+        "coverage",
+        "ace_pressure"
+      ],
+      "training_focus": "Chuck should decide whether to press Fighting STAB, cover a switch, or preserve Hitmonlee when a Fighting mirror is public."
+    },
+    {
+      "baseline_action_id": "move_hypnosis",
+      "best_action_ids": [],
+      "disagrees_with_baseline": false,
+      "fixture_id": "chuck_poliwrath_vs_alakazam_hypnosis_or_ice_punch",
+      "label_count": 0,
+      "leader": "Chuck",
+      "preference_count": 0,
+      "tags": [
+        "coverage",
+        "speed_disadvantage",
+        "sleep"
+      ],
+      "training_focus": "Chuck should weigh sleep, coverage, and preservation when Poliwrath faces a faster Psychic threat."
+    },
+    {
+      "baseline_action_id": "move_thunder_wave",
+      "best_action_ids": [],
+      "disagrees_with_baseline": false,
+      "fixture_id": "jasmine_magneton_vs_quilava_thunder_wave_or_bolt",
+      "label_count": 0,
+      "leader": "Jasmine",
+      "preference_count": 0,
+      "tags": [
+        "status",
+        "speed_control",
+        "type_advantage"
+      ],
+      "training_focus": "Is Thunder Wave correct when the user is faster, or is direct Thunder damage strictly better?"
+    },
+    {
+      "baseline_action_id": "move_amnesia",
+      "best_action_ids": [],
+      "disagrees_with_baseline": false,
+      "fixture_id": "pryce_piloswine_vs_typhlosion_amnesia_or_attack",
+      "label_count": 0,
+      "leader": "Pryce",
+      "preference_count": 0,
+      "tags": [
+        "setup",
+        "ace_pressure",
+        "fire_threat"
+      ],
+      "training_focus": "Decide whether to set up SpD against a Fire opponent or just race the kill."
+    },
+    {
+      "baseline_action_id": "move_dragon_dance",
+      "best_action_ids": [],
+      "disagrees_with_baseline": false,
+      "fixture_id": "clair_kingdra_vs_dragonair_dragon_dance_mirror",
+      "label_count": 0,
+      "leader": "Clair",
+      "preference_count": 0,
+      "tags": [
+        "setup",
+        "mirror_dragon",
+        "endgame"
+      ],
+      "training_focus": "Mirror match: when does the boss DD before the player DDs vs preempt with damage?"
+    },
+    {
+      "baseline_action_id": "move_thunder",
+      "best_action_ids": [],
+      "disagrees_with_baseline": false,
+      "fixture_id": "clair_dragonair_vs_ampharos_thunder_or_wave",
+      "label_count": 0,
+      "leader": "Clair",
+      "preference_count": 0,
+      "tags": [
+        "coverage",
+        "speed_control",
+        "endgame"
+      ],
+      "training_focus": "Clair's Dragonair should choose between immediate Thunder damage and speed control into an Electric threat."
+    },
+    {
+      "baseline_action_id": "move_psychic",
+      "best_action_ids": [],
+      "disagrees_with_baseline": false,
+      "fixture_id": "will_xatu_vs_typhlosion_psychic_or_future_sight",
+      "label_count": 0,
+      "leader": "Will",
+      "preference_count": 0,
+      "tags": [
+        "e4",
+        "opener_choice",
+        "status"
+      ],
+      "training_focus": "Will's current Xatu should choose immediate Psychic pressure, delayed Future Sight, or a Fire-resistant pivot."
+    },
+    {
+      "baseline_action_id": "move_amnesia",
+      "best_action_ids": [],
+      "disagrees_with_baseline": false,
+      "fixture_id": "will_slowbro_vs_houndoom_amnesia_or_surf",
+      "label_count": 0,
+      "leader": "Will",
+      "preference_count": 0,
+      "tags": [
+        "setup",
+        "dark_threat",
+        "ace_preservation"
+      ],
+      "training_focus": "Setup against a fast Dark/Crunch threat is a tempo trap even though Amnesia boosts the correct defensive stat."
+    },
+    {
+      "baseline_action_id": "move_psychic",
+      "best_action_ids": [],
+      "disagrees_with_baseline": false,
+      "fixture_id": "will_alakazam_vs_machamp_psychic_or_coverage",
+      "label_count": 0,
+      "leader": "Will",
+      "preference_count": 0,
+      "tags": [
+        "coverage",
+        "fighting_pressure",
+        "speed"
+      ],
+      "training_focus": "Will's Alakazam should choose clean Psychic damage or coverage when a Fighting threat is active."
+    },
+    {
+      "baseline_action_id": "move_spikes",
+      "best_action_ids": [],
+      "disagrees_with_baseline": false,
+      "fixture_id": "koga_ariados_vs_typhlosion_spikes_or_toxic",
+      "label_count": 0,
+      "leader": "Koga",
+      "preference_count": 0,
+      "tags": [
+        "e4",
+        "hazards",
+        "status"
+      ],
+      "training_focus": "Koga's current Ariados lead should choose hazards, poison pressure, or a Fire-resistant pivot under revealed Fire pressure."
+    },
+    {
+      "baseline_action_id": "move_spider_web",
+      "best_action_ids": [],
+      "disagrees_with_baseline": false,
+      "fixture_id": "koga_ariados_vs_quilava_spider_web_or_attack",
+      "label_count": 0,
+      "leader": "Koga",
+      "preference_count": 0,
+      "tags": [
+        "trap",
+        "switch_denial",
+        "ace_pressure"
+      ],
+      "training_focus": "Spider Web prevents switching but gives up damage; capture when trap is correct."
+    },
+    {
+      "baseline_action_id": "move_cross_chop",
+      "best_action_ids": [],
+      "disagrees_with_baseline": false,
+      "fixture_id": "bruno_machamp_vs_alakazam_rock_slide_or_cross_chop",
+      "label_count": 0,
+      "leader": "Bruno",
+      "preference_count": 0,
+      "tags": [
+        "e4",
+        "coverage_choice",
+        "speed_disadvantage"
+      ],
+      "training_focus": "Two strong damage options with different accuracy/spread tradeoffs into a faster Psychic threat."
+    },
+    {
+      "baseline_action_id": "move_hi_jump_kick",
+      "best_action_ids": [],
+      "disagrees_with_baseline": false,
+      "fixture_id": "bruno_hitmonlee_vs_skarmory_high_jump_kick_or_brick_break",
+      "label_count": 0,
+      "leader": "Bruno",
+      "preference_count": 0,
+      "tags": [
+        "e4",
+        "recoil",
+        "type_advantage"
+      ],
+      "training_focus": "Big damage with crash recoil vs safe damage when the matchup is otherwise winning."
+    },
+    {
+      "baseline_action_id": "move_sandstorm",
+      "best_action_ids": [],
+      "disagrees_with_baseline": false,
+      "fixture_id": "bruno_onix_vs_typhlosion_sandstorm_or_explosion",
+      "label_count": 0,
+      "leader": "Bruno",
+      "preference_count": 0,
+      "tags": [
+        "e4",
+        "weather_chip",
+        "sacrifice"
+      ],
+      "training_focus": "Sandstorm gives long-game chip but Onix at low HP could trade. Capture taste for slow vs fast finish."
+    },
+    {
+      "baseline_action_id": "move_pursuit",
+      "best_action_ids": [],
+      "disagrees_with_baseline": false,
+      "fixture_id": "karen_houndoom_vs_alakazam_pursuit_or_flamethrower",
+      "label_count": 0,
+      "leader": "Karen",
+      "preference_count": 0,
+      "tags": [
+        "e4",
+        "predict_switch",
+        "coverage"
+      ],
+      "training_focus": "Pursuit pays off only if the player switches; Flamethrower is the safe direct line. Capture when prediction is fair."
+    },
+    {
+      "baseline_action_id": "move_toxic",
+      "best_action_ids": [],
+      "disagrees_with_baseline": false,
+      "fixture_id": "karen_crobat_vs_dragonite_toxic_or_attack",
+      "label_count": 0,
+      "leader": "Karen",
+      "preference_count": 0,
+      "tags": [
+        "e4",
+        "status",
+        "anti_dragon"
+      ],
+      "training_focus": "Karen's current Crobat should decide between Toxic clock, direct Flying damage, and a Tyranitar pivot into Dragonite."
+    },
+    {
+      "baseline_action_id": "move_destiny_bond",
+      "best_action_ids": [],
+      "disagrees_with_baseline": false,
+      "fixture_id": "karen_gengar_vs_snorlax_destiny_bond_or_thunderbolt",
+      "label_count": 0,
+      "leader": "Karen",
+      "preference_count": 0,
+      "tags": [
+        "e4",
+        "sacrifice",
+        "endgame"
+      ],
+      "training_focus": "Destiny Bond on the last leader's last mon: scary-good gauntlet seal, or cheap reflex?"
+    },
+    {
+      "baseline_action_id": "move_outrage",
+      "best_action_ids": [],
+      "disagrees_with_baseline": false,
+      "fixture_id": "lance_dragonite_vs_aerodactyl_outrage_or_dragon_dance",
+      "label_count": 0,
+      "leader": "Champion Lance",
+      "preference_count": 0,
+      "tags": [
+        "champion",
+        "ace_pressure",
+        "current_lance_roster"
+      ],
+      "training_focus": "Current Lance Dragonite no longer has Thunder or Fire Blast; compare immediate Outrage pressure against greedy Dragon Dance and preservation pivots."
+    },
+    {
+      "baseline_action_id": "move_thunder",
+      "best_action_ids": [],
+      "disagrees_with_baseline": false,
+      "fixture_id": "lance_ampharos_vs_porygon2_thunder_or_dragon_dance",
+      "label_count": 0,
+      "leader": "Champion Lance",
+      "preference_count": 0,
+      "tags": [
+        "champion",
+        "setup",
+        "current_lance_roster",
+        "smart_attack"
+      ],
+      "training_focus": "Ampharos is now part of Lance's Dragon roster; teach when Dragon Dance is worth it versus immediate Thunder pressure."
+    },
+    {
+      "baseline_action_id": "move_dragon_dance",
+      "best_action_ids": [],
+      "disagrees_with_baseline": false,
+      "fixture_id": "lance_kingdra_vs_starmie_dragon_dance_or_attack",
+      "label_count": 0,
+      "leader": "Champion Lance",
+      "preference_count": 0,
+      "tags": [
+        "champion",
+        "setup",
+        "water_dragon",
+        "current_lance_roster"
+      ],
+      "training_focus": "Kingdra chooses between Dragon Dance setup, immediate neutral damage, and pivoting around bulky Water recovery."
+    },
+    {
+      "baseline_action_id": "move_thunderbolt",
+      "best_action_ids": [],
+      "disagrees_with_baseline": false,
+      "fixture_id": "red_pikachu_vs_dragonite_thunderbolt_or_extremespeed",
+      "label_count": 0,
+      "leader": "Red",
+      "preference_count": 0,
+      "tags": [
+        "post_game",
+        "speed_priority",
+        "type_advantage",
+        "current_red_roster"
+      ],
+      "training_focus": "Red's current Pikachu has ExtremeSpeed, not Quick Attack or Thunder; compare priority chip against the stronger Light Ball hit."
+    },
+    {
+      "baseline_action_id": "move_body_slam",
+      "best_action_ids": [],
+      "disagrees_with_baseline": false,
+      "fixture_id": "red_snorlax_vs_alakazam_curse_or_body_slam",
+      "label_count": 0,
+      "leader": "Red",
+      "preference_count": 0,
+      "tags": [
+        "post_game",
+        "setup",
+        "wallbreaker",
+        "current_red_roster"
+      ],
+      "training_focus": "Red's current Snorlax no longer has Amnesia or Self-Destruct; teach Curse versus direct Body Slam under Psychic/Recover pressure."
+    },
+    {
+      "baseline_action_id": "switch_pikachu",
+      "best_action_ids": [],
+      "disagrees_with_baseline": false,
+      "fixture_id": "red_charizard_vs_starmie_sunny_day_or_switch",
+      "label_count": 0,
+      "leader": "Red",
+      "preference_count": 0,
+      "tags": [
+        "post_game",
+        "weather_setup",
+        "type_disadvantage",
+        "current_red_roster"
+      ],
+      "training_focus": "Red's current Charizard has Flamethrower, Wing Attack, Sunny Day, and SolarBeam; teach when the sun package is too slow under Surf pressure."
+    },
+    {
+      "baseline_action_id": "move_earthquake",
+      "best_action_ids": [],
+      "disagrees_with_baseline": false,
+      "fixture_id": "lance_dragonite_vs_steelix_earthquake_or_outrage",
+      "label_count": 0,
+      "leader": "Champion Lance",
+      "preference_count": 0,
+      "tags": [
+        "champion",
+        "coverage_choice",
+        "hack_specific_typing",
+        "current_lance_roster"
+      ],
+      "training_focus": "Current Lance Dragonite uses Earthquake, not Fire Blast or Thunder, to punish Steel/Dragon Steelix."
+    },
+    {
+      "baseline_action_id": "move_mirror_coat",
+      "best_action_ids": [],
+      "disagrees_with_baseline": false,
+      "fixture_id": "red_blastoise_vs_zapdos_mirror_coat_or_blizzard",
+      "label_count": 0,
+      "leader": "Red",
+      "preference_count": 0,
+      "tags": [
+        "post_game",
+        "counterplay",
+        "mirror_coat",
+        "current_red_roster"
+      ],
+      "training_focus": "Mirror Coat Blastoise: teach when a visible special attacker makes the reactive trap a real line."
+    },
+    {
+      "baseline_action_id": "move_surf",
+      "best_action_ids": [],
+      "disagrees_with_baseline": false,
+      "fixture_id": "red_blastoise_vs_tyranitar_surf_or_mirror_coat",
+      "label_count": 0,
+      "leader": "Red",
+      "preference_count": 0,
+      "tags": [
+        "post_game",
+        "counterplay",
+        "mirror_coat",
+        "current_red_roster"
+      ],
+      "training_focus": "Mirror Coat negative example: do not click the reactive special trap into a physical Rock/Dark bruiser when Surf is obvious."
+    },
+    {
+      "baseline_action_id": "move_sleep_powder",
+      "best_action_ids": [],
+      "disagrees_with_baseline": false,
+      "fixture_id": "lance_yanma_vs_lapras_sleep_powder_or_quiver_dance",
+      "label_count": 0,
+      "leader": "Champion Lance",
+      "preference_count": 3,
+      "tags": [
+        "champion",
+        "sleep",
+        "setup",
+        "current_lance_roster"
+      ],
+      "training_focus": "Yanma is now on Lance's Dragon roster; compare legal sleep pressure against greedy Quiver Dance into Ice risk."
     }
   ],
   "label_count": 0,
   "label_counts": {},
   "labeled_fixture_count": 0,
-  "preference_count": 7,
+  "preference_count": 20,
   "preference_counts": {
-    "a_better": 3,
-    "b_better": 2,
-    "both_good": 1,
-    "other_better": 1
+    "a_better": 9,
+    "b_better": 4,
+    "both_good": 2,
+    "needs_context": 1,
+    "other_better": 4
   },
-  "preferenced_fixture_count": 7,
+  "preferenced_fixture_count": 18,
   "tool_version": "boss-ai-preference-v0"
 }

@@ -1,0 +1,1416 @@
+{
+  "all_metrics": {
+    "accuracy": 0.9231,
+    "accuracy_label": "92.3%",
+    "by_leader": {
+      "Brock": {
+        "accuracy": 1.0,
+        "accuracy_label": "100.0%",
+        "correct": 1,
+        "count": 1
+      },
+      "Bugsy": {
+        "accuracy": 1.0,
+        "accuracy_label": "100.0%",
+        "correct": 1,
+        "count": 1
+      },
+      "Champion Lance": {
+        "accuracy": 1.0,
+        "accuracy_label": "100.0%",
+        "correct": 3,
+        "count": 3
+      },
+      "Clair": {
+        "accuracy": 1.0,
+        "accuracy_label": "100.0%",
+        "correct": 1,
+        "count": 1
+      },
+      "Falkner": {
+        "accuracy": 1.0,
+        "accuracy_label": "100.0%",
+        "correct": 1,
+        "count": 1
+      },
+      "Jasmine": {
+        "accuracy": 1.0,
+        "accuracy_label": "100.0%",
+        "correct": 1,
+        "count": 1
+      },
+      "Koga": {
+        "accuracy": 1.0,
+        "accuracy_label": "100.0%",
+        "correct": 1,
+        "count": 1
+      },
+      "Misty": {
+        "accuracy": 0.0,
+        "accuracy_label": "0.0%",
+        "correct": 0,
+        "count": 1
+      },
+      "Morty": {
+        "accuracy": 1.0,
+        "accuracy_label": "100.0%",
+        "correct": 2,
+        "count": 2
+      },
+      "Whitney": {
+        "accuracy": 1.0,
+        "accuracy_label": "100.0%",
+        "correct": 1,
+        "count": 1
+      }
+    },
+    "by_lesson_type": {
+      "sequence_policy": {
+        "accuracy": 1.0,
+        "accuracy_label": "100.0%",
+        "correct": 3,
+        "count": 3
+      },
+      "untyped": {
+        "accuracy": 0.9,
+        "accuracy_label": "90.0%",
+        "correct": 9,
+        "count": 10
+      }
+    },
+    "correct": 12,
+    "count": 13,
+    "examples": [
+      {
+        "agrees": true,
+        "expected": "b_better",
+        "fixture_id": "falkner_pidgeotto_vs_geodude_rock_risk",
+        "leader": "Falkner",
+        "model_choice": "b_better",
+        "model_probability_a": 0.3004,
+        "preference_id": "falkner_pidgeotto_vs_geodude_rock_risk:move_gust:move_sand_attack",
+        "scorer_choice": "b_better"
+      },
+      {
+        "agrees": true,
+        "expected": "a_better",
+        "fixture_id": "bugsy_scyther_vs_quilava_fire_pressure",
+        "leader": "Bugsy",
+        "model_choice": "a_better",
+        "model_probability_a": 0.8282,
+        "preference_id": "bugsy_scyther_vs_quilava_fire_pressure:move_swords_dance:move_wing_attack",
+        "scorer_choice": "a_better"
+      },
+      {
+        "agrees": true,
+        "expected": "b_better",
+        "fixture_id": "whitney_miltank_vs_geodude_rollout_temptation",
+        "leader": "Whitney",
+        "model_choice": "b_better",
+        "model_probability_a": 0.0823,
+        "preference_id": "whitney_miltank_vs_geodude_rollout_temptation:move_rollout:move_body_slam",
+        "scorer_choice": "b_better"
+      },
+      {
+        "agrees": true,
+        "expected": "a_better",
+        "fixture_id": "morty_gengar_vs_kadabra_destiny_bond",
+        "leader": "Morty",
+        "model_choice": "a_better",
+        "model_probability_a": 0.9875,
+        "preference_id": "morty_gengar_vs_kadabra_destiny_bond:move_shadow_ball:move_destiny_bond",
+        "scorer_choice": "a_better"
+      },
+      {
+        "agrees": true,
+        "expected": "a_better",
+        "fixture_id": "morty_haunter_vs_noctowl_sleep_line",
+        "leader": "Morty",
+        "model_choice": "a_better",
+        "model_probability_a": 0.9066,
+        "preference_id": "morty_haunter_vs_noctowl_sleep_line:move_hypnosis:move_night_shade",
+        "scorer_choice": "a_better"
+      },
+      {
+        "agrees": true,
+        "expected": "a_better",
+        "fixture_id": "jasmine_steelix_vs_quilava_fire_threat",
+        "leader": "Jasmine",
+        "model_choice": "a_better",
+        "model_probability_a": 0.9343,
+        "preference_id": "jasmine_steelix_vs_quilava_fire_threat:move_rock_slide:move_earthquake",
+        "scorer_choice": "a_better"
+      },
+      {
+        "agrees": true,
+        "expected": "a_better",
+        "fixture_id": "clair_kingdra_vs_lapras_dragon_dance_or_attack",
+        "leader": "Clair",
+        "model_choice": "a_better",
+        "model_probability_a": 0.8363,
+        "preference_id": "clair_kingdra_vs_lapras_dragon_dance_or_attack:move_dragon_dance:move_surf",
+        "scorer_choice": "a_better"
+      },
+      {
+        "agrees": true,
+        "expected": "b_better",
+        "fixture_id": "koga_crobat_vs_alakazam_toxic_or_attack",
+        "leader": "Koga",
+        "model_choice": "b_better",
+        "model_probability_a": 0.1195,
+        "preference_id": "koga_crobat_vs_alakazam_toxic_or_attack:move_toxic:move_wing_attack",
+        "scorer_choice": "a_better"
+      },
+      {
+        "agrees": true,
+        "expected": "a_better",
+        "fixture_id": "brock_golem_vs_vaporeon_explosion_question",
+        "leader": "Brock",
+        "model_choice": "a_better",
+        "model_probability_a": 0.973,
+        "preference_id": "brock_golem_vs_vaporeon_explosion_question:move_explosion:move_earthquake",
+        "scorer_choice": "a_better"
+      },
+      {
+        "agrees": false,
+        "expected": "b_better",
+        "fixture_id": "misty_starmie_vs_meganium_recover_or_attack",
+        "leader": "Misty",
+        "model_choice": "a_better",
+        "model_probability_a": 0.6004,
+        "preference_id": "misty_starmie_vs_meganium_recover_or_attack:move_recover:move_psychic",
+        "scorer_choice": "b_better"
+      },
+      {
+        "agrees": true,
+        "expected": "a_better",
+        "fixture_id": "lance_yanma_vs_lapras_sleep_powder_or_quiver_dance",
+        "leader": "Champion Lance",
+        "model_choice": "a_better",
+        "model_probability_a": 0.9213,
+        "preference_id": "lance_yanma_vs_lapras_sleep_powder_or_quiver_dance:move_sleep_powder:move_quiver_dance",
+        "scorer_choice": "b_better"
+      },
+      {
+        "agrees": true,
+        "expected": "a_better",
+        "fixture_id": "lance_yanma_vs_lapras_sleep_powder_or_quiver_dance",
+        "leader": "Champion Lance",
+        "model_choice": "a_better",
+        "model_probability_a": 0.943,
+        "preference_id": "lance_yanma_vs_lapras_sleep_powder_or_quiver_dance:move_sleep_powder:move_giga_drain",
+        "scorer_choice": "a_better"
+      },
+      {
+        "agrees": true,
+        "expected": "a_better",
+        "fixture_id": "lance_yanma_vs_lapras_sleep_powder_or_quiver_dance",
+        "leader": "Champion Lance",
+        "model_choice": "a_better",
+        "model_probability_a": 0.9406,
+        "preference_id": "lance_yanma_vs_lapras_sleep_powder_or_quiver_dance:move_sleep_powder:switch_kingdra",
+        "scorer_choice": "a_better"
+      }
+    ]
+  },
+  "generated_at": "2026-05-12T10:57:09+00:00",
+  "holdout_count": 2,
+  "holdout_metrics": {
+    "accuracy": 0.5,
+    "accuracy_label": "50.0%",
+    "by_leader": {
+      "Falkner": {
+        "accuracy": 1.0,
+        "accuracy_label": "100.0%",
+        "correct": 1,
+        "count": 1
+      },
+      "Misty": {
+        "accuracy": 0.0,
+        "accuracy_label": "0.0%",
+        "correct": 0,
+        "count": 1
+      }
+    },
+    "by_lesson_type": {
+      "untyped": {
+        "accuracy": 0.5,
+        "accuracy_label": "50.0%",
+        "correct": 1,
+        "count": 2
+      }
+    },
+    "correct": 1,
+    "count": 2,
+    "examples": [
+      {
+        "agrees": true,
+        "expected": "b_better",
+        "fixture_id": "falkner_pidgeotto_vs_geodude_rock_risk",
+        "leader": "Falkner",
+        "model_choice": "b_better",
+        "model_probability_a": 0.3004,
+        "preference_id": "falkner_pidgeotto_vs_geodude_rock_risk:move_gust:move_sand_attack",
+        "scorer_choice": "b_better"
+      },
+      {
+        "agrees": false,
+        "expected": "b_better",
+        "fixture_id": "misty_starmie_vs_meganium_recover_or_attack",
+        "leader": "Misty",
+        "model_choice": "a_better",
+        "model_probability_a": 0.6004,
+        "preference_id": "misty_starmie_vs_meganium_recover_or_attack:move_recover:move_psychic",
+        "scorer_choice": "b_better"
+      }
+    ]
+  },
+  "model_correct_scorer_missed": [
+    {
+      "expected": "b_better",
+      "leader": "Koga",
+      "model_choice": "b_better",
+      "note": "This one is just non-sensical. The point of Toxic is to help chip a pokemon slowly. Crobat just straight up kills Alakazam with Wing Attack. It's like choosing between earning $10 a day or getting a million dollars right now. You don't need",
+      "preference_id": "koga_crobat_vs_alakazam_toxic_or_attack:move_toxic:move_wing_attack",
+      "scorer_choice": "a_better"
+    },
+    {
+      "expected": "a_better",
+      "leader": "Champion Lance",
+      "model_choice": "a_better",
+      "note": "Same pattern as Erika: Sleep Powder first, then use the sleep turn to Quiver Dance, then attack with Giga Drain. If Lapras wakes up and Sleep Clause is free, Sleep Powder can be reapplied before continuing pressure.",
+      "preference_id": "lance_yanma_vs_lapras_sleep_powder_or_quiver_dance:move_sleep_powder:move_quiver_dance",
+      "scorer_choice": "b_better"
+    }
+  ],
+  "scorer_correct_model_missed": [
+    {
+      "expected": "b_better",
+      "leader": "Misty",
+      "model_choice": "a_better",
+      "note": "Recover is a no go here, you will be outdamaged by super effective moves. Go ahead and get chip on it so Lapras can come in and kill with an ice move after a free switch in from Starmie fainting.",
+      "preference_id": "misty_starmie_vs_meganium_recover_or_attack:move_recover:move_psychic",
+      "scorer_choice": "b_better"
+    }
+  ],
+  "strict_example_count": 13,
+  "top_negative_weights": [
+    {
+      "feature": "damage_bucket_major",
+      "support": 3,
+      "weight": -1.034403
+    },
+    {
+      "feature": "damage_bucket_chip",
+      "support": 2,
+      "weight": -0.918991
+    },
+    {
+      "feature": "text_setup_or_greedy",
+      "support": 4,
+      "weight": -0.451532
+    },
+    {
+      "feature": "move_class_lock",
+      "support": 1,
+      "weight": -0.332972
+    },
+    {
+      "feature": "damage_bucket_meaningful",
+      "support": 3,
+      "weight": -0.266029
+    },
+    {
+      "feature": "text_information_probe",
+      "support": 1,
+      "weight": -0.266019
+    },
+    {
+      "feature": "kind_switch",
+      "support": 1,
+      "weight": -0.251015
+    },
+    {
+      "feature": "text_preserve_value",
+      "support": 1,
+      "weight": -0.251015
+    }
+  ],
+  "top_positive_weights": [
+    {
+      "feature": "move_class_setup",
+      "support": 2,
+      "weight": 1.216965
+    },
+    {
+      "feature": "move_class_sleep",
+      "support": 4,
+      "weight": 1.157686
+    },
+    {
+      "feature": "text_tempo_or_punish",
+      "support": 3,
+      "weight": 0.846987
+    },
+    {
+      "feature": "move_class_status",
+      "support": 5,
+      "weight": 0.760778
+    },
+    {
+      "feature": "ko_possible",
+      "support": 3,
+      "weight": 0.599215
+    },
+    {
+      "feature": "damage_bucket_ko",
+      "support": 3,
+      "weight": 0.599215
+    },
+    {
+      "feature": "damage_high_percent",
+      "support": 9,
+      "weight": 0.353528
+    },
+    {
+      "feature": "text_personality_style",
+      "support": 1,
+      "weight": 0.351005
+    },
+    {
+      "feature": "damage_average_percent",
+      "support": 9,
+      "weight": 0.324135
+    },
+    {
+      "feature": "damage_low_percent",
+      "support": 9,
+      "weight": 0.294741
+    },
+    {
+      "feature": "damage_bucket_near_ko",
+      "support": 1,
+      "weight": 0.266019
+    },
+    {
+      "feature": "kind_move",
+      "support": 1,
+      "weight": 0.251015
+    },
+    {
+      "feature": "ko_confirmed",
+      "support": 2,
+      "weight": 0.202307
+    },
+    {
+      "feature": "two_hko_or_better",
+      "support": 4,
+      "weight": 0.096851
+    },
+    {
+      "feature": "text_visible_risk",
+      "support": 5,
+      "weight": 0.090359
+    }
+  ],
+  "train_count": 11,
+  "train_metrics": {
+    "accuracy": 1.0,
+    "accuracy_label": "100.0%",
+    "by_leader": {
+      "Brock": {
+        "accuracy": 1.0,
+        "accuracy_label": "100.0%",
+        "correct": 1,
+        "count": 1
+      },
+      "Bugsy": {
+        "accuracy": 1.0,
+        "accuracy_label": "100.0%",
+        "correct": 1,
+        "count": 1
+      },
+      "Champion Lance": {
+        "accuracy": 1.0,
+        "accuracy_label": "100.0%",
+        "correct": 3,
+        "count": 3
+      },
+      "Clair": {
+        "accuracy": 1.0,
+        "accuracy_label": "100.0%",
+        "correct": 1,
+        "count": 1
+      },
+      "Jasmine": {
+        "accuracy": 1.0,
+        "accuracy_label": "100.0%",
+        "correct": 1,
+        "count": 1
+      },
+      "Koga": {
+        "accuracy": 1.0,
+        "accuracy_label": "100.0%",
+        "correct": 1,
+        "count": 1
+      },
+      "Morty": {
+        "accuracy": 1.0,
+        "accuracy_label": "100.0%",
+        "correct": 2,
+        "count": 2
+      },
+      "Whitney": {
+        "accuracy": 1.0,
+        "accuracy_label": "100.0%",
+        "correct": 1,
+        "count": 1
+      }
+    },
+    "by_lesson_type": {
+      "sequence_policy": {
+        "accuracy": 1.0,
+        "accuracy_label": "100.0%",
+        "correct": 3,
+        "count": 3
+      },
+      "untyped": {
+        "accuracy": 1.0,
+        "accuracy_label": "100.0%",
+        "correct": 8,
+        "count": 8
+      }
+    },
+    "correct": 11,
+    "count": 11,
+    "examples": [
+      {
+        "agrees": true,
+        "expected": "a_better",
+        "fixture_id": "bugsy_scyther_vs_quilava_fire_pressure",
+        "leader": "Bugsy",
+        "model_choice": "a_better",
+        "model_probability_a": 0.8282,
+        "preference_id": "bugsy_scyther_vs_quilava_fire_pressure:move_swords_dance:move_wing_attack",
+        "scorer_choice": "a_better"
+      },
+      {
+        "agrees": true,
+        "expected": "b_better",
+        "fixture_id": "whitney_miltank_vs_geodude_rollout_temptation",
+        "leader": "Whitney",
+        "model_choice": "b_better",
+        "model_probability_a": 0.0823,
+        "preference_id": "whitney_miltank_vs_geodude_rollout_temptation:move_rollout:move_body_slam",
+        "scorer_choice": "b_better"
+      },
+      {
+        "agrees": true,
+        "expected": "a_better",
+        "fixture_id": "morty_gengar_vs_kadabra_destiny_bond",
+        "leader": "Morty",
+        "model_choice": "a_better",
+        "model_probability_a": 0.9875,
+        "preference_id": "morty_gengar_vs_kadabra_destiny_bond:move_shadow_ball:move_destiny_bond",
+        "scorer_choice": "a_better"
+      },
+      {
+        "agrees": true,
+        "expected": "a_better",
+        "fixture_id": "morty_haunter_vs_noctowl_sleep_line",
+        "leader": "Morty",
+        "model_choice": "a_better",
+        "model_probability_a": 0.9066,
+        "preference_id": "morty_haunter_vs_noctowl_sleep_line:move_hypnosis:move_night_shade",
+        "scorer_choice": "a_better"
+      },
+      {
+        "agrees": true,
+        "expected": "a_better",
+        "fixture_id": "jasmine_steelix_vs_quilava_fire_threat",
+        "leader": "Jasmine",
+        "model_choice": "a_better",
+        "model_probability_a": 0.9343,
+        "preference_id": "jasmine_steelix_vs_quilava_fire_threat:move_rock_slide:move_earthquake",
+        "scorer_choice": "a_better"
+      },
+      {
+        "agrees": true,
+        "expected": "a_better",
+        "fixture_id": "clair_kingdra_vs_lapras_dragon_dance_or_attack",
+        "leader": "Clair",
+        "model_choice": "a_better",
+        "model_probability_a": 0.8363,
+        "preference_id": "clair_kingdra_vs_lapras_dragon_dance_or_attack:move_dragon_dance:move_surf",
+        "scorer_choice": "a_better"
+      },
+      {
+        "agrees": true,
+        "expected": "b_better",
+        "fixture_id": "koga_crobat_vs_alakazam_toxic_or_attack",
+        "leader": "Koga",
+        "model_choice": "b_better",
+        "model_probability_a": 0.1195,
+        "preference_id": "koga_crobat_vs_alakazam_toxic_or_attack:move_toxic:move_wing_attack",
+        "scorer_choice": "a_better"
+      },
+      {
+        "agrees": true,
+        "expected": "a_better",
+        "fixture_id": "brock_golem_vs_vaporeon_explosion_question",
+        "leader": "Brock",
+        "model_choice": "a_better",
+        "model_probability_a": 0.973,
+        "preference_id": "brock_golem_vs_vaporeon_explosion_question:move_explosion:move_earthquake",
+        "scorer_choice": "a_better"
+      },
+      {
+        "agrees": true,
+        "expected": "a_better",
+        "fixture_id": "lance_yanma_vs_lapras_sleep_powder_or_quiver_dance",
+        "leader": "Champion Lance",
+        "model_choice": "a_better",
+        "model_probability_a": 0.9213,
+        "preference_id": "lance_yanma_vs_lapras_sleep_powder_or_quiver_dance:move_sleep_powder:move_quiver_dance",
+        "scorer_choice": "b_better"
+      },
+      {
+        "agrees": true,
+        "expected": "a_better",
+        "fixture_id": "lance_yanma_vs_lapras_sleep_powder_or_quiver_dance",
+        "leader": "Champion Lance",
+        "model_choice": "a_better",
+        "model_probability_a": 0.943,
+        "preference_id": "lance_yanma_vs_lapras_sleep_powder_or_quiver_dance:move_sleep_powder:move_giga_drain",
+        "scorer_choice": "a_better"
+      },
+      {
+        "agrees": true,
+        "expected": "a_better",
+        "fixture_id": "lance_yanma_vs_lapras_sleep_powder_or_quiver_dance",
+        "leader": "Champion Lance",
+        "model_choice": "a_better",
+        "model_probability_a": 0.9406,
+        "preference_id": "lance_yanma_vs_lapras_sleep_powder_or_quiver_dance:move_sleep_powder:switch_kingdra",
+        "scorer_choice": "a_better"
+      }
+    ]
+  },
+  "training": {
+    "epochs": 500,
+    "l2": 0.02,
+    "learning_rate": 0.08
+  },
+  "trajectory_model": {
+    "all_metrics": {
+      "accuracy": 0.8947,
+      "accuracy_label": "89.5%",
+      "by_leader": {
+        "Brock": {
+          "accuracy": 1.0,
+          "accuracy_label": "100.0%",
+          "correct": 3,
+          "count": 3
+        },
+        "Bugsy": {
+          "accuracy": 1.0,
+          "accuracy_label": "100.0%",
+          "correct": 2,
+          "count": 2
+        },
+        "Champion Lance": {
+          "accuracy": 1.0,
+          "accuracy_label": "100.0%",
+          "correct": 2,
+          "count": 2
+        },
+        "Chuck": {
+          "accuracy": 1.0,
+          "accuracy_label": "100.0%",
+          "correct": 2,
+          "count": 2
+        },
+        "Clair": {
+          "accuracy": 0.6667,
+          "accuracy_label": "66.7%",
+          "correct": 2,
+          "count": 3
+        },
+        "Falkner": {
+          "accuracy": 1.0,
+          "accuracy_label": "100.0%",
+          "correct": 2,
+          "count": 2
+        },
+        "Morty": {
+          "accuracy": 0.5,
+          "accuracy_label": "50.0%",
+          "correct": 1,
+          "count": 2
+        },
+        "Pryce": {
+          "accuracy": 1.0,
+          "accuracy_label": "100.0%",
+          "correct": 3,
+          "count": 3
+        }
+      },
+      "by_lesson_type": {
+        "sequence_policy": {
+          "accuracy": 1.0,
+          "accuracy_label": "100.0%",
+          "correct": 1,
+          "count": 1
+        },
+        "switch_policy": {
+          "accuracy": 0.8889,
+          "accuracy_label": "88.9%",
+          "correct": 16,
+          "count": 18
+        }
+      },
+      "correct": 17,
+      "count": 19,
+      "examples": [
+        {
+          "agrees": true,
+          "expected": "a_better",
+          "fixture_id": "bugsy_scyther_vs_quilava_fire_pressure",
+          "leader": "Bugsy",
+          "model_choice": "a_better",
+          "model_probability_a": 0.8102,
+          "preference_id": "trajectory:bugsy_scyther_vs_quilava_fire_pressure:plan_bugsy_scyther_vs_quilava_fire_pressure_setup_once_then_attack_move_swords_dance_move_wing_attack:plan_bugsy_scyther_vs_quilava_fire_pressure_attack_now_move_wing_attack_move_wing_attack",
+          "scorer_choice": "not_scored_by_rom"
+        },
+        {
+          "agrees": true,
+          "expected": "a_better",
+          "fixture_id": "bugsy_scyther_vs_quilava_fire_pressure",
+          "leader": "Bugsy",
+          "model_choice": "a_better",
+          "model_probability_a": 0.7168,
+          "preference_id": "trajectory:bugsy_scyther_vs_quilava_fire_pressure:plan_bugsy_scyther_vs_quilava_fire_pressure_setup_once_then_attack_move_swords_dance_move_wing_attack:plan_bugsy_scyther_vs_quilava_fire_pressure_switch_preserve_then_rescore_switch_ledian_move_wing_attack",
+          "scorer_choice": "not_scored_by_rom"
+        },
+        {
+          "agrees": true,
+          "expected": "a_better",
+          "fixture_id": "lance_dragonite_vs_suicune_champion_ace",
+          "leader": "Champion Lance",
+          "model_choice": "a_better",
+          "model_probability_a": 0.7528,
+          "preference_id": "trajectory:lance_dragonite_vs_suicune_champion_ace:plan_lance_dragonite_vs_suicune_champion_ace_switch_preserve_then_rescore_switch_kingdra_move_outrage:plan_lance_dragonite_vs_suicune_champion_ace_attack_now_move_outrage_move_outrage",
+          "scorer_choice": "not_scored_by_rom"
+        },
+        {
+          "agrees": true,
+          "expected": "a_better",
+          "fixture_id": "lance_dragonite_vs_suicune_champion_ace",
+          "leader": "Champion Lance",
+          "model_choice": "a_better",
+          "model_probability_a": 0.5987,
+          "preference_id": "trajectory:lance_dragonite_vs_suicune_champion_ace:plan_lance_dragonite_vs_suicune_champion_ace_switch_preserve_then_rescore_switch_kingdra_move_outrage:plan_lance_dragonite_vs_suicune_champion_ace_setup_once_then_attack_move_dragon_dance_move_outrage",
+          "scorer_choice": "not_scored_by_rom"
+        },
+        {
+          "agrees": true,
+          "expected": "a_better",
+          "fixture_id": "brock_golem_vs_vaporeon_explosion_question",
+          "leader": "Brock",
+          "model_choice": "a_better",
+          "model_probability_a": 0.8896,
+          "preference_id": "trajectory:brock_golem_vs_vaporeon_explosion_question:plan_brock_golem_vs_vaporeon_explosion_question_sacrifice_trade_for_clean_switch_move_explosion_move_explosion:plan_brock_golem_vs_vaporeon_explosion_question_attack_now_move_explosion_move_explosion",
+          "scorer_choice": "not_scored_by_rom"
+        },
+        {
+          "agrees": true,
+          "expected": "a_better",
+          "fixture_id": "brock_golem_vs_vaporeon_explosion_question",
+          "leader": "Brock",
+          "model_choice": "a_better",
+          "model_probability_a": 0.6861,
+          "preference_id": "trajectory:brock_golem_vs_vaporeon_explosion_question:plan_brock_golem_vs_vaporeon_explosion_question_sacrifice_trade_for_clean_switch_move_explosion_move_explosion:plan_brock_golem_vs_vaporeon_explosion_question_setup_once_then_attack_move_curse_move_explosion",
+          "scorer_choice": "not_scored_by_rom"
+        },
+        {
+          "agrees": true,
+          "expected": "a_better",
+          "fixture_id": "brock_golem_vs_vaporeon_explosion_question",
+          "leader": "Brock",
+          "model_choice": "a_better",
+          "model_probability_a": 0.8269,
+          "preference_id": "trajectory:brock_golem_vs_vaporeon_explosion_question:plan_brock_golem_vs_vaporeon_explosion_question_sacrifice_trade_for_clean_switch_move_explosion_move_explosion:plan_brock_golem_vs_vaporeon_explosion_question_switch_preserve_then_rescore_switch_omastar_move_explosion",
+          "scorer_choice": "not_scored_by_rom"
+        },
+        {
+          "agrees": true,
+          "expected": "a_better",
+          "fixture_id": "falkner_pidgeotto_vs_geodude_rock_risk",
+          "leader": "Falkner",
+          "model_choice": "a_better",
+          "model_probability_a": 0.9453,
+          "preference_id": "trajectory:falkner_pidgeotto_vs_geodude_rock_risk:plan_falkner_pidgeotto_vs_geodude_rock_risk_scout_probe_then_commit_move_sand_attack_move_gust:plan_falkner_pidgeotto_vs_geodude_rock_risk_attack_now_move_gust_move_gust",
+          "scorer_choice": "not_scored_by_rom"
+        },
+        {
+          "agrees": true,
+          "expected": "a_better",
+          "fixture_id": "falkner_pidgeotto_vs_geodude_rock_risk",
+          "leader": "Falkner",
+          "model_choice": "a_better",
+          "model_probability_a": 0.911,
+          "preference_id": "trajectory:falkner_pidgeotto_vs_geodude_rock_risk:plan_falkner_pidgeotto_vs_geodude_rock_risk_scout_probe_then_commit_move_sand_attack_move_gust:plan_falkner_pidgeotto_vs_geodude_rock_risk_switch_preserve_then_rescore_switch_noctowl_move_gust",
+          "scorer_choice": "not_scored_by_rom"
+        },
+        {
+          "agrees": true,
+          "expected": "a_better",
+          "fixture_id": "pryce_slowking_vs_ampharos_ground_pivot",
+          "leader": "Pryce",
+          "model_choice": "a_better",
+          "model_probability_a": 0.7568,
+          "preference_id": "trajectory:pryce_slowking_vs_ampharos_ground_pivot:plan_pryce_slowking_vs_ampharos_ground_pivot_switch_preserve_then_rescore_switch_piloswine_move_surf:plan_pryce_slowking_vs_ampharos_ground_pivot_attack_now_move_surf_move_surf",
+          "scorer_choice": "not_scored_by_rom"
+        },
+        {
+          "agrees": true,
+          "expected": "a_better",
+          "fixture_id": "pryce_slowking_vs_ampharos_ground_pivot",
+          "leader": "Pryce",
+          "model_choice": "a_better",
+          "model_probability_a": 0.9727,
+          "preference_id": "trajectory:pryce_slowking_vs_ampharos_ground_pivot:plan_pryce_slowking_vs_ampharos_ground_pivot_switch_preserve_then_rescore_switch_piloswine_move_surf:plan_pryce_slowking_vs_ampharos_ground_pivot_speed_control_then_attack_move_thunder_wave_move_surf",
+          "scorer_choice": "not_scored_by_rom"
+        },
+        {
+          "agrees": true,
+          "expected": "a_better",
+          "fixture_id": "pryce_slowking_vs_ampharos_ground_pivot",
+          "leader": "Pryce",
+          "model_choice": "a_better",
+          "model_probability_a": 0.9042,
+          "preference_id": "trajectory:pryce_slowking_vs_ampharos_ground_pivot:plan_pryce_slowking_vs_ampharos_ground_pivot_switch_preserve_then_rescore_switch_piloswine_move_surf:plan_pryce_slowking_vs_ampharos_ground_pivot_recover_until_safe_move_rest_move_surf",
+          "scorer_choice": "not_scored_by_rom"
+        },
+        {
+          "agrees": false,
+          "expected": "a_better",
+          "fixture_id": "clair_dragonair_vs_suicune_hidden_ice_beam",
+          "leader": "Clair",
+          "model_choice": "b_better",
+          "model_probability_a": 0.3863,
+          "preference_id": "trajectory:clair_dragonair_vs_suicune_hidden_ice_beam:plan_clair_dragonair_vs_suicune_hidden_ice_beam_attack_now_move_thunder_move_thunder:plan_clair_dragonair_vs_suicune_hidden_ice_beam_switch_preserve_then_rescore_switch_kingdra_move_thunder",
+          "scorer_choice": "not_scored_by_rom"
+        },
+        {
+          "agrees": true,
+          "expected": "a_better",
+          "fixture_id": "clair_dragonair_vs_suicune_hidden_ice_beam",
+          "leader": "Clair",
+          "model_choice": "a_better",
+          "model_probability_a": 0.8542,
+          "preference_id": "trajectory:clair_dragonair_vs_suicune_hidden_ice_beam:plan_clair_dragonair_vs_suicune_hidden_ice_beam_attack_now_move_thunder_move_thunder:plan_clair_dragonair_vs_suicune_hidden_ice_beam_commit_lock_only_if_safe_move_outrage_move_thunder",
+          "scorer_choice": "not_scored_by_rom"
+        },
+        {
+          "agrees": false,
+          "expected": "a_better",
+          "fixture_id": "morty_gengar_vs_kadabra_destiny_bond",
+          "leader": "Morty",
+          "model_choice": "tie",
+          "model_probability_a": 0.5211,
+          "preference_id": "trajectory:morty_gengar_vs_kadabra_destiny_bond:plan_morty_gengar_vs_kadabra_destiny_bond_attack_now_move_shadow_ball_move_shadow_ball:plan_morty_gengar_vs_kadabra_destiny_bond_sacrifice_trade_for_clean_switch_move_destiny_bond_move_shadow_ball",
+          "scorer_choice": "not_scored_by_rom"
+        },
+        {
+          "agrees": true,
+          "expected": "a_better",
+          "fixture_id": "morty_gengar_vs_kadabra_destiny_bond",
+          "leader": "Morty",
+          "model_choice": "a_better",
+          "model_probability_a": 0.6986,
+          "preference_id": "trajectory:morty_gengar_vs_kadabra_destiny_bond:plan_morty_gengar_vs_kadabra_destiny_bond_attack_now_move_shadow_ball_move_shadow_ball:plan_morty_gengar_vs_kadabra_destiny_bond_switch_preserve_then_rescore_switch_misdreavus_move_shadow_ball",
+          "scorer_choice": "not_scored_by_rom"
+        },
+        {
+          "agrees": true,
+          "expected": "a_better",
+          "fixture_id": "chuck_poliwrath_vs_pidgeotto_ice_punch",
+          "leader": "Chuck",
+          "model_choice": "a_better",
+          "model_probability_a": 0.6278,
+          "preference_id": "trajectory:chuck_poliwrath_vs_pidgeotto_ice_punch:plan_chuck_poliwrath_vs_pidgeotto_ice_punch_switch_preserve_then_rescore_switch_sudowoodo_move_focus_punch:plan_chuck_poliwrath_vs_pidgeotto_ice_punch_attack_now_move_focus_punch_move_focus_punch",
+          "scorer_choice": "not_scored_by_rom"
+        },
+        {
+          "agrees": true,
+          "expected": "a_better",
+          "fixture_id": "chuck_poliwrath_vs_pidgeotto_ice_punch",
+          "leader": "Chuck",
+          "model_choice": "a_better",
+          "model_probability_a": 0.9264,
+          "preference_id": "trajectory:chuck_poliwrath_vs_pidgeotto_ice_punch:plan_chuck_poliwrath_vs_pidgeotto_ice_punch_switch_preserve_then_rescore_switch_sudowoodo_move_focus_punch:plan_chuck_poliwrath_vs_pidgeotto_ice_punch_status_once_then_attack_move_hypnosis_move_focus_punch",
+          "scorer_choice": "not_scored_by_rom"
+        },
+        {
+          "agrees": true,
+          "expected": "a_better",
+          "fixture_id": "clair_kingdra_vs_lapras_dragon_dance_or_attack",
+          "leader": "Clair",
+          "model_choice": "a_better",
+          "model_probability_a": 0.6712,
+          "preference_id": "trajectory:clair_kingdra_vs_lapras_dragon_dance_or_attack:plan_clair_kingdra_vs_lapras_dragon_dance_or_attack_setup_once_then_attack_move_dragon_dance_move_outrage:plan_clair_kingdra_vs_lapras_dragon_dance_or_attack_attack_now_move_outrage_move_outrage",
+          "scorer_choice": "not_scored_by_rom"
+        }
+      ]
+    },
+    "holdout_count": 0,
+    "holdout_metrics": {
+      "accuracy": null,
+      "accuracy_label": "n/a",
+      "by_leader": {},
+      "by_lesson_type": {},
+      "correct": 0,
+      "count": 0,
+      "examples": []
+    },
+    "skipped_examples": [],
+    "strict_example_count": 19,
+    "top_negative_weights": [
+      {
+        "feature": "plan_action_text_visible_risk",
+        "support": 2,
+        "weight": -1.363419
+      },
+      {
+        "feature": "plan_action_move_class_sacrifice",
+        "support": 1,
+        "weight": -0.807481
+      },
+      {
+        "feature": "plan_action_text_setup_or_greedy",
+        "support": 4,
+        "weight": -0.737737
+      },
+      {
+        "feature": "branch_if_target_switches",
+        "support": 12,
+        "weight": -0.345437
+      },
+      {
+        "feature": "plan_action_damage_bucket_meaningful",
+        "support": 1,
+        "weight": -0.317024
+      },
+      {
+        "feature": "plan_action_move_class_lock",
+        "support": 1,
+        "weight": -0.317024
+      },
+      {
+        "feature": "plan_shape_commit_lock_only_if_safe",
+        "support": 1,
+        "weight": -0.317024
+      },
+      {
+        "feature": "stop_target_can_switch",
+        "support": 1,
+        "weight": -0.317024
+      },
+      {
+        "feature": "stop_target_resists_lock_move",
+        "support": 1,
+        "weight": -0.317024
+      },
+      {
+        "feature": "branch_if_sleep_clause_occupied",
+        "support": 2,
+        "weight": -0.252162
+      },
+      {
+        "feature": "branch_if_status_landed",
+        "support": 2,
+        "weight": -0.252162
+      },
+      {
+        "feature": "branch_then_do_not_repeat_control",
+        "support": 2,
+        "weight": -0.252162
+      },
+      {
+        "feature": "branch_then_skip_sleep_move",
+        "support": 2,
+        "weight": -0.252162
+      },
+      {
+        "feature": "init_target_not_statused",
+        "support": 2,
+        "weight": -0.252162
+      },
+      {
+        "feature": "plan_action_move_class_status",
+        "support": 2,
+        "weight": -0.252162
+      }
+    ],
+    "top_positive_weights": [
+      {
+        "feature": "plan_action_text_information_probe",
+        "support": 3,
+        "weight": 0.672386
+      },
+      {
+        "feature": "plan_action_text_tempo_or_punish",
+        "support": 3,
+        "weight": 0.591009
+      },
+      {
+        "feature": "stop_threat_revealed",
+        "support": 2,
+        "weight": 0.333699
+      },
+      {
+        "feature": "plan_shape_scout_probe_then_commit",
+        "support": 2,
+        "weight": 0.333699
+      },
+      {
+        "feature": "init_hidden_coverage_or_speed_boundary",
+        "support": 2,
+        "weight": 0.333699
+      },
+      {
+        "feature": "branch_then_preserve_or_switch",
+        "support": 2,
+        "weight": 0.333699
+      },
+      {
+        "feature": "branch_then_commit_to_damage",
+        "support": 2,
+        "weight": 0.333699
+      },
+      {
+        "feature": "branch_if_no_punish_revealed",
+        "support": 2,
+        "weight": 0.333699
+      },
+      {
+        "feature": "branch_if_hidden_threat_revealed",
+        "support": 2,
+        "weight": 0.333699
+      },
+      {
+        "feature": "stop_target_switches",
+        "support": 14,
+        "weight": 0.247321
+      },
+      {
+        "feature": "stop_sacrifice_no_longer_profitable",
+        "support": 4,
+        "weight": 0.242541
+      },
+      {
+        "feature": "stop_boss_has_no_clean_followup",
+        "support": 4,
+        "weight": 0.242541
+      },
+      {
+        "feature": "plan_shape_sacrifice_trade_for_clean_switch",
+        "support": 4,
+        "weight": 0.242541
+      },
+      {
+        "feature": "init_late_game_resource_trade",
+        "support": 4,
+        "weight": 0.242541
+      },
+      {
+        "feature": "init_clean_switch_value",
+        "support": 4,
+        "weight": 0.242541
+      }
+    ],
+    "train_count": 19,
+    "train_metrics": {
+      "accuracy": 0.8947,
+      "accuracy_label": "89.5%",
+      "by_leader": {
+        "Brock": {
+          "accuracy": 1.0,
+          "accuracy_label": "100.0%",
+          "correct": 3,
+          "count": 3
+        },
+        "Bugsy": {
+          "accuracy": 1.0,
+          "accuracy_label": "100.0%",
+          "correct": 2,
+          "count": 2
+        },
+        "Champion Lance": {
+          "accuracy": 1.0,
+          "accuracy_label": "100.0%",
+          "correct": 2,
+          "count": 2
+        },
+        "Chuck": {
+          "accuracy": 1.0,
+          "accuracy_label": "100.0%",
+          "correct": 2,
+          "count": 2
+        },
+        "Clair": {
+          "accuracy": 0.6667,
+          "accuracy_label": "66.7%",
+          "correct": 2,
+          "count": 3
+        },
+        "Falkner": {
+          "accuracy": 1.0,
+          "accuracy_label": "100.0%",
+          "correct": 2,
+          "count": 2
+        },
+        "Morty": {
+          "accuracy": 0.5,
+          "accuracy_label": "50.0%",
+          "correct": 1,
+          "count": 2
+        },
+        "Pryce": {
+          "accuracy": 1.0,
+          "accuracy_label": "100.0%",
+          "correct": 3,
+          "count": 3
+        }
+      },
+      "by_lesson_type": {
+        "sequence_policy": {
+          "accuracy": 1.0,
+          "accuracy_label": "100.0%",
+          "correct": 1,
+          "count": 1
+        },
+        "switch_policy": {
+          "accuracy": 0.8889,
+          "accuracy_label": "88.9%",
+          "correct": 16,
+          "count": 18
+        }
+      },
+      "correct": 17,
+      "count": 19,
+      "examples": [
+        {
+          "agrees": true,
+          "expected": "a_better",
+          "fixture_id": "bugsy_scyther_vs_quilava_fire_pressure",
+          "leader": "Bugsy",
+          "model_choice": "a_better",
+          "model_probability_a": 0.8102,
+          "preference_id": "trajectory:bugsy_scyther_vs_quilava_fire_pressure:plan_bugsy_scyther_vs_quilava_fire_pressure_setup_once_then_attack_move_swords_dance_move_wing_attack:plan_bugsy_scyther_vs_quilava_fire_pressure_attack_now_move_wing_attack_move_wing_attack",
+          "scorer_choice": "not_scored_by_rom"
+        },
+        {
+          "agrees": true,
+          "expected": "a_better",
+          "fixture_id": "bugsy_scyther_vs_quilava_fire_pressure",
+          "leader": "Bugsy",
+          "model_choice": "a_better",
+          "model_probability_a": 0.7168,
+          "preference_id": "trajectory:bugsy_scyther_vs_quilava_fire_pressure:plan_bugsy_scyther_vs_quilava_fire_pressure_setup_once_then_attack_move_swords_dance_move_wing_attack:plan_bugsy_scyther_vs_quilava_fire_pressure_switch_preserve_then_rescore_switch_ledian_move_wing_attack",
+          "scorer_choice": "not_scored_by_rom"
+        },
+        {
+          "agrees": true,
+          "expected": "a_better",
+          "fixture_id": "lance_dragonite_vs_suicune_champion_ace",
+          "leader": "Champion Lance",
+          "model_choice": "a_better",
+          "model_probability_a": 0.7528,
+          "preference_id": "trajectory:lance_dragonite_vs_suicune_champion_ace:plan_lance_dragonite_vs_suicune_champion_ace_switch_preserve_then_rescore_switch_kingdra_move_outrage:plan_lance_dragonite_vs_suicune_champion_ace_attack_now_move_outrage_move_outrage",
+          "scorer_choice": "not_scored_by_rom"
+        },
+        {
+          "agrees": true,
+          "expected": "a_better",
+          "fixture_id": "lance_dragonite_vs_suicune_champion_ace",
+          "leader": "Champion Lance",
+          "model_choice": "a_better",
+          "model_probability_a": 0.5987,
+          "preference_id": "trajectory:lance_dragonite_vs_suicune_champion_ace:plan_lance_dragonite_vs_suicune_champion_ace_switch_preserve_then_rescore_switch_kingdra_move_outrage:plan_lance_dragonite_vs_suicune_champion_ace_setup_once_then_attack_move_dragon_dance_move_outrage",
+          "scorer_choice": "not_scored_by_rom"
+        },
+        {
+          "agrees": true,
+          "expected": "a_better",
+          "fixture_id": "brock_golem_vs_vaporeon_explosion_question",
+          "leader": "Brock",
+          "model_choice": "a_better",
+          "model_probability_a": 0.8896,
+          "preference_id": "trajectory:brock_golem_vs_vaporeon_explosion_question:plan_brock_golem_vs_vaporeon_explosion_question_sacrifice_trade_for_clean_switch_move_explosion_move_explosion:plan_brock_golem_vs_vaporeon_explosion_question_attack_now_move_explosion_move_explosion",
+          "scorer_choice": "not_scored_by_rom"
+        },
+        {
+          "agrees": true,
+          "expected": "a_better",
+          "fixture_id": "brock_golem_vs_vaporeon_explosion_question",
+          "leader": "Brock",
+          "model_choice": "a_better",
+          "model_probability_a": 0.6861,
+          "preference_id": "trajectory:brock_golem_vs_vaporeon_explosion_question:plan_brock_golem_vs_vaporeon_explosion_question_sacrifice_trade_for_clean_switch_move_explosion_move_explosion:plan_brock_golem_vs_vaporeon_explosion_question_setup_once_then_attack_move_curse_move_explosion",
+          "scorer_choice": "not_scored_by_rom"
+        },
+        {
+          "agrees": true,
+          "expected": "a_better",
+          "fixture_id": "brock_golem_vs_vaporeon_explosion_question",
+          "leader": "Brock",
+          "model_choice": "a_better",
+          "model_probability_a": 0.8269,
+          "preference_id": "trajectory:brock_golem_vs_vaporeon_explosion_question:plan_brock_golem_vs_vaporeon_explosion_question_sacrifice_trade_for_clean_switch_move_explosion_move_explosion:plan_brock_golem_vs_vaporeon_explosion_question_switch_preserve_then_rescore_switch_omastar_move_explosion",
+          "scorer_choice": "not_scored_by_rom"
+        },
+        {
+          "agrees": true,
+          "expected": "a_better",
+          "fixture_id": "falkner_pidgeotto_vs_geodude_rock_risk",
+          "leader": "Falkner",
+          "model_choice": "a_better",
+          "model_probability_a": 0.9453,
+          "preference_id": "trajectory:falkner_pidgeotto_vs_geodude_rock_risk:plan_falkner_pidgeotto_vs_geodude_rock_risk_scout_probe_then_commit_move_sand_attack_move_gust:plan_falkner_pidgeotto_vs_geodude_rock_risk_attack_now_move_gust_move_gust",
+          "scorer_choice": "not_scored_by_rom"
+        },
+        {
+          "agrees": true,
+          "expected": "a_better",
+          "fixture_id": "falkner_pidgeotto_vs_geodude_rock_risk",
+          "leader": "Falkner",
+          "model_choice": "a_better",
+          "model_probability_a": 0.911,
+          "preference_id": "trajectory:falkner_pidgeotto_vs_geodude_rock_risk:plan_falkner_pidgeotto_vs_geodude_rock_risk_scout_probe_then_commit_move_sand_attack_move_gust:plan_falkner_pidgeotto_vs_geodude_rock_risk_switch_preserve_then_rescore_switch_noctowl_move_gust",
+          "scorer_choice": "not_scored_by_rom"
+        },
+        {
+          "agrees": true,
+          "expected": "a_better",
+          "fixture_id": "pryce_slowking_vs_ampharos_ground_pivot",
+          "leader": "Pryce",
+          "model_choice": "a_better",
+          "model_probability_a": 0.7568,
+          "preference_id": "trajectory:pryce_slowking_vs_ampharos_ground_pivot:plan_pryce_slowking_vs_ampharos_ground_pivot_switch_preserve_then_rescore_switch_piloswine_move_surf:plan_pryce_slowking_vs_ampharos_ground_pivot_attack_now_move_surf_move_surf",
+          "scorer_choice": "not_scored_by_rom"
+        },
+        {
+          "agrees": true,
+          "expected": "a_better",
+          "fixture_id": "pryce_slowking_vs_ampharos_ground_pivot",
+          "leader": "Pryce",
+          "model_choice": "a_better",
+          "model_probability_a": 0.9727,
+          "preference_id": "trajectory:pryce_slowking_vs_ampharos_ground_pivot:plan_pryce_slowking_vs_ampharos_ground_pivot_switch_preserve_then_rescore_switch_piloswine_move_surf:plan_pryce_slowking_vs_ampharos_ground_pivot_speed_control_then_attack_move_thunder_wave_move_surf",
+          "scorer_choice": "not_scored_by_rom"
+        },
+        {
+          "agrees": true,
+          "expected": "a_better",
+          "fixture_id": "pryce_slowking_vs_ampharos_ground_pivot",
+          "leader": "Pryce",
+          "model_choice": "a_better",
+          "model_probability_a": 0.9042,
+          "preference_id": "trajectory:pryce_slowking_vs_ampharos_ground_pivot:plan_pryce_slowking_vs_ampharos_ground_pivot_switch_preserve_then_rescore_switch_piloswine_move_surf:plan_pryce_slowking_vs_ampharos_ground_pivot_recover_until_safe_move_rest_move_surf",
+          "scorer_choice": "not_scored_by_rom"
+        },
+        {
+          "agrees": false,
+          "expected": "a_better",
+          "fixture_id": "clair_dragonair_vs_suicune_hidden_ice_beam",
+          "leader": "Clair",
+          "model_choice": "b_better",
+          "model_probability_a": 0.3863,
+          "preference_id": "trajectory:clair_dragonair_vs_suicune_hidden_ice_beam:plan_clair_dragonair_vs_suicune_hidden_ice_beam_attack_now_move_thunder_move_thunder:plan_clair_dragonair_vs_suicune_hidden_ice_beam_switch_preserve_then_rescore_switch_kingdra_move_thunder",
+          "scorer_choice": "not_scored_by_rom"
+        },
+        {
+          "agrees": true,
+          "expected": "a_better",
+          "fixture_id": "clair_dragonair_vs_suicune_hidden_ice_beam",
+          "leader": "Clair",
+          "model_choice": "a_better",
+          "model_probability_a": 0.8542,
+          "preference_id": "trajectory:clair_dragonair_vs_suicune_hidden_ice_beam:plan_clair_dragonair_vs_suicune_hidden_ice_beam_attack_now_move_thunder_move_thunder:plan_clair_dragonair_vs_suicune_hidden_ice_beam_commit_lock_only_if_safe_move_outrage_move_thunder",
+          "scorer_choice": "not_scored_by_rom"
+        },
+        {
+          "agrees": false,
+          "expected": "a_better",
+          "fixture_id": "morty_gengar_vs_kadabra_destiny_bond",
+          "leader": "Morty",
+          "model_choice": "tie",
+          "model_probability_a": 0.5211,
+          "preference_id": "trajectory:morty_gengar_vs_kadabra_destiny_bond:plan_morty_gengar_vs_kadabra_destiny_bond_attack_now_move_shadow_ball_move_shadow_ball:plan_morty_gengar_vs_kadabra_destiny_bond_sacrifice_trade_for_clean_switch_move_destiny_bond_move_shadow_ball",
+          "scorer_choice": "not_scored_by_rom"
+        },
+        {
+          "agrees": true,
+          "expected": "a_better",
+          "fixture_id": "morty_gengar_vs_kadabra_destiny_bond",
+          "leader": "Morty",
+          "model_choice": "a_better",
+          "model_probability_a": 0.6986,
+          "preference_id": "trajectory:morty_gengar_vs_kadabra_destiny_bond:plan_morty_gengar_vs_kadabra_destiny_bond_attack_now_move_shadow_ball_move_shadow_ball:plan_morty_gengar_vs_kadabra_destiny_bond_switch_preserve_then_rescore_switch_misdreavus_move_shadow_ball",
+          "scorer_choice": "not_scored_by_rom"
+        },
+        {
+          "agrees": true,
+          "expected": "a_better",
+          "fixture_id": "chuck_poliwrath_vs_pidgeotto_ice_punch",
+          "leader": "Chuck",
+          "model_choice": "a_better",
+          "model_probability_a": 0.6278,
+          "preference_id": "trajectory:chuck_poliwrath_vs_pidgeotto_ice_punch:plan_chuck_poliwrath_vs_pidgeotto_ice_punch_switch_preserve_then_rescore_switch_sudowoodo_move_focus_punch:plan_chuck_poliwrath_vs_pidgeotto_ice_punch_attack_now_move_focus_punch_move_focus_punch",
+          "scorer_choice": "not_scored_by_rom"
+        },
+        {
+          "agrees": true,
+          "expected": "a_better",
+          "fixture_id": "chuck_poliwrath_vs_pidgeotto_ice_punch",
+          "leader": "Chuck",
+          "model_choice": "a_better",
+          "model_probability_a": 0.9264,
+          "preference_id": "trajectory:chuck_poliwrath_vs_pidgeotto_ice_punch:plan_chuck_poliwrath_vs_pidgeotto_ice_punch_switch_preserve_then_rescore_switch_sudowoodo_move_focus_punch:plan_chuck_poliwrath_vs_pidgeotto_ice_punch_status_once_then_attack_move_hypnosis_move_focus_punch",
+          "scorer_choice": "not_scored_by_rom"
+        },
+        {
+          "agrees": true,
+          "expected": "a_better",
+          "fixture_id": "clair_kingdra_vs_lapras_dragon_dance_or_attack",
+          "leader": "Clair",
+          "model_choice": "a_better",
+          "model_probability_a": 0.6712,
+          "preference_id": "trajectory:clair_kingdra_vs_lapras_dragon_dance_or_attack:plan_clair_kingdra_vs_lapras_dragon_dance_or_attack_setup_once_then_attack_move_dragon_dance_move_outrage:plan_clair_kingdra_vs_lapras_dragon_dance_or_attack_attack_now_move_outrage_move_outrage",
+          "scorer_choice": "not_scored_by_rom"
+        }
+      ]
+    },
+    "unstable_low_support_weights": [
+      {
+        "feature": "plan_action_move_class_sacrifice",
+        "support": 1,
+        "weight": -0.807481
+      },
+      {
+        "feature": "plan_action_damage_bucket_meaningful",
+        "support": 1,
+        "weight": -0.317024
+      },
+      {
+        "feature": "plan_action_move_class_lock",
+        "support": 1,
+        "weight": -0.317024
+      },
+      {
+        "feature": "plan_shape_commit_lock_only_if_safe",
+        "support": 1,
+        "weight": -0.317024
+      },
+      {
+        "feature": "stop_target_can_switch",
+        "support": 1,
+        "weight": -0.317024
+      },
+      {
+        "feature": "stop_target_resists_lock_move",
+        "support": 1,
+        "weight": -0.317024
+      },
+      {
+        "feature": "plan_action_move_class_recovery",
+        "support": 1,
+        "weight": -0.194196
+      },
+      {
+        "feature": "plan_shape_recover_until_safe",
+        "support": 1,
+        "weight": -0.194196
+      },
+      {
+        "feature": "stop_boss_hp_high_enough",
+        "support": 1,
+        "weight": -0.194196
+      },
+      {
+        "feature": "stop_not_outdamaging_player",
+        "support": 1,
+        "weight": -0.194196
+      },
+      {
+        "feature": "stop_target_can_setup",
+        "support": 1,
+        "weight": -0.194196
+      },
+      {
+        "feature": "plan_action_move_class_sleep",
+        "support": 1,
+        "weight": -0.163203
+      },
+      {
+        "feature": "plan_action_text_personality_style",
+        "support": 1,
+        "weight": -0.163203
+      },
+      {
+        "feature": "plan_shape_status_once_then_attack",
+        "support": 1,
+        "weight": -0.163203
+      },
+      {
+        "feature": "plan_action_move_class_speed_control",
+        "support": 1,
+        "weight": -0.088959
+      },
+      {
+        "feature": "plan_shape_speed_control_then_attack",
+        "support": 1,
+        "weight": -0.088959
+      }
+    ]
+  },
+  "unstable_low_support_weights": [
+    {
+      "feature": "move_class_lock",
+      "support": 1,
+      "weight": -0.332972
+    },
+    {
+      "feature": "text_information_probe",
+      "support": 1,
+      "weight": -0.266019
+    },
+    {
+      "feature": "kind_switch",
+      "support": 1,
+      "weight": -0.251015
+    },
+    {
+      "feature": "text_preserve_value",
+      "support": 1,
+      "weight": -0.251015
+    },
+    {
+      "feature": "kind_move",
+      "support": 1,
+      "weight": 0.251015
+    },
+    {
+      "feature": "damage_bucket_near_ko",
+      "support": 1,
+      "weight": 0.266019
+    },
+    {
+      "feature": "text_personality_style",
+      "support": 1,
+      "weight": 0.351005
+    }
+  ]
+}

@@ -1,0 +1,416 @@
+{
+  "derived_lesson_count": 11,
+  "fixture_count": 53,
+  "generated_at": "2026-05-12T10:56:58+00:00",
+  "label_count": 0,
+  "leader_coverage": {
+    "Brock": {
+      "immediate_ko_over_slow_plan": 1,
+      "sacrifice_switch_mixed_strategy": 1
+    },
+    "Bugsy": {
+      "immediate_ko_over_slow_plan": 1,
+      "setup_requires_damage_race": 1
+    },
+    "Champion Lance": {
+      "hidden_coverage_probe_before_ace_setup": 1,
+      "immediate_ko_over_slow_plan": 1,
+      "setup_requires_damage_race": 1,
+      "sleep_pressure_clause_gated": 3
+    },
+    "Chuck": {
+      "immediate_ko_over_slow_plan": 1,
+      "other_better_means_action_pool_gap": 1
+    },
+    "Clair": {
+      "hidden_coverage_probe_before_ace_setup": 1,
+      "other_better_means_action_pool_gap": 1,
+      "setup_requires_damage_race": 1
+    },
+    "Falkner": {
+      "single_debuff_then_attack": 1
+    },
+    "Jasmine": {
+      "immediate_ko_over_slow_plan": 1
+    },
+    "Koga": {
+      "immediate_ko_over_slow_plan": 1
+    },
+    "Misty": {
+      "immediate_ko_over_slow_plan": 1
+    },
+    "Morty": {
+      "immediate_ko_over_slow_plan": 1,
+      "sacrifice_switch_mixed_strategy": 1,
+      "sleep_pressure_clause_gated": 1
+    },
+    "Pryce": {
+      "other_better_means_action_pool_gap": 2
+    },
+    "Whitney": {
+      "resisted_ramp_lock_opener": 1,
+      "setup_requires_damage_race": 1
+    },
+    "unknown": {
+      "trajectory_scout_probe_boundary": 5,
+      "trajectory_sequence_policy_boundary": 31,
+      "trajectory_switch_preserve_boundary": 29
+    }
+  },
+  "lesson_count": 11,
+  "lesson_status_counts": {
+    "candidate": 11
+  },
+  "lesson_type_counts": {
+    "hard_rule": 2,
+    "personality_style": 1,
+    "schema_only": 1,
+    "scout_policy": 2,
+    "sequence_policy": 2,
+    "switch_policy": 1,
+    "weight_hint": 2
+  },
+  "lessons": [
+    {
+      "applies_to": {
+        "discourage": [
+          "greedy_setup_before_probe"
+        ],
+        "encourage": [
+          "information_probe",
+          "safe_scout",
+          "ace_preservation"
+        ],
+        "threat_properties": [
+          "hidden_coverage_plausible",
+          "4x_or_major_hit"
+        ]
+      },
+      "expected_direction": "mixed",
+      "human_summary": "Hidden coverage suspicion can make scouting or probing better than greedy setup, especially before committing an ace.",
+      "lesson_id": "hidden_coverage_probe_before_ace_setup",
+      "lesson_type": "scout_policy",
+      "rom_target": "engine/battle/ai/scoring.asm",
+      "source_preference_ids": [
+        "clair_dragonair_vs_suicune_hidden_ice_beam:move_outrage:move_thunder",
+        "lance_dragonite_vs_suicune_champion_ace:move_dragon_dance:move_outrage"
+      ],
+      "status": "candidate"
+    },
+    {
+      "applies_to": {
+        "discourage_instead": [
+          "slow_chip",
+          "recovery",
+          "status_setup"
+        ],
+        "move_properties": [
+          "damaging"
+        ],
+        "required_when": [
+          "ko_confirmed_or_near_confirmed"
+        ]
+      },
+      "expected_direction": "encourage",
+      "human_summary": "A guaranteed or near-guaranteed KO should dominate slow chip, status, or recovery when the target can punish passivity.",
+      "lesson_id": "immediate_ko_over_slow_plan",
+      "lesson_type": "weight_hint",
+      "rom_target": "tools/boss_ai_preference/reward_model.py",
+      "source_preference_ids": [
+        "brock_golem_vs_vaporeon_explosion_question:move_explosion:move_earthquake",
+        "bugsy_scyther_vs_quilava_fire_pressure:move_swords_dance:move_wing_attack",
+        "chuck_poliwrath_vs_pidgeotto_ice_punch:move_focus_punch:move_ice_punch",
+        "jasmine_steelix_vs_quilava_fire_threat:move_rock_slide:move_earthquake",
+        "koga_crobat_vs_alakazam_toxic_or_attack:move_toxic:move_wing_attack",
+        "lance_dragonite_vs_suicune_champion_ace:move_dragon_dance:move_outrage",
+        "misty_starmie_vs_meganium_recover_or_attack:move_recover:move_psychic",
+        "morty_gengar_vs_kadabra_destiny_bond:move_shadow_ball:move_destiny_bond"
+      ],
+      "status": "candidate"
+    },
+    {
+      "applies_to": {
+        "choice": [
+          "other_better"
+        ],
+        "required_ui": [
+          "full_action_list",
+          "switch_actions",
+          "plan_actions"
+        ]
+      },
+      "expected_direction": "review",
+      "human_summary": "Several labels say the best answer is outside the displayed pair, so V2 queries must include switch and plan actions.",
+      "lesson_id": "other_better_means_action_pool_gap",
+      "lesson_type": "schema_only",
+      "rom_target": "tools/boss_ai_preference/app.py",
+      "source_preference_ids": [
+        "chuck_poliwrath_vs_pidgeotto_ice_punch:move_focus_punch:move_ice_punch",
+        "clair_dragonair_vs_suicune_hidden_ice_beam:move_outrage:move_thunder",
+        "pryce_cloyster_vs_quilava_explosion_line:move_surf:move_explosion",
+        "pryce_slowking_vs_ampharos_ground_pivot:move_thunder_wave:move_surf"
+      ],
+      "status": "candidate"
+    },
+    {
+      "applies_to": {
+        "excluded_when": [
+          "ko_confirmed",
+          "target_paralyzed",
+          "already_locked"
+        ],
+        "move_properties": [
+          "ramp_lock"
+        ],
+        "target_properties": [
+          "resists_move",
+          "physically_bulky"
+        ]
+      },
+      "expected_direction": "discourage",
+      "human_summary": "Do not start a resisted ramp-lock sequence when it does not KO and the target can punish or switch.",
+      "lesson_id": "resisted_ramp_lock_opener",
+      "lesson_type": "hard_rule",
+      "rom_target": "engine/battle/ai/scoring.asm",
+      "source_preference_ids": [
+        "whitney_miltank_vs_geodude_rollout_temptation:move_rollout:move_body_slam"
+      ],
+      "status": "candidate"
+    },
+    {
+      "applies_to": {
+        "move_properties": [
+          "explosion",
+          "destiny_bond"
+        ],
+        "near_ties": [
+          "sacrifice",
+          "safe_switch",
+          "clean_switch_after_faint"
+        ]
+      },
+      "expected_direction": "mixed",
+      "human_summary": "Sacrifice, switch, and attack can be near-tie spots where the AI should preserve variety instead of becoming deterministic.",
+      "lesson_id": "sacrifice_switch_mixed_strategy",
+      "lesson_type": "personality_style",
+      "rom_target": "engine/battle/ai/POLICY_DESIGN.md",
+      "source_preference_ids": [
+        "brock_golem_vs_vaporeon_explosion_question:move_explosion:move_earthquake",
+        "morty_gengar_vs_kadabra_destiny_bond:move_shadow_ball:move_destiny_bond"
+      ],
+      "status": "candidate"
+    },
+    {
+      "applies_to": {
+        "excluded_when": [
+          "setup_loses_same_damage_race"
+        ],
+        "move_properties": [
+          "setup"
+        ],
+        "required_when": [
+          "boss_faster_or_survives",
+          "setup_changes_ko_math"
+        ]
+      },
+      "expected_direction": "encourage",
+      "human_summary": "Setup is good when it keeps or improves the damage race, not merely because setup is boss-flavored.",
+      "lesson_id": "setup_requires_damage_race",
+      "lesson_type": "weight_hint",
+      "rom_target": "tools/boss_ai_preference/reward_model.py",
+      "source_preference_ids": [
+        "bugsy_scyther_vs_quilava_fire_pressure:move_swords_dance:move_wing_attack",
+        "clair_kingdra_vs_lapras_dragon_dance_or_attack:move_dragon_dance:move_surf",
+        "lance_dragonite_vs_suicune_champion_ace:move_dragon_dance:move_outrage",
+        "whitney_clefairy_vs_bayleef_encore_window:move_double_team:move_encore"
+      ],
+      "status": "candidate"
+    },
+    {
+      "applies_to": {
+        "excluded_when": [
+          "debuff_already_landed",
+          "target_can_switch_reset"
+        ],
+        "move_properties": [
+          "accuracy_debuff"
+        ]
+      },
+      "expected_direction": "mixed",
+      "human_summary": "One accuracy debuff can be correct when direct chip is worthless, but repeated debuffs lose value because switching clears them.",
+      "lesson_id": "single_debuff_then_attack",
+      "lesson_type": "sequence_policy",
+      "rom_target": "engine/battle/ai/scoring.asm",
+      "source_preference_ids": [
+        "falkner_pidgeotto_vs_geodude_rock_risk:move_gust:move_sand_attack"
+      ],
+      "status": "candidate"
+    },
+    {
+      "applies_to": {
+        "excluded_when": [
+          "sleep_clause_occupied",
+          "safeguard",
+          "substitute"
+        ],
+        "move_properties": [
+          "sleep"
+        ],
+        "required_when": [
+          "sleep_clause_free",
+          "target_not_statused"
+        ]
+      },
+      "expected_direction": "encourage",
+      "human_summary": "Sleep is strong legal pressure, but fail states and Sleep Clause must gate it before taste scoring runs.",
+      "lesson_id": "sleep_pressure_clause_gated",
+      "lesson_type": "hard_rule",
+      "rom_target": "engine/battle/ai/scoring.asm",
+      "source_preference_ids": [
+        "lance_yanma_vs_lapras_sleep_powder_or_quiver_dance:move_sleep_powder:move_giga_drain",
+        "lance_yanma_vs_lapras_sleep_powder_or_quiver_dance:move_sleep_powder:move_quiver_dance",
+        "lance_yanma_vs_lapras_sleep_powder_or_quiver_dance:move_sleep_powder:switch_kingdra",
+        "morty_haunter_vs_noctowl_sleep_line:move_hypnosis:move_night_shade"
+      ],
+      "status": "candidate"
+    },
+    {
+      "applies_to": {
+        "excluded_when": [
+          "threat_is_revealed_and_damage_wins_now"
+        ],
+        "plan_properties": [
+          "probe",
+          "public_belief",
+          "hidden_coverage_plausible"
+        ],
+        "required_when": [
+          "ace_commitment_is_risky"
+        ]
+      },
+      "expected_direction": "mixed",
+      "human_summary": "Trajectory labels should teach when one scout/probe turn is worth more than immediate ace commitment.",
+      "lesson_id": "trajectory_scout_probe_boundary",
+      "lesson_type": "scout_policy",
+      "rom_target": "tools/boss_ai_preference/rollouts.py",
+      "source_preference_ids": [
+        "trajectory:falkner_pidgeotto_vs_geodude_rock_risk:plan_falkner_pidgeotto_vs_geodude_rock_risk_scout_probe_then_commit_move_sand_attack_move_gust:plan_falkner_pidgeotto_vs_geodude_rock_risk_attack_now_move_gust_move_gust",
+        "trajectory:falkner_pidgeotto_vs_geodude_rock_risk:plan_falkner_pidgeotto_vs_geodude_rock_risk_scout_probe_then_commit_move_sand_attack_move_gust:plan_falkner_pidgeotto_vs_geodude_rock_risk_switch_preserve_then_rescore_switch_noctowl_move_gust",
+        "trajectory:whitney_miltank_vs_geodude_rollout_temptation:plan_whitney_miltank_vs_geodude_rollout_temptation_attack_now_move_body_slam_move_body_slam:plan_whitney_miltank_vs_geodude_rollout_temptation_scout_probe_then_commit_move_milk_drink_move_body_slam",
+        "trajectory:whitney_miltank_vs_geodude_rollout_temptation:plan_whitney_miltank_vs_geodude_rollout_temptation_scout_probe_then_commit_move_milk_drink_move_body_slam:plan_whitney_miltank_vs_geodude_rollout_temptation_recover_until_safe_move_milk_drink_move_body_slam",
+        "trajectory:whitney_miltank_vs_geodude_rollout_temptation:plan_whitney_miltank_vs_geodude_rollout_temptation_scout_probe_then_commit_move_milk_drink_move_body_slam:plan_whitney_miltank_vs_geodude_rollout_temptation_switch_preserve_then_rescore_switch_girafarig_move_body_slam"
+      ],
+      "status": "candidate"
+    },
+    {
+      "applies_to": {
+        "excluded_when": [
+          "stop_condition_reached"
+        ],
+        "plan_properties": [
+          "setup",
+          "status",
+          "lock",
+          "repeat_until"
+        ],
+        "required_when": [
+          "explicit_human_trajectory_preference"
+        ]
+      },
+      "expected_direction": "mixed",
+      "human_summary": "Multi-turn labels should teach bounded setup/status/lock lines with explicit branch and stop conditions instead of raw move weights.",
+      "lesson_id": "trajectory_sequence_policy_boundary",
+      "lesson_type": "sequence_policy",
+      "rom_target": "tools/boss_ai_preference/plans.py",
+      "source_preference_ids": [
+        "trajectory:brock_golem_vs_vaporeon_explosion_question:plan_brock_golem_vs_vaporeon_explosion_question_sacrifice_trade_for_clean_switch_move_explosion_move_explosion:plan_brock_golem_vs_vaporeon_explosion_question_setup_once_then_attack_move_curse_move_explosion",
+        "trajectory:brock_golem_vs_vaporeon_explosion_question:plan_brock_golem_vs_vaporeon_explosion_question_sacrifice_trade_for_clean_switch_move_explosion_move_explosion:plan_brock_golem_vs_vaporeon_explosion_question_switch_preserve_then_rescore_switch_omastar_move_explosion",
+        "trajectory:bugsy_scyther_vs_quilava_fire_pressure:plan_bugsy_scyther_vs_quilava_fire_pressure_setup_once_then_attack_move_swords_dance_move_wing_attack:plan_bugsy_scyther_vs_quilava_fire_pressure_attack_now_move_wing_attack_move_wing_attack",
+        "trajectory:bugsy_scyther_vs_quilava_fire_pressure:plan_bugsy_scyther_vs_quilava_fire_pressure_setup_once_then_attack_move_swords_dance_move_wing_attack:plan_bugsy_scyther_vs_quilava_fire_pressure_switch_preserve_then_rescore_switch_ledian_move_wing_attack",
+        "trajectory:chuck_poliwrath_vs_pidgeotto_ice_punch:plan_chuck_poliwrath_vs_pidgeotto_ice_punch_switch_preserve_then_rescore_switch_sudowoodo_move_focus_punch:plan_chuck_poliwrath_vs_pidgeotto_ice_punch_attack_now_move_focus_punch_move_focus_punch",
+        "trajectory:chuck_poliwrath_vs_pidgeotto_ice_punch:plan_chuck_poliwrath_vs_pidgeotto_ice_punch_switch_preserve_then_rescore_switch_sudowoodo_move_focus_punch:plan_chuck_poliwrath_vs_pidgeotto_ice_punch_status_once_then_attack_move_hypnosis_move_focus_punch",
+        "trajectory:clair_dragonair_vs_suicune_hidden_ice_beam:plan_clair_dragonair_vs_suicune_hidden_ice_beam_attack_now_move_thunder_move_thunder:plan_clair_dragonair_vs_suicune_hidden_ice_beam_switch_preserve_then_rescore_switch_kingdra_move_thunder",
+        "trajectory:clair_kingdra_vs_lapras_dragon_dance_or_attack:plan_clair_kingdra_vs_lapras_dragon_dance_or_attack_setup_once_then_attack_move_dragon_dance_move_outrage:plan_clair_kingdra_vs_lapras_dragon_dance_or_attack_attack_now_move_outrage_move_outrage",
+        "trajectory:erika_victreebel_vs_snorlax_sleep_or_boost:plan_erika_victreebel_vs_snorlax_sleep_or_boost_attack_now_move_sludge_bomb_move_sludge_bomb:plan_erika_victreebel_vs_snorlax_sleep_or_boost_setup_once_then_attack_move_swords_dance_move_sludge_bomb",
+        "trajectory:erika_victreebel_vs_snorlax_sleep_or_boost:plan_erika_victreebel_vs_snorlax_sleep_or_boost_attack_now_move_sludge_bomb_move_sludge_bomb:plan_erika_victreebel_vs_snorlax_sleep_or_boost_status_once_then_attack_move_sleep_powder_move_sludge_bomb",
+        "trajectory:erika_victreebel_vs_snorlax_sleep_or_boost:plan_erika_victreebel_vs_snorlax_sleep_or_boost_attack_now_move_sludge_bomb_move_sludge_bomb:plan_erika_victreebel_vs_snorlax_sleep_or_boost_switch_preserve_then_rescore_switch_exeggutor_move_sludge_bomb",
+        "trajectory:erika_victreebel_vs_snorlax_sleep_or_boost:plan_erika_victreebel_vs_snorlax_sleep_or_boost_setup_once_then_attack_move_swords_dance_move_sludge_bomb:plan_erika_victreebel_vs_snorlax_sleep_or_boost_status_once_then_attack_move_sleep_powder_move_sludge_bomb",
+        "trajectory:erika_victreebel_vs_snorlax_sleep_or_boost:plan_erika_victreebel_vs_snorlax_sleep_or_boost_setup_once_then_attack_move_swords_dance_move_sludge_bomb:plan_erika_victreebel_vs_snorlax_sleep_or_boost_switch_preserve_then_rescore_switch_exeggutor_move_sludge_bomb",
+        "trajectory:erika_victreebel_vs_snorlax_sleep_or_boost:plan_erika_victreebel_vs_snorlax_sleep_or_boost_status_once_then_attack_move_sleep_powder_move_sludge_bomb:plan_erika_victreebel_vs_snorlax_sleep_or_boost_switch_preserve_then_rescore_switch_exeggutor_move_sludge_bomb",
+        "trajectory:falkner_pidgeotto_vs_geodude_rock_risk:plan_falkner_pidgeotto_vs_geodude_rock_risk_scout_probe_then_commit_move_sand_attack_move_gust:plan_falkner_pidgeotto_vs_geodude_rock_risk_attack_now_move_gust_move_gust",
+        "trajectory:falkner_pidgeotto_vs_geodude_rock_risk:plan_falkner_pidgeotto_vs_geodude_rock_risk_scout_probe_then_commit_move_sand_attack_move_gust:plan_falkner_pidgeotto_vs_geodude_rock_risk_switch_preserve_then_rescore_switch_noctowl_move_gust",
+        "trajectory:lance_dragonite_vs_suicune_champion_ace:plan_lance_dragonite_vs_suicune_champion_ace_switch_preserve_then_rescore_switch_kingdra_move_outrage:plan_lance_dragonite_vs_suicune_champion_ace_attack_now_move_outrage_move_outrage",
+        "trajectory:lance_dragonite_vs_suicune_champion_ace:plan_lance_dragonite_vs_suicune_champion_ace_switch_preserve_then_rescore_switch_kingdra_move_outrage:plan_lance_dragonite_vs_suicune_champion_ace_setup_once_then_attack_move_dragon_dance_move_outrage",
+        "trajectory:lance_yanma_vs_lapras_sleep_powder_or_quiver_dance:plan_lance_yanma_vs_lapras_sleep_powder_or_quiver_dance_attack_now_move_giga_drain_move_giga_drain:plan_lance_yanma_vs_lapras_sleep_powder_or_quiver_dance_status_once_then_attack_move_sleep_powder_move_giga_drain",
+        "trajectory:lance_yanma_vs_lapras_sleep_powder_or_quiver_dance:plan_lance_yanma_vs_lapras_sleep_powder_or_quiver_dance_attack_now_move_giga_drain_move_giga_drain:plan_lance_yanma_vs_lapras_sleep_powder_or_quiver_dance_switch_preserve_then_rescore_switch_kingdra_move_giga_drain",
+        "trajectory:lance_yanma_vs_lapras_sleep_powder_or_quiver_dance:plan_lance_yanma_vs_lapras_sleep_powder_or_quiver_dance_status_once_then_attack_move_sleep_powder_move_giga_drain:plan_lance_yanma_vs_lapras_sleep_powder_or_quiver_dance_switch_preserve_then_rescore_switch_kingdra_move_giga_drain",
+        "trajectory:morty_gengar_vs_kadabra_destiny_bond:plan_morty_gengar_vs_kadabra_destiny_bond_attack_now_move_shadow_ball_move_shadow_ball:plan_morty_gengar_vs_kadabra_destiny_bond_switch_preserve_then_rescore_switch_misdreavus_move_shadow_ball",
+        "trajectory:pryce_slowking_vs_ampharos_ground_pivot:plan_pryce_slowking_vs_ampharos_ground_pivot_switch_preserve_then_rescore_switch_piloswine_move_surf:plan_pryce_slowking_vs_ampharos_ground_pivot_attack_now_move_surf_move_surf",
+        "trajectory:pryce_slowking_vs_ampharos_ground_pivot:plan_pryce_slowking_vs_ampharos_ground_pivot_switch_preserve_then_rescore_switch_piloswine_move_surf:plan_pryce_slowking_vs_ampharos_ground_pivot_recover_until_safe_move_rest_move_surf",
+        "trajectory:pryce_slowking_vs_ampharos_ground_pivot:plan_pryce_slowking_vs_ampharos_ground_pivot_switch_preserve_then_rescore_switch_piloswine_move_surf:plan_pryce_slowking_vs_ampharos_ground_pivot_speed_control_then_attack_move_thunder_wave_move_surf",
+        "trajectory:whitney_miltank_vs_geodude_rollout_temptation:plan_whitney_miltank_vs_geodude_rollout_temptation_attack_now_move_body_slam_move_body_slam:plan_whitney_miltank_vs_geodude_rollout_temptation_recover_until_safe_move_milk_drink_move_body_slam",
+        "trajectory:whitney_miltank_vs_geodude_rollout_temptation:plan_whitney_miltank_vs_geodude_rollout_temptation_attack_now_move_body_slam_move_body_slam:plan_whitney_miltank_vs_geodude_rollout_temptation_scout_probe_then_commit_move_milk_drink_move_body_slam",
+        "trajectory:whitney_miltank_vs_geodude_rollout_temptation:plan_whitney_miltank_vs_geodude_rollout_temptation_attack_now_move_body_slam_move_body_slam:plan_whitney_miltank_vs_geodude_rollout_temptation_switch_preserve_then_rescore_switch_girafarig_move_body_slam",
+        "trajectory:whitney_miltank_vs_geodude_rollout_temptation:plan_whitney_miltank_vs_geodude_rollout_temptation_scout_probe_then_commit_move_milk_drink_move_body_slam:plan_whitney_miltank_vs_geodude_rollout_temptation_recover_until_safe_move_milk_drink_move_body_slam",
+        "trajectory:whitney_miltank_vs_geodude_rollout_temptation:plan_whitney_miltank_vs_geodude_rollout_temptation_scout_probe_then_commit_move_milk_drink_move_body_slam:plan_whitney_miltank_vs_geodude_rollout_temptation_switch_preserve_then_rescore_switch_girafarig_move_body_slam",
+        "trajectory:whitney_miltank_vs_geodude_rollout_temptation:plan_whitney_miltank_vs_geodude_rollout_temptation_switch_preserve_then_rescore_switch_girafarig_move_body_slam:plan_whitney_miltank_vs_geodude_rollout_temptation_recover_until_safe_move_milk_drink_move_body_slam"
+      ],
+      "status": "candidate"
+    },
+    {
+      "applies_to": {
+        "excluded_when": [
+          "switch_in_bad_fit"
+        ],
+        "plan_properties": [
+          "switch_preserve",
+          "clean_switch"
+        ],
+        "required_when": [
+          "preserve_value_exceeds_tempo_loss"
+        ]
+      },
+      "expected_direction": "mixed",
+      "human_summary": "Trajectory labels should distinguish useful preservation switches from passive switching that gives up the fight.",
+      "lesson_id": "trajectory_switch_preserve_boundary",
+      "lesson_type": "switch_policy",
+      "rom_target": "tools/boss_ai_preference/proposals.py",
+      "source_preference_ids": [
+        "trajectory:brock_golem_vs_vaporeon_explosion_question:plan_brock_golem_vs_vaporeon_explosion_question_sacrifice_trade_for_clean_switch_move_explosion_move_explosion:plan_brock_golem_vs_vaporeon_explosion_question_attack_now_move_explosion_move_explosion",
+        "trajectory:brock_golem_vs_vaporeon_explosion_question:plan_brock_golem_vs_vaporeon_explosion_question_sacrifice_trade_for_clean_switch_move_explosion_move_explosion:plan_brock_golem_vs_vaporeon_explosion_question_setup_once_then_attack_move_curse_move_explosion",
+        "trajectory:brock_golem_vs_vaporeon_explosion_question:plan_brock_golem_vs_vaporeon_explosion_question_sacrifice_trade_for_clean_switch_move_explosion_move_explosion:plan_brock_golem_vs_vaporeon_explosion_question_switch_preserve_then_rescore_switch_omastar_move_explosion",
+        "trajectory:bugsy_scyther_vs_quilava_fire_pressure:plan_bugsy_scyther_vs_quilava_fire_pressure_setup_once_then_attack_move_swords_dance_move_wing_attack:plan_bugsy_scyther_vs_quilava_fire_pressure_attack_now_move_wing_attack_move_wing_attack",
+        "trajectory:bugsy_scyther_vs_quilava_fire_pressure:plan_bugsy_scyther_vs_quilava_fire_pressure_setup_once_then_attack_move_swords_dance_move_wing_attack:plan_bugsy_scyther_vs_quilava_fire_pressure_switch_preserve_then_rescore_switch_ledian_move_wing_attack",
+        "trajectory:chuck_poliwrath_vs_pidgeotto_ice_punch:plan_chuck_poliwrath_vs_pidgeotto_ice_punch_switch_preserve_then_rescore_switch_sudowoodo_move_focus_punch:plan_chuck_poliwrath_vs_pidgeotto_ice_punch_attack_now_move_focus_punch_move_focus_punch",
+        "trajectory:chuck_poliwrath_vs_pidgeotto_ice_punch:plan_chuck_poliwrath_vs_pidgeotto_ice_punch_switch_preserve_then_rescore_switch_sudowoodo_move_focus_punch:plan_chuck_poliwrath_vs_pidgeotto_ice_punch_status_once_then_attack_move_hypnosis_move_focus_punch",
+        "trajectory:clair_dragonair_vs_suicune_hidden_ice_beam:plan_clair_dragonair_vs_suicune_hidden_ice_beam_attack_now_move_thunder_move_thunder:plan_clair_dragonair_vs_suicune_hidden_ice_beam_commit_lock_only_if_safe_move_outrage_move_thunder",
+        "trajectory:clair_dragonair_vs_suicune_hidden_ice_beam:plan_clair_dragonair_vs_suicune_hidden_ice_beam_attack_now_move_thunder_move_thunder:plan_clair_dragonair_vs_suicune_hidden_ice_beam_switch_preserve_then_rescore_switch_kingdra_move_thunder",
+        "trajectory:erika_victreebel_vs_snorlax_sleep_or_boost:plan_erika_victreebel_vs_snorlax_sleep_or_boost_attack_now_move_sludge_bomb_move_sludge_bomb:plan_erika_victreebel_vs_snorlax_sleep_or_boost_switch_preserve_then_rescore_switch_exeggutor_move_sludge_bomb",
+        "trajectory:erika_victreebel_vs_snorlax_sleep_or_boost:plan_erika_victreebel_vs_snorlax_sleep_or_boost_setup_once_then_attack_move_swords_dance_move_sludge_bomb:plan_erika_victreebel_vs_snorlax_sleep_or_boost_switch_preserve_then_rescore_switch_exeggutor_move_sludge_bomb",
+        "trajectory:erika_victreebel_vs_snorlax_sleep_or_boost:plan_erika_victreebel_vs_snorlax_sleep_or_boost_status_once_then_attack_move_sleep_powder_move_sludge_bomb:plan_erika_victreebel_vs_snorlax_sleep_or_boost_switch_preserve_then_rescore_switch_exeggutor_move_sludge_bomb",
+        "trajectory:falkner_pidgeotto_vs_geodude_rock_risk:plan_falkner_pidgeotto_vs_geodude_rock_risk_scout_probe_then_commit_move_sand_attack_move_gust:plan_falkner_pidgeotto_vs_geodude_rock_risk_attack_now_move_gust_move_gust",
+        "trajectory:falkner_pidgeotto_vs_geodude_rock_risk:plan_falkner_pidgeotto_vs_geodude_rock_risk_scout_probe_then_commit_move_sand_attack_move_gust:plan_falkner_pidgeotto_vs_geodude_rock_risk_switch_preserve_then_rescore_switch_noctowl_move_gust",
+        "trajectory:lance_dragonite_vs_suicune_champion_ace:plan_lance_dragonite_vs_suicune_champion_ace_switch_preserve_then_rescore_switch_kingdra_move_outrage:plan_lance_dragonite_vs_suicune_champion_ace_attack_now_move_outrage_move_outrage",
+        "trajectory:lance_dragonite_vs_suicune_champion_ace:plan_lance_dragonite_vs_suicune_champion_ace_switch_preserve_then_rescore_switch_kingdra_move_outrage:plan_lance_dragonite_vs_suicune_champion_ace_setup_once_then_attack_move_dragon_dance_move_outrage",
+        "trajectory:lance_yanma_vs_lapras_sleep_powder_or_quiver_dance:plan_lance_yanma_vs_lapras_sleep_powder_or_quiver_dance_attack_now_move_giga_drain_move_giga_drain:plan_lance_yanma_vs_lapras_sleep_powder_or_quiver_dance_switch_preserve_then_rescore_switch_kingdra_move_giga_drain",
+        "trajectory:lance_yanma_vs_lapras_sleep_powder_or_quiver_dance:plan_lance_yanma_vs_lapras_sleep_powder_or_quiver_dance_status_once_then_attack_move_sleep_powder_move_giga_drain:plan_lance_yanma_vs_lapras_sleep_powder_or_quiver_dance_switch_preserve_then_rescore_switch_kingdra_move_giga_drain",
+        "trajectory:morty_gengar_vs_kadabra_destiny_bond:plan_morty_gengar_vs_kadabra_destiny_bond_attack_now_move_shadow_ball_move_shadow_ball:plan_morty_gengar_vs_kadabra_destiny_bond_sacrifice_trade_for_clean_switch_move_destiny_bond_move_shadow_ball",
+        "trajectory:morty_gengar_vs_kadabra_destiny_bond:plan_morty_gengar_vs_kadabra_destiny_bond_attack_now_move_shadow_ball_move_shadow_ball:plan_morty_gengar_vs_kadabra_destiny_bond_switch_preserve_then_rescore_switch_misdreavus_move_shadow_ball",
+        "trajectory:pryce_slowking_vs_ampharos_ground_pivot:plan_pryce_slowking_vs_ampharos_ground_pivot_switch_preserve_then_rescore_switch_piloswine_move_surf:plan_pryce_slowking_vs_ampharos_ground_pivot_attack_now_move_surf_move_surf",
+        "trajectory:pryce_slowking_vs_ampharos_ground_pivot:plan_pryce_slowking_vs_ampharos_ground_pivot_switch_preserve_then_rescore_switch_piloswine_move_surf:plan_pryce_slowking_vs_ampharos_ground_pivot_recover_until_safe_move_rest_move_surf",
+        "trajectory:pryce_slowking_vs_ampharos_ground_pivot:plan_pryce_slowking_vs_ampharos_ground_pivot_switch_preserve_then_rescore_switch_piloswine_move_surf:plan_pryce_slowking_vs_ampharos_ground_pivot_speed_control_then_attack_move_thunder_wave_move_surf",
+        "trajectory:whitney_miltank_vs_geodude_rollout_temptation:plan_whitney_miltank_vs_geodude_rollout_temptation_attack_now_move_body_slam_move_body_slam:plan_whitney_miltank_vs_geodude_rollout_temptation_recover_until_safe_move_milk_drink_move_body_slam",
+        "trajectory:whitney_miltank_vs_geodude_rollout_temptation:plan_whitney_miltank_vs_geodude_rollout_temptation_attack_now_move_body_slam_move_body_slam:plan_whitney_miltank_vs_geodude_rollout_temptation_scout_probe_then_commit_move_milk_drink_move_body_slam",
+        "trajectory:whitney_miltank_vs_geodude_rollout_temptation:plan_whitney_miltank_vs_geodude_rollout_temptation_attack_now_move_body_slam_move_body_slam:plan_whitney_miltank_vs_geodude_rollout_temptation_switch_preserve_then_rescore_switch_girafarig_move_body_slam",
+        "trajectory:whitney_miltank_vs_geodude_rollout_temptation:plan_whitney_miltank_vs_geodude_rollout_temptation_scout_probe_then_commit_move_milk_drink_move_body_slam:plan_whitney_miltank_vs_geodude_rollout_temptation_recover_until_safe_move_milk_drink_move_body_slam",
+        "trajectory:whitney_miltank_vs_geodude_rollout_temptation:plan_whitney_miltank_vs_geodude_rollout_temptation_scout_probe_then_commit_move_milk_drink_move_body_slam:plan_whitney_miltank_vs_geodude_rollout_temptation_switch_preserve_then_rescore_switch_girafarig_move_body_slam",
+        "trajectory:whitney_miltank_vs_geodude_rollout_temptation:plan_whitney_miltank_vs_geodude_rollout_temptation_switch_preserve_then_rescore_switch_girafarig_move_body_slam:plan_whitney_miltank_vs_geodude_rollout_temptation_recover_until_safe_move_milk_drink_move_body_slam"
+      ],
+      "status": "candidate"
+    }
+  ],
+  "manual_lesson_count": 0,
+  "preference_count": 20,
+  "stale_direct_actions": [],
+  "trajectory_count": 34
+}
