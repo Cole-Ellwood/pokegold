@@ -1,6 +1,6 @@
 	db TANGELA ; 114
 
-	db 130,  55, 115,  60, 100,  60
+	db 130,  55, 115,  50, 100,  50
 	;   hp  atk  def  spd  sat  sdf
 
 	db GRASS, GRASS ; type

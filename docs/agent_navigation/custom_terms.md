@@ -8,7 +8,7 @@ feature category.
 
 | Term helpers | Meaning | Primary route |
 | --- | --- | --- |
-| `Type Passive V1`, type passives, Dragon's Majesty, Imperial Scales | Type-based passive damage/status/accuracy mechanics. | `docs/mechanics_changes_from_base.md`, `engine/battle/type_passive_damage_mods.asm` |
+| `Type Passive V1`, type passives, Dragon's Majesty, Imperial Scales | Type-based passive damage/status/accuracy mechanics. | `docs/agent_navigation/hack_mechanics_reference.md`, `docs/mechanics_changes_from_base.md`, `engine/battle/type_passive_damage_mods.asm` |
 | Dragon-only Outrage category exception, effective category | Dragon users can make `OUTRAGE` use physical category under defined stat conditions. | `docs/mechanics_changes_from_base.md`, `engine/battle/core.asm`, `engine/battle/type_passive_damage_mods.asm` |
 | Spikes layers, Rapid Spin rework | Three-layer Spikes and full Rapid Spin clearing. | `engine/battle/move_effects/spikes.asm`, `engine/battle/move_effects/rapid_spin.asm` |
 | Contact flags, Rocky Helmet, Poison retaliation | Gen 6-style contact table used by multiple battle effects. | `data/moves/contact_flags.asm`, `engine/battle/type_passive_damage_mods.asm` |

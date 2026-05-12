@@ -24,21 +24,24 @@ player can lose, and old knowledge is useful but incomplete.
 
 ## Required Read Order
 
-1. `docs/agent_navigation/gen2_vs_modern_mechanics.md`: Gen 2 mechanics
-   reference — read before any mechanics, balance, AI, moveset, item, or
-   stat claim, to prevent modern-Pokemon prior bleed.
-2. `docs/README.md`: helper-doc routing and precedence.
-3. `docs/project_context.md`: First-Playthrough Promise, design constraints,
+1. `docs/agent_navigation/hack_mechanics_reference.md`: source-derived
+   mechanics lookup for type matchups, move categories/data, item attributes,
+   and Pokemon stats. Read before any mechanics, balance, AI, moveset, item,
+   or stat claim.
+2. `docs/agent_navigation/gen2_vs_modern_mechanics.md`: Gen 2 vs modern
+   mechanics drift guide. Use it with the source-derived reference above.
+3. `docs/README.md`: helper-doc routing and precedence.
+4. `docs/project_context.md`: First-Playthrough Promise, design constraints,
    done criteria.
-4. `docs/project_map.md`: task-to-source routing.
-5. `docs/project_roadmap.md`: current project workstreams and future-session
+5. `docs/project_map.md`: task-to-source routing.
+6. `docs/project_roadmap.md`: current project workstreams and future-session
    status board.
-6. `docs/agent_navigation/start_card.md`: one-screen lane picker for broad or
+7. `docs/agent_navigation/start_card.md`: one-screen lane picker for broad or
    ambiguous prompts.
-7. `docs/agent_navigation/README.md`: constant-time task routing, source-zone
+8. `docs/agent_navigation/README.md`: constant-time task routing, source-zone
    classification, verification matrix, and durable artifact catalog.
-8. `docs/generated/dev_index.md`: current banks, labels, source anchors, memory.
-9. Task-specific docs:
+9. `docs/generated/dev_index.md`: current banks, labels, source anchors, memory.
+10. Task-specific docs:
    - Boss AI / trainer difficulty: `docs/boss_ai_spec.md`,
      `docs/boss_ai_bug_testing_plan.md`
    - Review / bug hunt: `docs/review_playbook.md`,
@@ -142,4 +145,22 @@ or evolution edits:
 
 ```powershell
 python scripts\generate_balance_audit.py
+```
+
+Regenerate the source-derived mechanics reference after changes to mechanics,
+move data, item attributes, type matchups, or base stats:
+
+```powershell
+python scripts\generate_hack_mechanics_reference.py
+python tools\audit\check_mechanics_docs_and_fixtures.py
+```
+
+Regenerate the player-facing trainer dossier PDF (gym leaders + Elite 4 +
+Champion teams, Pokemon Showdown style — name, level, item, full moveset, base
+stats with bars) after edits to `data/trainers/parties.asm` for any boss
+trainer or after relevant base-stat edits. Output is `docs/trainer_dossier.pdf`.
+
+```powershell
+python -m pip install reportlab Pillow   # one-time install
+python scripts\generate_trainer_dossier_pdf.py
 ```

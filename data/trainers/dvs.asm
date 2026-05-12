@@ -22,7 +22,7 @@ TrainerClassDVs:
 	dn  7,  8,  8,  8 ; MISTY
 	dn  9,  8,  8,  8 ; LT_SURGE
 	dn  9,  8,  8,  8 ; SCIENTIST
-	dn  7,  8,  8,  8 ; ERIKA
+	dn 10,  8,  8,  8 ; ERIKA — atk DV 10 still yields 68 BP HP Fire for Bellossom while keeping the class-wide Atk bump smaller
 	dn  9,  8,  8,  8 ; YOUNGSTER
 	dn  9,  8,  8,  8 ; SCHOOLBOY
 	dn  9,  8,  8,  8 ; BIRD_KEEPER

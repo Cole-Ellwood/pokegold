@@ -44,7 +44,7 @@ The arc:
 | Move | Power | Gate | Mechanism |
 |---|---|---|---|
 | **Outrage** | 100 BP, 2-3 turn lock + confusion on lock-out | Level-up at **L55** on every Dragon (post-Lance / pre-Kanto-leaders); *plus* one-time TM from Clair after gym victory | TM50 is Dragon-type-restricted (step-3 commit `a10a8454`); level-up entries set per Dragon line |
-| **Dragon Dance** | +1 Atk / +1 Spe | Level-up at **L30+** on every Dragon | Level-up move only — never a TM in this hack |
+| **Dragon Dance** | +1 to best-attack stat (max of Atk and SpA) / +1 Spe | Level-up at **L30+** on every Dragon | Level-up move only — never a TM in this hack. Effect script in `data/moves/effects.asm` uses `bestattackup` not `attackup`, so it pairs cleanly with Outrage's category-flip rule — Dragon Dance always boosts whichever stat Outrage will run off for that user. |
 
 Non-Dragons must not have access to either move — with three named
 legendary-flavor exceptions documented below. No other exceptions.

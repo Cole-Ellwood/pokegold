@@ -10,9 +10,11 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import io
 import re
 import subprocess
 import sys
+import tarfile
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -105,6 +107,29 @@ def git_text(ref: str, path: str | Path) -> str | None:
     if proc.returncode != 0:
         return None
     return proc.stdout
+
+
+def git_archive_texts(ref: str, tree_path: str | Path) -> dict[str, str]:
+    posix = Path(tree_path).as_posix()
+    proc = subprocess.run(
+        ["git", "-C", str(ROOT), "archive", "--format=tar", ref, posix],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    if proc.returncode != 0:
+        return {}
+
+    texts: dict[str, str] = {}
+    with tarfile.open(fileobj=io.BytesIO(proc.stdout), mode="r:") as archive:
+        for member in archive.getmembers():
+            if not member.isfile() or not member.name.endswith(".asm"):
+                continue
+            extracted = archive.extractfile(member)
+            if extracted is None:
+                continue
+            texts[member.name] = extracted.read().decode("utf-8")
+    return texts
 
 
 def parse_species_order(text: str) -> list[str]:
@@ -211,9 +236,15 @@ def parse_base_stats_file(text: str) -> tuple[str, BaseStats] | None:
 
 def parse_base_stats(ref: str | None = None) -> dict[str, BaseStats]:
     parsed: dict[str, BaseStats] = {}
-    for path in sorted((ROOT / "data/pokemon/base_stats").glob("*.asm")):
-        rel = path.relative_to(ROOT)
-        text = git_text(ref, rel) if ref else path.read_text(encoding="utf-8")
+    if ref:
+        texts = git_archive_texts(ref, "data/pokemon/base_stats")
+    else:
+        texts = {
+            path.relative_to(ROOT).as_posix(): path.read_text(encoding="utf-8")
+            for path in sorted((ROOT / "data/pokemon/base_stats").glob("*.asm"))
+        }
+
+    for _path, text in sorted(texts.items()):
         if text is None:
             continue
         entry = parse_base_stats_file(text)
@@ -380,7 +411,7 @@ def markdown_move(entry: tuple[str, Move] | None) -> str:
     return f"{name} ({move.move_type} {move.power}bp {move.accuracy}%)"
 
 
-def generate_report(baseline_ref: str, out_path: Path) -> None:
+def build_report(baseline_ref: str) -> str:
     species_order = parse_species_order(repo_text("constants/pokemon_constants.asm"))
     labels = parse_evos_pointer_labels(repo_text("data/pokemon/evos_attacks_pointers.asm"))
     label_to_species = {
@@ -530,8 +561,13 @@ def generate_report(baseline_ref: str, out_path: Path) -> None:
     append_rows(lines, final_rows)
     lines.append("")
 
+    return "\n".join(lines)
+
+
+def generate_report(baseline_ref: str, out_path: Path) -> None:
+    report = build_report(baseline_ref)
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text("\n".join(lines), encoding="utf-8")
+    out_path.write_text(report, encoding="utf-8")
 
 
 def append_rows(lines: list[str], rows: list[dict[str, object]]) -> None:
@@ -590,8 +626,16 @@ def main(argv: list[str]) -> int:
         default="docs/generated/balance_audit.md",
         help="output markdown path",
     )
+    parser.add_argument(
+        "--stdout",
+        action="store_true",
+        help="write generated Markdown to stdout instead of --out",
+    )
     args = parser.parse_args(argv)
-    generate_report(args.baseline_ref, ROOT / args.out)
+    if args.stdout:
+        sys.stdout.write(build_report(args.baseline_ref))
+    else:
+        generate_report(args.baseline_ref, ROOT / args.out)
     return 0
 
 

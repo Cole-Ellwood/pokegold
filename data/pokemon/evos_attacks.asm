@@ -395,11 +395,11 @@ SandslashEvosAttacks:
 NidoranFEvosAttacks:
 	db EVOLVE_LEVEL, 16, NIDORINA
 	db 0 ; no more evolutions
+	db 1, POISON_STING
 	db 1, GROWL
 	db 1, TACKLE
 	db 8, SCRATCH
 	db 12, DOUBLE_KICK
-	db 17, POISON_STING
 	db 23, TAIL_WHIP
 	db 30, BITE
 	db 38, FURY_SWIPES
@@ -433,11 +433,11 @@ NidoqueenEvosAttacks:
 NidoranMEvosAttacks:
 	db EVOLVE_LEVEL, 16, NIDORINO
 	db 0 ; no more evolutions
+	db 1, POISON_STING
 	db 1, LEER
 	db 1, TACKLE
 	db 8, HORN_ATTACK
 	db 12, DOUBLE_KICK
-	db 17, POISON_STING
 	db 23, FOCUS_ENERGY
 	db 30, FURY_ATTACK
 	db 38, HORN_DRILL
@@ -518,6 +518,7 @@ NinetalesEvosAttacks:
 	db 1, SAFEGUARD
 	db 31, FLAMETHROWER
 	db 38, CALM_MIND
+	db 40, PSYCHIC_M
 	db 43, MORNING_SUN
 	db 48, FIRE_BLAST
 	db 0 ; no more level-up moves
@@ -1136,8 +1137,10 @@ MagnetonEvosAttacks:
 	db 21, THUNDER_WAVE
 	db 27, SPIKES
 	db 30, SWIFT
-	db 34, THUNDERBOLT
+	db 31, THUNDERBOLT
+	db 33, DRAGONBREATH
 	db 38, ZAP_CANNON
+	db 38, EXPLOSION
 	db 0 ; no more level-up moves
 
 FarfetchDEvosAttacks:
@@ -1311,6 +1314,7 @@ OnixEvosAttacks:
 	db 14, ROCK_THROW
 	db 20, SPIKES
 	db 27, RAGE
+	db 30, ROCK_SLIDE
 	db 36, SANDSTORM
 	db 40, SLAM
 	db 0 ; no more level-up moves
@@ -1340,6 +1344,7 @@ HypnoEvosAttacks:
 	db 10, DISABLE
 	db 16, TOXIC
 	db 18, CONFUSION
+	db 22, SEISMIC_TOSS
 	db 25, HEADBUTT
 	db 33, DREAM_EATER
 	db 39, PSYCHIC_M
@@ -2147,7 +2152,7 @@ CyndaquilEvosAttacks:
 	db 6, SMOKESCREEN
 	db 7, EMBER
 	db 19, QUICK_ATTACK
-	db 27, FLAME_WHEEL
+	db 27, FLAMETHROWER
 	db 36, SWIFT
 	db 46, FLAMETHROWER
 	db 0 ; no more level-up moves
@@ -2160,11 +2165,11 @@ QuilavaEvosAttacks:
 	db 1, SMOKESCREEN
 	db 6, SMOKESCREEN
 	db 12, EMBER
-	db 20, FLAMETHROWER
+	db 20, FLAME_WHEEL
 	db 21, QUICK_ATTACK
+	db 30, FLAMETHROWER
 	db 31, THUNDERPUNCH
 	db 42, SWIFT
-	db 54, FLAMETHROWER
 	db 0 ; no more level-up moves
 
 TyphlosionEvosAttacks:
@@ -2177,6 +2182,7 @@ TyphlosionEvosAttacks:
 	db 12, EMBER
 	db 21, QUICK_ATTACK
 	db 31, FLAME_WHEEL
+	db 36, DOUBLE_EDGE
 	db 37, FIRE_BLAST
 	db 45, ANCIENTPOWER
 	db 0 ; no more level-up moves
@@ -2259,7 +2265,7 @@ HoothootEvosAttacks:
 	db 16, HYPNOSIS
 	db 22, REFLECT
 	db 28, TAKE_DOWN
-	db 34, CONFUSION
+	db 34, PSYCHIC_M
 	db 48, DREAM_EATER
 	db 0 ; no more level-up moves
 
@@ -2272,9 +2278,10 @@ NoctowlEvosAttacks:
 	db 6, FORESIGHT
 	db 11, PECK
 	db 16, HYPNOSIS
-	db 20, PSYCHIC_M
+	db 20, CONFUSION
 	db 25, TOXIC
 	db 32, REST
+	db 34, PSYCHIC_M
 	db 40, CALM_MIND
 	db 0 ; no more level-up moves
 
@@ -2562,7 +2569,6 @@ PolitoedEvosAttacks:
 	db 1, DOUBLESLAP
 	db 1, PERISH_SONG
 	db 27, RAIN_DANCE
-	db 35, QUIVER_DANCE
 	db 38, HYDRO_PUMP
 	db 43, ICE_BEAM
 	db 0 ; no more level-up moves
@@ -2657,7 +2663,7 @@ YanmaEvosAttacks:
 	db 25, WING_ATTACK
 	db 31, SLEEP_POWDER
 	db 32, DRAGONBREATH
-	db 35, DRAGON_DANCE
+	db 35, QUIVER_DANCE
 	db 37, SWIFT
 	db 55, OUTRAGE
 	db 0 ; no more level-up moves
@@ -2914,8 +2920,10 @@ HeracrossEvosAttacks:
 	db 6, HORN_ATTACK
 	db 12, ENDURE
 	db 19, FURY_ATTACK
+	db 25, FOCUS_ENERGY
 	db 27, COUNTER
 	db 35, TAKE_DOWN
+	db 40, CROSS_CHOP
 	db 44, REVERSAL
 	db 54, MEGAHORN
 	db 0 ; no more level-up moves

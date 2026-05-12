@@ -11,10 +11,11 @@ here. The most recent failure mode (2026-05-02): a +Atk Houndoom proposal
 forgetting that in Gen 2 Dark is a Special-attacking type, so Crunch /
 Pursuit / Bite all run off SpA — making +Atk dead weight on Houndoom.
 
-This doc is the durable fix. Every numeric claim either points at the
-source file/label that implements it, or is marked `(verify)` inline. If
-the source says one thing and your training-data prior says another, the
-source wins, and this doc must say so.
+This doc is a durable drift guard. Numeric table lookups now live in
+`docs/agent_navigation/hack_mechanics_reference.md`; rule claims here should
+point at source file/labels when they are not already covered by that generated
+reference. If the source says one thing and your training-data prior says
+another, the source wins, and this doc must say so.
 
 This hack is built on the pret/pokegold disassembly. It is Gen 2 plus a
 hand-picked set of late-gen additions (Choice items, Assault Vest,
@@ -23,9 +24,11 @@ hand-picked set of late-gen additions (Choice items, Assault Vest,
 **Vanilla Gen 2** | **Modern (Gen 5+)** | **This hack**, where the
 third column is what actually ships and is the one you must reason from.
 
-The authoritative source for hack-specific deviations from vanilla Gen 2 is
+The source-derived quick-check table is
+`docs/agent_navigation/hack_mechanics_reference.md`. The authoritative
+summary for hack-specific deviations from vanilla Gen 2 is
 `docs/mechanics_changes_from_base.md`. This doc is the *navigation*
-reference — short rules with source-file pointers — not a replacement.
+reference -- short rules with source-file pointers -- not a replacement.
 
 ## 1. Physical / Special split — the single most-leaked rule
 
@@ -36,8 +39,8 @@ type → same offensive stat, every time, regardless of whether the move
 "feels" punchy.
 
 Source of truth: `constants/type_constants.asm`. Type constants are
-ordered so that `PHYSICAL = 0` (NORMAL is 0) and `SPECIAL = 19` (FIRE is
-19). The damage path classifies a move by comparing its type constant
+ordered so that `PHYSICAL = 0` (NORMAL is 0) and `SPECIAL = 20` (FIRE is
+20). The damage path classifies a move by comparing its type constant
 against `SPECIAL`: type < SPECIAL → physical; type >= SPECIAL → special.
 The runtime classifier is
 `TypePassive_GetEffectiveMoveCategory_Far` in
@@ -109,13 +112,13 @@ do (Dark + Fire are both special, so it has no native physical STAB).
 ## 2. Type chart
 
 - **17 types.** No Fairy. No Fairy STAB, no Fairy weakness, no "Fairy
-  resists Dark". Steel still resists Dark and Ghost (vanilla Gen 2, see
-  the matchup table source below).
+  resists Dark". Do not import modern Steel/Dark/Ghost memory: in this
+  hack Dark hits Steel neutrally and Ghost has no effect on Steel.
 
 Source of truth: `data/types/type_matchups.asm`. Read that file directly
 before asserting any matchup; do not work from training-data memory of
-"the Gen 2 type chart". The Foresight-only matchups are the second
-block, after the `db -2` sentinel.
+"the Gen 2 type chart". The second block after the `db -2` sentinel is
+the set of Ghost immunities skipped when Foresight is active.
 
 **Boss AI / preference-labeling caution.** Do not turn a general "threat"
 word into a false type claim. Example: Geodude's Magnitude is a real public
@@ -174,13 +177,12 @@ scoring auto-adapts. There are no hardcoded matchup assumptions in
 ### Stat formulas (this hack uses vanilla Gen 2 formulas)
 
 ```
-ComputedStat (non-HP) = floor((2*base + IV + EV/4) * level / 100) + 5
-ComputedHP            = floor((2*base + IV + EV/4) * level / 100) + level + 10
+ComputedStat (non-HP) = floor(((2 * (base + DV)) + floor(sqrt(StatExp) / 4)) * level / 100) + 5
+ComputedHP            = floor(((2 * (base + HP_DV)) + floor(sqrt(HPStatExp) / 4)) * level / 100) + level + 10
 ```
 
-(`EV/4` here is `floor(sqrt(StatExp)) / 4` — the IV/EV terminology in
-this doc and CLAUDE.md tracks the Gen 2-flavored simplified formula. Do
-not use Gen 3+ EVs.)
+Source: `CalcMonStatC` in `engine/pokemon/move_mon.asm`. Do not use
+Gen 3+ EVs or 0..31 IVs here.
 
 ### Stat-stage multipliers (Gen 2)
 
@@ -197,10 +199,12 @@ Note: `wEnemySpdLevel` and friends use base-7 byte encoding —
 `BASE_STAT_LEVEL = 7` is `+0`, `MAX_STAT_LEVEL = 13` is `+6`. **Do not
 read the byte as the multiplier directly.**
 
-**Trap:** the boost multiplies the +5 floor and the IV/EV contribution.
-A low-base mon at +N can outpace a high-base mon at +0. Base 50 at +2
-Speed beats base 100 at +0 Speed at level 50. See
-[CLAUDE.md](../../CLAUDE.md) "Stat math" section for the worked example.
+**Trap:** stat stages multiply the already-calculated battle stat, not
+the base stat. The boost includes the +5 floor and the DV/Stat Exp
+contribution. A base 100 Attack Pokemon at +2 is stronger than a base
+200 Attack Pokemon at +0 because +2 doubles the computed stat after the
+full formula. See [CLAUDE.md](../../CLAUDE.md) "Stat math" section for
+the worked example.
 
 ## 4. Critical hits
 
@@ -479,9 +483,9 @@ reach for and be wrong:
 - **Earth Power / Flash Cannon / Dark Pulse / Aura Sphere /
   Air Slash** (Gen 4) — absent.
 - **Bullet Punch / Ice Shard / Shadow Sneak / Aqua Jet** (Gen 4+
-  priority) — absent. Priority moves in this hack are Quick Attack
-  (+1, NORMAL), Mach Punch (+1, FIGHTING), and Extreme Speed
-  (`EXTREMESPEED`, +2 Gen 2 priority, NORMAL).
+  priority) — absent. Priority moves in this hack are Quick Attack,
+  Mach Punch, and Extreme Speed. All three share `EFFECT_PRIORITY_HIT`,
+  which is one tier above base priority in `data/moves/effects_priorities.asm`.
 - **Fairy moves** (Moonblast, Dazzling Gleam, Play Rough) — absent;
   no Fairy type.
 - **Fake Out** — absent.
@@ -490,10 +494,9 @@ reach for and be wrong:
 
 ### Moves that DO exist in this hack but are post-Gen 2 in vanilla
 
-- **Dragon Dance** (`DRAGON_DANCE`, ID `fc`): +1 Atk / +1 Spe.
-- **Calm Mind** (`CALM_MIND`, ID `fd`): +1 SpA / +1 SpD `(verify exact
-  effect bytes via data/moves/moves.asm and the EFFECT_CALM_MIND
-  handler)`.
+- **Dragon Dance** (`DRAGON_DANCE`, ID `fc`): +1 to the user's current
+  higher offensive stat via `bestattackup`, then +1 Spe. Ties raise Atk.
+- **Calm Mind** (`CALM_MIND`, ID `fd`): +1 SpA / +1 SpD.
 - **Quiver Dance** (`QUIVER_DANCE`, ID `fe`): +1 SpA / +1 SpD / +1 Spe.
   Gen 5 in vanilla.
 - **Iron Head** (`IRON_HEAD`, ID `01`): replaces vanilla Pound at
@@ -621,7 +624,8 @@ Source: `engine/battle/move_effects/rain_dance.asm`,
 - **Three weather effects:** Sunny Day, Rain Dance, Sandstorm. **NO
   Hail.** **NO weather-summoning abilities** (no abilities at all).
 - **Sun:** Fire damage ×1.5, Water damage ×0.5, SolarBeam no charge,
-  Synthesis-family heal up (§ 9), Thunder accuracy down `(verify)`.
+  Synthesis-family heal up (§ 9), Thunder accuracy set to 50%+1 by
+  `engine/battle/move_effects/thunder.asm`.
 - **Rain:** Water ×1.5, Fire ×0.5, Thunder bypasses accuracy check
   (`engine/battle/effect_commands.asm:1800-1809` `.ThunderRain`),
   Synthesis-family heal halved.
@@ -663,15 +667,14 @@ turn-order resolution).
   re-rolled in a side-stable order.
 - **Choice Scarf** Speed ×3/2 is hack-added (Group B above), applied
   to the turn-order Speed only.
-- **Priority moves** in this hack (from `data/moves/moves.asm`):
-  - Quick Attack: +1, NORMAL, BP 40
-  - Mach Punch: +1, FIGHTING, BP 40
-  - Extreme Speed (`EXTREMESPEED`): Gen 2 priority `+2` `(verify
-    against EFFECT_PRIORITY_HIT handling — Extreme Speed in vanilla
-    Gen 2 is +1; some references say +2 for Gen 5+ retconning)`. The
-    move slot is in `data/moves/moves.asm`; the effect is
-    `EFFECT_PRIORITY_HIT` shared with Quick Attack and Mach Punch, so
-    likely +1.
+- **Priority moves** in this hack (from `data/moves/moves.asm` and
+  `data/moves/effects_priorities.asm`):
+  - Quick Attack: `EFFECT_PRIORITY_HIT`, NORMAL, BP 40
+  - Mach Punch: `EFFECT_PRIORITY_HIT`, FIGHTING, BP 40
+  - Extreme Speed: `EFFECT_PRIORITY_HIT`, NORMAL, BP 80
+
+  `BASE_PRIORITY = 1` and `EFFECT_PRIORITY_HIT = 2`, so all three share
+  the same +1 priority tier. Protect and Endure are higher at priority 3.
 - **Priority below 0** (Counter / Mirror Coat / Roar / Whirlwind):
   vanilla Gen 2 doesn't formalize these as numeric priorities; they
   are special-cased in turn-order code. Don't claim "priority -6 like
@@ -680,7 +683,7 @@ turn-order resolution).
 ### Speed-affecting moves in this hack
 
 - `AGILITY` (+2 Spe) is the ONLY single-stat +Speed move in this hack.
-- `DRAGON_DANCE` = +1 Atk, +1 Spe combo.
+- `DRAGON_DANCE` = +1 current higher offensive stat, +1 Spe combo.
 - `QUIVER_DANCE` = +1 SpA, +1 SpD, +1 Spe combo.
 - A "no Agility" rule is equivalent to "no single-stat +Speed move"
   here.
@@ -787,16 +790,16 @@ source, update this doc; do not work around it.
 
 ## Verification protocol
 
-Every numeric or rule claim in this doc either cites a source label
-(`engine/.../foo.asm:NNN`) or is marked `(verify)` inline. When you
+Every numeric table claim belongs in
+`docs/agent_navigation/hack_mechanics_reference.md` when possible. When you
 extend or update this doc:
 
 1. If the claim is about a battle mechanic in this hack, find and cite
    the source label that implements it.
 2. If the source disagrees with the modern-mechanics prior, the source
    wins, and the doc must say so explicitly.
-3. If the claim cannot be verified within reasonable effort, mark it
-   `(verify)` rather than asserting confidently.
+3. If the claim cannot be verified within reasonable effort, do not present it
+   as a rule. Point readers at the source area and say what still needs checking.
 
 This is the same standard the project applies to all design docs:
 "trust source/linker truth and update the helper doc"
