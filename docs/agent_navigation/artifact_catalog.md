@@ -16,6 +16,7 @@ scratch paths first.
 | `docs/project_completion_todo.md` | Current proof/feel sweep todo list with double-check states. | Execution checklist. | Mark finished items `DONE_NEEDS_DOUBLE_CHECK` until the named second pass is complete. |
 | `docs/generated/dev_index.md` | Generated banks, labels, memory pressure, source anchors. | Generated navigation truth. | Regenerate only through `scripts/generate_dev_index.py`. |
 | `docs/generated/balance_audit.md` | Generated Pokemon data audit. | Generated data mirror. | Regenerate through `scripts/generate_balance_audit.py`. |
+| `audit/move_progression/move_progression_audit.html` | Generated same-type move progression issue report. | Generated audit report. | Regenerate through `scripts/generate_move_progression_audit_html.py`. |
 | `docs/agent_navigation/source_output_ownership.md` | Source/generated/output ownership map. | Routing only. | Use before editing build artifacts or generated files. |
 | `docs/agent_navigation/custom_terms.md` | Search glossary for custom mechanics and symbols. | Routing only. | Use when the feature name is remembered imprecisely. |
 | `tools/audit/check_navigation_floor.py` | One-command docs/navigation readiness floor. | Audit helper. | Runs docs navigation, whitespace diff check, and dirty-state report; add `--workspace-hygiene` for clutter classification. |
