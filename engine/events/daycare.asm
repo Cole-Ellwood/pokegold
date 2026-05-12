@@ -160,10 +160,6 @@ DayCareAskDepositPokemon:
 	scf
 	ret
 
-.DaycareDummyText: ; unreferenced
-	text_far _DaycareDummyText
-	text_end
-
 DayCare_DepositPokemonText:
 	ld a, DAYCARETEXT_DEPOSIT
 	call PrintDayCareText
@@ -196,7 +192,7 @@ DayCare_AskWithdrawBreedMon:
 .check_money
 	ld de, wMoney
 	ld bc, wStringBuffer2 + 2
-	farcall CompareMoney
+	call CompareMoney
 	jr c, .not_enough_money
 	ld a, [wPartyCount]
 	cp PARTY_LENGTH
@@ -222,7 +218,7 @@ DayCare_AskWithdrawBreedMon:
 DayCare_GetBackMonForMoney:
 	ld bc, wStringBuffer2 + 2
 	ld de, wMoney
-	farcall TakeMoney
+	call TakeMoney
 	ld a, DAYCARETEXT_WITHDRAW
 	call PrintDayCareText
 	ld a, [wCurPartySpecies]
@@ -537,9 +533,7 @@ DayCare_InitBreeding:
 	cp 150
 	jr c, .loop
 	ld [wStepsToEgg], a
-	jp .UselessJump
 
-.UselessJump:
 	xor a
 	ld hl, wEggMon
 	ld bc, BOXMON_STRUCT_LENGTH

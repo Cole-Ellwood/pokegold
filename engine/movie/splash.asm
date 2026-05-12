@@ -138,12 +138,6 @@ GameFreakPresents_NextScene:
 	inc [hl]
 	ret
 
-GameFreakPresents_Wait64Frames: ; unreferenced
-	ld c, 64
-	call DelayFrames
-	call GameFreakPresents_NextScene
-	ret
-
 GameFreakPresents_Star:
 ; tell GameFreakPresents_PlaceLogo we haven't finished yet
 	xor a

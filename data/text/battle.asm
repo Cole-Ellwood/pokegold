@@ -690,6 +690,11 @@ AlreadyAsleepText:
 	line "already asleep!"
 	prompt
 
+SleepClauseActiveText:
+	text "Sleep Clause is"
+	line "active!"
+	prompt
+
 WasPoisonedText:
 	text "<TARGET>"
 	line "was poisoned!"

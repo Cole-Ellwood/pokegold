@@ -803,11 +803,10 @@ Pokedex_UpdateUnownMode:
 	ret
 
 Pokedex_UnownModeHandleDPadInput:
-	ld hl, hJoyLast
-	ld a, [hl]
+	ldh a, [hJoyLast]
 	and PAD_RIGHT
 	jr nz, .right
-	ld a, [hl]
+	ldh a, [hJoyLast]
 	and PAD_LEFT
 	jr nz, .left
 	ret
@@ -1132,8 +1131,6 @@ Pokedex_DrawDexEntryScreenBG:
 	call Pokedex_PlaceFrontpicTopLeftCorner
 	ret
 
-.Number: ; unreferenced
-	db $5c, $5d, -1 ; No.
 .Height:
 	db "HT  ?", $5e, "??", $5f, -1 ; HT  ?'??"
 .Weight:
@@ -2174,12 +2171,11 @@ Pokedex_MoveArrowCursor:
 	jr nz, .select
 	call Pokedex_ArrowCursorDelay
 	jr c, .no_action
-	ld hl, hJoyLast
-	ld a, [hl]
+	ldh a, [hJoyLast]
 	and PAD_LEFT | PAD_UP
 	and b
 	jr nz, .move_left_or_up
-	ld a, [hl]
+	ldh a, [hJoyLast]
 	and PAD_RIGHT | PAD_DOWN
 	and b
 	jr nz, .move_right_or_down

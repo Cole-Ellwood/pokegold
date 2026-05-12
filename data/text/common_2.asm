@@ -64,11 +64,6 @@ _CantUseTeleportText::
 	para ""
 	done
 
-_AlreadyUsingStrengthText::
-	text "A #MON is using"
-	line "STRENGTH already."
-	prompt
-
 _UseStrengthText::
 	text_ram wStringBuffer2
 	text " used"
@@ -180,11 +175,6 @@ _RodNothingText::
 	text "Not even a nibble!"
 	prompt
 
-_UnusedNothingHereText::
-	text "Looks like there's"
-	line "nothing here."
-	prompt
-
 _CantGetOffBikeText::
 	text "You can't get off"
 	line "here!"
@@ -254,14 +244,6 @@ _PoisonFaintText::
 	line "fainted!"
 	prompt
 
-_PoisonWhiteoutText::
-	text "<PLAYER> is out of"
-	line "useable #MON!"
-
-	para "<PLAYER> whited"
-	line "out!"
-	prompt
-
 _UseSweetScentText::
 	text_ram wStringBuffer3
 	text " used"
@@ -290,10 +272,6 @@ _AnEggCantHoldAnItemText::
 	text "An EGG can't hold"
 	line "an item."
 	prompt
-
-_PackNoItemText::
-	text "No items."
-	done
 
 _AskThrowAwayText::
 	text "Throw away how"
@@ -348,19 +326,10 @@ _PackEmptyText::
 	text_start
 	done
 
-_YouCantUseItInABattleText::
-	text "You can't use it"
-	line "in a battle."
-	prompt
-
 _ActorNameText::
 	text "<USER>@@"
 
 _UsedMove1Text::
-	text_start
-	line "used @@"
-
-_UsedMove2Text::
 	text_start
 	line "used @@"
 
@@ -373,22 +342,6 @@ _MoveNameText::
 	db "@@"
 
 _EndUsedMove1Text::
-	text "!"
-	done
-
-_EndUsedMove2Text::
-	text "!"
-	done
-
-_EndUsedMove3Text::
-	text "!"
-	done
-
-_EndUsedMove4Text::
-	text "!"
-	done
-
-_EndUsedMove5Text::
 	text "!"
 	done
 
@@ -1157,10 +1110,6 @@ _MayRegisterItemText::
 	line "on SELECT Button."
 	done
 
-_MainMenuTimeUnknownText::
-	text "Clock time unknown"
-	done
-
 _OakText1::
 	text "Hello! Sorry to"
 	line "keep you waiting!"
@@ -1335,30 +1284,13 @@ _MoveMonWOMailSaveText::
 	cont "will be saved. OK?"
 	done
 
-_WindowAreaExceededErrorText:: ; unreferenced
-	text "The window save"
-	line "area was exceeded."
-	done
-
 _WindowPoppingErrorText::
 	text "No windows avail-"
 	line "able for popping."
 	done
 
-_CorruptedEventText:: ; unreferenced
-	text "Corrupted event!"
-	prompt
-
 _ObjectEventText::
 	text "Object event."
-	done
-
-_BGEventText::
-	text "BG event"
-	done
-
-_CoordinatesEventText::
-	text "Coordinates event"
 	done
 
 _ReceivedItemText::
@@ -1560,12 +1492,6 @@ _PharmacyComeAgainText::
 	text "All right."
 	line "See you around."
 	done
-
-;unused
-_NothingToSellText::
-	text "You don't have"
-	line "anything to sell."
-	prompt
 
 _MartSellHowManyText::
 	text "How many?"

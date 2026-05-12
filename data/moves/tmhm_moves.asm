@@ -18,8 +18,3 @@ endr
 	assert_table_length NUM_TM_HM
 
 	db 0 ; end
-
-; unused
-	db 0
-	db 0
-	db 0

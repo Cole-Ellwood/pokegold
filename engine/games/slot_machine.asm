@@ -190,38 +190,12 @@ SlotsLoop:
 	ld [wCurSpriteOAMAddr], a
 	callfar DoNextFrameForFirst16Sprites
 	call .PrintCoinsAndPayout
-	call .Stubbed_AlternateMatchingSevensPalette
 	call DelayFrame
 	and a
 	ret
 
 .stop
 	scf
-	ret
-
-.Stubbed_AlternateMatchingSevensPalette:
-; dummied out
-	ret
-	ld a, [wReel1ReelAction]
-	and a
-	ret nz
-	ld a, [wReel2ReelAction]
-	and a
-	ret nz
-	ld a, [wFirstTwoReelsMatchingSevens]
-	and a
-	jr nz, .matching_sevens
-	ld a, %11100100
-	call DmgToCgbBGPals
-	ret
-
-.matching_sevens
-	ld a, [wTextDelayFrames]
-	and $7
-	ret nz
-	ldh a, [rBGP]
-	xor %00001100 ; alternates two palettes
-	call DmgToCgbBGPals
 	ret
 
 .PrintCoinsAndPayout:
@@ -233,43 +207,6 @@ SlotsLoop:
 	ld de, wPayout
 	lb bc, PRINTNUM_LEADINGZEROS | 2, 4
 	call PrintNum
-	ret
-
-DebugPrintSlotBias: ; unreferenced
-	ld a, [wSlotBias]
-	add 0
-	daa
-	ld e, a
-	and $f
-	add '0'
-	hlcoord 1, 0
-	ld [hl], a
-	ld a, e
-	swap a
-	and $f
-	add '0'
-	hlcoord 0, 0
-	ld [hl], a
-	ret
-
-AnimateSlotReelIcons: ; unreferenced
-; This animation was present in pokegold-spaceworld.
-	ld hl, wUnusedSlotReelIconDelay
-	ld a, [hl]
-	inc [hl]
-	and $7
-	ret nz
-	ld hl, wShadowOAMSprite16TileID
-	ld c, OAM_COUNT - 16
-.loop
-	ld a, [hl]
-	xor $20 ; alternate between $00-$1f and $20-$3f
-	ld [hli], a ; tile id
-rept OBJ_SIZE - 1
-	inc hl
-endr
-	dec c
-	jr nz, .loop
 	ret
 
 SlotsJumptable:
@@ -351,8 +288,7 @@ SlotsAction_WaitStart:
 	ret
 
 SlotsAction_WaitReel1:
-	ld hl, hJoypadSum
-	ld a, [hl]
+	ldh a, [hJoypadSum]
 	and PAD_A
 	ret z
 	call SlotsAction_Next
@@ -371,8 +307,7 @@ SlotsAction_WaitStopReel1:
 	xor a
 	ldh [hJoypadSum], a
 SlotsAction_WaitReel2:
-	ld hl, hJoypadSum
-	ld a, [hl]
+	ldh a, [hJoypadSum]
 	and PAD_A
 	ret z
 	call SlotsAction_Next
@@ -391,8 +326,7 @@ SlotsAction_WaitStopReel2:
 	xor a
 	ldh [hJoypadSum], a
 SlotsAction_WaitReel3:
-	ld hl, hJoypadSum
-	ld a, [hl]
+	ldh a, [hJoypadSum]
 	and PAD_A
 	ret z
 	call SlotsAction_Next
@@ -848,31 +782,6 @@ Slots_UpdateReelPositionAndOAM:
 	cp 2 * TILE_WIDTH
 	jr nz, .loop
 	ret
-
-GetUnknownSlotReelData: ; unreferenced
-; Used to get OAM attribute values for slot reels?
-; (final Slots_UpdateReelPositionAndOAM above reuses tile IDs as OAM palettes)
-	push hl
-	srl a
-	srl a
-	add LOW(.data)
-	ld l, a
-	ld a, 0
-	adc HIGH(.data)
-	ld h, a
-	ld a, [hl]
-	pop hl
-	ret
-
-.data:
-	table_width 1
-	db 0 ; SLOTS_SEVEN
-	db 1 ; SLOTS_POKEBALL
-	db 2 ; SLOTS_CHERRY
-	db 3 ; SLOTS_PIKACHU
-	db 4 ; SLOTS_SQUIRTLE
-	db 5 ; SLOTS_STARYU
-	assert_table_length NUM_SLOT_REELS
 
 ReelActionJumptable:
 	ld hl, REEL_ACTION

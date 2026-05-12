@@ -138,7 +138,7 @@ UnusedWait30Frames: ; unreferenced
 HandleMap:
 	call ResetOverworldDelay
 	call HandleMapTimeAndJoypad
-	farcall HandleCmdQueue ; no need to farcall
+	call HandleCmdQueue
 	call MapEvents
 
 ; Not immediately entering a connected map will cause problems.
@@ -370,13 +370,7 @@ SetUpFiveStepWildEncounterCooldown:
 	ret
 
 SetMinTwoStepWildEncounterCooldown:
-; dummied out
-	ret
-	ld a, [wWildEncounterCooldown]
-	cp 2
-	ret nc
-	ld a, 2
-	ld [wWildEncounterCooldown], a
+; Jump movement intentionally leaves the map-entry cooldown unchanged.
 	ret
 
 Dummy_CheckEnabledMapEventsBit5:

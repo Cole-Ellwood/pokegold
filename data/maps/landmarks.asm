@@ -146,11 +146,7 @@ VictoryRoadName:     db "VICTORY<BSP>ROAD@"
 MtMoonName:          db "MT.MOON@"
 RockTunnelName:      db "ROCK TUNNEL@"
 LavRadioTowerName:   db "LAV<BSP>RADIO TOWER@"
-SilphCoName:         db "SILPH CO.@" ; unreferenced
-SafariZoneName:      db "SAFARI ZONE@" ; unreferenced
 SeafoamIslandsName:  db "SEAFOAM<BSP>ISLANDS@"
-PokemonMansionName:  db "#MON<BSP>MANSION@" ; unreferenced
-CeruleanCaveName:    db "CERULEAN<BSP>CAVE@" ; unreferenced
 Route1Name:          db "ROUTE 1@"
 Route2Name:          db "ROUTE 2@"
 Route3Name:          db "ROUTE 3@"
@@ -201,7 +197,6 @@ DarkCaveName:        db "DARK CAVE@"
 IlexForestName:      db "ILEX<BSP>FOREST@"
 BurnedTowerName:     db "BURNED<BSP>TOWER@"
 FastShipName:        db "FAST SHIP@"
-ViridianForestName:  db "VIRIDIAN<BSP>FOREST@" ; unreferenced
 DiglettsCaveName:    db "DIGLETT's<BSP>CAVE@"
 TohjoFallsName:      db "TOHJO FALLS@"
 UndergroundName:     db "UNDERGROUND@"

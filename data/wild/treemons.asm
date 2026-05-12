@@ -16,19 +16,7 @@ TreeMons:
 TreeMonSet_None:
 TreeMonSet_Unused:
 TreeMonSet_City:
-; common
-	db 50, VENONAT,    15
-	db 30, VENONAT,    15
-	db 10, ABRA,       15
-	db  5, ABRA,       15
-	db  5, VENOMOTH,   15
 	db -1
-; rare
-	db 50, VENONAT,    15
-	db 30, MAGNEMITE,  15
-	db 10, ABRA,       15
-	db  5, ABRA,       15
-	db  5, VENOMOTH,   15
 	db -1
 
 TreeMonSet_Forest:

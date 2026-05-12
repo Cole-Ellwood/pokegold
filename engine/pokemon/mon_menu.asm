@@ -1205,16 +1205,18 @@ PlaceMoveData:
 	ld de, String_MoveAtk
 	call PlaceString
 	ld a, [wCurSpecies]
-	ld b, a
-	hlcoord 2, 12
-	predef PrintMoveType
-	ld a, [wCurSpecies]
 	dec a
 	ld hl, Moves + MOVE_POWER
 	ld bc, MOVE_LENGTH
 	call AddNTimes
 	ld a, BANK(Moves)
-	call GetFarByte
+	call GetFarWord
+	ld a, l
+	ld [wTextDecimalByte], a
+	ld b, h
+	hlcoord 2, 12
+	predef PrintType
+	ld a, [wTextDecimalByte]
 	hlcoord 16, 12
 	cp 2
 	jr c, .no_power

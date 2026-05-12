@@ -570,12 +570,17 @@ GetItemPrice:
 ; Return the price of wCurItem in de.
 	push hl
 	push bc
-	ld a, ITEMATTR_PRICE_LO
-	call GetItemAttr
-	ld e, a
-	ld a, ITEMATTR_PRICE_HI
-	call GetItemAttr
-	ld d, a
+	xor a
+	ld [wItemAttributeValue], a
+	ld hl, ItemAttributes + ITEMATTR_PRICE
+	ld a, [wCurItem]
+	dec a
+	ld bc, ITEMATTR_STRUCT_LENGTH
+	call AddNTimes
+	ld a, BANK(ItemAttributes)
+	call GetFarWord
+	ld d, h
+	ld e, l
 	pop bc
 	pop hl
 	ret

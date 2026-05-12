@@ -884,8 +884,7 @@ Don't roll your own `Random mod N` — use `RandomRange` (0..N-1) or this
 ### 5.5 Conditional negation (absolute value)
 
 ```asm
-; from home/math.asm:51-58
-SubtractAbsolute::
+; standalone pattern
 ; Return |a - b|, sign in carry.
     sub b
     ret nc

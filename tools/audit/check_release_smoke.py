@@ -13,6 +13,25 @@ ROOT = Path(__file__).resolve().parents[2]
 MART_TERMINATORS = {"-1", "CANCEL"}
 
 
+class SourceCache:
+    def __init__(self) -> None:
+        self._text: dict[Path, str] = {}
+        self._lines: dict[Path, list[str]] = {}
+
+    def text(self, path: Path) -> str:
+        if path not in self._text:
+            self._text[path] = path.read_text(encoding="utf-8")
+        return self._text[path]
+
+    def lines(self, path: Path) -> list[str]:
+        if path not in self._lines:
+            self._lines[path] = self.text(path).splitlines()
+        return self._lines[path]
+
+
+SOURCE = SourceCache()
+
+
 def fail(msg: str) -> None:
     print(f"FAIL: {msg}")
     raise SystemExit(1)
@@ -23,7 +42,7 @@ def parse_moves(path: Path) -> dict[str, dict[str, str]]:
     pat = re.compile(
         r"^\s*move\s+([A-Z0-9_]+),\s*([A-Z0-9_]+),\s*(\d+),\s*([A-Z0-9_]+),\s*(\d+),\s*(\d+),\s*(\d+)"
     )
-    for line in path.read_text(encoding="utf-8").splitlines():
+    for line in SOURCE.lines(path):
         m = pat.match(line)
         if not m:
             continue
@@ -40,7 +59,7 @@ def parse_moves(path: Path) -> dict[str, dict[str, str]]:
 
 
 def parse_base_stats(path: Path) -> tuple[list[int], tuple[str, str]]:
-    lines = path.read_text(encoding="utf-8").splitlines()
+    lines = SOURCE.lines(path)
     stats_pat = re.compile(r"^\s*db\s+(\d+),\s*(\d+),\s*(\d+),\s*(\d+),\s*(\d+),\s*(\d+)")
     type_pat = re.compile(r"^\s*db\s+([A-Z0-9_]+),\s*([A-Z0-9_]+)\s*;\s*type\b")
     stats: list[int] | None = None
@@ -64,7 +83,7 @@ def parse_base_stats(path: Path) -> tuple[list[int], tuple[str, str]]:
 
 
 def parse_levelup_block(path: Path, label: str) -> dict[str, int]:
-    lines = path.read_text(encoding="utf-8").splitlines()
+    lines = SOURCE.lines(path)
     in_block = False
     out: dict[str, int] = {}
     move_pat = re.compile(r"^\s*db\s+(\d+),\s*([A-Z0-9_]+)\s*$")
@@ -93,7 +112,7 @@ def check_levelup_move_order(path: Path) -> None:
     label_pat = re.compile(r"^([A-Za-z0-9_]+EvosAttacks):\s*$")
     move_pat = re.compile(r"^db\s+(\d+),\s*[A-Z0-9_]+\b")
 
-    for line_no, raw in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+    for line_no, raw in enumerate(SOURCE.lines(path), 1):
         label_match = label_pat.match(raw)
         if label_match:
             current_label = label_match.group(1)
@@ -137,13 +156,13 @@ def check_levelup_move_order(path: Path) -> None:
 
 
 def require_text(path: Path, needle: str) -> None:
-    text = path.read_text(encoding="utf-8")
+    text = SOURCE.text(path)
     if needle not in text:
         fail(f"missing '{needle}' in {path}")
 
 
 def require_ordered_text(path: Path, needles: tuple[str, ...], label: str) -> None:
-    text = path.read_text(encoding="utf-8")
+    text = SOURCE.text(path)
     cursor = -1
     for needle in needles:
         next_cursor = text.find(needle, cursor + 1)
@@ -157,7 +176,7 @@ def parse_item_constants(path: Path) -> dict[str, int]:
     in_items = False
     value = 0
     const_pat = re.compile(r"^\s*const\s+([A-Z0-9_]+)\b")
-    for line in path.read_text(encoding="utf-8").splitlines():
+    for line in SOURCE.lines(path):
         if line.strip() == "const_def":
             in_items = True
             value = 0
@@ -178,7 +197,7 @@ def parse_item_constants(path: Path) -> dict[str, int]:
 def parse_item_tokens(path: Path) -> set[str]:
     tokens = set(parse_item_constants(path))
     machine_pat = re.compile(r"^\s*add_(tm|hm)\s+([A-Z0-9_]+)\b")
-    for line in path.read_text(encoding="utf-8").splitlines():
+    for line in SOURCE.lines(path):
         m = machine_pat.match(line)
         if m:
             prefix, move = m.groups()
@@ -191,7 +210,7 @@ def parse_item_names(path: Path) -> dict[int, str]:
     in_names = False
     item_id = 1
     name_pat = re.compile(r'^\s*li\s+"([^"]+)"')
-    for line in path.read_text(encoding="utf-8").splitlines():
+    for line in SOURCE.lines(path):
         if line.strip() == "ItemNames::":
             in_names = True
             continue
@@ -211,7 +230,7 @@ def parse_item_names(path: Path) -> dict[int, str]:
 def parse_key_item_attributes(path: Path) -> set[str]:
     out: set[str] = set()
     item: str | None = None
-    for line in path.read_text(encoding="utf-8").splitlines():
+    for line in SOURCE.lines(path):
         stripped = line.strip()
         if stripped.startswith("; "):
             item = stripped[2:].split()[0]
@@ -227,7 +246,7 @@ def parse_key_item_attributes(path: Path) -> set[str]:
 
 def parse_equ(path: Path, name: str) -> int:
     pat = re.compile(rf"^\s*DEF\s+{re.escape(name)}\s+EQU\s+(\d+)\b")
-    for line in path.read_text(encoding="utf-8").splitlines():
+    for line in SOURCE.lines(path):
         m = pat.match(line)
         if m:
             return int(m.group(1))
@@ -287,7 +306,7 @@ def check_no_stale_reward_receipt_texts() -> None:
     )
     stale: list[str] = []
     for path in sorted((ROOT / "maps").glob("*.asm")):
-        for line_no, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        for line_no, line in enumerate(SOURCE.lines(path), 1):
             match = stale_receipt_pat.match(line)
             if match:
                 stale.append(f"{path.relative_to(ROOT)}:{line_no}:{match.group('label')}")
@@ -365,7 +384,7 @@ def check_bug_contest_exit_flow() -> None:
 
 
 def parse_map_label_first_code(path: Path) -> dict[str, str]:
-    lines = path.read_text(encoding="utf-8").splitlines()
+    lines = SOURCE.lines(path)
     labels: dict[str, str] = {}
     label_pat = re.compile(r"^([A-Za-z0-9_.]+):\s*$")
     for index, line in enumerate(lines):
@@ -383,7 +402,7 @@ def parse_map_label_first_code(path: Path) -> dict[str, str]:
 def check_map_event_script_shapes() -> None:
     for path in sorted((ROOT / "maps").glob("*.asm")):
         labels = parse_map_label_first_code(path)
-        for line_no, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        for line_no, line in enumerate(SOURCE.lines(path), 1):
             stripped = line.lstrip()
             if stripped.startswith("object_event"):
                 parts = [part.strip() for part in line.split(",")]
@@ -418,7 +437,7 @@ def check_map_event_script_shapes() -> None:
 def parse_map_scene_scripts(path: Path) -> set[str]:
     scene_script_pat = re.compile(r"^\s*scene_script\s+[^,]+,\s*([A-Z0-9_]+)\b")
     scene_scripts: set[str] = set()
-    for raw in path.read_text(encoding="utf-8").splitlines():
+    for raw in SOURCE.lines(path):
         code = raw.split(";", 1)[0]
         scene_script_match = scene_script_pat.match(code)
         if scene_script_match:
@@ -429,7 +448,7 @@ def parse_map_scene_scripts(path: Path) -> set[str]:
 def parse_map_attribute_labels(path: Path) -> dict[str, str]:
     attr_pat = re.compile(r"^\s*map_attributes\s+([A-Za-z0-9_]+),\s*([A-Z0-9_]+),")
     labels: dict[str, str] = {}
-    for raw in path.read_text(encoding="utf-8").splitlines():
+    for raw in SOURCE.lines(path):
         match = attr_pat.match(raw)
         if match:
             label, map_constant = match.groups()
@@ -442,7 +461,7 @@ def parse_map_attribute_labels(path: Path) -> dict[str, str]:
 def parse_map_dimensions(path: Path) -> dict[str, tuple[int, int]]:
     map_const_pat = re.compile(r"^\s*map_const\s+([A-Z0-9_]+),\s*(\d+),\s*(\d+)")
     dimensions: dict[str, tuple[int, int]] = {}
-    for raw in path.read_text(encoding="utf-8").splitlines():
+    for raw in SOURCE.lines(path):
         match = map_const_pat.match(raw)
         if match:
             map_constant, width_blocks, height_blocks = match.groups()
@@ -462,7 +481,7 @@ def check_coord_events_use_counted_scene_scripts() -> None:
     for path in sorted((ROOT / "maps").glob("*.asm")):
         scene_scripts = parse_map_scene_scripts(path)
         coord_events: list[tuple[int, str]] = []
-        for line_no, raw in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        for line_no, raw in enumerate(SOURCE.lines(path), 1):
             code = raw.split(";", 1)[0]
             coord_event_match = coord_event_pat.match(code)
             if coord_event_match:
@@ -491,7 +510,7 @@ def check_scene_setting_commands_use_counted_scene_scripts() -> None:
     ]
 
     for path in script_paths:
-        for line_no, raw in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        for line_no, raw in enumerate(SOURCE.lines(path), 1):
             code = raw.split(";", 1)[0]
             setscene_match = setscene_pat.match(code)
             if setscene_match and path.parent == ROOT / "maps":
@@ -537,7 +556,7 @@ def check_map_event_coordinates_within_bounds() -> None:
         if dimensions is None:
             fail(f"{path.relative_to(ROOT)}: no map_const dimensions for {map_constant}")
         width, height = dimensions
-        for line_no, raw in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        for line_no, raw in enumerate(SOURCE.lines(path), 1):
             code = raw.split(";", 1)[0]
             for event_type, event_pat in event_pats:
                 match = event_pat.match(code)
@@ -559,7 +578,7 @@ def check_warp_events_target_existing_warps() -> None:
 
     for path in sorted((ROOT / "maps").glob("*.asm")):
         warp_count = 0
-        for line_no, raw in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        for line_no, raw in enumerate(SOURCE.lines(path), 1):
             code = raw.split(";", 1)[0]
             match = warp_pat.match(code)
             if not match:
@@ -588,7 +607,7 @@ def check_warp_events_target_existing_warps() -> None:
 def check_object_constants_match_object_events() -> None:
     const_pat = re.compile(r"^\s*const\s+[A-Z0-9_]+\b")
     for path in sorted((ROOT / "maps").glob("*.asm")):
-        lines = path.read_text(encoding="utf-8").splitlines()
+        lines = SOURCE.lines(path)
         in_object_consts = False
         object_consts = 0
         object_events = 0
@@ -613,7 +632,7 @@ def check_object_constants_match_object_events() -> None:
 
 
 def parse_map_itemball_labels(path: Path) -> dict[str, str]:
-    lines = path.read_text(encoding="utf-8").splitlines()
+    lines = SOURCE.lines(path)
     labels: dict[str, str] = {}
     label_pat = re.compile(r"^([A-Za-z0-9_]+):\s*$")
     itemball_pat = re.compile(r"^\s*itemball\s+([A-Z0-9_]+)\b")
@@ -632,7 +651,7 @@ def parse_map_hiddenitem_labels(path: Path) -> dict[str, tuple[str, str]]:
     label_pat = re.compile(r"^([A-Za-z0-9_]+):\s*$")
     hiddenitem_pat = re.compile(r"^\s*hiddenitem\s+([A-Z0-9_]+),\s*(EVENT_[A-Z0-9_]+)\b")
     current_label: str | None = None
-    for line in path.read_text(encoding="utf-8").splitlines():
+    for line in SOURCE.lines(path):
         label_match = label_pat.match(line)
         if label_match:
             current_label = label_match.group(1)
@@ -669,7 +688,7 @@ def check_itemball_event_cross_swaps() -> None:
     for path in sorted((ROOT / "maps").glob("*.asm")):
         itemball_labels = parse_map_itemball_labels(path)
         rows: list[tuple[int, str, str, str]] = []
-        for line_no, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        for line_no, line in enumerate(SOURCE.lines(path), 1):
             if not line.lstrip().startswith("object_event") or "OBJECTTYPE_ITEMBALL" not in line:
                 continue
             parts = [part.strip() for part in line.split(",")]
@@ -696,7 +715,7 @@ def check_itemball_event_cross_swaps() -> None:
 def check_non_tm_itemball_event_names() -> None:
     for path in sorted((ROOT / "maps").glob("*.asm")):
         itemball_labels = parse_map_itemball_labels(path)
-        for line_no, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        for line_no, line in enumerate(SOURCE.lines(path), 1):
             if not line.lstrip().startswith("object_event") or "OBJECTTYPE_ITEMBALL" not in line:
                 continue
             parts = [part.strip() for part in line.split(",")]
@@ -723,7 +742,7 @@ def check_map_item_label_names() -> None:
     for path in sorted((ROOT / "maps").glob("*.asm")):
         itemball_labels = parse_map_itemball_labels(path)
         hiddenitem_labels = parse_map_hiddenitem_labels(path)
-        for line_no, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        for line_no, line in enumerate(SOURCE.lines(path), 1):
             stripped = line.lstrip()
             if stripped.startswith("object_event") and "OBJECTTYPE_ITEMBALL" in line:
                 parts = [part.strip() for part in line.split(",")]
@@ -899,7 +918,7 @@ BrokenMart:
 
 def check_mart_inventory_tables(valid_items: set[str]) -> None:
     issues = find_mart_inventory_issues(
-        (ROOT / "data/items/marts.asm").read_text(encoding="utf-8"),
+        SOURCE.text(ROOT / "data/items/marts.asm"),
         valid_items,
         "data/items/marts.asm",
     )
@@ -924,8 +943,8 @@ def main() -> int:
     print("PASS: key move table checks")
 
     expected_species = {
-        "meganium.asm": ([110, 82, 100, 80, 83, 100], ("GRASS", "GRASS")),
-        "typhlosion.asm": ([78, 84, 78, 100, 130, 85], ("FIRE", "NORMAL")),
+        "meganium.asm": ([130, 75, 107, 60, 83, 100], ("GRASS", "GRASS")),
+        "typhlosion.asm": ([78, 99, 78, 100, 130, 70], ("FIRE", "NORMAL")),
         "feraligatr.asm": ([85, 105, 100, 87, 95, 83], ("WATER", "FIGHTING")),
     }
     for filename, (expected_stats, expected_types) in expected_species.items():
@@ -942,8 +961,9 @@ def main() -> int:
 
     expected_level_moves = {
         "MeganiumEvosAttacks": {"HEAL_BELL": 33, "SOLARBEAM": 41},
-        "TyphlosionEvosAttacks": {"FIRE_BLAST": 37, "ANCIENTPOWER": 45},
+        "TyphlosionEvosAttacks": {"DOUBLE_EDGE": 36, "FIRE_BLAST": 37, "ANCIENTPOWER": 45},
         "FeraligatrEvosAttacks": {"SLASH": 38, "HYDRO_PUMP": 45},
+        "MagnetonEvosAttacks": {"THUNDERBOLT": 31, "DRAGONBREATH": 33, "EXPLOSION": 38},
         "AriadosEvosAttacks": {"SPIKES": 22, "SPIDER_WEB": 37},
         "YanmaEvosAttacks": {"LEECH_LIFE": 17, "WING_ATTACK": 25},
     }

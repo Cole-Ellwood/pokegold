@@ -1,7 +1,7 @@
 EnvironmentColorsPointers:
 ; entries correspond to environment constants (see constants/map_data_constants.asm)
 	table_width 2
-	dw .OutdoorColors ; unused
+	dw .OutdoorColors ; index 0 padding for one-based environments
 	dw .OutdoorColors ; TOWN
 	dw .OutdoorColors ; ROUTE
 	dw .IndoorColors  ; INDOOR

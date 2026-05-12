@@ -8,6 +8,12 @@ exposed by that variant is buggy.
 
 from __future__ import annotations
 
+LEGACY_EXIT = (
+    "tools.damage_debugger.legacy scripts are pruned one-shot drivers; "
+    "use active tools.damage_debugger modules instead."
+)
+raise SystemExit(LEGACY_EXIT)
+
 import sys
 from dataclasses import asdict, dataclass, field, replace
 from pathlib import Path

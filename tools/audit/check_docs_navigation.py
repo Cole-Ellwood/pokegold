@@ -8,7 +8,6 @@ import json
 import re
 import subprocess
 import sys
-import tempfile
 from collections.abc import Callable
 from pathlib import Path
 
@@ -479,51 +478,34 @@ def check_generated_file(
         errors.append(missing_message)
         return
 
-    tmp_root = ROOT / ".local" / "tmp"
-    tmp_root.mkdir(parents=True, exist_ok=True)
-    with tempfile.NamedTemporaryFile(
-        dir=tmp_root,
-        prefix="doc_nav_",
-        suffix=f"_{output_name}",
-        delete=False,
-    ) as temp_file:
-        out_path = Path(temp_file.name)
+    proc = subprocess.run(
+        [
+            sys.executable,
+            str(generator),
+            *generator_args,
+            "--stdout",
+        ],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    if proc.returncode != 0:
+        errors.append(f"{regenerate_message}: {process_output(proc)}")
+        return
 
-    try:
-        proc = subprocess.run(
-            [
-                sys.executable,
-                str(generator),
-                *generator_args,
-                "--out",
-                str(out_path),
-            ],
-            cwd=ROOT,
-            text=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            check=False,
+    committed = normalize(committed_path.read_text(encoding="utf-8"))
+    regenerated = normalize(proc.stdout)
+    if committed != regenerated:
+        preview = preview_diff(
+            display_path(committed_path),
+            f"regenerated {output_name}",
+            committed,
+            regenerated,
         )
-        if proc.returncode != 0:
-            errors.append(f"{regenerate_message}: {process_output(proc)}")
-            return
-
-        committed = normalize(committed_path.read_text(encoding="utf-8"))
-        regenerated = normalize(out_path.read_text(encoding="utf-8"))
-        if committed != regenerated:
-            preview = preview_diff(
-                display_path(committed_path),
-                f"regenerated {output_name}",
-                committed,
-                regenerated,
-            )
-            errors.append(stale_message + (f"\n{preview}" if preview else ""))
-            return
-    finally:
-        try:
-            out_path.unlink(missing_ok=True)
-        except OSError:
-            pass
+        errors.append(stale_message + (f"\n{preview}" if preview else ""))
+        return
 
     print(pass_message)
 

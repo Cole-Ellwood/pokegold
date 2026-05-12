@@ -5,14 +5,16 @@ DEF WALL_TILE  EQU $0f
 DEF TALK       EQU $10
 
 ; collision data types (see data/tilesets/*_collision.asm)
+; Numeric collision IDs are map-collision ABI and CollisionPermissionTable indexes.
+; "unused" means not emitted by known tilesets; do not renumber or compact IDs.
 ; CollisionPermissionTable indexes (see data/collision/collision_permissions.asm)
 DEF COLL_FLOOR             EQU $00
 DEF COLL_01                EQU $01 ; garbage
 DEF COLL_03                EQU $03 ; garbage
 DEF COLL_04                EQU $04 ; garbage
 DEF COLL_WALL              EQU $07
-DEF COLL_CUT_08            EQU $08 ; unused
-DEF COLL_TALL_GRASS_10     EQU $10 ; unused
+DEF COLL_CUT_08            EQU $08 ; used by tile-event tables
+DEF COLL_TALL_GRASS_10     EQU $10 ; used by tile-event tables
 DEF COLL_CUT_TREE          EQU $12
 DEF COLL_LONG_GRASS        EQU $14
 DEF COLL_HEADBUTT_TREE     EQU $15
@@ -22,7 +24,7 @@ DEF COLL_LONG_GRASS_1C     EQU $1c ; unused
 DEF COLL_HEADBUTT_TREE_1D  EQU $1d ; unused
 DEF COLL_1E                EQU $1e ; garbage
 DEF COLL_1F                EQU $1f ; garbage
-DEF COLL_WATER_21          EQU $21 ; unused
+DEF COLL_WATER_21          EQU $21 ; table-indexed
 DEF COLL_ICE               EQU $23
 DEF COLL_WHIRLPOOL         EQU $24
 DEF COLL_BUOY              EQU $27
@@ -35,7 +37,7 @@ DEF COLL_WATERFALL_LEFT    EQU $31 ; unused
 DEF COLL_WATERFALL_UP      EQU $32 ; unused
 DEF COLL_WATERFALL         EQU $33
 DEF COLL_36                EQU $36 ; garbage
-DEF COLL_CURRENT_RIGHT     EQU $38 ; unused
+DEF COLL_CURRENT_RIGHT     EQU $38 ; table-indexed
 DEF COLL_CURRENT_LEFT      EQU $39 ; unused
 DEF COLL_CURRENT_UP        EQU $3a ; unused
 DEF COLL_CURRENT_DOWN      EQU $3b ; unused
@@ -52,7 +54,7 @@ DEF COLL_GRASS_49          EQU $49 ; garbage
 DEF COLL_GRASS_4A          EQU $4a ; garbage
 DEF COLL_GRASS_4B          EQU $4b ; garbage
 DEF COLL_GRASS_4C          EQU $4c ; unused
-DEF COLL_WALK_RIGHT_ALT    EQU $50 ; unused
+DEF COLL_WALK_RIGHT_ALT    EQU $50 ; used by movement tables
 DEF COLL_WALK_LEFT_ALT     EQU $51 ; unused
 DEF COLL_WALK_UP_ALT       EQU $52 ; unused
 DEF COLL_WALK_DOWN_ALT     EQU $53 ; unused
@@ -70,7 +72,7 @@ DEF COLL_PIT_68            EQU $68 ; unused
 DEF COLL_WARP_CARPET_DOWN  EQU $70
 DEF COLL_DOOR              EQU $71
 DEF COLL_LADDER            EQU $72
-DEF COLL_STAIRCASE_73      EQU $73 ; unused
+DEF COLL_STAIRCASE_73      EQU $73 ; used by tile-event tables
 DEF COLL_CAVE_74           EQU $74 ; unused
 DEF COLL_DOOR_75           EQU $75 ; unused
 DEF COLL_WARP_CARPET_LEFT  EQU $76
@@ -98,12 +100,12 @@ DEF COLL_WINDOW            EQU $9d
 DEF COLL_INCENSE_BURNER    EQU $9f
 DEF COLL_HOP_RIGHT         EQU $a0
 DEF COLL_HOP_LEFT          EQU $a1
-DEF COLL_HOP_UP            EQU $a2 ; unused
+DEF COLL_HOP_UP            EQU $a2 ; used by movement tables
 DEF COLL_HOP_DOWN          EQU $a3
 DEF COLL_HOP_DOWN_RIGHT    EQU $a4
 DEF COLL_HOP_DOWN_LEFT     EQU $a5
-DEF COLL_HOP_UP_RIGHT      EQU $a6 ; unused
-DEF COLL_HOP_UP_LEFT       EQU $a7 ; unused
+DEF COLL_HOP_UP_RIGHT      EQU $a6 ; used by movement tables
+DEF COLL_HOP_UP_LEFT       EQU $a7 ; used by movement tables
 DEF COLL_RIGHT_WALL        EQU $b0
 DEF COLL_LEFT_WALL         EQU $b1
 DEF COLL_UP_WALL           EQU $b2
@@ -112,7 +114,7 @@ DEF COLL_DOWN_RIGHT_WALL   EQU $b4 ; unused
 DEF COLL_DOWN_LEFT_WALL    EQU $b5 ; unused
 DEF COLL_UP_RIGHT_WALL     EQU $b6 ; unused
 DEF COLL_UP_LEFT_WALL      EQU $b7 ; unused
-DEF COLL_RIGHT_BUOY        EQU $c0 ; unused
+DEF COLL_RIGHT_BUOY        EQU $c0 ; table-indexed
 DEF COLL_LEFT_BUOY         EQU $c1 ; unused
 DEF COLL_UP_BUOY           EQU $c2 ; unused
 DEF COLL_DOWN_BUOY         EQU $c3 ; unused

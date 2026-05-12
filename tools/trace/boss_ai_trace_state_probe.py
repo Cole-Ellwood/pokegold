@@ -4,15 +4,16 @@
 from __future__ import annotations
 
 import argparse
-import hashlib
-import logging
 import sys
-import warnings
-from dataclasses import dataclass
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from tools.trace import runtime as trace_runtime
+
 DEFAULT_ROM = ROOT / "pokegold_trace.gbc"
 DEFAULT_SYMBOLS = ROOT / "pokegold_trace.sym"
 
@@ -68,10 +69,7 @@ INSPECT_SYMBOLS = (
 )
 
 
-@dataclass(frozen=True)
-class Symbol:
-    bank: int
-    address: int
+Symbol = trace_runtime.Symbol
 
 
 def fail(message: str) -> None:
@@ -80,35 +78,15 @@ def fail(message: str) -> None:
 
 
 def display_path(path: Path) -> str:
-    resolved = path.resolve()
-    try:
-        return str(resolved.relative_to(ROOT)).replace("\\", "/")
-    except ValueError:
-        return str(resolved)
+    return trace_runtime.display_path(path)
 
 
 def sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as fh:
-        for chunk in iter(lambda: fh.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest().upper()
+    return trace_runtime.sha256_file(path)
 
 
 def parse_symbols(path: Path) -> dict[str, Symbol]:
-    if not path.exists():
-        fail(f"missing symbol file: {path}")
-    out: dict[str, Symbol] = {}
-    for raw in path.read_text(encoding="utf-8", errors="replace").splitlines():
-        parts = raw.split()
-        if len(parts) != 2 or ":" not in parts[0]:
-            continue
-        bank_s, addr_s = parts[0].split(":", 1)
-        try:
-            out[parts[1]] = Symbol(int(bank_s, 16), int(addr_s, 16))
-        except ValueError:
-            continue
-    return out
+    return trace_runtime.parse_symbols(path)
 
 
 def require_symbols(symbols: dict[str, Symbol]) -> None:
@@ -118,44 +96,19 @@ def require_symbols(symbols: dict[str, Symbol]) -> None:
 
 
 def load_pyboy():
-    local_pydeps = ROOT / ".local" / "pydeps"
-    if local_pydeps.exists():
-        sys.path.insert(0, str(local_pydeps))
-    warnings.filterwarnings("ignore", message="Using SDL2 binaries.*")
-    try:
-        from pyboy import PyBoy  # type: ignore
-    except Exception as exc:
-        fail(f"PyBoy is required for state probing. Import failed: {exc}")
-    return PyBoy
+    return trace_runtime.load_pyboy("PyBoy is required for state probing. Import failed")
 
 
 def open_pyboy(rom: Path):
-    if not rom.exists():
-        fail(f"missing ROM: {rom}")
-    logging.disable(logging.WARNING)
-    PyBoy = load_pyboy()
-    try:
-        return PyBoy(str(rom), window="null", sound=False, log_level="ERROR")
-    except TypeError:
-        return PyBoy(str(rom), window="null", sound=False)
+    return trace_runtime.open_pyboy(rom, "PyBoy is required for state probing. Import failed")
 
 
 def read_byte(pyboy, symbol: Symbol) -> int:
-    if 0xD000 <= symbol.address <= 0xDFFF and symbol.bank:
-        try:
-            return int(pyboy.memory[symbol.bank, symbol.address])
-        except Exception:
-            old_bank = int(pyboy.memory[0xFF70])
-            pyboy.memory[0xFF70] = symbol.bank
-            try:
-                return int(pyboy.memory[symbol.address])
-            finally:
-                pyboy.memory[0xFF70] = old_bank
-    return int(pyboy.memory[symbol.address])
+    return trace_runtime.read_byte(pyboy, symbol)
 
 
 def read_addr(pyboy, bank: int, address: int) -> int:
-    return read_byte(pyboy, Symbol(bank, address))
+    return trace_runtime.read_addr(pyboy, bank, address)
 
 
 def read_symbol(pyboy, symbols: dict[str, Symbol], name: str) -> int:
@@ -163,11 +116,7 @@ def read_symbol(pyboy, symbols: dict[str, Symbol], name: str) -> int:
 
 
 def read_word(pyboy, symbol: Symbol) -> int:
-    return (read_byte(pyboy, symbol) << 8) | read_addr(
-        pyboy,
-        symbol.bank,
-        symbol.address + 1,
-    )
+    return trace_runtime.read_word(pyboy, symbol)
 
 
 def read_symbol_word(pyboy, symbols: dict[str, Symbol], name: str) -> int:

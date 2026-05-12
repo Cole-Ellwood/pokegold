@@ -5,71 +5,9 @@ from __future__ import annotations
 
 from datetime import date
 from pathlib import Path
-import re
 import sys
 
-
-CATEGORY_RE = re.compile(r"^##\s+(.+?)\s*$")
-SECTION_RE = re.compile(r"^###\s+(.+?)\s*$")
-
-
-def section_bullets(lines: list[str], start: int) -> tuple[list[str], int]:
-    bullets: list[str] = []
-    in_bullet = False
-    j = start
-
-    while j < len(lines):
-        current = lines[j]
-        if current.startswith("### ") or current.startswith("## "):
-            break
-        if current.lstrip().startswith("- "):
-            bullets.append(current.rstrip())
-            in_bullet = True
-        elif in_bullet and current.startswith((" ", "\t")) and current.strip():
-            bullets.append(current.rstrip())
-        elif current.strip():
-            in_bullet = False
-        j += 1
-
-    return bullets, j
-
-
-def flat_title(title: str, category: str, seen_titles: set[str]) -> str:
-    if title.startswith("Batch "):
-        return title
-    if title not in seen_titles:
-        seen_titles.add(title)
-        return title
-    if category:
-        return f"{title} {category.lower()}"
-    return title
-
-
-def extract_change_sections(lines: list[str]) -> list[tuple[str, list[str]]]:
-    sections: list[tuple[str, list[str]]] = []
-    current_category = ""
-    seen_titles: set[str] = set()
-    i = 0
-
-    while i < len(lines):
-        line = lines[i]
-        category_match = CATEGORY_RE.match(line)
-        if category_match:
-            current_category = category_match.group(1)
-            i += 1
-            continue
-
-        section_match = SECTION_RE.match(line)
-        if section_match:
-            title = section_match.group(1)
-            bullets, j = section_bullets(lines, i + 1)
-            if bullets:
-                sections.append((f"### {flat_title(title, current_category, seen_titles)}", bullets))
-            i = j
-            continue
-        i += 1
-
-    return sections
+from manifest_changes import flat_change_sections, parse_manifest
 
 
 def main() -> int:
@@ -82,7 +20,7 @@ def main() -> int:
         return 1
 
     lines = manifest_path.read_text(encoding="utf-8").splitlines()
-    sections = extract_change_sections(lines)
+    sections = flat_change_sections(parse_manifest(lines))
 
     if not sections:
         print("error: no '### ' change sections with bullets found in docs/manifest.md", file=sys.stderr)

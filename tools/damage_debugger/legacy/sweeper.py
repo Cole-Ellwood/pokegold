@@ -21,6 +21,12 @@ base-7 encoding (BASE_STAT_LEVEL=7=+0).
 
 from __future__ import annotations
 
+LEGACY_EXIT = (
+    "tools.damage_debugger.legacy scripts are pruned one-shot drivers; "
+    "use active tools.damage_debugger modules instead."
+)
+raise SystemExit(LEGACY_EXIT)
+
 import math
 from dataclasses import asdict, dataclass, field, replace
 from pathlib import Path

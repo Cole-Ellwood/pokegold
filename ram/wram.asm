@@ -14,7 +14,7 @@ endr
 wCurTrackDuty:: db
 wCurTrackVolumeEnvelope:: db
 wCurTrackFrequency:: dw
-wUnusedBCDNumber:: db ; BCD value, dummied out
+wUnusedBCDNumber:: db ; unused; kept for WRAM layout
 wCurNoteDuration:: db ; used in MusicE0 and LoadNote
 
 wCurMusicByte:: db
@@ -395,6 +395,7 @@ SECTION "Unused Map Buffer", WRAM0
 
 ; This was a buffer for map-related pointers in the 1997 G/S prototype.
 ; See wMapBuffer in pokegold-spaceworld's wram.asm.
+; Retained for WRAM layout; current map setup does not clear or read it.
 wUnusedMapBuffer:: ds 24
 wUnusedMapBufferEnd::
 
@@ -871,6 +872,9 @@ wEnemySafeguardCount:: db
 wEnemyLightScreenCount:: db
 wEnemyReflectCount:: db
 	ds 2
+
+wPlayerSleepClauseSlot:: db ; 0 = free; 1..6 = wCurOTMon+1 of slept enemy
+wEnemySleepClauseSlot::  db ; 0 = free; 1..6 = wCurBattleMon+1 of slept player
 
 wBattleWeather::
 ; 00 normal
@@ -1379,6 +1383,7 @@ NEXTU
 ; movement buffer data
 wMovementBufferCount:: db
 wMovementBufferObject:: db
+; Old indirect movement-buffer ABI fields; retained for WRAM layout only.
 wUnusedMovementBufferBank:: db
 wUnusedMovementBufferPointer:: dw
 wMovementBuffer:: ds 55
@@ -1613,7 +1618,7 @@ ENDU
 	ds 1
 
 wBoxAlignment:: db
-wFarDecompressPicPointer:: dw
+wFarDecompressPicPointer:: dw ; unused; kept for WRAM layout
 wFXAnimID:: dw
 ENDU
 

@@ -300,7 +300,7 @@ SpriteMovementData::
 
 	assert_table_length NUM_SPRITEMOVEDATA
 
-; unused
+; Padding row for unguarded invalid movement-data readers.
 	db SPRITEMOVEFN_00 ; movement function
 	db DOWN ; facing
 	db OBJECT_ACTION_STAND ; action

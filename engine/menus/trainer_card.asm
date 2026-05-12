@@ -115,22 +115,13 @@ TrainerCard_Page1_LoadGFX:
 
 TrainerCard_Page1_Joypad:
 	call TrainerCard_Page1_PrintGameTime
-	ld hl, hJoyLast
-	ld a, [hl]
+	ldh a, [hJoyLast]
 	and PAD_RIGHT | PAD_A
 	jr nz, .pressed_right_a
 	ret
 
 .pressed_right_a
 	ld a, TRAINERCARDSTATE_PAGE2_LOADGFX
-	ld [wJumptableIndex], a
-	ret
-
-.KantoBadgeCheck: ; unreferenced
-	ld a, [wKantoBadges]
-	and a
-	ret z
-	ld a, TRAINERCARDSTATE_PAGE3_LOADGFX
 	ld [wJumptableIndex], a
 	ret
 
@@ -155,25 +146,16 @@ TrainerCard_Page2_LoadGFX:
 TrainerCard_Page2_Joypad:
 	ld hl, TrainerCard_JohtoBadgesOAM
 	call TrainerCard_Page2_3_AnimateBadges
-	ld hl, hJoyLast
-	ld a, [hl]
+	ldh a, [hJoyLast]
 	and PAD_A
 	jr nz, .Quit
-	ld a, [hl]
+	ldh a, [hJoyLast]
 	and PAD_LEFT
 	jr nz, .d_left
 	ret
 
 .d_left
 	ld a, TRAINERCARDSTATE_PAGE1_LOADGFX
-	ld [wJumptableIndex], a
-	ret
-
-.KantoBadgeCheck: ; unreferenced
-	ld a, [wKantoBadges]
-	and a
-	ret z
-	ld a, TRAINERCARDSTATE_PAGE3_LOADGFX
 	ld [wJumptableIndex], a
 	ret
 
@@ -203,11 +185,10 @@ TrainerCard_Page3_LoadGFX:
 TrainerCard_Page3_Joypad:
 	ld hl, TrainerCard_JohtoBadgesOAM
 	call TrainerCard_Page2_3_AnimateBadges
-	ld hl, hJoyLast
-	ld a, [hl]
+	ldh a, [hJoyLast]
 	and PAD_LEFT
 	jr nz, .left
-	ld a, [hl]
+	ldh a, [hJoyLast]
 	and PAD_RIGHT
 	jr nz, .right
 	ret
@@ -306,9 +287,6 @@ TrainerCard_Page1_PrintDexCaught_GameTime:
 .Dex_PlayTime:
 	db   "#DEX"
 	next "PLAY TIME@"
-
-.Unused: ; unreferenced
-	db "@"
 
 .Badges:
 	db "BADGES▶@"

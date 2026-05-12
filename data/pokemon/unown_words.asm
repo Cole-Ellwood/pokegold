@@ -8,7 +8,7 @@ ENDM
 UnownWords:
 ; entries correspond to UNOWN_* form constants
 	table_width 2
-	dw UnownWordA ; unused
+	dw UnownWordA ; index 0 padding for one-based UNOWN_* forms
 	dw UnownWordA
 	dw UnownWordB
 	dw UnownWordC

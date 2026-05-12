@@ -35,6 +35,17 @@ ASM_SCAN_ROOTS = (
     ROOT / "home",
     ROOT / "maps",
 )
+EXCLUDED_SCAN_DIRS = {
+    ".claude",
+    ".git",
+    ".local",
+    "__pycache__",
+    "dist",
+    "generated",
+    "outbox",
+    "rgbds-1.0.1",
+    "workspace",
+}
 
 TOP_LABEL_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*:{1,2}\s*(?:;.*)?$")
 LOCAL_LABEL_RE = re.compile(r"^\.[A-Za-z_][A-Za-z0-9_]*:?\s*(?:;.*)?$")
@@ -113,6 +124,32 @@ def read_text(path: Path) -> str:
     if not path.exists():
         raise FileNotFoundError(path)
     return path.read_text(encoding="utf-8", errors="replace")
+
+
+def is_excluded_scan_path(path: Path) -> bool:
+    try:
+        rel = path.relative_to(ROOT)
+    except ValueError:
+        return True
+    return any(part in EXCLUDED_SCAN_DIRS for part in rel.parts)
+
+
+def iter_asm_scan_files() -> list[Path]:
+    return [
+        path
+        for root in ASM_SCAN_ROOTS
+        for path in root.rglob("*.asm")
+        if not is_excluded_scan_path(path)
+    ]
+
+
+def iter_docs_markdown_files() -> list[Path]:
+    docs = ROOT / "docs"
+    return [
+        path
+        for path in docs.rglob("*.md")
+        if not is_excluded_scan_path(path)
+    ]
 
 
 def code_lines(path: Path) -> list[tuple[int, str, str]]:
@@ -492,7 +529,7 @@ def audit_known_rejected_leads(leads: list[Lead]) -> str:
         "home/names.asm",
         "docs/bug_hunt_labeled_findings_2026-04-26.md",
     }
-    for path in sorted(ROOT.rglob("*.asm")) + sorted((ROOT / "docs").rglob("*.md")):
+    for path in sorted(iter_asm_scan_files()) + sorted(iter_docs_markdown_files()):
         rel = path.relative_to(ROOT).as_posix()
         text = read_text(path)
         if "MOVE_DESC_NAME_BROKEN" not in text:
@@ -538,29 +575,28 @@ def audit_known_rejected_leads(leads: list[Lead]) -> str:
 
 def audit_commented_flag_refreshes(leads: list[Lead]) -> str:
     checked = 0
-    for root in ASM_SCAN_ROOTS:
-        for path in sorted(root.rglob("*.asm")):
-            lines = read_text(path).splitlines()
-            for index, raw in enumerate(lines):
-                if COMMENTED_FLAG_REFRESH_RE.match(raw) is None:
+    for path in sorted(iter_asm_scan_files()):
+        lines = read_text(path).splitlines()
+        for index, raw in enumerate(lines):
+            if COMMENTED_FLAG_REFRESH_RE.match(raw) is None:
+                continue
+            for next_index in range(index + 1, len(lines)):
+                code = strip_comment(lines[next_index]).strip()
+                if not code:
                     continue
-                for next_index in range(index + 1, len(lines)):
-                    code = strip_comment(lines[next_index]).strip()
-                    if not code:
-                        continue
-                    if FLAG_CONSUMER_RE.match(code):
-                        checked += 1
-                        add_lead(
-                            leads,
-                            2,
-                            path,
-                            index + 1,
-                            "commented-out flag refresh before conditional control flow",
-                            "A disabled flag-setting instruction next to a flag-sensitive branch is easy to turn into stale-flag logic.",
-                            f"`{raw.strip()}` before `{code}`",
-                            "Trace the intended return/branch convention; either restore the flag refresh or remove the stale commented instruction.",
-                        )
-                    break
+                if FLAG_CONSUMER_RE.match(code):
+                    checked += 1
+                    add_lead(
+                        leads,
+                        2,
+                        path,
+                        index + 1,
+                        "commented-out flag refresh before conditional control flow",
+                        "A disabled flag-setting instruction next to a flag-sensitive branch is easy to turn into stale-flag logic.",
+                        f"`{raw.strip()}` before `{code}`",
+                        "Trace the intended return/branch convention; either restore the flag refresh or remove the stale commented instruction.",
+                    )
+                break
 
     return f"commented flag-refresh sentinels checked={checked}"
 
@@ -581,29 +617,28 @@ def stale_flag_reason_before_load(codes: list[str], load_index: int) -> str | No
 
 def audit_memory_load_flag_branches(leads: list[Lead]) -> str:
     checked = 0
-    for root in ASM_SCAN_ROOTS:
-        for path in sorted(root.rglob("*.asm")):
-            lines = read_text(path).splitlines()
-            codes = [strip_comment(line).strip() for line in lines]
-            for index in range(len(codes) - 1):
-                code = codes[index]
-                next_code = codes[index + 1]
-                if MEMORY_A_LOAD_RE.match(code) is None or ZN_BRANCH_RE.match(next_code) is None:
-                    continue
-                checked += 1
-                reason = stale_flag_reason_before_load(codes, index)
-                if reason is None:
-                    continue
-                add_lead(
-                    leads,
-                    2,
-                    path,
-                    index + 1,
-                    "memory load followed by conditional branch without local flag refresh",
-                    "`ld a, [addr]` does not update flags; this branch may be reading an older comparison.",
-                    f"{lines[index].strip()} / {lines[index + 1].strip()} ({reason})",
-                    "Trace the intended condition. If the loaded value is the condition, insert `and a`; if the old flags are intentional, add a narrow comment or teach this scanner the idiom.",
-                )
+    for path in sorted(iter_asm_scan_files()):
+        lines = read_text(path).splitlines()
+        codes = [strip_comment(line).strip() for line in lines]
+        for index in range(len(codes) - 1):
+            code = codes[index]
+            next_code = codes[index + 1]
+            if MEMORY_A_LOAD_RE.match(code) is None or ZN_BRANCH_RE.match(next_code) is None:
+                continue
+            checked += 1
+            reason = stale_flag_reason_before_load(codes, index)
+            if reason is None:
+                continue
+            add_lead(
+                leads,
+                2,
+                path,
+                index + 1,
+                "memory load followed by conditional branch without local flag refresh",
+                "`ld a, [addr]` does not update flags; this branch may be reading an older comparison.",
+                f"{lines[index].strip()} / {lines[index + 1].strip()} ({reason})",
+                "Trace the intended condition. If the loaded value is the condition, insert `and a`; if the old flags are intentional, add a narrow comment or teach this scanner the idiom.",
+            )
     return f"memory-load flag branches checked={checked}"
 
 

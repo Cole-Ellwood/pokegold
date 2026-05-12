@@ -422,17 +422,12 @@ BuyMenuLoop:
 	ld a, [wMenuJoypad]
 	cp PAD_B
 	jr z, .set_carry
-	cp PAD_A
-	jr z, .useless_pointer
-
-.useless_pointer
 	call MartAskPurchaseQuantity
 	jr c, .cancel
 	call MartConfirmPurchase
 	jr c, .cancel
 	ld de, wMoney
 	ld bc, hMoneyTemp
-	ld a, 3 ; useless load
 	call CompareMoney
 	jr c, .insufficient_funds
 	ld hl, wNumItems
@@ -672,16 +667,6 @@ SellMenu:
 	and a
 	ret
 
-.NothingToSell: ; unreferenced
-	ld hl, .NothingToSellText
-	call MenuTextboxBackup
-	and a
-	ret
-
-.NothingToSellText:
-	text_far _NothingToSellText
-	text_end
-
 .TryToSellItem:
 	farcall CheckItemMenu
 	ld a, [wItemAttributeValue]
@@ -753,9 +738,6 @@ MartSellHowManyText:
 MartSellPriceText:
 	text_far _MartSellPriceText
 	text_end
-
-UnusedDummyString: ; unreferenced
-	db "！ダミー！@" ; "!Dummy!"
 
 MartWelcomeText:
 	text_far _MartWelcomeText

@@ -8,11 +8,11 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-
-ROOT = Path(__file__).resolve().parents[2]
+from asm_scan import ROOT, TOP_LABEL_RE, LOCAL_LABEL_RE, SECTION_RE, code_part, iter_asm_files as scan_asm_files
 
 SCAN_ROOTS = [
     ROOT / "engine" / "battle",
+    ROOT / "engine" / "math",
     ROOT / "engine" / "pokemon",
     ROOT / "engine" / "overworld",
     ROOT / "home",
@@ -37,8 +37,7 @@ OFFSET_RE = re.compile(
     r"\b(?P<label>hMultiplicand|hProduct|hDividend|hQuotient|hMathBuffer)"
     r"\s*(?P<sign>[+-])\s*(?P<offset>\d+)\b"
 )
-GLOBAL_LABEL_RE = re.compile(r"^(?P<label>[A-Za-z_][A-Za-z0-9_]*):")
-LOCAL_LABEL_RE = re.compile(r"^(?P<label>\.[A-Za-z_][A-Za-z0-9_]*):?$")
+GLOBAL_LABEL_RE = TOP_LABEL_RE
 
 
 @dataclass(frozen=True)
@@ -136,12 +135,32 @@ def scan_file(path: Path) -> list[Issue]:
     return issues
 
 
-def iter_asm_files() -> list[Path]:
-    files: list[Path] = []
-    for root in SCAN_ROOTS:
-        if root.exists():
-            files.extend(sorted(root.rglob("*.asm")))
-    return files
+def iter_asm_paths() -> list[Path]:
+    return [asm_file.path for asm_file in scan_asm_files(roots=SCAN_ROOTS)]
+
+
+def function_code_lines(path: Path, label: str) -> list[str] | None:
+    if not path.exists():
+        return None
+    lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+    block: list[str] = []
+    in_block = False
+    for raw in lines:
+        if SECTION_RE.match(raw) and in_block:
+            break
+        label_match = GLOBAL_LABEL_RE.match(raw)
+        if label_match:
+            current_label = label_match.group("label")
+            if current_label == label:
+                in_block = True
+                continue
+            if in_block:
+                break
+        if in_block:
+            code = code_part(raw)
+            if code:
+                block.append(code)
+    return block if in_block else None
 
 
 def require_text(path: Path, needle: str, issues: list[Issue], reason: str) -> None:
@@ -291,20 +310,61 @@ def audit_late_gen_damage_multiplier_scratch_state() -> list[Issue]:
         "Expert Belt must preserve pending damage in hQuotient around BattleCheckTypeMatchup",
     )
 
-    require_text(
-        LATE_GEN_HELD_ITEMS,
-        (
-            "DittoMetalPowder_Far:\n"
-            "\tcall TypePassive_GetEffectiveMoveCategory_Far\n"
-            "\tcp SPECIAL\n"
-            "\tret nc\n"
-            "\tld a, MON_SPECIES"
-        ),
-        issues,
-        "Metal Powder must only boost physical Defense, not Special Defense",
-    )
+    require_metal_powder_physical_gate(issues)
 
     return issues
+
+
+def require_metal_powder_physical_gate(issues: list[Issue]) -> None:
+    block = function_code_lines(LATE_GEN_HELD_ITEMS, "DittoMetalPowder_Far")
+    if block is None:
+        issues.append(
+            Issue(
+                path=LATE_GEN_HELD_ITEMS,
+                lineno=1,
+                line="",
+                reason="missing DittoMetalPowder_Far",
+            )
+        )
+        return
+
+    try:
+        call_index = block.index("call TypePassive_GetEffectiveMoveCategory_Far")
+    except ValueError:
+        issues.append(
+            Issue(
+                path=LATE_GEN_HELD_ITEMS,
+                lineno=1,
+                line="",
+                reason="Metal Powder must call the effective move category helper",
+            )
+        )
+        return
+
+    before_call = block[:call_index]
+    after_call = block[call_index + 1 :]
+    if "push bc" not in before_call or "pop bc" not in after_call:
+        issues.append(
+            Issue(
+                path=LATE_GEN_HELD_ITEMS,
+                lineno=1,
+                line="",
+                reason="Metal Powder must preserve bc around the effective category helper",
+            )
+        )
+        return
+
+    pop_index = after_call.index("pop bc")
+    gate = after_call[pop_index + 1 : pop_index + 4]
+    if len(gate) < 2 or gate[0] != "cp SPECIAL" or gate[1] != "ret nc":
+        issues.append(
+            Issue(
+                path=LATE_GEN_HELD_ITEMS,
+                lineno=1,
+                line="",
+                reason="Metal Powder must reject SPECIAL-or-higher categories before boosting Defense",
+            )
+        )
 
 
 def audit_dynamic_category_consumers() -> list[Issue]:
@@ -373,7 +433,8 @@ def audit_dynamic_category_consumers() -> list[Issue]:
 
 def main() -> int:
     issues: list[Issue] = []
-    for path in iter_asm_files():
+    asm_paths = iter_asm_paths()
+    for path in asm_paths:
         issues.extend(scan_file(path))
     issues.extend(audit_dynamic_category_consumers())
     issues.extend(audit_late_gen_damage_multiplier_scratch_state())
@@ -388,7 +449,7 @@ def main() -> int:
         return 1
 
     print("Battle math safety audit passed.")
-    print(f"Scanned {len(iter_asm_files())} ASM files.")
+    print(f"Scanned {len(asm_paths)} ASM files.")
     print("Dynamic category consumers use the effective-category helpers.")
     print("Late-gen item stat/damage hooks preserve live battle math state and category gates.")
     return 0

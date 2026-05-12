@@ -1326,10 +1326,6 @@ _MomJustDoWhatYouCanText::
 	line "you can."
 	done
 
-_DaycareDummyText::
-	text_start
-	done
-
 _DayCareManIntroText::
 	text "I'm the DAY-CARE"
 	line "MAN. Want me to"
@@ -1714,13 +1710,6 @@ _ComeBackText::
 	line "back!"
 	done
 
-_PlayerPickedUpPayDayMoney::
-	text "<PLAYER> picked up"
-	line "¥@"
-	text_decimal wPayDayMoney, 3, 6
-	text "!"
-	prompt
-
 _BootedTMText::
 	text "Booted up a TM."
 	prompt
@@ -1749,21 +1738,6 @@ _TMHMNotCompatibleText::
 	line "@"
 	text_ram wStringBuffer2
 	text "."
-	prompt
-
-_NoRoomTMHMText::
-	text "You have no room"
-	line "for any more"
-	cont "@"
-	text_ram wStringBuffer1
-	text "S."
-	prompt
-
-_ReceivedTMHMText::
-	text "You received"
-	line "@"
-	text_ram wStringBuffer1
-	text "!"
 	prompt
 
 _BadgeRequiredText::

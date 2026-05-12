@@ -936,11 +936,6 @@ TitleScreenScene:
 	dw TitleScreenMain
 	dw TitleScreenEnd
 
-TitleScreenNextScene: ; unreferenced
-	ld hl, wJumptableIndex
-	inc [hl]
-	ret
-
 TitleScreenTimer:
 ; Next scene
 	ld hl, wJumptableIndex

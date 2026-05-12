@@ -146,7 +146,6 @@ WildFled_EnemyFled_LinkBattleCanceled:
 	ld de, SFX_RUN
 	call WaitPlaySFX
 	call SetPlayerTurn
-	callfar DummyPredef38
 	ld a, 1
 	ld [wBattleEnded], a
 	ret
@@ -254,7 +253,6 @@ HandleBetweenTurnEffects:
 	call HandleDefrost
 	call HandleSafeguard
 	call HandleScreens
-	call HandleStatBoostingHeldItems
 	call HandleHealingItems
 	call UpdateBattleMonInParty
 	call LoadTilemapToTempTilemap
@@ -1968,22 +1966,6 @@ GetMaxHP:
 	ld c, a
 	ret
 
-GetHalfHP: ; unreferenced
-	ld hl, wBattleMonHP
-	ld de, wEnemyMonHP
-	call _GetSidedHL
-	ld a, [hli]
-	ld b, a
-	ld a, [hli]
-	ld c, a
-	srl b
-	rr c
-	ld a, [hli]
-	ld [wHPBuffer1 + 1], a
-	ld a, [hl]
-	ld [wHPBuffer1], a
-	ret
-
 CheckUserHasEnoughHP:
 	ld hl, wBattleMonHP + 1
 	ld de, wEnemyMonHP + 1
@@ -2154,6 +2136,17 @@ DoubleSwitch:
 
 UpdateBattleStateAndExperienceAfterEnemyFaint:
 	call UpdateBattleMonInParty
+	ld a, [wPlayerSleepClauseSlot]
+	and a
+	jr z, .sleep_clause_clear_done
+	ld b, a
+	ld a, [wCurOTMon]
+	inc a
+	cp b
+	jr nz, .sleep_clause_clear_done
+	xor a
+	ld [wPlayerSleepClauseSlot], a
+.sleep_clause_clear_done
 	ld a, [wBattleMode]
 	dec a
 	jr z, .wild
@@ -2660,6 +2653,17 @@ HandlePlayerMonFaint:
 
 UpdateFaintedPlayerMon:
 	callfar BossAI_RecordPlayerFaint
+	ld a, [wEnemySleepClauseSlot]
+	and a
+	jr z, .sleep_clause_clear_done
+	ld b, a
+	ld a, [wCurBattleMon]
+	inc a
+	cp b
+	jr nz, .sleep_clause_clear_done
+	xor a
+	ld [wEnemySleepClauseSlot], a
+.sleep_clause_clear_done
 	ld a, [wCurBattleMon]
 	ld c, a
 	ld hl, wBattleParticipantsNotFainted
@@ -2692,10 +2696,6 @@ UpdateFaintedPlayerMon:
 	and BATTLERESULT_BITMASK
 	add LOSE
 	ld [wBattleResult], a
-	ld a, [wWhichMonFaintedFirst]
-	and a
-	ret z
-	; code was probably dummied out here
 	ret
 
 AskUseNextPokemon:
@@ -4036,7 +4036,7 @@ PursuitSwitch:
 	call GetMoveEffect
 	ld a, b
 	cp EFFECT_PURSUIT
-	jr nz, .done
+	jp nz, .done
 
 	ld a, [wCurBattleMon]
 	push af
@@ -4091,6 +4091,17 @@ PursuitSwitch:
 	ld a, [hli]
 	or [hl]
 	jr nz, .done
+	ld a, [wPlayerSleepClauseSlot]
+	and a
+	jr z, .sleep_clause_clear_done
+	ld b, a
+	ld a, [wCurOTMon]
+	inc a
+	cp b
+	jr nz, .sleep_clause_clear_done
+	xor a
+	ld [wPlayerSleepClauseSlot], a
+.sleep_clause_clear_done
 
 	ld de, SFX_KINESIS
 	call PlaySFX
@@ -4272,6 +4283,40 @@ UseHeldStatusHealingItem:
 	call GetBattleVarAddr
 	and b
 	ret z
+	push bc
+	ld a, [hl]
+	and SLP_MASK
+	jr z, .sleep_clause_checked
+	ld a, b
+	and SLP_MASK
+	jr z, .sleep_clause_checked
+	ldh a, [hBattleTurn]
+	and a
+	jr nz, .sleep_clause_check_player
+	ld a, [wPlayerSleepClauseSlot]
+	and a
+	jr z, .sleep_clause_checked
+	ld b, a
+	ld a, [wCurOTMon]
+	inc a
+	cp b
+	jr nz, .sleep_clause_checked
+	xor a
+	ld [wPlayerSleepClauseSlot], a
+	jr .sleep_clause_checked
+.sleep_clause_check_player
+	ld a, [wEnemySleepClauseSlot]
+	and a
+	jr z, .sleep_clause_checked
+	ld b, a
+	ld a, [wCurBattleMon]
+	inc a
+	cp b
+	jr nz, .sleep_clause_checked
+	xor a
+	ld [wEnemySleepClauseSlot], a
+.sleep_clause_checked
+	pop bc
 	xor a
 	ld [hl], a
 	push bc
@@ -4352,76 +4397,6 @@ UseConfusionHealingItem:
 	ld [bc], a
 	ld [hl], a
 	ret
-
-HandleStatBoostingHeldItems:
-; The effects handled here are not used in-game.
-	ldh a, [hSerialConnectionStatus]
-	cp USING_EXTERNAL_CLOCK
-	jr z, .player_1
-	call .DoPlayer
-	jp .DoEnemy
-
-.player_1
-	call .DoEnemy
-	jp .DoPlayer
-
-.DoPlayer:
-	call GetPartymonItem
-	ld a, $0
-	jp .HandleItem
-
-.DoEnemy:
-	call GetOTPartymonItem
-	ld a, $1
-.HandleItem:
-	ldh [hBattleTurn], a
-	ld d, h
-	ld e, l
-	push de
-	push bc
-	ld a, [bc]
-	ld b, a
-	callfar GetItemHeldEffect
-	ld hl, HeldStatUpItems
-.loop
-	ld a, [hli]
-	cp -1
-	jr z, .finish
-	inc hl
-	inc hl
-	cp b
-	jr nz, .loop
-	pop bc
-	ld a, [bc]
-	ld [wNamedObjectIndex], a
-	push bc
-	dec hl
-	dec hl
-	ld a, [hli]
-	ld h, [hl]
-	ld l, a
-	ld a, BANK(BattleCommand_AttackUp)
-	rst FarCall
-	pop bc
-	pop de
-	ld a, [wFailedMessage]
-	and a
-	ret nz
-	xor a
-	ld [bc], a
-	ld [de], a
-	call GetItemName
-	ld hl, BattleText_UsersStringBuffer1Activated
-	call StdBattleTextbox
-	callfar BattleCommand_StatUpMessage
-	ret
-
-.finish
-	pop bc
-	pop de
-	ret
-
-INCLUDE "data/battle/held_stat_up.asm"
 
 GetPartymonItem:
 	ld hl, wPartyMon1Item
@@ -4533,7 +4508,6 @@ CheckDanger:
 PrintPlayerHUD:
 	ld de, wBattleMonNickname
 	hlcoord 10, 7
-	call Battle_DummyFunction
 	call PlaceString
 
 	push bc
@@ -4619,7 +4593,6 @@ DrawEnemyHUD:
 	call GetBaseData
 	ld de, wEnemyMonNickname
 	hlcoord 1, 0
-	call Battle_DummyFunction
 	call PlaceString
 	ld h, b
 	ld l, c
@@ -4747,10 +4720,6 @@ UpdateHPPal:
 	cp b
 	ret z
 	jp FinishBattleAnim
-
-Battle_DummyFunction:
-; called before placing either battler's nickname in the HUD
-	ret
 
 BattleMenu:
 	xor a
@@ -5707,10 +5676,10 @@ MoveInfoBox:
 	call PrintNum
 
 	callfar UpdateMoveData
-	ld a, [wPlayerMoveStruct + MOVE_ANIM]
+	ld a, [wPlayerMoveStruct + MOVE_TYPE]
 	ld b, a
 	hlcoord 2, 10
-	predef PrintMoveType
+	predef PrintType
 
 .done
 	ret
@@ -6495,17 +6464,6 @@ CheckUnownLetter:
 
 INCLUDE "data/wild/unlocked_unowns.asm"
 
-SwapBattlerLevels: ; unreferenced
-	push bc
-	ld a, [wBattleMonLevel]
-	ld b, a
-	ld a, [wEnemyMonLevel]
-	ld [wBattleMonLevel], a
-	ld a, b
-	ld [wEnemyMonLevel], a
-	pop bc
-	ret
-
 BattleWinSlideInEnemyTrainerFrontpic:
 	xor a
 	ld [wTempEnemyMonSpecies], a
@@ -6778,20 +6736,6 @@ _LoadBattleFontsHPBar:
 _LoadHPBar:
 	callfar LoadHPBar
 	ret
-
-LoadHPExpBarGFX: ; unreferenced
-	ld de, EnemyHPBarBorderGFX
-	ld hl, vTiles2 tile $6c
-	lb bc, BANK(EnemyHPBarBorderGFX), 4
-	call Get1bpp
-	ld de, HPExpBarBorderGFX
-	ld hl, vTiles2 tile $73
-	lb bc, BANK(HPExpBarBorderGFX), 6
-	call Get1bpp
-	ld de, ExpBarGFX
-	ld hl, vTiles2 tile $55
-	lb bc, BANK(ExpBarGFX), 8
-	jp Get2bpp
 
 EmptyBattleTextbox:
 	ld hl, .empty
@@ -7116,7 +7060,6 @@ GiveExperiencePoints:
 	add hl, bc
 	ld a, [hl]
 	ld [wCurSpecies], a
-	ld [wTempSpecies], a ; unused?
 	call GetBaseData
 	ld hl, MON_MAXHP + 1
 	add hl, bc
@@ -7185,7 +7128,7 @@ GiveExperiencePoints:
 	call ApplyStatLevelMultiplierOnAllStats
 	callfar ApplyStatusEffectOnPlayerStats
 	callfar BadgeStatBoosts
-	callfar UpdatePlayerHUD
+	call UpdatePlayerHUD
 	call EmptyBattleTextbox
 	call LoadTilemapToTempTilemap
 	ld a, $1
@@ -7225,7 +7168,7 @@ GiveExperiencePoints:
 	xor a ; PARTYMON
 	ld [wMonType], a
 	ld a, [wCurSpecies]
-	ld [wTempSpecies], a ; unused?
+	ld [wTempSpecies], a ; feeds LearnLevelMoves
 	ld a, [wCurPartyLevel]
 	push af
 	ld c, a
@@ -7640,38 +7583,6 @@ ComeBackText:
 	text_far _ComeBackText
 	text_end
 
-HandleSafariAngerEatingStatus: ; unreferenced
-	ld hl, wSafariMonEating
-	ld a, [hl]
-	and a
-	jr z, .angry
-	dec [hl]
-	ld hl, BattleText_WildMonIsEating
-	jr .finish
-
-.angry
-	dec hl
-	assert wSafariMonEating - 1 == wSafariMonAngerCount
-	ld a, [hl]
-	and a
-	ret z
-	dec [hl]
-	ld hl, BattleText_WildMonIsAngry
-	jr nz, .finish
-	push hl
-	ld a, [wEnemyMonSpecies]
-	ld [wCurSpecies], a
-	call GetBaseData
-	ld a, [wBaseCatchRate]
-	ld [wEnemyMonCatchRate], a
-	pop hl
-
-.finish
-	push hl
-	call SafeLoadTempTilemapToTilemap
-	pop hl
-	jp StdBattleTextbox
-
 FillInExpBar:
 	push hl
 	call CalcExpBar
@@ -8039,57 +7950,6 @@ InitEnemyWildmon:
 	predef PlaceGraphic
 	ret
 
-FillEnemyMovesFromMoveIndicesBuffer: ; unreferenced
-	ld hl, wEnemyMonMoves
-	ld de, wListMoves_MoveIndicesBuffer
-	ld b, NUM_MOVES
-.loop
-	ld a, [de]
-	inc de
-	ld [hli], a
-	and a
-	jr z, .clearpp
-
-	push bc
-	push hl
-
-	push hl
-	dec a
-	ld hl, Moves + MOVE_PP
-	ld bc, MOVE_LENGTH
-	call AddNTimes
-	ld a, BANK(Moves)
-	call GetFarByte
-	pop hl
-
-	ld bc, wEnemyMonPP - (wEnemyMonMoves + 1)
-	add hl, bc
-	ld [hl], a
-
-	pop hl
-	pop bc
-
-	dec b
-	jr nz, .loop
-	ret
-
-.clear
-	xor a
-	ld [hli], a
-
-.clearpp
-	push bc
-	push hl
-	ld bc, wEnemyMonPP - (wEnemyMonMoves + 1)
-	add hl, bc
-	xor a
-	ld [hl], a
-	pop hl
-	pop bc
-	dec b
-	jr nz, .clear
-	ret
-
 ExitBattle:
 	call IsLinkBattle
 	jr nz, .HandleEndOfBattle
@@ -8168,10 +8028,6 @@ CheckPayDay:
 	ld hl, BattleText_PlayerPickedUpPayDayMoney
 	call StdBattleTextbox
 	ret
-
-PlayerPickedUpPayDayMoney: ; unreferenced
-	text_far _PlayerPickedUpPayDayMoney
-	text_end
 
 ShowLinkBattleParticipantsAfterEnd:
 	ld a, [wCurOTMon]

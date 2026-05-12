@@ -94,8 +94,3 @@ ElmPhoneCallerScript:
 	writetext ElmPhoneGiftText
 	specialphonecall SPECIALCALL_NONE
 	end
-
-.neat ; unreferenced
-	writetext ElmPhoneGotAholdOfSomethingNeatText
-	specialphonecall SPECIALCALL_NONE
-	end

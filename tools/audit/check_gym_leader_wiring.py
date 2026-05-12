@@ -6,6 +6,8 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
+from trainer_parties import parse_parties_text
+
 
 ROOT = Path(__file__).resolve().parents[2]
 LEADERS_FILE = ROOT / "data" / "trainers" / "leaders.asm"
@@ -73,6 +75,15 @@ class TrainerEventRef:
     trainer_label: str
     trainer_class: str
     trainer_id: str
+
+
+@dataclass(frozen=True)
+class LeaderMapContext:
+    leader: Leader
+    path: Path
+    text: str
+    object_events: tuple[tuple[str, ...], ...]
+    script_block: str | None
 
 
 def allowed_leader_no_move(leader_name: str, slot: int, mon: PartyMon, move_slot: int) -> bool:
@@ -268,9 +279,6 @@ CLASS_ENTRY_RE = re.compile(r"^\s*db\s+([A-Z0-9_]+|-1)\s*(?:;.*)?$")
 AI_TIER_RE = re.compile(
     r"^\s*db\s+([A-Z0-9_]+)\s*,\s*([A-Z0-9_]+)\s*,\s*(AI_TIER_[A-Z]+)\s*(?:;.*)?$"
 )
-GROUP_RE = re.compile(r"^([A-Za-z0-9_]+Group):\s*$")
-TRAINER_RE = re.compile(r'^\s*db\s+"[^"]*@",\s*(TRAINERTYPE_[A-Z_]+)\s*(?:;.*)?$')
-DB_RE = re.compile(r"^\s*db\s+(.+?)\s*(?:;.*)?$")
 CONST_RE = re.compile(r"^\s*const\s+([A-Z0-9_]+)\b")
 CONST_DEF_RE = re.compile(r"^\s*const_def(?:\s+(\$[0-9a-fA-F]+|[0-9]+))?\b")
 ADD_TMHM_RE = re.compile(r"^\s*add_(tm|hm)\s+([A-Z0-9_]+)\b")
@@ -374,6 +382,7 @@ LEADER_REWARDS = {
 CLAIR_BADGE_ROUTE_FILE = ROOT / "maps" / "DragonsDenB1F.asm"
 CLAIR_BADGE_ROUTE_LABEL = "DragonsDenB1FDragonFangScript"
 LEADERS_WITHOUT_STATUES = {"BLAINE"}
+TEXT_CACHE: dict[Path, str] = {}
 
 
 def fail(failures: list[str], message: str) -> None:
@@ -384,7 +393,9 @@ def read_text(path: Path, failures: list[str]) -> str:
     if not path.exists():
         fail(failures, f"missing file: {path.relative_to(ROOT)}")
         return ""
-    return path.read_text(encoding="utf-8")
+    if path not in TEXT_CACHE:
+        TEXT_CACHE[path] = path.read_text(encoding="utf-8")
+    return TEXT_CACHE[path]
 
 
 def find_script_block(text: str, label: str) -> str | None:
@@ -407,6 +418,18 @@ def find_script_block(text: str, label: str) -> str | None:
 
 def ordered_positions(block: str, needles: list[str]) -> list[int | None]:
     return [block.find(needle) if needle in block else None for needle in needles]
+
+
+def build_leader_map_context(leader: Leader, failures: list[str]) -> LeaderMapContext:
+    map_path = ROOT / leader.map_file
+    text = read_text(map_path, failures)
+    return LeaderMapContext(
+        leader=leader,
+        path=map_path,
+        text=text,
+        object_events=tuple(tuple(tokens) for tokens in parse_object_events(text)) if text else (),
+        script_block=find_script_block(text, leader.script_label) if text else None,
+    )
 
 
 def parse_class_list(text: str, label: str) -> set[str]:
@@ -625,10 +648,12 @@ def parse_set_beat_events(block: str) -> list[str]:
     return events
 
 
-def parse_trainer_event_refs() -> dict[str, list[TrainerEventRef]]:
+def parse_trainer_event_refs(failures: list[str]) -> dict[str, list[TrainerEventRef]]:
     refs: dict[str, list[TrainerEventRef]] = {}
     for map_path in (ROOT / "maps").glob("*.asm"):
-        text = map_path.read_text(encoding="utf-8")
+        text = read_text(map_path, failures)
+        if not text:
+            continue
         object_events = parse_object_events(text)
         object_trainer_labels = {
             tokens[11] for tokens in object_events if len(tokens) >= 12 and tokens[9] == "OBJECTTYPE_TRAINER"
@@ -901,74 +926,22 @@ def split_tokens(raw_db_payload: str) -> list[str]:
 
 def parse_party_entries(text: str) -> dict[str, list[PartyEntry]]:
     entries: dict[str, list[PartyEntry]] = {}
-    current_group: str | None = None
-    active_type: str | None = None
-    active_mons: list[PartyMon] = []
-
-    for raw_line in text.splitlines():
-        group_match = GROUP_RE.match(raw_line)
-        if group_match:
-            if current_group is not None and active_type is not None:
-                entries.setdefault(current_group, []).append(
-                    PartyEntry(current_group, active_type, tuple(active_mons))
+    for parsed in parse_parties_text(text, path_label=str(PARTIES_FILE)):
+        mons: list[PartyMon] = []
+        for mon in parsed.mons:
+            if parsed.trainer_type != "TRAINERTYPE_ITEM_MOVES" or len(mon.moves) != 4:
+                mons.append(PartyMon(0, "", "", ("", "", "", "")))
+                continue
+            mons.append(
+                PartyMon(
+                    level=mon.level,
+                    species=mon.species,
+                    item=mon.item,
+                    moves=(mon.moves[0], mon.moves[1], mon.moves[2], mon.moves[3]),
                 )
-            current_group = group_match.group(1)
-            active_type = None
-            active_mons = []
-            continue
-
-        if current_group is None:
-            continue
-
-        trainer_match = TRAINER_RE.match(raw_line)
-        if trainer_match:
-            if active_type is not None:
-                entries.setdefault(current_group, []).append(
-                    PartyEntry(current_group, active_type, tuple(active_mons))
-                )
-            active_type = trainer_match.group(1)
-            active_mons = []
-            continue
-
-        if active_type is None:
-            continue
-
-        db_match = DB_RE.match(raw_line)
-        if not db_match:
-            continue
-        tokens = split_tokens(db_match.group(1))
-        if not tokens:
-            continue
-        if tokens[0] == "-1":
-            entries.setdefault(current_group, []).append(
-                PartyEntry(current_group, active_type, tuple(active_mons))
             )
-            active_type = None
-            active_mons = []
-            continue
-
-        if active_type != "TRAINERTYPE_ITEM_MOVES":
-            active_mons.append(PartyMon(0, "", "", ("", "", "", "")))
-            continue
-        if len(tokens) != 7:
-            active_mons.append(PartyMon(0, "", "", ("", "", "", "")))
-            continue
-        try:
-            level = int(tokens[0], 10)
-        except ValueError:
-            level = 0
-        active_mons.append(
-            PartyMon(
-                level=level,
-                species=tokens[1],
-                item=tokens[2],
-                moves=(tokens[3], tokens[4], tokens[5], tokens[6]),
-            )
-        )
-
-    if current_group is not None and active_type is not None:
-        entries.setdefault(current_group, []).append(
-            PartyEntry(current_group, active_type, tuple(active_mons))
+        entries.setdefault(parsed.group, []).append(
+            PartyEntry(parsed.group, parsed.trainer_type, tuple(mons))
         )
     return entries
 
@@ -1158,7 +1131,7 @@ def check_battle_resources(
 
 
 def check_map_resources(
-    leader: Leader,
+    context: LeaderMapContext,
     map_constants: dict[str, tuple[int, int]],
     map_rows: dict[str, list[str]],
     map_attributes: dict[str, str],
@@ -1167,10 +1140,10 @@ def check_map_resources(
     event_constants: set[str],
     failures: list[str],
 ) -> None:
+    leader = context.leader
     name = map_name(leader)
     map_id = map_constant_name(name)
-    map_path = ROOT / leader.map_file
-    text = read_text(map_path, failures)
+    text = context.text
     if not text:
         return
 
@@ -1219,7 +1192,7 @@ def check_map_resources(
         fail(failures, f"{leader.name}: object_const_def lacks a leader object ending in _{object_suffix}")
 
     matching_events = []
-    for tokens in parse_object_events(text):
+    for tokens in context.object_events:
         if len(tokens) < 13:
             continue
         if (
@@ -1251,13 +1224,13 @@ def check_map_resources(
         fail(failures, f"{leader.name}: leader object visibility event is unknown: {visibility_event}")
 
 
-def check_map_script(leader: Leader, failures: list[str]) -> None:
-    map_path = ROOT / leader.map_file
-    text = read_text(map_path, failures)
+def check_map_script(context: LeaderMapContext, failures: list[str]) -> None:
+    leader = context.leader
+    text = context.text
     if not text:
         return
 
-    block = find_script_block(text, leader.script_label)
+    block = context.script_block
     if block is None:
         fail(failures, f"{leader.name}: missing script {leader.script_label} in {leader.map_file}")
         return
@@ -1290,17 +1263,16 @@ def check_map_script(leader: Leader, failures: list[str]) -> None:
 
 
 def check_gym_trainer_sweep(
-    leader: Leader,
+    context: LeaderMapContext,
     event_constants: set[str],
     trainer_event_refs: dict[str, list[TrainerEventRef]],
     trainer_constants_text: str,
     failures: list[str],
 ) -> None:
-    map_path = ROOT / leader.map_file
-    text = read_text(map_path, failures)
-    if not text:
+    leader = context.leader
+    if not context.text:
         return
-    block = find_script_block(text, leader.script_label)
+    block = context.script_block
     if block is None:
         return
 
@@ -1329,18 +1301,18 @@ def check_gym_trainer_sweep(
 
 
 def check_leader_aftermath(
-    leader: Leader,
+    context: LeaderMapContext,
     event_constants: set[str],
     engine_flags: set[str],
     item_constants: set[str],
     clair_badge_route_text: str,
     failures: list[str],
 ) -> None:
-    map_path = ROOT / leader.map_file
-    text = read_text(map_path, failures)
+    leader = context.leader
+    text = context.text
     if not text:
         return
-    block = find_script_block(text, leader.script_label)
+    block = context.script_block
     if block is None:
         return
 
@@ -1483,11 +1455,12 @@ def main() -> int:
     map_attributes = parse_map_attributes(map_attributes_text)
     map_script_includes = parse_script_includes(map_scripts_text)
     map_block_resources = parse_block_resources(map_blocks_text)
-    trainer_event_refs = parse_trainer_event_refs()
+    trainer_event_refs = parse_trainer_event_refs(failures)
 
     for leader in LEADERS:
+        map_context = build_leader_map_context(leader, failures)
         check_map_resources(
-            leader,
+            map_context,
             map_constants,
             map_rows,
             map_attributes,
@@ -1496,16 +1469,16 @@ def main() -> int:
             event_constants,
             failures,
         )
-        check_map_script(leader, failures)
+        check_map_script(map_context, failures)
         check_gym_trainer_sweep(
-            leader,
+            map_context,
             event_constants,
             trainer_event_refs,
             trainer_constants_text,
             failures,
         )
         check_leader_aftermath(
-            leader,
+            map_context,
             event_constants,
             engine_flags,
             item_constants,

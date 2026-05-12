@@ -160,14 +160,7 @@ GetMonBackpic:
 	push af
 	inc hl
 	ld a, d
-	call GetFarByte
-	push af
-	inc hl
-	ld a, d
-	call GetFarByte
-	ld h, a
-	pop af
-	ld l, a
+	call GetFarWord
 	ld de, sDecompressBuffer
 	pop af
 	call FarDecompress
@@ -261,14 +254,7 @@ GetTrainerPic:
 	push af
 	inc hl
 	ld a, BANK(TrainerPicPointers)
-	call GetFarByte
-	push af
-	inc hl
-	ld a, BANK(TrainerPicPointers)
-	call GetFarByte
-	ld h, a
-	pop af
-	ld l, a
+	call GetFarWord
 	ld de, sDecompressBuffer
 	pop af
 	call FarDecompress

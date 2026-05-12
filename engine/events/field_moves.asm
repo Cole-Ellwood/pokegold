@@ -10,14 +10,14 @@ PlayWhirlpoolSound:
 	ret
 
 BlindingFlash:
-	farcall FadeOutToWhite
+	call FadeOutToWhite
 	ld hl, wStatusFlags
 	set STATUSFLAGS_FLASH_F, [hl]
-	farcall ReplaceTimeOfDayPals
-	farcall UpdateTimeOfDayPal
+	call ReplaceTimeOfDayPals
+	call UpdateTimeOfDayPal
 	ld b, SCGB_MAPPALS
 	call GetSGBLayout
-	farcall FadeInFromWhite
+	call FadeInFromWhite
 	ret
 
 ShakeHeadbuttTree:
@@ -133,7 +133,7 @@ OWCutAnimation:
 	ret
 
 .LoadCutGFX:
-	callfar ClearSpriteAnims ; pointless to farcall
+	call ClearSpriteAnims
 	ld de, CutGrassGFX
 	ld hl, vTiles0 tile FIELDMOVE_GRASS
 	lb bc, BANK(CutGrassGFX), 4
@@ -319,7 +319,7 @@ FlyFromAnim:
 	ld a, [wJumptableIndex]
 	bit JUMPTABLE_EXIT_F, a
 	jr nz, .exit
-	ld a, 0 * OBJ_SIZE
+	xor a
 	ld [wCurSpriteOAMAddr], a
 	callfar DoNextFrameForAllSprites
 	call FlyFunction_FrameTimer
@@ -356,7 +356,7 @@ FlyToAnim:
 	ld a, [wJumptableIndex]
 	bit JUMPTABLE_EXIT_F, a
 	jr nz, .exit
-	ld a, 0 * OBJ_SIZE
+	xor a
 	ld [wCurSpriteOAMAddr], a
 	callfar DoNextFrameForAllSprites
 	call FlyFunction_FrameTimer

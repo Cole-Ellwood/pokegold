@@ -157,11 +157,11 @@ TypePassive_ApplyDamageModifiers_Far:
 .after_rock
 	call TypePassive_GetEffectiveMoveCategory_Far
 	cp SPECIAL
-	jr nc, .after_bug
+	jr nc, .check_water
 	ld a, BUG
 	call .GetOpponentTypeContribution
 	and a
-	jr z, .after_bug
+	jr z, .after_water
 	cp 2
 	ld a, 19
 	ld d, 20
@@ -170,11 +170,9 @@ TypePassive_ApplyDamageModifiers_Far:
 	ld d, 10
 .apply_bug
 	call .ApplyCurDamageFraction
+	jr .after_water
 
-.after_bug
-	call TypePassive_GetEffectiveMoveCategory_Far
-	cp SPECIAL
-	jr c, .after_water
+.check_water
 	ld a, WATER
 	call .GetOpponentTypeContribution
 	and a
@@ -517,9 +515,10 @@ TypePassive_GetEffectiveMoveCategory_Far::
 .done
 	ld a, e
 	pop bc
-	ld c, a            ; mirror a -> c so callers via Battle_GetEffectiveMoveCategory
-	                   ; (farcall) see the category in a (§3.3 a/c passthrough). Safe:
-	                   ; same-bank callers consume a immediately and don't read c.
+	ld c, a            ; mirror a -> c so Battle_GetEffectiveMoveCategory farcall
+	                   ; callers see the category in a (section 3.3 a/c passthrough).
+	                   ; Same-bank callers that keep bc live must preserve c
+	                   ; themselves; see late_gen_held_items.asm AG-08 notes.
 	pop de
 	pop hl
 	ret

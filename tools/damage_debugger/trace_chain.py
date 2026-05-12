@@ -9,7 +9,8 @@ from pathlib import Path
 
 from pyboy import PyBoy
 
-ROOT = Path("C:/Users/lolno/Downloads/pokemon gold hack")
+from .paths import find_rom, find_sym
+
 LOG_PATH = Path(__file__).resolve().parents[2] / "audit" / "damage_debugger" / "trace_chain.log"
 
 
@@ -61,8 +62,8 @@ def main() -> int:
         sys.stdout.write(msg + "\n"); sys.stdout.flush()
         fh.write(msg + "\n"); fh.flush()
 
-    rom = ROOT / "pokegold_debug.gbc"
-    sym = ROOT / "pokegold_debug.sym"
+    rom = find_rom()
+    sym = find_sym()
     syms = parse_sym(sym)
 
     pyboy = PyBoy(str(rom), window="null", sound=False, log_level="ERROR")

@@ -472,7 +472,6 @@ _PushWindow::
 	call GetMenuBoxDims
 	inc b
 	inc c
-	call .ret ; empty function
 
 .row
 	push bc
@@ -503,7 +502,6 @@ _PushWindow::
 
 .done
 	pop hl
-	call .ret ; empty function
 	ld a, h
 	ld [de], a
 	dec de
@@ -518,9 +516,6 @@ _PushWindow::
 	call CloseSRAM
 	ld hl, wWindowStackSize
 	inc [hl]
-	ret
-
-.ret
 	ret
 
 _ExitMenu::

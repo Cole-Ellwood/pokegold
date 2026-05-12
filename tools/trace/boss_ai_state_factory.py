@@ -5,10 +5,8 @@ from __future__ import annotations
 
 import argparse
 import json
-import logging
 import shutil
 import sys
-import warnings
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -18,6 +16,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from tools.trace import boss_ai_trace_capture as capture
+from tools.trace import runtime as trace_runtime
 
 
 DEFAULT_OUT_DIR = ROOT / ".local" / "tmp" / "boss_state_factory"
@@ -507,21 +506,8 @@ def prepare_work_rom(args: argparse.Namespace) -> Path:
 
 
 def open_pyboy(rom: Path):
-    local_pydeps = ROOT / ".local" / "pydeps"
-    if local_pydeps.exists():
-        sys.path.insert(0, str(local_pydeps))
-    warnings.filterwarnings("ignore", message="Using SDL2 binaries.*")
-    try:
-        from pyboy import PyBoy  # type: ignore
-    except Exception as exc:
-        fail(f"PyBoy is required for state generation. Import failed: {exc}")
-
-    logging.disable(logging.WARNING)
-    try:
-        pyboy = PyBoy(str(rom), window="null", sound=False, log_level="ERROR")
-    except TypeError:
-        pyboy = PyBoy(str(rom), window="null", sound=False)
-    capture.disable_realtime(pyboy)
+    pyboy = trace_runtime.open_pyboy(rom, "PyBoy is required for state generation. Import failed")
+    trace_runtime.disable_realtime(pyboy)
     return pyboy
 
 

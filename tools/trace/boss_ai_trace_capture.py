@@ -4,15 +4,16 @@
 from __future__ import annotations
 
 import argparse
-import hashlib
-import logging
 import sys
-import warnings
-from dataclasses import dataclass
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from tools.trace import runtime as trace_runtime
+
 DEFAULT_ROM = ROOT / "pokegold_trace.gbc"
 DEFAULT_SYMBOLS = ROOT / "pokegold_trace.sym"
 MOVE_CONSTANTS = ROOT / "constants" / "move_constants.asm"
@@ -60,10 +61,7 @@ METADATA_KEYS = (
 )
 
 
-@dataclass(frozen=True)
-class Symbol:
-    bank: int
-    address: int
+Symbol = trace_runtime.Symbol
 
 
 def fail(message: str) -> None:
@@ -72,37 +70,15 @@ def fail(message: str) -> None:
 
 
 def display_path(path: Path) -> str:
-    resolved = path.resolve()
-    try:
-        return str(resolved.relative_to(ROOT)).replace("\\", "/")
-    except ValueError:
-        return str(resolved)
+    return trace_runtime.display_path(path)
 
 
 def sha256_file(path: Path) -> str:
-    if not path.exists():
-        fail(f"missing file for SHA256: {path}")
-    digest = hashlib.sha256()
-    with path.open("rb") as fh:
-        for chunk in iter(lambda: fh.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest().upper()
+    return trace_runtime.sha256_file(path)
 
 
 def parse_symbols(path: Path) -> dict[str, Symbol]:
-    if not path.exists():
-        fail(f"missing symbol file: {path}")
-    out: dict[str, Symbol] = {}
-    for raw in path.read_text(encoding="utf-8", errors="replace").splitlines():
-        parts = raw.split()
-        if len(parts) != 2 or ":" not in parts[0]:
-            continue
-        bank_s, addr_s = parts[0].split(":", 1)
-        try:
-            out[parts[1]] = Symbol(int(bank_s, 16), int(addr_s, 16))
-        except ValueError:
-            continue
-    return out
+    return trace_runtime.parse_symbols(path)
 
 
 def parse_move_names(path: Path) -> dict[int, str]:
@@ -145,24 +121,11 @@ def format_addr(symbol: Symbol) -> str:
 
 
 def read_byte(pyboy, symbol: Symbol) -> int:
-    if 0xD000 <= symbol.address <= 0xDFFF and symbol.bank:
-        try:
-            return int(pyboy.memory[symbol.bank, symbol.address])
-        except Exception:
-            old_bank = int(pyboy.memory[0xFF70])
-            pyboy.memory[0xFF70] = symbol.bank
-            try:
-                return int(pyboy.memory[symbol.address])
-            finally:
-                pyboy.memory[0xFF70] = old_bank
-    return int(pyboy.memory[symbol.address])
+    return trace_runtime.read_byte(pyboy, symbol)
 
 
 def read_range(pyboy, symbol: Symbol, size: int) -> list[int]:
-    return [
-        read_byte(pyboy, Symbol(symbol.bank, symbol.address + offset))
-        for offset in range(size)
-    ]
+    return trace_runtime.read_range(pyboy, symbol, size)
 
 
 def decode_move(move_id: int, move_names: dict[int, str]) -> str:
@@ -271,37 +234,22 @@ def read_trace_values(pyboy, symbols: dict[str, Symbol]) -> dict[str, list[int]]
 
 
 def load_pyboy():
-    local_pydeps = ROOT / ".local" / "pydeps"
-    if local_pydeps.exists():
-        sys.path.insert(0, str(local_pydeps))
-    warnings.filterwarnings("ignore", message="Using SDL2 binaries.*")
-    try:
-        from pyboy import PyBoy  # type: ignore
-    except Exception as exc:
-        fail(
-            "PyBoy is required for WRAM capture. Use --symbols-only for debugger "
-            f"addresses, or install PyBoy. Import failed: {exc}"
-        )
-    return PyBoy
+    return trace_runtime.load_pyboy(
+        "PyBoy is required for WRAM capture. Use --symbols-only for debugger "
+        "addresses, or install PyBoy. Import failed"
+    )
 
 
 def open_pyboy(args: argparse.Namespace):
-    if not args.rom.exists():
-        fail(f"missing ROM: {args.rom}")
-
-    logging.disable(logging.WARNING)
-    PyBoy = load_pyboy()
-    try:
-        pyboy = PyBoy(str(args.rom), window="null", sound=False, log_level="ERROR")
-    except TypeError:
-        pyboy = PyBoy(str(args.rom), window="null", sound=False)
-    return pyboy
+    return trace_runtime.open_pyboy(
+        args.rom,
+        "PyBoy is required for WRAM capture. Use --symbols-only for debugger "
+        "addresses, or install PyBoy. Import failed",
+    )
 
 
 def disable_realtime(pyboy) -> None:
-    set_speed = getattr(pyboy, "set_emulation_speed", None)
-    if set_speed is not None:
-        set_speed(0)
+    trace_runtime.disable_realtime(pyboy)
 
 
 def load_state_if_requested(pyboy, args: argparse.Namespace) -> None:

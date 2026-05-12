@@ -16,6 +16,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+from tools.damage_debugger import oracle
 from tools.damage_debugger.synth import SynthBattle, SynthMon, SynthMove, run_synth
 
 TYPE_NORMAL = 0x00
@@ -31,6 +32,20 @@ TYPE_FIRE = 0x14
 
 def computed(base: int, level: int) -> int:
     return ((2 * base) * level) // 100 + 5
+
+
+def oracle_damagecalc_only(attacker: SynthMon, defender: SynthMon, move: SynthMove) -> int:
+    inputs = oracle.BattleInputs(
+        attacker_level=attacker.level,
+        move_bp=move.power,
+        move_type=move.type,
+        is_physical=True,
+        attacker_atk=attacker.attack,
+        defender_def=defender.defense,
+        attacker_types=(attacker.type1, attacker.type2),
+        defender_types=(defender.type1, defender.type2),
+    )
+    return oracle.predict_damagecalc_only(inputs)
 
 
 def main() -> int:
@@ -89,26 +104,28 @@ def main() -> int:
     print(f"first/last PC  : {res['first_pc']:04x} / {res['last_pc']:04x}" if res['first_pc'] else "(no trace)")
     print(f"final cur_dmg  : {res['cur_damage']}")
 
-    # Hand-computed Gen 2 formula:
-    # base = ((2*L/5+2) * Atk * Power / Def) / 50 + 2
-    L, A, P, D = pidgey.level, pidgey.attack, tackle.power, cyndaquil.defense
-    inner = (2 * L) // 5 + 2
-    base = ((inner * A * P) // D) // 50 + 2
-    print(f"\nhand-computed: L={L} A={A} P={P} D={D}")
-    print(f"  inner = (2*{L})/5+2 = {inner}")
-    print(f"  base = ({inner}*{A}*{P}/{D})/50+2 = {base}")
-    print(f"  expected ~{base} (no STAB, no item, no crit, no type-eff)")
+    expected = oracle_damagecalc_only(pidgey, cyndaquil, tackle)
+    print("\noracle damagecalc-only input:")
+    print(
+        "  "
+        f"L={pidgey.level} A={pidgey.attack} P={tackle.power} "
+        f"D={cyndaquil.defense} move_type=NORMAL"
+    )
+    print(f"  expected {expected} (no STAB, no item, no crit, no type-eff)")
 
-    if res["cur_damage"] == base:
-        print(f"\n*** SYNTH MATCHES ORACLE: {base} ***")
+    if res["cur_damage"] == expected:
+        print(f"\n*** SYNTH MATCHES ORACLE: {expected} ***")
         print("  -> DamageCalc inner formula is correct in isolation.")
         print("  -> Bug is in upstream (DamageStats sets wrong b/c/d/e) or")
         print("     post-DamageCalc commands (Stab/etc multiply wrong).")
-    elif res["cur_damage"] > base * 4:
-        print(f"\n*** SYNTH ALSO BUGGY: live={res['cur_damage']} vs oracle={base} ratio={res['cur_damage']/base:.1f}x ***")
+    elif res["cur_damage"] > expected * 4:
+        print(
+            f"\n*** SYNTH ALSO BUGGY: live={res['cur_damage']} "
+            f"vs oracle={expected} ratio={res['cur_damage']/expected:.1f}x ***"
+        )
         print("  -> Bug is INSIDE DamageCalc body (the inner formula).")
     else:
-        print(f"\n*** UNEXPECTED: live={res['cur_damage']} vs oracle={base} ***")
+        print(f"\n*** UNEXPECTED: live={res['cur_damage']} vs oracle={expected} ***")
 
     return 0
 

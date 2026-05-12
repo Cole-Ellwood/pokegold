@@ -44,6 +44,7 @@ HealMachineAnim:
 	ld [wHealMachineAnimState], a
 	add hl, de
 	ld a, [hl]
+; FINISH terminates the sequence before any state dispatch.
 	cp HEALMACHINESTATE_FINISH
 	jr z, .finish
 	ld hl, .Jumptable
@@ -56,7 +57,7 @@ HealMachineAnim:
 .Pointers:
 ; entries correspond to HEALMACHINE_* constants
 	dw .Pokecenter
-	dw .ElmsLab
+	dw .Pokecenter
 	dw .HallOfFame
 
 MACRO healmachineanimseq
@@ -68,8 +69,6 @@ ENDM
 
 .Pokecenter:
 	healmachineanimseq LOADGFX, PCLOADBALLS, PLAYMUSIC, FINISH
-.ElmsLab:
-	healmachineanimseq LOADGFX, PCLOADBALLS, PLAYMUSIC, FINISH
 .HallOfFame:
 	healmachineanimseq LOADGFX, HOFLOADBALLS, HOFPLAYSFX, FINISH
 
@@ -80,7 +79,6 @@ ENDM
 	dw .HOF_LoadBallsOntoMachine
 	dw .PlayHealMusic
 	dw .HOF_PlaySFX
-	dw .dummy_5 ; never encountered
 
 .LoadGFX:
 	call .LoadPalettes
@@ -128,9 +126,6 @@ ENDM
 	call WaitSFX
 	ld de, SFX_BOOT_PC
 	call PlaySFX
-	ret
-
-.dummy_5
 	ret
 
 .PC_ElmsLab_OAM:

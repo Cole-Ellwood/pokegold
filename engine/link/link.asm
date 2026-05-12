@@ -2494,15 +2494,3 @@ CableClubCheckWhichChris:
 
 LinkCommsBorderGFX:
 INCBIN "gfx/trade/border_tiles.2bpp"
-
-CheckSRAM0Flag: ; unreferenced
-; input: hl = unknown flag array in "SRAM Bank 0"
-	ld a, BANK("SRAM Bank 0")
-	call OpenSRAM
-	ld d, 0
-	ld b, CHECK_FLAG
-	predef SmallFarFlagAction
-	call CloseSRAM
-	ld a, c
-	and a
-	ret

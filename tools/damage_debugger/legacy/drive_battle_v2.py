@@ -8,6 +8,12 @@ where pressing A on the right NPC triggers a battle.
 
 from __future__ import annotations
 
+LEGACY_EXIT = (
+    "tools.damage_debugger.legacy scripts are pruned one-shot drivers; "
+    "use active tools.damage_debugger modules instead."
+)
+raise SystemExit(LEGACY_EXIT)
+
 import sys
 import time
 from pathlib import Path

@@ -1538,7 +1538,7 @@ Rollout_FillLYOverridesBackup:
 	jr nz, .loop
 	ret
 
-BattleBGEffect_BetaPursuit: ; unused
+BattleBGEffect_BetaPursuit: ; beta-named, used by Pursuit animation
 	call BattleBGEffects_AnonJumptable
 .anon_dw
 	dw VitalThrow_MoveBackwards
@@ -1773,7 +1773,7 @@ BattleBGEffect_BounceDown:
 	call BattleAnim_ResetLCDStatCustom
 	ret
 
-BattleBGEffect_BetaSendOutMon1: ; unused
+BattleBGEffect_BetaSendOutMon1: ; beta-named, used by send-out animations
 	call BattleBGEffects_AnonJumptable
 .anon_dw
 	dw .zero
@@ -1881,7 +1881,7 @@ BattleBGEffect_BetaSendOutMon1: ; unused
 	db $00, $40, $90, $e4
 	db -1
 
-BattleBGEffect_BetaSendOutMon2: ; unused
+BattleBGEffect_BetaSendOutMon2: ; beta-named, used by send-out animations
 	call BattleBGEffects_AnonJumptable
 .anon_dw
 	dw .zero

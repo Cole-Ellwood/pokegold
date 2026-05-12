@@ -28,7 +28,7 @@ Elevator::
 
 .LoadFloors:
 	ld de, wCurElevatorCount
-	ld bc, wElevatorDataEnd - wElevatorData
+	ld b, wElevatorDataEnd - wElevatorData
 	ld hl, wElevatorPointer
 	ld a, [hli]
 	ld h, [hl]
@@ -38,14 +38,21 @@ Elevator::
 	inc hl
 	ld [de], a
 	inc de
+	ld c, a
 	assert wCurElevatorCount + 1 == wCurElevatorFloors
 .loop
 	ld a, [wElevatorPointerBank]
 	call GetFarByte
 	ld [de], a
 	inc de
-	add hl, bc
-	cp -1
+	ld a, l
+	add b
+	ld l, a
+	jr nc, .no_carry
+	inc h
+
+.no_carry
+	dec c
 	jr nz, .loop
 	ret
 
@@ -54,9 +61,6 @@ Elevator::
 	ld a, [hli]
 	ld h, [hl]
 	ld l, a
-	ld a, [wElevatorPointerBank]
-	call GetFarByte
-	ld c, a
 	inc hl
 	ld a, [wBackupMapGroup]
 	ld d, a

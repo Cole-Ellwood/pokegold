@@ -62,7 +62,7 @@ _UnownPuzzle:
 	ld a, [wJumptableIndex]
 	bit JUMPTABLE_EXIT_F, a
 	jr nz, .quit
-	call UnownPuzzleJumptable
+	call UnownPuzzle_HandleInput
 	ld a, [wHoldingUnownPuzzlePiece]
 	and a
 	jr nz, .holding_piece
@@ -168,13 +168,7 @@ PlaceStartCancelBoxBorder:
 	ld [hl], a
 	ret
 
-UnownPuzzleJumptable:
-	jumptable .Jumptable, wJumptableIndex
-
-.Jumptable: ; redundant one-entry jumptable
-	dw .Function
-
-.Function:
+UnownPuzzle_HandleInput:
 	ldh a, [hJoyPressed]
 	and PAD_START
 	jp nz, UnownPuzzle_Quit

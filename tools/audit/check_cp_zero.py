@@ -59,9 +59,15 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
-
-SKIP_DIR_PARTS = {".git", "rgbds-1.0.1", "tools", "scripts", ".local", "workspace", ".claude"}
+from asm_scan import (
+    ROOT,
+    TOP_LABEL_RE,
+    LOCAL_LABEL_RE,
+    SECTION_RE,
+    code_part,
+    has_keep_marker,
+    iter_asm_files,
+)
 
 # `cp 0`, `cp $0`, `cp $00`. Decimal `0` and hex `$0`/`$00` only -- larger
 # literals (`$01`, `1`, ...) are real comparisons, not no-ops.
@@ -69,10 +75,6 @@ CP_ZERO_RE = re.compile(
     r"^(?P<indent>\s*)cp\s+(?:0|\$0{1,2})\s*(?P<tail>;.*)?$",
     re.IGNORECASE,
 )
-TOP_LABEL_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*:{1,2}\s*(?:;.*)?$")
-LOCAL_LABEL_RE = re.compile(r"^\s*\.[A-Za-z_][A-Za-z0-9_]*:?\s*(?:;.*)?$")
-SECTION_RE = re.compile(r"^\s*SECTION\s+\"", re.IGNORECASE)
-
 # --- Reads ---
 # `daa` is the only instruction that reads N (and H).
 READS_N_RE = re.compile(r"^\s*daa\b", re.IGNORECASE)
@@ -132,27 +134,6 @@ class Site:
     has_keep_marker: bool = False
 
 
-def code_part(line: str) -> str:
-    return line.split(";", 1)[0].strip()
-
-
-def has_keep_marker(line: str) -> bool:
-    if ";" not in line:
-        return False
-    comment = line.split(";", 1)[1].lower()
-    return "keep" in comment
-
-
-def iter_asm_files() -> list[Path]:
-    files: list[Path] = []
-    for p in sorted(ROOT.rglob("*.asm")):
-        rel_parts = p.relative_to(ROOT).parts
-        if any(part in SKIP_DIR_PARTS for part in rel_parts):
-            continue
-        files.append(p)
-    return files
-
-
 def classify_site(lines: list[str], site_idx: int) -> tuple[str, str]:
     """Forward walk. Return (classification, reason) where classification is
     one of SAFE, UNSAFE, INDETERMINATE."""
@@ -184,9 +165,9 @@ def classify_site(lines: list[str], site_idx: int) -> tuple[str, str]:
 
 def collect_sites() -> list[Site]:
     sites: list[Site] = []
-    for path in iter_asm_files():
-        text = path.read_text(encoding="utf-8", errors="replace")
-        lines = text.splitlines()
+    for asm_file in iter_asm_files():
+        path = asm_file.path
+        lines = asm_file.lines
         for i, raw in enumerate(lines):
             m = CP_ZERO_RE.match(raw)
             if not m:

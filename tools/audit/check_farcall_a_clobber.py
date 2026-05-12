@@ -68,12 +68,8 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+from asm_scan import AsmFile, ROOT, TOP_LABEL_RE, SECTION_RE, code_part, iter_asm_files
 
-SKIP_DIR_PARTS = {".git", "rgbds-1.0.1", "tools", "scripts", ".local", "workspace", ".claude"}
-
-TOP_LABEL_RE = re.compile(r"^(?P<label>[A-Za-z_][A-Za-z0-9_]*):{1,2}\s*(?:;.*)?$")
-SECTION_RE = re.compile(r'^\s*SECTION\s+"', re.IGNORECASE)
 FARCALL_RE = re.compile(
     r"^\s*(?P<op>farcall|callfar)\s+(?P<target>[A-Za-z_][A-Za-z0-9_]*)\b"
 )
@@ -196,27 +192,13 @@ class Issue:
     caller_consumption: str
 
 
-def code_part(line: str) -> str:
-    return line.split(";", 1)[0].strip()
-
-
-def iter_asm_files() -> list[Path]:
-    files: list[Path] = []
-    for p in sorted(ROOT.rglob("*.asm")):
-        rel_parts = p.relative_to(ROOT).parts
-        if any(part in SKIP_DIR_PARTS for part in rel_parts):
-            continue
-        files.append(p)
-    return files
-
-
-def collect_functions(files: list[Path]) -> dict[str, Function]:
+def collect_functions(files: list[AsmFile]) -> dict[str, Function]:
     """Build label -> Function. Body = lines from the line after the label up
     to (but not including) the next top-level label or SECTION directive."""
     funcs: dict[str, Function] = {}
-    for path in files:
-        text = path.read_text(encoding="utf-8", errors="replace")
-        lines = text.splitlines()
+    for asm_file in files:
+        path = asm_file.path
+        lines = asm_file.lines
         current: Function | None = None
         for i, raw in enumerate(lines):
             if SECTION_RE.match(raw):
@@ -327,9 +309,9 @@ def main() -> int:
     functions = collect_functions(files)
 
     issues: list[Issue] = []
-    for path in files:
-        text = path.read_text(encoding="utf-8", errors="replace")
-        lines = text.splitlines()
+    for asm_file in files:
+        path = asm_file.path
+        lines = asm_file.lines
         for i, raw in enumerate(lines):
             m = FARCALL_RE.match(code_part(raw))
             if not m:

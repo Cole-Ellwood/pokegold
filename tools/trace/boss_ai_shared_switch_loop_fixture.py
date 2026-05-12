@@ -6,7 +6,6 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-import warnings
 from pathlib import Path
 
 
@@ -16,6 +15,7 @@ if str(ROOT) not in sys.path:
 
 from tools.trace import boss_ai_state_factory as factory
 from tools.trace import boss_ai_trace_capture as capture
+from tools.trace import runtime as trace_runtime
 
 
 DEFAULT_BASE_STATE = ROOT / ".local" / "tmp" / "boss_state_factory" / "jasmine_chosen_frame_4520.state"
@@ -31,14 +31,6 @@ PARTYMON_STRUCT_LENGTH = 0x30
 def fail(message: str) -> None:
     print(f"ERROR: {message}", file=sys.stderr)
     raise SystemExit(1)
-
-
-def display_path(path: Path) -> str:
-    resolved = path.resolve()
-    try:
-        return str(resolved.relative_to(ROOT)).replace("\\", "/")
-    except ValueError:
-        return str(resolved)
 
 
 def write_word(pyboy, symbols: dict[str, capture.Symbol], name: str, value: int) -> None:
@@ -136,24 +128,12 @@ def verify_fixture(pyboy, symbols: dict[str, capture.Symbol], frames: int) -> li
     fail(f"no switch confidence observed within {frames} verification frames")
 
 
-def load_pyboy():
-    local_pydeps = ROOT / ".local" / "pydeps"
-    if local_pydeps.exists():
-        sys.path.insert(0, str(local_pydeps))
-    warnings.filterwarnings("ignore", message="Using SDL2 binaries.*")
-    try:
-        from pyboy import PyBoy  # type: ignore
-    except Exception as exc:
-        fail(f"PyBoy is required to build the fixture: {exc}")
-    return PyBoy
-
-
 def update_manifest(state_path: Path) -> None:
     data = json.loads(MANIFEST.read_text(encoding="utf-8"))
     for entry in data["captures"]:
         if entry.get("id") != "shared_switch_loop":
             continue
-        entry["save_state"] = display_path(state_path)
+        entry["save_state"] = trace_runtime.display_path(state_path)
         entry["watch_frames"] = 180
         entry["poll_every"] = 1
         entry["stop_after_first_capture"] = True
@@ -183,10 +163,9 @@ def main() -> int:
 
     symbols = capture.parse_symbols(capture.DEFAULT_SYMBOLS)
     capture.require_symbols(symbols)
-    PyBoy = load_pyboy()
-    pyboy = PyBoy(str(capture.DEFAULT_ROM), window="null", sound=False, log_level="ERROR")
+    pyboy = trace_runtime.open_pyboy(capture.DEFAULT_ROM, "PyBoy is required to build the fixture")
     try:
-        pyboy.set_emulation_speed(0)
+        trace_runtime.disable_realtime(pyboy)
         with args.base_state.open("rb") as fh:
             pyboy.load_state(fh)
         prepare_repeated_switch_state(pyboy, symbols)
@@ -200,8 +179,8 @@ def main() -> int:
 
     log_lines = [
         "shared_switch_loop_fixture=PASS",
-        f"base_state={display_path(args.base_state)}",
-        f"out={display_path(args.out)}",
+        f"base_state={trace_runtime.display_path(args.base_state)}",
+        f"out={trace_runtime.display_path(args.out)}",
         f"advance_frames={args.advance_frames}",
         *observed,
         "setup=cur_ot=0,last_switched_out=2,cooldown=2,public_move=EARTHQUAKE,enemy_hp=full",

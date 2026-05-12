@@ -23,8 +23,6 @@ DelCellNum::
 	ret
 
 CheckCellNum::
-	jp _CheckCellNum ; useless
-
 _CheckCellNum:
 	ld hl, wPhoneList
 	ld b, CONTACT_LIST_SIZE
@@ -145,13 +143,6 @@ CheckPhoneCall::
 
 .timecheck
 	farcall CheckReceiveCallTimer
-	ret
-
-.unused ; unreferenced
-	ret
-
-FarInitCallReceiveDelay: ; unreferenced
-	farcall InitCallReceiveDelay
 	ret
 
 CheckPhoneContactTimeOfDay:
@@ -446,15 +437,6 @@ Script_SpecialBillCall::
 	ld e, PHONE_BILL
 	jp LoadCallerScript
 
-Script_SpecialElmCall: ; unreferenced
-	callasm .LoadElmScript
-	pause 30
-	sjump Script_ReceivePhoneCall
-
-.LoadElmScript:
-	ld e, PHONE_ELM
-	jp LoadCallerScript
-
 RingTwice_StartCall:
 	call .Ring
 ; fallthrough (rings a second time)
@@ -528,11 +510,6 @@ Phone_CallEnd:
 	call HangUp_Wait20Frames
 	call HangUp_BoopOff
 	call HangUp_Wait20Frames
-	ret
-
-HangUp_ShutDown: ; unreferenced
-	ld de, SFX_SHUT_DOWN_PC
-	call PlaySFX
 	ret
 
 HangUp_Beep:
@@ -699,7 +676,7 @@ GetCallerLocation:
 	push bc
 	call GetWorldMapLocation
 	ld e, a
-	farcall GetLandmarkName
+	call GetLandmarkName
 	pop bc
 	pop de
 	ret
@@ -722,12 +699,4 @@ PhoneScript_JustTalkToThem:
 
 PhoneJustTalkToThemText:
 	text_far _PhoneJustTalkToThemText
-	text_end
-
-PhoneThankYouTextScript: ; unreferenced
-	writetext PhoneThankYouText
-	end
-
-PhoneThankYouText:
-	text_far _PhoneThankYouText
 	text_end

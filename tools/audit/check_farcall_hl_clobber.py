@@ -29,9 +29,7 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
-
-SKIP_DIR_PARTS = {".git", "rgbds-1.0.1", "tools", "scripts", ".local", "workspace", ".claude"}
+from asm_scan import AsmFile, ROOT, iter_asm_files
 
 LABEL_RE = re.compile(r"^(?P<label>[A-Za-z_][A-Za-z0-9_]*):{1,2}\s*(?:;.*)?$")
 FARCALL_RE = re.compile(
@@ -54,23 +52,13 @@ class Issue:
     target: str
 
 
-def iter_asm_files() -> list[Path]:
-    files: list[Path] = []
-    for p in ROOT.rglob("*.asm"):
-        rel_parts = p.relative_to(ROOT).parts
-        if any(part in SKIP_DIR_PARTS for part in rel_parts):
-            continue
-        files.append(p)
-    return sorted(files)
-
-
-def discover_hl_input_funcs(files: list[Path]) -> set[str]:
+def discover_hl_input_funcs(files: list[AsmFile]) -> set[str]:
     """Find function definitions whose header comment block carries the
     `Reach via ROM0 thunk` marker. The header block ends at the first
     non-comment, non-blank line."""
     found: set[str] = set(EXTRA_HL_INPUT_FUNCS)
-    for path in files:
-        lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+    for asm_file in files:
+        lines = asm_file.lines
         for i, line in enumerate(lines):
             m = LABEL_RE.match(line)
             if not m:
@@ -88,10 +76,11 @@ def discover_hl_input_funcs(files: list[Path]) -> set[str]:
     return found
 
 
-def scan_farcall_violations(files: list[Path], hl_inputs: set[str]) -> list[Issue]:
+def scan_farcall_violations(files: list[AsmFile], hl_inputs: set[str]) -> list[Issue]:
     issues: list[Issue] = []
-    for path in files:
-        lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+    for asm_file in files:
+        path = asm_file.path
+        lines = asm_file.lines
         for i, raw in enumerate(lines):
             code = raw.split(";", 1)[0]
             m = FARCALL_RE.match(code)

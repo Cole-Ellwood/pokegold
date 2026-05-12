@@ -1,12 +1,5 @@
 ; Functions dealing with rendering and interacting with maps.
 
-ClearUnusedMapBuffer::
-	ld hl, wUnusedMapBuffer
-	ld bc, wUnusedMapBufferEnd - wUnusedMapBuffer
-	xor a
-	call ByteFill
-	ret
-
 CheckScenes::
 ; Checks wCurMapSceneScriptPointer.  If it's empty, returns -1 in a.  Otherwise, returns the active scene ID in a.
 	push hl
@@ -211,7 +204,6 @@ ReturnToMapFromSubmenu::
 	ret
 
 HandleNewMap::
-	call ClearUnusedMapBuffer
 	call ResetMapBufferEventFlags
 	call ResetFlashIfOutOfCave
 	call GetCurrentMapSceneID
@@ -582,8 +574,8 @@ GetDestinationWarpNumber::
 
 .found_warp
 	pop hl
-	call .IncreaseHLTwice
-	ret nc ; never encountered
+	inc hl
+	inc hl
 
 	ld a, [wCurMapWarpEventCount]
 	inc a
@@ -592,11 +584,6 @@ GetDestinationWarpNumber::
 	scf
 	ret
 
-.IncreaseHLTwice:
-	inc hl
-	inc hl
-	scf
-	ret
 
 CopyWarpData::
 	ldh a, [hROMBank]
@@ -730,14 +717,6 @@ CheckIndoorMap::
 	cp DUNGEON
 	ret z
 	cp GATE
-	ret
-
-CheckUnknownMap:: ; unreferenced
-	cp INDOOR
-	ret z
-	cp GATE
-	ret z
-	cp ENVIRONMENT_5
 	ret
 
 LoadMapAttributes::
@@ -955,9 +934,7 @@ ReadObjectEvents::
 	jr z, .skip
 	jr c, .skip
 
-	; could have done "inc hl" instead
-	ld bc, 1
-	add hl, bc
+	inc hl
 ; Fill the remaining sprite IDs and y coords with 0 and -1, respectively.
 	ld bc, MAPOBJECT_LENGTH
 .loop
@@ -1006,16 +983,6 @@ ClearObjectStructs::
 	xor a
 	call ByteFill
 
-; Just to make sure (this is rather pointless)
-	ld hl, wObject1Struct
-	ld de, OBJECT_LENGTH
-	ld c, NUM_OBJECT_STRUCTS - 1
-	xor a
-.loop
-	ld [hl], a
-	add hl, de
-	dec c
-	jr nz, .loop
 	ret
 
 GetWarpDestCoords::
@@ -1512,20 +1479,6 @@ ObjectEventText::
 	text_far _ObjectEventText
 	text_end
 
-BGEvent:: ; unreferenced
-	jumptext BGEventText
-
-BGEventText::
-	text_far _BGEventText
-	text_end
-
-CoordinatesEvent:: ; unreferenced
-	jumptext CoordinatesEventText
-
-CoordinatesEventText::
-	text_far _CoordinatesEventText
-	text_end
-
 CheckObjectMask::
 	ldh a, [hMapObjectIndex]
 	ld e, a
@@ -1713,13 +1666,6 @@ UpdateBGMapColumn::
 	jr nz, .loop
 	ld a, SCREEN_HEIGHT
 	ldh [hBGMapTileCount], a
-	ret
-
-ClearBGMapBuffer:: ; unreferenced
-	ld hl, wBGMapBuffer
-	ld bc, wBGMapBufferEnd - wBGMapBuffer
-	xor a
-	call ByteFill
 	ret
 
 LoadTilesetGFX::
@@ -2413,11 +2359,6 @@ SwitchToAnyMapAttributesBank::
 	rst Bankswitch
 	ret
 
-GetMapAttributesBank:: ; unreferenced
-	ld a, [wMapGroup]
-	ld b, a
-	ld a, [wMapNumber]
-	ld c, a
 GetAnyMapAttributesBank::
 	push hl
 	push de
@@ -2505,9 +2446,6 @@ GetMapEnvironment::
 	pop bc
 	pop de
 	pop hl
-	ret
-
-Map_DummyFunction:: ; unreferenced
 	ret
 
 GetAnyMapEnvironment::

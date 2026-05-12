@@ -640,7 +640,6 @@ ENDM
 	add e
 	ld e, a
 ; Find an object struct with coordinates equal to d,e
-	ld bc, wObjectStructs ; redundant
 	farcall IsNPCAtCoord
 	jr nc, .no_npc
 	call .CheckStrengthBoulder

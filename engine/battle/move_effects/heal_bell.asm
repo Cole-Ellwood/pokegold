@@ -8,6 +8,16 @@ BattleCommand_HealBell:
 	jr z, .got_status
 	ld de, wOTPartyMon1Status
 .got_status
+	ldh a, [hBattleTurn]
+	and a
+	jr nz, .clear_player_clause
+	xor a
+	ld [wEnemySleepClauseSlot], a
+	jr .clause_done
+.clear_player_clause
+	xor a
+	ld [wPlayerSleepClauseSlot], a
+.clause_done
 	ld a, BATTLE_VARS_STATUS
 	call GetBattleVarAddr
 	xor a

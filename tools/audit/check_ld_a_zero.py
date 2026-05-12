@@ -70,14 +70,21 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+from asm_scan import (
+    ROOT,
+    TOP_LABEL_RE,
+    LOCAL_LABEL_RE,
+    SECTION_RE,
+    code_part,
+    has_keep_marker,
+    iter_asm_files,
+)
 
-SKIP_DIR_PARTS = {".git", "rgbds-1.0.1", "tools", "scripts", ".local", "workspace", ".claude"}
-
-LD_A_ZERO_RE = re.compile(r"^(?P<indent>\s*)ld\s+a\s*,\s*0\s*(?P<tail>;.*)?$", re.IGNORECASE)
-TOP_LABEL_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*:{1,2}\s*(?:;.*)?$")
-LOCAL_LABEL_RE = re.compile(r"^\s*\.[A-Za-z_][A-Za-z0-9_]*:?\s*(?:;.*)?$")
-SECTION_RE = re.compile(r"^\s*SECTION\s+\"", re.IGNORECASE)
+ZERO_VALUE_RE = r"(?:0|0\s*\*\s*[A-Za-z_][A-Za-z0-9_]*)"
+LD_A_ZERO_RE = re.compile(
+    rf"^(?P<indent>\s*)ld\s+a\s*,\s*{ZERO_VALUE_RE}\s*(?P<tail>;.*)?$",
+    re.IGNORECASE,
+)
 
 # --- Reads ---
 READS_Z_RE = re.compile(r"^\s*(?:jp|jr|call|ret)\s+n?z\b", re.IGNORECASE)
@@ -173,27 +180,6 @@ class Site:
     has_keep_marker: bool = False
 
 
-def code_part(line: str) -> str:
-    return line.split(";", 1)[0].strip()
-
-
-def has_keep_marker(line: str) -> bool:
-    if ";" not in line:
-        return False
-    comment = line.split(";", 1)[1].lower()
-    return "keep" in comment
-
-
-def iter_asm_files() -> list[Path]:
-    files: list[Path] = []
-    for p in sorted(ROOT.rglob("*.asm")):
-        rel_parts = p.relative_to(ROOT).parts
-        if any(part in SKIP_DIR_PARTS for part in rel_parts):
-            continue
-        files.append(p)
-    return files
-
-
 def classify_site(lines: list[str], site_idx: int) -> tuple[str, str]:
     """Forward walk. Return (classification, reason) where classification is
     one of SAFE, UNSAFE, INDETERMINATE."""
@@ -234,9 +220,9 @@ def classify_site(lines: list[str], site_idx: int) -> tuple[str, str]:
 
 def collect_sites() -> list[Site]:
     sites: list[Site] = []
-    for path in iter_asm_files():
-        text = path.read_text(encoding="utf-8", errors="replace")
-        lines = text.splitlines()
+    for asm_file in iter_asm_files():
+        path = asm_file.path
+        lines = asm_file.lines
         for i, raw in enumerate(lines):
             m = LD_A_ZERO_RE.match(raw)
             if not m:

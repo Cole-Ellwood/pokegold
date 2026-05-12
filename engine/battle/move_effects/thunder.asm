@@ -11,6 +11,5 @@ BattleCommand_ThunderAccuracy:
 	ret
 
 .rain
-	; Redundant with CheckHit guranteeing hit
-	ld [hl], 100 percent
+	; CheckHit guarantees Thunder hits in rain.
 	ret

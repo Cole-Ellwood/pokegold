@@ -698,18 +698,6 @@ MailGFX_PlaceMessage:
 .place_author
 	jp PlaceString
 
-InvertBytes: ; unreferenced
-; invert bc bytes starting at hl
-.loop
-	ld a, [hl]
-	xor $ff
-	ld [hli], a
-	dec bc
-	ld a, b
-	or c
-	jr nz, .loop
-	ret
-
 DrawMailBorder:
 	hlcoord 0, 0
 	ld a, $31
@@ -756,11 +744,6 @@ Mail_Place14TileAlternatingRow:
 	ld b, 14 / 2
 	jr Mail_PlaceAlternatingRow
 
-Mail_Place16TileAlternatingRow: ; unreferenced
-	push af
-	ld b, 16 / 2
-	jr Mail_PlaceAlternatingRow
-
 Mail_Place18TileAlternatingRow:
 	push af
 	ld b, 18 / 2
@@ -801,10 +784,6 @@ Mail_PlaceAlternatingColumn:
 	ld [hl], a
 	pop af
 	ret
-
-Mail_Draw7TileRow: ; unreferenced
-	ld b, 7
-	jr Mail_DrawRowLoop
 
 Mail_Draw13TileRow:
 	ld b, 13

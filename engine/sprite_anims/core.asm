@@ -174,9 +174,6 @@ _InitSpriteAnimStruct::
 	call GetSpriteAnimVTile
 	ld [hli], a ; SPRITEANIMSTRUCT_TILE_ID
 	pop de
-; Set hl to field 4 (X coordinate).  Kinda pointless, because we're presumably already here.
-	ld hl, SPRITEANIMSTRUCT_XCOORD
-	add hl, bc
 ; Load the original value of de into here.
 	ld a, e
 	ld [hli], a ; SPRITEANIMSTRUCT_XCOORD
@@ -492,27 +489,6 @@ GetFrameOAMPointer:
 	add hl, de
 	ret
 
-UnusedLoadSpriteAnimGFX: ; unreferenced
-	push hl
-	ld l, a
-	ld h, 0
-	add hl, hl
-	add hl, hl
-	ld de, UnusedSpriteAnimGFX
-	add hl, de
-	ld c, [hl]
-	inc hl
-	ld b, [hl]
-	inc hl
-	ld e, [hl]
-	inc hl
-	ld d, [hl]
-	pop hl
-	push bc
-	call Request2bpp
-	pop bc
-	ret
-
 INCLUDE "data/sprite_anims/objects.asm"
 
 INCLUDE "engine/sprite_anims/functions.asm"
@@ -520,8 +496,6 @@ INCLUDE "engine/sprite_anims/functions.asm"
 INCLUDE "data/sprite_anims/framesets.asm"
 
 INCLUDE "data/sprite_anims/oam.asm"
-
-INCLUDE "data/sprite_anims/unused_gfx.asm"
 
 Sprites_Cosine:
 ; a = d * cos(a * pi/32)

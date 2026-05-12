@@ -39,7 +39,7 @@ rept 2
 	dec c
 
 ; Tiles
-	ld a, 0
+	xor a
 	ldh [rVBK], a
 
 	ld a, [de]
@@ -104,8 +104,6 @@ UpdateBGMap::
 	jr z, .Attr
 
 ; BG Map 1
-	dec a ; useless
-
 	ldh a, [hBGMapAddress]
 	ld l, a
 	ldh a, [hBGMapAddress + 1]
@@ -383,14 +381,6 @@ AnimateTileset::
 
 	pop af
 	rst Bankswitch
-	ret
-
-Video_DummyFunction:: ; unreferenced
-	ret
-
-EnableSpriteDisplay:: ; unreferenced
-	ld hl, rLCDC
-	set B_LCDC_OBJS, [hl]
 	ret
 
 FillBGMap0WithBlack::

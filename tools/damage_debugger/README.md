@@ -203,6 +203,8 @@ One-shot investigation drivers from earlier bug hunts: `boss_drive*`,
 `full_sweep`, `validate_emulator`, `inspect_boss_state`, `full_chain`
 (superseded by `full_chain_v2`). Kept on disk because future debugging
 may want to crib pieces from them, but not part of the active surface.
+These scripts exit immediately if run; copy any useful fragments into an
+active module instead of reviving their hardcoded roots and log paths.
 
 ## Wiring into §6 verification floor
 

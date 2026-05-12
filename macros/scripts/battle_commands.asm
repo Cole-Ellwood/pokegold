@@ -3,6 +3,19 @@ MACRO command
 	DEF \1 EQUS "db \1_command"
 ENDM
 
+MACRO statup_anim_message
+	lowersub
+	statupanim
+	raisesub
+	statupmessage
+ENDM
+
+MACRO chain_statup
+	effect0x5d
+	\1
+	statup_anim_message
+ENDM
+
 ; BattleCommandPointers indexes (see data/battle/effect_command_pointers.asm)
 	const_def 1
 	command checkturn               ; 01
@@ -97,7 +110,7 @@ ENDM
 	command endure                  ; 5a
 	command checkrollout            ; 5b
 	command rolloutpower            ; 5c
-	command effect0x5d              ; 5d
+	command effect0x5d              ; 5d, clears wAttackMissed between boosts
 	command furycutter              ; 5e
 	command attract                 ; 5f
 	command happinesspower          ; 60

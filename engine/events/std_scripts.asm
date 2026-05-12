@@ -14,7 +14,7 @@ StdScripts::
 	add_stdscript TownMapScript
 	add_stdscript WindowScript
 	add_stdscript TVScript
-	add_stdscript HomepageScript ; unused
+	add_stdscript ReservedStdscriptSlot ; legacy Homepage slot, unused
 	add_stdscript Radio1Script
 	add_stdscript Radio2Script
 	add_stdscript TrashCanScript
@@ -160,8 +160,8 @@ TVScript:
 	closetext
 	end
 
-HomepageScript:
-	jumptext HomepageText
+ReservedStdscriptSlot:
+	end
 
 Radio1Script:
 	opentext

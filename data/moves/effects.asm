@@ -2108,16 +2108,8 @@ DragonDance:
 	usedmovetext
 	doturn
 	bestattackup
-	lowersub
-	statupanim
-	raisesub
-	statupmessage
-	effect0x5d
-	speedup
-	lowersub
-	statupanim
-	raisesub
-	statupmessage
+	statup_anim_message
+	chain_statup speedup
 	statupfailtext
 	endmove
 
@@ -2126,16 +2118,8 @@ CalmMind:
 	usedmovetext
 	doturn
 	specialattackup
-	lowersub
-	statupanim
-	raisesub
-	statupmessage
-	effect0x5d
-	specialdefenseup
-	lowersub
-	statupanim
-	raisesub
-	statupmessage
+	statup_anim_message
+	chain_statup specialdefenseup
 	statupfailtext
 	endmove
 
@@ -2144,21 +2128,8 @@ QuiverDance:
 	usedmovetext
 	doturn
 	specialattackup
-	lowersub
-	statupanim
-	raisesub
-	statupmessage
-	effect0x5d
-	specialdefenseup
-	lowersub
-	statupanim
-	raisesub
-	statupmessage
-	effect0x5d
-	speedup
-	lowersub
-	statupanim
-	raisesub
-	statupmessage
+	statup_anim_message
+	chain_statup specialdefenseup
+	chain_statup speedup
 	statupfailtext
 	endmove

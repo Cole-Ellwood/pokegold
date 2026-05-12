@@ -45,11 +45,10 @@ KNOWN_SAFE = {
     # CheckDamageStatsCritical_Far: push bc wraps the whole function body
     # (line 631 / pop bc at line 662); inner c-clobber doesn't escape.
     ("engine/battle/late_gen_held_items.asm", "CheckDamageStatsCritical_Far"),
-    # TypePassive_ApplyDamageModifiers_Far .after_rock / .after_bug:
+    # TypePassive_ApplyDamageModifiers_Far .after_rock:
     # caller (BattleCommand_Stab via farcall) doesn't read bc after the
     # farcall — uses wCurDamage directly. Caller's bc is dispatcher-managed.
     ("engine/battle/type_passive_damage_mods.asm", "after_rock"),
-    ("engine/battle/type_passive_damage_mods.asm", "after_bug"),
 }
 
 

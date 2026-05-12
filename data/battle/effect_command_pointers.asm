@@ -97,7 +97,7 @@ BattleCommandPointers:
 	dw BattleCommand_Endure
 	dw BattleCommand_CheckRollout
 	dw BattleCommand_RolloutPower
-	dw BattleCommand_Unused5D
+	dw BattleCommand_Unused5D ; live: clears wAttackMissed between boosts
 	dw BattleCommand_FuryCutter
 	dw BattleCommand_Attract
 	dw BattleCommand_HappinessPower

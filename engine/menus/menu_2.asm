@@ -109,41 +109,6 @@ CoinString:
 	db "COIN@"
 ShowMoney_TerminatorString:
 	db "@"
-UnusedEmptyString: ; unreferenced
-	db "@"
-
-StartMenu_PrintSafariGameStatus: ; unreferenced
-	ld hl, wOptions
-	ld a, [hl]
-	push af
-	set NO_TEXT_SCROLL, [hl]
-	hlcoord 0, 0
-	ld b, 3
-	ld c, 7
-	call Textbox
-	hlcoord 1, 1
-	ld de, wSafariTimeRemaining
-	lb bc, 2, 3
-	call PrintNum
-	hlcoord 4, 1
-	ld de, .slash_500
-	call PlaceString
-	hlcoord 1, 3
-	ld de, .booru_ko
-	call PlaceString
-	hlcoord 5, 3
-	ld de, wSafariBallsRemaining
-	lb bc, 1, 2
-	call PrintNum
-	pop af
-	ld [wOptions], a
-	ret
-
-.slash_500
-	db "／５００@"
-.booru_ko
-	db "ボール　　　こ@"
-
 StartMenu_DrawBugContestStatusBox:
 	hlcoord 0, 0
 	ld b, 5
@@ -195,8 +160,6 @@ StartMenu_PrintBugContestStatus:
 	ld [wOptions], a
 	ret
 
-.BallsJPString: ; unreferenced
-	db "ボール　　　こ@"
 .CaughtString:
 	db "CAUGHT@"
 .BallsString:

@@ -847,6 +847,11 @@ def main() -> int:
         default="docs/generated/dev_index.md",
         help="Output Markdown path, relative to the repo root unless absolute.",
     )
+    parser.add_argument(
+        "--stdout",
+        action="store_true",
+        help="write generated Markdown to stdout instead of --out",
+    )
     args = parser.parse_args()
 
     map_path = ROOT / f"{args.rom}.map"
@@ -866,21 +871,22 @@ def main() -> int:
     layout = parse_layout(layout_path)
     label_sources, section_sources = parse_source_indexes(iter_asm_files())
 
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text(
-        build_markdown(
-            rom=args.rom,
-            summary=summary,
-            sections=sections,
-            empties=empties,
-            symbols=symbols,
-            label_sources=label_sources,
-            section_sources=section_sources,
-            layout=layout,
-        ),
-        encoding="utf-8",
-        newline="\n",
+    markdown = build_markdown(
+        rom=args.rom,
+        summary=summary,
+        sections=sections,
+        empties=empties,
+        symbols=symbols,
+        label_sources=label_sources,
+        section_sources=section_sources,
+        layout=layout,
     )
+    if args.stdout:
+        sys.stdout.write(markdown)
+        return 0
+
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(markdown, encoding="utf-8", newline="\n")
     print(f"wrote {out_path.relative_to(ROOT).as_posix()}")
     return 0
 

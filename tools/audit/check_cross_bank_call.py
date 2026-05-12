@@ -41,14 +41,14 @@ import re
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+from asm_scan import AsmFile, ROOT, TOP_LABEL_RE, SECTION_RE, iter_asm_files
+
 SYM_PATH = ROOT / "pokegold.sym"
 
 SYM_LINE_RE = re.compile(
     r"^([0-9a-fA-F]{2}):([0-9a-fA-F]{4})\s+([A-Za-z_][A-Za-z0-9_.]*)\s*$"
 )
-GLOBAL_LABEL_RE = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*):{1,2}\s*(?:;.*)?$")
-SECTION_RE = re.compile(r'^\s*SECTION\s+"[^"]+"')
+GLOBAL_LABEL_RE = TOP_LABEL_RE
 CALL_SITE_RE = re.compile(
     r"^\s*(call|jp)\s+(?:(?:nz|z|nc|c)\s*,\s*)?"
     r"([A-Za-z_][A-Za-z0-9_.]*)\s*(?:;.*)?$"
@@ -73,20 +73,14 @@ def load_sym() -> dict[str, str]:
     return sym
 
 
-def iter_asm_files() -> list[Path]:
-    files: list[Path] = []
-    for d in SCAN_DIRS:
-        base = ROOT / d
-        if base.exists():
-            files.extend(sorted(base.rglob("*.asm")))
-    return files
+def cross_bank_asm_files() -> list[AsmFile]:
+    return iter_asm_files(roots=[ROOT / directory for directory in SCAN_DIRS])
 
 
-def scan_file(path: Path, sym: dict[str, str]) -> list[tuple[int, str, str, str, str]]:
+def scan_file(asm_file: AsmFile, sym: dict[str, str]) -> list[tuple[int, str, str, str, str]]:
     violations: list[tuple[int, str, str, str, str]] = []
     current_label: str | None = None
-    text = path.read_text(encoding="utf-8", errors="replace")
-    for lineno, raw in enumerate(text.splitlines(), 1):
+    for lineno, raw in enumerate(asm_file.lines, 1):
         stripped = raw.rstrip()
         if not stripped:
             continue
@@ -95,7 +89,7 @@ def scan_file(path: Path, sym: dict[str, str]) -> list[tuple[int, str, str, str,
             continue
         m_label = GLOBAL_LABEL_RE.match(stripped)
         if m_label:
-            current_label = m_label.group(1)
+            current_label = m_label.group("label")
             continue
         m_call = CALL_SITE_RE.match(stripped)
         if not m_call:
@@ -122,11 +116,11 @@ def scan_file(path: Path, sym: dict[str, str]) -> list[tuple[int, str, str, str,
 def main() -> int:
     sym = load_sym()
     total = 0
-    for path in iter_asm_files():
-        viols = scan_file(path, sym)
+    for asm_file in cross_bank_asm_files():
+        viols = scan_file(asm_file, sym)
         if not viols:
             continue
-        rel = path.relative_to(ROOT).as_posix()
+        rel = asm_file.path.relative_to(ROOT).as_posix()
         for ln, op, tgt, cb, tb in viols:
             print(
                 f"{rel}:{ln}: cross-bank `{op} {tgt}` "

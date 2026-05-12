@@ -419,12 +419,6 @@ Intro_InitLapras:
 	call InitSpriteAnimStruct
 	ret
 
-Intro_UnusedInitAerodactyl: ; unreferenced
-	depixel 2, 0
-	ld a, SPRITE_ANIM_OBJ_UNUSED_INTRO_AERODACTYL
-	call InitSpriteAnimStruct
-	ret
-
 Intro_UpdateTilemapAndBGMap:
 ; add new tiles to top as water scene scrolls up to surface
 	push hl
@@ -718,9 +712,6 @@ IntroScene9:
 	db %01000000
 	db %00000000
 	db -1
-
-Intro_DummyFunction: ; unreferenced
-	ret
 
 Intro_InitNote:
 	ld a, [wIntroSpriteStateFlag]
@@ -1156,18 +1147,6 @@ Intro_AnimateFireball:
 	dec [hl]
 	ld hl, wGlobalAnimXOffset
 	inc [hl]
-	ret
-
-Copy128Tiles: ; unreferenced
-	ld bc, 128 tiles
-.loop
-	ld a, [de]
-	inc de
-	ld [hli], a
-	dec bc
-	ld a, c
-	or b
-	jr nz, .loop
 	ret
 
 Intro_DrawBackground:
