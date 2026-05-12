@@ -4,11 +4,13 @@ import io
 import json
 import tempfile
 import unittest
+from collections import Counter
 from contextlib import redirect_stdout
 from pathlib import Path
 
 from tools.boss_ai_debugger.__main__ import main as debugger_main
 from tools.boss_ai_debugger.regression import evaluate_corpus, format_json, format_summary
+from tools.boss_ai_debugger.scorer import score_action
 from tools.boss_ai_preference.data import (
     PreferenceDataError,
     load_fixtures,
@@ -98,9 +100,102 @@ class RegressionTests(unittest.TestCase):
 
         result = evaluate_corpus(fixtures, labels, threshold=0.80)
 
-        self.assertEqual(len(labels), 7)
-        self.assertEqual(result.strict_label_count, 5)
-        self.assertEqual(result.skipped, {"both_good": 1, "other_better": 1})
+        expected_strict = sum(
+            1 for label in labels if label["choice"] in {"a_better", "b_better"}
+        )
+        expected_skipped = Counter(
+            label["choice"]
+            for label in labels
+            if label["choice"] not in {"a_better", "b_better"}
+        )
+        self.assertGreaterEqual(len(labels), 10)
+        self.assertEqual(result.strict_label_count, expected_strict)
+        self.assertEqual(result.skipped, dict(sorted(expected_skipped.items())))
+
+    def test_lock_risk_only_applies_to_actual_lock_moves(self) -> None:
+        fixture = {
+            "id": "lock_text_fixture",
+            "leader": "Tester",
+            "state": {},
+            "actions": [
+                {
+                    "id": "move_body_slam",
+                    "kind": "move",
+                    "name": "Body Slam",
+                    "explanation": "Keeps pressure without locking into a bad sequence.",
+                    "public_tradeoff": "Safe damage.",
+                },
+                {
+                    "id": "move_rollout",
+                    "kind": "move",
+                    "name": "Rollout",
+                    "explanation": "Actual ramp lock move.",
+                    "public_tradeoff": "Risky lock.",
+                },
+            ],
+        }
+
+        body_slam = score_action(fixture, fixture["actions"][0])
+        rollout = score_action(fixture, fixture["actions"][1])
+
+        self.assertNotIn(
+            "lock_risk",
+            {contribution["rule"] for contribution in body_slam["contributions"]},
+        )
+        self.assertIn(
+            "lock_risk",
+            {contribution["rule"] for contribution in rollout["contributions"]},
+        )
+
+    def test_setup_prose_does_not_make_setup_a_coverage_move(self) -> None:
+        fixture = {
+            "id": "setup_text_fixture",
+            "leader": "Tester",
+            "state": {},
+            "actions": [
+                {
+                    "id": "move_swords_dance",
+                    "kind": "move",
+                    "name": "Swords Dance",
+                    "explanation": "Can set up if the player cannot punish.",
+                    "public_tradeoff": "A real setup opportunity.",
+                }
+            ],
+        }
+
+        scored = score_action(fixture, fixture["actions"][0])
+        rules = {contribution["rule"] for contribution in scored["contributions"]}
+
+        self.assertIn("setup_window", rules)
+        self.assertNotIn("coverage", rules)
+
+    def test_damage_estimate_can_mark_confirmed_ko(self) -> None:
+        fixture = {
+            "id": "ko_fixture",
+            "leader": "Tester",
+            "state": {},
+            "actions": [
+                {
+                    "id": "move_wing_attack",
+                    "kind": "move",
+                    "name": "Wing Attack",
+                    "explanation": "Immediate damage.",
+                    "public_tradeoff": "Clean tempo.",
+                    "damage_estimate": {
+                        "low_percent": 95,
+                        "high_percent": 112,
+                        "target_hp": "51%",
+                    },
+                }
+            ],
+        }
+
+        scored = score_action(fixture, fixture["actions"][0])
+
+        self.assertIn(
+            "ko_confirmed",
+            {contribution["rule"] for contribution in scored["contributions"]},
+        )
 
     def test_strict_pair_passes_when_scorer_matches_label(self) -> None:
         result = evaluate_corpus([tiny_fixture()], [pairwise_label("a_better")], 0.80)

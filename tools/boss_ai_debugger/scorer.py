@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import re
 from typing import Any
 
 
@@ -11,6 +12,15 @@ SETUP_NAMES = {
     "double team",
     "growth",
     "swords dance",
+}
+DEBUFF_NAMES = {
+    "flash",
+    "growl",
+    "leer",
+    "sand attack",
+    "screech",
+    "smokescreen",
+    "tail whip",
 }
 STATUS_NAMES = {
     "confuse ray",
@@ -37,6 +47,36 @@ COVERAGE_NAMES = {
 LOCK_NAMES = {"outrage", "rollout"}
 RECOVERY_NAMES = {"milk drink", "recover", "rest", "synthesis"}
 PHAZING_NAMES = {"roar", "whirlwind"}
+NON_DAMAGE_NAMES = (
+    SETUP_NAMES
+    | STATUS_NAMES
+    | DEBUFF_NAMES
+    | {"attract", "baton pass", "lock-on", "mean look", "protect", "spikes", "substitute"}
+)
+SETUP_SAFE_TEXT = {
+    "cannot punish",
+    "can set up",
+    "free setup",
+    "safe setup",
+    "setup opportunity",
+    "survives",
+}
+SETUP_RISK_TEXT = {
+    "direct pressure",
+    "greedy",
+    "risky",
+    "super-effective",
+    "throw",
+    "under fire pressure",
+    "visible pressure",
+}
+WEAK_DAMAGE_TEXT = {
+    "low damage",
+    "minimal damage",
+    "resisted",
+    "resistance",
+    "weak chip",
+}
 
 
 @dataclass(frozen=True)
@@ -55,6 +95,25 @@ def _action_text(action: dict[str, Any]) -> str:
 
 def _name(action: dict[str, Any]) -> str:
     return str(action.get("name", "")).lower()
+
+
+def _is_damage_like_move(name: str) -> bool:
+    return name not in NON_DAMAGE_NAMES
+
+
+def _has_any(text: str, needles: set[str]) -> bool:
+    return any(needle in text for needle in needles)
+
+
+def _hp_percent(value: Any) -> float | None:
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        return max(0.0, min(100.0, float(value)))
+    if not isinstance(value, str):
+        return None
+    match = re.search(r"(\d+(?:\.\d+)?)\s*%", value)
+    if not match:
+        return None
+    return max(0.0, min(100.0, float(match.group(1))))
 
 
 def _add(
@@ -89,25 +148,48 @@ def score_action(
             _add(contributions, "bad_pivot", -8, "switch target does not solve the visible threat")
 
     if kind == "move":
-        if "immediate" in text or "direct" in text or "clean" in text:
+        damage_like = _is_damage_like_move(name)
+        if damage_like and ("immediate" in text or "direct" in text or "clean" in text):
             _add(contributions, "tempo_damage", 5, "move takes tempo instead of waiting")
-        if name in COVERAGE_NAMES or "coverage" in text or "punish" in text:
+        if name in COVERAGE_NAMES or (damage_like and ("coverage" in text or "punish" in text)):
             _add(contributions, "coverage", 7, "move uses public coverage or visible punish")
+        if damage_like and _has_any(text, WEAK_DAMAGE_TEXT):
+            _add(contributions, "weak_chip", -4, "text marks this damage as low-impact chip")
+        estimate = action.get("damage_estimate")
+        if damage_like and isinstance(estimate, dict):
+            low = estimate.get("low_percent")
+            high = estimate.get("high_percent")
+            target_hp = _hp_percent(estimate.get("target_hp"))
+            if (
+                isinstance(low, (int, float))
+                and isinstance(high, (int, float))
+                and target_hp is not None
+            ):
+                if float(low) >= target_hp:
+                    _add(contributions, "ko_confirmed", 12, "damage estimate confirms the target is KOed")
+                elif float(high) >= target_hp:
+                    _add(contributions, "ko_possible", 8, "damage estimate can KO the target")
         if name in PRIORITY_NAMES:
             _add(contributions, "priority", 6, "priority can answer a low-HP race")
         if name in SETUP_NAMES:
-            _add(contributions, "setup_identity", 4, "setup move matches a boss plan")
-            if "visible" in text or "revealed" in text or "greedy" in text or "risky" in text:
+            _add(contributions, "setup_identity", 6, "setup move matches a boss plan")
+            if _has_any(text, SETUP_SAFE_TEXT):
+                _add(contributions, "setup_window", 12, "public text describes a real setup window")
+            if _has_any(text, SETUP_RISK_TEXT):
                 _add(contributions, "setup_risk", -10, "public pressure makes setup risky")
+        if name in DEBUFF_NAMES:
+            _add(contributions, "debuff_control", 3, "one debuff can reduce public counterplay risk")
         if name in STATUS_NAMES:
             _add(contributions, "status_identity", 5, "status/control move matches boss identity")
             if "cheap" in text or "annoying" in text:
                 _add(contributions, "taste_risk", -3, "status line needs user taste judgment")
         if name in SACRIFICE_NAMES:
             _add(contributions, "sacrifice_pressure", 4, "sacrifice line can stop a sweep")
+            if "stop" in text or "sweep" in text or "trade" in text:
+                _add(contributions, "sacrifice_trade_window", 8, "trade line answers a public sweep or clean-switch threat")
             if "cheap" in text:
-                _add(contributions, "taste_risk", -5, "sacrifice line may feel cheap")
-        if name in LOCK_NAMES or "lock" in text:
+                _add(contributions, "taste_risk", -2, "sacrifice line may feel cheap")
+        if name in LOCK_NAMES:
             _add(contributions, "lock_risk", -8, "locking move is dangerous under public counterplay")
         if name in RECOVERY_NAMES:
             _add(contributions, "preserve_value", 4, "recovery preserves a key boss mon")

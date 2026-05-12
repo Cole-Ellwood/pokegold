@@ -82,7 +82,7 @@ AIChooseMove:
 
 	ld a, c
 	cp 16 ; up to 16 scoring layers
-	jr z, .BossModel
+	jr z, .DecrementScores
 
 	push bc
 	ld d, BANK(TrainerClassAttributes)

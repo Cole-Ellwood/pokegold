@@ -911,14 +911,24 @@ BossAI_ApplyMoveModel:
 	cp EFFECT_FURY_CUTTER
 	ret nz
 .ramp_move
+	call .HasKOLine
+	ret c
+	push hl
+	call BossAI_CheckEnemyMoveTypeMatchupVsPlayerNoItem
+	pop hl
+	ld a, [wTypeMatchup]
+	cp EFFECTIVE
+	jr c, .ramp_resisted
 	call .EnemyUnderPressure
 	jr c, .ramp_risky
 	ld c, 3
 	call .EncourageByTierWeight
 	ret
+.ramp_resisted
+	ld a, 6
+	call BossAI_DiscourageScoreHL
+	ret
 .ramp_risky
-	call .HasKOLine
-	ret c
 	ld a, 5
 	call BossAI_DiscourageScoreHL
 	ret
@@ -2164,13 +2174,8 @@ BossAI_PlayerHasPublicThreatVsEnemyUncached:
 	inc hl
 	call BossAI_GetMoveByte
 	ld c, a
-	call BossAI_CheckPlayerMoveTypeMatchupVsEnemyNoItem
-	ld a, [wTypeMatchup]
-	cp EFFECTIVE + 1
-	jr c, .next_used_move
-	ld a, c
-	call BossAI_EnemyKnownItemNullifiesThreatType
-	jr nc, .yes_pop_hl
+	call BossAI_PlayerThreatTypeSuperEffectiveVsEnemy
+	jr c, .yes_pop_hl
 
 .next_used_move
 	pop hl
@@ -2191,27 +2196,16 @@ BossAI_PlayerHasPublicThreatVsEnemyUncached:
 .public_type_fallback
 	ld a, [wBattleMonType1]
 	ld c, a
-	call BossAI_CheckPlayerMoveTypeMatchupVsEnemyNoItem
-	ld a, [wTypeMatchup]
-	cp EFFECTIVE + 1
-	jr c, .unknown_second_type
-	ld a, c
-	call BossAI_EnemyKnownItemNullifiesThreatType
-	jr nc, .yes
+	call BossAI_PlayerThreatTypeSuperEffectiveVsEnemy
+	jr c, .yes
 .unknown_second_type
 	ld a, [wBattleMonType2]
 	ld c, a
 	ld a, [wBattleMonType1]
 	cp c
 	jr z, .no
-	ld a, c
-	call BossAI_CheckPlayerMoveTypeMatchupVsEnemyNoItem
-	ld a, [wTypeMatchup]
-	cp EFFECTIVE + 1
-	jr c, .no
-	ld a, c
-	call BossAI_EnemyKnownItemNullifiesThreatType
-	jr nc, .yes
+	call BossAI_PlayerThreatTypeSuperEffectiveVsEnemy
+	jr c, .yes
 	jr .no
 
 ; ai-layer: POLICY
@@ -2258,14 +2252,9 @@ BossAI_PlayerHasRevealedPriorityThreatUncached:
 	dec a
 	ld hl, Moves + MOVE_TYPE
 	call BossAI_GetMoveAttr
-	ld e, a
-	call BossAI_CheckPlayerMoveTypeMatchupVsEnemyNoItem
-	ld a, [wTypeMatchup]
-	and a
-	jr z, .next
-	ld a, e
-	call BossAI_EnemyKnownItemNullifiesThreatType
-	jr c, .next
+	ld c, a
+	call BossAI_PlayerThreatTypeHitsEnemy
+	jr nc, .next
 	call AICheckEnemyQuarterHP_HL
 	jr nc, .yes_pop
 	call AICheckEnemyHalfHP_HL
@@ -2612,6 +2601,9 @@ BossAI_ApplyEnemyHeldItemPressure:
 	ret
 
 ; ai-layer: POLICY
+; Coarse AI pressure model for selected Type Passive V1 modifiers.
+; Damage ground truth lives in TypePassive_ApplyDamageModifiers_Far
+; (engine/battle/type_passive_damage_mods.asm); omissions are policy choices.
 BossAI_ApplyEnemyOffensivePassivePressure:
 	ld a, [wEnemyMoveStruct + MOVE_TYPE]
 	cp NORMAL
@@ -2932,15 +2924,9 @@ BossAI_HasRevealedSuperEffectiveMove:
 	pop hl
 	jr nc, .type_loop
 	push hl
-	ld a, c
-	call BossAI_CheckPlayerMoveTypeMatchupVsEnemyNoItem
+	call BossAI_PlayerThreatTypeSuperEffectiveVsEnemy
 	pop hl
-	ld a, [wTypeMatchup]
-	cp EFFECTIVE + 1
-	jr c, .type_loop
-	ld a, c
-	call BossAI_EnemyKnownItemNullifiesThreatType
-	jr c, .type_loop
+	jr nc, .type_loop
 	scf
 	ret
 
@@ -2955,14 +2941,9 @@ BossAI_HasRevealedSuperEffectiveMove:
 	jr z, .no
 	ld c, a
 	push hl
-	call BossAI_CheckPlayerMoveTypeMatchupVsEnemyNoItem
+	call BossAI_PlayerThreatTypeSuperEffectiveVsEnemy
 	pop hl
-	ld a, [wTypeMatchup]
-	cp EFFECTIVE + 1
-	jr c, .hp_loop
-	ld a, c
-	call BossAI_EnemyKnownItemNullifiesThreatType
-	jr c, .hp_loop
+	jr nc, .hp_loop
 	scf
 	ret
 
@@ -4834,6 +4815,7 @@ BossAI_AdjustThreatSeverityForEnemyKnownDefense:
 
 .assault_vest
 	call BossAI_GetEnemyHeldEffect
+	ld e, a
 	cp HELD_ASSAULT_VEST
 	jr nz, .eviolite
 	ld a, c
@@ -4842,7 +4824,7 @@ BossAI_AdjustThreatSeverityForEnemyKnownDefense:
 	call BossAI_DecThreatSeverityB
 
 .eviolite
-	call BossAI_GetEnemyHeldEffect
+	ld a, e
 	cp HELD_EVOLITE
 	jr nz, .done
 	call BossAI_EnemySpeciesCanEvolve
@@ -4851,6 +4833,39 @@ BossAI_AdjustThreatSeverityForEnemyKnownDefense:
 
 .done
 	ld a, b
+	ret
+
+; ai-layer: POLICY
+BossAI_PlayerThreatTypeSuperEffectiveVsEnemy:
+; input: c = public threat type. output: carry if super-effective and not nullified.
+	call BossAI_PlayerThreatTypeHitsEnemy
+	jr nc, .no
+	ld a, [wTypeMatchup]
+	cp EFFECTIVE + 1
+	jr c, .no
+	scf
+	ret
+
+.no
+	and a
+	ret
+
+; ai-layer: POLICY
+BossAI_PlayerThreatTypeHitsEnemy:
+; input: c = public threat type. output: carry if it can hit and is not nullified.
+	ld a, c
+	call BossAI_CheckPlayerMoveTypeMatchupVsEnemyNoItem
+	ld a, [wTypeMatchup]
+	and a
+	jr z, .no
+	ld a, c
+	call BossAI_EnemyKnownItemNullifiesThreatType
+	jr c, .no
+	scf
+	ret
+
+.no
+	and a
 	ret
 
 ; ai-layer: POLICY

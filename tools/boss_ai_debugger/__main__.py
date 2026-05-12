@@ -19,6 +19,7 @@ from tools.boss_ai_preference.data import (
     load_preferences,
     write_report,
 )
+from tools.boss_ai_preference.damage_estimates import attach_damage_estimates
 
 from .regression import (
     evaluate_corpus,
@@ -61,6 +62,7 @@ def cmd_list(args: argparse.Namespace) -> int:
 
 def cmd_inspect(args: argparse.Namespace) -> int:
     fixture = _load_fixture(args.fixtures, args.fixture_id)
+    fixture = attach_damage_estimates([fixture])[0]
     inspection = inspect_fixture(fixture)
     if args.json:
         print(json.dumps(inspection, indent=2, sort_keys=True))

@@ -346,7 +346,6 @@ AI_Smart_EffectHandlers:
 	dbw EFFECT_SNORE,            AI_Smart_Snore
 	dbw EFFECT_CONVERSION2,      AI_Smart_Conversion2
 	dbw EFFECT_LOCK_ON,          AI_Smart_LockOn
-	dbw EFFECT_DEFROST_OPPONENT, AI_Smart_DefrostOpponent
 	dbw EFFECT_SLEEP_TALK,       AI_Smart_SleepTalk
 	dbw EFFECT_DESTINY_BOND,     AI_Smart_DestinyBond
 	dbw EFFECT_REVERSAL,         AI_Smart_Reversal
@@ -1493,18 +1492,6 @@ AI_Smart_SleepTalk:
 	inc [hl]
 	ret
 
-AI_Smart_DefrostOpponent:
-; Greatly encourage this move if enemy is frozen.
-; No move has EFFECT_DEFROST_OPPONENT, so this layer is unused.
-
-	ld a, [wEnemyMonStatus]
-	and 1 << FRZ
-	ret z
-	dec [hl]
-	dec [hl]
-	dec [hl]
-	ret
-
 AI_Smart_Spite:
 	ld a, [wLastPlayerCounterMove]
 	and a
@@ -1560,9 +1547,6 @@ AI_Smart_Spite:
 	dec [hl]
 	dec [hl]
 	ret
-
-.dismiss ; unreferenced
-	jp AIDiscourageMove
 
 AI_Smart_DestinyBond:
 AI_Smart_Reversal:
@@ -2485,25 +2469,6 @@ AI_Smart_PsychUp:
 	sub d
 	pop hl
 	jr nc, .discourage
-
-; Else, 80% chance to encourage this move unless player's accuracy level is lower than -1...
-	ld a, [wPlayerAccLevel]
-	cp BASE_STAT_LEVEL - 1
-	ret c
-
-; ...or player's evasion level is lower than +2 or higher than +0 (which will always be true).
-	ld a, [wPlayerEvaLevel]
-	cp BASE_STAT_LEVEL + 2
-	ret c
-	ld a, [wPlayerEvaLevel]
-	cp BASE_STAT_LEVEL + 1
-	ret nc
-
-; This block will never be reached.
-	call AI_80_20
-	ret c
-
-	dec [hl]
 	ret
 
 .discourage

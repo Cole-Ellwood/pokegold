@@ -153,6 +153,7 @@ BossAI_CheckAbleToSwitchSafe:
 
 ; ai-layer: POLICY
 BossAI_FindFirstAliveSwitchCandidate:
+; output: carry and wBossAITemp if a living bench candidate exists; clobbers bc, de, hl.
 	ld a, [wOTPartyCount]
 	cp 2
 	jr c, .none
@@ -175,10 +176,8 @@ BossAI_FindFirstAliveSwitchCandidate:
 	ret
 
 .next
-	push bc
 	ld bc, PARTYMON_STRUCT_LENGTH
 	add hl, bc
-	pop bc
 	inc e
 	dec d
 	jr nz, .loop
@@ -640,11 +639,6 @@ BossAI_ComputeSwitchConfidence:
 	add d
 	ld [wBossAISwitchConfidence], a
 
-	ld a, c
-	cp 20
-	jr c, .done
-
-.done
 	ld a, [wBossAISwitchConfidence]
 	ld b, a
 	call BossAI_ApplyPlausibleRiskToSwitchConfidence

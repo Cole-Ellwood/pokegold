@@ -320,11 +320,42 @@ def audit_public_threat_keeps_species_fallback(boss: str) -> None:
             "ret",
             ".public_type_fallback",
             "ld a, [wBattleMonType1]",
-            "call BossAI_CheckPlayerMoveTypeMatchupVsEnemyNoItem",
+            "call BossAI_PlayerThreatTypeSuperEffectiveVsEnemy",
             "ld a, [wBattleMonType2]",
-            "call BossAI_CheckPlayerMoveTypeMatchupVsEnemyNoItem",
+            "call BossAI_PlayerThreatTypeSuperEffectiveVsEnemy",
         ],
         "public threat wrapper keeps active species typing after revealed-move scan",
+    )
+    hit_helper = top_block(boss, "BossAI_PlayerThreatTypeHitsEnemy")
+    require_order(
+        hit_helper,
+        [
+            "ld a, c",
+            "call BossAI_CheckPlayerMoveTypeMatchupVsEnemyNoItem",
+            "ld a, [wTypeMatchup]",
+            "and a",
+            "jr z, .no",
+            "ld a, c",
+            "call BossAI_EnemyKnownItemNullifiesThreatType",
+            "jr c, .no",
+            "scf",
+            "ret",
+        ],
+        "public threat type helper preserves no-item matchup plus known nullifier semantics",
+    )
+    super_helper = top_block(boss, "BossAI_PlayerThreatTypeSuperEffectiveVsEnemy")
+    require_order(
+        super_helper,
+        [
+            "call BossAI_PlayerThreatTypeHitsEnemy",
+            "jr nc, .no",
+            "ld a, [wTypeMatchup]",
+            "cp EFFECTIVE + 1",
+            "jr c, .no",
+            "scf",
+            "ret",
+        ],
+        "super-effective public threat helper keeps the current severity threshold",
     )
 
 
@@ -454,8 +485,7 @@ def audit_revealed_priority_pressure(boss: str) -> None:
             "call BossAI_GetMoveAttr",
             "ld hl, Moves + MOVE_TYPE",
             "call BossAI_GetMoveAttr",
-            "call BossAI_CheckPlayerMoveTypeMatchupVsEnemyNoItem",
-            "call BossAI_EnemyKnownItemNullifiesThreatType",
+            "call BossAI_PlayerThreatTypeHitsEnemy",
             "call AICheckEnemyQuarterHP",
             "call AICheckEnemyHalfHP",
             "cp 80",
@@ -1953,13 +1983,13 @@ def audit_priority_trainers(parties: str, tiers: str) -> None:
         require_contains(tiers, entry, "priority boss AI tier")
 
     for move in (
-        "GENGAR,     SPELL_TAG, SHADOW_BALL, THUNDERBOLT, DESTINY_BOND, SPIKES",
-        "MAGNETON,   MAGNET, SPIKES, THUNDERBOLT, THUNDER_WAVE, LIGHT_SCREEN",
+        "GENGAR,     SPELL_TAG, SHADOW_BALL, THUNDERBOLT, DESTINY_BOND, PSYCHIC_M",
+        "MAGNETON,   MAGNET, SPIKES, THUNDERBOLT, THUNDER_WAVE, SWIFT",
         "STEELIX,    METAL_COAT, EARTHQUAKE, IRON_TAIL, ROCK_SLIDE, ROAR",
         "SKARMORY,   ROCKY_HELMET, SPIKES, STEEL_WING, TOXIC, WHIRLWIND",
         "GLIGAR,     QUICK_CLAW, SPIKES, EARTHQUAKE, WING_ATTACK, TOXIC",
         "TENTACRUEL, MYSTIC_WATER, RAPID_SPIN, SURF, SLUDGE_BOMB, HAZE",
-        "GYARADOS,   LEFTOVERS, RAIN_DANCE, OUTRAGE, SURF, HYPER_BEAM",
+        "GYARADOS,   LEFTOVERS, DRAGON_DANCE, OUTRAGE, HYDRO_PUMP, HYPER_BEAM",
     ):
         require_contains(parties, move, "priority boss scenario move")
 

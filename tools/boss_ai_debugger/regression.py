@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 from tools.boss_ai_preference.data import PreferenceDataError, action_map, fixture_map
+from tools.boss_ai_preference.damage_estimates import attach_damage_estimates
 
 from .scorer import score_action
 
@@ -107,6 +108,7 @@ def evaluate_corpus(
     scorer: ScoreAction = score_action,
     rank_labels: list[dict[str, Any]] | None = None,
 ) -> RegressionResult:
+    fixtures = attach_damage_estimates(fixtures)
     fixtures_by_id = fixture_map(fixtures)
     skipped: Counter[str] = Counter()
     disagreements: list[LabelVerdict] = []
