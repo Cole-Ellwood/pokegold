@@ -1,0 +1,1525 @@
+{
+  "answer_count": 44,
+  "benchmark_contract_ready": true,
+  "benchmark_count": 44,
+  "benchmarks": [
+    {
+      "acceptable_move_ids": [
+        "move_sludge_bomb"
+      ],
+      "benchmark_id": "vanilla_gsc_sleep_setup_disruption_001",
+      "best_move_ids": [
+        "move_sleep_powder"
+      ],
+      "catastrophe_trigger": "Victreebel uses Swords Dance after the prior Sleep Powder miss.",
+      "catastrophic_move_ids": [
+        "move_swords_dance"
+      ],
+      "chosen_label": "best",
+      "chosen_move_id": "move_sleep_powder",
+      "dominant_policy": "Re-score after sleep disruption; use Sleep Powder only because the recomputed state still says sleep is the route creator.",
+      "information_that_changes_answer": [
+        "Sleep Clause is already occupied.",
+        "Snorlax is already statused.",
+        "Victreebel is slower due to paralysis or speed control.",
+        "Snorlax is in guaranteed Sludge Bomb KO range."
+      ],
+      "mechanics_profile": "vanilla_gsc",
+      "outcome": "best",
+      "split": "seed",
+      "tags": [
+        "sleep",
+        "setup",
+        "disruption",
+        "heuristic_arbitration"
+      ]
+    },
+    {
+      "acceptable_move_ids": [
+        "move_explosion"
+      ],
+      "benchmark_id": "romhack_spikes_third_layer_janine_001",
+      "best_move_ids": [
+        "move_spikes"
+      ],
+      "catastrophe_trigger": "Qwilfish switches instead of placing the third layer.",
+      "catastrophic_move_ids": [
+        "switch_tentacruel"
+      ],
+      "chosen_label": "best",
+      "chosen_move_id": "move_spikes",
+      "dominant_policy": "Finish the third layer when the stack is nearly complete, the target cannot immediately stop it, and hazard control is not public.",
+      "information_that_changes_answer": [
+        "A player Rapid Spin user is revealed and can enter cheaply.",
+        "The player team is mostly Flying or otherwise ignores Spikes.",
+        "Snorlax has an immediate KO on Qwilfish.",
+        "Explosion removes the only defensive answer to a confirmed endgame route."
+      ],
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "outcome": "best",
+      "split": "seed",
+      "tags": [
+        "spikes",
+        "romhack_delta",
+        "hazards",
+        "heuristic_arbitration"
+      ]
+    },
+    {
+      "acceptable_move_ids": [
+        "move_explosion"
+      ],
+      "benchmark_id": "romhack_spikes_fourth_click_janine_001",
+      "best_move_ids": [
+        "move_sludge_bomb"
+      ],
+      "catastrophe_trigger": "Qwilfish attempts Spikes at three existing layers.",
+      "catastrophic_move_ids": [
+        "move_spikes"
+      ],
+      "chosen_label": "best",
+      "chosen_move_id": "move_sludge_bomb",
+      "dominant_policy": "State legality dominates strategic slogans: once Spikes are maxed, use a live conversion move.",
+      "information_that_changes_answer": [
+        "The local source changes to support a fourth layer.",
+        "The recorded hazard state was wrong and only two layers are up.",
+        "Explosion creates an immediate forced win."
+      ],
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "outcome": "best",
+      "split": "seed",
+      "tags": [
+        "spikes",
+        "romhack_delta",
+        "failed_move",
+        "heuristic_arbitration"
+      ]
+    },
+    {
+      "acceptable_move_ids": [
+        "switch_omastar"
+      ],
+      "benchmark_id": "romhack_explosion_route_trade_brock_001",
+      "best_move_ids": [
+        "move_explosion"
+      ],
+      "catastrophe_trigger": "Golem uses Curse instead of trading or switching.",
+      "catastrophic_move_ids": [
+        "move_curse"
+      ],
+      "chosen_label": "best",
+      "chosen_move_id": "move_explosion",
+      "dominant_policy": "Explosion dominates only because the sacrifice buys a concrete next position and Golem's future defensive role is replaceable.",
+      "information_that_changes_answer": [
+        "Vaporeon is already in guaranteed Earthquake or Rock Slide range.",
+        "Golem is needed later as the only Electric immunity or Explosion user.",
+        "The opponent has revealed Protect or a Ghost pivot.",
+        "Omastar cannot safely take the forced follow-up."
+      ],
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "outcome": "best",
+      "split": "seed",
+      "tags": [
+        "explosion",
+        "sacrifice",
+        "route_trade",
+        "heuristic_arbitration"
+      ]
+    },
+    {
+      "acceptable_move_ids": [
+        "move_thunder_wave"
+      ],
+      "benchmark_id": "romhack_defensive_answer_preservation_pryce_001",
+      "best_move_ids": [
+        "switch_piloswine"
+      ],
+      "catastrophe_trigger": "Slowking uses Rest or weak chip while Ampharos keeps Electric pressure.",
+      "catastrophic_move_ids": [
+        "move_rest"
+      ],
+      "chosen_label": "best",
+      "chosen_move_id": "switch_piloswine",
+      "dominant_policy": "Preservation through a resistant pivot dominates because it answers the immediate punish and keeps Slowking useful.",
+      "information_that_changes_answer": [
+        "Piloswine is low enough that it cannot absorb ThunderPunch.",
+        "Ampharos has revealed coverage that KOs Piloswine on the switch.",
+        "Slowking has a guaranteed KO this turn.",
+        "Ampharos is already paralyzed or otherwise unable to pressure."
+      ],
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "outcome": "best",
+      "split": "seed",
+      "tags": [
+        "defensive_answer",
+        "preservation",
+        "hidden_info",
+        "heuristic_arbitration"
+      ]
+    },
+    {
+      "acceptable_move_ids": [
+        "move_swords_dance"
+      ],
+      "benchmark_id": "vanilla_gsc_sleep_clause_blocked_holdout_001",
+      "best_move_ids": [
+        "move_sludge_bomb"
+      ],
+      "catastrophe_trigger": "Victreebel clicks Sleep Powder while Sleep Clause is occupied.",
+      "catastrophic_move_ids": [
+        "move_sleep_powder"
+      ],
+      "chosen_label": "best",
+      "chosen_move_id": "move_sludge_bomb",
+      "dominant_policy": "Move legality dominates the sleep/setup heuristic; use live chip when Sleep Clause blocks the route.",
+      "information_that_changes_answer": [
+        "Sleep Clause becomes free.",
+        "Snorlax is already in guaranteed Sludge Bomb KO range.",
+        "Victreebel is needed more as a preserved defensive piece than an attacker."
+      ],
+      "mechanics_profile": "vanilla_gsc",
+      "outcome": "best",
+      "split": "holdout",
+      "tags": [
+        "sleep",
+        "setup",
+        "disruption",
+        "heuristic_arbitration",
+        "holdout"
+      ]
+    },
+    {
+      "acceptable_move_ids": [
+        "move_sludge_bomb"
+      ],
+      "benchmark_id": "romhack_spikes_public_spinner_holdout_001",
+      "best_move_ids": [
+        "move_explosion"
+      ],
+      "catastrophe_trigger": "Qwilfish places a third layer while public Starmie remains active and healthy enough to spin.",
+      "catastrophic_move_ids": [
+        "move_spikes"
+      ],
+      "chosen_label": "best",
+      "chosen_move_id": "move_explosion",
+      "dominant_policy": "Public hazard control dominates the layer-completion heuristic; remove the spinner if the trade preserves the whole hazard route.",
+      "information_that_changes_answer": [
+        "Rapid Spin is not actually revealed.",
+        "Starmie is in guaranteed Sludge Bomb range.",
+        "The opponent has a Ghost that can block the Explosion route or punish it.",
+        "Qwilfish is needed later as the only answer to a separate threat."
+      ],
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "outcome": "best",
+      "split": "holdout",
+      "tags": [
+        "spikes",
+        "romhack_delta",
+        "hazards",
+        "heuristic_arbitration",
+        "holdout",
+        "explosion"
+      ]
+    },
+    {
+      "acceptable_move_ids": [
+        "move_sludge_bomb"
+      ],
+      "benchmark_id": "romhack_spikes_maxed_explosion_conversion_holdout_001",
+      "best_move_ids": [
+        "move_explosion"
+      ],
+      "catastrophe_trigger": "Qwilfish clicks a fourth Spikes or weak chip while Snorlax Rests.",
+      "catastrophic_move_ids": [
+        "move_spikes"
+      ],
+      "chosen_label": "best",
+      "chosen_move_id": "move_explosion",
+      "dominant_policy": "After the stack is complete, Explosion can dominate live chip when it removes the piece that prevents hazard conversion.",
+      "information_that_changes_answer": [
+        "Snorlax reveals Protect or a Ghost pivot is available.",
+        "Qwilfish is needed later as the only hazard setter after a likely spin.",
+        "Snorlax is already in guaranteed Sludge Bomb range.",
+        "A second opposing hazard absorber is healthier and more important."
+      ],
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "outcome": "best",
+      "split": "holdout",
+      "tags": [
+        "spikes",
+        "romhack_delta",
+        "failed_move",
+        "heuristic_arbitration",
+        "holdout",
+        "explosion",
+        "route_trade"
+      ]
+    },
+    {
+      "acceptable_move_ids": [
+        "move_earthquake"
+      ],
+      "benchmark_id": "romhack_explosion_blocked_by_protect_holdout_001",
+      "best_move_ids": [
+        "switch_omastar"
+      ],
+      "catastrophe_trigger": "Golem Explodes into a revealed Protect branch.",
+      "catastrophic_move_ids": [
+        "move_explosion"
+      ],
+      "chosen_label": "best",
+      "chosen_move_id": "switch_omastar",
+      "dominant_policy": "Public Protect information overrides the Explosion-converts heuristic; preserve or chip until the block is no longer free.",
+      "information_that_changes_answer": [
+        "Protect is out of PP or disabled.",
+        "The opponent is forced to attack due to a timer or guaranteed loss if it Protects.",
+        "Omastar cannot safely absorb Surf.",
+        "Earthquake puts Vaporeon into a forced follow-up KO range."
+      ],
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "outcome": "best",
+      "split": "holdout",
+      "tags": [
+        "explosion",
+        "sacrifice",
+        "route_trade",
+        "heuristic_arbitration",
+        "holdout",
+        "hidden_info"
+      ]
+    },
+    {
+      "acceptable_move_ids": [
+        "move_surf"
+      ],
+      "benchmark_id": "romhack_defensive_answer_unavailable_holdout_001",
+      "best_move_ids": [
+        "move_thunder_wave"
+      ],
+      "catastrophe_trigger": "Slowking tries to switch to a Piloswine that is not on the public bench.",
+      "catastrophic_move_ids": [
+        "switch_piloswine"
+      ],
+      "chosen_label": "best",
+      "chosen_move_id": "move_thunder_wave",
+      "dominant_policy": "Current availability dominates the preservation slogan; when the answer is gone, choose the best live mitigation move.",
+      "information_that_changes_answer": [
+        "Piloswine is actually alive and available.",
+        "Ampharos is immune to paralysis or already paralyzed.",
+        "Surf is a guaranteed KO.",
+        "Cloyster has a verified way to absorb or punish Ampharos."
+      ],
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "outcome": "best",
+      "split": "holdout",
+      "tags": [
+        "defensive_answer",
+        "preservation",
+        "hidden_info",
+        "heuristic_arbitration",
+        "holdout"
+      ]
+    },
+    {
+      "acceptable_move_ids": [
+        "move_ice_punch"
+      ],
+      "benchmark_id": "fixture_chuck_poliwrath_vs_pidgeotto_ice_punch_001",
+      "best_move_ids": [
+        "switch_sudowoodo"
+      ],
+      "catastrophe_trigger": "Poliwrath clicks Focus Punch into the revealed faster attacking line.",
+      "catastrophic_move_ids": [
+        "move_focus_punch"
+      ],
+      "chosen_label": "best",
+      "chosen_move_id": "switch_sudowoodo",
+      "dominant_policy": "When a live defensive answer is available and the active piece matters later, preservation dominates visible coverage and speculative Focus Punch.",
+      "information_that_changes_answer": [
+        "Sudowoodo is unavailable, statused, or already in KO range.",
+        "Ice Punch is a guaranteed KO and Poliwrath survives every public response afterward.",
+        "Pidgeotto is locked into a non-attacking move or cannot break Focus Punch.",
+        "Kadabra is gone, making Poliwrath HP much less valuable."
+      ],
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "outcome": "best",
+      "split": "fixture_harvest",
+      "tags": [
+        "coverage",
+        "prediction",
+        "status",
+        "defensive_answer",
+        "preservation",
+        "hidden_info",
+        "heuristic_arbitration",
+        "fixture_harvest"
+      ]
+    },
+    {
+      "acceptable_move_ids": [
+        "move_explosion"
+      ],
+      "benchmark_id": "fixture_janine_qwilfish_third_spikes_layer_001",
+      "best_move_ids": [
+        "move_spikes"
+      ],
+      "catastrophe_trigger": "Qwilfish attacks or switches instead of placing the third layer while the stack is at two.",
+      "catastrophic_move_ids": [
+        "move_sludge_bomb",
+        "move_surf",
+        "switch_tentacruel"
+      ],
+      "chosen_label": "best",
+      "chosen_move_id": "move_spikes",
+      "dominant_policy": "The romhack third layer dominates while it is live, public hazard control is absent, and the current opponent cannot immediately stop it.",
+      "information_that_changes_answer": [
+        "A player Rapid Spin user is revealed and can enter without cost.",
+        "Snorlax has an immediate KO or disabling move into Qwilfish.",
+        "The seen player team is not mostly grounded.",
+        "Explosion creates an immediate forced win that third-layer Spikes cannot match."
+      ],
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "outcome": "best",
+      "split": "fixture_harvest",
+      "tags": [
+        "kanto_leader",
+        "hazards",
+        "romhack_delta",
+        "spikes_layers",
+        "heuristic_arbitration",
+        "fixture_harvest"
+      ]
+    },
+    {
+      "acceptable_move_ids": [
+        "move_curse"
+      ],
+      "benchmark_id": "fixture_mechanics_snorlax_full_hp_rest_status_fail_001",
+      "best_move_ids": [
+        "move_body_slam"
+      ],
+      "catastrophe_trigger": "Snorlax chooses Rest at full HP or Sleep Talk while awake.",
+      "catastrophic_move_ids": [
+        "move_rest",
+        "move_sleep_talk"
+      ],
+      "chosen_label": "best",
+      "chosen_move_id": "move_body_slam",
+      "dominant_policy": "Mechanics legality dominates role slogans: choose a live move when Rest and Sleep Talk fail from the exact current state.",
+      "information_that_changes_answer": [
+        "Snorlax is below full HP, making Rest mechanically legal.",
+        "Snorlax is asleep, making Sleep Talk mechanically legal.",
+        "Skarmory is in guaranteed Body Slam KO range.",
+        "Whirlwind is disabled or out of PP, increasing Curse conversion value."
+      ],
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "outcome": "best",
+      "split": "fixture_harvest",
+      "tags": [
+        "mechanics",
+        "rest_cycle",
+        "status_cure",
+        "local_engine",
+        "heuristic_arbitration",
+        "fixture_harvest"
+      ]
+    },
+    {
+      "acceptable_move_ids": [
+        "switch_omastar"
+      ],
+      "benchmark_id": "fixture_brock_golem_vs_vaporeon_explosion_question_001",
+      "best_move_ids": [
+        "move_explosion"
+      ],
+      "catastrophe_trigger": "Golem uses Earthquake while Vaporeon stays in and uses Surf.",
+      "catastrophic_move_ids": [
+        "move_earthquake"
+      ],
+      "chosen_label": "best",
+      "chosen_move_id": "move_explosion",
+      "dominant_policy": "Explosion narrowly dominates because the saved judgment treats it and Omastar as close, and the current state lets the sacrifice buy a clean next position.",
+      "information_that_changes_answer": [
+        "Vaporeon reveals Protect or another Explosion block.",
+        "Golem is still required as the only answer to a confirmed remaining physical threat.",
+        "Omastar is too low to absorb Surf after switching.",
+        "Earthquake is guaranteed to KO because Vaporeon is much lower than recorded."
+      ],
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "outcome": "best",
+      "split": "fixture_harvest",
+      "tags": [
+        "sacrifice",
+        "explosion",
+        "route_trade",
+        "water_pressure",
+        "late_game",
+        "hidden_info",
+        "heuristic_arbitration",
+        "fixture_harvest"
+      ]
+    },
+    {
+      "acceptable_move_ids": [
+        "switch_skarmory",
+        "move_sludge_bomb"
+      ],
+      "benchmark_id": "long_battle_sleep_disruption_after_miss_001",
+      "best_move_ids": [
+        "move_sleep_powder"
+      ],
+      "catastrophe_trigger": "Victreebel uses Swords Dance after Sleep Powder already missed and Snorlax remains awake.",
+      "catastrophic_move_ids": [
+        "move_swords_dance"
+      ],
+      "chosen_label": "best",
+      "chosen_move_id": "move_sleep_powder",
+      "dominant_policy": "After a sleep disruption, re-score the current board; sleep remains best only because the clause and target status still allow it.",
+      "information_that_changes_answer": [
+        "Sleep Clause is occupied.",
+        "Snorlax is already statused.",
+        "Victreebel no longer survives the revealed Body Slam branch.",
+        "Snorlax is in guaranteed Sludge Bomb KO range."
+      ],
+      "mechanics_profile": "vanilla_gsc",
+      "outcome": "best",
+      "split": "holdout",
+      "tags": [
+        "sleep",
+        "setup",
+        "disruption",
+        "long_battle",
+        "heuristic_arbitration"
+      ]
+    },
+    {
+      "acceptable_move_ids": [
+        "switch_skarmory"
+      ],
+      "benchmark_id": "long_battle_rest_tempo_unforced_001",
+      "best_move_ids": [
+        "move_body_slam"
+      ],
+      "catastrophe_trigger": "Snorlax chooses Rest while still healthy enough to keep pressuring Tyranitar.",
+      "catastrophic_move_ids": [
+        "move_rest"
+      ],
+      "chosen_label": "best",
+      "chosen_move_id": "move_body_slam",
+      "dominant_policy": "Rest timing must be forced by role survival or route conversion; high-HP Rest under phaze/attack pressure is tempo loss.",
+      "information_that_changes_answer": [
+        "Snorlax is in guaranteed KO range if it does not Rest now.",
+        "Tyranitar lacks Roar or meaningful attacking pressure.",
+        "Snorlax's Body Slam PP or Rest PP is nearly exhausted.",
+        "Skarmory cannot safely enter due to hazard or coverage damage."
+      ],
+      "mechanics_profile": "vanilla_gsc",
+      "outcome": "best",
+      "split": "holdout",
+      "tags": [
+        "rest_cycle",
+        "tempo",
+        "long_battle",
+        "heuristic_arbitration"
+      ]
+    },
+    {
+      "acceptable_move_ids": [
+        "switch_raikou"
+      ],
+      "benchmark_id": "romhack_spinblock_damage_context_001",
+      "best_move_ids": [
+        "move_thunderbolt"
+      ],
+      "catastrophe_trigger": "Gengar chooses a non-damaging line while Starmie uses Rapid Spin or Psychic.",
+      "catastrophic_move_ids": [
+        "move_destiny_bond"
+      ],
+      "chosen_label": "best",
+      "chosen_move_id": "move_thunderbolt",
+      "dominant_policy": "Exact romhack damage evidence dominates the generic preserve-spinblocker heuristic; staying in is correct only because the public band says Gengar survives and KOs.",
+      "information_that_changes_answer": [
+        "Gengar current HP is 52 or lower, making Psychic a guaranteed KO before Thunderbolt.",
+        "Starmie is no longer in guaranteed Thunderbolt KO range.",
+        "Starmie has a public Protect-like block or another move that changes the immediate punish.",
+        "The battle is vanilla GSC rather than the romhack, because Gengar typing and damage evidence differ."
+      ],
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "outcome": "best",
+      "split": "holdout",
+      "tags": [
+        "spinblock",
+        "damage_context",
+        "hazards",
+        "romhack_delta",
+        "heuristic_arbitration"
+      ]
+    },
+    {
+      "acceptable_move_ids": [
+        "switch_suicune"
+      ],
+      "benchmark_id": "vanilla_gsc_phazing_timing_mirror_001",
+      "best_move_ids": [
+        "move_rock_slide"
+      ],
+      "catastrophe_trigger": "Golem clicks Roar while faster than Skarmory in a simultaneous phazing turn.",
+      "catastrophic_move_ids": [
+        "move_roar"
+      ],
+      "chosen_label": "best",
+      "chosen_move_id": "move_rock_slide",
+      "dominant_policy": "Mechanics truth dominates the phazing slogan: Roar is only a policy move when the public move order lets it act last.",
+      "information_that_changes_answer": [
+        "Golem is slower than Skarmory within the negative-priority phazing bracket.",
+        "Skarmory cannot or will not click Whirlwind this turn.",
+        "Rock Slide no longer forces meaningful damage or flinch pressure.",
+        "Explosion removes Skarmory and opens a named route while Golem's role is no longer needed."
+      ],
+      "mechanics_profile": "vanilla_gsc",
+      "outcome": "best",
+      "split": "holdout",
+      "tags": [
+        "phazing",
+        "timing",
+        "mechanics",
+        "setup_control",
+        "heuristic_arbitration"
+      ]
+    },
+    {
+      "acceptable_move_ids": [
+        "move_toxic"
+      ],
+      "benchmark_id": "vanilla_gsc_pp_phaze_loop_save_final_whirlwind_001",
+      "best_move_ids": [
+        "move_rest"
+      ],
+      "catastrophe_trigger": "Skarmory uses its last Whirlwind PP while Snorlax is unboosted and not yet forcing a route.",
+      "catastrophic_move_ids": [
+        "move_whirlwind"
+      ],
+      "chosen_label": "best",
+      "chosen_move_id": "move_rest",
+      "dominant_policy": "PP is route material: final phazing PP should be spent only when it denies an immediate setup route or prevents an unavoidable loss.",
+      "information_that_changes_answer": [
+        "Snorlax is already heavily boosted and one more turn creates an unanswerable route.",
+        "Skarmory cannot survive the current Double-Edge branch unless it phazes now.",
+        "Whirlwind has more than one PP remaining.",
+        "Toxic is blocked by existing status or another mechanics condition."
+      ],
+      "mechanics_profile": "vanilla_gsc",
+      "outcome": "best",
+      "split": "holdout",
+      "tags": [
+        "pp_endgame",
+        "phazing",
+        "rest_cycle",
+        "endgame",
+        "heuristic_arbitration"
+      ]
+    },
+    {
+      "acceptable_move_ids": [
+        "move_earthquake"
+      ],
+      "benchmark_id": "external_gsc_sleeping_lax_curse_window_001",
+      "best_move_ids": [
+        "move_curse"
+      ],
+      "catastrophe_trigger": "Rhydon switches instead of using the sleep window.",
+      "catastrophic_move_ids": [
+        "switch_zapdos"
+      ],
+      "chosen_label": "best",
+      "chosen_move_id": "move_curse",
+      "dominant_policy": "Setup dominates immediate damage only because the target is asleep and Curse changes the post-wake exchange.",
+      "information_that_changes_answer": [
+        "Snorlax is awake or guaranteed to wake before Rhydon converts.",
+        "Curse no longer changes the Earthquake KO math.",
+        "Snorlax reveals a move that KOs Rhydon after the Curse turn.",
+        "Zapdos is the only remaining route and must be preserved immediately."
+      ],
+      "mechanics_profile": "vanilla_gsc",
+      "outcome": "best",
+      "split": "holdout",
+      "tags": [
+        "external_gsc",
+        "sleep",
+        "sleep_window",
+        "setup",
+        "endgame",
+        "heuristic_arbitration"
+      ]
+    },
+    {
+      "acceptable_move_ids": [
+        "move_thunder",
+        "move_roar"
+      ],
+      "benchmark_id": "vanilla_gsc_opening_electric_double_switch_spikes_001",
+      "best_move_ids": [
+        "switch_cloyster"
+      ],
+      "catastrophe_trigger": "Raikou uses Rest at full HP or otherwise passes the lead turn without pressure.",
+      "catastrophic_move_ids": [
+        "move_rest"
+      ],
+      "chosen_label": "best",
+      "chosen_move_id": "switch_cloyster",
+      "dominant_policy": "Opening moves are information and resource bids: double-switching dominates only when the public incentives make the opponent's pivot likely and the resulting Spikes window is concrete.",
+      "information_that_changes_answer": [
+        "Opponent Cloyster is not incentivized to switch and can safely set Spikes.",
+        "Boss Cloyster is unavailable, statused, or too low to claim the expected Spikes turn.",
+        "The likely switch target blocks or is hostile to Cloyster's Spikes plan.",
+        "Direct Thunder damage or paralysis is needed immediately to stop Cloyster from completing its hazard role."
+      ],
+      "mechanics_profile": "vanilla_gsc",
+      "outcome": "best",
+      "split": "holdout",
+      "tags": [
+        "opening",
+        "lead_cycle",
+        "spikes",
+        "information_gain",
+        "opening_info_resource_bid",
+        "heuristic_arbitration"
+      ]
+    },
+    {
+      "acceptable_move_ids": [
+        "switch_snorlax",
+        "move_toxic"
+      ],
+      "benchmark_id": "external_gsc_forretress_explosion_on_quagsire_001",
+      "best_move_ids": [
+        "move_explosion"
+      ],
+      "catastrophe_trigger": "Forretress repeats Spikes or takes a no-progress turn after its hazard role is discharged.",
+      "catastrophic_move_ids": [
+        "move_spikes"
+      ],
+      "chosen_label": "best",
+      "chosen_move_id": "move_explosion",
+      "dominant_policy": "Route conversion dominates preservation because Forretress has already completed its hazard/spin jobs and Explosion removes the active blocker.",
+      "information_that_changes_answer": [
+        "Protect or a Ghost switch is publicly revealed.",
+        "Forretress is still needed to remove hazards later.",
+        "Explosion no longer removes or cripples Quagsire enough to open the route.",
+        "Quagsire is no longer a relevant blocker to the remaining Snorlax route."
+      ],
+      "mechanics_profile": "vanilla_gsc",
+      "outcome": "best",
+      "split": "holdout",
+      "tags": [
+        "external_gsc",
+        "explosion",
+        "route_trade",
+        "spikes",
+        "endgame",
+        "heuristic_arbitration"
+      ]
+    },
+    {
+      "acceptable_move_ids": [
+        "move_rest",
+        "switch_raikou"
+      ],
+      "benchmark_id": "external_gsc_vaporeon_vs_restdtalk_snorlax_001",
+      "best_move_ids": [
+        "move_surf"
+      ],
+      "catastrophe_trigger": "Vaporeon uses Growth while Snorlax is asleep with Sleep Talk and Rest revealed.",
+      "catastrophic_move_ids": [
+        "move_growth"
+      ],
+      "chosen_label": "best",
+      "chosen_move_id": "move_surf",
+      "dominant_policy": "Immediate conversion pressure dominates setup because the sleeping target has public RestTalk counterplay.",
+      "information_that_changes_answer": [
+        "Sleep Talk or Rest is not available on Snorlax.",
+        "Growth changes the Surf KO math enough to survive the RestTalk branch.",
+        "Vaporeon is forced to Rest immediately by poison or incoming damage.",
+        "Snorlax is guaranteed to stay asleep without Sleep Talk this turn."
+      ],
+      "mechanics_profile": "vanilla_gsc",
+      "outcome": "best",
+      "split": "holdout",
+      "tags": [
+        "external_gsc",
+        "sleep",
+        "sleep_window",
+        "resttalk",
+        "endgame",
+        "heuristic_arbitration"
+      ]
+    },
+    {
+      "acceptable_move_ids": [
+        "move_earthquake",
+        "move_roar"
+      ],
+      "benchmark_id": "external_gsc_golem_late_rapid_spin_001",
+      "best_move_ids": [
+        "move_rapid_spin"
+      ],
+      "catastrophe_trigger": "Golem spends Explosion before clearing own-side Spikes.",
+      "catastrophic_move_ids": [
+        "move_explosion"
+      ],
+      "chosen_label": "best",
+      "chosen_move_id": "move_rapid_spin",
+      "dominant_policy": "Hazard removal dominates immediate damage because Snorlax is likely to Rest and own-side Spikes still tax the future route.",
+      "information_that_changes_answer": [
+        "Own-side Spikes are already absent.",
+        "Snorlax cannot Rest or is in guaranteed KO range.",
+        "Golem is no longer needed as a spinner or phazer.",
+        "Explosion immediately removes the final opponent route and no future switches are required."
+      ],
+      "mechanics_profile": "vanilla_gsc",
+      "outcome": "best",
+      "split": "holdout",
+      "tags": [
+        "external_gsc",
+        "hazard_control",
+        "rapid_spin",
+        "spikes",
+        "endgame",
+        "heuristic_arbitration"
+      ]
+    },
+    {
+      "acceptable_move_ids": [
+        "move_surf"
+      ],
+      "benchmark_id": "fixture_will_slowbro_vs_houndoom_fast_dark_001",
+      "best_move_ids": [
+        "switch_houndoom"
+      ],
+      "catastrophe_trigger": "Slowbro uses Amnesia or another non-preserving stay-in move while Houndoom clicks Crunch.",
+      "catastrophic_move_ids": [
+        "move_amnesia",
+        "move_psychic"
+      ],
+      "chosen_label": "best",
+      "chosen_move_id": "switch_houndoom",
+      "dominant_policy": "Immediate public lethal punish and preservation dominate direct damage and setup when a healthy pivot can absorb the known route.",
+      "information_that_changes_answer": [
+        "Will's Houndoom pivot is unavailable or too low to absorb the public Dark pressure.",
+        "Crunch is not actually available or no longer lethal by exact damage evidence.",
+        "Slowbro is faster due to speed control.",
+        "Surf is guaranteed to KO before Houndoom can act.",
+        "The player has revealed Pursuit and the switch punishment is worse than staying in."
+      ],
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "outcome": "best",
+      "split": "fixture_harvest",
+      "tags": [
+        "fixture_harvest",
+        "fast_public_punish",
+        "dark_threat",
+        "defensive_answer",
+        "preservation",
+        "heuristic_arbitration"
+      ]
+    },
+    {
+      "acceptable_move_ids": [
+        "switch_umbreon"
+      ],
+      "benchmark_id": "fixture_koga_ariados_vs_typhlosion_fire_spikes_001",
+      "best_move_ids": [
+        "switch_tentacruel"
+      ],
+      "catastrophe_trigger": "Ariados stays in for Spikes, Toxic, or Leech Life while Typhlosion clicks revealed Flamethrower.",
+      "catastrophic_move_ids": [
+        "move_spikes",
+        "move_toxic",
+        "move_leech_life"
+      ],
+      "chosen_label": "best",
+      "chosen_move_id": "switch_tentacruel",
+      "dominant_policy": "Immediate public lethal punish dominates generic hazard and status progress; preserve Ariados through the cleanest available pivot, then re-score.",
+      "information_that_changes_answer": [
+        "Tentacruel is unavailable or too low to absorb the public Fire pressure, making Umbreon the next preserving pivot.",
+        "Flamethrower is unavailable, out of PP, or no longer lethal by exact damage evidence.",
+        "Typhlosion is in guaranteed KO range before it can move.",
+        "Ariados is no longer needed as a hazard or poison piece and a sacrifice opens a forced route.",
+        "A public Earthquake branch makes Tentacruel's switch-in catastrophe worse than preserving through another pivot."
+      ],
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "outcome": "best",
+      "split": "fixture_harvest",
+      "tags": [
+        "fixture_harvest",
+        "spikes",
+        "status",
+        "fire_pressure",
+        "fast_public_punish",
+        "defensive_answer",
+        "preservation",
+        "heuristic_arbitration"
+      ]
+    },
+    {
+      "acceptable_move_ids": [
+        "move_wing_attack"
+      ],
+      "benchmark_id": "fixture_bugsy_scyther_vs_geodude_safe_swords_dance_001",
+      "best_move_ids": [
+        "move_swords_dance"
+      ],
+      "catastrophe_trigger": "Scyther switches or uses low-value chip while Geodude remains unable to punish the setup turn.",
+      "catastrophic_move_ids": [
+        "switch_ariados",
+        "move_quick_attack"
+      ],
+      "chosen_label": "best",
+      "chosen_move_id": "move_swords_dance",
+      "dominant_policy": "Setup dominates because the public punish is survivable and the boost changes the next-turn route; preservation and chip are weaker here.",
+      "information_that_changes_answer": [
+        "Scyther is chipped low enough that Rock Throw or Magnitude removes it after the setup turn.",
+        "A stronger public Rock move is revealed.",
+        "Geodude is already in guaranteed Wing Attack KO range.",
+        "The player has a priority or phazing branch that stops Scyther after setup.",
+        "Bugsy needs Scyther only as a preserved late-game piece rather than the current route converter."
+      ],
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "outcome": "best",
+      "split": "fixture_harvest",
+      "tags": [
+        "fixture_harvest",
+        "setup",
+        "safe_setup_window",
+        "damage_threshold",
+        "route_conversion",
+        "heuristic_arbitration"
+      ]
+    },
+    {
+      "acceptable_move_ids": [
+        "move_hypnosis",
+        "move_surf"
+      ],
+      "benchmark_id": "fixture_chuck_poliwrath_vs_alakazam_psychic_pivot_001",
+      "best_move_ids": [
+        "switch_umbreon"
+      ],
+      "catastrophe_trigger": "Poliwrath uses low-impact direct damage while Alakazam attacks or Recovers.",
+      "catastrophic_move_ids": [
+        "move_ice_punch"
+      ],
+      "chosen_label": "best",
+      "chosen_move_id": "switch_umbreon",
+      "dominant_policy": "Clean preservation through an environment-verified Psychic answer dominates accuracy-dependent sleep and low direct chip while the pivot is available.",
+      "information_that_changes_answer": [
+        "Umbreon is unavailable, too low, or threatened by confirmed coverage on the switch.",
+        "Sleep Clause is occupied or Alakazam is already statused, making Hypnosis invalid.",
+        "Psychic is no longer available or no longer a major punish by exact damage evidence.",
+        "Surf is a guaranteed KO or puts Alakazam into unavoidable KO range despite Recover.",
+        "Alakazam reveals a non-Psychic coverage branch that makes the Umbreon pivot worse than sleep or direct damage."
+      ],
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "outcome": "best",
+      "split": "fixture_harvest",
+      "tags": [
+        "fixture_harvest",
+        "fast_public_punish",
+        "psychic_threat",
+        "sleep",
+        "defensive_answer",
+        "preservation",
+        "heuristic_arbitration"
+      ]
+    },
+    {
+      "acceptable_move_ids": [
+        "move_night_shade"
+      ],
+      "benchmark_id": "fixture_morty_haunter_vs_noctowl_sleep_line_001",
+      "best_move_ids": [
+        "move_hypnosis"
+      ],
+      "catastrophe_trigger": "Haunter uses Curse or switches while Noctowl remains unstatused and Sleep Clause is free.",
+      "catastrophic_move_ids": [
+        "move_curse",
+        "switch_gengar"
+      ],
+      "chosen_label": "best",
+      "chosen_move_id": "move_hypnosis",
+      "dominant_policy": "Legal sleep control dominates fixed damage because the public punish is survivable and the target is not already neutralized.",
+      "information_that_changes_answer": [
+        "Sleep Clause is occupied.",
+        "Noctowl is already statused.",
+        "Hypnosis PP is exhausted or accuracy risk is unacceptable because Haunter is in guaranteed KO range.",
+        "Noctowl reveals Sleep Talk or another sleep-absorbing route.",
+        "Night Shade puts Noctowl into guaranteed next-turn KO range."
+      ],
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "outcome": "best",
+      "split": "fixture_harvest",
+      "tags": [
+        "fixture_harvest",
+        "sleep",
+        "status",
+        "tempo_control",
+        "heuristic_arbitration"
+      ]
+    },
+    {
+      "acceptable_move_ids": [
+        "move_gust"
+      ],
+      "benchmark_id": "fixture_falkner_pidgeotto_vs_geodude_scout_probe_001",
+      "best_move_ids": [
+        "move_sand_attack"
+      ],
+      "catastrophe_trigger": "Pidgeotto keeps clicking Gust or switches immediately while Geodude has a live Rock-risk branch.",
+      "catastrophic_move_ids": [
+        "switch_noctowl"
+      ],
+      "chosen_label": "best",
+      "chosen_move_id": "move_sand_attack",
+      "dominant_policy": "One scout probe dominates direct chip because the chip is tiny and the public punish is live; repeated probing is explicitly not the policy.",
+      "information_that_changes_answer": [
+        "Rock Throw is impossible, out of PP, or no longer meaningful by exact damage evidence.",
+        "Geodude is in a damage band where Gust materially changes the route.",
+        "Sand Attack has already landed once and the next turn should convert.",
+        "Noctowl has a confirmed better attack or defensive route into Geodude.",
+        "Pidgeotto is in guaranteed KO range even after one accuracy probe."
+      ],
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "outcome": "best",
+      "split": "fixture_harvest",
+      "tags": [
+        "fixture_harvest",
+        "scout_probe",
+        "rock_risk",
+        "accuracy_control",
+        "heuristic_arbitration"
+      ]
+    },
+    {
+      "acceptable_move_ids": [
+        "move_protect"
+      ],
+      "benchmark_id": "fixture_pryce_cloyster_vs_quilava_fire_pivot_001",
+      "best_move_ids": [
+        "switch_slowking"
+      ],
+      "catastrophe_trigger": "Cloyster stays in to click Surf or Explosion while faster Quilava has revealed Flame Wheel.",
+      "catastrophic_move_ids": [
+        "move_surf",
+        "move_explosion"
+      ],
+      "chosen_label": "best",
+      "chosen_move_id": "switch_slowking",
+      "dominant_policy": "Preservation dominates both direct attack and Explosion because the active faints before progress and a public Fire-resist pivot exists.",
+      "information_that_changes_answer": [
+        "Cloyster is healthy enough to survive Flame Wheel and Surf materially changes the route.",
+        "Slowking is unavailable or already too low to pivot into Fire pressure.",
+        "Quilava's Fire STAB is out of PP, disabled, or otherwise cannot KO before Cloyster moves.",
+        "Explosion is guaranteed to move first or remove the only remaining blocker to Pryce's endgame.",
+        "Protect has a field effect or residual-damage route that makes scouting more than a one-turn delay."
+      ],
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "outcome": "best",
+      "split": "fixture_harvest",
+      "tags": [
+        "fixture_harvest",
+        "fast_public_punish",
+        "defensive_answer",
+        "preservation",
+        "fire_pivot",
+        "explosion_discipline",
+        "heuristic_arbitration"
+      ]
+    },
+    {
+      "acceptable_move_ids": [
+        "move_wing_attack"
+      ],
+      "benchmark_id": "fixture_bugsy_scyther_vs_quilava_fire_setup_001",
+      "best_move_ids": [
+        "move_swords_dance"
+      ],
+      "catastrophe_trigger": "Scyther switches or uses weak priority while the setup route is live.",
+      "catastrophic_move_ids": [
+        "move_quick_attack",
+        "switch_ledian"
+      ],
+      "chosen_label": "best",
+      "chosen_move_id": "move_swords_dance",
+      "dominant_policy": "Setup dominates because the public punish is survivable and the boost changes the two-turn route; attack dominates only after the survival or conversion condition fails.",
+      "information_that_changes_answer": [
+        "Scyther is slower than Quilava.",
+        "Ember or another revealed Fire move KOs Scyther after the setup turn.",
+        "Unboosted Wing Attack already KOs Quilava from the public HP.",
+        "A switch-in makes the boosted route fail or exposes a more important Scyther preservation duty.",
+        "A damage roll leaves Quilava outside +2 Wing Attack range and Quick Attack does not cover the remainder."
+      ],
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "outcome": "best",
+      "split": "fixture_harvest",
+      "tags": [
+        "fixture_harvest",
+        "setup",
+        "safe_setup_window",
+        "fire_pressure",
+        "tempo",
+        "heuristic_arbitration"
+      ]
+    },
+    {
+      "acceptable_move_ids": [
+        "move_milk_drink"
+      ],
+      "benchmark_id": "fixture_whitney_miltank_vs_geodude_rollout_lock_001",
+      "best_move_ids": [
+        "move_body_slam"
+      ],
+      "catastrophe_trigger": "Miltank opens Rollout into healthy, unstatused Geodude.",
+      "catastrophic_move_ids": [
+        "move_rollout",
+        "switch_girafarig"
+      ],
+      "chosen_label": "best",
+      "chosen_move_id": "move_body_slam",
+      "dominant_policy": "Body Slam pressure dominates first-turn Rollout because lock moves need status, HP, and punish branches to be favorable before commitment.",
+      "information_that_changes_answer": [
+        "Body Slam already paralyzed Geodude.",
+        "Miltank is near the damage threshold where Milk Drink is required before continuing pressure.",
+        "Geodude is in range where Rollout immediately forces the route without dangerous lock turns.",
+        "Magnitude is confirmed absent or unable to threaten the lock sequence.",
+        "A switch makes Body Slam pressure worse than preserving Miltank."
+      ],
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "outcome": "best",
+      "split": "fixture_harvest",
+      "tags": [
+        "fixture_harvest",
+        "lock_move",
+        "sequence_policy",
+        "ace_preservation",
+        "status_pressure",
+        "heuristic_arbitration"
+      ]
+    },
+    {
+      "acceptable_move_ids": [
+        "switch_tyranitar"
+      ],
+      "benchmark_id": "fixture_karen_crobat_vs_dragonite_toxic_clock_001",
+      "best_move_ids": [
+        "move_toxic"
+      ],
+      "catastrophe_trigger": "Crobat uses Wing Attack into full-HP Dragonite.",
+      "catastrophic_move_ids": [
+        "move_wing_attack",
+        "move_confuse_ray"
+      ],
+      "chosen_label": "best",
+      "chosen_move_id": "move_toxic",
+      "dominant_policy": "Toxic dominates because it creates a concrete clock while Crobat survives the first punish; preservation becomes the next re-score after the clock is established.",
+      "information_that_changes_answer": [
+        "Crobat no longer survives the public Outrage branch.",
+        "Dragonite already has primary status.",
+        "Wing Attack reaches a decisive damage threshold.",
+        "Tyranitar is unavailable or too low to pivot into the Dragon route.",
+        "A revealed coverage move makes Tyranitar a bad follow-up pivot."
+      ],
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "outcome": "best",
+      "split": "fixture_harvest",
+      "tags": [
+        "fixture_harvest",
+        "status_clock",
+        "anti_dragon",
+        "preservation",
+        "sequence_policy",
+        "heuristic_arbitration"
+      ]
+    },
+    {
+      "acceptable_move_ids": [
+        "switch_umbreon"
+      ],
+      "benchmark_id": "fixture_koga_crobat_vs_alakazam_immediate_ko_001",
+      "best_move_ids": [
+        "move_wing_attack"
+      ],
+      "catastrophe_trigger": "Crobat uses Toxic while Wing Attack already KOs.",
+      "catastrophic_move_ids": [
+        "move_toxic",
+        "move_confuse_ray"
+      ],
+      "chosen_label": "best",
+      "chosen_move_id": "move_wing_attack",
+      "dominant_policy": "Immediate KO damage dominates slow status and disruption when it removes the active threat before Psychic or Recover can matter.",
+      "information_that_changes_answer": [
+        "Wing Attack no longer KOs from the current HP range.",
+        "Alakazam is already statused or cannot use Recover.",
+        "Crobat is slower than Alakazam in the public state.",
+        "Umbreon is unavailable or too low to preserve Crobat if the KO route disappears.",
+        "A revealed Alakazam move makes Umbreon a bad fallback pivot."
+      ],
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "outcome": "best",
+      "split": "fixture_harvest",
+      "tags": [
+        "fixture_harvest",
+        "immediate_ko",
+        "status_clock",
+        "speed",
+        "psychic_pressure",
+        "heuristic_arbitration"
+      ]
+    },
+    {
+      "acceptable_move_ids": [
+        "move_whirlwind"
+      ],
+      "benchmark_id": "fixture_jasmine_skarmory_vs_machoke_focus_energy_001",
+      "best_move_ids": [
+        "move_toxic"
+      ],
+      "catastrophe_trigger": "Skarmory attacks with Steel Wing into healthy Machoke.",
+      "catastrophic_move_ids": [
+        "move_steel_wing",
+        "switch_forretress"
+      ],
+      "chosen_label": "best",
+      "chosen_move_id": "move_toxic",
+      "dominant_policy": "Toxic pressure slightly dominates because Focus Energy is a low-urgency setup signal and Skarmory can survive the public punish; Whirlwind takes over only when setup becomes a real boost route.",
+      "information_that_changes_answer": [
+        "Machoke reveals a real attack-boosting setup route.",
+        "Machoke is already poisoned.",
+        "Steel Wing reaches a KO threshold.",
+        "Fire Blast is confirmed and makes Skarmory unable to stay.",
+        "Whirlwind PP is scarce enough that spending it now closes a later route."
+      ],
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "outcome": "best",
+      "split": "fixture_harvest",
+      "tags": [
+        "fixture_harvest",
+        "phazing",
+        "setup_denial",
+        "status_clock",
+        "heuristic_arbitration"
+      ]
+    },
+    {
+      "acceptable_move_ids": [
+        "switch_gengar"
+      ],
+      "benchmark_id": "fixture_morty_misdreavus_vs_typhlosion_perish_route_001",
+      "best_move_ids": [
+        "move_perish_song"
+      ],
+      "catastrophe_trigger": "Misdreavus uses Confuse Ray instead of Perish Song.",
+      "catastrophic_move_ids": [
+        "move_confuse_ray",
+        "move_psywave"
+      ],
+      "chosen_label": "best",
+      "chosen_move_id": "move_perish_song",
+      "dominant_policy": "Perish Song dominates because it changes the route by forcing the boosted attacker to leave, while Misdreavus survives the public punish.",
+      "information_that_changes_answer": [
+        "Misdreavus no longer survives the revealed Flame Wheel branch.",
+        "Typhlosion is no longer boosted.",
+        "Typhlosion is already in a direct KO range.",
+        "Gengar is unavailable or too low to preserve the route.",
+        "A stronger Fire move is confirmed and changes whether Perish Song can start."
+      ],
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "outcome": "best",
+      "split": "fixture_harvest",
+      "tags": [
+        "fixture_harvest",
+        "perish_route",
+        "forced_clock",
+        "boost_reset",
+        "preservation",
+        "heuristic_arbitration"
+      ]
+    },
+    {
+      "acceptable_move_ids": [
+        "move_double_team"
+      ],
+      "benchmark_id": "fixture_whitney_clefairy_vs_bayleef_encore_reflect_001",
+      "best_move_ids": [
+        "move_encore"
+      ],
+      "catastrophe_trigger": "Clefairy uses DoubleSlap while Bayleef's last move is Reflect.",
+      "catastrophic_move_ids": [
+        "move_doubleslap"
+      ],
+      "chosen_label": "best",
+      "chosen_move_id": "move_encore",
+      "dominant_policy": "Encore dominates because public last-move and speed evidence make it a concrete trap, while Double Team is only the fallback when that trap is absent.",
+      "information_that_changes_answer": [
+        "Bayleef's last move is not Reflect.",
+        "Clefairy is slower than Bayleef.",
+        "Bayleef already switched out after using Reflect.",
+        "Bayleef is already under Encore.",
+        "Bayleef is in direct KO range from an attack."
+      ],
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "outcome": "best",
+      "split": "fixture_harvest",
+      "tags": [
+        "fixture_harvest",
+        "encore_trap",
+        "setup_denial",
+        "sequence_policy",
+        "early_gym",
+        "heuristic_arbitration"
+      ]
+    },
+    {
+      "acceptable_move_ids": [
+        "move_thunderbolt"
+      ],
+      "benchmark_id": "fixture_jasmine_magneton_vs_quilava_speed_control_001",
+      "best_move_ids": [
+        "move_thunder_wave"
+      ],
+      "catastrophe_trigger": "Magneton uses Lock-On while Quilava remains faster.",
+      "catastrophic_move_ids": [
+        "move_lock_on",
+        "switch_steelix"
+      ],
+      "chosen_label": "best",
+      "chosen_move_id": "move_thunder_wave",
+      "dominant_policy": "Speed-control status dominates while direct damage does not remove Quilava and Magneton survives the public punish; direct attack takes over once the damage threshold removes the active threat.",
+      "information_that_changes_answer": [
+        "Thunderbolt reaches a direct removal threshold.",
+        "Quilava is already statused.",
+        "Magneton no longer survives the public Flame Wheel branch.",
+        "Dig is confirmed as the immediate move and changes whether Magneton can stay.",
+        "Steelix is no longer needed as a later-route anchor."
+      ],
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "outcome": "best",
+      "split": "fixture_harvest",
+      "tags": [
+        "fixture_harvest",
+        "status_clock",
+        "speed_control",
+        "immediate_ko",
+        "early_gym",
+        "heuristic_arbitration"
+      ]
+    },
+    {
+      "acceptable_move_ids": [
+        "switch_lapras"
+      ],
+      "benchmark_id": "fixture_misty_starmie_vs_meganium_recover_tempo_001",
+      "best_move_ids": [
+        "move_psychic"
+      ],
+      "catastrophe_trigger": "Starmie uses Recover while Meganium remains active and able to attack.",
+      "catastrophic_move_ids": [
+        "move_recover",
+        "move_hydro_pump"
+      ],
+      "chosen_label": "best",
+      "chosen_move_id": "move_psychic",
+      "dominant_policy": "Tempo attack dominates because it improves the named Lapras cleanup route while Recover lacks a public window.",
+      "information_that_changes_answer": [
+        "Meganium is asleep or otherwise cannot punish the recovery turn.",
+        "Psychic no longer changes the Lapras cleanup band.",
+        "Lapras already has guaranteed cleanup without Starmie chip.",
+        "Starmie is needed later and can Recover without donating tempo.",
+        "Meganium has Synthesis confirmed and the chip route no longer sticks."
+      ],
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "outcome": "best",
+      "split": "fixture_harvest",
+      "tags": [
+        "fixture_harvest",
+        "recovery_tempo",
+        "late_game",
+        "cleanup_route",
+        "heuristic_arbitration"
+      ]
+    },
+    {
+      "acceptable_move_ids": [
+        "switch_mantine"
+      ],
+      "benchmark_id": "fixture_clair_dragonair_vs_suicune_hidden_ice_001",
+      "best_move_ids": [
+        "switch_kingdra"
+      ],
+      "catastrophe_trigger": "Dragonair stays in with Thunder while Suicune reveals Ice coverage.",
+      "catastrophic_move_ids": [
+        "move_thunder",
+        "move_outrage"
+      ],
+      "chosen_label": "best",
+      "chosen_move_id": "switch_kingdra",
+      "dominant_policy": "Hidden-info preservation dominates because the plausible punish is severe, the opponent is incentivized to reveal it, and Kingdra is available.",
+      "information_that_changes_answer": [
+        "Ice Beam or equivalent Ice coverage becomes impossible or very low plausibility.",
+        "Kingdra is unavailable or too low to pivot.",
+        "Suicune is forced to switch rather than threaten coverage.",
+        "Thunder reaches a decisive KO or forced-Rest threshold.",
+        "Mantine has a stronger confirmed role than Kingdra in the remaining matchup."
+      ],
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "outcome": "best",
+      "split": "fixture_harvest",
+      "tags": [
+        "fixture_harvest",
+        "hidden_info",
+        "hidden_coverage",
+        "preservation",
+        "lock_move",
+        "heuristic_arbitration"
+      ]
+    },
+    {
+      "acceptable_move_ids": [
+        "switch_scyther"
+      ],
+      "benchmark_id": "fixture_bugsy_ariados_vs_pidgey_status_clock_001",
+      "best_move_ids": [
+        "move_toxic"
+      ],
+      "catastrophe_trigger": "Ariados uses weak chip instead of Toxic.",
+      "catastrophic_move_ids": [
+        "move_poison_sting",
+        "move_giga_drain",
+        "move_leech_life"
+      ],
+      "chosen_label": "best",
+      "chosen_move_id": "move_toxic",
+      "dominant_policy": "Toxic dominates because it changes future turns while the public punish is survivable; pivoting dominates only after the clock exists or Toxic is unsafe.",
+      "information_that_changes_answer": [
+        "Pidgey is already poisoned or otherwise statused.",
+        "Gust or another revealed move now KOs Ariados before Toxic matters.",
+        "Scyther is no longer an important ace route.",
+        "Ariados direct damage reaches a decisive threshold.",
+        "The player has a confirmed status-blocking pivot."
+      ],
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "outcome": "best",
+      "split": "fixture_harvest",
+      "tags": [
+        "fixture_harvest",
+        "status_clock",
+        "weak_chip",
+        "ace_preservation",
+        "early_gym",
+        "heuristic_arbitration"
+      ]
+    },
+    {
+      "acceptable_move_ids": [
+        "move_rapid_spin",
+        "move_spikes"
+      ],
+      "benchmark_id": "external_gsc_forretress_vs_curselax_status_before_hazards_001",
+      "best_move_ids": [
+        "move_toxic"
+      ],
+      "catastrophe_trigger": "Forretress spends the turn on Explosion or a bad switch instead of starting the Toxic clock.",
+      "catastrophic_move_ids": [
+        "move_explosion",
+        "switch_gengar"
+      ],
+      "chosen_label": "best",
+      "chosen_move_id": "move_toxic",
+      "dominant_policy": "When a support Pokemon survives and the opposing setup anchor is unstatused, the route-stopping status move dominates generic hazard economy.",
+      "information_that_changes_answer": [
+        "Snorlax is already poisoned, paralyzed, asleep, or otherwise statused.",
+        "Forretress no longer survives the public hit long enough to land Toxic.",
+        "A phazing move is available and must be used immediately to stop a more dangerous boost state.",
+        "Rapid Spin is needed because own-side Spikes decide an immediate forced-entry route.",
+        "Explosion is proven to remove Snorlax and open a cleaner route than status."
+      ],
+      "mechanics_profile": "vanilla_gsc",
+      "outcome": "best",
+      "split": "fixture_harvest",
+      "tags": [
+        "external_gsc",
+        "status_clock",
+        "support_priority",
+        "setup_denial",
+        "hazards",
+        "replay_903666"
+      ]
+    },
+    {
+      "acceptable_move_ids": [
+        "switch_misdreavus"
+      ],
+      "benchmark_id": "fixture_morty_gengar_vs_kadabra_destiny_bond_001",
+      "best_move_ids": [
+        "move_shadow_ball"
+      ],
+      "catastrophe_trigger": "Gengar uses Destiny Bond while Shadow Ball already removes Kadabra.",
+      "catastrophic_move_ids": [
+        "move_destiny_bond",
+        "move_spikes"
+      ],
+      "chosen_label": "best",
+      "chosen_move_id": "move_shadow_ball",
+      "dominant_policy": "Direct removal dominates sacrifice and preservation while it cleanly removes the active threat; the trade line becomes correct only after direct removal stops converting.",
+      "information_that_changes_answer": [
+        "Kadabra is outside Shadow Ball removal range.",
+        "Gengar is slower than Kadabra.",
+        "Destiny Bond is blocked or cannot carry through the expected move order.",
+        "Misdreavus is the only remaining answer to a later threat and cannot be exposed.",
+        "The battle is vanilla GSC rather than this romhack benchmark, requiring separate damage evidence."
+      ],
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "outcome": "best",
+      "split": "fixture_harvest",
+      "tags": [
+        "sacrifice",
+        "route_trade",
+        "direct_removal",
+        "heuristic_arbitration"
+      ]
+    }
+  ],
+  "generated_at": "2026-05-14T03:34:49+00:00",
+  "mechanics_profile_counts": {
+    "romhack_gym_leader_lab": 32,
+    "vanilla_gsc": 12
+  },
+  "missing_initial_benchmarks": [],
+  "outcome_counts": {
+    "best": 44
+  },
+  "outcomes_by_split": {
+    "fixture_harvest": {
+      "best": 24
+    },
+    "holdout": {
+      "best": 15
+    },
+    "seed": {
+      "best": 5
+    }
+  },
+  "policy_evaluated": true,
+  "policy_passes": true,
+  "required_initial_benchmark_count": 5,
+  "split_counts": {
+    "fixture_harvest": 24,
+    "holdout": 15,
+    "seed": 5
+  },
+  "split_passes": {
+    "fixture_harvest": true,
+    "holdout": true,
+    "seed": true
+  },
+  "unknown_answer_ids": []
+}

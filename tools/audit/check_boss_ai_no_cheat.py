@@ -26,6 +26,14 @@ class ForbiddenPattern:
     reason: str
 
 
+@dataclass(frozen=True)
+class ApprovedDirectHelperException:
+    path: str
+    helper: str
+    top_label: str
+    reason: str
+
+
 # Curated forbidden symbols/routines for non-cheating Boss AI:
 # - no unrevealed player party reads
 # - no unrevealed player move/item reads
@@ -44,6 +52,21 @@ FORBIDDEN_PATTERNS = [
     ForbiddenPattern(re.compile(r"\bwMenuCursor[A-Za-z0-9_]*\b"), "menu input read"),
 ]
 
+DIRECT_EXACT_HELPER_RE = re.compile(
+    r"\b(?:call|farcall|jp|farjp)\s+"
+    r"(?P<helper>AIDamageCalc|AICompareSpeed|CheckPlayerMoveTypeMatchups)\b"
+)
+TOP_LABEL_RE = re.compile(r"^(?P<label>[A-Za-z_][A-Za-z0-9_]*):{1,2}$")
+
+APPROVED_DIRECT_HELPER_EXCEPTIONS = [
+    ApprovedDirectHelperException(
+        path="engine/battle/ai/boss_policy_move.asm",
+        helper="AICompareSpeed",
+        top_label="BossAI_SetupBoostHasFurtherValue",
+        reason="approved setup-speed headroom check",
+    ),
+]
+
 
 def strip_comment(line: str) -> str:
     if ";" in line:
@@ -51,16 +74,41 @@ def strip_comment(line: str) -> str:
     return line
 
 
+def top_label_for_line(raw: list[str], index: int) -> str:
+    for line in reversed(raw[: index + 1]):
+        match = TOP_LABEL_RE.match(strip_comment(line).strip())
+        if match:
+            return match.group("label")
+    return ""
+
+
+def is_approved_direct_helper_exception(path: Path, helper: str, top_label: str) -> bool:
+    rel = path.relative_to(ROOT).as_posix()
+    return any(
+        exception.path == rel
+        and exception.helper == helper
+        and exception.top_label == top_label
+        for exception in APPROVED_DIRECT_HELPER_EXCEPTIONS
+    )
+
+
 def scan_file(path: Path) -> list[tuple[int, str, str]]:
     issues: list[tuple[int, str, str]] = []
     raw = path.read_text(encoding="utf-8", errors="replace").splitlines()
-    for lineno, line in enumerate(raw, start=1):
+    for index, line in enumerate(raw):
+        lineno = index + 1
         code = strip_comment(line)
         if not code.strip():
             continue
         for fp in FORBIDDEN_PATTERNS:
             if fp.pattern.search(code):
                 issues.append((lineno, fp.pattern.pattern, fp.reason))
+        helper_match = DIRECT_EXACT_HELPER_RE.search(code)
+        if helper_match:
+            helper = helper_match.group("helper")
+            top_label = top_label_for_line(raw, index)
+            if not is_approved_direct_helper_exception(path, helper, top_label):
+                issues.append((lineno, helper, "unapproved exact battle helper call"))
     return issues
 
 
@@ -89,6 +137,12 @@ def main() -> int:
     print("Scanned files:")
     for path in SCAN_FILES:
         print(f"  - {path.relative_to(ROOT)}")
+    print("Approved exact-helper exceptions:")
+    for exception in APPROVED_DIRECT_HELPER_EXCEPTIONS:
+        print(
+            f"  - {exception.path}:{exception.top_label} "
+            f"may call {exception.helper} ({exception.reason})"
+        )
     return 0
 
 

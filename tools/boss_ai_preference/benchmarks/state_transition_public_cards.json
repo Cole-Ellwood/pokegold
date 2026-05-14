@@ -1,0 +1,4734 @@
+{
+  "schema_version": 1,
+  "cards": [
+    {
+      "id": "vanilla_gsc_sleep_setup_disruption_001",
+      "version": 1,
+      "split": "seed",
+      "mechanics_profile": "vanilla_gsc",
+      "source_refs": [
+        "docs/boss_ai_teaching_heuristics.md",
+        ".local/tmp/pokemon_singles_sim/long_gsc_drill.js"
+      ],
+      "tags": [
+        "sleep",
+        "setup",
+        "disruption",
+        "heuristic_arbitration"
+      ],
+      "position_snapshot": {
+        "summary": "Victreebel tried Sleep Powder into Snorlax last turn and missed. Snorlax stayed in and used Body Slam. Victreebel still moves first, Sleep Clause is free, and Snorlax is unstatused.",
+        "boss_active": {
+          "species": "Victreebel",
+          "hp": "45%",
+          "status": "none",
+          "known_moves": [
+            "Sleep Powder",
+            "Swords Dance",
+            "Sludge Bomb",
+            "Giga Drain"
+          ]
+        },
+        "opponent_active": {
+          "species": "Snorlax",
+          "hp": "84%",
+          "status": "none",
+          "revealed_moves": [
+            "Body Slam",
+            "Rest"
+          ],
+          "likely_moves": [
+            "Curse",
+            "Earthquake"
+          ]
+        },
+        "field": {
+          "spikes": "none",
+          "sleep_clause": "free"
+        }
+      },
+      "candidate_moves_public": [
+        {
+          "id": "move_sleep_powder",
+          "kind": "move"
+        },
+        {
+          "id": "move_sludge_bomb",
+          "kind": "move"
+        },
+        {
+          "id": "move_swords_dance",
+          "kind": "move"
+        }
+      ],
+      "required_answer_fields": [
+        "chosen_move_id",
+        "candidate_ranking",
+        "current_win_conditions",
+        "irreplaceable_pieces",
+        "catastrophe_branches",
+        "answer_changing_information",
+        "rules_fired"
+      ],
+      "hidden_info_visible_to_policy": {},
+      "public_opponent_model": {
+        "immediate_punish": "Body Slam KOs or leaves Victreebel unable to set up if it spends the turn on Swords Dance.",
+        "role_aware_preservation": "Snorlax can Rest if it takes only chip and is not put to sleep.",
+        "incentive_compatible_response": "Staying in and attacking is credible because Victreebel is already in range.",
+        "hidden_info_belief_state": "Earthquake or Curse changes whether Giga Drain or chip plans can ever matter, but neither justifies raw setup after a miss."
+      }
+    },
+    {
+      "id": "romhack_spikes_third_layer_janine_001",
+      "version": 1,
+      "split": "seed",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_refs": [
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json:janine_qwilfish_finish_third_spikes_layer",
+        "docs/mechanics_changes_from_base.md",
+        "engine/battle/move_effects/spikes.asm",
+        "engine/battle/core.asm"
+      ],
+      "tags": [
+        "spikes",
+        "romhack_delta",
+        "hazards",
+        "heuristic_arbitration"
+      ],
+      "position_snapshot": {
+        "summary": "Janine Qwilfish faces Snorlax with two Spikes layers already on the player's side. The seen player team is grounded and no Rapid Spin user is public.",
+        "boss_active": {
+          "species": "Qwilfish",
+          "hp": "82%",
+          "status": "none",
+          "known_moves": [
+            "Spikes",
+            "Sludge Bomb",
+            "Surf",
+            "Explosion"
+          ]
+        },
+        "opponent_active": {
+          "species": "Snorlax",
+          "hp": "76%",
+          "status": "none",
+          "revealed_moves": [
+            "Body Slam",
+            "Rest"
+          ]
+        },
+        "field": {
+          "player_side_spikes_layers": 2,
+          "boss_side_spikes_layers": 0,
+          "player_rapid_spin_seen": false,
+          "player_grounded_seen": 6,
+          "player_flying_seen": 0
+        }
+      },
+      "candidate_moves_public": [
+        {
+          "id": "move_spikes",
+          "kind": "move"
+        },
+        {
+          "id": "move_explosion",
+          "kind": "move"
+        },
+        {
+          "id": "switch_tentacruel",
+          "kind": "switch"
+        }
+      ],
+      "required_answer_fields": [
+        "chosen_move_id",
+        "candidate_ranking",
+        "current_win_conditions",
+        "irreplaceable_pieces",
+        "catastrophe_branches",
+        "answer_changing_information",
+        "rules_fired"
+      ],
+      "hidden_info_visible_to_policy": {},
+      "public_opponent_model": {
+        "immediate_punish": "Snorlax Body Slam chips but does not publicly stop Qwilfish from placing the layer.",
+        "role_aware_preservation": "The opponent wants to keep Snorlax out of Explosion range while avoiding future quarter-HP entries.",
+        "incentive_compatible_response": "Switching is less attractive once the third layer goes up, which is exactly why the layer matters now.",
+        "hidden_info_belief_state": "An unrevealed Rapid Spin user or mostly Flying bench would lower the value of finishing the stack."
+      }
+    },
+    {
+      "id": "romhack_spikes_fourth_click_janine_001",
+      "version": 1,
+      "split": "seed",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_refs": [
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json:janine_qwilfish_spikes_already_maxed",
+        "docs/mechanics_changes_from_base.md",
+        "engine/battle/move_effects/spikes.asm"
+      ],
+      "tags": [
+        "spikes",
+        "romhack_delta",
+        "failed_move",
+        "heuristic_arbitration"
+      ],
+      "position_snapshot": {
+        "summary": "Janine Qwilfish is active after three Spikes layers have already been placed on the player's side.",
+        "boss_active": {
+          "species": "Qwilfish",
+          "hp": "74%",
+          "status": "none",
+          "known_moves": [
+            "Spikes",
+            "Sludge Bomb",
+            "Surf",
+            "Explosion"
+          ]
+        },
+        "opponent_active": {
+          "species": "Snorlax",
+          "hp": "58%",
+          "status": "none",
+          "revealed_moves": [
+            "Body Slam",
+            "Rest"
+          ]
+        },
+        "field": {
+          "player_side_spikes_layers": 3,
+          "boss_side_spikes_layers": 0
+        }
+      },
+      "candidate_moves_public": [
+        {
+          "id": "move_sludge_bomb",
+          "kind": "move"
+        },
+        {
+          "id": "move_explosion",
+          "kind": "move"
+        },
+        {
+          "id": "move_spikes",
+          "kind": "move"
+        }
+      ],
+      "required_answer_fields": [
+        "chosen_move_id",
+        "candidate_ranking",
+        "current_win_conditions",
+        "irreplaceable_pieces",
+        "catastrophe_branches",
+        "answer_changing_information",
+        "rules_fired"
+      ],
+      "hidden_info_visible_to_policy": {},
+      "public_opponent_model": {
+        "immediate_punish": "If Qwilfish clicks failed Spikes, Snorlax gets a free Body Slam or Rest turn.",
+        "role_aware_preservation": "The opponent wants to preserve anything that can remove or ignore hazards.",
+        "incentive_compatible_response": "The opponent is incentivized to stay in and punish a wasted fourth click.",
+        "hidden_info_belief_state": "Unrevealed Rapid Spin affects how urgently Qwilfish must damage or trade after the stack is complete."
+      }
+    },
+    {
+      "id": "romhack_explosion_route_trade_brock_001",
+      "version": 1,
+      "split": "seed",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_refs": [
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json:brock_golem_vs_vaporeon_explosion_question",
+        "docs/boss_ai_teaching_heuristics.md",
+        "data/types/type_matchups.asm",
+        "docs/agent_navigation/hack_mechanics_reference.md"
+      ],
+      "tags": [
+        "explosion",
+        "sacrifice",
+        "route_trade",
+        "heuristic_arbitration"
+      ],
+      "position_snapshot": {
+        "summary": "Brock Golem is below half HP into a faster Vaporeon that threatens Water damage. Golem is unlikely to survive as a useful long-game piece, but Explosion can create a clean next position.",
+        "boss_active": {
+          "species": "Golem",
+          "hp": "44%",
+          "status": "none",
+          "known_moves": [
+            "Explosion",
+            "Earthquake",
+            "Rock Slide",
+            "Curse"
+          ]
+        },
+        "opponent_active": {
+          "species": "Vaporeon",
+          "hp": "100%",
+          "status": "none",
+          "revealed_moves": [
+            "Surf"
+          ]
+        },
+        "boss_bench": [
+          "Omastar",
+          "Kabutops",
+          "Aerodactyl"
+        ]
+      },
+      "candidate_moves_public": [
+        {
+          "id": "move_explosion",
+          "kind": "move"
+        },
+        {
+          "id": "switch_omastar",
+          "kind": "switch"
+        },
+        {
+          "id": "move_curse",
+          "kind": "move"
+        }
+      ],
+      "required_answer_fields": [
+        "chosen_move_id",
+        "candidate_ranking",
+        "current_win_conditions",
+        "irreplaceable_pieces",
+        "catastrophe_branches",
+        "answer_changing_information",
+        "rules_fired"
+      ],
+      "hidden_info_visible_to_policy": {},
+      "public_opponent_model": {
+        "immediate_punish": "Surf threatens to remove Golem before slow setup or chip matters.",
+        "role_aware_preservation": "The opponent wants to keep Vaporeon out of Explosion range if a switch is obvious.",
+        "incentive_compatible_response": "Attacking is credible because Golem is weak to Water and low enough that preservation is hard.",
+        "hidden_info_belief_state": "If Vaporeon has Protect or the player strongly expects Explosion, the trade line becomes less reliable."
+      }
+    },
+    {
+      "id": "romhack_defensive_answer_preservation_pryce_001",
+      "version": 1,
+      "split": "seed",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_refs": [
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json:pryce_slowking_vs_ampharos_ground_pivot",
+        "docs/boss_ai_teaching_heuristics.md",
+        "data/types/type_matchups.asm",
+        "docs/agent_navigation/gen2_vs_modern_mechanics.md",
+        "docs/agent_navigation/hack_mechanics_reference.md",
+        "engine/battle/type_passive_damage_mods.asm"
+      ],
+      "tags": [
+        "defensive_answer",
+        "preservation",
+        "hidden_info",
+        "heuristic_arbitration"
+      ],
+      "position_snapshot": {
+        "summary": "Pryce Slowking faces Ampharos. Piloswine is revealed on the boss bench. Dragon's Majesty means Ground is not a full immunity to this Dragon/Electric route, but Piloswine still resists and threatens Earthquake.",
+        "boss_active": {
+          "species": "Slowking",
+          "hp": "68%",
+          "status": "none",
+          "known_moves": [
+            "Thunder Wave",
+            "Surf",
+            "Rest"
+          ]
+        },
+        "boss_bench": [
+          "Piloswine",
+          "Cloyster",
+          "Slowking"
+        ],
+        "opponent_active": {
+          "species": "Ampharos",
+          "hp": "80%",
+          "status": "none",
+          "revealed_moves": [
+            "ThunderPunch"
+          ],
+          "likely_moves": [
+            "Dragon coverage",
+            "Thunder Wave"
+          ]
+        }
+      },
+      "candidate_moves_public": [
+        {
+          "id": "switch_piloswine",
+          "kind": "switch"
+        },
+        {
+          "id": "move_thunder_wave",
+          "kind": "move"
+        },
+        {
+          "id": "move_rest",
+          "kind": "move"
+        }
+      ],
+      "required_answer_fields": [
+        "chosen_move_id",
+        "candidate_ranking",
+        "current_win_conditions",
+        "irreplaceable_pieces",
+        "catastrophe_branches",
+        "answer_changing_information",
+        "rules_fired"
+      ],
+      "hidden_info_visible_to_policy": {},
+      "public_opponent_model": {
+        "immediate_punish": "ThunderPunch pressures Slowking immediately and can make Rest or weak Surf too slow.",
+        "role_aware_preservation": "The opponent wants to keep Ampharos from eating Earthquake while continuing to pressure Slowking.",
+        "incentive_compatible_response": "If Slowking stays, Ampharos has incentive to keep attacking or paralyze; if Piloswine enters, the opponent may pivot.",
+        "hidden_info_belief_state": "Dragon's Majesty prevents assuming a full Ground immunity, so the answer is resistance plus threat, not a slogan."
+      }
+    },
+    {
+      "id": "vanilla_gsc_sleep_clause_blocked_holdout_001",
+      "version": 1,
+      "split": "holdout",
+      "mechanics_profile": "vanilla_gsc",
+      "source_refs": [
+        "docs/boss_ai_teaching_heuristics.md",
+        ".local/tmp/pokemon_singles_sim/long_gsc_drill.js"
+      ],
+      "tags": [
+        "sleep",
+        "setup",
+        "disruption",
+        "heuristic_arbitration",
+        "holdout"
+      ],
+      "position_snapshot": {
+        "summary": "Victreebel wants the familiar sleep/setup route into Snorlax, but Sleep Clause is already occupied by a sleeping opposing Zapdos on the bench. Snorlax is unstatused and still threatens Body Slam.",
+        "boss_active": {
+          "species": "Victreebel",
+          "hp": "45%",
+          "status": "none",
+          "known_moves": [
+            "Sleep Powder",
+            "Swords Dance",
+            "Sludge Bomb",
+            "Giga Drain"
+          ]
+        },
+        "opponent_active": {
+          "species": "Snorlax",
+          "hp": "52%",
+          "status": "none",
+          "revealed_moves": [
+            "Body Slam",
+            "Rest"
+          ],
+          "likely_moves": [
+            "Curse",
+            "Earthquake"
+          ]
+        },
+        "field": {
+          "spikes": "none",
+          "sleep_clause": "occupied",
+          "sleep_clause_target": "Zapdos"
+        }
+      },
+      "candidate_moves_public": [
+        {
+          "id": "move_sludge_bomb",
+          "kind": "move"
+        },
+        {
+          "id": "move_swords_dance",
+          "kind": "move"
+        },
+        {
+          "id": "move_sleep_powder",
+          "kind": "move"
+        }
+      ],
+      "required_answer_fields": [
+        "chosen_move_id",
+        "candidate_ranking",
+        "current_win_conditions",
+        "irreplaceable_pieces",
+        "catastrophe_branches",
+        "answer_changing_information",
+        "rules_fired"
+      ],
+      "hidden_info_visible_to_policy": {},
+      "public_opponent_model": {
+        "immediate_punish": "Body Slam KOs or leaves Victreebel unable to set up if it spends the turn on Swords Dance.",
+        "role_aware_preservation": "Snorlax can Rest if it takes only chip and is not put to sleep.",
+        "incentive_compatible_response": "Staying in and attacking is credible because Victreebel is already in range.",
+        "hidden_info_belief_state": "Earthquake or Curse changes whether Giga Drain or chip plans can ever matter, but neither justifies raw setup after a miss."
+      }
+    },
+    {
+      "id": "romhack_spikes_public_spinner_holdout_001",
+      "version": 1,
+      "split": "holdout",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_refs": [
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json:janine_qwilfish_finish_third_spikes_layer",
+        "docs/mechanics_changes_from_base.md",
+        "engine/battle/move_effects/spikes.asm",
+        "engine/battle/core.asm"
+      ],
+      "tags": [
+        "spikes",
+        "romhack_delta",
+        "hazards",
+        "heuristic_arbitration",
+        "holdout",
+        "explosion"
+      ],
+      "position_snapshot": {
+        "summary": "Janine Qwilfish has two Spikes layers up, but the player has revealed Starmie with Rapid Spin and Starmie is the active target at mid HP.",
+        "boss_active": {
+          "species": "Qwilfish",
+          "hp": "82%",
+          "status": "none",
+          "known_moves": [
+            "Spikes",
+            "Sludge Bomb",
+            "Surf",
+            "Explosion"
+          ]
+        },
+        "opponent_active": {
+          "species": "Starmie",
+          "hp": "55%",
+          "status": "none",
+          "revealed_moves": [
+            "Rapid Spin",
+            "Recover",
+            "Surf"
+          ]
+        },
+        "field": {
+          "player_side_spikes_layers": 2,
+          "boss_side_spikes_layers": 0,
+          "player_rapid_spin_seen": true,
+          "player_grounded_seen": 5,
+          "player_flying_seen": 1
+        }
+      },
+      "candidate_moves_public": [
+        {
+          "id": "move_explosion",
+          "kind": "move"
+        },
+        {
+          "id": "move_sludge_bomb",
+          "kind": "move"
+        },
+        {
+          "id": "move_spikes",
+          "kind": "move"
+        }
+      ],
+      "required_answer_fields": [
+        "chosen_move_id",
+        "candidate_ranking",
+        "current_win_conditions",
+        "irreplaceable_pieces",
+        "catastrophe_branches",
+        "answer_changing_information",
+        "rules_fired"
+      ],
+      "hidden_info_visible_to_policy": {},
+      "public_opponent_model": {
+        "immediate_punish": "Rapid Spin can remove the layers if Qwilfish spends the turn on another layer or weak chip.",
+        "role_aware_preservation": "The opponent wants to keep Starmie alive because it is the hazard-control route.",
+        "incentive_compatible_response": "Spinning or Recovering is credible because the boss has already invested in hazards.",
+        "hidden_info_belief_state": "If another spinner exists, Explosion into Starmie is less final; if Starmie lacks Recover PP, chip improves."
+      }
+    },
+    {
+      "id": "romhack_spikes_maxed_explosion_conversion_holdout_001",
+      "version": 1,
+      "split": "holdout",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_refs": [
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json:janine_qwilfish_spikes_already_maxed",
+        "docs/mechanics_changes_from_base.md",
+        "engine/battle/move_effects/spikes.asm"
+      ],
+      "tags": [
+        "spikes",
+        "romhack_delta",
+        "failed_move",
+        "heuristic_arbitration",
+        "holdout",
+        "explosion",
+        "route_trade"
+      ],
+      "position_snapshot": {
+        "summary": "Three Spikes layers are already up. Qwilfish is below half HP into Snorlax, and Explosion removes the Rest-cycle anchor that otherwise absorbs the completed stack.",
+        "boss_active": {
+          "species": "Qwilfish",
+          "hp": "42%",
+          "status": "none",
+          "known_moves": [
+            "Spikes",
+            "Sludge Bomb",
+            "Surf",
+            "Explosion"
+          ]
+        },
+        "opponent_active": {
+          "species": "Snorlax",
+          "hp": "62%",
+          "status": "none",
+          "revealed_moves": [
+            "Body Slam",
+            "Rest"
+          ]
+        },
+        "field": {
+          "player_side_spikes_layers": 3,
+          "boss_side_spikes_layers": 0
+        }
+      },
+      "candidate_moves_public": [
+        {
+          "id": "move_explosion",
+          "kind": "move"
+        },
+        {
+          "id": "move_sludge_bomb",
+          "kind": "move"
+        },
+        {
+          "id": "move_spikes",
+          "kind": "move"
+        }
+      ],
+      "required_answer_fields": [
+        "chosen_move_id",
+        "candidate_ranking",
+        "current_win_conditions",
+        "irreplaceable_pieces",
+        "catastrophe_branches",
+        "answer_changing_information",
+        "rules_fired"
+      ],
+      "hidden_info_visible_to_policy": {},
+      "public_opponent_model": {
+        "immediate_punish": "If Qwilfish clicks failed Spikes, Snorlax gets a free Body Slam or Rest turn.",
+        "role_aware_preservation": "The opponent wants to preserve anything that can remove or ignore hazards.",
+        "incentive_compatible_response": "The opponent is incentivized to stay in and punish a wasted fourth click.",
+        "hidden_info_belief_state": "Unrevealed Rapid Spin affects how urgently Qwilfish must damage or trade after the stack is complete."
+      }
+    },
+    {
+      "id": "romhack_explosion_blocked_by_protect_holdout_001",
+      "version": 1,
+      "split": "holdout",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_refs": [
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json:brock_golem_vs_vaporeon_explosion_question",
+        "docs/boss_ai_teaching_heuristics.md"
+      ],
+      "tags": [
+        "explosion",
+        "sacrifice",
+        "route_trade",
+        "heuristic_arbitration",
+        "holdout",
+        "hidden_info"
+      ],
+      "position_snapshot": {
+        "summary": "Brock Golem is low into Vaporeon, but Vaporeon has revealed Protect. Explosion is now a known blocked branch unless the boss first makes Protect costly.",
+        "boss_active": {
+          "species": "Golem",
+          "hp": "44%",
+          "status": "none",
+          "known_moves": [
+            "Explosion",
+            "Earthquake",
+            "Rock Slide",
+            "Curse"
+          ]
+        },
+        "opponent_active": {
+          "species": "Vaporeon",
+          "hp": "100%",
+          "status": "none",
+          "revealed_moves": [
+            "Surf",
+            "Protect"
+          ]
+        },
+        "boss_bench": [
+          "Omastar",
+          "Kabutops",
+          "Aerodactyl"
+        ]
+      },
+      "candidate_moves_public": [
+        {
+          "id": "switch_omastar",
+          "kind": "switch"
+        },
+        {
+          "id": "move_earthquake",
+          "kind": "move"
+        },
+        {
+          "id": "move_explosion",
+          "kind": "move"
+        }
+      ],
+      "required_answer_fields": [
+        "chosen_move_id",
+        "candidate_ranking",
+        "current_win_conditions",
+        "irreplaceable_pieces",
+        "catastrophe_branches",
+        "answer_changing_information",
+        "rules_fired"
+      ],
+      "hidden_info_visible_to_policy": {},
+      "public_opponent_model": {
+        "immediate_punish": "Protect can blank Explosion; Surf threatens Golem if it stays.",
+        "role_aware_preservation": "The opponent wants to preserve Vaporeon by scouting or blocking the sacrifice.",
+        "incentive_compatible_response": "Protect is incentive-compatible because Explosion is obvious from low HP Golem.",
+        "hidden_info_belief_state": "If Protect PP is gone or Vaporeon cannot afford to Protect, Explosion may become live again."
+      }
+    },
+    {
+      "id": "romhack_defensive_answer_unavailable_holdout_001",
+      "version": 1,
+      "split": "holdout",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_refs": [
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json:pryce_slowking_vs_ampharos_ground_pivot",
+        "docs/boss_ai_teaching_heuristics.md",
+        "data/types/type_matchups.asm",
+        "docs/agent_navigation/gen2_vs_modern_mechanics.md",
+        "docs/agent_navigation/hack_mechanics_reference.md",
+        "engine/battle/type_passive_damage_mods.asm"
+      ],
+      "tags": [
+        "defensive_answer",
+        "preservation",
+        "hidden_info",
+        "heuristic_arbitration",
+        "holdout"
+      ],
+      "position_snapshot": {
+        "summary": "Pryce Slowking faces Ampharos, but Piloswine has already fainted and is not on the public bench. The usual preservation pivot is unavailable.",
+        "boss_active": {
+          "species": "Slowking",
+          "hp": "68%",
+          "status": "none",
+          "known_moves": [
+            "Thunder Wave",
+            "Surf",
+            "Rest"
+          ]
+        },
+        "boss_bench": [
+          "Cloyster",
+          "Slowking"
+        ],
+        "opponent_active": {
+          "species": "Ampharos",
+          "hp": "80%",
+          "status": "none",
+          "revealed_moves": [
+            "ThunderPunch"
+          ],
+          "likely_moves": [
+            "Dragon coverage",
+            "Thunder Wave"
+          ]
+        }
+      },
+      "candidate_moves_public": [
+        {
+          "id": "move_thunder_wave",
+          "kind": "move"
+        },
+        {
+          "id": "move_surf",
+          "kind": "move"
+        },
+        {
+          "id": "switch_piloswine",
+          "kind": "switch"
+        }
+      ],
+      "required_answer_fields": [
+        "chosen_move_id",
+        "candidate_ranking",
+        "current_win_conditions",
+        "irreplaceable_pieces",
+        "catastrophe_branches",
+        "answer_changing_information",
+        "rules_fired"
+      ],
+      "hidden_info_visible_to_policy": {},
+      "public_opponent_model": {
+        "immediate_punish": "ThunderPunch pressures Slowking immediately and can make Rest or weak Surf too slow.",
+        "role_aware_preservation": "The opponent wants to keep Ampharos from eating Earthquake while continuing to pressure Slowking.",
+        "incentive_compatible_response": "If Slowking stays, Ampharos has incentive to keep attacking or paralyze; if Piloswine enters, the opponent may pivot.",
+        "hidden_info_belief_state": "Dragon's Majesty prevents assuming a full Ground immunity, so the answer is resistance plus threat, not a slogan."
+      }
+    },
+    {
+      "id": "fixture_chuck_poliwrath_vs_pidgeotto_ice_punch_001",
+      "version": 1,
+      "split": "fixture_harvest",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_refs": [
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json:chuck_poliwrath_vs_pidgeotto_ice_punch",
+        "tools/boss_ai_preference/labels/boss_ai_pairwise_preferences.jsonl",
+        "audit/boss_ai_preference/fixture_benchmark_harvest.md"
+      ],
+      "tags": [
+        "coverage",
+        "prediction",
+        "status",
+        "defensive_answer",
+        "preservation",
+        "hidden_info",
+        "heuristic_arbitration",
+        "fixture_harvest"
+      ],
+      "position_snapshot": {
+        "summary": "Chuck Poliwrath faces a revealed Pidgeotto at 58%. Ice Punch is visible coverage, but Sudowoodo is available and preserves Poliwrath from public Flying pressure. Focus Punch is exposed to any attacking line.",
+        "boss_active": {
+          "species": "Poliwrath",
+          "hp": "76%",
+          "status": "none",
+          "item": "Mystic Water",
+          "known_moves": [
+            "Surf",
+            "Hypnosis",
+            "Ice Punch",
+            "Focus Punch"
+          ],
+          "role": "bulky closer"
+        },
+        "boss_bench": [
+          "Sudowoodo",
+          "Hitmontop",
+          "Hitmonlee",
+          "Umbreon"
+        ],
+        "opponent_active": {
+          "species": "Pidgeotto",
+          "hp": "58%",
+          "status": "none",
+          "revealed_moves": [
+            "Wing Attack",
+            "Quick Attack"
+          ],
+          "public_priors": [
+            "Flying pressure is already revealed"
+          ]
+        },
+        "opponent_seen_party": [
+          "Pidgeotto",
+          "Kadabra"
+        ],
+        "field": {
+          "weather": "none",
+          "screens": "none"
+        }
+      },
+      "candidate_moves_public": [
+        {
+          "id": "switch_sudowoodo",
+          "kind": "switch"
+        },
+        {
+          "id": "move_ice_punch",
+          "kind": "move"
+        },
+        {
+          "id": "move_focus_punch",
+          "kind": "move"
+        }
+      ],
+      "required_answer_fields": [
+        "chosen_move_id",
+        "candidate_ranking",
+        "current_win_conditions",
+        "irreplaceable_pieces",
+        "catastrophe_branches",
+        "answer_changing_information",
+        "rules_fired"
+      ],
+      "hidden_info_visible_to_policy": {},
+      "public_opponent_model": {
+        "immediate_punish": "Wing Attack or Quick Attack breaks Focus Punch and pushes Poliwrath closer to Kadabra range.",
+        "role_aware_preservation": "The opponent wants to keep Pidgeotto useful as the public Flying-pressure piece unless Ice Punch becomes unavoidable.",
+        "incentive_compatible_response": "Attacking is credible because Pidgeotto has already revealed the exact move class that punishes Poliwrath staying in.",
+        "hidden_info_belief_state": "Unrevealed Kadabra coverage and Pidgeotto damage rolls make Poliwrath HP preservation more important than one coverage click."
+      }
+    },
+    {
+      "id": "fixture_janine_qwilfish_third_spikes_layer_001",
+      "version": 1,
+      "split": "fixture_harvest",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_refs": [
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json:janine_qwilfish_finish_third_spikes_layer",
+        "tools/boss_ai_preference/labels/boss_ai_pairwise_preferences.jsonl",
+        "audit/boss_ai_preference/fixture_benchmark_harvest.md",
+        "data/types/type_matchups.asm",
+        "docs/agent_navigation/hack_mechanics_reference.md",
+        "engine/battle/move_effects/spikes.asm"
+      ],
+      "tags": [
+        "kanto_leader",
+        "hazards",
+        "romhack_delta",
+        "spikes_layers",
+        "heuristic_arbitration",
+        "fixture_harvest"
+      ],
+      "position_snapshot": {
+        "summary": "Janine Qwilfish faces Snorlax with two local Spikes layers already down on the player side. The player team is fully grounded in public information and no Rapid Spin user has been revealed.",
+        "boss_active": {
+          "species": "Qwilfish",
+          "hp": "82%",
+          "status": "none",
+          "item": "Leftovers",
+          "known_moves": [
+            "Spikes",
+            "Sludge Bomb",
+            "Surf",
+            "Explosion"
+          ],
+          "role": "fast hazard trade piece"
+        },
+        "boss_bench": [
+          "Tentacruel",
+          "Muk",
+          "Nidoking",
+          "Weezing",
+          "Venomoth"
+        ],
+        "opponent_active": {
+          "species": "Snorlax",
+          "hp": "76%",
+          "status": "none",
+          "revealed_moves": [
+            "Body Slam",
+            "Rest"
+          ],
+          "public_priors": [
+            "No immediate KO route shown"
+          ]
+        },
+        "opponent_seen_party": [
+          "Snorlax",
+          "Meganium",
+          "Ampharos",
+          "Nidoking",
+          "Heracross",
+          "Blissey"
+        ],
+        "field": {
+          "weather": "none",
+          "screens": "none",
+          "boss_side_spikes_layers": 0,
+          "player_side_spikes_layers": 2,
+          "player_grounded_seen": 6,
+          "player_flying_seen": 0,
+          "player_rapid_spin_seen": false
+        }
+      },
+      "candidate_moves_public": [
+        {
+          "id": "move_spikes",
+          "kind": "move"
+        },
+        {
+          "id": "move_explosion",
+          "kind": "move"
+        },
+        {
+          "id": "move_sludge_bomb",
+          "kind": "move"
+        },
+        {
+          "id": "move_surf",
+          "kind": "move"
+        },
+        {
+          "id": "switch_tentacruel",
+          "kind": "switch"
+        }
+      ],
+      "required_answer_fields": [
+        "chosen_move_id",
+        "candidate_ranking",
+        "current_win_conditions",
+        "irreplaceable_pieces",
+        "catastrophe_branches",
+        "answer_changing_information",
+        "rules_fired"
+      ],
+      "hidden_info_visible_to_policy": {},
+      "public_opponent_model": {
+        "immediate_punish": "Snorlax can Body Slam, but no public line immediately prevents Qwilfish from placing the third layer.",
+        "role_aware_preservation": "The opponent wants to preserve Snorlax and any hidden hazard control because quarter-HP entries reshape every later switch.",
+        "incentive_compatible_response": "Staying in is credible because switching before the third layer only makes the hazard tax worse afterward.",
+        "hidden_info_belief_state": "The no-spinner assumption is public-state limited; a hidden spinner would lower but not erase the value of forcing the reveal."
+      }
+    },
+    {
+      "id": "fixture_mechanics_snorlax_full_hp_rest_status_fail_001",
+      "version": 1,
+      "split": "fixture_harvest",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_refs": [
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json:mechanics_snorlax_full_hp_rest_status_fail",
+        "tools/boss_ai_preference/labels/boss_ai_pairwise_preferences.jsonl",
+        "audit/boss_ai_preference/fixture_benchmark_harvest.md",
+        "engine/battle/effect_commands.asm"
+      ],
+      "tags": [
+        "mechanics",
+        "rest_cycle",
+        "status_cure",
+        "local_engine",
+        "heuristic_arbitration",
+        "fixture_harvest"
+      ],
+      "position_snapshot": {
+        "summary": "Snorlax is paralyzed at full HP into Skarmory. In the local engine, full-HP Rest fails before curing status, and Sleep Talk also fails because Snorlax is awake.",
+        "boss_active": {
+          "species": "Snorlax",
+          "hp": "100%",
+          "status": "par",
+          "item": "Leftovers",
+          "known_moves": [
+            "Body Slam",
+            "Rest",
+            "Sleep Talk",
+            "Curse"
+          ],
+          "role": "RestTalk wall"
+        },
+        "boss_bench": [
+          "Raikou",
+          "Cloyster",
+          "Skarmory"
+        ],
+        "opponent_active": {
+          "species": "Skarmory",
+          "hp": "68%",
+          "status": "none",
+          "revealed_moves": [
+            "Whirlwind",
+            "Drill Peck"
+          ],
+          "likely_moves": [
+            "Toxic",
+            "Rest"
+          ]
+        },
+        "opponent_seen_party": [
+          "Skarmory",
+          "Raikou",
+          "Cloyster"
+        ],
+        "field": {
+          "weather": "none",
+          "screens": "none",
+          "boss_side_spikes": true,
+          "player_side_spikes": true
+        }
+      },
+      "candidate_moves_public": [
+        {
+          "id": "move_body_slam",
+          "kind": "move"
+        },
+        {
+          "id": "move_curse",
+          "kind": "move"
+        },
+        {
+          "id": "move_rest",
+          "kind": "move"
+        },
+        {
+          "id": "move_sleep_talk",
+          "kind": "move"
+        }
+      ],
+      "required_answer_fields": [
+        "chosen_move_id",
+        "candidate_ranking",
+        "current_win_conditions",
+        "irreplaceable_pieces",
+        "catastrophe_branches",
+        "answer_changing_information",
+        "rules_fired"
+      ],
+      "hidden_info_visible_to_policy": {},
+      "public_opponent_model": {
+        "immediate_punish": "Whirlwind can erase Curse and Drill Peck or Toxic pressure punishes any failed Rest or Sleep Talk turn.",
+        "role_aware_preservation": "The opponent wants to keep Skarmory available as the phazer until Snorlax is forced into a real Rest cycle.",
+        "incentive_compatible_response": "Phazing is credible if Snorlax boosts; attacking or status is credible if Snorlax wastes a state-gated move.",
+        "hidden_info_belief_state": "Unrevealed Toxic or Rest on Skarmory affects how much Body Slam pressure matters, but not the legality of full-HP Rest or awake Sleep Talk."
+      }
+    },
+    {
+      "id": "fixture_brock_golem_vs_vaporeon_explosion_question_001",
+      "version": 1,
+      "split": "fixture_harvest",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_refs": [
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json:brock_golem_vs_vaporeon_explosion_question",
+        "tools/boss_ai_preference/labels/boss_ai_pairwise_preferences.jsonl",
+        "audit/boss_ai_preference/fixture_benchmark_harvest.md",
+        "data/types/type_matchups.asm",
+        "docs/agent_navigation/hack_mechanics_reference.md"
+      ],
+      "tags": [
+        "sacrifice",
+        "explosion",
+        "route_trade",
+        "water_pressure",
+        "late_game",
+        "hidden_info",
+        "heuristic_arbitration",
+        "fixture_harvest"
+      ],
+      "position_snapshot": {
+        "summary": "Brock Golem is at 42% into Vaporeon, which has revealed Surf and outspeeds the stay-in branch. Explosion trades a low-future-value Golem for a clean route, while Omastar is the acceptable Water-resist preservation line.",
+        "boss_active": {
+          "species": "Golem",
+          "hp": "42%",
+          "status": "none",
+          "item": "Rocky Helmet",
+          "known_moves": [
+            "Earthquake",
+            "Rock Slide",
+            "Explosion",
+            "Curse"
+          ],
+          "role": "physical wall"
+        },
+        "boss_bench": [
+          "Omastar",
+          "Corsola",
+          "Kabutops",
+          "Onix",
+          "Aerodactyl"
+        ],
+        "opponent_active": {
+          "species": "Vaporeon",
+          "hp": "76%",
+          "status": "none",
+          "revealed_moves": [
+            "Surf",
+            "Bite"
+          ],
+          "likely_moves": [
+            "Ice Beam",
+            "Rest"
+          ]
+        },
+        "opponent_seen_party": [
+          "Vaporeon",
+          "Machamp"
+        ],
+        "field": {
+          "weather": "none",
+          "screens": "none"
+        }
+      },
+      "candidate_moves_public": [
+        {
+          "id": "move_explosion",
+          "kind": "move"
+        },
+        {
+          "id": "switch_omastar",
+          "kind": "switch"
+        },
+        {
+          "id": "move_earthquake",
+          "kind": "move"
+        }
+      ],
+      "required_answer_fields": [
+        "chosen_move_id",
+        "candidate_ranking",
+        "current_win_conditions",
+        "irreplaceable_pieces",
+        "catastrophe_branches",
+        "answer_changing_information",
+        "rules_fired"
+      ],
+      "hidden_info_visible_to_policy": {},
+      "public_opponent_model": {
+        "immediate_punish": "Surf threatens to KO or leave Golem without useful future value if it uses a normal attack or Curse.",
+        "role_aware_preservation": "The opponent wants Vaporeon alive because Surf pressures most of Brock's structure.",
+        "incentive_compatible_response": "Attacking is credible because Golem is slower, low, and visibly weak to Water pressure.",
+        "hidden_info_belief_state": "Rest or Protect would change the trade timing, while a forced opponent switch would increase Earthquake or Rock Slide value."
+      }
+    },
+    {
+      "id": "long_battle_sleep_disruption_after_miss_001",
+      "version": 1,
+      "split": "holdout",
+      "mechanics_profile": "vanilla_gsc",
+      "source_refs": [
+        "audit/boss_ai_preference/long_battle_review.md",
+        "docs/boss_ai_teaching_heuristics.md",
+        "https://www.smogon.com/gs/articles/gsc_guide_part1"
+      ],
+      "tags": [
+        "sleep",
+        "setup",
+        "disruption",
+        "long_battle",
+        "heuristic_arbitration"
+      ],
+      "position_snapshot": {
+        "summary": "Turn 9 of the constructed long battle: Victreebel used Sleep Powder last turn, missed, and took Body Slam. Sleep Clause is still free, Snorlax is awake and unstatused, and Victreebel remains a key breaker but is now in punish range.",
+        "boss_active": {
+          "species": "Victreebel",
+          "hp": "45%",
+          "status": "none",
+          "known_moves": [
+            "Sleep Powder",
+            "Swords Dance",
+            "Sludge Bomb",
+            "Giga Drain"
+          ],
+          "role": "sleep/setup breaker"
+        },
+        "boss_bench": [
+          "Skarmory",
+          "Raikou",
+          "Snorlax"
+        ],
+        "opponent_active": {
+          "species": "Snorlax",
+          "hp": "84%",
+          "status": "none",
+          "revealed_moves": [
+            "Body Slam",
+            "Rest"
+          ],
+          "likely_moves": [
+            "Curse",
+            "Earthquake"
+          ]
+        },
+        "field": {
+          "spikes": "opponent_side_one_layer",
+          "sleep_clause": "free"
+        }
+      },
+      "candidate_moves_public": [
+        {
+          "id": "move_sleep_powder",
+          "kind": "move"
+        },
+        {
+          "id": "switch_skarmory",
+          "kind": "switch"
+        },
+        {
+          "id": "move_sludge_bomb",
+          "kind": "move"
+        },
+        {
+          "id": "move_swords_dance",
+          "kind": "move"
+        }
+      ],
+      "required_answer_fields": [
+        "chosen_move_id",
+        "candidate_ranking",
+        "current_win_conditions",
+        "irreplaceable_pieces",
+        "catastrophe_branches",
+        "answer_changing_information",
+        "rules_fired"
+      ],
+      "hidden_info_visible_to_policy": {
+        "snorlax_fourth_move": "unknown"
+      },
+      "public_opponent_model": {
+        "immediate_punish": "Body Slam attack can remove Victreebel or leave it unable to convert if it spends the turn on Swords Dance.",
+        "role_aware_preservation": "The opponent wants Snorlax awake and healthy enough to absorb Sludge Bomb or Rest off chip.",
+        "incentive_compatible_response": "Staying in and attacking is credible because the prior miss exposed Victreebel to the same punish again.",
+        "hidden_info_belief_state": "Curse, Sleep Talk, or Earthquake changes the follow-up route, but none justifies raw setup after the miss."
+      }
+    },
+    {
+      "id": "long_battle_rest_tempo_unforced_001",
+      "version": 1,
+      "split": "holdout",
+      "mechanics_profile": "vanilla_gsc",
+      "source_refs": [
+        "audit/boss_ai_preference/long_battle_review.md",
+        "docs/boss_ai_teaching_heuristics.md",
+        "https://www.smogon.com/smog/issue28/gsc"
+      ],
+      "tags": [
+        "rest_cycle",
+        "tempo",
+        "long_battle",
+        "heuristic_arbitration"
+      ],
+      "position_snapshot": {
+        "summary": "Turn 21 of the constructed long battle: Snorlax is at 72% into Tyranitar and is not yet forced to Rest. Rest would donate two sleep turns before Snorlax has protected a required route.",
+        "boss_active": {
+          "species": "Snorlax",
+          "hp": "72%",
+          "status": "none",
+          "known_moves": [
+            "Body Slam",
+            "Curse",
+            "Rest",
+            "Sleep Talk"
+          ],
+          "role": "central RestTalk wall"
+        },
+        "boss_bench": [
+          "Skarmory",
+          "Raikou",
+          "Gengar"
+        ],
+        "opponent_active": {
+          "species": "Tyranitar",
+          "hp": "68%",
+          "status": "none",
+          "revealed_moves": [
+            "Rock Slide",
+            "Roar"
+          ],
+          "likely_moves": [
+            "Crunch",
+            "Rest"
+          ]
+        },
+        "field": {
+          "spikes": "opponent_side_one_layer",
+          "sleep_clause": "free"
+        }
+      },
+      "candidate_moves_public": [
+        {
+          "id": "move_body_slam",
+          "kind": "move"
+        },
+        {
+          "id": "switch_skarmory",
+          "kind": "switch"
+        },
+        {
+          "id": "move_curse",
+          "kind": "move"
+        },
+        {
+          "id": "move_rest",
+          "kind": "move"
+        }
+      ],
+      "required_answer_fields": [
+        "chosen_move_id",
+        "candidate_ranking",
+        "current_win_conditions",
+        "irreplaceable_pieces",
+        "catastrophe_branches",
+        "answer_changing_information",
+        "rules_fired"
+      ],
+      "hidden_info_visible_to_policy": {
+        "exact_pp": "unknown",
+        "tyranitar_damage_rolls": "unverified"
+      },
+      "public_opponent_model": {
+        "immediate_punish": "Tyranitar can attack or Roar while Rest gives up initiative before Snorlax is in forced recovery range.",
+        "role_aware_preservation": "The opponent wants to exploit Snorlax sleep turns rather than let Body Slam or paralysis pressure accumulate.",
+        "incentive_compatible_response": "Attacking or phazing is credible because Snorlax is not low enough to require immediate Rest.",
+        "hidden_info_belief_state": "Exact Rock Slide damage and remaining PP can change when Rest becomes forced, but the current public state does not prove that threshold."
+      }
+    },
+    {
+      "id": "romhack_spinblock_damage_context_001",
+      "version": 1,
+      "split": "holdout",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_refs": [
+        "audit/boss_ai_preference/long_battle_review.md",
+        "tools.damage_debugger.matchup STARMIE:55:player GENGAR:55:trainer PSYCHIC",
+        "tools.damage_debugger.matchup GENGAR:55:trainer STARMIE:55:player THUNDERBOLT",
+        "data/pokemon/base_stats/gengar.asm",
+        "data/pokemon/base_stats/starmie.asm",
+        "data/moves/moves.asm",
+        "data/types/type_matchups.asm"
+      ],
+      "tags": [
+        "spinblock",
+        "damage_context",
+        "hazards",
+        "romhack_delta",
+        "heuristic_arbitration"
+      ],
+      "position_snapshot": {
+        "summary": "Romhack threshold version of the long-battle spinblock gap: Gengar is blocking Starmie's Rapid Spin, Starmie is faster and has Psychic revealed, and exact local damage says Gengar survives Psychic while Thunderbolt removes Starmie.",
+        "boss_active": {
+          "species": "Gengar",
+          "level": 55,
+          "hp": "48%",
+          "current_hp": 67,
+          "max_hp": 139,
+          "status": "none",
+          "known_moves": [
+            "Thunderbolt",
+            "Shadow Ball",
+            "Destiny Bond",
+            "Hypnosis"
+          ],
+          "role": "spinblocker"
+        },
+        "boss_bench": [
+          "Raikou",
+          "Snorlax",
+          "Skarmory"
+        ],
+        "opponent_active": {
+          "species": "Starmie",
+          "level": 55,
+          "hp": "43%",
+          "current_hp": 83,
+          "max_hp": 194,
+          "status": "none",
+          "revealed_moves": [
+            "Rapid Spin",
+            "Psychic"
+          ],
+          "likely_moves": [
+            "Surf",
+            "Recover"
+          ],
+          "role": "spinner",
+          "speed_relation": "opponent_faster"
+        },
+        "field": {
+          "player_side_spikes_layers": 1,
+          "boss_side_spikes_layers": 0,
+          "player_rapid_spin_seen": true,
+          "sleep_clause": "free"
+        },
+        "damage_bands": {
+          "opponent_psychic_vs_boss_active": {
+            "attacker": "Starmie",
+            "defender": "Gengar",
+            "move": "Psychic",
+            "damage_low": 53,
+            "damage_high": 63,
+            "defender_current_hp": 67,
+            "ko_at_current_hp": "never",
+            "mechanics_profile": "romhack_gym_leader_lab",
+            "evidence": "tools.damage_debugger.matchup STARMIE:55:player GENGAR:55:trainer PSYCHIC"
+          },
+          "boss_thunderbolt_vs_opponent_active": {
+            "attacker": "Gengar",
+            "defender": "Starmie",
+            "move": "Thunderbolt",
+            "damage_low": 85,
+            "damage_high": 101,
+            "defender_current_hp": 83,
+            "ko_at_current_hp": "guaranteed",
+            "mechanics_profile": "romhack_gym_leader_lab",
+            "evidence": "tools.damage_debugger.matchup GENGAR:55:trainer STARMIE:55:player THUNDERBOLT"
+          }
+        }
+      },
+      "candidate_moves_public": [
+        {
+          "id": "move_thunderbolt",
+          "kind": "move"
+        },
+        {
+          "id": "switch_raikou",
+          "kind": "switch"
+        },
+        {
+          "id": "switch_snorlax",
+          "kind": "switch"
+        },
+        {
+          "id": "move_destiny_bond",
+          "kind": "move"
+        }
+      ],
+      "required_answer_fields": [
+        "chosen_move_id",
+        "candidate_ranking",
+        "current_win_conditions",
+        "irreplaceable_pieces",
+        "catastrophe_branches",
+        "answer_changing_information",
+        "rules_fired"
+      ],
+      "hidden_info_visible_to_policy": {
+        "starmie_fourth_move": "unknown",
+        "crit_branch": "possible but not the baseline label"
+      },
+      "public_opponent_model": {
+        "immediate_punish": "Starmie is faster and can use Psychic before Gengar moves, but public local damage says Psychic does not KO this Gengar HP band.",
+        "role_aware_preservation": "The opponent wants Starmie to remove the active Spikes layer or preserve it as the spinner if Thunderbolt is not forced.",
+        "incentive_compatible_response": "Psychic is the immediate punish and Rapid Spin is the route reset; both are answered if Gengar survives and KOs with Thunderbolt.",
+        "hidden_info_belief_state": "A higher Psychic damage band, a lower Gengar HP band, or Protect-like romhack delta would make staying in worse."
+      }
+    },
+    {
+      "id": "vanilla_gsc_phazing_timing_mirror_001",
+      "version": 1,
+      "split": "holdout",
+      "mechanics_profile": "vanilla_gsc",
+      "source_refs": [
+        "https://www.smogon.com/gs/articles/move_priority",
+        "docs/boss_ai_teaching_heuristics.md",
+        "audit/boss_ai_preference/expert_play_research.md"
+      ],
+      "tags": [
+        "phazing",
+        "timing",
+        "mechanics",
+        "setup_control",
+        "heuristic_arbitration"
+      ],
+      "position_snapshot": {
+        "summary": "Vanilla GSC phazing mirror: Golem and Skarmory are both in a phazing loop. Golem is faster within the -1 priority phazing bracket, so if both sides click phazing, Golem's Roar acts before Skarmory's Whirlwind and fails under Gen 2 timing.",
+        "boss_active": {
+          "species": "Golem",
+          "hp": "64%",
+          "status": "none",
+          "known_moves": [
+            "Roar",
+            "Rock Slide",
+            "Earthquake",
+            "Explosion"
+          ],
+          "boosts": {
+            "atk": 1,
+            "def": 1,
+            "spe": -1
+          },
+          "speed_relation": "faster_than_opponent_within_negative_priority",
+          "role": "boosted physical route and phazer"
+        },
+        "boss_bench": [
+          "Snorlax",
+          "Suicune",
+          "Cloyster"
+        ],
+        "opponent_active": {
+          "species": "Skarmory",
+          "hp": "48%",
+          "status": "none",
+          "revealed_moves": [
+            "Whirlwind",
+            "Rest",
+            "Drill Peck"
+          ],
+          "boosts": {
+            "atk": 0,
+            "def": 0,
+            "spe": 0
+          },
+          "role": "opposing phazer"
+        },
+        "field": {
+          "spikes": "opponent_side_one_layer",
+          "sleep_clause": "free"
+        },
+        "mechanics": {
+          "roar_whirlwind_must_go_last": true,
+          "boss_phaze_order": "before_opponent_phaze"
+        }
+      },
+      "candidate_moves_public": [
+        {
+          "id": "move_roar",
+          "kind": "move"
+        },
+        {
+          "id": "move_rock_slide",
+          "kind": "move"
+        },
+        {
+          "id": "switch_suicune",
+          "kind": "switch"
+        },
+        {
+          "id": "move_explosion",
+          "kind": "move"
+        }
+      ],
+      "required_answer_fields": [
+        "chosen_move_id",
+        "candidate_ranking",
+        "current_win_conditions",
+        "irreplaceable_pieces",
+        "catastrophe_branches",
+        "answer_changing_information",
+        "rules_fired"
+      ],
+      "hidden_info_visible_to_policy": {
+        "opponent_fourth_move": "unknown",
+        "exact_speed_stats": "public relation only"
+      },
+      "public_opponent_model": {
+        "immediate_punish": "If both sides click phazing, Golem Roar fails because it acts before Skarmory Whirlwind; Skarmory then acts last and phazes Golem out.",
+        "role_aware_preservation": "The opponent wants Skarmory to preserve its phazing role and deny Golem's boosted route.",
+        "incentive_compatible_response": "Whirlwind is credible because it removes the boosted Golem if Golem does not force damage first.",
+        "hidden_info_belief_state": "If the speed relation flips or Skarmory cannot phaze, Roar may become the route-denial move."
+      }
+    },
+    {
+      "id": "vanilla_gsc_pp_phaze_loop_save_final_whirlwind_001",
+      "version": 1,
+      "split": "holdout",
+      "mechanics_profile": "vanilla_gsc",
+      "source_refs": [
+        "audit/boss_ai_preference/long_battle_review.md",
+        "audit/boss_ai_preference/expert_play_research.md",
+        "https://www.smogon.com/rs/articles/long_term_thinking",
+        "https://www.smogon.com/gs/articles/gsc_guide_part1"
+      ],
+      "tags": [
+        "pp_endgame",
+        "phazing",
+        "rest_cycle",
+        "endgame",
+        "heuristic_arbitration"
+      ],
+      "position_snapshot": {
+        "summary": "Vanilla GSC PP endgame: Skarmory has only one Whirlwind PP left. Snorlax is not currently boosted into an immediate route, so spending final Whirlwind now only cycles the board and exhausts the last setup-control resource.",
+        "boss_active": {
+          "species": "Skarmory",
+          "hp": "34%",
+          "status": "none",
+          "known_moves": [
+            "Whirlwind",
+            "Rest",
+            "Toxic",
+            "Drill Peck"
+          ],
+          "role": "final phazer"
+        },
+        "boss_bench": [
+          "Raikou",
+          "Snorlax",
+          "Cloyster"
+        ],
+        "opponent_active": {
+          "species": "Snorlax",
+          "hp": "62%",
+          "status": "none",
+          "revealed_moves": [
+            "Curse",
+            "Rest",
+            "Double-Edge"
+          ],
+          "boosts": {
+            "atk": 0,
+            "def": 0,
+            "spe": 0
+          },
+          "role": "central win condition"
+        },
+        "field": {
+          "spikes": "opponent_side_one_layer",
+          "sleep_clause": "free"
+        },
+        "mechanics": {
+          "immediate_setup_route": false,
+          "last_phazing_pp_is_route_material": true
+        },
+        "pp": {
+          "boss_active": {
+            "Whirlwind": 1,
+            "Rest": 4,
+            "Toxic": 9,
+            "Drill Peck": 18
+          },
+          "opponent_active": {
+            "Curse": 10,
+            "Rest": 1,
+            "Double-Edge": 7
+          }
+        }
+      },
+      "candidate_moves_public": [
+        {
+          "id": "move_rest",
+          "kind": "move"
+        },
+        {
+          "id": "move_toxic",
+          "kind": "move"
+        },
+        {
+          "id": "move_whirlwind",
+          "kind": "move"
+        },
+        {
+          "id": "switch_raikou",
+          "kind": "switch"
+        }
+      ],
+      "required_answer_fields": [
+        "chosen_move_id",
+        "candidate_ranking",
+        "current_win_conditions",
+        "irreplaceable_pieces",
+        "catastrophe_branches",
+        "answer_changing_information",
+        "rules_fired"
+      ],
+      "hidden_info_visible_to_policy": {
+        "exact_damage_rolls": "unknown",
+        "opponent_fourth_move": "unknown"
+      },
+      "public_opponent_model": {
+        "immediate_punish": "Snorlax is unboosted this turn; a single Curse is not yet an unanswerable route while Skarmory preserves HP and final Whirlwind PP.",
+        "role_aware_preservation": "The opponent wants to exhaust the final Whirlwind PP before committing to the Snorlax setup route.",
+        "incentive_compatible_response": "Curse or Double-Edge can pressure Skarmory, but forcing the final Whirlwind now is the main route gain for the opponent.",
+        "hidden_info_belief_state": "If Snorlax is already heavily boosted or Skarmory cannot survive another turn, spending Whirlwind becomes much more valuable."
+      }
+    },
+    {
+      "id": "external_gsc_sleeping_lax_curse_window_001",
+      "version": 1,
+      "split": "holdout",
+      "mechanics_profile": "vanilla_gsc",
+      "source_refs": [
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json:external_gsc_rhydon_vs_sleeping_snorlax_curse_window",
+        "tools/boss_ai_preference/labels/boss_ai_pairwise_preferences.jsonl:external_gsc_rhydon_vs_sleeping_snorlax_curse_window",
+        "docs/boss_ai_teaching_heuristics.md:bench_external_sleeping_lax_endgame_001",
+        "https://replay.pokemonshowdown.com/smogtours-gen2ou-912130.log"
+      ],
+      "tags": [
+        "external_gsc",
+        "sleep",
+        "sleep_window",
+        "setup",
+        "endgame",
+        "heuristic_arbitration"
+      ],
+      "position_snapshot": {
+        "summary": "External GSC replay 912130 turn 49: Rhydon faces a preserved but still-sleeping Snorlax. The sleep window lets Curse change Earthquake KO math before the wake branch; attacking immediately may fail to convert the endgame.",
+        "boss_active": {
+          "species": "Rhydon",
+          "level": 100,
+          "hp": "about 60%",
+          "status": "none",
+          "item": "Leftovers",
+          "known_moves": [
+            "Curse",
+            "Earthquake",
+            "Rock Slide"
+          ],
+          "role": "late-game physical breaker"
+        },
+        "boss_bench": [
+          "Zapdos",
+          "Meganium",
+          "Houndoom"
+        ],
+        "opponent_active": {
+          "species": "Snorlax",
+          "level": 100,
+          "hp": "87%",
+          "status": "sleep",
+          "revealed_moves": [
+            "Curse"
+          ],
+          "likely_moves": [
+            "Earthquake",
+            "Double-Edge",
+            "Rest"
+          ],
+          "role": "preserved but sleeping endgame route"
+        },
+        "field": {
+          "spikes": "both_sides_one_layer",
+          "weather": "none",
+          "screens": "none"
+        },
+        "mechanics": {
+          "sleep_window_available": true,
+          "setup_changes_ko_math": true,
+          "active_target_grounded": true,
+          "wake_branch_review_required": true
+        }
+      },
+      "candidate_moves_public": [
+        {
+          "id": "move_curse",
+          "kind": "move"
+        },
+        {
+          "id": "move_earthquake",
+          "kind": "move"
+        },
+        {
+          "id": "move_rock_slide",
+          "kind": "move"
+        },
+        {
+          "id": "switch_zapdos",
+          "kind": "switch"
+        }
+      ],
+      "required_answer_fields": [
+        "chosen_move_id",
+        "candidate_ranking",
+        "current_win_conditions",
+        "irreplaceable_pieces",
+        "catastrophe_branches",
+        "answer_changing_information",
+        "rules_fired"
+      ],
+      "hidden_info_visible_to_policy": {
+        "exact_sleep_counter": "unknown",
+        "snorlax_full_moveset": "partially_revealed"
+      },
+      "public_opponent_model": {
+        "immediate_punish": "Snorlax is still asleep this turn, so it cannot immediately punish Curse, but the wake branch must be priced after setup.",
+        "role_aware_preservation": "The opponent preserved Snorlax as a late-game route, but sleep state and hazards mean it is not immediately active.",
+        "incentive_compatible_response": "If Snorlax wakes after the setup turn it will try to attack or Rest, so Curse is correct only because it changes the post-wake exchange.",
+        "hidden_info_belief_state": "Exact sleep counter and unrevealed Snorlax attack can change whether Curse remains safe."
+      }
+    },
+    {
+      "id": "vanilla_gsc_opening_electric_double_switch_spikes_001",
+      "version": 1,
+      "split": "holdout",
+      "mechanics_profile": "vanilla_gsc",
+      "source_refs": [
+        "https://www.smogon.com/forums/threads/an-analysis-of-leads-in-gsc-ou.3656620/",
+        "audit/boss_ai_preference/expert_play_research.md"
+      ],
+      "tags": [
+        "opening",
+        "lead_cycle",
+        "spikes",
+        "information_gain",
+        "opening_info_resource_bid",
+        "heuristic_arbitration"
+      ],
+      "position_snapshot": {
+        "summary": "Vanilla GSC lead-cycle position: Raikou faces lead Cloyster. The public opponent model says Cloyster is strongly incentivized to leave rather than take Electric pressure, so switching to Cloyster aims to catch the Snorlax or Ground pivot and create an early Spikes turn.",
+        "boss_active": {
+          "species": "Raikou",
+          "hp": "100%",
+          "status": "none",
+          "known_moves": [
+            "Thunder",
+            "Roar",
+            "Rest",
+            "Sleep Talk"
+          ],
+          "role": "lead Electric and information scout"
+        },
+        "boss_bench": [
+          "Cloyster",
+          "Snorlax",
+          "Exeggutor",
+          "Skarmory",
+          "Miltank"
+        ],
+        "opponent_active": {
+          "species": "Cloyster",
+          "hp": "100%",
+          "status": "none",
+          "revealed_moves": [
+            "Spikes",
+            "Surf"
+          ],
+          "role": "lead Spiker under Electric pressure"
+        },
+        "field": {
+          "spikes": "none",
+          "sleep_clause": "free",
+          "opponent_team_revealed_count": 1
+        },
+        "mechanics": {
+          "double_switch_spikes_window": true,
+          "opening_reveal_value": true,
+          "opening_direct_pressure_needed": false,
+          "opponent_switch_incentive": "high"
+        }
+      },
+      "candidate_moves_public": [
+        {
+          "id": "switch_cloyster",
+          "kind": "switch"
+        },
+        {
+          "id": "move_thunder",
+          "kind": "move"
+        },
+        {
+          "id": "move_roar",
+          "kind": "move"
+        },
+        {
+          "id": "move_rest",
+          "kind": "move"
+        }
+      ],
+      "required_answer_fields": [
+        "chosen_move_id",
+        "candidate_ranking",
+        "current_win_conditions",
+        "irreplaceable_pieces",
+        "catastrophe_branches",
+        "answer_changing_information",
+        "rules_fired"
+      ],
+      "hidden_info_visible_to_policy": {
+        "opponent_switch_target": "unknown",
+        "opponent_full_team": "mostly_unrevealed"
+      },
+      "public_opponent_model": {
+        "immediate_punish": "If Raikou uses Rest at full HP it wastes the turn; if Raikou stays passive, Cloyster can escape the bad lead state without giving the boss a Spikes window.",
+        "role_aware_preservation": "A competent opponent is likely to preserve Cloyster rather than leave it in against an Electric lead.",
+        "incentive_compatible_response": "Snorlax or a Ground-type pivot is the likely response to Raikou, so the boss can double-switch Cloyster to meet that pivot and threaten Spikes.",
+        "hidden_info_belief_state": "If Cloyster is not incentivized to switch, or if the boss Cloyster is unavailable or too low, direct Thunder pressure becomes better than the double-switch."
+      }
+    },
+    {
+      "id": "external_gsc_forretress_explosion_on_quagsire_001",
+      "version": 1,
+      "split": "holdout",
+      "mechanics_profile": "vanilla_gsc",
+      "source_refs": [
+        "https://replay.pokemonshowdown.com/smogtours-gen2ou-861526.log",
+        "https://www.smogon.com/gs/articles/guide_to_explosion",
+        "https://www.smogon.com/gs/articles/gsc_spikes",
+        "audit/boss_ai_preference/expert_play_research.md"
+      ],
+      "tags": [
+        "external_gsc",
+        "explosion",
+        "route_trade",
+        "spikes",
+        "endgame",
+        "heuristic_arbitration"
+      ],
+      "position_snapshot": {
+        "summary": "External GSC replay 861526 turn 42: low-HP Forretress has already set the only vanilla Spikes layer, Rapid Spin has cleared its own side, and Explosion can remove Quagsire to simplify into Snorlax's endgame.",
+        "boss_active": {
+          "species": "Forretress",
+          "level": 100,
+          "hp": "18%",
+          "status": "none",
+          "item": "Leftovers",
+          "known_moves": [
+            "Spikes",
+            "Toxic",
+            "Hidden Power",
+            "Explosion"
+          ],
+          "role": "spent Spiker with one-time Explosion conversion"
+        },
+        "boss_bench": [
+          "Snorlax",
+          "Raikou",
+          "Exeggutor"
+        ],
+        "opponent_active": {
+          "species": "Quagsire",
+          "level": 100,
+          "hp": "82%",
+          "status": "none",
+          "revealed_moves": [
+            "Earthquake"
+          ],
+          "role": "healthy Ground/Water route blocker"
+        },
+        "field": {
+          "spikes": "opponent_side_one_layer",
+          "boss_side_spikes": "none",
+          "weather": "none",
+          "screens": "none"
+        },
+        "mechanics": {
+          "vanilla_spikes_already_set": true,
+          "boss_spinning_role_completed": true,
+          "explosion_route_target_present": true,
+          "route_conversion_available": true
+        }
+      },
+      "candidate_moves_public": [
+        {
+          "id": "move_explosion",
+          "kind": "move"
+        },
+        {
+          "id": "move_toxic",
+          "kind": "move"
+        },
+        {
+          "id": "move_hidden_power",
+          "kind": "move"
+        },
+        {
+          "id": "move_spikes",
+          "kind": "move"
+        },
+        {
+          "id": "switch_snorlax",
+          "kind": "switch"
+        }
+      ],
+      "required_answer_fields": [
+        "chosen_move_id",
+        "candidate_ranking",
+        "current_win_conditions",
+        "irreplaceable_pieces",
+        "catastrophe_branches",
+        "answer_changing_information",
+        "rules_fired"
+      ],
+      "hidden_info_visible_to_policy": {
+        "opponent_full_bench": "partially_revealed",
+        "protect_or_ghost_block": "not_revealed",
+        "exact_explosion_damage_roll": "unknown"
+      },
+      "public_opponent_model": {
+        "immediate_punish": "Quagsire can keep pressure on the low-HP Forretress if the boss uses a no-progress move, but no public Protect or Ghost block is revealed.",
+        "role_aware_preservation": "A competent opponent values Quagsire as a healthy route blocker, but the active board gives Forretress a concrete one-time trade.",
+        "incentive_compatible_response": "If Forretress does not convert now, Quagsire remains healthy and the boss still needs another way to open Snorlax's route.",
+        "hidden_info_belief_state": "Explosion changes if Protect, a Ghost pivot, or insufficient damage becomes public; otherwise the low-HP Forretress has already discharged its hazard role."
+      }
+    },
+    {
+      "id": "external_gsc_vaporeon_vs_restdtalk_snorlax_001",
+      "version": 1,
+      "split": "holdout",
+      "mechanics_profile": "vanilla_gsc",
+      "source_refs": [
+        "https://replay.pokemonshowdown.com/smogtours-gen2ou-861526.log",
+        "https://www.smogon.com/gs/articles/status",
+        "https://www.smogon.com/forums/threads/gsc-mechanics.3542417/",
+        "audit/boss_ai_preference/expert_play_research.md"
+      ],
+      "tags": [
+        "external_gsc",
+        "sleep",
+        "sleep_window",
+        "resttalk",
+        "endgame",
+        "heuristic_arbitration"
+      ],
+      "position_snapshot": {
+        "summary": "External GSC replay 861526 turn 26: Vaporeon faces sleeping Snorlax, but Snorlax has already revealed Sleep Talk and can call Rest. The policy must attack the conversion window without claiming sleep has disabled the target.",
+        "boss_active": {
+          "species": "Vaporeon",
+          "level": 100,
+          "hp": "68%",
+          "status": "tox",
+          "item": "Leftovers",
+          "known_moves": [
+            "Surf",
+            "Growth",
+            "Rest",
+            "Sleep Talk"
+          ],
+          "role": "special setup route under poison timer"
+        },
+        "boss_bench": [
+          "Snorlax",
+          "Raikou",
+          "Exeggutor",
+          "Forretress"
+        ],
+        "opponent_active": {
+          "species": "Snorlax",
+          "level": 100,
+          "hp": "55%",
+          "status": "sleep",
+          "revealed_moves": [
+            "Sleep Talk",
+            "Rest",
+            "Earthquake",
+            "Double-Edge"
+          ],
+          "role": "sleeping RestTalk endgame route"
+        },
+        "field": {
+          "spikes": "opponent_side_one_layer",
+          "weather": "none",
+          "screens": "none"
+        },
+        "mechanics": {
+          "sleep_window_available": true,
+          "sleep_talk_rest_branch": true,
+          "setup_changes_ko_math": false,
+          "poison_timer_active": true,
+          "wake_branch_review_required": true
+        }
+      },
+      "candidate_moves_public": [
+        {
+          "id": "move_surf",
+          "kind": "move"
+        },
+        {
+          "id": "move_growth",
+          "kind": "move"
+        },
+        {
+          "id": "move_rest",
+          "kind": "move"
+        },
+        {
+          "id": "switch_raikou",
+          "kind": "switch"
+        }
+      ],
+      "required_answer_fields": [
+        "chosen_move_id",
+        "candidate_ranking",
+        "current_win_conditions",
+        "irreplaceable_pieces",
+        "catastrophe_branches",
+        "answer_changing_information",
+        "rules_fired"
+      ],
+      "hidden_info_visible_to_policy": {
+        "sleep_talk_roll": "unknown",
+        "exact_sleep_counter": "unknown",
+        "exact_surf_damage_roll": "unknown"
+      },
+      "public_opponent_model": {
+        "immediate_punish": "Snorlax is asleep, but Sleep Talk can call Rest in GSC and reset the Rest sleep counter, so a passive Growth turn can fail to convert before Snorlax heals.",
+        "role_aware_preservation": "The opponent still values Snorlax as an endgame route even while asleep because Sleep Talk keeps it active.",
+        "incentive_compatible_response": "If Vaporeon attacks, it pressures the current HP before Sleep Talk can reset the position; if it sets up, Snorlax may heal through RestTalk.",
+        "hidden_info_belief_state": "The exact Sleep Talk roll and wake counter are hidden; the public policy must represent them as catastrophe branches rather than assuming a free turn."
+      }
+    },
+    {
+      "id": "external_gsc_golem_late_rapid_spin_001",
+      "version": 1,
+      "split": "holdout",
+      "mechanics_profile": "vanilla_gsc",
+      "source_refs": [
+        "https://replay.pokemonshowdown.com/smogtours-gen2ou-861526.log",
+        "https://www.smogon.com/gs/articles/gsc_spikes",
+        "audit/boss_ai_preference/expert_play_research.md"
+      ],
+      "tags": [
+        "external_gsc",
+        "hazard_control",
+        "rapid_spin",
+        "spikes",
+        "endgame",
+        "heuristic_arbitration"
+      ],
+      "position_snapshot": {
+        "summary": "External GSC replay 861526 turn 34: Golem faces low Snorlax while the boss side still has Spikes. Rapid Spin preserves the remaining switch/phaze route before Snorlax Rests and the game simplifies.",
+        "boss_active": {
+          "species": "Golem",
+          "level": 100,
+          "hp": "94%",
+          "status": "none",
+          "item": "Leftovers",
+          "known_moves": [
+            "Rapid Spin",
+            "Roar",
+            "Explosion",
+            "Earthquake"
+          ],
+          "role": "spinner, phazer, and one-time Explosion route"
+        },
+        "boss_bench": [
+          "Snorlax",
+          "Exeggutor",
+          "Forretress"
+        ],
+        "opponent_active": {
+          "species": "Snorlax",
+          "level": 100,
+          "hp": "46%",
+          "status": "none",
+          "revealed_moves": [
+            "Rest",
+            "Sleep Talk",
+            "Earthquake",
+            "Double-Edge"
+          ],
+          "role": "RestTalk endgame route likely to Rest"
+        },
+        "field": {
+          "spikes": "both_sides_one_layer",
+          "boss_side_spikes": "one_layer",
+          "opponent_side_spikes": "one_layer",
+          "weather": "none",
+          "screens": "none"
+        },
+        "mechanics": {
+          "own_hazards_present": true,
+          "opponent_likely_rest": true,
+          "rapid_spin_clears_own_spikes": true,
+          "attack_into_rest_low_conversion": true
+        }
+      },
+      "candidate_moves_public": [
+        {
+          "id": "move_rapid_spin",
+          "kind": "move"
+        },
+        {
+          "id": "move_earthquake",
+          "kind": "move"
+        },
+        {
+          "id": "move_roar",
+          "kind": "move"
+        },
+        {
+          "id": "move_explosion",
+          "kind": "move"
+        }
+      ],
+      "required_answer_fields": [
+        "chosen_move_id",
+        "candidate_ranking",
+        "current_win_conditions",
+        "irreplaceable_pieces",
+        "catastrophe_branches",
+        "answer_changing_information",
+        "rules_fired"
+      ],
+      "hidden_info_visible_to_policy": {
+        "opponent_exact_choice": "unknown",
+        "remaining_pp": "partially_known",
+        "post_spin_switch_order": "unknown"
+      },
+      "public_opponent_model": {
+        "immediate_punish": "Snorlax is low enough to Rest, so attacking now may be absorbed by recovery while own-side Spikes continue taxing the remaining pivots.",
+        "role_aware_preservation": "Golem still has spinner, phazer, and Explosion value; spending the turn on Rapid Spin preserves those later routes instead of cashing out immediately.",
+        "incentive_compatible_response": "The opponent wants Snorlax to reset with Rest; the boss can use that turn to remove the hazard tax before re-scoring.",
+        "hidden_info_belief_state": "If own-side Spikes are absent, or if Snorlax cannot Rest, direct Earthquake pressure can overtake Rapid Spin."
+      }
+    },
+    {
+      "id": "fixture_will_slowbro_vs_houndoom_fast_dark_001",
+      "version": 1,
+      "split": "fixture_harvest",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_refs": [
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json:will_slowbro_vs_houndoom_amnesia_or_surf",
+        "tools/boss_ai_preference/labels/boss_ai_pairwise_preferences.jsonl:will_slowbro_vs_houndoom_amnesia_or_surf",
+        "data/types/type_matchups.asm",
+        "docs/agent_navigation/gen2_vs_modern_mechanics.md",
+        "audit/boss_ai_preference/type_effectiveness_evidence.md"
+      ],
+      "tags": [
+        "fixture_harvest",
+        "fast_public_punish",
+        "dark_threat",
+        "defensive_answer",
+        "preservation",
+        "heuristic_arbitration"
+      ],
+      "position_snapshot": {
+        "summary": "Will Slowbro faces a faster player Houndoom with Crunch revealed. Surf is super-effective and is the best stay-in attack, but the public Crunch branch threatens to KO Slowbro before Surf converts; the healthy boss Houndoom pivot preserves Slowbro and resists the Dark pressure.",
+        "boss_active": {
+          "species": "Slowbro",
+          "level": 41,
+          "hp": "78%",
+          "status": "none",
+          "item": "Leftovers",
+          "known_moves": [
+            "Surf",
+            "Body Slam",
+            "Psychic",
+            "Amnesia"
+          ],
+          "role": "bulky special pivot that should not be spent into a faster lethal Dark branch"
+        },
+        "boss_bench": [
+          "Forretress",
+          "Starmie",
+          "Alakazam",
+          "Houndoom",
+          "Xatu"
+        ],
+        "opponent_active": {
+          "species": "Houndoom",
+          "level": 44,
+          "hp": "100%",
+          "status": "none",
+          "revealed_moves": [
+            "Crunch"
+          ],
+          "public_priors": [
+            "Flamethrower plausible",
+            "Pursuit plausible"
+          ],
+          "role": "faster Dark pressure"
+        },
+        "field": {
+          "weather": "none",
+          "screens": "none",
+          "sleep_clause": "uncommitted"
+        },
+        "mechanics": {
+          "boss_active_slower": true,
+          "public_fast_lethal_punish": true,
+          "fallback_attack_if_no_pivot": "move_surf",
+          "direct_attack_if_forced": "move_surf"
+        },
+        "damage_bands": {
+          "opponent_crunch_vs_boss_active": {
+            "label": "about 93-109%",
+            "damage_low_pct": 93,
+            "damage_high_pct": 109,
+            "ko_at_current_hp": "guaranteed"
+          },
+          "boss_surf_vs_opponent_active": {
+            "label": "about 68-81%",
+            "damage_low_pct": 68,
+            "damage_high_pct": 81,
+            "ko_at_current_hp": "never"
+          }
+        }
+      },
+      "candidate_moves_public": [
+        {
+          "id": "switch_houndoom",
+          "kind": "switch"
+        },
+        {
+          "id": "move_surf",
+          "kind": "move"
+        },
+        {
+          "id": "move_amnesia",
+          "kind": "move"
+        },
+        {
+          "id": "move_psychic",
+          "kind": "move"
+        }
+      ],
+      "required_answer_fields": [
+        "chosen_move_id",
+        "candidate_ranking",
+        "current_win_conditions",
+        "irreplaceable_pieces",
+        "catastrophe_branches",
+        "answer_changing_information",
+        "rules_fired"
+      ],
+      "hidden_info_visible_to_policy": {
+        "opponent_remaining_moves": "three unknown slots",
+        "opponent_exact_set": "unknown beyond revealed Crunch and public priors",
+        "switch_turn_player_choice": "unknown"
+      },
+      "public_opponent_model": {
+        "immediate_punish": "Houndoom is faster and revealed Crunch is a lethal public punish into Slowbro, so Amnesia or direct Surf can fail before Slowbro converts.",
+        "role_aware_preservation": "Will's Houndoom is healthy and can absorb the public Dark/Fire pressure while preserving Slowbro for later routes.",
+        "incentive_compatible_response": "The player is incentivized to keep clicking Crunch into Slowbro because it is revealed, fast, and lethal.",
+        "hidden_info_belief_state": "Unrevealed Pursuit, Fire coverage, or a player double-switch can change the next turn after the pivot, but does not justify spending Slowbro this turn."
+      }
+    },
+    {
+      "id": "fixture_koga_ariados_vs_typhlosion_fire_spikes_001",
+      "version": 1,
+      "split": "fixture_harvest",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_refs": [
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json:koga_ariados_vs_typhlosion_spikes_or_toxic",
+        "data/types/type_matchups.asm",
+        "docs/agent_navigation/gen2_vs_modern_mechanics.md",
+        "audit/boss_ai_preference/type_effectiveness_evidence.md",
+        "https://www.smogon.com/gs/articles/gsc_spikes"
+      ],
+      "tags": [
+        "fixture_harvest",
+        "spikes",
+        "status",
+        "fire_pressure",
+        "fast_public_punish",
+        "defensive_answer",
+        "preservation",
+        "heuristic_arbitration"
+      ],
+      "position_snapshot": {
+        "summary": "Koga Ariados faces player Typhlosion with Flamethrower revealed. Spikes and Toxic are normally Koga's long-game tools, but the public Fire branch KOs Ariados before those tools can convert; Tentacruel is the clean preserving pivot, with Umbreon as the lower-fit fallback pivot.",
+        "boss_active": {
+          "species": "Ariados",
+          "level": 40,
+          "hp": "100%",
+          "status": "none",
+          "item": "Leftovers",
+          "known_moves": [
+            "Spikes",
+            "Toxic",
+            "Leech Life"
+          ],
+          "role": "hazard and poison lead that still has future route value if preserved"
+        },
+        "boss_bench": [
+          "Tentacruel",
+          "Muk",
+          "Nidoking",
+          "Umbreon",
+          "Crobat"
+        ],
+        "opponent_active": {
+          "species": "Typhlosion",
+          "level": 45,
+          "hp": "100%",
+          "status": "none",
+          "revealed_moves": [
+            "Flamethrower"
+          ],
+          "public_priors": [
+            "Earthquake plausible"
+          ],
+          "role": "faster Fire pressure"
+        },
+        "field": {
+          "weather": "none",
+          "screens": "none",
+          "sleep_clause": "uncommitted"
+        },
+        "mechanics": {
+          "boss_active_slower": true,
+          "public_fast_lethal_punish": true,
+          "primary_preservation_pivot": "switch_tentacruel",
+          "fallback_preservation_pivot": "switch_umbreon"
+        },
+        "damage_bands": {
+          "opponent_flamethrower_vs_boss_active": {
+            "label": "about 149-176%",
+            "damage_low_pct": 149,
+            "damage_high_pct": 176,
+            "ko_at_current_hp": "guaranteed"
+          },
+          "boss_leech_life_vs_opponent_active": {
+            "label": "about 14-17%",
+            "damage_low_pct": 14,
+            "damage_high_pct": 17,
+            "ko_at_current_hp": "never"
+          }
+        }
+      },
+      "candidate_moves_public": [
+        {
+          "id": "switch_tentacruel",
+          "kind": "switch"
+        },
+        {
+          "id": "switch_umbreon",
+          "kind": "switch"
+        },
+        {
+          "id": "move_spikes",
+          "kind": "move"
+        },
+        {
+          "id": "move_toxic",
+          "kind": "move"
+        },
+        {
+          "id": "move_leech_life",
+          "kind": "move"
+        }
+      ],
+      "required_answer_fields": [
+        "chosen_move_id",
+        "candidate_ranking",
+        "current_win_conditions",
+        "irreplaceable_pieces",
+        "catastrophe_branches",
+        "answer_changing_information",
+        "rules_fired"
+      ],
+      "hidden_info_visible_to_policy": {
+        "opponent_remaining_moves": "three unknown slots",
+        "opponent_exact_set": "unknown beyond revealed Flamethrower and public Earthquake prior",
+        "switch_turn_player_choice": "unknown"
+      },
+      "public_opponent_model": {
+        "immediate_punish": "Typhlosion is faster and revealed Flamethrower is a guaranteed KO into Ariados, so Spikes, Toxic, or Leech Life can fail before they create route progress.",
+        "role_aware_preservation": "Koga still wants Ariados's hazard and poison role later; Tentacruel is healthy and has the best visible fit into the public Fire pressure.",
+        "incentive_compatible_response": "The player is incentivized to click the revealed lethal Fire move into Ariados instead of letting Koga claim a free hazard or poison turn.",
+        "hidden_info_belief_state": "Earthquake is plausible and must be re-scored after the switch, but it does not make donating Ariados into revealed Flamethrower correct."
+      }
+    },
+    {
+      "id": "fixture_bugsy_scyther_vs_geodude_safe_swords_dance_001",
+      "version": 1,
+      "split": "fixture_harvest",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_refs": [
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json:bugsy_scyther_vs_geodude_safe_swords_dance",
+        "docs/agent_navigation/gen2_vs_modern_mechanics.md",
+        "https://www.smogon.com/gs/articles/gsc_guide_part1"
+      ],
+      "tags": [
+        "fixture_harvest",
+        "setup",
+        "safe_setup_window",
+        "damage_threshold",
+        "route_conversion",
+        "heuristic_arbitration"
+      ],
+      "position_snapshot": {
+        "summary": "Bugsy Scyther faces Geodude at 92%. Scyther is faster, revealed Geodude moves do not threaten it, and the plausible Rock Throw branch does not cleanly remove Scyther from full HP. Swords Dance uses the safe turn to turn low-value chip into a real route.",
+        "boss_active": {
+          "species": "Scyther",
+          "level": 17,
+          "hp": "100%",
+          "status": "none",
+          "item": "Silverpowder",
+          "known_moves": [
+            "Quick Attack",
+            "Wing Attack",
+            "Swords Dance"
+          ],
+          "role": "ace with a real setup window"
+        },
+        "boss_bench": [
+          "Ariados",
+          "Ledian"
+        ],
+        "opponent_active": {
+          "species": "Geodude",
+          "level": 16,
+          "hp": "92%",
+          "status": "none",
+          "revealed_moves": [
+            "Tackle",
+            "Defense Curl"
+          ],
+          "public_priors": [
+            "Magnitude plausible",
+            "Rock Throw plausible but slow"
+          ],
+          "role": "slow physical blocker"
+        },
+        "field": {
+          "weather": "none",
+          "screens": "none",
+          "sleep_clause": "uncommitted"
+        },
+        "mechanics": {
+          "boss_active_faster": true,
+          "public_setup_window": true,
+          "setup_survives_worst_plausible_branch": true,
+          "setup_changes_route": true,
+          "fallback_attack_if_setup_unsafe": "move_wing_attack"
+        },
+        "damage_bands": {
+          "opponent_tackle_vs_boss_active": {
+            "label": "about 9-12%",
+            "damage_low_pct": 9,
+            "damage_high_pct": 12,
+            "ko_at_current_hp": "never"
+          },
+          "opponent_rock_throw_vs_boss_active": {
+            "label": "about 73-88%",
+            "damage_low_pct": 73,
+            "damage_high_pct": 88,
+            "ko_at_current_hp": "never"
+          },
+          "boss_wing_attack_vs_opponent_active": {
+            "label": "about 24-29%",
+            "damage_low_pct": 24,
+            "damage_high_pct": 29,
+            "ko_at_current_hp": "never"
+          },
+          "boss_quick_attack_vs_opponent_active": {
+            "label": "about 7-10%",
+            "damage_low_pct": 7,
+            "damage_high_pct": 10,
+            "ko_at_current_hp": "never"
+          }
+        }
+      },
+      "candidate_moves_public": [
+        {
+          "id": "move_swords_dance",
+          "kind": "move"
+        },
+        {
+          "id": "move_wing_attack",
+          "kind": "move"
+        },
+        {
+          "id": "move_quick_attack",
+          "kind": "move"
+        },
+        {
+          "id": "switch_ariados",
+          "kind": "switch"
+        }
+      ],
+      "required_answer_fields": [
+        "chosen_move_id",
+        "candidate_ranking",
+        "current_win_conditions",
+        "irreplaceable_pieces",
+        "catastrophe_branches",
+        "answer_changing_information",
+        "rules_fired"
+      ],
+      "hidden_info_visible_to_policy": {
+        "opponent_unrevealed_moves": "two unknown slots beyond Tackle and Defense Curl",
+        "exact_magnitude_roll": "unknown",
+        "post_setup_player_choice": "unknown"
+      },
+      "public_opponent_model": {
+        "immediate_punish": "The public Geodude punish is survivable from Scyther's current HP; Rock Throw is plausible but slow and does not cleanly remove Scyther before the boosted route can matter.",
+        "role_aware_preservation": "Scyther is Bugsy's ace, but preserving it by switching wastes a rare safe setup window against a slow target.",
+        "incentive_compatible_response": "The player is incentivized to use the strongest immediate punish if available; the public damage band still leaves Scyther alive from full HP.",
+        "hidden_info_belief_state": "A stronger hidden Rock move, lower Scyther HP, or a guaranteed KO damage roll would change the answer away from Swords Dance."
+      }
+    },
+    {
+      "id": "fixture_chuck_poliwrath_vs_alakazam_psychic_pivot_001",
+      "version": 1,
+      "split": "fixture_harvest",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_refs": [
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json:chuck_poliwrath_vs_alakazam_hypnosis_or_ice_punch",
+        "data/types/type_matchups.asm",
+        "docs/agent_navigation/gen2_vs_modern_mechanics.md",
+        "docs/agent_navigation/hack_mechanics_reference.md",
+        "audit/boss_ai_preference/type_effectiveness_evidence.md"
+      ],
+      "tags": [
+        "fixture_harvest",
+        "fast_public_punish",
+        "psychic_threat",
+        "sleep",
+        "defensive_answer",
+        "preservation",
+        "heuristic_arbitration"
+      ],
+      "position_snapshot": {
+        "summary": "Chuck Poliwrath faces faster Alakazam with Psychic and Recover revealed. Hypnosis can swing the position if it lands, but the clean state transition is the healthy Umbreon pivot because romhack Psychic has no effect on Dark; direct Surf or Ice Punch does not deny Alakazam's faster Psychic/Recover route.",
+        "boss_active": {
+          "species": "Poliwrath",
+          "level": 34,
+          "hp": "100%",
+          "status": "none",
+          "item": "Mystic Water",
+          "known_moves": [
+            "Surf",
+            "Ice Punch",
+            "Hypnosis"
+          ],
+          "role": "ace that should not be spent into a faster public Psychic branch while a clean pivot exists"
+        },
+        "boss_bench": [
+          "Sudowoodo",
+          "Hitmontop",
+          "Hitmonlee",
+          "Umbreon"
+        ],
+        "opponent_active": {
+          "species": "Alakazam",
+          "level": 32,
+          "hp": "100%",
+          "status": "none",
+          "revealed_moves": [
+            "Psychic",
+            "Recover"
+          ],
+          "public_priors": [
+            "Thunderpunch plausible"
+          ],
+          "role": "faster Psychic pressure with recovery"
+        },
+        "field": {
+          "weather": "none",
+          "screens": "none",
+          "sleep_clause": "free"
+        },
+        "mechanics": {
+          "boss_active_slower": true,
+          "public_fast_major_punish": true,
+          "primary_preservation_pivot": "switch_umbreon",
+          "fallback_control_if_no_pivot": "move_hypnosis",
+          "psychic_vs_dark": "no_effect"
+        },
+        "damage_bands": {
+          "opponent_psychic_vs_boss_active": {
+            "label": "about 73-86%",
+            "damage_low_pct": 73,
+            "damage_high_pct": 86,
+            "ko_at_current_hp": "never"
+          },
+          "boss_surf_vs_opponent_active": {
+            "label": "about 33-39%",
+            "damage_low_pct": 33,
+            "damage_high_pct": 39,
+            "ko_at_current_hp": "never"
+          },
+          "boss_ice_punch_vs_opponent_active": {
+            "label": "about 15-19%",
+            "damage_low_pct": 15,
+            "damage_high_pct": 19,
+            "ko_at_current_hp": "never"
+          }
+        }
+      },
+      "candidate_moves_public": [
+        {
+          "id": "switch_umbreon",
+          "kind": "switch"
+        },
+        {
+          "id": "move_hypnosis",
+          "kind": "move"
+        },
+        {
+          "id": "move_surf",
+          "kind": "move"
+        },
+        {
+          "id": "move_ice_punch",
+          "kind": "move"
+        }
+      ],
+      "required_answer_fields": [
+        "chosen_move_id",
+        "candidate_ranking",
+        "current_win_conditions",
+        "irreplaceable_pieces",
+        "catastrophe_branches",
+        "answer_changing_information",
+        "rules_fired"
+      ],
+      "hidden_info_visible_to_policy": {
+        "opponent_remaining_moves": "two unknown slots beyond Psychic and Recover",
+        "hypnosis_hit_or_miss": "unknown",
+        "post_switch_player_choice": "unknown"
+      },
+      "public_opponent_model": {
+        "immediate_punish": "Alakazam is faster and revealed Psychic chunks Poliwrath before Surf, Ice Punch, or Hypnosis can convert; Recover means light chip does not create a reliable route.",
+        "role_aware_preservation": "Umbreon is healthy and the romhack type chart says Psychic has no effect on Dark, so it preserves Poliwrath while answering the public route.",
+        "incentive_compatible_response": "The player is incentivized to keep clicking the revealed Psychic or recover off weak chip if Poliwrath stays in.",
+        "hidden_info_belief_state": "Thunderpunch or a double-switch must be re-scored after the pivot; Hypnosis becomes more attractive if Umbreon is unavailable or sleep is the only remaining control route."
+      }
+    },
+    {
+      "id": "fixture_morty_haunter_vs_noctowl_sleep_line_001",
+      "version": 1,
+      "split": "fixture_harvest",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_refs": [
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json:morty_haunter_vs_noctowl_sleep_line",
+        "docs/agent_navigation/gen2_vs_modern_mechanics.md",
+        "https://www.smogon.com/gs/articles/status"
+      ],
+      "tags": [
+        "fixture_harvest",
+        "sleep",
+        "status",
+        "tempo_control",
+        "heuristic_arbitration"
+      ],
+      "position_snapshot": {
+        "summary": "Morty Haunter faces Noctowl at 93%. Peck meaningfully chips Haunter, but it does not immediately remove it; Night Shade is reliable 27% fixed damage. With Sleep Clause free and Noctowl unstatused, Hypnosis is the route-creating control move rather than generic Ghost-flavored annoyance.",
+        "boss_active": {
+          "species": "Haunter",
+          "level": 22,
+          "hp": "88%",
+          "status": "none",
+          "item": "MiracleBerry",
+          "known_moves": [
+            "Hypnosis",
+            "Night Shade",
+            "Curse"
+          ],
+          "role": "status opener"
+        },
+        "boss_bench": [
+          "Misdreavus",
+          "Gengar",
+          "Haunter"
+        ],
+        "opponent_active": {
+          "species": "Noctowl",
+          "level": 23,
+          "hp": "93%",
+          "status": "none",
+          "revealed_moves": [
+            "Peck",
+            "Reflect"
+          ],
+          "public_priors": [
+            "Confusion plausible",
+            "Hypnosis plausible"
+          ],
+          "role": "bulky tempo controller"
+        },
+        "field": {
+          "weather": "none",
+          "screens": "none",
+          "sleep_clause": "free"
+        },
+        "mechanics": {
+          "target_unstatused": true,
+          "sleep_creates_route": true,
+          "fallback_attack_if_sleep_blocked": "move_night_shade"
+        },
+        "damage_bands": {
+          "opponent_peck_vs_boss_active": {
+            "label": "about 31-38%",
+            "damage_low_pct": 31,
+            "damage_high_pct": 38,
+            "ko_at_current_hp": "never"
+          },
+          "boss_night_shade_vs_opponent_active": {
+            "label": "about 27%",
+            "damage_low_pct": 27,
+            "damage_high_pct": 27,
+            "ko_at_current_hp": "never"
+          }
+        }
+      },
+      "candidate_moves_public": [
+        {
+          "id": "move_hypnosis",
+          "kind": "move"
+        },
+        {
+          "id": "move_night_shade",
+          "kind": "move"
+        },
+        {
+          "id": "move_curse",
+          "kind": "move"
+        },
+        {
+          "id": "switch_gengar",
+          "kind": "switch"
+        }
+      ],
+      "required_answer_fields": [
+        "chosen_move_id",
+        "candidate_ranking",
+        "current_win_conditions",
+        "irreplaceable_pieces",
+        "catastrophe_branches",
+        "answer_changing_information",
+        "rules_fired"
+      ],
+      "hidden_info_visible_to_policy": {
+        "hypnosis_hit_or_miss": "unknown",
+        "opponent_remaining_moves": "two unknown slots beyond Peck and Reflect",
+        "opponent_switch_after_sleep": "unknown"
+      },
+      "public_opponent_model": {
+        "immediate_punish": "Peck meaningfully chips Haunter, and Reflect can slow physical follow-up, but neither branch removes Haunter before a legal Hypnosis can create a tempo route.",
+        "role_aware_preservation": "Haunter is a status opener; spending it on Curse or switching immediately gives up the current sleep opportunity.",
+        "incentive_compatible_response": "The player wants Noctowl to control tempo with Peck or Reflect if Morty only deals fixed damage.",
+        "hidden_info_belief_state": "Hypnosis miss, Sleep Clause, target status, or a sleep absorber switch all require re-scoring after the first turn."
+      }
+    },
+    {
+      "id": "fixture_falkner_pidgeotto_vs_geodude_scout_probe_001",
+      "version": 1,
+      "split": "fixture_harvest",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_refs": [
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json:falkner_pidgeotto_vs_geodude_rock_risk",
+        "tools/boss_ai_preference/labels/boss_ai_pairwise_preferences.jsonl:falkner_pidgeotto_vs_geodude_rock_risk",
+        "tools/boss_ai_preference/labels/boss_ai_trajectory_preferences.jsonl:falkner_pidgeotto_vs_geodude_rock_risk",
+        "docs/agent_navigation/gen2_vs_modern_mechanics.md",
+        "https://www.smogon.com/gs/articles/gsc_guide_part1"
+      ],
+      "tags": [
+        "fixture_harvest",
+        "scout_probe",
+        "rock_risk",
+        "accuracy_control",
+        "heuristic_arbitration"
+      ],
+      "position_snapshot": {
+        "summary": "Falkner Pidgeotto faces Geodude at 86%. Gust does only about 6-9%, while public Rock Throw is a meaningful punish into Pidgeotto's 72% HP. Saved feedback teaches one Sand Attack, then Gust: probe once to reduce the swing branch, but do not loop debuffs forever.",
+        "boss_active": {
+          "species": "Pidgeotto",
+          "level": 12,
+          "hp": "72%",
+          "status": "none",
+          "item": "Sharp Beak",
+          "known_moves": [
+            "Tackle",
+            "Gust",
+            "Sand Attack"
+          ],
+          "role": "lead pressure with one fair probe turn"
+        },
+        "boss_bench": [
+          "Spearow",
+          "Noctowl"
+        ],
+        "opponent_active": {
+          "species": "Geodude",
+          "level": 12,
+          "hp": "86%",
+          "status": "none",
+          "revealed_moves": [
+            "Tackle",
+            "Defense Curl"
+          ],
+          "public_priors": [
+            "Rock Throw plausible",
+            "Magnitude plausible"
+          ],
+          "role": "early physical wall with public Rock-risk branch"
+        },
+        "field": {
+          "weather": "none",
+          "screens": "none",
+          "sleep_clause": "uncommitted"
+        },
+        "mechanics": {
+          "public_probe_needed": true,
+          "single_probe_then_progress": true,
+          "fallback_attack_if_probe_unneeded": "move_gust"
+        },
+        "damage_bands": {
+          "boss_gust_vs_opponent_active": {
+            "label": "about 6-9%",
+            "damage_low_pct": 6,
+            "damage_high_pct": 9,
+            "ko_at_current_hp": "never"
+          },
+          "opponent_rock_throw_vs_boss_active": {
+            "label": "about 55-65%",
+            "damage_low_pct": 55,
+            "damage_high_pct": 65,
+            "ko_at_current_hp": "never"
+          },
+          "opponent_tackle_vs_boss_active": {
+            "label": "about 12-18%",
+            "damage_low_pct": 12,
+            "damage_high_pct": 18,
+            "ko_at_current_hp": "never"
+          }
+        }
+      },
+      "candidate_moves_public": [
+        {
+          "id": "move_sand_attack",
+          "kind": "move"
+        },
+        {
+          "id": "move_gust",
+          "kind": "move"
+        },
+        {
+          "id": "switch_noctowl",
+          "kind": "switch"
+        }
+      ],
+      "required_answer_fields": [
+        "chosen_move_id",
+        "candidate_ranking",
+        "current_win_conditions",
+        "irreplaceable_pieces",
+        "catastrophe_branches",
+        "answer_changing_information",
+        "rules_fired"
+      ],
+      "hidden_info_visible_to_policy": {
+        "opponent_unrevealed_moves": "two unknown slots beyond Tackle and Defense Curl",
+        "whether_geodude_clicks_rock_throw": "unknown",
+        "post_probe_switch_choice": "unknown"
+      },
+      "public_opponent_model": {
+        "immediate_punish": "Rock Throw is plausible and meaningful while Gust is under 10% chip, so one Sand Attack buys risk reduction before committing.",
+        "role_aware_preservation": "Noctowl is available but does not cleanly solve the same Rock-risk branch; switching is not the best first transition.",
+        "incentive_compatible_response": "The player is incentivized to reveal or threaten the strongest public punish if Falkner keeps clicking low-value Gust.",
+        "hidden_info_belief_state": "If Rock-risk is absent, if Geodude is already in meaningful Gust range, or if the first Sand Attack already landed, the answer should re-score away from repeated debuffing."
+      }
+    },
+    {
+      "id": "fixture_pryce_cloyster_vs_quilava_fire_pivot_001",
+      "version": 1,
+      "split": "fixture_harvest",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_refs": [
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json:pryce_cloyster_vs_quilava_explosion_line",
+        "tools/boss_ai_preference/labels/boss_ai_pairwise_preferences.jsonl:pryce_cloyster_vs_quilava_explosion_line",
+        "docs/agent_navigation/gen2_vs_modern_mechanics.md",
+        "https://www.smogon.com/gs/articles/gsc_guide_part1",
+        "https://www.smogon.com/gs/articles/guide_to_explosion"
+      ],
+      "tags": [
+        "fixture_harvest",
+        "fast_public_punish",
+        "defensive_answer",
+        "preservation",
+        "fire_pivot",
+        "explosion_discipline",
+        "heuristic_arbitration"
+      ],
+      "position_snapshot": {
+        "summary": "Pryce Cloyster faces Quilava at 88% while Cloyster is only 39%. Saved feedback says Slowking is the public Fire-resist pivot, while Surf and Explosion both fail the main branch because faster Quilava can remove Cloyster before it acts. The point is not to never use Explosion; it is to preserve Cloyster's later Spikes/Explosion route when a clean pivot exists.",
+        "boss_active": {
+          "species": "Cloyster",
+          "level": 30,
+          "hp": "39%",
+          "status": "none",
+          "item": "NeverMeltIce",
+          "known_moves": [
+            "Spikes",
+            "Ice Beam",
+            "Surf",
+            "Explosion",
+            "Protect"
+          ],
+          "role": "hazard lead and future Explosion resource"
+        },
+        "boss_bench": [
+          "Dewgong",
+          "Sneasel",
+          "Piloswine",
+          "Slowking"
+        ],
+        "opponent_active": {
+          "species": "Quilava",
+          "level": 32,
+          "hp": "88%",
+          "status": "none",
+          "revealed_moves": [
+            "Flame Wheel",
+            "Quick Attack"
+          ],
+          "public_priors": [
+            "Fire STAB threatens Cloyster"
+          ],
+          "role": "faster Fire attacker"
+        },
+        "field": {
+          "weather": "none",
+          "screens": "none",
+          "sleep_clause": "uncommitted"
+        },
+        "mechanics": {
+          "active_faints_before_progress": true,
+          "active_survives_public_punish": false,
+          "fallback_attack_if_active_survives": "move_surf"
+        },
+        "damage_bands": {
+          "opponent_flame_wheel_vs_boss_active": {
+            "label": "public Fire STAB KOs before Cloyster can act",
+            "damage_low_pct": 45,
+            "damage_high_pct": 55,
+            "ko_at_current_hp": "guaranteed"
+          },
+          "boss_surf_vs_opponent_active": {
+            "label": "strong Water punish if Cloyster survives to move",
+            "damage_low_pct": 70,
+            "damage_high_pct": 85,
+            "ko_at_current_hp": "never"
+          }
+        }
+      },
+      "candidate_moves_public": [
+        {
+          "id": "switch_slowking",
+          "kind": "switch"
+        },
+        {
+          "id": "move_protect",
+          "kind": "move"
+        },
+        {
+          "id": "move_surf",
+          "kind": "move"
+        },
+        {
+          "id": "move_explosion",
+          "kind": "move"
+        }
+      ],
+      "required_answer_fields": [
+        "chosen_move_id",
+        "candidate_ranking",
+        "current_win_conditions",
+        "irreplaceable_pieces",
+        "catastrophe_branches",
+        "answer_changing_information",
+        "rules_fired"
+      ],
+      "hidden_info_visible_to_policy": {
+        "whether_quilava_clicks_flame_wheel": "unknown but strongly incentivized",
+        "opponent_remaining_moves": "two unknown slots beyond Flame Wheel and Quick Attack",
+        "later_cloyster_explosion_target": "unknown"
+      },
+      "public_opponent_model": {
+        "immediate_punish": "Quilava is faster and has revealed Flame Wheel, which can remove 39% Cloyster before Surf or Explosion converts.",
+        "role_aware_preservation": "Cloyster still has future Spikes and Explosion value; Slowking is the public bulky Fire pivot that preserves that resource.",
+        "incentive_compatible_response": "The player is incentivized to click the revealed Fire STAB into Cloyster rather than allowing Surf or Explosion.",
+        "hidden_info_belief_state": "If Cloyster survives Flame Wheel, if Slowking is unavailable, or if Quilava cannot threaten the KO, Surf or Explosion must be re-scored."
+      }
+    },
+    {
+      "id": "fixture_bugsy_scyther_vs_quilava_fire_setup_001",
+      "version": 1,
+      "split": "fixture_harvest",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_refs": [
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json:bugsy_scyther_vs_quilava_fire_pressure",
+        "tools/boss_ai_preference/labels/boss_ai_pairwise_preferences.jsonl:bugsy_scyther_vs_quilava_fire_pressure",
+        "tools/boss_ai_preference/labels/boss_ai_trajectory_preferences.jsonl:bugsy_scyther_vs_quilava_fire_pressure",
+        "audit/boss_ai_preference/threat_availability_report.md:bugsy_scyther_vs_quilava_fire_pressure",
+        "https://www.smogon.com/gs/articles/gsc_guide_part1"
+      ],
+      "tags": [
+        "fixture_harvest",
+        "setup",
+        "safe_setup_window",
+        "fire_pressure",
+        "tempo",
+        "heuristic_arbitration"
+      ],
+      "position_snapshot": {
+        "summary": "Bugsy Scyther faces Quilava at 69%. Saved feedback says Swords Dance is preferred because Scyther acts first, survives one revealed Ember, unboosted Wing Attack does not KO, and +2 Wing Attack changes the two-turn route while leaving Scyther boosted afterward.",
+        "boss_active": {
+          "species": "Scyther",
+          "level": 17,
+          "hp": "81%",
+          "status": "none",
+          "item": "Silverpowder",
+          "known_moves": [
+            "Quick Attack",
+            "Wing Attack",
+            "Swords Dance"
+          ],
+          "speed_relation": "faster_than_opponent",
+          "role": "ace and setup route"
+        },
+        "boss_bench": [
+          "Ariados",
+          "Ledian"
+        ],
+        "opponent_active": {
+          "species": "Quilava",
+          "level": 17,
+          "hp": "69%",
+          "status": "none",
+          "revealed_moves": [
+            "Ember",
+            "Quick Attack"
+          ],
+          "public_priors": [
+            "Fire STAB remains available"
+          ],
+          "role": "Fire-pressure attacker"
+        },
+        "field": {
+          "weather": "none",
+          "screens": "none",
+          "sleep_clause": "uncommitted"
+        },
+        "mechanics": {
+          "setup_survives_worst_plausible_branch": true,
+          "setup_changes_route": true,
+          "fallback_attack_if_setup_unsafe": "move_wing_attack"
+        },
+        "damage_bands": {
+          "boss_wing_attack_vs_opponent_active": {
+            "label": "unboosted Wing Attack does not KO from the public HP",
+            "damage_low_pct": 49,
+            "damage_high_pct": 58,
+            "ko_at_current_hp": "never"
+          },
+          "boss_plus2_wing_attack_vs_opponent_active": {
+            "label": "+2 Wing Attack can convert the two-turn route",
+            "damage_low_pct": 95,
+            "damage_high_pct": 114,
+            "ko_at_current_hp": "possible"
+          },
+          "opponent_ember_vs_boss_active": {
+            "label": "revealed Ember is survivable from current Scyther HP",
+            "damage_low_pct": 71,
+            "damage_high_pct": 84,
+            "ko_at_current_hp": "never"
+          }
+        }
+      },
+      "candidate_moves_public": [
+        {
+          "id": "move_swords_dance",
+          "kind": "move"
+        },
+        {
+          "id": "move_wing_attack",
+          "kind": "move"
+        },
+        {
+          "id": "move_quick_attack",
+          "kind": "move"
+        },
+        {
+          "id": "switch_ledian",
+          "kind": "switch"
+        }
+      ],
+      "required_answer_fields": [
+        "chosen_move_id",
+        "candidate_ranking",
+        "current_win_conditions",
+        "irreplaceable_pieces",
+        "catastrophe_branches",
+        "answer_changing_information",
+        "rules_fired"
+      ],
+      "hidden_info_visible_to_policy": {
+        "damage_rolls": "unknown",
+        "whether_quilava_uses_ember": "unknown but strongly incentivized",
+        "opponent_remaining_moves": "two unknown slots beyond Ember and Quick Attack"
+      },
+      "public_opponent_model": {
+        "immediate_punish": "Quilava can click revealed Ember, but Scyther survives the public branch and is faster on the conversion turn.",
+        "role_aware_preservation": "Scyther is the ace, but switching to Ledian enters the same Fire pressure and gives up the route.",
+        "incentive_compatible_response": "The player is incentivized to Ember after Scyther sets up; Bugsy must prove the boosted route survives that branch.",
+        "hidden_info_belief_state": "If Scyther is slower, if Ember KOs after the setup turn, or if unboosted Wing Attack already KOs, the answer should re-score away from greedy setup."
+      }
+    },
+    {
+      "id": "fixture_whitney_miltank_vs_geodude_rollout_lock_001",
+      "version": 1,
+      "split": "fixture_harvest",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_refs": [
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json:whitney_miltank_vs_geodude_rollout_temptation",
+        "tools/boss_ai_preference/labels/boss_ai_pairwise_preferences.jsonl:whitney_miltank_vs_geodude_rollout_temptation",
+        "tools/boss_ai_preference/labels/boss_ai_trajectory_preferences.jsonl:whitney_miltank_vs_geodude_rollout_temptation",
+        "audit/boss_ai_preference/threat_availability_report.md:whitney_miltank_vs_geodude_rollout_temptation",
+        "https://www.smogon.com/gs/articles/gsc_guide_part1"
+      ],
+      "tags": [
+        "fixture_harvest",
+        "lock_move",
+        "sequence_policy",
+        "ace_preservation",
+        "status_pressure",
+        "heuristic_arbitration"
+      ],
+      "position_snapshot": {
+        "summary": "Whitney Miltank faces Geodude at 78%. Saved feedback says Body Slam is the opener because first-turn Rollout is tiny chip by public damage evidence, locks the ace, and Geodude still has public Rock Throw plus plausible Magnitude pressure. The taught line is Body Slam pressure first, heal only around the danger threshold, then consider Rollout after paralysis or a safer board.",
+        "boss_active": {
+          "species": "Miltank",
+          "level": 21,
+          "hp": "92%",
+          "status": "none",
+          "item": "Mint Berry",
+          "known_moves": [
+            "Body Slam",
+            "Milk Drink",
+            "Rollout"
+          ],
+          "role": "ace pressure and route stabilizer"
+        },
+        "boss_bench": [
+          "Clefairy",
+          "Girafarig"
+        ],
+        "opponent_active": {
+          "species": "Geodude",
+          "level": 20,
+          "hp": "78%",
+          "status": "none",
+          "revealed_moves": [
+            "Rock Throw",
+            "Defense Curl"
+          ],
+          "public_priors": [
+            "Magnitude plausible"
+          ],
+          "role": "physical wall with public Rock/Ground pressure"
+        },
+        "field": {
+          "weather": "none",
+          "screens": "none",
+          "sleep_clause": "uncommitted"
+        },
+        "mechanics": {
+          "status_pressure_move": "move_body_slam",
+          "lock_move_safe": false,
+          "lock_after_status_or_safe_state": false
+        },
+        "damage_bands": {
+          "boss_body_slam_vs_opponent_active": {
+            "label": "Body Slam is modest chip but can create paralysis pressure",
+            "damage_low_pct": 15,
+            "damage_high_pct": 19,
+            "ko_at_current_hp": "never"
+          },
+          "boss_rollout_first_hit_vs_opponent_active": {
+            "label": "first-turn Rollout is tiny chip before ramping",
+            "damage_low_pct": 4,
+            "damage_high_pct": 6,
+            "ko_at_current_hp": "never"
+          },
+          "opponent_rock_throw_vs_boss_active": {
+            "label": "Rock Throw is chip, not a forced recovery threshold at current HP",
+            "damage_low_pct": 21,
+            "damage_high_pct": 25,
+            "ko_at_current_hp": "never"
+          }
+        }
+      },
+      "candidate_moves_public": [
+        {
+          "id": "move_body_slam",
+          "kind": "move"
+        },
+        {
+          "id": "move_rollout",
+          "kind": "move"
+        },
+        {
+          "id": "move_milk_drink",
+          "kind": "move"
+        },
+        {
+          "id": "switch_girafarig",
+          "kind": "switch"
+        }
+      ],
+      "required_answer_fields": [
+        "chosen_move_id",
+        "candidate_ranking",
+        "current_win_conditions",
+        "irreplaceable_pieces",
+        "catastrophe_branches",
+        "answer_changing_information",
+        "rules_fired"
+      ],
+      "hidden_info_visible_to_policy": {
+        "body_slam_paralysis": "unknown",
+        "opponent_magnitude": "plausible, not confirmed",
+        "future_rollout_lock_turns": "must be re-scored after status and HP changes"
+      },
+      "public_opponent_model": {
+        "immediate_punish": "Rock Throw is public chip and Magnitude is plausible, but Miltank is healthy enough to use Body Slam before healing.",
+        "role_aware_preservation": "Miltank is the ace; locking it into weak Rollout before status or safety gives up flexible recovery and pressure.",
+        "incentive_compatible_response": "The player wants Miltank locked or chipped before paralysis changes Geodude's route.",
+        "hidden_info_belief_state": "If Body Slam has already paralyzed Geodude, if Miltank is near a danger threshold, or if Geodude's punish is absent, the answer should re-score."
+      }
+    },
+    {
+      "id": "fixture_karen_crobat_vs_dragonite_toxic_clock_001",
+      "version": 1,
+      "split": "fixture_harvest",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_refs": [
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json:karen_crobat_vs_dragonite_toxic_or_attack",
+        "audit/boss_ai_preference/threat_availability_report.md:karen_crobat_vs_dragonite_toxic_or_attack",
+        "docs/boss_ai_teaching_heuristics.md:bench_status_karen_crobat_001",
+        "https://www.smogon.com/resources/competitive/gs/status",
+        "https://www.smogon.com/gs/articles/gsc_guide_part1"
+      ],
+      "tags": [
+        "fixture_harvest",
+        "status_clock",
+        "anti_dragon",
+        "preservation",
+        "sequence_policy",
+        "heuristic_arbitration"
+      ],
+      "position_snapshot": {
+        "summary": "Karen Crobat faces full-HP Dragonite after Outrage has been revealed. Toxic starts a concrete clock while Crobat survives one public Outrage branch; Wing Attack is low-impact chip, Confuse Ray is swingier, and Tyranitar is the anti-Dragon pivot to re-score into after the clock is started.",
+        "boss_active": {
+          "species": "Crobat",
+          "level": 45,
+          "hp": "92%",
+          "status": "none",
+          "item": "Leftovers",
+          "known_moves": [
+            "Confuse Ray",
+            "Wing Attack",
+            "Toxic"
+          ],
+          "role": "fast status pivot that can start a clock before preserving"
+        },
+        "boss_bench": [
+          "Gengar",
+          "Donphan",
+          "Murkrow",
+          "Tyranitar",
+          "Houndoom"
+        ],
+        "opponent_active": {
+          "species": "Dragonite",
+          "level": 48,
+          "hp": "100%",
+          "status": "none",
+          "revealed_moves": [
+            "Outrage"
+          ],
+          "public_priors": [
+            "Hyper Beam plausible",
+            "Thunder plausible",
+            "Blizzard plausible"
+          ],
+          "role": "locked-damage threat that can punish repeated Crobat turns"
+        },
+        "field": {
+          "weather": "none",
+          "screens": "none",
+          "sleep_clause": "uncommitted"
+        },
+        "mechanics": {
+          "status_clock_move": "move_toxic",
+          "status_clock_live": true,
+          "status_clock_survives_punish": true,
+          "direct_attack_low_impact": true,
+          "fallback_pivot_if_status_unsafe": "switch_tyranitar"
+        },
+        "damage_bands": {
+          "boss_wing_attack_vs_opponent_active": {
+            "label": "Wing Attack is only light chip into full-HP Dragonite",
+            "damage_low_pct": 12,
+            "damage_high_pct": 14,
+            "ko_at_current_hp": "never"
+          },
+          "opponent_outrage_vs_boss_active": {
+            "label": "Outrage leaves Crobat alive from the public HP state",
+            "damage_low_pct": 63,
+            "damage_high_pct": 74,
+            "ko_at_current_hp": "never"
+          },
+          "opponent_outrage_vs_switch_tyranitar": {
+            "label": "Tyranitar is a real pivot but still takes meaningful Outrage damage",
+            "damage_low_pct": 55,
+            "damage_high_pct": 65,
+            "ko_at_current_hp": "never"
+          },
+          "future_tyranitar_rock_slide_vs_opponent_active": {
+            "label": "Rock Slide is a future anti-Dragon damage route after the pivot",
+            "damage_low_pct": 39,
+            "damage_high_pct": 46,
+            "ko_at_current_hp": "never"
+          }
+        }
+      },
+      "candidate_moves_public": [
+        {
+          "id": "move_toxic",
+          "kind": "move"
+        },
+        {
+          "id": "move_wing_attack",
+          "kind": "move"
+        },
+        {
+          "id": "move_confuse_ray",
+          "kind": "move"
+        },
+        {
+          "id": "switch_tyranitar",
+          "kind": "switch"
+        }
+      ],
+      "required_answer_fields": [
+        "chosen_move_id",
+        "candidate_ranking",
+        "current_win_conditions",
+        "irreplaceable_pieces",
+        "catastrophe_branches",
+        "answer_changing_information",
+        "rules_fired"
+      ],
+      "hidden_info_visible_to_policy": {
+        "dragonite_remaining_moves": "three unrevealed slots; Hyper Beam, Thunder, and Blizzard remain plausible, not confirmed",
+        "toxic_accuracy_branch": "unknown and must be separated from decision quality",
+        "post_toxic_pivot_timing": "must be re-scored after damage, status, and lock duration are observed"
+      },
+      "public_opponent_model": {
+        "immediate_punish": "Dragonite's revealed Outrage is meaningful but Crobat survives one public branch, so Toxic can start the clock before the boss re-scores preservation.",
+        "role_aware_preservation": "Crobat should not stay forever after starting the clock; Tyranitar is the visible anti-Dragon pivot once the status route exists.",
+        "incentive_compatible_response": "The player is incentivized to keep attacking or reveal coverage if Karen spends turns on low-impact Wing Attack or swingy disruption.",
+        "hidden_info_belief_state": "If Crobat no longer survives Outrage, if Dragonite already has status, or if Wing Attack reaches a decisive damage threshold, the answer should flip away from Toxic."
+      }
+    },
+    {
+      "id": "fixture_koga_crobat_vs_alakazam_immediate_ko_001",
+      "version": 1,
+      "split": "fixture_harvest",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_refs": [
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json:koga_crobat_vs_alakazam_toxic_or_attack",
+        "tools/boss_ai_preference/labels/boss_ai_pairwise_preferences.jsonl:koga_crobat_vs_alakazam_toxic_or_attack",
+        "audit/boss_ai_preference/threat_availability_report.md:koga_crobat_vs_alakazam_toxic_or_attack",
+        "https://www.smogon.com/resources/beginner/bw_risk_reward",
+        "https://www.smogon.com/articles/getting-started"
+      ],
+      "tags": [
+        "fixture_harvest",
+        "immediate_ko",
+        "status_clock",
+        "speed",
+        "psychic_pressure",
+        "heuristic_arbitration"
+      ],
+      "position_snapshot": {
+        "summary": "Koga Crobat faces Alakazam at 51%. Saved feedback says Wing Attack should be chosen because public damage evidence removes Alakazam immediately, while Toxic is slow pressure and Alakazam has revealed Psychic plus Recover. If the KO threshold disappears, Koga should re-score toward preservation through Umbreon.",
+        "boss_active": {
+          "species": "Crobat",
+          "level": 44,
+          "hp": "57%",
+          "status": "none",
+          "item": "Sharp Beak",
+          "known_moves": [
+            "Wing Attack",
+            "Toxic",
+            "Confuse Ray"
+          ],
+          "role": "fast ace that can cash out a direct KO"
+        },
+        "boss_bench": [
+          "Tentacruel",
+          "Muk",
+          "Nidoking",
+          "Umbreon"
+        ],
+        "opponent_active": {
+          "species": "Alakazam",
+          "level": 44,
+          "hp": "51%",
+          "status": "none",
+          "revealed_moves": [
+            "Psychic",
+            "Recover"
+          ],
+          "public_priors": [
+            "ThunderPunch plausible"
+          ],
+          "role": "fast recovery attacker that punishes slow clocks"
+        },
+        "field": {
+          "weather": "none",
+          "screens": "none",
+          "sleep_clause": "uncommitted"
+        },
+        "mechanics": {
+          "direct_ko_move": "move_wing_attack",
+          "direct_ko_available": true,
+          "fallback_pivot_if_ko_unavailable": "switch_umbreon",
+          "status_clock_move": "move_toxic",
+          "status_clock_live": false,
+          "status_clock_survives_punish": false
+        },
+        "damage_bands": {
+          "boss_wing_attack_vs_opponent_active": {
+            "label": "Wing Attack removes the current Alakazam by public damage evidence",
+            "damage_low_pct": 54,
+            "damage_high_pct": 64,
+            "ko_at_current_hp": "guaranteed"
+          },
+          "opponent_psychic_vs_boss_active": {
+            "label": "Psychic can remove Crobat from the current public HP range",
+            "damage_low_pct": 53,
+            "damage_high_pct": 62,
+            "ko_at_current_hp": "possible"
+          },
+          "opponent_recover": {
+            "label": "Recover can erase slow chip if Alakazam survives the turn",
+            "support_effect": "healing"
+          }
+        }
+      },
+      "candidate_moves_public": [
+        {
+          "id": "move_wing_attack",
+          "kind": "move"
+        },
+        {
+          "id": "move_toxic",
+          "kind": "move"
+        },
+        {
+          "id": "move_confuse_ray",
+          "kind": "move"
+        },
+        {
+          "id": "switch_umbreon",
+          "kind": "switch"
+        }
+      ],
+      "required_answer_fields": [
+        "chosen_move_id",
+        "candidate_ranking",
+        "current_win_conditions",
+        "irreplaceable_pieces",
+        "catastrophe_branches",
+        "answer_changing_information",
+        "rules_fired"
+      ],
+      "hidden_info_visible_to_policy": {
+        "alakazam_remaining_moves": "two unrevealed slots beyond Psychic and Recover",
+        "wing_attack_damage_roll": "public band says KO; do not rely on type words",
+        "post_ko_player_switch": "unknown and must be re-scored after the KO"
+      },
+      "public_opponent_model": {
+        "immediate_punish": "If Alakazam survives, revealed Psychic can remove Crobat and Recover can erase slow pressure; public Wing Attack damage avoids both branches by KOing now.",
+        "role_aware_preservation": "Umbreon is the clean public preservation route only if Crobat cannot remove Alakazam immediately.",
+        "incentive_compatible_response": "The player is incentivized to attack or Recover if Koga spends the turn on Toxic or confusion instead of taking the KO.",
+        "hidden_info_belief_state": "If Wing Attack no longer KOs, if Alakazam is already statused, or if Umbreon is unavailable, the answer should re-score away from the current direct-KO line."
+      }
+    },
+    {
+      "id": "fixture_jasmine_skarmory_vs_machoke_focus_energy_001",
+      "version": 1,
+      "split": "fixture_harvest",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_refs": [
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json:jasmine_skarmory_vs_machoke_whirlwind",
+        "tools/boss_ai_preference/labels/boss_ai_pairwise_preferences.jsonl:jasmine_skarmory_vs_machoke_whirlwind",
+        "audit/boss_ai_preference/threat_availability_report.md:jasmine_skarmory_vs_machoke_whirlwind",
+        "https://www.smogon.com/gs/articles/move_priority",
+        "https://www.smogon.com/gs/articles/gsc_spikes"
+      ],
+      "tags": [
+        "fixture_harvest",
+        "phazing",
+        "setup_denial",
+        "status_clock",
+        "heuristic_arbitration"
+      ],
+      "position_snapshot": {
+        "summary": "Jasmine Skarmory faces healthy Machoke after Focus Energy and Karate Chop are public. Saved feedback says Toxic and Whirlwind are both defensible, but Focus Energy is not urgent attack setup; Toxic starts the better first clock while Whirlwind is reserved for a real boost route.",
+        "boss_active": {
+          "species": "Skarmory",
+          "level": 33,
+          "hp": "83%",
+          "status": "none",
+          "item": "Rocky Helmet",
+          "known_moves": [
+            "Steel Wing",
+            "Toxic",
+            "Whirlwind"
+          ],
+          "role": "physical wall and phazer"
+        },
+        "boss_bench": [
+          "Magneton",
+          "Forretress",
+          "Scizor",
+          "Steelix"
+        ],
+        "opponent_active": {
+          "species": "Machoke",
+          "level": 34,
+          "hp": "90%",
+          "status": "none",
+          "revealed_moves": [
+            "Focus Energy",
+            "Karate Chop"
+          ],
+          "public_priors": [
+            "Rock Slide plausible",
+            "Fire Blast plausible"
+          ],
+          "role": "bulky physical threat with low-urgency setup signal"
+        },
+        "field": {
+          "weather": "none",
+          "screens": "none",
+          "sleep_clause": "uncommitted"
+        },
+        "mechanics": {
+          "status_clock_move": "move_toxic",
+          "status_clock_live": true,
+          "status_clock_survives_punish": true,
+          "weak_setup_signal": true,
+          "phazing_required_for_boost": false
+        },
+        "damage_bands": {
+          "opponent_karate_chop_vs_boss_active": {
+            "label": "Karate Chop is chip into current Skarmory HP",
+            "damage_low_pct": 26,
+            "damage_high_pct": 31,
+            "ko_at_current_hp": "never"
+          },
+          "opponent_fire_blast_vs_boss_active": {
+            "label": "Fire Blast is plausible major coverage, not confirmed",
+            "damage_low_pct": 61,
+            "damage_high_pct": 72,
+            "ko_at_current_hp": "never"
+          },
+          "boss_steel_wing_vs_opponent_active": {
+            "label": "Steel Wing is not current KO pressure into healthy Machoke",
+            "ko_at_current_hp": "never"
+          }
+        }
+      },
+      "candidate_moves_public": [
+        {
+          "id": "move_toxic",
+          "kind": "move"
+        },
+        {
+          "id": "move_whirlwind",
+          "kind": "move"
+        },
+        {
+          "id": "move_steel_wing",
+          "kind": "move"
+        },
+        {
+          "id": "switch_forretress",
+          "kind": "switch"
+        }
+      ],
+      "required_answer_fields": [
+        "chosen_move_id",
+        "candidate_ranking",
+        "current_win_conditions",
+        "irreplaceable_pieces",
+        "catastrophe_branches",
+        "answer_changing_information",
+        "rules_fired"
+      ],
+      "hidden_info_visible_to_policy": {
+        "machoke_remaining_moves": "two unrevealed slots beyond Focus Energy and Karate Chop",
+        "fire_blast": "plausible coverage, not confirmed",
+        "future_boost_route": "unknown; Whirlwind value must be re-scored if a real boost appears"
+      },
+      "public_opponent_model": {
+        "immediate_punish": "Focus Energy is public setup intent but not an immediate attack-stage route, so Whirlwind is not forced before Toxic can create a clock.",
+        "role_aware_preservation": "Skarmory is the current wall and phazer; Forretress should not be asked to take over unless Skarmory's role changes.",
+        "incentive_compatible_response": "The player wants Jasmine to spend phazing PP or pivot unnecessarily if Machoke has not created a dangerous boost route.",
+        "hidden_info_belief_state": "If Machoke reveals a real boost, if Fire Blast becomes confirmed, or if Steel Wing enters KO range, the answer should re-score."
+      }
+    },
+    {
+      "id": "fixture_morty_misdreavus_vs_typhlosion_perish_route_001",
+      "version": 1,
+      "split": "fixture_harvest",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_refs": [
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json:morty_misdreavus_vs_typhlosion_perish_song",
+        "audit/boss_ai_preference/threat_availability_report.md:morty_misdreavus_vs_typhlosion_perish_song",
+        "https://www.smogon.com/forums/threads/misdreavus-ou-revamp-done.3643258/",
+        "https://www.smogon.com/forums/threads/sleep-trapping.3617871/"
+      ],
+      "tags": [
+        "fixture_harvest",
+        "perish_route",
+        "forced_clock",
+        "boost_reset",
+        "preservation",
+        "heuristic_arbitration"
+      ],
+      "position_snapshot": {
+        "summary": "Morty Misdreavus faces Typhlosion at 84% after Typhlosion gained +1 Attack. Perish Song is the route move because it forces the boosted attacker to leave or lose the countdown, while Confuse Ray and Psywave do not reset the long-game threat. The clock is valid only because Misdreavus survives the public Flame Wheel branch.",
+        "boss_active": {
+          "species": "Misdreavus",
+          "level": 24,
+          "hp": "63%",
+          "status": "none",
+          "item": "Spell Tag",
+          "known_moves": [
+            "Confuse Ray",
+            "Psywave",
+            "Perish Song"
+          ],
+          "role": "control piece that can force a boosted target off the board"
+        },
+        "boss_bench": [
+          "Gengar"
+        ],
+        "opponent_active": {
+          "species": "Typhlosion",
+          "level": 28,
+          "hp": "84%",
+          "status": "none",
+          "revealed_moves": [
+            "Flame Wheel",
+            "Swift"
+          ],
+          "public_priors": [
+            "Sunny Day plausible",
+            "Fire Punch plausible"
+          ],
+          "boosts": {
+            "atk": 1
+          },
+          "role": "boosted Fire-pressure attacker"
+        },
+        "field": {
+          "weather": "none",
+          "screens": "none",
+          "sleep_clause": "uncommitted"
+        },
+        "mechanics": {
+          "perish_route_live": true,
+          "perish_route_survives_punish": true,
+          "fallback_pivot_if_perish_unsafe": "switch_gengar"
+        },
+        "damage_bands": {
+          "opponent_flame_wheel_vs_boss_active": {
+            "label": "Flame Wheel chips Misdreavus but does not remove it from current HP",
+            "damage_low_pct": 46,
+            "damage_high_pct": 55,
+            "ko_at_current_hp": "never"
+          },
+          "opponent_swift_vs_boss_active": {
+            "label": "Swift has no useful damage into Misdreavus in the public fixture evidence",
+            "damage_low_pct": 0,
+            "damage_high_pct": 0,
+            "ko_at_current_hp": "never"
+          },
+          "boss_psywave_vs_opponent_active": {
+            "label": "Psywave is variable and does not remove the boosted Typhlosion route",
+            "ko_at_current_hp": "never"
+          }
+        }
+      },
+      "candidate_moves_public": [
+        {
+          "id": "move_perish_song",
+          "kind": "move"
+        },
+        {
+          "id": "move_confuse_ray",
+          "kind": "move"
+        },
+        {
+          "id": "move_psywave",
+          "kind": "move"
+        },
+        {
+          "id": "switch_gengar",
+          "kind": "switch"
+        }
+      ],
+      "required_answer_fields": [
+        "chosen_move_id",
+        "candidate_ranking",
+        "current_win_conditions",
+        "irreplaceable_pieces",
+        "catastrophe_branches",
+        "answer_changing_information",
+        "rules_fired"
+      ],
+      "hidden_info_visible_to_policy": {
+        "typhlosion_remaining_moves": "two unrevealed slots beyond Flame Wheel and Swift",
+        "perish_followup": "must be re-scored after the countdown, damage, and any switch",
+        "fire_coverage": "Fire Punch and stronger Fire coverage are plausible, not confirmed"
+      },
+      "public_opponent_model": {
+        "immediate_punish": "Typhlosion can use revealed Flame Wheel, but public damage evidence says Misdreavus survives and can start the Perish clock.",
+        "role_aware_preservation": "Gengar is the fallback route if Misdreavus cannot safely start Perish Song, but switching first lets the boosted Typhlosion keep its route.",
+        "incentive_compatible_response": "The player wants Morty to spend turns on confusion or variable damage instead of forcing the boosted attacker to leave.",
+        "hidden_info_belief_state": "If Misdreavus no longer survives Flame Wheel, if Typhlosion is no longer boosted, or if Gengar is unavailable, the answer should re-score."
+      }
+    },
+    {
+      "id": "fixture_whitney_clefairy_vs_bayleef_encore_reflect_001",
+      "version": 1,
+      "split": "fixture_harvest",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_refs": [
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json:whitney_clefairy_vs_bayleef_encore_window",
+        "tools/boss_ai_preference/labels/boss_ai_pairwise_preferences.jsonl:whitney_clefairy_vs_bayleef_encore_window",
+        "docs/agent_navigation/gen2_vs_modern_mechanics.md",
+        "engine/battle/move_effects/encore.asm",
+        "https://www.smogon.com/resources/beginner/bw_risk_reward"
+      ],
+      "tags": [
+        "fixture_harvest",
+        "encore_trap",
+        "setup_denial",
+        "sequence_policy",
+        "early_gym",
+        "heuristic_arbitration"
+      ],
+      "position_snapshot": {
+        "summary": "Whitney Clefairy faces Bayleef after Bayleef used Reflect and the screen is already active. Saved feedback says Encore is the best transition if Clefairy is faster because it locks Bayleef into a low-value Reflect repeat; without that public trap, one Double Team setup turn is the safer utility route.",
+        "boss_active": {
+          "species": "Clefairy",
+          "level": 19,
+          "hp": "100%",
+          "status": "none",
+          "item": "Evolite",
+          "known_moves": [
+            "Encore",
+            "Thunder Wave",
+            "Double Team",
+            "DoubleSlap"
+          ],
+          "role": "early utility lead"
+        },
+        "boss_bench": [
+          "Girafarig",
+          "Miltank"
+        ],
+        "opponent_active": {
+          "species": "Bayleef",
+          "level": 20,
+          "hp": "100%",
+          "status": "none",
+          "revealed_moves": [
+            "Reflect"
+          ],
+          "public_priors": [
+            "Razor Leaf likely",
+            "Synthesis plausible"
+          ],
+          "role": "bulky starter with public support turn"
+        },
+        "field": {
+          "weather": "none",
+          "screens": {
+            "player_reflect": "active"
+          },
+          "player_last_move": "Reflect",
+          "sleep_clause": "uncommitted"
+        },
+        "mechanics": {
+          "encore_trap_live": true,
+          "encore_user_faster": true,
+          "encore_locks_low_value_move": true,
+          "safe_one_setup_turn": true,
+          "fallback_setup_if_encore_absent": "move_double_team"
+        },
+        "damage_bands": {
+          "opponent_giga_drain_vs_boss_active": {
+            "label": "Bayleef damage is survivable enough for one utility turn",
+            "damage_low_pct": 28,
+            "damage_high_pct": 33,
+            "ko_at_current_hp": "never"
+          },
+          "opponent_razor_leaf_vs_boss_active": {
+            "label": "Razor Leaf is survivable enough for one utility turn",
+            "damage_low_pct": 26,
+            "damage_high_pct": 31,
+            "ko_at_current_hp": "never"
+          },
+          "boss_doubleslap_vs_opponent_active": {
+            "label": "DoubleSlap is low-impact chip compared with the utility routes",
+            "ko_at_current_hp": "never"
+          }
+        }
+      },
+      "candidate_moves_public": [
+        {
+          "id": "move_encore",
+          "kind": "move"
+        },
+        {
+          "id": "move_double_team",
+          "kind": "move"
+        },
+        {
+          "id": "move_thunder_wave",
+          "kind": "move"
+        },
+        {
+          "id": "move_doubleslap",
+          "kind": "move"
+        }
+      ],
+      "required_answer_fields": [
+        "chosen_move_id",
+        "candidate_ranking",
+        "current_win_conditions",
+        "irreplaceable_pieces",
+        "catastrophe_branches",
+        "answer_changing_information",
+        "rules_fired"
+      ],
+      "hidden_info_visible_to_policy": {
+        "bayleef_remaining_moves": "unknown beyond revealed Reflect and public priors",
+        "encore_duration": "3 to 6 turns from local mechanics",
+        "switch_response": "unknown; player may switch after the Encore attempt"
+      },
+      "public_opponent_model": {
+        "immediate_punish": "Bayleef's last visible move is Reflect and Clefairy is faster, so Encore can trap a low-value repeat before Bayleef attacks.",
+        "role_aware_preservation": "Clefairy is the utility lead; it can spend one utility turn but should not turn the whole fight into blind evasion.",
+        "incentive_compatible_response": "The player wants to avoid being locked into Reflect and may switch after the Encore, so Whitney must re-score after the trap attempt.",
+        "hidden_info_belief_state": "If Reflect was not the last move, if Clefairy is slower, or if Bayleef has already switched, Encore should lose priority."
+      }
+    },
+    {
+      "id": "fixture_jasmine_magneton_vs_quilava_speed_control_001",
+      "version": 1,
+      "split": "fixture_harvest",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_refs": [
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json:jasmine_magneton_vs_quilava_thunder_wave_or_bolt",
+        "docs/agent_navigation/gen2_vs_modern_mechanics.md",
+        "engine/battle/effect_commands.asm:BattleCommand_ParalyzeTarget",
+        "engine/battle/type_passive_damage_mods.asm:ApplyPrzEffectOnSpeed_Far",
+        "https://www.smogon.com/resources/beginner/bw_risk_reward",
+        "https://www.smogon.com/smog/issue1/introduction_to_prediction"
+      ],
+      "tags": [
+        "fixture_harvest",
+        "status_clock",
+        "speed_control",
+        "immediate_ko",
+        "early_gym",
+        "heuristic_arbitration"
+      ],
+      "position_snapshot": {
+        "summary": "Jasmine Magneton faces Quilava. The fixture says Magneton is slower, Thunder Wave flips the next-turn order, and Thunderbolt does not currently remove Quilava. The decision is whether speed-control status creates a route or direct damage is already enough.",
+        "boss_active": {
+          "species": "Magneton",
+          "level": 31,
+          "hp": "100%",
+          "status": "none",
+          "item": "Magnet",
+          "known_moves": [
+            "Thunder Wave",
+            "Thunderbolt",
+            "Lock-On"
+          ],
+          "speed_relation": "slower_than_opponent_before_paralysis",
+          "role": "speed-control attacker"
+        },
+        "boss_bench": [
+          "Steelix",
+          "Skarmory"
+        ],
+        "opponent_active": {
+          "species": "Quilava",
+          "level": 33,
+          "hp": "82%",
+          "status": "none",
+          "revealed_moves": [
+            "Flame Wheel",
+            "Quick Attack"
+          ],
+          "public_priors": [
+            "Dig plausible"
+          ],
+          "role": "faster Fire attacker"
+        },
+        "field": {
+          "weather": "none",
+          "screens": "none",
+          "sleep_clause": "uncommitted"
+        },
+        "mechanics": {
+          "status_clock_move": "move_thunder_wave",
+          "status_clock_live": true,
+          "status_clock_survives_punish": true,
+          "direct_ko_move": "move_thunderbolt",
+          "direct_ko_available": false,
+          "direct_attack_low_impact": true
+        },
+        "damage_bands": {
+          "opponent_flame_wheel_vs_boss_active": {
+            "label": "Flame Wheel damages Magneton but does not remove it from full HP",
+            "damage_low_pct": 45,
+            "damage_high_pct": 53,
+            "ko_at_current_hp": "never"
+          },
+          "boss_thunderbolt_vs_opponent_active": {
+            "label": "Thunderbolt is meaningful damage but does not remove Quilava from the public HP",
+            "damage_low_pct": 54,
+            "damage_high_pct": 64,
+            "ko_at_current_hp": "never"
+          }
+        }
+      },
+      "candidate_moves_public": [
+        {
+          "id": "move_thunder_wave",
+          "kind": "move"
+        },
+        {
+          "id": "move_thunderbolt",
+          "kind": "move"
+        },
+        {
+          "id": "move_lock_on",
+          "kind": "move"
+        },
+        {
+          "id": "switch_steelix",
+          "kind": "switch"
+        }
+      ],
+      "required_answer_fields": [
+        "chosen_move_id",
+        "candidate_ranking",
+        "current_win_conditions",
+        "irreplaceable_pieces",
+        "catastrophe_branches",
+        "answer_changing_information",
+        "rules_fired"
+      ],
+      "hidden_info_visible_to_policy": {
+        "quilava_remaining_moves": "two unrevealed slots beyond Flame Wheel and Quick Attack",
+        "dig": "plausible, not confirmed",
+        "damage_threshold": "Thunderbolt must be re-scored if Quilava falls into direct removal range"
+      },
+      "public_opponent_model": {
+        "immediate_punish": "Quilava is faster and can damage Magneton before direct damage resolves, but Magneton survives from full HP and can use Thunder Wave to change next-turn order.",
+        "role_aware_preservation": "Steelix and Skarmory are backline anchors; switching to Steelix before speed control exposes the ace line to Fire and Ground pressure.",
+        "incentive_compatible_response": "The player wants to keep Quilava fast enough to pressure Magneton or force Jasmine into an early ace pivot.",
+        "hidden_info_belief_state": "If Thunderbolt now removes Quilava, if Quilava is already statused, if Magneton no longer survives Flame Wheel, or if Dig is confirmed as the immediate punish, the answer should re-score."
+      }
+    },
+    {
+      "id": "fixture_misty_starmie_vs_meganium_recover_tempo_001",
+      "version": 1,
+      "split": "fixture_harvest",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_refs": [
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json:misty_starmie_vs_meganium_recover_or_attack",
+        "tools/boss_ai_preference/labels/boss_ai_pairwise_preferences.jsonl:misty_starmie_vs_meganium_recover_or_attack",
+        "https://www.smogon.com/resources/beginner/bw_risk_reward",
+        "https://www.smogon.com/articles/getting-started"
+      ],
+      "tags": [
+        "fixture_harvest",
+        "recovery_tempo",
+        "late_game",
+        "cleanup_route",
+        "heuristic_arbitration"
+      ],
+      "position_snapshot": {
+        "summary": "Misty Starmie faces Meganium at 46% HP. Saved feedback says Recover is a trap here because Meganium can keep damaging through the recovery turn; Psychic creates the chip route that lets Lapras clean after Starmie is forced out or faints.",
+        "boss_active": {
+          "species": "Starmie",
+          "level": 63,
+          "hp": "46%",
+          "status": "none",
+          "item": "Wise Glasses",
+          "known_moves": [
+            "Hydro Pump",
+            "Recover",
+            "Psychic"
+          ],
+          "role": "ace and tempo attacker"
+        },
+        "boss_bench": [
+          "Politoed",
+          "Quagsire",
+          "Lapras",
+          "Lanturn"
+        ],
+        "opponent_active": {
+          "species": "Meganium",
+          "level": 62,
+          "hp": "68%",
+          "status": "none",
+          "revealed_moves": [
+            "Razor Leaf",
+            "Reflect"
+          ],
+          "public_priors": [
+            "Synthesis plausible",
+            "Body Slam plausible"
+          ],
+          "role": "bulky pressure target"
+        },
+        "field": {
+          "weather": "rain",
+          "screens": {
+            "player_reflect": "active"
+          },
+          "sleep_clause": "uncommitted"
+        },
+        "mechanics": {
+          "tempo_attack_move": "move_psychic",
+          "tempo_attack_changes_route": true,
+          "recovery_move": "move_recover",
+          "recovery_window_live": false
+        },
+        "damage_bands": {
+          "opponent_razor_leaf_vs_boss_active": {
+            "label": "Razor Leaf keeps Starmie under active damage pressure after Recover",
+            "damage_low_pct": 54,
+            "damage_high_pct": 64,
+            "ko_at_current_hp": "guaranteed"
+          },
+          "boss_psychic_vs_opponent_active": {
+            "label": "Psychic chip changes the Lapras cleanup band",
+            "damage_low_pct": 31,
+            "damage_high_pct": 37,
+            "ko_at_current_hp": "never"
+          },
+          "bench_lapras_ice_beam_after_psychic": {
+            "label": "Lapras cleanup becomes favored after Psychic chip",
+            "ko_after_psychic_chip": "favored"
+          }
+        }
+      },
+      "candidate_moves_public": [
+        {
+          "id": "move_recover",
+          "kind": "move"
+        },
+        {
+          "id": "move_psychic",
+          "kind": "move"
+        },
+        {
+          "id": "move_hydro_pump",
+          "kind": "move"
+        },
+        {
+          "id": "switch_lapras",
+          "kind": "switch"
+        }
+      ],
+      "required_answer_fields": [
+        "chosen_move_id",
+        "candidate_ranking",
+        "current_win_conditions",
+        "irreplaceable_pieces",
+        "catastrophe_branches",
+        "answer_changing_information",
+        "rules_fired"
+      ],
+      "hidden_info_visible_to_policy": {
+        "meganium_remaining_moves": "two unrevealed slots beyond Razor Leaf and Reflect",
+        "synthesis": "plausible and makes low-impact chip weaker",
+        "lapras_cleanup_band": "public plan says Psychic chip is needed before Lapras cleanup"
+      },
+      "public_opponent_model": {
+        "immediate_punish": "Meganium can keep damaging Starmie after a Recover turn, so recovery does not change the route while Psychic can create a cleanup threshold.",
+        "role_aware_preservation": "Lapras is the cleanup piece, but switching immediately may miss the Psychic chip that makes the cleanup route reliable.",
+        "incentive_compatible_response": "The player wants Misty to spend turns healing or using low-impact rain damage while Meganium remains healthy enough to recover or trade.",
+        "hidden_info_belief_state": "If Meganium is asleep, if Psychic no longer changes the cleanup band, if Starmie is required later, or if direct Lapras cleanup is already guaranteed, Recover or a pivot can rise."
+      }
+    },
+    {
+      "id": "fixture_clair_dragonair_vs_suicune_hidden_ice_001",
+      "version": 1,
+      "split": "fixture_harvest",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_refs": [
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json:clair_dragonair_vs_suicune_hidden_ice_beam",
+        "tools/boss_ai_preference/labels/boss_ai_pairwise_preferences.jsonl:clair_dragonair_vs_suicune_hidden_ice_beam",
+        "audit/boss_ai_preference/plan_queue.md:clair_dragonair_vs_suicune_hidden_ice_beam",
+        "data/types/type_matchups.asm",
+        "docs/agent_navigation/gen2_vs_modern_mechanics.md",
+        "https://www.smogon.com/smog/issue1/introduction_to_prediction",
+        "https://www.smogon.com/resources/beginner/bw_risk_reward"
+      ],
+      "tags": [
+        "fixture_harvest",
+        "hidden_info",
+        "hidden_coverage",
+        "preservation",
+        "lock_move",
+        "heuristic_arbitration"
+      ],
+      "position_snapshot": {
+        "summary": "Clair Dragonair faces Suicune after Surf is revealed. Dragonair resists Surf, so Suicune staying in is public evidence for a plausible hidden Ice punish. Saved feedback says the policy should preserve through Kingdra instead of committing Dragonair to Thunder or Outrage.",
+        "boss_active": {
+          "species": "Dragonair",
+          "level": 38,
+          "hp": "74%",
+          "status": "none",
+          "item": "Expert Belt",
+          "known_moves": [
+            "Thunder",
+            "Outrage"
+          ],
+          "role": "coverage dragon that should not be spent into plausible Ice coverage"
+        },
+        "boss_bench": [
+          "Gligar",
+          "Mantine",
+          "Kingdra",
+          "Steelix",
+          "Dragonair"
+        ],
+        "opponent_active": {
+          "species": "Suicune",
+          "level": 40,
+          "hp": "88%",
+          "status": "none",
+          "revealed_moves": [
+            "Surf"
+          ],
+          "public_priors": [
+            "Ice Beam common coverage",
+            "Rest plausible"
+          ],
+          "role": "bulky Water that may be staying to reveal coverage"
+        },
+        "field": {
+          "weather": "none",
+          "screens": "none",
+          "sleep_clause": "uncommitted"
+        },
+        "mechanics": {
+          "hidden_coverage_punish_plausible": true,
+          "primary_hidden_coverage_pivot": "switch_kingdra",
+          "fallback_hidden_coverage_pivot": "switch_mantine",
+          "fallback_attack_if_hidden_coverage_absent": "move_thunder",
+          "lock_move_safe": false,
+          "lock_after_status_or_safe_state": false
+        },
+        "damage_bands": {
+          "opponent_surf_vs_boss_active": {
+            "label": "Surf is not the issue; hidden Ice coverage is the severe branch",
+            "ko_at_current_hp": "never"
+          },
+          "opponent_hidden_ice_vs_boss_active": {
+            "label": "Hidden Ice coverage is plausible and severe from public priors",
+            "ko_at_current_hp": "plausible"
+          },
+          "boss_thunder_vs_opponent_active": {
+            "label": "Thunder is direct pressure but exposes Dragonair to the hidden coverage branch",
+            "ko_at_current_hp": "never"
+          }
+        }
+      },
+      "candidate_moves_public": [
+        {
+          "id": "move_thunder",
+          "kind": "move"
+        },
+        {
+          "id": "move_outrage",
+          "kind": "move"
+        },
+        {
+          "id": "switch_kingdra",
+          "kind": "switch"
+        },
+        {
+          "id": "switch_mantine",
+          "kind": "switch"
+        }
+      ],
+      "required_answer_fields": [
+        "chosen_move_id",
+        "candidate_ranking",
+        "current_win_conditions",
+        "irreplaceable_pieces",
+        "catastrophe_branches",
+        "answer_changing_information",
+        "rules_fired"
+      ],
+      "hidden_info_visible_to_policy": {
+        "suicune_remaining_moves": "three unrevealed slots beyond Surf",
+        "ice_beam": "plausible from public priors, not confirmed",
+        "rest": "plausible and affects whether direct chip sticks",
+        "exact_hidden_set": "unknown; policy must not oracle-peek"
+      },
+      "public_opponent_model": {
+        "immediate_punish": "Suicune staying in despite Dragonair resisting Surf makes hidden Ice coverage a plausible severe punish.",
+        "role_aware_preservation": "Dragonair should not be spent into a likely coverage test while Kingdra is available as Clair's better Water/Ice-pressure pivot.",
+        "incentive_compatible_response": "The player is incentivized to reveal Ice coverage or force Dragonair into a bad lock if Clair stays in.",
+        "hidden_info_belief_state": "If hidden Ice coverage is no longer plausible, if Kingdra is unavailable, or if Suicune is forced to switch, Thunder can rise above preservation."
+      }
+    },
+    {
+      "id": "fixture_bugsy_ariados_vs_pidgey_status_clock_001",
+      "version": 1,
+      "split": "fixture_harvest",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_refs": [
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json:bugsy_ariados_vs_pidgey_toxic_or_attack",
+        "tools/boss_ai_preference/labels/boss_ai_pairwise_preferences.jsonl:bugsy_ariados_vs_pidgey_toxic_or_attack",
+        "docs/boss_ai_teaching_heuristics.md:bench_status_bugsy_ariados_001",
+        "https://www.smogon.com/resources/competitive/gs/status",
+        "https://www.smogon.com/resources/beginner/bw_risk_reward"
+      ],
+      "tags": [
+        "fixture_harvest",
+        "status_clock",
+        "weak_chip",
+        "ace_preservation",
+        "early_gym",
+        "heuristic_arbitration"
+      ],
+      "position_snapshot": {
+        "summary": "Bugsy Ariados faces Pidgey. Saved feedback says Toxic is the opener because Pidgey's pressure is real but not immediately lethal, while Ariados's direct damage is weak and switching to Scyther exposes the ace before a clock exists.",
+        "boss_active": {
+          "species": "Ariados",
+          "level": 15,
+          "hp": "100%",
+          "status": "none",
+          "item": "Berry",
+          "known_moves": [
+            "Toxic",
+            "Poison Sting",
+            "Giga Drain",
+            "Leech Life"
+          ],
+          "role": "status opener"
+        },
+        "boss_bench": [
+          "Ledian",
+          "Scyther"
+        ],
+        "opponent_active": {
+          "species": "Pidgey",
+          "level": 17,
+          "hp": "100%",
+          "status": "none",
+          "revealed_moves": [
+            "Quick Attack"
+          ],
+          "public_priors": [
+            "Gust plausible"
+          ],
+          "role": "early Flying pressure"
+        },
+        "field": {
+          "weather": "none",
+          "screens": "none",
+          "sleep_clause": "uncommitted"
+        },
+        "mechanics": {
+          "status_clock_move": "move_toxic",
+          "status_clock_live": true,
+          "status_clock_survives_punish": true,
+          "direct_attack_low_impact": true,
+          "fallback_pivot_if_status_unsafe": "switch_scyther"
+        },
+        "damage_bands": {
+          "opponent_gust_vs_boss_active": {
+            "label": "Gust is meaningful pressure but does not remove Ariados this turn",
+            "damage_low_pct": 27,
+            "damage_high_pct": 32,
+            "ko_at_current_hp": "never"
+          },
+          "opponent_quick_attack_vs_boss_active": {
+            "label": "Quick Attack chip is survivable",
+            "damage_low_pct": 12,
+            "damage_high_pct": 15,
+            "ko_at_current_hp": "never"
+          },
+          "boss_leech_life_vs_opponent_active": {
+            "label": "Ariados direct damage is low-impact and does not change the route quickly",
+            "damage_low_pct": 18,
+            "damage_high_pct": 21,
+            "ko_at_current_hp": "never"
+          },
+          "boss_giga_drain_vs_opponent_active": {
+            "label": "Ariados alternate direct damage is low-impact and does not change the route quickly",
+            "damage_low_pct": 18,
+            "damage_high_pct": 21,
+            "ko_at_current_hp": "never"
+          }
+        }
+      },
+      "candidate_moves_public": [
+        {
+          "id": "move_toxic",
+          "kind": "move"
+        },
+        {
+          "id": "move_poison_sting",
+          "kind": "move"
+        },
+        {
+          "id": "move_giga_drain",
+          "kind": "move"
+        },
+        {
+          "id": "move_leech_life",
+          "kind": "move"
+        },
+        {
+          "id": "switch_scyther",
+          "kind": "switch"
+        }
+      ],
+      "required_answer_fields": [
+        "chosen_move_id",
+        "candidate_ranking",
+        "current_win_conditions",
+        "irreplaceable_pieces",
+        "catastrophe_branches",
+        "answer_changing_information",
+        "rules_fired"
+      ],
+      "hidden_info_visible_to_policy": {
+        "pidgey_remaining_moves": "three unrevealed slots beyond Quick Attack",
+        "gust": "plausible public pressure, not confirmed this turn",
+        "clock_followup": "must be re-scored after Toxic lands, misses, or the player pivots"
+      },
+      "public_opponent_model": {
+        "immediate_punish": "Pidgey's public Flying pressure is real but Ariados survives the plausible hit, so Toxic can start the clock before direct chip or ace exposure.",
+        "role_aware_preservation": "Scyther is the ace and should not be exposed before the status clock exists or a stronger punish forces the pivot.",
+        "incentive_compatible_response": "The player wants Bugsy to choose weak chip or an early ace switch instead of putting Pidgey on a clock.",
+        "hidden_info_belief_state": "If Pidgey is already statused, if Gust becomes a current KO, or if Ariados has already created the clock, the answer should re-score away from Toxic."
+      }
+    },
+    {
+      "id": "external_gsc_forretress_vs_curselax_status_before_hazards_001",
+      "version": 1,
+      "split": "fixture_harvest",
+      "mechanics_profile": "vanilla_gsc",
+      "source_refs": [
+        "docs/pokemon_mastery/quick_tests/replay_turn_pause_005_status_route_smogtours-gen2ou-903666_2026-05-14.md",
+        "https://replay.pokemonshowdown.com/smogtours-gen2ou-903666.log",
+        "docs/pokemon_mastery/paused_turn_atlas.md#pta-056-stop-the-setup-route-before-support-economy"
+      ],
+      "tags": [
+        "external_gsc",
+        "status_clock",
+        "support_priority",
+        "setup_denial",
+        "hazards",
+        "replay_903666"
+      ],
+      "position_snapshot": {
+        "summary": "External GSC replay 903666 turn 11: Forretress faces a +1 Snorlax while its own side has Spikes. Toxic can stop the CurseLax route before Forretress spends the support turn on Spikes, Rapid Spin, or a sacrifice.",
+        "boss_active": {
+          "species": "Forretress",
+          "level": 100,
+          "hp": "94%",
+          "status": "none",
+          "item": "Leftovers",
+          "known_moves": [
+            "Toxic",
+            "Spikes",
+            "Rapid Spin",
+            "Explosion"
+          ],
+          "role": "support route controller"
+        },
+        "boss_bench": [
+          "Snorlax",
+          "Exeggutor",
+          "Gengar"
+        ],
+        "opponent_active": {
+          "species": "Snorlax",
+          "level": 100,
+          "hp": "74%",
+          "status": "none",
+          "boosts": {
+            "atk": 1,
+            "def": 1,
+            "spe": -1
+          },
+          "revealed_moves": [
+            "Curse"
+          ],
+          "public_priors": [
+            "Double-Edge plausible",
+            "Rest plausible",
+            "Sleep Talk plausible"
+          ],
+          "role": "active setup anchor"
+        },
+        "field": {
+          "weather": "none",
+          "boss_side_spikes": "one layer",
+          "player_side_spikes_layers": 0,
+          "sleep_clause": "occupied"
+        },
+        "mechanics": {
+          "status_clock_move": "move_toxic",
+          "status_clock_live": true,
+          "status_clock_survives_punish": true,
+          "opponent_setup_route_live": true,
+          "own_hazards_present": true
+        },
+        "damage_bands": {
+          "opponent_double_edge_vs_boss_active": {
+            "label": "+1 Snorlax Double-Edge does not remove Forretress before Toxic can land",
+            "ko_at_current_hp": "never"
+          }
+        }
+      },
+      "candidate_moves_public": [
+        {
+          "id": "move_toxic",
+          "kind": "move"
+        },
+        {
+          "id": "move_rapid_spin",
+          "kind": "move"
+        },
+        {
+          "id": "move_spikes",
+          "kind": "move"
+        },
+        {
+          "id": "move_explosion",
+          "kind": "move"
+        },
+        {
+          "id": "switch_gengar",
+          "kind": "switch"
+        }
+      ],
+      "required_answer_fields": [
+        "chosen_move_id",
+        "candidate_ranking",
+        "current_win_conditions",
+        "irreplaceable_pieces",
+        "catastrophe_branches",
+        "answer_changing_information",
+        "rules_fired"
+      ],
+      "hidden_info_visible_to_policy": {
+        "forretress_remaining_moves": "candidate list is the public policy surface for this fixture, not hidden player input",
+        "snorlax_remaining_moves": "three unrevealed slots beyond Curse; RestTalk is plausible but not confirmed",
+        "followup": "after Toxic lands, re-score Spikes, Rapid Spin, Explosion, or switching"
+      },
+      "public_opponent_model": {
+        "immediate_punish": "Snorlax can keep attacking or boosting; if it remains unstatused, the Curse route may become the whole board before hazard economy matters.",
+        "role_aware_preservation": "Forretress is the current support route controller and survives long enough to start the poison clock.",
+        "incentive_compatible_response": "The opponent wants Forretress to spend the turn on Spikes, Rapid Spin, or Explosion before Snorlax is put on a clock.",
+        "hidden_info_belief_state": "If Snorlax is already statused, if Forretress cannot survive the hit, or if phazing is available and required, the answer must be re-scored."
+      }
+    },
+    {
+      "id": "fixture_morty_gengar_vs_kadabra_destiny_bond_001",
+      "version": 1,
+      "split": "fixture_harvest",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_refs": [
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json:morty_gengar_vs_kadabra_destiny_bond",
+        "tools/boss_ai_preference/labels/boss_ai_pairwise_preferences.jsonl",
+        "tools/boss_ai_preference/labels/boss_ai_trajectory_preferences.jsonl",
+        "https://www.smogon.com/gs/articles/guide_to_explosion",
+        "https://www.smogon.com/rs/articles/long_term_thinking"
+      ],
+      "tags": [
+        "sacrifice",
+        "route_trade",
+        "direct_removal",
+        "heuristic_arbitration"
+      ],
+      "position_snapshot": {
+        "summary": "Morty's low-HP Gengar faces Kadabra. Saved feedback says Destiny Bond is a wasteful trade while Shadow Ball already removes Kadabra from the public HP band.",
+        "boss_active": {
+          "species": "Gengar",
+          "level": 26,
+          "hp": "34%",
+          "status": "none",
+          "item": "Spell Tag",
+          "known_moves": [
+            "Shadow Ball",
+            "Thunderbolt",
+            "Destiny Bond",
+            "Spikes"
+          ],
+          "speed_relation": "boss_faster",
+          "role": "ace and one-time sacrifice threat"
+        },
+        "boss_bench": [
+          {
+            "species": "Haunter",
+            "hp": "63%",
+            "status": "none"
+          },
+          {
+            "species": "Misdreavus",
+            "hp": "100%",
+            "status": "none"
+          }
+        ],
+        "opponent_active": {
+          "species": "Kadabra",
+          "level": 26,
+          "hp": "62%",
+          "status": "none",
+          "revealed_moves": [
+            "Confusion",
+            "Recover"
+          ],
+          "public_priors": [
+            "Psychic plausible",
+            "Kadabra may Recover if it survives"
+          ],
+          "role": "fast special attacker and recovery target"
+        },
+        "field": {
+          "weather": "none",
+          "screens": "none",
+          "sleep_clause": "free"
+        },
+        "mechanics": {
+          "direct_ko_move": "move_shadow_ball",
+          "direct_ko_available": true,
+          "sacrifice_trade_move": "move_destiny_bond",
+          "sacrifice_trade_live": true,
+          "sacrifice_trade_forced": false
+        },
+        "damage_bands": {
+          "boss_shadow_ball_vs_opponent_active": {
+            "label": "Shadow Ball removes Kadabra at the current public HP band",
+            "damage_low_pct": 104,
+            "damage_high_pct": 123,
+            "ko_at_current_hp": "guaranteed"
+          },
+          "opponent_psychic_vs_boss_active": {
+            "label": "Kadabra can remove Gengar if Gengar gives it a turn",
+            "damage_low_pct": 66,
+            "damage_high_pct": 78,
+            "ko_at_current_hp": "guaranteed"
+          }
+        }
+      },
+      "candidate_moves_public": [
+        {
+          "id": "move_shadow_ball",
+          "kind": "move"
+        },
+        {
+          "id": "move_destiny_bond",
+          "kind": "move"
+        },
+        {
+          "id": "move_spikes",
+          "kind": "move"
+        },
+        {
+          "id": "switch_misdreavus",
+          "kind": "switch"
+        }
+      ],
+      "required_answer_fields": [
+        "chosen_move_id",
+        "candidate_ranking",
+        "current_win_conditions",
+        "irreplaceable_pieces",
+        "catastrophe_branches",
+        "answer_changing_information",
+        "rules_fired"
+      ],
+      "hidden_info_visible_to_policy": {
+        "kadabra_remaining_moves": "two unrevealed slots beyond Confusion and Recover",
+        "damage_boundary": "Shadow Ball currently removes Kadabra; if that boundary changes, the sacrifice line must be re-scored"
+      },
+      "public_opponent_model": {
+        "immediate_punish": "Kadabra can punish any non-removal turn with Psychic or Recover pressure, but Shadow Ball removes it before that branch matters.",
+        "role_aware_preservation": "Gengar is low, yet it still has value if it can remove Kadabra without spending itself.",
+        "incentive_compatible_response": "The player wants Morty to spend Destiny Bond or switch instead of taking the confirmed removal.",
+        "hidden_info_belief_state": "If Kadabra is outside Shadow Ball range, if Misdreavus becomes the required follow-up piece, or if Destiny Bond is publicly blocked by move order or status, the answer should flip."
+      }
+    }
+  ]
+}

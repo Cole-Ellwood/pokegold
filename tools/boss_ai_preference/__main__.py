@@ -10,6 +10,28 @@ from .active_queue import (
     DEFAULT_TRACE_DIR,
     write_active_queue,
 )
+from .benchmark_positions import (
+    DEFAULT_BENCHMARK_ORACLES_PATH,
+    DEFAULT_BENCHMARK_JSON_PATH,
+    DEFAULT_BENCHMARK_MUTATION_JSON_PATH,
+    DEFAULT_BENCHMARK_MUTATION_REPORT_PATH,
+    DEFAULT_BENCHMARK_POLICY_ANSWERS_PATH,
+    DEFAULT_BENCHMARK_REPORT_PATH,
+    DEFAULT_BENCHMARKS_PATH,
+    load_benchmark_oracles,
+    load_benchmarks,
+    write_benchmark_mutation_report,
+    write_benchmark_policy_answers,
+    write_benchmark_report,
+)
+from .benchmark_harvest import (
+    DEFAULT_BENCHMARK_HARVEST_JSON_PATH,
+    DEFAULT_BENCHMARK_HARVEST_REPORT_PATH,
+    DEFAULT_BENCHMARK_LABEL_QUEUE_JSON_PATH,
+    DEFAULT_BENCHMARK_LABEL_QUEUE_REPORT_PATH,
+    write_benchmark_harvest_report,
+    write_benchmark_label_queue,
+)
 from .app import run_server
 from .counterfactuals import (
     DEFAULT_COUNTERFACTUAL_JSON_PATH,
@@ -39,6 +61,11 @@ from .features import (
     DEFAULT_FEATURE_REPORT_PATH,
     write_feature_report,
 )
+from .expert_play_research import (
+    DEFAULT_EXPERT_PLAY_RESEARCH_JSON_PATH,
+    DEFAULT_EXPERT_PLAY_RESEARCH_REPORT_PATH,
+    write_expert_play_research_report,
+)
 from .final_report import (
     DEFAULT_FINAL_JSON_PATH,
     DEFAULT_FINAL_REPORT_PATH,
@@ -49,6 +76,11 @@ from .lessons import (
     DEFAULT_LESSON_REPORT_PATH,
     DEFAULT_LESSONS_PATH,
     write_lesson_report,
+)
+from .long_battle_review import (
+    DEFAULT_LONG_BATTLE_REVIEW_JSON_PATH,
+    DEFAULT_LONG_BATTLE_REVIEW_REPORT_PATH,
+    write_long_battle_review_report,
 )
 from .plan_queue import (
     DEFAULT_COACH_JSON_PATH,
@@ -72,6 +104,11 @@ from .threat_availability import (
     DEFAULT_THREAT_JSON_PATH,
     DEFAULT_THREAT_REPORT_PATH,
     write_threat_report,
+)
+from .type_evidence import (
+    DEFAULT_TYPE_EVIDENCE_JSON_PATH,
+    DEFAULT_TYPE_EVIDENCE_REPORT_PATH,
+    write_type_evidence_report,
 )
 from .trajectory_data import (
     DEFAULT_PLAN_DEMONSTRATIONS_PATH,
@@ -152,11 +189,154 @@ def cmd_validate(args: argparse.Namespace) -> int:
     preferences = load_preferences(args.preferences, fixtures=fixtures)
     trajectories = load_trajectory_preferences(args.trajectories, fixtures=fixtures)
     demonstrations = load_plan_demonstrations(args.demonstrations, fixtures=fixtures)
+    benchmarks = load_benchmarks(args.benchmarks)
+    oracles = load_benchmark_oracles(args.oracles)
     print(f"Preference fixtures valid: {len(fixtures)}")
     print(f"Preference labels valid: {len(labels)}")
     print(f"Pairwise preferences valid: {len(preferences)}")
     print(f"Trajectory preferences valid: {len(trajectories)}")
     print(f"Plan demonstrations valid: {len(demonstrations)}")
+    print(f"State-transition public cards valid: {len(benchmarks)}")
+    print(f"State-transition hidden oracles valid: {len(oracles)}")
+    return 0
+
+
+def cmd_benchmark_report(args: argparse.Namespace) -> int:
+    report = write_benchmark_report(
+        benchmarks_path=args.benchmarks,
+        oracles_path=args.oracles,
+        answers_path=args.answers,
+        out_path=args.out,
+        json_out_path=args.json_out,
+    )
+    print(f"Wrote {args.out}")
+    if args.json_out is not None:
+        print(f"Wrote {args.json_out}")
+    print(
+        "State-transition benchmark summary: "
+        f"{report['benchmark_count']} benchmarks, "
+        f"contract_ready={report['benchmark_contract_ready']}, "
+        f"policy_evaluated={report['policy_evaluated']}, "
+        f"policy_passes={report['policy_passes']}"
+    )
+    return 0
+
+
+def cmd_benchmark_policy(args: argparse.Namespace) -> int:
+    report = write_benchmark_policy_answers(
+        benchmarks_path=args.benchmarks,
+        out_path=args.out,
+    )
+    print(f"Wrote {args.out}")
+    print(
+        "State-transition policy answer summary: "
+        f"{len(report['answers'])} answers from {report['policy_name']}"
+    )
+    return 0
+
+
+def cmd_benchmark_mutations(args: argparse.Namespace) -> int:
+    report = write_benchmark_mutation_report(
+        benchmarks_path=args.benchmarks,
+        out_path=args.out,
+        json_out_path=args.json_out,
+    )
+    print(f"Wrote {args.out}")
+    if args.json_out is not None:
+        print(f"Wrote {args.json_out}")
+    print(
+        "State-transition mutation summary: "
+        f"{report['mutation_count']} mutations, "
+        f"policy_flips={report['policy_flip_count']}, "
+        f"all_pass={report['all_mutations_pass']}"
+    )
+    return 0
+
+
+def cmd_benchmark_harvest(args: argparse.Namespace) -> int:
+    report = write_benchmark_harvest_report(
+        fixtures_path=args.fixtures,
+        preferences_path=args.preferences,
+        out_path=args.out,
+        json_out_path=args.json_out,
+    )
+    print(f"Wrote {args.out}")
+    if args.json_out is not None:
+        print(f"Wrote {args.json_out}")
+    print(
+        "Fixture benchmark harvest summary: "
+        f"{report['complete_candidate_count']} complete, "
+        f"{report['partial_candidate_count']} partial"
+    )
+    return 0
+
+
+def cmd_benchmark_label_queue(args: argparse.Namespace) -> int:
+    report = write_benchmark_label_queue(
+        fixtures_path=args.fixtures,
+        preferences_path=args.preferences,
+        out_path=args.out,
+        json_out_path=args.json_out,
+        limit=args.limit,
+    )
+    print(f"Wrote {args.out}")
+    if args.json_out is not None:
+        print(f"Wrote {args.json_out}")
+    print(
+        "Benchmark label queue summary: "
+        f"{report['returned_count']} / {report['request_count']} requests, "
+        f"{report['one_label_completion_count']} one-label completions"
+    )
+    return 0
+
+
+def cmd_type_evidence(args: argparse.Namespace) -> int:
+    report = write_type_evidence_report(
+        out_path=args.out,
+        json_out_path=args.json_out,
+    )
+    print(f"Wrote {args.out}")
+    if args.json_out is not None:
+        print(f"Wrote {args.json_out}")
+    print(
+        "Type-effectiveness evidence summary: "
+        f"{report['chart_tweak_count']} chart tweaks, "
+        f"{report['text_claim_count']} text claims, "
+        f"unsupported={report['unsupported_text_claim_count']}, "
+        f"all_pass={report['all_pass']}"
+    )
+    return 0
+
+
+def cmd_long_battle_review(args: argparse.Namespace) -> int:
+    report = write_long_battle_review_report(
+        out_path=args.out,
+        json_out_path=args.json_out,
+    )
+    print(f"Wrote {args.out}")
+    if args.json_out is not None:
+        print(f"Wrote {args.json_out}")
+    print(
+        "Long battle review summary: "
+        f"{report['turn_count']} turns, "
+        f"{report['critical_turn_count']} critical turns, "
+        f"valid={report['reviews_valid']}"
+    )
+    return 0
+
+
+def cmd_expert_play_research(args: argparse.Namespace) -> int:
+    report = write_expert_play_research_report(
+        out_path=args.out,
+        json_out_path=args.json_out,
+    )
+    print(f"Wrote {args.out}")
+    if args.json_out is not None:
+        print(f"Wrote {args.json_out}")
+    print(
+        "Expert play research summary: "
+        f"{report['principle_count']} source-backed principles"
+    )
     return 0
 
 
@@ -466,7 +646,150 @@ def build_parser() -> argparse.ArgumentParser:
     validate = subparsers.add_parser("validate")
     add_common_paths(validate)
     add_trajectory_paths(validate)
+    validate.add_argument("--benchmarks", type=path_arg, default=DEFAULT_BENCHMARKS_PATH)
+    validate.add_argument("--oracles", type=path_arg, default=DEFAULT_BENCHMARK_ORACLES_PATH)
     validate.set_defaults(func=cmd_validate)
+
+    benchmark_report = subparsers.add_parser("benchmark-report")
+    benchmark_report.add_argument(
+        "--benchmarks",
+        type=path_arg,
+        default=DEFAULT_BENCHMARKS_PATH,
+    )
+    benchmark_report.add_argument(
+        "--oracles",
+        type=path_arg,
+        default=DEFAULT_BENCHMARK_ORACLES_PATH,
+    )
+    benchmark_report.add_argument("--answers", type=path_arg)
+    benchmark_report.add_argument(
+        "--out",
+        type=path_arg,
+        default=DEFAULT_BENCHMARK_REPORT_PATH,
+    )
+    benchmark_report.add_argument(
+        "--json-out",
+        type=path_arg,
+        default=DEFAULT_BENCHMARK_JSON_PATH,
+    )
+    benchmark_report.set_defaults(func=cmd_benchmark_report)
+
+    benchmark_policy = subparsers.add_parser("benchmark-policy")
+    benchmark_policy.add_argument(
+        "--benchmarks",
+        type=path_arg,
+        default=DEFAULT_BENCHMARKS_PATH,
+    )
+    benchmark_policy.add_argument(
+        "--out",
+        type=path_arg,
+        default=DEFAULT_BENCHMARK_POLICY_ANSWERS_PATH,
+    )
+    benchmark_policy.set_defaults(func=cmd_benchmark_policy)
+
+    benchmark_mutations = subparsers.add_parser("benchmark-mutations")
+    benchmark_mutations.add_argument(
+        "--benchmarks",
+        type=path_arg,
+        default=DEFAULT_BENCHMARKS_PATH,
+    )
+    benchmark_mutations.add_argument(
+        "--out",
+        type=path_arg,
+        default=DEFAULT_BENCHMARK_MUTATION_REPORT_PATH,
+    )
+    benchmark_mutations.add_argument(
+        "--json-out",
+        type=path_arg,
+        default=DEFAULT_BENCHMARK_MUTATION_JSON_PATH,
+    )
+    benchmark_mutations.set_defaults(func=cmd_benchmark_mutations)
+
+    benchmark_harvest = subparsers.add_parser("benchmark-harvest")
+    benchmark_harvest.add_argument(
+        "--fixtures",
+        type=path_arg,
+        default=DEFAULT_FIXTURES_PATH,
+    )
+    benchmark_harvest.add_argument(
+        "--preferences",
+        type=path_arg,
+        default=DEFAULT_PREFERENCES_PATH,
+    )
+    benchmark_harvest.add_argument(
+        "--out",
+        type=path_arg,
+        default=DEFAULT_BENCHMARK_HARVEST_REPORT_PATH,
+    )
+    benchmark_harvest.add_argument(
+        "--json-out",
+        type=path_arg,
+        default=DEFAULT_BENCHMARK_HARVEST_JSON_PATH,
+    )
+    benchmark_harvest.set_defaults(func=cmd_benchmark_harvest)
+
+    benchmark_label_queue = subparsers.add_parser("benchmark-label-queue")
+    benchmark_label_queue.add_argument(
+        "--fixtures",
+        type=path_arg,
+        default=DEFAULT_FIXTURES_PATH,
+    )
+    benchmark_label_queue.add_argument(
+        "--preferences",
+        type=path_arg,
+        default=DEFAULT_PREFERENCES_PATH,
+    )
+    benchmark_label_queue.add_argument(
+        "--out",
+        type=path_arg,
+        default=DEFAULT_BENCHMARK_LABEL_QUEUE_REPORT_PATH,
+    )
+    benchmark_label_queue.add_argument(
+        "--json-out",
+        type=path_arg,
+        default=DEFAULT_BENCHMARK_LABEL_QUEUE_JSON_PATH,
+    )
+    benchmark_label_queue.add_argument("--limit", type=int, default=20)
+    benchmark_label_queue.set_defaults(func=cmd_benchmark_label_queue)
+
+    type_evidence = subparsers.add_parser("type-evidence")
+    type_evidence.add_argument(
+        "--out",
+        type=path_arg,
+        default=DEFAULT_TYPE_EVIDENCE_REPORT_PATH,
+    )
+    type_evidence.add_argument(
+        "--json-out",
+        type=path_arg,
+        default=DEFAULT_TYPE_EVIDENCE_JSON_PATH,
+    )
+    type_evidence.set_defaults(func=cmd_type_evidence)
+
+    long_battle_review = subparsers.add_parser("long-battle-review")
+    long_battle_review.add_argument(
+        "--out",
+        type=path_arg,
+        default=DEFAULT_LONG_BATTLE_REVIEW_REPORT_PATH,
+    )
+    long_battle_review.add_argument(
+        "--json-out",
+        type=path_arg,
+        default=DEFAULT_LONG_BATTLE_REVIEW_JSON_PATH,
+    )
+    long_battle_review.set_defaults(func=cmd_long_battle_review)
+
+    expert_play_research = subparsers.add_parser("expert-play-research")
+    expert_play_research.add_argument(
+        "--out",
+        type=path_arg,
+        default=DEFAULT_EXPERT_PLAY_RESEARCH_REPORT_PATH,
+    )
+    expert_play_research.add_argument(
+        "--json-out",
+        type=path_arg,
+        default=DEFAULT_EXPERT_PLAY_RESEARCH_JSON_PATH,
+    )
+    expert_play_research.set_defaults(func=cmd_expert_play_research)
 
     label = subparsers.add_parser("label")
     add_common_paths(label)

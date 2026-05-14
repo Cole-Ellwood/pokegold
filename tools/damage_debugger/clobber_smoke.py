@@ -337,6 +337,13 @@ def seed_special_fire_badge(pyboy, syms):
     write_byte(pyboy, "wKantoBadges", syms, VOLCANOBADGE_MASK)
 
 
+def seed_special_fire_low_hp(pyboy, syms):
+    """Full-FIRE attacker below one-third HP -> Fire passive boosts damage 6/5."""
+    _seed_cyndaquil_attacks_pidgey_with_ember(pyboy, syms)
+    write_be_u16(pyboy, "wBattleMonHP", syms, 1)
+    write_be_u16(pyboy, "wBattleMonMaxHP", syms, 10)
+
+
 def _seed_player_item_multiplier_case(
     pyboy,
     syms,
@@ -541,6 +548,10 @@ SCENARIOS = [
     Scenario(
         "special_fire_badge", seed_special_fire_badge, 13, 17,
         "VolcanoBadge adds damage/8 before STAB on player FIRE move.",
+    ),
+    Scenario(
+        "special_fire_low_hp", seed_special_fire_low_hp, 15, 15,
+        "Full-FIRE attacker below one-third HP gets the type-passive 6/5 damage boost.",
     ),
     Scenario(
         "physical_type_boost_item", seed_physical_type_boost_item, 40, 42,

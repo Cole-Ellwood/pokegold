@@ -16,6 +16,7 @@ from tools.boss_ai_preference.data import (
     load_fixtures,
     load_preferences,
 )
+from tools.boss_ai_preference.features import extract_action_features
 
 
 def tiny_fixture() -> dict:
@@ -168,6 +169,278 @@ class RegressionTests(unittest.TestCase):
 
         self.assertIn("setup_window", rules)
         self.assertNotIn("coverage", rules)
+
+    def test_quiver_dance_is_scored_as_setup_not_damage_coverage(self) -> None:
+        fixture = {
+            "id": "quiver_setup_fixture",
+            "leader": "Tester",
+            "state": {},
+            "actions": [
+                {
+                    "id": "move_quiver_dance",
+                    "kind": "move",
+                    "name": "Quiver Dance",
+                    "explanation": "Attempts to snowball through speed and special pressure.",
+                    "public_tradeoff": "Greedy if the target has Ice coverage.",
+                }
+            ],
+        }
+
+        scored = score_action(fixture, fixture["actions"][0])
+        rules = {contribution["rule"] for contribution in scored["contributions"]}
+        features = extract_action_features(fixture, fixture["actions"][0])["features"]
+
+        self.assertIn("setup_identity", rules)
+        self.assertIn("setup_risk", rules)
+        self.assertNotIn("coverage", rules)
+        self.assertIn("move_class_setup", features)
+
+    def test_public_psychic_into_dark_is_penalized(self) -> None:
+        fixture = {
+            "id": "psychic_dark_fixture",
+            "leader": "Tester",
+            "tags": ["choice_lock", "coverage"],
+            "state": {
+                "public_notes": [
+                    "Psychic may fail into Dark typing.",
+                ]
+            },
+            "actions": [
+                {
+                    "id": "move_psychic",
+                    "kind": "move",
+                    "name": "Psychic",
+                    "explanation": "Highest identity move but bad into a public Dark type.",
+                    "public_tradeoff": "Too robotic if chosen blindly.",
+                },
+                {
+                    "id": "move_thunderpunch",
+                    "kind": "move",
+                    "name": "ThunderPunch",
+                    "explanation": "Neutral coverage without locking into a failed Psychic.",
+                    "public_tradeoff": "Readable adaptation.",
+                },
+            ],
+        }
+
+        psychic = score_action(fixture, fixture["actions"][0])
+        thunderpunch = score_action(fixture, fixture["actions"][1])
+        rules = {contribution["rule"] for contribution in psychic["contributions"]}
+        features = extract_action_features(fixture, fixture["actions"][0])["features"]
+
+        self.assertLess(psychic["score"], thunderpunch["score"])
+        self.assertIn("public_type_immunity_risk", rules)
+        self.assertIn("public_type_immunity_risk", features)
+
+    def test_setup_into_public_sleep_window_can_beat_immediate_damage(self) -> None:
+        fixture = {
+            "id": "sleeping_target_setup_fixture",
+            "leader": "Tester",
+            "tags": ["sleep", "setup"],
+            "state": {
+                "player": {
+                    "active": {
+                        "species": "Snorlax",
+                        "hp": "87%",
+                        "status": "sleep",
+                    }
+                }
+            },
+            "actions": [
+                {
+                    "id": "move_curse",
+                    "kind": "move",
+                    "name": "Curse",
+                    "explanation": "Uses the sleep window to change KO math.",
+                    "public_tradeoff": "Wake timing still matters.",
+                },
+                {
+                    "id": "move_earthquake",
+                    "kind": "move",
+                    "name": "Earthquake",
+                    "explanation": "Immediate damage into the sleeping target.",
+                    "public_tradeoff": "May fail to convert before wake.",
+                },
+            ],
+        }
+
+        curse = score_action(fixture, fixture["actions"][0])
+        earthquake = score_action(fixture, fixture["actions"][1])
+        rules = {contribution["rule"] for contribution in curse["contributions"]}
+        features = extract_action_features(fixture, fixture["actions"][0])["features"]
+
+        self.assertGreater(curse["score"], earthquake["score"])
+        self.assertIn("sleeping_target_setup_window", rules)
+        self.assertIn("setup_into_sleep_window", features)
+
+    def test_sleep_first_can_enable_setup_line(self) -> None:
+        fixture = {
+            "id": "sleep_first_setup_fixture",
+            "leader": "Tester",
+            "tags": ["sleep", "setup"],
+            "state": {
+                "player": {
+                    "active": {
+                        "species": "Snorlax",
+                        "hp": "84%",
+                        "status": "none",
+                    }
+                }
+            },
+            "actions": [
+                {
+                    "id": "move_sleep_powder",
+                    "kind": "move",
+                    "name": "Sleep Powder",
+                    "explanation": "Controls the target before setup.",
+                    "public_tradeoff": "Miss risk exists.",
+                },
+                {
+                    "id": "move_swords_dance",
+                    "kind": "move",
+                    "name": "Swords Dance",
+                    "explanation": "Attempts raw setup.",
+                    "public_tradeoff": "Greedy if the target can hit back.",
+                },
+            ],
+        }
+
+        sleep_powder = score_action(fixture, fixture["actions"][0])
+        swords_dance = score_action(fixture, fixture["actions"][1])
+        rules = {
+            contribution["rule"] for contribution in sleep_powder["contributions"]
+        }
+        features = extract_action_features(fixture, fixture["actions"][0])["features"]
+
+        self.assertGreater(sleep_powder["score"], swords_dance["score"])
+        self.assertIn("sleep_enables_setup_line", rules)
+        self.assertIn("sleep_enables_setup_line", features)
+
+    def test_rest_and_sleep_talk_state_gates_are_scored(self) -> None:
+        fixture = {
+            "id": "rest_state_fixture",
+            "leader": "Tester",
+            "state": {
+                "boss": {
+                    "active": {
+                        "species": "Snorlax",
+                        "hp": "100%",
+                        "status": "par",
+                    }
+                }
+            },
+            "actions": [
+                {
+                    "id": "move_rest",
+                    "kind": "move",
+                    "name": "Rest",
+                    "explanation": "Tries to cure status at full HP.",
+                    "public_tradeoff": "Local mechanics make this fail.",
+                },
+                {
+                    "id": "move_sleep_talk",
+                    "kind": "move",
+                    "name": "Sleep Talk",
+                    "explanation": "Only works while asleep.",
+                    "public_tradeoff": "The user is awake.",
+                },
+            ],
+        }
+
+        rest = score_action(fixture, fixture["actions"][0])
+        sleep_talk = score_action(fixture, fixture["actions"][1])
+        rest_rules = {contribution["rule"] for contribution in rest["contributions"]}
+        sleep_talk_rules = {
+            contribution["rule"] for contribution in sleep_talk["contributions"]
+        }
+        rest_features = extract_action_features(fixture, fixture["actions"][0])["features"]
+        sleep_talk_features = extract_action_features(fixture, fixture["actions"][1])[
+            "features"
+        ]
+
+        self.assertIn("full_hp_rest_fails", rest_rules)
+        self.assertIn("awake_sleep_talk_fails", sleep_talk_rules)
+        self.assertIn("rest_at_full_hp", rest_features)
+        self.assertIn("sleep_talk_while_awake", sleep_talk_features)
+
+    def test_spikes_layer_delta_is_scored_from_fixture_state(self) -> None:
+        fixture = {
+            "id": "spikes_layer_fixture",
+            "leader": "Tester",
+            "tags": ["hazards", "romhack_delta"],
+            "state": {
+                "field": {
+                    "hazards": {
+                        "player_side_spikes_layers": 2,
+                    }
+                }
+            },
+            "actions": [
+                {
+                    "id": "move_spikes",
+                    "kind": "move",
+                    "name": "Spikes",
+                    "explanation": "Places the third local Spikes layer.",
+                    "public_tradeoff": "Converts future grounded switches.",
+                },
+                {
+                    "id": "move_sludge_bomb",
+                    "kind": "move",
+                    "name": "Sludge Bomb",
+                    "explanation": "Direct STAB chip.",
+                    "public_tradeoff": "Does not change the hazard economy.",
+                },
+            ],
+        }
+
+        spikes = score_action(fixture, fixture["actions"][0])
+        sludge_bomb = score_action(fixture, fixture["actions"][1])
+        rules = {contribution["rule"] for contribution in spikes["contributions"]}
+        features = extract_action_features(fixture, fixture["actions"][0])["features"]
+
+        self.assertGreater(spikes["score"], sludge_bomb["score"])
+        self.assertIn("third_spikes_layer_pressure", rules)
+        self.assertIn("spikes_third_layer_available", features)
+        self.assertIn("move_class_hazard", features)
+
+    def test_spikes_already_maxed_is_scored_as_failed_redundancy(self) -> None:
+        fixture = {
+            "id": "spikes_maxed_fixture",
+            "leader": "Tester",
+            "tags": ["hazards", "romhack_delta"],
+            "state": {
+                "field": {
+                    "hazards": {
+                        "player_side_spikes_layers": 3,
+                    }
+                }
+            },
+            "actions": [
+                {
+                    "id": "move_spikes",
+                    "kind": "move",
+                    "name": "Spikes",
+                    "explanation": "Attempts a fourth local Spikes layer.",
+                    "public_tradeoff": "Fails once three layers are already set.",
+                },
+                {
+                    "id": "move_sludge_bomb",
+                    "kind": "move",
+                    "name": "Sludge Bomb",
+                    "explanation": "Direct STAB chip.",
+                    "public_tradeoff": "At least advances the board.",
+                },
+            ],
+        }
+
+        spikes = score_action(fixture, fixture["actions"][0])
+        sludge_bomb = score_action(fixture, fixture["actions"][1])
+        rules = {contribution["rule"] for contribution in spikes["contributions"]}
+        features = extract_action_features(fixture, fixture["actions"][0])["features"]
+
+        self.assertLess(spikes["score"], sludge_bomb["score"])
+        self.assertIn("spikes_already_maxed", rules)
+        self.assertIn("spikes_already_maxed", features)
 
     def test_damage_estimate_can_mark_confirmed_ko(self) -> None:
         fixture = {

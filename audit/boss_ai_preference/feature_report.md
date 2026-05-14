@@ -1,35 +1,35 @@
 # Boss AI Preference Feature Report
 
-Generated: 2026-05-12T10:56:59+00:00
+Generated: 2026-05-13T11:25:48+00:00
 
 ## Summary
 
-- Fixtures: 53
-- Actions: 220
-- Non-zero feature names: 110
+- Fixtures: 57
+- Actions: 238
+- Non-zero feature names: 132
 
 ## Highest Support Features
 
-- `boss_hp_percent`: 220
-- `player_hp_percent`: 220
-- `public_active_threat_count`: 220
-- `public_likely_active_threat`: 220
-- `boss_hp_minus_player_hp`: 179
-- `kind_move`: 171
-- `public_major_or_lethal_active_threat`: 154
-- `boss_hp_high`: 153
-- `player_hp_high`: 152
-- `damage_average_percent`: 104
-- `damage_high_percent`: 104
-- `damage_low_percent`: 104
+- `boss_hp_percent`: 238
+- `player_hp_percent`: 238
+- `public_active_threat_count`: 238
+- `public_likely_active_threat`: 238
+- `boss_hp_minus_player_hp`: 197
+- `kind_move`: 186
+- `public_major_or_lethal_active_threat`: 168
+- `boss_hp_high`: 162
+- `player_hp_high`: 161
+- `damage_average_percent`: 113
+- `damage_high_percent`: 113
+- `damage_low_percent`: 113
 - `public_switch_threat_count`: 98
-- `text_tempo_or_punish`: 81
-- `player_hp_mid`: 60
-- `text_visible_risk`: 53
+- `text_tempo_or_punish`: 85
+- `player_hp_mid`: 69
+- `text_visible_risk`: 56
+- `boss_hp_mid`: 52
+- `kind_switch`: 52
+- `fixture_tag_setup`: 50
 - `fixture_tag_status`: 49
-- `kind_switch`: 49
-- `fixture_tag_setup`: 46
-- `boss_hp_mid`: 43
 
 ## Leader Coverage
 
@@ -41,10 +41,13 @@ Generated: 2026-05-12T10:56:59+00:00
 - Chuck: 12 action(s); `boss_hp_percent`=12, `fixture_tag_coverage`=12, `player_hp_percent`=12, `public_active_threat_count`=12, `public_likely_active_threat`=12, `kind_move`=9, `boss_hp_high`=8, `boss_hp_minus_player_hp`=8
 - Clair: 17 action(s); `boss_hp_minus_player_hp`=17, `boss_hp_percent`=17, `player_hp_percent`=17, `public_active_threat_count`=17, `public_likely_active_threat`=17, `kind_move`=13, `public_major_or_lethal_active_threat`=13, `fixture_tag_endgame`=13
 - Erika: 4 action(s); `boss_hp_high`=4, `boss_hp_minus_player_hp`=4, `boss_hp_percent`=4, `fixture_tag_setup`=4, `fixture_tag_sleep`=4, `fixture_tag_wallbreaking`=4, `player_hp_high`=4, `player_hp_percent`=4
+- External GSC: 4 action(s); `boss_hp_mid`=4, `boss_hp_minus_player_hp`=4, `boss_hp_percent`=4, `fixture_tag_endgame`=4, `fixture_tag_external_gsc`=4, `fixture_tag_replay_912130`=4, `fixture_tag_setup`=4, `fixture_tag_sleep`=4
 - Falkner: 11 action(s); `boss_hp_percent`=11, `player_hp_percent`=11, `public_active_threat_count`=11, `public_likely_active_threat`=11, `kind_move`=8, `boss_hp_high`=8, `boss_hp_minus_player_hp`=7, `fixture_tag_early_gym`=7
+- Janine: 10 action(s); `boss_hp_minus_player_hp`=10, `boss_hp_percent`=10, `fixture_tag_hazards`=10, `fixture_tag_kanto_leader`=10, `fixture_tag_romhack_delta`=10, `fixture_tag_spikes_layers`=10, `player_hp_percent`=10, `public_active_threat_count`=10
 - Jasmine: 12 action(s); `boss_hp_minus_player_hp`=12, `boss_hp_percent`=12, `player_hp_percent`=12, `public_active_threat_count`=12, `public_likely_active_threat`=12, `public_major_or_lethal_active_threat`=12, `kind_move`=9, `boss_hp_high`=8
 - Karen: 12 action(s); `boss_hp_percent`=12, `fixture_tag_e4`=12, `player_hp_percent`=12, `public_active_threat_count`=12, `public_likely_active_threat`=12, `kind_move`=10, `boss_hp_high`=8, `player_hp_high`=8
 - Koga: 12 action(s); `boss_hp_percent`=12, `player_hp_percent`=12, `public_active_threat_count`=12, `public_likely_active_threat`=12, `public_major_or_lethal_active_threat`=12, `kind_move`=9, `boss_hp_mid`=8, `boss_hp_minus_player_hp`=8
+- Mechanics Drill: 4 action(s); `boss_active_status_par`=4, `boss_hp_high`=4, `boss_hp_minus_player_hp`=4, `boss_hp_percent`=4, `fixture_tag_local_engine`=4, `fixture_tag_mechanics`=4, `fixture_tag_rest_cycle`=4, `fixture_tag_status_cure`=4
 - Misty: 4 action(s); `boss_hp_low`=4, `boss_hp_minus_player_hp`=4, `boss_hp_percent`=4, `fixture_tag_coverage`=4, `fixture_tag_late_game`=4, `fixture_tag_recovery`=4, `player_hp_mid`=4, `player_hp_percent`=4
 - Morty: 12 action(s); `boss_hp_minus_player_hp`=12, `boss_hp_percent`=12, `player_hp_percent`=12, `public_active_threat_count`=12, `public_likely_active_threat`=12, `kind_move`=9, `fixture_tag_status`=8, `public_major_or_lethal_active_threat`=8
 - Pryce: 12 action(s); `boss_hp_minus_player_hp`=12, `boss_hp_percent`=12, `player_hp_percent`=12, `public_active_threat_count`=12, `public_likely_active_threat`=12, `public_major_or_lethal_active_threat`=12, `kind_move`=9, `player_hp_high`=8

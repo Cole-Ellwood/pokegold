@@ -1,0 +1,633 @@
+{
+  "complete_candidate_count": 4,
+  "feedback_fixture_count": 27,
+  "fixture_count": 57,
+  "generated_at": "2026-05-13T11:25:56+00:00",
+  "missing_counts": {
+    "acceptable": 20,
+    "best": 3,
+    "catastrophic": 3,
+    "single_best": 5
+  },
+  "one_label_completion_count": 11,
+  "partial_candidate_count": 23,
+  "request_count": 23,
+  "requests": [
+    {
+      "acceptable_action_ids": [],
+      "action_a_id": "move_swords_dance",
+      "action_b_id": "switch_ledian",
+      "best_action_ids": [
+        "move_swords_dance"
+      ],
+      "can_complete_with_one_label": true,
+      "catastrophic_action_ids": [
+        "move_wing_attack"
+      ],
+      "completion_effect": "one acceptable label would complete this candidate",
+      "current_acceptable": "-",
+      "current_best": "Swords Dance (`move_swords_dance`)",
+      "current_catastrophic": "Wing Attack (`move_wing_attack`)",
+      "fixture_id": "bugsy_scyther_vs_quilava_fire_pressure",
+      "leader": "Bugsy",
+      "missing": [
+        "acceptable"
+      ],
+      "priority_score": 95,
+      "question": "Can Switch to Ledian (`switch_ledian`) be an acceptable alternative to Swords Dance (`move_swords_dance`), or should it stay outside the benchmark's acceptable set?",
+      "review_type": "acceptable",
+      "suggested_command_template": "python -m tools.boss_ai_preference prefer --fixture-id bugsy_scyther_vs_quilava_fire_pressure --action-a-id move_swords_dance --action-b-id switch_ledian --choice <a_better|b_better|both_good|needs_context|other_better> --note \"<why this label is right>\"",
+      "training_focus": "Teach when a boss should stop setting up because a publicly revealed threat already has tempo.",
+      "turn": 2,
+      "unclassified_action_ids": [
+        "switch_ledian",
+        "move_quick_attack"
+      ]
+    },
+    {
+      "acceptable_action_ids": [],
+      "action_a_id": "switch_kingdra",
+      "action_b_id": "switch_mantine",
+      "best_action_ids": [
+        "switch_kingdra"
+      ],
+      "can_complete_with_one_label": true,
+      "catastrophic_action_ids": [
+        "move_thunder",
+        "move_outrage"
+      ],
+      "completion_effect": "one acceptable label would complete this candidate",
+      "current_acceptable": "-",
+      "current_best": "Switch to Kingdra (`switch_kingdra`)",
+      "current_catastrophic": "Thunder (`move_thunder`), Outrage (`move_outrage`)",
+      "fixture_id": "clair_dragonair_vs_suicune_hidden_ice_beam",
+      "leader": "Clair",
+      "missing": [
+        "acceptable"
+      ],
+      "priority_score": 95,
+      "question": "Can Switch to Mantine (`switch_mantine`) be an acceptable alternative to Switch to Kingdra (`switch_kingdra`), or should it stay outside the benchmark's acceptable set?",
+      "review_type": "acceptable",
+      "suggested_command_template": "python -m tools.boss_ai_preference prefer --fixture-id clair_dragonair_vs_suicune_hidden_ice_beam --action-a-id switch_kingdra --action-b-id switch_mantine --choice <a_better|b_better|both_good|needs_context|other_better> --note \"<why this label is right>\"",
+      "training_focus": "The Suicune/Ice Beam test: the AI should respect public meta coverage before it is revealed.",
+      "turn": 4,
+      "unclassified_action_ids": [
+        "switch_mantine"
+      ]
+    },
+    {
+      "acceptable_action_ids": [],
+      "action_a_id": "move_dragon_dance",
+      "action_b_id": "move_ice_beam",
+      "best_action_ids": [
+        "move_dragon_dance"
+      ],
+      "can_complete_with_one_label": true,
+      "catastrophic_action_ids": [
+        "move_surf"
+      ],
+      "completion_effect": "one acceptable label would complete this candidate",
+      "current_acceptable": "-",
+      "current_best": "Dragon Dance (`move_dragon_dance`)",
+      "current_catastrophic": "Surf (`move_surf`)",
+      "fixture_id": "clair_kingdra_vs_lapras_dragon_dance_or_attack",
+      "leader": "Clair",
+      "missing": [
+        "acceptable"
+      ],
+      "priority_score": 95,
+      "question": "Can Ice Beam (`move_ice_beam`) be an acceptable alternative to Dragon Dance (`move_dragon_dance`), or should it stay outside the benchmark's acceptable set?",
+      "review_type": "acceptable",
+      "suggested_command_template": "python -m tools.boss_ai_preference prefer --fixture-id clair_kingdra_vs_lapras_dragon_dance_or_attack --action-a-id move_dragon_dance --action-b-id move_ice_beam --choice <a_better|b_better|both_good|needs_context|other_better> --note \"<why this label is right>\"",
+      "training_focus": "Label when Clair should spend a turn on Dragon Dance instead of taking damage now.",
+      "turn": 6,
+      "unclassified_action_ids": [
+        "move_ice_beam",
+        "move_outrage"
+      ]
+    },
+    {
+      "acceptable_action_ids": [],
+      "action_a_id": "move_sand_attack",
+      "action_b_id": "switch_noctowl",
+      "best_action_ids": [
+        "move_sand_attack"
+      ],
+      "can_complete_with_one_label": true,
+      "catastrophic_action_ids": [
+        "move_gust"
+      ],
+      "completion_effect": "one acceptable label would complete this candidate",
+      "current_acceptable": "-",
+      "current_best": "Sand Attack (`move_sand_attack`)",
+      "current_catastrophic": "Gust (`move_gust`)",
+      "fixture_id": "falkner_pidgeotto_vs_geodude_rock_risk",
+      "leader": "Falkner",
+      "missing": [
+        "acceptable"
+      ],
+      "priority_score": 95,
+      "question": "Can Switch to Noctowl (`switch_noctowl`) be an acceptable alternative to Sand Attack (`move_sand_attack`), or should it stay outside the benchmark's acceptable set?",
+      "review_type": "acceptable",
+      "suggested_command_template": "python -m tools.boss_ai_preference prefer --fixture-id falkner_pidgeotto_vs_geodude_rock_risk --action-a-id move_sand_attack --action-b-id switch_noctowl --choice <a_better|b_better|both_good|needs_context|other_better> --note \"<why this label is right>\"",
+      "training_focus": "Do not treat a visible type advantage as complete safety when a common early Rock threat is public-plausible.",
+      "turn": 3,
+      "unclassified_action_ids": [
+        "switch_noctowl"
+      ]
+    },
+    {
+      "acceptable_action_ids": [],
+      "action_a_id": "move_rock_slide",
+      "action_b_id": "switch_skarmory",
+      "best_action_ids": [
+        "move_rock_slide"
+      ],
+      "can_complete_with_one_label": true,
+      "catastrophic_action_ids": [
+        "move_earthquake"
+      ],
+      "completion_effect": "one acceptable label would complete this candidate",
+      "current_acceptable": "-",
+      "current_best": "Rock Slide (`move_rock_slide`)",
+      "current_catastrophic": "Earthquake (`move_earthquake`)",
+      "fixture_id": "jasmine_steelix_vs_quilava_fire_threat",
+      "leader": "Jasmine",
+      "missing": [
+        "acceptable"
+      ],
+      "priority_score": 95,
+      "question": "Can Switch to Skarmory (`switch_skarmory`) be an acceptable alternative to Rock Slide (`move_rock_slide`), or should it stay outside the benchmark's acceptable set?",
+      "review_type": "acceptable",
+      "suggested_command_template": "python -m tools.boss_ai_preference prefer --fixture-id jasmine_steelix_vs_quilava_fire_threat --action-a-id move_rock_slide --action-b-id switch_skarmory --choice <a_better|b_better|both_good|needs_context|other_better> --note \"<why this label is right>\"",
+      "training_focus": "Teach Jasmine to stay patient into reduced Fire chip while still respecting stronger public Fire coverage.",
+      "turn": 5,
+      "unclassified_action_ids": [
+        "switch_skarmory",
+        "move_roar"
+      ]
+    },
+    {
+      "acceptable_action_ids": [],
+      "action_a_id": "move_wing_attack",
+      "action_b_id": "switch_umbreon",
+      "best_action_ids": [
+        "move_wing_attack"
+      ],
+      "can_complete_with_one_label": true,
+      "catastrophic_action_ids": [
+        "move_toxic"
+      ],
+      "completion_effect": "one acceptable label would complete this candidate",
+      "current_acceptable": "-",
+      "current_best": "Wing Attack (`move_wing_attack`)",
+      "current_catastrophic": "Toxic (`move_toxic`)",
+      "fixture_id": "koga_crobat_vs_alakazam_toxic_or_attack",
+      "leader": "Koga",
+      "missing": [
+        "acceptable"
+      ],
+      "priority_score": 95,
+      "question": "Can Switch to Umbreon (`switch_umbreon`) be an acceptable alternative to Wing Attack (`move_wing_attack`), or should it stay outside the benchmark's acceptable set?",
+      "review_type": "acceptable",
+      "suggested_command_template": "python -m tools.boss_ai_preference prefer --fixture-id koga_crobat_vs_alakazam_toxic_or_attack --action-a-id move_wing_attack --action-b-id switch_umbreon --choice <a_better|b_better|both_good|needs_context|other_better> --note \"<why this label is right>\"",
+      "training_focus": "Capture Koga's poison-clock identity without ignoring immediate Psychic pressure.",
+      "turn": 5,
+      "unclassified_action_ids": [
+        "switch_umbreon",
+        "move_confuse_ray"
+      ]
+    },
+    {
+      "acceptable_action_ids": [],
+      "action_a_id": "move_psychic",
+      "action_b_id": "switch_lapras",
+      "best_action_ids": [
+        "move_psychic"
+      ],
+      "can_complete_with_one_label": true,
+      "catastrophic_action_ids": [
+        "move_recover"
+      ],
+      "completion_effect": "one acceptable label would complete this candidate",
+      "current_acceptable": "-",
+      "current_best": "Psychic (`move_psychic`)",
+      "current_catastrophic": "Recover (`move_recover`)",
+      "fixture_id": "misty_starmie_vs_meganium_recover_or_attack",
+      "leader": "Misty",
+      "missing": [
+        "acceptable"
+      ],
+      "priority_score": 95,
+      "question": "Can Switch to Lapras (`switch_lapras`) be an acceptable alternative to Psychic (`move_psychic`), or should it stay outside the benchmark's acceptable set?",
+      "review_type": "acceptable",
+      "suggested_command_template": "python -m tools.boss_ai_preference prefer --fixture-id misty_starmie_vs_meganium_recover_or_attack --action-a-id move_psychic --action-b-id switch_lapras --choice <a_better|b_better|both_good|needs_context|other_better> --note \"<why this label is right>\"",
+      "training_focus": "Decide when a fast ace should Recover versus press coverage into a Grass threat.",
+      "turn": 8,
+      "unclassified_action_ids": [
+        "switch_lapras",
+        "move_hydro_pump"
+      ]
+    },
+    {
+      "acceptable_action_ids": [],
+      "action_a_id": "move_shadow_ball",
+      "action_b_id": "switch_misdreavus",
+      "best_action_ids": [
+        "move_shadow_ball"
+      ],
+      "can_complete_with_one_label": true,
+      "catastrophic_action_ids": [
+        "move_destiny_bond"
+      ],
+      "completion_effect": "one acceptable label would complete this candidate",
+      "current_acceptable": "-",
+      "current_best": "Shadow Ball (`move_shadow_ball`)",
+      "current_catastrophic": "Destiny Bond (`move_destiny_bond`)",
+      "fixture_id": "morty_gengar_vs_kadabra_destiny_bond",
+      "leader": "Morty",
+      "missing": [
+        "acceptable"
+      ],
+      "priority_score": 95,
+      "question": "Can Switch to Misdreavus (`switch_misdreavus`) be an acceptable alternative to Shadow Ball (`move_shadow_ball`), or should it stay outside the benchmark's acceptable set?",
+      "review_type": "acceptable",
+      "suggested_command_template": "python -m tools.boss_ai_preference prefer --fixture-id morty_gengar_vs_kadabra_destiny_bond --action-a-id move_shadow_ball --action-b-id switch_misdreavus --choice <a_better|b_better|both_good|needs_context|other_better> --note \"<why this label is right>\"",
+      "training_focus": "Decide when Destiny Bond is scary-good versus cheap or wasteful.",
+      "turn": 4,
+      "unclassified_action_ids": [
+        "switch_misdreavus",
+        "move_spikes"
+      ]
+    },
+    {
+      "acceptable_action_ids": [],
+      "action_a_id": "move_hypnosis",
+      "action_b_id": "switch_gengar",
+      "best_action_ids": [
+        "move_hypnosis"
+      ],
+      "can_complete_with_one_label": true,
+      "catastrophic_action_ids": [
+        "move_night_shade"
+      ],
+      "completion_effect": "one acceptable label would complete this candidate",
+      "current_acceptable": "-",
+      "current_best": "Hypnosis (`move_hypnosis`)",
+      "current_catastrophic": "Night Shade (`move_night_shade`)",
+      "fixture_id": "morty_haunter_vs_noctowl_sleep_line",
+      "leader": "Morty",
+      "missing": [
+        "acceptable"
+      ],
+      "priority_score": 95,
+      "question": "Can Switch to Gengar (`switch_gengar`) be an acceptable alternative to Hypnosis (`move_hypnosis`), or should it stay outside the benchmark's acceptable set?",
+      "review_type": "acceptable",
+      "suggested_command_template": "python -m tools.boss_ai_preference prefer --fixture-id morty_haunter_vs_noctowl_sleep_line --action-a-id move_hypnosis --action-b-id switch_gengar --choice <a_better|b_better|both_good|needs_context|other_better> --note \"<why this label is right>\"",
+      "training_focus": "Label how often sleep should be the correct scary line instead of a cheap default.",
+      "turn": 2,
+      "unclassified_action_ids": [
+        "switch_gengar",
+        "move_curse"
+      ]
+    },
+    {
+      "acceptable_action_ids": [],
+      "action_a_id": "switch_slowking",
+      "action_b_id": "move_protect",
+      "best_action_ids": [
+        "switch_slowking"
+      ],
+      "can_complete_with_one_label": true,
+      "catastrophic_action_ids": [
+        "move_surf",
+        "move_explosion"
+      ],
+      "completion_effect": "one acceptable label would complete this candidate",
+      "current_acceptable": "-",
+      "current_best": "Switch to Slowking (`switch_slowking`)",
+      "current_catastrophic": "Surf (`move_surf`), Explosion (`move_explosion`)",
+      "fixture_id": "pryce_cloyster_vs_quilava_explosion_line",
+      "leader": "Pryce",
+      "missing": [
+        "acceptable"
+      ],
+      "priority_score": 95,
+      "question": "Can Protect (`move_protect`) be an acceptable alternative to Switch to Slowking (`switch_slowking`), or should it stay outside the benchmark's acceptable set?",
+      "review_type": "acceptable",
+      "suggested_command_template": "python -m tools.boss_ai_preference prefer --fixture-id pryce_cloyster_vs_quilava_explosion_line --action-a-id switch_slowking --action-b-id move_protect --choice <a_better|b_better|both_good|needs_context|other_better> --note \"<why this label is right>\"",
+      "training_focus": "Decide when Explosion is dramatic, fair, or cheap in a gym-leader fight.",
+      "turn": 3,
+      "unclassified_action_ids": [
+        "move_protect"
+      ]
+    },
+    {
+      "acceptable_action_ids": [],
+      "action_a_id": "move_body_slam",
+      "action_b_id": "switch_girafarig",
+      "best_action_ids": [
+        "move_body_slam"
+      ],
+      "can_complete_with_one_label": true,
+      "catastrophic_action_ids": [
+        "move_rollout"
+      ],
+      "completion_effect": "one acceptable label would complete this candidate",
+      "current_acceptable": "-",
+      "current_best": "Body Slam (`move_body_slam`)",
+      "current_catastrophic": "Rollout (`move_rollout`)",
+      "fixture_id": "whitney_miltank_vs_geodude_rollout_temptation",
+      "leader": "Whitney",
+      "missing": [
+        "acceptable"
+      ],
+      "priority_score": 95,
+      "question": "Can Switch to Girafarig (`switch_girafarig`) be an acceptable alternative to Body Slam (`move_body_slam`), or should it stay outside the benchmark's acceptable set?",
+      "review_type": "acceptable",
+      "suggested_command_template": "python -m tools.boss_ai_preference prefer --fixture-id whitney_miltank_vs_geodude_rollout_temptation --action-a-id move_body_slam --action-b-id switch_girafarig --choice <a_better|b_better|both_good|needs_context|other_better> --note \"<why this label is right>\"",
+      "training_focus": "Separate iconic pressure from bad Rollout locking when Rock/Ground danger is public.",
+      "turn": 5,
+      "unclassified_action_ids": [
+        "switch_girafarig",
+        "move_milk_drink"
+      ]
+    },
+    {
+      "acceptable_action_ids": [],
+      "action_a_id": "move_toxic",
+      "action_b_id": null,
+      "best_action_ids": [
+        "move_toxic"
+      ],
+      "can_complete_with_one_label": false,
+      "catastrophic_action_ids": [
+        "move_poison_sting",
+        "move_giga_drain",
+        "move_leech_life",
+        "switch_scyther"
+      ],
+      "completion_effect": "requires a new contextual exception or benchmark variant",
+      "current_acceptable": "-",
+      "current_best": "Toxic (`move_toxic`)",
+      "current_catastrophic": "Poison Sting (`move_poison_sting`), Giga Drain (`move_giga_drain`), Leech Life (`move_leech_life`), Switch to Scyther (`switch_scyther`)",
+      "fixture_id": "bugsy_ariados_vs_pidgey_toxic_or_attack",
+      "leader": "Bugsy",
+      "missing": [
+        "acceptable"
+      ],
+      "priority_score": 10,
+      "question": "No unclassified action remains. Decide whether an existing catastrophic label is overbroad, add a contextual exception, or create a separate benchmark variant with a real acceptable alternative.",
+      "review_type": "acceptable",
+      "suggested_command_template": "python -m tools.boss_ai_preference prefer --fixture-id bugsy_ariados_vs_pidgey_toxic_or_attack --action-a-id move_toxic --action-b-id <action-b> --choice <a_better|b_better|both_good|needs_context|other_better> --note \"<why this label is right>\"",
+      "training_focus": "Bugsy's opener should decide between Toxic pressure, weak chip, and preserving Ariados when a Flying threat is public.",
+      "turn": 1,
+      "unclassified_action_ids": []
+    },
+    {
+      "acceptable_action_ids": [],
+      "action_a_id": "switch_piloswine",
+      "action_b_id": null,
+      "best_action_ids": [
+        "switch_piloswine"
+      ],
+      "can_complete_with_one_label": false,
+      "catastrophic_action_ids": [
+        "move_surf",
+        "move_thunder_wave",
+        "move_rest"
+      ],
+      "completion_effect": "requires a new contextual exception or benchmark variant",
+      "current_acceptable": "-",
+      "current_best": "Switch to Piloswine (`switch_piloswine`)",
+      "current_catastrophic": "Surf (`move_surf`), Thunder Wave (`move_thunder_wave`), Rest (`move_rest`)",
+      "fixture_id": "pryce_slowking_vs_ampharos_ground_pivot",
+      "leader": "Pryce",
+      "missing": [
+        "acceptable"
+      ],
+      "priority_score": 10,
+      "question": "No unclassified action remains. Decide whether an existing catastrophic label is overbroad, add a contextual exception, or create a separate benchmark variant with a real acceptable alternative.",
+      "review_type": "acceptable",
+      "suggested_command_template": "python -m tools.boss_ai_preference prefer --fixture-id pryce_slowking_vs_ampharos_ground_pivot --action-a-id switch_piloswine --action-b-id <action-b> --choice <a_better|b_better|both_good|needs_context|other_better> --note \"<why this label is right>\"",
+      "training_focus": "Teach when a Water/Psychic wall should respect Electric pressure and pivot to a Ground type.",
+      "turn": 8,
+      "unclassified_action_ids": []
+    },
+    {
+      "acceptable_action_ids": [],
+      "action_a_id": "move_sleep_powder",
+      "action_b_id": null,
+      "best_action_ids": [
+        "move_sleep_powder"
+      ],
+      "can_complete_with_one_label": false,
+      "catastrophic_action_ids": [
+        "move_swords_dance",
+        "move_sludge_bomb",
+        "switch_exeggutor"
+      ],
+      "completion_effect": "requires a new contextual exception or benchmark variant",
+      "current_acceptable": "-",
+      "current_best": "Sleep Powder (`move_sleep_powder`)",
+      "current_catastrophic": "Swords Dance (`move_swords_dance`), Sludge Bomb (`move_sludge_bomb`), Switch to Exeggutor (`switch_exeggutor`)",
+      "fixture_id": "erika_victreebel_vs_snorlax_sleep_or_boost",
+      "leader": "Erika",
+      "missing": [
+        "acceptable"
+      ],
+      "priority_score": 5,
+      "question": "No unclassified action remains. Decide whether an existing catastrophic label is overbroad, add a contextual exception, or create a separate benchmark variant with a real acceptable alternative.",
+      "review_type": "acceptable",
+      "suggested_command_template": "python -m tools.boss_ai_preference prefer --fixture-id erika_victreebel_vs_snorlax_sleep_or_boost --action-a-id move_sleep_powder --action-b-id <action-b> --choice <a_better|b_better|both_good|needs_context|other_better> --note \"<why this label is right>\"",
+      "training_focus": "Label Erika's grass-control style against a bulky normal wall.",
+      "turn": 5,
+      "unclassified_action_ids": []
+    },
+    {
+      "acceptable_action_ids": [],
+      "action_a_id": "move_curse",
+      "action_b_id": null,
+      "best_action_ids": [
+        "move_curse"
+      ],
+      "can_complete_with_one_label": false,
+      "catastrophic_action_ids": [
+        "move_earthquake",
+        "move_rock_slide",
+        "switch_zapdos"
+      ],
+      "completion_effect": "requires a new contextual exception or benchmark variant",
+      "current_acceptable": "-",
+      "current_best": "Curse (`move_curse`)",
+      "current_catastrophic": "Earthquake (`move_earthquake`), Rock Slide (`move_rock_slide`), Switch to Zapdos (`switch_zapdos`)",
+      "fixture_id": "external_gsc_rhydon_vs_sleeping_snorlax_curse_window",
+      "leader": "External GSC",
+      "missing": [
+        "acceptable"
+      ],
+      "priority_score": 5,
+      "question": "No unclassified action remains. Decide whether an existing catastrophic label is overbroad, add a contextual exception, or create a separate benchmark variant with a real acceptable alternative.",
+      "review_type": "acceptable",
+      "suggested_command_template": "python -m tools.boss_ai_preference prefer --fixture-id external_gsc_rhydon_vs_sleeping_snorlax_curse_window --action-a-id move_curse --action-b-id <action-b> --choice <a_better|b_better|both_good|needs_context|other_better> --note \"<why this label is right>\"",
+      "training_focus": "Turn a preserved but sleeping Snorlax into a concrete setup-window test: Curse is strong only because wake timing, hazards, and Rhydon's KO route have been tracked.",
+      "turn": 49,
+      "unclassified_action_ids": []
+    },
+    {
+      "acceptable_action_ids": [],
+      "action_a_id": "move_sleep_powder",
+      "action_b_id": null,
+      "best_action_ids": [
+        "move_sleep_powder"
+      ],
+      "can_complete_with_one_label": false,
+      "catastrophic_action_ids": [
+        "move_quiver_dance",
+        "move_giga_drain",
+        "switch_kingdra"
+      ],
+      "completion_effect": "requires a new contextual exception or benchmark variant",
+      "current_acceptable": "-",
+      "current_best": "Sleep Powder (`move_sleep_powder`)",
+      "current_catastrophic": "Quiver Dance (`move_quiver_dance`), Giga Drain (`move_giga_drain`), Switch to Kingdra (`switch_kingdra`)",
+      "fixture_id": "lance_yanma_vs_lapras_sleep_powder_or_quiver_dance",
+      "leader": "Champion Lance",
+      "missing": [
+        "acceptable"
+      ],
+      "priority_score": 5,
+      "question": "No unclassified action remains. Decide whether an existing catastrophic label is overbroad, add a contextual exception, or create a separate benchmark variant with a real acceptable alternative.",
+      "review_type": "acceptable",
+      "suggested_command_template": "python -m tools.boss_ai_preference prefer --fixture-id lance_yanma_vs_lapras_sleep_powder_or_quiver_dance --action-a-id move_sleep_powder --action-b-id <action-b> --choice <a_better|b_better|both_good|needs_context|other_better> --note \"<why this label is right>\"",
+      "training_focus": "Yanma is now on Lance's Dragon roster; compare legal sleep pressure against greedy Quiver Dance into Ice risk.",
+      "turn": 6,
+      "unclassified_action_ids": []
+    },
+    {
+      "acceptable_action_ids": [],
+      "action_a_id": "move_body_slam",
+      "action_b_id": null,
+      "best_action_ids": [
+        "move_body_slam"
+      ],
+      "can_complete_with_one_label": false,
+      "catastrophic_action_ids": [
+        "move_curse",
+        "move_rest",
+        "move_sleep_talk"
+      ],
+      "completion_effect": "requires a new contextual exception or benchmark variant",
+      "current_acceptable": "-",
+      "current_best": "Body Slam (`move_body_slam`)",
+      "current_catastrophic": "Curse (`move_curse`), Rest (`move_rest`), Sleep Talk (`move_sleep_talk`)",
+      "fixture_id": "red_snorlax_vs_alakazam_curse_or_body_slam",
+      "leader": "Red",
+      "missing": [
+        "acceptable"
+      ],
+      "priority_score": 5,
+      "question": "No unclassified action remains. Decide whether an existing catastrophic label is overbroad, add a contextual exception, or create a separate benchmark variant with a real acceptable alternative.",
+      "review_type": "acceptable",
+      "suggested_command_template": "python -m tools.boss_ai_preference prefer --fixture-id red_snorlax_vs_alakazam_curse_or_body_slam --action-a-id move_body_slam --action-b-id <action-b> --choice <a_better|b_better|both_good|needs_context|other_better> --note \"<why this label is right>\"",
+      "training_focus": "Red's current Snorlax no longer has Amnesia or Self-Destruct; teach Curse versus direct Body Slam under Psychic/Recover pressure.",
+      "turn": 2,
+      "unclassified_action_ids": []
+    },
+    {
+      "acceptable_action_ids": [],
+      "action_a_id": "switch_houndoom",
+      "action_b_id": null,
+      "best_action_ids": [
+        "switch_houndoom"
+      ],
+      "can_complete_with_one_label": false,
+      "catastrophic_action_ids": [
+        "move_amnesia",
+        "move_surf",
+        "move_psychic"
+      ],
+      "completion_effect": "requires a new contextual exception or benchmark variant",
+      "current_acceptable": "-",
+      "current_best": "Switch to Houndoom (`switch_houndoom`)",
+      "current_catastrophic": "Amnesia (`move_amnesia`), Surf (`move_surf`), Psychic (`move_psychic`)",
+      "fixture_id": "will_slowbro_vs_houndoom_amnesia_or_surf",
+      "leader": "Will",
+      "missing": [
+        "acceptable"
+      ],
+      "priority_score": 5,
+      "question": "No unclassified action remains. Decide whether an existing catastrophic label is overbroad, add a contextual exception, or create a separate benchmark variant with a real acceptable alternative.",
+      "review_type": "acceptable",
+      "suggested_command_template": "python -m tools.boss_ai_preference prefer --fixture-id will_slowbro_vs_houndoom_amnesia_or_surf --action-a-id switch_houndoom --action-b-id <action-b> --choice <a_better|b_better|both_good|needs_context|other_better> --note \"<why this label is right>\"",
+      "training_focus": "Setup against a fast Dark/Crunch threat is a tempo trap even though Amnesia boosts the correct defensive stat.",
+      "turn": 3,
+      "unclassified_action_ids": []
+    },
+    {
+      "acceptable_action_ids": [],
+      "action_a_id": "move_thunderpunch",
+      "action_b_id": null,
+      "best_action_ids": [
+        "move_thunderpunch",
+        "move_ice_punch",
+        "switch_hypno"
+      ],
+      "can_complete_with_one_label": false,
+      "catastrophic_action_ids": [
+        "move_psychic"
+      ],
+      "completion_effect": "requires a new contextual exception or benchmark variant",
+      "current_acceptable": "-",
+      "current_best": "ThunderPunch (`move_thunderpunch`), Ice Punch (`move_ice_punch`), Switch to Hypno (`switch_hypno`)",
+      "current_catastrophic": "Psychic (`move_psychic`)",
+      "fixture_id": "sabrina_alakazam_choice_lock_vs_houndoom",
+      "leader": "Sabrina",
+      "missing": [
+        "acceptable",
+        "single_best"
+      ],
+      "priority_score": -5,
+      "question": "No unclassified action remains. Decide whether an existing catastrophic label is overbroad, add a contextual exception, or create a separate benchmark variant with a real acceptable alternative.",
+      "review_type": "acceptable",
+      "suggested_command_template": "python -m tools.boss_ai_preference prefer --fixture-id sabrina_alakazam_choice_lock_vs_houndoom --action-a-id move_thunderpunch --action-b-id <action-b> --choice <a_better|b_better|both_good|needs_context|other_better> --note \"<why this label is right>\"",
+      "training_focus": "Teach a late-game ace not to autopick Psychic into a public Dark answer.",
+      "turn": 6,
+      "unclassified_action_ids": []
+    },
+    {
+      "acceptable_action_ids": [],
+      "action_a_id": "move_sludge_bomb",
+      "action_b_id": "switch_tentacruel",
+      "best_action_ids": [
+        "move_sludge_bomb",
+        "move_surf"
+      ],
+      "can_complete_with_one_label": false,
+      "catastrophic_action_ids": [
+        "move_spikes"
+      ],
+      "completion_effect": "requires a new contextual exception or benchmark variant",
+      "current_acceptable": "-",
+      "current_best": "Sludge Bomb (`move_sludge_bomb`), Surf (`move_surf`)",
+      "current_catastrophic": "Spikes (`move_spikes`)",
+      "fixture_id": "janine_qwilfish_spikes_already_maxed",
+      "leader": "Janine",
+      "missing": [
+        "acceptable",
+        "single_best"
+      ],
+      "priority_score": -10,
+      "question": "Can Switch to Tentacruel (`switch_tentacruel`) be an acceptable alternative to Sludge Bomb (`move_sludge_bomb`), or should it stay outside the benchmark's acceptable set?",
+      "review_type": "acceptable",
+      "suggested_command_template": "python -m tools.boss_ai_preference prefer --fixture-id janine_qwilfish_spikes_already_maxed --action-a-id move_sludge_bomb --action-b-id switch_tentacruel --choice <a_better|b_better|both_good|needs_context|other_better> --note \"<why this label is right>\"",
+      "training_focus": "When three Spikes layers already exist, Janine's Qwilfish must stop clicking Spikes and use a live move.",
+      "turn": 22,
+      "unclassified_action_ids": [
+        "switch_tentacruel",
+        "move_explosion"
+      ]
+    }
+  ],
+  "returned_count": 20
+}

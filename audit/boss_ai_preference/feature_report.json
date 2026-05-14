@@ -1,5 +1,5 @@
 {
-  "action_count": 220,
+  "action_count": 238,
   "actions": [
     {
       "action_id": "move_gust",
@@ -570,6 +570,7 @@
         "fixture_tag_sacrifice": 1.0,
         "fixture_tag_status": 1.0,
         "kind_move": 1.0,
+        "move_class_hazard": 1.0,
         "player_hp_mid": 1.0,
         "player_hp_percent": 0.62,
         "public_active_threat_count": 6.0,
@@ -2311,7 +2312,8 @@
         "player_hp_percent": 0.84,
         "public_active_threat_count": 8.0,
         "public_likely_active_threat": 1.0,
-        "public_major_or_lethal_active_threat": 1.0
+        "public_major_or_lethal_active_threat": 1.0,
+        "sleep_enables_setup_line": 1.0
       },
       "fixture_id": "erika_victreebel_vs_snorlax_sleep_or_boost",
       "leader": "Erika"
@@ -2441,6 +2443,7 @@
         "public_active_threat_count": 8.0,
         "public_likely_active_threat": 1.0,
         "public_major_or_lethal_active_threat": 1.0,
+        "public_type_immunity_risk": 1.0,
         "text_visible_risk": 1.0
       },
       "fixture_id": "sabrina_alakazam_choice_lock_vs_houndoom",
@@ -2814,6 +2817,7 @@
         ]
       },
       "features": {
+        "boss_active_status_paralyzed": 1.0,
         "boss_hp_high": 1.0,
         "boss_hp_minus_player_hp": 0.34,
         "boss_hp_percent": 0.78,
@@ -2850,6 +2854,7 @@
         ]
       },
       "features": {
+        "boss_active_status_paralyzed": 1.0,
         "boss_hp_high": 1.0,
         "boss_hp_minus_player_hp": 0.34,
         "boss_hp_percent": 0.78,
@@ -2886,6 +2891,7 @@
         ]
       },
       "features": {
+        "boss_active_status_paralyzed": 1.0,
         "boss_hp_high": 1.0,
         "boss_hp_minus_player_hp": 0.34,
         "boss_hp_percent": 0.78,
@@ -2916,6 +2922,7 @@
         ]
       },
       "features": {
+        "boss_active_status_paralyzed": 1.0,
         "boss_hp_high": 1.0,
         "boss_hp_minus_player_hp": 0.34,
         "boss_hp_percent": 0.78,
@@ -4760,6 +4767,7 @@
         "fixture_tag_hazards": 1.0,
         "fixture_tag_status": 1.0,
         "kind_move": 1.0,
+        "move_class_hazard": 1.0,
         "player_hp_high": 1.0,
         "player_hp_percent": 1.0,
         "public_active_threat_count": 8.0,
@@ -4861,6 +4869,353 @@
       },
       "fixture_id": "koga_ariados_vs_typhlosion_spikes_or_toxic",
       "leader": "Koga"
+    },
+    {
+      "action_id": "move_spikes",
+      "action_name": "Spikes",
+      "feature_sources": {
+        "damage_estimate": [],
+        "incoming_threats": [
+          "level_up",
+          "revealed",
+          "tm_available"
+        ]
+      },
+      "features": {
+        "boss_hp_high": 1.0,
+        "boss_hp_minus_player_hp": 0.06,
+        "boss_hp_percent": 0.82,
+        "fixture_tag_hazards": 1.0,
+        "fixture_tag_kanto_leader": 1.0,
+        "fixture_tag_romhack_delta": 1.0,
+        "fixture_tag_spikes_layers": 1.0,
+        "kind_move": 1.0,
+        "move_class_hazard": 1.0,
+        "player_hp_high": 1.0,
+        "player_hp_percent": 0.76,
+        "public_active_threat_count": 8.0,
+        "public_likely_active_threat": 1.0,
+        "public_major_or_lethal_active_threat": 1.0,
+        "spikes_player_layers_2": 1.0,
+        "spikes_third_layer_available": 1.0,
+        "text_tempo_or_punish": 1.0
+      },
+      "fixture_id": "janine_qwilfish_finish_third_spikes_layer",
+      "leader": "Janine"
+    },
+    {
+      "action_id": "move_sludge_bomb",
+      "action_name": "Sludge Bomb",
+      "feature_sources": {
+        "damage_estimate": [
+          "tools.boss_ai_preference.damage_estimates"
+        ],
+        "incoming_threats": [
+          "level_up",
+          "revealed",
+          "tm_available"
+        ]
+      },
+      "features": {
+        "boss_hp_high": 1.0,
+        "boss_hp_minus_player_hp": 0.06,
+        "boss_hp_percent": 0.82,
+        "damage_average_percent": 0.74,
+        "damage_bucket_near_ko": 1.0,
+        "damage_high_percent": 0.8,
+        "damage_low_percent": 0.68,
+        "fixture_tag_hazards": 1.0,
+        "fixture_tag_kanto_leader": 1.0,
+        "fixture_tag_romhack_delta": 1.0,
+        "fixture_tag_spikes_layers": 1.0,
+        "kind_move": 1.0,
+        "player_hp_high": 1.0,
+        "player_hp_percent": 0.76,
+        "public_active_threat_count": 8.0,
+        "public_likely_active_threat": 1.0,
+        "public_major_or_lethal_active_threat": 1.0,
+        "two_hko_or_better": 1.0
+      },
+      "fixture_id": "janine_qwilfish_finish_third_spikes_layer",
+      "leader": "Janine"
+    },
+    {
+      "action_id": "move_surf",
+      "action_name": "Surf",
+      "feature_sources": {
+        "damage_estimate": [
+          "tools.boss_ai_preference.damage_estimates"
+        ],
+        "incoming_threats": [
+          "level_up",
+          "revealed",
+          "tm_available"
+        ]
+      },
+      "features": {
+        "boss_hp_high": 1.0,
+        "boss_hp_minus_player_hp": 0.06,
+        "boss_hp_percent": 0.82,
+        "damage_average_percent": 0.165,
+        "damage_bucket_meaningful": 1.0,
+        "damage_high_percent": 0.18,
+        "damage_low_percent": 0.15,
+        "fixture_tag_hazards": 1.0,
+        "fixture_tag_kanto_leader": 1.0,
+        "fixture_tag_romhack_delta": 1.0,
+        "fixture_tag_spikes_layers": 1.0,
+        "kind_move": 1.0,
+        "player_hp_high": 1.0,
+        "player_hp_percent": 0.76,
+        "public_active_threat_count": 8.0,
+        "public_likely_active_threat": 1.0,
+        "public_major_or_lethal_active_threat": 1.0,
+        "text_tempo_or_punish": 1.0
+      },
+      "fixture_id": "janine_qwilfish_finish_third_spikes_layer",
+      "leader": "Janine"
+    },
+    {
+      "action_id": "move_explosion",
+      "action_name": "Explosion",
+      "feature_sources": {
+        "damage_estimate": [
+          "tools.boss_ai_preference.damage_estimates"
+        ],
+        "incoming_threats": [
+          "level_up",
+          "revealed",
+          "tm_available"
+        ]
+      },
+      "features": {
+        "boss_hp_high": 1.0,
+        "boss_hp_minus_player_hp": 0.06,
+        "boss_hp_percent": 0.82,
+        "damage_average_percent": 1.35,
+        "damage_bucket_ko": 1.0,
+        "damage_high_percent": 1.46,
+        "damage_low_percent": 1.24,
+        "fixture_tag_hazards": 1.0,
+        "fixture_tag_kanto_leader": 1.0,
+        "fixture_tag_romhack_delta": 1.0,
+        "fixture_tag_spikes_layers": 1.0,
+        "kind_move": 1.0,
+        "ko_confirmed": 1.0,
+        "ko_possible": 1.0,
+        "move_class_sacrifice": 1.0,
+        "player_hp_high": 1.0,
+        "player_hp_percent": 0.76,
+        "public_active_threat_count": 8.0,
+        "public_likely_active_threat": 1.0,
+        "public_major_or_lethal_active_threat": 1.0,
+        "two_hko_or_better": 1.0
+      },
+      "fixture_id": "janine_qwilfish_finish_third_spikes_layer",
+      "leader": "Janine"
+    },
+    {
+      "action_id": "switch_tentacruel",
+      "action_name": "Switch to Tentacruel",
+      "feature_sources": {
+        "damage_estimate": [],
+        "incoming_threats": [
+          "level_up",
+          "revealed",
+          "tm_available"
+        ]
+      },
+      "features": {
+        "boss_hp_high": 1.0,
+        "boss_hp_minus_player_hp": 0.06,
+        "boss_hp_percent": 0.82,
+        "fixture_tag_hazards": 1.0,
+        "fixture_tag_kanto_leader": 1.0,
+        "fixture_tag_romhack_delta": 1.0,
+        "fixture_tag_spikes_layers": 1.0,
+        "kind_switch": 1.0,
+        "player_hp_high": 1.0,
+        "player_hp_percent": 0.76,
+        "public_active_threat_count": 8.0,
+        "public_likely_active_threat": 1.0,
+        "public_major_or_lethal_active_threat": 1.0,
+        "text_preserve_value": 1.0
+      },
+      "fixture_id": "janine_qwilfish_finish_third_spikes_layer",
+      "leader": "Janine"
+    },
+    {
+      "action_id": "move_spikes",
+      "action_name": "Spikes",
+      "feature_sources": {
+        "damage_estimate": [],
+        "incoming_threats": [
+          "level_up",
+          "revealed",
+          "tm_available"
+        ]
+      },
+      "features": {
+        "boss_hp_mid": 1.0,
+        "boss_hp_minus_player_hp": 0.16,
+        "boss_hp_percent": 0.74,
+        "fixture_tag_hazards": 1.0,
+        "fixture_tag_kanto_leader": 1.0,
+        "fixture_tag_romhack_delta": 1.0,
+        "fixture_tag_spikes_layers": 1.0,
+        "kind_move": 1.0,
+        "move_class_hazard": 1.0,
+        "player_hp_mid": 1.0,
+        "player_hp_percent": 0.58,
+        "public_active_threat_count": 8.0,
+        "public_likely_active_threat": 1.0,
+        "public_major_or_lethal_active_threat": 1.0,
+        "spikes_already_maxed": 1.0,
+        "spikes_player_layers_3": 1.0
+      },
+      "fixture_id": "janine_qwilfish_spikes_already_maxed",
+      "leader": "Janine"
+    },
+    {
+      "action_id": "move_sludge_bomb",
+      "action_name": "Sludge Bomb",
+      "feature_sources": {
+        "damage_estimate": [
+          "tools.boss_ai_preference.damage_estimates"
+        ],
+        "incoming_threats": [
+          "level_up",
+          "revealed",
+          "tm_available"
+        ]
+      },
+      "features": {
+        "boss_hp_mid": 1.0,
+        "boss_hp_minus_player_hp": 0.16,
+        "boss_hp_percent": 0.74,
+        "damage_average_percent": 0.74,
+        "damage_bucket_near_ko": 1.0,
+        "damage_high_percent": 0.8,
+        "damage_low_percent": 0.68,
+        "fixture_tag_hazards": 1.0,
+        "fixture_tag_kanto_leader": 1.0,
+        "fixture_tag_romhack_delta": 1.0,
+        "fixture_tag_spikes_layers": 1.0,
+        "kind_move": 1.0,
+        "player_hp_mid": 1.0,
+        "player_hp_percent": 0.58,
+        "public_active_threat_count": 8.0,
+        "public_likely_active_threat": 1.0,
+        "public_major_or_lethal_active_threat": 1.0,
+        "two_hko_or_better": 1.0
+      },
+      "fixture_id": "janine_qwilfish_spikes_already_maxed",
+      "leader": "Janine"
+    },
+    {
+      "action_id": "move_surf",
+      "action_name": "Surf",
+      "feature_sources": {
+        "damage_estimate": [
+          "tools.boss_ai_preference.damage_estimates"
+        ],
+        "incoming_threats": [
+          "level_up",
+          "revealed",
+          "tm_available"
+        ]
+      },
+      "features": {
+        "boss_hp_mid": 1.0,
+        "boss_hp_minus_player_hp": 0.16,
+        "boss_hp_percent": 0.74,
+        "damage_average_percent": 0.165,
+        "damage_bucket_meaningful": 1.0,
+        "damage_high_percent": 0.18,
+        "damage_low_percent": 0.15,
+        "fixture_tag_hazards": 1.0,
+        "fixture_tag_kanto_leader": 1.0,
+        "fixture_tag_romhack_delta": 1.0,
+        "fixture_tag_spikes_layers": 1.0,
+        "kind_move": 1.0,
+        "player_hp_mid": 1.0,
+        "player_hp_percent": 0.58,
+        "public_active_threat_count": 8.0,
+        "public_likely_active_threat": 1.0,
+        "public_major_or_lethal_active_threat": 1.0,
+        "text_tempo_or_punish": 1.0
+      },
+      "fixture_id": "janine_qwilfish_spikes_already_maxed",
+      "leader": "Janine"
+    },
+    {
+      "action_id": "move_explosion",
+      "action_name": "Explosion",
+      "feature_sources": {
+        "damage_estimate": [
+          "tools.boss_ai_preference.damage_estimates"
+        ],
+        "incoming_threats": [
+          "level_up",
+          "revealed",
+          "tm_available"
+        ]
+      },
+      "features": {
+        "boss_hp_mid": 1.0,
+        "boss_hp_minus_player_hp": 0.16,
+        "boss_hp_percent": 0.74,
+        "damage_average_percent": 1.35,
+        "damage_bucket_ko": 1.0,
+        "damage_high_percent": 1.46,
+        "damage_low_percent": 1.24,
+        "fixture_tag_hazards": 1.0,
+        "fixture_tag_kanto_leader": 1.0,
+        "fixture_tag_romhack_delta": 1.0,
+        "fixture_tag_spikes_layers": 1.0,
+        "kind_move": 1.0,
+        "ko_confirmed": 1.0,
+        "ko_possible": 1.0,
+        "move_class_sacrifice": 1.0,
+        "player_hp_mid": 1.0,
+        "player_hp_percent": 0.58,
+        "public_active_threat_count": 8.0,
+        "public_likely_active_threat": 1.0,
+        "public_major_or_lethal_active_threat": 1.0,
+        "two_hko_or_better": 1.0
+      },
+      "fixture_id": "janine_qwilfish_spikes_already_maxed",
+      "leader": "Janine"
+    },
+    {
+      "action_id": "switch_tentacruel",
+      "action_name": "Switch to Tentacruel",
+      "feature_sources": {
+        "damage_estimate": [],
+        "incoming_threats": [
+          "level_up",
+          "revealed",
+          "tm_available"
+        ]
+      },
+      "features": {
+        "boss_hp_mid": 1.0,
+        "boss_hp_minus_player_hp": 0.16,
+        "boss_hp_percent": 0.74,
+        "fixture_tag_hazards": 1.0,
+        "fixture_tag_kanto_leader": 1.0,
+        "fixture_tag_romhack_delta": 1.0,
+        "fixture_tag_spikes_layers": 1.0,
+        "kind_switch": 1.0,
+        "player_hp_mid": 1.0,
+        "player_hp_percent": 0.58,
+        "public_active_threat_count": 8.0,
+        "public_likely_active_threat": 1.0,
+        "public_major_or_lethal_active_threat": 1.0,
+        "text_preserve_value": 1.0
+      },
+      "fixture_id": "janine_qwilfish_spikes_already_maxed",
+      "leader": "Janine"
     },
     {
       "action_id": "move_spider_web",
@@ -6514,7 +6869,8 @@
         "player_hp_mid": 1.0,
         "player_hp_percent": 0.62,
         "public_active_threat_count": 8.0,
-        "public_likely_active_threat": 1.0
+        "public_likely_active_threat": 1.0,
+        "sleep_talk_while_awake": 1.0
       },
       "fixture_id": "red_snorlax_vs_alakazam_curse_or_body_slam",
       "leader": "Red"
@@ -7178,6 +7534,7 @@
         "public_likely_active_threat": 1.0,
         "public_major_or_lethal_active_threat": 1.0,
         "public_switch_threat_count": 4.0,
+        "sleep_enables_setup_line": 1.0,
         "text_tempo_or_punish": 1.0,
         "text_visible_risk": 1.0
       },
@@ -7204,6 +7561,7 @@
         "fixture_tag_setup": 1.0,
         "fixture_tag_sleep": 1.0,
         "kind_move": 1.0,
+        "move_class_setup": 1.0,
         "player_hp_high": 1.0,
         "player_hp_percent": 1.0,
         "public_active_threat_count": 4.0,
@@ -7284,23 +7642,292 @@
       },
       "fixture_id": "lance_yanma_vs_lapras_sleep_powder_or_quiver_dance",
       "leader": "Champion Lance"
+    },
+    {
+      "action_id": "move_curse",
+      "action_name": "Curse",
+      "feature_sources": {
+        "damage_estimate": [],
+        "incoming_threats": [
+          "level_up",
+          "revealed",
+          "tm_available"
+        ]
+      },
+      "features": {
+        "boss_hp_mid": 1.0,
+        "boss_hp_minus_player_hp": -0.27,
+        "boss_hp_percent": 0.6,
+        "fixture_tag_endgame": 1.0,
+        "fixture_tag_external_gsc": 1.0,
+        "fixture_tag_replay_912130": 1.0,
+        "fixture_tag_setup": 1.0,
+        "fixture_tag_sleep": 1.0,
+        "kind_move": 1.0,
+        "move_class_setup": 1.0,
+        "player_active_status_sleep": 1.0,
+        "player_hp_high": 1.0,
+        "player_hp_percent": 0.87,
+        "public_active_threat_count": 8.0,
+        "public_likely_active_threat": 1.0,
+        "public_major_or_lethal_active_threat": 1.0,
+        "setup_into_sleep_window": 1.0,
+        "text_visible_risk": 1.0
+      },
+      "fixture_id": "external_gsc_rhydon_vs_sleeping_snorlax_curse_window",
+      "leader": "External GSC"
+    },
+    {
+      "action_id": "move_earthquake",
+      "action_name": "Earthquake",
+      "feature_sources": {
+        "damage_estimate": [
+          "tools.boss_ai_preference.damage_estimates"
+        ],
+        "incoming_threats": [
+          "level_up",
+          "revealed",
+          "tm_available"
+        ]
+      },
+      "features": {
+        "boss_hp_mid": 1.0,
+        "boss_hp_minus_player_hp": -0.27,
+        "boss_hp_percent": 0.6,
+        "damage_average_percent": 0.5,
+        "damage_bucket_major": 1.0,
+        "damage_high_percent": 0.54,
+        "damage_low_percent": 0.46,
+        "fixture_tag_endgame": 1.0,
+        "fixture_tag_external_gsc": 1.0,
+        "fixture_tag_replay_912130": 1.0,
+        "fixture_tag_setup": 1.0,
+        "fixture_tag_sleep": 1.0,
+        "kind_move": 1.0,
+        "player_active_status_sleep": 1.0,
+        "player_hp_high": 1.0,
+        "player_hp_percent": 0.87,
+        "public_active_threat_count": 8.0,
+        "public_likely_active_threat": 1.0,
+        "public_major_or_lethal_active_threat": 1.0,
+        "two_hko_or_better": 1.0
+      },
+      "fixture_id": "external_gsc_rhydon_vs_sleeping_snorlax_curse_window",
+      "leader": "External GSC"
+    },
+    {
+      "action_id": "move_rock_slide",
+      "action_name": "Rock Slide",
+      "feature_sources": {
+        "damage_estimate": [
+          "tools.boss_ai_preference.damage_estimates"
+        ],
+        "incoming_threats": [
+          "level_up",
+          "revealed",
+          "tm_available"
+        ]
+      },
+      "features": {
+        "boss_hp_mid": 1.0,
+        "boss_hp_minus_player_hp": -0.27,
+        "boss_hp_percent": 0.6,
+        "damage_average_percent": 0.375,
+        "damage_bucket_major": 1.0,
+        "damage_high_percent": 0.41,
+        "damage_low_percent": 0.34,
+        "fixture_tag_endgame": 1.0,
+        "fixture_tag_external_gsc": 1.0,
+        "fixture_tag_replay_912130": 1.0,
+        "fixture_tag_setup": 1.0,
+        "fixture_tag_sleep": 1.0,
+        "kind_move": 1.0,
+        "player_active_status_sleep": 1.0,
+        "player_hp_high": 1.0,
+        "player_hp_percent": 0.87,
+        "public_active_threat_count": 8.0,
+        "public_likely_active_threat": 1.0,
+        "public_major_or_lethal_active_threat": 1.0,
+        "text_visible_risk": 1.0
+      },
+      "fixture_id": "external_gsc_rhydon_vs_sleeping_snorlax_curse_window",
+      "leader": "External GSC"
+    },
+    {
+      "action_id": "switch_zapdos",
+      "action_name": "Switch to Zapdos",
+      "feature_sources": {
+        "damage_estimate": [],
+        "incoming_threats": [
+          "level_up",
+          "revealed",
+          "tm_available"
+        ]
+      },
+      "features": {
+        "boss_hp_mid": 1.0,
+        "boss_hp_minus_player_hp": -0.27,
+        "boss_hp_percent": 0.6,
+        "fixture_tag_endgame": 1.0,
+        "fixture_tag_external_gsc": 1.0,
+        "fixture_tag_replay_912130": 1.0,
+        "fixture_tag_setup": 1.0,
+        "fixture_tag_sleep": 1.0,
+        "kind_switch": 1.0,
+        "player_active_status_sleep": 1.0,
+        "player_hp_high": 1.0,
+        "player_hp_percent": 0.87,
+        "public_active_threat_count": 8.0,
+        "public_likely_active_threat": 1.0,
+        "public_major_or_lethal_active_threat": 1.0,
+        "text_preserve_value": 1.0
+      },
+      "fixture_id": "external_gsc_rhydon_vs_sleeping_snorlax_curse_window",
+      "leader": "External GSC"
+    },
+    {
+      "action_id": "move_body_slam",
+      "action_name": "Body Slam",
+      "feature_sources": {
+        "damage_estimate": [
+          "tools.boss_ai_preference.damage_estimates"
+        ],
+        "incoming_threats": [
+          "revealed",
+          "tm_available"
+        ]
+      },
+      "features": {
+        "boss_active_status_par": 1.0,
+        "boss_hp_high": 1.0,
+        "boss_hp_minus_player_hp": 0.32,
+        "boss_hp_percent": 1.0,
+        "damage_average_percent": 0.135,
+        "damage_bucket_meaningful": 1.0,
+        "damage_high_percent": 0.15,
+        "damage_low_percent": 0.12,
+        "fixture_tag_local_engine": 1.0,
+        "fixture_tag_mechanics": 1.0,
+        "fixture_tag_rest_cycle": 1.0,
+        "fixture_tag_status_cure": 1.0,
+        "kind_move": 1.0,
+        "player_hp_mid": 1.0,
+        "player_hp_percent": 0.68,
+        "public_active_threat_count": 3.0,
+        "public_likely_active_threat": 1.0,
+        "text_tempo_or_punish": 1.0
+      },
+      "fixture_id": "mechanics_snorlax_full_hp_rest_status_fail",
+      "leader": "Mechanics Drill"
+    },
+    {
+      "action_id": "move_rest",
+      "action_name": "Rest",
+      "feature_sources": {
+        "damage_estimate": [],
+        "incoming_threats": [
+          "revealed",
+          "tm_available"
+        ]
+      },
+      "features": {
+        "boss_active_status_par": 1.0,
+        "boss_hp_high": 1.0,
+        "boss_hp_minus_player_hp": 0.32,
+        "boss_hp_percent": 1.0,
+        "fixture_tag_local_engine": 1.0,
+        "fixture_tag_mechanics": 1.0,
+        "fixture_tag_rest_cycle": 1.0,
+        "fixture_tag_status_cure": 1.0,
+        "kind_move": 1.0,
+        "move_class_recovery": 1.0,
+        "player_hp_mid": 1.0,
+        "player_hp_percent": 0.68,
+        "public_active_threat_count": 3.0,
+        "public_likely_active_threat": 1.0,
+        "rest_at_full_hp": 1.0
+      },
+      "fixture_id": "mechanics_snorlax_full_hp_rest_status_fail",
+      "leader": "Mechanics Drill"
+    },
+    {
+      "action_id": "move_sleep_talk",
+      "action_name": "Sleep Talk",
+      "feature_sources": {
+        "damage_estimate": [],
+        "incoming_threats": [
+          "revealed",
+          "tm_available"
+        ]
+      },
+      "features": {
+        "boss_active_status_par": 1.0,
+        "boss_hp_high": 1.0,
+        "boss_hp_minus_player_hp": 0.32,
+        "boss_hp_percent": 1.0,
+        "fixture_tag_local_engine": 1.0,
+        "fixture_tag_mechanics": 1.0,
+        "fixture_tag_rest_cycle": 1.0,
+        "fixture_tag_status_cure": 1.0,
+        "kind_move": 1.0,
+        "player_hp_mid": 1.0,
+        "player_hp_percent": 0.68,
+        "public_active_threat_count": 3.0,
+        "public_likely_active_threat": 1.0,
+        "sleep_talk_while_awake": 1.0
+      },
+      "fixture_id": "mechanics_snorlax_full_hp_rest_status_fail",
+      "leader": "Mechanics Drill"
+    },
+    {
+      "action_id": "move_curse",
+      "action_name": "Curse",
+      "feature_sources": {
+        "damage_estimate": [],
+        "incoming_threats": [
+          "revealed",
+          "tm_available"
+        ]
+      },
+      "features": {
+        "boss_active_status_par": 1.0,
+        "boss_hp_high": 1.0,
+        "boss_hp_minus_player_hp": 0.32,
+        "boss_hp_percent": 1.0,
+        "fixture_tag_local_engine": 1.0,
+        "fixture_tag_mechanics": 1.0,
+        "fixture_tag_rest_cycle": 1.0,
+        "fixture_tag_status_cure": 1.0,
+        "kind_move": 1.0,
+        "move_class_setup": 1.0,
+        "player_hp_mid": 1.0,
+        "player_hp_percent": 0.68,
+        "public_active_threat_count": 3.0,
+        "public_likely_active_threat": 1.0,
+        "text_setup_or_greedy": 1.0,
+        "text_visible_risk": 1.0
+      },
+      "fixture_id": "mechanics_snorlax_full_hp_rest_status_fail",
+      "leader": "Mechanics Drill"
     }
   ],
-  "feature_count": 110,
+  "feature_count": 132,
   "feature_support": {
-    "boss_hp_high": 153,
+    "boss_active_status_par": 4,
+    "boss_active_status_paralyzed": 4,
+    "boss_hp_high": 162,
     "boss_hp_low": 24,
-    "boss_hp_mid": 43,
-    "boss_hp_minus_player_hp": 179,
-    "boss_hp_percent": 220,
-    "damage_average_percent": 104,
+    "boss_hp_mid": 52,
+    "boss_hp_minus_player_hp": 197,
+    "boss_hp_percent": 238,
+    "damage_average_percent": 113,
     "damage_bucket_chip": 17,
-    "damage_bucket_ko": 11,
-    "damage_bucket_major": 31,
-    "damage_bucket_meaningful": 38,
-    "damage_bucket_near_ko": 12,
-    "damage_high_percent": 104,
-    "damage_low_percent": 104,
+    "damage_bucket_ko": 13,
+    "damage_bucket_major": 33,
+    "damage_bucket_meaningful": 41,
+    "damage_bucket_near_ko": 14,
+    "damage_high_percent": 113,
+    "damage_low_percent": 113,
     "fixture_tag_accuracy_debuff": 4,
     "fixture_tag_ace": 4,
     "fixture_tag_ace_preservation": 29,
@@ -7318,16 +7945,20 @@
     "fixture_tag_e4": 32,
     "fixture_tag_early": 5,
     "fixture_tag_early_gym": 11,
-    "fixture_tag_endgame": 21,
+    "fixture_tag_endgame": 25,
     "fixture_tag_endgame_pressure": 4,
+    "fixture_tag_external_gsc": 4,
     "fixture_tag_fairness": 4,
     "fixture_tag_fighting_pressure": 5,
     "fixture_tag_fire_threat": 4,
     "fixture_tag_gender_dependency": 4,
     "fixture_tag_hack_specific_typing": 4,
-    "fixture_tag_hazards": 8,
+    "fixture_tag_hazards": 18,
     "fixture_tag_hidden_coverage": 13,
+    "fixture_tag_kanto_leader": 10,
     "fixture_tag_late_game": 12,
+    "fixture_tag_local_engine": 4,
+    "fixture_tag_mechanics": 4,
     "fixture_tag_mirror_coat": 9,
     "fixture_tag_mirror_dragon": 5,
     "fixture_tag_mirror_fighting": 4,
@@ -7342,20 +7973,25 @@
     "fixture_tag_public_type": 4,
     "fixture_tag_recoil": 4,
     "fixture_tag_recovery": 4,
+    "fixture_tag_replay_912130": 4,
+    "fixture_tag_rest_cycle": 4,
+    "fixture_tag_romhack_delta": 10,
     "fixture_tag_sacrifice": 20,
     "fixture_tag_safe_setup": 4,
-    "fixture_tag_setup": 46,
+    "fixture_tag_setup": 50,
     "fixture_tag_setup_denial": 8,
     "fixture_tag_setup_lock": 4,
     "fixture_tag_signature_test": 4,
-    "fixture_tag_sleep": 16,
+    "fixture_tag_sleep": 20,
     "fixture_tag_smart_attack": 4,
     "fixture_tag_speed": 13,
     "fixture_tag_speed_control": 8,
     "fixture_tag_speed_disadvantage": 8,
     "fixture_tag_speed_priority": 4,
+    "fixture_tag_spikes_layers": 10,
     "fixture_tag_stall": 4,
     "fixture_tag_status": 49,
+    "fixture_tag_status_cure": 4,
     "fixture_tag_super_effective_pressure": 4,
     "fixture_tag_switch_denial": 4,
     "fixture_tag_switching": 16,
@@ -7370,37 +8006,48 @@
     "fixture_tag_water_pressure": 4,
     "fixture_tag_weather_chip": 4,
     "fixture_tag_weather_setup": 5,
-    "kind_move": 171,
-    "kind_switch": 49,
-    "ko_confirmed": 7,
-    "ko_possible": 13,
+    "kind_move": 186,
+    "kind_switch": 52,
+    "ko_confirmed": 9,
+    "ko_possible": 15,
+    "move_class_hazard": 4,
     "move_class_lock": 11,
     "move_class_phazing": 2,
     "move_class_priority": 5,
-    "move_class_recovery": 4,
-    "move_class_sacrifice": 5,
-    "move_class_setup": 15,
+    "move_class_recovery": 5,
+    "move_class_sacrifice": 7,
+    "move_class_setup": 18,
     "move_class_sleep": 5,
     "move_class_speed_control": 4,
     "move_class_status": 19,
-    "player_hp_high": 152,
+    "player_active_status_sleep": 4,
+    "player_hp_high": 161,
     "player_hp_low": 8,
-    "player_hp_mid": 60,
-    "player_hp_percent": 220,
-    "public_active_threat_count": 220,
-    "public_likely_active_threat": 220,
-    "public_major_or_lethal_active_threat": 154,
+    "player_hp_mid": 69,
+    "player_hp_percent": 238,
+    "public_active_threat_count": 238,
+    "public_likely_active_threat": 238,
+    "public_major_or_lethal_active_threat": 168,
     "public_switch_threat_count": 98,
+    "public_type_immunity_risk": 1,
+    "rest_at_full_hp": 1,
+    "setup_into_sleep_window": 1,
+    "sleep_enables_setup_line": 2,
+    "sleep_talk_while_awake": 2,
+    "spikes_already_maxed": 1,
+    "spikes_player_layers_2": 1,
+    "spikes_player_layers_3": 1,
+    "spikes_third_layer_available": 1,
     "text_information_probe": 17,
     "text_personality_style": 5,
-    "text_preserve_value": 26,
-    "text_setup_or_greedy": 29,
-    "text_tempo_or_punish": 81,
-    "text_visible_risk": 53,
-    "two_hko_or_better": 34
+    "text_preserve_value": 29,
+    "text_setup_or_greedy": 30,
+    "text_tempo_or_punish": 85,
+    "text_visible_risk": 56,
+    "two_hko_or_better": 39
   },
-  "fixture_count": 53,
-  "generated_at": "2026-05-12T10:56:59+00:00",
+  "fixture_count": 57,
+  "generated_at": "2026-05-13T11:25:48+00:00",
   "leader_action_counts": {
     "Blue": 4,
     "Brock": 4,
@@ -7410,10 +8057,13 @@
     "Chuck": 12,
     "Clair": 17,
     "Erika": 4,
+    "External GSC": 4,
     "Falkner": 11,
+    "Janine": 10,
     "Jasmine": 12,
     "Karen": 12,
     "Koga": 12,
+    "Mechanics Drill": 4,
     "Misty": 4,
     "Morty": 12,
     "Pryce": 12,
@@ -7503,6 +8153,16 @@
       "player_hp_high": 4,
       "player_hp_percent": 4
     },
+    "External GSC": {
+      "boss_hp_mid": 4,
+      "boss_hp_minus_player_hp": 4,
+      "boss_hp_percent": 4,
+      "fixture_tag_endgame": 4,
+      "fixture_tag_external_gsc": 4,
+      "fixture_tag_replay_912130": 4,
+      "fixture_tag_setup": 4,
+      "fixture_tag_sleep": 4
+    },
     "Falkner": {
       "boss_hp_high": 8,
       "boss_hp_minus_player_hp": 7,
@@ -7512,6 +8172,16 @@
       "player_hp_percent": 11,
       "public_active_threat_count": 11,
       "public_likely_active_threat": 11
+    },
+    "Janine": {
+      "boss_hp_minus_player_hp": 10,
+      "boss_hp_percent": 10,
+      "fixture_tag_hazards": 10,
+      "fixture_tag_kanto_leader": 10,
+      "fixture_tag_romhack_delta": 10,
+      "fixture_tag_spikes_layers": 10,
+      "player_hp_percent": 10,
+      "public_active_threat_count": 10
     },
     "Jasmine": {
       "boss_hp_high": 8,
@@ -7542,6 +8212,16 @@
       "public_active_threat_count": 12,
       "public_likely_active_threat": 12,
       "public_major_or_lethal_active_threat": 12
+    },
+    "Mechanics Drill": {
+      "boss_active_status_par": 4,
+      "boss_hp_high": 4,
+      "boss_hp_minus_player_hp": 4,
+      "boss_hp_percent": 4,
+      "fixture_tag_local_engine": 4,
+      "fixture_tag_mechanics": 4,
+      "fixture_tag_rest_cycle": 4,
+      "fixture_tag_status_cure": 4
     },
     "Misty": {
       "boss_hp_low": 4,

@@ -3980,6 +3980,290 @@
       ]
     },
     {
+      "id": "janine_qwilfish_finish_third_spikes_layer",
+      "leader": "Janine",
+      "boss_party_index": 1,
+      "turn": 18,
+      "tags": [
+        "kanto_leader",
+        "hazards",
+        "romhack_delta",
+        "spikes_layers"
+      ],
+      "training_focus": "Janine's Qwilfish should finish the third Spikes layer when the player is grounded, no spin has been revealed, and no immediate KO threat is public.",
+      "baseline_action_id": "move_spikes",
+      "state": {
+        "boss": {
+          "active": {
+            "species": "Qwilfish",
+            "level": 60,
+            "hp": "82%",
+            "status": "none",
+            "item": "Leftovers",
+            "revealed_moves": [
+              "Spikes",
+              "Sludge Bomb",
+              "Surf",
+              "Explosion"
+            ],
+            "role": "fast hazard trade piece"
+          },
+          "bench": [
+            "Tentacruel",
+            "Muk",
+            "Nidoking",
+            "Weezing",
+            "Venomoth"
+          ],
+          "bench_state": [
+            {
+              "species": "Tentacruel",
+              "hp": "100%",
+              "status": "none"
+            },
+            {
+              "species": "Muk",
+              "hp": "92%",
+              "status": "none"
+            },
+            {
+              "species": "Nidoking",
+              "hp": "100%",
+              "status": "none"
+            },
+            {
+              "species": "Weezing",
+              "hp": "100%",
+              "status": "none"
+            },
+            {
+              "species": "Venomoth",
+              "hp": "100%",
+              "status": "none"
+            }
+          ]
+        },
+        "player": {
+          "active": {
+            "species": "Snorlax",
+            "level": 60,
+            "hp": "76%",
+            "status": "none",
+            "revealed_moves": [
+              "Body Slam",
+              "Rest"
+            ],
+            "public_priors": [
+              "No immediate KO route shown"
+            ]
+          },
+          "seen_party": [
+            "Snorlax",
+            "Meganium",
+            "Ampharos",
+            "Nidoking",
+            "Heracross",
+            "Blissey"
+          ]
+        },
+        "field": {
+          "weather": "none",
+          "screens": "none",
+          "hazards": {
+            "boss_side_spikes_layers": 0,
+            "player_side_spikes_layers": 2,
+            "player_grounded_seen": 6,
+            "player_flying_seen": 0,
+            "player_rapid_spin_seen": false
+          }
+        },
+        "public_notes": [
+          "Local source supports three Spikes layers at one-eighth, one-sixth, and one-quarter max HP.",
+          "Two layers are already on the player side, so another Spikes turn changes every grounded switch from one-sixth to one-quarter max HP.",
+          "No Rapid Spin user has been revealed on the player side.",
+          "Snorlax is not showing an immediate KO route into Qwilfish."
+        ]
+      },
+      "actions": [
+        {
+          "id": "move_spikes",
+          "kind": "move",
+          "name": "Spikes",
+          "explanation": "Places the third local Spikes layer.",
+          "public_tradeoff": "Converts future grounded switches and Rest cycles into much higher pressure."
+        },
+        {
+          "id": "move_sludge_bomb",
+          "kind": "move",
+          "name": "Sludge Bomb",
+          "explanation": "Direct poison STAB into Snorlax.",
+          "public_tradeoff": "Safe chip, but it does not change the hazard economy."
+        },
+        {
+          "id": "move_surf",
+          "kind": "move",
+          "name": "Surf",
+          "explanation": "Neutral Water coverage.",
+          "public_tradeoff": "No immediate KO is public."
+        },
+        {
+          "id": "move_explosion",
+          "kind": "move",
+          "name": "Explosion",
+          "explanation": "Sacrifices Qwilfish for tempo.",
+          "public_tradeoff": "Too early while Qwilfish can still finish the hazard stack."
+        },
+        {
+          "id": "switch_tentacruel",
+          "kind": "switch",
+          "name": "Switch to Tentacruel",
+          "explanation": "Preserves Qwilfish and brings in Janine's spinner.",
+          "public_tradeoff": "Gives up the open third-layer turn."
+        }
+      ]
+    },
+    {
+      "id": "janine_qwilfish_spikes_already_maxed",
+      "leader": "Janine",
+      "boss_party_index": 1,
+      "turn": 22,
+      "tags": [
+        "kanto_leader",
+        "hazards",
+        "romhack_delta",
+        "spikes_layers"
+      ],
+      "training_focus": "When three Spikes layers already exist, Janine's Qwilfish must stop clicking Spikes and use a live move.",
+      "baseline_action_id": "move_sludge_bomb",
+      "state": {
+        "boss": {
+          "active": {
+            "species": "Qwilfish",
+            "level": 60,
+            "hp": "74%",
+            "status": "none",
+            "item": "Leftovers",
+            "revealed_moves": [
+              "Spikes",
+              "Sludge Bomb",
+              "Surf",
+              "Explosion"
+            ],
+            "role": "fast hazard trade piece"
+          },
+          "bench": [
+            "Tentacruel",
+            "Muk",
+            "Nidoking",
+            "Weezing",
+            "Venomoth"
+          ],
+          "bench_state": [
+            {
+              "species": "Tentacruel",
+              "hp": "94%",
+              "status": "none"
+            },
+            {
+              "species": "Muk",
+              "hp": "92%",
+              "status": "none"
+            },
+            {
+              "species": "Nidoking",
+              "hp": "100%",
+              "status": "none"
+            },
+            {
+              "species": "Weezing",
+              "hp": "100%",
+              "status": "none"
+            },
+            {
+              "species": "Venomoth",
+              "hp": "100%",
+              "status": "none"
+            }
+          ]
+        },
+        "player": {
+          "active": {
+            "species": "Snorlax",
+            "level": 60,
+            "hp": "58%",
+            "status": "none",
+            "revealed_moves": [
+              "Body Slam",
+              "Rest"
+            ],
+            "public_priors": [
+              "No immediate KO route shown"
+            ]
+          },
+          "seen_party": [
+            "Snorlax",
+            "Meganium",
+            "Ampharos",
+            "Nidoking",
+            "Heracross",
+            "Blissey"
+          ]
+        },
+        "field": {
+          "weather": "none",
+          "screens": "none",
+          "hazards": {
+            "boss_side_spikes_layers": 0,
+            "player_side_spikes_layers": 3,
+            "player_grounded_seen": 6,
+            "player_flying_seen": 0,
+            "player_rapid_spin_seen": false
+          }
+        },
+        "public_notes": [
+          "Local Spikes placement fails once three layers are already on that side.",
+          "The hazard route is already established; Qwilfish needs to use a live move or preserve itself."
+        ]
+      },
+      "actions": [
+        {
+          "id": "move_spikes",
+          "kind": "move",
+          "name": "Spikes",
+          "explanation": "Attempts a fourth local Spikes layer.",
+          "public_tradeoff": "Fails once three layers are already set."
+        },
+        {
+          "id": "move_sludge_bomb",
+          "kind": "move",
+          "name": "Sludge Bomb",
+          "explanation": "Direct poison STAB into Snorlax.",
+          "public_tradeoff": "A live attack after the hazard stack is complete."
+        },
+        {
+          "id": "move_surf",
+          "kind": "move",
+          "name": "Surf",
+          "explanation": "Neutral Water coverage.",
+          "public_tradeoff": "A live move, though less aligned with Qwilfish's Poison pressure."
+        },
+        {
+          "id": "move_explosion",
+          "kind": "move",
+          "name": "Explosion",
+          "explanation": "Sacrifices Qwilfish for material.",
+          "public_tradeoff": "Can be held until the completed hazard stack creates a better use."
+        },
+        {
+          "id": "switch_tentacruel",
+          "kind": "switch",
+          "name": "Switch to Tentacruel",
+          "explanation": "Preserves Qwilfish and brings in Janine's spinner.",
+          "public_tradeoff": "Conservative, but at least avoids a failed Spikes click."
+        }
+      ]
+    },
+    {
       "id": "koga_ariados_vs_quilava_spider_web_or_attack",
       "leader": "Koga",
       "turn": 2,
@@ -5969,6 +6253,243 @@
           "name": "Switch to Kingdra",
           "explanation": "Preserves Yanma and handles Water/Ice pressure better.",
           "public_tradeoff": "Conservative champion pivot."
+        }
+      ]
+    },
+    {
+      "id": "external_gsc_rhydon_vs_sleeping_snorlax_curse_window",
+      "leader": "External GSC",
+      "boss_party_source": "fixture_state",
+      "boss_party_source_path": "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json",
+      "turn": 49,
+      "tags": [
+        "external_gsc",
+        "sleep",
+        "setup",
+        "endgame",
+        "replay_912130"
+      ],
+      "training_focus": "Turn a preserved but sleeping Snorlax into a concrete setup-window test: Curse is strong only because wake timing, hazards, and Rhydon's KO route have been tracked.",
+      "baseline_action_id": "move_earthquake",
+      "state": {
+        "boss": {
+          "active": {
+            "species": "Rhydon",
+            "level": 100,
+            "hp": "about 60%",
+            "status": "none",
+            "item": "Leftovers",
+            "revealed_moves": [
+              "Earthquake",
+              "Rock Slide"
+            ],
+            "role": "late-game physical breaker"
+          },
+          "bench": [
+            "Zapdos",
+            "Meganium",
+            "Houndoom"
+          ],
+          "bench_state": [
+            {
+              "species": "Zapdos",
+              "hp": "about half",
+              "status": "none"
+            },
+            {
+              "species": "Meganium",
+              "hp": "healthy",
+              "status": "none"
+            },
+            {
+              "species": "Houndoom",
+              "hp": "healthy",
+              "status": "none"
+            }
+          ]
+        },
+        "player": {
+          "active": {
+            "species": "Snorlax",
+            "level": 100,
+            "hp": "87%",
+            "status": "sleep",
+            "revealed_moves": [
+              "Curse"
+            ],
+            "public_priors": [
+              "Earthquake plausible",
+              "Double-Edge plausible",
+              "Rest plausible",
+              "Snorlax may wake soon but cannot act while asleep"
+            ]
+          },
+          "seen_party": [
+            "Snorlax",
+            "Zapdos",
+            "Moltres"
+          ]
+        },
+        "field": {
+          "weather": "none",
+          "screens": "none",
+          "hazards": {
+            "boss_side_spikes": true,
+            "player_side_spikes": true
+          }
+        },
+        "public_notes": [
+          "Snorlax was put to sleep by Lovely Kiss on turn 2 and is still asleep after returning late.",
+          "Rhydon has already removed Golem and can use the sleep window to change the KO math.",
+          "Curse costs speed, so the line must still account for Snorlax waking and acting before Rhydon."
+        ]
+      },
+      "actions": [
+        {
+          "id": "move_curse",
+          "kind": "move",
+          "name": "Curse",
+          "explanation": "Uses the sleep window to make Earthquake strong enough to trade through Snorlax.",
+          "public_tradeoff": "Excellent if the wake branch still leaves Rhydon favored; bad if wake timing or a hidden move flips the exchange."
+        },
+        {
+          "id": "move_earthquake",
+          "kind": "move",
+          "name": "Earthquake",
+          "explanation": "Immediate damage into sleeping Snorlax.",
+          "public_tradeoff": "Keeps tempo but may fail to convert before Snorlax wakes."
+        },
+        {
+          "id": "move_rock_slide",
+          "kind": "move",
+          "name": "Rock Slide",
+          "explanation": "Useful for Zapdos or Moltres, but weak into the active Snorlax.",
+          "public_tradeoff": "Only makes sense on a strong Flying-type switch read."
+        },
+        {
+          "id": "switch_zapdos",
+          "kind": "switch",
+          "name": "Switch to Zapdos",
+          "explanation": "Preserves Rhydon and keeps a final special route available.",
+          "public_tradeoff": "Gives the sleeping Snorlax a chance to wake without forcing progress."
+        }
+      ]
+    },
+    {
+      "id": "mechanics_snorlax_full_hp_rest_status_fail",
+      "leader": "Mechanics Drill",
+      "boss_party_source": "fixture_state",
+      "boss_party_source_path": "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json",
+      "turn": 12,
+      "tags": [
+        "mechanics",
+        "rest_cycle",
+        "status_cure",
+        "local_engine"
+      ],
+      "training_focus": "Full-HP Rest is not a status cure in the local engine; the move fails before clearing status.",
+      "baseline_action_id": "move_rest",
+      "state": {
+        "boss": {
+          "active": {
+            "species": "Snorlax",
+            "level": 100,
+            "hp": "100%",
+            "status": "par",
+            "item": "Leftovers",
+            "revealed_moves": [
+              "Body Slam",
+              "Rest",
+              "Sleep Talk"
+            ],
+            "role": "RestTalk wall"
+          },
+          "bench": [
+            "Raikou",
+            "Cloyster",
+            "Skarmory"
+          ],
+          "bench_state": [
+            {
+              "species": "Raikou",
+              "hp": "74%",
+              "status": "none"
+            },
+            {
+              "species": "Cloyster",
+              "hp": "42%",
+              "status": "none"
+            },
+            {
+              "species": "Skarmory",
+              "hp": "68%",
+              "status": "none"
+            }
+          ]
+        },
+        "player": {
+          "active": {
+            "species": "Skarmory",
+            "level": 100,
+            "hp": "68%",
+            "status": "none",
+            "revealed_moves": [
+              "Whirlwind",
+              "Drill Peck"
+            ],
+            "public_priors": [
+              "Toxic plausible",
+              "Rest plausible"
+            ]
+          },
+          "seen_party": [
+            "Skarmory",
+            "Raikou",
+            "Cloyster"
+          ]
+        },
+        "field": {
+          "weather": "none",
+          "screens": "none",
+          "hazards": {
+            "boss_side_spikes": true,
+            "player_side_spikes": true
+          }
+        },
+        "public_notes": [
+          "Local Rest checks full HP before the status-cure path.",
+          "Paralysis does not make full-HP Rest legal.",
+          "Sleep Talk is also public-failing because Snorlax is not asleep."
+        ]
+      },
+      "actions": [
+        {
+          "id": "move_body_slam",
+          "kind": "move",
+          "name": "Body Slam",
+          "explanation": "Keeps pressure while Rest is mechanically unavailable.",
+          "public_tradeoff": "Does not cure paralysis, but at least advances the turn."
+        },
+        {
+          "id": "move_rest",
+          "kind": "move",
+          "name": "Rest",
+          "explanation": "Would be a status cure below full HP.",
+          "public_tradeoff": "Fails at full HP in the local engine before curing status."
+        },
+        {
+          "id": "move_sleep_talk",
+          "kind": "move",
+          "name": "Sleep Talk",
+          "explanation": "Only useful while asleep.",
+          "public_tradeoff": "Fails while awake."
+        },
+        {
+          "id": "move_curse",
+          "kind": "move",
+          "name": "Curse",
+          "explanation": "Can build a route if Whirlwind does not erase the boost.",
+          "public_tradeoff": "Still risks donating a phazing turn."
         }
       ]
     }

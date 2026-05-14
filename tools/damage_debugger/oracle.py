@@ -986,6 +986,16 @@ def _self_test() -> list[tuple[str, int, int]]:
     ))
 
     cases.append((
+        "special_fire_low_hp", 15,
+        BattleInputs(
+            attacker_level=5, move_bp=40, move_type=FIRE, is_physical=False,
+            attacker_atk=11, defender_def=5,
+            attacker_types=CYNDAQUIL_TYPES, defender_types=PIDGEY_TYPES,
+            attacker_below_third_hp=True,
+        ),
+    ))
+
+    cases.append((
         "physical_type_boost_item", 41,
         BattleInputs(
             attacker_level=50, move_bp=60, move_type=FIGHTING, is_physical=True,

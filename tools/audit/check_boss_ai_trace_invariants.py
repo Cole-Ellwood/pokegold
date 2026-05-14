@@ -985,6 +985,7 @@ def audit_spikes_and_status(boss: str) -> None:
     for effect in (
         "EFFECT_LIGHT_SCREEN",
         "EFFECT_REFLECT",
+        "EFFECT_SAFEGUARD",
         "EFFECT_SUBSTITUTE",
         "EFFECT_PROTECT",
         "EFFECT_DISABLE",
@@ -1002,6 +1003,7 @@ def audit_spikes_and_status(boss: str) -> None:
         "wEnemyScreens",
         "SCREENS_LIGHT_SCREEN",
         "SCREENS_REFLECT",
+        "SCREENS_SAFEGUARD",
         "wEnemySubStatus4",
         "wPlayerSubStatus4",
         "wPlayerSubStatus5",
@@ -1015,6 +1017,16 @@ def audit_spikes_and_status(boss: str) -> None:
         "AICheckEnemyMaxHP",
     ):
         require_contains(utility, public_state, "utility public fail states")
+    safeguard = local_block(utility, ".check_safeguard", ".check_substitute")
+    require_order(
+        safeguard,
+        [
+            "ld a, [wEnemyScreens]",
+            "bit SCREENS_SAFEGUARD, a",
+            "jp nz, .status_fail",
+        ],
+        "Safeguard public already-active fail gate",
+    )
     disable = local_block(utility, ".check_disable", ".check_encore")
     require_order(
         disable,

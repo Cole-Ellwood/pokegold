@@ -1,0 +1,789 @@
+{
+  "all_pass": true,
+  "chart_tweak_count": 15,
+  "chart_tweaks": [
+    {
+      "actual_hack_factor": 0,
+      "actual_hack_label": "immune",
+      "attack_type": "GROUND",
+      "claim_plane": "chart_result",
+      "defend_type": "GHOST",
+      "expected_hack_factor": 0,
+      "expected_hack_label": "immune",
+      "id": "ground_ghost_immunity",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "passes": true,
+      "source": "data/types/type_matchups.asm",
+      "vanilla_factor": 10,
+      "vanilla_label": "neutral"
+    },
+    {
+      "actual_hack_factor": 5,
+      "actual_hack_label": "resisted",
+      "attack_type": "WATER",
+      "claim_plane": "chart_result",
+      "defend_type": "ICE",
+      "expected_hack_factor": 5,
+      "expected_hack_label": "resisted",
+      "id": "water_ice_resisted",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "passes": true,
+      "source": "data/types/type_matchups.asm",
+      "vanilla_factor": 10,
+      "vanilla_label": "neutral"
+    },
+    {
+      "actual_hack_factor": 10,
+      "actual_hack_label": "neutral",
+      "attack_type": "GROUND",
+      "claim_plane": "chart_result",
+      "defend_type": "FIRE",
+      "expected_hack_factor": 10,
+      "expected_hack_label": "neutral",
+      "id": "ground_fire_neutral",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "passes": true,
+      "source": "data/types/type_matchups.asm",
+      "vanilla_factor": 20,
+      "vanilla_label": "super_effective"
+    },
+    {
+      "actual_hack_factor": 5,
+      "actual_hack_label": "resisted",
+      "attack_type": "STEEL",
+      "claim_plane": "chart_result",
+      "defend_type": "FIGHTING",
+      "expected_hack_factor": 5,
+      "expected_hack_label": "resisted",
+      "id": "steel_fighting_resisted",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "passes": true,
+      "source": "data/types/type_matchups.asm",
+      "vanilla_factor": 10,
+      "vanilla_label": "neutral"
+    },
+    {
+      "actual_hack_factor": 5,
+      "actual_hack_label": "resisted",
+      "attack_type": "ROCK",
+      "claim_plane": "chart_result",
+      "defend_type": "PSYCHIC_TYPE",
+      "expected_hack_factor": 5,
+      "expected_hack_label": "resisted",
+      "id": "rock_psychic_resisted",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "passes": true,
+      "source": "data/types/type_matchups.asm",
+      "vanilla_factor": 10,
+      "vanilla_label": "neutral"
+    },
+    {
+      "actual_hack_factor": 5,
+      "actual_hack_label": "resisted",
+      "attack_type": "NORMAL",
+      "claim_plane": "chart_result",
+      "defend_type": "PSYCHIC_TYPE",
+      "expected_hack_factor": 5,
+      "expected_hack_label": "resisted",
+      "id": "normal_psychic_resisted",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "passes": true,
+      "source": "data/types/type_matchups.asm",
+      "vanilla_factor": 10,
+      "vanilla_label": "neutral"
+    },
+    {
+      "actual_hack_factor": 0,
+      "actual_hack_label": "immune",
+      "attack_type": "GHOST",
+      "claim_plane": "chart_result",
+      "defend_type": "STEEL",
+      "expected_hack_factor": 0,
+      "expected_hack_label": "immune",
+      "id": "ghost_steel_no_effect",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "passes": true,
+      "source": "data/types/type_matchups.asm",
+      "vanilla_factor": 5,
+      "vanilla_label": "resisted"
+    },
+    {
+      "actual_hack_factor": 20,
+      "actual_hack_label": "super_effective",
+      "attack_type": "GHOST",
+      "claim_plane": "chart_result",
+      "defend_type": "FIGHTING",
+      "expected_hack_factor": 20,
+      "expected_hack_label": "super_effective",
+      "id": "ghost_fighting_super_effective",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "passes": true,
+      "source": "data/types/type_matchups.asm",
+      "vanilla_factor": 10,
+      "vanilla_label": "neutral"
+    },
+    {
+      "actual_hack_factor": 20,
+      "actual_hack_label": "super_effective",
+      "attack_type": "POISON",
+      "claim_plane": "chart_result",
+      "defend_type": "NORMAL",
+      "expected_hack_factor": 20,
+      "expected_hack_label": "super_effective",
+      "id": "poison_normal_super_effective",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "passes": true,
+      "source": "data/types/type_matchups.asm",
+      "vanilla_factor": 10,
+      "vanilla_label": "neutral"
+    },
+    {
+      "actual_hack_factor": 10,
+      "actual_hack_label": "neutral",
+      "attack_type": "DARK",
+      "claim_plane": "chart_result",
+      "defend_type": "STEEL",
+      "expected_hack_factor": 10,
+      "expected_hack_label": "neutral",
+      "id": "dark_steel_neutral",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "passes": true,
+      "source": "data/types/type_matchups.asm",
+      "vanilla_factor": 5,
+      "vanilla_label": "resisted"
+    },
+    {
+      "actual_hack_factor": 10,
+      "actual_hack_label": "neutral",
+      "attack_type": "STEEL",
+      "claim_plane": "chart_result",
+      "defend_type": "ELECTRIC",
+      "expected_hack_factor": 10,
+      "expected_hack_label": "neutral",
+      "id": "steel_electric_neutral",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "passes": true,
+      "source": "data/types/type_matchups.asm",
+      "vanilla_factor": 5,
+      "vanilla_label": "resisted"
+    },
+    {
+      "actual_hack_factor": 10,
+      "actual_hack_label": "neutral",
+      "attack_type": "GRASS",
+      "claim_plane": "chart_result",
+      "defend_type": "FLYING",
+      "expected_hack_factor": 10,
+      "expected_hack_label": "neutral",
+      "id": "grass_flying_neutral",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "passes": true,
+      "source": "data/types/type_matchups.asm",
+      "vanilla_factor": 5,
+      "vanilla_label": "resisted"
+    },
+    {
+      "actual_hack_factor": 10,
+      "actual_hack_label": "neutral",
+      "attack_type": "FIGHTING",
+      "claim_plane": "chart_result",
+      "defend_type": "POISON",
+      "expected_hack_factor": 10,
+      "expected_hack_label": "neutral",
+      "id": "fighting_poison_neutral",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "passes": true,
+      "source": "data/types/type_matchups.asm",
+      "vanilla_factor": 5,
+      "vanilla_label": "resisted"
+    },
+    {
+      "actual_hack_factor": 10,
+      "actual_hack_label": "neutral",
+      "attack_type": "FIGHTING",
+      "claim_plane": "chart_result",
+      "defend_type": "BUG",
+      "expected_hack_factor": 10,
+      "expected_hack_label": "neutral",
+      "id": "fighting_bug_neutral",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "passes": true,
+      "source": "data/types/type_matchups.asm",
+      "vanilla_factor": 5,
+      "vanilla_label": "resisted"
+    },
+    {
+      "actual_hack_factor": 10,
+      "actual_hack_label": "neutral",
+      "attack_type": "PSYCHIC_TYPE",
+      "claim_plane": "chart_result",
+      "defend_type": "POISON",
+      "expected_hack_factor": 10,
+      "expected_hack_label": "neutral",
+      "id": "psychic_poison_neutral",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "passes": true,
+      "source": "data/types/type_matchups.asm",
+      "vanilla_factor": 20,
+      "vanilla_label": "super_effective"
+    }
+  ],
+  "chart_tweaks_pass": true,
+  "claim_planes": [
+    "chart_result",
+    "passive_adjusted_result",
+    "final_damage",
+    "strategic_move_label"
+  ],
+  "generated_at": "2026-05-14T03:34:37+00:00",
+  "required_source_paths": [
+    "data/types/type_matchups.asm",
+    "docs/agent_navigation/gen2_vs_modern_mechanics.md",
+    "docs/agent_navigation/hack_mechanics_reference.md",
+    "engine/battle/core.asm",
+    "engine/battle/move_effects/rapid_spin.asm",
+    "engine/battle/move_effects/spikes.asm",
+    "engine/battle/type_passive_damage_mods.asm"
+  ],
+  "schema_version": 1,
+  "source_hierarchy": {
+    "disagreement": "treat disagreement as source/tooling/version mismatch and investigate",
+    "exact_battle_state_damage": "validated debugger trace is authority for exact battle-state damage",
+    "general_mechanics": "source code is authority for general mechanics"
+  },
+  "steel_ghost_dark_divergence": [
+    {
+      "actual_hack_factor": 0,
+      "actual_hack_label": "immune",
+      "attack_type": "GHOST",
+      "claim_plane": "chart_result",
+      "defend_type": "STEEL",
+      "expected_hack_factor": 0,
+      "expected_hack_label": "immune",
+      "id": "ghost_steel_no_effect",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "passes": true,
+      "source": "data/types/type_matchups.asm",
+      "vanilla_factor": 5,
+      "vanilla_label": "resisted"
+    },
+    {
+      "actual_hack_factor": 10,
+      "actual_hack_label": "neutral",
+      "attack_type": "DARK",
+      "claim_plane": "chart_result",
+      "defend_type": "STEEL",
+      "expected_hack_factor": 10,
+      "expected_hack_label": "neutral",
+      "id": "dark_steel_neutral",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "passes": true,
+      "source": "data/types/type_matchups.asm",
+      "vanilla_factor": 5,
+      "vanilla_label": "resisted"
+    }
+  ],
+  "steel_ghost_dark_divergence_pass": true,
+  "text_claim_count": 22,
+  "text_claims": [
+    {
+      "benchmark_id": "romhack_explosion_route_trade_brock_001",
+      "claim_planes": [
+        "chart_result"
+      ],
+      "has_environment_specific_evidence": true,
+      "location": "$.answer_changing_information[1]",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_name": "hidden_oracle",
+      "source_paths_seen": [
+        "data/types/type_matchups.asm",
+        "docs/agent_navigation/hack_mechanics_reference.md",
+        "docs/boss_ai_teaching_heuristics.md",
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json"
+      ],
+      "terms": [
+        "immunity"
+      ],
+      "text": "Golem is needed later as the only Electric immunity or Explosion user."
+    },
+    {
+      "benchmark_id": "romhack_defensive_answer_preservation_pryce_001",
+      "claim_planes": [
+        "chart_result",
+        "passive_adjusted_result",
+        "strategic_move_label"
+      ],
+      "has_environment_specific_evidence": true,
+      "location": "$.position_snapshot.summary",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_name": "public_card",
+      "source_paths_seen": [
+        "data/types/type_matchups.asm",
+        "docs/agent_navigation/gen2_vs_modern_mechanics.md",
+        "docs/agent_navigation/hack_mechanics_reference.md",
+        "docs/boss_ai_teaching_heuristics.md",
+        "engine/battle/type_passive_damage_mods.asm",
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json"
+      ],
+      "terms": [
+        "immunity",
+        "resists"
+      ],
+      "text": "Pryce Slowking faces Ampharos. Piloswine is revealed on the boss bench. Dragon's Majesty means Ground is not a full immunity to this Dragon/Electric route, but Piloswine still resists and threatens Earthquake."
+    },
+    {
+      "benchmark_id": "romhack_defensive_answer_preservation_pryce_001",
+      "claim_planes": [
+        "chart_result",
+        "passive_adjusted_result",
+        "strategic_move_label"
+      ],
+      "has_environment_specific_evidence": true,
+      "location": "$.public_opponent_model.hidden_info_belief_state",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_name": "public_card",
+      "source_paths_seen": [
+        "data/types/type_matchups.asm",
+        "docs/agent_navigation/gen2_vs_modern_mechanics.md",
+        "docs/agent_navigation/hack_mechanics_reference.md",
+        "docs/boss_ai_teaching_heuristics.md",
+        "engine/battle/type_passive_damage_mods.asm",
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json"
+      ],
+      "terms": [
+        "immunity",
+        "resistance"
+      ],
+      "text": "Dragon's Majesty prevents assuming a full Ground immunity, so the answer is resistance plus threat, not a slogan."
+    },
+    {
+      "benchmark_id": "romhack_defensive_answer_preservation_pryce_001",
+      "claim_planes": [
+        "chart_result"
+      ],
+      "has_environment_specific_evidence": true,
+      "location": "$.why_best.switch_piloswine",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_name": "hidden_oracle",
+      "source_paths_seen": [
+        "data/types/type_matchups.asm",
+        "docs/agent_navigation/gen2_vs_modern_mechanics.md",
+        "docs/agent_navigation/hack_mechanics_reference.md",
+        "docs/boss_ai_teaching_heuristics.md",
+        "engine/battle/type_passive_damage_mods.asm",
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json"
+      ],
+      "terms": [
+        "resists"
+      ],
+      "text": "It preserves Slowking, resists the public Electric pressure, and threatens back with Ground coverage."
+    },
+    {
+      "benchmark_id": "romhack_defensive_answer_preservation_pryce_001",
+      "claim_planes": [
+        "chart_result"
+      ],
+      "has_environment_specific_evidence": true,
+      "location": "$.heuristic_arbitration.competing_heuristics[3]",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_name": "hidden_oracle",
+      "source_paths_seen": [
+        "data/types/type_matchups.asm",
+        "docs/agent_navigation/gen2_vs_modern_mechanics.md",
+        "docs/agent_navigation/hack_mechanics_reference.md",
+        "docs/boss_ai_teaching_heuristics.md",
+        "engine/battle/type_passive_damage_mods.asm",
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json"
+      ],
+      "terms": [
+        "immunity"
+      ],
+      "text": "Do not over-trust type immunity slogans in the romhack fork."
+    },
+    {
+      "benchmark_id": "romhack_defensive_answer_unavailable_holdout_001",
+      "claim_planes": [
+        "chart_result",
+        "passive_adjusted_result",
+        "strategic_move_label"
+      ],
+      "has_environment_specific_evidence": true,
+      "location": "$.public_opponent_model.hidden_info_belief_state",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_name": "public_card",
+      "source_paths_seen": [
+        "data/types/type_matchups.asm",
+        "docs/agent_navigation/gen2_vs_modern_mechanics.md",
+        "docs/agent_navigation/hack_mechanics_reference.md",
+        "docs/boss_ai_teaching_heuristics.md",
+        "engine/battle/type_passive_damage_mods.asm",
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json"
+      ],
+      "terms": [
+        "immunity",
+        "resistance"
+      ],
+      "text": "Dragon's Majesty prevents assuming a full Ground immunity, so the answer is resistance plus threat, not a slogan."
+    },
+    {
+      "benchmark_id": "romhack_defensive_answer_unavailable_holdout_001",
+      "claim_planes": [
+        "chart_result"
+      ],
+      "has_environment_specific_evidence": true,
+      "location": "$.answer_changing_information[1]",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_name": "hidden_oracle",
+      "source_paths_seen": [
+        "data/types/type_matchups.asm",
+        "docs/agent_navigation/gen2_vs_modern_mechanics.md",
+        "docs/agent_navigation/hack_mechanics_reference.md",
+        "docs/boss_ai_teaching_heuristics.md",
+        "engine/battle/type_passive_damage_mods.asm",
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json"
+      ],
+      "terms": [
+        "immune"
+      ],
+      "text": "Ampharos is immune to paralysis or already paralyzed."
+    },
+    {
+      "benchmark_id": "fixture_janine_qwilfish_third_spikes_layer_001",
+      "claim_planes": [
+        "chart_result",
+        "strategic_move_label"
+      ],
+      "has_environment_specific_evidence": true,
+      "location": "$.why_catastrophic.move_surf",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_name": "hidden_oracle",
+      "source_paths_seen": [
+        "audit/boss_ai_preference/fixture_benchmark_harvest.md",
+        "data/types/type_matchups.asm",
+        "docs/agent_navigation/hack_mechanics_reference.md",
+        "engine/battle/move_effects/spikes.asm",
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json",
+        "tools/boss_ai_preference/labels/boss_ai_pairwise_preferences.jsonl"
+      ],
+      "terms": [
+        "neutral"
+      ],
+      "text": "Neutral chip does not change the hazard economy and spends the best current opportunity."
+    },
+    {
+      "benchmark_id": "fixture_brock_golem_vs_vaporeon_explosion_question_001",
+      "claim_planes": [
+        "chart_result",
+        "final_damage",
+        "strategic_move_label"
+      ],
+      "has_environment_specific_evidence": true,
+      "location": "$.position_snapshot.summary",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_name": "public_card",
+      "source_paths_seen": [
+        "audit/boss_ai_preference/fixture_benchmark_harvest.md",
+        "data/types/type_matchups.asm",
+        "docs/agent_navigation/hack_mechanics_reference.md",
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json",
+        "tools/boss_ai_preference/labels/boss_ai_pairwise_preferences.jsonl"
+      ],
+      "terms": [
+        "resist"
+      ],
+      "text": "Brock Golem is at 42% into Vaporeon, which has revealed Surf and outspeeds the stay-in branch. Explosion trades a low-future-value Golem for a clean route, while Omastar is the acceptable Water-resist preservation line."
+    },
+    {
+      "benchmark_id": "fixture_brock_golem_vs_vaporeon_explosion_question_001",
+      "claim_planes": [
+        "chart_result",
+        "strategic_move_label"
+      ],
+      "has_environment_specific_evidence": true,
+      "location": "$.why_acceptable.switch_omastar",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_name": "hidden_oracle",
+      "source_paths_seen": [
+        "audit/boss_ai_preference/fixture_benchmark_harvest.md",
+        "data/types/type_matchups.asm",
+        "docs/agent_navigation/hack_mechanics_reference.md",
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json",
+        "tools/boss_ai_preference/labels/boss_ai_pairwise_preferences.jsonl"
+      ],
+      "terms": [
+        "resist"
+      ],
+      "text": "Omastar is a real Water-resist preservation line and was explicitly close in the saved note, but it risks taking Surf chip instead of cashing Golem out."
+    },
+    {
+      "benchmark_id": "fixture_brock_golem_vs_vaporeon_explosion_question_001",
+      "claim_planes": [
+        "chart_result",
+        "strategic_move_label"
+      ],
+      "has_environment_specific_evidence": true,
+      "location": "$.heuristic_arbitration.competing_heuristics[1]",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_name": "hidden_oracle",
+      "source_paths_seen": [
+        "audit/boss_ai_preference/fixture_benchmark_harvest.md",
+        "data/types/type_matchups.asm",
+        "docs/agent_navigation/hack_mechanics_reference.md",
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json",
+        "tools/boss_ai_preference/labels/boss_ai_pairwise_preferences.jsonl"
+      ],
+      "terms": [
+        "resist"
+      ],
+      "text": "Preserve answers by switching to the Water resist."
+    },
+    {
+      "benchmark_id": "fixture_brock_golem_vs_vaporeon_explosion_question_001",
+      "claim_planes": [
+        "chart_result",
+        "final_damage"
+      ],
+      "has_environment_specific_evidence": true,
+      "location": "$.heuristic_arbitration.competing_heuristics[2]",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_name": "hidden_oracle",
+      "source_paths_seen": [
+        "audit/boss_ai_preference/fixture_benchmark_harvest.md",
+        "data/types/type_matchups.asm",
+        "docs/agent_navigation/hack_mechanics_reference.md",
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json",
+        "tools/boss_ai_preference/labels/boss_ai_pairwise_preferences.jsonl"
+      ],
+      "terms": [
+        "super-effective"
+      ],
+      "text": "Do not stay in with ordinary damage under faster super-effective pressure."
+    },
+    {
+      "benchmark_id": "fixture_will_slowbro_vs_houndoom_fast_dark_001",
+      "claim_planes": [
+        "chart_result",
+        "final_damage",
+        "strategic_move_label"
+      ],
+      "has_environment_specific_evidence": true,
+      "location": "$.position_snapshot.summary",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_name": "public_card",
+      "source_paths_seen": [
+        "audit/boss_ai_preference/type_effectiveness_evidence.md",
+        "data/types/type_matchups.asm",
+        "docs/agent_navigation/gen2_vs_modern_mechanics.md",
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json",
+        "tools/boss_ai_preference/labels/boss_ai_pairwise_preferences.jsonl"
+      ],
+      "terms": [
+        "resists",
+        "super-effective"
+      ],
+      "text": "Will Slowbro faces a faster player Houndoom with Crunch revealed. Surf is super-effective and is the best stay-in attack, but the public Crunch branch threatens to KO Slowbro before Surf converts; the healthy boss Houndoom pivot preserves Slowbro and resists the Dark pressure."
+    },
+    {
+      "benchmark_id": "fixture_will_slowbro_vs_houndoom_fast_dark_001",
+      "claim_planes": [
+        "chart_result"
+      ],
+      "has_environment_specific_evidence": true,
+      "location": "$.heuristic_arbitration.competing_heuristics[0]",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_name": "hidden_oracle",
+      "source_paths_seen": [
+        "audit/boss_ai_preference/type_effectiveness_evidence.md",
+        "data/types/type_matchups.asm",
+        "docs/agent_navigation/gen2_vs_modern_mechanics.md",
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json",
+        "tools/boss_ai_preference/labels/boss_ai_pairwise_preferences.jsonl"
+      ],
+      "terms": [
+        "super-effective"
+      ],
+      "text": "Click the super-effective attack."
+    },
+    {
+      "benchmark_id": "fixture_chuck_poliwrath_vs_alakazam_psychic_pivot_001",
+      "claim_planes": [
+        "chart_result",
+        "strategic_move_label"
+      ],
+      "has_environment_specific_evidence": true,
+      "location": "$.position_snapshot.summary",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_name": "public_card",
+      "source_paths_seen": [
+        "audit/boss_ai_preference/type_effectiveness_evidence.md",
+        "data/types/type_matchups.asm",
+        "docs/agent_navigation/gen2_vs_modern_mechanics.md",
+        "docs/agent_navigation/hack_mechanics_reference.md",
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json"
+      ],
+      "terms": [
+        "no effect"
+      ],
+      "text": "Chuck Poliwrath faces faster Alakazam with Psychic and Recover revealed. Hypnosis can swing the position if it lands, but the clean state transition is the healthy Umbreon pivot because romhack Psychic has no effect on Dark; direct Surf or Ice Punch does not deny Alakazam's faster Psychic/Recover route."
+    },
+    {
+      "benchmark_id": "fixture_chuck_poliwrath_vs_alakazam_psychic_pivot_001",
+      "claim_planes": [
+        "chart_result",
+        "strategic_move_label"
+      ],
+      "has_environment_specific_evidence": true,
+      "location": "$.public_opponent_model.role_aware_preservation",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_name": "public_card",
+      "source_paths_seen": [
+        "audit/boss_ai_preference/type_effectiveness_evidence.md",
+        "data/types/type_matchups.asm",
+        "docs/agent_navigation/gen2_vs_modern_mechanics.md",
+        "docs/agent_navigation/hack_mechanics_reference.md",
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json"
+      ],
+      "terms": [
+        "no effect"
+      ],
+      "text": "Umbreon is healthy and the romhack type chart says Psychic has no effect on Dark, so it preserves Poliwrath while answering the public route."
+    },
+    {
+      "benchmark_id": "fixture_chuck_poliwrath_vs_alakazam_psychic_pivot_001",
+      "claim_planes": [
+        "chart_result",
+        "strategic_move_label"
+      ],
+      "has_environment_specific_evidence": true,
+      "location": "$.why_best.switch_umbreon",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_name": "hidden_oracle",
+      "source_paths_seen": [
+        "audit/boss_ai_preference/type_effectiveness_evidence.md",
+        "data/types/type_matchups.asm",
+        "docs/agent_navigation/gen2_vs_modern_mechanics.md",
+        "docs/agent_navigation/hack_mechanics_reference.md",
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json"
+      ],
+      "terms": [
+        "no effect"
+      ],
+      "text": "The public state gives Chuck a clean Psychic answer: Umbreon is healthy and the romhack chart says Psychic has no effect on Dark. This preserves Poliwrath instead of gambling it into faster Psychic pressure."
+    },
+    {
+      "benchmark_id": "fixture_pryce_cloyster_vs_quilava_fire_pivot_001",
+      "claim_planes": [
+        "chart_result",
+        "final_damage",
+        "strategic_move_label"
+      ],
+      "has_environment_specific_evidence": true,
+      "location": "$.position_snapshot.summary",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_name": "public_card",
+      "source_paths_seen": [
+        "docs/agent_navigation/gen2_vs_modern_mechanics.md",
+        "https",
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json",
+        "tools/boss_ai_preference/labels/boss_ai_pairwise_preferences.jsonl"
+      ],
+      "terms": [
+        "resist"
+      ],
+      "text": "Pryce Cloyster faces Quilava at 88% while Cloyster is only 39%. Saved feedback says Slowking is the public Fire-resist pivot, while Surf and Explosion both fail the main branch because faster Quilava can remove Cloyster before it acts. The point is not to never use Explosion; it is to preserve Cloyster's later Spikes/Explosion route when a clean pivot exists."
+    },
+    {
+      "benchmark_id": "fixture_pryce_cloyster_vs_quilava_fire_pivot_001",
+      "claim_planes": [
+        "chart_result",
+        "final_damage",
+        "strategic_move_label"
+      ],
+      "has_environment_specific_evidence": true,
+      "location": "$.why_best.switch_slowking",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_name": "hidden_oracle",
+      "source_paths_seen": [
+        "docs/agent_navigation/gen2_vs_modern_mechanics.md",
+        "https",
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json",
+        "tools/boss_ai_preference/labels/boss_ai_pairwise_preferences.jsonl"
+      ],
+      "terms": [
+        "resist"
+      ],
+      "text": "Saved feedback identifies Slowking as the safe Fire-resist pivot. Because Quilava is faster and can KO 39% Cloyster before it acts, switching preserves Cloyster's later Spikes/Explosion resource instead of losing it for no progress."
+    },
+    {
+      "benchmark_id": "fixture_pryce_cloyster_vs_quilava_fire_pivot_001",
+      "claim_planes": [
+        "chart_result"
+      ],
+      "has_environment_specific_evidence": true,
+      "location": "$.heuristic_arbitration.dominant_policy",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_name": "hidden_oracle",
+      "source_paths_seen": [
+        "docs/agent_navigation/gen2_vs_modern_mechanics.md",
+        "https",
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json",
+        "tools/boss_ai_preference/labels/boss_ai_pairwise_preferences.jsonl"
+      ],
+      "terms": [
+        "resist"
+      ],
+      "text": "Preservation dominates both direct attack and Explosion because the active faints before progress and a public Fire-resist pivot exists."
+    },
+    {
+      "benchmark_id": "fixture_pryce_cloyster_vs_quilava_fire_pivot_001",
+      "claim_planes": [
+        "chart_result"
+      ],
+      "has_environment_specific_evidence": true,
+      "location": "$.irreplaceable_pieces.boss[1]",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_name": "hidden_oracle",
+      "source_paths_seen": [
+        "docs/agent_navigation/gen2_vs_modern_mechanics.md",
+        "https",
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json",
+        "tools/boss_ai_preference/labels/boss_ai_pairwise_preferences.jsonl"
+      ],
+      "terms": [
+        "resist"
+      ],
+      "text": "Slowking as the current public Fire-resist pivot."
+    },
+    {
+      "benchmark_id": "fixture_clair_dragonair_vs_suicune_hidden_ice_001",
+      "claim_planes": [
+        "chart_result"
+      ],
+      "has_environment_specific_evidence": true,
+      "location": "$.position_snapshot.summary",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_name": "public_card",
+      "source_paths_seen": [
+        "audit/boss_ai_preference/plan_queue.md",
+        "data/types/type_matchups.asm",
+        "docs/agent_navigation/gen2_vs_modern_mechanics.md",
+        "https",
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json",
+        "tools/boss_ai_preference/labels/boss_ai_pairwise_preferences.jsonl"
+      ],
+      "terms": [
+        "resists"
+      ],
+      "text": "Clair Dragonair faces Suicune after Surf is revealed. Dragonair resists Surf, so Suicune staying in is public evidence for a plausible hidden Ice punish. Saved feedback says the policy should preserve through Kingdra instead of committing Dragonair to Thunder or Outrage."
+    }
+  ],
+  "text_claims_pass": true,
+  "type_evidence_source_paths": [
+    "data/types/type_matchups.asm",
+    "docs/agent_navigation/gen2_vs_modern_mechanics.md",
+    "docs/agent_navigation/hack_mechanics_reference.md",
+    "engine/battle/type_passive_damage_mods.asm"
+  ],
+  "unsupported_text_claim_count": 0,
+  "unsupported_text_claims": []
+}

@@ -1,71 +1,62 @@
 {
+  "benchmark_harvest": {
+    "complete_candidate_count": 4,
+    "missing_counts": {
+      "acceptable": 20,
+      "best": 3,
+      "catastrophic": 3,
+      "single_best": 5
+    },
+    "partial_candidate_count": 23
+  },
+  "benchmark_label_queue": {
+    "one_label_completion_count": 11,
+    "request_count": 23
+  },
   "demonstration_count": 3,
-  "fixture_count": 53,
+  "fixture_count": 57,
   "fixture_phase_counts": {
     "early": 20,
-    "late": 2,
+    "late": 6,
     "mid": 31
   },
   "gates": {
     "all_fixtures_have_exact_party_anchor": true,
     "has_holdout_pairwise_examples": true,
-    "has_holdout_trajectory_examples": false,
+    "has_holdout_trajectory_examples": true,
     "no_stale_trajectory_rows": true,
     "no_trajectory_conflicts": true,
     "proposals_are_not_conflict_blocked": true,
     "top_plan_pairs_are_fully_labeled": false
   },
-  "generated_at": "2026-05-12T10:57:14+00:00",
+  "generated_at": "2026-05-13T11:25:57+00:00",
   "label_count": 0,
   "leader_trajectory_counts": {
-    "Brock": 3,
-    "Bugsy": 2,
-    "Champion Lance": 5,
-    "Chuck": 2,
+    "Brock": 6,
+    "Bugsy": 5,
+    "Champion Lance": 11,
+    "Chuck": 5,
     "Clair": 3,
-    "Erika": 6,
-    "Falkner": 2,
-    "Morty": 2,
-    "Pryce": 3,
-    "Whitney": 6
+    "Erika": 9,
+    "External GSC": 2,
+    "Falkner": 3,
+    "Jasmine": 1,
+    "Koga": 2,
+    "Morty": 6,
+    "Pryce": 6,
+    "Whitney": 9,
+    "Will": 1
   },
-  "pairwise_preference_count": 20,
+  "pairwise_preference_count": 52,
   "party_anchor_report": {
-    "exact_count": 53,
+    "exact_count": 57,
     "missing_exact": [],
     "missing_exact_count": 0
   },
   "plan_pair_coverage": {
-    "candidate_count": 51,
-    "complete_count": 4,
+    "candidate_count": 55,
+    "complete_count": 13,
     "incomplete": [
-      {
-        "candidate_id": "plan:lance_dragonite_vs_suicune_champion_ace",
-        "complete": false,
-        "covered_pairs": 2,
-        "fixture_id": "lance_dragonite_vs_suicune_champion_ace",
-        "leader": "Champion Lance",
-        "phase": "late",
-        "required_pairs": 3
-      },
-      {
-        "candidate_id": "plan:bugsy_scyther_vs_quilava_fire_pressure",
-        "complete": false,
-        "covered_pairs": 2,
-        "fixture_id": "bugsy_scyther_vs_quilava_fire_pressure",
-        "leader": "Bugsy",
-        "phase": "early",
-        "required_pairs": 3
-      },
-      {
-        "candidate_id": "plan:pryce_slowking_vs_ampharos_ground_pivot",
-        "complete": false,
-        "covered_pairs": 3,
-        "fixture_id": "pryce_slowking_vs_ampharos_ground_pivot",
-        "leader": "Pryce",
-        "phase": "mid",
-        "required_pairs": 6
-      },
       {
         "candidate_id": "plan:clair_dragonair_vs_suicune_hidden_ice_beam",
         "complete": false,
@@ -73,51 +64,6 @@
         "fixture_id": "clair_dragonair_vs_suicune_hidden_ice_beam",
         "leader": "Clair",
         "phase": "mid",
-        "required_pairs": 3
-      },
-      {
-        "candidate_id": "plan:falkner_pidgeotto_vs_geodude_rock_risk",
-        "complete": false,
-        "covered_pairs": 2,
-        "fixture_id": "falkner_pidgeotto_vs_geodude_rock_risk",
-        "leader": "Falkner",
-        "phase": "mid",
-        "required_pairs": 3
-      },
-      {
-        "candidate_id": "plan:chuck_poliwrath_vs_pidgeotto_ice_punch",
-        "complete": false,
-        "covered_pairs": 2,
-        "fixture_id": "chuck_poliwrath_vs_pidgeotto_ice_punch",
-        "leader": "Chuck",
-        "phase": "mid",
-        "required_pairs": 3
-      },
-      {
-        "candidate_id": "plan:bugsy_ariados_vs_pidgey_toxic_or_attack",
-        "complete": false,
-        "covered_pairs": 0,
-        "fixture_id": "bugsy_ariados_vs_pidgey_toxic_or_attack",
-        "leader": "Bugsy",
-        "phase": "early",
-        "required_pairs": 3
-      },
-      {
-        "candidate_id": "plan:morty_gengar_vs_kadabra_destiny_bond",
-        "complete": false,
-        "covered_pairs": 2,
-        "fixture_id": "morty_gengar_vs_kadabra_destiny_bond",
-        "leader": "Morty",
-        "phase": "mid",
-        "required_pairs": 3
-      },
-      {
-        "candidate_id": "plan:bugsy_scyther_vs_geodude_safe_swords_dance",
-        "complete": false,
-        "covered_pairs": 0,
-        "fixture_id": "bugsy_scyther_vs_geodude_safe_swords_dance",
-        "leader": "Bugsy",
-        "phase": "early",
         "required_pairs": 3
       },
       {
@@ -130,49 +76,13 @@
         "required_pairs": 3
       },
       {
-        "candidate_id": "plan:chuck_poliwrath_vs_alakazam_hypnosis_or_ice_punch",
+        "candidate_id": "plan:external_gsc_rhydon_vs_sleeping_snorlax_curse_window",
         "complete": false,
-        "covered_pairs": 0,
-        "fixture_id": "chuck_poliwrath_vs_alakazam_hypnosis_or_ice_punch",
-        "leader": "Chuck",
-        "phase": "early",
+        "covered_pairs": 2,
+        "fixture_id": "external_gsc_rhydon_vs_sleeping_snorlax_curse_window",
+        "leader": "External GSC",
+        "phase": "late",
         "required_pairs": 3
-      },
-      {
-        "candidate_id": "plan:koga_ariados_vs_typhlosion_spikes_or_toxic",
-        "complete": false,
-        "covered_pairs": 0,
-        "fixture_id": "koga_ariados_vs_typhlosion_spikes_or_toxic",
-        "leader": "Koga",
-        "phase": "early",
-        "required_pairs": 3
-      },
-      {
-        "candidate_id": "plan:morty_haunter_vs_noctowl_sleep_line",
-        "complete": false,
-        "covered_pairs": 0,
-        "fixture_id": "morty_haunter_vs_noctowl_sleep_line",
-        "leader": "Morty",
-        "phase": "early",
-        "required_pairs": 6
-      },
-      {
-        "candidate_id": "plan:will_slowbro_vs_houndoom_amnesia_or_surf",
-        "complete": false,
-        "covered_pairs": 0,
-        "fixture_id": "will_slowbro_vs_houndoom_amnesia_or_surf",
-        "leader": "Will",
-        "phase": "mid",
-        "required_pairs": 1
-      },
-      {
-        "candidate_id": "plan:brock_golem_vs_vaporeon_explosion_question",
-        "complete": false,
-        "covered_pairs": 3,
-        "fixture_id": "brock_golem_vs_vaporeon_explosion_question",
-        "leader": "Brock",
-        "phase": "mid",
-        "required_pairs": 6
       },
       {
         "candidate_id": "plan:morty_misdreavus_vs_typhlosion_perish_song",
@@ -193,15 +103,6 @@
         "required_pairs": 3
       },
       {
-        "candidate_id": "plan:red_snorlax_vs_alakazam_curse_or_body_slam",
-        "complete": false,
-        "covered_pairs": 0,
-        "fixture_id": "red_snorlax_vs_alakazam_curse_or_body_slam",
-        "leader": "Red",
-        "phase": "early",
-        "required_pairs": 3
-      },
-      {
         "candidate_id": "plan:whitney_clefairy_vs_bayleef_encore_window",
         "complete": false,
         "covered_pairs": 0,
@@ -218,29 +119,146 @@
         "leader": "Jasmine",
         "phase": "mid",
         "required_pairs": 3
+      },
+      {
+        "candidate_id": "plan:bugsy_ariados_vs_pidgey_toxic_or_attack",
+        "complete": false,
+        "covered_pairs": 0,
+        "fixture_id": "bugsy_ariados_vs_pidgey_toxic_or_attack",
+        "leader": "Bugsy",
+        "phase": "early",
+        "required_pairs": 3
+      },
+      {
+        "candidate_id": "plan:bugsy_scyther_vs_geodude_safe_swords_dance",
+        "complete": false,
+        "covered_pairs": 2,
+        "fixture_id": "bugsy_scyther_vs_geodude_safe_swords_dance",
+        "leader": "Bugsy",
+        "phase": "early",
+        "required_pairs": 3
+      },
+      {
+        "candidate_id": "plan:chuck_poliwrath_vs_alakazam_hypnosis_or_ice_punch",
+        "complete": false,
+        "covered_pairs": 2,
+        "fixture_id": "chuck_poliwrath_vs_alakazam_hypnosis_or_ice_punch",
+        "leader": "Chuck",
+        "phase": "early",
+        "required_pairs": 3
+      },
+      {
+        "candidate_id": "plan:clair_kingdra_vs_dragonair_dragon_dance_mirror",
+        "complete": false,
+        "covered_pairs": 0,
+        "fixture_id": "clair_kingdra_vs_dragonair_dragon_dance_mirror",
+        "leader": "Clair",
+        "phase": "early",
+        "required_pairs": 3
+      },
+      {
+        "candidate_id": "plan:koga_ariados_vs_typhlosion_spikes_or_toxic",
+        "complete": false,
+        "covered_pairs": 2,
+        "fixture_id": "koga_ariados_vs_typhlosion_spikes_or_toxic",
+        "leader": "Koga",
+        "phase": "early",
+        "required_pairs": 3
+      },
+      {
+        "candidate_id": "plan:lance_ampharos_vs_porygon2_thunder_or_dragon_dance",
+        "complete": false,
+        "covered_pairs": 0,
+        "fixture_id": "lance_ampharos_vs_porygon2_thunder_or_dragon_dance",
+        "leader": "Champion Lance",
+        "phase": "mid",
+        "required_pairs": 6
+      },
+      {
+        "candidate_id": "plan:lance_kingdra_vs_starmie_dragon_dance_or_attack",
+        "complete": false,
+        "covered_pairs": 0,
+        "fixture_id": "lance_kingdra_vs_starmie_dragon_dance_or_attack",
+        "leader": "Champion Lance",
+        "phase": "mid",
+        "required_pairs": 3
+      },
+      {
+        "candidate_id": "plan:morty_haunter_vs_noctowl_sleep_line",
+        "complete": false,
+        "covered_pairs": 3,
+        "fixture_id": "morty_haunter_vs_noctowl_sleep_line",
+        "leader": "Morty",
+        "phase": "early",
+        "required_pairs": 6
+      },
+      {
+        "candidate_id": "plan:bruno_onix_vs_typhlosion_sandstorm_or_explosion",
+        "complete": false,
+        "covered_pairs": 0,
+        "fixture_id": "bruno_onix_vs_typhlosion_sandstorm_or_explosion",
+        "leader": "Bruno",
+        "phase": "mid",
+        "required_pairs": 3
+      },
+      {
+        "candidate_id": "plan:karen_gengar_vs_snorlax_destiny_bond_or_thunderbolt",
+        "complete": false,
+        "covered_pairs": 0,
+        "fixture_id": "karen_gengar_vs_snorlax_destiny_bond_or_thunderbolt",
+        "leader": "Karen",
+        "phase": "mid",
+        "required_pairs": 3
+      },
+      {
+        "candidate_id": "plan:koga_crobat_vs_alakazam_toxic_or_attack",
+        "complete": false,
+        "covered_pairs": 0,
+        "fixture_id": "koga_crobat_vs_alakazam_toxic_or_attack",
+        "leader": "Koga",
+        "phase": "mid",
+        "required_pairs": 3
+      },
+      {
+        "candidate_id": "plan:jasmine_magneton_vs_quilava_thunder_wave_or_bolt",
+        "complete": false,
+        "covered_pairs": 0,
+        "fixture_id": "jasmine_magneton_vs_quilava_thunder_wave_or_bolt",
+        "leader": "Jasmine",
+        "phase": "early",
+        "required_pairs": 3
+      },
+      {
+        "candidate_id": "plan:koga_ariados_vs_quilava_spider_web_or_attack",
+        "complete": false,
+        "covered_pairs": 0,
+        "fixture_id": "koga_ariados_vs_quilava_spider_web_or_attack",
+        "leader": "Koga",
+        "phase": "early",
+        "required_pairs": 3
       }
     ],
-    "incomplete_count": 47
+    "incomplete_count": 42
   },
-  "proposal_count": 45,
+  "proposal_count": 80,
   "proposal_type_counts": {
     "hard_rule": 2,
-    "needs_more_labels": 21,
+    "needs_more_labels": 15,
     "schema_only": 1,
     "scoring_weight": 1,
     "scout_policy": 2,
-    "sequence_policy": 1,
-    "switch_policy": 17
+    "sequence_policy": 30,
+    "switch_policy": 29
   },
   "ready_for_rom_scoring_review": false,
-  "reward_model_holdout_accuracy": "50.0%",
+  "reward_model_holdout_accuracy": "83.3%",
   "stale_trajectory_count": 0,
   "trajectory_conflict_count": 0,
-  "trajectory_count": 34,
-  "trajectory_model_holdout_accuracy": "n/a",
+  "trajectory_count": 69,
+  "trajectory_model_holdout_accuracy": "100.0%",
   "trajectory_phase_counts": {
-    "early": 1,
-    "late": 1,
-    "mid": 10
+    "early": 5,
+    "late": 2,
+    "mid": 12
   }
 }

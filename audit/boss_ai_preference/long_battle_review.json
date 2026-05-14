@@ -1,0 +1,991 @@
+{
+  "benchmark_extraction_count": 3,
+  "critical_turn_count": 4,
+  "damage_context_evidence": [
+    {
+      "id": "romhack_spinblock_damage_context_001",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "policy_threshold": "Gengar at 67 HP survives Psychic and removes 83 HP Starmie; Gengar at 52 HP is KOed before moving.",
+      "promoted_artifact": "tools/boss_ai_preference/benchmarks/state_transition_public_cards.json:romhack_spinblock_damage_context_001",
+      "queries": [
+        "STARMIE:55:player GENGAR:55:trainer PSYCHIC",
+        "GENGAR:55:trainer STARMIE:55:player THUNDERBOLT"
+      ],
+      "result": [
+        "Starmie Psychic deals 53-63 HP to trainer Gengar.",
+        "Gengar Thunderbolt deals 85-101 HP to player Starmie."
+      ],
+      "source": "tools.damage_debugger.matchup",
+      "transfer_warning": "This evidence uses romhack source stats and typing, including Ghost/Psychic Gengar, so it must not be used as vanilla GSC truth."
+    }
+  ],
+  "earliest_meaningful_error": {
+    "error_class": "OVERFITTED_SCRIPT_ERROR",
+    "regression_target": "sleep_disruption_after_miss_long_game_001",
+    "turn": 9,
+    "why_irreversible": "Victreebel was the only realistic sleep/setup breaker; losing it made the remaining plan rely on Snorlax PP and Explosion trades."
+  },
+  "generated_at": "2026-05-13T11:25:48+00:00",
+  "heuristics_learned": [
+    "A sleep miss in a long game invalidates setup scripts more severely when the sleeper is also an irreplaceable route piece.",
+    "Explosion is a good route trade only when the lost role is already discharged or replaceable.",
+    "Rest timing is a route-preservation claim; high-HP Rest without a forced range can donate conversion turns.",
+    "Spinblock decisions in endgames require profile-specific damage evidence; the romhack Starmie/Gengar threshold is not vanilla GSC proof."
+  ],
+  "review_count": 1,
+  "reviews": [
+    {
+      "benchmark_extractions": [
+        {
+          "answer_flip_field": "sleep_move_result: hit -> miss",
+          "best": [
+            "move_sleep_powder",
+            "switch_skarmory"
+          ],
+          "catastrophic": [
+            "move_swords_dance"
+          ],
+          "id": "sleep_disruption_after_miss_long_game_001",
+          "turn": 9
+        },
+        {
+          "answer_flip_field": "snorlax_hp: forced_rest_range -> 72%",
+          "best": [
+            "move_body_slam"
+          ],
+          "catastrophic": [
+            "move_rest"
+          ],
+          "id": "rest_tempo_unforced_long_game_001",
+          "turn": 21
+        },
+        {
+          "answer_flip_field": "starmie_psychic_vs_gengar_damage_range",
+          "best": [
+            "needs_context"
+          ],
+          "catastrophic": [
+            "move_thunderbolt_without_survival_range"
+          ],
+          "id": "spinblock_damage_context_long_game_001",
+          "turn": 29
+        }
+      ],
+      "critical_turns": [
+        {
+          "expected": "retry sleep only if the miss branch is survivable, otherwise preserve Victreebel or pivot to Skarmory",
+          "label": "earliest_irreversible_error",
+          "mistake": "Swords Dance after Sleep Powder miss without re-scoring",
+          "turn": 9
+        },
+        {
+          "expected": "Explosion is justified because Machamp blocks Snorlax endgame and Cloyster already set the only vanilla Spikes layer",
+          "label": "good_route_trade",
+          "mistake": "",
+          "turn": 17
+        },
+        {
+          "expected": "attack or pivot until Rest is forced by range",
+          "label": "rest_tempo_error",
+          "mistake": "Rest at 72% gave Tyranitar sleep turns without preserving a required role",
+          "turn": 21
+        },
+        {
+          "expected": "classify as needs_context unless profile-specific damage range is known; a romhack threshold card now covers the verified local damage case",
+          "label": "damage_range_gap",
+          "mistake": "Gengar spinblock line needs exact Psychic survival evidence before staying in",
+          "turn": 29
+        }
+      ],
+      "damage_context_evidence": [
+        {
+          "id": "romhack_spinblock_damage_context_001",
+          "mechanics_profile": "romhack_gym_leader_lab",
+          "policy_threshold": "Gengar at 67 HP survives Psychic and removes 83 HP Starmie; Gengar at 52 HP is KOed before moving.",
+          "promoted_artifact": "tools/boss_ai_preference/benchmarks/state_transition_public_cards.json:romhack_spinblock_damage_context_001",
+          "queries": [
+            "STARMIE:55:player GENGAR:55:trainer PSYCHIC",
+            "GENGAR:55:trainer STARMIE:55:player THUNDERBOLT"
+          ],
+          "result": [
+            "Starmie Psychic deals 53-63 HP to trainer Gengar.",
+            "Gengar Thunderbolt deals 85-101 HP to player Starmie."
+          ],
+          "source": "tools.damage_debugger.matchup",
+          "transfer_warning": "This evidence uses romhack source stats and typing, including Ghost/Psychic Gengar, so it must not be used as vanilla GSC truth."
+        }
+      ],
+      "earliest_meaningful_error": {
+        "error_class": "OVERFITTED_SCRIPT_ERROR",
+        "regression_target": "sleep_disruption_after_miss_long_game_001",
+        "turn": 9,
+        "why_irreversible": "Victreebel was the only realistic sleep/setup breaker; losing it made the remaining plan rely on Snorlax PP and Explosion trades."
+      },
+      "heuristics_learned": [
+        "A sleep miss in a long game invalidates setup scripts more severely when the sleeper is also an irreplaceable route piece.",
+        "Explosion is a good route trade only when the lost role is already discharged or replaceable.",
+        "Rest timing is a route-preservation claim; high-HP Rest without a forced range can donate conversion turns.",
+        "Spinblock decisions in endgames require profile-specific damage evidence; the romhack Starmie/Gengar threshold is not vanilla GSC proof."
+      ],
+      "id": "constructed_gsc_sleep_spikes_route_review_001",
+      "ledger_entries": [
+        {
+          "checklist": {
+            "answer_changing_info_named": true,
+            "irreplaceables_named": true,
+            "mechanics_profile_checked": true,
+            "opponent_route_named": true,
+            "win_conditions_named": true,
+            "worst_branch_named": true
+          },
+          "chosen_action": "Spikes",
+          "decision_quality": "good",
+          "expected_action": "Spikes",
+          "hazards": "none",
+          "irreplaceable_pieces": [
+            "Cloyster as only Spiker"
+          ],
+          "opp_win_route": "Raikou pivots to Starmie for spin control",
+          "own_win_route": "establish Spikes then force Rest cycles",
+          "phase": "opening",
+          "review_flags": [],
+          "sleep_state": "none",
+          "turn": 1,
+          "visible_state": "Cloyster vs Raikou"
+        },
+        {
+          "checklist": {
+            "answer_changing_info_named": true,
+            "irreplaceables_named": true,
+            "mechanics_profile_checked": true,
+            "opponent_route_named": true,
+            "win_conditions_named": true,
+            "worst_branch_named": true
+          },
+          "chosen_action": "Toxic",
+          "decision_quality": "acceptable",
+          "expected_action": "Toxic or switch:Gengar",
+          "hazards": "opp side Spikes",
+          "irreplaceable_pieces": [
+            "Cloyster",
+            "Gengar spinblocker"
+          ],
+          "opp_win_route": "Starmie spins and resets hazard economy",
+          "own_win_route": "poison or pressure spinner before it removes Spikes",
+          "phase": "opening",
+          "review_flags": [],
+          "sleep_state": "none",
+          "turn": 2,
+          "visible_state": "Cloyster vs Starmie"
+        },
+        {
+          "checklist": {
+            "answer_changing_info_named": true,
+            "irreplaceables_named": true,
+            "mechanics_profile_checked": true,
+            "opponent_route_named": true,
+            "win_conditions_named": true,
+            "worst_branch_named": true
+          },
+          "chosen_action": "Thunderbolt",
+          "decision_quality": "good",
+          "expected_action": "Thunderbolt",
+          "hazards": "opp side Spikes",
+          "irreplaceable_pieces": [
+            "Gengar spinblocker"
+          ],
+          "opp_win_route": "Starmie forces Gengar out with Psychic",
+          "own_win_route": "block Rapid Spin and keep hazards",
+          "phase": "opening",
+          "review_flags": [],
+          "sleep_state": "none",
+          "turn": 3,
+          "visible_state": "Gengar vs Starmie"
+        },
+        {
+          "checklist": {
+            "answer_changing_info_named": true,
+            "irreplaceables_named": true,
+            "mechanics_profile_checked": true,
+            "opponent_route_named": true,
+            "win_conditions_named": true,
+            "worst_branch_named": true
+          },
+          "chosen_action": "switch:Skarmory",
+          "decision_quality": "good",
+          "expected_action": "switch:Skarmory",
+          "hazards": "opp side Spikes",
+          "irreplaceable_pieces": [
+            "Gengar spinblocker"
+          ],
+          "opp_win_route": "Tyranitar Pursuit traps Ghost",
+          "own_win_route": "preserve spinblocker for later Starmie",
+          "phase": "opening",
+          "review_flags": [],
+          "sleep_state": "none",
+          "turn": 4,
+          "visible_state": "Gengar vs Tyranitar"
+        },
+        {
+          "checklist": {
+            "answer_changing_info_named": true,
+            "irreplaceables_named": true,
+            "mechanics_profile_checked": true,
+            "opponent_route_named": true,
+            "win_conditions_named": true,
+            "worst_branch_named": true
+          },
+          "chosen_action": "Whirlwind",
+          "decision_quality": "good",
+          "expected_action": "Whirlwind",
+          "hazards": "opp side Spikes",
+          "irreplaceable_pieces": [
+            "Skarmory Snorlax answer"
+          ],
+          "opp_win_route": "Tyranitar chips phazer into Lax range",
+          "own_win_route": "preserve Skarmory for Snorlax while scouting",
+          "phase": "opening",
+          "review_flags": [],
+          "sleep_state": "none",
+          "turn": 5,
+          "visible_state": "Skarmory vs Tyranitar"
+        },
+        {
+          "checklist": {
+            "answer_changing_info_named": true,
+            "irreplaceables_named": true,
+            "mechanics_profile_checked": true,
+            "opponent_route_named": true,
+            "win_conditions_named": true,
+            "worst_branch_named": true
+          },
+          "chosen_action": "switch:Raikou",
+          "decision_quality": "acceptable",
+          "expected_action": "switch:Raikou or Whirlwind",
+          "hazards": "opp side Spikes",
+          "irreplaceable_pieces": [
+            "Skarmory Snorlax answer"
+          ],
+          "opp_win_route": "CurseLax starts boost route",
+          "own_win_route": "keep phazing route intact",
+          "phase": "opening",
+          "review_flags": [],
+          "sleep_state": "none",
+          "turn": 6,
+          "visible_state": "Skarmory phazes Snorlax in"
+        },
+        {
+          "checklist": {
+            "answer_changing_info_named": true,
+            "irreplaceables_named": true,
+            "mechanics_profile_checked": true,
+            "opponent_route_named": true,
+            "win_conditions_named": true,
+            "worst_branch_named": true
+          },
+          "chosen_action": "Roar",
+          "decision_quality": "good",
+          "expected_action": "Roar",
+          "hazards": "opp side Spikes",
+          "irreplaceable_pieces": [
+            "Raikou special check",
+            "Skarmory phazer"
+          ],
+          "opp_win_route": "Snorlax Body Slam paralysis opens endgame",
+          "own_win_route": "force Rest or pivot to sleep user",
+          "phase": "midgame",
+          "review_flags": [],
+          "sleep_state": "none",
+          "turn": 7,
+          "visible_state": "Raikou vs Snorlax"
+        },
+        {
+          "checklist": {
+            "answer_changing_info_named": true,
+            "irreplaceables_named": true,
+            "mechanics_profile_checked": true,
+            "opponent_route_named": true,
+            "win_conditions_named": true,
+            "worst_branch_named": true
+          },
+          "chosen_action": "Sleep Powder",
+          "decision_quality": "good",
+          "expected_action": "Sleep Powder",
+          "hazards": "opp side Spikes",
+          "irreplaceable_pieces": [
+            "Victreebel breaker"
+          ],
+          "opp_win_route": "Snorlax stays and attacks if sleep misses",
+          "own_win_route": "sleep Snorlax to open Swords Dance route",
+          "phase": "midgame",
+          "review_flags": [],
+          "sleep_state": "sleep clause free",
+          "turn": 8,
+          "visible_state": "Victreebel vs Snorlax"
+        },
+        {
+          "checklist": {
+            "answer_changing_info_named": true,
+            "irreplaceables_named": true,
+            "mechanics_profile_checked": true,
+            "opponent_route_named": true,
+            "win_conditions_named": true,
+            "worst_branch_named": false
+          },
+          "chosen_action": "Swords Dance",
+          "decision_quality": "bad",
+          "expected_action": "Sleep Powder or switch:Skarmory",
+          "hazards": "opp side Spikes",
+          "irreplaceable_pieces": [
+            "Victreebel breaker",
+            "Skarmory phazer"
+          ],
+          "opp_win_route": "Body Slam or Double-Edge removes Victreebel",
+          "own_win_route": "re-score: preserve breaker or retry sleep only if miss branch survivable",
+          "phase": "midgame",
+          "review_flags": [
+            "OVERFITTED_SCRIPT_ERROR",
+            "STATE_REEVALUATION_FAILURE"
+          ],
+          "sleep_state": "sleep clause free, target awake",
+          "turn": 9,
+          "visible_state": "Victreebel vs Snorlax after Sleep Powder miss"
+        },
+        {
+          "checklist": {
+            "answer_changing_info_named": true,
+            "irreplaceables_named": true,
+            "mechanics_profile_checked": true,
+            "opponent_route_named": true,
+            "win_conditions_named": true,
+            "worst_branch_named": true
+          },
+          "chosen_action": "send:Raikou",
+          "decision_quality": "forced",
+          "expected_action": "send:Raikou",
+          "hazards": "opp side Spikes",
+          "irreplaceable_pieces": [
+            "Skarmory phazer",
+            "Raikou"
+          ],
+          "opp_win_route": "Snorlax no longer has to fear Grass setup",
+          "own_win_route": "fallback to Raikou pressure after losing breaker",
+          "phase": "midgame",
+          "review_flags": [
+            "EARLIEST_IRREVERSIBLE_ERROR_MATURES"
+          ],
+          "sleep_state": "sleep clause free, target awake",
+          "turn": 10,
+          "visible_state": "Snorlax KOs Victreebel"
+        },
+        {
+          "checklist": {
+            "answer_changing_info_named": true,
+            "irreplaceables_named": true,
+            "mechanics_profile_checked": true,
+            "opponent_route_named": true,
+            "win_conditions_named": true,
+            "worst_branch_named": true
+          },
+          "chosen_action": "Thunder",
+          "decision_quality": "good",
+          "expected_action": "Thunder",
+          "hazards": "opp side Spikes",
+          "irreplaceable_pieces": [
+            "Raikou",
+            "Skarmory"
+          ],
+          "opp_win_route": "Snorlax uses Curse if Raikou Rests early",
+          "own_win_route": "force Snorlax Rest through Thunder pressure",
+          "phase": "midgame",
+          "review_flags": [],
+          "sleep_state": "none",
+          "turn": 11,
+          "visible_state": "Raikou vs Snorlax"
+        },
+        {
+          "checklist": {
+            "answer_changing_info_named": true,
+            "irreplaceables_named": true,
+            "mechanics_profile_checked": true,
+            "opponent_route_named": true,
+            "win_conditions_named": true,
+            "worst_branch_named": true
+          },
+          "chosen_action": "Thunder",
+          "decision_quality": "good",
+          "expected_action": "Thunder",
+          "hazards": "opp side Spikes",
+          "irreplaceable_pieces": [
+            "Raikou PP",
+            "Skarmory"
+          ],
+          "opp_win_route": "Snorlax Rest resets progress",
+          "own_win_route": "force Rest then go Skarmory or Gengar",
+          "phase": "midgame",
+          "review_flags": [],
+          "sleep_state": "none",
+          "turn": 12,
+          "visible_state": "Raikou vs low Snorlax"
+        },
+        {
+          "checklist": {
+            "answer_changing_info_named": true,
+            "irreplaceables_named": true,
+            "mechanics_profile_checked": true,
+            "opponent_route_named": true,
+            "win_conditions_named": true,
+            "worst_branch_named": true
+          },
+          "chosen_action": "switch:Skarmory",
+          "decision_quality": "good",
+          "expected_action": "switch:Skarmory",
+          "hazards": "opp side Spikes",
+          "irreplaceable_pieces": [
+            "Skarmory"
+          ],
+          "opp_win_route": "Sleep Talk can still call Body Slam or Curse",
+          "own_win_route": "use forced sleep turn to regain phaze position",
+          "phase": "midgame",
+          "review_flags": [],
+          "sleep_state": "Rest sleep turn 1",
+          "turn": 13,
+          "visible_state": "Snorlax Rests"
+        },
+        {
+          "checklist": {
+            "answer_changing_info_named": true,
+            "irreplaceables_named": true,
+            "mechanics_profile_checked": true,
+            "opponent_route_named": true,
+            "win_conditions_named": true,
+            "worst_branch_named": true
+          },
+          "chosen_action": "Whirlwind",
+          "decision_quality": "good",
+          "expected_action": "Whirlwind",
+          "hazards": "opp side Spikes",
+          "irreplaceable_pieces": [
+            "Skarmory Whirlwind PP"
+          ],
+          "opp_win_route": "Sleep Talk Curse creates boost pressure",
+          "own_win_route": "Whirlwind with Spikes pressure",
+          "phase": "midgame",
+          "review_flags": [],
+          "sleep_state": "Rest sleep turn 2",
+          "turn": 14,
+          "visible_state": "Skarmory vs sleeping Snorlax"
+        },
+        {
+          "checklist": {
+            "answer_changing_info_named": true,
+            "irreplaceables_named": true,
+            "mechanics_profile_checked": true,
+            "opponent_route_named": true,
+            "win_conditions_named": true,
+            "worst_branch_named": true
+          },
+          "chosen_action": "switch:Gengar",
+          "decision_quality": "good",
+          "expected_action": "switch:Gengar",
+          "hazards": "opp side Spikes",
+          "irreplaceable_pieces": [
+            "Gengar spinblocker"
+          ],
+          "opp_win_route": "Starmie removes only hazard layer",
+          "own_win_route": "keep Starmie from spinning",
+          "phase": "midgame",
+          "review_flags": [],
+          "sleep_state": "none",
+          "turn": 15,
+          "visible_state": "Cloyster vs Starmie after phaze"
+        },
+        {
+          "checklist": {
+            "answer_changing_info_named": true,
+            "irreplaceables_named": true,
+            "mechanics_profile_checked": true,
+            "opponent_route_named": true,
+            "win_conditions_named": true,
+            "worst_branch_named": true
+          },
+          "chosen_action": "Thunderbolt",
+          "decision_quality": "good",
+          "expected_action": "Thunderbolt",
+          "hazards": "opp side Spikes",
+          "irreplaceable_pieces": [
+            "Gengar"
+          ],
+          "opp_win_route": "Psychic chips Gengar below future spinblock range",
+          "own_win_route": "pressure spinner without losing spinblocker",
+          "phase": "midgame",
+          "review_flags": [],
+          "sleep_state": "none",
+          "turn": 16,
+          "visible_state": "Gengar vs Starmie"
+        },
+        {
+          "checklist": {
+            "answer_changing_info_named": true,
+            "irreplaceables_named": true,
+            "mechanics_profile_checked": true,
+            "opponent_route_named": true,
+            "win_conditions_named": true,
+            "worst_branch_named": true
+          },
+          "chosen_action": "Explosion",
+          "decision_quality": "good",
+          "expected_action": "Explosion",
+          "hazards": "opp side Spikes",
+          "irreplaceable_pieces": [
+            "Cloyster Explosion",
+            "Snorlax"
+          ],
+          "opp_win_route": "Machamp breaks Snorlax if left healthy",
+          "own_win_route": "Explode only if it opens Snorlax/Raikou route",
+          "phase": "conversion",
+          "review_flags": [],
+          "sleep_state": "none",
+          "turn": 17,
+          "visible_state": "Cloyster vs Machamp"
+        },
+        {
+          "checklist": {
+            "answer_changing_info_named": true,
+            "irreplaceables_named": true,
+            "mechanics_profile_checked": true,
+            "opponent_route_named": true,
+            "win_conditions_named": true,
+            "worst_branch_named": true
+          },
+          "chosen_action": "send:Snorlax",
+          "decision_quality": "good",
+          "expected_action": "send:Snorlax",
+          "hazards": "opp side Spikes",
+          "irreplaceable_pieces": [
+            "Gengar spinblocker",
+            "Snorlax"
+          ],
+          "opp_win_route": "Starmie still threatens spin if Gengar falls",
+          "own_win_route": "Snorlax endgame improves with Machamp gone",
+          "phase": "conversion",
+          "review_flags": [],
+          "sleep_state": "none",
+          "turn": 18,
+          "visible_state": "Cloyster traded for Machamp"
+        },
+        {
+          "checklist": {
+            "answer_changing_info_named": true,
+            "irreplaceables_named": true,
+            "mechanics_profile_checked": true,
+            "opponent_route_named": true,
+            "win_conditions_named": true,
+            "worst_branch_named": true
+          },
+          "chosen_action": "Body Slam",
+          "decision_quality": "good",
+          "expected_action": "Body Slam",
+          "hazards": "opp side Spikes",
+          "irreplaceable_pieces": [
+            "Snorlax Rest PP"
+          ],
+          "opp_win_route": "Raikou Roar burns setup turn",
+          "own_win_route": "Curse toward endgame only while phazers are weakened",
+          "phase": "conversion",
+          "review_flags": [],
+          "sleep_state": "none",
+          "turn": 19,
+          "visible_state": "Snorlax vs Raikou"
+        },
+        {
+          "checklist": {
+            "answer_changing_info_named": true,
+            "irreplaceables_named": true,
+            "mechanics_profile_checked": true,
+            "opponent_route_named": true,
+            "win_conditions_named": true,
+            "worst_branch_named": true
+          },
+          "chosen_action": "Curse",
+          "decision_quality": "needs_review",
+          "expected_action": "Body Slam or switch:Skarmory",
+          "hazards": "opp side Spikes",
+          "irreplaceable_pieces": [
+            "Snorlax"
+          ],
+          "opp_win_route": "Tyranitar Rock Slide flinch and Roar pressure",
+          "own_win_route": "avoid unnecessary Rest before forced",
+          "phase": "conversion",
+          "review_flags": [
+            "SETUP_WITHOUT_ROUTE_PROOF"
+          ],
+          "sleep_state": "none",
+          "turn": 20,
+          "visible_state": "Snorlax vs Tyranitar"
+        },
+        {
+          "checklist": {
+            "answer_changing_info_named": true,
+            "irreplaceables_named": true,
+            "mechanics_profile_checked": true,
+            "opponent_route_named": true,
+            "win_conditions_named": true,
+            "worst_branch_named": true
+          },
+          "chosen_action": "Rest",
+          "decision_quality": "bad",
+          "expected_action": "Body Slam",
+          "hazards": "opp side Spikes",
+          "irreplaceable_pieces": [
+            "Snorlax Rest PP"
+          ],
+          "opp_win_route": "Rest too early donates Tyranitar turns",
+          "own_win_route": "attack before Rest threshold",
+          "phase": "conversion",
+          "review_flags": [
+            "REST_TEMPO_ERROR"
+          ],
+          "sleep_state": "none",
+          "turn": 21,
+          "visible_state": "Snorlax at 72% vs Tyranitar"
+        },
+        {
+          "checklist": {
+            "answer_changing_info_named": true,
+            "irreplaceables_named": true,
+            "mechanics_profile_checked": true,
+            "opponent_route_named": true,
+            "win_conditions_named": true,
+            "worst_branch_named": true
+          },
+          "chosen_action": "Sleep Talk",
+          "decision_quality": "forced",
+          "expected_action": "Sleep Talk",
+          "hazards": "opp side Spikes",
+          "irreplaceable_pieces": [
+            "Snorlax"
+          ],
+          "opp_win_route": "Tyranitar can phaze or crit before wake",
+          "own_win_route": "survive sleep turns with Sleep Talk",
+          "phase": "conversion",
+          "review_flags": [],
+          "sleep_state": "Rest sleep turn 1",
+          "turn": 22,
+          "visible_state": "Sleeping Snorlax vs Tyranitar"
+        },
+        {
+          "checklist": {
+            "answer_changing_info_named": true,
+            "irreplaceables_named": true,
+            "mechanics_profile_checked": true,
+            "opponent_route_named": true,
+            "win_conditions_named": true,
+            "worst_branch_named": true
+          },
+          "chosen_action": "Sleep Talk",
+          "decision_quality": "forced",
+          "expected_action": "Sleep Talk",
+          "hazards": "opp side Spikes",
+          "irreplaceable_pieces": [
+            "Snorlax"
+          ],
+          "opp_win_route": "Tyranitar can Roar after boost",
+          "own_win_route": "boost while asleep but track wake",
+          "phase": "conversion",
+          "review_flags": [],
+          "sleep_state": "Rest sleep turn 2",
+          "turn": 23,
+          "visible_state": "Sleeping Snorlax Sleep Talk calls Curse"
+        },
+        {
+          "checklist": {
+            "answer_changing_info_named": true,
+            "irreplaceables_named": true,
+            "mechanics_profile_checked": true,
+            "opponent_route_named": true,
+            "win_conditions_named": true,
+            "worst_branch_named": true
+          },
+          "chosen_action": "Body Slam",
+          "decision_quality": "good",
+          "expected_action": "Body Slam",
+          "hazards": "opp side Spikes",
+          "irreplaceable_pieces": [
+            "Snorlax PP",
+            "Raikou"
+          ],
+          "opp_win_route": "Skarmory phazes Curse boosts",
+          "own_win_route": "force Skarmory Rest or paralyze it",
+          "phase": "conversion",
+          "review_flags": [],
+          "sleep_state": "awake",
+          "turn": 24,
+          "visible_state": "Awake Snorlax vs Skarmory"
+        },
+        {
+          "checklist": {
+            "answer_changing_info_named": true,
+            "irreplaceables_named": true,
+            "mechanics_profile_checked": true,
+            "opponent_route_named": true,
+            "win_conditions_named": true,
+            "worst_branch_named": true
+          },
+          "chosen_action": "Thunder",
+          "decision_quality": "good",
+          "expected_action": "Thunder",
+          "hazards": "opp side Spikes",
+          "irreplaceable_pieces": [
+            "Raikou Thunder PP"
+          ],
+          "opp_win_route": "Skarmory Whirlwind stalls",
+          "own_win_route": "preserve Thunder PP and force Rest",
+          "phase": "endgame",
+          "review_flags": [],
+          "sleep_state": "none",
+          "turn": 25,
+          "visible_state": "Raikou vs Skarmory"
+        },
+        {
+          "checklist": {
+            "answer_changing_info_named": true,
+            "irreplaceables_named": true,
+            "mechanics_profile_checked": true,
+            "opponent_route_named": true,
+            "win_conditions_named": true,
+            "worst_branch_named": true
+          },
+          "chosen_action": "switch:Snorlax",
+          "decision_quality": "good",
+          "expected_action": "switch:Snorlax",
+          "hazards": "opp side Spikes",
+          "irreplaceable_pieces": [
+            "Snorlax"
+          ],
+          "opp_win_route": "Sleep Talk Whirlwind can break route",
+          "own_win_route": "use Rest turn to double into Snorlax",
+          "phase": "endgame",
+          "review_flags": [],
+          "sleep_state": "Rest sleep turn 1",
+          "turn": 26,
+          "visible_state": "Raikou vs Resting Skarmory"
+        },
+        {
+          "checklist": {
+            "answer_changing_info_named": true,
+            "irreplaceables_named": true,
+            "mechanics_profile_checked": true,
+            "opponent_route_named": true,
+            "win_conditions_named": true,
+            "worst_branch_named": true
+          },
+          "chosen_action": "Curse",
+          "decision_quality": "acceptable",
+          "expected_action": "Curse",
+          "hazards": "opp side Spikes",
+          "irreplaceable_pieces": [
+            "Snorlax"
+          ],
+          "opp_win_route": "Sleep Talk Whirlwind resets",
+          "own_win_route": "Curse once if Sleep Talk phaze branch tolerable",
+          "phase": "endgame",
+          "review_flags": [],
+          "sleep_state": "Rest sleep turn 2",
+          "turn": 27,
+          "visible_state": "Snorlax vs sleeping Skarmory"
+        },
+        {
+          "checklist": {
+            "answer_changing_info_named": true,
+            "irreplaceables_named": true,
+            "mechanics_profile_checked": true,
+            "opponent_route_named": true,
+            "win_conditions_named": true,
+            "worst_branch_named": true
+          },
+          "chosen_action": "Body Slam",
+          "decision_quality": "good",
+          "expected_action": "Body Slam",
+          "hazards": "opp side Spikes",
+          "irreplaceable_pieces": [
+            "Snorlax PP"
+          ],
+          "opp_win_route": "Whirlwind removes boost",
+          "own_win_route": "Body Slam for paralysis or force Rest",
+          "phase": "endgame",
+          "review_flags": [],
+          "sleep_state": "awake",
+          "turn": 28,
+          "visible_state": "Snorlax at +1 vs awake Skarmory"
+        },
+        {
+          "checklist": {
+            "answer_changing_info_named": true,
+            "irreplaceables_named": true,
+            "mechanics_profile_checked": true,
+            "opponent_route_named": true,
+            "win_conditions_named": true,
+            "worst_branch_named": true
+          },
+          "chosen_action": "Thunderbolt",
+          "decision_quality": "needs_review",
+          "expected_action": "switch:Snorlax if Psychic KO is confirmed",
+          "hazards": "opp side Spikes",
+          "irreplaceable_pieces": [
+            "Gengar spinblocker"
+          ],
+          "opp_win_route": "Starmie spin frees late switches",
+          "own_win_route": "block final spin only if Gengar survives Psychic",
+          "phase": "endgame",
+          "review_flags": [
+            "DAMAGE_RANGE_UNVERIFIED"
+          ],
+          "sleep_state": "none",
+          "turn": 29,
+          "visible_state": "Gengar low vs Starmie"
+        },
+        {
+          "checklist": {
+            "answer_changing_info_named": true,
+            "irreplaceables_named": true,
+            "mechanics_profile_checked": true,
+            "opponent_route_named": true,
+            "win_conditions_named": true,
+            "worst_branch_named": true
+          },
+          "chosen_action": "send:Snorlax",
+          "decision_quality": "forced",
+          "expected_action": "send:Snorlax",
+          "hazards": "no hazards",
+          "irreplaceable_pieces": [
+            "Snorlax",
+            "Raikou"
+          ],
+          "opp_win_route": "opponent switching is free again",
+          "own_win_route": "win through Snorlax PP instead of hazards",
+          "phase": "endgame",
+          "review_flags": [
+            "HAZARD_ROUTE_LOST"
+          ],
+          "sleep_state": "none",
+          "turn": 30,
+          "visible_state": "Starmie spins after Gengar faints"
+        },
+        {
+          "checklist": {
+            "answer_changing_info_named": true,
+            "irreplaceables_named": true,
+            "mechanics_profile_checked": true,
+            "opponent_route_named": true,
+            "win_conditions_named": true,
+            "worst_branch_named": true
+          },
+          "chosen_action": "Body Slam",
+          "decision_quality": "good",
+          "expected_action": "Body Slam",
+          "hazards": "no hazards",
+          "irreplaceable_pieces": [
+            "Snorlax Rest PP",
+            "Body Slam PP"
+          ],
+          "opp_win_route": "Raikou Roar and Rest cycles can outlast",
+          "own_win_route": "PP endgame: force Rest without wasting Body Slam",
+          "phase": "endgame",
+          "review_flags": [],
+          "sleep_state": "none",
+          "turn": 31,
+          "visible_state": "Snorlax vs Raikou"
+        },
+        {
+          "checklist": {
+            "answer_changing_info_named": true,
+            "irreplaceables_named": true,
+            "mechanics_profile_checked": true,
+            "opponent_route_named": true,
+            "win_conditions_named": true,
+            "worst_branch_named": true
+          },
+          "chosen_action": "Curse",
+          "decision_quality": "needs_review",
+          "expected_action": "Curse or Rest depending exact PP",
+          "hazards": "no hazards",
+          "irreplaceable_pieces": [
+            "Snorlax Rest PP"
+          ],
+          "opp_win_route": "Raikou wakes and Roars if PP route fails",
+          "own_win_route": "final route depends on PP and paralysis, not damage slogans",
+          "phase": "endgame",
+          "review_flags": [
+            "PP_COUNT_REQUIRED"
+          ],
+          "sleep_state": "Rest sleep turn 1",
+          "turn": 32,
+          "visible_state": "Snorlax low vs Resting Raikou"
+        }
+      ],
+      "mechanics_profile": "vanilla_gsc",
+      "phases": [
+        {
+          "focus": "establish hazard and spinner model",
+          "name": "opening",
+          "turns": [
+            1,
+            7
+          ]
+        },
+        {
+          "focus": "sleep disruption, spinblock, and Explosion trade",
+          "name": "midgame",
+          "turns": [
+            8,
+            18
+          ]
+        },
+        {
+          "focus": "Rest cycle and setup timing",
+          "name": "conversion",
+          "turns": [
+            19,
+            24
+          ]
+        },
+        {
+          "focus": "PP, hazard loss, and final route conversion",
+          "name": "endgame",
+          "turns": [
+            25,
+            32
+          ]
+        }
+      ],
+      "scenario_type": "constructed_long_game",
+      "source_refs": [
+        "docs/boss_ai_teaching_heuristics.md",
+        "tools/boss_ai_preference/benchmarks/state_transition_public_cards.json",
+        "tools/boss_ai_preference/type_evidence.py",
+        "https://www.smogon.com/gs/articles/gsc_spikes",
+        "https://www.smogon.com/gs/articles/guide_to_explosion",
+        "https://www.smogon.com/gs/articles/gsc_guide_part1",
+        "https://www.smogon.com/smog/issue28/gsc"
+      ],
+      "turn_count": 32,
+      "unverified": [
+        "Exact vanilla GSC Starmie Psychic versus Gengar damage for the constructed review.",
+        "Exact original turn-29 Gengar HP/level if this constructed scenario is replaced with a real battle log.",
+        "Exact remaining PP for Snorlax Body Slam, Rest, and opposing Raikou Roar in the final four turns.",
+        "Whether an expert reviewer would prefer preserving Victreebel or retrying Sleep Powder on turn 9."
+      ]
+    }
+  ],
+  "reviews_valid": true,
+  "schema_version": 1,
+  "turn_count": 32,
+  "unverified": [
+    "Exact vanilla GSC Starmie Psychic versus Gengar damage for the constructed review.",
+    "Exact original turn-29 Gengar HP/level if this constructed scenario is replaced with a real battle log.",
+    "Exact remaining PP for Snorlax Body Slam, Rest, and opposing Raikou Roar in the final four turns.",
+    "Whether an expert reviewer would prefer preserving Victreebel or retrying Sleep Powder on turn 9."
+  ],
+  "validation_errors": []
+}

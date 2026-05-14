@@ -1,0 +1,2614 @@
+{
+  "complete_candidate_count": 4,
+  "complete_candidates": [
+    {
+      "acceptable_action_ids": [
+        "move_ice_punch"
+      ],
+      "actions": [
+        {
+          "action_id": "switch_sudowoodo",
+          "explanation": "Hard walls Flying pressure but exposes a Water/Fighting team plan.",
+          "kind": "switch",
+          "losses": 0,
+          "name": "Switch to Sudowoodo",
+          "preference_ids": [
+            "chuck_poliwrath_vs_pidgeotto_ice_punch:1:move_focus_punch:move_ice_punch:other_better"
+          ],
+          "public_tradeoff": "Maybe smart if Chuck preserves Poliwrath.",
+          "score": 2,
+          "tags": {
+            "keeps_tempo": 1,
+            "reduces_risk": 1,
+            "uses_public_info": 1
+          },
+          "wins": 1
+        },
+        {
+          "action_id": "move_hypnosis",
+          "explanation": "Stops the bird if it lands.",
+          "kind": "move",
+          "losses": 0,
+          "name": "Hypnosis",
+          "preference_ids": [],
+          "public_tradeoff": "Swingy but leader-flavored.",
+          "score": 0,
+          "tags": {},
+          "wins": 0
+        },
+        {
+          "action_id": "move_ice_punch",
+          "explanation": "Coverage hit into the revealed Flying threat.",
+          "kind": "move",
+          "losses": 1,
+          "name": "Ice Punch",
+          "preference_ids": [
+            "chuck_poliwrath_vs_pidgeotto_ice_punch:1:move_focus_punch:move_ice_punch:other_better"
+          ],
+          "public_tradeoff": "Looks prepared without hidden information.",
+          "score": -1,
+          "tags": {
+            "uses_public_info": 1
+          },
+          "wins": 0
+        },
+        {
+          "action_id": "move_focus_punch",
+          "explanation": "High reward if the player does not attack, but Wing Attack is visible.",
+          "kind": "move",
+          "losses": 1,
+          "name": "Focus Punch",
+          "preference_ids": [
+            "chuck_poliwrath_vs_pidgeotto_ice_punch:1:move_focus_punch:move_ice_punch:other_better"
+          ],
+          "public_tradeoff": "Can look foolish when the threat is obvious.",
+          "score": -2,
+          "tags": {
+            "too_greedy": 1
+          },
+          "wins": 0
+        }
+      ],
+      "best_action_ids": [
+        "switch_sudowoodo"
+      ],
+      "catastrophic_action_ids": [
+        "move_focus_punch"
+      ],
+      "complete": true,
+      "condition_tags": [],
+      "fixture_id": "chuck_poliwrath_vs_pidgeotto_ice_punch",
+      "leader": "Chuck",
+      "lesson_types": [],
+      "missing": [],
+      "preference_count": 1,
+      "strict_preference_count": 1,
+      "tags": [
+        "coverage",
+        "prediction",
+        "status"
+      ],
+      "training_focus": "Teach the boss to value visible coverage without pretending it knows the player's next move.",
+      "turn": 6
+    },
+    {
+      "acceptable_action_ids": [
+        "switch_omastar"
+      ],
+      "actions": [
+        {
+          "action_id": "move_explosion",
+          "explanation": "Trades Golem to stop Vaporeon from sweeping.",
+          "kind": "move",
+          "losses": 0,
+          "name": "Explosion",
+          "preference_ids": [
+            "brock_golem_vs_vaporeon_explosion_question:1:move_explosion:move_earthquake:a_better"
+          ],
+          "public_tradeoff": "Can be dramatic or cheap.",
+          "score": 2,
+          "tags": {
+            "calculated_risk": 1,
+            "keeps_tempo": 2,
+            "reduces_risk": 1
+          },
+          "wins": 1
+        },
+        {
+          "action_id": "move_curse",
+          "explanation": "Setup while under direct Water pressure.",
+          "kind": "move",
+          "losses": 0,
+          "name": "Curse",
+          "preference_ids": [],
+          "public_tradeoff": "Likely too greedy.",
+          "score": 0,
+          "tags": {},
+          "wins": 0
+        },
+        {
+          "action_id": "switch_omastar",
+          "explanation": "Preserves Golem and resists Water better.",
+          "kind": "switch",
+          "losses": 0,
+          "name": "Switch to Omastar",
+          "preference_ids": [],
+          "public_tradeoff": "Defensive but sensible.",
+          "score": 0,
+          "tags": {
+            "reduces_risk": 1,
+            "uses_public_info": 1
+          },
+          "wins": 0
+        },
+        {
+          "action_id": "move_earthquake",
+          "explanation": "Best normal damage while accepting Water risk.",
+          "kind": "move",
+          "losses": 1,
+          "name": "Earthquake",
+          "preference_ids": [
+            "brock_golem_vs_vaporeon_explosion_question:1:move_explosion:move_earthquake:a_better"
+          ],
+          "public_tradeoff": "Straightforward but maybe not enough.",
+          "score": -2,
+          "tags": {
+            "misses_public_threat": 1
+          },
+          "wins": 0
+        }
+      ],
+      "best_action_ids": [
+        "move_explosion"
+      ],
+      "catastrophic_action_ids": [
+        "move_earthquake"
+      ],
+      "complete": true,
+      "condition_tags": [
+        "explosion_and_switch_both_live",
+        "low_future_value_exploder",
+        "water_pressure_revealed"
+      ],
+      "fixture_id": "brock_golem_vs_vaporeon_explosion_question",
+      "leader": "Brock",
+      "lesson_types": [
+        "needs_context"
+      ],
+      "missing": [],
+      "preference_count": 2,
+      "strict_preference_count": 1,
+      "tags": [
+        "sacrifice",
+        "water_pressure",
+        "late_game"
+      ],
+      "training_focus": "Label whether a late-game Rock leader should trade Golem or preserve it under Water pressure.",
+      "turn": 6
+    },
+    {
+      "acceptable_action_ids": [
+        "move_explosion"
+      ],
+      "actions": [
+        {
+          "action_id": "move_spikes",
+          "explanation": "Places the third local Spikes layer.",
+          "kind": "move",
+          "losses": 0,
+          "name": "Spikes",
+          "preference_ids": [
+            "janine_qwilfish_finish_third_spikes_layer:1:move_spikes:move_sludge_bomb:a_better",
+            "janine_qwilfish_finish_third_spikes_layer:2:move_spikes:move_surf:a_better",
+            "janine_qwilfish_finish_third_spikes_layer:3:move_spikes:switch_tentacruel:a_better"
+          ],
+          "public_tradeoff": "Converts future grounded switches and Rest cycles into much higher pressure.",
+          "score": 6,
+          "tags": {
+            "keeps_tempo": 3,
+            "uses_public_info": 4
+          },
+          "wins": 3
+        },
+        {
+          "action_id": "move_explosion",
+          "explanation": "Sacrifices Qwilfish for tempo.",
+          "kind": "move",
+          "losses": 0,
+          "name": "Explosion",
+          "preference_ids": [],
+          "public_tradeoff": "Too early while Qwilfish can still finish the hazard stack.",
+          "score": 0,
+          "tags": {
+            "calculated_risk": 1
+          },
+          "wins": 0
+        },
+        {
+          "action_id": "move_sludge_bomb",
+          "explanation": "Direct poison STAB into Snorlax.",
+          "kind": "move",
+          "losses": 1,
+          "name": "Sludge Bomb",
+          "preference_ids": [
+            "janine_qwilfish_finish_third_spikes_layer:1:move_spikes:move_sludge_bomb:a_better"
+          ],
+          "public_tradeoff": "Safe chip, but it does not change the hazard economy.",
+          "score": -2,
+          "tags": {
+            "too_passive": 1
+          },
+          "wins": 0
+        },
+        {
+          "action_id": "move_surf",
+          "explanation": "Neutral Water coverage.",
+          "kind": "move",
+          "losses": 1,
+          "name": "Surf",
+          "preference_ids": [
+            "janine_qwilfish_finish_third_spikes_layer:2:move_spikes:move_surf:a_better"
+          ],
+          "public_tradeoff": "No immediate KO is public.",
+          "score": -2,
+          "tags": {
+            "too_passive": 1
+          },
+          "wins": 0
+        },
+        {
+          "action_id": "switch_tentacruel",
+          "explanation": "Preserves Qwilfish and brings in Janine's spinner.",
+          "kind": "switch",
+          "losses": 1,
+          "name": "Switch to Tentacruel",
+          "preference_ids": [
+            "janine_qwilfish_finish_third_spikes_layer:3:move_spikes:switch_tentacruel:a_better"
+          ],
+          "public_tradeoff": "Gives up the open third-layer turn.",
+          "score": -2,
+          "tags": {
+            "too_passive": 1
+          },
+          "wins": 0
+        }
+      ],
+      "best_action_ids": [
+        "move_spikes"
+      ],
+      "catastrophic_action_ids": [
+        "move_sludge_bomb",
+        "move_surf",
+        "switch_tentacruel"
+      ],
+      "complete": true,
+      "condition_tags": [
+        "explosion_route_trade_requires_review",
+        "no_immediate_ko_threat",
+        "no_spin_revealed",
+        "player_grounded",
+        "third_spikes_layer_available"
+      ],
+      "fixture_id": "janine_qwilfish_finish_third_spikes_layer",
+      "leader": "Janine",
+      "lesson_types": [
+        "needs_context",
+        "weight_hint"
+      ],
+      "missing": [],
+      "preference_count": 4,
+      "strict_preference_count": 3,
+      "tags": [
+        "kanto_leader",
+        "hazards",
+        "romhack_delta",
+        "spikes_layers"
+      ],
+      "training_focus": "Janine's Qwilfish should finish the third Spikes layer when the player is grounded, no spin has been revealed, and no immediate KO threat is public.",
+      "turn": 18
+    },
+    {
+      "acceptable_action_ids": [
+        "move_curse"
+      ],
+      "actions": [
+        {
+          "action_id": "move_body_slam",
+          "explanation": "Keeps pressure while Rest is mechanically unavailable.",
+          "kind": "move",
+          "losses": 0,
+          "name": "Body Slam",
+          "preference_ids": [
+            "mechanics_snorlax_full_hp_rest_status_fail:1:move_body_slam:move_rest:a_better",
+            "mechanics_snorlax_full_hp_rest_status_fail:3:move_body_slam:move_sleep_talk:a_better"
+          ],
+          "public_tradeoff": "Does not cure paralysis, but at least advances the turn.",
+          "score": 4,
+          "tags": {
+            "keeps_tempo": 2
+          },
+          "wins": 2
+        },
+        {
+          "action_id": "move_curse",
+          "explanation": "Can build a route if Whirlwind does not erase the boost.",
+          "kind": "move",
+          "losses": 0,
+          "name": "Curse",
+          "preference_ids": [
+            "mechanics_snorlax_full_hp_rest_status_fail:2:move_curse:move_rest:a_better"
+          ],
+          "public_tradeoff": "Still risks donating a phazing turn.",
+          "score": 2,
+          "tags": {
+            "calculated_risk": 1
+          },
+          "wins": 1
+        },
+        {
+          "action_id": "move_sleep_talk",
+          "explanation": "Only useful while asleep.",
+          "kind": "move",
+          "losses": 1,
+          "name": "Sleep Talk",
+          "preference_ids": [
+            "mechanics_snorlax_full_hp_rest_status_fail:3:move_body_slam:move_sleep_talk:a_better"
+          ],
+          "public_tradeoff": "Fails while awake.",
+          "score": -2,
+          "tags": {
+            "too_passive": 1
+          },
+          "wins": 0
+        },
+        {
+          "action_id": "move_rest",
+          "explanation": "Would be a status cure below full HP.",
+          "kind": "move",
+          "losses": 2,
+          "name": "Rest",
+          "preference_ids": [
+            "mechanics_snorlax_full_hp_rest_status_fail:1:move_body_slam:move_rest:a_better",
+            "mechanics_snorlax_full_hp_rest_status_fail:2:move_curse:move_rest:a_better"
+          ],
+          "public_tradeoff": "Fails at full HP in the local engine before curing status.",
+          "score": -4,
+          "tags": {
+            "too_greedy": 2
+          },
+          "wins": 0
+        }
+      ],
+      "best_action_ids": [
+        "move_body_slam"
+      ],
+      "catastrophic_action_ids": [
+        "move_rest",
+        "move_sleep_talk"
+      ],
+      "complete": true,
+      "condition_tags": [
+        "phaze_risk_still_better_than_failed_move",
+        "rest_full_hp_fails",
+        "sleep_talk_requires_sleep",
+        "status_cure_requires_damage"
+      ],
+      "fixture_id": "mechanics_snorlax_full_hp_rest_status_fail",
+      "leader": "Mechanics Drill",
+      "lesson_types": [
+        "hard_rule"
+      ],
+      "missing": [],
+      "preference_count": 3,
+      "strict_preference_count": 3,
+      "tags": [
+        "mechanics",
+        "rest_cycle",
+        "status_cure",
+        "local_engine"
+      ],
+      "training_focus": "Full-HP Rest is not a status cure in the local engine; the move fails before clearing status.",
+      "turn": 12
+    }
+  ],
+  "feedback_fixture_count": 27,
+  "fixture_count": 57,
+  "generated_at": "2026-05-13T11:25:56+00:00",
+  "lesson_type_counts": {
+    "hard_rule": 4,
+    "needs_context": 2,
+    "sequence_policy": 4,
+    "switch_policy": 2,
+    "weight_hint": 2
+  },
+  "missing_counts": {
+    "acceptable": 20,
+    "best": 3,
+    "catastrophic": 3,
+    "single_best": 5
+  },
+  "partial_candidate_count": 23,
+  "partial_candidates": [
+    {
+      "acceptable_action_ids": [],
+      "actions": [
+        {
+          "action_id": "move_sand_attack",
+          "explanation": "Reduces future Rock-risk without pretending to know the player's exact move.",
+          "kind": "move",
+          "losses": 0,
+          "name": "Sand Attack",
+          "preference_ids": [
+            "falkner_pidgeotto_vs_geodude_rock_risk:1:move_gust:move_sand_attack:b_better"
+          ],
+          "public_tradeoff": "Annoying but fair if used sparingly.",
+          "score": 2,
+          "tags": {
+            "reduces_risk": 1
+          },
+          "wins": 1
+        },
+        {
+          "action_id": "switch_noctowl",
+          "explanation": "Preserves Pidgeotto but does not solve Rock weakness cleanly.",
+          "kind": "switch",
+          "losses": 0,
+          "name": "Switch to Noctowl",
+          "preference_ids": [],
+          "public_tradeoff": "May be too passive for Falkner.",
+          "score": 0,
+          "tags": {},
+          "wins": 0
+        },
+        {
+          "action_id": "move_gust",
+          "explanation": "Safe visible STAB into Geodude's resistance; likely low damage.",
+          "kind": "move",
+          "losses": 1,
+          "name": "Gust",
+          "preference_ids": [
+            "falkner_pidgeotto_vs_geodude_rock_risk:1:move_gust:move_sand_attack:b_better"
+          ],
+          "public_tradeoff": "Looks normal, but ignores the public Rock-risk prior.",
+          "score": -2,
+          "tags": {
+            "too_passive": 1
+          },
+          "wins": 0
+        }
+      ],
+      "best_action_ids": [
+        "move_sand_attack"
+      ],
+      "catastrophic_action_ids": [
+        "move_gust"
+      ],
+      "complete": false,
+      "condition_tags": [],
+      "fixture_id": "falkner_pidgeotto_vs_geodude_rock_risk",
+      "leader": "Falkner",
+      "lesson_types": [],
+      "missing": [
+        "acceptable"
+      ],
+      "preference_count": 1,
+      "strict_preference_count": 1,
+      "tags": [
+        "early_gym",
+        "hidden_coverage",
+        "ace_preservation"
+      ],
+      "training_focus": "Do not treat a visible type advantage as complete safety when a common early Rock threat is public-plausible.",
+      "turn": 3
+    },
+    {
+      "acceptable_action_ids": [],
+      "actions": [
+        {
+          "action_id": "move_swords_dance",
+          "explanation": "Potentially scary if Quilava cannot punish, but Fire pressure is visible.",
+          "kind": "move",
+          "losses": 0,
+          "name": "Swords Dance",
+          "preference_ids": [
+            "bugsy_scyther_vs_quilava_fire_pressure:1:move_swords_dance:move_wing_attack:a_better"
+          ],
+          "public_tradeoff": "May feel like a throw if Ember is obvious.",
+          "score": 2,
+          "tags": {
+            "calculated_risk": 1,
+            "scary_pressure": 1,
+            "uses_public_info": 1
+          },
+          "wins": 1
+        },
+        {
+          "action_id": "move_quick_attack",
+          "explanation": "Priority chip if Scyther is trying to avoid a low-HP race.",
+          "kind": "move",
+          "losses": 0,
+          "name": "Quick Attack",
+          "preference_ids": [],
+          "public_tradeoff": "Weak if Quilava is not in range.",
+          "score": 0,
+          "tags": {},
+          "wins": 0
+        },
+        {
+          "action_id": "switch_ledian",
+          "explanation": "Preserves Scyther but switches into the same Fire pressure.",
+          "kind": "switch",
+          "losses": 0,
+          "name": "Switch to Ledian",
+          "preference_ids": [],
+          "public_tradeoff": "Probably too defensive and not useful.",
+          "score": 0,
+          "tags": {},
+          "wins": 0
+        },
+        {
+          "action_id": "move_wing_attack",
+          "explanation": "Cash damage before Quilava can punish Scyther.",
+          "kind": "move",
+          "losses": 1,
+          "name": "Wing Attack",
+          "preference_ids": [
+            "bugsy_scyther_vs_quilava_fire_pressure:1:move_swords_dance:move_wing_attack:a_better"
+          ],
+          "public_tradeoff": "Straightforward tempo play.",
+          "score": -2,
+          "tags": {
+            "reduces_risk": 1,
+            "uses_public_info": 1
+          },
+          "wins": 0
+        }
+      ],
+      "best_action_ids": [
+        "move_swords_dance"
+      ],
+      "catastrophic_action_ids": [
+        "move_wing_attack"
+      ],
+      "complete": false,
+      "condition_tags": [],
+      "fixture_id": "bugsy_scyther_vs_quilava_fire_pressure",
+      "leader": "Bugsy",
+      "lesson_types": [],
+      "missing": [
+        "acceptable"
+      ],
+      "preference_count": 1,
+      "strict_preference_count": 1,
+      "tags": [
+        "setup",
+        "tempo",
+        "super_effective_pressure"
+      ],
+      "training_focus": "Teach when a boss should stop setting up because a publicly revealed threat already has tempo.",
+      "turn": 2
+    },
+    {
+      "acceptable_action_ids": [],
+      "actions": [
+        {
+          "action_id": "move_body_slam",
+          "explanation": "Keeps pressure without locking Miltank into a bad sequence.",
+          "kind": "move",
+          "losses": 0,
+          "name": "Body Slam",
+          "preference_ids": [
+            "whitney_miltank_vs_geodude_rollout_temptation:1:move_rollout:move_body_slam:b_better"
+          ],
+          "public_tradeoff": "Less iconic but safer.",
+          "score": 2,
+          "tags": {
+            "reduces_risk": 1,
+            "uses_public_info": 1
+          },
+          "wins": 1
+        },
+        {
+          "action_id": "move_milk_drink",
+          "explanation": "Preserves the ace while scouting whether Geodude has real damage.",
+          "kind": "move",
+          "losses": 0,
+          "name": "Milk Drink",
+          "preference_ids": [],
+          "public_tradeoff": "Can feel cheap if spammed at high HP.",
+          "score": 0,
+          "tags": {},
+          "wins": 0
+        },
+        {
+          "action_id": "switch_girafarig",
+          "explanation": "Avoids Ground risk, but gives up Miltank's pressure.",
+          "kind": "switch",
+          "losses": 0,
+          "name": "Switch to Girafarig",
+          "preference_ids": [],
+          "public_tradeoff": "A rare switch may feel smart; repeated switches may not.",
+          "score": 0,
+          "tags": {},
+          "wins": 0
+        },
+        {
+          "action_id": "move_rollout",
+          "explanation": "Iconic snowball line, but Rock resistance and Magnitude risk are public.",
+          "kind": "move",
+          "losses": 1,
+          "name": "Rollout",
+          "preference_ids": [
+            "whitney_miltank_vs_geodude_rollout_temptation:1:move_rollout:move_body_slam:b_better"
+          ],
+          "public_tradeoff": "May be exciting or too robotic depending on taste.",
+          "score": -2,
+          "tags": {
+            "too_greedy": 1
+          },
+          "wins": 0
+        }
+      ],
+      "best_action_ids": [
+        "move_body_slam"
+      ],
+      "catastrophic_action_ids": [
+        "move_rollout"
+      ],
+      "complete": false,
+      "condition_tags": [],
+      "fixture_id": "whitney_miltank_vs_geodude_rollout_temptation",
+      "leader": "Whitney",
+      "lesson_types": [],
+      "missing": [
+        "acceptable"
+      ],
+      "preference_count": 1,
+      "strict_preference_count": 1,
+      "tags": [
+        "ace_preservation",
+        "cheapness",
+        "setup_lock"
+      ],
+      "training_focus": "Separate iconic pressure from bad Rollout locking when Rock/Ground danger is public.",
+      "turn": 5
+    },
+    {
+      "acceptable_action_ids": [
+        "move_encore",
+        "move_double_team"
+      ],
+      "actions": [
+        {
+          "action_id": "move_double_team",
+          "explanation": "Raises evasion before the player has shown a punish.",
+          "kind": "move",
+          "losses": 0,
+          "name": "Double Team",
+          "preference_ids": [],
+          "public_tradeoff": "High risk of feeling cheap.",
+          "score": 0,
+          "tags": {
+            "reduces_risk": 1,
+            "uses_public_info": 1
+          },
+          "wins": 0
+        },
+        {
+          "action_id": "move_doubleslap",
+          "explanation": "Simple chip that preserves the tutorial-like tone.",
+          "kind": "move",
+          "losses": 0,
+          "name": "DoubleSlap",
+          "preference_ids": [],
+          "public_tradeoff": "May be too weak to feel prepared.",
+          "score": 0,
+          "tags": {},
+          "wins": 0
+        },
+        {
+          "action_id": "move_encore",
+          "explanation": "Targets a likely support pattern if Bayleef reveals it.",
+          "kind": "move",
+          "losses": 0,
+          "name": "Encore",
+          "preference_ids": [],
+          "public_tradeoff": "Smart when timed; bad if blind-spammed.",
+          "score": 0,
+          "tags": {
+            "keeps_tempo": 1,
+            "uses_public_info": 1
+          },
+          "wins": 0
+        },
+        {
+          "action_id": "move_thunder_wave",
+          "explanation": "Reliable speed control into a bulky starter.",
+          "kind": "move",
+          "losses": 0,
+          "name": "Thunder Wave",
+          "preference_ids": [],
+          "public_tradeoff": "Strong, readable early utility.",
+          "score": 0,
+          "tags": {},
+          "wins": 0
+        }
+      ],
+      "best_action_ids": [],
+      "catastrophic_action_ids": [],
+      "complete": false,
+      "condition_tags": [],
+      "fixture_id": "whitney_clefairy_vs_bayleef_encore_window",
+      "leader": "Whitney",
+      "lesson_types": [],
+      "missing": [
+        "best",
+        "catastrophic",
+        "single_best"
+      ],
+      "preference_count": 1,
+      "strict_preference_count": 0,
+      "tags": [
+        "status",
+        "setup_denial",
+        "early_gym"
+      ],
+      "training_focus": "Capture whether early utility moves should punish setup attempts or just take simple damage.",
+      "turn": 1
+    },
+    {
+      "acceptable_action_ids": [],
+      "actions": [
+        {
+          "action_id": "move_shadow_ball",
+          "explanation": "Direct STAB pressure into a Psychic-type.",
+          "kind": "move",
+          "losses": 0,
+          "name": "Shadow Ball",
+          "preference_ids": [
+            "morty_gengar_vs_kadabra_destiny_bond:1:move_shadow_ball:move_destiny_bond:a_better"
+          ],
+          "public_tradeoff": "Clean and explainable.",
+          "score": 2,
+          "tags": {
+            "keeps_tempo": 1,
+            "uses_public_info": 1
+          },
+          "wins": 1
+        },
+        {
+          "action_id": "move_spikes",
+          "explanation": "Long-game pressure that may waste a low-HP ace turn.",
+          "kind": "move",
+          "losses": 0,
+          "name": "Spikes",
+          "preference_ids": [],
+          "public_tradeoff": "Probably too slow here.",
+          "score": 0,
+          "tags": {},
+          "wins": 0
+        },
+        {
+          "action_id": "switch_misdreavus",
+          "explanation": "Preserves Gengar, but risks another Ghost into Psychic pressure.",
+          "kind": "switch",
+          "losses": 0,
+          "name": "Switch to Misdreavus",
+          "preference_ids": [],
+          "public_tradeoff": "Defensive but readable.",
+          "score": 0,
+          "tags": {},
+          "wins": 0
+        },
+        {
+          "action_id": "move_destiny_bond",
+          "explanation": "Punishes an obvious KO attempt while Gengar is low.",
+          "kind": "move",
+          "losses": 1,
+          "name": "Destiny Bond",
+          "preference_ids": [
+            "morty_gengar_vs_kadabra_destiny_bond:1:move_shadow_ball:move_destiny_bond:a_better"
+          ],
+          "public_tradeoff": "Scary if occasional; cheap if overused.",
+          "score": -2,
+          "tags": {
+            "too_passive": 1
+          },
+          "wins": 0
+        }
+      ],
+      "best_action_ids": [
+        "move_shadow_ball"
+      ],
+      "catastrophic_action_ids": [
+        "move_destiny_bond"
+      ],
+      "complete": false,
+      "condition_tags": [],
+      "fixture_id": "morty_gengar_vs_kadabra_destiny_bond",
+      "leader": "Morty",
+      "lesson_types": [],
+      "missing": [
+        "acceptable"
+      ],
+      "preference_count": 1,
+      "strict_preference_count": 1,
+      "tags": [
+        "sacrifice",
+        "status",
+        "ace_preservation"
+      ],
+      "training_focus": "Decide when Destiny Bond is scary-good versus cheap or wasteful.",
+      "turn": 4
+    },
+    {
+      "acceptable_action_ids": [],
+      "actions": [
+        {
+          "action_id": "move_hypnosis",
+          "explanation": "Status pressure into a bulky bird before it controls tempo.",
+          "kind": "move",
+          "losses": 0,
+          "name": "Hypnosis",
+          "preference_ids": [
+            "morty_haunter_vs_noctowl_sleep_line:1:move_hypnosis:move_night_shade:a_better"
+          ],
+          "public_tradeoff": "Leader-flavored but accuracy-dependent.",
+          "score": 2,
+          "tags": {
+            "keeps_tempo": 1,
+            "scary_pressure": 1
+          },
+          "wins": 1
+        },
+        {
+          "action_id": "move_curse",
+          "explanation": "Ghost pressure at the cost of Haunter's HP.",
+          "kind": "move",
+          "losses": 0,
+          "name": "Curse",
+          "preference_ids": [],
+          "public_tradeoff": "Can look dramatic or wasteful.",
+          "score": 0,
+          "tags": {},
+          "wins": 0
+        },
+        {
+          "action_id": "switch_gengar",
+          "explanation": "Escalates to the ace early.",
+          "kind": "switch",
+          "losses": 0,
+          "name": "Switch to Gengar",
+          "preference_ids": [],
+          "public_tradeoff": "May be too eager.",
+          "score": 0,
+          "tags": {},
+          "wins": 0
+        },
+        {
+          "action_id": "move_night_shade",
+          "explanation": "Reliable fixed damage without status swing.",
+          "kind": "move",
+          "losses": 1,
+          "name": "Night Shade",
+          "preference_ids": [
+            "morty_haunter_vs_noctowl_sleep_line:1:move_hypnosis:move_night_shade:a_better"
+          ],
+          "public_tradeoff": "Fair but less threatening.",
+          "score": -2,
+          "tags": {
+            "too_passive": 1
+          },
+          "wins": 0
+        }
+      ],
+      "best_action_ids": [
+        "move_hypnosis"
+      ],
+      "catastrophic_action_ids": [
+        "move_night_shade"
+      ],
+      "complete": false,
+      "condition_tags": [],
+      "fixture_id": "morty_haunter_vs_noctowl_sleep_line",
+      "leader": "Morty",
+      "lesson_types": [],
+      "missing": [
+        "acceptable"
+      ],
+      "preference_count": 1,
+      "strict_preference_count": 1,
+      "tags": [
+        "sleep",
+        "status",
+        "fairness"
+      ],
+      "training_focus": "Label how often sleep should be the correct scary line instead of a cheap default.",
+      "turn": 2
+    },
+    {
+      "acceptable_action_ids": [],
+      "actions": [
+        {
+          "action_id": "move_rock_slide",
+          "explanation": "Super-effective Rock hit into Fire with real KO pressure at Quilava's current HP.",
+          "kind": "move",
+          "losses": 0,
+          "name": "Rock Slide",
+          "preference_ids": [
+            "jasmine_steelix_vs_quilava_fire_threat:1:move_rock_slide:move_earthquake:a_better"
+          ],
+          "public_tradeoff": "Stronger damage line, but less accurate than Earthquake.",
+          "score": 2,
+          "tags": {},
+          "wins": 1
+        },
+        {
+          "action_id": "move_roar",
+          "explanation": "Rejects setup or switch patterns but gives up damage.",
+          "kind": "move",
+          "losses": 0,
+          "name": "Roar",
+          "preference_ids": [],
+          "public_tradeoff": "Defensive Jasmine flavor.",
+          "score": 0,
+          "tags": {},
+          "wins": 0
+        },
+        {
+          "action_id": "switch_skarmory",
+          "explanation": "Preserves Steelix but may overreact to reduced Fire chip.",
+          "kind": "switch",
+          "losses": 0,
+          "name": "Switch to Skarmory",
+          "preference_ids": [],
+          "public_tradeoff": "Likely too conservative unless Fire Blast risk dominates.",
+          "score": 0,
+          "tags": {},
+          "wins": 0
+        },
+        {
+          "action_id": "move_earthquake",
+          "explanation": "Accurate neutral hit into a Fire-type whose revealed Flame Wheel is not enough to force Steelix out.",
+          "kind": "move",
+          "losses": 1,
+          "name": "Earthquake",
+          "preference_ids": [
+            "jasmine_steelix_vs_quilava_fire_threat:1:move_rock_slide:move_earthquake:a_better"
+          ],
+          "public_tradeoff": "Reliable but much weaker than Rock Slide here.",
+          "score": -2,
+          "tags": {},
+          "wins": 0
+        }
+      ],
+      "best_action_ids": [
+        "move_rock_slide"
+      ],
+      "catastrophic_action_ids": [
+        "move_earthquake"
+      ],
+      "complete": false,
+      "condition_tags": [],
+      "fixture_id": "jasmine_steelix_vs_quilava_fire_threat",
+      "leader": "Jasmine",
+      "lesson_types": [],
+      "missing": [
+        "acceptable"
+      ],
+      "preference_count": 1,
+      "strict_preference_count": 1,
+      "tags": [
+        "ace_preservation",
+        "coverage",
+        "switching"
+      ],
+      "training_focus": "Teach Jasmine to stay patient into reduced Fire chip while still respecting stronger public Fire coverage.",
+      "turn": 5
+    },
+    {
+      "acceptable_action_ids": [
+        "move_whirlwind",
+        "move_toxic"
+      ],
+      "actions": [
+        {
+          "action_id": "move_steel_wing",
+          "explanation": "Direct damage without committing to stall.",
+          "kind": "move",
+          "losses": 0,
+          "name": "Steel Wing",
+          "preference_ids": [],
+          "public_tradeoff": "Probably low impact.",
+          "score": 0,
+          "tags": {},
+          "wins": 0
+        },
+        {
+          "action_id": "move_toxic",
+          "explanation": "Starts a clock on a bulky physical threat.",
+          "kind": "move",
+          "losses": 0,
+          "name": "Toxic",
+          "preference_ids": [],
+          "public_tradeoff": "Classic stall pressure.",
+          "score": 0,
+          "tags": {
+            "reduces_risk": 1
+          },
+          "wins": 0
+        },
+        {
+          "action_id": "move_whirlwind",
+          "explanation": "Deletes a setup line before it snowballs.",
+          "kind": "move",
+          "losses": 0,
+          "name": "Whirlwind",
+          "preference_ids": [],
+          "public_tradeoff": "Smart if setup is real; annoying if reflexive.",
+          "score": 0,
+          "tags": {
+            "reduces_risk": 1
+          },
+          "wins": 0
+        },
+        {
+          "action_id": "switch_forretress",
+          "explanation": "A defensive pivot that may invite Fire pressure later.",
+          "kind": "switch",
+          "losses": 0,
+          "name": "Switch to Forretress",
+          "preference_ids": [],
+          "public_tradeoff": "Team-plan move, not immediate punish.",
+          "score": 0,
+          "tags": {},
+          "wins": 0
+        }
+      ],
+      "best_action_ids": [],
+      "catastrophic_action_ids": [],
+      "complete": false,
+      "condition_tags": [],
+      "fixture_id": "jasmine_skarmory_vs_machoke_whirlwind",
+      "leader": "Jasmine",
+      "lesson_types": [],
+      "missing": [
+        "best",
+        "catastrophic",
+        "single_best"
+      ],
+      "preference_count": 1,
+      "strict_preference_count": 0,
+      "tags": [
+        "phazing",
+        "setup_denial",
+        "stall"
+      ],
+      "training_focus": "Label whether phazing a setup threat feels like good defense or slow stall.",
+      "turn": 7
+    },
+    {
+      "acceptable_action_ids": [],
+      "actions": [
+        {
+          "action_id": "switch_slowking",
+          "explanation": "Preserves Cloyster and moves into a bulky answer.",
+          "kind": "switch",
+          "losses": 0,
+          "name": "Switch to Slowking",
+          "preference_ids": [
+            "pryce_cloyster_vs_quilava_explosion_line:1:move_surf:move_explosion:other_better"
+          ],
+          "public_tradeoff": "Conservative Pryce line.",
+          "score": 2,
+          "tags": {
+            "reduces_risk": 1,
+            "uses_public_info": 1
+          },
+          "wins": 1
+        },
+        {
+          "action_id": "move_protect",
+          "explanation": "Scouts and burns a turn at low HP.",
+          "kind": "move",
+          "losses": 0,
+          "name": "Protect",
+          "preference_ids": [],
+          "public_tradeoff": "May be stally without hail or poison.",
+          "score": 0,
+          "tags": {},
+          "wins": 0
+        },
+        {
+          "action_id": "move_explosion",
+          "explanation": "Trades Cloyster for a major tempo swing.",
+          "kind": "move",
+          "losses": 1,
+          "name": "Explosion",
+          "preference_ids": [
+            "pryce_cloyster_vs_quilava_explosion_line:1:move_surf:move_explosion:other_better"
+          ],
+          "public_tradeoff": "Needs taste labeling for cheapness.",
+          "score": -2,
+          "tags": {
+            "misses_public_threat": 1
+          },
+          "wins": 0
+        },
+        {
+          "action_id": "move_surf",
+          "explanation": "Clean Water punish into Quilava.",
+          "kind": "move",
+          "losses": 1,
+          "name": "Surf",
+          "preference_ids": [
+            "pryce_cloyster_vs_quilava_explosion_line:1:move_surf:move_explosion:other_better"
+          ],
+          "public_tradeoff": "Strong and fair.",
+          "score": -2,
+          "tags": {
+            "misses_public_threat": 1
+          },
+          "wins": 0
+        }
+      ],
+      "best_action_ids": [
+        "switch_slowking"
+      ],
+      "catastrophic_action_ids": [
+        "move_surf",
+        "move_explosion"
+      ],
+      "complete": false,
+      "condition_tags": [],
+      "fixture_id": "pryce_cloyster_vs_quilava_explosion_line",
+      "leader": "Pryce",
+      "lesson_types": [],
+      "missing": [
+        "acceptable"
+      ],
+      "preference_count": 1,
+      "strict_preference_count": 1,
+      "tags": [
+        "sacrifice",
+        "cheapness",
+        "hazards"
+      ],
+      "training_focus": "Decide when Explosion is dramatic, fair, or cheap in a gym-leader fight.",
+      "turn": 3
+    },
+    {
+      "acceptable_action_ids": [],
+      "actions": [
+        {
+          "action_id": "switch_piloswine",
+          "explanation": "Ground pivot into a revealed Electric attack.",
+          "kind": "switch",
+          "losses": 0,
+          "name": "Switch to Piloswine",
+          "preference_ids": [
+            "pryce_slowking_vs_ampharos_ground_pivot:1:move_thunder_wave:move_surf:other_better",
+            "pryce_slowking_vs_ampharos_ground_pivot:2:switch_piloswine:move_thunder_wave:a_better",
+            "pryce_slowking_vs_ampharos_ground_pivot:3:switch_piloswine:move_surf:a_better",
+            "pryce_slowking_vs_ampharos_ground_pivot:4:switch_piloswine:move_rest:a_better"
+          ],
+          "public_tradeoff": "Prepared and fair if based on public typing.",
+          "score": 8,
+          "tags": {
+            "reduces_risk": 4,
+            "uses_public_info": 4
+          },
+          "wins": 4
+        },
+        {
+          "action_id": "move_rest",
+          "explanation": "Preserves Slowking if it expects a weaker turn.",
+          "kind": "move",
+          "losses": 1,
+          "name": "Rest",
+          "preference_ids": [
+            "pryce_slowking_vs_ampharos_ground_pivot:4:switch_piloswine:move_rest:a_better"
+          ],
+          "public_tradeoff": "Likely bad into Electric pressure.",
+          "score": -2,
+          "tags": {
+            "too_passive": 1
+          },
+          "wins": 0
+        },
+        {
+          "action_id": "move_thunder_wave",
+          "explanation": "Speed control if Slowking can take the hit.",
+          "kind": "move",
+          "losses": 2,
+          "name": "Thunder Wave",
+          "preference_ids": [
+            "pryce_slowking_vs_ampharos_ground_pivot:1:move_thunder_wave:move_surf:other_better",
+            "pryce_slowking_vs_ampharos_ground_pivot:2:switch_piloswine:move_thunder_wave:a_better"
+          ],
+          "public_tradeoff": "Good utility if not too greedy.",
+          "score": -3,
+          "tags": {
+            "calculated_risk": 1,
+            "reduces_risk": 1
+          },
+          "wins": 0
+        },
+        {
+          "action_id": "move_surf",
+          "explanation": "Neutral damage while staying in against Electric pressure.",
+          "kind": "move",
+          "losses": 2,
+          "name": "Surf",
+          "preference_ids": [
+            "pryce_slowking_vs_ampharos_ground_pivot:1:move_thunder_wave:move_surf:other_better",
+            "pryce_slowking_vs_ampharos_ground_pivot:3:switch_piloswine:move_surf:a_better"
+          ],
+          "public_tradeoff": "Simple but risky.",
+          "score": -4,
+          "tags": {
+            "misses_public_threat": 2,
+            "too_passive": 1
+          },
+          "wins": 0
+        }
+      ],
+      "best_action_ids": [
+        "switch_piloswine"
+      ],
+      "catastrophic_action_ids": [
+        "move_surf",
+        "move_thunder_wave",
+        "move_rest"
+      ],
+      "complete": false,
+      "condition_tags": [
+        "dragon_majesty_no_immunity",
+        "electric_pressure",
+        "preserve_slowking",
+        "resistant_ground_pivot"
+      ],
+      "fixture_id": "pryce_slowking_vs_ampharos_ground_pivot",
+      "leader": "Pryce",
+      "lesson_types": [
+        "switch_policy"
+      ],
+      "missing": [
+        "acceptable"
+      ],
+      "preference_count": 4,
+      "strict_preference_count": 4,
+      "tags": [
+        "switching",
+        "public_type",
+        "status"
+      ],
+      "training_focus": "Teach when a Water/Psychic wall should respect Electric pressure and pivot to a Ground type.",
+      "turn": 8
+    },
+    {
+      "acceptable_action_ids": [],
+      "actions": [
+        {
+          "action_id": "switch_kingdra",
+          "explanation": "Pivots into Clair's ace and handles Water/Ice pressure better.",
+          "kind": "switch",
+          "losses": 0,
+          "name": "Switch to Kingdra",
+          "preference_ids": [
+            "clair_dragonair_vs_suicune_hidden_ice_beam:1:move_outrage:move_thunder:other_better"
+          ],
+          "public_tradeoff": "Smart if Clair values Kingdra as her ace.",
+          "score": 2,
+          "tags": {
+            "reduces_risk": 1
+          },
+          "wins": 1
+        },
+        {
+          "action_id": "switch_mantine",
+          "explanation": "Water-resistant pivot with different risks.",
+          "kind": "switch",
+          "losses": 0,
+          "name": "Switch to Mantine",
+          "preference_ids": [],
+          "public_tradeoff": "Defensive but public-info legal.",
+          "score": 0,
+          "tags": {},
+          "wins": 0
+        },
+        {
+          "action_id": "move_outrage",
+          "explanation": "Commits Dragonair into a lock while Ice coverage is plausible.",
+          "kind": "move",
+          "losses": 1,
+          "name": "Outrage",
+          "preference_ids": [
+            "clair_dragonair_vs_suicune_hidden_ice_beam:1:move_outrage:move_thunder:other_better"
+          ],
+          "public_tradeoff": "May be too reckless.",
+          "score": -2,
+          "tags": {
+            "misses_public_threat": 1
+          },
+          "wins": 0
+        },
+        {
+          "action_id": "move_thunder",
+          "explanation": "Punishes Water typing immediately if Dragonair stays in.",
+          "kind": "move",
+          "losses": 1,
+          "name": "Thunder",
+          "preference_ids": [
+            "clair_dragonair_vs_suicune_hidden_ice_beam:1:move_outrage:move_thunder:other_better"
+          ],
+          "public_tradeoff": "Strong but risks hidden Ice coverage.",
+          "score": -2,
+          "tags": {
+            "misses_public_threat": 1
+          },
+          "wins": 0
+        }
+      ],
+      "best_action_ids": [
+        "switch_kingdra"
+      ],
+      "catastrophic_action_ids": [
+        "move_thunder",
+        "move_outrage"
+      ],
+      "complete": false,
+      "condition_tags": [],
+      "fixture_id": "clair_dragonair_vs_suicune_hidden_ice_beam",
+      "leader": "Clair",
+      "lesson_types": [],
+      "missing": [
+        "acceptable"
+      ],
+      "preference_count": 1,
+      "strict_preference_count": 1,
+      "tags": [
+        "hidden_coverage",
+        "ace_preservation",
+        "signature_test"
+      ],
+      "training_focus": "The Suicune/Ice Beam test: the AI should respect public meta coverage before it is revealed.",
+      "turn": 4
+    },
+    {
+      "acceptable_action_ids": [],
+      "actions": [
+        {
+          "action_id": "move_dragon_dance",
+          "explanation": "Sets up a sweep if Kingdra survives the next hit.",
+          "kind": "move",
+          "losses": 0,
+          "name": "Dragon Dance",
+          "preference_ids": [
+            "clair_kingdra_vs_lapras_dragon_dance_or_attack:1:move_dragon_dance:move_surf:a_better"
+          ],
+          "public_tradeoff": "Scary-good or greedy depending on HP taste.",
+          "score": 2,
+          "tags": {
+            "keeps_tempo": 1,
+            "scary_pressure": 1,
+            "uses_public_info": 1
+          },
+          "wins": 1
+        },
+        {
+          "action_id": "move_ice_beam",
+          "explanation": "Neutral coverage with freeze chance.",
+          "kind": "move",
+          "losses": 0,
+          "name": "Ice Beam",
+          "preference_ids": [],
+          "public_tradeoff": "May be the boring safe line.",
+          "score": 0,
+          "tags": {},
+          "wins": 0
+        },
+        {
+          "action_id": "move_outrage",
+          "explanation": "Commits to damage and lock-in.",
+          "kind": "move",
+          "losses": 0,
+          "name": "Outrage",
+          "preference_ids": [],
+          "public_tradeoff": "Aggressive Clair line.",
+          "score": 0,
+          "tags": {},
+          "wins": 0
+        },
+        {
+          "action_id": "move_surf",
+          "explanation": "Reliable chip in a Water mirror.",
+          "kind": "move",
+          "losses": 1,
+          "name": "Surf",
+          "preference_ids": [
+            "clair_kingdra_vs_lapras_dragon_dance_or_attack:1:move_dragon_dance:move_surf:a_better"
+          ],
+          "public_tradeoff": "Low drama but safe.",
+          "score": -2,
+          "tags": {
+            "too_passive": 1
+          },
+          "wins": 0
+        }
+      ],
+      "best_action_ids": [
+        "move_dragon_dance"
+      ],
+      "catastrophic_action_ids": [
+        "move_surf"
+      ],
+      "complete": false,
+      "condition_tags": [],
+      "fixture_id": "clair_kingdra_vs_lapras_dragon_dance_or_attack",
+      "leader": "Clair",
+      "lesson_types": [],
+      "missing": [
+        "acceptable"
+      ],
+      "preference_count": 1,
+      "strict_preference_count": 1,
+      "tags": [
+        "setup",
+        "mirror_water",
+        "endgame"
+      ],
+      "training_focus": "Label when Clair should spend a turn on Dragon Dance instead of taking damage now.",
+      "turn": 6
+    },
+    {
+      "acceptable_action_ids": [],
+      "actions": [
+        {
+          "action_id": "move_wing_attack",
+          "explanation": "Immediate damage before Alakazam can Recover or attack.",
+          "kind": "move",
+          "losses": 0,
+          "name": "Wing Attack",
+          "preference_ids": [
+            "koga_crobat_vs_alakazam_toxic_or_attack:1:move_toxic:move_wing_attack:b_better"
+          ],
+          "public_tradeoff": "Tempo-first Koga line.",
+          "score": 2,
+          "tags": {
+            "scary_pressure": 1,
+            "uses_public_info": 1
+          },
+          "wins": 1
+        },
+        {
+          "action_id": "move_confuse_ray",
+          "explanation": "Disruption into a dangerous attacker.",
+          "kind": "move",
+          "losses": 0,
+          "name": "Confuse Ray",
+          "preference_ids": [],
+          "public_tradeoff": "Swingy and potentially annoying.",
+          "score": 0,
+          "tags": {},
+          "wins": 0
+        },
+        {
+          "action_id": "switch_umbreon",
+          "explanation": "Publicly strong Psychic answer if Umbreon is known.",
+          "kind": "switch",
+          "losses": 0,
+          "name": "Switch to Umbreon",
+          "preference_ids": [],
+          "public_tradeoff": "Smart preservation line.",
+          "score": 0,
+          "tags": {},
+          "wins": 0
+        },
+        {
+          "action_id": "move_toxic",
+          "explanation": "Starts the poison clock.",
+          "kind": "move",
+          "losses": 1,
+          "name": "Toxic",
+          "preference_ids": [
+            "koga_crobat_vs_alakazam_toxic_or_attack:1:move_toxic:move_wing_attack:b_better"
+          ],
+          "public_tradeoff": "Very Koga, but maybe greedy.",
+          "score": -2,
+          "tags": {
+            "fits_boss_style": 1,
+            "too_passive": 1
+          },
+          "wins": 0
+        }
+      ],
+      "best_action_ids": [
+        "move_wing_attack"
+      ],
+      "catastrophic_action_ids": [
+        "move_toxic"
+      ],
+      "complete": false,
+      "condition_tags": [],
+      "fixture_id": "koga_crobat_vs_alakazam_toxic_or_attack",
+      "leader": "Koga",
+      "lesson_types": [],
+      "missing": [
+        "acceptable"
+      ],
+      "preference_count": 1,
+      "strict_preference_count": 1,
+      "tags": [
+        "status",
+        "speed",
+        "endgame"
+      ],
+      "training_focus": "Capture Koga's poison-clock identity without ignoring immediate Psychic pressure.",
+      "turn": 5
+    },
+    {
+      "acceptable_action_ids": [
+        "move_dragon_dance",
+        "move_outrage"
+      ],
+      "actions": [
+        {
+          "action_id": "move_dragon_dance",
+          "explanation": "Greedy setup into a Pokemon likely to carry Ice coverage.",
+          "kind": "move",
+          "losses": 0,
+          "name": "Dragon Dance",
+          "preference_ids": [],
+          "public_tradeoff": "Strong if Suicune lacks Ice Beam; catastrophic if it has it.",
+          "score": 0,
+          "tags": {
+            "calculated_risk": 1,
+            "scary_pressure": 1
+          },
+          "wins": 0
+        },
+        {
+          "action_id": "move_earthquake",
+          "explanation": "Coverage that avoids Outrage lock but is weaker into Suicune.",
+          "kind": "move",
+          "losses": 0,
+          "name": "Earthquake",
+          "preference_ids": [],
+          "public_tradeoff": "Keeps options open at the cost of pressure.",
+          "score": 0,
+          "tags": {},
+          "wins": 0
+        },
+        {
+          "action_id": "move_outrage",
+          "explanation": "Commits to immediate chip and probes whether Suicune stays for Ice coverage.",
+          "kind": "move",
+          "losses": 0,
+          "name": "Outrage",
+          "preference_ids": [],
+          "public_tradeoff": "Damage plus information, but locks Dragonite.",
+          "score": 0,
+          "tags": {
+            "keeps_tempo": 1,
+            "reduces_risk": 1
+          },
+          "wins": 0
+        },
+        {
+          "action_id": "switch_gyarados",
+          "explanation": "Water-resistant pivot that still fears Electric coverage.",
+          "kind": "switch",
+          "losses": 0,
+          "name": "Switch to Gyarados",
+          "preference_ids": [],
+          "public_tradeoff": "Useful scout if Electric risk is low.",
+          "score": 0,
+          "tags": {},
+          "wins": 0
+        },
+        {
+          "action_id": "switch_kingdra",
+          "explanation": "Preserves Dragonite and handles Water/Ice pressure better than most dragons.",
+          "kind": "switch",
+          "losses": 0,
+          "name": "Switch to Kingdra",
+          "preference_ids": [],
+          "public_tradeoff": "Strong preservation line if Lance values the ace.",
+          "score": 0,
+          "tags": {},
+          "wins": 0
+        },
+        {
+          "action_id": "switch_steelix",
+          "explanation": "Preserves Dragonite while resisting some neutral chip, but hates Surf.",
+          "kind": "switch",
+          "losses": 0,
+          "name": "Switch to Steelix",
+          "preference_ids": [],
+          "public_tradeoff": "Bad if Suicune simply attacks with Water.",
+          "score": 0,
+          "tags": {},
+          "wins": 0
+        }
+      ],
+      "best_action_ids": [],
+      "catastrophic_action_ids": [],
+      "complete": false,
+      "condition_tags": [],
+      "fixture_id": "lance_dragonite_vs_suicune_champion_ace",
+      "leader": "Champion Lance",
+      "lesson_types": [],
+      "missing": [
+        "best",
+        "catastrophic",
+        "single_best"
+      ],
+      "preference_count": 1,
+      "strict_preference_count": 0,
+      "tags": [
+        "hidden_coverage",
+        "ace_preservation",
+        "champion",
+        "current_lance_roster"
+      ],
+      "training_focus": "Lance's current Dragon-heavy roster decides whether Dragonite should set up, chip, or pivot around public Ice coverage.",
+      "turn": 9
+    },
+    {
+      "acceptable_action_ids": [],
+      "actions": [
+        {
+          "action_id": "move_psychic",
+          "explanation": "Presses damage into Meganium without relying on Water.",
+          "kind": "move",
+          "losses": 0,
+          "name": "Psychic",
+          "preference_ids": [
+            "misty_starmie_vs_meganium_recover_or_attack:1:move_recover:move_psychic:b_better"
+          ],
+          "public_tradeoff": "Tempo-focused ace play.",
+          "score": 2,
+          "tags": {
+            "keeps_tempo": 1,
+            "scary_pressure": 1,
+            "uses_public_info": 1
+          },
+          "wins": 1
+        },
+        {
+          "action_id": "move_hydro_pump",
+          "explanation": "Rain-boosted STAB into a Grass resist.",
+          "kind": "move",
+          "losses": 0,
+          "name": "Hydro Pump",
+          "preference_ids": [],
+          "public_tradeoff": "Big but likely inefficient.",
+          "score": 0,
+          "tags": {},
+          "wins": 0
+        },
+        {
+          "action_id": "switch_lapras",
+          "explanation": "Bulky pivot with Ice Beam pressure.",
+          "kind": "switch",
+          "losses": 0,
+          "name": "Switch to Lapras",
+          "preference_ids": [],
+          "public_tradeoff": "Smart if preserving Starmie is the priority.",
+          "score": 0,
+          "tags": {},
+          "wins": 0
+        },
+        {
+          "action_id": "move_recover",
+          "explanation": "Preserves Starmie while rain remains active.",
+          "kind": "move",
+          "losses": 1,
+          "name": "Recover",
+          "preference_ids": [
+            "misty_starmie_vs_meganium_recover_or_attack:1:move_recover:move_psychic:b_better"
+          ],
+          "public_tradeoff": "Correct at low HP; annoying if automatic.",
+          "score": -2,
+          "tags": {
+            "misses_public_threat": 1,
+            "too_passive": 1
+          },
+          "wins": 0
+        }
+      ],
+      "best_action_ids": [
+        "move_psychic"
+      ],
+      "catastrophic_action_ids": [
+        "move_recover"
+      ],
+      "complete": false,
+      "condition_tags": [],
+      "fixture_id": "misty_starmie_vs_meganium_recover_or_attack",
+      "leader": "Misty",
+      "lesson_types": [],
+      "missing": [
+        "acceptable"
+      ],
+      "preference_count": 1,
+      "strict_preference_count": 1,
+      "tags": [
+        "recovery",
+        "coverage",
+        "late_game"
+      ],
+      "training_focus": "Decide when a fast ace should Recover versus press coverage into a Grass threat.",
+      "turn": 8
+    },
+    {
+      "acceptable_action_ids": [],
+      "actions": [
+        {
+          "action_id": "move_sleep_powder",
+          "explanation": "Controls the wall before it can Rest or Curse.",
+          "kind": "move",
+          "losses": 0,
+          "name": "Sleep Powder",
+          "preference_ids": [
+            "erika_victreebel_vs_snorlax_sleep_or_boost:1:move_sleep_powder:move_swords_dance:a_better",
+            "erika_victreebel_vs_snorlax_sleep_or_boost:2:move_sleep_powder:move_sludge_bomb:a_better",
+            "erika_victreebel_vs_snorlax_sleep_or_boost:3:move_sleep_powder:switch_exeggutor:a_better"
+          ],
+          "public_tradeoff": "Strong status line; taste decides cheapness.",
+          "score": 6,
+          "tags": {
+            "calculated_risk": 3,
+            "scary_pressure": 3,
+            "uses_public_info": 3
+          },
+          "wins": 3
+        },
+        {
+          "action_id": "move_sludge_bomb",
+          "explanation": "Immediate strong neutral hit.",
+          "kind": "move",
+          "losses": 1,
+          "name": "Sludge Bomb",
+          "preference_ids": [
+            "erika_victreebel_vs_snorlax_sleep_or_boost:2:move_sleep_powder:move_sludge_bomb:a_better"
+          ],
+          "public_tradeoff": "Simple pressure.",
+          "score": -2,
+          "tags": {
+            "misses_public_threat": 1
+          },
+          "wins": 0
+        },
+        {
+          "action_id": "move_swords_dance",
+          "explanation": "Attempts to break through with Muscle Band pressure.",
+          "kind": "move",
+          "losses": 1,
+          "name": "Swords Dance",
+          "preference_ids": [
+            "erika_victreebel_vs_snorlax_sleep_or_boost:1:move_sleep_powder:move_swords_dance:a_better"
+          ],
+          "public_tradeoff": "Scary if Snorlax cannot punish.",
+          "score": -2,
+          "tags": {
+            "too_greedy": 1
+          },
+          "wins": 0
+        },
+        {
+          "action_id": "switch_exeggutor",
+          "explanation": "Special pressure and Explosion threat later.",
+          "kind": "switch",
+          "losses": 1,
+          "name": "Switch to Exeggutor",
+          "preference_ids": [
+            "erika_victreebel_vs_snorlax_sleep_or_boost:3:move_sleep_powder:switch_exeggutor:a_better"
+          ],
+          "public_tradeoff": "May reveal too much too early.",
+          "score": -2,
+          "tags": {
+            "too_passive": 1
+          },
+          "wins": 0
+        }
+      ],
+      "best_action_ids": [
+        "move_sleep_powder"
+      ],
+      "catastrophic_action_ids": [
+        "move_swords_dance",
+        "move_sludge_bomb",
+        "switch_exeggutor"
+      ],
+      "complete": false,
+      "condition_tags": [
+        "setup_after_sleep_lands",
+        "sleep_clause_free",
+        "sleep_miss_risk_accepted",
+        "target_not_statused"
+      ],
+      "fixture_id": "erika_victreebel_vs_snorlax_sleep_or_boost",
+      "leader": "Erika",
+      "lesson_types": [
+        "sequence_policy"
+      ],
+      "missing": [
+        "acceptable"
+      ],
+      "preference_count": 3,
+      "strict_preference_count": 3,
+      "tags": [
+        "sleep",
+        "setup",
+        "wallbreaking"
+      ],
+      "training_focus": "Label Erika's grass-control style against a bulky normal wall.",
+      "turn": 5
+    },
+    {
+      "acceptable_action_ids": [],
+      "actions": [
+        {
+          "action_id": "move_ice_punch",
+          "explanation": "Neutral coverage with freeze chance.",
+          "kind": "move",
+          "losses": 0,
+          "name": "Ice Punch",
+          "preference_ids": [
+            "sabrina_alakazam_choice_lock_vs_houndoom:3:move_ice_punch:move_psychic:a_better"
+          ],
+          "public_tradeoff": "Safe but lower identity.",
+          "score": 2,
+          "tags": {
+            "keeps_tempo": 1,
+            "uses_public_info": 1
+          },
+          "wins": 1
+        },
+        {
+          "action_id": "move_thunderpunch",
+          "explanation": "Neutral coverage without locking into a failed Psychic.",
+          "kind": "move",
+          "losses": 0,
+          "name": "ThunderPunch",
+          "preference_ids": [
+            "sabrina_alakazam_choice_lock_vs_houndoom:2:move_thunderpunch:move_psychic:a_better"
+          ],
+          "public_tradeoff": "Readable adaptation.",
+          "score": 2,
+          "tags": {
+            "keeps_tempo": 1,
+            "uses_public_info": 1
+          },
+          "wins": 1
+        },
+        {
+          "action_id": "switch_hypno",
+          "explanation": "Bulky status pivot away from Dark pressure.",
+          "kind": "switch",
+          "losses": 0,
+          "name": "Switch to Hypno",
+          "preference_ids": [
+            "sabrina_alakazam_choice_lock_vs_houndoom:1:switch_hypno:move_psychic:a_better"
+          ],
+          "public_tradeoff": "Defensive champion-level play.",
+          "score": 2,
+          "tags": {
+            "reduces_risk": 1,
+            "uses_public_info": 1
+          },
+          "wins": 1
+        },
+        {
+          "action_id": "move_psychic",
+          "explanation": "Highest identity move but bad into a public Dark type.",
+          "kind": "move",
+          "losses": 3,
+          "name": "Psychic",
+          "preference_ids": [
+            "sabrina_alakazam_choice_lock_vs_houndoom:1:switch_hypno:move_psychic:a_better",
+            "sabrina_alakazam_choice_lock_vs_houndoom:2:move_thunderpunch:move_psychic:a_better",
+            "sabrina_alakazam_choice_lock_vs_houndoom:3:move_ice_punch:move_psychic:a_better"
+          ],
+          "public_tradeoff": "Too robotic if chosen blindly.",
+          "score": -6,
+          "tags": {
+            "misses_public_threat": 3,
+            "too_passive": 3
+          },
+          "wins": 0
+        }
+      ],
+      "best_action_ids": [
+        "move_thunderpunch",
+        "move_ice_punch",
+        "switch_hypno"
+      ],
+      "catastrophic_action_ids": [
+        "move_psychic"
+      ],
+      "complete": false,
+      "condition_tags": [
+        "choice_lock_risk",
+        "psychic_fails",
+        "public_dark_target"
+      ],
+      "fixture_id": "sabrina_alakazam_choice_lock_vs_houndoom",
+      "leader": "Sabrina",
+      "lesson_types": [
+        "hard_rule"
+      ],
+      "missing": [
+        "acceptable",
+        "single_best"
+      ],
+      "preference_count": 3,
+      "strict_preference_count": 3,
+      "tags": [
+        "choice_lock",
+        "coverage",
+        "switching"
+      ],
+      "training_focus": "Teach a late-game ace not to autopick Psychic into a public Dark answer.",
+      "turn": 6
+    },
+    {
+      "acceptable_action_ids": [],
+      "actions": [
+        {
+          "action_id": "move_toxic",
+          "explanation": "Starts poison pressure before Pidgey can chip Ariados or pivot out.",
+          "kind": "move",
+          "losses": 0,
+          "name": "Toxic",
+          "preference_ids": [
+            "bugsy_ariados_vs_pidgey_toxic_or_attack:1:move_toxic:move_giga_drain:a_better",
+            "bugsy_ariados_vs_pidgey_toxic_or_attack:2:move_toxic:move_leech_life:a_better",
+            "bugsy_ariados_vs_pidgey_toxic_or_attack:3:move_toxic:move_poison_sting:a_better",
+            "bugsy_ariados_vs_pidgey_toxic_or_attack:4:move_toxic:switch_scyther:a_better"
+          ],
+          "public_tradeoff": "Status tempo can be correct, but it gives Pidgey a free attack if damage matters now.",
+          "score": 8,
+          "tags": {
+            "keeps_tempo": 4,
+            "uses_public_info": 4
+          },
+          "wins": 4
+        },
+        {
+          "action_id": "move_giga_drain",
+          "explanation": "Sustain damage that keeps Ariados healthy if the matchup is not immediately dangerous.",
+          "kind": "move",
+          "losses": 1,
+          "name": "Giga Drain",
+          "preference_ids": [
+            "bugsy_ariados_vs_pidgey_toxic_or_attack:1:move_toxic:move_giga_drain:a_better"
+          ],
+          "public_tradeoff": "Neutral into Pidgey in this hack, but better if the player pivots to a Rock or Ground answer.",
+          "score": -2,
+          "tags": {
+            "too_passive": 1
+          },
+          "wins": 0
+        },
+        {
+          "action_id": "move_leech_life",
+          "explanation": "Uses Ariados's Bug STAB for direct damage and recovery.",
+          "kind": "move",
+          "losses": 1,
+          "name": "Leech Life",
+          "preference_ids": [
+            "bugsy_ariados_vs_pidgey_toxic_or_attack:2:move_toxic:move_leech_life:a_better"
+          ],
+          "public_tradeoff": "Resisted into Pidgey, so it may read as low-tempo.",
+          "score": -2,
+          "tags": {
+            "too_passive": 1
+          },
+          "wins": 0
+        },
+        {
+          "action_id": "move_poison_sting",
+          "explanation": "Small chip with a poison chance while avoiding a full status turn.",
+          "kind": "move",
+          "losses": 1,
+          "name": "Poison Sting",
+          "preference_ids": [
+            "bugsy_ariados_vs_pidgey_toxic_or_attack:3:move_toxic:move_poison_sting:a_better"
+          ],
+          "public_tradeoff": "Low impact unless poison lands.",
+          "score": -2,
+          "tags": {
+            "too_passive": 1
+          },
+          "wins": 0
+        },
+        {
+          "action_id": "switch_scyther",
+          "explanation": "Preserves Ariados and brings in Bugsy's ace against the public Flying matchup.",
+          "kind": "switch",
+          "losses": 1,
+          "name": "Switch to Scyther",
+          "preference_ids": [
+            "bugsy_ariados_vs_pidgey_toxic_or_attack:4:move_toxic:switch_scyther:a_better"
+          ],
+          "public_tradeoff": "Aggressive pivot, but it exposes Scyther early.",
+          "score": -2,
+          "tags": {
+            "too_greedy": 1
+          },
+          "wins": 0
+        }
+      ],
+      "best_action_ids": [
+        "move_toxic"
+      ],
+      "catastrophic_action_ids": [
+        "move_poison_sting",
+        "move_giga_drain",
+        "move_leech_life",
+        "switch_scyther"
+      ],
+      "complete": false,
+      "condition_tags": [
+        "do_not_expose_ace_early",
+        "flying_pressure_not_lethal",
+        "status_clock_beats_weak_chip"
+      ],
+      "fixture_id": "bugsy_ariados_vs_pidgey_toxic_or_attack",
+      "leader": "Bugsy",
+      "lesson_types": [
+        "weight_hint"
+      ],
+      "missing": [
+        "acceptable"
+      ],
+      "preference_count": 4,
+      "strict_preference_count": 4,
+      "tags": [
+        "status",
+        "tempo",
+        "early"
+      ],
+      "training_focus": "Bugsy's opener should decide between Toxic pressure, weak chip, and preserving Ariados when a Flying threat is public.",
+      "turn": 1
+    },
+    {
+      "acceptable_action_ids": [],
+      "actions": [
+        {
+          "action_id": "switch_houndoom",
+          "explanation": "Preserves Slowbro and resists Houndoom's Dark/Fire pressure.",
+          "kind": "switch",
+          "losses": 0,
+          "name": "Switch to Houndoom",
+          "preference_ids": [
+            "will_slowbro_vs_houndoom_amnesia_or_surf:1:switch_houndoom:move_amnesia:a_better",
+            "will_slowbro_vs_houndoom_amnesia_or_surf:2:switch_houndoom:move_surf:a_better",
+            "will_slowbro_vs_houndoom_amnesia_or_surf:3:switch_houndoom:move_psychic:a_better"
+          ],
+          "public_tradeoff": "Conservative mirror pivot that gives up immediate Surf pressure.",
+          "score": 6,
+          "tags": {
+            "reduces_risk": 3,
+            "uses_public_info": 3
+          },
+          "wins": 3
+        },
+        {
+          "action_id": "move_amnesia",
+          "explanation": "Raises Slowbro's special bulk.",
+          "kind": "move",
+          "losses": 1,
+          "name": "Amnesia",
+          "preference_ids": [
+            "will_slowbro_vs_houndoom_amnesia_or_surf:1:switch_houndoom:move_amnesia:a_better"
+          ],
+          "public_tradeoff": "Correct defensive axis, but spending the turn may still lose tempo into fast Crunch.",
+          "score": -2,
+          "tags": {
+            "misses_public_threat": 1,
+            "too_greedy": 1
+          },
+          "wins": 0
+        },
+        {
+          "action_id": "move_psychic",
+          "explanation": "Secondary STAB from Slowbro's current set.",
+          "kind": "move",
+          "losses": 1,
+          "name": "Psychic",
+          "preference_ids": [
+            "will_slowbro_vs_houndoom_amnesia_or_surf:3:switch_houndoom:move_psychic:a_better"
+          ],
+          "public_tradeoff": "Worse than Surf into Houndoom.",
+          "score": -2,
+          "tags": {
+            "misses_public_threat": 1,
+            "too_passive": 1
+          },
+          "wins": 0
+        },
+        {
+          "action_id": "move_surf",
+          "explanation": "Super-effective STAB into Houndoom.",
+          "kind": "move",
+          "losses": 1,
+          "name": "Surf",
+          "preference_ids": [
+            "will_slowbro_vs_houndoom_amnesia_or_surf:2:switch_houndoom:move_surf:a_better"
+          ],
+          "public_tradeoff": "Cleanest direct answer if Slowbro stays in.",
+          "score": -2,
+          "tags": {
+            "calculated_risk": 1,
+            "misses_public_threat": 1
+          },
+          "wins": 0
+        }
+      ],
+      "best_action_ids": [
+        "switch_houndoom"
+      ],
+      "catastrophic_action_ids": [
+        "move_amnesia",
+        "move_surf",
+        "move_psychic"
+      ],
+      "complete": false,
+      "condition_tags": [
+        "faster_public_ko_threat",
+        "no_setup_before_survival",
+        "preserve_defensive_piece"
+      ],
+      "fixture_id": "will_slowbro_vs_houndoom_amnesia_or_surf",
+      "leader": "Will",
+      "lesson_types": [
+        "switch_policy"
+      ],
+      "missing": [
+        "acceptable"
+      ],
+      "preference_count": 3,
+      "strict_preference_count": 3,
+      "tags": [
+        "setup",
+        "dark_threat",
+        "ace_preservation"
+      ],
+      "training_focus": "Setup against a fast Dark/Crunch threat is a tempo trap even though Amnesia boosts the correct defensive stat.",
+      "turn": 3
+    },
+    {
+      "acceptable_action_ids": [],
+      "actions": [
+        {
+          "action_id": "move_sludge_bomb",
+          "explanation": "Direct poison STAB into Snorlax.",
+          "kind": "move",
+          "losses": 0,
+          "name": "Sludge Bomb",
+          "preference_ids": [
+            "janine_qwilfish_spikes_already_maxed:1:move_sludge_bomb:move_spikes:a_better"
+          ],
+          "public_tradeoff": "A live attack after the hazard stack is complete.",
+          "score": 2,
+          "tags": {
+            "keeps_tempo": 1
+          },
+          "wins": 1
+        },
+        {
+          "action_id": "move_surf",
+          "explanation": "Neutral Water coverage.",
+          "kind": "move",
+          "losses": 0,
+          "name": "Surf",
+          "preference_ids": [
+            "janine_qwilfish_spikes_already_maxed:2:move_surf:move_spikes:a_better"
+          ],
+          "public_tradeoff": "A live move, though less aligned with Qwilfish's Poison pressure.",
+          "score": 2,
+          "tags": {
+            "keeps_tempo": 1
+          },
+          "wins": 1
+        },
+        {
+          "action_id": "move_explosion",
+          "explanation": "Sacrifices Qwilfish for material.",
+          "kind": "move",
+          "losses": 0,
+          "name": "Explosion",
+          "preference_ids": [],
+          "public_tradeoff": "Can be held until the completed hazard stack creates a better use.",
+          "score": 0,
+          "tags": {},
+          "wins": 0
+        },
+        {
+          "action_id": "switch_tentacruel",
+          "explanation": "Preserves Qwilfish and brings in Janine's spinner.",
+          "kind": "switch",
+          "losses": 0,
+          "name": "Switch to Tentacruel",
+          "preference_ids": [],
+          "public_tradeoff": "Conservative, but at least avoids a failed Spikes click.",
+          "score": 0,
+          "tags": {},
+          "wins": 0
+        },
+        {
+          "action_id": "move_spikes",
+          "explanation": "Attempts a fourth local Spikes layer.",
+          "kind": "move",
+          "losses": 2,
+          "name": "Spikes",
+          "preference_ids": [
+            "janine_qwilfish_spikes_already_maxed:1:move_sludge_bomb:move_spikes:a_better",
+            "janine_qwilfish_spikes_already_maxed:2:move_surf:move_spikes:a_better"
+          ],
+          "public_tradeoff": "Fails once three layers are already set.",
+          "score": -4,
+          "tags": {
+            "misses_public_threat": 2,
+            "too_passive": 2
+          },
+          "wins": 0
+        }
+      ],
+      "best_action_ids": [
+        "move_sludge_bomb",
+        "move_surf"
+      ],
+      "catastrophic_action_ids": [
+        "move_spikes"
+      ],
+      "complete": false,
+      "condition_tags": [
+        "fourth_layer_fails",
+        "spikes_already_maxed"
+      ],
+      "fixture_id": "janine_qwilfish_spikes_already_maxed",
+      "leader": "Janine",
+      "lesson_types": [
+        "hard_rule"
+      ],
+      "missing": [
+        "acceptable",
+        "single_best"
+      ],
+      "preference_count": 2,
+      "strict_preference_count": 2,
+      "tags": [
+        "kanto_leader",
+        "hazards",
+        "romhack_delta",
+        "spikes_layers"
+      ],
+      "training_focus": "When three Spikes layers already exist, Janine's Qwilfish must stop clicking Spikes and use a live move.",
+      "turn": 22
+    },
+    {
+      "acceptable_action_ids": [],
+      "actions": [
+        {
+          "action_id": "move_body_slam",
+          "explanation": "Direct chip with paralysis chance into a faster Recover user.",
+          "kind": "move",
+          "losses": 0,
+          "name": "Body Slam",
+          "preference_ids": [
+            "red_snorlax_vs_alakazam_curse_or_body_slam:1:move_body_slam:move_rest:a_better",
+            "red_snorlax_vs_alakazam_curse_or_body_slam:2:move_body_slam:move_sleep_talk:a_better",
+            "red_snorlax_vs_alakazam_curse_or_body_slam:3:move_body_slam:move_curse:a_better"
+          ],
+          "public_tradeoff": "Keeps tempo and can enable later setup.",
+          "score": 6,
+          "tags": {
+            "keeps_tempo": 3
+          },
+          "wins": 3
+        },
+        {
+          "action_id": "move_curse",
+          "explanation": "Atk+Def setup while Psychic pressure is special.",
+          "kind": "move",
+          "losses": 1,
+          "name": "Curse",
+          "preference_ids": [
+            "red_snorlax_vs_alakazam_curse_or_body_slam:3:move_body_slam:move_curse:a_better"
+          ],
+          "public_tradeoff": "Potentially greedy before paralysis or chip.",
+          "score": -2,
+          "tags": {
+            "too_greedy": 1
+          },
+          "wins": 0
+        },
+        {
+          "action_id": "move_rest",
+          "explanation": "Full heal if Snorlax is truly losing the trade.",
+          "kind": "move",
+          "losses": 1,
+          "name": "Rest",
+          "preference_ids": [
+            "red_snorlax_vs_alakazam_curse_or_body_slam:1:move_body_slam:move_rest:a_better"
+          ],
+          "public_tradeoff": "Too early at high HP.",
+          "score": -2,
+          "tags": {
+            "too_passive": 1
+          },
+          "wins": 0
+        },
+        {
+          "action_id": "move_sleep_talk",
+          "explanation": "Only useful while asleep.",
+          "kind": "move",
+          "losses": 1,
+          "name": "Sleep Talk",
+          "preference_ids": [
+            "red_snorlax_vs_alakazam_curse_or_body_slam:2:move_body_slam:move_sleep_talk:a_better"
+          ],
+          "public_tradeoff": "Public fail if used awake.",
+          "score": -2,
+          "tags": {
+            "too_passive": 1
+          },
+          "wins": 0
+        }
+      ],
+      "best_action_ids": [
+        "move_body_slam"
+      ],
+      "catastrophic_action_ids": [
+        "move_curse",
+        "move_rest",
+        "move_sleep_talk"
+      ],
+      "complete": false,
+      "condition_tags": [
+        "rest_too_early",
+        "setup_before_paralysis_too_greedy",
+        "sleep_talk_requires_sleep",
+        "target_has_recover"
+      ],
+      "fixture_id": "red_snorlax_vs_alakazam_curse_or_body_slam",
+      "leader": "Red",
+      "lesson_types": [
+        "hard_rule",
+        "sequence_policy"
+      ],
+      "missing": [
+        "acceptable"
+      ],
+      "preference_count": 3,
+      "strict_preference_count": 3,
+      "tags": [
+        "post_game",
+        "setup",
+        "wallbreaker",
+        "current_red_roster"
+      ],
+      "training_focus": "Red's current Snorlax no longer has Amnesia or Self-Destruct; teach Curse versus direct Body Slam under Psychic/Recover pressure.",
+      "turn": 2
+    },
+    {
+      "acceptable_action_ids": [],
+      "actions": [
+        {
+          "action_id": "move_sleep_powder",
+          "explanation": "Disables a bulky Ice-risk target before it can punish.",
+          "kind": "move",
+          "losses": 0,
+          "name": "Sleep Powder",
+          "preference_ids": [
+            "lance_yanma_vs_lapras_sleep_powder_or_quiver_dance:1:move_sleep_powder:move_quiver_dance:a_better",
+            "lance_yanma_vs_lapras_sleep_powder_or_quiver_dance:2:move_sleep_powder:move_giga_drain:a_better",
+            "lance_yanma_vs_lapras_sleep_powder_or_quiver_dance:3:move_sleep_powder:switch_kingdra:a_better"
+          ],
+          "public_tradeoff": "Strong but accuracy-dependent.",
+          "score": 6,
+          "tags": {
+            "calculated_risk": 3,
+            "scary_pressure": 3,
+            "uses_public_info": 3
+          },
+          "wins": 3
+        },
+        {
+          "action_id": "move_giga_drain",
+          "explanation": "Immediate super-effective sustain damage.",
+          "kind": "move",
+          "losses": 1,
+          "name": "Giga Drain",
+          "preference_ids": [
+            "lance_yanma_vs_lapras_sleep_powder_or_quiver_dance:2:move_sleep_powder:move_giga_drain:a_better"
+          ],
+          "public_tradeoff": "Keeps tempo if sleep risk is not worth it.",
+          "score": -2,
+          "tags": {
+            "misses_public_threat": 1
+          },
+          "wins": 0
+        },
+        {
+          "action_id": "move_quiver_dance",
+          "explanation": "Attempts to snowball Yanma through speed and special pressure.",
+          "kind": "move",
+          "losses": 1,
+          "name": "Quiver Dance",
+          "preference_ids": [
+            "lance_yanma_vs_lapras_sleep_powder_or_quiver_dance:1:move_sleep_powder:move_quiver_dance:a_better"
+          ],
+          "public_tradeoff": "Greedy if Lapras has Ice coverage.",
+          "score": -2,
+          "tags": {
+            "too_greedy": 1
+          },
+          "wins": 0
+        },
+        {
+          "action_id": "switch_kingdra",
+          "explanation": "Preserves Yanma and handles Water/Ice pressure better.",
+          "kind": "switch",
+          "losses": 1,
+          "name": "Switch to Kingdra",
+          "preference_ids": [
+            "lance_yanma_vs_lapras_sleep_powder_or_quiver_dance:3:move_sleep_powder:switch_kingdra:a_better"
+          ],
+          "public_tradeoff": "Conservative champion pivot.",
+          "score": -2,
+          "tags": {
+            "misses_public_threat": 1
+          },
+          "wins": 0
+        }
+      ],
+      "best_action_ids": [
+        "move_sleep_powder"
+      ],
+      "catastrophic_action_ids": [
+        "move_quiver_dance",
+        "move_giga_drain",
+        "switch_kingdra"
+      ],
+      "complete": false,
+      "condition_tags": [
+        "setup_after_sleep_lands",
+        "sleep_clause_free",
+        "sleep_miss_risk_accepted",
+        "target_not_statused"
+      ],
+      "fixture_id": "lance_yanma_vs_lapras_sleep_powder_or_quiver_dance",
+      "leader": "Champion Lance",
+      "lesson_types": [
+        "sequence_policy"
+      ],
+      "missing": [
+        "acceptable"
+      ],
+      "preference_count": 3,
+      "strict_preference_count": 3,
+      "tags": [
+        "champion",
+        "sleep",
+        "setup",
+        "current_lance_roster"
+      ],
+      "training_focus": "Yanma is now on Lance's Dragon roster; compare legal sleep pressure against greedy Quiver Dance into Ice risk.",
+      "turn": 6
+    },
+    {
+      "acceptable_action_ids": [],
+      "actions": [
+        {
+          "action_id": "move_curse",
+          "explanation": "Uses the sleep window to make Earthquake strong enough to trade through Snorlax.",
+          "kind": "move",
+          "losses": 0,
+          "name": "Curse",
+          "preference_ids": [
+            "external_gsc_rhydon_vs_sleeping_snorlax_curse_window:1:move_curse:move_earthquake:a_better",
+            "external_gsc_rhydon_vs_sleeping_snorlax_curse_window:2:move_curse:move_rock_slide:a_better",
+            "external_gsc_rhydon_vs_sleeping_snorlax_curse_window:3:move_curse:switch_zapdos:a_better"
+          ],
+          "public_tradeoff": "Excellent if the wake branch still leaves Rhydon favored; bad if wake timing or a hidden move flips the exchange.",
+          "score": 6,
+          "tags": {
+            "calculated_risk": 3,
+            "scary_pressure": 3
+          },
+          "wins": 3
+        },
+        {
+          "action_id": "move_earthquake",
+          "explanation": "Immediate damage into sleeping Snorlax.",
+          "kind": "move",
+          "losses": 1,
+          "name": "Earthquake",
+          "preference_ids": [
+            "external_gsc_rhydon_vs_sleeping_snorlax_curse_window:1:move_curse:move_earthquake:a_better"
+          ],
+          "public_tradeoff": "Keeps tempo but may fail to convert before Snorlax wakes.",
+          "score": -2,
+          "tags": {
+            "misses_public_threat": 1
+          },
+          "wins": 0
+        },
+        {
+          "action_id": "move_rock_slide",
+          "explanation": "Useful for Zapdos or Moltres, but weak into the active Snorlax.",
+          "kind": "move",
+          "losses": 1,
+          "name": "Rock Slide",
+          "preference_ids": [
+            "external_gsc_rhydon_vs_sleeping_snorlax_curse_window:2:move_curse:move_rock_slide:a_better"
+          ],
+          "public_tradeoff": "Only makes sense on a strong Flying-type switch read.",
+          "score": -2,
+          "tags": {
+            "too_passive": 1
+          },
+          "wins": 0
+        },
+        {
+          "action_id": "switch_zapdos",
+          "explanation": "Preserves Rhydon and keeps a final special route available.",
+          "kind": "switch",
+          "losses": 1,
+          "name": "Switch to Zapdos",
+          "preference_ids": [
+            "external_gsc_rhydon_vs_sleeping_snorlax_curse_window:3:move_curse:switch_zapdos:a_better"
+          ],
+          "public_tradeoff": "Gives the sleeping Snorlax a chance to wake without forcing progress.",
+          "score": -2,
+          "tags": {
+            "too_passive": 1
+          },
+          "wins": 0
+        }
+      ],
+      "best_action_ids": [
+        "move_curse"
+      ],
+      "catastrophic_action_ids": [
+        "move_earthquake",
+        "move_rock_slide",
+        "switch_zapdos"
+      ],
+      "complete": false,
+      "condition_tags": [
+        "active_target_not_flying",
+        "endgame_conversion",
+        "setup_changes_ko_math",
+        "target_asleep",
+        "wake_branch_review_required"
+      ],
+      "fixture_id": "external_gsc_rhydon_vs_sleeping_snorlax_curse_window",
+      "leader": "External GSC",
+      "lesson_types": [
+        "sequence_policy"
+      ],
+      "missing": [
+        "acceptable"
+      ],
+      "preference_count": 3,
+      "strict_preference_count": 3,
+      "tags": [
+        "external_gsc",
+        "sleep",
+        "setup",
+        "endgame",
+        "replay_912130"
+      ],
+      "training_focus": "Turn a preserved but sleeping Snorlax into a concrete setup-window test: Curse is strong only because wake timing, hazards, and Rhydon's KO route have been tracked.",
+      "turn": 49
+    }
+  ],
+  "preference_count": 52
+}

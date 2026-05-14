@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "State-transition policy answer file",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "generated_at",
+    "policy_name",
+    "answers"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "generated_at": {
+      "type": "string"
+    },
+    "policy_name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "answers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "benchmark_id",
+          "policy_version",
+          "mechanics_profile_seen",
+          "state_hash",
+          "decision_status",
+          "chosen_move_id",
+          "confidence",
+          "candidate_ranking",
+          "current_win_conditions",
+          "irreplaceable_pieces",
+          "catastrophe_branches",
+          "answer_changing_information",
+          "rules_fired"
+        ],
+        "properties": {
+          "benchmark_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "policy_version": {
+            "type": "string",
+            "minLength": 1
+          },
+          "mechanics_profile_seen": {
+            "type": "string"
+          },
+          "state_hash": {
+            "type": "string",
+            "pattern": "^sha256:"
+          },
+          "decision_status": {
+            "enum": [
+              "action",
+              "needs_context"
+            ]
+          },
+          "chosen_move_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "candidate_ranking": {
+            "type": "array",
+            "minItems": 1
+          },
+          "current_win_conditions": {
+            "type": "array",
+            "minItems": 1
+          },
+          "irreplaceable_pieces": {
+            "type": "array",
+            "minItems": 1
+          },
+          "catastrophe_branches": {
+            "type": "array",
+            "minItems": 1
+          },
+          "answer_changing_information": {
+            "type": "array",
+            "minItems": 1
+          },
+          "rules_fired": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": true
+}

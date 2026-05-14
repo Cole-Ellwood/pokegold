@@ -1,14 +1,14 @@
 {
   "agreement_rate": 1.0,
   "disagreements": [],
-  "generated_at": "2026-05-12T02:50:59+00:00",
+  "generated_at": "2026-05-14T00:01:24+00:00",
   "schema_version": 1,
   "skipped": {
-    "both_good": 2,
-    "needs_context": 1,
+    "both_good": 3,
+    "needs_context": 2,
     "other_better": 4
   },
-  "strict_agreement_count": 10,
-  "strict_label_count": 10,
+  "strict_agreement_count": 43,
+  "strict_label_count": 43,
   "threshold": 0.8
 }

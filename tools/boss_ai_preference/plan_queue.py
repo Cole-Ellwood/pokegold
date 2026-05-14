@@ -35,6 +35,7 @@ DEFAULT_COACH_JSON_PATH = ROOT / "audit" / "boss_ai_preference" / "coach_report.
 
 PLAN_SHAPE_TEACHES = {
     "attack_now": "tempo",
+    "sleep_then_setup_then_attack": "sequence_policy",
     "setup_once_then_attack": "sequence_policy",
     "status_once_then_attack": "sequence_policy",
     "speed_control_then_attack": "sequence_policy",
@@ -42,6 +43,7 @@ PLAN_SHAPE_TEACHES = {
     "switch_preserve_then_rescore": "switch_policy",
     "sacrifice_trade_for_clean_switch": "mixed_strategy",
     "commit_lock_only_if_safe": "sequence_policy",
+    "pressure_recover_then_lock": "late_resource_policy",
     "recover_until_safe": "late_resource_policy",
 }
 SEQUENCE_WORDS = {
@@ -137,7 +139,10 @@ def priority_for_plan_question(
     if len(set(shapes)) >= 3:
         priority += 2
         reasons.append("generated plan cards cover several different plan shapes")
-    if any(shape in {"setup_once_then_attack", "status_once_then_attack"} for shape in shapes):
+    if any(
+        shape in {"sleep_then_setup_then_attack", "setup_once_then_attack", "status_once_then_attack"}
+        for shape in shapes
+    ):
         priority += 3
         reasons.append("top candidate set includes setup/status sequencing")
     if "switch_preserve_then_rescore" in shapes:

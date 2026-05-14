@@ -1,0 +1,1519 @@
+{
+  "all_mutations_flip": true,
+  "all_mutations_pass": true,
+  "families": [
+    "damage_threshold_flip",
+    "defensive_answer_unavailable",
+    "direct_removal_absent_sacrifice_trade",
+    "encore_trap_absent",
+    "explosion_blocked",
+    "fast_public_punish_preservation_unavailable",
+    "fast_public_punish_removed",
+    "hazard_removal_absent",
+    "hidden_coverage_absent",
+    "immediate_ko_threshold_removed",
+    "lock_move_safe_after_status",
+    "max_spikes_noop",
+    "opening_incentive_flip",
+    "perish_route_survival_removed",
+    "phazing_order_flip",
+    "pp_route_pressure_flip",
+    "preservation_switch_unavailable",
+    "recovery_window_opens",
+    "rest_forced_range",
+    "scout_probe_removed",
+    "setup_window_removed",
+    "sleep_clause_occupied",
+    "sleep_talk_branch_removed",
+    "sleep_window_removed",
+    "speed_control_to_direct_ko",
+    "spinner_revealed",
+    "status_clock_already_started",
+    "status_clock_survival_removed",
+    "target_already_statused",
+    "weak_setup_signal_to_real_boost"
+  ],
+  "generated_at": "2026-05-14T03:34:44+00:00",
+  "mutation_count": 36,
+  "mutations": [
+    {
+      "base_benchmark_id": "vanilla_gsc_sleep_setup_disruption_001",
+      "base_chosen_move_id": "move_sleep_powder",
+      "base_matches_expected": true,
+      "base_state_hash": "sha256:6e3f88f0f46502e22b3820359e3ec07f4c6330a8ae22155967ba38b42c7ede21",
+      "expected_base_move_id": "move_sleep_powder",
+      "expected_mutated_move_id": "move_sludge_bomb",
+      "family": "sleep_clause_occupied",
+      "minimal_delta": "position_snapshot.field.sleep_clause: free -> occupied",
+      "mutated_chosen_move_id": "move_sludge_bomb",
+      "mutated_matches_expected": true,
+      "mutated_state_hash": "sha256:903ce9d769f04be61daa1afcfe5bd26cbec6ceb147349c2d71a9cc0ebe224db7",
+      "mutation_id": "mut_sleep_clause_occupied_blocks_sleep_001",
+      "mutation_passes": true,
+      "policy_flipped": true,
+      "principle": "sleep control loses when clause state blocks the transition",
+      "top_mutated_candidates": [
+        {
+          "action": "move_sludge_bomb",
+          "move_class": "attack",
+          "rank": 1,
+          "reason": "chip is live but does not recreate the setup window",
+          "score": 20
+        },
+        {
+          "action": "move_sleep_powder",
+          "move_class": "sleep",
+          "rank": 2,
+          "reason": "sleep is blocked by clause or existing status; sleep/setup disruption policy recreates the setup window",
+          "score": -20
+        },
+        {
+          "action": "move_swords_dance",
+          "move_class": "setup",
+          "rank": 3,
+          "reason": "setup follows a disrupted or threatened script; public punish can hit before setup converts",
+          "score": -70
+        }
+      ],
+      "validation_errors": []
+    },
+    {
+      "base_benchmark_id": "vanilla_gsc_sleep_setup_disruption_001",
+      "base_chosen_move_id": "move_sleep_powder",
+      "base_matches_expected": true,
+      "base_state_hash": "sha256:6e3f88f0f46502e22b3820359e3ec07f4c6330a8ae22155967ba38b42c7ede21",
+      "expected_base_move_id": "move_sleep_powder",
+      "expected_mutated_move_id": "move_sludge_bomb",
+      "family": "target_already_statused",
+      "minimal_delta": "position_snapshot.opponent_active.status: none -> par",
+      "mutated_chosen_move_id": "move_sludge_bomb",
+      "mutated_matches_expected": true,
+      "mutated_state_hash": "sha256:ccc055d655a28974d772c3e319f3f4cc9a3956732c3f81f1076e64473a9a8730",
+      "mutation_id": "mut_target_already_statused_blocks_sleep_001",
+      "mutation_passes": true,
+      "policy_flipped": true,
+      "principle": "sleep move value collapses when the visible target is already statused",
+      "top_mutated_candidates": [
+        {
+          "action": "move_sludge_bomb",
+          "move_class": "attack",
+          "rank": 1,
+          "reason": "chip is live but does not recreate the setup window",
+          "score": 20
+        },
+        {
+          "action": "move_sleep_powder",
+          "move_class": "sleep",
+          "rank": 2,
+          "reason": "sleep is blocked by clause or existing status; sleep/setup disruption policy recreates the setup window",
+          "score": -20
+        },
+        {
+          "action": "move_swords_dance",
+          "move_class": "setup",
+          "rank": 3,
+          "reason": "setup follows a disrupted or threatened script; public punish can hit before setup converts",
+          "score": -70
+        }
+      ],
+      "validation_errors": []
+    },
+    {
+      "base_benchmark_id": "long_battle_sleep_disruption_after_miss_001",
+      "base_chosen_move_id": "move_sleep_powder",
+      "base_matches_expected": true,
+      "base_state_hash": "sha256:f68c8816f2f7f1fb23d2417a0003fc1b0d7531a4b74b989c96233c8800911dce",
+      "expected_base_move_id": "move_sleep_powder",
+      "expected_mutated_move_id": "move_sludge_bomb",
+      "family": "sleep_clause_occupied",
+      "minimal_delta": "position_snapshot.field.sleep_clause: free -> occupied",
+      "mutated_chosen_move_id": "move_sludge_bomb",
+      "mutated_matches_expected": true,
+      "mutated_state_hash": "sha256:c5cbe6b9d5e382e4a8aab94757610f7d2179351ae31b75f88e4bd371a495d1a5",
+      "mutation_id": "mut_long_battle_sleep_clause_blocks_rescore_001",
+      "mutation_passes": true,
+      "policy_flipped": true,
+      "principle": "long-game sleep re-score must abandon sleep if clause state blocks it",
+      "top_mutated_candidates": [
+        {
+          "action": "move_sludge_bomb",
+          "move_class": "attack",
+          "rank": 1,
+          "reason": "chip is live but does not recreate the setup window",
+          "score": 20
+        },
+        {
+          "action": "switch_skarmory",
+          "move_class": "switch",
+          "rank": 2,
+          "reason": "no state-transition trigger matched",
+          "score": 0
+        },
+        {
+          "action": "move_sleep_powder",
+          "move_class": "sleep",
+          "rank": 3,
+          "reason": "sleep is blocked by clause or existing status; sleep/setup disruption policy recreates the setup window",
+          "score": -20
+        }
+      ],
+      "validation_errors": []
+    },
+    {
+      "base_benchmark_id": "romhack_spikes_third_layer_janine_001",
+      "base_chosen_move_id": "move_spikes",
+      "base_matches_expected": true,
+      "base_state_hash": "sha256:54a4ada9cca0b06bf9cb92d29984513c833e0c5fa18c2f900240d9cf15155679",
+      "expected_base_move_id": "move_spikes",
+      "expected_mutated_move_id": "move_explosion",
+      "family": "max_spikes_noop",
+      "minimal_delta": "position_snapshot.field.player_side_spikes_layers: 2 -> 3",
+      "mutated_chosen_move_id": "move_explosion",
+      "mutated_matches_expected": true,
+      "mutated_state_hash": "sha256:797de3b8c001940926f3a1f6c8cae8e2f4bb353c57d3d73bff2ee1bcf2445da8",
+      "mutation_id": "mut_spikes_layer_2_to_max_001",
+      "mutation_passes": true,
+      "policy_flipped": true,
+      "principle": "max hazard layer no-op dominates the set-Spikes heuristic",
+      "top_mutated_candidates": [
+        {
+          "action": "move_explosion",
+          "move_class": "explosion",
+          "rank": 1,
+          "reason": "Explosion remains live after the hazard stack is complete",
+          "score": 35
+        },
+        {
+          "action": "switch_tentacruel",
+          "move_class": "switch",
+          "rank": 2,
+          "reason": "no state-transition trigger matched",
+          "score": 0
+        },
+        {
+          "action": "move_spikes",
+          "move_class": "hazard",
+          "rank": 3,
+          "reason": "local Spikes are already maxed",
+          "score": -100
+        }
+      ],
+      "validation_errors": []
+    },
+    {
+      "base_benchmark_id": "fixture_janine_qwilfish_third_spikes_layer_001",
+      "base_chosen_move_id": "move_spikes",
+      "base_matches_expected": true,
+      "base_state_hash": "sha256:3b4720d57aa1f88a7567acea204c1bd1144d510f5bd36792a74aa8d74ffaef7d",
+      "expected_base_move_id": "move_spikes",
+      "expected_mutated_move_id": "move_explosion",
+      "family": "spinner_revealed",
+      "minimal_delta": "position_snapshot.field.player_rapid_spin_seen: false -> true",
+      "mutated_chosen_move_id": "move_explosion",
+      "mutated_matches_expected": true,
+      "mutated_state_hash": "sha256:01f76cabd6b661fd9d0edcfe54ac6cff9d8b5cea0cf01dbd3ef911a739cac1ff",
+      "mutation_id": "mut_spinner_public_lowers_spikes_001",
+      "mutation_passes": true,
+      "policy_flipped": true,
+      "principle": "public removal pressure can dominate finishing the hazard stack",
+      "top_mutated_candidates": [
+        {
+          "action": "move_explosion",
+          "move_class": "explosion",
+          "rank": 1,
+          "reason": "Explosion is a possible wall trade but competes with layer completion",
+          "score": 30
+        },
+        {
+          "action": "move_sludge_bomb",
+          "move_class": "attack",
+          "rank": 2,
+          "reason": "direct damage is a live fallback",
+          "score": 10
+        },
+        {
+          "action": "move_spikes",
+          "move_class": "hazard",
+          "rank": 3,
+          "reason": "hazards have generic long-game value",
+          "score": 10
+        }
+      ],
+      "validation_errors": []
+    },
+    {
+      "base_benchmark_id": "romhack_explosion_route_trade_brock_001",
+      "base_chosen_move_id": "move_explosion",
+      "base_matches_expected": true,
+      "base_state_hash": "sha256:ffecf6899d261ec289f908f0f770e0548fbc8cf2483947db36686eb8fbef6e62",
+      "expected_base_move_id": "move_explosion",
+      "expected_mutated_move_id": "switch_omastar",
+      "family": "explosion_blocked",
+      "minimal_delta": "position_snapshot.opponent_active.revealed_moves: [Surf] -> [Surf, Protect]",
+      "mutated_chosen_move_id": "switch_omastar",
+      "mutated_matches_expected": true,
+      "mutated_state_hash": "sha256:a7bb233bd4a92d618984b3448e7a4f17f548bf93e7f73bbebf195747b128e6fa",
+      "mutation_id": "mut_explosion_blocked_by_protect_001",
+      "mutation_passes": true,
+      "policy_flipped": true,
+      "principle": "Explosion route conversion loses to a public block branch",
+      "top_mutated_candidates": [
+        {
+          "action": "switch_omastar",
+          "move_class": "switch",
+          "rank": 1,
+          "reason": "switching preserves material but may miss the trade window",
+          "score": 30
+        },
+        {
+          "action": "move_explosion",
+          "move_class": "explosion",
+          "rank": 2,
+          "reason": "public Protect or Ghost information can blank Explosion; low-future-value attacker can trade for a route",
+          "score": -15
+        },
+        {
+          "action": "move_curse",
+          "move_class": "setup",
+          "rank": 3,
+          "reason": "public punish can hit before setup converts",
+          "score": -35
+        }
+      ],
+      "validation_errors": []
+    },
+    {
+      "base_benchmark_id": "romhack_defensive_answer_preservation_pryce_001",
+      "base_chosen_move_id": "switch_piloswine",
+      "base_matches_expected": true,
+      "base_state_hash": "sha256:68929c958aed815b089372edbdddd924ec79782199407c969d30da2c4fda96ff",
+      "expected_base_move_id": "switch_piloswine",
+      "expected_mutated_move_id": "move_thunder_wave",
+      "family": "defensive_answer_unavailable",
+      "minimal_delta": "position_snapshot.boss_bench: remove Piloswine",
+      "mutated_chosen_move_id": "move_thunder_wave",
+      "mutated_matches_expected": true,
+      "mutated_state_hash": "sha256:6ba765d5f626705d0e3952cb598c637e91c75a849e54c43fc1f5700f23c73ce5",
+      "mutation_id": "mut_defensive_pivot_unavailable_001",
+      "mutation_passes": true,
+      "policy_flipped": true,
+      "principle": "preservation cannot choose an unavailable defensive answer",
+      "top_mutated_candidates": [
+        {
+          "action": "move_thunder_wave",
+          "move_class": "status",
+          "rank": 1,
+          "reason": "status helps but does not preserve the answer as cleanly",
+          "score": 25
+        },
+        {
+          "action": "switch_piloswine",
+          "move_class": "switch",
+          "rank": 2,
+          "reason": "switch target is not available on the public bench; resistant pivot preserves the exposed active piece",
+          "score": -15
+        },
+        {
+          "action": "move_rest",
+          "move_class": "recovery",
+          "rank": 3,
+          "reason": "recovery gives initiative under active pressure",
+          "score": -55
+        }
+      ],
+      "validation_errors": []
+    },
+    {
+      "base_benchmark_id": "fixture_chuck_poliwrath_vs_pidgeotto_ice_punch_001",
+      "base_chosen_move_id": "switch_sudowoodo",
+      "base_matches_expected": true,
+      "base_state_hash": "sha256:439d85fe4a57b5dd6e6cb63fcd413e2c384e727ff8c45190eb931d4543a2025f",
+      "expected_base_move_id": "switch_sudowoodo",
+      "expected_mutated_move_id": "move_ice_punch",
+      "family": "preservation_switch_unavailable",
+      "minimal_delta": "position_snapshot.boss_bench: remove Sudowoodo",
+      "mutated_chosen_move_id": "move_ice_punch",
+      "mutated_matches_expected": true,
+      "mutated_state_hash": "sha256:069974325a81c9a7815662abaff8feeeec6e2bc8cd5200ed5e262efcc36b6e10",
+      "mutation_id": "mut_preservation_switch_unavailable_001",
+      "mutation_passes": true,
+      "policy_flipped": true,
+      "principle": "switch preservation only dominates when the preserving pivot exists",
+      "top_mutated_candidates": [
+        {
+          "action": "move_ice_punch",
+          "move_class": "attack",
+          "rank": 1,
+          "reason": "direct damage is a live fallback",
+          "score": 10
+        },
+        {
+          "action": "switch_sudowoodo",
+          "move_class": "switch",
+          "rank": 2,
+          "reason": "switch target is not available on the public bench; resistant pivot preserves the exposed active piece",
+          "score": -15
+        },
+        {
+          "action": "move_focus_punch",
+          "move_class": "attack",
+          "rank": 3,
+          "reason": "Focus Punch is exposed to public attacking pressure; direct damage is a live fallback",
+          "score": -50
+        }
+      ],
+      "validation_errors": []
+    },
+    {
+      "base_benchmark_id": "long_battle_rest_tempo_unforced_001",
+      "base_chosen_move_id": "move_body_slam",
+      "base_matches_expected": true,
+      "base_state_hash": "sha256:a718ff038fdb4da2a83e512e67c813441ec3bfd36577053f172bc94d80a09365",
+      "expected_base_move_id": "move_body_slam",
+      "expected_mutated_move_id": "move_rest",
+      "family": "rest_forced_range",
+      "minimal_delta": "Snorlax HP 72% -> 32%; immediate punish becomes KO if no Rest",
+      "mutated_chosen_move_id": "move_rest",
+      "mutated_matches_expected": true,
+      "mutated_state_hash": "sha256:302f92f946c6462701b7b89ac24ac433695d8fb211d3469f700277fdb93955b3",
+      "mutation_id": "mut_long_battle_rest_becomes_forced_001",
+      "mutation_passes": true,
+      "policy_flipped": true,
+      "principle": "Rest changes from tempo loss to forced role preservation once survival is at stake",
+      "top_mutated_candidates": [
+        {
+          "action": "move_rest",
+          "move_class": "recovery",
+          "rank": 1,
+          "reason": "Rest is forced by low HP role survival; recovery gives initiative under active pressure",
+          "score": 15
+        },
+        {
+          "action": "move_body_slam",
+          "move_class": "attack",
+          "rank": 2,
+          "reason": "direct damage is a live fallback",
+          "score": 10
+        },
+        {
+          "action": "switch_skarmory",
+          "move_class": "switch",
+          "rank": 3,
+          "reason": "no state-transition trigger matched",
+          "score": 0
+        }
+      ],
+      "validation_errors": []
+    },
+    {
+      "base_benchmark_id": "romhack_spinblock_damage_context_001",
+      "base_chosen_move_id": "move_thunderbolt",
+      "base_matches_expected": true,
+      "base_state_hash": "sha256:01195c2107f7e768897ffccf6c7ad4e80fd3ef6db3e70a0b65f969367beecb70",
+      "expected_base_move_id": "move_thunderbolt",
+      "expected_mutated_move_id": "switch_raikou",
+      "family": "damage_threshold_flip",
+      "minimal_delta": "Gengar HP 48% / 67 HP -> 38% / 52 HP; Starmie Psychic 53-63 becomes a guaranteed KO",
+      "mutated_chosen_move_id": "switch_raikou",
+      "mutated_matches_expected": true,
+      "mutated_state_hash": "sha256:24e0ee168ad036da4ac4d19131a081709f49bd1833443933bfc92e1789205c76",
+      "mutation_id": "mut_spinblock_damage_survival_to_ko_001",
+      "mutation_passes": true,
+      "policy_flipped": true,
+      "principle": "spinblocking with an attack only dominates when exact damage evidence says the blocker survives the opponent's fastest punish",
+      "top_mutated_candidates": [
+        {
+          "action": "switch_raikou",
+          "move_class": "switch",
+          "rank": 1,
+          "reason": "switch preserves material when public damage says the spinblocker is KOed",
+          "score": 65
+        },
+        {
+          "action": "switch_snorlax",
+          "move_class": "switch",
+          "rank": 2,
+          "reason": "switch preserves material when public damage says the spinblocker is KOed",
+          "score": 65
+        },
+        {
+          "action": "move_thunderbolt",
+          "move_class": "attack",
+          "rank": 3,
+          "reason": "public damage band says the faster punish KOs before the attack; public damage band says the attack removes the spinner; direct damage is a live fallback",
+          "score": -50
+        }
+      ],
+      "validation_errors": []
+    },
+    {
+      "base_benchmark_id": "vanilla_gsc_phazing_timing_mirror_001",
+      "base_chosen_move_id": "move_rock_slide",
+      "base_matches_expected": true,
+      "base_state_hash": "sha256:610ed045f0be5f3690a2dc819d483bb0a8ee3e5fdbf5c987df188ea796fe3883",
+      "expected_base_move_id": "move_rock_slide",
+      "expected_mutated_move_id": "move_roar",
+      "family": "phazing_order_flip",
+      "minimal_delta": "boss phazer moves before opposing phazer -> boss phazer moves after opposing phazer",
+      "mutated_chosen_move_id": "move_roar",
+      "mutated_matches_expected": true,
+      "mutated_state_hash": "sha256:dc5f54ede5230dc8fefb03302d8e2fa2e0e9ff72e8021363c482045c5c5b6038",
+      "mutation_id": "mut_phazing_order_faster_to_slower_001",
+      "mutation_passes": true,
+      "policy_flipped": true,
+      "principle": "Gen 2 phazing changes answer when move order flips because Roar and Whirlwind must be last to work",
+      "top_mutated_candidates": [
+        {
+          "action": "move_roar",
+          "move_class": "phazing",
+          "rank": 1,
+          "reason": "Gen 2 phazing works because this phaze action goes last",
+          "score": 90
+        },
+        {
+          "action": "move_explosion",
+          "move_class": "explosion",
+          "rank": 2,
+          "reason": "no state-transition trigger matched",
+          "score": 0
+        },
+        {
+          "action": "switch_suicune",
+          "move_class": "switch",
+          "rank": 3,
+          "reason": "no state-transition trigger matched",
+          "score": 0
+        }
+      ],
+      "validation_errors": []
+    },
+    {
+      "base_benchmark_id": "vanilla_gsc_pp_phaze_loop_save_final_whirlwind_001",
+      "base_chosen_move_id": "move_rest",
+      "base_matches_expected": true,
+      "base_state_hash": "sha256:cc2eafb243c6ae8dc39687939cfa90f393b41fbbd1fd5f2c827b4d51a1bdaad9",
+      "expected_base_move_id": "move_rest",
+      "expected_mutated_move_id": "move_whirlwind",
+      "family": "pp_route_pressure_flip",
+      "minimal_delta": "opponent setup route is contained -> immediate unanswerable setup route",
+      "mutated_chosen_move_id": "move_whirlwind",
+      "mutated_matches_expected": true,
+      "mutated_state_hash": "sha256:760ab68c256126ed7b638de0aa761c0f2942b38cbb9f5cb8da7c55f76754b67e",
+      "mutation_id": "mut_final_phaze_pp_setup_pressure_001",
+      "mutation_passes": true,
+      "policy_flipped": true,
+      "principle": "final phazing PP should be saved unless spending it denies an immediate setup route",
+      "top_mutated_candidates": [
+        {
+          "action": "move_whirlwind",
+          "move_class": "phazing",
+          "rank": 1,
+          "reason": "phazing can deny setup when timing is valid; final phazing PP is justified by an immediate setup route",
+          "score": 115
+        },
+        {
+          "action": "move_toxic",
+          "move_class": "status",
+          "rank": 2,
+          "reason": "status can create future turns",
+          "score": 15
+        },
+        {
+          "action": "move_rest",
+          "move_class": "recovery",
+          "rank": 3,
+          "reason": "Rest is forced by low HP role survival; recovery gives the active setup route an unchecked turn",
+          "score": 5
+        }
+      ],
+      "validation_errors": []
+    },
+    {
+      "base_benchmark_id": "external_gsc_sleeping_lax_curse_window_001",
+      "base_chosen_move_id": "move_curse",
+      "base_matches_expected": true,
+      "base_state_hash": "sha256:737e7dcf21ba9949036d0f5fc7e04fe9984082404d79d286e5a5dc1e48fe9442",
+      "expected_base_move_id": "move_curse",
+      "expected_mutated_move_id": "move_earthquake",
+      "family": "sleep_window_removed",
+      "minimal_delta": "Snorlax asleep -> awake and able to punish setup",
+      "mutated_chosen_move_id": "move_earthquake",
+      "mutated_matches_expected": true,
+      "mutated_state_hash": "sha256:90f12a2221b1a564b330e69ef250887aaead9420eee9534effa19a26132ed044",
+      "mutation_id": "mut_sleep_window_target_awake_001",
+      "mutation_passes": true,
+      "policy_flipped": true,
+      "principle": "setup during a sleep window loses priority once the target is awake and can punish immediately",
+      "top_mutated_candidates": [
+        {
+          "action": "move_earthquake",
+          "move_class": "attack",
+          "rank": 1,
+          "reason": "immediate attack is preferred once the sleep setup window is gone; Earthquake is the grounded active-target attack; direct damage is a live fallback",
+          "score": 80
+        },
+        {
+          "action": "move_rock_slide",
+          "move_class": "attack",
+          "rank": 2,
+          "reason": "immediate attack is preferred once the sleep setup window is gone; Rock Slide mainly covers a switch read rather than the grounded active target; direct damage is a live fallback",
+          "score": 40
+        },
+        {
+          "action": "switch_zapdos",
+          "move_class": "switch",
+          "rank": 3,
+          "reason": "no state-transition trigger matched",
+          "score": 0
+        }
+      ],
+      "validation_errors": []
+    },
+    {
+      "base_benchmark_id": "vanilla_gsc_opening_electric_double_switch_spikes_001",
+      "base_chosen_move_id": "switch_cloyster",
+      "base_matches_expected": true,
+      "base_state_hash": "sha256:3960f24b351f28308f1cbb4767d59a041fd8a8856759ea4a83b8c4a84738af5b",
+      "expected_base_move_id": "switch_cloyster",
+      "expected_mutated_move_id": "move_thunder",
+      "family": "opening_incentive_flip",
+      "minimal_delta": "opponent Cloyster likely switches -> opponent Cloyster can stay and set Spikes",
+      "mutated_chosen_move_id": "move_thunder",
+      "mutated_matches_expected": true,
+      "mutated_state_hash": "sha256:4f927477a7e28171e2f2739e3bd56f6d5532534b310e02c607c479035f23ba7a",
+      "mutation_id": "mut_opening_double_switch_to_direct_pressure_001",
+      "mutation_passes": true,
+      "policy_flipped": true,
+      "principle": "opening double-switches are resource bids that lose to direct pressure when the opponent no longer has the switch incentive",
+      "top_mutated_candidates": [
+        {
+          "action": "move_thunder",
+          "move_class": "attack",
+          "rank": 1,
+          "reason": "direct Thunder pressure stops the Spiker from claiming the opening; direct damage is a live fallback",
+          "score": 90
+        },
+        {
+          "action": "move_roar",
+          "move_class": "phazing",
+          "rank": 2,
+          "reason": "phazing can deny setup when timing is valid; opening phazing is lower value when direct pressure is required",
+          "score": 10
+        },
+        {
+          "action": "switch_cloyster",
+          "move_class": "switch",
+          "rank": 3,
+          "reason": "double-switch loses value when the opponent can stay and claim hazards",
+          "score": -70
+        }
+      ],
+      "validation_errors": []
+    },
+    {
+      "base_benchmark_id": "external_gsc_forretress_explosion_on_quagsire_001",
+      "base_chosen_move_id": "move_explosion",
+      "base_matches_expected": true,
+      "base_state_hash": "sha256:49f8e044718558bc4bad95beec88d63f3c3fa6090b4b13d2a926623d08c94b56",
+      "expected_base_move_id": "move_explosion",
+      "expected_mutated_move_id": "switch_snorlax",
+      "family": "explosion_blocked",
+      "minimal_delta": "Quagsire route target has no public block -> Protect is revealed",
+      "mutated_chosen_move_id": "switch_snorlax",
+      "mutated_matches_expected": true,
+      "mutated_state_hash": "sha256:85ab19e236aff7c92dd4d9a4f5a7e629e948a71222e32fcf48605620b8694eb6",
+      "mutation_id": "mut_external_boom_blocked_by_protect_001",
+      "mutation_passes": true,
+      "policy_flipped": true,
+      "principle": "real replay Explosion conversion loses to a public block branch even when the original route trade was correct",
+      "top_mutated_candidates": [
+        {
+          "action": "switch_snorlax",
+          "move_class": "switch",
+          "rank": 1,
+          "reason": "switching preserves material but may miss the trade window",
+          "score": 30
+        },
+        {
+          "action": "move_toxic",
+          "move_class": "status",
+          "rank": 2,
+          "reason": "status can create future turns",
+          "score": 15
+        },
+        {
+          "action": "move_hidden_power",
+          "move_class": "attack",
+          "rank": 3,
+          "reason": "direct damage is a live fallback",
+          "score": 10
+        }
+      ],
+      "validation_errors": []
+    },
+    {
+      "base_benchmark_id": "external_gsc_vaporeon_vs_restdtalk_snorlax_001",
+      "base_chosen_move_id": "move_surf",
+      "base_matches_expected": true,
+      "base_state_hash": "sha256:f27ea11fdfe02839ae6c2317e2bf972880d87ba24002de805c1dc0dab7f411c1",
+      "expected_base_move_id": "move_surf",
+      "expected_mutated_move_id": "move_growth",
+      "family": "sleep_talk_branch_removed",
+      "minimal_delta": "Sleep Talk Rest branch public -> no Sleep Talk/Rest branch and Growth changes KO math",
+      "mutated_chosen_move_id": "move_growth",
+      "mutated_matches_expected": true,
+      "mutated_state_hash": "sha256:c332952308284c485a0655552af7bcdf03a17f9de6df80248f84bb7a0184109f",
+      "mutation_id": "mut_restdtalk_branch_absent_setup_window_001",
+      "mutation_passes": true,
+      "policy_flipped": true,
+      "principle": "attacking a sleeping RestTalk user dominates greed, but setup can dominate when the public RestTalk catastrophe branch is absent and setup changes KO math",
+      "top_mutated_candidates": [
+        {
+          "action": "move_growth",
+          "move_class": "setup",
+          "rank": 1,
+          "reason": "setup uses a live sleep window to change endgame KO math; public punish can hit before setup converts",
+          "score": 50
+        },
+        {
+          "action": "switch_raikou",
+          "move_class": "switch",
+          "rank": 2,
+          "reason": "no state-transition trigger matched",
+          "score": 0
+        },
+        {
+          "action": "move_surf",
+          "move_class": "attack",
+          "rank": 3,
+          "reason": "immediate attack fails to use the sleep window's setup conversion; direct damage is a live fallback",
+          "score": -10
+        }
+      ],
+      "validation_errors": []
+    },
+    {
+      "base_benchmark_id": "external_gsc_golem_late_rapid_spin_001",
+      "base_chosen_move_id": "move_rapid_spin",
+      "base_matches_expected": true,
+      "base_state_hash": "sha256:c741efbd20ba81d6a9cbbc878c18b3f211b019c2f56c6578d9ae71a5ff576014",
+      "expected_base_move_id": "move_rapid_spin",
+      "expected_mutated_move_id": "move_earthquake",
+      "family": "hazard_removal_absent",
+      "minimal_delta": "own side has one Spikes layer -> no own-side hazards",
+      "mutated_chosen_move_id": "move_earthquake",
+      "mutated_matches_expected": true,
+      "mutated_state_hash": "sha256:bdf09b6e19f2e6851fcc23c7a72f026fee86e431f9e5de74ccb27d8f017ce353",
+      "mutation_id": "mut_late_spin_no_hazards_attack_now_001",
+      "mutation_passes": true,
+      "policy_flipped": true,
+      "principle": "late-game Rapid Spin is a route-preservation move only while hazards still tax future switches",
+      "top_mutated_candidates": [
+        {
+          "action": "move_earthquake",
+          "move_class": "attack",
+          "rank": 1,
+          "reason": "direct pressure dominates once there are no own-side hazards to remove; direct damage is a live fallback",
+          "score": 65
+        },
+        {
+          "action": "move_roar",
+          "move_class": "phazing",
+          "rank": 2,
+          "reason": "phazing can deny setup when timing is valid",
+          "score": 20
+        },
+        {
+          "action": "move_explosion",
+          "move_class": "explosion",
+          "rank": 3,
+          "reason": "no state-transition trigger matched",
+          "score": 0
+        }
+      ],
+      "validation_errors": []
+    },
+    {
+      "base_benchmark_id": "fixture_will_slowbro_vs_houndoom_fast_dark_001",
+      "base_chosen_move_id": "switch_houndoom",
+      "base_matches_expected": true,
+      "base_state_hash": "sha256:61e3087b9459096a2dbd37207eed7bf5de8cf5bd3b12502c2b9dd9c3a50a9d88",
+      "expected_base_move_id": "switch_houndoom",
+      "expected_mutated_move_id": "move_surf",
+      "family": "fast_public_punish_preservation_unavailable",
+      "minimal_delta": "position_snapshot.boss_bench: remove Houndoom",
+      "mutated_chosen_move_id": "move_surf",
+      "mutated_matches_expected": true,
+      "mutated_state_hash": "sha256:6747a9c8ed6ebd4199d4a8da6cad623d7b04cf3f146f94db6859bc6ad20e4c67",
+      "mutation_id": "mut_fast_dark_pivot_unavailable_attack_now_001",
+      "mutation_passes": true,
+      "policy_flipped": true,
+      "principle": "fast public punish preservation flips to the best stay-in attack only when the preserving pivot is unavailable",
+      "top_mutated_candidates": [
+        {
+          "action": "move_surf",
+          "move_class": "attack",
+          "rank": 1,
+          "reason": "this is the best fallback attack if the preservation pivot is unavailable; direct damage is a live fallback",
+          "score": 45
+        },
+        {
+          "action": "move_psychic",
+          "move_class": "attack",
+          "rank": 2,
+          "reason": "direct damage is a live fallback",
+          "score": 10
+        },
+        {
+          "action": "switch_houndoom",
+          "move_class": "switch",
+          "rank": 3,
+          "reason": "switch target is not available on the public bench; resistant pivot preserves the exposed active piece",
+          "score": -15
+        }
+      ],
+      "validation_errors": []
+    },
+    {
+      "base_benchmark_id": "fixture_koga_ariados_vs_typhlosion_fire_spikes_001",
+      "base_chosen_move_id": "switch_tentacruel",
+      "base_matches_expected": true,
+      "base_state_hash": "sha256:368cd99c2917e52a16a3885c359456f291c5c6b7fac0a57f6c5dae16310c1dfc",
+      "expected_base_move_id": "switch_tentacruel",
+      "expected_mutated_move_id": "switch_umbreon",
+      "family": "fast_public_punish_preservation_unavailable",
+      "minimal_delta": "position_snapshot.boss_bench: remove Tentacruel",
+      "mutated_chosen_move_id": "switch_umbreon",
+      "mutated_matches_expected": true,
+      "mutated_state_hash": "sha256:8630d8d253fa4def4d446610746e6e19be309617558a0004d4e8c7669d9af616",
+      "mutation_id": "mut_fire_preservation_primary_pivot_unavailable_001",
+      "mutation_passes": true,
+      "policy_flipped": true,
+      "principle": "lethal public Fire pressure still demands preservation, but the best preserving pivot changes when the primary answer is unavailable",
+      "top_mutated_candidates": [
+        {
+          "action": "switch_umbreon",
+          "move_class": "switch",
+          "rank": 1,
+          "reason": "resistant pivot preserves the exposed active piece",
+          "score": 85
+        },
+        {
+          "action": "move_toxic",
+          "move_class": "status",
+          "rank": 2,
+          "reason": "status helps but does not preserve the answer as cleanly",
+          "score": 25
+        },
+        {
+          "action": "move_leech_life",
+          "move_class": "attack",
+          "rank": 3,
+          "reason": "direct damage is a live fallback",
+          "score": 10
+        }
+      ],
+      "validation_errors": []
+    },
+    {
+      "base_benchmark_id": "fixture_bugsy_scyther_vs_geodude_safe_swords_dance_001",
+      "base_chosen_move_id": "move_swords_dance",
+      "base_matches_expected": true,
+      "base_state_hash": "sha256:8228f422f9d1bcf4901a829fa4f339c980663f596be5671749e0eb9492455398",
+      "expected_base_move_id": "move_swords_dance",
+      "expected_mutated_move_id": "move_wing_attack",
+      "family": "setup_window_removed",
+      "minimal_delta": "Scyther survives Rock Throw -> Rock Throw is a guaranteed KO after the setup turn",
+      "mutated_chosen_move_id": "move_wing_attack",
+      "mutated_matches_expected": true,
+      "mutated_state_hash": "sha256:62ef7462f0f7bb2c34fb1e4530d360af0594fd32d81746842689f451e9046a5e",
+      "mutation_id": "mut_safe_setup_window_removed_by_ko_range_001",
+      "mutation_passes": true,
+      "policy_flipped": true,
+      "principle": "setup is correct only while the worst plausible punish leaves the boosted route alive",
+      "top_mutated_candidates": [
+        {
+          "action": "move_wing_attack",
+          "move_class": "attack",
+          "rank": 1,
+          "reason": "this is the best fallback attack once setup no longer survives the public punish; direct damage is a live fallback",
+          "score": 65
+        },
+        {
+          "action": "move_quick_attack",
+          "move_class": "attack",
+          "rank": 2,
+          "reason": "direct damage is a live fallback",
+          "score": 10
+        },
+        {
+          "action": "switch_ariados",
+          "move_class": "switch",
+          "rank": 3,
+          "reason": "no state-transition trigger matched",
+          "score": 0
+        }
+      ],
+      "validation_errors": []
+    },
+    {
+      "base_benchmark_id": "fixture_chuck_poliwrath_vs_alakazam_psychic_pivot_001",
+      "base_chosen_move_id": "switch_umbreon",
+      "base_matches_expected": true,
+      "base_state_hash": "sha256:6881a92f7a0d4e04ad0d2b8eb55dd8a741afec30e87554ae8ee89831110932ae",
+      "expected_base_move_id": "switch_umbreon",
+      "expected_mutated_move_id": "move_hypnosis",
+      "family": "defensive_answer_unavailable",
+      "minimal_delta": "position_snapshot.boss_bench: remove Umbreon",
+      "mutated_chosen_move_id": "move_hypnosis",
+      "mutated_matches_expected": true,
+      "mutated_state_hash": "sha256:920801e28e8e16196655c995ecb19d0d394a3aec46043d4401e86dd49dcb05a0",
+      "mutation_id": "mut_psychic_pivot_unavailable_sleep_fallback_001",
+      "mutation_passes": true,
+      "policy_flipped": true,
+      "principle": "accuracy-dependent sleep becomes the fallback control line only when the clean Psychic pivot is unavailable",
+      "top_mutated_candidates": [
+        {
+          "action": "move_hypnosis",
+          "move_class": "sleep",
+          "rank": 1,
+          "reason": "sleep is legal into an unstatused target",
+          "score": 35
+        },
+        {
+          "action": "move_ice_punch",
+          "move_class": "attack",
+          "rank": 2,
+          "reason": "direct damage is a live fallback",
+          "score": 10
+        },
+        {
+          "action": "move_surf",
+          "move_class": "attack",
+          "rank": 3,
+          "reason": "direct damage is a live fallback",
+          "score": 10
+        }
+      ],
+      "validation_errors": []
+    },
+    {
+      "base_benchmark_id": "fixture_morty_haunter_vs_noctowl_sleep_line_001",
+      "base_chosen_move_id": "move_hypnosis",
+      "base_matches_expected": true,
+      "base_state_hash": "sha256:2af59b15982fdfde9f65f95ab4b47341062dab3518c1b98356f59e7ac8cc1d6a",
+      "expected_base_move_id": "move_hypnosis",
+      "expected_mutated_move_id": "move_night_shade",
+      "family": "sleep_clause_occupied",
+      "minimal_delta": "position_snapshot.field.sleep_clause: free -> occupied",
+      "mutated_chosen_move_id": "move_night_shade",
+      "mutated_matches_expected": true,
+      "mutated_state_hash": "sha256:f498b01fc5f13171af5973f77ca9f67d53d23220ddd2309e76992abc34e3fff5",
+      "mutation_id": "mut_morty_sleep_clause_blocks_hypnosis_001",
+      "mutation_passes": true,
+      "policy_flipped": true,
+      "principle": "sleep pressure is a route only while Sleep Clause and target status make it legal",
+      "top_mutated_candidates": [
+        {
+          "action": "move_night_shade",
+          "move_class": "attack",
+          "rank": 1,
+          "reason": "direct damage is a live fallback",
+          "score": 10
+        },
+        {
+          "action": "move_curse",
+          "move_class": "setup",
+          "rank": 2,
+          "reason": "no state-transition trigger matched",
+          "score": 0
+        },
+        {
+          "action": "switch_gengar",
+          "move_class": "switch",
+          "rank": 3,
+          "reason": "no state-transition trigger matched",
+          "score": 0
+        }
+      ],
+      "validation_errors": []
+    },
+    {
+      "base_benchmark_id": "fixture_falkner_pidgeotto_vs_geodude_scout_probe_001",
+      "base_chosen_move_id": "move_sand_attack",
+      "base_matches_expected": true,
+      "base_state_hash": "sha256:e89e43b69a7c2046f01c8c56fc54391766aa5acac231e397454360a42b9bc5a4",
+      "expected_base_move_id": "move_sand_attack",
+      "expected_mutated_move_id": "move_gust",
+      "family": "scout_probe_removed",
+      "minimal_delta": "public Rock-risk probe needed -> no meaningful Rock-risk branch",
+      "mutated_chosen_move_id": "move_gust",
+      "mutated_matches_expected": true,
+      "mutated_state_hash": "sha256:842355a7812979b985e3ef92fc6a3418b07606cbf24bc8c05daf8f67fae500e8",
+      "mutation_id": "mut_falkner_probe_unneeded_attack_now_001",
+      "mutation_passes": true,
+      "policy_flipped": true,
+      "principle": "scout or accuracy probes need a live punish branch; otherwise the policy should take direct progress",
+      "top_mutated_candidates": [
+        {
+          "action": "move_gust",
+          "move_class": "attack",
+          "rank": 1,
+          "reason": "direct progress is preferred once the scout probe has no live punish to reduce; direct damage is a live fallback",
+          "score": 65
+        },
+        {
+          "action": "switch_noctowl",
+          "move_class": "switch",
+          "rank": 2,
+          "reason": "no state-transition trigger matched",
+          "score": 0
+        },
+        {
+          "action": "move_sand_attack",
+          "move_class": "scout",
+          "rank": 3,
+          "reason": "scout probe is low value without a live public punish branch",
+          "score": -60
+        }
+      ],
+      "validation_errors": []
+    },
+    {
+      "base_benchmark_id": "fixture_pryce_cloyster_vs_quilava_fire_pivot_001",
+      "base_chosen_move_id": "switch_slowking",
+      "base_matches_expected": true,
+      "base_state_hash": "sha256:67307e9ad84b6857679b58bf9bf2e9db58db03668e2009c21f0233e4821e71d1",
+      "expected_base_move_id": "switch_slowking",
+      "expected_mutated_move_id": "move_surf",
+      "family": "fast_public_punish_removed",
+      "minimal_delta": "Cloyster is KOed before progress -> Cloyster survives Flame Wheel and Surf converts",
+      "mutated_chosen_move_id": "move_surf",
+      "mutated_matches_expected": true,
+      "mutated_state_hash": "sha256:0cb69169478e2656e2f998e317a2e084c83da848ecbe17e97a665ee6a47f1a08",
+      "mutation_id": "mut_pryce_cloyster_survives_attack_now_001",
+      "mutation_passes": true,
+      "policy_flipped": true,
+      "principle": "switching out of a bad matchup dominates while the active faints before progress, but direct attack takes over once survival evidence makes the route immediate",
+      "top_mutated_candidates": [
+        {
+          "action": "move_surf",
+          "move_class": "attack",
+          "rank": 1,
+          "reason": "direct attack is preferred once survival evidence makes the route immediate; direct damage is a live fallback",
+          "score": 90
+        },
+        {
+          "action": "switch_slowking",
+          "move_class": "switch",
+          "rank": 2,
+          "reason": "resistant pivot preserves the exposed active piece; switching loses priority once the active survives and can convert directly",
+          "score": 10
+        },
+        {
+          "action": "move_protect",
+          "move_class": "protect",
+          "rank": 3,
+          "reason": "Protect is lower value once direct progress is safe",
+          "score": -25
+        }
+      ],
+      "validation_errors": []
+    },
+    {
+      "base_benchmark_id": "fixture_bugsy_scyther_vs_quilava_fire_setup_001",
+      "base_chosen_move_id": "move_swords_dance",
+      "base_matches_expected": true,
+      "base_state_hash": "sha256:52a517826f511be0e9349d523a675f0fdcbbedb0adffd01381b2df11ae9e8363",
+      "expected_base_move_id": "move_swords_dance",
+      "expected_mutated_move_id": "move_wing_attack",
+      "family": "setup_window_removed",
+      "minimal_delta": "Scyther survives one Ember -> Ember removes the setup route before +2 Wing Attack converts",
+      "mutated_chosen_move_id": "move_wing_attack",
+      "mutated_matches_expected": true,
+      "mutated_state_hash": "sha256:cb628e5d81e473e9d472026ab1520c1ee4d11e9cdb474c700d5493815de3156d",
+      "mutation_id": "mut_bugsy_fire_setup_window_removed_001",
+      "mutation_passes": true,
+      "policy_flipped": true,
+      "principle": "setup under public Fire pressure is correct only while speed, survival, and boosted damage preserve the two-turn route",
+      "top_mutated_candidates": [
+        {
+          "action": "move_wing_attack",
+          "move_class": "attack",
+          "rank": 1,
+          "reason": "this is the best fallback attack once setup no longer survives the public punish; direct damage is a live fallback",
+          "score": 65
+        },
+        {
+          "action": "move_quick_attack",
+          "move_class": "attack",
+          "rank": 2,
+          "reason": "direct damage is a live fallback",
+          "score": 10
+        },
+        {
+          "action": "switch_ledian",
+          "move_class": "switch",
+          "rank": 3,
+          "reason": "no state-transition trigger matched",
+          "score": 0
+        }
+      ],
+      "validation_errors": []
+    },
+    {
+      "base_benchmark_id": "fixture_whitney_miltank_vs_geodude_rollout_lock_001",
+      "base_chosen_move_id": "move_body_slam",
+      "base_matches_expected": true,
+      "base_state_hash": "sha256:ae4b1c05ee1a8b9225a385e58751e1f07ae43e0aacbfd5a8c643572d97161bdf",
+      "expected_base_move_id": "move_body_slam",
+      "expected_mutated_move_id": "move_rollout",
+      "family": "lock_move_safe_after_status",
+      "minimal_delta": "Geodude unstatused and Rollout unsafe -> Geodude paralyzed and Rollout safe",
+      "mutated_chosen_move_id": "move_rollout",
+      "mutated_matches_expected": true,
+      "mutated_state_hash": "sha256:7ecfd9f75f29e5e2f64d670f44f4d3c50dfba95ca365bb1f7ccaba7ddad9cfef",
+      "mutation_id": "mut_whitney_rollout_after_status_001",
+      "mutation_passes": true,
+      "policy_flipped": true,
+      "principle": "lock moves are route conversions only after status or safety changes the board",
+      "top_mutated_candidates": [
+        {
+          "action": "move_rollout",
+          "move_class": "lock",
+          "rank": 1,
+          "reason": "lock move is now safe because status or board state changed the route",
+          "score": 90
+        },
+        {
+          "action": "move_body_slam",
+          "move_class": "attack",
+          "rank": 2,
+          "reason": "status pressure is still useful but the lock conversion is now live; direct damage is a live fallback",
+          "score": 20
+        },
+        {
+          "action": "switch_girafarig",
+          "move_class": "switch",
+          "rank": 3,
+          "reason": "no state-transition trigger matched",
+          "score": 0
+        }
+      ],
+      "validation_errors": []
+    },
+    {
+      "base_benchmark_id": "fixture_karen_crobat_vs_dragonite_toxic_clock_001",
+      "base_chosen_move_id": "move_toxic",
+      "base_matches_expected": true,
+      "base_state_hash": "sha256:a7cf2a5739104465c897f46960dbe3e42ef0aca52e137288bf8d3f2670f6587d",
+      "expected_base_move_id": "move_toxic",
+      "expected_mutated_move_id": "switch_tyranitar",
+      "family": "status_clock_survival_removed",
+      "minimal_delta": "Crobat survives one Outrage after Toxic -> Crobat cannot keep the clock route alive",
+      "mutated_chosen_move_id": "switch_tyranitar",
+      "mutated_matches_expected": true,
+      "mutated_state_hash": "sha256:e762e8dd6fb02046ff32ec43512cbeddcb0028304d45b06d0bfd6dd4bc793a62",
+      "mutation_id": "mut_karen_toxic_clock_no_survival_001",
+      "mutation_passes": true,
+      "policy_flipped": true,
+      "principle": "a Toxic clock is only the first move when the user survives the immediate route punish or the sacrifice is explicitly justified",
+      "top_mutated_candidates": [
+        {
+          "action": "switch_tyranitar",
+          "move_class": "switch",
+          "rank": 1,
+          "reason": "pivot becomes the route once the status user cannot survive the immediate punish",
+          "score": 90
+        },
+        {
+          "action": "move_confuse_ray",
+          "move_class": "attack",
+          "rank": 2,
+          "reason": "direct attack is low-impact and does not improve the status-clock route; direct damage is a live fallback",
+          "score": -35
+        },
+        {
+          "action": "move_wing_attack",
+          "move_class": "attack",
+          "rank": 3,
+          "reason": "direct attack is low-impact and does not improve the status-clock route; direct damage is a live fallback",
+          "score": -35
+        }
+      ],
+      "validation_errors": []
+    },
+    {
+      "base_benchmark_id": "fixture_koga_crobat_vs_alakazam_immediate_ko_001",
+      "base_chosen_move_id": "move_wing_attack",
+      "base_matches_expected": true,
+      "base_state_hash": "sha256:7aca88724a87584d2be612445aa45e362824cd66dd2cd0e195aa63acb05315a2",
+      "expected_base_move_id": "move_wing_attack",
+      "expected_mutated_move_id": "switch_umbreon",
+      "family": "immediate_ko_threshold_removed",
+      "minimal_delta": "Wing Attack KOs now -> Wing Attack no longer KOs before Psychic/Recover pressure",
+      "mutated_chosen_move_id": "switch_umbreon",
+      "mutated_matches_expected": true,
+      "mutated_state_hash": "sha256:a36942da8788ff083d3e566de166dacd7ad74a8e0b0b5070192cd5761414539d",
+      "mutation_id": "mut_koga_ko_removed_preserve_umbreon_001",
+      "mutation_passes": true,
+      "policy_flipped": true,
+      "principle": "direct KO damage dominates slow status, but preservation takes over once the KO threshold disappears",
+      "top_mutated_candidates": [
+        {
+          "action": "switch_umbreon",
+          "move_class": "switch",
+          "rank": 1,
+          "reason": "pivot becomes the route once direct KO damage is unavailable",
+          "score": 90
+        },
+        {
+          "action": "move_confuse_ray",
+          "move_class": "attack",
+          "rank": 2,
+          "reason": "direct damage is a live fallback",
+          "score": 10
+        },
+        {
+          "action": "move_wing_attack",
+          "move_class": "attack",
+          "rank": 3,
+          "reason": "direct attack loses priority once it no longer reaches the KO threshold; direct damage is a live fallback",
+          "score": -30
+        }
+      ],
+      "validation_errors": []
+    },
+    {
+      "base_benchmark_id": "fixture_jasmine_skarmory_vs_machoke_focus_energy_001",
+      "base_chosen_move_id": "move_toxic",
+      "base_matches_expected": true,
+      "base_state_hash": "sha256:877305c08f11e0f13d69672497481cc3bf0e9bdfdd88697e6a126a8807474ba3",
+      "expected_base_move_id": "move_toxic",
+      "expected_mutated_move_id": "move_whirlwind",
+      "family": "weak_setup_signal_to_real_boost",
+      "minimal_delta": "Focus Energy is low-urgency setup -> Machoke has a real attack-boost route",
+      "mutated_chosen_move_id": "move_whirlwind",
+      "mutated_matches_expected": true,
+      "mutated_state_hash": "sha256:2299209921010a4dbcdab6e7834b0dcf606dbab496bf16bd4809f81b2d52726d",
+      "mutation_id": "mut_jasmine_real_boost_requires_whirlwind_001",
+      "mutation_passes": true,
+      "policy_flipped": true,
+      "principle": "phazing dominates status only when the setup route is dangerous enough to deny now",
+      "top_mutated_candidates": [
+        {
+          "action": "move_whirlwind",
+          "move_class": "phazing",
+          "rank": 1,
+          "reason": "phazing can deny setup when timing is valid; phazing is required because the public setup route is immediately dangerous",
+          "score": 115
+        },
+        {
+          "action": "move_toxic",
+          "move_class": "status",
+          "rank": 2,
+          "reason": "status clock is live because the target is unstatused and the user survives the immediate punish; status is too slow when a real boost route must be phazed now; status can create future turns",
+          "score": 40
+        },
+        {
+          "action": "move_steel_wing",
+          "move_class": "attack",
+          "rank": 3,
+          "reason": "direct damage is a live fallback",
+          "score": 10
+        }
+      ],
+      "validation_errors": []
+    },
+    {
+      "base_benchmark_id": "fixture_morty_misdreavus_vs_typhlosion_perish_route_001",
+      "base_chosen_move_id": "move_perish_song",
+      "base_matches_expected": true,
+      "base_state_hash": "sha256:6c2a9e0cb4c76323d6713ddb8cd798fd8d4e79fea1eb2de3e2cc6b703002d13e",
+      "expected_base_move_id": "move_perish_song",
+      "expected_mutated_move_id": "switch_gengar",
+      "family": "perish_route_survival_removed",
+      "minimal_delta": "Misdreavus survives Flame Wheel to start Perish Song -> Misdreavus is KOed before the clock starts",
+      "mutated_chosen_move_id": "switch_gengar",
+      "mutated_matches_expected": true,
+      "mutated_state_hash": "sha256:bf70c15ca24b7a682f2da11e69d841bad2bc6ee59fd3941bde9f1b38a0db4422",
+      "mutation_id": "mut_morty_perish_route_cannot_survive_001",
+      "mutation_passes": true,
+      "policy_flipped": true,
+      "principle": "Perish Song is a route only if the user can survive long enough to start the countdown",
+      "top_mutated_candidates": [
+        {
+          "action": "switch_gengar",
+          "move_class": "switch",
+          "rank": 1,
+          "reason": "pivot becomes the route once Perish Song cannot survive the immediate punish",
+          "score": 90
+        },
+        {
+          "action": "move_confuse_ray",
+          "move_class": "attack",
+          "rank": 2,
+          "reason": "direct or swing damage is lower value than starting the forced Perish clock; direct damage is a live fallback",
+          "score": -30
+        },
+        {
+          "action": "move_psywave",
+          "move_class": "attack",
+          "rank": 3,
+          "reason": "direct or swing damage is lower value than starting the forced Perish clock; direct damage is a live fallback",
+          "score": -30
+        }
+      ],
+      "validation_errors": []
+    },
+    {
+      "base_benchmark_id": "fixture_whitney_clefairy_vs_bayleef_encore_reflect_001",
+      "base_chosen_move_id": "move_encore",
+      "base_matches_expected": true,
+      "base_state_hash": "sha256:c2f4edcd49c3b5468d12e47424f00169db0d51f54fc2bac29bd2214aaca24a7d",
+      "expected_base_move_id": "move_encore",
+      "expected_mutated_move_id": "move_double_team",
+      "family": "encore_trap_absent",
+      "minimal_delta": "Bayleef just used Reflect and Clefairy is faster -> no visible Encore trap",
+      "mutated_chosen_move_id": "move_double_team",
+      "mutated_matches_expected": true,
+      "mutated_state_hash": "sha256:3427a817fff01b79e267120d91b69bb004c65f28735606fb975fbf8959ad9dae",
+      "mutation_id": "mut_whitney_encore_trap_absent_double_team_001",
+      "mutation_passes": true,
+      "policy_flipped": true,
+      "principle": "Encore is a must-click only with public last-move and speed evidence; otherwise safe one-turn setup can dominate",
+      "top_mutated_candidates": [
+        {
+          "action": "move_double_team",
+          "move_class": "setup",
+          "rank": 1,
+          "reason": "one setup turn becomes best when the visible Encore trap is absent",
+          "score": 85
+        },
+        {
+          "action": "move_thunder_wave",
+          "move_class": "status",
+          "rank": 2,
+          "reason": "status can create future turns",
+          "score": 15
+        },
+        {
+          "action": "move_doubleslap",
+          "move_class": "attack",
+          "rank": 3,
+          "reason": "direct damage is a live fallback",
+          "score": 10
+        }
+      ],
+      "validation_errors": []
+    },
+    {
+      "base_benchmark_id": "fixture_jasmine_magneton_vs_quilava_speed_control_001",
+      "base_chosen_move_id": "move_thunder_wave",
+      "base_matches_expected": true,
+      "base_state_hash": "sha256:9cd483976ec4a5b85260da50dd1c5a9f5d8c4f642bbbb8d763a45d2877f59a55",
+      "expected_base_move_id": "move_thunder_wave",
+      "expected_mutated_move_id": "move_thunderbolt",
+      "family": "speed_control_to_direct_ko",
+      "minimal_delta": "Thunderbolt does not KO -> Thunderbolt is public direct removal",
+      "mutated_chosen_move_id": "move_thunderbolt",
+      "mutated_matches_expected": true,
+      "mutated_state_hash": "sha256:baca0ea1baa75659b0c658152af5c610ce070fa6d74e3cadffd302f5140a90eb",
+      "mutation_id": "mut_jasmine_speed_control_to_direct_ko_001",
+      "mutation_passes": true,
+      "policy_flipped": true,
+      "principle": "Speed-control status is correct only while it creates future turns; public direct removal dominates once it is available",
+      "top_mutated_candidates": [
+        {
+          "action": "move_thunderbolt",
+          "move_class": "attack",
+          "rank": 1,
+          "reason": "direct attack removes the threat before slow status or preservation is needed; direct attack is low-impact and does not improve the status-clock route; direct damage is a live fallback",
+          "score": 70
+        },
+        {
+          "action": "move_thunder_wave",
+          "move_class": "status",
+          "rank": 2,
+          "reason": "status clock is live because the target is unstatused and the user survives the immediate punish; slow status loses to an immediate KO route; status can create future turns",
+          "score": 25
+        },
+        {
+          "action": "switch_steelix",
+          "move_class": "switch",
+          "rank": 3,
+          "reason": "no state-transition trigger matched",
+          "score": 0
+        }
+      ],
+      "validation_errors": []
+    },
+    {
+      "base_benchmark_id": "fixture_misty_starmie_vs_meganium_recover_tempo_001",
+      "base_chosen_move_id": "move_psychic",
+      "base_matches_expected": true,
+      "base_state_hash": "sha256:8e59b45a31b284d2dac8e780811d90ccfa46d31ed994758efc437f29d05f351e",
+      "expected_base_move_id": "move_psychic",
+      "expected_mutated_move_id": "move_recover",
+      "family": "recovery_window_opens",
+      "minimal_delta": "Meganium can immediately punish -> Meganium is asleep and Psychic no longer changes cleanup math",
+      "mutated_chosen_move_id": "move_recover",
+      "mutated_matches_expected": true,
+      "mutated_state_hash": "sha256:f49765e11cbd5369b84898e58f2bfc81441723037843412e6e102c940b9ef7d8",
+      "mutation_id": "mut_misty_recovery_window_opens_001",
+      "mutation_passes": true,
+      "policy_flipped": true,
+      "principle": "Reliable recovery is correct only when a real window opens and recovery preserves a route better than immediate progress",
+      "top_mutated_candidates": [
+        {
+          "action": "move_recover",
+          "move_class": "recovery",
+          "rank": 1,
+          "reason": "recovery has a real public window and preserves the route",
+          "score": 90
+        },
+        {
+          "action": "switch_lapras",
+          "move_class": "switch",
+          "rank": 2,
+          "reason": "no state-transition trigger matched",
+          "score": 0
+        },
+        {
+          "action": "move_hydro_pump",
+          "move_class": "attack",
+          "rank": 3,
+          "reason": "non-tempo attack misses the named progress route; direct damage is a live fallback",
+          "score": -10
+        }
+      ],
+      "validation_errors": []
+    },
+    {
+      "base_benchmark_id": "fixture_clair_dragonair_vs_suicune_hidden_ice_001",
+      "base_chosen_move_id": "switch_kingdra",
+      "base_matches_expected": true,
+      "base_state_hash": "sha256:162e235b98175139c71e4145c835a059b2194e49826d987617565ff8caf530fa",
+      "expected_base_move_id": "switch_kingdra",
+      "expected_mutated_move_id": "move_thunder",
+      "family": "hidden_coverage_absent",
+      "minimal_delta": "Suicune staying implies hidden Ice pressure -> hidden Ice pressure no longer plausible",
+      "mutated_chosen_move_id": "move_thunder",
+      "mutated_matches_expected": true,
+      "mutated_state_hash": "sha256:e0a5e6c079f0024a92a28ddf35444b8625b7735c36639e7e0ec8467c08b62c07",
+      "mutation_id": "mut_clair_hidden_ice_absent_attack_now_001",
+      "mutation_passes": true,
+      "policy_flipped": true,
+      "principle": "Hidden-info preservation dominates only while the punish is legal, plausible, and severe enough to change the route",
+      "top_mutated_candidates": [
+        {
+          "action": "move_thunder",
+          "move_class": "attack",
+          "rank": 1,
+          "reason": "direct attack becomes best once the severe hidden-coverage branch is absent; direct damage is a live fallback",
+          "score": 95
+        },
+        {
+          "action": "switch_kingdra",
+          "move_class": "switch",
+          "rank": 2,
+          "reason": "primary hidden-coverage pivot loses value once the punish is absent",
+          "score": -45
+        },
+        {
+          "action": "switch_mantine",
+          "move_class": "switch",
+          "rank": 3,
+          "reason": "fallback hidden-coverage pivot is too passive once the punish is absent",
+          "score": -50
+        }
+      ],
+      "validation_errors": []
+    },
+    {
+      "base_benchmark_id": "fixture_bugsy_ariados_vs_pidgey_status_clock_001",
+      "base_chosen_move_id": "move_toxic",
+      "base_matches_expected": true,
+      "base_state_hash": "sha256:f401e99690a922c5d3e008983d68d5dad7d9a5a5557c2782b5b9a133dff0ae2e",
+      "expected_base_move_id": "move_toxic",
+      "expected_mutated_move_id": "switch_scyther",
+      "family": "status_clock_already_started",
+      "minimal_delta": "Pidgey unstatused -> Pidgey already toxic and Ariados has created the clock",
+      "mutated_chosen_move_id": "switch_scyther",
+      "mutated_matches_expected": true,
+      "mutated_state_hash": "sha256:c28e82720fb0f83ade766e68efa44ce7697344754053c62179cd9d913eeea9f8",
+      "mutation_id": "mut_bugsy_status_clock_already_started_001",
+      "mutation_passes": true,
+      "policy_flipped": true,
+      "principle": "Status clock policy is not repeated status: once the clock exists, re-score the follow-up route",
+      "top_mutated_candidates": [
+        {
+          "action": "switch_scyther",
+          "move_class": "switch",
+          "rank": 1,
+          "reason": "pivot becomes the route once the status user cannot survive the immediate punish",
+          "score": 90
+        },
+        {
+          "action": "move_giga_drain",
+          "move_class": "attack",
+          "rank": 2,
+          "reason": "direct attack is low-impact and does not improve the status-clock route; direct damage is a live fallback",
+          "score": -35
+        },
+        {
+          "action": "move_leech_life",
+          "move_class": "attack",
+          "rank": 3,
+          "reason": "direct attack is low-impact and does not improve the status-clock route; direct damage is a live fallback",
+          "score": -35
+        }
+      ],
+      "validation_errors": []
+    },
+    {
+      "base_benchmark_id": "fixture_morty_gengar_vs_kadabra_destiny_bond_001",
+      "base_chosen_move_id": "move_shadow_ball",
+      "base_matches_expected": true,
+      "base_state_hash": "sha256:dcffbd876aad5d1b08dfd009ee867cc2995f58817bf0e32f94a9482ae05df9a9",
+      "expected_base_move_id": "move_shadow_ball",
+      "expected_mutated_move_id": "move_destiny_bond",
+      "family": "direct_removal_absent_sacrifice_trade",
+      "minimal_delta": "direct_ko_available: true -> false",
+      "mutated_chosen_move_id": "move_destiny_bond",
+      "mutated_matches_expected": true,
+      "mutated_state_hash": "sha256:281f3677caa120004c4edcc2a2b67643bcf62fe286bf0ac2c8076bf3535e1718",
+      "mutation_id": "mut_morty_direct_removal_absent_destiny_bond_001",
+      "mutation_passes": true,
+      "policy_flipped": true,
+      "principle": "Sacrifice trade becomes correct only after direct removal no longer converts the route",
+      "top_mutated_candidates": [
+        {
+          "action": "move_destiny_bond",
+          "move_class": "sacrifice",
+          "rank": 1,
+          "reason": "sacrifice trade is forced because direct removal no longer converts",
+          "score": 100
+        },
+        {
+          "action": "switch_misdreavus",
+          "move_class": "switch",
+          "rank": 2,
+          "reason": "no state-transition trigger matched",
+          "score": 0
+        },
+        {
+          "action": "move_shadow_ball",
+          "move_class": "attack",
+          "rank": 3,
+          "reason": "direct attack loses priority once it no longer reaches the KO threshold; direct damage is a live fallback",
+          "score": -30
+        }
+      ],
+      "validation_errors": []
+    }
+  ],
+  "pass_count": 36,
+  "policy_flip_count": 36,
+  "schema_version": 1
+}

@@ -1,0 +1,1597 @@
+{
+  "schema_version": 1,
+  "benchmarks": [
+    {
+      "id": "vanilla_gsc_sleep_setup_disruption_001",
+      "mechanics_profile": "vanilla_gsc",
+      "source_refs": [
+        "docs/boss_ai_teaching_heuristics.md",
+        ".local/tmp/pokemon_singles_sim/long_gsc_drill.js"
+      ],
+      "tags": [
+        "sleep",
+        "setup",
+        "disruption",
+        "heuristic_arbitration"
+      ],
+      "position": {
+        "summary": "Victreebel tried Sleep Powder into Snorlax last turn and missed. Snorlax stayed in and used Body Slam. Victreebel still moves first, Sleep Clause is free, and Snorlax is unstatused.",
+        "boss_active": {
+          "species": "Victreebel",
+          "hp": "45%",
+          "status": "none",
+          "known_moves": [
+            "Sleep Powder",
+            "Swords Dance",
+            "Sludge Bomb",
+            "Giga Drain"
+          ]
+        },
+        "opponent_active": {
+          "species": "Snorlax",
+          "hp": "84%",
+          "status": "none",
+          "revealed_moves": [
+            "Body Slam",
+            "Rest"
+          ],
+          "likely_moves": [
+            "Curse",
+            "Earthquake"
+          ]
+        },
+        "field": {
+          "spikes": "none",
+          "sleep_clause": "free"
+        }
+      },
+      "candidate_moves": [
+        {
+          "id": "move_sleep_powder",
+          "label": "best",
+          "reason": "The previous miss invalidated the setup script, but the target is still unstatused and slower. Sleep is the only move that can recreate the setup window before Body Slam removes Victreebel."
+        },
+        {
+          "id": "move_sludge_bomb",
+          "label": "acceptable",
+          "reason": "Acceptable if the player believes sleep miss risk is too costly and wants guaranteed chip, but it does not create a winning setup route."
+        },
+        {
+          "id": "move_swords_dance",
+          "label": "catastrophic",
+          "reason": "Continuing the old script after the miss exposes Victreebel to Body Slam before the sleep window exists."
+        }
+      ],
+      "current_win_conditions": {
+        "boss": [
+          "Land sleep, set up once, and convert with boosted Sludge Bomb before Snorlax can Rest-cycle."
+        ],
+        "opponent": [
+          "Use Body Slam chip or Curse tempo to keep Victreebel from ever getting a safe boost."
+        ]
+      },
+      "irreplaceable_pieces": {
+        "boss": [
+          "Victreebel as the only current sleep/setup converter."
+        ],
+        "opponent": [
+          "Snorlax as the wall that forces the sleep arbitration."
+        ]
+      },
+      "opponent_model": {
+        "immediate_punish": "Body Slam KOs or leaves Victreebel unable to set up if it spends the turn on Swords Dance.",
+        "role_aware_preservation": "Snorlax can Rest if it takes only chip and is not put to sleep.",
+        "incentive_compatible_response": "Staying in and attacking is credible because Victreebel is already in range.",
+        "hidden_info_belief_state": "Earthquake or Curse changes whether Giga Drain or chip plans can ever matter, but neither justifies raw setup after a miss."
+      },
+      "catastrophe_branch": {
+        "trigger": "Victreebel uses Swords Dance after the prior Sleep Powder miss.",
+        "consequence": "Snorlax attacks, Victreebel loses the only setup converter, and the sleep/setup route collapses."
+      },
+      "information_that_changes_answer": [
+        "Sleep Clause is already occupied.",
+        "Snorlax is already statused.",
+        "Victreebel is slower due to paralysis or speed control.",
+        "Snorlax is in guaranteed Sludge Bomb KO range."
+      ],
+      "arbitration": {
+        "competing_heuristics": [
+          "Use sleep to set up.",
+          "Do not keep following a script after disruption.",
+          "Take guaranteed damage when accuracy can lose."
+        ],
+        "dominant_policy": "Re-score after sleep disruption; use Sleep Powder only because the recomputed state still says sleep is the route creator.",
+        "exceptions": [
+          "If sleep cannot legally land, the best move shifts to chip or preservation."
+        ]
+      },
+      "split": "seed"
+    },
+    {
+      "id": "romhack_spikes_third_layer_janine_001",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_refs": [
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json:janine_qwilfish_finish_third_spikes_layer",
+        "docs/mechanics_changes_from_base.md",
+        "engine/battle/move_effects/spikes.asm",
+        "engine/battle/core.asm"
+      ],
+      "tags": [
+        "spikes",
+        "romhack_delta",
+        "hazards",
+        "heuristic_arbitration"
+      ],
+      "position": {
+        "summary": "Janine Qwilfish faces Snorlax with two Spikes layers already on the player's side. The seen player team is grounded and no Rapid Spin user is public.",
+        "boss_active": {
+          "species": "Qwilfish",
+          "hp": "82%",
+          "status": "none",
+          "known_moves": [
+            "Spikes",
+            "Sludge Bomb",
+            "Surf",
+            "Explosion"
+          ]
+        },
+        "opponent_active": {
+          "species": "Snorlax",
+          "hp": "76%",
+          "status": "none",
+          "revealed_moves": [
+            "Body Slam",
+            "Rest"
+          ]
+        },
+        "field": {
+          "player_side_spikes_layers": 2,
+          "boss_side_spikes_layers": 0,
+          "player_rapid_spin_seen": false,
+          "player_grounded_seen": 6,
+          "player_flying_seen": 0
+        }
+      },
+      "candidate_moves": [
+        {
+          "id": "move_spikes",
+          "label": "best",
+          "reason": "The third layer changes every grounded switch-in from max HP / 6 to max HP / 4, so it dominates ordinary chip while the setter has a playable turn."
+        },
+        {
+          "id": "move_explosion",
+          "label": "acceptable",
+          "reason": "Acceptable only if removing Snorlax immediately opens a clearer route than completing the stack."
+        },
+        {
+          "id": "switch_tentacruel",
+          "label": "catastrophic",
+          "reason": "Switching gives up the open third-layer turn and may let the player reset tempo before the hazard route is complete."
+        }
+      ],
+      "current_win_conditions": {
+        "boss": [
+          "Complete the hazard stack, then convert forced switches, Rest cycles, and phazing into quarter-HP entry damage."
+        ],
+        "opponent": [
+          "Keep Snorlax healthy, find Rapid Spin or Flying pivots if available, and prevent Qwilfish from finishing the stack."
+        ]
+      },
+      "irreplaceable_pieces": {
+        "boss": [
+          "Qwilfish as the current layer setter.",
+          "Tentacruel as later hazard control, not the current conversion piece."
+        ],
+        "opponent": [
+          "Any unrevealed spinner or Flying pivot if one exists.",
+          "Snorlax as the Rest-cycle anchor."
+        ]
+      },
+      "opponent_model": {
+        "immediate_punish": "Snorlax Body Slam chips but does not publicly stop Qwilfish from placing the layer.",
+        "role_aware_preservation": "The opponent wants to keep Snorlax out of Explosion range while avoiding future quarter-HP entries.",
+        "incentive_compatible_response": "Switching is less attractive once the third layer goes up, which is exactly why the layer matters now.",
+        "hidden_info_belief_state": "An unrevealed Rapid Spin user or mostly Flying bench would lower the value of finishing the stack."
+      },
+      "catastrophe_branch": {
+        "trigger": "Qwilfish switches instead of placing the third layer.",
+        "consequence": "The boss loses the clearest hazard-conversion turn and may never regain the exact no-spin, grounded-team window."
+      },
+      "information_that_changes_answer": [
+        "A player Rapid Spin user is revealed and can enter cheaply.",
+        "The player team is mostly Flying or otherwise ignores Spikes.",
+        "Snorlax has an immediate KO on Qwilfish.",
+        "Explosion removes the only defensive answer to a confirmed endgame route."
+      ],
+      "arbitration": {
+        "competing_heuristics": [
+          "Set Spikes.",
+          "Preserve the hazard setter.",
+          "Explosion converts by removing a wall."
+        ],
+        "dominant_policy": "Finish the third layer when the stack is nearly complete, the target cannot immediately stop it, and hazard control is not public.",
+        "exceptions": [
+          "Explosion can dominate if it creates an immediate forced win.",
+          "Preservation can dominate if the third layer will be spun away for free."
+        ]
+      },
+      "split": "seed"
+    },
+    {
+      "id": "romhack_spikes_fourth_click_janine_001",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_refs": [
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json:janine_qwilfish_spikes_already_maxed",
+        "docs/mechanics_changes_from_base.md",
+        "engine/battle/move_effects/spikes.asm"
+      ],
+      "tags": [
+        "spikes",
+        "romhack_delta",
+        "failed_move",
+        "heuristic_arbitration"
+      ],
+      "position": {
+        "summary": "Janine Qwilfish is active after three Spikes layers have already been placed on the player's side.",
+        "boss_active": {
+          "species": "Qwilfish",
+          "hp": "74%",
+          "status": "none",
+          "known_moves": [
+            "Spikes",
+            "Sludge Bomb",
+            "Surf",
+            "Explosion"
+          ]
+        },
+        "opponent_active": {
+          "species": "Snorlax",
+          "hp": "58%",
+          "status": "none",
+          "revealed_moves": [
+            "Body Slam",
+            "Rest"
+          ]
+        },
+        "field": {
+          "player_side_spikes_layers": 3,
+          "boss_side_spikes_layers": 0
+        }
+      },
+      "candidate_moves": [
+        {
+          "id": "move_sludge_bomb",
+          "label": "best",
+          "reason": "A live STAB move converts the already-complete hazard state into damage."
+        },
+        {
+          "id": "move_explosion",
+          "label": "acceptable",
+          "reason": "A route trade may be correct if removing Snorlax opens the endgame, but it must be justified separately."
+        },
+        {
+          "id": "move_spikes",
+          "label": "catastrophic",
+          "reason": "The fourth Spikes click fails in the local engine and spends the turn for no value."
+        }
+      ],
+      "current_win_conditions": {
+        "boss": [
+          "Use the completed stack to force Snorlax into bad Rest and switch decisions."
+        ],
+        "opponent": [
+          "Stabilize with Snorlax Rest or force Qwilfish to waste turns instead of converting."
+        ]
+      },
+      "irreplaceable_pieces": {
+        "boss": [
+          "Completed hazard stack.",
+          "Qwilfish's remaining Explosion access."
+        ],
+        "opponent": [
+          "Snorlax as the main absorber.",
+          "Any hazard remover if one exists."
+        ]
+      },
+      "opponent_model": {
+        "immediate_punish": "If Qwilfish clicks failed Spikes, Snorlax gets a free Body Slam or Rest turn.",
+        "role_aware_preservation": "The opponent wants to preserve anything that can remove or ignore hazards.",
+        "incentive_compatible_response": "The opponent is incentivized to stay in and punish a wasted fourth click.",
+        "hidden_info_belief_state": "Unrevealed Rapid Spin affects how urgently Qwilfish must damage or trade after the stack is complete."
+      },
+      "catastrophe_branch": {
+        "trigger": "Qwilfish attempts Spikes at three existing layers.",
+        "consequence": "The move fails, the opponent gets a free turn, and the boss fails a basic state-tracking check."
+      },
+      "information_that_changes_answer": [
+        "The local source changes to support a fourth layer.",
+        "The recorded hazard state was wrong and only two layers are up.",
+        "Explosion creates an immediate forced win."
+      ],
+      "arbitration": {
+        "competing_heuristics": [
+          "Set Spikes.",
+          "Convert hazards with damage.",
+          "Explosion converts."
+        ],
+        "dominant_policy": "State legality dominates strategic slogans: once Spikes are maxed, use a live conversion move.",
+        "exceptions": [
+          "None for the fourth Spikes click unless the mechanics or layer state changes."
+        ]
+      },
+      "split": "seed"
+    },
+    {
+      "id": "romhack_explosion_route_trade_brock_001",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_refs": [
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json:brock_golem_vs_vaporeon_explosion_question",
+        "docs/boss_ai_teaching_heuristics.md"
+      ],
+      "tags": [
+        "explosion",
+        "sacrifice",
+        "route_trade",
+        "heuristic_arbitration"
+      ],
+      "position": {
+        "summary": "Brock Golem is below half HP into a faster Vaporeon that threatens Water damage. Golem is unlikely to survive as a useful long-game piece, but Explosion can create a clean next position.",
+        "boss_active": {
+          "species": "Golem",
+          "hp": "44%",
+          "status": "none",
+          "known_moves": [
+            "Explosion",
+            "Earthquake",
+            "Rock Slide",
+            "Curse"
+          ]
+        },
+        "opponent_active": {
+          "species": "Vaporeon",
+          "hp": "100%",
+          "status": "none",
+          "revealed_moves": [
+            "Surf"
+          ]
+        },
+        "boss_bench": [
+          "Omastar",
+          "Kabutops",
+          "Aerodactyl"
+        ]
+      },
+      "candidate_moves": [
+        {
+          "id": "move_explosion",
+          "label": "best",
+          "reason": "Golem is likely outsped and removed by Water pressure; Explosion converts a low-future-value piece into material and a clean switch."
+        },
+        {
+          "id": "switch_omastar",
+          "label": "acceptable",
+          "reason": "Preserving Golem is defensible if Omastar can absorb Surf and Golem still has later utility."
+        },
+        {
+          "id": "move_curse",
+          "label": "catastrophic",
+          "reason": "Setup donates the turn to a faster Water attack and closes the sacrifice route without gaining a real win condition."
+        }
+      ],
+      "current_win_conditions": {
+        "boss": [
+          "Remove or cripple Vaporeon, then bring in the correct Rock/Water follow-up without taking switch damage."
+        ],
+        "opponent": [
+          "Use faster Surf pressure to remove Golem while keeping Vaporeon healthy."
+        ]
+      },
+      "irreplaceable_pieces": {
+        "boss": [
+          "Omastar or another Water answer as the post-trade stabilizer."
+        ],
+        "opponent": [
+          "Vaporeon as the Water-pressure piece that forces the trade."
+        ]
+      },
+      "opponent_model": {
+        "immediate_punish": "Surf threatens to remove Golem before slow setup or chip matters.",
+        "role_aware_preservation": "The opponent wants to keep Vaporeon out of Explosion range if a switch is obvious.",
+        "incentive_compatible_response": "Attacking is credible because Golem is weak to Water and low enough that preservation is hard.",
+        "hidden_info_belief_state": "If Vaporeon has Protect or the player strongly expects Explosion, the trade line becomes less reliable."
+      },
+      "catastrophe_branch": {
+        "trigger": "Golem uses Curse instead of trading or switching.",
+        "consequence": "Vaporeon removes Golem, the boss gets no material back, and the next switch enters from a worse resource state."
+      },
+      "information_that_changes_answer": [
+        "Vaporeon is already in guaranteed Earthquake or Rock Slide range.",
+        "Golem is needed later as the only Electric immunity or Explosion user.",
+        "The opponent has revealed Protect or a Ghost pivot.",
+        "Omastar cannot safely take the forced follow-up."
+      ],
+      "arbitration": {
+        "competing_heuristics": [
+          "Explosion converts.",
+          "Preserve defensive answers.",
+          "Do not sacrifice without a route."
+        ],
+        "dominant_policy": "Explosion dominates only because the sacrifice buys a concrete next position and Golem's future defensive role is replaceable.",
+        "exceptions": [
+          "Preservation dominates if Golem is still the only answer to a later threat.",
+          "Switching dominates if Explosion is blocked or over-predicted."
+        ]
+      },
+      "split": "seed"
+    },
+    {
+      "id": "romhack_defensive_answer_preservation_pryce_001",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_refs": [
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json:pryce_slowking_vs_ampharos_ground_pivot",
+        "docs/boss_ai_teaching_heuristics.md"
+      ],
+      "tags": [
+        "defensive_answer",
+        "preservation",
+        "hidden_info",
+        "heuristic_arbitration"
+      ],
+      "position": {
+        "summary": "Pryce Slowking faces Ampharos. Piloswine is revealed on the boss bench. Dragon's Majesty means Ground is not a full immunity to this Dragon/Electric route, but Piloswine still resists and threatens Earthquake.",
+        "boss_active": {
+          "species": "Slowking",
+          "hp": "68%",
+          "status": "none",
+          "known_moves": [
+            "Thunder Wave",
+            "Surf",
+            "Rest"
+          ]
+        },
+        "boss_bench": [
+          "Piloswine",
+          "Cloyster",
+          "Slowking"
+        ],
+        "opponent_active": {
+          "species": "Ampharos",
+          "hp": "80%",
+          "status": "none",
+          "revealed_moves": [
+            "ThunderPunch"
+          ],
+          "likely_moves": [
+            "Dragon coverage",
+            "Thunder Wave"
+          ]
+        }
+      },
+      "candidate_moves": [
+        {
+          "id": "switch_piloswine",
+          "label": "best",
+          "reason": "It preserves Slowking, resists the public Electric pressure, and threatens back with Ground coverage."
+        },
+        {
+          "id": "move_thunder_wave",
+          "label": "acceptable",
+          "reason": "Acceptable only if Slowking survives and slowing Ampharos is more valuable than preserving HP, but it is worse than the clean pivot."
+        },
+        {
+          "id": "move_rest",
+          "label": "catastrophic",
+          "reason": "Rest gives Ampharos initiative and does not answer the active pressure before Slowking is pushed out or removed."
+        }
+      ],
+      "current_win_conditions": {
+        "boss": [
+          "Keep Slowking for later defensive work while using Piloswine to force Ampharos out or into Earthquake range."
+        ],
+        "opponent": [
+          "Use Ampharos to overload Slowking and force Pryce into a bad Rest or paralysis trade."
+        ]
+      },
+      "irreplaceable_pieces": {
+        "boss": [
+          "Slowking as a later bulky special pivot.",
+          "Piloswine as the current Electric-pressure answer."
+        ],
+        "opponent": [
+          "Ampharos as the Electric/Dragon pressure piece."
+        ]
+      },
+      "opponent_model": {
+        "immediate_punish": "ThunderPunch pressures Slowking immediately and can make Rest or weak Surf too slow.",
+        "role_aware_preservation": "The opponent wants to keep Ampharos from eating Earthquake while continuing to pressure Slowking.",
+        "incentive_compatible_response": "If Slowking stays, Ampharos has incentive to keep attacking or paralyze; if Piloswine enters, the opponent may pivot.",
+        "hidden_info_belief_state": "Dragon's Majesty prevents assuming a full Ground immunity, so the answer is resistance plus threat, not a slogan."
+      },
+      "catastrophe_branch": {
+        "trigger": "Slowking uses Rest or weak chip while Ampharos keeps Electric pressure.",
+        "consequence": "Slowking loses its preservation role, Ampharos remains active, and Pryce is forced into a worse switch later."
+      },
+      "information_that_changes_answer": [
+        "Piloswine is low enough that it cannot absorb ThunderPunch.",
+        "Ampharos has revealed coverage that KOs Piloswine on the switch.",
+        "Slowking has a guaranteed KO this turn.",
+        "Ampharos is already paralyzed or otherwise unable to pressure."
+      ],
+      "arbitration": {
+        "competing_heuristics": [
+          "Preserve defensive answers.",
+          "Use speed control.",
+          "Attack the active threat.",
+          "Do not over-trust type immunity slogans in the romhack fork."
+        ],
+        "dominant_policy": "Preservation through a resistant pivot dominates because it answers the immediate punish and keeps Slowking useful.",
+        "exceptions": [
+          "Thunder Wave can dominate if the pivot is compromised and Slowking survives.",
+          "Attacking can dominate only with confirmed KO range."
+        ]
+      },
+      "split": "seed"
+    },
+    {
+      "id": "vanilla_gsc_sleep_clause_blocked_holdout_001",
+      "mechanics_profile": "vanilla_gsc",
+      "source_refs": [
+        "docs/boss_ai_teaching_heuristics.md",
+        ".local/tmp/pokemon_singles_sim/long_gsc_drill.js"
+      ],
+      "tags": [
+        "sleep",
+        "setup",
+        "disruption",
+        "heuristic_arbitration",
+        "holdout"
+      ],
+      "position": {
+        "summary": "Victreebel wants the familiar sleep/setup route into Snorlax, but Sleep Clause is already occupied by a sleeping opposing Zapdos on the bench. Snorlax is unstatused and still threatens Body Slam.",
+        "boss_active": {
+          "species": "Victreebel",
+          "hp": "45%",
+          "status": "none",
+          "known_moves": [
+            "Sleep Powder",
+            "Swords Dance",
+            "Sludge Bomb",
+            "Giga Drain"
+          ]
+        },
+        "opponent_active": {
+          "species": "Snorlax",
+          "hp": "52%",
+          "status": "none",
+          "revealed_moves": [
+            "Body Slam",
+            "Rest"
+          ],
+          "likely_moves": [
+            "Curse",
+            "Earthquake"
+          ]
+        },
+        "field": {
+          "spikes": "none",
+          "sleep_clause": "occupied",
+          "sleep_clause_target": "Zapdos"
+        }
+      },
+      "candidate_moves": [
+        {
+          "id": "move_sludge_bomb",
+          "label": "best",
+          "reason": "Sleep is illegal under Sleep Clause, so Victreebel must convert with live chip rather than pretend the setup route still exists."
+        },
+        {
+          "id": "move_swords_dance",
+          "label": "acceptable",
+          "reason": "Greedy but at least legal if Snorlax is forced to Rest soon; it still risks Body Slam before the boost pays off."
+        },
+        {
+          "id": "move_sleep_powder",
+          "label": "catastrophic",
+          "reason": "The move fails under Sleep Clause and donates the turn."
+        }
+      ],
+      "current_win_conditions": {
+        "boss": [
+          "Use chip and any forced Rest turn to keep Victreebel relevant without violating Sleep Clause."
+        ],
+        "opponent": [
+          "Punish the illegal sleep attempt or raw setup with Body Slam tempo, then Rest-cycle if needed."
+        ]
+      },
+      "irreplaceable_pieces": {
+        "boss": [
+          "Victreebel as the only current sleep/setup converter."
+        ],
+        "opponent": [
+          "Snorlax as the wall that forces the sleep arbitration."
+        ]
+      },
+      "opponent_model": {
+        "immediate_punish": "Body Slam KOs or leaves Victreebel unable to set up if it spends the turn on Swords Dance.",
+        "role_aware_preservation": "Snorlax can Rest if it takes only chip and is not put to sleep.",
+        "incentive_compatible_response": "Staying in and attacking is credible because Victreebel is already in range.",
+        "hidden_info_belief_state": "Earthquake or Curse changes whether Giga Drain or chip plans can ever matter, but neither justifies raw setup after a miss."
+      },
+      "catastrophe_branch": {
+        "trigger": "Victreebel clicks Sleep Powder while Sleep Clause is occupied.",
+        "consequence": "Sleep Powder fails, Snorlax gets a free punish turn, and the agent proves it did not track global sleep state."
+      },
+      "information_that_changes_answer": [
+        "Sleep Clause becomes free.",
+        "Snorlax is already in guaranteed Sludge Bomb KO range.",
+        "Victreebel is needed more as a preserved defensive piece than an attacker."
+      ],
+      "arbitration": {
+        "competing_heuristics": [
+          "Use sleep to set up.",
+          "Respect Sleep Clause state.",
+          "Convert with live damage when the control route is illegal."
+        ],
+        "dominant_policy": "Move legality dominates the sleep/setup heuristic; use live chip when Sleep Clause blocks the route.",
+        "exceptions": [
+          "If Sleep Clause is free again, re-score the normal sleep/setup line."
+        ]
+      },
+      "split": "holdout"
+    },
+    {
+      "id": "romhack_spikes_public_spinner_holdout_001",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_refs": [
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json:janine_qwilfish_finish_third_spikes_layer",
+        "docs/mechanics_changes_from_base.md",
+        "engine/battle/move_effects/spikes.asm",
+        "engine/battle/core.asm"
+      ],
+      "tags": [
+        "spikes",
+        "romhack_delta",
+        "hazards",
+        "heuristic_arbitration",
+        "holdout",
+        "explosion"
+      ],
+      "position": {
+        "summary": "Janine Qwilfish has two Spikes layers up, but the player has revealed Starmie with Rapid Spin and Starmie is the active target at mid HP.",
+        "boss_active": {
+          "species": "Qwilfish",
+          "hp": "82%",
+          "status": "none",
+          "known_moves": [
+            "Spikes",
+            "Sludge Bomb",
+            "Surf",
+            "Explosion"
+          ]
+        },
+        "opponent_active": {
+          "species": "Starmie",
+          "hp": "55%",
+          "status": "none",
+          "revealed_moves": [
+            "Rapid Spin",
+            "Recover",
+            "Surf"
+          ]
+        },
+        "field": {
+          "player_side_spikes_layers": 2,
+          "boss_side_spikes_layers": 0,
+          "player_rapid_spin_seen": true,
+          "player_grounded_seen": 5,
+          "player_flying_seen": 1
+        }
+      },
+      "candidate_moves": [
+        {
+          "id": "move_explosion",
+          "label": "best",
+          "reason": "The public spinner can erase the stack; trading Qwilfish for Starmie can preserve the hazard route better than placing a removable third layer."
+        },
+        {
+          "id": "move_sludge_bomb",
+          "label": "acceptable",
+          "reason": "Live chip pressures the spinner, but it may allow Rapid Spin or Recover to keep the removal route alive."
+        },
+        {
+          "id": "move_spikes",
+          "label": "catastrophic",
+          "reason": "The third layer is likely spun away for low cost because the spinner is public and active."
+        }
+      ],
+      "current_win_conditions": {
+        "boss": [
+          "Remove the public spinner, then let existing or future hazards matter."
+        ],
+        "opponent": [
+          "Use Starmie to spin before the three-layer stack can convert into permanent pressure."
+        ]
+      },
+      "irreplaceable_pieces": {
+        "boss": [
+          "Qwilfish as the piece that can either finish hazards or remove the spinner with Explosion."
+        ],
+        "opponent": [
+          "Starmie as the revealed hazard-control piece."
+        ]
+      },
+      "opponent_model": {
+        "immediate_punish": "Rapid Spin can remove the layers if Qwilfish spends the turn on another layer or weak chip.",
+        "role_aware_preservation": "The opponent wants to keep Starmie alive because it is the hazard-control route.",
+        "incentive_compatible_response": "Spinning or Recovering is credible because the boss has already invested in hazards.",
+        "hidden_info_belief_state": "If another spinner exists, Explosion into Starmie is less final; if Starmie lacks Recover PP, chip improves."
+      },
+      "catastrophe_branch": {
+        "trigger": "Qwilfish places a third layer while public Starmie remains active and healthy enough to spin.",
+        "consequence": "The stack is removed before it converts, and Qwilfish may never regain the same hazard-control position."
+      },
+      "information_that_changes_answer": [
+        "Rapid Spin is not actually revealed.",
+        "Starmie is in guaranteed Sludge Bomb range.",
+        "The opponent has a Ghost that can block the Explosion route or punish it.",
+        "Qwilfish is needed later as the only answer to a separate threat."
+      ],
+      "arbitration": {
+        "competing_heuristics": [
+          "Set the third Spikes layer.",
+          "Preserve hazards by removing hazard control.",
+          "Explosion converts when it removes the opposing route."
+        ],
+        "dominant_policy": "Public hazard control dominates the layer-completion heuristic; remove the spinner if the trade preserves the whole hazard route.",
+        "exceptions": [
+          "Finish the layer if the spinner cannot enter or remove hazards cheaply."
+        ]
+      },
+      "split": "holdout"
+    },
+    {
+      "id": "romhack_spikes_maxed_explosion_conversion_holdout_001",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_refs": [
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json:janine_qwilfish_spikes_already_maxed",
+        "docs/mechanics_changes_from_base.md",
+        "engine/battle/move_effects/spikes.asm"
+      ],
+      "tags": [
+        "spikes",
+        "romhack_delta",
+        "failed_move",
+        "heuristic_arbitration",
+        "holdout",
+        "explosion",
+        "route_trade"
+      ],
+      "position": {
+        "summary": "Three Spikes layers are already up. Qwilfish is below half HP into Snorlax, and Explosion removes the Rest-cycle anchor that otherwise absorbs the completed stack.",
+        "boss_active": {
+          "species": "Qwilfish",
+          "hp": "42%",
+          "status": "none",
+          "known_moves": [
+            "Spikes",
+            "Sludge Bomb",
+            "Surf",
+            "Explosion"
+          ]
+        },
+        "opponent_active": {
+          "species": "Snorlax",
+          "hp": "62%",
+          "status": "none",
+          "revealed_moves": [
+            "Body Slam",
+            "Rest"
+          ]
+        },
+        "field": {
+          "player_side_spikes_layers": 3,
+          "boss_side_spikes_layers": 0
+        }
+      },
+      "candidate_moves": [
+        {
+          "id": "move_explosion",
+          "label": "best",
+          "reason": "With the stack complete, Explosion cashes low-future-value Qwilfish into the opponent's Rest-cycle anchor."
+        },
+        {
+          "id": "move_sludge_bomb",
+          "label": "acceptable",
+          "reason": "A live attack converts the complete stack slowly, but it may let Snorlax Rest and keep absorbing entries."
+        },
+        {
+          "id": "move_spikes",
+          "label": "catastrophic",
+          "reason": "A fourth Spikes click is a failed move."
+        }
+      ],
+      "current_win_conditions": {
+        "boss": [
+          "Use the complete stack plus removal of Snorlax to force every grounded entry into a losing range."
+        ],
+        "opponent": [
+          "Keep Snorlax alive to Rest-cycle through chip and deny the stack conversion."
+        ]
+      },
+      "irreplaceable_pieces": {
+        "boss": [
+          "Completed hazard stack.",
+          "Qwilfish's remaining Explosion access."
+        ],
+        "opponent": [
+          "Snorlax as the main absorber.",
+          "Any hazard remover if one exists."
+        ]
+      },
+      "opponent_model": {
+        "immediate_punish": "If Qwilfish clicks failed Spikes, Snorlax gets a free Body Slam or Rest turn.",
+        "role_aware_preservation": "The opponent wants to preserve anything that can remove or ignore hazards.",
+        "incentive_compatible_response": "The opponent is incentivized to stay in and punish a wasted fourth click.",
+        "hidden_info_belief_state": "Unrevealed Rapid Spin affects how urgently Qwilfish must damage or trade after the stack is complete."
+      },
+      "catastrophe_branch": {
+        "trigger": "Qwilfish clicks a fourth Spikes or weak chip while Snorlax Rests.",
+        "consequence": "The complete stack exists but does not convert because the main absorber remains healthy."
+      },
+      "information_that_changes_answer": [
+        "Snorlax reveals Protect or a Ghost pivot is available.",
+        "Qwilfish is needed later as the only hazard setter after a likely spin.",
+        "Snorlax is already in guaranteed Sludge Bomb range.",
+        "A second opposing hazard absorber is healthier and more important."
+      ],
+      "arbitration": {
+        "competing_heuristics": [
+          "Do not click failed Spikes.",
+          "Convert hazards with live damage.",
+          "Explosion converts by removing the absorber."
+        ],
+        "dominant_policy": "After the stack is complete, Explosion can dominate live chip when it removes the piece that prevents hazard conversion.",
+        "exceptions": [
+          "Use a live attack instead if Explosion is blocked or Qwilfish's future role is irreplaceable."
+        ]
+      },
+      "split": "holdout"
+    },
+    {
+      "id": "romhack_explosion_blocked_by_protect_holdout_001",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_refs": [
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json:brock_golem_vs_vaporeon_explosion_question",
+        "docs/boss_ai_teaching_heuristics.md"
+      ],
+      "tags": [
+        "explosion",
+        "sacrifice",
+        "route_trade",
+        "heuristic_arbitration",
+        "holdout",
+        "hidden_info"
+      ],
+      "position": {
+        "summary": "Brock Golem is low into Vaporeon, but Vaporeon has revealed Protect. Explosion is now a known blocked branch unless the boss first makes Protect costly.",
+        "boss_active": {
+          "species": "Golem",
+          "hp": "44%",
+          "status": "none",
+          "known_moves": [
+            "Explosion",
+            "Earthquake",
+            "Rock Slide",
+            "Curse"
+          ]
+        },
+        "opponent_active": {
+          "species": "Vaporeon",
+          "hp": "100%",
+          "status": "none",
+          "revealed_moves": [
+            "Surf",
+            "Protect"
+          ]
+        },
+        "boss_bench": [
+          "Omastar",
+          "Kabutops",
+          "Aerodactyl"
+        ]
+      },
+      "candidate_moves": [
+        {
+          "id": "switch_omastar",
+          "label": "best",
+          "reason": "The protected Explosion route is no longer reliable; Omastar preserves material and answers Surf pressure."
+        },
+        {
+          "id": "move_earthquake",
+          "label": "acceptable",
+          "reason": "Earthquake is live chip if preserving tempo matters, but Golem still risks being removed by Surf."
+        },
+        {
+          "id": "move_explosion",
+          "label": "catastrophic",
+          "reason": "Protect can blank the sacrifice and leave the boss down a Pokemon for no route gain."
+        }
+      ],
+      "current_win_conditions": {
+        "boss": [
+          "Avoid wasting Golem into Protect, stabilize with a Water answer, then find a later trade or chip route."
+        ],
+        "opponent": [
+          "Bait Explosion into Protect or Surf pressure, preserving Vaporeon as the Water route."
+        ]
+      },
+      "irreplaceable_pieces": {
+        "boss": [
+          "Omastar or another Water answer as the post-trade stabilizer."
+        ],
+        "opponent": [
+          "Vaporeon as the Water-pressure piece that forces the trade."
+        ]
+      },
+      "opponent_model": {
+        "immediate_punish": "Protect can blank Explosion; Surf threatens Golem if it stays.",
+        "role_aware_preservation": "The opponent wants to preserve Vaporeon by scouting or blocking the sacrifice.",
+        "incentive_compatible_response": "Protect is incentive-compatible because Explosion is obvious from low HP Golem.",
+        "hidden_info_belief_state": "If Protect PP is gone or Vaporeon cannot afford to Protect, Explosion may become live again."
+      },
+      "catastrophe_branch": {
+        "trigger": "Golem Explodes into a revealed Protect branch.",
+        "consequence": "The sacrifice fails, Vaporeon remains, and the boss loses the route trade."
+      },
+      "information_that_changes_answer": [
+        "Protect is out of PP or disabled.",
+        "The opponent is forced to attack due to a timer or guaranteed loss if it Protects.",
+        "Omastar cannot safely absorb Surf.",
+        "Earthquake puts Vaporeon into a forced follow-up KO range."
+      ],
+      "arbitration": {
+        "competing_heuristics": [
+          "Explosion converts.",
+          "Do not sacrifice into a public block.",
+          "Preserve the defensive answer."
+        ],
+        "dominant_policy": "Public Protect information overrides the Explosion-converts heuristic; preserve or chip until the block is no longer free.",
+        "exceptions": [
+          "Explosion becomes correct if Protect is unavailable or made losing by the broader position."
+        ]
+      },
+      "split": "holdout"
+    },
+    {
+      "id": "romhack_defensive_answer_unavailable_holdout_001",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_refs": [
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json:pryce_slowking_vs_ampharos_ground_pivot",
+        "docs/boss_ai_teaching_heuristics.md"
+      ],
+      "tags": [
+        "defensive_answer",
+        "preservation",
+        "hidden_info",
+        "heuristic_arbitration",
+        "holdout"
+      ],
+      "position": {
+        "summary": "Pryce Slowking faces Ampharos, but Piloswine has already fainted and is not on the public bench. The usual preservation pivot is unavailable.",
+        "boss_active": {
+          "species": "Slowking",
+          "hp": "68%",
+          "status": "none",
+          "known_moves": [
+            "Thunder Wave",
+            "Surf",
+            "Rest"
+          ]
+        },
+        "boss_bench": [
+          "Cloyster",
+          "Slowking"
+        ],
+        "opponent_active": {
+          "species": "Ampharos",
+          "hp": "80%",
+          "status": "none",
+          "revealed_moves": [
+            "ThunderPunch"
+          ],
+          "likely_moves": [
+            "Dragon coverage",
+            "Thunder Wave"
+          ]
+        }
+      },
+      "candidate_moves": [
+        {
+          "id": "move_thunder_wave",
+          "label": "best",
+          "reason": "With the resistant pivot unavailable, speed control is the best live way to reduce Ampharos's pressure before Slowking is forced out."
+        },
+        {
+          "id": "move_surf",
+          "label": "acceptable",
+          "reason": "Surf is legal chip, but it does less to change the pressure than paralysis."
+        },
+        {
+          "id": "switch_piloswine",
+          "label": "catastrophic",
+          "reason": "The preferred pivot is not available on the public bench, so choosing it is a state-tracking failure."
+        }
+      ],
+      "current_win_conditions": {
+        "boss": [
+          "Paralyze Ampharos or chip it enough that the remaining bench can stop the Electric/Dragon route."
+        ],
+        "opponent": [
+          "Exploit the missing Ground pivot to force Slowking into damage, paralysis, or bad recovery."
+        ]
+      },
+      "irreplaceable_pieces": {
+        "boss": [
+          "Slowking as the remaining bulky pivot; no Piloswine pivot remains."
+        ],
+        "opponent": [
+          "Ampharos as the active pressure piece."
+        ]
+      },
+      "opponent_model": {
+        "immediate_punish": "ThunderPunch pressures Slowking immediately and can make Rest or weak Surf too slow.",
+        "role_aware_preservation": "The opponent wants to keep Ampharos from eating Earthquake while continuing to pressure Slowking.",
+        "incentive_compatible_response": "If Slowking stays, Ampharos has incentive to keep attacking or paralyze; if Piloswine enters, the opponent may pivot.",
+        "hidden_info_belief_state": "Dragon's Majesty prevents assuming a full Ground immunity, so the answer is resistance plus threat, not a slogan."
+      },
+      "catastrophe_branch": {
+        "trigger": "Slowking tries to switch to a Piloswine that is not on the public bench.",
+        "consequence": "The agent selects an impossible preservation line and fails the current-state model."
+      },
+      "information_that_changes_answer": [
+        "Piloswine is actually alive and available.",
+        "Ampharos is immune to paralysis or already paralyzed.",
+        "Surf is a guaranteed KO.",
+        "Cloyster has a verified way to absorb or punish Ampharos."
+      ],
+      "arbitration": {
+        "competing_heuristics": [
+          "Preserve defensive answers.",
+          "Use speed control when the pivot is gone.",
+          "Do not choose unavailable switch lines."
+        ],
+        "dominant_policy": "Current availability dominates the preservation slogan; when the answer is gone, choose the best live mitigation move.",
+        "exceptions": [
+          "Switching dominates again if a real resistant pivot is available."
+        ]
+      },
+      "split": "holdout"
+    },
+    {
+      "id": "fixture_chuck_poliwrath_vs_pidgeotto_ice_punch_001",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_refs": [
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json:chuck_poliwrath_vs_pidgeotto_ice_punch",
+        "tools/boss_ai_preference/labels/boss_ai_pairwise_preferences.jsonl",
+        "audit/boss_ai_preference/fixture_benchmark_harvest.md"
+      ],
+      "tags": [
+        "coverage",
+        "prediction",
+        "status",
+        "defensive_answer",
+        "preservation",
+        "hidden_info",
+        "heuristic_arbitration",
+        "fixture_harvest"
+      ],
+      "position": {
+        "summary": "Chuck Poliwrath faces a revealed Pidgeotto at 58%. Ice Punch is visible coverage, but Sudowoodo is available and preserves Poliwrath from public Flying pressure. Focus Punch is exposed to any attacking line.",
+        "boss_active": {
+          "species": "Poliwrath",
+          "hp": "76%",
+          "status": "none",
+          "item": "Mystic Water",
+          "known_moves": [
+            "Surf",
+            "Hypnosis",
+            "Ice Punch",
+            "Focus Punch"
+          ],
+          "role": "bulky closer"
+        },
+        "boss_bench": [
+          "Sudowoodo",
+          "Hitmontop",
+          "Hitmonlee",
+          "Umbreon"
+        ],
+        "opponent_active": {
+          "species": "Pidgeotto",
+          "hp": "58%",
+          "status": "none",
+          "revealed_moves": [
+            "Wing Attack",
+            "Quick Attack"
+          ],
+          "public_priors": [
+            "Flying pressure is already revealed"
+          ]
+        },
+        "opponent_seen_party": [
+          "Pidgeotto",
+          "Kadabra"
+        ],
+        "field": {
+          "weather": "none",
+          "screens": "none"
+        }
+      },
+      "candidate_moves": [
+        {
+          "id": "switch_sudowoodo",
+          "label": "best",
+          "reason": "The switch preserves Poliwrath and makes the public Wing Attack punish fail, which matters more than taking visible coverage damage this turn."
+        },
+        {
+          "id": "move_ice_punch",
+          "label": "acceptable",
+          "reason": "Ice Punch is live coverage into Pidgeotto and avoids inventing hidden information, but it spends Poliwrath HP into an already revealed pressure route."
+        },
+        {
+          "id": "move_focus_punch",
+          "label": "catastrophic",
+          "reason": "Focus Punch is broken by the faster public attacking line and turns visible Flying pressure into a wasted turn."
+        }
+      ],
+      "current_win_conditions": {
+        "boss": [
+          "Preserve Poliwrath as a bulky closer while using Sudowoodo or coverage to stop Pidgeotto from farming Flying pressure."
+        ],
+        "opponent": [
+          "Force Poliwrath to take Flying chip or waste Focus Punch, then use Kadabra or priority to finish the weakened closer."
+        ]
+      },
+      "irreplaceable_pieces": {
+        "boss": [
+          "Poliwrath as Chuck's current bulky closer.",
+          "Sudowoodo as the available Flying-pressure answer."
+        ],
+        "opponent": [
+          "Pidgeotto as the revealed Flying attacker.",
+          "Kadabra as the likely special punish if Poliwrath is weakened."
+        ]
+      },
+      "opponent_model": {
+        "immediate_punish": "Wing Attack or Quick Attack breaks Focus Punch and pushes Poliwrath closer to Kadabra range.",
+        "role_aware_preservation": "The opponent wants to keep Pidgeotto useful as the public Flying-pressure piece unless Ice Punch becomes unavoidable.",
+        "incentive_compatible_response": "Attacking is credible because Pidgeotto has already revealed the exact move class that punishes Poliwrath staying in.",
+        "hidden_info_belief_state": "Unrevealed Kadabra coverage and Pidgeotto damage rolls make Poliwrath HP preservation more important than one coverage click."
+      },
+      "catastrophe_branch": {
+        "trigger": "Poliwrath clicks Focus Punch into the revealed faster attacking line.",
+        "consequence": "Focus Punch fails, Poliwrath takes damage, and Chuck loses the preservation route without gaining information or progress."
+      },
+      "information_that_changes_answer": [
+        "Sudowoodo is unavailable, statused, or already in KO range.",
+        "Ice Punch is a guaranteed KO and Poliwrath survives every public response afterward.",
+        "Pidgeotto is locked into a non-attacking move or cannot break Focus Punch.",
+        "Kadabra is gone, making Poliwrath HP much less valuable."
+      ],
+      "arbitration": {
+        "competing_heuristics": [
+          "Use visible coverage.",
+          "Preserve irreplaceable defensive and offensive pieces.",
+          "Do not choose a focus move into public fast damage."
+        ],
+        "dominant_policy": "When a live defensive answer is available and the active piece matters later, preservation dominates visible coverage and speculative Focus Punch.",
+        "exceptions": [
+          "Coverage can dominate if it KOs and the active piece is no longer needed as a closer.",
+          "Focus Punch can be reconsidered only if the opponent cannot attack or is forced to switch."
+        ]
+      },
+      "split": "fixture_harvest"
+    },
+    {
+      "id": "fixture_janine_qwilfish_third_spikes_layer_001",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_refs": [
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json:janine_qwilfish_finish_third_spikes_layer",
+        "tools/boss_ai_preference/labels/boss_ai_pairwise_preferences.jsonl",
+        "audit/boss_ai_preference/fixture_benchmark_harvest.md",
+        "engine/battle/move_effects/spikes.asm"
+      ],
+      "tags": [
+        "kanto_leader",
+        "hazards",
+        "romhack_delta",
+        "spikes_layers",
+        "heuristic_arbitration",
+        "fixture_harvest"
+      ],
+      "position": {
+        "summary": "Janine Qwilfish faces Snorlax with two local Spikes layers already down on the player side. The player team is fully grounded in public information and no Rapid Spin user has been revealed.",
+        "boss_active": {
+          "species": "Qwilfish",
+          "hp": "82%",
+          "status": "none",
+          "item": "Leftovers",
+          "known_moves": [
+            "Spikes",
+            "Sludge Bomb",
+            "Surf",
+            "Explosion"
+          ],
+          "role": "fast hazard trade piece"
+        },
+        "boss_bench": [
+          "Tentacruel",
+          "Muk",
+          "Nidoking",
+          "Weezing",
+          "Venomoth"
+        ],
+        "opponent_active": {
+          "species": "Snorlax",
+          "hp": "76%",
+          "status": "none",
+          "revealed_moves": [
+            "Body Slam",
+            "Rest"
+          ],
+          "public_priors": [
+            "No immediate KO route shown"
+          ]
+        },
+        "opponent_seen_party": [
+          "Snorlax",
+          "Meganium",
+          "Ampharos",
+          "Nidoking",
+          "Heracross",
+          "Blissey"
+        ],
+        "field": {
+          "weather": "none",
+          "screens": "none",
+          "boss_side_spikes_layers": 0,
+          "player_side_spikes_layers": 2,
+          "player_grounded_seen": 6,
+          "player_flying_seen": 0,
+          "player_rapid_spin_seen": false
+        }
+      },
+      "candidate_moves": [
+        {
+          "id": "move_spikes",
+          "label": "best",
+          "reason": "The third romhack layer changes every grounded switch from one-sixth to one-quarter max HP while the player has no public spin route."
+        },
+        {
+          "id": "move_explosion",
+          "label": "acceptable",
+          "reason": "Explosion may still remove Snorlax and open a route, but it is worse while Qwilfish can finish the stack first."
+        },
+        {
+          "id": "move_sludge_bomb",
+          "label": "catastrophic",
+          "reason": "Chip into Snorlax gives up the live third-layer turn and lets the main absorber keep Rest-cycle leverage."
+        },
+        {
+          "id": "move_surf",
+          "label": "catastrophic",
+          "reason": "Neutral chip does not change the hazard economy and spends the best current opportunity."
+        },
+        {
+          "id": "switch_tentacruel",
+          "label": "catastrophic",
+          "reason": "Switching preserves Qwilfish but gives up the exact no-spin, grounded-team window that makes the third layer decisive."
+        }
+      ],
+      "current_win_conditions": {
+        "boss": [
+          "Complete the three-layer hazard stack, then convert every grounded switch and Rest cycle into quarter-HP pressure."
+        ],
+        "opponent": [
+          "Keep Snorlax healthy, find or reveal hazard control, and prevent Janine from turning repeated grounded entries into forced loss."
+        ]
+      },
+      "irreplaceable_pieces": {
+        "boss": [
+          "Qwilfish as the current third-layer setter.",
+          "Explosion access after the stack is complete."
+        ],
+        "opponent": [
+          "Snorlax as the main absorber.",
+          "Any unrevealed Rapid Spin or hazard-control piece if one exists."
+        ]
+      },
+      "opponent_model": {
+        "immediate_punish": "Snorlax can Body Slam, but no public line immediately prevents Qwilfish from placing the third layer.",
+        "role_aware_preservation": "The opponent wants to preserve Snorlax and any hidden hazard control because quarter-HP entries reshape every later switch.",
+        "incentive_compatible_response": "Staying in is credible because switching before the third layer only makes the hazard tax worse afterward.",
+        "hidden_info_belief_state": "The no-spinner assumption is public-state limited; a hidden spinner would lower but not erase the value of forcing the reveal."
+      },
+      "catastrophe_branch": {
+        "trigger": "Qwilfish attacks or switches instead of placing the third layer while the stack is at two.",
+        "consequence": "Janine loses the cleanest romhack-specific hazard conversion turn and may never regain it after Rest, spin, or a matchup reset."
+      },
+      "information_that_changes_answer": [
+        "A player Rapid Spin user is revealed and can enter without cost.",
+        "Snorlax has an immediate KO or disabling move into Qwilfish.",
+        "The seen player team is not mostly grounded.",
+        "Explosion creates an immediate forced win that third-layer Spikes cannot match."
+      ],
+      "arbitration": {
+        "competing_heuristics": [
+          "Set Spikes.",
+          "Explosion converts by removing a wall.",
+          "Preserve the hazard setter.",
+          "Direct attacks avoid overcommitting to hazards."
+        ],
+        "dominant_policy": "The romhack third layer dominates while it is live, public hazard control is absent, and the current opponent cannot immediately stop it.",
+        "exceptions": [
+          "Explosion can dominate if it opens a named forced endgame now.",
+          "Preservation can dominate if the third layer will be removed for free."
+        ]
+      },
+      "split": "fixture_harvest"
+    },
+    {
+      "id": "fixture_mechanics_snorlax_full_hp_rest_status_fail_001",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_refs": [
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json:mechanics_snorlax_full_hp_rest_status_fail",
+        "tools/boss_ai_preference/labels/boss_ai_pairwise_preferences.jsonl",
+        "audit/boss_ai_preference/fixture_benchmark_harvest.md",
+        "engine/battle/effect_commands.asm"
+      ],
+      "tags": [
+        "mechanics",
+        "rest_cycle",
+        "status_cure",
+        "local_engine",
+        "heuristic_arbitration",
+        "fixture_harvest"
+      ],
+      "position": {
+        "summary": "Snorlax is paralyzed at full HP into Skarmory. In the local engine, full-HP Rest fails before curing status, and Sleep Talk also fails because Snorlax is awake.",
+        "boss_active": {
+          "species": "Snorlax",
+          "hp": "100%",
+          "status": "par",
+          "item": "Leftovers",
+          "known_moves": [
+            "Body Slam",
+            "Rest",
+            "Sleep Talk",
+            "Curse"
+          ],
+          "role": "RestTalk wall"
+        },
+        "boss_bench": [
+          "Raikou",
+          "Cloyster",
+          "Skarmory"
+        ],
+        "opponent_active": {
+          "species": "Skarmory",
+          "hp": "68%",
+          "status": "none",
+          "revealed_moves": [
+            "Whirlwind",
+            "Drill Peck"
+          ],
+          "likely_moves": [
+            "Toxic",
+            "Rest"
+          ]
+        },
+        "opponent_seen_party": [
+          "Skarmory",
+          "Raikou",
+          "Cloyster"
+        ],
+        "field": {
+          "weather": "none",
+          "screens": "none",
+          "boss_side_spikes": true,
+          "player_side_spikes": true
+        }
+      },
+      "candidate_moves": [
+        {
+          "id": "move_body_slam",
+          "label": "best",
+          "reason": "Body Slam is the best live move while the recovery and Sleep Talk buttons are mechanically unavailable."
+        },
+        {
+          "id": "move_curse",
+          "label": "acceptable",
+          "reason": "Curse can try to build a route if Whirlwind is not used, but it risks donating the phazing turn."
+        },
+        {
+          "id": "move_rest",
+          "label": "catastrophic",
+          "reason": "Full-HP Rest fails before curing paralysis in the local engine, so it is not a status-cure line from this state."
+        },
+        {
+          "id": "move_sleep_talk",
+          "label": "catastrophic",
+          "reason": "Sleep Talk fails while Snorlax is awake and gives Skarmory a free phaze or pressure turn."
+        }
+      ],
+      "current_win_conditions": {
+        "boss": [
+          "Use live pressure or a carefully timed Curse while preserving Snorlax for later Rest cycles once Rest is actually legal."
+        ],
+        "opponent": [
+          "Exploit failed status-cure attempts, phaze Curse boosts, and keep Snorlax from converting paralysis into a free reset."
+        ]
+      },
+      "irreplaceable_pieces": {
+        "boss": [
+          "Snorlax as the central long-game wall, but not as a legal full-HP Rest user this turn."
+        ],
+        "opponent": [
+          "Skarmory as the phazer that prevents careless Curse conversion."
+        ]
+      },
+      "opponent_model": {
+        "immediate_punish": "Whirlwind can erase Curse and Drill Peck or Toxic pressure punishes any failed Rest or Sleep Talk turn.",
+        "role_aware_preservation": "The opponent wants to keep Skarmory available as the phazer until Snorlax is forced into a real Rest cycle.",
+        "incentive_compatible_response": "Phazing is credible if Snorlax boosts; attacking or status is credible if Snorlax wastes a state-gated move.",
+        "hidden_info_belief_state": "Unrevealed Toxic or Rest on Skarmory affects how much Body Slam pressure matters, but not the legality of full-HP Rest or awake Sleep Talk."
+      },
+      "catastrophe_branch": {
+        "trigger": "Snorlax chooses Rest at full HP or Sleep Talk while awake.",
+        "consequence": "The move fails, paralysis remains, Skarmory keeps initiative, and the agent exposes a mechanics-state error instead of making progress."
+      },
+      "information_that_changes_answer": [
+        "Snorlax is below full HP, making Rest mechanically legal.",
+        "Snorlax is asleep, making Sleep Talk mechanically legal.",
+        "Skarmory is in guaranteed Body Slam KO range.",
+        "Whirlwind is disabled or out of PP, increasing Curse conversion value."
+      ],
+      "arbitration": {
+        "competing_heuristics": [
+          "Use Rest to cure status.",
+          "Use Sleep Talk with RestTalk walls.",
+          "Pressure the phazer with live damage.",
+          "Set up only when phazing cannot erase the route."
+        ],
+        "dominant_policy": "Mechanics legality dominates role slogans: choose a live move when Rest and Sleep Talk fail from the exact current state.",
+        "exceptions": [
+          "Rest dominates once Snorlax is below full HP and needs the recovery or cure.",
+          "Sleep Talk becomes live only after Snorlax is actually asleep."
+        ]
+      },
+      "split": "fixture_harvest"
+    },
+    {
+      "id": "fixture_brock_golem_vs_vaporeon_explosion_question_001",
+      "mechanics_profile": "romhack_gym_leader_lab",
+      "source_refs": [
+        "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json:brock_golem_vs_vaporeon_explosion_question",
+        "tools/boss_ai_preference/labels/boss_ai_pairwise_preferences.jsonl",
+        "audit/boss_ai_preference/fixture_benchmark_harvest.md"
+      ],
+      "tags": [
+        "sacrifice",
+        "explosion",
+        "route_trade",
+        "water_pressure",
+        "late_game",
+        "hidden_info",
+        "heuristic_arbitration",
+        "fixture_harvest"
+      ],
+      "position": {
+        "summary": "Brock Golem is at 42% into Vaporeon, which has revealed Surf and outspeeds the stay-in branch. Explosion trades a low-future-value Golem for a clean route, while Omastar is the acceptable Water-resist preservation line.",
+        "boss_active": {
+          "species": "Golem",
+          "hp": "42%",
+          "status": "none",
+          "item": "Rocky Helmet",
+          "known_moves": [
+            "Earthquake",
+            "Rock Slide",
+            "Explosion",
+            "Curse"
+          ],
+          "role": "physical wall"
+        },
+        "boss_bench": [
+          "Omastar",
+          "Corsola",
+          "Kabutops",
+          "Onix",
+          "Aerodactyl"
+        ],
+        "opponent_active": {
+          "species": "Vaporeon",
+          "hp": "76%",
+          "status": "none",
+          "revealed_moves": [
+            "Surf",
+            "Bite"
+          ],
+          "likely_moves": [
+            "Ice Beam",
+            "Rest"
+          ]
+        },
+        "opponent_seen_party": [
+          "Vaporeon",
+          "Machamp"
+        ],
+        "field": {
+          "weather": "none",
+          "screens": "none"
+        }
+      },
+      "candidate_moves": [
+        {
+          "id": "move_explosion",
+          "label": "best",
+          "reason": "Explosion converts Golem before Surf removes it, trading a low-future-value wall for a clean entry and likely removal or crippling of Vaporeon."
+        },
+        {
+          "id": "switch_omastar",
+          "label": "acceptable",
+          "reason": "Omastar is a real Water-resist preservation line and was explicitly close in the saved note, but it risks taking Surf chip instead of cashing Golem out."
+        },
+        {
+          "id": "move_earthquake",
+          "label": "catastrophic",
+          "reason": "Earthquake stays in under revealed faster Surf pressure without removing Vaporeon or preserving Golem."
+        }
+      ],
+      "current_win_conditions": {
+        "boss": [
+          "Remove or heavily damage Vaporeon, then enter Omastar or another Rock team member without donating Surf momentum."
+        ],
+        "opponent": [
+          "Use Vaporeon to force Golem out or KO it with Surf, preserving the Water-pressure route into Brock's Rock team."
+        ]
+      },
+      "irreplaceable_pieces": {
+        "boss": [
+          "Omastar as the clean Water-pressure stabilizer after the trade.",
+          "Golem only if its physical-wall role is still needed after Vaporeon is answered."
+        ],
+        "opponent": [
+          "Vaporeon as the revealed Surf pressure piece."
+        ]
+      },
+      "opponent_model": {
+        "immediate_punish": "Surf threatens to KO or leave Golem without useful future value if it uses a normal attack or Curse.",
+        "role_aware_preservation": "The opponent wants Vaporeon alive because Surf pressures most of Brock's structure.",
+        "incentive_compatible_response": "Attacking is credible because Golem is slower, low, and visibly weak to Water pressure.",
+        "hidden_info_belief_state": "Rest or Protect would change the trade timing, while a forced opponent switch would increase Earthquake or Rock Slide value."
+      },
+      "catastrophe_branch": {
+        "trigger": "Golem uses Earthquake while Vaporeon stays in and uses Surf.",
+        "consequence": "Brock loses Golem without removing the Water-pressure piece or gaining the clean post-trade entry."
+      },
+      "information_that_changes_answer": [
+        "Vaporeon reveals Protect or another Explosion block.",
+        "Golem is still required as the only answer to a confirmed remaining physical threat.",
+        "Omastar is too low to absorb Surf after switching.",
+        "Earthquake is guaranteed to KO because Vaporeon is much lower than recorded."
+      ],
+      "arbitration": {
+        "competing_heuristics": [
+          "Explosion converts low-future-value pieces into route progress.",
+          "Preserve answers by switching to the Water resist.",
+          "Do not stay in with ordinary damage under faster super-effective pressure."
+        ],
+        "dominant_policy": "Explosion narrowly dominates because the saved judgment treats it and Omastar as close, and the current state lets the sacrifice buy a clean next position.",
+        "exceptions": [
+          "Switching to Omastar becomes best if Golem still has an irreplaceable defensive job or Explosion is publicly blocked."
+        ]
+      },
+      "split": "fixture_harvest"
+    }
+  ]
+}

@@ -6,6 +6,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from .benchmark_harvest import build_benchmark_harvest_report, build_benchmark_label_queue
 from .boss_team import boss_team_source_for_fixture
 from .data import (
     DEFAULT_FIXTURES_PATH,
@@ -166,6 +167,8 @@ def build_final_report(
     )
     party_anchor_report = build_party_anchor_report(fixtures)
     plan_pair_coverage = build_plan_pair_coverage(plan_queue, trajectories)
+    benchmark_harvest = build_benchmark_harvest_report(fixtures, preferences)
+    benchmark_label_queue = build_benchmark_label_queue(fixtures, preferences, limit=20)
     trajectory_model = reward_report.get("trajectory_model") or {}
 
     gates = {
@@ -189,6 +192,17 @@ def build_final_report(
         "leader_trajectory_counts": dict(sorted(leader_trajectory_counts.items())),
         "party_anchor_report": party_anchor_report,
         "plan_pair_coverage": plan_pair_coverage,
+        "benchmark_harvest": {
+            "complete_candidate_count": benchmark_harvest["complete_candidate_count"],
+            "partial_candidate_count": benchmark_harvest["partial_candidate_count"],
+            "missing_counts": benchmark_harvest["missing_counts"],
+        },
+        "benchmark_label_queue": {
+            "request_count": benchmark_label_queue["request_count"],
+            "one_label_completion_count": benchmark_label_queue[
+                "one_label_completion_count"
+            ],
+        },
         "trajectory_conflict_count": len(trajectory_report["conflicts"]),
         "stale_trajectory_count": len(trajectory_report.get("stale_rows", [])),
         "reward_model_holdout_accuracy": reward_report["holdout_metrics"]["accuracy_label"],
@@ -233,6 +247,9 @@ def render_final_report(report: dict[str, Any]) -> str:
             f"- Trajectory phases: `{report['trajectory_phase_counts']}`",
             f"- Exact party anchors: {report['party_anchor_report']['exact_count']} / {report['fixture_count']}",
             f"- Incomplete top plan-card questions: {report['plan_pair_coverage']['incomplete_count']}",
+            f"- Complete benchmark candidates: {report['benchmark_harvest']['complete_candidate_count']}",
+            f"- Partial benchmark candidates: {report['benchmark_harvest']['partial_candidate_count']}",
+            f"- One-label benchmark completions: {report['benchmark_label_queue']['one_label_completion_count']} / {report['benchmark_label_queue']['request_count']}",
             f"- Trajectory conflicts: {report['trajectory_conflict_count']}",
             f"- Stale trajectory rows: {report['stale_trajectory_count']}",
             f"- Pairwise holdout accuracy: {report['reward_model_holdout_accuracy']}",

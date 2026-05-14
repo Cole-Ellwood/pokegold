@@ -11,6 +11,7 @@ SETUP_NAMES = {
     "dragon dance",
     "double team",
     "growth",
+    "quiver dance",
     "swords dance",
 }
 DEBUFF_NAMES = {
@@ -31,6 +32,7 @@ STATUS_NAMES = {
     "thunder wave",
     "toxic",
 }
+SLEEP_NAMES = {"hypnosis", "lovely kiss", "sleep powder", "spore"}
 SACRIFICE_NAMES = {"destiny bond", "explosion"}
 PRIORITY_NAMES = {"extremespeed", "quick attack"}
 COVERAGE_NAMES = {
@@ -47,6 +49,7 @@ COVERAGE_NAMES = {
 LOCK_NAMES = {"outrage", "rollout"}
 RECOVERY_NAMES = {"milk drink", "recover", "rest", "synthesis"}
 PHAZING_NAMES = {"roar", "whirlwind"}
+HAZARD_NAMES = {"spikes"}
 NON_DAMAGE_NAMES = (
     SETUP_NAMES
     | STATUS_NAMES
@@ -77,6 +80,23 @@ WEAK_DAMAGE_TEXT = {
     "resistance",
     "weak chip",
 }
+PUBLIC_TYPE_FAIL_TEXT = {
+    "bad into a public dark",
+    "does not affect",
+    "fail into dark",
+    "failed psychic",
+    "no effect",
+    "public fail into dark",
+}
+HAZARD_TEMPO_RISK_TEXT = {
+    "cannot afford",
+    "fire hit",
+    "fire pressure",
+    "full hazard turn",
+    "lethal pressure",
+    "revealed flamethrower",
+    "tempo risk",
+}
 
 
 @dataclass(frozen=True)
@@ -91,6 +111,16 @@ def _action_text(action: dict[str, Any]) -> str:
         str(action.get(key, ""))
         for key in ("id", "kind", "name", "explanation", "public_tradeoff")
     ).lower()
+
+
+def _public_text(fixture: dict[str, Any]) -> str:
+    state = fixture.get("state", {})
+    notes: list[Any] = []
+    if isinstance(state, dict):
+        public_notes = state.get("public_notes", [])
+        if isinstance(public_notes, list):
+            notes.extend(public_notes)
+    return " ".join(str(note) for note in notes).lower()
 
 
 def _name(action: dict[str, Any]) -> str:
@@ -114,6 +144,71 @@ def _hp_percent(value: Any) -> float | None:
     if not match:
         return None
     return max(0.0, min(100.0, float(match.group(1))))
+
+
+def _player_active_status(fixture: dict[str, Any]) -> str:
+    state = fixture.get("state", {})
+    if not isinstance(state, dict):
+        return ""
+    player = state.get("player", {})
+    if not isinstance(player, dict):
+        return ""
+    active = player.get("active", {})
+    if not isinstance(active, dict):
+        return ""
+    return str(active.get("status", "")).strip().lower()
+
+
+def _boss_active(fixture: dict[str, Any]) -> dict[str, Any]:
+    state = fixture.get("state", {})
+    if not isinstance(state, dict):
+        return {}
+    boss = state.get("boss", {})
+    if not isinstance(boss, dict):
+        return {}
+    active = boss.get("active", {})
+    return active if isinstance(active, dict) else {}
+
+
+def _boss_active_status(fixture: dict[str, Any]) -> str:
+    return str(_boss_active(fixture).get("status", "")).strip().lower()
+
+
+def _boss_active_hp(fixture: dict[str, Any]) -> float | None:
+    return _hp_percent(_boss_active(fixture).get("hp"))
+
+
+def _has_status(status: str) -> bool:
+    return status not in {"", "none"}
+
+
+def _is_asleep(status: str) -> bool:
+    return status in {"sleep", "slp", "asleep"}
+
+
+def _field_hazards(fixture: dict[str, Any]) -> dict[str, Any]:
+    state = fixture.get("state", {})
+    if not isinstance(state, dict):
+        return {}
+    field = state.get("field", {})
+    if not isinstance(field, dict):
+        return {}
+    hazards = field.get("hazards", {})
+    return hazards if isinstance(hazards, dict) else {}
+
+
+def _spikes_layers(fixture: dict[str, Any], side: str) -> int | None:
+    hazards = _field_hazards(fixture)
+    layers_key = f"{side}_spikes_layers"
+    if layers_key in hazards:
+        try:
+            return max(0, min(3, int(hazards[layers_key])))
+        except (TypeError, ValueError):
+            return None
+    legacy_key = f"{side}_spikes"
+    if isinstance(hazards.get(legacy_key), bool):
+        return 1 if hazards[legacy_key] else 0
+    return None
 
 
 def _add(
@@ -155,6 +250,17 @@ def score_action(
             _add(contributions, "coverage", 7, "move uses public coverage or visible punish")
         if damage_like and _has_any(text, WEAK_DAMAGE_TEXT):
             _add(contributions, "weak_chip", -4, "text marks this damage as low-impact chip")
+        combined_public_text = f"{text} {_public_text(fixture)}"
+        if name == "psychic" and "dark" in combined_public_text and _has_any(
+            combined_public_text,
+            PUBLIC_TYPE_FAIL_TEXT,
+        ):
+            _add(
+                contributions,
+                "public_type_immunity_risk",
+                -18,
+                "public text marks Psychic as failing into a Dark target",
+            )
         estimate = action.get("damage_estimate")
         if damage_like and isinstance(estimate, dict):
             low = estimate.get("low_percent")
@@ -175,12 +281,31 @@ def score_action(
             _add(contributions, "setup_identity", 6, "setup move matches a boss plan")
             if _has_any(text, SETUP_SAFE_TEXT):
                 _add(contributions, "setup_window", 12, "public text describes a real setup window")
+            if (
+                {"sleep", "setup"} <= tags
+                and _player_active_status(fixture) in {"sleep", "asleep", "slp"}
+            ):
+                _add(
+                    contributions,
+                    "sleeping_target_setup_window",
+                    12,
+                    "public target sleep creates a setup window that still needs wake-branch review",
+                )
             if _has_any(text, SETUP_RISK_TEXT):
                 _add(contributions, "setup_risk", -10, "public pressure makes setup risky")
         if name in DEBUFF_NAMES:
             _add(contributions, "debuff_control", 3, "one debuff can reduce public counterplay risk")
         if name in STATUS_NAMES:
             _add(contributions, "status_identity", 5, "status/control move matches boss identity")
+            if name in SLEEP_NAMES and {"sleep", "setup"} <= tags and not _has_status(
+                _player_active_status(fixture)
+            ):
+                _add(
+                    contributions,
+                    "sleep_enables_setup_line",
+                    18,
+                    "sleep-first line can create the setup turn against an unstatused target",
+                )
             if "cheap" in text or "annoying" in text:
                 _add(contributions, "taste_risk", -3, "status line needs user taste judgment")
         if name in SACRIFICE_NAMES:
@@ -195,8 +320,40 @@ def score_action(
             _add(contributions, "preserve_value", 4, "recovery preserves a key boss mon")
             if "spam" in text or "robotic" in text or "automatic" in text:
                 _add(contributions, "taste_risk", -4, "recovery can become robotic")
+            if name == "rest":
+                boss_hp = _boss_active_hp(fixture)
+                boss_status = _boss_active_status(fixture)
+                if boss_hp == 100:
+                    _add(
+                        contributions,
+                        "full_hp_rest_fails",
+                        -16,
+                        "local Rest fails at full HP before curing status",
+                    )
+                elif boss_hp is not None and boss_hp >= 85 and not _has_status(boss_status):
+                    _add(
+                        contributions,
+                        "healthy_rest_no_status",
+                        -8,
+                        "high-HP Rest without status usually wastes tempo",
+                    )
+        if name == "sleep talk" and not _is_asleep(_boss_active_status(fixture)):
+            _add(contributions, "awake_sleep_talk_fails", -12, "Sleep Talk needs the user to be asleep")
         if name in PHAZING_NAMES:
             _add(contributions, "denial", 6, "phazing denies public setup or switch patterns")
+        if name in HAZARD_NAMES:
+            player_layers = _spikes_layers(fixture, "player_side")
+            _add(contributions, "hazard_identity", 6, "hazard move can change long-game switch economics")
+            if player_layers == 0:
+                _add(contributions, "first_spikes_layer", 4, "first Spikes layer creates a switching tax")
+            elif player_layers == 1:
+                _add(contributions, "second_spikes_layer", 7, "second local Spikes layer increases every grounded switch cost")
+            elif player_layers == 2:
+                _add(contributions, "third_spikes_layer_pressure", 12, "third local Spikes layer pushes grounded switch-ins to quarter-HP damage")
+            elif player_layers == 3:
+                _add(contributions, "spikes_already_maxed", -20, "local Spikes fails when three layers are already set")
+            if _has_any(f"{text} {_public_text(fixture)}", HAZARD_TEMPO_RISK_TEXT):
+                _add(contributions, "hazard_tempo_risk", -8, "public pressure makes the hazard turn risky")
 
     if "hidden_coverage" in tags:
         if kind == "switch":

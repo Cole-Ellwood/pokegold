@@ -142,7 +142,39 @@ def party_hash(party: TrainerPartyEntry | None) -> str | None:
     return hashlib.sha256(encoded).hexdigest()[:16]
 
 
+def fixture_state_party_hash(fixture: dict[str, Any]) -> str:
+    state = fixture.get("state", {})
+    boss = state.get("boss", {}) if isinstance(state, dict) else {}
+    payload = {
+        "active": boss.get("active", {}),
+        "bench": boss.get("bench", []),
+        "bench_state": boss.get("bench_state", []),
+    }
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()[:16]
+
+
 def boss_team_source_for_fixture(fixture: dict[str, Any]) -> dict[str, Any]:
+    if fixture.get("boss_party_source") == "fixture_state":
+        group = str(
+            fixture.get("boss_party_group")
+            or group_name_for_leader(str(fixture.get("leader", "")))
+        )
+        return {
+            "group": group,
+            "index": None,
+            "anchor": "fixture_state",
+            "exact": True,
+            "hash": fixture_state_party_hash(fixture),
+            "path": str(
+                fixture.get(
+                    "boss_party_source_path",
+                    "tools/boss_ai_preference/fixtures/boss_ai_preference_fixtures.json",
+                )
+            ),
+            "line": None,
+        }
+
     group, index, anchor = party_anchor_for_fixture(fixture)
     party = party_for_fixture(fixture)
     return {

@@ -21,6 +21,17 @@ from tools.boss_ai_preference.data import (
     save_preference,
 )
 from tools.boss_ai_preference.active_queue import build_active_queue
+from tools.boss_ai_preference.benchmark_positions import (
+    build_benchmark_mutation_report,
+    build_benchmark_policy_answers,
+    build_benchmark_report,
+    load_benchmark_oracles,
+    load_benchmarks,
+)
+from tools.boss_ai_preference.benchmark_harvest import (
+    build_benchmark_harvest_report,
+    build_benchmark_label_queue,
+)
 from tools.boss_ai_preference.boss_team import (
     attach_boss_teams,
     boss_team_for_fixture,
@@ -38,6 +49,7 @@ from tools.boss_ai_preference.damage_estimates import (
 from tools.boss_ai_preference.features import build_feature_report
 from tools.boss_ai_preference.final_report import build_final_report
 from tools.boss_ai_preference.lessons import build_lesson_report
+from tools.boss_ai_preference.long_battle_review import build_long_battle_review_report
 from tools.boss_ai_preference.plan_queue import build_coach_report, build_plan_queue
 from tools.boss_ai_preference.plans import generate_plan_cards, generated_plan_ids_by_fixture
 from tools.boss_ai_preference.proposals import build_proposal_report
@@ -61,12 +73,18 @@ from tools.boss_ai_preference.threat_availability import (
     threats_for_pokemon,
     write_threat_report,
 )
+from tools.boss_ai_preference.type_evidence import build_type_evidence_report
+
+
+EXPECTED_FIXTURE_COUNT = 57
 
 
 def main() -> int:
     fixtures = load_fixtures()
-    if len(fixtures) != 53:
-        raise SystemExit("expected current 53-fixture Boss AI preference corpus")
+    if len(fixtures) != EXPECTED_FIXTURE_COUNT:
+        raise SystemExit(
+            f"expected current {EXPECTED_FIXTURE_COUNT}-fixture Boss AI preference corpus"
+        )
     missing_bench_state = [
         fixture["id"]
         for fixture in fixtures
@@ -84,7 +102,9 @@ def main() -> int:
     for fixture in fixtures:
         party = party_for_fixture(fixture)
         if party is None:
-            stale_party_members.append(f"{fixture['id']}: no exact source party")
+            source = boss_team_source_for_fixture(fixture)
+            if not source.get("exact"):
+                stale_party_members.append(f"{fixture['id']}: no exact source party")
             continue
         source_species = {species_key(mon.species) for mon in party.mons}
         boss = fixture["state"]["boss"]
@@ -129,6 +149,58 @@ def main() -> int:
         raise SystemExit("expected feature report to cover every fixture action")
     if "kind_switch" not in feature_report["feature_support"]:
         raise SystemExit("expected feature report to include switch action features")
+
+    benchmarks = load_benchmarks()
+    benchmark_oracles = load_benchmark_oracles()
+    if {row["id"] for row in benchmarks} != {row["id"] for row in benchmark_oracles}:
+        raise SystemExit("expected public benchmark cards and hidden oracles to match by id")
+    benchmark_policy = build_benchmark_policy_answers(benchmarks)
+    benchmark_answers = {
+        row["benchmark_id"]: row["chosen_move_id"]
+        for row in benchmark_policy["answers"]
+    }
+    benchmark_report = build_benchmark_report(
+        benchmarks,
+        oracles=benchmark_oracles,
+        answers=benchmark_answers,
+    )
+    if not benchmark_report["benchmark_contract_ready"]:
+        raise SystemExit("expected state-transition benchmark contract to be ready")
+    if not benchmark_report["policy_passes"]:
+        raise SystemExit("expected state-transition baseline policy to pass benchmarks")
+    mutation_report = build_benchmark_mutation_report(benchmarks)
+    if mutation_report["mutation_count"] < 7:
+        raise SystemExit("expected answer-flip benchmark mutation coverage")
+    if not mutation_report["all_mutations_pass"]:
+        raise SystemExit("expected state-transition mutations to pass")
+    if not mutation_report["all_mutations_flip"]:
+        raise SystemExit("expected every benchmark mutation to flip the baseline answer")
+    type_evidence_report = build_type_evidence_report(
+        benchmarks,
+        benchmark_oracles,
+        benchmark_policy["answers"],
+    )
+    if type_evidence_report["chart_tweak_count"] != 15:
+        raise SystemExit("expected all 15 romhack type-chart tweaks in type evidence")
+    if not type_evidence_report["all_pass"]:
+        raise SystemExit("expected benchmark type-effectiveness evidence to pass")
+    long_battle_report = build_long_battle_review_report()
+    if not long_battle_report["reviews_valid"]:
+        raise SystemExit("expected structured long-battle review to validate")
+    if long_battle_report["turn_count"] < 30:
+        raise SystemExit("expected long-battle review to cover at least 30 turns")
+    if long_battle_report["benchmark_extraction_count"] < 3:
+        raise SystemExit("expected long-battle review to extract benchmark candidates")
+    harvest_report = build_benchmark_harvest_report(fixtures, real_preferences)
+    if harvest_report["complete_candidate_count"] < 3:
+        raise SystemExit("expected fixture-derived benchmark harvest candidates")
+    label_queue = build_benchmark_label_queue(fixtures, real_preferences, limit=5)
+    if label_queue["returned_count"] != 5:
+        raise SystemExit("expected benchmark label queue to return requested candidates")
+    if label_queue["one_label_completion_count"] == 0:
+        raise SystemExit("expected benchmark label queue to find promotable partials")
+    if not label_queue["requests"][0]["question"]:
+        raise SystemExit("expected benchmark label queue requests to ask concrete questions")
 
     active_queue = build_active_queue(fixtures, [], real_preferences, trace_dir=Path("missing"), limit=5)
     if active_queue["returned_count"] != 5:
@@ -564,8 +636,15 @@ def main() -> int:
         )
         if "top_plan_pairs_are_fully_labeled" not in final_report["gates"]:
             raise SystemExit("expected final readiness report to include plan-pair gate")
-        if final_report["party_anchor_report"]["missing_exact_count"]:
-            raise SystemExit("expected final report to find exact trainer-party anchors")
+        missing_exact_ids = {
+            row["fixture_id"]
+            for row in final_report["party_anchor_report"]["missing_exact"]
+        }
+        if missing_exact_ids:
+            raise SystemExit(
+                "expected all fixtures, including fixture-state drills, to have exact "
+                f"trainer-party anchors: {sorted(missing_exact_ids)}"
+            )
 
     print(
         "Boss AI preference audit passed: "

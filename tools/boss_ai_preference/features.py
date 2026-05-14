@@ -22,6 +22,7 @@ SETUP_MOVES = {
     "dragon dance",
     "double team",
     "growth",
+    "quiver dance",
     "swords dance",
 }
 STATUS_MOVES = {
@@ -40,10 +41,32 @@ PRIORITY_MOVES = {"extremespeed", "quick attack"}
 LOCK_MOVES = {"outrage", "rollout"}
 RECOVERY_MOVES = {"milk drink", "recover", "rest", "synthesis"}
 PHAZING_MOVES = {"roar", "whirlwind"}
+HAZARD_MOVES = {"spikes"}
+STAY_IN_PLAN_SHAPES = {
+    "attack_now",
+    "commit_lock_only_if_safe",
+    "pressure_recover_then_lock",
+    "recover_until_safe",
+    "scout_probe_then_commit",
+    "setup_once_then_attack",
+    "sleep_then_setup_then_attack",
+    "speed_control_then_attack",
+    "status_once_then_attack",
+}
+PRESERVATION_PLAN_SHAPES = {"switch_preserve_then_rescore"}
+ROUTE_TRADE_PLAN_SHAPES = {"sacrifice_trade_for_clean_switch"}
 PROBE_WORDS = {"probe", "scout", "reveal", "reveals", "information"}
 GREED_WORDS = {"greedy", "setup", "set up", "boost", "snowball"}
 PUNISH_WORDS = {"punish", "kills", "ko", "ohko", "threat", "pressure"}
 RISK_WORDS = {"risk", "risky", "dies", "die", "bad", "punish", "weak"}
+PUBLIC_TYPE_FAIL_WORDS = {
+    "bad into a public dark",
+    "does not affect",
+    "fail into dark",
+    "failed psychic",
+    "no effect",
+    "public fail into dark",
+}
 
 
 def enrich_fixtures(fixtures: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -101,6 +124,103 @@ def fixture_hp_features(fixture: dict[str, Any], features: dict[str, float]) -> 
         add(features, "player_hp_percent", player_hp / 100)
     if boss_hp is not None and player_hp is not None:
         add(features, "boss_hp_minus_player_hp", (boss_hp - player_hp) / 100)
+
+
+def public_status_features(
+    fixture: dict[str, Any],
+    action: dict[str, Any],
+    features: dict[str, float],
+) -> None:
+    status = (
+        str(
+            fixture.get("state", {})
+            .get("player", {})
+            .get("active", {})
+            .get("status", "")
+        )
+        .strip()
+        .lower()
+    )
+    tags = {tag for tag in fixture.get("tags", []) if isinstance(tag, str)}
+    if {"sleep", "setup"} <= tags and action_name(action) in SLEEP_MOVES and status in {
+        "",
+        "none",
+    }:
+        add(features, "sleep_enables_setup_line")
+    if status not in {"sleep", "asleep", "slp"}:
+        return
+
+    add(features, "player_active_status_sleep")
+    if {"sleep", "setup"} <= tags and action_name(action) in SETUP_MOVES:
+        add(features, "setup_into_sleep_window")
+
+
+def boss_status_features(
+    fixture: dict[str, Any],
+    action: dict[str, Any],
+    features: dict[str, float],
+) -> None:
+    active = fixture.get("state", {}).get("boss", {}).get("active", {})
+    if not isinstance(active, dict):
+        return
+
+    status = str(active.get("status", "")).strip().lower()
+    has_status = status not in {"", "none"}
+    hp = parse_hp_percent(active.get("hp"))
+    name = action_name(action)
+
+    if has_status:
+        add(features, f"boss_active_status_{status}")
+    if name == "rest":
+        if hp == 100:
+            add(features, "rest_at_full_hp")
+        elif hp is not None and hp >= 85 and not has_status:
+            add(features, "rest_high_hp_no_status")
+        elif hp is not None and hp < 100 and has_status:
+            add(features, "rest_status_cure_possible")
+    if name == "sleep talk" and status != "sleep" and status != "slp":
+        add(features, "sleep_talk_while_awake")
+
+
+def field_hazards(fixture: dict[str, Any]) -> dict[str, Any]:
+    field = fixture.get("state", {}).get("field", {})
+    if not isinstance(field, dict):
+        return {}
+    hazards = field.get("hazards", {})
+    return hazards if isinstance(hazards, dict) else {}
+
+
+def spikes_layers(fixture: dict[str, Any], side: str) -> int | None:
+    hazards = field_hazards(fixture)
+    layers_key = f"{side}_spikes_layers"
+    if layers_key in hazards:
+        try:
+            return max(0, min(3, int(hazards[layers_key])))
+        except (TypeError, ValueError):
+            return None
+    legacy_key = f"{side}_spikes"
+    if isinstance(hazards.get(legacy_key), bool):
+        return 1 if hazards[legacy_key] else 0
+    return None
+
+
+def hazard_features(
+    fixture: dict[str, Any],
+    action: dict[str, Any],
+    features: dict[str, float],
+) -> None:
+    if action_name(action) != "spikes":
+        return
+
+    player_layers = spikes_layers(fixture, "player_side")
+    if player_layers is None:
+        return
+
+    add(features, f"spikes_player_layers_{player_layers}")
+    if player_layers == 2:
+        add(features, "spikes_third_layer_available")
+    elif player_layers >= 3:
+        add(features, "spikes_already_maxed")
 
 
 def damage_features(action: dict[str, Any], features: dict[str, float]) -> None:
@@ -170,6 +290,53 @@ def public_threat_features(fixture: dict[str, Any], features: dict[str, float]) 
     return sources
 
 
+def strongest_active_public_threat(fixture: dict[str, Any]) -> dict[str, Any] | None:
+    threats = fixture.get("incoming_threats", [])
+    if not isinstance(threats, list):
+        return None
+    severity_rank = {
+        "support": 0,
+        "chip": 1,
+        "meaningful": 2,
+        "major": 3,
+        "lethal": 4,
+    }
+    active_threats = [
+        threat
+        for threat in threats
+        if isinstance(threat, dict) and threat.get("immediacy") == "active"
+    ]
+    if not active_threats:
+        return None
+    return max(
+        active_threats,
+        key=lambda threat: (
+            severity_rank.get(str(threat.get("severity", "")), -1),
+            int(threat.get("likelihood", 0))
+            if isinstance(threat.get("likelihood"), int)
+            else 0,
+        ),
+    )
+
+
+def fixture_public_text(fixture: dict[str, Any]) -> str:
+    state = fixture.get("state", {})
+    public_notes = state.get("public_notes", []) if isinstance(state, dict) else []
+    if not isinstance(public_notes, list):
+        public_notes = []
+    parts = [
+        str(fixture.get("training_focus", "")),
+        *(str(tag) for tag in fixture.get("tags", []) if isinstance(tag, str)),
+        *(str(note) for note in public_notes),
+    ]
+    return " ".join(parts).lower()
+
+
+def has_fast_public_threat_context(fixture: dict[str, Any]) -> bool:
+    text = fixture_public_text(fixture)
+    return any(token in text for token in ("fast ", "faster", "outspeed", "outspeeds"))
+
+
 def action_class_features(action: dict[str, Any], features: dict[str, float]) -> None:
     kind = str(action.get("kind", "unknown"))
     name = action_name(action)
@@ -186,6 +353,7 @@ def action_class_features(action: dict[str, Any], features: dict[str, float]) ->
         ("lock", LOCK_MOVES),
         ("recovery", RECOVERY_MOVES),
         ("phazing", PHAZING_MOVES),
+        ("hazard", HAZARD_MOVES),
     ):
         if name in names:
             add(features, f"move_class_{tag}")
@@ -202,6 +370,12 @@ def action_class_features(action: dict[str, Any], features: dict[str, float]) ->
         add(features, "text_preserve_value")
     if "iconic" in text or "leader-flavored" in text or "flavored" in text:
         add(features, "text_personality_style")
+    if (
+        name == "psychic"
+        and "dark" in text
+        and any(word in text for word in PUBLIC_TYPE_FAIL_WORDS)
+    ):
+        add(features, "public_type_immunity_risk")
 
 
 def fixture_tag_features(fixture: dict[str, Any], features: dict[str, float]) -> None:
@@ -218,6 +392,9 @@ def extract_action_features(
     fixture_tag_features(fixture, features)
     fixture_hp_features(fixture, features)
     action_class_features(action, features)
+    public_status_features(fixture, action, features)
+    boss_status_features(fixture, action, features)
+    hazard_features(fixture, action, features)
     damage_features(action, features)
     threat_sources = public_threat_features(fixture, features)
 
@@ -245,12 +422,50 @@ def extract_plan_features(
     plan: dict[str, Any],
 ) -> dict[str, Any]:
     features: dict[str, float] = {}
+    shape = str(plan.get("shape", "unknown"))
     add(features, "kind_plan")
-    add(features, f"plan_shape_{plan.get('shape', 'unknown')}")
+    add(features, f"plan_shape_{shape}")
     add(features, f"plan_phase_{plan.get('phase', 'unknown')}")
     horizon = plan.get("horizon", 1)
     if isinstance(horizon, (int, float)) and not isinstance(horizon, bool):
         add(features, "plan_horizon", min(5.0, max(1.0, float(horizon))) / 5.0)
+
+    threat = strongest_active_public_threat(fixture)
+    threat_severity = str((threat or {}).get("severity", ""))
+    if threat_severity in {"major", "lethal"}:
+        fast_public_threat = has_fast_public_threat_context(fixture)
+        add(features, "plan_public_major_or_lethal_active_threat")
+        add(features, f"plan_public_{threat_severity}_active_threat")
+        if fast_public_threat:
+            add(features, "plan_public_fast_major_or_lethal_active_threat")
+            add(features, f"plan_public_fast_{threat_severity}_active_threat")
+        if shape in STAY_IN_PLAN_SHAPES:
+            add(features, "plan_stays_in_under_public_major_or_lethal_threat")
+            add(features, f"plan_stays_in_under_public_{threat_severity}_threat")
+            if fast_public_threat:
+                add(features, "plan_stays_in_under_fast_public_major_or_lethal_threat")
+                add(features, f"plan_stays_in_under_fast_public_{threat_severity}_threat")
+        if shape == "attack_now":
+            add(features, "plan_attack_now_under_public_major_or_lethal_threat")
+            add(features, f"plan_attack_now_under_public_{threat_severity}_threat")
+            if fast_public_threat:
+                add(features, "plan_attack_now_under_fast_public_major_or_lethal_threat")
+                add(features, f"plan_attack_now_under_fast_public_{threat_severity}_threat")
+        if shape in {"setup_once_then_attack", "sleep_then_setup_then_attack"}:
+            add(features, "plan_setup_under_public_major_or_lethal_threat")
+            add(features, f"plan_setup_under_public_{threat_severity}_threat")
+            if fast_public_threat:
+                add(features, "plan_setup_under_fast_public_major_or_lethal_threat")
+                add(features, f"plan_setup_under_fast_public_{threat_severity}_threat")
+        if shape in PRESERVATION_PLAN_SHAPES:
+            add(features, "plan_switch_preserve_under_public_major_or_lethal_threat")
+            add(features, f"plan_switch_preserve_under_public_{threat_severity}_threat")
+            if fast_public_threat:
+                add(features, "plan_switch_preserve_under_fast_public_major_or_lethal_threat")
+                add(features, f"plan_switch_preserve_under_fast_public_{threat_severity}_threat")
+        if shape in ROUTE_TRADE_PLAN_SHAPES:
+            add(features, "plan_route_trade_under_public_major_or_lethal_threat")
+            add(features, f"plan_route_trade_under_public_{threat_severity}_threat")
 
     for condition in plan.get("stop_conditions", []):
         if isinstance(condition, str) and condition:

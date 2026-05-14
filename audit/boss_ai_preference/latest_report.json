@@ -68,7 +68,7 @@
       "fixture_id": "pryce_slowking_vs_ampharos_ground_pivot",
       "label_count": 0,
       "leader": "Pryce",
-      "preference_count": 1,
+      "preference_count": 4,
       "tags": [
         "switching",
         "public_type",
@@ -120,10 +120,89 @@
         "late_game"
       ],
       "training_focus": "Decide when a fast ace should Recover versus press coverage into a Grass threat."
+    },
+    {
+      "baseline_action_id": "move_psychic",
+      "best_action_ids": [],
+      "disagrees_with_baseline": true,
+      "fixture_id": "sabrina_alakazam_choice_lock_vs_houndoom",
+      "label_count": 0,
+      "leader": "Sabrina",
+      "preference_count": 3,
+      "tags": [
+        "choice_lock",
+        "coverage",
+        "switching"
+      ],
+      "training_focus": "Teach a late-game ace not to autopick Psychic into a public Dark answer."
+    },
+    {
+      "baseline_action_id": "move_amnesia",
+      "best_action_ids": [],
+      "disagrees_with_baseline": true,
+      "fixture_id": "will_slowbro_vs_houndoom_amnesia_or_surf",
+      "label_count": 0,
+      "leader": "Will",
+      "preference_count": 3,
+      "tags": [
+        "setup",
+        "dark_threat",
+        "ace_preservation"
+      ],
+      "training_focus": "Setup against a fast Dark/Crunch threat is a tempo trap even though Amnesia boosts the correct defensive stat."
+    },
+    {
+      "baseline_action_id": "move_sludge_bomb",
+      "best_action_ids": [],
+      "disagrees_with_baseline": true,
+      "fixture_id": "janine_qwilfish_spikes_already_maxed",
+      "label_count": 0,
+      "leader": "Janine",
+      "preference_count": 2,
+      "tags": [
+        "kanto_leader",
+        "hazards",
+        "romhack_delta",
+        "spikes_layers"
+      ],
+      "training_focus": "When three Spikes layers already exist, Janine's Qwilfish must stop clicking Spikes and use a live move."
+    },
+    {
+      "baseline_action_id": "move_earthquake",
+      "best_action_ids": [],
+      "disagrees_with_baseline": true,
+      "fixture_id": "external_gsc_rhydon_vs_sleeping_snorlax_curse_window",
+      "label_count": 0,
+      "leader": "External GSC",
+      "preference_count": 3,
+      "tags": [
+        "external_gsc",
+        "sleep",
+        "setup",
+        "endgame",
+        "replay_912130"
+      ],
+      "training_focus": "Turn a preserved but sleeping Snorlax into a concrete setup-window test: Curse is strong only because wake timing, hazards, and Rhydon's KO route have been tracked."
+    },
+    {
+      "baseline_action_id": "move_rest",
+      "best_action_ids": [],
+      "disagrees_with_baseline": true,
+      "fixture_id": "mechanics_snorlax_full_hp_rest_status_fail",
+      "label_count": 0,
+      "leader": "Mechanics Drill",
+      "preference_count": 3,
+      "tags": [
+        "mechanics",
+        "rest_cycle",
+        "status_cure",
+        "local_engine"
+      ],
+      "training_focus": "Full-HP Rest is not a status cure in the local engine; the move fails before clearing status."
     }
   ],
-  "feedback_fixture_count": 18,
-  "fixture_count": 53,
+  "feedback_fixture_count": 27,
+  "fixture_count": 57,
   "fixtures": [
     {
       "baseline_action_id": "move_gust",
@@ -282,7 +361,7 @@
       "fixture_id": "pryce_slowking_vs_ampharos_ground_pivot",
       "label_count": 0,
       "leader": "Pryce",
-      "preference_count": 1,
+      "preference_count": 4,
       "tags": [
         "switching",
         "public_type",
@@ -388,7 +467,7 @@
       "fixture_id": "erika_victreebel_vs_snorlax_sleep_or_boost",
       "label_count": 0,
       "leader": "Erika",
-      "preference_count": 0,
+      "preference_count": 3,
       "tags": [
         "sleep",
         "setup",
@@ -399,11 +478,11 @@
     {
       "baseline_action_id": "move_psychic",
       "best_action_ids": [],
-      "disagrees_with_baseline": false,
+      "disagrees_with_baseline": true,
       "fixture_id": "sabrina_alakazam_choice_lock_vs_houndoom",
       "label_count": 0,
       "leader": "Sabrina",
-      "preference_count": 0,
+      "preference_count": 3,
       "tags": [
         "choice_lock",
         "coverage",
@@ -478,7 +557,7 @@
       "fixture_id": "bugsy_ariados_vs_pidgey_toxic_or_attack",
       "label_count": 0,
       "leader": "Bugsy",
-      "preference_count": 0,
+      "preference_count": 4,
       "tags": [
         "status",
         "tempo",
@@ -624,11 +703,11 @@
     {
       "baseline_action_id": "move_amnesia",
       "best_action_ids": [],
-      "disagrees_with_baseline": false,
+      "disagrees_with_baseline": true,
       "fixture_id": "will_slowbro_vs_houndoom_amnesia_or_surf",
       "label_count": 0,
       "leader": "Will",
-      "preference_count": 0,
+      "preference_count": 3,
       "tags": [
         "setup",
         "dark_threat",
@@ -665,6 +744,38 @@
         "status"
       ],
       "training_focus": "Koga's current Ariados lead should choose hazards, poison pressure, or a Fire-resistant pivot under revealed Fire pressure."
+    },
+    {
+      "baseline_action_id": "move_spikes",
+      "best_action_ids": [],
+      "disagrees_with_baseline": false,
+      "fixture_id": "janine_qwilfish_finish_third_spikes_layer",
+      "label_count": 0,
+      "leader": "Janine",
+      "preference_count": 4,
+      "tags": [
+        "kanto_leader",
+        "hazards",
+        "romhack_delta",
+        "spikes_layers"
+      ],
+      "training_focus": "Janine's Qwilfish should finish the third Spikes layer when the player is grounded, no spin has been revealed, and no immediate KO threat is public."
+    },
+    {
+      "baseline_action_id": "move_sludge_bomb",
+      "best_action_ids": [],
+      "disagrees_with_baseline": true,
+      "fixture_id": "janine_qwilfish_spikes_already_maxed",
+      "label_count": 0,
+      "leader": "Janine",
+      "preference_count": 2,
+      "tags": [
+        "kanto_leader",
+        "hazards",
+        "romhack_delta",
+        "spikes_layers"
+      ],
+      "training_focus": "When three Spikes layers already exist, Janine's Qwilfish must stop clicking Spikes and use a live move."
     },
     {
       "baseline_action_id": "move_spider_web",
@@ -841,7 +952,7 @@
       "fixture_id": "red_snorlax_vs_alakazam_curse_or_body_slam",
       "label_count": 0,
       "leader": "Red",
-      "preference_count": 0,
+      "preference_count": 3,
       "tags": [
         "post_game",
         "setup",
@@ -929,19 +1040,52 @@
         "current_lance_roster"
       ],
       "training_focus": "Yanma is now on Lance's Dragon roster; compare legal sleep pressure against greedy Quiver Dance into Ice risk."
+    },
+    {
+      "baseline_action_id": "move_earthquake",
+      "best_action_ids": [],
+      "disagrees_with_baseline": true,
+      "fixture_id": "external_gsc_rhydon_vs_sleeping_snorlax_curse_window",
+      "label_count": 0,
+      "leader": "External GSC",
+      "preference_count": 3,
+      "tags": [
+        "external_gsc",
+        "sleep",
+        "setup",
+        "endgame",
+        "replay_912130"
+      ],
+      "training_focus": "Turn a preserved but sleeping Snorlax into a concrete setup-window test: Curse is strong only because wake timing, hazards, and Rhydon's KO route have been tracked."
+    },
+    {
+      "baseline_action_id": "move_rest",
+      "best_action_ids": [],
+      "disagrees_with_baseline": true,
+      "fixture_id": "mechanics_snorlax_full_hp_rest_status_fail",
+      "label_count": 0,
+      "leader": "Mechanics Drill",
+      "preference_count": 3,
+      "tags": [
+        "mechanics",
+        "rest_cycle",
+        "status_cure",
+        "local_engine"
+      ],
+      "training_focus": "Full-HP Rest is not a status cure in the local engine; the move fails before clearing status."
     }
   ],
   "label_count": 0,
   "label_counts": {},
   "labeled_fixture_count": 0,
-  "preference_count": 20,
+  "preference_count": 51,
   "preference_counts": {
-    "a_better": 9,
+    "a_better": 39,
     "b_better": 4,
     "both_good": 2,
-    "needs_context": 1,
+    "needs_context": 2,
     "other_better": 4
   },
-  "preferenced_fixture_count": 18,
+  "preferenced_fixture_count": 27,
   "tool_version": "boss-ai-preference-v0"
 }

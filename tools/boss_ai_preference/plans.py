@@ -11,6 +11,7 @@ from .features import (
     RECOVERY_MOVES,
     SACRIFICE_MOVES,
     SETUP_MOVES,
+    SLEEP_MOVES,
     SPEED_CONTROL_MOVES,
     STATUS_MOVES,
 )
@@ -78,6 +79,10 @@ def is_setup_action(action: dict[str, Any]) -> bool:
 
 def is_status_action(action: dict[str, Any]) -> bool:
     return action_name_key(action) in STATUS_MOVES
+
+
+def is_sleep_action(action: dict[str, Any]) -> bool:
+    return action_name_key(action) in SLEEP_MOVES
 
 
 def is_speed_control_action(action: dict[str, Any]) -> bool:
@@ -262,6 +267,53 @@ def setup_then_attack_plan(
     )
 
 
+def sleep_setup_then_attack_plan(
+    fixture: dict[str, Any],
+    sleep: dict[str, Any],
+    setup: dict[str, Any],
+    attack: dict[str, Any],
+    *,
+    rollout_mode: str,
+) -> dict[str, Any]:
+    return make_plan(
+        fixture,
+        shape="sleep_then_setup_then_attack",
+        label=f"{action_name(sleep)}, then {action_name(setup)}, then {action_name(attack)}",
+        goal="Use sleep to create the setup turn, then cash the boosted attack.",
+        steps=[
+            plan_step(1, sleep),
+            plan_step(2, setup),
+            plan_step(3, attack, repeat_until=["target_in_ko_range", "target_wakes"]),
+        ],
+        rationale=(
+            "Sleep-first setup is a bounded route: setup is only part of the "
+            "line while sleep still makes the board safe enough to spend the turn."
+        ),
+        priority=11,
+        stop_conditions=[
+            "status_misses",
+            "target_wakes",
+            "target_switches",
+            "sleep_clause_occupied",
+            "setup_no_longer_changes_ko_math",
+            "boss_hp_below_35",
+        ],
+        branch_rules=[
+            {"if": "status_misses", "then": "re_score"},
+            {"if": "target_wakes", "then": "re_score_or_reapply_sleep_if_clause_free"},
+            {"if": "target_switches", "then": "re_score"},
+            {"if": "sleep_clause_occupied", "then": "skip_sleep_move"},
+        ],
+        initiation_conditions=[
+            "sleep_clause_free",
+            "target_not_statused",
+            "setup_changes_ko_math",
+        ],
+        horizon=5,
+        rollout_mode=rollout_mode,
+    )
+
+
 def status_then_attack_plan(
     fixture: dict[str, Any],
     status: dict[str, Any],
@@ -398,6 +450,58 @@ def lock_or_recovery_plan(
     )
 
 
+def pressure_recover_lock_plan(
+    fixture: dict[str, Any],
+    attack: dict[str, Any],
+    recovery: dict[str, Any],
+    lock: dict[str, Any],
+    *,
+    rollout_mode: str,
+) -> dict[str, Any]:
+    return make_plan(
+        fixture,
+        shape="pressure_recover_then_lock",
+        label=(
+            f"{action_name(attack)} pressure, heal when needed, "
+            f"then consider {action_name(lock)}"
+        ),
+        goal=(
+            "Use safe pressure first, preserve the ace near the danger threshold, "
+            "and only commit to the lock once the board is safer."
+        ),
+        steps=[
+            plan_step(1, attack, repeat_until=["target_statused", "target_in_ko_range"]),
+            plan_step(2, attack, repeat_until=["boss_hp_near_recovery_threshold"]),
+            plan_step(3, recovery, condition="boss_hp_near_recovery_threshold"),
+            plan_step(4, lock, condition="target_statused_or_cannot_punish"),
+        ],
+        rationale=(
+            "The demonstrated line does not open with recovery or lock-in. It "
+            "uses pressure to fish for paralysis or range, heals only when the "
+            "damage race demands it, then revisits the risky lock."
+        ),
+        priority=13,
+        stop_conditions=[
+            "target_switches",
+            "boss_hp_below_35",
+            "target_can_punish_lock",
+            "lock_no_longer_changes_ko_math",
+        ],
+        branch_rules=[
+            {"if": "target_statused", "then": "consider_lock_or_continue_pressure"},
+            {"if": "boss_hp_near_recovery_threshold", "then": "recover_once"},
+            {"if": "target_reveals_stronger_punish", "then": "abandon_lock_and_re_score"},
+        ],
+        initiation_conditions=[
+            "lock_is_resisted_or_punishable_now",
+            "safe_attack_has_status_or_range_value",
+            "recovery_preserves_ace_after_chip",
+        ],
+        horizon=5,
+        rollout_mode=rollout_mode,
+    )
+
+
 def dedupe_plans(plans: list[dict[str, Any]]) -> list[dict[str, Any]]:
     seen: set[tuple[str, tuple[str, ...]]] = set()
     output: list[dict[str, Any]] = []
@@ -429,10 +533,30 @@ def generate_plan_cards(
         plans.append(direct_attack_plan(enriched, damage, rollout_mode=mode))
 
     setup = first_matching(actions, is_setup_action)
+    status = first_matching(actions, is_status_action)
+    fixture_tags = {str(tag) for tag in enriched.get("tags", [])}
+    if (
+        setup is not None
+        and status is not None
+        and damage is not None
+        and action_id(setup) != action_id(damage)
+        and action_id(status) != action_id(damage)
+        and is_sleep_action(status)
+        and {"sleep", "setup"} <= fixture_tags
+    ):
+        plans.append(
+            sleep_setup_then_attack_plan(
+                enriched,
+                status,
+                setup,
+                damage,
+                rollout_mode=mode,
+            )
+        )
+
     if setup is not None and damage is not None and action_id(setup) != action_id(damage):
         plans.append(setup_then_attack_plan(enriched, setup, damage, rollout_mode=mode))
 
-    status = first_matching(actions, is_status_action)
     if status is not None and damage is not None and action_id(status) != action_id(damage):
         plans.append(status_then_attack_plan(enriched, status, damage, rollout_mode=mode))
 
@@ -456,7 +580,6 @@ def generate_plan_cards(
             )
         ),
     )
-    fixture_tags = {str(tag) for tag in enriched.get("tags", [])}
     if utility is not None and damage is not None and (
         "hidden_coverage" in fixture_tags or "prediction" in fixture_tags or "ace_preservation" in fixture_tags
     ):
@@ -465,6 +588,24 @@ def generate_plan_cards(
     lock_or_recovery = first_matching(actions, lambda action: is_lock_action(action) or is_recovery_action(action))
     if lock_or_recovery is not None and damage is not None and action_id(lock_or_recovery) != action_id(damage):
         plans.append(lock_or_recovery_plan(enriched, lock_or_recovery, damage, rollout_mode=mode))
+
+    lock_action = first_matching(actions, is_lock_action)
+    recovery_action = first_matching(actions, is_recovery_action)
+    if (
+        damage is not None
+        and lock_action is not None
+        and recovery_action is not None
+        and {"ace_preservation", "setup_lock"} <= fixture_tags
+    ):
+        plans.append(
+            pressure_recover_lock_plan(
+                enriched,
+                damage,
+                recovery_action,
+                lock_action,
+                rollout_mode=mode,
+            )
+        )
 
     output = dedupe_plans(plans)
     for index, plan in enumerate(output, start=1):
