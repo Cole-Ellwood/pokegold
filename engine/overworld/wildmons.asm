@@ -365,13 +365,18 @@ ChooseWildEncounter:
 RaiseWildLevelForProgression:
 ; Spread wild levels around a progression-driven center, biased low.
 ;
+; Before the Mystery Egg is returned to Elm, keep the starter-errand window
+; gentle: wild levels above 3 are capped at 3. This covers the first Route
+; 29/30 trip and the Cherrygrove rival fight, and ends immediately before
+; Elm's aide gives Poke Balls.
+;
 ; The center is the same value the original "floor" produced:
 ;   - 65 if EVENT_BEAT_BLUE is set (post-League).
 ;   - max(1, GetProgressionLevelCap - 6) otherwise.
 ;   - Always at least 65 inside Mt. Silver.
 ;
 ; Variance:
-;   - center < 16 (pre-Rival 1 through pre-Whitney): ±3.
+;   - center < 16 (pre-Falkner through pre-Whitney): ±3.
 ;   - center >= 16 (pre-Morty onward, plus everything post-Lance): ±5.
 ;
 ; The offset is rolled from a probability table biased toward lower offsets
@@ -392,6 +397,22 @@ RaiseWildLevelForProgression:
 	push de
 	push hl
 
+	; --- Cap the opening errand before applying progression spread. ---
+	push bc
+	ld de, EVENT_GAVE_MYSTERY_EGG_TO_ELM
+	ld b, CHECK_FLAG
+	call EventFlagAction
+	ld a, c
+	pop bc
+	and a
+	jr nz, .egg_returned
+	ld a, b
+	cp 4
+	jr c, .done
+	ld b, 3
+	jr .done
+
+.egg_returned
 	; --- Compute center in a ---
 	push bc
 	ld de, EVENT_BEAT_BLUE

@@ -1125,6 +1125,11 @@ TypePassive_TryMindShield_Far:
 	xor a
 	ld [wCurDamage], a
 	ld [wCurDamage + 1], a
+	ld [wCriticalHit], a
+	ld a, EFFECTIVE
+	ld [wTypeModifier], a
+	ld hl, TypePassivePsychicGuardText
+	call StdBattleTextbox
 	ret
 
 TypePassive_MaybePoisonRetaliation_Far:
@@ -1190,6 +1195,8 @@ TypePassive_MaybePoisonRetaliation_Far:
 	set PSN, [hl]
 	call UpdateUserInParty
 	call RefreshBattleHuds
+	ld hl, TypePassivePoisonRetaliationText
+	call StdBattleTextbox
 	ret
 
 TypePassive_AdjustRecoilBCForSteel_Far:
@@ -1271,6 +1278,9 @@ HandleTypePassiveRegrowth_Far:
 	call .ShiftBCByA_MinOne
 	farcall SwitchTurnCore
 	farcall RestoreHP
+	farcall SwitchTurnCore
+	ld hl, TypePassiveGrassRegrowthText
+	call StdBattleTextbox
 	ret
 
 .ShiftBCByA_MinOne:

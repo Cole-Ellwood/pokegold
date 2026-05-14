@@ -419,6 +419,8 @@ BossAI_ApplyMoveModel:
 	jr z, .check_light_screen
 	cp EFFECT_REFLECT
 	jr z, .check_reflect
+	cp EFFECT_SAFEGUARD
+	jr z, .check_safeguard
 	cp EFFECT_SUBSTITUTE
 	jr z, .check_substitute
 	cp EFFECT_PROTECT
@@ -458,6 +460,13 @@ BossAI_ApplyMoveModel:
 .check_reflect
 	ld a, [wEnemyScreens]
 	bit SCREENS_REFLECT, a
+	jp nz, .status_fail
+	and a
+	ret
+
+.check_safeguard
+	ld a, [wEnemyScreens]
+	bit SCREENS_SAFEGUARD, a
 	jp nz, .status_fail
 	and a
 	ret
@@ -3472,8 +3481,8 @@ BossAI_SetupBoostHasFurtherValue:
 	cp d
 	pop de
 	jr nc, .no
-; If the enemy already outspeeds the active player mon, an Agility / Speed
-; boost flips no race. Stop encouraging.
+; Approved exact-speed exception: if the enemy already outspeeds the active
+; player mon, an Agility / Speed boost flips no race. Stop encouraging.
 ; AICompareSpeed lives in the AI Scoring section now (separate bank); cross
 ; via farcall. Safe because the helper takes no hl input.
 	farcall AICompareSpeed

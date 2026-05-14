@@ -240,6 +240,10 @@ WaitSFX::
 ; infinite loop until sfx is done playing
 
 	push hl
+	; Text can leave a pending BG-map refresh behind. Do not let it run
+	; through, or resume after, long SFX waits.
+	xor a
+	ldh [hBGMapMode], a
 
 .wait
 	ld hl, wChannel5Flags1
@@ -255,6 +259,8 @@ WaitSFX::
 	bit SOUND_CHANNEL_ON, [hl]
 	jr nz, .wait
 
+	xor a
+	ldh [hBGMapMode], a
 	pop hl
 	ret
 

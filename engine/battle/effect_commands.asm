@@ -1644,7 +1644,11 @@ BattleCommand_CheckHit:
 	jr nz, .Miss
 
 	farcall TypePassive_TryDarkStatusShield_Far
-	jr c, .Miss
+	jr nc, .no_dark_status_shield
+	ld hl, TypePassiveDarkShieldText
+	call StdBattleTextbox
+	jp EndMoveEffect
+.no_dark_status_shield
 
 	call .ThunderRain
 	ret z

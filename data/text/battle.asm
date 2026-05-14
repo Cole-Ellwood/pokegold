@@ -442,6 +442,29 @@ BattleText_RockyHelmetHurt:
 	line "by ROCKY HELMET!"
 	prompt
 
+TypePassiveGrassRegrowthText:
+	text "<USER>"
+	line "restored some HP!"
+	prompt
+
+TypePassivePoisonRetaliationText:
+	text "<TARGET>'s"
+	line "venom poisoned"
+	cont "<USER>!"
+	prompt
+
+TypePassiveDarkShieldText:
+	text "<TARGET>'s"
+	line "dark shroud"
+	cont "blocked the move!"
+	prompt
+
+TypePassivePsychicGuardText:
+	text "<TARGET>'s"
+	line "psychic guard"
+	cont "nullified damage!"
+	prompt
+
 BattleText_UserWasReleasedFromStringBuffer1:
 	text "<USER>"
 	line "was released from"
