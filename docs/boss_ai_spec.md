@@ -720,6 +720,11 @@ hidden party information:
   only for species already revealed in the current battle.
 - `BossAI_PublicEnemyFaster`: public species base-speed estimate, not exact
   runtime speed stats.
+- Approved exact-speed exception: `BossAI_SetupBoostHasFurtherValue` may call
+  `AICompareSpeed` to stop encouraging further Speed setup after exact active
+  battle speed already says the boss currently outspeeds the active player mon.
+  Do not use this exception for damage, hidden items, hidden move slots, hidden
+  reserves, or player input.
 - `BossAI_CheckPlayerMoveTypeMatchupVsEnemyNoItem` and
   `BossAI_CheckEnemyMoveTypeMatchupVsPlayerNoItem`: type matchup without held
   item peeking.
@@ -728,7 +733,9 @@ hidden party information:
 
 Treat direct boss-model calls to `AIDamageCalc`, `AICompareSpeed`, or
 `CheckPlayerMoveTypeMatchups` as suspect unless the caller is clearly ordinary
-AI or battle resolution rather than boss decision knowledge.
+AI or battle resolution rather than boss decision knowledge. The only approved
+boss decision exception is the `AICompareSpeed` call in
+`BossAI_SetupBoostHasFurtherValue`.
 
 ## Runtime State Budget
 
@@ -770,7 +777,8 @@ as the source of truth; refresh it after linker outputs change.
 Exact battle helpers such as `AIDamageCalc` and `AICompareSpeed` remain in the
 legacy AI code and battle engine. Those helpers use exact active Pokemon stats,
 including private player stat values. That is stronger than a human-like
-estimate when used for boss decision knowledge.
+estimate when used for boss decision knowledge, except for the documented
+`BossAI_SetupBoostHasFurtherValue` speed-setup headroom check.
 
 Future fix direction:
 
@@ -778,7 +786,8 @@ Future fix direction:
   typing, stat stages, revealed moves, and observed damage ranges.
 - Keep exact helpers for ordinary AI or internal battle resolution, but do not
   use them for boss decision knowledge unless the exact value has become public
-  through observed turn order or damage.
+  through observed turn order or damage, or the call is the documented
+  `BossAI_SetupBoostHasFurtherValue` speed exception.
 - Treat any new direct boss-model call to those exact helpers as a review
   finding unless it is deliberately documented and justified.
 

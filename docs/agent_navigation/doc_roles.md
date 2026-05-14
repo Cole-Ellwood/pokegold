@@ -19,6 +19,7 @@ future sessions from adding the same routing fact in five places.
 | `docs/balance_intent.md` | Species-level design intent and locked/provisional roles. | Generated source audit facts. |
 | `docs/buff_backlog.md` | Durable weak-Pokemon review queue. | Final source implementation. |
 | `docs/qol_handoff.md` | QoL current/remaining state and low-risk implementation notes. | General map/event routing outside QoL. |
+| `docs/graphics_emulator_debugging.md` | Visual-corruption triage, emulator-specific repro notes, and PyBoy/VBA save-state handling. | Exact source truth, generated addresses, or proof that a visual issue is fixed in every emulator. |
 | `docs/build.md` | Build environment and command patterns. | Current workstream urgency or release decision. |
 | `docs/validation_report.md` | Snapshot of validation status. | A guarantee that current dirty source still matches the snapshot. |
 | `decisions/` | Short records for judgment calls future sessions could reasonably make differently. | Source truth, generated facts, or broad session journals. |

@@ -45,7 +45,11 @@ Preserve these constraints while implementing tests:
 - No save-wide chaos or overprediction score.
 - No probability simulator.
 - No Battle Core bank `0f` hooks.
-- No exact private `AIDamageCalc` or `AICompareSpeed` boss decision knowledge.
+- No exact private `AIDamageCalc` boss decision knowledge. The approved
+  `AICompareSpeed` exception is
+  `BossAI_SetupBoostHasFurtherValue`: it may use exact active speed only to
+  stop encouraging further Speed setup once the boss already outspeeds the
+  current active player mon.
 - No persistent state in the temporary boss AI block.
 
 ## Scope
@@ -163,14 +167,15 @@ Assertions to implement:
   fail state.
 - Confusion status moves treat Safeguard, Substitute, and already-confused as
   public fail states.
-- `.UtilityMoveWouldFailPublicly` heavily discourages already-active Reflect or
-  Light Screen, Substitute while already behind a Substitute or too low on HP,
-  Protect while already behind a Substitute, Disable with no public last counter
-  move or an already-disabled player, Encore with no public last move or an
-  already-encored player, Mean Look / Spider Web into a publicly already-trapped
-  player, Dream Eater into visible player Substitute or a non-sleeping player,
-  Nightmare into visible player Substitute, a non-sleeping player, or an
-  already-nightmared player, and healing moves while already at full HP.
+- `.UtilityMoveWouldFailPublicly` heavily discourages already-active Reflect,
+  Light Screen, or Safeguard, Substitute while already behind a Substitute or
+  too low on HP, Protect while already behind a Substitute, Disable with no
+  public last counter move or an already-disabled player, Encore with no public
+  last move or an already-encored player, Mean Look / Spider Web into a publicly
+  already-trapped player, Dream Eater into visible player Substitute or a
+  non-sleeping player, Nightmare into visible player Substitute, a non-sleeping
+  player, or an already-nightmared player, and healing moves while already at
+  full HP.
 - Disable/Encore public fail gates must not inspect hidden player move slots or
   hidden PP. Those exact legality checks are Haki-only if they are ever used for
   boss decisions.

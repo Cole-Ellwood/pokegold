@@ -52,6 +52,8 @@ player can lose, and old knowledge is useful but incomplete.
    - Existing mechanics: `docs/mechanics_changes_from_base.md`
    - QoL follow-up work: `docs/qol_handoff.md`,
      `docs/qol_research_report.md`
+   - Graphics / emulator visual bugs:
+     `docs/graphics_emulator_debugging.md`
    - Data rebalance history: `docs/manifest.md`
    - Build/release status: `docs/build.md`, `docs/validation_report.md`
 

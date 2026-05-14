@@ -31,39 +31,6 @@ Status: active learning. Do not treat this section as mastery proof yet. It is
 the working notebook for learning the game well enough to answer Gym Leader Lab
 questions without sounding like a generic policy summary.
 
-### Research Autonomy Contract
-
-The user explicitly granted autonomy to spend long work blocks on fuzzy expert
-study, web research, and battle review even when the immediate output is not
-code. The primary curriculum is how strong players actually play Pokemon,
-especially Smogon GSC articles, analyses, forum discussions, tournament
-replays, and battle logs.
-
-GPT-5.5 Pro's saved guidance has been read and organized under
-`docs/pokemon_mastery/pro_notes/`. Treat those files as method guidance for
-study, review, and evidence discipline, not as a replacement for expert-source
-study.
-
-Weighting rule:
-
-- Expert play sources and long battle reviews are the main training signal.
-- Romhack source/docs/debugger evidence is the transfer and verification layer.
-- User-provided RLHF cards are calibration examples, not the curriculum; weight
-  them lightly unless they expose a concrete mechanic, answer flip, or repeated
-  decision error.
-
-Preferred work-block shape:
-
-1. Read and synthesize expert sources first.
-2. Review full games or long constructed positions for win-condition,
-   preservation, Spikes, status, Rest-cycle, Explosion, phazing, PP, and
-   hidden-information decisions.
-3. Convert only the best learned principles into policy notes, benchmark cards,
-   or tests.
-4. Avoid spending most of a block expanding local preference cards unless the
-   user explicitly asks for that.
-5. Never delete ROM artifacts or spend real money.
-
 ### Operational Mastery Target
 
 I am not "done" when I can name a good move in a vacuum. The target is to play
@@ -1245,7 +1212,6 @@ Initial hard snapshots:
 | `fixture_misty_starmie_vs_meganium_recover_tempo_001` | fixture_harvest | romhack | Misty Starmie into Meganium tests recovery timing: Psychic wins while Recover lacks a real window and chip enables Lapras cleanup; if Meganium cannot punish and the chip threshold is gone, the mutation flips to Recover. |
 | `fixture_clair_dragonair_vs_suicune_hidden_ice_001` | fixture_harvest | romhack | Clair Dragonair into Suicune tests hidden-info preservation: Kingdra wins while hidden Ice coverage is plausible; if that punish is no longer plausible, the mutation flips to Thunder. |
 | `fixture_bugsy_ariados_vs_pidgey_status_clock_001` | fixture_harvest | romhack | Bugsy Ariados into Pidgey tests status-clock sequencing: Toxic wins while the target is unstatused and Ariados survives; if the clock already exists, the mutation flips to Scyther. |
-| `fixture_morty_gengar_vs_kadabra_destiny_bond_001` | fixture_harvest | romhack | Morty Gengar into Kadabra tests sacrifice-trade arbitration: Shadow Ball wins while it directly removes the active threat; if that damage boundary disappears, the mutation flips to Destiny Bond. |
 
 Key lesson: `set Spikes`, `preserve answers`, `use sleep`, and `Explosion
 converts` can all be true. The policy has to decide which one dominates on the
@@ -1266,19 +1232,18 @@ Current fixture coverage audit:
   - 52 pairwise preferences;
   - 27 / 57 fixtures with pairwise feedback;
   - 69 trajectory preferences and 3 plan demonstrations;
-  - 43 machine-readable state-transition benchmarks: 5 seed, 15 holdout, and
-    23 fixture-harvest cards promoted from saved feedback, fixture evidence, or
+  - 42 machine-readable state-transition benchmarks: 5 seed, 15 holdout, and
+    22 fixture-harvest cards promoted from saved feedback, fixture evidence, or
     targeted state-transition gaps.
-  - 36 boundary mutation checks that force answer flips across sleep/setup,
+  - 35 boundary mutation checks that force answer flips across sleep/setup,
     maxed Spikes, public spin pressure, Explosion blocking, opening
     double-switch pressure, RestTalk branch removal, late-game hazard removal,
     phazing order, PP conservation, damage survival, defensive preservation
     availability, fast public-punish pivot availability, and speed-control
     versus direct-removal thresholds, recovery-window timing, and hidden-info
-    coverage plausibility, already-established status clocks, and sacrifice
-    trades when direct removal stops converting.
+    coverage plausibility, and already-established status clocks.
   - 15 romhack type-chart deltas enforced by the type-effectiveness evidence
-    report; current benchmark/oracle/policy text has 22 effectiveness claims
+    report; current benchmark/oracle/policy text has 21 effectiveness claims
     and 0 unsupported claims.
   - 19 source-backed expert-play principles in
     `audit/boss_ai_preference/expert_play_research.md`, including the current
@@ -2680,8 +2645,8 @@ resolved have already been promoted into fixtures, labels, or code changes.
 
 Latest local audit status:
 
-- `python -m tools.boss_ai_preference validate` passes and now validates 43
-  public state-transition cards and 43 hidden oracles with explicit `seed` /
+- `python -m tools.boss_ai_preference validate` passes and now validates 30
+  public state-transition cards and 30 hidden oracles with explicit `seed` /
   `holdout` / `fixture_harvest` splits.
 - `python -m tools.boss_ai_preference benchmark-policy` writes
   `audit/boss_ai_preference/state_transition_policy_answers.json` from the
@@ -2696,7 +2661,7 @@ Latest local audit status:
   `benchmark_contract_ready=True`, `policy_evaluated=True`,
   `policy_passes=True`, and
   `split_passes={'fixture_harvest': True, 'holdout': True, 'seed': True}`
-  across the 43 current snapshots. This is a baseline gate, not mastery proof.
+  across the 30 current snapshots. This is a baseline gate, not mastery proof.
 - `python -m tools.boss_ai_preference benchmark-harvest` writes
   `audit/boss_ai_preference/fixture_benchmark_harvest.md`. The current harvest
   finds 4 complete fixture-derived benchmark candidates:
@@ -2719,13 +2684,12 @@ Latest local audit status:
   mostly because they lack an acceptable alternative label.
 - `python -m tools.boss_ai_preference benchmark-label-queue` writes
   `audit/boss_ai_preference/benchmark_label_queue.md`. The current queue has
-  23 request candidates, returns 20 by default, and has 11 one-label
-  completions where an unclassified action can be reviewed as the missing
-  acceptable alternative. It prefers plausible probes such as preservation
-  switches or sensible coverage over already catastrophic moves, so the queue
-  is for evidence collection rather than label invention. The remaining
-  partials need either a contextual exception, a new benchmark variant, or a
-  resolved single-best / catastrophe label.
+  23 review requests and 11 one-label completions where an unclassified action
+  can be reviewed as the missing acceptable alternative. It prefers plausible
+  probes such as preservation switches or sensible coverage over already
+  catastrophic moves, so the queue is for evidence collection rather than label
+  invention. The remaining partials need either a contextual exception, a new
+  benchmark variant, or a resolved single-best / catastrophe label.
 - `python -m unittest tools.boss_ai_preference.tests.test_benchmark_positions`
   also checks answer-changing mutations: blocked Sleep Clause changes away from
   sleep, maxed Spikes changes away from Spikes, revealed Protect changes away
