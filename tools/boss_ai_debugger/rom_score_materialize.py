@@ -18,6 +18,7 @@ from .contribution_compare import compare_contribution_reports
 from .contribution_compare import python_contribution_report_from_scenarios
 from .rom_contribution_trace import apply_memory_patches
 from .rom_contribution_trace import clear_chosen_move
+from .rom_contribution_trace import drive_replay_to_choice
 from .rom_contribution_trace import memory_patches_to_json
 from .rom_contribution_trace import MemoryPatch
 from .rom_contribution_trace import RomContributionTraceSession
@@ -101,6 +102,17 @@ class ScenarioMaterialization:
     layers: int
 
 
+@dataclass(frozen=True)
+class ReplayControls:
+    base_state: Path
+    base_state_field: str
+    button: str
+    button_delay: int
+    watch_frames: int
+    button_presses: int
+    button_interval_frames: int
+
+
 class RomScoreReplaySession:
     def __init__(
         self,
@@ -163,6 +175,8 @@ class RomScoreReplaySession:
         button: str = "a",
         button_delay: int = 8,
         watch_frames: int = DEFAULT_WATCH_FRAMES,
+        button_presses: int = 1,
+        button_interval_frames: int = 0,
         metadata: dict[str, str] | None = None,
         memory_patches: list[MemoryPatch] | None = None,
     ) -> dict[str, Any]:
@@ -177,16 +191,15 @@ class RomScoreReplaySession:
         self.load_state(save_state)
         apply_memory_patches(self.pyboy, self.symbols, patches)
         clear_chosen_move(self.pyboy, self.symbols)
-        if button:
-            self.pyboy.button(button, delay=button_delay)
-
-        final_values = None
-        for _frame in range(watch_frames + 1):
-            values = capture.read_trace_values(self.pyboy, self.symbols)
-            if values["wBossAITraceChosenMove"][0] != 0:
-                final_values = values
-                break
-            self.pyboy.tick(1, False, False)
+        final_values, _presses_issued = drive_replay_to_choice(
+            self.pyboy,
+            self.symbols,
+            button=button,
+            button_delay=button_delay,
+            button_presses=button_presses,
+            button_interval_frames=button_interval_frames,
+            watch_frames=watch_frames,
+        )
         if final_values is None:
             raise PreferenceDataError(
                 f"no boss move choice observed within {watch_frames} frames"
@@ -266,6 +279,72 @@ def run_rom_score_materialization_from_path(
     )
 
 
+def replay_controls_from_manifest(
+    manifest_entry: dict[str, Any],
+    *,
+    button: str,
+    button_delay: int,
+    watch_frames: int,
+) -> ReplayControls:
+    base_state_field = (
+        "score_materialization_state"
+        if manifest_entry.get("score_materialization_state")
+        else "pre_choice_state"
+    )
+    base_state = resolve_manifest_path(str(manifest_entry[base_state_field]))
+    score_button = str(manifest_entry.get("score_materialization_button", button))
+    button_presses = int(manifest_entry.get("score_materialization_button_presses", 1))
+    button_interval_frames = int(
+        manifest_entry.get("score_materialization_button_interval_frames", 0)
+    )
+    manifest_watch_frames = int(
+        manifest_entry.get("score_materialization_watch_frames", watch_frames)
+    )
+    min_watch_frames = (
+        button_interval_frames * max(0, button_presses - 1) + 1
+        if button_presses
+        else 1
+    )
+    effective_watch_frames = max(watch_frames, manifest_watch_frames, min_watch_frames)
+    return ReplayControls(
+        base_state=base_state,
+        base_state_field=base_state_field,
+        button=score_button,
+        button_delay=button_delay,
+        watch_frames=effective_watch_frames,
+        button_presses=button_presses,
+        button_interval_frames=button_interval_frames,
+    )
+
+
+def validate_score_materialization_base(values: dict[str, list[int]]) -> None:
+    problems: list[str] = []
+    if values["wBossAITraceChosenMove"][0] != 0:
+        problems.append("chosen move is already set")
+    if any(values["wBossAITraceTopMoves"]):
+        problems.append("top-move trace is already populated")
+    for field in ("wBossAITracePreModelScores", "wBossAITracePostModelScores"):
+        dirty = [value for value in values[field] if value not in (0, 0xFF)]
+        if dirty:
+            problems.append(f"{field} already contains score bytes {dirty}")
+    if problems:
+        raise PreferenceDataError(
+            "score materialization base state is already inside or past Boss AI "
+            "scoring: "
+            + "; ".join(problems)
+        )
+
+
+def validate_base_state_file(
+    pyboy: Any,
+    symbols: dict[str, capture.Symbol],
+    base_state: Path,
+) -> None:
+    with base_state.open("rb") as fh:
+        pyboy.load_state(fh)
+    validate_score_materialization_base(capture.read_trace_values(pyboy, symbols))
+
+
 def run_rom_score_materialization(
     scenarios: list[dict[str, Any]],
     *,
@@ -304,9 +383,16 @@ def run_rom_score_materialization(
         )
 
     manifest_entry = load_manifest_entry(manifest_path, base_route)
-    base_state = resolve_manifest_path(manifest_entry["pre_choice_state"])
-    if not base_state.exists():
-        raise PreferenceDataError(f"missing base pre-choice state: {base_state}")
+    controls = replay_controls_from_manifest(
+        manifest_entry,
+        button=button,
+        button_delay=button_delay,
+        watch_frames=watch_frames,
+    )
+    if not controls.base_state.exists():
+        raise PreferenceDataError(
+            f"missing {controls.base_state_field}: {controls.base_state}"
+        )
 
     move_names = capture.parse_move_names(capture.MOVE_CONSTANTS)
     move_name_to_id = {normalize_name(name): move_id for move_id, name in move_names.items()}
@@ -320,6 +406,7 @@ def run_rom_score_materialization(
     )
     with ExitStack() as stack:
         session = stack.enter_context(session_class(rom=rom, symbols_path=symbols_path))
+        validate_base_state_file(session.pyboy, session.symbols, controls.base_state)
         fast_session = None
         if collect_contribution_traces and compare_fast_score:
             fast_session = stack.enter_context(
@@ -338,10 +425,12 @@ def run_rom_score_materialization(
                     move_name_to_id=move_name_to_id,
                 )
                 rom_report = session.run(
-                    save_state=base_state,
-                    button=button,
-                    button_delay=button_delay,
-                    watch_frames=watch_frames,
+                    save_state=controls.base_state,
+                    button=controls.button,
+                    button_delay=controls.button_delay,
+                    watch_frames=controls.watch_frames,
+                    button_presses=controls.button_presses,
+                    button_interval_frames=controls.button_interval_frames,
                     metadata={
                         "boss": base_route,
                         "notes": f"generated-score-materialization:{scenario_id}",
@@ -353,10 +442,12 @@ def run_rom_score_materialization(
                 fast_report = None
                 if fast_session is not None:
                     fast_report = fast_session.run(
-                        save_state=base_state,
-                        button=button,
-                        button_delay=button_delay,
-                        watch_frames=watch_frames,
+                        save_state=controls.base_state,
+                        button=controls.button,
+                        button_delay=controls.button_delay,
+                        watch_frames=controls.watch_frames,
+                        button_presses=controls.button_presses,
+                        button_interval_frames=controls.button_interval_frames,
                         metadata={
                             "boss": base_route,
                             "notes": f"fast-score-equivalence:{scenario_id}",
@@ -413,7 +504,11 @@ def run_rom_score_materialization(
         "source": source,
         "kind": "rom_score_materialization",
         "base_route": base_route,
-        "base_state": display_path(base_state),
+        "base_state": display_path(controls.base_state),
+        "base_state_field": controls.base_state_field,
+        "button_presses": controls.button_presses,
+        "button_interval_frames": controls.button_interval_frames,
+        "effective_watch_frames": controls.watch_frames,
         "scenario_count": len(scenarios),
         "checked_count": len(checked),
         "skipped_count": len(verdicts) - len(checked),
@@ -547,6 +642,14 @@ def merge_score_materialization_reports(
         "kind": "rom_score_materialization",
         "base_route": reports[0].get("base_route", "") if reports else "",
         "base_state": reports[0].get("base_state", "") if reports else "",
+        "base_state_field": reports[0].get("base_state_field", "") if reports else "",
+        "button_presses": reports[0].get("button_presses", 0) if reports else 0,
+        "button_interval_frames": (
+            reports[0].get("button_interval_frames", 0) if reports else 0
+        ),
+        "effective_watch_frames": (
+            reports[0].get("effective_watch_frames", 0) if reports else 0
+        ),
         "scenario_count": sum(int(report.get("scenario_count", 0)) for report in reports),
         "checked_count": checked_count,
         "skipped_count": sum(int(report.get("skipped_count", 0)) for report in reports),
@@ -996,6 +1099,8 @@ def format_rom_score_materialization(
         (
             f"base_route={report['base_route']} "
             f"base_state={report['base_state']} "
+            f"presses={report.get('button_presses', 1)} "
+            f"interval={report.get('button_interval_frames', 0)} "
             f"mode={report.get('score_replay_mode', 'contribution_trace')} "
             f"rate={report['materializations_per_minute']:.0f}/min"
         ),

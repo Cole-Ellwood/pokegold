@@ -1,14 +1,17 @@
 from __future__ import annotations
 
 import unittest
+from pathlib import Path
 
 from tools.boss_ai_debugger.rom_contribution_trace import (
     HookTarget,
     MemoryPatch,
     RomContributionTracer,
     RuleFrame,
+    build_report,
     format_rom_contribution_trace,
     parse_memory_patch,
+    should_issue_replay_button,
     summarize_rom_contribution_trace,
     SymbolIndex,
 )
@@ -304,6 +307,56 @@ class RomContributionTraceTests(unittest.TestCase):
         )
 
         self.assertEqual(tracer.selector_entry_scores, [14, 10, 19, 28])
+
+    def test_replay_button_schedule_repeats_at_interval(self) -> None:
+        frames = [
+            frame
+            for frame in range(140)
+            if should_issue_replay_button(
+                frame=frame,
+                button="a",
+                button_presses=3,
+                button_interval_frames=45,
+                presses_issued=sum(
+                    1
+                    for prior in (0, 45, 90)
+                    if prior < frame
+                ),
+            )
+        ]
+
+        self.assertEqual(frames, [0, 45, 90])
+
+    def test_build_report_snapshots_mutable_trace_lists(self) -> None:
+        events = [
+            {
+                "changed": True,
+                "source": {"rule_id": "move.test"},
+                "candidate": {"slot_index": 0},
+            }
+        ]
+        report = build_report(
+            save_state=Path(__file__),
+            basis={},
+            values={
+                "wBossAITraceChosenMove": [1],
+                "wCurEnemyMoveNum": [0],
+                "wEnemyMonMoves": [1, 2, 3, 4],
+                "wEnemyAIMoveScores": [1, 2, 3, 4],
+                "wBossAITracePreModelScores": [20, 20, 20, 20],
+                "wBossAITracePostModelScores": [19, 20, 20, 20],
+            },
+            events=events,
+            rule_entries=[],
+            predicate_branch_entries=[],
+            selector_entry_scores=[19, 20, 20, 20],
+            move_names={1: "TEST"},
+            memory_patches=[],
+        )
+        events.clear()
+
+        self.assertEqual(report["event_count"], 1)
+        self.assertEqual(len(report["events"]), 1)
 
     def test_tracer_reset_clears_events_and_updates_patches(self) -> None:
         tracer = RomContributionTracer(

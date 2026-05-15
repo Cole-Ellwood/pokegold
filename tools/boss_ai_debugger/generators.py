@@ -16,6 +16,22 @@ DEFAULT_GENERATOR_VERSION = "boss-ai-debugger-generator-v1"
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_TRACE_ROM = ROOT / "pokegold_trace.gbc"
 DEFAULT_TRACE_SYMBOLS = ROOT / "pokegold_trace.sym"
+AI_TIER_MID = 2
+AI_TIER_LATE = 3
+ROM_TIER_WEIGHTS = {
+    "mid": {
+        "setup": 2,
+        "status": 1,
+        "role": 1,
+        "risk": 2,
+    },
+    "late": {
+        "setup": 2,
+        "status": 2,
+        "role": 3,
+        "risk": 1,
+    },
+}
 
 POLICY_CARD_REFS = {
     "active_pressure_before_status": (
@@ -513,7 +529,6 @@ def spikes_spin_scenario(index: int, rng: random.Random, seed: int) -> dict[str,
     active_species_prior = rng.choice([False, True])
     immediate_pressure = rng.choice([False, True])
 
-    spikes_delta = spikes_layer_delta(layers)
     condition_tags = [f"spikes_layers_{layers}"]
     if active_revealed_spin:
         condition_tags.append("active_revealed_rapid_spin")
@@ -530,46 +545,40 @@ def spikes_spin_scenario(index: int, rng: random.Random, seed: int) -> dict[str,
     if immediate_pressure:
         condition_tags.append("immediate_pressure")
 
-    risk_delta = 0
-    if layers in {1, 2}:
-        if active_revealed_spin:
-            risk_delta += 18
-            if active_ghost and not foresighted:
-                risk_delta -= 12
-            elif reserve_ghost:
-                risk_delta -= 6
-        elif bench_revealed_spin:
-            risk_delta += 9
-        elif active_species_prior:
-            risk_delta += 4
-    if immediate_pressure:
-        risk_delta += 8
-
-    spike_deltas = [{"rule": "spikes_layer_value", "delta": spikes_delta}]
-    if risk_delta:
-        spike_deltas.append({"rule": "public_spin_or_tempo_risk", "delta": risk_delta})
+    rom_deltas = materialized_spikes_spin_rom_deltas(
+        tier=tier,
+        layers=layers,
+        active_revealed_spin=active_revealed_spin,
+        active_ghost=active_ghost,
+        foresighted=foresighted,
+        reserve_ghost=reserve_ghost,
+        bench_revealed_spin=bench_revealed_spin,
+        active_species_prior=active_species_prior,
+    )
 
     moves = [
         {
             "id": "move_spikes",
             "name": "Spikes",
-            "deltas": spike_deltas,
-            "lookahead_delta": -1 if layers < 3 and risk_delta <= 4 else 1,
+            "deltas": rom_deltas["spikes"],
+            "lookahead_delta": 18,
         },
         {
             "id": "move_sludge_bomb",
             "name": "Sludge Bomb",
-            "deltas": [{"rule": "live_damage", "delta": -3}],
+            "deltas": rom_deltas["sludge_bomb"],
+            "lookahead_delta": 18,
         },
         {
             "id": "move_surf",
             "name": "Surf",
-            "deltas": [{"rule": "coverage_chip", "delta": -1}],
+            "deltas": rom_deltas["surf"],
+            "lookahead_delta": 18,
         },
         {
             "id": "move_explosion",
             "name": "Explosion",
-            "deltas": [{"rule": "route_trade", "delta": -2 if active_revealed_spin else 1}],
+            "deltas": rom_deltas["explosion"],
         },
     ]
 
@@ -636,6 +645,127 @@ def spikes_layer_delta(layers: int) -> int:
     if layers == 2:
         return -12
     return 20
+
+
+def materialized_spikes_spin_rom_deltas(
+    *,
+    tier: str,
+    layers: int,
+    active_revealed_spin: bool,
+    active_ghost: bool,
+    foresighted: bool,
+    reserve_ghost: bool,
+    bench_revealed_spin: bool,
+    active_species_prior: bool,
+) -> dict[str, int]:
+    weights = ROM_TIER_WEIGHTS[tier]
+    role = weights["role"]
+    status = weights["status"]
+    setup = weights["setup"]
+    risk = weights["risk"]
+    pressure = active_species_prior and not active_ghost
+    active_spinblock = active_ghost and not foresighted
+    spinblock_available = active_ghost or reserve_ghost
+    revealed_spin_counts = active_revealed_spin and not active_ghost
+
+    spikes: list[dict[str, int]] = []
+    if layers == 0:
+        add_rom_delta(
+            spikes,
+            "move.apply_move_model.enemy_under_pressure",
+            -(status if pressure else role),
+        )
+    elif layers == 1:
+        if pressure:
+            add_rom_delta(spikes, "move.apply_move_model.enemy_under_pressure", role)
+        else:
+            returned = False
+            if revealed_spin_counts and not active_spinblock:
+                if reserve_ghost:
+                    add_rom_delta(
+                        spikes,
+                        "move.apply_move_model.apply_revealed_rapid_spin_spikes_risk",
+                        1,
+                    )
+                else:
+                    add_rom_delta(
+                        spikes,
+                        "move.apply_move_model.boss_has_available_reserve_ghost",
+                        role,
+                    )
+                    returned = True
+            if not returned:
+                if not spinblock_available and (
+                    bench_revealed_spin or active_species_prior
+                ):
+                    add_rom_delta(
+                        spikes,
+                        "move.apply_move_model.apply_spikes_layer2_unrevealed_spin_risk",
+                        1,
+                    )
+                add_rom_delta(
+                    spikes,
+                    "move.apply_move_model.apply_spikes_layer2_unrevealed_spin_risk",
+                    status,
+                )
+    elif layers == 2:
+        if pressure:
+            add_rom_delta(spikes, "move.apply_move_model.enemy_under_pressure", setup)
+        else:
+            returned = False
+            if revealed_spin_counts and not active_spinblock:
+                if reserve_ghost:
+                    add_rom_delta(
+                        spikes,
+                        "move.apply_move_model.apply_revealed_rapid_spin_spikes_risk",
+                        1,
+                    )
+                else:
+                    add_rom_delta(
+                        spikes,
+                        "move.apply_move_model.boss_has_available_reserve_ghost",
+                        role,
+                    )
+                    returned = True
+            if not returned:
+                if not spinblock_available and (
+                    bench_revealed_spin
+                    or active_species_prior
+                    or tier == "late"
+                ):
+                    add_rom_delta(
+                        spikes,
+                        "move.apply_move_model.apply_spikes_layer3_unrevealed_spin_risk",
+                        1,
+                    )
+                add_rom_delta(
+                    spikes,
+                    "move.apply_move_model.apply_spikes_layer3_unrevealed_spin_risk",
+                    -role,
+                )
+    else:
+        add_rom_delta(spikes, "move.apply_move_model.apply_spikes_layer_bias", role)
+
+    add_rom_delta(spikes, "move.apply_move_model.apply_role_bias", -role)
+    return {
+        "spikes": spikes,
+        "sludge_bomb": [
+            {"rule": "move.apply_move_model.apply_role_bias", "delta": -role}
+        ],
+        "surf": [],
+        "explosion": [
+            {
+                "rule": "move.apply_move_model.apply_self_kotrade_discipline",
+                "delta": 6,
+            },
+            {"rule": "move.current_enemy_move_accuracy_risky", "delta": risk},
+        ],
+    }
+
+
+def add_rom_delta(events: list[dict[str, int]], rule: str, delta: int) -> None:
+    if delta:
+        events.append({"rule": rule, "delta": delta})
 
 
 def mastery_policy_scenario(index: int, rng: random.Random, seed: int) -> dict[str, Any]:

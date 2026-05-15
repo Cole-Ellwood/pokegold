@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from argparse import Namespace
+from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -825,6 +826,8 @@ class RomContributionTraceSession:
         button: str = "a",
         button_delay: int = 8,
         watch_frames: int = 60,
+        button_presses: int = 1,
+        button_interval_frames: int = 0,
         metadata: dict[str, str] | None = None,
         memory_patches: list[MemoryPatch] | None = None,
     ) -> dict[str, Any]:
@@ -837,16 +840,15 @@ class RomContributionTraceSession:
             self.pyboy.load_state(fh)
         apply_memory_patches(self.pyboy, self.symbols, patches)
         clear_chosen_move(self.pyboy, self.symbols)
-        if button:
-            self.pyboy.button(button, delay=button_delay)
-
-        final_values = None
-        for _frame in range(watch_frames + 1):
-            values = capture.read_trace_values(self.pyboy, self.symbols)
-            if values["wBossAITraceChosenMove"][0] != 0:
-                final_values = values
-                break
-            self.pyboy.tick(1, False, False)
+        final_values, _presses_issued = drive_replay_to_choice(
+            self.pyboy,
+            self.symbols,
+            button=button,
+            button_delay=button_delay,
+            button_presses=button_presses,
+            button_interval_frames=button_interval_frames,
+            watch_frames=watch_frames,
+        )
         self.tracer.close_pending(trigger="replay_end")
         if final_values is None:
             raise PreferenceDataError(
@@ -877,6 +879,8 @@ def run_rom_contribution_trace(
     button: str = "a",
     button_delay: int = 8,
     watch_frames: int = 60,
+    button_presses: int = 1,
+    button_interval_frames: int = 0,
     metadata: dict[str, str] | None = None,
     memory_patches: list[MemoryPatch] | None = None,
 ) -> dict[str, Any]:
@@ -886,6 +890,8 @@ def run_rom_contribution_trace(
             button=button,
             button_delay=button_delay,
             watch_frames=watch_frames,
+            button_presses=button_presses,
+            button_interval_frames=button_interval_frames,
             metadata=metadata,
             memory_patches=memory_patches,
         )
@@ -1082,6 +1088,60 @@ def clear_chosen_move(
     pyboy.memory[symbol.address] = 0
 
 
+def drive_replay_to_choice(
+    pyboy: Any,
+    symbols: dict[str, capture.Symbol],
+    *,
+    button: str,
+    button_delay: int,
+    button_presses: int,
+    button_interval_frames: int,
+    watch_frames: int,
+) -> tuple[dict[str, list[int]] | None, int]:
+    if watch_frames <= 0:
+        raise PreferenceDataError("watch_frames must be positive")
+    if button_presses < 0:
+        raise PreferenceDataError("button_presses must be non-negative")
+    if button_interval_frames < 0:
+        raise PreferenceDataError("button_interval_frames must be non-negative")
+    if button_presses > 1 and button_interval_frames == 0:
+        raise PreferenceDataError(
+            "button_interval_frames is required when button_presses is greater than 1"
+        )
+
+    presses_issued = 0
+    for frame in range(watch_frames + 1):
+        if should_issue_replay_button(
+            frame=frame,
+            button=button,
+            button_presses=button_presses,
+            button_interval_frames=button_interval_frames,
+            presses_issued=presses_issued,
+        ):
+            pyboy.button(button, delay=button_delay)
+            presses_issued += 1
+        values = capture.read_trace_values(pyboy, symbols)
+        if values["wBossAITraceChosenMove"][0] != 0:
+            return values, presses_issued
+        pyboy.tick(1, False, False)
+    return None, presses_issued
+
+
+def should_issue_replay_button(
+    *,
+    frame: int,
+    button: str,
+    button_presses: int,
+    button_interval_frames: int,
+    presses_issued: int,
+) -> bool:
+    if not button or presses_issued >= button_presses:
+        return False
+    if button_interval_frames == 0:
+        return frame == 0
+    return frame % button_interval_frames == 0
+
+
 def parse_memory_patch(text: str) -> MemoryPatch:
     lhs, sep, rhs = text.partition("=")
     if sep != "=" or not lhs or not rhs:
@@ -1188,16 +1248,16 @@ def build_report(
         "move_scores": values["wEnemyAIMoveScores"],
         "pre_model_scores": values["wBossAITracePreModelScores"],
         "post_model_scores": values["wBossAITracePostModelScores"],
-        "selector_entry_scores": selector_entry_scores,
+        "selector_entry_scores": list(selector_entry_scores),
         "rule_entry_count": len(rule_entries),
         "executed_rule_count": len(executed_rule_ids),
         "executed_rule_ids": executed_rule_ids,
-        "rule_entries": rule_entries,
+        "rule_entries": deepcopy(rule_entries),
         "predicate_branch_entry_count": len(predicate_branch_entries),
-        "predicate_branch_entries": predicate_branch_entries,
+        "predicate_branch_entries": deepcopy(predicate_branch_entries),
         "event_count": len(events),
         "changed_event_count": len(changed),
-        "events": events,
+        "events": deepcopy(events),
         "known_limits": [
             "Trace events are captured by PyBoy execution hooks, not by an in-ROM WRAM ring buffer.",
             "Score events record score helper deltas and source labels, while rule entries record dynamic rule-label execution.",

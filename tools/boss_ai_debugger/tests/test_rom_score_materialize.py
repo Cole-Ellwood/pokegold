@@ -14,8 +14,11 @@ from tools.boss_ai_debugger.rom_score_materialize import (
     materialization_for_scenario,
     move_ids_for_scenario,
     parse_spikes_layers,
+    replay_controls_from_manifest,
     scenario_condition_tags,
+    validate_score_materialization_base,
 )
+from tools.boss_ai_preference.data import PreferenceDataError
 
 
 class RomScoreMaterializeTests(unittest.TestCase):
@@ -118,6 +121,36 @@ class RomScoreMaterializeTests(unittest.TestCase):
             sorted(item["id"] for chunk in chunks for item in chunk),
             [str(index) for index in range(7)],
         )
+
+    def test_replay_controls_use_clean_score_materialization_state_when_present(self) -> None:
+        controls = replay_controls_from_manifest(
+            {
+                "pre_choice_state": "bad_mid_ai.state",
+                "score_materialization_state": ".local/tmp/clean.state",
+                "score_materialization_button_presses": 5,
+                "score_materialization_button_interval_frames": 45,
+                "score_materialization_watch_frames": 270,
+            },
+            button="a",
+            button_delay=8,
+            watch_frames=90,
+        )
+
+        self.assertEqual(controls.base_state_field, "score_materialization_state")
+        self.assertEqual(controls.button_presses, 5)
+        self.assertEqual(controls.button_interval_frames, 45)
+        self.assertEqual(controls.watch_frames, 270)
+
+    def test_score_materialization_base_rejects_mid_ai_trace_scores(self) -> None:
+        with self.assertRaisesRegex(PreferenceDataError, "already inside"):
+            validate_score_materialization_base(
+                {
+                    "wBossAITraceChosenMove": [0],
+                    "wBossAITraceTopMoves": [0, 0, 0],
+                    "wBossAITracePreModelScores": [20, 20, 20, 0xFF],
+                    "wBossAITracePostModelScores": [14, 10, 0xFF, 0xFF],
+                }
+            )
 
 
 if __name__ == "__main__":

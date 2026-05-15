@@ -246,7 +246,12 @@
       "require_chosen_move": true,
       "pre_choice_state": ".local/tmp/boss_state_factory/koga_pre_choice_frame_4791.state",
       "choice_button": "a",
-      "choice_wait_frames": 45
+      "choice_wait_frames": 45,
+      "score_materialization_state": ".local/tmp/boss_ai_debugger/koga_score_materialization_base_frame_4611.state",
+      "score_materialization_button": "a",
+      "score_materialization_button_presses": 12,
+      "score_materialization_button_interval_frames": 45,
+      "score_materialization_watch_frames": 700
     },
     {
       "id": "champion_lance",
