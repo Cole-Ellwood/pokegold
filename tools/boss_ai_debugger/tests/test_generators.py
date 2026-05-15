@@ -7,7 +7,7 @@ from contextlib import redirect_stdout
 from pathlib import Path
 
 from tools.boss_ai_debugger.__main__ import main as debugger_main
-from tools.boss_ai_debugger.generators import generate_scenarios
+from tools.boss_ai_debugger.generators import POLICY_CARD_REFS, generate_scenarios
 from tools.boss_ai_debugger.rom_scenarios import evaluate_batch
 from tools.boss_ai_debugger.state_schema import validate_scenario_file
 
@@ -37,6 +37,23 @@ class GeneratorTests(unittest.TestCase):
         self.assertTrue(validation["valid"])
         self.assertEqual(report["scenario_count"], 20)
         self.assertGreater(report["scenarios_per_minute"], 0)
+
+    def test_mastery_policy_generation_covers_policy_cards(self) -> None:
+        scenarios = generate_scenarios(
+            family="mastery_policy",
+            count=len(POLICY_CARD_REFS),
+            seed=13,
+        )
+
+        refs = {
+            scenario["expectation"]["evidence_refs"][0]
+            for scenario in scenarios
+        }
+        report = evaluate_batch(scenarios)
+
+        self.assertEqual(refs, set(POLICY_CARD_REFS.values()))
+        self.assertEqual(report["scenario_count"], len(POLICY_CARD_REFS))
+        self.assertEqual(report["reviewable_count"], 0)
 
     def test_cli_generate_writes_jsonl(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

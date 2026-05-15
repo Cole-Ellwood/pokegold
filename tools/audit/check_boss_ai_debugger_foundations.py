@@ -101,6 +101,11 @@ def main() -> int:
         errors.append("mastery index found no policy cards")
     if coverage["mastery"]["policy_card_count"] != mastery["policy_card_count"]:
         errors.append("coverage report mastery policy-card count mismatch")
+    if (
+        coverage["mastery"]["generated_policy_card_coverage_count"]
+        != coverage["mastery"]["policy_card_count"]
+    ):
+        errors.append("generated scenarios do not cover every mastery policy card")
     if not counterfactual["score_flips_to_expected_best"]:
         errors.append("counterfactual analysis did not report expected-best score flips")
     if decision_trace["event_count"] == 0:

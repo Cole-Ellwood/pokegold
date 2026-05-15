@@ -21,6 +21,12 @@ Generate selector edge cases:
 python -m tools.boss_ai_debugger generate --family selector_edges --count 1000 --seed 1 --out audit\boss_ai_debugger\generated\selector_edges.jsonl
 ```
 
+Generate mastery-policy coverage cases:
+
+```powershell
+python -m tools.boss_ai_debugger generate --family mastery_policy --count 800 --seed 1 --out audit\boss_ai_debugger\generated\mastery_policy.jsonl
+```
+
 Validate and evaluate:
 
 ```powershell
@@ -36,6 +42,10 @@ python -m tools.boss_ai_debugger review-queue --scenarios audit\boss_ai_debugger
 - `spikes_spin`: hazard retention cases around Spikes layers, active revealed
   Rapid Spin, Ghost spinblock, Foresight, reserve Ghosts, bench revealed Spin,
   active species Spin priors, and immediate pressure.
+- `mastery_policy`: compact review cases tied one-to-one to the active mastery
+  policy cards: active pressure, branch action, cash-out boundaries, hazard
+  loops, hidden-role gates, romhack mechanics, sleep ambiguity, and support
+  handoffs.
 - `all`: round-robin mix of implemented families.
 
 ## Review Shape

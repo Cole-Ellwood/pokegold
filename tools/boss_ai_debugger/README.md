@@ -137,12 +137,15 @@ Generate high-throughput scenario corpora:
 
 ```powershell
 python -m tools.boss_ai_debugger generate --family spikes_spin --count 10000 --seed 1 --out audit\boss_ai_debugger\generated\spikes_spin.jsonl
+python -m tools.boss_ai_debugger generate --family mastery_policy --count 800 --seed 1 --out audit\boss_ai_debugger\generated\mastery_policy.jsonl
 python -m tools.boss_ai_debugger batch-simulate --scenarios audit\boss_ai_debugger\generated\spikes_spin.jsonl --limit 50
 ```
 
 Generated scenarios are deterministic by seed and include policy expectations,
 condition tags, evidence refs, and answer-changing information so batch output
-can be used as a review queue rather than raw simulation spam.
+can be used as a review queue rather than raw simulation spam. The
+`mastery_policy` family keeps at least one generated scenario tied to every
+active policy card so coverage reports expose decision-review blind spots.
 
 Build a compact review queue from generated scenarios or a saved batch report:
 

@@ -2,14 +2,395 @@ from __future__ import annotations
 
 import json
 import random
+from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
 from tools.boss_ai_preference.data import PreferenceDataError
 
 
-FAMILIES = ("selector_edges", "spikes_spin", "all")
+FAMILIES = ("selector_edges", "spikes_spin", "mastery_policy", "all")
 DEFAULT_GENERATOR_VERSION = "boss-ai-debugger-generator-v1"
+
+POLICY_CARD_REFS = {
+    "active_pressure_before_status": (
+        "docs/pokemon_mastery/policy_cards/active_pressure_before_status.md"
+    ),
+    "branch_action_after_naming": (
+        "docs/pokemon_mastery/policy_cards/branch_action_after_naming.md"
+    ),
+    "cashout_boundary": "docs/pokemon_mastery/policy_cards/cashout_boundary.md",
+    "hazard_loop_spin_window": (
+        "docs/pokemon_mastery/policy_cards/hazard_loop_spin_window.md"
+    ),
+    "hidden_role_voluntary_entry": (
+        "docs/pokemon_mastery/policy_cards/hidden_role_voluntary_entry.md"
+    ),
+    "romhack_mechanics_firewall": (
+        "docs/pokemon_mastery/policy_cards/romhack_mechanics_firewall.md"
+    ),
+    "sleep_absorber_and_set_ambiguity": (
+        "docs/pokemon_mastery/policy_cards/sleep_absorber_and_set_ambiguity.md"
+    ),
+    "support_handoff_after_job": (
+        "docs/pokemon_mastery/policy_cards/support_handoff_after_job.md"
+    ),
+}
+
+MASTERY_POLICY_CASES = [
+    {
+        "card_id": "active_pressure_before_status",
+        "tiers": ("mid", "late"),
+        "notes": [
+            "generated mastery case: active pressure is already making route progress",
+        ],
+        "moves": [
+            {
+                "id": "move_active_pressure",
+                "name": "Active Pressure",
+                "deltas": [{"rule": "named active route pressure", "delta": -6}],
+                "lookahead_delta": -1,
+            },
+            {
+                "id": "move_status_script",
+                "name": "Status Script",
+                "deltas": [{"rule": "status exists but route is already active", "delta": -1}],
+            },
+            {
+                "id": "move_pivot_out",
+                "name": "Pivot Out",
+                "deltas": [{"rule": "unpriced handoff", "delta": 1}],
+            },
+            {
+                "id": "move_self_ko",
+                "name": "Self-KO",
+                "deltas": [{"rule": "premature cashout", "delta": 3}],
+            },
+        ],
+        "expectation": {
+            "best_action_ids": ["move_active_pressure"],
+            "acceptable_action_ids": ["move_status_script"],
+            "bad_action_ids": ["move_self_ko"],
+            "policy_tags": ["active_pressure", "status_timing"],
+            "condition_tags": ["active_pressure_before_status"],
+            "lesson_type": "policy_card",
+            "confidence": "medium",
+            "why": "Price the direct pressure line before status or cash-out when it already advances a named route.",
+            "answer_changing_information": [
+                "whether status stops a route that damage cannot",
+                "whether the support piece has no future entry or job",
+            ],
+        },
+    },
+    {
+        "card_id": "branch_action_after_naming",
+        "tiers": ("mid", "late"),
+        "notes": [
+            "generated mastery case: the likely receiver is named before choosing",
+        ],
+        "moves": [
+            {
+                "id": "move_receiver_coverage",
+                "name": "Receiver Coverage",
+                "deltas": [{"rule": "beats named receiver branch", "delta": -7}],
+                "lookahead_delta": -1,
+            },
+            {
+                "id": "move_counter_handoff",
+                "name": "Counter-Handoff",
+                "deltas": [{"rule": "owns next board", "delta": -3}],
+            },
+            {
+                "id": "move_active_damage",
+                "name": "Active Damage",
+                "deltas": [{"rule": "only beats current active", "delta": -1}],
+            },
+            {
+                "id": "move_generic_status",
+                "name": "Generic Status",
+                "deltas": [{"rule": "absorber branch unpriced", "delta": 2}],
+            },
+        ],
+        "expectation": {
+            "best_action_ids": ["move_receiver_coverage"],
+            "acceptable_action_ids": ["move_counter_handoff"],
+            "bad_action_ids": ["move_generic_status"],
+            "policy_tags": ["branch_action", "receiver_pricing"],
+            "condition_tags": ["named_receiver_branch"],
+            "lesson_type": "policy_card",
+            "confidence": "medium",
+            "why": "After naming the likely branch, choose the action that beats that branch rather than the visible active alone.",
+            "answer_changing_information": [
+                "which receiver or absorber is likely",
+                "whether the active move also changes the receiver board",
+            ],
+        },
+    },
+    {
+        "card_id": "cashout_boundary",
+        "tiers": ("mid", "late"),
+        "notes": [
+            "generated mastery case: a one-time trade has a named converter",
+        ],
+        "moves": [
+            {
+                "id": "move_cashout_converter",
+                "name": "Cash Out Into Converter",
+                "deltas": [{"rule": "named route trade", "delta": -8}],
+                "lookahead_delta": -1,
+            },
+            {
+                "id": "move_preserve_job",
+                "name": "Preserve Support Job",
+                "deltas": [{"rule": "support job mostly delivered", "delta": -2}],
+            },
+            {
+                "id": "move_safe_status",
+                "name": "Safe Status",
+                "deltas": [{"rule": "misses converter window", "delta": 1}],
+            },
+            {
+                "id": "move_chip_damage",
+                "name": "Chip Damage",
+                "deltas": [{"rule": "no converter named", "delta": 2}],
+            },
+        ],
+        "expectation": {
+            "best_action_ids": ["move_cashout_converter"],
+            "acceptable_action_ids": ["move_preserve_job"],
+            "bad_action_ids": ["move_chip_damage"],
+            "policy_tags": ["cashout", "route_converter"],
+            "condition_tags": ["one_time_trade_named_converter"],
+            "lesson_type": "policy_card",
+            "confidence": "medium",
+            "why": "Cash out only when the target and post-trade converter are named and slow play can lose the window.",
+            "answer_changing_information": [
+                "whether the support job remains route-defining",
+                "whether a revealed absorber or immunity blanks the trade",
+            ],
+        },
+    },
+    {
+        "card_id": "hazard_loop_spin_window",
+        "tiers": ("mid", "late"),
+        "notes": [
+            "generated mastery case: hazard progress is only real if Spin is priced",
+        ],
+        "moves": [
+            {
+                "id": "move_punish_spin",
+                "name": "Punish Spin",
+                "deltas": [{"rule": "keeps hazard route intact", "delta": -7}],
+                "lookahead_delta": -1,
+            },
+            {
+                "id": "move_attack_spinner",
+                "name": "Attack Spinner",
+                "deltas": [{"rule": "live damage into spinner", "delta": -3}],
+            },
+            {
+                "id": "move_set_extra_spikes",
+                "name": "Set Extra Spikes",
+                "deltas": [{"rule": "free spin window", "delta": 4}],
+            },
+            {
+                "id": "move_passive_handoff",
+                "name": "Passive Handoff",
+                "deltas": [{"rule": "spin route unresolved", "delta": 2}],
+            },
+        ],
+        "expectation": {
+            "best_action_ids": ["move_punish_spin"],
+            "acceptable_action_ids": ["move_attack_spinner"],
+            "bad_action_ids": ["move_set_extra_spikes"],
+            "policy_tags": ["hazard_retention", "rapid_spin", "spikes"],
+            "condition_tags": ["spin_window_priced"],
+            "lesson_type": "policy_card",
+            "confidence": "medium",
+            "why": "Hazard progress is not stable if the opponent can remove it without paying a route-relevant cost.",
+            "answer_changing_information": [
+                "whether the spinner has an entry path",
+                "whether a spinblocker is already active or safely available",
+            ],
+        },
+    },
+    {
+        "card_id": "hidden_role_voluntary_entry",
+        "tiers": ("early", "mid", "late"),
+        "notes": [
+            "generated mastery case: voluntary entry signals a role before species memory does",
+        ],
+        "moves": [
+            {
+                "id": "move_respect_lure",
+                "name": "Respect Lure",
+                "deltas": [{"rule": "revealed-role public evidence", "delta": -6}],
+                "lookahead_delta": -1,
+            },
+            {
+                "id": "move_scout_switch",
+                "name": "Scout Switch",
+                "deltas": [{"rule": "covers strong prior if wrong", "delta": -2}],
+            },
+            {
+                "id": "move_species_template",
+                "name": "Species Template",
+                "deltas": [{"rule": "ignores voluntary entry", "delta": 3}],
+            },
+            {
+                "id": "move_possible_only_read",
+                "name": "Possible-Only Read",
+                "deltas": [{"rule": "unrevealed move promoted to fact", "delta": 4}],
+            },
+        ],
+        "expectation": {
+            "best_action_ids": ["move_respect_lure"],
+            "acceptable_action_ids": ["move_scout_switch"],
+            "bad_action_ids": ["move_possible_only_read"],
+            "policy_tags": ["hidden_role", "public_info_gate"],
+            "condition_tags": ["voluntary_entry_role_signal"],
+            "lesson_type": "policy_card",
+            "confidence": "medium",
+            "why": "Treat a voluntary bad-looking entry or set reveal as evidence, while keeping unrevealed moves at prior strength.",
+            "answer_changing_information": [
+                "which move or entry detail is public",
+                "whether the standard role still explains the entry",
+            ],
+        },
+    },
+    {
+        "card_id": "romhack_mechanics_firewall",
+        "tiers": ("mid", "late"),
+        "notes": [
+            "generated mastery case: local mechanics evidence outranks imported vanilla knowledge",
+        ],
+        "moves": [
+            {
+                "id": "move_local_verified_line",
+                "name": "Local Verified Line",
+                "deltas": [{"rule": "runtime-verified local mechanic", "delta": -5}],
+                "lookahead_delta": -1,
+            },
+            {
+                "id": "move_neutral_route",
+                "name": "Neutral Route",
+                "deltas": [{"rule": "mechanic not decision-relevant", "delta": -1}],
+            },
+            {
+                "id": "move_vanilla_assumption",
+                "name": "Vanilla Assumption",
+                "deltas": [{"rule": "unverified imported mechanic", "delta": 4}],
+            },
+            {
+                "id": "move_haki_generalization",
+                "name": "Haki Generalization",
+                "deltas": [{"rule": "quarantined exception generalized", "delta": 5}],
+            },
+        ],
+        "expectation": {
+            "best_action_ids": ["move_local_verified_line"],
+            "acceptable_action_ids": ["move_neutral_route"],
+            "bad_action_ids": ["move_haki_generalization"],
+            "policy_tags": ["romhack_mechanics", "no_cheat_boundary"],
+            "condition_tags": ["local_mechanics_firewall"],
+            "lesson_type": "policy_card",
+            "confidence": "medium",
+            "why": "Use local evidence for romhack mechanics and keep Haki/oracle exceptions quarantined from ordinary boss AI.",
+            "answer_changing_information": [
+                "local fixture or trace status for the mechanic",
+                "whether the mechanic is decision-relevant",
+            ],
+        },
+    },
+    {
+        "card_id": "sleep_absorber_and_set_ambiguity",
+        "tiers": ("mid", "late"),
+        "notes": [
+            "generated mastery case: sleep state changes the route instead of starting a script",
+        ],
+        "moves": [
+            {
+                "id": "move_preserve_sleep_absorber",
+                "name": "Preserve Sleep Absorber",
+                "deltas": [{"rule": "keeps sleep-clause route value", "delta": -6}],
+                "lookahead_delta": -1,
+            },
+            {
+                "id": "move_active_absorber_job",
+                "name": "Active Absorber Job",
+                "deltas": [{"rule": "staying has a named job", "delta": -2}],
+            },
+            {
+                "id": "move_burn_wake_turns",
+                "name": "Burn Wake Turns",
+                "deltas": [{"rule": "no active job named", "delta": 4}],
+            },
+            {
+                "id": "move_status_sleeping_target",
+                "name": "Status Sleeping Target",
+                "deltas": [{"rule": "timing branch unresolved", "delta": 3}],
+            },
+        ],
+        "expectation": {
+            "best_action_ids": ["move_preserve_sleep_absorber"],
+            "acceptable_action_ids": ["move_active_absorber_job"],
+            "bad_action_ids": ["move_burn_wake_turns"],
+            "policy_tags": ["sleep_absorber", "set_ambiguity"],
+            "condition_tags": ["sleep_clause_value_preserved"],
+            "lesson_type": "policy_card",
+            "confidence": "medium",
+            "why": "A sleeping Pokemon is route state; preserve it unless staying has a named active job.",
+            "answer_changing_information": [
+                "whether staying burns turns toward a useful job",
+                "whether a revealed set changes the absorber map",
+            ],
+        },
+    },
+    {
+        "card_id": "support_handoff_after_job",
+        "tiers": ("mid", "late"),
+        "notes": [
+            "generated mastery case: support success must be converted on the next board",
+        ],
+        "moves": [
+            {
+                "id": "move_handoff_converter",
+                "name": "Handoff Converter",
+                "deltas": [{"rule": "names next board converter", "delta": -6}],
+                "lookahead_delta": -1,
+            },
+            {
+                "id": "move_cover_worst_branch",
+                "name": "Cover Worst Branch",
+                "deltas": [{"rule": "stops immediate reset branch", "delta": -2}],
+            },
+            {
+                "id": "move_repeat_support",
+                "name": "Repeat Support",
+                "deltas": [{"rule": "support job already done", "delta": 4}],
+            },
+            {
+                "id": "move_generic_damage",
+                "name": "Generic Damage",
+                "deltas": [{"rule": "converter unnamed", "delta": 2}],
+            },
+        ],
+        "expectation": {
+            "best_action_ids": ["move_handoff_converter"],
+            "acceptable_action_ids": ["move_cover_worst_branch"],
+            "bad_action_ids": ["move_repeat_support"],
+            "policy_tags": ["support_handoff", "route_converter"],
+            "condition_tags": ["support_job_completed"],
+            "lesson_type": "policy_card",
+            "confidence": "medium",
+            "why": "After support lands, name the next board, converter, counter-pivot, and the resource needed for the handoff.",
+            "answer_changing_information": [
+                "whether the converter has an entry path",
+                "whether the opponent can immediately reset with Spin, Rest, setup, or phaze",
+            ],
+        },
+    },
+]
 
 
 def generate_scenarios(
@@ -24,7 +405,7 @@ def generate_scenarios(
         raise PreferenceDataError(f"unknown generator family {family!r}")
     rng = random.Random(seed)
     if family == "all":
-        families = ("selector_edges", "spikes_spin")
+        families = ("selector_edges", "spikes_spin", "mastery_policy")
         scenarios: list[dict[str, Any]] = []
         for index in range(count):
             chosen = families[index % len(families)]
@@ -43,6 +424,8 @@ def generate_one(
         return selector_edge_scenario(index, rng, seed)
     if family == "spikes_spin":
         return spikes_spin_scenario(index, rng, seed)
+    if family == "mastery_policy":
+        return mastery_policy_scenario(index, rng, seed)
     raise PreferenceDataError(f"unknown generator family {family!r}")
 
 
@@ -248,6 +631,30 @@ def spikes_layer_delta(layers: int) -> int:
     if layers == 2:
         return -12
     return 20
+
+
+def mastery_policy_scenario(index: int, rng: random.Random, seed: int) -> dict[str, Any]:
+    case = MASTERY_POLICY_CASES[index % len(MASTERY_POLICY_CASES)]
+    card_id = str(case["card_id"])
+    expectation = deepcopy(case["expectation"])
+    expectation["evidence_refs"] = [POLICY_CARD_REFS[card_id]]
+    condition_tags = list(expectation.get("condition_tags", []))
+    if card_id not in condition_tags:
+        condition_tags.append(card_id)
+    expectation["condition_tags"] = condition_tags
+
+    return {
+        "id": f"generated_mastery_policy_{seed}_{index:05d}_{card_id}",
+        "generator": DEFAULT_GENERATOR_VERSION,
+        "family": "mastery_policy",
+        "policy_card": card_id,
+        "seed": seed,
+        "case_index": index,
+        "tier": rng.choice(list(case["tiers"])),
+        "notes": deepcopy(case["notes"]),
+        "moves": deepcopy(case["moves"]),
+        "expectation": expectation,
+    }
 
 
 def write_jsonl(scenarios: list[dict[str, Any]], path: Path) -> None:
