@@ -20,6 +20,9 @@ class GeneratorTests(unittest.TestCase):
         self.assertEqual(first, second)
         self.assertEqual(len(first), 5)
         self.assertEqual(first[0]["family"], "spikes_spin")
+        self.assertRegex(first[0]["state_hash"], r"^[0-9A-F]{64}$")
+        self.assertIn("rom_sha256", first[0])
+        self.assertIn("symbols_sha256", first[0])
 
     def test_generated_scenarios_validate_and_batch_evaluate(self) -> None:
         scenarios = generate_scenarios(family="all", count=20, seed=11)

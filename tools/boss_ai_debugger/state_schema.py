@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from typing import Any
 
@@ -17,6 +18,7 @@ ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_TRACE_DIR = ROOT / "audit" / "boss_ai_trace"
 DEFAULT_TRACE_GLOB = "*_live.txt"
 PUBLIC_ONLY_SCOPE = "public_only"
+SHA256_RE = re.compile(r"^[0-9A-F]{64}$")
 
 HIDDEN_FIELD_NAMES = {
     "hidden",
@@ -111,6 +113,10 @@ def validate_scenario(scenario: dict[str, Any], source: str) -> list[str]:
         return [f"{source}: scenario must be an object"]
     if not scenario.get("id") and not scenario.get("scenario_id"):
         errors.append(f"{source}: missing id or scenario_id")
+    for key in ("state_hash", "rom_sha256", "symbols_sha256"):
+        value = scenario.get(key)
+        if value is not None and value != "" and not valid_sha256(value):
+            errors.append(f"{source}.{key}: must be an uppercase SHA-256 hex digest")
 
     if "state" in scenario:
         state = scenario["state"]
@@ -214,6 +220,10 @@ def validate_trace_block(fields: dict[str, str], source: str) -> list[str]:
             if value not in {0, 1, 2, 3}:
                 errors.append(f"{source}: tier must be 0, 1, 2, or 3")
     return errors
+
+
+def valid_sha256(value: Any) -> bool:
+    return isinstance(value, str) and SHA256_RE.match(value) is not None
 
 
 def parse_trace_int_list(

@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import random
 from copy import deepcopy
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -11,6 +13,9 @@ from tools.boss_ai_preference.data import PreferenceDataError
 
 FAMILIES = ("selector_edges", "spikes_spin", "mastery_policy", "all")
 DEFAULT_GENERATOR_VERSION = "boss-ai-debugger-generator-v1"
+ROOT = Path(__file__).resolve().parents[2]
+DEFAULT_TRACE_ROM = ROOT / "pokegold_trace.gbc"
+DEFAULT_TRACE_SYMBOLS = ROOT / "pokegold_trace.sym"
 
 POLICY_CARD_REFS = {
     "active_pressure_before_status": (
@@ -409,9 +414,9 @@ def generate_scenarios(
         scenarios: list[dict[str, Any]] = []
         for index in range(count):
             chosen = families[index % len(families)]
-            scenarios.append(generate_one(chosen, index, rng, seed))
+            scenarios.append(stamp_scenario(generate_one(chosen, index, rng, seed)))
         return scenarios
-    return [generate_one(family, index, rng, seed) for index in range(count)]
+    return [stamp_scenario(generate_one(family, index, rng, seed)) for index in range(count)]
 
 
 def generate_one(
@@ -661,6 +666,42 @@ def write_jsonl(scenarios: list[dict[str, Any]], path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     text = "\n".join(json.dumps(scenario, sort_keys=True) for scenario in scenarios)
     path.write_text(text + ("\n" if text else ""), encoding="utf-8", newline="\n")
+
+
+def stamp_scenario(scenario: dict[str, Any]) -> dict[str, Any]:
+    stamped = dict(scenario)
+    stamped["generator_source"] = "tools.boss_ai_debugger.generators"
+    stamped["rom"] = display_path(DEFAULT_TRACE_ROM)
+    stamped["rom_sha256"] = sha256_file_cached(str(DEFAULT_TRACE_ROM))
+    stamped["symbols"] = display_path(DEFAULT_TRACE_SYMBOLS)
+    stamped["symbols_sha256"] = sha256_file_cached(str(DEFAULT_TRACE_SYMBOLS))
+    stamped["state_hash"] = scenario_hash(stamped)
+    return stamped
+
+
+def scenario_hash(scenario: dict[str, Any]) -> str:
+    canonical = {
+        key: value
+        for key, value in scenario.items()
+        if key not in {"state_hash", "scenario_hash"}
+    }
+    payload = json.dumps(canonical, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest().upper()
+
+
+@lru_cache(maxsize=None)
+def sha256_file_cached(path_text: str) -> str:
+    path = Path(path_text)
+    if not path.exists():
+        return ""
+    return hashlib.sha256(path.read_bytes()).hexdigest().upper()
+
+
+def display_path(path: Path) -> str:
+    try:
+        return str(path.relative_to(ROOT)).replace("/", "\\")
+    except ValueError:
+        return str(path)
 
 
 def format_generate_report(

@@ -145,8 +145,9 @@ python -m tools.boss_ai_debugger batch-simulate --scenarios audit\boss_ai_debugg
 ```
 
 Generated scenarios are deterministic by seed and include policy expectations,
-condition tags, evidence refs, and answer-changing information so batch output
-can be used as a review queue rather than raw simulation spam. The
+condition tags, evidence refs, answer-changing information, trace ROM/symbol
+hashes, and a stable `state_hash` so batch output can be used as a review queue
+rather than raw simulation spam. The
 `mastery_policy` family keeps at least one generated scenario tied to every
 active policy card so coverage reports expose decision-review blind spots.
 

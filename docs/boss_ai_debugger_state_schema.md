@@ -43,6 +43,8 @@ Fixture and scenario states must keep these concepts structured:
 - optional `state.field`
 - action or move `id`
 - action or move `name`
+- optional generated `state_hash`, `rom_sha256`, and `symbols_sha256` as
+  uppercase SHA-256 hex digests
 
 Trace captures must include:
 

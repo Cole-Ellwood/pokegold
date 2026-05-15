@@ -53,6 +53,9 @@ python -m tools.boss_ai_debugger review-queue --scenarios audit\boss_ai_debugger
 Each generated scenario includes:
 
 - deterministic `seed` and `case_index`
+- deterministic `state_hash`
+- trace ROM and symbol paths plus `rom_sha256` and `symbols_sha256` when those
+  files are present
 - generated `family`
 - ROM-score moves and deltas
 - `best_action_ids`

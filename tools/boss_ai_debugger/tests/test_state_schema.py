@@ -85,6 +85,25 @@ class StateSchemaTests(unittest.TestCase):
         self.assertFalse(report["valid"])
         self.assertIn("hidden-info field", "\n".join(report["errors"]))
 
+    def test_bad_generated_hash_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "scenario.json"
+            path.write_text(
+                json.dumps(
+                    {
+                        "id": "bad_hash",
+                        "state_hash": "not-a-hash",
+                        "moves": [{"id": "slot1", "name": "Slot 1"}],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            report = validate_scenario_file(path)
+
+        self.assertFalse(report["valid"])
+        self.assertIn("state_hash", "\n".join(report["errors"]))
+
     def test_cli_default_validation_checks_fixtures_and_traces(self) -> None:
         stdout = io.StringIO()
         with redirect_stdout(stdout):
