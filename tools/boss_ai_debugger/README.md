@@ -161,3 +161,13 @@ python tools\audit\check_boss_ai_debugger_foundations.py
 
 This checks current fixture/trace schema validity, stored rule-map freshness,
 generated scenario evaluation, and review-queue accounting.
+
+Run metamorphic checks:
+
+```powershell
+python -m tools.boss_ai_debugger metamorphic --generated 100 --seed 1 --fail-on-mismatch
+```
+
+The metamorphic suite checks selector invariants and Spikes/Rapid Spin boundary
+relations that should hold without needing a hand label for every generated
+state.

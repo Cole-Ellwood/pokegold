@@ -27,6 +27,11 @@ from .generators import (
     generate_scenarios,
     write_jsonl as write_scenarios_jsonl,
 )
+from .metamorphic import (
+    format_metamorphic_report,
+    run_metamorphic_suite,
+    write_metamorphic_json,
+)
 from .regression import (
     evaluate_corpus,
     exit_code_for_result,
@@ -339,6 +344,21 @@ def cmd_run_suite(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_metamorphic(args: argparse.Namespace) -> int:
+    report = run_metamorphic_suite(generated=args.generated, seed=args.seed)
+    if args.json_out != "":
+        write_metamorphic_json(report, Path(args.json_out))
+    if args.json:
+        print(json.dumps(report, indent=2, sort_keys=True))
+    else:
+        print(format_metamorphic_report(report))
+        if args.json_out != "":
+            print(f"wrote {args.json_out}")
+    if args.fail_on_mismatch and not report["passed"]:
+        return 1
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="python -m tools.boss_ai_debugger")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -456,6 +476,14 @@ def build_parser() -> argparse.ArgumentParser:
     run_suite.add_argument("--runs-dir", type=path_arg, default=DEFAULT_RUNS_DIR)
     run_suite.add_argument("--json", action="store_true")
     run_suite.set_defaults(func=cmd_run_suite)
+
+    metamorphic_cmd = subparsers.add_parser("metamorphic")
+    metamorphic_cmd.add_argument("--generated", type=int, default=0)
+    metamorphic_cmd.add_argument("--seed", type=int, default=1)
+    metamorphic_cmd.add_argument("--json", action="store_true")
+    metamorphic_cmd.add_argument("--json-out", default="")
+    metamorphic_cmd.add_argument("--fail-on-mismatch", action="store_true")
+    metamorphic_cmd.set_defaults(func=cmd_metamorphic)
     return parser
 
 

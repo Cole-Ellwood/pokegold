@@ -9,6 +9,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from tools.boss_ai_debugger.generators import generate_scenarios
+from tools.boss_ai_debugger.metamorphic import run_metamorphic_suite
 from tools.boss_ai_debugger.review_queue import build_review_queue
 from tools.boss_ai_debugger.rom_scenarios import evaluate_batch
 from tools.boss_ai_debugger.rule_map import (
@@ -33,6 +34,7 @@ def main() -> int:
     scenarios = generate_scenarios(family="all", count=100, seed=1)
     batch = evaluate_batch(scenarios)
     queue = build_review_queue(batch, limit=20)
+    metamorphic = run_metamorphic_suite(generated=25, seed=1)
 
     errors: list[str] = []
     if not fixture_report["valid"]:
@@ -44,6 +46,8 @@ def main() -> int:
         errors.append("generated smoke batch did not evaluate 100 scenarios")
     if queue["input_reviewable_count"] != batch["reviewable_count"]:
         errors.append("review queue did not preserve reviewable count")
+    if not metamorphic["passed"]:
+        errors.append("metamorphic suite reported failures")
 
     if errors:
         print("Boss AI debugger foundation audit failed.")
@@ -65,6 +69,10 @@ def main() -> int:
         f"{batch['scenario_count']} scenarios, "
         f"{batch['reviewable_count']} reviewable, "
         f"{batch['scenarios_per_minute']:.0f}/min."
+    )
+    print(
+        "Metamorphic: "
+        f"{metamorphic['pass_count']} / {metamorphic['relation_count']} relations passed."
     )
     return 0
 
