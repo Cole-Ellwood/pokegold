@@ -309,7 +309,7 @@
     "Trace events are captured by PyBoy execution hooks, not by an in-ROM WRAM ring buffer.",
     "Score events record score helper deltas and source labels, while rule entries record dynamic rule-label execution.",
     "Predicate branch entries record selected executable public-info branch labels, not full false-path coverage.",
-    "Public-read evidence combines static rule-map hints with selected branch legal-input labels, not dynamic memory-read slicing yet."
+    "Public-read evidence includes selected branch legal-input snapshots, but not full dynamic memory-read slicing yet."
   ],
   "memory_patches": [],
   "move_ids": [

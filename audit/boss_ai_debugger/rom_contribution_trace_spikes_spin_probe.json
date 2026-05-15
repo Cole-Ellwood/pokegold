@@ -445,7 +445,7 @@
     "Trace events are captured by PyBoy execution hooks, not by an in-ROM WRAM ring buffer.",
     "Score events record score helper deltas and source labels, while rule entries record dynamic rule-label execution.",
     "Predicate branch entries record selected executable public-info branch labels, not full false-path coverage.",
-    "Public-read evidence combines static rule-map hints with selected branch legal-input labels, not dynamic memory-read slicing yet."
+    "Public-read evidence includes selected branch legal-input snapshots, but not full dynamic memory-read slicing yet."
   ],
   "memory_patches": [
     {
@@ -457,21 +457,6 @@
       "offset": 0,
       "symbol_name": "wPlayerUsedMoves",
       "value": 229
-    },
-    {
-      "offset": 1,
-      "symbol_name": "wPlayerUsedMoves",
-      "value": 0
-    },
-    {
-      "offset": 2,
-      "symbol_name": "wPlayerUsedMoves",
-      "value": 0
-    },
-    {
-      "offset": 3,
-      "symbol_name": "wPlayerUsedMoves",
-      "value": 0
     }
   ],
   "move_ids": [
@@ -527,6 +512,19 @@
         "parent_symbol": "BossAI_ApplyMoveModel.ApplySpikesLayerBias",
         "predicate_id": "spikes_existing_layer_count"
       },
+      "public_input_snapshot": {
+        "wPlayerScreens": {
+          "address": "cbd3",
+          "available": true,
+          "bank": "00",
+          "kind": "byte_range",
+          "symbol": "wPlayerScreens",
+          "values": [
+            1
+          ],
+          "width": 1
+        }
+      },
       "source": {
         "branch_symbol": "BossAI_ApplyMoveModel.spikes_layer2",
         "classification": "public_info",
@@ -578,6 +576,41 @@
         "outcome": "not_blocked",
         "parent_symbol": "BossAI_ApplyMoveModel.ApplyRevealedRapidSpinSpikesRisk",
         "predicate_id": "revealed_rapid_spin_active_spinblock"
+      },
+      "public_input_snapshot": {
+        "wEnemyMonType1": {
+          "address": "d10d",
+          "available": true,
+          "bank": "01",
+          "kind": "byte_range",
+          "symbol": "wEnemyMonType1",
+          "values": [
+            7
+          ],
+          "width": 1
+        },
+        "wEnemyMonType2": {
+          "address": "d10e",
+          "available": true,
+          "bank": "01",
+          "kind": "byte_range",
+          "symbol": "wEnemyMonType2",
+          "values": [
+            3
+          ],
+          "width": 1
+        },
+        "wEnemySubStatus1": {
+          "address": "cb3b",
+          "available": true,
+          "bank": "00",
+          "kind": "byte_range",
+          "symbol": "wEnemySubStatus1",
+          "values": [
+            0
+          ],
+          "width": 1
+        }
       },
       "source": {
         "branch_symbol": "BossAI_ApplyMoveModel.revealed_spin_not_blocked",
@@ -631,12 +664,124 @@
         "legal_inputs": [
           "wOTPartyCount",
           "wOTPartySpecies",
-          "wOTPartyMonHP",
+          "wOTPartyMon1HP",
           "BaseData"
         ],
         "outcome": "unavailable",
         "parent_symbol": "BossAI_ApplyMoveModel.BossHasAvailableReserveGhost",
         "predicate_id": "boss_reserve_spinblock"
+      },
+      "public_input_snapshot": {
+        "BaseData": {
+          "address": "5ab9",
+          "available": true,
+          "bank": "14",
+          "input": "BaseData",
+          "kind": "static_table_reference",
+          "note": "static ROM table reference; branch-specific table bytes are not sampled",
+          "symbol": "BaseData",
+          "values": []
+        },
+        "wOTPartyCount": {
+          "address": "dd55",
+          "available": true,
+          "bank": "01",
+          "kind": "byte_range",
+          "symbol": "wOTPartyCount",
+          "values": [
+            6
+          ],
+          "width": 1
+        },
+        "wOTPartyMon1HP": {
+          "address": "dd7f",
+          "available": true,
+          "bank": "01",
+          "kind": "party_hp_slots",
+          "slot_count": 6,
+          "slot_width": 4,
+          "slots": [
+            {
+              "address": "dd7f",
+              "slot_index": 0,
+              "values": [
+                0,
+                146,
+                0,
+                146
+              ]
+            },
+            {
+              "address": "ddaf",
+              "slot_index": 1,
+              "values": [
+                0,
+                125,
+                0,
+                125
+              ]
+            },
+            {
+              "address": "dddf",
+              "slot_index": 2,
+              "values": [
+                0,
+                162,
+                0,
+                162
+              ]
+            },
+            {
+              "address": "de0f",
+              "slot_index": 3,
+              "values": [
+                0,
+                144,
+                0,
+                144
+              ]
+            },
+            {
+              "address": "de3f",
+              "slot_index": 4,
+              "values": [
+                0,
+                145,
+                0,
+                145
+              ]
+            },
+            {
+              "address": "de6f",
+              "slot_index": 5,
+              "values": [
+                0,
+                151,
+                0,
+                151
+              ]
+            }
+          ],
+          "stride": 48,
+          "symbol": "wOTPartyMon1HP"
+        },
+        "wOTPartySpecies": {
+          "address": "dd56",
+          "available": true,
+          "bank": "01",
+          "kind": "byte_range",
+          "symbol": "wOTPartySpecies",
+          "values": [
+            168,
+            73,
+            89,
+            34,
+            197,
+            169,
+            255
+          ],
+          "width": 7
+        }
       },
       "source": {
         "branch_symbol": "BossAI_ApplyMoveModel.reserve_ghost_no",
@@ -644,7 +789,7 @@
         "dynamic_branch_legal_inputs": [
           "wOTPartyCount",
           "wOTPartySpecies",
-          "wOTPartyMonHP",
+          "wOTPartyMon1HP",
           "BaseData"
         ],
         "full_symbol": "BossAI_ApplyMoveModel.BossHasAvailableReserveGhost",
