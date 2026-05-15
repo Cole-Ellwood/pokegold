@@ -312,6 +312,8 @@ class SymbolIndex:
         targets: list[HookTarget] = []
         names: dict[str, tuple[str, str]] = {}
         for name in self.rule_by_full_symbol:
+            if not is_executable_hook_label(name):
+                continue
             names[name] = ("rule", "")
         for name, operation in SCORE_HELPERS.items():
             names[name] = ("score_helper", operation)
@@ -1529,6 +1531,13 @@ def full_symbol_for_rule(rule: dict[str, Any]) -> str:
             return ""
         return f"{rule['parent_label']}{label}"
     return label
+
+
+def is_executable_hook_label(full_symbol: str) -> bool:
+    label = full_symbol.rsplit(".", 1)[-1]
+    if label.startswith("BossAI") and not label.startswith("BossAI_"):
+        return False
+    return True
 
 
 def nearest_name(items: list[tuple[int, str]], address: int) -> str:

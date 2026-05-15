@@ -10,6 +10,7 @@ from tools.boss_ai_debugger.rom_contribution_trace import (
     format_rom_contribution_trace,
     parse_memory_patch,
     summarize_rom_contribution_trace,
+    SymbolIndex,
 )
 from tools.trace.runtime import Symbol
 
@@ -307,6 +308,36 @@ class RomContributionTraceTests(unittest.TestCase):
         self.assertEqual(tracer.predicate_branch_entries, [])
         self.assertEqual(tracer.frames, [])
         self.assertEqual(tracer.memory_patches[0].value, 2)
+
+    def test_hook_targets_skip_static_boss_ai_tables(self) -> None:
+        rule_map = {
+            "rules": [
+                {
+                    "rule_id": "move.boss_airisky_effects",
+                    "source_label": "BossAIRiskyEffects",
+                    "classification": "internal",
+                    "public_reads": [],
+                },
+                {
+                    "rule_id": "move.apply_move_model",
+                    "source_label": "BossAI_ApplyMoveModel",
+                    "classification": "platform_boundary",
+                    "public_reads": [],
+                },
+            ]
+        }
+        index = SymbolIndex(
+            {
+                "BossAIRiskyEffects": Symbol(0x0E, 0x724F),
+                "BossAI_ApplyMoveModel": Symbol(0x0E, 0x5000),
+            },
+            rule_map,
+        )
+
+        hook_symbols = {target.full_symbol for target in index.hook_targets()}
+
+        self.assertNotIn("BossAIRiskyEffects", hook_symbols)
+        self.assertIn("BossAI_ApplyMoveModel", hook_symbols)
 
     def test_format_marks_changed_events(self) -> None:
         text = format_rom_contribution_trace(
