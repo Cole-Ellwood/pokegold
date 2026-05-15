@@ -142,6 +142,7 @@ class RomContributionTracer:
         self.frames: list[RuleFrame] = []
         self.pending: PendingScore | None = None
         self.events: list[dict[str, Any]] = []
+        self.rule_entries: list[dict[str, Any]] = []
 
     def handle_hook(self, targets: list[HookTarget]) -> None:
         for target in sorted(targets, key=hook_order):
@@ -164,6 +165,15 @@ class RomContributionTracer:
             self.frames[-1] = frame
         else:
             self.frames.append(frame)
+        self.rule_entries.append(
+            {
+                "index": len(self.rule_entries) + 1,
+                "event_type": "rule_enter",
+                "sp": f"{sp:04x}",
+                "candidate": self.active_score_candidate(),
+                "source": self.source_for_rule_entry(target, rule),
+            }
+        )
 
     def handle_score_helper(self, target: HookTarget) -> None:
         self.close_pending(trigger=target.full_symbol)
@@ -252,11 +262,42 @@ class RomContributionTracer:
             "full_symbol": full_symbol,
             "classification": rule.get("classification", "") if rule else "",
             "public_reads": rule.get("public_reads", []) if rule else [],
+            "static_public_read_hints": rule.get("public_reads", []) if rule else [],
             "callsite_symbol": callsite_symbol,
             "callsite_rule_symbol": callsite_rule_symbol,
             "return_address": f"{return_address:04x}",
             "hook_bank": f"{target.bank:02x}",
         }
+
+    def source_for_rule_entry(
+        self,
+        target: HookTarget,
+        rule: dict[str, Any],
+    ) -> dict[str, Any]:
+        return {
+            "rule_id": rule.get("rule_id", ""),
+            "source_label": rule.get("source_label", ""),
+            "full_symbol": target.full_symbol,
+            "classification": rule.get("classification", ""),
+            "public_reads": rule.get("public_reads", []),
+            "static_public_read_hints": rule.get("public_reads", []),
+            "hook_bank": f"{target.bank:02x}",
+            "hook_address": f"{target.address:04x}",
+        }
+
+    def active_score_candidate(self) -> dict[str, Any]:
+        if "wBossAIScorePtr" not in self.symbols:
+            return unknown_candidate()
+        try:
+            symbol = self.symbols["wBossAIScorePtr"]
+            high = trace_runtime.read_byte(self.pyboy, symbol)
+            low = trace_runtime.read_byte(
+                self.pyboy,
+                capture.Symbol(symbol.bank, symbol.address + 1),
+            )
+        except Exception:
+            return unknown_candidate()
+        return self.candidate_for_score_pointer((high << 8) | low)
 
     def candidate_for_score_pointer(self, pointer: int) -> dict[str, Any]:
         base = self.symbols["wEnemyAIMoveScores"]
@@ -272,11 +313,8 @@ class RomContributionTracer:
                 "move_name": self.move_names.get(move_id, f"#{move_id:02x}"),
             }
         return {
-            "kind": "unknown_score_pointer",
-            "slot_index": -1,
-            "slot": 0,
-            "move_id": 0,
-            "move_name": "",
+            **unknown_candidate(),
+            "score_pointer": f"{pointer:04x}",
         }
 
     def stack_return_address(self) -> int:
@@ -348,6 +386,7 @@ def run_rom_contribution_trace(
             basis=basis,
             values=final_values,
             events=tracer.events,
+            rule_entries=tracer.rule_entries,
             move_names=move_names,
         )
     finally:
@@ -437,6 +476,7 @@ def run_rom_contribution_trace_for_route(
             basis=basis,
             values=values,
             events=tracer.events,
+            rule_entries=tracer.rule_entries,
             move_names=move_names,
         )
         report["boss_route"] = route.capture_id
@@ -538,9 +578,13 @@ def build_report(
     basis: dict[str, str],
     values: dict[str, list[int]],
     events: list[dict[str, Any]],
+    rule_entries: list[dict[str, Any]],
     move_names: dict[int, str],
 ) -> dict[str, Any]:
     changed = [event for event in events if event["changed"]]
+    executed_rule_ids = sorted(
+        rule_ids_from_events(rule_entries) | rule_ids_from_events(events)
+    )
     return {
         "schema_version": 1,
         "source": "trace_rom_pyboy_hooks",
@@ -558,13 +602,17 @@ def build_report(
         "move_scores": values["wEnemyAIMoveScores"],
         "pre_model_scores": values["wBossAITracePreModelScores"],
         "post_model_scores": values["wBossAITracePostModelScores"],
+        "rule_entry_count": len(rule_entries),
+        "executed_rule_count": len(executed_rule_ids),
+        "executed_rule_ids": executed_rule_ids,
+        "rule_entries": rule_entries,
         "event_count": len(events),
         "changed_event_count": len(changed),
         "events": events,
         "known_limits": [
             "Trace events are captured by PyBoy execution hooks, not by an in-ROM WRAM ring buffer.",
-            "This records score helper deltas and source labels, but not every predicate false path yet.",
-            "Public-read evidence is sourced from the rule map hints, not dynamic memory-read slicing yet.",
+            "Score events record score helper deltas and source labels, while rule entries record dynamic rule-label execution.",
+            "Public-read evidence is static rule-map hints, not dynamic memory-read slicing yet.",
         ],
     }
 
@@ -575,7 +623,8 @@ def format_rom_contribution_trace(report: dict[str, Any], *, limit: int = 80) ->
         "Boss AI ROM contribution trace",
         (
             f"source={report['source']} save_state={report['save_state']} "
-            f"events={report['event_count']} changed={report['changed_event_count']}"
+            f"events={report['event_count']} changed={report['changed_event_count']} "
+            f"rule_entries={report.get('rule_entry_count', 0)}"
         ),
         (
             f"chosen={chosen['move_name']}#{chosen['move_id']} "
@@ -608,6 +657,20 @@ def format_rom_contribution_trace(report: dict[str, Any], *, limit: int = 80) ->
         )
     if len(report["events"]) > limit:
         lines.append(f"  ... {len(report['events']) - limit} more")
+    rule_entries = report.get("rule_entries", [])
+    if rule_entries:
+        lines.append("")
+        lines.append(f"First {min(limit, len(rule_entries))} rule entries:")
+        for entry in rule_entries[:limit]:
+            source = entry.get("source", {})
+            candidate = entry.get("candidate", {})
+            lines.append(
+                f"  {entry['index']:03d} "
+                f"slot={candidate.get('slot_index', -1)} "
+                f"{source.get('rule_id') or source.get('full_symbol', '')}"
+            )
+        if len(rule_entries) > limit:
+            lines.append(f"  ... {len(rule_entries) - limit} more")
     lines.append("")
     lines.append("Known limits:")
     for limit_text in report["known_limits"]:
@@ -642,13 +705,21 @@ def summarize_rom_contribution_trace(
     artifact_path: Path | None = None,
 ) -> dict[str, Any]:
     events = [event for event in report.get("events", []) if isinstance(event, dict)]
+    rule_entries = [
+        event for event in report.get("rule_entries", []) if isinstance(event, dict)
+    ]
     changed_events = [event for event in events if event.get("changed")]
     covered_rule_ids = sorted(rule_ids_from_events(events))
     changed_rule_ids = sorted(rule_ids_from_events(changed_events))
+    executed_rule_ids = sorted(rule_ids_from_events(rule_entries) | set(covered_rule_ids))
     operation_counts = count_event_values(events, "operation")
     changed_operation_counts = count_event_values(changed_events, "operation")
     classification_counts = count_source_values(events, "classification")
     changed_classification_counts = count_source_values(changed_events, "classification")
+    executed_classification_counts = count_source_values(
+        [*rule_entries, *events],
+        "classification",
+    )
     result = {
         "available": True,
         "source": report.get("source", ""),
@@ -662,15 +733,20 @@ def summarize_rom_contribution_trace(
         ),
         "event_count": int(report.get("event_count", len(events))),
         "changed_event_count": int(report.get("changed_event_count", len(changed_events))),
+        "rule_entry_count": int(report.get("rule_entry_count", len(rule_entries))),
+        "executed_rule_count": len(executed_rule_ids),
         "covered_rule_count": len(covered_rule_ids),
         "changed_rule_count": len(changed_rule_ids),
+        "executed_rule_ids": executed_rule_ids,
         "covered_rule_ids": covered_rule_ids,
         "changed_rule_ids": changed_rule_ids,
         "operation_counts": operation_counts,
         "changed_operation_counts": changed_operation_counts,
+        "executed_classification_counts": executed_classification_counts,
         "classification_counts": classification_counts,
         "changed_classification_counts": changed_classification_counts,
         "unmapped_event_count": count_unmapped_events(events),
+        "unmapped_rule_entry_count": count_unmapped_events(rule_entries),
         "changed_unmapped_event_count": count_unmapped_events(changed_events),
         "candidate_count": len(candidate_keys(events)),
         "changed_candidate_count": len(candidate_keys(changed_events)),
@@ -695,15 +771,20 @@ def summarize_rom_contribution_trace_paths(paths: list[Path]) -> dict[str, Any]:
             "artifact_count": 0,
             "event_count": 0,
             "changed_event_count": 0,
+            "rule_entry_count": 0,
+            "executed_rule_count": 0,
             "covered_rule_count": 0,
             "changed_rule_count": 0,
+            "executed_rule_ids": [],
             "covered_rule_ids": [],
             "changed_rule_ids": [],
             "operation_counts": {},
             "changed_operation_counts": {},
+            "executed_classification_counts": {},
             "classification_counts": {},
             "changed_classification_counts": {},
             "unmapped_event_count": 0,
+            "unmapped_rule_entry_count": 0,
             "changed_unmapped_event_count": 0,
             "candidate_count": 0,
             "changed_candidate_count": 0,
@@ -724,6 +805,13 @@ def summarize_rom_contribution_trace_paths(paths: list[Path]) -> dict[str, Any]:
             for rule_id in summary["changed_rule_ids"]
         }
     )
+    executed_rule_ids = sorted(
+        {
+            rule_id
+            for summary in loaded
+            for rule_id in summary["executed_rule_ids"]
+        }
+    )
     return {
         "available": True,
         "artifact_count": len(loaded),
@@ -731,8 +819,11 @@ def summarize_rom_contribution_trace_paths(paths: list[Path]) -> dict[str, Any]:
         "changed_event_count": sum(
             int(summary["changed_event_count"]) for summary in loaded
         ),
+        "rule_entry_count": sum(int(summary["rule_entry_count"]) for summary in loaded),
+        "executed_rule_count": len(executed_rule_ids),
         "covered_rule_count": len(covered_rule_ids),
         "changed_rule_count": len(changed_rule_ids),
+        "executed_rule_ids": executed_rule_ids,
         "covered_rule_ids": covered_rule_ids,
         "changed_rule_ids": changed_rule_ids,
         "operation_counts": merge_counts(
@@ -740,6 +831,9 @@ def summarize_rom_contribution_trace_paths(paths: list[Path]) -> dict[str, Any]:
         ),
         "changed_operation_counts": merge_counts(
             summary["changed_operation_counts"] for summary in loaded
+        ),
+        "executed_classification_counts": merge_counts(
+            summary["executed_classification_counts"] for summary in loaded
         ),
         "classification_counts": merge_counts(
             summary["classification_counts"] for summary in loaded
@@ -749,6 +843,9 @@ def summarize_rom_contribution_trace_paths(paths: list[Path]) -> dict[str, Any]:
         ),
         "unmapped_event_count": sum(
             int(summary["unmapped_event_count"]) for summary in loaded
+        ),
+        "unmapped_rule_entry_count": sum(
+            int(summary["unmapped_rule_entry_count"]) for summary in loaded
         ),
         "changed_unmapped_event_count": sum(
             int(summary["changed_unmapped_event_count"]) for summary in loaded
@@ -837,6 +934,16 @@ def candidate_keys(events: list[dict[str, Any]]) -> set[tuple[str, int, int]]:
             )
         )
     return keys
+
+
+def unknown_candidate() -> dict[str, Any]:
+    return {
+        "kind": "unknown_score_pointer",
+        "slot_index": -1,
+        "slot": 0,
+        "move_id": 0,
+        "move_name": "",
+    }
 
 
 def count_event_values(events: list[dict[str, Any]], key: str) -> dict[str, int]:

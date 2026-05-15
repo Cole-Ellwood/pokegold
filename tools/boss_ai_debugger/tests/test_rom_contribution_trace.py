@@ -108,9 +108,52 @@ class RomContributionTraceTests(unittest.TestCase):
         self.assertEqual(event["candidate"]["slot_index"], 0)
         self.assertEqual(event["candidate"]["move_name"], "SURF")
         self.assertEqual(event["source"]["rule_id"], "move.apply_test_bias")
+        self.assertEqual(
+            event["source"]["static_public_read_hints"],
+            ["wPlayerUsedMoves"],
+        )
         self.assertEqual(event["score_before"], 20)
         self.assertEqual(event["score_after"], 15)
         self.assertEqual(event["delta"], -5)
+
+    def test_rule_hook_records_dynamic_rule_entry_separate_from_score_events(self) -> None:
+        pyboy = FakePyBoy()
+        pyboy.memory[1, 0xD768] = 0xD0
+        pyboy.memory[1, 0xD769] = 0xD3
+        pyboy.memory[1, 0xD0D3] = 20
+        pyboy.memory[1, 0xD100] = 57
+        pyboy.register_file.SP = 0xFEF0
+        tracer = RomContributionTracer(
+            pyboy,
+            {
+                "wEnemyAIMoveScores": Symbol(1, 0xD0D3),
+                "wEnemyMonMoves": Symbol(1, 0xD100),
+                "wBossAIScorePtr": Symbol(1, 0xD768),
+            },
+            FakeSymbolIndex(),
+            {57: "SURF"},
+        )
+
+        tracer.handle_rule(
+            HookTarget(
+                kind="rule",
+                full_symbol="BossAI_ApplyMoveModel.ApplyTestBias",
+                operation="",
+                bank=0x0E,
+                address=0x5100,
+            )
+        )
+
+        self.assertEqual(tracer.events, [])
+        self.assertEqual(len(tracer.rule_entries), 1)
+        entry = tracer.rule_entries[0]
+        self.assertEqual(entry["event_type"], "rule_enter")
+        self.assertEqual(entry["candidate"]["move_name"], "SURF")
+        self.assertEqual(entry["source"]["rule_id"], "move.apply_test_bias")
+        self.assertEqual(
+            entry["source"]["static_public_read_hints"],
+            ["wPlayerUsedMoves"],
+        )
 
     def test_format_marks_changed_events(self) -> None:
         text = format_rom_contribution_trace(
@@ -123,6 +166,15 @@ class RomContributionTraceTests(unittest.TestCase):
                 "pre_model_scores": [20, 20, 20, 20],
                 "post_model_scores": [20, 20, 20, 20],
                 "move_scores": [15, 20, 20, 20],
+                "rule_entry_count": 1,
+                "rule_entries": [
+                    {
+                        "index": 1,
+                        "event_type": "rule_enter",
+                        "candidate": {"slot_index": 0, "move_name": "SURF"},
+                        "source": {"rule_id": "move.apply_test_bias"},
+                    }
+                ],
                 "events": [
                     {
                         "index": 1,
@@ -145,6 +197,8 @@ class RomContributionTraceTests(unittest.TestCase):
 
         self.assertIn("* 001 slot=0 SURF encourage_score a=5 20->15 delta=-5", text)
         self.assertIn("move.apply_test_bias", text)
+        self.assertIn("rule_entries=1", text)
+        self.assertIn("First 1 rule entries:", text)
 
     def test_summary_counts_changed_and_executed_rules_separately(self) -> None:
         summary = summarize_rom_contribution_trace(
@@ -153,8 +207,17 @@ class RomContributionTraceTests(unittest.TestCase):
                 "save_state": "route:unit",
                 "event_count": 2,
                 "changed_event_count": 1,
+                "rule_entry_count": 1,
                 "chosen": {"move_name": "SURF", "move_id": 57, "slot_index": 0},
                 "trace_basis": {"trace_rom_sha256": "ROM", "trace_symbols_sha256": "SYM"},
+                "rule_entries": [
+                    {
+                        "source": {
+                            "rule_id": "move.rule_entry_only",
+                            "classification": "public_info",
+                        }
+                    }
+                ],
                 "events": [
                     {
                         "changed": True,
@@ -181,8 +244,14 @@ class RomContributionTraceTests(unittest.TestCase):
 
         self.assertEqual(summary["event_count"], 2)
         self.assertEqual(summary["changed_event_count"], 1)
+        self.assertEqual(summary["rule_entry_count"], 1)
         self.assertEqual(summary["covered_rule_ids"], ["move.changed_rule", "move.executed_only"])
+        self.assertEqual(
+            summary["executed_rule_ids"],
+            ["move.changed_rule", "move.executed_only", "move.rule_entry_only"],
+        )
         self.assertEqual(summary["changed_rule_ids"], ["move.changed_rule"])
+        self.assertEqual(summary["executed_rule_count"], 3)
         self.assertEqual(summary["operation_counts"], {"discourage_score": 1, "encourage_score": 1})
         self.assertEqual(summary["changed_operation_counts"], {"encourage_score": 1})
 

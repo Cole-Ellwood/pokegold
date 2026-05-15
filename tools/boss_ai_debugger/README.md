@@ -300,10 +300,13 @@ python -m tools.boss_ai_debugger rom-contribution-trace --boss-route clair --jso
 source labels and score mutation helpers, then drives the existing real
 map/script boss route until the first move choice. It records candidate slot,
 source rule id, score before/after, signed delta, helper operation, callsite,
-and the pinned trace ROM/symbol hashes. Save-state mode also exists, but it only
-captures score events if the supplied state is before scoring; the existing
-`pre_choice_state` files are already after move scoring and mainly exercise the
-selector.
+dynamic rule-label entries, and the pinned trace ROM/symbol hashes. Score
+events and rule entries are separate: a rule entry proves the label executed,
+while a score event proves a score mutation. Public-read evidence remains static
+rule-map hints, not dynamic memory-read slicing. Save-state mode also exists,
+but it only captures score events if the supplied state is before scoring; the
+existing `pre_choice_state` files are already after move scoring and mainly
+exercise the selector.
 
 Materialize generated final score bytes into the trace ROM selector:
 

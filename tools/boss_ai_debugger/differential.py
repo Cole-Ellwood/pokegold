@@ -227,7 +227,8 @@ def format_differential_report(report: dict[str, Any], *, limit: int = 20) -> st
             "rom contribution: "
             f"artifacts={report['rom_contribution_summary']['artifact_count']} "
             f"events={report['rom_contribution_summary']['event_count']} "
-            f"rules={report['rom_contribution_summary']['covered_rule_count']}"
+            f"rules={report['rom_contribution_summary']['covered_rule_count']} "
+            f"executed_rules={report['rom_contribution_summary']['executed_rule_count']}"
         ),
         (
             "contribution diff: "

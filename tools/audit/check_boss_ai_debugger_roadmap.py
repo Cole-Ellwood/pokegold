@@ -214,6 +214,8 @@ def roadmap_items(evidence: dict[str, Any]) -> list[dict[str, Any]]:
                     f"{coverage['rule_map']['rom_hook_score_trace_available']}"
                 ),
                 f"trace_events={coverage['rule_map']['trace_event_count']}",
+                f"trace_rule_entries={coverage['rule_map']['trace_rule_entry_count']}",
+                f"trace_executed_rules={coverage['rule_map']['trace_executed_rule_count']}",
                 f"trace_covered_rules={coverage['rule_map']['trace_covered_rule_count']}",
                 (
                     "full_trace_rule_coverage="
@@ -651,6 +653,8 @@ def evidence_summary(evidence: dict[str, Any]) -> dict[str, Any]:
         "rule_map_error_count": len(evidence["rule_map_errors"]),
         "mapped_rule_count": coverage["rule_map"]["mapped_rule_count"],
         "trace_covered_rule_count": coverage["rule_map"]["trace_covered_rule_count"],
+        "trace_executed_rule_count": coverage["rule_map"]["trace_executed_rule_count"],
+        "trace_rule_entry_count": coverage["rule_map"]["trace_rule_entry_count"],
         "uncovered_rule_count": coverage["uncovered_rules"]["uncovered_rule_count"],
         "full_trace_rule_coverage_available": coverage["rule_map"][
             "full_trace_rule_coverage_available"

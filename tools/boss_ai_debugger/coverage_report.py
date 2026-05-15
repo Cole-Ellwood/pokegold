@@ -110,8 +110,11 @@ def rule_coverage_summary(
         "trace_artifact_count": contribution_summary["artifact_count"],
         "trace_event_count": contribution_summary["event_count"],
         "trace_changed_event_count": contribution_summary["changed_event_count"],
+        "trace_rule_entry_count": contribution_summary["rule_entry_count"],
+        "trace_executed_rule_count": contribution_summary["executed_rule_count"],
         "trace_covered_rule_count": contribution_summary["covered_rule_count"],
         "trace_changed_rule_count": contribution_summary["changed_rule_count"],
+        "trace_executed_rule_ids": contribution_summary["executed_rule_ids"],
         "trace_covered_rule_ids": contribution_summary["covered_rule_ids"],
         "trace_changed_rule_ids": contribution_summary["changed_rule_ids"],
     }
@@ -292,7 +295,8 @@ def format_coverage_report(data: dict[str, Any]) -> str:
             (
                 f"mapped_rules={rule_map['mapped_rule_count']} "
                 f"full_trace_rule_coverage={rule_map['full_trace_rule_coverage_available']} "
-                f"score_trace_rules={rule_map['trace_covered_rule_count']}"
+                f"score_trace_rules={rule_map['trace_covered_rule_count']} "
+                f"executed_rules={rule_map['trace_executed_rule_count']}"
             ),
             (
                 f"policy_cards={mastery['policy_card_count']} "
