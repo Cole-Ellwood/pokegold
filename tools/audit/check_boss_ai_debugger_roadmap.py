@@ -1026,7 +1026,10 @@ def maybe_run_score_materialization(
         "available": (
             report["checked_count"] > 0
             and report["error_count"] == 0
+            and report["score_bytes_match_count"] == report["checked_count"]
+            and report["selector_top_match_count"] == report["checked_count"]
             and report["contribution_matched_count"] > 0
+            and report["contribution_mismatch_count"] == 0
             and report["hook_equivalence_checked_count"] > 0
             and report["hook_equivalence_mismatch_count"] == 0
         ),
@@ -1051,6 +1054,8 @@ def score_materialization_status(evidence: dict[str, Any]) -> str:
         return "partial"
     if data.get("available"):
         return "complete"
+    if int(data.get("checked_count", 0)) > 0:
+        return "partial"
     return "missing"
 
 
@@ -1058,8 +1063,6 @@ def score_materialization_evidence(evidence: dict[str, Any]) -> str:
     data = evidence["score_materialization"]
     if not data.get("checked"):
         return str(data.get("reason", "score materialization not checked"))
-    if not data.get("available"):
-        return f"score materialization unavailable: {data.get('reason', '')}"
     return (
         f"score_checked={data['checked_count']} "
         f"errors={data['error_count']} "
@@ -1081,9 +1084,28 @@ def score_materialization_gaps(evidence: dict[str, Any]) -> list[str]:
                 "use --check-rom-score-materialization when PyBoy and states are available."
             )
         ]
+    gaps = []
+    checked = int(data.get("checked_count", 0))
     if data.get("available"):
-        return []
-    gaps = [str(data.get("reason", "ROM score materialization failed"))]
+        return gaps
+    reason = str(data.get("reason", ""))
+    if reason:
+        gaps.append(reason)
+    if checked and int(data.get("score_bytes_match_count", 0)) != checked:
+        gaps.append(
+            "ROM score materialization score-byte agreement is below 100%: "
+            f"{int(data.get('score_bytes_match_count', 0))} / {checked}."
+        )
+    if checked and int(data.get("selector_top_match_count", 0)) != checked:
+        gaps.append(
+            "ROM score materialization selector-top agreement is below 100%: "
+            f"{int(data.get('selector_top_match_count', 0))} / {checked}."
+        )
+    if int(data.get("contribution_mismatch_count", 0)) > 0:
+        gaps.append(
+            "ROM/Python score contribution materialization has "
+            f"{int(data.get('contribution_mismatch_count', 0))} mismatch(es)."
+        )
     if data.get("hook_equivalence_checked_count", 0) == 0:
         gaps.append("ROM contribution hook equivalence was not checked.")
     if data.get("hook_equivalence_mismatch_count", 0) > 0:

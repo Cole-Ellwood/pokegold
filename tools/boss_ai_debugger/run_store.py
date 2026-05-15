@@ -332,6 +332,12 @@ def run_changed_ai_suite(
         "rom_score_materialization_summary": {
             "checked_count": rom_score_materialization.get("checked_count", 0),
             "error_count": rom_score_materialization.get("error_count", 0),
+            "score_bytes_match_count": rom_score_materialization.get(
+                "score_bytes_match_count", 0
+            ),
+            "selector_top_match_count": rom_score_materialization.get(
+                "selector_top_match_count", 0
+            ),
             "contribution_matched_count": rom_score_materialization.get(
                 "contribution_matched_count", 0
             ),
@@ -736,6 +742,14 @@ def changed_ai_metric_deltas(
         ),
         "trace_replay_failure_count": ("trace_replay_summary", "failure_count"),
         "rom_score_error_count": ("rom_score_materialization_summary", "error_count"),
+        "rom_score_bytes_match_count": (
+            "rom_score_materialization_summary",
+            "score_bytes_match_count",
+        ),
+        "rom_score_selector_top_match_count": (
+            "rom_score_materialization_summary",
+            "selector_top_match_count",
+        ),
         "rom_score_contribution_mismatch_count": (
             "rom_score_materialization_summary",
             "contribution_mismatch_count",

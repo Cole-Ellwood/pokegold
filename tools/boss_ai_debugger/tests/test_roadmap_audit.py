@@ -6,7 +6,9 @@ from tools.audit.check_boss_ai_debugger_roadmap import (
     build_roadmap_audit,
     coverage_guided_status,
     differential_status,
+    score_materialization_gaps,
     score_materialization_scenarios,
+    score_materialization_status,
 )
 
 
@@ -74,6 +76,24 @@ class RoadmapAuditTests(unittest.TestCase):
         selected = score_materialization_scenarios(scenarios, limit=1)
 
         self.assertEqual(selected[0]["id"], "target")
+
+    def test_score_materialization_status_requires_exact_score_agreement(self) -> None:
+        evidence = {
+            "score_materialization": {
+                "checked": True,
+                "available": False,
+                "checked_count": 3,
+                "error_count": 0,
+                "score_bytes_match_count": 2,
+                "selector_top_match_count": 3,
+                "contribution_mismatch_count": 0,
+                "hook_equivalence_checked_count": 3,
+                "hook_equivalence_mismatch_count": 0,
+            }
+        }
+
+        self.assertEqual(score_materialization_status(evidence), "partial")
+        self.assertIn("score-byte agreement", "\n".join(score_materialization_gaps(evidence)))
 
 
 if __name__ == "__main__":
