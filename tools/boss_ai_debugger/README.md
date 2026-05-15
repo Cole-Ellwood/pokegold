@@ -212,6 +212,19 @@ is expected to report `ready=False` until ROM-materialized generated scenarios,
 full predicate/read provenance, reachable rule coverage, and the final
 performance targets are proven.
 
+Run the combined definition-of-done gate:
+
+```powershell
+python tools\audit\check_boss_ai_debugger_done.py
+```
+
+The done gate runs debugger tests, no-cheat/gating/trace invariants, live
+capture ledger, exact selector replay, pre-choice replay, foundation and
+performance audits, docs navigation, and the roadmap audit with ROM selector
+and score materialization enabled. It writes
+`.local\tmp\boss_ai_debugger\done_gate.json` and exits nonzero until every
+roadmap blocker is actually closed.
+
 Run metamorphic checks:
 
 ```powershell

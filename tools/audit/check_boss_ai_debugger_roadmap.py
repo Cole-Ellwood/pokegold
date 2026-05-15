@@ -42,6 +42,7 @@ from tools.boss_ai_debugger.state_schema import (
 
 
 REPORT_PATH = ROOT / ".local" / "tmp" / "boss_ai_debugger" / "roadmap_audit.json"
+DONE_GATE_PATH = ROOT / "tools" / "audit" / "check_boss_ai_debugger_done.py"
 MIN_SCENARIOS_PER_MINUTE_DONE = 1_000_000
 MIN_REVIEWABLE_PER_MINUTE_DONE = 1_000_000
 MIN_ROM_BACKED_REPLAY_PER_MINUTE_DONE = 10_000
@@ -472,21 +473,19 @@ def roadmap_items(evidence: dict[str, Any]) -> list[dict[str, Any]]:
         status_item(
             "final_one_command_definition_of_done",
             "One-command final definition of done",
-            status="partial",
+            status=done_gate_status(evidence),
             evidence=[
-                "foundation and changed-AI suite commands exist",
-                "full score waterfalls and ROM-backed generated diff are not complete",
-            ],
-            gaps=[
+                "tools/audit/check_boss_ai_debugger_done.py runs the combined gate",
+                f"done_gate_exists={DONE_GATE_PATH.exists()}",
                 (
-                    "Combine exact replay, full score waterfalls, rule coverage diff, "
-                    "targeted generated stress, hidden-info checks, minimized "
-                    "mismatches, counterfactuals, mastery refs, top review queue, "
-                    "behavior diff, and reproducible metadata into one green gate."
-                )
+                    "roadmap_remaining_blockers="
+                    f"{len(roadmap_remaining_blockers(evidence))}"
+                ),
             ],
+            gaps=done_gate_gaps(evidence),
             refs=[
-                "docs/boss_ai_debugger_state_of_art_implementation_plan_2026-05-15.md"
+                "tools/audit/check_boss_ai_debugger_done.py",
+                "docs/boss_ai_debugger_state_of_art_implementation_plan_2026-05-15.md",
             ],
         ),
     ]
@@ -881,6 +880,41 @@ def multi_turn_route_gaps(evidence: dict[str, Any]) -> list[str]:
             + ", ".join(missing)
         )
     return gaps
+
+
+def done_gate_status(evidence: dict[str, Any]) -> str:
+    if not DONE_GATE_PATH.exists():
+        return "missing"
+    if roadmap_remaining_blockers(evidence):
+        return "partial"
+    return "complete"
+
+
+def done_gate_gaps(evidence: dict[str, Any]) -> list[str]:
+    if not DONE_GATE_PATH.exists():
+        return ["One-command Boss AI debugger done gate is not implemented."]
+    blockers = roadmap_remaining_blockers(evidence)
+    if not blockers:
+        return []
+    return [
+        "The one-command done gate exists, but it still reports roadmap blockers: "
+        + "; ".join(blockers[:3])
+    ]
+
+
+def roadmap_remaining_blockers(evidence: dict[str, Any]) -> list[str]:
+    blockers = []
+    coverage = evidence["coverage"]
+    differential = evidence["differential"]
+    if not coverage["rule_map"]["full_trace_rule_coverage_available"]:
+        blockers.append("full score contribution coverage is still partial")
+    if coverage["uncovered_rules"]["uncovered_rule_count"]:
+        blockers.append("rule-id coverage loop is not closed")
+    if differential["contribution_comparison"]["mismatch_count"]:
+        blockers.append("ROM/Python contribution mismatches remain")
+    if differential["contribution_comparison"]["matched_trace_count"] == 0:
+        blockers.append("no matched ROM/Python contribution traces")
+    return blockers
 
 
 def summarized_score_materialization(data: dict[str, Any]) -> dict[str, Any]:
