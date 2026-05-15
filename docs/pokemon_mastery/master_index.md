@@ -1,16 +1,19 @@
 # Pokemon Mastery Master Index
 
 Purpose: route future study and live-advice work to the right artifact quickly.
-This is the table of contents for the Pokemon mastery docs, not a replacement
-for the cookbook or the detailed subfolder indexes.
+Fresh unseen move choice starts from `live_core.md`, not the archive. This is
+the table of contents for the Pokemon mastery docs, not a replacement for the
+cookbook or the detailed subfolder indexes.
 
 ## Start Here
 
 | Need | Open |
 | --- | --- |
-| Current compact context packet | `active_context.md` |
+| Fresh unseen move-choice core | `live_core.md` |
+| Tiny live heuristic cards | `heuristic_core/README.md` |
+| Current compact status packet | `active_context.md` |
 | Context-management plan and vote record | `context_management_plan.md` |
-| Active policy cards | `policy_cards/README.md` |
+| Expanded reference policy cards | `policy_cards/README.md` |
 | Current learning continuation prompt | `continue_learning_1500_elo_prompt.md` |
 | Goal recreation prompt | `goal_restart_prompt.md` |
 | Study measurement loop | `measurement_minigoal_2026-05.md` |
@@ -26,10 +29,11 @@ for the cookbook or the detailed subfolder indexes.
 
 | Task | First file | Then check |
 | --- | --- | --- |
-| Give live turn advice | `active_context.md`, then `boss_turn_advice_template.md` | matching `boss_route_maps/*_turn1_route_sheet.md`, one relevant `policy_cards/*.md`, local mechanics docs |
+| Fresh unseen replay move choice | `live_core.md`, current prompt | at most one `heuristic_core/*.md`; scoring rules only after answers are frozen |
+| Give live turn advice | `live_core.md`, then `boss_turn_advice_template.md` | matching `boss_route_maps/*_turn1_route_sheet.md`, at most one tiny heuristic, local mechanics docs |
 | Plan a boss before turn 1 | `pre_battle_route_sheet.md` | `boss_route_maps/README.md`, matching `worked_examples/*_pre_battle_route_sheet.md` |
-| Study a reusable decision recipe | `active_context.md`, then `policy_cards/README.md` | `cookbook.md`, `source_to_policy_ledger.md`, `worked_examples/README.md` |
-| Practice exact move choice | `worked_examples/live_turn_drills.md` | `paused_turn_atlas.md`, `measurement_minigoal_2026-05.md` |
+| Study a reusable decision recipe | `heuristic_core/migration_map.md`, then `policy_cards/README.md` | `cookbook.md`, `source_to_policy_ledger.md`, `worked_examples/README.md` |
+| Practice exact move choice | `live_core.md`, then `replay_turn_pause_protocol.md` | choose prompts from `paused_turn_atlas.md` or `worked_examples/live_turn_drills.md` before answering, not during answer selection |
 | Review a long expert battle | `active_context.md`, then `replay_turn_pause_protocol.md` | `reviews/`; add/update `source_to_policy_ledger.md`, `paused_turn_atlas.md`, `worked_examples/` only if the lesson is reusable |
 | Take an adjacent-domain tangent | `cross_domain_autonomy_policy.md` | create STP/PTA/helper/fixture/reject note, then test against a Pokemon score |
 | Validate romhack mechanics | `romhack_deltas/` | `mechanics_fixtures/`, local source/debugger/emulator evidence |
@@ -42,9 +46,11 @@ for the cookbook or the detailed subfolder indexes.
 
 | Area | Role | Keep Policy |
 | --- | --- | --- |
-| `active_context.md` | Compact current packet for future work blocks. | Preserve cap. Move details into cards or evidence artifacts when it grows. |
+| `live_core.md` | Tiny pre-freeze move-choice entrypoint. | Keep under 80 lines. Do not turn it into an archive. |
+| `heuristic_core/` | Tiny live heuristics plus migration map. | Keep to 6-8 small cards. Map old lessons instead of copying long notes. |
+| `active_context.md` | Compact status and routing packet for future work blocks. | Preserve cap. Move decision details into `heuristic_core/` or archive evidence. |
 | `context_management_plan.md` | Approved context-management plan and granular vote record. | Preserve as process source; update only after another declared audit. |
-| `policy_cards/` | Compact active decision-boundary cards. | Keep short. Link to evidence instead of copying long replay notes. |
+| `policy_cards/` | Expanded decision-boundary reference and evidence index. | Preserve. Do not load before fresh answer freeze by default. |
 | `cookbook.md` | Canonical concise recipes for battle advice. | Preserve. Edit only to clarify, de-duplicate, or add a battle-tested recipe. |
 | `source_to_policy_ledger.md` | Source lessons compressed into trigger/default/exception/worst-branch entries. | Preserve. It is the trace from expert source to policy. |
 | `paused_turn_atlas.md` | Reviewed positions turned into move-choice prompts. | Preserve. It is practice material, not prose. |
@@ -98,13 +104,14 @@ trying to stop making?"
 
 | Failure mode | Open first | Drill or proof target |
 | --- | --- | --- |
-| Treating hazards as progress before retention/conversion | `cookbook.md`, hazard/spin recipes; `romhack_deltas/spikes_and_rapid_spin.md` | `worked_examples/will_hazard_retention_stress_test.md`, `worked_examples/janine_qwilfish_spikes_arbitration.md` |
-| Letting Rapid Spin erase the route | `mechanics_fixtures/spikes_rapid_spin/README.md`, `romhack_deltas/spikes_rapid_spin_fixture_plan.md` | finish pending fixture items; add a quick-probe scenario |
-| Overclaiming hidden player moves or team slots | `goal_restart_prompt.md`, `external_research_returns/2026-05-14_deep_research_hidden_info_turn_atlas.md` | convert public-only prompts into `paused_turn_atlas.md` |
-| Following a stale plan after reveal, KO, Spin, Rest, or switch | `cookbook.md`, plan-revision recipes | `worked_examples/misty_starmie_meganium_followup_chain.md`, whole-battle ledger drills |
-| Spending a unique answer for generic progress | `worked_examples/check_durability_boss_examples.md`, `worked_examples/primary_to_backup_route_handoff_boss_examples.md` | boss route maps for the relevant fight |
-| Using Explosion or Destiny Bond into the wrong target | `worked_examples/smogtours_451060_delayed_explosion_contract.md`, `worked_examples/smogtours_902742_staged_one_time_trades.md` | `worked_examples/brock_golem_explosion_turn_order_quarantine.md` |
-| Mispricing RestTalk, sleep, or status allocation | `worked_examples/resttalk_branch_pricing_boss_examples.md`, `worked_examples/status_absorber_assignment_boss_examples.md` | `worked_examples/live_turn_drills.md` sleep/status drills |
+| Treating hazards as progress before retention/conversion | `heuristic_core/reset_loop_denial.md` | after scoring, inspect `policy_cards/hazard_loop_spin_window.md` |
+| Letting Rapid Spin erase the route | `heuristic_core/reset_loop_denial.md` | finish pending fixture items; add a quick-probe scenario |
+| Overclaiming hidden player moves or team slots | `heuristic_core/public_info_tiers.md` | convert public-only prompts into `paused_turn_atlas.md` after scoring |
+| Following a stale plan after reveal, KO, Spin, Rest, or switch | `heuristic_core/rescore_after_reveal.md` | postmortem with old policy card or whole-battle ledger drill |
+| Spending a unique answer for generic progress | `heuristic_core/spend_or_save_piece.md` | boss route maps for the relevant fight |
+| Using Explosion or Destiny Bond into the wrong target | `heuristic_core/spend_or_save_piece.md` | postmortem with one-time trade examples |
+| Mispricing RestTalk, sleep, or status allocation | `heuristic_core/reset_loop_denial.md` | after scoring, use sleep/status drills |
+| Naming a branch but not punishing it | `heuristic_core/branch_punish_ranking.md` | next fresh replay should track branch-punish movement |
 | Making type-effectiveness claims from vanilla memory | `romhack_deltas/type_passive_fixture_priorities.md`, `pro_notes/04_type_effectiveness_evidence_firewall.md` | local fixture or source check before advice |
 | Calling simulation win rate proof too early | `boss_sim_readiness_audit_2026-05-13.md`, `boss_sim_validation_protocol.md` | filled real boss worksheet and readiness blockers closed |
 | Producing more notes without proving improvement | `measurement_minigoal_2026-05.md`, `measurement_progress_ledger.csv` | Quick Test 001, then trend rows |

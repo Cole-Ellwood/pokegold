@@ -1,7 +1,7 @@
 # Pokemon Mastery Notebook
 
-Purpose: build a practical cookbook for long-form Pokemon singles advice in
-the Pokemon Gold romhack / Gym Leader Lab setting.
+Purpose: build practical move-choice skill for Pokemon singles advice in the
+Pokemon Gold romhack / Gym Leader Lab setting.
 
 The notebook is not meant to prove mastery by volume. It should help answer
 real turns: what the plan is, what can still win, what can lose immediately,
@@ -12,6 +12,8 @@ which pieces matter, and which move improves a concrete route.
 | File | Role |
 | --- | --- |
 | `active_goal.md` | Operating goal, study cadence, and serious-turn checklist. |
+| `live_core.md` | Tiny pre-freeze entrypoint for fresh unseen move choice. |
+| `heuristic_core/` | Small live heuristic cards and migration map from repeated old lessons. |
 | `continue_learning_1500_elo_prompt.md` | Copy-paste prompt for continuing measured 1500-Elo Pokemon learning work with fresh web checks and local-doc grounding. |
 | `master_index.md` | Top-level table of contents and task router for the mastery docs. |
 | `study_roadmap_2026-05-14.md` | Forward roadmap focused on measured Pokemon decision improvement. |
