@@ -196,6 +196,7 @@ Run the foundation audit:
 ```powershell
 python tools\audit\check_boss_ai_debugger_foundations.py
 python tools\audit\check_boss_ai_debugger_performance.py
+python tools\audit\check_boss_ai_debugger_roadmap.py --allow-incomplete
 ```
 
 This checks current fixture/trace schema validity, stored rule-map freshness,
@@ -203,6 +204,10 @@ generated scenario evaluation, and review-queue accounting. The performance
 audit makes the simulation/review bottleneck explicit: generated scenario
 evaluation must stay above `10000/min`, reviewable checks above `1000/min`, and
 the top review queue must stay below 10% avoidable duplicate lesson spam.
+The roadmap audit is the readiness gate for the full state-of-the-art plan. It
+is expected to report `ready=False` until ROM-materialized generated scenarios,
+full predicate/read provenance, reachable rule coverage, and the final
+performance targets are proven.
 
 Run metamorphic checks:
 
