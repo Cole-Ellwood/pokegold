@@ -5,6 +5,7 @@ Status: local foundation.
 ```powershell
 python -m tools.boss_ai_debugger run-suite --profile changed-ai --count 200 --seed 1
 python -m tools.boss_ai_debugger run-suite --profile changed-ai --refresh-rom-contribution-trace
+python tools\audit\check_boss_ai_debugger_performance.py
 ```
 
 The changed-AI profile creates a reproducible run directory under

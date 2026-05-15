@@ -194,10 +194,14 @@ Run the foundation audit:
 
 ```powershell
 python tools\audit\check_boss_ai_debugger_foundations.py
+python tools\audit\check_boss_ai_debugger_performance.py
 ```
 
 This checks current fixture/trace schema validity, stored rule-map freshness,
-generated scenario evaluation, and review-queue accounting.
+generated scenario evaluation, and review-queue accounting. The performance
+audit makes the simulation/review bottleneck explicit: generated scenario
+evaluation must stay above `10000/min`, reviewable checks above `1000/min`, and
+the top review queue must stay below 10% avoidable duplicate lesson spam.
 
 Run metamorphic checks:
 
