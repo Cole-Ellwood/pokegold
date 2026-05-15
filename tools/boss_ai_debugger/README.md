@@ -210,6 +210,7 @@ Build mastery and coverage indexes:
 ```powershell
 python -m tools.boss_ai_debugger mastery-index build
 python -m tools.boss_ai_debugger coverage-report --generated-count 250 --seed 1
+python -m tools.boss_ai_debugger coverage-report --changed-file engine\battle\ai\boss_policy_move.asm
 ```
 
 The mastery index parses policy cards, quick tests, reviews, and the
@@ -217,7 +218,9 @@ source-to-policy ledger. The coverage report shows mapped Boss AI rules,
 generated scenario tag coverage, policy-card evidence coverage, and explicitly
 aggregates score-helper rule ids from available ROM contribution trace
 artifacts. It still flags that this is not full trace coverage because false
-predicates and dynamic read provenance are not traced yet.
+predicates and dynamic read provenance are not traced yet. The report also
+lists uncovered mapped rules, suggested generator families, and changed-file
+rule coverage for targeted Boss AI edits.
 
 Run scorer mutation tests:
 

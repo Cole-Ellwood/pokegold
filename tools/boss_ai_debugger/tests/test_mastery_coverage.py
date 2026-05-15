@@ -27,6 +27,8 @@ class MasteryCoverageTests(unittest.TestCase):
         self.assertFalse(data["rule_map"]["full_trace_rule_coverage_available"])
         self.assertIn("hazard_retention", data["generated"]["policy_tag_counts"])
         self.assertGreaterEqual(data["mastery"]["policy_card_count"], 1)
+        self.assertGreater(data["uncovered_rules"]["uncovered_rule_count"], 0)
+        self.assertIn("suggested_generator_counts", data["uncovered_rules"])
 
     def test_cli_mastery_index_and_coverage_report_write_json(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -77,6 +79,8 @@ class MasteryCoverageTests(unittest.TestCase):
                         "10",
                         "--rom-contribution-trace",
                         str(contribution_trace),
+                        "--changed-file",
+                        "engine/battle/ai/boss_policy_move.asm",
                         "--json-out",
                         str(coverage_out),
                     ]
@@ -89,6 +93,7 @@ class MasteryCoverageTests(unittest.TestCase):
         self.assertIn("policy_cards", mastery)
         self.assertIn("known_gaps", coverage)
         self.assertEqual(coverage["rule_map"]["trace_covered_rule_count"], 1)
+        self.assertGreater(coverage["changed_rules"]["mapped_rule_count"], 0)
 
     def test_coverage_report_aggregates_rom_contribution_rules(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -135,6 +140,17 @@ class MasteryCoverageTests(unittest.TestCase):
             data["rule_map"]["trace_covered_rule_ids"],
             ["move.unit_trace_rule"],
         )
+
+    def test_coverage_report_summarizes_changed_rule_gaps(self) -> None:
+        data = build_coverage_report(
+            generated_count=5,
+            seed=1,
+            changed_files=["engine/battle/ai/boss_policy_move.asm"],
+        )
+
+        self.assertGreater(data["changed_rules"]["mapped_rule_count"], 0)
+        self.assertGreater(data["changed_rules"]["uncovered_rule_count"], 0)
+        self.assertIn("uncovered_rules", data["changed_rules"])
 
 
 if __name__ == "__main__":

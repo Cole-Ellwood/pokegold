@@ -481,6 +481,7 @@ def cmd_coverage_report(args: argparse.Namespace) -> int:
         generated_count=args.generated_count,
         seed=args.seed,
         rom_contribution_trace_paths=args.rom_contribution_trace,
+        changed_files=args.changed_file,
     )
     if args.json_out != "":
         write_coverage_report(data, Path(args.json_out))
@@ -814,6 +815,7 @@ def build_parser() -> argparse.ArgumentParser:
     coverage_cmd.add_argument("--generated-count", type=int, default=250)
     coverage_cmd.add_argument("--seed", type=int, default=1)
     coverage_cmd.add_argument("--rom-contribution-trace", type=path_arg, action="append")
+    coverage_cmd.add_argument("--changed-file", type=path_arg, action="append")
     coverage_cmd.add_argument("--json", action="store_true")
     coverage_cmd.add_argument("--json-out", default=str(DEFAULT_COVERAGE_PATH))
     coverage_cmd.set_defaults(func=cmd_coverage_report)

@@ -110,6 +110,8 @@ def main() -> int:
         errors.append("coverage report mastery policy-card count mismatch")
     if coverage["rule_map"]["trace_covered_rule_count"] == 0:
         errors.append("coverage report did not aggregate ROM contribution rules")
+    if coverage["uncovered_rules"]["uncovered_rule_count"] == 0:
+        errors.append("coverage report did not expose uncovered mapped rules")
     if (
         coverage["mastery"]["generated_policy_card_coverage_count"]
         != coverage["mastery"]["policy_card_count"]
@@ -178,6 +180,7 @@ def main() -> int:
         f"{coverage['mastery']['generated_policy_card_coverage_count']} / "
         f"{coverage['mastery']['policy_card_count']} policy cards covered by generated refs; "
         f"score_trace_rules={coverage['rule_map']['trace_covered_rule_count']}; "
+        f"uncovered_rules={coverage['uncovered_rules']['uncovered_rule_count']}; "
         f"full_trace_rule_coverage={coverage['rule_map']['full_trace_rule_coverage_available']}."
     )
     print(

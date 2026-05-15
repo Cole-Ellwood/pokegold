@@ -22,6 +22,7 @@ def build_coverage_report(
     generated_count: int = 250,
     seed: int = 1,
     rom_contribution_trace_paths: list[Path] | None = None,
+    changed_files: list[Path | str] | None = None,
 ) -> dict[str, Any]:
     rule_map = build_rule_map()
     mastery = build_mastery_index()
@@ -30,6 +31,7 @@ def build_coverage_report(
     contribution_summary = summarize_rom_contribution_trace_paths(
         resolve_rom_contribution_trace_paths(rom_contribution_trace_paths)
     )
+    covered_rule_ids = set(contribution_summary["covered_rule_ids"])
     generator_evidence = sorted(
         {
             ref.replace("/", "\\")
@@ -50,6 +52,12 @@ def build_coverage_report(
         "generated_count": generated_count,
         "seed": seed,
         "rule_map": rule_coverage_summary(rule_map, contribution_summary),
+        "uncovered_rules": uncovered_rule_summary(rule_map, covered_rule_ids),
+        "changed_rules": changed_rule_summary(
+            rule_map,
+            covered_rule_ids,
+            changed_files or [],
+        ),
         "rom_contribution_trace": contribution_summary,
         "mastery": {
             "policy_card_count": mastery["policy_card_count"],
@@ -98,6 +106,90 @@ def rule_coverage_summary(
     }
 
 
+def uncovered_rule_summary(
+    rule_map: dict[str, Any],
+    covered_rule_ids: set[str],
+    *,
+    limit: int = 50,
+) -> dict[str, Any]:
+    uncovered = [
+        rule for rule in rule_map["rules"] if rule["rule_id"] not in covered_rule_ids
+    ]
+    generator_counts = count_generators(uncovered)
+    return {
+        "uncovered_rule_count": len(uncovered),
+        "uncovered_rule_ids": [rule["rule_id"] for rule in uncovered],
+        "first_uncovered_rules": [rule_digest(rule) for rule in uncovered[:limit]],
+        "suggested_generator_counts": generator_counts,
+    }
+
+
+def changed_rule_summary(
+    rule_map: dict[str, Any],
+    covered_rule_ids: set[str],
+    changed_files: list[Path | str],
+) -> dict[str, Any]:
+    normalized_files = sorted({normalize_repo_path(path) for path in changed_files})
+    rules = [
+        rule
+        for rule in rule_map["rules"]
+        if normalize_repo_path(rule["source_file"]) in normalized_files
+    ]
+    uncovered = [rule for rule in rules if rule["rule_id"] not in covered_rule_ids]
+    return {
+        "changed_files": normalized_files,
+        "mapped_rule_count": len(rules),
+        "covered_rule_count": len(rules) - len(uncovered),
+        "uncovered_rule_count": len(uncovered),
+        "uncovered_rules": [rule_digest(rule) for rule in uncovered],
+        "suggested_generator_counts": count_generators(uncovered),
+    }
+
+
+def rule_digest(rule: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "rule_id": rule["rule_id"],
+        "classification": rule["classification"],
+        "source_file": rule["source_file"],
+        "source_label": rule["source_label"],
+        "line": rule["line"],
+        "suggested_generator": suggested_generator(rule),
+    }
+
+
+def count_generators(rules: list[dict[str, Any]]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for rule in rules:
+        generator = suggested_generator(rule)
+        counts[generator] = counts.get(generator, 0) + 1
+    return dict(sorted(counts.items()))
+
+
+def suggested_generator(rule: dict[str, Any]) -> str:
+    text = " ".join(
+        [
+            str(rule.get("rule_id", "")),
+            str(rule.get("source_label", "")),
+            " ".join(str(item) for item in rule.get("public_reads", [])),
+        ]
+    ).lower()
+    if any(token in text for token in ("spikes", "rapid_spin", "rapidspin", "ghost")):
+        return "spikes_spin"
+    if any(token in text for token in ("select_move", "selector", "score")):
+        return "selector_edges"
+    return "mastery_policy"
+
+
+def normalize_repo_path(path: Path | str) -> str:
+    text = str(path).replace("/", "\\")
+    marker = "\\pokemon gold hack\\"
+    lowered = text.lower()
+    if marker in lowered:
+        index = lowered.index(marker) + len(marker)
+        return text[index:]
+    return text.strip(".\\")
+
+
 def count_expectation_values(scenarios: list[dict[str, Any]], key: str) -> dict[str, int]:
     counts: dict[str, int] = {}
     for scenario in scenarios:
@@ -134,6 +226,10 @@ def format_coverage_report(data: dict[str, Any]) -> str:
                 f"policy_cards={mastery['policy_card_count']} "
                 f"generated_covered={mastery['generated_policy_card_coverage_count']} "
                 f"coverage={mastery['generated_policy_card_coverage_rate']:.1%}"
+            ),
+            (
+                f"uncovered_rules={data['uncovered_rules']['uncovered_rule_count']} "
+                f"changed_uncovered={data['changed_rules']['uncovered_rule_count']}"
             ),
             (
                 "known_gaps="
