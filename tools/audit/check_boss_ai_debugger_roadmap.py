@@ -956,6 +956,7 @@ def maybe_run_score_materialization(
             base_route=DEFAULT_SCORE_BASE_ROUTE,
             manifest_path=DEFAULT_MANIFEST_PATH,
             watch_frames=DEFAULT_SCORE_WATCH_FRAMES,
+            compare_fast_score=True,
             source="roadmap_audit",
         )
     except Exception as exc:
@@ -969,6 +970,8 @@ def maybe_run_score_materialization(
             report["checked_count"] > 0
             and report["error_count"] == 0
             and report["contribution_matched_count"] > 0
+            and report["hook_equivalence_checked_count"] > 0
+            and report["hook_equivalence_mismatch_count"] == 0
         ),
         "checked": True,
         "checked_count": report["checked_count"],
@@ -977,6 +980,8 @@ def maybe_run_score_materialization(
         "selector_top_match_count": report["selector_top_match_count"],
         "contribution_matched_count": report["contribution_matched_count"],
         "contribution_mismatch_count": report["contribution_mismatch_count"],
+        "hook_equivalence_checked_count": report["hook_equivalence_checked_count"],
+        "hook_equivalence_mismatch_count": report["hook_equivalence_mismatch_count"],
         "materializations_per_minute": report["materializations_per_minute"],
         "known_limits": report["known_limits"],
         "traces": report["traces"],
@@ -1004,6 +1009,8 @@ def score_materialization_evidence(evidence: dict[str, Any]) -> str:
         f"score_matches={data['score_bytes_match_count']} "
         f"contribution_matched={data['contribution_matched_count']} "
         f"contribution_mismatches={data['contribution_mismatch_count']} "
+        f"hook_equivalence_checked={data['hook_equivalence_checked_count']} "
+        f"hook_equivalence_mismatches={data['hook_equivalence_mismatch_count']} "
         f"rate={data['materializations_per_minute']:.0f}/min"
     )
 
@@ -1019,7 +1026,12 @@ def score_materialization_gaps(evidence: dict[str, Any]) -> list[str]:
         ]
     if data.get("available"):
         return []
-    return [str(data.get("reason", "ROM score materialization failed"))]
+    gaps = [str(data.get("reason", "ROM score materialization failed"))]
+    if data.get("hook_equivalence_checked_count", 0) == 0:
+        gaps.append("ROM contribution hook equivalence was not checked.")
+    if data.get("hook_equivalence_mismatch_count", 0) > 0:
+        gaps.append("ROM contribution hooks changed score behavior.")
+    return gaps
 
 
 def score_materialization_scenarios(
