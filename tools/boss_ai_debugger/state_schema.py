@@ -173,12 +173,36 @@ def validate_trace_block(fields: dict[str, str], source: str) -> list[str]:
 
     move_ids = parse_trace_int_list(fields, "move_ids", source, errors)
     scores = parse_trace_int_list(fields, "move_scores", source, errors)
+    pre_model_scores = parse_optional_trace_int_list(
+        fields,
+        "pre_model_scores",
+        source,
+        errors,
+    )
+    post_model_scores = parse_optional_trace_int_list(
+        fields,
+        "post_model_scores",
+        source,
+        errors,
+    )
     if move_ids is not None and len(move_ids) != 4:
         errors.append(f"{source}: move_ids must contain four bytes")
     if scores is not None and len(scores) != 4:
         errors.append(f"{source}: move_scores must contain four bytes")
+    if pre_model_scores is not None and len(pre_model_scores) != 4:
+        errors.append(f"{source}: pre_model_scores must contain four bytes")
+    if post_model_scores is not None and len(post_model_scores) != 4:
+        errors.append(f"{source}: post_model_scores must contain four bytes")
     if move_ids is not None and scores is not None and len(move_ids) != len(scores):
         errors.append(f"{source}: move_ids and move_scores length mismatch")
+    if (
+        pre_model_scores is not None
+        and post_model_scores is not None
+        and len(pre_model_scores) != len(post_model_scores)
+    ):
+        errors.append(
+            f"{source}: pre_model_scores and post_model_scores length mismatch"
+        )
 
     tier = fields.get("tier")
     if tier is not None:
@@ -210,6 +234,17 @@ def parse_trace_int_list(
     if bad:
         errors.append(f"{source}: {key} contains byte outside 0..255")
     return values
+
+
+def parse_optional_trace_int_list(
+    fields: dict[str, str],
+    key: str,
+    source: str,
+    errors: list[str],
+) -> list[int] | None:
+    if key not in fields:
+        return None
+    return parse_trace_int_list(fields, key, source, errors)
 
 
 def scenario_rows(data: Any) -> list[dict[str, Any]]:

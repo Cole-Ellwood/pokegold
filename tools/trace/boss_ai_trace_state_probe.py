@@ -60,6 +60,8 @@ INSPECT_SYMBOLS = (
     "wBattleMonMaxHP",
     "wBossAITraceTopMoves",
     "wBossAITraceTopScores",
+    "wBossAITracePreModelScores",
+    "wBossAITracePostModelScores",
     "wBossAITraceChosenMove",
     "wBossAITraceSwitchConfidence",
     "wBossAITracePlanId",
@@ -372,6 +374,18 @@ def format_probe(pyboy, symbols: dict[str, Symbol], args: argparse.Namespace) ->
             format_kv(
                 "trace_top_scores",
                 hex_bytes(read_symbol_range(pyboy, symbols, "wBossAITraceTopScores", 3)),
+            ),
+            format_kv(
+                "trace_pre_model_scores",
+                hex_bytes(
+                    read_symbol_range(pyboy, symbols, "wBossAITracePreModelScores", 4)
+                ),
+            ),
+            format_kv(
+                "trace_post_model_scores",
+                hex_bytes(
+                    read_symbol_range(pyboy, symbols, "wBossAITracePostModelScores", 4)
+                ),
             ),
             format_kv(
                 "trace_chosen",

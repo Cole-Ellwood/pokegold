@@ -51,6 +51,8 @@ Trace captures must include:
 - `tier`
 - four `move_ids`
 - four `move_scores`
+- optional four `pre_model_scores`
+- optional four `post_model_scores`
 
 The validator rejects public-only data containing obvious hidden/private fields,
 including `hidden_moves`, `hidden_move_slots`, `private_moves`, `move_slots`,

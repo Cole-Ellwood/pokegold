@@ -2066,6 +2066,61 @@ def audit_trace_top_moves_preserves_pointer(boss: str) -> None:
     )
 
 
+def audit_move_model_trace_snapshots(boss: str, wram: str) -> None:
+    move_model = top_block(boss, "BossAI_ApplyMoveModel")
+    require_order(
+        move_model,
+        [
+            "call BossAI_ComputePlayerPlausibleTypeMask",
+            "call .ClearMoveModelTrace",
+            "ld hl, wEnemyAIMoveScores",
+            "ld de, wEnemyMonMoves",
+            "call .TracePreModelScore",
+            "ld a, [hl]",
+            "cp 80",
+            "jr nc, .scored",
+            "call .ScoreMove",
+            ".scored",
+            "call .TracePostModelScore",
+        ],
+        "move-model trace snapshots bracket policy scoring",
+    )
+    for label in (".TracePreModelScore", ".TracePostModelScore"):
+        helper = local_block(move_model, label, ".ScoreMove" if label == ".TracePostModelScore" else ".TracePostModelScore")
+        require_order(
+            helper,
+            [
+                "push af",
+                "push bc",
+                "push de",
+                "push hl",
+                "ld d, [hl]",
+                "ld a, NUM_MOVES",
+                "sub c",
+                "ld c, a",
+                "ld b, 0",
+                "add hl, bc",
+                "ld [hl], d",
+                "pop hl",
+                "pop de",
+                "pop bc",
+                "pop af",
+                "ret",
+            ],
+            f"{label} preserves score-loop registers",
+        )
+    require_contains(
+        wram,
+        "wBossAITracePreModelScores:: ds NUM_MOVES",
+        "trace pre-model score snapshot reserve",
+    )
+    require_contains(
+        wram,
+        "wBossAITracePostModelScores:: ds NUM_MOVES",
+        "trace post-model score snapshot reserve",
+    )
+
+
 def audit_boss_move_attr_bank_safety(boss: str) -> None:
     require_not_contains(boss, "call GetMoveAttr", "Boss AI cross-bank move attr reads")
     require_not_contains(boss, "call GetMoveByte", "Boss AI cross-bank move byte reads")
@@ -2311,6 +2366,7 @@ def main() -> int:
     audit_item_and_passive_reasoning(boss)
     audit_baton_pass_requires_living_bench(boss)
     audit_trace_top_moves_preserves_pointer(boss)
+    audit_move_model_trace_snapshots(boss, wram)
     audit_boss_move_attr_bank_safety(boss)
     audit_public_threat_scan_preserves_source_pointers(boss)
     audit_type_matchup_scan_preserves_table_cursor(boss)
@@ -2369,6 +2425,7 @@ def main() -> int:
         "known item and passive tactical reasoning",
         "Baton Pass living-bench gate",
         "trace top-move pointer preservation",
+        "move-model trace score snapshots",
         "Boss AI bank-safe move attr reads",
         "public threat scan source pointer preservation",
         "type-matchup scan table cursor preservation",

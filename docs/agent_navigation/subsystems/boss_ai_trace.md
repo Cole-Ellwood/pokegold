@@ -30,8 +30,8 @@ Acceptable evidence:
 
 - `*_live.txt` file under `audit/boss_ai_trace/` produced from a current trace
   ROM state or manually recorded debugger position.
-- Trace fields including chosen move, top scores, plausible masks, and revealed
-  move bitmap when relevant.
+- Trace fields including chosen move, top scores, pre/post move-model scores,
+  plausible masks, and revealed move bitmap when relevant.
 - Matching ledger and manifest updates.
 
 Not enough by itself:

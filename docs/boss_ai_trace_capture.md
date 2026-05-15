@@ -26,6 +26,8 @@ Build interface note:
 It writes trace fields into WRAM symbols only:
 - `wBossAITraceTopMoves`
 - `wBossAITraceTopScores`
+- `wBossAITracePreModelScores`
+- `wBossAITracePostModelScores`
 - `wBossAITraceChosenMove`
 - `wBossAITraceSwitchConfidence`
 - `wBossAITracePlanId`
@@ -34,6 +36,12 @@ It writes trace fields into WRAM symbols only:
 - `wBossAITracePlausibleMask`
 - `wBossAITraceRiskFlags`
 - `wBossAITraceLookaheadBonusTop`
+
+`wBossAITracePreModelScores` and `wBossAITracePostModelScores` are trace-only
+aggregate snapshots around the move-scoring overlay. They are not per-rule
+contribution events. Use them to separate move-model score changes from later
+lookahead and selector behavior while the full rule-event trace remains a
+separate debugger target.
 
 `wBossAITraceRiskFlags` bit meanings:
 - bit 0: plausible-risk / scout trigger logic fired

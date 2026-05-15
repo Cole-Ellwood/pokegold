@@ -37,11 +37,39 @@ def load_state(pyboy, path: Path) -> None:
         pyboy.load_state(fh)
 
 
+def write_byte(pyboy, symbol: capture.Symbol, value: int) -> None:
+    value &= 0xFF
+    if 0xD000 <= symbol.address <= 0xDFFF and symbol.bank:
+        try:
+            pyboy.memory[symbol.bank, symbol.address] = value
+            return
+        except Exception:
+            old_bank = int(pyboy.memory[0xFF70])
+            pyboy.memory[0xFF70] = symbol.bank
+            try:
+                pyboy.memory[symbol.address] = value
+            finally:
+                pyboy.memory[0xFF70] = old_bank
+            return
+    pyboy.memory[symbol.address] = value
+
+
+def clear_replay_outputs(pyboy, symbols: dict[str, capture.Symbol]) -> None:
+    replay_output_fields = {"wBossAITraceChosenMove"}
+    for name, size in capture.TRACE_FIELDS:
+        if name not in replay_output_fields:
+            continue
+        symbol = symbols[name]
+        for offset in range(size):
+            write_byte(
+                pyboy,
+                capture.Symbol(symbol.bank, symbol.address + offset),
+                0,
+            )
+
+
 def has_replay_decision(values: dict[str, list[int]]) -> bool:
-    return (
-        values["wCurEnemyMove"][0] != 0
-        or values["wBossAITraceChosenMove"][0] != 0
-    )
+    return values["wBossAITraceChosenMove"][0] != 0
 
 
 def replay_state(args: argparse.Namespace) -> dict[str, list[int]]:
@@ -50,6 +78,7 @@ def replay_state(args: argparse.Namespace) -> dict[str, list[int]]:
     pyboy = open_pyboy(args.rom)
     try:
         load_state(pyboy, args.save_state)
+        clear_replay_outputs(pyboy, symbols)
         if args.button:
             pyboy.button(args.button, delay=args.button_delay)
         for _frame in range(args.watch_frames + 1):

@@ -176,6 +176,9 @@ BossAI_ApplyMoveModel:
 	call BossAI_ResetTurnCaches
 	call BossAI_SelectPlanIfNeeded
 	call BossAI_ComputePlayerPlausibleTypeMask
+IF DEF(BOSS_AI_TRACE)
+	call .ClearMoveModelTrace
+ENDC
 
 	ld hl, wEnemyAIMoveScores
 	ld de, wEnemyMonMoves
@@ -184,9 +187,12 @@ BossAI_ApplyMoveModel:
 	ld a, [de]
 	and a
 	ret z
+IF DEF(BOSS_AI_TRACE)
+	call .TracePreModelScore
+ENDC
 	ld a, [hl]
 	cp 80
-	jr nc, .next
+	jr nc, .scored
 	push bc
 	push de
 	push hl
@@ -194,12 +200,66 @@ BossAI_ApplyMoveModel:
 	pop hl
 	pop de
 	pop bc
+.scored
+IF DEF(BOSS_AI_TRACE)
+	call .TracePostModelScore
+ENDC
 .next
 	inc hl
 	inc de
 	dec c
 	jr nz, .loop
 	ret
+
+IF DEF(BOSS_AI_TRACE)
+.ClearMoveModelTrace
+	ld hl, wBossAITracePreModelScores
+	ld c, NUM_MOVES * 2
+	ld a, $ff
+.clear_trace_loop
+	ld [hli], a
+	dec c
+	jr nz, .clear_trace_loop
+	ret
+
+.TracePreModelScore
+	push af
+	push bc
+	push de
+	push hl
+	ld d, [hl]
+	ld a, NUM_MOVES
+	sub c
+	ld c, a
+	ld b, 0
+	ld hl, wBossAITracePreModelScores
+	add hl, bc
+	ld [hl], d
+	pop hl
+	pop de
+	pop bc
+	pop af
+	ret
+
+.TracePostModelScore
+	push af
+	push bc
+	push de
+	push hl
+	ld d, [hl]
+	ld a, NUM_MOVES
+	sub c
+	ld c, a
+	ld b, 0
+	ld hl, wBossAITracePostModelScores
+	add hl, bc
+	ld [hl], d
+	pop hl
+	pop de
+	pop bc
+	pop af
+	ret
+ENDC
 
 .ScoreMove
 	ld a, h

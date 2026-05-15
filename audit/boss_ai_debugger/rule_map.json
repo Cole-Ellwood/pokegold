@@ -40,7 +40,7 @@
     },
     {
       "classification": "public_info",
-      "line": 399,
+      "line": 459,
       "parent_label": "BossAI_ApplyMoveModel",
       "public_reads": [],
       "rule_id": "move.apply_move_model.status_move_would_fail_publicly",
@@ -49,7 +49,7 @@
     },
     {
       "classification": "public_info",
-      "line": 419,
+      "line": 479,
       "parent_label": "BossAI_ApplyMoveModel",
       "public_reads": [],
       "rule_id": "move.apply_move_model.utility_move_would_fail_publicly",
@@ -58,7 +58,7 @@
     },
     {
       "classification": "internal",
-      "line": 653,
+      "line": 713,
       "parent_label": "BossAI_ApplyMoveModel",
       "public_reads": [],
       "rule_id": "move.apply_move_model.enemy_status_move_type_misses_player",
@@ -67,7 +67,7 @@
     },
     {
       "classification": "internal",
-      "line": 777,
+      "line": 837,
       "parent_label": "BossAI_ApplyMoveModel",
       "public_reads": [],
       "rule_id": "move.apply_move_model.apply_setup_punish_bias",
@@ -76,7 +76,7 @@
     },
     {
       "classification": "internal",
-      "line": 793,
+      "line": 853,
       "parent_label": "BossAI_ApplyMoveModel",
       "public_reads": [],
       "rule_id": "move.apply_move_model.apply_setup_discipline_bias",
@@ -85,7 +85,7 @@
     },
     {
       "classification": "internal",
-      "line": 806,
+      "line": 866,
       "parent_label": "BossAI_ApplyMoveModel",
       "public_reads": [],
       "rule_id": "move.apply_move_model.apply_status_hard_answer_discipline",
@@ -94,7 +94,7 @@
     },
     {
       "classification": "internal",
-      "line": 812,
+      "line": 872,
       "parent_label": "BossAI_ApplyMoveModel",
       "public_reads": [],
       "rule_id": "move.apply_move_model.apply_self_kotrade_discipline",
@@ -103,7 +103,7 @@
     },
     {
       "classification": "internal",
-      "line": 831,
+      "line": 891,
       "parent_label": "BossAI_ApplyMoveModel",
       "public_reads": [
         "Moves + MOVE_EFFECT",
@@ -115,7 +115,7 @@
     },
     {
       "classification": "internal",
-      "line": 842,
+      "line": 902,
       "parent_label": "BossAI_ApplyMoveModel",
       "public_reads": [
         "Moves + MOVE_EFFECT",
@@ -127,7 +127,7 @@
     },
     {
       "classification": "internal",
-      "line": 858,
+      "line": 918,
       "parent_label": "BossAI_ApplyMoveModel",
       "public_reads": [],
       "rule_id": "move.apply_move_model.apply_phazing_plan_bias",
@@ -136,7 +136,7 @@
     },
     {
       "classification": "public_info",
-      "line": 875,
+      "line": 935,
       "parent_label": "BossAI_ApplyMoveModel",
       "public_reads": [
         "Moves + MOVE_EFFECT",
@@ -148,7 +148,7 @@
     },
     {
       "classification": "internal",
-      "line": 886,
+      "line": 946,
       "parent_label": "BossAI_ApplyMoveModel",
       "public_reads": [],
       "rule_id": "move.apply_move_model.apply_baton_pass_bias",
@@ -157,7 +157,7 @@
     },
     {
       "classification": "public_info",
-      "line": 905,
+      "line": 965,
       "parent_label": "BossAI_ApplyMoveModel",
       "public_reads": [
         "wPlayerUsedMoves"
@@ -168,7 +168,7 @@
     },
     {
       "classification": "internal",
-      "line": 918,
+      "line": 978,
       "parent_label": "BossAI_ApplyMoveModel",
       "public_reads": [],
       "rule_id": "move.apply_move_model.is_boost_setup_move",
@@ -177,7 +177,7 @@
     },
     {
       "classification": "public_info",
-      "line": 947,
+      "line": 1007,
       "parent_label": "BossAI_ApplyMoveModel",
       "public_reads": [
         "wPlayerUsedMoves"
@@ -188,7 +188,7 @@
     },
     {
       "classification": "public_info",
-      "line": 954,
+      "line": 1014,
       "parent_label": "BossAI_ApplyMoveModel",
       "public_reads": [
         "wPlayerUsedMoves"
@@ -199,7 +199,7 @@
     },
     {
       "classification": "internal",
-      "line": 987,
+      "line": 1047,
       "parent_label": "BossAI_ApplyMoveModel",
       "public_reads": [],
       "rule_id": "move.apply_move_model.apply_ramp_move_bias",
@@ -208,7 +208,7 @@
     },
     {
       "classification": "internal",
-      "line": 1016,
+      "line": 1076,
       "parent_label": "BossAI_ApplyMoveModel",
       "public_reads": [],
       "rule_id": "move.apply_move_model.apply_charge_move_bias",
@@ -217,7 +217,7 @@
     },
     {
       "classification": "internal",
-      "line": 1030,
+      "line": 1090,
       "parent_label": "BossAI_ApplyMoveModel",
       "public_reads": [],
       "rule_id": "move.apply_move_model.apply_poison_contact_risk_bias",
@@ -226,7 +226,7 @@
     },
     {
       "classification": "internal",
-      "line": 1055,
+      "line": 1115,
       "parent_label": "BossAI_ApplyMoveModel",
       "public_reads": [],
       "rule_id": "move.apply_move_model.apply_dark_shield_chance_bias",
@@ -235,7 +235,7 @@
     },
     {
       "classification": "internal",
-      "line": 1071,
+      "line": 1131,
       "parent_label": "BossAI_ApplyMoveModel",
       "public_reads": [],
       "rule_id": "move.apply_move_model.apply_life_orb_recoil_bias",
@@ -244,7 +244,7 @@
     },
     {
       "classification": "internal",
-      "line": 1085,
+      "line": 1145,
       "parent_label": "BossAI_ApplyMoveModel",
       "public_reads": [],
       "rule_id": "move.apply_move_model.apply_destiny_bond_trade_bias",
@@ -253,7 +253,7 @@
     },
     {
       "classification": "public_info",
-      "line": 1105,
+      "line": 1165,
       "parent_label": "BossAI_ApplyMoveModel",
       "public_reads": [
         "wPlayerUsedMoves"
@@ -264,7 +264,7 @@
     },
     {
       "classification": "internal",
-      "line": 1124,
+      "line": 1184,
       "parent_label": "BossAI_ApplyMoveModel",
       "public_reads": [
         "Moves + MOVE_EFFECT",
@@ -276,7 +276,7 @@
     },
     {
       "classification": "public_info",
-      "line": 1159,
+      "line": 1219,
       "parent_label": "BossAI_ApplyMoveModel",
       "public_reads": [
         "Moves + MOVE_EFFECT",
@@ -288,7 +288,7 @@
     },
     {
       "classification": "public_info",
-      "line": 1206,
+      "line": 1266,
       "parent_label": "BossAI_ApplyMoveModel",
       "public_reads": [
         "Moves + MOVE_EFFECT",
@@ -300,7 +300,7 @@
     },
     {
       "classification": "public_info",
-      "line": 1230,
+      "line": 1290,
       "parent_label": "BossAI_ApplyMoveModel",
       "public_reads": [
         "Moves + MOVE_EFFECT",
@@ -312,7 +312,7 @@
     },
     {
       "classification": "internal",
-      "line": 1240,
+      "line": 1300,
       "parent_label": "BossAI_ApplyMoveModel",
       "public_reads": [],
       "rule_id": "move.apply_move_model.apply_choice_first_lock_regret",
@@ -321,7 +321,7 @@
     },
     {
       "classification": "public_info",
-      "line": 1319,
+      "line": 1379,
       "parent_label": "BossAI_ApplyMoveModel",
       "public_reads": [
         "Moves + MOVE_EFFECT",
@@ -333,7 +333,7 @@
     },
     {
       "classification": "public_info",
-      "line": 1333,
+      "line": 1393,
       "parent_label": "BossAI_ApplyMoveModel",
       "public_reads": [
         "Moves + MOVE_EFFECT",
@@ -345,7 +345,7 @@
     },
     {
       "classification": "public_info",
-      "line": 1337,
+      "line": 1397,
       "parent_label": "BossAI_ApplyMoveModel",
       "public_reads": [
         "Moves + MOVE_EFFECT",
@@ -357,7 +357,7 @@
     },
     {
       "classification": "public_info",
-      "line": 1365,
+      "line": 1425,
       "parent_label": "BossAI_ApplyMoveModel",
       "public_reads": [
         "Moves + MOVE_EFFECT",
@@ -369,7 +369,7 @@
     },
     {
       "classification": "public_info",
-      "line": 1394,
+      "line": 1454,
       "parent_label": "BossAI_ApplyMoveModel",
       "public_reads": [
         "wLastPlayerMove",
@@ -381,7 +381,7 @@
     },
     {
       "classification": "internal",
-      "line": 1433,
+      "line": 1493,
       "parent_label": "BossAI_ApplyMoveModel",
       "public_reads": [
         "wLastPlayerMove",
@@ -393,7 +393,7 @@
     },
     {
       "classification": "public_info",
-      "line": 1483,
+      "line": 1543,
       "parent_label": "BossAI_ApplyMoveModel",
       "public_reads": [
         "Moves + MOVE_EFFECT",
@@ -405,7 +405,7 @@
     },
     {
       "classification": "public_info",
-      "line": 1503,
+      "line": 1563,
       "parent_label": "BossAI_ApplyMoveModel",
       "public_reads": [
         "wPlayerUsedMoves"
@@ -416,7 +416,7 @@
     },
     {
       "classification": "public_info",
-      "line": 1507,
+      "line": 1567,
       "parent_label": "BossAI_ApplyMoveModel",
       "public_reads": [
         "wPlayerUsedMoves"
@@ -427,7 +427,7 @@
     },
     {
       "classification": "internal",
-      "line": 1547,
+      "line": 1607,
       "parent_label": "BossAI_ApplyMoveModel",
       "public_reads": [],
       "rule_id": "move.apply_move_model.enemy_move_makes_contact",
@@ -436,7 +436,7 @@
     },
     {
       "classification": "internal",
-      "line": 1568,
+      "line": 1628,
       "parent_label": "BossAI_ApplyMoveModel",
       "public_reads": [],
       "rule_id": "move.apply_move_model.enemy_can_be_poisoned_by_retaliation",
@@ -445,7 +445,7 @@
     },
     {
       "classification": "internal",
-      "line": 1591,
+      "line": 1651,
       "parent_label": "BossAI_ApplyMoveModel",
       "public_reads": [],
       "rule_id": "move.apply_move_model.player_poison_type_contribution",
@@ -454,7 +454,7 @@
     },
     {
       "classification": "internal",
-      "line": 1618,
+      "line": 1678,
       "parent_label": "BossAI_ApplyMoveModel",
       "public_reads": [],
       "rule_id": "move.apply_move_model.enemy_has_boost_to_pass",
@@ -463,7 +463,7 @@
     },
     {
       "classification": "internal",
-      "line": 1633,
+      "line": 1693,
       "parent_label": "BossAI_ApplyMoveModel",
       "public_reads": [],
       "rule_id": "move.apply_move_model.player_has_major_setup_boost",
@@ -472,7 +472,7 @@
     },
     {
       "classification": "internal",
-      "line": 1652,
+      "line": 1712,
       "parent_label": "BossAI_ApplyMoveModel",
       "public_reads": [],
       "rule_id": "move.apply_move_model.player_has_repeated_switch_pressure",
@@ -481,7 +481,7 @@
     },
     {
       "classification": "public_info",
-      "line": 1669,
+      "line": 1729,
       "parent_label": "BossAI_ApplyMoveModel",
       "public_reads": [
         "wBossAITurnsElapsed",
@@ -493,7 +493,7 @@
     },
     {
       "classification": "public_info",
-      "line": 1767,
+      "line": 1827,
       "parent_label": "BossAI_ApplyMoveModel",
       "public_reads": [
         "Moves + MOVE_EFFECT",
@@ -507,7 +507,7 @@
     },
     {
       "classification": "public_info",
-      "line": 1789,
+      "line": 1849,
       "parent_label": "BossAI_ApplyMoveModel",
       "public_reads": [
         "wBossAITurnsElapsed",
@@ -519,7 +519,7 @@
     },
     {
       "classification": "public_info",
-      "line": 1800,
+      "line": 1860,
       "parent_label": "BossAI_ApplyMoveModel",
       "public_reads": [
         "wBossAITurnsElapsed",
@@ -531,7 +531,7 @@
     },
     {
       "classification": "internal",
-      "line": 1817,
+      "line": 1877,
       "parent_label": "BossAI_ApplyMoveModel",
       "public_reads": [],
       "rule_id": "move.apply_move_model.boss_has_spinblock_available",
@@ -540,7 +540,7 @@
     },
     {
       "classification": "public_info",
-      "line": 1822,
+      "line": 1882,
       "parent_label": "BossAI_ApplyMoveModel",
       "public_reads": [
         "Moves + MOVE_EFFECT",
@@ -552,7 +552,7 @@
     },
     {
       "classification": "public_info",
-      "line": 1834,
+      "line": 1894,
       "parent_label": "BossAI_ApplyMoveModel",
       "public_reads": [
         "wEnemyMonType1",
@@ -564,7 +564,7 @@
     },
     {
       "classification": "public_info",
-      "line": 1938,
+      "line": 1998,
       "parent_label": "BossAI_ApplyMoveModel",
       "public_reads": [
         "Moves + MOVE_EFFECT",
@@ -577,7 +577,7 @@
     },
     {
       "classification": "public_info",
-      "line": 2002,
+      "line": 2062,
       "parent_label": "BossAI_ApplyMoveModel",
       "public_reads": [
         "Moves + MOVE_EFFECT",
@@ -589,7 +589,7 @@
     },
     {
       "classification": "public_info",
-      "line": 2049,
+      "line": 2109,
       "parent_label": "BossAI_ApplyMoveModel",
       "public_reads": [
         "EvosAttacks",
@@ -604,7 +604,7 @@
     },
     {
       "classification": "internal",
-      "line": 2106,
+      "line": 2166,
       "parent_label": "BossAI_ApplyMoveModel",
       "public_reads": [],
       "rule_id": "move.apply_move_model.apply_role_bias",
@@ -613,7 +613,7 @@
     },
     {
       "classification": "internal",
-      "line": 2433,
+      "line": 2493,
       "parent_label": "BossAI_ApplyMoveModel",
       "public_reads": [],
       "rule_id": "move.apply_move_model.enemy_under_pressure",
@@ -622,7 +622,7 @@
     },
     {
       "classification": "internal",
-      "line": 2446,
+      "line": 2506,
       "parent_label": "BossAI_ApplyMoveModel",
       "public_reads": [],
       "rule_id": "move.apply_move_model.has_koline",
@@ -631,7 +631,7 @@
     },
     {
       "classification": "public_info",
-      "line": 2467,
+      "line": 2527,
       "parent_label": "BossAI_EnemyIsGhostType",
       "public_reads": [
         "wEnemyMonType1",
@@ -643,7 +643,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 2490,
+      "line": 2550,
       "parent_label": "BossAI_SelectMove",
       "public_reads": [],
       "rule_id": "move.select_move",
@@ -652,7 +652,7 @@
     },
     {
       "classification": "public_info",
-      "line": 2698,
+      "line": 2758,
       "parent_label": "BossAI_PlayerHasPublicThreatVsEnemy",
       "public_reads": [],
       "rule_id": "move.player_has_public_threat_vs_enemy",
@@ -661,7 +661,7 @@
     },
     {
       "classification": "public_info",
-      "line": 2715,
+      "line": 2775,
       "parent_label": "BossAI_PlayerHasPublicThreatVsEnemyUncached",
       "public_reads": [],
       "rule_id": "move.player_has_public_threat_vs_enemy_uncached",
@@ -670,7 +670,7 @@
     },
     {
       "classification": "public_info",
-      "line": 2773,
+      "line": 2833,
       "parent_label": "BossAI_PlayerHasRevealedPriorityThreat",
       "public_reads": [
         "Moves + MOVE_EFFECT",
@@ -682,7 +682,7 @@
     },
     {
       "classification": "public_info",
-      "line": 2790,
+      "line": 2850,
       "parent_label": "BossAI_PlayerHasRevealedPriorityThreatUncached",
       "public_reads": [
         "Moves + MOVE_EFFECT",
@@ -694,7 +694,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 2856,
+      "line": 2916,
       "parent_label": "BossAI_CurrentEnemyMoveHasKOPressure",
       "public_reads": [],
       "rule_id": "move.current_enemy_move_has_kopressure",
@@ -703,7 +703,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 2890,
+      "line": 2950,
       "parent_label": "BossAI_CurrentEnemyMovePressureScore",
       "public_reads": [],
       "rule_id": "move.current_enemy_move_pressure_score",
@@ -712,7 +712,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 2980,
+      "line": 3040,
       "parent_label": "BossAI_CurrentEnemyMoveScoredPower",
       "public_reads": [],
       "rule_id": "move.current_enemy_move_scored_power",
@@ -721,7 +721,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 3018,
+      "line": 3078,
       "parent_label": "BossAI_ScaleMovePowerByBaseStatRatio",
       "public_reads": [],
       "rule_id": "move.scale_move_power_by_base_stat_ratio",
@@ -730,7 +730,7 @@
     },
     {
       "classification": "public_info",
-      "line": 3096,
+      "line": 3156,
       "parent_label": "BossAI_ApplyEnemyKnownPressureModifiers",
       "public_reads": [],
       "rule_id": "move.apply_enemy_known_pressure_modifiers",
@@ -739,7 +739,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 3103,
+      "line": 3163,
       "parent_label": "BossAI_ApplyEnemyHeldItemPressure",
       "public_reads": [],
       "rule_id": "move.apply_enemy_held_item_pressure",
@@ -748,7 +748,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 3168,
+      "line": 3228,
       "parent_label": "BossAI_ApplyEnemyOffensivePassivePressure",
       "public_reads": [],
       "rule_id": "move.apply_enemy_offensive_passive_pressure",
@@ -757,7 +757,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 3202,
+      "line": 3262,
       "parent_label": "BossAI_ApplyPlayerDefensivePassivePressure",
       "public_reads": [],
       "rule_id": "move.apply_player_defensive_passive_pressure",
@@ -766,7 +766,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 3250,
+      "line": 3310,
       "parent_label": "BossAI_DecPressureB",
       "public_reads": [],
       "rule_id": "move.dec_pressure_b",
@@ -775,7 +775,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 3258,
+      "line": 3318,
       "parent_label": "BossAI_EnemyBelowOneThirdHP",
       "public_reads": [],
       "rule_id": "move.enemy_below_one_third_hp",
@@ -784,7 +784,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 3300,
+      "line": 3360,
       "parent_label": "BossAI_CurrentEnemyMoveAccuracyRisky",
       "public_reads": [],
       "rule_id": "move.current_enemy_move_accuracy_risky",
@@ -793,7 +793,7 @@
     },
     {
       "classification": "public_info",
-      "line": 3335,
+      "line": 3395,
       "parent_label": "BossAI_PublicEnemyFaster",
       "public_reads": [],
       "rule_id": "move.public_enemy_faster",
@@ -802,7 +802,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 3410,
+      "line": 3470,
       "parent_label": "BossAI_PredictPlayerSwitch",
       "public_reads": [],
       "rule_id": "move.predict_player_switch",
@@ -811,7 +811,7 @@
     },
     {
       "classification": "public_info",
-      "line": 3469,
+      "line": 3529,
       "parent_label": "BossAI_HasRevealedSuperEffectiveMove",
       "public_reads": [
         "wPlayerUsedMoves"
@@ -822,7 +822,7 @@
     },
     {
       "classification": "public_info",
-      "line": 3525,
+      "line": 3585,
       "parent_label": "BossAI_SeenBenchThreatScore",
       "public_reads": [
         "wBossAISeenPlayerSpecies"
@@ -833,7 +833,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 3620,
+      "line": 3680,
       "parent_label": "BossAI_SelectPlanIfNeeded",
       "public_reads": [],
       "rule_id": "move.select_plan_if_needed",
@@ -842,7 +842,7 @@
     },
     {
       "classification": "internal",
-      "line": 3755,
+      "line": 3815,
       "parent_label": "BossAI_SelectPlanIfNeeded",
       "public_reads": [],
       "rule_id": "move.select_plan_if_needed.is_wincon_compromised",
@@ -851,7 +851,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 3805,
+      "line": 3865,
       "parent_label": "BossAI_FindPartyMonByRole",
       "public_reads": [],
       "rule_id": "move.find_party_mon_by_role",
@@ -860,7 +860,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 3898,
+      "line": 3958,
       "parent_label": "BossAI_IsSetupEffect",
       "public_reads": [],
       "rule_id": "move.is_setup_effect",
@@ -869,7 +869,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 3925,
+      "line": 3985,
       "parent_label": "BossAI_IsCurrentEnemySetupMove",
       "public_reads": [],
       "rule_id": "move.is_current_enemy_setup_move",
@@ -878,7 +878,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 3942,
+      "line": 4002,
       "parent_label": "BossAI_SetupBoostHasFurtherValue",
       "public_reads": [],
       "rule_id": "move.setup_boost_has_further_value",
@@ -887,7 +887,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 4098,
+      "line": 4158,
       "parent_label": "BossAI_SetupTurnIsAffordable",
       "public_reads": [],
       "rule_id": "move.setup_turn_is_affordable",
@@ -896,7 +896,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 4125,
+      "line": 4185,
       "parent_label": "BossAI_IsStatusEffect",
       "public_reads": [],
       "rule_id": "move.is_status_effect",
@@ -905,7 +905,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 4136,
+      "line": 4196,
       "parent_label": "BossAI_IsDenialEffect",
       "public_reads": [],
       "rule_id": "move.is_denial_effect",
@@ -914,7 +914,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 4159,
+      "line": 4219,
       "parent_label": "BossAI_ComputePlayerPlausibleTypeMask",
       "public_reads": [],
       "rule_id": "move.compute_player_plausible_type_mask",
@@ -923,7 +923,7 @@
     },
     {
       "classification": "public_info",
-      "line": 4202,
+      "line": 4262,
       "parent_label": "BossAI_AddPublicSTABThreatsToMask",
       "public_reads": [],
       "rule_id": "move.add_public_stabthreats_to_mask",
@@ -932,7 +932,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 4215,
+      "line": 4275,
       "parent_label": "BossAI_PlayerActiveFourMoveSaturated",
       "public_reads": [],
       "rule_id": "move.player_active_four_move_saturated",
@@ -941,7 +941,7 @@
     },
     {
       "classification": "public_info",
-      "line": 4245,
+      "line": 4305,
       "parent_label": "BossAI_AddRevealedDamagingTypesToMask",
       "public_reads": [
         "wPlayerUsedMoves"
@@ -952,7 +952,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 4273,
+      "line": 4333,
       "parent_label": "BossAI_AddMoveIdToPlausibleMask",
       "public_reads": [],
       "rule_id": "move.add_move_id_to_plausible_mask",
@@ -961,7 +961,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 4303,
+      "line": 4363,
       "parent_label": "BossAI_AddMoveIdToLikelyMask",
       "public_reads": [],
       "rule_id": "move.add_move_id_to_likely_mask",
@@ -970,7 +970,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 4336,
+      "line": 4396,
       "parent_label": "BossAI_AddSpeciesAndPreEvolutionMovesToMask",
       "public_reads": [],
       "rule_id": "move.add_species_and_pre_evolution_moves_to_mask",
@@ -979,7 +979,7 @@
     },
     {
       "classification": "public_info",
-      "line": 4366,
+      "line": 4426,
       "parent_label": "BossAI_LoadPublicThreatSourceSpecies",
       "public_reads": [],
       "rule_id": "move.load_public_threat_source_species",
@@ -988,7 +988,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 4373,
+      "line": 4433,
       "parent_label": "BossAI_AddCurrentSpeciesSpeculativeMoveThreats",
       "public_reads": [],
       "rule_id": "move.add_current_species_speculative_move_threats",
@@ -997,7 +997,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 4382,
+      "line": 4442,
       "parent_label": "BossAI_AddCurrentSpeciesLikelyMoveThreats",
       "public_reads": [],
       "rule_id": "move.add_current_species_likely_move_threats",
@@ -1006,7 +1006,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 4391,
+      "line": 4451,
       "parent_label": "BossAI_AdvanceToPreEvolutionThreatSource",
       "public_reads": [],
       "rule_id": "move.advance_to_pre_evolution_threat_source",
@@ -1015,7 +1015,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 4400,
+      "line": 4460,
       "parent_label": "BossAI_AddBaseTMHMMovesToMask",
       "public_reads": [],
       "rule_id": "move.add_base_tmhmmoves_to_mask",
@@ -1024,7 +1024,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 4434,
+      "line": 4494,
       "parent_label": "BossAI_AddSpeciesLevelUpMovesToMask",
       "public_reads": [
         "EvosAttacks",
@@ -1037,7 +1037,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 4491,
+      "line": 4551,
       "parent_label": "BossAI_AddSpeciesLevelUpMovesToLikelyMask",
       "public_reads": [
         "EvosAttacks",
@@ -1050,7 +1050,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 4548,
+      "line": 4608,
       "parent_label": "BossAI_AddSpeciesEggMovesToMask",
       "public_reads": [],
       "rule_id": "move.add_species_egg_moves_to_mask",
@@ -1059,7 +1059,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 4581,
+      "line": 4641,
       "parent_label": "BossAI_ApplyPlanMoveBias",
       "public_reads": [],
       "rule_id": "move.apply_plan_move_bias",
@@ -1068,7 +1068,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 4647,
+      "line": 4707,
       "parent_label": "BossAI_ApplyScoutMoveBias",
       "public_reads": [],
       "rule_id": "move.apply_scout_move_bias",
@@ -1077,7 +1077,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 4667,
+      "line": 4727,
       "parent_label": "BossAI_ApplyRepeatPenalty",
       "public_reads": [],
       "rule_id": "move.apply_repeat_penalty",
@@ -1086,7 +1086,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 4697,
+      "line": 4757,
       "parent_label": "BossAI_ApplyLookaheadToTopMoveCandidates",
       "public_reads": [],
       "rule_id": "move.apply_lookahead_to_top_move_candidates",
@@ -1095,7 +1095,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 4793,
+      "line": 4853,
       "parent_label": "BossAI_ApplySignedDeltaToScore",
       "public_reads": [],
       "rule_id": "move.apply_signed_delta_to_score",
@@ -1104,7 +1104,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 4826,
+      "line": 4886,
       "parent_label": "BossAI_EvaluateActionLookahead",
       "public_reads": [],
       "rule_id": "move.evaluate_action_lookahead",
@@ -1113,7 +1113,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 4976,
+      "line": 5036,
       "parent_label": "BossAI_ApplyMultiTurnProjection",
       "public_reads": [],
       "rule_id": "move.apply_multi_turn_projection",
@@ -1122,7 +1122,7 @@
     },
     {
       "classification": "internal",
-      "line": 5087,
+      "line": 5147,
       "parent_label": "BossAI_ApplyMultiTurnProjection",
       "public_reads": [],
       "rule_id": "move.apply_multi_turn_projection.is_under_pressure",
@@ -1131,7 +1131,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 5132,
+      "line": 5192,
       "parent_label": "BossAI_ClampSignedLookaheadDelta",
       "public_reads": [],
       "rule_id": "move.clamp_signed_lookahead_delta",
@@ -1140,7 +1140,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 5161,
+      "line": 5221,
       "parent_label": "BossAI_GetPrimaryThreatType",
       "public_reads": [],
       "rule_id": "move.get_primary_threat_type",
@@ -1149,7 +1149,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 5184,
+      "line": 5244,
       "parent_label": "BossAI_GetPrimaryThreatTypeUncached",
       "public_reads": [],
       "rule_id": "move.get_primary_threat_type_uncached",
@@ -1158,7 +1158,7 @@
     },
     {
       "classification": "public_info",
-      "line": 5327,
+      "line": 5387,
       "parent_label": "BossAI_GetRevealedMoveThreatTypeAndSeverity",
       "public_reads": [
         "wPlayerUsedMoves"
@@ -1169,7 +1169,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 5360,
+      "line": 5420,
       "parent_label": "BossAI_GetTypeThreatSeverityVsEnemyMon",
       "public_reads": [],
       "rule_id": "move.get_type_threat_severity_vs_enemy_mon",
@@ -1178,7 +1178,7 @@
     },
     {
       "classification": "public_info",
-      "line": 5388,
+      "line": 5448,
       "parent_label": "BossAI_AdjustThreatSeverityForEnemyKnownDefense",
       "public_reads": [],
       "rule_id": "move.adjust_threat_severity_for_enemy_known_defense",
@@ -1187,7 +1187,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 5429,
+      "line": 5489,
       "parent_label": "BossAI_PlayerThreatTypeSuperEffectiveVsEnemy",
       "public_reads": [],
       "rule_id": "move.player_threat_type_super_effective_vs_enemy",
@@ -1196,7 +1196,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 5444,
+      "line": 5504,
       "parent_label": "BossAI_PlayerThreatTypeHitsEnemy",
       "public_reads": [],
       "rule_id": "move.player_threat_type_hits_enemy",
@@ -1205,7 +1205,7 @@
     },
     {
       "classification": "public_info",
-      "line": 5462,
+      "line": 5522,
       "parent_label": "BossAI_EnemyKnownItemNullifiesThreatType",
       "public_reads": [],
       "rule_id": "move.enemy_known_item_nullifies_threat_type",
@@ -1214,7 +1214,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 5476,
+      "line": 5536,
       "parent_label": "BossAI_DecThreatSeverityB",
       "public_reads": [],
       "rule_id": "move.dec_threat_severity_b",
@@ -1223,7 +1223,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 5484,
+      "line": 5544,
       "parent_label": "BossAI_EnemySpeciesCanEvolve",
       "public_reads": [],
       "rule_id": "move.enemy_species_can_evolve",
@@ -1232,7 +1232,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 5523,
+      "line": 5583,
       "parent_label": "BossAI_GetTierPlausibleRiskWeight",
       "public_reads": [],
       "rule_id": "move.get_tier_plausible_risk_weight",
@@ -1241,7 +1241,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 5536,
+      "line": 5596,
       "parent_label": "BossAI_GetSpeculativePlausibleRiskWeight",
       "public_reads": [],
       "rule_id": "move.get_speculative_plausible_risk_weight",
@@ -1250,7 +1250,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 5544,
+      "line": 5604,
       "parent_label": "BossAI_GetScoutRollThreshold",
       "public_reads": [],
       "rule_id": "move.get_scout_roll_threshold",
@@ -1259,7 +1259,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 5559,
+      "line": 5619,
       "parent_label": "BossAI_ShouldScout",
       "public_reads": [],
       "rule_id": "move.should_scout",
@@ -1268,7 +1268,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 5588,
+      "line": 5648,
       "parent_label": "BossAI_MarkScoutedIfScoutMove",
       "public_reads": [],
       "rule_id": "move.mark_scouted_if_scout_move",
@@ -1277,7 +1277,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 5617,
+      "line": 5677,
       "parent_label": "BossAI_MaybeMarkScoutPivot",
       "public_reads": [],
       "rule_id": "move.maybe_mark_scout_pivot",
@@ -1563,7 +1563,7 @@
   ],
   "schema_version": 1,
   "source_hashes": {
-    "engine\\battle\\ai\\boss_policy_move.asm": "12E6BC82F9D4A36BF7AA42D8914EC0C1C86E38838A4D4539732B0039BAA01FBF",
+    "engine\\battle\\ai\\boss_policy_move.asm": "96501EC3E777817C3FAFAAEF2285B05E899300EB8768BB40D79BC646D2BAC23D",
     "engine\\battle\\ai\\boss_policy_switch.asm": "2DD08B15DCCA8DD95D171805C18995EF0F7262AC05F5EFEF7B6A97E41CF0C844"
   }
 }

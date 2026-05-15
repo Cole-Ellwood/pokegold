@@ -21,6 +21,8 @@ MOVE_CONSTANTS = ROOT / "constants" / "move_constants.asm"
 TRACE_FIELDS: tuple[tuple[str, int], ...] = (
     ("wBossAITraceTopMoves", 3),
     ("wBossAITraceTopScores", 3),
+    ("wBossAITracePreModelScores", 4),
+    ("wBossAITracePostModelScores", 4),
     ("wBossAITraceChosenMove", 1),
     ("wBossAITraceSwitchConfidence", 1),
     ("wBossAITracePlanId", 1),
@@ -148,6 +150,20 @@ def hex_bytes(values: list[int]) -> str:
     return " ".join(f"{value:02x}" for value in values)
 
 
+def csv_bytes(values: list[int]) -> str:
+    return ",".join(str(value) for value in values)
+
+
+def csv_score_deltas(before: list[int], after: list[int]) -> str:
+    deltas = []
+    for left, right in zip(before, after):
+        if left == 0xFF or right == 0xFF:
+            deltas.append("na")
+        else:
+            deltas.append(f"{right - left:+d}")
+    return ",".join(deltas)
+
+
 def decode_risk_flags(value: int) -> str:
     active = [name for bit, name in RISK_FLAGS if value & (1 << bit)]
     return ",".join(active) if active else "none"
@@ -172,6 +188,8 @@ def format_capture(
     risk_flags = values["wBossAITraceRiskFlags"][0]
     move_ids = values["wEnemyMonMoves"]
     move_scores = values["wEnemyAIMoveScores"]
+    pre_model_scores = values["wBossAITracePreModelScores"]
+    post_model_scores = values["wBossAITracePostModelScores"]
 
     top_pairs = []
     for move, score in zip(top_moves, top_scores):
@@ -182,8 +200,11 @@ def format_capture(
     lines.extend(
         [
             f"tier={values['wBossAITier'][0]}",
-            f"move_ids={','.join(str(value) for value in move_ids)}",
-            f"move_scores={','.join(str(value) for value in move_scores)}",
+            f"move_ids={csv_bytes(move_ids)}",
+            f"move_scores={csv_bytes(move_scores)}",
+            f"pre_model_scores={csv_bytes(pre_model_scores)}",
+            f"post_model_scores={csv_bytes(post_model_scores)}",
+            f"model_score_deltas={csv_score_deltas(pre_model_scores, post_model_scores)}",
             f"chosen_slot={values['wCurEnemyMoveNum'][0]}",
             f"cur_enemy_move_id={values['wCurEnemyMove'][0]}",
             f"top_moves={','.join(top_pairs)}",
@@ -195,7 +216,7 @@ def format_capture(
             f"plan_confidence={values['wBossAITracePlanConfidence'][0]}",
             f"plausible_mask={hex_bytes(values['wBossAITracePlausibleMask'])}",
             f"risk_flags={risk_flags:02x} ({decode_risk_flags(risk_flags)})",
-            f"lookahead_bonus_top={','.join(str(v) for v in values['wBossAITraceLookaheadBonusTop'])}",
+            f"lookahead_bonus_top={csv_bytes(values['wBossAITraceLookaheadBonusTop'])}",
             f"revealed_masks={hex_bytes(values['wBossAIRevealedMovesBitmap'])}",
             (
                 "switch_context="

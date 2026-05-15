@@ -552,6 +552,19 @@ def estimate_boss_ai_trace_bytes() -> int:
     if not path.exists():
         return 0
 
+    size_names = {
+        "NUM_MOVES": 4,
+        "PARTY_LENGTH": 6,
+    }
+
+    def parse_size(expr: str) -> int:
+        expr = expr.split(";", 1)[0].strip()
+        for name, value in size_names.items():
+            expr = re.sub(rf"\b{name}\b", str(value), expr)
+        if not re.fullmatch(r"[0-9a-fA-FxX+\-*/ ()]+", expr):
+            raise ValueError(expr)
+        return int(eval(expr, {"__builtins__": {}}, {}))
+
     total = 0
     in_trace = False
     for raw_line in path.read_text(encoding="utf-8").splitlines():
@@ -575,7 +588,7 @@ def estimate_boss_ai_trace_bytes() -> int:
         args = " ".join(parts[directive_index + 1 :]).strip()
         if directive == "ds":
             try:
-                total += int(args.split()[0], 0)
+                total += parse_size(args)
             except (IndexError, ValueError):
                 pass
         elif directive == "db":

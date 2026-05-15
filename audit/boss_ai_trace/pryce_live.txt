@@ -1,12 +1,15 @@
 trace_rom=pokegold_trace.gbc
-trace_rom_sha256=68C730B544CB312B95D3924975AED586244159A0850FF1ED85852A414F6D0992
+trace_rom_sha256=75A46C806E002B67A61C4BF5B0507E6362994706185B87DBD45920D9AF04DA67
 trace_symbols=pokegold_trace.sym
-trace_symbols_sha256=D32C3CC1885F91C385E88616A0C497C4AE877EA83BAF7CC4CEED4F9B59439005
+trace_symbols_sha256=37728BE9D503EFABED4CB7E39CEC4BB6385CA995DE430909BC5CEE63DEB2BDF2
 boss=Pryce
 notes=late-tier adaptive-lead gym leader; Ice/Ground role bias and weather/setup planning
 tier=3
 move_ids=191,57,58,153
 move_scores=38,20,20,20
+pre_model_scores=20,20,20,20
+post_model_scores=20,20,20,20
+model_score_deltas=+0,+0,+0,+0
 chosen_slot=1
 cur_enemy_move_id=57
 top_moves=SURF:20,ICE_BEAM:20,EXPLOSION:20

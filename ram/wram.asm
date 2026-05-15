@@ -2485,6 +2485,8 @@ wBossAIPrimaryThreatCache:: db      ; $ff = uncomputed, $20 = no threat, else ty
 IF DEF(BOSS_AI_TRACE)
 wBossAITraceTopMoves:: ds 3
 wBossAITraceTopScores:: ds 3
+wBossAITracePreModelScores:: ds NUM_MOVES
+wBossAITracePostModelScores:: ds NUM_MOVES
 wBossAITraceChosenMove:: db
 wBossAITraceSwitchConfidence:: db
 wBossAITracePlanId:: db

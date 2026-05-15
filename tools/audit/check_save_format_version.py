@@ -54,6 +54,9 @@ SRAM_LABEL_RE = re.compile(r"^(s[A-Za-z0-9_]+)::")
 SECTION_RE = re.compile(r'^SECTION\s+"([^"]+)"\s*,\s*SRAM\b')
 BANK_HEADER_RE = re.compile(r"^([A-Z][A-Z0-9_]*)\s+\$([0-9a-fA-F]+)\b")
 LAYOUT_SECTION_RE = re.compile(r'^\s*"([^"]+)"\s*$')
+TRACE_ONLY_IF_RE = re.compile(r"^\s*IF\s+DEF\(\s*BOSS_AI_TRACE\s*\)\s*$")
+IF_RE = re.compile(r"^\s*IF\b")
+ENDC_RE = re.compile(r"^\s*ENDC\b")
 
 
 def fail(message: str) -> None:
@@ -67,6 +70,28 @@ def load(path: Path) -> str:
     return path.read_text(encoding="utf-8", errors="replace")
 
 
+def normal_build_wram_lines() -> list[str]:
+    """Return wram.asm source lines visible to normal, save-compatible builds."""
+
+    lines = load(WRAM).splitlines()
+    out: list[str] = []
+    trace_only_depth = 0
+    for line in lines:
+        if trace_only_depth:
+            if IF_RE.match(line):
+                trace_only_depth += 1
+            elif ENDC_RE.match(line):
+                trace_only_depth -= 1
+            continue
+        if TRACE_ONLY_IF_RE.match(line):
+            trace_only_depth = 1
+            continue
+        out.append(line)
+    if trace_only_depth:
+        fail("wram.asm has an unterminated IF DEF(BOSS_AI_TRACE) block")
+    return out
+
+
 def parse_version() -> int:
     for line in load(CONSTANTS).splitlines():
         match = EQU_RE.match(line)
@@ -77,7 +102,7 @@ def parse_version() -> int:
 
 
 def parse_wram_pairs() -> dict[str, list[str]]:
-    lines = load(WRAM).splitlines()
+    lines = normal_build_wram_lines()
     label_at: dict[str, int] = {}
     for idx, line in enumerate(lines):
         match = WRAM_LABEL_RE.match(line)

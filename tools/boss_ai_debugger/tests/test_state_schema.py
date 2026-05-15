@@ -35,6 +35,8 @@ class StateSchemaTests(unittest.TestCase):
                         "tier=3",
                         "move_ids=1,2,3,0",
                         "move_scores=20,21,80,80",
+                        "pre_model_scores=20,20,80,255",
+                        "post_model_scores=20,21,80,255",
                         "chosen_id=1",
                         "chosen_slot=0",
                     ]
