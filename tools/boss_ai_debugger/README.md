@@ -184,7 +184,9 @@ python -m tools.boss_ai_debugger run-suite --profile changed-ai --refresh-rom-sc
 This profile records generated stress results, review queue, route evaluation,
 metamorphic checks, scorer mutation results, candidate invariants, selector
 trace replay when traces are available, rule-map drift, artifact hashes, and
-known gaps. It does not rebuild ROMs or refresh
+known gaps. It also writes `previous_run_diff.json` to compare changed-AI
+metrics, artifact hashes, and changed-file sets against the latest older
+changed-AI run in the same run store. It does not rebuild ROMs or refresh
 `rom-contribution-trace` output itself, but it ingests the existing
 `audit\boss_ai_debugger\rom_contribution_trace_smoke.json` artifact when it is
 present and records a summary plus copied artifact hashes in the run directory.

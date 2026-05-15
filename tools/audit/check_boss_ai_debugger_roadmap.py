@@ -468,11 +468,11 @@ def roadmap_items(evidence: dict[str, Any]) -> list[dict[str, Any]]:
             evidence=[
                 "run-suite --profile changed-ai records generated stress, selector replay, contribution summaries, and score-materialization artifacts",
                 "the suite can optionally refresh one contribution trace and one targeted generated score batch",
+                "changed-AI runs write previous_run_diff.json against the latest older changed-AI run in the same run store",
             ],
             gaps=[
                 (
-                    "Make changed-ai rebuild ROMs, refresh relevant live traces, and "
-                    "diff behavior against the previous run."
+                    "Make changed-ai rebuild ROMs and refresh relevant live traces."
                 )
             ],
             refs=[

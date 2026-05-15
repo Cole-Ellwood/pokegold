@@ -35,11 +35,15 @@ The generated-smoke profile writes:
 - review queue summary
 - changed-AI gate summaries when using `--profile changed-ai`
 - copied ROM contribution trace artifacts and summary hashes when present
+- previous changed-AI run diff summary when an older run exists
 
 ## Scope
 
 This is not the final changed-AI suite. The changed-AI profile ingests existing
 ROM score-helper contribution trace artifacts, but it does not rebuild ROMs,
-refresh live captures, or regenerate those trace artifacts. The current run
-store gives generated scenario searches and fast changed-AI gates reproducible
-lineage now, so later ROM-backed suites can use the same artifact shape.
+refresh live captures, or regenerate those trace artifacts by default. It does
+compare each changed-AI run to the latest older changed-AI run in the same run
+store, including key metric deltas, artifact hash changes, and changed-file set
+changes. The current run store gives generated scenario searches and fast
+changed-AI gates reproducible lineage now, so later ROM-backed suites can use
+the same artifact shape.

@@ -20,6 +20,8 @@ The changed-AI profile creates a reproducible run directory under
 - candidate invariant report
 - selector trace replay report when trace files are available
 - ROM contribution trace summary from existing trace artifacts when present
+- optional targeted ROM score materialization results
+- previous changed-AI run diff when an earlier run exists
 - run metadata with git commit, changed files, artifact hashes, and known gaps
 - Markdown summary
 
@@ -27,9 +29,12 @@ This is the current one-command adaptation harness for local debugger work. It
 does not yet rebuild ROMs, refresh live trace captures, or regenerate scoring
 contribution traces. It copies and summarizes existing
 `rom-contribution-trace` JSON artifacts so score-helper rule coverage is visible
-in the same run output. The differential artifact compares ROM/Python
-contribution events only when trace ids match. Those limitations are recorded in
-each run's `known_gaps` field so the suite does not overstate ROM accuracy.
+in the same run output. Each run also writes `previous_run_diff.json`, comparing
+changed-AI metrics, artifact hashes, and changed-file sets against the latest
+older changed-AI run in the same run store. The differential artifact compares
+ROM/Python contribution events only when trace ids match. Those limitations are
+recorded in each run's `known_gaps` field so the suite does not overstate ROM
+accuracy.
 
 `--refresh-rom-contribution-trace` drives one configured boss route, Clair by
 default, and stores a fresh ROM contribution trace inside the run directory. It

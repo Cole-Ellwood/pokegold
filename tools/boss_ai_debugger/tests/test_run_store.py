@@ -8,7 +8,11 @@ from contextlib import redirect_stdout
 from pathlib import Path
 
 from tools.boss_ai_debugger.__main__ import main as debugger_main
-from tools.boss_ai_debugger.run_store import run_changed_ai_suite, run_generated_smoke_suite
+from tools.boss_ai_debugger.run_store import (
+    build_previous_run_diff,
+    run_changed_ai_suite,
+    run_generated_smoke_suite,
+)
 
 
 def write_unit_contribution_trace(path: Path) -> None:
@@ -108,6 +112,7 @@ class RunStoreTests(unittest.TestCase):
             self.assertTrue((run_dir / "trace_replay.json").exists())
             self.assertTrue((run_dir / "rom_contribution_trace_summary.json").exists())
             self.assertTrue((run_dir / "rom_score_materialization.json").exists())
+            self.assertTrue((run_dir / "previous_run_diff.json").exists())
             self.assertTrue((run_dir / "summary.md").exists())
             contribution_summary = json.loads(
                 (run_dir / "rom_contribution_trace_summary.json").read_text(
@@ -126,13 +131,98 @@ class RunStoreTests(unittest.TestCase):
         self.assertFalse(metadata["parameters"]["refresh_rom_score_materialization"])
         self.assertIn("rom_contribution_trace_summary", metadata["artifacts"])
         self.assertIn("rom_score_materialization", metadata["artifacts"])
+        self.assertIn("previous_run_diff", metadata["artifacts"])
         self.assertIn("rom_contribution_trace_summary", metadata["artifact_hashes"])
         self.assertIn("rom_score_materialization", metadata["artifact_hashes"])
+        self.assertIn("previous_run_diff", metadata["artifact_hashes"])
+        self.assertFalse(metadata["previous_run_diff_summary"]["available"])
         self.assertEqual(
             metadata["rom_score_materialization_summary"]["checked_count"],
             0,
         )
         self.assertIn("known_gaps", metadata)
+
+    def test_previous_run_diff_reports_metric_deltas(self) -> None:
+        previous = {
+            "run_id": "previous",
+            "profile": "changed-ai",
+            "git_commit": "old",
+            "batch_summary": {"scenario_count": 4, "reviewable_count": 3},
+            "differential_summary": {
+                "mismatch_count": 2,
+                "contribution_comparison": {"mismatch_count": 1},
+            },
+            "trace_replay_summary": {"failure_count": 0},
+            "rom_score_materialization_summary": {
+                "error_count": 0,
+                "contribution_mismatch_count": 1,
+            },
+            "mutation_summary": {"survived_count": 4},
+            "invariant_summary": {"violation_count": 5},
+            "artifact_hashes": {
+                "batch_report": "OLD",
+                "previous_run_diff": "OLD_SELF",
+            },
+            "changed_files": ["engine/battle/ai/boss_policy_move.asm"],
+        }
+        current = {
+            "run_id": "current",
+            "profile": "changed-ai",
+            "git_commit": "new",
+            "batch_summary": {"scenario_count": 6, "reviewable_count": 5},
+            "differential_summary": {
+                "mismatch_count": 1,
+                "contribution_comparison": {"mismatch_count": 0},
+            },
+            "trace_replay_summary": {"failure_count": 0},
+            "rom_score_materialization_summary": {
+                "error_count": 0,
+                "contribution_mismatch_count": 0,
+            },
+            "mutation_summary": {"survived_count": 2},
+            "invariant_summary": {"violation_count": 5},
+            "artifact_hashes": {
+                "batch_report": "NEW",
+                "previous_run_diff": "NEW_SELF",
+            },
+            "changed_files": [
+                "engine/battle/ai/boss_policy_move.asm",
+                "tools/boss_ai_debugger/scorer.py",
+            ],
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            runs_dir = Path(tmp)
+            previous_dir = runs_dir / "previous"
+            previous_dir.mkdir()
+            (previous_dir / "metadata.json").write_text(
+                json.dumps({**previous, "created_at": "2026-05-15T00:00:00Z"}),
+                encoding="utf-8",
+            )
+
+            diff = build_previous_run_diff(
+                runs_dir=runs_dir,
+                current_run_id="current",
+                current_metadata=current,
+            )
+
+        self.assertTrue(diff["available"])
+        self.assertEqual(diff["previous_run_id"], "previous")
+        self.assertEqual(diff["metric_deltas"]["scenario_count"]["delta"], 2)
+        self.assertEqual(diff["metric_deltas"]["reviewable_count"]["delta"], 2)
+        self.assertEqual(
+            diff["metric_deltas"]["differential_mismatch_count"]["delta"],
+            -1,
+        )
+        self.assertEqual(diff["summary"]["artifact_hash_change_count"], 1)
+        self.assertEqual(
+            [change["artifact"] for change in diff["artifact_hash_changes"]],
+            ["batch_report"],
+        )
+        self.assertEqual(diff["summary"]["changed_file_added_count"], 1)
+        self.assertEqual(
+            diff["changed_file_diff"]["added"],
+            ["tools/boss_ai_debugger/scorer.py"],
+        )
 
     def test_cli_run_suite_changed_ai(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

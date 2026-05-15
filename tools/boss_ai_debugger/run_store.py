@@ -36,6 +36,7 @@ from .trace_replay import replay_trace_paths
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_RUNS_DIR = ROOT / "audit" / "boss_ai_debugger" / "runs"
 RUN_STORE_VERSION = "boss-ai-debugger-run-v1"
+SELF_REFERENTIAL_DIFF_ARTIFACTS = {"previous_run_diff"}
 
 
 def run_generated_smoke_suite(
@@ -133,6 +134,7 @@ def run_changed_ai_suite(
     trace_replay_path = run_dir / "trace_replay.json"
     rom_contribution_summary_path = run_dir / "rom_contribution_trace_summary.json"
     rom_score_materialization_path = run_dir / "rom_score_materialization.json"
+    previous_run_diff_path = run_dir / "previous_run_diff.json"
     metadata_path = run_dir / "metadata.json"
     summary_path = run_dir / "summary.md"
     copied_rom_contribution_paths = materialize_rom_contribution_traces(
@@ -220,6 +222,7 @@ def run_changed_ai_suite(
                 rom_contribution_summary_path,
             ),
             "rom_score_materialization": relative_path(rom_score_materialization_path),
+            "previous_run_diff": relative_path(previous_run_diff_path),
             "rom_contribution_traces": [
                 relative_path(path) for path in copied_rom_contribution_paths
             ],
@@ -327,6 +330,16 @@ def run_changed_ai_suite(
             refresh_rom_score_materialization=refresh_rom_score_materialization,
         ),
     }
+    previous_run_diff = build_previous_run_diff(
+        runs_dir=runs_dir,
+        current_run_id=resolved_run_id,
+        current_metadata=metadata,
+    )
+    write_json(previous_run_diff, previous_run_diff_path)
+    metadata["artifact_hashes"]["previous_run_diff"] = sha256_file(
+        previous_run_diff_path
+    )
+    metadata["previous_run_diff_summary"] = previous_run_diff["summary"]
     write_json(metadata, metadata_path)
     summary_path.write_text(
         format_changed_ai_summary(metadata, queue),
@@ -392,6 +405,7 @@ def format_changed_ai_summary(metadata: dict[str, Any], queue: dict[str, Any]) -
         f"- trace replay: `{trace}`",
         f"- ROM contribution: `{contribution}`",
         f"- ROM score materialization: `{score_materialization}`",
+        f"- previous run diff: `{metadata.get('previous_run_diff_summary', {})}`",
         f"- rule map errors: `{metadata['rule_map_summary']['stored_rule_map_errors']}`",
         "",
         "## Known Gaps",
@@ -450,6 +464,200 @@ def changed_files() -> list[str]:
     if not output:
         return []
     return [line.strip() for line in output.splitlines() if line.strip()]
+
+
+def build_previous_run_diff(
+    *,
+    runs_dir: Path,
+    current_run_id: str,
+    current_metadata: dict[str, Any],
+) -> dict[str, Any]:
+    previous = load_previous_changed_ai_metadata(
+        runs_dir=runs_dir,
+        current_run_id=current_run_id,
+    )
+    if previous is None:
+        return {
+            "schema_version": 1,
+            "kind": "changed_ai_previous_run_diff",
+            "available": False,
+            "current_run_id": current_run_id,
+            "previous_run_id": "",
+            "reason": "no previous changed-ai run metadata found",
+            "summary": {
+                "available": False,
+                "changed_metric_count": 0,
+                "artifact_hash_change_count": 0,
+                "changed_file_added_count": 0,
+                "changed_file_removed_count": 0,
+            },
+            "metric_deltas": {},
+            "artifact_hash_changes": [],
+            "changed_file_diff": {
+                "previous_count": 0,
+                "current_count": 0,
+                "added": [],
+                "removed": [],
+                "shared": [],
+            },
+        }
+
+    metric_deltas = changed_ai_metric_deltas(previous, current_metadata)
+    artifact_hash_changes = artifact_hash_changes_for_runs(previous, current_metadata)
+    changed_file_diff = changed_ai_changed_file_diff(previous, current_metadata)
+    return {
+        "schema_version": 1,
+        "kind": "changed_ai_previous_run_diff",
+        "available": True,
+        "current_run_id": current_run_id,
+        "previous_run_id": str(previous.get("run_id", "")),
+        "previous_git_commit": str(previous.get("git_commit", "")),
+        "current_git_commit": str(current_metadata.get("git_commit", "")),
+        "summary": {
+            "available": True,
+            "changed_metric_count": len(
+                [item for item in metric_deltas.values() if item["delta"] != 0]
+            ),
+            "artifact_hash_change_count": len(artifact_hash_changes),
+            "changed_file_added_count": len(changed_file_diff["added"]),
+            "changed_file_removed_count": len(changed_file_diff["removed"]),
+        },
+        "metric_deltas": metric_deltas,
+        "artifact_hash_changes": artifact_hash_changes,
+        "changed_file_diff": changed_file_diff,
+    }
+
+
+def load_previous_changed_ai_metadata(
+    *,
+    runs_dir: Path,
+    current_run_id: str,
+) -> dict[str, Any] | None:
+    candidates = []
+    for path in runs_dir.glob("*/metadata.json"):
+        if path.parent.name == current_run_id:
+            continue
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if not isinstance(data, dict) or data.get("profile") != "changed-ai":
+            continue
+        candidates.append((str(data.get("created_at", "")), path, data))
+    if not candidates:
+        return None
+    candidates.sort(key=lambda item: (item[0], str(item[1])))
+    return candidates[-1][2]
+
+
+def changed_ai_metric_deltas(
+    previous: dict[str, Any],
+    current: dict[str, Any],
+) -> dict[str, dict[str, float]]:
+    metric_paths = {
+        "scenario_count": ("batch_summary", "scenario_count"),
+        "reviewable_count": ("batch_summary", "reviewable_count"),
+        "differential_mismatch_count": ("differential_summary", "mismatch_count"),
+        "contribution_mismatch_count": (
+            "differential_summary",
+            "contribution_comparison",
+            "mismatch_count",
+        ),
+        "trace_replay_failure_count": ("trace_replay_summary", "failure_count"),
+        "rom_score_error_count": ("rom_score_materialization_summary", "error_count"),
+        "rom_score_contribution_mismatch_count": (
+            "rom_score_materialization_summary",
+            "contribution_mismatch_count",
+        ),
+        "mutation_survived_count": ("mutation_summary", "survived_count"),
+        "invariant_violation_count": ("invariant_summary", "violation_count"),
+    }
+    return {
+        metric: metric_delta(previous, current, path)
+        for metric, path in metric_paths.items()
+    }
+
+
+def metric_delta(
+    previous: dict[str, Any],
+    current: dict[str, Any],
+    path: tuple[str, ...],
+) -> dict[str, float]:
+    previous_value = nested_number(previous, path)
+    current_value = nested_number(current, path)
+    return {
+        "previous": previous_value,
+        "current": current_value,
+        "delta": current_value - previous_value,
+    }
+
+
+def nested_number(data: dict[str, Any], path: tuple[str, ...]) -> float:
+    value: Any = data
+    for key in path:
+        if not isinstance(value, dict):
+            return 0.0
+        value = value.get(key)
+    if isinstance(value, (int, float)):
+        return float(value)
+    return 0.0
+
+
+def artifact_hash_changes_for_runs(
+    previous: dict[str, Any],
+    current: dict[str, Any],
+) -> list[dict[str, str]]:
+    previous_hashes = flatten_hashes(previous.get("artifact_hashes", {}))
+    current_hashes = flatten_hashes(current.get("artifact_hashes", {}))
+    changes = []
+    for key in sorted(set(previous_hashes) | set(current_hashes)):
+        if key in SELF_REFERENTIAL_DIFF_ARTIFACTS:
+            continue
+        previous_hash = previous_hashes.get(key, "")
+        current_hash = current_hashes.get(key, "")
+        if previous_hash == current_hash:
+            continue
+        changes.append(
+            {
+                "artifact": key,
+                "previous": previous_hash,
+                "current": current_hash,
+            }
+        )
+    return changes
+
+
+def changed_ai_changed_file_diff(
+    previous: dict[str, Any],
+    current: dict[str, Any],
+) -> dict[str, Any]:
+    previous_files = string_set(previous.get("changed_files", []))
+    current_files = string_set(current.get("changed_files", []))
+    return {
+        "previous_count": len(previous_files),
+        "current_count": len(current_files),
+        "added": sorted(current_files - previous_files),
+        "removed": sorted(previous_files - current_files),
+        "shared": sorted(previous_files & current_files),
+    }
+
+
+def string_set(value: Any) -> set[str]:
+    if not isinstance(value, list):
+        return set()
+    return {item for item in value if isinstance(item, str)}
+
+
+def flatten_hashes(value: Any, *, prefix: str = "") -> dict[str, str]:
+    if isinstance(value, str):
+        return {prefix: value} if prefix else {}
+    if not isinstance(value, dict):
+        return {}
+    result: dict[str, str] = {}
+    for key, item in value.items():
+        child_prefix = f"{prefix}.{key}" if prefix else str(key)
+        result.update(flatten_hashes(item, prefix=child_prefix))
+    return result
 
 
 def copy_rom_contribution_traces(paths: list[Path], *, run_dir: Path) -> list[Path]:
