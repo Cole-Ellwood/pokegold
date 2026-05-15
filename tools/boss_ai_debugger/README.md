@@ -183,3 +183,16 @@ The mastery index parses policy cards, quick tests, reviews, and the
 source-to-policy ledger. The coverage report shows mapped Boss AI rules,
 generated scenario tag coverage, policy-card evidence coverage, and explicitly
 flags that full ROM scoring trace coverage is not implemented yet.
+
+Analyze a mismatch:
+
+```powershell
+python -m tools.boss_ai_debugger counterfactual --scenario audit\boss_ai_debugger\generated\spikes_spin.jsonl --scenario-id generated_spikes_spin_1_00001
+python -m tools.boss_ai_debugger minimize --scenario audit\boss_ai_debugger\generated\spikes_spin.jsonl --scenario-id generated_spikes_spin_1_00001
+python -m tools.boss_ai_debugger localize --scenarios audit\boss_ai_debugger\generated\spikes_spin.jsonl
+```
+
+`counterfactual` reports the smallest score movement and public fact changes
+that would flip the answer, `minimize` removes nonessential fields/actions while
+preserving the verdict, and `localize` ranks overrepresented tags and move-delta
+rules in reviewable batches.

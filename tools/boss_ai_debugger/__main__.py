@@ -27,6 +27,11 @@ from .coverage_report import (
     format_coverage_report,
     write_coverage_report,
 )
+from .counterfactuals import (
+    explain_counterfactuals_for_path,
+    format_counterfactual_report,
+    write_counterfactual_json,
+)
 from .generators import (
     FAMILIES as GENERATOR_FAMILIES,
     format_generate_report,
@@ -38,11 +43,22 @@ from .metamorphic import (
     run_metamorphic_suite,
     write_metamorphic_json,
 )
+from .localize import (
+    format_localization_report,
+    localize_from_report,
+    localize_from_scenarios,
+    write_localization_json,
+)
 from .mastery_index import (
     DEFAULT_MASTERY_INDEX_PATH,
     build_mastery_index,
     format_mastery_index,
     write_mastery_index,
+)
+from .minimize import (
+    format_minimized_report,
+    minimize_scenario_path,
+    write_minimized_json,
 )
 from .regression import (
     evaluate_corpus,
@@ -397,6 +413,48 @@ def cmd_coverage_report(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_counterfactual(args: argparse.Namespace) -> int:
+    report = explain_counterfactuals_for_path(args.scenario, scenario_id=args.scenario_id or None)
+    if args.json_out != "":
+        write_counterfactual_json(report, Path(args.json_out))
+    if args.json:
+        print(json.dumps(report, indent=2, sort_keys=True))
+    else:
+        print(format_counterfactual_report(report))
+        if args.json_out != "":
+            print(f"wrote {args.json_out}")
+    return 0
+
+
+def cmd_minimize(args: argparse.Namespace) -> int:
+    report = minimize_scenario_path(args.scenario, scenario_id=args.scenario_id or None)
+    if args.json_out != "":
+        write_minimized_json(report, Path(args.json_out))
+    if args.json:
+        print(json.dumps(report, indent=2, sort_keys=True))
+    else:
+        print(format_minimized_report(report))
+        if args.json_out != "":
+            print(f"wrote {args.json_out}")
+    return 0
+
+
+def cmd_localize(args: argparse.Namespace) -> int:
+    if args.report is not None:
+        report = localize_from_report(args.report)
+    else:
+        report = localize_from_scenarios(args.scenarios)
+    if args.json_out != "":
+        write_localization_json(report, Path(args.json_out))
+    if args.json:
+        print(json.dumps(report, indent=2, sort_keys=True))
+    else:
+        print(format_localization_report(report))
+        if args.json_out != "":
+            print(f"wrote {args.json_out}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="python -m tools.boss_ai_debugger")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -536,6 +594,28 @@ def build_parser() -> argparse.ArgumentParser:
     coverage_cmd.add_argument("--json", action="store_true")
     coverage_cmd.add_argument("--json-out", default=str(DEFAULT_COVERAGE_PATH))
     coverage_cmd.set_defaults(func=cmd_coverage_report)
+
+    counterfactual_cmd = subparsers.add_parser("counterfactual")
+    counterfactual_cmd.add_argument("--scenario", type=path_arg, required=True)
+    counterfactual_cmd.add_argument("--scenario-id", default="")
+    counterfactual_cmd.add_argument("--json", action="store_true")
+    counterfactual_cmd.add_argument("--json-out", default="")
+    counterfactual_cmd.set_defaults(func=cmd_counterfactual)
+
+    minimize_cmd = subparsers.add_parser("minimize")
+    minimize_cmd.add_argument("--scenario", type=path_arg, required=True)
+    minimize_cmd.add_argument("--scenario-id", default="")
+    minimize_cmd.add_argument("--json", action="store_true")
+    minimize_cmd.add_argument("--json-out", default="")
+    minimize_cmd.set_defaults(func=cmd_minimize)
+
+    localize_cmd = subparsers.add_parser("localize")
+    localize_source = localize_cmd.add_mutually_exclusive_group(required=True)
+    localize_source.add_argument("--report", type=path_arg)
+    localize_source.add_argument("--scenarios", type=path_arg)
+    localize_cmd.add_argument("--json", action="store_true")
+    localize_cmd.add_argument("--json-out", default="")
+    localize_cmd.set_defaults(func=cmd_localize)
     return parser
 
 

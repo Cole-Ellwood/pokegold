@@ -8,10 +8,13 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from tools.boss_ai_debugger.generators import generate_scenarios
 from tools.boss_ai_debugger.coverage_report import build_coverage_report
+from tools.boss_ai_debugger.counterfactuals import explain_counterfactuals
+from tools.boss_ai_debugger.generators import generate_scenarios
+from tools.boss_ai_debugger.localize import localize_report
 from tools.boss_ai_debugger.mastery_index import build_mastery_index
 from tools.boss_ai_debugger.metamorphic import run_metamorphic_suite
+from tools.boss_ai_debugger.minimize import minimize_scenario
 from tools.boss_ai_debugger.review_queue import build_review_queue
 from tools.boss_ai_debugger.rom_scenarios import evaluate_batch
 from tools.boss_ai_debugger.rule_map import (
@@ -39,6 +42,20 @@ def main() -> int:
     metamorphic = run_metamorphic_suite(generated=25, seed=1)
     mastery = build_mastery_index()
     coverage = build_coverage_report(generated_count=100, seed=1)
+    reviewable = [
+        verdict for verdict in batch["verdicts"] if int(verdict.get("severity", 0)) > 0
+    ]
+    analysis_scenario = next(
+        (
+            scenario
+            for scenario in scenarios
+            if any(verdict["scenario_id"] == scenario["id"] for verdict in reviewable)
+        ),
+        scenarios[0],
+    )
+    counterfactual = explain_counterfactuals(analysis_scenario)
+    minimized = minimize_scenario(analysis_scenario)
+    localized = localize_report(batch, scenarios=scenarios, source="foundation_audit")
 
     errors: list[str] = []
     if not fixture_report["valid"]:
@@ -56,6 +73,12 @@ def main() -> int:
         errors.append("mastery index found no policy cards")
     if coverage["mastery"]["policy_card_count"] != mastery["policy_card_count"]:
         errors.append("coverage report mastery policy-card count mismatch")
+    if not counterfactual["score_flips_to_expected_best"]:
+        errors.append("counterfactual analysis did not report expected-best score flips")
+    if not minimized["preserved"]:
+        errors.append("minimization did not preserve verdict")
+    if not localized["likely_causes"]:
+        errors.append("localization did not report likely causes")
 
     if errors:
         print("Boss AI debugger foundation audit failed.")
@@ -87,6 +110,12 @@ def main() -> int:
         f"{coverage['mastery']['generated_policy_card_coverage_count']} / "
         f"{coverage['mastery']['policy_card_count']} policy cards covered by generated refs; "
         f"full_trace_rule_coverage={coverage['rule_map']['full_trace_rule_coverage_available']}."
+    )
+    print(
+        "Analysis tools: "
+        f"counterfactual={counterfactual['scenario_id']}, "
+        f"minimized_preserved={minimized['preserved']}, "
+        f"likely_causes={len(localized['likely_causes'])}."
     )
     return 0
 
