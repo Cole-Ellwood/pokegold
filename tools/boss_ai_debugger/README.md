@@ -90,6 +90,16 @@ python tools\audit\check_boss_ai_selector_replay.py
 That gate requires exact score-byte captures, not just older top-three trace
 summaries.
 
+Run the current differential report:
+
+```powershell
+python -m tools.boss_ai_debugger diff --scenarios audit\boss_ai_debugger\generated\spikes_spin.jsonl --trace-dir audit\boss_ai_trace
+```
+
+`diff` combines generated policy mismatches and exact selector trace replay
+mismatches into one mismatch schema. Full ROM score-rule deltas still require
+future scoring contribution traces.
+
 The full pre-choice ROM replay gate is:
 
 ```powershell

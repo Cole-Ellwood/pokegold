@@ -72,6 +72,7 @@ class RunStoreTests(unittest.TestCase):
             run_dir = runs_dir / "changed_run"
 
             self.assertTrue((run_dir / "route_eval.json").exists())
+            self.assertTrue((run_dir / "differential.json").exists())
             self.assertTrue((run_dir / "mutation.json").exists())
             self.assertTrue((run_dir / "invariants.json").exists())
             self.assertTrue((run_dir / "trace_replay.json").exists())
@@ -80,6 +81,7 @@ class RunStoreTests(unittest.TestCase):
         self.assertEqual(metadata["profile"], "changed-ai")
         self.assertEqual(metadata["batch_summary"]["scenario_count"], 6)
         self.assertIn("route_eval_summary", metadata)
+        self.assertIn("differential_summary", metadata)
         self.assertIn("known_gaps", metadata)
 
     def test_cli_run_suite_changed_ai(self) -> None:

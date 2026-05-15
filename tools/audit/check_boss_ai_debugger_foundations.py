@@ -10,6 +10,7 @@ if str(ROOT) not in sys.path:
 
 from tools.boss_ai_debugger.coverage_report import build_coverage_report
 from tools.boss_ai_debugger.counterfactuals import explain_counterfactuals
+from tools.boss_ai_debugger.differential import build_differential_report
 from tools.boss_ai_debugger.generators import generate_scenarios
 from tools.boss_ai_debugger.invariants import mine_invariants
 from tools.boss_ai_debugger.localize import localize_report
@@ -60,6 +61,11 @@ def main() -> int:
     minimized = minimize_scenario(analysis_scenario)
     localized = localize_report(batch, scenarios=scenarios, source="foundation_audit")
     route_eval = evaluate_route_batch(scenarios, source="foundation_audit")
+    differential = build_differential_report(
+        scenarios=scenarios,
+        trace_paths=sorted(DEFAULT_TRACE_DIR.glob("*_live.txt")),
+        source="foundation_audit",
+    )
     invariants = mine_invariants(
         scenarios=scenarios,
         trace_paths=sorted(DEFAULT_TRACE_DIR.glob("*_live.txt")),
@@ -103,6 +109,10 @@ def main() -> int:
         errors.append("route evaluation did not classify every generated scenario")
     if not route_eval["classification_counts"]:
         errors.append("route evaluation did not report classification counts")
+    if differential["scenario_count"] != len(scenarios):
+        errors.append("differential report did not include every generated scenario")
+    if "known_gaps" not in differential:
+        errors.append("differential report did not preserve known gaps")
     if invariants["candidate_count"] == 0:
         errors.append("invariant miner did not produce candidates")
     if mutation["killed_count"] != 1:
@@ -155,6 +165,11 @@ def main() -> int:
         "Route eval: "
         f"{route_eval['scenario_count']} scenarios, "
         f"classifications={route_eval['classification_counts']}."
+    )
+    print(
+        "Differential: "
+        f"{differential['mismatch_count']} mismatches, "
+        f"classes={differential['mismatch_class_counts']}."
     )
     return 0
 

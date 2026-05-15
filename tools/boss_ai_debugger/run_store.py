@@ -9,6 +9,7 @@ from typing import Any
 
 from tools.boss_ai_preference.data import load_fixtures, load_preferences
 
+from .differential import build_differential_report
 from .invariants import mine_invariants
 from .generators import generate_scenarios, write_jsonl
 from .metamorphic import run_metamorphic_suite
@@ -110,6 +111,7 @@ def run_changed_ai_suite(
     batch_path = run_dir / "batch_report.json"
     queue_path = run_dir / "review_queue.json"
     route_eval_path = run_dir / "route_eval.json"
+    differential_path = run_dir / "differential.json"
     metamorphic_path = run_dir / "metamorphic.json"
     mutation_path = run_dir / "mutation.json"
     invariants_path = run_dir / "invariants.json"
@@ -127,6 +129,11 @@ def run_changed_ai_suite(
     labels = load_preferences(fixtures=fixtures)
     mutation = run_scorer_mutations(fixtures, labels)
     trace_paths = sorted(trace_dir.glob("*_live.txt")) if trace_dir and trace_dir.exists() else []
+    differential = build_differential_report(
+        scenarios=scenarios,
+        trace_paths=trace_paths,
+        source="changed-ai",
+    )
     trace_replay = replay_trace_paths(trace_paths) if trace_paths else skipped_trace_report(trace_dir)
     invariants = mine_invariants(
         scenarios=scenarios,
@@ -139,6 +146,7 @@ def run_changed_ai_suite(
     write_json(batch, batch_path)
     write_review_queue(queue, queue_path)
     write_json(route_eval, route_eval_path)
+    write_json(differential, differential_path)
     write_json(metamorphic, metamorphic_path)
     write_json(mutation, mutation_path)
     write_json(invariants, invariants_path)
@@ -159,6 +167,7 @@ def run_changed_ai_suite(
             "batch_report": relative_path(batch_path),
             "review_queue": relative_path(queue_path),
             "route_eval": relative_path(route_eval_path),
+            "differential": relative_path(differential_path),
             "metamorphic": relative_path(metamorphic_path),
             "mutation": relative_path(mutation_path),
             "invariants": relative_path(invariants_path),
@@ -170,6 +179,7 @@ def run_changed_ai_suite(
             "batch_report": sha256_file(batch_path),
             "review_queue": sha256_file(queue_path),
             "route_eval": sha256_file(route_eval_path),
+            "differential": sha256_file(differential_path),
             "metamorphic": sha256_file(metamorphic_path),
             "mutation": sha256_file(mutation_path),
             "invariants": sha256_file(invariants_path),
@@ -187,6 +197,10 @@ def run_changed_ai_suite(
             "input_reviewable_count": queue["input_reviewable_count"],
         },
         "route_eval_summary": route_eval["classification_counts"],
+        "differential_summary": {
+            "mismatch_count": differential["mismatch_count"],
+            "mismatch_class_counts": differential["mismatch_class_counts"],
+        },
         "metamorphic_summary": {
             "passed": metamorphic["passed"],
             "pass_count": metamorphic["pass_count"],
@@ -274,6 +288,7 @@ def format_changed_ai_summary(metadata: dict[str, Any], queue: dict[str, Any]) -
         f"- scenarios: `{batch['scenario_count']}`",
         f"- reviewable: `{batch['reviewable_count']}`",
         f"- route classifications: `{metadata['route_eval_summary']}`",
+        f"- differential: `{metadata['differential_summary']}`",
         f"- metamorphic: `{metadata['metamorphic_summary']}`",
         f"- mutation: `{mutation}`",
         f"- invariants: `{metadata['invariant_summary']}`",

@@ -32,6 +32,11 @@ from .counterfactuals import (
     format_counterfactual_report,
     write_counterfactual_json,
 )
+from .differential import (
+    differential_from_paths,
+    format_differential_report,
+    write_differential_json,
+)
 from .generators import (
     FAMILIES as GENERATOR_FAMILIES,
     format_generate_report,
@@ -542,6 +547,25 @@ def cmd_route_eval(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_diff(args: argparse.Namespace) -> int:
+    report = differential_from_paths(
+        scenarios_path=args.scenarios,
+        trace_dir=args.trace_dir,
+        trace_glob=args.glob,
+    )
+    if args.json_out != "":
+        write_differential_json(report, Path(args.json_out))
+    if args.json:
+        print(json.dumps(report, indent=2, sort_keys=True))
+    else:
+        print(format_differential_report(report, limit=args.limit))
+        if args.json_out != "":
+            print(f"wrote {args.json_out}")
+    if args.fail_on_mismatch and report["mismatch_count"] > 0:
+        return 1
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="python -m tools.boss_ai_debugger")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -721,6 +745,16 @@ def build_parser() -> argparse.ArgumentParser:
     route_eval_cmd.add_argument("--json", action="store_true")
     route_eval_cmd.add_argument("--json-out", default="")
     route_eval_cmd.set_defaults(func=cmd_route_eval)
+
+    diff_cmd = subparsers.add_parser("diff")
+    diff_cmd.add_argument("--scenarios", type=path_arg)
+    diff_cmd.add_argument("--trace-dir", type=path_arg)
+    diff_cmd.add_argument("--glob", default="*_live.txt")
+    diff_cmd.add_argument("--json", action="store_true")
+    diff_cmd.add_argument("--json-out", default="")
+    diff_cmd.add_argument("--limit", type=int, default=20)
+    diff_cmd.add_argument("--fail-on-mismatch", action="store_true")
+    diff_cmd.set_defaults(func=cmd_diff)
 
     invariants_cmd = subparsers.add_parser("invariants")
     invariants_subcommands = invariants_cmd.add_subparsers(
