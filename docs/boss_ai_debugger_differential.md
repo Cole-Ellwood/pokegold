@@ -17,9 +17,10 @@ schema:
 - partial or decisionless trace captures become `trace_incomplete`
 - ROM contribution trace JSON files are summarized into
   `rom_contribution_summary`
+- matched ROM/Python contribution traces can produce `rule_delta_mismatch`,
+  `missing_python_rule`, and `missing_rom_rule`
 
-Known limits are recorded in every report. Full `rule_delta_mismatch`,
-`missing_python_rule`, and `missing_rom_rule` classes require comparing the
-`rom-contribution-trace` event stream against Python mirror events. The current
-`diff` output keeps the ROM score-helper event coverage visible without
-claiming that comparison yet.
+Known limits are recorded in every report. Contribution comparison only runs
+when a ROM trace id matches a Python trace id, and it currently compares changed
+score-helper events by rule id and candidate slot. False predicate paths and
+dynamic public-memory-read provenance are still outside this report.

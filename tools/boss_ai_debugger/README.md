@@ -99,8 +99,9 @@ python -m tools.boss_ai_debugger diff --scenarios audit\boss_ai_debugger\generat
 
 `diff` combines generated policy mismatches and exact selector trace replay
 mismatches into one mismatch schema. ROM score-helper deltas are available from
-`rom-contribution-trace`; `diff` now summarizes those artifacts when present,
-but it does not compare them against Python contribution events yet.
+`rom-contribution-trace`; `diff` summarizes those artifacts and, when matching
+Python contribution traces are supplied or generated from scenarios, emits
+`rule_delta_mismatch`, `missing_python_rule`, and `missing_rom_rule`.
 
 The full pre-choice ROM replay gate is:
 
@@ -261,6 +262,16 @@ python -m tools.boss_ai_debugger decision-trace --scenario audit\boss_ai_debugge
 `decision-trace` emits structured events for state load, candidates, score-rule
 contributions, selector output, and policy check. It is the Python scenario
 waterfall format.
+
+Write a normalized Python contribution stream for ROM/Python comparison:
+
+```powershell
+python -m tools.boss_ai_debugger python-contribution-trace --scenarios scenarios.jsonl --json-out audit\boss_ai_debugger\python_contribution_trace.json
+```
+
+`python-contribution-trace` adapts scenario score events into the same
+candidate/rule/delta shape as ROM contribution traces. Only explicitly mapped
+ROM-mirror rules, such as lookahead, should be treated as ROM-accuracy claims.
 
 Capture a ROM contribution trace from an existing boss route:
 

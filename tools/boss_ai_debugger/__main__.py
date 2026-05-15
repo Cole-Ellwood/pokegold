@@ -32,6 +32,11 @@ from .counterfactuals import (
     format_counterfactual_report,
     write_counterfactual_json,
 )
+from .contribution_compare import (
+    format_python_contribution_report,
+    python_contribution_report_from_scenarios,
+    write_python_contribution_report,
+)
 from .differential import (
     differential_from_paths,
     format_differential_report,
@@ -574,6 +579,7 @@ def cmd_diff(args: argparse.Namespace) -> int:
         trace_dir=args.trace_dir,
         trace_glob=args.glob,
         rom_contribution_trace_paths=args.rom_contribution_trace,
+        python_contribution_trace_paths=args.python_contribution_trace,
     )
     if args.json_out != "":
         write_differential_json(report, Path(args.json_out))
@@ -585,6 +591,20 @@ def cmd_diff(args: argparse.Namespace) -> int:
             print(f"wrote {args.json_out}")
     if args.fail_on_mismatch and report["mismatch_count"] > 0:
         return 1
+    return 0
+
+
+def cmd_python_contribution_trace(args: argparse.Namespace) -> int:
+    scenarios = load_scenario_batch(args.scenarios)
+    report = python_contribution_report_from_scenarios(scenarios)
+    if args.json_out != "":
+        write_python_contribution_report(report, Path(args.json_out))
+    if args.json:
+        print(json.dumps(report, indent=2, sort_keys=True))
+    else:
+        print(format_python_contribution_report(report))
+        if args.json_out != "":
+            print(f"wrote {args.json_out}")
     return 0
 
 
@@ -832,6 +852,7 @@ def build_parser() -> argparse.ArgumentParser:
     diff_cmd.add_argument("--trace-dir", type=path_arg)
     diff_cmd.add_argument("--glob", default="*_live.txt")
     diff_cmd.add_argument("--rom-contribution-trace", type=path_arg, action="append")
+    diff_cmd.add_argument("--python-contribution-trace", type=path_arg, action="append")
     diff_cmd.add_argument("--json", action="store_true")
     diff_cmd.add_argument("--json-out", default="")
     diff_cmd.add_argument("--limit", type=int, default=20)
@@ -845,6 +866,12 @@ def build_parser() -> argparse.ArgumentParser:
     decision_trace_cmd.add_argument("--json-out", default="")
     decision_trace_cmd.add_argument("--limit", type=int, default=40)
     decision_trace_cmd.set_defaults(func=cmd_decision_trace)
+
+    python_trace_cmd = subparsers.add_parser("python-contribution-trace")
+    python_trace_cmd.add_argument("--scenarios", type=path_arg, required=True)
+    python_trace_cmd.add_argument("--json", action="store_true")
+    python_trace_cmd.add_argument("--json-out", default="")
+    python_trace_cmd.set_defaults(func=cmd_python_contribution_trace)
 
     rom_trace_cmd = subparsers.add_parser("rom-contribution-trace")
     rom_trace_source = rom_trace_cmd.add_mutually_exclusive_group(required=True)

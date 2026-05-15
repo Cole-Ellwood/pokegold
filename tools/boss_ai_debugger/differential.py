@@ -4,6 +4,12 @@ import json
 from pathlib import Path
 from typing import Any
 
+from .contribution_compare import (
+    compare_contribution_reports,
+    load_python_contribution_reports,
+    load_rom_contribution_reports,
+    python_contribution_report_from_scenarios,
+)
 from .rom_contribution_trace import (
     resolve_rom_contribution_trace_paths,
     summarize_rom_contribution_trace_paths,
@@ -18,6 +24,7 @@ def differential_from_paths(
     trace_dir: Path | None = None,
     trace_glob: str = "*_live.txt",
     rom_contribution_trace_paths: list[Path] | None = None,
+    python_contribution_trace_paths: list[Path] | None = None,
 ) -> dict[str, Any]:
     scenarios = load_scenario_batch(scenarios_path) if scenarios_path is not None else []
     trace_paths = []
@@ -27,6 +34,7 @@ def differential_from_paths(
         scenarios=scenarios,
         trace_paths=trace_paths,
         rom_contribution_trace_paths=rom_contribution_trace_paths,
+        python_contribution_trace_paths=python_contribution_trace_paths,
         source={
             "scenarios": str(scenarios_path) if scenarios_path is not None else "",
             "trace_dir": str(trace_dir) if trace_dir is not None else "",
@@ -39,6 +47,7 @@ def build_differential_report(
     scenarios: list[dict[str, Any]] | None = None,
     trace_paths: list[Path] | None = None,
     rom_contribution_trace_paths: list[Path] | None = None,
+    python_contribution_trace_paths: list[Path] | None = None,
     source: str | dict[str, str] = "inline",
 ) -> dict[str, Any]:
     scenario_rows = scenarios or []
@@ -53,6 +62,12 @@ def build_differential_report(
     contribution_summary = summarize_rom_contribution_trace_paths(
         resolve_rom_contribution_trace_paths(rom_contribution_trace_paths)
     )
+    contribution_comparison = build_contribution_comparison(
+        scenarios=scenario_rows,
+        rom_contribution_trace_paths=rom_contribution_trace_paths,
+        python_contribution_trace_paths=python_contribution_trace_paths,
+    )
+    mismatches.extend(contribution_comparison["mismatches"])
 
     class_counts: dict[str, int] = {}
     for mismatch in mismatches:
@@ -77,16 +92,34 @@ def build_differential_report(
             "exact_agreement_rate": trace_replay.get("exact_agreement_rate", 0.0),
         },
         "rom_contribution_summary": contribution_summary,
+        "contribution_comparison": contribution_comparison,
         "mismatches": sorted(
             mismatches,
             key=lambda item: (-int(item["severity"]), item["id"]),
         ),
         "known_gaps": [
-            "ROM hook score-helper traces are summarized but not compared against Python contribution events yet.",
-            "Rule-delta, missing-ROM-rule, and missing-Python-rule mismatches require a matched Python contribution stream.",
+            "ROM/Python contribution traces are compared only for matching trace ids.",
+            "False predicate paths and dynamic read provenance are not traced yet.",
             "Scenario policy mismatches are debugger expectation checks, not ROM materialized-state replays.",
         ],
     }
+
+
+def build_contribution_comparison(
+    *,
+    scenarios: list[dict[str, Any]],
+    rom_contribution_trace_paths: list[Path] | None,
+    python_contribution_trace_paths: list[Path] | None,
+) -> dict[str, Any]:
+    rom_paths = resolve_rom_contribution_trace_paths(rom_contribution_trace_paths)
+    rom_reports = load_rom_contribution_reports(rom_paths)
+    python_reports = load_python_contribution_reports(python_contribution_trace_paths)
+    if scenarios:
+        python_reports.append(python_contribution_report_from_scenarios(scenarios))
+    return compare_contribution_reports(
+        rom_reports=rom_reports,
+        python_reports=python_reports,
+    )
 
 
 def policy_mismatches(batch: dict[str, Any]) -> list[dict[str, Any]]:
@@ -195,6 +228,11 @@ def format_differential_report(report: dict[str, Any], *, limit: int = 20) -> st
             f"artifacts={report['rom_contribution_summary']['artifact_count']} "
             f"events={report['rom_contribution_summary']['event_count']} "
             f"rules={report['rom_contribution_summary']['covered_rule_count']}"
+        ),
+        (
+            "contribution diff: "
+            f"matched={report['contribution_comparison']['matched_trace_count']} "
+            f"mismatches={report['contribution_comparison']['mismatch_count']}"
         ),
     ]
     if report["mismatches"]:

@@ -25,5 +25,6 @@ This is the current one-command adaptation harness for local debugger work. It
 does not yet rebuild ROMs, refresh live trace captures, or regenerate scoring
 contribution traces. It copies and summarizes existing
 `rom-contribution-trace` JSON artifacts so score-helper rule coverage is visible
-in the same run output. Those limitations are recorded in each run's
-`known_gaps` field so the suite does not overstate ROM accuracy.
+in the same run output. The differential artifact compares ROM/Python
+contribution events only when trace ids match. Those limitations are recorded in
+each run's `known_gaps` field so the suite does not overstate ROM accuracy.

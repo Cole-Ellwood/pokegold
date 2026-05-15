@@ -137,6 +137,8 @@ def main() -> int:
         errors.append("differential report did not preserve known gaps")
     if differential["rom_contribution_summary"]["covered_rule_count"] == 0:
         errors.append("differential report did not summarize ROM contribution rules")
+    if differential["contribution_comparison"]["rom_trace_count"] == 0:
+        errors.append("differential report did not load ROM contribution traces")
     if invariants["candidate_count"] == 0:
         errors.append("invariant miner did not produce candidates")
     if mutation["killed_count"] != 1:
@@ -200,7 +202,8 @@ def main() -> int:
         "Differential: "
         f"{differential['mismatch_count']} mismatches, "
         f"classes={differential['mismatch_class_counts']}, "
-        f"score_trace_rules={differential['rom_contribution_summary']['covered_rule_count']}."
+        f"score_trace_rules={differential['rom_contribution_summary']['covered_rule_count']}, "
+        f"contribution_matched={differential['contribution_comparison']['matched_trace_count']}."
     )
     print(
         "ROM contribution trace: "

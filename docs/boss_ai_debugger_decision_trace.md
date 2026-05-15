@@ -19,6 +19,8 @@ The trace uses a structured event format:
 
 This is a Python scenario score waterfall. It gives the debugger the event shape
 used by ROM contribution traces, but it is not itself a ROM rule-event trace.
+For comparison, use `python-contribution-trace` to normalize scenario score
+events into candidate/rule/delta records with explicit ROM-mirror rule ids.
 
 ROM contribution trace companion:
 

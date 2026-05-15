@@ -229,6 +229,17 @@ def run_changed_ai_suite(
         "differential_summary": {
             "mismatch_count": differential["mismatch_count"],
             "mismatch_class_counts": differential["mismatch_class_counts"],
+            "contribution_comparison": {
+                "matched_trace_count": differential["contribution_comparison"][
+                    "matched_trace_count"
+                ],
+                "mismatch_count": differential["contribution_comparison"][
+                    "mismatch_count"
+                ],
+                "mismatch_class_counts": differential["contribution_comparison"][
+                    "mismatch_class_counts"
+                ],
+            },
         },
         "metamorphic_summary": {
             "passed": metamorphic["passed"],
@@ -267,7 +278,7 @@ def run_changed_ai_suite(
         "known_gaps": [
             "changed-ai suite does not rebuild ROMs yet.",
             "changed-ai suite ingests existing ROM contribution trace artifacts but does not refresh them.",
-            "ROM hook score-helper traces are summarized but not compared against Python contribution events yet.",
+            "ROM/Python contribution traces are compared only when trace ids match.",
             "pre-choice replay remains a separate audit until trace timing is stable.",
         ],
     }

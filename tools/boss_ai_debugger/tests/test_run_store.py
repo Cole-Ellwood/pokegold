@@ -118,6 +118,7 @@ class RunStoreTests(unittest.TestCase):
         self.assertEqual(metadata["batch_summary"]["scenario_count"], 6)
         self.assertIn("route_eval_summary", metadata)
         self.assertIn("differential_summary", metadata)
+        self.assertIn("contribution_comparison", metadata["differential_summary"])
         self.assertEqual(contribution_summary["covered_rule_count"], 1)
         self.assertEqual(metadata["rom_contribution_summary"]["covered_rule_count"], 1)
         self.assertIn("rom_contribution_trace_summary", metadata["artifacts"])
