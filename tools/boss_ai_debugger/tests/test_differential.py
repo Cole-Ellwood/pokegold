@@ -224,6 +224,36 @@ class DifferentialTests(unittest.TestCase):
         self.assertEqual(report["contribution_comparison"]["matched_trace_count"], 1)
         self.assertEqual(report["contribution_comparison"]["mismatch_count"], 0)
 
+    def test_scenario_policy_deltas_are_not_treated_as_rom_mirror_rules(self) -> None:
+        scenario = {
+            "id": "unit",
+            "tier": "late",
+            "moves": [
+                {
+                    "id": "policy_line",
+                    "name": "Policy Line",
+                    "deltas": [{"rule": "policy_only_delta", "delta": -4}],
+                }
+            ],
+        }
+        rom_report = {
+            "source": "trace_rom_pyboy_hooks",
+            "trace_id": "unit",
+            "event_count": 0,
+            "changed_event_count": 0,
+            "trace_basis": {},
+            "chosen": {},
+            "events": [],
+        }
+
+        report = build_differential_report(
+            scenarios=[scenario],
+            rom_contribution_reports=[rom_report],
+        )
+
+        self.assertEqual(report["contribution_comparison"]["matched_trace_count"], 0)
+        self.assertEqual(report["contribution_comparison"]["mismatch_count"], 0)
+
     def test_cli_diff_writes_json(self) -> None:
         scenario = {
             "id": "cli_policy_case",

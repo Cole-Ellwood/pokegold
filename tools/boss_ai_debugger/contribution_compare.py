@@ -13,6 +13,7 @@ from .rom_scenarios import select_move
 PYTHON_RULE_ID_MAP = {
     "lookahead": "move.apply_lookahead_to_top_move_candidates",
 }
+ROM_RULE_PREFIXES = ("move.", "switch.", "item.")
 
 
 def python_contribution_report_from_scenarios(
@@ -29,11 +30,14 @@ def python_trace_from_scenario(scenario: dict[str, Any]) -> dict[str, Any]:
         slot = int(move["slot"])
         for score_event in move.get("events", []):
             delta = score_event.get("delta")
-            rule_id = python_rule_id(str(score_event["rule"]))
+            python_rule = str(score_event["rule"])
+            rule_id = python_rule_id(python_rule)
+            rom_mirror_rule = is_rom_mirror_rule(python_rule, rule_id)
             events.append(
                 {
                     "event_type": "score_delta",
                     "rule_id": rule_id,
+                    "rom_mirror_rule": rom_mirror_rule,
                     "operation": "python_score_delta",
                     "delta": int(delta) if delta is not None else 0,
                     "changed": delta not in {None, 0},
@@ -48,7 +52,8 @@ def python_trace_from_scenario(scenario: dict[str, Any]) -> dict[str, Any]:
                     },
                     "source": {
                         "rule_id": rule_id,
-                        "python_rule": str(score_event["rule"]),
+                        "python_rule": python_rule,
+                        "rom_mirror_rule": rom_mirror_rule,
                         "source": "python_scenario",
                         "note": str(score_event.get("note", "")),
                     },
@@ -78,7 +83,7 @@ def build_python_report(
             str(event.get("rule_id", ""))
             for trace in traces
             for event in trace.get("events", [])
-            if event.get("rule_id")
+            if event.get("rule_id") and event.get("rom_mirror_rule", True)
         }
     )
     return {
@@ -122,10 +127,13 @@ def decision_trace_to_python_trace(trace: dict[str, Any]) -> dict[str, Any]:
         slot = int(attrs.get("slot", 0))
         delta = attrs.get("delta")
         rule_id = python_rule_id(str(attrs.get("rule_id") or attrs.get("rule", "")))
+        python_rule = str(attrs.get("rule_id") or attrs.get("rule", ""))
+        rom_mirror_rule = is_rom_mirror_rule(python_rule, rule_id)
         events.append(
             {
                 "event_type": "score_delta",
                 "rule_id": rule_id,
+                "rom_mirror_rule": rom_mirror_rule,
                 "operation": "python_score_delta",
                 "delta": int(delta) if delta is not None else 0,
                 "changed": delta not in {None, 0},
@@ -140,7 +148,8 @@ def decision_trace_to_python_trace(trace: dict[str, Any]) -> dict[str, Any]:
                 },
                 "source": {
                     "rule_id": rule_id,
-                    "python_rule": str(attrs.get("rule_id") or attrs.get("rule", "")),
+                    "python_rule": python_rule,
+                    "rom_mirror_rule": rom_mirror_rule,
                     "source": "python_decision_trace",
                     "note": str(attrs.get("note", "")),
                 },
@@ -247,6 +256,8 @@ def collect_python_events(
                 continue
             for event in trace.get("events", []):
                 if not isinstance(event, dict) or not event.get("changed"):
+                    continue
+                if not python_event_is_comparable(event):
                     continue
                 normalized = normalize_python_event(event)
                 if not normalized["rule_id"]:
@@ -376,6 +387,7 @@ def normalize_rom_event(event: dict[str, Any]) -> dict[str, Any]:
         },
         "operation": str(event.get("operation", "")),
         "delta": int(event.get("delta", 0)),
+        "rom_mirror_rule": bool(event.get("rom_mirror_rule", True)),
     }
 
 
@@ -424,3 +436,20 @@ def python_rule_id(rule: str) -> str:
     if "." in rule:
         return rule
     return PYTHON_RULE_ID_MAP.get(rule, rule)
+
+
+def is_rom_mirror_rule(python_rule: str, rule_id: str) -> bool:
+    if python_rule in PYTHON_RULE_ID_MAP:
+        return True
+    return rule_id.startswith(ROM_RULE_PREFIXES)
+
+
+def python_event_is_comparable(event: dict[str, Any]) -> bool:
+    if "rom_mirror_rule" in event:
+        return bool(event["rom_mirror_rule"])
+    rule_id = str(event.get("rule_id", ""))
+    source = event.get("source", {})
+    python_rule = ""
+    if isinstance(source, dict):
+        python_rule = str(source.get("python_rule", ""))
+    return is_rom_mirror_rule(python_rule or rule_id, rule_id)
