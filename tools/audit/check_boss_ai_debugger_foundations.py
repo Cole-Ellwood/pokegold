@@ -219,18 +219,26 @@ def main() -> int:
     print(
         "ROM contribution trace: "
         f"{rom_contribution_trace['event_count']} events, "
-        f"{rom_contribution_trace['changed_event_count']} changed."
+        f"{rom_contribution_trace['changed_event_count']} changed, "
+        f"{rom_contribution_trace['predicate_branch_entry_count']} predicate branches."
     )
     return 0
 
 
 def load_rom_contribution_trace_smoke() -> dict:
     if not ROM_CONTRIBUTION_TRACE_SMOKE.exists():
-        return {"event_count": 0, "changed_event_count": 0}
+        return {
+            "event_count": 0,
+            "changed_event_count": 0,
+            "predicate_branch_entry_count": 0,
+        }
     data = json.loads(ROM_CONTRIBUTION_TRACE_SMOKE.read_text(encoding="utf-8"))
     return {
         "event_count": int(data.get("event_count", 0)),
         "changed_event_count": int(data.get("changed_event_count", 0)),
+        "predicate_branch_entry_count": int(
+            data.get("predicate_branch_entry_count", 0)
+        ),
     }
 
 

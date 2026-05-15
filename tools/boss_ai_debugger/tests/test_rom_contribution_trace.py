@@ -7,6 +7,7 @@ from tools.boss_ai_debugger.rom_contribution_trace import (
     RomContributionTracer,
     RuleFrame,
     format_rom_contribution_trace,
+    parse_memory_patch,
     summarize_rom_contribution_trace,
 )
 from tools.trace.runtime import Symbol
@@ -155,6 +156,59 @@ class RomContributionTraceTests(unittest.TestCase):
             ["wPlayerUsedMoves"],
         )
 
+    def test_predicate_branch_records_selected_outcome(self) -> None:
+        pyboy = FakePyBoy()
+        pyboy.memory[1, 0xD768] = 0xD0
+        pyboy.memory[1, 0xD769] = 0xD3
+        pyboy.memory[1, 0xD0D3] = 20
+        pyboy.memory[1, 0xD100] = 57
+        pyboy.register_file.SP = 0xFEF0
+        tracer = RomContributionTracer(
+            pyboy,
+            {
+                "wEnemyAIMoveScores": Symbol(1, 0xD0D3),
+                "wEnemyMonMoves": Symbol(1, 0xD100),
+                "wBossAIScorePtr": Symbol(1, 0xD768),
+            },
+            FakeSymbolIndex(),
+            {57: "SURF"},
+        )
+
+        tracer.handle_predicate_branch(
+            HookTarget(
+                kind="predicate_branch",
+                full_symbol="BossAI_ApplyMoveModel.bench_spin_yes_pop",
+                operation="found",
+                bank=0x0E,
+                address=0x53F0,
+                predicate_id="seen_bench_revealed_rapid_spin",
+                outcome="found",
+                parent_symbol="BossAI_ApplyMoveModel.ApplyTestBias",
+                legal_inputs=("wBossAISeenPlayerSpecies", "wBossAISpeciesUsedMoves"),
+            )
+        )
+
+        self.assertEqual(tracer.events, [])
+        self.assertEqual(tracer.rule_entries, [])
+        self.assertEqual(len(tracer.predicate_branch_entries), 1)
+        entry = tracer.predicate_branch_entries[0]
+        self.assertEqual(entry["event_type"], "predicate_branch")
+        self.assertEqual(entry["candidate"]["move_name"], "SURF")
+        self.assertEqual(
+            entry["predicate"]["predicate_id"],
+            "seen_bench_revealed_rapid_spin",
+        )
+        self.assertEqual(entry["predicate"]["outcome"], "found")
+        self.assertEqual(
+            entry["predicate"]["legal_inputs"],
+            ["wBossAISeenPlayerSpecies", "wBossAISpeciesUsedMoves"],
+        )
+        self.assertEqual(entry["source"]["rule_id"], "move.apply_test_bias")
+        self.assertEqual(
+            entry["source"]["dynamic_branch_legal_inputs"],
+            ["wBossAISeenPlayerSpecies", "wBossAISpeciesUsedMoves"],
+        )
+
     def test_format_marks_changed_events(self) -> None:
         text = format_rom_contribution_trace(
             {
@@ -167,12 +221,24 @@ class RomContributionTraceTests(unittest.TestCase):
                 "post_model_scores": [20, 20, 20, 20],
                 "move_scores": [15, 20, 20, 20],
                 "rule_entry_count": 1,
+                "predicate_branch_entry_count": 1,
                 "rule_entries": [
                     {
                         "index": 1,
                         "event_type": "rule_enter",
                         "candidate": {"slot_index": 0, "move_name": "SURF"},
                         "source": {"rule_id": "move.apply_test_bias"},
+                    }
+                ],
+                "predicate_branch_entries": [
+                    {
+                        "index": 1,
+                        "event_type": "predicate_branch",
+                        "candidate": {"slot_index": 0, "move_name": "SURF"},
+                        "predicate": {
+                            "predicate_id": "seen_bench_revealed_rapid_spin",
+                            "outcome": "found",
+                        },
                     }
                 ],
                 "events": [
@@ -198,7 +264,9 @@ class RomContributionTraceTests(unittest.TestCase):
         self.assertIn("* 001 slot=0 SURF encourage_score a=5 20->15 delta=-5", text)
         self.assertIn("move.apply_test_bias", text)
         self.assertIn("rule_entries=1", text)
+        self.assertIn("predicate_branches=1", text)
         self.assertIn("First 1 rule entries:", text)
+        self.assertIn("seen_bench_revealed_rapid_spin=found", text)
 
     def test_summary_counts_changed_and_executed_rules_separately(self) -> None:
         summary = summarize_rom_contribution_trace(
@@ -208,6 +276,7 @@ class RomContributionTraceTests(unittest.TestCase):
                 "event_count": 2,
                 "changed_event_count": 1,
                 "rule_entry_count": 1,
+                "predicate_branch_entry_count": 1,
                 "chosen": {"move_name": "SURF", "move_id": 57, "slot_index": 0},
                 "trace_basis": {"trace_rom_sha256": "ROM", "trace_symbols_sha256": "SYM"},
                 "rule_entries": [
@@ -216,6 +285,18 @@ class RomContributionTraceTests(unittest.TestCase):
                             "rule_id": "move.rule_entry_only",
                             "classification": "public_info",
                         }
+                    }
+                ],
+                "predicate_branch_entries": [
+                    {
+                        "predicate": {
+                            "predicate_id": "seen_bench_revealed_rapid_spin",
+                            "outcome": "found",
+                        },
+                        "source": {
+                            "rule_id": "move.predicate_rule",
+                            "classification": "public_info",
+                        },
                     }
                 ],
                 "events": [
@@ -245,15 +326,42 @@ class RomContributionTraceTests(unittest.TestCase):
         self.assertEqual(summary["event_count"], 2)
         self.assertEqual(summary["changed_event_count"], 1)
         self.assertEqual(summary["rule_entry_count"], 1)
-        self.assertEqual(summary["covered_rule_ids"], ["move.changed_rule", "move.executed_only"])
+        self.assertEqual(summary["predicate_branch_entry_count"], 1)
+        self.assertEqual(
+            summary["covered_rule_ids"],
+            ["move.changed_rule", "move.executed_only"],
+        )
         self.assertEqual(
             summary["executed_rule_ids"],
-            ["move.changed_rule", "move.executed_only", "move.rule_entry_only"],
+            [
+                "move.changed_rule",
+                "move.executed_only",
+                "move.predicate_rule",
+                "move.rule_entry_only",
+            ],
         )
         self.assertEqual(summary["changed_rule_ids"], ["move.changed_rule"])
-        self.assertEqual(summary["executed_rule_count"], 3)
-        self.assertEqual(summary["operation_counts"], {"discourage_score": 1, "encourage_score": 1})
+        self.assertEqual(summary["executed_rule_count"], 4)
+        self.assertEqual(
+            summary["operation_counts"],
+            {"discourage_score": 1, "encourage_score": 1},
+        )
         self.assertEqual(summary["changed_operation_counts"], {"encourage_score": 1})
+        self.assertEqual(
+            summary["predicate_counts"],
+            {"seen_bench_revealed_rapid_spin": 1},
+        )
+        self.assertEqual(
+            summary["predicate_outcome_counts"],
+            {"seen_bench_revealed_rapid_spin:found": 1},
+        )
+
+    def test_parse_memory_patch_supports_symbol_offsets_and_hex_values(self) -> None:
+        patch = parse_memory_patch("wPlayerUsedMoves+2=0xe5")
+
+        self.assertEqual(patch.symbol_name, "wPlayerUsedMoves")
+        self.assertEqual(patch.offset, 2)
+        self.assertEqual(patch.value, 0xE5)
 
 
 if __name__ == "__main__":

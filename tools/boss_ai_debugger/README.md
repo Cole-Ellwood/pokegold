@@ -294,6 +294,7 @@ Capture a ROM contribution trace from an existing boss route:
 
 ```powershell
 python -m tools.boss_ai_debugger rom-contribution-trace --boss-route clair --json-out audit\boss_ai_debugger\rom_contribution_trace_smoke.json
+python -m tools.boss_ai_debugger rom-contribution-trace --boss-route koga --patch-symbol wPlayerScreens=0x01 --patch-symbol wPlayerUsedMoves=0xe5 --json-out audit\boss_ai_debugger\rom_contribution_trace_spikes_spin_probe.json
 ```
 
 `rom-contribution-trace` installs PyBoy execution hooks on trace-ROM Boss AI
@@ -302,11 +303,17 @@ map/script boss route until the first move choice. It records candidate slot,
 source rule id, score before/after, signed delta, helper operation, callsite,
 dynamic rule-label entries, and the pinned trace ROM/symbol hashes. Score
 events and rule entries are separate: a rule entry proves the label executed,
-while a score event proves a score mutation. Public-read evidence remains static
-rule-map hints, not dynamic memory-read slicing. Save-state mode also exists,
-but it only captures score events if the supplied state is before scoring; the
-existing `pre_choice_state` files are already after move scoring and mainly
-exercise the selector.
+while a score event proves a score mutation. Selected public-info branch labels
+are recorded as predicate branch entries; they explain concrete branch outcomes
+such as Spikes layer count or Rapid Spin hazard-risk paths without pretending to
+trace every memory read. `--patch-symbol SYMBOL=VALUE` can apply byte patches at
+replay start and before the first scored candidate, which is useful for one-off
+ROM probes like `--patch-symbol wPlayerScreens=0x01`. Public-read evidence still
+combines static rule-map hints and selected branch legal-input labels, not full
+dynamic memory-read slicing. Save-state mode also exists, but it only captures
+score events if the supplied state is before scoring; the existing
+`pre_choice_state` files are already after move scoring and mainly exercise the
+selector.
 
 Materialize generated final score bytes into the trace ROM selector:
 
@@ -319,6 +326,23 @@ python -m tools.boss_ai_debugger rom-selector-materialize --scenarios audit\boss
 post-score move ids and score bytes into WRAM, and then lets the ROM selector
 choose. This is an honest ROM-backed selector check for generated cases, but it
 is not full battle-state or score-model materialization.
+
+Materialize generated score-model state before ROM scoring:
+
+```powershell
+python -m tools.boss_ai_debugger generate --family spikes_spin --count 12 --seed 1 --out .local\tmp\boss_ai_debugger\spikes_score_materialize.jsonl
+python -m tools.boss_ai_debugger rom-score-materialize --scenarios .local\tmp\boss_ai_debugger\spikes_score_materialize.jsonl --limit 4
+```
+
+`rom-score-materialize` loads Koga's real pre-choice trace state, patches a
+generated Spikes/Rapid Spin scenario into public WRAM before
+`BossAI_ApplyMoveModel.ScoreMove`, and captures the resulting ROM contribution
+trace under the generated scenario id. It patches concrete move ids, tier/weight
+row, score bytes, Spikes layers, active revealed Rapid Spin, Ghost/Foresight
+spinblock state, reserve Ghost availability, bench revealed Spin memory, and
+active species Spin priors. The output also compares ROM score-helper
+contributions against the Python scenario contribution stream with matching
+trace ids, so mismatches become review items instead of hand inspection.
 
 Classify one-turn route context:
 

@@ -23,6 +23,11 @@ from tools.boss_ai_debugger.rom_selector_materialize import (
     DEFAULT_WATCH_FRAMES,
     run_rom_selector_materialization,
 )
+from tools.boss_ai_debugger.rom_score_materialize import (
+    DEFAULT_BASE_ROUTE as DEFAULT_SCORE_BASE_ROUTE,
+    DEFAULT_WATCH_FRAMES as DEFAULT_SCORE_WATCH_FRAMES,
+    run_rom_score_materialization,
+)
 from tools.boss_ai_debugger.rule_map import (
     DEFAULT_RULE_MAP_PATH,
     build_rule_map,
@@ -56,6 +61,11 @@ def main() -> int:
         help="also run the PyBoy-backed generated selector materialization smoke",
     )
     parser.add_argument(
+        "--check-rom-score-materialization",
+        action="store_true",
+        help="also run the PyBoy-backed generated score-model materialization smoke",
+    )
+    parser.add_argument(
         "--allow-incomplete",
         action="store_true",
         help="write the report and exit zero even when roadmap readiness is incomplete",
@@ -66,6 +76,7 @@ def main() -> int:
         generated_count=args.generated_count,
         seed=args.seed,
         check_rom_selector_materialization=args.check_rom_selector_materialization,
+        check_rom_score_materialization=args.check_rom_score_materialization,
     )
     write_json(report, args.json_out)
     print(format_roadmap_audit(report))
@@ -80,11 +91,13 @@ def build_roadmap_audit(
     generated_count: int = 120,
     seed: int = 1,
     check_rom_selector_materialization: bool = False,
+    check_rom_score_materialization: bool = False,
 ) -> dict[str, Any]:
     evidence = collect_evidence(
         generated_count=generated_count,
         seed=seed,
         check_rom_selector_materialization=check_rom_selector_materialization,
+        check_rom_score_materialization=check_rom_score_materialization,
     )
     items = roadmap_items(evidence)
     status_counts = count_statuses(items)
@@ -114,6 +127,7 @@ def collect_evidence(
     generated_count: int,
     seed: int,
     check_rom_selector_materialization: bool,
+    check_rom_score_materialization: bool,
 ) -> dict[str, Any]:
     fixture_report = validate_fixtures_file()
     trace_report = validate_trace_dir(DEFAULT_TRACE_DIR)
@@ -140,6 +154,10 @@ def collect_evidence(
         scenarios,
         enabled=check_rom_selector_materialization,
     )
+    score_materialization = maybe_run_score_materialization(
+        scenarios,
+        enabled=check_rom_score_materialization,
+    )
     return {
         "generated_count": generated_count,
         "seed": seed,
@@ -154,6 +172,7 @@ def collect_evidence(
         "batch": batch,
         "queue": queue,
         "selector_materialization": selector_materialization,
+        "score_materialization": score_materialization,
     }
 
 
@@ -215,6 +234,10 @@ def roadmap_items(evidence: dict[str, Any]) -> list[dict[str, Any]]:
                 ),
                 f"trace_events={coverage['rule_map']['trace_event_count']}",
                 f"trace_rule_entries={coverage['rule_map']['trace_rule_entry_count']}",
+                (
+                    "trace_predicate_branches="
+                    f"{coverage['rule_map']['trace_predicate_branch_entry_count']}"
+                ),
                 f"trace_executed_rules={coverage['rule_map']['trace_executed_rule_count']}",
                 f"trace_covered_rules={coverage['rule_map']['trace_covered_rule_count']}",
                 (
@@ -350,19 +373,14 @@ def roadmap_items(evidence: dict[str, Any]) -> list[dict[str, Any]]:
         status_item(
             "rom_score_materialized_generated_scenarios",
             "ROM score-model materialized generated scenarios",
-            status="missing",
+            status=score_materialization_status(evidence),
             evidence=[
-                "selector materialization is post-score only",
-                "default contribution comparison has no matched generated ROM trace ids",
+                score_materialization_evidence(evidence),
+                "generated scenario WRAM is patched before BossAI_ApplyMoveModel.ScoreMove",
             ],
-            gaps=[
-                (
-                    "Implement full materialization from canonical scenario JSON into "
-                    "battle WRAM before BossAI_ApplyMoveModel, then compare ROM and "
-                    "Python contribution traces for the same scenario ids."
-                )
-            ],
+            gaps=score_materialization_gaps(evidence),
             refs=[
+                "tools/boss_ai_debugger/rom_score_materialize.py",
                 "tools/boss_ai_debugger/differential.py",
                 "tools/boss_ai_debugger/rom_contribution_trace.py",
             ],
@@ -370,18 +388,16 @@ def roadmap_items(evidence: dict[str, Any]) -> list[dict[str, Any]]:
         status_item(
             "dynamic_public_read_provenance",
             "Dynamic public-read provenance",
-            status="missing",
+            status=provenance_status(coverage),
             evidence=[
                 "rule-map public_reads are static hints",
-                "ROM trace known limits say dynamic memory-read slicing is absent",
-            ],
-            gaps=[
                 (
-                    "Trace actual public memory reads and false predicate outcomes so "
-                    "public-info legality is proven per event instead of inferred from "
-                    "rule metadata."
-                )
+                    "predicate_branch_entries="
+                    f"{coverage['rule_map']['trace_predicate_branch_entry_count']}"
+                ),
+                "ROM trace known limits say selected branch labels are traced, but dynamic memory-read slicing is absent",
             ],
+            gaps=provenance_gaps(coverage),
             refs=[
                 "tools/boss_ai_debugger/rule_map.py",
                 "tools/boss_ai_debugger/rom_contribution_trace.py",
@@ -532,6 +548,24 @@ def score_trace_gaps(coverage: dict[str, Any]) -> list[str]:
     return gaps
 
 
+def provenance_status(coverage: dict[str, Any]) -> str:
+    if coverage["rule_map"]["trace_predicate_branch_entry_count"] > 0:
+        return "partial"
+    return "missing"
+
+
+def provenance_gaps(coverage: dict[str, Any]) -> list[str]:
+    gaps = []
+    if coverage["rule_map"]["trace_predicate_branch_entry_count"] == 0:
+        gaps.append("No selected public-info predicate branch labels were observed.")
+    gaps.append(
+        "Trace actual public memory reads and false predicate outcomes so "
+        "public-info legality is proven per event instead of inferred from "
+        "rule metadata and selected branch labels."
+    )
+    return gaps
+
+
 def differential_status(differential: dict[str, Any]) -> str:
     if differential["trace_summary"]["checked_count"] == 0:
         return "missing"
@@ -655,6 +689,9 @@ def evidence_summary(evidence: dict[str, Any]) -> dict[str, Any]:
         "trace_covered_rule_count": coverage["rule_map"]["trace_covered_rule_count"],
         "trace_executed_rule_count": coverage["rule_map"]["trace_executed_rule_count"],
         "trace_rule_entry_count": coverage["rule_map"]["trace_rule_entry_count"],
+        "trace_predicate_branch_entry_count": coverage["rule_map"][
+            "trace_predicate_branch_entry_count"
+        ],
         "uncovered_rule_count": coverage["uncovered_rules"]["uncovered_rule_count"],
         "full_trace_rule_coverage_available": coverage["rule_map"][
             "full_trace_rule_coverage_available"
@@ -675,6 +712,7 @@ def evidence_summary(evidence: dict[str, Any]) -> dict[str, Any]:
             "contribution_comparison"
         ]["matched_trace_count"],
         "selector_materialization": evidence["selector_materialization"],
+        "score_materialization": evidence["score_materialization"],
         "scenarios_per_minute": batch["scenarios_per_minute"],
         "reviewable_per_minute": batch["reviewable_per_minute"],
         "reviewable_count": batch["reviewable_count"],
@@ -786,6 +824,120 @@ def selector_materialization_gaps(evidence: dict[str, Any]) -> list[str]:
     if data.get("available"):
         return []
     return [str(data.get("reason", "ROM selector materialization failed"))]
+
+
+def maybe_run_score_materialization(
+    scenarios: list[dict[str, Any]],
+    *,
+    enabled: bool,
+) -> dict[str, Any]:
+    if not enabled:
+        return {
+            "available": False,
+            "checked": False,
+            "reason": "not requested; pass --check-rom-score-materialization to run it",
+        }
+    score_scenarios = score_materialization_scenarios(scenarios, limit=3)
+    if not score_scenarios:
+        return {
+            "available": False,
+            "checked": False,
+            "reason": "no spikes_spin scenarios available in generated sample",
+        }
+    try:
+        report = run_rom_score_materialization(
+            score_scenarios,
+            base_route=DEFAULT_SCORE_BASE_ROUTE,
+            manifest_path=DEFAULT_MANIFEST_PATH,
+            watch_frames=DEFAULT_SCORE_WATCH_FRAMES,
+            source="roadmap_audit",
+        )
+    except Exception as exc:
+        return {
+            "available": False,
+            "checked": True,
+            "reason": str(exc),
+        }
+    return {
+        "available": (
+            report["checked_count"] > 0
+            and report["error_count"] == 0
+            and report["contribution_matched_count"] > 0
+        ),
+        "checked": True,
+        "checked_count": report["checked_count"],
+        "error_count": report["error_count"],
+        "score_bytes_match_count": report["score_bytes_match_count"],
+        "selector_top_match_count": report["selector_top_match_count"],
+        "contribution_matched_count": report["contribution_matched_count"],
+        "contribution_mismatch_count": report["contribution_mismatch_count"],
+        "materializations_per_minute": report["materializations_per_minute"],
+        "known_limits": report["known_limits"],
+    }
+
+
+def score_materialization_status(evidence: dict[str, Any]) -> str:
+    data = evidence["score_materialization"]
+    if not data.get("checked"):
+        return "partial"
+    if data.get("available"):
+        return "complete"
+    return "missing"
+
+
+def score_materialization_evidence(evidence: dict[str, Any]) -> str:
+    data = evidence["score_materialization"]
+    if not data.get("checked"):
+        return str(data.get("reason", "score materialization not checked"))
+    if not data.get("available"):
+        return f"score materialization unavailable: {data.get('reason', '')}"
+    return (
+        f"score_checked={data['checked_count']} "
+        f"errors={data['error_count']} "
+        f"score_matches={data['score_bytes_match_count']} "
+        f"contribution_matched={data['contribution_matched_count']} "
+        f"contribution_mismatches={data['contribution_mismatch_count']} "
+        f"rate={data['materializations_per_minute']:.0f}/min"
+    )
+
+
+def score_materialization_gaps(evidence: dict[str, Any]) -> list[str]:
+    data = evidence["score_materialization"]
+    if not data.get("checked"):
+        return [
+            (
+                "ROM score materialization exists but was not run in this audit; "
+                "use --check-rom-score-materialization when PyBoy and states are available."
+            )
+        ]
+    if data.get("available"):
+        return []
+    return [str(data.get("reason", "ROM score materialization failed"))]
+
+
+def score_materialization_scenarios(
+    scenarios: list[dict[str, Any]],
+    *,
+    limit: int,
+) -> list[dict[str, Any]]:
+    candidates = [
+        scenario
+        for scenario in scenarios
+        if scenario.get("family") == "spikes_spin"
+    ]
+
+    def priority(scenario: dict[str, Any]) -> tuple[int, str]:
+        expectation = scenario.get("expectation", {})
+        tags = (
+            set(expectation.get("condition_tags", []))
+            if isinstance(expectation, dict)
+            else set()
+        )
+        active_revealed = "active_revealed_rapid_spin" in tags
+        risky_layer = "spikes_layers_1" in tags or "spikes_layers_2" in tags
+        return (0 if active_revealed and risky_layer else 1, str(scenario.get("id", "")))
+
+    return sorted(candidates, key=priority)[:limit]
 
 
 def write_json(data: dict[str, Any], path: Path) -> None:

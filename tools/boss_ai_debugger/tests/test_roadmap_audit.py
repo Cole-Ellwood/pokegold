@@ -6,6 +6,7 @@ from tools.audit.check_boss_ai_debugger_roadmap import (
     build_roadmap_audit,
     coverage_guided_status,
     differential_status,
+    score_materialization_scenarios,
 )
 
 
@@ -24,9 +25,9 @@ class RoadmapAuditTests(unittest.TestCase):
         )
         self.assertEqual(
             items["rom_score_materialized_generated_scenarios"]["status"],
-            "missing",
+            "partial",
         )
-        self.assertEqual(items["dynamic_public_read_provenance"]["status"], "missing")
+        self.assertEqual(items["dynamic_public_read_provenance"]["status"], "partial")
         self.assertGreater(report["blocking_gap_count"], 0)
 
     def test_differential_without_matched_contributions_is_partial(self) -> None:
@@ -50,6 +51,29 @@ class RoadmapAuditTests(unittest.TestCase):
         }
 
         self.assertEqual(coverage_guided_status(coverage), "partial")
+
+    def test_score_materialization_prefers_active_revealed_spin_layers(self) -> None:
+        scenarios = [
+            {
+                "id": "ordinary",
+                "family": "spikes_spin",
+                "expectation": {"condition_tags": ["spikes_layers_0"]},
+            },
+            {
+                "id": "target",
+                "family": "spikes_spin",
+                "expectation": {
+                    "condition_tags": [
+                        "spikes_layers_2",
+                        "active_revealed_rapid_spin",
+                    ]
+                },
+            },
+        ]
+
+        selected = score_materialization_scenarios(scenarios, limit=1)
+
+        self.assertEqual(selected[0]["id"], "target")
 
 
 if __name__ == "__main__":

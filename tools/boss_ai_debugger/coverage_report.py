@@ -88,7 +88,7 @@ def build_coverage_report(
             "evidence_refs": generator_evidence,
         },
         "known_gaps": [
-            "ROM hook score-helper coverage is not full rule coverage because false predicates and dynamic read provenance are not traced yet.",
+            "ROM hook score-helper coverage is not full rule coverage because only selected predicate branch labels are traced and dynamic read provenance is not traced yet.",
             "Generated scenario coverage is currently ROM-score-simulator coverage, not PyBoy materialized-state coverage.",
         ],
     }
@@ -111,6 +111,9 @@ def rule_coverage_summary(
         "trace_event_count": contribution_summary["event_count"],
         "trace_changed_event_count": contribution_summary["changed_event_count"],
         "trace_rule_entry_count": contribution_summary["rule_entry_count"],
+        "trace_predicate_branch_entry_count": contribution_summary[
+            "predicate_branch_entry_count"
+        ],
         "trace_executed_rule_count": contribution_summary["executed_rule_count"],
         "trace_covered_rule_count": contribution_summary["covered_rule_count"],
         "trace_changed_rule_count": contribution_summary["changed_rule_count"],
