@@ -723,6 +723,7 @@ def cmd_rom_score_materialize(args: argparse.Namespace) -> int:
         button=args.button,
         button_delay=args.button_delay,
         watch_frames=args.watch_frames,
+        collect_contribution_traces=not args.fast_score_only,
     )
     if args.json_out != "":
         write_rom_score_materialization_json(report, Path(args.json_out))
@@ -1046,6 +1047,7 @@ def build_parser() -> argparse.ArgumentParser:
     score_materialize_cmd.add_argument("--json", action="store_true")
     score_materialize_cmd.add_argument("--json-out", default="")
     score_materialize_cmd.add_argument("--display-limit", type=int, default=20)
+    score_materialize_cmd.add_argument("--fast-score-only", action="store_true")
     score_materialize_cmd.add_argument("--fail-on-mismatch", action="store_true")
     score_materialize_cmd.set_defaults(func=cmd_rom_score_materialize)
 

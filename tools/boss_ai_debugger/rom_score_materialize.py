@@ -8,11 +8,16 @@ from typing import Any
 
 from tools.boss_ai_preference.data import PreferenceDataError
 from tools.trace import boss_ai_trace_capture as capture
+from tools.trace import runtime as trace_runtime
 
 from .contribution_compare import compare_contribution_reports
 from .contribution_compare import python_contribution_report_from_scenarios
+from .rom_contribution_trace import apply_memory_patches
+from .rom_contribution_trace import clear_chosen_move
+from .rom_contribution_trace import memory_patches_to_json
 from .rom_contribution_trace import MemoryPatch
-from .rom_contribution_trace import run_rom_contribution_trace
+from .rom_contribution_trace import RomContributionTraceSession
+from .rom_contribution_trace import SimpleTraceArgs
 from .rom_scenarios import normalize_tier
 from .rom_scenarios import select_from_score_bytes
 from .rom_scenarios import select_move
@@ -76,6 +81,11 @@ KNOWN_LIMITS = [
         "under matching generated scenario ids; mismatches are review items, not "
         "evidence that the ROM trace failed to run."
     ),
+    (
+        "Fast score-only mode skips rule-level contribution hooks for throughput. "
+        "Contribution-trace mode is diagnostic and should be checked against the "
+        "fast score path before treating hook-heavy score bytes as behavior."
+    ),
 ]
 
 
@@ -85,6 +95,106 @@ class ScenarioMaterialization:
     patches: list[MemoryPatch]
     move_ids: list[int]
     layers: int
+
+
+class RomScoreReplaySession:
+    def __init__(
+        self,
+        *,
+        rom: Path = capture.DEFAULT_ROM,
+        symbols_path: Path = capture.DEFAULT_SYMBOLS,
+    ) -> None:
+        self.rom = rom
+        self.symbols_path = symbols_path
+        self.symbols = capture.parse_symbols(symbols_path)
+        capture.require_symbols(self.symbols)
+        self.move_names = capture.parse_move_names(capture.MOVE_CONSTANTS)
+        pyboy_class = trace_runtime.load_pyboy(
+            "PyBoy is required for ROM score materialization"
+        )
+        self.pyboy = pyboy_class(str(rom), window="null", sound=False, log_level="ERROR")
+        trace_runtime.disable_realtime(self.pyboy)
+        score_move = self.symbols.get("BossAI_ApplyMoveModel.ScoreMove")
+        if score_move is None:
+            raise PreferenceDataError(
+                "missing hook symbol: BossAI_ApplyMoveModel.ScoreMove"
+        )
+        self.memory_patches: list[MemoryPatch] = []
+        self.score_start_patches_applied = False
+        self.score_start_patch_count = 0
+        self.pyboy.hook_register(
+            score_move.bank,
+            score_move.address,
+            fast_score_patch_callback,
+            self,
+        )
+        self.basis = capture.build_trace_basis_metadata(
+            SimpleTraceArgs(rom=rom, symbols=symbols_path)
+        )
+
+    def __enter__(self) -> "RomScoreReplaySession":
+        return self
+
+    def __exit__(self, exc_type: Any, exc: Any, traceback: Any) -> None:
+        self.close()
+
+    def close(self) -> None:
+        self.pyboy.stop(save=False)
+
+    def run(
+        self,
+        *,
+        save_state: Path,
+        button: str = "a",
+        button_delay: int = 8,
+        watch_frames: int = DEFAULT_WATCH_FRAMES,
+        metadata: dict[str, str] | None = None,
+        memory_patches: list[MemoryPatch] | None = None,
+    ) -> dict[str, Any]:
+        if not save_state.exists():
+            raise PreferenceDataError(f"missing save-state: {save_state}")
+
+        patches = memory_patches or []
+        self.memory_patches = patches
+        self.score_start_patches_applied = False
+        self.score_start_patch_count = 0
+        with save_state.open("rb") as fh:
+            self.pyboy.load_state(fh)
+        apply_memory_patches(self.pyboy, self.symbols, patches)
+        clear_chosen_move(self.pyboy, self.symbols)
+        if button:
+            self.pyboy.button(button, delay=button_delay)
+
+        final_values = None
+        for _frame in range(watch_frames + 1):
+            values = capture.read_trace_values(self.pyboy, self.symbols)
+            if values["wBossAITraceChosenMove"][0] != 0:
+                final_values = values
+                break
+            self.pyboy.tick(1, False, False)
+        if final_values is None:
+            raise PreferenceDataError(
+                f"no boss move choice observed within {watch_frames} frames"
+            )
+
+        basis = dict(self.basis)
+        if metadata:
+            basis.update(metadata)
+        return build_fast_score_report(
+            save_state=save_state,
+            basis=basis,
+            values=final_values,
+            move_names=self.move_names,
+            memory_patches=patches,
+            score_start_patch_count=self.score_start_patch_count,
+        )
+
+    def apply_score_start_patches(self) -> None:
+        if self.score_start_patches_applied:
+            return
+        apply_memory_patches(self.pyboy, self.symbols, self.memory_patches)
+        self.score_start_patches_applied = True
+        self.score_start_patch_count += 1
 
 
 def run_rom_score_materialization_from_path(
@@ -98,6 +208,7 @@ def run_rom_score_materialization_from_path(
     button: str = "a",
     button_delay: int = 8,
     watch_frames: int = DEFAULT_WATCH_FRAMES,
+    collect_contribution_traces: bool = True,
 ) -> dict[str, Any]:
     from .rom_scenarios import load_scenario_batch
 
@@ -113,6 +224,7 @@ def run_rom_score_materialization_from_path(
         button=button,
         button_delay=button_delay,
         watch_frames=watch_frames,
+        collect_contribution_traces=collect_contribution_traces,
         source=str(scenarios_path),
     )
 
@@ -127,6 +239,7 @@ def run_rom_score_materialization(
     button: str = "a",
     button_delay: int = 8,
     watch_frames: int = DEFAULT_WATCH_FRAMES,
+    collect_contribution_traces: bool = True,
     source: str = "inline",
 ) -> dict[str, Any]:
     if not scenarios:
@@ -144,42 +257,50 @@ def run_rom_score_materialization(
     started = time.perf_counter()
     verdicts: list[dict[str, Any]] = []
     traces: list[dict[str, Any]] = []
-    for scenario in scenarios:
-        scenario_id = str(scenario.get("id", "unnamed"))
-        if scenario.get("family") not in SUPPORTED_FAMILIES:
-            verdicts.append(skipped_verdict(scenario_id, "unsupported scenario family"))
-            continue
-        try:
-            materialization = materialization_for_scenario(
-                scenario,
-                move_name_to_id=move_name_to_id,
-            )
-            rom_report = run_rom_contribution_trace(
-                save_state=base_state,
-                rom=rom,
-                symbols_path=symbols_path,
-                button=button,
-                button_delay=button_delay,
-                watch_frames=watch_frames,
-                metadata={
-                    "boss": base_route,
-                    "notes": f"generated-score-materialization:{scenario_id}",
-                },
-                memory_patches=materialization.patches,
-            )
-            rom_report["trace_id"] = scenario_id
-            rom_report["scenario_id"] = scenario_id
-            traces.append(rom_report)
-            verdicts.append(
-                verdict_from_materialized_trace(
-                    scenario,
-                    materialization,
-                    rom_report,
-                    move_names=move_names,
+    session_class = (
+        RomContributionTraceSession
+        if collect_contribution_traces
+        else RomScoreReplaySession
+    )
+    with session_class(rom=rom, symbols_path=symbols_path) as session:
+        for scenario in scenarios:
+            scenario_id = str(scenario.get("id", "unnamed"))
+            if scenario.get("family") not in SUPPORTED_FAMILIES:
+                verdicts.append(
+                    skipped_verdict(scenario_id, "unsupported scenario family")
                 )
-            )
-        except Exception as exc:
-            verdicts.append(skipped_verdict(scenario_id, str(exc), status="error"))
+                continue
+            try:
+                materialization = materialization_for_scenario(
+                    scenario,
+                    move_name_to_id=move_name_to_id,
+                )
+                rom_report = session.run(
+                    save_state=base_state,
+                    button=button,
+                    button_delay=button_delay,
+                    watch_frames=watch_frames,
+                    metadata={
+                        "boss": base_route,
+                        "notes": f"generated-score-materialization:{scenario_id}",
+                    },
+                    memory_patches=materialization.patches,
+                )
+                rom_report["trace_id"] = scenario_id
+                rom_report["scenario_id"] = scenario_id
+                if collect_contribution_traces:
+                    traces.append(rom_report)
+                verdicts.append(
+                    verdict_from_materialized_trace(
+                        scenario,
+                        materialization,
+                        rom_report,
+                        move_names=move_names,
+                        compare_contributions=collect_contribution_traces,
+                    )
+                )
+            except Exception as exc:
+                verdicts.append(skipped_verdict(scenario_id, str(exc), status="error"))
 
     elapsed = time.perf_counter() - started
     checked = [verdict for verdict in verdicts if verdict["status"] == "pass"]
@@ -217,6 +338,9 @@ def run_rom_score_materialization(
         "contribution_mismatch_count": len(contribution_mismatches),
         "elapsed_seconds": elapsed,
         "materializations_per_minute": len(checked) / elapsed * 60 if elapsed else 0.0,
+        "score_replay_mode": (
+            "contribution_trace" if collect_contribution_traces else "fast_score_only"
+        ),
         "known_limits": KNOWN_LIMITS,
         "verdicts": verdicts,
         "traces": traces,
@@ -391,6 +515,7 @@ def verdict_from_materialized_trace(
     rom_report: dict[str, Any],
     *,
     move_names: dict[int, str],
+    compare_contributions: bool = True,
 ) -> dict[str, Any]:
     scenario_id = materialization.scenario_id
     python_result = select_move(scenario)
@@ -403,10 +528,13 @@ def verdict_from_materialized_trace(
     )
     expected_scores = [int(move["final_score"]) for move in python_result["moves"][:4]]
     observed_scores = [int(value) for value in rom_report["move_scores"][: len(expected_scores)]]
-    comparison = compare_contribution_reports(
-        rom_reports=[rom_report],
-        python_reports=[python_contribution_report_from_scenarios([scenario])],
-    )
+    if compare_contributions:
+        comparison = compare_contribution_reports(
+            rom_reports=[rom_report],
+            python_reports=[python_contribution_report_from_scenarios([scenario])],
+        )
+    else:
+        comparison = empty_contribution_comparison()
     rom_best_action_id = action_id_for_slot(scenario, rom_selector.get("best_slot_index"))
     selector_top_match = (
         bool(python_result.get("ready"))
@@ -434,6 +562,7 @@ def verdict_from_materialized_trace(
             ],
             "final_scores": observed_scores,
             "changed_event_count": rom_report.get("changed_event_count", 0),
+            "score_start_patch_count": rom_report.get("score_start_patch_count", 0),
             "rule_entry_count": rom_report.get("rule_entry_count", 0),
             "predicate_branch_entry_count": rom_report.get(
                 "predicate_branch_entry_count", 0
@@ -453,6 +582,59 @@ def verdict_from_materialized_trace(
             for item in materialization.patches
         ],
     }
+
+
+def build_fast_score_report(
+    *,
+    save_state: Path,
+    basis: dict[str, str],
+    values: dict[str, list[int]],
+    move_names: dict[int, str],
+    memory_patches: list[MemoryPatch],
+    score_start_patch_count: int = 0,
+) -> dict[str, Any]:
+    chosen_move = values["wBossAITraceChosenMove"][0]
+    return {
+        "schema_version": 1,
+        "source": "trace_rom_pyboy_fast_score",
+        "save_state": trace_runtime.display_path(save_state),
+        "trace_basis": basis,
+        "chosen": {
+            "move_id": chosen_move,
+            "move_name": move_names.get(chosen_move, f"#{chosen_move:02x}"),
+            "slot_index": values["wCurEnemyMoveNum"][0],
+        },
+        "memory_patches": memory_patches_to_json(memory_patches),
+        "move_ids": values["wEnemyMonMoves"],
+        "move_scores": values["wEnemyAIMoveScores"],
+        "pre_model_scores": values["wBossAITracePreModelScores"],
+        "post_model_scores": values["wBossAITracePostModelScores"],
+        "rule_entry_count": 0,
+        "predicate_branch_entry_count": 0,
+        "event_count": 0,
+        "changed_event_count": 0,
+        "score_start_patch_count": score_start_patch_count,
+        "events": [],
+        "rule_entries": [],
+        "predicate_branch_entries": [],
+        "known_limits": [
+            "Fast score replay records ROM score bytes and selector output without contribution hooks.",
+            "Run again with contribution traces enabled to localize rule-level score deltas.",
+        ],
+    }
+
+
+def empty_contribution_comparison() -> dict[str, Any]:
+    return {
+        "matched_trace_count": 0,
+        "mismatch_count": 0,
+        "mismatch_class_counts": {},
+        "mismatches": [],
+    }
+
+
+def fast_score_patch_callback(session: RomScoreReplaySession) -> None:
+    session.apply_score_start_patches()
 
 
 def skipped_verdict(
@@ -541,6 +723,7 @@ def format_rom_score_materialization(
         (
             f"base_route={report['base_route']} "
             f"base_state={report['base_state']} "
+            f"mode={report.get('score_replay_mode', 'contribution_trace')} "
             f"rate={report['materializations_per_minute']:.0f}/min"
         ),
     ]

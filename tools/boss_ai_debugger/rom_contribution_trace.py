@@ -381,6 +381,15 @@ class RomContributionTracer:
         self.rule_entries: list[dict[str, Any]] = []
         self.predicate_branch_entries: list[dict[str, Any]] = []
 
+    def reset(self, *, memory_patches: list[MemoryPatch] | None = None) -> None:
+        self.memory_patches = memory_patches or []
+        self.score_start_patches_applied = False
+        self.frames.clear()
+        self.pending = None
+        self.events.clear()
+        self.rule_entries.clear()
+        self.predicate_branch_entries.clear()
+
     def handle_hook(self, targets: list[HookTarget]) -> None:
         for target in sorted(targets, key=hook_order):
             if target.kind == "rule":
@@ -751,6 +760,95 @@ class RomContributionTracer:
         return int(trace_runtime.read_byte(self.pyboy, capture.Symbol(bank, address)))
 
 
+class RomContributionTraceSession:
+    def __init__(
+        self,
+        *,
+        rom: Path = capture.DEFAULT_ROM,
+        symbols_path: Path = capture.DEFAULT_SYMBOLS,
+    ) -> None:
+        self.rom = rom
+        self.symbols_path = symbols_path
+        self.symbols = capture.parse_symbols(symbols_path)
+        capture.require_symbols(self.symbols)
+        require_hook_symbols(self.symbols)
+        self.symbol_index = SymbolIndex(self.symbols, build_rule_map())
+        self.move_names = capture.parse_move_names(capture.MOVE_CONSTANTS)
+        pyboy_class = trace_runtime.load_pyboy(
+            "PyBoy is required for ROM contribution tracing"
+        )
+        self.pyboy = pyboy_class(str(rom), window="null", sound=False, log_level="ERROR")
+        trace_runtime.disable_realtime(self.pyboy)
+        self.tracer = RomContributionTracer(
+            self.pyboy,
+            self.symbols,
+            self.symbol_index,
+            self.move_names,
+        )
+        register_hooks(self.pyboy, self.symbol_index.hook_targets(), self.tracer)
+        self.basis = capture.build_trace_basis_metadata(
+            SimpleTraceArgs(rom=rom, symbols=symbols_path)
+        )
+
+    def __enter__(self) -> "RomContributionTraceSession":
+        return self
+
+    def __exit__(self, exc_type: Any, exc: Any, traceback: Any) -> None:
+        self.close()
+
+    def close(self) -> None:
+        self.pyboy.stop(save=False)
+
+    def run(
+        self,
+        *,
+        save_state: Path,
+        button: str = "a",
+        button_delay: int = 8,
+        watch_frames: int = 60,
+        metadata: dict[str, str] | None = None,
+        memory_patches: list[MemoryPatch] | None = None,
+    ) -> dict[str, Any]:
+        if not save_state.exists():
+            raise PreferenceDataError(f"missing save-state: {save_state}")
+
+        patches = memory_patches or []
+        self.tracer.reset(memory_patches=patches)
+        with save_state.open("rb") as fh:
+            self.pyboy.load_state(fh)
+        apply_memory_patches(self.pyboy, self.symbols, patches)
+        clear_chosen_move(self.pyboy, self.symbols)
+        if button:
+            self.pyboy.button(button, delay=button_delay)
+
+        final_values = None
+        for _frame in range(watch_frames + 1):
+            values = capture.read_trace_values(self.pyboy, self.symbols)
+            if values["wBossAITraceChosenMove"][0] != 0:
+                final_values = values
+                break
+            self.pyboy.tick(1, False, False)
+        self.tracer.close_pending(trigger="replay_end")
+        if final_values is None:
+            raise PreferenceDataError(
+                f"no boss move choice observed within {watch_frames} frames"
+            )
+
+        basis = dict(self.basis)
+        if metadata:
+            basis.update(metadata)
+        return build_report(
+            save_state=save_state,
+            basis=basis,
+            values=final_values,
+            events=self.tracer.events,
+            rule_entries=self.tracer.rule_entries,
+            predicate_branch_entries=self.tracer.predicate_branch_entries,
+            move_names=self.move_names,
+            memory_patches=patches,
+        )
+
+
 def run_rom_contribution_trace(
     *,
     save_state: Path,
@@ -762,60 +860,15 @@ def run_rom_contribution_trace(
     metadata: dict[str, str] | None = None,
     memory_patches: list[MemoryPatch] | None = None,
 ) -> dict[str, Any]:
-    if not save_state.exists():
-        raise PreferenceDataError(f"missing save-state: {save_state}")
-    symbols = capture.parse_symbols(symbols_path)
-    capture.require_symbols(symbols)
-    require_hook_symbols(symbols)
-    symbol_index = SymbolIndex(symbols, build_rule_map())
-    move_names = capture.parse_move_names(capture.MOVE_CONSTANTS)
-    PyBoy = trace_runtime.load_pyboy("PyBoy is required for ROM contribution tracing")
-    pyboy = PyBoy(str(rom), window="null", sound=False, log_level="ERROR")
-    trace_runtime.disable_realtime(pyboy)
-    tracer = RomContributionTracer(
-        pyboy,
-        symbols,
-        symbol_index,
-        move_names,
-        memory_patches=memory_patches,
-    )
-    try:
-        with save_state.open("rb") as fh:
-            pyboy.load_state(fh)
-        apply_memory_patches(pyboy, symbols, memory_patches or [])
-        register_hooks(pyboy, symbol_index.hook_targets(), tracer)
-        clear_chosen_move(pyboy, symbols)
-        if button:
-            pyboy.button(button, delay=button_delay)
-        final_values = None
-        for _frame in range(watch_frames + 1):
-            values = capture.read_trace_values(pyboy, symbols)
-            if values["wBossAITraceChosenMove"][0] != 0:
-                final_values = values
-                break
-            pyboy.tick(1, False, False)
-        tracer.close_pending(trigger="replay_end")
-        if final_values is None:
-            raise PreferenceDataError(
-                f"no boss move choice observed within {watch_frames} frames"
-            )
-        basis = capture.build_trace_basis_metadata(
-            SimpleTraceArgs(rom=rom, symbols=symbols_path)
-        )
-        if metadata:
-            basis.update(metadata)
-        return build_report(
+    with RomContributionTraceSession(rom=rom, symbols_path=symbols_path) as session:
+        return session.run(
             save_state=save_state,
-            basis=basis,
-            values=final_values,
-            events=tracer.events,
-            rule_entries=tracer.rule_entries,
-            predicate_branch_entries=tracer.predicate_branch_entries,
-            move_names=move_names,
-            memory_patches=memory_patches or [],
+            button=button,
+            button_delay=button_delay,
+            watch_frames=watch_frames,
+            metadata=metadata,
+            memory_patches=memory_patches,
         )
-    finally:
-        pyboy.stop(save=False)
 
 
 def run_rom_contribution_trace_for_route(

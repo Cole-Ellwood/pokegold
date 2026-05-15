@@ -4,6 +4,7 @@ import unittest
 
 from tools.boss_ai_debugger.rom_contribution_trace import (
     HookTarget,
+    MemoryPatch,
     RomContributionTracer,
     RuleFrame,
     format_rom_contribution_trace,
@@ -277,6 +278,35 @@ class RomContributionTraceTests(unittest.TestCase):
         self.assertEqual(snapshot["BaseData"]["kind"], "static_table_reference")
         self.assertEqual(snapshot["EvosAttacks"]["symbol"], "EvosAttacksPointers")
         self.assertFalse(snapshot["MissingPublicInput"]["available"])
+
+    def test_tracer_reset_clears_events_and_updates_patches(self) -> None:
+        tracer = RomContributionTracer(
+            FakePyBoy(),
+            {},
+            FakeSymbolIndex(),
+            {},
+            memory_patches=[MemoryPatch("wPlayerScreens", 0, 1)],
+        )
+        tracer.score_start_patches_applied = True
+        tracer.events.append({"event_type": "score_delta"})
+        tracer.rule_entries.append({"event_type": "rule_enter"})
+        tracer.predicate_branch_entries.append({"event_type": "predicate_branch"})
+        tracer.frames.append(
+            RuleFrame(
+                sp=0xFEF0,
+                full_symbol="BossAI_ApplyMoveModel.ApplyTestBias",
+                rule=FakeSymbolIndex.rule,
+            )
+        )
+
+        tracer.reset(memory_patches=[MemoryPatch("wPlayerScreens", 0, 2)])
+
+        self.assertFalse(tracer.score_start_patches_applied)
+        self.assertEqual(tracer.events, [])
+        self.assertEqual(tracer.rule_entries, [])
+        self.assertEqual(tracer.predicate_branch_entries, [])
+        self.assertEqual(tracer.frames, [])
+        self.assertEqual(tracer.memory_patches[0].value, 2)
 
     def test_format_marks_changed_events(self) -> None:
         text = format_rom_contribution_trace(

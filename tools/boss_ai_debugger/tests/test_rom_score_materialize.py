@@ -6,6 +6,7 @@ from tools.boss_ai_debugger.generators import generate_scenarios
 from tools.boss_ai_debugger.rom_score_materialize import (
     MOVES,
     action_id_for_slot,
+    empty_contribution_comparison,
     materialization_for_scenario,
     move_ids_for_scenario,
     parse_spikes_layers,
@@ -59,6 +60,13 @@ class RomScoreMaterializeTests(unittest.TestCase):
 
         self.assertEqual(action_id_for_slot(scenario, 1), "second")
         self.assertIsNone(action_id_for_slot(scenario, 4))
+
+    def test_fast_score_mode_uses_empty_contribution_comparison(self) -> None:
+        comparison = empty_contribution_comparison()
+
+        self.assertEqual(comparison["matched_trace_count"], 0)
+        self.assertEqual(comparison["mismatch_count"], 0)
+        self.assertEqual(comparison["mismatch_class_counts"], {})
 
 
 if __name__ == "__main__":
