@@ -171,3 +171,15 @@ python -m tools.boss_ai_debugger metamorphic --generated 100 --seed 1 --fail-on-
 The metamorphic suite checks selector invariants and Spikes/Rapid Spin boundary
 relations that should hold without needing a hand label for every generated
 state.
+
+Build mastery and coverage indexes:
+
+```powershell
+python -m tools.boss_ai_debugger mastery-index build
+python -m tools.boss_ai_debugger coverage-report --generated-count 250 --seed 1
+```
+
+The mastery index parses policy cards, quick tests, reviews, and the
+source-to-policy ledger. The coverage report shows mapped Boss AI rules,
+generated scenario tag coverage, policy-card evidence coverage, and explicitly
+flags that full ROM scoring trace coverage is not implemented yet.

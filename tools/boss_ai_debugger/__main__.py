@@ -21,6 +21,12 @@ from tools.boss_ai_preference.data import (
 )
 from tools.boss_ai_preference.damage_estimates import attach_damage_estimates
 
+from .coverage_report import (
+    DEFAULT_COVERAGE_PATH,
+    build_coverage_report,
+    format_coverage_report,
+    write_coverage_report,
+)
 from .generators import (
     FAMILIES as GENERATOR_FAMILIES,
     format_generate_report,
@@ -31,6 +37,12 @@ from .metamorphic import (
     format_metamorphic_report,
     run_metamorphic_suite,
     write_metamorphic_json,
+)
+from .mastery_index import (
+    DEFAULT_MASTERY_INDEX_PATH,
+    build_mastery_index,
+    format_mastery_index,
+    write_mastery_index,
 )
 from .regression import (
     evaluate_corpus,
@@ -359,6 +371,32 @@ def cmd_metamorphic(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_mastery_index_build(args: argparse.Namespace) -> int:
+    data = build_mastery_index()
+    if args.json_out != "":
+        write_mastery_index(data, Path(args.json_out))
+    if args.json:
+        print(json.dumps(data, indent=2, sort_keys=True))
+    else:
+        print(format_mastery_index(data))
+        if args.json_out != "":
+            print(f"wrote {args.json_out}")
+    return 0
+
+
+def cmd_coverage_report(args: argparse.Namespace) -> int:
+    data = build_coverage_report(generated_count=args.generated_count, seed=args.seed)
+    if args.json_out != "":
+        write_coverage_report(data, Path(args.json_out))
+    if args.json:
+        print(json.dumps(data, indent=2, sort_keys=True))
+    else:
+        print(format_coverage_report(data))
+        if args.json_out != "":
+            print(f"wrote {args.json_out}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="python -m tools.boss_ai_debugger")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -484,6 +522,20 @@ def build_parser() -> argparse.ArgumentParser:
     metamorphic_cmd.add_argument("--json-out", default="")
     metamorphic_cmd.add_argument("--fail-on-mismatch", action="store_true")
     metamorphic_cmd.set_defaults(func=cmd_metamorphic)
+
+    mastery_cmd = subparsers.add_parser("mastery-index")
+    mastery_subcommands = mastery_cmd.add_subparsers(dest="mastery_command", required=True)
+    mastery_build = mastery_subcommands.add_parser("build")
+    mastery_build.add_argument("--json", action="store_true")
+    mastery_build.add_argument("--json-out", default=str(DEFAULT_MASTERY_INDEX_PATH))
+    mastery_build.set_defaults(func=cmd_mastery_index_build)
+
+    coverage_cmd = subparsers.add_parser("coverage-report")
+    coverage_cmd.add_argument("--generated-count", type=int, default=250)
+    coverage_cmd.add_argument("--seed", type=int, default=1)
+    coverage_cmd.add_argument("--json", action="store_true")
+    coverage_cmd.add_argument("--json-out", default=str(DEFAULT_COVERAGE_PATH))
+    coverage_cmd.set_defaults(func=cmd_coverage_report)
     return parser
 
 

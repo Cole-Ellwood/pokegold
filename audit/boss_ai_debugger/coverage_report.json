@@ -1,0 +1,70 @@
+{
+  "generated": {
+    "condition_tag_counts": {
+      "active_ghost_spinblock": 71,
+      "active_revealed_rapid_spin": 76,
+      "active_species_spin_prior": 63,
+      "bench_revealed_rapid_spin": 63,
+      "best_second_only": 31,
+      "blocked_score_ignored": 31,
+      "equal_scores": 31,
+      "foresight_identified_ghost": 32,
+      "immediate_pressure": 55,
+      "reserve_ghost_available": 64,
+      "spikes_layers_0": 32,
+      "spikes_layers_1": 27,
+      "spikes_layers_2": 32,
+      "spikes_layers_3": 34,
+      "third_slot_tied_second": 32,
+      "wide_gap": 31
+    },
+    "evidence_refs": [
+      "docs\\pokemon_mastery\\policy_cards\\hazard_loop_spin_window.md",
+      "docs\\pokemon_mastery\\romhack_deltas\\spikes_and_rapid_spin.md"
+    ],
+    "policy_tag_counts": {
+      "hazard_retention": 125,
+      "rapid_spin": 125,
+      "selector_surface": 125,
+      "spikes": 125
+    }
+  },
+  "generated_count": 250,
+  "known_gaps": [
+    "Full ROM scoring contribution trace coverage is not implemented yet.",
+    "Generated scenario coverage is currently ROM-score-simulator coverage, not PyBoy materialized-state coverage."
+  ],
+  "mastery": {
+    "covered_policy_cards": [
+      "docs\\pokemon_mastery\\policy_cards\\hazard_loop_spin_window.md"
+    ],
+    "generated_policy_card_coverage_count": 1,
+    "generated_policy_card_coverage_rate": 0.125,
+    "policy_card_count": 8,
+    "quick_test_count": 180,
+    "review_count": 43,
+    "source_policy_count": 58,
+    "uncovered_policy_cards": [
+      "docs\\pokemon_mastery\\policy_cards\\active_pressure_before_status.md",
+      "docs\\pokemon_mastery\\policy_cards\\branch_action_after_naming.md",
+      "docs\\pokemon_mastery\\policy_cards\\cashout_boundary.md",
+      "docs\\pokemon_mastery\\policy_cards\\hidden_role_voluntary_entry.md",
+      "docs\\pokemon_mastery\\policy_cards\\romhack_mechanics_firewall.md",
+      "docs\\pokemon_mastery\\policy_cards\\sleep_absorber_and_set_ambiguity.md",
+      "docs\\pokemon_mastery\\policy_cards\\support_handoff_after_job.md"
+    ]
+  },
+  "rule_map": {
+    "classification_counts": {
+      "haki_exception": 3,
+      "internal": 37,
+      "platform_boundary": 76,
+      "public_info": 44
+    },
+    "full_trace_rule_coverage_available": false,
+    "mapped_rule_count": 160,
+    "trace_covered_rule_count": 0
+  },
+  "schema_version": 1,
+  "seed": 1
+}

@@ -9,6 +9,8 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from tools.boss_ai_debugger.generators import generate_scenarios
+from tools.boss_ai_debugger.coverage_report import build_coverage_report
+from tools.boss_ai_debugger.mastery_index import build_mastery_index
 from tools.boss_ai_debugger.metamorphic import run_metamorphic_suite
 from tools.boss_ai_debugger.review_queue import build_review_queue
 from tools.boss_ai_debugger.rom_scenarios import evaluate_batch
@@ -35,6 +37,8 @@ def main() -> int:
     batch = evaluate_batch(scenarios)
     queue = build_review_queue(batch, limit=20)
     metamorphic = run_metamorphic_suite(generated=25, seed=1)
+    mastery = build_mastery_index()
+    coverage = build_coverage_report(generated_count=100, seed=1)
 
     errors: list[str] = []
     if not fixture_report["valid"]:
@@ -48,6 +52,10 @@ def main() -> int:
         errors.append("review queue did not preserve reviewable count")
     if not metamorphic["passed"]:
         errors.append("metamorphic suite reported failures")
+    if mastery["policy_card_count"] == 0:
+        errors.append("mastery index found no policy cards")
+    if coverage["mastery"]["policy_card_count"] != mastery["policy_card_count"]:
+        errors.append("coverage report mastery policy-card count mismatch")
 
     if errors:
         print("Boss AI debugger foundation audit failed.")
@@ -73,6 +81,12 @@ def main() -> int:
     print(
         "Metamorphic: "
         f"{metamorphic['pass_count']} / {metamorphic['relation_count']} relations passed."
+    )
+    print(
+        "Mastery coverage: "
+        f"{coverage['mastery']['generated_policy_card_coverage_count']} / "
+        f"{coverage['mastery']['policy_card_count']} policy cards covered by generated refs; "
+        f"full_trace_rule_coverage={coverage['rule_map']['full_trace_rule_coverage_available']}."
     )
     return 0
 
