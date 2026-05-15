@@ -364,12 +364,17 @@ def cmd_generate(args: argparse.Namespace) -> int:
 
 def cmd_review_queue(args: argparse.Namespace) -> int:
     if args.report is not None:
-        queue = build_review_queue_from_report(args.report, limit=args.limit)
+        queue = build_review_queue_from_report(
+            args.report,
+            limit=args.limit,
+            max_per_lesson=args.max_per_lesson,
+        )
     else:
         queue = build_review_queue_from_scenarios(
             args.scenarios,
             expectations_path=args.expectations,
             limit=args.limit,
+            max_per_lesson=args.max_per_lesson,
         )
     if args.json_out != "":
         write_review_queue(queue, Path(args.json_out))
@@ -744,6 +749,7 @@ def build_parser() -> argparse.ArgumentParser:
     review_source.add_argument("--scenarios", type=path_arg)
     review_cmd.add_argument("--expectations", type=path_arg)
     review_cmd.add_argument("--limit", type=int, default=50)
+    review_cmd.add_argument("--max-per-lesson", type=int, default=5)
     review_cmd.add_argument("--json", action="store_true")
     review_cmd.add_argument("--json-out", default="")
     review_cmd.set_defaults(func=cmd_review_queue)

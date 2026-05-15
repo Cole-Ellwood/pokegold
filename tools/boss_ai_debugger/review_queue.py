@@ -6,6 +6,7 @@ from typing import Any
 
 from tools.boss_ai_preference.data import PreferenceDataError
 
+from .mastery_index import build_mastery_index
 from .rom_scenarios import evaluate_batch, load_scenario_batch
 
 
@@ -25,30 +26,54 @@ def build_review_queue_from_scenarios(
     *,
     expectations_path: Path | None = None,
     limit: int = 50,
+    max_per_lesson: int = 5,
 ) -> dict[str, Any]:
     scenarios = load_scenario_batch(scenarios_path, expectations_path)
     report = evaluate_batch(scenarios)
-    return build_review_queue(report, limit=limit, source=str(scenarios_path))
+    return build_review_queue(
+        report,
+        limit=limit,
+        max_per_lesson=max_per_lesson,
+        source=str(scenarios_path),
+    )
 
 
-def build_review_queue_from_report(path: Path, *, limit: int = 50) -> dict[str, Any]:
+def build_review_queue_from_report(
+    path: Path,
+    *,
+    limit: int = 50,
+    max_per_lesson: int = 5,
+) -> dict[str, Any]:
     data = json.loads(path.read_text(encoding="utf-8"))
-    return build_review_queue(data, limit=limit, source=str(path))
+    return build_review_queue(
+        data,
+        limit=limit,
+        max_per_lesson=max_per_lesson,
+        source=str(path),
+    )
 
 
 def build_review_queue(
     report: dict[str, Any],
     *,
     limit: int = 50,
+    max_per_lesson: int = 5,
     source: str = "",
 ) -> dict[str, Any]:
     if limit < 0:
         raise PreferenceDataError("limit must be non-negative")
+    if max_per_lesson < 0:
+        raise PreferenceDataError("max_per_lesson must be non-negative")
     verdicts = report.get("verdicts")
     if not isinstance(verdicts, list):
         raise PreferenceDataError("review queue input must contain verdicts")
 
-    items = [review_item(item) for item in verdicts if int(item.get("severity", 0)) > 0]
+    evidence_index = mastery_evidence_index()
+    items = [
+        review_item(item, evidence_index=evidence_index)
+        for item in verdicts
+        if int(item.get("severity", 0)) > 0
+    ]
     items.sort(
         key=lambda item: (
             -int(item["priority_score"]),
@@ -56,19 +81,24 @@ def build_review_queue(
             str(item["scenario_id"]),
         )
     )
-    top = items[:limit]
+    top = select_diverse_items(items, limit=limit, max_per_lesson=max_per_lesson)
     return {
         "schema_version": 1,
         "source": source,
         "input_scenario_count": report.get("scenario_count"),
         "input_reviewable_count": len(items),
         "limit": limit,
+        "max_per_lesson": max_per_lesson,
         "returned_count": len(top),
         "items": top,
     }
 
 
-def review_item(verdict: dict[str, Any]) -> dict[str, Any]:
+def review_item(
+    verdict: dict[str, Any],
+    *,
+    evidence_index: dict[str, dict[str, Any]] | None = None,
+) -> dict[str, Any]:
     severity = int(verdict.get("severity", 0))
     verdict_name = str(verdict.get("verdict", ""))
     policy_tags = string_list(verdict.get("policy_tags"))
@@ -84,11 +114,13 @@ def review_item(verdict: dict[str, Any]) -> dict[str, Any]:
         + (10 if answer_changing_information else 0)
         + int(rom_probability * 10)
     )
+    digest = evidence_digest(evidence_refs, evidence_index or {})
     return {
         "scenario_id": str(verdict.get("scenario_id", "")),
         "verdict": verdict_name,
         "severity": severity,
         "priority_score": priority_score,
+        "lesson_key": lesson_key(policy_tags, evidence_refs),
         "rom_best_action_id": verdict.get("rom_best_action_id"),
         "rom_best_probability": rom_probability,
         "expected_best_action_ids": string_list(verdict.get("expected_best_action_ids")),
@@ -107,7 +139,126 @@ def review_item(verdict: dict[str, Any]) -> dict[str, Any]:
         "why": str(verdict.get("why", "")),
         "answer_changing_information": answer_changing_information,
         "evidence_refs": evidence_refs,
+        "evidence_digest": digest,
+        "next_action": next_action_hint(
+            verdict_name,
+            rom_best=verdict.get("rom_best_action_id"),
+            expected_best=string_list(verdict.get("expected_best_action_ids")),
+            evidence_digest=digest,
+            answer_changing_information=answer_changing_information,
+        ),
     }
+
+
+def select_diverse_items(
+    items: list[dict[str, Any]],
+    *,
+    limit: int,
+    max_per_lesson: int,
+) -> list[dict[str, Any]]:
+    if limit == 0:
+        return []
+    if max_per_lesson == 0:
+        return items[:limit]
+
+    selected: list[dict[str, Any]] = []
+    deferred: list[dict[str, Any]] = []
+    lesson_counts: dict[str, int] = {}
+    for item in items:
+        lesson = str(item["lesson_key"])
+        if lesson_counts.get(lesson, 0) < max_per_lesson:
+            selected.append(item)
+            lesson_counts[lesson] = lesson_counts.get(lesson, 0) + 1
+            if len(selected) == limit:
+                return selected
+        else:
+            deferred.append(item)
+
+    selected_ids = {id(item) for item in selected}
+    for item in [*deferred, *items]:
+        if len(selected) == limit:
+            break
+        if id(item) in selected_ids:
+            continue
+        selected.append(item)
+        selected_ids.add(id(item))
+    return selected
+
+
+def mastery_evidence_index() -> dict[str, dict[str, Any]]:
+    index = build_mastery_index()
+    by_path: dict[str, dict[str, Any]] = {}
+    for card in index["policy_cards"]:
+        path = str(card["path"])
+        by_path[path] = card
+        by_path[path.replace("\\", "/")] = card
+    return by_path
+
+
+def evidence_digest(
+    evidence_refs: list[str],
+    evidence_index: dict[str, dict[str, Any]],
+) -> list[dict[str, Any]]:
+    digests = []
+    for ref in evidence_refs:
+        card = evidence_index.get(ref) or evidence_index.get(ref.replace("/", "\\"))
+        if card is None:
+            continue
+        digests.append(
+            {
+                "path": card["path"],
+                "title": card["title"],
+                "status": card["status"],
+                "use_when": card["use_when"],
+                "default_summary": compact_text(card.get("default", []), limit=240),
+                "worst_branch": compact_text(card.get("worst_branch", ""), limit=180),
+                "evidence_count": len(card.get("evidence", [])),
+            }
+        )
+    return digests
+
+
+def compact_text(value: Any, *, limit: int) -> str:
+    if isinstance(value, list):
+        text = " ".join(str(item) for item in value)
+    else:
+        text = str(value)
+    text = " ".join(text.split())
+    if len(text) <= limit:
+        return text
+    return text[: limit - 3].rstrip() + "..."
+
+
+def lesson_key(policy_tags: list[str], evidence_refs: list[str]) -> str:
+    for ref in evidence_refs:
+        if "\\policy_cards\\" in ref or "/policy_cards/" in ref:
+            return ref.replace("/", "\\")
+    if policy_tags:
+        return "tag:" + policy_tags[0]
+    return "untagged"
+
+
+def next_action_hint(
+    verdict: str,
+    *,
+    rom_best: Any,
+    expected_best: list[str],
+    evidence_digest: list[dict[str, Any]],
+    answer_changing_information: list[str],
+) -> str:
+    policy = evidence_digest[0]["title"] if evidence_digest else "the cited policy"
+    if answer_changing_information:
+        return "Check the answer-changing fact first: " + answer_changing_information[0]
+    if verdict in {"bad_roll", "catastrophic_roll"}:
+        return f"Verify whether ROM should remove probability from {rom_best} under {policy}."
+    if verdict in {"mismatch", "best_never_rolled", "partial_best_unrolled"}:
+        wanted = ",".join(expected_best) or "the expected line"
+        return f"Compare ROM top {rom_best} against {wanted} using {policy}."
+    if verdict == "weak_best":
+        return f"Decide whether the near-tie probability is acceptable under {policy}."
+    if verdict == "acceptable_top":
+        return f"Decide whether acceptable top {rom_best} should become expected-best."
+    return f"Review against {policy}."
 
 
 def string_list(value: Any) -> list[str]:
@@ -153,6 +304,12 @@ def format_review_queue(queue: dict[str, Any]) -> str:
             )
         if item["evidence_refs"]:
             lines.append("      refs: " + "; ".join(item["evidence_refs"][:3]))
+        if item["evidence_digest"]:
+            digest = item["evidence_digest"][0]
+            lines.append(
+                f"      evidence: {digest['title']} - {digest['default_summary']}"
+            )
+        lines.append(f"      next: {item['next_action']}")
     return "\n".join(lines)
 
 

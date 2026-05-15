@@ -157,7 +157,10 @@ python -m tools.boss_ai_debugger review-queue --report audit\boss_ai_debugger\ru
 ```
 
 The queue re-ranks reviewable mismatches by severity, bad-roll risk, policy
-tags, condition novelty, and answer-changing information.
+tags, condition novelty, and answer-changing information. It also attaches a
+compact mastery policy digest and a `next_action` hint to each item, and
+`--max-per-lesson` diversifies the first pass before filling any remaining
+slots with duplicates.
 
 Record a reproducible generated smoke run:
 
