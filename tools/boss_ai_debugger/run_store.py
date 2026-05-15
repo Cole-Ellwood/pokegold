@@ -4,6 +4,9 @@ import hashlib
 import json
 import shutil
 import subprocess
+import sys
+import time
+from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -37,6 +40,7 @@ ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_RUNS_DIR = ROOT / "audit" / "boss_ai_debugger" / "runs"
 RUN_STORE_VERSION = "boss-ai-debugger-run-v1"
 SELF_REFERENTIAL_DIFF_ARTIFACTS = {"previous_run_diff"}
+CommandRunner = Callable[[list[str]], dict[str, Any]]
 
 
 def run_generated_smoke_suite(
@@ -115,6 +119,9 @@ def run_changed_ai_suite(
     refresh_rom_contribution_trace: bool = False,
     rom_contribution_boss_route: str = "clair",
     refresh_rom_score_materialization: bool = False,
+    rebuild_roms: bool = False,
+    refresh_live_traces: bool = False,
+    command_runner: CommandRunner | None = None,
 ) -> dict[str, Any]:
     if count < 0:
         raise ValueError("count must be non-negative")
@@ -134,9 +141,19 @@ def run_changed_ai_suite(
     trace_replay_path = run_dir / "trace_replay.json"
     rom_contribution_summary_path = run_dir / "rom_contribution_trace_summary.json"
     rom_score_materialization_path = run_dir / "rom_score_materialization.json"
+    rom_rebuild_path = run_dir / "rom_rebuild.json"
+    live_trace_refresh_path = run_dir / "live_trace_refresh.json"
     previous_run_diff_path = run_dir / "previous_run_diff.json"
     metadata_path = run_dir / "metadata.json"
     summary_path = run_dir / "summary.md"
+    rom_rebuild = run_rom_rebuild_report(
+        requested=rebuild_roms,
+        command_runner=command_runner,
+    )
+    live_trace_refresh = run_live_trace_refresh_report(
+        requested=refresh_live_traces,
+        command_runner=command_runner,
+    )
     copied_rom_contribution_paths = materialize_rom_contribution_traces(
         run_dir=run_dir,
         input_paths=resolve_rom_contribution_trace_paths(rom_contribution_trace_paths),
@@ -190,6 +207,8 @@ def run_changed_ai_suite(
         rom_score_materialization,
         rom_score_materialization_path,
     )
+    write_json(rom_rebuild, rom_rebuild_path)
+    write_json(live_trace_refresh, live_trace_refresh_path)
 
     metadata = {
         "schema_version": 1,
@@ -207,6 +226,8 @@ def run_changed_ai_suite(
             "refresh_rom_contribution_trace": refresh_rom_contribution_trace,
             "rom_contribution_boss_route": rom_contribution_boss_route,
             "refresh_rom_score_materialization": refresh_rom_score_materialization,
+            "rebuild_roms": rebuild_roms,
+            "refresh_live_traces": refresh_live_traces,
         },
         "artifacts": {
             "scenarios": relative_path(scenarios_path),
@@ -222,6 +243,8 @@ def run_changed_ai_suite(
                 rom_contribution_summary_path,
             ),
             "rom_score_materialization": relative_path(rom_score_materialization_path),
+            "rom_rebuild": relative_path(rom_rebuild_path),
+            "live_trace_refresh": relative_path(live_trace_refresh_path),
             "previous_run_diff": relative_path(previous_run_diff_path),
             "rom_contribution_traces": [
                 relative_path(path) for path in copied_rom_contribution_paths
@@ -242,6 +265,8 @@ def run_changed_ai_suite(
                 rom_contribution_summary_path,
             ),
             "rom_score_materialization": sha256_file(rom_score_materialization_path),
+            "rom_rebuild": sha256_file(rom_rebuild_path),
+            "live_trace_refresh": sha256_file(live_trace_refresh_path),
             "rom_contribution_traces": {
                 relative_path(path): sha256_file(path)
                 for path in copied_rom_contribution_paths
@@ -321,6 +346,8 @@ def run_changed_ai_suite(
             ),
             "skipped_reason": rom_score_materialization.get("skipped_reason", ""),
         },
+        "rom_rebuild_summary": command_report_summary(rom_rebuild),
+        "live_trace_refresh_summary": command_report_summary(live_trace_refresh),
         "rule_map_summary": {
             "rule_count": rule_map["rule_count"],
             "stored_rule_map_errors": rule_errors,
@@ -328,6 +355,8 @@ def run_changed_ai_suite(
         "known_gaps": changed_ai_known_gaps(
             refresh_rom_contribution_trace=refresh_rom_contribution_trace,
             refresh_rom_score_materialization=refresh_rom_score_materialization,
+            rom_rebuild=rom_rebuild,
+            live_trace_refresh=live_trace_refresh,
         ),
     }
     previous_run_diff = build_previous_run_diff(
@@ -387,6 +416,8 @@ def format_changed_ai_summary(metadata: dict[str, Any], queue: dict[str, Any]) -
     mutation = metadata["mutation_summary"]
     contribution = metadata["rom_contribution_summary"]
     score_materialization = metadata["rom_score_materialization_summary"]
+    rom_rebuild = metadata["rom_rebuild_summary"]
+    live_trace_refresh = metadata["live_trace_refresh_summary"]
     lines = [
         f"# Boss AI Debugger Changed-AI Run: {metadata['run_id']}",
         "",
@@ -405,6 +436,8 @@ def format_changed_ai_summary(metadata: dict[str, Any], queue: dict[str, Any]) -
         f"- trace replay: `{trace}`",
         f"- ROM contribution: `{contribution}`",
         f"- ROM score materialization: `{score_materialization}`",
+        f"- ROM rebuild: `{rom_rebuild}`",
+        f"- live trace refresh: `{live_trace_refresh}`",
         f"- previous run diff: `{metadata.get('previous_run_diff_summary', {})}`",
         f"- rule map errors: `{metadata['rule_map_summary']['stored_rule_map_errors']}`",
         "",
@@ -464,6 +497,144 @@ def changed_files() -> list[str]:
     if not output:
         return []
     return [line.strip() for line in output.splitlines() if line.strip()]
+
+
+def run_rom_rebuild_report(
+    *,
+    requested: bool,
+    command_runner: CommandRunner | None,
+) -> dict[str, Any]:
+    return run_command_report(
+        kind="changed_ai_rom_rebuild",
+        requested=requested,
+        skipped_reason="not requested; pass --rebuild-roms to rebuild normal and trace ROMs",
+        commands=[
+            ["wsl", "make", "pokegold.gbc", "pokesilver.gbc", "pokegold_trace.gbc"],
+        ],
+        command_runner=command_runner,
+    )
+
+
+def run_live_trace_refresh_report(
+    *,
+    requested: bool,
+    command_runner: CommandRunner | None,
+) -> dict[str, Any]:
+    return run_command_report(
+        kind="changed_ai_live_trace_refresh",
+        requested=requested,
+        skipped_reason=(
+            "not requested; pass --refresh-live-traces to rebuild state-factory "
+            "states and live trace captures"
+        ),
+        commands=[
+            [
+                sys.executable,
+                "tools\\trace\\boss_ai_state_factory.py",
+                "--all",
+                "--update-manifest",
+            ],
+            [
+                sys.executable,
+                "tools\\trace\\boss_ai_trace_batch.py",
+                "--execute",
+            ],
+        ],
+        command_runner=command_runner,
+    )
+
+
+def run_command_report(
+    *,
+    kind: str,
+    requested: bool,
+    skipped_reason: str,
+    commands: list[list[str]],
+    command_runner: CommandRunner | None,
+) -> dict[str, Any]:
+    if not requested:
+        return {
+            "schema_version": 1,
+            "kind": kind,
+            "requested": False,
+            "passed": True,
+            "command_count": 0,
+            "failed_count": 0,
+            "skipped_reason": skipped_reason,
+            "commands": [],
+        }
+    runner = command_runner or default_command_runner
+    results = [
+        normalize_command_result(command, runner(command))
+        for command in commands
+    ]
+    failed_count = len([result for result in results if result["returncode"] != 0])
+    return {
+        "schema_version": 1,
+        "kind": kind,
+        "requested": True,
+        "passed": failed_count == 0,
+        "command_count": len(results),
+        "failed_count": failed_count,
+        "skipped_reason": "",
+        "commands": results,
+    }
+
+
+def default_command_runner(command: list[str]) -> dict[str, Any]:
+    started = time.perf_counter()
+    try:
+        completed = subprocess.run(
+            command,
+            cwd=ROOT,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+    except OSError as exc:
+        return {
+            "argv": command,
+            "returncode": 1,
+            "elapsed_seconds": time.perf_counter() - started,
+            "stdout_tail": "",
+            "stderr_tail": str(exc),
+        }
+    return {
+        "argv": command,
+        "returncode": int(completed.returncode),
+        "elapsed_seconds": time.perf_counter() - started,
+        "stdout_tail": tail_text(completed.stdout),
+        "stderr_tail": tail_text(completed.stderr),
+    }
+
+
+def normalize_command_result(
+    command: list[str],
+    result: dict[str, Any],
+) -> dict[str, Any]:
+    return {
+        "argv": [str(item) for item in result.get("argv", command)],
+        "returncode": int(result.get("returncode", 1)),
+        "elapsed_seconds": float(result.get("elapsed_seconds", 0.0)),
+        "stdout_tail": tail_text(str(result.get("stdout_tail", result.get("stdout", "")))),
+        "stderr_tail": tail_text(str(result.get("stderr_tail", result.get("stderr", "")))),
+    }
+
+
+def command_report_summary(report: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "requested": bool(report.get("requested", False)),
+        "passed": bool(report.get("passed", False)),
+        "command_count": int(report.get("command_count", 0)),
+        "failed_count": int(report.get("failed_count", 0)),
+        "skipped_reason": str(report.get("skipped_reason", "")),
+    }
+
+
+def tail_text(value: str, *, max_chars: int = 4000) -> str:
+    if len(value) <= max_chars:
+        return value
+    return value[-max_chars:]
 
 
 def build_previous_run_diff(
@@ -783,8 +954,18 @@ def changed_ai_known_gaps(
     *,
     refresh_rom_contribution_trace: bool,
     refresh_rom_score_materialization: bool,
+    rom_rebuild: dict[str, Any],
+    live_trace_refresh: dict[str, Any],
 ) -> list[str]:
-    gaps = ["changed-ai suite does not rebuild ROMs yet."]
+    gaps = []
+    if not rom_rebuild.get("requested"):
+        gaps.append("changed-ai suite records ROM rebuild as skipped unless explicitly requested.")
+    elif not rom_rebuild.get("passed"):
+        gaps.append("changed-ai suite ROM rebuild command failed.")
+    if not live_trace_refresh.get("requested"):
+        gaps.append("changed-ai suite records live trace refresh as skipped unless explicitly requested.")
+    elif not live_trace_refresh.get("passed"):
+        gaps.append("changed-ai suite live trace refresh command failed.")
     if refresh_rom_contribution_trace:
         gaps.append(
             "changed-ai suite refreshes one ROM contribution route, not the full live trace corpus."

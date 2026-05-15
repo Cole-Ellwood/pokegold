@@ -426,6 +426,8 @@ def cmd_run_suite(args: argparse.Namespace) -> int:
             refresh_rom_contribution_trace=args.refresh_rom_contribution_trace,
             rom_contribution_boss_route=args.rom_contribution_boss_route,
             refresh_rom_score_materialization=args.refresh_rom_score_materialization,
+            rebuild_roms=args.rebuild_roms,
+            refresh_live_traces=args.refresh_live_traces,
         )
     else:
         raise PreferenceDataError(f"unknown run-suite profile {args.profile!r}")
@@ -861,6 +863,8 @@ def build_parser() -> argparse.ArgumentParser:
     run_suite.add_argument("--refresh-rom-contribution-trace", action="store_true")
     run_suite.add_argument("--rom-contribution-boss-route", default="clair")
     run_suite.add_argument("--refresh-rom-score-materialization", action="store_true")
+    run_suite.add_argument("--rebuild-roms", action="store_true")
+    run_suite.add_argument("--refresh-live-traces", action="store_true")
     run_suite.add_argument("--json", action="store_true")
     run_suite.set_defaults(func=cmd_run_suite)
 

@@ -112,6 +112,8 @@ class RunStoreTests(unittest.TestCase):
             self.assertTrue((run_dir / "trace_replay.json").exists())
             self.assertTrue((run_dir / "rom_contribution_trace_summary.json").exists())
             self.assertTrue((run_dir / "rom_score_materialization.json").exists())
+            self.assertTrue((run_dir / "rom_rebuild.json").exists())
+            self.assertTrue((run_dir / "live_trace_refresh.json").exists())
             self.assertTrue((run_dir / "previous_run_diff.json").exists())
             self.assertTrue((run_dir / "summary.md").exists())
             contribution_summary = json.loads(
@@ -132,15 +134,65 @@ class RunStoreTests(unittest.TestCase):
         self.assertIn("rom_contribution_trace_summary", metadata["artifacts"])
         self.assertIn("rom_score_materialization", metadata["artifacts"])
         self.assertIn("previous_run_diff", metadata["artifacts"])
+        self.assertIn("rom_rebuild", metadata["artifacts"])
+        self.assertIn("live_trace_refresh", metadata["artifacts"])
         self.assertIn("rom_contribution_trace_summary", metadata["artifact_hashes"])
         self.assertIn("rom_score_materialization", metadata["artifact_hashes"])
         self.assertIn("previous_run_diff", metadata["artifact_hashes"])
+        self.assertFalse(metadata["rom_rebuild_summary"]["requested"])
+        self.assertFalse(metadata["live_trace_refresh_summary"]["requested"])
         self.assertFalse(metadata["previous_run_diff_summary"]["available"])
         self.assertEqual(
             metadata["rom_score_materialization_summary"]["checked_count"],
             0,
         )
         self.assertIn("known_gaps", metadata)
+
+    def test_changed_ai_suite_records_requested_rebuild_and_trace_commands(self) -> None:
+        calls = []
+
+        def fake_runner(command):
+            calls.append(command)
+            return {
+                "argv": command,
+                "returncode": 0,
+                "elapsed_seconds": 0.01,
+                "stdout": "ok",
+                "stderr": "",
+            }
+
+        with tempfile.TemporaryDirectory() as tmp:
+            runs_dir = Path(tmp)
+            contribution_trace = runs_dir / "unit_rom_trace.json"
+            write_unit_contribution_trace(contribution_trace)
+            metadata = run_changed_ai_suite(
+                count=2,
+                seed=3,
+                run_id="changed_run",
+                runs_dir=runs_dir,
+                trace_dir=None,
+                rom_contribution_trace_paths=[contribution_trace],
+                rebuild_roms=True,
+                refresh_live_traces=True,
+                command_runner=fake_runner,
+            )
+            run_dir = runs_dir / "changed_run"
+            rom_rebuild = json.loads(
+                (run_dir / "rom_rebuild.json").read_text(encoding="utf-8")
+            )
+            live_refresh = json.loads(
+                (run_dir / "live_trace_refresh.json").read_text(encoding="utf-8")
+            )
+
+        self.assertEqual(len(calls), 3)
+        self.assertTrue(rom_rebuild["requested"])
+        self.assertTrue(rom_rebuild["passed"])
+        self.assertEqual(rom_rebuild["command_count"], 1)
+        self.assertTrue(live_refresh["requested"])
+        self.assertTrue(live_refresh["passed"])
+        self.assertEqual(live_refresh["command_count"], 2)
+        self.assertTrue(metadata["rom_rebuild_summary"]["passed"])
+        self.assertTrue(metadata["live_trace_refresh_summary"]["passed"])
 
     def test_previous_run_diff_reports_metric_deltas(self) -> None:
         previous = {

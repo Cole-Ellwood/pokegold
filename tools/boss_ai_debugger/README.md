@@ -179,6 +179,7 @@ Run the local changed-AI adaptation suite:
 python -m tools.boss_ai_debugger run-suite --profile changed-ai --count 200 --seed 1
 python -m tools.boss_ai_debugger run-suite --profile changed-ai --refresh-rom-contribution-trace
 python -m tools.boss_ai_debugger run-suite --profile changed-ai --refresh-rom-score-materialization
+python -m tools.boss_ai_debugger run-suite --profile changed-ai --rebuild-roms --refresh-live-traces
 ```
 
 This profile records generated stress results, review queue, route evaluation,
@@ -195,6 +196,9 @@ fresh ROM contribution artifact in that run instead of copying the existing
 smoke artifact. With `--refresh-rom-score-materialization`, it also
 materializes a targeted generated Spikes/Rapid Spin score batch before ROM
 scoring and stores the matched ROM/Python contribution comparison.
+With `--rebuild-roms` and `--refresh-live-traces`, it also records command
+artifacts for the ROM rebuild and live trace refresh steps; without those flags
+the artifacts are present as explicit skipped reports.
 
 Run the foundation audit:
 
