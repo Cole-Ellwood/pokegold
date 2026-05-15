@@ -1,9 +1,9 @@
 {
   "agreement_rate": 1.0,
   "capture_count": 19,
-  "captures_per_minute": 146384.68271252885,
+  "captures_per_minute": 18782.931886771228,
   "checked_count": 19,
-  "elapsed_seconds": 0.007787700043991208,
+  "elapsed_seconds": 0.060693400097079575,
   "exact_agreement_rate": 1.0,
   "exact_count": 19,
   "exact_match_count": 19,

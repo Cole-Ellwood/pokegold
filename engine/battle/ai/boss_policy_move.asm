@@ -1713,7 +1713,11 @@ BossAI_ApplyMoveModel:
 	jr c, .spikes_l2_danger
 	ld a, EFFECT_RAPID_SPIN
 	call .PlayerHasRevealedEffectA
-	jr c, .spikes_revealed_spinner_active
+	jr nc, .spikes_l2_no_revealed_spin
+	call .ApplyRevealedRapidSpinSpikesRisk
+	ret c
+.spikes_l2_no_revealed_spin
+	call .ApplySpikesLayer2UnrevealedSpinRisk
 	push hl
 	call BossAI_PredictPlayerSwitch
 	pop hl
@@ -1739,7 +1743,11 @@ BossAI_ApplyMoveModel:
 	jr c, .spikes_l3_danger
 	ld a, EFFECT_RAPID_SPIN
 	call .PlayerHasRevealedEffectA
-	jr c, .spikes_revealed_spinner_active
+	jr nc, .spikes_l3_no_revealed_spin
+	call .ApplyRevealedRapidSpinSpikesRisk
+	ret c
+.spikes_l3_no_revealed_spin
+	call .ApplySpikesLayer3UnrevealedSpinRisk
 	ld c, 5
 	call .EncourageByTierWeight
 	push hl
@@ -1756,9 +1764,343 @@ BossAI_ApplyMoveModel:
 	call .DiscourageByTierWeight
 	ret
 
-.spikes_revealed_spinner_active
+.ApplyRevealedRapidSpinSpikesRisk
+; Active Rapid Spin is public. Panic only if it can currently clear Spikes.
+	call .EnemyActiveBlocksRapidSpin
+	jr nc, .revealed_spin_not_blocked
+	ld a, EFFECT_FORESIGHT
+	call .PlayerHasRevealedEffectA
+	jr c, .revealed_spin_soft
+	and a
+	ret
+.revealed_spin_not_blocked
+	call .BossHasAvailableReserveGhost
+	jr c, .revealed_spin_soft
 	ld c, 5
 	call .DiscourageByTierWeight
+	scf
+	ret
+.revealed_spin_soft
+	ld a, 1
+	call BossAI_DiscourageScoreHL
+	and a
+	ret
+
+.ApplySpikesLayer2UnrevealedSpinRisk
+	call .BossHasSpinblockAvailable
+	ret c
+	call .PlayerHasSeenBenchRevealedRapidSpin
+	jr c, .spikes_l2_soft_spin_risk
+	call .PlayerActiveLikelyCanRapidSpin
+	ret nc
+.spikes_l2_soft_spin_risk
+	ld a, 1
+	jp BossAI_DiscourageScoreHL
+
+.ApplySpikesLayer3UnrevealedSpinRisk
+	call .BossHasSpinblockAvailable
+	ret c
+	call .PlayerHasSeenBenchRevealedRapidSpin
+	jr c, .spikes_l3_bench_spin_risk
+	call .PlayerActiveLikelyCanRapidSpin
+	jr c, .spikes_l3_soft_spin_risk
+	ld a, [wBossAITier]
+	cp AI_TIER_LATE
+	ret c
+.spikes_l3_soft_spin_risk
+	ld a, 1
+	jp BossAI_DiscourageScoreHL
+.spikes_l3_bench_spin_risk
+	ld a, 2
+	jp BossAI_DiscourageScoreHL
+
+.BossHasSpinblockAvailable
+	call .EnemyActiveBlocksRapidSpin
+	ret c
+	jp .BossHasAvailableReserveGhost
+
+.EnemyActiveBlocksRapidSpin
+	call BossAI_EnemyIsGhostType
+	ret nc
+	ld a, [wEnemySubStatus1]
+	bit SUBSTATUS_IDENTIFIED, a
+	jr nz, .enemy_not_spinblocking
+	scf
+	ret
+.enemy_not_spinblocking
+	and a
+	ret
+
+.BossHasAvailableReserveGhost
+	ld a, [wOTPartyCount]
+	cp 2
+	jr c, .reserve_ghost_no
+	ld [wBossAITemp2], a
+	ld a, [wCurSpecies]
+	ld [wBossAITemp4], a
+	ld a, [wCurPartySpecies]
+	ld [wBossAITemp5], a
+	ld de, wOTPartySpecies
+	ld hl, wOTPartyMon1HP
+	ld c, 0
+.reserve_ghost_loop
+	ld a, [wCurOTMon]
+	cp c
+	jr z, .reserve_ghost_next
+	push hl
+	push de
+	push bc
+	call .PartyMonAtLeastQuarterHP
+	pop bc
+	pop de
+	pop hl
+	jr nc, .reserve_ghost_next
+	ld a, [de]
+	and a
+	jr z, .reserve_ghost_next
+	push hl
+	push de
+	push bc
+	ld [wCurSpecies], a
+	call GetBaseData
+	ld a, [wBaseType1]
+	cp GHOST
+	jr z, .reserve_ghost_yes_pop
+	ld a, [wBaseType2]
+	cp GHOST
+	jr z, .reserve_ghost_yes_pop
+	pop bc
+	pop de
+	pop hl
+.reserve_ghost_next
+	inc de
+	push bc
+	ld bc, PARTYMON_STRUCT_LENGTH
+	add hl, bc
+	pop bc
+	inc c
+	ld a, [wBossAITemp2]
+	cp c
+	jr nz, .reserve_ghost_loop
+	jr .reserve_ghost_restore_no
+.reserve_ghost_yes_pop
+	pop bc
+	pop de
+	pop hl
+	call .RestoreBossSpeciesBaseData
+	scf
+	ret
+.reserve_ghost_restore_no
+	call .RestoreBossSpeciesBaseData
+.reserve_ghost_no
+	and a
+	ret
+
+.RestoreBossSpeciesBaseData
+	ld a, [wBossAITemp5]
+	ld [wCurPartySpecies], a
+	ld a, [wBossAITemp4]
+	ld [wCurSpecies], a
+	and a
+	call nz, GetBaseData
+	ret
+
+.PartyMonAtLeastQuarterHP
+; hl = party-mon HP. Return carry if current HP is at least one quarter max HP.
+	ld a, [hli]
+	ld b, a
+	ld a, [hli]
+	ld c, a
+	or b
+	jr z, .party_hp_low
+	sla c
+	rl b
+	sla c
+	rl b
+	ld a, [hli]
+	ld d, a
+	ld a, [hl]
+	ld e, a
+	ld a, b
+	cp d
+	jr c, .party_hp_low
+	jr nz, .party_hp_ok
+	ld a, c
+	cp e
+	jr c, .party_hp_low
+.party_hp_ok
+	scf
+	ret
+.party_hp_low
+	and a
+	ret
+
+.PlayerHasSeenBenchRevealedRapidSpin
+	ld a, [wBossAISeenPlayerSpeciesCount]
+	and a
+	jr z, .bench_spin_no
+	ld c, a
+	ld a, [wBossAISeenPlayerAliveMask]
+	ld [wBossAITemp5], a
+	ld hl, wBossAISeenPlayerSpecies
+	ld b, 0
+.bench_spin_loop
+	ld a, [hli]
+	and a
+	jr z, .bench_spin_next
+	ld e, a
+	ld a, [wBossAITemp5]
+	bit 0, a
+	jr z, .bench_spin_next
+	ld a, [wBattleMonSpecies]
+	cp e
+	jr z, .bench_spin_next
+	push hl
+	push bc
+	ld a, b
+	add a
+	add a
+	ld e, a
+	ld d, 0
+	ld hl, wBossAISpeciesUsedMoves
+	add hl, de
+	ld c, NUM_MOVES
+.bench_spin_moves
+	ld a, [hli]
+	and a
+	jr z, .bench_spin_move_next
+	push hl
+	push bc
+	dec a
+	ld hl, Moves + MOVE_EFFECT
+	call BossAI_GetMoveAttr
+	cp EFFECT_RAPID_SPIN
+	pop bc
+	pop hl
+	jr z, .bench_spin_yes_pop
+.bench_spin_move_next
+	dec c
+	jr nz, .bench_spin_moves
+	pop bc
+	pop hl
+.bench_spin_next
+	ld a, [wBossAITemp5]
+	srl a
+	ld [wBossAITemp5], a
+	inc b
+	dec c
+	jr nz, .bench_spin_loop
+.bench_spin_no
+	and a
+	ret
+.bench_spin_yes_pop
+	pop bc
+	pop hl
+	scf
+	ret
+
+.PlayerActiveLikelyCanRapidSpin
+	call BossAI_PlayerActiveFourMoveSaturated
+	jr c, .active_spin_no
+	ld a, [wBattleMonSpecies]
+	and a
+	jr z, .active_spin_no
+	ld [wBossAITemp4], a
+	ld a, [wCurSpecies]
+	push af
+	ld a, [wCurPartySpecies]
+	push af
+	xor a
+	ld [wBossAITemp2], a
+	ld a, [wBossAITemp4]
+	ld [wCurPartySpecies], a
+.active_spin_source_loop
+	ld a, [wCurPartySpecies]
+	ld [wCurSpecies], a
+	call GetBaseData
+	ld a, [wCurPartySpecies]
+	call .SpeciesLevelUpHasRapidSpin
+	jr c, .active_spin_yes
+	callfar GetPreEvolution
+	jr nc, .active_spin_restore_no
+	ld a, 1
+	ld [wBossAITemp2], a
+	jr .active_spin_source_loop
+.active_spin_yes
+	pop af
+	ld [wCurPartySpecies], a
+	pop af
+	ld [wCurSpecies], a
+	and a
+	call nz, GetBaseData
+	scf
+	ret
+.active_spin_restore_no
+	pop af
+	ld [wCurPartySpecies], a
+	pop af
+	ld [wCurSpecies], a
+	and a
+	call nz, GetBaseData
+.active_spin_no
+	and a
+	ret
+
+.SpeciesLevelUpHasRapidSpin
+	and a
+	ret z
+	dec a
+	ld c, a
+	ld b, 0
+	ld hl, EvosAttacksPointers
+	add hl, bc
+	add hl, bc
+	ld a, BANK(EvosAttacksPointers)
+	call GetFarWord
+.species_spin_skip_evos
+	ld a, BANK("Evolutions and Attacks")
+	call GetFarByte
+	and a
+	jr z, .species_spin_moves
+	cp EVOLVE_STAT
+	jr z, .species_spin_skip_stat_evo
+	inc hl
+	inc hl
+	inc hl
+	jr .species_spin_skip_evos
+.species_spin_skip_stat_evo
+	inc hl
+	inc hl
+	inc hl
+	inc hl
+	jr .species_spin_skip_evos
+.species_spin_moves
+	inc hl
+.species_spin_move_loop
+	ld a, BANK("Evolutions and Attacks")
+	call GetFarByte
+	and a
+	jr z, .species_spin_no
+	ld b, a
+	ld a, [wBattleMonLevel]
+	cp b
+	jr c, .species_spin_skip_move
+	inc hl
+	ld a, BANK("Evolutions and Attacks")
+	call GetFarByte
+	cp RAPID_SPIN
+	jr z, .species_spin_yes
+	inc hl
+	jr .species_spin_move_loop
+.species_spin_skip_move
+	inc hl
+	inc hl
+	jr .species_spin_move_loop
+.species_spin_yes
+	scf
+	ret
+.species_spin_no
+	and a
 	ret
 
 .ApplyRoleBias

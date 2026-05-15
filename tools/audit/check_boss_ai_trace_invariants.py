@@ -1004,6 +1004,155 @@ def audit_spikes_and_status(boss: str) -> None:
     if re.search(r"ld a, \[wBossAITurnsElapsed\]\s*\n\s*and a", spikes):
         fail("first-layer Spikes reverted to turn-zero-only check")
 
+    spikes_l2 = local_block(boss, ".spikes_layer2", ".spikes_layer3")
+    require_order(
+        spikes_l2,
+        [
+            "ld a, EFFECT_RAPID_SPIN",
+            "call .PlayerHasRevealedEffectA",
+            "call .ApplyRevealedRapidSpinSpikesRisk",
+            "ret c",
+            "call .ApplySpikesLayer2UnrevealedSpinRisk",
+            "call BossAI_PredictPlayerSwitch",
+        ],
+        "layer-two Spikes applies public Spin risk before switch projection",
+    )
+
+    spikes_l3 = local_block(boss, ".spikes_layer3", ".spikes_l3_danger")
+    require_order(
+        spikes_l3,
+        [
+            "ld a, EFFECT_RAPID_SPIN",
+            "call .PlayerHasRevealedEffectA",
+            "call .ApplyRevealedRapidSpinSpikesRisk",
+            "ret c",
+            "call .ApplySpikesLayer3UnrevealedSpinRisk",
+            "call .EncourageByTierWeight",
+        ],
+        "layer-three Spikes applies public Spin risk before third-layer reward",
+    )
+
+    revealed_spin = local_block(
+        boss,
+        ".ApplyRevealedRapidSpinSpikesRisk",
+        ".ApplySpikesLayer2UnrevealedSpinRisk",
+    )
+    require_order(
+        revealed_spin,
+        [
+            "call .EnemyActiveBlocksRapidSpin",
+            "ld a, EFFECT_FORESIGHT",
+            "call .PlayerHasRevealedEffectA",
+            "call .BossHasAvailableReserveGhost",
+            "call .DiscourageByTierWeight",
+            "scf",
+            "ret",
+        ],
+        "revealed Rapid Spin risk respects Ghost/Foresight before hard penalty",
+    )
+
+    active_spinblock = local_block(
+        boss,
+        ".EnemyActiveBlocksRapidSpin",
+        ".BossHasAvailableReserveGhost",
+    )
+    require_order(
+        active_spinblock,
+        [
+            "call BossAI_EnemyIsGhostType",
+            "ld a, [wEnemySubStatus1]",
+            "bit SUBSTATUS_IDENTIFIED, a",
+        ],
+        "active Ghost spinblock uses public identified state",
+    )
+
+    reserve_spinblock = local_block(
+        boss,
+        ".BossHasAvailableReserveGhost",
+        ".RestoreBossSpeciesBaseData",
+    )
+    require_order(
+        reserve_spinblock,
+        [
+            "ld a, [wOTPartyCount]",
+            "ld de, wOTPartySpecies",
+            "ld hl, wOTPartyMon1HP",
+            "call .PartyMonAtLeastQuarterHP",
+            "call GetBaseData",
+            "ld a, [wBaseType1]",
+            "cp GHOST",
+            "ld a, [wBaseType2]",
+            "cp GHOST",
+        ],
+        "reserve Ghost spinblock uses only boss-owned party state",
+    )
+    require_not_contains(
+        reserve_spinblock,
+        "wParty",
+        "reserve Ghost spinblock must not read player party data",
+    )
+
+    bench_spin = local_block(
+        boss,
+        ".PlayerHasSeenBenchRevealedRapidSpin",
+        ".PlayerActiveLikelyCanRapidSpin",
+    )
+    require_order(
+        bench_spin,
+        [
+            "ld a, [wBossAISeenPlayerSpeciesCount]",
+            "ld a, [wBossAISeenPlayerAliveMask]",
+            "ld hl, wBossAISeenPlayerSpecies",
+            "ld hl, wBossAISpeciesUsedMoves",
+            "cp EFFECT_RAPID_SPIN",
+        ],
+        "bench Rapid Spin risk uses public seen/alive revealed-move memory",
+    )
+    require_not_contains(
+        bench_spin,
+        "wParty",
+        "bench Rapid Spin risk must not read hidden player party data",
+    )
+
+    active_spin_prior = local_block(
+        boss,
+        ".PlayerActiveLikelyCanRapidSpin",
+        ".SpeciesLevelUpHasRapidSpin",
+    )
+    require_order(
+        active_spin_prior,
+        [
+            "call BossAI_PlayerActiveFourMoveSaturated",
+            "ld a, [wBattleMonSpecies]",
+            "call GetBaseData",
+            "call .SpeciesLevelUpHasRapidSpin",
+            "callfar GetPreEvolution",
+        ],
+        "active Rapid Spin prior uses public species/level and saturation",
+    )
+    for hidden_source in ("EggMovePointers", "wParty", "wBattleMonMoves"):
+        require_not_contains(
+            active_spin_prior,
+            hidden_source,
+            "active Rapid Spin prior excludes hidden or egg-move sources",
+        )
+
+    species_spin = local_block(boss, ".SpeciesLevelUpHasRapidSpin", ".ApplyRoleBias")
+    require_order(
+        species_spin,
+        [
+            "ld hl, EvosAttacksPointers",
+            "ld a, [wBattleMonLevel]",
+            "cp RAPID_SPIN",
+        ],
+        "Rapid Spin prior walks only level-up data through current public level",
+    )
+    require_not_contains(
+        species_spin,
+        "EggMovePointers",
+        "Rapid Spin likely prior must exclude egg moves",
+    )
+
     status = local_block(
         boss,
         ".StatusMoveWouldFailPublicly",
@@ -2190,6 +2339,10 @@ def main() -> int:
         "last-move Encore trap bias",
         "revealed Selfdestruct Protect bias",
         "first-turn Spikes pressure gate",
+        "public Rapid Spin risk before extra Spikes",
+        "Ghost/Foresight spinblock adjustment",
+        "bench revealed Rapid Spin public-memory risk",
+        "active species Rapid Spin level-up prior",
         "public status fail gates",
         "public utility fail gates",
         "Disable/Encore public lock fail gates",
