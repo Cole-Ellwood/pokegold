@@ -12,6 +12,7 @@ which pieces matter, and which move improves a concrete route.
 | File | Role |
 | --- | --- |
 | `active_goal.md` | Operating goal, study cadence, and serious-turn checklist. |
+| `continue_learning_1500_elo_prompt.md` | Copy-paste prompt for continuing measured 1500-Elo Pokemon learning work with fresh web checks and local-doc grounding. |
 | `master_index.md` | Top-level table of contents and task router for the mastery docs. |
 | `study_roadmap_2026-05-14.md` | Forward roadmap focused on measured Pokemon decision improvement. |
 | `doc_cleanup_audit_2026-05-14.md` | Redundancy, keep/merge/delete, and cleanup policy. |

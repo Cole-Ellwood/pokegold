@@ -1,0 +1,2254 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/ccjb12",
+    "id": "ccjb12",
+    "slide": 3,
+    "layoutId": "e3fd55af-303b-4a75-a64b-15538c6ada38",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "51cad470-a5e6-490f-980d-21b983c71172",
+    "masterLayoutName": "Master",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "Aptos",
+      "Bahnschrift"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "e3fd55af-303b-4a75-a64b-15538c6ada38",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "51cad470-a5e6-490f-980d-21b983c71172",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "51cad470-a5e6-490f-980d-21b983c71172",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/5o7qpg3e",
+      "id": "1",
+      "name": "background",
+      "bbox": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0"
+      },
+      "geometry": "rect",
+      "fillColor": "#FBF7EA"
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/yxobm58z",
+      "id": "2",
+      "name": "kicker-what-exists-today",
+      "bbox": [
+        96,
+        72,
+        1728,
+        26
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.0"
+      },
+      "geometry": "rect",
+      "text": "WHAT EXISTS TODAY",
+      "textPreview": "WHAT EXISTS TODAY",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "fontSize": 18,
+        "typeface": "Bahnschrift",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "WHAT EXISTS TODAY"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "WHAT EXISTS TODAY",
+          "runs": [
+            {
+              "index": 1,
+              "text": "WHAT EXISTS TODAY",
+              "fontSize": 18,
+              "typeface": "Bahnschrift",
+              "color": "#2E7D5B",
+              "bold": true,
+              "alignment": "left"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/nih4byhg",
+      "id": "3",
+      "bbox": [
+        96,
+        124,
+        1308,
+        178
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.1"
+      },
+      "geometry": "rect",
+      "text": "The AI stack is already more than vanilla trainer behavior.",
+      "textPreview": "The AI stack is already more than vanilla trainer behavior.",
+      "resolvedFontSize": 72,
+      "resolvedTextStyle": {
+        "fontSize": 72,
+        "typeface": "Bahnschrift",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "The AI stack is already more than vanilla"
+          },
+          {
+            "index": 2,
+            "text": "trainer behavior."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "The AI stack is already more than vanilla trainer behavior.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "The AI stack is already more than vanilla trainer behavior.",
+              "fontSize": 72,
+              "typeface": "Bahnschrift",
+              "color": "#141A1F",
+              "bold": true,
+              "alignment": "left"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/gr2p8nqx",
+      "id": "4",
+      "bbox": [
+        96,
+        374,
+        752,
+        34
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.0.0"
+      },
+      "geometry": "rect",
+      "text": "Public state",
+      "textPreview": "Public state",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "Bahnschrift",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Public state"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Public state",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Public state",
+              "fontSize": 24,
+              "typeface": "Bahnschrift",
+              "color": "#2E7D5B",
+              "bold": true,
+              "alignment": "left"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/9cvixcze",
+      "id": "5",
+      "bbox": [
+        96,
+        420,
+        752,
+        62
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.0.1"
+      },
+      "geometry": "rect",
+      "text": "Visible active Pokemon, revealed moves, seen species, HP/status/boosts, hazards, observed switches.",
+      "textPreview": "Visible active Pokemon, revealed moves, seen species, HP/status/boosts, hazards, observed switches.",
+      "resolvedFontSize": 23,
+      "resolvedTextStyle": {
+        "fontSize": 23,
+        "typeface": "Aptos",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Visible active Pokemon, revealed moves, seen species, HP/status/boosts,"
+          },
+          {
+            "index": 2,
+            "text": "hazards, observed switches."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Visible active Pokemon, revealed moves, seen species, HP/status/boosts, hazards, observed switches.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Visible active Pokemon, revealed moves, seen species, HP/status/boosts, hazards, observed switches.",
+              "fontSize": 23,
+              "typeface": "Aptos",
+              "color": "#25313B",
+              "alignment": "left"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ylc7u54z",
+      "id": "6",
+      "bbox": [
+        96,
+        496,
+        752,
+        44
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.0.2"
+      },
+      "geometry": "rect",
+      "text": ">",
+      "textPreview": ">",
+      "resolvedFontSize": 32,
+      "resolvedTextStyle": {
+        "fontSize": 32,
+        "typeface": "Bahnschrift",
+        "bold": true,
+        "alignment": "center"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": ">"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": ">",
+          "runs": [
+            {
+              "index": 1,
+              "text": ">",
+              "fontSize": 32,
+              "typeface": "Bahnschrift",
+              "color": "#F4B942",
+              "bold": true,
+              "alignment": "center"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 7,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/r65wjudg",
+      "id": "7",
+      "bbox": [
+        96,
+        554,
+        752,
+        34
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.0.3"
+      },
+      "geometry": "rect",
+      "text": "Boss scorer",
+      "textPreview": "Boss scorer",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "Bahnschrift",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Boss scorer"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Boss scorer",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Boss scorer",
+              "fontSize": 24,
+              "typeface": "Bahnschrift",
+              "color": "#2E7D5B",
+              "bold": true,
+              "alignment": "left"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 8,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/gfmlkjm1",
+      "id": "8",
+      "bbox": [
+        96,
+        600,
+        752,
+        62
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.0.4"
+      },
+      "geometry": "rect",
+      "text": "KO pressure, deny-KO, utility fail gates, plan/role bias, setup pressure, phazing, Spikes, Rapid Spin.",
+      "textPreview": "KO pressure, deny-KO, utility fail gates, plan/role bias, setup pressure, phazing, Spikes, Rapid Spin.",
+      "resolvedFontSize": 23,
+      "resolvedTextStyle": {
+        "fontSize": 23,
+        "typeface": "Aptos",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "KO pressure, deny-KO, utility fail gates, plan/role bias, setup pressure, phazing,"
+          },
+          {
+            "index": 2,
+            "text": "Spikes, Rapid Spin."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "KO pressure, deny-KO, utility fail gates, plan/role bias, setup pressure, phazing, Spikes, Rapid Spin.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "KO pressure, deny-KO, utility fail gates, plan/role bias, setup pressure, phazing, Spikes, Rapid Spin.",
+              "fontSize": 23,
+              "typeface": "Aptos",
+              "color": "#25313B",
+              "alignment": "left"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 9,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/90je9cvi",
+      "id": "9",
+      "bbox": [
+        96,
+        676,
+        752,
+        44
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.0.5"
+      },
+      "geometry": "rect",
+      "text": ">",
+      "textPreview": ">",
+      "resolvedFontSize": 32,
+      "resolvedTextStyle": {
+        "fontSize": 32,
+        "typeface": "Bahnschrift",
+        "bold": true,
+        "alignment": "center"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": ">"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": ">",
+          "runs": [
+            {
+              "index": 1,
+              "text": ">",
+              "fontSize": 32,
+              "typeface": "Bahnschrift",
+              "color": "#F4B942",
+              "bold": true,
+              "alignment": "center"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 10,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/lc7u54zi",
+      "id": "10",
+      "bbox": [
+        96,
+        732,
+        752,
+        34
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.0.6"
+      },
+      "geometry": "rect",
+      "text": "Selection and trace",
+      "textPreview": "Selection and trace",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "Bahnschrift",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Selection and trace"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Selection and trace",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Selection and trace",
+              "fontSize": 24,
+              "typeface": "Bahnschrift",
+              "color": "#2E7D5B",
+              "bold": true,
+              "alignment": "left"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 11,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/wra5gbq1",
+      "id": "11",
+      "bbox": [
+        96,
+        778,
+        752,
+        62
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.0.7"
+      },
+      "geometry": "rect",
+      "text": "Lookahead for near-top moves, weighted best-vs-second selection, trace fields under BOSS_AI_TRACE.",
+      "textPreview": "Lookahead for near-top moves, weighted best-vs-second selection, trace fields under BOSS_AI_TRACE.",
+      "resolvedFontSize": 23,
+      "resolvedTextStyle": {
+        "fontSize": 23,
+        "typeface": "Aptos",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Lookahead for near-top moves, weighted best-vs-second selection, trace fields"
+          },
+          {
+            "index": 2,
+            "text": "under BOSS_AI_TRACE."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Lookahead for near-top moves, weighted best-vs-second selection, trace fields under BOSS_AI_TRACE.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Lookahead for near-top moves, weighted best-vs-second selection, trace fields under BOSS_AI_TRACE.",
+              "fontSize": 23,
+              "typeface": "Aptos",
+              "color": "#25313B",
+              "alignment": "left"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 12,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/36hcrmhk",
+      "id": "12",
+      "name": "battle-artifact-bg",
+      "bbox": [
+        928,
+        352,
+        872,
+        512
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.1.0"
+      },
+      "geometry": "rect",
+      "fillColor": "#141A1F"
+    },
+    {
+      "order": 13,
+      "kind": "image",
+      "scope": "slide",
+      "aid": "im/x0nuxc3y",
+      "id": "13",
+      "name": "qwilfish-architecture",
+      "bbox": [
+        1030,
+        418.62,
+        260,
+        260
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.1.1.0.0"
+      },
+      "alt": "qwilfish-architecture",
+      "contentType": "image/png",
+      "asset": {
+        "assetId": "63639ff2-b123-41ee-a8e9-a736691e8845",
+        "contentType": "image/png",
+        "byteLength": 1489
+      }
+    },
+    {
+      "order": 14,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/l0rqd4vm",
+      "id": "14",
+      "bbox": [
+        962,
+        682,
+        396,
+        30
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.1.1.0.1"
+      },
+      "geometry": "rect",
+      "text": "Boss move set",
+      "textPreview": "Boss move set",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "fontSize": 22,
+        "typeface": "Bahnschrift",
+        "bold": true,
+        "alignment": "center"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Boss move set"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Boss move set",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Boss move set",
+              "fontSize": 22,
+              "typeface": "Bahnschrift",
+              "color": "#F1E7C8",
+              "bold": true,
+              "alignment": "center"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 15,
+      "kind": "image",
+      "scope": "slide",
+      "aid": "im/fil0rqd4",
+      "id": "15",
+      "name": "starmie-architecture",
+      "bbox": [
+        1440,
+        418.62,
+        260,
+        260
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.1.1.1.0"
+      },
+      "alt": "starmie-architecture",
+      "contentType": "image/png",
+      "asset": {
+        "assetId": "63fc3621-acc1-4a5b-9367-3413151751ce",
+        "contentType": "image/png",
+        "byteLength": 2220
+      }
+    },
+    {
+      "order": 16,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/7u54zido",
+      "id": "16",
+      "bbox": [
+        1372,
+        682,
+        396,
+        30
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.1.1.1.1"
+      },
+      "geometry": "rect",
+      "text": "Player public state",
+      "textPreview": "Player public state",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "fontSize": 22,
+        "typeface": "Bahnschrift",
+        "bold": true,
+        "alignment": "center"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Player public state"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Player public state",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Player public state",
+              "fontSize": 22,
+              "typeface": "Bahnschrift",
+              "color": "#F1E7C8",
+              "bold": true,
+              "alignment": "center"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 17,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ed8bat47",
+      "id": "17",
+      "bbox": [
+        962,
+        764,
+        806,
+        68
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.1.1.2"
+      },
+      "geometry": "rect",
+      "text": "Current selector already mixes close best-vs-second choices; the plan tightens what counts as a defensible choice.",
+      "textPreview": "Current selector already mixes close best-vs-second choices; the plan tightens what counts as a defensible choice.",
+      "resolvedFontSize": 25,
+      "resolvedTextStyle": {
+        "fontSize": 25,
+        "typeface": "Aptos",
+        "alignment": "center"
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Current selector already mixes close best-vs-second choices; the plan tightens"
+          },
+          {
+            "index": 2,
+            "text": "what counts as a defensible choice."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Current selector already mixes close best-vs-second choices; the plan tightens what counts as a defensible choice.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Current selector already mixes close best-vs-second choices; the plan tightens what counts as a defensible choice.",
+              "fontSize": 25,
+              "typeface": "Aptos",
+              "color": "#EDE8D7",
+              "alignment": "center"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 18,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/psfil0rq",
+      "id": "18",
+      "name": "source-footer",
+      "bbox": [
+        96,
+        916,
+        1728,
+        20
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.3"
+      },
+      "geometry": "rect",
+      "text": "Fact: boss trainers enter this path when wBossAITier != 0; lower move score is better.",
+      "textPreview": "Fact: boss trainers enter this path when wBossAITier != 0; lower move score is better.",
+      "resolvedFontSize": 14,
+      "resolvedTextStyle": {
+        "fontSize": 14,
+        "typeface": "Aptos",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Fact: boss trainers enter this path when wBossAITier != 0; lower move score is better."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Fact: boss trainers enter this path when wBossAITier != 0; lower move score is better.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Fact: boss trainers enter this path when wBossAITier != 0; lower move score is better.",
+              "fontSize": 14,
+              "typeface": "Aptos",
+              "color": "#7A725F",
+              "alignment": "left"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "composeRuns": [
+    {
+      "index": 1,
+      "frame": {
+        "left": 0,
+        "top": 0,
+        "width": 1920,
+        "height": 1080
+      },
+      "baseUnit": 8,
+      "root": {
+        "path": "0",
+        "kind": "layers",
+        "name": "slide-root",
+        "requestedSize": {
+          "width": {
+            "mode": "fill",
+            "value": 1
+          },
+          "height": {
+            "mode": "fill",
+            "value": 1
+          }
+        },
+        "intrinsicSize": {
+          "width": 0,
+          "height": 0
+        },
+        "frame": {
+          "left": 0,
+          "top": 0,
+          "width": 1920,
+          "height": 1080
+        },
+        "children": [
+          {
+            "path": "0.0",
+            "kind": "shape",
+            "name": "background",
+            "requestedSize": {
+              "width": {
+                "mode": "fill",
+                "value": 1
+              },
+              "height": {
+                "mode": "fill",
+                "value": 1
+              }
+            },
+            "intrinsicSize": {
+              "width": 0,
+              "height": 0
+            },
+            "frame": {
+              "left": 0,
+              "top": 0,
+              "width": 1920,
+              "height": 1080
+            },
+            "snappedFrame": {
+              "left": 0,
+              "top": 0,
+              "width": 1920,
+              "height": 1080
+            },
+            "children": [],
+            "geometry": "rect",
+            "element": {
+              "aid": "sh/5o7qpg3e",
+              "id": "1",
+              "kind": "shape"
+            }
+          },
+          {
+            "path": "0.1",
+            "kind": "column",
+            "name": "content",
+            "requestedSize": {
+              "width": {
+                "mode": "fill",
+                "value": 1
+              },
+              "height": {
+                "mode": "fill",
+                "value": 1
+              }
+            },
+            "intrinsicSize": {
+              "width": 1499.18,
+              "height": 1007.26
+            },
+            "frame": {
+              "left": 0,
+              "top": 0,
+              "width": 1920,
+              "height": 1080
+            },
+            "children": [
+              {
+                "path": "0.1.0",
+                "kind": "text",
+                "name": "kicker-what-exists-today",
+                "requestedSize": {
+                  "width": {
+                    "mode": "fill",
+                    "value": 1
+                  },
+                  "height": {
+                    "mode": "hug"
+                  }
+                },
+                "intrinsicSize": {
+                  "width": 0,
+                  "height": 24.19
+                },
+                "frame": {
+                  "left": 96,
+                  "top": 72,
+                  "width": 1728,
+                  "height": 24.19
+                },
+                "snappedFrame": {
+                  "left": 96,
+                  "top": 72,
+                  "width": 1728,
+                  "height": 26
+                },
+                "children": [],
+                "text": "WHAT EXISTS TODAY",
+                "transform": "none",
+                "element": {
+                  "aid": "sh/yxobm58z",
+                  "id": "2",
+                  "kind": "shape"
+                }
+              },
+              {
+                "path": "0.1.1",
+                "kind": "text",
+                "requestedSize": {
+                  "width": {
+                    "mode": "wrap",
+                    "max": 1480
+                  },
+                  "height": {
+                    "mode": "hug"
+                  }
+                },
+                "intrinsicSize": {
+                  "width": 1307.18,
+                  "height": 176.26
+                },
+                "frame": {
+                  "left": 96,
+                  "top": 124.19,
+                  "width": 1307.18,
+                  "height": 176.26
+                },
+                "snappedFrame": {
+                  "left": 96,
+                  "top": 124,
+                  "width": 1308,
+                  "height": 178
+                },
+                "children": [],
+                "text": "The AI stack is already more than vanilla trainer behavior.",
+                "transform": "none",
+                "element": {
+                  "aid": "sh/nih4byhg",
+                  "id": "3",
+                  "kind": "shape"
+                }
+              },
+              {
+                "path": "0.1.2",
+                "kind": "grid",
+                "name": "architecture-grid",
+                "requestedSize": {
+                  "width": {
+                    "mode": "fill",
+                    "value": 1
+                  },
+                  "height": {
+                    "mode": "hug"
+                  }
+                },
+                "intrinsicSize": {
+                  "width": 58,
+                  "height": 560
+                },
+                "frame": {
+                  "left": 96,
+                  "top": 328.45,
+                  "width": 1728,
+                  "height": 560
+                },
+                "children": [
+                  {
+                    "path": "0.1.2.0",
+                    "kind": "column",
+                    "name": "pipeline",
+                    "requestedSize": {
+                      "width": {
+                        "mode": "fill",
+                        "value": 1
+                      },
+                      "height": {
+                        "mode": "hug"
+                      }
+                    },
+                    "intrinsicSize": {
+                      "width": 0,
+                      "height": 373.52
+                    },
+                    "frame": {
+                      "left": 96,
+                      "top": 374,
+                      "width": 751.5,
+                      "height": 468
+                    },
+                    "children": [
+                      {
+                        "path": "0.1.2.0.0",
+                        "kind": "text",
+                        "requestedSize": {
+                          "width": {
+                            "mode": "fill",
+                            "value": 1
+                          },
+                          "height": {
+                            "mode": "hug"
+                          }
+                        },
+                        "intrinsicSize": {
+                          "width": 0,
+                          "height": 32.26
+                        },
+                        "frame": {
+                          "left": 96,
+                          "top": 374,
+                          "width": 751.5,
+                          "height": 32.26
+                        },
+                        "snappedFrame": {
+                          "left": 96,
+                          "top": 374,
+                          "width": 752,
+                          "height": 34
+                        },
+                        "children": [],
+                        "text": "Public state",
+                        "transform": "none",
+                        "element": {
+                          "aid": "sh/gr2p8nqx",
+                          "id": "4",
+                          "kind": "shape"
+                        }
+                      },
+                      {
+                        "path": "0.1.2.0.1",
+                        "kind": "text",
+                        "requestedSize": {
+                          "width": {
+                            "mode": "fill",
+                            "value": 1
+                          },
+                          "height": {
+                            "mode": "hug"
+                          }
+                        },
+                        "intrinsicSize": {
+                          "width": 0,
+                          "height": 30.91
+                        },
+                        "frame": {
+                          "left": 96,
+                          "top": 420.26,
+                          "width": 751.5,
+                          "height": 61.82
+                        },
+                        "snappedFrame": {
+                          "left": 96,
+                          "top": 420,
+                          "width": 752,
+                          "height": 62
+                        },
+                        "children": [],
+                        "text": "Visible active Pokemon, revealed moves, seen species, HP/status/boosts, hazards, observed switches.",
+                        "transform": "none",
+                        "element": {
+                          "aid": "sh/9cvixcze",
+                          "id": "5",
+                          "kind": "shape"
+                        }
+                      },
+                      {
+                        "path": "0.1.2.0.2",
+                        "kind": "text",
+                        "requestedSize": {
+                          "width": {
+                            "mode": "fill",
+                            "value": 1
+                          },
+                          "height": {
+                            "mode": "hug"
+                          }
+                        },
+                        "intrinsicSize": {
+                          "width": 0,
+                          "height": 43.01
+                        },
+                        "frame": {
+                          "left": 96,
+                          "top": 496.08,
+                          "width": 751.5,
+                          "height": 43.01
+                        },
+                        "snappedFrame": {
+                          "left": 96,
+                          "top": 496,
+                          "width": 752,
+                          "height": 44
+                        },
+                        "children": [],
+                        "text": ">",
+                        "transform": "none",
+                        "element": {
+                          "aid": "sh/ylc7u54z",
+                          "id": "6",
+                          "kind": "shape"
+                        }
+                      },
+                      {
+                        "path": "0.1.2.0.3",
+                        "kind": "text",
+                        "requestedSize": {
+                          "width": {
+                            "mode": "fill",
+                            "value": 1
+                          },
+                          "height": {
+                            "mode": "hug"
+                          }
+                        },
+                        "intrinsicSize": {
+                          "width": 0,
+                          "height": 32.26
+                        },
+                        "frame": {
+                          "left": 96,
+                          "top": 553.09,
+                          "width": 751.5,
+                          "height": 32.26
+                        },
+                        "snappedFrame": {
+                          "left": 96,
+                          "top": 554,
+                          "width": 752,
+                          "height": 34
+                        },
+                        "children": [],
+                        "text": "Boss scorer",
+                        "transform": "none",
+                        "element": {
+                          "aid": "sh/r65wjudg",
+                          "id": "7",
+                          "kind": "shape"
+                        }
+                      },
+                      {
+                        "path": "0.1.2.0.4",
+                        "kind": "text",
+                        "requestedSize": {
+                          "width": {
+                            "mode": "fill",
+                            "value": 1
+                          },
+                          "height": {
+                            "mode": "hug"
+                          }
+                        },
+                        "intrinsicSize": {
+                          "width": 0,
+                          "height": 30.91
+                        },
+                        "frame": {
+                          "left": 96,
+                          "top": 599.34,
+                          "width": 751.5,
+                          "height": 61.82
+                        },
+                        "snappedFrame": {
+                          "left": 96,
+                          "top": 600,
+                          "width": 752,
+                          "height": 62
+                        },
+                        "children": [],
+                        "text": "KO pressure, deny-KO, utility fail gates, plan/role bias, setup pressure, phazing, Spikes, Rapid Spin.",
+                        "transform": "none",
+                        "element": {
+                          "aid": "sh/gfmlkjm1",
+                          "id": "8",
+                          "kind": "shape"
+                        }
+                      },
+                      {
+                        "path": "0.1.2.0.5",
+                        "kind": "text",
+                        "requestedSize": {
+                          "width": {
+                            "mode": "fill",
+                            "value": 1
+                          },
+                          "height": {
+                            "mode": "hug"
+                          }
+                        },
+                        "intrinsicSize": {
+                          "width": 0,
+                          "height": 43.01
+                        },
+                        "frame": {
+                          "left": 96,
+                          "top": 675.17,
+                          "width": 751.5,
+                          "height": 43.01
+                        },
+                        "snappedFrame": {
+                          "left": 96,
+                          "top": 676,
+                          "width": 752,
+                          "height": 44
+                        },
+                        "children": [],
+                        "text": ">",
+                        "transform": "none",
+                        "element": {
+                          "aid": "sh/90je9cvi",
+                          "id": "9",
+                          "kind": "shape"
+                        }
+                      },
+                      {
+                        "path": "0.1.2.0.6",
+                        "kind": "text",
+                        "requestedSize": {
+                          "width": {
+                            "mode": "fill",
+                            "value": 1
+                          },
+                          "height": {
+                            "mode": "hug"
+                          }
+                        },
+                        "intrinsicSize": {
+                          "width": 0,
+                          "height": 32.26
+                        },
+                        "frame": {
+                          "left": 96,
+                          "top": 732.18,
+                          "width": 751.5,
+                          "height": 32.26
+                        },
+                        "snappedFrame": {
+                          "left": 96,
+                          "top": 732,
+                          "width": 752,
+                          "height": 34
+                        },
+                        "children": [],
+                        "text": "Selection and trace",
+                        "transform": "none",
+                        "element": {
+                          "aid": "sh/lc7u54zi",
+                          "id": "10",
+                          "kind": "shape"
+                        }
+                      },
+                      {
+                        "path": "0.1.2.0.7",
+                        "kind": "text",
+                        "requestedSize": {
+                          "width": {
+                            "mode": "fill",
+                            "value": 1
+                          },
+                          "height": {
+                            "mode": "hug"
+                          }
+                        },
+                        "intrinsicSize": {
+                          "width": 0,
+                          "height": 30.91
+                        },
+                        "frame": {
+                          "left": 96,
+                          "top": 778.43,
+                          "width": 751.5,
+                          "height": 61.82
+                        },
+                        "snappedFrame": {
+                          "left": 96,
+                          "top": 778,
+                          "width": 752,
+                          "height": 62
+                        },
+                        "children": [],
+                        "text": "Lookahead for near-top moves, weighted best-vs-second selection, trace fields under BOSS_AI_TRACE.",
+                        "transform": "none",
+                        "element": {
+                          "aid": "sh/wra5gbq1",
+                          "id": "11",
+                          "kind": "shape"
+                        }
+                      }
+                    ],
+                    "padding": {
+                      "top": 0,
+                      "right": 0,
+                      "bottom": 0,
+                      "left": 0
+                    },
+                    "gap": 14,
+                    "effectiveGap": 14,
+                    "justifyOffset": 0,
+                    "align": "start",
+                    "justify": "start",
+                    "contentFrame": {
+                      "left": 96,
+                      "top": 374,
+                      "width": 751.5,
+                      "height": 468
+                    },
+                    "items": [
+                      {
+                        "path": "0.1.2.0.0",
+                        "frame": {
+                          "left": 96,
+                          "top": 374,
+                          "width": 751.5,
+                          "height": 32.26
+                        }
+                      },
+                      {
+                        "path": "0.1.2.0.1",
+                        "frame": {
+                          "left": 96,
+                          "top": 420.26,
+                          "width": 751.5,
+                          "height": 61.82
+                        }
+                      },
+                      {
+                        "path": "0.1.2.0.2",
+                        "frame": {
+                          "left": 96,
+                          "top": 496.08,
+                          "width": 751.5,
+                          "height": 43.01
+                        }
+                      },
+                      {
+                        "path": "0.1.2.0.3",
+                        "frame": {
+                          "left": 96,
+                          "top": 553.09,
+                          "width": 751.5,
+                          "height": 32.26
+                        }
+                      },
+                      {
+                        "path": "0.1.2.0.4",
+                        "frame": {
+                          "left": 96,
+                          "top": 599.34,
+                          "width": 751.5,
+                          "height": 61.82
+                        }
+                      },
+                      {
+                        "path": "0.1.2.0.5",
+                        "frame": {
+                          "left": 96,
+                          "top": 675.17,
+                          "width": 751.5,
+                          "height": 43.01
+                        }
+                      },
+                      {
+                        "path": "0.1.2.0.6",
+                        "frame": {
+                          "left": 96,
+                          "top": 732.18,
+                          "width": 751.5,
+                          "height": 32.26
+                        }
+                      },
+                      {
+                        "path": "0.1.2.0.7",
+                        "frame": {
+                          "left": 96,
+                          "top": 778.43,
+                          "width": 751.5,
+                          "height": 61.82
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "path": "0.1.2.1",
+                    "kind": "layers",
+                    "name": "battle-artifact",
+                    "requestedSize": {
+                      "width": {
+                        "mode": "fill",
+                        "value": 1
+                      },
+                      "height": {
+                        "mode": "fixed",
+                        "value": 560
+                      }
+                    },
+                    "intrinsicSize": {
+                      "width": 48,
+                      "height": 48
+                    },
+                    "frame": {
+                      "left": 905.5,
+                      "top": 328,
+                      "width": 918.5,
+                      "height": 560
+                    },
+                    "children": [
+                      {
+                        "path": "0.1.2.1.0",
+                        "kind": "shape",
+                        "name": "battle-artifact-bg",
+                        "requestedSize": {
+                          "width": {
+                            "mode": "fill",
+                            "value": 1
+                          },
+                          "height": {
+                            "mode": "fill",
+                            "value": 1
+                          }
+                        },
+                        "intrinsicSize": {
+                          "width": 0,
+                          "height": 0
+                        },
+                        "frame": {
+                          "left": 929.5,
+                          "top": 352,
+                          "width": 870.5,
+                          "height": 512
+                        },
+                        "snappedFrame": {
+                          "left": 928,
+                          "top": 352,
+                          "width": 872,
+                          "height": 512
+                        },
+                        "children": [],
+                        "geometry": "rect",
+                        "element": {
+                          "aid": "sh/36hcrmhk",
+                          "id": "12",
+                          "kind": "shape"
+                        }
+                      },
+                      {
+                        "path": "0.1.2.1.1",
+                        "kind": "grid",
+                        "requestedSize": {
+                          "width": {
+                            "mode": "fill",
+                            "value": 1
+                          },
+                          "height": {
+                            "mode": "fill",
+                            "value": 1
+                          }
+                        },
+                        "intrinsicSize": {
+                          "width": 76,
+                          "height": 115.6
+                        },
+                        "frame": {
+                          "left": 929.5,
+                          "top": 352,
+                          "width": 870.5,
+                          "height": 512
+                        },
+                        "children": [
+                          {
+                            "path": "0.1.2.1.1.0",
+                            "kind": "column",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fill",
+                                "value": 1
+                              },
+                              "height": {
+                                "mode": "fill",
+                                "value": 1
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 260,
+                              "height": 293.57
+                            },
+                            "frame": {
+                              "left": 961.5,
+                              "top": 384,
+                              "width": 397.25,
+                              "height": 362.8
+                            },
+                            "children": [
+                              {
+                                "path": "0.1.2.1.1.0.0",
+                                "kind": "image",
+                                "name": "qwilfish-architecture",
+                                "requestedSize": {
+                                  "width": {
+                                    "mode": "fixed",
+                                    "value": 260
+                                  },
+                                  "height": {
+                                    "mode": "fixed",
+                                    "value": 260
+                                  }
+                                },
+                                "intrinsicSize": {
+                                  "width": 260,
+                                  "height": 260
+                                },
+                                "frame": {
+                                  "left": 1030,
+                                  "top": 418.62,
+                                  "width": 260,
+                                  "height": 260
+                                },
+                                "snappedFrame": {
+                                  "left": 1030,
+                                  "top": 418.62,
+                                  "width": 260,
+                                  "height": 260
+                                },
+                                "children": [],
+                                "source": {
+                                  "kind": "dataUrl"
+                                },
+                                "fit": "contain",
+                                "alt": "qwilfish-architecture",
+                                "element": {
+                                  "aid": "im/x0nuxc3y",
+                                  "id": "13",
+                                  "kind": "image"
+                                }
+                              },
+                              {
+                                "path": "0.1.2.1.1.0.1",
+                                "kind": "text",
+                                "requestedSize": {
+                                  "width": {
+                                    "mode": "fill",
+                                    "value": 1
+                                  },
+                                  "height": {
+                                    "mode": "hug"
+                                  }
+                                },
+                                "intrinsicSize": {
+                                  "width": 0,
+                                  "height": 29.57
+                                },
+                                "frame": {
+                                  "left": 962,
+                                  "top": 682.62,
+                                  "width": 396,
+                                  "height": 29.57
+                                },
+                                "snappedFrame": {
+                                  "left": 962,
+                                  "top": 682,
+                                  "width": 396,
+                                  "height": 30
+                                },
+                                "children": [],
+                                "text": "Boss move set",
+                                "transform": "none",
+                                "element": {
+                                  "aid": "sh/l0rqd4vm",
+                                  "id": "14",
+                                  "kind": "shape"
+                                }
+                              }
+                            ],
+                            "padding": {
+                              "top": 0,
+                              "right": 0,
+                              "bottom": 0,
+                              "left": 0
+                            },
+                            "gap": 4,
+                            "effectiveGap": 4,
+                            "justifyOffset": 34.62,
+                            "align": "center",
+                            "justify": "center",
+                            "contentFrame": {
+                              "left": 961.5,
+                              "top": 384,
+                              "width": 397.25,
+                              "height": 362.8
+                            },
+                            "items": [
+                              {
+                                "path": "0.1.2.1.1.0.0",
+                                "frame": {
+                                  "left": 1030,
+                                  "top": 418.62,
+                                  "width": 260,
+                                  "height": 260
+                                }
+                              },
+                              {
+                                "path": "0.1.2.1.1.0.1",
+                                "frame": {
+                                  "left": 962,
+                                  "top": 682.62,
+                                  "width": 396,
+                                  "height": 29.57
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "path": "0.1.2.1.1.1",
+                            "kind": "column",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fill",
+                                "value": 1
+                              },
+                              "height": {
+                                "mode": "fill",
+                                "value": 1
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 260,
+                              "height": 293.57
+                            },
+                            "frame": {
+                              "left": 1370.75,
+                              "top": 384,
+                              "width": 397.25,
+                              "height": 362.8
+                            },
+                            "children": [
+                              {
+                                "path": "0.1.2.1.1.1.0",
+                                "kind": "image",
+                                "name": "starmie-architecture",
+                                "requestedSize": {
+                                  "width": {
+                                    "mode": "fixed",
+                                    "value": 260
+                                  },
+                                  "height": {
+                                    "mode": "fixed",
+                                    "value": 260
+                                  }
+                                },
+                                "intrinsicSize": {
+                                  "width": 260,
+                                  "height": 260
+                                },
+                                "frame": {
+                                  "left": 1440,
+                                  "top": 418.62,
+                                  "width": 260,
+                                  "height": 260
+                                },
+                                "snappedFrame": {
+                                  "left": 1440,
+                                  "top": 418.62,
+                                  "width": 260,
+                                  "height": 260
+                                },
+                                "children": [],
+                                "source": {
+                                  "kind": "dataUrl"
+                                },
+                                "fit": "contain",
+                                "alt": "starmie-architecture",
+                                "element": {
+                                  "aid": "im/fil0rqd4",
+                                  "id": "15",
+                                  "kind": "image"
+                                }
+                              },
+                              {
+                                "path": "0.1.2.1.1.1.1",
+                                "kind": "text",
+                                "requestedSize": {
+                                  "width": {
+                                    "mode": "fill",
+                                    "value": 1
+                                  },
+                                  "height": {
+                                    "mode": "hug"
+                                  }
+                                },
+                                "intrinsicSize": {
+                                  "width": 0,
+                                  "height": 29.57
+                                },
+                                "frame": {
+                                  "left": 1372,
+                                  "top": 682.62,
+                                  "width": 396,
+                                  "height": 29.57
+                                },
+                                "snappedFrame": {
+                                  "left": 1372,
+                                  "top": 682,
+                                  "width": 396,
+                                  "height": 30
+                                },
+                                "children": [],
+                                "text": "Player public state",
+                                "transform": "none",
+                                "element": {
+                                  "aid": "sh/7u54zido",
+                                  "id": "16",
+                                  "kind": "shape"
+                                }
+                              }
+                            ],
+                            "padding": {
+                              "top": 0,
+                              "right": 0,
+                              "bottom": 0,
+                              "left": 0
+                            },
+                            "gap": 4,
+                            "effectiveGap": 4,
+                            "justifyOffset": 34.62,
+                            "align": "center",
+                            "justify": "center",
+                            "contentFrame": {
+                              "left": 1370.75,
+                              "top": 384,
+                              "width": 397.25,
+                              "height": 362.8
+                            },
+                            "items": [
+                              {
+                                "path": "0.1.2.1.1.1.0",
+                                "frame": {
+                                  "left": 1440,
+                                  "top": 418.62,
+                                  "width": 260,
+                                  "height": 260
+                                }
+                              },
+                              {
+                                "path": "0.1.2.1.1.1.1",
+                                "frame": {
+                                  "left": 1372,
+                                  "top": 682.62,
+                                  "width": 396,
+                                  "height": 29.57
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "path": "0.1.2.1.1.2",
+                            "kind": "text",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fill",
+                                "value": 1
+                              },
+                              "height": {
+                                "mode": "hug"
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 0,
+                              "height": 33.6
+                            },
+                            "frame": {
+                              "left": 961.5,
+                              "top": 764.8,
+                              "width": 806.5,
+                              "height": 67.2
+                            },
+                            "snappedFrame": {
+                              "left": 962,
+                              "top": 764,
+                              "width": 806,
+                              "height": 68
+                            },
+                            "children": [],
+                            "text": "Current selector already mixes close best-vs-second choices; the plan tightens what counts as a defensible choice.",
+                            "transform": "none",
+                            "element": {
+                              "aid": "sh/ed8bat47",
+                              "id": "17",
+                              "kind": "shape"
+                            }
+                          }
+                        ],
+                        "padding": {
+                          "top": 32,
+                          "right": 32,
+                          "bottom": 32,
+                          "left": 32
+                        },
+                        "columnGap": 12,
+                        "rowGap": 18,
+                        "alignItems": "stretch",
+                        "justifyItems": "stretch",
+                        "contentFrame": {
+                          "left": 961.5,
+                          "top": 384,
+                          "width": 806.5,
+                          "height": 448
+                        },
+                        "columns": [
+                          {
+                            "mode": "fr",
+                            "value": 1
+                          },
+                          {
+                            "mode": "fr",
+                            "value": 1
+                          }
+                        ],
+                        "rows": [
+                          {
+                            "mode": "fr",
+                            "value": 1
+                          },
+                          "auto"
+                        ],
+                        "autoRows": "auto",
+                        "resolvedRows": [
+                          {
+                            "mode": "fr",
+                            "value": 1
+                          },
+                          "auto"
+                        ],
+                        "columnSizes": [
+                          397.25,
+                          397.25
+                        ],
+                        "rowSizes": [
+                          362.8,
+                          67.2
+                        ],
+                        "cells": [
+                          {
+                            "path": "0.1.2.1.1.0",
+                            "column": 0,
+                            "row": 0,
+                            "columnSpan": 1,
+                            "rowSpan": 1,
+                            "cellFrame": {
+                              "left": 961.5,
+                              "top": 384,
+                              "width": 397.25,
+                              "height": 362.8
+                            }
+                          },
+                          {
+                            "path": "0.1.2.1.1.1",
+                            "column": 1,
+                            "row": 0,
+                            "columnSpan": 1,
+                            "rowSpan": 1,
+                            "cellFrame": {
+                              "left": 1370.75,
+                              "top": 384,
+                              "width": 397.25,
+                              "height": 362.8
+                            }
+                          },
+                          {
+                            "path": "0.1.2.1.1.2",
+                            "column": 0,
+                            "row": 1,
+                            "columnSpan": 2,
+                            "rowSpan": 1,
+                            "cellFrame": {
+                              "left": 961.5,
+                              "top": 764.8,
+                              "width": 806.5,
+                              "height": 67.2
+                            }
+                          }
+                        ]
+                      }
+                    ],
+                    "padding": {
+                      "top": 24,
+                      "right": 24,
+                      "bottom": 24,
+                      "left": 24
+                    },
+                    "alignItems": "stretch",
+                    "justifyItems": "stretch",
+                    "contentFrame": {
+                      "left": 929.5,
+                      "top": 352,
+                      "width": 870.5,
+                      "height": 512
+                    },
+                    "items": [
+                      {
+                        "path": "0.1.2.1.0",
+                        "frame": {
+                          "left": 929.5,
+                          "top": 352,
+                          "width": 870.5,
+                          "height": 512
+                        }
+                      },
+                      {
+                        "path": "0.1.2.1.1",
+                        "frame": {
+                          "left": 929.5,
+                          "top": 352,
+                          "width": 870.5,
+                          "height": 512
+                        }
+                      }
+                    ]
+                  }
+                ],
+                "padding": {
+                  "top": 0,
+                  "right": 0,
+                  "bottom": 0,
+                  "left": 0
+                },
+                "columnGap": 58,
+                "rowGap": 0,
+                "alignItems": "center",
+                "justifyItems": "stretch",
+                "contentFrame": {
+                  "left": 96,
+                  "top": 328.45,
+                  "width": 1728,
+                  "height": 560
+                },
+                "columns": [
+                  {
+                    "mode": "fr",
+                    "value": 0.9
+                  },
+                  {
+                    "mode": "fr",
+                    "value": 1.1
+                  }
+                ],
+                "autoRows": "auto",
+                "resolvedRows": [
+                  "auto"
+                ],
+                "columnSizes": [
+                  751.5,
+                  918.5
+                ],
+                "rowSizes": [
+                  560
+                ],
+                "cells": [
+                  {
+                    "path": "0.1.2.0",
+                    "column": 0,
+                    "row": 0,
+                    "columnSpan": 1,
+                    "rowSpan": 1,
+                    "cellFrame": {
+                      "left": 96,
+                      "top": 328.45,
+                      "width": 751.5,
+                      "height": 560
+                    }
+                  },
+                  {
+                    "path": "0.1.2.1",
+                    "column": 1,
+                    "row": 0,
+                    "columnSpan": 1,
+                    "rowSpan": 1,
+                    "cellFrame": {
+                      "left": 905.5,
+                      "top": 328.45,
+                      "width": 918.5,
+                      "height": 560
+                    }
+                  }
+                ]
+              },
+              {
+                "path": "0.1.3",
+                "kind": "text",
+                "name": "source-footer",
+                "requestedSize": {
+                  "width": {
+                    "mode": "fill",
+                    "value": 1
+                  },
+                  "height": {
+                    "mode": "hug"
+                  }
+                },
+                "intrinsicSize": {
+                  "width": 0,
+                  "height": 18.82
+                },
+                "frame": {
+                  "left": 96,
+                  "top": 916.45,
+                  "width": 1728,
+                  "height": 18.82
+                },
+                "snappedFrame": {
+                  "left": 96,
+                  "top": 916,
+                  "width": 1728,
+                  "height": 20
+                },
+                "children": [],
+                "text": "Fact: boss trainers enter this path when wBossAITier != 0; lower move score is better.",
+                "transform": "none",
+                "element": {
+                  "aid": "sh/psfil0rq",
+                  "id": "18",
+                  "kind": "shape"
+                }
+              }
+            ],
+            "padding": {
+              "top": 72,
+              "right": 96,
+              "bottom": 72,
+              "left": 96
+            },
+            "gap": 28,
+            "effectiveGap": 28,
+            "justifyOffset": 0,
+            "align": "start",
+            "justify": "start",
+            "contentFrame": {
+              "left": 96,
+              "top": 72,
+              "width": 1728,
+              "height": 936
+            },
+            "items": [
+              {
+                "path": "0.1.0",
+                "frame": {
+                  "left": 96,
+                  "top": 72,
+                  "width": 1728,
+                  "height": 24.19
+                }
+              },
+              {
+                "path": "0.1.1",
+                "frame": {
+                  "left": 96,
+                  "top": 124.19,
+                  "width": 1307.18,
+                  "height": 176.26
+                }
+              },
+              {
+                "path": "0.1.2",
+                "frame": {
+                  "left": 96,
+                  "top": 328.45,
+                  "width": 1728,
+                  "height": 560
+                }
+              },
+              {
+                "path": "0.1.3",
+                "frame": {
+                  "left": 96,
+                  "top": 916.45,
+                  "width": 1728,
+                  "height": 18.82
+                }
+              }
+            ]
+          }
+        ],
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "alignItems": "stretch",
+        "justifyItems": "stretch",
+        "contentFrame": {
+          "left": 0,
+          "top": 0,
+          "width": 1920,
+          "height": 1080
+        },
+        "items": [
+          {
+            "path": "0.0",
+            "frame": {
+              "left": 0,
+              "top": 0,
+              "width": 1920,
+              "height": 1080
+            }
+          },
+          {
+            "path": "0.1",
+            "frame": {
+              "left": 0,
+              "top": 0,
+              "width": 1920,
+              "height": 1080
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

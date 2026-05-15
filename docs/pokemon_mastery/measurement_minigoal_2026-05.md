@@ -193,6 +193,21 @@ Caps:
 - romhack-facing answer with decision-relevant unverified mechanic: max 70;
 - no single recommended move or ranked move class: max 75.
 
+Error tags are non-exclusive. If one answer both assumes an unrevealed fact and
+loses a central route, count both `hidden_info_error` and `severe_blunder` and
+apply the most restrictive cap. Do not relabel a severe error as hidden-info to
+make severe-blunder rate look better.
+
+Hidden-information tiering:
+
+- `revealed`: public move, item, status, role, or teammate evidence. It can be
+  used as fact.
+- `strong prior`: common set, voluntary-entry clue, or source-backed tendency.
+  It can affect risk pricing, but the answer must state the fallback if wrong.
+- `possible only`: legal or plausible but not public. It can be listed as a
+  branch, not used as the main reason for the move unless the line is explicitly
+  marked as a high-risk read and slow play loses.
+
 ## Trend Rules
 
 Track:
@@ -205,6 +220,7 @@ Track:
 - mechanics error rate;
 - hidden-information error rate;
 - replay turn-pause top-match and acceptable-match rates;
+- positive-selection rate in fresh replay or focused-transfer artifacts;
 - transfer-sprint target error rate before and after the Pokemon check;
 - simulation/emulator win rate only after readiness gates pass.
 
@@ -215,6 +231,12 @@ Call progress real only when:
 - hidden or generated-holdout scores do not lag public/regression scores by
   more than 15 points;
 - mechanics errors are flat or declining;
+- hidden-information, mechanics, and state errors are not merely replacing
+  severe blunders. If severe blunders drop but total tracked errors rise, report
+  only "catastrophic error control improved," not broad error improvement;
+- severe blunders stay low and positive-selection rate rises. Do not call a
+  block progress if it only avoids obvious mistakes while choosing safe,
+  generic, or non-converting moves;
 - the same catastrophic error class does not recur in two consecutive scored
   runs;
 - improvement appears in both vanilla and romhack pools, or the reported claim

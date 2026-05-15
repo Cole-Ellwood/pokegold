@@ -9,6 +9,7 @@ from typing import Iterable
 
 @dataclass
 class MonState:
+    species: str = ""
     hp: str = "?"
     status: str = ""
     moves: set[str] = field(default_factory=set)
@@ -50,6 +51,10 @@ def clean_mon(slot: str) -> str:
     return slot
 
 
+def clean_species(details: str) -> str:
+    return details.split(",", 1)[0]
+
+
 def parse_hp_status(value: str) -> tuple[str, str]:
     parts = value.split()
     if not parts:
@@ -89,6 +94,7 @@ def apply_event(state: ReplayState, line: str) -> None:
         hp, status = parse_hp_status(parts[4])
         state.sides[side].active = mon
         mon_state = get_mon(state, side, mon)
+        mon_state.species = clean_species(parts[3])
         mon_state.hp = hp
         mon_state.status = status
         mon_state.boosts = {}
@@ -187,21 +193,29 @@ def format_boosts(boosts: dict[str, int]) -> str:
     return ", ".join(active) if active else "none"
 
 
+def format_mon_label(nickname: str, mon_state: MonState) -> str:
+    if mon_state.species and mon_state.species != nickname:
+        return f"{nickname} ({mon_state.species})"
+    return nickname
+
+
 def format_side(label: str, side: SideState) -> list[str]:
     name = side.name or label
     active_state = side.seen.get(side.active, MonState())
+    active_label = format_mon_label(side.active, active_state)
     side_conditions = ", ".join(sorted(side.side_conditions)) or "none"
     lines = [
         (
-            f"{label} / {name}: active {side.active} "
+            f"{label} / {name}: active {active_label} "
             f"HP {active_state.hp} {active_state.status or 'healthy'}; "
             f"boosts {format_boosts(active_state.boosts)}; side {side_conditions}."
         )
     ]
     seen = []
     for mon, mon_state in sorted(side.seen.items()):
+        mon_label = format_mon_label(mon, mon_state)
         moves = ", ".join(sorted(mon_state.moves)) if mon_state.moves else "no moves revealed"
-        seen.append(f"{mon} {mon_state.hp} {mon_state.status or 'healthy'}; moves: {moves}")
+        seen.append(f"{mon_label} {mon_state.hp} {mon_state.status or 'healthy'}; moves: {moves}")
     lines.append("Seen: " + (" | ".join(seen) if seen else "none"))
     return lines
 

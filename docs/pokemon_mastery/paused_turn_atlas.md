@@ -144,6 +144,23 @@ Rank: trade now / preserve recurring job / use recurring job / switch.
 Expected policy: trade only when the target is a named route blocker, the lost
 job is replaceable or finished, and a post-trade converter exists.
 
+Sleeping-target threshold: when the target is asleep, do not cash out only
+because wake risk exists. First ask whether steady pressure or a lower-value
+wake absorber covers the branch. Cash out when wake, Rest, Sleep Talk,
+Self-Destruct, or preservation would otherwise undo the route.
+
+Constructed regression:
+`quick_tests/sleeping_target_cashout_threshold_probe_001_2026-05-14.md`.
+
+Partial transfer replay:
+`quick_tests/replay_turn_pause_021_cashout_threshold_partial_smogtours-gen2ou-934904_2026-05-14.md`.
+
+Post-oracle receiver regression:
+`quick_tests/selfdestruct_receiver_branch_regression_001_smogtours-gen2ou-934904_2026-05-14.md`.
+
+Fresh receiver transfer:
+`quick_tests/replay_turn_pause_022_receiver_counterplay_transfer_smogtours-gen2ou-935551_2026-05-14.md`.
+
 Related source-to-policy entries: `STP-003`, `STP-007`.
 
 ## PTA-007: Hazard Contract Against Will
@@ -193,6 +210,44 @@ shorten game.
 Expected policy: absorption is correct only if the future job remains
 functional, the status turn does not create a larger boss route, and the plan
 after absorption is named.
+
+Sleep Clause clause: when the absorbed status is sleep, first price the common
+branch where the slept Pokemon switches out immediately and is preserved as
+Sleep Clause material. Burning wake turns is correct only if the sleeper's
+current board job is better than preserving Sleep Clause, or if the wake route
+is itself the plan. A sleeping absorber may still be saved for Explosion,
+Spikes, Rapid Spin, phazing, Sleep Talk, a controlled sack, or a wake attack.
+
+Fresh replay exception: if the opponent's active cannot strongly punish the
+sleeping Pokemon, or if Explosion/pivot scouting is material, one burned sleep
+turn can be acceptable before switching under stronger pressure.
+
+Later-job check: a sleeping Pokemon can still be the correct route piece before
+it wakes if Sleep Talk, Heal Bell support, forced-switch absorption, predicted
+coverage absorption, wake-and-act timing, or cheaper switches after hazard
+removal changes the board.
+
+Cash-out threshold: do not spend Explosion, Self-Destruct, Destiny Bond, or an
+irreplaceable attacker into a sleeper only because wake risk exists. Spend it
+when the wake move, Rest, Sleep Talk result, or endgame role would otherwise
+undo the route; otherwise steady pressure or a wake absorber can be better.
+
+Regression probe: `quick_tests/sleep_clause_absorber_probe_001_2026-05-14.md`.
+
+Fresh replay check:
+`quick_tests/replay_turn_pause_018_sleep_clause_absorber_fresh_smogtours-gen2ou-934335_2026-05-14.md`.
+
+Later-job replay check:
+`quick_tests/replay_turn_pause_019_sleeper_later_job_smogtours-gen2ou-934335_2026-05-14.md`.
+
+Constructed regression:
+`quick_tests/sleeping_piece_later_job_probe_001_2026-05-14.md`.
+
+Transfer replay:
+`quick_tests/replay_turn_pause_020_sleeper_transfer_smogtours-gen2ou-935572_2026-05-14.md`.
+
+Cash-out regression:
+`quick_tests/sleeping_target_cashout_threshold_probe_001_2026-05-14.md`.
 
 Related source-to-policy entries: `STP-002`, `STP-009`, `STP-010`.
 
@@ -1525,3 +1580,170 @@ setting reciprocal Spikes may outrank spinning if the active pressure is now
 on a clock.
 
 Related source-to-policy entries: `STP-024`, `STP-050`, `STP-055`, `STP-058`.
+
+## PTA-057: Cash-Out Or Handoff Before Explosion
+
+Source:
+`quick_tests/replay_turn_pause_008_cashout_handoff_fresh_smogtours-gen2ou-907674_2026-05-14.md`
+
+Format: vanilla GSC turn-pause replay and Gym Leader Lab support-transfer
+drill.
+
+Skill tested: avoid overcalling Explosion or Self-Destruct when status,
+phazing, hazard control, or a recurring teammate handoff solves the current
+route while preserving the one-time trade.
+
+Public prompt:
+
+```text
+Our support Pokemon can plausibly Explode, Self-Destruct, Destiny Bond, or
+otherwise cash out. It can also use a support route-stopper such as Toxic,
+paralysis, phazing, Rapid Spin, Spikes, or a switch to a recurring teammate
+that pressures the current answer. The opposing active is dangerous but not
+yet guaranteed to win this turn.
+
+Rank: status route-stopper / phaze / hand off to recurring teammate / set or
+remove hazard / attack / cash out now / switch preserve.
+```
+
+Expected policy: first ask whether a non-cash-out action stops the current
+route and keeps the one-time trade available. Prefer status, phazing, or a
+handoff when it contains the threat and gives a recurring teammate a better
+board. Cash out now only when the target is the actual route blocker, the
+support user has no better remaining job, or the handoff gives the opponent a
+stronger route than the trade removes.
+
+Related source-to-policy entries: `STP-003`, `STP-025`, `STP-043`, `STP-055`,
+`STP-058`.
+
+## PTA-058: Support Choice Before Handoff Or Cash-Out
+
+Source:
+`quick_tests/replay_turn_pause_011_support_choice_smogtours-gen2ou-928706_2026-05-14.md`
+
+Format: vanilla GSC turn-pause replay and Gym Leader Lab support-action
+ordering drill.
+
+Skill tested: choose the support action that changes the current route before
+defaulting to more support, handoff, attack, Rapid Spin, phazing, or Explosion.
+
+Public prompt:
+
+```text
+Our support Pokemon has at least two useful jobs available: it can set or
+remove hazards, spread status, phaze, attack, switch to a recurring teammate,
+or cash out with a one-time trade. The current board already has some support
+state in play, and the opponent can either exploit the active matchup, pivot to
+the next route, reset status or hazards, or preserve a damaged converter.
+
+Rank: route-changing status / set hazard / remove hazard / phaze / hand off
+to recurring teammate / attack / cash out now / preserve support piece.
+```
+
+Expected policy: first ask whether the last support action has already changed
+the local route. If it has, name the teammate or opponent route that now
+benefits before clicking another support move. Prefer the support action that
+creates a concrete receiver or denies the opponent's next route; prefer handoff
+when the receiver is already better than another support turn; accept Rapid
+Spin or phazing when skipping it lets the opponent's route become live. Cash
+out only if the current target is the route blocker or the support piece cannot
+deliver a better job first.
+
+Boundary clause: once the support job has been delivered, do not keep
+preserving by inertia. If the active target is now the route piece and the
+support Pokemon no longer improves the board by preserving, phazing, spinning,
+or handing off, the correct support choice may be Explosion or another
+one-time trade.
+
+Defense clause: if the opponent's cash-out is the branch being covered, name
+the piece we are willing to lose before choosing. Stay in only when the active
+piece is already expendable or the trade opens a better route. If a lower-value
+absorber exists and the active piece still defines a route, preserve before
+attacking.
+
+Handoff clause: if status or chip on the target makes Rest or another passive
+reset likely, price the route handoff before the one-time trade. In 935045,
+paralyzing and chipping Raikou did not force Exeggutor Explosion; it created a
+Marowak handoff into Raikou's Rest. The same replay also showed the defense
+clause working against low Cloyster: preserve Marowak by spending lower-value
+Smeargle, then let Smeargle deliver one last Spikes before it dies.
+
+Status follow-up clause: after support status lands on a boosting anchor,
+re-score the exact follow-up order. In 935022, Cloyster's sequence was Toxic,
+then Spikes, then Explosion into the boosted Snorlax. The defending side must
+state whether staying depends on a non-crit or damage roll, and whether a
+lower-value absorber preserves the anchor without losing the only remaining
+route.
+
+Related source-to-policy entries: `STP-003`, `STP-024`, `STP-055`,
+`STP-058`.
+
+## PTA-059: Focus Energy Retaliation Branch
+
+Source:
+`quick_tests/focus_energy_counter_branch_regression_001_smogtours-gen2ou-935022_2026-05-14.md`
+
+Format: vanilla GSC replay drill and Gym Leader Lab crit-pressure drill.
+
+Skill tested: after Focus Energy or another crit-stage/setup move is revealed,
+re-price the whole route bundle instead of treating the next turn as ordinary
+coverage or ordinary retaliation.
+
+Public prompt:
+
+```text
+The opposing active has revealed Focus Energy or a similar setup/punish state.
+It is damaged enough to look expendable, but it may still move first, attack
+with coverage, threaten a crit branch, or punish the obvious attack with
+Counter, Mirror Coat, Bide, Destiny Bond, or a similar move.
+
+Rank: attack for KO / safer category attack / switch preserve / status-control
+/ controlled sack / scout / accept forced risk.
+```
+
+Expected policy: name the current public setup state, speed/order, KO ranges,
+whether our active can move before dying, whether our obvious attack triggers a
+retaliation move, and whether an odd-category move such as Hidden Power changes
+punish legality. Low HP does not make the boosted attacker harmless. Attack
+only if the KO or forced trade opens a named route, or if preserving gives the
+opponent a stronger converter.
+
+Related source-to-policy entries: `STP-036`, `STP-055`, `STP-058`.
+
+## PTA-060: Baton Pass Route Is Not A Script
+
+Source:
+`quick_tests/replay_turn_pause_016_baton_pass_resolve_smogtours-gen2ou-934428_2026-05-14.md`
+
+Format: vanilla GSC replay drill and Gym Leader Lab setup-transfer drill.
+
+Skill tested: after a setup move or Baton Pass reveal, re-solve the current
+route instead of defaulting to "boost more" or "pass now."
+
+Public prompt:
+
+```text
+Our active has a setup-transfer route online: Agility, Swords Dance, Growth,
+Substitute, or Baton Pass has been revealed or strongly implied. The passer can
+add another boost, attack with the current boost, pass to a named receiver,
+use Baton Pass as a fast pivot into a low-value teammate, or abandon the chain.
+The opponent can attack, phaze, status, Explode, switch to a route answer, or
+let the current active become expendable.
+
+Rank: add boost / attack with passer / Baton Pass to receiver / Baton Pass as
+fast pivot / ordinary switch / status-control / controlled sack / abandon.
+```
+
+Expected policy: name the receiver before passing and name the board the
+receiver inherits. Do not pass automatically if the passer's boosted attack
+changes the range map first. Do not keep boosting if the opponent's punish now
+breaks the chain. Treat Baton Pass as a move-speed switch option even when no
+boost payload matters, but only when the pivot target's loss is priced.
+
+Comeback clause: when direct damage loses, search for the receiver route before
+calling the position dead. If the exact receiver is not public in spectator
+practice, label it as an inferred archetype branch, not a known species. In
+`934428`, Jolteon's damage into Tyranitar was not the comeback route; Agility
+plus Baton Pass to the last receiver was.
+
+Related source-to-policy entries: `STP-006`, `STP-034`, `STP-055`, `STP-058`.

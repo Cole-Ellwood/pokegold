@@ -1,7 +1,11 @@
 # Romhack Delta: Spikes And Rapid Spin
 
-Status: source-verified from local docs and assembly. Not yet runtime-fixture
-verified in an emulator trace.
+Status: source-verified from local docs and assembly, with partial runtime
+smoke coverage. Runtime smoke verifies WRAM layer transitions, successful
+hazard-clear state for 1-3 Spikes layers, damage fraction helpers, and
+Flying-type early return. Full battle text, PP, complete switch-in HP
+subtraction, Rapid Spin failure branches, and same-turn timing remain
+unverified.
 
 Scope: Pokemon Gold romhack / Gym Leader Lab. Do not use this as a vanilla GSC
 claim.
@@ -46,6 +50,8 @@ Verified facts:
   - layer 1 is broadly encouraged, especially early or when a switch is likely;
   - layer 2 is treated as lower immediate gain unless layer 3 looks reachable;
   - layer 3 is strongly encouraged unless the enemy is under immediate danger;
+  - layer 2 and layer 3 are discouraged when the active opposing Pokemon has
+    publicly revealed Rapid Spin;
   - clicking at three layers is discouraged.
 
 ## Strategic Translation
@@ -85,7 +91,8 @@ Ask:
 3. How many remaining opposing Pokemon are non-Flying and likely to switch?
 4. Does the next layer change a KO range, Rest cycle, phazing route, or forced
    switch sequence?
-5. Can the opponent Rapid Spin soon, and can we punish or block it?
+5. Has the active opponent publicly revealed Rapid Spin, and can we punish or
+   block it?
 6. Does the setter survive the worst plausible branch?
 7. Is the setter still needed for another role, such as Rapid Spin, Explosion,
    walling, or a future sacrifice?
@@ -109,8 +116,10 @@ Ask:
 
 ## Remaining Verification
 
-- Use `spikes_rapid_spin_fixture_plan.md` as the concrete fixture plan before
-  counting Spikes-heavy boss simulations as mastery evidence.
+- Use `spikes_rapid_spin_fixture_plan.md` and
+  `mechanics_fixtures/spikes_rapid_spin/README.md` as the concrete fixture
+  plan/status before counting Spikes-heavy boss simulations as mastery
+  evidence.
 - Build or run an emulator/debugger fixture for exact text, PP, and timing on a
   fourth Spikes click at three layers.
 - Build or run a fixture confirming Rapid Spin clears all layers in a live

@@ -1,0 +1,1859 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/kzzquf",
+    "id": "kzzquf",
+    "slide": 10,
+    "layoutId": "e3fd55af-303b-4a75-a64b-15538c6ada38",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "51cad470-a5e6-490f-980d-21b983c71172",
+    "masterLayoutName": "Master",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "Aptos",
+      "Bahnschrift"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "e3fd55af-303b-4a75-a64b-15538c6ada38",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "51cad470-a5e6-490f-980d-21b983c71172",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "51cad470-a5e6-490f-980d-21b983c71172",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/7ed8bat4",
+      "id": "1",
+      "name": "background",
+      "bbox": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0"
+      },
+      "geometry": "rect",
+      "fillColor": "#FBF7EA"
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/0z61032l",
+      "id": "2",
+      "name": "kicker-investor-takeaway",
+      "bbox": [
+        96,
+        72,
+        1728,
+        26
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.0"
+      },
+      "geometry": "rect",
+      "text": "INVESTOR TAKEAWAY",
+      "textPreview": "INVESTOR TAKEAWAY",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "fontSize": 18,
+        "typeface": "Bahnschrift",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "INVESTOR TAKEAWAY"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "INVESTOR TAKEAWAY",
+          "runs": [
+            {
+              "index": 1,
+              "text": "INVESTOR TAKEAWAY",
+              "fontSize": 18,
+              "typeface": "Bahnschrift",
+              "color": "#2E7D5B",
+              "bold": true,
+              "alignment": "left"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/pkzupwb2",
+      "id": "3",
+      "bbox": [
+        96,
+        124,
+        1496,
+        188
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.1"
+      },
+      "geometry": "rect",
+      "text": "The improvement is product-visible, not just technical.",
+      "textPreview": "The improvement is product-visible, not just technical.",
+      "resolvedFontSize": 76,
+      "resolvedTextStyle": {
+        "fontSize": 76,
+        "typeface": "Bahnschrift",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "The improvement is product-visible, not"
+          },
+          {
+            "index": 2,
+            "text": "just technical."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "The improvement is product-visible, not just technical.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "The improvement is product-visible, not just technical.",
+              "fontSize": 76,
+              "typeface": "Bahnschrift",
+              "color": "#141A1F",
+              "bold": true,
+              "alignment": "left"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ih4byhgn",
+      "id": "4",
+      "bbox": [
+        96,
+        430,
+        798,
+        138
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.0.0"
+      },
+      "geometry": "rect",
+      "text": "After implementation, bosses should feel more prepared because they punish public board mistakes, preserve important pieces, and vary close good choices.",
+      "textPreview": "After implementation, bosses should feel more prepared because they punish public board mistakes, preserve important pieces, and vary clo...",
+      "resolvedFontSize": 34,
+      "resolvedTextStyle": {
+        "fontSize": 34,
+        "typeface": "Aptos",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 3,
+        "lines": [
+          {
+            "index": 1,
+            "text": "After implementation, bosses should feel more"
+          },
+          {
+            "index": 2,
+            "text": "prepared because they punish public board mistakes,"
+          },
+          {
+            "index": 3,
+            "text": "preserve important pieces, and vary close good choices."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "After implementation, bosses should feel more prepared because they punish public board mistakes, preserve important pieces, and vary close good choices.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "After implementation, bosses should feel more prepared because they punish public board mistakes, preserve important pieces, and vary close good choices.",
+              "fontSize": 34,
+              "typeface": "Aptos",
+              "color": "#141A1F",
+              "bold": true,
+              "alignment": "left"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/72x4nap4",
+      "id": "5",
+      "bbox": [
+        96,
+        592,
+        752,
+        118
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.0.1"
+      },
+      "geometry": "rect",
+      "text": "The credibility comes from the constraints: buildable ROM, byte-aware patches, no hidden player information, and scenario gates before claims.",
+      "textPreview": "The credibility comes from the constraints: buildable ROM, byte-aware patches, no hidden player information, and scenario gates before cl...",
+      "resolvedFontSize": 29,
+      "resolvedTextStyle": {
+        "fontSize": 29,
+        "typeface": "Aptos",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 3,
+        "lines": [
+          {
+            "index": 1,
+            "text": "The credibility comes from the constraints: buildable ROM,"
+          },
+          {
+            "index": 2,
+            "text": "byte-aware patches, no hidden player information, and"
+          },
+          {
+            "index": 3,
+            "text": "scenario gates before claims."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "The credibility comes from the constraints: buildable ROM, byte-aware patches, no hidden player information, and scenario gates before claims.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "The credibility comes from the constraints: buildable ROM, byte-aware patches, no hidden player information, and scenario gates before claims.",
+              "fontSize": 29,
+              "typeface": "Aptos",
+              "color": "#25313B",
+              "alignment": "left"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/0nuxc3yl",
+      "id": "6",
+      "name": "pill-fairer-difficulty",
+      "bbox": [
+        96,
+        732.02,
+        238,
+        52
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.0.2.0"
+      },
+      "geometry": "roundRect",
+      "fillColor": "#2E7D5B"
+    },
+    {
+      "order": 7,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/p8nqxs72",
+      "id": "7",
+      "bbox": [
+        114,
+        740,
+        202,
+        26
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.0.2.0.0"
+      },
+      "geometry": "rect",
+      "text": "Fairer difficulty",
+      "textPreview": "Fairer difficulty",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "fontSize": 18,
+        "typeface": "Bahnschrift",
+        "bold": true,
+        "alignment": "center"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Fairer difficulty"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Fairer difficulty",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Fairer difficulty",
+              "fontSize": 18,
+              "typeface": "Bahnschrift",
+              "color": "#FFFFFF",
+              "bold": true,
+              "alignment": "center"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 8,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ed8v6psf",
+      "id": "8",
+      "name": "pill-more-replayable-bosses",
+      "bbox": [
+        350,
+        732.02,
+        298,
+        52
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.0.2.1"
+      },
+      "geometry": "roundRect",
+      "fillColor": "#2F5EA8"
+    },
+    {
+      "order": 9,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/7y1kre1w",
+      "id": "9",
+      "bbox": [
+        368,
+        740,
+        262,
+        26
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.0.2.1.0"
+      },
+      "geometry": "rect",
+      "text": "More replayable bosses",
+      "textPreview": "More replayable bosses",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "fontSize": 18,
+        "typeface": "Bahnschrift",
+        "bold": true,
+        "alignment": "center"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "More replayable bosses"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "More replayable bosses",
+          "runs": [
+            {
+              "index": 1,
+              "text": "More replayable bosses",
+              "fontSize": 18,
+              "typeface": "Bahnschrift",
+              "color": "#FFFFFF",
+              "bold": true,
+              "alignment": "center"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 10,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/rmhk3q5o",
+      "id": "10",
+      "name": "pill-measured-rollout",
+      "bbox": [
+        664,
+        732.02,
+        226,
+        52
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.0.2.2"
+      },
+      "geometry": "roundRect",
+      "fillColor": "#25313B"
+    },
+    {
+      "order": 11,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/y1kre1w7",
+      "id": "11",
+      "bbox": [
+        682,
+        740,
+        190,
+        26
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.0.2.2.0"
+      },
+      "geometry": "rect",
+      "text": "Measured rollout",
+      "textPreview": "Measured rollout",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "fontSize": 18,
+        "typeface": "Bahnschrift",
+        "bold": true,
+        "alignment": "center"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Measured rollout"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Measured rollout",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Measured rollout",
+              "fontSize": 18,
+              "typeface": "Bahnschrift",
+              "color": "#FFFFFF",
+              "bold": true,
+              "alignment": "center"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 12,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/9s36hcrm",
+      "id": "12",
+      "name": "final-bg",
+      "bbox": [
+        1016,
+        368,
+        776,
+        480
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.1.0"
+      },
+      "geometry": "rect",
+      "fillColor": "#23333B"
+    },
+    {
+      "order": 13,
+      "kind": "image",
+      "scope": "slide",
+      "aid": "im/fu18jqh0",
+      "id": "13",
+      "name": "final-janine",
+      "bbox": [
+        1045.5,
+        468,
+        235,
+        280
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.1.1.0"
+      },
+      "alt": "final-janine",
+      "contentType": "image/png",
+      "asset": {
+        "assetId": "75b6c334-973b-426d-a948-99ed9d047c38",
+        "contentType": "image/png",
+        "byteLength": 2466
+      }
+    },
+    {
+      "order": 14,
+      "kind": "image",
+      "scope": "slide",
+      "aid": "im/83itgfml",
+      "id": "14",
+      "name": "final-koga",
+      "bbox": [
+        1288.5,
+        468,
+        235,
+        280
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.1.1.1"
+      },
+      "alt": "final-koga",
+      "contentType": "image/png",
+      "asset": {
+        "assetId": "a7752470-1398-43ec-a5e5-ba5ad4977b70",
+        "contentType": "image/png",
+        "byteLength": 2418
+      }
+    },
+    {
+      "order": 15,
+      "kind": "image",
+      "scope": "slide",
+      "aid": "im/xobm58z2",
+      "id": "15",
+      "name": "final-champion",
+      "bbox": [
+        1531.5,
+        468,
+        235,
+        280
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.1.1.2"
+      },
+      "alt": "final-champion",
+      "contentType": "image/png",
+      "asset": {
+        "assetId": "fd948ee8-921b-4ecb-9bee-53754b3a1e5b",
+        "contentType": "image/png",
+        "byteLength": 2722
+      }
+    },
+    {
+      "order": 16,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/90je9cvi",
+      "id": "16",
+      "name": "source-footer",
+      "bbox": [
+        96,
+        906,
+        1728,
+        20
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.3"
+      },
+      "geometry": "rect",
+      "text": "Next concrete milestone: implement Public revealed-spinner hazard retention with three fixtures, normal build, map delta, and audit floor.",
+      "textPreview": "Next concrete milestone: implement Public revealed-spinner hazard retention with three fixtures, normal build, map delta, and audit floor.",
+      "resolvedFontSize": 14,
+      "resolvedTextStyle": {
+        "fontSize": 14,
+        "typeface": "Aptos",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Next concrete milestone: implement Public revealed-spinner hazard retention with three fixtures, normal build, map delta, and audit floor."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Next concrete milestone: implement Public revealed-spinner hazard retention with three fixtures, normal build, map delta, and audit floor.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Next concrete milestone: implement Public revealed-spinner hazard retention with three fixtures, normal build, map delta, and audit floor.",
+              "fontSize": 14,
+              "typeface": "Aptos",
+              "color": "#7A725F",
+              "alignment": "left"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "composeRuns": [
+    {
+      "index": 1,
+      "frame": {
+        "left": 0,
+        "top": 0,
+        "width": 1920,
+        "height": 1080
+      },
+      "baseUnit": 8,
+      "root": {
+        "path": "0",
+        "kind": "layers",
+        "name": "slide-root",
+        "requestedSize": {
+          "width": {
+            "mode": "fill",
+            "value": 1
+          },
+          "height": {
+            "mode": "fill",
+            "value": 1
+          }
+        },
+        "intrinsicSize": {
+          "width": 0,
+          "height": 0
+        },
+        "frame": {
+          "left": 0,
+          "top": 0,
+          "width": 1920,
+          "height": 1080
+        },
+        "children": [
+          {
+            "path": "0.0",
+            "kind": "shape",
+            "name": "background",
+            "requestedSize": {
+              "width": {
+                "mode": "fill",
+                "value": 1
+              },
+              "height": {
+                "mode": "fill",
+                "value": 1
+              }
+            },
+            "intrinsicSize": {
+              "width": 0,
+              "height": 0
+            },
+            "frame": {
+              "left": 0,
+              "top": 0,
+              "width": 1920,
+              "height": 1080
+            },
+            "snappedFrame": {
+              "left": 0,
+              "top": 0,
+              "width": 1920,
+              "height": 1080
+            },
+            "children": [],
+            "geometry": "rect",
+            "element": {
+              "aid": "sh/7ed8bat4",
+              "id": "1",
+              "kind": "shape"
+            }
+          },
+          {
+            "path": "0.1",
+            "kind": "column",
+            "name": "content",
+            "requestedSize": {
+              "width": {
+                "mode": "fill",
+                "value": 1
+              },
+              "height": {
+                "mode": "fill",
+                "value": 1
+              }
+            },
+            "intrinsicSize": {
+              "width": 1688.17,
+              "height": 997.06
+            },
+            "frame": {
+              "left": 0,
+              "top": 0,
+              "width": 1920,
+              "height": 1080
+            },
+            "children": [
+              {
+                "path": "0.1.0",
+                "kind": "text",
+                "name": "kicker-investor-takeaway",
+                "requestedSize": {
+                  "width": {
+                    "mode": "fill",
+                    "value": 1
+                  },
+                  "height": {
+                    "mode": "hug"
+                  }
+                },
+                "intrinsicSize": {
+                  "width": 0,
+                  "height": 24.19
+                },
+                "frame": {
+                  "left": 96,
+                  "top": 72,
+                  "width": 1728,
+                  "height": 24.19
+                },
+                "snappedFrame": {
+                  "left": 96,
+                  "top": 72,
+                  "width": 1728,
+                  "height": 26
+                },
+                "children": [],
+                "text": "INVESTOR TAKEAWAY",
+                "transform": "none",
+                "element": {
+                  "aid": "sh/0z61032l",
+                  "id": "2",
+                  "kind": "shape"
+                }
+              },
+              {
+                "path": "0.1.1",
+                "kind": "text",
+                "requestedSize": {
+                  "width": {
+                    "mode": "wrap",
+                    "max": 1500
+                  },
+                  "height": {
+                    "mode": "hug"
+                  }
+                },
+                "intrinsicSize": {
+                  "width": 1496.17,
+                  "height": 186.05
+                },
+                "frame": {
+                  "left": 96,
+                  "top": 124.19,
+                  "width": 1496.17,
+                  "height": 186.05
+                },
+                "snappedFrame": {
+                  "left": 96,
+                  "top": 124,
+                  "width": 1496,
+                  "height": 188
+                },
+                "children": [],
+                "text": "The improvement is product-visible, not just technical.",
+                "transform": "none",
+                "element": {
+                  "aid": "sh/pkzupwb2",
+                  "id": "3",
+                  "kind": "shape"
+                }
+              },
+              {
+                "path": "0.1.2",
+                "kind": "grid",
+                "name": "takeaway-grid",
+                "requestedSize": {
+                  "width": {
+                    "mode": "fill",
+                    "value": 1
+                  },
+                  "height": {
+                    "mode": "hug"
+                  }
+                },
+                "intrinsicSize": {
+                  "width": 56,
+                  "height": 540
+                },
+                "frame": {
+                  "left": 96,
+                  "top": 338.24,
+                  "width": 1728,
+                  "height": 540
+                },
+                "children": [
+                  {
+                    "path": "0.1.2.0",
+                    "kind": "column",
+                    "name": "takeaway-copy",
+                    "requestedSize": {
+                      "width": {
+                        "mode": "fill",
+                        "value": 1
+                      },
+                      "height": {
+                        "mode": "hug"
+                      }
+                    },
+                    "intrinsicSize": {
+                      "width": 798.54,
+                      "height": 354.02
+                    },
+                    "frame": {
+                      "left": 96,
+                      "top": 430,
+                      "width": 836,
+                      "height": 356
+                    },
+                    "children": [
+                      {
+                        "path": "0.1.2.0.0",
+                        "kind": "text",
+                        "requestedSize": {
+                          "width": {
+                            "mode": "wrap",
+                            "max": 820
+                          },
+                          "height": {
+                            "mode": "hug"
+                          }
+                        },
+                        "intrinsicSize": {
+                          "width": 798.54,
+                          "height": 137.09
+                        },
+                        "frame": {
+                          "left": 96,
+                          "top": 430,
+                          "width": 798.54,
+                          "height": 137.09
+                        },
+                        "snappedFrame": {
+                          "left": 96,
+                          "top": 430,
+                          "width": 798,
+                          "height": 138
+                        },
+                        "children": [],
+                        "text": "After implementation, bosses should feel more prepared because they punish public board mistakes, preserve important pieces, and vary close good choices.",
+                        "transform": "none",
+                        "element": {
+                          "aid": "sh/ih4byhgn",
+                          "id": "4",
+                          "kind": "shape"
+                        }
+                      },
+                      {
+                        "path": "0.1.2.0.1",
+                        "kind": "text",
+                        "requestedSize": {
+                          "width": {
+                            "mode": "wrap",
+                            "max": 820
+                          },
+                          "height": {
+                            "mode": "hug"
+                          }
+                        },
+                        "intrinsicSize": {
+                          "width": 752.64,
+                          "height": 116.93
+                        },
+                        "frame": {
+                          "left": 96,
+                          "top": 591.09,
+                          "width": 752.64,
+                          "height": 116.93
+                        },
+                        "snappedFrame": {
+                          "left": 96,
+                          "top": 592,
+                          "width": 752,
+                          "height": 118
+                        },
+                        "children": [],
+                        "text": "The credibility comes from the constraints: buildable ROM, byte-aware patches, no hidden player information, and scenario gates before claims.",
+                        "transform": "none",
+                        "element": {
+                          "aid": "sh/72x4nap4",
+                          "id": "5",
+                          "kind": "shape"
+                        }
+                      },
+                      {
+                        "path": "0.1.2.0.2",
+                        "kind": "row",
+                        "requestedSize": {
+                          "width": {
+                            "mode": "fill",
+                            "value": 1
+                          },
+                          "height": {
+                            "mode": "hug"
+                          }
+                        },
+                        "intrinsicSize": {
+                          "width": 794,
+                          "height": 52
+                        },
+                        "frame": {
+                          "left": 96,
+                          "top": 732.02,
+                          "width": 836,
+                          "height": 52
+                        },
+                        "children": [
+                          {
+                            "path": "0.1.2.0.2.0",
+                            "kind": "panel",
+                            "name": "pill-fairer-difficulty",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fixed",
+                                "value": 238
+                              },
+                              "height": {
+                                "mode": "fixed",
+                                "value": 52
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 36,
+                              "height": 40.19
+                            },
+                            "frame": {
+                              "left": 96,
+                              "top": 732.02,
+                              "width": 238,
+                              "height": 52
+                            },
+                            "snappedFrame": {
+                              "left": 96,
+                              "top": 732.02,
+                              "width": 238,
+                              "height": 52
+                            },
+                            "children": [
+                              {
+                                "path": "0.1.2.0.2.0.0",
+                                "kind": "text",
+                                "requestedSize": {
+                                  "width": {
+                                    "mode": "fill",
+                                    "value": 1
+                                  },
+                                  "height": {
+                                    "mode": "hug"
+                                  }
+                                },
+                                "intrinsicSize": {
+                                  "width": 0,
+                                  "height": 24.19
+                                },
+                                "frame": {
+                                  "left": 114,
+                                  "top": 740.02,
+                                  "width": 202,
+                                  "height": 24.19
+                                },
+                                "snappedFrame": {
+                                  "left": 114,
+                                  "top": 740,
+                                  "width": 202,
+                                  "height": 26
+                                },
+                                "children": [],
+                                "text": "Fairer difficulty",
+                                "transform": "none",
+                                "element": {
+                                  "aid": "sh/p8nqxs72",
+                                  "id": "7",
+                                  "kind": "shape"
+                                }
+                              }
+                            ],
+                            "padding": {
+                              "top": 8,
+                              "right": 18,
+                              "bottom": 8,
+                              "left": 18
+                            },
+                            "align": "start",
+                            "justify": "start",
+                            "contentFrame": {
+                              "left": 114,
+                              "top": 740.02,
+                              "width": 202,
+                              "height": 36
+                            },
+                            "element": {
+                              "aid": "sh/0nuxc3yl",
+                              "id": "6",
+                              "kind": "shape"
+                            }
+                          },
+                          {
+                            "path": "0.1.2.0.2.1",
+                            "kind": "panel",
+                            "name": "pill-more-replayable-bosses",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fixed",
+                                "value": 298
+                              },
+                              "height": {
+                                "mode": "fixed",
+                                "value": 52
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 36,
+                              "height": 40.19
+                            },
+                            "frame": {
+                              "left": 350,
+                              "top": 732.02,
+                              "width": 298,
+                              "height": 52
+                            },
+                            "snappedFrame": {
+                              "left": 350,
+                              "top": 732.02,
+                              "width": 298,
+                              "height": 52
+                            },
+                            "children": [
+                              {
+                                "path": "0.1.2.0.2.1.0",
+                                "kind": "text",
+                                "requestedSize": {
+                                  "width": {
+                                    "mode": "fill",
+                                    "value": 1
+                                  },
+                                  "height": {
+                                    "mode": "hug"
+                                  }
+                                },
+                                "intrinsicSize": {
+                                  "width": 0,
+                                  "height": 24.19
+                                },
+                                "frame": {
+                                  "left": 368,
+                                  "top": 740.02,
+                                  "width": 262,
+                                  "height": 24.19
+                                },
+                                "snappedFrame": {
+                                  "left": 368,
+                                  "top": 740,
+                                  "width": 262,
+                                  "height": 26
+                                },
+                                "children": [],
+                                "text": "More replayable bosses",
+                                "transform": "none",
+                                "element": {
+                                  "aid": "sh/7y1kre1w",
+                                  "id": "9",
+                                  "kind": "shape"
+                                }
+                              }
+                            ],
+                            "padding": {
+                              "top": 8,
+                              "right": 18,
+                              "bottom": 8,
+                              "left": 18
+                            },
+                            "align": "start",
+                            "justify": "start",
+                            "contentFrame": {
+                              "left": 368,
+                              "top": 740.02,
+                              "width": 262,
+                              "height": 36
+                            },
+                            "element": {
+                              "aid": "sh/ed8v6psf",
+                              "id": "8",
+                              "kind": "shape"
+                            }
+                          },
+                          {
+                            "path": "0.1.2.0.2.2",
+                            "kind": "panel",
+                            "name": "pill-measured-rollout",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fixed",
+                                "value": 226
+                              },
+                              "height": {
+                                "mode": "fixed",
+                                "value": 52
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 36,
+                              "height": 40.19
+                            },
+                            "frame": {
+                              "left": 664,
+                              "top": 732.02,
+                              "width": 226,
+                              "height": 52
+                            },
+                            "snappedFrame": {
+                              "left": 664,
+                              "top": 732.02,
+                              "width": 226,
+                              "height": 52
+                            },
+                            "children": [
+                              {
+                                "path": "0.1.2.0.2.2.0",
+                                "kind": "text",
+                                "requestedSize": {
+                                  "width": {
+                                    "mode": "fill",
+                                    "value": 1
+                                  },
+                                  "height": {
+                                    "mode": "hug"
+                                  }
+                                },
+                                "intrinsicSize": {
+                                  "width": 0,
+                                  "height": 24.19
+                                },
+                                "frame": {
+                                  "left": 682,
+                                  "top": 740.02,
+                                  "width": 190,
+                                  "height": 24.19
+                                },
+                                "snappedFrame": {
+                                  "left": 682,
+                                  "top": 740,
+                                  "width": 190,
+                                  "height": 26
+                                },
+                                "children": [],
+                                "text": "Measured rollout",
+                                "transform": "none",
+                                "element": {
+                                  "aid": "sh/y1kre1w7",
+                                  "id": "11",
+                                  "kind": "shape"
+                                }
+                              }
+                            ],
+                            "padding": {
+                              "top": 8,
+                              "right": 18,
+                              "bottom": 8,
+                              "left": 18
+                            },
+                            "align": "start",
+                            "justify": "start",
+                            "contentFrame": {
+                              "left": 682,
+                              "top": 740.02,
+                              "width": 190,
+                              "height": 36
+                            },
+                            "element": {
+                              "aid": "sh/rmhk3q5o",
+                              "id": "10",
+                              "kind": "shape"
+                            }
+                          }
+                        ],
+                        "padding": {
+                          "top": 0,
+                          "right": 0,
+                          "bottom": 0,
+                          "left": 0
+                        },
+                        "gap": 16,
+                        "effectiveGap": 16,
+                        "justifyOffset": 0,
+                        "align": "start",
+                        "justify": "start",
+                        "contentFrame": {
+                          "left": 96,
+                          "top": 732.02,
+                          "width": 836,
+                          "height": 52
+                        },
+                        "items": [
+                          {
+                            "path": "0.1.2.0.2.0",
+                            "frame": {
+                              "left": 96,
+                              "top": 732.02,
+                              "width": 238,
+                              "height": 52
+                            }
+                          },
+                          {
+                            "path": "0.1.2.0.2.1",
+                            "frame": {
+                              "left": 350,
+                              "top": 732.02,
+                              "width": 298,
+                              "height": 52
+                            }
+                          },
+                          {
+                            "path": "0.1.2.0.2.2",
+                            "frame": {
+                              "left": 664,
+                              "top": 732.02,
+                              "width": 226,
+                              "height": 52
+                            }
+                          }
+                        ]
+                      }
+                    ],
+                    "padding": {
+                      "top": 0,
+                      "right": 0,
+                      "bottom": 0,
+                      "left": 0
+                    },
+                    "gap": 24,
+                    "effectiveGap": 24,
+                    "justifyOffset": 0,
+                    "align": "start",
+                    "justify": "start",
+                    "contentFrame": {
+                      "left": 96,
+                      "top": 430,
+                      "width": 836,
+                      "height": 356
+                    },
+                    "items": [
+                      {
+                        "path": "0.1.2.0.0",
+                        "frame": {
+                          "left": 96,
+                          "top": 430,
+                          "width": 798.54,
+                          "height": 137.09
+                        }
+                      },
+                      {
+                        "path": "0.1.2.0.1",
+                        "frame": {
+                          "left": 96,
+                          "top": 591.09,
+                          "width": 752.64,
+                          "height": 116.93
+                        }
+                      },
+                      {
+                        "path": "0.1.2.0.2",
+                        "frame": {
+                          "left": 96,
+                          "top": 732.02,
+                          "width": 836,
+                          "height": 52
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "path": "0.1.2.1",
+                    "kind": "layers",
+                    "name": "final-art",
+                    "requestedSize": {
+                      "width": {
+                        "mode": "fill",
+                        "value": 1
+                      },
+                      "height": {
+                        "mode": "fixed",
+                        "value": 540
+                      }
+                    },
+                    "intrinsicSize": {
+                      "width": 60,
+                      "height": 60
+                    },
+                    "frame": {
+                      "left": 988,
+                      "top": 338,
+                      "width": 836,
+                      "height": 540
+                    },
+                    "children": [
+                      {
+                        "path": "0.1.2.1.0",
+                        "kind": "shape",
+                        "name": "final-bg",
+                        "requestedSize": {
+                          "width": {
+                            "mode": "fill",
+                            "value": 1
+                          },
+                          "height": {
+                            "mode": "fill",
+                            "value": 1
+                          }
+                        },
+                        "intrinsicSize": {
+                          "width": 0,
+                          "height": 0
+                        },
+                        "frame": {
+                          "left": 1018,
+                          "top": 368,
+                          "width": 776,
+                          "height": 480
+                        },
+                        "snappedFrame": {
+                          "left": 1016,
+                          "top": 368,
+                          "width": 776,
+                          "height": 480
+                        },
+                        "children": [],
+                        "geometry": "rect",
+                        "element": {
+                          "aid": "sh/9s36hcrm",
+                          "id": "12",
+                          "kind": "shape"
+                        }
+                      },
+                      {
+                        "path": "0.1.2.1.1",
+                        "kind": "row",
+                        "requestedSize": {
+                          "width": {
+                            "mode": "fill",
+                            "value": 1
+                          },
+                          "height": {
+                            "mode": "fill",
+                            "value": 1
+                          }
+                        },
+                        "intrinsicSize": {
+                          "width": 721,
+                          "height": 280
+                        },
+                        "frame": {
+                          "left": 1018,
+                          "top": 368,
+                          "width": 776,
+                          "height": 480
+                        },
+                        "children": [
+                          {
+                            "path": "0.1.2.1.1.0",
+                            "kind": "image",
+                            "name": "final-janine",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fixed",
+                                "value": 235
+                              },
+                              "height": {
+                                "mode": "fixed",
+                                "value": 280
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 235,
+                              "height": 280
+                            },
+                            "frame": {
+                              "left": 1045.5,
+                              "top": 468,
+                              "width": 235,
+                              "height": 280
+                            },
+                            "snappedFrame": {
+                              "left": 1045.5,
+                              "top": 468,
+                              "width": 235,
+                              "height": 280
+                            },
+                            "children": [],
+                            "source": {
+                              "kind": "dataUrl"
+                            },
+                            "fit": "contain",
+                            "alt": "final-janine",
+                            "element": {
+                              "aid": "im/fu18jqh0",
+                              "id": "13",
+                              "kind": "image"
+                            }
+                          },
+                          {
+                            "path": "0.1.2.1.1.1",
+                            "kind": "image",
+                            "name": "final-koga",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fixed",
+                                "value": 235
+                              },
+                              "height": {
+                                "mode": "fixed",
+                                "value": 280
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 235,
+                              "height": 280
+                            },
+                            "frame": {
+                              "left": 1288.5,
+                              "top": 468,
+                              "width": 235,
+                              "height": 280
+                            },
+                            "snappedFrame": {
+                              "left": 1288.5,
+                              "top": 468,
+                              "width": 235,
+                              "height": 280
+                            },
+                            "children": [],
+                            "source": {
+                              "kind": "dataUrl"
+                            },
+                            "fit": "contain",
+                            "alt": "final-koga",
+                            "element": {
+                              "aid": "im/83itgfml",
+                              "id": "14",
+                              "kind": "image"
+                            }
+                          },
+                          {
+                            "path": "0.1.2.1.1.2",
+                            "kind": "image",
+                            "name": "final-champion",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fixed",
+                                "value": 235
+                              },
+                              "height": {
+                                "mode": "fixed",
+                                "value": 280
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 235,
+                              "height": 280
+                            },
+                            "frame": {
+                              "left": 1531.5,
+                              "top": 468,
+                              "width": 235,
+                              "height": 280
+                            },
+                            "snappedFrame": {
+                              "left": 1531.5,
+                              "top": 468,
+                              "width": 235,
+                              "height": 280
+                            },
+                            "children": [],
+                            "source": {
+                              "kind": "dataUrl"
+                            },
+                            "fit": "contain",
+                            "alt": "final-champion",
+                            "element": {
+                              "aid": "im/xobm58z2",
+                              "id": "15",
+                              "kind": "image"
+                            }
+                          }
+                        ],
+                        "padding": {
+                          "top": 0,
+                          "right": 0,
+                          "bottom": 0,
+                          "left": 0
+                        },
+                        "gap": 8,
+                        "effectiveGap": 8,
+                        "justifyOffset": 27.5,
+                        "align": "center",
+                        "justify": "center",
+                        "contentFrame": {
+                          "left": 1018,
+                          "top": 368,
+                          "width": 776,
+                          "height": 480
+                        },
+                        "items": [
+                          {
+                            "path": "0.1.2.1.1.0",
+                            "frame": {
+                              "left": 1045.5,
+                              "top": 468,
+                              "width": 235,
+                              "height": 280
+                            }
+                          },
+                          {
+                            "path": "0.1.2.1.1.1",
+                            "frame": {
+                              "left": 1288.5,
+                              "top": 468,
+                              "width": 235,
+                              "height": 280
+                            }
+                          },
+                          {
+                            "path": "0.1.2.1.1.2",
+                            "frame": {
+                              "left": 1531.5,
+                              "top": 468,
+                              "width": 235,
+                              "height": 280
+                            }
+                          }
+                        ]
+                      }
+                    ],
+                    "padding": {
+                      "top": 30,
+                      "right": 30,
+                      "bottom": 30,
+                      "left": 30
+                    },
+                    "alignItems": "stretch",
+                    "justifyItems": "stretch",
+                    "contentFrame": {
+                      "left": 1018,
+                      "top": 368,
+                      "width": 776,
+                      "height": 480
+                    },
+                    "items": [
+                      {
+                        "path": "0.1.2.1.0",
+                        "frame": {
+                          "left": 1018,
+                          "top": 368,
+                          "width": 776,
+                          "height": 480
+                        }
+                      },
+                      {
+                        "path": "0.1.2.1.1",
+                        "frame": {
+                          "left": 1018,
+                          "top": 368,
+                          "width": 776,
+                          "height": 480
+                        }
+                      }
+                    ]
+                  }
+                ],
+                "padding": {
+                  "top": 0,
+                  "right": 0,
+                  "bottom": 0,
+                  "left": 0
+                },
+                "columnGap": 56,
+                "rowGap": 0,
+                "alignItems": "center",
+                "justifyItems": "stretch",
+                "contentFrame": {
+                  "left": 96,
+                  "top": 338.24,
+                  "width": 1728,
+                  "height": 540
+                },
+                "columns": [
+                  {
+                    "mode": "fr",
+                    "value": 1
+                  },
+                  {
+                    "mode": "fr",
+                    "value": 1
+                  }
+                ],
+                "autoRows": "auto",
+                "resolvedRows": [
+                  "auto"
+                ],
+                "columnSizes": [
+                  836,
+                  836
+                ],
+                "rowSizes": [
+                  540
+                ],
+                "cells": [
+                  {
+                    "path": "0.1.2.0",
+                    "column": 0,
+                    "row": 0,
+                    "columnSpan": 1,
+                    "rowSpan": 1,
+                    "cellFrame": {
+                      "left": 96,
+                      "top": 338.24,
+                      "width": 836,
+                      "height": 540
+                    }
+                  },
+                  {
+                    "path": "0.1.2.1",
+                    "column": 1,
+                    "row": 0,
+                    "columnSpan": 1,
+                    "rowSpan": 1,
+                    "cellFrame": {
+                      "left": 988,
+                      "top": 338.24,
+                      "width": 836,
+                      "height": 540
+                    }
+                  }
+                ]
+              },
+              {
+                "path": "0.1.3",
+                "kind": "text",
+                "name": "source-footer",
+                "requestedSize": {
+                  "width": {
+                    "mode": "fill",
+                    "value": 1
+                  },
+                  "height": {
+                    "mode": "hug"
+                  }
+                },
+                "intrinsicSize": {
+                  "width": 0,
+                  "height": 18.82
+                },
+                "frame": {
+                  "left": 96,
+                  "top": 906.24,
+                  "width": 1728,
+                  "height": 18.82
+                },
+                "snappedFrame": {
+                  "left": 96,
+                  "top": 906,
+                  "width": 1728,
+                  "height": 20
+                },
+                "children": [],
+                "text": "Next concrete milestone: implement Public revealed-spinner hazard retention with three fixtures, normal build, map delta, and audit floor.",
+                "transform": "none",
+                "element": {
+                  "aid": "sh/90je9cvi",
+                  "id": "16",
+                  "kind": "shape"
+                }
+              }
+            ],
+            "padding": {
+              "top": 72,
+              "right": 96,
+              "bottom": 72,
+              "left": 96
+            },
+            "gap": 28,
+            "effectiveGap": 28,
+            "justifyOffset": 0,
+            "align": "start",
+            "justify": "start",
+            "contentFrame": {
+              "left": 96,
+              "top": 72,
+              "width": 1728,
+              "height": 936
+            },
+            "items": [
+              {
+                "path": "0.1.0",
+                "frame": {
+                  "left": 96,
+                  "top": 72,
+                  "width": 1728,
+                  "height": 24.19
+                }
+              },
+              {
+                "path": "0.1.1",
+                "frame": {
+                  "left": 96,
+                  "top": 124.19,
+                  "width": 1496.17,
+                  "height": 186.05
+                }
+              },
+              {
+                "path": "0.1.2",
+                "frame": {
+                  "left": 96,
+                  "top": 338.24,
+                  "width": 1728,
+                  "height": 540
+                }
+              },
+              {
+                "path": "0.1.3",
+                "frame": {
+                  "left": 96,
+                  "top": 906.24,
+                  "width": 1728,
+                  "height": 18.82
+                }
+              }
+            ]
+          }
+        ],
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "alignItems": "stretch",
+        "justifyItems": "stretch",
+        "contentFrame": {
+          "left": 0,
+          "top": 0,
+          "width": 1920,
+          "height": 1080
+        },
+        "items": [
+          {
+            "path": "0.0",
+            "frame": {
+              "left": 0,
+              "top": 0,
+              "width": 1920,
+              "height": 1080
+            }
+          },
+          {
+            "path": "0.1",
+            "frame": {
+              "left": 0,
+              "top": 0,
+              "width": 1920,
+              "height": 1080
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

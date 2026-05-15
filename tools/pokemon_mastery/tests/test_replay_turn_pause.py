@@ -38,6 +38,20 @@ SYNTHETIC_LOG = """\
 """
 
 
+NICKNAMED_LOG = """\
+|player|p1|Alice|
+|player|p2|Bob|
+|gen|2
+|tier|[Gen 2] OU
+|start
+|switch|p1a: Cloyster|Cloyster, M|100/100
+|switch|p2a: Bastard|Snorlax, M|100/100
+|turn|1
+|move|p1a: Cloyster|Spikes|p2a: Bastard
+|-sidestart|p2: Bob|Spikes
+"""
+
+
 class ReplayTurnPauseTests(unittest.TestCase):
     def test_prompt_before_turn_includes_past_public_state_only(self) -> None:
         with TemporaryDirectory() as tmpdir:
@@ -54,6 +68,17 @@ class ReplayTurnPauseTests(unittest.TestCase):
         self.assertNotIn("Golem", prompt)
         self.assertNotIn("Rest", prompt)
         self.assertNotIn("Earthquake", prompt)
+
+    def test_prompt_includes_public_species_for_nicknamed_pokemon(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "nicknamed.log"
+            path.write_text(NICKNAMED_LOG, encoding="utf-8")
+
+            prompt = format_prompt(path, 1)
+
+        self.assertIn("p2 / Bob: active Bastard (Snorlax) HP 100/100 healthy", prompt)
+        self.assertIn("Bastard (Snorlax) 100/100 healthy; moves: no moves revealed", prompt)
+        self.assertNotIn("Spikes", prompt)
 
     def test_reveal_includes_selected_turn_but_not_future_turn(self) -> None:
         with TemporaryDirectory() as tmpdir:

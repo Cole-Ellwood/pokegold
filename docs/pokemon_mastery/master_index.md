@@ -8,7 +8,11 @@ for the cookbook or the detailed subfolder indexes.
 
 | Need | Open |
 | --- | --- |
-| Current operating prompt | `goal_restart_prompt.md` |
+| Current compact context packet | `active_context.md` |
+| Context-management plan and vote record | `context_management_plan.md` |
+| Active policy cards | `policy_cards/README.md` |
+| Current learning continuation prompt | `continue_learning_1500_elo_prompt.md` |
+| Goal recreation prompt | `goal_restart_prompt.md` |
 | Study measurement loop | `measurement_minigoal_2026-05.md` |
 | Live boss turn answer shape | `boss_turn_advice_template.md` |
 | Pre-battle boss planning worksheet | `pre_battle_route_sheet.md` |
@@ -22,11 +26,11 @@ for the cookbook or the detailed subfolder indexes.
 
 | Task | First file | Then check |
 | --- | --- | --- |
-| Give live turn advice | `boss_turn_advice_template.md` | matching `boss_route_maps/*_turn1_route_sheet.md`, `worked_examples/*_player_turn_drill.md`, local mechanics docs |
+| Give live turn advice | `active_context.md`, then `boss_turn_advice_template.md` | matching `boss_route_maps/*_turn1_route_sheet.md`, one relevant `policy_cards/*.md`, local mechanics docs |
 | Plan a boss before turn 1 | `pre_battle_route_sheet.md` | `boss_route_maps/README.md`, matching `worked_examples/*_pre_battle_route_sheet.md` |
-| Study a reusable decision recipe | `cookbook.md` | `source_to_policy_ledger.md`, `worked_examples/README.md` |
+| Study a reusable decision recipe | `active_context.md`, then `policy_cards/README.md` | `cookbook.md`, `source_to_policy_ledger.md`, `worked_examples/README.md` |
 | Practice exact move choice | `worked_examples/live_turn_drills.md` | `paused_turn_atlas.md`, `measurement_minigoal_2026-05.md` |
-| Review a long expert battle | `replay_turn_pause_protocol.md` | `reviews/`; add/update `source_to_policy_ledger.md`, `paused_turn_atlas.md`, `worked_examples/` only if the lesson is reusable |
+| Review a long expert battle | `active_context.md`, then `replay_turn_pause_protocol.md` | `reviews/`; add/update `source_to_policy_ledger.md`, `paused_turn_atlas.md`, `worked_examples/` only if the lesson is reusable |
 | Take an adjacent-domain tangent | `cross_domain_autonomy_policy.md` | create STP/PTA/helper/fixture/reject note, then test against a Pokemon score |
 | Validate romhack mechanics | `romhack_deltas/` | `mechanics_fixtures/`, local source/debugger/emulator evidence |
 | Review cheap boss-AI policy fixes | `boss_ai_re_solve_trigger_audit_2026-05-14.md` | `tools/boss_ai_preference/benchmarks/`, `engine/battle/ai/boss_policy_move.asm`, `engine/battle/ai/boss_policy_switch.asm` |
@@ -38,6 +42,9 @@ for the cookbook or the detailed subfolder indexes.
 
 | Area | Role | Keep Policy |
 | --- | --- | --- |
+| `active_context.md` | Compact current packet for future work blocks. | Preserve cap. Move details into cards or evidence artifacts when it grows. |
+| `context_management_plan.md` | Approved context-management plan and granular vote record. | Preserve as process source; update only after another declared audit. |
+| `policy_cards/` | Compact active decision-boundary cards. | Keep short. Link to evidence instead of copying long replay notes. |
 | `cookbook.md` | Canonical concise recipes for battle advice. | Preserve. Edit only to clarify, de-duplicate, or add a battle-tested recipe. |
 | `source_to_policy_ledger.md` | Source lessons compressed into trigger/default/exception/worst-branch entries. | Preserve. It is the trace from expert source to policy. |
 | `paused_turn_atlas.md` | Reviewed positions turned into move-choice prompts. | Preserve. It is practice material, not prose. |
@@ -45,6 +52,7 @@ for the cookbook or the detailed subfolder indexes.
 | `reviews/` | Individual battle reviews and extracted lessons. | Preserve. Do not merge into the cookbook unless the lesson has become reusable. |
 | `boss_route_maps/` | Boss-specific no-preview route maps. | Preserve. They are local roster planning artifacts. |
 | `romhack_deltas/` | Mechanics forks and local transfer rules. | Preserve. These outrank vanilla memory for romhack claims. |
+| `romhack_deltas/mechanics_pending_index.md` | Current routing index for decision-relevant mechanics that still need local proof. | Update row status when local evidence changes. |
 | `mechanics_fixtures/` | Runtime evidence for mechanics that affect advice. | Preserve and expand. |
 | `measurement_*` | Progress measurement and score history. | Preserve. This is the anti-wheel-spinning layer. |
 | `quick_tests/` | Scored quick-probe artifacts and post-oracle summaries. | Preserve. These are the trend evidence trail. |
@@ -65,10 +73,10 @@ Snapshot from 2026-05-14:
 | Matching pre-battle worked route sheets | 22 |
 | Battle reviews | 39 |
 | Source-to-policy entries | 58 |
-| Paused-turn atlas prompts | 56 |
+| Paused-turn atlas prompts | 60 |
 | Live-turn drills | 52 |
 | External hidden-info atlas entries | 40 |
-| Romhack delta docs | 8 |
+| Romhack delta docs | 9 |
 
 ## High-Value Entry Points By Skill
 

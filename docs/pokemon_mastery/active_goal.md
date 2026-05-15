@@ -1,20 +1,23 @@
 # Active Pokemon Mastery Goal
 
-Status: active. The goal tool has been restarted with the tighter measurable
-target from `goal_restart_prompt.md`.
+Status: active. The goal tool now uses the compact-context system from
+`active_context.md` as the startup spine.
 
 ## Goal
 
-Become a strategically competent high-level Pokemon singles advisor, roughly
-equivalent to a solid 1500-ELO player, able to help win long-form battles by
-planning from turn 1, updating plans as the board changes, and choosing moves
-that preserve or improve realistic win routes.
+Become a measurably stronger Pokemon singles advisor, using solid 1500-Elo play
+as a training proxy rather than proof. The practical target is better unseen
+move choice: plan multiple turns ahead, re-solve after new public information,
+and choose moves that preserve or improve realistic win routes in GSC-style
+singles and practical romhack boss turns.
 
 ## Operating Rules
 
-- Use web search constantly. Smogon articles, analyses, tournament replays,
-  battle logs, forum discussions, sample teams, and high-level player reasoning
-  are the primary curriculum.
+- Start from `active_context.md` and only the 1-3 policy cards or local docs
+  needed for the selected bottleneck. Do not load broad archives by default.
+- Use current web search when selecting fresh Smogon/GSC material, checking
+  current competitive sources, verifying current ladder/rating claims, or
+  investigating a repeated error not explained locally.
 - Use full autonomy when it improves decisions: search outside Pokemon, study
   adjacent games or AI methods, build helper programs, download materials, and
   run experiments. Use `cross_domain_autonomy_policy.md` to keep tangents tied
@@ -32,6 +35,16 @@ that preserve or improve realistic win routes.
 - Optimize for live move choice. The central skill is decision compression:
   turning a messy board into one ranked recommendation, with the next-turn
   consequence and worst plausible branch named clearly.
+- Treat severe-blunder avoidance as a gate, not the main training objective.
+  The next phase must improve positive move selection: choosing moves that
+  convert route pressure, punish named branches, or spend/preserve the correct
+  route piece instead of merely choosing a safe or defensible line.
+- Before serious recommendations, separate decision-relevant set facts into
+  `revealed`, `strong prior`, and `possible only`. Revealed facts can anchor the
+  line. Strong priors can affect risk pricing only if the recommendation says
+  what happens when the prior is wrong. Possible-only facts are branches, not
+  reasons to choose the main move unless slow play loses and the answer is
+  explicitly marked as a read.
 - Use local preference cards only as light calibration. Do not let them become
   the curriculum.
 - Use GSC as the home format because the romhack is GSC-based, but study ADV,
@@ -71,18 +84,22 @@ that preserve or improve realistic win routes.
 Before advising a serious move, answer:
 
 1. What is the exact public state?
-2. What was the original game plan, and is it still live?
-3. What are our current winning routes?
-4. What are the opponent's current winning routes?
-5. Which pieces are irreplaceable, and which are expendable?
-6. What is the opponent's best immediate punish?
-7. What is the worst plausible branch?
-8. What happens if we attack, switch, set hazards, use status, set up, recover,
+2. Which decision-relevant moves, items, roles, and teammates are revealed,
+   strong priors, or possible only?
+3. Does my intended line require an unrevealed fact to be true? If yes, is it a
+   justified read, and what happens if it is wrong?
+4. What was the original game plan, and is it still live?
+5. What are our current winning routes?
+6. What are the opponent's current winning routes?
+7. Which pieces are irreplaceable, and which are expendable?
+8. What is the opponent's best immediate punish?
+9. What is the worst plausible branch?
+10. What happens if we attack, switch, set hazards, use status, set up, recover,
    phaze, scout, or sacrifice?
-9. What resource does the move gain, and what does it spend?
-10. Does the move improve a concrete route, or only feel active?
-11. What is the likely next turn if this works?
-12. What information would make us abandon the plan?
+11. What resource does the move gain, and what does it spend?
+12. Does the move improve a concrete route, or only feel active?
+13. What is the likely next turn if this works?
+14. What information would make us abandon the plan?
 
 ## Study Cadence
 
@@ -130,9 +147,15 @@ Track progress with move-quality evidence, not notebook volume:
 
 - mechanics errors;
 - state-completeness errors;
+- hidden-information errors, counted separately and also counted alongside
+  severe blunders when the same recommendation both assumes hidden facts and
+  loses a route;
 - live-turn drill scores;
 - top-move or acceptable-move agreement in reviewed expert turns;
 - turn-pause replay scores from unseen Smogon GSC tournament games;
+- positive-selection rate in fresh replay artifacts: whether the chosen move
+  actively improves the route, punishes the named branch, preserves or spends
+  the correct route piece, or converts pressure into progress;
 - transfer-study artifacts that become Pokemon drills, policy entries,
   fixtures, helpers, or scored probes;
 - earliest meaningful mistake found in long reviews;
@@ -149,6 +172,9 @@ The real proof is better play advice:
 - accurate plan revision after new information;
 - strong win-condition tracking;
 - fewer severe blunders;
+- fewer total tracked errors, or a clearly labeled narrower claim such as
+  "catastrophic errors improved but hidden-info errors did not";
+- higher positive-selection rate, with severe blunders kept low;
 - preservation of irreplaceable pieces;
 - better hazard, status, Rest, PP, sacrifice, setup, phazing, and endgame
   planning;

@@ -1,0 +1,2692 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/xz9j4y",
+    "id": "xz9j4y",
+    "slide": 7,
+    "layoutId": "e3fd55af-303b-4a75-a64b-15538c6ada38",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "51cad470-a5e6-490f-980d-21b983c71172",
+    "masterLayoutName": "Master",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "Aptos",
+      "Bahnschrift"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "e3fd55af-303b-4a75-a64b-15538c6ada38",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "51cad470-a5e6-490f-980d-21b983c71172",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "51cad470-a5e6-490f-980d-21b983c71172",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/oza1gvy9",
+      "id": "1",
+      "name": "background",
+      "bbox": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0"
+      },
+      "geometry": "rect",
+      "fillColor": "#FBF7EA"
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/zed8v6ps",
+      "id": "2",
+      "name": "kicker-before-after-example-3",
+      "bbox": [
+        96,
+        72,
+        1728,
+        26
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.0"
+      },
+      "geometry": "rect",
+      "text": "BEFORE / AFTER EXAMPLE 3",
+      "textPreview": "BEFORE / AFTER EXAMPLE 3",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "fontSize": 18,
+        "typeface": "Bahnschrift",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "BEFORE / AFTER EXAMPLE 3"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "BEFORE / AFTER EXAMPLE 3",
+          "runs": [
+            {
+              "index": 1,
+              "text": "BEFORE / AFTER EXAMPLE 3",
+              "fontSize": 18,
+              "typeface": "Bahnschrift",
+              "color": "#2E7D5B",
+              "bold": true,
+              "alignment": "left"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/6xkf6dcb",
+      "id": "3",
+      "bbox": [
+        96,
+        124,
+        1490,
+        178
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.1"
+      },
+      "geometry": "rect",
+      "text": "Sacrifice moves become route tools instead of spectacle.",
+      "textPreview": "Sacrifice moves become route tools instead of spectacle.",
+      "resolvedFontSize": 72,
+      "resolvedTextStyle": {
+        "fontSize": 72,
+        "typeface": "Bahnschrift",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Sacrifice moves become route tools instead"
+          },
+          {
+            "index": 2,
+            "text": "of spectacle."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Sacrifice moves become route tools instead of spectacle.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Sacrifice moves become route tools instead of spectacle.",
+              "fontSize": 72,
+              "typeface": "Bahnschrift",
+              "color": "#141A1F",
+              "bold": true,
+              "alignment": "left"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/hwfyxobm",
+      "id": "4",
+      "bbox": [
+        96,
+        376,
+        918,
+        44
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.0.0"
+      },
+      "geometry": "rect",
+      "text": "The plan treats Explosion and Selfdestruct as human trade decisions.",
+      "textPreview": "The plan treats Explosion and Selfdestruct as human trade decisions.",
+      "resolvedFontSize": 32,
+      "resolvedTextStyle": {
+        "fontSize": 32,
+        "typeface": "Aptos",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "The plan treats Explosion and Selfdestruct as human trade decisions."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "The plan treats Explosion and Selfdestruct as human trade decisions.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "The plan treats Explosion and Selfdestruct as human trade decisions.",
+              "fontSize": 32,
+              "typeface": "Aptos",
+              "color": "#141A1F",
+              "bold": true,
+              "alignment": "left"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/obm58z25",
+      "id": "5",
+      "bbox": [
+        96,
+        442,
+        280,
+        34
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.0.1.0.0"
+      },
+      "geometry": "rect",
+      "text": "Current gap",
+      "textPreview": "Current gap",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "Bahnschrift",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Current gap"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Current gap",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Current gap",
+              "fontSize": 24,
+              "typeface": "Bahnschrift",
+              "color": "#C74632",
+              "bold": true,
+              "alignment": "left"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/zqtcj6to",
+      "id": "6",
+      "bbox": [
+        412,
+        442,
+        284,
+        90
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.0.1.0.1"
+      },
+      "geometry": "rect",
+      "text": "Sacrifice moves can be over- or under-valued without a route-value gate.",
+      "textPreview": "Sacrifice moves can be over- or under-valued without a route-value gate.",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "fontSize": 22,
+        "typeface": "Aptos",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 3,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Sacrifice moves can be over- or"
+          },
+          {
+            "index": 2,
+            "text": "under-valued without a"
+          },
+          {
+            "index": 3,
+            "text": "route-value gate."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Sacrifice moves can be over- or under-valued without a route-value gate.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Sacrifice moves can be over- or under-valued without a route-value gate.",
+              "fontSize": 22,
+              "typeface": "Aptos",
+              "color": "#25313B",
+              "alignment": "left"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 7,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/65wjudg7",
+      "id": "7",
+      "bbox": [
+        732,
+        442,
+        284,
+        90
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.0.1.0.2"
+      },
+      "geometry": "rect",
+      "text": "Planned scoring: spend them only when public route value is high.",
+      "textPreview": "Planned scoring: spend them only when public route value is high.",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "fontSize": 22,
+        "typeface": "Aptos",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 3,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Planned scoring: spend them"
+          },
+          {
+            "index": 2,
+            "text": "only when public route value is"
+          },
+          {
+            "index": 3,
+            "text": "high."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Planned scoring: spend them only when public route value is high.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Planned scoring: spend them only when public route value is high.",
+              "fontSize": 22,
+              "typeface": "Aptos",
+              "color": "#141A1F",
+              "alignment": "left"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 8,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/h0fepkzu",
+      "id": "8",
+      "name": "rule-Current gap",
+      "bbox": [
+        96,
+        544,
+        918,
+        2
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.0.1.1"
+      },
+      "geometry": "rect",
+      "fillColor": "#D6CBAA",
+      "lineColor": "#D6CBAA",
+      "lineWidth": 0
+    },
+    {
+      "order": 9,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/sfil0rqd",
+      "id": "9",
+      "bbox": [
+        96,
+        568,
+        280,
+        34
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.0.2.0.0"
+      },
+      "geometry": "rect",
+      "text": "Route value",
+      "textPreview": "Route value",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "Bahnschrift",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Route value"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Route value",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Route value",
+              "fontSize": 24,
+              "typeface": "Bahnschrift",
+              "color": "#2E7D5B",
+              "bold": true,
+              "alignment": "left"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 10,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/qtcj6tov",
+      "id": "10",
+      "bbox": [
+        412,
+        568,
+        284,
+        90
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.0.2.0.1"
+      },
+      "geometry": "rect",
+      "text": "Meaningful trades remove a public threat, deny setup, or open the boss's route.",
+      "textPreview": "Meaningful trades remove a public threat, deny setup, or open the boss's route.",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "fontSize": 22,
+        "typeface": "Aptos",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 3,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Meaningful trades remove a"
+          },
+          {
+            "index": 2,
+            "text": "public threat, deny setup, or"
+          },
+          {
+            "index": 3,
+            "text": "open the boss's route."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Meaningful trades remove a public threat, deny setup, or open the boss's route.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Meaningful trades remove a public threat, deny setup, or open the boss's route.",
+              "fontSize": 22,
+              "typeface": "Aptos",
+              "color": "#25313B",
+              "alignment": "left"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 11,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/je9cvixc",
+      "id": "11",
+      "bbox": [
+        732,
+        568,
+        284,
+        60
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.0.2.0.2"
+      },
+      "geometry": "rect",
+      "text": "Measured through fixtures before source changes.",
+      "textPreview": "Measured through fixtures before source changes.",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "fontSize": 22,
+        "typeface": "Aptos",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Measured through fixtures"
+          },
+          {
+            "index": 2,
+            "text": "before source changes."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Measured through fixtures before source changes.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Measured through fixtures before source changes.",
+              "fontSize": 22,
+              "typeface": "Aptos",
+              "color": "#141A1F",
+              "alignment": "left"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 12,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/8z25kb6x",
+      "id": "12",
+      "name": "rule-Route value",
+      "bbox": [
+        96,
+        670,
+        918,
+        2
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.0.2.1"
+      },
+      "geometry": "rect",
+      "fillColor": "#D6CBAA",
+      "lineColor": "#D6CBAA",
+      "lineWidth": 0
+    },
+    {
+      "order": 13,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/1gvy90je",
+      "id": "13",
+      "bbox": [
+        96,
+        694,
+        280,
+        34
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.0.3.0.0"
+      },
+      "geometry": "rect",
+      "text": "Guardrail",
+      "textPreview": "Guardrail",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "Bahnschrift",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Guardrail"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Guardrail",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Guardrail",
+              "fontSize": 24,
+              "typeface": "Bahnschrift",
+              "color": "#2F5EA8",
+              "bold": true,
+              "alignment": "left"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 14,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/q1orytsv",
+      "id": "14",
+      "bbox": [
+        412,
+        694,
+        284,
+        90
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.0.3.0.1"
+      },
+      "geometry": "rect",
+      "text": "Do not call hidden party or current-input helpers to decide whether the trade is good.",
+      "textPreview": "Do not call hidden party or current-input helpers to decide whether the trade is good.",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "fontSize": 22,
+        "typeface": "Aptos",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 3,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Do not call hidden party or"
+          },
+          {
+            "index": 2,
+            "text": "current-input helpers to decide"
+          },
+          {
+            "index": 3,
+            "text": "whether the trade is good."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Do not call hidden party or current-input helpers to decide whether the trade is good.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Do not call hidden party or current-input helpers to decide whether the trade is good.",
+              "fontSize": 22,
+              "typeface": "Aptos",
+              "color": "#25313B",
+              "alignment": "left"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 15,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/fmlkjm1c",
+      "id": "15",
+      "bbox": [
+        732,
+        694,
+        284,
+        60
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.0.3.0.2"
+      },
+      "geometry": "rect",
+      "text": "Use active visible pressure and already seen species only.",
+      "textPreview": "Use active visible pressure and already seen species only.",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "fontSize": 22,
+        "typeface": "Aptos",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Use active visible pressure and"
+          },
+          {
+            "index": 2,
+            "text": "already seen species only."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Use active visible pressure and already seen species only.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Use active visible pressure and already seen species only.",
+              "fontSize": 22,
+              "typeface": "Aptos",
+              "color": "#141A1F",
+              "alignment": "left"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 16,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/87ed8bat",
+      "id": "16",
+      "name": "rule-Guardrail",
+      "bbox": [
+        96,
+        798,
+        918,
+        2
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.0.3.1"
+      },
+      "geometry": "rect",
+      "fillColor": "#D6CBAA",
+      "lineColor": "#D6CBAA",
+      "lineWidth": 0
+    },
+    {
+      "order": 17,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/xs72x4na",
+      "id": "17",
+      "name": "explosion-bg",
+      "bbox": [
+        1096,
+        352,
+        696,
+        472
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.1.0"
+      },
+      "geometry": "rect",
+      "fillColor": "#311F1C"
+    },
+    {
+      "order": 18,
+      "kind": "image",
+      "scope": "slide",
+      "aid": "im/5o7qpg3e",
+      "id": "18",
+      "name": "explosion",
+      "bbox": [
+        1238,
+        394.14,
+        420,
+        260
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.1.1.0"
+      },
+      "alt": "Explosion animation asset",
+      "contentType": "image/png",
+      "asset": {
+        "assetId": "cab261ef-96fb-46cf-a867-e9222f481a02",
+        "contentType": "image/png",
+        "byteLength": 490
+      }
+    },
+    {
+      "order": 19,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/fyxobm58",
+      "id": "19",
+      "bbox": [
+        1160,
+        674,
+        576,
+        108
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.1.1.1"
+      },
+      "geometry": "rect",
+      "text": "Cash out only when the trade matters.",
+      "textPreview": "Cash out only when the trade matters.",
+      "resolvedFontSize": 44,
+      "resolvedTextStyle": {
+        "fontSize": 44,
+        "typeface": "Bahnschrift",
+        "bold": true,
+        "alignment": "center"
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Cash out only when the trade"
+          },
+          {
+            "index": 2,
+            "text": "matters."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Cash out only when the trade matters.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Cash out only when the trade matters.",
+              "fontSize": 44,
+              "typeface": "Bahnschrift",
+              "color": "#F1E7C8",
+              "bold": true,
+              "alignment": "center"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 20,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/7y1kre1w",
+      "id": "20",
+      "name": "source-footer",
+      "bbox": [
+        96,
+        876,
+        1728,
+        20
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.3"
+      },
+      "geometry": "rect",
+      "text": "Roadmap item after hazard retention, four-move saturation review, and anti-dead-setup tightening.",
+      "textPreview": "Roadmap item after hazard retention, four-move saturation review, and anti-dead-setup tightening.",
+      "resolvedFontSize": 14,
+      "resolvedTextStyle": {
+        "fontSize": 14,
+        "typeface": "Aptos",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Roadmap item after hazard retention, four-move saturation review, and anti-dead-setup tightening."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Roadmap item after hazard retention, four-move saturation review, and anti-dead-setup tightening.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Roadmap item after hazard retention, four-move saturation review, and anti-dead-setup tightening.",
+              "fontSize": 14,
+              "typeface": "Aptos",
+              "color": "#7A725F",
+              "alignment": "left"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "composeRuns": [
+    {
+      "index": 1,
+      "frame": {
+        "left": 0,
+        "top": 0,
+        "width": 1920,
+        "height": 1080
+      },
+      "baseUnit": 8,
+      "root": {
+        "path": "0",
+        "kind": "layers",
+        "name": "slide-root",
+        "requestedSize": {
+          "width": {
+            "mode": "fill",
+            "value": 1
+          },
+          "height": {
+            "mode": "fill",
+            "value": 1
+          }
+        },
+        "intrinsicSize": {
+          "width": 0,
+          "height": 0
+        },
+        "frame": {
+          "left": 0,
+          "top": 0,
+          "width": 1920,
+          "height": 1080
+        },
+        "children": [
+          {
+            "path": "0.0",
+            "kind": "shape",
+            "name": "background",
+            "requestedSize": {
+              "width": {
+                "mode": "fill",
+                "value": 1
+              },
+              "height": {
+                "mode": "fill",
+                "value": 1
+              }
+            },
+            "intrinsicSize": {
+              "width": 0,
+              "height": 0
+            },
+            "frame": {
+              "left": 0,
+              "top": 0,
+              "width": 1920,
+              "height": 1080
+            },
+            "snappedFrame": {
+              "left": 0,
+              "top": 0,
+              "width": 1920,
+              "height": 1080
+            },
+            "children": [],
+            "geometry": "rect",
+            "element": {
+              "aid": "sh/oza1gvy9",
+              "id": "1",
+              "kind": "shape"
+            }
+          },
+          {
+            "path": "0.1",
+            "kind": "column",
+            "name": "content",
+            "requestedSize": {
+              "width": {
+                "mode": "fill",
+                "value": 1
+              },
+              "height": {
+                "mode": "fill",
+                "value": 1
+              }
+            },
+            "intrinsicSize": {
+              "width": 1682.82,
+              "height": 967.26
+            },
+            "frame": {
+              "left": 0,
+              "top": 0,
+              "width": 1920,
+              "height": 1080
+            },
+            "children": [
+              {
+                "path": "0.1.0",
+                "kind": "text",
+                "name": "kicker-before-after-example-3",
+                "requestedSize": {
+                  "width": {
+                    "mode": "fill",
+                    "value": 1
+                  },
+                  "height": {
+                    "mode": "hug"
+                  }
+                },
+                "intrinsicSize": {
+                  "width": 0,
+                  "height": 24.19
+                },
+                "frame": {
+                  "left": 96,
+                  "top": 72,
+                  "width": 1728,
+                  "height": 24.19
+                },
+                "snappedFrame": {
+                  "left": 96,
+                  "top": 72,
+                  "width": 1728,
+                  "height": 26
+                },
+                "children": [],
+                "text": "BEFORE / AFTER EXAMPLE 3",
+                "transform": "none",
+                "element": {
+                  "aid": "sh/zed8v6ps",
+                  "id": "2",
+                  "kind": "shape"
+                }
+              },
+              {
+                "path": "0.1.1",
+                "kind": "text",
+                "requestedSize": {
+                  "width": {
+                    "mode": "wrap",
+                    "max": 1500
+                  },
+                  "height": {
+                    "mode": "hug"
+                  }
+                },
+                "intrinsicSize": {
+                  "width": 1490.82,
+                  "height": 176.26
+                },
+                "frame": {
+                  "left": 96,
+                  "top": 124.19,
+                  "width": 1490.82,
+                  "height": 176.26
+                },
+                "snappedFrame": {
+                  "left": 96,
+                  "top": 124,
+                  "width": 1490,
+                  "height": 178
+                },
+                "children": [],
+                "text": "Sacrifice moves become route tools instead of spectacle.",
+                "transform": "none",
+                "element": {
+                  "aid": "sh/6xkf6dcb",
+                  "id": "3",
+                  "kind": "shape"
+                }
+              },
+              {
+                "path": "0.1.2",
+                "kind": "grid",
+                "name": "cashout-grid",
+                "requestedSize": {
+                  "width": {
+                    "mode": "fill",
+                    "value": 1
+                  },
+                  "height": {
+                    "mode": "hug"
+                  }
+                },
+                "intrinsicSize": {
+                  "width": 58,
+                  "height": 520
+                },
+                "frame": {
+                  "left": 96,
+                  "top": 328.45,
+                  "width": 1728,
+                  "height": 520
+                },
+                "children": [
+                  {
+                    "path": "0.1.2.0",
+                    "kind": "column",
+                    "name": "cashout-copy",
+                    "requestedSize": {
+                      "width": {
+                        "mode": "fill",
+                        "value": 1
+                      },
+                      "height": {
+                        "mode": "hug"
+                      }
+                    },
+                    "intrinsicSize": {
+                      "width": 0,
+                      "height": 253.78
+                    },
+                    "frame": {
+                      "left": 96,
+                      "top": 376,
+                      "width": 918.5,
+                      "height": 424
+                    },
+                    "children": [
+                      {
+                        "path": "0.1.2.0.0",
+                        "kind": "text",
+                        "requestedSize": {
+                          "width": {
+                            "mode": "fill",
+                            "value": 1
+                          },
+                          "height": {
+                            "mode": "hug"
+                          }
+                        },
+                        "intrinsicSize": {
+                          "width": 0,
+                          "height": 43.01
+                        },
+                        "frame": {
+                          "left": 96,
+                          "top": 376,
+                          "width": 918.5,
+                          "height": 43.01
+                        },
+                        "snappedFrame": {
+                          "left": 96,
+                          "top": 376,
+                          "width": 918,
+                          "height": 44
+                        },
+                        "children": [],
+                        "text": "The plan treats Explosion and Selfdestruct as human trade decisions.",
+                        "transform": "none",
+                        "element": {
+                          "aid": "sh/hwfyxobm",
+                          "id": "4",
+                          "kind": "shape"
+                        }
+                      },
+                      {
+                        "path": "0.1.2.0.1",
+                        "kind": "column",
+                        "name": "compare-row-Current gap",
+                        "requestedSize": {
+                          "width": {
+                            "mode": "fill",
+                            "value": 1
+                          },
+                          "height": {
+                            "mode": "hug"
+                          }
+                        },
+                        "intrinsicSize": {
+                          "width": 0,
+                          "height": 48.26
+                        },
+                        "frame": {
+                          "left": 96,
+                          "top": 441.01,
+                          "width": 918.5,
+                          "height": 104.7
+                        },
+                        "children": [
+                          {
+                            "path": "0.1.2.0.1.0",
+                            "kind": "grid",
+                            "name": "compare-grid-Current gap",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fill",
+                                "value": 1
+                              },
+                              "height": {
+                                "mode": "hug"
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 352,
+                              "height": 32.26
+                            },
+                            "frame": {
+                              "left": 96,
+                              "top": 441.01,
+                              "width": 918.5,
+                              "height": 88.7
+                            },
+                            "children": [
+                              {
+                                "path": "0.1.2.0.1.0.0",
+                                "kind": "text",
+                                "requestedSize": {
+                                  "width": {
+                                    "mode": "fill",
+                                    "value": 1
+                                  },
+                                  "height": {
+                                    "mode": "hug"
+                                  }
+                                },
+                                "intrinsicSize": {
+                                  "width": 0,
+                                  "height": 32.26
+                                },
+                                "frame": {
+                                  "left": 96,
+                                  "top": 441.01,
+                                  "width": 280,
+                                  "height": 32.26
+                                },
+                                "snappedFrame": {
+                                  "left": 96,
+                                  "top": 442,
+                                  "width": 280,
+                                  "height": 34
+                                },
+                                "children": [],
+                                "text": "Current gap",
+                                "transform": "none",
+                                "element": {
+                                  "aid": "sh/obm58z25",
+                                  "id": "5",
+                                  "kind": "shape"
+                                }
+                              },
+                              {
+                                "path": "0.1.2.0.1.0.1",
+                                "kind": "text",
+                                "requestedSize": {
+                                  "width": {
+                                    "mode": "fill",
+                                    "value": 1
+                                  },
+                                  "height": {
+                                    "mode": "hug"
+                                  }
+                                },
+                                "intrinsicSize": {
+                                  "width": 0,
+                                  "height": 29.57
+                                },
+                                "frame": {
+                                  "left": 412,
+                                  "top": 441.01,
+                                  "width": 283.25,
+                                  "height": 88.7
+                                },
+                                "snappedFrame": {
+                                  "left": 412,
+                                  "top": 442,
+                                  "width": 284,
+                                  "height": 90
+                                },
+                                "children": [],
+                                "text": "Sacrifice moves can be over- or under-valued without a route-value gate.",
+                                "transform": "none",
+                                "element": {
+                                  "aid": "sh/zqtcj6to",
+                                  "id": "6",
+                                  "kind": "shape"
+                                }
+                              },
+                              {
+                                "path": "0.1.2.0.1.0.2",
+                                "kind": "text",
+                                "requestedSize": {
+                                  "width": {
+                                    "mode": "fill",
+                                    "value": 1
+                                  },
+                                  "height": {
+                                    "mode": "hug"
+                                  }
+                                },
+                                "intrinsicSize": {
+                                  "width": 0,
+                                  "height": 29.57
+                                },
+                                "frame": {
+                                  "left": 731.25,
+                                  "top": 441.01,
+                                  "width": 283.25,
+                                  "height": 88.7
+                                },
+                                "snappedFrame": {
+                                  "left": 732,
+                                  "top": 442,
+                                  "width": 284,
+                                  "height": 90
+                                },
+                                "children": [],
+                                "text": "Planned scoring: spend them only when public route value is high.",
+                                "transform": "none",
+                                "element": {
+                                  "aid": "sh/65wjudg7",
+                                  "id": "7",
+                                  "kind": "shape"
+                                }
+                              }
+                            ],
+                            "padding": {
+                              "top": 0,
+                              "right": 0,
+                              "bottom": 0,
+                              "left": 0
+                            },
+                            "columnGap": 36,
+                            "rowGap": 0,
+                            "alignItems": "start",
+                            "justifyItems": "stretch",
+                            "contentFrame": {
+                              "left": 96,
+                              "top": 441.01,
+                              "width": 918.5,
+                              "height": 88.7
+                            },
+                            "columns": [
+                              {
+                                "mode": "fixed",
+                                "value": 280
+                              },
+                              {
+                                "mode": "fr",
+                                "value": 1
+                              },
+                              {
+                                "mode": "fr",
+                                "value": 1
+                              }
+                            ],
+                            "autoRows": "auto",
+                            "resolvedRows": [
+                              "auto"
+                            ],
+                            "columnSizes": [
+                              280,
+                              283.25,
+                              283.25
+                            ],
+                            "rowSizes": [
+                              88.7
+                            ],
+                            "cells": [
+                              {
+                                "path": "0.1.2.0.1.0.0",
+                                "column": 0,
+                                "row": 0,
+                                "columnSpan": 1,
+                                "rowSpan": 1,
+                                "cellFrame": {
+                                  "left": 96,
+                                  "top": 441.01,
+                                  "width": 280,
+                                  "height": 88.7
+                                }
+                              },
+                              {
+                                "path": "0.1.2.0.1.0.1",
+                                "column": 1,
+                                "row": 0,
+                                "columnSpan": 1,
+                                "rowSpan": 1,
+                                "cellFrame": {
+                                  "left": 412,
+                                  "top": 441.01,
+                                  "width": 283.25,
+                                  "height": 88.7
+                                }
+                              },
+                              {
+                                "path": "0.1.2.0.1.0.2",
+                                "column": 2,
+                                "row": 0,
+                                "columnSpan": 1,
+                                "rowSpan": 1,
+                                "cellFrame": {
+                                  "left": 731.25,
+                                  "top": 441.01,
+                                  "width": 283.25,
+                                  "height": 88.7
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "path": "0.1.2.0.1.1",
+                            "kind": "rule",
+                            "name": "rule-Current gap",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fill",
+                                "value": 1
+                              },
+                              "height": {
+                                "mode": "fixed",
+                                "value": 2
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 0,
+                              "height": 2
+                            },
+                            "frame": {
+                              "left": 96,
+                              "top": 543.71,
+                              "width": 918.5,
+                              "height": 2
+                            },
+                            "snappedFrame": {
+                              "left": 96,
+                              "top": 544,
+                              "width": 918,
+                              "height": 2
+                            },
+                            "children": [],
+                            "weight": 2,
+                            "element": {
+                              "aid": "sh/h0fepkzu",
+                              "id": "8",
+                              "kind": "shape"
+                            }
+                          }
+                        ],
+                        "padding": {
+                          "top": 0,
+                          "right": 0,
+                          "bottom": 0,
+                          "left": 0
+                        },
+                        "gap": 14,
+                        "effectiveGap": 14,
+                        "justifyOffset": 0,
+                        "align": "start",
+                        "justify": "start",
+                        "contentFrame": {
+                          "left": 96,
+                          "top": 441.01,
+                          "width": 918.5,
+                          "height": 104.7
+                        },
+                        "items": [
+                          {
+                            "path": "0.1.2.0.1.0",
+                            "frame": {
+                              "left": 96,
+                              "top": 441.01,
+                              "width": 918.5,
+                              "height": 88.7
+                            }
+                          },
+                          {
+                            "path": "0.1.2.0.1.1",
+                            "frame": {
+                              "left": 96,
+                              "top": 543.71,
+                              "width": 918.5,
+                              "height": 2
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "path": "0.1.2.0.2",
+                        "kind": "column",
+                        "name": "compare-row-Route value",
+                        "requestedSize": {
+                          "width": {
+                            "mode": "fill",
+                            "value": 1
+                          },
+                          "height": {
+                            "mode": "hug"
+                          }
+                        },
+                        "intrinsicSize": {
+                          "width": 0,
+                          "height": 48.26
+                        },
+                        "frame": {
+                          "left": 96,
+                          "top": 567.71,
+                          "width": 918.5,
+                          "height": 104.7
+                        },
+                        "children": [
+                          {
+                            "path": "0.1.2.0.2.0",
+                            "kind": "grid",
+                            "name": "compare-grid-Route value",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fill",
+                                "value": 1
+                              },
+                              "height": {
+                                "mode": "hug"
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 352,
+                              "height": 32.26
+                            },
+                            "frame": {
+                              "left": 96,
+                              "top": 567.71,
+                              "width": 918.5,
+                              "height": 88.7
+                            },
+                            "children": [
+                              {
+                                "path": "0.1.2.0.2.0.0",
+                                "kind": "text",
+                                "requestedSize": {
+                                  "width": {
+                                    "mode": "fill",
+                                    "value": 1
+                                  },
+                                  "height": {
+                                    "mode": "hug"
+                                  }
+                                },
+                                "intrinsicSize": {
+                                  "width": 0,
+                                  "height": 32.26
+                                },
+                                "frame": {
+                                  "left": 96,
+                                  "top": 567.71,
+                                  "width": 280,
+                                  "height": 32.26
+                                },
+                                "snappedFrame": {
+                                  "left": 96,
+                                  "top": 568,
+                                  "width": 280,
+                                  "height": 34
+                                },
+                                "children": [],
+                                "text": "Route value",
+                                "transform": "none",
+                                "element": {
+                                  "aid": "sh/sfil0rqd",
+                                  "id": "9",
+                                  "kind": "shape"
+                                }
+                              },
+                              {
+                                "path": "0.1.2.0.2.0.1",
+                                "kind": "text",
+                                "requestedSize": {
+                                  "width": {
+                                    "mode": "fill",
+                                    "value": 1
+                                  },
+                                  "height": {
+                                    "mode": "hug"
+                                  }
+                                },
+                                "intrinsicSize": {
+                                  "width": 0,
+                                  "height": 29.57
+                                },
+                                "frame": {
+                                  "left": 412,
+                                  "top": 567.71,
+                                  "width": 283.25,
+                                  "height": 88.7
+                                },
+                                "snappedFrame": {
+                                  "left": 412,
+                                  "top": 568,
+                                  "width": 284,
+                                  "height": 90
+                                },
+                                "children": [],
+                                "text": "Meaningful trades remove a public threat, deny setup, or open the boss's route.",
+                                "transform": "none",
+                                "element": {
+                                  "aid": "sh/qtcj6tov",
+                                  "id": "10",
+                                  "kind": "shape"
+                                }
+                              },
+                              {
+                                "path": "0.1.2.0.2.0.2",
+                                "kind": "text",
+                                "requestedSize": {
+                                  "width": {
+                                    "mode": "fill",
+                                    "value": 1
+                                  },
+                                  "height": {
+                                    "mode": "hug"
+                                  }
+                                },
+                                "intrinsicSize": {
+                                  "width": 0,
+                                  "height": 29.57
+                                },
+                                "frame": {
+                                  "left": 731.25,
+                                  "top": 567.71,
+                                  "width": 283.25,
+                                  "height": 59.14
+                                },
+                                "snappedFrame": {
+                                  "left": 732,
+                                  "top": 568,
+                                  "width": 284,
+                                  "height": 60
+                                },
+                                "children": [],
+                                "text": "Measured through fixtures before source changes.",
+                                "transform": "none",
+                                "element": {
+                                  "aid": "sh/je9cvixc",
+                                  "id": "11",
+                                  "kind": "shape"
+                                }
+                              }
+                            ],
+                            "padding": {
+                              "top": 0,
+                              "right": 0,
+                              "bottom": 0,
+                              "left": 0
+                            },
+                            "columnGap": 36,
+                            "rowGap": 0,
+                            "alignItems": "start",
+                            "justifyItems": "stretch",
+                            "contentFrame": {
+                              "left": 96,
+                              "top": 567.71,
+                              "width": 918.5,
+                              "height": 88.7
+                            },
+                            "columns": [
+                              {
+                                "mode": "fixed",
+                                "value": 280
+                              },
+                              {
+                                "mode": "fr",
+                                "value": 1
+                              },
+                              {
+                                "mode": "fr",
+                                "value": 1
+                              }
+                            ],
+                            "autoRows": "auto",
+                            "resolvedRows": [
+                              "auto"
+                            ],
+                            "columnSizes": [
+                              280,
+                              283.25,
+                              283.25
+                            ],
+                            "rowSizes": [
+                              88.7
+                            ],
+                            "cells": [
+                              {
+                                "path": "0.1.2.0.2.0.0",
+                                "column": 0,
+                                "row": 0,
+                                "columnSpan": 1,
+                                "rowSpan": 1,
+                                "cellFrame": {
+                                  "left": 96,
+                                  "top": 567.71,
+                                  "width": 280,
+                                  "height": 88.7
+                                }
+                              },
+                              {
+                                "path": "0.1.2.0.2.0.1",
+                                "column": 1,
+                                "row": 0,
+                                "columnSpan": 1,
+                                "rowSpan": 1,
+                                "cellFrame": {
+                                  "left": 412,
+                                  "top": 567.71,
+                                  "width": 283.25,
+                                  "height": 88.7
+                                }
+                              },
+                              {
+                                "path": "0.1.2.0.2.0.2",
+                                "column": 2,
+                                "row": 0,
+                                "columnSpan": 1,
+                                "rowSpan": 1,
+                                "cellFrame": {
+                                  "left": 731.25,
+                                  "top": 567.71,
+                                  "width": 283.25,
+                                  "height": 88.7
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "path": "0.1.2.0.2.1",
+                            "kind": "rule",
+                            "name": "rule-Route value",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fill",
+                                "value": 1
+                              },
+                              "height": {
+                                "mode": "fixed",
+                                "value": 2
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 0,
+                              "height": 2
+                            },
+                            "frame": {
+                              "left": 96,
+                              "top": 670.42,
+                              "width": 918.5,
+                              "height": 2
+                            },
+                            "snappedFrame": {
+                              "left": 96,
+                              "top": 670,
+                              "width": 918,
+                              "height": 2
+                            },
+                            "children": [],
+                            "weight": 2,
+                            "element": {
+                              "aid": "sh/8z25kb6x",
+                              "id": "12",
+                              "kind": "shape"
+                            }
+                          }
+                        ],
+                        "padding": {
+                          "top": 0,
+                          "right": 0,
+                          "bottom": 0,
+                          "left": 0
+                        },
+                        "gap": 14,
+                        "effectiveGap": 14,
+                        "justifyOffset": 0,
+                        "align": "start",
+                        "justify": "start",
+                        "contentFrame": {
+                          "left": 96,
+                          "top": 567.71,
+                          "width": 918.5,
+                          "height": 104.7
+                        },
+                        "items": [
+                          {
+                            "path": "0.1.2.0.2.0",
+                            "frame": {
+                              "left": 96,
+                              "top": 567.71,
+                              "width": 918.5,
+                              "height": 88.7
+                            }
+                          },
+                          {
+                            "path": "0.1.2.0.2.1",
+                            "frame": {
+                              "left": 96,
+                              "top": 670.42,
+                              "width": 918.5,
+                              "height": 2
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "path": "0.1.2.0.3",
+                        "kind": "column",
+                        "name": "compare-row-Guardrail",
+                        "requestedSize": {
+                          "width": {
+                            "mode": "fill",
+                            "value": 1
+                          },
+                          "height": {
+                            "mode": "hug"
+                          }
+                        },
+                        "intrinsicSize": {
+                          "width": 0,
+                          "height": 48.26
+                        },
+                        "frame": {
+                          "left": 96,
+                          "top": 694.42,
+                          "width": 918.5,
+                          "height": 104.7
+                        },
+                        "children": [
+                          {
+                            "path": "0.1.2.0.3.0",
+                            "kind": "grid",
+                            "name": "compare-grid-Guardrail",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fill",
+                                "value": 1
+                              },
+                              "height": {
+                                "mode": "hug"
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 352,
+                              "height": 32.26
+                            },
+                            "frame": {
+                              "left": 96,
+                              "top": 694.42,
+                              "width": 918.5,
+                              "height": 88.7
+                            },
+                            "children": [
+                              {
+                                "path": "0.1.2.0.3.0.0",
+                                "kind": "text",
+                                "requestedSize": {
+                                  "width": {
+                                    "mode": "fill",
+                                    "value": 1
+                                  },
+                                  "height": {
+                                    "mode": "hug"
+                                  }
+                                },
+                                "intrinsicSize": {
+                                  "width": 0,
+                                  "height": 32.26
+                                },
+                                "frame": {
+                                  "left": 96,
+                                  "top": 694.42,
+                                  "width": 280,
+                                  "height": 32.26
+                                },
+                                "snappedFrame": {
+                                  "left": 96,
+                                  "top": 694,
+                                  "width": 280,
+                                  "height": 34
+                                },
+                                "children": [],
+                                "text": "Guardrail",
+                                "transform": "none",
+                                "element": {
+                                  "aid": "sh/1gvy90je",
+                                  "id": "13",
+                                  "kind": "shape"
+                                }
+                              },
+                              {
+                                "path": "0.1.2.0.3.0.1",
+                                "kind": "text",
+                                "requestedSize": {
+                                  "width": {
+                                    "mode": "fill",
+                                    "value": 1
+                                  },
+                                  "height": {
+                                    "mode": "hug"
+                                  }
+                                },
+                                "intrinsicSize": {
+                                  "width": 0,
+                                  "height": 29.57
+                                },
+                                "frame": {
+                                  "left": 412,
+                                  "top": 694.42,
+                                  "width": 283.25,
+                                  "height": 88.7
+                                },
+                                "snappedFrame": {
+                                  "left": 412,
+                                  "top": 694,
+                                  "width": 284,
+                                  "height": 90
+                                },
+                                "children": [],
+                                "text": "Do not call hidden party or current-input helpers to decide whether the trade is good.",
+                                "transform": "none",
+                                "element": {
+                                  "aid": "sh/q1orytsv",
+                                  "id": "14",
+                                  "kind": "shape"
+                                }
+                              },
+                              {
+                                "path": "0.1.2.0.3.0.2",
+                                "kind": "text",
+                                "requestedSize": {
+                                  "width": {
+                                    "mode": "fill",
+                                    "value": 1
+                                  },
+                                  "height": {
+                                    "mode": "hug"
+                                  }
+                                },
+                                "intrinsicSize": {
+                                  "width": 0,
+                                  "height": 29.57
+                                },
+                                "frame": {
+                                  "left": 731.25,
+                                  "top": 694.42,
+                                  "width": 283.25,
+                                  "height": 59.14
+                                },
+                                "snappedFrame": {
+                                  "left": 732,
+                                  "top": 694,
+                                  "width": 284,
+                                  "height": 60
+                                },
+                                "children": [],
+                                "text": "Use active visible pressure and already seen species only.",
+                                "transform": "none",
+                                "element": {
+                                  "aid": "sh/fmlkjm1c",
+                                  "id": "15",
+                                  "kind": "shape"
+                                }
+                              }
+                            ],
+                            "padding": {
+                              "top": 0,
+                              "right": 0,
+                              "bottom": 0,
+                              "left": 0
+                            },
+                            "columnGap": 36,
+                            "rowGap": 0,
+                            "alignItems": "start",
+                            "justifyItems": "stretch",
+                            "contentFrame": {
+                              "left": 96,
+                              "top": 694.42,
+                              "width": 918.5,
+                              "height": 88.7
+                            },
+                            "columns": [
+                              {
+                                "mode": "fixed",
+                                "value": 280
+                              },
+                              {
+                                "mode": "fr",
+                                "value": 1
+                              },
+                              {
+                                "mode": "fr",
+                                "value": 1
+                              }
+                            ],
+                            "autoRows": "auto",
+                            "resolvedRows": [
+                              "auto"
+                            ],
+                            "columnSizes": [
+                              280,
+                              283.25,
+                              283.25
+                            ],
+                            "rowSizes": [
+                              88.7
+                            ],
+                            "cells": [
+                              {
+                                "path": "0.1.2.0.3.0.0",
+                                "column": 0,
+                                "row": 0,
+                                "columnSpan": 1,
+                                "rowSpan": 1,
+                                "cellFrame": {
+                                  "left": 96,
+                                  "top": 694.42,
+                                  "width": 280,
+                                  "height": 88.7
+                                }
+                              },
+                              {
+                                "path": "0.1.2.0.3.0.1",
+                                "column": 1,
+                                "row": 0,
+                                "columnSpan": 1,
+                                "rowSpan": 1,
+                                "cellFrame": {
+                                  "left": 412,
+                                  "top": 694.42,
+                                  "width": 283.25,
+                                  "height": 88.7
+                                }
+                              },
+                              {
+                                "path": "0.1.2.0.3.0.2",
+                                "column": 2,
+                                "row": 0,
+                                "columnSpan": 1,
+                                "rowSpan": 1,
+                                "cellFrame": {
+                                  "left": 731.25,
+                                  "top": 694.42,
+                                  "width": 283.25,
+                                  "height": 88.7
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "path": "0.1.2.0.3.1",
+                            "kind": "rule",
+                            "name": "rule-Guardrail",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fill",
+                                "value": 1
+                              },
+                              "height": {
+                                "mode": "fixed",
+                                "value": 2
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 0,
+                              "height": 2
+                            },
+                            "frame": {
+                              "left": 96,
+                              "top": 797.12,
+                              "width": 918.5,
+                              "height": 2
+                            },
+                            "snappedFrame": {
+                              "left": 96,
+                              "top": 798,
+                              "width": 918,
+                              "height": 2
+                            },
+                            "children": [],
+                            "weight": 2,
+                            "element": {
+                              "aid": "sh/87ed8bat",
+                              "id": "16",
+                              "kind": "shape"
+                            }
+                          }
+                        ],
+                        "padding": {
+                          "top": 0,
+                          "right": 0,
+                          "bottom": 0,
+                          "left": 0
+                        },
+                        "gap": 14,
+                        "effectiveGap": 14,
+                        "justifyOffset": 0,
+                        "align": "start",
+                        "justify": "start",
+                        "contentFrame": {
+                          "left": 96,
+                          "top": 694.42,
+                          "width": 918.5,
+                          "height": 104.7
+                        },
+                        "items": [
+                          {
+                            "path": "0.1.2.0.3.0",
+                            "frame": {
+                              "left": 96,
+                              "top": 694.42,
+                              "width": 918.5,
+                              "height": 88.7
+                            }
+                          },
+                          {
+                            "path": "0.1.2.0.3.1",
+                            "frame": {
+                              "left": 96,
+                              "top": 797.12,
+                              "width": 918.5,
+                              "height": 2
+                            }
+                          }
+                        ]
+                      }
+                    ],
+                    "padding": {
+                      "top": 0,
+                      "right": 0,
+                      "bottom": 0,
+                      "left": 0
+                    },
+                    "gap": 22,
+                    "effectiveGap": 22,
+                    "justifyOffset": 0,
+                    "align": "start",
+                    "justify": "start",
+                    "contentFrame": {
+                      "left": 96,
+                      "top": 376,
+                      "width": 918.5,
+                      "height": 424
+                    },
+                    "items": [
+                      {
+                        "path": "0.1.2.0.0",
+                        "frame": {
+                          "left": 96,
+                          "top": 376,
+                          "width": 918.5,
+                          "height": 43.01
+                        }
+                      },
+                      {
+                        "path": "0.1.2.0.1",
+                        "frame": {
+                          "left": 96,
+                          "top": 441.01,
+                          "width": 918.5,
+                          "height": 104.7
+                        }
+                      },
+                      {
+                        "path": "0.1.2.0.2",
+                        "frame": {
+                          "left": 96,
+                          "top": 567.71,
+                          "width": 918.5,
+                          "height": 104.7
+                        }
+                      },
+                      {
+                        "path": "0.1.2.0.3",
+                        "frame": {
+                          "left": 96,
+                          "top": 694.42,
+                          "width": 918.5,
+                          "height": 104.7
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "path": "0.1.2.1",
+                    "kind": "layers",
+                    "name": "explosion-art",
+                    "requestedSize": {
+                      "width": {
+                        "mode": "fill",
+                        "value": 1
+                      },
+                      "height": {
+                        "mode": "fixed",
+                        "value": 520
+                      }
+                    },
+                    "intrinsicSize": {
+                      "width": 52,
+                      "height": 52
+                    },
+                    "frame": {
+                      "left": 1072.5,
+                      "top": 328,
+                      "width": 751.5,
+                      "height": 520
+                    },
+                    "children": [
+                      {
+                        "path": "0.1.2.1.0",
+                        "kind": "shape",
+                        "name": "explosion-bg",
+                        "requestedSize": {
+                          "width": {
+                            "mode": "fill",
+                            "value": 1
+                          },
+                          "height": {
+                            "mode": "fill",
+                            "value": 1
+                          }
+                        },
+                        "intrinsicSize": {
+                          "width": 0,
+                          "height": 0
+                        },
+                        "frame": {
+                          "left": 1098.5,
+                          "top": 354,
+                          "width": 699.5,
+                          "height": 468
+                        },
+                        "snappedFrame": {
+                          "left": 1096,
+                          "top": 352,
+                          "width": 696,
+                          "height": 472
+                        },
+                        "children": [],
+                        "geometry": "rect",
+                        "element": {
+                          "aid": "sh/xs72x4na",
+                          "id": "17",
+                          "kind": "shape"
+                        }
+                      },
+                      {
+                        "path": "0.1.2.1.1",
+                        "kind": "column",
+                        "requestedSize": {
+                          "width": {
+                            "mode": "fill",
+                            "value": 1
+                          },
+                          "height": {
+                            "mode": "fill",
+                            "value": 1
+                          }
+                        },
+                        "intrinsicSize": {
+                          "width": 575.08,
+                          "height": 387.71
+                        },
+                        "frame": {
+                          "left": 1098.5,
+                          "top": 354,
+                          "width": 699.5,
+                          "height": 468
+                        },
+                        "children": [
+                          {
+                            "path": "0.1.2.1.1.0",
+                            "kind": "image",
+                            "name": "explosion",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fixed",
+                                "value": 420
+                              },
+                              "height": {
+                                "mode": "fixed",
+                                "value": 260
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 420,
+                              "height": 260
+                            },
+                            "frame": {
+                              "left": 1238,
+                              "top": 394.14,
+                              "width": 420,
+                              "height": 260
+                            },
+                            "snappedFrame": {
+                              "left": 1238,
+                              "top": 394.14,
+                              "width": 420,
+                              "height": 260
+                            },
+                            "children": [],
+                            "source": {
+                              "kind": "dataUrl"
+                            },
+                            "fit": "contain",
+                            "alt": "Explosion animation asset",
+                            "element": {
+                              "aid": "im/5o7qpg3e",
+                              "id": "18",
+                              "kind": "image"
+                            }
+                          },
+                          {
+                            "path": "0.1.2.1.1.1",
+                            "kind": "text",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "wrap",
+                                "max": 600
+                              },
+                              "height": {
+                                "mode": "hug"
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 575.08,
+                              "height": 107.71
+                            },
+                            "frame": {
+                              "left": 1160,
+                              "top": 674.14,
+                              "width": 576,
+                              "height": 107.71
+                            },
+                            "snappedFrame": {
+                              "left": 1160,
+                              "top": 674,
+                              "width": 576,
+                              "height": 108
+                            },
+                            "children": [],
+                            "text": "Cash out only when the trade matters.",
+                            "transform": "none",
+                            "element": {
+                              "aid": "sh/fyxobm58",
+                              "id": "19",
+                              "kind": "shape"
+                            }
+                          }
+                        ],
+                        "padding": {
+                          "top": 0,
+                          "right": 0,
+                          "bottom": 0,
+                          "left": 0
+                        },
+                        "gap": 20,
+                        "effectiveGap": 20,
+                        "justifyOffset": 40.14,
+                        "align": "center",
+                        "justify": "center",
+                        "contentFrame": {
+                          "left": 1098.5,
+                          "top": 354,
+                          "width": 699.5,
+                          "height": 468
+                        },
+                        "items": [
+                          {
+                            "path": "0.1.2.1.1.0",
+                            "frame": {
+                              "left": 1238,
+                              "top": 394.14,
+                              "width": 420,
+                              "height": 260
+                            }
+                          },
+                          {
+                            "path": "0.1.2.1.1.1",
+                            "frame": {
+                              "left": 1160,
+                              "top": 674.14,
+                              "width": 576,
+                              "height": 107.71
+                            }
+                          }
+                        ]
+                      }
+                    ],
+                    "padding": {
+                      "top": 26,
+                      "right": 26,
+                      "bottom": 26,
+                      "left": 26
+                    },
+                    "alignItems": "stretch",
+                    "justifyItems": "stretch",
+                    "contentFrame": {
+                      "left": 1098.5,
+                      "top": 354,
+                      "width": 699.5,
+                      "height": 468
+                    },
+                    "items": [
+                      {
+                        "path": "0.1.2.1.0",
+                        "frame": {
+                          "left": 1098.5,
+                          "top": 354,
+                          "width": 699.5,
+                          "height": 468
+                        }
+                      },
+                      {
+                        "path": "0.1.2.1.1",
+                        "frame": {
+                          "left": 1098.5,
+                          "top": 354,
+                          "width": 699.5,
+                          "height": 468
+                        }
+                      }
+                    ]
+                  }
+                ],
+                "padding": {
+                  "top": 0,
+                  "right": 0,
+                  "bottom": 0,
+                  "left": 0
+                },
+                "columnGap": 58,
+                "rowGap": 0,
+                "alignItems": "center",
+                "justifyItems": "stretch",
+                "contentFrame": {
+                  "left": 96,
+                  "top": 328.45,
+                  "width": 1728,
+                  "height": 520
+                },
+                "columns": [
+                  {
+                    "mode": "fr",
+                    "value": 1.1
+                  },
+                  {
+                    "mode": "fr",
+                    "value": 0.9
+                  }
+                ],
+                "autoRows": "auto",
+                "resolvedRows": [
+                  "auto"
+                ],
+                "columnSizes": [
+                  918.5,
+                  751.5
+                ],
+                "rowSizes": [
+                  520
+                ],
+                "cells": [
+                  {
+                    "path": "0.1.2.0",
+                    "column": 0,
+                    "row": 0,
+                    "columnSpan": 1,
+                    "rowSpan": 1,
+                    "cellFrame": {
+                      "left": 96,
+                      "top": 328.45,
+                      "width": 918.5,
+                      "height": 520
+                    }
+                  },
+                  {
+                    "path": "0.1.2.1",
+                    "column": 1,
+                    "row": 0,
+                    "columnSpan": 1,
+                    "rowSpan": 1,
+                    "cellFrame": {
+                      "left": 1072.5,
+                      "top": 328.45,
+                      "width": 751.5,
+                      "height": 520
+                    }
+                  }
+                ]
+              },
+              {
+                "path": "0.1.3",
+                "kind": "text",
+                "name": "source-footer",
+                "requestedSize": {
+                  "width": {
+                    "mode": "fill",
+                    "value": 1
+                  },
+                  "height": {
+                    "mode": "hug"
+                  }
+                },
+                "intrinsicSize": {
+                  "width": 0,
+                  "height": 18.82
+                },
+                "frame": {
+                  "left": 96,
+                  "top": 876.45,
+                  "width": 1728,
+                  "height": 18.82
+                },
+                "snappedFrame": {
+                  "left": 96,
+                  "top": 876,
+                  "width": 1728,
+                  "height": 20
+                },
+                "children": [],
+                "text": "Roadmap item after hazard retention, four-move saturation review, and anti-dead-setup tightening.",
+                "transform": "none",
+                "element": {
+                  "aid": "sh/7y1kre1w",
+                  "id": "20",
+                  "kind": "shape"
+                }
+              }
+            ],
+            "padding": {
+              "top": 72,
+              "right": 96,
+              "bottom": 72,
+              "left": 96
+            },
+            "gap": 28,
+            "effectiveGap": 28,
+            "justifyOffset": 0,
+            "align": "start",
+            "justify": "start",
+            "contentFrame": {
+              "left": 96,
+              "top": 72,
+              "width": 1728,
+              "height": 936
+            },
+            "items": [
+              {
+                "path": "0.1.0",
+                "frame": {
+                  "left": 96,
+                  "top": 72,
+                  "width": 1728,
+                  "height": 24.19
+                }
+              },
+              {
+                "path": "0.1.1",
+                "frame": {
+                  "left": 96,
+                  "top": 124.19,
+                  "width": 1490.82,
+                  "height": 176.26
+                }
+              },
+              {
+                "path": "0.1.2",
+                "frame": {
+                  "left": 96,
+                  "top": 328.45,
+                  "width": 1728,
+                  "height": 520
+                }
+              },
+              {
+                "path": "0.1.3",
+                "frame": {
+                  "left": 96,
+                  "top": 876.45,
+                  "width": 1728,
+                  "height": 18.82
+                }
+              }
+            ]
+          }
+        ],
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "alignItems": "stretch",
+        "justifyItems": "stretch",
+        "contentFrame": {
+          "left": 0,
+          "top": 0,
+          "width": 1920,
+          "height": 1080
+        },
+        "items": [
+          {
+            "path": "0.0",
+            "frame": {
+              "left": 0,
+              "top": 0,
+              "width": 1920,
+              "height": 1080
+            }
+          },
+          {
+            "path": "0.1",
+            "frame": {
+              "left": 0,
+              "top": 0,
+              "width": 1920,
+              "height": 1080
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

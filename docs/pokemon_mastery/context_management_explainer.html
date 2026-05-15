@@ -1,0 +1,1117 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pokemon Mastery Context System - Plain English Explainer</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 0;
+    }
+
+    :root {
+      --ink: #172033;
+      --muted: #5f6c7f;
+      --line: #d9e1ec;
+      --panel: #f7f9fc;
+      --blue: #315fbd;
+      --blue-soft: #e9f0ff;
+      --green: #2d7d54;
+      --green-soft: #e7f5ed;
+      --gold: #a86800;
+      --gold-soft: #fff4dc;
+      --red: #b5473c;
+      --red-soft: #fdecea;
+      --violet: #6153b7;
+      --violet-soft: #efedff;
+      --paper: #ffffff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: #dfe5ee;
+      color: var(--ink);
+      font-family: "Segoe UI", Arial, sans-serif;
+      line-height: 1.42;
+    }
+
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      margin: 0 auto;
+      padding: 20mm 18mm;
+      background: var(--paper);
+      page-break-after: always;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .page:last-child {
+      page-break-after: auto;
+    }
+
+    .page::after {
+      content: attr(data-page);
+      position: absolute;
+      right: 18mm;
+      bottom: 10mm;
+      color: #8a95a7;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .cover {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      background:
+        linear-gradient(135deg, rgba(49,95,189,0.10), rgba(45,125,84,0.08)),
+        var(--paper);
+    }
+
+    h1, h2, h3 {
+      margin: 0;
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    h1 {
+      max-width: 650px;
+      font-size: 44px;
+      font-weight: 760;
+    }
+
+    h2 {
+      margin-bottom: 18px;
+      font-size: 30px;
+      font-weight: 740;
+    }
+
+    h3 {
+      margin: 18px 0 8px;
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    p {
+      margin: 0 0 12px;
+      font-size: 15px;
+    }
+
+    ul, ol {
+      margin: 8px 0 0 20px;
+      padding: 0;
+      font-size: 14px;
+    }
+
+    li {
+      margin: 6px 0;
+    }
+
+    .eyebrow {
+      margin-bottom: 12px;
+      color: var(--blue);
+      font-size: 12px;
+      font-weight: 750;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .subtitle {
+      max-width: 640px;
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 18px;
+    }
+
+    .stamp {
+      display: inline-block;
+      margin-top: 26px;
+      padding: 8px 12px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: rgba(255,255,255,0.75);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      align-items: stretch;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      padding: 14px;
+    }
+
+    .panel.white {
+      background: #ffffff;
+    }
+
+    .panel.blue {
+      border-color: #bfd0f6;
+      background: var(--blue-soft);
+    }
+
+    .panel.green {
+      border-color: #bfe1ce;
+      background: var(--green-soft);
+    }
+
+    .panel.gold {
+      border-color: #f0d39b;
+      background: var(--gold-soft);
+    }
+
+    .panel.red {
+      border-color: #f0c2bd;
+      background: var(--red-soft);
+    }
+
+    .panel.violet {
+      border-color: #d6d0ff;
+      background: var(--violet-soft);
+    }
+
+    .panel-title {
+      margin-bottom: 8px;
+      font-size: 14px;
+      font-weight: 760;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #34425a;
+    }
+
+    .big-number {
+      margin: 4px 0;
+      font-size: 36px;
+      line-height: 1;
+      font-weight: 780;
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .callout {
+      margin: 16px 0;
+      padding: 14px 16px;
+      border-left: 5px solid var(--blue);
+      border-radius: 6px;
+      background: var(--blue-soft);
+      font-size: 15px;
+    }
+
+    .warn {
+      border-left-color: var(--gold);
+      background: var(--gold-soft);
+    }
+
+    .ok {
+      border-left-color: var(--green);
+      background: var(--green-soft);
+    }
+
+    .danger {
+      border-left-color: var(--red);
+      background: var(--red-soft);
+    }
+
+    .tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .tag {
+      padding: 5px 8px;
+      border-radius: 999px;
+      background: #eef2f7;
+      color: #40516c;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .arrow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      font-size: 32px;
+      font-weight: 700;
+    }
+
+    .flow {
+      display: grid;
+      grid-template-columns: 1fr 36px 1fr 36px 1fr;
+      gap: 8px;
+      align-items: center;
+      margin: 16px 0;
+    }
+
+    .flow .step {
+      min-height: 86px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #ffffff;
+    }
+
+    .step strong {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--blue);
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .pyramid {
+      width: 100%;
+      margin: 8px 0 18px;
+    }
+
+    .pyramid-row {
+      margin: 0 auto 8px;
+      padding: 12px;
+      border-radius: 8px;
+      color: #ffffff;
+      text-align: center;
+      font-weight: 750;
+    }
+
+    .p1 {
+      width: 46%;
+      background: var(--blue);
+    }
+
+    .p2 {
+      width: 68%;
+      background: var(--green);
+    }
+
+    .p3 {
+      width: 90%;
+      background: #5b677a;
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .metric {
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #ffffff;
+      text-align: center;
+    }
+
+    .metric strong {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+    }
+
+    .metric span {
+      display: block;
+      font-size: 24px;
+      font-weight: 780;
+    }
+
+    .bar {
+      height: 10px;
+      margin-top: 8px;
+      border-radius: 999px;
+      background: #d7dee9;
+      overflow: hidden;
+    }
+
+    .bar > i {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: var(--blue);
+    }
+
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 12px;
+    }
+
+    .table th, .table td {
+      border: 1px solid var(--line);
+      padding: 7px 8px;
+      vertical-align: top;
+      text-align: left;
+    }
+
+    .table th {
+      background: #edf2f8;
+      font-weight: 760;
+    }
+
+    .example {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #ffffff;
+    }
+
+    .example-head {
+      padding: 10px 12px;
+      background: #edf2f8;
+      font-weight: 760;
+    }
+
+    .example-body {
+      padding: 12px;
+    }
+
+    .move {
+      display: inline-block;
+      min-width: 78px;
+      margin: 3px 4px 3px 0;
+      padding: 6px 8px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #ffffff;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .move.good {
+      border-color: #8ac49f;
+      background: var(--green-soft);
+      color: #1f623e;
+    }
+
+    .move.warn {
+      border-color: #e6bf7a;
+      background: var(--gold-soft);
+      color: #794d00;
+    }
+
+    .move.bad {
+      border-color: #e2a09a;
+      background: var(--red-soft);
+      color: #90342b;
+    }
+
+    .mini-card {
+      padding: 11px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #ffffff;
+    }
+
+    .mini-card strong {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--blue);
+    }
+
+    .footer-note {
+      position: absolute;
+      left: 18mm;
+      bottom: 10mm;
+      color: #8a95a7;
+      font-size: 10px;
+    }
+
+    svg text {
+      font-family: "Segoe UI", Arial, sans-serif;
+    }
+
+    code {
+      padding: 1px 4px;
+      border-radius: 4px;
+      background: #eef2f7;
+      color: #29364b;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 0.92em;
+    }
+  </style>
+</head>
+<body>
+  <section class="page cover" data-page="context system">
+    <div>
+      <div class="eyebrow">Pokemon mastery project</div>
+      <h1>The new context system, explained simply</h1>
+      <p class="subtitle">
+        What was implemented, why it matters, and how it helps future Pokemon
+        training sessions stay focused instead of drowning in notes.
+      </p>
+      <div class="stamp">Implemented May 14, 2026 in docs/pokemon_mastery</div>
+    </div>
+    <svg viewBox="0 0 760 260" width="100%" height="260" role="img" aria-label="Before and after overview graphic">
+      <rect x="12" y="26" width="310" height="190" rx="14" fill="#fdecea" stroke="#efb3ad"/>
+      <text x="36" y="58" font-size="19" font-weight="700" fill="#8d332c">Before</text>
+      <rect x="44" y="78" width="86" height="24" rx="4" fill="#ffffff" stroke="#e6aaa4"/>
+      <rect x="70" y="112" width="128" height="24" rx="4" fill="#ffffff" stroke="#e6aaa4"/>
+      <rect x="106" y="146" width="154" height="24" rx="4" fill="#ffffff" stroke="#e6aaa4"/>
+      <rect x="52" y="180" width="210" height="24" rx="4" fill="#ffffff" stroke="#e6aaa4"/>
+      <text x="48" y="232" font-size="13" fill="#8d332c">Useful evidence, but too much to load at once</text>
+      <path d="M348 120 L410 120" stroke="#5f6c7f" stroke-width="5" stroke-linecap="round"/>
+      <path d="M410 120 L390 104 M410 120 L390 136" stroke="#5f6c7f" stroke-width="5" stroke-linecap="round"/>
+      <rect x="440" y="26" width="310" height="190" rx="14" fill="#e7f5ed" stroke="#a8d8bb"/>
+      <text x="464" y="58" font-size="19" font-weight="700" fill="#1f623e">After</text>
+      <rect x="518" y="76" width="154" height="36" rx="7" fill="#315fbd"/>
+      <text x="542" y="99" font-size="13" font-weight="700" fill="#ffffff">Active context</text>
+      <rect x="494" y="128" width="202" height="32" rx="7" fill="#2d7d54"/>
+      <text x="520" y="149" font-size="13" font-weight="700" fill="#ffffff">Policy cards</text>
+      <rect x="470" y="176" width="250" height="32" rx="7" fill="#5b677a"/>
+      <text x="514" y="197" font-size="13" font-weight="700" fill="#ffffff">Evidence archive</text>
+      <text x="475" y="232" font-size="13" fill="#1f623e">Small live packet, full evidence preserved</text>
+    </svg>
+    <div class="footer-note">Plain-language reading copy generated from the implemented docs.</div>
+  </section>
+
+  <section class="page" data-page="1">
+    <div class="eyebrow">The short version</div>
+    <h2>What changed?</h2>
+    <p>
+      The Pokemon mastery project had become very valuable, but also very large.
+      It had replays, reviews, quick tests, score ledgers, strategy notes, local
+      romhack mechanics notes, and source-to-policy notes. The risk was not that
+      the notes were bad. The risk was that a future session could load too much,
+      load the wrong things, or follow the latest lesson too rigidly.
+    </p>
+    <p>
+      I implemented a small control layer above the big archive. Think of it as
+      a dashboard on top of a library. The library is still there. The dashboard
+      tells the next session which shelf to open, which rule matters right now,
+      and which score proves progress.
+    </p>
+
+    <div class="grid-3">
+      <div class="panel blue">
+        <div class="panel-title">1. Active context</div>
+        <p>A short startup packet that says what matters now and what should not
+        be loaded by default.</p>
+      </div>
+      <div class="panel green">
+        <div class="panel-title">2. Policy cards</div>
+        <p>Small decision cards for the current recurring mistakes, each with a
+        default rule and the opposite boundary.</p>
+      </div>
+      <div class="panel gold">
+        <div class="panel-title">3. Real scoring gates</div>
+        <p>Progress is measured by fresh replay decisions, not by how many notes
+        were written.</p>
+      </div>
+    </div>
+
+    <div class="callout ok">
+      In simple terms: the new system tells future me, "Start here, load only
+      what you need, make a decision, score it, and keep the archive as proof."
+    </div>
+
+    <h3>Files created or updated</h3>
+    <table class="table">
+      <tr><th>File</th><th>Plain-English job</th></tr>
+      <tr><td><code>active_context.md</code></td><td>The small packet future sessions should read first.</td></tr>
+      <tr><td><code>context_management_plan.md</code></td><td>The approved plan, comparisons, vote record, and caveats.</td></tr>
+      <tr><td><code>policy_cards/</code></td><td>Compact rules for the active decision boundaries.</td></tr>
+      <tr><td><code>mechanics_pending_index.md</code></td><td>A warning board for romhack mechanics that need local proof.</td></tr>
+      <tr><td><code>master_index.md</code></td><td>Updated so future work routes through the new compact layer.</td></tr>
+    </table>
+  </section>
+
+  <section class="page" data-page="2">
+    <div class="eyebrow">Why this was needed</div>
+    <h2>The old problem was not "bad notes." It was too much context.</h2>
+    <p>
+      The project already had a lot of strong material. The trouble was that
+      strong material can still become hard to use. If every session starts by
+      reading giant files, the important lesson can get buried. If every replay
+      miss creates another long note, the project can feel smarter while the
+      move choices do not actually improve.
+    </p>
+
+    <div class="grid-2">
+      <div class="panel red">
+        <div class="panel-title">Before: the failure pattern</div>
+        <ul>
+          <li>Many useful docs existed, but the next best file was not always obvious.</li>
+          <li>Large strategy ledgers mixed core rules with replay history.</li>
+          <li>Fresh replay misses could create more notes without proving transfer.</li>
+          <li>The newest lesson could overcorrect the next decision.</li>
+          <li>Vanilla GSC knowledge could leak into romhack advice too confidently.</li>
+        </ul>
+      </div>
+      <div class="panel green">
+        <div class="panel-title">After: the new behavior</div>
+        <ul>
+          <li>Start with one compact context packet.</li>
+          <li>Load one to three policy cards instead of whole archives.</li>
+          <li>Use fresh replay packets as the main scoreboard.</li>
+          <li>Require the opposite boundary so rules do not become scripts.</li>
+          <li>Check local mechanics status before romhack claims.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="callout warn">
+      The goal is not fewer documents forever. The goal is that each future
+      work session has a small working memory and a clear scoreboard.
+    </div>
+
+    <h3>A plain example</h3>
+    <div class="example">
+      <div class="example-head">Situation: a sleeping Pokemon is on the field</div>
+      <div class="example-body">
+        <p><strong>Old risk:</strong> I might remember a recent lesson like
+        "preserve sleepers for Sleep Clause" and switch automatically.</p>
+        <p><strong>New rule:</strong> the policy card says this is common, but
+        not absolute. I must ask: does the sleeper have an active job right now,
+        or is it more valuable saved for later?</p>
+        <span class="move good">Switch</span>
+        <span class="move warn">Stay</span>
+        <span class="move bad">Autopilot</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="page" data-page="3">
+    <div class="eyebrow">The main structure</div>
+    <h2>The evidence pyramid</h2>
+    <p>
+      The core design is a three-layer pyramid. The top layer is tiny and used
+      every time. The middle layer holds compact rules. The bottom layer is the
+      full evidence archive.
+    </p>
+
+    <div class="pyramid">
+      <div class="pyramid-row p1">active_context.md: what to load now</div>
+      <div class="pyramid-row p2">policy_cards: current decision boundaries</div>
+      <div class="pyramid-row p3">archive: replays, reviews, ledgers, fixtures, source notes</div>
+    </div>
+
+    <div class="grid-3">
+      <div class="panel white">
+        <div class="panel-title">Top layer</div>
+        <p>The short packet. It lists the current objective, the active mistakes,
+        the score gates, and the correct startup files.</p>
+      </div>
+      <div class="panel white">
+        <div class="panel-title">Middle layer</div>
+        <p>Policy cards. Each card says when a rule applies, when it flips, how
+        it fails, and what evidence supports it.</p>
+      </div>
+      <div class="panel white">
+        <div class="panel-title">Bottom layer</div>
+        <p>The full archive stays intact. It is used for audits, evidence, and
+        deeper study, not loaded blindly every time.</p>
+      </div>
+    </div>
+
+    <h3>Why this is better</h3>
+    <p>
+      It solves the context problem without throwing away the work already done.
+      Future sessions can move faster because the current high-value knowledge is
+      extracted into small cards, while the original replay and review evidence
+      still exists if a rule needs to be checked.
+    </p>
+
+    <div class="callout ok">
+      The big archive is now treated like a library. The active context packet
+      is the reading list. Policy cards are bookmarks for the current lessons.
+    </div>
+  </section>
+
+  <section class="page" data-page="4">
+    <div class="eyebrow">What active_context.md does</div>
+    <h2>The startup packet keeps each session on rails</h2>
+    <p>
+      The active context packet is a compact briefing for future work. It says:
+      here is the current goal, here are the active mistakes, here is how to use
+      web search, here is when to use subagents, and here is what counts as
+      progress.
+    </p>
+
+    <div class="flow">
+      <div class="step"><strong>1. Pick mode</strong>Replay, quick probe, boss advice, mechanics, source mining, or audit.</div>
+      <div class="arrow">></div>
+      <div class="step"><strong>2. Load small context</strong>Use the packet plus only the relevant card or local mechanics file.</div>
+      <div class="arrow">></div>
+      <div class="step"><strong>3. Produce proof</strong>Make a decision, score it, update the smallest useful artifact.</div>
+    </div>
+
+    <h3>The session header</h3>
+    <p>
+      The packet adds a small form to fill out before serious work. It prevents
+      vague sessions like "study more Pokemon" and forces the work to name the
+      current job.
+    </p>
+
+    <div class="panel blue">
+      <pre style="margin:0; font: 13px/1.45 Consolas, 'Courier New', monospace;">Goal:
+Mode: replay / quick_probe / boss_advice / mechanics / source_mining / audit
+Information model:
+Current bottleneck:
+Artifact target:
+Forbidden info:
+Stop condition:</pre>
+    </div>
+
+    <div class="grid-2" style="margin-top: 16px;">
+      <div class="panel red">
+        <div class="panel-title">Without the header</div>
+        <p>"I should read more GSC strategy."</p>
+        <p class="small">This can become broad note-taking.</p>
+      </div>
+      <div class="panel green">
+        <div class="panel-title">With the header</div>
+        <p>"Replay mode. Bottleneck: sleep absorber assignment. Forbidden info:
+        future turns. Stop after 30 scored decisions."</p>
+        <p class="small">This creates a measurable rep.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="page" data-page="5">
+    <div class="eyebrow">What policy cards do</div>
+    <h2>Policy cards turn lessons into usable decision boundaries</h2>
+    <p>
+      A policy card is a small rule sheet. It is not a long essay. It tells me
+      when a rule applies, what the default is, when the opposite play is right,
+      how the rule can fail, and where the evidence lives.
+    </p>
+
+    <div class="grid-2">
+      <div class="panel white">
+        <div class="panel-title">Created cards</div>
+        <ul>
+          <li>Cash-out boundary</li>
+          <li>Sleep absorber and set ambiguity</li>
+          <li>Hazard loop and Rapid Spin window</li>
+          <li>Support handoff after a job lands</li>
+          <li>Romhack mechanics firewall</li>
+        </ul>
+      </div>
+      <div class="panel violet">
+        <div class="panel-title">The important design choice</div>
+        <p>Each card must include an opposite boundary. That keeps a lesson from
+        becoming a rigid script.</p>
+      </div>
+    </div>
+
+    <h3>Example: cash-out boundary</h3>
+    <div class="example">
+      <div class="example-head">Should a weak support Pokemon be preserved or spent?</div>
+      <div class="example-body">
+        <p><strong>Default:</strong> preserve it if it still has a route-defining
+        job, like keeping hazards, checking a threat, or enabling a future switch.</p>
+        <p><strong>Opposite boundary:</strong> spend it now if Explosion or a
+        sacrifice opens a concrete converter that slow play cannot reach.</p>
+        <p><strong>Worst failure:</strong> saving it just because it is famous or
+        valuable, then later realizing it had no safe entry and no real job.</p>
+      </div>
+    </div>
+
+    <div class="tag-row">
+      <span class="tag">Trigger</span>
+      <span class="tag">Default</span>
+      <span class="tag">Opposite boundary</span>
+      <span class="tag">Exceptions</span>
+      <span class="tag">Worst branch</span>
+      <span class="tag">Evidence</span>
+      <span class="tag">Drill</span>
+    </div>
+
+    <div class="callout">
+      The card is a reminder to ask the right question, not an answer to every
+      position. It points to the archive if the rule needs to be checked.
+    </div>
+  </section>
+
+  <section class="page" data-page="6">
+    <div class="eyebrow">How progress is measured</div>
+    <h2>The scoreboard changed from "more notes" to "better unseen decisions"</h2>
+    <p>
+      The biggest measurement change is philosophical but important: writing
+      more artifacts does not prove improvement. Improvement has to show up in
+      fresh positions that were not already turned into a lesson.
+    </p>
+
+    <div class="metric-grid">
+      <div class="metric">
+        <strong>Current top-match baseline</strong>
+        <span>47/95</span>
+        <div class="bar"><i style="width:49.5%"></i></div>
+      </div>
+      <div class="metric">
+        <strong>Current acceptable baseline</strong>
+        <span>62/95</span>
+        <div class="bar"><i style="width:65.3%; background: var(--green);"></i></div>
+      </div>
+      <div class="metric">
+        <strong>Severe blunders recorded</strong>
+        <span>0</span>
+        <div class="bar"><i style="width:100%; background: var(--green);"></i></div>
+      </div>
+    </div>
+
+    <h3>Primary gate: sealed replay-transfer packet</h3>
+    <p>
+      A sealed packet means fresh replay turns where the future outcome and
+      answer labels are hidden before the move choice is made. This is the main
+      proof because it tests transfer to unseen positions.
+    </p>
+    <table class="table">
+      <tr><th>Gate</th><th>Plain meaning</th></tr>
+      <tr><td>30-50 decisions</td><td>Enough turns to reduce one-lucky-run noise.</td></tr>
+      <tr><td>55% top-match target</td><td>The chosen move matches the expert replay move often enough to show direction.</td></tr>
+      <tr><td>70% acceptable target</td><td>Even when not exact, the move is still strategically acceptable.</td></tr>
+      <tr><td>0 severe blunders</td><td>No move that clearly breaks the live win route.</td></tr>
+      <tr><td>No repeated uncorrected error twice</td><td>The same mistake should not keep appearing inside one packet.</td></tr>
+    </table>
+
+    <div class="callout warn">
+      These numbers are provisional. The plan says they should be recalibrated
+      after one or two sealed packets.
+    </div>
+  </section>
+
+  <section class="page" data-page="7">
+    <div class="eyebrow">Regression probes</div>
+    <h2>Small lab tests are useful, but they are not the final exam</h2>
+    <p>
+      The project has many constructed quick probes. These are useful because
+      they check whether a specific lesson was understood. But they are often
+      written after the mistake is already known, so they can be too easy to
+      pass. That is why the plan separates them from fresh replay evidence.
+    </p>
+
+    <div class="grid-2">
+      <div class="panel green">
+        <div class="panel-title">Good use of a probe</div>
+        <p>A replay showed I over-preserved a low Cloyster. A tiny probe tests
+        the boundary: preserve when it still has a job, cash out when the
+        converter is ready.</p>
+      </div>
+      <div class="panel red">
+        <div class="panel-title">Bad use of a probe</div>
+        <p>Writing many labeled scenarios until the lesson becomes recognizable
+        by name, then treating a perfect score as proof of mastery.</p>
+      </div>
+    </div>
+
+    <h3>The new rule</h3>
+    <p>
+      By default, create at most one small constructed probe for each fresh replay
+      miss. If one replay exposes several truly different mistakes, the plan
+      allows separate probes for separate boundaries. "Retire or merge" means
+      mark or index the probe after transfer, not delete it.
+    </p>
+
+    <svg viewBox="0 0 760 230" width="100%" height="230" role="img" aria-label="Replay miss to probe to fresh transfer loop">
+      <rect x="18" y="54" width="180" height="86" rx="10" fill="#ffffff" stroke="#d9e1ec"/>
+      <text x="42" y="85" font-size="15" font-weight="700" fill="#172033">Fresh replay miss</text>
+      <text x="42" y="112" font-size="12" fill="#5f6c7f">Unseen position exposes</text>
+      <text x="42" y="130" font-size="12" fill="#5f6c7f">a real decision error</text>
+      <path d="M212 97 H284" stroke="#5f6c7f" stroke-width="4"/>
+      <path d="M284 97 l-14 -11 M284 97 l-14 11" stroke="#5f6c7f" stroke-width="4"/>
+      <rect x="298" y="54" width="180" height="86" rx="10" fill="#fff4dc" stroke="#f0d39b"/>
+      <text x="329" y="85" font-size="15" font-weight="700" fill="#172033">Small probe</text>
+      <text x="329" y="112" font-size="12" fill="#5f6c7f">Check the exact boundary,</text>
+      <text x="329" y="130" font-size="12" fill="#5f6c7f">not a broad essay</text>
+      <path d="M492 97 H564" stroke="#5f6c7f" stroke-width="4"/>
+      <path d="M564 97 l-14 -11 M564 97 l-14 11" stroke="#5f6c7f" stroke-width="4"/>
+      <rect x="578" y="54" width="164" height="86" rx="10" fill="#e7f5ed" stroke="#a8d8bb"/>
+      <text x="611" y="85" font-size="15" font-weight="700" fill="#172033">Fresh transfer</text>
+      <text x="611" y="112" font-size="12" fill="#5f6c7f">Only this proves the</text>
+      <text x="611" y="130" font-size="12" fill="#5f6c7f">lesson travels</text>
+    </svg>
+  </section>
+
+  <section class="page" data-page="8">
+    <div class="eyebrow">Romhack mechanics</div>
+    <h2>The mechanics firewall stops confident wrong advice</h2>
+    <p>
+      This project is not just vanilla GSC. It is a Pokemon Gold romhack. That
+      means outside GSC knowledge is useful, but it is not automatically true
+      locally. The mechanics pending index makes that visible.
+    </p>
+
+    <div class="callout danger">
+      Simple rule: if a move recommendation depends on local mechanics, do not
+      settle it with memory or web search. Check local docs, source, fixtures,
+      debugger output, or emulator traces.
+    </div>
+
+    <div class="grid-2">
+      <div class="panel white">
+        <div class="panel-title">Examples of mechanics that need status</div>
+        <ul>
+          <li>Spikes layer count and successful Rapid Spin hazard clearing.</li>
+          <li>Sleep duration, wake timing, Sleep Talk, and Rest.</li>
+          <li>Explosion timing, Ghost interactions, and damage behavior.</li>
+          <li>Type passives, Focus Band, Quick Claw, Counter, Mirror Coat.</li>
+          <li>What ordinary boss AI is allowed to know.</li>
+        </ul>
+      </div>
+      <div class="panel blue">
+        <div class="panel-title">Status labels</div>
+        <ul>
+          <li><code>runtime_verified</code></li>
+          <li><code>source_verified</code></li>
+          <li><code>supplied_unverified</code></li>
+          <li><code>unknown</code></li>
+          <li><code>not_decision_relevant</code></li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>Example</h3>
+    <p>
+      If the decision is "set Spikes because Rapid Spin works like vanilla," the
+      firewall stops that. The local index now marks the romhack Spikes layer
+      count and successful Rapid Spin hazard-clear command as
+      <code>runtime_verified</code>, while exact turn timing and failure
+      branches still need fixtures. The answer should use the verified facts but
+      cap confidence on the unknown timing details.
+    </p>
+
+    <div class="panel gold">
+      <div class="panel-title">Why this matters</div>
+      <p>A bad move caused by wrong mechanics is not the same as a bad move
+      caused by bad strategy. The new index keeps those error classes separate.</p>
+    </div>
+  </section>
+
+  <section class="page" data-page="9">
+    <div class="eyebrow">Subagents and web search</div>
+    <h2>Autonomy is now controlled, not vague</h2>
+    <p>
+      The plan does not say "never use subagents" or "always use all agents."
+      It says use the amount of help that improves the work without turning each
+      session into process management.
+    </p>
+
+    <div class="grid-2">
+      <div class="panel green">
+        <div class="panel-title">Default: specialist bursts</div>
+        <p>The main session stays responsible. A subagent gets one bounded job,
+        such as source scouting, mechanics checking, replay proctoring,
+        measurement scoring, or context stewardship.</p>
+      </div>
+      <div class="panel violet">
+        <div class="panel-title">Rare: standing council</div>
+        <p>Use a full council only for declared audits or architecture work,
+        like the one that approved this plan.</p>
+      </div>
+    </div>
+
+    <h3>Every subagent packet must say</h3>
+    <div class="grid-3">
+      <div class="mini-card"><strong>Objective</strong>What exact question is being answered?</div>
+      <div class="mini-card"><strong>Allowed sources</strong>What files or web sources may it use?</div>
+      <div class="mini-card"><strong>Forbidden info</strong>What must it not reveal or inspect?</div>
+      <div class="mini-card"><strong>Output schema</strong>What compact answer should it return?</div>
+      <div class="mini-card"><strong>Stop condition</strong>When should it stop instead of wandering?</div>
+      <div class="mini-card"><strong>Max references</strong>How much evidence is enough?</div>
+    </div>
+
+    <h3>Web search rules</h3>
+    <table class="table">
+      <tr><th>Use web search when</th><th>Do not use web search when</th></tr>
+      <tr>
+        <td>Choosing fresh Smogon/GSC material, checking current competitive sources, or extracting a new source-to-policy rule.</td>
+        <td>Answering a sealed replay turn before freezing the move.</td>
+      </tr>
+      <tr>
+        <td>Investigating a repeated error that local notes do not explain.</td>
+        <td>Settling local romhack mechanics that need local evidence.</td>
+      </tr>
+    </table>
+  </section>
+
+  <section class="page" data-page="10">
+    <div class="eyebrow">The council vote</div>
+    <h2>Every implementation idea had to pass on its own</h2>
+    <p>
+      The user clarified that approval was needed for each individual idea, not
+      just the plan as a whole. So the plan used five voters: the main assistant
+      plus four subagents. An idea needed at least three yes votes.
+    </p>
+
+    <div class="grid-3">
+      <div class="panel green">
+        <div class="big-number">24</div>
+        <div class="panel-title">Atomic ideas voted</div>
+        <p>Each one was listed separately before implementation.</p>
+      </div>
+      <div class="panel green">
+        <div class="big-number">24</div>
+        <div class="panel-title">Majority approvals</div>
+        <p>All implementation ideas passed the 3-of-5 threshold.</p>
+      </div>
+      <div class="panel gold">
+        <div class="big-number">3</div>
+        <div class="panel-title">Important caveats</div>
+        <p>Baseline, score thresholds, and probe caps were approved with limits.</p>
+      </div>
+    </div>
+
+    <h3>The caveats that matter</h3>
+    <div class="panel white">
+      <ul>
+        <li>Runs 052-057 are a current baseline, not proof of overall mastery.</li>
+        <li>The 55% top-match and 70% acceptable-match targets are provisional.</li>
+        <li>The probe cap is a default. If one replay exposes multiple distinct
+        errors, more than one tiny probe can be justified.</li>
+      </ul>
+    </div>
+
+    <div class="callout ok">
+      This means the implementation was not just "my gut." It was compared,
+      challenged, voted on, and written with the caveats preserved.
+    </div>
+
+    <h3>Why this is better</h3>
+    <p>
+      The vote process matters because context systems can easily become
+      attractive busywork. The council pushed the implementation toward small,
+      measurable, low-tooling changes instead of a full reorganization or a big
+      retrieval app.
+    </p>
+  </section>
+
+  <section class="page" data-page="11">
+    <div class="eyebrow">Before and after</div>
+    <h2>How a future training session should feel different</h2>
+
+    <table class="table">
+      <tr><th>Moment</th><th>Before</th><th>After</th></tr>
+      <tr>
+        <td>Starting a session</td>
+        <td>Open many docs and hope the right lesson stands out.</td>
+        <td>Open <code>active_context.md</code>, choose mode, and load one relevant card.</td>
+      </tr>
+      <tr>
+        <td>Using a lesson</td>
+        <td>Risk turning the latest miss into a hard rule.</td>
+        <td>Check the default and the opposite boundary.</td>
+      </tr>
+      <tr>
+        <td>Measuring improvement</td>
+        <td>More notes can feel like progress.</td>
+        <td>Fresh replay-transfer packets are the scoreboard.</td>
+      </tr>
+      <tr>
+        <td>Handling romhack claims</td>
+        <td>Vanilla knowledge can sneak in as local truth.</td>
+        <td>Mechanics status must be known or confidence is capped.</td>
+      </tr>
+      <tr>
+        <td>Using subagents</td>
+        <td>Could become broad or uncontrolled.</td>
+        <td>Use bounded specialist bursts, councils only for audits.</td>
+      </tr>
+    </table>
+
+    <h3>Concrete next use</h3>
+    <div class="flow">
+      <div class="step"><strong>Read</strong><code>active_context.md</code> and choose replay mode.</div>
+      <div class="arrow">></div>
+      <div class="step"><strong>Test</strong>Run a sealed replay packet on sleep, cash-out, hazards, and handoff.</div>
+      <div class="arrow">></div>
+      <div class="step"><strong>Update</strong>Score the packet and change only one small artifact if needed.</div>
+    </div>
+
+    <div class="callout">
+      The system is better because it protects the real goal: stronger move
+      choices in unseen positions. It keeps the notes useful, but it stops the
+      notes from becoming the goal.
+    </div>
+  </section>
+
+  <section class="page" data-page="12">
+    <div class="eyebrow">One-page summary</div>
+    <h2>The implemented system in one picture</h2>
+    <svg viewBox="0 0 760 610" width="100%" height="610" role="img" aria-label="Complete system diagram">
+      <rect x="32" y="26" width="696" height="558" rx="16" fill="#f7f9fc" stroke="#d9e1ec"/>
+      <rect x="72" y="64" width="616" height="66" rx="10" fill="#315fbd"/>
+      <text x="113" y="103" font-size="20" font-weight="700" fill="#ffffff">active_context.md: read this first</text>
+
+      <path d="M380 130 V174" stroke="#5f6c7f" stroke-width="4"/>
+      <path d="M380 174 l-11 -14 M380 174 l11 -14" stroke="#5f6c7f" stroke-width="4"/>
+
+      <rect x="72" y="178" width="118" height="86" rx="10" fill="#ffffff" stroke="#bfd0f6"/>
+      <text x="95" y="209" font-size="14" font-weight="700" fill="#172033">Live turn</text>
+      <text x="91" y="235" font-size="11" fill="#5f6c7f">board + one</text>
+      <text x="93" y="251" font-size="11" fill="#5f6c7f">policy card</text>
+
+      <rect x="206" y="178" width="118" height="86" rx="10" fill="#ffffff" stroke="#bfd0f6"/>
+      <text x="230" y="209" font-size="14" font-weight="700" fill="#172033">Replay</text>
+      <text x="225" y="235" font-size="11" fill="#5f6c7f">freeze answer</text>
+      <text x="235" y="251" font-size="11" fill="#5f6c7f">then score</text>
+
+      <rect x="340" y="178" width="118" height="86" rx="10" fill="#ffffff" stroke="#bfd0f6"/>
+      <text x="362" y="209" font-size="14" font-weight="700" fill="#172033">Probe</text>
+      <text x="359" y="235" font-size="11" fill="#5f6c7f">small lab test</text>
+      <text x="367" y="251" font-size="11" fill="#5f6c7f">not proof</text>
+
+      <rect x="474" y="178" width="118" height="86" rx="10" fill="#ffffff" stroke="#bfd0f6"/>
+      <text x="495" y="209" font-size="14" font-weight="700" fill="#172033">Mechanics</text>
+      <text x="493" y="235" font-size="11" fill="#5f6c7f">local status</text>
+      <text x="500" y="251" font-size="11" fill="#5f6c7f">required</text>
+
+      <rect x="608" y="178" width="80" height="86" rx="10" fill="#ffffff" stroke="#bfd0f6"/>
+      <text x="625" y="209" font-size="14" font-weight="700" fill="#172033">Study</text>
+      <text x="624" y="235" font-size="11" fill="#5f6c7f">source to</text>
+      <text x="629" y="251" font-size="11" fill="#5f6c7f">policy</text>
+
+      <path d="M380 264 V306" stroke="#5f6c7f" stroke-width="4"/>
+      <path d="M380 306 l-11 -14 M380 306 l11 -14" stroke="#5f6c7f" stroke-width="4"/>
+
+      <rect x="106" y="312" width="548" height="86" rx="10" fill="#e7f5ed" stroke="#a8d8bb"/>
+      <text x="167" y="346" font-size="18" font-weight="700" fill="#1f623e">policy cards: compact rules with opposite boundaries</text>
+      <text x="195" y="374" font-size="13" fill="#31513f">cash-out | sleep | hazards | handoff | romhack firewall</text>
+
+      <path d="M380 398 V438" stroke="#5f6c7f" stroke-width="4"/>
+      <path d="M380 438 l-11 -14 M380 438 l11 -14" stroke="#5f6c7f" stroke-width="4"/>
+
+      <rect x="106" y="444" width="252" height="84" rx="10" fill="#fff4dc" stroke="#f0d39b"/>
+      <text x="137" y="477" font-size="16" font-weight="700" fill="#7a4b00">sealed replay gate</text>
+      <text x="132" y="503" font-size="12" fill="#5f6c7f">fresh decisions prove transfer</text>
+
+      <rect x="402" y="444" width="252" height="84" rx="10" fill="#ffffff" stroke="#d9e1ec"/>
+      <text x="442" y="477" font-size="16" font-weight="700" fill="#172033">evidence archive</text>
+      <text x="438" y="503" font-size="12" fill="#5f6c7f">full notes remain available</text>
+
+      <text x="217" y="560" font-size="14" font-weight="700" fill="#172033">Main result: smaller working context, stronger measurement, less overfitting.</text>
+    </svg>
+  </section>
+</body>
+</html>

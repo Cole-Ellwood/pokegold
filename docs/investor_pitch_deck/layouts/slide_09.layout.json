@@ -1,0 +1,3301 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/bjrub9",
+    "id": "bjrub9",
+    "slide": 9,
+    "layoutId": "e3fd55af-303b-4a75-a64b-15538c6ada38",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "51cad470-a5e6-490f-980d-21b983c71172",
+    "masterLayoutName": "Master",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "Aptos",
+      "Bahnschrift"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "e3fd55af-303b-4a75-a64b-15538c6ada38",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "51cad470-a5e6-490f-980d-21b983c71172",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "51cad470-a5e6-490f-980d-21b983c71172",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/a1gvy90j",
+      "id": "1",
+      "name": "background",
+      "bbox": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0"
+      },
+      "geometry": "rect",
+      "fillColor": "#FBF7EA"
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/hoza1gvy",
+      "id": "2",
+      "name": "kicker-implementation-roadmap",
+      "bbox": [
+        96,
+        72,
+        1728,
+        26
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.0"
+      },
+      "geometry": "rect",
+      "text": "IMPLEMENTATION ROADMAP",
+      "textPreview": "IMPLEMENTATION ROADMAP",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "fontSize": 18,
+        "typeface": "Bahnschrift",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "IMPLEMENTATION ROADMAP"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "IMPLEMENTATION ROADMAP",
+          "runs": [
+            {
+              "index": 1,
+              "text": "IMPLEMENTATION ROADMAP",
+              "fontSize": 18,
+              "typeface": "Bahnschrift",
+              "color": "#2E7D5B",
+              "bold": true,
+              "alignment": "left"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/s36hcrmh",
+      "id": "3",
+      "bbox": [
+        96,
+        124,
+        1420,
+        172
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.1"
+      },
+      "geometry": "rect",
+      "text": "The path is deliberately small, reversible, and evidence-led.",
+      "textPreview": "The path is deliberately small, reversible, and evidence-led.",
+      "resolvedFontSize": 70,
+      "resolvedTextStyle": {
+        "fontSize": 70,
+        "typeface": "Bahnschrift",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "The path is deliberately small, reversible, and"
+          },
+          {
+            "index": 2,
+            "text": "evidence-led."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "The path is deliberately small, reversible, and evidence-led.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "The path is deliberately small, reversible, and evidence-led.",
+              "fontSize": 70,
+              "typeface": "Bahnschrift",
+              "color": "#141A1F",
+              "bold": true,
+              "alignment": "left"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 4,
+      "kind": "image",
+      "scope": "slide",
+      "aid": "im/2p8nqxs7",
+      "id": "4",
+      "name": "misty-roadmap",
+      "bbox": [
+        116,
+        323.55,
+        260,
+        260
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.0.0"
+      },
+      "alt": "misty-roadmap",
+      "contentType": "image/png",
+      "asset": {
+        "assetId": "abc06386-a8e3-4d24-89c9-3938f280437a",
+        "contentType": "image/png",
+        "byteLength": 2452
+      }
+    },
+    {
+      "order": 5,
+      "kind": "image",
+      "scope": "slide",
+      "aid": "im/ra5gbq1o",
+      "id": "5",
+      "name": "badges-roadmap",
+      "bbox": [
+        66,
+        601.55,
+        360,
+        140
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.0.1"
+      },
+      "alt": "badges-roadmap",
+      "contentType": "image/png",
+      "asset": {
+        "assetId": "55fbc488-7c1a-445c-be86-9dea085fb159",
+        "contentType": "image/png",
+        "byteLength": 3182
+      }
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/hgn29gr2",
+      "id": "6",
+      "bbox": [
+        98,
+        760,
+        296,
+        90
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.0.2"
+      },
+      "geometry": "rect",
+      "text": "Leader identity improves through scoring, not bespoke scripts for every fight.",
+      "textPreview": "Leader identity improves through scoring, not bespoke scripts for every fight.",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "fontSize": 22,
+        "typeface": "Aptos",
+        "alignment": "center"
+      },
+      "textLayout": {
+        "lineCount": 3,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Leader identity improves"
+          },
+          {
+            "index": 2,
+            "text": "through scoring, not bespoke"
+          },
+          {
+            "index": 3,
+            "text": "scripts for every fight."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Leader identity improves through scoring, not bespoke scripts for every fight.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Leader identity improves through scoring, not bespoke scripts for every fight.",
+              "fontSize": 22,
+              "typeface": "Aptos",
+              "color": "#25313B",
+              "alignment": "center"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 7,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/svu9knih",
+      "id": "7",
+      "name": "dot-F4B942",
+      "bbox": [
+        444,
+        332,
+        18,
+        18
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.1.0.0"
+      },
+      "geometry": "ellipse",
+      "fillColor": "#F4B942"
+    },
+    {
+      "order": 8,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/3ylc7u54",
+      "id": "8",
+      "bbox": [
+        486,
+        324,
+        360,
+        28
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.1.0.1"
+      },
+      "geometry": "rect",
+      "text": "0. Reset the floor",
+      "textPreview": "0. Reset the floor",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "fontSize": 22,
+        "typeface": "Bahnschrift",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "0. Reset the floor"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "0. Reset the floor",
+          "runs": [
+            {
+              "index": 1,
+              "text": "0. Reset the floor",
+              "fontSize": 22,
+              "typeface": "Bahnschrift",
+              "color": "#141A1F",
+              "bold": true,
+              "alignment": "left"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 9,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/adsji5sn",
+      "id": "9",
+      "bbox": [
+        862,
+        324,
+        190,
+        28
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.1.0.2"
+      },
+      "geometry": "rect",
+      "text": "FIRST",
+      "textPreview": "FIRST",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "fontSize": 22,
+        "typeface": "Aptos",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "FIRST"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "FIRST",
+          "runs": [
+            {
+              "index": 1,
+              "text": "FIRST",
+              "fontSize": 22,
+              "typeface": "Aptos",
+              "color": "#F4B942",
+              "bold": true,
+              "alignment": "left"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 10,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/w7mp0bi9",
+      "id": "10",
+      "bbox": [
+        1068,
+        324,
+        756,
+        28
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.1.0.3"
+      },
+      "geometry": "rect",
+      "text": "Regenerate dev_index.md and refresh trace hashes or document deferral.",
+      "textPreview": "Regenerate dev_index.md and refresh trace hashes or document deferral.",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "fontSize": 20,
+        "typeface": "Aptos",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Regenerate dev_index.md and refresh trace hashes or document deferral."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Regenerate dev_index.md and refresh trace hashes or document deferral.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Regenerate dev_index.md and refresh trace hashes or document deferral.",
+              "fontSize": 20,
+              "typeface": "Aptos",
+              "color": "#25313B",
+              "alignment": "left"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 11,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/psfil0rq",
+      "id": "11",
+      "name": "dot-2E7D5B",
+      "bbox": [
+        444,
+        380,
+        18,
+        18
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.1.1.0"
+      },
+      "geometry": "ellipse",
+      "fillColor": "#2E7D5B"
+    },
+    {
+      "order": 12,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/e1w7mp0b",
+      "id": "12",
+      "bbox": [
+        486,
+        374,
+        360,
+        28
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.1.1.1"
+      },
+      "geometry": "rect",
+      "text": "1. Revealed-spinner hazards",
+      "textPreview": "1. Revealed-spinner hazards",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "fontSize": 22,
+        "typeface": "Bahnschrift",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "1. Revealed-spinner hazards"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "1. Revealed-spinner hazards",
+          "runs": [
+            {
+              "index": 1,
+              "text": "1. Revealed-spinner hazards",
+              "fontSize": 22,
+              "typeface": "Bahnschrift",
+              "color": "#141A1F",
+              "bold": true,
+              "alignment": "left"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 13,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/7mp0bi9s",
+      "id": "13",
+      "bbox": [
+        862,
+        374,
+        190,
+        28
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.1.1.2"
+      },
+      "geometry": "rect",
+      "text": "FIRST PATCH",
+      "textPreview": "FIRST PATCH",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "fontSize": 22,
+        "typeface": "Aptos",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "FIRST PATCH"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "FIRST PATCH",
+          "runs": [
+            {
+              "index": 1,
+              "text": "FIRST PATCH",
+              "fontSize": 22,
+              "typeface": "Aptos",
+              "color": "#2E7D5B",
+              "bold": true,
+              "alignment": "left"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 14,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/wval87ed",
+      "id": "14",
+      "bbox": [
+        1068,
+        374,
+        756,
+        28
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.1.1.3"
+      },
+      "geometry": "rect",
+      "text": "0 new WRAM; use exact active revealed Rapid Spin only.",
+      "textPreview": "0 new WRAM; use exact active revealed Rapid Spin only.",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "fontSize": 20,
+        "typeface": "Aptos",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "0 new WRAM; use exact active revealed Rapid Spin only."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "0 new WRAM; use exact active revealed Rapid Spin only.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "0 new WRAM; use exact active revealed Rapid Spin only.",
+              "fontSize": 20,
+              "typeface": "Aptos",
+              "color": "#25313B",
+              "alignment": "left"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 15,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/pg3ex0nu",
+      "id": "15",
+      "name": "dot-2F5EA8",
+      "bbox": [
+        444,
+        428,
+        18,
+        18
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.1.2.0"
+      },
+      "geometry": "ellipse",
+      "fillColor": "#2F5EA8"
+    },
+    {
+      "order": 16,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/epkzupwb",
+      "id": "16",
+      "bbox": [
+        486,
+        424,
+        360,
+        28
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.1.2.1"
+      },
+      "geometry": "rect",
+      "text": "2. Four-move saturation",
+      "textPreview": "2. Four-move saturation",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "fontSize": 22,
+        "typeface": "Bahnschrift",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "2. Four-move saturation"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "2. Four-move saturation",
+          "runs": [
+            {
+              "index": 1,
+              "text": "2. Four-move saturation",
+              "fontSize": 22,
+              "typeface": "Bahnschrift",
+              "color": "#141A1F",
+              "bold": true,
+              "alignment": "left"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 17,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/7adsji5s",
+      "id": "17",
+      "bbox": [
+        862,
+        424,
+        190,
+        28
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.1.2.2"
+      },
+      "geometry": "rect",
+      "text": "NEXT",
+      "textPreview": "NEXT",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "fontSize": 22,
+        "typeface": "Aptos",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "NEXT"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "NEXT",
+          "runs": [
+            {
+              "index": 1,
+              "text": "NEXT",
+              "fontSize": 22,
+              "typeface": "Aptos",
+              "color": "#2F5EA8",
+              "bold": true,
+              "alignment": "left"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 18,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/wra5gbq1",
+      "id": "18",
+      "bbox": [
+        1068,
+        424,
+        756,
+        28
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.1.2.3"
+      },
+      "geometry": "rect",
+      "text": "Stop respecting speculative coverage after four real moves are public, after edge-case audit.",
+      "textPreview": "Stop respecting speculative coverage after four real moves are public, after edge-case audit.",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "fontSize": 20,
+        "typeface": "Aptos",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Stop respecting speculative coverage after four real moves are public, after edge-case audit."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Stop respecting speculative coverage after four real moves are public, after edge-case audit.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Stop respecting speculative coverage after four real moves are public, after edge-case audit.",
+              "fontSize": 20,
+              "typeface": "Aptos",
+              "color": "#25313B",
+              "alignment": "left"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 19,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/lc7u54zi",
+      "id": "19",
+      "name": "dot-6D4DB2",
+      "bbox": [
+        444,
+        480,
+        18,
+        18
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.1.3.0"
+      },
+      "geometry": "ellipse",
+      "fillColor": "#6D4DB2"
+    },
+    {
+      "order": 20,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/p4r65wju",
+      "id": "20",
+      "bbox": [
+        486,
+        474,
+        360,
+        28
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.1.3.1"
+      },
+      "geometry": "rect",
+      "text": "3. Anti-dead setup",
+      "textPreview": "3. Anti-dead setup",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "fontSize": 22,
+        "typeface": "Bahnschrift",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "3. Anti-dead setup"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "3. Anti-dead setup",
+          "runs": [
+            {
+              "index": 1,
+              "text": "3. Anti-dead setup",
+              "fontSize": 22,
+              "typeface": "Bahnschrift",
+              "color": "#141A1F",
+              "bold": true,
+              "alignment": "left"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 21,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/wjudg7ad",
+      "id": "21",
+      "bbox": [
+        862,
+        474,
+        190,
+        28
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.1.3.2"
+      },
+      "geometry": "rect",
+      "text": "NEXT",
+      "textPreview": "NEXT",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "fontSize": 22,
+        "typeface": "Aptos",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "NEXT"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "NEXT",
+          "runs": [
+            {
+              "index": 1,
+              "text": "NEXT",
+              "fontSize": 22,
+              "typeface": "Aptos",
+              "color": "#6D4DB2",
+              "bold": true,
+              "alignment": "left"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 22,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/7y1kre1w",
+      "id": "22",
+      "bbox": [
+        1068,
+        474,
+        756,
+        28
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.1.3.3"
+      },
+      "geometry": "rect",
+      "text": "Suppress low-HP setup under public KO pressure unless it changes the route.",
+      "textPreview": "Suppress low-HP setup under public KO pressure unless it changes the route.",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "fontSize": 20,
+        "typeface": "Aptos",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Suppress low-HP setup under public KO pressure unless it changes the route."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Suppress low-HP setup under public KO pressure unless it changes the route.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Suppress low-HP setup under public KO pressure unless it changes the route.",
+              "fontSize": 20,
+              "typeface": "Aptos",
+              "color": "#25313B",
+              "alignment": "left"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 23,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ed8v6psf",
+      "id": "23",
+      "name": "dot-C74632",
+      "bbox": [
+        444,
+        528,
+        18,
+        18
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.1.4.0"
+      },
+      "geometry": "ellipse",
+      "fillColor": "#C74632"
+    },
+    {
+      "order": 24,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/pwb2hwfy",
+      "id": "24",
+      "bbox": [
+        486,
+        522,
+        360,
+        28
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.1.4.1"
+      },
+      "geometry": "rect",
+      "text": "4. Cash-out discipline",
+      "textPreview": "4. Cash-out discipline",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "fontSize": 22,
+        "typeface": "Bahnschrift",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "4. Cash-out discipline"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "4. Cash-out discipline",
+          "runs": [
+            {
+              "index": 1,
+              "text": "4. Cash-out discipline",
+              "fontSize": 22,
+              "typeface": "Bahnschrift",
+              "color": "#141A1F",
+              "bold": true,
+              "alignment": "left"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 25,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/0bi9s36h",
+      "id": "25",
+      "bbox": [
+        862,
+        522,
+        190,
+        28
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.1.4.2"
+      },
+      "geometry": "rect",
+      "text": "LATER",
+      "textPreview": "LATER",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "fontSize": 22,
+        "typeface": "Aptos",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "LATER"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "LATER",
+          "runs": [
+            {
+              "index": 1,
+              "text": "LATER",
+              "fontSize": 22,
+              "typeface": "Aptos",
+              "color": "#C74632",
+              "bold": true,
+              "alignment": "left"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 26,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/7qpg3ex0",
+      "id": "26",
+      "bbox": [
+        1068,
+        522,
+        756,
+        28
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.2.1.4.3"
+      },
+      "geometry": "rect",
+      "text": "Make Explosion-style trades route-aware and measurable.",
+      "textPreview": "Make Explosion-style trades route-aware and measurable.",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "fontSize": 20,
+        "typeface": "Aptos",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Make Explosion-style trades route-aware and measurable."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Make Explosion-style trades route-aware and measurable.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Make Explosion-style trades route-aware and measurable.",
+              "fontSize": 20,
+              "typeface": "Aptos",
+              "color": "#25313B",
+              "alignment": "left"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 27,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/i5sneloj",
+      "id": "27",
+      "name": "source-footer",
+      "bbox": [
+        96,
+        876,
+        1728,
+        20
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.1.3"
+      },
+      "geometry": "rect",
+      "text": "The plan explicitly defers broad search, large counters, and personality tables until smaller heuristics are proven.",
+      "textPreview": "The plan explicitly defers broad search, large counters, and personality tables until smaller heuristics are proven.",
+      "resolvedFontSize": 14,
+      "resolvedTextStyle": {
+        "fontSize": 14,
+        "typeface": "Aptos",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "The plan explicitly defers broad search, large counters, and personality tables until smaller heuristics are proven."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "The plan explicitly defers broad search, large counters, and personality tables until smaller heuristics are proven.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "The plan explicitly defers broad search, large counters, and personality tables until smaller heuristics are proven.",
+              "fontSize": 14,
+              "typeface": "Aptos",
+              "color": "#7A725F",
+              "alignment": "left"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "composeRuns": [
+    {
+      "index": 1,
+      "frame": {
+        "left": 0,
+        "top": 0,
+        "width": 1920,
+        "height": 1080
+      },
+      "baseUnit": 8,
+      "root": {
+        "path": "0",
+        "kind": "layers",
+        "name": "slide-root",
+        "requestedSize": {
+          "width": {
+            "mode": "fill",
+            "value": 1
+          },
+          "height": {
+            "mode": "fill",
+            "value": 1
+          }
+        },
+        "intrinsicSize": {
+          "width": 0,
+          "height": 0
+        },
+        "frame": {
+          "left": 0,
+          "top": 0,
+          "width": 1920,
+          "height": 1080
+        },
+        "children": [
+          {
+            "path": "0.0",
+            "kind": "shape",
+            "name": "background",
+            "requestedSize": {
+              "width": {
+                "mode": "fill",
+                "value": 1
+              },
+              "height": {
+                "mode": "fill",
+                "value": 1
+              }
+            },
+            "intrinsicSize": {
+              "width": 0,
+              "height": 0
+            },
+            "frame": {
+              "left": 0,
+              "top": 0,
+              "width": 1920,
+              "height": 1080
+            },
+            "snappedFrame": {
+              "left": 0,
+              "top": 0,
+              "width": 1920,
+              "height": 1080
+            },
+            "children": [],
+            "geometry": "rect",
+            "element": {
+              "aid": "sh/a1gvy90j",
+              "id": "1",
+              "kind": "shape"
+            }
+          },
+          {
+            "path": "0.1",
+            "kind": "column",
+            "name": "content",
+            "requestedSize": {
+              "width": {
+                "mode": "fill",
+                "value": 1
+              },
+              "height": {
+                "mode": "fill",
+                "value": 1
+              }
+            },
+            "intrinsicSize": {
+              "width": 1611.82,
+              "height": 967.07
+            },
+            "frame": {
+              "left": 0,
+              "top": 0,
+              "width": 1920,
+              "height": 1080
+            },
+            "children": [
+              {
+                "path": "0.1.0",
+                "kind": "text",
+                "name": "kicker-implementation-roadmap",
+                "requestedSize": {
+                  "width": {
+                    "mode": "fill",
+                    "value": 1
+                  },
+                  "height": {
+                    "mode": "hug"
+                  }
+                },
+                "intrinsicSize": {
+                  "width": 0,
+                  "height": 24.19
+                },
+                "frame": {
+                  "left": 96,
+                  "top": 72,
+                  "width": 1728,
+                  "height": 24.19
+                },
+                "snappedFrame": {
+                  "left": 96,
+                  "top": 72,
+                  "width": 1728,
+                  "height": 26
+                },
+                "children": [],
+                "text": "IMPLEMENTATION ROADMAP",
+                "transform": "none",
+                "element": {
+                  "aid": "sh/hoza1gvy",
+                  "id": "2",
+                  "kind": "shape"
+                }
+              },
+              {
+                "path": "0.1.1",
+                "kind": "text",
+                "requestedSize": {
+                  "width": {
+                    "mode": "wrap",
+                    "max": 1500
+                  },
+                  "height": {
+                    "mode": "hug"
+                  }
+                },
+                "intrinsicSize": {
+                  "width": 1419.82,
+                  "height": 171.36
+                },
+                "frame": {
+                  "left": 96,
+                  "top": 124.19,
+                  "width": 1419.82,
+                  "height": 171.36
+                },
+                "snappedFrame": {
+                  "left": 96,
+                  "top": 124,
+                  "width": 1420,
+                  "height": 172
+                },
+                "children": [],
+                "text": "The path is deliberately small, reversible, and evidence-led.",
+                "transform": "none",
+                "element": {
+                  "aid": "sh/s36hcrmh",
+                  "id": "3",
+                  "kind": "shape"
+                }
+              },
+              {
+                "path": "0.1.2",
+                "kind": "grid",
+                "name": "roadmap-grid",
+                "requestedSize": {
+                  "width": {
+                    "mode": "fill",
+                    "value": 1
+                  },
+                  "height": {
+                    "mode": "hug"
+                  }
+                },
+                "intrinsicSize": {
+                  "width": 346,
+                  "height": 524.7
+                },
+                "frame": {
+                  "left": 96,
+                  "top": 323.55,
+                  "width": 1728,
+                  "height": 524.7
+                },
+                "children": [
+                  {
+                    "path": "0.1.2.0",
+                    "kind": "column",
+                    "name": "roadmap-art",
+                    "requestedSize": {
+                      "width": {
+                        "mode": "fill",
+                        "value": 1
+                      },
+                      "height": {
+                        "mode": "hug"
+                      }
+                    },
+                    "intrinsicSize": {
+                      "width": 360,
+                      "height": 524.7
+                    },
+                    "frame": {
+                      "left": 96,
+                      "top": 323.55,
+                      "width": 300,
+                      "height": 524.7
+                    },
+                    "children": [
+                      {
+                        "path": "0.1.2.0.0",
+                        "kind": "image",
+                        "name": "misty-roadmap",
+                        "requestedSize": {
+                          "width": {
+                            "mode": "fixed",
+                            "value": 260
+                          },
+                          "height": {
+                            "mode": "fixed",
+                            "value": 260
+                          }
+                        },
+                        "intrinsicSize": {
+                          "width": 260,
+                          "height": 260
+                        },
+                        "frame": {
+                          "left": 116,
+                          "top": 323.55,
+                          "width": 260,
+                          "height": 260
+                        },
+                        "snappedFrame": {
+                          "left": 116,
+                          "top": 323.55,
+                          "width": 260,
+                          "height": 260
+                        },
+                        "children": [],
+                        "source": {
+                          "kind": "dataUrl"
+                        },
+                        "fit": "contain",
+                        "alt": "misty-roadmap",
+                        "element": {
+                          "aid": "im/2p8nqxs7",
+                          "id": "4",
+                          "kind": "image"
+                        }
+                      },
+                      {
+                        "path": "0.1.2.0.1",
+                        "kind": "image",
+                        "name": "badges-roadmap",
+                        "requestedSize": {
+                          "width": {
+                            "mode": "fixed",
+                            "value": 360
+                          },
+                          "height": {
+                            "mode": "fixed",
+                            "value": 140
+                          }
+                        },
+                        "intrinsicSize": {
+                          "width": 360,
+                          "height": 140
+                        },
+                        "frame": {
+                          "left": 66,
+                          "top": 601.55,
+                          "width": 360,
+                          "height": 140
+                        },
+                        "snappedFrame": {
+                          "left": 66,
+                          "top": 601.55,
+                          "width": 360,
+                          "height": 140
+                        },
+                        "children": [],
+                        "source": {
+                          "kind": "dataUrl"
+                        },
+                        "fit": "contain",
+                        "alt": "badges-roadmap",
+                        "element": {
+                          "aid": "im/ra5gbq1o",
+                          "id": "5",
+                          "kind": "image"
+                        }
+                      },
+                      {
+                        "path": "0.1.2.0.2",
+                        "kind": "text",
+                        "requestedSize": {
+                          "width": {
+                            "mode": "wrap",
+                            "max": 300
+                          },
+                          "height": {
+                            "mode": "hug"
+                          }
+                        },
+                        "intrinsicSize": {
+                          "width": 297.87,
+                          "height": 88.7
+                        },
+                        "frame": {
+                          "left": 98,
+                          "top": 759.55,
+                          "width": 296,
+                          "height": 88.7
+                        },
+                        "snappedFrame": {
+                          "left": 98,
+                          "top": 760,
+                          "width": 296,
+                          "height": 90
+                        },
+                        "children": [],
+                        "text": "Leader identity improves through scoring, not bespoke scripts for every fight.",
+                        "transform": "none",
+                        "element": {
+                          "aid": "sh/hgn29gr2",
+                          "id": "6",
+                          "kind": "shape"
+                        }
+                      }
+                    ],
+                    "padding": {
+                      "top": 0,
+                      "right": 0,
+                      "bottom": 0,
+                      "left": 0
+                    },
+                    "gap": 18,
+                    "effectiveGap": 18,
+                    "justifyOffset": 0,
+                    "align": "center",
+                    "justify": "start",
+                    "contentFrame": {
+                      "left": 96,
+                      "top": 323.55,
+                      "width": 300,
+                      "height": 524.7
+                    },
+                    "items": [
+                      {
+                        "path": "0.1.2.0.0",
+                        "frame": {
+                          "left": 116,
+                          "top": 323.55,
+                          "width": 260,
+                          "height": 260
+                        }
+                      },
+                      {
+                        "path": "0.1.2.0.1",
+                        "frame": {
+                          "left": 66,
+                          "top": 601.55,
+                          "width": 360,
+                          "height": 140
+                        }
+                      },
+                      {
+                        "path": "0.1.2.0.2",
+                        "frame": {
+                          "left": 98,
+                          "top": 759.55,
+                          "width": 296,
+                          "height": 88.7
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "path": "0.1.2.1",
+                    "kind": "column",
+                    "name": "roadmap-steps",
+                    "requestedSize": {
+                      "width": {
+                        "mode": "fill",
+                        "value": 1
+                      },
+                      "height": {
+                        "mode": "hug"
+                      }
+                    },
+                    "intrinsicSize": {
+                      "width": 0,
+                      "height": 227.84
+                    },
+                    "frame": {
+                      "left": 442,
+                      "top": 323.55,
+                      "width": 1382,
+                      "height": 227.84
+                    },
+                    "children": [
+                      {
+                        "path": "0.1.2.1.0",
+                        "kind": "grid",
+                        "name": "status-0. Reset the floor",
+                        "requestedSize": {
+                          "width": {
+                            "mode": "fill",
+                            "value": 1
+                          },
+                          "height": {
+                            "mode": "hug"
+                          }
+                        },
+                        "intrinsicSize": {
+                          "width": 626,
+                          "height": 29.57
+                        },
+                        "frame": {
+                          "left": 442,
+                          "top": 323.55,
+                          "width": 1382,
+                          "height": 29.57
+                        },
+                        "children": [
+                          {
+                            "path": "0.1.2.1.0.0",
+                            "kind": "shape",
+                            "name": "dot-F4B942",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fixed",
+                                "value": 18
+                              },
+                              "height": {
+                                "mode": "fixed",
+                                "value": 18
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 18,
+                              "height": 18
+                            },
+                            "frame": {
+                              "left": 442,
+                              "top": 330,
+                              "width": 18,
+                              "height": 18
+                            },
+                            "snappedFrame": {
+                              "left": 444,
+                              "top": 332,
+                              "width": 18,
+                              "height": 18
+                            },
+                            "children": [],
+                            "geometry": "ellipse",
+                            "element": {
+                              "aid": "sh/svu9knih",
+                              "id": "7",
+                              "kind": "shape"
+                            }
+                          },
+                          {
+                            "path": "0.1.2.1.0.1",
+                            "kind": "text",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fill",
+                                "value": 1
+                              },
+                              "height": {
+                                "mode": "hug"
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 0,
+                              "height": 29.57
+                            },
+                            "frame": {
+                              "left": 486,
+                              "top": 324,
+                              "width": 360,
+                              "height": 28
+                            },
+                            "snappedFrame": {
+                              "left": 486,
+                              "top": 324,
+                              "width": 360,
+                              "height": 28
+                            },
+                            "children": [],
+                            "text": "0. Reset the floor",
+                            "transform": "none",
+                            "element": {
+                              "aid": "sh/3ylc7u54",
+                              "id": "8",
+                              "kind": "shape"
+                            }
+                          },
+                          {
+                            "path": "0.1.2.1.0.2",
+                            "kind": "text",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fill",
+                                "value": 1
+                              },
+                              "height": {
+                                "mode": "hug"
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 0,
+                              "height": 29.57
+                            },
+                            "frame": {
+                              "left": 862,
+                              "top": 324,
+                              "width": 190,
+                              "height": 28
+                            },
+                            "snappedFrame": {
+                              "left": 862,
+                              "top": 324,
+                              "width": 190,
+                              "height": 28
+                            },
+                            "children": [],
+                            "text": "FIRST",
+                            "transform": "none",
+                            "element": {
+                              "aid": "sh/adsji5sn",
+                              "id": "9",
+                              "kind": "shape"
+                            }
+                          },
+                          {
+                            "path": "0.1.2.1.0.3",
+                            "kind": "text",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fill",
+                                "value": 1
+                              },
+                              "height": {
+                                "mode": "hug"
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 0,
+                              "height": 26.88
+                            },
+                            "frame": {
+                              "left": 1068,
+                              "top": 324,
+                              "width": 756,
+                              "height": 28
+                            },
+                            "snappedFrame": {
+                              "left": 1068,
+                              "top": 324,
+                              "width": 756,
+                              "height": 28
+                            },
+                            "children": [],
+                            "text": "Regenerate dev_index.md and refresh trace hashes or document deferral.",
+                            "transform": "none",
+                            "element": {
+                              "aid": "sh/w7mp0bi9",
+                              "id": "10",
+                              "kind": "shape"
+                            }
+                          }
+                        ],
+                        "padding": {
+                          "top": 0,
+                          "right": 0,
+                          "bottom": 0,
+                          "left": 0
+                        },
+                        "columnGap": 16,
+                        "rowGap": 0,
+                        "alignItems": "center",
+                        "justifyItems": "stretch",
+                        "contentFrame": {
+                          "left": 442,
+                          "top": 323.55,
+                          "width": 1382,
+                          "height": 29.57
+                        },
+                        "columns": [
+                          {
+                            "mode": "fixed",
+                            "value": 28
+                          },
+                          {
+                            "mode": "fixed",
+                            "value": 360
+                          },
+                          {
+                            "mode": "fixed",
+                            "value": 190
+                          },
+                          {
+                            "mode": "fr",
+                            "value": 1
+                          }
+                        ],
+                        "autoRows": "auto",
+                        "resolvedRows": [
+                          "auto"
+                        ],
+                        "columnSizes": [
+                          28,
+                          360,
+                          190,
+                          756
+                        ],
+                        "rowSizes": [
+                          29.57
+                        ],
+                        "cells": [
+                          {
+                            "path": "0.1.2.1.0.0",
+                            "column": 0,
+                            "row": 0,
+                            "columnSpan": 1,
+                            "rowSpan": 1,
+                            "cellFrame": {
+                              "left": 442,
+                              "top": 323.55,
+                              "width": 28,
+                              "height": 29.57
+                            }
+                          },
+                          {
+                            "path": "0.1.2.1.0.1",
+                            "column": 1,
+                            "row": 0,
+                            "columnSpan": 1,
+                            "rowSpan": 1,
+                            "cellFrame": {
+                              "left": 486,
+                              "top": 323.55,
+                              "width": 360,
+                              "height": 29.57
+                            }
+                          },
+                          {
+                            "path": "0.1.2.1.0.2",
+                            "column": 2,
+                            "row": 0,
+                            "columnSpan": 1,
+                            "rowSpan": 1,
+                            "cellFrame": {
+                              "left": 862,
+                              "top": 323.55,
+                              "width": 190,
+                              "height": 29.57
+                            }
+                          },
+                          {
+                            "path": "0.1.2.1.0.3",
+                            "column": 3,
+                            "row": 0,
+                            "columnSpan": 1,
+                            "rowSpan": 1,
+                            "cellFrame": {
+                              "left": 1068,
+                              "top": 323.55,
+                              "width": 756,
+                              "height": 29.57
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "path": "0.1.2.1.1",
+                        "kind": "grid",
+                        "name": "status-1. Revealed-spinner hazards",
+                        "requestedSize": {
+                          "width": {
+                            "mode": "fill",
+                            "value": 1
+                          },
+                          "height": {
+                            "mode": "hug"
+                          }
+                        },
+                        "intrinsicSize": {
+                          "width": 626,
+                          "height": 29.57
+                        },
+                        "frame": {
+                          "left": 442,
+                          "top": 373.12,
+                          "width": 1382,
+                          "height": 29.57
+                        },
+                        "children": [
+                          {
+                            "path": "0.1.2.1.1.0",
+                            "kind": "shape",
+                            "name": "dot-2E7D5B",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fixed",
+                                "value": 18
+                              },
+                              "height": {
+                                "mode": "fixed",
+                                "value": 18
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 18,
+                              "height": 18
+                            },
+                            "frame": {
+                              "left": 442,
+                              "top": 378,
+                              "width": 18,
+                              "height": 18
+                            },
+                            "snappedFrame": {
+                              "left": 444,
+                              "top": 380,
+                              "width": 18,
+                              "height": 18
+                            },
+                            "children": [],
+                            "geometry": "ellipse",
+                            "element": {
+                              "aid": "sh/psfil0rq",
+                              "id": "11",
+                              "kind": "shape"
+                            }
+                          },
+                          {
+                            "path": "0.1.2.1.1.1",
+                            "kind": "text",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fill",
+                                "value": 1
+                              },
+                              "height": {
+                                "mode": "hug"
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 0,
+                              "height": 29.57
+                            },
+                            "frame": {
+                              "left": 486,
+                              "top": 374,
+                              "width": 360,
+                              "height": 28
+                            },
+                            "snappedFrame": {
+                              "left": 486,
+                              "top": 374,
+                              "width": 360,
+                              "height": 28
+                            },
+                            "children": [],
+                            "text": "1. Revealed-spinner hazards",
+                            "transform": "none",
+                            "element": {
+                              "aid": "sh/e1w7mp0b",
+                              "id": "12",
+                              "kind": "shape"
+                            }
+                          },
+                          {
+                            "path": "0.1.2.1.1.2",
+                            "kind": "text",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fill",
+                                "value": 1
+                              },
+                              "height": {
+                                "mode": "hug"
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 0,
+                              "height": 29.57
+                            },
+                            "frame": {
+                              "left": 862,
+                              "top": 374,
+                              "width": 190,
+                              "height": 28
+                            },
+                            "snappedFrame": {
+                              "left": 862,
+                              "top": 374,
+                              "width": 190,
+                              "height": 28
+                            },
+                            "children": [],
+                            "text": "FIRST PATCH",
+                            "transform": "none",
+                            "element": {
+                              "aid": "sh/7mp0bi9s",
+                              "id": "13",
+                              "kind": "shape"
+                            }
+                          },
+                          {
+                            "path": "0.1.2.1.1.3",
+                            "kind": "text",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fill",
+                                "value": 1
+                              },
+                              "height": {
+                                "mode": "hug"
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 0,
+                              "height": 26.88
+                            },
+                            "frame": {
+                              "left": 1068,
+                              "top": 374,
+                              "width": 756,
+                              "height": 28
+                            },
+                            "snappedFrame": {
+                              "left": 1068,
+                              "top": 374,
+                              "width": 756,
+                              "height": 28
+                            },
+                            "children": [],
+                            "text": "0 new WRAM; use exact active revealed Rapid Spin only.",
+                            "transform": "none",
+                            "element": {
+                              "aid": "sh/wval87ed",
+                              "id": "14",
+                              "kind": "shape"
+                            }
+                          }
+                        ],
+                        "padding": {
+                          "top": 0,
+                          "right": 0,
+                          "bottom": 0,
+                          "left": 0
+                        },
+                        "columnGap": 16,
+                        "rowGap": 0,
+                        "alignItems": "center",
+                        "justifyItems": "stretch",
+                        "contentFrame": {
+                          "left": 442,
+                          "top": 373.12,
+                          "width": 1382,
+                          "height": 29.57
+                        },
+                        "columns": [
+                          {
+                            "mode": "fixed",
+                            "value": 28
+                          },
+                          {
+                            "mode": "fixed",
+                            "value": 360
+                          },
+                          {
+                            "mode": "fixed",
+                            "value": 190
+                          },
+                          {
+                            "mode": "fr",
+                            "value": 1
+                          }
+                        ],
+                        "autoRows": "auto",
+                        "resolvedRows": [
+                          "auto"
+                        ],
+                        "columnSizes": [
+                          28,
+                          360,
+                          190,
+                          756
+                        ],
+                        "rowSizes": [
+                          29.57
+                        ],
+                        "cells": [
+                          {
+                            "path": "0.1.2.1.1.0",
+                            "column": 0,
+                            "row": 0,
+                            "columnSpan": 1,
+                            "rowSpan": 1,
+                            "cellFrame": {
+                              "left": 442,
+                              "top": 373.12,
+                              "width": 28,
+                              "height": 29.57
+                            }
+                          },
+                          {
+                            "path": "0.1.2.1.1.1",
+                            "column": 1,
+                            "row": 0,
+                            "columnSpan": 1,
+                            "rowSpan": 1,
+                            "cellFrame": {
+                              "left": 486,
+                              "top": 373.12,
+                              "width": 360,
+                              "height": 29.57
+                            }
+                          },
+                          {
+                            "path": "0.1.2.1.1.2",
+                            "column": 2,
+                            "row": 0,
+                            "columnSpan": 1,
+                            "rowSpan": 1,
+                            "cellFrame": {
+                              "left": 862,
+                              "top": 373.12,
+                              "width": 190,
+                              "height": 29.57
+                            }
+                          },
+                          {
+                            "path": "0.1.2.1.1.3",
+                            "column": 3,
+                            "row": 0,
+                            "columnSpan": 1,
+                            "rowSpan": 1,
+                            "cellFrame": {
+                              "left": 1068,
+                              "top": 373.12,
+                              "width": 756,
+                              "height": 29.57
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "path": "0.1.2.1.2",
+                        "kind": "grid",
+                        "name": "status-2. Four-move saturation",
+                        "requestedSize": {
+                          "width": {
+                            "mode": "fill",
+                            "value": 1
+                          },
+                          "height": {
+                            "mode": "hug"
+                          }
+                        },
+                        "intrinsicSize": {
+                          "width": 626,
+                          "height": 29.57
+                        },
+                        "frame": {
+                          "left": 442,
+                          "top": 422.69,
+                          "width": 1382,
+                          "height": 29.57
+                        },
+                        "children": [
+                          {
+                            "path": "0.1.2.1.2.0",
+                            "kind": "shape",
+                            "name": "dot-2F5EA8",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fixed",
+                                "value": 18
+                              },
+                              "height": {
+                                "mode": "fixed",
+                                "value": 18
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 18,
+                              "height": 18
+                            },
+                            "frame": {
+                              "left": 442,
+                              "top": 428,
+                              "width": 18,
+                              "height": 18
+                            },
+                            "snappedFrame": {
+                              "left": 444,
+                              "top": 428,
+                              "width": 18,
+                              "height": 18
+                            },
+                            "children": [],
+                            "geometry": "ellipse",
+                            "element": {
+                              "aid": "sh/pg3ex0nu",
+                              "id": "15",
+                              "kind": "shape"
+                            }
+                          },
+                          {
+                            "path": "0.1.2.1.2.1",
+                            "kind": "text",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fill",
+                                "value": 1
+                              },
+                              "height": {
+                                "mode": "hug"
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 0,
+                              "height": 29.57
+                            },
+                            "frame": {
+                              "left": 486,
+                              "top": 424,
+                              "width": 360,
+                              "height": 28
+                            },
+                            "snappedFrame": {
+                              "left": 486,
+                              "top": 424,
+                              "width": 360,
+                              "height": 28
+                            },
+                            "children": [],
+                            "text": "2. Four-move saturation",
+                            "transform": "none",
+                            "element": {
+                              "aid": "sh/epkzupwb",
+                              "id": "16",
+                              "kind": "shape"
+                            }
+                          },
+                          {
+                            "path": "0.1.2.1.2.2",
+                            "kind": "text",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fill",
+                                "value": 1
+                              },
+                              "height": {
+                                "mode": "hug"
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 0,
+                              "height": 29.57
+                            },
+                            "frame": {
+                              "left": 862,
+                              "top": 424,
+                              "width": 190,
+                              "height": 28
+                            },
+                            "snappedFrame": {
+                              "left": 862,
+                              "top": 424,
+                              "width": 190,
+                              "height": 28
+                            },
+                            "children": [],
+                            "text": "NEXT",
+                            "transform": "none",
+                            "element": {
+                              "aid": "sh/7adsji5s",
+                              "id": "17",
+                              "kind": "shape"
+                            }
+                          },
+                          {
+                            "path": "0.1.2.1.2.3",
+                            "kind": "text",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fill",
+                                "value": 1
+                              },
+                              "height": {
+                                "mode": "hug"
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 0,
+                              "height": 26.88
+                            },
+                            "frame": {
+                              "left": 1068,
+                              "top": 424,
+                              "width": 756,
+                              "height": 28
+                            },
+                            "snappedFrame": {
+                              "left": 1068,
+                              "top": 424,
+                              "width": 756,
+                              "height": 28
+                            },
+                            "children": [],
+                            "text": "Stop respecting speculative coverage after four real moves are public, after edge-case audit.",
+                            "transform": "none",
+                            "element": {
+                              "aid": "sh/wra5gbq1",
+                              "id": "18",
+                              "kind": "shape"
+                            }
+                          }
+                        ],
+                        "padding": {
+                          "top": 0,
+                          "right": 0,
+                          "bottom": 0,
+                          "left": 0
+                        },
+                        "columnGap": 16,
+                        "rowGap": 0,
+                        "alignItems": "center",
+                        "justifyItems": "stretch",
+                        "contentFrame": {
+                          "left": 442,
+                          "top": 422.69,
+                          "width": 1382,
+                          "height": 29.57
+                        },
+                        "columns": [
+                          {
+                            "mode": "fixed",
+                            "value": 28
+                          },
+                          {
+                            "mode": "fixed",
+                            "value": 360
+                          },
+                          {
+                            "mode": "fixed",
+                            "value": 190
+                          },
+                          {
+                            "mode": "fr",
+                            "value": 1
+                          }
+                        ],
+                        "autoRows": "auto",
+                        "resolvedRows": [
+                          "auto"
+                        ],
+                        "columnSizes": [
+                          28,
+                          360,
+                          190,
+                          756
+                        ],
+                        "rowSizes": [
+                          29.57
+                        ],
+                        "cells": [
+                          {
+                            "path": "0.1.2.1.2.0",
+                            "column": 0,
+                            "row": 0,
+                            "columnSpan": 1,
+                            "rowSpan": 1,
+                            "cellFrame": {
+                              "left": 442,
+                              "top": 422.69,
+                              "width": 28,
+                              "height": 29.57
+                            }
+                          },
+                          {
+                            "path": "0.1.2.1.2.1",
+                            "column": 1,
+                            "row": 0,
+                            "columnSpan": 1,
+                            "rowSpan": 1,
+                            "cellFrame": {
+                              "left": 486,
+                              "top": 422.69,
+                              "width": 360,
+                              "height": 29.57
+                            }
+                          },
+                          {
+                            "path": "0.1.2.1.2.2",
+                            "column": 2,
+                            "row": 0,
+                            "columnSpan": 1,
+                            "rowSpan": 1,
+                            "cellFrame": {
+                              "left": 862,
+                              "top": 422.69,
+                              "width": 190,
+                              "height": 29.57
+                            }
+                          },
+                          {
+                            "path": "0.1.2.1.2.3",
+                            "column": 3,
+                            "row": 0,
+                            "columnSpan": 1,
+                            "rowSpan": 1,
+                            "cellFrame": {
+                              "left": 1068,
+                              "top": 422.69,
+                              "width": 756,
+                              "height": 29.57
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "path": "0.1.2.1.3",
+                        "kind": "grid",
+                        "name": "status-3. Anti-dead setup",
+                        "requestedSize": {
+                          "width": {
+                            "mode": "fill",
+                            "value": 1
+                          },
+                          "height": {
+                            "mode": "hug"
+                          }
+                        },
+                        "intrinsicSize": {
+                          "width": 626,
+                          "height": 29.57
+                        },
+                        "frame": {
+                          "left": 442,
+                          "top": 472.26,
+                          "width": 1382,
+                          "height": 29.57
+                        },
+                        "children": [
+                          {
+                            "path": "0.1.2.1.3.0",
+                            "kind": "shape",
+                            "name": "dot-6D4DB2",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fixed",
+                                "value": 18
+                              },
+                              "height": {
+                                "mode": "fixed",
+                                "value": 18
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 18,
+                              "height": 18
+                            },
+                            "frame": {
+                              "left": 442,
+                              "top": 478,
+                              "width": 18,
+                              "height": 18
+                            },
+                            "snappedFrame": {
+                              "left": 444,
+                              "top": 480,
+                              "width": 18,
+                              "height": 18
+                            },
+                            "children": [],
+                            "geometry": "ellipse",
+                            "element": {
+                              "aid": "sh/lc7u54zi",
+                              "id": "19",
+                              "kind": "shape"
+                            }
+                          },
+                          {
+                            "path": "0.1.2.1.3.1",
+                            "kind": "text",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fill",
+                                "value": 1
+                              },
+                              "height": {
+                                "mode": "hug"
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 0,
+                              "height": 29.57
+                            },
+                            "frame": {
+                              "left": 486,
+                              "top": 474,
+                              "width": 360,
+                              "height": 28
+                            },
+                            "snappedFrame": {
+                              "left": 486,
+                              "top": 474,
+                              "width": 360,
+                              "height": 28
+                            },
+                            "children": [],
+                            "text": "3. Anti-dead setup",
+                            "transform": "none",
+                            "element": {
+                              "aid": "sh/p4r65wju",
+                              "id": "20",
+                              "kind": "shape"
+                            }
+                          },
+                          {
+                            "path": "0.1.2.1.3.2",
+                            "kind": "text",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fill",
+                                "value": 1
+                              },
+                              "height": {
+                                "mode": "hug"
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 0,
+                              "height": 29.57
+                            },
+                            "frame": {
+                              "left": 862,
+                              "top": 474,
+                              "width": 190,
+                              "height": 28
+                            },
+                            "snappedFrame": {
+                              "left": 862,
+                              "top": 474,
+                              "width": 190,
+                              "height": 28
+                            },
+                            "children": [],
+                            "text": "NEXT",
+                            "transform": "none",
+                            "element": {
+                              "aid": "sh/wjudg7ad",
+                              "id": "21",
+                              "kind": "shape"
+                            }
+                          },
+                          {
+                            "path": "0.1.2.1.3.3",
+                            "kind": "text",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fill",
+                                "value": 1
+                              },
+                              "height": {
+                                "mode": "hug"
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 0,
+                              "height": 26.88
+                            },
+                            "frame": {
+                              "left": 1068,
+                              "top": 474,
+                              "width": 756,
+                              "height": 28
+                            },
+                            "snappedFrame": {
+                              "left": 1068,
+                              "top": 474,
+                              "width": 756,
+                              "height": 28
+                            },
+                            "children": [],
+                            "text": "Suppress low-HP setup under public KO pressure unless it changes the route.",
+                            "transform": "none",
+                            "element": {
+                              "aid": "sh/7y1kre1w",
+                              "id": "22",
+                              "kind": "shape"
+                            }
+                          }
+                        ],
+                        "padding": {
+                          "top": 0,
+                          "right": 0,
+                          "bottom": 0,
+                          "left": 0
+                        },
+                        "columnGap": 16,
+                        "rowGap": 0,
+                        "alignItems": "center",
+                        "justifyItems": "stretch",
+                        "contentFrame": {
+                          "left": 442,
+                          "top": 472.26,
+                          "width": 1382,
+                          "height": 29.57
+                        },
+                        "columns": [
+                          {
+                            "mode": "fixed",
+                            "value": 28
+                          },
+                          {
+                            "mode": "fixed",
+                            "value": 360
+                          },
+                          {
+                            "mode": "fixed",
+                            "value": 190
+                          },
+                          {
+                            "mode": "fr",
+                            "value": 1
+                          }
+                        ],
+                        "autoRows": "auto",
+                        "resolvedRows": [
+                          "auto"
+                        ],
+                        "columnSizes": [
+                          28,
+                          360,
+                          190,
+                          756
+                        ],
+                        "rowSizes": [
+                          29.57
+                        ],
+                        "cells": [
+                          {
+                            "path": "0.1.2.1.3.0",
+                            "column": 0,
+                            "row": 0,
+                            "columnSpan": 1,
+                            "rowSpan": 1,
+                            "cellFrame": {
+                              "left": 442,
+                              "top": 472.26,
+                              "width": 28,
+                              "height": 29.57
+                            }
+                          },
+                          {
+                            "path": "0.1.2.1.3.1",
+                            "column": 1,
+                            "row": 0,
+                            "columnSpan": 1,
+                            "rowSpan": 1,
+                            "cellFrame": {
+                              "left": 486,
+                              "top": 472.26,
+                              "width": 360,
+                              "height": 29.57
+                            }
+                          },
+                          {
+                            "path": "0.1.2.1.3.2",
+                            "column": 2,
+                            "row": 0,
+                            "columnSpan": 1,
+                            "rowSpan": 1,
+                            "cellFrame": {
+                              "left": 862,
+                              "top": 472.26,
+                              "width": 190,
+                              "height": 29.57
+                            }
+                          },
+                          {
+                            "path": "0.1.2.1.3.3",
+                            "column": 3,
+                            "row": 0,
+                            "columnSpan": 1,
+                            "rowSpan": 1,
+                            "cellFrame": {
+                              "left": 1068,
+                              "top": 472.26,
+                              "width": 756,
+                              "height": 29.57
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "path": "0.1.2.1.4",
+                        "kind": "grid",
+                        "name": "status-4. Cash-out discipline",
+                        "requestedSize": {
+                          "width": {
+                            "mode": "fill",
+                            "value": 1
+                          },
+                          "height": {
+                            "mode": "hug"
+                          }
+                        },
+                        "intrinsicSize": {
+                          "width": 626,
+                          "height": 29.57
+                        },
+                        "frame": {
+                          "left": 442,
+                          "top": 521.82,
+                          "width": 1382,
+                          "height": 29.57
+                        },
+                        "children": [
+                          {
+                            "path": "0.1.2.1.4.0",
+                            "kind": "shape",
+                            "name": "dot-C74632",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fixed",
+                                "value": 18
+                              },
+                              "height": {
+                                "mode": "fixed",
+                                "value": 18
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 18,
+                              "height": 18
+                            },
+                            "frame": {
+                              "left": 442,
+                              "top": 528,
+                              "width": 18,
+                              "height": 18
+                            },
+                            "snappedFrame": {
+                              "left": 444,
+                              "top": 528,
+                              "width": 18,
+                              "height": 18
+                            },
+                            "children": [],
+                            "geometry": "ellipse",
+                            "element": {
+                              "aid": "sh/ed8v6psf",
+                              "id": "23",
+                              "kind": "shape"
+                            }
+                          },
+                          {
+                            "path": "0.1.2.1.4.1",
+                            "kind": "text",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fill",
+                                "value": 1
+                              },
+                              "height": {
+                                "mode": "hug"
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 0,
+                              "height": 29.57
+                            },
+                            "frame": {
+                              "left": 486,
+                              "top": 522,
+                              "width": 360,
+                              "height": 28
+                            },
+                            "snappedFrame": {
+                              "left": 486,
+                              "top": 522,
+                              "width": 360,
+                              "height": 28
+                            },
+                            "children": [],
+                            "text": "4. Cash-out discipline",
+                            "transform": "none",
+                            "element": {
+                              "aid": "sh/pwb2hwfy",
+                              "id": "24",
+                              "kind": "shape"
+                            }
+                          },
+                          {
+                            "path": "0.1.2.1.4.2",
+                            "kind": "text",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fill",
+                                "value": 1
+                              },
+                              "height": {
+                                "mode": "hug"
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 0,
+                              "height": 29.57
+                            },
+                            "frame": {
+                              "left": 862,
+                              "top": 522,
+                              "width": 190,
+                              "height": 28
+                            },
+                            "snappedFrame": {
+                              "left": 862,
+                              "top": 522,
+                              "width": 190,
+                              "height": 28
+                            },
+                            "children": [],
+                            "text": "LATER",
+                            "transform": "none",
+                            "element": {
+                              "aid": "sh/0bi9s36h",
+                              "id": "25",
+                              "kind": "shape"
+                            }
+                          },
+                          {
+                            "path": "0.1.2.1.4.3",
+                            "kind": "text",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fill",
+                                "value": 1
+                              },
+                              "height": {
+                                "mode": "hug"
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 0,
+                              "height": 26.88
+                            },
+                            "frame": {
+                              "left": 1068,
+                              "top": 522,
+                              "width": 756,
+                              "height": 28
+                            },
+                            "snappedFrame": {
+                              "left": 1068,
+                              "top": 522,
+                              "width": 756,
+                              "height": 28
+                            },
+                            "children": [],
+                            "text": "Make Explosion-style trades route-aware and measurable.",
+                            "transform": "none",
+                            "element": {
+                              "aid": "sh/7qpg3ex0",
+                              "id": "26",
+                              "kind": "shape"
+                            }
+                          }
+                        ],
+                        "padding": {
+                          "top": 0,
+                          "right": 0,
+                          "bottom": 0,
+                          "left": 0
+                        },
+                        "columnGap": 16,
+                        "rowGap": 0,
+                        "alignItems": "center",
+                        "justifyItems": "stretch",
+                        "contentFrame": {
+                          "left": 442,
+                          "top": 521.82,
+                          "width": 1382,
+                          "height": 29.57
+                        },
+                        "columns": [
+                          {
+                            "mode": "fixed",
+                            "value": 28
+                          },
+                          {
+                            "mode": "fixed",
+                            "value": 360
+                          },
+                          {
+                            "mode": "fixed",
+                            "value": 190
+                          },
+                          {
+                            "mode": "fr",
+                            "value": 1
+                          }
+                        ],
+                        "autoRows": "auto",
+                        "resolvedRows": [
+                          "auto"
+                        ],
+                        "columnSizes": [
+                          28,
+                          360,
+                          190,
+                          756
+                        ],
+                        "rowSizes": [
+                          29.57
+                        ],
+                        "cells": [
+                          {
+                            "path": "0.1.2.1.4.0",
+                            "column": 0,
+                            "row": 0,
+                            "columnSpan": 1,
+                            "rowSpan": 1,
+                            "cellFrame": {
+                              "left": 442,
+                              "top": 521.82,
+                              "width": 28,
+                              "height": 29.57
+                            }
+                          },
+                          {
+                            "path": "0.1.2.1.4.1",
+                            "column": 1,
+                            "row": 0,
+                            "columnSpan": 1,
+                            "rowSpan": 1,
+                            "cellFrame": {
+                              "left": 486,
+                              "top": 521.82,
+                              "width": 360,
+                              "height": 29.57
+                            }
+                          },
+                          {
+                            "path": "0.1.2.1.4.2",
+                            "column": 2,
+                            "row": 0,
+                            "columnSpan": 1,
+                            "rowSpan": 1,
+                            "cellFrame": {
+                              "left": 862,
+                              "top": 521.82,
+                              "width": 190,
+                              "height": 29.57
+                            }
+                          },
+                          {
+                            "path": "0.1.2.1.4.3",
+                            "column": 3,
+                            "row": 0,
+                            "columnSpan": 1,
+                            "rowSpan": 1,
+                            "cellFrame": {
+                              "left": 1068,
+                              "top": 521.82,
+                              "width": 756,
+                              "height": 29.57
+                            }
+                          }
+                        ]
+                      }
+                    ],
+                    "padding": {
+                      "top": 0,
+                      "right": 0,
+                      "bottom": 0,
+                      "left": 0
+                    },
+                    "gap": 20,
+                    "effectiveGap": 20,
+                    "justifyOffset": 0,
+                    "align": "start",
+                    "justify": "start",
+                    "contentFrame": {
+                      "left": 442,
+                      "top": 323.55,
+                      "width": 1382,
+                      "height": 227.84
+                    },
+                    "items": [
+                      {
+                        "path": "0.1.2.1.0",
+                        "frame": {
+                          "left": 442,
+                          "top": 323.55,
+                          "width": 1382,
+                          "height": 29.57
+                        }
+                      },
+                      {
+                        "path": "0.1.2.1.1",
+                        "frame": {
+                          "left": 442,
+                          "top": 373.12,
+                          "width": 1382,
+                          "height": 29.57
+                        }
+                      },
+                      {
+                        "path": "0.1.2.1.2",
+                        "frame": {
+                          "left": 442,
+                          "top": 422.69,
+                          "width": 1382,
+                          "height": 29.57
+                        }
+                      },
+                      {
+                        "path": "0.1.2.1.3",
+                        "frame": {
+                          "left": 442,
+                          "top": 472.26,
+                          "width": 1382,
+                          "height": 29.57
+                        }
+                      },
+                      {
+                        "path": "0.1.2.1.4",
+                        "frame": {
+                          "left": 442,
+                          "top": 521.82,
+                          "width": 1382,
+                          "height": 29.57
+                        }
+                      }
+                    ]
+                  }
+                ],
+                "padding": {
+                  "top": 0,
+                  "right": 0,
+                  "bottom": 0,
+                  "left": 0
+                },
+                "columnGap": 46,
+                "rowGap": 0,
+                "alignItems": "start",
+                "justifyItems": "stretch",
+                "contentFrame": {
+                  "left": 96,
+                  "top": 323.55,
+                  "width": 1728,
+                  "height": 524.7
+                },
+                "columns": [
+                  {
+                    "mode": "fixed",
+                    "value": 300
+                  },
+                  {
+                    "mode": "fr",
+                    "value": 1
+                  }
+                ],
+                "autoRows": "auto",
+                "resolvedRows": [
+                  "auto"
+                ],
+                "columnSizes": [
+                  300,
+                  1382
+                ],
+                "rowSizes": [
+                  524.7
+                ],
+                "cells": [
+                  {
+                    "path": "0.1.2.0",
+                    "column": 0,
+                    "row": 0,
+                    "columnSpan": 1,
+                    "rowSpan": 1,
+                    "cellFrame": {
+                      "left": 96,
+                      "top": 323.55,
+                      "width": 300,
+                      "height": 524.7
+                    }
+                  },
+                  {
+                    "path": "0.1.2.1",
+                    "column": 1,
+                    "row": 0,
+                    "columnSpan": 1,
+                    "rowSpan": 1,
+                    "cellFrame": {
+                      "left": 442,
+                      "top": 323.55,
+                      "width": 1382,
+                      "height": 524.7
+                    }
+                  }
+                ]
+              },
+              {
+                "path": "0.1.3",
+                "kind": "text",
+                "name": "source-footer",
+                "requestedSize": {
+                  "width": {
+                    "mode": "fill",
+                    "value": 1
+                  },
+                  "height": {
+                    "mode": "hug"
+                  }
+                },
+                "intrinsicSize": {
+                  "width": 0,
+                  "height": 18.82
+                },
+                "frame": {
+                  "left": 96,
+                  "top": 876.26,
+                  "width": 1728,
+                  "height": 18.82
+                },
+                "snappedFrame": {
+                  "left": 96,
+                  "top": 876,
+                  "width": 1728,
+                  "height": 20
+                },
+                "children": [],
+                "text": "The plan explicitly defers broad search, large counters, and personality tables until smaller heuristics are proven.",
+                "transform": "none",
+                "element": {
+                  "aid": "sh/i5sneloj",
+                  "id": "27",
+                  "kind": "shape"
+                }
+              }
+            ],
+            "padding": {
+              "top": 72,
+              "right": 96,
+              "bottom": 72,
+              "left": 96
+            },
+            "gap": 28,
+            "effectiveGap": 28,
+            "justifyOffset": 0,
+            "align": "start",
+            "justify": "start",
+            "contentFrame": {
+              "left": 96,
+              "top": 72,
+              "width": 1728,
+              "height": 936
+            },
+            "items": [
+              {
+                "path": "0.1.0",
+                "frame": {
+                  "left": 96,
+                  "top": 72,
+                  "width": 1728,
+                  "height": 24.19
+                }
+              },
+              {
+                "path": "0.1.1",
+                "frame": {
+                  "left": 96,
+                  "top": 124.19,
+                  "width": 1419.82,
+                  "height": 171.36
+                }
+              },
+              {
+                "path": "0.1.2",
+                "frame": {
+                  "left": 96,
+                  "top": 323.55,
+                  "width": 1728,
+                  "height": 524.7
+                }
+              },
+              {
+                "path": "0.1.3",
+                "frame": {
+                  "left": 96,
+                  "top": 876.26,
+                  "width": 1728,
+                  "height": 18.82
+                }
+              }
+            ]
+          }
+        ],
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "alignItems": "stretch",
+        "justifyItems": "stretch",
+        "contentFrame": {
+          "left": 0,
+          "top": 0,
+          "width": 1920,
+          "height": 1080
+        },
+        "items": [
+          {
+            "path": "0.0",
+            "frame": {
+              "left": 0,
+              "top": 0,
+              "width": 1920,
+              "height": 1080
+            }
+          },
+          {
+            "path": "0.1",
+            "frame": {
+              "left": 0,
+              "top": 0,
+              "width": 1920,
+              "height": 1080
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

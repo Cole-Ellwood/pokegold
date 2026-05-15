@@ -21,7 +21,7 @@ open two classifiers for the same decision.
 | `audit/` | Evidence and audit artifacts | Edit when documenting real evidence or blocked attempts. | Evidence, not implementation truth. |
 | `decisions/`, `journal/` | Durable judgment calls and session diaries | Edit when recording reversible architecture choices or per-session observations. | Tracked durable communication. |
 | `.claude_handoffs/` | Per-session handoff prompts (gitignored) | Write when ending a long task; not tracked. | Local communication only. |
-| `.local/`, `workspace/` | Scratch, local deps, probes, temporary outputs | Do not treat as canonical without an explicit task. | Scratch/archive only. |
+| `.local/`, `workspace/`, root `tmp/` | Scratch, local deps, probes, temporary outputs | Do not treat as canonical without an explicit task. | Scratch/archive only. |
 | `dist/`, `*.gbc`, `*.o`, `*.map`, `*.sym` | Build/release outputs | Do not edit by hand. | Outputs; `.map`/`.sym` are read-only linker truth. |
 
 ## Generator And Output Owners
@@ -43,7 +43,7 @@ open two classifiers for the same decision.
 | `*.map`, `*.sym` | Linker outputs and address truth | No. | Rebuild; read as current address/source truth. |
 | `roms.sha1` | Checksum target metadata | Only during release/checksum tasks. | Full compare/release workflow. |
 | `dist/` | Release artifacts | No ordinary source edits. | Release artifact workflow in `docs/build.md`. |
-| `.local/`, `workspace/` | Scratch, local deps, probes, temporary outputs | No canonical edits. | Treat as disposable unless a task explicitly names it. |
+| `.local/`, `workspace/`, root `tmp/` | Scratch, local deps, probes, temporary outputs | No canonical edits. | Treat as disposable unless a task explicitly names it. |
 
 ## Decision Rule
 

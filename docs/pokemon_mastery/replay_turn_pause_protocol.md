@@ -26,7 +26,9 @@ Treat the replay move as a pro-comparison oracle, not absolute truth.
    - recommended move or switch;
    - confidence;
    - route reason;
+   - ranked top three candidates when the board is nontrivial;
    - serious alternatives;
+   - rejected tempting safe/default line;
    - worst plausible branch;
    - information that would change the answer.
 5. Reveal the actual turn.
@@ -52,6 +54,16 @@ Do not mix these modes inside a score without saying so.
 
 ## Scoring
 
+Before scoring, classify decision-relevant set information:
+
+- `revealed`: public from the log so far.
+- `strong prior`: common set or board clue, but not public fact.
+- `possible only`: legal or plausible but not enough to anchor the main line.
+
+An answer may price strong priors, but it must say what happens if the prior is
+wrong. A possible-only move, item, or role cannot be the main reason for the
+recommendation unless the answer explicitly marks the line as a read.
+
 For each decision:
 
 - `top_match`: exact same move/switch as the player, when the actual move is
@@ -60,10 +72,23 @@ For each decision:
   conditional match.
 - `route_error`: wrong plan, wrong resource, or stale plan continuation.
 - `state_error`: missed HP/status/hazards/revealed move/speed/order detail.
-- `hidden_info_error`: assumes unrevealed opponent team/moves/items as fact.
+- `hidden_info_error`: assumes unrevealed team/moves/items/roles as fact or
+  lets an unrevealed fact determine the main recommendation without labeling it
+  as a read and naming the fallback.
 - `mechanics_error`: wrong GSC or local-romhack mechanic.
 - `severe_blunder`: line immediately loses a central route or irreplaceable
   piece without compensation.
+- `positive_selection`: answer chooses a move that actively improves the route,
+  punishes the named branch, preserves or spends the correct route piece, or
+  converts pressure into progress. Mark 0 when the answer is merely safe,
+  generic, passive, or acceptable only because it does not throw.
+- `route_converting_move_chosen`: answer identifies and chooses the move that
+  improves board equity when a converter exists.
+- `branch_punish_chosen`: answer names the likely branch and chooses the move,
+  switch, phaze, setup, coverage, or utility action that beats that branch.
+
+Tags are non-exclusive. A line can be both `hidden_info_error` and
+`severe_blunder`; count both rather than choosing the softer label.
 
 Replay-probe score should be reported separately from quick-test and final-exam
 scores.
@@ -99,6 +124,9 @@ Severe blunders:
 State errors:
 Hidden-info errors:
 Mechanics errors:
+Positive-selection:
+Route-converting move chosen:
+Branch-punish chosen:
 Earliest meaningful error:
 
 ## Turn N
@@ -108,6 +136,7 @@ My p1 answer:
 My p2 answer:
 Actual choices:
 Grade:
+Positive-selection tags:
 Reusable lesson:
 ```
 

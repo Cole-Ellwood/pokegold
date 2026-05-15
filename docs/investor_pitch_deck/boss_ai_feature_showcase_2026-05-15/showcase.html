@@ -1,0 +1,834 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Gym Leader Lab Boss AI Feature Showcase</title>
+  <style>
+    @page {
+      size: 11in 8.5in;
+      margin: 0;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Aptos", "Segoe UI", Arial, sans-serif;
+      color: #162033;
+      background: #101627;
+    }
+
+    .page {
+      width: 11in;
+      height: 8.5in;
+      position: relative;
+      overflow: hidden;
+      page-break-after: always;
+      padding: 0.56in 0.64in;
+      background:
+        radial-gradient(circle at 92% 10%, rgba(255,255,255,0.24) 0 0.35in, transparent 0.36in),
+        linear-gradient(135deg, #fff7d6 0%, #e7fbff 48%, #f4e8ff 100%);
+    }
+
+    .page.dark {
+      color: #f9fbff;
+      background:
+        linear-gradient(135deg, rgba(13,18,36,0.96), rgba(42,33,70,0.96)),
+        linear-gradient(45deg, #2b6ef3, #ff5573);
+    }
+
+    .page.fire {
+      background:
+        radial-gradient(circle at 86% 16%, rgba(255,255,255,0.28) 0 0.42in, transparent 0.43in),
+        linear-gradient(135deg, #ffefbd 0%, #ffe1f1 45%, #d9f8ff 100%);
+    }
+
+    .page.blue {
+      background:
+        radial-gradient(circle at 12% 88%, rgba(255,255,255,0.5) 0 0.48in, transparent 0.49in),
+        linear-gradient(135deg, #ddf7ff 0%, #f2edff 54%, #fff3cf 100%);
+    }
+
+    .pattern {
+      position: absolute;
+      inset: 0;
+      opacity: 0.14;
+      background-image:
+        linear-gradient(45deg, currentColor 12.5%, transparent 12.5%, transparent 50%, currentColor 50%, currentColor 62.5%, transparent 62.5%, transparent 100%);
+      background-size: 0.36in 0.36in;
+      color: #3855aa;
+      pointer-events: none;
+    }
+
+    .page.dark .pattern {
+      color: #ffffff;
+      opacity: 0.08;
+    }
+
+    .content {
+      position: relative;
+      z-index: 2;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 0.18in;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      width: fit-content;
+      gap: 0.08in;
+      padding: 0.07in 0.16in;
+      border-radius: 999px;
+      background: #162033;
+      color: #fff;
+      font-size: 0.14in;
+      font-weight: 800;
+      letter-spacing: 0.02in;
+      text-transform: uppercase;
+    }
+
+    .page.dark .eyebrow {
+      background: #fff;
+      color: #172038;
+    }
+
+    h1, h2, h3, p {
+      margin: 0;
+    }
+
+    h1 {
+      font-size: 0.67in;
+      line-height: 0.92;
+      letter-spacing: 0;
+      max-width: 8.4in;
+      color: #151a2e;
+    }
+
+    .page.dark h1,
+    .page.dark h2,
+    .page.dark h3 {
+      color: #fff;
+    }
+
+    h2 {
+      font-size: 0.44in;
+      line-height: 1;
+      color: #151a2e;
+      max-width: 8.9in;
+    }
+
+    h3 {
+      font-size: 0.2in;
+      line-height: 1.1;
+      color: #151a2e;
+      margin-bottom: 0.07in;
+    }
+
+    .lead {
+      font-size: 0.24in;
+      line-height: 1.25;
+      max-width: 7.9in;
+      color: #30405d;
+      font-weight: 650;
+    }
+
+    .page.dark .lead,
+    .page.dark .small,
+    .page.dark .note {
+      color: #dfe8ff;
+    }
+
+    .small {
+      font-size: 0.135in;
+      line-height: 1.35;
+      color: #4b5d7a;
+    }
+
+    .note {
+      font-size: 0.12in;
+      line-height: 1.32;
+      color: #52637b;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 0.34in;
+      align-items: center;
+      flex: 1;
+    }
+
+    .pokeball {
+      position: relative;
+      width: 3.15in;
+      height: 3.15in;
+      border-radius: 50%;
+      background:
+        linear-gradient(#ff4b5d 0 47%, #172033 47% 53%, #ffffff 53% 100%);
+      border: 0.12in solid #172033;
+      box-shadow: 0 0.18in 0.5in rgba(22,32,51,0.28);
+      margin-left: auto;
+    }
+
+    .pokeball:before {
+      content: "";
+      position: absolute;
+      width: 0.86in;
+      height: 0.86in;
+      border-radius: 50%;
+      background: #fff;
+      border: 0.11in solid #172033;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      box-shadow: inset 0 0 0 0.12in #dfe7f4;
+    }
+
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.1in;
+      margin-top: 0.2in;
+    }
+
+    .badge {
+      padding: 0.08in 0.14in;
+      border: 0.018in solid rgba(22,32,51,0.16);
+      border-radius: 999px;
+      background: rgba(255,255,255,0.72);
+      font-size: 0.13in;
+      font-weight: 800;
+      color: #172033;
+    }
+
+    .page.dark .badge {
+      background: rgba(255,255,255,0.13);
+      border-color: rgba(255,255,255,0.22);
+      color: #fff;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.16in;
+      flex: 1;
+    }
+
+    .card {
+      border-radius: 0.14in;
+      background: rgba(255,255,255,0.82);
+      padding: 0.18in;
+      border: 0.018in solid rgba(22,32,51,0.1);
+      box-shadow: 0 0.12in 0.32in rgba(28,40,71,0.12);
+      min-height: 1.52in;
+    }
+
+    .card.bright {
+      color: #fff;
+      background: linear-gradient(135deg, #2857e8, #12b7ca);
+    }
+
+    .card.pink {
+      color: #fff;
+      background: linear-gradient(135deg, #fa496d, #a24bdb);
+    }
+
+    .card.gold {
+      background: linear-gradient(135deg, #ffd75a, #fff4c8);
+    }
+
+    .card.green {
+      color: #fff;
+      background: linear-gradient(135deg, #1aa879, #2e7ce8);
+    }
+
+    .card.darkcard {
+      color: #fff;
+      background: linear-gradient(135deg, #26334f, #171b2d);
+    }
+
+    .card.bright h3,
+    .card.pink h3,
+    .card.green h3,
+    .card.darkcard h3 {
+      color: #fff;
+    }
+
+    .card.bright .small,
+    .card.pink .small,
+    .card.green .small,
+    .card.darkcard .small {
+      color: rgba(255,255,255,0.9);
+    }
+
+    .vs-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.22in;
+      flex: 1;
+      align-items: stretch;
+    }
+
+    .panel {
+      border-radius: 0.18in;
+      padding: 0.22in;
+      min-height: 4.8in;
+      display: flex;
+      flex-direction: column;
+      gap: 0.15in;
+      border: 0.025in solid rgba(22,32,51,0.12);
+      box-shadow: 0 0.14in 0.32in rgba(24,35,62,0.13);
+      background: rgba(255,255,255,0.84);
+    }
+
+    .before {
+      background: linear-gradient(135deg, rgba(255,255,255,0.94), rgba(255,230,220,0.88));
+    }
+
+    .after {
+      background: linear-gradient(135deg, rgba(255,255,255,0.94), rgba(221,255,235,0.9));
+    }
+
+    .panel-title {
+      display: inline-flex;
+      width: fit-content;
+      padding: 0.06in 0.12in;
+      border-radius: 999px;
+      font-size: 0.14in;
+      font-weight: 900;
+      text-transform: uppercase;
+      color: #fff;
+    }
+
+    .before .panel-title {
+      background: #f05d63;
+    }
+
+    .after .panel-title {
+      background: #12a871;
+    }
+
+    .battle {
+      font-size: 0.27in;
+      line-height: 1.05;
+      font-weight: 950;
+      color: #172033;
+    }
+
+    .move-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.08in;
+      margin-top: auto;
+    }
+
+    .move {
+      padding: 0.07in 0.1in;
+      border-radius: 0.08in;
+      background: #172033;
+      color: #fff;
+      font-size: 0.12in;
+      font-weight: 850;
+    }
+
+    .move.water { background: #2387e8; }
+    .move.poison { background: #9a54d9; }
+    .move.ghost { background: #5746a5; }
+    .move.fire { background: #ed5b37; }
+    .move.grass { background: #2ca75e; }
+    .move.electric { background: #d89b00; }
+    .move.normal { background: #717a8a; }
+    .move.ice { background: #32a8b8; }
+
+    .scoreboard {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.14in;
+      margin-top: 0.12in;
+    }
+
+    .stat {
+      border-radius: 0.16in;
+      background: rgba(255,255,255,0.14);
+      border: 0.02in solid rgba(255,255,255,0.18);
+      padding: 0.18in;
+      min-height: 1.2in;
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 0.34in;
+      line-height: 1;
+      color: #fff;
+    }
+
+    .stat span {
+      display: block;
+      font-size: 0.12in;
+      color: #dfe8ff;
+      margin-top: 0.07in;
+      line-height: 1.25;
+    }
+
+    .timeline {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0.12in;
+      margin-top: 0.15in;
+    }
+
+    .step {
+      border-radius: 0.14in;
+      background: rgba(255,255,255,0.78);
+      padding: 0.14in;
+      min-height: 1.35in;
+      border: 0.018in solid rgba(22,32,51,0.12);
+    }
+
+    .step-num {
+      width: 0.28in;
+      height: 0.28in;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      background: #2857e8;
+      font-size: 0.13in;
+      font-weight: 900;
+      margin-bottom: 0.08in;
+    }
+
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: auto;
+      font-size: 0.105in;
+      color: rgba(22,32,51,0.6);
+      font-weight: 750;
+    }
+
+    .page.dark .footer {
+      color: rgba(255,255,255,0.6);
+    }
+
+    .sprite-line {
+      display: flex;
+      gap: 0.1in;
+      align-items: center;
+      margin-top: 0.12in;
+    }
+
+    .pixel {
+      width: 0.34in;
+      height: 0.34in;
+      background: #172033;
+      box-shadow:
+        0.34in 0 #172033,
+        0.68in 0 #172033,
+        0 0.34in #ff4b5d,
+        0.34in 0.34in #fff,
+        0.68in 0.34in #2387e8,
+        0 0.68in #ffd75a,
+        0.34in 0.68in #2ac47a,
+        0.68in 0.68in #172033;
+      transform: scale(0.72);
+      transform-origin: top left;
+      margin-right: 0.45in;
+    }
+
+    .callout {
+      border-left: 0.08in solid #ffcb3f;
+      background: rgba(255,255,255,0.74);
+      padding: 0.14in 0.18in;
+      border-radius: 0.12in;
+      font-size: 0.16in;
+      line-height: 1.3;
+      font-weight: 760;
+      color: #20304b;
+    }
+
+    .page.dark .callout {
+      background: rgba(255,255,255,0.11);
+      color: #f5f8ff;
+    }
+  </style>
+</head>
+<body>
+
+  <section class="page dark">
+    <div class="pattern"></div>
+    <div class="content">
+      <div class="eyebrow">Gym Leader Lab Boss AI</div>
+      <div class="hero-grid">
+        <div>
+          <h1>Johto's bosses just got way more alive.</h1>
+          <p class="lead" style="margin-top:0.24in;">
+            The new AI patch makes leaders play the public battle like a sharp human:
+            remembering revealed moves, cashing out at the right time, preserving
+            key pieces, and showing personality without silently reading your team.
+          </p>
+          <div class="badge-row">
+            <span class="badge">No new WRAM used</span>
+            <span class="badge">19 live traces refreshed</span>
+            <span class="badge">45/45 strict labels pass</span>
+            <span class="badge">Morty Haki prototype</span>
+          </div>
+        </div>
+        <div class="pokeball" aria-hidden="true"></div>
+      </div>
+      <div class="footer">
+        <span>Pokemon Gold hack progress showcase</span>
+        <span>Built from current workspace facts, 2026-05-15</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="page fire">
+    <div class="pattern"></div>
+    <div class="content">
+      <div class="eyebrow">The Fun Promise</div>
+      <h2>Scary, stylish, still fair.</h2>
+      <p class="lead">
+        Ordinary boss AI still plays by the rules: public information, revealed moves,
+        visible HP/status/boosts, boss-owned party state, and observed switch tempo.
+        The one exception is Haki, and it is boxed up like a rare candy in a locked case.
+      </p>
+      <div class="cards">
+        <div class="card bright">
+          <h3>Better battle memory</h3>
+          <p class="small">After four real public moves, the boss stops inventing a fifth hidden coverage move.</p>
+        </div>
+        <div class="card pink">
+          <h3>Less silly button mashing</h3>
+          <p class="small">Dead setup, slow status, early recovery, and bad booms get disciplined.</p>
+        </div>
+        <div class="card green">
+          <h3>Trainer flavor</h3>
+          <p class="small">Leaders get close-score nudges toward their style: hazards, pressure, tricks, weather, or ace plays.</p>
+        </div>
+        <div class="card gold">
+          <h3>Hazard cat-and-mouse</h3>
+          <p class="small">Revealed Rapid Spin matters. The boss can stop feeding free hazard removal.</p>
+        </div>
+        <div class="card darkcard">
+          <h3>Preserve the wincon</h3>
+          <p class="small">A valuable active boss mon under public threat is more willing to pivot if it lacks a KO line.</p>
+        </div>
+        <div class="card bright">
+          <h3>One dramatic cheat, audited</h3>
+          <p class="small">Morty's Gengar gets the first Haki prototype, with a trace flag and no leakage into normal scoring.</p>
+        </div>
+      </div>
+      <div class="footer">
+        <span>Design rule: make bosses feel prepared, not omniscient.</span>
+        <span>Source: boss AI roadmap and post-patch notes</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="page blue">
+    <div class="pattern"></div>
+    <div class="content">
+      <div class="eyebrow">Before / After 01</div>
+      <h2>Four moves means four moves.</h2>
+      <div class="vs-grid">
+        <div class="panel before">
+          <span class="panel-title">Before</span>
+          <p class="battle">The boss keeps worrying about a mystery fifth move.</p>
+          <p class="small">
+            If a player species can learn scary coverage, the old plausible-threat
+            model could keep pricing that threat even after the active Pokemon had
+            already shown a complete four-move set.
+          </p>
+          <div class="move-list">
+            <span class="move water">Surf</span>
+            <span class="move normal">Rest</span>
+            <span class="move normal">Roar</span>
+            <span class="move poison">Toxic</span>
+            <span class="move ice">Imaginary fifth slot?</span>
+          </div>
+        </div>
+        <div class="panel after">
+          <span class="panel-title">After</span>
+          <p class="battle">The boss respects the revealed set and stops shadowboxing.</p>
+          <p class="small">
+            Public STAB and revealed moves still count. Speculative learnset and
+            pre-evolution coverage stops only when the active species has revealed
+            four non-tainted real moves.
+          </p>
+          <div class="callout">
+            Safety twist: Transform, Mimic, Metronome, Mirror Move, Sleep Talk,
+            Sketch, and Struggle taint the reveal history, so copied or temporary
+            moves cannot trick the boss.
+          </div>
+        </div>
+      </div>
+      <div class="footer">
+        <span>Implemented by BossAI_PlayerActiveFourMoveSaturated</span>
+        <span>Zero new WRAM</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="page fire">
+    <div class="pattern"></div>
+    <div class="content">
+      <div class="eyebrow">Before / After 02</div>
+      <h2>Hazards are now a mini-game, not a script.</h2>
+      <div class="vs-grid">
+        <div class="panel before">
+          <span class="panel-title">Before</span>
+          <p class="battle">Qwilfish could keep stacking into a public spinner.</p>
+          <p class="small">
+            In a Janine-style Spikes position, adding another layer can be great.
+            But if the active target has already shown Rapid Spin, blindly clicking
+            more Spikes can turn into a free reset button for the player.
+          </p>
+          <div class="move-list">
+            <span class="move poison">Spikes</span>
+            <span class="move water">Rapid Spin revealed</span>
+            <span class="move normal">Two layers up</span>
+          </div>
+        </div>
+        <div class="panel after">
+          <span class="panel-title">After</span>
+          <p class="battle">The boss asks: can this layer actually stick?</p>
+          <p class="small">
+            Layer-two and layer-three Spikes now discourage extra stacking when
+            the active player Pokemon has publicly revealed Rapid Spin.
+          </p>
+          <div class="callout">
+            Real guardrails kept: no Rapid Spin revealed still favors the third
+            layer; spinner-capable species without revealed Spin does not count;
+            a fourth Spikes click remains bad.
+          </div>
+        </div>
+      </div>
+      <div class="footer">
+        <span>Fixture family: Janine Qwilfish Spikes / revealed spinner</span>
+        <span>No hidden move, PP, or bench reads</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="page blue">
+    <div class="pattern"></div>
+    <div class="content">
+      <div class="eyebrow">Before / After 03</div>
+      <h2>The boss learned when not to get fancy.</h2>
+      <div class="timeline">
+        <div class="step">
+          <div class="step-num">1</div>
+          <h3>Dead setup</h3>
+          <p class="small">Before: boost because setup is cool. After: boost only if it still has value and the turn is affordable.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <h3>Slow status</h3>
+          <p class="small">Before: Toxic or sleep could crowd out the hard answer. After: a public KO line gets priority.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <h3>Early recovery</h3>
+          <p class="small">Before: heal because damaged. After: recovery waits for real route preservation windows.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <h3>Big boom</h3>
+          <p class="small">Before: Explosion is generic damage. After: healthy no-KO booms are bad, low-HP cash-outs are tasty.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">5</div>
+          <h3>Wincon pivot</h3>
+          <p class="small">Before: a key mon might stay in under public danger. After: it gets a switch-confidence boost if it lacks a KO.</p>
+        </div>
+      </div>
+      <div class="cards" style="grid-template-columns: repeat(2, 1fr); margin-top:0.14in;">
+        <div class="card pink">
+          <h3>Example: Bugsy's Scyther</h3>
+          <p class="small">Swords Dance is exciting, but not into obvious public fire pressure unless the boost changes the route.</p>
+        </div>
+        <div class="card bright">
+          <h3>Example: status into Alakazam</h3>
+          <p class="small">If the boss can remove the threat now, it should not spend the turn trying to be clever first.</p>
+        </div>
+      </div>
+      <div class="footer">
+        <span>Implemented in setup, status, recovery, self-KO, and switch policy helpers</span>
+        <span>Readable, boring code paths; flashy game feel</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="page dark">
+    <div class="pattern"></div>
+    <div class="content">
+      <div class="eyebrow">Boss Personality</div>
+      <h2>Leaders now get more of their own battle flavor.</h2>
+      <p class="lead">
+        This is not a bag of scripts. Personality is a close-score nudge, so a
+        boss can feel like itself without resurrecting bad moves or overriding
+        hard public fail gates.
+      </p>
+      <div class="cards">
+        <div class="card bright">
+          <h3>Janine / Koga</h3>
+          <p class="small">Poison, Toxic, Spikes, Baton Pass, and confuse pressure get style weight when legal.</p>
+        </div>
+        <div class="card pink">
+          <h3>Morty</h3>
+          <p class="small">Ghost pressure, sleep, Mean Look, Curse, Destiny Bond. Spooky, but gated.</p>
+        </div>
+        <div class="card green">
+          <h3>Pryce</h3>
+          <p class="small">Ice/Ground pressure plus healing and force-switch identity.</p>
+        </div>
+        <div class="card gold">
+          <h3>Lance</h3>
+          <p class="small">Dragon/Flying pressure, weather/safeguard flavor, and non-KO Hyper Beam restraint.</p>
+        </div>
+        <div class="card bright">
+          <h3>Blue / Red</h3>
+          <p class="small">Mixed endgame identity, with ace-pressure and close-score style.</p>
+        </div>
+        <div class="card darkcard">
+          <h3>Everyone</h3>
+          <p class="small">Hard gates still win. Personality makes a good choice cooler; it does not make a bad choice legal.</p>
+        </div>
+      </div>
+      <div class="footer">
+        <span>Expanded through existing role-bias tables</span>
+        <span>No new personality WRAM</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="page fire">
+    <div class="pattern"></div>
+    <div class="content">
+      <div class="eyebrow">The Spooky Prototype</div>
+      <h2>Morty's Gengar got the first Haki moment.</h2>
+      <div class="vs-grid">
+        <div class="panel before">
+          <span class="panel-title">Normal AI</span>
+          <p class="battle">Public-only. No current-turn mind reading.</p>
+          <p class="small">
+            Boss move scoring still happens before player input. That means the
+            ordinary AI cannot peek at the player's selected move, hidden party,
+            hidden items, or hidden PP.
+          </p>
+          <div class="sprite-line">
+            <div class="pixel"></div>
+            <p class="small"><strong>Rulebook mode:</strong> strong because it reads the board well.</p>
+          </div>
+        </div>
+        <div class="panel after">
+          <span class="panel-title">Haki branch</span>
+          <p class="battle">One locked, audited, dramatic exception.</p>
+          <p class="small">
+            On Gengar's ace-first active turn, if Morty has not spent Haki, Gengar
+            moves first, and the player locked a strong super-effective attack,
+            the prototype may spend Haki to choose Destiny Bond.
+          </p>
+          <div class="callout">
+            It is quarantined in `BossAI_TryMortyHakiOracle`, refreshes move data,
+            sets trace risk bit 3, and is explicitly allowlisted by the no-cheat audit.
+          </div>
+        </div>
+      </div>
+      <div class="footer">
+        <span>Full all-leader Haki remains gated by priority/hook safety</span>
+        <span>This is intentional spice, not normal AI leakage</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="page dark">
+    <div class="pattern"></div>
+    <div class="content">
+      <div class="eyebrow">Proof Badges</div>
+      <h2>Cool feature, boring validation. That is the good kind.</h2>
+      <div class="scoreboard">
+        <div class="stat"><strong>104</strong><span>normal Boss AI WRAM bytes used</span></div>
+        <div class="stat"><strong>36</strong><span>normal Boss AI WRAM bytes still free</span></div>
+        <div class="stat"><strong>123</strong><span>trace Boss AI WRAM bytes used</span></div>
+        <div class="stat"><strong>17</strong><span>trace Boss AI WRAM bytes still free</span></div>
+      </div>
+      <div class="cards" style="margin-top:0.2in;">
+        <div class="card bright">
+          <h3>Builds</h3>
+          <p class="small">Gold, Silver, and Gold trace ROM all built successfully.</p>
+        </div>
+        <div class="card green">
+          <h3>Regression</h3>
+          <p class="small">45 / 45 strict preference labels agreed after the patch.</p>
+        </div>
+        <div class="card pink">
+          <h3>Trace replay</h3>
+          <p class="small">19 / 19 selector captures matched exactly against the refreshed trace ROM.</p>
+        </div>
+        <div class="card gold">
+          <h3>No-cheat audit</h3>
+          <p class="small">Only the Morty Haki routine may read current-turn input, and the audit prints that exception.</p>
+        </div>
+        <div class="card darkcard">
+          <h3>Release smoke</h3>
+          <p class="small">Save format fingerprint and broad release smoke checks passed.</p>
+        </div>
+        <div class="card bright">
+          <h3>Live captures</h3>
+          <p class="small">Falkner through Lance plus shared switch-loop traces were refreshed.</p>
+        </div>
+      </div>
+      <div class="footer">
+        <span>Trace ROM hash: 7307C540...99120A4A</span>
+        <span>Symbols hash: EC96A143...4AA601AA</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="page blue">
+    <div class="pattern"></div>
+    <div class="content">
+      <div class="eyebrow">Player Feel</div>
+      <h2>This should feel like a better Pokemon battle.</h2>
+      <p class="lead">
+        The player is not supposed to see the code. They are supposed to feel
+        the gym leader adapt: remembering what was shown, refusing obvious bait,
+        protecting important pieces, and sometimes making one terrifying anime
+        read because this is still a Pokemon game.
+      </p>
+      <div class="cards">
+        <div class="card gold">
+          <h3>More "oh no" moments</h3>
+          <p class="small">The boss cashes out, pivots, or denies a greedy line when the public board says it should.</p>
+        </div>
+        <div class="card bright">
+          <h3>Fewer goofy turns</h3>
+          <p class="small">Setup, recovery, status, and Explosion are less likely to happen at the wrong time.</p>
+        </div>
+        <div class="card pink">
+          <h3>More leader identity</h3>
+          <p class="small">Morty feels spooky, Janine feels toxic, Lance feels dangerous, and the endgame gets sharper.</p>
+        </div>
+      </div>
+      <div class="callout" style="margin-top:0.22in;">
+        Bottom line: the hack gets tougher without turning into a hidden-info
+        machine. It plays more like a prepared rival sitting across from you,
+        not like a debugger with a battle menu.
+      </div>
+      <div class="footer">
+        <span>Prepared for the current `codex/cleanup-gsc-rebalance-split` worktree</span>
+        <span>PDF generated from factual source and trace state</span>
+      </div>
+    </div>
+  </section>
+
+</body>
+</html>
