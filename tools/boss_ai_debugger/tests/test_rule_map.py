@@ -31,6 +31,19 @@ class RuleMapTests(unittest.TestCase):
             "move.apply_move_model.player_has_seen_bench_revealed_rapid_spin",
         )
         self.assertIn("wPlayerUsedMoves", rule["public_reads"])
+        self.assertTrue(rule["executable"])
+        self.assertTrue(rule["score_trace_target"])
+        self.assertTrue(rule["requires_public_read_provenance"])
+        self.assertIn("wPlayerUsedMoves", rule["expected_public_inputs"])
+
+    def test_static_boss_ai_tables_are_not_dynamic_coverage_targets(self) -> None:
+        data = build_rule_map()
+        by_label = {rule["source_label"]: rule for rule in data["rules"]}
+        table = by_label["BossAIRiskyEffects"]
+
+        self.assertFalse(table["executable"])
+        self.assertFalse(table["dynamic_coverage_target"])
+        self.assertEqual(table["coverage_mode"], "static_reference")
 
     def test_cli_rule_map_build_writes_json(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

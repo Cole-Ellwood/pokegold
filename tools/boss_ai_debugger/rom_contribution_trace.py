@@ -21,6 +21,8 @@ DEFAULT_ROM_CONTRIBUTION_TRACE_PATH = (
 DEFAULT_ROM_CONTRIBUTION_TRACE_PROBE_PATH = (
     ROOT / "audit" / "boss_ai_debugger" / "rom_contribution_trace_spikes_spin_probe.json"
 )
+DEFAULT_ROM_CONTRIBUTION_TRACE_DIR = ROOT / "audit" / "boss_ai_debugger"
+DEFAULT_ROM_CONTRIBUTION_TRACE_GLOB = "rom_contribution_trace_*.json"
 
 MAX_REPLAY_POLL_CHUNK_FRAMES = 45
 PARTY_LENGTH = 6
@@ -246,6 +248,16 @@ PREDICATE_BRANCH_HOOKS = {
     },
 }
 
+PUBLIC_READ_PROBE_HOOKS = {
+    name: {
+        "probe_id": spec["predicate_id"],
+        "outcome": spec["outcome"],
+        "parent_symbol": spec["parent_symbol"],
+        "legal_inputs": spec["legal_inputs"],
+    }
+    for name, spec in PREDICATE_BRANCH_HOOKS.items()
+}
+
 
 @dataclass(frozen=True)
 class HookTarget:
@@ -353,6 +365,23 @@ class SymbolIndex:
                     legal_inputs=tuple(str(item) for item in spec["legal_inputs"]),
                 )
             )
+        for name, spec in PUBLIC_READ_PROBE_HOOKS.items():
+            symbol = self.symbols.get(name)
+            if symbol is None:
+                continue
+            targets.append(
+                HookTarget(
+                    kind="public_read_probe",
+                    full_symbol=name,
+                    operation=str(spec["outcome"]),
+                    bank=symbol.bank,
+                    address=symbol.address,
+                    predicate_id=str(spec["probe_id"]),
+                    outcome=str(spec["outcome"]),
+                    parent_symbol=str(spec["parent_symbol"]),
+                    legal_inputs=tuple(str(item) for item in spec["legal_inputs"]),
+                )
+            )
         return targets
 
     def nearest_symbol(self, bank: int, address: int) -> str:
@@ -385,6 +414,7 @@ class RomContributionTracer:
         self.events: list[dict[str, Any]] = []
         self.rule_entries: list[dict[str, Any]] = []
         self.predicate_branch_entries: list[dict[str, Any]] = []
+        self.public_read_probe_entries: list[dict[str, Any]] = []
         self.selector_entry_scores: list[int] = []
 
     def reset(self, *, memory_patches: list[MemoryPatch] | None = None) -> None:
@@ -395,6 +425,7 @@ class RomContributionTracer:
         self.events.clear()
         self.rule_entries.clear()
         self.predicate_branch_entries.clear()
+        self.public_read_probe_entries.clear()
         self.selector_entry_scores = []
 
     def handle_hook(self, targets: list[HookTarget]) -> None:
@@ -407,6 +438,8 @@ class RomContributionTracer:
                 self.handle_control(target)
             elif target.kind == "predicate_branch":
                 self.handle_predicate_branch(target)
+            elif target.kind == "public_read_probe":
+                self.handle_public_read_probe(target)
 
     def handle_rule(self, target: HookTarget) -> None:
         self.close_pending(trigger=target.full_symbol)
@@ -470,6 +503,31 @@ class RomContributionTracer:
                     target.legal_inputs
                 ),
                 "source": self.source_for_predicate_branch(target),
+            }
+        )
+
+    def handle_public_read_probe(self, target: HookTarget) -> None:
+        self.close_pending(trigger=target.full_symbol)
+        sp = int(self.pyboy.register_file.SP)
+        self.pop_returned_frames(sp)
+        self.public_read_probe_entries.append(
+            {
+                "index": len(self.public_read_probe_entries) + 1,
+                "event_type": "public_read_probe",
+                "sp": f"{sp:04x}",
+                "candidate": self.active_score_candidate(),
+                "move_struct": self.current_move_struct(),
+                "probe": {
+                    "probe_id": target.predicate_id,
+                    "outcome": target.outcome,
+                    "probe_symbol": target.full_symbol,
+                    "parent_symbol": target.parent_symbol,
+                    "legal_inputs": list(target.legal_inputs),
+                },
+                "public_input_snapshot": self.public_input_snapshot(
+                    target.legal_inputs
+                ),
+                "source": self.source_for_public_read_probe(target),
             }
         )
 
@@ -594,6 +652,21 @@ class RomContributionTracer:
             "public_reads": rule.get("public_reads", []) if rule else [],
             "static_public_read_hints": rule.get("public_reads", []) if rule else [],
             "dynamic_branch_legal_inputs": list(target.legal_inputs),
+            "hook_bank": f"{target.bank:02x}",
+            "hook_address": f"{target.address:04x}",
+        }
+
+    def source_for_public_read_probe(self, target: HookTarget) -> dict[str, Any]:
+        rule = self.symbol_index.rule_for(target.parent_symbol)
+        return {
+            "rule_id": rule.get("rule_id", "") if rule else "",
+            "source_label": rule.get("source_label", "") if rule else "",
+            "full_symbol": target.parent_symbol,
+            "probe_symbol": target.full_symbol,
+            "classification": rule.get("classification", "") if rule else "",
+            "public_reads": rule.get("public_reads", []) if rule else [],
+            "static_public_read_hints": rule.get("public_reads", []) if rule else [],
+            "dynamic_probe_legal_inputs": list(target.legal_inputs),
             "hook_bank": f"{target.bank:02x}",
             "hook_address": f"{target.address:04x}",
         }
@@ -866,6 +939,7 @@ class RomContributionTraceSession:
             events=self.tracer.events,
             rule_entries=self.tracer.rule_entries,
             predicate_branch_entries=self.tracer.predicate_branch_entries,
+            public_read_probe_entries=self.tracer.public_read_probe_entries,
             selector_entry_scores=self.tracer.selector_entry_scores,
             move_names=self.move_names,
             memory_patches=patches,
@@ -991,6 +1065,7 @@ def run_rom_contribution_trace_for_route(
             events=tracer.events,
             rule_entries=tracer.rule_entries,
             predicate_branch_entries=tracer.predicate_branch_entries,
+            public_read_probe_entries=tracer.public_read_probe_entries,
             selector_entry_scores=tracer.selector_entry_scores,
             move_names=move_names,
             memory_patches=memory_patches or [],
@@ -1070,9 +1145,13 @@ def hook_callback(context: tuple[RomContributionTracer, list[HookTarget]]) -> No
 
 
 def hook_order(target: HookTarget) -> int:
-    return {"control": 0, "rule": 1, "predicate_branch": 2, "score_helper": 3}[
-        target.kind
-    ]
+    return {
+        "control": 0,
+        "rule": 1,
+        "predicate_branch": 2,
+        "public_read_probe": 3,
+        "score_helper": 4,
+    }[target.kind]
 
 
 def clear_chosen_move(
@@ -1278,6 +1357,7 @@ def build_report(
     events: list[dict[str, Any]],
     rule_entries: list[dict[str, Any]],
     predicate_branch_entries: list[dict[str, Any]],
+    public_read_probe_entries: list[dict[str, Any]],
     selector_entry_scores: list[int],
     move_names: dict[int, str],
     memory_patches: list[MemoryPatch],
@@ -1286,6 +1366,7 @@ def build_report(
     executed_rule_ids = sorted(
         rule_ids_from_events(rule_entries)
         | rule_ids_from_events(predicate_branch_entries)
+        | rule_ids_from_events(public_read_probe_entries)
         | rule_ids_from_events(events)
     )
     return {
@@ -1313,14 +1394,16 @@ def build_report(
         "rule_entries": deepcopy(rule_entries),
         "predicate_branch_entry_count": len(predicate_branch_entries),
         "predicate_branch_entries": deepcopy(predicate_branch_entries),
+        "public_read_probe_entry_count": len(public_read_probe_entries),
+        "public_read_probe_entries": deepcopy(public_read_probe_entries),
         "event_count": len(events),
         "changed_event_count": len(changed),
         "events": deepcopy(events),
         "known_limits": [
             "Trace events are captured by PyBoy execution hooks, not by an in-ROM WRAM ring buffer.",
             "Score events record score helper deltas and source labels, while rule entries record dynamic rule-label execution.",
-            "Predicate branch entries record selected executable public-info branch labels, not full false-path coverage.",
-            "Public-read evidence includes selected branch legal-input snapshots, but not full dynamic memory-read slicing yet.",
+            "Predicate branch entries record selected executable public-info branch labels and configured outcomes.",
+            "Public-read probe entries record legal-input snapshots at configured executable labels; they are not CPU memory-read watchpoints.",
         ],
     }
 
@@ -1333,7 +1416,8 @@ def format_rom_contribution_trace(report: dict[str, Any], *, limit: int = 80) ->
             f"source={report['source']} save_state={report['save_state']} "
             f"events={report['event_count']} changed={report['changed_event_count']} "
             f"rule_entries={report.get('rule_entry_count', 0)} "
-            f"predicate_branches={report.get('predicate_branch_entry_count', 0)}"
+            f"predicate_branches={report.get('predicate_branch_entry_count', 0)} "
+            f"public_read_probes={report.get('public_read_probe_entry_count', 0)}"
         ),
         (
             f"chosen={chosen['move_name']}#{chosen['move_id']} "
@@ -1366,6 +1450,20 @@ def format_rom_contribution_trace(report: dict[str, Any], *, limit: int = 80) ->
         )
     if len(report["events"]) > limit:
         lines.append(f"  ... {len(report['events']) - limit} more")
+    probe_entries = report.get("public_read_probe_entries", [])
+    if probe_entries:
+        lines.append("")
+        lines.append(f"First {min(limit, len(probe_entries))} public-read probes:")
+        for entry in probe_entries[:limit]:
+            probe = entry.get("probe", {})
+            candidate = entry.get("candidate", {})
+            lines.append(
+                f"  {entry['index']:03d} "
+                f"slot={candidate.get('slot_index', -1)} "
+                f"{probe.get('probe_id', '')}={probe.get('outcome', '')}"
+            )
+        if len(probe_entries) > limit:
+            lines.append(f"  ... {len(probe_entries) - limit} more")
     rule_entries = report.get("rule_entries", [])
     if rule_entries:
         lines.append("")
@@ -1440,12 +1538,18 @@ def summarize_rom_contribution_trace(
         for event in report.get("predicate_branch_entries", [])
         if isinstance(event, dict)
     ]
+    public_read_probe_entries = [
+        event
+        for event in report.get("public_read_probe_entries", [])
+        if isinstance(event, dict)
+    ]
     changed_events = [event for event in events if event.get("changed")]
     covered_rule_ids = sorted(rule_ids_from_events(events))
     changed_rule_ids = sorted(rule_ids_from_events(changed_events))
     executed_rule_ids = sorted(
         rule_ids_from_events(rule_entries)
         | rule_ids_from_events(predicate_branch_entries)
+        | rule_ids_from_events(public_read_probe_entries)
         | set(covered_rule_ids)
     )
     operation_counts = count_event_values(events, "operation")
@@ -1453,13 +1557,18 @@ def summarize_rom_contribution_trace(
     classification_counts = count_source_values(events, "classification")
     changed_classification_counts = count_source_values(changed_events, "classification")
     executed_classification_counts = count_source_values(
-        [*rule_entries, *predicate_branch_entries, *events],
+        [*rule_entries, *predicate_branch_entries, *public_read_probe_entries, *events],
         "classification",
     )
     predicate_counts = count_predicate_values(predicate_branch_entries, "predicate_id")
     predicate_outcome_counts = count_predicate_outcomes(predicate_branch_entries)
     predicate_snapshot_count = count_predicate_public_input_snapshots(
         predicate_branch_entries
+    )
+    public_probe_counts = count_probe_values(public_read_probe_entries, "probe_id")
+    public_probe_outcome_counts = count_probe_outcomes(public_read_probe_entries)
+    public_probe_snapshot_count = count_public_input_snapshots(
+        public_read_probe_entries
     )
     result = {
         "available": True,
@@ -1479,6 +1588,10 @@ def summarize_rom_contribution_trace(
             report.get("predicate_branch_entry_count", len(predicate_branch_entries))
         ),
         "predicate_public_input_snapshot_count": predicate_snapshot_count,
+        "public_read_probe_entry_count": int(
+            report.get("public_read_probe_entry_count", len(public_read_probe_entries))
+        ),
+        "public_read_probe_snapshot_count": public_probe_snapshot_count,
         "executed_rule_count": len(executed_rule_ids),
         "covered_rule_count": len(covered_rule_ids),
         "changed_rule_count": len(changed_rule_ids),
@@ -1492,10 +1605,15 @@ def summarize_rom_contribution_trace(
         "changed_classification_counts": changed_classification_counts,
         "predicate_counts": predicate_counts,
         "predicate_outcome_counts": predicate_outcome_counts,
+        "public_read_probe_counts": public_probe_counts,
+        "public_read_probe_outcome_counts": public_probe_outcome_counts,
         "unmapped_event_count": count_unmapped_events(events),
         "unmapped_rule_entry_count": count_unmapped_events(rule_entries),
         "unmapped_predicate_branch_entry_count": count_unmapped_events(
             predicate_branch_entries
+        ),
+        "unmapped_public_read_probe_entry_count": count_unmapped_events(
+            public_read_probe_entries
         ),
         "changed_unmapped_event_count": count_unmapped_events(changed_events),
         "candidate_count": len(candidate_keys(events)),
@@ -1515,6 +1633,20 @@ def summarize_rom_contribution_trace_paths(paths: list[Path]) -> dict[str, Any]:
         for path in paths
         if path.exists()
     ]
+    return summarize_rom_contribution_trace_summaries(loaded)
+
+
+def summarize_rom_contribution_trace_reports(
+    reports: list[dict[str, Any]],
+) -> dict[str, Any]:
+    return summarize_rom_contribution_trace_summaries(
+        [summarize_rom_contribution_trace(report) for report in reports]
+    )
+
+
+def summarize_rom_contribution_trace_summaries(
+    loaded: list[dict[str, Any]],
+) -> dict[str, Any]:
     if not loaded:
         return {
             "available": False,
@@ -1524,6 +1656,8 @@ def summarize_rom_contribution_trace_paths(paths: list[Path]) -> dict[str, Any]:
             "rule_entry_count": 0,
             "predicate_branch_entry_count": 0,
             "predicate_public_input_snapshot_count": 0,
+            "public_read_probe_entry_count": 0,
+            "public_read_probe_snapshot_count": 0,
             "executed_rule_count": 0,
             "covered_rule_count": 0,
             "changed_rule_count": 0,
@@ -1537,9 +1671,12 @@ def summarize_rom_contribution_trace_paths(paths: list[Path]) -> dict[str, Any]:
             "changed_classification_counts": {},
             "predicate_counts": {},
             "predicate_outcome_counts": {},
+            "public_read_probe_counts": {},
+            "public_read_probe_outcome_counts": {},
             "unmapped_event_count": 0,
             "unmapped_rule_entry_count": 0,
             "unmapped_predicate_branch_entry_count": 0,
+            "unmapped_public_read_probe_entry_count": 0,
             "changed_unmapped_event_count": 0,
             "candidate_count": 0,
             "changed_candidate_count": 0,
@@ -1582,6 +1719,12 @@ def summarize_rom_contribution_trace_paths(paths: list[Path]) -> dict[str, Any]:
             int(summary["predicate_public_input_snapshot_count"])
             for summary in loaded
         ),
+        "public_read_probe_entry_count": sum(
+            int(summary["public_read_probe_entry_count"]) for summary in loaded
+        ),
+        "public_read_probe_snapshot_count": sum(
+            int(summary["public_read_probe_snapshot_count"]) for summary in loaded
+        ),
         "executed_rule_count": len(executed_rule_ids),
         "covered_rule_count": len(covered_rule_ids),
         "changed_rule_count": len(changed_rule_ids),
@@ -1609,6 +1752,12 @@ def summarize_rom_contribution_trace_paths(paths: list[Path]) -> dict[str, Any]:
         "predicate_outcome_counts": merge_counts(
             summary["predicate_outcome_counts"] for summary in loaded
         ),
+        "public_read_probe_counts": merge_counts(
+            summary["public_read_probe_counts"] for summary in loaded
+        ),
+        "public_read_probe_outcome_counts": merge_counts(
+            summary["public_read_probe_outcome_counts"] for summary in loaded
+        ),
         "unmapped_event_count": sum(
             int(summary["unmapped_event_count"]) for summary in loaded
         ),
@@ -1617,6 +1766,10 @@ def summarize_rom_contribution_trace_paths(paths: list[Path]) -> dict[str, Any]:
         ),
         "unmapped_predicate_branch_entry_count": sum(
             int(summary["unmapped_predicate_branch_entry_count"])
+            for summary in loaded
+        ),
+        "unmapped_public_read_probe_entry_count": sum(
+            int(summary["unmapped_public_read_probe_entry_count"])
             for summary in loaded
         ),
         "changed_unmapped_event_count": sum(
@@ -1633,14 +1786,16 @@ def summarize_rom_contribution_trace_paths(paths: list[Path]) -> dict[str, Any]:
 def resolve_rom_contribution_trace_paths(paths: list[Path] | None) -> list[Path]:
     if paths is not None:
         return paths
-    return [
-        path
-        for path in (
-            DEFAULT_ROM_CONTRIBUTION_TRACE_PATH,
-            DEFAULT_ROM_CONTRIBUTION_TRACE_PROBE_PATH,
-        )
-        if path.exists()
-    ]
+    return sorted(
+        DEFAULT_ROM_CONTRIBUTION_TRACE_DIR.glob(DEFAULT_ROM_CONTRIBUTION_TRACE_GLOB)
+    )
+
+
+def expected_public_read_probe_outcomes() -> list[str]:
+    return sorted(
+        f"{spec['probe_id']}:{spec['outcome']}"
+        for spec in PUBLIC_READ_PROBE_HOOKS.values()
+    )
 
 
 def require_hook_symbols(symbols: dict[str, capture.Symbol]) -> None:
@@ -1782,12 +1937,44 @@ def count_predicate_outcomes(events: list[dict[str, Any]]) -> dict[str, int]:
 
 
 def count_predicate_public_input_snapshots(events: list[dict[str, Any]]) -> int:
+    return count_public_input_snapshots(events)
+
+
+def count_public_input_snapshots(events: list[dict[str, Any]]) -> int:
     count = 0
     for event in events:
         snapshot = event.get("public_input_snapshot")
         if isinstance(snapshot, dict) and snapshot:
             count += 1
     return count
+
+
+def count_probe_values(events: list[dict[str, Any]], key: str) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for event in events:
+        probe = event.get("probe", {})
+        if not isinstance(probe, dict):
+            continue
+        value = str(probe.get(key, ""))
+        if not value:
+            continue
+        counts[value] = counts.get(value, 0) + 1
+    return dict(sorted(counts.items()))
+
+
+def count_probe_outcomes(events: list[dict[str, Any]]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for event in events:
+        probe = event.get("probe", {})
+        if not isinstance(probe, dict):
+            continue
+        probe_id = str(probe.get("probe_id", ""))
+        outcome = str(probe.get("outcome", ""))
+        if not probe_id or not outcome:
+            continue
+        key = f"{probe_id}:{outcome}"
+        counts[key] = counts.get(key, 0) + 1
+    return dict(sorted(counts.items()))
 
 
 def count_unmapped_events(events: list[dict[str, Any]]) -> int:

@@ -29,7 +29,7 @@ class RoadmapAuditTests(unittest.TestCase):
             items["rom_score_materialized_generated_scenarios"]["status"],
             "partial",
         )
-        self.assertEqual(items["dynamic_public_read_provenance"]["status"], "partial")
+        self.assertEqual(items["dynamic_public_read_provenance"]["status"], "complete")
         self.assertGreater(report["blocking_gap_count"], 0)
 
     def test_differential_without_matched_contributions_is_partial(self) -> None:
@@ -50,9 +50,10 @@ class RoadmapAuditTests(unittest.TestCase):
         coverage = {
             "rule_map": {"mapped_rule_count": 10},
             "uncovered_rules": {"uncovered_rule_count": 3},
+            "coverage_targets": {"target_count": 3, "group_count": 2},
         }
 
-        self.assertEqual(coverage_guided_status(coverage), "partial")
+        self.assertEqual(coverage_guided_status(coverage), "complete")
 
     def test_score_materialization_prefers_active_revealed_spin_layers(self) -> None:
         scenarios = [

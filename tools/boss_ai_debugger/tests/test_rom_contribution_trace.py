@@ -405,6 +405,7 @@ class RomContributionTraceTests(unittest.TestCase):
             events=events,
             rule_entries=[],
             predicate_branch_entries=[],
+            public_read_probe_entries=[],
             selector_entry_scores=[19, 20, 20, 20],
             move_names={1: "TEST"},
             memory_patches=[],
@@ -426,6 +427,7 @@ class RomContributionTraceTests(unittest.TestCase):
         tracer.events.append({"event_type": "score_delta"})
         tracer.rule_entries.append({"event_type": "rule_enter"})
         tracer.predicate_branch_entries.append({"event_type": "predicate_branch"})
+        tracer.public_read_probe_entries.append({"event_type": "public_read_probe"})
         tracer.selector_entry_scores = [1, 2, 3, 4]
         tracer.frames.append(
             RuleFrame(
@@ -441,6 +443,7 @@ class RomContributionTraceTests(unittest.TestCase):
         self.assertEqual(tracer.events, [])
         self.assertEqual(tracer.rule_entries, [])
         self.assertEqual(tracer.predicate_branch_entries, [])
+        self.assertEqual(tracer.public_read_probe_entries, [])
         self.assertEqual(tracer.selector_entry_scores, [])
         self.assertEqual(tracer.frames, [])
         self.assertEqual(tracer.memory_patches[0].value, 2)
@@ -488,6 +491,7 @@ class RomContributionTraceTests(unittest.TestCase):
                 "move_scores": [15, 20, 20, 20],
                 "rule_entry_count": 1,
                 "predicate_branch_entry_count": 1,
+                "public_read_probe_entry_count": 1,
                 "rule_entries": [
                     {
                         "index": 1,
@@ -503,6 +507,17 @@ class RomContributionTraceTests(unittest.TestCase):
                         "candidate": {"slot_index": 0, "move_name": "SURF"},
                         "predicate": {
                             "predicate_id": "seen_bench_revealed_rapid_spin",
+                            "outcome": "found",
+                        },
+                    }
+                ],
+                "public_read_probe_entries": [
+                    {
+                        "index": 1,
+                        "event_type": "public_read_probe",
+                        "candidate": {"slot_index": 0, "move_name": "SURF"},
+                        "probe": {
+                            "probe_id": "seen_bench_revealed_rapid_spin",
                             "outcome": "found",
                         },
                     }
@@ -531,6 +546,8 @@ class RomContributionTraceTests(unittest.TestCase):
         self.assertIn("move.apply_test_bias", text)
         self.assertIn("rule_entries=1", text)
         self.assertIn("predicate_branches=1", text)
+        self.assertIn("public_read_probes=1", text)
+        self.assertIn("First 1 public-read probes:", text)
         self.assertIn("First 1 rule entries:", text)
         self.assertIn("seen_bench_revealed_rapid_spin=found", text)
 
@@ -543,6 +560,7 @@ class RomContributionTraceTests(unittest.TestCase):
                 "changed_event_count": 1,
                 "rule_entry_count": 1,
                 "predicate_branch_entry_count": 1,
+                "public_read_probe_entry_count": 1,
                 "chosen": {"move_name": "SURF", "move_id": 57, "slot_index": 0},
                 "trace_basis": {"trace_rom_sha256": "ROM", "trace_symbols_sha256": "SYM"},
                 "rule_entries": [
@@ -564,6 +582,21 @@ class RomContributionTraceTests(unittest.TestCase):
                         },
                         "source": {
                             "rule_id": "move.predicate_rule",
+                            "classification": "public_info",
+                        },
+                    }
+                ],
+                "public_read_probe_entries": [
+                    {
+                        "probe": {
+                            "probe_id": "active_revealed_rapid_spin",
+                            "outcome": "not_revealed_for_layer2",
+                        },
+                        "public_input_snapshot": {
+                            "wPlayerUsedMoves": {"values": [0, 0, 0, 0]},
+                        },
+                        "source": {
+                            "rule_id": "move.public_probe_rule",
                             "classification": "public_info",
                         },
                     }
@@ -606,11 +639,12 @@ class RomContributionTraceTests(unittest.TestCase):
                 "move.changed_rule",
                 "move.executed_only",
                 "move.predicate_rule",
+                "move.public_probe_rule",
                 "move.rule_entry_only",
             ],
         )
         self.assertEqual(summary["changed_rule_ids"], ["move.changed_rule"])
-        self.assertEqual(summary["executed_rule_count"], 4)
+        self.assertEqual(summary["executed_rule_count"], 5)
         self.assertEqual(
             summary["operation_counts"],
             {"discourage_score": 1, "encourage_score": 1},
@@ -625,6 +659,16 @@ class RomContributionTraceTests(unittest.TestCase):
             {"seen_bench_revealed_rapid_spin:found": 1},
         )
         self.assertEqual(summary["predicate_public_input_snapshot_count"], 1)
+        self.assertEqual(summary["public_read_probe_entry_count"], 1)
+        self.assertEqual(summary["public_read_probe_snapshot_count"], 1)
+        self.assertEqual(
+            summary["public_read_probe_counts"],
+            {"active_revealed_rapid_spin": 1},
+        )
+        self.assertEqual(
+            summary["public_read_probe_outcome_counts"],
+            {"active_revealed_rapid_spin:not_revealed_for_layer2": 1},
+        )
 
     def test_parse_memory_patch_supports_symbol_offsets_and_hex_values(self) -> None:
         patch = parse_memory_patch("wPlayerUsedMoves+2=0xe5")

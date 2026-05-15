@@ -256,10 +256,10 @@ The mastery index parses policy cards, quick tests, reviews, and the
 source-to-policy ledger. The coverage report shows mapped Boss AI rules,
 generated scenario tag coverage, policy-card evidence coverage, and explicitly
 aggregates score-helper rule ids from available ROM contribution trace
-artifacts. It still flags that this is not full trace coverage because false
-predicates and full dynamic read slicing are not traced yet. The report also
-lists uncovered mapped rules, suggested generator families, and changed-file
-rule coverage for targeted Boss AI edits.
+artifacts. It distinguishes executable hook targets from static data labels,
+tracks score-trace target coverage separately from score-delta coverage, and
+emits grouped coverage-target worklists with suggested generator families and
+trace modes for targeted Boss AI edits.
 
 Run scorer mutation tests:
 
@@ -330,18 +330,17 @@ dynamic rule-label entries, and the pinned trace ROM/symbol hashes. Score
 events and rule entries are separate: a rule entry proves the label executed,
 while a score event proves a score mutation. Selected public-info branch labels
 are recorded as predicate branch entries; they explain concrete branch outcomes
-such as Spikes layer count or Rapid Spin hazard-risk paths. Each selected
-predicate branch also records a compact snapshot of its declared public inputs,
-including byte ranges such as `wPlayerUsedMoves`, structured party HP slots for
-reserve Ghost checks, and static ROM table references for learnset/base-data
-dependencies. `--patch-symbol SYMBOL=VALUE` can apply byte patches at
+such as Spikes layer count or Rapid Spin hazard-risk paths. Configured
+public-read probes record compact snapshots of declared legal inputs, including
+byte ranges such as `wPlayerUsedMoves`, structured party HP slots for reserve
+Ghost checks, and static ROM table references for learnset/base-data
+dependencies. These are PyBoy execution hooks with snapshots, not CPU
+memory-read watchpoints. `--patch-symbol SYMBOL=VALUE` can apply byte patches at
 replay start and before the first scored candidate, which is useful for one-off
-ROM probes like `--patch-symbol wPlayerScreens=0x01`. Public-read evidence still
-combines static rule-map hints, selected branch labels, and selected-input
-snapshots, not full dynamic memory-read slicing. Save-state mode also exists,
-but it only captures score events if the supplied state is before scoring; the existing
-`pre_choice_state` files are already after move scoring and mainly exercise the
-selector.
+ROM probes like `--patch-symbol wPlayerScreens=0x01`. Save-state mode also
+exists, but it only captures score events if the supplied state is before
+scoring; the existing `pre_choice_state` files are already after move scoring
+and mainly exercise the selector.
 
 Materialize generated final score bytes into the trace ROM selector:
 

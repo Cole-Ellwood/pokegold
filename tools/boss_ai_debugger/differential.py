@@ -101,7 +101,7 @@ def build_differential_report(
         ),
         "known_gaps": [
             "ROM/Python contribution traces are compared only for matching trace ids.",
-            "False predicate paths and dynamic read provenance are not traced yet.",
+            "Public-read provenance is explicit branch/probe snapshot coverage, not CPU memory-read slicing.",
             "Scenario policy mismatches are debugger expectation checks, not ROM materialized-state replays.",
         ],
     }

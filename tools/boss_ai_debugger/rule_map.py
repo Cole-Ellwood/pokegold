@@ -76,6 +76,12 @@ class RuleLabel:
     parent_label: str | None
     classification: str
     public_reads: tuple[str, ...]
+    expected_public_inputs: tuple[str, ...]
+    executable: bool
+    dynamic_coverage_target: bool
+    score_trace_target: bool
+    requires_public_read_provenance: bool
+    coverage_mode: str
 
 
 def build_rule_map(paths: tuple[Path, ...] = SOURCE_PATHS) -> dict[str, Any]:
@@ -115,6 +121,9 @@ def parse_rule_labels(path: Path) -> list[RuleLabel]:
         if not is_rule_label(label):
             continue
         rule_id = make_rule_id(subsystem, label, parent)
+        public_reads = tuple(public_reads_for(label, parent))
+        executable = is_executable_rule_label(label, parent)
+        score_trace_target = is_score_trace_rule(path, label, parent)
         rules.append(
             RuleLabel(
                 rule_id=rule_id,
@@ -123,7 +132,15 @@ def parse_rule_labels(path: Path) -> list[RuleLabel]:
                 line=line_number,
                 parent_label=parent,
                 classification=classify_label(label, parent),
-                public_reads=tuple(public_reads_for(label, parent)),
+                public_reads=public_reads,
+                expected_public_inputs=public_reads,
+                executable=executable,
+                dynamic_coverage_target=executable,
+                score_trace_target=score_trace_target,
+                requires_public_read_provenance=(
+                    classify_label(label, parent) == "public_info" and bool(public_reads)
+                ),
+                coverage_mode=coverage_mode_for(path, label, parent, executable),
             )
         )
     return rules
@@ -195,6 +212,47 @@ def public_reads_for(label: str, parent: str | None) -> list[str]:
     return sorted(set(reads))
 
 
+def is_executable_rule_label(label: str, parent: str | None) -> bool:
+    full_symbol = full_symbol_for_label(label, parent)
+    if not full_symbol:
+        return False
+    hook_label = full_symbol.rsplit(".", 1)[-1]
+    if hook_label.startswith("BossAI") and not hook_label.startswith("BossAI_"):
+        return False
+    return True
+
+
+def full_symbol_for_label(label: str, parent: str | None) -> str:
+    if label.startswith("."):
+        if parent is None:
+            return ""
+        return f"{parent}{label}"
+    return label
+
+
+def is_score_trace_rule(path: Path, label: str, parent: str | None) -> bool:
+    if path.name != "boss_policy_move.asm":
+        return False
+    return (parent in {"BossAI_ApplyMoveModel", "BossAI_SelectMove"}) or (
+        label in {"BossAI_ApplyMoveModel", "BossAI_SelectMove"}
+    )
+
+
+def coverage_mode_for(
+    path: Path,
+    label: str,
+    parent: str | None,
+    executable: bool,
+) -> str:
+    if not executable:
+        return "static_reference"
+    if is_score_trace_rule(path, label, parent):
+        return "rom_score_execution_hook"
+    if path.name == "boss_policy_switch.asm":
+        return "rom_route_execution_hook"
+    return "rom_execution_hook"
+
+
 def validate_rule_map(data: dict[str, Any]) -> list[str]:
     errors: list[str] = []
     if data.get("schema_version") != 1:
@@ -229,6 +287,29 @@ def validate_rule_map(data: dict[str, Any]) -> list[str]:
             "internal",
         }:
             errors.append(f"{prefix}: invalid classification")
+        for key in (
+            "executable",
+            "dynamic_coverage_target",
+            "score_trace_target",
+            "requires_public_read_provenance",
+        ):
+            if key in rule and not isinstance(rule.get(key), bool):
+                errors.append(f"{prefix}: {key} must be a boolean")
+        expected_inputs = rule.get("expected_public_inputs", [])
+        if expected_inputs is not None and not isinstance(expected_inputs, list):
+            errors.append(f"{prefix}: expected_public_inputs must be a list")
+        if rule.get("requires_public_read_provenance") and not expected_inputs:
+            errors.append(
+                f"{prefix}: public-read provenance target has no expected inputs"
+            )
+        coverage_mode = rule.get("coverage_mode", "")
+        if coverage_mode and coverage_mode not in {
+            "rom_execution_hook",
+            "rom_route_execution_hook",
+            "rom_score_execution_hook",
+            "static_reference",
+        }:
+            errors.append(f"{prefix}: invalid coverage_mode")
 
     missing = sorted(REQUIRED_LABELS - labels)
     if missing:
@@ -261,7 +342,19 @@ def compare_rule_maps(current: dict[str, Any], expected_path: Path) -> list[str]
         if rule_id not in expected_by_id:
             continue
         expected_rule = expected_by_id[rule_id]
-        for key in ("source_label", "source_file", "parent_label", "classification", "public_reads"):
+        for key in (
+            "source_label",
+            "source_file",
+            "parent_label",
+            "classification",
+            "public_reads",
+            "expected_public_inputs",
+            "executable",
+            "dynamic_coverage_target",
+            "score_trace_target",
+            "requires_public_read_provenance",
+            "coverage_mode",
+        ):
             if rule.get(key) != expected_rule.get(key):
                 problems.append(f"{rule_id}: stored {key} differs from current")
                 break
@@ -285,13 +378,27 @@ def format_rule_map_summary(
     errors = compare_errors or []
     status = "failed" if errors else "passed"
     counts: dict[str, int] = {}
+    executable = 0
+    dynamic_targets = 0
+    score_targets = 0
+    provenance_targets = 0
     for rule in data["rules"]:
         key = str(rule["classification"])
         counts[key] = counts.get(key, 0) + 1
+        executable += int(bool(rule.get("executable", False)))
+        dynamic_targets += int(bool(rule.get("dynamic_coverage_target", False)))
+        score_targets += int(bool(rule.get("score_trace_target", False)))
+        provenance_targets += int(
+            bool(rule.get("requires_public_read_provenance", False))
+        )
     count_text = " ".join(f"{key}={counts[key]}" for key in sorted(counts))
     lines = [
         f"Boss AI rule-map check {status}.",
-        f"rules={data['rule_count']} {count_text}",
+        (
+            f"rules={data['rule_count']} executable={executable} "
+            f"dynamic_targets={dynamic_targets} score_targets={score_targets} "
+            f"public_provenance_targets={provenance_targets} {count_text}"
+        ),
     ]
     for error in errors[:20]:
         lines.append(f"  - {error}")
@@ -320,6 +427,12 @@ def rule_to_json(rule: RuleLabel) -> dict[str, Any]:
         "parent_label": rule.parent_label,
         "classification": rule.classification,
         "public_reads": list(rule.public_reads),
+        "expected_public_inputs": list(rule.expected_public_inputs),
+        "executable": rule.executable,
+        "dynamic_coverage_target": rule.dynamic_coverage_target,
+        "score_trace_target": rule.score_trace_target,
+        "requires_public_read_provenance": rule.requires_public_read_provenance,
+        "coverage_mode": rule.coverage_mode,
     }
 
 

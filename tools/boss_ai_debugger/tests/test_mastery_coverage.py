@@ -30,6 +30,9 @@ class MasteryCoverageTests(unittest.TestCase):
         self.assertIn("policy_card_requirement_coverage", data["mastery"])
         self.assertGreater(data["uncovered_rules"]["uncovered_rule_count"], 0)
         self.assertIn("suggested_generator_counts", data["uncovered_rules"])
+        self.assertIn("coverage_targets", data)
+        self.assertGreater(data["coverage_targets"]["group_count"], 0)
+        self.assertIn("public_read_provenance", data)
 
     def test_cli_mastery_index_and_coverage_report_write_json(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -95,6 +98,7 @@ class MasteryCoverageTests(unittest.TestCase):
         self.assertIn("known_gaps", coverage)
         self.assertEqual(coverage["rule_map"]["trace_covered_rule_count"], 1)
         self.assertGreater(coverage["changed_rules"]["mapped_rule_count"], 0)
+        self.assertIn("dynamic_target_count", coverage["changed_rules"])
         self.assertIn("policy_card_missing_positive_count", coverage["mastery"])
 
     def test_coverage_report_aggregates_rom_contribution_rules(self) -> None:
@@ -138,6 +142,7 @@ class MasteryCoverageTests(unittest.TestCase):
         self.assertFalse(data["rule_map"]["full_trace_rule_coverage_available"])
         self.assertEqual(data["rule_map"]["trace_covered_rule_count"], 1)
         self.assertEqual(data["rule_map"]["trace_changed_rule_count"], 1)
+        self.assertIn("score_trace_target_count", data["rule_map"])
         self.assertEqual(
             data["rule_map"]["trace_covered_rule_ids"],
             ["move.unit_trace_rule"],

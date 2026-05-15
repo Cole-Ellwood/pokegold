@@ -114,7 +114,7 @@ def decision_trace_for_scenario(scenario: dict[str, Any]) -> dict[str, Any]:
         "events": events,
         "known_limits": [
             "This is a Python scenario score waterfall, not a ROM scoring trace.",
-            "Use rom-contribution-trace for ROM score-helper deltas; dynamic public-read evidence still requires future memory-read slicing.",
+            "Use rom-contribution-trace for ROM score-helper deltas and explicit public-read probe snapshots.",
         ],
     }
 

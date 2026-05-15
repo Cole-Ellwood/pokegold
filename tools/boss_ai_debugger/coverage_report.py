@@ -7,7 +7,10 @@ from typing import Any
 from .generators import generate_scenarios
 from .mastery_index import build_mastery_index
 from .rom_contribution_trace import (
+    expected_public_read_probe_outcomes,
     resolve_rom_contribution_trace_paths,
+    summarize_rom_contribution_trace_reports,
+    summarize_rom_contribution_trace_summaries,
     summarize_rom_contribution_trace_paths,
 )
 from .rule_map import build_rule_map
@@ -22,13 +25,15 @@ def build_coverage_report(
     generated_count: int = 250,
     seed: int = 1,
     rom_contribution_trace_paths: list[Path] | None = None,
+    rom_contribution_reports: list[dict[str, Any]] | None = None,
     changed_files: list[Path | str] | None = None,
 ) -> dict[str, Any]:
     rule_map = build_rule_map()
     mastery = build_mastery_index()
     scenarios = generate_scenarios(family="all", count=generated_count, seed=seed)
-    contribution_summary = summarize_rom_contribution_trace_paths(
-        resolve_rom_contribution_trace_paths(rom_contribution_trace_paths)
+    contribution_summary = summarize_contribution_sources(
+        rom_contribution_trace_paths=rom_contribution_trace_paths,
+        rom_contribution_reports=rom_contribution_reports or [],
     )
     executed_rule_ids = set(contribution_summary["executed_rule_ids"])
     score_delta_rule_ids = set(contribution_summary["covered_rule_ids"])
@@ -66,6 +71,11 @@ def build_coverage_report(
             executed_rule_ids,
             changed_files or [],
         ),
+        "coverage_targets": coverage_target_worklist(rule_map, executed_rule_ids),
+        "public_read_provenance": public_read_provenance_summary(
+            rule_map,
+            contribution_summary,
+        ),
         "rom_contribution_trace": contribution_summary,
         "mastery": {
             "policy_card_count": mastery["policy_card_count"],
@@ -94,8 +104,29 @@ def build_coverage_report(
         "known_gaps": [
             "ROM hook rule coverage is dynamic execution coverage; score-delta coverage is tracked separately because many executed rules leave scores unchanged.",
             "Generated scenario coverage is currently ROM-score-simulator coverage, not PyBoy materialized-state coverage.",
+            "PyBoy trace hooks are execution hooks with configured public-input snapshots, not CPU memory-read watchpoints.",
         ],
     }
+
+
+def summarize_contribution_sources(
+    *,
+    rom_contribution_trace_paths: list[Path] | None,
+    rom_contribution_reports: list[dict[str, Any]],
+) -> dict[str, Any]:
+    path_summary = summarize_rom_contribution_trace_paths(
+        resolve_rom_contribution_trace_paths(rom_contribution_trace_paths)
+    )
+    if not rom_contribution_reports:
+        return path_summary
+    report_summary = summarize_rom_contribution_trace_reports(rom_contribution_reports)
+    return summarize_rom_contribution_trace_summaries(
+        [
+            summary
+            for summary in (path_summary, report_summary)
+            if summary.get("available")
+        ]
+    )
 
 
 def rule_coverage_summary(
@@ -103,13 +134,43 @@ def rule_coverage_summary(
     contribution_summary: dict[str, Any],
 ) -> dict[str, Any]:
     by_classification: dict[str, int] = {}
+    executable_rules = []
+    dynamic_targets = []
+    score_trace_targets = []
+    provenance_targets = []
     for rule in rule_map["rules"]:
         key = str(rule["classification"])
         by_classification[key] = by_classification.get(key, 0) + 1
+        if rule.get("executable", False):
+            executable_rules.append(rule)
+        if rule.get("dynamic_coverage_target", False):
+            dynamic_targets.append(rule)
+        if rule.get("score_trace_target", False):
+            score_trace_targets.append(rule)
+        if rule.get("requires_public_read_provenance", False):
+            provenance_targets.append(rule)
+    executed_rule_ids = set(contribution_summary["executed_rule_ids"])
+    dynamic_uncovered = [
+        rule for rule in dynamic_targets if rule["rule_id"] not in executed_rule_ids
+    ]
+    score_trace_uncovered = [
+        rule for rule in score_trace_targets if rule["rule_id"] not in executed_rule_ids
+    ]
     return {
         "mapped_rule_count": rule_map["rule_count"],
         "classification_counts": dict(sorted(by_classification.items())),
-        "full_trace_rule_coverage_available": False,
+        "executable_rule_count": len(executable_rules),
+        "dynamic_coverage_target_count": len(dynamic_targets),
+        "dynamic_covered_rule_count": len(dynamic_targets) - len(dynamic_uncovered),
+        "dynamic_uncovered_rule_count": len(dynamic_uncovered),
+        "score_trace_target_count": len(score_trace_targets),
+        "score_trace_covered_rule_count": (
+            len(score_trace_targets) - len(score_trace_uncovered)
+        ),
+        "score_trace_uncovered_rule_count": len(score_trace_uncovered),
+        "public_read_provenance_target_count": len(provenance_targets),
+        "full_trace_rule_coverage_available": len(dynamic_uncovered) == 0,
+        "score_trace_rule_coverage_available": len(score_trace_uncovered) == 0,
         "rom_hook_score_trace_available": True,
         "trace_artifact_count": contribution_summary["artifact_count"],
         "trace_event_count": contribution_summary["event_count"],
@@ -120,6 +181,12 @@ def rule_coverage_summary(
         ],
         "trace_predicate_public_input_snapshot_count": contribution_summary[
             "predicate_public_input_snapshot_count"
+        ],
+        "trace_public_read_probe_entry_count": contribution_summary[
+            "public_read_probe_entry_count"
+        ],
+        "trace_public_read_probe_snapshot_count": contribution_summary[
+            "public_read_probe_snapshot_count"
         ],
         "trace_executed_rule_count": contribution_summary["executed_rule_count"],
         "trace_covered_rule_count": contribution_summary["covered_rule_count"],
@@ -139,7 +206,10 @@ def uncovered_rule_summary(
     limit: int = 50,
 ) -> dict[str, Any]:
     uncovered = [
-        rule for rule in rule_map["rules"] if rule["rule_id"] not in covered_rule_ids
+        rule
+        for rule in rule_map["rules"]
+        if rule.get("dynamic_coverage_target", False)
+        and rule["rule_id"] not in covered_rule_ids
     ]
     generator_counts = count_generators(uncovered)
     return {
@@ -161,11 +231,17 @@ def changed_rule_summary(
         for rule in rule_map["rules"]
         if normalize_repo_path(rule["source_file"]) in normalized_files
     ]
-    uncovered = [rule for rule in rules if rule["rule_id"] not in covered_rule_ids]
+    dynamic_rules = [
+        rule for rule in rules if rule.get("dynamic_coverage_target", False)
+    ]
+    uncovered = [
+        rule for rule in dynamic_rules if rule["rule_id"] not in covered_rule_ids
+    ]
     return {
         "changed_files": normalized_files,
         "mapped_rule_count": len(rules),
-        "covered_rule_count": len(rules) - len(uncovered),
+        "dynamic_target_count": len(dynamic_rules),
+        "covered_rule_count": len(dynamic_rules) - len(uncovered),
         "uncovered_rule_count": len(uncovered),
         "uncovered_rules": [rule_digest(rule) for rule in uncovered],
         "suggested_generator_counts": count_generators(uncovered),
@@ -179,7 +255,100 @@ def rule_digest(rule: dict[str, Any]) -> dict[str, Any]:
         "source_file": rule["source_file"],
         "source_label": rule["source_label"],
         "line": rule["line"],
+        "coverage_mode": rule.get("coverage_mode", ""),
+        "score_trace_target": bool(rule.get("score_trace_target", False)),
+        "expected_public_inputs": rule.get("expected_public_inputs", []),
         "suggested_generator": suggested_generator(rule),
+        "recommended_trace_mode": recommended_trace_mode(rule),
+    }
+
+
+def coverage_target_worklist(
+    rule_map: dict[str, Any],
+    covered_rule_ids: set[str],
+) -> dict[str, Any]:
+    uncovered = [
+        rule
+        for rule in rule_map["rules"]
+        if rule.get("dynamic_coverage_target", False)
+        and rule["rule_id"] not in covered_rule_ids
+    ]
+    groups: dict[tuple[str, str, str, str, str], list[dict[str, Any]]] = {}
+    for rule in uncovered:
+        key = (
+            str(rule.get("source_file", "")),
+            str(rule.get("parent_label") or rule.get("source_label", "")),
+            str(rule.get("classification", "")),
+            suggested_generator(rule),
+            recommended_trace_mode(rule),
+        )
+        groups.setdefault(key, []).append(rule)
+    grouped = []
+    for (
+        source_file,
+        parent_label,
+        classification,
+        generator,
+        trace_mode,
+    ), rules in sorted(groups.items()):
+        grouped.append(
+            {
+                "source_file": source_file,
+                "parent_label": parent_label,
+                "classification": classification,
+                "suggested_generator": generator,
+                "recommended_trace_mode": trace_mode,
+                "rule_count": len(rules),
+                "rule_ids": [rule["rule_id"] for rule in rules],
+                "first_rules": [rule_digest(rule) for rule in rules[:10]],
+            }
+        )
+    return {
+        "target_count": len(uncovered),
+        "group_count": len(grouped),
+        "groups": grouped,
+    }
+
+
+def public_read_provenance_summary(
+    rule_map: dict[str, Any],
+    contribution_summary: dict[str, Any],
+) -> dict[str, Any]:
+    expected_outcomes = expected_public_read_probe_outcomes()
+    observed_probe_outcomes = set(
+        contribution_summary.get("public_read_probe_outcome_counts", {})
+    )
+    observed_predicate_outcomes = set(
+        contribution_summary.get("predicate_outcome_counts", {})
+    )
+    observed_outcomes = observed_probe_outcomes | observed_predicate_outcomes
+    target_rules = [
+        rule
+        for rule in rule_map["rules"]
+        if rule.get("requires_public_read_provenance", False)
+    ]
+    missing_outcomes = [
+        outcome for outcome in expected_outcomes if outcome not in observed_outcomes
+    ]
+    snapshot_count = int(
+        contribution_summary.get("public_read_probe_snapshot_count", 0)
+    ) + int(contribution_summary.get("predicate_public_input_snapshot_count", 0))
+    return {
+        "available": snapshot_count > 0 and bool(observed_outcomes),
+        "target_rule_count": len(target_rules),
+        "expected_probe_outcome_count": len(expected_outcomes),
+        "observed_probe_outcome_count": len(observed_outcomes),
+        "missing_probe_outcome_count": len(missing_outcomes),
+        "missing_probe_outcomes": missing_outcomes,
+        "snapshot_count": snapshot_count,
+        "public_read_probe_entry_count": contribution_summary.get(
+            "public_read_probe_entry_count",
+            0,
+        ),
+        "predicate_branch_entry_count": contribution_summary.get(
+            "predicate_branch_entry_count",
+            0,
+        ),
     }
 
 
@@ -204,6 +373,14 @@ def suggested_generator(rule: dict[str, Any]) -> str:
     if any(token in text for token in ("select_move", "selector", "score")):
         return "selector_edges"
     return "mastery_policy"
+
+
+def recommended_trace_mode(rule: dict[str, Any]) -> str:
+    if rule.get("score_trace_target", False):
+        return "rom_score_materialization"
+    if str(rule.get("coverage_mode", "")) == "rom_route_execution_hook":
+        return "rom_route_contribution_trace"
+    return "rom_contribution_trace"
 
 
 def normalize_repo_path(path: Path | str) -> str:
@@ -307,6 +484,7 @@ def format_coverage_report(data: dict[str, Any]) -> str:
             (
                 f"mapped_rules={rule_map['mapped_rule_count']} "
                 f"full_trace_rule_coverage={rule_map['full_trace_rule_coverage_available']} "
+                f"score_trace_rule_coverage={rule_map['score_trace_rule_coverage_available']} "
                 f"score_trace_rules={rule_map['trace_covered_rule_count']} "
                 f"executed_rules={rule_map['trace_executed_rule_count']}"
             ),
@@ -322,6 +500,7 @@ def format_coverage_report(data: dict[str, Any]) -> str:
             ),
             (
                 f"uncovered_rules={data['uncovered_rules']['uncovered_rule_count']} "
+                f"coverage_target_groups={data['coverage_targets']['group_count']} "
                 f"changed_uncovered={data['changed_rules']['uncovered_rule_count']}"
             ),
             (

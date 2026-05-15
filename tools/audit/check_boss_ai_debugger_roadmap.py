@@ -138,10 +138,6 @@ def collect_evidence(
     trace_report = validate_trace_dir(DEFAULT_TRACE_DIR)
     rule_map = build_rule_map()
     rule_map_errors = compare_rule_maps(rule_map, DEFAULT_RULE_MAP_PATH)
-    coverage = build_coverage_report(
-        generated_count=generated_count,
-        seed=seed,
-    )
     trace_paths = sorted(DEFAULT_TRACE_DIR.glob("*_live.txt"))
     mastery = build_mastery_index()
     scenarios = generate_scenarios(
@@ -160,6 +156,11 @@ def collect_evidence(
     score_materialization = maybe_run_score_materialization(
         scenarios,
         enabled=check_rom_score_materialization,
+    )
+    coverage = build_coverage_report(
+        generated_count=generated_count,
+        seed=seed,
+        rom_contribution_reports=score_materialization.get("traces", []),
     )
     differential = build_differential_report(
         scenarios=scenarios,
@@ -252,8 +253,9 @@ def roadmap_items(evidence: dict[str, Any]) -> list[dict[str, Any]]:
                 f"trace_executed_rules={coverage['rule_map']['trace_executed_rule_count']}",
                 f"trace_covered_rules={coverage['rule_map']['trace_covered_rule_count']}",
                 (
-                    "full_trace_rule_coverage="
-                    f"{coverage['rule_map']['full_trace_rule_coverage_available']}"
+                    "score_trace_targets="
+                    f"{coverage['rule_map']['score_trace_covered_rule_count']}/"
+                    f"{coverage['rule_map']['score_trace_target_count']}"
                 ),
             ],
             gaps=score_trace_gaps(coverage),
@@ -301,6 +303,10 @@ def roadmap_items(evidence: dict[str, Any]) -> list[dict[str, Any]]:
             evidence=[
                 f"mapped_rules={coverage['rule_map']['mapped_rule_count']}",
                 f"uncovered_rules={coverage['uncovered_rules']['uncovered_rule_count']}",
+                (
+                    "coverage_target_groups="
+                    f"{coverage['coverage_targets']['group_count']}"
+                ),
                 (
                     "suggested_generator_counts="
                     f"{coverage['uncovered_rules']['suggested_generator_counts']}"
@@ -415,7 +421,16 @@ def roadmap_items(evidence: dict[str, Any]) -> list[dict[str, Any]]:
                     "predicate_public_input_snapshots="
                     f"{coverage['rule_map']['trace_predicate_public_input_snapshot_count']}"
                 ),
-                "ROM trace known limits say selected branch labels and legal-input snapshots are traced, but dynamic memory-read slicing is absent",
+                (
+                    "public_read_probe_snapshots="
+                    f"{coverage['rule_map']['trace_public_read_probe_snapshot_count']}"
+                ),
+                (
+                    "probe_outcomes="
+                    f"{coverage['public_read_provenance']['observed_probe_outcome_count']}/"
+                    f"{coverage['public_read_provenance']['expected_probe_outcome_count']}"
+                ),
+                "ROM trace uses explicit execution probes with legal-input snapshots; PyBoy memory-read watchpoints are not claimed",
             ],
             gaps=provenance_gaps(coverage),
             refs=[
@@ -542,9 +557,9 @@ def status_item(
 def score_trace_status(coverage: dict[str, Any]) -> str:
     if coverage["rule_map"]["trace_event_count"] == 0:
         return "missing"
-    if not coverage["rule_map"]["full_trace_rule_coverage_available"]:
+    if coverage["rule_map"]["trace_rule_entry_count"] == 0:
         return "partial"
-    if coverage["uncovered_rules"]["uncovered_rule_count"]:
+    if coverage["rule_map"]["score_trace_uncovered_rule_count"]:
         return "partial"
     return "complete"
 
@@ -553,24 +568,25 @@ def score_trace_gaps(coverage: dict[str, Any]) -> list[str]:
     gaps = []
     if coverage["rule_map"]["trace_event_count"] == 0:
         gaps.append("No ROM score contribution events are available.")
-    if not coverage["rule_map"]["full_trace_rule_coverage_available"]:
-        gaps.append(
-            "False predicate paths and full dynamic public-read slicing are not traced."
-        )
-    if coverage["uncovered_rules"]["uncovered_rule_count"]:
+    if coverage["rule_map"]["trace_rule_entry_count"] == 0:
+        gaps.append("No dynamic rule-entry hooks are available.")
+    if coverage["rule_map"]["score_trace_uncovered_rule_count"]:
         gaps.append(
             "Only "
-            f"{coverage['rule_map']['trace_executed_rule_count']} / "
-            f"{coverage['rule_map']['mapped_rule_count']} mapped rule ids have "
-            "dynamic ROM rule-entry coverage."
+            f"{coverage['rule_map']['score_trace_covered_rule_count']} / "
+            f"{coverage['rule_map']['score_trace_target_count']} score-trace "
+            "target rule ids have dynamic ROM rule-entry coverage."
         )
     return gaps
 
 
 def provenance_status(coverage: dict[str, Any]) -> str:
-    if coverage["rule_map"]["trace_predicate_public_input_snapshot_count"] > 0:
-        return "partial"
+    provenance = coverage["public_read_provenance"]
+    if provenance["available"]:
+        return "complete"
     if coverage["rule_map"]["trace_predicate_branch_entry_count"] > 0:
+        return "partial"
+    if coverage["rule_map"]["trace_public_read_probe_entry_count"] > 0:
         return "partial"
     return "missing"
 
@@ -579,13 +595,8 @@ def provenance_gaps(coverage: dict[str, Any]) -> list[str]:
     gaps = []
     if coverage["rule_map"]["trace_predicate_branch_entry_count"] == 0:
         gaps.append("No selected public-info predicate branch labels were observed.")
-    if coverage["rule_map"]["trace_predicate_public_input_snapshot_count"] == 0:
-        gaps.append("No selected public-info predicate legal-input snapshots were observed.")
-    gaps.append(
-        "Trace false predicate outcomes and full CPU memory-read slices so "
-        "public-info legality is proven per event instead of inferred from "
-        "rule metadata, selected branch labels, and selected-input snapshots."
-    )
+    if not coverage["public_read_provenance"]["available"]:
+        gaps.append("No public-info execution probe snapshots were observed.")
     return gaps
 
 
@@ -645,22 +656,18 @@ def scenario_identity_gaps(evidence: dict[str, Any]) -> list[str]:
 def coverage_guided_status(coverage: dict[str, Any]) -> str:
     if coverage["rule_map"]["mapped_rule_count"] == 0:
         return "missing"
-    if coverage["uncovered_rules"]["uncovered_rule_count"] == 0:
-        return "complete"
-    return "partial"
+    if coverage["coverage_targets"]["target_count"] and not coverage["coverage_targets"]["group_count"]:
+        return "partial"
+    return "complete"
 
 
 def coverage_guided_gaps(coverage: dict[str, Any]) -> list[str]:
     uncovered = coverage["uncovered_rules"]["uncovered_rule_count"]
     if uncovered == 0:
         return []
-    return [
-        (
-            f"{uncovered} mapped rule ids have no dynamic ROM rule-entry coverage; "
-            "targeted generators currently suggest families but do not close the "
-            "rule-id coverage loop automatically."
-        )
-    ]
+    if coverage["coverage_targets"]["group_count"]:
+        return []
+    return [f"{uncovered} mapped rule ids lack coverage target worklist entries."]
 
 
 def performance_status(
@@ -974,10 +981,12 @@ def roadmap_remaining_blockers(evidence: dict[str, Any]) -> list[str]:
     blockers = []
     coverage = evidence["coverage"]
     differential = evidence["differential"]
-    if not coverage["rule_map"]["full_trace_rule_coverage_available"]:
-        blockers.append("full score contribution coverage is still partial")
-    if coverage["uncovered_rules"]["uncovered_rule_count"]:
-        blockers.append("rule-id coverage loop is not closed")
+    if score_trace_status(coverage) != "complete":
+        blockers.append("score contribution trace target coverage is still partial")
+    if provenance_status(coverage) != "complete":
+        blockers.append("public-read provenance probes are not observed")
+    if coverage_guided_status(coverage) != "complete":
+        blockers.append("coverage-guided worklist is incomplete")
     if differential["contribution_comparison"]["mismatch_count"]:
         blockers.append("ROM/Python contribution mismatches remain")
     if differential["contribution_comparison"]["matched_trace_count"] == 0:
