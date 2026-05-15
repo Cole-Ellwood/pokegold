@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import unittest
+from pathlib import Path
 
 from tools.boss_ai_debugger.generators import generate_scenarios
 from tools.boss_ai_debugger.rom_score_materialize import (
     MOVES,
     action_id_for_slot,
+    build_fast_score_report,
     chunk_scenarios,
     empty_contribution_comparison,
     hook_equivalence_summary,
@@ -86,6 +88,25 @@ class RomScoreMaterializeTests(unittest.TestCase):
         self.assertFalse(summary["match"])
         self.assertFalse(summary["score_bytes_match"])
         self.assertFalse(summary["chosen_match"])
+
+    def test_fast_score_report_includes_selector_entry_scores(self) -> None:
+        report = build_fast_score_report(
+            save_state=Path(__file__),
+            basis={},
+            values={
+                "wBossAITraceChosenMove": [0x99],
+                "wCurEnemyMoveNum": [3],
+                "wEnemyMonMoves": [0xBF, 0xBC, 0x39, 0x99],
+                "wEnemyAIMoveScores": [38, 38, 38, 28],
+                "wBossAITracePreModelScores": [20, 20, 20, 20],
+                "wBossAITracePostModelScores": [14, 10, 19, 28],
+            },
+            move_names={0x99: "EXPLOSION"},
+            memory_patches=[],
+            selector_entry_scores=[20, 20, 19, 28],
+        )
+
+        self.assertEqual(report["selector_entry_scores"], [20, 20, 19, 28])
 
     def test_chunk_scenarios_preserves_all_cases(self) -> None:
         scenarios = [{"id": str(index)} for index in range(7)]

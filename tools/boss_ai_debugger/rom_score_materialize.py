@@ -126,11 +126,21 @@ class RomScoreReplaySession:
         self.memory_patches: list[MemoryPatch] = []
         self.score_start_patches_applied = False
         self.score_start_patch_count = 0
+        self.selector_entry_scores: list[int] = []
         self.state_cache: dict[Path, bytes] = {}
         self.pyboy.hook_register(
             score_move.bank,
             score_move.address,
             fast_score_patch_callback,
+            self,
+        )
+        selector_start = self.symbols.get("BossAI_SelectMove")
+        if selector_start is None:
+            raise PreferenceDataError("missing hook symbol: BossAI_SelectMove")
+        self.pyboy.hook_register(
+            selector_start.bank,
+            selector_start.address,
+            fast_selector_start_callback,
             self,
         )
         self.basis = capture.build_trace_basis_metadata(
@@ -163,6 +173,7 @@ class RomScoreReplaySession:
         self.memory_patches = patches
         self.score_start_patches_applied = False
         self.score_start_patch_count = 0
+        self.selector_entry_scores = []
         self.load_state(save_state)
         apply_memory_patches(self.pyboy, self.symbols, patches)
         clear_chosen_move(self.pyboy, self.symbols)
@@ -191,6 +202,7 @@ class RomScoreReplaySession:
             move_names=self.move_names,
             memory_patches=patches,
             score_start_patch_count=self.score_start_patch_count,
+            selector_entry_scores=self.selector_entry_scores,
         )
 
     def apply_score_start_patches(self) -> None:
@@ -199,6 +211,16 @@ class RomScoreReplaySession:
         apply_memory_patches(self.pyboy, self.symbols, self.memory_patches)
         self.score_start_patches_applied = True
         self.score_start_patch_count += 1
+
+    def record_selector_entry_scores(self) -> None:
+        symbol = self.symbols["wEnemyAIMoveScores"]
+        self.selector_entry_scores = [
+            int(trace_runtime.read_byte(
+                self.pyboy,
+                capture.Symbol(symbol.bank, symbol.address + offset),
+            ))
+            for offset in range(4)
+        ]
 
     def load_state(self, save_state: Path) -> None:
         state_bytes = self.state_cache.get(save_state)
@@ -774,6 +796,8 @@ def verdict_from_materialized_trace(
                 for slot in rom_selector.get("possible_slot_indices", [])
             ],
             "final_scores": observed_scores,
+            "selector_entry_scores": rom_report.get("selector_entry_scores", []),
+            "post_model_scores": rom_report.get("post_model_scores", []),
             "changed_event_count": rom_report.get("changed_event_count", 0),
             "score_start_patch_count": rom_report.get("score_start_patch_count", 0),
             "rule_entry_count": rom_report.get("rule_entry_count", 0),
@@ -834,6 +858,7 @@ def build_fast_score_report(
     move_names: dict[int, str],
     memory_patches: list[MemoryPatch],
     score_start_patch_count: int = 0,
+    selector_entry_scores: list[int] | None = None,
 ) -> dict[str, Any]:
     chosen_move = values["wBossAITraceChosenMove"][0]
     return {
@@ -851,6 +876,7 @@ def build_fast_score_report(
         "move_scores": values["wEnemyAIMoveScores"],
         "pre_model_scores": values["wBossAITracePreModelScores"],
         "post_model_scores": values["wBossAITracePostModelScores"],
+        "selector_entry_scores": selector_entry_scores or [],
         "rule_entry_count": 0,
         "predicate_branch_entry_count": 0,
         "event_count": 0,
@@ -877,6 +903,10 @@ def empty_contribution_comparison() -> dict[str, Any]:
 
 def fast_score_patch_callback(session: RomScoreReplaySession) -> None:
     session.apply_score_start_patches()
+
+
+def fast_selector_start_callback(session: RomScoreReplaySession) -> None:
+    session.record_selector_entry_scores()
 
 
 def skipped_verdict(

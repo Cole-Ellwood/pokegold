@@ -65,6 +65,7 @@ POINTER_FROM_WRAM_SCORE_PTR = {
 CONTROL_HOOKS = {
     "BossAI_ApplyMoveModel.ScoreMove": "candidate_start",
     "BossAI_ApplyMoveModel.TracePostModelScore": "candidate_end",
+    "BossAI_SelectMove": "selector_start",
 }
 
 PREDICATE_BRANCH_HOOKS = {
@@ -382,6 +383,7 @@ class RomContributionTracer:
         self.events: list[dict[str, Any]] = []
         self.rule_entries: list[dict[str, Any]] = []
         self.predicate_branch_entries: list[dict[str, Any]] = []
+        self.selector_entry_scores: list[int] = []
 
     def reset(self, *, memory_patches: list[MemoryPatch] | None = None) -> None:
         self.memory_patches = memory_patches or []
@@ -391,6 +393,7 @@ class RomContributionTracer:
         self.events.clear()
         self.rule_entries.clear()
         self.predicate_branch_entries.clear()
+        self.selector_entry_scores = []
 
     def handle_hook(self, targets: list[HookTarget]) -> None:
         for target in sorted(targets, key=hook_order):
@@ -486,6 +489,20 @@ class RomContributionTracer:
                 apply_memory_patches(self.pyboy, self.symbols, self.memory_patches)
                 self.score_start_patches_applied = True
             self.frames.clear()
+        elif target.operation == "selector_start":
+            self.selector_entry_scores = self.current_score_bytes()
+
+    def current_score_bytes(self) -> list[int]:
+        symbol = self.symbols.get("wEnemyAIMoveScores")
+        if symbol is None:
+            return []
+        try:
+            return [
+                self.read_symbol_offset(symbol, offset)
+                for offset in range(4)
+            ]
+        except Exception:
+            return []
 
     def close_pending(self, *, trigger: str) -> None:
         pending = self.pending
@@ -846,6 +863,7 @@ class RomContributionTraceSession:
             events=self.tracer.events,
             rule_entries=self.tracer.rule_entries,
             predicate_branch_entries=self.tracer.predicate_branch_entries,
+            selector_entry_scores=self.tracer.selector_entry_scores,
             move_names=self.move_names,
             memory_patches=patches,
         )
@@ -966,6 +984,7 @@ def run_rom_contribution_trace_for_route(
             events=tracer.events,
             rule_entries=tracer.rule_entries,
             predicate_branch_entries=tracer.predicate_branch_entries,
+            selector_entry_scores=tracer.selector_entry_scores,
             move_names=move_names,
             memory_patches=memory_patches or [],
         )
@@ -1141,6 +1160,7 @@ def build_report(
     events: list[dict[str, Any]],
     rule_entries: list[dict[str, Any]],
     predicate_branch_entries: list[dict[str, Any]],
+    selector_entry_scores: list[int],
     move_names: dict[int, str],
     memory_patches: list[MemoryPatch],
 ) -> dict[str, Any]:
@@ -1168,6 +1188,7 @@ def build_report(
         "move_scores": values["wEnemyAIMoveScores"],
         "pre_model_scores": values["wBossAITracePreModelScores"],
         "post_model_scores": values["wBossAITracePostModelScores"],
+        "selector_entry_scores": selector_entry_scores,
         "rule_entry_count": len(rule_entries),
         "executed_rule_count": len(executed_rule_ids),
         "executed_rule_ids": executed_rule_ids,

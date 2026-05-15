@@ -280,6 +280,31 @@ class RomContributionTraceTests(unittest.TestCase):
         self.assertEqual(snapshot["EvosAttacks"]["symbol"], "EvosAttacksPointers")
         self.assertFalse(snapshot["MissingPublicInput"]["available"])
 
+    def test_selector_start_records_score_phase_boundary(self) -> None:
+        pyboy = FakePyBoy()
+        pyboy.memory[1, 0xD0D3] = 14
+        pyboy.memory[1, 0xD0D4] = 10
+        pyboy.memory[1, 0xD0D5] = 19
+        pyboy.memory[1, 0xD0D6] = 28
+        tracer = RomContributionTracer(
+            pyboy,
+            {"wEnemyAIMoveScores": Symbol(1, 0xD0D3)},
+            FakeSymbolIndex(),
+            {},
+        )
+
+        tracer.handle_control(
+            HookTarget(
+                kind="control",
+                full_symbol="BossAI_SelectMove",
+                operation="selector_start",
+                bank=0x0E,
+                address=0x5000,
+            )
+        )
+
+        self.assertEqual(tracer.selector_entry_scores, [14, 10, 19, 28])
+
     def test_tracer_reset_clears_events_and_updates_patches(self) -> None:
         tracer = RomContributionTracer(
             FakePyBoy(),
@@ -292,6 +317,7 @@ class RomContributionTraceTests(unittest.TestCase):
         tracer.events.append({"event_type": "score_delta"})
         tracer.rule_entries.append({"event_type": "rule_enter"})
         tracer.predicate_branch_entries.append({"event_type": "predicate_branch"})
+        tracer.selector_entry_scores = [1, 2, 3, 4]
         tracer.frames.append(
             RuleFrame(
                 sp=0xFEF0,
@@ -306,6 +332,7 @@ class RomContributionTraceTests(unittest.TestCase):
         self.assertEqual(tracer.events, [])
         self.assertEqual(tracer.rule_entries, [])
         self.assertEqual(tracer.predicate_branch_entries, [])
+        self.assertEqual(tracer.selector_entry_scores, [])
         self.assertEqual(tracer.frames, [])
         self.assertEqual(tracer.memory_patches[0].value, 2)
 
