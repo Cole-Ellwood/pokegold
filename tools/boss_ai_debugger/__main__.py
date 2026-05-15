@@ -109,6 +109,13 @@ from .rom_contribution_trace import (
     run_rom_contribution_trace_for_route,
     write_rom_contribution_trace_json,
 )
+from .rom_selector_materialize import (
+    DEFAULT_BASE_ROUTE as DEFAULT_SELECTOR_MATERIALIZE_ROUTE,
+    DEFAULT_MANIFEST_PATH as DEFAULT_SELECTOR_MATERIALIZE_MANIFEST,
+    format_rom_selector_materialization,
+    run_rom_selector_materialization_from_path,
+    write_rom_selector_materialization_json,
+)
 from .run_store import DEFAULT_RUNS_DIR, run_changed_ai_suite, run_generated_smoke_suite
 from .rule_map import (
     DEFAULT_RULE_MAP_PATH,
@@ -667,6 +674,31 @@ def cmd_rom_contribution_trace(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_rom_selector_materialize(args: argparse.Namespace) -> int:
+    report = run_rom_selector_materialization_from_path(
+        args.scenarios,
+        limit=args.limit,
+        base_route=args.base_route,
+        manifest_path=args.manifest,
+        rom=args.rom,
+        symbols_path=args.symbols,
+        button=args.button,
+        button_delay=args.button_delay,
+        watch_frames=args.watch_frames,
+    )
+    if args.json_out != "":
+        write_rom_selector_materialization_json(report, Path(args.json_out))
+    if args.json:
+        print(json.dumps(report, indent=2, sort_keys=True))
+    else:
+        print(format_rom_selector_materialization(report, limit=args.display_limit))
+        if args.json_out != "":
+            print(f"wrote {args.json_out}")
+    if args.fail_on_mismatch and report["mismatch_count"] > 0:
+        return 1
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="python -m tools.boss_ai_debugger")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -901,6 +933,37 @@ def build_parser() -> argparse.ArgumentParser:
     rom_trace_cmd.add_argument("--json-out", default="")
     rom_trace_cmd.add_argument("--limit", type=int, default=80)
     rom_trace_cmd.set_defaults(func=cmd_rom_contribution_trace)
+
+    selector_materialize_cmd = subparsers.add_parser("rom-selector-materialize")
+    selector_materialize_cmd.add_argument("--scenarios", type=path_arg, required=True)
+    selector_materialize_cmd.add_argument("--limit", type=int, default=20)
+    selector_materialize_cmd.add_argument(
+        "--base-route",
+        default=DEFAULT_SELECTOR_MATERIALIZE_ROUTE,
+    )
+    selector_materialize_cmd.add_argument(
+        "--manifest",
+        type=path_arg,
+        default=DEFAULT_SELECTOR_MATERIALIZE_MANIFEST,
+    )
+    selector_materialize_cmd.add_argument(
+        "--rom",
+        type=path_arg,
+        default=Path("pokegold_trace.gbc"),
+    )
+    selector_materialize_cmd.add_argument(
+        "--symbols",
+        type=path_arg,
+        default=Path("pokegold_trace.sym"),
+    )
+    selector_materialize_cmd.add_argument("--button", default="a")
+    selector_materialize_cmd.add_argument("--button-delay", type=int, default=8)
+    selector_materialize_cmd.add_argument("--watch-frames", type=int, default=80)
+    selector_materialize_cmd.add_argument("--json", action="store_true")
+    selector_materialize_cmd.add_argument("--json-out", default="")
+    selector_materialize_cmd.add_argument("--display-limit", type=int, default=20)
+    selector_materialize_cmd.add_argument("--fail-on-mismatch", action="store_true")
+    selector_materialize_cmd.set_defaults(func=cmd_rom_selector_materialize)
 
     invariants_cmd = subparsers.add_parser("invariants")
     invariants_subcommands = invariants_cmd.add_subparsers(

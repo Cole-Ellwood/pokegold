@@ -17,6 +17,12 @@ from tools.boss_ai_debugger.generators import generate_scenarios
 from tools.boss_ai_debugger.mastery_index import build_mastery_index
 from tools.boss_ai_debugger.review_queue import build_review_queue
 from tools.boss_ai_debugger.rom_scenarios import evaluate_batch
+from tools.boss_ai_debugger.rom_selector_materialize import (
+    DEFAULT_BASE_ROUTE,
+    DEFAULT_MANIFEST_PATH,
+    DEFAULT_WATCH_FRAMES,
+    run_rom_selector_materialization,
+)
 from tools.boss_ai_debugger.rule_map import (
     DEFAULT_RULE_MAP_PATH,
     build_rule_map,
@@ -45,6 +51,11 @@ def main() -> int:
     parser.add_argument("--seed", type=int, default=1)
     parser.add_argument("--json-out", type=Path, default=REPORT_PATH)
     parser.add_argument(
+        "--check-rom-selector-materialization",
+        action="store_true",
+        help="also run the PyBoy-backed generated selector materialization smoke",
+    )
+    parser.add_argument(
         "--allow-incomplete",
         action="store_true",
         help="write the report and exit zero even when roadmap readiness is incomplete",
@@ -54,6 +65,7 @@ def main() -> int:
     report = build_roadmap_audit(
         generated_count=args.generated_count,
         seed=args.seed,
+        check_rom_selector_materialization=args.check_rom_selector_materialization,
     )
     write_json(report, args.json_out)
     print(format_roadmap_audit(report))
@@ -67,8 +79,13 @@ def build_roadmap_audit(
     *,
     generated_count: int = 120,
     seed: int = 1,
+    check_rom_selector_materialization: bool = False,
 ) -> dict[str, Any]:
-    evidence = collect_evidence(generated_count=generated_count, seed=seed)
+    evidence = collect_evidence(
+        generated_count=generated_count,
+        seed=seed,
+        check_rom_selector_materialization=check_rom_selector_materialization,
+    )
     items = roadmap_items(evidence)
     status_counts = count_statuses(items)
     blocking_gaps = [
@@ -92,7 +109,12 @@ def build_roadmap_audit(
     }
 
 
-def collect_evidence(*, generated_count: int, seed: int) -> dict[str, Any]:
+def collect_evidence(
+    *,
+    generated_count: int,
+    seed: int,
+    check_rom_selector_materialization: bool,
+) -> dict[str, Any]:
     fixture_report = validate_fixtures_file()
     trace_report = validate_trace_dir(DEFAULT_TRACE_DIR)
     rule_map = build_rule_map()
@@ -114,6 +136,10 @@ def collect_evidence(*, generated_count: int, seed: int) -> dict[str, Any]:
     )
     batch = evaluate_batch(scenarios)
     queue = build_review_queue(batch, limit=50, max_per_lesson=2)
+    selector_materialization = maybe_run_selector_materialization(
+        scenarios,
+        enabled=check_rom_selector_materialization,
+    )
     return {
         "generated_count": generated_count,
         "seed": seed,
@@ -127,6 +153,7 @@ def collect_evidence(*, generated_count: int, seed: int) -> dict[str, Any]:
         "mastery": mastery,
         "batch": batch,
         "queue": queue,
+        "selector_materialization": selector_materialization,
     }
 
 
@@ -306,18 +333,31 @@ def roadmap_items(evidence: dict[str, Any]) -> list[dict[str, Any]]:
             refs=["tools/audit/check_boss_ai_debugger_performance.py"],
         ),
         status_item(
-            "rom_materialized_generated_scenarios",
-            "ROM-materialized generated scenarios",
+            "rom_selector_materialized_generated_scenarios",
+            "ROM selector-materialized generated scenarios",
+            status=selector_materialization_status(evidence),
+            evidence=[
+                selector_materialization_evidence(evidence),
+                "generated final score bytes are patched at BossAI_SelectMove.first_pass",
+            ],
+            gaps=selector_materialization_gaps(evidence),
+            refs=[
+                "tools/boss_ai_debugger/rom_selector_materialize.py",
+            ],
+        ),
+        status_item(
+            "rom_score_materialized_generated_scenarios",
+            "ROM score-model materialized generated scenarios",
             status="missing",
             evidence=[
-                "generated scenarios are scored by the Python ROM-score simulator",
+                "selector materialization is post-score only",
                 "default contribution comparison has no matched generated ROM trace ids",
             ],
             gaps=[
                 (
-                    "Implement materialization from canonical scenario JSON into trace "
-                    "ROM save states, then compare ROM and Python contribution traces "
-                    "for the same scenario ids."
+                    "Implement full materialization from canonical scenario JSON into "
+                    "battle WRAM before BossAI_ApplyMoveModel, then compare ROM and "
+                    "Python contribution traces for the same scenario ids."
                 )
             ],
             refs=[
@@ -630,6 +670,7 @@ def evidence_summary(evidence: dict[str, Any]) -> dict[str, Any]:
         "contribution_matched_trace_count": differential[
             "contribution_comparison"
         ]["matched_trace_count"],
+        "selector_materialization": evidence["selector_materialization"],
         "scenarios_per_minute": batch["scenarios_per_minute"],
         "reviewable_per_minute": batch["reviewable_per_minute"],
         "reviewable_count": batch["reviewable_count"],
@@ -657,6 +698,90 @@ def format_roadmap_audit(report: dict[str, Any]) -> str:
         for gap in report["blocking_gaps"][:8]:
             lines.append(f"  - {gap}")
     return "\n".join(lines)
+
+
+def maybe_run_selector_materialization(
+    scenarios: list[dict[str, Any]],
+    *,
+    enabled: bool,
+) -> dict[str, Any]:
+    if not enabled:
+        return {
+            "available": False,
+            "checked": False,
+            "reason": "not requested; pass --check-rom-selector-materialization to run it",
+        }
+    selector_scenarios = [
+        scenario
+        for scenario in scenarios
+        if scenario.get("family") == "selector_edges"
+    ][:4]
+    if not selector_scenarios:
+        return {
+            "available": False,
+            "checked": False,
+            "reason": "no selector_edges scenarios available in generated sample",
+        }
+    try:
+        report = run_rom_selector_materialization(
+            selector_scenarios,
+            base_route=DEFAULT_BASE_ROUTE,
+            manifest_path=DEFAULT_MANIFEST_PATH,
+            watch_frames=DEFAULT_WATCH_FRAMES,
+            source="roadmap_audit",
+        )
+    except Exception as exc:
+        return {
+            "available": False,
+            "checked": True,
+            "reason": str(exc),
+        }
+    return {
+        "available": report["mismatch_count"] == 0 and report["checked_count"] > 0,
+        "checked": True,
+        "checked_count": report["checked_count"],
+        "mismatch_count": report["mismatch_count"],
+        "agreement_rate": report["agreement_rate"],
+        "materializations_per_minute": report["materializations_per_minute"],
+        "known_limits": report["known_limits"],
+    }
+
+
+def selector_materialization_status(evidence: dict[str, Any]) -> str:
+    data = evidence["selector_materialization"]
+    if not data.get("checked"):
+        return "partial"
+    if data.get("available"):
+        return "complete"
+    return "missing"
+
+
+def selector_materialization_evidence(evidence: dict[str, Any]) -> str:
+    data = evidence["selector_materialization"]
+    if not data.get("checked"):
+        return str(data.get("reason", "selector materialization not checked"))
+    if not data.get("available"):
+        return f"selector materialization unavailable: {data.get('reason', '')}"
+    return (
+        f"selector_checked={data['checked_count']} "
+        f"mismatches={data['mismatch_count']} "
+        f"agreement={data['agreement_rate']:.4%} "
+        f"rate={data['materializations_per_minute']:.0f}/min"
+    )
+
+
+def selector_materialization_gaps(evidence: dict[str, Any]) -> list[str]:
+    data = evidence["selector_materialization"]
+    if not data.get("checked"):
+        return [
+            (
+                "ROM selector materialization exists but was not run in this audit; "
+                "use --check-rom-selector-materialization when PyBoy and states are available."
+            )
+        ]
+    if data.get("available"):
+        return []
+    return [str(data.get("reason", "ROM selector materialization failed"))]
 
 
 def write_json(data: dict[str, Any], path: Path) -> None:

@@ -18,7 +18,14 @@ class RoadmapAuditTests(unittest.TestCase):
         self.assertFalse(report["ready"])
         self.assertEqual(items["canonical_state_schema"]["status"], "complete")
         self.assertEqual(items["rule_id_source_map"]["status"], "complete")
-        self.assertEqual(items["rom_materialized_generated_scenarios"]["status"], "missing")
+        self.assertEqual(
+            items["rom_selector_materialized_generated_scenarios"]["status"],
+            "partial",
+        )
+        self.assertEqual(
+            items["rom_score_materialized_generated_scenarios"]["status"],
+            "missing",
+        )
         self.assertEqual(items["dynamic_public_read_provenance"]["status"], "missing")
         self.assertGreater(report["blocking_gap_count"], 0)
 

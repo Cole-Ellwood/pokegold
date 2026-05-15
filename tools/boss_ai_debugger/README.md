@@ -305,6 +305,18 @@ captures score events if the supplied state is before scoring; the existing
 `pre_choice_state` files are already after move scoring and mainly exercise the
 selector.
 
+Materialize generated final score bytes into the trace ROM selector:
+
+```powershell
+python -m tools.boss_ai_debugger rom-selector-materialize --scenarios audit\boss_ai_debugger\generated\selector_edges.jsonl --limit 20
+```
+
+`rom-selector-materialize` loads a real pre-choice trace state, hooks
+`BossAI_SelectMove.first_pass`, patches the generated scenario's final
+post-score move ids and score bytes into WRAM, and then lets the ROM selector
+choose. This is an honest ROM-backed selector check for generated cases, but it
+is not full battle-state or score-model materialization.
+
 Classify one-turn route context:
 
 ```powershell
