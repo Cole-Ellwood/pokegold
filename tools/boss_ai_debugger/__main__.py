@@ -88,7 +88,7 @@ from .rom_scenarios import (
     load_scenario_batch,
     select_move,
 )
-from .run_store import DEFAULT_RUNS_DIR, run_generated_smoke_suite
+from .run_store import DEFAULT_RUNS_DIR, run_changed_ai_suite, run_generated_smoke_suite
 from .rule_map import (
     DEFAULT_RULE_MAP_PATH,
     build_rule_map,
@@ -367,16 +367,23 @@ def cmd_review_queue(args: argparse.Namespace) -> int:
 
 
 def cmd_run_suite(args: argparse.Namespace) -> int:
-    if args.profile != "generated-smoke":
-        raise PreferenceDataError(
-            "only generated-smoke is implemented; changed-ai needs full ROM trace phase"
+    if args.profile == "generated-smoke":
+        metadata = run_generated_smoke_suite(
+            count=args.count,
+            seed=args.seed,
+            run_id=args.run_id,
+            runs_dir=args.runs_dir,
         )
-    metadata = run_generated_smoke_suite(
-        count=args.count,
-        seed=args.seed,
-        run_id=args.run_id,
-        runs_dir=args.runs_dir,
-    )
+    elif args.profile == "changed-ai":
+        metadata = run_changed_ai_suite(
+            count=args.count,
+            seed=args.seed,
+            run_id=args.run_id,
+            runs_dir=args.runs_dir,
+            trace_dir=args.trace_dir,
+        )
+    else:
+        raise PreferenceDataError(f"unknown run-suite profile {args.profile!r}")
     if args.json:
         print(json.dumps(metadata, indent=2, sort_keys=True))
     else:
@@ -650,6 +657,7 @@ def build_parser() -> argparse.ArgumentParser:
     run_suite.add_argument("--seed", type=int, default=1)
     run_suite.add_argument("--run-id", default="")
     run_suite.add_argument("--runs-dir", type=path_arg, default=DEFAULT_RUNS_DIR)
+    run_suite.add_argument("--trace-dir", type=path_arg, default=DEFAULT_TRACE_DIR)
     run_suite.add_argument("--json", action="store_true")
     run_suite.set_defaults(func=cmd_run_suite)
 

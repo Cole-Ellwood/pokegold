@@ -153,6 +153,18 @@ python -m tools.boss_ai_debugger run-suite --profile generated-smoke --count 200
 The run suite writes scenarios, batch report, review queue, metadata, artifact
 hashes, and a Markdown summary under `audit\boss_ai_debugger\runs\`.
 
+Run the local changed-AI adaptation suite:
+
+```powershell
+python -m tools.boss_ai_debugger run-suite --profile changed-ai --count 200 --seed 1
+```
+
+This profile records generated stress results, review queue, route evaluation,
+metamorphic checks, scorer mutation results, candidate invariants, selector
+trace replay when traces are available, rule-map drift, artifact hashes, and
+known gaps. It does not rebuild ROMs or produce full scoring contribution traces
+yet.
+
 Run the foundation audit:
 
 ```powershell

@@ -26,6 +26,12 @@ Report statuses:
 This deliberately starts with scorer mutations because it has a clean injection
 point and does not require source patching, subprocesses, or ROM rebuilds.
 
+The changed-AI run profile includes this report:
+
+```powershell
+python -m tools.boss_ai_debugger run-suite --profile changed-ai --count 200 --seed 1
+```
+
 ## Invariant Mining
 
 ```powershell

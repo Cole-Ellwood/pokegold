@@ -8,7 +8,7 @@ from contextlib import redirect_stdout
 from pathlib import Path
 
 from tools.boss_ai_debugger.__main__ import main as debugger_main
-from tools.boss_ai_debugger.run_store import run_generated_smoke_suite
+from tools.boss_ai_debugger.run_store import run_changed_ai_suite, run_generated_smoke_suite
 
 
 class RunStoreTests(unittest.TestCase):
@@ -58,6 +58,58 @@ class RunStoreTests(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertEqual(data["run_id"], "cli_run")
         self.assertEqual(data["batch_summary"]["scenario_count"], 6)
+
+    def test_changed_ai_suite_records_debugger_gates(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            runs_dir = Path(tmp)
+            metadata = run_changed_ai_suite(
+                count=6,
+                seed=3,
+                run_id="changed_run",
+                runs_dir=runs_dir,
+                trace_dir=None,
+            )
+            run_dir = runs_dir / "changed_run"
+
+            self.assertTrue((run_dir / "route_eval.json").exists())
+            self.assertTrue((run_dir / "mutation.json").exists())
+            self.assertTrue((run_dir / "invariants.json").exists())
+            self.assertTrue((run_dir / "trace_replay.json").exists())
+            self.assertTrue((run_dir / "summary.md").exists())
+
+        self.assertEqual(metadata["profile"], "changed-ai")
+        self.assertEqual(metadata["batch_summary"]["scenario_count"], 6)
+        self.assertIn("route_eval_summary", metadata)
+        self.assertIn("known_gaps", metadata)
+
+    def test_cli_run_suite_changed_ai(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            stdout = io.StringIO()
+            with redirect_stdout(stdout):
+                code = debugger_main(
+                    [
+                        "run-suite",
+                        "--profile",
+                        "changed-ai",
+                        "--count",
+                        "4",
+                        "--seed",
+                        "5",
+                        "--run-id",
+                        "cli_changed",
+                        "--runs-dir",
+                        tmp,
+                        "--trace-dir",
+                        str(Path(tmp) / "missing_traces"),
+                        "--json",
+                    ]
+                )
+            data = json.loads(stdout.getvalue())
+
+        self.assertEqual(code, 0)
+        self.assertEqual(data["profile"], "changed-ai")
+        self.assertEqual(data["run_id"], "cli_changed")
+        self.assertEqual(data["batch_summary"]["scenario_count"], 4)
 
 
 if __name__ == "__main__":
