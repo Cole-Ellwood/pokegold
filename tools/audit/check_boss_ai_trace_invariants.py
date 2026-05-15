@@ -17,6 +17,7 @@ BOSS_FILES = (
 )
 BOSS_TRACE_TOPMOVES = ROOT / "engine" / "battle" / "ai" / "boss_trace_topmoves.asm"
 ITEMS = ROOT / "engine" / "battle" / "ai" / "items.asm"
+SCORING = ROOT / "engine" / "battle" / "ai" / "scoring.asm"
 SWITCH = ROOT / "engine" / "battle" / "ai" / "switch.asm"
 WRAM = ROOT / "ram" / "wram.asm"
 PARTIES = ROOT / "data" / "trainers" / "parties.asm"
@@ -2169,6 +2170,30 @@ def audit_boss_move_attr_bank_safety(boss: str) -> None:
     )
 
 
+def audit_ai_get_enemy_move_thunk_preserves_move_id(boss: str, scoring: str) -> None:
+    thunk = top_block(boss, "AIGetEnemyMove_HL")
+    require_not_contains(
+        thunk,
+        "farcall AIGetEnemyMove\n",
+        "AIGetEnemyMove_HL must not pass the bank id as the move id",
+    )
+    require_order(
+        thunk,
+        [
+            "push hl",
+            "push bc",
+            "ld c, a",
+            "farcall AIGetEnemyMoveFromC",
+            "pop bc",
+            "pop hl",
+            "ret",
+        ],
+        "AIGetEnemyMove_HL preserves hl and passes move id through c",
+    )
+    wrapper = top_block(scoring, "AIGetEnemyMoveFromC")
+    require_contains(wrapper, "ld a, c", "AIGetEnemyMoveFromC restores move id")
+
+
 def audit_public_threat_scan_preserves_source_pointers(boss: str) -> None:
     level_moves = local_block(
         top_block(boss, "BossAI_AddSpeciesLevelUpMovesToMask"),
@@ -2364,6 +2389,7 @@ def audit_constants(constants: str) -> None:
 def main() -> int:
     boss = load_boss_source()
     items = load(ITEMS)
+    scoring = load(SCORING)
     switch = load(SWITCH)
     wram = load(WRAM)
     parties = load(PARTIES)
@@ -2393,6 +2419,7 @@ def main() -> int:
     audit_move_model_trace_snapshots(boss, wram)
     audit_lookahead_trace_preserves_score_cursor(boss)
     audit_boss_move_attr_bank_safety(boss)
+    audit_ai_get_enemy_move_thunk_preserves_move_id(boss, scoring)
     audit_public_threat_scan_preserves_source_pointers(boss)
     audit_type_matchup_scan_preserves_table_cursor(boss)
     audit_type_threat_severity_preserves_list_cursor(boss)
@@ -2453,6 +2480,7 @@ def main() -> int:
         "move-model trace score snapshots",
         "lookahead trace score-cursor preservation",
         "Boss AI bank-safe move attr reads",
+        "AIGetEnemyMove_HL move-id preservation",
         "public threat scan source pointer preservation",
         "type-matchup scan table cursor preservation",
         "type-threat severity list cursor preservation",

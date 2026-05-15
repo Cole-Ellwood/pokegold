@@ -18,11 +18,12 @@
 ; call (e.g., `jp BossAI_*ScoreHL`).
 ;
 ; These intra-bank thunks live alongside boss.asm in bank 0x0e, so plain
-; `call AIxxx_HL` from boss.asm reaches them. Each thunk wraps `farcall`
+; `call AIxxx_HL` from boss.asm reaches them. Most thunks wrap `farcall`
 ; to the bank-0x0b target with `push hl` / `pop hl` so caller's hl is
-; preserved end-to-end. Each thunk is 9 bytes; 7 thunks = 63 bytes in
-; bank 0x0e. ROM0 was too tight for these (Home section had 13 bytes
-; free; the 229 ROM0-free is fragmented across rst-handler gaps).
+; preserved end-to-end. AIGetEnemyMove_HL also preserves bc and passes
+; the move id through c because farcall consumes a for the target bank.
+; ROM0 was too tight for these (Home section had 13 bytes free; the
+; 229 ROM0-free is fragmented across rst-handler gaps).
 ;
 ; Rationale: `tools/audit/check_cross_bank_call.py` flagged 39 plain-call
 ; sites in boss.asm targeting scoring.asm; this is the same class as
@@ -31,7 +32,10 @@
 ; ai-layer: THUNK
 AIGetEnemyMove_HL:
 	push hl
-	farcall AIGetEnemyMove
+	push bc
+	ld c, a
+	farcall AIGetEnemyMoveFromC
+	pop bc
 	pop hl
 	ret
 

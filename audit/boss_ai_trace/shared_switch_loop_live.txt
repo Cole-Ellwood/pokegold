@@ -1,7 +1,7 @@
 trace_rom=pokegold_trace.gbc
-trace_rom_sha256=D3A5F38B3BC9F0DD4A4A602337C0A091A50EF0E204BAB28CE07B9249D7A72943
+trace_rom_sha256=6F33CFEB30AF621E230450EBB582302B68A92CA73E821F1454FCFF1C5B693DFB
 trace_symbols=pokegold_trace.sym
-trace_symbols_sha256=22C0E6F289017826A63E8E7F6EB71BD52DAF9610A0FA4200079F1E6381DF89E7
+trace_symbols_sha256=910852CA36840B22723466B3E4951E37598339DEBCA846FE0549F69AB784CAD3
 boss=Shared switch-loop
 notes=synthetic Jasmine battle context; repeated-switch state records current switch confidence and loop context
 tier=2

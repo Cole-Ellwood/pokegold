@@ -3181,6 +3181,9 @@ AIBlockMove:
 	ld [hl], a
 	ret
 
+AIGetEnemyMoveFromC:
+	ld a, c
+
 AIGetEnemyMove:
 ; Load attributes of move a into ram
 
