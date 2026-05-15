@@ -27,6 +27,7 @@ class MasteryCoverageTests(unittest.TestCase):
         self.assertFalse(data["rule_map"]["full_trace_rule_coverage_available"])
         self.assertIn("hazard_retention", data["generated"]["policy_tag_counts"])
         self.assertGreaterEqual(data["mastery"]["policy_card_count"], 1)
+        self.assertIn("policy_card_requirement_coverage", data["mastery"])
         self.assertGreater(data["uncovered_rules"]["uncovered_rule_count"], 0)
         self.assertIn("suggested_generator_counts", data["uncovered_rules"])
 
@@ -94,6 +95,7 @@ class MasteryCoverageTests(unittest.TestCase):
         self.assertIn("known_gaps", coverage)
         self.assertEqual(coverage["rule_map"]["trace_covered_rule_count"], 1)
         self.assertGreater(coverage["changed_rules"]["mapped_rule_count"], 0)
+        self.assertIn("policy_card_missing_positive_count", coverage["mastery"])
 
     def test_coverage_report_aggregates_rom_contribution_rules(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -151,6 +153,12 @@ class MasteryCoverageTests(unittest.TestCase):
         self.assertGreater(data["changed_rules"]["mapped_rule_count"], 0)
         self.assertGreater(data["changed_rules"]["uncovered_rule_count"], 0)
         self.assertIn("uncovered_rules", data["changed_rules"])
+
+    def test_mastery_policy_generation_has_positive_and_negative_card_coverage(self) -> None:
+        data = build_coverage_report(generated_count=24, seed=1)
+
+        self.assertEqual(data["mastery"]["policy_card_missing_positive_count"], 0)
+        self.assertEqual(data["mastery"]["policy_card_missing_negative_count"], 0)
 
 
 if __name__ == "__main__":

@@ -117,6 +117,10 @@ def main() -> int:
         != coverage["mastery"]["policy_card_count"]
     ):
         errors.append("generated scenarios do not cover every mastery policy card")
+    if coverage["mastery"]["policy_card_missing_positive_count"] != 0:
+        errors.append("generated scenarios are missing positive policy-card coverage")
+    if coverage["mastery"]["policy_card_missing_negative_count"] != 0:
+        errors.append("generated scenarios are missing negative policy-card coverage")
     if not counterfactual["score_flips_to_expected_best"]:
         errors.append("counterfactual analysis did not report expected-best score flips")
     if decision_trace["event_count"] == 0:
@@ -179,6 +183,8 @@ def main() -> int:
         "Mastery coverage: "
         f"{coverage['mastery']['generated_policy_card_coverage_count']} / "
         f"{coverage['mastery']['policy_card_count']} policy cards covered by generated refs; "
+        f"missing_pos={coverage['mastery']['policy_card_missing_positive_count']}; "
+        f"missing_neg={coverage['mastery']['policy_card_missing_negative_count']}; "
         f"score_trace_rules={coverage['rule_map']['trace_covered_rule_count']}; "
         f"uncovered_rules={coverage['uncovered_rules']['uncovered_rule_count']}; "
         f"full_trace_rule_coverage={coverage['rule_map']['full_trace_rule_coverage_available']}."

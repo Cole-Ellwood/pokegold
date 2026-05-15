@@ -46,6 +46,10 @@ def build_coverage_report(
     uncovered_policy_cards = [
         path for path in policy_card_paths if path not in generator_evidence
     ]
+    policy_card_requirements = policy_card_requirement_coverage(
+        policy_card_paths,
+        scenarios,
+    )
 
     return {
         "schema_version": 1,
@@ -70,6 +74,13 @@ def build_coverage_report(
             ),
             "covered_policy_cards": covered_policy_cards,
             "uncovered_policy_cards": uncovered_policy_cards,
+            "policy_card_requirement_coverage": policy_card_requirements,
+            "policy_card_missing_positive_count": len(
+                policy_card_requirements["missing_positive"]
+            ),
+            "policy_card_missing_negative_count": len(
+                policy_card_requirements["missing_negative"]
+            ),
         },
         "generated": {
             "policy_tag_counts": count_expectation_values(scenarios, "policy_tags"),
@@ -202,6 +213,67 @@ def count_expectation_values(scenarios: list[dict[str, Any]], key: str) -> dict[
     return dict(sorted(counts.items()))
 
 
+def policy_card_requirement_coverage(
+    policy_card_paths: list[str],
+    scenarios: list[dict[str, Any]],
+) -> dict[str, Any]:
+    rows = []
+    for path in policy_card_paths:
+        matching = [
+            scenario
+            for scenario in scenarios
+            if path in normalized_evidence_refs(scenario)
+        ]
+        positive = [
+            scenario["id"]
+            for scenario in matching
+            if scenario_expectation_list(scenario, "best_action_ids")
+        ]
+        negative = [
+            scenario["id"]
+            for scenario in matching
+            if scenario_expectation_list(scenario, "bad_action_ids")
+            or scenario_expectation_list(scenario, "catastrophic_action_ids")
+        ]
+        rows.append(
+            {
+                "policy_card": path,
+                "scenario_count": len(matching),
+                "positive_scenario_count": len(positive),
+                "negative_scenario_count": len(negative),
+                "positive_examples": positive[:5],
+                "negative_examples": negative[:5],
+                "has_positive": bool(positive),
+                "has_negative": bool(negative),
+            }
+        )
+    return {
+        "cards": rows,
+        "missing_positive": [
+            row["policy_card"] for row in rows if not row["has_positive"]
+        ],
+        "missing_negative": [
+            row["policy_card"] for row in rows if not row["has_negative"]
+        ],
+    }
+
+
+def normalized_evidence_refs(scenario: dict[str, Any]) -> set[str]:
+    refs = scenario.get("expectation", {}).get("evidence_refs", [])
+    if isinstance(refs, str):
+        refs = [refs]
+    return {str(ref).replace("/", "\\") for ref in refs}
+
+
+def scenario_expectation_list(scenario: dict[str, Any], key: str) -> list[Any]:
+    value = scenario.get("expectation", {}).get(key, [])
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return value
+    return [value]
+
+
 def write_coverage_report(data: dict[str, Any], path: Path = DEFAULT_COVERAGE_PATH) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
@@ -226,6 +298,11 @@ def format_coverage_report(data: dict[str, Any]) -> str:
                 f"policy_cards={mastery['policy_card_count']} "
                 f"generated_covered={mastery['generated_policy_card_coverage_count']} "
                 f"coverage={mastery['generated_policy_card_coverage_rate']:.1%}"
+            ),
+            (
+                "policy_card_missing="
+                f"positive:{mastery['policy_card_missing_positive_count']} "
+                f"negative:{mastery['policy_card_missing_negative_count']}"
             ),
             (
                 f"uncovered_rules={data['uncovered_rules']['uncovered_rule_count']} "

@@ -24,6 +24,7 @@ python -m tools.boss_ai_debugger coverage-report --changed-file engine\battle\ai
 - generated scenario condition tags
 - generated evidence refs
 - policy-card coverage from generated evidence refs
+- positive and negative scenario coverage for each policy card
 - ROM hook contribution trace artifact summaries when available
 - uncovered mapped Boss AI rule ids with suggested generator families
 - changed-file rule coverage for targeted Boss AI edits
@@ -44,3 +45,7 @@ false path, or public read was dynamically proven.
 Changed-file coverage is a targeting aid. It identifies mapped source labels in
 the supplied files and shows which of those labels are not covered by current
 score-helper trace artifacts.
+
+Policy-card requirement coverage is stricter than a file reference. Each card
+reports whether generated scenarios include at least one expected-best line and
+at least one bad or catastrophic line tied to that card.
