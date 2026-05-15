@@ -70,6 +70,28 @@ GATE_COMMANDS = (
         "scenario throughput and review queue throughput",
     ),
     GateCommand(
+        "changed_ai_suite",
+        [
+            sys.executable,
+            "-m",
+            "tools.boss_ai_debugger",
+            "run-suite",
+            "--profile",
+            "changed-ai",
+            "--count",
+            "24",
+            "--seed",
+            "1",
+            "--runs-dir",
+            ".local\\tmp\\boss_ai_debugger\\changed_ai_runs",
+            "--refresh-rom-contribution-trace",
+            "--refresh-rom-score-materialization",
+            "--rebuild-roms",
+            "--refresh-live-traces",
+        ],
+        "changed-AI rebuild, live trace refresh, ROM score materialization, and run lineage",
+    ),
+    GateCommand(
         "docs_navigation",
         [sys.executable, "tools\\audit\\check_docs_navigation.py"],
         "docs and generated-index integration",
@@ -84,11 +106,13 @@ def main() -> int:
     parser.add_argument("--json-out", type=Path, default=REPORT_PATH)
     parser.add_argument("--generated-count", type=int, default=24)
     parser.add_argument("--skip-slow-replay", action="store_true")
+    parser.add_argument("--skip-changed-ai-suite", action="store_true")
     args = parser.parse_args()
 
     report = build_done_gate_report(
         generated_count=args.generated_count,
         skip_slow_replay=args.skip_slow_replay,
+        skip_changed_ai_suite=args.skip_changed_ai_suite,
     )
     write_json(report, args.json_out)
     print(format_done_gate_report(report))
@@ -100,12 +124,16 @@ def build_done_gate_report(
     *,
     generated_count: int,
     skip_slow_replay: bool,
+    skip_changed_ai_suite: bool,
 ) -> dict[str, Any]:
     started = time.perf_counter()
     commands = [
         command
         for command in GATE_COMMANDS
         if not (skip_slow_replay and command.gate_id == "pre_choice_replay")
+        and not (
+            skip_changed_ai_suite and command.gate_id == "changed_ai_suite"
+        )
     ]
     command_results = [run_gate_command(command) for command in commands]
     roadmap = run_roadmap_audit(generated_count=generated_count)
@@ -181,7 +209,7 @@ def done_requirements() -> list[dict[str, str]]:
         },
         {
             "requirement": "workflow integration",
-            "evidence": "docs navigation, generated index, changed-AI suite coverage in roadmap",
+            "evidence": "docs navigation, generated index, changed-AI suite coverage and final-gate command artifact",
         },
     ]
 

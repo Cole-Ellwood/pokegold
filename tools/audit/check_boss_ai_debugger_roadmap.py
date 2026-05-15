@@ -464,18 +464,15 @@ def roadmap_items(evidence: dict[str, Any]) -> list[dict[str, Any]]:
         status_item(
             "change_adaptation_suite",
             "Changed-AI adaptation suite",
-            status="partial",
+            status="complete",
             evidence=[
                 "run-suite --profile changed-ai records generated stress, selector replay, contribution summaries, and score-materialization artifacts",
                 "the suite can optionally refresh one contribution trace and one targeted generated score batch",
                 "changed-AI runs write previous_run_diff.json against the latest older changed-AI run in the same run store",
                 "changed-AI runs can record opt-in --rebuild-roms and --refresh-live-traces command artifacts",
+                "the final done gate invokes changed-AI with ROM rebuild and live trace refresh enabled by default",
             ],
-            gaps=[
-                (
-                    "Make the final done gate run changed-ai with ROM rebuild and live trace refresh enabled."
-                )
-            ],
+            gaps=[],
             refs=[
                 "tools/boss_ai_debugger/run_store.py",
                 "docs/boss_ai_debugger_changed_ai_suite.md",

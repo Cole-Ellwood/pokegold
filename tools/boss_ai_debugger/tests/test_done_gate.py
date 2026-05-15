@@ -4,6 +4,7 @@ import unittest
 
 from tools.audit.check_boss_ai_debugger_done import (
     format_done_gate_report,
+    GATE_COMMANDS,
     tail,
 )
 
@@ -34,6 +35,17 @@ class DoneGateTests(unittest.TestCase):
         self.assertIn("passed=False", text)
         self.assertIn("bad", text)
         self.assertIn("coverage gap", text)
+
+    def test_done_gate_includes_changed_ai_suite_command(self) -> None:
+        commands = {command.gate_id: command.command for command in GATE_COMMANDS}
+
+        command = commands["changed_ai_suite"]
+
+        self.assertIn("run-suite", command)
+        self.assertIn("--profile", command)
+        self.assertIn("changed-ai", command)
+        self.assertIn("--rebuild-roms", command)
+        self.assertIn("--refresh-live-traces", command)
 
 
 if __name__ == "__main__":

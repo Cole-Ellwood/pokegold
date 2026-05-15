@@ -226,10 +226,13 @@ python tools\audit\check_boss_ai_debugger_done.py
 
 The done gate runs debugger tests, no-cheat/gating/trace invariants, live
 capture ledger, exact selector replay, pre-choice replay, foundation and
-performance audits, docs navigation, and the roadmap audit with ROM selector
-and score materialization enabled. It writes
+performance audits, changed-AI rebuild/live-trace suite, docs navigation, and
+the roadmap audit with ROM selector and score materialization enabled. It writes
 `.local\tmp\boss_ai_debugger\done_gate.json` and exits nonzero until every
 roadmap blocker is actually closed.
+
+Use `--skip-changed-ai-suite` only when intentionally avoiding the expensive
+ROM rebuild and live trace refresh pass.
 
 Run metamorphic checks:
 

@@ -45,6 +45,10 @@ batch commands and stores `live_trace_refresh.json`. Both are opt-in so a fast
 local changed-AI run records skipped command artifacts instead of silently doing
 expensive work.
 
+The final debugger done gate invokes this profile with rebuild, live trace
+refresh, contribution refresh, and score materialization enabled unless
+`--skip-changed-ai-suite` is passed to the done gate.
+
 `--refresh-rom-contribution-trace` drives one configured boss route, Clair by
 default, and stores a fresh ROM contribution trace inside the run directory. It
 is intentionally opt-in so the normal changed-AI suite remains fast and does not
