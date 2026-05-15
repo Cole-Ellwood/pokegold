@@ -22,6 +22,7 @@ DEFAULT_ROM_CONTRIBUTION_TRACE_PROBE_PATH = (
     ROOT / "audit" / "boss_ai_debugger" / "rom_contribution_trace_spikes_spin_probe.json"
 )
 
+MAX_REPLAY_POLL_CHUNK_FRAMES = 45
 PARTY_LENGTH = 6
 PARTYMON_STRUCT_LENGTH = 48
 
@@ -1110,7 +1111,8 @@ def drive_replay_to_choice(
         )
 
     presses_issued = 0
-    for frame in range(watch_frames + 1):
+    frame = 0
+    while frame <= watch_frames:
         if should_issue_replay_button(
             frame=frame,
             button=button,
@@ -1123,8 +1125,64 @@ def drive_replay_to_choice(
         values = capture.read_trace_values(pyboy, symbols)
         if values["wBossAITraceChosenMove"][0] != 0:
             return values, presses_issued
-        pyboy.tick(1, False, False)
+        tick_count = replay_tick_count(
+            frame=frame,
+            watch_frames=watch_frames,
+            button=button,
+            button_presses=button_presses,
+            button_interval_frames=button_interval_frames,
+            presses_issued=presses_issued,
+        )
+        pyboy.tick(tick_count, False, False)
+        frame += tick_count
     return None, presses_issued
+
+
+def replay_tick_count(
+    *,
+    frame: int,
+    watch_frames: int,
+    button: str,
+    button_presses: int,
+    button_interval_frames: int,
+    presses_issued: int,
+) -> int:
+    remaining = watch_frames - frame
+    if remaining <= 0:
+        return 1
+
+    next_frame = frame + min(remaining, MAX_REPLAY_POLL_CHUNK_FRAMES)
+    next_button = next_replay_button_frame(
+        frame=frame,
+        button=button,
+        button_presses=button_presses,
+        button_interval_frames=button_interval_frames,
+        presses_issued=presses_issued,
+    )
+    if next_button is not None:
+        next_frame = min(next_frame, next_button)
+    return max(1, next_frame - frame)
+
+
+def next_replay_button_frame(
+    *,
+    frame: int,
+    button: str,
+    button_presses: int,
+    button_interval_frames: int,
+    presses_issued: int,
+) -> int | None:
+    if not button or presses_issued >= button_presses:
+        return None
+    if button_interval_frames == 0:
+        return None
+    next_frame = button_interval_frames * presses_issued
+    while next_frame <= frame and presses_issued < button_presses:
+        presses_issued += 1
+        next_frame = button_interval_frames * presses_issued
+    if presses_issued >= button_presses:
+        return None
+    return next_frame
 
 
 def should_issue_replay_button(

@@ -2,10 +2,13 @@ from __future__ import annotations
 
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from tools.boss_ai_debugger.rom_contribution_trace import (
+    drive_replay_to_choice,
     HookTarget,
     MemoryPatch,
+    replay_tick_count,
     RomContributionTracer,
     RuleFrame,
     build_report,
@@ -47,6 +50,21 @@ class FakePyBoy:
     def __init__(self) -> None:
         self.register_file = FakeRegisters()
         self.memory = FakeMemory()
+
+
+class FakeReplayPyBoy:
+    def __init__(self, *, chosen_at_frame: int) -> None:
+        self.frame = 0
+        self.chosen_at_frame = chosen_at_frame
+        self.buttons: list[tuple[int, str, int]] = []
+        self.ticks: list[int] = []
+
+    def button(self, button_name: str, *, delay: int) -> None:
+        self.buttons.append((self.frame, button_name, delay))
+
+    def tick(self, count: int, _render: bool, _sound: bool) -> None:
+        self.ticks.append(count)
+        self.frame += count
 
 
 class FakeSymbolIndex:
@@ -326,6 +344,44 @@ class RomContributionTraceTests(unittest.TestCase):
         ]
 
         self.assertEqual(frames, [0, 45, 90])
+
+    def test_replay_tick_count_stops_on_next_button_frame(self) -> None:
+        tick_count = replay_tick_count(
+            frame=0,
+            watch_frames=700,
+            button="a",
+            button_presses=12,
+            button_interval_frames=45,
+            presses_issued=1,
+        )
+
+        self.assertEqual(tick_count, 45)
+
+    def test_drive_replay_to_choice_ticks_between_repeated_buttons(self) -> None:
+        pyboy = FakeReplayPyBoy(chosen_at_frame=96)
+
+        def fake_trace_values(_pyboy, _symbols):
+            chosen = 1 if pyboy.frame >= pyboy.chosen_at_frame else 0
+            return {"wBossAITraceChosenMove": [chosen]}
+
+        with patch(
+            "tools.boss_ai_debugger.rom_contribution_trace.capture.read_trace_values",
+            fake_trace_values,
+        ):
+            values, presses = drive_replay_to_choice(
+                pyboy,
+                {},
+                button="a",
+                button_delay=8,
+                button_presses=3,
+                button_interval_frames=45,
+                watch_frames=200,
+            )
+
+        self.assertEqual(values, {"wBossAITraceChosenMove": [1]})
+        self.assertEqual(presses, 3)
+        self.assertEqual(pyboy.buttons, [(0, "a", 8), (45, "a", 8), (90, "a", 8)])
+        self.assertEqual(pyboy.ticks, [45, 45, 45])
 
     def test_build_report_snapshots_mutable_trace_lists(self) -> None:
         events = [
