@@ -7,6 +7,7 @@ from tools.boss_ai_debugger.rom_score_materialize import (
     MOVES,
     action_id_for_slot,
     empty_contribution_comparison,
+    hook_equivalence_summary,
     materialization_for_scenario,
     move_ids_for_scenario,
     parse_spikes_layers,
@@ -67,6 +68,23 @@ class RomScoreMaterializeTests(unittest.TestCase):
         self.assertEqual(comparison["matched_trace_count"], 0)
         self.assertEqual(comparison["mismatch_count"], 0)
         self.assertEqual(comparison["mismatch_class_counts"], {})
+
+    def test_hook_equivalence_summary_compares_scores_and_choice(self) -> None:
+        summary = hook_equivalence_summary(
+            traced_report={
+                "move_scores": [20, 25],
+                "chosen": {"move_id": 1, "slot_index": 0},
+            },
+            fast_report={
+                "move_scores": [20, 26],
+                "chosen": {"move_id": 2, "slot_index": 1},
+            },
+        )
+
+        self.assertTrue(summary["checked"])
+        self.assertFalse(summary["match"])
+        self.assertFalse(summary["score_bytes_match"])
+        self.assertFalse(summary["chosen_match"])
 
 
 if __name__ == "__main__":

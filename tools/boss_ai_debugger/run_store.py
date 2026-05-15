@@ -310,6 +310,12 @@ def run_changed_ai_suite(
             "contribution_mismatch_count": rom_score_materialization.get(
                 "contribution_mismatch_count", 0
             ),
+            "hook_equivalence_checked_count": rom_score_materialization.get(
+                "hook_equivalence_checked_count", 0
+            ),
+            "hook_equivalence_mismatch_count": rom_score_materialization.get(
+                "hook_equivalence_mismatch_count", 0
+            ),
             "skipped_reason": rom_score_materialization.get("skipped_reason", ""),
         },
         "rule_map_summary": {
@@ -554,6 +560,8 @@ def skipped_rom_score_materialization_report(
         "selector_top_match_count": 0,
         "contribution_matched_count": 0,
         "contribution_mismatch_count": 0,
+        "hook_equivalence_checked_count": 0,
+        "hook_equivalence_mismatch_count": 0,
         "elapsed_seconds": 0.0,
         "materializations_per_minute": 0.0,
         "skipped_reason": reason,

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import time
+from contextlib import ExitStack
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -209,6 +210,7 @@ def run_rom_score_materialization_from_path(
     button_delay: int = 8,
     watch_frames: int = DEFAULT_WATCH_FRAMES,
     collect_contribution_traces: bool = True,
+    compare_fast_score: bool = False,
 ) -> dict[str, Any]:
     from .rom_scenarios import load_scenario_batch
 
@@ -225,6 +227,7 @@ def run_rom_score_materialization_from_path(
         button_delay=button_delay,
         watch_frames=watch_frames,
         collect_contribution_traces=collect_contribution_traces,
+        compare_fast_score=compare_fast_score,
         source=str(scenarios_path),
     )
 
@@ -240,6 +243,7 @@ def run_rom_score_materialization(
     button_delay: int = 8,
     watch_frames: int = DEFAULT_WATCH_FRAMES,
     collect_contribution_traces: bool = True,
+    compare_fast_score: bool = False,
     source: str = "inline",
 ) -> dict[str, Any]:
     if not scenarios:
@@ -262,7 +266,13 @@ def run_rom_score_materialization(
         if collect_contribution_traces
         else RomScoreReplaySession
     )
-    with session_class(rom=rom, symbols_path=symbols_path) as session:
+    with ExitStack() as stack:
+        session = stack.enter_context(session_class(rom=rom, symbols_path=symbols_path))
+        fast_session = None
+        if collect_contribution_traces and compare_fast_score:
+            fast_session = stack.enter_context(
+                RomScoreReplaySession(rom=rom, symbols_path=symbols_path)
+            )
         for scenario in scenarios:
             scenario_id = str(scenario.get("id", "unnamed"))
             if scenario.get("family") not in SUPPORTED_FAMILIES:
@@ -288,6 +298,19 @@ def run_rom_score_materialization(
                 )
                 rom_report["trace_id"] = scenario_id
                 rom_report["scenario_id"] = scenario_id
+                fast_report = None
+                if fast_session is not None:
+                    fast_report = fast_session.run(
+                        save_state=base_state,
+                        button=button,
+                        button_delay=button_delay,
+                        watch_frames=watch_frames,
+                        metadata={
+                            "boss": base_route,
+                            "notes": f"fast-score-equivalence:{scenario_id}",
+                        },
+                        memory_patches=materialization.patches,
+                    )
                 if collect_contribution_traces:
                     traces.append(rom_report)
                 verdicts.append(
@@ -297,6 +320,7 @@ def run_rom_score_materialization(
                         rom_report,
                         move_names=move_names,
                         compare_contributions=collect_contribution_traces,
+                        fast_score_report=fast_report,
                     )
                 )
             except Exception as exc:
@@ -321,6 +345,16 @@ def run_rom_score_materialization(
     selector_top_matches = [
         verdict for verdict in checked if verdict.get("selector_top_match", False)
     ]
+    hook_equivalence_checked = [
+        verdict
+        for verdict in checked
+        if verdict.get("hook_equivalence", {}).get("checked", False)
+    ]
+    hook_equivalence_mismatches = [
+        verdict
+        for verdict in hook_equivalence_checked
+        if not verdict.get("hook_equivalence", {}).get("match", False)
+    ]
 
     return {
         "schema_version": 1,
@@ -336,6 +370,8 @@ def run_rom_score_materialization(
         "selector_top_match_count": len(selector_top_matches),
         "contribution_matched_count": len(contribution_matched),
         "contribution_mismatch_count": len(contribution_mismatches),
+        "hook_equivalence_checked_count": len(hook_equivalence_checked),
+        "hook_equivalence_mismatch_count": len(hook_equivalence_mismatches),
         "elapsed_seconds": elapsed,
         "materializations_per_minute": len(checked) / elapsed * 60 if elapsed else 0.0,
         "score_replay_mode": (
@@ -516,6 +552,7 @@ def verdict_from_materialized_trace(
     *,
     move_names: dict[int, str],
     compare_contributions: bool = True,
+    fast_score_report: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     scenario_id = materialization.scenario_id
     python_result = select_move(scenario)
@@ -573,6 +610,10 @@ def verdict_from_materialized_trace(
             "mismatch_count": comparison["mismatch_count"],
             "mismatch_class_counts": comparison["mismatch_class_counts"],
         },
+        "hook_equivalence": hook_equivalence_summary(
+            traced_report=rom_report,
+            fast_report=fast_score_report,
+        ),
         "patches": [
             {
                 "symbol_name": item.symbol_name,
@@ -581,6 +622,31 @@ def verdict_from_materialized_trace(
             }
             for item in materialization.patches
         ],
+    }
+
+
+def hook_equivalence_summary(
+    *,
+    traced_report: dict[str, Any],
+    fast_report: dict[str, Any] | None,
+) -> dict[str, Any]:
+    if fast_report is None:
+        return {"checked": False}
+    traced_scores = [int(value) for value in traced_report.get("move_scores", [])]
+    fast_scores = [int(value) for value in fast_report.get("move_scores", [])]
+    traced_chosen = traced_report.get("chosen", {})
+    fast_chosen = fast_report.get("chosen", {})
+    score_match = traced_scores == fast_scores
+    chosen_match = traced_chosen == fast_chosen
+    return {
+        "checked": True,
+        "match": score_match and chosen_match,
+        "score_bytes_match": score_match,
+        "chosen_match": chosen_match,
+        "traced_scores": traced_scores,
+        "fast_scores": fast_scores,
+        "traced_chosen": traced_chosen,
+        "fast_chosen": fast_chosen,
     }
 
 
@@ -718,7 +784,8 @@ def format_rom_score_materialization(
             f"scenarios={report['scenario_count']} checked={report['checked_count']} "
             f"skipped={report['skipped_count']} errors={report['error_count']} "
             f"score_matches={report['score_bytes_match_count']} "
-            f"contribution_matched={report['contribution_matched_count']}"
+            f"contribution_matched={report['contribution_matched_count']} "
+            f"hook_mismatches={report.get('hook_equivalence_mismatch_count', 0)}"
         ),
         (
             f"base_route={report['base_route']} "
@@ -741,12 +808,14 @@ def format_rom_score_materialization(
         lines.append(f"Top {limit} review items:")
         for verdict in review[:limit]:
             comparison = verdict.get("contribution_comparison", {})
+            hook_equivalence = verdict.get("hook_equivalence", {})
             lines.append(
                 f"  {verdict['scenario_id']}: "
                 f"rom={verdict.get('rom', {}).get('best_action_id')} "
                 f"python={verdict.get('python', {}).get('best_action_id')} "
                 f"score_match={verdict.get('score_bytes_match', False)} "
-                f"contribution_mismatches={comparison.get('mismatch_count', 0)}"
+                f"contribution_mismatches={comparison.get('mismatch_count', 0)} "
+                f"hook_match={hook_equivalence.get('match', 'not_checked')}"
             )
     lines.append("")
     lines.append("Known limits:")

@@ -351,6 +351,7 @@ Materialize generated score-model state before ROM scoring:
 ```powershell
 python -m tools.boss_ai_debugger generate --family spikes_spin --count 12 --seed 1 --out .local\tmp\boss_ai_debugger\spikes_score_materialize.jsonl
 python -m tools.boss_ai_debugger rom-score-materialize --scenarios .local\tmp\boss_ai_debugger\spikes_score_materialize.jsonl --limit 4
+python -m tools.boss_ai_debugger rom-score-materialize --scenarios .local\tmp\boss_ai_debugger\spikes_score_materialize.jsonl --limit 4 --compare-fast-score
 python -m tools.boss_ai_debugger rom-score-materialize --scenarios .local\tmp\boss_ai_debugger\spikes_score_materialize.jsonl --limit 200 --fast-score-only
 ```
 
@@ -368,7 +369,8 @@ score-helper hooks; use it for high-throughput ROM answer checks, then rerun
 interesting failures without that flag for rule-level contribution traces. If
 the hook-heavy contribution run disagrees with the fast score-only run, treat
 the fast run as the behavior check and the contribution run as diagnostic
-evidence that needs localization.
+evidence that needs localization. `--compare-fast-score` runs both paths for
+the same scenarios and reports hook-equivalence mismatches explicitly.
 
 Classify route context:
 
