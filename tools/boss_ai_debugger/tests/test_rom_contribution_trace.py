@@ -7,6 +7,7 @@ from tools.boss_ai_debugger.rom_contribution_trace import (
     RomContributionTracer,
     RuleFrame,
     format_rom_contribution_trace,
+    summarize_rom_contribution_trace,
 )
 from tools.trace.runtime import Symbol
 
@@ -144,6 +145,46 @@ class RomContributionTraceTests(unittest.TestCase):
 
         self.assertIn("* 001 slot=0 SURF encourage_score a=5 20->15 delta=-5", text)
         self.assertIn("move.apply_test_bias", text)
+
+    def test_summary_counts_changed_and_executed_rules_separately(self) -> None:
+        summary = summarize_rom_contribution_trace(
+            {
+                "source": "trace_rom_pyboy_hooks",
+                "save_state": "route:unit",
+                "event_count": 2,
+                "changed_event_count": 1,
+                "chosen": {"move_name": "SURF", "move_id": 57, "slot_index": 0},
+                "trace_basis": {"trace_rom_sha256": "ROM", "trace_symbols_sha256": "SYM"},
+                "events": [
+                    {
+                        "changed": True,
+                        "operation": "encourage_score",
+                        "candidate": {"kind": "move", "slot_index": 0, "move_id": 57},
+                        "source": {
+                            "rule_id": "move.changed_rule",
+                            "classification": "public_info",
+                        },
+                    },
+                    {
+                        "changed": False,
+                        "operation": "discourage_score",
+                        "candidate": {"kind": "move", "slot_index": 1, "move_id": 58},
+                        "source": {
+                            "rule_id": "move.executed_only",
+                            "classification": "public_info",
+                        },
+                    },
+                ],
+                "known_limits": ["unit limit"],
+            }
+        )
+
+        self.assertEqual(summary["event_count"], 2)
+        self.assertEqual(summary["changed_event_count"], 1)
+        self.assertEqual(summary["covered_rule_ids"], ["move.changed_rule", "move.executed_only"])
+        self.assertEqual(summary["changed_rule_ids"], ["move.changed_rule"])
+        self.assertEqual(summary["operation_counts"], {"discourage_score": 1, "encourage_score": 1})
+        self.assertEqual(summary["changed_operation_counts"], {"encourage_score": 1})
 
 
 if __name__ == "__main__":

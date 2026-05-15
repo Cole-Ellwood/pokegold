@@ -4,6 +4,10 @@ import json
 from pathlib import Path
 from typing import Any
 
+from .rom_contribution_trace import (
+    resolve_rom_contribution_trace_paths,
+    summarize_rom_contribution_trace_paths,
+)
 from .rom_scenarios import evaluate_batch, load_scenario_batch
 from .trace_replay import replay_trace_paths
 
@@ -13,6 +17,7 @@ def differential_from_paths(
     scenarios_path: Path | None = None,
     trace_dir: Path | None = None,
     trace_glob: str = "*_live.txt",
+    rom_contribution_trace_paths: list[Path] | None = None,
 ) -> dict[str, Any]:
     scenarios = load_scenario_batch(scenarios_path) if scenarios_path is not None else []
     trace_paths = []
@@ -21,6 +26,7 @@ def differential_from_paths(
     return build_differential_report(
         scenarios=scenarios,
         trace_paths=trace_paths,
+        rom_contribution_trace_paths=rom_contribution_trace_paths,
         source={
             "scenarios": str(scenarios_path) if scenarios_path is not None else "",
             "trace_dir": str(trace_dir) if trace_dir is not None else "",
@@ -32,6 +38,7 @@ def build_differential_report(
     *,
     scenarios: list[dict[str, Any]] | None = None,
     trace_paths: list[Path] | None = None,
+    rom_contribution_trace_paths: list[Path] | None = None,
     source: str | dict[str, str] = "inline",
 ) -> dict[str, Any]:
     scenario_rows = scenarios or []
@@ -43,6 +50,9 @@ def build_differential_report(
 
     trace_replay = replay_trace_paths(trace_rows) if trace_rows else empty_trace_report()
     mismatches.extend(trace_mismatches(trace_replay))
+    contribution_summary = summarize_rom_contribution_trace_paths(
+        resolve_rom_contribution_trace_paths(rom_contribution_trace_paths)
+    )
 
     class_counts: dict[str, int] = {}
     for mismatch in mismatches:
@@ -66,13 +76,14 @@ def build_differential_report(
             "agreement_rate": trace_replay["agreement_rate"],
             "exact_agreement_rate": trace_replay.get("exact_agreement_rate", 0.0),
         },
+        "rom_contribution_summary": contribution_summary,
         "mismatches": sorted(
             mismatches,
             key=lambda item: (-int(item["severity"]), item["id"]),
         ),
         "known_gaps": [
-            "ROM hook score-helper traces exist, but this differential report does not compare them yet.",
-            "Rule-delta, missing-ROM-rule, and missing-Python-rule mismatches require contribution-trace comparison.",
+            "ROM hook score-helper traces are summarized but not compared against Python contribution events yet.",
+            "Rule-delta, missing-ROM-rule, and missing-Python-rule mismatches require a matched Python contribution stream.",
             "Scenario policy mismatches are debugger expectation checks, not ROM materialized-state replays.",
         ],
     }
@@ -178,6 +189,12 @@ def format_differential_report(report: dict[str, Any], *, limit: int = 20) -> st
             f"checked={report['trace_summary']['checked_count']} "
             f"failures={report['trace_summary']['failure_count']} "
             f"agreement={report['trace_summary']['agreement_rate']:.4%}"
+        ),
+        (
+            "rom contribution: "
+            f"artifacts={report['rom_contribution_summary']['artifact_count']} "
+            f"events={report['rom_contribution_summary']['event_count']} "
+            f"rules={report['rom_contribution_summary']['covered_rule_count']}"
         ),
     ]
     if report["mismatches"]:

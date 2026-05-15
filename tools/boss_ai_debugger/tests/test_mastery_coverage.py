@@ -32,6 +32,35 @@ class MasteryCoverageTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             mastery_out = Path(tmp) / "mastery.json"
             coverage_out = Path(tmp) / "coverage.json"
+            contribution_trace = Path(tmp) / "rom_contribution.json"
+            contribution_trace.write_text(
+                json.dumps(
+                    {
+                        "source": "trace_rom_pyboy_hooks",
+                        "save_state": "route:unit",
+                        "event_count": 1,
+                        "changed_event_count": 1,
+                        "trace_basis": {},
+                        "chosen": {},
+                        "events": [
+                            {
+                                "changed": True,
+                                "operation": "encourage_score",
+                                "candidate": {
+                                    "kind": "move",
+                                    "slot_index": 0,
+                                    "move_id": 57,
+                                },
+                                "source": {
+                                    "rule_id": "move.cli_trace_rule",
+                                    "classification": "public_info",
+                                },
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
             with redirect_stdout(io.StringIO()):
                 mastery_code = debugger_main(
                     [
@@ -46,6 +75,8 @@ class MasteryCoverageTests(unittest.TestCase):
                         "coverage-report",
                         "--generated-count",
                         "10",
+                        "--rom-contribution-trace",
+                        str(contribution_trace),
                         "--json-out",
                         str(coverage_out),
                     ]
@@ -57,6 +88,53 @@ class MasteryCoverageTests(unittest.TestCase):
         self.assertEqual(coverage_code, 0)
         self.assertIn("policy_cards", mastery)
         self.assertIn("known_gaps", coverage)
+        self.assertEqual(coverage["rule_map"]["trace_covered_rule_count"], 1)
+
+    def test_coverage_report_aggregates_rom_contribution_rules(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            trace = Path(tmp) / "rom_contribution.json"
+            trace.write_text(
+                json.dumps(
+                    {
+                        "source": "trace_rom_pyboy_hooks",
+                        "save_state": "route:unit",
+                        "event_count": 1,
+                        "changed_event_count": 1,
+                        "trace_basis": {},
+                        "chosen": {},
+                        "events": [
+                            {
+                                "changed": True,
+                                "operation": "encourage_score",
+                                "candidate": {
+                                    "kind": "move",
+                                    "slot_index": 0,
+                                    "move_id": 57,
+                                },
+                                "source": {
+                                    "rule_id": "move.unit_trace_rule",
+                                    "classification": "public_info",
+                                },
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            data = build_coverage_report(
+                generated_count=5,
+                seed=1,
+                rom_contribution_trace_paths=[trace],
+            )
+
+        self.assertFalse(data["rule_map"]["full_trace_rule_coverage_available"])
+        self.assertEqual(data["rule_map"]["trace_covered_rule_count"], 1)
+        self.assertEqual(data["rule_map"]["trace_changed_rule_count"], 1)
+        self.assertEqual(
+            data["rule_map"]["trace_covered_rule_ids"],
+            ["move.unit_trace_rule"],
+        )
 
 
 if __name__ == "__main__":

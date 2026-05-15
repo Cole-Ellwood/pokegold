@@ -9,6 +9,7 @@ Status: Phase-1 experiment-lineage foundation.
 
 ```powershell
 python -m tools.boss_ai_debugger run-suite --profile generated-smoke --count 200 --seed 1
+python -m tools.boss_ai_debugger run-suite --profile changed-ai --count 200 --seed 1
 ```
 
 The generated-smoke profile writes:
@@ -32,10 +33,13 @@ The generated-smoke profile writes:
 - schema validation report
 - batch summary
 - review queue summary
+- changed-AI gate summaries when using `--profile changed-ai`
+- copied ROM contribution trace artifacts and summary hashes when present
 
 ## Scope
 
-This is not the final changed-AI suite. The changed-AI profile still depends on
-full ROM scoring contribution traces. The current run store gives generated
-scenario searches reproducible lineage now, so later ROM-backed suites can use
-the same artifact shape.
+This is not the final changed-AI suite. The changed-AI profile ingests existing
+ROM score-helper contribution trace artifacts, but it does not rebuild ROMs,
+refresh live captures, or regenerate those trace artifacts. The current run
+store gives generated scenario searches and fast changed-AI gates reproducible
+lineage now, so later ROM-backed suites can use the same artifact shape.

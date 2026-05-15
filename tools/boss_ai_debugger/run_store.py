@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import shutil
 import subprocess
 from datetime import UTC, datetime
 from pathlib import Path
@@ -15,6 +16,10 @@ from .generators import generate_scenarios, write_jsonl
 from .metamorphic import run_metamorphic_suite
 from .mutation import run_scorer_mutations
 from .review_queue import build_review_queue, write_review_queue
+from .rom_contribution_trace import (
+    resolve_rom_contribution_trace_paths,
+    summarize_rom_contribution_trace_paths,
+)
 from .rom_scenarios import evaluate_batch
 from .route_eval import evaluate_route_batch
 from .rule_map import DEFAULT_RULE_MAP_PATH, build_rule_map, compare_rule_maps
@@ -99,6 +104,7 @@ def run_changed_ai_suite(
     run_id: str | None = None,
     runs_dir: Path = DEFAULT_RUNS_DIR,
     trace_dir: Path | None = DEFAULT_TRACE_DIR,
+    rom_contribution_trace_paths: list[Path] | None = None,
 ) -> dict[str, Any]:
     if count < 0:
         raise ValueError("count must be non-negative")
@@ -116,8 +122,13 @@ def run_changed_ai_suite(
     mutation_path = run_dir / "mutation.json"
     invariants_path = run_dir / "invariants.json"
     trace_replay_path = run_dir / "trace_replay.json"
+    rom_contribution_summary_path = run_dir / "rom_contribution_trace_summary.json"
     metadata_path = run_dir / "metadata.json"
     summary_path = run_dir / "summary.md"
+    copied_rom_contribution_paths = copy_rom_contribution_traces(
+        resolve_rom_contribution_trace_paths(rom_contribution_trace_paths),
+        run_dir=run_dir,
+    )
 
     write_jsonl(scenarios, scenarios_path)
     validation = validate_scenario_file(scenarios_path)
@@ -132,7 +143,11 @@ def run_changed_ai_suite(
     differential = build_differential_report(
         scenarios=scenarios,
         trace_paths=trace_paths,
+        rom_contribution_trace_paths=copied_rom_contribution_paths,
         source="changed-ai",
+    )
+    rom_contribution_summary = summarize_rom_contribution_trace_paths(
+        copied_rom_contribution_paths
     )
     trace_replay = replay_trace_paths(trace_paths) if trace_paths else skipped_trace_report(trace_dir)
     invariants = mine_invariants(
@@ -151,6 +166,7 @@ def run_changed_ai_suite(
     write_json(mutation, mutation_path)
     write_json(invariants, invariants_path)
     write_json(trace_replay, trace_replay_path)
+    write_json(rom_contribution_summary, rom_contribution_summary_path)
 
     metadata = {
         "schema_version": 1,
@@ -172,6 +188,12 @@ def run_changed_ai_suite(
             "mutation": relative_path(mutation_path),
             "invariants": relative_path(invariants_path),
             "trace_replay": relative_path(trace_replay_path),
+            "rom_contribution_trace_summary": relative_path(
+                rom_contribution_summary_path,
+            ),
+            "rom_contribution_traces": [
+                relative_path(path) for path in copied_rom_contribution_paths
+            ],
             "summary": relative_path(summary_path),
         },
         "artifact_hashes": {
@@ -184,6 +206,13 @@ def run_changed_ai_suite(
             "mutation": sha256_file(mutation_path),
             "invariants": sha256_file(invariants_path),
             "trace_replay": sha256_file(trace_replay_path),
+            "rom_contribution_trace_summary": sha256_file(
+                rom_contribution_summary_path,
+            ),
+            "rom_contribution_traces": {
+                relative_path(path): sha256_file(path)
+                for path in copied_rom_contribution_paths
+            },
         },
         "validation": validation,
         "batch_summary": {
@@ -222,13 +251,23 @@ def run_changed_ai_suite(
             "failure_count": trace_replay.get("failure_count", 0),
             "agreement_rate": trace_replay.get("agreement_rate", 0.0),
         },
+        "rom_contribution_summary": {
+            "available": rom_contribution_summary["available"],
+            "artifact_count": rom_contribution_summary["artifact_count"],
+            "event_count": rom_contribution_summary["event_count"],
+            "changed_event_count": rom_contribution_summary["changed_event_count"],
+            "covered_rule_count": rom_contribution_summary["covered_rule_count"],
+            "changed_rule_count": rom_contribution_summary["changed_rule_count"],
+            "unmapped_event_count": rom_contribution_summary["unmapped_event_count"],
+        },
         "rule_map_summary": {
             "rule_count": rule_map["rule_count"],
             "stored_rule_map_errors": rule_errors,
         },
         "known_gaps": [
             "changed-ai suite does not rebuild ROMs yet.",
-            "ROM hook score-helper traces are available as a separate command but are not yet part of changed-ai suite output.",
+            "changed-ai suite ingests existing ROM contribution trace artifacts but does not refresh them.",
+            "ROM hook score-helper traces are summarized but not compared against Python contribution events yet.",
             "pre-choice replay remains a separate audit until trace timing is stable.",
         ],
     }
@@ -277,6 +316,7 @@ def format_changed_ai_summary(metadata: dict[str, Any], queue: dict[str, Any]) -
     batch = metadata["batch_summary"]
     trace = metadata["trace_replay_summary"]
     mutation = metadata["mutation_summary"]
+    contribution = metadata["rom_contribution_summary"]
     lines = [
         f"# Boss AI Debugger Changed-AI Run: {metadata['run_id']}",
         "",
@@ -293,6 +333,7 @@ def format_changed_ai_summary(metadata: dict[str, Any], queue: dict[str, Any]) -
         f"- mutation: `{mutation}`",
         f"- invariants: `{metadata['invariant_summary']}`",
         f"- trace replay: `{trace}`",
+        f"- ROM contribution: `{contribution}`",
         f"- rule map errors: `{metadata['rule_map_summary']['stored_rule_map_errors']}`",
         "",
         "## Known Gaps",
@@ -351,6 +392,21 @@ def changed_files() -> list[str]:
     if not output:
         return []
     return [line.strip() for line in output.splitlines() if line.strip()]
+
+
+def copy_rom_contribution_traces(paths: list[Path], *, run_dir: Path) -> list[Path]:
+    copied = []
+    if not paths:
+        return copied
+    target_dir = run_dir / "rom_contribution_traces"
+    for index, path in enumerate(paths, start=1):
+        if not path.exists():
+            continue
+        target_dir.mkdir(parents=True, exist_ok=True)
+        target = target_dir / f"{index:02d}_{path.name}"
+        shutil.copyfile(path, target)
+        copied.append(target)
+    return copied
 
 
 def skipped_trace_report(trace_dir: Path | None) -> dict[str, Any]:

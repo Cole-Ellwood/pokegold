@@ -17,10 +17,13 @@ The changed-AI profile creates a reproducible run directory under
 - scorer mutation report
 - candidate invariant report
 - selector trace replay report when trace files are available
+- ROM contribution trace summary from existing trace artifacts when present
 - run metadata with git commit, changed files, artifact hashes, and known gaps
 - Markdown summary
 
 This is the current one-command adaptation harness for local debugger work. It
-does not yet rebuild ROMs, refresh live trace captures, or emit full scoring
-contribution traces. Those limitations are recorded in each run's `known_gaps`
-field so the suite does not overstate ROM accuracy.
+does not yet rebuild ROMs, refresh live trace captures, or regenerate scoring
+contribution traces. It copies and summarizes existing
+`rom-contribution-trace` JSON artifacts so score-helper rule coverage is visible
+in the same run output. Those limitations are recorded in each run's
+`known_gaps` field so the suite does not overstate ROM accuracy.

@@ -108,6 +108,8 @@ def main() -> int:
         errors.append("mastery index found no policy cards")
     if coverage["mastery"]["policy_card_count"] != mastery["policy_card_count"]:
         errors.append("coverage report mastery policy-card count mismatch")
+    if coverage["rule_map"]["trace_covered_rule_count"] == 0:
+        errors.append("coverage report did not aggregate ROM contribution rules")
     if (
         coverage["mastery"]["generated_policy_card_coverage_count"]
         != coverage["mastery"]["policy_card_count"]
@@ -133,6 +135,8 @@ def main() -> int:
         errors.append("differential report did not include every generated scenario")
     if "known_gaps" not in differential:
         errors.append("differential report did not preserve known gaps")
+    if differential["rom_contribution_summary"]["covered_rule_count"] == 0:
+        errors.append("differential report did not summarize ROM contribution rules")
     if invariants["candidate_count"] == 0:
         errors.append("invariant miner did not produce candidates")
     if mutation["killed_count"] != 1:
@@ -171,6 +175,7 @@ def main() -> int:
         "Mastery coverage: "
         f"{coverage['mastery']['generated_policy_card_coverage_count']} / "
         f"{coverage['mastery']['policy_card_count']} policy cards covered by generated refs; "
+        f"score_trace_rules={coverage['rule_map']['trace_covered_rule_count']}; "
         f"full_trace_rule_coverage={coverage['rule_map']['full_trace_rule_coverage_available']}."
     )
     print(
@@ -194,7 +199,8 @@ def main() -> int:
     print(
         "Differential: "
         f"{differential['mismatch_count']} mismatches, "
-        f"classes={differential['mismatch_class_counts']}."
+        f"classes={differential['mismatch_class_counts']}, "
+        f"score_trace_rules={differential['rom_contribution_summary']['covered_rule_count']}."
     )
     print(
         "ROM contribution trace: "

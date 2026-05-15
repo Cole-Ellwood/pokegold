@@ -12,6 +12,33 @@ from tools.boss_ai_debugger.differential import build_differential_report
 from tools.boss_ai_debugger.generators import write_jsonl
 
 
+def write_unit_contribution_trace(path: Path) -> None:
+    path.write_text(
+        json.dumps(
+            {
+                "source": "trace_rom_pyboy_hooks",
+                "save_state": "route:unit",
+                "event_count": 1,
+                "changed_event_count": 1,
+                "trace_basis": {},
+                "chosen": {},
+                "events": [
+                    {
+                        "changed": True,
+                        "operation": "encourage_score",
+                        "candidate": {"kind": "move", "slot_index": 0, "move_id": 57},
+                        "source": {
+                            "rule_id": "move.unit_trace_rule",
+                            "classification": "public_info",
+                        },
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+
 class DifferentialTests(unittest.TestCase):
     def test_policy_mismatch_is_reported(self) -> None:
         scenario = {
@@ -59,6 +86,21 @@ class DifferentialTests(unittest.TestCase):
         self.assertEqual(report["mismatch_class_counts"], {"selector_mismatch": 1})
         self.assertEqual(report["mismatches"][0]["status"], "confirmed")
 
+    def test_rom_contribution_trace_is_summarized_without_mismatch(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            trace = Path(tmp) / "rom_contribution.json"
+            write_unit_contribution_trace(trace)
+
+            report = build_differential_report(
+                rom_contribution_trace_paths=[trace],
+            )
+
+        self.assertEqual(report["mismatch_count"], 0)
+        self.assertEqual(
+            report["rom_contribution_summary"]["covered_rule_ids"],
+            ["move.unit_trace_rule"],
+        )
+
     def test_cli_diff_writes_json(self) -> None:
         scenario = {
             "id": "cli_policy_case",
@@ -71,8 +113,10 @@ class DifferentialTests(unittest.TestCase):
         }
         with tempfile.TemporaryDirectory() as tmp:
             scenarios_path = Path(tmp) / "scenarios.jsonl"
+            contribution_trace = Path(tmp) / "rom_contribution.json"
             out = Path(tmp) / "diff.json"
             write_jsonl([scenario], scenarios_path)
+            write_unit_contribution_trace(contribution_trace)
             stdout = io.StringIO()
             with redirect_stdout(stdout):
                 code = debugger_main(
@@ -80,6 +124,8 @@ class DifferentialTests(unittest.TestCase):
                         "diff",
                         "--scenarios",
                         str(scenarios_path),
+                        "--rom-contribution-trace",
+                        str(contribution_trace),
                         "--json-out",
                         str(out),
                     ]
@@ -88,6 +134,7 @@ class DifferentialTests(unittest.TestCase):
 
         self.assertEqual(code, 0)
         self.assertEqual(data["mismatch_count"], 1)
+        self.assertEqual(data["rom_contribution_summary"]["covered_rule_count"], 1)
         self.assertIn("differential report", stdout.getvalue())
 
 

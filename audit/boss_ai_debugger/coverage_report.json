@@ -1,92 +1,147 @@
 {
   "generated": {
     "condition_tag_counts": {
-      "active_ghost_spinblock": 43,
-      "active_pressure_before_status": 11,
-      "active_revealed_rapid_spin": 45,
-      "active_species_spin_prior": 46,
-      "bench_revealed_rapid_spin": 38,
-      "best_second_only": 19,
-      "blocked_score_ignored": 25,
-      "branch_action_after_naming": 10,
-      "cashout_boundary": 11,
-      "equal_scores": 19,
-      "foresight_identified_ghost": 22,
-      "hazard_loop_spin_window": 10,
-      "hidden_role_voluntary_entry": 10,
-      "immediate_pressure": 36,
-      "local_mechanics_firewall": 11,
-      "named_receiver_branch": 10,
-      "one_time_trade_named_converter": 11,
-      "reserve_ghost_available": 37,
-      "romhack_mechanics_firewall": 11,
-      "sleep_absorber_and_set_ambiguity": 10,
-      "sleep_clause_value_preserved": 10,
-      "spikes_layers_0": 17,
-      "spikes_layers_1": 17,
-      "spikes_layers_2": 26,
-      "spikes_layers_3": 23,
-      "spin_window_priced": 10,
-      "support_handoff_after_job": 10,
-      "support_job_completed": 10,
-      "third_slot_tied_second": 20,
-      "voluntary_entry_role_signal": 10,
-      "wide_gap": 20
+      "active_ghost_spinblock": 1,
+      "active_pressure_before_status": 1,
+      "active_revealed_rapid_spin": 3,
+      "active_species_spin_prior": 1,
+      "bench_revealed_rapid_spin": 2,
+      "best_second_only": 2,
+      "blocked_score_ignored": 1,
+      "cashout_boundary": 1,
+      "equal_scores": 2,
+      "foresight_identified_ghost": 1,
+      "immediate_pressure": 1,
+      "local_mechanics_firewall": 1,
+      "one_time_trade_named_converter": 1,
+      "reserve_ghost_available": 1,
+      "romhack_mechanics_firewall": 1,
+      "spikes_layers_0": 1,
+      "spikes_layers_1": 1,
+      "spikes_layers_3": 1,
+      "wide_gap": 1
     },
     "evidence_refs": [
       "docs\\pokemon_mastery\\policy_cards\\active_pressure_before_status.md",
-      "docs\\pokemon_mastery\\policy_cards\\branch_action_after_naming.md",
       "docs\\pokemon_mastery\\policy_cards\\cashout_boundary.md",
       "docs\\pokemon_mastery\\policy_cards\\hazard_loop_spin_window.md",
-      "docs\\pokemon_mastery\\policy_cards\\hidden_role_voluntary_entry.md",
       "docs\\pokemon_mastery\\policy_cards\\romhack_mechanics_firewall.md",
-      "docs\\pokemon_mastery\\policy_cards\\sleep_absorber_and_set_ambiguity.md",
-      "docs\\pokemon_mastery\\policy_cards\\support_handoff_after_job.md",
       "docs\\pokemon_mastery\\romhack_deltas\\spikes_and_rapid_spin.md"
     ],
     "policy_tag_counts": {
-      "active_pressure": 11,
-      "branch_action": 10,
-      "cashout": 11,
-      "hazard_retention": 93,
-      "hidden_role": 10,
-      "no_cheat_boundary": 11,
-      "public_info_gate": 10,
-      "rapid_spin": 93,
-      "receiver_pricing": 10,
-      "romhack_mechanics": 11,
-      "route_converter": 21,
-      "selector_surface": 84,
-      "set_ambiguity": 10,
-      "sleep_absorber": 10,
-      "spikes": 93,
-      "status_timing": 11,
-      "support_handoff": 10
+      "active_pressure": 1,
+      "cashout": 1,
+      "hazard_retention": 3,
+      "no_cheat_boundary": 1,
+      "rapid_spin": 3,
+      "romhack_mechanics": 1,
+      "route_converter": 1,
+      "selector_surface": 4,
+      "spikes": 3,
+      "status_timing": 1
     }
   },
-  "generated_count": 250,
+  "generated_count": 10,
   "known_gaps": [
-    "ROM hook score-helper traces exist, but coverage is not aggregated across rule ids yet.",
+    "ROM hook score-helper coverage is not full rule coverage because false predicates and dynamic read provenance are not traced yet.",
     "Generated scenario coverage is currently ROM-score-simulator coverage, not PyBoy materialized-state coverage."
   ],
   "mastery": {
     "covered_policy_cards": [
       "docs\\pokemon_mastery\\policy_cards\\active_pressure_before_status.md",
-      "docs\\pokemon_mastery\\policy_cards\\branch_action_after_naming.md",
       "docs\\pokemon_mastery\\policy_cards\\cashout_boundary.md",
       "docs\\pokemon_mastery\\policy_cards\\hazard_loop_spin_window.md",
-      "docs\\pokemon_mastery\\policy_cards\\hidden_role_voluntary_entry.md",
-      "docs\\pokemon_mastery\\policy_cards\\romhack_mechanics_firewall.md",
-      "docs\\pokemon_mastery\\policy_cards\\sleep_absorber_and_set_ambiguity.md",
-      "docs\\pokemon_mastery\\policy_cards\\support_handoff_after_job.md"
+      "docs\\pokemon_mastery\\policy_cards\\romhack_mechanics_firewall.md"
     ],
-    "generated_policy_card_coverage_count": 8,
-    "generated_policy_card_coverage_rate": 1.0,
+    "generated_policy_card_coverage_count": 4,
+    "generated_policy_card_coverage_rate": 0.5,
     "policy_card_count": 8,
     "quick_test_count": 180,
     "review_count": 43,
     "source_policy_count": 58,
-    "uncovered_policy_cards": []
+    "uncovered_policy_cards": [
+      "docs\\pokemon_mastery\\policy_cards\\branch_action_after_naming.md",
+      "docs\\pokemon_mastery\\policy_cards\\hidden_role_voluntary_entry.md",
+      "docs\\pokemon_mastery\\policy_cards\\sleep_absorber_and_set_ambiguity.md",
+      "docs\\pokemon_mastery\\policy_cards\\support_handoff_after_job.md"
+    ]
+  },
+  "rom_contribution_trace": {
+    "artifact_count": 1,
+    "artifacts": [
+      {
+        "artifact": "audit\\boss_ai_debugger\\rom_contribution_trace_smoke.json",
+        "available": true,
+        "boss_route": "clair",
+        "candidate_count": 4,
+        "changed_candidate_count": 4,
+        "changed_classification_counts": {
+          "platform_boundary": 4
+        },
+        "changed_event_count": 4,
+        "changed_operation_counts": {
+          "apply_signed_lookahead_delta": 4
+        },
+        "changed_rule_count": 1,
+        "changed_rule_ids": [
+          "move.apply_lookahead_to_top_move_candidates"
+        ],
+        "changed_unmapped_event_count": 0,
+        "chosen": {
+          "move_id": 252,
+          "move_name": "DRAGON_DANCE",
+          "slot_index": 0
+        },
+        "classification_counts": {
+          "platform_boundary": 4
+        },
+        "covered_rule_count": 1,
+        "covered_rule_ids": [
+          "move.apply_lookahead_to_top_move_candidates"
+        ],
+        "event_count": 4,
+        "known_limits": [
+          "Trace events are captured by PyBoy execution hooks, not by an in-ROM WRAM ring buffer.",
+          "This records score helper deltas and source labels, but not every predicate false path yet.",
+          "Public-read evidence is sourced from the rule map hints, not dynamic memory-read slicing yet."
+        ],
+        "operation_counts": {
+          "apply_signed_lookahead_delta": 4
+        },
+        "save_state": "route:clair",
+        "source": "trace_rom_pyboy_hooks",
+        "trace_rom_sha256": "D3A5F38B3BC9F0DD4A4A602337C0A091A50EF0E204BAB28CE07B9249D7A72943",
+        "trace_symbols_sha256": "22C0E6F289017826A63E8E7F6EB71BD52DAF9610A0FA4200079F1E6381DF89E7",
+        "unmapped_event_count": 0
+      }
+    ],
+    "available": true,
+    "candidate_count": 4,
+    "changed_candidate_count": 4,
+    "changed_classification_counts": {
+      "platform_boundary": 4
+    },
+    "changed_event_count": 4,
+    "changed_operation_counts": {
+      "apply_signed_lookahead_delta": 4
+    },
+    "changed_rule_count": 1,
+    "changed_rule_ids": [
+      "move.apply_lookahead_to_top_move_candidates"
+    ],
+    "changed_unmapped_event_count": 0,
+    "classification_counts": {
+      "platform_boundary": 4
+    },
+    "covered_rule_count": 1,
+    "covered_rule_ids": [
+      "move.apply_lookahead_to_top_move_candidates"
+    ],
+    "event_count": 4,
+    "operation_counts": {
+      "apply_signed_lookahead_delta": 4
+    },
+    "unmapped_event_count": 0
   },
   "rule_map": {
     "classification_counts": {
@@ -98,7 +153,17 @@
     "full_trace_rule_coverage_available": false,
     "mapped_rule_count": 185,
     "rom_hook_score_trace_available": true,
-    "trace_covered_rule_count": 0
+    "trace_artifact_count": 1,
+    "trace_changed_event_count": 4,
+    "trace_changed_rule_count": 1,
+    "trace_changed_rule_ids": [
+      "move.apply_lookahead_to_top_move_candidates"
+    ],
+    "trace_covered_rule_count": 1,
+    "trace_covered_rule_ids": [
+      "move.apply_lookahead_to_top_move_candidates"
+    ],
+    "trace_event_count": 4
   },
   "schema_version": 1,
   "seed": 1

@@ -15,8 +15,11 @@ schema:
 - generated scenario expectation failures become `policy_preference_mismatch`
 - exact trace selector replay failures become confirmed `selector_mismatch`
 - partial or decisionless trace captures become `trace_incomplete`
+- ROM contribution trace JSON files are summarized into
+  `rom_contribution_summary`
 
 Known limits are recorded in every report. Full `rule_delta_mismatch`,
 `missing_python_rule`, and `missing_rom_rule` classes require comparing the
-`rom-contribution-trace` event stream against Python mirror events; that
-comparison is not wired into `diff` yet.
+`rom-contribution-trace` event stream against Python mirror events. The current
+`diff` output keeps the ROM score-helper event coverage visible without
+claiming that comparison yet.

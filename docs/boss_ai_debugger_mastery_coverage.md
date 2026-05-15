@@ -23,7 +23,8 @@ python -m tools.boss_ai_debugger coverage-report --generated-count 250 --seed 1
 - generated scenario condition tags
 - generated evidence refs
 - policy-card coverage from generated evidence refs
-- known gaps, including missing aggregation of ROM hook contribution traces into
+- ROM hook contribution trace artifact summaries when available
+- known gaps, including the fact that score-helper trace coverage is not full
   rule coverage
 
 ## Current Meaning
@@ -32,3 +33,7 @@ This is not final coverage. It is a useful early report that prevents us from
 mistaking a narrow generator for broad mastery coverage. For example, the first
 generator family covers the hazard/spin card but intentionally leaves other
 policy cards uncovered until their scenario families exist.
+
+ROM contribution trace coverage means "this score-helper rule id produced a
+hook event in the trace artifact." It does not mean every branch predicate,
+false path, or public read was dynamically proven.

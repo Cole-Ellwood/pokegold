@@ -99,7 +99,8 @@ python -m tools.boss_ai_debugger diff --scenarios audit\boss_ai_debugger\generat
 
 `diff` combines generated policy mismatches and exact selector trace replay
 mismatches into one mismatch schema. ROM score-helper deltas are available from
-`rom-contribution-trace`, but `diff` does not compare those events yet.
+`rom-contribution-trace`; `diff` now summarizes those artifacts when present,
+but it does not compare them against Python contribution events yet.
 
 The full pre-choice ROM replay gate is:
 
@@ -176,8 +177,10 @@ python -m tools.boss_ai_debugger run-suite --profile changed-ai --count 200 --se
 This profile records generated stress results, review queue, route evaluation,
 metamorphic checks, scorer mutation results, candidate invariants, selector
 trace replay when traces are available, rule-map drift, artifact hashes, and
-known gaps. It does not rebuild ROMs or include the separate
-`rom-contribution-trace` output yet.
+known gaps. It does not rebuild ROMs or refresh
+`rom-contribution-trace` output itself, but it ingests the existing
+`audit\boss_ai_debugger\rom_contribution_trace_smoke.json` artifact when it is
+present and records a summary plus copied artifact hashes in the run directory.
 
 Run the foundation audit:
 
@@ -208,7 +211,9 @@ python -m tools.boss_ai_debugger coverage-report --generated-count 250 --seed 1
 The mastery index parses policy cards, quick tests, reviews, and the
 source-to-policy ledger. The coverage report shows mapped Boss AI rules,
 generated scenario tag coverage, policy-card evidence coverage, and explicitly
-flags that ROM hook traces are not yet aggregated into rule coverage.
+aggregates score-helper rule ids from available ROM contribution trace
+artifacts. It still flags that this is not full trace coverage because false
+predicates and dynamic read provenance are not traced yet.
 
 Run scorer mutation tests:
 

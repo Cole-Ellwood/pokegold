@@ -13,6 +13,11 @@ from tools.trace import runtime as trace_runtime
 from .rule_map import build_rule_map
 
 
+ROOT = Path(__file__).resolve().parents[2]
+DEFAULT_ROM_CONTRIBUTION_TRACE_PATH = (
+    ROOT / "audit" / "boss_ai_debugger" / "rom_contribution_trace_smoke.json"
+)
+
 SCORE_HELPERS = {
     "BossAI_ApplyMoveModel.EncourageScoreByA": "encourage_tier_weight",
     "BossAI_ApplyMoveModel.DiscourageScoreByA": "discourage_tier_weight",
@@ -619,6 +624,151 @@ def write_rom_contribution_trace_json(report: dict[str, Any], path: Path) -> Non
     )
 
 
+def load_rom_contribution_trace(path: Path) -> dict[str, Any]:
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError as exc:
+        raise PreferenceDataError(f"missing ROM contribution trace: {path}") from exc
+    if not isinstance(data, dict):
+        raise PreferenceDataError(f"ROM contribution trace is not an object: {path}")
+    if data.get("source") != "trace_rom_pyboy_hooks":
+        raise PreferenceDataError(f"unsupported ROM contribution trace source: {path}")
+    return data
+
+
+def summarize_rom_contribution_trace(
+    report: dict[str, Any],
+    *,
+    artifact_path: Path | None = None,
+) -> dict[str, Any]:
+    events = [event for event in report.get("events", []) if isinstance(event, dict)]
+    changed_events = [event for event in events if event.get("changed")]
+    covered_rule_ids = sorted(rule_ids_from_events(events))
+    changed_rule_ids = sorted(rule_ids_from_events(changed_events))
+    operation_counts = count_event_values(events, "operation")
+    changed_operation_counts = count_event_values(changed_events, "operation")
+    classification_counts = count_source_values(events, "classification")
+    changed_classification_counts = count_source_values(changed_events, "classification")
+    result = {
+        "available": True,
+        "source": report.get("source", ""),
+        "save_state": report.get("save_state", ""),
+        "boss_route": report.get("boss_route", ""),
+        "artifact": relative_artifact_path(artifact_path) if artifact_path else "",
+        "trace_rom_sha256": report.get("trace_basis", {}).get("trace_rom_sha256", ""),
+        "trace_symbols_sha256": report.get("trace_basis", {}).get(
+            "trace_symbols_sha256",
+            "",
+        ),
+        "event_count": int(report.get("event_count", len(events))),
+        "changed_event_count": int(report.get("changed_event_count", len(changed_events))),
+        "covered_rule_count": len(covered_rule_ids),
+        "changed_rule_count": len(changed_rule_ids),
+        "covered_rule_ids": covered_rule_ids,
+        "changed_rule_ids": changed_rule_ids,
+        "operation_counts": operation_counts,
+        "changed_operation_counts": changed_operation_counts,
+        "classification_counts": classification_counts,
+        "changed_classification_counts": changed_classification_counts,
+        "unmapped_event_count": count_unmapped_events(events),
+        "changed_unmapped_event_count": count_unmapped_events(changed_events),
+        "candidate_count": len(candidate_keys(events)),
+        "changed_candidate_count": len(candidate_keys(changed_events)),
+        "chosen": report.get("chosen", {}),
+        "known_limits": report.get("known_limits", []),
+    }
+    return result
+
+
+def summarize_rom_contribution_trace_paths(paths: list[Path]) -> dict[str, Any]:
+    loaded = [
+        summarize_rom_contribution_trace(
+            load_rom_contribution_trace(path),
+            artifact_path=path,
+        )
+        for path in paths
+        if path.exists()
+    ]
+    if not loaded:
+        return {
+            "available": False,
+            "artifact_count": 0,
+            "event_count": 0,
+            "changed_event_count": 0,
+            "covered_rule_count": 0,
+            "changed_rule_count": 0,
+            "covered_rule_ids": [],
+            "changed_rule_ids": [],
+            "operation_counts": {},
+            "changed_operation_counts": {},
+            "classification_counts": {},
+            "changed_classification_counts": {},
+            "unmapped_event_count": 0,
+            "changed_unmapped_event_count": 0,
+            "candidate_count": 0,
+            "changed_candidate_count": 0,
+            "artifacts": [],
+        }
+
+    covered_rule_ids = sorted(
+        {
+            rule_id
+            for summary in loaded
+            for rule_id in summary["covered_rule_ids"]
+        }
+    )
+    changed_rule_ids = sorted(
+        {
+            rule_id
+            for summary in loaded
+            for rule_id in summary["changed_rule_ids"]
+        }
+    )
+    return {
+        "available": True,
+        "artifact_count": len(loaded),
+        "event_count": sum(int(summary["event_count"]) for summary in loaded),
+        "changed_event_count": sum(
+            int(summary["changed_event_count"]) for summary in loaded
+        ),
+        "covered_rule_count": len(covered_rule_ids),
+        "changed_rule_count": len(changed_rule_ids),
+        "covered_rule_ids": covered_rule_ids,
+        "changed_rule_ids": changed_rule_ids,
+        "operation_counts": merge_counts(
+            summary["operation_counts"] for summary in loaded
+        ),
+        "changed_operation_counts": merge_counts(
+            summary["changed_operation_counts"] for summary in loaded
+        ),
+        "classification_counts": merge_counts(
+            summary["classification_counts"] for summary in loaded
+        ),
+        "changed_classification_counts": merge_counts(
+            summary["changed_classification_counts"] for summary in loaded
+        ),
+        "unmapped_event_count": sum(
+            int(summary["unmapped_event_count"]) for summary in loaded
+        ),
+        "changed_unmapped_event_count": sum(
+            int(summary["changed_unmapped_event_count"]) for summary in loaded
+        ),
+        "candidate_count": sum(int(summary["candidate_count"]) for summary in loaded),
+        "changed_candidate_count": sum(
+            int(summary["changed_candidate_count"]) for summary in loaded
+        ),
+        "artifacts": loaded,
+    }
+
+
+def resolve_rom_contribution_trace_paths(paths: list[Path] | None) -> list[Path]:
+    if paths is not None:
+        return paths
+    if DEFAULT_ROM_CONTRIBUTION_TRACE_PATH.exists():
+        return [DEFAULT_ROM_CONTRIBUTION_TRACE_PATH]
+    return []
+
+
 def require_hook_symbols(symbols: dict[str, capture.Symbol]) -> None:
     missing = [
         name
@@ -659,6 +809,82 @@ def nearest_name(items: list[tuple[int, str]], address: int) -> str:
 
 def csv(values: list[int]) -> str:
     return ",".join(str(value) for value in values)
+
+
+def rule_ids_from_events(events: list[dict[str, Any]]) -> set[str]:
+    rule_ids = set()
+    for event in events:
+        source = event.get("source", {})
+        if not isinstance(source, dict):
+            continue
+        rule_id = str(source.get("rule_id", ""))
+        if rule_id:
+            rule_ids.add(rule_id)
+    return rule_ids
+
+
+def candidate_keys(events: list[dict[str, Any]]) -> set[tuple[str, int, int]]:
+    keys = set()
+    for event in events:
+        candidate = event.get("candidate", {})
+        if not isinstance(candidate, dict):
+            continue
+        keys.add(
+            (
+                str(candidate.get("kind", "")),
+                int(candidate.get("slot_index", -1)),
+                int(candidate.get("move_id", 0)),
+            )
+        )
+    return keys
+
+
+def count_event_values(events: list[dict[str, Any]], key: str) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for event in events:
+        value = str(event.get(key, ""))
+        if not value:
+            continue
+        counts[value] = counts.get(value, 0) + 1
+    return dict(sorted(counts.items()))
+
+
+def count_source_values(events: list[dict[str, Any]], key: str) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for event in events:
+        source = event.get("source", {})
+        if not isinstance(source, dict):
+            continue
+        value = str(source.get(key, ""))
+        if not value:
+            continue
+        counts[value] = counts.get(value, 0) + 1
+    return dict(sorted(counts.items()))
+
+
+def count_unmapped_events(events: list[dict[str, Any]]) -> int:
+    count = 0
+    for event in events:
+        if not rule_ids_from_events([event]):
+            count += 1
+    return count
+
+
+def merge_counts(items: Any) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for item in items:
+        for key, value in item.items():
+            counts[key] = counts.get(key, 0) + int(value)
+    return dict(sorted(counts.items()))
+
+
+def relative_artifact_path(path: Path | None) -> str:
+    if path is None:
+        return ""
+    try:
+        return str(path.relative_to(ROOT)).replace("/", "\\")
+    except ValueError:
+        return str(path)
 
 
 @dataclass(frozen=True)

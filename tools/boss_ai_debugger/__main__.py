@@ -397,6 +397,7 @@ def cmd_run_suite(args: argparse.Namespace) -> int:
             run_id=args.run_id,
             runs_dir=args.runs_dir,
             trace_dir=args.trace_dir,
+            rom_contribution_trace_paths=args.rom_contribution_trace,
         )
     else:
         raise PreferenceDataError(f"unknown run-suite profile {args.profile!r}")
@@ -466,7 +467,11 @@ def cmd_mastery_index_build(args: argparse.Namespace) -> int:
 
 
 def cmd_coverage_report(args: argparse.Namespace) -> int:
-    data = build_coverage_report(generated_count=args.generated_count, seed=args.seed)
+    data = build_coverage_report(
+        generated_count=args.generated_count,
+        seed=args.seed,
+        rom_contribution_trace_paths=args.rom_contribution_trace,
+    )
     if args.json_out != "":
         write_coverage_report(data, Path(args.json_out))
     if args.json:
@@ -563,6 +568,7 @@ def cmd_diff(args: argparse.Namespace) -> int:
         scenarios_path=args.scenarios,
         trace_dir=args.trace_dir,
         trace_glob=args.glob,
+        rom_contribution_trace_paths=args.rom_contribution_trace,
     )
     if args.json_out != "":
         write_differential_json(report, Path(args.json_out))
@@ -749,6 +755,7 @@ def build_parser() -> argparse.ArgumentParser:
     run_suite.add_argument("--run-id", default="")
     run_suite.add_argument("--runs-dir", type=path_arg, default=DEFAULT_RUNS_DIR)
     run_suite.add_argument("--trace-dir", type=path_arg, default=DEFAULT_TRACE_DIR)
+    run_suite.add_argument("--rom-contribution-trace", type=path_arg, action="append")
     run_suite.add_argument("--json", action="store_true")
     run_suite.set_defaults(func=cmd_run_suite)
 
@@ -780,6 +787,7 @@ def build_parser() -> argparse.ArgumentParser:
     coverage_cmd = subparsers.add_parser("coverage-report")
     coverage_cmd.add_argument("--generated-count", type=int, default=250)
     coverage_cmd.add_argument("--seed", type=int, default=1)
+    coverage_cmd.add_argument("--rom-contribution-trace", type=path_arg, action="append")
     coverage_cmd.add_argument("--json", action="store_true")
     coverage_cmd.add_argument("--json-out", default=str(DEFAULT_COVERAGE_PATH))
     coverage_cmd.set_defaults(func=cmd_coverage_report)
@@ -817,6 +825,7 @@ def build_parser() -> argparse.ArgumentParser:
     diff_cmd.add_argument("--scenarios", type=path_arg)
     diff_cmd.add_argument("--trace-dir", type=path_arg)
     diff_cmd.add_argument("--glob", default="*_live.txt")
+    diff_cmd.add_argument("--rom-contribution-trace", type=path_arg, action="append")
     diff_cmd.add_argument("--json", action="store_true")
     diff_cmd.add_argument("--json-out", default="")
     diff_cmd.add_argument("--limit", type=int, default=20)
