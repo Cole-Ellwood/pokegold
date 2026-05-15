@@ -121,6 +121,7 @@ class RunStoreTests(unittest.TestCase):
         self.assertIn("contribution_comparison", metadata["differential_summary"])
         self.assertEqual(contribution_summary["covered_rule_count"], 1)
         self.assertEqual(metadata["rom_contribution_summary"]["covered_rule_count"], 1)
+        self.assertFalse(metadata["parameters"]["refresh_rom_contribution_trace"])
         self.assertIn("rom_contribution_trace_summary", metadata["artifacts"])
         self.assertIn("rom_contribution_trace_summary", metadata["artifact_hashes"])
         self.assertIn("known_gaps", metadata)

@@ -4,6 +4,7 @@ Status: local foundation.
 
 ```powershell
 python -m tools.boss_ai_debugger run-suite --profile changed-ai --count 200 --seed 1
+python -m tools.boss_ai_debugger run-suite --profile changed-ai --refresh-rom-contribution-trace
 ```
 
 The changed-AI profile creates a reproducible run directory under
@@ -28,3 +29,8 @@ contribution traces. It copies and summarizes existing
 in the same run output. The differential artifact compares ROM/Python
 contribution events only when trace ids match. Those limitations are recorded in
 each run's `known_gaps` field so the suite does not overstate ROM accuracy.
+
+`--refresh-rom-contribution-trace` drives one configured boss route, Clair by
+default, and stores a fresh ROM contribution trace inside the run directory. It
+is intentionally opt-in so the normal changed-AI suite remains fast and does not
+require PyBoy for every local report.

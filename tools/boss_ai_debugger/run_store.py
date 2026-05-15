@@ -18,7 +18,9 @@ from .mutation import run_scorer_mutations
 from .review_queue import build_review_queue, write_review_queue
 from .rom_contribution_trace import (
     resolve_rom_contribution_trace_paths,
+    run_rom_contribution_trace_for_route,
     summarize_rom_contribution_trace_paths,
+    write_rom_contribution_trace_json,
 )
 from .rom_scenarios import evaluate_batch
 from .route_eval import evaluate_route_batch
@@ -105,6 +107,8 @@ def run_changed_ai_suite(
     runs_dir: Path = DEFAULT_RUNS_DIR,
     trace_dir: Path | None = DEFAULT_TRACE_DIR,
     rom_contribution_trace_paths: list[Path] | None = None,
+    refresh_rom_contribution_trace: bool = False,
+    rom_contribution_boss_route: str = "clair",
 ) -> dict[str, Any]:
     if count < 0:
         raise ValueError("count must be non-negative")
@@ -125,9 +129,11 @@ def run_changed_ai_suite(
     rom_contribution_summary_path = run_dir / "rom_contribution_trace_summary.json"
     metadata_path = run_dir / "metadata.json"
     summary_path = run_dir / "summary.md"
-    copied_rom_contribution_paths = copy_rom_contribution_traces(
-        resolve_rom_contribution_trace_paths(rom_contribution_trace_paths),
+    copied_rom_contribution_paths = materialize_rom_contribution_traces(
         run_dir=run_dir,
+        input_paths=resolve_rom_contribution_trace_paths(rom_contribution_trace_paths),
+        refresh=refresh_rom_contribution_trace,
+        boss_route=rom_contribution_boss_route,
     )
 
     write_jsonl(scenarios, scenarios_path)
@@ -177,7 +183,13 @@ def run_changed_ai_suite(
         "git_commit": git_stdout(["git", "rev-parse", "HEAD"]),
         "git_status_short": git_stdout(["git", "status", "--short"]),
         "changed_files": changed_files(),
-        "parameters": {"count": count, "seed": seed, "trace_dir": str(trace_dir or "")},
+        "parameters": {
+            "count": count,
+            "seed": seed,
+            "trace_dir": str(trace_dir or ""),
+            "refresh_rom_contribution_trace": refresh_rom_contribution_trace,
+            "rom_contribution_boss_route": rom_contribution_boss_route,
+        },
         "artifacts": {
             "scenarios": relative_path(scenarios_path),
             "batch_report": relative_path(batch_path),
@@ -275,12 +287,9 @@ def run_changed_ai_suite(
             "rule_count": rule_map["rule_count"],
             "stored_rule_map_errors": rule_errors,
         },
-        "known_gaps": [
-            "changed-ai suite does not rebuild ROMs yet.",
-            "changed-ai suite ingests existing ROM contribution trace artifacts but does not refresh them.",
-            "ROM/Python contribution traces are compared only when trace ids match.",
-            "pre-choice replay remains a separate audit until trace timing is stable.",
-        ],
+        "known_gaps": changed_ai_known_gaps(
+            refresh_rom_contribution_trace=refresh_rom_contribution_trace,
+        ),
     }
     write_json(metadata, metadata_path)
     summary_path.write_text(
@@ -418,6 +427,46 @@ def copy_rom_contribution_traces(paths: list[Path], *, run_dir: Path) -> list[Pa
         shutil.copyfile(path, target)
         copied.append(target)
     return copied
+
+
+def materialize_rom_contribution_traces(
+    *,
+    run_dir: Path,
+    input_paths: list[Path],
+    refresh: bool,
+    boss_route: str,
+) -> list[Path]:
+    if refresh:
+        path = run_dir / "rom_contribution_trace_refreshed.json"
+        report = run_rom_contribution_trace_for_route(
+            boss_id=boss_route,
+            metadata={
+                "boss": boss_route,
+                "notes": "changed-ai-suite-refresh",
+            },
+        )
+        write_rom_contribution_trace_json(report, path)
+        return [path]
+    return copy_rom_contribution_traces(input_paths, run_dir=run_dir)
+
+
+def changed_ai_known_gaps(*, refresh_rom_contribution_trace: bool) -> list[str]:
+    gaps = ["changed-ai suite does not rebuild ROMs yet."]
+    if refresh_rom_contribution_trace:
+        gaps.append(
+            "changed-ai suite refreshes one ROM contribution route, not the full live trace corpus."
+        )
+    else:
+        gaps.append(
+            "changed-ai suite ingests existing ROM contribution trace artifacts but does not refresh them."
+        )
+    gaps.extend(
+        [
+            "ROM/Python contribution traces are compared only when trace ids match.",
+            "pre-choice replay remains a separate audit until trace timing is stable.",
+        ]
+    )
+    return gaps
 
 
 def skipped_trace_report(trace_dir: Path | None) -> dict[str, Any]:
