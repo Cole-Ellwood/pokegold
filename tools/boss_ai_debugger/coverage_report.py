@@ -56,7 +56,7 @@ def build_coverage_report(*, generated_count: int = 250, seed: int = 1) -> dict[
             "evidence_refs": generator_evidence,
         },
         "known_gaps": [
-            "Full ROM scoring contribution trace coverage is not implemented yet.",
+            "ROM hook score-helper traces exist, but coverage is not aggregated across rule ids yet.",
             "Generated scenario coverage is currently ROM-score-simulator coverage, not PyBoy materialized-state coverage.",
         ],
     }
@@ -71,6 +71,7 @@ def rule_coverage_summary(rule_map: dict[str, Any]) -> dict[str, Any]:
         "mapped_rule_count": rule_map["rule_count"],
         "classification_counts": dict(sorted(by_classification.items())),
         "full_trace_rule_coverage_available": False,
+        "rom_hook_score_trace_available": True,
         "trace_covered_rule_count": 0,
     }
 

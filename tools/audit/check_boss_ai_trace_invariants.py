@@ -2121,6 +2121,30 @@ def audit_move_model_trace_snapshots(boss: str, wram: str) -> None:
     )
 
 
+def audit_lookahead_trace_preserves_score_cursor(boss: str) -> None:
+    lookahead = top_block(boss, "BossAI_ApplyLookaheadToTopMoveCandidates")
+    require_order(
+        lookahead,
+        [
+            "call BossAI_ApplySignedDeltaToScore",
+            "pop bc",
+            "IF DEF(BOSS_AI_TRACE)",
+            "push bc",
+            "push hl",
+            "ld hl, wBossAITraceLookaheadBonusTop",
+            "ld [hl], a",
+            ".after_trace",
+            "pop hl",
+            "pop bc",
+            "ENDC",
+            "inc b",
+            "ld a, b",
+            "cp BOSS_AI_LOOKAHEAD_N",
+        ],
+        "lookahead trace bonus write preserves score cursor",
+    )
+
+
 def audit_boss_move_attr_bank_safety(boss: str) -> None:
     require_not_contains(boss, "call GetMoveAttr", "Boss AI cross-bank move attr reads")
     require_not_contains(boss, "call GetMoveByte", "Boss AI cross-bank move byte reads")
@@ -2367,6 +2391,7 @@ def main() -> int:
     audit_baton_pass_requires_living_bench(boss)
     audit_trace_top_moves_preserves_pointer(boss)
     audit_move_model_trace_snapshots(boss, wram)
+    audit_lookahead_trace_preserves_score_cursor(boss)
     audit_boss_move_attr_bank_safety(boss)
     audit_public_threat_scan_preserves_source_pointers(boss)
     audit_type_matchup_scan_preserves_table_cursor(boss)
@@ -2426,6 +2451,7 @@ def main() -> int:
         "Baton Pass living-bench gate",
         "trace top-move pointer preservation",
         "move-model trace score snapshots",
+        "lookahead trace score-cursor preservation",
         "Boss AI bank-safe move attr reads",
         "public threat scan source pointer preservation",
         "type-matchup scan table cursor preservation",

@@ -1,6 +1,6 @@
 # Boss AI Debugger Decision Trace
 
-Status: Python scenario foundation.
+Status: Python scenario foundation plus ROM hook trace companion.
 
 ```powershell
 python -m tools.boss_ai_debugger decision-trace `
@@ -18,6 +18,18 @@ The trace uses a structured event format:
 - `policy_check`
 
 This is a Python scenario score waterfall. It gives the debugger the event shape
-needed for future ROM scoring contribution traces, but it is not itself a ROM
-rule-event trace. ROM rule ids, score-event ring buffers, and public-read
-evidence still need trace-ROM instrumentation.
+used by ROM contribution traces, but it is not itself a ROM rule-event trace.
+
+ROM contribution trace companion:
+
+```powershell
+python -m tools.boss_ai_debugger rom-contribution-trace `
+  --boss-route clair `
+  --json-out audit\boss_ai_debugger\rom_contribution_trace_smoke.json
+```
+
+`rom-contribution-trace` drives a real trace-ROM boss route with PyBoy execution
+hooks on Boss AI rule labels and score mutation helpers. It records score
+before/after, signed delta, candidate slot, rule id, source label, and callsite
+without adding a WRAM event buffer. Current limits: false predicate paths and
+dynamic public-memory-read provenance are not captured yet.

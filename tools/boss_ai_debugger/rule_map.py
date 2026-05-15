@@ -17,7 +17,9 @@ SOURCE_PATHS = (
     ROOT / "engine" / "battle" / "ai" / "boss_policy_switch.asm",
 )
 
-LABEL_RE = re.compile(r"^(?P<label>(?:BossAI_[A-Za-z0-9_]+|\.[A-Za-z0-9_]+))(?::)?$")
+LABEL_RE = re.compile(
+    r"^(?:(?P<local>\.[A-Za-z0-9_]+)(?::)?|(?P<top>[A-Za-z_][A-Za-z0-9_]*):{1,2})$"
+)
 GENERIC_LOCAL_LABELS = {
     ".loop",
     ".next",
@@ -107,8 +109,8 @@ def parse_rule_labels(path: Path) -> list[RuleLabel]:
         match = LABEL_RE.match(line)
         if match is None:
             continue
-        label = match.group("label")
-        if label.startswith("BossAI_"):
+        label = match.group("local") or match.group("top")
+        if not label.startswith("."):
             parent = label
         if not is_rule_label(label):
             continue
@@ -218,6 +220,8 @@ def validate_rule_map(data: dict[str, Any]) -> list[str]:
         label = rule.get("source_label")
         if isinstance(label, str):
             labels.add(label)
+            if label.startswith(".") and not isinstance(rule.get("parent_label"), str):
+                errors.append(f"{prefix}: local label {label!r} is missing parent_label")
         if rule.get("classification") not in {
             "public_info",
             "haki_exception",

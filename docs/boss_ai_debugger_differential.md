@@ -17,5 +17,6 @@ schema:
 - partial or decisionless trace captures become `trace_incomplete`
 
 Known limits are recorded in every report. Full `rule_delta_mismatch`,
-`missing_python_rule`, and `missing_rom_rule` classes require ROM scoring
-contribution trace events, which are not implemented yet.
+`missing_python_rule`, and `missing_rom_rule` classes require comparing the
+`rom-contribution-trace` event stream against Python mirror events; that
+comparison is not wired into `diff` yet.

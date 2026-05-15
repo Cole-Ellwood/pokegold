@@ -228,7 +228,7 @@ def run_changed_ai_suite(
         },
         "known_gaps": [
             "changed-ai suite does not rebuild ROMs yet.",
-            "full scoring contribution traces are not implemented yet.",
+            "ROM hook score-helper traces are available as a separate command but are not yet part of changed-ai suite output.",
             "pre-choice replay remains a separate audit until trace timing is stable.",
         ],
     }

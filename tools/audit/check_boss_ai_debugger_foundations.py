@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
@@ -32,6 +33,11 @@ from tools.boss_ai_debugger.state_schema import (
     format_validation_report,
     validate_fixtures_file,
     validate_trace_dir,
+)
+
+
+ROM_CONTRIBUTION_TRACE_SMOKE = (
+    ROOT / "audit" / "boss_ai_debugger" / "rom_contribution_trace_smoke.json"
 )
 
 
@@ -84,6 +90,7 @@ def main() -> int:
             )
         ],
     )
+    rom_contribution_trace = load_rom_contribution_trace_smoke()
 
     errors: list[str] = []
     if not fixture_report["valid"]:
@@ -130,6 +137,10 @@ def main() -> int:
         errors.append("invariant miner did not produce candidates")
     if mutation["killed_count"] != 1:
         errors.append("mutation smoke did not kill the coverage-removal mutant")
+    if rom_contribution_trace["event_count"] == 0:
+        errors.append("ROM contribution trace smoke has no score events")
+    if rom_contribution_trace["changed_event_count"] == 0:
+        errors.append("ROM contribution trace smoke has no changed score events")
 
     if errors:
         print("Boss AI debugger foundation audit failed.")
@@ -185,7 +196,22 @@ def main() -> int:
         f"{differential['mismatch_count']} mismatches, "
         f"classes={differential['mismatch_class_counts']}."
     )
+    print(
+        "ROM contribution trace: "
+        f"{rom_contribution_trace['event_count']} events, "
+        f"{rom_contribution_trace['changed_event_count']} changed."
+    )
     return 0
+
+
+def load_rom_contribution_trace_smoke() -> dict:
+    if not ROM_CONTRIBUTION_TRACE_SMOKE.exists():
+        return {"event_count": 0, "changed_event_count": 0}
+    data = json.loads(ROM_CONTRIBUTION_TRACE_SMOKE.read_text(encoding="utf-8"))
+    return {
+        "event_count": int(data.get("event_count", 0)),
+        "changed_event_count": int(data.get("changed_event_count", 0)),
+    }
 
 
 def mutation_fixture() -> dict:

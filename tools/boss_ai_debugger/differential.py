@@ -71,8 +71,8 @@ def build_differential_report(
             key=lambda item: (-int(item["severity"]), item["id"]),
         ),
         "known_gaps": [
-            "Full ROM scoring contribution trace events are not available yet.",
-            "Rule-delta, missing-ROM-rule, and missing-Python-rule mismatches require full scoring traces.",
+            "ROM hook score-helper traces exist, but this differential report does not compare them yet.",
+            "Rule-delta, missing-ROM-rule, and missing-Python-rule mismatches require contribution-trace comparison.",
             "Scenario policy mismatches are debugger expectation checks, not ROM materialized-state replays.",
         ],
     }

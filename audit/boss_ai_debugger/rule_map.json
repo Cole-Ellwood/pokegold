@@ -1,31 +1,31 @@
 {
   "generator": "tools.boss_ai_debugger.rule_map",
-  "rule_count": 160,
+  "rule_count": 185,
   "rules": [
     {
       "classification": "internal",
       "line": 75,
-      "parent_label": null,
+      "parent_label": "MaybePickAdaptiveEnemyLead",
       "public_reads": [],
-      "rule_id": "move.should_use_adaptive_lead_for_trainer",
+      "rule_id": "move.maybe_pick_adaptive_enemy_lead.should_use_adaptive_lead_for_trainer",
       "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
       "source_label": ".ShouldUseAdaptiveLeadForTrainer"
     },
     {
       "classification": "internal",
       "line": 101,
-      "parent_label": null,
+      "parent_label": "MaybePickAdaptiveEnemyLead",
       "public_reads": [],
-      "rule_id": "move.find_first_alive_otmon",
+      "rule_id": "move.maybe_pick_adaptive_enemy_lead.find_first_alive_otmon",
       "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
       "source_label": ".FindFirstAliveOTMon"
     },
     {
       "classification": "internal",
       "line": 129,
-      "parent_label": null,
+      "parent_label": "MaybePickAdaptiveEnemyLead",
       "public_reads": [],
-      "rule_id": "move.find_next_alive_otmon",
+      "rule_id": "move.maybe_pick_adaptive_enemy_lead.find_next_alive_otmon",
       "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
       "source_label": ".FindNextAliveOTMon"
     },
@@ -1095,7 +1095,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 4853,
+      "line": 4855,
       "parent_label": "BossAI_ApplySignedDeltaToScore",
       "public_reads": [],
       "rule_id": "move.apply_signed_delta_to_score",
@@ -1104,7 +1104,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 4886,
+      "line": 4888,
       "parent_label": "BossAI_EvaluateActionLookahead",
       "public_reads": [],
       "rule_id": "move.evaluate_action_lookahead",
@@ -1113,7 +1113,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 5036,
+      "line": 5038,
       "parent_label": "BossAI_ApplyMultiTurnProjection",
       "public_reads": [],
       "rule_id": "move.apply_multi_turn_projection",
@@ -1122,7 +1122,7 @@
     },
     {
       "classification": "internal",
-      "line": 5147,
+      "line": 5149,
       "parent_label": "BossAI_ApplyMultiTurnProjection",
       "public_reads": [],
       "rule_id": "move.apply_multi_turn_projection.is_under_pressure",
@@ -1131,7 +1131,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 5192,
+      "line": 5194,
       "parent_label": "BossAI_ClampSignedLookaheadDelta",
       "public_reads": [],
       "rule_id": "move.clamp_signed_lookahead_delta",
@@ -1140,7 +1140,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 5221,
+      "line": 5223,
       "parent_label": "BossAI_GetPrimaryThreatType",
       "public_reads": [],
       "rule_id": "move.get_primary_threat_type",
@@ -1149,7 +1149,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 5244,
+      "line": 5246,
       "parent_label": "BossAI_GetPrimaryThreatTypeUncached",
       "public_reads": [],
       "rule_id": "move.get_primary_threat_type_uncached",
@@ -1158,7 +1158,7 @@
     },
     {
       "classification": "public_info",
-      "line": 5387,
+      "line": 5389,
       "parent_label": "BossAI_GetRevealedMoveThreatTypeAndSeverity",
       "public_reads": [
         "wPlayerUsedMoves"
@@ -1169,7 +1169,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 5420,
+      "line": 5422,
       "parent_label": "BossAI_GetTypeThreatSeverityVsEnemyMon",
       "public_reads": [],
       "rule_id": "move.get_type_threat_severity_vs_enemy_mon",
@@ -1178,7 +1178,7 @@
     },
     {
       "classification": "public_info",
-      "line": 5448,
+      "line": 5450,
       "parent_label": "BossAI_AdjustThreatSeverityForEnemyKnownDefense",
       "public_reads": [],
       "rule_id": "move.adjust_threat_severity_for_enemy_known_defense",
@@ -1187,7 +1187,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 5489,
+      "line": 5491,
       "parent_label": "BossAI_PlayerThreatTypeSuperEffectiveVsEnemy",
       "public_reads": [],
       "rule_id": "move.player_threat_type_super_effective_vs_enemy",
@@ -1196,7 +1196,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 5504,
+      "line": 5506,
       "parent_label": "BossAI_PlayerThreatTypeHitsEnemy",
       "public_reads": [],
       "rule_id": "move.player_threat_type_hits_enemy",
@@ -1205,7 +1205,7 @@
     },
     {
       "classification": "public_info",
-      "line": 5522,
+      "line": 5524,
       "parent_label": "BossAI_EnemyKnownItemNullifiesThreatType",
       "public_reads": [],
       "rule_id": "move.enemy_known_item_nullifies_threat_type",
@@ -1214,7 +1214,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 5536,
+      "line": 5538,
       "parent_label": "BossAI_DecThreatSeverityB",
       "public_reads": [],
       "rule_id": "move.dec_threat_severity_b",
@@ -1223,7 +1223,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 5544,
+      "line": 5546,
       "parent_label": "BossAI_EnemySpeciesCanEvolve",
       "public_reads": [],
       "rule_id": "move.enemy_species_can_evolve",
@@ -1232,7 +1232,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 5583,
+      "line": 5585,
       "parent_label": "BossAI_GetTierPlausibleRiskWeight",
       "public_reads": [],
       "rule_id": "move.get_tier_plausible_risk_weight",
@@ -1241,7 +1241,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 5596,
+      "line": 5598,
       "parent_label": "BossAI_GetSpeculativePlausibleRiskWeight",
       "public_reads": [],
       "rule_id": "move.get_speculative_plausible_risk_weight",
@@ -1250,7 +1250,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 5604,
+      "line": 5606,
       "parent_label": "BossAI_GetScoutRollThreshold",
       "public_reads": [],
       "rule_id": "move.get_scout_roll_threshold",
@@ -1259,7 +1259,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 5619,
+      "line": 5621,
       "parent_label": "BossAI_ShouldScout",
       "public_reads": [],
       "rule_id": "move.should_scout",
@@ -1268,7 +1268,7 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 5648,
+      "line": 5650,
       "parent_label": "BossAI_MarkScoutedIfScoutMove",
       "public_reads": [],
       "rule_id": "move.mark_scouted_if_scout_move",
@@ -1277,12 +1277,237 @@
     },
     {
       "classification": "platform_boundary",
-      "line": 5677,
+      "line": 5679,
       "parent_label": "BossAI_MaybeMarkScoutPivot",
       "public_reads": [],
       "rule_id": "move.maybe_mark_scout_pivot",
       "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
       "source_label": "BossAI_MaybeMarkScoutPivot"
+    },
+    {
+      "classification": "internal",
+      "line": 5693,
+      "parent_label": "BossAITierWeights",
+      "public_reads": [],
+      "rule_id": "move.boss_aitier_weights",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAITierWeights"
+    },
+    {
+      "classification": "internal",
+      "line": 5705,
+      "parent_label": "BossAIDenyKOEffects",
+      "public_reads": [],
+      "rule_id": "move.boss_aideny_koeffects",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAIDenyKOEffects"
+    },
+    {
+      "classification": "internal",
+      "line": 5722,
+      "parent_label": "BossAIStatusEffects",
+      "public_reads": [],
+      "rule_id": "move.boss_aistatus_effects",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAIStatusEffects"
+    },
+    {
+      "classification": "internal",
+      "line": 5732,
+      "parent_label": "BossAIBugsyRoleEffects",
+      "public_reads": [],
+      "rule_id": "move.boss_aibugsy_role_effects",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAIBugsyRoleEffects"
+    },
+    {
+      "classification": "internal",
+      "line": 5739,
+      "parent_label": "BossAIWhitneyRoleEffects",
+      "public_reads": [],
+      "rule_id": "move.boss_aiwhitney_role_effects",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAIWhitneyRoleEffects"
+    },
+    {
+      "classification": "internal",
+      "line": 5747,
+      "parent_label": "BossAIMortyRoleEffects",
+      "public_reads": [],
+      "rule_id": "move.boss_aimorty_role_effects",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAIMortyRoleEffects"
+    },
+    {
+      "classification": "internal",
+      "line": 5756,
+      "parent_label": "BossAIChuckRoleEffects",
+      "public_reads": [],
+      "rule_id": "move.boss_aichuck_role_effects",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAIChuckRoleEffects"
+    },
+    {
+      "classification": "internal",
+      "line": 5763,
+      "parent_label": "BossAIJasmineRoleEffects",
+      "public_reads": [],
+      "rule_id": "move.boss_aijasmine_role_effects",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAIJasmineRoleEffects"
+    },
+    {
+      "classification": "internal",
+      "line": 5770,
+      "parent_label": "BossAIPryceRoleEffects",
+      "public_reads": [],
+      "rule_id": "move.boss_aipryce_role_effects",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAIPryceRoleEffects"
+    },
+    {
+      "classification": "internal",
+      "line": 5780,
+      "parent_label": "BossAIClairRoleEffects",
+      "public_reads": [],
+      "rule_id": "move.boss_aiclair_role_effects",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAIClairRoleEffects"
+    },
+    {
+      "classification": "internal",
+      "line": 5789,
+      "parent_label": "BossAIWillRoleEffects",
+      "public_reads": [],
+      "rule_id": "move.boss_aiwill_role_effects",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAIWillRoleEffects"
+    },
+    {
+      "classification": "internal",
+      "line": 5797,
+      "parent_label": "BossAIBrunoRoleEffects",
+      "public_reads": [],
+      "rule_id": "move.boss_aibruno_role_effects",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAIBrunoRoleEffects"
+    },
+    {
+      "classification": "internal",
+      "line": 5804,
+      "parent_label": "BossAIKarenRoleEffects",
+      "public_reads": [],
+      "rule_id": "move.boss_aikaren_role_effects",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAIKarenRoleEffects"
+    },
+    {
+      "classification": "internal",
+      "line": 5814,
+      "parent_label": "BossAIKogaRoleEffects",
+      "public_reads": [],
+      "rule_id": "move.boss_aikoga_role_effects",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAIKogaRoleEffects"
+    },
+    {
+      "classification": "internal",
+      "line": 5823,
+      "parent_label": "BossAIChampionRoleEffects",
+      "public_reads": [],
+      "rule_id": "move.boss_aichampion_role_effects",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAIChampionRoleEffects"
+    },
+    {
+      "classification": "internal",
+      "line": 5831,
+      "parent_label": "BossAIBrockRoleEffects",
+      "public_reads": [],
+      "rule_id": "move.boss_aibrock_role_effects",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAIBrockRoleEffects"
+    },
+    {
+      "classification": "internal",
+      "line": 5838,
+      "parent_label": "BossAIMistyRoleEffects",
+      "public_reads": [],
+      "rule_id": "move.boss_aimisty_role_effects",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAIMistyRoleEffects"
+    },
+    {
+      "classification": "internal",
+      "line": 5845,
+      "parent_label": "BossAISurgeRoleEffects",
+      "public_reads": [],
+      "rule_id": "move.boss_aisurge_role_effects",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAISurgeRoleEffects"
+    },
+    {
+      "classification": "internal",
+      "line": 5852,
+      "parent_label": "BossAIErikaRoleEffects",
+      "public_reads": [],
+      "rule_id": "move.boss_aierika_role_effects",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAIErikaRoleEffects"
+    },
+    {
+      "classification": "internal",
+      "line": 5860,
+      "parent_label": "BossAIJanineRoleEffects",
+      "public_reads": [],
+      "rule_id": "move.boss_aijanine_role_effects",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAIJanineRoleEffects"
+    },
+    {
+      "classification": "internal",
+      "line": 5869,
+      "parent_label": "BossAISabrinaRoleEffects",
+      "public_reads": [],
+      "rule_id": "move.boss_aisabrina_role_effects",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAISabrinaRoleEffects"
+    },
+    {
+      "classification": "internal",
+      "line": 5877,
+      "parent_label": "BossAIBlaineRoleEffects",
+      "public_reads": [],
+      "rule_id": "move.boss_aiblaine_role_effects",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAIBlaineRoleEffects"
+    },
+    {
+      "classification": "internal",
+      "line": 5883,
+      "parent_label": "BossAIBlueRoleEffects",
+      "public_reads": [],
+      "rule_id": "move.boss_aiblue_role_effects",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAIBlueRoleEffects"
+    },
+    {
+      "classification": "internal",
+      "line": 5891,
+      "parent_label": "BossAIRedRoleEffects",
+      "public_reads": [],
+      "rule_id": "move.boss_aired_role_effects",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAIRedRoleEffects"
+    },
+    {
+      "classification": "internal",
+      "line": 5898,
+      "parent_label": "BossAIRiskyEffects",
+      "public_reads": [],
+      "rule_id": "move.boss_airisky_effects",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAIRiskyEffects"
     },
     {
       "classification": "platform_boundary",
@@ -1563,7 +1788,7 @@
   ],
   "schema_version": 1,
   "source_hashes": {
-    "engine\\battle\\ai\\boss_policy_move.asm": "96501EC3E777817C3FAFAAEF2285B05E899300EB8768BB40D79BC646D2BAC23D",
+    "engine\\battle\\ai\\boss_policy_move.asm": "D191AD514247B6F3174D27AFD8B95F3F0744EED0BD14FE06554156A6A9A4B9D6",
     "engine\\battle\\ai\\boss_policy_switch.asm": "2DD08B15DCCA8DD95D171805C18995EF0F7262AC05F5EFEF7B6A97E41CF0C844"
   }
 }

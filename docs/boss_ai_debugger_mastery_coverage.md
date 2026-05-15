@@ -23,7 +23,8 @@ python -m tools.boss_ai_debugger coverage-report --generated-count 250 --seed 1
 - generated scenario condition tags
 - generated evidence refs
 - policy-card coverage from generated evidence refs
-- known gaps, including lack of full ROM scoring contribution trace coverage
+- known gaps, including missing aggregation of ROM hook contribution traces into
+  rule coverage
 
 ## Current Meaning
 

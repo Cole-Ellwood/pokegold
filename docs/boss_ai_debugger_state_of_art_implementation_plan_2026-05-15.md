@@ -151,8 +151,11 @@ Each event should capture:
 - public evidence bits read
 - source label id
 
-Use a compact ring buffer in trace builds only. Normal ROM must remain
-unchanged except for behavior itself.
+Implementation note: the first landed version uses PyBoy execution hooks instead
+of a WRAM ring buffer, because the trace WRAM reserve is tight and hook-side
+events are enough for score-helper contribution waterfalls. Normal ROM remains
+unchanged except for behavior itself, and the trace ROM only needs stable labels
+and score bytes.
 
 Acceptance:
 

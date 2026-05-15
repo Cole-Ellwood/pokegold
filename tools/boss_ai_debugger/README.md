@@ -5,9 +5,10 @@ Phase-1 debugger for BOSSAI-003.
 Long-term implementation plan:
 `docs/boss_ai_debugger_state_of_art_implementation_plan_2026-05-15.md`.
 
-This is fixture-backed today. It uses the BOSSAI-004 public-info fixtures and
-labels as the decision corpus, then gives every legal action a readable scoring
-breakdown. It does not execute the ROM scorer yet.
+This started as a fixture-backed review aid. It still uses the BOSSAI-004
+public-info fixtures and labels as the decision corpus, but it can now also
+run the trace ROM through PyBoy hooks to capture score-helper contribution
+events from live boss-route execution.
 
 List fixtures:
 
@@ -97,8 +98,8 @@ python -m tools.boss_ai_debugger diff --scenarios audit\boss_ai_debugger\generat
 ```
 
 `diff` combines generated policy mismatches and exact selector trace replay
-mismatches into one mismatch schema. Full ROM score-rule deltas still require
-future scoring contribution traces.
+mismatches into one mismatch schema. ROM score-helper deltas are available from
+`rom-contribution-trace`, but `diff` does not compare those events yet.
 
 The full pre-choice ROM replay gate is:
 
@@ -129,7 +130,7 @@ python -m tools.boss_ai_debugger rule-map build --json-out audit\boss_ai_debugge
 python -m tools.boss_ai_debugger rule-map check
 ```
 
-The rule map gives source labels stable semantic ids for later full scoring
+The rule map gives source labels stable semantic ids for ROM contribution
 traces. `rule-map check` compares the stored artifact with current source labels,
 classifications, public-read hints, and source hashes.
 
@@ -175,8 +176,8 @@ python -m tools.boss_ai_debugger run-suite --profile changed-ai --count 200 --se
 This profile records generated stress results, review queue, route evaluation,
 metamorphic checks, scorer mutation results, candidate invariants, selector
 trace replay when traces are available, rule-map drift, artifact hashes, and
-known gaps. It does not rebuild ROMs or produce full scoring contribution traces
-yet.
+known gaps. It does not rebuild ROMs or include the separate
+`rom-contribution-trace` output yet.
 
 Run the foundation audit:
 
@@ -207,7 +208,7 @@ python -m tools.boss_ai_debugger coverage-report --generated-count 250 --seed 1
 The mastery index parses policy cards, quick tests, reviews, and the
 source-to-policy ledger. The coverage report shows mapped Boss AI rules,
 generated scenario tag coverage, policy-card evidence coverage, and explicitly
-flags that full ROM scoring trace coverage is not implemented yet.
+flags that ROM hook traces are not yet aggregated into rule coverage.
 
 Run scorer mutation tests:
 
@@ -251,8 +252,22 @@ python -m tools.boss_ai_debugger decision-trace --scenario audit\boss_ai_debugge
 
 `decision-trace` emits structured events for state load, candidates, score-rule
 contributions, selector output, and policy check. It is the Python scenario
-waterfall format; full ROM scoring contribution events still require trace-ROM
-instrumentation.
+waterfall format.
+
+Capture a ROM contribution trace from an existing boss route:
+
+```powershell
+python -m tools.boss_ai_debugger rom-contribution-trace --boss-route clair --json-out audit\boss_ai_debugger\rom_contribution_trace_smoke.json
+```
+
+`rom-contribution-trace` installs PyBoy execution hooks on trace-ROM Boss AI
+source labels and score mutation helpers, then drives the existing real
+map/script boss route until the first move choice. It records candidate slot,
+source rule id, score before/after, signed delta, helper operation, callsite,
+and the pinned trace ROM/symbol hashes. Save-state mode also exists, but it only
+captures score events if the supplied state is before scoring; the existing
+`pre_choice_state` files are already after move scoring and mainly exercise the
+selector.
 
 Classify one-turn route context:
 

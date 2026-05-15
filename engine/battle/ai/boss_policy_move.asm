@@ -4821,6 +4821,7 @@ ENDC
 	pop bc
 IF DEF(BOSS_AI_TRACE)
 	push bc
+	push hl
 	ld a, b
 	cp 3
 	jr nc, .after_trace
@@ -4833,6 +4834,7 @@ IF DEF(BOSS_AI_TRACE)
 	ld [hl], a
 	pop de
 .after_trace
+	pop hl
 	pop bc
 ENDC
 	inc b

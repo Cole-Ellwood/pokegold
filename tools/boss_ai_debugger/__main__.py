@@ -98,6 +98,12 @@ from .rom_scenarios import (
     load_scenario_batch,
     select_move,
 )
+from .rom_contribution_trace import (
+    format_rom_contribution_trace,
+    run_rom_contribution_trace,
+    run_rom_contribution_trace_for_route,
+    write_rom_contribution_trace_json,
+)
 from .run_store import DEFAULT_RUNS_DIR, run_changed_ai_suite, run_generated_smoke_suite
 from .rule_map import (
     DEFAULT_RULE_MAP_PATH,
@@ -587,6 +593,46 @@ def cmd_decision_trace(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_rom_contribution_trace(args: argparse.Namespace) -> int:
+    metadata = {
+        "boss": args.boss,
+        "turn": args.turn,
+        "enemy": args.enemy,
+        "player": args.player,
+        "notes": args.notes,
+    }
+    if args.boss_route:
+        report = run_rom_contribution_trace_for_route(
+            boss_id=args.boss_route,
+            rom=args.rom,
+            symbols_path=args.symbols,
+            battery_save=args.battery_save,
+            out_dir=args.out_dir,
+            input_wait_frames=args.input_wait_frames,
+            max_a_presses=args.max_a_presses,
+            metadata=metadata,
+        )
+    else:
+        report = run_rom_contribution_trace(
+            save_state=args.save_state,
+            rom=args.rom,
+            symbols_path=args.symbols,
+            button=args.button,
+            button_delay=args.button_delay,
+            watch_frames=args.watch_frames,
+            metadata=metadata,
+        )
+    if args.json_out != "":
+        write_rom_contribution_trace_json(report, Path(args.json_out))
+    if args.json:
+        print(json.dumps(report, indent=2, sort_keys=True))
+    else:
+        print(format_rom_contribution_trace(report, limit=args.limit))
+        if args.json_out != "":
+            print(f"wrote {args.json_out}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="python -m tools.boss_ai_debugger")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -784,6 +830,29 @@ def build_parser() -> argparse.ArgumentParser:
     decision_trace_cmd.add_argument("--json-out", default="")
     decision_trace_cmd.add_argument("--limit", type=int, default=40)
     decision_trace_cmd.set_defaults(func=cmd_decision_trace)
+
+    rom_trace_cmd = subparsers.add_parser("rom-contribution-trace")
+    rom_trace_source = rom_trace_cmd.add_mutually_exclusive_group(required=True)
+    rom_trace_source.add_argument("--save-state", type=path_arg)
+    rom_trace_source.add_argument("--boss-route")
+    rom_trace_cmd.add_argument("--rom", type=path_arg, default=Path("pokegold_trace.gbc"))
+    rom_trace_cmd.add_argument("--symbols", type=path_arg, default=Path("pokegold_trace.sym"))
+    rom_trace_cmd.add_argument("--battery-save", type=path_arg)
+    rom_trace_cmd.add_argument("--out-dir", type=path_arg)
+    rom_trace_cmd.add_argument("--input-wait-frames", type=int, default=0)
+    rom_trace_cmd.add_argument("--max-a-presses", type=int, default=0)
+    rom_trace_cmd.add_argument("--button", default="a")
+    rom_trace_cmd.add_argument("--button-delay", type=int, default=8)
+    rom_trace_cmd.add_argument("--watch-frames", type=int, default=60)
+    rom_trace_cmd.add_argument("--boss", default="")
+    rom_trace_cmd.add_argument("--turn", default="")
+    rom_trace_cmd.add_argument("--enemy", default="")
+    rom_trace_cmd.add_argument("--player", default="")
+    rom_trace_cmd.add_argument("--notes", default="")
+    rom_trace_cmd.add_argument("--json", action="store_true")
+    rom_trace_cmd.add_argument("--json-out", default="")
+    rom_trace_cmd.add_argument("--limit", type=int, default=80)
+    rom_trace_cmd.set_defaults(func=cmd_rom_contribution_trace)
 
     invariants_cmd = subparsers.add_parser("invariants")
     invariants_subcommands = invariants_cmd.add_subparsers(
