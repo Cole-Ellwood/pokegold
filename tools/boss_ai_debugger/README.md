@@ -217,3 +217,15 @@ python -m tools.boss_ai_debugger localize --scenarios audit\boss_ai_debugger\gen
 that would flip the answer, `minimize` removes nonessential fields/actions while
 preserving the verdict, and `localize` ranks overrepresented tags and move-delta
 rules in reviewable batches.
+
+Classify one-turn route context:
+
+```powershell
+python -m tools.boss_ai_debugger route-eval --scenario audit\boss_ai_debugger\generated\spikes_spin.jsonl
+```
+
+`route-eval` maps scenario verdicts into structured route outcomes such as
+`route_bad_roll`, `route_expected_unreachable`, or
+`route_acceptable_but_review`, plus coarse buckets for `actually_bad`,
+`acceptable_near_tie`, and `needs_context`. It is a foundation for route review,
+not full multi-turn search yet.

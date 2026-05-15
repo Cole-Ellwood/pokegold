@@ -102,6 +102,11 @@ from .review_queue import (
     format_review_queue,
     write_review_queue,
 )
+from .route_eval import (
+    evaluate_route_path,
+    format_route_eval_report,
+    write_route_eval_json,
+)
 from .scorer import format_inspection, inspect_fixture
 from .state_schema import (
     DEFAULT_TRACE_DIR,
@@ -514,6 +519,22 @@ def cmd_invariants_mine(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_route_eval(args: argparse.Namespace) -> int:
+    report = evaluate_route_path(
+        args.scenario,
+        scenario_id=args.scenario_id or None,
+    )
+    if args.json_out != "":
+        write_route_eval_json(report, Path(args.json_out))
+    if args.json:
+        print(json.dumps(report, indent=2, sort_keys=True))
+    else:
+        print(format_route_eval_report(report))
+        if args.json_out != "":
+            print(f"wrote {args.json_out}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="python -m tools.boss_ai_debugger")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -685,6 +706,13 @@ def build_parser() -> argparse.ArgumentParser:
     localize_cmd.add_argument("--json", action="store_true")
     localize_cmd.add_argument("--json-out", default="")
     localize_cmd.set_defaults(func=cmd_localize)
+
+    route_eval_cmd = subparsers.add_parser("route-eval")
+    route_eval_cmd.add_argument("--scenario", type=path_arg, required=True)
+    route_eval_cmd.add_argument("--scenario-id", default="")
+    route_eval_cmd.add_argument("--json", action="store_true")
+    route_eval_cmd.add_argument("--json-out", default="")
+    route_eval_cmd.set_defaults(func=cmd_route_eval)
 
     invariants_cmd = subparsers.add_parser("invariants")
     invariants_subcommands = invariants_cmd.add_subparsers(

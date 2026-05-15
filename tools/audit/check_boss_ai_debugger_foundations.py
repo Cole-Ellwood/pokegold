@@ -19,6 +19,7 @@ from tools.boss_ai_debugger.minimize import minimize_scenario
 from tools.boss_ai_debugger.mutation import remove_rule_mutant, run_scorer_mutations
 from tools.boss_ai_debugger.review_queue import build_review_queue
 from tools.boss_ai_debugger.rom_scenarios import evaluate_batch
+from tools.boss_ai_debugger.route_eval import evaluate_route_batch
 from tools.boss_ai_debugger.rule_map import (
     DEFAULT_RULE_MAP_PATH,
     build_rule_map,
@@ -58,6 +59,7 @@ def main() -> int:
     counterfactual = explain_counterfactuals(analysis_scenario)
     minimized = minimize_scenario(analysis_scenario)
     localized = localize_report(batch, scenarios=scenarios, source="foundation_audit")
+    route_eval = evaluate_route_batch(scenarios, source="foundation_audit")
     invariants = mine_invariants(
         scenarios=scenarios,
         trace_paths=sorted(DEFAULT_TRACE_DIR.glob("*_live.txt")),
@@ -97,6 +99,10 @@ def main() -> int:
         errors.append("minimization did not preserve verdict")
     if not localized["likely_causes"]:
         errors.append("localization did not report likely causes")
+    if route_eval["scenario_count"] != len(scenarios):
+        errors.append("route evaluation did not classify every generated scenario")
+    if not route_eval["classification_counts"]:
+        errors.append("route evaluation did not report classification counts")
     if invariants["candidate_count"] == 0:
         errors.append("invariant miner did not produce candidates")
     if mutation["killed_count"] != 1:
@@ -144,6 +150,11 @@ def main() -> int:
         f"invariant_candidates={invariants['candidate_count']}, "
         f"invariant_violations={invariants['violation_count']}, "
         f"mutants_killed={mutation['killed_count']} / {mutation['mutant_count']}."
+    )
+    print(
+        "Route eval: "
+        f"{route_eval['scenario_count']} scenarios, "
+        f"classifications={route_eval['classification_counts']}."
     )
     return 0
 
