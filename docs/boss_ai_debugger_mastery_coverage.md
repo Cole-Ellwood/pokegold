@@ -28,8 +28,8 @@ python -m tools.boss_ai_debugger coverage-report --changed-file engine\battle\ai
 - ROM hook contribution trace artifact summaries when available
 - uncovered mapped Boss AI rule ids with suggested generator families
 - changed-file rule coverage for targeted Boss AI edits
-- known gaps, including the fact that score-helper trace coverage is not full
-  rule coverage
+- known gaps, including the fact that dynamic rule-entry coverage is not full
+  public-read slicing
 
 ## Current Meaning
 
@@ -38,13 +38,15 @@ mistaking a narrow generator for broad mastery coverage. For example, the first
 generator family covers the hazard/spin card but intentionally leaves other
 policy cards uncovered until their scenario families exist.
 
-ROM contribution trace coverage means "this score-helper rule id produced a
-hook event in the trace artifact." It does not mean every branch predicate,
-false path, or public read was dynamically proven.
+ROM contribution trace coverage now has two levels. Dynamic rule-entry coverage
+means a mapped executable rule label ran in a trace artifact. Score-delta
+coverage means a score helper changed or attempted to change a candidate score
+inside that rule. Neither level means every false branch or every public memory
+read was dynamically proven.
 
 Changed-file coverage is a targeting aid. It identifies mapped source labels in
 the supplied files and shows which of those labels are not covered by current
-score-helper trace artifacts.
+dynamic rule-entry trace artifacts.
 
 Policy-card requirement coverage is stricter than a file reference. Each card
 reports whether generated scenarios include at least one expected-best line and

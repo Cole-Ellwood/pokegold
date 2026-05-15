@@ -31,7 +31,8 @@ def build_coverage_report(
     contribution_summary = summarize_rom_contribution_trace_paths(
         resolve_rom_contribution_trace_paths(rom_contribution_trace_paths)
     )
-    covered_rule_ids = set(contribution_summary["covered_rule_ids"])
+    executed_rule_ids = set(contribution_summary["executed_rule_ids"])
+    score_delta_rule_ids = set(contribution_summary["covered_rule_ids"])
     generator_evidence = sorted(
         {
             ref.replace("/", "\\")
@@ -56,10 +57,14 @@ def build_coverage_report(
         "generated_count": generated_count,
         "seed": seed,
         "rule_map": rule_coverage_summary(rule_map, contribution_summary),
-        "uncovered_rules": uncovered_rule_summary(rule_map, covered_rule_ids),
+        "uncovered_rules": uncovered_rule_summary(rule_map, executed_rule_ids),
+        "score_delta_uncovered_rules": uncovered_rule_summary(
+            rule_map,
+            score_delta_rule_ids,
+        ),
         "changed_rules": changed_rule_summary(
             rule_map,
-            covered_rule_ids,
+            executed_rule_ids,
             changed_files or [],
         ),
         "rom_contribution_trace": contribution_summary,
@@ -88,7 +93,7 @@ def build_coverage_report(
             "evidence_refs": generator_evidence,
         },
         "known_gaps": [
-            "ROM hook score-helper coverage is not full rule coverage because only selected predicate branch labels and legal-input snapshots are traced.",
+            "ROM hook rule coverage is dynamic execution coverage; score-delta coverage is tracked separately because many executed rules leave scores unchanged.",
             "Generated scenario coverage is currently ROM-score-simulator coverage, not PyBoy materialized-state coverage.",
         ],
     }
@@ -123,6 +128,8 @@ def rule_coverage_summary(
         "trace_executed_rule_ids": contribution_summary["executed_rule_ids"],
         "trace_covered_rule_ids": contribution_summary["covered_rule_ids"],
         "trace_changed_rule_ids": contribution_summary["changed_rule_ids"],
+        "rule_coverage_basis": "dynamic_rule_execution",
+        "score_delta_rule_count": contribution_summary["covered_rule_count"],
     }
 
 

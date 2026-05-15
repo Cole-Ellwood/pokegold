@@ -562,9 +562,9 @@ def score_trace_gaps(coverage: dict[str, Any]) -> list[str]:
     if coverage["uncovered_rules"]["uncovered_rule_count"]:
         gaps.append(
             "Only "
-            f"{coverage['rule_map']['trace_covered_rule_count']} / "
+            f"{coverage['rule_map']['trace_executed_rule_count']} / "
             f"{coverage['rule_map']['mapped_rule_count']} mapped rule ids have "
-            "ROM contribution trace coverage."
+            "dynamic ROM rule-entry coverage."
         )
     return gaps
 
@@ -658,7 +658,7 @@ def coverage_guided_gaps(coverage: dict[str, Any]) -> list[str]:
         return []
     return [
         (
-            f"{uncovered} mapped rule ids have no ROM contribution coverage; "
+            f"{uncovered} mapped rule ids have no dynamic ROM rule-entry coverage; "
             "targeted generators currently suggest families but do not close the "
             "rule-id coverage loop automatically."
         )
