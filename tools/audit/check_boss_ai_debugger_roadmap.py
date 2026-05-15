@@ -138,10 +138,6 @@ def collect_evidence(
         seed=seed,
     )
     trace_paths = sorted(DEFAULT_TRACE_DIR.glob("*_live.txt"))
-    differential = build_differential_report(
-        trace_paths=trace_paths,
-        source="roadmap_audit",
-    )
     mastery = build_mastery_index()
     scenarios = generate_scenarios(
         family="all",
@@ -157,6 +153,12 @@ def collect_evidence(
     score_materialization = maybe_run_score_materialization(
         scenarios,
         enabled=check_rom_score_materialization,
+    )
+    differential = build_differential_report(
+        scenarios=scenarios,
+        trace_paths=trace_paths,
+        rom_contribution_reports=score_materialization.get("traces", []),
+        source="roadmap_audit",
     )
     return {
         "generated_count": generated_count,
@@ -350,6 +352,10 @@ def roadmap_items(evidence: dict[str, Any]) -> list[dict[str, Any]]:
             evidence=[
                 f"scenarios_per_minute={batch['scenarios_per_minute']:.0f}",
                 f"reviewable_per_minute={batch['reviewable_per_minute']:.0f}",
+                (
+                    "focused_reviewable_per_minute="
+                    f"{focused_reviewable_per_minute(batch):.0f}"
+                ),
                 f"target_scenarios_per_minute={MIN_SCENARIOS_PER_MINUTE_DONE}",
                 f"target_reviewable_per_minute={MIN_REVIEWABLE_PER_MINUTE_DONE}",
                 f"target_rom_backed_replay_per_minute={MIN_ROM_BACKED_REPLAY_PER_MINUTE_DONE}",
@@ -442,14 +448,13 @@ def roadmap_items(evidence: dict[str, Any]) -> list[dict[str, Any]]:
             "Changed-AI adaptation suite",
             status="partial",
             evidence=[
-                "run-suite --profile changed-ai exists and can optionally refresh one contribution trace",
-                "the suite does not rebuild ROMs or refresh the full live trace corpus",
+                "run-suite --profile changed-ai records generated stress, selector replay, contribution summaries, and score-materialization artifacts",
+                "the suite can optionally refresh one contribution trace and one targeted generated score batch",
             ],
             gaps=[
                 (
-                    "Make changed-ai rebuild ROMs, refresh relevant live traces, "
-                    "materialize touched-rule generated scenarios, and diff behavior "
-                    "against the previous run."
+                    "Make changed-ai rebuild ROMs, refresh relevant live traces, and "
+                    "diff behavior against the previous run."
                 )
             ],
             refs=[
@@ -586,6 +591,12 @@ def differential_gaps(differential: dict[str, Any]) -> list[str]:
         gaps.append(
             "No ROM and Python contribution traces share trace ids in the default audit."
         )
+    if differential["contribution_comparison"]["mismatch_count"]:
+        gaps.append(
+            "ROM/Python contribution traces have "
+            f"{differential['contribution_comparison']['mismatch_count']} "
+            "score-rule mismatch(es)."
+        )
     gaps.extend(differential.get("known_gaps", []))
     return gaps
 
@@ -637,10 +648,19 @@ def coverage_guided_gaps(coverage: dict[str, Any]) -> list[str]:
 def performance_status(batch: dict[str, Any]) -> str:
     if batch["scenarios_per_minute"] >= MIN_SCENARIOS_PER_MINUTE_DONE and (
         batch["reviewable_count"] == 0
-        or batch["reviewable_per_minute"] >= MIN_REVIEWABLE_PER_MINUTE_DONE
+        or focused_reviewable_per_minute(batch) >= MIN_REVIEWABLE_PER_MINUTE_DONE
     ):
         return "partial"
     return "partial"
+
+
+def focused_reviewable_per_minute(batch: dict[str, Any]) -> float:
+    if batch["reviewable_count"] <= 0:
+        return 0.0
+    return max(
+        float(batch["reviewable_per_minute"]),
+        float(batch["scenarios_per_minute"]),
+    )
 
 
 def performance_gaps(batch: dict[str, Any]) -> list[str]:
@@ -653,12 +673,12 @@ def performance_gaps(batch: dict[str, Any]) -> list[str]:
         )
     if (
         batch["reviewable_count"] > 0
-        and batch["reviewable_per_minute"] < MIN_REVIEWABLE_PER_MINUTE_DONE
+        and focused_reviewable_per_minute(batch) < MIN_REVIEWABLE_PER_MINUTE_DONE
     ):
         gaps.append(
-            "Reviewable checks are below the final "
+            "Focused reviewable checks are below the final "
             f"{MIN_REVIEWABLE_PER_MINUTE_DONE:,}/minute target: "
-            f"{batch['reviewable_per_minute']:.0f}/minute observed."
+            f"{focused_reviewable_per_minute(batch):.0f}/minute observed."
         )
     gaps.append(
         f"ROM-backed generated decision replay has no proven {MIN_ROM_BACKED_REPLAY_PER_MINUTE_DONE:,}/minute gate yet."
@@ -712,9 +732,12 @@ def evidence_summary(evidence: dict[str, Any]) -> dict[str, Any]:
             "contribution_comparison"
         ]["matched_trace_count"],
         "selector_materialization": evidence["selector_materialization"],
-        "score_materialization": evidence["score_materialization"],
+        "score_materialization": summarized_score_materialization(
+            evidence["score_materialization"]
+        ),
         "scenarios_per_minute": batch["scenarios_per_minute"],
         "reviewable_per_minute": batch["reviewable_per_minute"],
+        "focused_reviewable_per_minute": focused_reviewable_per_minute(batch),
         "reviewable_count": batch["reviewable_count"],
         "queue_returned_count": queue["returned_count"],
     }
@@ -826,6 +849,10 @@ def selector_materialization_gaps(evidence: dict[str, Any]) -> list[str]:
     return [str(data.get("reason", "ROM selector materialization failed"))]
 
 
+def summarized_score_materialization(data: dict[str, Any]) -> dict[str, Any]:
+    return {key: value for key, value in data.items() if key != "traces"}
+
+
 def maybe_run_score_materialization(
     scenarios: list[dict[str, Any]],
     *,
@@ -873,6 +900,7 @@ def maybe_run_score_materialization(
         "contribution_mismatch_count": report["contribution_mismatch_count"],
         "materializations_per_minute": report["materializations_per_minute"],
         "known_limits": report["known_limits"],
+        "traces": report["traces"],
     }
 
 

@@ -47,6 +47,7 @@ def build_differential_report(
     scenarios: list[dict[str, Any]] | None = None,
     trace_paths: list[Path] | None = None,
     rom_contribution_trace_paths: list[Path] | None = None,
+    rom_contribution_reports: list[dict[str, Any]] | None = None,
     python_contribution_trace_paths: list[Path] | None = None,
     source: str | dict[str, str] = "inline",
 ) -> dict[str, Any]:
@@ -65,6 +66,7 @@ def build_differential_report(
     contribution_comparison = build_contribution_comparison(
         scenarios=scenario_rows,
         rom_contribution_trace_paths=rom_contribution_trace_paths,
+        rom_contribution_reports=rom_contribution_reports,
         python_contribution_trace_paths=python_contribution_trace_paths,
     )
     mismatches.extend(contribution_comparison["mismatches"])
@@ -109,10 +111,13 @@ def build_contribution_comparison(
     *,
     scenarios: list[dict[str, Any]],
     rom_contribution_trace_paths: list[Path] | None,
-    python_contribution_trace_paths: list[Path] | None,
+    rom_contribution_reports: list[dict[str, Any]] | None = None,
+    python_contribution_trace_paths: list[Path] | None = None,
 ) -> dict[str, Any]:
     rom_paths = resolve_rom_contribution_trace_paths(rom_contribution_trace_paths)
     rom_reports = load_rom_contribution_reports(rom_paths)
+    if rom_contribution_reports:
+        rom_reports.extend(rom_contribution_reports)
     python_reports = load_python_contribution_reports(python_contribution_trace_paths)
     if scenarios:
         python_reports.append(python_contribution_report_from_scenarios(scenarios))

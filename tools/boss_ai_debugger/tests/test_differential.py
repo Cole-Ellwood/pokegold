@@ -199,6 +199,31 @@ class DifferentialTests(unittest.TestCase):
         )
         self.assertEqual(report["mismatch_count"], 3)
 
+    def test_contribution_comparison_accepts_in_memory_rom_reports(self) -> None:
+        rom_report = {
+            "source": "trace_rom_pyboy_hooks",
+            "trace_id": "unit",
+            "event_count": 1,
+            "changed_event_count": 1,
+            "trace_basis": {},
+            "chosen": {},
+            "events": [contribution_event("move.shared_delta", 5)],
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            python_trace = Path(tmp) / "python_contribution.json"
+            write_python_contribution_trace(
+                python_trace,
+                [contribution_event("move.shared_delta", 5)],
+            )
+
+            report = build_differential_report(
+                rom_contribution_reports=[rom_report],
+                python_contribution_trace_paths=[python_trace],
+            )
+
+        self.assertEqual(report["contribution_comparison"]["matched_trace_count"], 1)
+        self.assertEqual(report["contribution_comparison"]["mismatch_count"], 0)
+
     def test_cli_diff_writes_json(self) -> None:
         scenario = {
             "id": "cli_policy_case",

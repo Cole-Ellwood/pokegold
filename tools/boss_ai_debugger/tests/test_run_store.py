@@ -107,6 +107,7 @@ class RunStoreTests(unittest.TestCase):
             self.assertTrue((run_dir / "invariants.json").exists())
             self.assertTrue((run_dir / "trace_replay.json").exists())
             self.assertTrue((run_dir / "rom_contribution_trace_summary.json").exists())
+            self.assertTrue((run_dir / "rom_score_materialization.json").exists())
             self.assertTrue((run_dir / "summary.md").exists())
             contribution_summary = json.loads(
                 (run_dir / "rom_contribution_trace_summary.json").read_text(
@@ -122,8 +123,15 @@ class RunStoreTests(unittest.TestCase):
         self.assertEqual(contribution_summary["covered_rule_count"], 1)
         self.assertEqual(metadata["rom_contribution_summary"]["covered_rule_count"], 1)
         self.assertFalse(metadata["parameters"]["refresh_rom_contribution_trace"])
+        self.assertFalse(metadata["parameters"]["refresh_rom_score_materialization"])
         self.assertIn("rom_contribution_trace_summary", metadata["artifacts"])
+        self.assertIn("rom_score_materialization", metadata["artifacts"])
         self.assertIn("rom_contribution_trace_summary", metadata["artifact_hashes"])
+        self.assertIn("rom_score_materialization", metadata["artifact_hashes"])
+        self.assertEqual(
+            metadata["rom_score_materialization_summary"]["checked_count"],
+            0,
+        )
         self.assertIn("known_gaps", metadata)
 
     def test_cli_run_suite_changed_ai(self) -> None:

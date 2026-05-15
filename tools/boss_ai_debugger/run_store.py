@@ -23,6 +23,10 @@ from .rom_contribution_trace import (
     write_rom_contribution_trace_json,
 )
 from .rom_scenarios import evaluate_batch
+from .rom_score_materialize import (
+    run_rom_score_materialization,
+    write_rom_score_materialization_json,
+)
 from .route_eval import evaluate_route_batch
 from .rule_map import DEFAULT_RULE_MAP_PATH, build_rule_map, compare_rule_maps
 from .state_schema import DEFAULT_TRACE_DIR, validate_scenario_file
@@ -109,6 +113,7 @@ def run_changed_ai_suite(
     rom_contribution_trace_paths: list[Path] | None = None,
     refresh_rom_contribution_trace: bool = False,
     rom_contribution_boss_route: str = "clair",
+    refresh_rom_score_materialization: bool = False,
 ) -> dict[str, Any]:
     if count < 0:
         raise ValueError("count must be non-negative")
@@ -127,6 +132,7 @@ def run_changed_ai_suite(
     invariants_path = run_dir / "invariants.json"
     trace_replay_path = run_dir / "trace_replay.json"
     rom_contribution_summary_path = run_dir / "rom_contribution_trace_summary.json"
+    rom_score_materialization_path = run_dir / "rom_score_materialization.json"
     metadata_path = run_dir / "metadata.json"
     summary_path = run_dir / "summary.md"
     copied_rom_contribution_paths = materialize_rom_contribution_traces(
@@ -141,6 +147,10 @@ def run_changed_ai_suite(
     batch = evaluate_batch(scenarios)
     queue = build_review_queue(batch, limit=50, source=str(batch_path))
     route_eval = evaluate_route_batch(scenarios, source=str(scenarios_path))
+    rom_score_materialization = materialize_rom_score_scenarios(
+        scenarios=scenarios,
+        refresh=refresh_rom_score_materialization,
+    )
     metamorphic = run_metamorphic_suite(generated=min(count, 100), seed=seed)
     fixtures = load_fixtures()
     labels = load_preferences(fixtures=fixtures)
@@ -150,6 +160,7 @@ def run_changed_ai_suite(
         scenarios=scenarios,
         trace_paths=trace_paths,
         rom_contribution_trace_paths=copied_rom_contribution_paths,
+        rom_contribution_reports=rom_score_materialization.get("traces", []),
         source="changed-ai",
     )
     rom_contribution_summary = summarize_rom_contribution_trace_paths(
@@ -173,6 +184,10 @@ def run_changed_ai_suite(
     write_json(invariants, invariants_path)
     write_json(trace_replay, trace_replay_path)
     write_json(rom_contribution_summary, rom_contribution_summary_path)
+    write_rom_score_materialization_json(
+        rom_score_materialization,
+        rom_score_materialization_path,
+    )
 
     metadata = {
         "schema_version": 1,
@@ -189,6 +204,7 @@ def run_changed_ai_suite(
             "trace_dir": str(trace_dir or ""),
             "refresh_rom_contribution_trace": refresh_rom_contribution_trace,
             "rom_contribution_boss_route": rom_contribution_boss_route,
+            "refresh_rom_score_materialization": refresh_rom_score_materialization,
         },
         "artifacts": {
             "scenarios": relative_path(scenarios_path),
@@ -203,6 +219,7 @@ def run_changed_ai_suite(
             "rom_contribution_trace_summary": relative_path(
                 rom_contribution_summary_path,
             ),
+            "rom_score_materialization": relative_path(rom_score_materialization_path),
             "rom_contribution_traces": [
                 relative_path(path) for path in copied_rom_contribution_paths
             ],
@@ -221,6 +238,7 @@ def run_changed_ai_suite(
             "rom_contribution_trace_summary": sha256_file(
                 rom_contribution_summary_path,
             ),
+            "rom_score_materialization": sha256_file(rom_score_materialization_path),
             "rom_contribution_traces": {
                 relative_path(path): sha256_file(path)
                 for path in copied_rom_contribution_paths
@@ -283,12 +301,24 @@ def run_changed_ai_suite(
             "changed_rule_count": rom_contribution_summary["changed_rule_count"],
             "unmapped_event_count": rom_contribution_summary["unmapped_event_count"],
         },
+        "rom_score_materialization_summary": {
+            "checked_count": rom_score_materialization.get("checked_count", 0),
+            "error_count": rom_score_materialization.get("error_count", 0),
+            "contribution_matched_count": rom_score_materialization.get(
+                "contribution_matched_count", 0
+            ),
+            "contribution_mismatch_count": rom_score_materialization.get(
+                "contribution_mismatch_count", 0
+            ),
+            "skipped_reason": rom_score_materialization.get("skipped_reason", ""),
+        },
         "rule_map_summary": {
             "rule_count": rule_map["rule_count"],
             "stored_rule_map_errors": rule_errors,
         },
         "known_gaps": changed_ai_known_gaps(
             refresh_rom_contribution_trace=refresh_rom_contribution_trace,
+            refresh_rom_score_materialization=refresh_rom_score_materialization,
         ),
     }
     write_json(metadata, metadata_path)
@@ -337,6 +367,7 @@ def format_changed_ai_summary(metadata: dict[str, Any], queue: dict[str, Any]) -
     trace = metadata["trace_replay_summary"]
     mutation = metadata["mutation_summary"]
     contribution = metadata["rom_contribution_summary"]
+    score_materialization = metadata["rom_score_materialization_summary"]
     lines = [
         f"# Boss AI Debugger Changed-AI Run: {metadata['run_id']}",
         "",
@@ -354,6 +385,7 @@ def format_changed_ai_summary(metadata: dict[str, Any], queue: dict[str, Any]) -
         f"- invariants: `{metadata['invariant_summary']}`",
         f"- trace replay: `{trace}`",
         f"- ROM contribution: `{contribution}`",
+        f"- ROM score materialization: `{score_materialization}`",
         f"- rule map errors: `{metadata['rule_map_summary']['stored_rule_map_errors']}`",
         "",
         "## Known Gaps",
@@ -450,7 +482,92 @@ def materialize_rom_contribution_traces(
     return copy_rom_contribution_traces(input_paths, run_dir=run_dir)
 
 
-def changed_ai_known_gaps(*, refresh_rom_contribution_trace: bool) -> list[str]:
+def materialize_rom_score_scenarios(
+    *,
+    scenarios: list[dict[str, Any]],
+    refresh: bool,
+) -> dict[str, Any]:
+    selected = score_materialization_scenarios(scenarios, limit=3)
+    if not refresh:
+        return skipped_rom_score_materialization_report(
+            selected_count=len(selected),
+            reason=(
+                "not requested; pass --refresh-rom-score-materialization to run "
+                "generated score-model materialization"
+            ),
+        )
+    if not selected:
+        return skipped_rom_score_materialization_report(
+            selected_count=0,
+            reason="no generated spikes_spin scenarios available for score materialization",
+        )
+    return run_rom_score_materialization(
+        selected,
+        source="changed-ai-suite",
+    )
+
+
+def score_materialization_scenarios(
+    scenarios: list[dict[str, Any]],
+    *,
+    limit: int,
+) -> list[dict[str, Any]]:
+    candidates = [
+        scenario
+        for scenario in scenarios
+        if scenario.get("family") == "spikes_spin"
+    ]
+
+    def priority(scenario: dict[str, Any]) -> tuple[int, str]:
+        expectation = scenario.get("expectation", {})
+        tags = (
+            set(expectation.get("condition_tags", []))
+            if isinstance(expectation, dict)
+            else set()
+        )
+        active_revealed = "active_revealed_rapid_spin" in tags
+        risky_layer = "spikes_layers_1" in tags or "spikes_layers_2" in tags
+        return (
+            0 if active_revealed and risky_layer else 1,
+            str(scenario.get("id", "")),
+        )
+
+    return sorted(candidates, key=priority)[:limit]
+
+
+def skipped_rom_score_materialization_report(
+    *,
+    selected_count: int,
+    reason: str,
+) -> dict[str, Any]:
+    return {
+        "schema_version": 1,
+        "source": "changed-ai-suite",
+        "kind": "rom_score_materialization",
+        "base_route": "koga",
+        "base_state": "",
+        "scenario_count": selected_count,
+        "checked_count": 0,
+        "skipped_count": selected_count,
+        "error_count": 0,
+        "score_bytes_match_count": 0,
+        "selector_top_match_count": 0,
+        "contribution_matched_count": 0,
+        "contribution_mismatch_count": 0,
+        "elapsed_seconds": 0.0,
+        "materializations_per_minute": 0.0,
+        "skipped_reason": reason,
+        "known_limits": [reason],
+        "verdicts": [],
+        "traces": [],
+    }
+
+
+def changed_ai_known_gaps(
+    *,
+    refresh_rom_contribution_trace: bool,
+    refresh_rom_score_materialization: bool,
+) -> list[str]:
     gaps = ["changed-ai suite does not rebuild ROMs yet."]
     if refresh_rom_contribution_trace:
         gaps.append(
@@ -459,6 +576,14 @@ def changed_ai_known_gaps(*, refresh_rom_contribution_trace: bool) -> list[str]:
     else:
         gaps.append(
             "changed-ai suite ingests existing ROM contribution trace artifacts but does not refresh them."
+        )
+    if refresh_rom_score_materialization:
+        gaps.append(
+            "changed-ai suite materializes a targeted generated score batch, not all touched-rule generated scenarios."
+        )
+    else:
+        gaps.append(
+            "changed-ai suite records generated score materialization as skipped unless explicitly requested."
         )
     gaps.extend(
         [
