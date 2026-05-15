@@ -21,6 +21,12 @@ from tools.boss_ai_preference.data import (
 )
 from tools.boss_ai_preference.damage_estimates import attach_damage_estimates
 
+from .generators import (
+    FAMILIES as GENERATOR_FAMILIES,
+    format_generate_report,
+    generate_scenarios,
+    write_jsonl as write_scenarios_jsonl,
+)
 from .regression import (
     evaluate_corpus,
     exit_code_for_result,
@@ -36,7 +42,30 @@ from .rom_scenarios import (
     load_scenario_batch,
     select_move,
 )
+from .run_store import DEFAULT_RUNS_DIR, run_generated_smoke_suite
+from .rule_map import (
+    DEFAULT_RULE_MAP_PATH,
+    build_rule_map,
+    compare_rule_maps,
+    format_rule_map_summary,
+    write_rule_map,
+)
+from .review_queue import (
+    build_review_queue_from_report,
+    build_review_queue_from_scenarios,
+    format_review_queue,
+    write_review_queue,
+)
 from .scorer import format_inspection, inspect_fixture
+from .state_schema import (
+    DEFAULT_TRACE_DIR,
+    DEFAULT_TRACE_GLOB,
+    combine_reports,
+    format_validation_report,
+    validate_fixtures_file,
+    validate_path,
+    validate_trace_dir,
+)
 from .trace_replay import (
     collect_trace_paths,
     format_trace_replay_report,
@@ -215,6 +244,101 @@ def cmd_trace_replay(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_state_schema_validate(args: argparse.Namespace) -> int:
+    reports = []
+    if args.fixtures:
+        reports.append(validate_fixtures_file(args.fixtures_path))
+    if args.trace_dir is not None:
+        reports.append(validate_trace_dir(args.trace_dir, pattern=args.glob))
+    for path in args.path or []:
+        reports.append(validate_path(path))
+    if not reports:
+        reports.append(validate_fixtures_file(args.fixtures_path))
+        reports.append(validate_trace_dir(DEFAULT_TRACE_DIR, pattern=DEFAULT_TRACE_GLOB))
+
+    report = reports[0] if len(reports) == 1 else combine_reports("state_schema", reports)
+    if args.json:
+        print(json.dumps(report, indent=2, sort_keys=True))
+    else:
+        print(format_validation_report(report))
+    return 0 if report["valid"] else 1
+
+
+def cmd_rule_map_build(args: argparse.Namespace) -> int:
+    data = build_rule_map()
+    if args.json_out != "":
+        write_rule_map(data, Path(args.json_out))
+    if args.json:
+        print(json.dumps(data, indent=2, sort_keys=True))
+    else:
+        print(format_rule_map_summary(data))
+        if args.json_out != "":
+            print(f"wrote {args.json_out}")
+    return 0
+
+
+def cmd_rule_map_check(args: argparse.Namespace) -> int:
+    data = build_rule_map()
+    compare_errors = compare_rule_maps(data, args.rule_map)
+    print(format_rule_map_summary(data, compare_errors=compare_errors))
+    return 0 if not compare_errors else 1
+
+
+def cmd_generate(args: argparse.Namespace) -> int:
+    scenarios = generate_scenarios(family=args.family, count=args.count, seed=args.seed)
+    if args.out is not None:
+        write_scenarios_jsonl(scenarios, args.out)
+        print(format_generate_report(family=args.family, count=len(scenarios), seed=args.seed, out=args.out))
+    else:
+        for scenario in scenarios:
+            print(json.dumps(scenario, sort_keys=True))
+    return 0
+
+
+def cmd_review_queue(args: argparse.Namespace) -> int:
+    if args.report is not None:
+        queue = build_review_queue_from_report(args.report, limit=args.limit)
+    else:
+        queue = build_review_queue_from_scenarios(
+            args.scenarios,
+            expectations_path=args.expectations,
+            limit=args.limit,
+        )
+    if args.json_out != "":
+        write_review_queue(queue, Path(args.json_out))
+    if args.json:
+        print(json.dumps(queue, indent=2, sort_keys=True))
+    else:
+        print(format_review_queue(queue))
+        if args.json_out != "":
+            print(f"wrote {args.json_out}")
+    return 0
+
+
+def cmd_run_suite(args: argparse.Namespace) -> int:
+    if args.profile != "generated-smoke":
+        raise PreferenceDataError(
+            "only generated-smoke is implemented; changed-ai needs full ROM trace phase"
+        )
+    metadata = run_generated_smoke_suite(
+        count=args.count,
+        seed=args.seed,
+        run_id=args.run_id,
+        runs_dir=args.runs_dir,
+    )
+    if args.json:
+        print(json.dumps(metadata, indent=2, sort_keys=True))
+    else:
+        print(
+            "Boss AI debugger run-suite complete: "
+            f"profile={metadata['profile']} run_id={metadata['run_id']} "
+            f"scenarios={metadata['batch_summary']['scenario_count']} "
+            f"reviewable={metadata['batch_summary']['reviewable_count']} "
+            f"summary={metadata['artifacts']['summary']}"
+        )
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="python -m tools.boss_ai_debugger")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -284,6 +408,54 @@ def build_parser() -> argparse.ArgumentParser:
     trace_cmd.add_argument("--quiet", action="store_true")
     trace_cmd.add_argument("--fail-on-mismatch", action="store_true")
     trace_cmd.set_defaults(func=cmd_trace_replay)
+
+    state_cmd = subparsers.add_parser("state-schema")
+    state_subcommands = state_cmd.add_subparsers(dest="state_command", required=True)
+    state_validate = state_subcommands.add_parser("validate")
+    state_validate.add_argument("--path", type=path_arg, action="append")
+    state_validate.add_argument("--fixtures", action="store_true")
+    state_validate.add_argument("--fixtures-path", type=path_arg, default=DEFAULT_FIXTURES_PATH)
+    state_validate.add_argument("--trace-dir", type=path_arg)
+    state_validate.add_argument("--glob", default=DEFAULT_TRACE_GLOB)
+    state_validate.add_argument("--json", action="store_true")
+    state_validate.set_defaults(func=cmd_state_schema_validate)
+
+    rule_cmd = subparsers.add_parser("rule-map")
+    rule_subcommands = rule_cmd.add_subparsers(dest="rule_command", required=True)
+    rule_build = rule_subcommands.add_parser("build")
+    rule_build.add_argument("--json", action="store_true")
+    rule_build.add_argument("--json-out", default="")
+    rule_build.set_defaults(func=cmd_rule_map_build)
+
+    rule_check = rule_subcommands.add_parser("check")
+    rule_check.add_argument("--rule-map", type=path_arg, default=DEFAULT_RULE_MAP_PATH)
+    rule_check.set_defaults(func=cmd_rule_map_check)
+
+    generate_cmd = subparsers.add_parser("generate")
+    generate_cmd.add_argument("--family", choices=GENERATOR_FAMILIES, required=True)
+    generate_cmd.add_argument("--count", type=int, required=True)
+    generate_cmd.add_argument("--seed", type=int, default=1)
+    generate_cmd.add_argument("--out", type=path_arg)
+    generate_cmd.set_defaults(func=cmd_generate)
+
+    review_cmd = subparsers.add_parser("review-queue")
+    review_source = review_cmd.add_mutually_exclusive_group(required=True)
+    review_source.add_argument("--report", type=path_arg)
+    review_source.add_argument("--scenarios", type=path_arg)
+    review_cmd.add_argument("--expectations", type=path_arg)
+    review_cmd.add_argument("--limit", type=int, default=50)
+    review_cmd.add_argument("--json", action="store_true")
+    review_cmd.add_argument("--json-out", default="")
+    review_cmd.set_defaults(func=cmd_review_queue)
+
+    run_suite = subparsers.add_parser("run-suite")
+    run_suite.add_argument("--profile", choices=["generated-smoke", "changed-ai"], required=True)
+    run_suite.add_argument("--count", type=int, default=200)
+    run_suite.add_argument("--seed", type=int, default=1)
+    run_suite.add_argument("--run-id", default="")
+    run_suite.add_argument("--runs-dir", type=path_arg, default=DEFAULT_RUNS_DIR)
+    run_suite.add_argument("--json", action="store_true")
+    run_suite.set_defaults(func=cmd_run_suite)
     return parser
 
 

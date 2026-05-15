@@ -1,0 +1,1569 @@
+{
+  "generator": "tools.boss_ai_debugger.rule_map",
+  "rule_count": 160,
+  "rules": [
+    {
+      "classification": "internal",
+      "line": 75,
+      "parent_label": null,
+      "public_reads": [],
+      "rule_id": "move.should_use_adaptive_lead_for_trainer",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".ShouldUseAdaptiveLeadForTrainer"
+    },
+    {
+      "classification": "internal",
+      "line": 101,
+      "parent_label": null,
+      "public_reads": [],
+      "rule_id": "move.find_first_alive_otmon",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".FindFirstAliveOTMon"
+    },
+    {
+      "classification": "internal",
+      "line": 129,
+      "parent_label": null,
+      "public_reads": [],
+      "rule_id": "move.find_next_alive_otmon",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".FindNextAliveOTMon"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 172,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [],
+      "rule_id": "move.apply_move_model",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_ApplyMoveModel"
+    },
+    {
+      "classification": "public_info",
+      "line": 399,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [],
+      "rule_id": "move.apply_move_model.status_move_would_fail_publicly",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".StatusMoveWouldFailPublicly"
+    },
+    {
+      "classification": "public_info",
+      "line": 419,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [],
+      "rule_id": "move.apply_move_model.utility_move_would_fail_publicly",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".UtilityMoveWouldFailPublicly"
+    },
+    {
+      "classification": "internal",
+      "line": 653,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [],
+      "rule_id": "move.apply_move_model.enemy_status_move_type_misses_player",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".EnemyStatusMoveTypeMissesPlayer"
+    },
+    {
+      "classification": "internal",
+      "line": 777,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [],
+      "rule_id": "move.apply_move_model.apply_setup_punish_bias",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".ApplySetupPunishBias"
+    },
+    {
+      "classification": "internal",
+      "line": 793,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [],
+      "rule_id": "move.apply_move_model.apply_setup_discipline_bias",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".ApplySetupDisciplineBias"
+    },
+    {
+      "classification": "internal",
+      "line": 806,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [],
+      "rule_id": "move.apply_move_model.apply_status_hard_answer_discipline",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".ApplyStatusHardAnswerDiscipline"
+    },
+    {
+      "classification": "internal",
+      "line": 812,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [],
+      "rule_id": "move.apply_move_model.apply_self_kotrade_discipline",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".ApplySelfKOTradeDiscipline"
+    },
+    {
+      "classification": "internal",
+      "line": 831,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [
+        "Moves + MOVE_EFFECT",
+        "wPlayerUsedMoves"
+      ],
+      "rule_id": "move.apply_move_model.apply_recovery_timing_discipline",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".ApplyRecoveryTimingDiscipline"
+    },
+    {
+      "classification": "internal",
+      "line": 842,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [
+        "Moves + MOVE_EFFECT",
+        "wPlayerUsedMoves"
+      ],
+      "rule_id": "move.apply_move_model.is_current_enemy_recovery_move",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".IsCurrentEnemyRecoveryMove"
+    },
+    {
+      "classification": "internal",
+      "line": 858,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [],
+      "rule_id": "move.apply_move_model.apply_phazing_plan_bias",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".ApplyPhazingPlanBias"
+    },
+    {
+      "classification": "public_info",
+      "line": 875,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [
+        "Moves + MOVE_EFFECT",
+        "wPlayerUsedMoves"
+      ],
+      "rule_id": "move.apply_move_model.apply_rapid_spin_bias",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".ApplyRapidSpinBias"
+    },
+    {
+      "classification": "internal",
+      "line": 886,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [],
+      "rule_id": "move.apply_move_model.apply_baton_pass_bias",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".ApplyBatonPassBias"
+    },
+    {
+      "classification": "public_info",
+      "line": 905,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [
+        "wPlayerUsedMoves"
+      ],
+      "rule_id": "move.apply_move_model.apply_revealed_anti_setup_avoidance",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".ApplyRevealedAntiSetupAvoidance"
+    },
+    {
+      "classification": "internal",
+      "line": 918,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [],
+      "rule_id": "move.apply_move_model.is_boost_setup_move",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".IsBoostSetupMove"
+    },
+    {
+      "classification": "public_info",
+      "line": 947,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [
+        "wPlayerUsedMoves"
+      ],
+      "rule_id": "move.apply_move_model.player_has_revealed_anti_setup",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".PlayerHasRevealedAntiSetup"
+    },
+    {
+      "classification": "public_info",
+      "line": 954,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [
+        "wPlayerUsedMoves"
+      ],
+      "rule_id": "move.apply_move_model.player_has_revealed_effect_a",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".PlayerHasRevealedEffectA"
+    },
+    {
+      "classification": "internal",
+      "line": 987,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [],
+      "rule_id": "move.apply_move_model.apply_ramp_move_bias",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".ApplyRampMoveBias"
+    },
+    {
+      "classification": "internal",
+      "line": 1016,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [],
+      "rule_id": "move.apply_move_model.apply_charge_move_bias",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".ApplyChargeMoveBias"
+    },
+    {
+      "classification": "internal",
+      "line": 1030,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [],
+      "rule_id": "move.apply_move_model.apply_poison_contact_risk_bias",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".ApplyPoisonContactRiskBias"
+    },
+    {
+      "classification": "internal",
+      "line": 1055,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [],
+      "rule_id": "move.apply_move_model.apply_dark_shield_chance_bias",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".ApplyDarkShieldChanceBias"
+    },
+    {
+      "classification": "internal",
+      "line": 1071,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [],
+      "rule_id": "move.apply_move_model.apply_life_orb_recoil_bias",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".ApplyLifeOrbRecoilBias"
+    },
+    {
+      "classification": "internal",
+      "line": 1085,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [],
+      "rule_id": "move.apply_move_model.apply_destiny_bond_trade_bias",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".ApplyDestinyBondTradeBias"
+    },
+    {
+      "classification": "public_info",
+      "line": 1105,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [
+        "wPlayerUsedMoves"
+      ],
+      "rule_id": "move.apply_move_model.apply_revealed_destiny_bond_avoidance",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".ApplyRevealedDestinyBondAvoidance"
+    },
+    {
+      "classification": "internal",
+      "line": 1124,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [
+        "Moves + MOVE_EFFECT",
+        "wPlayerUsedMoves"
+      ],
+      "rule_id": "move.apply_move_model.apply_counter_coat_trade_bias",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".ApplyCounterCoatTradeBias"
+    },
+    {
+      "classification": "public_info",
+      "line": 1159,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [
+        "Moves + MOVE_EFFECT",
+        "wPlayerUsedMoves"
+      ],
+      "rule_id": "move.apply_move_model.player_has_revealed_counter_coat_category",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".PlayerHasRevealedCounterCoatCategory"
+    },
+    {
+      "classification": "public_info",
+      "line": 1206,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [
+        "Moves + MOVE_EFFECT",
+        "wPlayerUsedMoves"
+      ],
+      "rule_id": "move.apply_move_model.apply_revealed_counter_coat_avoidance",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".ApplyRevealedCounterCoatAvoidance"
+    },
+    {
+      "classification": "public_info",
+      "line": 1230,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [
+        "Moves + MOVE_EFFECT",
+        "wPlayerUsedMoves"
+      ],
+      "rule_id": "move.apply_move_model.player_has_revealed_counter_coat_trap",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".PlayerHasRevealedCounterCoatTrap"
+    },
+    {
+      "classification": "internal",
+      "line": 1240,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [],
+      "rule_id": "move.apply_move_model.apply_choice_first_lock_regret",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".ApplyChoiceFirstLockRegret"
+    },
+    {
+      "classification": "public_info",
+      "line": 1319,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [
+        "Moves + MOVE_EFFECT",
+        "wPlayerUsedMoves"
+      ],
+      "rule_id": "move.apply_move_model.apply_revealed_protect_commitment_risk",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".ApplyRevealedProtectCommitmentRisk"
+    },
+    {
+      "classification": "public_info",
+      "line": 1333,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [
+        "Moves + MOVE_EFFECT",
+        "wPlayerUsedMoves"
+      ],
+      "rule_id": "move.apply_move_model.player_has_revealed_protect",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".PlayerHasRevealedProtect"
+    },
+    {
+      "classification": "public_info",
+      "line": 1337,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [
+        "Moves + MOVE_EFFECT",
+        "wPlayerUsedMoves"
+      ],
+      "rule_id": "move.apply_move_model.apply_revealed_recovery_denial_bias",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".ApplyRevealedRecoveryDenialBias"
+    },
+    {
+      "classification": "public_info",
+      "line": 1365,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [
+        "Moves + MOVE_EFFECT",
+        "wPlayerUsedMoves"
+      ],
+      "rule_id": "move.apply_move_model.player_has_revealed_recovery",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".PlayerHasRevealedRecovery"
+    },
+    {
+      "classification": "public_info",
+      "line": 1394,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [
+        "wLastPlayerMove",
+        "wPlayerUsedMoves"
+      ],
+      "rule_id": "move.apply_move_model.apply_revealed_fast_encore_avoidance",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".ApplyRevealedFastEncoreAvoidance"
+    },
+    {
+      "classification": "internal",
+      "line": 1433,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [
+        "wLastPlayerMove",
+        "wPlayerUsedMoves"
+      ],
+      "rule_id": "move.apply_move_model.apply_last_move_encore_trap_bias",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".ApplyLastMoveEncoreTrapBias"
+    },
+    {
+      "classification": "public_info",
+      "line": 1483,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [
+        "Moves + MOVE_EFFECT",
+        "wPlayerUsedMoves"
+      ],
+      "rule_id": "move.apply_move_model.apply_revealed_selfdestruct_protect_bias",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".ApplyRevealedSelfdestructProtectBias"
+    },
+    {
+      "classification": "public_info",
+      "line": 1503,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [
+        "wPlayerUsedMoves"
+      ],
+      "rule_id": "move.apply_move_model.player_has_revealed_selfdestruct",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".PlayerHasRevealedSelfdestruct"
+    },
+    {
+      "classification": "public_info",
+      "line": 1507,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [
+        "wPlayerUsedMoves"
+      ],
+      "rule_id": "move.apply_move_model.apply_revealed_sleep_preempt_bias",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".ApplyRevealedSleepPreemptBias"
+    },
+    {
+      "classification": "internal",
+      "line": 1547,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [],
+      "rule_id": "move.apply_move_model.enemy_move_makes_contact",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".EnemyMoveMakesContact"
+    },
+    {
+      "classification": "internal",
+      "line": 1568,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [],
+      "rule_id": "move.apply_move_model.enemy_can_be_poisoned_by_retaliation",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".EnemyCanBePoisonedByRetaliation"
+    },
+    {
+      "classification": "internal",
+      "line": 1591,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [],
+      "rule_id": "move.apply_move_model.player_poison_type_contribution",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".PlayerPoisonTypeContribution"
+    },
+    {
+      "classification": "internal",
+      "line": 1618,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [],
+      "rule_id": "move.apply_move_model.enemy_has_boost_to_pass",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".EnemyHasBoostToPass"
+    },
+    {
+      "classification": "internal",
+      "line": 1633,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [],
+      "rule_id": "move.apply_move_model.player_has_major_setup_boost",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".PlayerHasMajorSetupBoost"
+    },
+    {
+      "classification": "internal",
+      "line": 1652,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [],
+      "rule_id": "move.apply_move_model.player_has_repeated_switch_pressure",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".PlayerHasRepeatedSwitchPressure"
+    },
+    {
+      "classification": "public_info",
+      "line": 1669,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [
+        "wBossAITurnsElapsed",
+        "wPlayerScreens"
+      ],
+      "rule_id": "move.apply_move_model.apply_spikes_layer_bias",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".ApplySpikesLayerBias"
+    },
+    {
+      "classification": "public_info",
+      "line": 1767,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [
+        "Moves + MOVE_EFFECT",
+        "wBossAITurnsElapsed",
+        "wPlayerScreens",
+        "wPlayerUsedMoves"
+      ],
+      "rule_id": "move.apply_move_model.apply_revealed_rapid_spin_spikes_risk",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".ApplyRevealedRapidSpinSpikesRisk"
+    },
+    {
+      "classification": "public_info",
+      "line": 1789,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [
+        "wBossAITurnsElapsed",
+        "wPlayerScreens"
+      ],
+      "rule_id": "move.apply_move_model.apply_spikes_layer2_unrevealed_spin_risk",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".ApplySpikesLayer2UnrevealedSpinRisk"
+    },
+    {
+      "classification": "public_info",
+      "line": 1800,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [
+        "wBossAITurnsElapsed",
+        "wPlayerScreens"
+      ],
+      "rule_id": "move.apply_move_model.apply_spikes_layer3_unrevealed_spin_risk",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".ApplySpikesLayer3UnrevealedSpinRisk"
+    },
+    {
+      "classification": "internal",
+      "line": 1817,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [],
+      "rule_id": "move.apply_move_model.boss_has_spinblock_available",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".BossHasSpinblockAvailable"
+    },
+    {
+      "classification": "public_info",
+      "line": 1822,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [
+        "Moves + MOVE_EFFECT",
+        "wPlayerUsedMoves"
+      ],
+      "rule_id": "move.apply_move_model.enemy_active_blocks_rapid_spin",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".EnemyActiveBlocksRapidSpin"
+    },
+    {
+      "classification": "public_info",
+      "line": 1834,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [
+        "wEnemyMonType1",
+        "wEnemyMonType2"
+      ],
+      "rule_id": "move.apply_move_model.boss_has_available_reserve_ghost",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".BossHasAvailableReserveGhost"
+    },
+    {
+      "classification": "public_info",
+      "line": 1938,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [
+        "Moves + MOVE_EFFECT",
+        "wBossAISeenPlayerSpecies",
+        "wPlayerUsedMoves"
+      ],
+      "rule_id": "move.apply_move_model.player_has_seen_bench_revealed_rapid_spin",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".PlayerHasSeenBenchRevealedRapidSpin"
+    },
+    {
+      "classification": "public_info",
+      "line": 2002,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [
+        "Moves + MOVE_EFFECT",
+        "wPlayerUsedMoves"
+      ],
+      "rule_id": "move.apply_move_model.player_active_likely_can_rapid_spin",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".PlayerActiveLikelyCanRapidSpin"
+    },
+    {
+      "classification": "public_info",
+      "line": 2049,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [
+        "EvosAttacks",
+        "Moves + MOVE_EFFECT",
+        "wBattleMonLevel",
+        "wPlayerMonSpecies",
+        "wPlayerUsedMoves"
+      ],
+      "rule_id": "move.apply_move_model.species_level_up_has_rapid_spin",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".SpeciesLevelUpHasRapidSpin"
+    },
+    {
+      "classification": "internal",
+      "line": 2106,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [],
+      "rule_id": "move.apply_move_model.apply_role_bias",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".ApplyRoleBias"
+    },
+    {
+      "classification": "internal",
+      "line": 2433,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [],
+      "rule_id": "move.apply_move_model.enemy_under_pressure",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".EnemyUnderPressure"
+    },
+    {
+      "classification": "internal",
+      "line": 2446,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [],
+      "rule_id": "move.apply_move_model.has_koline",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".HasKOLine"
+    },
+    {
+      "classification": "public_info",
+      "line": 2467,
+      "parent_label": "BossAI_EnemyIsGhostType",
+      "public_reads": [
+        "wEnemyMonType1",
+        "wEnemyMonType2"
+      ],
+      "rule_id": "move.enemy_is_ghost_type",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_EnemyIsGhostType"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 2490,
+      "parent_label": "BossAI_SelectMove",
+      "public_reads": [],
+      "rule_id": "move.select_move",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_SelectMove"
+    },
+    {
+      "classification": "public_info",
+      "line": 2698,
+      "parent_label": "BossAI_PlayerHasPublicThreatVsEnemy",
+      "public_reads": [],
+      "rule_id": "move.player_has_public_threat_vs_enemy",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_PlayerHasPublicThreatVsEnemy"
+    },
+    {
+      "classification": "public_info",
+      "line": 2715,
+      "parent_label": "BossAI_PlayerHasPublicThreatVsEnemyUncached",
+      "public_reads": [],
+      "rule_id": "move.player_has_public_threat_vs_enemy_uncached",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_PlayerHasPublicThreatVsEnemyUncached"
+    },
+    {
+      "classification": "public_info",
+      "line": 2773,
+      "parent_label": "BossAI_PlayerHasRevealedPriorityThreat",
+      "public_reads": [
+        "Moves + MOVE_EFFECT",
+        "wPlayerUsedMoves"
+      ],
+      "rule_id": "move.player_has_revealed_priority_threat",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_PlayerHasRevealedPriorityThreat"
+    },
+    {
+      "classification": "public_info",
+      "line": 2790,
+      "parent_label": "BossAI_PlayerHasRevealedPriorityThreatUncached",
+      "public_reads": [
+        "Moves + MOVE_EFFECT",
+        "wPlayerUsedMoves"
+      ],
+      "rule_id": "move.player_has_revealed_priority_threat_uncached",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_PlayerHasRevealedPriorityThreatUncached"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 2856,
+      "parent_label": "BossAI_CurrentEnemyMoveHasKOPressure",
+      "public_reads": [],
+      "rule_id": "move.current_enemy_move_has_kopressure",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_CurrentEnemyMoveHasKOPressure"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 2890,
+      "parent_label": "BossAI_CurrentEnemyMovePressureScore",
+      "public_reads": [],
+      "rule_id": "move.current_enemy_move_pressure_score",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_CurrentEnemyMovePressureScore"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 2980,
+      "parent_label": "BossAI_CurrentEnemyMoveScoredPower",
+      "public_reads": [],
+      "rule_id": "move.current_enemy_move_scored_power",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_CurrentEnemyMoveScoredPower"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 3018,
+      "parent_label": "BossAI_ScaleMovePowerByBaseStatRatio",
+      "public_reads": [],
+      "rule_id": "move.scale_move_power_by_base_stat_ratio",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_ScaleMovePowerByBaseStatRatio"
+    },
+    {
+      "classification": "public_info",
+      "line": 3096,
+      "parent_label": "BossAI_ApplyEnemyKnownPressureModifiers",
+      "public_reads": [],
+      "rule_id": "move.apply_enemy_known_pressure_modifiers",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_ApplyEnemyKnownPressureModifiers"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 3103,
+      "parent_label": "BossAI_ApplyEnemyHeldItemPressure",
+      "public_reads": [],
+      "rule_id": "move.apply_enemy_held_item_pressure",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_ApplyEnemyHeldItemPressure"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 3168,
+      "parent_label": "BossAI_ApplyEnemyOffensivePassivePressure",
+      "public_reads": [],
+      "rule_id": "move.apply_enemy_offensive_passive_pressure",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_ApplyEnemyOffensivePassivePressure"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 3202,
+      "parent_label": "BossAI_ApplyPlayerDefensivePassivePressure",
+      "public_reads": [],
+      "rule_id": "move.apply_player_defensive_passive_pressure",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_ApplyPlayerDefensivePassivePressure"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 3250,
+      "parent_label": "BossAI_DecPressureB",
+      "public_reads": [],
+      "rule_id": "move.dec_pressure_b",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_DecPressureB"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 3258,
+      "parent_label": "BossAI_EnemyBelowOneThirdHP",
+      "public_reads": [],
+      "rule_id": "move.enemy_below_one_third_hp",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_EnemyBelowOneThirdHP"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 3300,
+      "parent_label": "BossAI_CurrentEnemyMoveAccuracyRisky",
+      "public_reads": [],
+      "rule_id": "move.current_enemy_move_accuracy_risky",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_CurrentEnemyMoveAccuracyRisky"
+    },
+    {
+      "classification": "public_info",
+      "line": 3335,
+      "parent_label": "BossAI_PublicEnemyFaster",
+      "public_reads": [],
+      "rule_id": "move.public_enemy_faster",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_PublicEnemyFaster"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 3410,
+      "parent_label": "BossAI_PredictPlayerSwitch",
+      "public_reads": [],
+      "rule_id": "move.predict_player_switch",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_PredictPlayerSwitch"
+    },
+    {
+      "classification": "public_info",
+      "line": 3469,
+      "parent_label": "BossAI_HasRevealedSuperEffectiveMove",
+      "public_reads": [
+        "wPlayerUsedMoves"
+      ],
+      "rule_id": "move.has_revealed_super_effective_move",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_HasRevealedSuperEffectiveMove"
+    },
+    {
+      "classification": "public_info",
+      "line": 3525,
+      "parent_label": "BossAI_SeenBenchThreatScore",
+      "public_reads": [
+        "wBossAISeenPlayerSpecies"
+      ],
+      "rule_id": "move.seen_bench_threat_score",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_SeenBenchThreatScore"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 3620,
+      "parent_label": "BossAI_SelectPlanIfNeeded",
+      "public_reads": [],
+      "rule_id": "move.select_plan_if_needed",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_SelectPlanIfNeeded"
+    },
+    {
+      "classification": "internal",
+      "line": 3755,
+      "parent_label": "BossAI_SelectPlanIfNeeded",
+      "public_reads": [],
+      "rule_id": "move.select_plan_if_needed.is_wincon_compromised",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".IsWinconCompromised"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 3805,
+      "parent_label": "BossAI_FindPartyMonByRole",
+      "public_reads": [],
+      "rule_id": "move.find_party_mon_by_role",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_FindPartyMonByRole"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 3898,
+      "parent_label": "BossAI_IsSetupEffect",
+      "public_reads": [],
+      "rule_id": "move.is_setup_effect",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_IsSetupEffect"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 3925,
+      "parent_label": "BossAI_IsCurrentEnemySetupMove",
+      "public_reads": [],
+      "rule_id": "move.is_current_enemy_setup_move",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_IsCurrentEnemySetupMove"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 3942,
+      "parent_label": "BossAI_SetupBoostHasFurtherValue",
+      "public_reads": [],
+      "rule_id": "move.setup_boost_has_further_value",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_SetupBoostHasFurtherValue"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 4098,
+      "parent_label": "BossAI_SetupTurnIsAffordable",
+      "public_reads": [],
+      "rule_id": "move.setup_turn_is_affordable",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_SetupTurnIsAffordable"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 4125,
+      "parent_label": "BossAI_IsStatusEffect",
+      "public_reads": [],
+      "rule_id": "move.is_status_effect",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_IsStatusEffect"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 4136,
+      "parent_label": "BossAI_IsDenialEffect",
+      "public_reads": [],
+      "rule_id": "move.is_denial_effect",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_IsDenialEffect"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 4159,
+      "parent_label": "BossAI_ComputePlayerPlausibleTypeMask",
+      "public_reads": [],
+      "rule_id": "move.compute_player_plausible_type_mask",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_ComputePlayerPlausibleTypeMask"
+    },
+    {
+      "classification": "public_info",
+      "line": 4202,
+      "parent_label": "BossAI_AddPublicSTABThreatsToMask",
+      "public_reads": [],
+      "rule_id": "move.add_public_stabthreats_to_mask",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_AddPublicSTABThreatsToMask"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 4215,
+      "parent_label": "BossAI_PlayerActiveFourMoveSaturated",
+      "public_reads": [],
+      "rule_id": "move.player_active_four_move_saturated",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_PlayerActiveFourMoveSaturated"
+    },
+    {
+      "classification": "public_info",
+      "line": 4245,
+      "parent_label": "BossAI_AddRevealedDamagingTypesToMask",
+      "public_reads": [
+        "wPlayerUsedMoves"
+      ],
+      "rule_id": "move.add_revealed_damaging_types_to_mask",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_AddRevealedDamagingTypesToMask"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 4273,
+      "parent_label": "BossAI_AddMoveIdToPlausibleMask",
+      "public_reads": [],
+      "rule_id": "move.add_move_id_to_plausible_mask",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_AddMoveIdToPlausibleMask"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 4303,
+      "parent_label": "BossAI_AddMoveIdToLikelyMask",
+      "public_reads": [],
+      "rule_id": "move.add_move_id_to_likely_mask",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_AddMoveIdToLikelyMask"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 4336,
+      "parent_label": "BossAI_AddSpeciesAndPreEvolutionMovesToMask",
+      "public_reads": [],
+      "rule_id": "move.add_species_and_pre_evolution_moves_to_mask",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_AddSpeciesAndPreEvolutionMovesToMask"
+    },
+    {
+      "classification": "public_info",
+      "line": 4366,
+      "parent_label": "BossAI_LoadPublicThreatSourceSpecies",
+      "public_reads": [],
+      "rule_id": "move.load_public_threat_source_species",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_LoadPublicThreatSourceSpecies"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 4373,
+      "parent_label": "BossAI_AddCurrentSpeciesSpeculativeMoveThreats",
+      "public_reads": [],
+      "rule_id": "move.add_current_species_speculative_move_threats",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_AddCurrentSpeciesSpeculativeMoveThreats"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 4382,
+      "parent_label": "BossAI_AddCurrentSpeciesLikelyMoveThreats",
+      "public_reads": [],
+      "rule_id": "move.add_current_species_likely_move_threats",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_AddCurrentSpeciesLikelyMoveThreats"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 4391,
+      "parent_label": "BossAI_AdvanceToPreEvolutionThreatSource",
+      "public_reads": [],
+      "rule_id": "move.advance_to_pre_evolution_threat_source",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_AdvanceToPreEvolutionThreatSource"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 4400,
+      "parent_label": "BossAI_AddBaseTMHMMovesToMask",
+      "public_reads": [],
+      "rule_id": "move.add_base_tmhmmoves_to_mask",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_AddBaseTMHMMovesToMask"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 4434,
+      "parent_label": "BossAI_AddSpeciesLevelUpMovesToMask",
+      "public_reads": [
+        "EvosAttacks",
+        "wBattleMonLevel",
+        "wPlayerMonSpecies"
+      ],
+      "rule_id": "move.add_species_level_up_moves_to_mask",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_AddSpeciesLevelUpMovesToMask"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 4491,
+      "parent_label": "BossAI_AddSpeciesLevelUpMovesToLikelyMask",
+      "public_reads": [
+        "EvosAttacks",
+        "wBattleMonLevel",
+        "wPlayerMonSpecies"
+      ],
+      "rule_id": "move.add_species_level_up_moves_to_likely_mask",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_AddSpeciesLevelUpMovesToLikelyMask"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 4548,
+      "parent_label": "BossAI_AddSpeciesEggMovesToMask",
+      "public_reads": [],
+      "rule_id": "move.add_species_egg_moves_to_mask",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_AddSpeciesEggMovesToMask"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 4581,
+      "parent_label": "BossAI_ApplyPlanMoveBias",
+      "public_reads": [],
+      "rule_id": "move.apply_plan_move_bias",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_ApplyPlanMoveBias"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 4647,
+      "parent_label": "BossAI_ApplyScoutMoveBias",
+      "public_reads": [],
+      "rule_id": "move.apply_scout_move_bias",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_ApplyScoutMoveBias"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 4667,
+      "parent_label": "BossAI_ApplyRepeatPenalty",
+      "public_reads": [],
+      "rule_id": "move.apply_repeat_penalty",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_ApplyRepeatPenalty"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 4697,
+      "parent_label": "BossAI_ApplyLookaheadToTopMoveCandidates",
+      "public_reads": [],
+      "rule_id": "move.apply_lookahead_to_top_move_candidates",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_ApplyLookaheadToTopMoveCandidates"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 4793,
+      "parent_label": "BossAI_ApplySignedDeltaToScore",
+      "public_reads": [],
+      "rule_id": "move.apply_signed_delta_to_score",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_ApplySignedDeltaToScore"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 4826,
+      "parent_label": "BossAI_EvaluateActionLookahead",
+      "public_reads": [],
+      "rule_id": "move.evaluate_action_lookahead",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_EvaluateActionLookahead"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 4976,
+      "parent_label": "BossAI_ApplyMultiTurnProjection",
+      "public_reads": [],
+      "rule_id": "move.apply_multi_turn_projection",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_ApplyMultiTurnProjection"
+    },
+    {
+      "classification": "internal",
+      "line": 5087,
+      "parent_label": "BossAI_ApplyMultiTurnProjection",
+      "public_reads": [],
+      "rule_id": "move.apply_multi_turn_projection.is_under_pressure",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".IsUnderPressure"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 5132,
+      "parent_label": "BossAI_ClampSignedLookaheadDelta",
+      "public_reads": [],
+      "rule_id": "move.clamp_signed_lookahead_delta",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_ClampSignedLookaheadDelta"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 5161,
+      "parent_label": "BossAI_GetPrimaryThreatType",
+      "public_reads": [],
+      "rule_id": "move.get_primary_threat_type",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_GetPrimaryThreatType"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 5184,
+      "parent_label": "BossAI_GetPrimaryThreatTypeUncached",
+      "public_reads": [],
+      "rule_id": "move.get_primary_threat_type_uncached",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_GetPrimaryThreatTypeUncached"
+    },
+    {
+      "classification": "public_info",
+      "line": 5327,
+      "parent_label": "BossAI_GetRevealedMoveThreatTypeAndSeverity",
+      "public_reads": [
+        "wPlayerUsedMoves"
+      ],
+      "rule_id": "move.get_revealed_move_threat_type_and_severity",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_GetRevealedMoveThreatTypeAndSeverity"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 5360,
+      "parent_label": "BossAI_GetTypeThreatSeverityVsEnemyMon",
+      "public_reads": [],
+      "rule_id": "move.get_type_threat_severity_vs_enemy_mon",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_GetTypeThreatSeverityVsEnemyMon"
+    },
+    {
+      "classification": "public_info",
+      "line": 5388,
+      "parent_label": "BossAI_AdjustThreatSeverityForEnemyKnownDefense",
+      "public_reads": [],
+      "rule_id": "move.adjust_threat_severity_for_enemy_known_defense",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_AdjustThreatSeverityForEnemyKnownDefense"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 5429,
+      "parent_label": "BossAI_PlayerThreatTypeSuperEffectiveVsEnemy",
+      "public_reads": [],
+      "rule_id": "move.player_threat_type_super_effective_vs_enemy",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_PlayerThreatTypeSuperEffectiveVsEnemy"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 5444,
+      "parent_label": "BossAI_PlayerThreatTypeHitsEnemy",
+      "public_reads": [],
+      "rule_id": "move.player_threat_type_hits_enemy",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_PlayerThreatTypeHitsEnemy"
+    },
+    {
+      "classification": "public_info",
+      "line": 5462,
+      "parent_label": "BossAI_EnemyKnownItemNullifiesThreatType",
+      "public_reads": [],
+      "rule_id": "move.enemy_known_item_nullifies_threat_type",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_EnemyKnownItemNullifiesThreatType"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 5476,
+      "parent_label": "BossAI_DecThreatSeverityB",
+      "public_reads": [],
+      "rule_id": "move.dec_threat_severity_b",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_DecThreatSeverityB"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 5484,
+      "parent_label": "BossAI_EnemySpeciesCanEvolve",
+      "public_reads": [],
+      "rule_id": "move.enemy_species_can_evolve",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_EnemySpeciesCanEvolve"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 5523,
+      "parent_label": "BossAI_GetTierPlausibleRiskWeight",
+      "public_reads": [],
+      "rule_id": "move.get_tier_plausible_risk_weight",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_GetTierPlausibleRiskWeight"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 5536,
+      "parent_label": "BossAI_GetSpeculativePlausibleRiskWeight",
+      "public_reads": [],
+      "rule_id": "move.get_speculative_plausible_risk_weight",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_GetSpeculativePlausibleRiskWeight"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 5544,
+      "parent_label": "BossAI_GetScoutRollThreshold",
+      "public_reads": [],
+      "rule_id": "move.get_scout_roll_threshold",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_GetScoutRollThreshold"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 5559,
+      "parent_label": "BossAI_ShouldScout",
+      "public_reads": [],
+      "rule_id": "move.should_scout",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_ShouldScout"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 5588,
+      "parent_label": "BossAI_MarkScoutedIfScoutMove",
+      "public_reads": [],
+      "rule_id": "move.mark_scouted_if_scout_move",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_MarkScoutedIfScoutMove"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 5617,
+      "parent_label": "BossAI_MaybeMarkScoutPivot",
+      "public_reads": [],
+      "rule_id": "move.maybe_mark_scout_pivot",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_MaybeMarkScoutPivot"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 17,
+      "parent_label": "BossAI_SwitchOrTryItem",
+      "public_reads": [],
+      "rule_id": "switch.switch_or_try_item",
+      "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+      "source_label": "BossAI_SwitchOrTryItem"
+    },
+    {
+      "classification": "haki_exception",
+      "line": 111,
+      "parent_label": "BossAI_TryMortyHakiOracle",
+      "public_reads": [],
+      "rule_id": "switch.try_morty_haki_oracle",
+      "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+      "source_label": "BossAI_TryMortyHakiOracle"
+    },
+    {
+      "classification": "haki_exception",
+      "line": 160,
+      "parent_label": "BossAI_TryMortyHakiOracle",
+      "public_reads": [],
+      "rule_id": "switch.try_morty_haki_oracle.find_destiny_bond_slot",
+      "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+      "source_label": ".FindDestinyBondSlot"
+    },
+    {
+      "classification": "haki_exception",
+      "line": 187,
+      "parent_label": "BossAI_TryMortyHakiOracle",
+      "public_reads": [],
+      "rule_id": "switch.try_morty_haki_oracle.player_selected_strong_super_effective_attack",
+      "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+      "source_label": ".PlayerSelectedStrongSuperEffectiveAttack"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 208,
+      "parent_label": "BossAI_OnSwitchExecuted",
+      "public_reads": [],
+      "rule_id": "switch.on_switch_executed",
+      "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+      "source_label": "BossAI_OnSwitchExecuted"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 223,
+      "parent_label": "BossAI_DecaySwitchCooldown",
+      "public_reads": [],
+      "rule_id": "switch.decay_switch_cooldown",
+      "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+      "source_label": "BossAI_DecaySwitchCooldown"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 232,
+      "parent_label": "BossAI_CheckAbleToSwitchSafe",
+      "public_reads": [],
+      "rule_id": "switch.check_able_to_switch_safe",
+      "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+      "source_label": "BossAI_CheckAbleToSwitchSafe"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 254,
+      "parent_label": "BossAI_FindFirstAliveSwitchCandidate",
+      "public_reads": [],
+      "rule_id": "switch.find_first_alive_switch_candidate",
+      "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+      "source_label": "BossAI_FindFirstAliveSwitchCandidate"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 296,
+      "parent_label": "BossAI_GetSwitchThreshold",
+      "public_reads": [],
+      "rule_id": "switch.get_switch_threshold",
+      "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+      "source_label": "BossAI_GetSwitchThreshold"
+    },
+    {
+      "classification": "internal",
+      "line": 311,
+      "parent_label": "BossAI_GetSwitchThreshold",
+      "public_reads": [],
+      "rule_id": "switch.get_switch_threshold.apply_class_switch_threshold_mod",
+      "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+      "source_label": ".ApplyClassSwitchThresholdMod"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 376,
+      "parent_label": "BossAI_NeedsLoopPenalty",
+      "public_reads": [],
+      "rule_id": "switch.needs_loop_penalty",
+      "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+      "source_label": "BossAI_NeedsLoopPenalty"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 425,
+      "parent_label": "BossAI_IsImminentKOPrevention",
+      "public_reads": [],
+      "rule_id": "switch.is_imminent_koprevention",
+      "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+      "source_label": "BossAI_IsImminentKOPrevention"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 439,
+      "parent_label": "BossAI_EnemyPerishEscapeUrgent",
+      "public_reads": [
+        "wEnemyPerishCount",
+        "wEnemySubStatus1"
+      ],
+      "rule_id": "switch.enemy_perish_escape_urgent",
+      "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+      "source_label": "BossAI_EnemyPerishEscapeUrgent"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 455,
+      "parent_label": "BossAI_ShouldRespectPotentialPlayerRevenge",
+      "public_reads": [],
+      "rule_id": "switch.should_respect_potential_player_revenge",
+      "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+      "source_label": "BossAI_ShouldRespectPotentialPlayerRevenge"
+    },
+    {
+      "classification": "public_info",
+      "line": 491,
+      "parent_label": "BossAI_ShouldRespectPotentialPlayerRevenge",
+      "public_reads": [],
+      "rule_id": "switch.should_respect_potential_player_revenge.known_seen_revenge_threat",
+      "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+      "source_label": ".KnownSeenRevengeThreat"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 519,
+      "parent_label": "BossAI_IsScarfSwingPossible",
+      "public_reads": [],
+      "rule_id": "switch.is_scarf_swing_possible",
+      "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+      "source_label": "BossAI_IsScarfSwingPossible"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 525,
+      "parent_label": "BossAI_IsSuspiciousSwitchIn",
+      "public_reads": [],
+      "rule_id": "switch.is_suspicious_switch_in",
+      "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+      "source_label": "BossAI_IsSuspiciousSwitchIn"
+    },
+    {
+      "classification": "internal",
+      "line": 555,
+      "parent_label": "BossAI_IsSuspiciousSwitchIn",
+      "public_reads": [],
+      "rule_id": "switch.is_suspicious_switch_in.is_type_not_very_effective",
+      "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+      "source_label": ".IsTypeNotVeryEffective"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 567,
+      "parent_label": "BossAI_IsImmunityPivotOpportunity",
+      "public_reads": [],
+      "rule_id": "switch.is_immunity_pivot_opportunity",
+      "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+      "source_label": "BossAI_IsImmunityPivotOpportunity"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 639,
+      "parent_label": "BossAI_AceTimingHook",
+      "public_reads": [],
+      "rule_id": "switch.ace_timing_hook",
+      "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+      "source_label": "BossAI_AceTimingHook"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 685,
+      "parent_label": "BossAI_ComputeSwitchConfidence",
+      "public_reads": [],
+      "rule_id": "switch.compute_switch_confidence",
+      "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+      "source_label": "BossAI_ComputeSwitchConfidence"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 765,
+      "parent_label": "BossAI_RefineSwitchCandidateForPlausibleRisk",
+      "public_reads": [],
+      "rule_id": "switch.refine_switch_candidate_for_plausible_risk",
+      "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+      "source_label": "BossAI_RefineSwitchCandidateForPlausibleRisk"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 848,
+      "parent_label": "BossAI_ComputeSwitchCandidateRisk",
+      "public_reads": [],
+      "rule_id": "switch.compute_switch_candidate_risk",
+      "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+      "source_label": "BossAI_ComputeSwitchCandidateRisk"
+    },
+    {
+      "classification": "internal",
+      "line": 988,
+      "parent_label": "BossAI_ComputeSwitchCandidateRisk",
+      "public_reads": [],
+      "rule_id": "switch.compute_switch_candidate_risk.apply_primary_threat_immunity_tie_break",
+      "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+      "source_label": ".ApplyPrimaryThreatImmunityTieBreak"
+    },
+    {
+      "classification": "public_info",
+      "line": 1021,
+      "parent_label": "BossAI_ComputeSwitchCandidateRisk",
+      "public_reads": [
+        "Moves + MOVE_EFFECT",
+        "wPlayerUsedMoves"
+      ],
+      "rule_id": "switch.compute_switch_candidate_risk.apply_revealed_priority_switch_in_risk",
+      "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+      "source_label": ".ApplyRevealedPrioritySwitchInRisk"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 1148,
+      "parent_label": "BossAI_ApplyPlausibleRiskToSwitchConfidence",
+      "public_reads": [],
+      "rule_id": "switch.apply_plausible_risk_to_switch_confidence",
+      "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+      "source_label": "BossAI_ApplyPlausibleRiskToSwitchConfidence"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 1201,
+      "parent_label": "BossAI_ApplyPlanSwitchBias",
+      "public_reads": [],
+      "rule_id": "switch.apply_plan_switch_bias",
+      "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+      "source_label": "BossAI_ApplyPlanSwitchBias"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 1242,
+      "parent_label": "BossAI_ApplyPreservationSwitchBias",
+      "public_reads": [],
+      "rule_id": "switch.apply_preservation_switch_bias",
+      "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+      "source_label": "BossAI_ApplyPreservationSwitchBias"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 1265,
+      "parent_label": "BossAI_ShouldSackInsteadOfSwitch",
+      "public_reads": [],
+      "rule_id": "switch.should_sack_instead_of_switch",
+      "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+      "source_label": "BossAI_ShouldSackInsteadOfSwitch"
+    },
+    {
+      "classification": "platform_boundary",
+      "line": 1283,
+      "parent_label": "BossAI_IsSwitchingIntoWinconRisk",
+      "public_reads": [],
+      "rule_id": "switch.is_switching_into_wincon_risk",
+      "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+      "source_label": "BossAI_IsSwitchingIntoWinconRisk"
+    }
+  ],
+  "schema_version": 1,
+  "source_hashes": {
+    "engine\\battle\\ai\\boss_policy_move.asm": "12E6BC82F9D4A36BF7AA42D8914EC0C1C86E38838A4D4539732B0039BAA01FBF",
+    "engine\\battle\\ai\\boss_policy_switch.asm": "2DD08B15DCCA8DD95D171805C18995EF0F7262AC05F5EFEF7B6A97E41CF0C844"
+  }
+}
