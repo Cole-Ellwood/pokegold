@@ -38,6 +38,14 @@ from .generators import (
     generate_scenarios,
     write_jsonl as write_scenarios_jsonl,
 )
+from .invariants import (
+    DEFAULT_INVARIANTS_JSON_PATH,
+    DEFAULT_INVARIANTS_MD_PATH,
+    format_invariants_report,
+    mine_invariants_from_paths,
+    write_invariants_json,
+    write_invariants_markdown,
+)
 from .metamorphic import (
     format_metamorphic_report,
     run_metamorphic_suite,
@@ -59,6 +67,11 @@ from .minimize import (
     format_minimized_report,
     minimize_scenario_path,
     write_minimized_json,
+)
+from .mutation import (
+    format_mutation_report,
+    run_scorer_mutations,
+    write_mutation_json,
 )
 from .regression import (
     evaluate_corpus,
@@ -387,6 +400,30 @@ def cmd_metamorphic(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_mutate(args: argparse.Namespace) -> int:
+    if args.target != "scorer":
+        raise PreferenceDataError("only --target scorer is implemented")
+    fixtures = load_fixtures(args.fixtures)
+    labels = load_preferences(fixtures=fixtures, path=args.labels)
+    report = run_scorer_mutations(
+        fixtures,
+        labels,
+        threshold=args.threshold,
+        limit=args.limit,
+    )
+    if args.json_out != "":
+        write_mutation_json(report, Path(args.json_out))
+    if args.json:
+        print(json.dumps(report, indent=2, sort_keys=True))
+    else:
+        print(format_mutation_report(report))
+        if args.json_out != "":
+            print(f"wrote {args.json_out}")
+    if args.fail_on_survivor and report["survived_count"] > 0:
+        return 1
+    return 0
+
+
 def cmd_mastery_index_build(args: argparse.Namespace) -> int:
     data = build_mastery_index()
     if args.json_out != "":
@@ -452,6 +489,28 @@ def cmd_localize(args: argparse.Namespace) -> int:
         print(format_localization_report(report))
         if args.json_out != "":
             print(f"wrote {args.json_out}")
+    return 0
+
+
+def cmd_invariants_mine(args: argparse.Namespace) -> int:
+    report = mine_invariants_from_paths(
+        scenarios_path=args.scenarios,
+        runs_dir=args.runs_dir,
+        trace_dir=args.trace_dir,
+        trace_glob=args.glob,
+    )
+    if args.json_out != "":
+        write_invariants_json(report, Path(args.json_out))
+    if args.out != "":
+        write_invariants_markdown(report, Path(args.out))
+    if args.json:
+        print(json.dumps(report, indent=2, sort_keys=True))
+    else:
+        print(format_invariants_report(report))
+        if args.json_out != "":
+            print(f"wrote {args.json_out}")
+        if args.out != "":
+            print(f"wrote {args.out}")
     return 0
 
 
@@ -581,6 +640,16 @@ def build_parser() -> argparse.ArgumentParser:
     metamorphic_cmd.add_argument("--fail-on-mismatch", action="store_true")
     metamorphic_cmd.set_defaults(func=cmd_metamorphic)
 
+    mutate_cmd = subparsers.add_parser("mutate")
+    mutate_cmd.add_argument("--target", choices=["scorer"], default="scorer")
+    add_common_paths(mutate_cmd, labels_default=DEFAULT_PREFERENCES_PATH)
+    mutate_cmd.add_argument("--threshold", type=float, default=0.80)
+    mutate_cmd.add_argument("--limit", type=int)
+    mutate_cmd.add_argument("--json", action="store_true")
+    mutate_cmd.add_argument("--json-out", default="")
+    mutate_cmd.add_argument("--fail-on-survivor", action="store_true")
+    mutate_cmd.set_defaults(func=cmd_mutate)
+
     mastery_cmd = subparsers.add_parser("mastery-index")
     mastery_subcommands = mastery_cmd.add_subparsers(dest="mastery_command", required=True)
     mastery_build = mastery_subcommands.add_parser("build")
@@ -616,6 +685,24 @@ def build_parser() -> argparse.ArgumentParser:
     localize_cmd.add_argument("--json", action="store_true")
     localize_cmd.add_argument("--json-out", default="")
     localize_cmd.set_defaults(func=cmd_localize)
+
+    invariants_cmd = subparsers.add_parser("invariants")
+    invariants_subcommands = invariants_cmd.add_subparsers(
+        dest="invariants_command",
+        required=True,
+    )
+    invariants_mine = invariants_subcommands.add_parser("mine")
+    invariants_mine.add_argument("--scenarios", type=path_arg)
+    invariants_mine.add_argument("--runs-dir", type=path_arg)
+    invariants_mine.add_argument("--trace-dir", type=path_arg)
+    invariants_mine.add_argument("--glob", default="*_live.txt")
+    invariants_mine.add_argument("--json", action="store_true")
+    invariants_mine.add_argument(
+        "--json-out",
+        default=str(DEFAULT_INVARIANTS_JSON_PATH),
+    )
+    invariants_mine.add_argument("--out", default=str(DEFAULT_INVARIANTS_MD_PATH))
+    invariants_mine.set_defaults(func=cmd_invariants_mine)
     return parser
 
 

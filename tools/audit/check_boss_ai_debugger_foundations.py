@@ -11,10 +11,12 @@ if str(ROOT) not in sys.path:
 from tools.boss_ai_debugger.coverage_report import build_coverage_report
 from tools.boss_ai_debugger.counterfactuals import explain_counterfactuals
 from tools.boss_ai_debugger.generators import generate_scenarios
+from tools.boss_ai_debugger.invariants import mine_invariants
 from tools.boss_ai_debugger.localize import localize_report
 from tools.boss_ai_debugger.mastery_index import build_mastery_index
 from tools.boss_ai_debugger.metamorphic import run_metamorphic_suite
 from tools.boss_ai_debugger.minimize import minimize_scenario
+from tools.boss_ai_debugger.mutation import remove_rule_mutant, run_scorer_mutations
 from tools.boss_ai_debugger.review_queue import build_review_queue
 from tools.boss_ai_debugger.rom_scenarios import evaluate_batch
 from tools.boss_ai_debugger.rule_map import (
@@ -56,6 +58,22 @@ def main() -> int:
     counterfactual = explain_counterfactuals(analysis_scenario)
     minimized = minimize_scenario(analysis_scenario)
     localized = localize_report(batch, scenarios=scenarios, source="foundation_audit")
+    invariants = mine_invariants(
+        scenarios=scenarios,
+        trace_paths=sorted(DEFAULT_TRACE_DIR.glob("*_live.txt")),
+    )
+    mutation = run_scorer_mutations(
+        [mutation_fixture()],
+        [mutation_label()],
+        mutants=[
+            remove_rule_mutant(
+                "audit.remove_coverage",
+                "coverage",
+                "Remove coverage.",
+                "medium",
+            )
+        ],
+    )
 
     errors: list[str] = []
     if not fixture_report["valid"]:
@@ -79,6 +97,10 @@ def main() -> int:
         errors.append("minimization did not preserve verdict")
     if not localized["likely_causes"]:
         errors.append("localization did not report likely causes")
+    if invariants["candidate_count"] == 0:
+        errors.append("invariant miner did not produce candidates")
+    if mutation["killed_count"] != 1:
+        errors.append("mutation smoke did not kill the coverage-removal mutant")
 
     if errors:
         print("Boss AI debugger foundation audit failed.")
@@ -117,7 +139,53 @@ def main() -> int:
         f"minimized_preserved={minimized['preserved']}, "
         f"likely_causes={len(localized['likely_causes'])}."
     )
+    print(
+        "Trust tools: "
+        f"invariant_candidates={invariants['candidate_count']}, "
+        f"invariant_violations={invariants['violation_count']}, "
+        f"mutants_killed={mutation['killed_count']} / {mutation['mutant_count']}."
+    )
     return 0
+
+
+def mutation_fixture() -> dict:
+    return {
+        "id": "foundation_mutation_fixture",
+        "leader": "Tester",
+        "state": {},
+        "actions": [
+            {
+                "id": "move_crunch",
+                "kind": "move",
+                "name": "Crunch",
+                "explanation": "coverage move",
+                "public_tradeoff": "punish visible pressure",
+            },
+            {
+                "id": "move_tackle",
+                "kind": "move",
+                "name": "Tackle",
+                "explanation": "plain move",
+                "public_tradeoff": "neutral",
+            },
+        ],
+    }
+
+
+def mutation_label() -> dict:
+    return {
+        "fixture_id": "foundation_mutation_fixture",
+        "state_version": 1,
+        "action_a_id": "move_crunch",
+        "action_b_id": "move_tackle",
+        "choice": "a_better",
+        "preferred_action_id": "move_crunch",
+        "reason_tags": [],
+        "action_tags": {"move_crunch": [], "move_tackle": []},
+        "note": "foundation audit label",
+        "created_at": "2026-05-15T00:00:00+00:00",
+        "tool_version": "boss-ai-preference-v0",
+    }
 
 
 if __name__ == "__main__":

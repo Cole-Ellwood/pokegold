@@ -184,6 +184,27 @@ source-to-policy ledger. The coverage report shows mapped Boss AI rules,
 generated scenario tag coverage, policy-card evidence coverage, and explicitly
 flags that full ROM scoring trace coverage is not implemented yet.
 
+Run scorer mutation tests:
+
+```powershell
+python -m tools.boss_ai_debugger mutate --target scorer --json-out audit\boss_ai_debugger\mutation_report.json
+```
+
+The mutation runner wraps the Python scorer in memory and reuses the strict
+pairwise preference regression. It reports killed, survived, and not-exercised
+mutants so missing label coverage is visible instead of being mistaken for
+correctness.
+
+Mine candidate invariants:
+
+```powershell
+python -m tools.boss_ai_debugger invariants mine --scenarios audit\boss_ai_debugger\generated\spikes_spin.jsonl --trace-dir audit\boss_ai_trace --runs-dir audit\boss_ai_debugger\runs
+```
+
+`invariants mine` emits candidate selector/scenario/run-store invariants with
+support counts and violations. These are hypotheses until promoted to a
+dedicated audit.
+
 Analyze a mismatch:
 
 ```powershell
