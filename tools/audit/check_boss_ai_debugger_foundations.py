@@ -10,6 +10,7 @@ if str(ROOT) not in sys.path:
 
 from tools.boss_ai_debugger.coverage_report import build_coverage_report
 from tools.boss_ai_debugger.counterfactuals import explain_counterfactuals
+from tools.boss_ai_debugger.decision_trace import decision_trace_for_scenario
 from tools.boss_ai_debugger.differential import build_differential_report
 from tools.boss_ai_debugger.generators import generate_scenarios
 from tools.boss_ai_debugger.invariants import mine_invariants
@@ -57,6 +58,7 @@ def main() -> int:
         ),
         scenarios[0],
     )
+    decision_trace = decision_trace_for_scenario(analysis_scenario)
     counterfactual = explain_counterfactuals(analysis_scenario)
     minimized = minimize_scenario(analysis_scenario)
     localized = localize_report(batch, scenarios=scenarios, source="foundation_audit")
@@ -101,6 +103,12 @@ def main() -> int:
         errors.append("coverage report mastery policy-card count mismatch")
     if not counterfactual["score_flips_to_expected_best"]:
         errors.append("counterfactual analysis did not report expected-best score flips")
+    if decision_trace["event_count"] == 0:
+        errors.append("decision trace did not report events")
+    if not any(
+        event["event_type"] == "selector" for event in decision_trace["events"]
+    ):
+        errors.append("decision trace did not include selector event")
     if not minimized["preserved"]:
         errors.append("minimization did not preserve verdict")
     if not localized["likely_causes"]:
@@ -151,6 +159,7 @@ def main() -> int:
     )
     print(
         "Analysis tools: "
+        f"decision_events={decision_trace['event_count']}, "
         f"counterfactual={counterfactual['scenario_id']}, "
         f"minimized_preserved={minimized['preserved']}, "
         f"likely_causes={len(localized['likely_causes'])}."

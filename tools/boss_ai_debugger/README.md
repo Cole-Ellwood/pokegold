@@ -240,6 +240,17 @@ that would flip the answer, `minimize` removes nonessential fields/actions while
 preserving the verdict, and `localize` ranks overrepresented tags and move-delta
 rules in reviewable batches.
 
+Render a Python scenario decision trace:
+
+```powershell
+python -m tools.boss_ai_debugger decision-trace --scenario audit\boss_ai_debugger\generated\spikes_spin.jsonl --scenario-id generated_spikes_spin_1_00001
+```
+
+`decision-trace` emits structured events for state load, candidates, score-rule
+contributions, selector output, and policy check. It is the Python scenario
+waterfall format; full ROM scoring contribution events still require trace-ROM
+instrumentation.
+
 Classify one-turn route context:
 
 ```powershell

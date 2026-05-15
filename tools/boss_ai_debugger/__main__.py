@@ -37,6 +37,11 @@ from .differential import (
     format_differential_report,
     write_differential_json,
 )
+from .decision_trace import (
+    decision_trace_from_path,
+    format_decision_trace,
+    write_decision_trace_json,
+)
 from .generators import (
     FAMILIES as GENERATOR_FAMILIES,
     format_generate_report,
@@ -566,6 +571,22 @@ def cmd_diff(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_decision_trace(args: argparse.Namespace) -> int:
+    trace = decision_trace_from_path(
+        args.scenario,
+        scenario_id=args.scenario_id or None,
+    )
+    if args.json_out != "":
+        write_decision_trace_json(trace, Path(args.json_out))
+    if args.json:
+        print(json.dumps(trace, indent=2, sort_keys=True))
+    else:
+        print(format_decision_trace(trace, limit=args.limit))
+        if args.json_out != "":
+            print(f"wrote {args.json_out}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="python -m tools.boss_ai_debugger")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -755,6 +776,14 @@ def build_parser() -> argparse.ArgumentParser:
     diff_cmd.add_argument("--limit", type=int, default=20)
     diff_cmd.add_argument("--fail-on-mismatch", action="store_true")
     diff_cmd.set_defaults(func=cmd_diff)
+
+    decision_trace_cmd = subparsers.add_parser("decision-trace")
+    decision_trace_cmd.add_argument("--scenario", type=path_arg, required=True)
+    decision_trace_cmd.add_argument("--scenario-id", default="")
+    decision_trace_cmd.add_argument("--json", action="store_true")
+    decision_trace_cmd.add_argument("--json-out", default="")
+    decision_trace_cmd.add_argument("--limit", type=int, default=40)
+    decision_trace_cmd.set_defaults(func=cmd_decision_trace)
 
     invariants_cmd = subparsers.add_parser("invariants")
     invariants_subcommands = invariants_cmd.add_subparsers(
