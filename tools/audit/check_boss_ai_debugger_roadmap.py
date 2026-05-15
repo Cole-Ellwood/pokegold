@@ -405,7 +405,11 @@ def roadmap_items(evidence: dict[str, Any]) -> list[dict[str, Any]]:
                     "predicate_branch_entries="
                     f"{coverage['rule_map']['trace_predicate_branch_entry_count']}"
                 ),
-                "ROM trace known limits say selected branch labels are traced, but dynamic memory-read slicing is absent",
+                (
+                    "predicate_public_input_snapshots="
+                    f"{coverage['rule_map']['trace_predicate_public_input_snapshot_count']}"
+                ),
+                "ROM trace known limits say selected branch labels and legal-input snapshots are traced, but dynamic memory-read slicing is absent",
             ],
             gaps=provenance_gaps(coverage),
             refs=[
@@ -547,7 +551,7 @@ def score_trace_gaps(coverage: dict[str, Any]) -> list[str]:
         gaps.append("No ROM score contribution events are available.")
     if not coverage["rule_map"]["full_trace_rule_coverage_available"]:
         gaps.append(
-            "False predicate paths and dynamic public-read provenance are not traced."
+            "False predicate paths and full dynamic public-read slicing are not traced."
         )
     if coverage["uncovered_rules"]["uncovered_rule_count"]:
         gaps.append(
@@ -560,6 +564,8 @@ def score_trace_gaps(coverage: dict[str, Any]) -> list[str]:
 
 
 def provenance_status(coverage: dict[str, Any]) -> str:
+    if coverage["rule_map"]["trace_predicate_public_input_snapshot_count"] > 0:
+        return "partial"
     if coverage["rule_map"]["trace_predicate_branch_entry_count"] > 0:
         return "partial"
     return "missing"
@@ -569,10 +575,12 @@ def provenance_gaps(coverage: dict[str, Any]) -> list[str]:
     gaps = []
     if coverage["rule_map"]["trace_predicate_branch_entry_count"] == 0:
         gaps.append("No selected public-info predicate branch labels were observed.")
+    if coverage["rule_map"]["trace_predicate_public_input_snapshot_count"] == 0:
+        gaps.append("No selected public-info predicate legal-input snapshots were observed.")
     gaps.append(
-        "Trace actual public memory reads and false predicate outcomes so "
+        "Trace false predicate outcomes and full CPU memory-read slices so "
         "public-info legality is proven per event instead of inferred from "
-        "rule metadata and selected branch labels."
+        "rule metadata, selected branch labels, and selected-input snapshots."
     )
     return gaps
 
@@ -717,6 +725,9 @@ def evidence_summary(evidence: dict[str, Any]) -> dict[str, Any]:
         "trace_rule_entry_count": coverage["rule_map"]["trace_rule_entry_count"],
         "trace_predicate_branch_entry_count": coverage["rule_map"][
             "trace_predicate_branch_entry_count"
+        ],
+        "trace_predicate_public_input_snapshot_count": coverage["rule_map"][
+            "trace_predicate_public_input_snapshot_count"
         ],
         "uncovered_rule_count": coverage["uncovered_rules"]["uncovered_rule_count"],
         "full_trace_rule_coverage_available": coverage["rule_map"][

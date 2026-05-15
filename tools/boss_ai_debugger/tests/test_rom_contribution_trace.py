@@ -162,6 +162,10 @@ class RomContributionTraceTests(unittest.TestCase):
         pyboy.memory[1, 0xD769] = 0xD3
         pyboy.memory[1, 0xD0D3] = 20
         pyboy.memory[1, 0xD100] = 57
+        for offset in range(6):
+            pyboy.memory[1, 0xD742 + offset] = 0x10 + offset
+        for offset in range(24):
+            pyboy.memory[1, 0xD777 + offset] = 0x80 + offset
         pyboy.register_file.SP = 0xFEF0
         tracer = RomContributionTracer(
             pyboy,
@@ -169,6 +173,8 @@ class RomContributionTraceTests(unittest.TestCase):
                 "wEnemyAIMoveScores": Symbol(1, 0xD0D3),
                 "wEnemyMonMoves": Symbol(1, 0xD100),
                 "wBossAIScorePtr": Symbol(1, 0xD768),
+                "wBossAISeenPlayerSpecies": Symbol(1, 0xD742),
+                "wBossAISpeciesUsedMoves": Symbol(1, 0xD777),
             },
             FakeSymbolIndex(),
             {57: "SURF"},
@@ -208,6 +214,69 @@ class RomContributionTraceTests(unittest.TestCase):
             entry["source"]["dynamic_branch_legal_inputs"],
             ["wBossAISeenPlayerSpecies", "wBossAISpeciesUsedMoves"],
         )
+        snapshot = entry["public_input_snapshot"]
+        self.assertEqual(
+            snapshot["wBossAISeenPlayerSpecies"]["values"],
+            [0x10, 0x11, 0x12, 0x13, 0x14, 0x15],
+        )
+        self.assertEqual(snapshot["wBossAISeenPlayerSpecies"]["width"], 6)
+        self.assertEqual(snapshot["wBossAISpeciesUsedMoves"]["width"], 24)
+        self.assertEqual(
+            snapshot["wBossAISpeciesUsedMoves"]["values"][:4],
+            [0x80, 0x81, 0x82, 0x83],
+        )
+
+    def test_public_input_snapshot_records_byte_party_and_static_inputs(self) -> None:
+        pyboy = FakePyBoy()
+        pyboy.memory[0, 0xCBE8] = 0xE5
+        pyboy.memory[0, 0xCBE9] = 0x00
+        pyboy.memory[0, 0xCBEA] = 0x33
+        pyboy.memory[0, 0xCBEB] = 0x44
+        pyboy.memory[1, 0xDD56] = 0x5E
+        pyboy.memory[1, 0xDD57] = 0x5F
+        for slot_index in range(6):
+            base = 0xDD7F + (slot_index * 48)
+            for offset in range(4):
+                pyboy.memory[1, base + offset] = (slot_index * 4) + offset + 1
+        tracer = RomContributionTracer(
+            pyboy,
+            {
+                "wPlayerUsedMoves": Symbol(0, 0xCBE8),
+                "wOTPartySpecies": Symbol(1, 0xDD56),
+                "wOTPartyMon1HP": Symbol(1, 0xDD7F),
+                "BaseData": Symbol(0x14, 0x5AB9),
+                "EvosAttacksPointers": Symbol(0x10, 0x685C),
+            },
+            FakeSymbolIndex(),
+            {},
+        )
+
+        snapshot = tracer.public_input_snapshot(
+            (
+                "wPlayerUsedMoves",
+                "wOTPartySpecies",
+                "wOTPartyMon1HP",
+                "BaseData",
+                "EvosAttacks",
+                "MissingPublicInput",
+            )
+        )
+
+        self.assertEqual(snapshot["wPlayerUsedMoves"]["kind"], "byte_range")
+        self.assertEqual(
+            snapshot["wPlayerUsedMoves"]["values"],
+            [0xE5, 0, 0x33, 0x44],
+        )
+        self.assertEqual(snapshot["wOTPartySpecies"]["width"], 7)
+        self.assertEqual(snapshot["wOTPartySpecies"]["values"][:2], [0x5E, 0x5F])
+        party_hp = snapshot["wOTPartyMon1HP"]
+        self.assertEqual(party_hp["kind"], "party_hp_slots")
+        self.assertEqual(party_hp["slot_count"], 6)
+        self.assertEqual(party_hp["slots"][0]["values"], [1, 2, 3, 4])
+        self.assertEqual(party_hp["slots"][5]["values"], [21, 22, 23, 24])
+        self.assertEqual(snapshot["BaseData"]["kind"], "static_table_reference")
+        self.assertEqual(snapshot["EvosAttacks"]["symbol"], "EvosAttacksPointers")
+        self.assertFalse(snapshot["MissingPublicInput"]["available"])
 
     def test_format_marks_changed_events(self) -> None:
         text = format_rom_contribution_trace(
@@ -293,6 +362,9 @@ class RomContributionTraceTests(unittest.TestCase):
                             "predicate_id": "seen_bench_revealed_rapid_spin",
                             "outcome": "found",
                         },
+                        "public_input_snapshot": {
+                            "wBossAISeenPlayerSpecies": {"values": [1, 2, 3]},
+                        },
                         "source": {
                             "rule_id": "move.predicate_rule",
                             "classification": "public_info",
@@ -355,6 +427,7 @@ class RomContributionTraceTests(unittest.TestCase):
             summary["predicate_outcome_counts"],
             {"seen_bench_revealed_rapid_spin:found": 1},
         )
+        self.assertEqual(summary["predicate_public_input_snapshot_count"], 1)
 
     def test_parse_memory_patch_supports_symbol_offsets_and_hex_values(self) -> None:
         patch = parse_memory_patch("wPlayerUsedMoves+2=0xe5")

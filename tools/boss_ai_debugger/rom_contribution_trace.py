@@ -21,6 +21,32 @@ DEFAULT_ROM_CONTRIBUTION_TRACE_PROBE_PATH = (
     ROOT / "audit" / "boss_ai_debugger" / "rom_contribution_trace_spikes_spin_probe.json"
 )
 
+PARTY_LENGTH = 6
+PARTYMON_STRUCT_LENGTH = 48
+
+PUBLIC_INPUT_SNAPSHOT_WIDTHS = {
+    "wPlayerScreens": 1,
+    "wEnemyScreens": 1,
+    "wPlayerUsedMoves": 4,
+    "wEnemyMonType1": 1,
+    "wEnemyMonType2": 1,
+    "wEnemySubStatus1": 1,
+    "wOTPartyCount": 1,
+    "wOTPartySpecies": PARTY_LENGTH + 1,
+    "wBossAITier": 1,
+    "wBossAISeenPlayerSpeciesCount": 1,
+    "wBossAISeenPlayerSpecies": PARTY_LENGTH,
+    "wBossAISeenPlayerAliveMask": 1,
+    "wBossAISpeciesUsedMoves": PARTY_LENGTH * 4,
+    "wBattleMonSpecies": 1,
+    "wBattleMonLevel": 1,
+}
+
+STATIC_PUBLIC_TABLE_SYMBOLS = {
+    "BaseData": "BaseData",
+    "EvosAttacks": "EvosAttacksPointers",
+}
+
 SCORE_HELPERS = {
     "BossAI_ApplyMoveModel.EncourageScoreByA": "encourage_tier_weight",
     "BossAI_ApplyMoveModel.DiscourageScoreByA": "discourage_tier_weight",
@@ -90,7 +116,7 @@ PREDICATE_BRANCH_HOOKS = {
             "wPlayerUsedMoves",
             "wEnemySubStatus1",
             "wOTPartySpecies",
-            "wOTPartyMonHP",
+            "wOTPartyMon1HP",
         ),
     },
     "BossAI_ApplyMoveModel.spikes_l2_soft_spin_risk": {
@@ -142,7 +168,7 @@ PREDICATE_BRANCH_HOOKS = {
         "parent_symbol": "BossAI_ApplyMoveModel.BossHasAvailableReserveGhost",
         "legal_inputs": (
             "wOTPartySpecies",
-            "wOTPartyMonHP",
+            "wOTPartyMon1HP",
             "BaseData",
         ),
     },
@@ -153,7 +179,7 @@ PREDICATE_BRANCH_HOOKS = {
         "legal_inputs": (
             "wOTPartyCount",
             "wOTPartySpecies",
-            "wOTPartyMonHP",
+            "wOTPartyMon1HP",
             "BaseData",
         ),
     },
@@ -424,6 +450,9 @@ class RomContributionTracer:
                     "parent_symbol": target.parent_symbol,
                     "legal_inputs": list(target.legal_inputs),
                 },
+                "public_input_snapshot": self.public_input_snapshot(
+                    target.legal_inputs
+                ),
                 "source": self.source_for_predicate_branch(target),
             }
         )
@@ -591,6 +620,117 @@ class RomContributionTracer:
             except Exception:
                 continue
         return values
+
+    def public_input_snapshot(self, names: tuple[str, ...]) -> dict[str, Any]:
+        return {name: self.snapshot_public_input(name) for name in names}
+
+    def snapshot_public_input(self, name: str) -> dict[str, Any]:
+        if name == "wOTPartyMon1HP":
+            return self.party_hp_snapshot(name)
+
+        static_symbol_name = STATIC_PUBLIC_TABLE_SYMBOLS.get(name)
+        if static_symbol_name is not None:
+            return self.static_table_snapshot(name, static_symbol_name)
+
+        symbol = self.symbols.get(name)
+        if symbol is None:
+            return {
+                "available": False,
+                "reason": "symbol not found",
+            }
+        width = PUBLIC_INPUT_SNAPSHOT_WIDTHS.get(name, 1)
+        try:
+            values = [
+                self.read_symbol_offset(symbol, offset)
+                for offset in range(width)
+            ]
+        except Exception as exc:
+            return {
+                "available": False,
+                "symbol": name,
+                "bank": f"{symbol.bank:02x}",
+                "address": f"{symbol.address:04x}",
+                "width": width,
+                "reason": f"read failed: {exc}",
+            }
+        return {
+            "available": True,
+            "kind": "byte_range",
+            "symbol": name,
+            "bank": f"{symbol.bank:02x}",
+            "address": f"{symbol.address:04x}",
+            "width": width,
+            "values": values,
+        }
+
+    def party_hp_snapshot(self, name: str) -> dict[str, Any]:
+        symbol = self.symbols.get(name)
+        if symbol is None:
+            return {
+                "available": False,
+                "reason": "symbol not found",
+            }
+        slots = []
+        try:
+            for slot_index in range(PARTY_LENGTH):
+                address = symbol.address + (slot_index * PARTYMON_STRUCT_LENGTH)
+                values = [
+                    self.read_symbol_offset(
+                        capture.Symbol(symbol.bank, address),
+                        offset,
+                    )
+                    for offset in range(4)
+                ]
+                slots.append(
+                    {
+                        "slot_index": slot_index,
+                        "address": f"{address:04x}",
+                        "values": values,
+                    }
+                )
+        except Exception as exc:
+            return {
+                "available": False,
+                "symbol": name,
+                "bank": f"{symbol.bank:02x}",
+                "address": f"{symbol.address:04x}",
+                "reason": f"read failed: {exc}",
+            }
+        return {
+            "available": True,
+            "kind": "party_hp_slots",
+            "symbol": name,
+            "bank": f"{symbol.bank:02x}",
+            "address": f"{symbol.address:04x}",
+            "slot_count": len(slots),
+            "slot_width": 4,
+            "stride": PARTYMON_STRUCT_LENGTH,
+            "slots": slots,
+        }
+
+    def static_table_snapshot(
+        self,
+        input_name: str,
+        symbol_name: str,
+    ) -> dict[str, Any]:
+        symbol = self.symbols.get(symbol_name)
+        if symbol is None:
+            return {
+                "available": False,
+                "kind": "static_table_reference",
+                "symbol": symbol_name,
+                "reason": "symbol not found",
+            }
+        return {
+            "available": True,
+            "kind": "static_table_reference",
+            "input": input_name,
+            "symbol": symbol_name,
+            "bank": f"{symbol.bank:02x}",
+            "address": f"{symbol.address:04x}",
+            "values": [],
+            "note": "static ROM table reference; branch-specific table bytes are not sampled",
+        }
 
     def stack_return_address(self) -> int:
         sp = int(self.pyboy.register_file.SP)
@@ -986,7 +1126,7 @@ def build_report(
             "Trace events are captured by PyBoy execution hooks, not by an in-ROM WRAM ring buffer.",
             "Score events record score helper deltas and source labels, while rule entries record dynamic rule-label execution.",
             "Predicate branch entries record selected executable public-info branch labels, not full false-path coverage.",
-            "Public-read evidence combines static rule-map hints with selected branch legal-input labels, not dynamic memory-read slicing yet.",
+            "Public-read evidence includes selected branch legal-input snapshots, but not full dynamic memory-read slicing yet.",
         ],
     }
 
@@ -1124,6 +1264,9 @@ def summarize_rom_contribution_trace(
     )
     predicate_counts = count_predicate_values(predicate_branch_entries, "predicate_id")
     predicate_outcome_counts = count_predicate_outcomes(predicate_branch_entries)
+    predicate_snapshot_count = count_predicate_public_input_snapshots(
+        predicate_branch_entries
+    )
     result = {
         "available": True,
         "source": report.get("source", ""),
@@ -1141,6 +1284,7 @@ def summarize_rom_contribution_trace(
         "predicate_branch_entry_count": int(
             report.get("predicate_branch_entry_count", len(predicate_branch_entries))
         ),
+        "predicate_public_input_snapshot_count": predicate_snapshot_count,
         "executed_rule_count": len(executed_rule_ids),
         "covered_rule_count": len(covered_rule_ids),
         "changed_rule_count": len(changed_rule_ids),
@@ -1185,6 +1329,7 @@ def summarize_rom_contribution_trace_paths(paths: list[Path]) -> dict[str, Any]:
             "changed_event_count": 0,
             "rule_entry_count": 0,
             "predicate_branch_entry_count": 0,
+            "predicate_public_input_snapshot_count": 0,
             "executed_rule_count": 0,
             "covered_rule_count": 0,
             "changed_rule_count": 0,
@@ -1238,6 +1383,10 @@ def summarize_rom_contribution_trace_paths(paths: list[Path]) -> dict[str, Any]:
         "rule_entry_count": sum(int(summary["rule_entry_count"]) for summary in loaded),
         "predicate_branch_entry_count": sum(
             int(summary["predicate_branch_entry_count"]) for summary in loaded
+        ),
+        "predicate_public_input_snapshot_count": sum(
+            int(summary["predicate_public_input_snapshot_count"])
+            for summary in loaded
         ),
         "executed_rule_count": len(executed_rule_ids),
         "covered_rule_count": len(covered_rule_ids),
@@ -1429,6 +1578,15 @@ def count_predicate_outcomes(events: list[dict[str, Any]]) -> dict[str, int]:
         key = f"{predicate_id}:{outcome}"
         counts[key] = counts.get(key, 0) + 1
     return dict(sorted(counts.items()))
+
+
+def count_predicate_public_input_snapshots(events: list[dict[str, Any]]) -> int:
+    count = 0
+    for event in events:
+        snapshot = event.get("public_input_snapshot")
+        if isinstance(snapshot, dict) and snapshot:
+            count += 1
+    return count
 
 
 def count_unmapped_events(events: list[dict[str, Any]]) -> int:
