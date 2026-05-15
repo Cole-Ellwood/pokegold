@@ -39,6 +39,7 @@ class PerformanceAuditTests(unittest.TestCase):
             "min_scenarios_per_minute": 10_000,
             "min_reviewable_checks_per_minute": 1_000,
             "min_queue_inputs_per_minute": 10_000,
+            "min_rom_backed_replay_per_minute": 10_000,
             "max_duplicate_lesson_rate": 0.1,
             "batch": {
                 "scenarios_per_minute": 9_000,
@@ -49,9 +50,13 @@ class PerformanceAuditTests(unittest.TestCase):
                 "queue_inputs_per_minute": 9_000,
                 "avoidable_duplicate_lesson_rate": 0.2,
             },
+            "rom_backed_replay": {
+                "error_count": 2,
+                "materializations_per_minute": 9_000,
+            },
         }
 
-        self.assertEqual(len(performance_errors(report)), 4)
+        self.assertEqual(len(performance_errors(report)), 6)
 
 
 if __name__ == "__main__":

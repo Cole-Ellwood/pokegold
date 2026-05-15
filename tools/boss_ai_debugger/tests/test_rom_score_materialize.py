@@ -6,6 +6,7 @@ from tools.boss_ai_debugger.generators import generate_scenarios
 from tools.boss_ai_debugger.rom_score_materialize import (
     MOVES,
     action_id_for_slot,
+    chunk_scenarios,
     empty_contribution_comparison,
     hook_equivalence_summary,
     materialization_for_scenario,
@@ -85,6 +86,17 @@ class RomScoreMaterializeTests(unittest.TestCase):
         self.assertFalse(summary["match"])
         self.assertFalse(summary["score_bytes_match"])
         self.assertFalse(summary["chosen_match"])
+
+    def test_chunk_scenarios_preserves_all_cases(self) -> None:
+        scenarios = [{"id": str(index)} for index in range(7)]
+
+        chunks = chunk_scenarios(scenarios, workers=3)
+
+        self.assertEqual([len(chunk) for chunk in chunks], [3, 2, 2])
+        self.assertEqual(
+            sorted(item["id"] for chunk in chunks for item in chunk),
+            [str(index) for index in range(7)],
+        )
 
 
 if __name__ == "__main__":

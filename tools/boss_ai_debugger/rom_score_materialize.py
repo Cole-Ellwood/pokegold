@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import io
 import json
+import os
 import time
+from concurrent.futures import ProcessPoolExecutor
 from contextlib import ExitStack
 from dataclasses import dataclass
 from pathlib import Path
@@ -123,6 +126,7 @@ class RomScoreReplaySession:
         self.memory_patches: list[MemoryPatch] = []
         self.score_start_patches_applied = False
         self.score_start_patch_count = 0
+        self.state_cache: dict[Path, bytes] = {}
         self.pyboy.hook_register(
             score_move.bank,
             score_move.address,
@@ -159,8 +163,7 @@ class RomScoreReplaySession:
         self.memory_patches = patches
         self.score_start_patches_applied = False
         self.score_start_patch_count = 0
-        with save_state.open("rb") as fh:
-            self.pyboy.load_state(fh)
+        self.load_state(save_state)
         apply_memory_patches(self.pyboy, self.symbols, patches)
         clear_chosen_move(self.pyboy, self.symbols)
         if button:
@@ -197,6 +200,13 @@ class RomScoreReplaySession:
         self.score_start_patches_applied = True
         self.score_start_patch_count += 1
 
+    def load_state(self, save_state: Path) -> None:
+        state_bytes = self.state_cache.get(save_state)
+        if state_bytes is None:
+            state_bytes = save_state.read_bytes()
+            self.state_cache[save_state] = state_bytes
+        self.pyboy.load_state(io.BytesIO(state_bytes))
+
 
 def run_rom_score_materialization_from_path(
     scenarios_path: Path,
@@ -211,6 +221,7 @@ def run_rom_score_materialization_from_path(
     watch_frames: int = DEFAULT_WATCH_FRAMES,
     collect_contribution_traces: bool = True,
     compare_fast_score: bool = False,
+    workers: int = 1,
 ) -> dict[str, Any]:
     from .rom_scenarios import load_scenario_batch
 
@@ -228,6 +239,7 @@ def run_rom_score_materialization_from_path(
         watch_frames=watch_frames,
         collect_contribution_traces=collect_contribution_traces,
         compare_fast_score=compare_fast_score,
+        workers=workers,
         source=str(scenarios_path),
     )
 
@@ -244,12 +256,30 @@ def run_rom_score_materialization(
     watch_frames: int = DEFAULT_WATCH_FRAMES,
     collect_contribution_traces: bool = True,
     compare_fast_score: bool = False,
+    workers: int = 1,
     source: str = "inline",
 ) -> dict[str, Any]:
     if not scenarios:
         raise PreferenceDataError("no scenarios supplied for ROM score materialization")
     if watch_frames <= 0:
         raise PreferenceDataError("--watch-frames must be positive")
+    if workers < 1:
+        raise PreferenceDataError("--workers must be positive")
+    if workers > 1:
+        if collect_contribution_traces:
+            raise PreferenceDataError("--workers is only supported with fast score-only replay")
+        return run_parallel_fast_score_materialization(
+            scenarios,
+            workers=workers,
+            base_route=base_route,
+            manifest_path=manifest_path,
+            rom=rom,
+            symbols_path=symbols_path,
+            button=button,
+            button_delay=button_delay,
+            watch_frames=watch_frames,
+            source=source,
+        )
 
     manifest_entry = load_manifest_entry(manifest_path, base_route)
     base_state = resolve_manifest_path(manifest_entry["pre_choice_state"])
@@ -379,6 +409,152 @@ def run_rom_score_materialization(
         ),
         "known_limits": KNOWN_LIMITS,
         "verdicts": verdicts,
+        "traces": traces,
+    }
+
+
+def run_parallel_fast_score_materialization(
+    scenarios: list[dict[str, Any]],
+    *,
+    workers: int,
+    base_route: str,
+    manifest_path: Path,
+    rom: Path,
+    symbols_path: Path,
+    button: str,
+    button_delay: int,
+    watch_frames: int,
+    source: str,
+) -> dict[str, Any]:
+    chunks = chunk_scenarios(scenarios, workers)
+    if len(chunks) == 1:
+        return run_rom_score_materialization(
+            chunks[0],
+            base_route=base_route,
+            manifest_path=manifest_path,
+            rom=rom,
+            symbols_path=symbols_path,
+            button=button,
+            button_delay=button_delay,
+            watch_frames=watch_frames,
+            collect_contribution_traces=False,
+            compare_fast_score=False,
+            workers=1,
+            source=source,
+        )
+
+    started = time.perf_counter()
+    worker_args = [
+        {
+            "scenarios": chunk,
+            "base_route": base_route,
+            "manifest_path": str(manifest_path),
+            "rom": str(rom),
+            "symbols_path": str(symbols_path),
+            "button": button,
+            "button_delay": button_delay,
+            "watch_frames": watch_frames,
+            "source": f"{source}:worker{index + 1}",
+        }
+        for index, chunk in enumerate(chunks)
+    ]
+    with ProcessPoolExecutor(max_workers=len(chunks)) as executor:
+        reports = list(executor.map(run_fast_score_worker, worker_args))
+    elapsed = time.perf_counter() - started
+    return merge_score_materialization_reports(
+        reports,
+        elapsed_seconds=elapsed,
+        source=source,
+        workers=len(chunks),
+    )
+
+
+def run_fast_score_worker(args: dict[str, Any]) -> dict[str, Any]:
+    return run_rom_score_materialization(
+        args["scenarios"],
+        base_route=str(args["base_route"]),
+        manifest_path=Path(str(args["manifest_path"])),
+        rom=Path(str(args["rom"])),
+        symbols_path=Path(str(args["symbols_path"])),
+        button=str(args["button"]),
+        button_delay=int(args["button_delay"]),
+        watch_frames=int(args["watch_frames"]),
+        collect_contribution_traces=False,
+        compare_fast_score=False,
+        workers=1,
+        source=str(args["source"]),
+    )
+
+
+def chunk_scenarios(
+    scenarios: list[dict[str, Any]],
+    workers: int,
+) -> list[list[dict[str, Any]]]:
+    worker_count = min(max(1, workers), len(scenarios))
+    chunks: list[list[dict[str, Any]]] = [[] for _ in range(worker_count)]
+    for index, scenario in enumerate(scenarios):
+        chunks[index % worker_count].append(scenario)
+    return [chunk for chunk in chunks if chunk]
+
+
+def merge_score_materialization_reports(
+    reports: list[dict[str, Any]],
+    *,
+    elapsed_seconds: float,
+    source: str,
+    workers: int,
+) -> dict[str, Any]:
+    verdicts = [
+        verdict
+        for report in reports
+        for verdict in report.get("verdicts", [])
+    ]
+    traces = [
+        trace
+        for report in reports
+        for trace in report.get("traces", [])
+    ]
+    checked_count = sum(int(report.get("checked_count", 0)) for report in reports)
+    known_limits = list(KNOWN_LIMITS)
+    known_limits.append(
+        f"Parallel fast score-only replay used {workers} worker process(es)."
+    )
+    return {
+        "schema_version": 1,
+        "source": source,
+        "kind": "rom_score_materialization",
+        "base_route": reports[0].get("base_route", "") if reports else "",
+        "base_state": reports[0].get("base_state", "") if reports else "",
+        "scenario_count": sum(int(report.get("scenario_count", 0)) for report in reports),
+        "checked_count": checked_count,
+        "skipped_count": sum(int(report.get("skipped_count", 0)) for report in reports),
+        "error_count": sum(int(report.get("error_count", 0)) for report in reports),
+        "score_bytes_match_count": sum(
+            int(report.get("score_bytes_match_count", 0)) for report in reports
+        ),
+        "selector_top_match_count": sum(
+            int(report.get("selector_top_match_count", 0)) for report in reports
+        ),
+        "contribution_matched_count": sum(
+            int(report.get("contribution_matched_count", 0)) for report in reports
+        ),
+        "contribution_mismatch_count": sum(
+            int(report.get("contribution_mismatch_count", 0)) for report in reports
+        ),
+        "hook_equivalence_checked_count": sum(
+            int(report.get("hook_equivalence_checked_count", 0)) for report in reports
+        ),
+        "hook_equivalence_mismatch_count": sum(
+            int(report.get("hook_equivalence_mismatch_count", 0)) for report in reports
+        ),
+        "elapsed_seconds": elapsed_seconds,
+        "materializations_per_minute": (
+            checked_count / elapsed_seconds * 60 if elapsed_seconds else 0.0
+        ),
+        "score_replay_mode": "fast_score_only_parallel",
+        "worker_count": workers,
+        "known_limits": known_limits,
+        "verdicts": sorted(verdicts, key=lambda item: str(item.get("scenario_id", ""))),
         "traces": traces,
     }
 

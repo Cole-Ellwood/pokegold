@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 import time
 from pathlib import Path
@@ -12,14 +13,18 @@ if str(ROOT) not in sys.path:
 
 from tools.boss_ai_debugger.generators import generate_scenarios
 from tools.boss_ai_debugger.review_queue import build_review_queue
+from tools.boss_ai_debugger.rom_score_materialize import run_rom_score_materialization
 from tools.boss_ai_debugger.rom_scenarios import evaluate_batch
 
 
 SCENARIO_COUNT = 5000
+ROM_REPLAY_SCENARIO_COUNT = 1000
+ROM_REPLAY_WORKERS = min(4, os.cpu_count() or 1)
 SEED = 23
 MIN_SCENARIOS_PER_MINUTE = 10_000
 MIN_REVIEWABLE_CHECKS_PER_MINUTE = 1_000
 MIN_QUEUE_INPUTS_PER_MINUTE = 10_000
+MIN_ROM_BACKED_REPLAY_PER_MINUTE = 10_000
 MAX_DUPLICATE_LESSON_RATE = 0.10
 REPORT_PATH = ROOT / ".local" / "tmp" / "boss_ai_debugger" / "performance_report.json"
 
@@ -40,6 +45,7 @@ def main() -> int:
         queue,
         available_lesson_keys,
     )
+    rom_replay = run_rom_backed_replay_benchmark()
 
     report = {
         "schema_version": 1,
@@ -48,6 +54,7 @@ def main() -> int:
         "min_scenarios_per_minute": MIN_SCENARIOS_PER_MINUTE,
         "min_reviewable_checks_per_minute": MIN_REVIEWABLE_CHECKS_PER_MINUTE,
         "min_queue_inputs_per_minute": MIN_QUEUE_INPUTS_PER_MINUTE,
+        "min_rom_backed_replay_per_minute": MIN_ROM_BACKED_REPLAY_PER_MINUTE,
         "max_duplicate_lesson_rate": MAX_DUPLICATE_LESSON_RATE,
         "batch": {
             "scenario_count": batch["scenario_count"],
@@ -65,6 +72,7 @@ def main() -> int:
             "avoidable_duplicate_lesson_rate": avoidable_duplicate_rate,
             "available_lesson_key_count": len(available_lesson_keys),
         },
+        "rom_backed_replay": rom_replay,
     }
     write_json(report, REPORT_PATH)
 
@@ -90,8 +98,36 @@ def main() -> int:
         f"avoidable_duplicate_lesson_rate={avoidable_duplicate_rate:.1%} "
         f"({len(available_lesson_keys)} available lesson key(s))."
     )
+    print(
+        "ROM-backed replay: "
+        f"{rom_replay['checked_count']} cases at "
+        f"{rom_replay['materializations_per_minute']:.0f}/min "
+        f"with {rom_replay['worker_count']} worker(s)."
+    )
     print(f"wrote {display_path(REPORT_PATH)}")
     return 0
+
+
+def run_rom_backed_replay_benchmark() -> dict:
+    scenarios = generate_scenarios(
+        family="spikes_spin",
+        count=ROM_REPLAY_SCENARIO_COUNT,
+        seed=SEED,
+    )
+    report = run_rom_score_materialization(
+        scenarios,
+        collect_contribution_traces=False,
+        workers=ROM_REPLAY_WORKERS,
+        source="performance_audit",
+    )
+    return {
+        "scenario_count": report["scenario_count"],
+        "checked_count": report["checked_count"],
+        "error_count": report["error_count"],
+        "materializations_per_minute": report["materializations_per_minute"],
+        "worker_count": report.get("worker_count", 1),
+        "score_replay_mode": report.get("score_replay_mode", ""),
+    }
 
 
 def performance_errors(report: dict) -> list[str]:
@@ -125,6 +161,20 @@ def performance_errors(report: dict) -> list[str]:
         errors.append(
             "review queue avoidable duplicate lesson rate above threshold: "
             f"{report['queue']['avoidable_duplicate_lesson_rate']:.1%}"
+        )
+    rom_replay = report.get("rom_backed_replay", {})
+    if int(rom_replay.get("error_count", 0)) > 0:
+        errors.append(
+            "ROM-backed replay had errors: "
+            f"{rom_replay.get('error_count', 0)}"
+        )
+    if (
+        float(rom_replay.get("materializations_per_minute", 0.0))
+        < report["min_rom_backed_replay_per_minute"]
+    ):
+        errors.append(
+            "ROM-backed replay below threshold: "
+            f"{float(rom_replay.get('materializations_per_minute', 0.0)):.0f}/min"
         )
     return errors
 

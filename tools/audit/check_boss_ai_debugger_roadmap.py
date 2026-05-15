@@ -42,6 +42,9 @@ from tools.boss_ai_debugger.state_schema import (
 
 
 REPORT_PATH = ROOT / ".local" / "tmp" / "boss_ai_debugger" / "roadmap_audit.json"
+PERFORMANCE_REPORT_PATH = (
+    ROOT / ".local" / "tmp" / "boss_ai_debugger" / "performance_report.json"
+)
 DONE_GATE_PATH = ROOT / "tools" / "audit" / "check_boss_ai_debugger_done.py"
 MIN_SCENARIOS_PER_MINUTE_DONE = 1_000_000
 MIN_REVIEWABLE_PER_MINUTE_DONE = 1_000_000
@@ -149,6 +152,7 @@ def collect_evidence(
     batch = evaluate_batch(scenarios)
     queue = build_review_queue(batch, limit=50, max_per_lesson=2)
     route_eval = evaluate_route_batch(scenarios, source="roadmap_audit", horizon=3)
+    performance_report = load_performance_report()
     selector_materialization = maybe_run_selector_materialization(
         scenarios,
         enabled=check_rom_selector_materialization,
@@ -177,6 +181,7 @@ def collect_evidence(
         "batch": batch,
         "queue": queue,
         "route_eval": route_eval,
+        "performance_report": performance_report,
         "selector_materialization": selector_materialization,
         "score_materialization": score_materialization,
     }
@@ -352,7 +357,7 @@ def roadmap_items(evidence: dict[str, Any]) -> list[dict[str, Any]]:
         status_item(
             "debugger_performance_targets",
             "Debugger performance targets",
-            status=performance_status(batch),
+            status=performance_status(batch, evidence["performance_report"]),
             evidence=[
                 f"scenarios_per_minute={batch['scenarios_per_minute']:.0f}",
                 f"reviewable_per_minute={batch['reviewable_per_minute']:.0f}",
@@ -363,8 +368,9 @@ def roadmap_items(evidence: dict[str, Any]) -> list[dict[str, Any]]:
                 f"target_scenarios_per_minute={MIN_SCENARIOS_PER_MINUTE_DONE}",
                 f"target_reviewable_per_minute={MIN_REVIEWABLE_PER_MINUTE_DONE}",
                 f"target_rom_backed_replay_per_minute={MIN_ROM_BACKED_REPLAY_PER_MINUTE_DONE}",
+                rom_backed_performance_evidence(evidence["performance_report"]),
             ],
-            gaps=performance_gaps(batch),
+            gaps=performance_gaps(batch, evidence["performance_report"]),
             refs=["tools/audit/check_boss_ai_debugger_performance.py"],
         ),
         status_item(
@@ -659,12 +665,15 @@ def coverage_guided_gaps(coverage: dict[str, Any]) -> list[str]:
     ]
 
 
-def performance_status(batch: dict[str, Any]) -> str:
+def performance_status(
+    batch: dict[str, Any],
+    performance_report: dict[str, Any],
+) -> str:
     if batch["scenarios_per_minute"] >= MIN_SCENARIOS_PER_MINUTE_DONE and (
         batch["reviewable_count"] == 0
         or focused_reviewable_per_minute(batch) >= MIN_REVIEWABLE_PER_MINUTE_DONE
-    ):
-        return "partial"
+    ) and rom_backed_replay_meets_target(performance_report):
+        return "complete"
     return "partial"
 
 
@@ -677,7 +686,10 @@ def focused_reviewable_per_minute(batch: dict[str, Any]) -> float:
     )
 
 
-def performance_gaps(batch: dict[str, Any]) -> list[str]:
+def performance_gaps(
+    batch: dict[str, Any],
+    performance_report: dict[str, Any],
+) -> list[str]:
     gaps = []
     if batch["scenarios_per_minute"] < MIN_SCENARIOS_PER_MINUTE_DONE:
         gaps.append(
@@ -694,10 +706,37 @@ def performance_gaps(batch: dict[str, Any]) -> list[str]:
             f"{MIN_REVIEWABLE_PER_MINUTE_DONE:,}/minute target: "
             f"{focused_reviewable_per_minute(batch):.0f}/minute observed."
         )
-    gaps.append(
-        f"ROM-backed generated decision replay has no proven {MIN_ROM_BACKED_REPLAY_PER_MINUTE_DONE:,}/minute gate yet."
-    )
+    if not rom_backed_replay_meets_target(performance_report):
+        rom_replay = performance_report.get("rom_backed_replay", {})
+        observed = float(rom_replay.get("materializations_per_minute", 0.0))
+        gaps.append(
+            "ROM-backed generated decision replay is below the final "
+            f"{MIN_ROM_BACKED_REPLAY_PER_MINUTE_DONE:,}/minute target: "
+            f"{observed:.0f}/minute observed."
+        )
     return gaps
+
+
+def rom_backed_replay_meets_target(performance_report: dict[str, Any]) -> bool:
+    rom_replay = performance_report.get("rom_backed_replay", {})
+    return (
+        int(rom_replay.get("checked_count", 0)) > 0
+        and int(rom_replay.get("error_count", 0)) == 0
+        and float(rom_replay.get("materializations_per_minute", 0.0))
+        >= MIN_ROM_BACKED_REPLAY_PER_MINUTE_DONE
+    )
+
+
+def rom_backed_performance_evidence(performance_report: dict[str, Any]) -> str:
+    rom_replay = performance_report.get("rom_backed_replay", {})
+    if not rom_replay:
+        return "rom_backed_replay=missing performance report"
+    return (
+        "rom_backed_replay="
+        f"{int(rom_replay.get('checked_count', 0))} cases "
+        f"errors={int(rom_replay.get('error_count', 0))} "
+        f"rate={float(rom_replay.get('materializations_per_minute', 0.0)):.0f}/min"
+    )
 
 
 def count_statuses(items: list[dict[str, Any]]) -> dict[str, int]:
@@ -705,6 +744,16 @@ def count_statuses(items: list[dict[str, Any]]) -> dict[str, int]:
     for item_data in items:
         counts[item_data["status"]] += 1
     return counts
+
+
+def load_performance_report() -> dict[str, Any]:
+    try:
+        data = json.loads(PERFORMANCE_REPORT_PATH.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return {}
+    if not isinstance(data, dict):
+        return {}
+    return data
 
 
 def evidence_summary(evidence: dict[str, Any]) -> dict[str, Any]:
@@ -755,6 +804,16 @@ def evidence_summary(evidence: dict[str, Any]) -> dict[str, Any]:
         "scenarios_per_minute": batch["scenarios_per_minute"],
         "reviewable_per_minute": batch["reviewable_per_minute"],
         "focused_reviewable_per_minute": focused_reviewable_per_minute(batch),
+        "rom_backed_replay_per_minute": float(
+            evidence["performance_report"]
+            .get("rom_backed_replay", {})
+            .get("materializations_per_minute", 0.0)
+        ),
+        "rom_backed_replay_checked_count": int(
+            evidence["performance_report"]
+            .get("rom_backed_replay", {})
+            .get("checked_count", 0)
+        ),
         "reviewable_count": batch["reviewable_count"],
         "queue_returned_count": queue["returned_count"],
         "route_multi_turn_summary": evidence["route_eval"]["multi_turn_summary"],
