@@ -1,0 +1,1427 @@
+{
+  "agreement_rate": 1.0,
+  "capture_count": 19,
+  "captures_per_minute": 146384.68271252885,
+  "checked_count": 19,
+  "elapsed_seconds": 0.007787700043991208,
+  "exact_agreement_rate": 1.0,
+  "exact_count": 19,
+  "exact_match_count": 19,
+  "failure_count": 0,
+  "match_count": 19,
+  "partial_agreement_rate": 0.0,
+  "partial_count": 0,
+  "partial_match_count": 0,
+  "trace_count": 19,
+  "verdict_counts": {
+    "match": 19
+  },
+  "verdicts": [
+    {
+      "capture_id": "Blaine#1",
+      "chosen_id": 53,
+      "expected_move_ids": [
+        53,
+        174
+      ],
+      "match": true,
+      "mode": "exact",
+      "path": "audit\\boss_ai_trace\\blaine_live.txt",
+      "reason": "chosen slot has nonzero selector probability",
+      "selector": {
+        "best_move_id": 174,
+        "best_roll_threshold": 186,
+        "best_score": 20,
+        "best_slot_index": 1,
+        "gap": 0,
+        "possible_move_ids": [
+          53,
+          174
+        ],
+        "possible_slot_indices": [
+          1,
+          2
+        ],
+        "probabilities_by_slot": {
+          "0": 0.0,
+          "1": 0.7265625,
+          "2": 0.2734375,
+          "3": 0.0
+        },
+        "ready": true,
+        "scenario_id": "Blaine#1",
+        "second_move_id": 53,
+        "second_score": 20,
+        "second_slot_index": 2,
+        "slots": [
+          {
+            "blocked": false,
+            "move_id": 191,
+            "name": "SPIKES",
+            "score": 38,
+            "slot": 1,
+            "slot_index": 0
+          },
+          {
+            "blocked": false,
+            "move_id": 174,
+            "name": "CURSE",
+            "score": 20,
+            "slot": 2,
+            "slot_index": 1
+          },
+          {
+            "blocked": false,
+            "move_id": 53,
+            "name": "FLAMETHROWER",
+            "score": 20,
+            "slot": 3,
+            "slot_index": 2
+          },
+          {
+            "blocked": false,
+            "move_id": 157,
+            "name": "ROCK_SLIDE",
+            "score": 20,
+            "slot": 4,
+            "slot_index": 3
+          }
+        ],
+        "tier": 3
+      },
+      "verdict": "match"
+    },
+    {
+      "capture_id": "Blue#1",
+      "chosen_id": 161,
+      "expected_move_ids": [
+        85,
+        161
+      ],
+      "match": true,
+      "mode": "exact",
+      "path": "audit\\boss_ai_trace\\blue_live.txt",
+      "reason": "chosen slot has nonzero selector probability",
+      "selector": {
+        "best_move_id": 161,
+        "best_roll_threshold": 186,
+        "best_score": 20,
+        "best_slot_index": 1,
+        "gap": 0,
+        "possible_move_ids": [
+          85,
+          161
+        ],
+        "possible_slot_indices": [
+          1,
+          2
+        ],
+        "probabilities_by_slot": {
+          "0": 0.0,
+          "1": 0.7265625,
+          "2": 0.2734375,
+          "3": 0.0
+        },
+        "ready": true,
+        "scenario_id": "Blue#1",
+        "second_move_id": 85,
+        "second_score": 20,
+        "second_slot_index": 2,
+        "slots": [
+          {
+            "blocked": false,
+            "move_id": 105,
+            "name": "RECOVER",
+            "score": 38,
+            "slot": 1,
+            "slot_index": 0
+          },
+          {
+            "blocked": false,
+            "move_id": 161,
+            "name": "TRI_ATTACK",
+            "score": 20,
+            "slot": 2,
+            "slot_index": 1
+          },
+          {
+            "blocked": false,
+            "move_id": 85,
+            "name": "THUNDERBOLT",
+            "score": 20,
+            "slot": 3,
+            "slot_index": 2
+          },
+          {
+            "blocked": false,
+            "move_id": 58,
+            "name": "ICE_BEAM",
+            "score": 20,
+            "slot": 4,
+            "slot_index": 3
+          }
+        ],
+        "tier": 3
+      },
+      "verdict": "match"
+    },
+    {
+      "capture_id": "Brock#1",
+      "chosen_id": 57,
+      "expected_move_ids": [
+        57,
+        58
+      ],
+      "match": true,
+      "mode": "exact",
+      "path": "audit\\boss_ai_trace\\brock_live.txt",
+      "reason": "chosen slot has nonzero selector probability",
+      "selector": {
+        "best_move_id": 57,
+        "best_roll_threshold": 186,
+        "best_score": 20,
+        "best_slot_index": 1,
+        "gap": 0,
+        "possible_move_ids": [
+          57,
+          58
+        ],
+        "possible_slot_indices": [
+          1,
+          2
+        ],
+        "probabilities_by_slot": {
+          "0": 0.0,
+          "1": 0.7265625,
+          "2": 0.2734375,
+          "3": 0.0
+        },
+        "ready": true,
+        "scenario_id": "Brock#1",
+        "second_move_id": 58,
+        "second_score": 20,
+        "second_slot_index": 2,
+        "slots": [
+          {
+            "blocked": false,
+            "move_id": 191,
+            "name": "SPIKES",
+            "score": 38,
+            "slot": 1,
+            "slot_index": 0
+          },
+          {
+            "blocked": false,
+            "move_id": 57,
+            "name": "SURF",
+            "score": 20,
+            "slot": 2,
+            "slot_index": 1
+          },
+          {
+            "blocked": false,
+            "move_id": 58,
+            "name": "ICE_BEAM",
+            "score": 20,
+            "slot": 3,
+            "slot_index": 2
+          },
+          {
+            "blocked": false,
+            "move_id": 182,
+            "name": "PROTECT",
+            "score": 20,
+            "slot": 4,
+            "slot_index": 3
+          }
+        ],
+        "tier": 3
+      },
+      "verdict": "match"
+    },
+    {
+      "capture_id": "Bugsy#1",
+      "chosen_id": 202,
+      "expected_move_ids": [
+        40,
+        202
+      ],
+      "match": true,
+      "mode": "exact",
+      "path": "audit\\boss_ai_trace\\bugsy_live.txt",
+      "reason": "chosen slot has nonzero selector probability",
+      "selector": {
+        "best_move_id": 40,
+        "best_roll_threshold": 154,
+        "best_score": 20,
+        "best_slot_index": 0,
+        "gap": 0,
+        "possible_move_ids": [
+          40,
+          202
+        ],
+        "possible_slot_indices": [
+          0,
+          1
+        ],
+        "probabilities_by_slot": {
+          "0": 0.6015625,
+          "1": 0.3984375,
+          "2": 0.0,
+          "3": 0.0
+        },
+        "ready": true,
+        "scenario_id": "Bugsy#1",
+        "second_move_id": 202,
+        "second_score": 20,
+        "second_slot_index": 1,
+        "slots": [
+          {
+            "blocked": false,
+            "move_id": 40,
+            "name": "POISON_STING",
+            "score": 20,
+            "slot": 1,
+            "slot_index": 0
+          },
+          {
+            "blocked": false,
+            "move_id": 202,
+            "name": "GIGA_DRAIN",
+            "score": 20,
+            "slot": 2,
+            "slot_index": 1
+          },
+          {
+            "blocked": false,
+            "move_id": 92,
+            "name": "TOXIC",
+            "score": 20,
+            "slot": 3,
+            "slot_index": 2
+          },
+          {
+            "blocked": false,
+            "move_id": 141,
+            "name": "LEECH_LIFE",
+            "score": 20,
+            "slot": 4,
+            "slot_index": 3
+          }
+        ],
+        "tier": 1
+      },
+      "verdict": "match"
+    },
+    {
+      "capture_id": "Champion Lance#1",
+      "chosen_id": 231,
+      "expected_move_ids": [
+        200,
+        231
+      ],
+      "match": true,
+      "mode": "exact",
+      "path": "audit\\boss_ai_trace\\champion_lance_live.txt",
+      "reason": "chosen slot has nonzero selector probability",
+      "selector": {
+        "best_move_id": 231,
+        "best_roll_threshold": 186,
+        "best_score": 20,
+        "best_slot_index": 1,
+        "gap": 0,
+        "possible_move_ids": [
+          200,
+          231
+        ],
+        "possible_slot_indices": [
+          1,
+          2
+        ],
+        "probabilities_by_slot": {
+          "0": 0.0,
+          "1": 0.7265625,
+          "2": 0.2734375,
+          "3": 0.0
+        },
+        "ready": true,
+        "scenario_id": "Champion Lance#1",
+        "second_move_id": 200,
+        "second_score": 20,
+        "second_slot_index": 2,
+        "slots": [
+          {
+            "blocked": false,
+            "move_id": 89,
+            "name": "EARTHQUAKE",
+            "score": 38,
+            "slot": 1,
+            "slot_index": 0
+          },
+          {
+            "blocked": false,
+            "move_id": 231,
+            "name": "IRON_TAIL",
+            "score": 20,
+            "slot": 2,
+            "slot_index": 1
+          },
+          {
+            "blocked": false,
+            "move_id": 200,
+            "name": "OUTRAGE",
+            "score": 20,
+            "slot": 3,
+            "slot_index": 2
+          },
+          {
+            "blocked": false,
+            "move_id": 252,
+            "name": "DRAGON_DANCE",
+            "score": 20,
+            "slot": 4,
+            "slot_index": 3
+          }
+        ],
+        "tier": 3
+      },
+      "verdict": "match"
+    },
+    {
+      "capture_id": "Chuck#1",
+      "chosen_id": 157,
+      "expected_move_ids": [
+        136,
+        157
+      ],
+      "match": true,
+      "mode": "exact",
+      "path": "audit\\boss_ai_trace\\chuck_live.txt",
+      "reason": "chosen slot has nonzero selector probability",
+      "selector": {
+        "best_move_id": 136,
+        "best_roll_threshold": 174,
+        "best_score": 20,
+        "best_slot_index": 1,
+        "gap": 0,
+        "possible_move_ids": [
+          136,
+          157
+        ],
+        "possible_slot_indices": [
+          1,
+          2
+        ],
+        "probabilities_by_slot": {
+          "0": 0.0,
+          "1": 0.6796875,
+          "2": 0.3203125,
+          "3": 0.0
+        },
+        "ready": true,
+        "scenario_id": "Chuck#1",
+        "second_move_id": 157,
+        "second_score": 20,
+        "second_slot_index": 2,
+        "slots": [
+          {
+            "blocked": false,
+            "move_id": 134,
+            "name": "FOCUS_PUNCH",
+            "score": 38,
+            "slot": 1,
+            "slot_index": 0
+          },
+          {
+            "blocked": false,
+            "move_id": 136,
+            "name": "HI_JUMP_KICK",
+            "score": 20,
+            "slot": 2,
+            "slot_index": 1
+          },
+          {
+            "blocked": false,
+            "move_id": 157,
+            "name": "ROCK_SLIDE",
+            "score": 20,
+            "slot": 3,
+            "slot_index": 2
+          },
+          {
+            "blocked": false,
+            "move_id": 193,
+            "name": "FORESIGHT",
+            "score": 20,
+            "slot": 4,
+            "slot_index": 3
+          }
+        ],
+        "tier": 2
+      },
+      "verdict": "match"
+    },
+    {
+      "capture_id": "Clair#1",
+      "chosen_id": 200,
+      "expected_move_ids": [
+        57,
+        200
+      ],
+      "match": true,
+      "mode": "exact",
+      "path": "audit\\boss_ai_trace\\clair_live.txt",
+      "reason": "chosen slot has nonzero selector probability",
+      "selector": {
+        "best_move_id": 57,
+        "best_roll_threshold": 186,
+        "best_score": 20,
+        "best_slot_index": 1,
+        "gap": 0,
+        "possible_move_ids": [
+          57,
+          200
+        ],
+        "possible_slot_indices": [
+          1,
+          2
+        ],
+        "probabilities_by_slot": {
+          "0": 0.0,
+          "1": 0.7265625,
+          "2": 0.2734375,
+          "3": 0.0
+        },
+        "ready": true,
+        "scenario_id": "Clair#1",
+        "second_move_id": 200,
+        "second_score": 20,
+        "second_slot_index": 2,
+        "slots": [
+          {
+            "blocked": false,
+            "move_id": 252,
+            "name": "DRAGON_DANCE",
+            "score": 38,
+            "slot": 1,
+            "slot_index": 0
+          },
+          {
+            "blocked": false,
+            "move_id": 57,
+            "name": "SURF",
+            "score": 20,
+            "slot": 2,
+            "slot_index": 1
+          },
+          {
+            "blocked": false,
+            "move_id": 200,
+            "name": "OUTRAGE",
+            "score": 20,
+            "slot": 3,
+            "slot_index": 2
+          },
+          {
+            "blocked": false,
+            "move_id": 58,
+            "name": "ICE_BEAM",
+            "score": 20,
+            "slot": 4,
+            "slot_index": 3
+          }
+        ],
+        "tier": 3
+      },
+      "verdict": "match"
+    },
+    {
+      "capture_id": "Erika#1",
+      "chosen_id": 202,
+      "expected_move_ids": [
+        78,
+        202
+      ],
+      "match": true,
+      "mode": "exact",
+      "path": "audit\\boss_ai_trace\\erika_live.txt",
+      "reason": "chosen slot has nonzero selector probability",
+      "selector": {
+        "best_move_id": 202,
+        "best_roll_threshold": 186,
+        "best_score": 20,
+        "best_slot_index": 1,
+        "gap": 0,
+        "possible_move_ids": [
+          78,
+          202
+        ],
+        "possible_slot_indices": [
+          1,
+          2
+        ],
+        "probabilities_by_slot": {
+          "0": 0.0,
+          "1": 0.7265625,
+          "2": 0.2734375,
+          "3": 0.0
+        },
+        "ready": true,
+        "scenario_id": "Erika#1",
+        "second_move_id": 78,
+        "second_score": 20,
+        "second_slot_index": 2,
+        "slots": [
+          {
+            "blocked": false,
+            "move_id": 229,
+            "name": "RAPID_SPIN",
+            "score": 38,
+            "slot": 1,
+            "slot_index": 0
+          },
+          {
+            "blocked": false,
+            "move_id": 202,
+            "name": "GIGA_DRAIN",
+            "score": 20,
+            "slot": 2,
+            "slot_index": 1
+          },
+          {
+            "blocked": false,
+            "move_id": 78,
+            "name": "STUN_SPORE",
+            "score": 20,
+            "slot": 3,
+            "slot_index": 2
+          },
+          {
+            "blocked": false,
+            "move_id": 115,
+            "name": "REFLECT",
+            "score": 20,
+            "slot": 4,
+            "slot_index": 3
+          }
+        ],
+        "tier": 3
+      },
+      "verdict": "match"
+    },
+    {
+      "capture_id": "Falkner#1",
+      "chosen_id": 33,
+      "expected_move_ids": [
+        28,
+        33
+      ],
+      "match": true,
+      "mode": "exact",
+      "path": "audit\\boss_ai_trace\\falkner_live.txt",
+      "reason": "chosen slot has nonzero selector probability",
+      "selector": {
+        "best_move_id": 33,
+        "best_roll_threshold": 154,
+        "best_score": 20,
+        "best_slot_index": 0,
+        "gap": 0,
+        "possible_move_ids": [
+          28,
+          33
+        ],
+        "possible_slot_indices": [
+          0,
+          1
+        ],
+        "probabilities_by_slot": {
+          "0": 0.6015625,
+          "1": 0.3984375,
+          "2": 0.0,
+          "3": 0.0
+        },
+        "ready": true,
+        "scenario_id": "Falkner#1",
+        "second_move_id": 28,
+        "second_score": 20,
+        "second_slot_index": 1,
+        "slots": [
+          {
+            "blocked": false,
+            "move_id": 33,
+            "name": "TACKLE",
+            "score": 20,
+            "slot": 1,
+            "slot_index": 0
+          },
+          {
+            "blocked": false,
+            "move_id": 28,
+            "name": "SAND_ATTACK",
+            "score": 20,
+            "slot": 2,
+            "slot_index": 1
+          },
+          {
+            "blocked": false,
+            "move_id": 16,
+            "name": "GUST",
+            "score": 20,
+            "slot": 3,
+            "slot_index": 2
+          },
+          {
+            "blocked": false,
+            "move_id": 98,
+            "name": "QUICK_ATTACK",
+            "score": 20,
+            "slot": 4,
+            "slot_index": 3
+          }
+        ],
+        "tier": 1
+      },
+      "verdict": "match"
+    },
+    {
+      "capture_id": "Janine#1",
+      "chosen_id": 188,
+      "expected_move_ids": [
+        57,
+        188
+      ],
+      "match": true,
+      "mode": "exact",
+      "path": "audit\\boss_ai_trace\\janine_live.txt",
+      "reason": "chosen slot has nonzero selector probability",
+      "selector": {
+        "best_move_id": 57,
+        "best_roll_threshold": 186,
+        "best_score": 20,
+        "best_slot_index": 1,
+        "gap": 0,
+        "possible_move_ids": [
+          57,
+          188
+        ],
+        "possible_slot_indices": [
+          1,
+          2
+        ],
+        "probabilities_by_slot": {
+          "0": 0.0,
+          "1": 0.7265625,
+          "2": 0.2734375,
+          "3": 0.0
+        },
+        "ready": true,
+        "scenario_id": "Janine#1",
+        "second_move_id": 188,
+        "second_score": 20,
+        "second_slot_index": 2,
+        "slots": [
+          {
+            "blocked": false,
+            "move_id": 229,
+            "name": "RAPID_SPIN",
+            "score": 38,
+            "slot": 1,
+            "slot_index": 0
+          },
+          {
+            "blocked": false,
+            "move_id": 57,
+            "name": "SURF",
+            "score": 20,
+            "slot": 2,
+            "slot_index": 1
+          },
+          {
+            "blocked": false,
+            "move_id": 188,
+            "name": "SLUDGE_BOMB",
+            "score": 20,
+            "slot": 3,
+            "slot_index": 2
+          },
+          {
+            "blocked": false,
+            "move_id": 114,
+            "name": "HAZE",
+            "score": 20,
+            "slot": 4,
+            "slot_index": 3
+          }
+        ],
+        "tier": 3
+      },
+      "verdict": "match"
+    },
+    {
+      "capture_id": "Jasmine#1",
+      "chosen_id": 85,
+      "expected_move_ids": [
+        85,
+        86
+      ],
+      "match": true,
+      "mode": "exact",
+      "path": "audit\\boss_ai_trace\\jasmine_live.txt",
+      "reason": "chosen slot has nonzero selector probability",
+      "selector": {
+        "best_move_id": 85,
+        "best_roll_threshold": 174,
+        "best_score": 20,
+        "best_slot_index": 1,
+        "gap": 0,
+        "possible_move_ids": [
+          85,
+          86
+        ],
+        "possible_slot_indices": [
+          1,
+          2
+        ],
+        "probabilities_by_slot": {
+          "0": 0.0,
+          "1": 0.6796875,
+          "2": 0.3203125,
+          "3": 0.0
+        },
+        "ready": true,
+        "scenario_id": "Jasmine#1",
+        "second_move_id": 86,
+        "second_score": 20,
+        "second_slot_index": 2,
+        "slots": [
+          {
+            "blocked": false,
+            "move_id": 191,
+            "name": "SPIKES",
+            "score": 38,
+            "slot": 1,
+            "slot_index": 0
+          },
+          {
+            "blocked": false,
+            "move_id": 85,
+            "name": "THUNDERBOLT",
+            "score": 20,
+            "slot": 2,
+            "slot_index": 1
+          },
+          {
+            "blocked": false,
+            "move_id": 86,
+            "name": "THUNDER_WAVE",
+            "score": 20,
+            "slot": 3,
+            "slot_index": 2
+          },
+          {
+            "blocked": false,
+            "move_id": 129,
+            "name": "SWIFT",
+            "score": 20,
+            "slot": 4,
+            "slot_index": 3
+          }
+        ],
+        "tier": 2
+      },
+      "verdict": "match"
+    },
+    {
+      "capture_id": "Koga#1",
+      "chosen_id": 141,
+      "expected_move_ids": [
+        92,
+        141
+      ],
+      "match": true,
+      "mode": "exact",
+      "path": "audit\\boss_ai_trace\\koga_live.txt",
+      "reason": "chosen slot has nonzero selector probability",
+      "selector": {
+        "best_move_id": 92,
+        "best_roll_threshold": 186,
+        "best_score": 20,
+        "best_slot_index": 1,
+        "gap": 0,
+        "possible_move_ids": [
+          92,
+          141
+        ],
+        "possible_slot_indices": [
+          1,
+          2
+        ],
+        "probabilities_by_slot": {
+          "0": 0.0,
+          "1": 0.7265625,
+          "2": 0.2734375,
+          "3": 0.0
+        },
+        "ready": true,
+        "scenario_id": "Koga#1",
+        "second_move_id": 141,
+        "second_score": 20,
+        "second_slot_index": 2,
+        "slots": [
+          {
+            "blocked": false,
+            "move_id": 191,
+            "name": "SPIKES",
+            "score": 38,
+            "slot": 1,
+            "slot_index": 0
+          },
+          {
+            "blocked": false,
+            "move_id": 92,
+            "name": "TOXIC",
+            "score": 20,
+            "slot": 2,
+            "slot_index": 1
+          },
+          {
+            "blocked": false,
+            "move_id": 141,
+            "name": "LEECH_LIFE",
+            "score": 20,
+            "slot": 3,
+            "slot_index": 2
+          },
+          {
+            "blocked": false,
+            "move_id": 169,
+            "name": "SPIDER_WEB",
+            "score": 20,
+            "slot": 4,
+            "slot_index": 3
+          }
+        ],
+        "tier": 3
+      },
+      "verdict": "match"
+    },
+    {
+      "capture_id": "Lt. Surge#1",
+      "chosen_id": 86,
+      "expected_move_ids": [
+        85,
+        86
+      ],
+      "match": true,
+      "mode": "exact",
+      "path": "audit\\boss_ai_trace\\lt_surge_live.txt",
+      "reason": "chosen slot has nonzero selector probability",
+      "selector": {
+        "best_move_id": 85,
+        "best_roll_threshold": 186,
+        "best_score": 20,
+        "best_slot_index": 1,
+        "gap": 0,
+        "possible_move_ids": [
+          85,
+          86
+        ],
+        "possible_slot_indices": [
+          1,
+          2
+        ],
+        "probabilities_by_slot": {
+          "0": 0.0,
+          "1": 0.7265625,
+          "2": 0.2734375,
+          "3": 0.0
+        },
+        "ready": true,
+        "scenario_id": "Lt. Surge#1",
+        "second_move_id": 86,
+        "second_score": 20,
+        "second_slot_index": 2,
+        "slots": [
+          {
+            "blocked": false,
+            "move_id": 191,
+            "name": "SPIKES",
+            "score": 38,
+            "slot": 1,
+            "slot_index": 0
+          },
+          {
+            "blocked": false,
+            "move_id": 85,
+            "name": "THUNDERBOLT",
+            "score": 20,
+            "slot": 2,
+            "slot_index": 1
+          },
+          {
+            "blocked": false,
+            "move_id": 86,
+            "name": "THUNDER_WAVE",
+            "score": 20,
+            "slot": 3,
+            "slot_index": 2
+          },
+          {
+            "blocked": false,
+            "move_id": 153,
+            "name": "EXPLOSION",
+            "score": 20,
+            "slot": 4,
+            "slot_index": 3
+          }
+        ],
+        "tier": 3
+      },
+      "verdict": "match"
+    },
+    {
+      "capture_id": "Misty#1",
+      "chosen_id": 95,
+      "expected_move_ids": [
+        57,
+        95
+      ],
+      "match": true,
+      "mode": "exact",
+      "path": "audit\\boss_ai_trace\\misty_live.txt",
+      "reason": "chosen slot has nonzero selector probability",
+      "selector": {
+        "best_move_id": 95,
+        "best_roll_threshold": 186,
+        "best_score": 20,
+        "best_slot_index": 1,
+        "gap": 0,
+        "possible_move_ids": [
+          57,
+          95
+        ],
+        "possible_slot_indices": [
+          1,
+          2
+        ],
+        "probabilities_by_slot": {
+          "0": 0.0,
+          "1": 0.7265625,
+          "2": 0.2734375,
+          "3": 0.0
+        },
+        "ready": true,
+        "scenario_id": "Misty#1",
+        "second_move_id": 57,
+        "second_score": 20,
+        "second_slot_index": 2,
+        "slots": [
+          {
+            "blocked": false,
+            "move_id": 240,
+            "name": "RAIN_DANCE",
+            "score": 38,
+            "slot": 1,
+            "slot_index": 0
+          },
+          {
+            "blocked": false,
+            "move_id": 95,
+            "name": "HYPNOSIS",
+            "score": 20,
+            "slot": 2,
+            "slot_index": 1
+          },
+          {
+            "blocked": false,
+            "move_id": 57,
+            "name": "SURF",
+            "score": 20,
+            "slot": 3,
+            "slot_index": 2
+          },
+          {
+            "blocked": false,
+            "move_id": 58,
+            "name": "ICE_BEAM",
+            "score": 20,
+            "slot": 4,
+            "slot_index": 3
+          }
+        ],
+        "tier": 3
+      },
+      "verdict": "match"
+    },
+    {
+      "capture_id": "Morty#1",
+      "chosen_id": 138,
+      "expected_move_ids": [
+        138,
+        174
+      ],
+      "match": true,
+      "mode": "exact",
+      "path": "audit\\boss_ai_trace\\morty_live.txt",
+      "reason": "chosen slot has nonzero selector probability",
+      "selector": {
+        "best_move_id": 138,
+        "best_roll_threshold": 174,
+        "best_score": 20,
+        "best_slot_index": 1,
+        "gap": 0,
+        "possible_move_ids": [
+          138,
+          174
+        ],
+        "possible_slot_indices": [
+          1,
+          2
+        ],
+        "probabilities_by_slot": {
+          "0": 0.0,
+          "1": 0.6796875,
+          "2": 0.3203125,
+          "3": 0.0
+        },
+        "ready": true,
+        "scenario_id": "Morty#1",
+        "second_move_id": 174,
+        "second_score": 20,
+        "second_slot_index": 2,
+        "slots": [
+          {
+            "blocked": false,
+            "move_id": 95,
+            "name": "HYPNOSIS",
+            "score": 38,
+            "slot": 1,
+            "slot_index": 0
+          },
+          {
+            "blocked": false,
+            "move_id": 138,
+            "name": "DREAM_EATER",
+            "score": 20,
+            "slot": 2,
+            "slot_index": 1
+          },
+          {
+            "blocked": false,
+            "move_id": 174,
+            "name": "CURSE",
+            "score": 20,
+            "slot": 3,
+            "slot_index": 2
+          },
+          {
+            "blocked": false,
+            "move_id": 101,
+            "name": "NIGHT_SHADE",
+            "score": 20,
+            "slot": 4,
+            "slot_index": 3
+          }
+        ],
+        "tier": 2
+      },
+      "verdict": "match"
+    },
+    {
+      "capture_id": "Pryce#1",
+      "chosen_id": 57,
+      "expected_move_ids": [
+        57,
+        58
+      ],
+      "match": true,
+      "mode": "exact",
+      "path": "audit\\boss_ai_trace\\pryce_live.txt",
+      "reason": "chosen slot has nonzero selector probability",
+      "selector": {
+        "best_move_id": 57,
+        "best_roll_threshold": 186,
+        "best_score": 20,
+        "best_slot_index": 1,
+        "gap": 0,
+        "possible_move_ids": [
+          57,
+          58
+        ],
+        "possible_slot_indices": [
+          1,
+          2
+        ],
+        "probabilities_by_slot": {
+          "0": 0.0,
+          "1": 0.7265625,
+          "2": 0.2734375,
+          "3": 0.0
+        },
+        "ready": true,
+        "scenario_id": "Pryce#1",
+        "second_move_id": 58,
+        "second_score": 20,
+        "second_slot_index": 2,
+        "slots": [
+          {
+            "blocked": false,
+            "move_id": 191,
+            "name": "SPIKES",
+            "score": 38,
+            "slot": 1,
+            "slot_index": 0
+          },
+          {
+            "blocked": false,
+            "move_id": 57,
+            "name": "SURF",
+            "score": 20,
+            "slot": 2,
+            "slot_index": 1
+          },
+          {
+            "blocked": false,
+            "move_id": 58,
+            "name": "ICE_BEAM",
+            "score": 20,
+            "slot": 3,
+            "slot_index": 2
+          },
+          {
+            "blocked": false,
+            "move_id": 153,
+            "name": "EXPLOSION",
+            "score": 20,
+            "slot": 4,
+            "slot_index": 3
+          }
+        ],
+        "tier": 3
+      },
+      "verdict": "match"
+    },
+    {
+      "capture_id": "Sabrina#1",
+      "chosen_id": 227,
+      "expected_move_ids": [
+        115,
+        227
+      ],
+      "match": true,
+      "mode": "exact",
+      "path": "audit\\boss_ai_trace\\sabrina_live.txt",
+      "reason": "chosen slot has nonzero selector probability",
+      "selector": {
+        "best_move_id": 115,
+        "best_roll_threshold": 186,
+        "best_score": 20,
+        "best_slot_index": 1,
+        "gap": 0,
+        "possible_move_ids": [
+          115,
+          227
+        ],
+        "possible_slot_indices": [
+          1,
+          2
+        ],
+        "probabilities_by_slot": {
+          "0": 0.0,
+          "1": 0.7265625,
+          "2": 0.2734375,
+          "3": 0.0
+        },
+        "ready": true,
+        "scenario_id": "Sabrina#1",
+        "second_move_id": 227,
+        "second_score": 20,
+        "second_slot_index": 2,
+        "slots": [
+          {
+            "blocked": false,
+            "move_id": 113,
+            "name": "LIGHT_SCREEN",
+            "score": 38,
+            "slot": 1,
+            "slot_index": 0
+          },
+          {
+            "blocked": false,
+            "move_id": 115,
+            "name": "REFLECT",
+            "score": 20,
+            "slot": 2,
+            "slot_index": 1
+          },
+          {
+            "blocked": false,
+            "move_id": 227,
+            "name": "ENCORE",
+            "score": 20,
+            "slot": 3,
+            "slot_index": 2
+          },
+          {
+            "blocked": false,
+            "move_id": 94,
+            "name": "PSYCHIC_M",
+            "score": 20,
+            "slot": 4,
+            "slot_index": 3
+          }
+        ],
+        "tier": 3
+      },
+      "verdict": "match"
+    },
+    {
+      "capture_id": "Shared switch-loop#1",
+      "chosen_id": 85,
+      "expected_move_ids": [
+        85,
+        86
+      ],
+      "match": true,
+      "mode": "exact",
+      "path": "audit\\boss_ai_trace\\shared_switch_loop_live.txt",
+      "reason": "chosen slot has nonzero selector probability",
+      "selector": {
+        "best_move_id": 85,
+        "best_roll_threshold": 174,
+        "best_score": 17,
+        "best_slot_index": 1,
+        "gap": 0,
+        "possible_move_ids": [
+          85,
+          86
+        ],
+        "possible_slot_indices": [
+          1,
+          2
+        ],
+        "probabilities_by_slot": {
+          "0": 0.0,
+          "1": 0.6796875,
+          "2": 0.3203125,
+          "3": 0.0
+        },
+        "ready": true,
+        "scenario_id": "Shared switch-loop#1",
+        "second_move_id": 86,
+        "second_score": 17,
+        "second_slot_index": 2,
+        "slots": [
+          {
+            "blocked": false,
+            "move_id": 191,
+            "name": "SPIKES",
+            "score": 20,
+            "slot": 1,
+            "slot_index": 0
+          },
+          {
+            "blocked": false,
+            "move_id": 85,
+            "name": "THUNDERBOLT",
+            "score": 17,
+            "slot": 2,
+            "slot_index": 1
+          },
+          {
+            "blocked": false,
+            "move_id": 86,
+            "name": "THUNDER_WAVE",
+            "score": 17,
+            "slot": 3,
+            "slot_index": 2
+          },
+          {
+            "blocked": false,
+            "move_id": 113,
+            "name": "LIGHT_SCREEN",
+            "score": 20,
+            "slot": 4,
+            "slot_index": 3
+          }
+        ],
+        "tier": 2
+      },
+      "verdict": "match"
+    },
+    {
+      "capture_id": "Whitney#1",
+      "chosen_id": 236,
+      "expected_move_ids": [
+        86,
+        236
+      ],
+      "match": true,
+      "mode": "exact",
+      "path": "audit\\boss_ai_trace\\whitney_live.txt",
+      "reason": "chosen slot has nonzero selector probability",
+      "selector": {
+        "best_move_id": 236,
+        "best_roll_threshold": 154,
+        "best_score": 19,
+        "best_slot_index": 0,
+        "gap": 0,
+        "possible_move_ids": [
+          86,
+          236
+        ],
+        "possible_slot_indices": [
+          0,
+          1
+        ],
+        "probabilities_by_slot": {
+          "0": 0.6015625,
+          "1": 0.3984375,
+          "2": 0.0,
+          "3": 0.0
+        },
+        "ready": true,
+        "scenario_id": "Whitney#1",
+        "second_move_id": 86,
+        "second_score": 19,
+        "second_slot_index": 1,
+        "slots": [
+          {
+            "blocked": false,
+            "move_id": 236,
+            "name": "MOONLIGHT",
+            "score": 19,
+            "slot": 1,
+            "slot_index": 0
+          },
+          {
+            "blocked": false,
+            "move_id": 86,
+            "name": "THUNDER_WAVE",
+            "score": 19,
+            "slot": 2,
+            "slot_index": 1
+          },
+          {
+            "blocked": false,
+            "move_id": 104,
+            "name": "DOUBLE_TEAM",
+            "score": 19,
+            "slot": 3,
+            "slot_index": 2
+          },
+          {
+            "blocked": false,
+            "move_id": 3,
+            "name": "DOUBLESLAP",
+            "score": 19,
+            "slot": 4,
+            "slot_index": 3
+          }
+        ],
+        "tier": 1
+      },
+      "verdict": "match"
+    }
+  ]
+}

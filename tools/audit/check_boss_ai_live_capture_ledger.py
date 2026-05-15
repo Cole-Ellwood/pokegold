@@ -69,6 +69,11 @@ REQUIRED_FINISHED_FIELDS = (
     "trace_rom_sha256",
     "trace_symbols",
     "trace_symbols_sha256",
+    "tier",
+    "move_ids",
+    "move_scores",
+    "chosen_slot",
+    "cur_enemy_move_id",
     "top_moves",
     "chosen",
     "switch_confidence",
@@ -126,6 +131,7 @@ def extract_status(status: str, context: str) -> str:
 def has_nonzero_trace_value(text: str) -> bool:
     patterns = (
         r"chosen_id=(\d+)",
+        r"cur_enemy_move_id=(\d+)",
         r"switch_confidence=(\d+)",
         r"plan_id=(\d+)",
         r"plan_confidence=(\d+)",
@@ -150,6 +156,9 @@ def has_nonzero_trace_value(text: str) -> bool:
 
 def has_decision_trace_value(text: str) -> bool:
     for match in re.finditer(r"chosen_id=(\d+)", text):
+        if int(match.group(1)):
+            return True
+    for match in re.finditer(r"cur_enemy_move_id=(\d+)", text):
         if int(match.group(1)):
             return True
     for line in text.splitlines():

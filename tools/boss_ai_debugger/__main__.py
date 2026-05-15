@@ -27,7 +27,22 @@ from .regression import (
     format_summary,
     write_json_report,
 )
+from .rom_scenarios import (
+    benchmark_batch,
+    evaluate_batch,
+    format_batch_report,
+    format_simulation,
+    load_scenario,
+    load_scenario_batch,
+    select_move,
+)
 from .scorer import format_inspection, inspect_fixture
+from .trace_replay import (
+    collect_trace_paths,
+    format_trace_replay_report,
+    replay_trace_paths,
+    write_trace_replay_json,
+)
 
 
 def path_arg(value: str) -> Path:
@@ -123,6 +138,83 @@ def cmd_regress(args: argparse.Namespace) -> int:
     return exit_code_for_result(result)
 
 
+def cmd_simulate(args: argparse.Namespace) -> int:
+    scenario = load_scenario(args.scenario, args.builtin)
+    result = select_move(scenario)
+    if args.json:
+        print(json.dumps(result, indent=2, sort_keys=True))
+    else:
+        print(format_simulation(result, show_events=not args.no_events))
+    return 0
+
+
+def cmd_batch_simulate(args: argparse.Namespace) -> int:
+    scenarios = load_scenario_batch(args.scenarios, args.expectations)
+    report = evaluate_batch(scenarios)
+    benchmark = None
+    if args.benchmark_seconds:
+        benchmark = benchmark_batch(scenarios, args.benchmark_seconds)
+        report["benchmark"] = benchmark
+
+    if args.json:
+        print(json.dumps(report, indent=2, sort_keys=True))
+    elif not args.quiet:
+        print(format_batch_report(report, limit=args.limit))
+        if benchmark is not None:
+            print("")
+            print(
+                "Benchmark: "
+                f"{benchmark['evaluations_per_minute']:.0f} evaluations/min; "
+                f"{benchmark['reviewable_evaluations_per_minute']:.0f} "
+                "reviewable evaluations/min"
+            )
+    else:
+        print(
+            "ROM boss AI batch check: "
+            f"{report['scenario_count']} scenarios, "
+            f"{report['reviewable_count']} reviewable, "
+            f"{report['scenarios_per_minute']:.0f}/min"
+        )
+
+    if args.json_out != "":
+        Path(args.json_out).parent.mkdir(parents=True, exist_ok=True)
+        Path(args.json_out).write_text(
+            json.dumps(report, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+            newline="\n",
+        )
+
+    if args.fail_on_reviewable_mismatch and report["reviewable_count"]:
+        return 1
+    return 0
+
+
+def cmd_trace_replay(args: argparse.Namespace) -> int:
+    paths = collect_trace_paths(
+        traces=args.trace,
+        trace_dir=args.trace_dir,
+        pattern=args.glob,
+    )
+    report = replay_trace_paths(paths)
+    if args.json:
+        print(json.dumps(report, indent=2, sort_keys=True))
+    elif not args.quiet:
+        print(format_trace_replay_report(report, limit=args.limit))
+    else:
+        print(
+            "Boss AI trace selector replay: "
+            f"{report['match_count']} / {report['checked_count']} matched "
+            f"({report['agreement_rate']:.4%})"
+        )
+
+    if args.json_out != "":
+        write_trace_replay_json(report, Path(args.json_out))
+
+    if args.fail_on_mismatch and report["failure_count"]:
+        return 1
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="python -m tools.boss_ai_debugger")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -159,6 +251,39 @@ def build_parser() -> argparse.ArgumentParser:
     regress_cmd.add_argument("--include-rank-labels", action="store_true")
     regress_cmd.add_argument("--quiet", action="store_true")
     regress_cmd.set_defaults(func=cmd_regress)
+
+    simulate_cmd = subparsers.add_parser("simulate")
+    simulate_source = simulate_cmd.add_mutually_exclusive_group(required=True)
+    simulate_source.add_argument("--scenario", type=path_arg)
+    simulate_source.add_argument(
+        "--builtin",
+        choices=["all_equal_late", "third_best_never_selected"],
+    )
+    simulate_cmd.add_argument("--json", action="store_true")
+    simulate_cmd.add_argument("--no-events", action="store_true")
+    simulate_cmd.set_defaults(func=cmd_simulate)
+
+    batch_cmd = subparsers.add_parser("batch-simulate")
+    batch_cmd.add_argument("--scenarios", type=path_arg, required=True)
+    batch_cmd.add_argument("--expectations", type=path_arg)
+    batch_cmd.add_argument("--json", action="store_true")
+    batch_cmd.add_argument("--json-out", default="")
+    batch_cmd.add_argument("--limit", type=int, default=20)
+    batch_cmd.add_argument("--quiet", action="store_true")
+    batch_cmd.add_argument("--benchmark-seconds", type=float, default=0.0)
+    batch_cmd.add_argument("--fail-on-reviewable-mismatch", action="store_true")
+    batch_cmd.set_defaults(func=cmd_batch_simulate)
+
+    trace_cmd = subparsers.add_parser("trace-replay")
+    trace_cmd.add_argument("--trace", type=path_arg, action="append")
+    trace_cmd.add_argument("--trace-dir", type=path_arg)
+    trace_cmd.add_argument("--glob", default="*_live.txt")
+    trace_cmd.add_argument("--json", action="store_true")
+    trace_cmd.add_argument("--json-out", default="")
+    trace_cmd.add_argument("--limit", type=int, default=20)
+    trace_cmd.add_argument("--quiet", action="store_true")
+    trace_cmd.add_argument("--fail-on-mismatch", action="store_true")
+    trace_cmd.set_defaults(func=cmd_trace_replay)
     return parser
 
 

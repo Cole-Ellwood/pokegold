@@ -1,14 +1,17 @@
 trace_rom=pokegold_trace.gbc
-trace_rom_sha256=ECE0411C1730CD3720D1E0DC05653949ABBA2E8375800FBBA0ED1F7A86F5B040
+trace_rom_sha256=7307C540A862E34F70F94D00CD7579A74CE3D7605AA445694D3D07EA99120A4A
 trace_symbols=pokegold_trace.sym
-trace_symbols_sha256=C9C0469A9045C15906BAFE2A334927D8A13E7E818FF51CA11885AAE17B022F8E
+trace_symbols_sha256=EC96A143E354E5249D9C38F23E533589FA453F2CD3AC0FAF3CE301F44AA601AA
 boss=Blue
-frame=0
-capture_index=1
 notes=late-tier adaptive-lead Kanto gym leader; mixed-team switch and public threat reasoning
-top_moves=DOUBLE_EDGE:20,STEEL_WING:20,QUICK_ATTACK:20
-chosen=DOUBLE_EDGE
-chosen_id=38
+tier=3
+move_ids=105,161,85,58
+move_scores=38,20,20,20
+chosen_slot=1
+cur_enemy_move_id=161
+top_moves=TRI_ATTACK:20,THUNDERBOLT:20,ICE_BEAM:20
+chosen=TRI_ATTACK
+chosen_id=161
 switch_confidence=0
 plan_id=4
 plan_phase=0
@@ -17,4 +20,4 @@ plausible_mask=33 02 20 8a
 risk_flags=00 (none)
 lookahead_bonus_top=18,18,18
 revealed_masks=00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
-switch_context=param=00,index=01,last_out=00,cooldown=00,cur_ot=00
+switch_context=param=00,index=02,last_out=00,cooldown=00,cur_ot=01

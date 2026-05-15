@@ -15,6 +15,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_MANIFEST = ROOT / "audit" / "boss_ai_trace" / "live_capture_manifest.json"
 CAPTURE_HELPER = ROOT / "tools" / "trace" / "boss_ai_trace_capture.py"
+STATE_REPLAY = ROOT / "tools" / "trace" / "boss_ai_state_replay.py"
 STATE_PROBE = ROOT / "tools" / "trace" / "boss_ai_trace_state_probe.py"
 ALLOWED_STATUSES = {"FINISHED", "IN PROGRESS", "UNTOUCHED"}
 PREFLIGHT_EXPECT_FLAGS = {
@@ -110,6 +111,14 @@ def validate_capture(entry: dict[str, Any], index: int) -> None:
         fail(f"capture {entry['id']}: invalid status {entry['status']}")
     if "save_state" in entry and not isinstance(entry["save_state"], str):
         fail(f"capture {entry['id']}: `save_state` must be a string")
+    for key in ("pre_choice_state", "choice_button"):
+        if key in entry and not isinstance(entry[key], str):
+            fail(f"capture {entry['id']}: `{key}` must be a string")
+    if "choice_wait_frames" in entry and (
+        not isinstance(entry["choice_wait_frames"], int)
+        or entry["choice_wait_frames"] < 0
+    ):
+        fail(f"capture {entry['id']}: `choice_wait_frames` must be non-negative")
     if "watch_frames" in entry and (
         not isinstance(entry["watch_frames"], int) or entry["watch_frames"] <= 0
     ):
@@ -126,6 +135,8 @@ def validate_capture(entry: dict[str, Any], index: int) -> None:
         entry["require_chosen_move"], bool
     ):
         fail(f"capture {entry['id']}: `require_chosen_move` must be a boolean")
+    if "snapshot_only" in entry and not isinstance(entry["snapshot_only"], bool):
+        fail(f"capture {entry['id']}: `snapshot_only` must be a boolean")
     preflight = entry.get("preflight")
     if preflight is None:
         return
@@ -179,10 +190,6 @@ def build_command(
     cmd = [
         sys.executable,
         str(CAPTURE_HELPER),
-        "--watch-frames",
-        str(entry.get("watch_frames", default_watch_frames)),
-        "--poll-every",
-        str(entry.get("poll_every", default_poll_every)),
         "--boss",
         entry["boss"],
         "--notes",
@@ -190,6 +197,15 @@ def build_command(
         "--out",
         str(rel_or_abs(entry["out"])),
     ]
+    if not entry.get("snapshot_only", False):
+        cmd.extend(
+            [
+                "--watch-frames",
+                str(entry.get("watch_frames", default_watch_frames)),
+                "--poll-every",
+                str(entry.get("poll_every", default_poll_every)),
+            ]
+        )
     if trace_rom is not None:
         cmd.extend(["--rom", str(trace_rom)])
     if trace_symbols is not None:
@@ -197,10 +213,44 @@ def build_command(
     save_state = entry.get("save_state", "")
     if save_state:
         cmd.extend(["--save-state", str(rel_or_abs(save_state))])
-    if entry.get("stop_after_first_capture", False):
+    if entry.get("stop_after_first_capture", False) and not entry.get(
+        "snapshot_only", False
+    ):
         cmd.append("--stop-after-first-capture")
-    if entry.get("require_chosen_move", False):
+    if entry.get("require_chosen_move", False) and not entry.get(
+        "snapshot_only", False
+    ):
         cmd.append("--require-chosen-move")
+    return cmd
+
+
+def build_pre_choice_replay_command(
+    entry: dict[str, Any],
+    default_watch_frames: int,
+    trace_rom: Path | None,
+    trace_symbols: Path | None,
+) -> list[str]:
+    pre_choice_state = entry.get("pre_choice_state", "")
+    cmd = [
+        sys.executable,
+        str(STATE_REPLAY),
+        "--save-state",
+        str(rel_or_abs(pre_choice_state)) if pre_choice_state else "",
+        "--button",
+        str(entry.get("choice_button", "a")),
+        "--watch-frames",
+        str(entry.get("choice_wait_frames", default_watch_frames)),
+        "--boss",
+        entry["boss"],
+        "--notes",
+        f"pre-choice replay; {entry['notes']}",
+        "--out",
+        str(rel_or_abs(entry["out"])),
+    ]
+    if trace_rom is not None:
+        cmd.extend(["--rom", str(trace_rom)])
+    if trace_symbols is not None:
+        cmd.extend(["--symbols", str(trace_symbols)])
     return cmd
 
 
@@ -279,6 +329,11 @@ def main() -> int:
     parser.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)
     parser.add_argument("--execute", action="store_true", help="run captures with existing save-states")
     parser.add_argument(
+        "--pre-choice-replay",
+        action="store_true",
+        help="run entries from pre_choice_state through boss_ai_state_replay.py",
+    )
+    parser.add_argument(
         "--strict",
         action="store_true",
         help="fail if any manifest entry lacks a save-state or has an invalid preflight",
@@ -310,16 +365,25 @@ def main() -> int:
         if selected and entry["id"] not in selected:
             continue
 
-        save_state_text = entry.get("save_state", "")
+        save_state_key = "pre_choice_state" if args.pre_choice_replay else "save_state"
+        save_state_text = entry.get(save_state_key, "")
         save_state = rel_or_abs(save_state_text) if save_state_text else None
         state_exists = bool(save_state and save_state.exists())
-        cmd = build_command(
-            entry,
-            default_watch_frames,
-            default_poll_every,
-            trace_rom,
-            trace_symbols,
-        )
+        if args.pre_choice_replay:
+            cmd = build_pre_choice_replay_command(
+                entry,
+                default_watch_frames,
+                trace_rom,
+                trace_symbols,
+            )
+        else:
+            cmd = build_command(
+                entry,
+                default_watch_frames,
+                default_poll_every,
+                trace_rom,
+                trace_symbols,
+            )
 
         if not state_exists:
             missing_state += 1
@@ -332,7 +396,11 @@ def main() -> int:
             continue
 
         assert save_state is not None
-        probe_cmd = build_state_probe_command(entry, save_state, trace_rom, trace_symbols)
+        probe_cmd = (
+            None
+            if args.pre_choice_replay
+            else build_state_probe_command(entry, save_state, trace_rom, trace_symbols)
+        )
         if probe_cmd is not None:
             proc = subprocess.run(
                 probe_cmd,

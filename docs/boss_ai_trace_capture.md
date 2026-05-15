@@ -39,6 +39,7 @@ It writes trace fields into WRAM symbols only:
 - bit 0: plausible-risk / scout trigger logic fired
 - bit 1: scout move was chosen (Protect/Substitute branch)
 - bit 2: scout pivot switch branch fired
+- bit 3: quarantined Haki oracle fired
 
 Practical capture method:
 - run a trace ROM in an emulator with memory/debugger access;
@@ -78,6 +79,8 @@ python tools\trace\boss_ai_state_factory.py --boss clair --update-manifest
 The factory writes:
 
 - decision states under `.local/tmp/boss_state_factory/*_chosen_frame_*.state`
+- pre-choice replay states under
+  `.local/tmp/boss_state_factory/*_pre_choice_frame_*.state`
 - per-route logs under `.local/tmp/boss_state_factory/*_state_factory.log`
 - `.local/tmp/boss_state_factory/manifest_hints.json`
 
@@ -116,9 +119,44 @@ Only promote a manifest/ledger row to `FINISHED` after the matching
 trainer first-decision rows should have nonzero `chosen_id`; switch-only
 scenario rows like `shared_switch_loop` may instead use nonzero
 `switch_confidence` plus `switch_context`. The factory's `--update-manifest`
-option intentionally does not promote status; it only fills `save_state`,
+option intentionally does not promote status; it fills `save_state`,
+`pre_choice_state`, `choice_button`, `choice_wait_frames`,
 `stop_after_first_capture`, and `require_chosen_move`, and it should not
 downgrade an already-finished row.
+
+To prove a saved state can replay through the move-choice path instead of only
+snapshotting a state after the choice already exists, use the matching
+pre-choice state:
+
+```powershell
+python tools\trace\boss_ai_state_replay.py `
+  --save-state .local\tmp\boss_state_factory\falkner_pre_choice_frame_4521.state `
+  --watch-frames 45 `
+  --boss Falkner `
+  --out .local\tmp\falkner_replay_trace.txt
+
+python -m tools.boss_ai_debugger trace-replay `
+  --trace .local\tmp\falkner_replay_trace.txt `
+  --fail-on-mismatch
+```
+
+Once manifest rows have `pre_choice_state`, `choice_button`, and
+`choice_wait_frames`, the batch runner can replay them directly:
+
+```powershell
+python tools\trace\boss_ai_trace_batch.py --pre-choice-replay
+python tools\trace\boss_ai_trace_batch.py --pre-choice-replay --execute
+```
+
+The audit gate for that replay path is:
+
+```powershell
+python tools\audit\check_boss_ai_pre_choice_replay.py
+```
+
+It replays every real-trainer `pre_choice_state` through the trace ROM and
+requires the replayed trace fields to match the baseline live trace before
+checking exact selector-field agreement with the captured chosen move.
 
 As of 2026-04-26, the factory supports all real trainer rows currently in the
 manifest: the 16 gym leaders, Koga, and Champion Lance. It does not generate
@@ -296,6 +334,8 @@ Post-patch scenarios to capture:
 - A->B->A switch-loop penalty fires unless an emergency exception applies;
 - first-turn Spikes gets lead bias only when not under immediate public
   pressure;
+- layer-two/layer-three Spikes is discouraged when the active player Pokemon
+  has publicly revealed Rapid Spin, without using learnset or bench inference;
 - status moves are discouraged into visible fail states;
 - Spikes plus Roar/Whirlwind responds to repeated switching or setup pressure;
 - public +2 setup is answered by denial moves when no immediate KO is available;

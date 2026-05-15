@@ -87,6 +87,10 @@ class TrainerConstant:
 class RunResult:
     route: BossRoute
     state_path: Path
+    pre_choice_state_path: Path
+    pre_choice_frame: int
+    choice_button: str
+    choice_wait_frames: int
     frame: int
 
 
@@ -642,7 +646,10 @@ def drive_to_chosen_move(
 
     last_signature: tuple[int, ...] | None = None
     max_presses = args.max_a_presses or route.max_a_presses
+    pre_choice_candidate = args.out_dir / f"{route.capture_id}_pre_choice_candidate.state"
     for step in range(max_presses):
+        pre_choice_frame = frame
+        save_state(pyboy, pre_choice_candidate)
         press(pyboy, "a", input_wait_frames)
         frame += input_wait_frames
         values = capture.read_trace_values(pyboy, symbols)
@@ -664,8 +671,20 @@ def drive_to_chosen_move(
                     f"diagnostic state saved to {diagnostic}"
                 )
             state_path = args.out_dir / f"{route.capture_id}_chosen_frame_{frame:04d}.state"
+            pre_choice_state = args.out_dir / (
+                f"{route.capture_id}_pre_choice_frame_{pre_choice_frame:04d}.state"
+            )
+            pre_choice_candidate.replace(pre_choice_state)
             save_state(pyboy, state_path)
-            return RunResult(route=route, state_path=state_path, frame=frame)
+            return RunResult(
+                route=route,
+                state_path=state_path,
+                pre_choice_state_path=pre_choice_state,
+                pre_choice_frame=pre_choice_frame,
+                choice_button="a",
+                choice_wait_frames=input_wait_frames,
+                frame=frame,
+            )
 
     diagnostic = args.out_dir / f"{route.capture_id}_no_chosen_after_{frame:04d}.state"
     save_state(pyboy, diagnostic)
@@ -676,23 +695,39 @@ def drive_to_chosen_move(
     )
 
 
+def hint_path(path: Path) -> str:
+    return capture.display_path(path)
+
+
 def write_manifest_hints(args: argparse.Namespace, results: list[RunResult]) -> None:
     hints = [
         {
             "boss": result.route.capture_id,
-            "save_state": str(result.state_path.relative_to(ROOT)).replace("\\", "/"),
+            "save_state": hint_path(result.state_path),
+            "pre_choice_state": hint_path(result.pre_choice_state_path),
+            "choice_button": result.choice_button,
+            "choice_wait_frames": result.choice_wait_frames,
+            "pre_choice_frame": result.pre_choice_frame,
             "frame": result.frame,
         }
         for result in results
     ]
-    hint_path = args.out_dir / "manifest_hints.json"
-    hint_path.write_text(json.dumps(hints, indent=2) + "\n", encoding="utf-8")
+    hint_file = args.out_dir / "manifest_hints.json"
+    hint_file.write_text(json.dumps(hints, indent=2) + "\n", encoding="utf-8")
 
 
 def update_manifest_paths(manifest_path: Path, results: list[RunResult]) -> None:
     data = json.loads(manifest_path.read_text(encoding="utf-8"))
     state_paths = {
-        result.route.capture_id: str(result.state_path.relative_to(ROOT)).replace("\\", "/")
+        result.route.capture_id: hint_path(result.state_path)
+        for result in results
+    }
+    pre_choice_paths = {
+        result.route.capture_id: hint_path(result.pre_choice_state_path)
+        for result in results
+    }
+    choice_metadata = {
+        result.route.capture_id: result
         for result in results
     }
     for entry in data.get("captures", []):
@@ -702,6 +737,9 @@ def update_manifest_paths(manifest_path: Path, results: list[RunResult]) -> None
         if capture_id not in state_paths:
             continue
         entry["save_state"] = state_paths[capture_id]
+        entry["pre_choice_state"] = pre_choice_paths[capture_id]
+        entry["choice_button"] = choice_metadata[capture_id].choice_button
+        entry["choice_wait_frames"] = choice_metadata[capture_id].choice_wait_frames
         entry["stop_after_first_capture"] = True
         entry["require_chosen_move"] = True
     manifest_path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
@@ -829,6 +867,10 @@ def main() -> int:
             fail(str(exc))
         results.append(result)
         print(f"{route.capture_id}: state={capture.display_path(result.state_path)}")
+        print(
+            f"{route.capture_id}: pre_choice_state="
+            f"{capture.display_path(result.pre_choice_state_path)}"
+        )
         print(f"{route.capture_id}: frame={result.frame}")
         print(f"{route.capture_id}: log={capture.display_path(log_path)}")
 

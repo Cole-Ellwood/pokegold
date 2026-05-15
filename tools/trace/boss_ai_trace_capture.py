@@ -32,6 +32,14 @@ TRACE_FIELDS: tuple[tuple[str, int], ...] = (
     ("wBossAIRevealedMovesBitmap", 24),
 )
 
+SELECTOR_REPLAY_FIELDS: tuple[tuple[str, int], ...] = (
+    ("wBossAITier", 1),
+    ("wEnemyMonMoves", 4),
+    ("wEnemyAIMoveScores", 4),
+    ("wCurEnemyMoveNum", 1),
+    ("wCurEnemyMove", 1),
+)
+
 CONTEXT_FIELDS: tuple[tuple[str, int], ...] = (
     ("wEnemySwitchMonParam", 1),
     ("wEnemySwitchMonIndex", 1),
@@ -44,6 +52,7 @@ RISK_FLAGS = (
     (0, "plausible-risk-or-scout-trigger"),
     (1, "scout-move-chosen"),
     (2, "scout-pivot-switch"),
+    (3, "haki-oracle-fired"),
 )
 
 METADATA_KEYS = (
@@ -109,7 +118,7 @@ def parse_move_names(path: Path) -> dict[int, str]:
 def require_symbols(symbols: dict[str, Symbol]) -> None:
     missing = [
         name
-        for name, _size in TRACE_FIELDS + CONTEXT_FIELDS
+        for name, _size in TRACE_FIELDS + SELECTOR_REPLAY_FIELDS + CONTEXT_FIELDS
         if name not in symbols
     ]
     if missing:
@@ -161,6 +170,8 @@ def format_capture(
     top_scores = values["wBossAITraceTopScores"]
     chosen = values["wBossAITraceChosenMove"][0]
     risk_flags = values["wBossAITraceRiskFlags"][0]
+    move_ids = values["wEnemyMonMoves"]
+    move_scores = values["wEnemyAIMoveScores"]
 
     top_pairs = []
     for move, score in zip(top_moves, top_scores):
@@ -170,6 +181,11 @@ def format_capture(
 
     lines.extend(
         [
+            f"tier={values['wBossAITier'][0]}",
+            f"move_ids={','.join(str(value) for value in move_ids)}",
+            f"move_scores={','.join(str(value) for value in move_scores)}",
+            f"chosen_slot={values['wCurEnemyMoveNum'][0]}",
+            f"cur_enemy_move_id={values['wCurEnemyMove'][0]}",
             f"top_moves={','.join(top_pairs)}",
             f"chosen={decode_move(chosen, move_names)}",
             f"chosen_id={chosen}",
@@ -196,7 +212,7 @@ def format_capture(
 
 def format_symbols(symbols: dict[str, Symbol]) -> str:
     lines = ["Boss AI trace symbols:"]
-    for name, size in TRACE_FIELDS + CONTEXT_FIELDS:
+    for name, size in TRACE_FIELDS + SELECTOR_REPLAY_FIELDS + CONTEXT_FIELDS:
         symbol = symbols[name]
         if size == 1:
             lines.append(f"{name}={format_addr(symbol)}")
@@ -229,7 +245,7 @@ def has_completed_move_decision(values: dict[str, list[int]]) -> bool:
 def read_trace_values(pyboy, symbols: dict[str, Symbol]) -> dict[str, list[int]]:
     return {
         name: read_range(pyboy, symbols[name], size)
-        for name, size in TRACE_FIELDS + CONTEXT_FIELDS
+        for name, size in TRACE_FIELDS + SELECTOR_REPLAY_FIELDS + CONTEXT_FIELDS
     }
 
 

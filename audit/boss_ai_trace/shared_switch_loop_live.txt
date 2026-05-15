@@ -1,20 +1,23 @@
 trace_rom=pokegold_trace.gbc
-trace_rom_sha256=ECE0411C1730CD3720D1E0DC05653949ABBA2E8375800FBBA0ED1F7A86F5B040
+trace_rom_sha256=7307C540A862E34F70F94D00CD7579A74CE3D7605AA445694D3D07EA99120A4A
 trace_symbols=pokegold_trace.sym
-trace_symbols_sha256=C9C0469A9045C15906BAFE2A334927D8A13E7E818FF51CA11885AAE17B022F8E
+trace_symbols_sha256=EC96A143E354E5249D9C38F23E533589FA453F2CD3AC0FAF3CE301F44AA601AA
 boss=Shared switch-loop
-frame=0
-capture_index=1
 notes=synthetic Jasmine battle context; public Earthquake pressure proposes returning to the last switched-out mon; confidence 80 beats Jasmine's 74 threshold but loses to the 84 anti-loop threshold
+tier=2
+move_ids=191,85,86,113
+move_scores=20,17,17,20
+chosen_slot=1
+cur_enemy_move_id=85
 top_moves=NO_MOVE:0,NO_MOVE:0,NO_MOVE:0
 chosen=NO_MOVE
 chosen_id=0
-switch_confidence=80
-plan_id=1
+switch_confidence=0
+plan_id=0
 plan_phase=0
-plan_confidence=2
+plan_confidence=0
 plausible_mask=00 00 00 00
 risk_flags=00 (none)
 lookahead_bonus_top=0,0,0
 revealed_masks=00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
-switch_context=param=31,index=00,last_out=02,cooldown=02,cur_ot=00
+switch_context=param=00,index=00,last_out=02,cooldown=02,cur_ot=00

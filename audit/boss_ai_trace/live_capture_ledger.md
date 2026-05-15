@@ -20,6 +20,8 @@ Tooling status:
 | Polling watch mode | `FINISHED` | `audit/boss_ai_trace/trace_watch_smoke.txt` |
 | State/RAM candidate probe | `FINISHED` | `python tools\trace\boss_ai_trace_state_probe.py --rom .local\do_now_morty_current\morty_live_attempt\pokegold_trace.gbc --boot-continue --expect-morty --strict` rejects raw stale Morty scratch RAM with `morty_candidate=FAIL`; the probe also rejects current-ROM debugger-warp states when copied SRAM has impossible active-player HP such as `64000/64000`. |
 | Ledger audit | `FINISHED` | `python tools\audit\check_boss_ai_live_capture_ledger.py` |
+| Exact selector replay audit | `FINISHED` | `python tools\audit\check_boss_ai_selector_replay.py` validates exact `wEnemyMonMoves`, `wEnemyAIMoveScores`, `wBossAITier`, and chosen move bytes for all `*_live.txt` captures. |
+| Pre-choice ROM replay audit | `FINISHED` | `python tools\audit\check_boss_ai_pre_choice_replay.py` replays every real-trainer `pre_choice_state` through the trace ROM, compares the replayed trace fields to the baseline live trace, then validates exact selector fields and chosen move bytes. |
 | Capture manifest | `FINISHED` | `audit/boss_ai_trace/live_capture_manifest.json` pins the current trace ROM and symbol SHA256 hashes and owns the Morty `preflight.expect` guard. |
 | Batch dry-run | `FINISHED` | `python tools\trace\boss_ai_trace_batch.py` reports missing save-states and uses manifest preflights before capture. |
 | Live trainer state factory | `FINISHED` | `python tools\trace\boss_ai_state_factory.py --all --update-manifest` generates real map/script-created decision states for every real trainer row in the manifest. |
@@ -35,25 +37,25 @@ Gym-leader and priority boss live captures:
 
 | Boss | Status | Required live checks | Output path |
 | --- | --- | --- | --- |
-| Falkner | `FINISHED` | `chosen_id=33`, `top_moves=TACKLE:20,SAND_ATTACK:20,GUST:20`, `plan_id=1` | `audit/boss_ai_trace/falkner_live.txt` |
-| Bugsy | `FINISHED` | `chosen_id=40`, `top_moves=POISON_STING:20,GIGA_DRAIN:20,TOXIC:20`, `plan_id=1` | `audit/boss_ai_trace/bugsy_live.txt` |
-| Whitney | `FINISHED` | `chosen_id=227`, `top_moves=ENCORE:20,THUNDER_WAVE:20,DOUBLE_TEAM:20`, `plan_id=1` | `audit/boss_ai_trace/whitney_live.txt` |
-| Morty | `FINISHED` | strict state preflight passes; current trace ROM excerpt has `chosen_id=138`, `top_moves=DREAM_EATER:20,CURSE:20,NIGHT_SHADE:20`, and `plan_id=1` | `audit/boss_ai_trace/morty_live.txt` |
-| Chuck | `FINISHED` | `chosen_id=157`, `top_moves=ROCK_SLIDE:20,FOCUS_PUNCH:20,ROAR:20`, `plan_id=1` | `audit/boss_ai_trace/chuck_live.txt` |
-| Jasmine | `FINISHED` | real Olivine Gym battle has `chosen_id=85`, `top_moves=THUNDERBOLT:20,THUNDER_WAVE:20,LIGHT_SCREEN:20`, and `plan_id=1` | `audit/boss_ai_trace/jasmine_live.txt` |
-| Pryce | `FINISHED` | `chosen_id=57`, `top_moves=SURF:20,ICE_BEAM:20,ENCORE:20`, `plan_id=4` | `audit/boss_ai_trace/pryce_live.txt` |
-| Clair | `FINISHED` | `chosen_id=89`, `top_moves=EARTHQUAKE:20,WING_ATTACK:20,TOXIC:20`, `plan_id=4` | `audit/boss_ai_trace/clair_live.txt` |
-| Brock | `FINISHED` | `chosen_id=157`, `top_moves=RECOVER:20,ROCK_SLIDE:20,TOXIC:20`, `plan_id=4` | `audit/boss_ai_trace/brock_live.txt` |
-| Misty | `FINISHED` | `chosen_id=95`, `top_moves=HYPNOSIS:20,SURF:20,ICE_BEAM:20`, `plan_id=4` | `audit/boss_ai_trace/misty_live.txt` |
-| Lt. Surge | `FINISHED` | `chosen_id=85`, `top_moves=THUNDERBOLT:20,CROSS_CHOP:20,RAZOR_LEAF:20`, `plan_id=4` | `audit/boss_ai_trace/lt_surge_live.txt` |
-| Erika | `FINISHED` | `chosen_id=241`, `top_moves=SUNNY_DAY:20,SYNTHESIS:20,SOLARBEAM:20`, `plan_id=4` | `audit/boss_ai_trace/erika_live.txt` |
-| Janine | `FINISHED` | `chosen_id=188`, `top_moves=SLUDGE_BOMB:20,SURF:20,EXPLOSION:20`, `plan_id=4` | `audit/boss_ai_trace/janine_live.txt` |
-| Sabrina | `FINISHED` | `chosen_id=115`, `top_moves=REFLECT:20,ENCORE:20,PSYCHIC_M:20`, `plan_id=4` | `audit/boss_ai_trace/sabrina_live.txt` |
-| Blaine | `FINISHED` | `chosen_id=126`, `top_moves=FIRE_BLAST:20,CONFUSE_RAY:20,SAFEGUARD:20`, `plan_id=4` | `audit/boss_ai_trace/blaine_live.txt` |
-| Blue | `FINISHED` | `chosen_id=38`, `top_moves=DOUBLE_EDGE:20,STEEL_WING:20,QUICK_ATTACK:20`, `plan_id=4` | `audit/boss_ai_trace/blue_live.txt` |
-| Koga | `FINISHED` | `chosen_id=92`, `top_moves=TOXIC:20,GIGA_DRAIN:20,SPIDER_WEB:20`, `plan_id=4` | `audit/boss_ai_trace/koga_live.txt` |
-| Champion Lance | `FINISHED` | `chosen_id=89`, `top_moves=EARTHQUAKE:20,WING_ATTACK:20,TOXIC:20`, `plan_id=4` | `audit/boss_ai_trace/champion_lance_live.txt` |
-| Shared switch-loop | `FINISHED` | `switch_confidence=80`; `switch_context=param=31,index=00,last_out=02,cooldown=02,cur_ot=00`; confidence beats Jasmine's normal `74` switch threshold but loses to the anti-loop `84` threshold | `audit/boss_ai_trace/shared_switch_loop_live.txt` |
+| Falkner | `FINISHED` | exact selector replay: `tier=1`, `cur_enemy_move_id=33`, `chosen_slot=0`, `move_scores=20,20,20,20` | `audit/boss_ai_trace/falkner_live.txt` |
+| Bugsy | `FINISHED` | exact selector replay: `tier=1`, `cur_enemy_move_id=202`, `chosen_slot=1`, `move_scores=20,20,20,20` | `audit/boss_ai_trace/bugsy_live.txt` |
+| Whitney | `FINISHED` | exact selector replay: `tier=1`, `cur_enemy_move_id=236`, `chosen_slot=0`, `move_scores=19,19,19,19` | `audit/boss_ai_trace/whitney_live.txt` |
+| Morty | `FINISHED` | strict state preflight passes; exact selector replay: `tier=2`, `cur_enemy_move_id=138`, `chosen_slot=1`, `move_scores=38,20,20,20` | `audit/boss_ai_trace/morty_live.txt` |
+| Chuck | `FINISHED` | exact selector replay: `tier=2`, `cur_enemy_move_id=157`, `chosen_slot=2`, `move_scores=38,20,20,20` | `audit/boss_ai_trace/chuck_live.txt` |
+| Jasmine | `FINISHED` | exact selector replay: `tier=2`, `cur_enemy_move_id=85`, `chosen_slot=1`, `move_scores=38,20,20,20` | `audit/boss_ai_trace/jasmine_live.txt` |
+| Pryce | `FINISHED` | exact selector replay: `tier=3`, `cur_enemy_move_id=57`, `chosen_slot=1`, `move_scores=38,20,20,20` | `audit/boss_ai_trace/pryce_live.txt` |
+| Clair | `FINISHED` | exact selector replay: `tier=3`, `cur_enemy_move_id=200`, `chosen_slot=2`, `move_scores=38,20,20,20` | `audit/boss_ai_trace/clair_live.txt` |
+| Brock | `FINISHED` | exact selector replay: `tier=3`, `cur_enemy_move_id=57`, `chosen_slot=1`, `move_scores=38,20,20,20` | `audit/boss_ai_trace/brock_live.txt` |
+| Misty | `FINISHED` | exact selector replay: `tier=3`, `cur_enemy_move_id=95`, `chosen_slot=1`, `move_scores=38,20,20,20` | `audit/boss_ai_trace/misty_live.txt` |
+| Lt. Surge | `FINISHED` | exact selector replay: `tier=3`, `cur_enemy_move_id=86`, `chosen_slot=2`, `move_scores=38,20,20,20` | `audit/boss_ai_trace/lt_surge_live.txt` |
+| Erika | `FINISHED` | exact selector replay: `tier=3`, `cur_enemy_move_id=202`, `chosen_slot=1`, `move_scores=38,20,20,20` | `audit/boss_ai_trace/erika_live.txt` |
+| Janine | `FINISHED` | exact selector replay: `tier=3`, `cur_enemy_move_id=188`, `chosen_slot=2`, `move_scores=38,20,20,20` | `audit/boss_ai_trace/janine_live.txt` |
+| Sabrina | `FINISHED` | exact selector replay: `tier=3`, `cur_enemy_move_id=227`, `chosen_slot=2`, `move_scores=38,20,20,20` | `audit/boss_ai_trace/sabrina_live.txt` |
+| Blaine | `FINISHED` | exact selector replay: `tier=3`, `cur_enemy_move_id=53`, `chosen_slot=2`, `move_scores=38,20,20,20` | `audit/boss_ai_trace/blaine_live.txt` |
+| Blue | `FINISHED` | exact selector replay: `tier=3`, `cur_enemy_move_id=161`, `chosen_slot=1`, `move_scores=38,20,20,20` | `audit/boss_ai_trace/blue_live.txt` |
+| Koga | `FINISHED` | exact selector replay: `tier=3`, `cur_enemy_move_id=141`, `chosen_slot=2`, `move_scores=38,20,20,20` | `audit/boss_ai_trace/koga_live.txt` |
+| Champion Lance | `FINISHED` | exact selector replay: `tier=3`, `cur_enemy_move_id=231`, `chosen_slot=1`, `move_scores=38,20,20,20` | `audit/boss_ai_trace/champion_lance_live.txt` |
+| Shared switch-loop | `FINISHED` | exact selector replay: `tier=2`, `cur_enemy_move_id=85`, `chosen_slot=1`, `move_scores=20,17,17,20`; switch context remains `param=31,index=00,last_out=02,cooldown=02,cur_ot=00` | `audit/boss_ai_trace/shared_switch_loop_live.txt` |
 
 Recommended command once a boss-position PyBoy state exists:
 
