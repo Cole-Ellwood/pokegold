@@ -580,6 +580,7 @@ def cmd_route_eval(args: argparse.Namespace) -> int:
     report = evaluate_route_path(
         args.scenario,
         scenario_id=args.scenario_id or None,
+        horizon=args.horizon,
     )
     if args.json_out != "":
         write_route_eval_json(report, Path(args.json_out))
@@ -919,6 +920,7 @@ def build_parser() -> argparse.ArgumentParser:
     route_eval_cmd = subparsers.add_parser("route-eval")
     route_eval_cmd.add_argument("--scenario", type=path_arg, required=True)
     route_eval_cmd.add_argument("--scenario-id", default="")
+    route_eval_cmd.add_argument("--horizon", type=int, default=3)
     route_eval_cmd.add_argument("--json", action="store_true")
     route_eval_cmd.add_argument("--json-out", default="")
     route_eval_cmd.set_defaults(func=cmd_route_eval)

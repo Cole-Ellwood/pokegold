@@ -28,6 +28,7 @@ from tools.boss_ai_debugger.rom_score_materialize import (
     DEFAULT_WATCH_FRAMES as DEFAULT_SCORE_WATCH_FRAMES,
     run_rom_score_materialization,
 )
+from tools.boss_ai_debugger.route_eval import MULTI_TURN_FACTORS, evaluate_route_batch
 from tools.boss_ai_debugger.rule_map import (
     DEFAULT_RULE_MAP_PATH,
     build_rule_map,
@@ -146,6 +147,7 @@ def collect_evidence(
     )
     batch = evaluate_batch(scenarios)
     queue = build_review_queue(batch, limit=50, max_per_lesson=2)
+    route_eval = evaluate_route_batch(scenarios, source="roadmap_audit", horizon=3)
     selector_materialization = maybe_run_selector_materialization(
         scenarios,
         enabled=check_rom_selector_materialization,
@@ -173,6 +175,7 @@ def collect_evidence(
         "mastery": mastery,
         "batch": batch,
         "queue": queue,
+        "route_eval": route_eval,
         "selector_materialization": selector_materialization,
         "score_materialization": score_materialization,
     }
@@ -429,18 +432,22 @@ def roadmap_items(evidence: dict[str, Any]) -> list[dict[str, Any]]:
         status_item(
             "multi_turn_route_evaluation",
             "Multi-turn route evaluation",
-            status="partial",
+            status=multi_turn_route_status(evidence),
             evidence=[
-                "route-eval classifies one-turn scenario outcomes",
-                "full 2-5 turn branch search is not implemented",
-            ],
-            gaps=[
                 (
-                    "Extend route evaluation from one-turn classification to 2-5 "
-                    "turn branch search with hazards, spin, phazing, sleep, recovery, "
-                    "self-KO, and ace preservation."
-                )
+                    "route_horizon="
+                    f"{evidence['route_eval']['multi_turn_summary']['horizon']}"
+                ),
+                (
+                    "implemented_factors="
+                    f"{evidence['route_eval']['multi_turn_summary']['implemented_factors']}"
+                ),
+                (
+                    "observed_factors="
+                    f"{evidence['route_eval']['multi_turn_summary']['observed_factors']}"
+                ),
             ],
+            gaps=multi_turn_route_gaps(evidence),
             refs=["tools/boss_ai_debugger/route_eval.py"],
         ),
         status_item(
@@ -740,6 +747,7 @@ def evidence_summary(evidence: dict[str, Any]) -> dict[str, Any]:
         "focused_reviewable_per_minute": focused_reviewable_per_minute(batch),
         "reviewable_count": batch["reviewable_count"],
         "queue_returned_count": queue["returned_count"],
+        "route_multi_turn_summary": evidence["route_eval"]["multi_turn_summary"],
     }
 
 
@@ -847,6 +855,32 @@ def selector_materialization_gaps(evidence: dict[str, Any]) -> list[str]:
     if data.get("available"):
         return []
     return [str(data.get("reason", "ROM selector materialization failed"))]
+
+
+def multi_turn_route_status(evidence: dict[str, Any]) -> str:
+    summary = evidence["route_eval"]["multi_turn_summary"]
+    factors = set(summary.get("implemented_factors", []))
+    if summary.get("horizon", 0) < 2:
+        return "missing"
+    if set(MULTI_TURN_FACTORS) <= factors:
+        return "complete"
+    return "partial"
+
+
+def multi_turn_route_gaps(evidence: dict[str, Any]) -> list[str]:
+    summary = evidence["route_eval"]["multi_turn_summary"]
+    gaps = []
+    if summary.get("horizon", 0) < 2:
+        gaps.append("Route evaluation horizon is below two turns.")
+    missing = sorted(
+        set(MULTI_TURN_FACTORS) - set(summary.get("implemented_factors", []))
+    )
+    if missing:
+        gaps.append(
+            "Multi-turn route evaluator is missing factor support: "
+            + ", ".join(missing)
+        )
+    return gaps
 
 
 def summarized_score_materialization(data: dict[str, Any]) -> dict[str, Any]:

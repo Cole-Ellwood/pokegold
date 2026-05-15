@@ -170,6 +170,62 @@ class RouteEvalTests(unittest.TestCase):
         self.assertEqual(item["classification"], "route_catastrophic")
         self.assertEqual(item["route_bucket"], "actually_bad")
 
+    def test_multi_turn_route_projects_named_factors(self) -> None:
+        item = evaluate_route_scenario(
+            {
+                "id": "multi_turn_case",
+                "tier": "late",
+                "moves": [
+                    {"id": "set_spikes", "name": "Spikes"},
+                    {"id": "roar_branch", "name": "Roar"},
+                    {"id": "sleep_line", "name": "Hypnosis"},
+                    {"id": "cashout", "name": "Explosion"},
+                ],
+                "expectation": {
+                    "best_action_ids": ["set_spikes"],
+                    "condition_tags": [
+                        "spikes_layers_1",
+                        "active_revealed_rapid_spin",
+                        "active_ghost_spinblock",
+                        "one_time_trade_named_converter",
+                    ],
+                },
+            },
+            horizon=5,
+        )
+
+        route = item["multi_turn_route"]
+
+        self.assertEqual(route["horizon"], 5)
+        self.assertIn("hazards", route["implemented_factors"])
+        self.assertIn("spin", route["observed_factors"])
+        self.assertIn("phazing", route["observed_factors"])
+        self.assertIn("sleep", route["observed_factors"])
+        self.assertIn("self_ko", route["observed_factors"])
+        self.assertTrue(any(line["branches"] for line in route["lines"]))
+
+    def test_multi_turn_route_tracks_recovery_and_ace_preservation(self) -> None:
+        item = evaluate_route_scenario(
+            {
+                "id": "recovery_ace_case",
+                "tier": "late",
+                "moves": [
+                    {"id": "preserve_ace", "name": "Recover"},
+                    {"id": "attack", "name": "Attack"},
+                ],
+                "expectation": {
+                    "best_action_ids": ["preserve_ace"],
+                    "condition_tags": ["ace_preservation"],
+                },
+            },
+            horizon=2,
+        )
+
+        factors = item["multi_turn_route"]["observed_factors"]
+
+        self.assertIn("recovery", factors)
+        self.assertIn("ace_preservation", factors)
+
     def test_cli_route_eval_writes_batch_json(self) -> None:
         scenarios = generate_scenarios(family="spikes_spin", count=8, seed=7)
         with tempfile.TemporaryDirectory() as tmp:
@@ -183,6 +239,8 @@ class RouteEvalTests(unittest.TestCase):
                         "route-eval",
                         "--scenario",
                         str(scenarios_path),
+                        "--horizon",
+                        "4",
                         "--json-out",
                         str(out),
                     ]
@@ -191,6 +249,7 @@ class RouteEvalTests(unittest.TestCase):
 
         self.assertEqual(code, 0)
         self.assertEqual(data["scenario_count"], 8)
+        self.assertEqual(data["multi_turn_summary"]["horizon"], 4)
         self.assertIn("classification_counts", data)
         self.assertIn("route evaluation", stdout.getvalue())
 

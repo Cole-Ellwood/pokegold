@@ -347,14 +347,17 @@ active species Spin priors. The output also compares ROM score-helper
 contributions against the Python scenario contribution stream with matching
 trace ids, so mismatches become review items instead of hand inspection.
 
-Classify one-turn route context:
+Classify route context:
 
 ```powershell
-python -m tools.boss_ai_debugger route-eval --scenario audit\boss_ai_debugger\generated\spikes_spin.jsonl
+python -m tools.boss_ai_debugger route-eval --scenario audit\boss_ai_debugger\generated\spikes_spin.jsonl --horizon 3
 ```
 
 `route-eval` maps scenario verdicts into structured route outcomes such as
 `route_bad_roll`, `route_expected_unreachable`, or
 `route_acceptable_but_review`, plus coarse buckets for `actually_bad`,
-`acceptable_near_tie`, and `needs_context`. It is a foundation for route review,
-not full multi-turn search yet.
+`acceptable_near_tie`, and `needs_context`. It also adds a bounded 2-5 turn
+route projection over candidate moves, with explicit factors for hazards, Rapid
+Spin, phazing, sleep, recovery, self-KO, and ace preservation. This is an
+analysis layer for review prioritization, not a claim that the ROM is doing
+multi-turn tree search.
