@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Any
 
 from .generators import generate_scenarios
-from .mastery_index import build_mastery_index, write_mastery_index
+from .mastery_index import build_mastery_index
 from .rom_contribution_trace import (
     resolve_rom_contribution_trace_paths,
     summarize_rom_contribution_trace_paths,
@@ -26,7 +26,6 @@ def build_coverage_report(
 ) -> dict[str, Any]:
     rule_map = build_rule_map()
     mastery = build_mastery_index()
-    write_mastery_index(mastery)
     scenarios = generate_scenarios(family="all", count=generated_count, seed=seed)
     contribution_summary = summarize_rom_contribution_trace_paths(
         resolve_rom_contribution_trace_paths(rom_contribution_trace_paths)

@@ -17,6 +17,10 @@ python -m tools.boss_ai_debugger coverage-report --changed-file engine\battle\ai
 - `docs/pokemon_mastery/quick_tests/*.md`
 - `docs/pokemon_mastery/reviews/*.md`
 
+It is the explicit command that writes `audit/boss_ai_debugger/mastery_index.json`.
+`coverage-report` reads the same mastery sources but does not refresh that
+artifact as a side effect.
+
 `coverage-report` combines:
 
 - Boss AI source rule-map counts
