@@ -6,6 +6,13 @@
 ; Included with BOSSAI_EMIT_* guards from main.asm to preserve ROM byte order.
 ; ============================================================
 
+IF !DEF(BOSSAI_HAKI_SPENT_F)
+DEF BOSSAI_HAKI_SPENT_F EQU 0
+DEF BOSSAI_HAKI_ACE_SEEN_F EQU 1
+DEF BOSSAI_HAKI_ELIGIBLE_F EQU 2
+DEF BOSSAI_HAKI_TRACE_FIRED_F EQU 3
+ENDC
+
 if DEF(BOSSAI_EMIT_PLATFORM_STATE_TRACKING)
 ; ============================================================
 ; Region: State tracking
@@ -18,6 +25,7 @@ BossAI_IncrementTurnsElapsed:
 	ld a, [wBossAITier]
 	and a
 	ret z
+	call BossAI_UpdateHakiAceWindow
 	ld hl, wBossAITurnsElapsed
 	inc [hl]
 	ld hl, wBossAIPlanPhase
@@ -37,6 +45,30 @@ BossAI_IncrementTurnsElapsed:
 	ld [wBossAIPlayerSwitchCount], a
 .no_pending_switch
 	call BossAI_DecaySwitchCooldown
+	ret
+
+; ai-layer: PLATFORM
+BossAI_UpdateHakiAceWindow:
+; Byte 1 of wBossAIRevealedMovesBitmapSpare stores quarantined Haki bits.
+; Morty's Gengar prototype only: mark a one-turn window when the ace first
+; starts a battle turn active, so player switch/item turns cannot defer Haki.
+	ld hl, wBossAIRevealedMovesBitmapSpare + 1
+	res BOSSAI_HAKI_ELIGIBLE_F, [hl]
+	bit BOSSAI_HAKI_SPENT_F, [hl]
+	ret nz
+	bit BOSSAI_HAKI_ACE_SEEN_F, [hl]
+	ret nz
+	ld a, [wTrainerClass]
+	cp MORTY
+	ret nz
+	ld a, [wOtherTrainerID]
+	cp MORTY1
+	ret nz
+	ld a, [wEnemyMonSpecies]
+	cp GENGAR
+	ret nz
+	set BOSSAI_HAKI_ACE_SEEN_F, [hl]
+	set BOSSAI_HAKI_ELIGIBLE_F, [hl]
 	ret
 
 ; ai-layer: PLATFORM
@@ -188,12 +220,84 @@ BossAI_RecordRevealedPlayerMove:
 	call BossAI_GetActiveSpeciesRevealedMaskPointer
 	pop bc
 	ret nc
+	push hl
+	ld a, b
+	call BossAI_MoveTaintsFourMoveReveal
+	pop hl
+	jr nc, .reveal_not_tainted
+	push hl
+	push bc
+	call BossAI_TaintActiveSpeciesReveal
+	pop bc
+	pop hl
+
+.reveal_not_tainted
 	ld a, b
 	call BossAI_AddRevealedMoveToSpeciesMask
 	call BossAI_MirrorPlayerUsedMovesToSpeciesSlot
 	xor a
 	ld [wBossAIPlausibleTypeMaskSpecies], a
 	ld [wBossAIPlausibleTypeMaskLevel], a
+	ret
+
+; ai-layer: PLATFORM
+BossAI_MoveTaintsFourMoveReveal:
+; Returns carry if move a can reveal copied/temporary moves, making the active
+; species unsafe for four-revealed-move plausible-mask saturation this battle.
+	and a
+	jr z, .no
+	cp STRUGGLE
+	jr z, .yes
+	dec a
+	ld hl, Moves + MOVE_EFFECT
+	call BossAI_GetMoveAttr
+	cp EFFECT_MIRROR_MOVE
+	jr z, .yes
+	cp EFFECT_TRANSFORM
+	jr z, .yes
+	cp EFFECT_MIMIC
+	jr z, .yes
+	cp EFFECT_METRONOME
+	jr z, .yes
+	cp EFFECT_SKETCH
+	jr z, .yes
+	cp EFFECT_SLEEP_TALK
+	jr z, .yes
+.no
+	and a
+	ret
+.yes
+	scf
+	ret
+
+; ai-layer: PLATFORM
+BossAI_TaintActiveSpeciesReveal:
+	call BossAI_GetActiveSpeciesSeenIndex
+	and a
+	ret z
+	dec a
+	ld c, a
+	call BossAI_SeenPlayerSpeciesBitFromC
+	ld hl, wBossAIRevealedMovesBitmapSpare
+	or [hl]
+	ld [hl], a
+	ret
+
+; ai-layer: PLATFORM
+BossAI_ActiveSpeciesRevealTainted:
+	call BossAI_GetActiveSpeciesSeenIndex
+	and a
+	jr z, .no
+	dec a
+	ld c, a
+	call BossAI_SeenPlayerSpeciesBitFromC
+	ld hl, wBossAIRevealedMovesBitmapSpare
+	and [hl]
+	jr z, .no
+	scf
+	ret
+.no
+	and a
 	ret
 
 ; ai-layer: PLATFORM

@@ -269,12 +269,16 @@ BossAI_ApplyMoveModel:
 	call .DiscourageByTierWeight
 
 .skip_setup
+	call .ApplySetupDisciplineBias
+
 	call .UtilityMoveWouldFailPublicly
 	jr nc, .skip_utility_fail
 	ld a, 24
 	call BossAI_DiscourageScoreHL
 
 .skip_utility_fail
+	call .ApplyRecoveryTimingDiscipline
+
 	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
 	ld hl, BossAIStatusEffects
 	ld de, 1
@@ -288,6 +292,7 @@ BossAI_ApplyMoveModel:
 .status_ok
 	ld c, 4
 	call .EncourageByTierWeight
+	call .ApplyStatusHardAnswerDiscipline
 
 .skip_status
 	call .ApplySetupPunishBias
@@ -309,6 +314,7 @@ BossAI_ApplyMoveModel:
 	call .ApplyRevealedCounterCoatAvoidance
 	call .ApplyChoiceFirstLockRegret
 	call .ApplyRevealedProtectCommitmentRisk
+	call .ApplySelfKOTradeDiscipline
 	call .ApplyRevealedRecoveryDenialBias
 	call .ApplyRevealedFastEncoreAvoidance
 	call .ApplyLastMoveEncoreTrapBias
@@ -783,6 +789,71 @@ BossAI_ApplyMoveModel:
 .setup_punish
 	ld a, 8
 	jp BossAI_EncourageScoreHL
+
+.ApplySetupDisciplineBias
+	call BossAI_IsCurrentEnemySetupMove
+	ret nc
+	call BossAI_SetupBoostHasFurtherValue
+	jr c, .setup_has_value
+	ld a, 8
+	jp BossAI_DiscourageScoreHL
+.setup_has_value
+	call BossAI_SetupTurnIsAffordable
+	ret c
+	ld a, 4
+	jp BossAI_DiscourageScoreHL
+
+.ApplyStatusHardAnswerDiscipline
+	call BossAI_HasAnyKOMove
+	ret nc
+	ld a, 5
+	jp BossAI_DiscourageScoreHL
+
+.ApplySelfKOTradeDiscipline
+	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
+	cp EFFECT_SELFDESTRUCT
+	ret nz
+	call .HasKOLine
+	jr c, .self_ko_has_ko
+	call AICheckEnemyQuarterHP_HL
+	ret nc
+	ld a, 6
+	jp BossAI_DiscourageScoreHL
+.self_ko_has_ko
+	call AICheckEnemyQuarterHP_HL
+	jr nc, .self_ko_cashout_good
+	call .EnemyUnderPressure
+	ret nc
+.self_ko_cashout_good
+	ld a, 4
+	jp BossAI_EncourageScoreHL
+
+.ApplyRecoveryTimingDiscipline
+	call .IsCurrentEnemyRecoveryMove
+	ret nc
+	call BossAI_HasAnyKOMove
+	jr c, .discourage_recovery
+	call AICheckEnemyHalfHP_HL
+	ret nc
+.discourage_recovery
+	ld a, 6
+	jp BossAI_DiscourageScoreHL
+
+.IsCurrentEnemyRecoveryMove
+	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
+	cp EFFECT_HEAL
+	jr z, .yes_recovery
+	cp EFFECT_MORNING_SUN
+	jr z, .yes_recovery
+	cp EFFECT_SYNTHESIS
+	jr z, .yes_recovery
+	cp EFFECT_MOONLIGHT
+	jr z, .yes_recovery
+	and a
+	ret
+.yes_recovery
+	scf
+	ret
 
 .ApplyPhazingPlanBias
 	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
@@ -1640,6 +1711,9 @@ BossAI_ApplyMoveModel:
 ; Layer 2 gives limited immediate gain; only push if layer 3 looks reachable.
 	call .EnemyUnderPressure
 	jr c, .spikes_l2_danger
+	ld a, EFFECT_RAPID_SPIN
+	call .PlayerHasRevealedEffectA
+	jr c, .spikes_revealed_spinner_active
 	push hl
 	call BossAI_PredictPlayerSwitch
 	pop hl
@@ -1663,6 +1737,9 @@ BossAI_ApplyMoveModel:
 ; Prioritize finishing the stack unless immediate danger.
 	call .EnemyUnderPressure
 	jr c, .spikes_l3_danger
+	ld a, EFFECT_RAPID_SPIN
+	call .PlayerHasRevealedEffectA
+	jr c, .spikes_revealed_spinner_active
 	ld c, 5
 	call .EncourageByTierWeight
 	push hl
@@ -1679,12 +1756,23 @@ BossAI_ApplyMoveModel:
 	call .DiscourageByTierWeight
 	ret
 
+.spikes_revealed_spinner_active
+	ld c, 5
+	call .DiscourageByTierWeight
+	ret
+
 .ApplyRoleBias
 	ld a, [wTrainerClass]
 	cp FALKNER
 	jp z, .falkner
 	cp RIVAL1
 	jp z, .rival
+	cp BUGSY
+	jp z, .bugsy
+	cp WHITNEY
+	jp z, .whitney
+	cp MORTY
+	jp z, .morty
 	cp CHUCK
 	jp z, .chuck
 	cp JASMINE
@@ -1703,6 +1791,24 @@ BossAI_ApplyMoveModel:
 	jp z, .koga
 	cp CHAMPION
 	jp z, .champion
+	cp BROCK
+	jp z, .brock
+	cp MISTY
+	jp z, .misty
+	cp LT_SURGE
+	jp z, .lt_surge
+	cp ERIKA
+	jp z, .erika
+	cp JANINE
+	jp z, .janine
+	cp SABRINA
+	jp z, .sabrina
+	cp BLAINE
+	jp z, .blaine
+	cp BLUE
+	jp z, .blue
+	cp RED
+	jp z, .red
 	ret
 
 .rival
@@ -1725,6 +1831,27 @@ BossAI_ApplyMoveModel:
 .falkner_bias
 	ld c, 5
 	call .EncourageByTierWeight
+	ret
+
+.bugsy
+	ld a, BUG
+	call .EncourageIfType
+	ld hl, BossAIBugsyRoleEffects
+	call .EncourageIfEffectInArray
+	ret
+
+.whitney
+	ld a, NORMAL
+	call .EncourageIfType
+	ld hl, BossAIWhitneyRoleEffects
+	call .EncourageIfEffectInArray
+	ret
+
+.morty
+	ld a, GHOST
+	call .EncourageIfType
+	ld hl, BossAIMortyRoleEffects
+	call .EncourageIfEffectInArray
 	ret
 
 .chuck
@@ -1805,6 +1932,83 @@ BossAI_ApplyMoveModel:
 	ret c
 	ld c, 5
 	call .DiscourageByTierWeight
+	ret
+
+.brock
+	ld a, ROCK
+	call .EncourageIfType
+	ld a, GROUND
+	call .EncourageIfType
+	ld hl, BossAIBrockRoleEffects
+	call .EncourageIfEffectInArray
+	ret
+
+.misty
+	ld a, WATER
+	call .EncourageIfType
+	ld hl, BossAIMistyRoleEffects
+	call .EncourageIfEffectInArray
+	ret
+
+.lt_surge
+	ld a, ELECTRIC
+	call .EncourageIfType
+	ld a, FIGHTING
+	call .EncourageIfType
+	ld hl, BossAISurgeRoleEffects
+	call .EncourageIfEffectInArray
+	ret
+
+.erika
+	ld a, GRASS
+	call .EncourageIfType
+	ld a, POISON
+	call .EncourageIfType
+	ld hl, BossAIErikaRoleEffects
+	call .EncourageIfEffectInArray
+	ret
+
+.janine
+	ld a, POISON
+	call .EncourageIfType
+	ld a, BUG
+	call .EncourageIfType
+	ld hl, BossAIJanineRoleEffects
+	call .EncourageIfEffectInArray
+	ret
+
+.sabrina
+	ld a, PSYCHIC_TYPE
+	call .EncourageIfType
+	ld hl, BossAISabrinaRoleEffects
+	call .EncourageIfEffectInArray
+	ret
+
+.blaine
+	ld a, FIRE
+	call .EncourageIfType
+	ld hl, BossAIBlaineRoleEffects
+	call .EncourageIfEffectInArray
+	ret
+
+.blue
+	ld a, FIRE
+	call .EncourageIfType
+	ld a, FLYING
+	call .EncourageIfType
+	ld a, DRAGON
+	call .EncourageIfType
+	ld hl, BossAIBlueRoleEffects
+	call .EncourageIfEffectInArray
+	ret
+
+.red
+	ld a, ELECTRIC
+	call .EncourageIfType
+	ld a, NORMAL
+	call .EncourageIfType
+	ld hl, BossAIRedRoleEffects
+	call .EncourageIfEffectInArray
 	ret
 
 .EncourageIfType
@@ -2047,7 +2251,7 @@ ENDC
 ; Pick best vs. second-best move based on score gap.
 ; Gap >= 6: 90% best (230/256)
 ; Gap >= 3: 75% best (192/256)
-; Gap <  3: 60% best (154/256)
+; Gap <  3: 60% best (154/256), with no tier bump so true near-ties mix.
 ; Keeps boss decisions weighted but non-deterministic.
 	ld a, b
 	sub e
@@ -2098,6 +2302,12 @@ ENDC
 .AdjustBestMovePickChance
 	push bc
 	ld b, a
+	cp 192
+	jr nc, .tier_adjust
+	ld a, b
+	jr .done
+
+.tier_adjust
 	ld a, [wBossAITier]
 	cp AI_TIER_LATE
 	jr nz, .check_mid
@@ -3632,6 +3842,8 @@ BossAI_ComputePlayerPlausibleTypeMask:
 
 	call BossAI_AddPublicSTABThreatsToMask
 	call BossAI_AddRevealedDamagingTypesToMask
+	call BossAI_PlayerActiveFourMoveSaturated
+	jr c, .done
 	ld a, [wBossAITemp]
 	call BossAI_AddSpeciesAndPreEvolutionMovesToMask
 
@@ -3655,6 +3867,33 @@ BossAI_AddPublicSTABThreatsToMask:
 	ret z
 	ld a, c
 	call BossAI_SetPlausibleAndLikelyMaskBit
+	ret
+
+; ai-layer: POLICY
+BossAI_PlayerActiveFourMoveSaturated:
+	ld a, [wPlayerSubStatus5]
+	bit SUBSTATUS_TRANSFORMED, a
+	jr nz, .no
+	call BossAI_ActiveSpeciesRevealTainted
+	jr c, .no
+	ld hl, wPlayerUsedMoves
+	ld c, NUM_MOVES
+.loop
+	ld a, [hli]
+	and a
+	jr z, .no
+	push bc
+	push hl
+	call BossAI_MoveTaintsFourMoveReveal
+	pop hl
+	pop bc
+	jr c, .no
+	dec c
+	jr nz, .loop
+	scf
+	ret
+.no
+	and a
 	ret
 
 ; ai-layer: POLICY
@@ -5086,6 +5325,30 @@ BossAIStatusEffects:
 	db -1
 
 ; ai-layer: POLICY
+BossAIBugsyRoleEffects:
+	db EFFECT_ATTACK_UP_2
+	db EFFECT_SPEED_UP
+	db EFFECT_BATON_PASS
+	db -1
+
+; ai-layer: POLICY
+BossAIWhitneyRoleEffects:
+	db EFFECT_ATTRACT
+	db EFFECT_DEFENSE_CURL
+	db EFFECT_ROLLOUT
+	db EFFECT_HEAL_BELL
+	db -1
+
+; ai-layer: POLICY
+BossAIMortyRoleEffects:
+	db EFFECT_SLEEP
+	db EFFECT_CONFUSE
+	db EFFECT_MEAN_LOOK
+	db EFFECT_CURSE
+	db EFFECT_DESTINY_BOND
+	db -1
+
+; ai-layer: POLICY
 BossAIChuckRoleEffects:
 	db EFFECT_SLEEP
 	db EFFECT_LOCK_ON
@@ -5158,6 +5421,73 @@ BossAIChampionRoleEffects:
 	db EFFECT_RAIN_DANCE
 	db EFFECT_SAFEGUARD
 	db EFFECT_FORCE_SWITCH
+	db -1
+
+; ai-layer: POLICY
+BossAIBrockRoleEffects:
+	db EFFECT_SANDSTORM
+	db EFFECT_FORCE_SWITCH
+	db EFFECT_PROTECT
+	db -1
+
+; ai-layer: POLICY
+BossAIMistyRoleEffects:
+	db EFFECT_HEAL
+	db EFFECT_RAIN_DANCE
+	db EFFECT_CONFUSE
+	db -1
+
+; ai-layer: POLICY
+BossAISurgeRoleEffects:
+	db EFFECT_PARALYZE
+	db EFFECT_LOCK_ON
+	db EFFECT_PRIORITY_HIT
+	db -1
+
+; ai-layer: POLICY
+BossAIErikaRoleEffects:
+	db EFFECT_SLEEP
+	db EFFECT_LEECH_SEED
+	db EFFECT_SUNNY_DAY
+	db EFFECT_HEAL_BELL
+	db -1
+
+; ai-layer: POLICY
+BossAIJanineRoleEffects:
+	db EFFECT_SLEEP
+	db EFFECT_TOXIC
+	db EFFECT_SPIKES
+	db EFFECT_BATON_PASS
+	db EFFECT_CONFUSE
+	db -1
+
+; ai-layer: POLICY
+BossAISabrinaRoleEffects:
+	db EFFECT_REFLECT
+	db EFFECT_LIGHT_SCREEN
+	db EFFECT_HEAL
+	db EFFECT_FUTURE_SIGHT
+	db -1
+
+; ai-layer: POLICY
+BossAIBlaineRoleEffects:
+	db EFFECT_SUNNY_DAY
+	db EFFECT_BURN_HIT
+	db -1
+
+; ai-layer: POLICY
+BossAIBlueRoleEffects:
+	db EFFECT_RAIN_DANCE
+	db EFFECT_SUNNY_DAY
+	db EFFECT_SAFEGUARD
+	db EFFECT_FORCE_SWITCH
+	db -1
+
+; ai-layer: POLICY
+BossAIRedRoleEffects:
+	db EFFECT_PRIORITY_HIT
+	db EFFECT_LIGHT_SCREEN
+	db EFFECT_HEAL
 	db -1
 
 ; ai-layer: POLICY

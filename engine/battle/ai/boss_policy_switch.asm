@@ -21,6 +21,8 @@ BossAI_SwitchOrTryItem:
 	call BossAI_ResetTurnCaches
 	call BossAI_SelectPlanIfNeeded
 	call BossAI_ComputePlayerPlausibleTypeMask
+	call BossAI_TryMortyHakiOracle
+	ret nz
 
 	call BossAI_EnemyPerishEscapeUrgent
 	jr c, .check_switch
@@ -104,6 +106,103 @@ ENDC
 .stay
 	pop af
 	jp AI_TryItem
+
+; ai-layer: POLICY
+BossAI_TryMortyHakiOracle:
+; Quarantined Haki prototype: Morty's Gengar may spend one ace-first-turn
+; Oracle read to pick Destiny Bond into a locked, strong super-effective move.
+; This is the only normal Boss AI routine allowed to read current-turn input.
+	ld hl, wBossAIRevealedMovesBitmapSpare + 1
+	bit BOSSAI_HAKI_SPENT_F, [hl]
+	jr nz, .no
+	bit BOSSAI_HAKI_ELIGIBLE_F, [hl]
+	jr z, .no
+	ld a, [wEnemyGoesFirst]
+	and a
+	jr z, .no
+	ld a, [wBattlePlayerAction]
+	and a
+	jr nz, .no
+	ld a, [wEnemySubStatus5]
+	bit SUBSTATUS_ENCORED, a
+	jr nz, .no
+	call .FindDestinyBondSlot
+	jr nc, .no
+	ld a, c
+	ld [wBossAITemp], a
+	call .PlayerSelectedStrongSuperEffectiveAttack
+	jr nc, .no
+	ld a, [wBossAITemp]
+	ld [wCurEnemyMoveNum], a
+	ld a, DESTINY_BOND
+	ld [wCurEnemyMove], a
+	callfar EnforceEnemyHeldMoveRestrictions_Far
+	callfar UpdateMoveData
+	call BossAI_UpdateRepeatTracker
+	ld hl, wBossAIRevealedMovesBitmapSpare + 1
+	set BOSSAI_HAKI_SPENT_F, [hl]
+	res BOSSAI_HAKI_ELIGIBLE_F, [hl]
+IF DEF(BOSS_AI_TRACE)
+	ld a, [wCurEnemyMove]
+	ld [wBossAITraceChosenMove], a
+	ld a, [wBossAITraceRiskFlags]
+	or 1 << BOSSAI_HAKI_TRACE_FIRED_F
+	ld [wBossAITraceRiskFlags], a
+ENDC
+	ld a, 1
+	and a
+	ret
+
+.no
+	xor a
+	ret
+
+.FindDestinyBondSlot
+	ld hl, wEnemyMonMoves
+	ld de, wEnemyMonPP
+	ld c, 0
+.destiny_loop
+	ld a, c
+	cp NUM_MOVES
+	jr nc, .destiny_no
+	ld a, [hli]
+	cp DESTINY_BOND
+	jr z, .destiny_candidate
+	inc de
+	inc c
+	jr .destiny_loop
+.destiny_candidate
+	ld a, [wEnemyDisabledMove]
+	cp DESTINY_BOND
+	jr z, .destiny_no
+	ld a, [de]
+	and PP_MASK
+	jr z, .destiny_no
+	scf
+	ret
+.destiny_no
+	and a
+	ret
+
+.PlayerSelectedStrongSuperEffectiveAttack
+	ld a, [wCurPlayerMove]
+	and a
+	jr z, .selected_no
+	dec a
+	ld hl, Moves + MOVE_POWER
+	call BossAI_GetMoveAttr
+	cp 60
+	jr c, .selected_no
+	ld a, [wCurPlayerMove]
+	dec a
+	ld hl, Moves + MOVE_TYPE
+	call BossAI_GetMoveAttr
+	ld c, a
+	call BossAI_PlayerThreatTypeSuperEffectiveVsEnemy
+	ret
+.selected_no
+	and a
+	ret
 
 ; ai-layer: POLICY
 BossAI_OnSwitchExecuted:
@@ -645,6 +744,8 @@ BossAI_ComputeSwitchConfidence:
 	ld b, a
 	call BossAI_ApplyPlanSwitchBias
 	ld b, a
+	call BossAI_ApplyPreservationSwitchBias
+	ld b, a
 	ld a, b
 	cp 100
 	ret c
@@ -1128,6 +1229,29 @@ BossAI_ApplyPlanSwitchBias:
 	jr nz, .base
 	ld a, b
 	add 4
+	jr .cap
+.base
+	ld a, b
+.cap
+	cp 100
+	ret c
+	ld a, 99
+	ret
+
+; ai-layer: POLICY
+BossAI_ApplyPreservationSwitchBias:
+	ld a, [wCurOTMon]
+	inc a
+	ld c, a
+	ld a, [wBossAIWinconMonIdx]
+	cp c
+	jr nz, .base
+	call BossAI_HasAnyKOMove
+	jr c, .base
+	call BossAI_PlayerHasPublicThreatVsEnemy
+	jr nc, .base
+	ld a, b
+	add 10
 	jr .cap
 .base
 	ld a, b

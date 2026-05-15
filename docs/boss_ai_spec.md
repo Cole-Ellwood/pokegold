@@ -124,13 +124,15 @@ Implementation rules:
 
 ## Trace Contract
 
-Under `BOSS_AI_TRACE`, every Haki fire writes one trace line:
+Under `BOSS_AI_TRACE`, every Haki fire must be visible in trace output:
 
 ```
 haki_fired turn=N trainer=<class>:<id> ace=<species> chosen_move=<move>
 ```
 
-This makes captured traces self-documenting. Future agents reading
+The current trace system records the Morty prototype with
+`wBossAITraceChosenMove` and `wBossAITraceRiskFlags` bit 3
+(`haki-oracle-fired`). Future agents reading
 `audit/boss_ai_trace/*_live.txt` can see exactly which boss decision was
 input-aware vs public-information-only.
 
@@ -146,8 +148,12 @@ own slot) to the existing Boss AI WRAM reserve:
   "first turn active" gate. May be omitted if existing active-mon turn
   counters already cover this.
 
-Under `BOSS_AI_TRACE`, one additional byte (`wHakiTraceMove`) records the
-chosen move for trace capture.
+Current implementation note (2026-05-14): the Morty/Gengar prototype does not
+add WRAM. It packs spent / ace-seen / current-turn eligibility bits into
+`wBossAIRevealedMovesBitmapSpare` byte 1 and uses existing trace fields plus
+`wBossAITraceRiskFlags` bit 3. A generic all-leader rollout still needs a fresh
+memory review because priority-changing Oracle choices require a pre-order hook
+or an equal-priority-only contract.
 
 For exact addresses and current free-byte counts, see the Runtime State
 Budget section below.

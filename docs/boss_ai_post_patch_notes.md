@@ -22,8 +22,18 @@ Implemented behavior:
 - Revealed player move knowledge is no longer one global exact-move bitmap.
   `wBossAIRevealedMovesBitmap` is reused as six 4-byte per-seen-species
   revealed type masks. The old spare reserve now also holds
-  `wBossAILikelyTypeMaskCache`, `wBossAISeenPlayerAliveMask`, and 3 remaining
-  spare bytes.
+  `wBossAILikelyTypeMaskCache`, `wBossAISeenPlayerAliveMask`, and the 3-byte
+  `wBossAIRevealedMovesBitmapSpare` reserve. The first byte of that spare area
+  is now used as a public copied/temporary reveal taint mask.
+- Once the active player species has publicly revealed four non-tainted real
+  moves, the plausible threat mask stops adding speculative species/pre-evo
+  learnset coverage for that active species. Public STAB and the revealed moves
+  themselves still count. Transform, Mimic, Metronome, Mirror Move, Sleep Talk,
+  Sketch, Struggle, and any species previously tainted by those wrappers keep
+  the older conservative learnset mask.
+- The second byte of `wBossAIRevealedMovesBitmapSpare` now packs the
+  quarantined Haki state for the Morty/Gengar prototype: spent, ace-seen, and
+  current-turn eligibility. No new WRAM bytes were added.
 - Switch loop prevention now checks the proposed switch target against the last
   mon switched out, so immediate A->B->A reversals can be penalized unless an
   emergency exception applies.
@@ -140,6 +150,34 @@ Implemented behavior:
 - First-layer Spikes treats `wBossAITurnsElapsed <= 1` as the first scoring
   turn after `BossAI_IncrementTurnsElapsed`, and avoids high hazard greed under
   immediate public pressure.
+- Layer-two and layer-three Spikes now respect active public Rapid Spin. If the
+  active player Pokemon has revealed Rapid Spin in `wPlayerUsedMoves`, bosses
+  discourage adding another layer into a stack that can be erased. This does
+  not fire from learnset possibility, bench memory, hidden moves, PP, or the
+  player's current-turn choice.
+- Setup moves now get an extra discipline pass: setup with no remaining boost
+  value is strongly discouraged, and setup that fails the existing public
+  affordability gate is modestly discouraged.
+- Legal status moves now lose priority when the boss already has a concrete KO
+  line, so status does not replace a hard answer.
+- Recovery effects are discouraged when the boss has a KO line or is still
+  above half HP, keeping healing as route preservation rather than passive
+  stalling.
+- Explosion/Selfdestruct is now priced as a route trade: healthy non-KO booms
+  are discouraged, while low-HP or pressured KO cash-outs get a small reward.
+- Wincon mons under public threat now get a small switch-confidence boost when
+  they lack a KO line, reusing existing loop/candidate-risk gates.
+- True near-tie move choices stay more mixed: the best-vs-second selector no
+  longer applies tier determinism bumps when the score gap is under 3.
+- Role-bias personality coverage now includes the remaining named leaders
+  through existing type/effect nudges. These are close-score identity biases,
+  not legality overrides.
+- Morty's Gengar has the first quarantined Haki prototype. On its ace-first
+  active turn only, after player input and turn order are locked, it may spend
+  Haki to choose Destiny Bond into a strong super-effective selected attack if
+  Gengar moves first. The input read is label-scoped to
+  `BossAI_TryMortyHakiOracle`, refreshed through `UpdateMoveData`, recorded in
+  trace risk bit 3, and explicitly allowlisted by the no-cheat audit.
 - Late-tier class role bias is restored, so late bosses keep identity bonuses
   and Lance-style non-KO Hyper Beam discouragement.
 - Phase 2 heuristics were added without a simulator: Spikes plus phazing bias,
@@ -192,6 +230,17 @@ Important anchors:
 - `BossAI_SeenBenchThreatScore`
 - `BossAI_RecordPlayerFaint`
 - `wBossAISeenPlayerAliveMask`
+- `wBossAIRevealedMovesBitmapSpare` byte 0 reveal taint mask
+- `wBossAIRevealedMovesBitmapSpare` byte 1 Haki flags
+- `BossAI_PlayerActiveFourMoveSaturated`
+- `BossAI_MoveTaintsFourMoveReveal`
+- `.ApplySetupDisciplineBias`
+- `.ApplyStatusHardAnswerDiscipline`
+- `.ApplyRecoveryTimingDiscipline`
+- `.ApplySelfKOTradeDiscipline`
+- `BossAI_ApplyPreservationSwitchBias`
+- `BossAI_TryMortyHakiOracle`
+- `BossAI_UpdateHakiAceWindow`
 - `.ApplyChoiceFirstLockRegret`
 - `.SeenSpeciesChoiceLockRisk`
 - `.ApplySetupPunishBias`
@@ -235,6 +284,9 @@ Current post-patch memory summary:
 - Plausible player move inference now uses a possible mask plus
   `wBossAILikelyTypeMaskCache`; the likely mask reuses old spare bytes from the
   revealed-move reserve and does not grow the Boss AI WRAM block.
+- The first byte of `wBossAIRevealedMovesBitmapSpare` keeps
+  four-revealed-move saturation from firing after
+  copied/temporary move reveals.
 - The single-effect revealed move scans for Protect, anti-setup denial,
   Counter/Mirror Coat avoidance, and Selfdestruct now share one public
   `wPlayerUsedMoves` effect helper. This is behavior-preserving compaction: no
@@ -364,6 +416,9 @@ Required behavior checks:
 - Late-tier Lance should keep role identity and avoid non-KO Hyper Beam.
 - Spikes plus Roar/Whirlwind should gain value after repeated player switching
   or public setup pressure.
+- Layer-two/layer-three Spikes should be discouraged only when the active
+  player Pokemon has publicly revealed Rapid Spin; spinner-capable species with
+  no revealed Rapid Spin should keep the no-cheat third-layer behavior.
 - Public +2 Attack, Special Attack, Speed, or Evasion should make Haze, Roar,
   Whirlwind, or Encore more attractive when no immediate KO line exists.
 - A public/revealed threat type should make a true immunity pivot slightly

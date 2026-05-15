@@ -437,7 +437,7 @@
       "fixture_id": "brock_golem_vs_vaporeon_explosion_question",
       "label_count": 0,
       "leader": "Brock",
-      "preference_count": 1,
+      "preference_count": 2,
       "tags": [
         "sacrifice",
         "water_pressure",
@@ -1078,11 +1078,11 @@
   "label_count": 0,
   "label_counts": {},
   "labeled_fixture_count": 0,
-  "preference_count": 51,
+  "preference_count": 52,
   "preference_counts": {
     "a_better": 39,
     "b_better": 4,
-    "both_good": 2,
+    "both_good": 3,
     "needs_context": 2,
     "other_better": 4
   },

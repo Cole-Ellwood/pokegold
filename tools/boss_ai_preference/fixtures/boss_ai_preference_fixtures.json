@@ -6492,6 +6492,206 @@
           "public_tradeoff": "Still risks donating a phazing turn."
         }
       ]
+    },
+    {
+      "id": "janine_qwilfish_revealed_spinner_hazard_retention",
+      "leader": "Janine",
+      "boss_party_index": 1,
+      "turn": 19,
+      "tags": [
+        "kanto_leader",
+        "hazards",
+        "rapid_spin",
+        "romhack_delta",
+        "spikes_layers"
+      ],
+      "training_focus": "Janine's Qwilfish should stop stacking more Spikes into an active player Pokemon after Rapid Spin is publicly revealed.",
+      "baseline_action_id": "move_sludge_bomb",
+      "state": {
+        "boss": {
+          "active": {
+            "species": "Qwilfish",
+            "level": 60,
+            "hp": "82%",
+            "status": "none",
+            "item": "Leftovers",
+            "revealed_moves": [
+              "Spikes",
+              "Sludge Bomb",
+              "Surf",
+              "Explosion"
+            ],
+            "role": "fast hazard trade piece"
+          }
+        },
+        "player": {
+          "active": {
+            "species": "Starmie",
+            "level": 60,
+            "hp": "72%",
+            "status": "none",
+            "revealed_moves": [
+              "Surf",
+              "Rapid Spin"
+            ],
+            "public_priors": [
+              "Rapid Spin is public on the active Pokemon."
+            ]
+          },
+          "seen_party": [
+            "Starmie",
+            "Snorlax",
+            "Meganium",
+            "Ampharos"
+          ]
+        },
+        "field": {
+          "weather": "none",
+          "screens": "none",
+          "hazards": {
+            "boss_side_spikes_layers": 0,
+            "player_side_spikes_layers": 2,
+            "player_grounded_seen": 4,
+            "player_flying_seen": 0,
+            "player_rapid_spin_seen": true
+          }
+        },
+        "public_notes": [
+          "Two local Spikes layers are already on the player side.",
+          "The active player Pokemon has publicly revealed Rapid Spin.",
+          "Rapid Spin clears the whole local Spikes stack, so another layer is poor retention unless the spinner is being punished or forced out."
+        ]
+      },
+      "actions": [
+        {
+          "id": "move_spikes",
+          "kind": "move",
+          "name": "Spikes",
+          "explanation": "Attempts to finish the third local Spikes layer.",
+          "public_tradeoff": "Stacks into an active spinner that has already revealed Rapid Spin."
+        },
+        {
+          "id": "move_sludge_bomb",
+          "kind": "move",
+          "name": "Sludge Bomb",
+          "explanation": "Direct poison STAB into the active spinner.",
+          "public_tradeoff": "Keeps tempo instead of stacking into public removal."
+        },
+        {
+          "id": "move_explosion",
+          "kind": "move",
+          "name": "Explosion",
+          "explanation": "Trades Qwilfish to remove or heavily punish the active spinner.",
+          "public_tradeoff": "A route trade can be valid once the revealed spinner threatens the hazard stack."
+        },
+        {
+          "id": "switch_tentacruel",
+          "kind": "switch",
+          "name": "Switch to Tentacruel",
+          "explanation": "Preserves Qwilfish and resists Water.",
+          "public_tradeoff": "Still gives Starmie a chance to spin if the branch is not priced."
+        }
+      ]
+    },
+    {
+      "id": "janine_qwilfish_unrevealed_spinner_no_suppression",
+      "leader": "Janine",
+      "boss_party_index": 1,
+      "turn": 19,
+      "tags": [
+        "kanto_leader",
+        "hazards",
+        "rapid_spin",
+        "romhack_delta",
+        "spikes_layers"
+      ],
+      "training_focus": "A spinner-capable active species must not suppress third-layer Spikes until Rapid Spin is actually revealed.",
+      "baseline_action_id": "move_spikes",
+      "state": {
+        "boss": {
+          "active": {
+            "species": "Qwilfish",
+            "level": 60,
+            "hp": "82%",
+            "status": "none",
+            "item": "Leftovers",
+            "revealed_moves": [
+              "Spikes",
+              "Sludge Bomb",
+              "Surf",
+              "Explosion"
+            ],
+            "role": "fast hazard trade piece"
+          }
+        },
+        "player": {
+          "active": {
+            "species": "Starmie",
+            "level": 60,
+            "hp": "72%",
+            "status": "none",
+            "revealed_moves": [
+              "Surf",
+              "Recover"
+            ],
+            "public_priors": [
+              "Starmie may be spinner-capable, but Rapid Spin is not public."
+            ]
+          },
+          "seen_party": [
+            "Starmie",
+            "Snorlax",
+            "Meganium",
+            "Ampharos"
+          ]
+        },
+        "field": {
+          "weather": "none",
+          "screens": "none",
+          "hazards": {
+            "boss_side_spikes_layers": 0,
+            "player_side_spikes_layers": 2,
+            "player_grounded_seen": 4,
+            "player_flying_seen": 0,
+            "player_rapid_spin_seen": false
+          }
+        },
+        "public_notes": [
+          "Two local Spikes layers are already on the player side.",
+          "Rapid Spin has not been revealed by the active player Pokemon.",
+          "The no-cheat boundary rejects suppressing Spikes from learnset possibility alone."
+        ]
+      },
+      "actions": [
+        {
+          "id": "move_spikes",
+          "kind": "move",
+          "name": "Spikes",
+          "explanation": "Places the third local Spikes layer.",
+          "public_tradeoff": "Rapid Spin has not been revealed by the active Pokemon."
+        },
+        {
+          "id": "move_sludge_bomb",
+          "kind": "move",
+          "name": "Sludge Bomb",
+          "explanation": "Direct poison STAB into Starmie.",
+          "public_tradeoff": "Safe chip, but it does not change the hazard economy."
+        },
+        {
+          "id": "move_explosion",
+          "kind": "move",
+          "name": "Explosion",
+          "explanation": "Sacrifices Qwilfish for tempo.",
+          "public_tradeoff": "Too early while the public hazard turn is still available."
+        },
+        {
+          "id": "switch_tentacruel",
+          "kind": "switch",
+          "name": "Switch to Tentacruel",
+          "explanation": "Preserves Qwilfish and resists Water.",
+          "public_tradeoff": "Gives up the open third-layer turn."
+        }
+      ]
     }
   ]
 }

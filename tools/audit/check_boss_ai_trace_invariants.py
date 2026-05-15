@@ -125,9 +125,65 @@ def audit_revealed_coverage(boss: str, wram: str) -> None:
         record,
         [
             "call BossAI_GetActiveSpeciesRevealedMaskPointer",
+            "push hl",
+            "call BossAI_MoveTaintsFourMoveReveal",
+            "pop hl",
             "call BossAI_AddRevealedMoveToSpeciesMask",
         ],
         "record revealed move path",
+    )
+
+    compute_mask = top_block(boss, "BossAI_ComputePlayerPlausibleTypeMask")
+    require_order(
+        compute_mask,
+        [
+            "call BossAI_AddPublicSTABThreatsToMask",
+            "call BossAI_AddRevealedDamagingTypesToMask",
+            "call BossAI_PlayerActiveFourMoveSaturated",
+            "jr c, .done",
+            "call BossAI_AddSpeciesAndPreEvolutionMovesToMask",
+        ],
+        "four-revealed-move saturation hook",
+    )
+
+    saturation = top_block(boss, "BossAI_PlayerActiveFourMoveSaturated")
+    require_order(
+        saturation,
+        [
+            "ld a, [wPlayerSubStatus5]",
+            "bit SUBSTATUS_TRANSFORMED, a",
+            "call BossAI_ActiveSpeciesRevealTainted",
+            "ld hl, wPlayerUsedMoves",
+            "ld c, NUM_MOVES",
+            "call BossAI_MoveTaintsFourMoveReveal",
+            "scf",
+            "ret",
+        ],
+        "four-revealed-move saturation guards",
+    )
+
+    taint_move = top_block(boss, "BossAI_MoveTaintsFourMoveReveal")
+    for needle in (
+        "cp STRUGGLE",
+        "cp EFFECT_MIRROR_MOVE",
+        "cp EFFECT_TRANSFORM",
+        "cp EFFECT_MIMIC",
+        "cp EFFECT_METRONOME",
+        "cp EFFECT_SKETCH",
+        "cp EFFECT_SLEEP_TALK",
+    ):
+        require_contains(taint_move, needle, "four-move saturation unsafe move filter")
+
+    active_taint = top_block(boss, "BossAI_ActiveSpeciesRevealTainted")
+    require_order(
+        active_taint,
+        [
+            "call BossAI_GetActiveSpeciesSeenIndex",
+            "call BossAI_SeenPlayerSpeciesBitFromC",
+            "ld hl, wBossAIRevealedMovesBitmapSpare",
+            "and [hl]",
+        ],
+        "four-move saturation taint mask read",
     )
 
     has_revealed = top_block(boss, "BossAI_HasRevealedSuperEffectiveMove")
@@ -366,6 +422,8 @@ def audit_switch_loop(boss: str) -> None:
         [
             "call BossAI_SelectPlanIfNeeded",
             "call BossAI_ComputePlayerPlausibleTypeMask",
+            "call BossAI_TryMortyHakiOracle",
+            "ret nz",
             "call BossAI_EnemyPerishEscapeUrgent",
             "jr c, .check_switch",
             "call BossAI_HasAnyKOMove",
@@ -441,6 +499,66 @@ def audit_switch_loop(boss: str) -> None:
         ],
         "perish escape adds strong switch confidence before player switch prediction",
     )
+
+
+def audit_haki_quarantine(boss: str) -> None:
+    turn = top_block(boss, "BossAI_IncrementTurnsElapsed")
+    require_order(
+        turn,
+        [
+            "ld a, [wBossAITier]",
+            "ret z",
+            "call BossAI_UpdateHakiAceWindow",
+            "ld hl, wBossAITurnsElapsed",
+        ],
+        "Haki first-turn window is updated once per battle turn",
+    )
+
+    window = top_block(boss, "BossAI_UpdateHakiAceWindow")
+    require_order(
+        window,
+        [
+            "ld hl, wBossAIRevealedMovesBitmapSpare + 1",
+            "res BOSSAI_HAKI_ELIGIBLE_F, [hl]",
+            "bit BOSSAI_HAKI_SPENT_F, [hl]",
+            "bit BOSSAI_HAKI_ACE_SEEN_F, [hl]",
+            "cp MORTY",
+            "cp MORTY1",
+            "cp GENGAR",
+            "set BOSSAI_HAKI_ACE_SEEN_F, [hl]",
+            "set BOSSAI_HAKI_ELIGIBLE_F, [hl]",
+        ],
+        "Morty Haki first-turn state is trainer and ace gated",
+    )
+
+    oracle = top_block(boss, "BossAI_TryMortyHakiOracle")
+    require_order(
+        oracle,
+        [
+            "ld hl, wBossAIRevealedMovesBitmapSpare + 1",
+            "bit BOSSAI_HAKI_SPENT_F, [hl]",
+            "bit BOSSAI_HAKI_ELIGIBLE_F, [hl]",
+            "ld a, [wEnemyGoesFirst]",
+            "ld a, [wBattlePlayerAction]",
+            "call .FindDestinyBondSlot",
+            "call .PlayerSelectedStrongSuperEffectiveAttack",
+            "ld [wCurEnemyMoveNum], a",
+            "ld a, DESTINY_BOND",
+            "ld [wCurEnemyMove], a",
+            "callfar EnforceEnemyHeldMoveRestrictions_Far",
+            "callfar UpdateMoveData",
+            "call BossAI_UpdateRepeatTracker",
+            "set BOSSAI_HAKI_SPENT_F, [hl]",
+        ],
+        "Morty Haki oracle is post-input, one-shot, and refreshes move data",
+    )
+    for needle in (
+        "ld a, [wCurPlayerMove]",
+        "call BossAI_PlayerThreatTypeSuperEffectiveVsEnemy",
+        "or 1 << BOSSAI_HAKI_TRACE_FIRED_F",
+        "ld [wBossAITraceChosenMove], a",
+    ):
+        require_contains(oracle, needle, "Morty Haki quarantine trace/input boundary")
 
 
 def audit_revenge_denial_uses_public_seen_species(boss: str) -> None:
@@ -2028,6 +2146,7 @@ def main() -> int:
     audit_revealed_coverage(boss, wram)
     audit_public_threat_keeps_species_fallback(boss)
     audit_switch_loop(boss)
+    audit_haki_quarantine(boss)
     audit_revenge_denial_uses_public_seen_species(boss)
     audit_revealed_priority_pressure(boss)
     audit_revealed_protect_commitment_risk(boss)
@@ -2056,11 +2175,13 @@ def main() -> int:
     print("Checked invariants:")
     for name in (
         "per-species revealed coverage",
+        "four-revealed-move saturation guards",
         "public threat fallback after revealed-move scan",
         "source-weighted plausible threat confidence",
         "plausible threat source and seen-bench restoration",
         "public perish-count escape switching",
         "A->B->A loop penalty target check",
+        "Morty Haki oracle quarantine",
         "public seen-species revenge denial",
         "revealed priority pressure",
         "revealed Protect commitment risk",

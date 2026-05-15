@@ -34,6 +34,14 @@ class ApprovedDirectHelperException:
     reason: str
 
 
+@dataclass(frozen=True)
+class ApprovedForbiddenPatternException:
+    path: str
+    reason: str
+    top_label: str
+    approval: str
+
+
 # Curated forbidden symbols/routines for non-cheating Boss AI:
 # - no unrevealed player party reads
 # - no unrevealed player move/item reads
@@ -67,6 +75,21 @@ APPROVED_DIRECT_HELPER_EXCEPTIONS = [
     ),
 ]
 
+APPROVED_FORBIDDEN_PATTERN_EXCEPTIONS = [
+    ApprovedForbiddenPatternException(
+        path="engine/battle/ai/boss_policy_switch.asm",
+        reason="player input read",
+        top_label="BossAI_TryMortyHakiOracle",
+        approval="quarantined Morty/Gengar Haki oracle",
+    ),
+    ApprovedForbiddenPatternException(
+        path="engine/battle/ai/boss_policy_switch.asm",
+        reason="player input action read",
+        top_label="BossAI_TryMortyHakiOracle",
+        approval="quarantined Morty/Gengar Haki oracle",
+    ),
+]
+
 
 def strip_comment(line: str) -> str:
     if ";" in line:
@@ -92,6 +115,16 @@ def is_approved_direct_helper_exception(path: Path, helper: str, top_label: str)
     )
 
 
+def is_approved_forbidden_pattern_exception(path: Path, reason: str, top_label: str) -> bool:
+    rel = path.relative_to(ROOT).as_posix()
+    return any(
+        exception.path == rel
+        and exception.reason == reason
+        and exception.top_label == top_label
+        for exception in APPROVED_FORBIDDEN_PATTERN_EXCEPTIONS
+    )
+
+
 def scan_file(path: Path) -> list[tuple[int, str, str]]:
     issues: list[tuple[int, str, str]] = []
     raw = path.read_text(encoding="utf-8", errors="replace").splitlines()
@@ -100,13 +133,15 @@ def scan_file(path: Path) -> list[tuple[int, str, str]]:
         code = strip_comment(line)
         if not code.strip():
             continue
+        top_label = top_label_for_line(raw, index)
         for fp in FORBIDDEN_PATTERNS:
             if fp.pattern.search(code):
+                if is_approved_forbidden_pattern_exception(path, fp.reason, top_label):
+                    continue
                 issues.append((lineno, fp.pattern.pattern, fp.reason))
         helper_match = DIRECT_EXACT_HELPER_RE.search(code)
         if helper_match:
             helper = helper_match.group("helper")
-            top_label = top_label_for_line(raw, index)
             if not is_approved_direct_helper_exception(path, helper, top_label):
                 issues.append((lineno, helper, "unapproved exact battle helper call"))
     return issues
@@ -142,6 +177,12 @@ def main() -> int:
         print(
             f"  - {exception.path}:{exception.top_label} "
             f"may call {exception.helper} ({exception.reason})"
+        )
+    print("Approved forbidden-symbol exceptions:")
+    for exception in APPROVED_FORBIDDEN_PATTERN_EXCEPTIONS:
+        print(
+            f"  - {exception.path}:{exception.top_label} may read "
+            f"{exception.reason} ({exception.approval})"
         )
     return 0
 

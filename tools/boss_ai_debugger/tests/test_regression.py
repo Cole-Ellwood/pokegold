@@ -442,6 +442,98 @@ class RegressionTests(unittest.TestCase):
         self.assertIn("spikes_already_maxed", rules)
         self.assertIn("spikes_already_maxed", features)
 
+    def test_revealed_spinner_penalizes_extra_spikes_layers(self) -> None:
+        for player_layers in (1, 2):
+            with self.subTest(player_layers=player_layers):
+                fixture = {
+                    "id": "revealed_spinner_fixture",
+                    "leader": "Tester",
+                    "tags": ["hazards", "romhack_delta"],
+                    "state": {
+                        "player": {
+                            "active": {
+                                "species": "Starmie",
+                                "revealed_moves": ["Surf", "Rapid Spin"],
+                            }
+                        },
+                        "field": {
+                            "hazards": {
+                                "player_side_spikes_layers": player_layers,
+                            }
+                        },
+                    },
+                    "actions": [
+                        {
+                            "id": "move_spikes",
+                            "kind": "move",
+                            "name": "Spikes",
+                            "explanation": "Stacks another local Spikes layer.",
+                            "public_tradeoff": "The active spinner has already revealed Rapid Spin.",
+                        },
+                        {
+                            "id": "move_sludge_bomb",
+                            "kind": "move",
+                            "name": "Sludge Bomb",
+                            "explanation": "Direct STAB chip into the active spinner.",
+                            "public_tradeoff": "Keeps tempo instead of stacking into revealed removal.",
+                        },
+                    ],
+                }
+
+                spikes = score_action(fixture, fixture["actions"][0])
+                sludge_bomb = score_action(fixture, fixture["actions"][1])
+                rules = {contribution["rule"] for contribution in spikes["contributions"]}
+                features = extract_action_features(fixture, fixture["actions"][0])["features"]
+
+                self.assertLess(spikes["score"], sludge_bomb["score"])
+                self.assertIn("active_revealed_spinner_hazard_retention", rules)
+                self.assertIn("active_revealed_spinner_hazard_retention", features)
+
+    def test_spinner_capable_without_revealed_spin_keeps_spikes_pressure(self) -> None:
+        fixture = {
+            "id": "unrevealed_spinner_fixture",
+            "leader": "Tester",
+            "tags": ["hazards", "romhack_delta"],
+            "state": {
+                "player": {
+                    "active": {
+                        "species": "Starmie",
+                        "revealed_moves": ["Surf", "Recover"],
+                    }
+                },
+                "field": {
+                    "hazards": {
+                        "player_side_spikes_layers": 2,
+                    }
+                },
+            },
+            "actions": [
+                {
+                    "id": "move_spikes",
+                    "kind": "move",
+                    "name": "Spikes",
+                    "explanation": "Places the third local Spikes layer.",
+                    "public_tradeoff": "Rapid Spin has not been revealed by the active Pokemon.",
+                },
+                {
+                    "id": "move_sludge_bomb",
+                    "kind": "move",
+                    "name": "Sludge Bomb",
+                    "explanation": "Direct STAB chip.",
+                    "public_tradeoff": "Does not change the hazard economy.",
+                },
+            ],
+        }
+
+        spikes = score_action(fixture, fixture["actions"][0])
+        sludge_bomb = score_action(fixture, fixture["actions"][1])
+        rules = {contribution["rule"] for contribution in spikes["contributions"]}
+        features = extract_action_features(fixture, fixture["actions"][0])["features"]
+
+        self.assertGreater(spikes["score"], sludge_bomb["score"])
+        self.assertNotIn("active_revealed_spinner_hazard_retention", rules)
+        self.assertNotIn("active_revealed_spinner_hazard_retention", features)
+
     def test_damage_estimate_can_mark_confirmed_ko(self) -> None:
         fixture = {
             "id": "ko_fixture",

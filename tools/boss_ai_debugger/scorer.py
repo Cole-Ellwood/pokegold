@@ -159,6 +159,26 @@ def _player_active_status(fixture: dict[str, Any]) -> str:
     return str(active.get("status", "")).strip().lower()
 
 
+def _player_active_revealed_moves(fixture: dict[str, Any]) -> set[str]:
+    state = fixture.get("state", {})
+    if not isinstance(state, dict):
+        return set()
+    player = state.get("player", {})
+    if not isinstance(player, dict):
+        return set()
+    active = player.get("active", {})
+    if not isinstance(active, dict):
+        return set()
+    moves = active.get("revealed_moves", [])
+    if not isinstance(moves, list):
+        return set()
+    return {str(move).strip().lower() for move in moves if str(move).strip()}
+
+
+def _active_player_revealed_rapid_spin(fixture: dict[str, Any]) -> bool:
+    return "rapid spin" in _player_active_revealed_moves(fixture)
+
+
 def _boss_active(fixture: dict[str, Any]) -> dict[str, Any]:
     state = fixture.get("state", {})
     if not isinstance(state, dict):
@@ -352,6 +372,13 @@ def score_action(
                 _add(contributions, "third_spikes_layer_pressure", 12, "third local Spikes layer pushes grounded switch-ins to quarter-HP damage")
             elif player_layers == 3:
                 _add(contributions, "spikes_already_maxed", -20, "local Spikes fails when three layers are already set")
+            if player_layers in {1, 2} and _active_player_revealed_rapid_spin(fixture):
+                _add(
+                    contributions,
+                    "active_revealed_spinner_hazard_retention",
+                    -18,
+                    "active player has publicly revealed Rapid Spin and can erase the stack",
+                )
             if _has_any(f"{text} {_public_text(fixture)}", HAZARD_TEMPO_RISK_TEXT):
                 _add(contributions, "hazard_tempo_risk", -8, "public pressure makes the hazard turn risky")
 

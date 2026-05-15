@@ -155,6 +155,20 @@ def public_status_features(
         add(features, "setup_into_sleep_window")
 
 
+def active_player_revealed_moves(fixture: dict[str, Any]) -> set[str]:
+    active = (
+        fixture.get("state", {})
+        .get("player", {})
+        .get("active", {})
+    )
+    if not isinstance(active, dict):
+        return set()
+    moves = active.get("revealed_moves", [])
+    if not isinstance(moves, list):
+        return set()
+    return {str(move).strip().lower() for move in moves if str(move).strip()}
+
+
 def boss_status_features(
     fixture: dict[str, Any],
     action: dict[str, Any],
@@ -221,6 +235,8 @@ def hazard_features(
         add(features, "spikes_third_layer_available")
     elif player_layers >= 3:
         add(features, "spikes_already_maxed")
+    if player_layers in {1, 2} and "rapid spin" in active_player_revealed_moves(fixture):
+        add(features, "active_revealed_spinner_hazard_retention")
 
 
 def damage_features(action: dict[str, Any], features: dict[str, float]) -> None:
