@@ -73,6 +73,8 @@ These remain required before Spikes-heavy boss simulations count as proof:
 - Whether the same text / animation path is used for player and enemy Spikes.
 - Grounded switch-in HP subtraction at 1, 2, and 3 layers in a full switch-in
   sequence.
+- Whether a grounded switch-in KO from Spikes cancels the opponent's selected
+  move and creates the replacement prompt in the same way as vanilla Showdown.
 - Flying-type immunity in live switch-in timing.
 - Rapid Spin miss, immunity, Substitute, KO, and failure boundaries.
 - Rapid Spin hazard-clear timing relative to damage and other move effects.

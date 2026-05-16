@@ -36,7 +36,7 @@ terminal. After any miss, wake, switch, Sleep Talk reveal, or phazing event,
 discard the old script and re-score.
 
 Sleep Clause material update:
-`quick_tests/replay_turn_pause_017_sleep_route_marowak_continuation_smogtours-gen2ou-934428_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_017_sleep_route_marowak_continuation_smogtours-gen2ou-934428_2026-05-14.md`
 showed that a slept target is often switched out immediately and preserved as
 Sleep Clause material. After sleep lands, ask whether the sleeping Pokemon
 should stay to burn turns or switch out to keep Sleep Clause active while
@@ -45,70 +45,70 @@ Talk, a controlled sack, or a wake attack. The default reason to preserve it is
 that waking can clear Sleep Clause and let the opponent sleep a more valuable
 piece later. Do not set up automatically if the sleeper can be preserved and
 the opponent can punish with another teammate.
-`quick_tests/replay_turn_pause_018_sleep_clause_absorber_fresh_smogtours-gen2ou-934335_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_018_sleep_clause_absorber_fresh_smogtours-gen2ou-934335_2026-05-14.md`
 adds the exception: immediate switching is a default branch, not a script. If
 the opponent's active cannot strongly punish one sleep turn, or if
 Explosion/pivot scouting matters, burning one turn before switching can be
 acceptable.
-`quick_tests/replay_turn_pause_019_sleeper_later_job_smogtours-gen2ou-934335_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_019_sleeper_later_job_smogtours-gen2ou-934335_2026-05-14.md`
 adds the later-job check: a sleeping Pokemon can still be the correct piece
 before it wakes if Sleep Talk, Heal Bell support, forced-switch absorption,
 predicted coverage absorption, wake-and-act timing, or hazard removal changes
 the route.
-`quick_tests/replay_turn_pause_020_sleeper_transfer_smogtours-gen2ou-935572_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_020_sleeper_transfer_smogtours-gen2ou-935572_2026-05-14.md`
 adds a cash-out threshold: do not spend Explosion or another one-time trade
 into a sleeper merely because wake risk exists. Spend it when the wake move,
 Rest, Sleep Talk, or endgame role would otherwise undo the route.
-`quick_tests/replay_turn_pause_034_sleep_clause_wake_cashout_transfer_smogtours-gen2ou-934415_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_034_sleep_clause_wake_cashout_transfer_smogtours-gen2ou-934415_2026-05-14.md`
 adds wake-window timing: a low-punish sleep turn can be correct early, but the
 position must be re-solved before each likely wake turn because Explosion,
 phazing, or a switch may become correct once the sleeper can wake and remove
 the active target.
-`quick_tests/replay_turn_pause_037_low_support_pressure_smogtours-gen2ou-931699_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_037_low_support_pressure_smogtours-gen2ou-931699_2026-05-14.md`
 adds the late absorber transfer: the already-sleeping Pokemon can be switched
 back into pressure later because it both blocks another sleep attempt under
 Sleep Clause and still has a matchup job. Do not burn wake turns just to wake;
 stay only when Sleep Talk, Rest timing, sacrifice value, or immediate pressure
 is better than preserving the sleep-clause shield.
-`quick_tests/replay_turn_pause_038_sleep_clause_overcorrection_smogtours-gen2ou-934314_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_038_sleep_clause_overcorrection_smogtours-gen2ou-934314_2026-05-14.md`
 adds the anti-overcorrection: switching the slept Pokemon out is common, not
 automatic. If the sleeper is already a boosted active win condition, switching
 would erase the route, and the opponent's current punishment is only slow chip
 or a conditional unrevealed cash-out, staying asleep to reach wake/Rest or
 wake/action can be correct.
-`quick_tests/sleep_clause_four_choice_probe_001_2026-05-14.md` turns this into
+`workspace/quick_tests/sleep_clause_four_choice_probe_001_2026-05-14.md` turns this into
 an eight-scenario regression: switch out, Sleep Talk, stay with the boosted
 route, cover revealed cash-out, leave phaze bait, stop preserving spent
 sleepers, cover wake self-KO, and re-solve after Rest converts the status.
-`quick_tests/replay_turn_pause_039_sleep_talk_pursuit_transfer_smogtours-gen2ou-931710_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_039_sleep_talk_pursuit_transfer_smogtours-gen2ou-931710_2026-05-14.md`
 adds the transfer check: when Sleep Talk is revealed, the slept Pokemon is an
 active board piece first and Sleep Clause material second. If Sleep Talk is
 not revealed, preserve remains plausible, but after the reveal the policy must
 flip immediately.
-`quick_tests/replay_turn_pause_045_sleep_clause_clamp_explosion_growth_smogtours-gen2ou-927169_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_045_sleep_clause_clamp_explosion_growth_smogtours-gen2ou-927169_2026-05-14.md`
 adds the low-HP shield case. A sleeping Pokemon can be worth switching out
 even when Spikes make future re-entry impossible, because the asleep status
 still blocks another Lovely Kiss. Preserve the sleep-clause shield with a
 lower-value spacer when fainting would reopen sleep and the sleeper no longer
 needs to perform an active combat job.
-`quick_tests/replay_turn_pause_049_coverage_reveal_absorber_smogtours-gen2ou-924921_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_049_coverage_reveal_absorber_smogtours-gen2ou-924921_2026-05-14.md`
 adds the sleeping absorber trade case. A sleeping Sleep Talk user can pivot
 into a support Pokemon not to wake or fight immediately, but to protect a more
 important route piece from Explosion while still keeping Sleep Clause active.
-`quick_tests/coverage_reveal_absorber_probe_001_2026-05-14.md` isolates that
+`workspace/quick_tests/coverage_reveal_absorber_probe_001_2026-05-14.md` isolates that
 branch as a regression prompt.
-`quick_tests/replay_turn_pause_052_lovely_kiss_snorlax_sleep_pivot_smogtours-gen2ou-923076_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_052_lovely_kiss_snorlax_sleep_pivot_smogtours-gen2ou-923076_2026-05-14.md`
 adds the team-level sleep-source check. Modern GSC offense can put Lovely Kiss
 on Snorlax, which frees Exeggutor or Gengar from carrying Sleep Powder or
 Hypnosis. Do not assign the sleep job by species alone. Until the sleep move is
 revealed, ask which teammate's set would make the current move coherent; after
 sleep lands, preserve the sleeping Pokemon as Sleep Clause material unless its
 active route is better.
-`quick_tests/replay_turn_pause_053_curselax_phaze_cashout_smogtours-gen2ou-922830_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_053_curselax_phaze_cashout_smogtours-gen2ou-922830_2026-05-14.md`
 adds the anti-overfit: Lovely Kiss Snorlax is a live branch, not a default.
 If Snorlax reveals Curse and Body Slam before any sleep move, keep Curse/Rest
 or RestTalk structure live and stop assigning sleep until it is revealed.
-`quick_tests/replay_turn_pause_057_sleep_absorber_trade_handoff_smogtours-gen2ou-922568_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_057_sleep_absorber_trade_handoff_smogtours-gen2ou-922568_2026-05-14.md`
 adds the reverse boundary: Curse first does not rule out Lovely Kiss. After
 Snorlax revealed Curse in a mirror, the next move was Lovely Kiss into
 Forretress. Keep sleep, attack, Rest, and coverage branches live until public
@@ -124,22 +124,22 @@ Local status: verify romhack sleep, Rest, and Sleep Talk behavior before making
 exact timing claims.
 
 Local drills:
-`quick_tests/replay_turn_pause_017_sleep_route_marowak_continuation_smogtours-gen2ou-934428_2026-05-14.md`,
-`quick_tests/sleep_clause_absorber_probe_001_2026-05-14.md`, and
-`quick_tests/replay_turn_pause_018_sleep_clause_absorber_fresh_smogtours-gen2ou-934335_2026-05-14.md`,
-`quick_tests/replay_turn_pause_019_sleeper_later_job_smogtours-gen2ou-934335_2026-05-14.md`,
-`quick_tests/sleeping_piece_later_job_probe_001_2026-05-14.md`, and
-`quick_tests/replay_turn_pause_020_sleeper_transfer_smogtours-gen2ou-935572_2026-05-14.md`,
-`quick_tests/sleeping_target_cashout_threshold_probe_001_2026-05-14.md`, and
-`quick_tests/replay_turn_pause_034_sleep_clause_wake_cashout_transfer_smogtours-gen2ou-934415_2026-05-14.md`,
+`workspace/quick_tests/replay_turn_pause_017_sleep_route_marowak_continuation_smogtours-gen2ou-934428_2026-05-14.md`,
+`workspace/quick_tests/sleep_clause_absorber_probe_001_2026-05-14.md`, and
+`workspace/quick_tests/replay_turn_pause_018_sleep_clause_absorber_fresh_smogtours-gen2ou-934335_2026-05-14.md`,
+`workspace/quick_tests/replay_turn_pause_019_sleeper_later_job_smogtours-gen2ou-934335_2026-05-14.md`,
+`workspace/quick_tests/sleeping_piece_later_job_probe_001_2026-05-14.md`, and
+`workspace/quick_tests/replay_turn_pause_020_sleeper_transfer_smogtours-gen2ou-935572_2026-05-14.md`,
+`workspace/quick_tests/sleeping_target_cashout_threshold_probe_001_2026-05-14.md`, and
+`workspace/quick_tests/replay_turn_pause_034_sleep_clause_wake_cashout_transfer_smogtours-gen2ou-934415_2026-05-14.md`,
 and
-`quick_tests/replay_turn_pause_037_low_support_pressure_smogtours-gen2ou-931699_2026-05-14.md`,
+`workspace/quick_tests/replay_turn_pause_037_low_support_pressure_smogtours-gen2ou-931699_2026-05-14.md`,
 and
-`quick_tests/replay_turn_pause_038_sleep_clause_overcorrection_smogtours-gen2ou-934314_2026-05-14.md`,
-`quick_tests/sleep_clause_four_choice_probe_001_2026-05-14.md`, and
-`quick_tests/replay_turn_pause_039_sleep_talk_pursuit_transfer_smogtours-gen2ou-931710_2026-05-14.md`,
+`workspace/quick_tests/replay_turn_pause_038_sleep_clause_overcorrection_smogtours-gen2ou-934314_2026-05-14.md`,
+`workspace/quick_tests/sleep_clause_four_choice_probe_001_2026-05-14.md`, and
+`workspace/quick_tests/replay_turn_pause_039_sleep_talk_pursuit_transfer_smogtours-gen2ou-931710_2026-05-14.md`,
 and
-`quick_tests/replay_turn_pause_045_sleep_clause_clamp_explosion_growth_smogtours-gen2ou-927169_2026-05-14.md`.
+`workspace/quick_tests/replay_turn_pause_045_sleep_clause_clamp_explosion_growth_smogtours-gen2ou-927169_2026-05-14.md`.
 
 ## STP-003: Explosion Is A Route Trade
 
@@ -151,79 +151,79 @@ Policy: Explode when the target's removal opens a named route and the user has
 no remaining role more valuable than that route.
 
 Sleeping-target threshold:
-`quick_tests/sleeping_target_cashout_threshold_probe_001_2026-05-14.md`
+`workspace/quick_tests/sleeping_target_cashout_threshold_probe_001_2026-05-14.md`
 tests the `replay_turn_pause_020` miss. Do not Explode into a sleeping target
 just because wake risk exists. First ask whether steady pressure or a
 lower-value absorber covers the wake branch. Cash out when wake, Rest, Sleep
 Talk, Self-Destruct, or preservation would otherwise undo a named route and the
 post-trade converter is clear.
-`quick_tests/replay_turn_pause_021_cashout_threshold_partial_smogtours-gen2ou-934904_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_021_cashout_threshold_partial_smogtours-gen2ou-934904_2026-05-14.md`
 adds the target-identification check: the one-time trade target may be the
 active route converter, not the sleeping Pokemon. Before setting up with a
 passed receiver into Snorlax, price Self-Destruct explicitly.
-`quick_tests/selfdestruct_receiver_branch_regression_001_smogtours-gen2ou-934904_2026-05-14.md`
+`workspace/quick_tests/selfdestruct_receiver_branch_regression_001_smogtours-gen2ou-934904_2026-05-14.md`
 turns that miss into a regression: before boosting with a passed receiver,
 choose between immediate damage, an absorber switch, or setup only after the
 self-KO branch is named.
-`quick_tests/replay_turn_pause_022_receiver_counterplay_transfer_smogtours-gen2ou-935551_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_022_receiver_counterplay_transfer_smogtours-gen2ou-935551_2026-05-14.md`
 adds the calibration check: pricing Explosion, phazing, status, and immediate
 damage does not mean hallucinating them. If the public counterplay is only
 damage and Substitute covers it, setup can be correct.
-`quick_tests/route_trade_active_pressure_probe_001_smogtours-gen2ou-934329_2026-05-14.md`
+`workspace/quick_tests/route_trade_active_pressure_probe_001_smogtours-gen2ou-934329_2026-05-14.md`
 adds the active-pressure threshold: Self-Destruct or Explosion can be correct
 as soon as the target has started or revealed the route that must be stopped,
 such as Curselax or RestTalk Electric pressure. Before cashing out, still name
 the lost-role successor, execution gate, and final converter.
-`quick_tests/replay_turn_pause_024_route_trade_threshold_smogtours-gen2ou-934148_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_024_route_trade_threshold_smogtours-gen2ou-934148_2026-05-14.md`
 adds the timing boundary: an active route threat does not automatically mean
 cash out on the first legal turn. Toxic, Spikes, recoil, and absorber cycling
 can make the eventual trade cleaner; cash out when the target is exact, prior
 jobs are delivered, and delay gives the opponent a reset or escape.
-`quick_tests/route_trade_timing_probe_001_2026-05-14.md` turns that boundary
+`workspace/quick_tests/route_trade_timing_probe_001_2026-05-14.md` turns that boundary
 into a six-step timing ladder: Toxic first, Spikes first, absorber pivot,
 preserve the exploder, immediate Explosion, and delayed Self-Destruct into the
 exact target.
-`quick_tests/replay_turn_pause_025_route_trade_timing_transfer_smogtours-gen2ou-934874_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_025_route_trade_timing_transfer_smogtours-gen2ou-934874_2026-05-14.md`
 adds the final-gate check: after Toxic and Spikes are delivered, do not cash
 out automatically. Price whether the target is likely to stay, whether a
 plausible absorber or double switch punishes Explosion, and whether the
 exploder still has future utility if preserved.
-`quick_tests/route_trade_final_gate_probe_001_2026-05-14.md` turns that miss
+`workspace/quick_tests/route_trade_final_gate_probe_001_2026-05-14.md` turns that miss
 into a checklist: exact target likelihood, absorber branch, remaining exploder
 job, ordinary damage or double-switch coverage, and whether delay gives Rest,
 setup, recovery, Spin, or escape.
-`quick_tests/explosion_absorber_resource_probe_001_2026-05-14.md` adds the
+`workspace/quick_tests/explosion_absorber_resource_probe_001_2026-05-14.md` adds the
 defensive mirror: when the opponent's self-KO move is live, choose the absorber
 by remaining route job. A sleeping anchor can be the correct absorber if the
 spinner, hazard setter, Electric answer, or cleaner still has the live job; but
 preserve the sleeping anchor when it is the only future check.
-`quick_tests/replay_turn_pause_037_low_support_pressure_smogtours-gen2ou-931699_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_037_low_support_pressure_smogtours-gen2ou-931699_2026-05-14.md`
 adds a low-HP support split: low HP does not by itself mean immediate
 Explosion. Cloyster at 31% still used Surf for useful chip before fainting,
 while Gengar at 13% correctly Exploded only after the target and post-trade
 Zapdos route were clear.
-`quick_tests/replay_turn_pause_039_sleep_talk_pursuit_transfer_smogtours-gen2ou-931710_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_039_sleep_talk_pursuit_transfer_smogtours-gen2ou-931710_2026-05-14.md`
 adds the trapper cash-out branch: once Houndoom had revealed Pursuit and Gengar
 was low, switching lost to the named punish. Explosion was the correct route
 trade because it removed the trapper and restored Zapdos/Tyranitar pressure.
-`quick_tests/replay_turn_pause_050_lead_trade_support_coverage_smogtours-gen2ou-924499_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_050_lead_trade_support_coverage_smogtours-gen2ou-924499_2026-05-14.md`
 adds the lead-trade boundary: a lead sleep threat does not force a sleep
 script. Immediate Explosion can be correct if it removes the opposing lead's
 route job and the exploding lead is not needed for a later route.
-`quick_tests/replay_turn_pause_051_support_entry_explosion_absorber_smogtours-gen2ou-923748_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_051_support_entry_explosion_absorber_smogtours-gen2ou-923748_2026-05-14.md`
 adds the support-entry mirror. After Cloyster claimed the support seat and
 dropped low, Explosion was live, but the player-side answer was to switch
 Gengar and blank it. Before cashing out or accepting the trade, ask whether a
 side-known Ghost absorber exists and whether preserving it matters more than
 absorbing the self-KO now.
-`quick_tests/replay_turn_pause_056_immediate_route_trade_converter_smogtours-gen2ou-922569_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_056_immediate_route_trade_converter_smogtours-gen2ou-922569_2026-05-14.md`
 adds the anti-overcorrection. Preservation lessons do not mean refusing
 Explosion. Immediate or early Explosion is correct when the target is exact,
 the support job is complete or expendable, delay lets the route continue, and
 the next converter is named. In the replay, Exeggutor removed Zapdos, then
 Forretress set Spikes before Exploding into boosted Snorlax to hand Machamp
 the board.
-`quick_tests/replay_turn_pause_057_sleep_absorber_trade_handoff_smogtours-gen2ou-922568_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_057_sleep_absorber_trade_handoff_smogtours-gen2ou-922568_2026-05-14.md`
 adds the defender-selection mirror. Explosion into a boosted Snorlax route can
 be correct for the exploding side, while the defending side can still make the
 right preservation switch by losing a different route piece. In that replay,
@@ -240,27 +240,27 @@ Local status: GSC strategic lesson is useful, but romhack type/passive and
 move-behavior interactions need local checks before exact advice.
 
 Local drills:
-`quick_tests/sleeping_target_cashout_threshold_probe_001_2026-05-14.md` and
-`quick_tests/replay_turn_pause_021_cashout_threshold_partial_smogtours-gen2ou-934904_2026-05-14.md`,
+`workspace/quick_tests/sleeping_target_cashout_threshold_probe_001_2026-05-14.md` and
+`workspace/quick_tests/replay_turn_pause_021_cashout_threshold_partial_smogtours-gen2ou-934904_2026-05-14.md`,
 and
-`quick_tests/selfdestruct_receiver_branch_regression_001_smogtours-gen2ou-934904_2026-05-14.md`,
-and `quick_tests/explosion_absorber_resource_probe_001_2026-05-14.md`,
+`workspace/quick_tests/selfdestruct_receiver_branch_regression_001_smogtours-gen2ou-934904_2026-05-14.md`,
+and `workspace/quick_tests/explosion_absorber_resource_probe_001_2026-05-14.md`,
 and
-`quick_tests/replay_turn_pause_022_receiver_counterplay_transfer_smogtours-gen2ou-935551_2026-05-14.md`,
+`workspace/quick_tests/replay_turn_pause_022_receiver_counterplay_transfer_smogtours-gen2ou-935551_2026-05-14.md`,
 and
-`quick_tests/route_trade_active_pressure_probe_001_smogtours-gen2ou-934329_2026-05-14.md`,
+`workspace/quick_tests/route_trade_active_pressure_probe_001_smogtours-gen2ou-934329_2026-05-14.md`,
 and
-`quick_tests/replay_turn_pause_024_route_trade_threshold_smogtours-gen2ou-934148_2026-05-14.md`,
+`workspace/quick_tests/replay_turn_pause_024_route_trade_threshold_smogtours-gen2ou-934148_2026-05-14.md`,
 and
-`quick_tests/route_trade_timing_probe_001_2026-05-14.md`,
+`workspace/quick_tests/route_trade_timing_probe_001_2026-05-14.md`,
 and
-`quick_tests/replay_turn_pause_025_route_trade_timing_transfer_smogtours-gen2ou-934874_2026-05-14.md`,
+`workspace/quick_tests/replay_turn_pause_025_route_trade_timing_transfer_smogtours-gen2ou-934874_2026-05-14.md`,
 and
-`quick_tests/route_trade_final_gate_probe_001_2026-05-14.md`,
+`workspace/quick_tests/route_trade_final_gate_probe_001_2026-05-14.md`,
 and
-`quick_tests/replay_turn_pause_037_low_support_pressure_smogtours-gen2ou-931699_2026-05-14.md`,
+`workspace/quick_tests/replay_turn_pause_037_low_support_pressure_smogtours-gen2ou-931699_2026-05-14.md`,
 and
-`quick_tests/replay_turn_pause_039_sleep_talk_pursuit_transfer_smogtours-gen2ou-931710_2026-05-14.md`.
+`workspace/quick_tests/replay_turn_pause_039_sleep_talk_pursuit_transfer_smogtours-gen2ou-931710_2026-05-14.md`.
 
 ## STP-004: Prediction Is A Risk Budget, Not A Personality
 
@@ -275,43 +275,43 @@ anyway. When ahead or stable, prefer the move that covers the worst plausible
 branch while still improving the route.
 
 Branch-coverage update:
-`quick_tests/replay_turn_pause_040_branch_coverage_spin_phaze_smogtours-gen2ou-931130_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_040_branch_coverage_spin_phaze_smogtours-gen2ou-931130_2026-05-14.md`
 separates naming a branch from covering it. After naming the bad branch, verify
 that the selected action actually improves that branch or explicitly accepts it
 as a priced trade. In the replay, Earthquake into Gengar covered the spinblock
 branch; preserving 14% Golem did not cover Psychic because Spikes made future
 Golem entry fake.
-`quick_tests/branch_coverage_spin_phaze_probe_001_2026-05-14.md` turns this
+`workspace/quick_tests/branch_coverage_spin_phaze_probe_001_2026-05-14.md` turns this
 into a six-branch regression: clean Spin on a forced switch, reset Spikes,
 Roar into the spinblocker, direct Ghost punish, low-resource sack for clean
 entry, and distinguishing a covered branch from an accepted Explosion trade.
-`quick_tests/replay_turn_pause_041_branch_coverage_transfer_smogtours-gen2ou-931101_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_041_branch_coverage_transfer_smogtours-gen2ou-931101_2026-05-14.md`
 adds the failed transfer: branch identification and branch coverage are
 separate scores. If Snorlax or Misdreavus is named as a likely pivot, the top
 move must either hit that pivot, punish it through a double, or explicitly
 accept it as a priced branch. Thunderbolt into a named Snorlax pivot and
 Dynamic Punch into a named Misdreavus pivot fail this gate even when the move
 looks active or matches the replay.
-`quick_tests/named_pivot_coverage_probe_001_2026-05-14.md` turns that miss into
+`workspace/quick_tests/named_pivot_coverage_probe_001_2026-05-14.md` turns that miss into
 a three-prompt midground check: double to Tyranitar for the Snorlax pivot,
 Earthquake rather than Dynamic Punch for Misdreavus, and Fire Blast for the
 Skarmory/Forretress pivot. If the active-target move fails a named pivot,
 either downgrade the pivot, choose the midground/double, or state why the
 accepted branch is worth it.
-`quick_tests/replay_turn_pause_042_named_pivot_transfer_smogtours-gen2ou-931095_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_042_named_pivot_transfer_smogtours-gen2ou-931095_2026-05-14.md`
 shows the regression has not transferred yet. The final-answer gate must be
 mechanical: after naming a pivot, ask whether the selected action affects that
 pivot. Earthquake into a named Zapdos pivot and Thunder into a named Steelix
 pivot are uncovered branches, not acceptable active-target pressure. Spikes
 into Thunder is different: it explicitly accepts the attack branch for a route
 gain.
-`quick_tests/replay_turn_pause_043_named_pivot_gate_transfer_smogtours-gen2ou-930771_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_043_named_pivot_gate_transfer_smogtours-gen2ou-930771_2026-05-14.md`
 shows the mechanical gate transferred: all four p1 decisions checked whether
 the chosen action affected the named pivot. The next ordering problem is that
 the active target can still be the larger branch after the pivot gate. In the
 replay, Gengar's Hypnosis, Gengar's escape/trap branch, and sleeping
 Tyranitar's current trapper seat mattered more than over-centering Steelix.
-`quick_tests/replay_turn_pause_044_active_target_after_pivot_gate_smogtours-gen2ou-929268_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_044_active_target_after_pivot_gate_smogtours-gen2ou-929268_2026-05-14.md`
 adds the next split: after the pivot gate, distinguish an active attack that is
 easy for the opponent to cover from an active progress move that improves
 through the expected response. Zapdos attacking Skarmory was easy to answer
@@ -319,25 +319,25 @@ with revealed Raikou, so the Snorlax double was stronger. One turn later,
 Snorlax did not need the immediate Zapdos double because Curse improved
 through the expected Skarmory response. Do not double just because the pivot
 is obvious if the active move already changes the next board through that
-pivot. `quick_tests/pivot_progress_after_gate_probe_001_2026-05-14.md` turns
+pivot. `workspace/quick_tests/pivot_progress_after_gate_probe_001_2026-05-14.md` turns
 this into a four-way regression: active attack, active progress, route denial,
 and side-known own-team answer.
-`quick_tests/replay_turn_pause_045_sleep_clause_clamp_explosion_growth_smogtours-gen2ou-927169_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_045_sleep_clause_clamp_explosion_growth_smogtours-gen2ou-927169_2026-05-14.md`
 shows the regression is not yet stable. Espeon Psychic hit the active
 Nidoking, but the expected Snorlax pivot made Growth the better active
 progress move. When a wall pivot is obvious, ask whether setup or status makes
 that pivot worse before choosing direct damage into the current target.
-`quick_tests/replay_turn_pause_046_special_wall_pivot_ladder_smogtours-gen2ou-925777_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_046_special_wall_pivot_ladder_smogtours-gen2ou-925777_2026-05-14.md`
 adds the pivot ladder. If the active attack is cleanly covered by a revealed
 absorber, double. If the active Pokemon has coverage into the expected wall,
 use coverage rather than generic setup. If setup, status, or hazards improve
 through the expected response, take that progress. If a recurring answer such
 as Roar can deny the active route, do not cash out with Explosion merely
 because the route is scary.
-`quick_tests/special_wall_pivot_ladder_probe_001_2026-05-14.md` turns the
+`workspace/quick_tests/special_wall_pivot_ladder_probe_001_2026-05-14.md` turns the
 ladder into a four-scenario regression: absorber double, coverage into wall,
 preserve support for a recurring answer, and Roar before Explosion.
-`quick_tests/replay_turn_pause_047_special_wall_pivot_ladder_transfer_smogtours-gen2ou-925686_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_047_special_wall_pivot_ladder_transfer_smogtours-gen2ou-925686_2026-05-14.md`
 adds two refinements. First, ask whether the active route needs a status clock
 before hazards; Toxic into +1 Snorlax was better than Spikes-first. Second,
 forced switch does not automatically mean setup. If the incoming pivot can
@@ -345,37 +345,37 @@ threaten status, Explosion, recovery, or immediate counterplay, direct damage
 or coverage into that pivot can beat boosting. Zapdos also showed the same
 coverage principle: Thunder into Exeggutor lost to the Steelix branch, while
 Hidden Power covered it.
-`quick_tests/forced_switch_pivot_damage_probe_001_2026-05-14.md` turns this
+`workspace/quick_tests/forced_switch_pivot_damage_probe_001_2026-05-14.md` turns this
 into four checks: status before hazard, hazard after clock, damage before setup
 into a punishing pivot, and coverage before Electric STAB into a Ground/Steel
 branch.
-`quick_tests/replay_turn_pause_048_hard_answer_before_status_smogtours-gen2ou-924922_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_048_hard_answer_before_status_smogtours-gen2ou-924922_2026-05-14.md`
 adds the clean-answer exception. If support is already delivered and a
 recurring hard answer can enter without losing the route, use the answer before
 adding status. After the hard answer enters, do not assume the next move is
 always Toxic or phazing; if the attacker has shown only resisted physical
 damage, counter-setup can improve the answer's position before phazing becomes
-necessary. `quick_tests/hard_answer_before_status_probe_001_2026-05-14.md`
+necessary. `workspace/quick_tests/hard_answer_before_status_probe_001_2026-05-14.md`
 turns this into three checks: hard answer before more support, counter-setup
 before phaze, and re-solve immediately if coverage invalidates the hard answer.
-`quick_tests/replay_turn_pause_049_coverage_reveal_absorber_smogtours-gen2ou-924921_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_049_coverage_reveal_absorber_smogtours-gen2ou-924921_2026-05-14.md`
 tests that re-solve. Snorlax revealing Fire Blast into Cloyster invalidated the
 old clean-answer map, but it did not mean Snorlax should keep attacking. After
 Cloyster survived and could threaten Explosion, the Snorlax side pivoted
 sleeping Moltres into the support piece, accepting Spikes while preserving the
 Fire Blast Snorlax route.
-`quick_tests/coverage_reveal_absorber_probe_001_2026-05-14.md` turns this into
+`workspace/quick_tests/coverage_reveal_absorber_probe_001_2026-05-14.md` turns this into
 three checks: coverage reveal invalidates the clean answer, the invalidated
 answer may still deliver support before cash-out, and a sleeping absorber can
 protect the revealed coverage user from Explosion.
-`quick_tests/replay_turn_pause_052_lovely_kiss_snorlax_sleep_pivot_smogtours-gen2ou-923076_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_052_lovely_kiss_snorlax_sleep_pivot_smogtours-gen2ou-923076_2026-05-14.md`
 adds damage-and-recoil pricing into the pivot ladder. If the active Pokemon
 survives the hit and its damage plus the opponent's recoil materially improves
 the route, staying can beat an immediate nominal-answer switch. Re-solve after
 that trade: once the active falls into KO range, choose the absorber that
 covers the most likely coverage branch, not merely the one that covers the
 obvious STAB.
-`quick_tests/replay_turn_pause_053_curselax_phaze_cashout_smogtours-gen2ou-922830_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_053_curselax_phaze_cashout_smogtours-gen2ou-922830_2026-05-14.md`
 adds the RestTalk inference boundary. Rest reveals recovery, not Sleep Talk.
 If a sleeping Snorlax has not revealed Sleep Talk and a lower-value teammate
 can absorb the immediate hit while preserving the anchor, switching can be
@@ -410,7 +410,7 @@ Local status: transfer cautiously because romhack three-layer Spikes increases
 the upside and the punishment for losing hazard tempo.
 
 Replay update:
-`quick_tests/replay_turn_pause_054_hazard_loop_spin_window_smogtours-gen2ou-922676_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_054_hazard_loop_spin_window_smogtours-gen2ou-922676_2026-05-14.md`
 adds the predicted-cash-out Spin window. When low Cloyster threatens Explosion
 and the opponent is likely to switch a lower-value absorber into the cash-out,
 Rapid Spin can be the better route move than booming. After the Spin, re-solve:
@@ -467,12 +467,12 @@ immediately erase or punish it. After a boost lands, re-score the marginal next
 boost. If the current boost is already sufficient to convert, attack, pivot, or
 recover instead of boosting again.
 
-Replay update: `quick_tests/replay_turn_pause_047_special_wall_pivot_ladder_transfer_smogtours-gen2ou-925686_2026-05-14.md`
+Replay update: `workspace/quick_tests/replay_turn_pause_047_special_wall_pivot_ladder_transfer_smogtours-gen2ou-925686_2026-05-14.md`
 adds the forced-switch boundary. A forced switch is only a setup turn if the
 incoming pivot cannot immediately punish the boost. If the likely pivot can
 spread status, Explode, recover, phaze, or force the booster out, direct damage
 into the pivot may be the better route move.
-`quick_tests/forced_switch_pivot_damage_probe_001_2026-05-14.md` makes this a
+`workspace/quick_tests/forced_switch_pivot_damage_probe_001_2026-05-14.md` makes this a
 regression: do not Swords Dance on a forced exit if Exeggutor or another
 punishing pivot can enter and take control immediately.
 
@@ -1479,7 +1479,7 @@ information. Red's Blastoise has Mirror Coat but not that full lock.
 Local drills: `worked_examples/red_blastoise_mirror_coat_arbitration.md`,
 `worked_examples/boss_live_turn_prompt_cards.md`,
 `worked_examples/red_30_turn_final_boss_ledger_drill.md`,
-`quick_tests/focus_energy_counter_branch_regression_001_smogtours-gen2ou-935022_2026-05-14.md`,
+`workspace/quick_tests/focus_energy_counter_branch_regression_001_smogtours-gen2ou-935022_2026-05-14.md`,
 and `paused_turn_atlas.md#pta-059-focus-energy-retaliation-branch`.
 
 ## STP-037: Known-Set Threatlists Gate Boss Plan Confidence
@@ -1699,8 +1699,8 @@ Boss AI must not select a final trade from hidden player-team knowledge.
 
 Local drills: `worked_examples/live_turn_drills.md`,
 `paused_turn_atlas.md`,
-`quick_tests/route_trade_active_pressure_probe_001_smogtours-gen2ou-934329_2026-05-14.md`,
-`quick_tests/replay_turn_pause_024_route_trade_threshold_smogtours-gen2ou-934148_2026-05-14.md`, and
+`workspace/quick_tests/route_trade_active_pressure_probe_001_smogtours-gen2ou-934329_2026-05-14.md`,
+`workspace/quick_tests/replay_turn_pause_024_route_trade_threshold_smogtours-gen2ou-934148_2026-05-14.md`, and
 `reviews/2026-05-13_smogtours-gen2ou-902089.md`.
 
 ## STP-043: One-Time Trades Must Pass The Execution Gate
@@ -1911,7 +1911,7 @@ actually converts. Phazing or Haze is a bridge only if the control user has the
 HP, PP, speed/timing, and target pool to keep resetting until a payoff appears.
 When the receiver is in damage range and the control user survives the return
 branch, attacking can outrank another reset.
-`quick_tests/replay_turn_pause_023_receiver_phaze_counterplay_smogtours-gen2ou-933853_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_023_receiver_phaze_counterplay_smogtours-gen2ou-933853_2026-05-14.md`
 adds the post-phaze rebuild check: after a receiver is dragged, do not stop at
 "the phazer's species walls this." Rebuild the receiver's route job and check
 for route-specific coverage, re-pass, sacrifice, absorber switch, or immediate
@@ -1938,7 +1938,7 @@ Local drills:
 `worked_examples/smogtours_861549_baton_pass_phaze_endpoint.md`,
 `worked_examples/live_turn_drills.md`, `paused_turn_atlas.md`,
 `worked_examples/boss_live_turn_prompt_cards.md`,
-`quick_tests/post_phaze_receiver_map_probe_001_2026-05-14.md`, and
+`workspace/quick_tests/post_phaze_receiver_map_probe_001_2026-05-14.md`, and
 `reviews/2026-05-13_smogtours-gen2ou-861549.md`.
 
 ## STP-049: Reset Hubs Win Only After Leak Closure
@@ -2006,7 +2006,7 @@ boost that implies a lock route is a warning to preserve the answer; a support
 piece that completes its job before fainting may already have converted value.
 Continue using the old species assumption only if the revealed function does
 not change the route map.
-`quick_tests/replay_turn_pause_023_receiver_phaze_counterplay_smogtours-gen2ou-933853_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_023_receiver_phaze_counterplay_smogtours-gen2ou-933853_2026-05-14.md`
 adds the mirror check: a species label can also underrate the active side's
 coverage. Marowak into Skarmory looked walled by species, but the route job of
 an Agility/Baton Pass receiver made Fire Blast the coverage question that had
@@ -2033,7 +2033,7 @@ Local drills:
 `worked_examples/smogtours_891177_surprise_function_reclassification.md`,
 `romhack_deltas/present_rollout_function_reclassification.md`,
 `worked_examples/live_turn_drills.md`, `paused_turn_atlas.md`,
-`quick_tests/post_phaze_receiver_map_probe_001_2026-05-14.md`, and
+`workspace/quick_tests/post_phaze_receiver_map_probe_001_2026-05-14.md`, and
 `reviews/2026-05-13_smogtours-gen2ou-891177.md`.
 
 ## STP-051: Accuracy Disruption Needs Endpoint And Hit-Reliability Re-Score
@@ -2132,99 +2132,99 @@ spinner is not retention unless it KOs, denies recovery, forces a worse reset,
 or immediately hands off to a converter.
 
 Spinblock transfer update:
-`quick_tests/replay_turn_pause_026_hazard_spinblock_transfer_smogtours-gen2ou-934842_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_026_hazard_spinblock_transfer_smogtours-gen2ou-934842_2026-05-14.md`
 exposed the mirror mistake from the spinner's side: Rapid Spin is not clean
 progress if a live Ghost can enter on the removal turn and we have not named
-the punish. `quick_tests/spinblock_route_probe_001_2026-05-14.md` turns that
+the punish. `workspace/quick_tests/spinblock_route_probe_001_2026-05-14.md` turns that
 miss into a six-part check: clean Spin, expected Ghost punish, healthy
 Misdreavus block, fragile Gengar not solving Starmie, route-stopper before
 Spin, and accepting status to remove a meaningful layer.
-`quick_tests/replay_turn_pause_027_spinblock_transfer_smogtours-gen2ou-934144_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_027_spinblock_transfer_smogtours-gen2ou-934144_2026-05-14.md`
 adds the second-stage handoff: after the spinner is poisoned or otherwise
 pressured, do not automatically reset Spikes. Ask whether a pressure piece can
 force the spinner to switch, Recover, take damage, or lose tempo before the
 next hazard reset.
-`quick_tests/replay_turn_pause_028_statused_spinner_handoff_smogtours-gen2ou-934149_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_028_statused_spinner_handoff_smogtours-gen2ou-934149_2026-05-14.md`
 showed this is still not automatic enough: after Toxic and Spikes, I missed
 both players handing off from Cloyster mirror to Electric pressure. The payoff
 from statusing support is the forced switch, recovery, re-entry tax, phaze, or
 pressure sequence it enables, not the status itself.
-`quick_tests/statused_spinner_handoff_probe_001_2026-05-14.md` turns that miss
+`workspace/quick_tests/statused_spinner_handoff_probe_001_2026-05-14.md` turns that miss
 into a six-branch ladder: first layer before handoff, clean Spin before
 handoff, Electric or Snorlax pressure, phazing conversion, direct attack, and
 delayed reset after the support piece leaves.
-`quick_tests/replay_turn_pause_029_spin_vs_setup_handoff_smogtours-gen2ou-935409_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_029_spin_vs_setup_handoff_smogtours-gen2ou-935409_2026-05-14.md`
 adds the overcorrection boundary: do not block Rapid Spin automatically when a
 spinner enters. If letting Spin resolve gives a pressure piece a setup, attack,
 Rest, phaze, sacrifice, or forced-switch route that matters more than the
 current layer, the pressure handoff can be correct.
-`quick_tests/spin_vs_setup_handoff_probe_001_2026-05-14.md` turns that boundary
+`workspace/quick_tests/spin_vs_setup_handoff_probe_001_2026-05-14.md` turns that boundary
 into a six-branch check: let Spin resolve for Curse, block Spin when the layer
 is the route, attack the spinner, Rest the converter, phaze immediately, or
 sacrifice the support piece to remove the spinner.
-`quick_tests/replay_turn_pause_030_spinblock_pressure_boundary_smogtours-gen2ou-934312_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_030_spinblock_pressure_boundary_smogtours-gen2ou-934312_2026-05-14.md`
 transferred the boundary and widened the pressure-action list: after a spin
 threat, the payoff can be Surf or other direct damage, Growth or other setup,
 Rest to preserve the converter, a phaze, a sacrifice, or the spinblock itself.
 Before switching to the Ghost, ask whether the current active punishes the
 spinner or its pivot immediately.
-`quick_tests/hazard_pressure_move_taxonomy_probe_001_2026-05-14.md`
+`workspace/quick_tests/hazard_pressure_move_taxonomy_probe_001_2026-05-14.md`
 compresses this into a six-class prompt: direct damage, setup, Rest, phaze,
 sacrifice, or spinblock. On hazard-control turns, classify the pressure move
 before defaulting to Rapid Spin or a Ghost switch.
-`quick_tests/replay_turn_pause_031_hazard_pressure_taxonomy_transfer_smogtours-gen2ou-866835_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_031_hazard_pressure_taxonomy_transfer_smogtours-gen2ou-866835_2026-05-14.md`
 tests the taxonomy in a fresh GSC Cup XI replay and adds the anti-overcorrection
 boundary: the taxonomy is a re-solve prompt, not an anti-Spin rule. A turn-11
 Starmie position punished premature Rapid Spin with Thunder/direct damage, but
 a later turn-25 Starmie position rewarded clean Rapid Spin into Blissey after
 the Ghost branch was priced. Reclassify each hazard-control turn instead of
 carrying the previous answer forward.
-`quick_tests/spin_vs_damage_boundary_probe_001_2026-05-14.md` turns that miss
+`workspace/quick_tests/spin_vs_damage_boundary_probe_001_2026-05-14.md` turns that miss
 into a Starmie/Cloyster four-question check: whether direct damage disables the
 spinner, phazer, or spinblocker; whether Rapid Spin is clean enough now;
 whether status changes future spin timing even if the current Spin resolves;
 and whether a Ghost can actually enter the Spin turn.
-`quick_tests/replay_turn_pause_032_spin_vs_damage_boundary_transfer_smogtours-gen2ou-852072_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_032_spin_vs_damage_boundary_transfer_smogtours-gen2ou-852072_2026-05-14.md`
 tests the check in a fresh replay and adds the poison-clock loop boundary:
 repeated Rapid Spin can be correct while poison is already removing Cloyster
 and the opponent keeps resetting Spikes, but the answer flips to Surf or other
 damage once it actually removes the setter/spinner before another reset.
-`quick_tests/poison_clock_spin_loop_probe_001_2026-05-14.md` compresses the
+`workspace/quick_tests/poison_clock_spin_loop_probe_001_2026-05-14.md` compresses the
 loop into HP-band prompts: do not Spin when our side is clear; Spin while
 damage fails to remove Cloyster and poison is already doing the removal work;
 attack once damage removes Cloyster before another reset; preserve Starmie if
 the loop spends its remaining spinner/check role.
-`quick_tests/replay_turn_pause_033_pressure_handoff_after_spin_smogtours-gen2ou-934324_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_033_pressure_handoff_after_spin_smogtours-gen2ou-934324_2026-05-14.md`
 adds the post-Spin pressure boundary: do not defend the layer at all costs. If
 letting Rapid Spin resolve gives Zapdos or another pressure piece a clean board
 against Starmie, the handoff can be correct. Rebuild Spikes later when a
 sleeping or Resting Snorlax gives Cloyster a real reset turn; after Cloyster
 has reset the layer and is too low to keep supporting, price Explosion before
 preservation.
-`quick_tests/pressure_handoff_after_spin_probe_001_2026-05-14.md` turns that
+`workspace/quick_tests/pressure_handoff_after_spin_probe_001_2026-05-14.md` turns that
 boundary into six regression branches: allow Spin into Zapdos pressure, block
 Spin when the layer is the route, reset Spikes on Resting Snorlax, cash out a
 spent Cloyster, preserve Cloyster when its job is still live, and carry weather
 or sleep-clock timing before repeating the prior move.
-`quick_tests/replay_turn_pause_035_unlabeled_hazard_cashout_transfer_smogtours-gen2ou-933816_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_035_unlabeled_hazard_cashout_transfer_smogtours-gen2ou-933816_2026-05-14.md`
 adds the resource-selection version: when Cloyster threatens Explosion after
 Spikes are up, do not preserve a sleeping anchor by exposing the spinner or
 hazard-control piece if that piece has the live removal/checking job. After the
 trade, a resisted or low-pressure matchup can be the Rapid Spin window even if
 direct damage looks active.
-`quick_tests/replay_turn_pause_036_selfko_absorber_transfer_smogtours-gen2ou-932597_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_036_selfko_absorber_transfer_smogtours-gen2ou-932597_2026-05-14.md`
 adds the poisoned-spinner loop: Toxic the spinner, hand off to pressure, reset
 Spikes on RestTalk Snorlax, and preserve the Spiker while poison does the
 removal work. Once a Ghost is available, rank the spinblock conditional before
 another pressure handoff. A low support Pokemon may also preserve itself by
 switching a sleeping anchor into pressure rather than forcing Rapid Spin or
 Explosion.
-`quick_tests/replay_turn_pause_040_branch_coverage_spin_phaze_smogtours-gen2ou-931130_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_040_branch_coverage_spin_phaze_smogtours-gen2ou-931130_2026-05-14.md`
 adds Golem compression: a clean Rapid Spin on the forced switch can be correct
 even from a Pokemon that also checks Electric-types, and Roar can be the
 branch-covering move after the opponent resets Spikes. If Roar drags in the
 spinblocker, stop trying to Spin and punish the Ghost directly.
-`quick_tests/branch_coverage_spin_phaze_probe_001_2026-05-14.md` compresses
+`workspace/quick_tests/branch_coverage_spin_phaze_probe_001_2026-05-14.md` compresses
 that into a reusable support-order check: Spin when the switch is forced, reset
 the layer before the support piece is spent, Roar when Spin would invite the
 Ghost, then attack the Ghost rather than repeating Spin into immunity.
@@ -2246,25 +2246,25 @@ Local drills: `reviews/2026-05-14_smogtours-gen2ou-912653.md`,
 `worked_examples/smogtours_878566_hazard_contract.md`,
 `worked_examples/smogtours_912836_rapid_spin_as_progress.md`, and
 `worked_examples/will_hazard_retention_stress_test.md`,
-`quick_tests/replay_turn_pause_026_hazard_spinblock_transfer_smogtours-gen2ou-934842_2026-05-14.md`,
-`quick_tests/replay_turn_pause_040_branch_coverage_spin_phaze_smogtours-gen2ou-931130_2026-05-14.md`,
-`quick_tests/branch_coverage_spin_phaze_probe_001_2026-05-14.md`,
-`quick_tests/spinblock_route_probe_001_2026-05-14.md`, and
-`quick_tests/replay_turn_pause_027_spinblock_transfer_smogtours-gen2ou-934144_2026-05-14.md`,
-`quick_tests/replay_turn_pause_028_statused_spinner_handoff_smogtours-gen2ou-934149_2026-05-14.md`,
-`quick_tests/statused_spinner_handoff_probe_001_2026-05-14.md`, and
-`quick_tests/replay_turn_pause_029_spin_vs_setup_handoff_smogtours-gen2ou-935409_2026-05-14.md`,
-`quick_tests/spin_vs_setup_handoff_probe_001_2026-05-14.md`, and
-`quick_tests/replay_turn_pause_030_spinblock_pressure_boundary_smogtours-gen2ou-934312_2026-05-14.md`,
-`quick_tests/hazard_pressure_move_taxonomy_probe_001_2026-05-14.md`, and
-`quick_tests/replay_turn_pause_031_hazard_pressure_taxonomy_transfer_smogtours-gen2ou-866835_2026-05-14.md`,
-`quick_tests/spin_vs_damage_boundary_probe_001_2026-05-14.md`, and
-`quick_tests/replay_turn_pause_032_spin_vs_damage_boundary_transfer_smogtours-gen2ou-852072_2026-05-14.md`,
-`quick_tests/poison_clock_spin_loop_probe_001_2026-05-14.md`, and
-`quick_tests/replay_turn_pause_033_pressure_handoff_after_spin_smogtours-gen2ou-934324_2026-05-14.md`,
-`quick_tests/pressure_handoff_after_spin_probe_001_2026-05-14.md`, and
-`quick_tests/replay_turn_pause_035_unlabeled_hazard_cashout_transfer_smogtours-gen2ou-933816_2026-05-14.md`,
-and `quick_tests/replay_turn_pause_036_selfko_absorber_transfer_smogtours-gen2ou-932597_2026-05-14.md`.
+`workspace/quick_tests/replay_turn_pause_026_hazard_spinblock_transfer_smogtours-gen2ou-934842_2026-05-14.md`,
+`workspace/quick_tests/replay_turn_pause_040_branch_coverage_spin_phaze_smogtours-gen2ou-931130_2026-05-14.md`,
+`workspace/quick_tests/branch_coverage_spin_phaze_probe_001_2026-05-14.md`,
+`workspace/quick_tests/spinblock_route_probe_001_2026-05-14.md`, and
+`workspace/quick_tests/replay_turn_pause_027_spinblock_transfer_smogtours-gen2ou-934144_2026-05-14.md`,
+`workspace/quick_tests/replay_turn_pause_028_statused_spinner_handoff_smogtours-gen2ou-934149_2026-05-14.md`,
+`workspace/quick_tests/statused_spinner_handoff_probe_001_2026-05-14.md`, and
+`workspace/quick_tests/replay_turn_pause_029_spin_vs_setup_handoff_smogtours-gen2ou-935409_2026-05-14.md`,
+`workspace/quick_tests/spin_vs_setup_handoff_probe_001_2026-05-14.md`, and
+`workspace/quick_tests/replay_turn_pause_030_spinblock_pressure_boundary_smogtours-gen2ou-934312_2026-05-14.md`,
+`workspace/quick_tests/hazard_pressure_move_taxonomy_probe_001_2026-05-14.md`, and
+`workspace/quick_tests/replay_turn_pause_031_hazard_pressure_taxonomy_transfer_smogtours-gen2ou-866835_2026-05-14.md`,
+`workspace/quick_tests/spin_vs_damage_boundary_probe_001_2026-05-14.md`, and
+`workspace/quick_tests/replay_turn_pause_032_spin_vs_damage_boundary_transfer_smogtours-gen2ou-852072_2026-05-14.md`,
+`workspace/quick_tests/poison_clock_spin_loop_probe_001_2026-05-14.md`, and
+`workspace/quick_tests/replay_turn_pause_033_pressure_handoff_after_spin_smogtours-gen2ou-934324_2026-05-14.md`,
+`workspace/quick_tests/pressure_handoff_after_spin_probe_001_2026-05-14.md`, and
+`workspace/quick_tests/replay_turn_pause_035_unlabeled_hazard_cashout_transfer_smogtours-gen2ou-933816_2026-05-14.md`,
+and `workspace/quick_tests/replay_turn_pause_036_selfko_absorber_transfer_smogtours-gen2ou-932597_2026-05-14.md`.
 
 ## STP-054: Base Speed Is A Public Prior, Not Move Order
 
@@ -2314,15 +2314,15 @@ Sources: Pokemon Showdown replay,
 Smogon, [Playing with Spikes in GSC](https://www.smogon.com/gs/articles/gsc_spikes),
 Smogon, [Explosion in GSC](https://www.smogon.com/gs/articles/guide_to_explosion),
 review `reviews/2026-05-14_smogtours-gen2ou-740650.md`, and turn-pause runs
-`quick_tests/replay_turn_pause_007_electric_handoff_overcorrection_smogtours-gen2ou-907668_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_007_electric_handoff_overcorrection_smogtours-gen2ou-907668_2026-05-14.md`
 and
-`quick_tests/replay_turn_pause_008_cashout_handoff_fresh_smogtours-gen2ou-907674_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_008_cashout_handoff_fresh_smogtours-gen2ou-907674_2026-05-14.md`
 and
-`quick_tests/replay_turn_pause_009_pta057_cashout_handoff_smogtours-gen2ou-928699_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_009_pta057_cashout_handoff_smogtours-gen2ou-928699_2026-05-14.md`
 and
-`quick_tests/replay_turn_pause_010_pta057_regression_smogtours-gen2ou-928703_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_010_pta057_regression_smogtours-gen2ou-928703_2026-05-14.md`
 and
-`quick_tests/replay_turn_pause_011_support_choice_smogtours-gen2ou-928706_2026-05-14.md`.
+`workspace/quick_tests/replay_turn_pause_011_support_choice_smogtours-gen2ou-928706_2026-05-14.md`.
 
 Trigger: a support Pokemon is losing future value but can still deliver one
 route-changing support action, such as Spikes, Rapid Spin, phazing, screens,
@@ -2470,15 +2470,15 @@ a cash-out is guaranteed.
 
 Local drills: `reviews/2026-05-14_smogtours-gen2ou-740650.md`,
 `paused_turn_atlas.md`,
-`quick_tests/replay_turn_pause_008_cashout_handoff_fresh_smogtours-gen2ou-907674_2026-05-14.md`,
-`quick_tests/replay_turn_pause_009_pta057_cashout_handoff_smogtours-gen2ou-928699_2026-05-14.md`,
-`quick_tests/replay_turn_pause_010_pta057_regression_smogtours-gen2ou-928703_2026-05-14.md`,
-`quick_tests/replay_turn_pause_011_support_choice_smogtours-gen2ou-928706_2026-05-14.md`,
-`quick_tests/replay_turn_pause_012_pta058_boundary_smogtours-gen2ou-930765_2026-05-14.md`,
-`quick_tests/replay_turn_pause_013_pta058_preserve_boundary_smogtours-gen2ou-933556_2026-05-14.md`,
-`quick_tests/replay_turn_pause_014_pta058_handoff_defense_smogtours-gen2ou-935045_2026-05-14.md`,
-`quick_tests/replay_turn_pause_015_support_status_followup_smogtours-gen2ou-935022_2026-05-14.md`,
-`quick_tests/replay_turn_pause_037_low_support_pressure_smogtours-gen2ou-931699_2026-05-14.md`,
+`workspace/quick_tests/replay_turn_pause_008_cashout_handoff_fresh_smogtours-gen2ou-907674_2026-05-14.md`,
+`workspace/quick_tests/replay_turn_pause_009_pta057_cashout_handoff_smogtours-gen2ou-928699_2026-05-14.md`,
+`workspace/quick_tests/replay_turn_pause_010_pta057_regression_smogtours-gen2ou-928703_2026-05-14.md`,
+`workspace/quick_tests/replay_turn_pause_011_support_choice_smogtours-gen2ou-928706_2026-05-14.md`,
+`workspace/quick_tests/replay_turn_pause_012_pta058_boundary_smogtours-gen2ou-930765_2026-05-14.md`,
+`workspace/quick_tests/replay_turn_pause_013_pta058_preserve_boundary_smogtours-gen2ou-933556_2026-05-14.md`,
+`workspace/quick_tests/replay_turn_pause_014_pta058_handoff_defense_smogtours-gen2ou-935045_2026-05-14.md`,
+`workspace/quick_tests/replay_turn_pause_015_support_status_followup_smogtours-gen2ou-935022_2026-05-14.md`,
+`workspace/quick_tests/replay_turn_pause_037_low_support_pressure_smogtours-gen2ou-931699_2026-05-14.md`,
 and
 `worked_examples/controlled_sack_for_clean_entry_boss_examples.md`.
 
@@ -2501,12 +2501,12 @@ sack is correct when the lost piece has no higher-value remaining job and the
 entry or branch removal changes the final route.
 
 Replay update:
-`quick_tests/replay_turn_pause_040_branch_coverage_spin_phaze_smogtours-gen2ou-931130_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_040_branch_coverage_spin_phaze_smogtours-gen2ou-931130_2026-05-14.md`
 adds the hazard-entry check: a 14% support Pokemon with Spikes on its own side
 may have no real future job because re-entry leaves it unable to act. In that
 case, staying in to faint can be better than a preservation switch that forces
 the converter to take both entry damage and the incoming attack.
-`quick_tests/branch_coverage_spin_phaze_probe_001_2026-05-14.md` adds the
+`workspace/quick_tests/branch_coverage_spin_phaze_probe_001_2026-05-14.md` adds the
 regression wording: preserving the name of a Pokemon is not preserving a
 resource if hazard entry leaves it unable to act. Count the action after
 re-entry, not the species in reserve.
@@ -2532,16 +2532,16 @@ sack has no downside.
 Local drills: `reviews/2026-05-14_smogtours-gen2ou-890958.md`,
 `paused_turn_atlas.md`,
 `worked_examples/controlled_sack_for_clean_entry_boss_examples.md`, and
-`quick_tests/replay_turn_pause_040_branch_coverage_spin_phaze_smogtours-gen2ou-931130_2026-05-14.md`,
+`workspace/quick_tests/replay_turn_pause_040_branch_coverage_spin_phaze_smogtours-gen2ou-931130_2026-05-14.md`,
 and
-`quick_tests/branch_coverage_spin_phaze_probe_001_2026-05-14.md`.
+`workspace/quick_tests/branch_coverage_spin_phaze_probe_001_2026-05-14.md`.
 
 ## STP-057: Support Jobs Can Be Split Across The Team
 
 Sources: Pokemon Showdown replay,
 [smogtours-gen2ou-912131](https://replay.pokemonshowdown.com/smogtours-gen2ou-912131),
 and local turn-pause run
-`quick_tests/replay_turn_pause_001_smogtours-gen2ou-912131_2026-05-14.md`.
+`workspace/quick_tests/replay_turn_pause_001_smogtours-gen2ou-912131_2026-05-14.md`.
 
 Trigger: the active support Pokemon has set hazards, used status, phazed, or
 otherwise taken the visible support seat, and the advisor is about to assume
@@ -2573,7 +2573,7 @@ phazing, trapping, and sacrifice across multiple authored team members. Boss AI
 may use its own team role map and public player reveals, but must not assume
 hidden player reserve support roles as fact under no Team Preview.
 
-Local drills: `quick_tests/replay_turn_pause_001_smogtours-gen2ou-912131_2026-05-14.md`,
+Local drills: `workspace/quick_tests/replay_turn_pause_001_smogtours-gen2ou-912131_2026-05-14.md`,
 `paused_turn_atlas.md`, and `worked_examples/will_hazard_retention_stress_test.md`.
 
 ## STP-058: Re-Solve The Local Subgame After Every Reveal
@@ -2607,21 +2607,21 @@ the exploitative read only when the slow robust line is losing or when public
 evidence makes the opponent's branch highly incentive-compatible.
 
 Canary update: the branch bundle has to be good, not just present. After
-`quick_tests/replay_turn_pause_003_resolve_canary_smogtours-gen2ou-917193_2026-05-14.md`,
+`workspace/quick_tests/replay_turn_pause_003_resolve_canary_smogtours-gen2ou-917193_2026-05-14.md`,
 add status-as-route-stopper, preservation of the punisher, and double re-solve
 after both sides know the active damage interaction when those branches are
 publicly plausible. Do not let "obvious punish exists" silently become
 "obvious punish is best now."
 
 Second canary update:
-`quick_tests/replay_turn_pause_004_branch_quality_smogtours-gen2ou-917826_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_004_branch_quality_smogtours-gen2ou-917826_2026-05-14.md`
 showed a better support-map score but added another required branch: when the
 route-preserving switch is obvious, include coverage into that switch as a
 serious opponent continuation. The best punish may be the move aimed at the
 incoming answer, not the strongest move into the current active.
 
 Third canary update:
-`quick_tests/replay_turn_pause_005_status_route_smogtours-gen2ou-903666_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_005_status_route_smogtours-gen2ou-903666_2026-05-14.md`
 showed the same status blind spot again. When a setup anchor is active, Toxic,
 paralysis, phazing, Encore, or another route-stopper may outrank both hazard
 economy and direct damage. Do not ask "Spikes or Rapid Spin?" before asking
@@ -2629,7 +2629,7 @@ whether the opponent's current setup route becomes permanent if it is not
 stopped now.
 
 Baton Pass update:
-`quick_tests/replay_turn_pause_016_baton_pass_resolve_smogtours-gen2ou-934428_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_016_baton_pass_resolve_smogtours-gen2ou-934428_2026-05-14.md`
 showed that a pass route is not a script. After Agility, Swords Dance, or a
 revealed Baton Pass, re-rank adding another boost, attacking with the passer,
 passing to the named receiver, using Baton Pass as a fast pivot into a sack, or
@@ -2637,7 +2637,7 @@ abandoning the chain. The correct move can be Hidden Power before passing, or
 Baton Pass with no boost payload, if that changes the next board.
 
 Receiver update:
-`quick_tests/replay_turn_pause_017_sleep_route_marowak_continuation_smogtours-gen2ou-934428_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_017_sleep_route_marowak_continuation_smogtours-gen2ou-934428_2026-05-14.md`
 showed the comeback version. When ordinary damage loses and a Baton Pass
 archetype is public, search for the remaining receiver route even if the exact
 receiver is not yet public. In spectator-public replay study, quarantine the
@@ -2662,9 +2662,9 @@ version would be a traceable re-score trigger after public events such as
 revealed Rapid Spin, observed speed anomaly, Rest/Sleep Talk reveal, phaze,
 Explosion, or a no-progress loop.
 
-Local drills: `quick_tests/replay_turn_pause_001_smogtours-gen2ou-912131_2026-05-14.md`,
-`quick_tests/replay_turn_pause_002_smogtours-gen2ou-917186_2026-05-14.md`,
-`quick_tests/replay_turn_pause_005_status_route_smogtours-gen2ou-903666_2026-05-14.md`,
-`quick_tests/replay_turn_pause_016_baton_pass_resolve_smogtours-gen2ou-934428_2026-05-14.md`,
-`quick_tests/replay_turn_pause_017_sleep_route_marowak_continuation_smogtours-gen2ou-934428_2026-05-14.md`,
+Local drills: `workspace/quick_tests/replay_turn_pause_001_smogtours-gen2ou-912131_2026-05-14.md`,
+`workspace/quick_tests/replay_turn_pause_002_smogtours-gen2ou-917186_2026-05-14.md`,
+`workspace/quick_tests/replay_turn_pause_005_status_route_smogtours-gen2ou-903666_2026-05-14.md`,
+`workspace/quick_tests/replay_turn_pause_016_baton_pass_resolve_smogtours-gen2ou-934428_2026-05-14.md`,
+`workspace/quick_tests/replay_turn_pause_017_sleep_route_marowak_continuation_smogtours-gen2ou-934428_2026-05-14.md`,
 and `paused_turn_atlas.md`.

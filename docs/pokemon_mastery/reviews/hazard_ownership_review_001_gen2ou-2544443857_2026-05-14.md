@@ -4,7 +4,7 @@ Source replay:
 `https://replay.pokemonshowdown.com/gen2ou-2544443857-5tvdxa7m0m3feng39gb3a5lo7368kwypw`
 
 Parent transfer:
-`quick_tests/three_check_transfer_001_gen2ou-2544443857_2026-05-14.md`
+`workspace/quick_tests/three_check_transfer_001_gen2ou-2544443857_2026-05-14.md`
 
 Mode: targeted expert replay review after reveal. This is not a fresh score.
 

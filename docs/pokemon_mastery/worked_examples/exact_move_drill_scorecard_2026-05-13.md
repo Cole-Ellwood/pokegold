@@ -234,7 +234,7 @@ score a multi-turn sequence, not just a constructed branch tree. The advice
 should recommend exact moves for at least three consecutive public states and
 grade whether each move preserved the declared route.
 
-Use `../battle_captures/README.md` as the evidence gate. If no real player
+Use `../workspace/battle_captures/README.md` as the evidence gate. If no real player
 team, save state, video, screenshots, or turn log is available, do not fill the
 gap with another constructed prompt. Keep the gap explicit until a public battle
 state can be scored.

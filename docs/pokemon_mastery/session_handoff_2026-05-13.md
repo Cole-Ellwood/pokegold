@@ -98,7 +98,7 @@ docs/pokemon_mastery/boss_route_maps/
 docs/pokemon_mastery/worked_examples/
 docs/pokemon_mastery/reviews/
 docs/pokemon_mastery/romhack_deltas/
-docs/pokemon_mastery/pro_notes/
+docs/pokemon_mastery/workspace/pro_notes/
 ```
 
 Local mechanics/source anchors:

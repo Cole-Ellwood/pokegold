@@ -9,10 +9,15 @@ Rule: rank route-changing actions before default scripts.
 
 Ask:
 - Does damage, coverage, Thief, setup, phaze, Explosion, or handoff convert now?
+- Does the active piece already have the converter, making preservation a delay?
+- In a lead item/status matchup, does absorbing their job or handing off beat
+  clicking my own slower sleep/status script?
 - Does the script move only look safe, or does it change a named route?
 - What branch punishes the converter, and is it public enough to demote it?
 
 Top move is the converter unless a named public branch beats it.
+Status/setup count as converters only when they beat the active target and the
+named next owner or counter-owner.
 
 Do not use status, hazards, or Spin as proof of progress without conversion.
 

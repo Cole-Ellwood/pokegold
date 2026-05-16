@@ -3232,7 +3232,7 @@ Worked example:
 
 - `worked_examples/smogtours_935507_post_spin_trade_audit.md`
 - `worked_examples/smogtours_912836_rapid_spin_as_progress.md`
-- `quick_tests/replay_turn_pause_001_smogtours-gen2ou-912131_2026-05-14.md`
+- `workspace/quick_tests/replay_turn_pause_001_smogtours-gen2ou-912131_2026-05-14.md`
 - `reviews/2026-05-13_smogtours-gen4ou-878566.md`
 
 ## Recipe: Sleep Plus Hazard Re-Entry Tax

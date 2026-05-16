@@ -150,16 +150,16 @@ wake absorber covers the branch. Cash out when wake, Rest, Sleep Talk,
 Self-Destruct, or preservation would otherwise undo the route.
 
 Constructed regression:
-`quick_tests/sleeping_target_cashout_threshold_probe_001_2026-05-14.md`.
+`workspace/quick_tests/sleeping_target_cashout_threshold_probe_001_2026-05-14.md`.
 
 Partial transfer replay:
-`quick_tests/replay_turn_pause_021_cashout_threshold_partial_smogtours-gen2ou-934904_2026-05-14.md`.
+`workspace/quick_tests/replay_turn_pause_021_cashout_threshold_partial_smogtours-gen2ou-934904_2026-05-14.md`.
 
 Post-oracle receiver regression:
-`quick_tests/selfdestruct_receiver_branch_regression_001_smogtours-gen2ou-934904_2026-05-14.md`.
+`workspace/quick_tests/selfdestruct_receiver_branch_regression_001_smogtours-gen2ou-934904_2026-05-14.md`.
 
 Fresh receiver transfer:
-`quick_tests/replay_turn_pause_022_receiver_counterplay_transfer_smogtours-gen2ou-935551_2026-05-14.md`.
+`workspace/quick_tests/replay_turn_pause_022_receiver_counterplay_transfer_smogtours-gen2ou-935551_2026-05-14.md`.
 
 Related source-to-policy entries: `STP-003`, `STP-007`.
 
@@ -232,22 +232,22 @@ irreplaceable attacker into a sleeper only because wake risk exists. Spend it
 when the wake move, Rest, Sleep Talk result, or endgame role would otherwise
 undo the route; otherwise steady pressure or a wake absorber can be better.
 
-Regression probe: `quick_tests/sleep_clause_absorber_probe_001_2026-05-14.md`.
+Regression probe: `workspace/quick_tests/sleep_clause_absorber_probe_001_2026-05-14.md`.
 
 Fresh replay check:
-`quick_tests/replay_turn_pause_018_sleep_clause_absorber_fresh_smogtours-gen2ou-934335_2026-05-14.md`.
+`workspace/quick_tests/replay_turn_pause_018_sleep_clause_absorber_fresh_smogtours-gen2ou-934335_2026-05-14.md`.
 
 Later-job replay check:
-`quick_tests/replay_turn_pause_019_sleeper_later_job_smogtours-gen2ou-934335_2026-05-14.md`.
+`workspace/quick_tests/replay_turn_pause_019_sleeper_later_job_smogtours-gen2ou-934335_2026-05-14.md`.
 
 Constructed regression:
-`quick_tests/sleeping_piece_later_job_probe_001_2026-05-14.md`.
+`workspace/quick_tests/sleeping_piece_later_job_probe_001_2026-05-14.md`.
 
 Transfer replay:
-`quick_tests/replay_turn_pause_020_sleeper_transfer_smogtours-gen2ou-935572_2026-05-14.md`.
+`workspace/quick_tests/replay_turn_pause_020_sleeper_transfer_smogtours-gen2ou-935572_2026-05-14.md`.
 
 Cash-out regression:
-`quick_tests/sleeping_target_cashout_threshold_probe_001_2026-05-14.md`.
+`workspace/quick_tests/sleeping_target_cashout_threshold_probe_001_2026-05-14.md`.
 
 Related source-to-policy entries: `STP-002`, `STP-009`, `STP-010`.
 
@@ -1489,7 +1489,7 @@ Related source-to-policy entries: `STP-007`, `STP-009`, `STP-042`, `STP-049`,
 
 ## PTA-054: Visible Setter Or Real Support Map
 
-Source: `quick_tests/replay_turn_pause_001_smogtours-gen2ou-912131_2026-05-14.md`
+Source: `workspace/quick_tests/replay_turn_pause_001_smogtours-gen2ou-912131_2026-05-14.md`
 
 Format: vanilla GSC turn-pause replay and Gym Leader Lab hazard-transfer drill.
 
@@ -1521,7 +1521,7 @@ Related source-to-policy entries: `STP-052`, `STP-053`, `STP-055`, `STP-057`.
 ## PTA-055: Re-Solve After The Reveal
 
 Source: `cross_domain_autonomy_policy.md`, poker-AI transfer sprint, and
-`quick_tests/replay_turn_pause_002_smogtours-gen2ou-917186_2026-05-14.md`.
+`workspace/quick_tests/replay_turn_pause_002_smogtours-gen2ou-917186_2026-05-14.md`.
 
 Format: no-Team-Preview Pokemon transfer drill.
 
@@ -1552,7 +1552,7 @@ Related source-to-policy entries: `STP-004`, `STP-034`, `STP-050`, `STP-057`,
 ## PTA-056: Stop The Setup Route Before Support Economy
 
 Source:
-`quick_tests/replay_turn_pause_005_status_route_smogtours-gen2ou-903666_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_005_status_route_smogtours-gen2ou-903666_2026-05-14.md`
 
 Format: vanilla GSC turn-pause replay and Gym Leader Lab support-priority
 drill.
@@ -1584,7 +1584,7 @@ Related source-to-policy entries: `STP-024`, `STP-050`, `STP-055`, `STP-058`.
 ## PTA-057: Cash-Out Or Handoff Before Explosion
 
 Source:
-`quick_tests/replay_turn_pause_008_cashout_handoff_fresh_smogtours-gen2ou-907674_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_008_cashout_handoff_fresh_smogtours-gen2ou-907674_2026-05-14.md`
 
 Format: vanilla GSC turn-pause replay and Gym Leader Lab support-transfer
 drill.
@@ -1619,7 +1619,7 @@ Related source-to-policy entries: `STP-003`, `STP-025`, `STP-043`, `STP-055`,
 ## PTA-058: Support Choice Before Handoff Or Cash-Out
 
 Source:
-`quick_tests/replay_turn_pause_011_support_choice_smogtours-gen2ou-928706_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_011_support_choice_smogtours-gen2ou-928706_2026-05-14.md`
 
 Format: vanilla GSC turn-pause replay and Gym Leader Lab support-action
 ordering drill.
@@ -1681,7 +1681,7 @@ Related source-to-policy entries: `STP-003`, `STP-024`, `STP-055`,
 ## PTA-059: Focus Energy Retaliation Branch
 
 Source:
-`quick_tests/focus_energy_counter_branch_regression_001_smogtours-gen2ou-935022_2026-05-14.md`
+`workspace/quick_tests/focus_energy_counter_branch_regression_001_smogtours-gen2ou-935022_2026-05-14.md`
 
 Format: vanilla GSC replay drill and Gym Leader Lab crit-pressure drill.
 
@@ -1713,7 +1713,7 @@ Related source-to-policy entries: `STP-036`, `STP-055`, `STP-058`.
 ## PTA-060: Baton Pass Route Is Not A Script
 
 Source:
-`quick_tests/replay_turn_pause_016_baton_pass_resolve_smogtours-gen2ou-934428_2026-05-14.md`
+`workspace/quick_tests/replay_turn_pause_016_baton_pass_resolve_smogtours-gen2ou-934428_2026-05-14.md`
 
 Format: vanilla GSC replay drill and Gym Leader Lab setup-transfer drill.
 
