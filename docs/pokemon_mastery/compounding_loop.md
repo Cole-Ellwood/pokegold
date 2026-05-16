@@ -111,6 +111,40 @@ and what's missing from the gate:
    what actually pulls weight in retrieval. Never delete evidence; demote with
    `compressed_into`.
 
+## Predictor hygiene (per-session contamination)
+
+The miss-investigation phase reveals future turns of the replay. After
+investigating turn N, the predictor has seen turns N+1 through N+10 (or
+however far they looked). That contaminates fresh predictions on the same
+replay for many turns afterward.
+
+To keep predictions cold:
+
+- **One replay per session is the ceiling.** Score as many turns of that
+  one replay as you want before any investigation; once you've investigated
+  even one miss, predictions on later turns of THAT replay are no longer
+  cold. Switch to a different replay or end the session.
+- **Score all turns first, investigate after.** A clean alternative: score
+  turn 1, turn 2, ..., turn N (with predictions only), THEN do the
+  investigation pass for every miss together. The investigation phase can
+  freely read forward; the prediction phase shouldn't.
+- **Tag contaminated cases.** When in doubt, set `context_contaminated=true`
+  on the case row. Contaminated bootstrap cases are kept for retrieval but
+  excluded from headline metrics by the verifiers.
+- **Cross-replay contamination is fine.** Reading future turns of replay A
+  doesn't contaminate predictions on replay B. So rotating replays per
+  session is a clean way to do many predictions.
+- **Pre-freeze context is `live_core.md` + the prompt + at most one
+  heuristic card + retrieved cases.** Don't load the case library file
+  directly (let `retrieve_cases.py` surface only the K nearest); don't load
+  the cookbook, source ledger, paused atlas, or reviews until after scoring.
+
+The `bootstrap_iteration=true` cases in the library were generated in a
+heavily-contaminated session (the loop's first build-out) and are
+grandfathered by `verify_loop_state.py` for investigation requirements.
+Future cases without that flag must pass the full investigation discipline
+on misses.
+
 ## Pre-freeze context discipline
 
 For fresh-replay predictions, load **only**:
