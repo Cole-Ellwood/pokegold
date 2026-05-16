@@ -101,6 +101,12 @@ bug-class lens — not just listed them.
 - `engine/menus/save.asm:540-820` — lens: save-load-version-validation, checksum-bypass. findings: 1 (Finding 8 — `cp $ff` legacy fallback still in v2 loader). Both CheckPrimarySaveFile and CheckBackupSaveFile have the issue.
 - `constants/misc_constants.asm:28-35` (SAVE_FORMAT_VERSION + spec comment) — lens: spec-vs-code alignment. findings: 0 here but flagged the spec/code mismatch in save.asm (Finding 8).
 - `tools/audit/check_save_format_version.py` — lens: existing audit coverage. findings: 0 (audit scope is layout fingerprint, not loader code; Finding 8 is in the gap between audits — proposed adding a strict-loader audit in the fix sketch).
+- `engine/events/npc_trade.asm` (lines 1-150 — NPCTrade flow + CheckTradeGender + DoNPCTrade) — lens: trade-flag-state, jump-table-OOB on trade ID. findings: 0 (e=trade ID stored into wJumptableIndex; SmallFarFlagAction is bounded by data; trade attribute accesses use GetTradeAttr with bounded e values).
+- `engine/events/fruit_trees.asm` — lens: array-OOB on wCurFruitTree. findings: 0 (wCurFruitTree is set by script just before dispatch; not in save data; `dec a` is safe for 1-based indexing because script always sets nonzero).
+- `engine/events/magikarp.asm` (lines 1-100, CheckMagikarpLength + PrintMagikarpLength) — lens: party-OOB on wCurPartyMon. findings: 0 (UI bounds wCurPartyMon via SelectMonFromParty; species filter `cp MAGIKARP` exits early on non-Magikarp).
+- `engine/items/tmhm.asm` (lines 1-100, TMHMPocket + TMHM_PocketLoop helpers) — lens: TM/HM array-OOB on wCurItem. findings: 0 (wCurItem set by menu; latent footgun for save-corrupted item ID covered by Finding 7).
+- `engine/overworld/scripting.asm` Script_givepoke/giveegg/setevent/clearevent/checkevent/setflag/clearflag (lines 1807-1900) — lens: state-write-without-validation. findings: 0 (per-handler patterns consistent: GetScriptByte → write to WRAM → farcall worker; no inline crashes — risk is upstream script data corruption, deferred to script-integrity audit).
+- `engine/movie/trade_animation.asm` (lines 1-100, opcode-table layout) — lens: animation-script dispatch OOB. findings: 0 in the preamble (opcodes are compile-time `tradeanim X` macros that resolve to (X_TradeCmd - Jumptable)/2 — bounded by definition; runtime dispatcher not fully read this iter).
 
 ### Regions deferred
 <!-- iterations append: - region (reason for deferral) -->
