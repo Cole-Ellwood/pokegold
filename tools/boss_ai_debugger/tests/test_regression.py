@@ -1160,6 +1160,109 @@ class RegressionTests(unittest.TestCase):
         rules = {c["rule"] for c in move["contributions"]}
         self.assertIn("tempo_damage", rules)
 
+    def test_public_switch_fires_on_ace_preservation_tag(self) -> None:
+        # Core rule (12 firings): switch action gets +8 when fixture is
+        # tagged ace_preservation / switching / hidden_coverage and the
+        # action isn't already a bad_pivot.
+        fixture = {
+            "id": "public_switch_fixture",
+            "leader": "Tester",
+            "tags": ["ace_preservation"],
+            "state": {},
+            "actions": [
+                {
+                    "id": "switch_target",
+                    "kind": "switch",
+                    "name": "Switch",
+                    "explanation": "Defensive pivot.",
+                    "public_tradeoff": "Conceded.",
+                },
+            ],
+        }
+        switch = score_action(fixture, fixture["actions"][0])
+        rules = {c["rule"] for c in switch["contributions"]}
+        self.assertIn("public_switch", rules)
+        contribution = next(
+            c for c in switch["contributions"] if c["rule"] == "public_switch"
+        )
+        self.assertEqual(contribution["delta"], 8)
+
+    def test_status_identity_fires_on_status_move(self) -> None:
+        # Core rule (19 firings): status-class moves get +5 as
+        # "matches boss identity".
+        fixture = {
+            "id": "status_identity_fixture",
+            "leader": "Tester",
+            "tags": [],
+            "state": {},
+            "actions": [
+                {
+                    "id": "move_thunder_wave",
+                    "kind": "move",
+                    "name": "Thunder Wave",
+                    "explanation": "Status control.",
+                    "public_tradeoff": "No damage.",
+                },
+            ],
+        }
+        move = score_action(fixture, fixture["actions"][0])
+        rules = {c["rule"] for c in move["contributions"]}
+        self.assertIn("status_identity", rules)
+
+    def test_weak_chip_fires_on_low_damage_text(self) -> None:
+        # Core rule (11 firings): damage move text marking the move as
+        # weak chip gets -4. The WEAK_DAMAGE_TEXT phrases are narrow:
+        # "low damage", "minimal damage", "resisted", "resistance",
+        # "weak chip".
+        fixture = {
+            "id": "weak_chip_fixture",
+            "leader": "Tester",
+            "tags": [],
+            "state": {},
+            "actions": [
+                {
+                    "id": "move_swift",
+                    "kind": "move",
+                    "name": "Swift",
+                    "explanation": "Low damage trickle.",
+                    "public_tradeoff": "Trickles.",
+                },
+            ],
+        }
+        move = score_action(fixture, fixture["actions"][0])
+        rules = {c["rule"] for c in move["contributions"]}
+        self.assertIn("weak_chip", rules)
+        contribution = next(
+            c for c in move["contributions"] if c["rule"] == "weak_chip"
+        )
+        self.assertEqual(contribution["delta"], -4)
+
+    def test_priority_fires_on_priority_named_move(self) -> None:
+        # Iter 5-or-earlier rule (5 firings): priority moves (Quick Attack,
+        # Mach Punch, etc.) get +6 because they answer low-HP races.
+        fixture = {
+            "id": "priority_fixture",
+            "leader": "Tester",
+            "tags": [],
+            "state": {},
+            "actions": [
+                {
+                    "id": "move_quick_attack",
+                    "kind": "move",
+                    "name": "Quick Attack",
+                    "explanation": "Priority hit.",
+                    "public_tradeoff": "Low BP.",
+                },
+            ],
+        }
+        move = score_action(fixture, fixture["actions"][0])
+        rules = {c["rule"] for c in move["contributions"]}
+        self.assertIn("priority", rules)
+        contribution = next(
+            c for c in move["contributions"] if c["rule"] == "priority"
+        )
+        self.assertEqual(contribution["delta"], 6)
+
     def test_public_notes_chip_qualifier_does_not_fire_on_move_actions(self) -> None:
         fixture = {
             "id": "chip_qualifier_move_fixture",
