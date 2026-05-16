@@ -13,7 +13,7 @@ brief needed a real implementation plan before a goal for full implementation
 would be honest.
 
 Source brief:
-`docs/pokemon_mastery/external_research_returns/codex_pokemon_gold_boss_ai_prompt.md`
+`docs/pokemon_mastery/workspace/external_research_returns/codex_pokemon_gold_boss_ai_prompt.md`
 
 Primary design rule:
 ordinary boss AI must not cheat. It may use public or boss-owned information.
@@ -53,7 +53,7 @@ current post-input hook is after move-order calculation.
 Core plan and strategy brief:
 
 - `docs/boss_ai_lessons_implementation_plan_2026-05-14.md`
-- `docs/pokemon_mastery/external_research_returns/codex_pokemon_gold_boss_ai_prompt.md`
+- `docs/pokemon_mastery/workspace/external_research_returns/codex_pokemon_gold_boss_ai_prompt.md`
 - `docs/boss_ai_post_patch_notes.md`
 - `docs/agent_navigation/subsystems/boss_ai_logic.md`
 - `engine/battle/ai/POLICY_DESIGN.md`

@@ -40,7 +40,7 @@ especially Smogon GSC articles, analyses, forum discussions, tournament
 replays, and battle logs.
 
 GPT-5.5 Pro's saved guidance has been read and organized under
-`docs/pokemon_mastery/pro_notes/`. Treat those files as method guidance for
+`docs/pokemon_mastery/workspace/pro_notes/`. Treat those files as method guidance for
 study, review, and evidence discipline, not as a replacement for expert-source
 study.
 

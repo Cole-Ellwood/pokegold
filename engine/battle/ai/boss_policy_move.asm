@@ -873,11 +873,24 @@ ENDC
 	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
 	cp EFFECT_SELFDESTRUCT
 	ret nz
+	call BossAI_CheckEnemyMoveTypeMatchupVsPlayerNoItem
+	ld a, [wTypeMatchup]
+	and a
+	jr z, .self_ko_active_immunity
+	call .PlayerHasSeenAliveBenchGhost
+	jr nc, .self_ko_check_ko
+.self_ko_seen_ghost_branch
+	ld a, 8
+	call BossAI_DiscourageScoreHL
+.self_ko_check_ko
 	call .HasKOLine
 	jr c, .self_ko_has_ko
 	call AICheckEnemyQuarterHP_HL
 	ret nc
-	ld a, 6
+	ld a, 16
+	jp BossAI_DiscourageScoreHL
+.self_ko_active_immunity
+	ld a, 24
 	jp BossAI_DiscourageScoreHL
 .self_ko_has_ko
 	call AICheckEnemyQuarterHP_HL
@@ -1741,8 +1754,8 @@ ENDC
 	jr z, .spikes_layer3
 
 ; Already at 3 layers: discourage.
-	ld c, 5
-	call .DiscourageByTierWeight
+	ld a, 24
+	call BossAI_DiscourageScoreHL
 	ret
 
 .spikes_layer1
@@ -1783,8 +1796,6 @@ ENDC
 	pop hl
 	cp 55
 	jr nc, .spikes_l2_longterm
-	ld c, 4
-	call .DiscourageByTierWeight
 	ret
 
 .spikes_l2_longterm
@@ -1793,8 +1804,8 @@ ENDC
 	ret
 
 .spikes_l2_danger
-	ld c, 5
-	call .DiscourageByTierWeight
+	ld a, 6
+	call BossAI_DiscourageScoreHL
 	ret
 
 .spikes_layer3
@@ -1820,8 +1831,8 @@ ENDC
 	ret
 
 .spikes_l3_danger
-	ld c, 3
-	call .DiscourageByTierWeight
+	ld a, 6
+	call BossAI_DiscourageScoreHL
 	ret
 
 .ApplyRevealedRapidSpinSpikesRisk
@@ -1836,26 +1847,19 @@ ENDC
 .revealed_spin_not_blocked
 	call .BossHasAvailableReserveGhost
 	jr c, .revealed_spin_soft
-	ld c, 5
-	call .DiscourageByTierWeight
+	ld a, 10
+	call BossAI_DiscourageScoreHL
 	scf
 	ret
 .revealed_spin_soft
-	ld a, 1
+	ld a, 8
 	call BossAI_DiscourageScoreHL
 	and a
 	ret
 
 .ApplySpikesLayer2UnrevealedSpinRisk
-	call .BossHasSpinblockAvailable
-	ret c
-	call .PlayerHasSeenBenchRevealedRapidSpin
-	jr c, .spikes_l2_soft_spin_risk
-	call .PlayerActiveLikelyCanRapidSpin
-	ret nc
 .spikes_l2_soft_spin_risk
-	ld a, 1
-	jp BossAI_DiscourageScoreHL
+	ret
 
 .ApplySpikesLayer3UnrevealedSpinRisk
 	call .BossHasSpinblockAvailable
@@ -1871,7 +1875,7 @@ ENDC
 	ld a, 1
 	jp BossAI_DiscourageScoreHL
 .spikes_l3_bench_spin_risk
-	ld a, 2
+	ld a, 6
 	jp BossAI_DiscourageScoreHL
 
 .BossHasSpinblockAvailable
@@ -2056,6 +2060,63 @@ ENDC
 .bench_spin_yes_pop
 	pop bc
 	pop hl
+	scf
+	ret
+
+.PlayerHasSeenAliveBenchGhost
+	ld a, [wBossAISeenPlayerSpeciesCount]
+	and a
+	jr z, .bench_ghost_no
+	ld c, a
+	ld a, [wBossAISeenPlayerAliveMask]
+	ld [wBossAITemp5], a
+	ld a, [wCurSpecies]
+	push af
+	ld hl, wBossAISeenPlayerSpecies
+.bench_ghost_loop
+	ld a, [hli]
+	and a
+	jr z, .bench_ghost_next
+	ld e, a
+	ld a, [wBossAITemp5]
+	bit 0, a
+	jr z, .bench_ghost_next
+	ld a, [wBattleMonSpecies]
+	cp e
+	jr z, .bench_ghost_next
+	push hl
+	push bc
+	ld a, e
+	ld [wCurSpecies], a
+	call GetBaseData
+	ld a, [wBaseType1]
+	cp GHOST
+	jr z, .bench_ghost_yes_pop
+	ld a, [wBaseType2]
+	cp GHOST
+	jr z, .bench_ghost_yes_pop
+	pop bc
+	pop hl
+.bench_ghost_next
+	ld a, [wBossAITemp5]
+	srl a
+	ld [wBossAITemp5], a
+	dec c
+	jr nz, .bench_ghost_loop
+	pop af
+	ld [wCurSpecies], a
+	and a
+	call nz, GetBaseData
+.bench_ghost_no
+	and a
+	ret
+.bench_ghost_yes_pop
+	pop bc
+	pop hl
+	pop af
+	ld [wCurSpecies], a
+	and a
+	call nz, GetBaseData
 	scf
 	ret
 
@@ -4793,7 +4854,7 @@ ENDC
 	ld de, wEnemyMonMoves
 	ld c, NUM_MOVES
 	ld a, b
-	add 6
+	add BOSS_AI_LOOKAHEAD_BONUS_CAP
 	push af
 	ld b, 0
 .eval_loop
