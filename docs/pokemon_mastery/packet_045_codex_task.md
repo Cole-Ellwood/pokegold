@@ -220,6 +220,14 @@ Per the falsification gate in
 - Do NOT read forward turns of the replay for anything except team
   reconstruction (and note exactly which turns you peeked at for
   reconstruction, before turn 1 starts).
+- Do NOT read the parallel runner's packet output
+  (`side_known_transfer_045_*_codex_*.md` if you are Claude, or
+  `side_known_transfer_045_*_claude_*.md` if you are Codex) until your
+  own packet is fully written and your done-marker line is appended.
+  The cross-model test only works if both runs are independent
+  decisions under identical public state. Reading the other runner's
+  per-turn reasoning before your own answer is frozen invalidates the
+  comparison.
 - Do NOT promote a miss into a new card rule unless it repeats. Single
   misses go in the per-turn `top_rank_failure` field, not into card
   edits.
