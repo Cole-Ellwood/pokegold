@@ -69,6 +69,17 @@ bug-class lens — not just listed them.
 - `home/header.asm` (re-read for rst-table audit) — findings: 1 (Finding 3 — rst $30 bypasses the canonical crash trap).
 - `home/delay.asm` (re-read for LCD-off pathology) — findings: 1 (Finding 4 — DelayFrames hangs on LCD off).
 - `home/init.asm:51-54` (re-read for .wait LCD assumption) — findings: 1 (Finding 5 — .wait hangs on LCD off).
+- `engine/battle/core.asm` (lines 1-100 + spot reads around line 2050, 2400, 2870) — lens: unbounded loops, battle-action OOB. findings: 1 (Finding 6 — DoBattle .loop unbounded for fully-fainted OT). Player-side has explicit `CheckPlayerPartyForFitMon → jp z, LostBattle` guard; OT-side does not.
+- `engine/menus/save.asm:220-540` — lens: save-corruption, partial-write windows. findings: 0 confirmed; the dual-save / Validate-then-Save-then-Checksum sequence is the standard dirty-bit pattern, correct as far as I can verify without runtime tests.
+- `engine/pokemon/breeding.asm` (lines 1-150) — lens: gen-2-breeding-glitches (egg-DV inheritance, daycare gender). findings: 0; the compatibility logic at lines 1-103 reads cleanly and the data sources (`wBreedMon1DVs`, `wBreedMon2DVs`) are bounded by GetGender's CGB-safe path.
+- `audio/engine.asm:1-250` + `1340-1420` — lens: audio-channel-OOB, music-command-dispatch. findings: 0 (`UpdateChannels` uses `maskbits NUM_CHANNELS`; `ParseMusicCommand` is gated by `cp FIRST_MUSIC_CMD; jr c, .readnote` at line 1149 and the command table is `assert_table_length $100 - FIRST_MUSIC_CMD` covering all command-range bytes).
+- `engine/items/items.asm` (`_ReceiveItem`/`_TossItem`/`_CheckItem` dispatchers + `CheckItemPocket`) — lens: jump-table OOB on item pocket. findings: 0 confirmed (item-attribute table has only pocket values 1-4 verified by reading `data/items/attributes.asm:1-50`; latent footgun for future data errors noted).
+- `engine/items/item_effects.asm:1-12` (deeper re-read, this iter) — lens: jump-table OOB on wCurItem. findings: 1 (Finding 7 — _DoItemEffect unbounded on wCurItem).
+- `data/items/attributes.asm` (preamble + first 50 entries) — lens: data-integrity, pocket-value validation. findings: 0 (item_attribute macro doesn't validate pocket value range; ALL audited entries have pocket ∈ {ITEM, KEY_ITEM, BALL, TM_HM}).
+- `engine/pokemon/experience.asm:1-120` — lens: div-by-zero in EXP formula, level-cap loop bound. findings: 0 (growth rate denominators all non-zero per data/growth_rates.asm; CalcLevel iteration bounded by `cp LOW(MAX_LEVEL + 1)`).
+- `constants/map_setup_constants.asm` — lens: enum value validity. findings: 0 (constants $f1-$fb cover valid MapSetupScripts indices 1-11 after low-nibble mask; Finding 2 covers the misuse if hMapEntryMethod is corrupted).
+- `constants/item_constants.asm:180-200` — lens: NUM_ITEMS bound. findings: 0 (NUM_ITEMS = 190, with item-effect table covering 187 of these; remaining 3 are mail items that don't reach the use-item dispatcher in normal play — Finding 7 covers the data-corruption case).
+- `constants/item_data_constants.asm` (pocket enum values) — lens: dispatcher index validity. findings: 0 (data values 1-4 match the 4-entry dispatcher tables).
 
 ### Regions deferred
 <!-- iterations append: - region (reason for deferral) -->
@@ -200,6 +211,66 @@ Finding template — copy/paste this block per finding:
 - **Fix sketch:** Either (a) explicitly turn the LCD on at the top of `Init` before `.wait`, or (b) check `rLCDC.B_LCDC_ENABLE` and skip the wait if LCD is off. 4-6 bytes.
 - **False-positive risk:** Mechanism is solid. Reachability requires entering Init with LCD off, which doesn't happen on `_Start` (boot ROM) and is blocked by Finding 4 on soft-reset. Sev 1 reflects "latent footgun, masked by other early-init invariants." Worth flagging because reviewer surprise: if any future early-init refactor *fixes* Finding 4 in a way that lets DelayFrames return with LCD off, this becomes the new hang point.
 
+### Finding 6 — `DoBattle` "find first non-fainted OT mon" loop is unbounded
+- **Severity:** 2
+- **Confidence:** HIGH
+- **Category:** oob-read (loop runs off the end of `wOTPartyMon*` if all six are HP=0)
+- **File:** `engine/battle/core.asm:19-32`
+- **Symptom:** If the OT party state arrives at `DoBattle` with **every** mon's HP = 0, the scan walks past `wOTPartyMon6` into adjacent WRAM (item bag, party data, save buffers — depends on `wram.asm` layout) until it happens to read a non-zero byte. At that point `d` holds an arbitrary value derived from how many slots it walked, and `wBattleAction` is set to that value. The game then "switches to OT mon #d" — indexing OOB in the OT party, computing stats from random WRAM, and almost certainly cascading into a crash or save corruption a few function calls later.
+- **Trigger:** No normal play path can reach `DoBattle` with all OT mons at HP=0 — trainer parties are loaded fresh from data, and wild battles only have 1 mon. The trigger is one of: (a) save-state restore that captured the OT party mid-faint without restoring HP, (b) a future buff/scaling code path that zeros all HPs as part of a difficulty modifier, (c) memory corruption from a glitch elsewhere that nukes OT HP bytes.
+- **Why:**
+  ```asm
+  ld hl, wOTPartyMon1HP
+  ld bc, PARTYMON_STRUCT_LENGTH - 1
+  ld d, BATTLEACTION_SWITCH1 - 1
+  .loop
+      inc d
+      ld a, [hli]
+      or [hl]            ; combined HP-high | HP-low; non-zero → mon is alive
+      jr nz, .alive
+      add hl, bc         ; skip to next mon's HP field
+      jr .loop
+  ```
+  No `cp PARTY_LENGTH` bound on `d`. The loop simply trusts that at least one mon is alive. There's an asymmetric guard for the player at line 59-62 (`call CheckPlayerPartyForFitMon; jp z, LostBattle`), but the OT side has no equivalent.
+- **Fix sketch:** Add a 4-byte bound:
+  ```asm
+  .loop
+      inc d
+      ld a, d
+      cp BATTLEACTION_SWITCH1 + PARTY_LENGTH    ; bail if scanned all 6
+      jr nc, .all_ot_fainted
+      ld a, [hli]
+      ...
+  ```
+  Then a `.all_ot_fainted` exit point that either declares trainer-loss (the natural semantics) or asserts. Defensible: if you got into `DoBattle` with no live OT mons, the right behaviour is "trainer immediately loses," not "wander into WRAM."
+- **False-positive risk:** Mechanism is solid but reachability is purely the precondition. Vanilla pokegold has shipped with this for decades because the precondition never occurs in scripted play. A hack like this one — which adds runtime modifiers (boss AI, scaling, type passive) — increases the surface area, so the prophylactic 4-byte fix is a reasonable hardening.
+
+### Finding 7 — `_DoItemEffect` jumps to garbage if `wCurItem` is 0 or > 187
+- **Severity:** 2
+- **Confidence:** HIGH
+- **Category:** jump-table OOB
+- **File:** `engine/items/item_effects.asm:1-12`
+- **Symptom:** Reading wCurItem = 0 (no-item / cleared) or wCurItem > 187 (corrupt / out-of-range item id) takes the `dec a; rst JumpTable` path into the 187-entry `ItemEffects` table at index 255 or 187+. The fetched pointer is the two bytes living just past the table — currently whatever instruction stream follows the table in the linked ROM. `jp hl` then jumps to that arbitrary 16-bit value. Likely crash.
+- **Trigger:** Pack UI bounds wCurItem to a real bag slot, so the no-corruption case is safe. Triggers if (a) save-data corruption places a >187 item id in the bag, (b) a future feature (e.g. event item delivery, debug menu) sets wCurItem then calls DoItemEffect without re-validating, (c) ITEMATTR pocket data has a bug that lets `_TossItem`/`_CheckItem` get there with a 0 — those dispatchers also `dec a; rst JumpTable` on a pocket value (separate bug, but same shape — already noted in deferred).
+- **Why:**
+  ```asm
+  _DoItemEffect::
+      ld a, [wCurItem]
+      ld [wNamedObjectIndex], a
+      call GetItemName
+      call CopyName1
+      ld a, 1
+      ld [wItemEffectSucceeded], a
+      ld a, [wCurItem]
+      dec a                        ; 0 → $FF; 188 → 187
+      ld hl, ItemEffects
+      rst JumpTable                ; 2 bytes per entry, table is 187 entries
+      ret
+  ```
+  `ItemEffects` has no `assert_table_length` (unlike the sibling tables in `data/items/attributes.asm` and `data/items/descriptions.asm`). Item ids in `constants/item_constants.asm` go up to `NUM_ITEMS = 190` (with mail items at $b5-$bd and `ITEM_BE` at $be). Mail items shouldn't reach `DoItemEffect` in normal play (mail attaches to mons, doesn't sit in bag), but the dispatcher has no defence.
+- **Fix sketch:** Two layers. (a) Add `assert_table_length NUM_ITEMS - NUM_TMHM_MAIL_ETC` (or whatever the correct exclusion is) on `ItemEffects` — at minimum, hard-state the table's intended size at build time. (b) Add a runtime guard in `_DoItemEffect`: `ld a, [wCurItem]; and a; ret z; cp ItemEffects.end - ItemEffects; ret nc` before the dispatch. Costs ~6 bytes for an unambiguous bound check.
+- **False-positive risk:** Mechanism is solid. Practical reachability is *low* under normal play (pack UI filters) but *non-zero* in the presence of save corruption — and mailbox/item-glitch-class bugs in the Gen 2 family historically arose from exactly this kind of "trust the caller" dispatcher. Sev 2 reflects "real but requires upstream corruption to fire."
+
 ---
 
 ## Summary table
@@ -211,8 +282,10 @@ Finding template — copy/paste this block per finding:
 | 3 | `rst $30` bypasses crash trap → executes JumpTable tail | 1 | HIGH | broken crash trap | [home/header.asm:20](home/header.asm:20) |
 | 4 | `DelayFrames` hangs if LCD off | 1 | HIGH | infinite-loop | [home/delay.asm:1](home/delay.asm:1) |
 | 5 | `Init.wait` hangs if entered with LCD off | 1 | HIGH | infinite-loop | [home/init.asm:51](home/init.asm:51) |
+| 6 | `DoBattle` "find first non-fainted OT mon" loop unbounded | 2 | HIGH | oob-read | [engine/battle/core.asm:22](engine/battle/core.asm:22) |
+| 7 | `_DoItemEffect` OOB-jumps when `wCurItem` is 0 or > 187 | 2 | HIGH | jump-table OOB | [engine/items/item_effects.asm:1](engine/items/item_effects.asm:1) |
 
-**Triage hint:** All 5 are latent — none has a known reproducible trigger in the current code. Findings 1, 4, 5 are protective-layer hardenings (cheap to add as guards). Finding 2 is the most reachable (any future write to `hMapEntryMethod` with a bad low nibble crashes). Finding 3 is the "the safety net is broken" class — fixable only by sacrificing the JumpTable optimisation or by accepting it. No Sev 3+ crashes were observed in this iteration; expect the harder findings (e.g. inherited Gen 2 glitches, hack-introduced race conditions) to appear in deeper passes.
+**Triage hint (post-iter 2):** All 7 findings remain latent — no reproducible trigger in current code. Findings 2, 6, 7 are the most operationally important: each is a missing-bound-check on a dispatcher/loop that "trusts the caller," and the cost of the fix is 4-8 bytes per site. The cheapest hardening pass would batch them: add explicit bound-check guards to `RunMapSetupScript`, `DoBattle .loop`, and `_DoItemEffect` together, plus matching `assert_table_length` directives on `MapSetupScripts` and `ItemEffects`. No Sev 3+ crashes have been observed yet across **41 review entries (~35 unique files; some re-read with different lenses)**. Deeper passes need to target high-value crash surfaces still un-audited: full `engine/battle/core.asm` (8748 lines), `engine/overworld/scripting.asm` script-cmd handlers (162 commands), `engine/battle/effect_commands.asm` (6634 lines), audio playback (notes/SFX), engine/link/, and the Gen-2 trade-cable / Time Capsule code paths.
 
 ---
 
