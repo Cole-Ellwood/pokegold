@@ -758,6 +758,95 @@ class RegressionTests(unittest.TestCase):
         )
         self.assertEqual(immunity["delta"], 8)
 
+    def test_healthy_ace_setup_lock_pivot_fires_at_high_hp_ace_role(self) -> None:
+        fixture = {
+            "id": "healthy_ace_fixture",
+            "leader": "Tester",
+            "tags": ["ace_preservation", "setup_lock"],
+            "state": {
+                "boss": {
+                    "active": {
+                        "species": "Miltank",
+                        "hp": "92%",
+                        "role": "ace",
+                    },
+                },
+            },
+            "actions": [
+                {
+                    "id": "switch_girafarig",
+                    "kind": "switch",
+                    "name": "Switch to Girafarig",
+                    "explanation": "Defensive pivot.",
+                    "public_tradeoff": "Conceded.",
+                },
+            ],
+        }
+        switch = score_action(fixture, fixture["actions"][0])
+        rules = {c["rule"] for c in switch["contributions"]}
+        self.assertIn("healthy_ace_setup_lock_pivot", rules)
+        contribution = next(
+            c for c in switch["contributions"]
+            if c["rule"] == "healthy_ace_setup_lock_pivot"
+        )
+        self.assertEqual(contribution["delta"], -10)
+
+    def test_healthy_ace_setup_lock_pivot_misses_when_hp_too_low(self) -> None:
+        fixture = {
+            "id": "low_hp_ace_fixture",
+            "leader": "Tester",
+            "tags": ["ace_preservation", "setup_lock"],
+            "state": {
+                "boss": {
+                    "active": {
+                        "species": "Miltank",
+                        "hp": "70%",
+                        "role": "ace",
+                    },
+                },
+            },
+            "actions": [
+                {
+                    "id": "switch_girafarig",
+                    "kind": "switch",
+                    "name": "Switch to Girafarig",
+                    "explanation": "Defensive pivot.",
+                    "public_tradeoff": "Conceded.",
+                },
+            ],
+        }
+        switch = score_action(fixture, fixture["actions"][0])
+        rules = {c["rule"] for c in switch["contributions"]}
+        self.assertNotIn("healthy_ace_setup_lock_pivot", rules)
+
+    def test_healthy_ace_setup_lock_pivot_misses_when_tag_missing(self) -> None:
+        fixture = {
+            "id": "missing_setup_lock_tag_fixture",
+            "leader": "Tester",
+            "tags": ["ace_preservation"],
+            "state": {
+                "boss": {
+                    "active": {
+                        "species": "Miltank",
+                        "hp": "92%",
+                        "role": "ace",
+                    },
+                },
+            },
+            "actions": [
+                {
+                    "id": "switch_girafarig",
+                    "kind": "switch",
+                    "name": "Switch to Girafarig",
+                    "explanation": "Defensive pivot.",
+                    "public_tradeoff": "Conceded.",
+                },
+            ],
+        }
+        switch = score_action(fixture, fixture["actions"][0])
+        rules = {c["rule"] for c in switch["contributions"]}
+        self.assertNotIn("healthy_ace_setup_lock_pivot", rules)
+
     def test_type_immunity_pivot_does_not_fire_on_resist_or_unrelated(self) -> None:
         fixture = {
             "id": "type_resist_only_fixture",

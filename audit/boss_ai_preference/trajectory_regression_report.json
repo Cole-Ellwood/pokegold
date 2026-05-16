@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-05-16T09:34:20+00:00",
+  "generated_at": "2026-05-16T09:38:35+00:00",
   "threshold": 0.8,
   "strict_label_count": 44,
-  "strict_agreement_count": 41,
-  "agreement_rate": 0.9318181818181818,
+  "strict_agreement_count": 42,
+  "agreement_rate": 0.9545454545454546,
   "passed": true,
   "skipped": {
     "both_good": 1,
@@ -16,7 +16,7 @@
   "by_lesson_type": {
     "sequence_policy": {
       "total": 18,
-      "agree": 16
+      "agree": 17
     },
     "switch_policy": {
       "total": 26,
@@ -37,32 +37,6 @@
       "same_first_move": false,
       "lesson_type": "switch_policy",
       "note": "",
-      "cumulative_score_a": 0,
-      "cumulative_score_b": 0,
-      "resolved_by": "first_move",
-      "route_value_delta_a": 0,
-      "route_value_delta_b": 6,
-      "route_factors_a": [],
-      "route_factors_b": [
-        "honest_continuation",
-        "switch_pivot"
-      ],
-      "structurally_valid_a": true,
-      "structurally_valid_b": true
-    },
-    {
-      "fixture_id": "whitney_miltank_vs_geodude_rollout_temptation",
-      "trajectory_a_id": "plan_whitney_miltank_vs_geodude_rollout_temptation_pressure_recover_then_lock_move_body_slam_move_body_slam_move_milk_drink_move_rollout",
-      "trajectory_b_id": "plan_whitney_miltank_vs_geodude_rollout_temptation_switch_preserve_then_rescore_switch_girafarig_move_body_slam",
-      "label_choice": "a_better",
-      "scorer_choice": "b_better",
-      "first_move_a": "move_body_slam",
-      "first_move_b": "switch_girafarig",
-      "score_a": 50,
-      "score_b": 58,
-      "same_first_move": false,
-      "lesson_type": "sequence_policy",
-      "note": "Use Body Slam pressure first, heal only around the danger threshold, then consider Rollout after paralysis or a safe board. Opening with Milk Drink, switching, or Body Slam without a recovery/lock branch misses the taught line.",
       "cumulative_score_a": 0,
       "cumulative_score_b": 0,
       "resolved_by": "first_move",

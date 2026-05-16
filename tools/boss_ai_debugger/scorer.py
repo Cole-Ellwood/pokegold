@@ -180,6 +180,10 @@ HAZARD_TEMPO_RISK_TEXT = {
 }
 
 
+HEALTHY_ACE_HP_FLOOR_PCT = 90
+HEALTHY_ACE_SETUP_LOCK_TAGS = frozenset({"ace_preservation", "setup_lock"})
+
+
 @dataclass(frozen=True)
 class Contribution:
     rule: str
@@ -214,6 +218,41 @@ def _is_damage_like_move(name: str) -> bool:
 
 def _has_any(text: str, needles: set[str]) -> bool:
     return any(needle in text for needle in needles)
+
+
+def _boss_active_hp_pct(fixture: dict[str, Any]) -> int | None:
+    """Return the boss active mon's HP as an integer percent, or None if not parseable."""
+    state = fixture.get("state", {})
+    if not isinstance(state, dict):
+        return None
+    boss = state.get("boss", {})
+    if not isinstance(boss, dict):
+        return None
+    active = boss.get("active", {})
+    if not isinstance(active, dict):
+        return None
+    hp = str(active.get("hp", "")).strip().rstrip("%")
+    if not hp:
+        return None
+    try:
+        return int(hp)
+    except (TypeError, ValueError):
+        return None
+
+
+def _is_boss_active_role_ace(fixture: dict[str, Any]) -> bool:
+    """True when the boss active mon's role field marks it as an ace piece."""
+    state = fixture.get("state", {})
+    if not isinstance(state, dict):
+        return False
+    boss = state.get("boss", {})
+    if not isinstance(boss, dict):
+        return False
+    active = boss.get("active", {})
+    if not isinstance(active, dict):
+        return False
+    role = str(active.get("role", "")).lower()
+    return "ace" in role
 
 
 def _hp_percent(value: Any) -> float | None:
@@ -373,6 +412,19 @@ def score_action(
                 "public_notes_chip_qualifier",
                 -6,
                 "fixture public_notes explicitly qualify the revealed threat as chip / not a reason to panic-switch",
+            )
+        hp_pct = _boss_active_hp_pct(fixture)
+        if (
+            HEALTHY_ACE_SETUP_LOCK_TAGS <= tags
+            and hp_pct is not None
+            and hp_pct >= HEALTHY_ACE_HP_FLOOR_PCT
+            and _is_boss_active_role_ace(fixture)
+        ):
+            _add(
+                contributions,
+                "healthy_ace_setup_lock_pivot",
+                -10,
+                "ace_preservation+setup_lock fixture with active ace at >=90% HP: switching gives up the ace's still-fresh attack pattern",
             )
 
     if kind == "move":
