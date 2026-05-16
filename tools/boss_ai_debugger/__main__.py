@@ -27,6 +27,19 @@ from .coverage_report import (
     format_coverage_report,
     write_coverage_report,
 )
+from .coverage_search import (
+    DEFAULT_COVERAGE_SEARCH_REPORT,
+    DEFAULT_COVERAGE_SEARCH_SCENARIOS,
+    format_coverage_search_report,
+    run_coverage_guided_search_from_path,
+    write_coverage_search_report,
+    write_coverage_search_scenarios,
+)
+from .confidence_report import (
+    build_confidence_report_from_paths,
+    format_confidence_report,
+    write_confidence_report_json,
+)
 from .counterfactuals import (
     explain_counterfactuals_for_path,
     format_counterfactual_report,
@@ -94,6 +107,14 @@ from .regression import (
     format_summary,
     write_json_report,
 )
+from .replay_import import (
+    DEFAULT_REPLAY_IMPORT_REPORT,
+    ReplayImportOptions,
+    format_replay_import_report,
+    import_replay_sources,
+    write_imported_scenarios,
+    write_replay_import_report,
+)
 from .rom_scenarios import (
     benchmark_batch,
     evaluate_batch,
@@ -123,6 +144,13 @@ from .rom_score_materialize import (
     format_rom_score_materialization,
     run_rom_score_materialization_from_path,
     write_rom_score_materialization_json,
+)
+from .rom_switch_materialize import (
+    DEFAULT_BASE_ROUTE as DEFAULT_SWITCH_MATERIALIZE_ROUTE,
+    DEFAULT_WATCH_FRAMES as DEFAULT_SWITCH_MATERIALIZE_WATCH_FRAMES,
+    format_rom_switch_materialization,
+    run_rom_switch_materialization_from_path,
+    write_rom_switch_materialization_json,
 )
 from .run_store import DEFAULT_RUNS_DIR, run_changed_ai_suite, run_generated_smoke_suite
 from .rule_map import (
@@ -382,6 +410,56 @@ def cmd_generate(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_replay_import(args: argparse.Namespace) -> int:
+    options = ReplayImportOptions(
+        side=args.side,
+        mode=args.mode,
+        turns=tuple(args.turn or ()),
+        limit=args.limit,
+        seed=args.seed,
+    )
+    result = import_replay_sources(
+        logs=args.log or (),
+        mastery_docs=args.mastery_doc or (),
+        quick_tests=args.quick_tests,
+        reviews=args.reviews,
+        options=options,
+    )
+    write_imported_scenarios(result["scenarios"], args.out)
+    if args.json_out != "":
+        write_replay_import_report(result["report"], Path(args.json_out))
+    if args.json:
+        print(json.dumps(result["report"], indent=2, sort_keys=True))
+    else:
+        print(format_replay_import_report(result["report"]))
+        print(f"wrote {args.out}")
+        if args.json_out != "":
+            print(f"wrote {args.json_out}")
+    return 0
+
+
+def cmd_coverage_search(args: argparse.Namespace) -> int:
+    result = run_coverage_guided_search_from_path(
+        args.scenarios,
+        rounds=args.rounds,
+        per_seed=args.per_seed,
+        seed=args.seed,
+        generated_count=args.generated_count,
+        keep=args.keep,
+    )
+    write_coverage_search_scenarios(result["scenarios"], args.out)
+    if args.json_out != "":
+        write_coverage_search_report(result["report"], Path(args.json_out))
+    if args.json:
+        print(json.dumps(result["report"], indent=2, sort_keys=True))
+    else:
+        print(format_coverage_search_report(result["report"]))
+        print(f"wrote {args.out}")
+        if args.json_out != "":
+            print(f"wrote {args.json_out}")
+    return 0
+
+
 def cmd_review_queue(args: argparse.Namespace) -> int:
     if args.report is not None:
         queue = build_review_queue_from_report(
@@ -509,6 +587,22 @@ def cmd_coverage_report(args: argparse.Namespace) -> int:
         print(json.dumps(data, indent=2, sort_keys=True))
     else:
         print(format_coverage_report(data))
+        if args.json_out != "":
+            print(f"wrote {args.json_out}")
+    return 0
+
+
+def cmd_confidence_report(args: argparse.Namespace) -> int:
+    data = build_confidence_report_from_paths(
+        batch_report_path=args.batch_report,
+        materialization_paths=args.materialization,
+    )
+    if args.json_out != "":
+        write_confidence_report_json(data, Path(args.json_out))
+    if args.json:
+        print(json.dumps(data, indent=2, sort_keys=True))
+    else:
+        print(format_confidence_report(data, limit=args.limit))
         if args.json_out != "":
             print(f"wrote {args.json_out}")
     return 0
@@ -742,6 +836,29 @@ def cmd_rom_score_materialize(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_rom_switch_materialize(args: argparse.Namespace) -> int:
+    report = run_rom_switch_materialization_from_path(
+        args.scenarios,
+        limit=args.limit,
+        base_route=args.base_route,
+        manifest_path=args.manifest,
+        rom=args.rom,
+        symbols_path=args.symbols,
+        watch_frames=args.watch_frames,
+    )
+    if args.json_out != "":
+        write_rom_switch_materialization_json(report, Path(args.json_out))
+    if args.json:
+        print(json.dumps(report, indent=2, sort_keys=True))
+    else:
+        print(format_rom_switch_materialization(report, limit=args.display_limit))
+        if args.json_out != "":
+            print(f"wrote {args.json_out}")
+    if args.fail_on_mismatch and report["policy_disagreement_count"] > 0:
+        return 1
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="python -m tools.boss_ai_debugger")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -841,6 +958,37 @@ def build_parser() -> argparse.ArgumentParser:
     generate_cmd.add_argument("--out", type=path_arg)
     generate_cmd.set_defaults(func=cmd_generate)
 
+    replay_import_cmd = subparsers.add_parser("replay-import")
+    replay_import_cmd.add_argument("--log", action="append", default=[])
+    replay_import_cmd.add_argument("--mastery-doc", type=path_arg, action="append", default=[])
+    replay_import_cmd.add_argument("--quick-tests", type=path_arg)
+    replay_import_cmd.add_argument("--reviews", type=path_arg)
+    replay_import_cmd.add_argument("--side", choices=["p1", "p2", "all"], default="all")
+    replay_import_cmd.add_argument(
+        "--mode",
+        choices=["side-known", "spectator-public"],
+        default="side-known",
+    )
+    replay_import_cmd.add_argument("--turn", type=int, action="append")
+    replay_import_cmd.add_argument("--limit", type=int)
+    replay_import_cmd.add_argument("--seed", type=int, default=1)
+    replay_import_cmd.add_argument("--out", type=path_arg, required=True)
+    replay_import_cmd.add_argument("--json", action="store_true")
+    replay_import_cmd.add_argument("--json-out", default=str(DEFAULT_REPLAY_IMPORT_REPORT))
+    replay_import_cmd.set_defaults(func=cmd_replay_import)
+
+    coverage_search_cmd = subparsers.add_parser("coverage-search")
+    coverage_search_cmd.add_argument("--scenarios", type=path_arg, required=True)
+    coverage_search_cmd.add_argument("--rounds", type=int, default=2)
+    coverage_search_cmd.add_argument("--per-seed", type=int, default=4)
+    coverage_search_cmd.add_argument("--seed", type=int, default=1)
+    coverage_search_cmd.add_argument("--generated-count", type=int, default=0)
+    coverage_search_cmd.add_argument("--keep", type=int, default=100)
+    coverage_search_cmd.add_argument("--out", type=path_arg, default=DEFAULT_COVERAGE_SEARCH_SCENARIOS)
+    coverage_search_cmd.add_argument("--json", action="store_true")
+    coverage_search_cmd.add_argument("--json-out", default=str(DEFAULT_COVERAGE_SEARCH_REPORT))
+    coverage_search_cmd.set_defaults(func=cmd_coverage_search)
+
     review_cmd = subparsers.add_parser("review-queue")
     review_source = review_cmd.add_mutually_exclusive_group(required=True)
     review_source.add_argument("--report", type=path_arg)
@@ -901,6 +1049,14 @@ def build_parser() -> argparse.ArgumentParser:
     coverage_cmd.add_argument("--json", action="store_true")
     coverage_cmd.add_argument("--json-out", default=str(DEFAULT_COVERAGE_PATH))
     coverage_cmd.set_defaults(func=cmd_coverage_report)
+
+    confidence_cmd = subparsers.add_parser("confidence-report")
+    confidence_cmd.add_argument("--batch-report", type=path_arg, required=True)
+    confidence_cmd.add_argument("--materialization", type=path_arg, action="append")
+    confidence_cmd.add_argument("--json", action="store_true")
+    confidence_cmd.add_argument("--json-out", default="")
+    confidence_cmd.add_argument("--limit", type=int, default=12)
+    confidence_cmd.set_defaults(func=cmd_confidence_report)
 
     counterfactual_cmd = subparsers.add_parser("counterfactual")
     counterfactual_cmd.add_argument("--scenario", type=path_arg, required=True)
@@ -1058,6 +1214,39 @@ def build_parser() -> argparse.ArgumentParser:
     score_materialize_cmd.add_argument("--workers", type=int, default=1)
     score_materialize_cmd.add_argument("--fail-on-mismatch", action="store_true")
     score_materialize_cmd.set_defaults(func=cmd_rom_score_materialize)
+
+    switch_materialize_cmd = subparsers.add_parser("rom-switch-materialize")
+    switch_materialize_cmd.add_argument("--scenarios", type=path_arg, required=True)
+    switch_materialize_cmd.add_argument("--limit", type=int, default=20)
+    switch_materialize_cmd.add_argument(
+        "--base-route",
+        default=DEFAULT_SWITCH_MATERIALIZE_ROUTE,
+    )
+    switch_materialize_cmd.add_argument(
+        "--manifest",
+        type=path_arg,
+        default=DEFAULT_SELECTOR_MATERIALIZE_MANIFEST,
+    )
+    switch_materialize_cmd.add_argument(
+        "--rom",
+        type=path_arg,
+        default=Path("pokegold_trace.gbc"),
+    )
+    switch_materialize_cmd.add_argument(
+        "--symbols",
+        type=path_arg,
+        default=Path("pokegold_trace.sym"),
+    )
+    switch_materialize_cmd.add_argument(
+        "--watch-frames",
+        type=int,
+        default=DEFAULT_SWITCH_MATERIALIZE_WATCH_FRAMES,
+    )
+    switch_materialize_cmd.add_argument("--json", action="store_true")
+    switch_materialize_cmd.add_argument("--json-out", default="")
+    switch_materialize_cmd.add_argument("--display-limit", type=int, default=20)
+    switch_materialize_cmd.add_argument("--fail-on-mismatch", action="store_true")
+    switch_materialize_cmd.set_defaults(func=cmd_rom_switch_materialize)
 
     invariants_cmd = subparsers.add_parser("invariants")
     invariants_subcommands = invariants_cmd.add_subparsers(

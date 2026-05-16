@@ -9,7 +9,7 @@ Spikes patch only. Use
 remaining roadmap.
 
 Source brief:
-`docs/pokemon_mastery/external_research_returns/codex_pokemon_gold_boss_ai_prompt.md`
+`docs/pokemon_mastery/workspace/external_research_returns/codex_pokemon_gold_boss_ai_prompt.md`
 
 User constraint:
 ordinary boss AI must not cheat. The only allowed exceptions are the existing
@@ -39,7 +39,7 @@ human-feeling boss that:
 
 Core brief and design docs:
 
-- `docs/pokemon_mastery/external_research_returns/codex_pokemon_gold_boss_ai_prompt.md`
+- `docs/pokemon_mastery/workspace/external_research_returns/codex_pokemon_gold_boss_ai_prompt.md`
 - `docs/boss_ai_spec.md`
 - `docs/boss_ai_post_patch_notes.md`
 - `docs/boss_ai_trace_capture.md`

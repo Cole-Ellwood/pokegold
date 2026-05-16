@@ -4487,7 +4487,7 @@
       "split": "fixture_harvest",
       "mechanics_profile": "vanilla_gsc",
       "source_refs": [
-        "docs/pokemon_mastery/quick_tests/replay_turn_pause_005_status_route_smogtours-gen2ou-903666_2026-05-14.md",
+        "docs/pokemon_mastery/workspace/quick_tests/replay_turn_pause_005_status_route_smogtours-gen2ou-903666_2026-05-14.md",
         "https://replay.pokemonshowdown.com/smogtours-gen2ou-903666.log",
         "docs/pokemon_mastery/paused_turn_atlas.md#pta-056-stop-the-setup-route-before-support-economy"
       ],

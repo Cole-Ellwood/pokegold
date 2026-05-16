@@ -11,7 +11,33 @@ from typing import Any
 from tools.boss_ai_preference.data import PreferenceDataError
 
 
-FAMILIES = ("selector_edges", "spikes_spin", "mastery_policy", "all")
+PUBLIC_POLICY_FAMILIES = (
+    "switch_sack",
+    "setup_heal",
+    "prediction_mix",
+    "support_handoff",
+    "cashout_board_delta",
+)
+FAMILIES = (
+    "selector_edges",
+    "spikes_spin",
+    "mastery_policy",
+    *PUBLIC_POLICY_FAMILIES,
+    "all",
+)
+ALL_FAMILY_SEQUENCE = (
+    "selector_edges",
+    "mastery_policy",
+    "spikes_spin",
+    "mastery_policy",
+    "switch_sack",
+    "mastery_policy",
+    "setup_heal",
+    "mastery_policy",
+    "prediction_mix",
+    "support_handoff",
+    "cashout_board_delta",
+)
 DEFAULT_GENERATOR_VERSION = "boss-ai-debugger-generator-v1"
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_TRACE_ROM = ROOT / "pokegold_trace.gbc"
@@ -413,6 +439,941 @@ MASTERY_POLICY_CASES = [
     },
 ]
 
+PUBLIC_POLICY_CASES = {
+    "switch_sack": [
+        {
+            "case_id": "preserve_wincon_over_comfort_damage",
+            "tiers": ("mid", "late"),
+            "notes": [
+                "generated switch/sack case: current active can chip, but the route owner must be preserved",
+            ],
+            "moves": [
+                {
+                    "id": "move_comfort_damage",
+                    "name": "Comfort Damage",
+                    "kind": "move",
+                    "deltas": [{"rule": "current active chip overvalued", "delta": -7}],
+                    "lookahead_delta": -1,
+                },
+                {
+                    "id": "move_preserve_wincon_switch",
+                    "name": "Switch Preserve Wincon",
+                    "kind": "switch",
+                    "deltas": [{"rule": "safe entry to named owner", "delta": -2}],
+                },
+                {
+                    "id": "move_support_status",
+                    "name": "Support Status",
+                    "kind": "move",
+                    "deltas": [{"rule": "script without converter", "delta": 1}],
+                },
+                {
+                    "id": "move_panic_cashout",
+                    "name": "Panic Explosion",
+                    "kind": "move",
+                    "deltas": [{"rule": "spends preserved route piece", "delta": 5}],
+                },
+            ],
+            "expectation": {
+                "best_action_ids": ["move_preserve_wincon_switch"],
+                "acceptable_action_ids": ["move_comfort_damage"],
+                "bad_action_ids": ["move_panic_cashout"],
+                "policy_tags": ["switching", "ace_preservation", "route_owner"],
+                "condition_tags": [
+                    "named_next_board_owner",
+                    "safe_entry_available",
+                    "ace_preservation",
+                    "public_threat_to_active",
+                ],
+                "lesson_type": "weight_hint",
+                "confidence": "medium",
+                "evidence_refs": [
+                    "docs/pokemon_mastery/heuristic_core/name_next_board_owner.md",
+                    "docs/pokemon_mastery/heuristic_core/spend_or_save_piece.md",
+                ],
+                "why": "When the active can leave and a preserved owner owns the next board, rank the switch above comfortable chip.",
+                "answer_changing_information": [
+                    "whether the switch target enters safely",
+                    "whether active damage also changes the receiver board",
+                ],
+            },
+        },
+        {
+            "case_id": "defensive_sack_for_safe_entry",
+            "tiers": ("mid", "late"),
+            "notes": [
+                "generated switch/sack case: a low-value sack creates safer entry than exposing the wincon",
+            ],
+            "moves": [
+                {
+                    "id": "move_switch_wincon_raw",
+                    "name": "Raw Switch To Wincon",
+                    "kind": "switch",
+                    "deltas": [{"rule": "named wincon bias", "delta": -5}],
+                },
+                {
+                    "id": "move_defensive_sack",
+                    "name": "Defensive Sack For Safe Entry",
+                    "kind": "switch",
+                    "deltas": [{"rule": "sack preserves higher-value owner", "delta": -2}],
+                    "lookahead_delta": -1,
+                },
+                {
+                    "id": "move_last_chip",
+                    "name": "Last Chip",
+                    "kind": "move",
+                    "deltas": [{"rule": "low piece attacks without handoff", "delta": 2}],
+                },
+                {
+                    "id": "move_repeat_support",
+                    "name": "Repeat Support",
+                    "kind": "move",
+                    "deltas": [{"rule": "support job already delivered", "delta": 4}],
+                },
+            ],
+            "expectation": {
+                "best_action_ids": ["move_defensive_sack"],
+                "acceptable_action_ids": ["move_switch_wincon_raw"],
+                "bad_action_ids": ["move_repeat_support"],
+                "policy_tags": ["switching", "defensive_sack", "safe_entry"],
+                "condition_tags": [
+                    "defensive_sack_owner",
+                    "safe_entry_available",
+                    "wincon_preservation",
+                    "support_job_completed",
+                ],
+                "lesson_type": "weight_hint",
+                "confidence": "medium",
+                "evidence_refs": [
+                    "docs/pokemon_mastery/policy_cards/cashout_boundary.md",
+                    "docs/pokemon_mastery/heuristic_core/spend_or_save_piece.md",
+                ],
+                "why": "A sack can be the positive move when it preserves the higher-value owner and creates clean entry.",
+                "answer_changing_information": [
+                    "whether the wincon takes route-losing damage on raw entry",
+                    "whether the sack still has a future route job",
+                ],
+            },
+        },
+        {
+            "case_id": "stay_when_current_move_converts",
+            "tiers": ("early", "mid", "late"),
+            "notes": [
+                "generated switch/sack case: switching is tempting, but active pressure already converts",
+            ],
+            "moves": [
+                {
+                    "id": "move_route_damage",
+                    "name": "Route Damage",
+                    "kind": "move",
+                    "deltas": [{"rule": "current pressure converts", "delta": -9}],
+                },
+                {
+                    "id": "move_safe_switch",
+                    "name": "Safe Switch",
+                    "kind": "switch",
+                    "deltas": [{"rule": "safe but gives up active conversion", "delta": -2}],
+                },
+                {
+                    "id": "move_status_script",
+                    "name": "Status Script",
+                    "kind": "move",
+                    "deltas": [{"rule": "script after converter", "delta": 2}],
+                },
+                {
+                    "id": "move_cashout",
+                    "name": "Explosion Cashout",
+                    "kind": "move",
+                    "deltas": [{"rule": "no named converter", "delta": 5}],
+                },
+            ],
+            "expectation": {
+                "best_action_ids": ["move_route_damage"],
+                "acceptable_action_ids": ["move_safe_switch"],
+                "bad_action_ids": ["move_cashout"],
+                "policy_tags": ["active_pressure", "switching", "converter"],
+                "condition_tags": ["active_pressure_converts", "named_current_owner"],
+                "lesson_type": "hard_rule",
+                "confidence": "medium",
+                "evidence_refs": [
+                    "docs/pokemon_mastery/policy_cards/active_pressure_before_status.md",
+                    "docs/pokemon_mastery/heuristic_core/converter_before_script.md",
+                ],
+                "why": "Do not switch or cash out when the current active move is already the converter.",
+                "answer_changing_information": [
+                    "whether the active move fails into the named receiver",
+                    "whether the active is removed before converting",
+                ],
+            },
+        },
+    ],
+    "setup_heal": [
+        {
+            "case_id": "setup_once_in_real_window",
+            "tiers": ("mid", "late"),
+            "notes": [
+                "generated setup/heal case: one boost is route-changing because the receiver cannot reset it",
+            ],
+            "moves": [
+                {
+                    "id": "move_safe_setup",
+                    "name": "Curse Setup Window",
+                    "kind": "move",
+                    "deltas": [{"rule": "setup identity", "delta": -3}],
+                    "lookahead_delta": -3,
+                },
+                {
+                    "id": "move_neutral_hit",
+                    "name": "Neutral Hit",
+                    "kind": "move",
+                    "deltas": [{"rule": "visible chip", "delta": -4}],
+                },
+                {
+                    "id": "move_switch_out",
+                    "name": "Switch Out",
+                    "kind": "switch",
+                    "deltas": [{"rule": "gives up setup board", "delta": 3}],
+                },
+                {
+                    "id": "move_recover",
+                    "name": "Recover",
+                    "kind": "move",
+                    "deltas": [{"rule": "healing before route exists", "delta": 4}],
+                },
+            ],
+            "expectation": {
+                "best_action_ids": ["move_safe_setup"],
+                "acceptable_action_ids": ["move_neutral_hit"],
+                "bad_action_ids": ["move_recover"],
+                "policy_tags": ["setup", "receiver_pricing", "route_converter"],
+                "condition_tags": [
+                    "setup_window",
+                    "named_receiver_branch",
+                    "reset_loop_denied",
+                    "worst_case_guarded",
+                ],
+                "lesson_type": "weight_hint",
+                "confidence": "medium",
+                "evidence_refs": [
+                    "docs/pokemon_mastery/policy_cards/branch_action_after_naming.md",
+                    "docs/pokemon_mastery/heuristic_core/reset_loop_denial.md",
+                ],
+                "why": "Setup is positive only when it changes the named receiver board before reset or phaze can erase it.",
+                "answer_changing_information": [
+                    "whether the receiver can phaze, Haze, recover, or KO",
+                    "whether one boost changes the next damage threshold",
+                ],
+            },
+        },
+        {
+            "case_id": "stop_setup_when_attack_converts",
+            "tiers": ("mid", "late"),
+            "notes": [
+                "generated setup/heal case: more setup is a loop once an attack already converts",
+            ],
+            "moves": [
+                {
+                    "id": "move_more_setup",
+                    "name": "More Curse",
+                    "kind": "move",
+                    "deltas": [{"rule": "setup identity overvalued", "delta": -5}],
+                },
+                {
+                    "id": "move_cashout_attack",
+                    "name": "Cashout Attack",
+                    "kind": "move",
+                    "deltas": [{"rule": "attack converts boosted route", "delta": -3}],
+                    "lookahead_delta": -2,
+                },
+                {
+                    "id": "move_recover_loop",
+                    "name": "Recover Loop",
+                    "kind": "move",
+                    "deltas": [{"rule": "preserves but misses timer", "delta": 2}],
+                },
+                {
+                    "id": "move_handoff",
+                    "name": "Handoff",
+                    "kind": "switch",
+                    "deltas": [{"rule": "unneeded handoff", "delta": 3}],
+                },
+            ],
+            "expectation": {
+                "best_action_ids": ["move_cashout_attack"],
+                "acceptable_action_ids": ["move_recover_loop"],
+                "bad_action_ids": ["move_more_setup"],
+                "policy_tags": ["setup", "cashout", "reset_loop_denial"],
+                "condition_tags": [
+                    "setup_already_bankrolled",
+                    "active_pressure_converts",
+                    "timer_pressure",
+                ],
+                "lesson_type": "hard_rule",
+                "confidence": "medium",
+                "evidence_refs": [
+                    "docs/pokemon_mastery/policy_cards/branch_action_after_naming.md",
+                    "docs/pokemon_mastery/heuristic_core/converter_before_script.md",
+                ],
+                "why": "Once the boosted route already converts, another setup turn is worse than cashing out the attack.",
+                "answer_changing_information": [
+                    "whether the attack misses the required range",
+                    "whether healing is required before the route is lost",
+                ],
+            },
+        },
+        {
+            "case_id": "heal_only_when_it_preserves_route",
+            "tiers": ("mid", "late"),
+            "notes": [
+                "generated setup/heal case: recovery is a route-preservation move, not a panic button",
+            ],
+            "moves": [
+                {
+                    "id": "move_recover_route",
+                    "name": "Recover Route",
+                    "kind": "move",
+                    "deltas": [{"rule": "recovery preserves named owner", "delta": -6}],
+                },
+                {
+                    "id": "move_weak_attack",
+                    "name": "Weak Attack",
+                    "kind": "move",
+                    "deltas": [{"rule": "does not cross threshold", "delta": -2}],
+                },
+                {
+                    "id": "move_status",
+                    "name": "Toxic",
+                    "kind": "move",
+                    "deltas": [{"rule": "status into reset loop", "delta": 3}],
+                },
+                {
+                    "id": "move_switch",
+                    "name": "Switch Handoff",
+                    "kind": "switch",
+                    "deltas": [{"rule": "handoff loses preserved route", "delta": 4}],
+                },
+            ],
+            "expectation": {
+                "best_action_ids": ["move_recover_route"],
+                "acceptable_action_ids": ["move_weak_attack"],
+                "bad_action_ids": ["move_status"],
+                "policy_tags": ["healing", "recovery", "route_preservation"],
+                "condition_tags": [
+                    "recovery_preserves_route",
+                    "no_immediate_pressure",
+                    "named_current_owner",
+                ],
+                "lesson_type": "weight_hint",
+                "confidence": "medium",
+                "evidence_refs": [
+                    "docs/pokemon_mastery/worked_examples/misty_starmie_meganium_recover_tempo.md",
+                    "docs/pokemon_mastery/heuristic_core/spend_or_save_piece.md",
+                ],
+                "why": "Heal when the restored HP keeps the named route alive; otherwise rank conversion first.",
+                "answer_changing_information": [
+                    "whether the next hit removes the route through recovery",
+                    "whether the attack crosses a decisive threshold now",
+                ],
+            },
+        },
+    ],
+    "prediction_mix": [
+        {
+            "case_id": "coverage_into_named_receiver",
+            "tiers": ("mid", "late"),
+            "notes": [
+                "generated prediction case: the receiver branch is public enough to punish",
+            ],
+            "moves": [
+                {
+                    "id": "move_obvious_stab",
+                    "name": "Obvious Active STAB",
+                    "kind": "move",
+                    "deltas": [{"rule": "beats visible active only", "delta": -6}],
+                },
+                {
+                    "id": "move_receiver_coverage",
+                    "name": "Prediction Receiver Coverage",
+                    "kind": "move",
+                    "deltas": [{"rule": "branch coverage underweighted", "delta": -2}],
+                    "lookahead_delta": -2,
+                },
+                {
+                    "id": "move_counter_handoff",
+                    "name": "Counter Handoff",
+                    "kind": "switch",
+                    "deltas": [{"rule": "owns next board if branch occurs", "delta": -1}],
+                },
+                {
+                    "id": "move_status_script",
+                    "name": "Status Script",
+                    "kind": "move",
+                    "deltas": [{"rule": "absorber branch unpriced", "delta": 4}],
+                },
+            ],
+            "expectation": {
+                "best_action_ids": ["move_receiver_coverage"],
+                "acceptable_action_ids": ["move_counter_handoff", "move_obvious_stab"],
+                "bad_action_ids": ["move_status_script"],
+                "policy_tags": ["prediction", "branch_action", "receiver_pricing"],
+                "condition_tags": [
+                    "named_receiver_branch",
+                    "prediction_branch_supported",
+                    "worst_case_guarded",
+                    "prediction_ev_positive",
+                ],
+                "lesson_type": "weight_hint",
+                "confidence": "medium",
+                "min_best_probability": 0.55,
+                "evidence_refs": [
+                    "docs/pokemon_mastery/policy_cards/branch_action_after_naming.md",
+                    "docs/pokemon_mastery/heuristic_core/branch_punish_ranking.md",
+                ],
+                "why": "Prediction is correct when public receiver probability and payoff beat the obvious line with bounded downside.",
+                "answer_changing_information": [
+                    "whether the receiver branch is actually public-supported",
+                    "how much the coverage loses if the active stays in",
+                ],
+            },
+        },
+        {
+            "case_id": "reject_reckless_prediction",
+            "tiers": ("mid", "late"),
+            "notes": [
+                "generated prediction case: the flashy read loses too much if wrong",
+            ],
+            "moves": [
+                {
+                    "id": "move_safe_active_ko",
+                    "name": "Safe Active KO",
+                    "kind": "move",
+                    "deltas": [{"rule": "visible KO", "delta": -6}],
+                },
+                {
+                    "id": "move_reckless_prediction",
+                    "name": "Reckless Prediction Coverage",
+                    "kind": "move",
+                    "deltas": [{"rule": "speculative branch payoff", "delta": -7}],
+                    "lookahead_delta": 2,
+                },
+                {
+                    "id": "move_safe_handoff",
+                    "name": "Safe Handoff",
+                    "kind": "switch",
+                    "deltas": [{"rule": "covers worst branch modestly", "delta": -1}],
+                },
+                {
+                    "id": "move_repeat_setup",
+                    "name": "Repeat Setup",
+                    "kind": "move",
+                    "deltas": [{"rule": "greedy into live punishment", "delta": 5}],
+                },
+            ],
+            "expectation": {
+                "best_action_ids": ["move_safe_active_ko"],
+                "acceptable_action_ids": ["move_safe_handoff"],
+                "bad_action_ids": ["move_reckless_prediction", "move_repeat_setup"],
+                "policy_tags": ["prediction", "risk_control", "active_pressure"],
+                "condition_tags": [
+                    "prediction_branch_possible_only",
+                    "worst_case_unguarded",
+                    "active_pressure_converts",
+                ],
+                "lesson_type": "hard_rule",
+                "confidence": "medium",
+                "evidence_refs": [
+                    "docs/pokemon_mastery/policy_cards/branch_action_after_naming.md",
+                    "docs/pokemon_mastery/heuristic_core/public_info_tiers.md",
+                ],
+                "why": "Do not make a high-downside read top when the active conversion is already public and safe.",
+                "answer_changing_information": [
+                    "whether the branch has moved from possible-only to strong-prior",
+                    "whether missing the prediction still preserves the route",
+                ],
+            },
+        },
+        {
+            "case_id": "near_tie_mix_surface",
+            "tiers": ("late",),
+            "notes": [
+                "generated prediction case: two public lines are close enough to mix without forcing determinism",
+            ],
+            "moves": [
+                {
+                    "id": "move_safe_default",
+                    "name": "Safe Default",
+                    "kind": "move",
+                    "deltas": [{"rule": "safe default line", "delta": -4}],
+                },
+                {
+                    "id": "move_low_risk_prediction",
+                    "name": "Low Risk Prediction Branch",
+                    "kind": "move",
+                    "deltas": [{"rule": "bounded branch punish", "delta": -3}],
+                },
+                {
+                    "id": "move_counter_switch",
+                    "name": "Counter Switch",
+                    "kind": "switch",
+                    "deltas": [{"rule": "acceptable if receiver branch occurs", "delta": -2}],
+                },
+                {
+                    "id": "move_all_in_read",
+                    "name": "All In Read",
+                    "kind": "move",
+                    "deltas": [{"rule": "unbounded read", "delta": 6}],
+                },
+            ],
+            "expectation": {
+                "best_action_ids": ["move_safe_default", "move_low_risk_prediction"],
+                "acceptable_action_ids": ["move_counter_switch"],
+                "bad_action_ids": ["move_all_in_read"],
+                "policy_tags": ["prediction", "mixed_strategy", "risk_control"],
+                "condition_tags": [
+                    "prediction_branch_supported",
+                    "worst_case_guarded",
+                    "near_tie_mix",
+                ],
+                "lesson_type": "weight_hint",
+                "confidence": "medium",
+                "min_best_probability": 0.50,
+                "evidence_refs": [
+                    "docs/pokemon_mastery/workspace/quick_tests/branch_action_mixed_probe_001_2026-05-14.md",
+                    "docs/pokemon_mastery/heuristic_core/branch_punish_ranking.md",
+                ],
+                "why": "When the default and low-risk branch punish are close, preserve both as rollable instead of enforcing a single obvious move.",
+                "answer_changing_information": [
+                    "whether one line becomes clearly dominant",
+                    "whether the branch punish becomes unbounded if wrong",
+                ],
+            },
+        },
+    ],
+    "support_handoff": [
+        {
+            "case_id": "handoff_after_support_lands",
+            "tiers": ("mid", "late"),
+            "notes": [
+                "generated support case: support already landed, so repeating it misses the conversion",
+            ],
+            "moves": [
+                {
+                    "id": "move_repeat_support",
+                    "name": "Repeat Support",
+                    "kind": "move",
+                    "deltas": [{"rule": "support identity overvalued", "delta": -5}],
+                },
+                {
+                    "id": "move_handoff_converter",
+                    "name": "Handoff Converter",
+                    "kind": "switch",
+                    "deltas": [{"rule": "names next-board converter", "delta": -2}],
+                    "lookahead_delta": -2,
+                },
+                {
+                    "id": "move_cover_reset",
+                    "name": "Cover Reset Branch",
+                    "kind": "move",
+                    "deltas": [{"rule": "denies immediate reset branch", "delta": -1}],
+                },
+                {
+                    "id": "move_generic_damage",
+                    "name": "Generic Damage",
+                    "kind": "move",
+                    "deltas": [{"rule": "converter unnamed", "delta": 3}],
+                },
+            ],
+            "expectation": {
+                "best_action_ids": ["move_handoff_converter"],
+                "acceptable_action_ids": ["move_cover_reset"],
+                "bad_action_ids": ["move_repeat_support"],
+                "policy_tags": ["support_handoff", "route_converter", "reset_loop_denial"],
+                "condition_tags": [
+                    "support_job_completed",
+                    "named_next_board_owner",
+                    "reset_loop_live",
+                ],
+                "lesson_type": "weight_hint",
+                "confidence": "medium",
+                "evidence_refs": [
+                    "docs/pokemon_mastery/policy_cards/support_handoff_after_job.md",
+                    "docs/pokemon_mastery/heuristic_core/name_next_board_owner.md",
+                ],
+                "why": "After support succeeds, convert or cover the reset branch instead of repeating the support move.",
+                "answer_changing_information": [
+                    "whether the converter has a safe entry path",
+                    "whether the reset branch must be covered immediately",
+                ],
+            },
+        },
+        {
+            "case_id": "status_absorber_branch_punish",
+            "tiers": ("mid", "late"),
+            "notes": [
+                "generated support case: status is bad into a named absorber unless it hits the branch target",
+            ],
+            "moves": [
+                {
+                    "id": "move_generic_status",
+                    "name": "Generic Toxic",
+                    "kind": "move",
+                    "deltas": [{"rule": "status identity overvalued", "delta": -6}],
+                },
+                {
+                    "id": "move_absorber_coverage",
+                    "name": "Absorber Coverage",
+                    "kind": "move",
+                    "deltas": [{"rule": "hits named absorber", "delta": -2}],
+                    "lookahead_delta": -1,
+                },
+                {
+                    "id": "move_counter_handoff",
+                    "name": "Counter Handoff",
+                    "kind": "switch",
+                    "deltas": [{"rule": "owns absorber board", "delta": -1}],
+                },
+                {
+                    "id": "move_passive_reset",
+                    "name": "Passive Reset",
+                    "kind": "move",
+                    "deltas": [{"rule": "hands back reset loop", "delta": 4}],
+                },
+            ],
+            "expectation": {
+                "best_action_ids": ["move_absorber_coverage"],
+                "acceptable_action_ids": ["move_counter_handoff"],
+                "bad_action_ids": ["move_generic_status", "move_passive_reset"],
+                "policy_tags": ["status_timing", "branch_action", "receiver_pricing"],
+                "condition_tags": [
+                    "status_absorber_named",
+                    "named_receiver_branch",
+                    "branch_punish_available",
+                ],
+                "lesson_type": "hard_rule",
+                "confidence": "medium",
+                "evidence_refs": [
+                    "docs/pokemon_mastery/policy_cards/branch_action_after_naming.md",
+                    "docs/pokemon_mastery/policy_cards/active_pressure_before_status.md",
+                ],
+                "why": "When a status absorber is named, rank the coverage or handoff that beats it before generic status.",
+                "answer_changing_information": [
+                    "whether the status move hits the incoming branch",
+                    "whether coverage also affects the visible active",
+                ],
+            },
+        },
+        {
+            "case_id": "phaze_loop_over_generic_chip",
+            "tiers": ("mid", "late"),
+            "notes": [
+                "generated support case: public phazing plus hazards can be the converter",
+            ],
+            "moves": [
+                {
+                    "id": "move_generic_chip",
+                    "name": "Generic Chip",
+                    "kind": "move",
+                    "deltas": [{"rule": "visible chip overvalued", "delta": -5}],
+                },
+                {
+                    "id": "move_roar_loop",
+                    "name": "Roar Phaze Loop",
+                    "kind": "move",
+                    "deltas": [{"rule": "phaze loop underweighted", "delta": -2}],
+                    "lookahead_delta": -2,
+                },
+                {
+                    "id": "move_spikes_reset",
+                    "name": "Spikes Reset",
+                    "kind": "move",
+                    "deltas": [{"rule": "hazard reset acceptable", "delta": -1}],
+                },
+                {
+                    "id": "move_switch_away",
+                    "name": "Switch Away",
+                    "kind": "switch",
+                    "deltas": [{"rule": "abandons phaze loop", "delta": 4}],
+                },
+            ],
+            "expectation": {
+                "best_action_ids": ["move_roar_loop"],
+                "acceptable_action_ids": ["move_spikes_reset"],
+                "bad_action_ids": ["move_switch_away"],
+                "policy_tags": ["phazing", "hazard_retention", "reset_loop_denial"],
+                "condition_tags": [
+                    "spikes_layers_2",
+                    "phaze_loop_live",
+                    "reset_loop_denied",
+                    "named_current_owner",
+                ],
+                "lesson_type": "weight_hint",
+                "confidence": "medium",
+                "evidence_refs": [
+                    "docs/pokemon_mastery/policy_cards/hazard_loop_spin_window.md",
+                    "docs/pokemon_mastery/heuristic_core/reset_loop_denial.md",
+                ],
+                "why": "When hazards and public phazing own the route, keep the phaze loop above generic chip or retreat.",
+                "answer_changing_information": [
+                    "whether the opponent has a live Spin, Recover, or phaze counter-loop",
+                    "whether chip forces an immediate irreversible threshold",
+                ],
+            },
+        },
+    ],
+    "cashout_board_delta": [
+        {
+            "case_id": "reversible_before_irreversible",
+            "tiers": ("mid", "late"),
+            "notes": [
+                "generated newest-mastery case: a reversible branch-covering move preserves the one-shot converter",
+            ],
+            "moves": [
+                {
+                    "id": "move_boom_now",
+                    "name": "Explosion Now",
+                    "kind": "move",
+                    "deltas": [{"rule": "one-shot converter overvalued", "delta": -7}],
+                },
+                {
+                    "id": "move_reversible_branch_cover",
+                    "name": "Earthquake Branch Cover",
+                    "kind": "move",
+                    "deltas": [{"rule": "covers active and named branch", "delta": -2}],
+                    "lookahead_delta": -2,
+                },
+                {
+                    "id": "move_counter_handoff",
+                    "name": "Counter Handoff",
+                    "kind": "switch",
+                    "deltas": [{"rule": "preserves converter for next forced choice", "delta": -1}],
+                },
+                {
+                    "id": "move_status_script",
+                    "name": "Status Script",
+                    "kind": "move",
+                    "deltas": [{"rule": "script misses branch", "delta": 3}],
+                },
+            ],
+            "expectation": {
+                "best_action_ids": ["move_reversible_branch_cover"],
+                "acceptable_action_ids": ["move_counter_handoff"],
+                "bad_action_ids": ["move_boom_now", "move_status_script"],
+                "policy_tags": [
+                    "cashout",
+                    "reversible_before_irreversible",
+                    "branch_action",
+                    "risk_control",
+                ],
+                "condition_tags": [
+                    "reversible_line_covers_active_and_branch",
+                    "irreversible_converter_preserved",
+                    "delay_does_not_reset_target",
+                ],
+                "lesson_type": "hard_rule",
+                "confidence": "medium",
+                "evidence_refs": [
+                    "docs/pokemon_mastery/reviews/training_method_review_004_2026-05-15.md",
+                    "docs/pokemon_mastery/heuristic_core/spend_or_save_piece.md",
+                    "docs/pokemon_mastery/policy_cards/cashout_boundary.md",
+                ],
+                "why": "Prefer the reversible line when it covers the active target and named branch while preserving the irreversible converter.",
+                "answer_changing_information": [
+                    "whether delay lets the target reset, escape, or remove the user",
+                    "whether the reversible line still covers the named branch",
+                ],
+            },
+        },
+        {
+            "case_id": "resisted_explosion_free_owner",
+            "tiers": ("mid", "late"),
+            "notes": [
+                "generated newest-mastery case: Explosion into a resist is positive when chip and denial create the next owner",
+            ],
+            "moves": [
+                {
+                    "id": "move_earthquake_active",
+                    "name": "Earthquake Active",
+                    "kind": "move",
+                    "deltas": [{"rule": "active damage overvalued", "delta": -5}],
+                },
+                {
+                    "id": "move_explosion_board_delta",
+                    "name": "Explosion Board Delta",
+                    "kind": "move",
+                    "deltas": [{"rule": "resisted trade creates free owner", "delta": -2}],
+                    "lookahead_delta": -4,
+                },
+                {
+                    "id": "move_preserve_piece",
+                    "name": "Preserve Piece",
+                    "kind": "switch",
+                    "deltas": [{"rule": "preserve but gives reset turn", "delta": 1}],
+                },
+                {
+                    "id": "move_generic_status",
+                    "name": "Generic Status",
+                    "kind": "move",
+                    "deltas": [{"rule": "misses conversion window", "delta": 4}],
+                },
+            ],
+            "expectation": {
+                "best_action_ids": ["move_explosion_board_delta"],
+                "acceptable_action_ids": ["move_earthquake_active"],
+                "bad_action_ids": ["move_generic_status"],
+                "policy_tags": [
+                    "cashout",
+                    "resisted_explosion_board_delta",
+                    "route_converter",
+                ],
+                "condition_tags": [
+                    "resisted_explosion_free_owner",
+                    "post_trade_owner_named",
+                    "active_damage_misses_receiver",
+                ],
+                "lesson_type": "weight_hint",
+                "confidence": "medium",
+                "evidence_refs": [
+                    "docs/pokemon_mastery/workspace/quick_tests/resisted_explosion_board_delta_drill_001_2026-05-15.md",
+                    "docs/pokemon_mastery/policy_cards/cashout_boundary.md",
+                ],
+                "why": "A resisted self-KO can be correct when it denies the receiver's action and gives the named owner a free board.",
+                "answer_changing_information": [
+                    "whether the resisted target survives outside the next owner's range",
+                    "whether preserving the user gives the target a reset turn",
+                ],
+            },
+        },
+        {
+            "case_id": "explosion_into_ghost_branch",
+            "tiers": ("mid", "late"),
+            "notes": [
+                "generated newest-mastery case: revealed Ghost branch makes unguarded cash-out bad",
+            ],
+            "moves": [
+                {
+                    "id": "move_explosion_read",
+                    "name": "Explosion Read",
+                    "kind": "move",
+                    "deltas": [
+                        {"rule": "cashout overvalued into immunity branch", "delta": -8},
+                        {
+                            "rule": "move.apply_move_model.self_ko_seen_ghost_branch",
+                            "delta": 8,
+                        },
+                    ],
+                },
+                {
+                    "id": "move_earthquake_branch_cover",
+                    "name": "Earthquake Branch Cover",
+                    "kind": "move",
+                    "deltas": [{"rule": "hits active and Ghost branch", "delta": -2}],
+                    "lookahead_delta": -2,
+                },
+                {
+                    "id": "move_preserve_handoff",
+                    "name": "Preserve Handoff",
+                    "kind": "switch",
+                    "deltas": [{"rule": "preserves one-shot converter", "delta": -1}],
+                },
+                {
+                    "id": "move_soft_status",
+                    "name": "Soft Status",
+                    "kind": "move",
+                    "deltas": [{"rule": "does not beat immunity branch", "delta": 3}],
+                },
+            ],
+            "expectation": {
+                "best_action_ids": ["move_earthquake_branch_cover"],
+                "acceptable_action_ids": ["move_preserve_handoff"],
+                "bad_action_ids": ["move_explosion_read"],
+                "policy_tags": [
+                    "cashout",
+                    "reversible_before_irreversible",
+                    "branch_action",
+                    "public_info_gate",
+                ],
+                "condition_tags": [
+                    "revealed_ghost_absorber",
+                    "cashout_immunity_guard",
+                    "reversible_line_covers_active_and_branch",
+                ],
+                "lesson_type": "hard_rule",
+                "confidence": "medium",
+                "evidence_refs": [
+                    "docs/pokemon_mastery/workspace/quick_tests/resisted_explosion_board_delta_drill_001_2026-05-15.md",
+                    "docs/pokemon_mastery/policy_cards/cashout_boundary.md",
+                ],
+                "why": "Do not make Explosion top when a revealed immunity branch can enter and a reversible line covers more public branches.",
+                "answer_changing_information": [
+                    "whether the Ghost branch is actually revealed or only possible",
+                    "whether slow play lets the active target reset",
+                ],
+            },
+        },
+        {
+            "case_id": "sleep_plus_cashout_package",
+            "tiers": ("mid", "late"),
+            "notes": [
+                "generated newest-mastery case: sleep plus self-KO is one public role package",
+            ],
+            "moves": [
+                {
+                    "id": "move_valuable_damage",
+                    "name": "Valuable Owner Damage",
+                    "kind": "move",
+                    "deltas": [{"rule": "damage ignores sleep-cashout package", "delta": -6}],
+                },
+                {
+                    "id": "move_low_value_guard",
+                    "name": "Low Value Guard",
+                    "kind": "switch",
+                    "deltas": [{"rule": "absorbs sleep plus cashout package", "delta": -2}],
+                    "lookahead_delta": -2,
+                },
+                {
+                    "id": "move_status_back",
+                    "name": "Status Back",
+                    "kind": "move",
+                    "deltas": [{"rule": "status into sleep package", "delta": 3}],
+                },
+                {
+                    "id": "move_setup_greed",
+                    "name": "Setup Greed",
+                    "kind": "move",
+                    "deltas": [{"rule": "gives self-KO target", "delta": 5}],
+                },
+            ],
+            "expectation": {
+                "best_action_ids": ["move_low_value_guard"],
+                "acceptable_action_ids": ["move_valuable_damage"],
+                "bad_action_ids": ["move_setup_greed"],
+                "policy_tags": [
+                    "role_package_ledger",
+                    "sleep_plus_cashout_package",
+                    "switch_sack",
+                    "cashout",
+                ],
+                "condition_tags": [
+                    "sleep_move_revealed",
+                    "self_ko_strong_prior",
+                    "low_value_absorber_available",
+                ],
+                "lesson_type": "hard_rule",
+                "confidence": "medium",
+                "evidence_refs": [
+                    "docs/pokemon_mastery/heuristic_core/role_package_ledger.md",
+                    "docs/pokemon_mastery/policy_cards/cashout_boundary.md",
+                ],
+                "why": "Once sleep plus cash-out is public or strong-prior, answer the package with a lower-value guard before exposing the key owner.",
+                "answer_changing_information": [
+                    "whether self-KO has been disproved by four revealed moves",
+                    "whether the low-value guard still has an undelivered route job",
+                ],
+            },
+        },
+    ],
+}
+
 
 def generate_scenarios(
     *,
@@ -426,11 +1387,14 @@ def generate_scenarios(
         raise PreferenceDataError(f"unknown generator family {family!r}")
     rng = random.Random(seed)
     if family == "all":
-        families = ("selector_edges", "spikes_spin", "mastery_policy")
+        families = ALL_FAMILY_SEQUENCE
+        family_counts = {name: 0 for name in FAMILIES if name != "all"}
         scenarios: list[dict[str, Any]] = []
         for index in range(count):
             chosen = families[index % len(families)]
-            scenarios.append(stamp_scenario(generate_one(chosen, index, rng, seed)))
+            child_index = family_counts[chosen]
+            family_counts[chosen] = child_index + 1
+            scenarios.append(stamp_scenario(generate_one(chosen, child_index, rng, seed)))
         return scenarios
     return [stamp_scenario(generate_one(family, index, rng, seed)) for index in range(count)]
 
@@ -447,6 +1411,8 @@ def generate_one(
         return spikes_spin_scenario(index, rng, seed)
     if family == "mastery_policy":
         return mastery_policy_scenario(index, rng, seed)
+    if family in PUBLIC_POLICY_CASES:
+        return public_policy_scenario(family, index, rng, seed)
     raise PreferenceDataError(f"unknown generator family {family!r}")
 
 
@@ -527,7 +1493,7 @@ def spikes_spin_scenario(index: int, rng: random.Random, seed: int) -> dict[str,
     reserve_ghost = rng.choice([False, True])
     bench_revealed_spin = rng.choice([False, True])
     active_species_prior = rng.choice([False, True])
-    immediate_pressure = rng.choice([False, True])
+    immediate_pressure = active_species_prior and not active_ghost
 
     condition_tags = [f"spikes_layers_{layers}"]
     if active_revealed_spin:
@@ -554,6 +1520,14 @@ def spikes_spin_scenario(index: int, rng: random.Random, seed: int) -> dict[str,
         reserve_ghost=reserve_ghost,
         bench_revealed_spin=bench_revealed_spin,
         active_species_prior=active_species_prior,
+    )
+    active_spinblock = active_ghost and not foresighted
+    spinblock_available = active_spinblock or reserve_ghost
+    active_spin_risk = active_revealed_spin and layers in {1, 2} and not active_spinblock
+    bench_spin_risk = (
+        bench_revealed_spin
+        and layers == 2
+        and not spinblock_available
     )
 
     moves = [
@@ -587,10 +1561,10 @@ def spikes_spin_scenario(index: int, rng: random.Random, seed: int) -> dict[str,
         bad = ["move_spikes"]
         why = "A fourth local Spikes click fails after the stack is already capped."
         lesson_type = "hard_rule"
-    elif active_revealed_spin and layers in {1, 2} and not (active_ghost and not foresighted):
+    elif active_spin_risk or bench_spin_risk:
         best = ["move_sludge_bomb"]
         bad = ["move_spikes"]
-        why = "Public Rapid Spin on the active Pokemon threatens to erase the stack before another layer pays off."
+        why = "Public Rapid Spin pressure threatens to erase the stack before another layer pays off."
         lesson_type = "hard_rule"
     elif immediate_pressure and layers > 0:
         best = ["move_sludge_bomb"]
@@ -661,12 +1635,11 @@ def materialized_spikes_spin_rom_deltas(
     weights = ROM_TIER_WEIGHTS[tier]
     role = weights["role"]
     status = weights["status"]
-    setup = weights["setup"]
     risk = weights["risk"]
     pressure = active_species_prior and not active_ghost
     active_spinblock = active_ghost and not foresighted
-    spinblock_available = active_ghost or reserve_ghost
-    revealed_spin_counts = active_revealed_spin and not active_ghost
+    spinblock_available = active_spinblock or reserve_ghost
+    revealed_spin_counts = active_revealed_spin and not active_spinblock
 
     spikes: list[dict[str, int]] = []
     if layers == 0:
@@ -677,62 +1650,50 @@ def materialized_spikes_spin_rom_deltas(
         )
     elif layers == 1:
         if pressure:
-            add_rom_delta(spikes, "move.apply_move_model.enemy_under_pressure", role)
+            add_rom_delta(spikes, "move.apply_move_model.enemy_under_pressure", 6)
         else:
             returned = False
-            if revealed_spin_counts and not active_spinblock:
+            if revealed_spin_counts:
                 if reserve_ghost:
                     add_rom_delta(
                         spikes,
                         "move.apply_move_model.apply_revealed_rapid_spin_spikes_risk",
-                        1,
+                        8,
                     )
                 else:
                     add_rom_delta(
                         spikes,
                         "move.apply_move_model.boss_has_available_reserve_ghost",
-                        role,
+                        10,
                     )
                     returned = True
-            if not returned:
-                if not spinblock_available and (
-                    bench_revealed_spin or active_species_prior
-                ):
-                    add_rom_delta(
-                        spikes,
-                        "move.apply_move_model.apply_spikes_layer2_unrevealed_spin_risk",
-                        1,
-                    )
-                add_rom_delta(
-                    spikes,
-                    "move.apply_move_model.apply_spikes_layer2_unrevealed_spin_risk",
-                    status,
-                )
     elif layers == 2:
         if pressure:
-            add_rom_delta(spikes, "move.apply_move_model.enemy_under_pressure", setup)
+            add_rom_delta(spikes, "move.apply_move_model.enemy_under_pressure", 6)
         else:
             returned = False
-            if revealed_spin_counts and not active_spinblock:
+            if revealed_spin_counts:
                 if reserve_ghost:
                     add_rom_delta(
                         spikes,
                         "move.apply_move_model.apply_revealed_rapid_spin_spikes_risk",
-                        1,
+                        8,
                     )
                 else:
                     add_rom_delta(
                         spikes,
                         "move.apply_move_model.boss_has_available_reserve_ghost",
-                        role,
+                        10,
                     )
                     returned = True
             if not returned:
-                if not spinblock_available and (
-                    bench_revealed_spin
-                    or active_species_prior
-                    or tier == "late"
-                ):
+                if not spinblock_available and bench_revealed_spin:
+                    add_rom_delta(
+                        spikes,
+                        "move.apply_move_model.apply_spikes_layer3_unrevealed_spin_risk",
+                        6,
+                    )
+                elif not spinblock_available and (active_species_prior or tier == "late"):
                     add_rom_delta(
                         spikes,
                         "move.apply_move_model.apply_spikes_layer3_unrevealed_spin_risk",
@@ -744,7 +1705,7 @@ def materialized_spikes_spin_rom_deltas(
                     -role,
                 )
     else:
-        add_rom_delta(spikes, "move.apply_move_model.apply_spikes_layer_bias", role)
+        add_rom_delta(spikes, "move.apply_move_model.apply_spikes_layer_bias", 24)
 
     add_rom_delta(spikes, "move.apply_move_model.apply_role_bias", -role)
     return {
@@ -756,7 +1717,7 @@ def materialized_spikes_spin_rom_deltas(
         "explosion": [
             {
                 "rule": "move.apply_move_model.apply_self_kotrade_discipline",
-                "delta": 6,
+                "delta": 16,
             },
             {"rule": "move.current_enemy_move_accuracy_risky", "delta": risk},
         ],
@@ -783,6 +1744,37 @@ def mastery_policy_scenario(index: int, rng: random.Random, seed: int) -> dict[s
         "generator": DEFAULT_GENERATOR_VERSION,
         "family": "mastery_policy",
         "policy_card": card_id,
+        "seed": seed,
+        "case_index": index,
+        "tier": rng.choice(list(case["tiers"])),
+        "notes": deepcopy(case["notes"]),
+        "moves": deepcopy(case["moves"]),
+        "expectation": expectation,
+    }
+
+
+def public_policy_scenario(
+    family: str,
+    index: int,
+    rng: random.Random,
+    seed: int,
+) -> dict[str, Any]:
+    cases = PUBLIC_POLICY_CASES[family]
+    case = cases[index % len(cases)]
+    case_id = str(case["case_id"])
+    expectation = deepcopy(case["expectation"])
+    condition_tags = list(expectation.get("condition_tags", []))
+    if family not in condition_tags:
+        condition_tags.append(family)
+    if case_id not in condition_tags:
+        condition_tags.append(case_id)
+    expectation["condition_tags"] = condition_tags
+
+    return {
+        "id": f"generated_{family}_{seed}_{index:05d}_{case_id}",
+        "generator": DEFAULT_GENERATOR_VERSION,
+        "family": family,
+        "policy_case": case_id,
         "seed": seed,
         "case_index": index,
         "tier": rng.choice(list(case["tiers"])),

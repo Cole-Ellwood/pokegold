@@ -4,7 +4,7 @@ Source replay:
 `https://replay.pokemonshowdown.com/smogtours-gen2ou-831843`
 
 Parent transfer:
-`quick_tests/low_self_ko_transfer_001_smogtours-gen2ou-831843_2026-05-14.md`
+`workspace/quick_tests/low_self_ko_transfer_001_smogtours-gen2ou-831843_2026-05-14.md`
 
 Mode: targeted expert replay review after reveal. This is not a fresh score.
 

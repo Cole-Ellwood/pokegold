@@ -372,6 +372,14 @@ def suggested_generator(rule: dict[str, Any]) -> str:
         return "spikes_spin"
     if any(token in text for token in ("select_move", "selector", "score")):
         return "selector_edges"
+    if any(token in text for token in ("switch", "pivot", "sack", "wincon")):
+        return "switch_sack"
+    if any(token in text for token in ("setup", "recover", "rest", "heal")):
+        return "setup_heal"
+    if any(token in text for token in ("predict", "receiver", "branch")):
+        return "prediction_mix"
+    if any(token in text for token in ("support", "handoff", "status", "phaze", "roar")):
+        return "support_handoff"
     return "mastery_policy"
 
 

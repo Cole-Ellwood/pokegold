@@ -7,13 +7,28 @@ The notebook is not meant to prove mastery by volume. It should help answer
 real turns: what the plan is, what can still win, what can lose immediately,
 which pieces matter, and which move improves a concrete route.
 
+## Default Context Contract
+
+Do not load `docs/pokemon_mastery/**` as a playbook. The folder contains both
+decision rules and measurement provenance.
+
+For a fresh unseen move choice, start from `active_context.md`,
+`playbook_manifest.md`, and `live_core.md`. Then add only decision-relevant
+tiny `heuristic_core/*.md` cards plus compact `canon/*.md` or
+`romhack_deltas/*.md` lookups when the public board needs them.
+
+Use `workspace/` only after answers are frozen, during scoring, postmortem,
+audits, or evidence reconstruction.
+
 ## Current Files
 
 | File | Role |
 | --- | --- |
 | `active_goal.md` | Operating goal, study cadence, and serious-turn checklist. |
 | `live_core.md` | Tiny pre-freeze entrypoint for fresh unseen move choice. |
+| `playbook_manifest.md` | Load contract separating live playbook, topic retrieval, and workspace provenance. |
 | `heuristic_core/` | Small live heuristic cards and migration map from repeated old lessons. |
+| `canon/` | Compact source-linked GSC topic lookups for mechanics and matchup facts. |
 | `continue_learning_1500_elo_prompt.md` | Copy-paste prompt for continuing measured 1500-Elo Pokemon learning work with fresh web checks and local-doc grounding. |
 | `master_index.md` | Top-level table of contents and task router for the mastery docs. |
 | `study_roadmap_2026-05-14.md` | Forward roadmap focused on measured Pokemon decision improvement. |
@@ -33,14 +48,13 @@ which pieces matter, and which move improves a concrete route.
 | `measurement_progress_ledger.csv` | Machine-readable dated score ledger for the measurement mini-goal. |
 | `paused_turn_atlas.md` | Index of reviewed positions turned into move-choice practice prompts. |
 | `pre_battle_route_sheet.md` | Compact worksheet for planning a boss fight before turn 1. |
-| `quick_tests/` | Scored quick-probe artifacts and post-oracle summaries. |
 | `replay_turn_pause_protocol.md` | Rules for unseen Smogon GSC replay practice: freeze turn predictions before revealing pro choices. |
 | `reviews/` | Short battle-review artifacts. These should focus on route planning, not full transcripts. |
 | `romhack_deltas/` | Source-checked mechanics forks and boss-policy deltas that change how vanilla lessons transfer. |
 | `source_to_policy_ledger.md` | Expert-source lessons compressed into trigger/default/exception/worst-branch policy entries. |
 | `training_cycle.md` | Current work allocation and standards for study blocks. |
 | `worked_examples/` | Concrete applications of the template to public benchmark or battle states. |
-| `pro_notes/` | GPT-5.5 Pro method notes, kept as process guidance rather than curriculum. |
+| `workspace/` | Scored quick tests, raw research returns, process notes, measurement reports, and battle captures. Preserve, but exclude from default playbook context. |
 
 ## Study Bias
 

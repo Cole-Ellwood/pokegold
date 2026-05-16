@@ -20,7 +20,7 @@ Local docs read or sampled:
 - `source_to_policy_ledger.md`
 - `cross_domain_autonomy_policy.md`
 - `study_roadmap_2026-05-14.md`
-- recent `quick_tests/replay_turn_pause_052` through `057`
+- recent `workspace/quick_tests/replay_turn_pause_052` through `057`
 
 Web sources checked:
 

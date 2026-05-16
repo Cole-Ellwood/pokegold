@@ -203,7 +203,7 @@ instead.
 For the first real attempt, save artifacts with this shape:
 
 ```text
-docs/pokemon_mastery/battle_captures/
+docs/pokemon_mastery/workspace/battle_captures/
   pryce_attempt_YYYYMMDD/
     README.md
     turn_log.md

@@ -24,6 +24,7 @@ from .rom_contribution_trace import MemoryPatch
 from .rom_contribution_trace import RomContributionTraceSession
 from .rom_contribution_trace import SimpleTraceArgs
 from .rom_scenarios import normalize_tier
+from .rom_scenarios import scenario_expectation
 from .rom_scenarios import select_from_score_bytes
 from .rom_scenarios import select_move
 from .rom_selector_materialize import (
@@ -36,13 +37,67 @@ from .rom_selector_materialize import (
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_BASE_ROUTE = "koga"
 DEFAULT_WATCH_FRAMES = 90
-SUPPORTED_FAMILIES = ("spikes_spin",)
+PUBLIC_POLICY_FAMILIES = (
+    "setup_heal",
+    "prediction_mix",
+    "support_handoff",
+    "cashout_board_delta",
+)
+SUPPORTED_FAMILIES = ("spikes_spin", *PUBLIC_POLICY_FAMILIES)
 
 MOVE_FALLBACK_IDS = {
+    "move_absorber_coverage": 0x59,
+    "move_all_in_read": 0x55,
+    "move_cashout_attack": 0xBC,
+    "move_counter_handoff": 0xE2,
+    "move_counter_switch": 0xE2,
+    "move_cover_reset": 0x2E,
+    "move_generic_chip": 0xBC,
+    "move_generic_damage": 0xBC,
+    "move_generic_status": 0x5C,
+    "move_handoff": 0xE2,
+    "move_handoff_converter": 0xE2,
+    "move_low_risk_prediction": 0x59,
+    "move_more_setup": 0xAE,
+    "move_neutral_hit": 0x22,
+    "move_obvious_stab": 0xBC,
+    "move_passive_reset": 0x69,
+    "move_receiver_coverage": 0x59,
+    "move_reckless_prediction": 0x59,
+    "move_recover": 0x69,
+    "move_recover_loop": 0x69,
+    "move_recover_route": 0x69,
+    "move_repeat_setup": 0xAE,
+    "move_repeat_support": 0x5C,
+    "move_roar_loop": 0x2E,
+    "move_safe_active_ko": 0xBC,
+    "move_safe_default": 0xBC,
+    "move_safe_handoff": 0xE2,
+    "move_safe_setup": 0xAE,
+    "move_spikes_reset": 0xBF,
+    "move_status": 0x5C,
+    "move_status_script": 0x5C,
+    "move_switch": 0xE2,
+    "move_switch_away": 0xE2,
+    "move_switch_out": 0xE2,
+    "move_weak_attack": 0x22,
     "move_spikes": 0xBF,
     "move_sludge_bomb": 0xBC,
     "move_surf": 0x39,
     "move_explosion": 0x99,
+    "move_boom_now": 0x99,
+    "move_earthquake_active": 0x59,
+    "move_earthquake_branch_cover": 0x59,
+    "move_explosion_board_delta": 0x99,
+    "move_explosion_read": 0x99,
+    "move_low_value_guard": 0xE2,
+    "move_preserve_handoff": 0xE2,
+    "move_preserve_piece": 0xE2,
+    "move_reversible_branch_cover": 0x59,
+    "move_setup_greed": 0xAE,
+    "move_soft_status": 0x5C,
+    "move_status_back": 0x5C,
+    "move_valuable_damage": 0xBC,
 }
 
 SPECIES = {
@@ -57,8 +112,12 @@ SPECIES = {
 TYPES = {
     "NORMAL": 0x00,
     "POISON": 0x03,
+    "GROUND": 0x04,
     "GHOST": 0x08,
+    "STEEL": 0x09,
     "WATER": 0x14,
+    "GRASS": 0x16,
+    "ELECTRIC": 0x17,
     "PSYCHIC": 0x18,
 }
 
@@ -70,7 +129,7 @@ ITEMS = {
     "NO_ITEM": 0x00,
 }
 
-SUBSTATUS_IDENTIFIED_MASK = 1 << 5
+SUBSTATUS_IDENTIFIED_MASK = 1 << 3
 
 KNOWN_LIMITS = [
     (
@@ -78,8 +137,13 @@ KNOWN_LIMITS = [
         "pre-choice state before BossAI_ApplyMoveModel scores the first move."
     ),
     (
-        "The first supported family is generated Spikes/Rapid Spin coverage, "
-        "because it exercises the current public-info hazard-retention patch."
+        "Generated Spikes/Rapid Spin scenarios are exact score-mirror checks; "
+        "broad public-policy families also materialize observed ROM score bytes "
+        "and policy verdicts, but their synthetic Python deltas are review aids."
+    ),
+    (
+        "Switch/sack cases need switch-dispatch materialization. They are not "
+        "treated as proved by move-score replay."
     ),
     (
         "ROM score traces and Python scenario contribution traces are compared "
@@ -690,6 +754,13 @@ def materialization_for_scenario(
     move_name_to_id: dict[str, int],
 ) -> ScenarioMaterialization:
     scenario_id = str(scenario.get("id", "unnamed"))
+    family = str(scenario.get("family", ""))
+    if family in PUBLIC_POLICY_FAMILIES:
+        return public_policy_materialization_for_scenario(
+            scenario,
+            move_name_to_id=move_name_to_id,
+        )
+
     tags = scenario_condition_tags(scenario)
     layers = parse_spikes_layers(tags)
     tier = normalize_tier(scenario.get("tier", "late"))
@@ -729,6 +800,188 @@ def materialization_for_scenario(
         move_ids=move_ids,
         layers=layers,
     )
+
+
+def public_policy_materialization_for_scenario(
+    scenario: dict[str, Any],
+    *,
+    move_name_to_id: dict[str, int],
+) -> ScenarioMaterialization:
+    scenario_id = str(scenario.get("id", "unnamed"))
+    tags = scenario_condition_tags(scenario)
+    tier = normalize_tier(scenario.get("tier", "late"))
+    layers = parse_optional_spikes_layers(tags)
+    move_ids = move_ids_for_scenario(scenario, move_name_to_id=move_name_to_id)
+    patches = base_public_policy_patches(
+        tier=tier,
+        layers=layers,
+        tags=tags,
+        policy_case=str(scenario.get("policy_case", "")),
+    )
+    for offset, move_id in enumerate(move_ids):
+        patches.append(patch("wEnemyMonMoves", move_id, offset))
+        patches.append(patch("wEnemyMonPP", 30, offset))
+        patches.append(patch("wEnemyAIMoveScores", 20, offset))
+    return ScenarioMaterialization(
+        scenario_id=scenario_id,
+        patches=patches,
+        move_ids=move_ids,
+        layers=layers,
+    )
+
+
+def base_public_policy_patches(
+    *,
+    tier: int,
+    layers: int,
+    tags: set[str],
+    policy_case: str,
+) -> list[MemoryPatch]:
+    enemy_hp = 80
+    if "recovery_preserves_route" in tags:
+        enemy_hp = 34
+    elif "defensive_sack_owner" in tags:
+        enemy_hp = 18
+    player_hp = 80
+    if "active_pressure_converts" in tags:
+        player_hp = 22
+
+    player_type1 = TYPES["WATER"]
+    player_type2 = TYPES["PSYCHIC"]
+    if "status_absorber_named" in tags:
+        player_type1 = TYPES["POISON"]
+        player_type2 = TYPES["POISON"]
+    elif "worst_case_unguarded" in tags:
+        player_type1 = TYPES["STEEL"]
+        player_type2 = TYPES["STEEL"]
+    elif "prediction_branch_supported" in tags:
+        player_type1 = TYPES["ELECTRIC"]
+        player_type2 = TYPES["ELECTRIC"]
+
+    patches: list[MemoryPatch] = [
+        patch("wBossAITier", tier),
+        patch("wBossAITierWeightRow", max(0, tier - 1)),
+        patch("wEnemyDisabledMove", 0),
+        patch("wEnemyMonItem", ITEMS["NO_ITEM"]),
+        patch("wPlayerScreens", layers & 0x03),
+        patch("wEnemyScreens", 0),
+        patch("wEnemySubStatus1", 0),
+        patch("wEnemySubStatus4", 0),
+        patch("wPlayerSubStatus1", 0),
+        patch("wPlayerSubStatus3", 0),
+        patch("wPlayerSubStatus4", 0),
+        patch("wPlayerSubStatus5", 0),
+        patch("wBattleMonLevel", 50),
+        patch("wEnemyMonLevel", 50),
+        patch("wBattleMonStatus", 0),
+        patch("wEnemyMonStatus", 0),
+        patch("wBattleMonSpecies", SPECIES["STARMIE"]),
+        patch("wEnemyMonSpecies", SPECIES["QWILFISH"]),
+        patch("wBattleMonType1", player_type1),
+        patch("wBattleMonType2", player_type2),
+        patch("wEnemyMonType1", TYPES["POISON"]),
+        patch("wEnemyMonType2", TYPES["WATER"]),
+        patch("hBattleTurn", 1),
+        patch("wBossAITurnsElapsed", 2 if "support_job_completed" in tags else 1),
+        patch("wBossAIPlayerSwitchCount", 1 if "prediction_branch_supported" in tags else 0),
+        patch("wBossAIPendingPlayerSwitchCount", 0),
+        patch("wBossAIRepeatCount", 0),
+        patch("wBossAILastChosenMove", 0),
+        patch("wBossAIPlanId", plan_id_for_tags(tags)),
+        patch("wBossAIPlanPhase", 1),
+        patch("wBossAIPlanConfidence", 70 if tags & {"setup_window", "support_job_completed"} else 50),
+        patch("wBossAIWinconMonIdx", 2),
+    ]
+    patches.extend(word_patches("wEnemyMonHP", enemy_hp))
+    patches.extend(word_patches("wEnemyMonMaxHP", 100))
+    patches.extend(word_patches("wBattleMonHP", player_hp))
+    patches.extend(word_patches("wBattleMonMaxHP", 100))
+    patches.extend(stat_level_patches("wEnemyStatLevels", enemy_stat_levels(tags)))
+    patches.extend(stat_level_patches("wPlayerStatLevels", player_stat_levels(tags)))
+    patches.extend(public_revealed_move_patches(tags, policy_case))
+    patches.extend(generic_bench_party_patches())
+    patches.extend(public_seen_player_patches(tags))
+    return patches
+
+
+def public_seen_player_patches(tags: set[str]) -> list[MemoryPatch]:
+    patches = [
+        patch("wBossAISeenPlayerSpeciesCount", 0),
+        patch("wBossAISeenPlayerAliveMask", 0),
+    ]
+    for offset in range(6):
+        patches.append(patch("wBossAISeenPlayerSpecies", 0, offset))
+    if "revealed_ghost_absorber" not in tags:
+        return patches
+    patches.extend(
+        [
+            patch("wBossAISeenPlayerSpeciesCount", 2),
+            patch("wBossAISeenPlayerSpecies", SPECIES["STARMIE"], 0),
+            patch("wBossAISeenPlayerSpecies", SPECIES["GENGAR"], 1),
+            patch("wBossAISeenPlayerAliveMask", 0b00000011),
+        ]
+    )
+    return patches
+
+
+def plan_id_for_tags(tags: set[str]) -> int:
+    if "setup_window" in tags or "setup_already_bankrolled" in tags:
+        return 1
+    if "support_job_completed" in tags or "status_absorber_named" in tags:
+        return 2
+    if "active_pressure_converts" in tags or "prediction_ev_positive" in tags:
+        return 3
+    if "recovery_preserves_route" in tags:
+        return 4
+    return 0
+
+
+def enemy_stat_levels(tags: set[str]) -> list[int]:
+    levels = [7] * 7
+    if "setup_already_bankrolled" in tags:
+        levels[0] = 10
+    return levels
+
+
+def player_stat_levels(tags: set[str]) -> list[int]:
+    levels = [7] * 7
+    if "reset_loop_live" in tags or "phaze_loop_live" in tags:
+        levels[0] = 9
+    return levels
+
+
+def stat_level_patches(symbol_name: str, levels: list[int]) -> list[MemoryPatch]:
+    return [patch(symbol_name, value, offset) for offset, value in enumerate(levels)]
+
+
+def public_revealed_move_patches(
+    tags: set[str],
+    policy_case: str,
+) -> list[MemoryPatch]:
+    moves = [0, 0, 0, 0]
+    if "reset_loop_live" in tags:
+        moves[0] = 0xE5
+    if "named_receiver_branch" in tags or "prediction_branch_supported" in tags:
+        moves[1] = 0x69
+    if "phaze_loop_live" in tags:
+        moves[2] = 0x2E
+    if policy_case == "reject_reckless_prediction":
+        moves[0] = 0x55
+    return [patch("wPlayerUsedMoves", value, offset) for offset, value in enumerate(moves)]
+
+
+def generic_bench_party_patches() -> list[MemoryPatch]:
+    return [
+        patch("wOTPartyCount", 2),
+        patch("wOTPartySpecies", SPECIES["QWILFISH"], 0),
+        patch("wOTPartySpecies", SPECIES["GENGAR"], 1),
+        patch("wOTPartySpecies", 0xFF, 2),
+        patch("wCurOTMon", 0),
+        patch("wOTPartyMon2Species", SPECIES["GENGAR"]),
+        patch("wOTPartyMon2Level", 50),
+        *word_patches("wOTPartyMon2HP", 80),
+        *word_patches("wOTPartyMon2MaxHP", 100),
+    ]
 
 
 def move_ids_for_scenario(
@@ -878,6 +1131,7 @@ def verdict_from_materialized_trace(
         bool(python_result.get("ready"))
         and rom_best_action_id == python_result.get("best_action_id")
     )
+    rom_policy = policy_verdict_from_rom_selector(scenario, rom_selector)
     return {
         "scenario_id": scenario_id,
         "status": "pass",
@@ -885,6 +1139,8 @@ def verdict_from_materialized_trace(
         "layers": materialization.layers,
         "score_bytes_match": observed_scores == expected_scores,
         "selector_top_match": selector_top_match,
+        "policy_agreement": rom_policy["severity"] == 0,
+        "rom_policy": rom_policy,
         "python": {
             "best_action_id": python_result.get("best_action_id"),
             "second_action_id": python_result.get("second_action_id"),
@@ -926,6 +1182,110 @@ def verdict_from_materialized_trace(
             for item in materialization.patches
         ],
     }
+
+
+def policy_verdict_from_rom_selector(
+    scenario: dict[str, Any],
+    rom_selector: dict[str, Any],
+) -> dict[str, Any]:
+    expectation = scenario_expectation(scenario)
+    best_ids = list_of_strings(expectation.get("best_action_ids"))
+    acceptable_ids = list_of_strings(expectation.get("acceptable_action_ids"))
+    bad_ids = list_of_strings(expectation.get("bad_action_ids"))
+    catastrophic_ids = list_of_strings(expectation.get("catastrophic_action_ids"))
+
+    probabilities = {
+        action_id_for_slot(scenario, slot_index): float(probability)
+        for slot_index, probability in rom_selector.get(
+            "probabilities_by_slot",
+            {},
+        ).items()
+    }
+    probabilities = {
+        str(action_id): probability
+        for action_id, probability in probabilities.items()
+        if action_id is not None
+    }
+    rom_best = action_id_for_slot(scenario, rom_selector.get("best_slot_index"))
+    rom_best_probability = probabilities.get(str(rom_best), 0.0) if rom_best else 0.0
+    rolled_bad = rolled_action_ids(probabilities, bad_ids)
+    rolled_catastrophic = rolled_action_ids(probabilities, catastrophic_ids)
+    zero_probability_best = [
+        action_id for action_id in best_ids if probabilities.get(action_id, 0.0) == 0.0
+    ]
+
+    if not rom_selector.get("ready"):
+        verdict = "no_rom_choice"
+        severity = 95
+        reason = str(rom_selector.get("reason", "no selectable ROM action"))
+    elif rolled_catastrophic:
+        verdict = "catastrophic_roll"
+        severity = 100
+        reason = "ROM score bytes give nonzero probability to catastrophic action(s)"
+    elif rolled_bad:
+        verdict = "bad_roll"
+        severity = 80
+        reason = "ROM score bytes give nonzero probability to bad action(s)"
+    elif rom_best in best_ids:
+        verdict = "pass"
+        severity = 0
+        reason = "ROM score bytes make an expected-best action top"
+    elif rom_best in acceptable_ids:
+        verdict = "acceptable_top"
+        severity = 30
+        reason = "ROM score bytes make an acceptable action top"
+    elif best_ids and zero_probability_best == best_ids:
+        verdict = "best_never_rolled"
+        severity = 75
+        reason = "ROM score bytes give every expected-best action zero probability"
+    elif best_ids:
+        verdict = "mismatch"
+        severity = 70
+        reason = "ROM score bytes top action is outside expected best/acceptable sets"
+    else:
+        verdict = "needs_expectation"
+        severity = 0
+        reason = "scenario has no expected best action ids"
+
+    if verdict in {"pass", "acceptable_top"} and zero_probability_best:
+        verdict = "partial_best_unrolled"
+        severity = max(severity, 45)
+        reason = "ROM score bytes give some expected-best actions zero probability"
+
+    return {
+        "verdict": verdict,
+        "severity": severity,
+        "reason": reason,
+        "rom_best_action_id": rom_best,
+        "rom_best_probability": rom_best_probability,
+        "expected_best_action_ids": best_ids,
+        "expected_acceptable_action_ids": acceptable_ids,
+        "rolled_bad_action_ids": rolled_bad,
+        "rolled_catastrophic_action_ids": rolled_catastrophic,
+        "zero_probability_best_action_ids": zero_probability_best,
+        "probabilities": probabilities,
+    }
+
+
+def rolled_action_ids(
+    probabilities: dict[str, float],
+    action_ids: list[str],
+) -> list[str]:
+    return [
+        action_id
+        for action_id in action_ids
+        if probabilities.get(action_id, 0.0) > 0.0
+    ]
+
+
+def list_of_strings(value: Any) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, str):
+        return [value]
+    if isinstance(value, list):
+        return [str(item) for item in value]
+    raise PreferenceDataError("expected string or list of strings")
 
 
 def hook_equivalence_summary(
@@ -1048,6 +1408,17 @@ def parse_spikes_layers(tags: set[str]) -> int:
     raise PreferenceDataError("spikes_spin scenario is missing spikes_layers_N tag")
 
 
+def parse_optional_spikes_layers(tags: set[str]) -> int:
+    for tag in tags:
+        prefix = "spikes_layers_"
+        if not tag.startswith(prefix):
+            continue
+        layers = int(tag[len(prefix) :], 10)
+        if 0 <= layers <= 3:
+            return layers
+    return 0
+
+
 def action_id_for_slot(scenario: dict[str, Any], slot_index: Any) -> str | None:
     if slot_index is None:
         return None
@@ -1066,6 +1437,15 @@ def action_id_for_slot(scenario: dict[str, Any], slot_index: Any) -> str | None:
 
 def patch(symbol_name: str, value: int, offset: int = 0) -> MemoryPatch:
     return MemoryPatch(symbol_name=symbol_name, offset=offset, value=value & 0xFF)
+
+
+def word_patches(symbol_name: str, value: int) -> list[MemoryPatch]:
+    if not 0 <= value <= 0xFFFF:
+        raise PreferenceDataError(f"{symbol_name} word patch is out of range")
+    return [
+        patch(symbol_name, (value >> 8) & 0xFF, 0),
+        patch(symbol_name, value & 0xFF, 1),
+    ]
 
 
 def validate_byte(raw: Any, label: str) -> int:
@@ -1112,6 +1492,7 @@ def format_rom_score_materialization(
         and (
             not verdict.get("score_bytes_match", False)
             or verdict.get("contribution_comparison", {}).get("mismatch_count", 0) > 0
+            or int(verdict.get("rom_policy", {}).get("severity", 0)) > 0
         )
     ]
     if review:
@@ -1120,10 +1501,12 @@ def format_rom_score_materialization(
         for verdict in review[:limit]:
             comparison = verdict.get("contribution_comparison", {})
             hook_equivalence = verdict.get("hook_equivalence", {})
+            rom_policy = verdict.get("rom_policy", {})
             lines.append(
                 f"  {verdict['scenario_id']}: "
                 f"rom={verdict.get('rom', {}).get('best_action_id')} "
                 f"python={verdict.get('python', {}).get('best_action_id')} "
+                f"policy={rom_policy.get('verdict', 'unknown')} "
                 f"score_match={verdict.get('score_bytes_match', False)} "
                 f"contribution_mismatches={comparison.get('mismatch_count', 0)} "
                 f"hook_match={hook_equivalence.get('match', 'not_checked')}"

@@ -109,7 +109,7 @@ Rules:
 
 - Use `replay_turn_pause_protocol.md`.
 - Prefer Smogon tournament GSC replays not already present in `reviews/`,
-  `worked_examples/`, or `quick_tests/`.
+  `worked_examples/`, or `workspace/quick_tests/`.
 - Freeze predictions for both players before revealing the turn.
 - Score the replay separately from quick probes because actual player choices
   are a strong comparison point, not a perfect oracle.
@@ -221,6 +221,7 @@ Track:
 - hidden-information error rate;
 - replay turn-pause top-match and acceptable-match rates;
 - positive-selection rate in fresh replay or focused-transfer artifacts;
+- role-package update obedience after public reveals;
 - transfer-sprint target error rate before and after the Pokemon check;
 - simulation/emulator win rate only after readiness gates pass.
 
@@ -243,6 +244,19 @@ Call progress real only when:
   is explicitly limited to one pool.
 
 Occasional drops are acceptable. A one-run gain is not a trend.
+
+Structural-repair sample gate:
+
+- After changing the live decision system, collect three fresh replay packets
+  or at least 90 scored side decisions before claiming the repair worked.
+- Compare against the recent fresh-replay baseline on top-match,
+  acceptable-match, positive-selection, route conversion, branch-punish, and
+  role-package obedience, with severe/hidden/state/mechanics errors still low.
+- If the sample is regressing or blatantly flat, pause replay review and run a
+  training-method review. Reconsider prompt format, replay review as the main
+  practice mode, scoring oracle quality, card structure, GSC theory gaps,
+  mechanics fixtures, and retrieval/attention limits before collecting more
+  replay volume.
 
 ## Simulation Ladder
 

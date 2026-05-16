@@ -1142,7 +1142,14 @@ def score_materialization_scenarios(
         )
         active_revealed = "active_revealed_rapid_spin" in tags
         risky_layer = "spikes_layers_1" in tags or "spikes_layers_2" in tags
-        return (0 if active_revealed and risky_layer else 1, str(scenario.get("id", "")))
+        family = str(scenario.get("family", ""))
+        if family == "spikes_spin" and active_revealed and risky_layer:
+            rank = 0
+        elif family == "spikes_spin":
+            rank = 1
+        else:
+            rank = 2
+        return (rank, str(scenario.get("id", "")))
 
     return sorted(candidates, key=priority)[:limit]
 

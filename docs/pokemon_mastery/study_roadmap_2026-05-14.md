@@ -51,7 +51,7 @@ The 50-battle validation gate is not ready until real capture evidence exists.
 
 Deliverables:
 
-- Use `battle_captures/README.md` and
+- Use `workspace/battle_captures/README.md` and
   `worked_examples/pryce_recorded_attempt_capture_protocol.md` for the first
   recorded boss attempt.
 - Fill `worked_examples/pryce_scored_manual_worksheet.md`.
@@ -88,7 +88,7 @@ pretend the unseen team is known.
 Deliverables:
 
 - Convert selected entries from
-  `external_research_returns/2026-05-14_deep_research_hidden_info_turn_atlas.md`
+  `workspace/external_research_returns/2026-05-14_deep_research_hidden_info_turn_atlas.md`
   into paused-turn drills.
 - Add Bayesian/non-reveal examples for Rapid Spin, hidden coverage, priority,
   and repeated switch routes.

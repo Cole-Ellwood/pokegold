@@ -20,10 +20,10 @@ faster without turning into meta-work.
 | `worked_examples/` | 111 | Keep. This is the main concrete practice library. |
 | `reviews/` | 39 | Keep. Reviews preserve source context and lesson provenance. |
 | `romhack_deltas/` | 8 | Keep. These are the local-mechanics firewall. |
-| `pro_notes/` | 6 | Keep as archive/process input, not daily curriculum. |
-| `external_research_returns/` | 2 | Keep raw; filter before integration. |
+| `workspace/pro_notes/` | 6 | Keep as archive/process input, not daily curriculum. |
+| `workspace/external_research_returns/` | 2 | Keep raw; filter before integration. |
 | `mechanics_fixtures/` | 1 | Expand. Runtime evidence is underbuilt. |
-| `battle_captures/` | 1 | Expand. Real boss attempts are the missing proof layer. |
+| `workspace/battle_captures/` | 1 | Expand. Real boss attempts are the missing proof layer. |
 
 ## Changes Made In This Audit
 
@@ -44,8 +44,8 @@ faster without turning into meta-work.
 | `boss_route_maps/*` and `worked_examples/*_pre_battle_route_sheet.md` | Keep both. | Route maps describe boss threats; worked sheets show how to use the planning worksheet. |
 | `reviews/` and `worked_examples/smogtours_*` | Keep both. | Reviews preserve battle narrative; worked examples distill one reusable pattern. |
 | `active_goal.md` and `goal_restart_prompt.md` | Keep, but mark state clearly. | `active_goal.md` is broad history/pending replacement; `goal_restart_prompt.md` is the current restart text. |
-| `external_research_prompts_*` and `external_research_returns/*` | Keep raw. | They are reproducibility/provenance for outside research. |
-| `pro_notes/*` and current operating docs | Keep archive. | They contain method ideas, but current behavior should be governed by restart prompt and measurement docs. |
+| `external_research_prompts_*` and `workspace/external_research_returns/*` | Keep raw. | They are reproducibility/provenance for outside research. |
+| `workspace/pro_notes/*` and current operating docs | Keep archive. | They contain method ideas, but current behavior should be governed by restart prompt and measurement docs. |
 | Many boss stress tests around hazards/status/route preservation | Keep. | Surface themes repeat, but they cover different boss rosters, public states, and failure branches. |
 
 ## Do Not Remove Without A Specific Reason
@@ -104,7 +104,7 @@ plan:
    where local type/passive, Rapid Spin, phazing, or item behavior matters.
 4. Convert the external hidden-info atlas JSONL block into a small generated
    CSV/index for practice selection, while preserving the raw return.
-5. Fill `battle_captures/` with the first real recorded boss attempt before any
+5. Fill `workspace/battle_captures/` with the first real recorded boss attempt before any
    50-battle validation claim.
 6. Add quick-test rows to `measurement_progress_ledger.csv` whenever a real
    probe is run.

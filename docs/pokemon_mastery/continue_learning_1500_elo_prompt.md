@@ -132,7 +132,7 @@ Default work loop:
    - docs/pokemon_mastery/policy_cards/
    - docs/pokemon_mastery/paused_turn_atlas.md
    - docs/pokemon_mastery/reviews/
-   - docs/pokemon_mastery/quick_tests/
+   - docs/pokemon_mastery/workspace/quick_tests/
    - docs/pokemon_mastery/worked_examples/
    - docs/pokemon_mastery/romhack_deltas/
    - docs/pokemon_mastery/mechanics_fixtures/

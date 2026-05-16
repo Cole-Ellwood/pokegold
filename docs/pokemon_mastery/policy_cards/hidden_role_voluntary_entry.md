@@ -27,6 +27,11 @@ Use a three-tier public-information gate:
 - `possible only`: branch to cover or mention, not the reason for the main move
   unless the answer is explicitly a high-risk read.
 
+Item-state gate: moves such as Thief, RestTalk item denial, or no-item lure
+logic need public item-state evidence before becoming the main line. A Pokemon
+at full HP that does not show Leftovers has not revealed no item. If item state
+is only possible, rank the move as a read and give the fallback.
+
 Opposite boundary:
 
 Do not invent hidden coverage just because it would be convenient. If the
@@ -58,18 +63,20 @@ local evidence when decision-relevant.
 
 Evidence:
 
-- `quick_tests/hidden_role_branch_probe_001_2026-05-14.md`
-- `quick_tests/replay_turn_pause_067_hidden_role_transfer_smogtours-gen2ou-912841_2026-05-14.md`
-- `quick_tests/electric_receiver_resttalk_transfer_001_smogtours-gen2ou-920928_2026-05-14.md`
-- `quick_tests/resttalk_hidden_role_correction_probe_001_2026-05-14.md`
-- `quick_tests/hidden_role_electric_transfer_001_smogtours-gen2ou-920951_2026-05-14.md`
-- `quick_tests/hidden_role_electric_transfer_002_smogtours-gen2ou-920961_2026-05-14.md`
-- `quick_tests/support_set_hidden_role_probe_001_2026-05-14.md`
-- `quick_tests/support_set_hidden_role_transfer_001_smogtours-gen2ou-921372_2026-05-14.md`
-- `quick_tests/counter_handoff_loop_transfer_001_smogtours-gen2ou-921389_2026-05-14.md`
-- `quick_tests/setup_hidden_role_stop_probe_001_2026-05-14.md`
-- `quick_tests/setup_hidden_role_stop_transfer_001_smogtours-gen2ou-921412_2026-05-14.md`
-- `quick_tests/screen_phaze_third_owner_probe_001_2026-05-14.md`
+- `workspace/quick_tests/hidden_role_branch_probe_001_2026-05-14.md`
+- `workspace/quick_tests/replay_turn_pause_067_hidden_role_transfer_smogtours-gen2ou-912841_2026-05-14.md`
+- `workspace/quick_tests/electric_receiver_resttalk_transfer_001_smogtours-gen2ou-920928_2026-05-14.md`
+- `workspace/quick_tests/resttalk_hidden_role_correction_probe_001_2026-05-14.md`
+- `workspace/quick_tests/hidden_role_electric_transfer_001_smogtours-gen2ou-920951_2026-05-14.md`
+- `workspace/quick_tests/hidden_role_electric_transfer_002_smogtours-gen2ou-920961_2026-05-14.md`
+- `workspace/quick_tests/support_set_hidden_role_probe_001_2026-05-14.md`
+- `workspace/quick_tests/support_set_hidden_role_transfer_001_smogtours-gen2ou-921372_2026-05-14.md`
+- `workspace/quick_tests/counter_handoff_loop_transfer_001_smogtours-gen2ou-921389_2026-05-14.md`
+- `workspace/quick_tests/setup_hidden_role_stop_probe_001_2026-05-14.md`
+- `workspace/quick_tests/setup_hidden_role_stop_transfer_001_smogtours-gen2ou-921412_2026-05-14.md`
+- `workspace/quick_tests/screen_phaze_third_owner_probe_001_2026-05-14.md`
+- `workspace/quick_tests/spinblock_subgrowth_transfer_001_smogtours-gen2ou-932556_2026-05-15.md`
+- `reviews/spinblock_subgrowth_review_001_2026-05-15.md`
 
 Drill:
 

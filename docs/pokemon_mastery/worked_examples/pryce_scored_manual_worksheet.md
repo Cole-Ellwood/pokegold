@@ -11,7 +11,7 @@ Local evidence:
 - Pryce route map: `../boss_route_maps/pryce_turn1_route_sheet.md`.
 - Live advice shape: `../boss_turn_advice_template.md`.
 - Benchmark grading notes:
-  `../pro_notes/03_benchmark_architecture_and_policy_schema.md`.
+  `../workspace/pro_notes/03_benchmark_architecture_and_policy_schema.md`.
 - Spikes / Rapid Spin delta:
   `../romhack_deltas/spikes_and_rapid_spin.md`.
 - Mechanics overview and generated mechanics reference:

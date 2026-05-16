@@ -67,6 +67,29 @@ class RomScenarioTests(unittest.TestCase):
         self.assertEqual(moves["attack"]["final_score"], 22)
         self.assertEqual(result["best_action_id"], "setup")
 
+    def test_lookahead_evaluates_candidates_within_max_score_swing(self) -> None:
+        result = select_move(
+            {
+                "id": "lookahead_swing",
+                "tier": "late",
+                "moves": [
+                    {"id": "best_now", "name": "Best Now", "lookahead_delta": 18},
+                    {
+                        "id": "could_leapfrog",
+                        "name": "Could Leapfrog",
+                        "deltas": [{"rule": "pre_score", "delta": 8}],
+                        "lookahead_delta": 18,
+                    },
+                    {"id": "outside", "name": "Outside", "blocked": True},
+                ],
+            }
+        )
+
+        moves = {move["action_id"]: move for move in result["moves"]}
+
+        self.assertTrue(moves["could_leapfrog"]["lookahead_applied"])
+        self.assertEqual(moves["could_leapfrog"]["final_score"], 46)
+
     def test_blocked_moves_are_not_selected(self) -> None:
         result = select_move(
             {
