@@ -88,6 +88,17 @@ PUBLIC_TYPE_FAIL_TEXT = {
     "no effect",
     "public fail into dark",
 }
+BAD_PIVOT_TEXT = {
+    "same fire pressure",
+    "still risks",
+    "likely still bad",
+    "does not solve",
+    "does not cleanly",
+    "still weak",
+    "stays exposed",
+}
+
+
 HAZARD_TEMPO_RISK_TEXT = {
     "cannot afford",
     "fire hit",
@@ -254,12 +265,15 @@ def score_action(
     if fixture.get("baseline_action_id") == action.get("id"):
         _add(contributions, "baseline", 1, "fixture baseline action for comparison")
 
+    is_bad_pivot = kind == "switch" and _has_any(text, BAD_PIVOT_TEXT)
     if kind == "switch":
-        if "ace_preservation" in tags or "switching" in tags or "hidden_coverage" in tags:
+        if not is_bad_pivot and (
+            "ace_preservation" in tags or "switching" in tags or "hidden_coverage" in tags
+        ):
             _add(contributions, "public_switch", 8, "switch addresses a public risk in this fixture")
-        if "preserve" in text or "handles" in text:
+        if not is_bad_pivot and ("preserve" in text or "handles" in text):
             _add(contributions, "preserve_value", 4, "action text preserves a high-value mon")
-        if "same fire pressure" in text or "still risks" in text or "likely still bad" in text:
+        if is_bad_pivot:
             _add(contributions, "bad_pivot", -8, "switch target does not solve the visible threat")
 
     if kind == "move":
@@ -384,7 +398,8 @@ def score_action(
 
     if "hidden_coverage" in tags:
         if kind == "switch":
-            _add(contributions, "hidden_coverage_respect", 10, "public hidden-coverage prior favors preserving the exposed mon")
+            if not is_bad_pivot:
+                _add(contributions, "hidden_coverage_respect", 10, "public hidden-coverage prior favors preserving the exposed mon")
         elif name in {"outrage", "dragon dance"} or "4x weak" in text or "hidden ice" in text:
             _add(contributions, "hidden_coverage_risk", -10, "action stays exposed to public hidden-coverage risk")
 

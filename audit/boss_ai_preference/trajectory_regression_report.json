@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-05-16T08:15:08+00:00",
+  "generated_at": "2026-05-16T08:20:35+00:00",
   "threshold": 0.8,
   "strict_label_count": 43,
-  "strict_agreement_count": 31,
-  "agreement_rate": 0.7209302325581395,
+  "strict_agreement_count": 32,
+  "agreement_rate": 0.7441860465116279,
   "passed": false,
   "skipped": {
     "both_good": 1,
@@ -17,7 +17,7 @@
     },
     "switch_policy": {
       "total": 25,
-      "agree": 18
+      "agree": 19
     }
   },
   "disagreements": [
@@ -32,20 +32,6 @@
       "score_a": 0,
       "score_b": 0,
       "same_first_move": true,
-      "lesson_type": "switch_policy",
-      "note": ""
-    },
-    {
-      "fixture_id": "falkner_pidgeotto_vs_geodude_rock_risk",
-      "trajectory_a_id": "plan_falkner_pidgeotto_vs_geodude_rock_risk_scout_probe_then_commit_move_sand_attack_move_gust",
-      "trajectory_b_id": "plan_falkner_pidgeotto_vs_geodude_rock_risk_switch_preserve_then_rescore_switch_noctowl_move_gust",
-      "label_choice": "a_better",
-      "scorer_choice": "b_better",
-      "first_move_a": "move_sand_attack",
-      "first_move_b": "switch_noctowl",
-      "score_a": 53,
-      "score_b": 72,
-      "same_first_move": false,
       "lesson_type": "switch_policy",
       "note": ""
     },
