@@ -1447,6 +1447,7 @@ def main() -> int:
     check_ld_a_zero()
     check_cp_zero()
     check_matchup_cli()
+    check_boss_ai_trajectory_regression()
 
     print("ALL RELEASE SMOKE CHECKS PASSED")
     return 0
@@ -1496,6 +1497,13 @@ def check_cp_zero() -> None:
 
 def check_matchup_cli() -> None:
     _run_subaudit("check_matchup_cli.py", "damage matchup CLI")
+
+
+def check_boss_ai_trajectory_regression() -> None:
+    _run_subaudit(
+        "check_boss_ai_trajectory_regression.py",
+        "boss AI trajectory regression",
+    )
 
 
 if __name__ == "__main__":
