@@ -23,8 +23,14 @@ Glicko-1 separately and says there is no official universal Elo standard.
 
 Open first by task:
 
-- Fresh unseen move choice: `live_core.md`, the public prompt, and at most one
-  tiny `heuristic_core/*.md` card.
+- Operating the Compounding Loop (default training/study mode):
+  `compounding_loop.md`. The case library at
+  `tools/pokemon_mastery/case_library/` is the durable shared brain; pre-freeze
+  context discipline + tier partition apply. Run one iteration via the runbook
+  recipe or let the pgoal Stop hook fire it automatically (Claude only).
+- Fresh unseen move choice: `live_core.md`, the public prompt, at most one
+  tiny `heuristic_core/*.md` card, and the K retrieved cases from
+  `tools/pokemon_mastery/case_library/cases.jsonl`.
 - Scoring or progress claims: `measurement_minigoal_2026-05.md` and the
   frozen answer artifact after answers are recorded.
 - Postmortem or cleanup: `heuristic_core/migration_map.md`, then the linked

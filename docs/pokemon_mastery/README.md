@@ -11,6 +11,7 @@ which pieces matter, and which move improves a concrete route.
 
 | File | Role |
 | --- | --- |
+| `compounding_loop.md` | Operator runbook for the durable, retrieval-augmented training loop driving validation top-move agreement to the stretch gate. **Read first** if you are a fresh session about to do mastery work. |
 | `active_goal.md` | Operating goal, study cadence, and serious-turn checklist. |
 | `live_core.md` | Tiny pre-freeze entrypoint for fresh unseen move choice. |
 | `heuristic_core/` | Small live heuristic cards and migration map from repeated old lessons. |

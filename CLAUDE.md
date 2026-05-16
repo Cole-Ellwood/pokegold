@@ -243,6 +243,20 @@ cited commit isn't an ancestor of the dev tip.
 Design intent for individual functions belongs at the function header in
 source (where it stays in sync with the code), not in this file.
 
+## Pokemon Mastery Compounding Loop
+
+The Pokemon Mastery training work is run as a durable, verifier-gated loop.
+The runbook is [docs/pokemon_mastery/compounding_loop.md](docs/pokemon_mastery/compounding_loop.md);
+the case library brain is in [tools/pokemon_mastery/case_library/](tools/pokemon_mastery/case_library/).
+Both Claude /pgoal sessions and Codex sessions can run iterations against
+the same case library. If you're in a fresh session and want to know loop
+state: `python ~/.claude/skills/pgoal/scripts/pgoal.py status` (Claude
+only), or read `tools/pokemon_mastery/case_library/loop_state.json`
+(both). To run a manual iteration, follow the "Run one iteration" recipe
+in the runbook. Per-iteration commits use the message form
+`pokemon-mastery-loop: iter N <phase> <replay_id|na>` so the loop's history
+is greppable.
+
 ## Workflow
 
 The repo runs on a senior-dev / CEO contract. The user has gameplay taste
