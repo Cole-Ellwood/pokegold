@@ -560,6 +560,7 @@ def cmd_trajectory_regress(args: argparse.Namespace) -> int:
             "passed": result.passed,
             "skipped": result.skipped,
             "tie_first_moves": result.tie_first_moves,
+            "cumulative_resolved": result.cumulative_resolved,
             "by_lesson_type": result.by_lesson_type,
             "disagreements": [
                 {
@@ -575,6 +576,9 @@ def cmd_trajectory_regress(args: argparse.Namespace) -> int:
                     "same_first_move": v.same_first_move,
                     "lesson_type": v.lesson_type,
                     "note": v.note,
+                    "cumulative_score_a": v.cumulative_score_a,
+                    "cumulative_score_b": v.cumulative_score_b,
+                    "resolved_by": v.resolved_by,
                 }
                 for v in result.disagreements
             ],
