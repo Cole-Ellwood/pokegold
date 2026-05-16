@@ -14,6 +14,18 @@ retype the spec.
 
 ## To (re-)arm the loop in a fresh Claude session
 
+Easiest — say to Claude: "arm the pokemon mastery pgoal".
+
+Equivalently:
+
+```bash
+python tools/pokemon_mastery/arm_pgoal.py
+```
+
+The wrapper reads these four files and shells out to the /pgoal harness.
+
+Fully manual:
+
 ```bash
 python ~/.claude/skills/pgoal/scripts/pgoal.py set \
   --objective "$(cat tools/pokemon_mastery/pgoal_spec/objective.txt)" \

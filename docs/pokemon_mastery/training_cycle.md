@@ -2,6 +2,11 @@
 
 Status: active operating plan for the current Pokemon mastery goal.
 
+The training/study work is now run as the durable Compounding Loop. See
+`compounding_loop.md` for the operator runbook, the 6 phases, the pre-freeze
+context discipline, the tier partition, and the verifier set. This file
+remains the broader operating plan and the standards for study blocks.
+
 The next study blocks should be judged by one question: did this make the next
 live move recommendation better?
 
