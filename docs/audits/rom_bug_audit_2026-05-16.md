@@ -121,6 +121,9 @@ bug-class lens — not just listed them.
 - `engine/battle/effect_commands.asm` BattleCommand_StatUp + RaiseStat (lines 4040-4138) — lens: stat-stage OOB, stat-recompute overflow. findings: 0 confirmed (low nibble of wLoweredStat & $f extracts stat index; MAX_STAT_LEVEL bound at 4066-4068; MAX_STAT_VALUE recompute bound at 4103-4107; .stats_already_max safety undoes the inc to keep stat-level monotonic).
 - `engine/battle/move_effects/transform.asm` — lens: stat-copy buffer-overflow, PP-corruption. findings: 0 (NUM_MOVES bound on .pp_loop; BattleSideCopy is direction-aware; SKETCH-PP set to 1, normal moves to 5).
 - `audio/cries.asm` (lines 1-60) — lens: cry-data validity. findings: 0 (pure data table; `channel_count N` + N × `channel ID, label` per Pokemon; no executable code in this file).
+- `engine/battle/effect_commands.asm` BattleCommand_StatDown (lines 4224-4314) — lens: stat-stage underflow, mist-protection. findings: 0 (`dec b; jr z, .CantLower` clamps at MIN_STAT_LEVEL=1; sharp-lower has its own `inc b` floor; CheckMist gates accuracy/evasion-down moves).
+- `engine/battle/effect_commands.asm` BattleCommand_Heal (lines 5886-5964) — lens: HP-restore overflow, REST state. findings: 0 (compare-current-vs-max via CompareBytes to detect already-full; REST sets sleep counter to fixed REST_SLEEP_TURNS+1).
+- `engine/games/slot_machine.asm` (lines 1-100, constants + entry) — lens: state-machine OOB, REEL_SIZE bounds. findings: 0 confirmed in the preamble; SlotsJumptable has 19 named states, ReelActionJumptable has 25 named actions; full handler not read.
 
 ### Regions deferred
 <!-- iterations append: - region (reason for deferral) -->
