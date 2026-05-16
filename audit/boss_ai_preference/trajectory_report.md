@@ -1,10 +1,10 @@
 # Boss AI Trajectory Preference Report
 
-Generated: 2026-05-13T11:25:48+00:00
+Generated: 2026-05-16T08:10:26+00:00
 
 ## Summary
 
-- Fixtures: 57
+- Fixtures: 59
 - Trajectory preferences: 69
 - Plan demonstrations: 3
 - Conflicting duplicate trajectory rows: 0

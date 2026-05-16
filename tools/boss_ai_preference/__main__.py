@@ -119,6 +119,10 @@ from .trajectory_data import (
     load_trajectory_preferences,
     write_trajectory_report,
 )
+from .trajectory_regression import (
+    evaluate_trajectory_corpus,
+    format_result as format_trajectory_regression,
+)
 
 
 def path_arg(value: str) -> Path:
@@ -539,6 +543,49 @@ def cmd_trajectory_report(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_trajectory_regress(args: argparse.Namespace) -> int:
+    fixtures = load_fixtures(args.fixtures)
+    trajectories = load_trajectory_preferences(args.trajectories, fixtures=fixtures)
+    result = evaluate_trajectory_corpus(
+        fixtures, trajectories, threshold=args.threshold
+    )
+    print(format_trajectory_regression(result))
+    if args.json_out is not None:
+        payload = {
+            "generated_at": result.generated_at,
+            "threshold": result.threshold,
+            "strict_label_count": result.strict_label_count,
+            "strict_agreement_count": result.strict_agreement_count,
+            "agreement_rate": result.agreement_rate,
+            "passed": result.passed,
+            "skipped": result.skipped,
+            "tie_first_moves": result.tie_first_moves,
+            "by_lesson_type": result.by_lesson_type,
+            "disagreements": [
+                {
+                    "fixture_id": v.fixture_id,
+                    "trajectory_a_id": v.trajectory_a_id,
+                    "trajectory_b_id": v.trajectory_b_id,
+                    "label_choice": v.label_choice,
+                    "scorer_choice": v.scorer_choice,
+                    "first_move_a": v.first_move_a,
+                    "first_move_b": v.first_move_b,
+                    "score_a": v.score_a,
+                    "score_b": v.score_b,
+                    "same_first_move": v.same_first_move,
+                    "lesson_type": v.lesson_type,
+                    "note": v.note,
+                }
+                for v in result.disagreements
+            ],
+        }
+        args.json_out.parent.mkdir(parents=True, exist_ok=True)
+        args.json_out.write_text(json.dumps(payload, indent=2))
+        print(f"Wrote {args.json_out}")
+    return 0 if result.passed else 1
+    return 0
+
+
 def cmd_fit_model(args: argparse.Namespace) -> int:
     report = write_reward_model_report(
         fixtures_path=args.fixtures,
@@ -873,6 +920,31 @@ def build_parser() -> argparse.ArgumentParser:
     trajectory_report.add_argument("--out", type=path_arg, default=DEFAULT_TRAJECTORY_REPORT_PATH)
     trajectory_report.add_argument("--json-out", type=path_arg, default=DEFAULT_TRAJECTORY_JSON_PATH)
     trajectory_report.set_defaults(func=cmd_trajectory_report)
+
+    trajectory_regress = subparsers.add_parser(
+        "trajectory-regress",
+        help="Grade the current Python scorer against trajectory preference labels "
+             "(first-move comparison; ties on shared turn-1 actions).",
+    )
+    trajectory_regress.add_argument("--fixtures", type=path_arg, default=DEFAULT_FIXTURES_PATH)
+    trajectory_regress.add_argument(
+        "--trajectories",
+        type=path_arg,
+        default=DEFAULT_TRAJECTORY_PREFERENCES_PATH,
+    )
+    trajectory_regress.add_argument(
+        "--threshold",
+        type=float,
+        default=0.8,
+        help="Minimum strict-label agreement rate (default 0.8).",
+    )
+    trajectory_regress.add_argument(
+        "--json-out",
+        type=path_arg,
+        default=None,
+        help="Optional path to write a JSON regression report.",
+    )
+    trajectory_regress.set_defaults(func=cmd_trajectory_regress)
 
     fit_model = subparsers.add_parser("fit-model")
     fit_model.add_argument("--fixtures", type=path_arg, default=DEFAULT_FIXTURES_PATH)

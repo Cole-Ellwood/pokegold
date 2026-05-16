@@ -1,0 +1,193 @@
+{
+  "generated_at": "2026-05-16T08:15:08+00:00",
+  "threshold": 0.8,
+  "strict_label_count": 43,
+  "strict_agreement_count": 31,
+  "agreement_rate": 0.7209302325581395,
+  "passed": false,
+  "skipped": {
+    "both_good": 1,
+    "neither_best_plan_missing": 25
+  },
+  "tie_first_moves": 4,
+  "by_lesson_type": {
+    "sequence_policy": {
+      "total": 18,
+      "agree": 13
+    },
+    "switch_policy": {
+      "total": 25,
+      "agree": 18
+    }
+  },
+  "disagreements": [
+    {
+      "fixture_id": "brock_golem_vs_vaporeon_explosion_question",
+      "trajectory_a_id": "plan_brock_golem_vs_vaporeon_explosion_question_sacrifice_trade_for_clean_switch_move_explosion_move_explosion",
+      "trajectory_b_id": "plan_brock_golem_vs_vaporeon_explosion_question_attack_now_move_explosion_move_explosion",
+      "label_choice": "a_better",
+      "scorer_choice": "tie",
+      "first_move_a": "move_explosion",
+      "first_move_b": "move_explosion",
+      "score_a": 0,
+      "score_b": 0,
+      "same_first_move": true,
+      "lesson_type": "switch_policy",
+      "note": ""
+    },
+    {
+      "fixture_id": "falkner_pidgeotto_vs_geodude_rock_risk",
+      "trajectory_a_id": "plan_falkner_pidgeotto_vs_geodude_rock_risk_scout_probe_then_commit_move_sand_attack_move_gust",
+      "trajectory_b_id": "plan_falkner_pidgeotto_vs_geodude_rock_risk_switch_preserve_then_rescore_switch_noctowl_move_gust",
+      "label_choice": "a_better",
+      "scorer_choice": "b_better",
+      "first_move_a": "move_sand_attack",
+      "first_move_b": "switch_noctowl",
+      "score_a": 53,
+      "score_b": 72,
+      "same_first_move": false,
+      "lesson_type": "switch_policy",
+      "note": ""
+    },
+    {
+      "fixture_id": "clair_dragonair_vs_suicune_hidden_ice_beam",
+      "trajectory_a_id": "plan_clair_dragonair_vs_suicune_hidden_ice_beam_attack_now_move_thunder_move_thunder",
+      "trajectory_b_id": "plan_clair_dragonair_vs_suicune_hidden_ice_beam_switch_preserve_then_rescore_switch_kingdra_move_thunder",
+      "label_choice": "a_better",
+      "scorer_choice": "b_better",
+      "first_move_a": "move_thunder",
+      "first_move_b": "switch_kingdra",
+      "score_a": 52,
+      "score_b": 72,
+      "same_first_move": false,
+      "lesson_type": "switch_policy",
+      "note": ""
+    },
+    {
+      "fixture_id": "chuck_poliwrath_vs_pidgeotto_ice_punch",
+      "trajectory_a_id": "plan_chuck_poliwrath_vs_pidgeotto_ice_punch_switch_preserve_then_rescore_switch_sudowoodo_move_focus_punch",
+      "trajectory_b_id": "plan_chuck_poliwrath_vs_pidgeotto_ice_punch_status_once_then_attack_move_hypnosis_move_focus_punch",
+      "label_choice": "a_better",
+      "scorer_choice": "b_better",
+      "first_move_a": "switch_sudowoodo",
+      "first_move_b": "move_hypnosis",
+      "score_a": 54,
+      "score_b": 55,
+      "same_first_move": false,
+      "lesson_type": "switch_policy",
+      "note": "you have a flying resist for a reason, use it"
+    },
+    {
+      "fixture_id": "whitney_miltank_vs_geodude_rollout_temptation",
+      "trajectory_a_id": "plan_whitney_miltank_vs_geodude_rollout_temptation_pressure_recover_then_lock_move_body_slam_move_body_slam_move_milk_drink_move_rollout",
+      "trajectory_b_id": "plan_whitney_miltank_vs_geodude_rollout_temptation_attack_now_move_body_slam_move_body_slam",
+      "label_choice": "a_better",
+      "scorer_choice": "tie",
+      "first_move_a": "move_body_slam",
+      "first_move_b": "move_body_slam",
+      "score_a": 0,
+      "score_b": 0,
+      "same_first_move": true,
+      "lesson_type": "sequence_policy",
+      "note": "Use Body Slam pressure first, heal only around the danger threshold, then consider Rollout after paralysis or a safe board. Opening with Milk Drink, switching, or Body Slam without a recovery/lock branch misses the taught line."
+    },
+    {
+      "fixture_id": "whitney_miltank_vs_geodude_rollout_temptation",
+      "trajectory_a_id": "plan_whitney_miltank_vs_geodude_rollout_temptation_pressure_recover_then_lock_move_body_slam_move_body_slam_move_milk_drink_move_rollout",
+      "trajectory_b_id": "plan_whitney_miltank_vs_geodude_rollout_temptation_switch_preserve_then_rescore_switch_girafarig_move_body_slam",
+      "label_choice": "a_better",
+      "scorer_choice": "b_better",
+      "first_move_a": "move_body_slam",
+      "first_move_b": "switch_girafarig",
+      "score_a": 50,
+      "score_b": 58,
+      "same_first_move": false,
+      "lesson_type": "sequence_policy",
+      "note": "Use Body Slam pressure first, heal only around the danger threshold, then consider Rollout after paralysis or a safe board. Opening with Milk Drink, switching, or Body Slam without a recovery/lock branch misses the taught line."
+    },
+    {
+      "fixture_id": "erika_victreebel_vs_snorlax_sleep_or_boost",
+      "trajectory_a_id": "plan_erika_victreebel_vs_snorlax_sleep_or_boost_sleep_then_setup_then_attack_move_sleep_powder_move_swords_dance_move_sludge_bomb",
+      "trajectory_b_id": "plan_erika_victreebel_vs_snorlax_sleep_or_boost_status_once_then_attack_move_sleep_powder_move_sludge_bomb",
+      "label_choice": "a_better",
+      "scorer_choice": "tie",
+      "first_move_a": "move_sleep_powder",
+      "first_move_b": "move_sleep_powder",
+      "score_a": 0,
+      "score_b": 0,
+      "same_first_move": true,
+      "lesson_type": "sequence_policy",
+      "note": "Sleep Powder then immediate Sludge Bomb is a partial line. The taught policy uses sleep to create the Swords Dance turn before attacking."
+    },
+    {
+      "fixture_id": "lance_yanma_vs_lapras_sleep_powder_or_quiver_dance",
+      "trajectory_a_id": "plan_lance_yanma_vs_lapras_sleep_powder_or_quiver_dance_sleep_then_setup_then_attack_move_sleep_powder_move_quiver_dance_move_giga_drain",
+      "trajectory_b_id": "plan_lance_yanma_vs_lapras_sleep_powder_or_quiver_dance_status_once_then_attack_move_sleep_powder_move_giga_drain",
+      "label_choice": "a_better",
+      "scorer_choice": "tie",
+      "first_move_a": "move_sleep_powder",
+      "first_move_b": "move_sleep_powder",
+      "score_a": 0,
+      "score_b": 0,
+      "same_first_move": true,
+      "lesson_type": "sequence_policy",
+      "note": "Sleep Powder then immediate Giga Drain is only the status half of the line. The taught plan uses the sleep turn to Quiver Dance before attacking."
+    },
+    {
+      "fixture_id": "jasmine_steelix_vs_quilava_fire_threat",
+      "trajectory_a_id": "plan_jasmine_steelix_vs_quilava_fire_threat_attack_now_move_rock_slide_move_rock_slide",
+      "trajectory_b_id": "plan_jasmine_steelix_vs_quilava_fire_threat_switch_preserve_then_rescore_switch_skarmory_move_rock_slide",
+      "label_choice": "a_better",
+      "scorer_choice": "b_better",
+      "first_move_a": "move_rock_slide",
+      "first_move_b": "switch_skarmory",
+      "score_a": 58,
+      "score_b": 62,
+      "same_first_move": false,
+      "lesson_type": "switch_policy",
+      "note": "Fixture public notes say revealed Flame Wheel is chip, not a reason to panic-switch; Rock Slide has the stronger route and KO pressure, while Skarmory over-preserves unless stronger Fire coverage is confirmed."
+    },
+    {
+      "fixture_id": "koga_ariados_vs_typhlosion_spikes_or_toxic",
+      "trajectory_a_id": "plan_koga_ariados_vs_typhlosion_spikes_or_toxic_switch_preserve_then_rescore_switch_tentacruel_move_leech_life",
+      "trajectory_b_id": "plan_koga_ariados_vs_typhlosion_spikes_or_toxic_status_once_then_attack_move_toxic_move_leech_life",
+      "label_choice": "a_better",
+      "scorer_choice": "b_better",
+      "first_move_a": "switch_tentacruel",
+      "first_move_b": "move_toxic",
+      "score_a": 54,
+      "score_b": 55,
+      "same_first_move": false,
+      "lesson_type": "switch_policy",
+      "note": "Revealed Flamethrower is a guaranteed KO into Ariados, so the Tentacruel pivot preserves the hazard/status piece while Toxic spends the turn before any poison route can convert."
+    },
+    {
+      "fixture_id": "chuck_poliwrath_vs_alakazam_hypnosis_or_ice_punch",
+      "trajectory_a_id": "plan_chuck_poliwrath_vs_alakazam_hypnosis_or_ice_punch_switch_preserve_then_rescore_switch_umbreon_move_surf",
+      "trajectory_b_id": "plan_chuck_poliwrath_vs_alakazam_hypnosis_or_ice_punch_status_once_then_attack_move_hypnosis_move_surf",
+      "label_choice": "a_better",
+      "scorer_choice": "b_better",
+      "first_move_a": "switch_umbreon",
+      "first_move_b": "move_hypnosis",
+      "score_a": 54,
+      "score_b": 56,
+      "same_first_move": false,
+      "lesson_type": "switch_policy",
+      "note": "Umbreon is the clean public Psychic answer because romhack Psychic has no effect on Dark; Hypnosis can work if it hits, but it gambles Poliwrath into faster Psychic while the pivot exists."
+    },
+    {
+      "fixture_id": "morty_haunter_vs_noctowl_sleep_line",
+      "trajectory_a_id": "plan_morty_haunter_vs_noctowl_sleep_line_status_once_then_attack_move_hypnosis_move_night_shade",
+      "trajectory_b_id": "plan_morty_haunter_vs_noctowl_sleep_line_setup_once_then_attack_move_curse_move_night_shade",
+      "label_choice": "a_better",
+      "scorer_choice": "tie",
+      "first_move_a": "move_hypnosis",
+      "first_move_b": "move_curse",
+      "score_a": 56,
+      "score_b": 56,
+      "same_first_move": false,
+      "lesson_type": "sequence_policy",
+      "note": "Curse spends Haunter HP and starts a slower route while legal sleep can neutralize the current Noctowl immediately; use sleep first, then re-score hit/miss/switch."
+    }
+  ]
+}
