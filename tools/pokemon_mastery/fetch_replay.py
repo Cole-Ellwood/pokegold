@@ -45,14 +45,22 @@ SEARCH_URL_TEMPLATE = "https://replay.pokemonshowdown.com/search.json?format={fm
 LOG_URL_TEMPLATE = "https://replay.pokemonshowdown.com/{replay_id}.log"
 
 
+_USER_AGENT = "pokemon-mastery-compounding-loop/0.1 (+local)"
+
+
+def _open(url: str):
+    req = urllib.request.Request(url, headers={"User-Agent": _USER_AGENT})
+    return urllib.request.urlopen(req, timeout=30)
+
+
 def _fetch_json(url: str) -> list[dict]:
-    with urllib.request.urlopen(url, timeout=30) as resp:
+    with _open(url) as resp:
         body = resp.read().decode("utf-8")
     return json.loads(body)
 
 
 def _fetch_text(url: str) -> str:
-    with urllib.request.urlopen(url, timeout=30) as resp:
+    with _open(url) as resp:
         return resp.read().decode("utf-8", errors="replace")
 
 
