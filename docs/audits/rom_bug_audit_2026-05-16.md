@@ -98,6 +98,9 @@ bug-class lens — not just listed them.
 - `engine/battle/move_effects/fury_cutter.asm` — lens: counter-byte wraparound. findings: 0 crash-class; counter at wPlayerFuryCutterCount can wrap to 0 after 256 consecutive hits (a cosmetic-only Sev 0 issue — practical reachability ~zero).
 - `engine/gfx/load_pics.asm` (lines 1-120) — lens: pic-bank confusion, species-OOB into PokemonPicPointers. findings: 0 (`GetFrontpic` filters species via `and a; ret z`, `cp NUM_POKEMON + 1; ret z`, `cp EGG + 1; ret nc`, and a dedicated UNOWN branch reading bounded `wUnownLetter`).
 - `macros/data.asm:23` (`percent` macro definition) — lens: percent expansion correctness. findings: 0 (`* $ff / 100` confirmed; 100 percent = 255).
+- `engine/menus/save.asm:540-820` — lens: save-load-version-validation, checksum-bypass. findings: 1 (Finding 8 — `cp $ff` legacy fallback still in v2 loader). Both CheckPrimarySaveFile and CheckBackupSaveFile have the issue.
+- `constants/misc_constants.asm:28-35` (SAVE_FORMAT_VERSION + spec comment) — lens: spec-vs-code alignment. findings: 0 here but flagged the spec/code mismatch in save.asm (Finding 8).
+- `tools/audit/check_save_format_version.py` — lens: existing audit coverage. findings: 0 (audit scope is layout fingerprint, not loader code; Finding 8 is in the gap between audits — proposed adding a strict-loader audit in the fix sketch).
 
 ### Regions deferred
 <!-- iterations append: - region (reason for deferral) -->
@@ -292,6 +295,44 @@ Finding template — copy/paste this block per finding:
 - **Fix sketch:** Two layers. (a) Add `assert_table_length NUM_ITEMS - NUM_TMHM_MAIL_ETC` (or whatever the correct exclusion is) on `ItemEffects` — at minimum, hard-state the table's intended size at build time. (b) Add a runtime guard in `_DoItemEffect`: `ld a, [wCurItem]; and a; ret z; cp ItemEffects.end - ItemEffects; ret nc` before the dispatch. Costs ~6 bytes for an unambiguous bound check.
 - **False-positive risk:** Mechanism is solid. Practical reachability is *low* under normal play (pack UI filters) but *non-zero* in the presence of save corruption — and mailbox/item-glitch-class bugs in the Gen 2 family historically arose from exactly this kind of "trust the caller" dispatcher. Sev 2 reflects "real but requires upstream corruption to fire."
 
+### Finding 8 — Save loader still accepts `$ff` legacy version after the spec said v2+ must remove it
+- **Severity:** 3
+- **Confidence:** HIGH
+- **Category:** save-format (code/spec mismatch with corruption risk on load)
+- **File:** `engine/menus/save.asm:625` and `engine/menus/save.asm:653`
+- **Symptom:** A v1-era save (SRAM with `sSaveFormatVersion = $ff`, the pre-marker sentinel) is loaded as if it were a current v2 save, but the WRAM layout in v2 differs from v1 by definition (the marker was added/bumped precisely because the layout drifted). The copy at lines 628-631 / 656-659 (`ld bc, wOptionsEnd - wOptions`; `call CopyBytes`) reads v2-sized blocks out of SRAM that was written with v1 sizes. Fields drift in/out of alignment: stat bytes, current-map data, party data may all read from the wrong offset. After load, the player sees garbage stats, wrong map, glitched name strings, or worse, the next save writes back v2-shaped data over v1 offsets → permanent corruption of any feature whose offset moved.
+- **Trigger:** Any user with a v1-era save (anyone who saved during development before the version marker was introduced) loading this build. Per `CLAUDE.md`'s "no migration code anywhere," there is no opt-in / opt-out / conversion path — the save loads silently and the corruption is invisible until a player notices wrong stats or a wrong field name.
+- **Why:**
+  ```asm
+  ; engine/menus/save.asm:613
+  CheckPrimarySaveFile:
+      ld a, BANK(sCheckValue1)
+      call OpenSRAM
+      ld a, [sCheckValue1]
+      cp SAVE_CHECK_VALUE_1
+      jr nz, .nope
+      ld a, [sCheckValue2]
+      cp SAVE_CHECK_VALUE_2
+      jr nz, .nope
+      ld a, [sSaveFormatVersion]
+      cp SAVE_FORMAT_VERSION         ; current = 2
+      jr z, .version_ok
+      cp $ff                          ; <-- still accepting legacy
+      jr nz, .nope
+  .version_ok
+      ...                             ; copies v2-sized blocks
+  ```
+  The spec lives at `constants/misc_constants.asm:29-34` and is unambiguous:
+  > `$FF` means "legacy save predating this marker" and is accepted only by v1 to absorb existing dev/playtest saves on first deploy. **v2+ must NOT keep the `$FF` accept path; only the current version and explicitly-migrated previous versions are valid.**
+
+  The version constant is `DEF SAVE_FORMAT_VERSION EQU 2` at line 35. So the loader is at v2 but still accepts the v1-only fallback. Same code-spec mismatch exists in `CheckBackupSaveFile` (line 650-654). The inline comment at the offending line itself says `v2+ must remove this`.
+
+  The existing audit `tools/audit/check_save_format_version.py` doesn't catch this: it fingerprints WRAM/SRAM **source layout** and checks the fingerprint matches the recorded one for the current version. It does not inspect the loader for stale legacy-version branches. (Reasonable scope for that audit — it's a different concern.)
+
+  A previous audit pass already noted this issue (`docs/codex-optimizations.html` flagged it). It remained unfixed.
+- **Fix sketch:** Remove the two `cp $ff; jr nz, .nope` branches (lines 625-626 and 653-654), so a non-matching version straight-up rejects the save (`.nope` path → fall through to backup or to defaults). Also remove the comment cruft. Optional follow-up: add a new audit `tools/audit/check_save_loader_version_strict.py` that greps for `cp $ff` in save.asm and fails if found — this prevents the same drift recurring on future bumps.
+- **False-positive risk:** The mechanism is concrete. The only thing that softens the impact is whether real users actually have v1-era saves out in the wild. For a hack distributed via patch + cart-flashing tools, dev/playtest saves do exist; CLAUDE.md treats save-format-version bumps as user-approval items precisely because this risk is real. Sev 3 (not 4-5) because the corruption is *silent* and *gradual* rather than a hard freeze — but the freeze could come downstream when corrupted state (e.g. an OOB species id, a >100 level byte) hits one of the unguarded dispatchers documented in Findings 2/6/7.
+
 ---
 
 ## Summary table
@@ -305,6 +346,7 @@ Finding template — copy/paste this block per finding:
 | 5 | `Init.wait` hangs if entered with LCD off | 1 | HIGH | infinite-loop | [home/init.asm:51](home/init.asm:51) |
 | 6 | `DoBattle` "find first non-fainted OT mon" loop unbounded | 2 | HIGH | oob-read | [engine/battle/core.asm:22](engine/battle/core.asm:22) |
 | 7 | `_DoItemEffect` OOB-jumps when `wCurItem` is 0 or > 187 | 2 | HIGH | jump-table OOB | [engine/items/item_effects.asm:1](engine/items/item_effects.asm:1) |
+| 8 | Save loader still accepts `$ff` legacy version at v2 — code/spec mismatch, silent save corruption on load | 3 | HIGH | save-format | [engine/menus/save.asm:625](engine/menus/save.asm:625), [engine/menus/save.asm:653](engine/menus/save.asm:653) |
 
 **Triage hint (post-iter 2):** All 7 findings remain latent — no reproducible trigger in current code. Findings 2, 6, 7 are the most operationally important: each is a missing-bound-check on a dispatcher/loop that "trusts the caller," and the cost of the fix is 4-8 bytes per site. The cheapest hardening pass would batch them: add explicit bound-check guards to `RunMapSetupScript`, `DoBattle .loop`, and `_DoItemEffect` together, plus matching `assert_table_length` directives on `MapSetupScripts` and `ItemEffects`. No Sev 3+ crashes have been observed yet across **41 review entries (~35 unique files; some re-read with different lenses)**. Deeper passes need to target high-value crash surfaces still un-audited: full `engine/battle/core.asm` (8748 lines), `engine/overworld/scripting.asm` script-cmd handlers (162 commands), `engine/battle/effect_commands.asm` (6634 lines), audio playback (notes/SFX), engine/link/, and the Gen-2 trade-cable / Time Capsule code paths.
 
