@@ -389,6 +389,17 @@ Finding template — copy/paste this block per finding:
 - **Full read of `engine/battle/effect_commands.asm` (6634 lines)** and `engine/battle/ai/boss_policy_move.asm` (5906 lines).
 - **VRAM/OAM timing audit during cutscenes** — `engine/movie/*.asm` and `engine/credits/` use unusual PPU timing; not crash-prone in vanilla but the hack hasn't been verified.
 
+**Self-audit pass (iter 10):** Each of the 8 findings was re-verified by re-opening its cited file at its cited line and confirming the code still matches the finding's quoted block. No false-positives; all 8 citations are accurate as of commit at iter 9. Specifically re-checked:
+
+- Finding 1: `home/random.asm:50` — `RandomRange::` header confirmed; `xor a; sub c; .mod sub c; jr nc, .mod` infinite-loop on `c=0` confirmed at lines 57-61.
+- Finding 2: `engine/overworld/map_setup.asm:1` — `RunMapSetupScript::` confirmed; `and $f; dec a; add hl, bc; add hl, bc` without bound check confirmed at lines 3-9.
+- Finding 3: `home/header.asm:20-35` — JumpTable section at `$0028` confirmed; the commented-out `; SECTION "rst30", ROM0[$0030]` at line 32 confirms the slot is occupied by JumpTable's tail rather than a `rst $38` crash trap.
+- Finding 4: `home/delay.asm:1-13` — `DelayFrame::` `.halt` loop confirmed; relies on `wVBlankOccurred` being cleared by VBlank handler, which only fires with LCD on.
+- Finding 5: `home/init.asm:51-54` — `.wait` loop polling `rLY` for `LY_VBLANK + 1` confirmed; no LCD-on guard.
+- Finding 6: `engine/battle/core.asm:19-28` — `.loop` walking `wOTPartyMon*HP` with no bound on `d` confirmed.
+- Finding 7: `engine/items/item_effects.asm:1-12` — `_DoItemEffect::` `dec a; ld hl, ItemEffects; rst JumpTable` confirmed; `ItemEffects` table at line 14 with no `assert_table_length`.
+- Finding 8: `engine/menus/save.asm:625` and `:653` — `cp $ff ; legacy save predating the marker; v2+ must remove this` confirmed at both sites; `SAVE_FORMAT_VERSION EQU 2` confirmed at `constants/misc_constants.asm:35`.
+
 **Process notes for the next /pgoal session that picks this up:**
 
 - The verifier (`scripts/verify_rom_bug_audit.py`) gates only on count + structure; it doesn't validate finding accuracy. Spot-check each finding by re-opening the cited file at the cited line before declaring "ready to fix."
