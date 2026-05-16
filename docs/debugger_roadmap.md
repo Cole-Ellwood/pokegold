@@ -424,6 +424,7 @@ debugger layer. Each entry is tagged with **status** (`have` / `extend` /
 | Hot-swap ROM bytes mid-scenario | new | P5 | For "what if this instruction were `xor a` instead?" probes |
 | Cycle-accurate alternate backend (SameBoy) | new | P4 | Spawn SameBoy as a subprocess, drive via libretro / SameBoy SDK; same scenario must produce same `wCurDamage` |
 | Cycle-accurate alternate backend (gambatte) | new | P4 | Same idea; gambatte is the accuracy reference |
+| **VBA-M parity backend** | new | P4 | Lower-automation backend: savestate load + frame tick + memdump only, no breakpoint integration. User plays in VBA — divergence between accuracy reference and VBA is the May 2026 tile-jumble bug class |
 | Cycle-accurate alternate backend (BGB) | new | P9 | Windows only; deferred |
 | Emulator divergence flagger | new | P4 | Run scenario on N emulators, fail if `wCurDamage` / `wEnemyMonHP` / etc differ |
 | ROM reload on rebuild | partial | P1 | Currently re-spawn; should be in-process reload |
@@ -1032,6 +1033,12 @@ entry. Migration is non-breaking.
   scripting REPL or a small thin RPC wrapper we write.
 - **[gambatte](https://github.com/sinamas/gambatte)** — accuracy
   reference. Same RPC pattern.
+- **[VBA-M](https://vba-m.com/)** — fourth cross-emu backend, parity
+  with the user's play emulator. Lower-automation: savestate load +
+  frame tick + memdump. Driven via subprocess + savestate file IO; the
+  legacy `.sgm` decoder under
+  [`tools/damage_debugger/legacy/sgm_decoder.py`](../tools/damage_debugger/legacy/)
+  is the starting point and gets promoted in P6.
 - **[Apache Arrow](https://arrow.apache.org/) + Parquet** — columnar
   event store. Read via PyArrow.
 - **[DuckDB](https://duckdb.org/)** — embedded SQL over Parquet/JSONL.
@@ -1232,19 +1239,22 @@ the divergence detector becomes a *test* of the recorder itself.
 **Approval point.** **YES — this is the foundation for time-travel +
 LLM contract. Sanity-check effort vs value before continuing.**
 
-### P4 — Cross-emulator differential + time-travel queries (4–5 days)
+### P4 — Cross-emulator differential + time-travel queries (5–6 days)
 
 The fuzz/differential research called this **the single highest-ROI
 addition**: "any time a property fails on PyBoy, you can immediately
 answer 'is this our bug or a PyBoy emulation bug?' without human
 work." [SameBoy](https://sameboy.github.io/) is the de-facto
 reference (passes Mooneye, Wilbert Pol, blargg; >99.9% on ~2800
-games).
+games). Per §11.3, **VBA-M is the fourth backend** — the user's
+play emulator — so cross-emu reports four columns.
 
 **Deliverables.**
 
-- SameBoy + gambatte subprocess backends in
-  `tools/debugger/kernel/backends/`.
+- SameBoy + gambatte + **VBA-M** subprocess backends in
+  `tools/debugger/kernel/backends/`. VBA-M is parity-only:
+  savestate load + frame tick + memdump; no breakpoints (its CLI
+  surface doesn't expose them reliably).
 - Cross-emu diff harness: same scenario, N emulators, diff
   `(WRAM, regs)` hash every frame; first divergence → byte-diff to
   show *exactly which addresses* started to differ. This is
@@ -1573,23 +1583,26 @@ just persisting state.
 
 | Phase | Days | Risk | Approval |
 | --- | --- | --- | --- |
-| P0 — Plan + baseline | 1 | None | **YES (before P1)** |
+| P0 — Plan + baseline (approved 2026-05-16) | 1 | None | ✅ DONE |
 | P1 — Symbol + state | 3–4 | Low | No |
 | P2 — Tracing & macros | 4–5 | Medium | No |
-| P3 — Event store + omniscient | 4–5 | Medium-high | **YES** |
-| P4 — Cross-emu + time-travel | 4–5 | Medium | **YES** |
+| P3 — Event store + omniscient + MCP | 5–7 | Medium-high | **YES** |
+| P4 — Cross-emu (4 backends) + time-travel | 5–6 | Medium | **YES** |
 | P5 — Battle viz + multi-axis fuzz | 4–5 | Low | No |
-| P6 — DAP / VS Code + save lab | 5–7 | Medium | **YES** |
-| P7 — Static analyzer | 5–7 | Medium | No |
+| P6 — DAP / VS Code + save lab (incl. VBA `.sgm` promotion) | 5–7 | Medium | **YES** |
+| P7 — Static analyzer (register-summary keystone) | 5–7 | Medium | No |
 | P8 — Stress + bisect + vanilla diff | 4–6 | Low | No |
 | P9 — Graphics / overworld / audio | 5–7 | Low | No |
 | P10 — Web UI + experiment store | 5–7 | Medium | **YES** |
-| P11 — LLM hypothesis tracker | 3–5 | Low | No |
+| P11 — LLM hypothesis tracker (persistence + citation only) | 3–5 | Low | No |
 | P12 — Polish | 3–5 | Low | **YES (done)** |
-| **Total** | **50–73** | | |
+| **Total** | **51–75** | | |
 
 That's ~10–15 weeks at "one focused Claude day per calendar day."
 Realistically with batching and overlap, **8–12 weeks** of wall time.
+
+User confirmed full P0–P12 commit on 2026-05-16. P0 closed
+(approval-by-AskUserQuestion). P1 unblocked for next session.
 
 ## 8. Risk Register
 
@@ -1764,6 +1777,8 @@ phase ships.
   - PyBoy docs — <https://docs.pyboy.dk/>
   - PyBoy MCP server — <https://mcpmarket.com/server/pyboy>
 - VBA-M — <https://vba-m.com/>
+  - VBA-M source — <https://github.com/visualboyadvance-m/visualboyadvance-m>
+  - VBA `.sgm` savestate format (referenced from `memory/reference_vba_sgm_format.md`)
 - rgbds-vscode (DonaldHays) —
   <https://github.com/DonaldHays/rgbds-vscode>
 - hgb-vscode (Hawkbat) — <https://github.com/Hawkbat/hgb-vscode>
@@ -2108,26 +2123,97 @@ debugger and the mastery loop share infrastructure:
 Compatible. The debugger roadmap does not block the mastery loop, and
 the mastery loop does not block the debugger.
 
-## 11. Open Questions
+## 11. Resolved Decisions (2026-05-16, user-confirmed)
 
-These need user input before final commitment. P0's approval point is
-where to resolve them.
+The original §11 listed open questions for P0 approval. The user
+answered the consequential ones in-session; the answers are persisted
+under `~/.claude/goal-state/.../decisions.jsonl` and summarized here.
 
-1. **Web UI vs TUI vs both vs neither.** The plan assumes both; the
-   user might want just CLI + TUI, or just CLI + web.
-2. **Cross-emu integration depth.** SameBoy + gambatte are the high-value
-   ones; do we also do BGB (Windows-only, closed-source, harder to RPC)?
-3. **VS Code DAP scope.** Full source-level debug, or just "click a label
-   to start a scenario trace from there"? The former is significantly
-   more work; the latter is 20% of the value at 10% of the effort.
-4. **LLM hypothesis tracker scope.** Just persistence + citation
-   grounding, or a more active "Claude proposes hypotheses
-   autonomously"?
-5. **Vanilla pokegold differential.** Worth building? The hack diverges
-   significantly; the universe of "parity-preserving subsystems" may be
-   small enough that point-audits are cheaper than a full diff harness.
-6. **Pacing.** This is a 50–73-day plan. Do we want to bind to it, or
-   do we want to ship P1–P3 and reassess?
+### 11.1 Scope: full P0–P12 commitment
+
+**Decision.** Bind to the full P0–P12 plan, not the P0–P3 first-cut
+default in §10.8.
+
+**Consequences.** Each phase's named approval gates remain in force —
+P3, P4, P6, P10, P12 still pause for explicit user nod before
+proceeding to the next phase. "Full commitment" means we won't
+re-litigate the scope of the roadmap; it doesn't mean every phase
+runs unsupervised.
+
+### 11.2 UI primacy: Claude-centric
+
+**Decision.** Primary surfaces are **MCP server + CLI + Markdown**.
+TUI / Web UI / DAP remain in the plan as Phase deliverables but are
+framed as Claude-centric: each renders rich artifacts that the user
+*reviews* even if Claude doesn't interactively use them.
+
+**Why.** The user delegated UI choice with "it's just for you (Claude)
+to use, you decide." For Claude, the canonical surfaces are
+programmatic (MCP), committed (Markdown), and one-shot (CLI). The
+visual surfaces (TUI, Web, DAP) are still useful — they produce
+shareable artifacts and the Web UI in particular is the natural home
+for the dataflow panel and time-travel scrubber when the user wants to
+inspect a long investigation.
+
+**Effect on phases.** No phase removed. P6 (DAP + save lab) and P10
+(Web UI + experiment store) keep their slots and approval gates;
+they're flagged "(Claude-renders; user-reviews)" so the framing is
+honest.
+
+### 11.3 Cross-emulator: PyBoy + SameBoy + gambatte + **VBA-M**
+
+**Decision.** Add VBA-M as a fourth cross-emulator backend.
+
+**Why VBA matters.** The user plays the ROM in VBA. The accuracy
+references (SameBoy, gambatte) tell us *"is the ROM right";* VBA-M
+tells us *"does the ROM behave right for the player."* Both questions
+are real. The May 2026 VBA tile jumble class proved divergence
+between PyBoy and VBA is itself a bug class worth catching, not just
+an emulator-quirk to dismiss.
+
+**Effect on P4.** Four backends instead of three. VBA-M support is
+intentionally lower-automation: savestate load (the `.sgm` decoder
+already in
+[tools/damage_debugger/legacy/](../tools/damage_debugger/legacy/)
+promoted, in P6), frame tick via subprocess, memory dump on pause.
+**No breakpoint integration** for VBA-M; it's a parity-check backend,
+not an instrumentation backend.
+
+**Effect on scenarios.** When `crossemu` runs in P4, it reports four
+columns: PyBoy / SameBoy / gambatte / VBA-M. Disagreement between
+SameBoy and gambatte = accuracy reference disagrees with itself (rare
+but possible; investigate the test ROM conformance gate). Disagreement
+between (SameBoy ∪ gambatte) and VBA-M = "the user sees something
+different than the reference says they should" — that's the May 2026
+class. Disagreement between PyBoy and the references = "PyBoy quirk;
+do not trust this for that subsystem until corrected."
+
+### 11.4 LLM hypothesis tracker: persistence + citation grounding only
+
+**Decision.** P11 ships persistence + citation grounding only. No
+autonomous hypothesis generation in V1.
+
+**Why.** Conservative path. Citation grounding is the floor that
+prevents the LLM from drifting into ungrounded claims; persistence
+makes investigations survive session changes. Autonomous generation
+can be added later (as V2 in a separate plan) if the persisted tree
+shows the manual workflow is the bottleneck.
+
+### 11.5 Vanilla pokegold differential
+
+**Decision.** Keep in P8 as planned. Not directly asked but per the
+"full commit" answer, defer trimming until P8's named approval gate.
+
+### 11.6 Pacing
+
+**Decision.** Bind to the 50–73-day estimate (8–12 weeks wall time
+with batching). Re-evaluate at each phase approval gate.
+
+---
+
+The remaining lines of §11.1–§11.6 are the authoritative scope of
+work. §10.8 is preserved as a historical record of the recommended
+first-cut; it's no longer the active plan.
 
 ## 12. Appendix A — Recipe-style task examples
 
@@ -2371,5 +2457,7 @@ change, one command answers "is this safe?" with cited evidence in
 language the user understands. Everything in this plan is in service
 of that bar.
 
-Now, P0 approval — does this scope feel right, or does it want
-trimming?
+P0 was approved on 2026-05-16 (user committed to full P0–P12 plan via
+AskUserQuestion; decisions logged in §11 and `decisions.jsonl`). P1
+is unblocked for the next session — start with the unified symbol +
+state service.
