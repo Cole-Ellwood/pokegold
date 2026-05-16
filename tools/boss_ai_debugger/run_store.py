@@ -898,7 +898,7 @@ def materialize_rom_score_scenarios(
     if not selected:
         return skipped_rom_score_materialization_report(
             selected_count=0,
-            reason="no generated spikes_spin scenarios available for score materialization",
+            reason="no generated move-policy scenarios available for score materialization",
         )
     return run_rom_score_materialization(
         selected,
@@ -911,10 +911,16 @@ def score_materialization_scenarios(
     *,
     limit: int,
 ) -> list[dict[str, Any]]:
+    supported_families = {
+        "spikes_spin",
+        "setup_heal",
+        "prediction_mix",
+        "support_handoff",
+    }
     candidates = [
         scenario
         for scenario in scenarios
-        if scenario.get("family") == "spikes_spin"
+        if scenario.get("family") in supported_families
     ]
 
     def priority(scenario: dict[str, Any]) -> tuple[int, str]:
@@ -926,10 +932,16 @@ def score_materialization_scenarios(
         )
         active_revealed = "active_revealed_rapid_spin" in tags
         risky_layer = "spikes_layers_1" in tags or "spikes_layers_2" in tags
-        return (
-            0 if active_revealed and risky_layer else 1,
-            str(scenario.get("id", "")),
-        )
+        family = str(scenario.get("family", ""))
+        if family == "spikes_spin" and active_revealed and risky_layer:
+            rank = 0
+        elif family == "spikes_spin":
+            rank = 1
+        elif family in {"prediction_mix", "support_handoff", "setup_heal"}:
+            rank = 2
+        else:
+            rank = 3
+        return (rank, str(scenario.get("id", "")))
 
     return sorted(candidates, key=priority)[:limit]
 

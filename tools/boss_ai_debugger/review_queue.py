@@ -20,6 +20,34 @@ HIGH_VALUE_VERDICTS = {
     "acceptable_top": 25,
 }
 
+MASTERY_TAG_BONUS = {
+    "hazard_retention": 10,
+    "rapid_spin": 10,
+    "spikes": 10,
+    "branch_action": 10,
+    "receiver_pricing": 10,
+    "cashout": 10,
+    "route_converter": 10,
+    "switch_sack": 10,
+    "setup_timing": 10,
+    "recovery_timing": 10,
+    "support_handoff": 10,
+    "reset_loop_denial": 10,
+    "prediction_mix": 10,
+    "public_info_gate": 10,
+    "role_package_ledger": 25,
+    "reversible_before_irreversible": 35,
+    "resisted_explosion_board_delta": 35,
+    "sleep_plus_cashout_package": 30,
+    "typed_status_absorber": 25,
+    "pass_receiver_survival": 25,
+    "clean_oracle_subset": 20,
+    "reversible_line_covers_active_and_branch": 20,
+    "resisted_explosion_free_owner": 20,
+    "cashout_immunity_guard": 20,
+    "low_value_absorber_available": 15,
+}
+
 
 def build_review_queue_from_scenarios(
     scenarios_path: Path,
@@ -113,13 +141,17 @@ def review_item(
         + min(20, len(condition_tags))
         + (10 if answer_changing_information else 0)
         + int(rom_probability * 10)
+        + mastery_tag_priority(policy_tags, condition_tags)
     )
+    strata = mastery_strata(policy_tags, condition_tags)
     digest = evidence_digest(evidence_refs, evidence_index or {})
     return {
         "scenario_id": str(verdict.get("scenario_id", "")),
         "verdict": verdict_name,
         "severity": severity,
         "priority_score": priority_score,
+        "mastery_strata": strata,
+        "newest_mastery_strata": strata,
         "lesson_key": lesson_key(policy_tags, evidence_refs),
         "rom_best_action_id": verdict.get("rom_best_action_id"),
         "rom_best_probability": rom_probability,
@@ -148,6 +180,46 @@ def review_item(
             answer_changing_information=answer_changing_information,
         ),
     }
+
+
+def mastery_tag_priority(policy_tags: list[str], condition_tags: list[str]) -> int:
+    tags = set(policy_tags) | set(condition_tags)
+    return min(70, sum(MASTERY_TAG_BONUS.get(tag, 0) for tag in tags))
+
+
+def mastery_strata(
+    policy_tags: list[str],
+    condition_tags: list[str],
+) -> list[str]:
+    tags = set(policy_tags) | set(condition_tags)
+    strata = []
+    if "hazard_retention" in tags or "rapid_spin" in tags or "spikes" in tags:
+        strata.append("hazard_spin_reset")
+    if "branch_action" in tags or "receiver_pricing" in tags:
+        strata.append("branch_receiver_pricing")
+    if "cashout" in tags or "route_converter" in tags:
+        strata.append("cashout_converter")
+    if "switch_sack" in tags or "switching" in tags or "defensive_sack" in tags:
+        strata.append("switch_sack_preservation")
+    if "setup_timing" in tags or "setup" in tags or "recovery_timing" in tags:
+        strata.append("setup_recovery_timing")
+    if "support_handoff" in tags or "reset_loop_denial" in tags:
+        strata.append("support_handoff_reset_denial")
+    if "prediction_mix" in tags or "prediction" in tags:
+        strata.append("prediction_risk_control")
+    if "reversible_before_irreversible" in tags or "reversible_line_covers_active_and_branch" in tags:
+        strata.append("reversible_vs_irreversible_cashout")
+    if "resisted_explosion_board_delta" in tags or "resisted_explosion_free_owner" in tags:
+        strata.append("resisted_explosion_board_delta")
+    if "role_package_ledger" in tags or "sleep_plus_cashout_package" in tags:
+        strata.append("role_package_reveal")
+    if "typed_status_absorber" in tags:
+        strata.append("typed_status_absorber")
+    if "pass_receiver_survival" in tags:
+        strata.append("pass_receiver_survival")
+    if "clean_oracle_subset" in tags:
+        strata.append("clean_oracle")
+    return strata
 
 
 def select_diverse_items(
@@ -294,6 +366,8 @@ def format_review_queue(queue: dict[str, Any]) -> str:
             f"{item['scenario_id']} rom={item['rom_best_action_id']}({probability:.1%}) "
             f"best={','.join(item['expected_best_action_ids']) or 'none'} tags={tags}"
         )
+        if item.get("mastery_strata"):
+            lines.append("      strata: " + ",".join(item["mastery_strata"]))
         lines.append(f"      {item['reason']}")
         if item["why"]:
             lines.append(f"      policy: {item['why']}")

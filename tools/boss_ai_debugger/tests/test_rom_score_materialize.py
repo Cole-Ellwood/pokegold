@@ -13,7 +13,9 @@ from tools.boss_ai_debugger.rom_score_materialize import (
     hook_equivalence_summary,
     materialization_for_scenario,
     move_ids_for_scenario,
+    parse_optional_spikes_layers,
     parse_spikes_layers,
+    policy_verdict_from_rom_selector,
     replay_controls_from_manifest,
     scenario_condition_tags,
     validate_score_materialization_base,
@@ -35,6 +37,7 @@ class RomScoreMaterializeTests(unittest.TestCase):
         scenario["expectation"]["condition_tags"] = [
             "spikes_layers_2",
             "active_revealed_rapid_spin",
+            "foresight_identified_ghost",
             "bench_revealed_rapid_spin",
         ]
 
@@ -48,6 +51,7 @@ class RomScoreMaterializeTests(unittest.TestCase):
         }
 
         self.assertEqual(patches[("wPlayerScreens", 0)], 2)
+        self.assertEqual(patches[("wEnemySubStatus1", 0)], 1 << 3)
         self.assertEqual(patches[("wPlayerUsedMoves", 0)], MOVES["RAPID_SPIN"])
         self.assertEqual(patches[("wBossAISeenPlayerSpeciesCount", 0)], 2)
         self.assertEqual(patches[("wBossAISpeciesUsedMoves", 4)], MOVES["RAPID_SPIN"])
@@ -56,6 +60,9 @@ class RomScoreMaterializeTests(unittest.TestCase):
         tags = {"spikes_layers_3", "active_revealed_rapid_spin"}
 
         self.assertEqual(parse_spikes_layers(tags), 3)
+
+    def test_optional_layer_parser_defaults_to_zero(self) -> None:
+        self.assertEqual(parse_optional_spikes_layers({"setup_window"}), 0)
 
     def test_scenario_condition_tags_reads_expectation(self) -> None:
         scenario = {"expectation": {"condition_tags": ["a", "b"]}}
@@ -110,6 +117,54 @@ class RomScoreMaterializeTests(unittest.TestCase):
         )
 
         self.assertEqual(report["selector_entry_scores"], [20, 20, 19, 28])
+
+    def test_public_policy_materialization_maps_synthetic_moves(self) -> None:
+        scenario = generate_scenarios(family="support_handoff", count=1, seed=9)[0]
+        scenario["tier"] = "mid"
+
+        materialization = materialization_for_scenario(
+            scenario,
+            move_name_to_id={},
+        )
+        patches = {
+            (patch.symbol_name, patch.offset): patch.value
+            for patch in materialization.patches
+        }
+
+        self.assertEqual(materialization.move_ids, [0x5C, 0xE2, 0x2E, 0xBC])
+        self.assertEqual(patches[("wBossAITier", 0)], 2)
+        self.assertEqual(patches[("wEnemyMonMoves", 1)], 0xE2)
+        self.assertEqual(patches[("wOTPartyCount", 0)], 2)
+
+    def test_cashout_materialization_patches_revealed_ghost_branch(self) -> None:
+        scenario = generate_scenarios(family="cashout_board_delta", count=3, seed=11)[2]
+
+        materialization = materialization_for_scenario(
+            scenario,
+            move_name_to_id={},
+        )
+        patches = {
+            (patch.symbol_name, patch.offset): patch.value
+            for patch in materialization.patches
+        }
+
+        self.assertEqual(materialization.move_ids[:2], [0x99, 0x59])
+        self.assertEqual(patches[("wBossAISeenPlayerSpeciesCount", 0)], 2)
+        self.assertEqual(patches[("wBossAISeenPlayerSpecies", 1)], 0x5E)
+        self.assertEqual(patches[("wBossAISeenPlayerAliveMask", 0)], 0b00000011)
+
+    def test_rom_policy_verdict_uses_observed_score_bytes(self) -> None:
+        scenario = generate_scenarios(family="prediction_mix", count=2, seed=3)[1]
+        rom_selector = {
+            "ready": True,
+            "best_slot_index": 1,
+            "probabilities_by_slot": {0: 0.25, 1: 0.75, 2: 0.0, 3: 0.0},
+        }
+
+        verdict = policy_verdict_from_rom_selector(scenario, rom_selector)
+
+        self.assertEqual(verdict["verdict"], "bad_roll")
+        self.assertEqual(verdict["rolled_bad_action_ids"], ["move_reckless_prediction"])
 
     def test_chunk_scenarios_preserves_all_cases(self) -> None:
         scenarios = [{"id": str(index)} for index in range(7)]

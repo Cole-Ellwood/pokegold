@@ -130,21 +130,57 @@ def smallest_score_flip(flips: list[dict[str, Any]]) -> dict[str, Any] | None:
 def public_fact_counterfactuals(condition_tags: list[str]) -> list[str]:
     suggestions: list[str] = []
     tags = set(condition_tags)
-    if "active_revealed_rapid_spin" in tags:
-        suggestions.append("If Rapid Spin were not publicly revealed, extra Spikes should become more live.")
-    else:
-        suggestions.append("If active Rapid Spin becomes publicly revealed, hazard-retention risk should increase.")
-    if "active_ghost_spinblock" in tags and "foresight_identified_ghost" not in tags:
-        suggestions.append("If the Ghost spinblock is identified by Foresight, spin panic should return.")
-    elif "active_ghost_spinblock" not in tags:
-        suggestions.append("If the boss active is a non-Foresighted Ghost, revealed Spin should matter less.")
-    if "immediate_pressure" in tags:
-        suggestions.append("If immediate pressure is removed, a hazard turn should become easier to justify.")
-    else:
-        suggestions.append("If immediate pressure appears, slow hazard work should be discounted.")
-    if "spikes_layers_3" in tags:
-        suggestions.append("If the stack had fewer than three layers, Spikes would no longer be a failing fourth click.")
+    if has_hazard_tags(tags):
+        if "active_revealed_rapid_spin" in tags:
+            suggestions.append("If Rapid Spin were not publicly revealed, extra Spikes should become more live.")
+        else:
+            suggestions.append("If active Rapid Spin becomes publicly revealed, hazard-retention risk should increase.")
+        if "active_ghost_spinblock" in tags and "foresight_identified_ghost" not in tags:
+            suggestions.append("If the Ghost spinblock is identified by Foresight, spin panic should return.")
+        elif "active_ghost_spinblock" not in tags:
+            suggestions.append("If the boss active is a non-Foresighted Ghost, revealed Spin should matter less.")
+        if "immediate_pressure" in tags:
+            suggestions.append("If immediate pressure is removed, a hazard turn should become easier to justify.")
+        else:
+            suggestions.append("If immediate pressure appears, slow hazard work should be discounted.")
+        if "spikes_layers_3" in tags:
+            suggestions.append("If the stack had fewer than three layers, Spikes would no longer be a failing fourth click.")
+    if "named_receiver_branch" in tags:
+        suggestions.append("If the named receiver is no longer public-supported, branch-punish moves should fall toward the safe default.")
+    if "branch_punish_available" in tags:
+        suggestions.append("If coverage or handoff no longer beats the branch, the visible-active line should regain priority.")
+    if "status_absorber_named" in tags:
+        suggestions.append("If the absorber is removed or already statused, generic status becomes less likely to be blanked.")
+    if "support_job_completed" in tags:
+        suggestions.append("If the support job is not actually complete, repeating support may be route progress instead of a handoff miss.")
+    if "named_next_board_owner" in tags:
+        suggestions.append("If no safe next-board owner can be named, switch or handoff should lose route value.")
+    if "safe_entry_available" in tags:
+        suggestions.append("If the entry path is unsafe, a switch, sack, or handoff should be discounted.")
+    if "setup_window" in tags:
+        suggestions.append("If the receiver can phaze, Haze, recover, or KO before the boost converts, setup should be discounted.")
+    if "setup_already_bankrolled" in tags:
+        suggestions.append("If no attack or recovery route converts from the current boosts, one more setup turn can become live again.")
+    if "recovery_preserves_route" in tags:
+        suggestions.append("If restored HP does not change the next route owner, recovery should fall below pressure or handoff.")
+    if "prediction_branch_supported" in tags:
+        suggestions.append("If the branch is only possible rather than public-supported, prediction should fall below the safe line.")
+    if "prediction_branch_possible_only" in tags:
+        suggestions.append("If public switch evidence upgrades the branch to strong-prior, a bounded prediction can become acceptable.")
+    if "worst_case_guarded" in tags:
+        suggestions.append("If the miss cost becomes unguarded, the prediction should no longer be top.")
+    if "worst_case_unguarded" in tags:
+        suggestions.append("If the worst-case miss still preserves the route, the prediction can be re-priced as a mixed branch.")
+    if not suggestions:
+        suggestions.append("Change the public route owner, converter, or reset branch and re-score the expected best action.")
     return suggestions
+
+
+def has_hazard_tags(tags: set[str]) -> bool:
+    return bool(
+        {"active_revealed_rapid_spin", "bench_revealed_rapid_spin", "spikes_spin"}
+        & tags
+    ) or any(tag.startswith("spikes_layers_") for tag in tags)
 
 
 def choose_scenario(

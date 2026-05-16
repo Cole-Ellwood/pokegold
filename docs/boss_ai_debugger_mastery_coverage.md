@@ -14,7 +14,7 @@ python -m tools.boss_ai_debugger coverage-report --changed-file engine\battle\ai
 
 - `docs/pokemon_mastery/policy_cards/*.md`
 - `docs/pokemon_mastery/source_to_policy_ledger.md`
-- `docs/pokemon_mastery/quick_tests/*.md`
+- `docs/pokemon_mastery/workspace/quick_tests/*.md`
 - `docs/pokemon_mastery/reviews/*.md`
 
 It is the explicit command that writes `audit/boss_ai_debugger/mastery_index.json`.

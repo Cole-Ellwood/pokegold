@@ -141,6 +141,7 @@ Generate high-throughput scenario corpora:
 ```powershell
 python -m tools.boss_ai_debugger generate --family spikes_spin --count 10000 --seed 1 --out audit\boss_ai_debugger\generated\spikes_spin.jsonl
 python -m tools.boss_ai_debugger generate --family mastery_policy --count 800 --seed 1 --out audit\boss_ai_debugger\generated\mastery_policy.jsonl
+python -m tools.boss_ai_debugger generate --family prediction_mix --count 800 --seed 1 --out audit\boss_ai_debugger\generated\prediction_mix.jsonl
 python -m tools.boss_ai_debugger batch-simulate --scenarios audit\boss_ai_debugger\generated\spikes_spin.jsonl --limit 50
 ```
 
@@ -149,7 +150,50 @@ condition tags, evidence refs, answer-changing information, trace ROM/symbol
 hashes, and a stable `state_hash` so batch output can be used as a review queue
 rather than raw simulation spam. The
 `mastery_policy` family keeps at least one generated scenario tied to every
-active policy card so coverage reports expose decision-review blind spots.
+active policy card so coverage reports expose decision-review blind spots. The
+public-policy families `switch_sack`, `setup_heal`, `prediction_mix`,
+`support_handoff`, and `cashout_board_delta` broaden disagreement hunting into
+switching, defensive sacks, setup timing, recovery, branch prediction,
+mixed-strategy surfaces, status absorbers, phazing, support handoffs, and
+newest-mastery cash-out board-delta boundaries. `cashout_board_delta` covers
+reversible-before-irreversible ranking, resisted Explosion that creates a free
+owner, revealed Ghost/immunity guards, and sleep-plus-cash-out role packages.
+These broad families are debugger policy surfaces first; use ROM selector
+materialization to prove selector behavior, and treat full ROM score
+materialization as supported only where `rom-score-materialize` says the family
+is supported.
+
+Import replay and mastery-study seeds into the same scenario format:
+
+```powershell
+python -m tools.boss_ai_debugger replay-import --log tmp\pokemon_mastery_replays\gen2ou-2595957046.log --side p1 --mode side-known --out .local\tmp\boss_ai_debugger\replay_seeds.jsonl
+python -m tools.boss_ai_debugger replay-import --quick-tests docs\pokemon_mastery\workspace\quick_tests --limit 100 --out .local\tmp\boss_ai_debugger\mastery_replay_seeds.jsonl
+python -m tools.boss_ai_debugger coverage-search --scenarios .local\tmp\boss_ai_debugger\mastery_replay_seeds.jsonl --rounds 2 --per-seed 4 --generated-count 100 --out .local\tmp\boss_ai_debugger\coverage_search_scenarios.jsonl
+```
+
+`replay-import` uses the Pokemon mastery replay turn-pause parser, so imported
+raw logs carry public turn state: active species, HP/status, revealed moves,
+side hazards, boosts, and tracked decision-relevant volatiles. In `side-known`
+mode it may add the advised side's own eventually shown moves as a reconstruction
+of the boss's own legal choices; opponent hidden party, hidden moves, PP, held
+items, and current input stay out of the scenario. Imported replay choices are
+pro-comparison evidence, not automatic policy truth. Scored mastery documents
+are projected through existing debugger families with their source path in
+`evidence_refs`, so they become searchable seeds without pretending vanilla GSC
+replay policy overrides local ROM traces.
+
+`coverage-search` mutates only public debugger facts: tier, policy tags, and
+candidate score deltas for named branch, recovery, setup, handoff, Spin, status,
+cash-out, typed/status absorber, pass-receiver, and role-package boundaries.
+Review queues boost mastery strata across the whole corpus: hazard/Spin reset,
+branch receiver pricing, cash-out converters, switch/sack preservation,
+setup/recovery timing, support handoff/reset denial, prediction risk control,
+plus the latest reversible versus irreversible cash-out, resisted Explosion
+board delta, clean-oracle replay evidence, role-package reveal, typed/status
+absorber, and pass receiver survival lessons.
+This is meant to widen disagreement hunting from real replay/mastery seeds
+before ROM materialization, not to add runtime memory or hidden-information
+behavior to the game.
 
 Build a compact review queue from generated scenarios or a saved batch report:
 
@@ -261,6 +305,20 @@ tracks score-trace target coverage separately from score-delta coverage, and
 emits grouped coverage-target worklists with suggested generator families and
 trace modes for targeted Boss AI edits.
 
+Build a stratified confidence report from a generated batch and optional ROM
+materialization artifacts:
+
+```powershell
+python -m tools.boss_ai_debugger confidence-report --batch-report .local\tmp\boss_ai_debugger\expanded_all_200_batch.json
+python -m tools.boss_ai_debugger confidence-report --batch-report .local\tmp\boss_ai_debugger\expanded_all_200_batch.json --materialization .local\tmp\boss_ai_debugger\expanded_all_80_selector_materialization.json --json-out .local\tmp\boss_ai_debugger\expanded_all_confidence.json
+```
+
+`confidence-report` groups generated verdicts by family, policy tag, and
+condition tag, attaches ROM selector/score materialization counts when supplied,
+and reports a Wilson 95% upper bound on reviewable or hard-failure rate per
+stratum. It is intended to make confidence claims concrete; it does not turn
+selector-only families into ROM score-model proof.
+
 Run scorer mutation tests:
 
 ```powershell
@@ -361,17 +419,27 @@ python -m tools.boss_ai_debugger generate --family spikes_spin --count 12 --seed
 python -m tools.boss_ai_debugger rom-score-materialize --scenarios .local\tmp\boss_ai_debugger\spikes_score_materialize.jsonl --limit 4
 python -m tools.boss_ai_debugger rom-score-materialize --scenarios .local\tmp\boss_ai_debugger\spikes_score_materialize.jsonl --limit 4 --compare-fast-score
 python -m tools.boss_ai_debugger rom-score-materialize --scenarios .local\tmp\boss_ai_debugger\spikes_score_materialize.jsonl --limit 200 --fast-score-only --workers 4
+python -m tools.boss_ai_debugger rom-switch-materialize --scenarios audit\boss_ai_debugger\generated\expanded_all.jsonl --limit 80
 ```
 
-`rom-score-materialize` loads Koga's real pre-choice trace state, patches a
-generated Spikes/Rapid Spin scenario into public WRAM before
-`BossAI_ApplyMoveModel.ScoreMove`, and captures the resulting ROM contribution
-trace under the generated scenario id. It patches concrete move ids, tier/weight
-row, score bytes, Spikes layers, active revealed Rapid Spin, Ghost/Foresight
-spinblock state, reserve Ghost availability, bench revealed Spin memory, and
-active species Spin priors. The output also compares ROM score-helper
-contributions against the Python scenario contribution stream with matching
-trace ids, so mismatches become review items instead of hand inspection.
+`rom-score-materialize` loads Koga's real pre-choice trace state and patches a
+generated scenario into public WRAM before `BossAI_ApplyMoveModel.ScoreMove`.
+For `spikes_spin`, this is an exact generated score-mirror check over concrete
+move ids, tier/weight row, score bytes, Spikes layers, active revealed Rapid
+Spin, Ghost/Foresight spinblock state, reserve Ghost availability, bench
+revealed Spin memory, and active species Spin priors. The broad move-policy
+families `setup_heal`, `prediction_mix`, and `support_handoff` also materialize
+real ROM score bytes and attach a `rom_policy` verdict from those observed
+bytes. Their generated Python deltas are review aids rather than exact source
+mirrors, so `score_bytes_match=false` is expected until a case is localized into
+a precise mirror rule. The roadmap/done gate keeps its strict score-byte sample
+to `spikes_spin` so broad mastery review cases do not become false exact-mirror
+blockers. `switch_sack` is intentionally not proved by this path; use
+`rom-switch-materialize` for the real switch-dispatch proposal path.
+
+The output also compares ROM score-helper contributions against the Python
+scenario contribution stream with matching trace ids when contribution hooks are
+enabled, so mismatches become review items instead of hand inspection.
 `--fast-score-only` reuses the same ROM state patching path but skips
 score-helper hooks; use it for high-throughput ROM answer checks, then rerun
 interesting failures without that flag for rule-level contribution traces. If
@@ -381,6 +449,12 @@ evidence that needs localization. `--compare-fast-score` runs both paths for
 the same scenarios and reports hook-equivalence mismatches explicitly. Fast mode
 can shard cases across `--workers` independent PyBoy sessions for the
 high-throughput ROM-backed replay gate.
+
+`rom-switch-materialize` loads the shared switch-loop trace state and patches
+generated `switch_sack` cases into public WRAM before the real
+`BossAI_SwitchOrTryItem` path reaches its switch confidence/proposal. It reports
+`rom_policy` verdicts for switch proposal disagreements separately from move
+score bytes, because switching is not a move-score selector decision.
 
 Classify route context:
 

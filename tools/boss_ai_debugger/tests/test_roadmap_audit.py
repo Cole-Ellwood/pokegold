@@ -78,6 +78,18 @@ class RoadmapAuditTests(unittest.TestCase):
 
         self.assertEqual(selected[0]["id"], "target")
 
+    def test_score_materialization_keeps_strict_sample_to_spikes_spin(self) -> None:
+        scenarios = [
+            {"id": "switch", "family": "switch_sack", "expectation": {}},
+            {"id": "setup", "family": "setup_heal", "expectation": {}},
+            {"id": "prediction", "family": "prediction_mix", "expectation": {}},
+            {"id": "support", "family": "support_handoff", "expectation": {}},
+        ]
+
+        selected = score_materialization_scenarios(scenarios, limit=10)
+
+        self.assertEqual(selected, [])
+
     def test_score_materialization_status_requires_exact_score_agreement(self) -> None:
         evidence = {
             "score_materialization": {

@@ -22,6 +22,11 @@ MULTI_TURN_FACTORS = (
     "recovery",
     "self_ko",
     "ace_preservation",
+    "switching",
+    "setup",
+    "status",
+    "prediction",
+    "support_handoff",
 )
 
 
@@ -225,6 +230,70 @@ def project_action_line(
             route_value += 9
             reasons.append("recovery preserves a future route resource")
 
+    if "switching" in traits:
+        factors.append("switching")
+        if state["safe_entry"]:
+            route_value += 10
+            reasons.append("switch creates a public safe entry for the named owner")
+        if state["named_receiver"]:
+            route_value += 6
+            reasons.append("switch or handoff addresses the named next-board branch")
+        if state["bad_switch_risk"]:
+            route_value -= 12
+            reasons.append("switch exposes the route owner to a public bad entry")
+
+    if "setup" in traits:
+        factors.append("setup")
+        if state["setup_already_bankrolled"]:
+            route_value -= 14
+            reasons.append("extra setup is wasteful once the route already converts")
+        elif state["setup_window"] and not state["tempo_pressure"]:
+            route_value += 12
+            reasons.append("setup window changes the receiver board before reset")
+        else:
+            route_value -= 8
+            reasons.append("setup lacks a public safe window")
+        if state["reset_loop_live"] and not state["reset_loop_denied"]:
+            route_value -= 8
+            reasons.append("reset loop can erase the setup route")
+
+    if "status" in traits:
+        factors.append("status")
+        if state["status_absorber"]:
+            route_value -= 10
+            reasons.append("named absorber can blank generic status")
+        elif state["support_completed"]:
+            route_value -= 5
+            reasons.append("support is already complete; status needs a new converter")
+        else:
+            route_value += 7
+            reasons.append("status can create route tempo when no absorber is named")
+
+    if "prediction" in traits:
+        factors.append("prediction")
+        if state["prediction_supported"] and state["worst_case_guarded"]:
+            route_value += 12
+            reasons.append("public branch and bounded downside support the prediction")
+        elif state["possible_only_prediction"] or not state["worst_case_guarded"]:
+            route_value -= 14
+            reasons.append("prediction is possible-only or loses too much when wrong")
+        else:
+            route_value += 2
+            reasons.append("prediction branch is live but not decisive")
+
+    if "support_handoff" in traits:
+        factors.append("support_handoff")
+        if state["support_completed"]:
+            if "switching" in traits or "prediction" in traits:
+                route_value += 12
+                reasons.append("handoff converts the completed support job")
+            else:
+                route_value -= 9
+                reasons.append("repeating completed support misses the handoff")
+        if state["reset_loop_live"] and "phazing" not in traits:
+            route_value -= 4
+            reasons.append("support line must still cover the public reset loop")
+
     if "self_ko" in traits:
         factors.append("self_ko")
         terminal = True
@@ -285,6 +354,38 @@ def continuation_branches(
                 "forced switch can compound hazard and matchup value",
             )
         )
+    if "switching" in traits and state["safe_entry"]:
+        branches.append(
+            branch(
+                "safe_entry",
+                6,
+                "safe entry can preserve the named route owner for the next board",
+            )
+        )
+    if "setup" in traits and state["setup_window"]:
+        branches.append(
+            branch(
+                "boosted_receiver_board",
+                6 if state["reset_loop_denied"] else -4,
+                "setup is tested against the receiver reset branch",
+            )
+        )
+    if "prediction" in traits:
+        branches.append(
+            branch(
+                "prediction_branch",
+                7 if state["worst_case_guarded"] else -9,
+                "prediction value depends on bounded miss cost",
+            )
+        )
+    if "support_handoff" in traits and state["support_completed"]:
+        branches.append(
+            branch(
+                "support_conversion",
+                6,
+                "completed support must be converted before it is reset",
+            )
+        )
     if "sleep" in traits and not state["sleep_absorber"]:
         branches.append(
             branch("sleep_turn", 6, "sleep creates a future free-turn branch")
@@ -311,6 +412,7 @@ def branch(branch_id: str, route_value_delta: int, reason: str) -> dict[str, Any
 def action_traits(move: dict[str, Any]) -> set[str]:
     parts = [
         str(move.get("action_id", "")),
+        str(move.get("kind", "")),
         str(move.get("name", "")),
     ]
     for event in move.get("events", []):
@@ -324,6 +426,16 @@ def action_traits(move: dict[str, Any]) -> set[str]:
         traits.add("spin")
     if any(token in text for token in ("phaz", "roar", "whirlwind", "force_switch")):
         traits.add("phazing")
+    if any(token in text for token in ("switch", "pivot", "handoff", "sack", "entry")):
+        traits.add("switching")
+    if any(token in text for token in ("setup", "boost", "curse", "growth", "agility", "swords")):
+        traits.add("setup")
+    if any(token in text for token in ("status", "toxic", "thunder_wave", "stun_spore", "sleep_powder")):
+        traits.add("status")
+    if any(token in text for token in ("predict", "prediction", "receiver", "branch", "counter_switch")):
+        traits.add("prediction")
+    if any(token in text for token in ("support", "handoff", "screen", "screech", "repeat_support")):
+        traits.add("support_handoff")
     if any(token in text for token in ("sleep", "hypnosis", "spore")):
         traits.add("sleep")
     if any(token in text for token in ("recover", "recovery", "rest", "synthesis")):
@@ -359,6 +471,7 @@ def initial_route_state(condition_tags: list[str]) -> dict[str, Any]:
                 "one_time_trade_named_converter",
                 "support_job_completed",
                 "route_trade",
+                "active_pressure_converts",
             }
             & conditions
         ),
@@ -366,6 +479,30 @@ def initial_route_state(condition_tags: list[str]) -> dict[str, Any]:
             {"ace_preservation", "wincon_preservation", "support_job_completed"}
             & conditions
         ),
+        "named_receiver": bool(
+            {
+                "named_receiver_branch",
+                "named_next_board_owner",
+                "branch_punish_available",
+            }
+            & conditions
+        ),
+        "safe_entry": "safe_entry_available" in conditions,
+        "bad_switch_risk": bool(
+            {"public_threat_to_active", "worst_case_unguarded"} & conditions
+        )
+        and "safe_entry_available" not in conditions,
+        "setup_window": "setup_window" in conditions,
+        "setup_already_bankrolled": "setup_already_bankrolled" in conditions,
+        "reset_loop_live": "reset_loop_live" in conditions,
+        "reset_loop_denied": "reset_loop_denied" in conditions,
+        "status_absorber": "status_absorber_named" in conditions,
+        "support_completed": "support_job_completed" in conditions,
+        "prediction_supported": bool(
+            {"prediction_branch_supported", "prediction_ev_positive"} & conditions
+        ),
+        "possible_only_prediction": "prediction_branch_possible_only" in conditions,
+        "worst_case_guarded": "worst_case_guarded" in conditions,
     }
 
 
@@ -540,6 +677,18 @@ def route_family_tags(
         result.append("selector_surface")
     if tags & HAZARD_POLICY_TAGS:
         result.append("hazard_route")
+    if "switching" in tags or "defensive_sack" in tags:
+        result.append("switch_route")
+    if "setup" in tags:
+        result.append("setup_route")
+    if "healing" in tags or "recovery" in tags:
+        result.append("healing_route")
+    if "prediction" in tags or "mixed_strategy" in tags:
+        result.append("prediction_route")
+    if "support_handoff" in tags:
+        result.append("support_handoff_route")
+    if "status_timing" in tags:
+        result.append("status_route")
     if "spikes_layers_3" in conditions:
         result.append("spikes_capped")
     if "active_revealed_rapid_spin" in conditions:

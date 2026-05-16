@@ -226,6 +226,53 @@ class RouteEvalTests(unittest.TestCase):
         self.assertIn("recovery", factors)
         self.assertIn("ace_preservation", factors)
 
+    def test_multi_turn_route_tracks_broad_public_policy_factors(self) -> None:
+        item = evaluate_route_scenario(
+            {
+                "id": "broad_policy_case",
+                "tier": "late",
+                "moves": [
+                    {"id": "switch_handoff", "name": "Switch Handoff", "kind": "switch"},
+                    {"id": "curse_setup", "name": "Curse Setup Window", "kind": "move"},
+                    {"id": "toxic_status", "name": "Toxic Status", "kind": "move"},
+                    {
+                        "id": "receiver_prediction",
+                        "name": "Prediction Receiver Coverage",
+                        "kind": "move",
+                    },
+                ],
+                "expectation": {
+                    "best_action_ids": ["switch_handoff"],
+                    "policy_tags": [
+                        "switching",
+                        "setup",
+                        "prediction",
+                        "support_handoff",
+                        "status_timing",
+                    ],
+                    "condition_tags": [
+                        "safe_entry_available",
+                        "setup_window",
+                        "support_job_completed",
+                        "prediction_branch_supported",
+                        "worst_case_guarded",
+                        "status_absorber_named",
+                    ],
+                },
+            },
+            horizon=3,
+        )
+
+        factors = item["multi_turn_route"]["observed_factors"]
+
+        self.assertIn("switching", factors)
+        self.assertIn("setup", factors)
+        self.assertIn("status", factors)
+        self.assertIn("prediction", factors)
+        self.assertIn("support_handoff", factors)
+        self.assertIn("switch_route", item["route_family_tags"])
+        self.assertIn("prediction_route", item["route_family_tags"])
+
     def test_cli_route_eval_writes_batch_json(self) -> None:
         scenarios = generate_scenarios(family="spikes_spin", count=8, seed=7)
         with tempfile.TemporaryDirectory() as tmp:

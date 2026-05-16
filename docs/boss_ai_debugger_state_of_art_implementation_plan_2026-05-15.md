@@ -393,7 +393,7 @@ Index:
 
 - `docs/pokemon_mastery/source_to_policy_ledger.md`
 - `docs/pokemon_mastery/policy_cards/*.md`
-- `docs/pokemon_mastery/quick_tests/*.md`
+- `docs/pokemon_mastery/workspace/quick_tests/*.md`
 - `docs/pokemon_mastery/reviews/*.md`
 - route sheets and boss route maps
 

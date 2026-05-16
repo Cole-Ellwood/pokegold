@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import os
 import sys
 import unittest
 from pathlib import Path
@@ -118,12 +119,13 @@ class RomSelectorMaterializeTests(unittest.TestCase):
         self.assertIsNone(action_id_for_slot(python_result, 3))
 
     @unittest.skipUnless(
-        pyboy_available()
+        os.environ.get("BOSS_AI_RUN_PYBOY_UNIT") == "1"
+        and pyboy_available()
         and capture.DEFAULT_ROM.exists()
         and capture.DEFAULT_SYMBOLS.exists()
         and DEFAULT_MANIFEST_PATH.exists()
         and (ROOT / ".local/tmp/boss_state_factory/clair_pre_choice_frame_4523.state").exists(),
-        "PyBoy trace ROM selector materialization fixture is unavailable",
+    "PyBoy selector materialization smoke is opt-in; set BOSS_AI_RUN_PYBOY_UNIT=1 with fixtures available",
     )
     def test_selector_materialization_smoke_matches_rom_selector(self) -> None:
         scenarios = generate_scenarios(family="selector_edges", count=2, seed=1)

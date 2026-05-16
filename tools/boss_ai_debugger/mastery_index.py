@@ -11,7 +11,7 @@ from tools.boss_ai_preference.data import PreferenceDataError
 ROOT = Path(__file__).resolve().parents[2]
 MASTERY_ROOT = ROOT / "docs" / "pokemon_mastery"
 POLICY_CARD_DIR = MASTERY_ROOT / "policy_cards"
-QUICK_TEST_DIR = MASTERY_ROOT / "quick_tests"
+QUICK_TEST_DIR = MASTERY_ROOT / "workspace" / "quick_tests"
 REVIEWS_DIR = MASTERY_ROOT / "reviews"
 SOURCE_TO_POLICY_LEDGER = MASTERY_ROOT / "source_to_policy_ledger.md"
 DEFAULT_MASTERY_INDEX_PATH = ROOT / "audit" / "boss_ai_debugger" / "mastery_index.json"
@@ -33,7 +33,7 @@ BACKTICK_PATH_RE = re.compile(r"`([^`]+)`")
 
 def build_mastery_index(root: Path = MASTERY_ROOT) -> dict[str, Any]:
     policy_dir = root / "policy_cards"
-    quick_dir = root / "quick_tests"
+    quick_dir = root / "workspace" / "quick_tests"
     reviews_dir = root / "reviews"
     ledger = root / "source_to_policy_ledger.md"
     policy_cards = [
