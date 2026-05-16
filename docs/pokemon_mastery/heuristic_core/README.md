@@ -19,6 +19,7 @@ tests, and the measurement ledger. They do not replace the archive; use
 | `reset_loop_denial.md` | Spikes, Spin, Rest, Recover, phaze, or pass loops matter. |
 | `rescore_after_reveal.md` | A reveal changes the set or package. |
 | `branch_punish_ranking.md` | The branch is named but the top move may not punish it. |
+| `tournament_variance_and_tempo.md` | Tournament-tier (>=1400 / league) early game; pivot-war or setup-vs-press choice. |
 
 ## Routing Rule
 
