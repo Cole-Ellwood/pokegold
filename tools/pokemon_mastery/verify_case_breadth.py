@@ -17,25 +17,17 @@ Exit 0 if distinct >= target. Exit 1 otherwise; prints the gap.
 
 from __future__ import annotations
 
-import hashlib
 import json
 import sys
 from pathlib import Path
 
+# Single source of truth for the breadth-counting hash lives in fingerprint.py.
+# Importing keeps this verifier in lockstep with what the loop actually stores.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
+from tools.pokemon_mastery.fingerprint import fingerprint_hash  # noqa: E402
+
 HERE = Path(__file__).resolve().parent
 LIB = HERE / "case_library"
-
-
-def fingerprint_hash(fp: dict) -> str:
-    parts = (
-        (fp.get("active_user") or {}).get("species", ""),
-        (fp.get("active_opp") or {}).get("species", ""),
-        fp.get("turn_bucket", ""),
-        ",".join(sorted(fp.get("side_conditions_user") or [])),
-        ",".join(sorted(fp.get("side_conditions_opp") or [])),
-    )
-    blob = "|".join(parts)
-    return hashlib.sha256(blob.encode("utf-8")).hexdigest()[:16]
 
 
 def main() -> int:

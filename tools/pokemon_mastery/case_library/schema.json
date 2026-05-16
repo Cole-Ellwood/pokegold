@@ -48,7 +48,7 @@
       "description": "Why the prediction missed. hit_top and hit_acceptable_only are not failures; they are recorded for retrieval (positive examples are still useful patterns to remember)."
     },
     "hp_bucket": {
-      "enum": ["0", "<=25%", "26-50%", "51-75%", "76-99%", "100%"]
+      "enum": ["0", "<=25%", "26-50%", "51-75%", "76-99%", "100%", "unknown"]
     },
     "turn_bucket": {
       "enum": ["t1", "early", "mid", "late", "endgame"],

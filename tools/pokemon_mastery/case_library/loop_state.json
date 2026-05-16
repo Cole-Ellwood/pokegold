@@ -12,8 +12,8 @@
     "sealed_window_decisions": 30,
     "case_breadth_min": 150
   },
-  "iteration_count": 1,
-  "last_iteration_phase": "INFRA_FETCH_REPLAY",
+  "iteration_count": 2,
+  "last_iteration_phase": "INFRA_FINGERPRINT",
   "last_iteration_replay_id": null,
   "phase_rotation_hint": "INGEST,DIAGNOSE,REGRESSION_PROTECT,VALIDATE_AFTER_5_INGESTS,CONSOLIDATE_AFTER_20_ITERATIONS,STAGNATION_CHECK_AFTER_3_VALIDATIONS",
   "ingest_cadence_validate": 5,
