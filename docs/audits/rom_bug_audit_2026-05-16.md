@@ -88,6 +88,16 @@ bug-class lens — not just listed them.
 - `engine/battle/ai/boss_platform.asm` (lines 1-200) — lens: WRAMX-budget overflow, computed-jump on corrupt state, bit-shift overflow. findings: 0 (BossAI_RecordPlayerSpecies caps at PARTY_LENGTH; counters saturate at $ff; BossAI_SeenPlayerSpeciesBitFromC bit-shift bounded by PARTY_LENGTH=6 → max bit = $20).
 - `engine/overworld/scripting.asm` (Script_giveitem at 1607, Script_givepoke at 1807, Script_warp at 1945) — lens: script-data-validation, save-corruption-via-script. findings: 0 confirmed; deferred observation: these script commands don't validate item/species/map IDs before writing to wCurItem/wCurPartySpecies/wMapGroup. Authored scripts use valid macros, but a typo-bug in a script would propagate corrupt IDs to bag/party and could feed Finding 2 / 7 with a bad value. Noted in deferred for a future "script-data-integrity" audit.
 - `data/moves/effects_pointers.asm` — lens: dispatcher table sizing. findings: 0 (`assert_table_length NUM_MOVE_EFFECTS` on a 159-entry table; coverage gap of 256-159 = 97 byte values which the engine never indexes because move data is authored).
+- `engine/battle/move_effects/magnitude.asm` + `data/moves/magnitude_power.asm` — lens: data-table-termination OOB. findings: 0 confirmed (`100 percent` evaluates to 255 via `* $ff / 100` macro, so the last row's threshold catches BattleRandom's max value).
+- `engine/battle/move_effects/metronome.asm` — lens: rejection-sampling infinite loop. findings: 0 (`cp NUM_ATTACKS + 1; jr nc, .GetMove` — bounded by RNG; NUM_ATTACKS is a compile-time constant > 0).
+- `engine/battle/move_effects/counter.asm` — lens: damage-doubling overflow. findings: 0 (uses `add a + adc a` with `jr nc` to saturate at `$ff/$ff`).
+- `engine/battle/move_effects/future_sight.asm` — lens: state-machine corruption, counter wraparound. findings: 0 (counter goes 4→0 monotonically, only fires when exactly 1, no wraparound path).
+- `engine/battle/move_effects/pain_split.asm` — lens: HP-averaging overflow. findings: 0 (uses 16-bit ld/srl/rr to compute average; saturation handled by `.skip` branch).
+- `engine/battle/move_effects/beat_up.asm` (lines 1-80) — lens: party-index wraparound, status-byte OOB. findings: 0 confirmed in the read; full file has more flows for enemy side.
+- `engine/battle/move_effects/hidden_power.asm` — lens: trivially clean (one farcall to bank-local handler).
+- `engine/battle/move_effects/fury_cutter.asm` — lens: counter-byte wraparound. findings: 0 crash-class; counter at wPlayerFuryCutterCount can wrap to 0 after 256 consecutive hits (a cosmetic-only Sev 0 issue — practical reachability ~zero).
+- `engine/gfx/load_pics.asm` (lines 1-120) — lens: pic-bank confusion, species-OOB into PokemonPicPointers. findings: 0 (`GetFrontpic` filters species via `and a; ret z`, `cp NUM_POKEMON + 1; ret z`, `cp EGG + 1; ret nc`, and a dedicated UNOWN branch reading bounded `wUnownLetter`).
+- `macros/data.asm:23` (`percent` macro definition) — lens: percent expansion correctness. findings: 0 (`* $ff / 100` confirmed; 100 percent = 255).
 
 ### Regions deferred
 <!-- iterations append: - region (reason for deferral) -->
