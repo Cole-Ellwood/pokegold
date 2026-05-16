@@ -124,6 +124,29 @@ def create_app(project_root: Path | None = None) -> Any:
                     pass
         return result
 
+    @app.get("/api/damage")
+    async def api_damage(
+        level: int = 50, bp: int = 60, move_type: int = 0,
+        atk: int = 100, dfn: int = 80, is_physical: bool = True,
+    ) -> dict[str, Any]:
+        try:
+            from tools.damage_debugger.oracle import BattleInputs, predict_damage
+            inp = BattleInputs(
+                attacker_level=level, move_bp=bp, move_type=move_type,
+                is_physical=is_physical, attacker_atk=atk, defender_def=dfn,
+                attacker_types=(move_type, move_type),
+                defender_types=(0xFF, 0xFF),
+            )
+            exact = predict_damage(inp)
+            return {
+                "exact": exact,
+                "low": max(1, exact * 217 // 255) if exact > 0 else 0,
+                "high": exact,
+                "inputs": {"level": level, "bp": bp, "atk": atk, "def": dfn},
+            }
+        except ImportError:
+            return {"error": "damage oracle not available"}
+
     @app.get("/battle", response_class=HTMLResponse)
     async def battle_page() -> str:
         return _render_page("battle", {"title": "Battle Inspector"})
@@ -149,42 +172,140 @@ def _render_page(name: str, context: dict[str, Any]) -> str:
         return template
 
     title = context.get("title", "Debugger")
-    return f"""<!DOCTYPE html>
+    pages = {
+        "index": _INDEX_HTML,
+        "battle": _BATTLE_HTML,
+        "coverage": _COVERAGE_HTML,
+        "runs": _RUNS_HTML,
+    }
+    body = pages.get(name, _INDEX_HTML)
+    return _BASE_HTML.format(title=title, body=body)
+
+
+_BASE_HTML = """<!DOCTYPE html>
 <html>
 <head>
-    <title>{title} — Pokemon Gold Debugger</title>
+    <title>{title} - Pokemon Gold Debugger</title>
     <style>
-        body {{ font-family: monospace; margin: 2em; background: #1a1a2e; color: #e0e0e0; }}
-        h1 {{ color: #e94560; }}
-        a {{ color: #0f3460; }}
-        nav {{ margin-bottom: 2em; }}
-        nav a {{ color: #16213e; background: #e94560; padding: 0.5em 1em;
-                 text-decoration: none; margin-right: 0.5em; }}
-        .card {{ background: #16213e; padding: 1em; margin: 1em 0; border-radius: 4px; }}
+        * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+        body {{ font-family: 'Consolas', 'Monaco', monospace; background: #0d1117; color: #c9d1d9; }}
+        nav {{ background: #161b22; padding: 0.75em 2em; border-bottom: 1px solid #30363d;
+               display: flex; gap: 1em; align-items: center; }}
+        nav .brand {{ color: #e94560; font-weight: bold; font-size: 1.1em; margin-right: 1em; }}
+        nav a {{ color: #58a6ff; text-decoration: none; padding: 0.3em 0.8em; border-radius: 4px; }}
+        nav a:hover {{ background: #21262d; }}
+        main {{ max-width: 1100px; margin: 2em auto; padding: 0 2em; }}
+        h1 {{ color: #e94560; margin-bottom: 1em; font-size: 1.4em; }}
+        .card {{ background: #161b22; border: 1px solid #30363d; border-radius: 6px;
+                 padding: 1.2em; margin-bottom: 1em; }}
+        .card h2 {{ color: #58a6ff; font-size: 1em; margin-bottom: 0.8em; }}
+        .stat {{ display: inline-block; margin-right: 2em; }}
+        .stat .label {{ color: #8b949e; font-size: 0.85em; }}
+        .stat .value {{ color: #c9d1d9; font-size: 1.3em; font-weight: bold; }}
+        .ok {{ color: #3fb950; }} .err {{ color: #f85149; }}
+        input {{ background: #0d1117; border: 1px solid #30363d; color: #c9d1d9;
+                 padding: 0.5em; border-radius: 4px; width: 300px; font-family: inherit; }}
+        button {{ background: #21262d; color: #c9d1d9; border: 1px solid #30363d;
+                  padding: 0.5em 1em; border-radius: 4px; cursor: pointer; font-family: inherit; }}
+        button:hover {{ background: #30363d; }}
+        pre {{ background: #0d1117; padding: 1em; border-radius: 4px; overflow-x: auto;
+               border: 1px solid #30363d; font-size: 0.85em; }}
+        table {{ width: 100%; border-collapse: collapse; }}
+        th, td {{ text-align: left; padding: 0.5em 1em; border-bottom: 1px solid #21262d; }}
+        th {{ color: #8b949e; font-size: 0.85em; }}
+        #results {{ margin-top: 1em; }}
     </style>
 </head>
 <body>
     <nav>
-        <a href="/">Home</a>
+        <span class="brand">PkGold Debug</span>
+        <a href="/">Status</a>
         <a href="/battle">Battle</a>
         <a href="/coverage">Coverage</a>
         <a href="/runs">Runs</a>
     </nav>
-    <h1>{title}</h1>
-    <div class="card" id="content">Loading...</div>
-    <script>
-        fetch('/api/status')
-            .then(r => r.json())
-            .then(data => {{
-                document.getElementById('content').innerHTML =
-                    '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
-            }})
-            .catch(e => {{
-                document.getElementById('content').textContent = 'API error: ' + e;
-            }});
-    </script>
+    <main>
+        {body}
+    </main>
 </body>
 </html>"""
+
+_INDEX_HTML = """
+<h1>Debugger Status</h1>
+<div class="card" id="status">Loading...</div>
+<div class="card">
+    <h2>Symbol Lookup</h2>
+    <input id="sym-input" placeholder="e.g. wBattleMonHP" />
+    <button onclick="lookupSymbol()">Resolve</button>
+    <div id="sym-result"></div>
+</div>
+<script>
+fetch('/api/status').then(r=>r.json()).then(d=>{
+    let h = '';
+    h += '<div class="stat"><span class="label">ROM</span><br>'
+       + '<span class="value '+(d.rom_exists?'ok':'err')+'">'
+       + (d.rom_exists ? (d.rom_size/1024).toFixed(0)+'K' : 'missing')+'</span></div>';
+    h += '<div class="stat"><span class="label">Symbols</span><br>'
+       + '<span class="value">'+d.symbol_count+'</span></div>';
+    h += '<div class="stat"><span class="label">Root</span><br>'
+       + '<span class="value" style="font-size:0.8em">'+d.project_root+'</span></div>';
+    document.getElementById('status').innerHTML = h;
+});
+function lookupSymbol() {
+    const name = document.getElementById('sym-input').value;
+    if (!name) return;
+    fetch('/api/symbols/'+encodeURIComponent(name)).then(r=>r.json()).then(d=>{
+        if (d.error) {
+            let h = '<p class="err">'+d.error+'</p>';
+            if (d.candidates) h += '<p>Did you mean: '+d.candidates.join(', ')+'</p>';
+            document.getElementById('sym-result').innerHTML = h;
+        } else {
+            document.getElementById('sym-result').innerHTML =
+                '<pre>'+d.name+' = '+d.bank_hex+':'+d.address_hex+'</pre>';
+        }
+    });
+}
+document.getElementById('sym-input').addEventListener('keydown', e=>{
+    if(e.key==='Enter') lookupSymbol();
+});
+</script>"""
+
+_BATTLE_HTML = """
+<h1>Battle Inspector</h1>
+<div class="card">
+    <h2>Damage Calculator</h2>
+    <p style="color:#8b949e">Use <code>python -m tools.debugger battle damage SPECIES:LV SPECIES:LV MOVE --explain</code> from CLI</p>
+</div>
+<div class="card">
+    <h2>Metamorphic Relations</h2>
+    <p style="color:#8b949e">Run <code>python -m tools.debugger metamorphic --count 50</code> to check damage invariants against the oracle</p>
+</div>"""
+
+_COVERAGE_HTML = """
+<h1>Coverage Report</h1>
+<div class="card">
+    <h2>Static Analysis</h2>
+    <p style="color:#8b949e">Run <code>python -m tools.debugger static analyze</code> for dead code, bank pressure, and clobber inference</p>
+</div>"""
+
+_RUNS_HTML = """
+<h1>Experiment Runs</h1>
+<div class="card" id="runs-list">Loading...</div>
+<script>
+fetch('/api/runs').then(r=>r.json()).then(d=>{
+    if (!d.runs || d.runs.length === 0) {
+        document.getElementById('runs-list').innerHTML = '<p style="color:#8b949e">No runs recorded yet.</p>';
+        return;
+    }
+    let h = '<table><tr><th>Run</th><th>Profile</th><th>Time</th></tr>';
+    d.runs.forEach(r => {
+        h += '<tr><td><a href="/api/runs/'+r.name+'">'+r.name+'</a></td>'
+           + '<td>'+r.profile+'</td><td>'+r.timestamp+'</td></tr>';
+    });
+    h += '</table>';
+    document.getElementById('runs-list').innerHTML = h;
+});
+</script>"""
 
 
 if HAS_FASTAPI:

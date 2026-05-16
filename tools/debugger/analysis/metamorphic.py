@@ -11,6 +11,9 @@ Relations implemented:
   - Determinism: same seed → same result
   - Hidden-info leak: hidden party data must not change Boss AI output
   - Item invariant: Choice Band locks move but doesn't change locked-turn damage
+
+Default damage function delegates to tools.damage_debugger.oracle when
+available, applying the 85%-100% DamageVariation range the ROM uses.
 """
 
 from __future__ import annotations
@@ -87,13 +90,87 @@ class Scenario:
 DamageFunc = Callable[[Scenario], tuple[int, int]]
 
 
-def _default_damage(scenario: Scenario) -> tuple[int, int]:
-    """Stub damage function — returns (low, high) range.
+_STAGE_MULTIPLIERS = {
+    1: 25, 2: 28, 3: 33, 4: 40, 5: 50, 6: 66,
+    7: 100, 8: 150, 9: 200, 10: 250, 11: 300, 12: 350, 13: 400,
+}
 
-    In production, this delegates to tools.damage_debugger.oracle or
-    the ROM emulator. Here it provides Gen 2 formula approximation
-    for standalone metamorphic testing.
+
+def _scenario_to_battle_inputs(scenario: Scenario) -> Any:
+    """Convert a metamorphic Scenario to a damage_debugger BattleInputs."""
+    from tools.damage_debugger.oracle import BattleInputs
+
+    is_physical = scenario.move_category == "physical"
+    atk_types = scenario.attacker_types
+    if len(atk_types) == 0:
+        atk_types = [0xFF]
+    if len(atk_types) == 1:
+        atk_types = [atk_types[0], atk_types[0]]
+
+    def_types = scenario.extra.get("defender_types", [0xFF, 0xFF])
+    if len(def_types) == 1:
+        def_types = [def_types[0], def_types[0]]
+
+    if is_physical:
+        raw_atk = scenario.attacker_atk
+        raw_def = scenario.defender_def
+        atk_stage = scenario.atk_stage
+        def_stage = scenario.def_stage
+    else:
+        raw_atk = scenario.attacker_spa
+        raw_def = scenario.defender_spd
+        atk_stage = scenario.spa_stage
+        def_stage = scenario.spd_stage
+
+    eff_atk = raw_atk * _STAGE_MULTIPLIERS.get(atk_stage, 100) // 100
+    eff_def = raw_def * _STAGE_MULTIPLIERS.get(def_stage, 100) // 100
+
+    return BattleInputs(
+        attacker_level=scenario.attacker_level,
+        move_bp=scenario.move_power,
+        move_type=scenario.move_type,
+        is_physical=is_physical,
+        attacker_atk=max(1, eff_atk),
+        defender_def=max(1, eff_def),
+        attacker_types=tuple(atk_types[:2]),
+        defender_types=tuple(def_types[:2]),
+    )
+
+
+def _oracle_damage(scenario: Scenario) -> tuple[int, int]:
+    """Damage via the real oracle, returning (low, high) with DamageVariation.
+
+    The ROM applies a final 85%-100% random multiplier (217/255 to 255/255).
+    The oracle predicts the pre-variation value; we apply the range here.
     """
+    from tools.damage_debugger.oracle import predict_damage
+    inp = _scenario_to_battle_inputs(scenario)
+    exact = predict_damage(inp)
+    if exact == 0:
+        return (0, 0)
+    low = max(1, exact * 217 // 255)
+    return (low, exact)
+
+
+_HAS_ORACLE = None
+
+
+def _check_oracle() -> bool:
+    global _HAS_ORACLE
+    if _HAS_ORACLE is None:
+        try:
+            from tools.damage_debugger.oracle import predict_damage  # noqa: F401
+            _HAS_ORACLE = True
+        except ImportError:
+            _HAS_ORACLE = False
+    return _HAS_ORACLE
+
+
+def _default_damage(scenario: Scenario) -> tuple[int, int]:
+    """Damage function — delegates to oracle when available, else approximates."""
+    if _check_oracle():
+        return _oracle_damage(scenario)
+
     level = scenario.attacker_level
     if scenario.move_category == "physical":
         atk = scenario.attacker_atk
@@ -133,16 +210,18 @@ def check_level_monotonicity(
     fn = damage_fn or _default_damage
     s1 = scenario
     s2 = scenario.copy(attacker_level=scenario.attacker_level + 1)
-    _, hi1 = fn(s1)
-    lo2, _ = fn(s2)
-    passed = lo2 >= hi1 or lo2 >= s1.attacker_level  # monotonic within variation
+    lo1, hi1 = fn(s1)
+    lo2, hi2 = fn(s2)
+    # Same-roll monotonicity: max(L+1) >= max(L). The DamageVariation
+    # band makes cross-roll comparison (lo2 >= hi1) fail for small deltas.
+    passed = hi2 >= hi1
     return MetamorphicResult(
         relation=RelationKind.LEVEL_MONOTONICITY,
         passed=passed,
         scenario_id=scenario.scenario_id,
         original={"level": s1.attacker_level, "damage_high": hi1},
-        transformed={"level": s2.attacker_level, "damage_low": lo2},
-        detail=f"L{s1.attacker_level}→L{s2.attacker_level}: hi={hi1} vs lo={lo2}",
+        transformed={"level": s2.attacker_level, "damage_high": hi2},
+        detail=f"L{s1.attacker_level}→L{s2.attacker_level}: max={hi1} vs max={hi2}",
     )
 
 
@@ -182,15 +261,15 @@ def check_stat_stage_monotonicity(
     else:
         boosted = scenario.copy(spa_stage=stage + 1)
     _, hi_base = fn(scenario)
-    lo_boost, _ = fn(boosted)
-    passed = lo_boost >= hi_base
+    _, hi_boost = fn(boosted)
+    passed = hi_boost >= hi_base
     return MetamorphicResult(
         relation=RelationKind.STAT_STAGE_MONOTONICITY,
         passed=passed,
         scenario_id=scenario.scenario_id,
-        original={"stage": stage, "damage_high": hi_base},
-        transformed={"stage": stage + 1, "damage_low": lo_boost},
-        detail=f"stage {stage}→{stage+1}: hi={hi_base} vs lo={lo_boost}",
+        original={"stage": stage, "damage_max": hi_base},
+        transformed={"stage": stage + 1, "damage_max": hi_boost},
+        detail=f"stage {stage}→{stage+1}: max={hi_base} vs max={hi_boost}",
     )
 
 
@@ -243,8 +322,21 @@ def check_hidden_info_leak(
 def check_symmetry(
     scenario: Scenario, *, damage_fn: DamageFunc | None = None
 ) -> MetamorphicResult:
-    """damage(A→B) == damage(B→A) when species/moves/stats swap and types are symmetric."""
+    """damage(A→B) == damage(B→A) when stats/levels/types swap fully.
+
+    Only meaningful when attacker and defender types are identical,
+    otherwise type matchups differ and asymmetry is expected.
+    """
     fn = damage_fn or _default_damage
+    def_types = scenario.extra.get("defender_types", [0xFF, 0xFF])
+    atk_types = scenario.attacker_types or [0xFF]
+    if sorted(atk_types) != sorted(def_types):
+        return MetamorphicResult(
+            relation=RelationKind.SYMMETRY,
+            passed=True,
+            scenario_id=scenario.scenario_id,
+            detail="types differ — symmetry not expected, skipped",
+        )
     swapped = scenario.copy(
         attacker_atk=scenario.defender_def,
         defender_def=scenario.attacker_atk,

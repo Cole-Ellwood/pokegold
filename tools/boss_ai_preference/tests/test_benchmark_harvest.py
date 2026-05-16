@@ -24,8 +24,8 @@ class BenchmarkHarvestTests(unittest.TestCase):
             row["fixture_id"] for row in report["complete_candidates"]
         }
 
-        self.assertEqual(report["fixture_count"], 57)
-        self.assertEqual(report["preference_count"], 52)
+        self.assertEqual(report["fixture_count"], 59)
+        self.assertEqual(report["preference_count"], 54)
         self.assertGreaterEqual(report["complete_candidate_count"], 4)
         self.assertIn("chuck_poliwrath_vs_pidgeotto_ice_punch", complete_ids)
         self.assertIn("janine_qwilfish_finish_third_spikes_layer", complete_ids)

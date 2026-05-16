@@ -43,6 +43,12 @@ class AudioSnapshot:
     sfx_id: int = 0
 
     @staticmethod
+    def from_session(session: Any) -> AudioSnapshot:
+        """Capture audio snapshot from a live DebugSession (PyBoy)."""
+        io_regs = bytes(session.pyboy.memory[0xFF00 + i] for i in range(0x80))
+        return AudioSnapshot.from_io(io_regs)
+
+    @staticmethod
     def from_io(io_regs: bytes, wram: bytes | None = None, wram_base: int = 0xC000) -> AudioSnapshot:
         """Build from IO register dump (0xFF00-0xFF7F)."""
         snap = AudioSnapshot()

@@ -94,6 +94,21 @@ def load_event_flags(project_root: Path) -> list[EventFlag]:
     return flags
 
 
+def read_event_flags_from_session(
+    flags: list[EventFlag],
+    session: Any,
+    flags_base_addr: int = 0xDA72,
+) -> list[EventFlag]:
+    """Read event flag values from a live DebugSession."""
+    result: list[EventFlag] = []
+    for f in flags:
+        addr = flags_base_addr + f.byte_offset
+        byte_val = session.read_bytes(None, addr, 1)[0]
+        f.value = bool(byte_val & (1 << f.bit))
+        result.append(f)
+    return result
+
+
 def read_event_flags(
     flags: list[EventFlag],
     wram: bytes,
@@ -132,5 +147,6 @@ __all__ = [
     "MapScriptTrace",
     "load_event_flags",
     "read_event_flags",
+    "read_event_flags_from_session",
     "diff_event_flags",
 ]

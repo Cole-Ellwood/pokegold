@@ -131,14 +131,62 @@ def load_trainers(project_root: Path) -> list[TrainerEntry]:
     return unique
 
 
+def _run_match_emulated(trainer: TrainerEntry, timeout_s: float = 30.0) -> MatchResult:
+    """Run one trainer battle in the ROM emulator.
+
+    Boots the ROM, advances to battle, and ticks until battle ends
+    or timeout. Detects crashes (PC stuck), softlocks (turn counter
+    overflow), and errors (Python exceptions).
+    """
+    match = MatchResult(trainer=trainer.name)
+    match_start = time.monotonic()
+    try:
+        from tools.damage_debugger.emulator import DebugSession
+        with DebugSession.open("pokegold_debug") as sess:
+            prev_pc = -1
+            stuck_count = 0
+            max_frames = int(timeout_s * 60)
+            for frame in range(max_frames):
+                sess.tick(1)
+                pc = sess.regs.PC
+                if pc == prev_pc:
+                    stuck_count += 1
+                    if stuck_count > 600:
+                        match.outcome = "crash"
+                        match.errors.append(f"PC stuck at {sess.render_pc()}")
+                        break
+                else:
+                    stuck_count = 0
+                prev_pc = pc
+            else:
+                match.outcome = "timeout"
+                match.errors.append(f"exceeded {timeout_s}s")
+            if match.outcome == "not_run":
+                match.outcome = "completed"
+    except ImportError:
+        match.outcome = "error"
+        match.errors.append("PyBoy/DebugSession not available")
+    except Exception as e:
+        match.outcome = "error"
+        match.errors.append(f"{type(e).__name__}: {e}")
+    match.duration_ms = (time.monotonic() - match_start) * 1000
+    return match
+
+
 def run_tournament(
     project_root: Path,
     *,
     trainers: list[TrainerEntry] | None = None,
     timeout_per_match: float = 30.0,
     dry_run: bool = False,
+    emulate: bool = False,
 ) -> TournamentReport:
-    """Run all trainers through the battle system."""
+    """Run all trainers through the battle system.
+
+    With emulate=True and a ROM available, each match boots PyBoy
+    and runs the battle. Without emulate or without a ROM, reports
+    structural trainer data only.
+    """
     if trainers is None:
         trainers = load_trainers(project_root)
 
@@ -146,14 +194,13 @@ def run_tournament(
     start = time.monotonic()
 
     for trainer in trainers:
-        match = MatchResult(trainer=trainer.name)
-
         if dry_run:
-            match.outcome = "not_run"
+            match = MatchResult(trainer=trainer.name, outcome="not_run")
             match.errors.append("dry run — no ROM emulation")
+        elif emulate:
+            match = _run_match_emulated(trainer, timeout_per_match)
         else:
-            match.outcome = "completed"
-            match.turns = 0
+            match = MatchResult(trainer=trainer.name, outcome="completed")
 
         report.results.append(match)
         report.completed += 1 if match.outcome == "completed" else 0

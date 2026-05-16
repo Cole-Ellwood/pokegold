@@ -80,7 +80,12 @@ class StackFrame:
 
 
 class DapSession:
-    """Single debug session state."""
+    """Single debug session state.
+
+    When a ROM is available, connects to PyBoy via DebugSession for
+    real instruction stepping and memory reads. Without a ROM, falls
+    back to local register state for protocol testing.
+    """
 
     def __init__(self) -> None:
         self.breakpoints: dict[int, Breakpoint] = {}
@@ -102,6 +107,47 @@ class DapSession:
             "A": 0, "B": 0, "C": 0, "D": 0, "E": 0,
             "H": 0, "L": 0, "F": 0, "SP": 0xFFFE, "PC": 0x0100,
         }
+        self._emu: Any = None
+
+    def connect_emulator(self, variant: str = "pokegold_debug") -> bool:
+        """Attach to a PyBoy ROM via DebugSession. Returns True on success."""
+        try:
+            from tools.damage_debugger.emulator import DebugSession
+            self._emu = DebugSession.open(variant)
+            self._sync_from_emu()
+            return True
+        except Exception:
+            self._emu = None
+            return False
+
+    def close_emulator(self) -> None:
+        if self._emu is not None:
+            self._emu.close()
+            self._emu = None
+
+    def _sync_from_emu(self) -> None:
+        """Pull register / PC / bank state from the live emulator."""
+        if self._emu is None:
+            return
+        snap = self._emu.regs_snapshot()
+        self.registers.update({
+            "A": snap["A"], "B": snap["B"], "C": snap["C"],
+            "D": snap["D"], "E": snap["E"],
+            "H": snap["HL"] >> 8, "L": snap["HL"] & 0xFF,
+            "F": snap["F"], "SP": snap["SP"], "PC": snap["PC"],
+        })
+        self.pc = snap["PC"]
+        self.bank = self._emu.cur_bank
+
+    def _read_memory(self, addr: int, size: int = 1) -> list[int]:
+        """Read memory from emulator or return zeros."""
+        if self._emu is not None:
+            return self._emu.read_bytes(None, addr, size)
+        return [0] * size
+
+    @property
+    def has_emulator(self) -> bool:
+        return self._emu is not None
 
     def add_breakpoint(self, source_file: str, line: int, condition: str = "") -> Breakpoint:
         bp = Breakpoint(
@@ -131,6 +177,17 @@ class DapSession:
 
     def evaluate_watch(self, watch: WatchExpression, wram: bytes | None = None) -> str:
         """Evaluate a watch expression against current state."""
+        if self._symbol_service is None and self._emu is None:
+            return "<no symbols>"
+
+        if self._emu is not None:
+            sym = self._emu.symbols.get(watch.expression)
+            if sym is None:
+                return "<unknown symbol>"
+            val = self._emu.read_bytes(sym.bank if sym.address >= 0x4000 else None, sym.address, 1)[0]
+            watch.value = f"${val:02X} ({val})"
+            return watch.value
+
         if self._symbol_service is None:
             return "<no symbols>"
 
@@ -181,8 +238,12 @@ class DapSession:
         return [top]
 
     def step(self) -> None:
-        self.pc += 1
-        self.registers["PC"] = self.pc
+        if self._emu is not None:
+            self._emu.tick(1)
+            self._sync_from_emu()
+        else:
+            self.pc += 1
+            self.registers["PC"] = self.pc
 
     def step_back(self) -> None:
         if self.pc > 0:
@@ -190,6 +251,14 @@ class DapSession:
             self.registers["PC"] = self.pc
 
     def continue_run(self) -> None:
+        if self._emu is not None:
+            self._emu.tick(60)
+            self._sync_from_emu()
+            for bp in self.breakpoints.values():
+                if bp.verified and self.pc == bp.address and self.bank == bp.bank:
+                    self.stopped = True
+                    self.stop_reason = "breakpoint"
+                    return
         self.stopped = False
 
 
@@ -255,7 +324,9 @@ class DapServer:
     def _handle_launch(self, request: dict[str, Any]) -> None:
         args = request.get("arguments", {})
         self.session.rom_path = args.get("program", "")
-        self.session.variant = args.get("variant", "pokegold")
+        self.session.variant = args.get("variant", "pokegold_debug")
+        if self.session.rom_path:
+            self.session.connect_emulator(self.session.variant)
         self._respond(request)
         self._event("stopped", {"reason": "entry", "threadId": 1})
 
@@ -309,12 +380,23 @@ class DapServer:
         ref = request.get("arguments", {}).get("variablesReference", 0)
         variables = []
         if ref == 1:
+            if self.session.has_emulator:
+                self.session._sync_from_emu()
             for name, val in self.session.registers.items():
                 variables.append({
                     "name": name,
                     "value": f"${val:04X}" if name in ("SP", "PC") else f"${val:02X}",
                     "variablesReference": 0,
                 })
+        elif ref == 3 and self.session.has_emulator:
+            for addr in range(0xFF80, 0xFFFF):
+                val = self.session._read_memory(addr, 1)[0]
+                if val != 0:
+                    variables.append({
+                        "name": f"${addr:04X}",
+                        "value": f"${val:02X} ({val})",
+                        "variablesReference": 0,
+                    })
         self._respond(request, {"variables": variables})
 
     def _handle_continue(self, request: dict[str, Any]) -> None:
@@ -351,6 +433,7 @@ class DapServer:
         })
 
     def _handle_disconnect(self, request: dict[str, Any]) -> None:
+        self.session.close_emulator()
         self._respond(request)
         self._running = False
 

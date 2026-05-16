@@ -92,6 +92,19 @@ class VramSnapshot:
     lcdc: int = 0
 
     @staticmethod
+    def from_session(session: Any) -> VramSnapshot:
+        """Capture VRAM snapshot from a live DebugSession (PyBoy)."""
+        pyboy = session.pyboy
+        vram_bytes = bytes(pyboy.memory[0x8000 + i] for i in range(0x2000))
+        try:
+            vram_bank1 = bytes(pyboy.memory[1, 0x8000 + i] for i in range(0x2000))
+            vram_bytes += vram_bank1
+        except (TypeError, IndexError):
+            vram_bytes += b"\x00" * 0x2000
+        io_regs = bytes(pyboy.memory[0xFF00 + i] for i in range(0x80))
+        return VramSnapshot.from_bytes(vram_bytes, io_regs)
+
+    @staticmethod
     def from_bytes(vram: bytes, io_regs: bytes | None = None) -> VramSnapshot:
         snap = VramSnapshot()
 

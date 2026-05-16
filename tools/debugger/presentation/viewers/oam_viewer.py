@@ -77,6 +77,13 @@ class OamSnapshot:
     sprite_size_8x16: bool = False
 
     @staticmethod
+    def from_session(session: Any) -> OamSnapshot:
+        """Capture OAM snapshot from a live DebugSession (PyBoy)."""
+        oam_data = bytes(session.pyboy.memory[0xFE00 + i] for i in range(OAM_TOTAL_SIZE))
+        lcdc = session.pyboy.memory[0xFF40]
+        return OamSnapshot.from_bytes(oam_data, lcdc)
+
+    @staticmethod
     def from_bytes(oam: bytes, lcdc: int = 0) -> OamSnapshot:
         snap = OamSnapshot(sprite_size_8x16=bool(lcdc & 0x04))
         for i in range(min(OAM_ENTRY_COUNT, len(oam) // OAM_ENTRY_SIZE)):

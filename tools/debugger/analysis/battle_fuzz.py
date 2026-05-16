@@ -5,6 +5,9 @@ sequences: UseMove, SwitchOut, ApplyItem, EndTurn.  Invariants
 assert structural correctness (HP bounds, stage bounds, no double
 Choice lock).  ``hypothesis.target()`` guides search toward
 worst-case drift and overflow.
+
+Damage calculation delegates to tools.damage_debugger.oracle when
+available, falling back to an inline Gen 2 approximation.
 """
 
 from __future__ import annotations
@@ -32,6 +35,42 @@ except ImportError:
 BASE_STAT_LEVEL = 7
 MAX_STAT_LEVEL = 13
 MIN_STAT_LEVEL = 1
+
+_ORACLE_AVAILABLE = None
+
+
+def _calc_damage(level: int, power: int, atk: int, dfn: int,
+                 is_physical: bool = True,
+                 move_type: int = 0,
+                 attacker_types: tuple[int, int] = (0, 0),
+                 defender_types: tuple[int, int] = (0xFF, 0xFF)) -> int:
+    """Calculate damage using the oracle when available, else inline formula."""
+    global _ORACLE_AVAILABLE
+    if _ORACLE_AVAILABLE is None:
+        try:
+            from tools.damage_debugger.oracle import predict_damage  # noqa: F401
+            _ORACLE_AVAILABLE = True
+        except ImportError:
+            _ORACLE_AVAILABLE = False
+
+    if _ORACLE_AVAILABLE:
+        from tools.damage_debugger.oracle import BattleInputs, predict_damage
+        inp = BattleInputs(
+            attacker_level=level,
+            move_bp=power,
+            move_type=move_type,
+            is_physical=is_physical,
+            attacker_atk=atk,
+            defender_def=dfn,
+            attacker_types=attacker_types,
+            defender_types=defender_types,
+        )
+        return max(1, predict_damage(inp))
+
+    if dfn == 0:
+        dfn = 1
+    damage = ((2 * level // 5 + 2) * power * atk // dfn) // 50 + 2
+    return max(1, damage)
 
 
 class MoveCategory(Enum):
@@ -139,11 +178,14 @@ if HAS_HYPOTHESIS:
                 atk_val = attacker.spa
                 def_val = defender.spd
 
-            level = attacker.level
-            if def_val == 0:
-                def_val = 1
-            damage = ((2 * level // 5 + 2) * power * atk_val // def_val) // 50 + 2
-            damage = max(1, damage)
+            atk_types = tuple(attacker.types[:2]) if len(attacker.types) >= 2 else (attacker.types[0], attacker.types[0]) if attacker.types else (0, 0)
+            def_types = tuple(defender.types[:2]) if len(defender.types) >= 2 else (defender.types[0], defender.types[0]) if defender.types else (0xFF, 0xFF)
+            damage = _calc_damage(
+                level=attacker.level, power=power,
+                atk=atk_val, dfn=def_val,
+                is_physical=(category == "physical"),
+                attacker_types=atk_types, defender_types=def_types,
+            )
 
             defender.hp = max(0, defender.hp - damage)
             self.damage_log.append({

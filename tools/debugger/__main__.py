@@ -251,6 +251,7 @@ def build_parser() -> argparse.ArgumentParser:
     mcp_call_p = mcp_sub.add_parser("call", help="Call an MCP tool")
     mcp_call_p.add_argument("tool", help="Tool name")
     mcp_call_p.add_argument("params", nargs="*", help="key=value params")
+    mcp_sub.add_parser("stdio", help="Run MCP server over stdin/stdout (JSON-RPC)")
 
     # --- battle subcommand ---
     battle_parser = sub.add_parser("battle", help="Battle analysis commands")
@@ -262,6 +263,12 @@ def build_parser() -> argparse.ArgumentParser:
     damage_p.add_argument("move", help="Move name")
     damage_p.add_argument("--explain", action="store_true", help="Full breakdown")
     damage_p.add_argument("--format", choices=["text", "arrow", "markdown"], default="text")
+    damage_p.add_argument("--bp", type=int, help="Move base power (required if no move DB)")
+    damage_p.add_argument("--atk", type=int, help="Attacker's attack stat")
+    damage_p.add_argument("--dfn", type=int, help="Defender's defense stat")
+    damage_p.add_argument("--move-type", type=int, default=0, help="Move type index")
+    damage_p.add_argument("--physical", action="store_true", default=True, help="Physical move (default)")
+    damage_p.add_argument("--special", action="store_true", help="Special move")
 
     # --- static subcommand ---
     static_parser = sub.add_parser("static", help="Static analysis commands")
@@ -284,8 +291,10 @@ def build_parser() -> argparse.ArgumentParser:
     analyze_p = static_sub.add_parser("analyze", help="Run all static analyses")
     analyze_p.add_argument("--variant", default="pokegold", help="ROM variant")
 
-    query_parser = sub.add_parser("query", help="Omniscient query (placeholder)")
-    query_parser.add_argument("expression", help="Query expression")
+    query_parser = sub.add_parser("query", help="Search symbols by prefix")
+    query_parser.add_argument("expression", help="Symbol prefix to search")
+    query_parser.add_argument("--variant", default="pokegold", help="ROM variant")
+    query_parser.add_argument("--limit", type=int, default=20, help="Max results")
 
     # --- selftest ---
     sub.add_parser("selftest", help="Run all component self-tests")
@@ -300,13 +309,15 @@ def build_parser() -> argparse.ArgumentParser:
 
     # --- bisect ---
     bisect_parser = sub.add_parser("bisect", help="Git bisect with scenario criterion")
-    bisect_parser.add_argument("--scenario", required=True, help="Scenario name or path")
+    bisect_parser.add_argument("--scenario", required=True, help="Shell command returning 0=good")
     bisect_parser.add_argument("--good", required=True, help="Known-good commit")
     bisect_parser.add_argument("--bad", default="HEAD", help="Known-bad commit")
+    bisect_parser.add_argument("--build-cmd", help="Build command to run before test")
 
     # --- tournament ---
     tour_parser = sub.add_parser("tournament", help="Run trainer tournament")
     tour_parser.add_argument("--dry-run", action="store_true", help="List trainers without running")
+    tour_parser.add_argument("--emulate", action="store_true", help="Run matches in PyBoy emulator")
 
     # --- savelab ---
     savelab_parser = sub.add_parser("savelab", help="Save-state lab commands")
@@ -465,6 +476,130 @@ def cmd_mcp_call(args: argparse.Namespace) -> int:
     return 0 if result.ok else 1
 
 
+def cmd_battle_damage(args: argparse.Namespace) -> int:
+    def _parse_spec(spec: str) -> tuple[str, int]:
+        if ":" in spec:
+            name, lvl = spec.rsplit(":", 1)
+            try:
+                return name, int(lvl)
+            except ValueError:
+                pass
+        return spec, 50
+
+    attacker_name, atk_level = _parse_spec(args.attacker)
+    defender_name, def_level = _parse_spec(args.defender)
+    move_name = args.move.replace("_", " ").title()
+
+    bp = getattr(args, "bp", None)
+    atk = getattr(args, "atk", None)
+    dfn = getattr(args, "dfn", None)
+    is_physical = not getattr(args, "special", False)
+    move_type = getattr(args, "move_type", 0) or 0
+
+    if bp is None or atk is None or dfn is None:
+        print(f"  {attacker_name} L{atk_level} vs {defender_name} L{def_level}")
+        print(f"  Move: {move_name}")
+        print()
+        print("Provide --bp, --atk, --dfn for oracle calculation.")
+        print("  Example: python -m tools.debugger battle damage CROBAT:44 ALAKAZAM:44 WING_ATTACK --bp 60 --atk 130 --dfn 90")
+        return 0
+
+    try:
+        from tools.damage_debugger.oracle import BattleInputs, predict_damage
+        inp = BattleInputs(
+            attacker_level=atk_level,
+            move_bp=bp,
+            move_type=move_type,
+            is_physical=is_physical,
+            attacker_atk=atk,
+            defender_def=dfn,
+            attacker_types=(move_type, move_type),
+            defender_types=(0xFF, 0xFF),
+        )
+        exact = predict_damage(inp)
+        low = max(1, exact * 217 // 255) if exact > 0 else 0
+    except ImportError:
+        print("error: damage oracle not available", file=sys.stderr)
+        return 1
+
+    from .analysis.damage_chain import DamageChainDiagram
+    diagram = DamageChainDiagram(
+        attacker=attacker_name, defender=defender_name, move=move_name,
+        final_low=low, final_high=exact,
+    )
+    diagram.add_step("Base power", bp)
+    base = (2 * atk_level // 5 + 2) * bp * atk // dfn // 50 + 2
+    diagram.add_step("Pre-modifier", base)
+    diagram.add_step("Final (exact)", exact)
+    diagram.add_step("DamageVariation low", low)
+
+    if args.format == "arrow":
+        print(diagram.render_arrow())
+    elif args.format == "markdown":
+        print(diagram.render_markdown())
+    else:
+        print(diagram.render_text())
+
+    if args.explain:
+        print(f"\n  Level: {atk_level}  BP: {bp}  Atk: {atk}  Def: {dfn}")
+        print(f"  Physical: {is_physical}  MoveType: {move_type}")
+        print(f"  Oracle exact: {exact}")
+        print(f"  DamageVariation range: {low}-{exact}")
+
+    return 0
+
+
+def cmd_query(args: argparse.Namespace) -> int:
+    from .kernel.symbol_service import SymbolService
+
+    try:
+        svc = SymbolService.from_project(variant=args.variant, start=ROOT)
+    except FileNotFoundError as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 1
+
+    matches = svc.prefix_search(args.expression)
+    if not matches:
+        print(f"No symbols matching '{args.expression}'")
+        return 1
+
+    shown = matches[:args.limit]
+    for m in shown:
+        print(f"  ${m.bank:02x}:{m.address:04x}  {m.name}")
+    if len(matches) > args.limit:
+        print(f"  ... and {len(matches) - args.limit} more")
+    print(f"\n{len(matches)} symbols matching '{args.expression}'")
+    return 0
+
+
+def cmd_bisect(args: argparse.Namespace) -> int:
+    import subprocess as _sp
+    from .stress.bisect import bisect_scenario
+
+    scenario_cmd = args.scenario
+
+    def test_fn(project_root: Path, commit: str) -> bool:
+        try:
+            proc = _sp.run(
+                scenario_cmd, shell=True, cwd=str(project_root),
+                capture_output=True, timeout=120,
+            )
+            return proc.returncode == 0
+        except _sp.TimeoutExpired:
+            return False
+
+    print(f"Bisecting {args.good}..{args.bad} with: {scenario_cmd}")
+    result = bisect_scenario(
+        ROOT,
+        good_commit=args.good,
+        bad_commit=args.bad,
+        test_fn=test_fn,
+        build_cmd=getattr(args, 'build_cmd', None),
+    )
+    print(result.summary())
+    return 0 if result.ok else 1
+
+
 def main() -> int:
     parser = build_parser()
     args = parser.parse_args()
@@ -496,14 +631,16 @@ def main() -> int:
             return cmd_mcp_list(args)
         elif args.mcp_command == "call":
             return cmd_mcp_call(args)
+        elif args.mcp_command == "stdio":
+            from .llm.mcp_server import run_stdio
+            run_stdio()
+            return 0
         else:
             parser.parse_args(["mcp", "--help"])
             return 1
     elif args.command == "battle":
         if args.battle_command == "damage":
-            print(f"Damage chain: {args.attacker} vs {args.defender} using {args.move}")
-            print("(Full battle damage CLI wired to oracle — use damage_debugger for now)")
-            return 0
+            return cmd_battle_damage(args)
         else:
             parser.parse_args(["battle", "--help"])
             return 1
@@ -520,9 +657,7 @@ def main() -> int:
             parser.parse_args(["static", "--help"])
             return 1
     elif args.command == "query":
-        print(f"Query: {args.expression}")
-        print("(Omniscient query DSL not yet implemented — P4)")
-        return 0
+        return cmd_query(args)
     elif args.command == "selftest":
         from .selftest import run_selftest
         report = run_selftest()
@@ -561,13 +696,10 @@ def main() -> int:
         print(json.dumps(result, indent=2))
         return 0 if result.get("passed") else 1
     elif args.command == "bisect":
-        from .stress.bisect import bisect_scenario
-        print(f"Bisect: {args.scenario} ({args.good}..{args.bad})")
-        print("(Requires ROM build at each step — use with build_cmd)")
-        return 0
+        return cmd_bisect(args)
     elif args.command == "tournament":
         from .stress.tournament import run_tournament
-        report = run_tournament(ROOT, dry_run=args.dry_run)
+        report = run_tournament(ROOT, dry_run=args.dry_run, emulate=getattr(args, 'emulate', False))
         print(report.summary())
         return 0 if report.ok else 1
     elif args.command == "savelab":

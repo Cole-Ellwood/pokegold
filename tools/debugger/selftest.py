@@ -106,9 +106,9 @@ def _test_battle_inspector() -> None:
     from .analysis.battle_inspector import BattleInspector
 
 
-@register("analysis: metamorphic relations")
+@register("analysis: metamorphic oracle wiring")
 def _test_metamorphic() -> None:
-    from .analysis.metamorphic import Scenario, run_all_damage
+    from .analysis.metamorphic import Scenario, run_all_damage, _check_oracle, _oracle_damage
     s = Scenario(
         scenario_id="selftest",
         move_power=60,
@@ -116,19 +116,26 @@ def _test_metamorphic() -> None:
         move_type=0,
         attacker_atk=100,
         defender_def=80,
+        extra={"defender_types": [0xFF, 0xFF]},
     )
     results = run_all_damage(s)
     assert len(results) >= 5, f"Expected >=5 relations, got {len(results)}"
     passed_count = sum(1 for r in results if r.passed)
     assert passed_count >= 4, f"Expected >=4 passing relations, got {passed_count}"
+    assert _check_oracle(), "Oracle should be importable in this repo"
+    lo, hi = _oracle_damage(s)
+    assert hi > 0, f"Oracle returned zero damage for a 60 BP move"
+    assert lo <= hi, f"Oracle low ({lo}) > high ({hi})"
 
 
-@register("analysis: battle fuzz import")
+@register("analysis: battle fuzz oracle wiring")
 def _test_battle_fuzz() -> None:
-    from .analysis.battle_fuzz import HAS_HYPOTHESIS, FuzzBattleState, FuzzMon
+    from .analysis.battle_fuzz import HAS_HYPOTHESIS, FuzzBattleState, FuzzMon, _calc_damage
     state = FuzzBattleState()
     assert state.turn == 0
     assert state.player_active.alive()
+    dmg = _calc_damage(level=50, power=60, atk=100, dfn=80)
+    assert dmg > 0, f"_calc_damage returned {dmg}, expected positive"
 
 
 @register("analysis: HDD minimize")
@@ -165,10 +172,12 @@ def _test_clobber() -> None:
     assert RegState.BOTTOM != RegState.DEFINED
 
 
-@register("presentation: DAP server")
+@register("presentation: DAP server + session")
 def _test_dap() -> None:
     from .presentation.dap import DapServer, DapSession
     session = DapSession()
+    assert not session.has_emulator
+
     bp = session.add_breakpoint("test.asm", 42)
     assert bp.line == 42
     assert bp.source_file == "test.asm"
@@ -176,8 +185,20 @@ def _test_dap() -> None:
     watch = session.add_watch("wBattleMonHP")
     assert watch.expression == "wBattleMonHP"
 
+    session.step()
+    assert session.pc == 0x0101, f"PC should be 0x0101 after step, got {session.pc:#x}"
+    session.step_back()
+    assert session.pc == 0x0100
+
     server = DapServer(session)
     assert "initialize" in server._handlers
+    assert "launch" in server._handlers
+    assert "evaluate" in server._handlers
+
+    import json
+    msg = {"seq": 1, "type": "request", "command": "initialize",
+           "arguments": {"adapterID": "test"}}
+    server.handle_message(msg)
 
 
 @register("presentation: viewers.vram")
@@ -287,6 +308,52 @@ def _test_hypothesis_tracker() -> None:
 
     child = h.refine("Specifically clobbered by the ld hl, target expansion")
     assert child.parent_id == h.id
+
+
+@register("integration: oracle self-test")
+def _test_oracle_integration() -> None:
+    from tools.damage_debugger.oracle import _self_test
+    results = _self_test()
+    fails = sum(1 for _, expected, got in results if expected != got)
+    assert fails == 0, f"{fails} oracle predictions disagree with paper math"
+
+
+@register("integration: metamorphic level monotonicity")
+def _test_metamorphic_level_mono() -> None:
+    from .analysis.metamorphic import Scenario, check_level_monotonicity
+    for level in (5, 20, 50, 80):
+        s = Scenario(
+            scenario_id=f"level_{level}",
+            move_power=80, attacker_types=[0x14], move_type=0x14,
+            attacker_atk=100, defender_def=80, attacker_level=level,
+            extra={"defender_types": [0xFF, 0xFF]},
+        )
+        result = check_level_monotonicity(s)
+        assert result.passed, f"Level monotonicity failed at L{level}: {result.detail}"
+
+
+@register("integration: tournament trainer loading")
+def _test_tournament_loading() -> None:
+    from .stress.tournament import load_trainers
+    from pathlib import Path
+    root = Path(__file__).resolve().parent.parent.parent
+    trainers = load_trainers(root)
+    assert len(trainers) > 0, "No trainers loaded from parties.asm"
+
+
+@register("integration: state diff round-trip")
+def _test_state_diff_integration() -> None:
+    from .savelab.state_conv import UnifiedState
+    from .savelab.state_diff import diff_states
+    wram = bytearray(0x2000)
+    wram[0] = 0x42
+    wram[0x100] = 0xFF
+    a = UnifiedState(wram=bytes(wram), hram=b"\x00" * 128)
+    wram[0] = 0x43
+    wram[0x200] = 0x01
+    b = UnifiedState(wram=bytes(wram), hram=b"\x00" * 128)
+    report = diff_states(a, b)
+    assert report.total_diffs >= 2, f"Expected >=2 diffs, got {report.total_diffs}"
 
 
 @register("compat: legacy bridges")

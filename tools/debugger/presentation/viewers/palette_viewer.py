@@ -7,6 +7,7 @@ from IO register dumps.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Any
 
 
 @dataclass
@@ -55,6 +56,23 @@ class PaletteSnapshot:
     """All BG and OBJ palettes."""
     bg_palettes: list[Palette] = field(default_factory=list)
     obj_palettes: list[Palette] = field(default_factory=list)
+
+    @staticmethod
+    def from_session(session: Any) -> PaletteSnapshot:
+        """Capture palette snapshot from a live DebugSession (PyBoy).
+
+        GBC palette RAM is accessed via BGPD (0xFF69) / OBPD (0xFF6B)
+        auto-increment registers. PyBoy exposes palette data through
+        the cgb_palettes API when available, otherwise we read the
+        palette index/data registers directly.
+        """
+        try:
+            bg_data = bytes(session.pyboy.memory[0xFF68 + i] for i in range(64))
+            obj_data = bytes(session.pyboy.memory[0xFF6A + i] for i in range(64))
+        except (TypeError, IndexError):
+            bg_data = b"\x00" * 64
+            obj_data = b"\x00" * 64
+        return PaletteSnapshot.from_bytes(bg_data, obj_data)
 
     @staticmethod
     def from_bytes(bg_data: bytes, obj_data: bytes) -> PaletteSnapshot:

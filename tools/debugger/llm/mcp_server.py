@@ -219,3 +219,90 @@ def list_tools() -> list[dict[str, str]]:
         {"name": name, "description": (fn.__doc__ or "").strip().split("\n")[0]}
         for name, fn in sorted(TOOL_TABLE.items())
     ]
+
+
+def _handle_jsonrpc(request: dict[str, Any]) -> dict[str, Any]:
+    """Handle one JSON-RPC 2.0 request and return a response."""
+    req_id = request.get("id")
+    method = request.get("method", "")
+    params = request.get("params", {})
+
+    if method == "initialize":
+        return {
+            "jsonrpc": "2.0", "id": req_id,
+            "result": {
+                "protocolVersion": "2024-11-05",
+                "capabilities": {"tools": {}},
+                "serverInfo": {"name": "pokemon-gold-debugger", "version": "0.1.0"},
+            },
+        }
+
+    if method == "notifications/initialized":
+        return {}
+
+    if method == "tools/list":
+        tools = []
+        for name, fn in sorted(TOOL_TABLE.items()):
+            doc = (fn.__doc__ or "").strip().split("\n")[0]
+            tools.append({
+                "name": name,
+                "description": doc,
+                "inputSchema": {"type": "object", "properties": {}},
+            })
+        return {"jsonrpc": "2.0", "id": req_id, "result": {"tools": tools}}
+
+    if method == "tools/call":
+        tool_name = params.get("name", "")
+        tool_args = params.get("arguments", {})
+        result = dispatch(tool_name, **tool_args)
+        content = [{"type": "text", "text": result.to_json()}]
+        return {
+            "jsonrpc": "2.0", "id": req_id,
+            "result": {"content": content, "isError": not result.ok},
+        }
+
+    return {
+        "jsonrpc": "2.0", "id": req_id,
+        "error": {"code": -32601, "message": f"Method not found: {method}"},
+    }
+
+
+def run_stdio() -> None:
+    """Run the MCP server over stdin/stdout with Content-Length framing."""
+    import sys
+
+    stdin = sys.stdin.buffer
+    stdout = sys.stdout.buffer
+
+    while True:
+        content_length = -1
+        while True:
+            line = stdin.readline()
+            if not line:
+                return
+            header = line.decode("utf-8", errors="replace").strip()
+            if not header:
+                break
+            if header.lower().startswith("content-length:"):
+                content_length = int(header.split(":", 1)[1].strip())
+
+        if content_length < 0:
+            continue
+
+        body = stdin.read(content_length)
+        if len(body) < content_length:
+            return
+
+        try:
+            request = json.loads(body)
+        except json.JSONDecodeError:
+            continue
+
+        response = _handle_jsonrpc(request)
+        if not response:
+            continue
+
+        payload = json.dumps(response).encode("utf-8")
+        stdout.write(f"Content-Length: {len(payload)}\r\n\r\n".encode("utf-8"))
+        stdout.write(payload)
+        stdout.flush()
