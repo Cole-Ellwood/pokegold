@@ -117,6 +117,10 @@ bug-class lens — not just listed them.
 - `engine/battle/ai/boss_policy_move.asm` (MaybePickAdaptiveEnemyLead + .ShouldUseAdaptiveLeadForTrainer, lines 1-100) — lens: party-slot OOB, link-mode guard. findings: 0 (early-exits on link, non-trainer, and non-AdaptiveLead trainers; `FindFirstAliveOTMon`/`FindNextAliveOTMon` are bounded by trainer party size; `inc a; ld [wEnemySwitchMonIndex], a` writes 1-based index).
 - `home/map.asm:1299-1300` (LoadMapStatus) — lens: wMapStatus writer audit. findings: 0 (single-byte ld, caller controls value).
 - `engine/battle/effect_commands.asm` (CheckTurn at lines 121-220, BattleCommand_Confuse at 5624-5703, BattleCommandPointers dispatcher around line 100-119) — lens: per-handler register-clobber, dispatch-OOB. findings: 0 confirmed in sampled handlers; dispatcher uses `BattleCommandPointers` which (per existing convention) covers the legal opcode range. Confuse handler bounds confused-count to 2..5 via `random & 3 + 2`.
+- `engine/battle/effect_commands.asm` BattleCommand_DamageCalc (lines 2824-3023) — lens: div-by-zero, stat overflow, damage cap. findings: 0 (explicit `ld c, 1` defense floor at line 2860-2864; level*2 overflow handled at 2873-2876; MAX_DAMAGE cap with multi-byte compare at 2964-3018).
+- `engine/battle/effect_commands.asm` BattleCommand_StatUp + RaiseStat (lines 4040-4138) — lens: stat-stage OOB, stat-recompute overflow. findings: 0 confirmed (low nibble of wLoweredStat & $f extracts stat index; MAX_STAT_LEVEL bound at 4066-4068; MAX_STAT_VALUE recompute bound at 4103-4107; .stats_already_max safety undoes the inc to keep stat-level monotonic).
+- `engine/battle/move_effects/transform.asm` — lens: stat-copy buffer-overflow, PP-corruption. findings: 0 (NUM_MOVES bound on .pp_loop; BattleSideCopy is direction-aware; SKETCH-PP set to 1, normal moves to 5).
+- `audio/cries.asm` (lines 1-60) — lens: cry-data validity. findings: 0 (pure data table; `channel_count N` + N × `channel ID, label` per Pokemon; no executable code in this file).
 
 ### Regions deferred
 <!-- iterations append: - region (reason for deferral) -->
