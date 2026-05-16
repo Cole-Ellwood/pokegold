@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-05-16T09:21:57+00:00",
+  "generated_at": "2026-05-16T09:31:41+00:00",
   "threshold": 0.8,
   "strict_label_count": 44,
-  "strict_agreement_count": 39,
-  "agreement_rate": 0.8863636363636364,
+  "strict_agreement_count": 40,
+  "agreement_rate": 0.9090909090909091,
   "passed": true,
   "skipped": {
     "both_good": 1,
@@ -20,7 +20,7 @@
     },
     "switch_policy": {
       "total": 26,
-      "agree": 23
+      "agree": 24
     }
   },
   "disagreements": [
@@ -63,32 +63,6 @@
       "same_first_move": false,
       "lesson_type": "sequence_policy",
       "note": "Use Body Slam pressure first, heal only around the danger threshold, then consider Rollout after paralysis or a safe board. Opening with Milk Drink, switching, or Body Slam without a recovery/lock branch misses the taught line.",
-      "cumulative_score_a": 0,
-      "cumulative_score_b": 0,
-      "resolved_by": "first_move",
-      "route_value_delta_a": 0,
-      "route_value_delta_b": 6,
-      "route_factors_a": [],
-      "route_factors_b": [
-        "honest_continuation",
-        "switch_pivot"
-      ],
-      "structurally_valid_a": true,
-      "structurally_valid_b": true
-    },
-    {
-      "fixture_id": "jasmine_steelix_vs_quilava_fire_threat",
-      "trajectory_a_id": "plan_jasmine_steelix_vs_quilava_fire_threat_attack_now_move_rock_slide_move_rock_slide",
-      "trajectory_b_id": "plan_jasmine_steelix_vs_quilava_fire_threat_switch_preserve_then_rescore_switch_skarmory_move_rock_slide",
-      "label_choice": "a_better",
-      "scorer_choice": "b_better",
-      "first_move_a": "move_rock_slide",
-      "first_move_b": "switch_skarmory",
-      "score_a": 58,
-      "score_b": 62,
-      "same_first_move": false,
-      "lesson_type": "switch_policy",
-      "note": "Fixture public notes say revealed Flame Wheel is chip, not a reason to panic-switch; Rock Slide has the stronger route and KO pressure, while Skarmory over-preserves unless stronger Fire coverage is confirmed.",
       "cumulative_score_a": 0,
       "cumulative_score_b": 0,
       "resolved_by": "first_move",

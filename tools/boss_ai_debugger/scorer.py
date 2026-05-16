@@ -105,6 +105,24 @@ TYPE_WALL_PIVOT_TEXT = {
 }
 
 
+PUBLIC_NOTES_CHIP_QUALIFIER_TEXT = {
+    # Labeler patterns that mean "the revealed player threat is chip-grade
+    # and does NOT justify giving up a tempo turn on a switch." When the
+    # fixture's public_notes explicitly say this, switch actions become
+    # bad pivots (over-preserves; "doesn't solve" the real problem because
+    # there isn't one). Keep this list narrow — only phrases the labeler
+    # uses to mean exactly that, never general "chip" mentions.
+    "panic-switch",
+    "panic switch",
+    "is chip",
+    "just chip",
+    "pure chip",
+    "only chip",
+    "reduced chip",
+    "not a reason to panic",
+}
+
+
 TYPE_RESIST_PIVOT_TEXT = {
     "fire-resistant",
     "water-resistant",
@@ -293,6 +311,8 @@ def score_action(
         _add(contributions, "baseline", 1, "fixture baseline action for comparison")
 
     is_bad_pivot = kind == "switch" and _has_any(text, BAD_PIVOT_TEXT)
+    public_notes_text = _public_text(fixture)
+    chip_qualifier_in_notes = _has_any(public_notes_text, PUBLIC_NOTES_CHIP_QUALIFIER_TEXT)
     if kind == "switch":
         if not is_bad_pivot and (
             "ace_preservation" in tags or "switching" in tags or "hidden_coverage" in tags
@@ -315,6 +335,13 @@ def score_action(
             )
         if is_bad_pivot:
             _add(contributions, "bad_pivot", -8, "switch target does not solve the visible threat")
+        if chip_qualifier_in_notes:
+            _add(
+                contributions,
+                "public_notes_chip_qualifier",
+                -6,
+                "fixture public_notes explicitly qualify the revealed threat as chip / not a reason to panic-switch",
+            )
 
     if kind == "move":
         damage_like = _is_damage_like_move(name)

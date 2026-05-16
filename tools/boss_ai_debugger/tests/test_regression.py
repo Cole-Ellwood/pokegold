@@ -673,6 +673,89 @@ class RegressionTests(unittest.TestCase):
                 )
             self.assertEqual(fail_code, 1)
 
+    def test_public_notes_chip_qualifier_penalises_switch_actions(self) -> None:
+        fixture = {
+            "id": "chip_qualifier_fixture",
+            "leader": "Tester",
+            "tags": ["switching"],
+            "state": {
+                "public_notes": [
+                    "Revealed Flame Wheel is chip, not a reason to panic-switch.",
+                ],
+            },
+            "actions": [
+                {
+                    "id": "move_rock_slide",
+                    "kind": "move",
+                    "name": "Rock Slide",
+                    "explanation": "Super-effective hit into the active threat.",
+                    "public_tradeoff": "Coverage tempo.",
+                },
+                {
+                    "id": "switch_skarmory",
+                    "kind": "switch",
+                    "name": "Switch to Skarmory",
+                    "explanation": "Preserves the ace.",
+                    "public_tradeoff": "Defensive pivot.",
+                },
+            ],
+        }
+        switch = score_action(fixture, fixture["actions"][1])
+        rules = {c["rule"] for c in switch["contributions"]}
+        self.assertIn("public_notes_chip_qualifier", rules)
+        chip_contribution = next(
+            c for c in switch["contributions"] if c["rule"] == "public_notes_chip_qualifier"
+        )
+        self.assertEqual(chip_contribution["delta"], -6)
+
+    def test_public_notes_chip_qualifier_does_not_fire_on_unrelated_fixture(self) -> None:
+        fixture = {
+            "id": "no_chip_qualifier_fixture",
+            "leader": "Tester",
+            "tags": ["switching"],
+            "state": {
+                "public_notes": [
+                    "Player has revealed Choice Specs lock; coverage might exist.",
+                ],
+            },
+            "actions": [
+                {
+                    "id": "switch_skarmory",
+                    "kind": "switch",
+                    "name": "Switch to Skarmory",
+                    "explanation": "Preserves the ace.",
+                    "public_tradeoff": "Defensive pivot.",
+                },
+            ],
+        }
+        switch = score_action(fixture, fixture["actions"][0])
+        rules = {c["rule"] for c in switch["contributions"]}
+        self.assertNotIn("public_notes_chip_qualifier", rules)
+
+    def test_public_notes_chip_qualifier_does_not_fire_on_move_actions(self) -> None:
+        fixture = {
+            "id": "chip_qualifier_move_fixture",
+            "leader": "Tester",
+            "tags": ["switching"],
+            "state": {
+                "public_notes": [
+                    "Revealed Flame Wheel is chip, not a reason to panic-switch.",
+                ],
+            },
+            "actions": [
+                {
+                    "id": "move_rock_slide",
+                    "kind": "move",
+                    "name": "Rock Slide",
+                    "explanation": "Super-effective hit into the active threat.",
+                    "public_tradeoff": "Coverage tempo.",
+                },
+            ],
+        }
+        move = score_action(fixture, fixture["actions"][0])
+        rules = {c["rule"] for c in move["contributions"]}
+        self.assertNotIn("public_notes_chip_qualifier", rules)
+
 
 if __name__ == "__main__":
     unittest.main()
