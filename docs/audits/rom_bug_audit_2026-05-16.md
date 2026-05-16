@@ -116,6 +116,7 @@ bug-class lens — not just listed them.
 - `engine/battle/ai/switch.asm` (CheckPlayerMoveTypeMatchups + CheckEnemyMoveMatchups, lines 1-130) — lens: move-index OOB into Moves table. findings: 0 (wPlayerUsedMoves is null-terminated and bailed via `and a; jr z`; entries are compile-time move IDs).
 - `engine/battle/ai/boss_policy_move.asm` (MaybePickAdaptiveEnemyLead + .ShouldUseAdaptiveLeadForTrainer, lines 1-100) — lens: party-slot OOB, link-mode guard. findings: 0 (early-exits on link, non-trainer, and non-AdaptiveLead trainers; `FindFirstAliveOTMon`/`FindNextAliveOTMon` are bounded by trainer party size; `inc a; ld [wEnemySwitchMonIndex], a` writes 1-based index).
 - `home/map.asm:1299-1300` (LoadMapStatus) — lens: wMapStatus writer audit. findings: 0 (single-byte ld, caller controls value).
+- `engine/battle/effect_commands.asm` (CheckTurn at lines 121-220, BattleCommand_Confuse at 5624-5703, BattleCommandPointers dispatcher around line 100-119) — lens: per-handler register-clobber, dispatch-OOB. findings: 0 confirmed in sampled handlers; dispatcher uses `BattleCommandPointers` which (per existing convention) covers the legal opcode range. Confuse handler bounds confused-count to 2..5 via `random & 3 + 2`.
 
 ### Regions deferred
 <!-- iterations append: - region (reason for deferral) -->
@@ -366,6 +367,33 @@ Finding template — copy/paste this block per finding:
 **Triage hint (post-iter 2):** All 7 findings remain latent — no reproducible trigger in current code. Findings 2, 6, 7 are the most operationally important: each is a missing-bound-check on a dispatcher/loop that "trusts the caller," and the cost of the fix is 4-8 bytes per site. The cheapest hardening pass would batch them: add explicit bound-check guards to `RunMapSetupScript`, `DoBattle .loop`, and `_DoItemEffect` together, plus matching `assert_table_length` directives on `MapSetupScripts` and `ItemEffects`. No Sev 3+ crashes have been observed yet across **41 review entries (~35 unique files; some re-read with different lenses)**. Deeper passes need to target high-value crash surfaces still un-audited: full `engine/battle/core.asm` (8748 lines), `engine/overworld/scripting.asm` script-cmd handlers (162 commands), `engine/battle/effect_commands.asm` (6634 lines), audio playback (notes/SFX), engine/link/, and the Gen-2 trade-cable / Time Capsule code paths.
 
 ---
+
+## Conclusion (after iters 1-8)
+
+**Headline:** 8 findings across 77 review entries spanning ~65 unique files. **One Sev 3** (save loader legacy fallback). The remaining 7 are Sev 1-2 latent footguns — real mechanisms with no current trigger in normal play.
+
+**What's true:** The pokegold base + this hack's additions are well-defended against the bug classes in scope (memory overflow, map tile glitches, stack/bank corruption, crash/lockup, save corruption). Existing audits (`check_cross_bank_call`, `check_farcall_*_clobber`, `check_battle_math_safety`, `check_save_format_version`, `check_typepassive_c_mirror`) catch the historically-most-fatal classes. The dispatcher surfaces I sampled (audio command, item-effects, move-effect, OverworldLoop, BillsPC, MartType, VBlank, PCN) either use `maskbits`, `cp X; jr nc`, or `assert_table_length` to bound their indices; the ones that don't (`RunMapSetupScript`, `DoBattle .loop`, `_DoItemEffect`) are Findings 2, 6, 7 — already logged.
+
+**What's worth fixing next, in priority order:**
+
+1. **Finding 8 (Sev 3, save loader)** — remove the `cp $ff` legacy branches from `engine/menus/save.asm:625, 653` and either add a new audit (`tools/audit/check_save_loader_version_strict.py` that fails on `cp $ff` in save.asm) or extend `check_save_format_version.py` to scan loader code. **One-line fix per site, plus the audit gate.** Highest risk-reduction per byte.
+2. **Findings 2, 6, 7 (Sev 2 batch)** — add explicit bound guards to `RunMapSetupScript`, `DoBattle .loop`, `_DoItemEffect`. Total ~20 bytes; each guard is "did the caller give me a value in range; if not, fall back to a defined exit." These prevent the cascade from Finding 8 (or any future save-corruption source) from escalating to a hard freeze.
+3. **Findings 1, 4, 5 (Sev 1 prophylactic batch)** — add LCD-on / range guards to `RandomRange`, `DelayFrames`, `Init.wait`. Cheap (~5 bytes each), seals known latent footguns. Lowest urgency.
+4. **Finding 3 (rst $30 trap)** — accept as inherited vanilla pokegold layout, OR add to CLAUDE.md as a known limitation, OR refactor JumpTable to free up $0030 for a `rst $38` trap (costly — would change ROM byte layout). The "document and accept" path is probably right.
+
+**Deferred to future audit passes:**
+
+- **Script-data-integrity audit** — cross-reference every `Script_*` data-consumer (giveitem/givepoke/setflag/pokemart/warp/etc.) against the maps/*.asm call sites to confirm every value is a known constant. Would catch typo-bugs that slip corrupt data into bag/party/flags. Suggested implementation: parse maps/*.asm + the macros, build a set of macro-emitted byte sequences, verify each script byte is from a named constant.
+- **Per-move-effect register-clobber audit** — engine/battle/effect_commands.asm has 159 individual BattleCommand_* handlers (6634 lines). This pass sampled ~12; the rest could harbor TD-005-Pattern-3-class register-clobber regressions, especially handlers that take `hl` as input. Run `tools/damage_debugger/clobber_smoke.py` after any new handler is added.
+- **Audio music-script audit** — `audio/music/*.asm` files are author-written sequences run through `ParseMusicCommand`. The dispatcher is bounded but per-command handlers might have OOB on malformed bytes; needs a focused read.
+- **Full read of `engine/battle/effect_commands.asm` (6634 lines)** and `engine/battle/ai/boss_policy_move.asm` (5906 lines).
+- **VRAM/OAM timing audit during cutscenes** — `engine/movie/*.asm` and `engine/credits/` use unusual PPU timing; not crash-prone in vanilla but the hack hasn't been verified.
+
+**Process notes for the next /pgoal session that picks this up:**
+
+- The verifier (`scripts/verify_rom_bug_audit.py`) gates only on count + structure; it doesn't validate finding accuracy. Spot-check each finding by re-opening the cited file at the cited line before declaring "ready to fix."
+- The `Files reviewed` log is the running breadcrumb. Don't trim it; future iterations need to know what's already been done.
+- New findings should default to LOW confidence and be upgraded only after reading the relevant callers/callees. Three findings (`RandomRange(0)`, `Init.wait` LCD-off, `DelayFrames` LCD-off) are reachability-bounded by other code — annotated with that in their false-positive-risk fields.
 
 ## What I did NOT review
 
