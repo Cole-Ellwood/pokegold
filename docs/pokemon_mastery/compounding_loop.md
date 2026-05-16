@@ -149,6 +149,31 @@ python tools/pokemon_mastery/replay_turn_pause.py \
 
 `loop_runner.py` (queued infrastructure) will automate steps 1, 6-10.
 
+## Start (or restart) the loop in a fresh Claude session
+
+The /pgoal state is per-worktree-path (project hash). Opening Claude in a
+fresh worktree where the pgoal was never armed shows no active goal even
+though the loop code is present. To arm it:
+
+```bash
+python ~/.claude/skills/pgoal/scripts/pgoal.py set \
+  --objective "$(cat tools/pokemon_mastery/pgoal_spec/objective.txt)" \
+  --phase implementation \
+  --criteria "$(cat tools/pokemon_mastery/pgoal_spec/criteria.txt)" \
+  --constraints "$(cat tools/pokemon_mastery/pgoal_spec/constraints.txt)" \
+  --verify "$(cat tools/pokemon_mastery/pgoal_spec/verify.txt)" \
+  --long-run --continuation-style adaptive --full-prompt-every-iterations 25 \
+  --assume-defaults
+```
+
+Pgoal state is in `~/.claude/goal-state/by-project/<sha256(worktree-path)>/`
+and persists across sessions; the Stop hook auto-continues iterations.
+The case library at `tools/pokemon_mastery/case_library/` is in-repo, so any
+checkout sees the same persistent brain.
+
+For Codex sessions, the pgoal harness isn't available — they invoke loop
+work directly via `python tools/pokemon_mastery/loop_runner.py`.
+
 ## Verifiers
 
 The five automated criteria are tied to commands that exit 0 (pass) or

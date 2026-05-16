@@ -1,0 +1,5 @@
+- fast: python -m pytest tools/pokemon_mastery/ -q
+- fast: python tools/pokemon_mastery/verify_loop_state.py
+- fast: python tools/pokemon_mastery/verify_regression_battery.py
+- fast: python tools/pokemon_mastery/verify_progress_gate.py
+- fast: python tools/pokemon_mastery/verify_case_breadth.py
