@@ -153,7 +153,18 @@ python tools/pokemon_mastery/replay_turn_pause.py \
 
 The /pgoal state is per-worktree-path (project hash). Opening Claude in a
 fresh worktree where the pgoal was never armed shows no active goal even
-though the loop code is present. To arm it:
+though the loop code is present.
+
+Simplest path — tell Claude in the new session: "arm the pokemon mastery
+pgoal". Claude reads this runbook and runs the wrapper for you.
+
+Equivalently, run the wrapper yourself:
+
+```bash
+python tools/pokemon_mastery/arm_pgoal.py
+```
+
+Or, the fully manual recipe:
 
 ```bash
 python ~/.claude/skills/pgoal/scripts/pgoal.py set \
