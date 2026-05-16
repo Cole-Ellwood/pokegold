@@ -23,8 +23,9 @@ Glicko-1 separately and says there is no official universal Elo standard.
 
 Open first by task:
 
-- Fresh unseen move choice: `live_core.md`, the public prompt, and at most one
-  tiny `heuristic_core/*.md` card.
+- Fresh unseen move choice: `live_core.md`, the public prompt, and any
+  `heuristic_core/*.md` cards forced by live_core's Load-Required Triggers
+  block; otherwise the smallest discretionary set.
 - Scoring or progress claims: `measurement_minigoal_2026-05.md` and the
   frozen answer artifact after answers are recorded.
 - Postmortem or cleanup: `heuristic_core/migration_map.md`, then the linked
@@ -39,9 +40,12 @@ tests, reviews, or external research returns before freezing fresh answers.
 ## Context Packets
 
 - `live_turn`: `live_core.md`, boss template, current board/sheet, local
-  mechanics status, and one tiny heuristic only if needed.
-- `replay_turn_pause`: `live_core.md`, protocol, prompt, and at most one tiny
-  heuristic before freezing. Keep future turns and answer labels hidden.
+  mechanics status, and any heuristic_core cards forced by Load-Required
+  Triggers (otherwise smallest discretionary set).
+- `replay_turn_pause`: `live_core.md`, protocol, prompt, and any
+  heuristic_core cards forced by Load-Required Triggers before freezing.
+  Keep future turns and answer labels hidden. Record the pre-freeze
+  loaded-card set per turn so H1/H2 misses are distinguishable post-score.
 - `quick_probe_generation`: parent fresh replay miss, relevant card, and
   measurement rules. Regression only, not proof.
 - `mechanics_verification`: romhack deltas, fixtures, source/debugger/emulator
@@ -105,10 +109,39 @@ Do not web search before freezing a sealed answer. Do not use web search to
 settle romhack mechanics that require local docs, source, fixtures, debugger
 output, or emulator traces.
 
+## Latest Diagnosis (2026-05-16, parallel branch)
+
+Packet 044 (on the codex/cleanup-gsc-rebalance-split branch's WIP, not
+yet on this branch) was 15/30 top, 29/30 acceptable, 25/30 actual-in-
+top-3, 27/30 branch named, clean severe/hidden/mechanics, 1 state.
+Diagnosis at `docs/pokemon_mastery/reviews/top_match_miss_classification_packet_044.md`:
+**67% of exact-top misses (10/15) trace to card-not-loaded** — the
+`reset_loop_denial.md` and `spend_or_save_piece.md` cards that contain
+the route-budget tiebreaker were NOT in pre-freeze context for packet
+044. The rule was already written; the model just had no access to it
+at decision time.
+
+Intervention shipped: `live_core.md` now has a Load-Required Triggers
+block that makes those cards mandatory on Spikes/Rest/phaze and
+preservation boards; the one-card cap was relaxed (it was already
+being violated in practice — packet 044 loaded four heuristic_core
+cards); a pre-freeze branch-punish audit was added to catch Turn-22-
+class state errors. The packet protocol now requires per-turn
+loaded-cards recording.
+
 ## Next Concrete Rep
 
-Fresh replay focused on item-first utility, Growth/recovery packages, and
-RestTalk/boost timing: after Thief, Thunder, coverage, Morning Sun, Growth,
-Baton Pass, Curse, Rest, Sleep Talk, or phaze appears, ask if the job is done,
-name the receiver/denial board, and rank the move that improves the next two
-turns.
+Run packet 045 on an unseen Smogon GSC tournament replay obeying
+`live_core.md`'s Load-Required Triggers. Expected outcomes:
+
+- **Plateau broken**: exact-top materially up (target ~25/30 if every
+  H1 miss flips, ~20/30 conservative) with clean severe/hidden/state/
+  mechanics gates and route-conversion/branch-punish metrics not
+  falling. Keep training under triggers.
+- **Diagnosis falsified**: exact-top <20/30 despite trigger compliance.
+  Pivot to pairwise contrastive drills (Inventory Issue 21) or
+  multi-oracle pivot (Inventory Issue 22).
+
+Do not claim progress without the triggers actually firing on the
+relevant boards — verify in the per-turn "Pre-freeze loaded cards"
+field.
