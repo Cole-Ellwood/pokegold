@@ -732,6 +732,54 @@ class RegressionTests(unittest.TestCase):
         rules = {c["rule"] for c in switch["contributions"]}
         self.assertNotIn("public_notes_chip_qualifier", rules)
 
+    def test_type_immunity_pivot_fires_on_dark_pivot_against_psychic(self) -> None:
+        fixture = {
+            "id": "type_immunity_pivot_fixture",
+            "leader": "Tester",
+            "tags": ["switching"],
+            "state": {
+                "public_notes": ["Player Alakazam revealed Psychic."],
+            },
+            "actions": [
+                {
+                    "id": "switch_umbreon",
+                    "kind": "switch",
+                    "name": "Switch to Umbreon",
+                    "explanation": "Preserves the ace and uses the Dark-type pivot.",
+                    "public_tradeoff": "Defensive immunity.",
+                },
+            ],
+        }
+        switch = score_action(fixture, fixture["actions"][0])
+        rules = {c["rule"] for c in switch["contributions"]}
+        self.assertIn("type_immunity_pivot", rules)
+        immunity = next(
+            c for c in switch["contributions"] if c["rule"] == "type_immunity_pivot"
+        )
+        self.assertEqual(immunity["delta"], 8)
+
+    def test_type_immunity_pivot_does_not_fire_on_resist_or_unrelated(self) -> None:
+        fixture = {
+            "id": "type_resist_only_fixture",
+            "leader": "Tester",
+            "tags": ["switching"],
+            "state": {
+                "public_notes": ["Fire chip from Quilava revealed."],
+            },
+            "actions": [
+                {
+                    "id": "switch_steelix",
+                    "kind": "switch",
+                    "name": "Switch to Steelix",
+                    "explanation": "Fire-resistant Steel pivot, not full immunity.",
+                    "public_tradeoff": "Defensive resist.",
+                },
+            ],
+        }
+        switch = score_action(fixture, fixture["actions"][0])
+        rules = {c["rule"] for c in switch["contributions"]}
+        self.assertNotIn("type_immunity_pivot", rules)
+
     def test_public_notes_chip_qualifier_does_not_fire_on_move_actions(self) -> None:
         fixture = {
             "id": "chip_qualifier_move_fixture",

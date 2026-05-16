@@ -123,6 +123,31 @@ PUBLIC_NOTES_CHIP_QUALIFIER_TEXT = {
 }
 
 
+TYPE_IMMUNITY_PIVOT_TEXT = {
+    # Labeler patterns naming a switch target whose defensive type is
+    # FULLY IMMUNE (0x) to a publicly revealed offensive type. The boss
+    # value of an immunity pivot is much higher than a 0.5x resist
+    # because it neutralises the threat outright. The hack's Psychic ->
+    # Dark immunity (deviation from base Gen 2) is the load-bearing
+    # case; standard Ghost immunity to Normal/Fighting, Ground immunity
+    # to Electric, Flying immunity to Ground, and Steel immunity to
+    # Poison are listed for future fixtures even though only the Dark
+    # case is in today's corpus. Keep this list narrow — match the
+    # labeler's specific "X-type pivot" idiom, not stray "type" mentions.
+    "dark-type pivot",
+    "ghost-type pivot",
+    "ground-type pivot",
+    "flying-type pivot",
+    "steel-type pivot",
+    "psychic immunity pivot",
+    "normal immunity pivot",
+    "fighting immunity pivot",
+    "electric immunity pivot",
+    "ground immunity pivot",
+    "poison immunity pivot",
+}
+
+
 TYPE_RESIST_PIVOT_TEXT = {
     "fire-resistant",
     "water-resistant",
@@ -322,6 +347,13 @@ def score_action(
             _add(contributions, "preserve_value", 4, "action text preserves a high-value mon")
         if not is_bad_pivot and _has_any(text, TYPE_WALL_PIVOT_TEXT):
             _add(contributions, "type_wall_pivot", 12, "switch target text marks it as a hard wall to the revealed threat")
+        if not is_bad_pivot and _has_any(text, TYPE_IMMUNITY_PIVOT_TEXT):
+            _add(
+                contributions,
+                "type_immunity_pivot",
+                8,
+                "switch target text names a defensive type that is fully immune to a revealed offensive type (e.g. hack's Psychic->Dark, base Ghost->Normal/Fighting)",
+            )
         if (
             not is_bad_pivot
             and "hidden_coverage" not in tags

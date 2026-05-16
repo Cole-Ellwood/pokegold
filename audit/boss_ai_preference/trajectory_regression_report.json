@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-05-16T09:31:41+00:00",
+  "generated_at": "2026-05-16T09:34:20+00:00",
   "threshold": 0.8,
   "strict_label_count": 44,
-  "strict_agreement_count": 40,
-  "agreement_rate": 0.9090909090909091,
+  "strict_agreement_count": 41,
+  "agreement_rate": 0.9318181818181818,
   "passed": true,
   "skipped": {
     "both_good": 1,
@@ -20,7 +20,7 @@
     },
     "switch_policy": {
       "total": 26,
-      "agree": 24
+      "agree": 25
     }
   },
   "disagreements": [
@@ -73,32 +73,6 @@
         "honest_continuation",
         "switch_pivot"
       ],
-      "structurally_valid_a": true,
-      "structurally_valid_b": true
-    },
-    {
-      "fixture_id": "chuck_poliwrath_vs_alakazam_hypnosis_or_ice_punch",
-      "trajectory_a_id": "plan_chuck_poliwrath_vs_alakazam_hypnosis_or_ice_punch_switch_preserve_then_rescore_switch_umbreon_move_surf",
-      "trajectory_b_id": "plan_chuck_poliwrath_vs_alakazam_hypnosis_or_ice_punch_status_once_then_attack_move_hypnosis_move_surf",
-      "label_choice": "a_better",
-      "scorer_choice": "b_better",
-      "first_move_a": "switch_umbreon",
-      "first_move_b": "move_hypnosis",
-      "score_a": 54,
-      "score_b": 56,
-      "same_first_move": false,
-      "lesson_type": "switch_policy",
-      "note": "Umbreon is the clean public Psychic answer because romhack Psychic has no effect on Dark; Hypnosis can work if it hits, but it gambles Poliwrath into faster Psychic while the pivot exists.",
-      "cumulative_score_a": 0,
-      "cumulative_score_b": 0,
-      "resolved_by": "first_move",
-      "route_value_delta_a": 6,
-      "route_value_delta_b": 0,
-      "route_factors_a": [
-        "honest_continuation",
-        "switch_pivot"
-      ],
-      "route_factors_b": [],
       "structurally_valid_a": true,
       "structurally_valid_b": true
     },
