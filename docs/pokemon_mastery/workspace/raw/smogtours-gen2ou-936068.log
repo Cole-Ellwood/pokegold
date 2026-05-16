@@ -1,0 +1,725 @@
+|inactive|Battle timer is ON: inactive players will automatically lose when time's up.
+|t:|1778881394
+|gametype|singles
+|player|p1|shiloh|#splxivtigers|
+|player|p2|gorgie|#splxviicryonicles2|
+|gen|2
+|tier|[Gen 2] OU
+|rule|HP Percentage Mod: HP is shown in percentages
+|rule|Beat Up Nicknames Mod: Beat Up will not reveal any party members
+|rule|Endless Battle Clause: Forcing endless battles is banned
+|rule|Sleep Clause Mod: Limit one foe put to sleep
+|rule|Freeze Clause Mod: Limit one foe frozen
+|rule|Species Clause: Limit one of each Pokémon
+|rule|OHKO Clause: OHKO moves are banned
+|rule|Evasion Items Clause: Evasion items are banned
+|rule|Evasion Moves Clause: Evasion moves are banned
+|
+|t:|1778881394
+|teamsize|p1|6
+|teamsize|p2|6
+|start
+|switch|p1a: Exeggutor|Exeggutor, M|100/100
+|switch|p2a: Introvert|Forretress, M|100/100
+|turn|1
+|inactive|shiloh also wants the timer to be on.
+|
+|t:|1778881413
+|switch|p2a: CRANE -ium|Heracross, M|100/100
+|move|p1a: Exeggutor|Stun Spore|p2a: CRANE -ium
+|-status|p2a: CRANE -ium|par
+|
+|upkeep
+|turn|2
+|
+|t:|1778881419
+|switch|p1a: Cloyster|Cloyster, M|100/100
+|switch|p2a: Introvert|Forretress, M|100/100
+|
+|upkeep
+|turn|3
+|
+|t:|1778881424
+|move|p1a: Cloyster|Spikes|p2a: Introvert
+|-sidestart|p2: gorgie|Spikes
+|move|p2a: Introvert|Toxic|p1a: Cloyster
+|-status|p1a: Cloyster|tox
+|
+|upkeep
+|turn|4
+|
+|t:|1778881431
+|move|p1a: Cloyster|Surf|p2a: Introvert
+|-damage|p2a: Introvert|59/100
+|-damage|p1a: Cloyster|95/100 tox|[from] psn
+|move|p2a: Introvert|Spikes|p1a: Cloyster
+|-sidestart|p1: shiloh|Spikes
+|
+|-heal|p1a: Cloyster|100/100 tox|[from] item: Leftovers
+|-heal|p2a: Introvert|66/100|[from] item: Leftovers
+|upkeep
+|turn|5
+|
+|t:|1778881444
+|switch|p2a: Annie Palmer|Misdreavus, M|100/100
+|-damage|p2a: Annie Palmer|88/100|[from] Spikes
+|move|p1a: Cloyster|Surf|p2a: Annie Palmer
+|-damage|p2a: Annie Palmer|52/100
+|-damage|p1a: Cloyster|89/100 tox|[from] psn
+|
+|-heal|p2a: Annie Palmer|58/100|[from] item: Leftovers
+|-heal|p1a: Cloyster|95/100 tox|[from] item: Leftovers
+|upkeep
+|turn|6
+|inactive|shiloh has 270 seconds left.
+|
+|t:|1778881484
+|switch|p2a: cardinal|Starmie|100/100
+|-damage|p2a: cardinal|88/100|[from] Spikes
+|move|p1a: Cloyster|Surf|p2a: cardinal
+|-resisted|p2a: cardinal
+|-damage|p2a: cardinal|71/100
+|-damage|p1a: Cloyster|77/100 tox|[from] psn
+|
+|-heal|p2a: cardinal|78/100|[from] item: Leftovers
+|-heal|p1a: Cloyster|83/100 tox|[from] item: Leftovers
+|upkeep
+|turn|7
+|c|☆gorgie|i see
+|
+|t:|1778881513
+|switch|p1a: Zapdos|Zapdos|100/100
+|move|p2a: cardinal|Rapid Spin|p1a: Zapdos
+|-damage|p1a: Zapdos|97/100
+|-sideend|p2: gorgie|Spikes|[from] move: Rapid Spin|[of] p2a: cardinal
+|
+|-heal|p2a: cardinal|84/100|[from] item: Leftovers
+|-heal|p1a: Zapdos|100/100|[from] item: Leftovers
+|upkeep
+|turn|8
+|
+|t:|1778881519
+|switch|p2a: genkai (old hag)|Raikou|100/100
+|switch|p1a: Cloyster|Cloyster, M|83/100 tox
+|-damage|p1a: Cloyster|70/100 tox|[from] Spikes
+|-status|p1a: Cloyster|psn|[silent]
+|-damage|p1a: Cloyster|58/100 psn|[from] psn
+|
+|-heal|p1a: Cloyster|64/100 psn|[from] item: Leftovers
+|upkeep
+|turn|9
+|
+|t:|1778881524
+|switch|p1a: Snorlax|Snorlax, M|100/100
+|-damage|p1a: Snorlax|88/100|[from] Spikes
+|move|p2a: genkai (old hag)|Thunderbolt|p1a: Snorlax
+|-damage|p1a: Snorlax|64/100
+|
+|-heal|p1a: Snorlax|70/100|[from] item: Leftovers
+|upkeep
+|turn|10
+|
+|t:|1778881530
+|switch|p2a: Annie Palmer|Misdreavus, M|58/100
+|move|p1a: Snorlax|Double-Edge|p2a: Annie Palmer
+|-immune|p2a: Annie Palmer
+|
+|-heal|p2a: Annie Palmer|65/100|[from] item: Leftovers
+|-heal|p1a: Snorlax|77/100|[from] item: Leftovers
+|upkeep
+|turn|11
+|
+|t:|1778881548
+|switch|p1a: Zapdos|Zapdos|100/100
+|move|p2a: Annie Palmer|Toxic|p1a: Zapdos
+|-status|p1a: Zapdos|tox
+|
+|-heal|p2a: Annie Palmer|71/100|[from] item: Leftovers
+|upkeep
+|turn|12
+|
+|t:|1778881554
+|switch|p2a: genkai (old hag)|Raikou|100/100
+|move|p1a: Zapdos|Thunder Wave|p2a: genkai (old hag)
+|-status|p2a: genkai (old hag)|par
+|-damage|p1a: Zapdos|94/100 tox|[from] psn
+|
+|-heal|p1a: Zapdos|100/100 tox|[from] item: Leftovers
+|upkeep
+|turn|13
+|
+|t:|1778881561
+|switch|p1a: Snorlax|Snorlax, M|77/100
+|-damage|p1a: Snorlax|64/100|[from] Spikes
+|move|p2a: genkai (old hag)|Thunderbolt|p1a: Snorlax
+|-damage|p1a: Snorlax|42/100
+|
+|-heal|p1a: Snorlax|48/100|[from] item: Leftovers
+|upkeep
+|turn|14
+|
+|t:|1778881570
+|switch|p2a: Annie Palmer|Misdreavus, M|71/100
+|move|p1a: Snorlax|Rest|p1a: Snorlax
+|-status|p1a: Snorlax|slp|[from] move: Rest
+|-heal|p1a: Snorlax|100/100 slp|[silent]
+|
+|-heal|p2a: Annie Palmer|77/100|[from] item: Leftovers
+|upkeep
+|turn|15
+|
+|t:|1778881580
+|switch|p2a: Introvert|Forretress, M|66/100
+|cant|p1a: Snorlax|slp
+|
+|-heal|p2a: Introvert|72/100|[from] item: Leftovers
+|upkeep
+|turn|16
+|
+|t:|1778881594
+|switch|p2a: CRANE -ium|Heracross, M|100/100 par
+|cant|p1a: Snorlax|slp
+|
+|upkeep
+|turn|17
+|
+|t:|1778881602
+|switch|p2a: Annie Palmer|Misdreavus, M|77/100
+|-curestatus|p1a: Snorlax|slp|[msg]
+|move|p1a: Snorlax|Double-Edge|p2a: Annie Palmer
+|-immune|p2a: Annie Palmer
+|
+|-heal|p2a: Annie Palmer|83/100|[from] item: Leftovers
+|upkeep
+|turn|18
+|
+|t:|1778881610
+|switch|p1a: Zapdos|Zapdos|100/100 tox
+|-status|p1a: Zapdos|psn|[silent]
+|-damage|p1a: Zapdos|88/100 psn|[from] psn
+|move|p2a: Annie Palmer|Toxic||[still]
+|-fail|p2a: Annie Palmer
+|
+|-heal|p1a: Zapdos|94/100 psn|[from] item: Leftovers
+|-heal|p2a: Annie Palmer|89/100|[from] item: Leftovers
+|upkeep
+|turn|19
+|
+|t:|1778881619
+|switch|p1a: Golem|Golem, M|100/100
+|-damage|p1a: Golem|88/100|[from] Spikes
+|switch|p2a: genkai (old hag)|Raikou|100/100 par
+|
+|-heal|p1a: Golem|94/100|[from] item: Leftovers
+|upkeep
+|turn|20
+|
+|t:|1778881627
+|switch|p2a: Introvert|Forretress, M|72/100
+|move|p1a: Golem|Earthquake|p2a: Introvert
+|-damage|p2a: Introvert|45/100
+|
+|-heal|p1a: Golem|99/100|[from] item: Leftovers
+|-heal|p2a: Introvert|51/100|[from] item: Leftovers
+|upkeep
+|turn|21
+|
+|t:|1778881636
+|switch|p1a: Zapdos|Zapdos|94/100 psn
+|-damage|p1a: Zapdos|82/100 psn|[from] psn
+|switch|p2a: cardinal|Starmie|84/100
+|
+|-heal|p2a: cardinal|90/100|[from] item: Leftovers
+|-heal|p1a: Zapdos|88/100 psn|[from] item: Leftovers
+|upkeep
+|turn|22
+|
+|t:|1778881642
+|switch|p2a: Wife of Seano|Blissey, F|100/100
+|move|p1a: Zapdos|Thunderbolt|p2a: Wife of Seano
+|-crit|p2a: Wife of Seano
+|-damage|p2a: Wife of Seano|71/100
+|-damage|p1a: Zapdos|76/100 psn|[from] psn|[of] p2a: Wife of Seano
+|
+|-heal|p1a: Zapdos|82/100 psn|[from] item: Leftovers
+|-heal|p2a: Wife of Seano|78/100|[from] item: Leftovers
+|upkeep
+|turn|23
+|
+|t:|1778881648
+|switch|p1a: Snorlax|Snorlax, M|100/100
+|-damage|p1a: Snorlax|88/100|[from] Spikes
+|move|p2a: Wife of Seano|Heal Bell|p2a: Wife of Seano
+|-cureteam|p2a: Wife of Seano|[from] move: Heal Bell
+|
+|-heal|p2a: Wife of Seano|84/100|[from] item: Leftovers
+|-heal|p1a: Snorlax|94/100|[from] item: Leftovers
+|upkeep
+|turn|24
+|
+|t:|1778881661
+|switch|p2a: Annie Palmer|Misdreavus, M|89/100
+|switch|p1a: Zapdos|Zapdos|82/100 psn
+|-damage|p1a: Zapdos|69/100 psn|[from] psn
+|
+|-heal|p1a: Zapdos|75/100 psn|[from] item: Leftovers
+|-heal|p2a: Annie Palmer|96/100|[from] item: Leftovers
+|upkeep
+|turn|25
+|
+|t:|1778881671
+|switch|p2a: Wife of Seano|Blissey, F|84/100
+|move|p1a: Zapdos|Thunder Wave|p2a: Wife of Seano
+|-status|p2a: Wife of Seano|par
+|-damage|p1a: Zapdos|63/100 psn|[from] psn|[of] p2a: Wife of Seano
+|
+|-heal|p1a: Zapdos|69/100 psn|[from] item: Leftovers
+|-heal|p2a: Wife of Seano|90/100 par|[from] item: Leftovers
+|upkeep
+|turn|26
+|
+|t:|1778881676
+|switch|p1a: Exeggutor|Exeggutor, M|100/100
+|-damage|p1a: Exeggutor|88/100|[from] Spikes
+|move|p2a: Wife of Seano|Ice Beam|p1a: Exeggutor
+|-supereffective|p1a: Exeggutor
+|-damage|p1a: Exeggutor|49/100
+|
+|-heal|p1a: Exeggutor|55/100|[from] item: Leftovers
+|-heal|p2a: Wife of Seano|96/100 par|[from] item: Leftovers
+|upkeep
+|turn|27
+|inactive|gorgie has 270 seconds left.
+|
+|t:|1778881724
+|switch|p2a: Annie Palmer|Misdreavus, M|96/100
+|move|p1a: Exeggutor|Stun Spore|p2a: Annie Palmer
+|-status|p2a: Annie Palmer|par
+|
+|-heal|p1a: Exeggutor|61/100|[from] item: Leftovers
+|-heal|p2a: Annie Palmer|100/100 par|[from] item: Leftovers
+|upkeep
+|turn|28
+|
+|t:|1778881735
+|move|p1a: Exeggutor|Psychic|p2a: Annie Palmer
+|-damage|p2a: Annie Palmer|55/100 par
+|cant|p2a: Annie Palmer|par
+|
+|-heal|p1a: Exeggutor|67/100|[from] item: Leftovers
+|-heal|p2a: Annie Palmer|61/100 par|[from] item: Leftovers
+|upkeep
+|turn|29
+|inactive|gorgie has 240 seconds left.
+|
+|t:|1778881766
+|switch|p2a: Wife of Seano|Blissey, F|96/100 par
+|move|p1a: Exeggutor|Psychic|p2a: Wife of Seano
+|-crit|p2a: Wife of Seano
+|-damage|p2a: Wife of Seano|70/100 par
+|
+|-heal|p1a: Exeggutor|73/100|[from] item: Leftovers
+|-heal|p2a: Wife of Seano|77/100 par|[from] item: Leftovers
+|upkeep
+|turn|30
+|inactive|gorgie has 240 seconds left.
+|
+|t:|1778881773
+|move|p1a: Exeggutor|Explosion|p2a: Wife of Seano
+|-damage|p2a: Wife of Seano|0 fnt
+|faint|p1a: Exeggutor
+|faint|p2a: Wife of Seano
+|inactive|gorgie has 240 seconds left.
+|
+|t:|1778881786
+|switch|p1a: Snorlax|Snorlax, M|94/100
+|switch|p2a: Introvert|Forretress, M|51/100
+|-damage|p1a: Snorlax|82/100|[from] Spikes
+|
+|-heal|p2a: Introvert|58/100|[from] item: Leftovers
+|-heal|p1a: Snorlax|88/100|[from] item: Leftovers
+|upkeep
+|turn|31
+|
+|t:|1778881791
+|switch|p2a: Annie Palmer|Misdreavus, M|61/100 par
+|move|p1a: Snorlax|Earthquake|p2a: Annie Palmer
+|-damage|p2a: Annie Palmer|28/100 par
+|
+|-heal|p1a: Snorlax|94/100|[from] item: Leftovers
+|-heal|p2a: Annie Palmer|34/100 par|[from] item: Leftovers
+|upkeep
+|turn|32
+|
+|t:|1778881796
+|switch|p2a: Introvert|Forretress, M|58/100
+|move|p1a: Snorlax|Earthquake|p2a: Introvert
+|-damage|p2a: Introvert|40/100
+|
+|-heal|p2a: Introvert|46/100|[from] item: Leftovers
+|-heal|p1a: Snorlax|99/100|[from] item: Leftovers
+|upkeep
+|turn|33
+|
+|t:|1778881804
+|move|p2a: Introvert|Toxic|p1a: Snorlax
+|-status|p1a: Snorlax|tox
+|move|p1a: Snorlax|Earthquake|p2a: Introvert
+|-damage|p2a: Introvert|29/100
+|-damage|p1a: Snorlax|94/100 tox|[from] psn
+|
+|-heal|p2a: Introvert|35/100|[from] item: Leftovers
+|-heal|p1a: Snorlax|99/100 tox|[from] item: Leftovers
+|upkeep
+|turn|34
+|
+|t:|1778881808
+|switch|p1a: Cloyster|Cloyster, M|64/100 psn
+|-damage|p1a: Cloyster|52/100 psn|[from] Spikes
+|-damage|p1a: Cloyster|40/100 psn|[from] psn
+|move|p2a: Introvert|Rest|p2a: Introvert
+|-status|p2a: Introvert|slp|[from] move: Rest
+|-heal|p2a: Introvert|100/100 slp|[silent]
+|
+|-heal|p1a: Cloyster|46/100 psn|[from] item: Leftovers
+|upkeep
+|turn|35
+|
+|t:|1778881813
+|switch|p2a: cardinal|Starmie|90/100
+|move|p1a: Cloyster|Spikes|p2a: cardinal
+|-sidestart|p2: gorgie|Spikes
+|-damage|p1a: Cloyster|34/100 psn|[from] psn|[of] p2a: cardinal
+|
+|-heal|p2a: cardinal|96/100|[from] item: Leftovers
+|-heal|p1a: Cloyster|39/100 psn|[from] item: Leftovers
+|upkeep
+|turn|36
+|
+|t:|1778881816
+|move|p2a: cardinal|Rapid Spin|p1a: Cloyster
+|-damage|p1a: Cloyster|36/100 psn
+|-sideend|p2: gorgie|Spikes|[from] move: Rapid Spin|[of] p2a: cardinal
+|move|p1a: Cloyster|Explosion|p2a: cardinal
+|-damage|p2a: cardinal|0 fnt
+|faint|p1a: Cloyster
+|faint|p2a: cardinal
+|inactive|gorgie has 270 seconds left.
+|
+|t:|1778881836
+|switch|p2a: genkai (old hag)|Raikou|100/100
+|switch|p1a: Golem|Golem, M|99/100
+|-damage|p1a: Golem|88/100|[from] Spikes
+|
+|-heal|p1a: Golem|94/100|[from] item: Leftovers
+|upkeep
+|turn|37
+|
+|t:|1778881840
+|switch|p2a: CRANE -ium|Heracross, M|100/100
+|switch|p1a: Snorlax|Snorlax, M|99/100 tox
+|-damage|p1a: Snorlax|88/100 tox|[from] Spikes
+|-status|p1a: Snorlax|psn|[silent]
+|-damage|p1a: Snorlax|75/100 psn|[from] psn
+|
+|-heal|p1a: Snorlax|81/100 psn|[from] item: Leftovers
+|upkeep
+|turn|38
+|
+|t:|1778881847
+|move|p2a: CRANE -ium|Seismic Toss|p1a: Snorlax
+|-damage|p1a: Snorlax|62/100 psn
+|move|p1a: Snorlax|Rest|p1a: Snorlax
+|-status|p1a: Snorlax|slp|[from] move: Rest
+|-heal|p1a: Snorlax|100/100 slp|[silent]
+|
+|upkeep
+|turn|39
+|
+|t:|1778881851
+|move|p2a: CRANE -ium|Megahorn|p1a: Snorlax
+|-damage|p1a: Snorlax|57/100 slp
+|cant|p1a: Snorlax|slp
+|move|p1a: Snorlax|Sleep Talk|p1a: Snorlax
+|move|p1a: Snorlax|Earthquake|p2a: CRANE -ium|[from] Sleep Talk
+|-resisted|p2a: CRANE -ium
+|-damage|p2a: CRANE -ium|86/100
+|
+|-heal|p2a: CRANE -ium|93/100|[from] item: Leftovers
+|-heal|p1a: Snorlax|63/100 slp|[from] item: Leftovers
+|upkeep
+|turn|40
+|
+|t:|1778881855
+|switch|p1a: Zapdos|Zapdos|69/100 psn
+|-damage|p1a: Zapdos|57/100 psn|[from] psn
+|move|p2a: CRANE -ium|Megahorn|p1a: Zapdos|[miss]
+|-miss|p2a: CRANE -ium
+|
+|-heal|p1a: Zapdos|63/100 psn|[from] item: Leftovers
+|-heal|p2a: CRANE -ium|99/100|[from] item: Leftovers
+|upkeep
+|turn|41
+|
+|t:|1778881865
+|move|p1a: Zapdos|Thunder Wave|p2a: CRANE -ium
+|-status|p2a: CRANE -ium|par
+|-damage|p1a: Zapdos|51/100 psn|[from] psn|[of] p2a: CRANE -ium
+|cant|p2a: CRANE -ium|par
+|
+|-heal|p1a: Zapdos|57/100 psn|[from] item: Leftovers
+|-heal|p2a: CRANE -ium|100/100 par|[from] item: Leftovers
+|upkeep
+|turn|42
+|
+|t:|1778881872
+|switch|p1a: Golem|Golem, M|94/100
+|-damage|p1a: Golem|81/100|[from] Spikes
+|move|p2a: CRANE -ium|Rest|p2a: CRANE -ium
+|-fail|p2a: CRANE -ium
+|
+|-heal|p1a: Golem|88/100|[from] item: Leftovers
+|upkeep
+|turn|43
+|
+|t:|1778881878
+|move|p1a: Golem|Earthquake|p2a: CRANE -ium
+|-resisted|p2a: CRANE -ium
+|-damage|p2a: CRANE -ium|81/100 par
+|move|p2a: CRANE -ium|Megahorn|p1a: Golem
+|-damage|p1a: Golem|51/100
+|
+|-heal|p1a: Golem|57/100|[from] item: Leftovers
+|-heal|p2a: CRANE -ium|87/100 par|[from] item: Leftovers
+|upkeep
+|turn|44
+|
+|t:|1778881883
+|move|p1a: Golem|Rapid Spin|p2a: CRANE -ium
+|-damage|p2a: CRANE -ium|81/100 par
+|-sideend|p1: shiloh|Spikes|[from] move: Rapid Spin|[of] p1a: Golem
+|move|p2a: CRANE -ium|Megahorn|p1a: Golem
+|-damage|p1a: Golem|17/100
+|
+|-heal|p1a: Golem|23/100|[from] item: Leftovers
+|-heal|p2a: CRANE -ium|87/100 par|[from] item: Leftovers
+|upkeep
+|turn|45
+|c|+Seanobiwan|!dt rest
+|c|+Seanobiwan|/raw <ul class="utilichart"><li class="result"><span class="col movenamecol"><a href="https://dex.pokemonshowdown.com/moves/rest">Rest</a></span> <span class="col typecol"><img src="//play.pokemonshowdown.com/sprites/types/Psychic.png" alt="Psychic" width="32" height="14"><img src="//play.pokemonshowdown.com/sprites/categories/Status.png" alt="Status" width="32" height="14"></span> <span class="col widelabelcol"><em>Accuracy</em><br>—</span> <span class="col pplabelcol"><em>PP</em><br>16</span> <span class="col movedesccol">User sleeps 2 turns and restores HP and status.</span> </li><li style="clear:both"></li></ul>
+|c|+Seanobiwan|/raw <font size="1"><font color="#686868">Priority:</font> 0&nbsp;|&ThickSpace;<font color="#686868">Gen:</font> 1&nbsp;|&ThickSpace;<font color="#686868">Target:</font> User</font>
+
+|
+|t:|1778881908
+|switch|p2a: Introvert|Forretress, M|100/100 slp
+|move|p1a: Golem|Earthquake|p2a: Introvert
+|-damage|p2a: Introvert|71/100 slp
+|
+|-heal|p1a: Golem|29/100|[from] item: Leftovers
+|-heal|p2a: Introvert|77/100 slp|[from] item: Leftovers
+|upkeep
+|turn|46
+|inactive|gorgie has 270 seconds left.
+|
+|t:|1778881929
+|move|p1a: Golem|Earthquake|p2a: Introvert
+|-damage|p2a: Introvert|51/100 slp
+|cant|p2a: Introvert|slp
+|
+|-heal|p1a: Golem|35/100|[from] item: Leftovers
+|-heal|p2a: Introvert|57/100 slp|[from] item: Leftovers
+|upkeep
+|turn|47
+|
+|t:|1778881936
+|switch|p1a: Marowak|Marowak, M|100/100
+|switch|p2a: CRANE -ium|Heracross, M|87/100 par
+|
+|-heal|p2a: CRANE -ium|93/100 par|[from] item: Leftovers
+|upkeep
+|turn|48
+|
+|t:|1778881947
+|switch|p1a: Zapdos|Zapdos|57/100 psn
+|-damage|p1a: Zapdos|44/100 psn|[from] psn
+|cant|p2a: CRANE -ium|par
+|
+|-heal|p1a: Zapdos|50/100 psn|[from] item: Leftovers
+|-heal|p2a: CRANE -ium|99/100 par|[from] item: Leftovers
+|upkeep
+|turn|49
+|
+|t:|1778881950
+|move|p1a: Zapdos|Thunderbolt|p2a: CRANE -ium
+|-damage|p2a: CRANE -ium|60/100 par
+|-damage|p1a: Zapdos|38/100 psn|[from] psn|[of] p2a: CRANE -ium
+|move|p2a: CRANE -ium|Rest|p2a: CRANE -ium
+|-status|p2a: CRANE -ium|slp|[from] move: Rest
+|-heal|p2a: CRANE -ium|100/100 slp|[silent]
+|
+|-heal|p1a: Zapdos|44/100 psn|[from] item: Leftovers
+|upkeep
+|turn|50
+|
+|t:|1778881967
+|switch|p2a: genkai (old hag)|Raikou|100/100
+|move|p1a: Zapdos|Thunderbolt|p2a: genkai (old hag)
+|-resisted|p2a: genkai (old hag)
+|-damage|p2a: genkai (old hag)|84/100
+|-damage|p1a: Zapdos|32/100 psn|[from] psn|[of] p2a: genkai (old hag)
+|
+|-heal|p2a: genkai (old hag)|90/100|[from] item: Leftovers
+|-heal|p1a: Zapdos|38/100 psn|[from] item: Leftovers
+|upkeep
+|turn|51
+|
+|t:|1778881972
+|switch|p1a: Snorlax|Snorlax, M|63/100 slp
+|move|p2a: genkai (old hag)|Hidden Power|p1a: Snorlax
+|-damage|p1a: Snorlax|52/100 slp
+|
+|-heal|p2a: genkai (old hag)|96/100|[from] item: Leftovers
+|-heal|p1a: Snorlax|58/100 slp|[from] item: Leftovers
+|upkeep
+|turn|52
+|
+|t:|1778881977
+|switch|p2a: Introvert|Forretress, M|57/100 slp
+|switch|p1a: Golem|Golem, M|35/100
+|
+|-heal|p1a: Golem|41/100|[from] item: Leftovers
+|-heal|p2a: Introvert|64/100 slp|[from] item: Leftovers
+|upkeep
+|turn|53
+|
+|t:|1778881988
+|switch|p1a: Marowak|Marowak, M|100/100
+|cant|p2a: Introvert|slp
+|
+|-heal|p2a: Introvert|70/100 slp|[from] item: Leftovers
+|upkeep
+|turn|54
+|
+|t:|1778881990
+|switch|p2a: CRANE -ium|Heracross, M|100/100 slp
+|move|p1a: Marowak|Fire Blast|p2a: CRANE -ium
+|-supereffective|p2a: CRANE -ium
+|-damage|p2a: CRANE -ium|64/100 slp
+|
+|-heal|p2a: CRANE -ium|70/100 slp|[from] item: Leftovers
+|upkeep
+|turn|55
+|inactive|shiloh has 270 seconds left.
+|
+|t:|1778882022
+|switch|p1a: Zapdos|Zapdos|38/100 psn
+|-damage|p1a: Zapdos|26/100 psn|[from] psn
+|cant|p2a: CRANE -ium|slp
+|move|p2a: CRANE -ium|Sleep Talk|p2a: CRANE -ium
+|move|p2a: CRANE -ium|Seismic Toss|p1a: Zapdos|[from] Sleep Talk
+|-damage|p1a: Zapdos|0 fnt
+|faint|p1a: Zapdos
+|
+|t:|1778882025
+|switch|p1a: Golem|Golem, M|41/100
+|
+|-heal|p2a: CRANE -ium|76/100 slp|[from] item: Leftovers
+|-heal|p1a: Golem|47/100|[from] item: Leftovers
+|upkeep
+|turn|56
+|
+|t:|1778882036
+|switch|p2a: Annie Palmer|Misdreavus, M|34/100 par
+|switch|p1a: Marowak|Marowak, M|100/100
+|
+|-heal|p2a: Annie Palmer|40/100 par|[from] item: Leftovers
+|upkeep
+|turn|57
+|
+|t:|1778882049
+|move|p1a: Marowak|Swords Dance|p1a: Marowak
+|-boost|p1a: Marowak|atk|2
+|cant|p2a: Annie Palmer|par
+|
+|-heal|p2a: Annie Palmer|46/100 par|[from] item: Leftovers
+|upkeep
+|turn|58
+|c|☆gorgie|hmmm
+|
+|t:|1778882062
+|move|p1a: Marowak|Earthquake|p2a: Annie Palmer
+|-damage|p2a: Annie Palmer|0 fnt
+|faint|p2a: Annie Palmer
+|c|☆gorgie|i deserve to crit imop
+|
+|t:|1778882070
+|switch|p2a: genkai (old hag)|Raikou|96/100
+|
+|-heal|p2a: genkai (old hag)|100/100|[from] item: Leftovers
+|upkeep
+|turn|59
+|
+|t:|1778882072
+|move|p2a: genkai (old hag)|Hidden Power|p1a: Marowak
+|-supereffective|p1a: Marowak
+|-damage|p1a: Marowak|53/100
+|move|p1a: Marowak|Earthquake|p2a: genkai (old hag)
+|-supereffective|p2a: genkai (old hag)
+|-damage|p2a: genkai (old hag)|0 fnt
+|faint|p2a: genkai (old hag)
+|c|☆gorgie|!calc
+|c|+gorgie|/raw <div class="infobox">Pok&eacute;mon Showdown! damage calculator. (Courtesy of Honko, Austin, dhelmise, &amp; jetou)<br />- <a href="https://calc.pokemonshowdown.com/index.html?gen=2">Damage Calculator</a></div>
+|inactive|gorgie has 270 seconds left.
+|
+|t:|1778882110
+|switch|p2a: CRANE -ium|Heracross, M|76/100 slp
+|
+|-heal|p2a: CRANE -ium|82/100 slp|[from] item: Leftovers
+|upkeep
+|turn|60
+|
+|t:|1778882125
+|cant|p2a: CRANE -ium|slp
+|move|p2a: CRANE -ium|Sleep Talk|p2a: CRANE -ium
+|move|p2a: CRANE -ium|Rest|p2a: CRANE -ium|[from] Sleep Talk
+|-status|p2a: CRANE -ium|slp|[from] move: Rest
+|-heal|p2a: CRANE -ium|100/100 slp|[silent]
+|move|p1a: Marowak|Earthquake|p2a: CRANE -ium
+|-resisted|p2a: CRANE -ium
+|-damage|p2a: CRANE -ium|34/100 slp
+|
+|-heal|p2a: CRANE -ium|40/100 slp|[from] item: Leftovers
+|upkeep
+|turn|61
+|c|☆gorgie|F
+|inactive|gorgie has 270 seconds left.
+|c|☆gorgie|Zarel help
+|
+|t:|1778882151
+|cant|p2a: CRANE -ium|slp
+|move|p2a: CRANE -ium|Sleep Talk|p2a: CRANE -ium
+|move|p2a: CRANE -ium|Seismic Toss|p1a: Marowak|[from] Sleep Talk
+|-damage|p1a: Marowak|22/100
+|move|p1a: Marowak|Earthquake|p2a: CRANE -ium
+|-resisted|p2a: CRANE -ium
+|-damage|p2a: CRANE -ium|0 fnt
+|faint|p2a: CRANE -ium
+|c|+Seanobiwan|Retirement home time
+|c|☆gorgie|nooooo
+|c|☆gorgie|ggs
+|
+|t:|1778882165
+|switch|p2a: Introvert|Forretress, M|70/100 slp
+|
+|-heal|p2a: Introvert|76/100 slp|[from] item: Leftovers
+|upkeep
+|turn|62
+|c|☆shiloh|ggs
+|
+|t:|1778882170
+|move|p1a: Marowak|Earthquake|p2a: Introvert
+|-crit|p2a: Introvert
+|-damage|p2a: Introvert|0 fnt
+|faint|p2a: Introvert
+|
+|win|shiloh

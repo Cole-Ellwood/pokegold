@@ -1,0 +1,1095 @@
+{
+  "failure_count": 0,
+  "generated": 100,
+  "pass_count": 106,
+  "passed": true,
+  "relation_count": 106,
+  "results": [
+    {
+      "details": {
+        "probabilities": {
+          "slot1": 0.7265625,
+          "slot2": 0.2734375,
+          "slot3": 0.0,
+          "slot4": 0.0
+        }
+      },
+      "passed": true,
+      "reason": "equal score selector surface must only roll first and second slots",
+      "relation": "equal_scores_roll_first_two",
+      "scenario_id": "metamorphic_equal_scores"
+    },
+    {
+      "details": {
+        "probabilities": {
+          "blocked": 0.0,
+          "live": 1.0
+        }
+      },
+      "passed": true,
+      "reason": "scores >= 80 must be unselectable regardless of slot order",
+      "relation": "blocked_scores_have_zero_probability",
+      "scenario_id": "metamorphic_blocked_score"
+    },
+    {
+      "details": {
+        "probabilities": {
+          "best": 0.7265625,
+          "second_a": 0.2734375,
+          "second_b": 0.0
+        }
+      },
+      "passed": true,
+      "reason": "the selector ignores later tied second-best slots",
+      "relation": "third_slot_tied_second_never_rolls",
+      "scenario_id": "metamorphic_third_slot_tied_second"
+    },
+    {
+      "details": {
+        "best_action_id": "move_sludge_bomb",
+        "scores": {
+          "move_explosion": 20,
+          "move_sludge_bomb": 17,
+          "move_spikes": 26,
+          "move_surf": 20
+        }
+      },
+      "passed": true,
+      "reason": "active revealed Rapid Spin should make a live damage line beat extra Spikes",
+      "relation": "revealed_spin_discourages_extra_spikes",
+      "scenario_id": "metamorphic_revealed_spin_extra_spikes"
+    },
+    {
+      "details": {
+        "best_action_id": "move_spikes",
+        "scores": {
+          "move_explosion": 20,
+          "move_sludge_bomb": 17,
+          "move_spikes": 8,
+          "move_surf": 20
+        }
+      },
+      "passed": true,
+      "reason": "spinner capability without revealed Rapid Spin should not suppress third-layer Spikes",
+      "relation": "unrevealed_spin_keeps_spikes_live",
+      "scenario_id": "metamorphic_unrevealed_spin_keeps_spikes"
+    },
+    {
+      "details": {
+        "best_action_id": "move_spikes",
+        "scores": {
+          "move_explosion": 20,
+          "move_sludge_bomb": 17,
+          "move_spikes": 14,
+          "move_surf": 20
+        }
+      },
+      "passed": true,
+      "reason": "active non-Foresighted Ghost spinblock should keep Spikes live into revealed Spin",
+      "relation": "ghost_spinblock_softens_revealed_spin_panic",
+      "scenario_id": "metamorphic_ghost_spinblock_softens_spin"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_selector_edges_20260515_00000_blocked_best"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_spikes_spin_20260515_00001"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_mastery_policy_20260515_00002_cashout_boundary"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_selector_edges_20260515_00003_all_equal"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_spikes_spin_20260515_00004"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_mastery_policy_20260515_00005_romhack_mechanics_firewall"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_selector_edges_20260515_00006_blocked_best"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_spikes_spin_20260515_00007"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_mastery_policy_20260515_00008_active_pressure_before_status"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_selector_edges_20260515_00009_all_equal"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_spikes_spin_20260515_00010"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_mastery_policy_20260515_00011_hazard_loop_spin_window"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_selector_edges_20260515_00012_wide_gap"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_spikes_spin_20260515_00013"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_mastery_policy_20260515_00014_sleep_absorber_and_set_ambiguity"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_selector_edges_20260515_00015_third_tied"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_spikes_spin_20260515_00016"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_mastery_policy_20260515_00017_branch_action_after_naming"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_selector_edges_20260515_00018_blocked_best"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_spikes_spin_20260515_00019"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_mastery_policy_20260515_00020_hidden_role_voluntary_entry"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_selector_edges_20260515_00021_blocked_best"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_spikes_spin_20260515_00022"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_mastery_policy_20260515_00023_support_handoff_after_job"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_selector_edges_20260515_00024_wide_gap"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_spikes_spin_20260515_00025"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_mastery_policy_20260515_00026_cashout_boundary"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_selector_edges_20260515_00027_wide_gap"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_spikes_spin_20260515_00028"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_mastery_policy_20260515_00029_romhack_mechanics_firewall"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_selector_edges_20260515_00030_third_tied"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_spikes_spin_20260515_00031"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_mastery_policy_20260515_00032_active_pressure_before_status"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_selector_edges_20260515_00033_blocked_best"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_spikes_spin_20260515_00034"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_mastery_policy_20260515_00035_hazard_loop_spin_window"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_selector_edges_20260515_00036_blocked_best"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_spikes_spin_20260515_00037"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_mastery_policy_20260515_00038_sleep_absorber_and_set_ambiguity"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_selector_edges_20260515_00039_all_equal"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_spikes_spin_20260515_00040"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_mastery_policy_20260515_00041_branch_action_after_naming"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_selector_edges_20260515_00042_all_equal"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_spikes_spin_20260515_00043"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_mastery_policy_20260515_00044_hidden_role_voluntary_entry"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_selector_edges_20260515_00045_blocked_best"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_spikes_spin_20260515_00046"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_mastery_policy_20260515_00047_support_handoff_after_job"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_selector_edges_20260515_00048_all_equal"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_spikes_spin_20260515_00049"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_mastery_policy_20260515_00050_cashout_boundary"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_selector_edges_20260515_00051_blocked_best"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_spikes_spin_20260515_00052"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_mastery_policy_20260515_00053_romhack_mechanics_firewall"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_selector_edges_20260515_00054_all_equal"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_spikes_spin_20260515_00055"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_mastery_policy_20260515_00056_active_pressure_before_status"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_selector_edges_20260515_00057_all_equal"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_spikes_spin_20260515_00058"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_mastery_policy_20260515_00059_hazard_loop_spin_window"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_selector_edges_20260515_00060_third_tied"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_spikes_spin_20260515_00061"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_mastery_policy_20260515_00062_sleep_absorber_and_set_ambiguity"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_selector_edges_20260515_00063_wide_gap"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_spikes_spin_20260515_00064"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_mastery_policy_20260515_00065_branch_action_after_naming"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_selector_edges_20260515_00066_blocked_best"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_spikes_spin_20260515_00067"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_mastery_policy_20260515_00068_hidden_role_voluntary_entry"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_selector_edges_20260515_00069_wide_gap"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_spikes_spin_20260515_00070"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_mastery_policy_20260515_00071_support_handoff_after_job"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_selector_edges_20260515_00072_wide_gap"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_spikes_spin_20260515_00073"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_mastery_policy_20260515_00074_cashout_boundary"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_selector_edges_20260515_00075_wide_gap"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_spikes_spin_20260515_00076"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_mastery_policy_20260515_00077_romhack_mechanics_firewall"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_selector_edges_20260515_00078_wide_gap"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_spikes_spin_20260515_00079"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_mastery_policy_20260515_00080_active_pressure_before_status"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_selector_edges_20260515_00081_blocked_best"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_spikes_spin_20260515_00082"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_mastery_policy_20260515_00083_hazard_loop_spin_window"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_selector_edges_20260515_00084_wide_gap"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_spikes_spin_20260515_00085"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_mastery_policy_20260515_00086_sleep_absorber_and_set_ambiguity"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_selector_edges_20260515_00087_wide_gap"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_spikes_spin_20260515_00088"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_mastery_policy_20260515_00089_branch_action_after_naming"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_selector_edges_20260515_00090_third_tied"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_spikes_spin_20260515_00091"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_mastery_policy_20260515_00092_hidden_role_voluntary_entry"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_selector_edges_20260515_00093_all_equal"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_spikes_spin_20260515_00094"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_mastery_policy_20260515_00095_support_handoff_after_job"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_selector_edges_20260515_00096_third_tied"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_spikes_spin_20260515_00097"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_mastery_policy_20260515_00098_cashout_boundary"
+    },
+    {
+      "details": {
+        "rolled_catastrophic_action_ids": [],
+        "verdict": "pass"
+      },
+      "passed": true,
+      "reason": "generated smoke scenarios should not roll catastrophic actions",
+      "relation": "generated_no_catastrophic_rolls",
+      "scenario_id": "generated_selector_edges_20260515_00099_third_tied"
+    }
+  ],
+  "schema_version": 1,
+  "seed": 20260515
+}

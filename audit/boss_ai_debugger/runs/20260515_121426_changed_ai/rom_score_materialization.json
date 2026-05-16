@@ -1,0 +1,25 @@
+{
+  "base_route": "koga",
+  "base_state": "",
+  "checked_count": 0,
+  "contribution_matched_count": 0,
+  "contribution_mismatch_count": 0,
+  "elapsed_seconds": 0.0,
+  "error_count": 0,
+  "hook_equivalence_checked_count": 0,
+  "hook_equivalence_mismatch_count": 0,
+  "kind": "rom_score_materialization",
+  "known_limits": [
+    "not requested; pass --refresh-rom-score-materialization to run generated score-model materialization"
+  ],
+  "materializations_per_minute": 0.0,
+  "scenario_count": 3,
+  "schema_version": 1,
+  "score_bytes_match_count": 0,
+  "selector_top_match_count": 0,
+  "skipped_count": 3,
+  "skipped_reason": "not requested; pass --refresh-rom-score-materialization to run generated score-model materialization",
+  "source": "changed-ai-suite",
+  "traces": [],
+  "verdicts": []
+}

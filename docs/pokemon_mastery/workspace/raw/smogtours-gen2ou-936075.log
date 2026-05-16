@@ -1,0 +1,937 @@
+|inactive|Battle timer is ON: inactive players will automatically lose when time's up.
+|t:|1778883059
+|gametype|singles
+|player|p1|leoperi99|will-gen2|
+|player|p2|KeshBa45|#rbtt9phantoms2|
+|gen|2
+|tier|[Gen 2] OU
+|rule|HP Percentage Mod: HP is shown in percentages
+|rule|Beat Up Nicknames Mod: Beat Up will not reveal any party members
+|rule|Endless Battle Clause: Forcing endless battles is banned
+|rule|Sleep Clause Mod: Limit one foe put to sleep
+|rule|Freeze Clause Mod: Limit one foe frozen
+|rule|Species Clause: Limit one of each Pokémon
+|rule|OHKO Clause: OHKO moves are banned
+|rule|Evasion Items Clause: Evasion items are banned
+|rule|Evasion Moves Clause: Evasion moves are banned
+|
+|t:|1778883059
+|teamsize|p1|6
+|teamsize|p2|6
+|start
+|switch|p1a: Jynx|Jynx, F|100/100
+|switch|p2a: Zapdos|Zapdos|100/100
+|turn|1
+|c|+kingler|I THOUGHT YOU WERE GOING TO SLEEP KESHBA
+|inactive|leoperi99 has 270 seconds left.
+|
+|t:|1778883115
+|switch|p2a: Raikou|Raikou|100/100
+|switch|p1a: Golem|Golem, M|100/100
+|
+|upkeep
+|turn|2
+|c|+tahat squared|don't let kingler rule your life 
+|
+|t:|1778883140
+|switch|p1a: Jynx|Jynx, F|100/100
+|move|p2a: Raikou|Thunder|p1a: Jynx
+|-damage|p1a: Jynx|49/100
+|-status|p1a: Jynx|par
+|
+|-heal|p1a: Jynx|55/100 par|[from] item: Leftovers
+|upkeep
+|turn|3
+|
+|t:|1778883155
+|move|p2a: Raikou|Thunder|p1a: Jynx|[miss]
+|-miss|p2a: Raikou
+|move|p1a: Jynx|Lovely Kiss|p2a: Raikou
+|-status|p2a: Raikou|slp|[from] move: Lovely Kiss
+|
+|-heal|p1a: Jynx|61/100 par|[from] item: Leftovers
+|upkeep
+|turn|4
+|
+|t:|1778883161
+|switch|p2a: Snorlax|Snorlax, M|100/100
+|switch|p1a: Snorlax|Snorlax, M|100/100
+|
+|upkeep
+|turn|5
+|
+|t:|1778883169
+|move|p1a: Snorlax|Double-Edge|p2a: Snorlax
+|-damage|p2a: Snorlax|66/100
+|-damage|p1a: Snorlax|92/100|[from] Recoil|[of] p2a: Snorlax
+|move|p2a: Snorlax|Double-Edge|p1a: Snorlax
+|-damage|p1a: Snorlax|55/100
+|-damage|p2a: Snorlax|57/100|[from] Recoil|[of] p1a: Snorlax
+|
+|-heal|p1a: Snorlax|61/100|[from] item: Leftovers
+|-heal|p2a: Snorlax|63/100|[from] item: Leftovers
+|upkeep
+|turn|6
+|
+|t:|1778883179
+|switch|p1a: Cloyster|Cloyster, M|100/100
+|move|p2a: Snorlax|Rest|p2a: Snorlax
+|-status|p2a: Snorlax|slp|[from] move: Rest
+|-heal|p2a: Snorlax|100/100 slp|[silent]
+|
+|upkeep
+|turn|7
+|
+|t:|1778883182
+|move|p1a: Cloyster|Spikes|p2a: Snorlax
+|-sidestart|p2: KeshBa45|Spikes
+|cant|p2a: Snorlax|slp
+|move|p2a: Snorlax|Sleep Talk|p2a: Snorlax
+|move|p2a: Snorlax|Curse|p2a: Snorlax|[from] Sleep Talk
+|-unboost|p2a: Snorlax|spe|1
+|-boost|p2a: Snorlax|atk|1
+|-boost|p2a: Snorlax|def|1
+|
+|upkeep
+|turn|8
+|
+|t:|1778883187
+|switch|p1a: Gengar|Gengar, M|100/100
+|cant|p2a: Snorlax|slp
+|move|p2a: Snorlax|Sleep Talk|p2a: Snorlax
+|move|p2a: Snorlax|Double-Edge|p1a: Gengar|[from] Sleep Talk
+|-immune|p1a: Gengar
+|
+|upkeep
+|turn|9
+|
+|t:|1778883193
+|switch|p2a: Raikou|Raikou|100/100 slp
+|-damage|p2a: Raikou|88/100 slp|[from] Spikes
+|move|p1a: Gengar|Thief|p2a: Raikou
+|-damage|p2a: Raikou|79/100 slp
+|-item|p1a: Gengar|Leftovers|[from] move: Thief|[of] p2a: Raikou
+|
+|upkeep
+|turn|10
+|
+|t:|1778883199
+|switch|p1a: Snorlax|Snorlax, M|61/100
+|cant|p2a: Raikou|slp
+|move|p2a: Raikou|Sleep Talk|p2a: Raikou
+|move|p2a: Raikou|Thunder|p1a: Snorlax|[from] Sleep Talk
+|-damage|p1a: Snorlax|32/100
+|
+|-heal|p1a: Snorlax|38/100|[from] item: Leftovers
+|upkeep
+|turn|11
+|
+|t:|1778883206
+|switch|p2a: Forretress|Forretress, M|100/100
+|-damage|p2a: Forretress|88/100|[from] Spikes
+|move|p1a: Snorlax|Rest|p1a: Snorlax
+|-status|p1a: Snorlax|slp|[from] move: Rest
+|-heal|p1a: Snorlax|100/100 slp|[silent]
+|
+|-heal|p2a: Forretress|94/100|[from] item: Leftovers
+|upkeep
+|turn|12
+|
+|t:|1778883212
+|switch|p1a: Gengar|Gengar, M|100/100
+|move|p2a: Forretress|Spikes|p1a: Gengar
+|-sidestart|p1: leoperi99|Spikes
+|
+|-heal|p2a: Forretress|100/100|[from] item: Leftovers
+|upkeep
+|turn|13
+|
+|t:|1778883225
+|switch|p2a: Zapdos|Zapdos|100/100
+|move|p1a: Gengar|Ice Punch|p2a: Zapdos
+|-supereffective|p2a: Zapdos
+|-damage|p2a: Zapdos|57/100
+|
+|-heal|p2a: Zapdos|63/100|[from] item: Leftovers
+|upkeep
+|turn|14
+|
+|t:|1778883239
+|switch|p1a: Snorlax|Snorlax, M|100/100 slp
+|-damage|p1a: Snorlax|88/100 slp|[from] Spikes
+|switch|p2a: Raikou|Raikou|79/100 slp
+|-damage|p2a: Raikou|66/100 slp|[from] Spikes
+|
+|-heal|p1a: Snorlax|94/100 slp|[from] item: Leftovers
+|upkeep
+|turn|15
+|
+|t:|1778883244
+|switch|p2a: Forretress|Forretress, M|100/100
+|-damage|p2a: Forretress|88/100|[from] Spikes
+|cant|p1a: Snorlax|slp
+|move|p1a: Snorlax|Sleep Talk|p1a: Snorlax
+|move|p1a: Snorlax|Rest|p1a: Snorlax|[from] Sleep Talk
+|-status|p1a: Snorlax|slp|[from] move: Rest
+|-heal|p1a: Snorlax|100/100 slp|[silent]
+|
+|-heal|p2a: Forretress|94/100|[from] item: Leftovers
+|upkeep
+|turn|16
+|
+|t:|1778883248
+|switch|p2a: Tyranitar|Tyranitar, M|100/100
+|-damage|p2a: Tyranitar|88/100|[from] Spikes
+|switch|p1a: Gengar|Gengar, M|100/100
+|-damage|p1a: Gengar|88/100|[from] Spikes
+|
+|-heal|p1a: Gengar|94/100|[from] item: Leftovers
+|-heal|p2a: Tyranitar|94/100|[from] item: Leftovers
+|upkeep
+|turn|17
+|
+|t:|1778883255
+|move|p1a: Gengar|Thunderbolt|p2a: Tyranitar
+|-damage|p2a: Tyranitar|72/100
+|move|p2a: Tyranitar|Crunch|p1a: Gengar
+|-supereffective|p1a: Gengar
+|-damage|p1a: Gengar|26/100
+|
+|-heal|p1a: Gengar|32/100|[from] item: Leftovers
+|-heal|p2a: Tyranitar|78/100|[from] item: Leftovers
+|upkeep
+|turn|18
+|
+|t:|1778883260
+|move|p1a: Gengar|Explosion|p2a: Tyranitar
+|-resisted|p2a: Tyranitar
+|-damage|p2a: Tyranitar|41/100
+|faint|p1a: Gengar
+|
+|t:|1778883264
+|switch|p1a: Zapdos|Zapdos|100/100
+|
+|-heal|p2a: Tyranitar|47/100|[from] item: Leftovers
+|upkeep
+|turn|19
+|
+|t:|1778883291
+|switch|p1a: Golem|Golem, M|100/100
+|-damage|p1a: Golem|88/100|[from] Spikes
+|switch|p2a: Raikou|Raikou|66/100 slp
+|-damage|p2a: Raikou|54/100 slp|[from] Spikes
+|
+|-heal|p1a: Golem|94/100|[from] item: Leftovers
+|upkeep
+|turn|20
+|
+|t:|1778883303
+|switch|p2a: Forretress|Forretress, M|94/100
+|-damage|p2a: Forretress|82/100|[from] Spikes
+|move|p1a: Golem|Roar|p2a: Forretress
+|drag|p2a: Raikou|Raikou|54/100 slp
+|-damage|p2a: Raikou|42/100 slp|[from] Spikes
+|
+|-heal|p1a: Golem|99/100|[from] item: Leftovers
+|upkeep
+|turn|21
+|
+|t:|1778883309
+|switch|p2a: Zapdos|Zapdos|63/100
+|move|p1a: Golem|Rapid Spin|p2a: Zapdos
+|-damage|p2a: Zapdos|57/100
+|-sideend|p1: leoperi99|Spikes|[from] move: Rapid Spin|[of] p1a: Golem
+|
+|-heal|p2a: Zapdos|63/100|[from] item: Leftovers
+|-heal|p1a: Golem|100/100|[from] item: Leftovers
+|upkeep
+|turn|22
+|
+|t:|1778883333
+|switch|p1a: Zapdos|Zapdos|100/100
+|move|p2a: Zapdos|Thunderbolt|p1a: Zapdos
+|-damage|p1a: Zapdos|63/100
+|-status|p1a: Zapdos|par
+|
+|-heal|p2a: Zapdos|69/100|[from] item: Leftovers
+|-heal|p1a: Zapdos|69/100 par|[from] item: Leftovers
+|upkeep
+|turn|23
+|inactive|KeshBa45 has 270 seconds left.
+|
+|t:|1778883349
+|switch|p2a: Raikou|Raikou|42/100 slp
+|-damage|p2a: Raikou|29/100 slp|[from] Spikes
+|cant|p1a: Zapdos|par
+|
+|-heal|p1a: Zapdos|75/100 par|[from] item: Leftovers
+|upkeep
+|turn|24
+|
+|t:|1778883353
+|-curestatus|p2a: Raikou|slp|[msg]
+|move|p2a: Raikou|Sleep Talk|p2a: Raikou
+|move|p1a: Zapdos|Thunderbolt|p2a: Raikou
+|-resisted|p2a: Raikou
+|-damage|p2a: Raikou|11/100
+|
+|-heal|p1a: Zapdos|81/100 par|[from] item: Leftovers
+|upkeep
+|turn|25
+|
+|t:|1778883363
+|switch|p1a: Jynx|Jynx, F|61/100 par
+|move|p2a: Raikou|Rest|p2a: Raikou
+|-status|p2a: Raikou|slp|[from] move: Rest
+|-heal|p2a: Raikou|100/100 slp|[silent]
+|
+|-heal|p1a: Jynx|67/100 par|[from] item: Leftovers
+|upkeep
+|turn|26
+|
+|t:|1778883381
+|switch|p2a: Snorlax|Snorlax, M|100/100 slp
+|-damage|p2a: Snorlax|88/100 slp|[from] Spikes
+|switch|p1a: Snorlax|Snorlax, M|100/100 slp
+|
+|-heal|p2a: Snorlax|94/100 slp|[from] item: Leftovers
+|upkeep
+|turn|27
+|
+|t:|1778883400
+|switch|p1a: Golem|Golem, M|100/100
+|switch|p2a: Forretress|Forretress, M|82/100
+|-damage|p2a: Forretress|69/100|[from] Spikes
+|
+|-heal|p2a: Forretress|76/100|[from] item: Leftovers
+|upkeep
+|turn|28
+|
+|t:|1778883405
+|move|p1a: Golem|Earthquake|p2a: Forretress
+|-damage|p2a: Forretress|47/100
+|move|p2a: Forretress|Rapid Spin|p1a: Golem
+|-resisted|p1a: Golem
+|-damage|p1a: Golem|99/100
+|-sideend|p2: KeshBa45|Spikes|[from] move: Rapid Spin|[of] p2a: Forretress
+|
+|-heal|p1a: Golem|100/100|[from] item: Leftovers
+|-heal|p2a: Forretress|53/100|[from] item: Leftovers
+|upkeep
+|turn|29
+|
+|t:|1778883407
+|switch|p2a: Zapdos|Zapdos|69/100
+|move|p1a: Golem|Earthquake|p2a: Zapdos
+|-immune|p2a: Zapdos
+|
+|-heal|p2a: Zapdos|75/100|[from] item: Leftovers
+|upkeep
+|turn|30
+|
+|t:|1778883412
+|switch|p1a: Snorlax|Snorlax, M|100/100 slp
+|move|p2a: Zapdos|Reflect|p2a: Zapdos
+|-sidestart|p2: KeshBa45|Reflect
+|
+|-heal|p2a: Zapdos|81/100|[from] item: Leftovers
+|upkeep
+|turn|31
+|
+|t:|1778883419
+|move|p2a: Zapdos|Thunderbolt|p1a: Snorlax
+|-damage|p1a: Snorlax|76/100 slp
+|cant|p1a: Snorlax|slp
+|move|p1a: Snorlax|Sleep Talk|p1a: Snorlax
+|move|p1a: Snorlax|Rest|p1a: Snorlax|[from] Sleep Talk
+|-status|p1a: Snorlax|slp|[from] move: Rest
+|-heal|p1a: Snorlax|100/100 slp|[silent]
+|
+|-heal|p2a: Zapdos|87/100|[from] item: Leftovers
+|upkeep
+|turn|32
+|
+|t:|1778883424
+|switch|p2a: Forretress|Forretress, M|53/100
+|cant|p1a: Snorlax|slp
+|move|p1a: Snorlax|Sleep Talk|p1a: Snorlax
+|move|p1a: Snorlax|Rest|p1a: Snorlax|[from] Sleep Talk
+|-fail|p1a: Snorlax
+|
+|-heal|p2a: Forretress|59/100|[from] item: Leftovers
+|upkeep
+|turn|33
+|
+|t:|1778883428
+|switch|p1a: Cloyster|Cloyster, M|100/100
+|move|p2a: Forretress|Spikes|p1a: Cloyster
+|-sidestart|p1: leoperi99|Spikes
+|
+|-heal|p2a: Forretress|66/100|[from] item: Leftovers
+|upkeep
+|turn|34
+|
+|t:|1778883431
+|switch|p2a: Zapdos|Zapdos|87/100
+|move|p1a: Cloyster|Spikes|p2a: Zapdos
+|-sidestart|p2: KeshBa45|Spikes
+|
+|-heal|p2a: Zapdos|93/100|[from] item: Leftovers
+|-sideend|p2: KeshBa45|Reflect
+|upkeep
+|turn|35
+|
+|t:|1778883435
+|switch|p1a: Snorlax|Snorlax, M|100/100 slp
+|-damage|p1a: Snorlax|88/100 slp|[from] Spikes
+|move|p2a: Zapdos|Whirlwind|p1a: Snorlax
+|drag|p1a: Cloyster|Cloyster, M|100/100
+|-damage|p1a: Cloyster|88/100|[from] Spikes
+|
+|-heal|p2a: Zapdos|99/100|[from] item: Leftovers
+|-heal|p1a: Cloyster|94/100|[from] item: Leftovers
+|upkeep
+|turn|36
+|
+|t:|1778883441
+|switch|p1a: Snorlax|Snorlax, M|88/100 slp
+|-damage|p1a: Snorlax|76/100 slp|[from] Spikes
+|move|p2a: Zapdos|Reflect|p2a: Zapdos
+|-sidestart|p2: KeshBa45|Reflect
+|
+|-heal|p2a: Zapdos|100/100|[from] item: Leftovers
+|-heal|p1a: Snorlax|82/100 slp|[from] item: Leftovers
+|upkeep
+|turn|37
+|
+|t:|1778883444
+|cant|p1a: Snorlax|slp
+|move|p1a: Snorlax|Sleep Talk|p1a: Snorlax
+|move|p1a: Snorlax|Rest|p1a: Snorlax|[from] Sleep Talk
+|-status|p1a: Snorlax|slp|[from] move: Rest
+|-heal|p1a: Snorlax|100/100 slp|[silent]
+|move|p2a: Zapdos|Whirlwind|p1a: Snorlax
+|drag|p1a: Zapdos|Zapdos|81/100 par
+|
+|-heal|p1a: Zapdos|87/100 par|[from] item: Leftovers
+|upkeep
+|turn|38
+|inactive|KeshBa45 has 270 seconds left.
+|
+|t:|1778883475
+|switch|p2a: Raikou|Raikou|100/100 slp
+|-damage|p2a: Raikou|88/100 slp|[from] Spikes
+|move|p1a: Zapdos|Rest|p1a: Zapdos
+|-status|p1a: Zapdos|slp|[from] move: Rest
+|-heal|p1a: Zapdos|100/100 slp|[silent]
+|
+|upkeep
+|turn|39
+|
+|t:|1778883484
+|switch|p1a: Snorlax|Snorlax, M|100/100 slp
+|-damage|p1a: Snorlax|88/100 slp|[from] Spikes
+|cant|p2a: Raikou|slp
+|move|p2a: Raikou|Sleep Talk|p2a: Raikou
+|move|p2a: Raikou|Thunder|p1a: Snorlax|[from] Sleep Talk
+|-damage|p1a: Snorlax|61/100 slp
+|
+|-heal|p1a: Snorlax|67/100 slp|[from] item: Leftovers
+|upkeep
+|turn|40
+|
+|t:|1778883490
+|switch|p2a: Forretress|Forretress, M|66/100
+|-damage|p2a: Forretress|53/100|[from] Spikes
+|cant|p1a: Snorlax|slp
+|move|p1a: Snorlax|Sleep Talk|p1a: Snorlax
+|move|p1a: Snorlax|Double-Edge|p2a: Forretress|[from] Sleep Talk
+|-resisted|p2a: Forretress
+|-damage|p2a: Forretress|44/100
+|-damage|p1a: Snorlax|66/100 slp|[from] Recoil|[of] p2a: Forretress
+|
+|-heal|p2a: Forretress|51/100|[from] item: Leftovers
+|-heal|p1a: Snorlax|72/100 slp|[from] item: Leftovers
+|-sideend|p2: KeshBa45|Reflect
+|upkeep
+|turn|41
+|inactive|KeshBa45 has 270 seconds left.
+|
+|t:|1778883513
+|move|p2a: Forretress|Toxic||[still]
+|-fail|p2a: Forretress
+|cant|p1a: Snorlax|slp
+|move|p1a: Snorlax|Sleep Talk|p1a: Snorlax
+|move|p1a: Snorlax|Rest|p1a: Snorlax|[from] Sleep Talk
+|-status|p1a: Snorlax|slp|[from] move: Rest
+|-heal|p1a: Snorlax|100/100 slp|[silent]
+|
+|-heal|p2a: Forretress|57/100|[from] item: Leftovers
+|upkeep
+|turn|42
+|
+|t:|1778883519
+|move|p2a: Forretress|Toxic||[still]
+|-fail|p2a: Forretress
+|cant|p1a: Snorlax|slp
+|move|p1a: Snorlax|Sleep Talk|p1a: Snorlax
+|move|p1a: Snorlax|Double-Edge|p2a: Forretress|[from] Sleep Talk
+|-resisted|p2a: Forretress
+|-damage|p2a: Forretress|40/100
+|-damage|p1a: Snorlax|98/100 slp|[from] Recoil|[of] p2a: Forretress
+|
+|-heal|p2a: Forretress|46/100|[from] item: Leftovers
+|-heal|p1a: Snorlax|100/100 slp|[from] item: Leftovers
+|upkeep
+|turn|43
+|
+|t:|1778883523
+|move|p2a: Forretress|Rapid Spin|p1a: Snorlax
+|-damage|p1a: Snorlax|97/100 slp
+|-sideend|p2: KeshBa45|Spikes|[from] move: Rapid Spin|[of] p2a: Forretress
+|cant|p1a: Snorlax|slp
+|move|p1a: Snorlax|Sleep Talk|p1a: Snorlax
+|move|p1a: Snorlax|Earthquake|p2a: Forretress|[from] Sleep Talk
+|-damage|p2a: Forretress|27/100
+|
+|-heal|p2a: Forretress|33/100|[from] item: Leftovers
+|-heal|p1a: Snorlax|100/100 slp|[from] item: Leftovers
+|upkeep
+|turn|44
+|
+|t:|1778883530
+|switch|p2a: Zapdos|Zapdos|100/100
+|switch|p1a: Cloyster|Cloyster, M|94/100
+|-damage|p1a: Cloyster|82/100|[from] Spikes
+|
+|-heal|p1a: Cloyster|88/100|[from] item: Leftovers
+|upkeep
+|turn|45
+|
+|t:|1778883536
+|switch|p1a: Zapdos|Zapdos|100/100 slp
+|move|p2a: Zapdos|Thunderbolt|p1a: Zapdos
+|-damage|p1a: Zapdos|65/100 slp
+|
+|-heal|p1a: Zapdos|71/100 slp|[from] item: Leftovers
+|upkeep
+|turn|46
+|
+|t:|1778883541
+|switch|p2a: Raikou|Raikou|88/100 slp
+|cant|p1a: Zapdos|slp
+|move|p1a: Zapdos|Sleep Talk|p1a: Zapdos
+|move|p1a: Zapdos|Rest|p1a: Zapdos|[from] Sleep Talk
+|-status|p1a: Zapdos|slp|[from] move: Rest
+|-heal|p1a: Zapdos|100/100 slp|[silent]
+|
+|upkeep
+|turn|47
+|
+|t:|1778883550
+|switch|p1a: Golem|Golem, M|100/100
+|-damage|p1a: Golem|88/100|[from] Spikes
+|cant|p2a: Raikou|slp
+|
+|-heal|p1a: Golem|94/100|[from] item: Leftovers
+|upkeep
+|turn|48
+|
+|t:|1778883566
+|switch|p2a: Zapdos|Zapdos|100/100
+|move|p1a: Golem|Rapid Spin|p2a: Zapdos
+|-damage|p2a: Zapdos|95/100
+|-sideend|p1: leoperi99|Spikes|[from] move: Rapid Spin|[of] p1a: Golem
+|
+|-heal|p2a: Zapdos|100/100|[from] item: Leftovers
+|-heal|p1a: Golem|99/100|[from] item: Leftovers
+|upkeep
+|turn|49
+|
+|t:|1778883574
+|switch|p1a: Zapdos|Zapdos|100/100 slp
+|move|p2a: Zapdos|Thunderbolt|p1a: Zapdos
+|-damage|p1a: Zapdos|66/100 slp
+|
+|-heal|p1a: Zapdos|72/100 slp|[from] item: Leftovers
+|upkeep
+|turn|50
+|
+|t:|1778883579
+|switch|p2a: Raikou|Raikou|88/100 slp
+|cant|p1a: Zapdos|slp
+|move|p1a: Zapdos|Sleep Talk|p1a: Zapdos
+|move|p1a: Zapdos|Rest|p1a: Zapdos|[from] Sleep Talk
+|-status|p1a: Zapdos|slp|[from] move: Rest
+|-heal|p1a: Zapdos|100/100 slp|[silent]
+|
+|upkeep
+|turn|51
+|
+|t:|1778883592
+|-curestatus|p2a: Raikou|slp|[msg]
+|move|p2a: Raikou|Thunder|p1a: Zapdos
+|-damage|p1a: Zapdos|56/100 slp
+|cant|p1a: Zapdos|slp
+|move|p1a: Zapdos|Sleep Talk|p1a: Zapdos
+|move|p1a: Zapdos|Hidden Power|p2a: Raikou|[from] Sleep Talk
+|-damage|p2a: Raikou|72/100
+|
+|-heal|p1a: Zapdos|62/100 slp|[from] item: Leftovers
+|upkeep
+|turn|52
+|
+|t:|1778883609
+|switch|p1a: Snorlax|Snorlax, M|100/100 slp
+|move|p2a: Raikou|Thunder|p1a: Snorlax
+|-damage|p1a: Snorlax|71/100 slp
+|
+|-heal|p1a: Snorlax|77/100 slp|[from] item: Leftovers
+|upkeep
+|turn|53
+|
+|t:|1778883620
+|switch|p2a: Forretress|Forretress, M|33/100
+|-curestatus|p1a: Snorlax|slp|[msg]
+|move|p1a: Snorlax|Double-Edge|p2a: Forretress
+|-resisted|p2a: Forretress
+|-damage|p2a: Forretress|17/100
+|-damage|p1a: Snorlax|74/100|[from] Recoil|[of] p2a: Forretress
+|
+|-heal|p2a: Forretress|23/100|[from] item: Leftovers
+|-heal|p1a: Snorlax|81/100|[from] item: Leftovers
+|upkeep
+|turn|54
+|
+|t:|1778883631
+|move|p2a: Forretress|Spikes|p1a: Snorlax
+|-sidestart|p1: leoperi99|Spikes
+|move|p1a: Snorlax|Earthquake|p2a: Forretress
+|-damage|p2a: Forretress|4/100
+|
+|-heal|p2a: Forretress|11/100|[from] item: Leftovers
+|-heal|p1a: Snorlax|87/100|[from] item: Leftovers
+|upkeep
+|turn|55
+|
+|t:|1778883639
+|switch|p2a: Zapdos|Zapdos|100/100
+|move|p1a: Snorlax|Earthquake|p2a: Zapdos
+|-immune|p2a: Zapdos
+|
+|-heal|p1a: Snorlax|93/100|[from] item: Leftovers
+|upkeep
+|turn|56
+|
+|t:|1778883643
+|move|p2a: Zapdos|Reflect|p2a: Zapdos
+|-sidestart|p2: KeshBa45|Reflect
+|move|p1a: Snorlax|Double-Edge|p2a: Zapdos
+|-damage|p2a: Zapdos|75/100
+|-damage|p1a: Snorlax|88/100|[from] Recoil|[of] p2a: Zapdos
+|
+|-heal|p2a: Zapdos|81/100|[from] item: Leftovers
+|-heal|p1a: Snorlax|95/100|[from] item: Leftovers
+|upkeep
+|turn|57
+|
+|t:|1778883656
+|move|p2a: Zapdos|Thunderbolt|p1a: Snorlax
+|-damage|p1a: Snorlax|69/100
+|move|p1a: Snorlax|Double-Edge|p2a: Zapdos
+|-damage|p2a: Zapdos|58/100
+|-damage|p1a: Snorlax|65/100|[from] Recoil|[of] p2a: Zapdos
+|
+|-heal|p2a: Zapdos|64/100|[from] item: Leftovers
+|-heal|p1a: Snorlax|71/100|[from] item: Leftovers
+|upkeep
+|turn|58
+|
+|t:|1778883664
+|move|p1a: Snorlax|Double-Edge|p2a: Zapdos
+|-damage|p2a: Zapdos|41/100
+|-damage|p1a: Snorlax|67/100|[from] Recoil|[of] p2a: Zapdos
+|move|p2a: Zapdos|Whirlwind|p1a: Snorlax
+|drag|p1a: Zapdos|Zapdos|62/100 slp
+|
+|-heal|p2a: Zapdos|47/100|[from] item: Leftovers
+|-heal|p1a: Zapdos|68/100 slp|[from] item: Leftovers
+|upkeep
+|turn|59
+|
+|t:|1778883668
+|switch|p2a: Raikou|Raikou|72/100
+|switch|p1a: Snorlax|Snorlax, M|67/100
+|-damage|p1a: Snorlax|55/100|[from] Spikes
+|
+|-heal|p1a: Snorlax|61/100|[from] item: Leftovers
+|upkeep
+|turn|60
+|
+|t:|1778883673
+|switch|p2a: Forretress|Forretress, M|11/100
+|move|p1a: Snorlax|Rest|p1a: Snorlax
+|-status|p1a: Snorlax|slp|[from] move: Rest
+|-heal|p1a: Snorlax|100/100 slp|[silent]
+|
+|-heal|p2a: Forretress|17/100|[from] item: Leftovers
+|-sideend|p2: KeshBa45|Reflect
+|upkeep
+|turn|61
+|
+|t:|1778883678
+|move|p2a: Forretress|Explosion|p1a: Snorlax
+|-damage|p1a: Snorlax|13/100 slp
+|faint|p2a: Forretress
+|
+|t:|1778883682
+|switch|p2a: Zapdos|Zapdos|47/100
+|
+|-heal|p2a: Zapdos|53/100|[from] item: Leftovers
+|-heal|p1a: Snorlax|19/100 slp|[from] item: Leftovers
+|upkeep
+|turn|62
+|
+|t:|1778883685
+|switch|p1a: Zapdos|Zapdos|68/100 slp
+|move|p2a: Zapdos|Thunderbolt|p1a: Zapdos
+|-damage|p1a: Zapdos|29/100 slp
+|
+|-heal|p1a: Zapdos|35/100 slp|[from] item: Leftovers
+|-heal|p2a: Zapdos|59/100|[from] item: Leftovers
+|upkeep
+|turn|63
+|
+|t:|1778883691
+|switch|p2a: Raikou|Raikou|72/100
+|cant|p1a: Zapdos|slp
+|move|p1a: Zapdos|Sleep Talk|p1a: Zapdos
+|move|p1a: Zapdos|Rest|p1a: Zapdos|[from] Sleep Talk
+|-status|p1a: Zapdos|slp|[from] move: Rest
+|-heal|p1a: Zapdos|100/100 slp|[silent]
+|
+|upkeep
+|turn|64
+|
+|t:|1778883696
+|switch|p1a: Jynx|Jynx, F|67/100 par
+|-damage|p1a: Jynx|55/100 par|[from] Spikes
+|move|p2a: Raikou|Hidden Power|p1a: Jynx
+|-resisted|p1a: Jynx
+|-damage|p1a: Jynx|46/100 par
+|
+|-heal|p1a: Jynx|52/100 par|[from] item: Leftovers
+|upkeep
+|turn|65
+|
+|t:|1778883703
+|switch|p1a: Golem|Golem, M|99/100
+|-damage|p1a: Golem|88/100|[from] Spikes
+|move|p2a: Raikou|Hidden Power|p1a: Golem
+|-supereffective|p1a: Golem
+|-damage|p1a: Golem|40/100
+|
+|-heal|p1a: Golem|47/100|[from] item: Leftovers
+|upkeep
+|turn|66
+|
+|t:|1778883710
+|move|p2a: Raikou|Hidden Power|p1a: Golem
+|-supereffective|p1a: Golem
+|-damage|p1a: Golem|4/100
+|move|p1a: Golem|Rapid Spin|p2a: Raikou
+|-damage|p2a: Raikou|67/100
+|-sideend|p1: leoperi99|Spikes|[from] move: Rapid Spin|[of] p1a: Golem
+|
+|-heal|p1a: Golem|10/100|[from] item: Leftovers
+|upkeep
+|turn|67
+|
+|t:|1778883716
+|switch|p1a: Zapdos|Zapdos|100/100 slp
+|move|p2a: Raikou|Hidden Power|p1a: Zapdos
+|-supereffective|p1a: Zapdos
+|-damage|p1a: Zapdos|68/100 slp
+|
+|-heal|p1a: Zapdos|74/100 slp|[from] item: Leftovers
+|upkeep
+|turn|68
+|
+|t:|1778883726
+|move|p2a: Raikou|Hidden Power|p1a: Zapdos
+|-supereffective|p1a: Zapdos
+|-damage|p1a: Zapdos|40/100 slp
+|cant|p1a: Zapdos|slp
+|move|p1a: Zapdos|Sleep Talk|p1a: Zapdos
+|move|p1a: Zapdos|Rest|p1a: Zapdos|[from] Sleep Talk
+|-status|p1a: Zapdos|slp|[from] move: Rest
+|-heal|p1a: Zapdos|100/100 slp|[silent]
+|
+|upkeep
+|turn|69
+|
+|t:|1778883738
+|move|p2a: Raikou|Hidden Power|p1a: Zapdos
+|-supereffective|p1a: Zapdos
+|-damage|p1a: Zapdos|67/100 slp
+|cant|p1a: Zapdos|slp
+|move|p1a: Zapdos|Sleep Talk|p1a: Zapdos
+|move|p1a: Zapdos|Hidden Power|p2a: Raikou|[from] Sleep Talk
+|-damage|p2a: Raikou|51/100
+|
+|-heal|p1a: Zapdos|73/100 slp|[from] item: Leftovers
+|upkeep
+|turn|70
+|
+|t:|1778883741
+|move|p2a: Raikou|Thunder|p1a: Zapdos
+|-damage|p1a: Zapdos|27/100 slp
+|cant|p1a: Zapdos|slp
+|move|p1a: Zapdos|Sleep Talk|p1a: Zapdos
+|move|p1a: Zapdos|Hidden Power|p2a: Raikou|[from] Sleep Talk
+|-damage|p2a: Raikou|33/100
+|
+|-heal|p1a: Zapdos|33/100 slp|[from] item: Leftovers
+|upkeep
+|turn|71
+|
+|t:|1778883746
+|switch|p1a: Jynx|Jynx, F|52/100 par
+|move|p2a: Raikou|Hidden Power|p1a: Jynx
+|-resisted|p1a: Jynx
+|-damage|p1a: Jynx|43/100 par
+|
+|-heal|p1a: Jynx|49/100 par|[from] item: Leftovers
+|upkeep
+|turn|72
+|
+|t:|1778883752
+|switch|p1a: Golem|Golem, M|10/100
+|move|p2a: Raikou|Thunder|p1a: Golem
+|-immune|p1a: Golem
+|
+|-heal|p1a: Golem|16/100|[from] item: Leftovers
+|upkeep
+|turn|73
+|
+|t:|1778883755
+|switch|p1a: Jynx|Jynx, F|49/100 par
+|move|p2a: Raikou|Hidden Power|p1a: Jynx
+|-crit|p1a: Jynx
+|-resisted|p1a: Jynx
+|-damage|p1a: Jynx|30/100 par
+|
+|-heal|p1a: Jynx|36/100 par|[from] item: Leftovers
+|upkeep
+|turn|74
+|
+|t:|1778883763
+|move|p2a: Raikou|Thunder|p1a: Jynx
+|-crit|p1a: Jynx
+|-damage|p1a: Jynx|0 fnt
+|faint|p1a: Jynx
+|
+|t:|1778883765
+|switch|p1a: Snorlax|Snorlax, M|19/100 slp
+|
+|-heal|p1a: Snorlax|25/100 slp|[from] item: Leftovers
+|upkeep
+|turn|75
+|
+|t:|1778883785
+|switch|p1a: Zapdos|Zapdos|33/100 slp
+|move|p2a: Raikou|Thunder|p1a: Zapdos
+|-damage|p1a: Zapdos|0 fnt
+|faint|p1a: Zapdos
+|
+|t:|1778883786
+|switch|p1a: Snorlax|Snorlax, M|25/100 slp
+|
+|-heal|p1a: Snorlax|31/100 slp|[from] item: Leftovers
+|upkeep
+|turn|76
+|
+|t:|1778883789
+|switch|p2a: Vaporeon|Vaporeon, M|100/100
+|cant|p1a: Snorlax|slp
+|move|p1a: Snorlax|Sleep Talk|p1a: Snorlax
+|move|p1a: Snorlax|Earthquake|p2a: Vaporeon|[from] Sleep Talk
+|-crit|p2a: Vaporeon
+|-damage|p2a: Vaporeon|53/100
+|
+|-heal|p2a: Vaporeon|59/100|[from] item: Leftovers
+|-heal|p1a: Snorlax|37/100 slp|[from] item: Leftovers
+|upkeep
+|turn|77
+|
+|t:|1778883796
+|switch|p1a: Cloyster|Cloyster, M|88/100
+|move|p2a: Vaporeon|Growth|p2a: Vaporeon
+|-boost|p2a: Vaporeon|spa|1
+|
+|-heal|p1a: Cloyster|94/100|[from] item: Leftovers
+|-heal|p2a: Vaporeon|65/100|[from] item: Leftovers
+|upkeep
+|turn|78
+|
+|t:|1778883800
+|move|p1a: Cloyster|Spikes|p2a: Vaporeon
+|-sidestart|p2: KeshBa45|Spikes
+|move|p2a: Vaporeon|Baton Pass|p2a: Vaporeon
+|
+|t:|1778883803
+|switch|p2a: Zapdos|Zapdos|59/100|[from] Baton Pass
+|
+|-heal|p2a: Zapdos|65/100|[from] item: Leftovers
+|-heal|p1a: Cloyster|99/100|[from] item: Leftovers
+|upkeep
+|turn|79
+|
+|t:|1778883807
+|move|p2a: Zapdos|Thunderbolt|p1a: Cloyster
+|-supereffective|p1a: Cloyster
+|-damage|p1a: Cloyster|0 fnt
+|faint|p1a: Cloyster
+|
+|t:|1778883808
+|switch|p1a: Snorlax|Snorlax, M|37/100 slp
+|
+|-heal|p2a: Zapdos|71/100|[from] item: Leftovers
+|-heal|p1a: Snorlax|43/100 slp|[from] item: Leftovers
+|upkeep
+|turn|80
+|
+|t:|1778883834
+|move|p2a: Zapdos|Thunderbolt|p1a: Snorlax
+|-damage|p1a: Snorlax|6/100 slp
+|cant|p1a: Snorlax|slp
+|move|p1a: Snorlax|Sleep Talk|p1a: Snorlax
+|move|p1a: Snorlax|Earthquake|p2a: Zapdos|[from] Sleep Talk
+|-immune|p2a: Zapdos
+|
+|-heal|p2a: Zapdos|77/100|[from] item: Leftovers
+|-heal|p1a: Snorlax|13/100 slp|[from] item: Leftovers
+|upkeep
+|turn|81
+|
+|t:|1778883842
+|move|p2a: Zapdos|Thunderbolt|p1a: Snorlax
+|-damage|p1a: Snorlax|0 fnt
+|faint|p1a: Snorlax
+|c|☆leoperi99|gg wp
+|
+|t:|1778883846
+|switch|p1a: Golem|Golem, M|16/100
+|
+|-heal|p2a: Zapdos|83/100|[from] item: Leftovers
+|-heal|p1a: Golem|23/100|[from] item: Leftovers
+|upkeep
+|turn|82
+|
+|t:|1778883853
+|move|p2a: Zapdos|Hidden Power|p1a: Golem
+|-supereffective|p1a: Golem
+|-damage|p1a: Golem|0 fnt
+|faint|p1a: Golem
+|
+|win|KeshBa45

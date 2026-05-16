@@ -1,0 +1,195 @@
+{
+  "artifact_hashes": {
+    "batch_report": "3D787DFBD4AB70AD9376DA137D2B1BFBFC20BD7C19C08B2EB505A63B6D569C7A",
+    "differential": "C089C81742F3B8BEF2F167206519FADD52DAE458E35FE204E05B0ADF6626A479",
+    "invariants": "E5C4A705930ADD657208C6950A3D8A1C7ABBE1915DA834D2F2FD8AB912371057",
+    "live_trace_refresh": "281E415111BB4AE9AEFCD36CFEC1794212EC5EB3EE39B9DA472535C2DAF41E9A",
+    "metamorphic": "32DBEFF2923DD1F1CE50E9F19C7868DA078642D2DC2D2CF79DA78D426559C02F",
+    "mutation": "CE47C7B8EB572337D4A13DE133A263ABA3660E6D8C37DEE6F832E36CA4EED4FA",
+    "previous_run_diff": "31DCB4958705E663D624C81C2E2CEC30FCC5EC30CCDC24F8EB0AF48290E022E4",
+    "review_queue": "526A2E5EA3D1A52CE92053A563335E92C3E4F73BD4FE96B9E1F0EFBC6FC64855",
+    "rom_contribution_trace_summary": "3956B56C33DC759957232CD94269947D3CC894AD6D9917F0CA3384387901FFA1",
+    "rom_contribution_traces": {
+      "audit\\boss_ai_debugger\\runs\\20260515_121426_changed_ai\\rom_contribution_traces\\01_rom_contribution_trace_counter_probe.json": "CBF9921437660E7FF66C480B48F07F480D3A1165CA7CC90DCFA377D38EA5BAAE",
+      "audit\\boss_ai_debugger\\runs\\20260515_121426_changed_ai\\rom_contribution_traces\\02_rom_contribution_trace_coverage_probe.json": "09F42A37F743F516FE258E960584BAD9282DEB49E939A41F291CDD055779C5C7",
+      "audit\\boss_ai_debugger\\runs\\20260515_121426_changed_ai\\rom_contribution_traces\\03_rom_contribution_trace_selfdestruct_probe.json": "A20BCEACB4DB5C8E7D4954BE55FAB4B7A3D796B7BDA156C9F111D3B6124E57B2",
+      "audit\\boss_ai_debugger\\runs\\20260515_121426_changed_ai\\rom_contribution_traces\\04_rom_contribution_trace_smoke.json": "B2D102D8C4F9612FABB94C468EF22467834C4FB425EC730DB51201FDC25C1DF3",
+      "audit\\boss_ai_debugger\\runs\\20260515_121426_changed_ai\\rom_contribution_traces\\05_rom_contribution_trace_spikes_l2_active_prior_probe.json": "3C99600F34856618501D4889907ED61A17CDD555C059D9F920526F50B8300161",
+      "audit\\boss_ai_debugger\\runs\\20260515_121426_changed_ai\\rom_contribution_traces\\06_rom_contribution_trace_spikes_l2_soft_probe.json": "3BA02EBCB0AED7FF954C492FF1DD1A20849A59644F8851029EDA09D838581BC5",
+      "audit\\boss_ai_debugger\\runs\\20260515_121426_changed_ai\\rom_contribution_traces\\07_rom_contribution_trace_spikes_l3_bench_probe.json": "EA7BBBDF7887F253F14D38BA0137DF19D32044000163480FBF71BD470A5C8345",
+      "audit\\boss_ai_debugger\\runs\\20260515_121426_changed_ai\\rom_contribution_traces\\08_rom_contribution_trace_spikes_spin_probe.json": "39193FC1175BCC529CCEEBAEA88385376DAB967BF5756D924B776F058E6FC159"
+    },
+    "rom_rebuild": "9C72D282B2B9366F12E9CAE01011313F8446BEA6D96006A8BEF6FB004574E16A",
+    "rom_score_materialization": "55B0B2BC3C5FEBEE37D61F644CF7B65FF152040866AFA650BE52438FDB97BEBE",
+    "route_eval": "97B43B118CDF55C1F2BFC6415CC03CA396096B1E12C8B4D7FB9E2BC3802477C8",
+    "scenarios": "D2560BDA777E2C56054894399C7A584D63FF84676D7A134E9E9138DDF0809205",
+    "trace_replay": "5FB83017D3F98EC0C984309DE1CA67E0C8B754CBEDF4AC0F43614A543D31E737"
+  },
+  "artifacts": {
+    "batch_report": "audit\\boss_ai_debugger\\runs\\20260515_121426_changed_ai\\batch_report.json",
+    "differential": "audit\\boss_ai_debugger\\runs\\20260515_121426_changed_ai\\differential.json",
+    "invariants": "audit\\boss_ai_debugger\\runs\\20260515_121426_changed_ai\\invariants.json",
+    "live_trace_refresh": "audit\\boss_ai_debugger\\runs\\20260515_121426_changed_ai\\live_trace_refresh.json",
+    "metamorphic": "audit\\boss_ai_debugger\\runs\\20260515_121426_changed_ai\\metamorphic.json",
+    "mutation": "audit\\boss_ai_debugger\\runs\\20260515_121426_changed_ai\\mutation.json",
+    "previous_run_diff": "audit\\boss_ai_debugger\\runs\\20260515_121426_changed_ai\\previous_run_diff.json",
+    "review_queue": "audit\\boss_ai_debugger\\runs\\20260515_121426_changed_ai\\review_queue.json",
+    "rom_contribution_trace_summary": "audit\\boss_ai_debugger\\runs\\20260515_121426_changed_ai\\rom_contribution_trace_summary.json",
+    "rom_contribution_traces": [
+      "audit\\boss_ai_debugger\\runs\\20260515_121426_changed_ai\\rom_contribution_traces\\01_rom_contribution_trace_counter_probe.json",
+      "audit\\boss_ai_debugger\\runs\\20260515_121426_changed_ai\\rom_contribution_traces\\02_rom_contribution_trace_coverage_probe.json",
+      "audit\\boss_ai_debugger\\runs\\20260515_121426_changed_ai\\rom_contribution_traces\\03_rom_contribution_trace_selfdestruct_probe.json",
+      "audit\\boss_ai_debugger\\runs\\20260515_121426_changed_ai\\rom_contribution_traces\\04_rom_contribution_trace_smoke.json",
+      "audit\\boss_ai_debugger\\runs\\20260515_121426_changed_ai\\rom_contribution_traces\\05_rom_contribution_trace_spikes_l2_active_prior_probe.json",
+      "audit\\boss_ai_debugger\\runs\\20260515_121426_changed_ai\\rom_contribution_traces\\06_rom_contribution_trace_spikes_l2_soft_probe.json",
+      "audit\\boss_ai_debugger\\runs\\20260515_121426_changed_ai\\rom_contribution_traces\\07_rom_contribution_trace_spikes_l3_bench_probe.json",
+      "audit\\boss_ai_debugger\\runs\\20260515_121426_changed_ai\\rom_contribution_traces\\08_rom_contribution_trace_spikes_spin_probe.json"
+    ],
+    "rom_rebuild": "audit\\boss_ai_debugger\\runs\\20260515_121426_changed_ai\\rom_rebuild.json",
+    "rom_score_materialization": "audit\\boss_ai_debugger\\runs\\20260515_121426_changed_ai\\rom_score_materialization.json",
+    "route_eval": "audit\\boss_ai_debugger\\runs\\20260515_121426_changed_ai\\route_eval.json",
+    "scenarios": "audit\\boss_ai_debugger\\runs\\20260515_121426_changed_ai\\scenarios.jsonl",
+    "summary": "audit\\boss_ai_debugger\\runs\\20260515_121426_changed_ai\\summary.md",
+    "trace_replay": "audit\\boss_ai_debugger\\runs\\20260515_121426_changed_ai\\trace_replay.json"
+  },
+  "batch_summary": {
+    "reviewable_count": 0,
+    "scenario_count": 200,
+    "scenarios_per_minute": 2932766.362723197,
+    "verdict_counts": {
+      "pass": 200
+    }
+  },
+  "changed_files": [
+    "docs/pokemon_mastery/README.md",
+    "docs/pokemon_mastery/active_context.md",
+    "docs/pokemon_mastery/heuristic_core/README.md",
+    "docs/pokemon_mastery/heuristic_core/branch_punish_ranking.md",
+    "docs/pokemon_mastery/heuristic_core/converter_before_script.md",
+    "docs/pokemon_mastery/heuristic_core/migration_map.md",
+    "docs/pokemon_mastery/heuristic_core/name_current_owner.md",
+    "docs/pokemon_mastery/heuristic_core/name_next_board_owner.md",
+    "docs/pokemon_mastery/heuristic_core/public_info_tiers.md",
+    "docs/pokemon_mastery/heuristic_core/rescore_after_reveal.md",
+    "docs/pokemon_mastery/heuristic_core/reset_loop_denial.md",
+    "docs/pokemon_mastery/heuristic_core/spend_or_save_piece.md",
+    "docs/pokemon_mastery/live_core.md",
+    "docs/pokemon_mastery/master_index.md",
+    "docs/pokemon_mastery/policy_cards/README.md"
+  ],
+  "created_at": "2026-05-15T12:14:26.700574+00:00",
+  "differential_summary": {
+    "contribution_comparison": {
+      "matched_trace_count": 0,
+      "mismatch_class_counts": {},
+      "mismatch_count": 0
+    },
+    "mismatch_class_counts": {},
+    "mismatch_count": 0
+  },
+  "git_commit": "fda90e2bb57d41a523a33ea5965686abf47710e4",
+  "git_status_short": "M audit/boss_ai_debugger/mastery_index.json\n M audit/boss_ai_debugger/rule_map.json\n M audit/boss_ai_trace/blaine_live.txt\n M audit/boss_ai_trace/blue_live.txt\n M audit/boss_ai_trace/brock_live.txt\n M audit/boss_ai_trace/bugsy_live.txt\n M audit/boss_ai_trace/champion_lance_live.txt\n M audit/boss_ai_trace/chuck_live.txt\n M audit/boss_ai_trace/clair_live.txt\n M audit/boss_ai_trace/erika_live.txt\n M audit/boss_ai_trace/falkner_live.txt\n M audit/boss_ai_trace/janine_live.txt\n M audit/boss_ai_trace/jasmine_live.txt\n M audit/boss_ai_trace/koga_live.txt\n M audit/boss_ai_trace/live_capture_manifest.json\n M audit/boss_ai_trace/lt_surge_live.txt\n M audit/boss_ai_trace/misty_live.txt\n M audit/boss_ai_trace/morty_live.txt\n M audit/boss_ai_trace/pryce_live.txt\n M audit/boss_ai_trace/sabrina_live.txt\n M audit/boss_ai_trace/shared_switch_loop_live.txt\n M audit/boss_ai_trace/whitney_live.txt\n M docs/agent_navigation/subsystems/boss_ai_logic.md\n M docs/generated/dev_index.md\n M docs/pokemon_mastery/active_context.md\n M docs/pokemon_mastery/measurement_progress_ledger.csv\n M docs/pokemon_mastery/policy_cards/active_pressure_before_status.md\n M docs/pokemon_mastery/policy_cards/branch_action_after_naming.md\n M docs/pokemon_mastery/policy_cards/cashout_boundary.md\n M docs/pokemon_mastery/policy_cards/hazard_loop_spin_window.md\n M docs/pokemon_mastery/policy_cards/hidden_role_voluntary_entry.md\n M docs/pokemon_mastery/policy_cards/sleep_absorber_and_set_ambiguity.md\n M docs/pokemon_mastery/policy_cards/support_handoff_after_job.md\n M docs/pokemon_mastery/replay_turn_pause_protocol.md\n M docs/project_roadmap.md\n M engine/battle/ai/boss_policy_move.asm\n M tools/audit/check_boss_ai_trace_invariants.py\n M tools/boss_ai_debugger/generators.py\n M tools/boss_ai_debugger/rom_scenarios.py\n M tools/boss_ai_debugger/rom_score_materialize.py\n M tools/boss_ai_debugger/tests/test_analysis_tools.py\n M tools/boss_ai_debugger/tests/test_generators.py\n M tools/boss_ai_debugger/tests/test_rom_scenarios.py\n M tools/boss_ai_debugger/tests/test_rom_score_materialize.py\n M tools/pokemon_mastery/replay_turn_pause.py\n M tools/pokemon_mastery/tests/test_replay_turn_pause.py\n?? audit/boss_ai_debugger/runs/\n?? docs/boss_ai_debugger_closed_loop_alignment_plan_2026-05-15.md\n?? docs/pokemon_mastery/workspace/quick_tests/agipass_machamp_explosion_guard_transfer_001_smogtours-gen2ou-933493_2026-05-15.md\n?? docs/pokemon_mastery/workspace/quick_tests/all_in_ghost_resttalk_wake_repair_probe_001_2026-05-15.md\n?? docs/pokemon_mastery/workspace/quick_tests/bp_chain_revealed_coverage_transfer_001_smogtours-gen2ou-933681_2026-05-15.md\n?? docs/pokemon_mastery/workspace/quick_tests/cloyster_skarmory_hazard_branch_probe_001_2026-05-15.md\n?? docs/pokemon_mastery/workspace/quick_tests/cloyster_skarmory_hazard_branch_transfer_001_smogtours-gen2ou-933324_2026-05-15.md\n?? docs/pokemon_mastery/workspace/quick_tests/compressed_core_transfer_001_smogtours-gen2ou-932782_2026-05-15.md\n?? docs/pokemon_mastery/workspace/quick_tests/curselax_forretress_timer_transfer_001_smogtours-gen2ou-933685_2026-05-15.md\n?? docs/pokemon_mastery/workspace/quick_tests/curselax_receiver_coverage_probe_001_2026-05-15.md\n?? docs/pokemon_mastery/workspace/quick_tests/curselax_receiver_coverage_transfer_001_smogtours-gen2ou-932818_2026-05-15.md\n?? docs/pokemon_mastery/workspace/quick_tests/early_cycle_counter_handoff_probe_001_2026-05-15.md\n?? docs/pokemon_mastery/workspace/quick_tests/ground_receiver_triangle_transfer_001_gen2ou-2591556155_2026-05-15.md\n?? docs/pokemon_mastery/workspace/quick_tests/item_package_followup_transfer_002_smogtours-gen2ou-935855_2026-05-15.md\n?? docs/pokemon_mastery/workspace/quick_tests/jolteon_agipass_receiver_probe_001_2026-05-15.md\n?? docs/pokemon_mastery/workspace/quick_tests/jolteon_agipass_receiver_transfer_001_smogtours-gen2ou-935550_2026-05-15.md\n?? docs/pokemon_mastery/workspace/quick_tests/lead_sleep_handoff_probe_001_2026-05-15.md\n?? docs/pokemon_mastery/workspace/quick_tests/lead_sleep_handoff_transfer_001_smogtours-gen2ou-935831_2026-05-15.md\n?? docs/pokemon_mastery/workspace/quick_tests/leech_resttalk_phaze_transfer_001_smogtours-gen2ou-933839_2026-05-15.md\n?? docs/pokemon_mastery/workspace/quick_tests/low_cloyster_cashout_transfer_001_gen2ou-2605299310_2026-05-15.md\n?? docs/pokemon_mastery/workspace/quick_tests/low_cloyster_ghost_guard_transfer_001_smogtours-gen2ou-933115_2026-05-15.md\n?? docs/pokemon_mastery/workspace/quick_tests/low_support_four_way_probe_001_2026-05-15.md\n?? docs/pokemon_mastery/workspace/quick_tests/one_time_trade_setup_transfer_001_smogtours-gen2ou-935835_2026-05-15.md\n?? docs/pokemon_mastery/workspace/quick_tests/pass_package_sleeper_handoff_transfer_001_gen2ou-2608087104_2026-05-15.md\n?? docs/pokemon_mastery/workspace/quick_tests/rest_spin_phaze_transfer_001_smogtours-gen2ou-931755_2026-05-15.md\n?? docs/pokemon_mastery/workspace/quick_tests/resttalk_growth_item_probe_001_2026-05-15.md\n?? docs/pokemon_mastery/workspace/quick_tests/resttalk_growth_item_transfer_001_smogtours-gen2ou-933217_2026-05-15.md\n?? docs/pokemon_mastery/workspace/quick_tests/resttalk_substarmie_phaze_transfer_001_smogtours-gen2ou-933823_2026-05-15.md\n?? docs/pokemon_mastery/workspace/quick_tests/snorlax_forretress_counter_handoff_transfer_001_smogtours-gen2ou-933120_2026-05-15.md\n?? docs/pokemon_mastery/workspace/quick_tests/spinblock_subgrowth_transfer_001_smogtours-gen2ou-932556_2026-05-15.md\n?? docs/pokemon_mastery/workspace/quick_tests/spinner_side_recover_transfer_001_gen2ou-2605980867_2026-05-15.md\n?? docs/pokemon_mastery/workspace/quick_tests/status_receiver_positive_transfer_001_smogtours-gen2ou-919779_2026-05-15.md\n?? docs/pokemon_mastery/workspace/quick_tests/status_receiver_positive_transfer_002_smogtours-gen2ou-935859_2026-05-15.md\n?? docs/pokemon_mastery/workspace/quick_tests/status_setup_handoff_transfer_001_smogtours-gen2ou-934420_2026-05-15.md\n?? docs/pokemon_mastery/workspace/quick_tests/steelix_curse_roar_split_probe_001_2026-05-15.md\n?? docs/pokemon_mastery/workspace/quick_tests/steelix_curse_roar_split_transfer_001_smogtours-gen2ou-933317_2026-05-15.md\n?? docs/pokemon_mastery/workspace/quick_tests/subspin_named_absorber_cashout_probe_001_2026-05-15.md\n?? docs/pokemon_mastery/workspace/quick_tests/subspin_named_absorber_transfer_001_smogtours-gen2ou-935833_2026-05-15.md\n?? docs/pokemon_mastery/workspace/quick_tests/tempo_coverage_sack_transfer_001_gen2ou-2605134773_2026-05-15.md\n?? docs/pokemon_mastery/workspace/quick_tests/tentacruel_spin_pursuit_transfer_001_smogtours-gen2ou-931770_2026-05-15.md\n?? docs/pokemon_mastery/workspace/quick_tests/thief_thunder_lure_handoff_probe_001_2026-05-15.md\n?? docs/pokemon_mastery/workspace/quick_tests/thief_thunder_lure_handoff_transfer_001_smogtours-gen2ou-933321_2026-05-15.md\n?? docs/pokemon_mastery/workspace/quick_tests/utility_screen_screech_transfer_001_gen2ou-2592987202_2026-05-15.md\n?? docs/pokemon_mastery/reviews/agipass_machamp_explosion_guard_review_001_2026-05-15.md\n?? docs/pokemon_mastery/reviews/bp_chain_revealed_coverage_review_001_2026-05-15.md\n?? docs/pokemon_mastery/reviews/cloyster_skarmory_hazard_branch_review_001_2026-05-15.md\n?? docs/pokemon_mastery/reviews/compressed_core_transfer_review_001_2026-05-15.md\n?? docs/pokemon_mastery/reviews/curselax_forretress_timer_review_001_2026-05-15.md\n?? docs/pokemon_mastery/reviews/curselax_receiver_coverage_review_001_2026-05-15.md\n?? docs/pokemon_mastery/reviews/ground_receiver_triangle_review_001_2026-05-15.md\n?? docs/pokemon_mastery/reviews/hypnosis_sack_setup_review_001_2026-05-15.md\n?? docs/pokemon_mastery/reviews/item_removal_revealed_package_review_001_2026-05-15.md\n?? docs/pokemon_mastery/reviews/jolteon_agipass_receiver_review_001_2026-05-15.md\n?? docs/pokemon_mastery/reviews/lead_sleep_handoff_review_001_2026-05-15.md\n?? docs/pokemon_mastery/reviews/leech_resttalk_phaze_review_001_2026-05-15.md\n?? docs/pokemon_mastery/reviews/low_cloyster_cashout_review_001_2026-05-15.md\n?? docs/pokemon_mastery/reviews/low_cloyster_ghost_guard_review_001_2026-05-15.md\n?? docs/pokemon_mastery/reviews/pass_package_sleeper_handoff_review_001_2026-05-15.md\n?? docs/pokemon_mastery/reviews/rest_spin_phaze_review_001_2026-05-15.md\n?? docs/pokemon_mastery/reviews/resttalk_growth_item_review_001_2026-05-15.md\n?? docs/pokemon_mastery/reviews/resttalk_substarmie_phaze_review_001_2026-05-15.md\n?? docs/pokemon_mastery/reviews/snorlax_forretress_counter_handoff_review_001_2026-05-15.md\n?? docs/pokemon_mastery/reviews/spinblock_subgrowth_review_001_2026-05-15.md\n?? docs/pokemon_mastery/reviews/spinner_side_recover_review_001_2026-05-15.md\n?? docs/pokemon_mastery/reviews/status_setup_handoff_review_001_2026-05-15.md\n?? docs/pokemon_mastery/reviews/steelix_curse_roar_split_review_001_2026-05-15.md\n?? docs/pokemon_mastery/reviews/subspin_exeggutor_cashout_review_001_2026-05-15.md\n?? docs/pokemon_mastery/reviews/tempo_coverage_sack_review_001_2026-05-15.md\n?? docs/pokemon_mastery/reviews/tentacruel_spin_pursuit_review_001_2026-05-15.md\n?? docs/pokemon_mastery/reviews/thief_thunder_lure_handoff_review_001_2026-05-15.md\n?? docs/pokemon_mastery/reviews/utility_screen_screech_review_001_2026-05-15.md",
+  "invariant_summary": {
+    "candidate_count": 13,
+    "violation_count": 0
+  },
+  "known_gaps": [
+    "changed-ai suite records ROM rebuild as skipped unless explicitly requested.",
+    "changed-ai suite records live trace refresh as skipped unless explicitly requested.",
+    "changed-ai suite ingests existing ROM contribution trace artifacts but does not refresh them.",
+    "changed-ai suite records generated score materialization as skipped unless explicitly requested.",
+    "ROM/Python contribution traces are compared only when trace ids match.",
+    "pre-choice replay remains a separate audit until trace timing is stable."
+  ],
+  "live_trace_refresh_summary": {
+    "command_count": 0,
+    "failed_count": 0,
+    "passed": true,
+    "requested": false,
+    "skipped_reason": "not requested; pass --refresh-live-traces to rebuild state-factory states and live trace captures"
+  },
+  "metamorphic_summary": {
+    "pass_count": 106,
+    "passed": true,
+    "relation_count": 106
+  },
+  "mutation_summary": {
+    "killed_count": 4,
+    "mutation_score": 0.8,
+    "not_exercised_count": 0,
+    "survived_count": 1
+  },
+  "parameters": {
+    "count": 200,
+    "rebuild_roms": false,
+    "refresh_live_traces": false,
+    "refresh_rom_contribution_trace": false,
+    "refresh_rom_score_materialization": false,
+    "rom_contribution_boss_route": "clair",
+    "seed": 20260515,
+    "trace_dir": "C:\\Users\\lolno\\Downloads\\pokemon gold hack\\audit\\boss_ai_trace"
+  },
+  "previous_run_diff_summary": {
+    "artifact_hash_change_count": 0,
+    "available": false,
+    "changed_file_added_count": 0,
+    "changed_file_removed_count": 0,
+    "changed_metric_count": 0
+  },
+  "profile": "changed-ai",
+  "review_queue_summary": {
+    "input_reviewable_count": 0,
+    "returned_count": 0
+  },
+  "rom_contribution_summary": {
+    "artifact_count": 8,
+    "available": true,
+    "changed_event_count": 70,
+    "changed_rule_count": 15,
+    "covered_rule_count": 15,
+    "event_count": 70,
+    "unmapped_event_count": 0
+  },
+  "rom_rebuild_summary": {
+    "command_count": 0,
+    "failed_count": 0,
+    "passed": true,
+    "requested": false,
+    "skipped_reason": "not requested; pass --rebuild-roms to rebuild normal and trace ROMs"
+  },
+  "rom_score_materialization_summary": {
+    "checked_count": 0,
+    "contribution_matched_count": 0,
+    "contribution_mismatch_count": 0,
+    "error_count": 0,
+    "hook_equivalence_checked_count": 0,
+    "hook_equivalence_mismatch_count": 0,
+    "score_bytes_match_count": 0,
+    "selector_top_match_count": 0,
+    "skipped_reason": "not requested; pass --refresh-rom-score-materialization to run generated score-model materialization"
+  },
+  "route_eval_summary": {
+    "route_pass": 200
+  },
+  "rule_map_summary": {
+    "rule_count": 185,
+    "stored_rule_map_errors": []
+  },
+  "run_id": "20260515_121426_changed_ai",
+  "schema_version": 1,
+  "tool_version": "boss-ai-debugger-run-v1",
+  "trace_replay_summary": {
+    "agreement_rate": 1.0,
+    "checked_count": 19,
+    "failure_count": 0,
+    "trace_count": 19
+  },
+  "validation": {
+    "checked_count": 200,
+    "error_count": 0,
+    "errors": [],
+    "kind": "scenario_file",
+    "schema_version": 1,
+    "valid": true
+  }
+}

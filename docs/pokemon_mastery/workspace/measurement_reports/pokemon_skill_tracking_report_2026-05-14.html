@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Pokemon Skill Tracking Report - 2026-05-14</title>
+<style>
+  @page { size: letter; margin: 0.55in; }
+  :root {
+    --ink: #172026;
+    --muted: #65717a;
+    --line: #d8e0e6;
+    --panel: #f7f9fb;
+    --top: #2f6fed;
+    --acc: #0f8f73;
+    --warn: #b15b2a;
+    --bad: #9f2d45;
+  }
+  * { box-sizing: border-box; }
+  body { font-family: Inter, Arial, sans-serif; color: var(--ink); margin: 0; background: #fff; line-height: 1.4; }
+  .page { max-width: 980px; margin: 0 auto; }
+  header { border-bottom: 3px solid var(--ink); padding: 10px 0 16px; margin-bottom: 22px; }
+  h1 { font-size: 32px; line-height: 1.08; margin: 0 0 8px; letter-spacing: 0; }
+  h2 { font-size: 20px; margin: 28px 0 10px; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+  h3 { font-size: 14px; margin: 0 0 8px; color: #26323a; }
+  p { margin: 7px 0; }
+  .subtitle { color: var(--muted); font-size: 13px; max-width: 840px; }
+  .grid-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 14px 0 18px; }
+  .card { border: 1px solid var(--line); background: var(--panel); border-radius: 8px; padding: 12px; min-height: 86px; }
+  .card .label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
+  .card .value { font-size: 24px; font-weight: 800; margin-top: 6px; }
+  .card .note { color: var(--muted); font-size: 11px; margin-top: 3px; }
+  .takeaways { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .callout { border-left: 5px solid var(--top); background: #f2f6ff; padding: 10px 12px; border-radius: 6px; }
+  .callout.warning { border-left-color: var(--warn); background: #fff7ef; }
+  .callout strong { display: block; margin-bottom: 4px; }
+  .chart { break-inside: avoid; margin: 15px 0; }
+  svg { width: 100%; height: auto; display: block; }
+  .plot-bg { fill: #fbfcfd; stroke: var(--line); }
+  .grid { stroke: #e7edf2; stroke-width: 1; }
+  .axis-line { stroke: #7b8790; stroke-width: 1.2; }
+  .axis { fill: #60707b; font-size: 11px; }
+  .legend { font-size: 12px; font-weight: 700; }
+  .line { fill: none; stroke-width: 3.2; stroke-linecap: round; stroke-linejoin: round; }
+  .line.top { stroke: var(--top); }
+  .line.acceptable { stroke: var(--acc); }
+  .top-text { fill: var(--top); }
+  .acceptable-text { fill: var(--acc); }
+  .bar-label { fill: #27323a; font-size: 11px; font-weight: 700; }
+  table { width: 100%; border-collapse: collapse; margin: 10px 0 18px; font-size: 11px; }
+  th, td { border-bottom: 1px solid var(--line); padding: 6px 7px; text-align: left; vertical-align: top; }
+  th { background: #eef3f7; font-size: 10px; text-transform: uppercase; letter-spacing: .035em; }
+  td.num, th.num { text-align: right; white-space: nowrap; }
+  .metric-panel { border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: #fff; }
+  .metric-row { display: grid; grid-template-columns: 190px 1fr; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+  .metric-row:last-child { border-bottom: 0; }
+  .metric-row-label { font-weight: 700; font-size: 12px; }
+  .bar-line { display: grid; grid-template-columns: 78px 1fr 95px; align-items: center; gap: 8px; font-size: 11px; margin: 2px 0; }
+  .bar-bg { height: 10px; background: #e8edf1; border-radius: 999px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 999px; }
+  .top-bg { background: var(--top); }
+  .acc-bg { background: var(--acc); }
+  .small { color: var(--muted); font-size: 11px; }
+  .page-break { break-before: page; }
+  code { font-family: Consolas, monospace; font-size: 0.92em; }
+</style>
+</head>
+<body>
+<div class="page">
+<header>
+  <h1>Pokemon Skill Tracking Report</h1>
+  <div class="subtitle">Generated 2026-05-14 from <code>docs/pokemon_mastery/measurement_progress_ledger.csv</code>. This report uses local measurement artifacts only; it does not claim ladder Elo, mastery, or boss-sim validation.</div>
+</header>
+
+<section>
+  <h2>Current Scoreboard</h2>
+  <div class="grid-cards">
+    <div class="card"><div class="label">Ledger rows</div><div class="value">162</div><div class="note">excluding CSV header</div></div>
+    <div class="card"><div class="label">Fresh decisions</div><div class="value">2125</div><div class="note">replay + focused transfer</div></div>
+    <div class="card"><div class="label">Fresh top-match</div><div class="value">40.6%</div><div class="note">863/2125</div></div>
+    <div class="card"><div class="label">Fresh acceptable</div><div class="value">59.2%</div><div class="note">1257/2125</div></div>
+  </div>
+  <div class="takeaways">
+    <div class="callout"><strong>Best hard fact</strong>Fresh replay work has produced 2125 scored side decisions across 97 replay/transfer rows. The aggregate is 40.6% top-match and 59.2% acceptable-match.</div>
+    <div class="callout warning"><strong>Important limitation</strong>Constructed probes are perfect on paper (265/265), but they are regression checks. The honest skill signal is the lower, noisier fresh replay score.</div>
+  </div>
+</section>
+
+<section>
+  <h2>Fresh Replay Trend</h2>
+  
+    <figure class="chart">
+      <h3>Cumulative agreement across fresh replay/transfer rows</h3>
+      <svg viewBox="0 0 760 300" role="img" aria-label="Cumulative agreement across fresh replay/transfer rows">
+        <rect x="0" y="0" width="760" height="300" rx="12" class="plot-bg"/>
+        <line x1="58" y1="258.0" x2="738" y2="258.0" class="grid"/><text x="48" y="262.0" class="axis" text-anchor="end">0%</text><line x1="58" y1="201.5" x2="738" y2="201.5" class="grid"/><text x="48" y="205.5" class="axis" text-anchor="end">25%</text><line x1="58" y1="145.0" x2="738" y2="145.0" class="grid"/><text x="48" y="149.0" class="axis" text-anchor="end">50%</text><line x1="58" y1="88.5" x2="738" y2="88.5" class="grid"/><text x="48" y="92.5" class="axis" text-anchor="end">75%</text><line x1="58" y1="32.0" x2="738" y2="32.0" class="grid"/><text x="48" y="36.0" class="axis" text-anchor="end">100%</text><text x="58.0" y="284" class="axis" text-anchor="middle">1</text><text x="220.9" y="284" class="axis" text-anchor="middle">24</text><text x="390.9" y="284" class="axis" text-anchor="middle">48</text><text x="560.9" y="284" class="axis" text-anchor="middle">72</text><text x="738.0" y="284" class="axis" text-anchor="middle">97</text>
+        <line x1="58" y1="32" x2="58" y2="258" class="axis-line"/>
+        <line x1="58" y1="258" x2="738" y2="258" class="axis-line"/>
+        <path d="M 58.0,122.4 L 65.1,107.3 L 72.2,113.4 L 79.2,119.5 L 86.3,117.5 L 93.4,118.6 L 100.5,119.8 L 107.6,121.6 L 114.7,122.7 L 121.8,127.0 L 128.8,131.7 L 135.9,129.4 L 143.0,130.9 L 150.1,128.9 L 157.2,130.5 L 164.2,133.0 L 171.3,131.3 L 178.4,127.9 L 185.5,126.7 L 192.6,128.0 L 199.7,126.5 L 206.8,125.6 L 213.8,122.8 L 220.9,119.4 L 228.0,118.5 L 235.1,118.1 L 242.2,115.4 L 249.2,114.3 L 256.3,114.5 L 263.4,115.8 L 270.5,114.9 L 277.6,114.8 L 284.7,114.9 L 291.8,114.3 L 298.8,114.1 L 305.9,114.4 L 313.0,113.2 L 320.1,113.6 L 327.2,113.0 L 334.2,114.0 L 341.3,114.6 L 348.4,114.8 L 355.5,115.2 L 362.6,115.3 L 369.7,115.0 L 376.8,114.9 L 383.8,115.5 L 390.9,115.2 L 398.0,115.2 L 405.1,115.3 L 412.2,115.5 L 419.2,115.3 L 426.3,115.1 L 433.4,114.9 L 440.5,115.0 L 447.6,115.2 L 454.7,115.1 L 461.8,114.9 L 468.8,116.0 L 475.9,116.8 L 483.0,117.4 L 490.1,117.9 L 497.2,118.4 L 504.2,118.6 L 511.3,119.2 L 518.4,119.5 L 525.5,120.4 L 532.6,120.9 L 539.7,121.1 L 546.8,121.8 L 553.8,122.1 L 560.9,122.0 L 568.0,122.2 L 575.1,122.2 L 582.2,122.2 L 589.2,122.3 L 596.3,121.8 L 603.4,121.5 L 610.5,121.1 L 617.6,120.9 L 624.7,120.9 L 631.8,120.8 L 638.8,120.9 L 645.9,121.0 L 653.0,121.2 L 660.1,121.3 L 667.2,121.5 L 674.2,121.8 L 681.3,122.0 L 688.4,122.6 L 695.5,122.5 L 702.6,123.2 L 709.7,124.1 L 716.8,124.0 L 723.8,123.7 L 730.9,124.5 L 738.0,124.3" class="line acceptable"/>
+        <path d="M 58.0,190.2 L 65.1,152.5 L 72.2,167.6 L 79.2,177.8 L 86.3,175.5 L 93.4,181.1 L 100.5,179.0 L 107.6,180.1 L 114.7,179.2 L 121.8,187.5 L 128.8,189.6 L 135.9,186.9 L 143.0,183.8 L 150.1,181.3 L 157.2,181.2 L 164.2,181.1 L 171.3,180.0 L 178.4,175.6 L 185.5,174.9 L 192.6,176.5 L 199.7,175.1 L 206.8,174.1 L 213.8,171.2 L 220.9,168.3 L 228.0,168.3 L 235.1,168.0 L 242.2,165.8 L 249.2,165.2 L 256.3,164.3 L 263.4,165.2 L 270.5,163.8 L 277.6,162.4 L 284.7,161.9 L 291.8,160.0 L 298.8,159.7 L 305.9,160.0 L 313.0,158.0 L 320.1,157.6 L 327.2,157.2 L 334.2,158.2 L 341.3,159.2 L 348.4,159.5 L 355.5,160.0 L 362.6,160.1 L 369.7,160.0 L 376.8,159.6 L 383.8,160.0 L 390.9,159.9 L 398.0,160.1 L 405.1,160.2 L 412.2,160.6 L 419.2,160.3 L 426.3,159.5 L 433.4,159.2 L 440.5,159.0 L 447.6,159.2 L 454.7,159.2 L 461.8,159.0 L 468.8,160.1 L 475.9,160.6 L 483.0,161.4 L 490.1,161.7 L 497.2,162.1 L 504.2,162.3 L 511.3,162.4 L 518.4,162.9 L 525.5,163.7 L 532.6,163.9 L 539.7,164.0 L 546.8,164.2 L 553.8,164.2 L 560.9,164.1 L 568.0,164.1 L 575.1,164.0 L 582.2,163.7 L 589.2,163.4 L 596.3,163.5 L 603.4,163.0 L 610.5,162.9 L 617.6,162.8 L 624.7,163.2 L 631.8,163.3 L 638.8,163.5 L 645.9,163.5 L 653.0,163.5 L 660.1,163.5 L 667.2,163.7 L 674.2,164.2 L 681.3,164.4 L 688.4,165.2 L 695.5,165.2 L 702.6,165.8 L 709.7,166.3 L 716.8,165.9 L 723.8,165.8 L 730.9,166.2 L 738.0,166.2" class="line top"/>
+        <text x="730" y="116.3" class="legend acceptable-text" text-anchor="end">acceptable</text>
+        <text x="730" y="184.2" class="legend top-text" text-anchor="end">top</text>
+        <text x="380.0" y="298" class="axis" text-anchor="middle">fresh replay/transfer run order</text>
+        <text x="18" y="150.0" class="axis rotated" transform="rotate(-90 18 150.0)" text-anchor="middle">Agreement rate</text>
+      </svg>
+    </figure>
+    
+  
+    <figure class="chart">
+      <h3>Rolling 10-row agreement across fresh replay/transfer rows</h3>
+      <svg viewBox="0 0 760 300" role="img" aria-label="Rolling 10-row agreement across fresh replay/transfer rows">
+        <rect x="0" y="0" width="760" height="300" rx="12" class="plot-bg"/>
+        <line x1="58" y1="258.0" x2="738" y2="258.0" class="grid"/><text x="48" y="262.0" class="axis" text-anchor="end">0%</text><line x1="58" y1="201.5" x2="738" y2="201.5" class="grid"/><text x="48" y="205.5" class="axis" text-anchor="end">25%</text><line x1="58" y1="145.0" x2="738" y2="145.0" class="grid"/><text x="48" y="149.0" class="axis" text-anchor="end">50%</text><line x1="58" y1="88.5" x2="738" y2="88.5" class="grid"/><text x="48" y="92.5" class="axis" text-anchor="end">75%</text><line x1="58" y1="32.0" x2="738" y2="32.0" class="grid"/><text x="48" y="36.0" class="axis" text-anchor="end">100%</text><text x="58.0" y="284" class="axis" text-anchor="middle">1</text><text x="220.9" y="284" class="axis" text-anchor="middle">24</text><text x="390.9" y="284" class="axis" text-anchor="middle">48</text><text x="560.9" y="284" class="axis" text-anchor="middle">72</text><text x="738.0" y="284" class="axis" text-anchor="middle">97</text>
+        <line x1="58" y1="32" x2="58" y2="258" class="axis-line"/>
+        <line x1="58" y1="258" x2="738" y2="258" class="axis-line"/>
+        <path d="M 58.0,122.4 L 65.1,107.3 L 72.2,113.4 L 79.2,119.5 L 86.3,117.5 L 93.4,118.6 L 100.5,119.8 L 107.6,121.6 L 114.7,122.7 L 121.8,127.0 L 128.8,132.2 L 135.9,132.7 L 143.0,135.1 L 150.1,131.5 L 157.2,134.6 L 164.2,138.3 L 171.3,135.8 L 178.4,130.7 L 185.5,128.7 L 192.6,128.6 L 199.7,122.2 L 206.8,121.3 L 213.8,112.6 L 220.9,106.6 L 228.0,99.1 L 235.1,86.8 L 242.2,83.5 L 249.2,84.6 L 256.3,90.5 L 263.4,91.1 L 270.5,91.9 L 277.6,95.9 L 284.7,101.0 L 291.8,105.1 L 298.8,105.6 L 305.9,107.6 L 313.0,108.8 L 320.1,112.1 L 327.2,109.7 L 334.2,109.8 L 341.3,113.6 L 348.4,114.6 L 355.5,116.5 L 362.6,119.4 L 369.7,118.9 L 376.8,116.8 L 383.8,126.1 L 390.9,123.8 L 398.0,127.2 L 405.1,124.5 L 412.2,124.2 L 419.2,120.0 L 426.3,114.2 L 433.4,112.0 L 440.5,115.2 L 447.6,117.4 L 454.7,111.9 L 461.8,111.8 L 468.8,121.7 L 475.9,126.9 L 483.0,128.9 L 490.1,132.4 L 497.2,136.6 L 504.2,139.1 L 511.3,141.6 L 518.4,140.9 L 525.5,144.5 L 532.6,147.2 L 539.7,143.3 L 546.8,142.5 L 553.8,141.4 L 560.9,140.7 L 568.0,139.5 L 575.1,140.3 L 582.2,137.5 L 589.2,137.1 L 596.3,129.3 L 603.4,124.6 L 610.5,121.0 L 617.6,115.6 L 624.7,114.0 L 631.8,113.8 L 638.8,112.4 L 645.9,113.4 L 653.0,114.3 L 660.1,113.0 L 667.2,119.1 L 674.2,124.6 L 681.3,131.8 L 688.4,139.1 L 695.5,136.7 L 702.6,141.5 L 709.7,144.6 L 716.8,140.9 L 723.8,136.9 L 730.9,140.8 L 738.0,137.9" class="line acceptable"/>
+        <path d="M 58.0,190.2 L 65.1,152.5 L 72.2,167.6 L 79.2,177.8 L 86.3,175.5 L 93.4,181.1 L 100.5,179.0 L 107.6,180.1 L 114.7,179.2 L 121.8,187.5 L 128.8,189.6 L 135.9,192.0 L 143.0,187.8 L 150.1,182.3 L 157.2,183.0 L 164.2,181.2 L 171.3,180.3 L 178.4,173.7 L 185.5,172.7 L 192.6,169.6 L 199.7,162.9 L 206.8,160.1 L 213.8,155.1 L 220.9,150.5 L 228.0,147.4 L 235.1,140.2 L 242.2,137.5 L 249.2,142.4 L 256.3,143.3 L 263.4,142.2 L 270.5,141.3 L 277.6,141.8 L 284.7,145.9 L 291.8,145.4 L 298.8,143.3 L 305.9,145.0 L 313.0,142.0 L 320.1,142.1 L 327.2,141.1 L 334.2,142.5 L 341.3,148.0 L 348.4,150.5 L 355.5,153.4 L 362.6,160.6 L 369.7,161.1 L 376.8,157.8 L 383.8,169.2 L 390.9,171.8 L 398.0,176.2 L 405.1,174.4 L 412.2,172.4 L 419.2,167.6 L 426.3,155.3 L 433.4,152.0 L 440.5,151.3 L 447.6,156.6 L 454.7,152.8 L 461.8,151.6 L 468.8,160.0 L 475.9,163.1 L 483.0,166.5 L 490.1,170.1 L 497.2,176.3 L 504.2,179.1 L 511.3,180.8 L 518.4,181.0 L 525.5,183.9 L 532.6,185.0 L 539.7,181.0 L 546.8,179.4 L 553.8,176.0 L 560.9,175.0 L 568.0,173.4 L 575.1,173.0 L 582.2,170.2 L 589.2,165.9 L 596.3,162.6 L 603.4,158.2 L 610.5,156.6 L 617.6,154.5 L 624.7,156.9 L 631.8,158.5 L 638.8,159.3 L 645.9,159.6 L 653.0,162.6 L 660.1,164.9 L 667.2,165.8 L 674.2,175.0 L 681.3,181.6 L 688.4,187.5 L 695.5,183.1 L 702.6,184.7 L 709.7,184.4 L 716.8,179.9 L 723.8,177.7 L 730.9,179.6 L 738.0,178.1" class="line top"/>
+        <text x="730" y="129.9" class="legend acceptable-text" text-anchor="end">acceptable</text>
+        <text x="730" y="196.1" class="legend top-text" text-anchor="end">top</text>
+        <text x="380.0" y="298" class="axis" text-anchor="middle">fresh replay/transfer run order</text>
+        <text x="18" y="150.0" class="axis rotated" transform="rotate(-90 18 150.0)" text-anchor="middle">Agreement rate</text>
+      </svg>
+    </figure>
+    
+</section>
+
+<section class="page-break">
+  <h2>Evidence Split</h2>
+  <div class="metric-panel">
+    
+      <div class="metric-row">
+        <div class="metric-row-label">Replay turn-pause</div>
+        <div class="stack">
+          <div class="bar-line"><span>Top</span><div class="bar-bg"><div class="bar-fill top-bg" style="width:41.9%"></div></div><strong>709/1693 (41.9%)</strong></div>
+          <div class="bar-line"><span>Acceptable</span><div class="bar-bg"><div class="bar-fill acc-bg" style="width:60.6%"></div></div><strong>1026/1693 (60.6%)</strong></div>
+        </div>
+      </div>
+    
+    
+      <div class="metric-row">
+        <div class="metric-row-label">Focused transfers</div>
+        <div class="stack">
+          <div class="bar-line"><span>Top</span><div class="bar-bg"><div class="bar-fill top-bg" style="width:35.6%"></div></div><strong>154/432 (35.6%)</strong></div>
+          <div class="bar-line"><span>Acceptable</span><div class="bar-bg"><div class="bar-fill acc-bg" style="width:53.5%"></div></div><strong>231/432 (53.5%)</strong></div>
+        </div>
+      </div>
+    
+    
+      <div class="metric-row">
+        <div class="metric-row-label">Constructed probes</div>
+        <div class="stack">
+          <div class="bar-line"><span>Top</span><div class="bar-bg"><div class="bar-fill top-bg" style="width:100.0%"></div></div><strong>265/265 (100.0%)</strong></div>
+          <div class="bar-line"><span>Acceptable</span><div class="bar-bg"><div class="bar-fill acc-bg" style="width:100.0%"></div></div><strong>265/265 (100.0%)</strong></div>
+        </div>
+      </div>
+    
+  </div>
+  <p class="small">Focused transfers are expected to score lower because they target known failure classes. Constructed probes are expected to score high because they are nonblind policy regressions.</p>
+</section>
+
+<section>
+  <h2>Error Control</h2>
+  
+    <figure class="chart">
+      <h3>Error counts: first 20 vs latest 20 fresh replay/transfer rows</h3>
+      <svg viewBox="0 0 760 300" role="img" aria-label="Error counts: first 20 vs latest 20 fresh replay/transfer rows">
+        <rect x="0" y="0" width="760" height="300" rx="12" class="plot-bg"/>
+        <line x1="70" y1="240.0" x2="736" y2="240.0" class="grid"/><text x="60" y="244.0" class="axis" text-anchor="end">0</text><line x1="70" y1="198.8" x2="736" y2="198.8" class="grid"/><text x="60" y="202.8" class="axis" text-anchor="end">1</text><line x1="70" y1="157.6" x2="736" y2="157.6" class="grid"/><text x="60" y="161.6" class="axis" text-anchor="end">2</text><line x1="70" y1="116.4" x2="736" y2="116.4" class="grid"/><text x="60" y="120.4" class="axis" text-anchor="end">3</text><line x1="70" y1="75.2" x2="736" y2="75.2" class="grid"/><text x="60" y="79.2" class="axis" text-anchor="end">4</text><line x1="70" y1="34.0" x2="736" y2="34.0" class="grid"/><text x="60" y="38.0" class="axis" text-anchor="end">5</text>
+        <line x1="70" y1="34" x2="70" y2="240" class="axis-line"/>
+        <line x1="70" y1="240" x2="736" y2="240" class="axis-line"/>
+        <rect x="140.5" y="34.0" width="42.0" height="206.0" rx="4" fill="#9f2d45"/><text x="161.5" y="29.0" class="bar-label" text-anchor="middle">5</text><rect x="190.5" y="157.6" width="42.0" height="82.4" rx="4" fill="#b15b2a"/><text x="211.5" y="152.6" class="bar-label" text-anchor="middle">2</text><rect x="240.5" y="240.0" width="42.0" height="0.0" rx="4" fill="#6f51bd"/><text x="261.5" y="235.0" class="bar-label" text-anchor="middle">0</text><rect x="290.5" y="240.0" width="42.0" height="0.0" rx="4" fill="#60707b"/><text x="311.5" y="235.0" class="bar-label" text-anchor="middle">0</text><text x="236.5" y="274" class="axis group-label" text-anchor="middle">First 20 fresh</text><rect x="473.5" y="198.8" width="42.0" height="41.2" rx="4" fill="#9f2d45"/><text x="494.5" y="193.8" class="bar-label" text-anchor="middle">1</text><rect x="523.5" y="116.4" width="42.0" height="123.6" rx="4" fill="#b15b2a"/><text x="544.5" y="111.4" class="bar-label" text-anchor="middle">3</text><rect x="573.5" y="75.2" width="42.0" height="164.8" rx="4" fill="#6f51bd"/><text x="594.5" y="70.2" class="bar-label" text-anchor="middle">4</text><rect x="623.5" y="198.8" width="42.0" height="41.2" rx="4" fill="#60707b"/><text x="644.5" y="193.8" class="bar-label" text-anchor="middle">1</text><text x="569.5" y="274" class="axis group-label" text-anchor="middle">Latest 20 fresh</text>
+        <rect x="70" y="285" width="10" height="10" rx="2" fill="#9f2d45"/><text x="86" y="294" class="axis">severe</text><rect x="175" y="285" width="10" height="10" rx="2" fill="#b15b2a"/><text x="191" y="294" class="axis">state</text><rect x="280" y="285" width="10" height="10" rx="2" fill="#6f51bd"/><text x="296" y="294" class="axis">hidden</text><rect x="385" y="285" width="10" height="10" rx="2" fill="#60707b"/><text x="401" y="294" class="axis">mechanics</text>
+      </svg>
+    </figure>
+    
+  <table>
+    <thead><tr><th>Window</th><th class="num">Decisions</th><th class="num">Top</th><th class="num">Acceptable</th><th class="num">Severe</th><th class="num">Mechanics</th><th class="num">State</th><th class="num">Hidden info</th></tr></thead>
+    <tbody>
+      <tr><td>First 20 fresh rows</td><td class="num">405</td><td class="num">146/405 (36.0%)</td><td class="num">233/405 (57.5%)</td><td class="num">5</td><td class="num">0</td><td class="num">2</td><td class="num">0</td></tr>
+      <tr><td>Latest 20 fresh rows</td><td class="num">544</td><td class="num">202/544 (37.1%)</td><td class="num">304/544 (55.9%)</td><td class="num">1</td><td class="num">1</td><td class="num">3</td><td class="num">4</td></tr>
+      <tr><td>All fresh rows</td><td class="num">2125</td><td class="num">863/2125 (40.6%)</td><td class="num">1257/2125 (59.2%)</td><td class="num">10</td><td class="num">1</td><td class="num">8</td><td class="num">4</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="page-break">
+  <h2>Data Inventory</h2>
+  <table>
+    <thead><tr><th>Test type</th><th class="num">Rows</th><th class="num">Scenario count</th><th class="num">Top agreement</th><th class="num">Acceptable agreement</th><th class="num">Severe</th><th class="num">Mech</th><th class="num">State</th><th class="num">Hidden</th></tr></thead>
+    <tbody>
+      <tr><td>replay_turn_pause</td><td class='num'>79</td><td class='num'>1693</td><td class='num'>709/1693 (41.9%)</td><td class='num'>1026/1693 (60.6%)</td><td class='num'>9</td><td class='num'>0</td><td class='num'>6</td><td class='num'>0</td></tr>
+      <tr><td>focused_replay_transfer</td><td class='num'>18</td><td class='num'>432</td><td class='num'>154/432 (35.6%)</td><td class='num'>231/432 (53.5%)</td><td class='num'>1</td><td class='num'>1</td><td class='num'>2</td><td class='num'>4</td></tr>
+      <tr><td>constructed_quick_probe</td><td class='num'>58</td><td class='num'>265</td><td class='num'>265/265 (100.0%)</td><td class='num'>265/265 (100.0%)</td><td class='num'>0</td><td class='num'>0</td><td class='num'>0</td><td class='num'>0</td></tr>
+      <tr><td>quick_probe</td><td class='num'>1</td><td class='num'>10</td><td class='num'>10/10 (100.0%)</td><td class='num'>10/10 (100.0%)</td><td class='num'>0</td><td class='num'>0</td><td class='num'>0</td><td class='num'>0</td></tr>
+      <tr><td>replay_micro_probe</td><td class='num'>1</td><td class='num'>5</td><td class='num'>2/4 (50.0%)</td><td class='num'>3/4 (75.0%)</td><td class='num'>0</td><td class='num'>0</td><td class='num'>1</td><td class='num'>0</td></tr>
+      <tr><td>post_oracle_regression</td><td class='num'>3</td><td class='num'>14</td><td class='num'>9/14 (64.3%)</td><td class='num'>11/14 (78.6%)</td><td class='num'>1</td><td class='num'>0</td><td class='num'>1</td><td class='num'>0</td></tr>
+      <tr><td>proxy_baseline</td><td class='num'>1</td><td class='num'>43</td><td class='num'>43/43 (100.0%)</td><td class='num'>n/a</td><td class='num'>0</td><td class='num'>0</td><td class='num'>0</td><td class='num'>0</td></tr>
+      <tr><td>cross_domain_transfer</td><td class='num'>1</td><td class='num'>1</td><td class='num'>n/a</td><td class='num'>n/a</td><td class='num'>0</td><td class='num'>0</td><td class='num'>0</td><td class='num'>0</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2>Recent Fresh Replay Rows</h2>
+  <table>
+    <thead><tr><th>Run</th><th class="num">Decisions</th><th class="num">Top</th><th class="num">Acceptable</th><th class="num">Severe</th><th class="num">State</th><th class="num">Hidden</th></tr></thead>
+    <tbody>
+      <tr><td>branch_handoff_transfer_001</td><td class='num'>12</td><td class='num'>41.7%</td><td class='num'>58.3%</td><td class='num'>0</td><td class='num'>0</td><td class='num'>0</td></tr>
+      <tr><td>branch_cashout_coverage_sleeptalk_transfer_001</td><td class='num'>23</td><td class='num'>34.8%</td><td class='num'>52.2%</td><td class='num'>0</td><td class='num'>0</td><td class='num'>0</td></tr>
+      <tr><td>setup_coverage_sleeptalk_handoff_transfer_001</td><td class='num'>22</td><td class='num'>27.3%</td><td class='num'>50.0%</td><td class='num'>0</td><td class='num'>0</td><td class='num'>0</td></tr>
+      <tr><td>paired_handoff_transfer_001</td><td class='num'>14</td><td class='num'>28.6%</td><td class='num'>50.0%</td><td class='num'>1</td><td class='num'>0</td><td class='num'>0</td></tr>
+      <tr><td>rest_sleeper_cleric_trade_transfer_001</td><td class='num'>42</td><td class='num'>26.2%</td><td class='num'>47.6%</td><td class='num'>0</td><td class='num'>0</td><td class='num'>0</td></tr>
+      <tr><td>ghost_electric_trap_phaze_transfer_001</td><td class='num'>47</td><td class='num'>40.4%</td><td class='num'>61.7%</td><td class='num'>0</td><td class='num'>0</td><td class='num'>1</td></tr>
+      <tr><td>electric_receiver_resttalk_transfer_001</td><td class='num'>42</td><td class='num'>28.6%</td><td class='num'>45.2%</td><td class='num'>0</td><td class='num'>1</td><td class='num'>2</td></tr>
+      <tr><td>hidden_role_electric_transfer_001</td><td class='num'>44</td><td class='num'>31.8%</td><td class='num'>43.2%</td><td class='num'>0</td><td class='num'>0</td><td class='num'>1</td></tr>
+      <tr><td>hidden_role_electric_transfer_002</td><td class='num'>44</td><td class='num'>47.7%</td><td class='num'>61.4%</td><td class='num'>0</td><td class='num'>0</td><td class='num'>0</td></tr>
+      <tr><td>support_set_hidden_role_transfer_001</td><td class='num'>31</td><td class='num'>45.2%</td><td class='num'>67.7%</td><td class='num'>0</td><td class='num'>0</td><td class='num'>0</td></tr>
+      <tr><td>counter_handoff_loop_transfer_001</td><td class='num'>40</td><td class='num'>30.0%</td><td class='num'>40.0%</td><td class='num'>0</td><td class='num'>1</td><td class='num'>0</td></tr>
+      <tr><td>setup_hidden_role_stop_transfer_001</td><td class='num'>39</td><td class='num'>41.0%</td><td class='num'>64.1%</td><td class='num'>0</td><td class='num'>0</td><td class='num'>0</td></tr>
+    </tbody>
+  </table>
+  <div class="callout"><strong>Most recent fresh transfer</strong>setup_hidden_role_stop_transfer_001_2026_05_14: 16/39 top-match, 25/39 acceptable-match, 0 severe blunders, 0 mechanics errors, 0 state errors, 0 hidden-info errors.</div>
+  <div class="callout warning" style="margin-top:10px"><strong>Most recent constructed probe</strong>screen_phaze_third_owner_probe_001_2026_05_14: 4/4_action_policy_hits and 4/4_boundary_hits. This confirms the correction is written down, not that it transfers under pressure.</div>
+</section>
+
+<section>
+  <h2>What The Measurement Says</h2>
+  <p>The clearest improvement is error control. The first 20 fresh rows had 5 severe blunders; the latest 20 fresh rows have 1. That is a real positive signal.</p>
+  <p>The move-choice signal is mixed. Top-match is slightly higher in the latest 20 fresh rows (37.1%) than the first 20 (36.0%), but acceptable-match is lower (55.9% vs 57.5%). This means the study is not yet stable enough to claim a broad skill jump.</p>
+  <p>The current bottleneck is transfer: can the clean policy-card corrections survive fresh replay turns without labels or hints? The next measurement step should therefore be a fresh transfer, not another broad note pass.</p>
+  <p class="small">Audit files generated with this report: <code>docs\pokemon_mastery\measurement_reports\pokemon_skill_tracking_report_2026-05-14.html</code> and <code>docs\pokemon_mastery\measurement_reports\pokemon_skill_tracking_report_2026-05-14_facts.json</code>.</p>
+</section>
+</div>
+</body>
+</html>

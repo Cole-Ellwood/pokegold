@@ -1,0 +1,2736 @@
+{
+  "input_reviewable_count": 55,
+  "input_scenario_count": 200,
+  "items": [
+    {
+      "answer_changing_information": [
+        "whether the status move hits the incoming branch",
+        "whether coverage also affects the visible active"
+      ],
+      "condition_tags": [
+        "status_absorber_named",
+        "named_receiver_branch",
+        "branch_punish_available",
+        "support_handoff",
+        "status_absorber_branch_punish"
+      ],
+      "confidence": "medium",
+      "evidence_digest": [
+        {
+          "default_summary": "After naming the branch, name the action that beats that branch. Choose counter-switch, coverage, phaze, Reflect, Toxic, Screech, setup, status, Explosion, or sacrifice only if that action beats the named receiver or punish. Substitute/s...",
+          "evidence_count": 92,
+          "path": "docs\\pokemon_mastery\\policy_cards\\branch_action_after_naming.md",
+          "status": "active boundary card.",
+          "title": "Branch Action After Naming",
+          "use_when": "the opponent is likely to switch, reveal coverage, use a support",
+          "worst_branch": "You correctly say \"they switch to the answer,\" then choose a move that only beats the Pokemon currently on screen and hand the opponent the board."
+        },
+        {
+          "default_summary": "Price the active pressure line before choosing status, Explosion, or a pivot. If direct damage, Roar/Whirlwind, or staying in already improves a named route, do not switch to a status script just because the move exists. If the next hit...",
+          "evidence_count": 29,
+          "path": "docs\\pokemon_mastery\\policy_cards\\active_pressure_before_status.md",
+          "status": "active boundary card.",
+          "title": "Active Pressure Before Status",
+          "use_when": "a Pokemon with status, Explosion, or a pivot option also has a direct",
+          "worst_branch": "You see a status or Explosion button, press it automatically, and give up an active route that was already forcing damage, switches, hazards, or recovery."
+        }
+      ],
+      "evidence_refs": [
+        "docs/pokemon_mastery/policy_cards/branch_action_after_naming.md",
+        "docs/pokemon_mastery/policy_cards/active_pressure_before_status.md"
+      ],
+      "expected_acceptable_action_ids": [
+        "move_counter_handoff"
+      ],
+      "expected_best_action_ids": [
+        "move_absorber_coverage"
+      ],
+      "lesson_key": "docs\\pokemon_mastery\\policy_cards\\branch_action_after_naming.md",
+      "lesson_type": "hard_rule",
+      "next_action": "Check the answer-changing fact first: whether the status move hits the incoming branch",
+      "policy_tags": [
+        "status_timing",
+        "branch_action",
+        "receiver_pricing"
+      ],
+      "priority_score": 202,
+      "reason": "ROM gives nonzero probability to bad action(s)",
+      "rolled_bad_action_ids": [
+        "move_generic_status"
+      ],
+      "rolled_catastrophic_action_ids": [],
+      "rom_best_action_id": "move_generic_status",
+      "rom_best_probability": 0.828125,
+      "scenario_id": "generated_support_handoff_20260515_00001_status_absorber_branch_punish",
+      "severity": 80,
+      "verdict": "bad_roll",
+      "why": "When a status absorber is named, rank the coverage or handoff that beats it before generic status."
+    },
+    {
+      "answer_changing_information": [
+        "whether the status move hits the incoming branch",
+        "whether coverage also affects the visible active"
+      ],
+      "condition_tags": [
+        "status_absorber_named",
+        "named_receiver_branch",
+        "branch_punish_available",
+        "support_handoff",
+        "status_absorber_branch_punish"
+      ],
+      "confidence": "medium",
+      "evidence_digest": [
+        {
+          "default_summary": "After naming the branch, name the action that beats that branch. Choose counter-switch, coverage, phaze, Reflect, Toxic, Screech, setup, status, Explosion, or sacrifice only if that action beats the named receiver or punish. Substitute/s...",
+          "evidence_count": 92,
+          "path": "docs\\pokemon_mastery\\policy_cards\\branch_action_after_naming.md",
+          "status": "active boundary card.",
+          "title": "Branch Action After Naming",
+          "use_when": "the opponent is likely to switch, reveal coverage, use a support",
+          "worst_branch": "You correctly say \"they switch to the answer,\" then choose a move that only beats the Pokemon currently on screen and hand the opponent the board."
+        },
+        {
+          "default_summary": "Price the active pressure line before choosing status, Explosion, or a pivot. If direct damage, Roar/Whirlwind, or staying in already improves a named route, do not switch to a status script just because the move exists. If the next hit...",
+          "evidence_count": 29,
+          "path": "docs\\pokemon_mastery\\policy_cards\\active_pressure_before_status.md",
+          "status": "active boundary card.",
+          "title": "Active Pressure Before Status",
+          "use_when": "a Pokemon with status, Explosion, or a pivot option also has a direct",
+          "worst_branch": "You see a status or Explosion button, press it automatically, and give up an active route that was already forcing damage, switches, hazards, or recovery."
+        }
+      ],
+      "evidence_refs": [
+        "docs/pokemon_mastery/policy_cards/branch_action_after_naming.md",
+        "docs/pokemon_mastery/policy_cards/active_pressure_before_status.md"
+      ],
+      "expected_acceptable_action_ids": [
+        "move_counter_handoff"
+      ],
+      "expected_best_action_ids": [
+        "move_absorber_coverage"
+      ],
+      "lesson_key": "docs\\pokemon_mastery\\policy_cards\\branch_action_after_naming.md",
+      "lesson_type": "hard_rule",
+      "next_action": "Check the answer-changing fact first: whether the status move hits the incoming branch",
+      "policy_tags": [
+        "status_timing",
+        "branch_action",
+        "receiver_pricing"
+      ],
+      "priority_score": 202,
+      "reason": "ROM gives nonzero probability to bad action(s)",
+      "rolled_bad_action_ids": [
+        "move_generic_status"
+      ],
+      "rolled_catastrophic_action_ids": [],
+      "rom_best_action_id": "move_generic_status",
+      "rom_best_probability": 0.828125,
+      "scenario_id": "generated_support_handoff_20260515_00004_status_absorber_branch_punish",
+      "severity": 80,
+      "verdict": "bad_roll",
+      "why": "When a status absorber is named, rank the coverage or handoff that beats it before generic status."
+    },
+    {
+      "answer_changing_information": [
+        "whether the status move hits the incoming branch",
+        "whether coverage also affects the visible active"
+      ],
+      "condition_tags": [
+        "status_absorber_named",
+        "named_receiver_branch",
+        "branch_punish_available",
+        "support_handoff",
+        "status_absorber_branch_punish"
+      ],
+      "confidence": "medium",
+      "evidence_digest": [
+        {
+          "default_summary": "After naming the branch, name the action that beats that branch. Choose counter-switch, coverage, phaze, Reflect, Toxic, Screech, setup, status, Explosion, or sacrifice only if that action beats the named receiver or punish. Substitute/s...",
+          "evidence_count": 92,
+          "path": "docs\\pokemon_mastery\\policy_cards\\branch_action_after_naming.md",
+          "status": "active boundary card.",
+          "title": "Branch Action After Naming",
+          "use_when": "the opponent is likely to switch, reveal coverage, use a support",
+          "worst_branch": "You correctly say \"they switch to the answer,\" then choose a move that only beats the Pokemon currently on screen and hand the opponent the board."
+        },
+        {
+          "default_summary": "Price the active pressure line before choosing status, Explosion, or a pivot. If direct damage, Roar/Whirlwind, or staying in already improves a named route, do not switch to a status script just because the move exists. If the next hit...",
+          "evidence_count": 29,
+          "path": "docs\\pokemon_mastery\\policy_cards\\active_pressure_before_status.md",
+          "status": "active boundary card.",
+          "title": "Active Pressure Before Status",
+          "use_when": "a Pokemon with status, Explosion, or a pivot option also has a direct",
+          "worst_branch": "You see a status or Explosion button, press it automatically, and give up an active route that was already forcing damage, switches, hazards, or recovery."
+        }
+      ],
+      "evidence_refs": [
+        "docs/pokemon_mastery/policy_cards/branch_action_after_naming.md",
+        "docs/pokemon_mastery/policy_cards/active_pressure_before_status.md"
+      ],
+      "expected_acceptable_action_ids": [
+        "move_counter_handoff"
+      ],
+      "expected_best_action_ids": [
+        "move_absorber_coverage"
+      ],
+      "lesson_key": "docs\\pokemon_mastery\\policy_cards\\branch_action_after_naming.md",
+      "lesson_type": "hard_rule",
+      "next_action": "Check the answer-changing fact first: whether the status move hits the incoming branch",
+      "policy_tags": [
+        "status_timing",
+        "branch_action",
+        "receiver_pricing"
+      ],
+      "priority_score": 202,
+      "reason": "ROM gives nonzero probability to bad action(s)",
+      "rolled_bad_action_ids": [
+        "move_generic_status"
+      ],
+      "rolled_catastrophic_action_ids": [],
+      "rom_best_action_id": "move_generic_status",
+      "rom_best_probability": 0.875,
+      "scenario_id": "generated_support_handoff_20260515_00007_status_absorber_branch_punish",
+      "severity": 80,
+      "verdict": "bad_roll",
+      "why": "When a status absorber is named, rank the coverage or handoff that beats it before generic status."
+    },
+    {
+      "answer_changing_information": [
+        "whether the status move hits the incoming branch",
+        "whether coverage also affects the visible active"
+      ],
+      "condition_tags": [
+        "status_absorber_named",
+        "named_receiver_branch",
+        "branch_punish_available",
+        "support_handoff",
+        "status_absorber_branch_punish"
+      ],
+      "confidence": "medium",
+      "evidence_digest": [
+        {
+          "default_summary": "After naming the branch, name the action that beats that branch. Choose counter-switch, coverage, phaze, Reflect, Toxic, Screech, setup, status, Explosion, or sacrifice only if that action beats the named receiver or punish. Substitute/s...",
+          "evidence_count": 92,
+          "path": "docs\\pokemon_mastery\\policy_cards\\branch_action_after_naming.md",
+          "status": "active boundary card.",
+          "title": "Branch Action After Naming",
+          "use_when": "the opponent is likely to switch, reveal coverage, use a support",
+          "worst_branch": "You correctly say \"they switch to the answer,\" then choose a move that only beats the Pokemon currently on screen and hand the opponent the board."
+        },
+        {
+          "default_summary": "Price the active pressure line before choosing status, Explosion, or a pivot. If direct damage, Roar/Whirlwind, or staying in already improves a named route, do not switch to a status script just because the move exists. If the next hit...",
+          "evidence_count": 29,
+          "path": "docs\\pokemon_mastery\\policy_cards\\active_pressure_before_status.md",
+          "status": "active boundary card.",
+          "title": "Active Pressure Before Status",
+          "use_when": "a Pokemon with status, Explosion, or a pivot option also has a direct",
+          "worst_branch": "You see a status or Explosion button, press it automatically, and give up an active route that was already forcing damage, switches, hazards, or recovery."
+        }
+      ],
+      "evidence_refs": [
+        "docs/pokemon_mastery/policy_cards/branch_action_after_naming.md",
+        "docs/pokemon_mastery/policy_cards/active_pressure_before_status.md"
+      ],
+      "expected_acceptable_action_ids": [
+        "move_counter_handoff"
+      ],
+      "expected_best_action_ids": [
+        "move_absorber_coverage"
+      ],
+      "lesson_key": "docs\\pokemon_mastery\\policy_cards\\branch_action_after_naming.md",
+      "lesson_type": "hard_rule",
+      "next_action": "Check the answer-changing fact first: whether the status move hits the incoming branch",
+      "policy_tags": [
+        "status_timing",
+        "branch_action",
+        "receiver_pricing"
+      ],
+      "priority_score": 202,
+      "reason": "ROM gives nonzero probability to bad action(s)",
+      "rolled_bad_action_ids": [
+        "move_generic_status"
+      ],
+      "rolled_catastrophic_action_ids": [],
+      "rom_best_action_id": "move_generic_status",
+      "rom_best_probability": 0.828125,
+      "scenario_id": "generated_support_handoff_20260515_00010_status_absorber_branch_punish",
+      "severity": 80,
+      "verdict": "bad_roll",
+      "why": "When a status absorber is named, rank the coverage or handoff that beats it before generic status."
+    },
+    {
+      "answer_changing_information": [
+        "whether the status move hits the incoming branch",
+        "whether coverage also affects the visible active"
+      ],
+      "condition_tags": [
+        "status_absorber_named",
+        "named_receiver_branch",
+        "branch_punish_available",
+        "support_handoff",
+        "status_absorber_branch_punish"
+      ],
+      "confidence": "medium",
+      "evidence_digest": [
+        {
+          "default_summary": "After naming the branch, name the action that beats that branch. Choose counter-switch, coverage, phaze, Reflect, Toxic, Screech, setup, status, Explosion, or sacrifice only if that action beats the named receiver or punish. Substitute/s...",
+          "evidence_count": 92,
+          "path": "docs\\pokemon_mastery\\policy_cards\\branch_action_after_naming.md",
+          "status": "active boundary card.",
+          "title": "Branch Action After Naming",
+          "use_when": "the opponent is likely to switch, reveal coverage, use a support",
+          "worst_branch": "You correctly say \"they switch to the answer,\" then choose a move that only beats the Pokemon currently on screen and hand the opponent the board."
+        },
+        {
+          "default_summary": "Price the active pressure line before choosing status, Explosion, or a pivot. If direct damage, Roar/Whirlwind, or staying in already improves a named route, do not switch to a status script just because the move exists. If the next hit...",
+          "evidence_count": 29,
+          "path": "docs\\pokemon_mastery\\policy_cards\\active_pressure_before_status.md",
+          "status": "active boundary card.",
+          "title": "Active Pressure Before Status",
+          "use_when": "a Pokemon with status, Explosion, or a pivot option also has a direct",
+          "worst_branch": "You see a status or Explosion button, press it automatically, and give up an active route that was already forcing damage, switches, hazards, or recovery."
+        }
+      ],
+      "evidence_refs": [
+        "docs/pokemon_mastery/policy_cards/branch_action_after_naming.md",
+        "docs/pokemon_mastery/policy_cards/active_pressure_before_status.md"
+      ],
+      "expected_acceptable_action_ids": [
+        "move_counter_handoff"
+      ],
+      "expected_best_action_ids": [
+        "move_absorber_coverage"
+      ],
+      "lesson_key": "docs\\pokemon_mastery\\policy_cards\\branch_action_after_naming.md",
+      "lesson_type": "hard_rule",
+      "next_action": "Check the answer-changing fact first: whether the status move hits the incoming branch",
+      "policy_tags": [
+        "status_timing",
+        "branch_action",
+        "receiver_pricing"
+      ],
+      "priority_score": 202,
+      "reason": "ROM gives nonzero probability to bad action(s)",
+      "rolled_bad_action_ids": [
+        "move_generic_status"
+      ],
+      "rolled_catastrophic_action_ids": [],
+      "rom_best_action_id": "move_generic_status",
+      "rom_best_probability": 0.828125,
+      "scenario_id": "generated_support_handoff_20260515_00013_status_absorber_branch_punish",
+      "severity": 80,
+      "verdict": "bad_roll",
+      "why": "When a status absorber is named, rank the coverage or handoff that beats it before generic status."
+    },
+    {
+      "answer_changing_information": [
+        "whether the converter has a safe entry path",
+        "whether the reset branch must be covered immediately"
+      ],
+      "condition_tags": [
+        "support_job_completed",
+        "named_next_board_owner",
+        "reset_loop_live",
+        "support_handoff",
+        "handoff_after_support_lands"
+      ],
+      "confidence": "medium",
+      "evidence_digest": [
+        {
+          "default_summary": "After support lands, immediately name the next board. Identify the converter, the opponent's best counter-pivot, and the resource that must be preserved for the handoff. Screen/drop sequence extension: Reflect, Light Screen, Screech, and...",
+          "evidence_count": 21,
+          "path": "docs\\pokemon_mastery\\policy_cards\\support_handoff_after_job.md",
+          "status": "active boundary card.",
+          "title": "Support Handoff After Job",
+          "use_when": "a support move, phaze, status, hazard, scout, or lure has just landed",
+          "worst_branch": "You celebrate the support action, miss the counter-pivot, and let the opponent erase the route before the converter enters."
+        }
+      ],
+      "evidence_refs": [
+        "docs/pokemon_mastery/policy_cards/support_handoff_after_job.md",
+        "docs/pokemon_mastery/heuristic_core/name_next_board_owner.md"
+      ],
+      "expected_acceptable_action_ids": [
+        "move_cover_reset"
+      ],
+      "expected_best_action_ids": [
+        "move_handoff_converter"
+      ],
+      "lesson_key": "docs\\pokemon_mastery\\policy_cards\\support_handoff_after_job.md",
+      "lesson_type": "weight_hint",
+      "next_action": "Check the answer-changing fact first: whether the converter has a safe entry path",
+      "policy_tags": [
+        "support_handoff",
+        "route_converter",
+        "reset_loop_denial"
+      ],
+      "priority_score": 201,
+      "reason": "ROM gives nonzero probability to bad action(s)",
+      "rolled_bad_action_ids": [
+        "move_repeat_support"
+      ],
+      "rolled_catastrophic_action_ids": [],
+      "rom_best_action_id": "move_repeat_support",
+      "rom_best_probability": 0.7265625,
+      "scenario_id": "generated_support_handoff_20260515_00012_handoff_after_support_lands",
+      "severity": 80,
+      "verdict": "bad_roll",
+      "why": "After support succeeds, convert or cover the reset branch instead of repeating the support move."
+    },
+    {
+      "answer_changing_information": [
+        "whether the converter has a safe entry path",
+        "whether the reset branch must be covered immediately"
+      ],
+      "condition_tags": [
+        "support_job_completed",
+        "named_next_board_owner",
+        "reset_loop_live",
+        "support_handoff",
+        "handoff_after_support_lands"
+      ],
+      "confidence": "medium",
+      "evidence_digest": [
+        {
+          "default_summary": "After support lands, immediately name the next board. Identify the converter, the opponent's best counter-pivot, and the resource that must be preserved for the handoff. Screen/drop sequence extension: Reflect, Light Screen, Screech, and...",
+          "evidence_count": 21,
+          "path": "docs\\pokemon_mastery\\policy_cards\\support_handoff_after_job.md",
+          "status": "active boundary card.",
+          "title": "Support Handoff After Job",
+          "use_when": "a support move, phaze, status, hazard, scout, or lure has just landed",
+          "worst_branch": "You celebrate the support action, miss the counter-pivot, and let the opponent erase the route before the converter enters."
+        }
+      ],
+      "evidence_refs": [
+        "docs/pokemon_mastery/policy_cards/support_handoff_after_job.md",
+        "docs/pokemon_mastery/heuristic_core/name_next_board_owner.md"
+      ],
+      "expected_acceptable_action_ids": [
+        "move_cover_reset"
+      ],
+      "expected_best_action_ids": [
+        "move_handoff_converter"
+      ],
+      "lesson_key": "docs\\pokemon_mastery\\policy_cards\\support_handoff_after_job.md",
+      "lesson_type": "weight_hint",
+      "next_action": "Check the answer-changing fact first: whether the converter has a safe entry path",
+      "policy_tags": [
+        "support_handoff",
+        "route_converter",
+        "reset_loop_denial"
+      ],
+      "priority_score": 201,
+      "reason": "ROM gives nonzero probability to bad action(s)",
+      "rolled_bad_action_ids": [
+        "move_repeat_support"
+      ],
+      "rolled_catastrophic_action_ids": [],
+      "rom_best_action_id": "move_repeat_support",
+      "rom_best_probability": 0.7265625,
+      "scenario_id": "generated_support_handoff_20260515_00015_handoff_after_support_lands",
+      "severity": 80,
+      "verdict": "bad_roll",
+      "why": "After support succeeds, convert or cover the reset branch instead of repeating the support move."
+    },
+    {
+      "answer_changing_information": [
+        "whether the converter has a safe entry path",
+        "whether the reset branch must be covered immediately"
+      ],
+      "condition_tags": [
+        "support_job_completed",
+        "named_next_board_owner",
+        "reset_loop_live",
+        "support_handoff",
+        "handoff_after_support_lands"
+      ],
+      "confidence": "medium",
+      "evidence_digest": [
+        {
+          "default_summary": "After support lands, immediately name the next board. Identify the converter, the opponent's best counter-pivot, and the resource that must be preserved for the handoff. Screen/drop sequence extension: Reflect, Light Screen, Screech, and...",
+          "evidence_count": 21,
+          "path": "docs\\pokemon_mastery\\policy_cards\\support_handoff_after_job.md",
+          "status": "active boundary card.",
+          "title": "Support Handoff After Job",
+          "use_when": "a support move, phaze, status, hazard, scout, or lure has just landed",
+          "worst_branch": "You celebrate the support action, miss the counter-pivot, and let the opponent erase the route before the converter enters."
+        }
+      ],
+      "evidence_refs": [
+        "docs/pokemon_mastery/policy_cards/support_handoff_after_job.md",
+        "docs/pokemon_mastery/heuristic_core/name_next_board_owner.md"
+      ],
+      "expected_acceptable_action_ids": [
+        "move_cover_reset"
+      ],
+      "expected_best_action_ids": [
+        "move_handoff_converter"
+      ],
+      "lesson_key": "docs\\pokemon_mastery\\policy_cards\\support_handoff_after_job.md",
+      "lesson_type": "weight_hint",
+      "next_action": "Check the answer-changing fact first: whether the converter has a safe entry path",
+      "policy_tags": [
+        "support_handoff",
+        "route_converter",
+        "reset_loop_denial"
+      ],
+      "priority_score": 201,
+      "reason": "ROM gives nonzero probability to bad action(s)",
+      "rolled_bad_action_ids": [
+        "move_repeat_support"
+      ],
+      "rolled_catastrophic_action_ids": [],
+      "rom_best_action_id": "move_repeat_support",
+      "rom_best_probability": 0.7265625,
+      "scenario_id": "generated_support_handoff_20260515_00018_handoff_after_support_lands",
+      "severity": 80,
+      "verdict": "bad_roll",
+      "why": "After support succeeds, convert or cover the reset branch instead of repeating the support move."
+    },
+    {
+      "answer_changing_information": [
+        "whether the converter has a safe entry path",
+        "whether the reset branch must be covered immediately"
+      ],
+      "condition_tags": [
+        "support_job_completed",
+        "named_next_board_owner",
+        "reset_loop_live",
+        "support_handoff",
+        "handoff_after_support_lands"
+      ],
+      "confidence": "medium",
+      "evidence_digest": [
+        {
+          "default_summary": "After support lands, immediately name the next board. Identify the converter, the opponent's best counter-pivot, and the resource that must be preserved for the handoff. Screen/drop sequence extension: Reflect, Light Screen, Screech, and...",
+          "evidence_count": 21,
+          "path": "docs\\pokemon_mastery\\policy_cards\\support_handoff_after_job.md",
+          "status": "active boundary card.",
+          "title": "Support Handoff After Job",
+          "use_when": "a support move, phaze, status, hazard, scout, or lure has just landed",
+          "worst_branch": "You celebrate the support action, miss the counter-pivot, and let the opponent erase the route before the converter enters."
+        }
+      ],
+      "evidence_refs": [
+        "docs/pokemon_mastery/policy_cards/support_handoff_after_job.md",
+        "docs/pokemon_mastery/heuristic_core/name_next_board_owner.md"
+      ],
+      "expected_acceptable_action_ids": [
+        "move_cover_reset"
+      ],
+      "expected_best_action_ids": [
+        "move_handoff_converter"
+      ],
+      "lesson_key": "docs\\pokemon_mastery\\policy_cards\\support_handoff_after_job.md",
+      "lesson_type": "weight_hint",
+      "next_action": "Check the answer-changing fact first: whether the converter has a safe entry path",
+      "policy_tags": [
+        "support_handoff",
+        "route_converter",
+        "reset_loop_denial"
+      ],
+      "priority_score": 200,
+      "reason": "ROM gives nonzero probability to bad action(s)",
+      "rolled_bad_action_ids": [
+        "move_repeat_support"
+      ],
+      "rolled_catastrophic_action_ids": [],
+      "rom_best_action_id": "move_repeat_support",
+      "rom_best_probability": 0.6796875,
+      "scenario_id": "generated_support_handoff_20260515_00000_handoff_after_support_lands",
+      "severity": 80,
+      "verdict": "bad_roll",
+      "why": "After support succeeds, convert or cover the reset branch instead of repeating the support move."
+    },
+    {
+      "answer_changing_information": [
+        "whether the converter has a safe entry path",
+        "whether the reset branch must be covered immediately"
+      ],
+      "condition_tags": [
+        "support_job_completed",
+        "named_next_board_owner",
+        "reset_loop_live",
+        "support_handoff",
+        "handoff_after_support_lands"
+      ],
+      "confidence": "medium",
+      "evidence_digest": [
+        {
+          "default_summary": "After support lands, immediately name the next board. Identify the converter, the opponent's best counter-pivot, and the resource that must be preserved for the handoff. Screen/drop sequence extension: Reflect, Light Screen, Screech, and...",
+          "evidence_count": 21,
+          "path": "docs\\pokemon_mastery\\policy_cards\\support_handoff_after_job.md",
+          "status": "active boundary card.",
+          "title": "Support Handoff After Job",
+          "use_when": "a support move, phaze, status, hazard, scout, or lure has just landed",
+          "worst_branch": "You celebrate the support action, miss the counter-pivot, and let the opponent erase the route before the converter enters."
+        }
+      ],
+      "evidence_refs": [
+        "docs/pokemon_mastery/policy_cards/support_handoff_after_job.md",
+        "docs/pokemon_mastery/heuristic_core/name_next_board_owner.md"
+      ],
+      "expected_acceptable_action_ids": [
+        "move_cover_reset"
+      ],
+      "expected_best_action_ids": [
+        "move_handoff_converter"
+      ],
+      "lesson_key": "docs\\pokemon_mastery\\policy_cards\\support_handoff_after_job.md",
+      "lesson_type": "weight_hint",
+      "next_action": "Check the answer-changing fact first: whether the converter has a safe entry path",
+      "policy_tags": [
+        "support_handoff",
+        "route_converter",
+        "reset_loop_denial"
+      ],
+      "priority_score": 200,
+      "reason": "ROM gives nonzero probability to bad action(s)",
+      "rolled_bad_action_ids": [
+        "move_repeat_support"
+      ],
+      "rolled_catastrophic_action_ids": [],
+      "rom_best_action_id": "move_repeat_support",
+      "rom_best_probability": 0.6796875,
+      "scenario_id": "generated_support_handoff_20260515_00003_handoff_after_support_lands",
+      "severity": 80,
+      "verdict": "bad_roll",
+      "why": "After support succeeds, convert or cover the reset branch instead of repeating the support move."
+    },
+    {
+      "answer_changing_information": [
+        "whether the opponent has a live Spin, Recover, or phaze counter-loop",
+        "whether chip forces an immediate irreversible threshold"
+      ],
+      "condition_tags": [
+        "spikes_layers_2",
+        "phaze_loop_live",
+        "reset_loop_denied",
+        "named_current_owner",
+        "support_handoff",
+        "phaze_loop_over_generic_chip"
+      ],
+      "confidence": "medium",
+      "evidence_digest": [
+        {
+          "default_summary": "Treat Spikes as a route subgame. Ask whether the line sets, retains, removes, punishes Spin, or converts the entry map. Hazard progress is not real if the opponent can remove it without giving up a route-relevant cost. Hazard job orderin...",
+          "evidence_count": 49,
+          "path": "docs\\pokemon_mastery\\policy_cards\\hazard_loop_spin_window.md",
+          "status": "active boundary card.",
+          "title": "Hazard Loop Spin Window",
+          "use_when": "Spikes, Rapid Spin, spinblocking, or post-support handoff determines",
+          "worst_branch": "You call setting Spikes progress, give the opponent a free spinner sequence, and lose both hazard pressure and tempo."
+        }
+      ],
+      "evidence_refs": [
+        "docs/pokemon_mastery/policy_cards/hazard_loop_spin_window.md",
+        "docs/pokemon_mastery/heuristic_core/reset_loop_denial.md"
+      ],
+      "expected_acceptable_action_ids": [
+        "move_spikes_reset"
+      ],
+      "expected_best_action_ids": [
+        "move_roar_loop"
+      ],
+      "lesson_key": "docs\\pokemon_mastery\\policy_cards\\hazard_loop_spin_window.md",
+      "lesson_type": "weight_hint",
+      "next_action": "Check the answer-changing fact first: whether the opponent has a live Spin, Recover, or phaze counter-loop",
+      "policy_tags": [
+        "phazing",
+        "hazard_retention",
+        "reset_loop_denial"
+      ],
+      "priority_score": 172,
+      "reason": "ROM top action is outside expected best/acceptable sets",
+      "rolled_bad_action_ids": [],
+      "rolled_catastrophic_action_ids": [],
+      "rom_best_action_id": "move_generic_chip",
+      "rom_best_probability": 0.7265625,
+      "scenario_id": "generated_support_handoff_20260515_00005_phaze_loop_over_generic_chip",
+      "severity": 70,
+      "verdict": "mismatch",
+      "why": "When hazards and public phazing own the route, keep the phaze loop above generic chip or retreat."
+    },
+    {
+      "answer_changing_information": [
+        "whether the opponent has a live Spin, Recover, or phaze counter-loop",
+        "whether chip forces an immediate irreversible threshold"
+      ],
+      "condition_tags": [
+        "spikes_layers_2",
+        "phaze_loop_live",
+        "reset_loop_denied",
+        "named_current_owner",
+        "support_handoff",
+        "phaze_loop_over_generic_chip"
+      ],
+      "confidence": "medium",
+      "evidence_digest": [
+        {
+          "default_summary": "Treat Spikes as a route subgame. Ask whether the line sets, retains, removes, punishes Spin, or converts the entry map. Hazard progress is not real if the opponent can remove it without giving up a route-relevant cost. Hazard job orderin...",
+          "evidence_count": 49,
+          "path": "docs\\pokemon_mastery\\policy_cards\\hazard_loop_spin_window.md",
+          "status": "active boundary card.",
+          "title": "Hazard Loop Spin Window",
+          "use_when": "Spikes, Rapid Spin, spinblocking, or post-support handoff determines",
+          "worst_branch": "You call setting Spikes progress, give the opponent a free spinner sequence, and lose both hazard pressure and tempo."
+        }
+      ],
+      "evidence_refs": [
+        "docs/pokemon_mastery/policy_cards/hazard_loop_spin_window.md",
+        "docs/pokemon_mastery/heuristic_core/reset_loop_denial.md"
+      ],
+      "expected_acceptable_action_ids": [
+        "move_spikes_reset"
+      ],
+      "expected_best_action_ids": [
+        "move_roar_loop"
+      ],
+      "lesson_key": "docs\\pokemon_mastery\\policy_cards\\hazard_loop_spin_window.md",
+      "lesson_type": "weight_hint",
+      "next_action": "Check the answer-changing fact first: whether the opponent has a live Spin, Recover, or phaze counter-loop",
+      "policy_tags": [
+        "phazing",
+        "hazard_retention",
+        "reset_loop_denial"
+      ],
+      "priority_score": 172,
+      "reason": "ROM top action is outside expected best/acceptable sets",
+      "rolled_bad_action_ids": [],
+      "rolled_catastrophic_action_ids": [],
+      "rom_best_action_id": "move_generic_chip",
+      "rom_best_probability": 0.7265625,
+      "scenario_id": "generated_support_handoff_20260515_00008_phaze_loop_over_generic_chip",
+      "severity": 70,
+      "verdict": "mismatch",
+      "why": "When hazards and public phazing own the route, keep the phaze loop above generic chip or retreat."
+    },
+    {
+      "answer_changing_information": [
+        "whether the opponent has a live Spin, Recover, or phaze counter-loop",
+        "whether chip forces an immediate irreversible threshold"
+      ],
+      "condition_tags": [
+        "spikes_layers_2",
+        "phaze_loop_live",
+        "reset_loop_denied",
+        "named_current_owner",
+        "support_handoff",
+        "phaze_loop_over_generic_chip"
+      ],
+      "confidence": "medium",
+      "evidence_digest": [
+        {
+          "default_summary": "Treat Spikes as a route subgame. Ask whether the line sets, retains, removes, punishes Spin, or converts the entry map. Hazard progress is not real if the opponent can remove it without giving up a route-relevant cost. Hazard job orderin...",
+          "evidence_count": 49,
+          "path": "docs\\pokemon_mastery\\policy_cards\\hazard_loop_spin_window.md",
+          "status": "active boundary card.",
+          "title": "Hazard Loop Spin Window",
+          "use_when": "Spikes, Rapid Spin, spinblocking, or post-support handoff determines",
+          "worst_branch": "You call setting Spikes progress, give the opponent a free spinner sequence, and lose both hazard pressure and tempo."
+        }
+      ],
+      "evidence_refs": [
+        "docs/pokemon_mastery/policy_cards/hazard_loop_spin_window.md",
+        "docs/pokemon_mastery/heuristic_core/reset_loop_denial.md"
+      ],
+      "expected_acceptable_action_ids": [
+        "move_spikes_reset"
+      ],
+      "expected_best_action_ids": [
+        "move_roar_loop"
+      ],
+      "lesson_key": "docs\\pokemon_mastery\\policy_cards\\hazard_loop_spin_window.md",
+      "lesson_type": "weight_hint",
+      "next_action": "Check the answer-changing fact first: whether the opponent has a live Spin, Recover, or phaze counter-loop",
+      "policy_tags": [
+        "phazing",
+        "hazard_retention",
+        "reset_loop_denial"
+      ],
+      "priority_score": 172,
+      "reason": "ROM top action is outside expected best/acceptable sets",
+      "rolled_bad_action_ids": [],
+      "rolled_catastrophic_action_ids": [],
+      "rom_best_action_id": "move_generic_chip",
+      "rom_best_probability": 0.7265625,
+      "scenario_id": "generated_support_handoff_20260515_00014_phaze_loop_over_generic_chip",
+      "severity": 70,
+      "verdict": "mismatch",
+      "why": "When hazards and public phazing own the route, keep the phaze loop above generic chip or retreat."
+    },
+    {
+      "answer_changing_information": [
+        "whether the opponent has a live Spin, Recover, or phaze counter-loop",
+        "whether chip forces an immediate irreversible threshold"
+      ],
+      "condition_tags": [
+        "spikes_layers_2",
+        "phaze_loop_live",
+        "reset_loop_denied",
+        "named_current_owner",
+        "support_handoff",
+        "phaze_loop_over_generic_chip"
+      ],
+      "confidence": "medium",
+      "evidence_digest": [
+        {
+          "default_summary": "Treat Spikes as a route subgame. Ask whether the line sets, retains, removes, punishes Spin, or converts the entry map. Hazard progress is not real if the opponent can remove it without giving up a route-relevant cost. Hazard job orderin...",
+          "evidence_count": 49,
+          "path": "docs\\pokemon_mastery\\policy_cards\\hazard_loop_spin_window.md",
+          "status": "active boundary card.",
+          "title": "Hazard Loop Spin Window",
+          "use_when": "Spikes, Rapid Spin, spinblocking, or post-support handoff determines",
+          "worst_branch": "You call setting Spikes progress, give the opponent a free spinner sequence, and lose both hazard pressure and tempo."
+        }
+      ],
+      "evidence_refs": [
+        "docs/pokemon_mastery/policy_cards/hazard_loop_spin_window.md",
+        "docs/pokemon_mastery/heuristic_core/reset_loop_denial.md"
+      ],
+      "expected_acceptable_action_ids": [
+        "move_spikes_reset"
+      ],
+      "expected_best_action_ids": [
+        "move_roar_loop"
+      ],
+      "lesson_key": "docs\\pokemon_mastery\\policy_cards\\hazard_loop_spin_window.md",
+      "lesson_type": "weight_hint",
+      "next_action": "Check the answer-changing fact first: whether the opponent has a live Spin, Recover, or phaze counter-loop",
+      "policy_tags": [
+        "phazing",
+        "hazard_retention",
+        "reset_loop_denial"
+      ],
+      "priority_score": 171,
+      "reason": "ROM top action is outside expected best/acceptable sets",
+      "rolled_bad_action_ids": [],
+      "rolled_catastrophic_action_ids": [],
+      "rom_best_action_id": "move_generic_chip",
+      "rom_best_probability": 0.6796875,
+      "scenario_id": "generated_support_handoff_20260515_00002_phaze_loop_over_generic_chip",
+      "severity": 70,
+      "verdict": "mismatch",
+      "why": "When hazards and public phazing own the route, keep the phaze loop above generic chip or retreat."
+    },
+    {
+      "answer_changing_information": [
+        "whether the opponent has a live Spin, Recover, or phaze counter-loop",
+        "whether chip forces an immediate irreversible threshold"
+      ],
+      "condition_tags": [
+        "spikes_layers_2",
+        "phaze_loop_live",
+        "reset_loop_denied",
+        "named_current_owner",
+        "support_handoff",
+        "phaze_loop_over_generic_chip"
+      ],
+      "confidence": "medium",
+      "evidence_digest": [
+        {
+          "default_summary": "Treat Spikes as a route subgame. Ask whether the line sets, retains, removes, punishes Spin, or converts the entry map. Hazard progress is not real if the opponent can remove it without giving up a route-relevant cost. Hazard job orderin...",
+          "evidence_count": 49,
+          "path": "docs\\pokemon_mastery\\policy_cards\\hazard_loop_spin_window.md",
+          "status": "active boundary card.",
+          "title": "Hazard Loop Spin Window",
+          "use_when": "Spikes, Rapid Spin, spinblocking, or post-support handoff determines",
+          "worst_branch": "You call setting Spikes progress, give the opponent a free spinner sequence, and lose both hazard pressure and tempo."
+        }
+      ],
+      "evidence_refs": [
+        "docs/pokemon_mastery/policy_cards/hazard_loop_spin_window.md",
+        "docs/pokemon_mastery/heuristic_core/reset_loop_denial.md"
+      ],
+      "expected_acceptable_action_ids": [
+        "move_spikes_reset"
+      ],
+      "expected_best_action_ids": [
+        "move_roar_loop"
+      ],
+      "lesson_key": "docs\\pokemon_mastery\\policy_cards\\hazard_loop_spin_window.md",
+      "lesson_type": "weight_hint",
+      "next_action": "Check the answer-changing fact first: whether the opponent has a live Spin, Recover, or phaze counter-loop",
+      "policy_tags": [
+        "phazing",
+        "hazard_retention",
+        "reset_loop_denial"
+      ],
+      "priority_score": 171,
+      "reason": "ROM top action is outside expected best/acceptable sets",
+      "rolled_bad_action_ids": [],
+      "rolled_catastrophic_action_ids": [],
+      "rom_best_action_id": "move_generic_chip",
+      "rom_best_probability": 0.6796875,
+      "scenario_id": "generated_support_handoff_20260515_00011_phaze_loop_over_generic_chip",
+      "severity": 70,
+      "verdict": "mismatch",
+      "why": "When hazards and public phazing own the route, keep the phaze loop above generic chip or retreat."
+    },
+    {
+      "answer_changing_information": [
+        "whether the switch target enters safely",
+        "whether active damage also changes the receiver board"
+      ],
+      "condition_tags": [
+        "named_next_board_owner",
+        "safe_entry_available",
+        "ace_preservation",
+        "public_threat_to_active",
+        "switch_sack",
+        "preserve_wincon_over_comfort_damage"
+      ],
+      "confidence": "medium",
+      "evidence_digest": [],
+      "evidence_refs": [
+        "docs/pokemon_mastery/heuristic_core/name_next_board_owner.md",
+        "docs/pokemon_mastery/heuristic_core/spend_or_save_piece.md"
+      ],
+      "expected_acceptable_action_ids": [
+        "move_comfort_damage"
+      ],
+      "expected_best_action_ids": [
+        "move_preserve_wincon_switch"
+      ],
+      "lesson_key": "tag:switching",
+      "lesson_type": "weight_hint",
+      "next_action": "Check the answer-changing fact first: whether the switch target enters safely",
+      "policy_tags": [
+        "switching",
+        "ace_preservation",
+        "route_owner"
+      ],
+      "priority_score": 89,
+      "reason": "ROM top action is acceptable but not expected-best",
+      "rolled_bad_action_ids": [],
+      "rolled_catastrophic_action_ids": [],
+      "rom_best_action_id": "move_comfort_damage",
+      "rom_best_probability": 0.95703125,
+      "scenario_id": "generated_switch_sack_20260515_00000_preserve_wincon_over_comfort_damage",
+      "severity": 30,
+      "verdict": "acceptable_top",
+      "why": "When the active can leave and a preserved owner owns the next board, rank the switch above comfortable chip."
+    },
+    {
+      "answer_changing_information": [
+        "whether the switch target enters safely",
+        "whether active damage also changes the receiver board"
+      ],
+      "condition_tags": [
+        "named_next_board_owner",
+        "safe_entry_available",
+        "ace_preservation",
+        "public_threat_to_active",
+        "switch_sack",
+        "preserve_wincon_over_comfort_damage"
+      ],
+      "confidence": "medium",
+      "evidence_digest": [],
+      "evidence_refs": [
+        "docs/pokemon_mastery/heuristic_core/name_next_board_owner.md",
+        "docs/pokemon_mastery/heuristic_core/spend_or_save_piece.md"
+      ],
+      "expected_acceptable_action_ids": [
+        "move_comfort_damage"
+      ],
+      "expected_best_action_ids": [
+        "move_preserve_wincon_switch"
+      ],
+      "lesson_key": "tag:switching",
+      "lesson_type": "weight_hint",
+      "next_action": "Check the answer-changing fact first: whether the switch target enters safely",
+      "policy_tags": [
+        "switching",
+        "ace_preservation",
+        "route_owner"
+      ],
+      "priority_score": 89,
+      "reason": "ROM top action is acceptable but not expected-best",
+      "rolled_bad_action_ids": [],
+      "rolled_catastrophic_action_ids": [],
+      "rom_best_action_id": "move_comfort_damage",
+      "rom_best_probability": 0.984375,
+      "scenario_id": "generated_switch_sack_20260515_00003_preserve_wincon_over_comfort_damage",
+      "severity": 30,
+      "verdict": "acceptable_top",
+      "why": "When the active can leave and a preserved owner owns the next board, rank the switch above comfortable chip."
+    },
+    {
+      "answer_changing_information": [
+        "whether the switch target enters safely",
+        "whether active damage also changes the receiver board"
+      ],
+      "condition_tags": [
+        "named_next_board_owner",
+        "safe_entry_available",
+        "ace_preservation",
+        "public_threat_to_active",
+        "switch_sack",
+        "preserve_wincon_over_comfort_damage"
+      ],
+      "confidence": "medium",
+      "evidence_digest": [],
+      "evidence_refs": [
+        "docs/pokemon_mastery/heuristic_core/name_next_board_owner.md",
+        "docs/pokemon_mastery/heuristic_core/spend_or_save_piece.md"
+      ],
+      "expected_acceptable_action_ids": [
+        "move_comfort_damage"
+      ],
+      "expected_best_action_ids": [
+        "move_preserve_wincon_switch"
+      ],
+      "lesson_key": "tag:switching",
+      "lesson_type": "weight_hint",
+      "next_action": "Check the answer-changing fact first: whether the switch target enters safely",
+      "policy_tags": [
+        "switching",
+        "ace_preservation",
+        "route_owner"
+      ],
+      "priority_score": 89,
+      "reason": "ROM top action is acceptable but not expected-best",
+      "rolled_bad_action_ids": [],
+      "rolled_catastrophic_action_ids": [],
+      "rom_best_action_id": "move_comfort_damage",
+      "rom_best_probability": 0.95703125,
+      "scenario_id": "generated_switch_sack_20260515_00006_preserve_wincon_over_comfort_damage",
+      "severity": 30,
+      "verdict": "acceptable_top",
+      "why": "When the active can leave and a preserved owner owns the next board, rank the switch above comfortable chip."
+    },
+    {
+      "answer_changing_information": [
+        "whether the switch target enters safely",
+        "whether active damage also changes the receiver board"
+      ],
+      "condition_tags": [
+        "named_next_board_owner",
+        "safe_entry_available",
+        "ace_preservation",
+        "public_threat_to_active",
+        "switch_sack",
+        "preserve_wincon_over_comfort_damage"
+      ],
+      "confidence": "medium",
+      "evidence_digest": [],
+      "evidence_refs": [
+        "docs/pokemon_mastery/heuristic_core/name_next_board_owner.md",
+        "docs/pokemon_mastery/heuristic_core/spend_or_save_piece.md"
+      ],
+      "expected_acceptable_action_ids": [
+        "move_comfort_damage"
+      ],
+      "expected_best_action_ids": [
+        "move_preserve_wincon_switch"
+      ],
+      "lesson_key": "tag:switching",
+      "lesson_type": "weight_hint",
+      "next_action": "Check the answer-changing fact first: whether the switch target enters safely",
+      "policy_tags": [
+        "switching",
+        "ace_preservation",
+        "route_owner"
+      ],
+      "priority_score": 89,
+      "reason": "ROM top action is acceptable but not expected-best",
+      "rolled_bad_action_ids": [],
+      "rolled_catastrophic_action_ids": [],
+      "rom_best_action_id": "move_comfort_damage",
+      "rom_best_probability": 0.984375,
+      "scenario_id": "generated_switch_sack_20260515_00009_preserve_wincon_over_comfort_damage",
+      "severity": 30,
+      "verdict": "acceptable_top",
+      "why": "When the active can leave and a preserved owner owns the next board, rank the switch above comfortable chip."
+    },
+    {
+      "answer_changing_information": [
+        "whether the switch target enters safely",
+        "whether active damage also changes the receiver board"
+      ],
+      "condition_tags": [
+        "named_next_board_owner",
+        "safe_entry_available",
+        "ace_preservation",
+        "public_threat_to_active",
+        "switch_sack",
+        "preserve_wincon_over_comfort_damage"
+      ],
+      "confidence": "medium",
+      "evidence_digest": [],
+      "evidence_refs": [
+        "docs/pokemon_mastery/heuristic_core/name_next_board_owner.md",
+        "docs/pokemon_mastery/heuristic_core/spend_or_save_piece.md"
+      ],
+      "expected_acceptable_action_ids": [
+        "move_comfort_damage"
+      ],
+      "expected_best_action_ids": [
+        "move_preserve_wincon_switch"
+      ],
+      "lesson_key": "tag:switching",
+      "lesson_type": "weight_hint",
+      "next_action": "Check the answer-changing fact first: whether the switch target enters safely",
+      "policy_tags": [
+        "switching",
+        "ace_preservation",
+        "route_owner"
+      ],
+      "priority_score": 89,
+      "reason": "ROM top action is acceptable but not expected-best",
+      "rolled_bad_action_ids": [],
+      "rolled_catastrophic_action_ids": [],
+      "rom_best_action_id": "move_comfort_damage",
+      "rom_best_probability": 0.984375,
+      "scenario_id": "generated_switch_sack_20260515_00012_preserve_wincon_over_comfort_damage",
+      "severity": 30,
+      "verdict": "acceptable_top",
+      "why": "When the active can leave and a preserved owner owns the next board, rank the switch above comfortable chip."
+    },
+    {
+      "answer_changing_information": [
+        "whether the wincon takes route-losing damage on raw entry",
+        "whether the sack still has a future route job"
+      ],
+      "condition_tags": [
+        "defensive_sack_owner",
+        "safe_entry_available",
+        "wincon_preservation",
+        "support_job_completed",
+        "switch_sack",
+        "defensive_sack_for_safe_entry"
+      ],
+      "confidence": "medium",
+      "evidence_digest": [
+        {
+          "default_summary": "Name the support job before spending the piece. Preserve if the job is still route-defining and no immediate converter appears. If you explicitly name an Explosion or Self-Destruct branch, the recommendation must also name the absorber,...",
+          "evidence_count": 58,
+          "path": "docs\\pokemon_mastery\\policy_cards\\cashout_boundary.md",
+          "status": "active boundary card.",
+          "title": "Cash-Out Boundary",
+          "use_when": "a low or one-time support piece can either preserve a future job or",
+          "worst_branch": "You preserve a famous or sentimental piece, lose the current converter window, and later discover the preserved piece had no safe entry or no remaining job. The opposite severe..."
+        }
+      ],
+      "evidence_refs": [
+        "docs/pokemon_mastery/policy_cards/cashout_boundary.md",
+        "docs/pokemon_mastery/heuristic_core/spend_or_save_piece.md"
+      ],
+      "expected_acceptable_action_ids": [
+        "move_switch_wincon_raw"
+      ],
+      "expected_best_action_ids": [
+        "move_defensive_sack"
+      ],
+      "lesson_key": "docs\\pokemon_mastery\\policy_cards\\cashout_boundary.md",
+      "lesson_type": "weight_hint",
+      "next_action": "Check the answer-changing fact first: whether the wincon takes route-losing damage on raw entry",
+      "policy_tags": [
+        "switching",
+        "defensive_sack",
+        "safe_entry"
+      ],
+      "priority_score": 87,
+      "reason": "ROM top action is acceptable but not expected-best",
+      "rolled_bad_action_ids": [],
+      "rolled_catastrophic_action_ids": [],
+      "rom_best_action_id": "move_switch_wincon_raw",
+      "rom_best_probability": 0.7265625,
+      "scenario_id": "generated_switch_sack_20260515_00001_defensive_sack_for_safe_entry",
+      "severity": 30,
+      "verdict": "acceptable_top",
+      "why": "A sack can be the positive move when it preserves the higher-value owner and creates clean entry."
+    },
+    {
+      "answer_changing_information": [
+        "whether the wincon takes route-losing damage on raw entry",
+        "whether the sack still has a future route job"
+      ],
+      "condition_tags": [
+        "defensive_sack_owner",
+        "safe_entry_available",
+        "wincon_preservation",
+        "support_job_completed",
+        "switch_sack",
+        "defensive_sack_for_safe_entry"
+      ],
+      "confidence": "medium",
+      "evidence_digest": [
+        {
+          "default_summary": "Name the support job before spending the piece. Preserve if the job is still route-defining and no immediate converter appears. If you explicitly name an Explosion or Self-Destruct branch, the recommendation must also name the absorber,...",
+          "evidence_count": 58,
+          "path": "docs\\pokemon_mastery\\policy_cards\\cashout_boundary.md",
+          "status": "active boundary card.",
+          "title": "Cash-Out Boundary",
+          "use_when": "a low or one-time support piece can either preserve a future job or",
+          "worst_branch": "You preserve a famous or sentimental piece, lose the current converter window, and later discover the preserved piece had no safe entry or no remaining job. The opposite severe..."
+        }
+      ],
+      "evidence_refs": [
+        "docs/pokemon_mastery/policy_cards/cashout_boundary.md",
+        "docs/pokemon_mastery/heuristic_core/spend_or_save_piece.md"
+      ],
+      "expected_acceptable_action_ids": [
+        "move_switch_wincon_raw"
+      ],
+      "expected_best_action_ids": [
+        "move_defensive_sack"
+      ],
+      "lesson_key": "docs\\pokemon_mastery\\policy_cards\\cashout_boundary.md",
+      "lesson_type": "weight_hint",
+      "next_action": "Check the answer-changing fact first: whether the wincon takes route-losing damage on raw entry",
+      "policy_tags": [
+        "switching",
+        "defensive_sack",
+        "safe_entry"
+      ],
+      "priority_score": 87,
+      "reason": "ROM top action is acceptable but not expected-best",
+      "rolled_bad_action_ids": [],
+      "rolled_catastrophic_action_ids": [],
+      "rom_best_action_id": "move_switch_wincon_raw",
+      "rom_best_probability": 0.7265625,
+      "scenario_id": "generated_switch_sack_20260515_00010_defensive_sack_for_safe_entry",
+      "severity": 30,
+      "verdict": "acceptable_top",
+      "why": "A sack can be the positive move when it preserves the higher-value owner and creates clean entry."
+    },
+    {
+      "answer_changing_information": [
+        "whether the wincon takes route-losing damage on raw entry",
+        "whether the sack still has a future route job"
+      ],
+      "condition_tags": [
+        "defensive_sack_owner",
+        "safe_entry_available",
+        "wincon_preservation",
+        "support_job_completed",
+        "switch_sack",
+        "defensive_sack_for_safe_entry"
+      ],
+      "confidence": "medium",
+      "evidence_digest": [
+        {
+          "default_summary": "Name the support job before spending the piece. Preserve if the job is still route-defining and no immediate converter appears. If you explicitly name an Explosion or Self-Destruct branch, the recommendation must also name the absorber,...",
+          "evidence_count": 58,
+          "path": "docs\\pokemon_mastery\\policy_cards\\cashout_boundary.md",
+          "status": "active boundary card.",
+          "title": "Cash-Out Boundary",
+          "use_when": "a low or one-time support piece can either preserve a future job or",
+          "worst_branch": "You preserve a famous or sentimental piece, lose the current converter window, and later discover the preserved piece had no safe entry or no remaining job. The opposite severe..."
+        }
+      ],
+      "evidence_refs": [
+        "docs/pokemon_mastery/policy_cards/cashout_boundary.md",
+        "docs/pokemon_mastery/heuristic_core/spend_or_save_piece.md"
+      ],
+      "expected_acceptable_action_ids": [
+        "move_switch_wincon_raw"
+      ],
+      "expected_best_action_ids": [
+        "move_defensive_sack"
+      ],
+      "lesson_key": "docs\\pokemon_mastery\\policy_cards\\cashout_boundary.md",
+      "lesson_type": "weight_hint",
+      "next_action": "Check the answer-changing fact first: whether the wincon takes route-losing damage on raw entry",
+      "policy_tags": [
+        "switching",
+        "defensive_sack",
+        "safe_entry"
+      ],
+      "priority_score": 86,
+      "reason": "ROM top action is acceptable but not expected-best",
+      "rolled_bad_action_ids": [],
+      "rolled_catastrophic_action_ids": [],
+      "rom_best_action_id": "move_switch_wincon_raw",
+      "rom_best_probability": 0.6796875,
+      "scenario_id": "generated_switch_sack_20260515_00004_defensive_sack_for_safe_entry",
+      "severity": 30,
+      "verdict": "acceptable_top",
+      "why": "A sack can be the positive move when it preserves the higher-value owner and creates clean entry."
+    },
+    {
+      "answer_changing_information": [
+        "whether the wincon takes route-losing damage on raw entry",
+        "whether the sack still has a future route job"
+      ],
+      "condition_tags": [
+        "defensive_sack_owner",
+        "safe_entry_available",
+        "wincon_preservation",
+        "support_job_completed",
+        "switch_sack",
+        "defensive_sack_for_safe_entry"
+      ],
+      "confidence": "medium",
+      "evidence_digest": [
+        {
+          "default_summary": "Name the support job before spending the piece. Preserve if the job is still route-defining and no immediate converter appears. If you explicitly name an Explosion or Self-Destruct branch, the recommendation must also name the absorber,...",
+          "evidence_count": 58,
+          "path": "docs\\pokemon_mastery\\policy_cards\\cashout_boundary.md",
+          "status": "active boundary card.",
+          "title": "Cash-Out Boundary",
+          "use_when": "a low or one-time support piece can either preserve a future job or",
+          "worst_branch": "You preserve a famous or sentimental piece, lose the current converter window, and later discover the preserved piece had no safe entry or no remaining job. The opposite severe..."
+        }
+      ],
+      "evidence_refs": [
+        "docs/pokemon_mastery/policy_cards/cashout_boundary.md",
+        "docs/pokemon_mastery/heuristic_core/spend_or_save_piece.md"
+      ],
+      "expected_acceptable_action_ids": [
+        "move_switch_wincon_raw"
+      ],
+      "expected_best_action_ids": [
+        "move_defensive_sack"
+      ],
+      "lesson_key": "docs\\pokemon_mastery\\policy_cards\\cashout_boundary.md",
+      "lesson_type": "weight_hint",
+      "next_action": "Check the answer-changing fact first: whether the wincon takes route-losing damage on raw entry",
+      "policy_tags": [
+        "switching",
+        "defensive_sack",
+        "safe_entry"
+      ],
+      "priority_score": 86,
+      "reason": "ROM top action is acceptable but not expected-best",
+      "rolled_bad_action_ids": [],
+      "rolled_catastrophic_action_ids": [],
+      "rom_best_action_id": "move_switch_wincon_raw",
+      "rom_best_probability": 0.6796875,
+      "scenario_id": "generated_switch_sack_20260515_00007_defensive_sack_for_safe_entry",
+      "severity": 30,
+      "verdict": "acceptable_top",
+      "why": "A sack can be the positive move when it preserves the higher-value owner and creates clean entry."
+    },
+    {
+      "answer_changing_information": [
+        "whether the wincon takes route-losing damage on raw entry",
+        "whether the sack still has a future route job"
+      ],
+      "condition_tags": [
+        "defensive_sack_owner",
+        "safe_entry_available",
+        "wincon_preservation",
+        "support_job_completed",
+        "switch_sack",
+        "defensive_sack_for_safe_entry"
+      ],
+      "confidence": "medium",
+      "evidence_digest": [
+        {
+          "default_summary": "Name the support job before spending the piece. Preserve if the job is still route-defining and no immediate converter appears. If you explicitly name an Explosion or Self-Destruct branch, the recommendation must also name the absorber,...",
+          "evidence_count": 58,
+          "path": "docs\\pokemon_mastery\\policy_cards\\cashout_boundary.md",
+          "status": "active boundary card.",
+          "title": "Cash-Out Boundary",
+          "use_when": "a low or one-time support piece can either preserve a future job or",
+          "worst_branch": "You preserve a famous or sentimental piece, lose the current converter window, and later discover the preserved piece had no safe entry or no remaining job. The opposite severe..."
+        }
+      ],
+      "evidence_refs": [
+        "docs/pokemon_mastery/policy_cards/cashout_boundary.md",
+        "docs/pokemon_mastery/heuristic_core/spend_or_save_piece.md"
+      ],
+      "expected_acceptable_action_ids": [
+        "move_switch_wincon_raw"
+      ],
+      "expected_best_action_ids": [
+        "move_defensive_sack"
+      ],
+      "lesson_key": "docs\\pokemon_mastery\\policy_cards\\cashout_boundary.md",
+      "lesson_type": "weight_hint",
+      "next_action": "Check the answer-changing fact first: whether the wincon takes route-losing damage on raw entry",
+      "policy_tags": [
+        "switching",
+        "defensive_sack",
+        "safe_entry"
+      ],
+      "priority_score": 86,
+      "reason": "ROM top action is acceptable but not expected-best",
+      "rolled_bad_action_ids": [],
+      "rolled_catastrophic_action_ids": [],
+      "rom_best_action_id": "move_switch_wincon_raw",
+      "rom_best_probability": 0.6796875,
+      "scenario_id": "generated_switch_sack_20260515_00013_defensive_sack_for_safe_entry",
+      "severity": 30,
+      "verdict": "acceptable_top",
+      "why": "A sack can be the positive move when it preserves the higher-value owner and creates clean entry."
+    },
+    {
+      "answer_changing_information": [
+        "whether the status move hits the incoming branch",
+        "whether coverage also affects the visible active"
+      ],
+      "condition_tags": [
+        "status_absorber_named",
+        "named_receiver_branch",
+        "branch_punish_available",
+        "support_handoff",
+        "status_absorber_branch_punish"
+      ],
+      "confidence": "medium",
+      "evidence_digest": [
+        {
+          "default_summary": "After naming the branch, name the action that beats that branch. Choose counter-switch, coverage, phaze, Reflect, Toxic, Screech, setup, status, Explosion, or sacrifice only if that action beats the named receiver or punish. Substitute/s...",
+          "evidence_count": 92,
+          "path": "docs\\pokemon_mastery\\policy_cards\\branch_action_after_naming.md",
+          "status": "active boundary card.",
+          "title": "Branch Action After Naming",
+          "use_when": "the opponent is likely to switch, reveal coverage, use a support",
+          "worst_branch": "You correctly say \"they switch to the answer,\" then choose a move that only beats the Pokemon currently on screen and hand the opponent the board."
+        },
+        {
+          "default_summary": "Price the active pressure line before choosing status, Explosion, or a pivot. If direct damage, Roar/Whirlwind, or staying in already improves a named route, do not switch to a status script just because the move exists. If the next hit...",
+          "evidence_count": 29,
+          "path": "docs\\pokemon_mastery\\policy_cards\\active_pressure_before_status.md",
+          "status": "active boundary card.",
+          "title": "Active Pressure Before Status",
+          "use_when": "a Pokemon with status, Explosion, or a pivot option also has a direct",
+          "worst_branch": "You see a status or Explosion button, press it automatically, and give up an active route that was already forcing damage, switches, hazards, or recovery."
+        }
+      ],
+      "evidence_refs": [
+        "docs/pokemon_mastery/policy_cards/branch_action_after_naming.md",
+        "docs/pokemon_mastery/policy_cards/active_pressure_before_status.md"
+      ],
+      "expected_acceptable_action_ids": [
+        "move_counter_handoff"
+      ],
+      "expected_best_action_ids": [
+        "move_absorber_coverage"
+      ],
+      "lesson_key": "docs\\pokemon_mastery\\policy_cards\\branch_action_after_naming.md",
+      "lesson_type": "hard_rule",
+      "next_action": "Check the answer-changing fact first: whether the status move hits the incoming branch",
+      "policy_tags": [
+        "status_timing",
+        "branch_action",
+        "receiver_pricing"
+      ],
+      "priority_score": 202,
+      "reason": "ROM gives nonzero probability to bad action(s)",
+      "rolled_bad_action_ids": [
+        "move_generic_status"
+      ],
+      "rolled_catastrophic_action_ids": [],
+      "rom_best_action_id": "move_generic_status",
+      "rom_best_probability": 0.828125,
+      "scenario_id": "generated_support_handoff_20260515_00016_status_absorber_branch_punish",
+      "severity": 80,
+      "verdict": "bad_roll",
+      "why": "When a status absorber is named, rank the coverage or handoff that beats it before generic status."
+    },
+    {
+      "answer_changing_information": [
+        "whether the status move hits the incoming branch",
+        "whether coverage also affects the visible active"
+      ],
+      "condition_tags": [
+        "status_absorber_named",
+        "named_receiver_branch",
+        "branch_punish_available",
+        "support_handoff",
+        "status_absorber_branch_punish"
+      ],
+      "confidence": "medium",
+      "evidence_digest": [
+        {
+          "default_summary": "After naming the branch, name the action that beats that branch. Choose counter-switch, coverage, phaze, Reflect, Toxic, Screech, setup, status, Explosion, or sacrifice only if that action beats the named receiver or punish. Substitute/s...",
+          "evidence_count": 92,
+          "path": "docs\\pokemon_mastery\\policy_cards\\branch_action_after_naming.md",
+          "status": "active boundary card.",
+          "title": "Branch Action After Naming",
+          "use_when": "the opponent is likely to switch, reveal coverage, use a support",
+          "worst_branch": "You correctly say \"they switch to the answer,\" then choose a move that only beats the Pokemon currently on screen and hand the opponent the board."
+        },
+        {
+          "default_summary": "Price the active pressure line before choosing status, Explosion, or a pivot. If direct damage, Roar/Whirlwind, or staying in already improves a named route, do not switch to a status script just because the move exists. If the next hit...",
+          "evidence_count": 29,
+          "path": "docs\\pokemon_mastery\\policy_cards\\active_pressure_before_status.md",
+          "status": "active boundary card.",
+          "title": "Active Pressure Before Status",
+          "use_when": "a Pokemon with status, Explosion, or a pivot option also has a direct",
+          "worst_branch": "You see a status or Explosion button, press it automatically, and give up an active route that was already forcing damage, switches, hazards, or recovery."
+        }
+      ],
+      "evidence_refs": [
+        "docs/pokemon_mastery/policy_cards/branch_action_after_naming.md",
+        "docs/pokemon_mastery/policy_cards/active_pressure_before_status.md"
+      ],
+      "expected_acceptable_action_ids": [
+        "move_counter_handoff"
+      ],
+      "expected_best_action_ids": [
+        "move_absorber_coverage"
+      ],
+      "lesson_key": "docs\\pokemon_mastery\\policy_cards\\branch_action_after_naming.md",
+      "lesson_type": "hard_rule",
+      "next_action": "Check the answer-changing fact first: whether the status move hits the incoming branch",
+      "policy_tags": [
+        "status_timing",
+        "branch_action",
+        "receiver_pricing"
+      ],
+      "priority_score": 202,
+      "reason": "ROM gives nonzero probability to bad action(s)",
+      "rolled_bad_action_ids": [
+        "move_generic_status"
+      ],
+      "rolled_catastrophic_action_ids": [],
+      "rom_best_action_id": "move_generic_status",
+      "rom_best_probability": 0.875,
+      "scenario_id": "generated_support_handoff_20260515_00019_status_absorber_branch_punish",
+      "severity": 80,
+      "verdict": "bad_roll",
+      "why": "When a status absorber is named, rank the coverage or handoff that beats it before generic status."
+    },
+    {
+      "answer_changing_information": [
+        "whether the branch has moved from possible-only to strong-prior",
+        "whether missing the prediction still preserves the route"
+      ],
+      "condition_tags": [
+        "prediction_branch_possible_only",
+        "worst_case_unguarded",
+        "active_pressure_converts",
+        "prediction_mix",
+        "reject_reckless_prediction"
+      ],
+      "confidence": "medium",
+      "evidence_digest": [
+        {
+          "default_summary": "After naming the branch, name the action that beats that branch. Choose counter-switch, coverage, phaze, Reflect, Toxic, Screech, setup, status, Explosion, or sacrifice only if that action beats the named receiver or punish. Substitute/s...",
+          "evidence_count": 92,
+          "path": "docs\\pokemon_mastery\\policy_cards\\branch_action_after_naming.md",
+          "status": "active boundary card.",
+          "title": "Branch Action After Naming",
+          "use_when": "the opponent is likely to switch, reveal coverage, use a support",
+          "worst_branch": "You correctly say \"they switch to the answer,\" then choose a move that only beats the Pokemon currently on screen and hand the opponent the board."
+        }
+      ],
+      "evidence_refs": [
+        "docs/pokemon_mastery/policy_cards/branch_action_after_naming.md",
+        "docs/pokemon_mastery/heuristic_core/public_info_tiers.md"
+      ],
+      "expected_acceptable_action_ids": [
+        "move_safe_handoff"
+      ],
+      "expected_best_action_ids": [
+        "move_safe_active_ko"
+      ],
+      "lesson_key": "docs\\pokemon_mastery\\policy_cards\\branch_action_after_naming.md",
+      "lesson_type": "hard_rule",
+      "next_action": "Check the answer-changing fact first: whether the branch has moved from possible-only to strong-prior",
+      "policy_tags": [
+        "prediction",
+        "risk_control",
+        "active_pressure"
+      ],
+      "priority_score": 201,
+      "reason": "ROM gives nonzero probability to bad action(s)",
+      "rolled_bad_action_ids": [
+        "move_reckless_prediction"
+      ],
+      "rolled_catastrophic_action_ids": [],
+      "rom_best_action_id": "move_safe_active_ko",
+      "rom_best_probability": 0.7265625,
+      "scenario_id": "generated_prediction_mix_20260515_00001_reject_reckless_prediction",
+      "severity": 80,
+      "verdict": "bad_roll",
+      "why": "Do not make a high-downside read top when the active conversion is already public and safe."
+    },
+    {
+      "answer_changing_information": [
+        "whether the attack misses the required range",
+        "whether healing is required before the route is lost"
+      ],
+      "condition_tags": [
+        "setup_already_bankrolled",
+        "active_pressure_converts",
+        "timer_pressure",
+        "setup_heal",
+        "stop_setup_when_attack_converts"
+      ],
+      "confidence": "medium",
+      "evidence_digest": [
+        {
+          "default_summary": "After naming the branch, name the action that beats that branch. Choose counter-switch, coverage, phaze, Reflect, Toxic, Screech, setup, status, Explosion, or sacrifice only if that action beats the named receiver or punish. Substitute/s...",
+          "evidence_count": 92,
+          "path": "docs\\pokemon_mastery\\policy_cards\\branch_action_after_naming.md",
+          "status": "active boundary card.",
+          "title": "Branch Action After Naming",
+          "use_when": "the opponent is likely to switch, reveal coverage, use a support",
+          "worst_branch": "You correctly say \"they switch to the answer,\" then choose a move that only beats the Pokemon currently on screen and hand the opponent the board."
+        }
+      ],
+      "evidence_refs": [
+        "docs/pokemon_mastery/policy_cards/branch_action_after_naming.md",
+        "docs/pokemon_mastery/heuristic_core/converter_before_script.md"
+      ],
+      "expected_acceptable_action_ids": [
+        "move_recover_loop"
+      ],
+      "expected_best_action_ids": [
+        "move_cashout_attack"
+      ],
+      "lesson_key": "docs\\pokemon_mastery\\policy_cards\\branch_action_after_naming.md",
+      "lesson_type": "hard_rule",
+      "next_action": "Check the answer-changing fact first: whether the attack misses the required range",
+      "policy_tags": [
+        "setup",
+        "cashout",
+        "reset_loop_denial"
+      ],
+      "priority_score": 201,
+      "reason": "ROM gives nonzero probability to bad action(s)",
+      "rolled_bad_action_ids": [
+        "move_more_setup"
+      ],
+      "rolled_catastrophic_action_ids": [],
+      "rom_best_action_id": "move_more_setup",
+      "rom_best_probability": 0.7265625,
+      "scenario_id": "generated_setup_heal_20260515_00004_stop_setup_when_attack_converts",
+      "severity": 80,
+      "verdict": "bad_roll",
+      "why": "Once the boosted route already converts, another setup turn is worse than cashing out the attack."
+    },
+    {
+      "answer_changing_information": [
+        "whether the attack misses the required range",
+        "whether healing is required before the route is lost"
+      ],
+      "condition_tags": [
+        "setup_already_bankrolled",
+        "active_pressure_converts",
+        "timer_pressure",
+        "setup_heal",
+        "stop_setup_when_attack_converts"
+      ],
+      "confidence": "medium",
+      "evidence_digest": [
+        {
+          "default_summary": "After naming the branch, name the action that beats that branch. Choose counter-switch, coverage, phaze, Reflect, Toxic, Screech, setup, status, Explosion, or sacrifice only if that action beats the named receiver or punish. Substitute/s...",
+          "evidence_count": 92,
+          "path": "docs\\pokemon_mastery\\policy_cards\\branch_action_after_naming.md",
+          "status": "active boundary card.",
+          "title": "Branch Action After Naming",
+          "use_when": "the opponent is likely to switch, reveal coverage, use a support",
+          "worst_branch": "You correctly say \"they switch to the answer,\" then choose a move that only beats the Pokemon currently on screen and hand the opponent the board."
+        }
+      ],
+      "evidence_refs": [
+        "docs/pokemon_mastery/policy_cards/branch_action_after_naming.md",
+        "docs/pokemon_mastery/heuristic_core/converter_before_script.md"
+      ],
+      "expected_acceptable_action_ids": [
+        "move_recover_loop"
+      ],
+      "expected_best_action_ids": [
+        "move_cashout_attack"
+      ],
+      "lesson_key": "docs\\pokemon_mastery\\policy_cards\\branch_action_after_naming.md",
+      "lesson_type": "hard_rule",
+      "next_action": "Check the answer-changing fact first: whether the attack misses the required range",
+      "policy_tags": [
+        "setup",
+        "cashout",
+        "reset_loop_denial"
+      ],
+      "priority_score": 201,
+      "reason": "ROM gives nonzero probability to bad action(s)",
+      "rolled_bad_action_ids": [
+        "move_more_setup"
+      ],
+      "rolled_catastrophic_action_ids": [],
+      "rom_best_action_id": "move_more_setup",
+      "rom_best_probability": 0.7265625,
+      "scenario_id": "generated_setup_heal_20260515_00010_stop_setup_when_attack_converts",
+      "severity": 80,
+      "verdict": "bad_roll",
+      "why": "Once the boosted route already converts, another setup turn is worse than cashing out the attack."
+    },
+    {
+      "answer_changing_information": [
+        "whether the attack misses the required range",
+        "whether healing is required before the route is lost"
+      ],
+      "condition_tags": [
+        "setup_already_bankrolled",
+        "active_pressure_converts",
+        "timer_pressure",
+        "setup_heal",
+        "stop_setup_when_attack_converts"
+      ],
+      "confidence": "medium",
+      "evidence_digest": [
+        {
+          "default_summary": "After naming the branch, name the action that beats that branch. Choose counter-switch, coverage, phaze, Reflect, Toxic, Screech, setup, status, Explosion, or sacrifice only if that action beats the named receiver or punish. Substitute/s...",
+          "evidence_count": 92,
+          "path": "docs\\pokemon_mastery\\policy_cards\\branch_action_after_naming.md",
+          "status": "active boundary card.",
+          "title": "Branch Action After Naming",
+          "use_when": "the opponent is likely to switch, reveal coverage, use a support",
+          "worst_branch": "You correctly say \"they switch to the answer,\" then choose a move that only beats the Pokemon currently on screen and hand the opponent the board."
+        }
+      ],
+      "evidence_refs": [
+        "docs/pokemon_mastery/policy_cards/branch_action_after_naming.md",
+        "docs/pokemon_mastery/heuristic_core/converter_before_script.md"
+      ],
+      "expected_acceptable_action_ids": [
+        "move_recover_loop"
+      ],
+      "expected_best_action_ids": [
+        "move_cashout_attack"
+      ],
+      "lesson_key": "docs\\pokemon_mastery\\policy_cards\\branch_action_after_naming.md",
+      "lesson_type": "hard_rule",
+      "next_action": "Check the answer-changing fact first: whether the attack misses the required range",
+      "policy_tags": [
+        "setup",
+        "cashout",
+        "reset_loop_denial"
+      ],
+      "priority_score": 201,
+      "reason": "ROM gives nonzero probability to bad action(s)",
+      "rolled_bad_action_ids": [
+        "move_more_setup"
+      ],
+      "rolled_catastrophic_action_ids": [],
+      "rom_best_action_id": "move_more_setup",
+      "rom_best_probability": 0.7265625,
+      "scenario_id": "generated_setup_heal_20260515_00016_stop_setup_when_attack_converts",
+      "severity": 80,
+      "verdict": "bad_roll",
+      "why": "Once the boosted route already converts, another setup turn is worse than cashing out the attack."
+    },
+    {
+      "answer_changing_information": [
+        "whether the attack misses the required range",
+        "whether healing is required before the route is lost"
+      ],
+      "condition_tags": [
+        "setup_already_bankrolled",
+        "active_pressure_converts",
+        "timer_pressure",
+        "setup_heal",
+        "stop_setup_when_attack_converts"
+      ],
+      "confidence": "medium",
+      "evidence_digest": [
+        {
+          "default_summary": "After naming the branch, name the action that beats that branch. Choose counter-switch, coverage, phaze, Reflect, Toxic, Screech, setup, status, Explosion, or sacrifice only if that action beats the named receiver or punish. Substitute/s...",
+          "evidence_count": 92,
+          "path": "docs\\pokemon_mastery\\policy_cards\\branch_action_after_naming.md",
+          "status": "active boundary card.",
+          "title": "Branch Action After Naming",
+          "use_when": "the opponent is likely to switch, reveal coverage, use a support",
+          "worst_branch": "You correctly say \"they switch to the answer,\" then choose a move that only beats the Pokemon currently on screen and hand the opponent the board."
+        }
+      ],
+      "evidence_refs": [
+        "docs/pokemon_mastery/policy_cards/branch_action_after_naming.md",
+        "docs/pokemon_mastery/heuristic_core/converter_before_script.md"
+      ],
+      "expected_acceptable_action_ids": [
+        "move_recover_loop"
+      ],
+      "expected_best_action_ids": [
+        "move_cashout_attack"
+      ],
+      "lesson_key": "docs\\pokemon_mastery\\policy_cards\\branch_action_after_naming.md",
+      "lesson_type": "hard_rule",
+      "next_action": "Check the answer-changing fact first: whether the attack misses the required range",
+      "policy_tags": [
+        "setup",
+        "cashout",
+        "reset_loop_denial"
+      ],
+      "priority_score": 201,
+      "reason": "ROM gives nonzero probability to bad action(s)",
+      "rolled_bad_action_ids": [
+        "move_more_setup"
+      ],
+      "rolled_catastrophic_action_ids": [],
+      "rom_best_action_id": "move_more_setup",
+      "rom_best_probability": 0.7265625,
+      "scenario_id": "generated_setup_heal_20260515_00019_stop_setup_when_attack_converts",
+      "severity": 80,
+      "verdict": "bad_roll",
+      "why": "Once the boosted route already converts, another setup turn is worse than cashing out the attack."
+    },
+    {
+      "answer_changing_information": [
+        "whether the branch has moved from possible-only to strong-prior",
+        "whether missing the prediction still preserves the route"
+      ],
+      "condition_tags": [
+        "prediction_branch_possible_only",
+        "worst_case_unguarded",
+        "active_pressure_converts",
+        "prediction_mix",
+        "reject_reckless_prediction"
+      ],
+      "confidence": "medium",
+      "evidence_digest": [
+        {
+          "default_summary": "After naming the branch, name the action that beats that branch. Choose counter-switch, coverage, phaze, Reflect, Toxic, Screech, setup, status, Explosion, or sacrifice only if that action beats the named receiver or punish. Substitute/s...",
+          "evidence_count": 92,
+          "path": "docs\\pokemon_mastery\\policy_cards\\branch_action_after_naming.md",
+          "status": "active boundary card.",
+          "title": "Branch Action After Naming",
+          "use_when": "the opponent is likely to switch, reveal coverage, use a support",
+          "worst_branch": "You correctly say \"they switch to the answer,\" then choose a move that only beats the Pokemon currently on screen and hand the opponent the board."
+        }
+      ],
+      "evidence_refs": [
+        "docs/pokemon_mastery/policy_cards/branch_action_after_naming.md",
+        "docs/pokemon_mastery/heuristic_core/public_info_tiers.md"
+      ],
+      "expected_acceptable_action_ids": [
+        "move_safe_handoff"
+      ],
+      "expected_best_action_ids": [
+        "move_safe_active_ko"
+      ],
+      "lesson_key": "docs\\pokemon_mastery\\policy_cards\\branch_action_after_naming.md",
+      "lesson_type": "hard_rule",
+      "next_action": "Check the answer-changing fact first: whether the branch has moved from possible-only to strong-prior",
+      "policy_tags": [
+        "prediction",
+        "risk_control",
+        "active_pressure"
+      ],
+      "priority_score": 200,
+      "reason": "ROM gives nonzero probability to bad action(s)",
+      "rolled_bad_action_ids": [
+        "move_reckless_prediction"
+      ],
+      "rolled_catastrophic_action_ids": [],
+      "rom_best_action_id": "move_safe_active_ko",
+      "rom_best_probability": 0.6796875,
+      "scenario_id": "generated_prediction_mix_20260515_00004_reject_reckless_prediction",
+      "severity": 80,
+      "verdict": "bad_roll",
+      "why": "Do not make a high-downside read top when the active conversion is already public and safe."
+    },
+    {
+      "answer_changing_information": [
+        "whether the branch has moved from possible-only to strong-prior",
+        "whether missing the prediction still preserves the route"
+      ],
+      "condition_tags": [
+        "prediction_branch_possible_only",
+        "worst_case_unguarded",
+        "active_pressure_converts",
+        "prediction_mix",
+        "reject_reckless_prediction"
+      ],
+      "confidence": "medium",
+      "evidence_digest": [
+        {
+          "default_summary": "After naming the branch, name the action that beats that branch. Choose counter-switch, coverage, phaze, Reflect, Toxic, Screech, setup, status, Explosion, or sacrifice only if that action beats the named receiver or punish. Substitute/s...",
+          "evidence_count": 92,
+          "path": "docs\\pokemon_mastery\\policy_cards\\branch_action_after_naming.md",
+          "status": "active boundary card.",
+          "title": "Branch Action After Naming",
+          "use_when": "the opponent is likely to switch, reveal coverage, use a support",
+          "worst_branch": "You correctly say \"they switch to the answer,\" then choose a move that only beats the Pokemon currently on screen and hand the opponent the board."
+        }
+      ],
+      "evidence_refs": [
+        "docs/pokemon_mastery/policy_cards/branch_action_after_naming.md",
+        "docs/pokemon_mastery/heuristic_core/public_info_tiers.md"
+      ],
+      "expected_acceptable_action_ids": [
+        "move_safe_handoff"
+      ],
+      "expected_best_action_ids": [
+        "move_safe_active_ko"
+      ],
+      "lesson_key": "docs\\pokemon_mastery\\policy_cards\\branch_action_after_naming.md",
+      "lesson_type": "hard_rule",
+      "next_action": "Check the answer-changing fact first: whether the branch has moved from possible-only to strong-prior",
+      "policy_tags": [
+        "prediction",
+        "risk_control",
+        "active_pressure"
+      ],
+      "priority_score": 200,
+      "reason": "ROM gives nonzero probability to bad action(s)",
+      "rolled_bad_action_ids": [
+        "move_reckless_prediction"
+      ],
+      "rolled_catastrophic_action_ids": [],
+      "rom_best_action_id": "move_safe_active_ko",
+      "rom_best_probability": 0.6796875,
+      "scenario_id": "generated_prediction_mix_20260515_00007_reject_reckless_prediction",
+      "severity": 80,
+      "verdict": "bad_roll",
+      "why": "Do not make a high-downside read top when the active conversion is already public and safe."
+    },
+    {
+      "answer_changing_information": [
+        "whether the branch has moved from possible-only to strong-prior",
+        "whether missing the prediction still preserves the route"
+      ],
+      "condition_tags": [
+        "prediction_branch_possible_only",
+        "worst_case_unguarded",
+        "active_pressure_converts",
+        "prediction_mix",
+        "reject_reckless_prediction"
+      ],
+      "confidence": "medium",
+      "evidence_digest": [
+        {
+          "default_summary": "After naming the branch, name the action that beats that branch. Choose counter-switch, coverage, phaze, Reflect, Toxic, Screech, setup, status, Explosion, or sacrifice only if that action beats the named receiver or punish. Substitute/s...",
+          "evidence_count": 92,
+          "path": "docs\\pokemon_mastery\\policy_cards\\branch_action_after_naming.md",
+          "status": "active boundary card.",
+          "title": "Branch Action After Naming",
+          "use_when": "the opponent is likely to switch, reveal coverage, use a support",
+          "worst_branch": "You correctly say \"they switch to the answer,\" then choose a move that only beats the Pokemon currently on screen and hand the opponent the board."
+        }
+      ],
+      "evidence_refs": [
+        "docs/pokemon_mastery/policy_cards/branch_action_after_naming.md",
+        "docs/pokemon_mastery/heuristic_core/public_info_tiers.md"
+      ],
+      "expected_acceptable_action_ids": [
+        "move_safe_handoff"
+      ],
+      "expected_best_action_ids": [
+        "move_safe_active_ko"
+      ],
+      "lesson_key": "docs\\pokemon_mastery\\policy_cards\\branch_action_after_naming.md",
+      "lesson_type": "hard_rule",
+      "next_action": "Check the answer-changing fact first: whether the branch has moved from possible-only to strong-prior",
+      "policy_tags": [
+        "prediction",
+        "risk_control",
+        "active_pressure"
+      ],
+      "priority_score": 200,
+      "reason": "ROM gives nonzero probability to bad action(s)",
+      "rolled_bad_action_ids": [
+        "move_reckless_prediction"
+      ],
+      "rolled_catastrophic_action_ids": [],
+      "rom_best_action_id": "move_safe_active_ko",
+      "rom_best_probability": 0.6796875,
+      "scenario_id": "generated_prediction_mix_20260515_00010_reject_reckless_prediction",
+      "severity": 80,
+      "verdict": "bad_roll",
+      "why": "Do not make a high-downside read top when the active conversion is already public and safe."
+    },
+    {
+      "answer_changing_information": [
+        "whether the branch has moved from possible-only to strong-prior",
+        "whether missing the prediction still preserves the route"
+      ],
+      "condition_tags": [
+        "prediction_branch_possible_only",
+        "worst_case_unguarded",
+        "active_pressure_converts",
+        "prediction_mix",
+        "reject_reckless_prediction"
+      ],
+      "confidence": "medium",
+      "evidence_digest": [
+        {
+          "default_summary": "After naming the branch, name the action that beats that branch. Choose counter-switch, coverage, phaze, Reflect, Toxic, Screech, setup, status, Explosion, or sacrifice only if that action beats the named receiver or punish. Substitute/s...",
+          "evidence_count": 92,
+          "path": "docs\\pokemon_mastery\\policy_cards\\branch_action_after_naming.md",
+          "status": "active boundary card.",
+          "title": "Branch Action After Naming",
+          "use_when": "the opponent is likely to switch, reveal coverage, use a support",
+          "worst_branch": "You correctly say \"they switch to the answer,\" then choose a move that only beats the Pokemon currently on screen and hand the opponent the board."
+        }
+      ],
+      "evidence_refs": [
+        "docs/pokemon_mastery/policy_cards/branch_action_after_naming.md",
+        "docs/pokemon_mastery/heuristic_core/public_info_tiers.md"
+      ],
+      "expected_acceptable_action_ids": [
+        "move_safe_handoff"
+      ],
+      "expected_best_action_ids": [
+        "move_safe_active_ko"
+      ],
+      "lesson_key": "docs\\pokemon_mastery\\policy_cards\\branch_action_after_naming.md",
+      "lesson_type": "hard_rule",
+      "next_action": "Check the answer-changing fact first: whether the branch has moved from possible-only to strong-prior",
+      "policy_tags": [
+        "prediction",
+        "risk_control",
+        "active_pressure"
+      ],
+      "priority_score": 200,
+      "reason": "ROM gives nonzero probability to bad action(s)",
+      "rolled_bad_action_ids": [
+        "move_reckless_prediction"
+      ],
+      "rolled_catastrophic_action_ids": [],
+      "rom_best_action_id": "move_safe_active_ko",
+      "rom_best_probability": 0.6796875,
+      "scenario_id": "generated_prediction_mix_20260515_00013_reject_reckless_prediction",
+      "severity": 80,
+      "verdict": "bad_roll",
+      "why": "Do not make a high-downside read top when the active conversion is already public and safe."
+    },
+    {
+      "answer_changing_information": [
+        "whether the branch has moved from possible-only to strong-prior",
+        "whether missing the prediction still preserves the route"
+      ],
+      "condition_tags": [
+        "prediction_branch_possible_only",
+        "worst_case_unguarded",
+        "active_pressure_converts",
+        "prediction_mix",
+        "reject_reckless_prediction"
+      ],
+      "confidence": "medium",
+      "evidence_digest": [
+        {
+          "default_summary": "After naming the branch, name the action that beats that branch. Choose counter-switch, coverage, phaze, Reflect, Toxic, Screech, setup, status, Explosion, or sacrifice only if that action beats the named receiver or punish. Substitute/s...",
+          "evidence_count": 92,
+          "path": "docs\\pokemon_mastery\\policy_cards\\branch_action_after_naming.md",
+          "status": "active boundary card.",
+          "title": "Branch Action After Naming",
+          "use_when": "the opponent is likely to switch, reveal coverage, use a support",
+          "worst_branch": "You correctly say \"they switch to the answer,\" then choose a move that only beats the Pokemon currently on screen and hand the opponent the board."
+        }
+      ],
+      "evidence_refs": [
+        "docs/pokemon_mastery/policy_cards/branch_action_after_naming.md",
+        "docs/pokemon_mastery/heuristic_core/public_info_tiers.md"
+      ],
+      "expected_acceptable_action_ids": [
+        "move_safe_handoff"
+      ],
+      "expected_best_action_ids": [
+        "move_safe_active_ko"
+      ],
+      "lesson_key": "docs\\pokemon_mastery\\policy_cards\\branch_action_after_naming.md",
+      "lesson_type": "hard_rule",
+      "next_action": "Check the answer-changing fact first: whether the branch has moved from possible-only to strong-prior",
+      "policy_tags": [
+        "prediction",
+        "risk_control",
+        "active_pressure"
+      ],
+      "priority_score": 200,
+      "reason": "ROM gives nonzero probability to bad action(s)",
+      "rolled_bad_action_ids": [
+        "move_reckless_prediction"
+      ],
+      "rolled_catastrophic_action_ids": [],
+      "rom_best_action_id": "move_safe_active_ko",
+      "rom_best_probability": 0.6796875,
+      "scenario_id": "generated_prediction_mix_20260515_00016_reject_reckless_prediction",
+      "severity": 80,
+      "verdict": "bad_roll",
+      "why": "Do not make a high-downside read top when the active conversion is already public and safe."
+    },
+    {
+      "answer_changing_information": [
+        "whether the branch has moved from possible-only to strong-prior",
+        "whether missing the prediction still preserves the route"
+      ],
+      "condition_tags": [
+        "prediction_branch_possible_only",
+        "worst_case_unguarded",
+        "active_pressure_converts",
+        "prediction_mix",
+        "reject_reckless_prediction"
+      ],
+      "confidence": "medium",
+      "evidence_digest": [
+        {
+          "default_summary": "After naming the branch, name the action that beats that branch. Choose counter-switch, coverage, phaze, Reflect, Toxic, Screech, setup, status, Explosion, or sacrifice only if that action beats the named receiver or punish. Substitute/s...",
+          "evidence_count": 92,
+          "path": "docs\\pokemon_mastery\\policy_cards\\branch_action_after_naming.md",
+          "status": "active boundary card.",
+          "title": "Branch Action After Naming",
+          "use_when": "the opponent is likely to switch, reveal coverage, use a support",
+          "worst_branch": "You correctly say \"they switch to the answer,\" then choose a move that only beats the Pokemon currently on screen and hand the opponent the board."
+        }
+      ],
+      "evidence_refs": [
+        "docs/pokemon_mastery/policy_cards/branch_action_after_naming.md",
+        "docs/pokemon_mastery/heuristic_core/public_info_tiers.md"
+      ],
+      "expected_acceptable_action_ids": [
+        "move_safe_handoff"
+      ],
+      "expected_best_action_ids": [
+        "move_safe_active_ko"
+      ],
+      "lesson_key": "docs\\pokemon_mastery\\policy_cards\\branch_action_after_naming.md",
+      "lesson_type": "hard_rule",
+      "next_action": "Check the answer-changing fact first: whether the branch has moved from possible-only to strong-prior",
+      "policy_tags": [
+        "prediction",
+        "risk_control",
+        "active_pressure"
+      ],
+      "priority_score": 200,
+      "reason": "ROM gives nonzero probability to bad action(s)",
+      "rolled_bad_action_ids": [
+        "move_reckless_prediction"
+      ],
+      "rolled_catastrophic_action_ids": [],
+      "rom_best_action_id": "move_safe_active_ko",
+      "rom_best_probability": 0.6796875,
+      "scenario_id": "generated_prediction_mix_20260515_00019_reject_reckless_prediction",
+      "severity": 80,
+      "verdict": "bad_roll",
+      "why": "Do not make a high-downside read top when the active conversion is already public and safe."
+    },
+    {
+      "answer_changing_information": [
+        "whether the attack misses the required range",
+        "whether healing is required before the route is lost"
+      ],
+      "condition_tags": [
+        "setup_already_bankrolled",
+        "active_pressure_converts",
+        "timer_pressure",
+        "setup_heal",
+        "stop_setup_when_attack_converts"
+      ],
+      "confidence": "medium",
+      "evidence_digest": [
+        {
+          "default_summary": "After naming the branch, name the action that beats that branch. Choose counter-switch, coverage, phaze, Reflect, Toxic, Screech, setup, status, Explosion, or sacrifice only if that action beats the named receiver or punish. Substitute/s...",
+          "evidence_count": 92,
+          "path": "docs\\pokemon_mastery\\policy_cards\\branch_action_after_naming.md",
+          "status": "active boundary card.",
+          "title": "Branch Action After Naming",
+          "use_when": "the opponent is likely to switch, reveal coverage, use a support",
+          "worst_branch": "You correctly say \"they switch to the answer,\" then choose a move that only beats the Pokemon currently on screen and hand the opponent the board."
+        }
+      ],
+      "evidence_refs": [
+        "docs/pokemon_mastery/policy_cards/branch_action_after_naming.md",
+        "docs/pokemon_mastery/heuristic_core/converter_before_script.md"
+      ],
+      "expected_acceptable_action_ids": [
+        "move_recover_loop"
+      ],
+      "expected_best_action_ids": [
+        "move_cashout_attack"
+      ],
+      "lesson_key": "docs\\pokemon_mastery\\policy_cards\\branch_action_after_naming.md",
+      "lesson_type": "hard_rule",
+      "next_action": "Check the answer-changing fact first: whether the attack misses the required range",
+      "policy_tags": [
+        "setup",
+        "cashout",
+        "reset_loop_denial"
+      ],
+      "priority_score": 200,
+      "reason": "ROM gives nonzero probability to bad action(s)",
+      "rolled_bad_action_ids": [
+        "move_more_setup"
+      ],
+      "rolled_catastrophic_action_ids": [],
+      "rom_best_action_id": "move_more_setup",
+      "rom_best_probability": 0.6796875,
+      "scenario_id": "generated_setup_heal_20260515_00001_stop_setup_when_attack_converts",
+      "severity": 80,
+      "verdict": "bad_roll",
+      "why": "Once the boosted route already converts, another setup turn is worse than cashing out the attack."
+    },
+    {
+      "answer_changing_information": [
+        "whether the attack misses the required range",
+        "whether healing is required before the route is lost"
+      ],
+      "condition_tags": [
+        "setup_already_bankrolled",
+        "active_pressure_converts",
+        "timer_pressure",
+        "setup_heal",
+        "stop_setup_when_attack_converts"
+      ],
+      "confidence": "medium",
+      "evidence_digest": [
+        {
+          "default_summary": "After naming the branch, name the action that beats that branch. Choose counter-switch, coverage, phaze, Reflect, Toxic, Screech, setup, status, Explosion, or sacrifice only if that action beats the named receiver or punish. Substitute/s...",
+          "evidence_count": 92,
+          "path": "docs\\pokemon_mastery\\policy_cards\\branch_action_after_naming.md",
+          "status": "active boundary card.",
+          "title": "Branch Action After Naming",
+          "use_when": "the opponent is likely to switch, reveal coverage, use a support",
+          "worst_branch": "You correctly say \"they switch to the answer,\" then choose a move that only beats the Pokemon currently on screen and hand the opponent the board."
+        }
+      ],
+      "evidence_refs": [
+        "docs/pokemon_mastery/policy_cards/branch_action_after_naming.md",
+        "docs/pokemon_mastery/heuristic_core/converter_before_script.md"
+      ],
+      "expected_acceptable_action_ids": [
+        "move_recover_loop"
+      ],
+      "expected_best_action_ids": [
+        "move_cashout_attack"
+      ],
+      "lesson_key": "docs\\pokemon_mastery\\policy_cards\\branch_action_after_naming.md",
+      "lesson_type": "hard_rule",
+      "next_action": "Check the answer-changing fact first: whether the attack misses the required range",
+      "policy_tags": [
+        "setup",
+        "cashout",
+        "reset_loop_denial"
+      ],
+      "priority_score": 200,
+      "reason": "ROM gives nonzero probability to bad action(s)",
+      "rolled_bad_action_ids": [
+        "move_more_setup"
+      ],
+      "rolled_catastrophic_action_ids": [],
+      "rom_best_action_id": "move_more_setup",
+      "rom_best_probability": 0.6796875,
+      "scenario_id": "generated_setup_heal_20260515_00007_stop_setup_when_attack_converts",
+      "severity": 80,
+      "verdict": "bad_roll",
+      "why": "Once the boosted route already converts, another setup turn is worse than cashing out the attack."
+    },
+    {
+      "answer_changing_information": [
+        "whether the attack misses the required range",
+        "whether healing is required before the route is lost"
+      ],
+      "condition_tags": [
+        "setup_already_bankrolled",
+        "active_pressure_converts",
+        "timer_pressure",
+        "setup_heal",
+        "stop_setup_when_attack_converts"
+      ],
+      "confidence": "medium",
+      "evidence_digest": [
+        {
+          "default_summary": "After naming the branch, name the action that beats that branch. Choose counter-switch, coverage, phaze, Reflect, Toxic, Screech, setup, status, Explosion, or sacrifice only if that action beats the named receiver or punish. Substitute/s...",
+          "evidence_count": 92,
+          "path": "docs\\pokemon_mastery\\policy_cards\\branch_action_after_naming.md",
+          "status": "active boundary card.",
+          "title": "Branch Action After Naming",
+          "use_when": "the opponent is likely to switch, reveal coverage, use a support",
+          "worst_branch": "You correctly say \"they switch to the answer,\" then choose a move that only beats the Pokemon currently on screen and hand the opponent the board."
+        }
+      ],
+      "evidence_refs": [
+        "docs/pokemon_mastery/policy_cards/branch_action_after_naming.md",
+        "docs/pokemon_mastery/heuristic_core/converter_before_script.md"
+      ],
+      "expected_acceptable_action_ids": [
+        "move_recover_loop"
+      ],
+      "expected_best_action_ids": [
+        "move_cashout_attack"
+      ],
+      "lesson_key": "docs\\pokemon_mastery\\policy_cards\\branch_action_after_naming.md",
+      "lesson_type": "hard_rule",
+      "next_action": "Check the answer-changing fact first: whether the attack misses the required range",
+      "policy_tags": [
+        "setup",
+        "cashout",
+        "reset_loop_denial"
+      ],
+      "priority_score": 200,
+      "reason": "ROM gives nonzero probability to bad action(s)",
+      "rolled_bad_action_ids": [
+        "move_more_setup"
+      ],
+      "rolled_catastrophic_action_ids": [],
+      "rom_best_action_id": "move_more_setup",
+      "rom_best_probability": 0.6796875,
+      "scenario_id": "generated_setup_heal_20260515_00013_stop_setup_when_attack_converts",
+      "severity": 80,
+      "verdict": "bad_roll",
+      "why": "Once the boosted route already converts, another setup turn is worse than cashing out the attack."
+    },
+    {
+      "answer_changing_information": [
+        "whether the converter has a safe entry path",
+        "whether the reset branch must be covered immediately"
+      ],
+      "condition_tags": [
+        "support_job_completed",
+        "named_next_board_owner",
+        "reset_loop_live",
+        "support_handoff",
+        "handoff_after_support_lands"
+      ],
+      "confidence": "medium",
+      "evidence_digest": [
+        {
+          "default_summary": "After support lands, immediately name the next board. Identify the converter, the opponent's best counter-pivot, and the resource that must be preserved for the handoff. Screen/drop sequence extension: Reflect, Light Screen, Screech, and...",
+          "evidence_count": 21,
+          "path": "docs\\pokemon_mastery\\policy_cards\\support_handoff_after_job.md",
+          "status": "active boundary card.",
+          "title": "Support Handoff After Job",
+          "use_when": "a support move, phaze, status, hazard, scout, or lure has just landed",
+          "worst_branch": "You celebrate the support action, miss the counter-pivot, and let the opponent erase the route before the converter enters."
+        }
+      ],
+      "evidence_refs": [
+        "docs/pokemon_mastery/policy_cards/support_handoff_after_job.md",
+        "docs/pokemon_mastery/heuristic_core/name_next_board_owner.md"
+      ],
+      "expected_acceptable_action_ids": [
+        "move_cover_reset"
+      ],
+      "expected_best_action_ids": [
+        "move_handoff_converter"
+      ],
+      "lesson_key": "docs\\pokemon_mastery\\policy_cards\\support_handoff_after_job.md",
+      "lesson_type": "weight_hint",
+      "next_action": "Check the answer-changing fact first: whether the converter has a safe entry path",
+      "policy_tags": [
+        "support_handoff",
+        "route_converter",
+        "reset_loop_denial"
+      ],
+      "priority_score": 200,
+      "reason": "ROM gives nonzero probability to bad action(s)",
+      "rolled_bad_action_ids": [
+        "move_repeat_support"
+      ],
+      "rolled_catastrophic_action_ids": [],
+      "rom_best_action_id": "move_repeat_support",
+      "rom_best_probability": 0.6796875,
+      "scenario_id": "generated_support_handoff_20260515_00006_handoff_after_support_lands",
+      "severity": 80,
+      "verdict": "bad_roll",
+      "why": "After support succeeds, convert or cover the reset branch instead of repeating the support move."
+    },
+    {
+      "answer_changing_information": [
+        "whether the converter has a safe entry path",
+        "whether the reset branch must be covered immediately"
+      ],
+      "condition_tags": [
+        "support_job_completed",
+        "named_next_board_owner",
+        "reset_loop_live",
+        "support_handoff",
+        "handoff_after_support_lands"
+      ],
+      "confidence": "medium",
+      "evidence_digest": [
+        {
+          "default_summary": "After support lands, immediately name the next board. Identify the converter, the opponent's best counter-pivot, and the resource that must be preserved for the handoff. Screen/drop sequence extension: Reflect, Light Screen, Screech, and...",
+          "evidence_count": 21,
+          "path": "docs\\pokemon_mastery\\policy_cards\\support_handoff_after_job.md",
+          "status": "active boundary card.",
+          "title": "Support Handoff After Job",
+          "use_when": "a support move, phaze, status, hazard, scout, or lure has just landed",
+          "worst_branch": "You celebrate the support action, miss the counter-pivot, and let the opponent erase the route before the converter enters."
+        }
+      ],
+      "evidence_refs": [
+        "docs/pokemon_mastery/policy_cards/support_handoff_after_job.md",
+        "docs/pokemon_mastery/heuristic_core/name_next_board_owner.md"
+      ],
+      "expected_acceptable_action_ids": [
+        "move_cover_reset"
+      ],
+      "expected_best_action_ids": [
+        "move_handoff_converter"
+      ],
+      "lesson_key": "docs\\pokemon_mastery\\policy_cards\\support_handoff_after_job.md",
+      "lesson_type": "weight_hint",
+      "next_action": "Check the answer-changing fact first: whether the converter has a safe entry path",
+      "policy_tags": [
+        "support_handoff",
+        "route_converter",
+        "reset_loop_denial"
+      ],
+      "priority_score": 200,
+      "reason": "ROM gives nonzero probability to bad action(s)",
+      "rolled_bad_action_ids": [
+        "move_repeat_support"
+      ],
+      "rolled_catastrophic_action_ids": [],
+      "rom_best_action_id": "move_repeat_support",
+      "rom_best_probability": 0.6796875,
+      "scenario_id": "generated_support_handoff_20260515_00009_handoff_after_support_lands",
+      "severity": 80,
+      "verdict": "bad_roll",
+      "why": "After support succeeds, convert or cover the reset branch instead of repeating the support move."
+    },
+    {
+      "answer_changing_information": [
+        "whether the opponent has a live Spin, Recover, or phaze counter-loop",
+        "whether chip forces an immediate irreversible threshold"
+      ],
+      "condition_tags": [
+        "spikes_layers_2",
+        "phaze_loop_live",
+        "reset_loop_denied",
+        "named_current_owner",
+        "support_handoff",
+        "phaze_loop_over_generic_chip"
+      ],
+      "confidence": "medium",
+      "evidence_digest": [
+        {
+          "default_summary": "Treat Spikes as a route subgame. Ask whether the line sets, retains, removes, punishes Spin, or converts the entry map. Hazard progress is not real if the opponent can remove it without giving up a route-relevant cost. Hazard job orderin...",
+          "evidence_count": 49,
+          "path": "docs\\pokemon_mastery\\policy_cards\\hazard_loop_spin_window.md",
+          "status": "active boundary card.",
+          "title": "Hazard Loop Spin Window",
+          "use_when": "Spikes, Rapid Spin, spinblocking, or post-support handoff determines",
+          "worst_branch": "You call setting Spikes progress, give the opponent a free spinner sequence, and lose both hazard pressure and tempo."
+        }
+      ],
+      "evidence_refs": [
+        "docs/pokemon_mastery/policy_cards/hazard_loop_spin_window.md",
+        "docs/pokemon_mastery/heuristic_core/reset_loop_denial.md"
+      ],
+      "expected_acceptable_action_ids": [
+        "move_spikes_reset"
+      ],
+      "expected_best_action_ids": [
+        "move_roar_loop"
+      ],
+      "lesson_key": "docs\\pokemon_mastery\\policy_cards\\hazard_loop_spin_window.md",
+      "lesson_type": "weight_hint",
+      "next_action": "Check the answer-changing fact first: whether the opponent has a live Spin, Recover, or phaze counter-loop",
+      "policy_tags": [
+        "phazing",
+        "hazard_retention",
+        "reset_loop_denial"
+      ],
+      "priority_score": 171,
+      "reason": "ROM top action is outside expected best/acceptable sets",
+      "rolled_bad_action_ids": [],
+      "rolled_catastrophic_action_ids": [],
+      "rom_best_action_id": "move_generic_chip",
+      "rom_best_probability": 0.6796875,
+      "scenario_id": "generated_support_handoff_20260515_00017_phaze_loop_over_generic_chip",
+      "severity": 70,
+      "verdict": "mismatch",
+      "why": "When hazards and public phazing own the route, keep the phaze loop above generic chip or retreat."
+    },
+    {
+      "answer_changing_information": [
+        "whether the switch target enters safely",
+        "whether active damage also changes the receiver board"
+      ],
+      "condition_tags": [
+        "named_next_board_owner",
+        "safe_entry_available",
+        "ace_preservation",
+        "public_threat_to_active",
+        "switch_sack",
+        "preserve_wincon_over_comfort_damage"
+      ],
+      "confidence": "medium",
+      "evidence_digest": [],
+      "evidence_refs": [
+        "docs/pokemon_mastery/heuristic_core/name_next_board_owner.md",
+        "docs/pokemon_mastery/heuristic_core/spend_or_save_piece.md"
+      ],
+      "expected_acceptable_action_ids": [
+        "move_comfort_damage"
+      ],
+      "expected_best_action_ids": [
+        "move_preserve_wincon_switch"
+      ],
+      "lesson_key": "tag:switching",
+      "lesson_type": "weight_hint",
+      "next_action": "Check the answer-changing fact first: whether the switch target enters safely",
+      "policy_tags": [
+        "switching",
+        "ace_preservation",
+        "route_owner"
+      ],
+      "priority_score": 89,
+      "reason": "ROM top action is acceptable but not expected-best",
+      "rolled_bad_action_ids": [],
+      "rolled_catastrophic_action_ids": [],
+      "rom_best_action_id": "move_comfort_damage",
+      "rom_best_probability": 0.95703125,
+      "scenario_id": "generated_switch_sack_20260515_00015_preserve_wincon_over_comfort_damage",
+      "severity": 30,
+      "verdict": "acceptable_top",
+      "why": "When the active can leave and a preserved owner owns the next board, rank the switch above comfortable chip."
+    },
+    {
+      "answer_changing_information": [
+        "whether the switch target enters safely",
+        "whether active damage also changes the receiver board"
+      ],
+      "condition_tags": [
+        "named_next_board_owner",
+        "safe_entry_available",
+        "ace_preservation",
+        "public_threat_to_active",
+        "switch_sack",
+        "preserve_wincon_over_comfort_damage"
+      ],
+      "confidence": "medium",
+      "evidence_digest": [],
+      "evidence_refs": [
+        "docs/pokemon_mastery/heuristic_core/name_next_board_owner.md",
+        "docs/pokemon_mastery/heuristic_core/spend_or_save_piece.md"
+      ],
+      "expected_acceptable_action_ids": [
+        "move_comfort_damage"
+      ],
+      "expected_best_action_ids": [
+        "move_preserve_wincon_switch"
+      ],
+      "lesson_key": "tag:switching",
+      "lesson_type": "weight_hint",
+      "next_action": "Check the answer-changing fact first: whether the switch target enters safely",
+      "policy_tags": [
+        "switching",
+        "ace_preservation",
+        "route_owner"
+      ],
+      "priority_score": 89,
+      "reason": "ROM top action is acceptable but not expected-best",
+      "rolled_bad_action_ids": [],
+      "rolled_catastrophic_action_ids": [],
+      "rom_best_action_id": "move_comfort_damage",
+      "rom_best_probability": 0.984375,
+      "scenario_id": "generated_switch_sack_20260515_00018_preserve_wincon_over_comfort_damage",
+      "severity": 30,
+      "verdict": "acceptable_top",
+      "why": "When the active can leave and a preserved owner owns the next board, rank the switch above comfortable chip."
+    },
+    {
+      "answer_changing_information": [
+        "whether the receiver branch is actually public-supported",
+        "how much the coverage loses if the active stays in"
+      ],
+      "condition_tags": [
+        "named_receiver_branch",
+        "prediction_branch_supported",
+        "worst_case_guarded",
+        "prediction_ev_positive",
+        "prediction_mix",
+        "coverage_into_named_receiver"
+      ],
+      "confidence": "medium",
+      "evidence_digest": [
+        {
+          "default_summary": "After naming the branch, name the action that beats that branch. Choose counter-switch, coverage, phaze, Reflect, Toxic, Screech, setup, status, Explosion, or sacrifice only if that action beats the named receiver or punish. Substitute/s...",
+          "evidence_count": 92,
+          "path": "docs\\pokemon_mastery\\policy_cards\\branch_action_after_naming.md",
+          "status": "active boundary card.",
+          "title": "Branch Action After Naming",
+          "use_when": "the opponent is likely to switch, reveal coverage, use a support",
+          "worst_branch": "You correctly say \"they switch to the answer,\" then choose a move that only beats the Pokemon currently on screen and hand the opponent the board."
+        }
+      ],
+      "evidence_refs": [
+        "docs/pokemon_mastery/policy_cards/branch_action_after_naming.md",
+        "docs/pokemon_mastery/heuristic_core/branch_punish_ranking.md"
+      ],
+      "expected_acceptable_action_ids": [
+        "move_counter_handoff",
+        "move_obvious_stab"
+      ],
+      "expected_best_action_ids": [
+        "move_receiver_coverage"
+      ],
+      "lesson_key": "docs\\pokemon_mastery\\policy_cards\\branch_action_after_naming.md",
+      "lesson_type": "weight_hint",
+      "next_action": "Check the answer-changing fact first: whether the receiver branch is actually public-supported",
+      "policy_tags": [
+        "prediction",
+        "branch_action",
+        "receiver_pricing"
+      ],
+      "priority_score": 87,
+      "reason": "ROM top action is acceptable but not expected-best",
+      "rolled_bad_action_ids": [],
+      "rolled_catastrophic_action_ids": [],
+      "rom_best_action_id": "move_obvious_stab",
+      "rom_best_probability": 0.7265625,
+      "scenario_id": "generated_prediction_mix_20260515_00000_coverage_into_named_receiver",
+      "severity": 30,
+      "verdict": "acceptable_top",
+      "why": "Prediction is correct when public receiver probability and payoff beat the obvious line with bounded downside."
+    },
+    {
+      "answer_changing_information": [
+        "whether the receiver branch is actually public-supported",
+        "how much the coverage loses if the active stays in"
+      ],
+      "condition_tags": [
+        "named_receiver_branch",
+        "prediction_branch_supported",
+        "worst_case_guarded",
+        "prediction_ev_positive",
+        "prediction_mix",
+        "coverage_into_named_receiver"
+      ],
+      "confidence": "medium",
+      "evidence_digest": [
+        {
+          "default_summary": "After naming the branch, name the action that beats that branch. Choose counter-switch, coverage, phaze, Reflect, Toxic, Screech, setup, status, Explosion, or sacrifice only if that action beats the named receiver or punish. Substitute/s...",
+          "evidence_count": 92,
+          "path": "docs\\pokemon_mastery\\policy_cards\\branch_action_after_naming.md",
+          "status": "active boundary card.",
+          "title": "Branch Action After Naming",
+          "use_when": "the opponent is likely to switch, reveal coverage, use a support",
+          "worst_branch": "You correctly say \"they switch to the answer,\" then choose a move that only beats the Pokemon currently on screen and hand the opponent the board."
+        }
+      ],
+      "evidence_refs": [
+        "docs/pokemon_mastery/policy_cards/branch_action_after_naming.md",
+        "docs/pokemon_mastery/heuristic_core/branch_punish_ranking.md"
+      ],
+      "expected_acceptable_action_ids": [
+        "move_counter_handoff",
+        "move_obvious_stab"
+      ],
+      "expected_best_action_ids": [
+        "move_receiver_coverage"
+      ],
+      "lesson_key": "docs\\pokemon_mastery\\policy_cards\\branch_action_after_naming.md",
+      "lesson_type": "weight_hint",
+      "next_action": "Check the answer-changing fact first: whether the receiver branch is actually public-supported",
+      "policy_tags": [
+        "prediction",
+        "branch_action",
+        "receiver_pricing"
+      ],
+      "priority_score": 87,
+      "reason": "ROM top action is acceptable but not expected-best",
+      "rolled_bad_action_ids": [],
+      "rolled_catastrophic_action_ids": [],
+      "rom_best_action_id": "move_obvious_stab",
+      "rom_best_probability": 0.7265625,
+      "scenario_id": "generated_prediction_mix_20260515_00006_coverage_into_named_receiver",
+      "severity": 30,
+      "verdict": "acceptable_top",
+      "why": "Prediction is correct when public receiver probability and payoff beat the obvious line with bounded downside."
+    },
+    {
+      "answer_changing_information": [
+        "whether the receiver branch is actually public-supported",
+        "how much the coverage loses if the active stays in"
+      ],
+      "condition_tags": [
+        "named_receiver_branch",
+        "prediction_branch_supported",
+        "worst_case_guarded",
+        "prediction_ev_positive",
+        "prediction_mix",
+        "coverage_into_named_receiver"
+      ],
+      "confidence": "medium",
+      "evidence_digest": [
+        {
+          "default_summary": "After naming the branch, name the action that beats that branch. Choose counter-switch, coverage, phaze, Reflect, Toxic, Screech, setup, status, Explosion, or sacrifice only if that action beats the named receiver or punish. Substitute/s...",
+          "evidence_count": 92,
+          "path": "docs\\pokemon_mastery\\policy_cards\\branch_action_after_naming.md",
+          "status": "active boundary card.",
+          "title": "Branch Action After Naming",
+          "use_when": "the opponent is likely to switch, reveal coverage, use a support",
+          "worst_branch": "You correctly say \"they switch to the answer,\" then choose a move that only beats the Pokemon currently on screen and hand the opponent the board."
+        }
+      ],
+      "evidence_refs": [
+        "docs/pokemon_mastery/policy_cards/branch_action_after_naming.md",
+        "docs/pokemon_mastery/heuristic_core/branch_punish_ranking.md"
+      ],
+      "expected_acceptable_action_ids": [
+        "move_counter_handoff",
+        "move_obvious_stab"
+      ],
+      "expected_best_action_ids": [
+        "move_receiver_coverage"
+      ],
+      "lesson_key": "docs\\pokemon_mastery\\policy_cards\\branch_action_after_naming.md",
+      "lesson_type": "weight_hint",
+      "next_action": "Check the answer-changing fact first: whether the receiver branch is actually public-supported",
+      "policy_tags": [
+        "prediction",
+        "branch_action",
+        "receiver_pricing"
+      ],
+      "priority_score": 87,
+      "reason": "ROM top action is acceptable but not expected-best",
+      "rolled_bad_action_ids": [],
+      "rolled_catastrophic_action_ids": [],
+      "rom_best_action_id": "move_obvious_stab",
+      "rom_best_probability": 0.7265625,
+      "scenario_id": "generated_prediction_mix_20260515_00009_coverage_into_named_receiver",
+      "severity": 30,
+      "verdict": "acceptable_top",
+      "why": "Prediction is correct when public receiver probability and payoff beat the obvious line with bounded downside."
+    },
+    {
+      "answer_changing_information": [
+        "whether the receiver branch is actually public-supported",
+        "how much the coverage loses if the active stays in"
+      ],
+      "condition_tags": [
+        "named_receiver_branch",
+        "prediction_branch_supported",
+        "worst_case_guarded",
+        "prediction_ev_positive",
+        "prediction_mix",
+        "coverage_into_named_receiver"
+      ],
+      "confidence": "medium",
+      "evidence_digest": [
+        {
+          "default_summary": "After naming the branch, name the action that beats that branch. Choose counter-switch, coverage, phaze, Reflect, Toxic, Screech, setup, status, Explosion, or sacrifice only if that action beats the named receiver or punish. Substitute/s...",
+          "evidence_count": 92,
+          "path": "docs\\pokemon_mastery\\policy_cards\\branch_action_after_naming.md",
+          "status": "active boundary card.",
+          "title": "Branch Action After Naming",
+          "use_when": "the opponent is likely to switch, reveal coverage, use a support",
+          "worst_branch": "You correctly say \"they switch to the answer,\" then choose a move that only beats the Pokemon currently on screen and hand the opponent the board."
+        }
+      ],
+      "evidence_refs": [
+        "docs/pokemon_mastery/policy_cards/branch_action_after_naming.md",
+        "docs/pokemon_mastery/heuristic_core/branch_punish_ranking.md"
+      ],
+      "expected_acceptable_action_ids": [
+        "move_counter_handoff",
+        "move_obvious_stab"
+      ],
+      "expected_best_action_ids": [
+        "move_receiver_coverage"
+      ],
+      "lesson_key": "docs\\pokemon_mastery\\policy_cards\\branch_action_after_naming.md",
+      "lesson_type": "weight_hint",
+      "next_action": "Check the answer-changing fact first: whether the receiver branch is actually public-supported",
+      "policy_tags": [
+        "prediction",
+        "branch_action",
+        "receiver_pricing"
+      ],
+      "priority_score": 87,
+      "reason": "ROM top action is acceptable but not expected-best",
+      "rolled_bad_action_ids": [],
+      "rolled_catastrophic_action_ids": [],
+      "rom_best_action_id": "move_obvious_stab",
+      "rom_best_probability": 0.7265625,
+      "scenario_id": "generated_prediction_mix_20260515_00015_coverage_into_named_receiver",
+      "severity": 30,
+      "verdict": "acceptable_top",
+      "why": "Prediction is correct when public receiver probability and payoff beat the obvious line with bounded downside."
+    }
+  ],
+  "limit": 50,
+  "max_per_lesson": 5,
+  "returned_count": 50,
+  "schema_version": 1,
+  "source": "C:\\Users\\lolno\\Downloads\\pokemon gold hack\\audit\\boss_ai_debugger\\runs\\expanded_policy_after_broad_score\\batch_report.json"
+}
