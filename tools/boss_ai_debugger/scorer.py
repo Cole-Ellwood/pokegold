@@ -491,6 +491,18 @@ def score_action(
                     18,
                     "sleep-first line can create the setup turn against an unstatused target",
                 )
+            if (
+                name in SLEEP_NAMES
+                and "sleep" in tags
+                and "setup" not in tags
+                and not _has_status(_player_active_status(fixture))
+            ):
+                _add(
+                    contributions,
+                    "sleep_clause_free_window",
+                    4,
+                    "sleep is publicly legal (player active unstatused, sleep tag) — sleep-inducing move neutralises the current threat for a tempo turn",
+                )
             if "cheap" in text or "annoying" in text:
                 _add(contributions, "taste_risk", -3, "status line needs user taste judgment")
         if name in SACRIFICE_NAMES:

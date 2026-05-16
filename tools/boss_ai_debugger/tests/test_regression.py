@@ -819,6 +819,95 @@ class RegressionTests(unittest.TestCase):
         rules = {c["rule"] for c in switch["contributions"]}
         self.assertNotIn("healthy_ace_setup_lock_pivot", rules)
 
+    def test_sleep_clause_free_window_fires_on_unstatused_target(self) -> None:
+        fixture = {
+            "id": "sleep_clause_free_fixture",
+            "leader": "Tester",
+            "tags": ["sleep", "status", "fairness"],
+            "state": {
+                "boss": {
+                    "active": {"species": "Haunter", "hp": "88%"},
+                },
+                "player": {
+                    "active": {"species": "Noctowl", "status": "none"},
+                },
+            },
+            "actions": [
+                {
+                    "id": "move_hypnosis",
+                    "kind": "move",
+                    "name": "Hypnosis",
+                    "explanation": "Status pressure into a bulky bird.",
+                    "public_tradeoff": "Sleep window.",
+                },
+            ],
+        }
+        move = score_action(fixture, fixture["actions"][0])
+        rules = {c["rule"] for c in move["contributions"]}
+        self.assertIn("sleep_clause_free_window", rules)
+        contribution = next(
+            c for c in move["contributions"]
+            if c["rule"] == "sleep_clause_free_window"
+        )
+        self.assertEqual(contribution["delta"], 4)
+
+    def test_sleep_clause_free_window_misses_when_target_already_asleep(self) -> None:
+        fixture = {
+            "id": "sleep_already_fixture",
+            "leader": "Tester",
+            "tags": ["sleep", "status"],
+            "state": {
+                "boss": {
+                    "active": {"species": "Haunter", "hp": "88%"},
+                },
+                "player": {
+                    "active": {"species": "Noctowl", "status": "sleep"},
+                },
+            },
+            "actions": [
+                {
+                    "id": "move_hypnosis",
+                    "kind": "move",
+                    "name": "Hypnosis",
+                    "explanation": "Status pressure.",
+                    "public_tradeoff": "Sleep window.",
+                },
+            ],
+        }
+        move = score_action(fixture, fixture["actions"][0])
+        rules = {c["rule"] for c in move["contributions"]}
+        self.assertNotIn("sleep_clause_free_window", rules)
+
+    def test_sleep_clause_free_window_does_not_double_count_with_sleep_enables_setup_line(self) -> None:
+        # When both 'sleep' AND 'setup' tags are present (the older setup-line case),
+        # we want sleep_enables_setup_line (+18) and NOT also the +4 floor bonus.
+        fixture = {
+            "id": "sleep_plus_setup_fixture",
+            "leader": "Tester",
+            "tags": ["sleep", "setup"],
+            "state": {
+                "boss": {
+                    "active": {"species": "Haunter", "hp": "100%"},
+                },
+                "player": {
+                    "active": {"species": "Snorlax", "status": "none"},
+                },
+            },
+            "actions": [
+                {
+                    "id": "move_hypnosis",
+                    "kind": "move",
+                    "name": "Hypnosis",
+                    "explanation": "Sleep before set up.",
+                    "public_tradeoff": "Sleep window.",
+                },
+            ],
+        }
+        move = score_action(fixture, fixture["actions"][0])
+        rules = {c["rule"] for c in move["contributions"]}
+        self.assertIn("sleep_enables_setup_line", rules)
+        self.assertNotIn("sleep_clause_free_window", rules)
+
     def test_healthy_ace_setup_lock_pivot_misses_when_tag_missing(self) -> None:
         fixture = {
             "id": "missing_setup_lock_tag_fixture",
