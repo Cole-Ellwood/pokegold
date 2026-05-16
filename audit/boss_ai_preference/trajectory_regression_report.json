@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-05-16T09:40:39+00:00",
+  "generated_at": "2026-05-16T09:47:45+00:00",
   "threshold": 0.8,
-  "strict_label_count": 44,
-  "strict_agreement_count": 43,
-  "agreement_rate": 0.9772727272727273,
+  "strict_label_count": 48,
+  "strict_agreement_count": 47,
+  "agreement_rate": 0.9791666666666666,
   "passed": true,
   "skipped": {
     "both_good": 1,
@@ -15,12 +15,12 @@
   "structurally_invalid_plans_seen": 2,
   "by_lesson_type": {
     "sequence_policy": {
-      "total": 18,
-      "agree": 18
+      "total": 20,
+      "agree": 20
     },
     "switch_policy": {
-      "total": 26,
-      "agree": 25
+      "total": 28,
+      "agree": 27
     }
   },
   "disagreements": [
