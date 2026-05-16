@@ -1,0 +1,23 @@
+{
+  "probe_id": "missed_class_001_snorlax_vs_blissey_hard_counter_pivot",
+  "failure_mode": "missed_class",
+  "reasoning_class": "converter",
+  "position": {
+    "active_user": {"species": "Snorlax"},
+    "active_opp": {"species": "Blissey"},
+    "turn_bucket": "t1"
+  },
+  "corrected_action": {"type": "switch", "switch_to": "Rhydon"},
+  "acceptable_actions": [
+    {"type": "switch", "switch_to": "Rhydon"},
+    {"type": "switch", "switch_to": "Marowak"},
+    {"type": "switch", "switch_to": "Steelix"},
+    {"type": "switch", "switch_to": "Donphan"}
+  ],
+  "rationale": "Snorlax vs Blissey turn 1: Curse / Lovely Kiss are tempting setup lines on Snorlax, but if a Ground-type hard-counter (Rhydon-class) is on the team, the converter line is to pivot in immediately and 2HKO Blissey with Earthquake. Predicting Curse/setup over the hard-counter pivot is the missed_class pattern this probe locks in. Even if Blissey's Toxic lands on the incoming Rhydon, the EV trade is favorable because Rhydon kills Blissey before poison kills Rhydon.",
+  "evidence_case_id": "bootstrap_gen2ou-2608087104_t1_p1",
+  "evidence_url": "https://replay.pokemonshowdown.com/gen2ou-2608087104",
+  "created_at": "2026-05-16T06:50:00Z",
+  "occurrence_count_at_creation": 4,
+  "occurrence_pattern": "Across the missed_class cluster (4 instances at probe creation), the unifying recipe is: when the pro switched and I predicted a move, the pivot was usually to a hard-counter or a route-changing attacker. The Snorlax->Rhydon vs Blissey case is the cleanest instance because the type matchup is unambiguous."
+}

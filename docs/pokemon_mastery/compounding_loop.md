@@ -71,6 +71,31 @@ and what's missing from the gate:
    predicted_action, pro_reasoning_class (from the enum), failure_mode, lesson
    (short imperative recipe), evidence_url. Hits are kept (positive patterns
    are still retrieval-valuable).
+
+   **MISS INVESTIGATION (required on every miss case)**: before writing the
+   lesson, pause and investigate why the pro made that move. The replay log
+   is now fully revealed (you scored a single turn; the rest of the game is
+   available). Required investigation steps:
+
+   1. Read the next 3-10 turns of the same replay. How did the piece's role
+      play out? Was it preserved for something specific? Did it convert a
+      route on a later turn?
+   2. If the move was non-obvious (lure, unusual coverage, niche set), check
+      Smogon for typical sets of that species in the current generation.
+   3. Form a root-cause hypothesis: was it a known set archetype (e.g.,
+      "TWave Starmie", "Lure Forretress HP Fighting", "CurseLax"), a
+      counter-meta read, or just suboptimal play by the player?
+   4. Write the lesson as a short imperative recipe that would help fire
+      the right move next time a similar position appears.
+   5. Record the investigation in the case row's `investigation` object:
+      `root_cause_hypothesis`, `future_turn_evidence` (with specific turn
+      numbers), optional `smogon_source` URL, optional `set_archetype`,
+      `confidence` (low | medium | high), optional
+      `alternative_hypotheses` that were considered and rejected.
+
+   `verify_loop_state.py` rejects miss cases that omit the investigation
+   block (unless tagged `bootstrap_iteration=true` for historical seeds).
+   Trivial "I just saw the move" lessons are not allowed on miss cases.
 3. **REGRESSION-PROTECT** — when a (failure_mode, reasoning_class) pair recurs
    >=3 times, generate a constructed probe under `regression/` with the
    minimal-position class + corrected action. `verify_regression_battery.py`

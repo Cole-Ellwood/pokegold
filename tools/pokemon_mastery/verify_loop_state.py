@@ -26,6 +26,20 @@ HERE = Path(__file__).resolve().parent
 LIB = HERE / "case_library"
 VALID_TIERS = {"study", "validation", "sealed_exam"}
 CASE_TIERS_ALLOWED = {"study"}
+MISS_FAILURE_MODES = {
+    "missed_class",
+    "wrong_specific_identity",
+    "hidden_role",
+    "mechanics",
+    "timing",
+    "branch_overcorrect",
+    "branch_undercorrect",
+    "preserved_wrong_piece",
+    "spent_wrong_piece",
+    "loop_freeze",
+}
+INVESTIGATION_REQUIRED_FIELDS = {"root_cause_hypothesis", "future_turn_evidence", "confidence"}
+INVESTIGATION_CONFIDENCE_VALUES = {"low", "medium", "high"}
 
 
 def fail(msg: str, errors: list[str]) -> None:
@@ -110,6 +124,28 @@ def check(errors: list[str]) -> None:
                 f"({seen_replays[rid]!r})",
                 errors,
             )
+        # Miss cases must carry an investigation block with root_cause_hypothesis,
+        # future_turn_evidence, and confidence. Bootstrap cases predating this
+        # rule are grandfathered via bootstrap_iteration=true unless they are
+        # NEW miss cases (created after the rule was added).
+        fm = row.get("failure_mode")
+        if fm in MISS_FAILURE_MODES:
+            investigation = row.get("investigation") or {}
+            missing = INVESTIGATION_REQUIRED_FIELDS - set(investigation.keys())
+            if missing and not row.get("bootstrap_iteration"):
+                fail(
+                    f"case {cid} is a miss (failure_mode={fm!r}) but is missing "
+                    f"investigation fields: {sorted(missing)}",
+                    errors,
+                )
+            elif investigation:
+                conf = investigation.get("confidence")
+                if conf and conf not in INVESTIGATION_CONFIDENCE_VALUES:
+                    fail(
+                        f"case {cid} investigation.confidence={conf!r} not in "
+                        f"{sorted(INVESTIGATION_CONFIDENCE_VALUES)}",
+                        errors,
+                    )
 
     reg_dir = LIB / "regression"
     if reg_dir.is_dir():
