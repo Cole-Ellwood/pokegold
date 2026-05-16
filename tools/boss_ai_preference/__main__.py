@@ -547,7 +547,10 @@ def cmd_trajectory_regress(args: argparse.Namespace) -> int:
     fixtures = load_fixtures(args.fixtures)
     trajectories = load_trajectory_preferences(args.trajectories, fixtures=fixtures)
     result = evaluate_trajectory_corpus(
-        fixtures, trajectories, threshold=args.threshold
+        fixtures,
+        trajectories,
+        threshold=args.threshold,
+        canonical_scope=args.canonical_scope,
     )
     print(format_trajectory_regression(result))
     if args.json_out is not None:
@@ -941,6 +944,19 @@ def build_parser() -> argparse.ArgumentParser:
         type=float,
         default=0.8,
         help="Minimum strict-label agreement rate (default 0.8).",
+    )
+    trajectory_regress.add_argument(
+        "--canonical-scope",
+        type=str,
+        default=None,
+        choices=("public_only", "public_plus_common_meta", "hidden_info_rejected", "needs_source_check"),
+        help=(
+            "Only grade labels whose public_info_scope matches this scope. "
+            "Default: grade every strict label (legacy). Use this when the loop's "
+            "canonical reasoning frame has moved (e.g. user directed Bayesian "
+            "inference) so older same-fixture labels under the wrong scope don't "
+            "drag down the agreement metric."
+        ),
     )
     trajectory_regress.add_argument(
         "--json-out",

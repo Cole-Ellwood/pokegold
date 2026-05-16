@@ -105,6 +105,17 @@ with `--json-out`. Default threshold 0.80; exits non-zero on failure so it
 can be wired into CI gates. Pairs with the pairwise-only
 `python -m tools.boss_ai_debugger regress`.
 
+`--canonical-scope <scope>` filters labels by `public_info_scope`, so older
+labels written under a stale reasoning frame don't drag down the metric
+against a scorer whose canonical frame has moved. Example: the iter-5
+pairwise label for `clair_dragonair_vs_suicune_hidden_ice_beam` recorded
+that the canonical scope for this loop is `public_plus_common_meta`
+(Bayesian inference over revealed-moves-plus-meta priors). The legacy
+trajectory labels for that fixture sit at `public_only` and disagree with
+the now-Bayesian scorer; with `--canonical-scope public_plus_common_meta`
+they are skipped under `non_canonical_scope` and only the canonical-scope
+labels grade the scorer.
+
 Default report outputs:
 - `audit/boss_ai_preference/latest_report.md`
 - `audit/boss_ai_preference/latest_report.json`

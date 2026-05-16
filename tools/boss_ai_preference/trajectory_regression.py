@@ -237,7 +237,19 @@ def evaluate_trajectory_corpus(
     fixtures: list[dict[str, Any]],
     trajectory_labels: list[dict[str, Any]],
     threshold: float = 0.8,
+    canonical_scope: str | None = None,
 ) -> TrajectoryRegressionResult:
+    """Grade trajectory labels against the scorer.
+
+    When canonical_scope is None (default), every strict trajectory label is
+    graded — the legacy behavior. When set to a scope name (e.g.
+    ``"public_plus_common_meta"``), labels whose ``public_info_scope`` does
+    NOT match are dropped from grading and counted under
+    ``skipped["non_canonical_scope"]``. Use this when the loop's canonical
+    reasoning frame has moved (e.g. the user directing Bayesian inference
+    over plain public-only) and the older labels would otherwise drag down
+    a metric that is now testing the wrong frame.
+    """
     fixtures_by_id = fixture_map(fixtures)
     plans_cache_by_fixture: dict[str, dict[str, dict[str, Any]]] = {}
     skipped: Counter[str] = Counter()
@@ -252,6 +264,9 @@ def evaluate_trajectory_corpus(
         choice = label["choice"]
         if choice not in STRICT_PAIRWISE_CHOICES:
             skipped[choice] += 1
+            continue
+        if canonical_scope is not None and label.get("public_info_scope") != canonical_scope:
+            skipped["non_canonical_scope"] += 1
             continue
         fixture_id = label["fixture_id"]
         try:
@@ -301,10 +316,13 @@ def run_trajectory_regression(
     fixtures_path: Any = DEFAULT_FIXTURES_PATH,
     trajectories_path: Any = DEFAULT_TRAJECTORY_PREFERENCES_PATH,
     threshold: float = 0.8,
+    canonical_scope: str | None = None,
 ) -> TrajectoryRegressionResult:
     fixtures = load_fixtures(fixtures_path)
     trajectories = load_trajectory_preferences(trajectories_path)
-    return evaluate_trajectory_corpus(fixtures, trajectories, threshold=threshold)
+    return evaluate_trajectory_corpus(
+        fixtures, trajectories, threshold=threshold, canonical_scope=canonical_scope
+    )
 
 
 def format_result(result: TrajectoryRegressionResult) -> str:
