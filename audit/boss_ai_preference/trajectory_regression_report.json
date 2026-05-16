@@ -1,44 +1,29 @@
 {
-  "generated_at": "2026-05-16T08:33:57+00:00",
+  "generated_at": "2026-05-16T09:21:57+00:00",
   "threshold": 0.8,
-  "strict_label_count": 43,
-  "strict_agreement_count": 37,
-  "agreement_rate": 0.8604651162790697,
+  "strict_label_count": 44,
+  "strict_agreement_count": 39,
+  "agreement_rate": 0.8863636363636364,
   "passed": true,
   "skipped": {
     "both_good": 1,
     "neither_best_plan_missing": 25
   },
   "tie_first_moves": 4,
-  "cumulative_resolved": 5,
+  "cumulative_resolved": 4,
+  "route_projected_resolved": 1,
+  "structurally_invalid_plans_seen": 2,
   "by_lesson_type": {
     "sequence_policy": {
       "total": 18,
       "agree": 16
     },
     "switch_policy": {
-      "total": 25,
-      "agree": 21
+      "total": 26,
+      "agree": 23
     }
   },
   "disagreements": [
-    {
-      "fixture_id": "brock_golem_vs_vaporeon_explosion_question",
-      "trajectory_a_id": "plan_brock_golem_vs_vaporeon_explosion_question_sacrifice_trade_for_clean_switch_move_explosion_move_explosion",
-      "trajectory_b_id": "plan_brock_golem_vs_vaporeon_explosion_question_attack_now_move_explosion_move_explosion",
-      "label_choice": "a_better",
-      "scorer_choice": "b_better",
-      "first_move_a": "move_explosion",
-      "first_move_b": "move_explosion",
-      "score_a": 63,
-      "score_b": 63,
-      "same_first_move": true,
-      "lesson_type": "switch_policy",
-      "note": "",
-      "cumulative_score_a": 63,
-      "cumulative_score_b": 126,
-      "resolved_by": "cumulative_boss_actions"
-    },
     {
       "fixture_id": "clair_dragonair_vs_suicune_hidden_ice_beam",
       "trajectory_a_id": "plan_clair_dragonair_vs_suicune_hidden_ice_beam_attack_now_move_thunder_move_thunder",
@@ -54,7 +39,16 @@
       "note": "",
       "cumulative_score_a": 0,
       "cumulative_score_b": 0,
-      "resolved_by": "first_move"
+      "resolved_by": "first_move",
+      "route_value_delta_a": 0,
+      "route_value_delta_b": 6,
+      "route_factors_a": [],
+      "route_factors_b": [
+        "honest_continuation",
+        "switch_pivot"
+      ],
+      "structurally_valid_a": true,
+      "structurally_valid_b": true
     },
     {
       "fixture_id": "whitney_miltank_vs_geodude_rollout_temptation",
@@ -71,7 +65,16 @@
       "note": "Use Body Slam pressure first, heal only around the danger threshold, then consider Rollout after paralysis or a safe board. Opening with Milk Drink, switching, or Body Slam without a recovery/lock branch misses the taught line.",
       "cumulative_score_a": 0,
       "cumulative_score_b": 0,
-      "resolved_by": "first_move"
+      "resolved_by": "first_move",
+      "route_value_delta_a": 0,
+      "route_value_delta_b": 6,
+      "route_factors_a": [],
+      "route_factors_b": [
+        "honest_continuation",
+        "switch_pivot"
+      ],
+      "structurally_valid_a": true,
+      "structurally_valid_b": true
     },
     {
       "fixture_id": "jasmine_steelix_vs_quilava_fire_threat",
@@ -88,7 +91,16 @@
       "note": "Fixture public notes say revealed Flame Wheel is chip, not a reason to panic-switch; Rock Slide has the stronger route and KO pressure, while Skarmory over-preserves unless stronger Fire coverage is confirmed.",
       "cumulative_score_a": 0,
       "cumulative_score_b": 0,
-      "resolved_by": "first_move"
+      "resolved_by": "first_move",
+      "route_value_delta_a": 0,
+      "route_value_delta_b": 6,
+      "route_factors_a": [],
+      "route_factors_b": [
+        "honest_continuation",
+        "switch_pivot"
+      ],
+      "structurally_valid_a": true,
+      "structurally_valid_b": true
     },
     {
       "fixture_id": "chuck_poliwrath_vs_alakazam_hypnosis_or_ice_punch",
@@ -105,7 +117,16 @@
       "note": "Umbreon is the clean public Psychic answer because romhack Psychic has no effect on Dark; Hypnosis can work if it hits, but it gambles Poliwrath into faster Psychic while the pivot exists.",
       "cumulative_score_a": 0,
       "cumulative_score_b": 0,
-      "resolved_by": "first_move"
+      "resolved_by": "first_move",
+      "route_value_delta_a": 6,
+      "route_value_delta_b": 0,
+      "route_factors_a": [
+        "honest_continuation",
+        "switch_pivot"
+      ],
+      "route_factors_b": [],
+      "structurally_valid_a": true,
+      "structurally_valid_b": true
     },
     {
       "fixture_id": "morty_haunter_vs_noctowl_sleep_line",
@@ -122,7 +143,13 @@
       "note": "Curse spends Haunter HP and starts a slower route while legal sleep can neutralize the current Noctowl immediately; use sleep first, then re-score hit/miss/switch.",
       "cumulative_score_a": 106,
       "cumulative_score_b": 106,
-      "resolved_by": "cumulative_boss_actions"
+      "resolved_by": "cumulative_boss_actions",
+      "route_value_delta_a": 0,
+      "route_value_delta_b": 0,
+      "route_factors_a": [],
+      "route_factors_b": [],
+      "structurally_valid_a": true,
+      "structurally_valid_b": true
     }
   ]
 }

@@ -116,6 +116,21 @@ the now-Bayesian scorer; with `--canonical-scope public_plus_common_meta`
 they are skipped under `non_canonical_scope` and only the canonical-scope
 labels grade the scorer.
 
+The tiebreaker also runs a multi-turn route projection
+(`tools/boss_ai_preference/route_projection.py`) when both plans share a
+turn-1 action. The projection refuses to award credit for structurally
+invalid post-steps: an `actor=None`/`actor="boss"` step that comes AFTER a
+self-KO action (Explosion, Self-Destruct, Memento, Healing Wish, Lunar
+Dance) or a switch action is impossible to simulate (the named active mon
+is gone). Plans whose self-KO or switch first step is followed by a
+`boss_next_mon` continuation are structurally honest and earn a small
+tiebreak bonus. This is how the `brock_golem_vs_vaporeon_explosion_question`
+disagreement landed — both plans Explode on turn 1, but only the
+`sacrifice_trade_for_clean_switch` plan continues via `boss_next_mon`;
+the `attack_now` plan double-uses dead Golem and is now correctly
+penalised. The verifier reports `route_projected_resolved` and
+`structurally_invalid_plans_seen` alongside `cumulative_resolved`.
+
 Default report outputs:
 - `audit/boss_ai_preference/latest_report.md`
 - `audit/boss_ai_preference/latest_report.json`

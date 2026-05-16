@@ -15,6 +15,7 @@ from .data import (
     load_fixtures,
 )
 from .plans import generate_plan_cards
+from .route_projection import project_plan_route
 from .trajectory_data import (
     DEFAULT_TRAJECTORY_PREFERENCES_PATH,
     load_trajectory_preferences,
@@ -41,6 +42,12 @@ class TrajectoryVerdict:
     cumulative_score_a: int = 0
     cumulative_score_b: int = 0
     resolved_by: str = "first_move"
+    route_value_delta_a: int = 0
+    route_value_delta_b: int = 0
+    route_factors_a: tuple[str, ...] = ()
+    route_factors_b: tuple[str, ...] = ()
+    structurally_valid_a: bool = True
+    structurally_valid_b: bool = True
 
 
 @dataclass
@@ -54,6 +61,8 @@ class TrajectoryRegressionResult:
     tie_first_moves: int
     by_lesson_type: dict[str, dict[str, int]]
     cumulative_resolved: int = 0
+    route_projected_resolved: int = 0
+    structurally_invalid_plans_seen: int = 0
 
     @property
     def agreement_rate(self) -> float:
@@ -122,22 +131,29 @@ def scorer_choice_for_trajectory_pair(
     plan_a: dict[str, Any],
     plan_b: dict[str, Any],
 ) -> tuple[str, dict[str, Any]]:
-    """Pairwise grader with first-move + cumulative-fallback.
+    """Pairwise grader with first-move + cumulative + route-projection fallback.
 
     Returns (choice, detail) where choice is a_better / b_better / tie.
     Stage 1: extract each plan's first boss-actor step and compare via
     score_action. If they differ, the better-first-move plan wins.
     Stage 2 (tiebreaker when both plans share turn-1 action OR when turn-1
     scores tie): sum scorer scores across each plan's full boss-action
-    sequence under the same fixture state. Static approximation - does not
-    simulate state evolution between turns - but it discriminates plans that
-    differ only at turn 2+ (e.g. "sleep then attack" vs "sleep then setup").
+    sequence under the same fixture state. Static approximation — does not
+    simulate state evolution between turns — but it discriminates plans that
+    differ only at turn 2+ ("sleep then attack" vs "sleep then setup").
+    Stage 3 (multi-turn route projection): when cumulative still ties, apply
+    ``route_projection.project_plan_route`` to each plan. The projection
+    penalises structurally invalid plans (same-actor steps after a self-KO
+    or switch, which the simulator could never run) and bonuses structurally
+    honest trade continuations (self-KO/switch + ``boss_next_mon`` step).
     """
     actions = action_map(fixture)
     step_a = _first_boss_step(plan_a)
     step_b = _first_boss_step(plan_b)
     boss_actions_a = _boss_action_ids(plan_a)
     boss_actions_b = _boss_action_ids(plan_b)
+    projection_a = project_plan_route(fixture, plan_a)
+    projection_b = project_plan_route(fixture, plan_b)
     detail: dict[str, Any] = {
         "first_move_a": (step_a or {}).get("action_id") or "",
         "first_move_b": (step_b or {}).get("action_id") or "",
@@ -150,6 +166,12 @@ def scorer_choice_for_trajectory_pair(
         "same_first_move": False,
         "resolved_by": "first_move",
         "reason": "first-move scorer comparison",
+        "route_value_delta_a": int(projection_a["route_value_delta"]),
+        "route_value_delta_b": int(projection_b["route_value_delta"]),
+        "route_factors_a": tuple(projection_a["factors"]),
+        "route_factors_b": tuple(projection_b["factors"]),
+        "structurally_valid_a": bool(projection_a["structural_valid"]),
+        "structurally_valid_b": bool(projection_b["structural_valid"]),
     }
     if step_a is None or step_b is None:
         detail["reason"] = "missing boss-actor step in one or both plans"
@@ -173,8 +195,8 @@ def scorer_choice_for_trajectory_pair(
             return "a_better", detail
         return "b_better", detail
 
-    # Tiebreaker: same first move OR equal first-move scores. Fall back to
-    # cumulative scoring over each plan's full boss-action sequence.
+    # Tiebreaker stage 2: same first move OR equal first-move scores. Fall
+    # back to cumulative scoring over each plan's full boss-action sequence.
     cumulative_a = _plan_cumulative_score(fixture, actions, boss_actions_a)
     cumulative_b = _plan_cumulative_score(fixture, actions, boss_actions_b)
     if cumulative_a is None or cumulative_b is None:
@@ -190,6 +212,22 @@ def scorer_choice_for_trajectory_pair(
     detail["reason"] = (
         "cumulative boss-action scoring (turn-1 tied or shared)"
     )
+
+    # Tiebreaker stage 3: multi-turn route projection. Apply structural
+    # validity adjustments to each plan's effective tiebreak total. This
+    # is the bridge between same-mon cumulative and cross-mon trade plans
+    # whose post-step looks the same statically but is logically different.
+    route_total_a = cumulative_a + int(projection_a["route_value_delta"])
+    route_total_b = cumulative_b + int(projection_b["route_value_delta"])
+    if route_total_a != cumulative_a or route_total_b != cumulative_b:
+        if route_total_a != route_total_b:
+            detail["resolved_by"] = "route_projection"
+            detail["reason"] = (
+                "multi-turn route projection adjusted cumulative scores "
+                "(structural validity / honest-continuation deltas)"
+            )
+            return ("a_better" if route_total_a > route_total_b else "b_better"), detail
+
     if cumulative_a == cumulative_b:
         return "tie", detail
     if cumulative_a > cumulative_b:
@@ -230,6 +268,12 @@ def evaluate_trajectory_label(
         cumulative_score_a=int(detail.get("cumulative_score_a", 0)),
         cumulative_score_b=int(detail.get("cumulative_score_b", 0)),
         resolved_by=str(detail.get("resolved_by", "first_move")),
+        route_value_delta_a=int(detail.get("route_value_delta_a", 0)),
+        route_value_delta_b=int(detail.get("route_value_delta_b", 0)),
+        route_factors_a=tuple(detail.get("route_factors_a", ())),
+        route_factors_b=tuple(detail.get("route_factors_b", ())),
+        structurally_valid_a=bool(detail.get("structurally_valid_a", True)),
+        structurally_valid_b=bool(detail.get("structurally_valid_b", True)),
     )
 
 
@@ -258,6 +302,8 @@ def evaluate_trajectory_corpus(
     strict_agreement_count = 0
     tie_first_moves = 0
     cumulative_resolved = 0
+    route_projected_resolved = 0
+    structurally_invalid_plans_seen = 0
     by_lesson_type: dict[str, Counter[str]] = {}
 
     for label in trajectory_labels:
@@ -285,6 +331,10 @@ def evaluate_trajectory_corpus(
             tie_first_moves += 1
         if verdict.resolved_by == "cumulative_boss_actions":
             cumulative_resolved += 1
+        elif verdict.resolved_by == "route_projection":
+            route_projected_resolved += 1
+        if not verdict.structurally_valid_a or not verdict.structurally_valid_b:
+            structurally_invalid_plans_seen += 1
         if verdict.agrees:
             strict_agreement_count += 1
             lesson_counter["agree"] += 1
@@ -309,6 +359,8 @@ def evaluate_trajectory_corpus(
         tie_first_moves=tie_first_moves,
         by_lesson_type=summary_by_lesson,
         cumulative_resolved=cumulative_resolved,
+        route_projected_resolved=route_projected_resolved,
+        structurally_invalid_plans_seen=structurally_invalid_plans_seen,
     )
 
 
@@ -331,9 +383,11 @@ def format_result(result: TrajectoryRegressionResult) -> str:
         f"{result.strict_agreement_count} / {result.strict_label_count} strict pairwise labels agree "
         f"({result.agreement_rate * 100:.1f}%)",
         f"  PASS threshold: {result.threshold:.2f}",
-        f"  Grader: first-move scorer comparison; cumulative boss-action tiebreaker",
+        f"  Grader: first-move scorer comparison; cumulative + route-projection tiebreaker",
         f"  Plans with shared first-turn action: {result.tie_first_moves}",
         f"  Resolved by cumulative tiebreaker: {result.cumulative_resolved}",
+        f"  Resolved by route projection: {result.route_projected_resolved}",
+        f"  Structurally invalid plans seen: {result.structurally_invalid_plans_seen}",
     ]
     if result.skipped:
         parts = " ".join(f"{k}={v}" for k, v in sorted(result.skipped.items()))

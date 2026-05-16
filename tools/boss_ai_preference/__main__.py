@@ -564,6 +564,8 @@ def cmd_trajectory_regress(args: argparse.Namespace) -> int:
             "skipped": result.skipped,
             "tie_first_moves": result.tie_first_moves,
             "cumulative_resolved": result.cumulative_resolved,
+            "route_projected_resolved": result.route_projected_resolved,
+            "structurally_invalid_plans_seen": result.structurally_invalid_plans_seen,
             "by_lesson_type": result.by_lesson_type,
             "disagreements": [
                 {
@@ -582,6 +584,12 @@ def cmd_trajectory_regress(args: argparse.Namespace) -> int:
                     "cumulative_score_a": v.cumulative_score_a,
                     "cumulative_score_b": v.cumulative_score_b,
                     "resolved_by": v.resolved_by,
+                    "route_value_delta_a": v.route_value_delta_a,
+                    "route_value_delta_b": v.route_value_delta_b,
+                    "route_factors_a": list(v.route_factors_a),
+                    "route_factors_b": list(v.route_factors_b),
+                    "structurally_valid_a": v.structurally_valid_a,
+                    "structurally_valid_b": v.structurally_valid_b,
                 }
                 for v in result.disagreements
             ],
