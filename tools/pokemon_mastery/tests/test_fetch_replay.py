@@ -206,3 +206,98 @@ def test_append_index_row_is_append_only(tmp_path: Path):
     fetch_replay.append_index_row({"replay_id": "b", "tier": "validation"}, p)
     rows = fetch_replay.read_replay_index(p)
     assert [r["replay_id"] for r in rows] == ["a", "b"]
+
+
+def test_search_candidates_single_page_default():
+    calls: list[str] = []
+
+    def fake_fetch_json(url):
+        calls.append(url)
+        return [{"id": "x", "rating": 1500, "uploadtime": 100}]
+
+    out = fetch_replay.search_candidates("gen2ou", fetch_json=fake_fetch_json)
+    assert len(out) == 1
+    assert len(calls) == 1
+    assert "before=" not in calls[0]
+
+
+def test_search_candidates_paginates_using_min_uploadtime():
+    calls: list[str] = []
+    pages = [
+        [
+            {"id": "a", "rating": 1100, "uploadtime": 300},
+            {"id": "b", "rating": 1200, "uploadtime": 250},
+        ],
+        [
+            {"id": "c", "rating": 1500, "uploadtime": 200},
+            {"id": "d", "rating": 1450, "uploadtime": 180},
+        ],
+        [
+            {"id": "e", "rating": 1700, "uploadtime": 150},
+        ],
+    ]
+
+    def fake_fetch_json(url):
+        calls.append(url)
+        return pages[len(calls) - 1]
+
+    out = fetch_replay.search_candidates("gen2ou", max_pages=3, fetch_json=fake_fetch_json)
+    assert [c["id"] for c in out] == ["a", "b", "c", "d", "e"]
+    # Page 1: no before. Page 2: before=min(page 1 uploadtimes)=250. Page 3: before=180.
+    assert "before=" not in calls[0]
+    assert "before=250" in calls[1]
+    assert "before=180" in calls[2]
+
+
+def test_search_candidates_stops_on_empty_page():
+    calls: list[str] = []
+    pages = [
+        [{"id": "a", "rating": 1500, "uploadtime": 100}],
+        [],
+        [{"id": "b", "rating": 1700, "uploadtime": 50}],
+    ]
+
+    def fake_fetch_json(url):
+        calls.append(url)
+        return pages[len(calls) - 1]
+
+    out = fetch_replay.search_candidates("gen2ou", max_pages=5, fetch_json=fake_fetch_json)
+    # Empty page 2 ends pagination; page 3 never fetched.
+    assert [c["id"] for c in out] == ["a"]
+    assert len(calls) == 2
+
+
+def test_search_candidates_rejects_zero_pages():
+    import pytest
+    with pytest.raises(ValueError):
+        fetch_replay.search_candidates("gen2ou", max_pages=0, fetch_json=lambda u: [])
+
+
+def test_pick_and_record_paginates_when_high_rated_on_later_page(tmp_path: Path):
+    """End-to-end: first page has no 1400+ replay; later page does."""
+    index_path = tmp_path / "replay_index.jsonl"
+    download_dir = tmp_path / "replays"
+
+    pages = [
+        [{"id": "low-1", "rating": 1100, "private": 0, "uploadtime": 300, "players": []}],
+        [{"id": "high-1", "rating": 1450, "private": 0, "uploadtime": 200, "players": ["alice", "bob"]}],
+    ]
+
+    def fake_fetch_json(url):
+        return pages[1] if "before=" in url else pages[0]
+
+    def fake_fetch_text(url):
+        return "|gen|2\n|turn|1\n"
+
+    row = fetch_replay.pick_and_record(
+        fmt="gen2ou",
+        min_rating=1400,
+        for_tier="auto",
+        max_search_pages=2,
+        download_dir=download_dir,
+        index_path=index_path,
+        fetch_json=fake_fetch_json,
+        fetch_text=fake_fetch_text,
+    )
+    assert row["replay_id"] == "high-1"
+    assert row["rating"] == 1450

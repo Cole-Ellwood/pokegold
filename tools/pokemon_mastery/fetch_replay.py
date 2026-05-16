@@ -42,7 +42,9 @@ VALIDATION_RATING_FLOOR = 1600
 STUDY_TO_VALIDATION_RATIO = 4
 
 SEARCH_URL_TEMPLATE = "https://replay.pokemonshowdown.com/search.json?format={fmt}"
+SEARCH_URL_BEFORE_TEMPLATE = "https://replay.pokemonshowdown.com/search.json?format={fmt}&before={before}"
 LOG_URL_TEMPLATE = "https://replay.pokemonshowdown.com/{replay_id}.log"
+DEFAULT_MAX_SEARCH_PAGES = 1
 
 
 _USER_AGENT = "pokemon-mastery-compounding-loop/0.1 (+local)"
@@ -173,11 +175,49 @@ def append_index_row(row: dict, path: Path) -> None:
         f.write(json.dumps(row, sort_keys=True) + "\n")
 
 
+def search_candidates(
+    fmt: str,
+    *,
+    max_pages: int = DEFAULT_MAX_SEARCH_PAGES,
+    fetch_json: Callable[[str], list[dict]] = _fetch_json,
+) -> list[dict]:
+    """Page through Showdown's replay search, accumulating candidates.
+
+    Each page returns ~51 results sorted by uploadtime. Pagination uses
+    `&before=<uploadtime>` set to the minimum uploadtime of the previous
+    page. Stops on empty page or when max_pages reached. Showdown's free
+    listing only surfaces recent games, so paging back is the only way
+    to reach tournament-tier replays.
+    """
+    if max_pages < 1:
+        raise ValueError(f"max_pages must be >= 1, got {max_pages}")
+    out: list[dict] = []
+    before: int | None = None
+    for _page in range(max_pages):
+        url = (
+            SEARCH_URL_BEFORE_TEMPLATE.format(fmt=fmt, before=before)
+            if before is not None
+            else SEARCH_URL_TEMPLATE.format(fmt=fmt)
+        )
+        page_results = fetch_json(url)
+        if not isinstance(page_results, list):
+            raise RuntimeError(f"unexpected search response shape: {type(page_results).__name__}")
+        if not page_results:
+            break
+        out.extend(page_results)
+        uploadtimes = [c.get("uploadtime") for c in page_results if c.get("uploadtime")]
+        if not uploadtimes:
+            break
+        before = min(uploadtimes)
+    return out
+
+
 def pick_and_record(
     *,
     fmt: str = "gen2ou",
     min_rating: int = STUDY_RATING_FLOOR,
     for_tier: str = "auto",
+    max_search_pages: int = DEFAULT_MAX_SEARCH_PAGES,
     download_dir: Path = DEFAULT_DOWNLOAD_DIR,
     index_path: Path = LIB / "replay_index.jsonl",
     fetch_json: Callable[[str], list[dict]] = _fetch_json,
@@ -190,16 +230,13 @@ def pick_and_record(
     index_rows = read_replay_index(index_path)
     seen = seen_replay_ids(index_rows)
 
-    search_url = SEARCH_URL_TEMPLATE.format(fmt=fmt)
-    candidates = fetch_json(search_url)
-    if not isinstance(candidates, list):
-        raise RuntimeError(f"unexpected search response shape: {type(candidates).__name__}")
+    candidates = search_candidates(fmt, max_pages=max_search_pages, fetch_json=fetch_json)
 
     candidate = pick_candidate(candidates, seen, min_rating)
     if candidate is None:
         raise RuntimeError(
             f"no eligible replay found (format={fmt}, min_rating={min_rating}, "
-            f"seen={len(seen)}, candidates={len(candidates)})"
+            f"seen={len(seen)}, candidates={len(candidates)}, pages={max_search_pages})"
         )
 
     tier = assign_tier(candidate.get("rating") or 0, index_rows, for_tier=for_tier)
@@ -234,6 +271,13 @@ def build_parser() -> argparse.ArgumentParser:
     )
     pick.add_argument("--download-dir", type=Path, default=DEFAULT_DOWNLOAD_DIR)
     pick.add_argument("--index-path", type=Path, default=LIB / "replay_index.jsonl")
+    pick.add_argument(
+        "--max-search-pages",
+        type=int,
+        default=DEFAULT_MAX_SEARCH_PAGES,
+        help="paginate Showdown search this many times (default 1). Each page is ~51 results; "
+             "tournament/high-rated games are typically only reachable on later pages.",
+    )
 
     return parser
 
@@ -246,6 +290,7 @@ def main(argv: list[str] | None = None) -> int:
                 fmt=args.fmt,
                 min_rating=args.min_rating,
                 for_tier=args.for_tier,
+                max_search_pages=args.max_search_pages,
                 download_dir=args.download_dir,
                 index_path=args.index_path,
             )
