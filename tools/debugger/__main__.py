@@ -287,6 +287,51 @@ def build_parser() -> argparse.ArgumentParser:
     query_parser = sub.add_parser("query", help="Omniscient query (placeholder)")
     query_parser.add_argument("expression", help="Query expression")
 
+    # --- selftest ---
+    sub.add_parser("selftest", help="Run all component self-tests")
+
+    # --- metamorphic ---
+    meta_parser = sub.add_parser("metamorphic", help="Run damage metamorphic relations")
+    meta_parser.add_argument("--count", type=int, default=10, help="Number of random scenarios")
+
+    # --- fuzz ---
+    fuzz_parser = sub.add_parser("fuzz", help="Run Hypothesis battle fuzz")
+    fuzz_parser.add_argument("--examples", type=int, default=200, help="Max examples")
+
+    # --- bisect ---
+    bisect_parser = sub.add_parser("bisect", help="Git bisect with scenario criterion")
+    bisect_parser.add_argument("--scenario", required=True, help="Scenario name or path")
+    bisect_parser.add_argument("--good", required=True, help="Known-good commit")
+    bisect_parser.add_argument("--bad", default="HEAD", help="Known-bad commit")
+
+    # --- tournament ---
+    tour_parser = sub.add_parser("tournament", help="Run trainer tournament")
+    tour_parser.add_argument("--dry-run", action="store_true", help="List trainers without running")
+
+    # --- savelab ---
+    savelab_parser = sub.add_parser("savelab", help="Save-state lab commands")
+    savelab_sub = savelab_parser.add_subparsers(dest="savelab_command")
+    decode_p = savelab_sub.add_parser("decode", help="Decode a VBA .sgm save state")
+    decode_p.add_argument("path", help="Path to .sgm file")
+    diff_save_p = savelab_sub.add_parser("diff", help="Diff two save states")
+    diff_save_p.add_argument("left", help="First state file")
+    diff_save_p.add_argument("right", help="Second state file")
+
+    # --- web ---
+    web_parser = sub.add_parser("web", help="Start web UI")
+    web_parser.add_argument("--port", type=int, default=8765, help="Port number")
+    web_parser.add_argument("--host", default="127.0.0.1", help="Host address")
+
+    # --- hypothesis ---
+    hyp_parser = sub.add_parser("hypothesis", help="Hypothesis tracker commands")
+    hyp_sub = hyp_parser.add_subparsers(dest="hyp_command")
+    hyp_add = hyp_sub.add_parser("add", help="Add a hypothesis")
+    hyp_add.add_argument("statement", help="Hypothesis statement")
+    hyp_add.add_argument("--tag", action="append", default=[], help="Tags")
+    hyp_list = hyp_sub.add_parser("list", help="List hypotheses")
+    hyp_list.add_argument("--status", help="Filter by status")
+    hyp_tree = hyp_sub.add_parser("tree", help="Show hypothesis tree")
+
     return parser
 
 
@@ -478,6 +523,94 @@ def main() -> int:
         print(f"Query: {args.expression}")
         print("(Omniscient query DSL not yet implemented — P4)")
         return 0
+    elif args.command == "selftest":
+        from .selftest import run_selftest
+        report = run_selftest()
+        print(report.summary())
+        return 0 if report.ok else 1
+    elif args.command == "metamorphic":
+        from .analysis.metamorphic import Scenario, run_all_damage
+        import random
+        total_pass = 0
+        total_fail = 0
+        for i in range(args.count):
+            s = Scenario(
+                scenario_id=f"random_{i}",
+                move_power=random.randint(20, 150),
+                attacker_atk=random.randint(30, 200),
+                defender_def=random.randint(30, 200),
+                attacker_spa=random.randint(30, 200),
+                defender_spd=random.randint(30, 200),
+                attacker_level=random.randint(5, 100),
+                attacker_types=[random.randint(0, 27)],
+                move_type=random.randint(0, 27),
+            )
+            results = run_all_damage(s)
+            for r in results:
+                if r.passed:
+                    total_pass += 1
+                else:
+                    total_fail += 1
+                    print(r)
+        print(f"\n{total_pass} passed, {total_fail} failed across {args.count} scenarios")
+        return 0 if total_fail == 0 else 1
+    elif args.command == "fuzz":
+        from .analysis.battle_fuzz import run_battle_fuzz
+        result = run_battle_fuzz(max_examples=args.examples)
+        import json
+        print(json.dumps(result, indent=2))
+        return 0 if result.get("passed") else 1
+    elif args.command == "bisect":
+        from .stress.bisect import bisect_scenario
+        print(f"Bisect: {args.scenario} ({args.good}..{args.bad})")
+        print("(Requires ROM build at each step — use with build_cmd)")
+        return 0
+    elif args.command == "tournament":
+        from .stress.tournament import run_tournament
+        report = run_tournament(ROOT, dry_run=args.dry_run)
+        print(report.summary())
+        return 0 if report.ok else 1
+    elif args.command == "savelab":
+        if args.savelab_command == "decode":
+            from .savelab.sgm_decoder import decode_sgm
+            state = decode_sgm(args.path)
+            print(state.summary())
+            return 0 if state.valid else 1
+        elif args.savelab_command == "diff":
+            from .savelab.state_conv import convert
+            from .savelab.state_diff import diff_states
+            left = convert(args.left)
+            right = convert(args.right)
+            report = diff_states(left, right)
+            print(report.summary())
+            return 0
+        else:
+            parser.parse_args(["savelab", "--help"])
+            return 1
+    elif args.command == "web":
+        from .presentation.web.app import main as web_main
+        web_main(port=args.port, host=args.host)
+        return 0
+    elif args.command == "hypothesis":
+        from .llm.hypothesis_tracker import HypothesisTracker, Hypothesis
+        store = ROOT / "audit" / "hypothesis_tree.jsonl"
+        tracker = HypothesisTracker(store)
+        if args.hyp_command == "add":
+            h = Hypothesis(statement=args.statement, tags=args.tag)
+            tracker.add(h)
+            print(f"Added hypothesis {h.id}: {h.statement}")
+            return 0
+        elif args.hyp_command == "list":
+            for h in tracker.list_all(status=args.status):
+                print(f"  [{h.status}] {h.id}: {h.statement}")
+            print(f"\n{tracker.count} total hypotheses")
+            return 0
+        elif args.hyp_command == "tree":
+            print(tracker.tree_summary())
+            return 0
+        else:
+            parser.parse_args(["hypothesis", "--help"])
+            return 1
     else:
         parser.print_help()
         return 0
