@@ -878,6 +878,83 @@ class RegressionTests(unittest.TestCase):
         rules = {c["rule"] for c in move["contributions"]}
         self.assertNotIn("sleep_clause_free_window", rules)
 
+    def test_sacrifice_cheapness_pivot_fires_on_both_tags(self) -> None:
+        fixture = {
+            "id": "sacrifice_cheapness_fixture",
+            "leader": "Tester",
+            "tags": ["sacrifice", "cheapness", "hazards"],
+            "state": {
+                "boss": {
+                    "active": {"species": "Cloyster", "hp": "39%"},
+                },
+            },
+            "actions": [
+                {
+                    "id": "switch_slowking",
+                    "kind": "switch",
+                    "name": "Switch to Slowking",
+                    "explanation": "Defensive pivot.",
+                    "public_tradeoff": "Preserve.",
+                },
+            ],
+        }
+        switch = score_action(fixture, fixture["actions"][0])
+        rules = {c["rule"] for c in switch["contributions"]}
+        self.assertIn("sacrifice_cheapness_pivot", rules)
+        contribution = next(
+            c for c in switch["contributions"]
+            if c["rule"] == "sacrifice_cheapness_pivot"
+        )
+        self.assertEqual(contribution["delta"], 10)
+
+    def test_sacrifice_cheapness_pivot_misses_when_only_sacrifice_tag(self) -> None:
+        fixture = {
+            "id": "sacrifice_only_fixture",
+            "leader": "Tester",
+            "tags": ["sacrifice", "status"],
+            "state": {
+                "boss": {
+                    "active": {"species": "Gengar", "hp": "34%"},
+                },
+            },
+            "actions": [
+                {
+                    "id": "switch_haunter",
+                    "kind": "switch",
+                    "name": "Switch to Haunter",
+                    "explanation": "Defensive pivot.",
+                    "public_tradeoff": "Preserve.",
+                },
+            ],
+        }
+        switch = score_action(fixture, fixture["actions"][0])
+        rules = {c["rule"] for c in switch["contributions"]}
+        self.assertNotIn("sacrifice_cheapness_pivot", rules)
+
+    def test_sacrifice_cheapness_pivot_does_not_apply_to_move_actions(self) -> None:
+        fixture = {
+            "id": "sacrifice_cheapness_move_fixture",
+            "leader": "Tester",
+            "tags": ["sacrifice", "cheapness"],
+            "state": {
+                "boss": {
+                    "active": {"species": "Cloyster", "hp": "39%"},
+                },
+            },
+            "actions": [
+                {
+                    "id": "move_surf",
+                    "kind": "move",
+                    "name": "Surf",
+                    "explanation": "Direct hit.",
+                    "public_tradeoff": "Tempo.",
+                },
+            ],
+        }
+        move = score_action(fixture, fixture["actions"][0])
+        rules = {c["rule"] for c in move["contributions"]}
+        self.assertNotIn("sacrifice_cheapness_pivot", rules)
+
     def test_sleep_clause_free_window_does_not_double_count_with_sleep_enables_setup_line(self) -> None:
         # When both 'sleep' AND 'setup' tags are present (the older setup-line case),
         # we want sleep_enables_setup_line (+18) and NOT also the +4 floor bonus.

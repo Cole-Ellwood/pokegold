@@ -183,6 +183,16 @@ HAZARD_TEMPO_RISK_TEXT = {
 HEALTHY_ACE_HP_FLOOR_PCT = 90
 HEALTHY_ACE_SETUP_LOCK_TAGS = frozenset({"ace_preservation", "setup_lock"})
 
+# When a fixture is tagged BOTH `sacrifice` and `cheapness` the labeler is
+# explicitly hedging against using a self-KO move on a low-HP active — the
+# trade may technically work but it costs taste-currency, and the clean
+# alternative is to preserve the active via switch. The pryce_cloyster_vs_
+# quilava_explosion_line "other_better" label is the load-bearing case:
+# Cloyster at 39% HP is outsped by Quilava and Slowking (Water/Psychic)
+# resists the revealed Fire threat, so switching is the route the labeler
+# prefers over both Surf and Explosion. Narrow trigger: both tags together.
+SACRIFICE_CHEAPNESS_PIVOT_TAGS = frozenset({"sacrifice", "cheapness"})
+
 
 @dataclass(frozen=True)
 class Contribution:
@@ -425,6 +435,13 @@ def score_action(
                 "healthy_ace_setup_lock_pivot",
                 -10,
                 "ace_preservation+setup_lock fixture with active ace at >=90% HP: switching gives up the ace's still-fresh attack pattern",
+            )
+        if SACRIFICE_CHEAPNESS_PIVOT_TAGS <= tags and not is_bad_pivot:
+            _add(
+                contributions,
+                "sacrifice_cheapness_pivot",
+                10,
+                "fixture is tagged BOTH `sacrifice` AND `cheapness` — labeler signals the active's trade is contested, and the clean alternative is a switch (preserves the active without burning taste currency on a self-KO)",
             )
 
     if kind == "move":
