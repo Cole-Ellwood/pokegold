@@ -194,8 +194,11 @@ python tools/pokemon_mastery/replay_turn_pause.py \
 python tools/pokemon_mastery/fingerprint.py \
   tmp/pokemon_mastery_replays/<replay_id>.log --turn 1 --side p1
 
-# 5. Query the case library for matching past cases (once retrieve_cases.py
-#    lands), freeze a prediction, then reveal and score:
+# 5. Query the case library for K nearest past cases by fingerprint:
+python tools/pokemon_mastery/retrieve_cases.py \
+  --log tmp/pokemon_mastery_replays/<replay_id>.log --turn 1 --side p1 --k 5
+#    Freeze a prediction with explicit reference to which cases fired
+#    (or "no cases fired"), then reveal and score:
 python tools/pokemon_mastery/replay_turn_pause.py \
   tmp/pokemon_mastery_replays/<replay_id>.log reveal --turn 1
 

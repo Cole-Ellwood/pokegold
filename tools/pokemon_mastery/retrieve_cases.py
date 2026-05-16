@@ -181,13 +181,36 @@ def format_retrieval_for_predictor(retrieved: list[RetrievedCase]) -> str:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--fingerprint", type=Path, required=True, help="path to a JSON file with the fingerprint")
+    parser.add_argument("--fingerprint", type=Path, help="path to a JSON file with the fingerprint")
+    parser.add_argument("--log", type=Path, help="raw replay .log to build the fingerprint from (with --turn/--side)")
+    parser.add_argument("--turn", type=int, help="turn number (1-indexed) for --log mode")
+    parser.add_argument("--side", choices=("p1", "p2"), help="side perspective for --log mode")
     parser.add_argument("--cases", type=Path, default=LIB / "cases.jsonl")
     parser.add_argument("--k", type=int, default=5)
     args = parser.parse_args(argv)
-    fp = json.loads(args.fingerprint.read_text(encoding="utf-8"))
-    if "fingerprint" in fp:
-        fp = fp["fingerprint"]
+
+    if args.fingerprint and args.log:
+        parser.error("--fingerprint and --log are mutually exclusive")
+    if not args.fingerprint and not args.log:
+        parser.error("one of --fingerprint or (--log + --turn + --side) is required")
+    if args.log and (args.turn is None or args.side is None):
+        parser.error("--log requires both --turn and --side")
+
+    if args.fingerprint:
+        fp = json.loads(args.fingerprint.read_text(encoding="utf-8"))
+        if "fingerprint" in fp:
+            fp = fp["fingerprint"]
+    else:
+        try:
+            from tools.pokemon_mastery.fingerprint import fingerprint_from_log
+        except ModuleNotFoundError:
+            # Direct invocation (python tools/pokemon_mastery/retrieve_cases.py); add repo root to sys.path.
+            repo_root = HERE.parent.parent
+            if str(repo_root) not in sys.path:
+                sys.path.insert(0, str(repo_root))
+            from tools.pokemon_mastery.fingerprint import fingerprint_from_log
+        fp = fingerprint_from_log(args.log, args.turn, args.side)
+
     cases = load_cases(args.cases)
     retrieved = retrieve(fp, cases, k=args.k)
     print(format_retrieval_for_predictor(retrieved))

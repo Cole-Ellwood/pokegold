@@ -130,3 +130,67 @@ def test_format_retrieval_for_predictor_renders_lesson():
     assert "active damage before script" in out
     assert "L0" in out
     assert "a" in out
+
+
+def test_cli_rejects_when_neither_fingerprint_nor_log_supplied(capsys):
+    import pytest
+    with pytest.raises(SystemExit):
+        rc.main(["--k", "3"])
+    err = capsys.readouterr().err
+    assert "--fingerprint" in err or "--log" in err
+
+
+def test_cli_rejects_when_both_fingerprint_and_log_supplied(tmp_path, capsys):
+    import pytest
+    fp_path = tmp_path / "fp.json"
+    fp_path.write_text('{"active_user":{"species":"X"},"active_opp":{"species":"Y"},"turn_bucket":"mid","side_conditions_user":[],"side_conditions_opp":[]}', encoding="utf-8")
+    log_path = tmp_path / "r.log"
+    log_path.write_text("|gametype|singles\n|player|p1|a||\n|player|p2|b||\n", encoding="utf-8")
+    with pytest.raises(SystemExit):
+        rc.main(["--fingerprint", str(fp_path), "--log", str(log_path), "--turn", "1", "--side", "p1"])
+    err = capsys.readouterr().err
+    assert "mutually exclusive" in err
+
+
+def test_cli_rejects_log_without_turn_or_side(tmp_path, capsys):
+    import pytest
+    log_path = tmp_path / "r.log"
+    log_path.write_text("|gametype|singles\n", encoding="utf-8")
+    with pytest.raises(SystemExit):
+        rc.main(["--log", str(log_path), "--turn", "1"])
+    err = capsys.readouterr().err
+    assert "--turn" in err and "--side" in err
+
+
+def test_cli_log_mode_round_trip(tmp_path, capsys):
+    """End-to-end: --log/--turn/--side computes fingerprint, retrieves matching case, prints lesson."""
+    # Minimal replay with one turn switched-in.
+    log = tmp_path / "r.log"
+    log.write_text(
+        "|gametype|singles\n"
+        "|player|p1|alice||\n"
+        "|player|p2|bob||\n"
+        "|teamsize|p1|6\n"
+        "|teamsize|p2|6\n"
+        "|gen|2\n"
+        "|tier|[Gen 2] OU\n"
+        "|switch|p1a: Snorlax|Snorlax, M|100/100\n"
+        "|switch|p2a: Cloyster|Cloyster, M|100/100\n"
+        "|turn|1\n",
+        encoding="utf-8",
+    )
+    # Cases file with a single Snorlax-vs-Cloyster entry.
+    cases_path = tmp_path / "cases.jsonl"
+    import json as _json
+    case = make_case("snorlax_vs_cloyster_lesson", "Snorlax", "Cloyster", "t1", lesson="curse over body slam")
+    cases_path.write_text(_json.dumps(case) + "\n", encoding="utf-8")
+    rc.main([
+        "--log", str(log),
+        "--turn", "1",
+        "--side", "p1",
+        "--cases", str(cases_path),
+        "--k", "5",
+    ])
+    out = capsys.readouterr().out
+    assert "curse over body slam" in out
+    assert "L0" in out
