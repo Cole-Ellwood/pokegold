@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-05-16T08:23:54+00:00",
+  "generated_at": "2026-05-16T08:27:25+00:00",
   "threshold": 0.8,
   "strict_label_count": 43,
-  "strict_agreement_count": 32,
-  "agreement_rate": 0.7441860465116279,
+  "strict_agreement_count": 33,
+  "agreement_rate": 0.7674418604651163,
   "passed": false,
   "skipped": {
     "both_good": 1,
@@ -17,7 +17,7 @@
     },
     "switch_policy": {
       "total": 25,
-      "agree": 19
+      "agree": 20
     }
   },
   "disagreements": [
@@ -48,20 +48,6 @@
       "same_first_move": false,
       "lesson_type": "switch_policy",
       "note": ""
-    },
-    {
-      "fixture_id": "chuck_poliwrath_vs_pidgeotto_ice_punch",
-      "trajectory_a_id": "plan_chuck_poliwrath_vs_pidgeotto_ice_punch_switch_preserve_then_rescore_switch_sudowoodo_move_focus_punch",
-      "trajectory_b_id": "plan_chuck_poliwrath_vs_pidgeotto_ice_punch_status_once_then_attack_move_hypnosis_move_focus_punch",
-      "label_choice": "a_better",
-      "scorer_choice": "b_better",
-      "first_move_a": "switch_sudowoodo",
-      "first_move_b": "move_hypnosis",
-      "score_a": 54,
-      "score_b": 55,
-      "same_first_move": false,
-      "lesson_type": "switch_policy",
-      "note": "you have a flying resist for a reason, use it"
     },
     {
       "fixture_id": "whitney_miltank_vs_geodude_rollout_temptation",

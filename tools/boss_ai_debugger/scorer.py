@@ -99,6 +99,12 @@ BAD_PIVOT_TEXT = {
 }
 
 
+TYPE_WALL_PIVOT_TEXT = {
+    "hard walls",
+    "hard wall",
+}
+
+
 HAZARD_TEMPO_RISK_TEXT = {
     "cannot afford",
     "fire hit",
@@ -273,6 +279,8 @@ def score_action(
             _add(contributions, "public_switch", 8, "switch addresses a public risk in this fixture")
         if not is_bad_pivot and ("preserve" in text or "handles" in text):
             _add(contributions, "preserve_value", 4, "action text preserves a high-value mon")
+        if not is_bad_pivot and _has_any(text, TYPE_WALL_PIVOT_TEXT):
+            _add(contributions, "type_wall_pivot", 12, "switch target text marks it as a hard wall to the revealed threat")
         if is_bad_pivot:
             _add(contributions, "bad_pivot", -8, "switch target does not solve the visible threat")
 
