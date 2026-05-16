@@ -1448,6 +1448,7 @@ def main() -> int:
     check_cp_zero()
     check_matchup_cli()
     check_boss_ai_trajectory_regression()
+    check_boss_ai_trajectory_canonical_scope()
 
     print("ALL RELEASE SMOKE CHECKS PASSED")
     return 0
@@ -1503,6 +1504,13 @@ def check_boss_ai_trajectory_regression() -> None:
     _run_subaudit(
         "check_boss_ai_trajectory_regression.py",
         "boss AI trajectory regression",
+    )
+
+
+def check_boss_ai_trajectory_canonical_scope() -> None:
+    _run_subaudit(
+        "check_boss_ai_trajectory_canonical_scope.py",
+        "boss AI trajectory canonical-scope",
     )
 
 
