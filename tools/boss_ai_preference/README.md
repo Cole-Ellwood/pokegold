@@ -85,6 +85,7 @@ python -m tools.boss_ai_preference feature-report
 python -m tools.boss_ai_preference active-queue
 python -m tools.boss_ai_preference plan-queue
 python -m tools.boss_ai_preference trajectory-report
+python -m tools.boss_ai_preference trajectory-regress
 python -m tools.boss_ai_preference coach-report
 python -m tools.boss_ai_preference generate-counterfactuals --dry-run
 python -m tools.boss_ai_preference lesson-report
@@ -95,6 +96,14 @@ python -m tools.boss_ai_preference final-report
 
 `lesson-report`, `fit-model`, and `propose` include Coach Mode trajectory rows
 by default. Use `--no-include-trajectories` for a legacy action-only check.
+
+`trajectory-regress` grades the current Python scorer against trajectory
+preference labels. First-move comparison with a cumulative boss-action
+tiebreaker when both plans share their turn-1 action. Static — does not
+simulate state evolution. Writes `audit/boss_ai_preference/trajectory_regression_report.json`
+with `--json-out`. Default threshold 0.80; exits non-zero on failure so it
+can be wired into CI gates. Pairs with the pairwise-only
+`python -m tools.boss_ai_debugger regress`.
 
 Default report outputs:
 - `audit/boss_ai_preference/latest_report.md`
