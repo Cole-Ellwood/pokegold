@@ -1,0 +1,487 @@
+"""Unified debugger CLI.
+
+Entry point: ``python -m tools.debugger <command> [args]``
+"""
+
+from __future__ import annotations
+
+import argparse
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+
+
+TOOL_REGISTRY: list[dict[str, str]] = [
+    {
+        "name": "damage_debugger",
+        "entry": "python -m tools.damage_debugger.clobber_smoke",
+        "description": "Battle-engine step tracer, oracle, fuzz, clobber smoke",
+        "readme": "tools/damage_debugger/README.md",
+    },
+    {
+        "name": "boss_ai_debugger",
+        "entry": "python -m tools.boss_ai_debugger",
+        "description": "Boss AI decision debugger: fixtures, scoring, traces, coverage",
+        "readme": "tools/boss_ai_debugger/README.md",
+    },
+    {
+        "name": "boss_ai_preference",
+        "entry": "python -m tools.boss_ai_preference",
+        "description": "Preference-labeling side app for boss AI pairwise judgments",
+        "readme": "tools/boss_ai_preference/README.md",
+    },
+    {
+        "name": "pokemon_mastery",
+        "entry": "python -m tools.pokemon_mastery",
+        "description": "Case library and compounding-loop infrastructure",
+        "readme": "",
+    },
+    {
+        "name": "trace",
+        "entry": "tools/trace/",
+        "description": "PyBoy state factory, trace batch capture, replay plumbing",
+        "readme": "",
+    },
+    {
+        "name": "audit",
+        "entry": "python tools/audit/check_release_smoke.py",
+        "description": "40+ static audit scripts (release-smoke floor)",
+        "readme": "",
+    },
+]
+
+
+def cmd_status(args: argparse.Namespace) -> int:
+    print("=== Pokemon Gold Hack — Debugger Status ===\n")
+    print(f"Project root: {ROOT}\n")
+
+    print("Registered tools:\n")
+    for tool in TOOL_REGISTRY:
+        readme_path = ROOT / tool["readme"] if tool["readme"] else None
+        has_readme = readme_path.exists() if readme_path else False
+        readme_tag = " [README]" if has_readme else ""
+        print(f"  {tool['name']:<25} {tool['description']}")
+        print(f"    entry: {tool['entry']}{readme_tag}")
+
+    print("\nBuild artifacts:")
+    for variant in ("pokegold", "pokegold_debug"):
+        for ext in (".gbc", ".sym", ".map"):
+            artifact = ROOT / f"{variant}{ext}"
+            exists = artifact.exists()
+            tag = "found" if exists else "MISSING"
+            print(f"  {variant}{ext:<8} {tag}")
+
+    print("\nAudit scripts:")
+    audit_dir = ROOT / "tools" / "audit"
+    if audit_dir.is_dir():
+        scripts = sorted(audit_dir.glob("check_*.py"))
+        for s in scripts:
+            print(f"  {s.name}")
+        print(f"  ({len(scripts)} total)")
+    else:
+        print("  tools/audit/ not found")
+
+    print("\nDebugger roadmap: docs/debugger_roadmap.md")
+    roadmap = ROOT / "docs" / "debugger_roadmap.md"
+    if roadmap.exists():
+        print(f"  size: {roadmap.stat().st_size:,} bytes")
+    else:
+        print("  NOT FOUND")
+
+    return 0
+
+
+def cmd_symbol_resolve(args: argparse.Namespace) -> int:
+    from .kernel.symbol_service import SymbolService
+
+    try:
+        svc = SymbolService.from_project(variant=args.variant, start=ROOT)
+    except FileNotFoundError as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 1
+
+    sym = svc.resolve(args.name)
+    if sym is None:
+        candidates = svc.prefix_search(args.name)
+        if candidates:
+            print(f"Symbol '{args.name}' not found. Did you mean:")
+            for c in candidates[:10]:
+                print(f"  {c}")
+        else:
+            print(f"Symbol '{args.name}' not found.")
+        return 1
+
+    print(f"name:    {sym.name}")
+    print(f"bank:    ${sym.bank:02x} ({sym.bank})")
+    print(f"address: ${sym.address:04x} ({sym.address})")
+    return 0
+
+
+def cmd_symbol_render(args: argparse.Namespace) -> int:
+    from .kernel.symbol_service import SymbolService
+
+    try:
+        svc = SymbolService.from_project(variant=args.variant, start=ROOT)
+    except FileNotFoundError as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 1
+
+    spec = args.spec
+    if ":" not in spec:
+        print(f"error: expected bank:addr format (e.g. 01:4000), got '{spec}'")
+        return 1
+
+    bank_s, addr_s = spec.split(":", 1)
+    try:
+        bank = int(bank_s, 16)
+        addr = int(addr_s, 16)
+    except ValueError:
+        print(f"error: invalid hex in '{spec}'")
+        return 1
+
+    label = svc.render(bank, addr)
+    print(label)
+    return 0
+
+
+def cmd_macro_classify(args: argparse.Namespace) -> int:
+    from .kernel.symbol_service import SymbolService
+    from .instrumentation.macro_resolver import MacroResolver
+
+    try:
+        svc = SymbolService.from_project(variant=args.variant, start=ROOT)
+    except FileNotFoundError as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 1
+
+    rom_path = None
+    for name in (f"{args.variant}.gbc", f"{args.variant}_debug.gbc"):
+        candidate = ROOT / name
+        if not candidate.exists():
+            for p in ROOT.parents:
+                candidate = p / name
+                if candidate.exists():
+                    break
+        if candidate.exists():
+            rom_path = candidate
+            break
+
+    if rom_path is None:
+        print("error: ROM not found. Build first.", file=sys.stderr)
+        return 1
+
+    rom = rom_path.read_bytes()
+    resolver = MacroResolver(svc)
+
+    spec = args.spec
+    if ":" not in spec:
+        sym = svc.resolve(spec)
+        if sym is None:
+            print(f"Symbol '{spec}' not found.", file=sys.stderr)
+            return 1
+        bank, pc = sym.bank, sym.address
+    else:
+        bank_s, addr_s = spec.split(":", 1)
+        bank = int(bank_s, 16)
+        pc = int(addr_s, 16)
+
+    ctx = resolver.classify(rom, bank, pc)
+    print(f"PC:    ${bank:02x}:{pc:04x} ({svc.render(bank, pc)})")
+    print(f"Macro: {ctx}")
+    if ctx.is_macro:
+        print(f"  target: ${ctx.target_bank:02x}:{ctx.target_addr:04x} {ctx.target_label}")
+        print(f"  expansion: ${ctx.expansion_start_pc:04x}-${ctx.expansion_end_pc:04x}")
+        print(f"  position: byte {ctx.position_in_expansion}")
+    return 0
+
+
+def cmd_schema_show(args: argparse.Namespace) -> int:
+    from .kernel.symbol_service import SymbolService
+    from .kernel.state_schema import WorldState
+
+    try:
+        svc = SymbolService.from_project(variant=args.variant, start=ROOT)
+    except FileNotFoundError as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 1
+
+    ws = WorldState.from_symbol_service(svc)
+    print(ws.summary())
+    return 0
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="python -m tools.debugger",
+        description="Unified debugger for the Pokemon Gold hack",
+    )
+    sub = parser.add_subparsers(dest="command")
+
+    sub.add_parser("status", help="List all tool entry-points and build artifacts")
+
+    sym_parser = sub.add_parser("symbol", help="Symbol service commands")
+    sym_sub = sym_parser.add_subparsers(dest="sym_command")
+
+    resolve_p = sym_sub.add_parser("resolve", help="Resolve symbol name to bank:addr")
+    resolve_p.add_argument("name", help="Symbol name (e.g. wBattleMonHP)")
+    resolve_p.add_argument("--variant", default="pokegold", help="ROM variant")
+
+    render_p = sym_sub.add_parser("render", help="Render bank:addr as label name")
+    render_p.add_argument("spec", help="Bank:addr in hex (e.g. 01:4000)")
+    render_p.add_argument("--variant", default="pokegold", help="ROM variant")
+
+    macro_parser = sub.add_parser("macro", help="Macro resolver commands")
+    macro_sub = macro_parser.add_subparsers(dest="macro_command")
+
+    classify_p = macro_sub.add_parser("classify", help="Classify PC as macro expansion")
+    classify_p.add_argument("spec", help="bank:addr or symbol name")
+    classify_p.add_argument("--variant", default="pokegold", help="ROM variant")
+
+    schema_parser = sub.add_parser("schema", help="State schema commands")
+    schema_sub = schema_parser.add_subparsers(dest="schema_command")
+
+    show_p = schema_sub.add_parser("show", help="Print region summary")
+    show_p.add_argument("--variant", default="pokegold", help="ROM variant")
+
+    mcp_parser = sub.add_parser("mcp", help="MCP server / tool dispatch")
+    mcp_sub = mcp_parser.add_subparsers(dest="mcp_command")
+
+    mcp_list_p = mcp_sub.add_parser("list", help="List available MCP tools")
+    mcp_call_p = mcp_sub.add_parser("call", help="Call an MCP tool")
+    mcp_call_p.add_argument("tool", help="Tool name")
+    mcp_call_p.add_argument("params", nargs="*", help="key=value params")
+
+    # --- battle subcommand ---
+    battle_parser = sub.add_parser("battle", help="Battle analysis commands")
+    battle_sub = battle_parser.add_subparsers(dest="battle_command")
+
+    damage_p = battle_sub.add_parser("damage", help="Damage chain diagram")
+    damage_p.add_argument("attacker", help="SPECIES:LEVEL")
+    damage_p.add_argument("defender", help="SPECIES:LEVEL")
+    damage_p.add_argument("move", help="Move name")
+    damage_p.add_argument("--explain", action="store_true", help="Full breakdown")
+    damage_p.add_argument("--format", choices=["text", "arrow", "markdown"], default="text")
+
+    # --- static subcommand ---
+    static_parser = sub.add_parser("static", help="Static analysis commands")
+    static_sub = static_parser.add_subparsers(dest="static_command")
+
+    clobber_p = static_sub.add_parser("clobber-summary", help="Infer register clobber set")
+    clobber_p.add_argument("function", help="Function name")
+    clobber_p.add_argument("--variant", default="pokegold", help="ROM variant")
+
+    pressure_p = static_sub.add_parser("bank-pressure", help="Bank free-space report")
+    pressure_p.add_argument("--threshold", type=int, default=256, help="Free-byte threshold")
+    pressure_p.add_argument("--variant", default="pokegold", help="ROM variant")
+    pressure_p.add_argument("--full", action="store_true", help="Show all banks")
+
+    savelock_p = static_sub.add_parser("save-lock", help="Save format lock check")
+    savelock_p.add_argument("--lockfile", default="save_format.lock", help="Lockfile path")
+    savelock_p.add_argument("--generate", action="store_true", help="Generate new lockfile")
+    savelock_p.add_argument("--variant", default="pokegold", help="ROM variant")
+
+    analyze_p = static_sub.add_parser("analyze", help="Run all static analyses")
+    analyze_p.add_argument("--variant", default="pokegold", help="ROM variant")
+
+    query_parser = sub.add_parser("query", help="Omniscient query (placeholder)")
+    query_parser.add_argument("expression", help="Query expression")
+
+    return parser
+
+
+def cmd_static_clobber(args: argparse.Namespace) -> int:
+    from .kernel.symbol_service import SymbolService
+    from .analysis.static.clobber_inference import infer_summary
+
+    try:
+        svc = SymbolService.from_project(variant=args.variant, start=ROOT)
+    except FileNotFoundError as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 1
+
+    rom_path = None
+    for name in (f"{args.variant}.gbc", f"{args.variant}_debug.gbc"):
+        for root_dir in (ROOT,) + tuple(ROOT.parents[:5]):
+            candidate = root_dir / name
+            if candidate.exists():
+                rom_path = candidate
+                break
+        if rom_path:
+            break
+
+    if rom_path is None:
+        print("error: ROM not found. Build first.", file=sys.stderr)
+        return 1
+
+    rom = rom_path.read_bytes()
+    summary = infer_summary(args.function, svc, rom)
+    if summary is None:
+        print(f"Symbol '{args.function}' not found.", file=sys.stderr)
+        return 1
+
+    import json
+    print(json.dumps(summary.to_dict(), indent=2))
+    return 0
+
+
+def cmd_static_bank_pressure(args: argparse.Namespace) -> int:
+    from .kernel.symbol_service import SymbolService
+    from .analysis.static.bank_pressure import BankPressureChecker
+
+    try:
+        svc = SymbolService.from_project(variant=args.variant, start=ROOT)
+    except FileNotFoundError as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 1
+
+    checker = BankPressureChecker(svc)
+    report = checker.check(threshold=args.threshold)
+    if args.full:
+        print(report.full_report())
+    else:
+        print(report.summary())
+    return 0 if report.ok else 1
+
+
+def cmd_static_save_lock(args: argparse.Namespace) -> int:
+    from .kernel.symbol_service import SymbolService
+    from .analysis.static.save_format_lock import SaveFormatChecker
+
+    try:
+        svc = SymbolService.from_project(variant=args.variant, start=ROOT)
+    except FileNotFoundError as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 1
+
+    checker = SaveFormatChecker(svc)
+    if args.generate:
+        checker.write_lockfile(args.lockfile)
+        fields = checker.current_fields()
+        print(f"Wrote lockfile with {len(fields)} fields to {args.lockfile}")
+        return 0
+
+    result = checker.check(args.lockfile)
+    print(result.summary())
+    return 0 if result.ok else 1
+
+
+def cmd_static_analyze(args: argparse.Namespace) -> int:
+    from .kernel.symbol_service import SymbolService
+    from .analysis.static.bank_pressure import BankPressureChecker
+    from .analysis.static.save_format_lock import SaveFormatChecker
+
+    try:
+        svc = SymbolService.from_project(variant=args.variant, start=ROOT)
+    except FileNotFoundError as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 1
+
+    print("=== Static Analysis Report ===\n")
+
+    bp_checker = BankPressureChecker(svc)
+    bp_report = bp_checker.check()
+    print(bp_report.summary())
+    print()
+
+    sf_checker = SaveFormatChecker(svc)
+    sf_result = sf_checker.check("save_format.lock")
+    print(sf_result.summary())
+    print()
+
+    ok = bp_report.ok and sf_result.ok
+    print(f"\nOverall: {'PASS' if ok else 'FINDINGS DETECTED'}")
+    return 0 if ok else 1
+
+
+def cmd_mcp_list(args: argparse.Namespace) -> int:
+    from .llm.mcp_server import list_tools
+    tools = list_tools()
+    print("Available MCP tools:\n")
+    for t in tools:
+        print(f"  {t['name']:<20} {t['description']}")
+    return 0
+
+
+def cmd_mcp_call(args: argparse.Namespace) -> int:
+    from .llm.mcp_server import dispatch
+    kwargs: dict[str, str] = {}
+    for p in args.params:
+        if "=" in p:
+            k, v = p.split("=", 1)
+            try:
+                kwargs[k] = int(v)
+            except ValueError:
+                kwargs[k] = v
+        else:
+            kwargs[p] = ""
+    result = dispatch(args.tool, **kwargs)
+    print(result.to_json())
+    return 0 if result.ok else 1
+
+
+def main() -> int:
+    parser = build_parser()
+    args = parser.parse_args()
+
+    if args.command == "status":
+        return cmd_status(args)
+    elif args.command == "symbol":
+        if args.sym_command == "resolve":
+            return cmd_symbol_resolve(args)
+        elif args.sym_command == "render":
+            return cmd_symbol_render(args)
+        else:
+            parser.parse_args(["symbol", "--help"])
+            return 1
+    elif args.command == "macro":
+        if args.macro_command == "classify":
+            return cmd_macro_classify(args)
+        else:
+            parser.parse_args(["macro", "--help"])
+            return 1
+    elif args.command == "schema":
+        if args.schema_command == "show":
+            return cmd_schema_show(args)
+        else:
+            parser.parse_args(["schema", "--help"])
+            return 1
+    elif args.command == "mcp":
+        if args.mcp_command == "list":
+            return cmd_mcp_list(args)
+        elif args.mcp_command == "call":
+            return cmd_mcp_call(args)
+        else:
+            parser.parse_args(["mcp", "--help"])
+            return 1
+    elif args.command == "battle":
+        if args.battle_command == "damage":
+            print(f"Damage chain: {args.attacker} vs {args.defender} using {args.move}")
+            print("(Full battle damage CLI wired to oracle — use damage_debugger for now)")
+            return 0
+        else:
+            parser.parse_args(["battle", "--help"])
+            return 1
+    elif args.command == "static":
+        if args.static_command == "clobber-summary":
+            return cmd_static_clobber(args)
+        elif args.static_command == "bank-pressure":
+            return cmd_static_bank_pressure(args)
+        elif args.static_command == "save-lock":
+            return cmd_static_save_lock(args)
+        elif args.static_command == "analyze":
+            return cmd_static_analyze(args)
+        else:
+            parser.parse_args(["static", "--help"])
+            return 1
+    elif args.command == "query":
+        print(f"Query: {args.expression}")
+        print("(Omniscient query DSL not yet implemented — P4)")
+        return 0
+    else:
+        parser.print_help()
+        return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
