@@ -257,6 +257,24 @@ in the runbook. Per-iteration commits use the message form
 `pokemon-mastery-loop: iter N <phase> <replay_id|na>` so the loop's history
 is greppable.
 
+## Boss AI Alignment Loop
+
+A separate, divergence-driven loop drives the Python scorer at
+`tools/boss_ai_debugger/scorer.py` to match Claude's labeled preferences.
+Runbook: [docs/boss_ai_loop_runbook.md](docs/boss_ai_loop_runbook.md).
+The Python scorer is the REVIEW pipeline's model of what the ROM AI does
+(or should do); many improvements there are already mirrored by an
+existing ROM helper. Working in Python lets us iterate on alignment
+without touching asm + risking selector replay.
+
+Per-iteration commits use `boss-ai-loop: iter N <action>`. Audit floor
+includes the new trajectory-regression gates: legacy ≥ 0.93 strict-label
+agreement (`check_boss_ai_trajectory_regression.py`) and canonical-scope
+(`public_plus_common_meta`) at 1.0 (`check_boss_ai_trajectory_canonical_scope.py`).
+Both run as subaudits of `check_release_smoke.py`. As of the iter-19
+ratchet the legacy corpus sits at 47/48 (97.9%) and the canonical at
+5/5 (100%).
+
 ## Workflow
 
 The repo runs on a senior-dev / CEO contract. The user has gameplay taste
