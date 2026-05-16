@@ -1035,6 +1035,131 @@ class RegressionTests(unittest.TestCase):
         rules = {c["rule"] for c in switch["contributions"]}
         self.assertNotIn("type_immunity_pivot", rules)
 
+    def test_type_wall_pivot_fires_on_hard_wall_text(self) -> None:
+        # Iter 6 rule: switch target text saying "hard walls" / "hard wall"
+        # gets +12 (highest switch-rule bonus, sized for "this switch
+        # outright walls the revealed threat").
+        fixture = {
+            "id": "type_wall_pivot_fixture",
+            "leader": "Tester",
+            "tags": ["switching"],
+            "state": {},
+            "actions": [
+                {
+                    "id": "switch_chansey",
+                    "kind": "switch",
+                    "name": "Switch to Chansey",
+                    "explanation": "Chansey hard walls the revealed special attacker.",
+                    "public_tradeoff": "Defensive.",
+                },
+            ],
+        }
+        switch = score_action(fixture, fixture["actions"][0])
+        rules = {c["rule"] for c in switch["contributions"]}
+        self.assertIn("type_wall_pivot", rules)
+        contribution = next(
+            c for c in switch["contributions"] if c["rule"] == "type_wall_pivot"
+        )
+        self.assertEqual(contribution["delta"], 12)
+
+    def test_type_resist_pivot_fires_on_x_resistant_text(self) -> None:
+        # Iter 7 rule: switch target text saying "X-resistant" (fire-resistant,
+        # water-resistant, etc.) gets +6. Gated on `hidden_coverage NOT in
+        # tags` to avoid double-counting with hidden_coverage_respect.
+        fixture = {
+            "id": "type_resist_pivot_fixture",
+            "leader": "Tester",
+            "tags": ["switching"],
+            "state": {},
+            "actions": [
+                {
+                    "id": "switch_lapras",
+                    "kind": "switch",
+                    "name": "Switch to Lapras",
+                    "explanation": "Lapras is fire-resistant.",
+                    "public_tradeoff": "Defensive pivot.",
+                },
+            ],
+        }
+        switch = score_action(fixture, fixture["actions"][0])
+        rules = {c["rule"] for c in switch["contributions"]}
+        self.assertIn("type_resist_pivot", rules)
+        contribution = next(
+            c for c in switch["contributions"] if c["rule"] == "type_resist_pivot"
+        )
+        self.assertEqual(contribution["delta"], 6)
+
+    def test_type_resist_pivot_does_not_fire_under_hidden_coverage_tag(self) -> None:
+        # Gating: when hidden_coverage tag is set, type_resist_pivot must NOT
+        # fire (the hidden_coverage_respect rule fires instead, avoiding
+        # double-count).
+        fixture = {
+            "id": "type_resist_hidden_coverage_fixture",
+            "leader": "Tester",
+            "tags": ["switching", "hidden_coverage"],
+            "state": {},
+            "actions": [
+                {
+                    "id": "switch_lapras",
+                    "kind": "switch",
+                    "name": "Switch to Lapras",
+                    "explanation": "Lapras is fire-resistant.",
+                    "public_tradeoff": "Defensive pivot.",
+                },
+            ],
+        }
+        switch = score_action(fixture, fixture["actions"][0])
+        rules = {c["rule"] for c in switch["contributions"]}
+        self.assertNotIn("type_resist_pivot", rules)
+
+    def test_preserve_value_fires_on_preserve_text(self) -> None:
+        # Core rule (31 firings across corpus): switch text mentioning
+        # "preserve" or "handles" gets +4 for protecting a valuable mon.
+        fixture = {
+            "id": "preserve_value_fixture",
+            "leader": "Tester",
+            "tags": [],
+            "state": {},
+            "actions": [
+                {
+                    "id": "switch_target",
+                    "kind": "switch",
+                    "name": "Switch",
+                    "explanation": "Preserves a valuable mon.",
+                    "public_tradeoff": "Defensive.",
+                },
+            ],
+        }
+        switch = score_action(fixture, fixture["actions"][0])
+        rules = {c["rule"] for c in switch["contributions"]}
+        self.assertIn("preserve_value", rules)
+        contribution = next(
+            c for c in switch["contributions"] if c["rule"] == "preserve_value"
+        )
+        self.assertEqual(contribution["delta"], 4)
+
+    def test_tempo_damage_fires_on_clean_text(self) -> None:
+        # Core rule (40 firings): damage-like move text mentioning
+        # "immediate" / "direct" / "clean" gets +5.
+        fixture = {
+            "id": "tempo_damage_fixture",
+            "leader": "Tester",
+            "tags": [],
+            "state": {},
+            "actions": [
+                {
+                    "id": "move_surf",
+                    "kind": "move",
+                    "name": "Surf",
+                    "explanation": "Clean Water punish.",
+                    "public_tradeoff": "Tempo.",
+                },
+            ],
+        }
+        move = score_action(fixture, fixture["actions"][0])
+        rules = {c["rule"] for c in move["contributions"]}
+        self.assertIn("tempo_damage", rules)
+
     def test_public_notes_chip_qualifier_does_not_fire_on_move_actions(self) -> None:
         fixture = {
             "id": "chip_qualifier_move_fixture",
