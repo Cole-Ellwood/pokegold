@@ -216,6 +216,69 @@ class PlanGenerationTests(unittest.TestCase):
         )
         self.assertNotIn("plan_stays_in_under_public_lethal_threat", switch_features)
 
+    def test_max_cards_higher_than_four_is_honored(self) -> None:
+        # Regression test: prior to iter-26 the slice in generate_plan_cards
+        # was `output[:max(1, min(4, max_cards))]`, which silently clamped
+        # `max_cards` to 4. That dropped low-priority plans (e.g. switch
+        # plans on fixtures whose four-plan budget was filled by
+        # attack/sleep/setup/status). With the clamp removed, callers can
+        # explicitly request more cards and get the full deduped output.
+        fixture = {
+            "id": "high_card_count_fixture",
+            "leader": "Tester",
+            "turn": 5,
+            "tags": ["sleep", "setup"],
+            "state": {
+                "boss": {
+                    "active": {"species": "Victreebel", "hp": "75%"},
+                    "bench": ["Exeggutor"],
+                    "bench_state": [{"species": "Exeggutor", "hp": "100%", "status": "none"}],
+                },
+            },
+            "actions": [
+                {
+                    "id": "move_sleep_powder",
+                    "kind": "move",
+                    "name": "Sleep Powder",
+                    "explanation": "Sets up a sleep turn.",
+                    "public_tradeoff": "Accuracy gamble.",
+                },
+                {
+                    "id": "move_swords_dance",
+                    "kind": "move",
+                    "name": "Swords Dance",
+                    "explanation": "Snowballs after sleep.",
+                    "public_tradeoff": "Greedy.",
+                },
+                {
+                    "id": "move_sludge_bomb",
+                    "kind": "move",
+                    "name": "Sludge Bomb",
+                    "explanation": "Direct STAB.",
+                    "public_tradeoff": "Tempo.",
+                },
+                {
+                    "id": "switch_exeggutor",
+                    "kind": "switch",
+                    "name": "Switch to Exeggutor",
+                    "explanation": "Preserve Victreebel.",
+                    "public_tradeoff": "Defensive pivot.",
+                },
+            ],
+        }
+        default_plans = generate_plan_cards(fixture)
+        extended_plans = generate_plan_cards(fixture, max_cards=10)
+        # Default is still bounded by 4.
+        self.assertEqual(len(default_plans), 4)
+        # Explicit max_cards > 4 now returns more plans (the switch_plan
+        # that the priority-sort+dedupe had moved past position 4).
+        self.assertGreater(len(extended_plans), 4)
+        ids = {p["id"] for p in extended_plans}
+        self.assertTrue(
+            any("switch_preserve_then_rescore" in pid for pid in ids),
+            f"expected switch_preserve_then_rescore plan in extended output, got {ids}",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

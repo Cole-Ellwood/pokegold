@@ -610,7 +610,7 @@ def generate_plan_cards(
     output = dedupe_plans(plans)
     for index, plan in enumerate(output, start=1):
         plan["card_index"] = index
-    return output[:max(1, min(4, max_cards))]
+    return output[:max(1, max_cards)]
 
 
 def generated_plan_ids_by_fixture(
