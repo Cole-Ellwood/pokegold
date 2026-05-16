@@ -1,6 +1,6 @@
 # Pokemon Mastery Live Core
 
-Hard cap: 80 lines. This is the only default pre-freeze move-choice entrypoint.
+Hard cap: 100 lines. This is the only default pre-freeze move-choice entrypoint.
 
 ## Fresh Replay Routing
 
@@ -8,7 +8,9 @@ Before answering a fresh unseen replay turn, load only:
 
 1. This file.
 2. The current replay prompt and public log state.
-3. At most one `heuristic_core/*.md` card chosen by the uncertainty.
+3. Any `heuristic_core/*.md` cards forced by the Load-Required Triggers
+   section below; otherwise the smallest discretionary set that answers
+   the live uncertainty.
 
 After answers are frozen, load scoring rules, old policy cards, reviews,
 ledger rows, cookbook entries, or source notes for scoring and postmortem only.
@@ -16,6 +18,32 @@ ledger rows, cookbook entries, or source notes for scoring and postmortem only.
 Do not load pre-freeze: `cookbook.md`, `source_to_policy_ledger.md`,
 `paused_turn_atlas.md`, `worked_examples/live_turn_drills.md`, old long
 `policy_cards/*.md`, scored quick tests, reviews, or external research returns.
+
+## Load-Required Triggers
+
+For these boards, the listed card MUST be in pre-freeze context. The
+selector below is mandatory for these triggers, not discretionary:
+
+- Spikes (either side), Rest in any package, Sleep Talk, any sleeping
+  target, or any phaze move in any revealed package
+  → `heuristic_core/reset_loop_denial.md`
+- Unique-role piece (spinner, phazer, RestTalker, breaker, last typed
+  absorber) at <80% HP, statused, or facing future Spikes-entry tax
+  → `heuristic_core/spend_or_save_piece.md`
+- Tempted by Toxic / Spikes / Rapid Spin / safe-switch when a converter
+  (damage, coverage, phaze-on-sleeping-target, cash-out, lower-cost
+  handoff) is available
+  → `heuristic_core/converter_before_script.md`
+
+Pre-freeze audit: for each top-three candidate, name the branch it
+beats AND the branch it loses to. A dead move into a named branch
+(Toxic into a sleeping target, status into a Steel that blanks it,
+Electric into a Ground, generic phaze when direct chip on the named
+receiver is available) demotes itself.
+
+Record the actual loaded-card set in the packet per turn so H1
+(card-not-loaded) and H2 (card-loaded-but-ignored) misses are
+distinguishable in post-score diagnosis.
 
 ## Pre-Move Solve
 

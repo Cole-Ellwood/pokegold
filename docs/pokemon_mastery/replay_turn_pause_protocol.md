@@ -23,6 +23,10 @@ Treat the replay move as a pro-comparison oracle, not absolute truth.
 3. Reveal the log only up to the next decision turn. Prefer the local helper:
    `python tools\pokemon_mastery\replay_turn_pause.py path\to\replay.log prompt --turn N`.
 4. For each side, freeze an answer before revealing that turn:
+   - **pre-freeze loaded cards**: list every card name in context for this turn
+     (live_core, active_context, heuristic_core/*, canon/*, etc.). This makes
+     H1 (card-not-loaded) vs H2 (card-loaded-but-ignored) misses distinguishable
+     in post-score diagnosis.
    - recommended move or switch;
    - confidence;
    - route reason;
@@ -132,6 +136,7 @@ Earliest meaningful error:
 ## Turn N
 
 Public state:
+Pre-freeze loaded cards:
 My p1 answer:
 My p2 answer:
 Actual choices:
