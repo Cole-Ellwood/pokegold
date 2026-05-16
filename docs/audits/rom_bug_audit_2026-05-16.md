@@ -124,6 +124,7 @@ bug-class lens — not just listed them.
 - `engine/battle/effect_commands.asm` BattleCommand_StatDown (lines 4224-4314) — lens: stat-stage underflow, mist-protection. findings: 0 (`dec b; jr z, .CantLower` clamps at MIN_STAT_LEVEL=1; sharp-lower has its own `inc b` floor; CheckMist gates accuracy/evasion-down moves).
 - `engine/battle/effect_commands.asm` BattleCommand_Heal (lines 5886-5964) — lens: HP-restore overflow, REST state. findings: 0 (compare-current-vs-max via CompareBytes to detect already-full; REST sets sleep counter to fixed REST_SLEEP_TURNS+1).
 - `engine/games/slot_machine.asm` (lines 1-100, constants + entry) — lens: state-machine OOB, REEL_SIZE bounds. findings: 0 confirmed in the preamble; SlotsJumptable has 19 named states, ReelActionJumptable has 25 named actions; full handler not read.
+- `engine/pokemon/evolve.asm` (EvolveAfterBattle main loop + .happiness + EVOLVE_STAT branch, lines 1-130) — lens: party-species OOB into EvosAttacksPointers, evolution-condition data integrity. findings: 0 confirmed (party walk terminates on `cp $ff` sentinel; EvosAttacksPointers indexed by species-1 trusts compile-time party data; same upstream-trust pattern as Findings 6/7 — save corruption could drive this OOB but no in-code crash).
 
 ### Regions deferred
 <!-- iterations append: - region (reason for deferral) -->
