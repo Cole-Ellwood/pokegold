@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-05-16T08:27:25+00:00",
+  "generated_at": "2026-05-16T08:30:20+00:00",
   "threshold": 0.8,
   "strict_label_count": 43,
-  "strict_agreement_count": 33,
-  "agreement_rate": 0.7674418604651163,
+  "strict_agreement_count": 34,
+  "agreement_rate": 0.7906976744186046,
   "passed": false,
   "skipped": {
     "both_good": 1,
@@ -17,7 +17,7 @@
     },
     "switch_policy": {
       "total": 25,
-      "agree": 20
+      "agree": 21
     }
   },
   "disagreements": [
@@ -118,20 +118,6 @@
       "same_first_move": false,
       "lesson_type": "switch_policy",
       "note": "Fixture public notes say revealed Flame Wheel is chip, not a reason to panic-switch; Rock Slide has the stronger route and KO pressure, while Skarmory over-preserves unless stronger Fire coverage is confirmed."
-    },
-    {
-      "fixture_id": "koga_ariados_vs_typhlosion_spikes_or_toxic",
-      "trajectory_a_id": "plan_koga_ariados_vs_typhlosion_spikes_or_toxic_switch_preserve_then_rescore_switch_tentacruel_move_leech_life",
-      "trajectory_b_id": "plan_koga_ariados_vs_typhlosion_spikes_or_toxic_status_once_then_attack_move_toxic_move_leech_life",
-      "label_choice": "a_better",
-      "scorer_choice": "b_better",
-      "first_move_a": "switch_tentacruel",
-      "first_move_b": "move_toxic",
-      "score_a": 54,
-      "score_b": 55,
-      "same_first_move": false,
-      "lesson_type": "switch_policy",
-      "note": "Revealed Flamethrower is a guaranteed KO into Ariados, so the Tentacruel pivot preserves the hazard/status piece while Toxic spends the turn before any poison route can convert."
     },
     {
       "fixture_id": "chuck_poliwrath_vs_alakazam_hypnosis_or_ice_punch",

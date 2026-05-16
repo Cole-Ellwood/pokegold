@@ -105,6 +105,27 @@ TYPE_WALL_PIVOT_TEXT = {
 }
 
 
+TYPE_RESIST_PIVOT_TEXT = {
+    "fire-resistant",
+    "water-resistant",
+    "grass-resistant",
+    "electric-resistant",
+    "ice-resistant",
+    "rock-resistant",
+    "ground-resistant",
+    "flying-resistant",
+    "psychic-resistant",
+    "fighting-resistant",
+    "dark-resistant",
+    "ghost-resistant",
+    "steel-resistant",
+    "bug-resistant",
+    "poison-resistant",
+    "dragon-resistant",
+    "normal-resistant",
+}
+
+
 HAZARD_TEMPO_RISK_TEXT = {
     "cannot afford",
     "fire hit",
@@ -281,6 +302,17 @@ def score_action(
             _add(contributions, "preserve_value", 4, "action text preserves a high-value mon")
         if not is_bad_pivot and _has_any(text, TYPE_WALL_PIVOT_TEXT):
             _add(contributions, "type_wall_pivot", 12, "switch target text marks it as a hard wall to the revealed threat")
+        if (
+            not is_bad_pivot
+            and "hidden_coverage" not in tags
+            and _has_any(text, TYPE_RESIST_PIVOT_TEXT)
+        ):
+            _add(
+                contributions,
+                "type_resist_pivot",
+                6,
+                "switch target is type-resistant to a revealed coverage type (not double-counted with hidden_coverage_respect)",
+            )
         if is_bad_pivot:
             _add(contributions, "bad_pivot", -8, "switch target does not solve the visible threat")
 
