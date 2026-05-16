@@ -6522,7 +6522,21 @@
               "Explosion"
             ],
             "role": "fast hazard trade piece"
-          }
+          },
+          "bench": [
+            "Tentacruel",
+            "Muk",
+            "Nidoking",
+            "Weezing",
+            "Venomoth"
+          ],
+          "bench_state": [
+            {"hp": "100%", "species": "Tentacruel", "status": "none"},
+            {"hp": "100%", "species": "Muk", "status": "none"},
+            {"hp": "100%", "species": "Nidoking", "status": "none"},
+            {"hp": "100%", "species": "Weezing", "status": "none"},
+            {"hp": "100%", "species": "Venomoth", "status": "none"}
+          ]
         },
         "player": {
           "active": {
@@ -6622,7 +6636,21 @@
               "Explosion"
             ],
             "role": "fast hazard trade piece"
-          }
+          },
+          "bench": [
+            "Tentacruel",
+            "Muk",
+            "Nidoking",
+            "Weezing",
+            "Venomoth"
+          ],
+          "bench_state": [
+            {"hp": "100%", "species": "Tentacruel", "status": "none"},
+            {"hp": "100%", "species": "Muk", "status": "none"},
+            {"hp": "100%", "species": "Nidoking", "status": "none"},
+            {"hp": "100%", "species": "Weezing", "status": "none"},
+            {"hp": "100%", "species": "Venomoth", "status": "none"}
+          ]
         },
         "player": {
           "active": {
