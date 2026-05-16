@@ -108,9 +108,24 @@
         "predicted_action": {"$ref": "#/definitions/action"},
         "pro_reasoning_class": {"$ref": "#/definitions/reasoning_class"},
         "failure_mode": {"$ref": "#/definitions/failure_mode"},
-        "lesson": {"type": "string", "description": "Short imperative recipe to apply when retrieval surfaces this case."},
+        "lesson": {"type": "string", "description": "Short imperative recipe to apply when retrieval surfaces this case. For misses, the lesson MUST be informed by the investigation field."},
+        "investigation": {
+          "type": "object",
+          "description": "REQUIRED on miss cases (failure_mode != hit_top, hit_acceptable_only). Documents the root-cause investigation that produced the lesson — replay future-turn evidence, Smogon source check, set/strategy hypothesis, and a confidence level. Trivial 'I just saw the move' lessons are not allowed on miss cases.",
+          "required": ["root_cause_hypothesis", "future_turn_evidence", "confidence"],
+          "properties": {
+            "root_cause_hypothesis": {"type": "string", "description": "Best explanation for why the pro chose that move. Must reference concrete evidence from future turns OR a cited Smogon source OR a named set archetype."},
+            "future_turn_evidence": {"type": "string", "description": "What the next 3-10 turns of the same replay showed about how the piece's role played out. Cite specific turns by number."},
+            "smogon_source": {"type": ["string", "null"], "description": "Optional URL to a Smogon analysis, set sheet, or forum thread that supports the hypothesis."},
+            "set_archetype": {"type": ["string", "null"], "description": "Optional named set archetype (e.g., 'TWave Starmie', 'Lure Forretress HP Fighting', 'CurseLax')."},
+            "confidence": {"enum": ["low", "medium", "high"], "description": "How confident the investigation is in the root cause."},
+            "alternative_hypotheses": {"type": "array", "items": {"type": "string"}, "description": "Other plausible explanations that were considered but rejected."}
+          }
+        },
         "evidence_url": {"type": "string"},
-        "created_at": {"type": "string", "format": "date-time"}
+        "created_at": {"type": "string", "format": "date-time"},
+        "bootstrap_iteration": {"type": "boolean"},
+        "context_contaminated": {"type": "boolean"}
       }
     },
     "replay_index_row": {
