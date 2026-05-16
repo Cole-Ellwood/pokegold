@@ -1,0 +1,199 @@
+{
+  "candidate_count": 13,
+  "candidates": [
+    {
+      "description": "Score deltas keep the ROM direction: negative encourages, positive discourages.",
+      "examples": [
+        "generated_selector_edges_20260515_00000_blocked_best",
+        "generated_selector_edges_20260515_00000_blocked_best",
+        "generated_selector_edges_20260515_00000_blocked_best",
+        "generated_selector_edges_20260515_00000_blocked_best",
+        "generated_spikes_spin_20260515_00001"
+      ],
+      "id": "scenario.score_delta_direction",
+      "source_kind": "scenario",
+      "status": "candidate",
+      "support_count": 1279,
+      "violation_count": 0,
+      "violations": []
+    },
+    {
+      "description": "Selectable scores stay in 1..79, and blocked scores stay at 80 or above.",
+      "examples": [
+        "generated_selector_edges_20260515_00000_blocked_best",
+        "generated_selector_edges_20260515_00000_blocked_best",
+        "generated_selector_edges_20260515_00000_blocked_best",
+        "generated_selector_edges_20260515_00000_blocked_best",
+        "generated_spikes_spin_20260515_00001"
+      ],
+      "id": "scenario.selectable_score_bounds",
+      "source_kind": "scenario",
+      "status": "candidate",
+      "support_count": 800,
+      "violation_count": 0,
+      "violations": []
+    },
+    {
+      "description": "Actions with final score 80 or above have zero selector probability.",
+      "examples": [
+        "generated_selector_edges_20260515_00000_blocked_best",
+        "generated_selector_edges_20260515_00006_blocked_best",
+        "generated_selector_edges_20260515_00018_blocked_best",
+        "generated_selector_edges_20260515_00021_blocked_best",
+        "generated_selector_edges_20260515_00033_blocked_best"
+      ],
+      "id": "scenario.blocked_probability_zero",
+      "source_kind": "scenario",
+      "status": "candidate",
+      "support_count": 22,
+      "violation_count": 0,
+      "violations": []
+    },
+    {
+      "description": "The selector gives nonzero probability only to the best and first second-best actions.",
+      "examples": [
+        "generated_selector_edges_20260515_00000_blocked_best",
+        "generated_spikes_spin_20260515_00001",
+        "generated_mastery_policy_20260515_00002_cashout_boundary",
+        "generated_selector_edges_20260515_00003_all_equal",
+        "generated_spikes_spin_20260515_00004"
+      ],
+      "id": "scenario.selector_probability_surface",
+      "source_kind": "scenario",
+      "status": "candidate",
+      "support_count": 200,
+      "violation_count": 0,
+      "violations": []
+    },
+    {
+      "description": "Pass verdicts with expected best ids satisfy the configured probability floor.",
+      "examples": [
+        "generated_selector_edges_20260515_00000_blocked_best",
+        "generated_spikes_spin_20260515_00001",
+        "generated_mastery_policy_20260515_00002_cashout_boundary",
+        "generated_selector_edges_20260515_00003_all_equal",
+        "generated_spikes_spin_20260515_00004"
+      ],
+      "id": "scenario.pass_expected_probability_floor",
+      "source_kind": "scenario",
+      "status": "candidate",
+      "support_count": 200,
+      "violation_count": 0,
+      "violations": []
+    },
+    {
+      "description": "Passing scenarios do not roll catastrophic actions.",
+      "examples": [
+        "generated_selector_edges_20260515_00000_blocked_best",
+        "generated_spikes_spin_20260515_00001",
+        "generated_mastery_policy_20260515_00002_cashout_boundary",
+        "generated_selector_edges_20260515_00003_all_equal",
+        "generated_spikes_spin_20260515_00004"
+      ],
+      "id": "scenario.pass_has_no_catastrophic_roll",
+      "source_kind": "scenario",
+      "status": "candidate",
+      "support_count": 200,
+      "violation_count": 0,
+      "violations": []
+    },
+    {
+      "description": "Exact trace captures carry four move ids and four move score bytes.",
+      "examples": [
+        "blaine_live#1",
+        "blue_live#1",
+        "brock_live#1",
+        "bugsy_live#1",
+        "champion_lance_live#1"
+      ],
+      "id": "trace.exact_selector_byte_shape",
+      "source_kind": "trace",
+      "status": "candidate",
+      "support_count": 19,
+      "violation_count": 0,
+      "violations": []
+    },
+    {
+      "description": "Exact matched captures choose a slot or move with nonzero selector probability.",
+      "examples": [
+        "Blaine#1",
+        "Blue#1",
+        "Brock#1",
+        "Bugsy#1",
+        "Champion Lance#1"
+      ],
+      "id": "trace.chosen_slot_is_possible",
+      "source_kind": "trace",
+      "status": "candidate",
+      "support_count": 19,
+      "violation_count": 0,
+      "violations": []
+    },
+    {
+      "description": "Trace selector slots with score 80 or above have zero probability.",
+      "examples": [],
+      "id": "trace.score_80_probability_zero",
+      "source_kind": "trace",
+      "status": "candidate",
+      "support_count": 0,
+      "violation_count": 0,
+      "violations": []
+    },
+    {
+      "description": "Exact selector replay exposes at most two possible slots.",
+      "examples": [
+        "Blaine#1",
+        "Blue#1",
+        "Brock#1",
+        "Bugsy#1",
+        "Champion Lance#1"
+      ],
+      "id": "trace.possible_slots_limited_to_best_second",
+      "source_kind": "trace",
+      "status": "candidate",
+      "support_count": 19,
+      "violation_count": 0,
+      "violations": []
+    },
+    {
+      "description": "Run metadata artifact hashes match the written artifact files.",
+      "examples": [],
+      "id": "run_store.artifact_hashes_match",
+      "source_kind": "run_store",
+      "status": "candidate",
+      "support_count": 0,
+      "violation_count": 0,
+      "violations": []
+    },
+    {
+      "description": "Run metadata batch summary agrees with batch_report.json.",
+      "examples": [],
+      "id": "run_store.batch_summary_matches_report",
+      "source_kind": "run_store",
+      "status": "candidate",
+      "support_count": 0,
+      "violation_count": 0,
+      "violations": []
+    },
+    {
+      "description": "Review queue input count agrees with batch reviewable count.",
+      "examples": [],
+      "id": "run_store.review_queue_matches_batch",
+      "source_kind": "run_store",
+      "status": "candidate",
+      "support_count": 0,
+      "violation_count": 0,
+      "violations": []
+    }
+  ],
+  "known_limits": [
+    "Current traces expose selector bytes, not full scoring rule events.",
+    "Candidate invariants are hypotheses until promoted to a dedicated audit."
+  ],
+  "run_count": 1,
+  "scenario_count": 200,
+  "schema_version": 1,
+  "status": "candidate",
+  "trace_file_count": 19,
+  "violation_count": 0
+}
