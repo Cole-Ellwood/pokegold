@@ -1,0 +1,6 @@
+- [v1] all pokemon_mastery tests pass
+- [v2] case library schema valid and no tier contamination
+- [v3] regression battery 100% pass on all probes
+- [v4] progress gate met: latest validation-tier metrics row has top_match>=0.60, acceptable_match>=0.75, severe_blunder_rate=0, positive_selection_converter>=0.65, decision_count>=30
+- [v5] case library has at least 150 distinct state fingerprints
+- [manual] user reviews a fresh final-exam packet (3 sealed_exam replays predicted cold under pre-freeze discipline) and confirms improvement is real and the loop is sound for ongoing use

@@ -1,0 +1,151 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Pokemon Mastery Case Library Schema v0",
+  "description": "Schema for the retrievable case library that powers the Compounding Loop. Each case is a structured row extracted from a scored unseen-replay miss (or hit), keyed by a public-state fingerprint that supports retrieval at fresh-prediction time.",
+  "definitions": {
+    "tier": {
+      "enum": ["study", "validation", "sealed_exam"],
+      "description": "Append-only partition. study replays may be mined for cases. validation replays may be scored but NEVER mined for cases (held-out for the headline top-match metric). sealed_exam replays are pulled fresh at exam time and predicted cold."
+    },
+    "reasoning_class": {
+      "enum": [
+        "converter",
+        "branch_punish",
+        "preservation",
+        "handoff",
+        "counter_handoff",
+        "cashout",
+        "reset_denial",
+        "info_gather",
+        "hazard_set",
+        "hazard_remove",
+        "status_apply",
+        "status_absorb",
+        "phaze",
+        "setup",
+        "trap",
+        "stall",
+        "endgame_solve",
+        "other"
+      ],
+      "description": "Taxonomy of pro reasoning that explains why the move was chosen."
+    },
+    "failure_mode": {
+      "enum": [
+        "missed_class",
+        "wrong_specific_identity",
+        "hidden_role",
+        "mechanics",
+        "timing",
+        "branch_overcorrect",
+        "branch_undercorrect",
+        "preserved_wrong_piece",
+        "spent_wrong_piece",
+        "loop_freeze",
+        "hit_top",
+        "hit_acceptable_only"
+      ],
+      "description": "Why the prediction missed. hit_top and hit_acceptable_only are not failures; they are recorded for retrieval (positive examples are still useful patterns to remember)."
+    },
+    "hp_bucket": {
+      "enum": ["0", "<=25%", "26-50%", "51-75%", "76-99%", "100%", "unknown"]
+    },
+    "turn_bucket": {
+      "enum": ["t1", "early", "mid", "late", "endgame"],
+      "description": "t1 = turn 1; early = 2-6; mid = 7-15; late = 16-25; endgame = 26+."
+    },
+    "mon_snapshot": {
+      "type": "object",
+      "required": ["species", "hp_bucket"],
+      "properties": {
+        "species": {"type": "string"},
+        "hp_bucket": {"$ref": "#/definitions/hp_bucket"},
+        "status": {"type": "string"},
+        "boosts": {"type": "object", "additionalProperties": {"type": "integer"}},
+        "revealed_moves": {"type": "array", "items": {"type": "string"}},
+        "revealed_item": {"type": ["string", "null"]}
+      }
+    },
+    "fingerprint": {
+      "type": "object",
+      "required": ["active_user", "active_opp", "turn_bucket"],
+      "properties": {
+        "active_user": {"$ref": "#/definitions/mon_snapshot"},
+        "active_opp": {"$ref": "#/definitions/mon_snapshot"},
+        "seen_user": {"type": "array", "items": {"$ref": "#/definitions/mon_snapshot"}},
+        "seen_opp": {"type": "array", "items": {"$ref": "#/definitions/mon_snapshot"}},
+        "side_conditions_user": {"type": "array", "items": {"type": "string"}},
+        "side_conditions_opp": {"type": "array", "items": {"type": "string"}},
+        "turn_bucket": {"$ref": "#/definitions/turn_bucket"},
+        "speed_order_known": {"type": "boolean"},
+        "decision_relevant_features": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Free-form salient features (e.g. 'opp has untouched sleep absorber', 'spikes 2 on opp side', 'rest just used by user'). Used as similarity boosters."
+        }
+      }
+    },
+    "action": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {"enum": ["move", "switch"]},
+        "move": {"type": "string"},
+        "switch_to": {"type": "string"}
+      }
+    },
+    "case": {
+      "type": "object",
+      "required": ["case_id", "replay_id", "turn", "side", "tier", "fingerprint", "pro_action", "pro_reasoning_class", "created_at"],
+      "properties": {
+        "case_id": {"type": "string"},
+        "replay_id": {"type": "string"},
+        "turn": {"type": "integer", "minimum": 1},
+        "side": {"enum": ["p1", "p2"]},
+        "tier": {"$ref": "#/definitions/tier"},
+        "fingerprint": {"$ref": "#/definitions/fingerprint"},
+        "pro_action": {"$ref": "#/definitions/action"},
+        "predicted_action": {"$ref": "#/definitions/action"},
+        "pro_reasoning_class": {"$ref": "#/definitions/reasoning_class"},
+        "failure_mode": {"$ref": "#/definitions/failure_mode"},
+        "lesson": {"type": "string", "description": "Short imperative recipe to apply when retrieval surfaces this case."},
+        "evidence_url": {"type": "string"},
+        "created_at": {"type": "string", "format": "date-time"}
+      }
+    },
+    "replay_index_row": {
+      "type": "object",
+      "required": ["replay_id", "tier", "rating", "uploadtime", "fetched_at"],
+      "properties": {
+        "replay_id": {"type": "string"},
+        "tier": {"$ref": "#/definitions/tier"},
+        "rating": {"type": "integer"},
+        "uploadtime": {"type": "integer"},
+        "fetched_at": {"type": "string", "format": "date-time"},
+        "players": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "metrics_row": {
+      "type": "object",
+      "required": ["window_id", "computed_at", "tier", "decision_count"],
+      "properties": {
+        "window_id": {"type": "string"},
+        "computed_at": {"type": "string", "format": "date-time"},
+        "tier": {"$ref": "#/definitions/tier"},
+        "decision_count": {"type": "integer"},
+        "top_match": {"type": "number"},
+        "acceptable_match": {"type": "number"},
+        "severe_blunder_rate": {"type": "number"},
+        "positive_selection_converter": {"type": "number"},
+        "ema_top_match": {"type": "number"},
+        "ema_window_size": {"type": "integer"}
+      }
+    }
+  },
+  "type": "object",
+  "properties": {
+    "case_array": {"type": "array", "items": {"$ref": "#/definitions/case"}},
+    "replay_index_array": {"type": "array", "items": {"$ref": "#/definitions/replay_index_row"}},
+    "metrics_array": {"type": "array", "items": {"$ref": "#/definitions/metrics_row"}}
+  }
+}

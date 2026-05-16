@@ -1,0 +1,28 @@
+{
+  "version": "v0",
+  "loop_name": "Pokemon Mastery Compounding Loop",
+  "armed_at": null,
+  "armed_by_pgoal": true,
+  "gate_target": {
+    "label": "stretch",
+    "top_match_min": 0.6,
+    "acceptable_match_min": 0.75,
+    "severe_blunder_max": 0,
+    "positive_selection_converter_min": 0.65,
+    "sealed_window_decisions": 30,
+    "case_breadth_min": 150
+  },
+  "iteration_count": 4,
+  "last_iteration_phase": "INGEST",
+  "last_iteration_replay_id": "gen2ou-2610734155",
+  "phase_rotation_hint": "INGEST,DIAGNOSE,REGRESSION_PROTECT,VALIDATE_AFTER_5_INGESTS,CONSOLIDATE_AFTER_20_ITERATIONS,STAGNATION_CHECK_AFTER_3_VALIDATIONS",
+  "ingest_cadence_validate": 5,
+  "consolidate_cadence_iterations": 20,
+  "stagnation_window_validations": 3,
+  "regression_min_occurrences": 3,
+  "predictor_policy": "whichever_session_runs_it",
+  "ema_alpha": 0.3,
+  "ema_window_size": 10,
+  "notes": "Bootstrap state. The loop overwrites iteration_count and last_iteration_* per iteration. gate_target is read by verify_progress_gate.py and is the source of truth for the headline metric.",
+  "last_iteration_at": "2026-05-16T06:05:54Z"
+}

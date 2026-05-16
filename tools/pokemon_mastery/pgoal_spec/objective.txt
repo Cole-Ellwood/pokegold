@@ -1,0 +1,28 @@
+Operate the Pokemon Mastery Compounding Loop — a durable, retrieval-augmented training cycle that drives validation top-move agreement with strong GSC OU players from the current ~30-50% plateau to the user-selected stretch gate (top>=60%, acceptable>=75%, severe blunders=0, positive-selection>=65% on converter decisions) over a sealed window of 30 fresh side decisions, then keeps the gate held while the case library grows toward >=150 distinct state fingerprints.
+
+LOOP MECHANISM
+The loop is durable across sessions and compactions. Learning persists in tools/pokemon_mastery/case_library/ (cases.jsonl, replay_index.jsonl, metrics.jsonl, regression/, schema.json, loop_state.json). Both Claude /pgoal sessions and Codex sessions can run iterations via the same CLI; the case library is the shared brain. Each iteration picks the highest-value phase based on loop_state.json:
+
+(A) INGEST — fetch one unseen working-tier (study) replay; for each scorable turn run replay_turn_pause.py prompt --turn N; query the case library for K-nearest past cases by public-state fingerprint; freeze a prediction WITH explicit reference to which retrieved cases fired (or "no cases fired"); reveal; score top_match/acceptable/errors/positive-selection per the existing replay_turn_pause_protocol.md scoring rules; save a quick_tests artifact AND append a row to docs/pokemon_mastery/measurement_progress_ledger.csv.
+
+(B) DIAGNOSE+EXTRACT — for every scored decision (miss OR hit), append a case row to case_library/cases.jsonl conforming to case_library/schema.json: state_fingerprint, pro_action, predicted_action, pro_reasoning_class (from the schema enum), failure_mode, lesson (short imperative recipe), evidence_url. Hits are kept (positive patterns are still retrieval-valuable). Misses are the priority.
+
+(C) REGRESSION-PROTECT — when a (failure_mode, reasoning_class) pair recurs at least 3 times in case_library/cases.jsonl, generate a constructed probe under case_library/regression/ that minimally reproduces the position class and lists the corrected action. verify_regression_battery.py enforces that every probe continues to find a matching case.
+
+(D) VALIDATE — every 5 ingest-iterations, fetch and score ONE validation-tier replay. Validation replays are NEVER mined for cases (tier contamination is enforced by verify_loop_state.py). Update the rolling-window metrics row in case_library/metrics.jsonl with tier=validation; this is the headline metric.
+
+(E) STAGNATION-CHECK — after every 3 validation runs, compute EMA of validation top_match. If flat or declining 3 windows in a row, ESCALATE. First escalation: deep-study iteration on the dominant failure_mode (Smogon articles, annotated replays, targeted heuristic_core card). Second: cross-domain transfer iteration (poker AI, chess endgame conversion, decision theory) producing a Pokemon decision artifact. Third: BLOCK with pgoal-blocked and request human review. Log every escalation via pgoal decision.
+
+(F) CONSOLIDATE — every 20 iterations, aggregate cases by (failure_mode, reasoning_class). Update heuristic_core/ cards to reflect which clusters actually pull weight in retrieval; mark cases that have never been retrieved as candidates for compression. Never DELETE evidence; demote with a compressed_into field.
+
+PRE-FREEZE CONTEXT DISCIPLINE
+For fresh-replay predictions, load ONLY: docs/pokemon_mastery/live_core.md, the replay prompt from replay_turn_pause.py, at most one heuristic_core/*.md card chosen by the question, AND the K retrieved cases from case_library. Do NOT load cookbook, source_to_policy_ledger, paused_turn_atlas, full policy_cards, scored quick tests, reviews, or external research returns before freezing. Do NOT use web search before freezing a fresh prediction. After scoring, full archives are open for postmortem.
+
+PARTITION DISCIPLINE
+replay_index.jsonl is append-only. At fetch time, assign the new replay to study (working) or validation tier based on a 4:1 ratio AND rating threshold (study: rating>=1400; validation: rating>=1600). sealed_exam tier replays are only fetched at final-exam time. verify_loop_state.py enforces that cases.jsonl rows only carry tier=study.
+
+ITERATION LOGGING
+Every iteration: (1) update tools/pokemon_mastery/case_library/loop_state.json with iteration_count++, last_iteration_phase, last_iteration_replay_id; (2) commit to the current claude/ branch with a message of the form: pokemon-mastery-loop: iter N phase replay_id_or_na; (3) append a pgoal note via pgoal note summarizing mode/changed/next.
+
+COMPLETION
+Completion requires (a) all 5 automated criteria green AND (b) user reviews a fresh final-exam packet of 3 brand-new sealed_exam replays pulled at exam time, predicted cold under the same pre-freeze discipline, and confirms improvement is real and the loop is sound for ongoing use. After completion the loop CODE keeps running for ongoing reps; the pgoal itself completes.

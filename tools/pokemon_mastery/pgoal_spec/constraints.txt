@@ -1,0 +1,9 @@
+- NEVER extract cases from validation or sealed_exam tier replays; verify_loop_state.py enforces this
+- NEVER commit to master; only the current claude/ working branch
+- Pre-freeze context for fresh predictions is live_core.md plus the replay prompt plus at most one heuristic_core card plus retrieved cases; no archives, no web search, no future turns
+- replay_index.jsonl is append-only; partitions are fixed at fetch time
+- When stagnation triggers escalation, log via pgoal decision
+- regression battery must stay 100% green; if a probe regresses, pause INGEST and refactor the relevant case before resuming
+- Pause and ask user before any save-format-affecting changes (defensive)
+- Per-iteration commits include a one-line message: pokemon-mastery-loop iter N phase replay_id
+- The Predictor for fresh predictions is whichever session is running the iteration (Claude or Codex); they share the same case library
