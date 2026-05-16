@@ -42,16 +42,61 @@ Read in this order:
    — the diagnosis behind the intervention. Read so you understand WHAT
    the trigger block is trying to fix, not just THAT it exists.
 
-## Inputs
+## Inputs — auto-coordinated, no human typing required
+
+This spec is shared by a parallel Codex run and a parallel Claude run.
+Both runs must use the **same replay URL + side perspective** or the
+cross-model comparison is meaningless. Resolve inputs as follows
+before reading any replay turn:
+
+1. Check whether `docs/pokemon_mastery/workspace/packet_045_inputs.md`
+   already exists.
+
+2. **If it exists**, read it. Use the `replay_url` and `side` it
+   specifies. Do NOT pick your own. Skip to "Side-known source" below.
+
+3. **If it does not exist**, you are the first parallel run. Pick:
+   - **Replay URL**: a Smogon Showdown or Smogon Tours GSC OU
+     tournament replay. Confirm it is unused by running
+     `rg "<replay-id>" docs/pokemon_mastery/` and verifying zero
+     hits. Prefer replays that go past turn 30 of meaningful battle
+     state. If you can browse, the Smogon Tours GSC OU replay search
+     and the Smogon GSC OU sample replays are good sources. If
+     web/replay access is blocked, fall back to a known-good ID
+     family the project already uses (gen2ou-* on
+     `replay.pokemonshowdown.com` or smogtours-gen2ou-* on
+     `replay.pokemonshowdown.com`); confirm unused with rg.
+   - **Side**: `p1` or `p2`, picked as the side whose 6 sets you
+     can fully reconstruct from either the Showdown search API
+     team-export endpoint, the replay's later turns (used for team
+     reconstruction only — never for future-turn outcomes), or a
+     paste sheet. Record exactly which turns you peeked at, if any,
+     for reconstruction. Do this peek BEFORE turn 1's freeze starts.
+   - Write the chosen inputs to
+     `docs/pokemon_mastery/workspace/packet_045_inputs.md` in this
+     format, exactly:
+     ```
+     # Packet 045 Inputs
+     replay_url: <full URL>
+     side: <p1|p2>
+     side_known_source: <one line describing where the team came from>
+     reconstruction_peek_turns: <comma-sep list of turns peeked at for
+       team reconstruction, or "none">
+     chosen_by: <"codex" or "claude">
+     chosen_at: 2026-05-16
+     ```
+   - Then proceed.
+
+4. **Side-known source**: per the inputs file. Read team-only data
+   from the named source. Never read future-turn outcomes.
 
 | Parameter | Value |
 |---|---|
-| Replay URL | **(user to fill in)** — must be a Smogon/Smogon Tours GSC OU replay not used in any prior packet. Confirm with `rg "<replay-id>"` across `docs/pokemon_mastery/` returning no hits before starting. |
-| Side perspective | **(user to fill in)** — `p1` or `p2`. Pick the side whose team you can reliably reconstruct (full sets known from external source / replay later in the match / paste sheet). |
-| Side-known source | Either the Showdown search API team paste, or the team revealed in the replay's later turns (read those later turns ONLY for team reconstruction, never for future-turn outcomes). Note the source. |
 | Target turns | 30 scored decisions; stop earlier ONLY if forced-switch / unscored conditions trigger per protocol §Exclusions. |
-| Output path | `docs/pokemon_mastery/workspace/quick_tests/side_known_transfer_045_<replay-id>_<side>_2026-05-16.md` |
-| Ledger path | append a new row to `docs/pokemon_mastery/measurement_progress_ledger.csv` |
+| Output path (Codex) | `docs/pokemon_mastery/workspace/quick_tests/side_known_transfer_045_<replay-id>_<side>_codex_2026-05-16.md` |
+| Output path (Claude) | `docs/pokemon_mastery/workspace/quick_tests/side_known_transfer_045_<replay-id>_<side>_claude_2026-05-16.md` |
+| Ledger path | append a new row per run to `docs/pokemon_mastery/measurement_progress_ledger.csv`, tagged with `_codex` or `_claude` in the run identifier so both rows are distinguishable |
+| Done marker | when your packet + ledger row are written, append your runner name to `docs/pokemon_mastery/workspace/packet_045_done.txt` (create if missing): one line, e.g. `codex 2026-05-16T<time>` |
 
 ## Pre-freeze loading rules (NEW — this is the intervention)
 
@@ -198,11 +243,13 @@ Then append a new ledger row at
 `docs/pokemon_mastery/measurement_progress_ledger.csv` with the full
 metric set.
 
-## Comparison protocol with Claude run
+## Comparison protocol (cross-model)
 
-A parallel Claude session will run the same replay (same URL, same
-side perspective, same side-known source). After both packets are
-written, the comparison passes are:
+A parallel run (Claude if you are Codex, Codex if you are Claude) is
+using the same `workspace/packet_045_inputs.md` so URL + side + source
+are identical. Output goes to the `_codex_` and `_claude_` artifact
+paths respectively. After both lines appear in `workspace/packet_045_done.txt`,
+the comparison passes are:
 
 1. **Pre-freeze loaded cards per turn**: do both runs load the same
    cards on the same triggers? Any mismatch indicates a trigger-block
