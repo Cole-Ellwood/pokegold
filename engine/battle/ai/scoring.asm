@@ -2287,6 +2287,18 @@ AI_Smart_HiddenPower:
 	ld a, 1
 	ldh [hBattleTurn], a
 
+	ld a, [wEnemyMonSpecies]
+	cp UNOWN
+	jr nz, .regular_hidden_power
+
+	callfar CountUnownHiddenPowerWeaknesses
+	pop hl
+	ld a, b
+	and a
+	ret z
+	jr .good
+
+.regular_hidden_power
 ; Calculate Hidden Power's type and base power based on enemy's DVs.
 	callfar HiddenPowerDamage
 	callfar BattleCheckTypeMatchup

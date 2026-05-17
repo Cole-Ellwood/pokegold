@@ -1,62 +1,24 @@
 HiddenPowerDamage:
 ; Override Hidden Power's type and power based on the user's DVs.
 
+	ld hl, wBattleMonSpecies
+	ld de, wEnemyMonSpecies
+	call _GetSidedHL
+	ld a, [hl]
+	cp UNOWN
+	jr nz, .regular_hidden_power
+
+	call UnownHiddenPowerType
+	ld d, 100
+	jr .done
+
+.regular_hidden_power
 	ld hl, wBattleMonDVs
 	ld de, wEnemyMonDVs
 	call _GetSidedHL
 
 ; Power:
-
-; Take the top bit from each stat
-
-	; Attack
-	ld a, [hl]
-	swap a
-	and %1000
-
-	; Defense
-	ld b, a
-	ld a, [hli]
-	and %1000
-	srl a
-	or b
-
-	; Speed
-	ld b, a
-	ld a, [hl]
-	swap a
-	and %1000
-	srl a
-	srl a
-	or b
-
-	; Special
-	ld b, a
-	ld a, [hl]
-	and %1000
-	srl a
-	srl a
-	srl a
-	or b
-
-; Multiply by 5
-	ld b, a
-	add a
-	add a
-	add b
-
-; Add Special & 3
-	ld b, a
-	ld a, [hld]
-	and %0011
-	add b
-
-; Divide by 2 and add 30 + 1
-	srl a
-	add 30
-	inc a
-
-	ld d, a
+	ld d, 60
 
 ; Type:
 
@@ -103,3 +65,90 @@ HiddenPowerDamage:
 	pop af
 	ld d, a
 	ret
+
+UnownHiddenPowerType:
+	call CountUnownHiddenPowerWeaknesses
+	ld a, b
+	and a
+	jr z, .fallback
+	ld c, a
+
+.random_weakness
+	call BattleRandom
+	and $f
+	cp c
+	jr nc, .random_weakness
+	ld b, a
+
+	ld hl, UnownHiddenPowerTypes
+.pick_loop
+	ld a, [hli]
+	cp -1
+	jr z, .fallback
+	push hl
+	push bc
+	call CheckUnownHiddenPowerType
+	cp SUPER_EFFECTIVE
+	pop bc
+	pop hl
+	jr c, .pick_loop
+	ld a, b
+	and a
+	jr z, .pick
+	dec b
+	jr .pick_loop
+
+.pick
+	dec hl
+	ld a, [hl]
+	ret
+
+.fallback
+	ld a, PSYCHIC_TYPE
+	ret
+
+CountUnownHiddenPowerWeaknesses:
+	ld hl, UnownHiddenPowerTypes
+	ld b, 0
+.loop
+	ld a, [hli]
+	cp -1
+	ret z
+	push hl
+	push bc
+	call CheckUnownHiddenPowerType
+	cp SUPER_EFFECTIVE
+	pop bc
+	pop hl
+	jr c, .loop
+	inc b
+	jr .loop
+
+CheckUnownHiddenPowerType:
+	push af
+	ld a, BATTLE_VARS_MOVE_TYPE
+	call GetBattleVarAddr
+	pop af
+	ld [hl], a
+	farcall BattleCheckTypeMatchup
+	ld a, [wTypeMatchup]
+	ret
+
+UnownHiddenPowerTypes:
+	db FIGHTING
+	db FLYING
+	db POISON
+	db GROUND
+	db ROCK
+	db BUG
+	db GHOST
+	db STEEL
+	db FIRE
+	db WATER
+	db GRASS
+	db ELECTRIC
+	db PSYCHIC_TYPE
+	db ICE
+	db DRAGON
+	db DARK
+	db -1

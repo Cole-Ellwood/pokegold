@@ -1211,8 +1211,8 @@ MoonlightDescription:
 	next "(varies by time).@"
 
 HiddenPowerDescription:
-	db   "The power varies"
-	next "with the #MON.@"
+	db   "Type shifts with"
+	next "user or foe.@"
 
 CrossChopDescription:
 	db   "Has a high criti-"
