@@ -366,6 +366,11 @@ def state_space_commands(
         "0x" + str(first_record["value_hex"])
         if first_record.get("value_hex") else "<value>"
     )
+    execute_minimize_arg = (
+        " --execute-state-patches"
+        if base_save_state and out_state and out_state != "<patched-state>"
+        else ""
+    )
     commands = [
         (
             "python -m tools.debugger state-space "
@@ -376,7 +381,7 @@ def state_space_commands(
         f"python -m tools.debugger replay --report {report_ref}{scenario_cli_arg} --save-state {out_state} --execute-watch",
         f"python -m tools.debugger watch {watch_args} --save-state {out_state} --execute",
         f"python -m tools.debugger trace-instructions --report {report_ref}{scenario_cli_arg} {watch_args} --save-state {out_state} --execute --require-hit",
-        f"python -m tools.debugger minimize --report {report_ref} --expect state-patch={first_symbol}{scenario_expect_arg},value={first_value} --out-state-report .local\\tmp\\debugger_state_space_minimized.json",
+        f"python -m tools.debugger minimize --report {report_ref} --expect state-patch={first_symbol}{scenario_expect_arg},value={first_value}{execute_minimize_arg} --out-state-report .local\\tmp\\debugger_state_space_minimized.json",
         f"python -m tools.debugger compare --report {report_ref}",
         f"python -m tools.debugger impact --report {report_ref}",
         f"python -m tools.debugger visualize --report {report_ref}",

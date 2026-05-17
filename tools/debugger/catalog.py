@@ -357,7 +357,7 @@ def build_capability_report(root: Path = ROOT) -> dict[str, Any]:
                 "tools/trace/boss_ai_state_replay.py",
             ),
             gaps=(
-                "Unified replay planning, setup/trigger materialization routing with explicit state synthesis recipes, content trigger precondition records, precondition-aware content scenario subset extraction, content positioned-state trigger coverage, content map-position, script-entry, movement-entry, and explicit generic WRAM state-space materialization, content-state plus generic state-space WRAM patch-set minimization against explicit expectations, scenario/report save-state discovery, instruction-trace reuse of executed content-state output states, generic watch execution, bounded dynamic watch-context windows, source-cause watch candidates, content scenario runtime helper/watch probes, content positioned-state instruction-trace proof routes, and expectation-preserving trace/report/context minimization exist, but executed semantic state-space minimization still needs reducers that rerun expectations after each candidate patch removal.",
+                "Unified replay planning, setup/trigger materialization routing with explicit state synthesis recipes, content trigger precondition records, precondition-aware content scenario subset extraction, content positioned-state trigger coverage, content map-position, script-entry, movement-entry, and explicit generic WRAM state-space materialization, content-state plus generic state-space WRAM patch-set minimization against explicit expectations, execution-backed generic state-space patch minimization for explicit state-patch expectations, scenario/report save-state discovery, instruction-trace reuse of executed content-state output states, generic watch execution, bounded dynamic watch-context windows, source-cause watch candidates, content scenario runtime helper/watch probes, content positioned-state instruction-trace proof routes, and expectation-preserving trace/report/context minimization exist, but semantic replay/watch reducers still need automatic reruns after each candidate state removal.",
                 "Replay/localization now consumes setup save-state discovery, reverse attribution, expectation failures, minimized evidence artifacts, watch-hit context frames, content ROM mirrors, and content scenario runtime targets, but exact dynamic replay is still deepest for damage and Boss AI.",
                 "Watch replay reports changes, preceding frame context, PC/register snapshots, bounded static source-cause candidates, and dynamic-taint sink-write attribution can now name exact sink-writing SM83 instructions and source operands, but full reverse execution across every CPU side effect is still not implemented.",
             ),
@@ -366,6 +366,7 @@ def build_capability_report(root: Path = ROOT) -> dict[str, Any]:
                 "python -m tools.debugger replay --symbol wCurDamage",
                 "python -m tools.debugger localize --symbol wCurDamage",
                 "python -m tools.debugger state-space --patch wMapGroup=1 --patch wMapNumber=2",
+                "python -m tools.debugger minimize --report <state-space.json> --execute-state-patches --expect state-patch=wMapGroup,applied=true,verified=true",
             ),
         ),
         _capability(
@@ -470,11 +471,12 @@ def build_capability_report(root: Path = ROOT) -> dict[str, Any]:
                 "tools/damage_debugger/precommit_check.py",
             ),
             gaps=(
-                "A unified investigation packet now coordinates ingest, replay, trace indexing, expectations, generation, ranking, reporting, and visualization; content-state materializations, instruction-trace validation, and ROM-surface severity calibration now feed rank/impact directly, but per-subsystem semantic severity models still need deeper ROM behavior calibration outside damage and Boss AI.",
+                "A unified investigation packet now coordinates ingest, explicit WRAM state-space patch hypotheses, replay, trace indexing, expectations, generation, ranking, reporting, and visualization; content-state materializations, instruction-trace validation, and ROM-surface severity calibration now feed rank/impact directly, but per-subsystem semantic severity models still need deeper ROM behavior calibration outside damage and Boss AI.",
                 "Whole-ROM gate failures, watch hits, dynamic sink-write attributions, instruction-trace hook misses/limits/dynamic-taint readiness, mirror gaps, content-state ready/blocked/executed state patches, ingest errors, investigation failures, explicit suspect inputs, and banking/event/map/movement/text/audio/graphics/UI/data surface risk hints are normalized; learned semantic impact still needs expansion.",
             ),
             commands=(
                 "python -m tools.debugger investigate --symbol wCurDamage",
+                "python -m tools.debugger investigate --patch wTypeMatchup=0 --watch-symbol wEnemyAIMoveScores",
                 "python -m tools.debugger impact --report <report.json>",
             ),
         ),

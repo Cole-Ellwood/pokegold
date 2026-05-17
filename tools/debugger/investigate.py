@@ -20,6 +20,7 @@ from .mirrors import build_compare_plan
 from .ranking import rank_findings
 from .replay import build_replay_plan
 from .reporting import build_static_report, write_static_report
+from .state_space import build_state_space_report
 from .taint import build_taint_report
 from .trace_index import build_trace_index_report, unique_list
 from .visualization import build_visualization_report, write_visualization
@@ -37,6 +38,7 @@ def build_investigation_run(
     traces: tuple[str, ...] = (),
     scenarios: tuple[str, ...] = (),
     reports: tuple[str, ...] = (),
+    patches: tuple[str, ...] = (),
     changed_files: tuple[str, ...] = (),
     symbols: tuple[str, ...] = (),
     watch_symbols: tuple[str, ...] = (),
@@ -82,11 +84,50 @@ def build_investigation_run(
         root=root,
     )
 
+    effective_watch_symbols = watch_symbols
+    if patches:
+        state_space_out_state = (
+            display_output_path(output_dir / "state_space_patched.state", root=root)
+            if output_dir and save_state else ""
+        )
+        state_space_report_path = (
+            display_output_path(output_dir / "02_state_space.json", root=root)
+            if output_dir else ""
+        )
+        state_space = build_state_space_report(
+            patches=patches,
+            watch_symbols=watch_symbols,
+            scenario_id="investigation_state_space_1",
+            source_files=changed_files,
+            symptom=symptom,
+            rom_path=rom_path or "pokegold.gbc",
+            symbols_path=symbols_path,
+            base_save_state=save_state,
+            out_state=state_space_out_state,
+            execute=False,
+            report_path=state_space_report_path,
+            root=root,
+        )
+        add_report(
+            steps,
+            produced_reports,
+            report_paths,
+            step_id="02_state_space",
+            phase="observe",
+            title="Build generic state-space patch report",
+            data=state_space,
+            output_dir=output_dir,
+            root=root,
+        )
+        effective_watch_symbols = tuple(
+            unique_list([*watch_symbols, *string_items(state_space.get("watch_symbols"))])
+        )
+
     trace_index = build_trace_index_report(
         traces=traces,
         reports=tuple(report_paths),
         symbols=symbols,
-        watch_symbols=watch_symbols,
+        watch_symbols=effective_watch_symbols,
         addresses=addresses,
         rules=rules,
         source_files=changed_files,
@@ -135,7 +176,7 @@ def build_investigation_run(
         traces=traces,
         scenarios=scenarios,
         reports=tuple(report_paths),
-        watch_symbols=watch_symbols,
+        watch_symbols=effective_watch_symbols,
         symbols=symbols,
         changed_files=changed_files,
         symptom=symptom,
@@ -181,7 +222,7 @@ def build_investigation_run(
     coverage = build_coverage_report(
         traces=traces,
         reports=tuple(report_paths),
-        symbols=tuple(unique_list([*symbols, *watch_symbols])),
+        symbols=tuple(unique_list([*symbols, *effective_watch_symbols])),
         rules=rules,
         changed_files=changed_files,
         symbols_path=symbols_path,
@@ -204,7 +245,7 @@ def build_investigation_run(
         reports=tuple(report_paths),
         traces=traces,
         symbols=symbols,
-        watch_symbols=watch_symbols,
+        watch_symbols=effective_watch_symbols,
         changed_files=changed_files,
         symptom=symptom,
         symbols_path=symbols_path,
@@ -225,7 +266,13 @@ def build_investigation_run(
     )
 
     taint_symbols = tuple(
-        unique_list([*watch_symbols, *state_symbols_from_trace_index(trace_index), *state_like_symbols(symbols)])[:max_targets]
+        unique_list(
+            [
+                *effective_watch_symbols,
+                *state_symbols_from_trace_index(trace_index),
+                *state_like_symbols(symbols),
+            ]
+        )[:max_targets]
     )
     if taint_symbols:
         taint_source_files = tuple(
@@ -519,9 +566,11 @@ def build_investigation_run(
         "warnings": warnings,
         "input_reports": list(reports),
         "input_traces": list(traces),
+        "patches": list(patches),
         "changed_files": list(changed_files),
         "symbols": list(symbols),
         "watch_symbols": list(watch_symbols),
+        "effective_watch_symbols": list(effective_watch_symbols),
         "rules": list(rules),
         "addresses": list(addresses),
         "symptom": symptom,

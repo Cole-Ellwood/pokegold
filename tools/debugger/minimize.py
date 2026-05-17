@@ -61,6 +61,7 @@ def build_minimization_plan(
     out_scenarios: str = "",
     out_trace: str = "",
     out_state_report: str = "",
+    execute_state_patches: bool = False,
     symbols_path: str = "pokegold.sym",
     max_scenarios: int = 20,
     max_trace_records: int = 200,
@@ -113,6 +114,7 @@ def build_minimization_plan(
         addresses=addresses,
         source_files=source_files,
         out_state_report=out_state_report,
+        execute_state_patches=execute_state_patches,
         root=root,
     )
     evidence_minimization = build_evidence_minimization(
@@ -529,6 +531,7 @@ def build_state_patch_minimization(
     addresses: tuple[str, ...],
     source_files: tuple[str, ...],
     out_state_report: str,
+    execute_state_patches: bool,
     root: Path,
 ) -> dict[str, Any]:
     views = [
@@ -579,7 +582,12 @@ def build_state_patch_minimization(
         }
 
     results = [
-        minimize_state_patch_view(view, expectations=all_expectations)
+        minimize_state_patch_view(
+            view,
+            expectations=all_expectations,
+            execute_state_patches=execute_state_patches,
+            root=root,
+        )
         for view in views
     ]
     preserved = [result for result in results if result.get("preserved")]
@@ -594,6 +602,17 @@ def build_state_patch_minimization(
         root=root,
     )
     errors = unique_list([*expectation_errors, *output.get("errors", [])])
+    if execute_state_patches and best is None:
+        errors = unique_list(
+            [
+                *errors,
+                *[
+                    error
+                    for result in results
+                    for error in string_items(result.get("execution_errors"))
+                ],
+            ]
+        )
     commands = state_patch_minimization_commands(
         out_report=str(output.get("path", "")),
         source=str(best.get("source", "")) if best else "",
@@ -607,6 +626,9 @@ def build_state_patch_minimization(
         "content_state_report_count": count_state_patch_views(views, "content_state"),
         "state_space_report_count": count_state_patch_views(views, "generic_state_space"),
         "expectation_count": len(all_expectations),
+        "execute_state_patches": execute_state_patches,
+        "execution_attempt_count": sum(int(result.get("execution_attempt_count", 0)) for result in results),
+        "executed_candidate_count": sum(int(result.get("executed_candidate_count", 0)) for result in results),
         "expectations": [
             {
                 "id": str(expectation.get("id", "")),
@@ -629,7 +651,7 @@ def build_state_patch_minimization(
         "commands": commands,
         "errors": errors,
         "known_limits": [
-            "Patch minimization preserves explicit expectations over content-state or generic state-space report evidence; rerun materialization or emulator execution before treating a minimized evidence view as a physical save state.",
+            "Patch minimization preserves explicit expectations over content-state or generic state-space report evidence; with --execute-state-patches, explicit generic state-space candidate subsets are materialized before their expectations are evaluated.",
             "Without a state-patch or similarly specific predicate, a broad expectation such as no-errors can minimize away behaviorally necessary state.",
         ],
     }
@@ -663,27 +685,73 @@ def count_state_patch_views(views: list[dict[str, Any]], view_kind: str) -> int:
     return sum(1 for view in views if view.get("view_kind") == view_kind)
 
 
-def minimize_state_patch_view(view: dict[str, Any], *, expectations: list[dict[str, Any]]) -> dict[str, Any]:
+def minimize_state_patch_view(
+    view: dict[str, Any],
+    *,
+    expectations: list[dict[str, Any]],
+    execute_state_patches: bool,
+    root: Path,
+) -> dict[str, Any]:
     patch_locations = list(view["patches"])
+    candidate_executions: list[dict[str, Any]] = []
 
     def predicate(candidate_locations: list[dict[str, Any]]) -> bool:
-        data = state_patch_report_with_patch_locations(view, candidate_locations)
+        data, execution = state_patch_candidate_report(
+            view,
+            candidate_locations,
+            execute_state_patches=execute_state_patches,
+            candidate_index=len(candidate_executions) + 1,
+            root=root,
+        )
+        if execution.get("attempted"):
+            candidate_executions.append(execution)
+            if not execution.get("executed"):
+                return False
         return state_patch_expectations_pass(data, source=str(view["source"]), expectations=expectations)
 
     initial_passed = predicate(patch_locations)
     minimized = greedy_minimize_items(patch_locations, predicate=predicate, min_items=0) if initial_passed else patch_locations
-    minimized_data = state_patch_report_with_patch_locations(view, minimized) if initial_passed else None
+    minimized_data = None
+    final_preserved = initial_passed
+    if initial_passed:
+        minimized_data, final_execution = state_patch_candidate_report(
+            view,
+            minimized,
+            execute_state_patches=execute_state_patches,
+            candidate_index=len(candidate_executions) + 1,
+            root=root,
+        )
+        if final_execution.get("attempted"):
+            candidate_executions.append(final_execution)
+            final_preserved = bool(final_execution.get("executed"))
+        if final_preserved:
+            final_preserved = state_patch_expectations_pass(
+                minimized_data,
+                source=str(view["source"]),
+                expectations=expectations,
+            )
     return {
         "source": view["source"],
         "view_kind": view.get("view_kind", "content_state"),
-        "preserved": bool(initial_passed),
+        "preserved": bool(final_preserved),
+        "execution_mode": "emulator" if any(item.get("attempted") for item in candidate_executions) else "evidence",
+        "execution_attempt_count": len([item for item in candidate_executions if item.get("attempted")]),
+        "executed_candidate_count": len([item for item in candidate_executions if item.get("executed")]),
+        "execution_errors": unique_list(
+            error
+            for item in candidate_executions
+            for error in string_items(item.get("errors"))
+        ),
         "original_patch_count": len(patch_locations),
-        "minimized_patch_count": len(minimized) if initial_passed else 0,
-        "removed_patch_count": len(patch_locations) - len(minimized) if initial_passed else 0,
-        "scenario_ids": state_patch_scenario_ids(minimized_data or view["data"], minimized if initial_passed else patch_locations),
-        "source_files": state_patch_source_files(minimized_data or view["data"], minimized if initial_passed else patch_locations),
-        "symbols": unique_list(str(location.get("symbol", "")) for location in minimized if location.get("symbol")),
-        "data": minimized_data,
+        "minimized_patch_count": len(minimized) if final_preserved else 0,
+        "removed_patch_count": len(patch_locations) - len(minimized) if final_preserved else 0,
+        "scenario_ids": state_patch_scenario_ids(minimized_data or view["data"], minimized if final_preserved else patch_locations),
+        "source_files": state_patch_source_files(minimized_data or view["data"], minimized if final_preserved else patch_locations),
+        "symbols": (
+            unique_list(str(location.get("symbol", "")) for location in minimized if location.get("symbol"))
+            if final_preserved else []
+        ),
+        "data": minimized_data if final_preserved else None,
     }
 
 
@@ -695,6 +763,163 @@ def state_patch_expectations_pass(data: dict[str, Any], *, source: str, expectat
     )
     results = [evaluate_expectation(expectation, evidence=evidence) for expectation in expectations]
     return bool(results) and all(result["status"] == "passed" for result in results)
+
+
+def state_patch_candidate_report(
+    view: dict[str, Any],
+    locations: list[dict[str, Any]],
+    *,
+    execute_state_patches: bool,
+    candidate_index: int,
+    root: Path,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    data = state_patch_report_with_patch_locations(view, locations)
+    if not execute_state_patches or view.get("view_kind") != "generic_state_space":
+        return data, {"attempted": False}
+    if data.get("kind") != "unified_debugger_state_space":
+        return data, {
+            "attempted": False,
+            "reason": "only unified_debugger_state_space reports can be execution-minimized",
+        }
+    return execute_generic_state_patch_candidate(
+        data,
+        source=str(view.get("source", "")),
+        candidate_index=candidate_index,
+        root=root,
+    )
+
+
+def execute_generic_state_patch_candidate(
+    data: dict[str, Any],
+    *,
+    source: str,
+    candidate_index: int,
+    root: Path,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    from .state_space import execute_state_space
+
+    context, context_errors = generic_state_execution_context(
+        data,
+        source=source,
+        candidate_index=candidate_index,
+        root=root,
+    )
+    patches, patch_errors = generic_state_executable_patches(data)
+    errors = unique_list([*context_errors, *patch_errors])
+    if errors:
+        return data, {
+            "attempted": True,
+            "executed": False,
+            "candidate_index": candidate_index,
+            "patch_count": len(patches),
+            "errors": errors,
+        }
+    execution = execute_state_space(
+        patches=patches,
+        rom=context["rom"],
+        base_state=context["base_state"],
+        output_state=context["out_state"],
+        execute=True,
+        root=root,
+    )
+    out = copy.deepcopy(data)
+    out["execution"] = execution
+    out["executed"] = bool(execution.get("executed"))
+    out["out_state"] = str(execution.get("out_state", ""))
+    state_space = out.setdefault("state_space", {})
+    if isinstance(state_space, dict):
+        state_space["out_state"] = str(execution.get("out_state", ""))
+        state_space["patches"] = list(execution.get("applied_patches") or patches)
+        state_space["patch_count"] = len(state_space["patches"])
+    out["patch_count"] = len(execution.get("applied_patches") or patches)
+    out["minimized_evidence_view"] = True
+    out["minimized_execution_view"] = True
+    out.setdefault("warnings", [])
+    if isinstance(out["warnings"], list):
+        out["warnings"] = unique_list(
+            [
+                *string_items(out["warnings"]),
+                "minimized generic state-space candidate was materialized before expectation evaluation",
+            ]
+        )
+        out["warning_count"] = len(out["warnings"])
+    return out, {
+        "attempted": True,
+        "executed": bool(execution.get("executed")),
+        "candidate_index": candidate_index,
+        "patch_count": len(patches),
+        "out_state": str(execution.get("out_state", "")),
+        "errors": list(execution.get("errors", [])),
+        "warnings": list(execution.get("warnings", [])),
+    }
+
+
+def generic_state_execution_context(
+    data: dict[str, Any],
+    *,
+    source: str,
+    candidate_index: int,
+    root: Path,
+) -> tuple[dict[str, Path], list[str]]:
+    state_space = data.get("state_space") if isinstance(data.get("state_space"), dict) else {}
+    execution = data.get("execution") if isinstance(data.get("execution"), dict) else {}
+    rom_text = str(data.get("rom") or data.get("rom_path") or "pokegold.gbc")
+    base_text = str(
+        data.get("base_save_state")
+        or state_space.get("base_save_state")
+        or execution.get("base_save_state")
+        or ""
+    )
+    rom = resolve_path(rom_text, root=root)
+    base_state = resolve_path(base_text, root=root) if base_text else None
+    out_state = state_patch_candidate_out_state(
+        source=source,
+        candidate_index=candidate_index,
+        root=root,
+    )
+    errors = []
+    if not rom.exists():
+        errors.append(f"missing ROM for state-space minimization execution: {rom_text}")
+    if base_state is None:
+        errors.append("state-space minimization execution requires base_save_state")
+    elif not base_state.exists():
+        errors.append(f"missing base save state for state-space minimization execution: {base_text}")
+    return {
+        "rom": rom,
+        "base_state": base_state or root / "<missing-base-state>",
+        "out_state": out_state,
+    }, errors
+
+
+def generic_state_executable_patches(data: dict[str, Any]) -> tuple[list[dict[str, Any]], list[str]]:
+    patches = []
+    errors = []
+    for patch in dict_items(value_at_key_path(data, ("state_space", "patches"))):
+        missing = [
+            key
+            for key in ("bank", "address", "value")
+            if patch.get(key) in {None, ""}
+        ]
+        if missing:
+            errors.append(
+                "state-space patch is missing execution fields "
+                + ",".join(missing)
+                + f": {patch.get('symbol', '<unknown>')}"
+            )
+            continue
+        patches.append(patch)
+    return patches, unique_list(errors)
+
+
+def state_patch_candidate_out_state(*, source: str, candidate_index: int, root: Path) -> Path:
+    source_name = safe_name(Path(source).stem or source or "state_space")
+    return (
+        root
+        / ".local"
+        / "tmp"
+        / "debugger_state_space_minimize"
+        / f"{source_name}_{candidate_index:04d}.state"
+    )
 
 
 def content_state_patch_locations(data: dict[str, Any]) -> list[dict[str, Any]]:
@@ -1507,7 +1732,7 @@ def build_state_patch_minimization_steps(state_patch_minimization: dict[str, Any
             steps,
             phase,
             command,
-            "Verify the minimized content-state patch evidence before using it as a replay or mirror artifact.",
+            "Verify the minimized state patch evidence before using it as a replay or mirror artifact.",
         )
     return unique_steps(steps)
 

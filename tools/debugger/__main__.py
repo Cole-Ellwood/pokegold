@@ -100,6 +100,7 @@ def build_parser() -> argparse.ArgumentParser:
     investigate.add_argument("--trace", action="append", default=[])
     investigate.add_argument("--scenario", action="append", default=[])
     investigate.add_argument("--report", action="append", default=[])
+    investigate.add_argument("--patch", action="append", default=[])
     investigate.add_argument("--changed-file", action="append", default=[])
     investigate.add_argument("--symbol", action="append", default=[])
     investigate.add_argument("--watch-symbol", action="append", default=[])
@@ -174,6 +175,7 @@ def build_parser() -> argparse.ArgumentParser:
     minimize.add_argument("--out-scenarios", default="")
     minimize.add_argument("--out-trace", default="")
     minimize.add_argument("--out-state-report", default="")
+    minimize.add_argument("--execute-state-patches", action="store_true")
     minimize.add_argument("--symbols", default="pokegold.sym")
     minimize.add_argument("--max-scenarios", type=int, default=20)
     minimize.add_argument("--max-trace-records", type=int, default=200)
@@ -507,6 +509,7 @@ def cmd_investigate(args: argparse.Namespace) -> int:
         traces=tuple(args.trace),
         scenarios=tuple(args.scenario),
         reports=tuple(args.report),
+        patches=tuple(args.patch),
         changed_files=tuple(args.changed_file),
         symbols=tuple(args.symbol),
         watch_symbols=tuple(args.watch_symbol),
@@ -593,6 +596,7 @@ def cmd_minimize(args: argparse.Namespace) -> int:
         out_scenarios=args.out_scenarios,
         out_trace=args.out_trace,
         out_state_report=args.out_state_report,
+        execute_state_patches=args.execute_state_patches,
         symbols_path=args.symbols,
         max_scenarios=args.max_scenarios,
         max_trace_records=args.max_trace_records,
@@ -1357,6 +1361,13 @@ def format_minimization_plan(report: dict[str, Any]) -> str:
             + "->"
             + str(state_patch_minimization.get("minimized_patch_count", 0))
         )
+        if state_patch_minimization.get("execute_state_patches"):
+            lines.append(
+                "state_patch_execution="
+                + str(state_patch_minimization.get("executed_candidate_count", 0))
+                + "/"
+                + str(state_patch_minimization.get("execution_attempt_count", 0))
+            )
         if state_patch_minimization.get("out_report"):
             lines.append(f"state_patch_subset={state_patch_minimization['out_report']}")
     evidence_minimization = report.get("evidence_minimization", {})

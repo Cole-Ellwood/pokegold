@@ -16,6 +16,7 @@ python -m tools.debugger triage --symptom "boss selected the wrong switch"
 python -m tools.debugger gate --changed-file engine\battle\late_gen_held_items.asm
 python -m tools.debugger gate --changed-file engine\battle\late_gen_held_items.asm --execute --max-commands 2
 python -m tools.debugger investigate --trace audit\boss_ai_debugger\rom_contribution_trace_smoke.json --symbol BossAI_ApplyMoveModel --address D0D3 --expect "event=score_delta,symbol=wEnemyAIMoveScores"
+python -m tools.debugger investigate --patch wTypeMatchup=0 --watch-symbol wEnemyAIMoveScores --symptom "AI chose a Ground move into immunity"
 python -m tools.debugger localize --symbol wCurDamage --symptom "damage spike"
 python -m tools.debugger localize --report .local\tmp\debugger_watch_smoke.json --report .local\tmp\debugger_slice_smoke.json
 python -m tools.debugger coverage --symbol BattleCommand_DamageCalc --report audit\boss_ai_debugger\runs\20260515_121426_changed_ai\rom_contribution_trace_summary.json
@@ -27,6 +28,7 @@ python -m tools.debugger minimize --scenario audit\boss_ai_debugger\runs\expande
 python -m tools.debugger minimize --symbol wCurDamage --bug-id hp_d_clobber
 python -m tools.debugger minimize --trace .local\tmp\debugger_reverse_trace_smoke.json --expect "event=memory_write,symbol=wCurDamage" --out-trace .local\tmp\debugger_minimized_trace.json
 python -m tools.debugger minimize --report .local\tmp\debugger_watch_smoke.json --expect "event=watch_change,symbol=wCurDamage" --expect "event=control_flow,symbol=BattleCommand_DamageCalc" --out-trace .local\tmp\debugger_minimized_watch.json
+python -m tools.debugger minimize --report .local\tmp\debugger_state_space.json --expect "state-patch=wTypeMatchup,value=0x00,applied=true,verified=true" --execute-state-patches --out-state-report .local\tmp\debugger_state_space_minimized.json
 python -m tools.debugger trace-instructions --report .local\tmp\debugger_watch_smoke.json --execute --require-hit --out-trace .local\tmp\watch_instruction_trace.jsonl
 python -m tools.debugger trace-instructions --symbol BattleCommand_DamageCalc --watch-symbol wCurDamage --execute --require-hit --out-trace .local\tmp\damagecalc_instruction_trace.jsonl
 python -m tools.debugger dynamic-taint --trace .local\tmp\instruction_trace.jsonl --source-reg a=move_power --sink-symbol wCurDamage
@@ -94,8 +96,9 @@ artifact.
 
 `investigate` is the one-command ROM debugging packet for this worktree. It
 ingests the supplied ROM/symbol/trace/save-state/scenario/source-change inputs,
-then runs trace indexing, replay planning, localization, coverage, causal
-explanation, mirror routing, optional expectation checks, counterexample
+turns any explicit `--patch SYMBOL=VALUE` WRAM hypotheses into a generic
+state-space report, then runs trace indexing, replay planning, localization,
+coverage, causal explanation, mirror routing, optional expectation checks, counterexample
 generation, minimization, ranking, impact scoring, static reporting, and
 visualization into a single output directory. It is the command to start with
 when a symptom has evidence but the next debugger step is unclear. A pass means
@@ -170,11 +173,15 @@ and explicit generic state-space reports with `state_patches` or
 `state_space.patches`, `--out-state-report` can write a minimized WRAM patch
 evidence view that preserves explicit `state-patch` expectations, then routes
 that reduced state evidence back through `expect`, `replay`, and `compare`.
+With `--execute-state-patches`, explicit generic state-space patch candidates
+are materialized through PyBoy before the minimizer accepts them, so expectations
+such as `applied=true,verified=true` are checked against an actual patched save
+state.
 Watch/replay reports keep only the relevant events and trim nested
 dynamic-context frame windows to the smallest useful causal context, giving
 every ROM surface a compact repro artifact before a surface-specific reducer
-exists. It is the unified coordinator; full semantic state-space reduction still
-requires executing the reduced state evidence in the owning ROM surface.
+exists. It is the unified coordinator; full semantic behavior reduction still
+requires replaying the owning ROM surface after the minimized state is built.
 
 `state-space` turns explicit WRAM hypotheses into a generic patch report that
 the rest of the debugger can consume. A patch such as `wScriptPos=0x50,0x40`

@@ -1077,6 +1077,110 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertTrue(minimized["minimized_evidence_view"])
         self.assertIn("minimized generic state-space evidence view", "\n".join(minimized["warnings"]))
 
+    def test_minimize_executes_generic_state_space_candidates(self) -> None:
+        class FakeMemory:
+            def __init__(self) -> None:
+                self.values: dict[Any, int] = {0xFF70: 1}
+
+            def __getitem__(self, key: Any) -> int:
+                return self.values.get(key, 0)
+
+            def __setitem__(self, key: Any, value: int) -> None:
+                self.values[key] = value & 0xFF
+
+        class FakePyBoy:
+            def __init__(self) -> None:
+                self.memory = FakeMemory()
+
+            def load_state(self, fh: Any) -> None:
+                fh.read()
+                self.memory = FakeMemory()
+
+            def save_state(self, fh: Any) -> None:
+                fh.write(b"patched-state")
+
+            def stop(self, save: bool = False) -> None:
+                return None
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "test.gbc").write_bytes(b"rom")
+            (root / "base.state").write_bytes(b"base-state")
+            state_space = root / "state_space.json"
+            state_space.write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_state_space",
+                        "valid": True,
+                        "rom": "test.gbc",
+                        "base_save_state": "base.state",
+                        "state_space": {
+                            "surface": "script_entry",
+                            "base_save_state": "base.state",
+                            "patches": [
+                                {
+                                    "symbol": "wScriptBank",
+                                    "value": 2,
+                                    "value_hex": "02",
+                                    "bank": 1,
+                                    "address": 0xDA10,
+                                    "source_file": "maps/UnitMap.asm",
+                                    "scenario_id": "script_entry_1",
+                                },
+                                {
+                                    "symbol": "wScriptPos",
+                                    "value": 0x50,
+                                    "value_hex": "50",
+                                    "bank": 1,
+                                    "address": 0xDA11,
+                                    "source_file": "maps/UnitMap.asm",
+                                    "scenario_id": "script_entry_1",
+                                },
+                                {
+                                    "symbol": "wUnusedDebugByte",
+                                    "value": 255,
+                                    "value_hex": "ff",
+                                    "bank": 1,
+                                    "address": 0xDA12,
+                                    "source_file": "engine/debug.asm",
+                                },
+                            ],
+                        },
+                        "errors": [],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            out_state_report = root / "minimized_state_space.json"
+
+            with patch("tools.debugger.state_space.trace_runtime.open_pyboy", return_value=FakePyBoy()):
+                report = build_minimization_plan(
+                    reports=("state_space.json",),
+                    expectations=(
+                        "state-patch=wScriptPos,scenario=script_entry_1,value=0x50,applied=true,verified=true",
+                    ),
+                    out_state_report="minimized_state_space.json",
+                    execute_state_patches=True,
+                    root=root,
+                )
+            minimized = json.loads(out_state_report.read_text(encoding="utf-8"))
+            candidate_state_written = (root / minimized["execution"]["out_state"]).exists()
+
+        state_patch = report["state_patch_minimization"]
+        patches = minimized["state_space"]["patches"]
+
+        self.assertTrue(report["valid"])
+        self.assertTrue(state_patch["preserved"])
+        self.assertTrue(state_patch["execute_state_patches"])
+        self.assertGreater(state_patch["execution_attempt_count"], 0)
+        self.assertEqual(state_patch["executed_candidate_count"], state_patch["execution_attempt_count"])
+        self.assertEqual(state_patch["minimized_patch_count"], 1)
+        self.assertEqual([patch["symbol"] for patch in patches], ["wScriptPos"])
+        self.assertTrue(patches[0]["applied"])
+        self.assertTrue(patches[0]["verified"])
+        self.assertTrue(minimized["minimized_execution_view"])
+        self.assertTrue(candidate_state_written)
+
     def test_minimize_extracts_content_report_scenarios_with_preconditions(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -4509,6 +4613,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(report["execution"]["patch_count"], 1)
         self.assertEqual(report["state_space"]["patches"][0]["observed_hex"], "50")
         self.assertTrue(report["state_space"]["patches"][0]["verified"])
+        self.assertIn("--execute-state-patches", "\n".join(report["commands"]))
         self.assertEqual(written, b"patched-state")
         self.assertTrue(fake.loaded)
         self.assertTrue(fake.stopped)
@@ -7331,6 +7436,74 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertTrue(static_written)
         self.assertTrue(visualization_written)
 
+    def test_investigation_run_builds_state_space_from_patches(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "engine" / "battle" / "ai").mkdir(parents=True)
+            (root / "data" / "types").mkdir(parents=True)
+            (root / "test.sym").write_text(
+                "0E:483E BossAI_ApplyMoveModel\n"
+                "01:D0D3 wEnemyAIMoveScores\n"
+                "01:D1EC wTypeMatchup\n",
+                encoding="utf-8",
+            )
+            (root / "engine" / "battle" / "ai" / "boss_policy_move.asm").write_text(
+                "BossAI_ApplyMoveModel:\n\tld hl, wEnemyAIMoveScores\n\tret\n",
+                encoding="utf-8",
+            )
+            (root / "engine" / "battle" / "late_gen_held_items.asm").write_text(
+                "AirBalloon:\n\tret\n",
+                encoding="utf-8",
+            )
+            (root / "engine" / "battle" / "effect_commands.asm").write_text(
+                "BattleCommand_DamageCalc:\n\tret\n",
+                encoding="utf-8",
+            )
+            (root / "data" / "types" / "type_matchups.asm").write_text(
+                "TypeMatchups:\n\tdb 0\n",
+                encoding="utf-8",
+            )
+            out_dir = root / "investigation"
+
+            report = build_investigation_run(
+                symbols_path="test.sym",
+                patches=("wTypeMatchup=0x00",),
+                watch_symbols=("wEnemyAIMoveScores",),
+                changed_files=("engine/battle/ai/boss_policy_move.asm",),
+                symptom="AI chose Ground move into Air Balloon immunity",
+                out_dir=str(out_dir),
+                max_targets=6,
+                max_cases=4,
+                root=root,
+            )
+            state_space = json.loads(
+                (out_dir / "02_state_space.json").read_text(encoding="utf-8")
+            )
+            replay = json.loads(
+                (out_dir / "03_replay.json").read_text(encoding="utf-8")
+            )
+            ranked = json.loads(
+                (out_dir / "11_rank.json").read_text(encoding="utf-8")
+            )
+            impact = json.loads(
+                (out_dir / "12_impact.json").read_text(encoding="utf-8")
+            )
+
+        step_ids = {step["id"] for step in report["steps"]}
+        ranked_types = {item["type"] for item in ranked["findings"]}
+        impact_types = {item["type"] for item in impact["items"]}
+
+        self.assertTrue(report["valid"])
+        self.assertTrue(report["passed"])
+        self.assertIn("02_state_space", step_ids)
+        self.assertEqual(report["patches"], ["wTypeMatchup=0x00"])
+        self.assertIn("wTypeMatchup", report["effective_watch_symbols"])
+        self.assertEqual(state_space["kind"], "unified_debugger_state_space")
+        self.assertEqual(state_space["state_space"]["patches"][0]["symbol"], "wTypeMatchup")
+        self.assertIn("wTypeMatchup", replay["replay_targets"]["watch_symbols"])
+        self.assertIn("state_space_ready", ranked_types)
+        self.assertIn("state_space_ready", impact_types)
+
     def test_cli_investigate_writes_json_packet(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -7372,6 +7545,8 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
                         str(symbols),
                         "--symbol",
                         "BossAI_ApplyMoveModel",
+                        "--patch",
+                        "wEnemyAIMoveScores=0x12",
                         "--address",
                         "D0D3",
                         "--expect",
@@ -7393,6 +7568,8 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertEqual(data["kind"], "unified_debugger_investigation_run")
         self.assertTrue(data["passed"])
+        self.assertEqual(data["patches"], ["wEnemyAIMoveScores=0x12"])
+        self.assertIn("wEnemyAIMoveScores", data["effective_watch_symbols"])
         self.assertTrue(data["static_report"])
         self.assertTrue(data["visualization"])
         self.assertTrue(seeds_written)
