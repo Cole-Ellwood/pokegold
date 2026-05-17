@@ -370,6 +370,8 @@ def collect_report_timeline(data: dict[str, Any], *, source: str, out: list[dict
             )
     elif kind == "unified_debugger_content_state_materialization":
         collect_content_state_timeline(data, source=source, out=out)
+    elif kind == "unified_debugger_state_space":
+        collect_state_space_timeline(data, source=source, out=out)
 
 
 def collect_instruction_trace_validation_timeline(data: dict[str, Any], *, source: str, out: list[dict[str, Any]]) -> None:
@@ -590,6 +592,112 @@ def collect_content_state_graph(
             add_graph_edge(edges, scenario_id, symbol, f"patches {content_state_patch_value(patch)}", source)
             if out_state:
                 add_graph_edge(edges, symbol, out_state, "saved_to", source)
+
+
+def collect_state_space_timeline(data: dict[str, Any], *, source: str, out: list[dict[str, Any]]) -> None:
+    state_space = data.get("state_space") if isinstance(data.get("state_space"), dict) else {}
+    execution = data.get("execution") if isinstance(data.get("execution"), dict) else {}
+    out_state = str(execution.get("out_state") or data.get("out_state") or state_space.get("out_state") or "")
+    patches = state_space_patch_records(data)
+    errors = string_items(data.get("errors"))
+    scenario_id = state_space_scenario_ids(data)[0] if state_space_scenario_ids(data) else "state_space"
+    status = "executed" if bool(data.get("executed") or execution.get("executed")) else ("blocked" if errors or not data.get("valid", True) else "ready")
+    if patches or errors:
+        out.append(
+            timeline_event(
+                lane="state_space",
+                event_type=status,
+                title=f"{scenario_id} {status}",
+                source=source,
+                detail=", ".join([*content_state_patch_evidence(patches)[:4], *errors[:2]]),
+                symbols=content_state_patch_symbols(patches),
+                files=state_space_source_files(data),
+                severity=content_state_severity(status="blocked" if status == "blocked" else "ready", errors=errors),
+            )
+        )
+    if bool(data.get("executed") or execution.get("executed")):
+        applied_patches = dict_items(execution.get("applied_patches")) or [patch for patch in patches if patch.get("applied")]
+        out.append(
+            timeline_event(
+                lane="runtime",
+                event_type="state_space_executed",
+                title=f"Patched state-space saved: {out_state or source}",
+                source=source,
+                detail=f"applied_patches={len(applied_patches)} "
+                + ", ".join(content_state_patch_evidence(applied_patches)[:4]),
+                symbols=content_state_patch_symbols(applied_patches),
+                files=state_space_source_files(data),
+                severity=62,
+            )
+        )
+
+
+def collect_state_space_graph(
+    data: dict[str, Any],
+    *,
+    source: str,
+    nodes: dict[str, dict[str, Any]],
+    edges: dict[tuple[str, str, str], dict[str, Any]],
+) -> None:
+    state_space = data.get("state_space") if isinstance(data.get("state_space"), dict) else {}
+    execution = data.get("execution") if isinstance(data.get("execution"), dict) else {}
+    out_state = str(execution.get("out_state") or data.get("out_state") or state_space.get("out_state") or "")
+    scenario_id = state_space_scenario_ids(data)[0] if state_space_scenario_ids(data) else "state_space"
+    add_graph_node(nodes, scenario_id, scenario_id, "state_space_materialization", source)
+    if out_state:
+        add_graph_node(nodes, out_state, out_state, "save_state", source)
+    for source_file in state_space_source_files(data):
+        add_graph_node(nodes, source_file, source_file, "content_source", source)
+        add_graph_edge(edges, source_file, scenario_id, "informs", source)
+    for patch in state_space_patch_records(data):
+        symbol = str(patch.get("symbol", ""))
+        if not symbol:
+            continue
+        add_graph_node(nodes, symbol, symbol, "runtime_state_patch", source)
+        add_graph_edge(edges, scenario_id, symbol, f"patches {content_state_patch_value(patch)}", source)
+        if out_state:
+            add_graph_edge(edges, symbol, out_state, "saved_to", source)
+
+
+def state_space_patch_records(data: dict[str, Any]) -> list[dict[str, Any]]:
+    state_space = data.get("state_space") if isinstance(data.get("state_space"), dict) else {}
+    execution = data.get("execution") if isinstance(data.get("execution"), dict) else {}
+    return [
+        *dict_items(data.get("state_patches")),
+        *dict_items(state_space.get("patches")),
+        *dict_items(state_space.get("state_patches")),
+        *dict_items(execution.get("applied_patches")),
+    ]
+
+
+def state_space_scenario_ids(data: dict[str, Any]) -> list[str]:
+    state_space = data.get("state_space") if isinstance(data.get("state_space"), dict) else {}
+    return unique_list(
+        [
+            str(data.get("scenario_id", "")),
+            *string_items(state_space.get("scenario_ids")),
+            *[
+                str(patch.get("scenario_id", ""))
+                for patch in state_space_patch_records(data)
+                if patch.get("scenario_id")
+            ],
+        ]
+    )
+
+
+def state_space_source_files(data: dict[str, Any]) -> list[str]:
+    state_space = data.get("state_space") if isinstance(data.get("state_space"), dict) else {}
+    return unique_list(
+        [
+            *string_items(data.get("source_files")),
+            *string_items(state_space.get("source_files")),
+            *[
+                str(patch.get("source_file", ""))
+                for patch in state_space_patch_records(data)
+                if patch.get("source_file")
+            ],
+        ]
+    )
 
 
 def content_state_severity(*, status: str, errors: list[str]) -> int:
@@ -841,6 +949,8 @@ def collect_graph(*, loaded_reports: list[dict[str, Any]]) -> dict[str, list[dic
                     add_graph_edge(edges, scenario_id, probe_id, str(probe.get("proof_level", "probes")), source)
         elif kind == "unified_debugger_content_state_materialization":
             collect_content_state_graph(data, source=source, nodes=nodes, edges=edges)
+        elif kind == "unified_debugger_state_space":
+            collect_state_space_graph(data, source=source, nodes=nodes, edges=edges)
     return {
         "nodes": sorted(nodes.values(), key=lambda item: (item["type"], item["label"])),
         "edges": sorted(edges.values(), key=lambda item: (item["from"], item["to"], item["relation"])),

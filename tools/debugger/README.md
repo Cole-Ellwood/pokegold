@@ -50,6 +50,8 @@ python -m tools.debugger compare --symbol wCurDamage
 python -m tools.debugger compare --changed-file engine\battle\ai\boss_policy_move.asm
 python -m tools.debugger content-mirror --source-file maps\NewBarkTown.asm
 python -m tools.debugger content-scenarios --source-file maps\NewBarkTown.asm --out-scenarios .local\tmp\debugger_content_scenarios.jsonl
+python -m tools.debugger state-space --patch wMapGroup=1 --patch wMapNumber=2 --patch wXCoord=6 --patch wYCoord=3 --json-out .local\tmp\debugger_state_space.json
+python -m tools.debugger state-space --patch wScriptBank=2 --patch wScriptPos=0x50,0x40 --base-save-state path\to\base.state --out-state .local\tmp\patched.state --execute --json-out .local\tmp\debugger_state_space.json
 python -m tools.debugger expect --report .local\tmp\debugger_trace_index_boss_ai.json --expect event=score_delta,symbol=wEnemyAIMoveScores
 python -m tools.debugger expect --trace audit\boss_ai_debugger\rom_contribution_trace_smoke.json --rule move.apply_move_model.apply_role_bias
 python -m tools.debugger expect --source-file maps\NewBarkTown.asm --expect contains=warp_event --expect not-contains=TODO
@@ -173,6 +175,15 @@ dynamic-context frame windows to the smallest useful causal context, giving
 every ROM surface a compact repro artifact before a surface-specific reducer
 exists. It is the unified coordinator; full semantic state-space reduction still
 requires executing the reduced state evidence in the owning ROM surface.
+
+`state-space` turns explicit WRAM hypotheses into a generic patch report that
+the rest of the debugger can consume. A patch such as `wScriptPos=0x50,0x40`
+resolves through the current `.sym`, records exact bank/address/value evidence,
+and emits expectation, replay, watch, instruction-trace, minimization, compare,
+impact, and visualization commands. With `--execute`, it loads an existing save
+state through PyBoy, writes the requested bytes, verifies them, and saves a
+patched state. This is the escape hatch for arbitrary ROM states that are not
+yet covered by a content-specific materializer.
 
 `generate` coordinates focused test generation and counterexample search. It
 combines reports, scenarios, changed files, symbols, symptoms, and optional

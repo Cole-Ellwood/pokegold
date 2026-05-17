@@ -29,6 +29,7 @@ from .replay import build_replay_plan
 from .reporting import build_static_report, write_static_report
 from .runtime_watch import build_watch_report
 from .setup_plan import build_setup_plan
+from .state_space import build_state_space_report
 from .slicing import build_slice_report
 from .testgen import suggest_tests
 from .taint import build_taint_report
@@ -371,6 +372,20 @@ def build_parser() -> argparse.ArgumentParser:
     content_state.add_argument("--max-scenarios", type=int, default=8)
     add_output_args(content_state)
     content_state.set_defaults(func=cmd_content_state)
+
+    state_space = subparsers.add_parser("state-space")
+    state_space.add_argument("--patch", action="append", default=[])
+    state_space.add_argument("--watch-symbol", action="append", default=[])
+    state_space.add_argument("--scenario-id", default="")
+    state_space.add_argument("--source-file", action="append", default=[])
+    state_space.add_argument("--symptom", default="")
+    state_space.add_argument("--rom", default="pokegold.gbc")
+    state_space.add_argument("--symbols", default="pokegold.sym")
+    state_space.add_argument("--base-save-state", default="")
+    state_space.add_argument("--out-state", default="")
+    state_space.add_argument("--execute", action="store_true")
+    add_output_args(state_space)
+    state_space.set_defaults(func=cmd_state_space)
 
     expect = subparsers.add_parser("expect")
     expect.add_argument("--report", action="append", default=[])
@@ -827,6 +842,24 @@ def cmd_content_state(args: argparse.Namespace) -> int:
     return 0 if report["valid"] else 1
 
 
+def cmd_state_space(args: argparse.Namespace) -> int:
+    report = build_state_space_report(
+        patches=tuple(args.patch),
+        watch_symbols=tuple(args.watch_symbol),
+        scenario_id=args.scenario_id,
+        source_files=tuple(args.source_file),
+        symptom=args.symptom,
+        rom_path=args.rom,
+        symbols_path=args.symbols,
+        base_save_state=args.base_save_state,
+        out_state=args.out_state,
+        execute=args.execute,
+        report_path=args.json_out,
+    )
+    emit_report(report, args)
+    return 0 if report["valid"] else 1
+
+
 def cmd_expect(args: argparse.Namespace) -> int:
     report = build_expectation_report(
         reports=tuple(args.report),
@@ -951,6 +984,8 @@ def emit_report(report: dict[str, Any], args: argparse.Namespace) -> None:
         print(format_content_scenarios(report))
     elif report["kind"] == "unified_debugger_content_state_materialization":
         print(format_content_state(report))
+    elif report["kind"] == "unified_debugger_state_space":
+        print(format_state_space(report))
     elif report["kind"] == "unified_debugger_expectation_report":
         print(format_expectation_report(report))
     elif report["kind"] == "unified_debugger_ranked_findings":
@@ -2209,6 +2244,53 @@ def format_content_state(report: dict[str, Any]) -> str:
     if report.get("commands"):
         lines.extend(["", "Commands:"])
         for command in report["commands"][:8]:
+            runnable = "runnable" if command_is_runnable(command) else "needs-input"
+            lines.append(f"  - {command} ({runnable})")
+    for warning in report["warnings"][:5]:
+        lines.append(f"warning: {warning}")
+    for error in report["errors"][:5]:
+        lines.append(f"error: {error}")
+    return "\n".join(lines)
+
+
+def format_state_space(report: dict[str, Any]) -> str:
+    lines = [
+        "Unified Pokemon Gold romhack debugger state-space materialization",
+        (
+            f"valid={report['valid']} executed={report['executed']} "
+            f"patches={report['patch_count']} errors={report['error_count']} "
+            f"warnings={report['warning_count']}"
+        ),
+        f"rom={report.get('rom', '')} symbols={report.get('symbols', '')}",
+    ]
+    if report.get("scenario_id"):
+        lines.append(f"scenario={report['scenario_id']}")
+    if report.get("source_files"):
+        lines.append("source_files=" + ", ".join(report["source_files"]))
+    if report.get("base_save_state") or report.get("out_state"):
+        lines.append(f"base_state={report.get('base_save_state', '')} out_state={report.get('out_state', '')}")
+    state_space = report.get("state_space") if isinstance(report.get("state_space"), dict) else {}
+    patches = state_space.get("patches", [])
+    if patches:
+        lines.extend(["", "Patches:"])
+        for patch in patches[:16]:
+            status = patch.get("status") or patch.get("materialization_status") or "planned"
+            lines.append(
+                f"  - {status}: {patch.get('symbol')}={patch.get('value_hex')} "
+                f"@{patch.get('bank_address')}"
+            )
+            if patch.get("observed_hex"):
+                lines.append(
+                    f"      observed={patch.get('observed_hex')} verified={patch.get('verified')}"
+                )
+            for error in patch.get("errors", [])[:3]:
+                lines.append(f"      error: {error}")
+    execution = report.get("execution", {}) if isinstance(report.get("execution"), dict) else {}
+    if execution.get("executed"):
+        lines.extend(["", f"wrote={execution.get('out_state', '')} patches={execution.get('patch_count', 0)}"])
+    if report.get("commands"):
+        lines.extend(["", "Commands:"])
+        for command in report["commands"][:9]:
             runnable = "runnable" if command_is_runnable(command) else "needs-input"
             lines.append(f"  - {command} ({runnable})")
     for warning in report["warnings"][:5]:

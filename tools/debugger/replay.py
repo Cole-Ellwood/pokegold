@@ -336,6 +336,8 @@ def walk_data_for_signals(data: Any, *, source: str, base_weight: int, out: list
             out.extend(content_scenario_runtime_signals(data, source=source, base_weight=max(base_weight, 84)))
         if kind == "unified_debugger_content_state_materialization":
             out.extend(content_state_materialization_signals(data, source=source, base_weight=max(base_weight, 88)))
+        if kind == "unified_debugger_state_space":
+            out.extend(state_space_signals(data, source=source, base_weight=max(base_weight, 88)))
         for key, value in data.items():
             lowered = str(key).lower()
             if lowered in SYMBOL_KEYS:
@@ -449,6 +451,55 @@ def content_state_materialization_signals(data: dict[str, Any], *, source: str, 
                 )
             )
     return out
+
+
+def state_space_signals(data: dict[str, Any], *, source: str, base_weight: int) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    state_space = data.get("state_space") if isinstance(data.get("state_space"), dict) else {}
+    execution = data.get("execution") if isinstance(data.get("execution"), dict) else {}
+    out_state = normalize_path(str(execution.get("out_state") or data.get("out_state") or state_space.get("out_state") or ""))
+    if out_state:
+        out.append(signal("state_space_out_state", note=out_state, weight=max(45, base_weight - 20), source=source))
+    for scenario_id in unique_list([str(data.get("scenario_id", "")), *string_items(state_space.get("scenario_ids"))]):
+        if scenario_id:
+            out.append(signal("state_space_scenario", scenario_id=scenario_id, note=scenario_id, weight=base_weight, source=source))
+    for source_file in unique_list([*string_items(data.get("source_files")), *string_items(state_space.get("source_files"))]):
+        if looks_like_source_path(source_file):
+            out.append(signal("state_space_file", file=normalize_path(source_file), weight=base_weight, source=source))
+    for symbol_name in unique_list([*string_items(data.get("watch_symbols")), *string_items(state_space.get("watch_symbols"))]):
+        if looks_like_symbol(symbol_name):
+            out.append(signal("state_space_watch_symbol", symbol=symbol_name, weight=min(100, base_weight + 12), source=source))
+    for patch in state_space_patch_records(data):
+        symbol_name = str(patch.get("base_symbol") or patch.get("symbol") or "")
+        if looks_like_symbol(symbol_name):
+            signal_type = "state_space_applied_patch_symbol" if patch.get("applied") else "state_space_patch_symbol"
+            out.append(
+                signal(
+                    signal_type,
+                    symbol=symbol_name,
+                    note=str(patch.get("out_state") or out_state or "state-space patch"),
+                    weight=min(100, base_weight + (16 if patch.get("applied") else 14)),
+                    source=source,
+                )
+            )
+        scenario_id = str(patch.get("scenario_id", ""))
+        if scenario_id:
+            out.append(signal("state_space_patch_scenario", scenario_id=scenario_id, weight=base_weight, source=source))
+        source_file = normalize_path(str(patch.get("source_file", "")))
+        if source_file:
+            out.append(signal("state_space_patch_file", file=source_file, weight=base_weight, source=source))
+    return out
+
+
+def state_space_patch_records(data: dict[str, Any]) -> list[dict[str, Any]]:
+    state_space = data.get("state_space") if isinstance(data.get("state_space"), dict) else {}
+    execution = data.get("execution") if isinstance(data.get("execution"), dict) else {}
+    return [
+        *dict_items(data.get("state_patches")),
+        *dict_items(state_space.get("patches")),
+        *dict_items(state_space.get("state_patches")),
+        *dict_items(execution.get("applied_patches")),
+    ]
 
 
 def build_replay_targets(signals: list[dict[str, Any]], *, max_targets: int) -> dict[str, Any]:

@@ -314,27 +314,47 @@ def discover_instruction_trace_save_states(
         data = loaded.get("data", {})
         if not isinstance(data, dict):
             continue
-        if str(data.get("kind", "")) != "unified_debugger_content_state_materialization":
-            continue
-        if not content_state_execution_succeeded(data):
-            continue
-        scenario_id = selected_content_state_scenario_id(data, scenario_ids=scenario_ids)
-        if scenario_id is None:
-            continue
-        out_state, key = content_state_report_out_state(data)
-        if not out_state:
-            continue
-        candidates.append(
-            save_state_candidate(
-                path=out_state,
-                source=str(loaded.get("source", "report")),
-                key=key,
-                scenario_id=scenario_id,
-                explicit=False,
-                preferred=True,
-                root=root,
+        kind = str(data.get("kind", ""))
+        if kind == "unified_debugger_content_state_materialization":
+            if not content_state_execution_succeeded(data):
+                continue
+            scenario_id = selected_content_state_scenario_id(data, scenario_ids=scenario_ids)
+            if scenario_id is None:
+                continue
+            out_state, key = content_state_report_out_state(data)
+            if not out_state:
+                continue
+            candidates.append(
+                save_state_candidate(
+                    path=out_state,
+                    source=str(loaded.get("source", "report")),
+                    key=key,
+                    scenario_id=scenario_id,
+                    explicit=False,
+                    preferred=True,
+                    root=root,
+                )
             )
-        )
+        elif kind == "unified_debugger_state_space":
+            if not state_space_execution_succeeded(data):
+                continue
+            scenario_id = selected_state_space_scenario_id(data, scenario_ids=scenario_ids)
+            if scenario_id is None:
+                continue
+            out_state, key = state_space_report_out_state(data)
+            if not out_state:
+                continue
+            candidates.append(
+                save_state_candidate(
+                    path=out_state,
+                    source=str(loaded.get("source", "report")),
+                    key=key,
+                    scenario_id=scenario_id,
+                    explicit=False,
+                    preferred=True,
+                    root=root,
+                )
+            )
     return sorted(
         unique_candidates(candidates),
         key=lambda item: (
@@ -372,6 +392,45 @@ def content_state_report_out_state(report: dict[str, Any]) -> tuple[str, str]:
     execution_out_state = str(execution.get("out_state") or "")
     if execution_out_state:
         return execution_out_state, "execution.out_state"
+    return str(report.get("out_state") or ""), "out_state"
+
+
+def state_space_execution_succeeded(report: dict[str, Any]) -> bool:
+    execution = report.get("execution") if isinstance(report.get("execution"), dict) else {}
+    return report.get("executed") is True or execution.get("executed") is True
+
+
+def selected_state_space_scenario_id(report: dict[str, Any], *, scenario_ids: tuple[str, ...]) -> str | None:
+    selected_ids = {str(item) for item in scenario_ids if item}
+    state_space = report.get("state_space") if isinstance(report.get("state_space"), dict) else {}
+    candidates = unique_list(
+        [
+            str(report.get("scenario_id") or report.get("id") or ""),
+            *string_items(state_space.get("scenario_ids")),
+            *[
+                str(patch.get("scenario_id", ""))
+                for patch in state_space_patch_records(report)
+                if patch.get("scenario_id")
+            ],
+        ]
+    )
+    if selected_ids:
+        for candidate in candidates:
+            if candidate in selected_ids:
+                return candidate
+        return None
+    return candidates[0] if candidates else ""
+
+
+def state_space_report_out_state(report: dict[str, Any]) -> tuple[str, str]:
+    execution = report.get("execution") if isinstance(report.get("execution"), dict) else {}
+    execution_out_state = str(execution.get("out_state") or "")
+    if execution_out_state:
+        return execution_out_state, "execution.out_state"
+    state_space = report.get("state_space") if isinstance(report.get("state_space"), dict) else {}
+    state_space_out = str(state_space.get("out_state") or "")
+    if state_space_out:
+        return state_space_out, "state_space.out_state"
     return str(report.get("out_state") or ""), "out_state"
 
 
@@ -500,6 +559,9 @@ def signals_from_report(report: dict[str, Any], *, source: str, scenario_ids: tu
         for materialization in dict_items(report.get("materializations")):
             if content_scenario_selected(materialization, scenario_ids=scenario_ids):
                 out.extend(signals_from_content_state_materialization(materialization, source=source))
+    elif kind == "unified_debugger_state_space":
+        if state_space_selected(report, scenario_ids=scenario_ids):
+            out.extend(signals_from_state_space_report(report, source=source))
     else:
         collect_generic_report_signals(report, source=source, out=out)
     return [item for item in out if item.get("symbol")]
@@ -541,6 +603,36 @@ def signals_from_content_state_materialization(materialization: dict[str, Any], 
     if precondition_kind == "script_entry":
         out.append(trace_signal("content_state_watch", symbol="wScriptVar", role="watch", source=source))
     return out
+
+
+def state_space_selected(report: dict[str, Any], *, scenario_ids: tuple[str, ...]) -> bool:
+    if not scenario_ids:
+        return True
+    return selected_state_space_scenario_id(report, scenario_ids=scenario_ids) is not None
+
+
+def signals_from_state_space_report(report: dict[str, Any], *, source: str) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    state_space = report.get("state_space") if isinstance(report.get("state_space"), dict) else {}
+    for symbol in unique_list([*string_items(report.get("watch_symbols")), *string_items(state_space.get("watch_symbols"))]):
+        out.append(trace_signal("content_state_watch", symbol=symbol, role="watch", source=source))
+    for patch in state_space_patch_records(report):
+        symbol = str(patch.get("base_symbol") or patch.get("symbol") or "")
+        if symbol:
+            out.append(trace_signal("content_state_watch", symbol=symbol, role="watch", source=source))
+    out.extend(signals_from_symptom(str(report.get("symptom", ""))))
+    return out
+
+
+def state_space_patch_records(report: dict[str, Any]) -> list[dict[str, Any]]:
+    state_space = report.get("state_space") if isinstance(report.get("state_space"), dict) else {}
+    execution = report.get("execution") if isinstance(report.get("execution"), dict) else {}
+    return [
+        *dict_items(report.get("state_patches")),
+        *dict_items(state_space.get("patches")),
+        *dict_items(state_space.get("state_patches")),
+        *dict_items(execution.get("applied_patches")),
+    ]
 
 
 def collect_generic_report_signals(data: Any, *, source: str, out: list[dict[str, Any]]) -> None:

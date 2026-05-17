@@ -36,6 +36,7 @@ from tools.debugger.replay import build_replay_plan
 from tools.debugger.reporting import build_static_report
 from tools.debugger.runtime_watch import build_watch_event_cause, build_watch_report
 from tools.debugger.setup_plan import build_setup_plan
+from tools.debugger.state_space import build_state_space_report
 from tools.debugger.slicing import build_slice_report
 from tools.debugger.taint import build_taint_report
 from tools.debugger.testgen import suggest_tests
@@ -1865,6 +1866,78 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertTrue(selected_state["exists"])
         self.assertIn("--save-state patched.state", commands)
 
+    def test_instruction_trace_uses_executed_state_space_out_state_and_watches(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            rom = bytearray(0x8000)
+            rom[0x4000:0x4003] = bytes([0x00, 0x00, 0xC9])
+            (root / "unit.gbc").write_bytes(bytes(rom))
+            (root / "patched.state").write_bytes(b"patched-state")
+            (root / "test.sym").write_text(
+                "01:4000 ScriptEvents\n01:4003 NextFunc\n01:DA10 wScriptBank\n01:DA11 wScriptPos\n",
+                encoding="utf-8",
+            )
+            (root / "state_space.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_state_space",
+                        "valid": True,
+                        "executed": True,
+                        "scenario_id": "script_entry_1",
+                        "out_state": "patched.state",
+                        "watch_symbols": ["wScriptPos"],
+                        "state_space": {
+                            "scenario_ids": ["script_entry_1"],
+                            "patches": [
+                                {
+                                    "symbol": "wScriptBank",
+                                    "base_symbol": "wScriptBank",
+                                    "value": 2,
+                                    "value_hex": "02",
+                                    "scenario_id": "script_entry_1",
+                                },
+                                {
+                                    "symbol": "wScriptPos",
+                                    "base_symbol": "wScriptPos",
+                                    "value": 80,
+                                    "value_hex": "50",
+                                    "scenario_id": "script_entry_1",
+                                },
+                            ],
+                        },
+                        "execution": {
+                            "executed": True,
+                            "out_state": "patched.state",
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            report = build_instruction_trace_report(
+                function_symbols=("ScriptEvents",),
+                reports=("state_space.json",),
+                scenario_ids=("script_entry_1",),
+                rom_path="unit.gbc",
+                symbols_path="test.sym",
+                root=root,
+            )
+
+        selection = report["target_selection"]
+        selected_state = report["save_state_discovery"]["selected"]
+        commands = "\n".join(report["commands"])
+
+        self.assertTrue(report["valid"])
+        self.assertEqual(selection["function_symbols"], ["ScriptEvents"])
+        self.assertIn("wScriptBank", selection["watch_symbols"])
+        self.assertIn("wScriptPos", selection["watch_symbols"])
+        self.assertEqual(report["effective_save_state"], "patched.state")
+        self.assertEqual(selected_state["key"], "execution.out_state")
+        self.assertEqual(selected_state["scenario_id"], "script_entry_1")
+        self.assertTrue(selected_state["exists"])
+        self.assertIn("--save-state patched.state", commands)
+        self.assertIn("--scenario-id script_entry_1", commands)
+
     def test_instruction_trace_does_not_use_unexecuted_content_state_out_state(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -1914,6 +1987,52 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertTrue(report["valid"])
         self.assertEqual(report["effective_save_state"], "")
         self.assertEqual(report["save_state_discovery"]["selected"], {})
+        self.assertNotIn("--save-state patched.state", commands)
+
+    def test_instruction_trace_does_not_use_unexecuted_state_space_out_state(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            rom = bytearray(0x8000)
+            rom[0x4000:0x4003] = bytes([0x00, 0x00, 0xC9])
+            (root / "unit.gbc").write_bytes(bytes(rom))
+            (root / "patched.state").write_bytes(b"planned-state")
+            (root / "test.sym").write_text("01:4000 ScriptEvents\n01:4003 NextFunc\n01:DA11 wScriptPos\n", encoding="utf-8")
+            (root / "state_space.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_state_space",
+                        "valid": True,
+                        "executed": False,
+                        "scenario_id": "script_entry_1",
+                        "out_state": "patched.state",
+                        "state_space": {
+                            "scenario_ids": ["script_entry_1"],
+                            "patches": [{"symbol": "wScriptPos", "base_symbol": "wScriptPos", "value": 80}],
+                        },
+                        "execution": {
+                            "executed": False,
+                            "out_state": "patched.state",
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            report = build_instruction_trace_report(
+                function_symbols=("ScriptEvents",),
+                reports=("state_space.json",),
+                scenario_ids=("script_entry_1",),
+                rom_path="unit.gbc",
+                symbols_path="test.sym",
+                root=root,
+            )
+
+        commands = "\n".join(report["commands"])
+
+        self.assertTrue(report["valid"])
+        self.assertEqual(report["effective_save_state"], "")
+        self.assertEqual(report["save_state_discovery"]["selected"], {})
+        self.assertIn("wScriptPos", report["target_selection"]["watch_symbols"])
         self.assertNotIn("--save-state patched.state", commands)
 
     def test_instruction_trace_derives_window_from_changed_source(self) -> None:
@@ -3537,6 +3656,83 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("--save-state patched.state", commands)
         self.assertIn("--scenario-id content_scenario_1_0000", commands)
 
+    def test_replay_plan_consumes_state_space_report(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "pokegold.gbc").write_bytes(bytes(0x8000))
+            (root / "pokegold.sym").write_text(
+                "01:4000 ScriptEvents\n01:DA10 wScriptBank\n01:DA11 wScriptPos\n",
+                encoding="utf-8",
+            )
+            (root / "patched.state").write_bytes(b"patched-state")
+            (root / "state_space.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_state_space",
+                        "valid": True,
+                        "executed": True,
+                        "scenario_id": "script_entry_1",
+                        "source_files": ["maps/UnitMap.asm"],
+                        "out_state": "patched.state",
+                        "watch_symbols": ["wScriptPos"],
+                        "state_space": {
+                            "scenario_ids": ["script_entry_1"],
+                            "source_files": ["maps/UnitMap.asm"],
+                            "out_state": "patched.state",
+                            "patches": [
+                                {
+                                    "symbol": "wScriptBank",
+                                    "base_symbol": "wScriptBank",
+                                    "value": 2,
+                                    "value_hex": "02",
+                                    "scenario_id": "script_entry_1",
+                                    "source_file": "maps/UnitMap.asm",
+                                },
+                                {
+                                    "symbol": "wScriptPos",
+                                    "base_symbol": "wScriptPos",
+                                    "value": 80,
+                                    "value_hex": "50",
+                                    "scenario_id": "script_entry_1",
+                                    "source_file": "maps/UnitMap.asm",
+                                },
+                            ],
+                        },
+                        "execution": {
+                            "executed": True,
+                            "out_state": "patched.state",
+                            "applied_patches": [
+                                {
+                                    "symbol": "wScriptPos",
+                                    "base_symbol": "wScriptPos",
+                                    "value": 80,
+                                    "value_hex": "50",
+                                    "scenario_id": "script_entry_1",
+                                    "source_file": "maps/UnitMap.asm",
+                                    "applied": True,
+                                }
+                            ],
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            report = build_replay_plan(reports=("state_space.json",), root=root)
+
+        commands = "\n".join(report["commands"])
+        selected = report["save_state_discovery"]["selected"]
+
+        self.assertTrue(report["valid"])
+        self.assertEqual(report["effective_save_state"], "patched.state")
+        self.assertTrue(selected["exists"])
+        self.assertIn("wScriptBank", report["replay_targets"]["watch_symbols"])
+        self.assertIn("wScriptPos", report["replay_targets"]["watch_symbols"])
+        self.assertIn("script_entry_1", report["replay_targets"]["scenario_ids"])
+        self.assertIn("maps/UnitMap.asm", report["replay_targets"]["source_files"])
+        self.assertIn("--save-state patched.state", commands)
+        self.assertIn("--scenario-id script_entry_1", commands)
+
     def test_replay_plan_does_not_use_missing_discovered_save_state(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -4201,6 +4397,202 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(written, b"patched-state")
         self.assertTrue(fake.loaded)
         self.assertTrue(fake.stopped)
+
+    def test_state_space_builds_generic_patch_report(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "test.sym").write_text(
+                "01:DA10 wScriptBank\n01:DA11 wScriptPos\n01:DA13 wScriptMode\n",
+                encoding="utf-8",
+            )
+
+            report = build_state_space_report(
+                patches=("wScriptBank=0x02", "wScriptPos=0x50,0x40", "wScriptMode=1"),
+                watch_symbols=("wScriptPos",),
+                scenario_id="script_entry_1",
+                source_files=("maps/UnitMap.asm",),
+                symbols_path="test.sym",
+                report_path="state_space.json",
+                root=root,
+            )
+
+        patches = report["state_space"]["patches"]
+        commands = "\n".join(report["commands"])
+
+        self.assertTrue(report["valid"])
+        self.assertFalse(report["executed"])
+        self.assertEqual(report["patch_count"], 4)
+        self.assertEqual([patch["symbol"] for patch in patches], ["wScriptBank", "wScriptPos", "wScriptPos+1", "wScriptMode"])
+        self.assertEqual(patches[1]["bank_address"], "01:DA11")
+        self.assertEqual(patches[2]["bank_address"], "01:DA12")
+        self.assertEqual(patches[2]["value_hex"], "40")
+        self.assertIn("wScriptPos", report["watch_symbols"])
+        self.assertIn("tools.debugger expect --report state_space.json --expect state-patch=wScriptBank,scenario=script_entry_1,value=0x02", commands)
+        self.assertIn("tools.debugger minimize --report state_space.json", commands)
+        self.assertIn("tools.debugger trace-instructions --report state_space.json --scenario-id script_entry_1", commands)
+
+    def test_cli_state_space_writes_json(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "test.sym").write_text("01:DA11 wScriptPos\n", encoding="utf-8")
+            out = root / "state_space.json"
+
+            with patch("tools.debugger.catalog.ROOT", root), redirect_stdout(io.StringIO()):
+                code = debugger_main(
+                    [
+                        "state-space",
+                        "--patch",
+                        "wScriptPos=0x50",
+                        "--symbols",
+                        str(root / "test.sym"),
+                        "--json-out",
+                        str(out),
+                    ]
+                )
+
+            data = json.loads(out.read_text(encoding="utf-8"))
+
+        self.assertEqual(code, 0)
+        self.assertEqual(data["kind"], "unified_debugger_state_space")
+        self.assertEqual(data["patch_count"], 1)
+        self.assertEqual(data["state_space"]["patches"][0]["symbol"], "wScriptPos")
+
+    def test_state_space_execute_patches_and_writes_state(self) -> None:
+        class FakeMemory:
+            def __init__(self) -> None:
+                self.values: dict[Any, int] = {0xFF70: 1}
+
+            def __getitem__(self, key: Any) -> int:
+                return self.values.get(key, 0)
+
+            def __setitem__(self, key: Any, value: int) -> None:
+                self.values[key] = int(value) & 0xFF
+
+        class FakePyBoy:
+            def __init__(self) -> None:
+                self.memory = FakeMemory()
+                self.loaded = False
+                self.stopped = False
+
+            def load_state(self, _fh: Any) -> None:
+                self.loaded = True
+
+            def save_state(self, fh: Any) -> None:
+                fh.write(b"patched-state")
+
+            def stop(self, save: bool = False) -> None:
+                self.stopped = True
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "test.sym").write_text("01:DA11 wScriptPos\n", encoding="utf-8")
+            (root / "rom.gbc").write_bytes(b"rom")
+            (root / "base.state").write_bytes(b"base")
+            out_state = root / "patched.state"
+            fake = FakePyBoy()
+
+            with patch("tools.debugger.state_space.trace_runtime.open_pyboy", return_value=fake):
+                report = build_state_space_report(
+                    patches=("wScriptPos=0x50",),
+                    symbols_path="test.sym",
+                    rom_path="rom.gbc",
+                    base_save_state="base.state",
+                    out_state="patched.state",
+                    execute=True,
+                    root=root,
+                )
+
+            written = out_state.read_bytes()
+
+        self.assertTrue(report["valid"])
+        self.assertTrue(report["executed"])
+        self.assertEqual(report["execution"]["patch_count"], 1)
+        self.assertEqual(report["state_space"]["patches"][0]["observed_hex"], "50")
+        self.assertTrue(report["state_space"]["patches"][0]["verified"])
+        self.assertEqual(written, b"patched-state")
+        self.assertTrue(fake.loaded)
+        self.assertTrue(fake.stopped)
+
+    def test_rank_impact_and_visualization_consume_state_space_reports(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "patched.state").write_bytes(b"patched-state")
+            (root / "state_space.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_state_space",
+                        "valid": True,
+                        "executed": True,
+                        "scenario_id": "script_entry_1",
+                        "source_files": ["maps/UnitMap.asm"],
+                        "out_state": "patched.state",
+                        "state_space": {
+                            "scenario_ids": ["script_entry_1"],
+                            "source_files": ["maps/UnitMap.asm"],
+                            "out_state": "patched.state",
+                            "patches": [
+                                {
+                                    "symbol": "wScriptPos",
+                                    "base_symbol": "wScriptPos",
+                                    "value": 80,
+                                    "value_hex": "50",
+                                    "bank_address": "01:DA11",
+                                    "scenario_id": "script_entry_1",
+                                    "source_file": "maps/UnitMap.asm",
+                                }
+                            ],
+                        },
+                        "execution": {
+                            "executed": True,
+                            "out_state": "patched.state",
+                            "applied_patches": [
+                                {
+                                    "symbol": "wScriptPos",
+                                    "base_symbol": "wScriptPos",
+                                    "value": 80,
+                                    "value_hex": "50",
+                                    "observed": 80,
+                                    "observed_hex": "50",
+                                    "verified": True,
+                                    "bank_address": "01:DA11",
+                                    "scenario_id": "script_entry_1",
+                                    "source_file": "maps/UnitMap.asm",
+                                    "applied": True,
+                                }
+                            ],
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            ranked = rank_findings(reports=("state_space.json",), root=root)
+            impact = build_impact_report(reports=("state_space.json",), root=root)
+            visualization = build_visualization_report(reports=("state_space.json",), root=root)
+
+        ranked_types = {item["type"] for item in ranked["findings"]}
+        impact_types = {item["type"] for item in impact["items"]}
+        lanes = {item["lane"] for item in visualization["timeline"]}
+        graph_node_types = {node["type"] for node in visualization["graph"]["nodes"]}
+        commands = "\n".join(
+            action
+            for item in impact["items"]
+            for action in item.get("next_actions", [])
+        )
+
+        self.assertIn("state_space_ready", ranked_types)
+        self.assertIn("state_space_executed", ranked_types)
+        self.assertIn("state_space_ready", impact_types)
+        self.assertIn("state_space_executed", impact_types)
+        self.assertIn("wScriptPos", {symbol for item in impact["items"] for symbol in item.get("related_symbols", [])})
+        self.assertIn("maps/UnitMap.asm", {path for item in impact["items"] for path in item.get("related_files", [])})
+        self.assertIn("tools.debugger replay --report state_space.json --scenario-id script_entry_1", commands)
+        self.assertIn("tools.debugger watch --watch-symbol wScriptPos --save-state patched.state --execute", commands)
+        self.assertIn("state_space", lanes)
+        self.assertIn("runtime", lanes)
+        self.assertIn("state_space_materialization", graph_node_types)
+        self.assertIn("runtime_state_patch", graph_node_types)
+        self.assertIn("save_state", graph_node_types)
 
     def test_setup_trigger_coverage_is_covered_with_supplied_state(self) -> None:
         report = build_setup_plan(

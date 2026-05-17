@@ -348,6 +348,7 @@ def build_capability_report(root: Path = ROOT) -> dict[str, Any]:
                 "tools/debugger/replay.py",
                 "tools/debugger/setup_plan.py",
                 "tools/debugger/content_state.py",
+                "tools/debugger/state_space.py",
                 "tools/debugger/localize.py",
                 "tools/debugger/runtime_watch.py",
                 "tools/debugger/ingest.py",
@@ -356,7 +357,7 @@ def build_capability_report(root: Path = ROOT) -> dict[str, Any]:
                 "tools/trace/boss_ai_state_replay.py",
             ),
             gaps=(
-                "Unified replay planning, setup/trigger materialization routing with explicit state synthesis recipes, content trigger precondition records, precondition-aware content scenario subset extraction, content positioned-state trigger coverage, content map-position, script-entry, and movement-entry WRAM patch materialization, content-state plus explicit generic state-space WRAM patch-set minimization against explicit expectations, scenario/report save-state discovery, instruction-trace reuse of executed content-state output states, generic watch execution, bounded dynamic watch-context windows, source-cause watch candidates, content scenario runtime helper/watch probes, content positioned-state instruction-trace proof routes, and expectation-preserving trace/report/context minimization exist, but executed semantic state-space minimization still needs emulator-backed reducers beyond the materialized surfaces.",
+                "Unified replay planning, setup/trigger materialization routing with explicit state synthesis recipes, content trigger precondition records, precondition-aware content scenario subset extraction, content positioned-state trigger coverage, content map-position, script-entry, movement-entry, and explicit generic WRAM state-space materialization, content-state plus generic state-space WRAM patch-set minimization against explicit expectations, scenario/report save-state discovery, instruction-trace reuse of executed content-state output states, generic watch execution, bounded dynamic watch-context windows, source-cause watch candidates, content scenario runtime helper/watch probes, content positioned-state instruction-trace proof routes, and expectation-preserving trace/report/context minimization exist, but executed semantic state-space minimization still needs reducers that rerun expectations after each candidate patch removal.",
                 "Replay/localization now consumes setup save-state discovery, reverse attribution, expectation failures, minimized evidence artifacts, watch-hit context frames, content ROM mirrors, and content scenario runtime targets, but exact dynamic replay is still deepest for damage and Boss AI.",
                 "Watch replay reports changes, preceding frame context, PC/register snapshots, bounded static source-cause candidates, and dynamic-taint sink-write attribution can now name exact sink-writing SM83 instructions and source operands, but full reverse execution across every CPU side effect is still not implemented.",
             ),
@@ -364,6 +365,7 @@ def build_capability_report(root: Path = ROOT) -> dict[str, Any]:
                 "python -m tools.debugger setup --symbol wCurDamage",
                 "python -m tools.debugger replay --symbol wCurDamage",
                 "python -m tools.debugger localize --symbol wCurDamage",
+                "python -m tools.debugger state-space --patch wMapGroup=1 --patch wMapNumber=2",
             ),
         ),
         _capability(
@@ -407,6 +409,7 @@ def build_capability_report(root: Path = ROOT) -> dict[str, Any]:
                 "tools/debugger/generate.py",
                 "tools/debugger/fuzz.py",
                 "tools/debugger/content_state.py",
+                "tools/debugger/state_space.py",
                 "tools/debugger/testgen.py",
                 "tools/debugger/minimize.py",
                 "tools/damage_debugger/fuzz.py",
@@ -414,7 +417,7 @@ def build_capability_report(root: Path = ROOT) -> dict[str, Any]:
                 "tools/boss_ai_debugger/coverage_search.py",
             ),
             gaps=(
-                "Unified generation and fuzz coordinators now write deterministic seed/case manifests, route to focused generators, preserve content scenario state preconditions, generate map positioned-state, script-entry, and movement-entry materialization/replay/instruction-trace routes, include script command-stream, text-block, and movement-data scenarios, route ready instruction-trace reports into dynamic-taint handoff campaigns/cases, and hand expectation-preserving evidence to downstream tools, but semantic generator execution remains subsystem-specific outside the materialized surfaces.",
+                "Unified generation and fuzz coordinators now write deterministic seed/case manifests, route to focused generators, preserve content scenario state preconditions, generate map positioned-state, script-entry, and movement-entry materialization/replay/instruction-trace routes, create explicit generic WRAM state-space materialization packets, include script command-stream, text-block, and movement-data scenarios, route ready instruction-trace reports into dynamic-taint handoff campaigns/cases, and hand expectation-preserving evidence to downstream tools, but semantic generator execution remains subsystem-specific outside the materialized surfaces.",
                 "Fuzzing is mature for damage and generated Boss AI policy cases; map content scenarios now get positioned-state WRAM patch generation plus replay/instruction-trace routes, script command streams get script-entry WRAM patch generation plus RunScriptCommand trace/watch routes, movement data gets movement-entry WRAM patch generation plus ApplyMovement/HandleMovementData trace/watch routes, audio and asset content get explicit runtime watch/trace proof routes, and text blocks get replay/provenance/trace helper routes, while graphics/audio/UI semantic playback, banking, full script VM behavior under arbitrary event-engine context, and arbitrary event-engine states still need dedicated dynamic ROM generators.",
             ),
             commands=(

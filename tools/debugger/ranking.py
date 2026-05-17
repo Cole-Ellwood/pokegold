@@ -20,6 +20,9 @@ SEVERITY_BASE = {
     "content_state_blocked": 68,
     "content_state_executed": 62,
     "content_state_ready": 58,
+    "state_space_blocked": 68,
+    "state_space_executed": 62,
+    "state_space_ready": 58,
     "setup_trigger_gap": 64,
     "expectation_failed": 78,
     "mirror_uncovered": 50,
@@ -207,6 +210,8 @@ def findings_from_report(report: dict[str, Any], *, source: str) -> list[dict[st
         return content_scenario_findings(report, source=source)
     if kind == "unified_debugger_content_state_materialization":
         return content_state_findings(report, source=source)
+    if kind == "unified_debugger_state_space":
+        return state_space_findings(report, source=source)
     if kind == "unified_debugger_expectation_report":
         return expectation_findings(report, source=source)
     if kind == "unified_debugger_test_suggestions":
@@ -660,6 +665,16 @@ def content_state_patch_evidence(raw_patches: Any) -> list[str]:
     return out
 
 
+def content_state_patch_symbols(raw_patches: Any) -> list[str]:
+    return unique_string_items(
+        [
+            str(patch.get("symbol", ""))
+            for patch in dict_items(raw_patches)
+            if patch.get("symbol")
+        ]
+    )
+
+
 def content_state_patch_value(patch: dict[str, Any]) -> str:
     value_hex = str(patch.get("value_hex") or "")
     if value_hex:
@@ -744,6 +759,185 @@ def content_state_watch_command(*, out_state: str, patch_symbols: list[str]) -> 
         + " ".join(f"--watch-symbol {symbol}" for symbol in symbols)
         + f" --save-state {out_state} --execute"
     ]
+
+
+def state_space_findings(report: dict[str, Any], *, source: str) -> list[dict[str, Any]]:
+    out = []
+    report_commands = string_items(report.get("commands"))
+    state_space = report.get("state_space") if isinstance(report.get("state_space"), dict) else {}
+    execution = report.get("execution") if isinstance(report.get("execution"), dict) else {}
+    patches = state_space_patch_records(report)
+    scenario_ids = state_space_scenario_ids(report)
+    source_files = state_space_source_files(report)
+    out_state = str(execution.get("out_state") or report.get("out_state") or state_space.get("out_state") or "")
+    errors = string_items(report.get("errors"))
+    for error in errors:
+        out.append(
+            finding(
+                finding_type="ingest_error",
+                title="State-space materialization input error",
+                source=source,
+                severity=SEVERITY_BASE["ingest_error"],
+                confidence=0.92,
+                evidence=[error],
+                next_actions=report_commands[:6]
+                or ["python -m tools.debugger state-space --patch <symbol>=<value>"],
+            )
+        )
+    if not patches:
+        out.append(
+            finding(
+                finding_type="test_gap",
+                title="State-space materializer produced no WRAM patches",
+                source=source,
+                severity=SEVERITY_BASE["test_gap"],
+                confidence=0.65,
+                evidence=["Provide at least one --patch SYMBOL=VALUE input."],
+                next_actions=report_commands[:6]
+                or ["python -m tools.debugger state-space --patch <symbol>=<value>"],
+            )
+        )
+    elif errors or not report.get("valid", True):
+        out.append(
+            finding(
+                finding_type="state_space_blocked",
+                title="State-space blocked",
+                source=source,
+                severity=SEVERITY_BASE["state_space_blocked"],
+                confidence=0.82,
+                evidence=[*state_space_evidence(report), *errors[:4]],
+                next_actions=report_commands[:8],
+            )
+        )
+    else:
+        title_id = scenario_ids[0] if scenario_ids else source
+        out.append(
+            finding(
+                finding_type="state_space_ready",
+                title=f"State-space ready: {title_id}",
+                source=source,
+                severity=SEVERITY_BASE["state_space_ready"],
+                confidence=0.78,
+                evidence=state_space_evidence(report),
+                next_actions=state_space_commands(
+                    source=source,
+                    scenario_ids=scenario_ids,
+                    out_state=out_state,
+                    patches=patches,
+                    report_commands=report_commands,
+                )[:8],
+            )
+        )
+    if bool(report.get("executed") or execution.get("executed")):
+        applied_patches = dict_items(execution.get("applied_patches")) or [patch for patch in patches if patch.get("applied")]
+        out.append(
+            finding(
+                finding_type="state_space_executed",
+                title=f"State-space executed: {out_state or source}",
+                source=source,
+                severity=SEVERITY_BASE["state_space_executed"],
+                confidence=0.86,
+                evidence=[
+                    f"out_state={out_state}",
+                    f"applied_patches={len(applied_patches)}",
+                    *content_state_patch_evidence(applied_patches),
+                ],
+                next_actions=state_space_commands(
+                    source=source,
+                    scenario_ids=scenario_ids,
+                    out_state=out_state,
+                    patches=applied_patches or patches,
+                    report_commands=report_commands,
+                )[:8],
+            )
+        )
+    return out
+
+
+def state_space_patch_records(report: dict[str, Any]) -> list[dict[str, Any]]:
+    state_space = report.get("state_space") if isinstance(report.get("state_space"), dict) else {}
+    execution = report.get("execution") if isinstance(report.get("execution"), dict) else {}
+    return [
+        *dict_items(report.get("state_patches")),
+        *dict_items(state_space.get("patches")),
+        *dict_items(state_space.get("state_patches")),
+        *dict_items(execution.get("applied_patches")),
+    ]
+
+
+def state_space_scenario_ids(report: dict[str, Any]) -> list[str]:
+    state_space = report.get("state_space") if isinstance(report.get("state_space"), dict) else {}
+    return unique_string_items(
+        [
+            str(report.get("scenario_id", "")),
+            *string_items(state_space.get("scenario_ids")),
+            *[
+                str(patch.get("scenario_id", ""))
+                for patch in state_space_patch_records(report)
+                if patch.get("scenario_id")
+            ],
+        ]
+    )
+
+
+def state_space_source_files(report: dict[str, Any]) -> list[str]:
+    state_space = report.get("state_space") if isinstance(report.get("state_space"), dict) else {}
+    return unique_string_items(
+        [
+            *string_items(report.get("source_files")),
+            *string_items(state_space.get("source_files")),
+            *[
+                str(patch.get("source_file", ""))
+                for patch in state_space_patch_records(report)
+                if patch.get("source_file")
+            ],
+        ]
+    )
+
+
+def state_space_evidence(report: dict[str, Any]) -> list[str]:
+    state_space = report.get("state_space") if isinstance(report.get("state_space"), dict) else {}
+    return [
+        f"scenario={','.join(state_space_scenario_ids(report))}" if state_space_scenario_ids(report) else "",
+        f"source={','.join(state_space_source_files(report))}" if state_space_source_files(report) else "",
+        f"patches={len(state_space_patch_records(report))}",
+        f"symptom={report.get('symptom') or state_space.get('symptom') or ''}",
+        *content_state_patch_evidence(state_space_patch_records(report)),
+    ]
+
+
+def state_space_commands(
+    *,
+    source: str,
+    scenario_ids: list[str],
+    out_state: str,
+    patches: list[dict[str, Any]],
+    report_commands: list[str],
+) -> list[str]:
+    commands = []
+    scenario_id = scenario_ids[0] if scenario_ids else ""
+    scenario_expect_arg = f",scenario={scenario_id}" if scenario_id else ""
+    scenario_cli_arg = f" --scenario-id {scenario_id}" if scenario_id else ""
+    for patch in patches[:8]:
+        symbol = str(patch.get("symbol", ""))
+        if not symbol:
+            continue
+        value_hex = str(patch.get("value_hex") or "")
+        value = patch.get("value")
+        value_arg = f",value=0x{value_hex}" if value_hex else (f",value={value}" if value is not None else "")
+        commands.append(
+            f"python -m tools.debugger expect --report {source} --expect state-patch={symbol}{scenario_expect_arg}{value_arg}"
+        )
+    commands.append(f"python -m tools.debugger replay --report {source}{scenario_cli_arg} --execute-watch")
+    commands.extend(content_state_watch_command(out_state=out_state, patch_symbols=content_state_patch_symbols(patches)))
+    commands.append(
+        f"python -m tools.debugger trace-instructions --report {source}{scenario_cli_arg} --execute --require-hit"
+    )
+    commands.append(
+        f"python -m tools.debugger minimize --report {source} --expect state-patch={content_state_patch_symbols(patches)[0] if content_state_patch_symbols(patches) else '<symbol>'} --out-state-report .local\\tmp\\debugger_state_space_minimized.json"
+    )
+    commands.extend(report_commands)
+    return unique_string_items(commands)
 
 
 def expectation_findings(report: dict[str, Any], *, source: str) -> list[dict[str, Any]]:
