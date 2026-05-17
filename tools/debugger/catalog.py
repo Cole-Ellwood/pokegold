@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -507,7 +508,7 @@ def triage_request(
             for path in normalized_paths
         )
         symptom_hit = bool(symptom_text) and any(
-            keyword in symptom_text for keyword in rule.symptom_keywords
+            _keyword_matches(keyword, symptom_text) for keyword in rule.symptom_keywords
         )
         if not path_hit and not symptom_hit:
             continue
@@ -615,6 +616,20 @@ def _report_from_capabilities(capabilities: list[Capability]) -> dict[str, Any]:
 
 def _normalize_path(path: str) -> str:
     return path.replace("\\", "/").strip().lower()
+
+
+def _keyword_matches(keyword: str, text: str) -> bool:
+    keyword_tokens = re.findall(r"[a-z0-9]+", keyword.lower())
+    text_tokens = re.findall(r"[a-z0-9]+", text.lower())
+    if not keyword_tokens or not text_tokens:
+        return False
+    if len(keyword_tokens) == 1:
+        return keyword_tokens[0] in text_tokens
+    window_size = len(keyword_tokens)
+    return any(
+        text_tokens[index:index + window_size] == keyword_tokens
+        for index in range(0, len(text_tokens) - window_size + 1)
+    )
 
 
 def _triage_match(

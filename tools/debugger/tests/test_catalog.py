@@ -83,6 +83,12 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("tools.boss_ai_debugger", commands)
         self.assertIn("check_boss_ai_debugger_done.py", commands)
 
+    def test_symptom_keyword_matching_does_not_match_inside_words(self) -> None:
+        report = triage_request(symptom="Air Balloon Ground immunity")
+
+        self.assertNotIn("boss_ai", {match["id"] for match in report["matches"]})
+        self.assertEqual(report["matches"][0]["id"], "general")
+
     def test_unknown_triage_returns_general_baseline(self) -> None:
         report = triage_request(symptom="unknown title screen issue")
 
