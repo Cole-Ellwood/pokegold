@@ -85,14 +85,19 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
 
     def test_symptom_keyword_matching_does_not_match_inside_words(self) -> None:
         report = triage_request(symptom="Air Balloon Ground immunity")
+        tests = suggest_tests(symptom="Air Balloon Ground immunity")
+        compare = build_compare_plan(symptom="Air Balloon Ground immunity")
         match_ids = {match["id"] for match in report["matches"]}
         damage_match = next(match for match in report["matches"] if match["id"] == "damage_chain")
+        commands = "\n".join(report["commands"] + tests["commands"] + compare["commands"])
 
         self.assertNotIn("boss_ai", match_ids)
         self.assertIn("damage_chain", match_ids)
         self.assertIn("air balloon", damage_match["matched_symptom_keywords"])
         self.assertIn("ground", damage_match["matched_symptom_keywords"])
         self.assertIn("immunity", damage_match["matched_symptom_keywords"])
+        self.assertIn("tools.damage_debugger", commands)
+        self.assertNotIn("tools.boss_ai_debugger", commands)
 
     def test_unknown_triage_returns_general_baseline(self) -> None:
         report = triage_request(symptom="unknown title screen issue")
@@ -315,6 +320,78 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("slice", phase_names)
         self.assertIn("tools.debugger watch", commands)
         self.assertIn("tools.damage_debugger", commands)
+
+    def test_localize_routes_air_balloon_immunity_to_type_matchup_sources(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "engine" / "battle").mkdir(parents=True)
+            (root / "engine" / "battle" / "ai").mkdir(parents=True)
+            (root / "data" / "types").mkdir(parents=True)
+            (root / "ram").mkdir()
+            (root / "test.sym").write_text(
+                "\n".join(
+                    [
+                        "0d:4936 BattleCheckTypeMatchup",
+                        "0d:4941 CheckTypeMatchup",
+                        "0d:4900 TypeMatchups",
+                        "01:d151 wTypeMatchup",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (root / "engine" / "battle" / "effect_commands.asm").write_text(
+                "\n".join(
+                    [
+                        "BattleCheckTypeMatchup:",
+                        "\tld [wTypeMatchup], a",
+                        "\tld hl, TypeMatchups",
+                        "\tret",
+                        "CheckTypeMatchup:",
+                        "\tcall BattleCheckTypeMatchup",
+                        "\tret",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (root / "engine" / "battle" / "late_gen_held_items.asm").write_text(
+                ".MaybePopAirBalloon:\n\tld hl, BattleText_AirBalloonPopped\n\tret\n",
+                encoding="utf-8",
+            )
+            (root / "engine" / "battle" / "ai" / "boss_policy_move.asm").write_text(
+                "BossAI_ApplyMoveModel:\n\tld a, [wTypeMatchup]\n\tret\n",
+                encoding="utf-8",
+            )
+            (root / "data" / "types" / "type_matchups.asm").write_text(
+                "TypeMatchups:\n\tdb GROUND, FLYING, 0\n",
+                encoding="utf-8",
+            )
+            (root / "ram" / "wram.asm").write_text(
+                "wTypeMatchup:: ds 1\n",
+                encoding="utf-8",
+            )
+
+            report = build_localization_plan(
+                symptom="Air Balloon Ground immunity",
+                symbols_path="test.sym",
+                root=root,
+            )
+
+        candidate_ids = [candidate["id"] for candidate in report["candidates"]]
+        commands = "\n".join(report["commands"])
+
+        self.assertTrue(report["valid"])
+        self.assertIn("damage_chain", report["triage_match_ids"])
+        self.assertNotIn("boss_ai", report["triage_match_ids"])
+        self.assertIn("BattleCheckTypeMatchup", candidate_ids)
+        self.assertIn("wTypeMatchup", candidate_ids)
+        self.assertIn("engine/battle/late_gen_held_items.asm", candidate_ids)
+        self.assertNotIn("BossAI_SelectMove", candidate_ids)
+        self.assertNotIn("tools.boss_ai_debugger", commands)
+        self.assertIn("tools.debugger watch --watch-symbol wTypeMatchup", commands)
+        self.assertIn("tools.debugger slice --symbol BattleCheckTypeMatchup", commands)
+        self.assertIn("tools.debugger slice --source-file engine/battle/late_gen_held_items.asm", commands)
 
     def test_localize_uses_watch_report_events_as_strong_signal(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

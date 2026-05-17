@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from .catalog import ROOT, triage_request
+from .catalog import ROOT, keyword_matches, triage_request
 from .mirrors import build_compare_plan
 from .reporting import load_reports
 from .slicing import build_slice_report
@@ -18,6 +18,89 @@ PHASE_TITLES = {
     "compare": "Compare ROM behavior to expectations",
     "minimize": "Minimize to a counterexample",
     "verify": "Verify the fix",
+}
+SYMPTOM_HINTS = {
+    "damage": (("symbol", "wCurDamage", 55),),
+    "hp": (("symbol", "wCurDamage", 45),),
+    "type": (
+        ("symbol", "BattleCheckTypeMatchup", 68),
+        ("symbol", "wTypeMatchup", 64),
+        ("symbol", "TypeMatchups", 56),
+        ("file", "engine/battle/effect_commands.asm", 62),
+        ("file", "data/types/type_matchups.asm", 54),
+    ),
+    "type matchup": (
+        ("symbol", "BattleCheckTypeMatchup", 78),
+        ("symbol", "CheckTypeMatchup", 70),
+        ("symbol", "wTypeMatchup", 74),
+        ("symbol", "TypeMatchups", 64),
+        ("file", "engine/battle/effect_commands.asm", 72),
+        ("file", "data/types/type_matchups.asm", 64),
+    ),
+    "type effectiveness": (
+        ("symbol", "BattleCheckTypeMatchup", 74),
+        ("symbol", "wTypeMatchup", 70),
+        ("file", "engine/battle/effect_commands.asm", 68),
+        ("file", "data/types/type_matchups.asm", 60),
+    ),
+    "matchup": (
+        ("symbol", "BattleCheckTypeMatchup", 66),
+        ("symbol", "wTypeMatchup", 62),
+        ("file", "engine/battle/effect_commands.asm", 58),
+    ),
+    "immune": (
+        ("symbol", "BattleCheckTypeMatchup", 64),
+        ("symbol", "wTypeMatchup", 62),
+        ("file", "engine/battle/effect_commands.asm", 58),
+    ),
+    "immunity": (
+        ("symbol", "BattleCheckTypeMatchup", 66),
+        ("symbol", "wTypeMatchup", 64),
+        ("file", "engine/battle/effect_commands.asm", 60),
+    ),
+    "ground": (
+        ("symbol", "BattleCheckTypeMatchup", 58),
+        ("symbol", "wTypeMatchup", 56),
+        ("file", "data/types/type_matchups.asm", 54),
+    ),
+    "air balloon": (
+        ("symbol", "BattleCheckTypeMatchup", 74),
+        ("symbol", "wTypeMatchup", 70),
+        ("file", "engine/battle/late_gen_held_items.asm", 82),
+        ("file", "engine/battle/effect_commands.asm", 64),
+    ),
+    "balloon": (
+        ("symbol", "BattleCheckTypeMatchup", 60),
+        ("symbol", "wTypeMatchup", 58),
+        ("file", "engine/battle/late_gen_held_items.asm", 72),
+    ),
+    "held item": (
+        ("file", "engine/battle/late_gen_held_items.asm", 64),
+        ("symbol", "wTypeMatchup", 42),
+    ),
+    "item": (
+        ("file", "engine/battle/late_gen_held_items.asm", 48),
+    ),
+    "passive": (
+        ("file", "engine/battle/type_passive_damage_mods.asm", 62),
+        ("symbol", "wTypeMatchup", 48),
+    ),
+    "ability": (
+        ("file", "engine/battle/type_passive_damage_mods.asm", 58),
+        ("symbol", "wTypeMatchup", 44),
+    ),
+    "boss": (
+        ("symbol", "BossAI_SelectMove", 45),
+        ("file", "engine/battle/ai/boss_policy_move.asm", 40),
+    ),
+    "ai": (
+        ("symbol", "BossAI_SelectMove", 45),
+        ("file", "engine/battle/ai/boss_policy_move.asm", 40),
+    ),
+    "score": (("symbol", "wEnemyAIMoveScores", 45),),
+    "switch": (("symbol", "BossAI_SwitchOrTryItem", 45),),
+    "bank": (("symbol", "hROMBank", 45),),
+    "farcall": (("symbol", "FarCall", 45),),
 }
 
 
@@ -58,25 +141,31 @@ def build_localization_plan(
     else:
         slice_report = None
 
+    workflow_files = tuple(changed_files)
+    workflow_symbols = tuple(symbols)
+    if not symptom:
+        workflow_files = tuple(candidate_files or changed_files)
+        workflow_symbols = tuple(candidate_symbols or symbols)
+
     triage = triage_request(
-        changed_files=tuple(candidate_files or changed_files),
+        changed_files=workflow_files,
         symptom=symptom,
         root=root,
     )
     tests = suggest_tests(
-        changed_files=tuple(candidate_files or changed_files),
-        symbols=tuple(candidate_symbols or symbols),
+        changed_files=workflow_files,
+        symbols=workflow_symbols,
         symptom=symptom,
         root=root,
     )
     compare = build_compare_plan(
-        changed_files=tuple(candidate_files or changed_files),
-        symbols=tuple(candidate_symbols or symbols),
+        changed_files=workflow_files,
+        symbols=workflow_symbols,
         symptom=symptom,
         root=root,
     )
     gate = build_gate_plan(
-        changed_files=tuple(candidate_files or changed_files),
+        changed_files=workflow_files,
         symptom=symptom,
         root=root,
     )
@@ -621,21 +710,15 @@ def signal_from_edge(edge: dict[str, Any], signal_type: str, *, source: str, wei
 
 
 def signals_from_symptom(symptom: str) -> list[dict[str, Any]]:
-    lowered = symptom.lower()
     out: list[dict[str, Any]] = []
-    keyword_map = {
-        "damage": ("wCurDamage", 55),
-        "hp": ("wCurDamage", 45),
-        "boss": ("BossAI_SelectMove", 45),
-        "ai": ("BossAI_SelectMove", 45),
-        "score": ("wEnemyAIMoveScores", 45),
-        "switch": ("BossAI_SwitchOrTryItem", 45),
-        "bank": ("hROMBank", 45),
-        "farcall": ("FarCall", 45),
-    }
-    for keyword, (symbol_name, weight) in keyword_map.items():
-        if keyword in lowered:
-            out.append(signal("symptom_keyword", symbol=symbol_name, note=keyword, weight=weight))
+    for keyword, hints in SYMPTOM_HINTS.items():
+        if not keyword_matches(keyword, symptom):
+            continue
+        for hint_kind, value, weight in hints:
+            if hint_kind == "symbol":
+                out.append(signal("symptom_keyword", symbol=value, note=keyword, weight=weight))
+            elif hint_kind == "file":
+                out.append(signal("symptom_keyword_file", file=value, note=keyword, weight=weight))
     return out
 
 

@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from .catalog import ROOT, triage_request
+from .catalog import ROOT, keyword_matches, triage_request
 from .provenance import build_provenance_report
 
 
@@ -36,8 +36,30 @@ GENERATOR_RULES = (
             "BattleCommand_DamageCalc",
             "BattleCommand_DamageStats",
             "BattleCommand_Stab",
+            "BattleCheckTypeMatchup",
+            "CheckTypeMatchup",
+            "wTypeMatchup",
+            "TypeMatchups",
         ),
-        symptom_keywords=("damage", "clobber", "stab", "type", "held item", "weather"),
+        symptom_keywords=(
+            "damage",
+            "clobber",
+            "stab",
+            "type",
+            "type matchup",
+            "type effectiveness",
+            "matchup",
+            "immune",
+            "immunity",
+            "ground",
+            "held item",
+            "air balloon",
+            "balloon",
+            "passive",
+            "ability",
+            "item",
+            "weather",
+        ),
         commands=(
             "python -m tools.damage_debugger.oracle",
             "python -m tools.damage_debugger.fuzz --self-check-workers=2",
@@ -146,7 +168,7 @@ def suggest_tests(
         )
         symbol_hit = any(symbol in rule.symbols for symbol in symbols)
         symptom_hit = bool(symptom_text) and any(
-            keyword in symptom_text for keyword in rule.symptom_keywords
+            keyword_matches(keyword, symptom_text) for keyword in rule.symptom_keywords
         )
         if not path_hit and not symbol_hit and not symptom_hit:
             continue

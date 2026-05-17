@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from .catalog import ROOT, triage_request
+from .catalog import ROOT, keyword_matches, triage_request
 from .provenance import build_provenance_report
 from .reporting import load_reports
 
@@ -42,8 +42,30 @@ MIRROR_RULES = (
             "BattleCommand_DamageStats",
             "BattleCommand_DamageCalc",
             "BattleCommand_Stab",
+            "BattleCheckTypeMatchup",
+            "CheckTypeMatchup",
+            "wTypeMatchup",
+            "TypeMatchups",
         ),
-        symptom_keywords=("damage", "stab", "type", "weather", "held item", "badge"),
+        symptom_keywords=(
+            "damage",
+            "stab",
+            "type",
+            "type matchup",
+            "type effectiveness",
+            "matchup",
+            "immune",
+            "immunity",
+            "ground",
+            "held item",
+            "air balloon",
+            "balloon",
+            "passive",
+            "ability",
+            "item",
+            "weather",
+            "badge",
+        ),
         evidence=(
             "tools/damage_debugger/oracle.py",
             "tools/damage_debugger/fuzz.py",
@@ -331,7 +353,7 @@ def match_mirrors(
         path_hit = any(path_matches_prefix(path, rule.path_prefixes) for path in normalized_paths)
         symbol_hit = any(symbol in rule.symbols for symbol in symbols)
         symptom_hit = bool(symptom_text) and any(
-            keyword in symptom_text for keyword in rule.symptom_keywords
+            keyword_matches(keyword, symptom_text) for keyword in rule.symptom_keywords
         )
         if not path_hit and not symbol_hit and not symptom_hit:
             continue

@@ -635,7 +635,7 @@ def _normalize_path(path: str) -> str:
     return path.replace("\\", "/").strip().lower()
 
 
-def _keyword_matches(keyword: str, text: str) -> bool:
+def keyword_matches(keyword: str, text: str) -> bool:
     keyword_tokens = re.findall(r"[a-z0-9]+", keyword.lower())
     text_tokens = re.findall(r"[a-z0-9]+", text.lower())
     if not keyword_tokens or not text_tokens:
@@ -653,7 +653,7 @@ def _matching_keywords(keywords: tuple[str, ...], text: str) -> list[str]:
     return [
         keyword
         for keyword in keywords
-        if _keyword_matches(keyword, text)
+        if keyword_matches(keyword, text)
     ]
 
 
