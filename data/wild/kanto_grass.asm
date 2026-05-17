@@ -263,7 +263,7 @@ KantoGrassWildMons:
 	db 3, CATERPIE
 	db 3, PIDGEY
 	db 5, METAPOD
-	db 7, BUTTERFREE
+	db 7, METAPOD
 	db 7, PIDGEOTTO
 	db 4, PIKACHU
 	db 4, PIKACHU
@@ -279,7 +279,7 @@ KantoGrassWildMons:
 	db 3, HOOTHOOT
 	db 3, SPINARAK
 	db 5, HOOTHOOT
-	db 7, NOCTOWL
+	db 7, HOOTHOOT
 	db 7, ARIADOS
 	db 4, PIKACHU
 	db 4, PIKACHU
@@ -288,7 +288,7 @@ KantoGrassWildMons:
 	db 3, WEEDLE
 	db 3, LEDYBA
 	db 5, KAKUNA
-	db 7, BEEDRILL
+	db 7, KAKUNA
 	db 7, LEDIAN
 	db 4, PIKACHU
 	db 4, PIKACHU
@@ -304,8 +304,8 @@ KantoGrassWildMons:
 	db 3, HOOTHOOT
 	db 3, HOOTHOOT
 	db 5, HOOTHOOT
-	db 7, NOCTOWL
-	db 7, NOCTOWL
+	db 7, HOOTHOOT
+	db 7, HOOTHOOT
 	db 4, PIKACHU
 	db 4, PIKACHU
 	ENDC
@@ -607,10 +607,10 @@ KantoGrassWildMons:
 	db 15, KADABRA
 	db 15, KADABRA
 	; nite
-	db 17, NOCTOWL
+	db 17, HOOTHOOT
 	db 20, HAUNTER
 	db 15, ABRA
-	db 19, NOCTOWL
+	db 19, HOOTHOOT
 	db 18, GROWLITHE
 	db 15, KADABRA
 	db 15, KADABRA
@@ -635,7 +635,7 @@ KantoGrassWildMons:
 	db 17, MEOWTH
 	db 20, HAUNTER
 	db 15, ABRA
-	db 19, NOCTOWL
+	db 19, HOOTHOOT
 	db 18, VULPIX
 	db 15, KADABRA
 	db 15, KADABRA
@@ -650,7 +650,7 @@ KantoGrassWildMons:
 	db 15, RATTATA
 	db 13, SPEAROW
 	db 15, RATICATE
-	db 15, FEAROW
+	db 15, SPEAROW
 	db 15, PRIMEAPE
 	db 15, PRIMEAPE
 	; day
@@ -658,7 +658,7 @@ KantoGrassWildMons:
 	db 15, RATTATA
 	db 13, SPEAROW
 	db 15, RATICATE
-	db 15, FEAROW
+	db 15, SPEAROW
 	db 15, PRIMEAPE
 	db 15, PRIMEAPE
 	; nite
@@ -675,7 +675,7 @@ KantoGrassWildMons:
 	db 15, SPEAROW
 	db 13, SPEAROW
 	db 15, RATICATE
-	db 15, FEAROW
+	db 15, SPEAROW
 	db 15, RATICATE
 	db 15, RATICATE
 	; day
@@ -683,7 +683,7 @@ KantoGrassWildMons:
 	db 15, SPEAROW
 	db 13, SPEAROW
 	db 15, RATICATE
-	db 15, FEAROW
+	db 15, SPEAROW
 	db 15, RATICATE
 	db 15, RATICATE
 	; nite
@@ -703,7 +703,7 @@ KantoGrassWildMons:
 	db 16, SPEAROW
 	db 17, VOLTORB
 	db 16, RATICATE
-	db 18, FEAROW
+	db 18, SPEAROW
 	db 16, QUAGSIRE
 	db 15, ELECTABUZZ
 	db 15, ELECTABUZZ
@@ -711,7 +711,7 @@ KantoGrassWildMons:
 	db 16, SPEAROW
 	db 17, VOLTORB
 	db 17, RATICATE
-	db 18, FEAROW
+	db 18, SPEAROW
 	db 15, ELECTABUZZ
 	db 17, ELECTABUZZ
 	db 17, ELECTABUZZ
@@ -1038,16 +1038,16 @@ KantoGrassWildMons:
 	db 5, SPEAROW
 	db 4, DODUO
 	db 6, PONYTA
-	db 7, FEAROW
-	db 7, FEAROW
+	db 7, SPEAROW
+	db 7, SPEAROW
 	; day
 	db 3, RATTATA
 	db 3, SPEAROW
 	db 5, SPEAROW
 	db 4, DODUO
 	db 6, PONYTA
-	db 7, FEAROW
-	db 7, FEAROW
+	db 7, SPEAROW
+	db 7, SPEAROW
 	; nite
 	db 3, RATTATA
 	db 3, RATTATA
@@ -1082,8 +1082,8 @@ KantoGrassWildMons:
 	db 9, ABRA
 	db 13, WEEPINBELL
 	db 10, BELLSPROUT
-	db 10, VENOMOTH
-	db 10, VENOMOTH
+	db 10, VENONAT
+	db 10, VENONAT
 	end_grass_wildmons
 
 	def_grass_wildmons ROUTE_25
@@ -1107,7 +1107,7 @@ KantoGrassWildMons:
 	; nite
 	db 8, VENONAT
 	db 10, ODDISH
-	db 10, VENOMOTH
+	db 10, VENONAT
 	db 9, ABRA
 	db 14, WEEPINBELL
 	db 10, BELLSPROUT

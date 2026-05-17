@@ -450,24 +450,24 @@ JohtoGrassWildMons:
 	db 5, ZUBAT
 	db 4, RATTATA
 	db 7, ZUBAT
-	db 6, ONIX
-	db 6, ONIX
+	db 6, GEODUDE
+	db 6, ZUBAT
 	; day
 	db 6, GEODUDE
 	db 6, SANDSHREW
 	db 5, ZUBAT
 	db 4, RATTATA
 	db 7, ZUBAT
-	db 6, ONIX
-	db 6, ONIX
+	db 6, GEODUDE
+	db 6, ZUBAT
 	; nite
 	db 6, GEODUDE
 	db 6, SANDSHREW
 	db 5, ZUBAT
 	db 4, RATTATA
 	db 7, ZUBAT
-	db 6, ONIX
-	db 6, ONIX
+	db 6, GEODUDE
+	db 6, ZUBAT
 	ELIF DEF(_SILVER)
 	; morn
 	db 6, GEODUDE
@@ -475,24 +475,24 @@ JohtoGrassWildMons:
 	db 5, ZUBAT
 	db 4, RATTATA
 	db 7, ZUBAT
-	db 6, ONIX
-	db 6, ONIX
+	db 6, GEODUDE
+	db 6, ZUBAT
 	; day
 	db 6, GEODUDE
 	db 6, RATTATA
 	db 5, ZUBAT
 	db 4, RATTATA
 	db 7, ZUBAT
-	db 6, ONIX
-	db 6, ONIX
+	db 6, GEODUDE
+	db 6, ZUBAT
 	; nite
 	db 6, GEODUDE
 	db 6, RATTATA
 	db 5, ZUBAT
 	db 4, RATTATA
 	db 7, ZUBAT
-	db 6, ONIX
-	db 6, ONIX
+	db 6, GEODUDE
+	db 6, ZUBAT
 	ENDC
 	end_grass_wildmons
 
@@ -503,7 +503,7 @@ JohtoGrassWildMons:
 	db 8, GEODUDE
 	db 8, SANDSHREW
 	db 7, ZUBAT
-	db 8, ONIX
+	db 8, GEODUDE
 	db 9, ZUBAT
 	db 6, RATTATA
 	db 6, RATTATA
@@ -511,7 +511,7 @@ JohtoGrassWildMons:
 	db 8, GEODUDE
 	db 8, SANDSHREW
 	db 7, ZUBAT
-	db 8, ONIX
+	db 8, GEODUDE
 	db 9, ZUBAT
 	db 6, RATTATA
 	db 6, RATTATA
@@ -519,7 +519,7 @@ JohtoGrassWildMons:
 	db 8, GEODUDE
 	db 8, SANDSHREW
 	db 7, ZUBAT
-	db 8, ONIX
+	db 8, GEODUDE
 	db 9, ZUBAT
 	db 6, RATTATA
 	db 6, RATTATA
@@ -528,7 +528,7 @@ JohtoGrassWildMons:
 	db 8, GEODUDE
 	db 8, RATTATA
 	db 7, ZUBAT
-	db 8, ONIX
+	db 8, GEODUDE
 	db 9, ZUBAT
 	db 6, RATTATA
 	db 6, RATTATA
@@ -536,7 +536,7 @@ JohtoGrassWildMons:
 	db 8, GEODUDE
 	db 8, RATTATA
 	db 7, ZUBAT
-	db 8, ONIX
+	db 8, GEODUDE
 	db 9, ZUBAT
 	db 6, RATTATA
 	db 6, RATTATA
@@ -544,7 +544,7 @@ JohtoGrassWildMons:
 	db 8, GEODUDE
 	db 8, RATTATA
 	db 7, ZUBAT
-	db 8, ONIX
+	db 8, GEODUDE
 	db 9, ZUBAT
 	db 6, RATTATA
 	db 6, RATTATA
@@ -1909,50 +1909,50 @@ JohtoGrassWildMons:
 	db 12, NIDORAN_F
 	db 13, PIDGEY
 	db 13, GROWLITHE
-	db 13, STANTLER
-	db 15, DODUO
+	db 13, KOFFING
+	db 15, HOUNDOUR
 	db 15, PONYTA
 	; day
 	db 12, NIDORAN_M
 	db 12, NIDORAN_F
 	db 14, PIDGEY
 	db 13, GROWLITHE
-	db 13, STANTLER
-	db 15, DODUO
+	db 13, KOFFING
+	db 15, HOUNDOUR
 	db 15, PONYTA
 	; nite
 	db 12, NIDORAN_M
 	db 12, NIDORAN_F
 	db 13, HOOTHOOT
 	db 13, GROWLITHE
-	db 13, STANTLER
-	db 15, DODUO
-	db 15, NOCTOWL
+	db 13, KOFFING
+	db 15, HOUNDOUR
+	db 15, HOOTHOOT
 	ELIF DEF(_SILVER)
 	; morn
 	db 12, NIDORAN_F
 	db 12, NIDORAN_M
 	db 13, PIDGEY
 	db 13, VULPIX
-	db 13, STANTLER
-	db 15, DODUO
+	db 13, KOFFING
+	db 15, HOUNDOUR
 	db 15, PONYTA
 	; day
 	db 12, NIDORAN_F
 	db 12, NIDORAN_M
 	db 14, PIDGEY
 	db 13, VULPIX
-	db 13, STANTLER
-	db 15, DODUO
+	db 13, KOFFING
+	db 15, HOUNDOUR
 	db 15, PONYTA
 	; nite
 	db 12, NIDORAN_F
 	db 12, NIDORAN_M
 	db 13, HOOTHOOT
 	db 13, VULPIX
-	db 13, STANTLER
-	db 15, DODUO
-	db 15, NOCTOWL
+	db 13, KOFFING
+	db 15, HOUNDOUR
+	db 15, HOOTHOOT
 	ENDC
 	end_grass_wildmons
 
@@ -1963,50 +1963,50 @@ JohtoGrassWildMons:
 	db 13, PIDGEY
 	db 15, STANTLER
 	db 15, DODUO
-	db 14, GROWLITHE
-	db 15, PIDGEOTTO
+	db 14, HOUNDOUR
+	db 15, KOFFING
 	db 16, PONYTA
 	db 16, VULPIX
 	; day
 	db 13, PIDGEY
 	db 15, STANTLER
 	db 15, DODUO
-	db 14, GROWLITHE
-	db 15, PIDGEOTTO
+	db 14, HOUNDOUR
+	db 15, KOFFING
 	db 16, PONYTA
 	db 16, VULPIX
 	; nite
 	db 13, SPINARAK
 	db 15, STANTLER
 	db 15, HOOTHOOT
-	db 14, GROWLITHE
-	db 15, DODUO
-	db 16, NOCTOWL
+	db 14, HOUNDOUR
+	db 15, KOFFING
+	db 16, HOOTHOOT
 	db 16, GASTLY
 	ELIF DEF(_SILVER)
 	; morn
 	db 13, LEDYBA
 	db 15, STANTLER
 	db 15, DODUO
-	db 14, VULPIX
-	db 15, PIDGEOTTO
+	db 14, HOUNDOUR
+	db 15, KOFFING
 	db 16, PONYTA
 	db 16, GROWLITHE
 	; day
 	db 13, PIDGEY
 	db 15, STANTLER
 	db 15, DODUO
-	db 14, VULPIX
-	db 15, PIDGEOTTO
+	db 14, HOUNDOUR
+	db 15, KOFFING
 	db 16, PONYTA
 	db 16, GROWLITHE
 	; nite
 	db 13, HOOTHOOT
 	db 15, STANTLER
 	db 15, HOOTHOOT
-	db 14, VULPIX
-	db 15, DODUO
-	db 16, NOCTOWL
+	db 14, HOUNDOUR
+	db 15, KOFFING
+	db 16, HOOTHOOT
 	db 16, GASTLY
 	ENDC
 	end_grass_wildmons
@@ -2145,7 +2145,7 @@ JohtoGrassWildMons:
 	db 15, MANKEY
 	db 13, MAREEP
 	db 14, ZUBAT
-	db 16, NOCTOWL
+	db 16, HOOTHOOT
 	db 15, FLAAFFY
 	db 17, CUBONE
 	db 17, GOLBAT
@@ -2170,7 +2170,7 @@ JohtoGrassWildMons:
 	db 13, MAREEP
 	db 14, ZUBAT
 	db 15, MEOWTH
-	db 16, NOCTOWL
+	db 16, HOOTHOOT
 	db 15, FLAAFFY
 	db 17, CUBONE
 	db 17, GOLBAT
@@ -2198,7 +2198,7 @@ JohtoGrassWildMons:
 	; nite
 	db 15, FLAAFFY
 	db 15, GIRAFARIG
-	db 17, NOCTOWL
+	db 17, HOOTHOOT
 	db 16, VENONAT
 	db 15, MAREEP
 	db 16, DROWZEE

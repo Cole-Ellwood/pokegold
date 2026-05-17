@@ -191,7 +191,7 @@ JohtoWaterWildMons:
 	db 2 percent ; encounter rate
 	db 20, MAGIKARP
 	db 15, GOLDEEN
-	db 15, GYARADOS
+	db 15, MAGIKARP
 	end_water_wildmons
 
 	def_water_wildmons ROUTE_44
@@ -258,7 +258,7 @@ JohtoWaterWildMons:
 	ENDC
 	db 15, MAGIKARP
 	db 10, MAGIKARP
-	db 15, GYARADOS
+	db 15, MAGIKARP
 	end_water_wildmons
 
 	def_water_wildmons BLACKTHORN_CITY

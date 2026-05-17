@@ -223,8 +223,8 @@ TimeFishGroups:
 	db QWILFISH,   40,  QWILFISH,   40 ; 11
 	db REMORAID,   20,  REMORAID,   20 ; 12
 	db REMORAID,   40,  REMORAID,   40 ; 13
-	db GYARADOS,   20,  GYARADOS,   20 ; 14
-	db GYARADOS,   40,  GYARADOS,   40 ; 15
+	db MAGIKARP,   20,  MAGIKARP,   20 ; 14
+	db MAGIKARP,   40,  MAGIKARP,   40 ; 15
 	db DRATINI,    10,  DRATINI,    10 ; 16
 	db DRATINI,    10,  DRATINI,    10 ; 17
 	db HORSEA,     20,  HORSEA,     20 ; 18

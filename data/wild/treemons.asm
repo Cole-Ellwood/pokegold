@@ -28,7 +28,7 @@ IF DEF(_GOLD)
 	db 15, METAPOD,    10
 	db 10, EXEGGCUTE,  10
 	db  5, EXEGGCUTE,  10
-	db  5, BUTTERFREE, 10
+	db  5, METAPOD,    10
 	db -1
 ; rare
 	db 50, CATERPIE,   10
@@ -36,7 +36,7 @@ IF DEF(_GOLD)
 	db 15, PINECO,     10
 	db 10, EXEGGCUTE,  10
 	db  5, EXEGGCUTE,  10
-	db  5, BUTTERFREE, 10
+	db  5, METAPOD,    10
 	db -1
 
 ELIF DEF(_SILVER)
@@ -46,7 +46,7 @@ ELIF DEF(_SILVER)
 	db 15, KAKUNA,     10
 	db 10, EXEGGCUTE,  10
 	db  5, EXEGGCUTE,  10
-	db  5, BEEDRILL,   10
+	db  5, KAKUNA,     10
 	db -1
 ; rare
 	db 50, WEEDLE,     10
@@ -54,7 +54,7 @@ ELIF DEF(_SILVER)
 	db 15, PINECO,     10
 	db 10, EXEGGCUTE,  10
 	db  5, EXEGGCUTE,  10
-	db  5, BEEDRILL,   10
+	db  5, KAKUNA,     10
 	db -1
 ENDC
 

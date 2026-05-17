@@ -174,7 +174,7 @@ CaterpieEvosAttacks:
 	db 0 ; no more level-up moves
 
 MetapodEvosAttacks:
-	db EVOLVE_LEVEL, 10, BUTTERFREE
+	db EVOLVE_LEVEL, 15, BUTTERFREE
 	db 0 ; no more evolutions
 	db 1, HARDEN
 	db 7, HARDEN
@@ -201,7 +201,7 @@ WeedleEvosAttacks:
 	db 0 ; no more level-up moves
 
 KakunaEvosAttacks:
-	db EVOLVE_LEVEL, 10, BEEDRILL
+	db EVOLVE_LEVEL, 15, BEEDRILL
 	db 0 ; no more evolutions
 	db 1, HARDEN
 	db 7, HARDEN
@@ -287,7 +287,7 @@ RaticateEvosAttacks:
 	db 0 ; no more level-up moves
 
 SpearowEvosAttacks:
-	db EVOLVE_LEVEL, 20, FEAROW
+	db EVOLVE_LEVEL, 26, FEAROW
 	db 0 ; no more evolutions
 	db 1, PECK
 	db 1, GROWL
@@ -644,7 +644,7 @@ ParasectEvosAttacks:
 	db 0 ; no more level-up moves
 
 VenonatEvosAttacks:
-	db EVOLVE_LEVEL, 31, VENOMOTH
+	db EVOLVE_LEVEL, 34, VENOMOTH
 	db 0 ; no more evolutions
 	db 1, TACKLE
 	db 1, DISABLE
@@ -1788,10 +1788,11 @@ TaurosEvosAttacks:
 	db 0 ; no more level-up moves
 
 MagikarpEvosAttacks:
-	db EVOLVE_LEVEL, 20, GYARADOS
+	db EVOLVE_LEVEL, 42, GYARADOS
 	db 0 ; no more evolutions
 	db 1, SPLASH
 	db 15, TACKLE
+	db 25, HYDRO_PUMP
 	db 30, FLAIL
 	db 0 ; no more level-up moves
 
@@ -2256,7 +2257,7 @@ FurretEvosAttacks:
 	db 0 ; no more level-up moves
 
 HoothootEvosAttacks:
-	db EVOLVE_LEVEL, 20, NOCTOWL
+	db EVOLVE_LEVEL, 23, NOCTOWL
 	db 0 ; no more evolutions
 	db 1, TACKLE
 	db 1, GROWL
@@ -2357,7 +2358,7 @@ CrobatEvosAttacks:
 	db 40, HAZE
 	db 0 ; no more level-up moves
 ChinchouEvosAttacks:
-	db EVOLVE_LEVEL, 27, LANTURN
+	db EVOLVE_LEVEL, 31, LANTURN
 	db 0 ; no more evolutions
 	db 1, BUBBLE
 	db 1, THUNDER_WAVE
@@ -2441,7 +2442,7 @@ TogeticEvosAttacks:
 	db 0 ; no more level-up moves
 
 NatuEvosAttacks:
-	db EVOLVE_LEVEL, 25, XATU
+	db EVOLVE_LEVEL, 36, XATU
 	db 0 ; no more evolutions
 	db 1, PECK
 	db 1, THUNDER_WAVE
@@ -2478,7 +2479,7 @@ MareepEvosAttacks:
 	db 0 ; no more level-up moves
 
 FlaaffyEvosAttacks:
-	db EVOLVE_LEVEL, 30, AMPHAROS
+	db EVOLVE_LEVEL, 36, AMPHAROS
 	db 0 ; no more evolutions
 	db 1, TACKLE
 	db 1, GROWL
@@ -2522,7 +2523,7 @@ BellossomEvosAttacks:
 	db 0 ; no more level-up moves
 
 MarillEvosAttacks:
-	db EVOLVE_LEVEL, 18, AZUMARILL
+	db EVOLVE_LEVEL, 25, AZUMARILL
 	db 0 ; no more evolutions
 	db 1, TACKLE
 	db 3, DEFENSE_CURL
@@ -3098,7 +3099,7 @@ SkarmoryEvosAttacks:
 	db 0 ; no more level-up moves
 
 HoundourEvosAttacks:
-	db EVOLVE_LEVEL, 24, HOUNDOOM
+	db EVOLVE_LEVEL, 32, HOUNDOOM
 	db 0 ; no more evolutions
 	db 1, LEER
 	db 1, EMBER
