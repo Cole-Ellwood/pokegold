@@ -85,9 +85,14 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
 
     def test_symptom_keyword_matching_does_not_match_inside_words(self) -> None:
         report = triage_request(symptom="Air Balloon Ground immunity")
+        match_ids = {match["id"] for match in report["matches"]}
+        damage_match = next(match for match in report["matches"] if match["id"] == "damage_chain")
 
-        self.assertNotIn("boss_ai", {match["id"] for match in report["matches"]})
-        self.assertEqual(report["matches"][0]["id"], "general")
+        self.assertNotIn("boss_ai", match_ids)
+        self.assertIn("damage_chain", match_ids)
+        self.assertIn("air balloon", damage_match["matched_symptom_keywords"])
+        self.assertIn("ground", damage_match["matched_symptom_keywords"])
+        self.assertIn("immunity", damage_match["matched_symptom_keywords"])
 
     def test_unknown_triage_returns_general_baseline(self) -> None:
         report = triage_request(symptom="unknown title screen issue")

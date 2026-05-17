@@ -78,6 +78,13 @@ metadata, parse warnings, and parse errors. This gives later replay,
 localization, differential, and provenance tools stable inputs without forcing
 Boss-AI-specific or damage-specific schemas onto every ROM surface.
 
+`triage` routes changed files and symptom text to the strongest available
+subsystem debugger. Symptom keywords are tokenized instead of substring-matched,
+so short routing words such as `ai` only match as standalone words while
+battle-mechanics phrases such as `Air Balloon Ground immunity` route to the
+damage/type-matchup tooling. JSON output includes `matched_symptom_keywords`
+when text caused a route.
+
 `gate` turns triage into an ordered workflow. By default it only prints the
 selected commands. With `--execute`, it runs known commands whose arguments are
 fully concrete and skips placeholder commands that need a specific scenario or

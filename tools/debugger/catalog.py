@@ -116,10 +116,21 @@ TRIAGE_RULES = (
             "damage",
             "clobber",
             "type",
+            "type matchup",
+            "type effectiveness",
+            "matchup",
+            "immune",
+            "immunity",
+            "ground",
             "stab",
             "badge",
             "weather",
             "held item",
+            "air balloon",
+            "balloon",
+            "passive",
+            "ability",
+            "item",
             "hp",
         ),
         reason="Damage has the strongest ROM-vs-oracle and register-clobber tooling today.",
@@ -507,13 +518,19 @@ def triage_request(
             any(path.startswith(prefix.lower()) for prefix in rule.path_prefixes)
             for path in normalized_paths
         )
-        symptom_hit = bool(symptom_text) and any(
-            _keyword_matches(keyword, symptom_text) for keyword in rule.symptom_keywords
-        )
+        matched_keywords = _matching_keywords(rule.symptom_keywords, symptom_text) if symptom_text else []
+        symptom_hit = bool(matched_keywords)
         if not path_hit and not symptom_hit:
             continue
         seen.add(rule.id)
-        matches.append(_triage_match(rule, path_hit=path_hit, symptom_hit=symptom_hit))
+        matches.append(
+            _triage_match(
+                rule,
+                path_hit=path_hit,
+                symptom_hit=symptom_hit,
+                matched_symptom_keywords=matched_keywords,
+            )
+        )
 
     if not matches:
         matches.append(
@@ -538,7 +555,7 @@ def triage_request(
         for path in normalized_paths
     ):
         rule = next(item for item in TRIAGE_RULES if item.id == "banking_and_abi")
-        matches.append(_triage_match(rule, path_hit=True, symptom_hit=False))
+        matches.append(_triage_match(rule, path_hit=True, symptom_hit=False, matched_symptom_keywords=[]))
 
     return {
         "schema_version": 1,
@@ -632,18 +649,27 @@ def _keyword_matches(keyword: str, text: str) -> bool:
     )
 
 
+def _matching_keywords(keywords: tuple[str, ...], text: str) -> list[str]:
+    return [
+        keyword
+        for keyword in keywords
+        if _keyword_matches(keyword, text)
+    ]
+
+
 def _triage_match(
     rule: TriageRule,
     *,
     path_hit: bool,
     symptom_hit: bool,
+    matched_symptom_keywords: list[str],
 ) -> dict[str, Any]:
     matched_by = []
     if path_hit:
         matched_by.append("changed_file")
     if symptom_hit:
         matched_by.append("symptom")
-    return {
+    match = {
         "id": rule.id,
         "title": rule.title,
         "matched_by": matched_by,
@@ -651,6 +677,9 @@ def _triage_match(
         "commands": list(rule.commands),
         "gaps": list(rule.gaps),
     }
+    if matched_symptom_keywords:
+        match["matched_symptom_keywords"] = matched_symptom_keywords
+    return match
 
 
 def _unique_command_list(matches: list[dict[str, Any]]) -> list[str]:
