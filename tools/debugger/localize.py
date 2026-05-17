@@ -1,0 +1,900 @@
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Any
+
+from .catalog import ROOT, triage_request
+from .mirrors import build_compare_plan
+from .reporting import load_reports
+from .slicing import build_slice_report
+from .testgen import suggest_tests
+from .workflow import build_gate_plan, command_is_runnable
+
+
+PHASE_TITLES = {
+    "reproduce": "Reproduce the symptom",
+    "observe": "Observe the suspected state",
+    "slice": "Map likely code/data contributors",
+    "compare": "Compare ROM behavior to expectations",
+    "minimize": "Minimize to a counterexample",
+    "verify": "Verify the fix",
+}
+
+
+def build_localization_plan(
+    *,
+    changed_files: tuple[str, ...] = (),
+    symbols: tuple[str, ...] = (),
+    symptom: str = "",
+    reports: tuple[str, ...] = (),
+    symbols_path: str = "pokegold.sym",
+    max_candidates: int = 20,
+    root: Path = ROOT,
+) -> dict[str, Any]:
+    loaded_reports, load_errors = load_reports(reports=reports, root=root)
+    signals = collect_signals(
+        changed_files=changed_files,
+        symbols=symbols,
+        symptom=symptom,
+        loaded_reports=loaded_reports,
+    )
+    candidate_scores = score_candidates(signals)
+    candidate_symbols = top_names(candidate_scores["symbols"], max_candidates)
+    candidate_files = top_names(candidate_scores["files"], max_candidates)
+
+    if candidate_symbols:
+        slice_report = build_slice_report(
+            symbols_path=symbols_path,
+            symbols=tuple(candidate_symbols),
+            source_files=tuple(candidate_files),
+            max_depth=2,
+            max_edges=24,
+            root=root,
+        )
+        signals.extend(signals_from_slice(slice_report))
+        candidate_scores = score_candidates(signals)
+        candidate_symbols = top_names(candidate_scores["symbols"], max_candidates)
+        candidate_files = top_names(candidate_scores["files"], max_candidates)
+    else:
+        slice_report = None
+
+    triage = triage_request(
+        changed_files=tuple(candidate_files or changed_files),
+        symptom=symptom,
+        root=root,
+    )
+    tests = suggest_tests(
+        changed_files=tuple(candidate_files or changed_files),
+        symbols=tuple(candidate_symbols or symbols),
+        symptom=symptom,
+        root=root,
+    )
+    compare = build_compare_plan(
+        changed_files=tuple(candidate_files or changed_files),
+        symbols=tuple(candidate_symbols or symbols),
+        symptom=symptom,
+        root=root,
+    )
+    gate = build_gate_plan(
+        changed_files=tuple(candidate_files or changed_files),
+        symptom=symptom,
+        root=root,
+    )
+
+    candidates = build_candidates(
+        symbol_scores=candidate_scores["symbols"],
+        file_scores=candidate_scores["files"],
+        signals=signals,
+        max_candidates=max_candidates,
+    )
+    phase_steps = build_phase_steps(
+        symbols=tuple(candidate_symbols or symbols),
+        changed_files=tuple(candidate_files or changed_files),
+        reports=reports,
+        triage=triage,
+        tests=tests,
+        compare=compare,
+        gate=gate,
+    )
+    errors = list(load_errors)
+    if slice_report:
+        errors.extend(slice_report.get("errors", []))
+
+    return {
+        "schema_version": 1,
+        "kind": "unified_debugger_localization_plan",
+        "root": str(root),
+        "valid": not errors,
+        "error_count": len(errors),
+        "errors": errors,
+        "changed_files": list(changed_files),
+        "symbols": list(symbols),
+        "symptom": symptom,
+        "input_reports": [item["source"] for item in loaded_reports],
+        "signal_count": len(signals),
+        "signals": signals[:120],
+        "candidate_count": len(candidates),
+        "candidates": candidates,
+        "triage_match_ids": [match["id"] for match in triage["matches"]],
+        "phase_steps": phase_steps,
+        "commands": unique_commands(
+            step["command"]
+            for phase in phase_steps
+            for step in phase["steps"]
+        ),
+        "runnable_commands": unique_commands(
+            step["command"]
+            for phase in phase_steps
+            for step in phase["steps"]
+            if step["runnable"]
+        ),
+        "blocked_commands": unique_commands(
+            step["command"]
+            for phase in phase_steps
+            for step in phase["steps"]
+            if not step["runnable"]
+        ),
+        "known_limits": [
+            "This command plans localization and minimization; it does not prove dynamic causality by itself.",
+            "Treat static slice candidates as suspects until confirmed by watch, replay, trace, taint, or subsystem materialization.",
+        ],
+    }
+
+
+def collect_signals(
+    *,
+    changed_files: tuple[str, ...],
+    symbols: tuple[str, ...],
+    symptom: str,
+    loaded_reports: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    signals: list[dict[str, Any]] = []
+    for path in changed_files:
+        signals.append(signal("explicit_change", file=normalize_path(path), weight=80))
+    for symbol in symbols:
+        signals.append(signal("explicit_symbol", symbol=symbol, weight=80))
+    if symptom:
+        signals.append(signal("symptom", note=symptom, weight=35))
+        signals.extend(signals_from_symptom(symptom))
+    for loaded in loaded_reports:
+        source = loaded["source"]
+        report = loaded["data"]
+        signals.extend(signals_from_report(report, source=source))
+    return merge_duplicate_signals(signals)
+
+
+def signals_from_report(report: dict[str, Any], *, source: str) -> list[dict[str, Any]]:
+    kind = report.get("kind", "")
+    out: list[dict[str, Any]] = []
+    if kind == "unified_debugger_watch_report":
+        for event in dict_items(report.get("events")):
+            out.append(
+                signal(
+                    "watch_hit",
+                    symbol=str(event.get("watch", "")),
+                    routine=str(event.get("pc_label", "")),
+                    note=f"{event.get('old_hex')} -> {event.get('new_hex')} at {event.get('pc_bank_address')}",
+                    source=source,
+                    weight=95,
+                )
+            )
+        for watch in dict_items(report.get("watches")):
+            out.append(
+                signal(
+                    "watch_symbol",
+                    symbol=str(watch.get("name", "")),
+                    source=source,
+                    weight=45,
+                )
+            )
+    elif kind == "unified_debugger_causal_slice":
+        out.extend(signals_from_slice(report, source=source))
+    elif kind == "unified_debugger_provenance_report":
+        for symbol in dict_items(report.get("symbols")):
+            out.append(
+                signal(
+                    "provenance_symbol",
+                    symbol=str(symbol.get("query", "")),
+                    source=source,
+                    weight=45,
+                )
+            )
+            for related in symbol.get("related_files", []):
+                out.append(signal("provenance_file", file=related, source=source, weight=35))
+        for source_file in dict_items(report.get("source_files")):
+            out.append(
+                signal(
+                    "provenance_source",
+                    file=str(source_file.get("path", "")),
+                    source=source,
+                    weight=40,
+                )
+            )
+    elif kind == "unified_debugger_gate_plan":
+        for step in dict_items(report.get("steps")):
+            if step.get("status") == "failed":
+                out.append(
+                    signal(
+                        "gate_failure",
+                        note=str(step.get("command", "")),
+                        source=source,
+                        weight=90,
+                    )
+                )
+    elif kind == "unified_debugger_ranked_findings":
+        for finding in dict_items(report.get("findings")):
+            severity = int(finding.get("severity", 30))
+            out.append(
+                signal(
+                    "ranked_finding",
+                    note=str(finding.get("title", "")),
+                    source=source,
+                    weight=min(100, severity),
+                )
+            )
+    elif kind == "unified_debugger_trace_index":
+        out.extend(signals_from_trace_index(report, source=source))
+    elif kind == "unified_debugger_expectation_report":
+        out.extend(signals_from_expectations(report, source=source))
+    elif kind == "unified_debugger_minimization_plan":
+        out.extend(signals_from_minimization(report, source=source))
+    elif kind in {"unified_debugger_taint_report", "unified_debugger_dynamic_taint_report"}:
+        out.extend(signals_from_taint(report, source=source))
+    elif kind == "unified_debugger_instruction_trace":
+        out.extend(signals_from_instruction_trace(report, source=source))
+    elif kind in {"unified_debugger_compare_plan", "unified_debugger_test_suggestions"}:
+        for match in dict_items(report.get("matches")):
+            weight = 55 if match.get("id") != "uncovered_surface" else 35
+            out.append(
+                signal(
+                    "tool_match",
+                    note=str(match.get("id", "")),
+                    source=source,
+                    weight=weight,
+                )
+            )
+    elif kind == "unified_debugger_content_mirror":
+        out.extend(signals_from_content_mirror(report, source=source))
+    elif kind == "unified_debugger_content_scenarios":
+        out.extend(signals_from_content_scenarios(report, source=source))
+    elif kind == "unified_debugger_ingest_manifest":
+        for artifact in dict_items(report.get("artifacts")):
+            if artifact.get("kind") == "source_change":
+                out.append(
+                    signal(
+                        "ingested_change",
+                        file=str(artifact.get("path", "")),
+                        source=source,
+                        weight=65,
+                    )
+                )
+            for error in artifact.get("errors", []):
+                out.append(signal("artifact_error", note=str(error), source=source, weight=85))
+    return [item for item in out if item.get("symbol") or item.get("file") or item.get("note")]
+
+
+def signals_from_content_mirror(report: dict[str, Any], *, source: str) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for mirror in dict_items(report.get("rom_mirrors")):
+        status = str(mirror.get("status", ""))
+        if status not in {"passed", "failed"}:
+            continue
+        weight = 94 if status == "failed" else 76
+        note = str(mirror.get("title") or mirror.get("id") or "ROM mirror evidence")
+        source_file = str(mirror.get("source_file", ""))
+        if source_file:
+            out.append(signal("content_rom_mirror_file", file=source_file, note=note, source=source, weight=weight))
+        for path in string_items(mirror.get("related_files")):
+            if looks_like_source_path(path):
+                out.append(signal("content_rom_mirror_related_file", file=path, note=note, source=source, weight=max(40, weight - 8)))
+        for symbol_name in string_items(mirror.get("related_symbols")):
+            out.append(signal("content_rom_mirror_symbol", symbol=symbol_name, note=note, source=source, weight=weight))
+    return out
+
+
+def signals_from_content_scenarios(report: dict[str, Any], *, source: str) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for scenario in dict_items(report.get("scenarios")):
+        scenario_id = str(scenario.get("id") or scenario.get("scenario_id") or "content scenario")
+        source_file = str(scenario.get("source_file", ""))
+        if source_file:
+            out.append(signal("content_scenario_file", file=source_file, note=scenario_id, source=source, weight=62))
+        runtime_targets = scenario.get("runtime_targets") if isinstance(scenario.get("runtime_targets"), dict) else {}
+        for symbol_name in string_items(runtime_targets.get("source_symbols")):
+            out.append(signal("content_scenario_source_symbol", symbol=symbol_name, note=scenario_id, source=source, weight=64))
+        for symbol_name in string_items(runtime_targets.get("script_symbols")):
+            out.append(signal("content_scenario_script_symbol", symbol=symbol_name, note=scenario_id, source=source, weight=70))
+        for symbol_name in string_items(runtime_targets.get("trace_symbols")):
+            out.append(signal("content_scenario_trace_symbol", symbol=symbol_name, note=scenario_id, source=source, weight=58))
+        for symbol_name in string_items(runtime_targets.get("watch_symbols")):
+            out.append(signal("content_scenario_watch_symbol", symbol=symbol_name, note=scenario_id, source=source, weight=56))
+        for symbol_name in string_items(scenario.get("related_symbols")):
+            out.append(signal("content_scenario_related_symbol", symbol=symbol_name, note=scenario_id, source=source, weight=52))
+    return out
+
+
+def signals_from_trace_index(report: dict[str, Any], *, source: str) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for attribution in dict_items(report.get("reverse_attributions")):
+        state = str(attribution.get("state", ""))
+        title = str(attribution.get("title", "reverse attribution"))
+        out.append(signal("reverse_attribution_state", symbol=state, note=title, source=source, weight=98))
+        if attribution.get("source_symbol"):
+            out.append(
+                signal(
+                    "reverse_attribution_source",
+                    symbol=str(attribution["source_symbol"]),
+                    note=title,
+                    source=source,
+                    weight=82,
+                )
+            )
+        for contributor in dict_items(attribution.get("contributors"))[:8]:
+            contributor_state = str(contributor.get("state", ""))
+            out.append(
+                signal(
+                    "reverse_attribution_contributor",
+                    symbol=contributor_state,
+                    note=f"{contributor.get('relation', 'contributor')} for {state}",
+                    source=source,
+                    weight=86,
+                )
+            )
+        for symbol_name in string_items(attribution.get("related_symbols")):
+            out.append(signal("reverse_attribution_related_symbol", symbol=symbol_name, source=source, weight=72))
+        for path in string_items(attribution.get("related_files")):
+            out.append(signal("reverse_attribution_related_file", file=path, source=source, weight=70))
+
+    for event in dict_items(report.get("events")):
+        event_type = str(event.get("event_type", "event"))
+        weight = 88 if event_type in {"watch_change", "memory_write", "memory_patch", "score_delta"} else 68
+        note = event_note(event)
+        if event.get("state_symbol"):
+            out.append(
+                signal(
+                    f"trace_{event_type}_state",
+                    symbol=str(event["state_symbol"]),
+                    note=note,
+                    source=source,
+                    weight=weight,
+                )
+            )
+        for key in ("source_symbol", "pc_symbol"):
+            if event.get(key):
+                out.append(
+                    signal(
+                        f"trace_{event_type}_{key}",
+                        symbol=str(event[key]),
+                        note=note,
+                        source=source,
+                        weight=max(45, weight - 14),
+                    )
+                )
+        if event.get("source_file"):
+            out.append(
+                signal(
+                    f"trace_{event_type}_source_file",
+                    file=str(event["source_file"]),
+                    note=note,
+                    source=source,
+                    weight=max(45, weight - 10),
+                )
+            )
+
+    for path in dict_items(report.get("causal_paths")):
+        title = str(path.get("title", "causal path"))
+        for symbol_name in string_items(path.get("related_symbols")):
+            out.append(signal("trace_path_symbol", symbol=symbol_name, note=title, source=source, weight=72))
+        for file_name in string_items(path.get("related_files")):
+            out.append(signal("trace_path_file", file=file_name, note=title, source=source, weight=68))
+        for node in dict_items(path.get("nodes"))[:8]:
+            if node.get("symbol"):
+                out.append(
+                    signal(
+                        "trace_path_node",
+                        symbol=str(node["symbol"]),
+                        note=title,
+                        source=source,
+                        weight=64,
+                    )
+                )
+            if node.get("file"):
+                out.append(
+                    signal(
+                        "trace_path_node_file",
+                        file=str(node["file"]),
+                        note=title,
+                        source=source,
+                        weight=60,
+                    )
+                )
+    return out
+
+
+def signals_from_expectations(report: dict[str, Any], *, source: str) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for result in dict_items(report.get("expectations")):
+        expectation = result.get("expectation") if isinstance(result.get("expectation"), dict) else {}
+        failed = result.get("status") == "failed"
+        weight = 96 if failed else 42
+        note = str(result.get("description") or result.get("id") or "expectation")
+        symbol = str(expectation.get("symbol") or expectation.get("state_symbol") or "")
+        if symbol:
+            out.append(
+                signal(
+                    "failed_expectation_symbol" if failed else "passed_expectation_symbol",
+                    symbol=symbol,
+                    note=note,
+                    source=source,
+                    weight=weight,
+                )
+            )
+        if expectation.get("source_file"):
+            out.append(
+                signal(
+                    "failed_expectation_file" if failed else "passed_expectation_file",
+                    file=str(expectation["source_file"]),
+                    note=note,
+                    source=source,
+                    weight=max(35, weight - 8),
+                )
+            )
+        if expectation.get("event_type"):
+            out.append(
+                signal(
+                    "failed_expectation_event" if failed else "passed_expectation_event",
+                    note=f"{expectation.get('event_type')}: {note}",
+                    source=source,
+                    weight=max(35, weight - 20),
+                )
+            )
+    evidence = report.get("evidence_summary") if isinstance(report.get("evidence_summary"), dict) else {}
+    for symbol_name in string_items(evidence.get("symbols")):
+        out.append(signal("expectation_evidence_symbol", symbol=symbol_name, source=source, weight=54))
+    for path in string_items(evidence.get("source_files")):
+        out.append(signal("expectation_evidence_file", file=path, source=source, weight=50))
+    return out
+
+
+def signals_from_minimization(report: dict[str, Any], *, source: str) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    evidence_minimization = report.get("evidence_minimization")
+    if not isinstance(evidence_minimization, dict):
+        return out
+    if evidence_minimization.get("preserved"):
+        note = (
+            f"evidence minimized {evidence_minimization.get('original_count', 0)}"
+            f" -> {evidence_minimization.get('minimized_count', 0)}"
+        )
+        for symbol_name in string_items(report.get("symbols")):
+            out.append(signal("minimized_trace_symbol", symbol=symbol_name, note=note, source=source, weight=78))
+        if evidence_minimization.get("out_trace"):
+            out.append(signal("minimized_trace_output", note=str(evidence_minimization["out_trace"]), source=source, weight=55))
+    return out
+
+
+def signals_from_taint(report: dict[str, Any], *, source: str) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for target in dict_items(report.get("targets")):
+        symbol_name = str(target.get("symbol", ""))
+        if symbol_name:
+            out.append(signal("taint_target", symbol=symbol_name, source=source, weight=84))
+        for sink in dict_items(target.get("sinks"))[:12]:
+            if sink.get("routine"):
+                out.append(
+                    signal(
+                        "taint_sink_routine",
+                        symbol=str(sink["routine"]),
+                        file=str(sink.get("source_file", "")),
+                        note=f"{sink.get('access', 'write')} {symbol_name}",
+                        source=source,
+                        weight=80,
+                    )
+                )
+        for contributor in dict_items(target.get("contributors"))[:16]:
+            if contributor.get("symbol"):
+                out.append(
+                    signal(
+                        "taint_contributor",
+                        symbol=str(contributor["symbol"]),
+                        file=str(contributor.get("source_file", "")),
+                        note=f"{contributor.get('relation', 'contributes')} -> {symbol_name}",
+                        source=source,
+                        weight=78,
+                    )
+                )
+    for path in dict_items(report.get("paths"))[:16]:
+        for symbol_name in string_items(path.get("related_symbols")):
+            out.append(signal("taint_path_symbol", symbol=symbol_name, source=source, weight=70))
+        for file_name in string_items(path.get("related_files")):
+            out.append(signal("taint_path_file", file=file_name, source=source, weight=68))
+    for attribution in dict_items(report.get("write_attributions"))[:16]:
+        target = str(attribution.get("target", ""))
+        if target:
+            out.append(
+                signal(
+                    "dynamic_write_target",
+                    symbol=target,
+                    note=str(attribution.get("mnemonic", "")),
+                    source=source,
+                    weight=92,
+                )
+            )
+        routine = base_pc_label(str(attribution.get("pc_label", "")))
+        if routine:
+            out.append(
+                signal(
+                    "dynamic_write_routine",
+                    symbol=routine,
+                    note=f"writes {target}",
+                    source=source,
+                    weight=86,
+                )
+            )
+        for symbol_name in string_items(attribution.get("related_symbols")):
+            out.append(signal("dynamic_write_related_symbol", symbol=symbol_name, source=source, weight=72))
+    return out
+
+
+def base_pc_label(label: str) -> str:
+    text = str(label).strip()
+    if not text or text.startswith("$"):
+        return ""
+    if "+" in text:
+        text = text.split("+", 1)[0]
+    return text
+
+
+def signals_from_instruction_trace(report: dict[str, Any], *, source: str) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for function in dict_items(report.get("functions"))[:16]:
+        symbol_name = str(function.get("symbol", ""))
+        if symbol_name:
+            out.append(signal("instruction_trace_function", symbol=symbol_name, source=source, weight=76))
+    for watch in dict_items(report.get("watches"))[:16]:
+        watch_name = str(watch.get("name", ""))
+        if watch_name:
+            out.append(signal("instruction_trace_watch", symbol=watch_name, source=source, weight=82))
+    for record in dict_items(report.get("sample_records"))[:16]:
+        for symbol_name in string_items([record.get("function"), record.get("pc_label")]):
+            out.append(signal("instruction_trace_runtime", symbol=symbol_name, source=source, weight=70))
+    return out
+
+
+def event_note(event: dict[str, Any]) -> str:
+    state = event.get("state_symbol") or event.get("bank_address") or event.get("address") or "state"
+    source = event.get("source_symbol") or event.get("pc_symbol") or event.get("rule_id") or "trace"
+    before = event.get("before", "")
+    after = event.get("after", "")
+    if before or after:
+        return f"{event.get('event_type', 'event')} {state} {before}->{after} from {source}"
+    return f"{event.get('event_type', 'event')} {state} from {source}"
+
+
+def signals_from_slice(report: dict[str, Any], *, source: str = "slice") -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for target in dict_items(report.get("targets")):
+        if not target.get("found"):
+            continue
+        symbol_name = str(target.get("resolved") or target.get("query") or "")
+        out.append(signal("slice_target", symbol=symbol_name, source=source, weight=60))
+        definition = target.get("definition") or {}
+        if definition.get("path"):
+            out.append(
+                signal(
+                    "slice_definition",
+                    symbol=symbol_name,
+                    file=str(definition["path"]),
+                    source=source,
+                    weight=55,
+                )
+            )
+        for edge in target.get("incoming", [])[:24]:
+            out.append(signal_from_edge(edge, "slice_incoming", source=source, weight=50))
+        for edge in target.get("outgoing", [])[:24]:
+            out.append(signal_from_edge(edge, "slice_outgoing", source=source, weight=35))
+        for path in target.get("impact_files", []):
+            out.append(signal("slice_impact_file", file=path, source=source, weight=30))
+    for source_file in dict_items(report.get("source_files")):
+        if source_file.get("path"):
+            out.append(
+                signal(
+                    "slice_source_file",
+                    file=str(source_file["path"]),
+                    source=source,
+                    weight=40,
+                )
+            )
+    return out
+
+
+def signal_from_edge(edge: dict[str, Any], signal_type: str, *, source: str, weight: int) -> dict[str, Any]:
+    return signal(
+        signal_type,
+        symbol=str(edge.get("target", "")),
+        routine=str(edge.get("source", "")),
+        file=str(edge.get("path", "")),
+        note=f"{edge.get('access', 'reference')} {edge.get('source')} -> {edge.get('target')}:{edge.get('line')}",
+        source=source,
+        weight=weight,
+    )
+
+
+def signals_from_symptom(symptom: str) -> list[dict[str, Any]]:
+    lowered = symptom.lower()
+    out: list[dict[str, Any]] = []
+    keyword_map = {
+        "damage": ("wCurDamage", 55),
+        "hp": ("wCurDamage", 45),
+        "boss": ("BossAI_SelectMove", 45),
+        "ai": ("BossAI_SelectMove", 45),
+        "score": ("wEnemyAIMoveScores", 45),
+        "switch": ("BossAI_SwitchOrTryItem", 45),
+        "bank": ("hROMBank", 45),
+        "farcall": ("FarCall", 45),
+    }
+    for keyword, (symbol_name, weight) in keyword_map.items():
+        if keyword in lowered:
+            out.append(signal("symptom_keyword", symbol=symbol_name, note=keyword, weight=weight))
+    return out
+
+
+def score_candidates(signals: list[dict[str, Any]]) -> dict[str, dict[str, int]]:
+    symbol_scores: dict[str, int] = {}
+    file_scores: dict[str, int] = {}
+    for item in signals:
+        weight = int(item.get("weight", 0))
+        symbol_name = item.get("symbol")
+        routine = item.get("routine")
+        file_name = item.get("file")
+        if symbol_name:
+            symbol_scores[str(symbol_name)] = symbol_scores.get(str(symbol_name), 0) + weight
+        if routine and not routine.startswith("$"):
+            symbol_scores[str(routine)] = symbol_scores.get(str(routine), 0) + max(15, weight // 2)
+        if file_name:
+            normalized = normalize_path(str(file_name))
+            file_scores[normalized] = file_scores.get(normalized, 0) + weight
+    return {"symbols": symbol_scores, "files": file_scores}
+
+
+def build_candidates(
+    *,
+    symbol_scores: dict[str, int],
+    file_scores: dict[str, int],
+    signals: list[dict[str, Any]],
+    max_candidates: int,
+) -> list[dict[str, Any]]:
+    candidates: list[dict[str, Any]] = []
+    for symbol_name, score in sorted(symbol_scores.items(), key=lambda item: (-item[1], item[0])):
+        candidates.append(
+            {
+                "type": "symbol",
+                "id": symbol_name,
+                "score": score,
+                "evidence": evidence_for(signals, symbol=symbol_name),
+            }
+        )
+    for file_name, score in sorted(file_scores.items(), key=lambda item: (-item[1], item[0])):
+        candidates.append(
+            {
+                "type": "source_file",
+                "id": file_name,
+                "score": score,
+                "evidence": evidence_for(signals, file=file_name),
+            }
+        )
+    return sorted(candidates, key=lambda item: (-int(item["score"]), item["type"], item["id"]))[:max_candidates]
+
+
+def build_phase_steps(
+    *,
+    symbols: tuple[str, ...],
+    changed_files: tuple[str, ...],
+    reports: tuple[str, ...],
+    triage: dict[str, Any],
+    tests: dict[str, Any],
+    compare: dict[str, Any],
+    gate: dict[str, Any],
+) -> list[dict[str, Any]]:
+    steps_by_phase: dict[str, list[dict[str, Any]]] = {
+        phase: [] for phase in PHASE_TITLES
+    }
+
+    if reports:
+        report_args = " ".join(f"--report {path}" for path in reports)
+        add_step(
+            steps_by_phase,
+            "reproduce",
+            f"python -m tools.debugger rank {report_args}",
+            "Normalize existing report failures before rerunning expensive tools.",
+        )
+    if symbols:
+        for symbol_name in symbols[:5]:
+            if is_watchable_symbol(symbol_name):
+                add_step(
+                    steps_by_phase,
+                    "observe",
+                    f"python -m tools.debugger watch --watch-symbol {symbol_name} --execute --frames 300 --json-out .local\\tmp\\debugger_watch_{safe_name(symbol_name)}.json",
+                    f"Replay and watch {symbol_name} for the first dynamic state change.",
+                )
+            add_step(
+                steps_by_phase,
+                "slice",
+                f"python -m tools.debugger slice --symbol {symbol_name} --json-out .local\\tmp\\debugger_slice_{safe_name(symbol_name)}.json",
+                f"Map static contributors for {symbol_name}.",
+            )
+            add_step(
+                steps_by_phase,
+                "slice",
+                f"python -m tools.debugger provenance --symbol {symbol_name}",
+                f"Find definitions, references, and subsystem routes for {symbol_name}.",
+            )
+    for path in changed_files[:5]:
+        add_step(
+            steps_by_phase,
+            "slice",
+            f"python -m tools.debugger slice --source-file {path}",
+            f"Map callers and touched labels around {path}.",
+        )
+    for command in triage.get("commands", []):
+        add_step(steps_by_phase, "reproduce", command, "Run the focused triage gate.")
+    for command in compare.get("commands", []):
+        add_step(steps_by_phase, "compare", command, "Compare against the best available mirror/oracle.")
+    for command in compare.get("materialization_commands", []):
+        add_step(steps_by_phase, "compare", command, "Materialize or replay before treating mirror output as ROM behavior.")
+    for command in tests.get("commands", []):
+        add_step(steps_by_phase, "minimize", command, "Generate focused scenarios around the suspected surface.")
+    for command in tests.get("counterexample_commands", []):
+        add_step(steps_by_phase, "minimize", command, "Reduce a failure to a concrete counterexample.")
+    for step in gate.get("steps", []):
+        add_step(steps_by_phase, "verify", step["command"], "Keep the final verification gate green.")
+
+    return [
+        {
+            "phase": phase,
+            "title": PHASE_TITLES[phase],
+            "steps": unique_steps(steps),
+        }
+        for phase, steps in steps_by_phase.items()
+        if steps
+    ]
+
+
+def add_step(
+    steps_by_phase: dict[str, list[dict[str, Any]]],
+    phase: str,
+    command: str,
+    reason: str,
+) -> None:
+    if not command:
+        return
+    steps_by_phase[phase].append(
+        {
+            "command": command,
+            "reason": reason,
+            "runnable": command_is_runnable(command),
+        }
+    )
+
+
+def signal(
+    signal_type: str,
+    *,
+    symbol: str = "",
+    routine: str = "",
+    file: str = "",
+    note: str = "",
+    source: str = "input",
+    weight: int = 0,
+) -> dict[str, Any]:
+    return {
+        "type": signal_type,
+        "symbol": symbol,
+        "routine": routine,
+        "file": normalize_path(file) if file else "",
+        "note": note,
+        "source": source,
+        "weight": int(weight),
+    }
+
+
+def merge_duplicate_signals(signals: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    merged: dict[tuple[str, str, str, str, str], dict[str, Any]] = {}
+    for item in signals:
+        key = (
+            str(item.get("type", "")),
+            str(item.get("symbol", "")),
+            str(item.get("routine", "")),
+            str(item.get("file", "")),
+            str(item.get("note", "")),
+        )
+        if key not in merged:
+            merged[key] = dict(item)
+            continue
+        merged[key]["weight"] = max(int(merged[key]["weight"]), int(item.get("weight", 0)))
+    return sorted(merged.values(), key=lambda item: (-int(item["weight"]), item["type"]))
+
+
+def evidence_for(
+    signals: list[dict[str, Any]],
+    *,
+    symbol: str = "",
+    file: str = "",
+) -> list[str]:
+    evidence: list[str] = []
+    for item in signals:
+        if symbol and symbol not in {item.get("symbol"), item.get("routine")}:
+            continue
+        if file and normalize_path(str(item.get("file", ""))) != file:
+            continue
+        note = item.get("note") or item.get("source") or item.get("type")
+        evidence.append(f"{item['type']}: {note}")
+    return unique_commands(evidence)[:6]
+
+
+def unique_steps(steps: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for step in steps:
+        command = step["command"]
+        if command in seen:
+            continue
+        seen.add(command)
+        out.append(step)
+    return out
+
+
+def unique_commands(commands: Any) -> list[str]:
+    out: list[str] = []
+    seen: set[str] = set()
+    for command in commands:
+        if not command or command in seen:
+            continue
+        seen.add(command)
+        out.append(str(command))
+    return out
+
+
+def top_names(scores: dict[str, int], limit: int) -> list[str]:
+    return [
+        name
+        for name, _score in sorted(scores.items(), key=lambda item: (-item[1], item[0]))[:limit]
+        if name
+    ]
+
+
+def normalize_path(path: str) -> str:
+    return path.replace("\\", "/").strip()
+
+
+def looks_like_source_path(path: str) -> bool:
+    normalized = normalize_path(path)
+    return bool(normalized and "/" in normalized and Path(normalized).suffix.lower() == ".asm")
+
+
+def safe_name(value: str) -> str:
+    return "".join(char if char.isalnum() or char in {"_", "-"} else "_" for char in value)
+
+
+def is_watchable_symbol(symbol_name: str) -> bool:
+    return symbol_name.startswith(("w", "h", "s", "v", "r"))
+
+
+def dict_items(value: Any) -> list[dict[str, Any]]:
+    if not isinstance(value, list | tuple):
+        return []
+    return [item for item in value if isinstance(item, dict)]
+
+
+def string_items(value: Any) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, str):
+        return [value] if value else []
+    if isinstance(value, list | tuple | set):
+        return [
+            nested
+            for item in value
+            for nested in string_items(item)
+        ]
+    return [str(value)] if value else []
