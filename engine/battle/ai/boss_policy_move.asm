@@ -472,7 +472,7 @@ ENDC
 	cp EFFECT_TOXIC
 	jp z, .check_poison
 	cp EFFECT_SLEEP
-	jp z, .check_primary_status
+	jp z, .check_sleep
 	and a
 	ret
 
@@ -689,6 +689,16 @@ ENDC
 
 .check_primary_status
 	call .PrimaryStatusBlocked
+	ret
+
+.check_sleep
+	call .PrimaryStatusBlocked
+	ret c
+; This scorer only evaluates enemy moves, so enemy sleep clause state is the
+; side that blocks another sleep attempt into the player's party.
+	ld a, [wEnemySleepClauseSlot]
+	and a
+	jp nz, .status_fail
 	ret
 
 .check_paralyze

@@ -157,10 +157,10 @@ FalknerZephyrBadgeText:
 	cont "power of #MON."
 
 	para "It also enables"
-	line "your LANTERN to"
+	line "FLASH outside"
 
-	para "use FLASH in"
-	line "dark places."
+	para "battle once you"
+	line "have a LANTERN."
 
 	para "Take this TM too."
 	done

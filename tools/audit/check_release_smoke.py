@@ -1137,7 +1137,7 @@ def main() -> int:
     for rel_path, text in (
         (
             "maps/VioletGym.asm",
-            '\tpara "It also enables"\n\tline "your LANTERN to"\n\n\tpara "use FLASH in"\n\tline "dark places."',
+            '\tpara "It also enables"\n\tline "FLASH outside"\n\n\tpara "battle once you"\n\tline "have a LANTERN."',
         ),
         (
             "maps/AzaleaGym.asm",
