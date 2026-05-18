@@ -3131,3 +3131,44 @@ Validation after patch:
 Remaining priority from Pro:
 
 - This removes another mirror proof-promotion path, but it does not implement emulator-backed checkpoint replay, full reverse execution, arbitrary event/runtime generation, full behavioral mirrors, or broader SM83 adapter unification.
+
+## Implementation Note - Real Runtime Reports Feed Content-State Mirror Observations
+
+Date: 2026-05-18.
+
+Context:
+
+- Content-state behavioral mirrors could already pass from synthetic top-level `runtime_observations`.
+- Real runtime report shapes, especially `unified_debugger_watch_report` and nested replay `watch_report`, were not converted into the same observation stream.
+- That meant an executed content-state route plus an actual watch/replay-watch hit on every expected sink could still stop at `state_materialized` instead of becoming observed mirror evidence.
+
+Implemented fix:
+
+- `tools/debugger/mirrors.py`
+  - derives runtime observations from strong runtime evidence records emitted by loaded reports.
+  - includes watch, replay-watch, instruction trace, effect trace, strong dynamic taint, visual snapshot, and audio snapshot evidence.
+  - keeps content-state metadata out of this derived observation stream, so state materialization alone still cannot pass a behavioral mirror.
+  - normalizes both `scenario_id` and `scenario_ids`, including replay `input_scenario_ids` and replay target scenario IDs, before applying observations to content-state mirror scenarios.
+  - preserves address observations alongside symbol observations so address-sink routes can be covered by real watch/replay evidence.
+
+Regression strengthened:
+
+- `test_compare_harvests_runtime_observations_from_watch_report_events`
+  - verifies a content-state mirror with expected `wMapGroup`/`wMapNumber` sinks passes when a loaded watch report has real watch-change events for both sinks.
+- `test_compare_harvests_runtime_observations_from_replay_watch_report`
+  - verifies the same promotion works through a replay report's nested `watch_report`.
+- Existing tests still verify content-state-only reports do not pass mirrors without runtime observations.
+
+Validation after patch:
+
+- Focused new watch/replay-watch observation regressions: 2 passed.
+- Full event-runtime materialization tests: 17 passed.
+- Adjacent content-state, runtime expectation, and output-mirror regressions: 6 passed.
+- Full `test_catalog`: 437 passed.
+- Full debugger suite: 454 passed.
+- `python -m tools.debugger audit`: `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- `py_compile` and `git diff --check` passed for touched debugger files.
+
+Remaining priority from Pro:
+
+- This connects existing real runtime reports to content-state behavioral mirror gating, but it does not implement emulator-backed checkpoint replay, full reverse execution, arbitrary event/runtime generation, full behavioral mirrors, or broader SM83 adapter unification.

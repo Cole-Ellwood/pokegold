@@ -438,6 +438,59 @@ class EventRuntimeMaterializationTests(unittest.TestCase):
         self.assertEqual(match["actual_proof_status"], "observed")
         self.assertEqual(match["observed_sinks"], ["wMapGroup", "wMapNumber"])
 
+    def test_compare_harvests_runtime_observations_from_watch_report_events(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write_content_state_report(
+                root,
+                executed=True,
+                materialization_status="ready",
+                actual_proof_status="state_materialized",
+            )
+            write_watch_report(root)
+
+            report = build_compare_plan(reports=("content_state.json", "watch.json"), root=root)
+
+        match = next(item for item in report["matches"] if item["id"] == "content_state_behavioral_mirror")
+
+        self.assertEqual(match["mirror_status"], "passed")
+        self.assertEqual(match["actual_proof_status"], "observed")
+        self.assertIn("wMapGroup", match["observed_sinks"])
+        self.assertIn("wMapNumber", match["observed_sinks"])
+        self.assertEqual(match["runtime_evidence_gaps"], [])
+
+    def test_compare_harvests_runtime_observations_from_replay_watch_report(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write_content_state_report(
+                root,
+                executed=True,
+                materialization_status="ready",
+                actual_proof_status="state_materialized",
+            )
+            watch_report = watch_report_payload()
+            (root / "replay.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_replay_plan",
+                        "valid": True,
+                        "executed_watch": True,
+                        "input_scenario_ids": ["content_scenario_1_0000"],
+                        "watch_report": watch_report,
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            report = build_compare_plan(reports=("content_state.json", "replay.json"), root=root)
+
+        match = next(item for item in report["matches"] if item["id"] == "content_state_behavioral_mirror")
+
+        self.assertEqual(match["mirror_status"], "passed")
+        self.assertEqual(match["actual_proof_status"], "observed")
+        self.assertIn("wMapGroup", match["observed_sinks"])
+        self.assertIn("wMapNumber", match["observed_sinks"])
+
 
 def write_map_fixture(root: Path) -> None:
     (root / "data" / "maps").mkdir(parents=True)
@@ -546,6 +599,39 @@ def write_content_state_report(
         ),
         encoding="utf-8",
     )
+
+
+def write_watch_report(root: Path) -> None:
+    (root / "watch.json").write_text(json.dumps(watch_report_payload()), encoding="utf-8")
+
+
+def watch_report_payload() -> dict[str, Any]:
+    return {
+        "kind": "unified_debugger_watch_report",
+        "valid": True,
+        "executed": True,
+        "watch_symbols": ["wMapGroup", "wMapNumber"],
+        "events": [
+            {
+                "frame": 1,
+                "watch": "wMapGroup",
+                "address": 0xDA00,
+                "bank": 1,
+                "bank_address": "01:DA00",
+                "old_hex": "00",
+                "new_hex": "18",
+            },
+            {
+                "frame": 1,
+                "watch": "wMapNumber",
+                "address": 0xDA01,
+                "bank": 1,
+                "bank_address": "01:DA01",
+                "old_hex": "00",
+                "new_hex": "04",
+            },
+        ],
+    }
 
 
 if __name__ == "__main__":

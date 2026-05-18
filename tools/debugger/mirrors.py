@@ -554,10 +554,37 @@ def collect_runtime_observations(
             if loaded.get("source") and not observation.get("source"):
                 observation["source"] = str(loaded.get("source", ""))
             observations.append(observation)
+        observations.extend(runtime_observations_from_report(loaded))
+    return observations
+
+
+def runtime_observations_from_report(loaded: dict[str, Any]) -> list[dict[str, Any]]:
+    observations = []
+    scenario_ids = report_scenario_ids(loaded.get("data") if isinstance(loaded.get("data"), dict) else {})
+    for evidence in runtime_mirror_evidence(loaded):
+        if not output_runtime_evidence_is_strong(evidence):
+            continue
+        observation = normalize_runtime_observation(
+            {
+                "source": evidence.get("source", loaded.get("source", "")),
+                "runtime_kind": evidence.get("kind", ""),
+                "proof_status": evidence.get("proof_status", ""),
+                "scenario_ids": scenario_ids,
+                "symbols": evidence.get("symbols", []),
+                "addresses": evidence.get("addresses", []),
+            }
+        )
+        observations.append(observation)
     return observations
 
 
 def normalize_runtime_observation(item: dict[str, Any]) -> dict[str, Any]:
+    scenario_ids = unique_list(
+        [
+            *scalar_string_items(item.get("scenario_id")),
+            *scalar_string_items(item.get("scenario_ids")),
+        ]
+    )
     observed_sinks = unique_list(
         [
             *scalar_string_items(item.get("observed_sinks")),
@@ -568,7 +595,8 @@ def normalize_runtime_observation(item: dict[str, Any]) -> dict[str, Any]:
     )
     return {
         **item,
-        "scenario_id": str(item.get("scenario_id", "")),
+        "scenario_id": scenario_ids[0] if len(scenario_ids) == 1 else str(item.get("scenario_id", "")),
+        "scenario_ids": scenario_ids,
         "observed_sinks": observed_sinks,
     }
 
@@ -582,8 +610,36 @@ def observed_sinks_for_scenarios(
     return unique_list(
         sink
         for observation in runtime_observations
-        if not observation.get("scenario_id") or str(observation.get("scenario_id", "")) in scenario_id_set
+        if runtime_observation_applies_to_scenarios(observation, scenario_id_set=scenario_id_set)
         for sink in scalar_string_items(observation.get("observed_sinks"))
+    )
+
+
+def runtime_observation_applies_to_scenarios(
+    observation: dict[str, Any],
+    *,
+    scenario_id_set: set[str],
+) -> bool:
+    if not scenario_id_set:
+        return True
+    observation_ids = set(scalar_string_items(observation.get("scenario_ids")))
+    if not observation_ids:
+        scenario_id = str(observation.get("scenario_id", ""))
+        if scenario_id:
+            observation_ids.add(scenario_id)
+    return not observation_ids or bool(observation_ids.intersection(scenario_id_set))
+
+
+def report_scenario_ids(data: dict[str, Any]) -> list[str]:
+    return unique_list(
+        [
+            *scalar_string_items(data.get("scenario_id")),
+            *scalar_string_items(data.get("scenario_ids")),
+            *scalar_string_items(data.get("input_scenario_ids")),
+            *scalar_string_items(
+                (data.get("replay_targets") if isinstance(data.get("replay_targets"), dict) else {}).get("scenario_ids")
+            ),
+        ]
     )
 
 
