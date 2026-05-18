@@ -19,12 +19,42 @@ from .content_mirror import (
     unique_list,
 )
 from .provenance import display_path, resolve_path
-from .workflow import command_is_runnable
+from .workflow import command_address_arg, command_is_runnable
 
 
 EVENT_MACROS = {"warp_event", "coord_event", "bg_event", "object_event"}
 CHANNEL_COUNT_RE = re.compile(r"^channel_count\s+(?P<count>[$0-9A-Fa-fx]+)\b")
 CHANNEL_RE = re.compile(r"^channel\s+(?P<channel>[$0-9A-Fa-fx]+)\s*,\s*(?P<label>[A-Za-z_.$][A-Za-z0-9_.$]*)")
+COORD_RE = re.compile(r"\b(?P<macro>hlcoord|decoord)\s+(?P<x>[^,\s]+)\s*,\s*(?P<y>[^,\s]+)(?:\s*,\s*(?P<target>[A-Za-z_.$][A-Za-z0-9_.$]*))?")
+AUDIO_DATA_FILES = {"cries.asm", "drumkits.asm", "sfx.asm"}
+AUDIO_COMMAND_TOKENS = {
+    "duty_cycle",
+    "duty_cycle_pattern",
+    "drum_note",
+    "drum_speed",
+    "intensity",
+    "new_noise",
+    "noise_note",
+    "note",
+    "note_type",
+    "octave",
+    "pitch_offset",
+    "pitch_slide",
+    "rest",
+    "sound_call",
+    "sound_jump",
+    "sound_loop",
+    "sound_ret",
+    "stereo_panning",
+    "tempo",
+    "tempo_relative",
+    "toggle_noise",
+    "toggle_perfect_pitch",
+    "transpose",
+    "vibrato",
+    "volume",
+    "volume_envelope",
+}
 MAP_STATE_WATCH_SYMBOLS = ("wMapGroup", "wMapNumber", "wXCoord", "wYCoord")
 MOVEMENT_STATE_WATCH_SYMBOLS = (
     "wMovementObject",
@@ -32,6 +62,13 @@ MOVEMENT_STATE_WATCH_SYMBOLS = (
     "wMovementDataAddress",
     "wMovementPointer",
     "wScriptMode",
+)
+SCRIPT_STATE_WATCH_SYMBOLS = (
+    "wScriptBank",
+    "wScriptPos",
+    "wScriptRunning",
+    "wScriptMode",
+    "wScriptVar",
 )
 AUDIO_STATE_WATCH_SYMBOLS = (
     "wMusicID",
@@ -41,6 +78,29 @@ AUDIO_STATE_WATCH_SYMBOLS = (
     "wChannel3Flags1",
     "wChannel4Flags1",
 )
+AUDIO_HARDWARE_OUTPUTS = (
+    ("rAUD1SWEEP", "$FF10"),
+    ("rAUD1LEN", "$FF11"),
+    ("rAUD1ENV", "$FF12"),
+    ("rAUD1LOW", "$FF13"),
+    ("rAUD1HIGH", "$FF14"),
+    ("rAUD2LEN", "$FF16"),
+    ("rAUD2ENV", "$FF17"),
+    ("rAUD2LOW", "$FF18"),
+    ("rAUD2HIGH", "$FF19"),
+    ("rAUD3ENA", "$FF1A"),
+    ("rAUD3LEN", "$FF1B"),
+    ("rAUD3LEVEL", "$FF1C"),
+    ("rAUD3LOW", "$FF1D"),
+    ("rAUD3HIGH", "$FF1E"),
+    ("rAUD4LEN", "$FF20"),
+    ("rAUD4ENV", "$FF21"),
+    ("rAUD4POLY", "$FF22"),
+    ("rAUD4GO", "$FF23"),
+    ("rAUDVOL", "$FF24"),
+    ("rAUDTERM", "$FF25"),
+    ("rAUDENA", "$FF26"),
+)
 ASSET_REQUEST_WATCH_SYMBOLS = (
     "wRequested2bppSource",
     "wRequested2bppDest",
@@ -48,6 +108,22 @@ ASSET_REQUEST_WATCH_SYMBOLS = (
     "wRequested1bppSource",
     "wRequested1bppDest",
     "wRequested1bppSize",
+)
+UI_OUTPUT_WATCH_SYMBOLS = (
+    "wTilemap",
+    "wAttrmap",
+    "hBGMapMode",
+    "hBGMapAddress",
+)
+UI_TILEMAP_HELPERS = (
+    "PlaceString",
+    "CopyBytes",
+    "ByteFill",
+    "LoadTilemapToTempTilemap",
+    "LoadStandardFont",
+    "LoadFontsExtra",
+    "WaitBGMap",
+    "ApplyTilemap",
 )
 SCENARIO_TRACE_HELPERS = {
     "map_warp": ("WarpCheck", "EnterMapWarp", "ReadMapEvents"),
@@ -58,7 +134,85 @@ SCENARIO_TRACE_HELPERS = {
     "text_block": ("PrintText", "PrintTextboxText", "PlaceString"),
     "movement_data": ("ApplyMovement", "GetMovementData", "HandleMovementData", "WaitScriptMovement"),
     "audio_channel_block": ("PlayMusic",),
+    "audio_command_stream": ("_PlayMusic", "ParseMusic", "ParseMusicCommand"),
     "asset_materialization": ("Request2bpp", "Get1bpp", "Decompress"),
+    "ui_tilemap_update": UI_TILEMAP_HELPERS,
+}
+PROOF_STATUS_PLANNED_ONLY = "planned_only"
+PROOF_STATUS_READY_TO_RUN = "ready_to_run"
+PROOF_STATUS_STATE_MATERIALIZED = "state_materialized"
+PROOF_STATUS_EXECUTED = "executed"
+PROOF_STATUS_OBSERVED = "observed"
+PROOF_STATUS_PROGRESSION = (
+    PROOF_STATUS_PLANNED_ONLY,
+    PROOF_STATUS_READY_TO_RUN,
+    PROOF_STATUS_STATE_MATERIALIZED,
+    PROOF_STATUS_EXECUTED,
+    PROOF_STATUS_OBSERVED,
+)
+EVENT_RUNTIME_ROUTE_KIND = "event_runtime_materialization"
+EVENT_RUNTIME_ROUTE_KEY = "event_runtime_materialization"
+EVENT_RUNTIME_ROUTE_LEGACY_KEY = "event_runtime_materialization_route"
+RUNTIME_ROUTE_PROFILES = {
+    "map_position": {
+        "runtime_route": "overworld_event_engine",
+        "expected_proof_status": "runtime_observed",
+        "required_inputs": ("rom", "symbols", "base_save_state", "scenario_manifest"),
+        "expected_proof_commands": (
+            "python -m tools.debugger content-state --scenario <scenario_manifest> --scenario-id <scenario_id> --execute",
+            "python -m tools.debugger replay --report <content_state_report> --scenario-id <scenario_id> --execute-watch",
+            "python -m tools.debugger watch --save-state <patched-state> --execute",
+        ),
+    },
+    "script_entry": {
+        "runtime_route": "script_engine",
+        "expected_proof_status": "instruction_observed",
+        "required_inputs": ("rom", "symbols", "base_save_state", "scenario_manifest"),
+        "evidence_kinds": ("instruction_trace", "watch"),
+        "expected_proof_commands": (
+            "python -m tools.debugger content-state --scenario <scenario_manifest> --scenario-id <scenario_id> --execute",
+            "python -m tools.debugger trace-instructions --report <content_state_report> --scenario-id <scenario_id> --symbol RunScriptCommand --execute --require-hit",
+        ),
+    },
+    "movement_entry": {
+        "runtime_route": "movement_engine",
+        "expected_proof_status": "instruction_observed",
+        "required_inputs": ("rom", "symbols", "base_save_state", "scenario_manifest"),
+        "evidence_kinds": ("instruction_trace", "watch"),
+        "expected_proof_commands": (
+            "python -m tools.debugger content-state --scenario <scenario_manifest> --scenario-id <scenario_id> --execute",
+            "python -m tools.debugger trace-instructions --report <content_state_report> --scenario-id <scenario_id> --symbol ApplyMovement --execute --require-hit",
+        ),
+    },
+    "audio_engine_entry": {
+        "runtime_route": "audio_engine",
+        "expected_proof_status": "runtime_observed",
+        "required_inputs": ("rom", "symbols", "runtime_save_state", "scenario_manifest"),
+        "expected_proof_commands": (
+            "python -m tools.debugger trace-instructions --scenario <scenario_manifest> --scenario-id <scenario_id> --symbol PlayMusic --execute --require-hit",
+            "python -m tools.debugger audio-snapshot --save-state <runtime-state>",
+            "python -m tools.debugger dynamic-taint --report <audio_trace_report>",
+        ),
+    },
+    "asset_loader_entry": {
+        "runtime_route": "asset_loader",
+        "expected_proof_status": "runtime_observed",
+        "required_inputs": ("rom", "symbols", "runtime_save_state", "scenario_manifest"),
+        "expected_proof_commands": (
+            "python -m tools.debugger trace-instructions --scenario <scenario_manifest> --scenario-id <scenario_id> --symbol Request2bpp --execute --require-hit",
+            "python -m tools.debugger dynamic-taint --report <asset_trace_report>",
+        ),
+    },
+    "ui_output_sink": {
+        "runtime_route": "ui_tilemap_engine",
+        "expected_proof_status": "runtime_observed",
+        "required_inputs": ("rom", "symbols", "runtime_save_state", "scenario_manifest"),
+        "expected_proof_commands": (
+            "python -m tools.debugger trace-instructions --scenario <scenario_manifest> --scenario-id <scenario_id> --symbol PlaceString --execute --require-hit",
+            "python -m tools.debugger visual-snapshot --save-state <runtime-state>",
+            "python -m tools.debugger dynamic-taint --report <ui_trace_report>",
+        ),
+    },
 }
 
 
@@ -223,35 +377,53 @@ def records_from_source(text: str, *, source_file: str, seed: int, start_index: 
                     expected=[f"incbin_asset={asset_path}"],
                 )
             )
-    for block in parse_script_blocks(lines):
-        commands = [
-            str(command.get("command", ""))
-            for command in dict_items(block.get("commands"))
-            if command.get("command")
-        ]
-        label = str(block.get("label", ""))
-        if not label or not commands:
-            continue
-        records.append(
-            scenario_record(
-                scenario_type="script_command_stream",
+    records.extend(
+        ui_tilemap_records(
+            lines,
+            source_file=source_file,
+            seed=seed,
+            start_index=start_index + len(records),
+        )
+    )
+    if is_audio_data_source(source_file):
+        records.extend(
+            audio_command_stream_records(
+                lines,
                 source_file=source_file,
-                label=label,
-                line=int(block.get("line", 0)),
                 seed=seed,
-                case_index=start_index + len(records),
-                trigger={
-                    "script": label,
-                    "command_count": len(commands),
-                    "commands": commands[:16],
-                },
-                expected=[
-                    f"script={label}",
-                    f"command_count={len(commands)}",
-                    *[f"script_command={name}" for name in commands[:6]],
-                ],
+                start_index=start_index + len(records),
             )
         )
+    if should_parse_script_blocks(source_file):
+        for block in parse_script_blocks(lines):
+            commands = [
+                str(command.get("command", ""))
+                for command in dict_items(block.get("commands"))
+                if command.get("command")
+            ]
+            label = str(block.get("label", ""))
+            if not label or not commands:
+                continue
+            records.append(
+                scenario_record(
+                    scenario_type="script_command_stream",
+                    source_file=source_file,
+                    label=label,
+                    line=int(block.get("line", 0)),
+                    seed=seed,
+                    case_index=start_index + len(records),
+                    trigger={
+                        "script": label,
+                        "command_count": len(commands),
+                        "commands": commands[:16],
+                    },
+                    expected=[
+                        f"script={label}",
+                        f"command_count={len(commands)}",
+                        *[f"script_command={name}" for name in commands[:6]],
+                    ],
+                )
+            )
     for block in parse_text_blocks(lines):
         commands = [
             str(command.get("command", ""))
@@ -311,6 +483,67 @@ def records_from_source(text: str, *, source_file: str, seed: int, start_index: 
             )
         )
     return records
+
+
+def should_parse_script_blocks(source_file: str) -> bool:
+    parts = [part for part in source_file.replace("\\", "/").lower().split("/") if part]
+    return "audio" not in parts
+
+
+def is_audio_data_source(source_file: str) -> bool:
+    parts = [part for part in source_file.replace("\\", "/").lower().split("/") if part]
+    if len(parts) >= 3 and parts[-3] == "audio" and parts[-2] == "music":
+        return True
+    return len(parts) >= 2 and parts[-2] == "audio" and parts[-1] in AUDIO_DATA_FILES
+
+
+def audio_command_stream_records(
+    lines: list[str],
+    *,
+    source_file: str,
+    seed: int,
+    start_index: int,
+) -> list[dict[str, Any]]:
+    records: list[dict[str, Any]] = []
+    for block in parse_script_blocks(lines):
+        commands = [
+            str(command.get("command", ""))
+            for command in dict_items(block.get("commands"))
+            if command.get("command")
+        ]
+        label = str(block.get("label", ""))
+        if not label or not commands:
+            continue
+        if not is_audio_command_stream(commands):
+            continue
+        records.append(
+            scenario_record(
+                scenario_type="audio_command_stream",
+                source_file=source_file,
+                label=label,
+                line=int(block.get("line", 0)),
+                seed=seed,
+                case_index=start_index + len(records),
+                trigger={
+                    "stream": label,
+                    "command_count": len(commands),
+                    "commands": commands[:16],
+                },
+                expected=[
+                    f"audio_stream={label}",
+                    f"command_count={len(commands)}",
+                    *[f"audio_command={name}" for name in commands[:6]],
+                ],
+            )
+        )
+    return records
+
+
+def is_audio_command_stream(commands: list[str]) -> bool:
+    command_set = set(commands)
+    if "channel_count" in command_set or "channel" in command_set:
+        return False
+    return any(command in AUDIO_COMMAND_TOKENS for command in commands)
 
 
 def scenario_from_event(
@@ -411,6 +644,77 @@ def scenario_from_event(
     return None
 
 
+def ui_tilemap_records(
+    lines: list[str],
+    *,
+    source_file: str,
+    seed: int,
+    start_index: int,
+) -> list[dict[str, Any]]:
+    records: list[dict[str, Any]] = []
+    current_label = ""
+    last_coord: dict[str, Any] = {}
+    for index, raw_line in enumerate(lines, start=1):
+        clean = strip_comment(raw_line).strip()
+        if not clean:
+            continue
+        label, code = split_label(clean)
+        if label and not label.startswith("."):
+            current_label = label
+        code = code_after_label(code)
+        coord = parse_coord_macro(code)
+        if coord:
+            last_coord = {**coord, "line": index}
+        helper = first_ui_tilemap_helper(code)
+        if not helper:
+            continue
+        scenario_label = current_label or helper
+        trigger = {
+            "helper": helper,
+            "coord": dict(last_coord),
+            "output_symbols": list(UI_OUTPUT_WATCH_SYMBOLS),
+        }
+        if coord and not last_coord:
+            trigger["coord"] = dict(coord)
+        records.append(
+            scenario_record(
+                scenario_type="ui_tilemap_update",
+                source_file=source_file,
+                label=scenario_label,
+                line=index,
+                seed=seed,
+                case_index=start_index + len(records),
+                trigger=trigger,
+                expected=[
+                    "ui_output=wTilemap",
+                    "ui_output=wAttrmap",
+                    f"ui_helper={helper}",
+                ],
+            )
+        )
+    return records
+
+
+def parse_coord_macro(code: str) -> dict[str, Any]:
+    match = COORD_RE.search(code)
+    if not match:
+        return {}
+    target = match.group("target") or ("wAttrmap" if match.group("macro") == "decoord" else "wTilemap")
+    return {
+        "macro": match.group("macro"),
+        "x": match.group("x"),
+        "y": match.group("y"),
+        "target": target,
+    }
+
+
+def first_ui_tilemap_helper(code: str) -> str:
+    for helper in UI_TILEMAP_HELPERS:
+        if re.search(rf"\b{re.escape(helper)}\b", code):
+            return helper
+    return ""
+
+
 def scenario_record(
     *,
     scenario_type: str,
@@ -424,8 +728,14 @@ def scenario_record(
 ) -> dict[str, Any]:
     scenario_id = f"content_scenario_{seed}_{case_index:04d}"
     trigger_preconditions = state_preconditions_for_scenario(
+        scenario_id=scenario_id,
         scenario_type=scenario_type,
         source_file=source_file,
+        label=label,
+        trigger=trigger,
+    )
+    outputs = output_sinks_for_scenario(
+        scenario_type=scenario_type,
         label=label,
         trigger=trigger,
     )
@@ -444,6 +754,7 @@ def scenario_record(
         "line": line,
         "trigger": trigger,
         "state_preconditions": trigger_preconditions,
+        "outputs": outputs,
         "expected": expected,
         "changed_files": [source_file],
         "commands": scenario_commands(source_file=source_file, scenario_id=scenario_id),
@@ -456,6 +767,7 @@ def scenario_record(
 
 def state_preconditions_for_scenario(
     *,
+    scenario_id: str,
     scenario_type: str,
     source_file: str,
     label: str,
@@ -469,7 +781,7 @@ def state_preconditions_for_scenario(
         for key in ("x", "y", "scene", "event_type", "script", "object_type", "event_flag", "destination_map", "destination_warp"):
             if trigger.get(key) not in {"", None}:
                 values[key] = trigger[key]
-        return [
+        preconditions = [
             {
                 "id": f"{scenario_type}_position",
                 "surface": "content_static",
@@ -483,26 +795,38 @@ def state_preconditions_for_scenario(
                 ],
             }
         ]
-    if scenario_type == "audio_channel_block":
-        return [
+        return attach_event_runtime_routes(preconditions, scenario_id=scenario_id, scenario_type=scenario_type)
+    if scenario_type in {"audio_channel_block", "audio_command_stream"}:
+        stream_value = trigger.get("stream", "")
+        values = {
+            "music_label": label,
+            "source_file": source_file,
+            "channel_count": trigger.get("channel_count", ""),
+        }
+        if stream_value:
+            values["stream_label"] = stream_value
+            values["command_count"] = trigger.get("command_count", "")
+        preconditions = [
             {
                 "id": "audio_channel_runtime",
                 "surface": "content_static",
                 "kind": "audio_engine_entry",
                 "status": "planned",
-                "values": {
-                    "music_label": label,
-                    "source_file": source_file,
-                    "channel_count": trigger.get("channel_count", ""),
-                },
+                "values": values,
                 "watch_symbols": list(AUDIO_STATE_WATCH_SYMBOLS),
+                "outputs": output_sinks_for_scenario(
+                    scenario_type=scenario_type,
+                    label=label,
+                    trigger=trigger,
+                ),
                 "notes": [
-                    "Route PlayMusic or the owning caller to this channel block before treating source checks as audio runtime proof.",
+                    "Route PlayMusic, _PlayMusic, or the owning caller to this audio data before treating source checks as audio runtime proof.",
                 ],
             }
         ]
+        return attach_event_runtime_routes(preconditions, scenario_id=scenario_id, scenario_type=scenario_type)
     if scenario_type == "asset_materialization":
-        return [
+        preconditions = [
             {
                 "id": "asset_loader_runtime",
                 "surface": "content_static",
@@ -514,13 +838,44 @@ def state_preconditions_for_scenario(
                     "label": label,
                 },
                 "watch_symbols": list(ASSET_REQUEST_WATCH_SYMBOLS),
+                "outputs": output_sinks_for_scenario(
+                    scenario_type=scenario_type,
+                    label=label,
+                    trigger=trigger,
+                ),
                 "notes": [
                     "Route the appropriate graphics/data loader to this INCBIN payload before treating the scenario as runtime materialized.",
                 ],
             }
         ]
+        return attach_event_runtime_routes(preconditions, scenario_id=scenario_id, scenario_type=scenario_type)
+    if scenario_type == "ui_tilemap_update":
+        preconditions = [
+            {
+                "id": "ui_tilemap_output",
+                "surface": "content_static",
+                "kind": "ui_output_sink",
+                "status": "planned",
+                "values": {
+                    "ui_label": label,
+                    "source_file": source_file,
+                    "helper": trigger.get("helper", ""),
+                    "coord": trigger.get("coord", {}),
+                },
+                "watch_symbols": list(UI_OUTPUT_WATCH_SYMBOLS),
+                "outputs": output_sinks_for_scenario(
+                    scenario_type=scenario_type,
+                    label=label,
+                    trigger=trigger,
+                ),
+                "notes": [
+                    "Trace the selected UI helper and watch tilemap/attrmap output sinks before treating source checks as UI runtime proof.",
+                ],
+            }
+        ]
+        return attach_event_runtime_routes(preconditions, scenario_id=scenario_id, scenario_type=scenario_type)
     if scenario_type == "script_command_stream":
-        return [
+        preconditions = [
             {
                 "id": "script_engine_entry",
                 "surface": "content_static",
@@ -531,15 +886,16 @@ def state_preconditions_for_scenario(
                     "source_file": source_file,
                     "command_count": trigger.get("command_count", ""),
                 },
-                "watch_symbols": ["wScriptBank", "wScriptPos", "wScriptRunning", "wScriptMode", "wScriptVar"],
+                "watch_symbols": list(SCRIPT_STATE_WATCH_SYMBOLS),
                 "notes": [
                     "Patch the script engine entry state so ScriptEvents starts reading from this script label.",
                     "Use RunScriptCommand instruction tracing plus wScriptPos/wScriptVar watches to prove semantic command execution.",
                 ],
             }
         ]
+        return attach_event_runtime_routes(preconditions, scenario_id=scenario_id, scenario_type=scenario_type)
     if scenario_type == "movement_data":
-        return [
+        preconditions = [
             {
                 "id": "movement_engine_entry",
                 "surface": "content_static",
@@ -558,7 +914,195 @@ def state_preconditions_for_scenario(
                 ],
             }
         ]
+        return attach_event_runtime_routes(preconditions, scenario_id=scenario_id, scenario_type=scenario_type)
     return []
+
+
+def attach_event_runtime_routes(
+    preconditions: list[dict[str, Any]],
+    *,
+    scenario_id: str,
+    scenario_type: str,
+) -> list[dict[str, Any]]:
+    out = []
+    for precondition in preconditions:
+        row = dict(precondition)
+        route = event_runtime_materialization_route(
+            scenario_id=scenario_id,
+            scenario_type=scenario_type,
+            precondition_id=str(row.get("id", "")),
+            precondition_kind=str(row.get("kind", "")),
+            values=row.get("values") if isinstance(row.get("values"), dict) else {},
+            watch_symbols=string_items(row.get("watch_symbols")),
+            outputs=dict_items(row.get("outputs")),
+        )
+        row[EVENT_RUNTIME_ROUTE_KEY] = route
+        row[EVENT_RUNTIME_ROUTE_LEGACY_KEY] = route
+        out.append(row)
+    return out
+
+
+def event_runtime_materialization_route(
+    *,
+    scenario_id: str = "",
+    scenario_type: str = "",
+    precondition_kind: str,
+    values: dict[str, Any] | None = None,
+    watch_symbols: list[str] | tuple[str, ...] = (),
+    outputs: list[dict[str, Any]] | tuple[dict[str, Any], ...] = (),
+    precondition_id: str = "",
+    source_file: str = "",
+    actual_proof_status: str = PROOF_STATUS_PLANNED_ONLY,
+    observed_sinks: list[str] | tuple[str, ...] = (),
+) -> dict[str, Any]:
+    profile = RUNTIME_ROUTE_PROFILES.get(precondition_kind, {})
+    runtime_route = str(profile.get("runtime_route") or runtime_route_for_scenario(scenario_type))
+    values = dict(values or {})
+    watch_symbols = string_items(watch_symbols)
+    outputs = dict_items(outputs)
+    source_file = source_file or str(values.get("source_file", ""))
+    expected_proof_status = str(profile.get("expected_proof_status") or "runtime_observed")
+    evidence_kinds = tuple(profile.get("evidence_kinds", ()))
+    if not evidence_kinds:
+        evidence_kinds = ("instruction_trace", "watch") if expected_proof_status == "instruction_observed" else ("watch",)
+    expected_sinks = unique_list([*watch_symbols, *output_sink_ids(outputs)])
+    return {
+        "kind": EVENT_RUNTIME_ROUTE_KIND,
+        "schema_version": 1,
+        "scenario_id": scenario_id,
+        "scenario_type": scenario_type,
+        "precondition_id": precondition_id,
+        "precondition_kind": precondition_kind,
+        "source_file": source_file,
+        "runtime_route": runtime_route,
+        "required_inputs": list(profile.get("required_inputs", ("rom", "symbols", "scenario_manifest"))),
+        "state_preconditions": [
+            {
+                "id": precondition_id,
+                "kind": precondition_kind,
+                "watch_symbols": list(watch_symbols),
+                "values": values,
+            }
+        ],
+        "expected_proof_commands": build_runtime_proof_commands(
+            scenario_id=scenario_id,
+            source_file=source_file,
+            precondition_kind=precondition_kind,
+            watch_symbols=watch_symbols,
+            trace_symbols=(),
+        ),
+        "expected_proof_status": expected_proof_status,
+        "actual_proof_status": actual_proof_status,
+        "expected_sinks": expected_sinks,
+        "observed_sinks": string_items(observed_sinks),
+        "evidence_kinds": list(evidence_kinds),
+    }
+
+
+def build_runtime_proof_commands(
+    *,
+    scenario_id: str,
+    source_file: str,
+    precondition_kind: str,
+    watch_symbols: list[str] | tuple[str, ...],
+    trace_symbols: list[str] | tuple[str, ...],
+) -> list[str]:
+    profile = RUNTIME_ROUTE_PROFILES.get(precondition_kind, {})
+    commands = list(profile.get("expected_proof_commands", ()))
+    if commands:
+        return commands
+    watch_arg = " ".join(f"--watch {symbol}" for symbol in unique_list(watch_symbols))
+    trace_arg = " ".join(f"--symbol {symbol}" for symbol in unique_list(trace_symbols))
+    source_arg = f" --source {source_file}" if source_file else ""
+    scenario_arg = f" --scenario-id {scenario_id}" if scenario_id else ""
+    return unique_list(
+        [
+            f"python -m tools.debugger content-state{source_arg}{scenario_arg} --execute".strip(),
+            f"python -m tools.debugger trace-instructions{scenario_arg} {trace_arg} --execute --require-hit".strip(),
+            f"python -m tools.debugger watch{scenario_arg} {watch_arg} --execute".strip(),
+        ]
+    )
+
+
+def output_sink_ids(outputs: list[dict[str, Any]]) -> list[str]:
+    return unique_list(
+        str(output.get("state_symbol") or output.get("output_symbol") or output.get("address") or output.get("watch_address") or output.get("sink_address") or "")
+        for output in outputs
+        if output.get("state_symbol") or output.get("output_symbol") or output.get("address") or output.get("watch_address") or output.get("sink_address")
+    )
+
+
+def output_sinks_for_scenario(*, scenario_type: str, label: str, trigger: dict[str, Any]) -> list[dict[str, Any]]:
+    if scenario_type in {"audio_channel_block", "audio_command_stream"}:
+        producer_symbol = "ParseMusicCommand" if scenario_type == "audio_command_stream" else "PlayMusic"
+        common = {
+            "size": 1,
+            "producer_symbol": producer_symbol,
+            "source_function": label or producer_symbol,
+            "channel_count": trigger.get("channel_count", ""),
+            "stream": trigger.get("stream", ""),
+        }
+        return [
+            {
+                "kind": "audio_engine_output",
+                "state_symbol": symbol,
+                **common,
+            }
+            for symbol in AUDIO_STATE_WATCH_SYMBOLS
+        ] + [
+            {
+                "kind": "audio_hardware_output",
+                "address": address,
+                "address_label": hardware_label,
+                **common,
+            }
+            for hardware_label, address in AUDIO_HARDWARE_OUTPUTS
+        ]
+    if scenario_type == "asset_materialization":
+        asset_path = str(trigger.get("asset") or "")
+        producer_symbol = asset_output_producer(asset_path)
+        return [
+            {
+                "kind": "asset_request_output",
+                "state_symbol": symbol,
+                "size": 1,
+                "producer_symbol": producer_symbol,
+                "source_function": label or producer_symbol,
+                "asset": asset_path,
+            }
+            for symbol in ASSET_REQUEST_WATCH_SYMBOLS
+        ]
+    if scenario_type != "ui_tilemap_update":
+        return []
+    helper = str(trigger.get("helper") or "PlaceString")
+    coord = trigger.get("coord") if isinstance(trigger.get("coord"), dict) else {}
+    return [
+        {
+            "kind": "ui_tilemap_output",
+            "state_symbol": "wTilemap",
+            "size": 1,
+            "producer_symbol": helper,
+            "source_function": label or helper,
+            "coord": dict(coord),
+        },
+        {
+            "kind": "ui_attrmap_output",
+            "state_symbol": "wAttrmap",
+            "size": 1,
+            "producer_symbol": helper,
+            "source_function": label or helper,
+            "coord": dict(coord),
+        },
+    ]
+
+
+def asset_output_producer(asset_path: str) -> str:
+    normalized = asset_path.lower()
+    if ".1bpp" in normalized:
+        return "Get1bpp"
+    if ".2bpp" in normalized:
+        return "Request2bpp"
+    return "Decompress"
 
 
 def attach_behavioral_probes(
@@ -714,6 +1258,24 @@ def behavioral_probe_plan(*, scenario: dict[str, Any], scenario_manifest_path: s
                 reason="Capture instruction-level helper evidence from the executed content-state report and its patched save state.",
             )
         )
+        output_symbols = output_symbols_for_scenario(scenario)
+        output_addresses = output_addresses_for_scenario(scenario)
+        if output_symbols or output_addresses:
+            sink_args = " ".join(
+                [
+                    *[f"--sink-symbol {symbol}" for symbol in output_symbols[:4]],
+                    *[f"--sink-address {command_address_arg(address)}" for address in output_addresses[:4]],
+                ]
+            )
+            probes.append(
+                behavioral_probe(
+                    probe_id="content_output_dynamic_taint_route",
+                    phase="taint",
+                    proof_level="output_sink_dynamic_planned",
+                    command=f"python -m tools.debugger dynamic-taint --report {state_report} {sink_args}",
+                    reason="Use the content-state output sink report to synthesize an instruction trace and attribute writes to declared content outputs.",
+                )
+            )
     if watch_symbols:
         watch_args = [
             "--scenario",
@@ -765,6 +1327,22 @@ def behavioral_probe_plan(*, scenario: dict[str, Any], scenario_manifest_path: s
     return probes
 
 
+def output_symbols_for_scenario(scenario: dict[str, Any]) -> list[str]:
+    return unique_list(
+        str(output.get("state_symbol") or output.get("output_symbol") or "")
+        for output in dict_items(scenario.get("outputs"))
+        if output.get("state_symbol") or output.get("output_symbol")
+    )
+
+
+def output_addresses_for_scenario(scenario: dict[str, Any]) -> list[str]:
+    return unique_list(
+        str(output.get("address") or output.get("watch_address") or output.get("sink_address") or "")
+        for output in dict_items(scenario.get("outputs"))
+        if output.get("address") or output.get("watch_address") or output.get("sink_address")
+    )
+
+
 def runtime_targets_for_scenario(scenario: dict[str, Any]) -> dict[str, Any]:
     scenario_type = str(scenario.get("scenario_type", ""))
     trigger = scenario.get("trigger") if isinstance(scenario.get("trigger"), dict) else {}
@@ -800,14 +1378,20 @@ def runtime_targets_for_scenario(scenario: dict[str, Any]) -> dict[str, Any]:
         )
     if scenario_type.startswith("map_"):
         watch_symbols = list(MAP_STATE_WATCH_SYMBOLS)
-    elif scenario_type == "audio_channel_block":
+    elif scenario_type in {"audio_channel_block", "audio_command_stream"}:
         watch_symbols = list(AUDIO_STATE_WATCH_SYMBOLS)
     elif scenario_type == "asset_materialization":
         watch_symbols = list(ASSET_REQUEST_WATCH_SYMBOLS)
+    elif scenario_type == "ui_tilemap_update":
+        watch_symbols = list(UI_OUTPUT_WATCH_SYMBOLS)
+    elif scenario_type == "script_command_stream":
+        watch_symbols = list(SCRIPT_STATE_WATCH_SYMBOLS)
     elif scenario_type == "movement_data":
         watch_symbols = list(MOVEMENT_STATE_WATCH_SYMBOLS)
     else:
         watch_symbols = []
+    for precondition in dict_items(scenario.get("state_preconditions")):
+        watch_symbols.extend(string_items(precondition.get("watch_symbols")))
     related_symbols = unique_list([*source_symbols, *script_symbols, *trace_symbols, *watch_symbols])
     return {
         "source_symbols": unique_list(source_symbols),
@@ -815,7 +1399,7 @@ def runtime_targets_for_scenario(scenario: dict[str, Any]) -> dict[str, Any]:
         "trace_symbols": unique_list(trace_symbols),
         "watch_symbols": unique_list(watch_symbols),
         "related_symbols": related_symbols,
-        "requires_positioned_state": scenario_type.startswith("map_"),
+        "requires_positioned_state": bool(scenario.get("state_preconditions")),
         "runtime_route": runtime_route_for_scenario(scenario_type),
     }
 
@@ -843,10 +1427,12 @@ def scenario_script_symbols(*, scenario_type: str, trigger: dict[str, Any]) -> l
 def runtime_route_for_scenario(scenario_type: str) -> str:
     if scenario_type.startswith("map_"):
         return "overworld_event_engine"
-    if scenario_type == "audio_channel_block":
+    if scenario_type in {"audio_channel_block", "audio_command_stream"}:
         return "audio_engine"
     if scenario_type == "asset_materialization":
         return "asset_loader"
+    if scenario_type == "ui_tilemap_update":
+        return "ui_tilemap_engine"
     if scenario_type == "script_command_stream":
         return "script_engine"
     if scenario_type == "text_block":
@@ -966,12 +1552,18 @@ def expectation_probes_for_scenario(scenario: dict[str, Any]) -> list[str]:
     scenario_type = str(scenario.get("scenario_type", ""))
     if scenario_type == "audio_channel_block":
         probes.append("contains=channel_count")
+    if scenario_type == "audio_command_stream":
+        probes.append("contains=audio_stream")
+        probes.append("contains=audio_command")
     if scenario_type == "script_command_stream":
         probes.append("contains=script")
     if scenario_type == "text_block":
         probes.append("contains=text")
     if scenario_type == "movement_data":
         probes.append("contains=movement")
+    if scenario_type == "ui_tilemap_update":
+        probes.append("contains=wTilemap")
+        probes.append("contains=hlcoord")
     return unique_list(probes)[:6]
 
 

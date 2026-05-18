@@ -5,6 +5,7 @@ import time
 from pathlib import Path
 from typing import Any
 
+from .address import command_address_text
 from .catalog import ROOT, triage_request
 
 
@@ -87,7 +88,74 @@ def gate_steps_from_triage(triage: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def command_is_runnable(command: str) -> bool:
-    return "<" not in command and ">" not in command
+    text = str(command)
+    if "<" in text or ">" in text:
+        return False
+    return not any(command_part_is_placeholder(part) for part in command_parts(text))
+
+
+def command_part_is_placeholder(part: str) -> bool:
+    normalized = strip_command_quotes(part).strip().replace("/", "\\").lower()
+    return normalized.startswith("path\\to\\")
+
+
+def command_address_arg(address: Any) -> str:
+    return command_address_text(address)
+
+
+def command_parts(command: str) -> list[str]:
+    parts: list[str] = []
+    current: list[str] = []
+    quote = ""
+    for char in str(command):
+        if quote:
+            if char == quote:
+                quote = ""
+            else:
+                current.append(char)
+            continue
+        if char in {"\"", "'"}:
+            quote = char
+            continue
+        if char.isspace():
+            if current:
+                parts.append("".join(current))
+                current = []
+            continue
+        current.append(char)
+    if current:
+        parts.append("".join(current))
+    return parts
+
+
+def command_option_values(command: str, option: str) -> list[str]:
+    values: list[str] = []
+    parts = command_parts(command)
+    for index, part in enumerate(parts):
+        if part == option and index + 1 < len(parts):
+            values.append(parts[index + 1])
+        elif part.startswith(option + "="):
+            values.append(strip_command_quotes(part.split("=", 1)[1]))
+    return unique_texts(values)
+
+
+def strip_command_quotes(value: str) -> str:
+    text = str(value)
+    if len(text) >= 2 and text[0] == text[-1] and text[0] in {"\"", "'"}:
+        return text[1:-1]
+    return text
+
+
+def unique_texts(values: list[str]) -> list[str]:
+    out: list[str] = []
+    seen: set[str] = set()
+    for value in values:
+        text = str(value)
+        if text in seen:
+            continue
+        seen.add(text)
+        out.append(text)
+    return out
 
 
 def execute_step(step: dict[str, Any], *, root: Path, timeout_seconds: int) -> None:
@@ -95,12 +163,17 @@ def execute_step(step: dict[str, Any], *, root: Path, timeout_seconds: int) -> N
         step["status"] = "skipped"
         step["stderr_tail"] = ["command contains a placeholder and needs a concrete artifact"]
         return
+    argv = command_parts(str(step.get("command", "")))
+    if not argv:
+        step["status"] = "skipped"
+        step["stderr_tail"] = ["empty command"]
+        return
     started = time.perf_counter()
     try:
         completed = subprocess.run(
-            step["command"],
+            argv,
             cwd=root,
-            shell=True,
+            shell=False,
             capture_output=True,
             text=True,
             timeout=timeout_seconds,
@@ -111,6 +184,13 @@ def execute_step(step: dict[str, Any], *, root: Path, timeout_seconds: int) -> N
         step["elapsed_seconds"] = time.perf_counter() - started
         step["stdout_tail"] = tail(exc.stdout or "")
         step["stderr_tail"] = tail((exc.stderr or "") + "\ncommand timed out")
+        return
+    except OSError as exc:
+        step["status"] = "failed"
+        step["returncode"] = None
+        step["elapsed_seconds"] = time.perf_counter() - started
+        step["stdout_tail"] = []
+        step["stderr_tail"] = tail(str(exc))
         return
     step["elapsed_seconds"] = time.perf_counter() - started
     step["returncode"] = completed.returncode

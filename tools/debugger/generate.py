@@ -23,7 +23,7 @@ from .mirrors import build_compare_plan
 from .provenance import display_path, resolve_path
 from .reporting import load_reports
 from .testgen import suggest_tests
-from .workflow import command_is_runnable
+from .workflow import command_is_runnable, execute_step
 
 
 SURFACE_RULES = {
@@ -108,10 +108,17 @@ SURFACE_NAMES = frozenset(SURFACE_ORDER)
 GENERATOR_PROOF_LEVELS = {
     "damage": "dynamic",
     "boss_ai": "dynamic",
-    "banking_abi": "static_watch",
+    "banking_abi": "dynamic_state_probe_planned",
     "content_static": "positioned_state_dynamic_planned",
     "general": "planning",
 }
+BANKING_WATCH_SYMBOLS = ("hROMBank", "wFarCallBC")
+BANKING_TRACE_SYMBOLS = ("FarCall", "FarCall_hl", "Bankswitch")
+BANKING_PATCH_PROFILES = (
+    ("active_bank_shadow", ("hROMBank=1",)),
+    ("farcall_param_pair", ("wFarCallBC=0,0",)),
+    ("bank_shadow_and_farcall_params", ("hROMBank=1", "wFarCallBC=0,0")),
+)
 
 
 def build_generation_plan(
@@ -125,6 +132,9 @@ def build_generation_plan(
     out_scenarios: str = "",
     max_cases: int = 64,
     seed: int = 1,
+    execute: bool = False,
+    max_execute_commands: int = 8,
+    execute_timeout_seconds: int = 600,
     root: Path = ROOT,
 ) -> dict[str, Any]:
     case_limit = max(1, int(max_cases))
@@ -138,12 +148,14 @@ def build_generation_plan(
         root=root,
     )
     tests = suggest_tests(
+        reports=reports,
         changed_files=changed_files,
         symbols=symbols,
         symptom=symptom,
         root=root,
     )
     compare = build_compare_plan(
+        reports=reports,
         changed_files=changed_files,
         symbols=symbols,
         symptom=symptom,
@@ -249,11 +261,20 @@ def build_generation_plan(
             *[item["command"] for item in counterexamples],
         ]
     )
+    execution = execute_command_batch(
+        commands,
+        execute=execute,
+        max_commands=max_execute_commands,
+        timeout_seconds=execute_timeout_seconds,
+        root=root,
+        step_prefix="generation",
+    )
     errors = unique_list(
         [
             *report_errors,
             *scenario_errors,
             *seed_output.get("errors", []),
+            *(execution.get("errors", []) if execute else []),
         ]
     )
 
@@ -317,10 +338,62 @@ def build_generation_plan(
         "commands": commands,
         "runnable_commands": [command for command in commands if command_is_runnable(command)],
         "blocked_commands": [command for command in commands if not command_is_runnable(command)],
+        "executed": execute,
+        "execution": execution,
         "known_limits": [
-            "This is the unified generator coordinator for this Pokemon Gold romhack; semantic scenario execution is strongest where a surface has a ROM materializer.",
+            "This is the unified generator coordinator for this Pokemon Gold romhack; it only executes commands when --execute is supplied, and semantic scenario execution is strongest where a surface has a ROM materializer.",
             "The optional JSONL seed manifest is a deterministic handoff manifest, not a guarantee that every surface can be replayed directly by the ROM today.",
-            "Damage and Boss AI have mature dynamic generators; map content now has positioned-state materialization routes, while arbitrary scripts, graphics, audio, UI, and banking still need deeper dynamic generators.",
+            "Damage and Boss AI have mature dynamic generators; map/script/movement content, banking, UI output sinks, and audio command/header WRAM plus rAUD hardware output sinks now have dynamic proof routes, while arbitrary event-engine states, full pixel playback, and full audio playback still need deeper dynamic generators.",
+        ],
+    }
+
+
+def execute_command_batch(
+    commands: list[str],
+    *,
+    execute: bool,
+    max_commands: int,
+    timeout_seconds: int,
+    root: Path,
+    step_prefix: str,
+) -> dict[str, Any]:
+    unique_commands = unique_list(commands)
+    steps = [
+        {
+            "id": f"{step_prefix}:{index + 1}",
+            "command": command,
+            "runnable": command_is_runnable(command),
+            "status": "pending",
+            "returncode": None,
+            "elapsed_seconds": 0.0,
+            "stdout_tail": [],
+            "stderr_tail": [],
+        }
+        for index, command in enumerate(unique_commands[: max(0, int(max_commands))])
+    ]
+    if execute:
+        for step in steps:
+            execute_step(step, root=root, timeout_seconds=timeout_seconds)
+    else:
+        for step in steps:
+            step["status"] = "planned"
+    failed = [step for step in steps if step["status"] == "failed"]
+    skipped = [step for step in steps if step["status"] == "skipped"]
+    passed = [step for step in steps if step["status"] == "passed"]
+    return {
+        "attempted": bool(unique_commands),
+        "executed": execute,
+        "command_count": len(unique_commands),
+        "step_count": len(steps),
+        "max_commands": max(0, int(max_commands)),
+        "passed_count": len(passed),
+        "failed_count": len(failed),
+        "skipped_count": len(skipped),
+        "truncated": len(unique_commands) > len(steps),
+        "steps": steps,
+        "errors": [
+            f"{step['id']}: {step['command']}"
+            for step in failed
         ],
     }
 
@@ -364,6 +437,10 @@ def collect_generation_signals(
 
     for match in tests.get("matches", []):
         signals.append(signal("test_generator", "generator", str(match.get("id", "")), 55, "suggest-tests"))
+        for symbol_name in match.get("related_symbols", [])[:6]:
+            signals.append(signal("test_related_symbol", "symbol", str(symbol_name), 45, "suggest-tests"))
+        for address in match.get("related_addresses", [])[:6]:
+            signals.append(signal("test_related_address", "address", str(address), 45, "suggest-tests"))
     for match in compare.get("matches", []):
         signals.append(signal("mirror", "mirror", str(match.get("id", "")), 50, "compare"))
     for item in minimization.get("signals", []):
@@ -556,33 +633,38 @@ def build_generator(
         )
 
     if surface == "banking_abi":
+        dynamic_probe_commands = banking_dynamic_probe_commands()
         commands = [
             "python tools\\audit\\check_farcall_a_clobber.py",
             "python tools\\audit\\check_farcall_hl_clobber.py",
             "python tools\\audit\\check_cross_bank_call.py",
             "python tools\\audit\\check_release_smoke.py",
+            dynamic_probe_commands[0],
         ]
         counterexample_commands = [
             "python -m tools.debugger watch --watch-symbol hROMBank --execute --frames 120",
             "python -m tools.debugger provenance --symbol hROMBank --symbol FarCall",
             "python -m tools.debugger gate --changed-file <changed_file>",
+            dynamic_probe_commands[3],
+            dynamic_probe_commands[4],
         ]
         materialization_commands = [
-            "python -m tools.debugger replay --watch-symbol hROMBank --execute-watch",
+            dynamic_probe_commands[1],
+            dynamic_probe_commands[2],
+            dynamic_probe_commands[3],
+            dynamic_probe_commands[4],
             "python -m tools.debugger explain --symbol hROMBank --changed-file <changed_file>",
         ]
         return generator(
-            generator_id="banking_abi_static_watch",
+            generator_id="banking_abi_dynamic_probe",
             surface=surface,
-            title="Banking and ABI static hazard plus runtime watch generator",
-            confidence=0.62,
-            status="static-only",
+            title="Banking and ABI dynamic state-space probe generator",
+            confidence=0.74,
+            status="dynamic-probe-planned",
             commands=commands,
             counterexample_commands=counterexample_commands,
             materialization_commands=materialization_commands,
-            gaps=[
-                "This surface still needs a dedicated dynamic scenario mutator for arbitrary bank/register/stack hazards.",
-            ],
+            gaps=[],
         )
 
     if surface == "content_static":
@@ -623,7 +705,7 @@ def build_generator(
             counterexample_commands=counterexample_commands,
             materialization_commands=materialization_commands,
             gaps=[
-                "Map content scenarios now route through positioned-state WRAM patch generation and replay; audio, asset, UI, and arbitrary script semantic generators still need dedicated emulator-backed state builders.",
+                "Map content scenarios now route through positioned-state WRAM patch generation and replay; audio header/command streams now expose music WRAM and rAUD hardware output-sink proof routes, while asset, UI, and arbitrary script semantic generators still need dedicated emulator-backed state builders for final behavioral proof.",
             ],
         )
 
@@ -664,6 +746,118 @@ def first_boss_family(families: tuple[str, ...]) -> str:
         if family.strip():
             return family.strip()
     return "all"
+
+
+def banking_patch_profile(index: int) -> tuple[str, tuple[str, ...]]:
+    return BANKING_PATCH_PROFILES[index % len(BANKING_PATCH_PROFILES)]
+
+
+def banking_dynamic_probe_commands(
+    *,
+    report_stem: str = ".local\\tmp\\debugger_banking_probe",
+    patches: tuple[str, ...] | None = None,
+    source_file: str = "",
+    base_state: str = "<base_state>",
+) -> list[str]:
+    patch_specs = tuple(patches or BANKING_PATCH_PROFILES[-1][1])
+    state_report = f"{report_stem}_state_space.json"
+    patched_state = f"{report_stem}.state"
+    trace_report = f"{report_stem}_trace_report.json"
+    trace_path = f"{report_stem}_trace.jsonl"
+    patch_args = " ".join(f"--patch {patch}" for patch in patch_specs)
+    watch_args = " ".join(f"--watch-symbol {symbol}" for symbol in BANKING_WATCH_SYMBOLS)
+    trace_args = " ".join(f"--symbol {symbol}" for symbol in BANKING_TRACE_SYMBOLS)
+    sink_args = " ".join(f"--sink-symbol {symbol}" for symbol in BANKING_WATCH_SYMBOLS)
+    source_arg = f" --source-file {quote_arg(source_file)}" if source_file else ""
+    return unique_list(
+        [
+            (
+                "python -m tools.debugger state-space "
+                f"{patch_args}{source_arg} {watch_args} --json-out {state_report}"
+            ),
+            (
+                "python -m tools.debugger state-space "
+                f"{patch_args}{source_arg} {watch_args} "
+                f"--base-save-state {quote_arg(base_state)} --out-state {patched_state} "
+                f"--execute --json-out {state_report}"
+            ),
+            (
+                "python -m tools.debugger replay "
+                f"--report {state_report} --save-state {patched_state} "
+                f"{watch_args} --execute-watch"
+            ),
+            (
+                "python -m tools.debugger trace-instructions "
+                f"--report {state_report} {trace_args} {watch_args} "
+                f"--save-state {patched_state} --execute --require-hit "
+                f"--out-trace {trace_path} --json-out {trace_report}"
+            ),
+            (
+                "python -m tools.debugger dynamic-taint "
+                f"--report {trace_report} {sink_args}"
+            ),
+            f"python -m tools.debugger compare --report {state_report} --report {trace_report}",
+            (
+                "python -m tools.debugger minimize "
+                f"--report {state_report} --expect state-patch={banking_first_patch_symbol(patch_specs)},value={banking_first_patch_value(patch_specs)} "
+                "--execute-state-patches --out-state-report .local\\tmp\\debugger_banking_minimized.json"
+            ),
+        ]
+    )
+
+
+def banking_state_space_request(
+    *,
+    profile_id: str,
+    patches: tuple[str, ...],
+    report_stem: str,
+    source_file: str = "",
+) -> dict[str, Any]:
+    commands = banking_dynamic_probe_commands(
+        report_stem=report_stem,
+        patches=patches,
+        source_file=source_file,
+    )
+    return {
+        "kind": "banking_abi_state_probe",
+        "profile_id": profile_id,
+        "patches": list(patches),
+        "watch_symbols": list(BANKING_WATCH_SYMBOLS),
+        "trace_symbols": list(BANKING_TRACE_SYMBOLS),
+        "state_report": f"{report_stem}_state_space.json",
+        "out_state": f"{report_stem}.state",
+        "trace_report": f"{report_stem}_trace_report.json",
+        "trace_output": f"{report_stem}_trace.jsonl",
+        "commands": commands,
+    }
+
+
+def banking_first_patch_symbol(patches: tuple[str, ...]) -> str:
+    if not patches:
+        return "hROMBank"
+    return patches[0].split("=", 1)[0].split("+", 1)[0]
+
+
+def banking_first_patch_value(patches: tuple[str, ...]) -> str:
+    if not patches or "=" not in patches[0]:
+        return "0x01"
+    first_value = patches[0].split("=", 1)[1].split(",", 1)[0].strip()
+    try:
+        return f"0x{int(first_value, 0):02X}"
+    except ValueError:
+        return first_value or "0x01"
+
+
+def banking_patch_expectations(patches: tuple[str, ...]) -> list[str]:
+    expectations = []
+    for patch in patches:
+        if "=" not in patch:
+            continue
+        symbol, value = patch.split("=", 1)
+        expectations.append(f"state-patch={symbol.split('+', 1)[0]},value={banking_first_patch_value((patch,))}")
+        if "," in value:
+            expectations.append(f"state-patch={symbol.split('+', 1)[0]},byte-count={len(value.split(','))}")
+    return unique_list(expectations)
 
 
 def generator(
@@ -805,6 +999,47 @@ def build_seed_records(
             records.append(source_record)
             if generator_item:
                 generator_item.setdefault("seed_ids", []).append(source_record["id"])
+            continue
+        if surface == "banking_abi":
+            record_id = f"debugger_generated_banking_abi_{seed}_{index:04d}"
+            profile_id, patches = banking_patch_profile(index)
+            source_file = normalize_path(changed_files[0]) if changed_files else ""
+            request = banking_state_space_request(
+                profile_id=profile_id,
+                patches=patches,
+                report_stem=f".local\\tmp\\debugger_banking_seed_{seed}_{index:04d}",
+                source_file=source_file,
+            )
+            record = {
+                "id": record_id,
+                "family": surface,
+                "source": "tools.debugger.generate",
+                "seed": seed,
+                "case_index": index,
+                "surface": surface,
+                "proof_level": "dynamic_state_probe_planned",
+                "scenario_type": "banking_abi_state_probe",
+                "profile_id": profile_id,
+                "symbols": unique_list([*symbols, *BANKING_WATCH_SYMBOLS, *BANKING_TRACE_SYMBOLS]),
+                "changed_files": [normalize_path(path) for path in changed_files],
+                "symptom": symptom,
+                "requested_families": list(families),
+                "expected": {
+                    "kind": "banking_abi_state_probe",
+                    "status": generator_item.get("status", "planned"),
+                    "expectations": banking_patch_expectations(patches),
+                },
+                "state_space_request": request,
+                "runtime_targets": {
+                    "runtime_route": "banking_abi",
+                    "watch_symbols": list(BANKING_WATCH_SYMBOLS),
+                    "trace_symbols": list(BANKING_TRACE_SYMBOLS),
+                },
+                "commands": request["commands"],
+            }
+            records.append(record)
+            if generator_item:
+                generator_item.setdefault("seed_ids", []).append(record_id)
             continue
         record_id = f"debugger_generated_{surface}_{seed}_{index:04d}"
         record = {
@@ -1009,6 +1244,8 @@ def build_dynamic_taint_handoffs(
                 "source_regs": list(discovered.get("source_regs", [])),
                 "source_mems": list(discovered.get("source_mems", [])),
                 "source_symbols": list(discovered.get("source_symbols", [])),
+                "related_symbols": dynamic_taint_related_symbols(discovered),
+                "related_addresses": dynamic_taint_related_addresses(discovered),
                 "trace_candidates": list(discovered.get("trace_candidates", [])),
                 "command": command,
                 "runnable": command_is_runnable(command),
@@ -1029,8 +1266,27 @@ def collect_counterexamples(
     dynamic_taint_handoffs: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
     counterexamples: list[dict[str, Any]] = []
-    for command in tests.get("counterexample_commands", []):
-        counterexamples.append(counterexample("suggest-tests", "", command))
+    matched_test_counterexamples = False
+    for match in tests.get("matches", []):
+        commands = string_items(match.get("counterexample_commands"))
+        if not commands:
+            continue
+        matched_test_counterexamples = True
+        reason = "; ".join(string_items(match.get("notes"))[:4])
+        for command in commands:
+            counterexamples.append(
+                counterexample(
+                    "suggest-tests",
+                    "",
+                    command,
+                    reason=reason,
+                    related_symbols=string_items(match.get("related_symbols")),
+                    related_addresses=string_items(match.get("related_addresses")),
+                )
+            )
+    if not matched_test_counterexamples:
+        for command in tests.get("counterexample_commands", []):
+            counterexamples.append(counterexample("suggest-tests", "", command))
     for step in minimization.get("steps", []):
         if step.get("phase") in {"find", "counterfactual", "minimize", "replay", "prove"}:
             counterexamples.append(
@@ -1059,6 +1315,8 @@ def collect_counterexamples(
                 "instruction_trace",
                 str(handoff.get("command", "")),
                 reason=str(handoff.get("reason", "")),
+                related_symbols=dynamic_taint_related_symbols(handoff),
+                related_addresses=dynamic_taint_related_addresses(handoff),
             )
         )
     return unique_counterexamples(counterexamples)
@@ -1070,14 +1328,27 @@ def subsystem_scenario_path(generator_item: dict[str, Any]) -> str:
     return "<scenarios.jsonl>"
 
 
-def counterexample(source: str, surface: str, command: str, *, reason: str = "") -> dict[str, Any]:
-    return {
+def counterexample(
+    source: str,
+    surface: str,
+    command: str,
+    *,
+    reason: str = "",
+    related_symbols: list[str] | None = None,
+    related_addresses: list[str] | None = None,
+) -> dict[str, Any]:
+    item = {
         "source": source,
         "surface": surface,
         "command": command,
         "reason": reason,
         "runnable": command_is_runnable(command),
     }
+    if related_symbols:
+        item["related_symbols"] = unique_list(related_symbols)
+    if related_addresses:
+        item["related_addresses"] = unique_list(related_addresses)
+    return item
 
 
 def command_records(commands: list[str]) -> list[dict[str, Any]]:
@@ -1175,9 +1446,90 @@ def unique_counterexamples(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return out
 
 
+def string_items(value: Any) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, str):
+        return [value] if value else []
+    if isinstance(value, list | tuple | set):
+        return [nested for item in value for nested in string_items(item)]
+    return [str(value)] if value else []
+
+
+def dynamic_taint_related_symbols(data: dict[str, Any]) -> list[str]:
+    return unique_list(
+        [
+            *string_items(data.get("sink_symbols")),
+            *string_items(data.get("source_symbols")),
+            *source_mem_origins(data),
+        ]
+    )
+
+
+def dynamic_taint_related_addresses(data: dict[str, Any]) -> list[str]:
+    return unique_list(
+        [
+            *string_items(data.get("sink_addresses")),
+            *source_mem_addresses(data),
+        ]
+    )
+
+
+def source_mem_origins(data: dict[str, Any]) -> list[str]:
+    return unique_list(
+        [
+            origin
+            for _, origin in source_mem_parts(data)
+            if origin
+        ]
+    )
+
+
+def source_mem_addresses(data: dict[str, Any]) -> list[str]:
+    return unique_list(
+        [
+            address
+            for address, _ in source_mem_parts(data)
+            if address
+        ]
+    )
+
+
+def source_mem_parts(data: dict[str, Any]) -> list[tuple[str, str]]:
+    out: list[tuple[str, str]] = []
+    for value in string_items(data.get("source_mems")):
+        text = str(value).strip()
+        if not text:
+            continue
+        if "=" in text:
+            left, right = (part.strip() for part in text.split("=", 1))
+            if looks_like_address(left):
+                out.append((left, right))
+            elif looks_like_address(right):
+                out.append((right, left))
+            else:
+                out.append((left, right))
+        else:
+            out.append((text, ""))
+    return out
+
+
+def looks_like_address(value: str) -> bool:
+    text = str(value).strip().replace("$", "")
+    if ":" in text:
+        bank, address = text.split(":", 1)
+        return is_hex(bank, 2) and is_hex(address, 4)
+    return is_hex(text, 4)
+
+
+def is_hex(value: str, length: int) -> bool:
+    text = str(value).strip()
+    return len(text) == length and all(char in "0123456789abcdefABCDEF" for char in text)
+
+
 def quote_arg(value: str) -> str:
     if not value:
         return "\"\""
     if any(char.isspace() for char in value) or any(char in value for char in "\"'"):
-        return json.dumps(value)
+        return '"' + value.replace('"', '\\"') + '"'
     return value

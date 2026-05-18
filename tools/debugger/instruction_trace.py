@@ -12,19 +12,21 @@ from tools.trace import runtime as trace_runtime
 from .catalog import ROOT
 from .explain import base_label
 from .ingest import sha256_file
+from .input_log import build_input_playback, play_inputs_for_frame
 from .provenance import display_path, parse_symbol_table, resolve_path
 from .reporting import load_reports
 from .runtime_watch import (
     DEFAULT_ROM,
     DEFAULT_SYMBOLS,
+    address_watch_specs,
     build_watch_spec,
     bytes_hex,
     read_watch_bytes,
     register_snapshot,
     render_pc,
 )
-from .setup_plan import save_state_candidate, select_save_state, unique_candidates
-from .workflow import command_is_runnable
+from .setup_plan import collect_save_state_candidates, save_state_candidate, select_save_state, unique_candidates
+from .workflow import command_address_arg, command_is_runnable, command_parts
 
 
 SOURCE_EXTENSIONS = {".asm", ".inc"}
@@ -107,6 +109,8 @@ def build_instruction_trace_report(
     *,
     function_symbols: tuple[str, ...] = (),
     watch_symbols: tuple[str, ...] = (),
+    watch_addresses: tuple[str, ...] = (),
+    watch_size: int = 1,
     reports: tuple[str, ...] = (),
     scenario_ids: tuple[str, ...] = (),
     changed_files: tuple[str, ...] = (),
@@ -115,6 +119,7 @@ def build_instruction_trace_report(
     rom_path: str = DEFAULT_ROM,
     symbols_path: str = DEFAULT_SYMBOLS,
     save_state: str = "",
+    input_logs: tuple[str, ...] = (),
     frames: int = 300,
     max_bytes: int = 0x800,
     max_frames: int = 50_000,
@@ -127,6 +132,14 @@ def build_instruction_trace_report(
     rom = resolve_path(rom_path, root=root)
     sym = resolve_path(symbols_path, root=root)
     loaded_reports, report_errors = load_reports(reports=reports, root=root)
+    report_watch_addresses = unique_list(
+        [
+            *instruction_trace_watch_addresses_from_reports(loaded_reports),
+            *instruction_trace_output_addresses_from_reports(loaded_reports),
+        ]
+    )
+    effective_watch_addresses = tuple(unique_list([*watch_addresses, *report_watch_addresses]))
+    effective_watch_size = max(watch_size, instruction_trace_watch_size_from_reports(loaded_reports))
     save_state_candidates = discover_instruction_trace_save_states(
         loaded_reports=loaded_reports,
         scenario_ids=scenario_ids,
@@ -147,12 +160,17 @@ def build_instruction_trace_report(
         errors.append("--max-frames must be positive")
     if max_functions < 1:
         errors.append("--max-functions must be positive")
+    if watch_size < 1:
+        errors.append("--watch-size must be positive")
     if not rom.exists():
         errors.append(f"missing ROM: {rom_path}")
     if not sym.exists():
         errors.append(f"missing symbols: {symbols_path}")
     if save is not None and not save.exists():
         errors.append(f"missing save-state: {effective_save_state}")
+    input_playback = build_input_playback(input_logs, root=root, max_events=0)
+    errors.extend(input_playback["errors"])
+    warnings.extend(input_playback["warnings"])
 
     symbol_table = parse_symbol_table(sym) if sym.exists() else {}
     selection = select_trace_targets(
@@ -172,11 +190,14 @@ def build_instruction_trace_report(
         errors.append(
             "no traceable function symbol was selected; provide --symbol, --report with PC labels, --changed-file, or a symptom/source that resolves to code"
         )
-    watches = [
+    symbol_watches = [
         build_watch_spec(symbol, symbol_table, symbols_path=sym, root=root)
         for symbol in selected_watches
     ] if sym.exists() else []
-    for watch in watches:
+    address_watches, address_watch_errors = address_watch_specs(effective_watch_addresses, size=effective_watch_size)
+    errors.extend(address_watch_errors)
+    watches = [*symbol_watches, *address_watches]
+    for watch in symbol_watches:
         if not watch["found"]:
             errors.append(f"watch symbol not found in symbols: {watch['name']}")
 
@@ -194,13 +215,15 @@ def build_instruction_trace_report(
             errors.extend(plan_errors)
 
     captured_records: list[dict[str, Any]] = []
+    played_inputs: list[dict[str, Any]] = []
     trace_output = {"path": display_path(resolve_path(out_trace, root=root), root=root) if out_trace else "", "written": False, "record_count": 0, "errors": []}
     if execute and not errors:
-        captured_records, capture_errors = execute_instruction_trace(
+        captured_records, capture_errors, played_inputs = execute_instruction_trace(
             rom=rom,
             save_state=save,
             plans=plans,
             watches=watches,
+            input_playback=input_playback,
             symbol_table=symbol_table,
             symbols_path=sym,
             frames=frames,
@@ -233,15 +256,19 @@ def build_instruction_trace_report(
         rom_path=rom_path,
         symbols_path=symbols_path,
         save_state=effective_save_state,
+        input_logs=input_logs,
         frames=frames,
         require_hit=require_hit,
         out_trace=out_trace,
+        watch_addresses=effective_watch_addresses,
+        watch_size=effective_watch_size,
     )
     return {
         "schema_version": 1,
         "kind": "unified_debugger_instruction_trace",
         "root": str(root),
         "valid": not errors,
+        "proof_status": "instruction_observed" if captured_records else "planned_only",
         "error_count": len(errors),
         "warning_count": len(warnings),
         "errors": errors,
@@ -253,6 +280,8 @@ def build_instruction_trace_report(
         "save_state": display_path(save, root=root) if save is not None else "",
         "input_save_state": save_state,
         "effective_save_state": display_path(save, root=root) if save is not None else "",
+        "input_logs": list(input_logs),
+        "input_playback": input_playback,
         "save_state_discovery": {
             "candidate_count": len(save_state_candidates),
             "selected": selected_save_state,
@@ -260,6 +289,8 @@ def build_instruction_trace_report(
         },
         "executed": execute,
         "frames": frames,
+        "watch_addresses": list(effective_watch_addresses),
+        "watch_size": effective_watch_size,
         "max_bytes": max_bytes,
         "max_frames": max_frames,
         "max_functions": max_functions,
@@ -273,6 +304,8 @@ def build_instruction_trace_report(
         "instruction_count": sum(int(plan.get("instruction_count", 0)) for plan in plans),
         "watch_count": len(watches),
         "captured_frame_count": len(captured_records),
+        "played_inputs": played_inputs,
+        "played_input_count": len(played_inputs),
         "functions": plans,
         "watches": watches,
         "execution_validation": execution_validation,
@@ -285,6 +318,7 @@ def build_instruction_trace_report(
         "known_limits": [
             "Instruction capture is hook-based over selected function bodies, not whole-CPU reverse execution.",
             "The static plan follows decoded function bodies from the ROM image; runtime capture records only instructions that actually execute during the frame window.",
+            "When input logs are supplied, supported text log steps are played before each frame tick in the capture window.",
             "Automatic target selection picks likely trace windows from reports, changed source labels, and symptoms; confirm broad or ambiguous selections before using them as final proof.",
             "Feed the emitted JSONL to dynamic-taint for byte-level causal paths from chosen sources to watched sinks.",
         ],
@@ -310,6 +344,7 @@ def discover_instruction_trace_save_states(
                 root=root,
             )
         )
+    selected_ids = {str(item) for item in scenario_ids if item}
     for loaded in loaded_reports:
         data = loaded.get("data", {})
         if not isinstance(data, dict):
@@ -355,6 +390,15 @@ def discover_instruction_trace_save_states(
                     root=root,
                 )
             )
+        collect_save_state_candidates(
+            data,
+            source=str(loaded.get("source", "report")),
+            scenario_id=str(data.get("scenario_id", "")),
+            preferred=True,
+            selected_ids=selected_ids,
+            root=root,
+            out=candidates,
+        )
     return sorted(
         unique_candidates(candidates),
         key=lambda item: (
@@ -548,6 +592,24 @@ def signals_from_report(report: dict[str, Any], *, source: str, scenario_ids: tu
             symbol = str(watch.get("name", ""))
             if symbol:
                 out.append(trace_signal("instruction_report_watch", symbol=symbol, role="watch", source=source))
+    elif kind == "unified_debugger_replay_plan":
+        watch_report = report.get("watch_report") if isinstance(report.get("watch_report"), dict) else {}
+        if watch_report:
+            out.extend(signals_from_report(watch_report, source=f"{source}:watch_report", scenario_ids=scenario_ids))
+        instruction_report = (
+            report.get("instruction_trace_report")
+            if isinstance(report.get("instruction_trace_report"), dict)
+            else {}
+        )
+        if instruction_report:
+            out.extend(signals_from_report(instruction_report, source=f"{source}:instruction_trace_report", scenario_ids=scenario_ids))
+        replay_targets = report.get("replay_targets") if isinstance(report.get("replay_targets"), dict) else {}
+        for symbol in string_items(replay_targets.get("symbols")):
+            out.append(trace_signal("replay_target_function", symbol=symbol, role="function", source=source, weight=88))
+        for symbol in string_items(replay_targets.get("watch_symbols")):
+            out.append(trace_signal("replay_target_watch", symbol=symbol, role="watch", source=source, weight=88))
+    elif kind == "unified_debugger_compare_plan":
+        out.extend(signals_from_compare_plan(report, source=source, scenario_ids=scenario_ids))
     elif kind == "unified_debugger_content_scenarios":
         for scenario in dict_items(report.get("scenarios")):
             if content_scenario_selected(scenario, scenario_ids=scenario_ids):
@@ -562,9 +624,50 @@ def signals_from_report(report: dict[str, Any], *, source: str, scenario_ids: tu
     elif kind == "unified_debugger_state_space":
         if state_space_selected(report, scenario_ids=scenario_ids):
             out.extend(signals_from_state_space_report(report, source=source))
+    elif kind == "unified_debugger_minimization_plan":
+        out.extend(signals_from_state_patch_minimization(report, source=source))
     else:
         collect_generic_report_signals(report, source=source, out=out)
     return [item for item in out if item.get("symbol")]
+
+
+def signals_from_compare_plan(
+    report: dict[str, Any],
+    *,
+    source: str,
+    scenario_ids: tuple[str, ...],
+) -> list[dict[str, Any]]:
+    selected_ids = {str(item) for item in scenario_ids if item}
+    out: list[dict[str, Any]] = []
+    for match in dict_items(report.get("matches")):
+        match_scenario_ids = set(string_items(match.get("scenario_ids")))
+        if selected_ids and match_scenario_ids and not selected_ids.intersection(match_scenario_ids):
+            continue
+        weight = 96 if match.get("id") == "content_fuzz_behavioral_mirror" else 70
+        for symbol in string_items(match.get("related_symbols")):
+            out.append(trace_signal("compare_match_symbol", symbol=symbol, role="", source=source, weight=weight))
+        for command in [
+            *string_items(match.get("commands")),
+            *string_items(match.get("materialization_commands")),
+        ]:
+            for symbol in symbols_from_command(command):
+                out.append(trace_signal("compare_match_command_symbol", symbol=symbol, role="", source=source, weight=max(60, weight - 8)))
+    return out
+
+
+def symbols_from_command(command: str) -> list[str]:
+    out: list[str] = []
+    parts = command_parts(command)
+    for index, part in enumerate(parts):
+        if part in {"--symbol", "--watch-symbol", "--sink-symbol"} and index + 1 < len(parts):
+            out.extend(command_symbol_values(parts[index + 1]))
+        elif part.startswith("--symbol=") or part.startswith("--watch-symbol=") or part.startswith("--sink-symbol="):
+            out.extend(command_symbol_values(part.split("=", 1)[1]))
+    return unique_list(out)
+
+
+def command_symbol_values(value: str) -> list[str]:
+    return [item.strip() for item in str(value).split(",") if item.strip()]
 
 
 def signals_from_content_scenario(scenario: dict[str, Any], *, source: str) -> list[dict[str, Any]]:
@@ -624,6 +727,18 @@ def signals_from_state_space_report(report: dict[str, Any], *, source: str) -> l
     return out
 
 
+def signals_from_state_patch_minimization(report: dict[str, Any], *, source: str) -> list[dict[str, Any]]:
+    minimization = report.get("state_patch_minimization")
+    if not isinstance(minimization, dict) or not minimization.get("attempted"):
+        return []
+    out: list[dict[str, Any]] = []
+    for symbol in state_patch_minimization_source_symbols(minimization):
+        out.append(trace_signal("trace_index_function", symbol=symbol, role="function", source=source, weight=106))
+    for symbol in state_patch_minimization_watch_symbols(minimization):
+        out.append(trace_signal("content_state_watch", symbol=symbol, role="watch", source=source, weight=108))
+    return out
+
+
 def state_space_patch_records(report: dict[str, Any]) -> list[dict[str, Any]]:
     state_space = report.get("state_space") if isinstance(report.get("state_space"), dict) else {}
     execution = report.get("execution") if isinstance(report.get("execution"), dict) else {}
@@ -635,13 +750,139 @@ def state_space_patch_records(report: dict[str, Any]) -> list[dict[str, Any]]:
     ]
 
 
+def instruction_trace_watch_addresses_from_reports(loaded_reports: list[dict[str, Any]]) -> list[str]:
+    addresses: list[str] = []
+    for loaded in loaded_reports:
+        data = loaded.get("data")
+        if not isinstance(data, dict):
+            continue
+        minimization = data.get("state_patch_minimization")
+        if isinstance(minimization, dict) and minimization.get("attempted"):
+            addresses.extend(state_patch_minimization_watch_addresses(minimization))
+    return unique_list(addresses)
+
+
+def instruction_trace_output_addresses_from_reports(loaded_reports: list[dict[str, Any]]) -> list[str]:
+    addresses: list[str] = []
+    for loaded in loaded_reports:
+        data = loaded.get("data")
+        if isinstance(data, dict):
+            collect_output_addresses(data, addresses=addresses, in_output=False)
+    return unique_list(addresses)
+
+
+def collect_output_addresses(value: Any, *, addresses: list[str], in_output: bool) -> None:
+    if isinstance(value, dict):
+        for key, nested in value.items():
+            lowered = str(key).lower()
+            if lowered in {"output", "outputs", "observed_output", "observed_outputs", "expected_output", "expected_outputs"}:
+                collect_output_addresses(nested, addresses=addresses, in_output=True)
+                continue
+            if lowered in {"output_address", "output_addresses", "output_watch_address", "output_watch_addresses"} or (
+                in_output and lowered in {"address", "bank_address", "watch_address", "sink_address"}
+            ):
+                addresses.extend(string_items(nested))
+            collect_output_addresses(nested, addresses=addresses, in_output=in_output)
+    elif isinstance(value, list):
+        for item in value:
+            collect_output_addresses(item, addresses=addresses, in_output=in_output)
+
+
+def instruction_trace_watch_size_from_reports(loaded_reports: list[dict[str, Any]]) -> int:
+    sizes: list[int] = []
+    for loaded in loaded_reports:
+        data = loaded.get("data")
+        if not isinstance(data, dict):
+            continue
+        minimization = data.get("state_patch_minimization")
+        if isinstance(minimization, dict) and minimization.get("attempted"):
+            sizes.append(positive_int(minimization.get("watch_size")))
+        collect_output_sizes(data, sizes=sizes, in_output=False)
+    return max((size for size in sizes if size > 0), default=1)
+
+
+def collect_output_sizes(value: Any, *, sizes: list[int], in_output: bool) -> None:
+    if isinstance(value, dict):
+        for key, nested in value.items():
+            lowered = str(key).lower()
+            if lowered in {"output", "outputs", "observed_output", "observed_outputs", "expected_output", "expected_outputs"}:
+                collect_output_sizes(nested, sizes=sizes, in_output=True)
+                continue
+            if lowered in {"output_size", "output_watch_size"} or (in_output and lowered in {"size", "watch_size", "sink_size"}):
+                size = positive_int(nested)
+                if size:
+                    sizes.append(size)
+            collect_output_sizes(nested, sizes=sizes, in_output=in_output)
+    elif isinstance(value, list):
+        for item in value:
+            collect_output_sizes(item, sizes=sizes, in_output=in_output)
+
+
+def state_patch_minimization_source_symbols(item: dict[str, Any]) -> list[str]:
+    symbols = string_items(item.get("source_symbols"))
+    for result in dict_items(item.get("results")):
+        symbols.extend(string_items(result.get("source_symbols")))
+    return unique_list(base_label(symbol) or symbol for symbol in symbols if symbol)
+
+
+def state_patch_minimization_watch_symbols(item: dict[str, Any]) -> list[str]:
+    symbols = [
+        *string_items(item.get("watch_symbols")),
+        *string_items(item.get("semantic_watch_symbols")),
+    ]
+    for _address, origin in source_mem_parts(item):
+        if origin:
+            symbols.append(origin)
+    for result in dict_items(item.get("results")):
+        symbols.extend(string_items(result.get("semantic_watch_symbols")))
+        for _address, origin in source_mem_parts(result):
+            if origin:
+                symbols.append(origin)
+    return unique_list(base_label(symbol) or symbol for symbol in symbols if symbol)
+
+
+def state_patch_minimization_watch_addresses(item: dict[str, Any]) -> list[str]:
+    addresses = [
+        *string_items(item.get("watch_addresses")),
+        *[address for address, _origin in source_mem_parts(item)],
+    ]
+    for result in dict_items(item.get("results")):
+        addresses.extend(string_items(result.get("semantic_watch_addresses")))
+        addresses.extend(string_items(result.get("semantic_replay_watch_addresses")))
+        addresses.extend(address for address, _origin in source_mem_parts(result))
+    return unique_list(addresses)
+
+
+def source_mem_parts(item: dict[str, Any]) -> list[tuple[str, str]]:
+    out: list[tuple[str, str]] = []
+    for raw in string_items(item.get("source_mems")):
+        text = str(raw).strip()
+        if not text:
+            continue
+        if "=" in text:
+            address, origin = text.split("=", 1)
+            out.append((address.strip(), origin.strip()))
+        else:
+            out.append((text, ""))
+    return out
+
+
 def collect_generic_report_signals(data: Any, *, source: str, out: list[dict[str, Any]]) -> None:
     if isinstance(data, dict):
         for key, value in data.items():
             lowered = str(key).lower()
+            if lowered in {"output", "outputs", "observed_output", "observed_outputs", "expected_output", "expected_outputs"}:
+                collect_output_report_signals(value, source=source, out=out)
+                continue
             if lowered in {"pc_label", "pc_symbol", "source_symbol", "routine", "function"}:
                 for symbol in string_items(value):
                     out.append(trace_signal("trace_index_function", symbol=base_label(symbol), role="function", source=source))
+            elif lowered in {"producer_symbol", "producer_symbols", "trace_symbol", "trace_symbols", "function_symbol", "function_symbols"}:
+                for symbol in string_items(value):
+                    out.append(trace_signal("output_function", symbol=base_label(symbol), role="function", source=source))
+            elif lowered in {"output_symbol", "output_symbols", "output_state_symbol", "output_state_symbols", "output_watch_symbol", "output_watch_symbols"}:
+                for symbol in string_items(value):
+                    out.append(trace_signal("output_watch", symbol=symbol, role="watch", source=source))
             elif lowered in {"watch", "target", "sink", "state_symbol"}:
                 for symbol in string_items(value):
                     out.append(trace_signal("trace_index_state", symbol=symbol, role="watch", source=source))
@@ -649,6 +890,22 @@ def collect_generic_report_signals(data: Any, *, source: str, out: list[dict[str
     elif isinstance(data, list):
         for item in data:
             collect_generic_report_signals(item, source=source, out=out)
+
+
+def collect_output_report_signals(data: Any, *, source: str, out: list[dict[str, Any]]) -> None:
+    if isinstance(data, dict):
+        for key, value in data.items():
+            lowered = str(key).lower()
+            if lowered in {"producer_symbol", "producer_symbols", "trace_symbol", "trace_symbols", "function_symbol", "function_symbols", "source_function", "source_functions", "routine", "function"}:
+                for symbol in string_items(value):
+                    out.append(trace_signal("output_function", symbol=base_label(symbol), role="function", source=source))
+            elif lowered in {"symbol", "state_symbol", "watch_symbol", "sink_symbol", "output_symbol", "output_symbols", "output_state_symbol", "output_state_symbols"}:
+                for symbol in string_items(value):
+                    out.append(trace_signal("output_watch", symbol=symbol, role="watch", source=source))
+            collect_output_report_signals(value, source=source, out=out)
+    elif isinstance(data, list):
+        for item in data:
+            collect_output_report_signals(item, source=source, out=out)
 
 
 def signals_from_source_file(
@@ -690,13 +947,13 @@ def signals_from_symptom(symptom: str) -> list[dict[str, Any]]:
     ]
 
 
-def trace_signal(signal_type: str, *, symbol: str, source: str, role: str = "") -> dict[str, Any]:
+def trace_signal(signal_type: str, *, symbol: str, source: str, role: str = "", weight: int | None = None) -> dict[str, Any]:
     return {
         "type": signal_type,
         "role": role,
         "symbol": base_label(str(symbol)) or str(symbol),
         "source": source,
-        "weight": SIGNAL_WEIGHT.get(signal_type, 40),
+        "weight": int(weight) if weight is not None else SIGNAL_WEIGHT.get(signal_type, 40),
     }
 
 
@@ -736,17 +993,19 @@ def execute_instruction_trace(
     save_state: Path | None,
     plans: list[dict[str, Any]],
     watches: list[dict[str, Any]],
+    input_playback: dict[str, Any],
     symbol_table: dict[str, dict[str, Any]],
     symbols_path: Path,
     frames: int,
     max_frames: int,
-) -> tuple[list[dict[str, Any]], list[str]]:
+) -> tuple[list[dict[str, Any]], list[str], list[dict[str, Any]]]:
     pyboy = trace_runtime.open_pyboy(
         rom,
         "PyBoy is required for unified instruction tracing. Import failed",
     )
     trace_runtime.disable_realtime(pyboy)
     records: list[dict[str, Any]] = []
+    played_inputs: list[dict[str, Any]] = []
     hooked: list[tuple[int, int]] = []
     errors: list[str] = []
     try:
@@ -768,12 +1027,18 @@ def execute_instruction_trace(
                             instruction=row,
                             function=function,
                             watches=watches,
+                            symbol_table=symbol_table,
                         ))
                     return callback
 
                 pyboy.hook_register(bank, pc, make_callback(instruction, str(plan["symbol"])), None)
                 hooked.append((bank, pc))
-        pyboy.tick(frames, False, False)
+        if input_playback.get("event_count"):
+            for frame in range(frames):
+                played_inputs.extend(play_inputs_for_frame(pyboy, input_playback, frame))
+                pyboy.tick(1, False, False)
+        else:
+            pyboy.tick(frames, False, False)
     except Exception as exc:
         errors.append(f"instruction trace capture failed: {exc}")
     finally:
@@ -786,7 +1051,7 @@ def execute_instruction_trace(
             pyboy.stop(save=False)
         except TypeError:
             pyboy.stop()
-    return records, errors
+    return records, errors, played_inputs
 
 
 def runtime_instruction_record(
@@ -795,8 +1060,11 @@ def runtime_instruction_record(
     instruction: dict[str, Any],
     function: str,
     watches: list[dict[str, Any]],
+    symbol_table: dict[str, dict[str, Any]],
 ) -> dict[str, Any]:
     registers = register_snapshot(pyboy)
+    bank_state = runtime_bank_state(pyboy, symbol_table=symbol_table)
+    watch_value_specs = runtime_watch_value_specs(pyboy=pyboy, watches=watches)
     regs = {
         name: parse_hex_register(registers.get(f"register_{name.lower()}", "0"))
         for name in ("A", "F", "B", "C", "D", "E", "H", "L", "SP", "PC")
@@ -819,12 +1087,74 @@ def runtime_instruction_record(
         "mnemonic": instruction["mnemonic"],
         "regs": regs,
         "registers": registers,
+        "bank_state": bank_state,
         "watch_values": {
-            watch["name"]: bytes_hex(read_watch_bytes(pyboy, watch))
-            for watch in watches
-            if watch.get("found")
+            sample["name"]: sample["value_hex"]
+            for sample in watch_value_specs
         },
+        "watch_value_specs": watch_value_specs,
     }
+
+
+def runtime_watch_value_specs(*, pyboy: Any, watches: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    samples: list[dict[str, Any]] = []
+    for watch in watches:
+        if not watch.get("found"):
+            continue
+        address = int(watch["address"])
+        bank = watch.get("bank")
+        sample = {
+            "name": str(watch.get("name", "")),
+            "value_hex": bytes_hex(read_watch_bytes(pyboy, watch)),
+            "address": address,
+            "address_hex": f"{address & 0xFFFF:04X}",
+            "bank": int(bank) if bank is not None else None,
+            "bank_address": str(watch.get("bank_address", "")),
+            "size": int(watch.get("size", 1)),
+            "address_watch": bool(watch.get("address_watch", False)),
+            "raw": str(watch.get("raw", "")),
+            "symbol": str(watch.get("symbol", "")),
+        }
+        samples.append(sample)
+    return samples
+
+
+def runtime_bank_state(pyboy: Any, *, symbol_table: dict[str, dict[str, Any]]) -> dict[str, int]:
+    wram_raw = safe_memory_byte(pyboy, 0xFF70)
+    vram_raw = safe_memory_byte(pyboy, 0xFF4F)
+    wram_bank = wram_raw & 0x07
+    if wram_bank == 0:
+        wram_bank = 1
+    state = {
+        "wram": wram_bank,
+        "wram_raw": wram_raw,
+        "vram": vram_raw & 0x01,
+        "vram_raw": vram_raw,
+    }
+    rom_bank = runtime_symbol_byte(pyboy, symbol_table=symbol_table, symbol="hROMBank")
+    if rom_bank is not None:
+        state["rom"] = rom_bank
+    loaded_rom_bank = runtime_symbol_byte(pyboy, symbol_table=symbol_table, symbol="hLoadedROMBank")
+    if loaded_rom_bank is not None:
+        state["loaded_rom"] = loaded_rom_bank
+    return state
+
+
+def runtime_symbol_byte(pyboy: Any, *, symbol_table: dict[str, dict[str, Any]], symbol: str) -> int | None:
+    entry = symbol_table.get(symbol)
+    if not entry:
+        return None
+    try:
+        return safe_memory_byte(pyboy, int(entry["address"]))
+    except (TypeError, ValueError, KeyError):
+        return None
+
+
+def safe_memory_byte(pyboy: Any, address: int) -> int:
+    try:
+        return int(pyboy.memory[address]) & 0xFF
+    except Exception:
+        return 0
 
 
 def build_execution_validation(
@@ -855,8 +1185,14 @@ def build_execution_validation(
     watch_symbols = [
         str(watch.get("name", ""))
         for watch in watches
-        if watch.get("found") and watch.get("name")
+        if watch.get("found") and not watch.get("address_watch") and watch.get("name")
     ]
+    watch_addresses = [
+        str(watch.get("raw") or watch.get("bank_address") or watch.get("name") or "")
+        for watch in watches
+        if watch.get("found") and watch.get("address_watch")
+    ]
+    watch_count = len(watch_symbols) + len(watch_addresses)
     hook_count = sum(int(plan.get("hook_count", 0)) for plan in plans)
     captured_frame_count = len(records)
     warnings: list[str] = []
@@ -894,9 +1230,11 @@ def build_execution_validation(
         "hit_function_symbols": hit_functions,
         "missing_function_symbols": missing_functions,
         "watch_symbols": watch_symbols,
-        "watch_count": len(watch_symbols),
+        "watch_addresses": watch_addresses,
+        "watch_count": watch_count,
+        "watch_address_count": len(watch_addresses),
         "trace_record_limit_hit": execute and captured_frame_count >= max_frames,
-        "ready_for_dynamic_taint": execute and captured_frame_count > 0 and bool(watch_symbols),
+        "ready_for_dynamic_taint": execute and captured_frame_count > 0 and watch_count > 0,
         "warnings": warnings,
         "errors": errors,
     }
@@ -946,6 +1284,8 @@ def build_commands(
     function_symbols: tuple[str, ...],
     selected_function_symbols: tuple[str, ...],
     watch_symbols: tuple[str, ...],
+    watch_addresses: tuple[str, ...],
+    watch_size: int,
     reports: tuple[str, ...],
     scenario_ids: tuple[str, ...],
     changed_files: tuple[str, ...],
@@ -953,14 +1293,18 @@ def build_commands(
     rom_path: str,
     symbols_path: str,
     save_state: str,
+    input_logs: tuple[str, ...],
     frames: int,
     require_hit: bool,
     out_trace: str,
 ) -> list[str]:
     trace_path = out_trace or ".local\\tmp\\debugger_instruction_trace.jsonl"
+    trace_path_arg = cmd_arg(trace_path)
     args = ["--rom", cmd_arg(rom_path), "--symbols", cmd_arg(symbols_path), "--frames", str(frames)]
     if save_state:
         args.extend(["--save-state", cmd_arg(save_state)])
+    for input_log in input_logs:
+        args.extend(["--input-log", cmd_arg(input_log)])
     for report in reports:
         args.extend(["--report", cmd_arg(report)])
     for scenario_id in scenario_ids:
@@ -973,15 +1317,26 @@ def build_commands(
         args.extend(["--symbol", cmd_arg(symbol)])
     for watch in watch_symbols:
         args.extend(["--watch-symbol", cmd_arg(watch)])
+    for address in watch_addresses:
+        args.extend(["--watch-address", cmd_arg(command_address_arg(address))])
+    if watch_addresses and watch_size != 1:
+        args.extend(["--watch-size", str(watch_size)])
     if require_hit:
         args.append("--require-hit")
     args.extend(["--execute", "--out-trace", cmd_arg(trace_path)])
     commands = ["python -m tools.debugger trace-instructions " + " ".join(args)]
-    commands.append(f"python -m tools.debugger trace-index --trace {trace_path}")
-    commands.append(f"python -m tools.debugger minimize --trace {trace_path} --expect event=control_flow")
+    commands.append(f"python -m tools.debugger trace-index --trace {trace_path_arg}")
+    commands.append(f"python -m tools.debugger minimize --trace {trace_path_arg} --expect event=control_flow")
     for watch in watch_symbols[:4]:
-        commands.append(f"python -m tools.debugger dynamic-taint --trace {trace_path} --sink-symbol {watch} --source-reg <register-or-origin>")
-        commands.append(f"python -m tools.debugger expect --trace {trace_path} --expect contains={watch}")
+        commands.append(f"python -m tools.debugger dynamic-taint --trace {trace_path_arg} --sink-symbol {watch} --source-reg <register-or-origin>")
+        commands.append(f"python -m tools.debugger expect --trace {trace_path_arg} --expect contains={watch}")
+    for address in watch_addresses[:4]:
+        sink_address = command_address_arg(sink_address_arg(address))
+        sink_size_arg = f" --sink-size {watch_size}" if watch_size != 1 else ""
+        commands.append(
+            f"python -m tools.debugger dynamic-taint --trace {trace_path_arg} --sink-address {cmd_arg(sink_address)}{sink_size_arg} --source-reg <register-or-origin>"
+        )
+        commands.append(f"python -m tools.debugger expect --trace {trace_path_arg} --expect contains={cmd_arg(command_address_arg(address))}")
     return unique_list(commands)
 
 
@@ -1045,8 +1400,23 @@ def cmd_arg(value: str) -> str:
     if not text:
         return '""'
     if any(char.isspace() for char in text):
-        return json.dumps(text)
+        return '"' + text.replace('"', '\\"') + '"'
     return text
+
+
+def sink_address_arg(value: str) -> str:
+    text = str(value).strip()
+    if "=" in text:
+        return text.split("=", 1)[1].strip()
+    return text
+
+
+def positive_int(value: Any) -> int:
+    try:
+        number = int(value)
+    except (TypeError, ValueError):
+        return 0
+    return number if number > 0 else 0
 
 
 def unique_list(values: Any) -> list[str]:

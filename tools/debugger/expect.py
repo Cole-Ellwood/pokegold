@@ -9,7 +9,7 @@ from .localize import normalize_path
 from .provenance import display_path, resolve_path
 from .reporting import load_reports
 from .trace_index import build_trace_index_report, unique_list
-from .workflow import command_is_runnable
+from .workflow import command_address_arg, command_is_runnable
 
 
 EVENT_MATCH_FIELDS = (
@@ -134,6 +134,8 @@ def build_expectation_report(
         "evidence_scenario_count": len(evidence["scenario_ids"]),
         "evidence_state_precondition_count": len(evidence["state_preconditions"]),
         "evidence_state_patch_count": len(evidence["state_patches"]),
+        "evidence_framebuffer_count": len(evidence["framebuffers"]),
+        "evidence_audio_snapshot_count": len(evidence["audio_snapshots"]),
         "source_artifact_count": len(loaded_sources),
         "expectations": results,
         "evidence_summary": {
@@ -144,6 +146,8 @@ def build_expectation_report(
             "scenario_ids": sorted(evidence["scenario_ids"])[:80],
             "state_preconditions": evidence["state_preconditions"][:20],
             "state_patches": evidence["state_patches"][:20],
+            "framebuffers": evidence["framebuffers"][:20],
+            "audio_snapshots": audio_snapshot_summary(evidence["audio_snapshots"])[:20],
             "source_artifacts": evidence["source_artifacts"][:20],
             "report_errors": evidence["errors"][:20],
             "report_warnings": evidence["warnings"][:20],
@@ -294,6 +298,33 @@ def parse_cli_expectation(raw: str) -> dict[str, Any]:
         return parse_state_patch_expectation(text.removeprefix("state-patch:"))
     if text.startswith("state-patch="):
         return parse_state_patch_expectation(text.removeprefix("state-patch="))
+    if text.startswith("framebuffer:"):
+        value = text.removeprefix("framebuffer:")
+        return {"id": f"cli_framebuffer_{safe_name(value)}", "type": "framebuffer_observed", "framebuffer": value, "source": "cli"}
+    if text.startswith("framebuffer="):
+        value = text.removeprefix("framebuffer=")
+        return {"id": f"cli_framebuffer_{safe_name(value)}", "type": "framebuffer_observed", "framebuffer": value, "source": "cli"}
+    if text.startswith("framebuffer-sha256="):
+        value = text.removeprefix("framebuffer-sha256=")
+        return {"id": f"cli_framebuffer_{safe_name(value)}", "type": "framebuffer_observed", "sha256": value, "source": "cli"}
+    if text.startswith("audio-register:"):
+        return parse_audio_named_value_expectation("audio_register", text.removeprefix("audio-register:"))
+    if text.startswith("audio-register="):
+        return parse_audio_named_value_expectation("audio_register", text.removeprefix("audio-register="))
+    if text.startswith("audio-symbol:"):
+        return parse_audio_named_value_expectation("audio_symbol", text.removeprefix("audio-symbol:"))
+    if text.startswith("audio-symbol="):
+        return parse_audio_named_value_expectation("audio_symbol", text.removeprefix("audio-symbol="))
+    if text.startswith("audio-state:"):
+        return parse_audio_named_value_expectation("audio_state_key", text.removeprefix("audio-state:"))
+    if text.startswith("audio-state="):
+        return parse_audio_named_value_expectation("audio_state_key", text.removeprefix("audio-state="))
+    if text.startswith("audio-wave-sha256:"):
+        value = text.removeprefix("audio-wave-sha256:")
+        return {"id": f"cli_audio_wave_{safe_name(value)}", "type": "audio_snapshot_observed", "audio_wave_sha256": value, "source": "cli"}
+    if text.startswith("audio-wave-sha256="):
+        value = text.removeprefix("audio-wave-sha256=")
+        return {"id": f"cli_audio_wave_{safe_name(value)}", "type": "audio_snapshot_observed", "audio_wave_sha256": value, "source": "cli"}
     if text.startswith("event:"):
         event_type = text[6:]
         return {"id": f"cli_event_{safe_name(event_type)}", "type": "event_observed", "event_type": event_type, "source": "cli"}
@@ -327,6 +358,24 @@ def parse_cli_expectation(raw: str) -> dict[str, Any]:
         "contains": text,
         "source": "cli",
     }
+
+
+def parse_audio_named_value_expectation(field: str, value: str) -> dict[str, Any]:
+    name = value.strip()
+    expected = ""
+    for separator in ("=", ":"):
+        if separator in name:
+            name, expected = name.split(separator, 1)
+            break
+    fields = {
+        "id": f"cli_audio_{safe_name(field)}_{safe_name(name)}",
+        "type": "audio_snapshot_observed",
+        field: name.strip(),
+        "source": "cli",
+    }
+    if expected.strip():
+        fields["value"] = expected.strip()
+    return fields
 
 
 def parse_precondition_expectation(value: str) -> dict[str, Any]:
@@ -483,6 +532,15 @@ def infer_expectation_type(expectation: dict[str, Any]) -> str:
         return "precondition_observed"
     if expectation.get("patch_symbol") or expectation.get("state_patch"):
         return "state_patch_observed"
+    if (
+        expectation.get("audio_register")
+        or expectation.get("audio_symbol")
+        or expectation.get("audio_state_key")
+        or expectation.get("audio_wave_sha256")
+    ):
+        return "audio_snapshot_observed"
+    if expectation.get("framebuffer") or expectation.get("framebuffer_sha256") or expectation.get("sha256"):
+        return "framebuffer_observed"
     if expectation.get("symbol"):
         return "symbol_observed"
     if expectation.get("rule_id") or expectation.get("rule"):
@@ -512,6 +570,8 @@ def collect_evidence(
         "scenario_ids": set(),
         "state_preconditions": [],
         "state_patches": [],
+        "framebuffers": [],
+        "audio_snapshots": [],
         "texts": [],
         "errors": [],
         "warnings": [],
@@ -599,8 +659,14 @@ def collect_report_evidence(data: Any, *, source: str, evidence: dict[str, Any])
 
 
 def collect_structured_state_evidence(data: dict[str, Any], *, source: str, evidence: dict[str, Any]) -> None:
+    if data.get("kind") in {"event_runtime_materialization", "event_runtime_materialization_route"}:
+        return
     if data.get("kind") == "unified_debugger_content_state_materialization":
         collect_content_state_patch_evidence(data, source=source, evidence=evidence)
+    if data.get("kind") == "unified_debugger_visual_snapshot":
+        collect_visual_snapshot_evidence(data, source=source, evidence=evidence)
+    if data.get("kind") == "unified_debugger_audio_snapshot":
+        collect_audio_snapshot_evidence(data, source=source, evidence=evidence)
     collect_generic_state_patch_evidence(data, source=source, evidence=evidence)
     scenario_id = scenario_id_from_record(data)
     if scenario_id:
@@ -626,16 +692,93 @@ def collect_structured_state_evidence(data: dict[str, Any], *, source: str, evid
         )
 
 
+def collect_visual_snapshot_evidence(data: dict[str, Any], *, source: str, evidence: dict[str, Any]) -> None:
+    screen_frame = data.get("screen_frame") if isinstance(data.get("screen_frame"), dict) else {}
+    if not screen_frame:
+        return
+    record = {
+        "source": source,
+        "framebuffer": str(screen_frame.get("framebuffer") or data.get("framebuffer") or ""),
+        "sha256": str(screen_frame.get("sha256") or ""),
+        "screen_source": str(screen_frame.get("screen_source") or ""),
+        "width": int(screen_frame.get("width", 0) or 0),
+        "height": int(screen_frame.get("height", 0) or 0),
+        "mode": str(screen_frame.get("mode") or ""),
+        "proof_status": str(data.get("proof_status") or ""),
+    }
+    if record not in evidence["framebuffers"]:
+        evidence["framebuffers"].append(record)
+    if record["framebuffer"]:
+        evidence["texts"].append(record["framebuffer"])
+    if record["sha256"]:
+        evidence["texts"].append(record["sha256"])
+
+
+def collect_audio_snapshot_evidence(data: dict[str, Any], *, source: str, evidence: dict[str, Any]) -> None:
+    if not data.get("executed"):
+        return
+    registers = data.get("registers") if isinstance(data.get("registers"), dict) else {}
+    register_details = dict_items(data.get("register_details"))
+    symbol_state = dict_items(data.get("symbol_state"))
+    audio_state = data.get("audio_state") if isinstance(data.get("audio_state"), dict) else {}
+    wave_ram = data.get("wave_ram") if isinstance(data.get("wave_ram"), dict) else {}
+    record = {
+        "source": source,
+        "proof_status": str(data.get("proof_status") or ""),
+        "registers": {str(key): str(value) for key, value in registers.items()},
+        "register_details": register_details,
+        "symbol_state": symbol_state,
+        "audio_state": dict(audio_state),
+        "wave_ram": dict(wave_ram),
+    }
+    if record not in evidence["audio_snapshots"]:
+        evidence["audio_snapshots"].append(record)
+    for name, value in record["registers"].items():
+        evidence["symbols"].add(name)
+        evidence["texts"].extend([name, value])
+    for detail in register_details:
+        if detail.get("name"):
+            evidence["symbols"].add(str(detail["name"]))
+        for address in address_variants(str(detail.get("address", ""))):
+            evidence["addresses"].add(address)
+    for item in symbol_state:
+        if item.get("symbol"):
+            evidence["symbols"].add(base_label(str(item["symbol"])))
+        for address in address_variants(str(item.get("address", ""))):
+            evidence["addresses"].add(address)
+        if item.get("value_hex"):
+            evidence["texts"].append(str(item["value_hex"]))
+    if wave_ram.get("address"):
+        for address in address_variants(str(wave_ram["address"])):
+            evidence["addresses"].add(address)
+    for key in ("sha256", "sample_hex"):
+        if wave_ram.get(key):
+            evidence["texts"].append(str(wave_ram[key]))
+
+
 def collect_content_state_patch_evidence(data: dict[str, Any], *, source: str, evidence: dict[str, Any]) -> None:
     out_state = normalize_path(str(data.get("out_state", "")))
     executed = bool(data.get("executed"))
-    for materialization in dict_items(data.get("materializations")):
+    for index, materialization in enumerate(dict_items(data.get("materializations")), 1):
         scenario_id = str(materialization.get("scenario_id", ""))
         source_file = normalize_path(str(materialization.get("source_file", "")))
         if scenario_id:
             evidence["scenario_ids"].add(scenario_id)
         if source_file:
             evidence["source_files"].add(source_file)
+        precondition_kind = str(materialization.get("precondition_kind", ""))
+        if precondition_kind:
+            add_state_precondition_evidence(
+                {**materialization, "kind": precondition_kind},
+                scenario={
+                    "scenario_id": scenario_id,
+                    "scenario_type": str(materialization.get("scenario_type", "")),
+                    "source_file": source_file,
+                },
+                source=source,
+                index=index,
+                evidence=evidence,
+            )
         for patch in dict_items(materialization.get("patches")):
             add_state_patch_evidence(
                 patch,
@@ -738,7 +881,7 @@ def add_state_precondition_evidence(
     evidence: dict[str, Any],
 ) -> None:
     values = precondition.get("values") if isinstance(precondition.get("values"), dict) else {}
-    scenario_id = str(precondition.get("scenario_id") or scenario.get("id") or scenario.get("scenario_id") or "")
+    scenario_id = str(precondition.get("scenario_id") or scenario.get("scenario_id") or scenario.get("id") or "")
     kind = str(precondition.get("kind", ""))
     source_file = normalize_path(
         str(
@@ -749,6 +892,17 @@ def add_state_precondition_evidence(
         )
     )
     watch_symbols = unique_list(string_items(precondition.get("watch_symbols")))
+    outputs = dict_items(precondition.get("outputs"))
+    output_symbols = unique_list(
+        str(output.get("state_symbol") or output.get("output_symbol") or "")
+        for output in outputs
+        if output.get("state_symbol") or output.get("output_symbol")
+    )
+    output_addresses = unique_list(
+        str(output.get("address") or output.get("watch_address") or output.get("sink_address") or "")
+        for output in outputs
+        if output.get("address") or output.get("watch_address") or output.get("sink_address")
+    )
     record = {
         "id": str(precondition.get("id") or f"{scenario_id}_precondition_{index}"),
         "scenario_id": scenario_id,
@@ -757,6 +911,8 @@ def add_state_precondition_evidence(
         "source_file": source_file,
         "values": dict(values),
         "watch_symbols": watch_symbols,
+        "output_symbols": output_symbols,
+        "output_addresses": output_addresses,
         "source": source,
     }
     if record not in evidence["state_preconditions"]:
@@ -767,6 +923,11 @@ def add_state_precondition_evidence(
         evidence["source_files"].add(source_file)
     for symbol in watch_symbols:
         evidence["symbols"].add(base_label(symbol))
+    for symbol in output_symbols:
+        evidence["symbols"].add(base_label(symbol))
+    for raw_address in output_addresses:
+        for address in address_variants(raw_address):
+            evidence["addresses"].add(address)
 
 
 def scenario_id_from_record(data: dict[str, Any]) -> str:
@@ -833,6 +994,12 @@ def evaluate_expectation(expectation: dict[str, Any], *, evidence: dict[str, Any
     elif expectation_type == "state_patch_observed":
         matches = matching_state_patches(expectation, evidence=evidence)
         result = count_result(expectation, observed_count=len(matches), evidence=state_patch_evidence(matches))
+    elif expectation_type == "framebuffer_observed":
+        matches = matching_framebuffers(expectation, evidence=evidence)
+        result = count_result(expectation, observed_count=len(matches), evidence=framebuffer_evidence(matches))
+    elif expectation_type == "audio_snapshot_observed":
+        matches = matching_audio_snapshots(expectation, evidence=evidence)
+        result = count_result(expectation, observed_count=len(matches), evidence=audio_snapshot_evidence(matches, expectation))
     elif expectation_type == "event_observed":
         matches = matching_events(expectation, evidence=evidence)
         result = count_result(expectation, observed_count=len(matches), evidence=event_evidence(matches))
@@ -897,8 +1064,25 @@ def precondition_matches(precondition: dict[str, Any], expectation: dict[str, An
     if expected_source and normalize_path(str(precondition.get("source_file", ""))) != normalize_path(expected_source):
         return False
     expected_symbol = str(expectation.get("symbol") or expectation.get("watch_symbol") or "")
-    if expected_symbol and base_label(expected_symbol) not in {base_label(symbol) for symbol in precondition.get("watch_symbols", [])}:
+    precondition_symbols = {
+        base_label(symbol)
+        for symbol in [
+            *precondition.get("watch_symbols", []),
+            *precondition.get("output_symbols", []),
+        ]
+    }
+    if expected_symbol and base_label(expected_symbol) not in precondition_symbols:
         return False
+    expected_address = str(expectation.get("address") or expectation.get("bank_address") or "")
+    if expected_address:
+        expected_variants = set(address_variants(expected_address))
+        precondition_variants = {
+            address
+            for raw_address in precondition.get("output_addresses", [])
+            for address in address_variants(str(raw_address))
+        }
+        if not expected_variants.intersection(precondition_variants):
+            return False
     value_key = str(expectation.get("value_key", ""))
     expected_value = str(expectation.get("value", expectation.get("expected", "")))
     values = precondition.get("values") if isinstance(precondition.get("values"), dict) else {}
@@ -989,6 +1173,120 @@ def truthy_expectation(value: Any) -> bool:
         return False
     text = str(value).strip().lower()
     return bool(text) and text not in {"0", "false", "no", "off"}
+
+
+def matching_framebuffers(expectation: dict[str, Any], *, evidence: dict[str, Any]) -> list[dict[str, Any]]:
+    expected = normalize_framebuffer_digest(
+        str(
+            expectation.get("framebuffer")
+            or expectation.get("framebuffer_sha256")
+            or expectation.get("sha256")
+            or expectation.get("expected")
+            or ""
+        )
+    )
+    if not expected:
+        return []
+    return [
+        frame
+        for frame in evidence["framebuffers"]
+        if expected
+        in {
+            normalize_framebuffer_digest(str(frame.get("framebuffer", ""))),
+            normalize_framebuffer_digest(str(frame.get("sha256", ""))),
+        }
+    ]
+
+
+def normalize_framebuffer_digest(value: str) -> str:
+    return value.strip().lower().removeprefix("sha256:")
+
+
+def matching_audio_snapshots(expectation: dict[str, Any], *, evidence: dict[str, Any]) -> list[dict[str, Any]]:
+    return [
+        snapshot
+        for snapshot in evidence["audio_snapshots"]
+        if audio_snapshot_matches(snapshot, expectation)
+    ]
+
+
+def audio_snapshot_matches(snapshot: dict[str, Any], expectation: dict[str, Any]) -> bool:
+    register = str(expectation.get("audio_register") or "").strip()
+    if register and not audio_register_matches(snapshot, register, str(expectation.get("value", ""))):
+        return False
+    symbol = str(expectation.get("audio_symbol") or "").strip()
+    if symbol and not audio_symbol_matches(snapshot, symbol, str(expectation.get("value", ""))):
+        return False
+    state_key = str(expectation.get("audio_state_key") or "").strip()
+    if state_key and not audio_state_matches(snapshot, state_key, expectation.get("value", "")):
+        return False
+    wave_sha256 = str(expectation.get("audio_wave_sha256") or "").strip()
+    if wave_sha256 and normalize_digest(wave_sha256) != normalize_digest(
+        str(snapshot.get("wave_ram", {}).get("sha256", ""))
+    ):
+        return False
+    return bool(register or symbol or state_key or wave_sha256)
+
+
+def audio_register_matches(snapshot: dict[str, Any], register: str, expected_value: str) -> bool:
+    registers = snapshot.get("registers") if isinstance(snapshot.get("registers"), dict) else {}
+    for name, value in registers.items():
+        if name.lower() != register.lower():
+            continue
+        return not expected_value or hex_value_matches(value, expected_value)
+    return False
+
+
+def audio_symbol_matches(snapshot: dict[str, Any], symbol: str, expected_value: str) -> bool:
+    for item in dict_items(snapshot.get("symbol_state")):
+        if base_label(str(item.get("symbol", ""))) != base_label(symbol):
+            continue
+        return not expected_value or hex_value_matches(str(item.get("value_hex", "")), expected_value)
+    return False
+
+
+def audio_state_matches(snapshot: dict[str, Any], key: str, expected_value: Any) -> bool:
+    state = snapshot.get("audio_state") if isinstance(snapshot.get("audio_state"), dict) else {}
+    if key not in state:
+        return False
+    if expected_value in {None, ""}:
+        return True
+    return scalar_value_matches(state[key], expected_value)
+
+
+def hex_value_matches(observed: Any, expected: str) -> bool:
+    observed_text = normalize_hex_value(str(observed))
+    expected_text = normalize_hex_value(str(expected))
+    return bool(expected_text) and observed_text == expected_text
+
+
+def normalize_hex_value(value: str) -> str:
+    text = value.strip().lower().removeprefix("$").removeprefix("0x")
+    if not text:
+        return ""
+    try:
+        number = int(text, 16)
+    except ValueError:
+        return text
+    width = max(2, len(text) + (len(text) % 2))
+    return f"{number:0{width}x}"
+
+
+def normalize_digest(value: str) -> str:
+    return value.strip().lower().removeprefix("sha256:")
+
+
+def scalar_value_matches(observed: Any, expected: Any) -> bool:
+    expected_text = str(expected).strip().lower()
+    if isinstance(observed, bool):
+        return expected_text in {str(observed).lower(), "1" if observed else "0", "yes" if observed else "no"}
+    numeric = parse_int_text(str(expected))
+    if numeric is not None:
+        try:
+            return int(observed) == numeric
+        except (TypeError, ValueError):
+            pass
+    return str(observed).strip().lower() == expected_text
 
 
 def matching_events(expectation: dict[str, Any], *, evidence: dict[str, Any]) -> list[dict[str, Any]]:
@@ -1082,13 +1380,13 @@ def commands_for_expectation(expectation: dict[str, Any], result: dict[str, Any]
     commands = []
     scenario_id = str(expectation.get("scenario_id", ""))
     if scenario_id:
-        commands.append(f"python -m tools.debugger setup --report <content_scenarios.json> --scenario-id {scenario_id}")
-        commands.append(f"python -m tools.debugger replay --report <content_scenarios.json> --scenario-id {scenario_id}")
+        commands.append(f"python -m tools.debugger setup --report <content_scenarios-or-fuzz.json> --scenario-id {scenario_id}")
+        commands.append(f"python -m tools.debugger replay --report <content_scenarios-or-fuzz.json> --scenario-id {scenario_id}")
     if expectation.get("type") == "precondition_observed" or expectation.get("precondition_kind"):
         precondition_kind = str(expectation.get("precondition_kind", "<kind>"))
         scenario_arg = f",scenario={scenario_id}" if scenario_id else ""
         commands.append(
-            f"python -m tools.debugger expect --report <content_scenarios.json> --expect precondition={precondition_kind}{scenario_arg}"
+            f"python -m tools.debugger expect --report <content_scenarios-or-fuzz.json> --expect precondition={precondition_kind}{scenario_arg}"
         )
     if expectation.get("type") == "state_patch_observed" or expectation.get("patch_symbol") or expectation.get("state_patch"):
         patch_symbol = str(
@@ -1124,13 +1422,62 @@ def commands_for_expectation(expectation: dict[str, Any], result: dict[str, Any]
         )
     if expectation.get("contains"):
         commands.append("python -m tools.debugger expect --source-file <source_file> --expect contains=<text>")
+    if expectation.get("type") == "framebuffer_observed" or expectation.get("framebuffer") or expectation.get("sha256"):
+        expected = expectation.get("framebuffer") or expectation.get("sha256") or "<sha256>"
+        commands.append("python -m tools.debugger visual-snapshot --rom pokegold.gbc --symbols pokegold.sym --save-state <state> --execute --json-out visual_snapshot.json")
+        commands.append(f"python -m tools.debugger expect --report visual_snapshot.json --expect framebuffer={expected}")
+    if expectation.get("type") == "audio_snapshot_observed" or any(
+        expectation.get(key)
+        for key in ("audio_register", "audio_symbol", "audio_state_key", "audio_wave_sha256")
+    ):
+        commands.append("python -m tools.debugger audio-snapshot --rom pokegold.gbc --symbols pokegold.sym --save-state <state> --execute --json-out audio_snapshot.json")
+        commands.append(f"python -m tools.debugger expect --report audio_snapshot.json --expect {audio_expectation_cli(expectation)}")
     if expectation.get("address") or expectation.get("bank_address"):
         address = expectation.get("address") or expectation.get("bank_address")
-        commands.append(f"python -m tools.debugger trace-index --address {address}")
+        command_address = command_address_arg(address)
+        watch_size = expectation_watch_size(expectation)
+        watch_size_arg = f" --watch-size {watch_size}" if watch_size != 1 else ""
+        sink_size_arg = f" --sink-size {watch_size}" if watch_size != 1 else ""
+        commands.append(f"python -m tools.debugger trace-index --address {command_address}")
+        commands.append(f"python -m tools.debugger localize --address {command_address}{watch_size_arg}")
+        commands.append(f"python -m tools.debugger setup --watch-address {command_address}{watch_size_arg}")
+        commands.append(f"python -m tools.debugger replay --watch-address {command_address}{watch_size_arg} --execute-watch")
+        commands.append(f"python -m tools.debugger watch --watch-address {command_address}{watch_size_arg} --execute")
+        commands.append(
+            f"python -m tools.debugger trace-instructions --symbol <function> --watch-address {command_address}{watch_size_arg} --execute --require-hit"
+        )
+        commands.append(
+            f"python -m tools.debugger dynamic-taint --report <watch-or-trace-report.json> --sink-address {command_address}{sink_size_arg}"
+        )
     if result["status"] == "failed":
         commands.append("python -m tools.debugger compare --symptom <expected_behavior>")
         commands.append("python -m tools.debugger generate --symptom <expected_behavior>")
     return unique_list(commands)
+
+
+def audio_expectation_cli(expectation: dict[str, Any]) -> str:
+    value = expectation.get("value", "")
+    suffix = f"={value}" if value not in {None, ""} else ""
+    if expectation.get("audio_register"):
+        return f"audio-register={expectation['audio_register']}{suffix}"
+    if expectation.get("audio_symbol"):
+        return f"audio-symbol={expectation['audio_symbol']}{suffix}"
+    if expectation.get("audio_state_key"):
+        return f"audio-state={expectation['audio_state_key']}{suffix}"
+    if expectation.get("audio_wave_sha256"):
+        return f"audio-wave-sha256={expectation['audio_wave_sha256']}"
+    return "audio-register=<register>=<value>"
+
+
+def expectation_watch_size(expectation: dict[str, Any]) -> int:
+    for key in ("watch_size", "sink_size", "size"):
+        try:
+            value = int(expectation.get(key, 0))
+        except (TypeError, ValueError):
+            continue
+        if value > 0:
+            return value
+    return 1
 
 
 def event_evidence(events: list[dict[str, Any]]) -> list[str]:
@@ -1162,6 +1509,71 @@ def state_patch_evidence(patches: list[dict[str, Any]]) -> list[str]:
         value = patch.get("value_hex") or patch.get("value") or "value"
         source_file = patch.get("source_file") or patch.get("source") or "source"
         out.append(f"{scenario_id} patches {symbol}={value} from {source_file}")
+    return out
+
+
+def framebuffer_evidence(frames: list[dict[str, Any]]) -> list[str]:
+    out = []
+    for frame in frames[:8]:
+        framebuffer = frame.get("framebuffer") or frame.get("sha256") or "framebuffer"
+        size = f"{frame.get('width', 0)}x{frame.get('height', 0)}"
+        out.append(f"{frame.get('source', 'visual')} captured {framebuffer} size={size}")
+    return out
+
+
+def audio_snapshot_evidence(snapshots: list[dict[str, Any]], expectation: dict[str, Any]) -> list[str]:
+    out = []
+    for snapshot in snapshots[:8]:
+        source = snapshot.get("source", "audio")
+        if expectation.get("audio_register"):
+            register = str(expectation["audio_register"])
+            value = audio_register_value(snapshot, register)
+            out.append(f"{source} captured {register}={value}")
+        elif expectation.get("audio_symbol"):
+            symbol = str(expectation["audio_symbol"])
+            value = audio_symbol_value(snapshot, symbol)
+            out.append(f"{source} captured {symbol}={value}")
+        elif expectation.get("audio_state_key"):
+            key = str(expectation["audio_state_key"])
+            state = snapshot.get("audio_state") if isinstance(snapshot.get("audio_state"), dict) else {}
+            out.append(f"{source} captured {key}={state.get(key)}")
+        elif expectation.get("audio_wave_sha256"):
+            wave = snapshot.get("wave_ram") if isinstance(snapshot.get("wave_ram"), dict) else {}
+            out.append(f"{source} captured wave_ram sha256={wave.get('sha256')}")
+        else:
+            out.append(f"{source} captured audio snapshot")
+    return out
+
+
+def audio_register_value(snapshot: dict[str, Any], register: str) -> str:
+    registers = snapshot.get("registers") if isinstance(snapshot.get("registers"), dict) else {}
+    for name, value in registers.items():
+        if name.lower() == register.lower():
+            return str(value)
+    return ""
+
+
+def audio_symbol_value(snapshot: dict[str, Any], symbol: str) -> str:
+    for item in dict_items(snapshot.get("symbol_state")):
+        if base_label(str(item.get("symbol", ""))) == base_label(symbol):
+            return str(item.get("value_hex", ""))
+    return ""
+
+
+def audio_snapshot_summary(snapshots: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    out = []
+    for snapshot in snapshots:
+        registers = snapshot.get("registers") if isinstance(snapshot.get("registers"), dict) else {}
+        wave = snapshot.get("wave_ram") if isinstance(snapshot.get("wave_ram"), dict) else {}
+        out.append(
+            {
+                "source": snapshot.get("source", ""),
+                "proof_status": snapshot.get("proof_status", ""),
+                "register_count": len(registers),
+                "symbol_state_count": len(dict_items(snapshot.get("symbol_state"))),
+                "wave_ram_sha256": wave.get("sha256", ""),
+            }
+        )
     return out
 
 

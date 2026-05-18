@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from .catalog import ROOT
-from .ranking import display_path, rank_findings, resolve_path
+from .ranking import display_path, proof_status_counts, rank_findings, resolve_path, with_proof_status
 
 
 REPORT_FORMATS = {"markdown", "html"}
@@ -17,6 +17,7 @@ SUMMARY_KEYS = (
     "passed",
     "status_counts",
     "artifact_count",
+    "packet_id",
     "error_count",
     "warning_count",
     "blocking_gap_count",
@@ -30,6 +31,7 @@ SUMMARY_KEYS = (
     "context_frames",
     "dynamic_context_event_count",
     "finding_count",
+    "proof_status_counts",
     "impact_count",
     "phase_count",
     "investigation_step_count",
@@ -56,6 +58,15 @@ SUMMARY_KEYS = (
     "content_scenario_count",
     "dynamic_event_count",
     "trace_observation_count",
+    "effect_event_count",
+    "memory_read_count",
+    "memory_write_count",
+    "stack_read_count",
+    "stack_write_count",
+    "io_read_count",
+    "io_write_count",
+    "watch_read_count",
+    "watch_write_count",
     "all_event_count",
     "matched_event_count",
     "write_event_count",
@@ -64,20 +75,26 @@ SUMMARY_KEYS = (
     "causal_link_count",
     "reverse_attribution_count",
     "write_attribution_count",
+    "trace_synthesis_route_count",
+    "trace_synthesis_executed",
     "sink_count",
     "contributor_count",
     "target_symbol_count",
     "target_file_count",
+    "node_count",
+    "edge_count",
     "path_count",
     "timeline_event_count",
     "waterfall_step_count",
     "graph_node_count",
     "graph_edge_count",
     "target_count",
+    "result_count",
     "covered_target_count",
     "indirect_target_count",
     "uncovered_target_count",
     "coverage_ratio",
+    "covered_address_count",
     "scenario_count",
     "selected_scenario_count",
     "surface_count",
@@ -140,6 +157,7 @@ def build_static_report(
         "requested_report_count": len(reports),
         "loaded_report_count": len(loaded_reports),
         "finding_count": len(findings),
+        "proof_status_counts": proof_status_counts(findings),
         "error_count": len(errors),
         "errors": errors,
         "sources": [summary["source"] for summary in summaries],
@@ -186,7 +204,7 @@ def collect_ranked_findings(
         if not data:
             continue
         if data.get("kind") == "unified_debugger_ranked_findings":
-            findings.extend(list(data.get("findings", [])))
+            findings.extend(with_proof_status(item) for item in dict_items(data.get("findings")))
         else:
             ranking_inputs.append(report_path)
 
@@ -212,7 +230,7 @@ def summarize_input_report(source: str, report: dict[str, Any]) -> dict[str, Any
         "source": source,
         "kind": str(report.get("kind", "<missing-kind>")),
         "summary": summarize_status(report),
-        "commands": collect_commands(report),
+        "commands": collect_commands(report, source=source),
         "gaps": collect_gaps(report),
         "issues": collect_issues(report),
         "candidates": collect_candidates(report),
@@ -231,8 +249,17 @@ def summarize_status(report: dict[str, Any]) -> list[str]:
     return summary
 
 
-def collect_commands(report: dict[str, Any]) -> list[str]:
+def format_counts(counts: dict[str, int]) -> str:
+    return ", ".join(f"{name}={count}" for name, count in sorted(counts.items()) if count)
+
+
+def collect_commands(report: dict[str, Any], *, source: str = "") -> list[str]:
     commands: list[str] = []
+    state_patch_minimization = report.get("state_patch_minimization")
+    if isinstance(state_patch_minimization, dict) and source:
+        add_strings(commands, f"python -m tools.debugger provenance --report {source}")
+        add_strings(commands, f"python -m tools.debugger taint --report {source}")
+        add_strings(commands, f"python -m tools.debugger slice --report {source}")
     add_strings(commands, report.get("commands"))
     add_strings(commands, report.get("materialization_commands"))
     add_strings(commands, report.get("counterexample_commands"))
@@ -244,9 +271,13 @@ def collect_commands(report: dict[str, Any]) -> list[str]:
     evidence_minimization = report.get("evidence_minimization")
     if isinstance(evidence_minimization, dict) and evidence_minimization.get("out_trace"):
         add_strings(commands, f"python -m tools.debugger trace-index --trace {evidence_minimization['out_trace']}")
-    state_patch_minimization = report.get("state_patch_minimization")
     if isinstance(state_patch_minimization, dict):
         add_strings(commands, state_patch_minimization.get("commands"))
+    trace_synthesis_plan = report.get("trace_synthesis_plan")
+    if isinstance(trace_synthesis_plan, dict):
+        add_strings(commands, trace_synthesis_plan.get("commands"))
+        for route in dict_items(trace_synthesis_plan.get("routes")):
+            add_strings(commands, route.get("commands"))
     for counterexample in dict_items(report.get("counterexamples")):
         add_strings(commands, counterexample.get("command"))
     for expectation in dict_items(report.get("expectations")):
@@ -257,6 +288,15 @@ def collect_commands(report: dict[str, Any]) -> list[str]:
         add_strings(commands, scenario.get("commands"))
         for probe in dict_items(scenario.get("behavioral_probes")):
             add_strings(commands, probe.get("command"))
+    for case in dict_items(report.get("fuzz_cases")):
+        add_strings(commands, case.get("commands"))
+        materialization_request = case.get("materialization_request")
+        if isinstance(materialization_request, dict):
+            add_strings(commands, materialization_request.get("commands"))
+        for probe in dict_items(case.get("behavioral_probes")):
+            add_strings(commands, probe.get("command"))
+    for campaign in dict_items(report.get("campaigns")):
+        add_strings(commands, campaign.get("commands"))
     for event in dict_items(report.get("events")):
         add_strings(commands, event.get("commands"))
     for path in dict_items(report.get("causal_paths")):
@@ -306,6 +346,8 @@ def collect_gaps(report: dict[str, Any]) -> list[str]:
         add_strings(gaps, match.get("gaps"))
     for generator in dict_items(report.get("generators")):
         add_strings(gaps, generator.get("gaps"))
+    for campaign in dict_items(report.get("campaigns")):
+        add_strings(gaps, campaign.get("gaps"))
     add_strings(gaps, report.get("known_limits"))
     for target in dict_items(report.get("uncovered_targets")):
         add_strings(gaps, f"uncovered {target.get('type', 'target')}: {target.get('id', '<unknown>')}")
@@ -349,6 +391,15 @@ def collect_issues(report: dict[str, Any]) -> list[str]:
             add_strings(issues, "instruction trace missed functions: " + ", ".join(string_items(validation.get("missing_function_symbols"))[:8]))
         if validation.get("trace_record_limit_hit"):
             add_strings(issues, "instruction trace reached record limit")
+    trace_synthesis_plan = report.get("trace_synthesis_plan")
+    if isinstance(trace_synthesis_plan, dict):
+        for route in dict_items(trace_synthesis_plan.get("routes")):
+            status = str(route.get("state_status", ""))
+            if status.startswith("requires"):
+                add_strings(
+                    issues,
+                    f"trace synthesis requires setup: {route.get('match_id') or route.get('id') or status}",
+                )
     return unique_list(issues)[:16]
 
 
@@ -365,14 +416,17 @@ def collect_candidates(report: dict[str, Any]) -> list[str]:
     for item in dict_items(report.get("items"))[:10]:
         candidates.append(
             f"I{item.get('impact_score', 0)} {item.get('type', 'impact')}: {item.get('title', '<unknown>')}"
+            f"{address_suffix(item)}{semantic_suffix(item)}"
         )
     for item in dict_items(report.get("top_impact"))[:10]:
         candidates.append(
             f"I{item.get('impact_score', 0)} {item.get('type', 'impact')}: {item.get('title', '<unknown>')}"
+            f"{address_suffix(item)}{semantic_suffix(item)}"
         )
     for finding in dict_items(report.get("top_findings"))[:10]:
         candidates.append(
             f"S{finding.get('severity', 0)} {finding.get('type', 'finding')}: {finding.get('title', '<unknown>')}"
+            f"{address_suffix(finding)}"
         )
     for produced in dict_items(report.get("reports"))[:10]:
         candidates.append(
@@ -381,6 +435,18 @@ def collect_candidates(report: dict[str, Any]) -> list[str]:
     for generator in dict_items(report.get("generators"))[:10]:
         candidates.append(
             f"{generator.get('status', 'unknown')} generator: {generator.get('id', '<unknown>')}"
+        )
+    for campaign in dict_items(report.get("campaigns"))[:10]:
+        sinks = ", ".join(
+            [
+                *string_items(campaign.get("related_symbols"))[:4],
+                *string_items(campaign.get("related_addresses"))[:4],
+            ]
+        )
+        candidates.append(
+            f"{campaign.get('proof_level', 'planned')} fuzz campaign: "
+            f"{campaign.get('id', '<unknown>')}"
+            f"{' sinks=' + sinks if sinks else ''}"
         )
     for scenario in dict_items(report.get("scenarios"))[:10]:
         if scenario.get("kind") == "unified_debugger_content_scenario" or scenario.get("scenario_type"):
@@ -393,6 +459,16 @@ def collect_candidates(report: dict[str, Any]) -> list[str]:
                 candidates.append(f"runtime helper: {symbol}")
             for symbol in string_items(runtime_targets.get("watch_symbols"))[:4]:
                 candidates.append(f"runtime watch: {symbol}")
+    for case in dict_items(report.get("fuzz_cases"))[:10]:
+        candidates.append(
+            f"{case.get('proof_level', 'fuzz')} fuzz case: "
+            f"{case.get('id', '<unknown>')} {case.get('fuzz_type', '')}".strip()
+        )
+        runtime_targets = case.get("runtime_targets") if isinstance(case.get("runtime_targets"), dict) else {}
+        for symbol in string_items(runtime_targets.get("trace_symbols"))[:4]:
+            candidates.append(f"fuzz runtime helper: {symbol}")
+        for symbol in string_items(runtime_targets.get("watch_symbols"))[:4]:
+            candidates.append(f"fuzz runtime watch: {symbol}")
     scenario_manifest = report.get("scenario_manifest")
     if isinstance(scenario_manifest, dict) and scenario_manifest.get("path"):
         state = "written" if scenario_manifest.get("written") else "planned"
@@ -414,9 +490,40 @@ def collect_candidates(report: dict[str, Any]) -> list[str]:
     state_patch_minimization = report.get("state_patch_minimization")
     if isinstance(state_patch_minimization, dict) and state_patch_minimization.get("attempted"):
         state = "preserved" if state_patch_minimization.get("preserved") else "failed"
+        watch_addresses = ", ".join(string_items(state_patch_minimization.get("watch_addresses"))[:4])
+        source_mems = ", ".join(string_items(state_patch_minimization.get("source_mems"))[:4])
+        reducer_surfaces = ", ".join(string_items(state_patch_minimization.get("semantic_reducer_surfaces"))[:6])
         candidates.append(
             f"{state} state-space patch minimization: {state_patch_minimization.get('original_patch_count', 0)} -> {state_patch_minimization.get('minimized_patch_count', 0)} patches"
+            f"{'; watch_addresses=' + watch_addresses if watch_addresses else ''}"
+            f"{'; source_mems=' + source_mems if source_mems else ''}"
+            f"; semantic_watch={state_patch_minimization.get('semantic_watch_rerun_count', 0)}/{state_patch_minimization.get('semantic_watch_rerun_attempt_count', 0)}"
+            f"; semantic_replay={state_patch_minimization.get('semantic_replay_rerun_count', 0)}/{state_patch_minimization.get('semantic_replay_rerun_attempt_count', 0)}"
+            f"{'; semantic_reducers=' + reducer_surfaces if reducer_surfaces else ''}"
         )
+        for route in dict_items(state_patch_minimization.get("semantic_reducer_routes"))[:8]:
+            commands = string_items(route.get("commands"))
+            candidates.append(
+                "semantic reducer route: "
+                f"{route.get('surface', 'general')} {route.get('id', '<unknown>')}"
+                f"{' source=' + route.get('source_file', '') if route.get('source_file') else ''}"
+                f" commands={len(commands)}"
+            )
+    trace_synthesis_plan = report.get("trace_synthesis_plan")
+    if isinstance(trace_synthesis_plan, dict):
+        for route in dict_items(trace_synthesis_plan.get("routes"))[:10]:
+            route_id = route.get("match_id") or route.get("id") or route.get("source_kind") or "route"
+            sinks = ", ".join(string_items(route.get("sink_symbols"))[:4] + string_items(route.get("sink_addresses"))[:4])
+            sources = ", ".join(trace_synthesis_related_sources(route)[:4])
+            source_mems = ", ".join(string_items(route.get("source_mems"))[:4])
+            candidates.append(
+                "trace synthesis: "
+                f"{route.get('state_status', 'planned')} {route_id}"
+                f"{' -> ' + route.get('trace_output', '') if route.get('trace_output') else ''}"
+                f"{' sources=' + sources if sources else ''}"
+                f"{' source_mems=' + source_mems if source_mems else ''}"
+                f"{' sinks=' + sinks if sinks else ''}"
+            )
     for expectation in dict_items(report.get("expectations"))[:10]:
         candidates.append(
             f"{expectation.get('status', 'unknown')} expectation: {expectation.get('id', '<unknown>')}"
@@ -448,6 +555,7 @@ def collect_candidates(report: dict[str, Any]) -> list[str]:
     for item in dict_items(report.get("write_attributions"))[:10]:
         candidates.append(
             f"C{item.get('confidence', 0)} dynamic write: {item.get('target', '<sink>')} at {item.get('pc_label', '<pc>')}"
+            f"{address_suffix(item)}"
         )
     for event in dict_items(report.get("events"))[:10]:
         state = event.get("state_symbol") or event.get("bank_address") or event.get("address") or "<unknown>"
@@ -504,6 +612,7 @@ def render_markdown_report(
         f"- Root: `{root}`",
         f"- Inputs: {len(summaries)} loaded / {requested_count} requested",
         f"- Normalized findings: {len(findings)}",
+        f"- Proof statuses: {format_counts(proof_status_counts(findings)) or 'none'}",
         f"- Input errors: {len(errors)}",
         "",
     ]
@@ -514,15 +623,17 @@ def render_markdown_report(
 
     lines.extend(["## Highest Priority Findings", ""])
     if findings:
-        lines.append("| Severity | Confidence | Type | Source | Finding |")
-        lines.append("| --- | --- | --- | --- | --- |")
+        lines.append("| Severity | Confidence | Proof | Type | Source | Finding |")
+        lines.append("| --- | --- | --- | --- | --- | --- |")
         for finding in findings[:30]:
+            proof_status = str(finding.get("proof_status", "planned_only"))
             lines.append(
                 "| "
                 + " | ".join(
                     (
                         str(finding.get("severity", "")),
                         f"{float(finding.get('confidence', 0.0)):.2f}",
+                        markdown_cell(proof_status),
                         markdown_cell(str(finding.get("type", ""))),
                         markdown_cell(str(finding.get("source", ""))),
                         markdown_cell(str(finding.get("title", ""))),
@@ -530,10 +641,18 @@ def render_markdown_report(
                 )
                 + " |"
             )
+            addresses = related_addresses(finding)
+            if addresses:
+                lines.append(
+                    "|  |  |  | addresses |  | "
+                    f"{markdown_cell(', '.join(f'`{address}`' for address in addresses[:6]))} |"
+                )
+            for factor in string_items(finding.get("semantic_factors"))[:2]:
+                lines.append(f"|  |  |  | semantic |  | {markdown_cell(truncate(str(factor)))} |")
             for evidence in finding.get("evidence", [])[:2]:
-                lines.append(f"|  |  | evidence |  | {markdown_cell(truncate(str(evidence)))} |")
+                lines.append(f"|  |  |  | evidence |  | {markdown_cell(truncate(str(evidence)))} |")
             for action in finding.get("next_actions", [])[:2]:
-                lines.append(f"|  |  | next |  | `{markdown_cell(truncate(str(action)))}` |")
+                lines.append(f"|  |  |  | next |  | `{markdown_cell(truncate(str(action)))}` |")
     else:
         lines.append("No normalized findings were produced from the input reports.")
     lines.append("")
@@ -579,18 +698,30 @@ def render_html_report(
 ) -> str:
     rows = []
     for finding in findings[:30]:
+        title = escape(str(finding.get("title", "")))
+        proof_status = escape(str(finding.get("proof_status", "planned_only")))
+        addresses = related_addresses(finding)
+        if addresses:
+            address_text = ", ".join(f"<code>{escape(address)}</code>" for address in addresses[:6])
+            title += f"<br><span class=\"meta\">Addresses: {address_text}</span>"
+        semantic = string_items(finding.get("semantic_factors"))
+        if semantic:
+            semantic_text = "; ".join(escape(item) for item in semantic[:3])
+            title += f"<br><span class=\"meta\">Semantic: {semantic_text}</span>"
         rows.append(
             "<tr>"
             f"<td>{escape(str(finding.get('severity', '')))}</td>"
             f"<td>{float(finding.get('confidence', 0.0)):.2f}</td>"
+            f"<td>{proof_status}</td>"
             f"<td>{escape(str(finding.get('type', '')))}</td>"
             f"<td>{escape(str(finding.get('source', '')))}</td>"
-            f"<td>{escape(str(finding.get('title', '')))}</td>"
+            f"<td>{title}</td>"
             "</tr>"
         )
     finding_table = "\n".join(rows) or (
-        "<tr><td colspan=\"5\">No normalized findings were produced.</td></tr>"
+        "<tr><td colspan=\"6\">No normalized findings were produced.</td></tr>"
     )
+    proof_summary = format_counts(proof_status_counts(findings)) or "none"
     return "\n".join(
         [
             "<!doctype html>",
@@ -612,12 +743,13 @@ def render_html_report(
             f"<li>Root: <code>{escape(str(root))}</code></li>",
             f"<li>Inputs: {len(summaries)} loaded / {requested_count} requested</li>",
             f"<li>Normalized findings: {len(findings)}</li>",
+            f"<li>Proof statuses: {escape(proof_summary)}</li>",
             f"<li>Input errors: {len(errors)}</li>",
             "</ul>",
             render_html_errors(errors),
             "<h2>Highest Priority Findings</h2>",
             "<table>",
-            "<thead><tr><th>Severity</th><th>Confidence</th><th>Type</th><th>Source</th><th>Finding</th></tr></thead>",
+            "<thead><tr><th>Severity</th><th>Confidence</th><th>Proof</th><th>Type</th><th>Source</th><th>Finding</th></tr></thead>",
             f"<tbody>{finding_table}</tbody>",
             "</table>",
             "<h2>Input Reports</h2>",
@@ -703,6 +835,64 @@ def string_items(value: Any) -> list[str]:
     out: list[str] = []
     add_strings(out, value)
     return out
+
+
+def related_addresses(item: dict[str, Any]) -> list[str]:
+    values: list[str] = []
+    add_strings(values, item.get("related_addresses"))
+    add_strings(values, item.get("bank_address"))
+    add_strings(values, item.get("address"))
+    return unique_list(values)
+
+
+def address_suffix(item: dict[str, Any]) -> str:
+    addresses = related_addresses(item)
+    if not addresses:
+        return ""
+    return " addresses=" + ", ".join(addresses[:4])
+
+
+def trace_synthesis_related_sources(route: dict[str, Any]) -> list[str]:
+    return unique_list(
+        [
+            *string_items(route.get("source_symbols")),
+            *source_mem_origins(route),
+        ]
+    )
+
+
+def source_mem_origins(route: dict[str, Any]) -> list[str]:
+    return unique_list(
+        [
+            origin
+            for _, origin in source_mem_parts(route)
+            if origin
+        ]
+    )
+
+
+def source_mem_parts(route: dict[str, Any]) -> list[tuple[str, str]]:
+    out: list[tuple[str, str]] = []
+    for value in string_items(route.get("source_mems")):
+        text = str(value).strip()
+        if not text:
+            continue
+        if "=" in text:
+            address, origin = text.split("=", 1)
+            out.append((address.strip(), origin.strip()))
+        else:
+            out.append((text, ""))
+    return out
+
+
+def semantic_suffix(item: dict[str, Any]) -> str:
+    factors = string_items(item.get("semantic_factors"))
+    if not factors and not item.get("semantic_score"):
+        return ""
+    if factors:
+        labels = ", ".join(str(factor).split(":", 1)[0] for factor in factors[:3])
+        return f" semantic={item.get('semantic_score', 0)}[{labels}]"
+    return f" semantic={item.get('semantic_score', 0)}"
 
 
 def instruction_trace_output_path(report: dict[str, Any]) -> str:

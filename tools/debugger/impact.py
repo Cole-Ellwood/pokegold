@@ -5,9 +5,21 @@ from pathlib import Path
 from typing import Any
 
 from .catalog import ROOT, triage_request
-from .ranking import SEVERITY_BASE, rank_findings
+from .evidence import merge_evidence_atoms
+from .ranking import (
+    SEVERITY_BASE,
+    materialized_save_state_delta,
+    minimized_state_patch_save_state_delta,
+    normalize_proof_status,
+    proof_status_counts,
+    proof_status_score,
+    rank_findings,
+    save_state_delta_evidence,
+    strongest_proof_status,
+    with_proof_status,
+)
 from .reporting import load_reports
-from .workflow import command_is_runnable
+from .workflow import command_address_arg, command_is_runnable
 
 
 TYPE_EVIDENCE_BONUS = {
@@ -16,8 +28,15 @@ TYPE_EVIDENCE_BONUS = {
     "workflow_failed": 25,
     "watch_hit": 24,
     "trace_event": 22,
+    "cpu_state_side_effect": 24,
+    "visual_snapshot": 16,
+    "audio_snapshot": 16,
     "reverse_attribution": 23,
+    "effect_trace_post_value_mismatch": 27,
+    "effect_trace_unmodeled_change": 25,
+    "dynamic_taint_unmodeled_write": 23,
     "expectation_failed": 28,
+    "mirror_passed": 3,
     "localization_candidate": 18,
     "compare_gap": 17,
     "mirror_uncovered": 16,
@@ -48,6 +67,19 @@ TYPE_EVIDENCE_BONUS = {
 }
 
 SURFACE_HINTS = (
+    (
+        "runtime_cpu_state",
+        "Runtime execution and CPU state",
+        34,
+        (
+            "cpu_state",
+            "halted",
+            "stopped",
+            "softlock",
+            "freeze",
+            "frozen",
+        ),
+    ),
     (
         "banking_abi",
         "ROM banking / ABI",
@@ -108,6 +140,32 @@ SURFACE_HINTS = (
         ),
     ),
     (
+        "battle_mechanics_items_hazards",
+        "Battle mechanics, items, and hazards",
+        33,
+        (
+            "engine/battle/move_effects/spikes",
+            "engine/battle/late_gen_held_items",
+            "engine/battle/type_passive_damage_mods",
+            "spikes",
+            "rapid spin",
+            "hazard",
+            "hazards",
+            "toxic",
+            "burn",
+            "paralysis",
+            "reflect",
+            "light screen",
+            "safeguard",
+            "substitute",
+            "held item",
+            "air balloon",
+            "choice",
+            "passive",
+            "contact",
+        ),
+    ),
+    (
         "battle_core",
         "Battle core",
         28,
@@ -163,6 +221,13 @@ SURFACE_HINTS = (
             "sfx",
             "menu",
             "window",
+            "visual_snapshot",
+            "audio_snapshot",
+            "wtilemap",
+            "wattrmap",
+            "wshadowoam",
+            "raud",
+            "audio",
         ),
     ),
     (
@@ -178,6 +243,300 @@ SURFACE_HINTS = (
     ),
 )
 WORD_RE = re.compile(r"[a-z0-9]+")
+SEMANTIC_RISK_FACTORS = (
+    (
+        "cpu_liveness_state",
+        "CPU halted/stopped liveness state",
+        14,
+        (
+            "cpu_state",
+            "halted",
+            "stopped",
+            "softlock",
+            "freeze",
+            "frozen",
+            "cpu liveness",
+        ),
+    ),
+    (
+        "memory_safety",
+        "memory-safety or banked-call risk",
+        16,
+        (
+            "farcall",
+            "clobber",
+            "hrombank",
+            "hloadedrombank",
+            "bankswitch",
+            "stack",
+            "crash",
+            "hang",
+            "corrupt",
+        ),
+    ),
+    (
+        "runtime_rom_proof",
+        "ROM-backed runtime state evidence",
+        13,
+        (
+            "watch_hit",
+            "trace_event",
+            "cpu_state_side_effect",
+            "effect_trace",
+            "effect_trace_post_value_mismatch",
+            "effect_trace_unmodeled_change",
+            "post_value_mismatch",
+            "unmodeled_observed_change",
+            "unattributed",
+            "reverse_attribution",
+            "dynamic write",
+            "pc_bank_address",
+            "captured_frames",
+            "out_state=",
+            "state-patch",
+        ),
+    ),
+    (
+        "failed_contract",
+        "failed expectation, mirror, or gate contract",
+        12,
+        (
+            "expectation_failed",
+            "gate_failed",
+            "content_mirror_failed",
+            "failed",
+            "mismatch",
+            "blocked",
+            "error",
+        ),
+    ),
+    (
+        "battle_mechanics_state",
+        "player-visible battle mechanics state",
+        12,
+        (
+            "spikes",
+            "rapid spin",
+            "hazard",
+            "toxic",
+            "burn",
+            "paralysis",
+            "reflect",
+            "light screen",
+            "safeguard",
+            "substitute",
+            "weather",
+            "held item",
+            "air balloon",
+            "choice",
+            "passive",
+        ),
+    ),
+    (
+        "progression_content_state",
+        "map, script, trainer, or item progression state",
+        8,
+        (
+            "warp",
+            "map",
+            "script",
+            "trainer",
+            "mart",
+            "item ball",
+            "hidden item",
+            "movement",
+            "text",
+        ),
+    ),
+    (
+        "runtime_probe_route",
+        "runtime replay, watch, trace, or materialization route",
+        9,
+        (
+            "behavioral_probe=",
+            "content_replay_route",
+            "content_runtime_watch_route",
+            "content_state_materialization_route",
+            "runtime_route=",
+            "watch_symbol=",
+            "trace_symbol=",
+            "--execute",
+        ),
+    ),
+    (
+        "script_vm_behavior",
+        "script VM, movement, or event-engine behavior",
+        10,
+        (
+            "script_entry",
+            "script_command_stream",
+            "runscriptcommand",
+            "callscript",
+            "movement_entry",
+            "applymovement",
+            "movement_engine",
+            "trainer",
+            "mart",
+            "callasm",
+        ),
+    ),
+    (
+        "audiovisual_content_state",
+        "graphics, audio, or UI presentation state",
+        7,
+        (
+            "audio_channel",
+            "audio_engine_entry",
+            "wmusicid",
+            "playmusic",
+            "gfx/",
+            "tileset",
+            "palette",
+            "sprite",
+            "incbin",
+            "2bpp",
+            "asset",
+            "menu",
+            "window",
+        ),
+    ),
+    (
+        "balance_data_state",
+        "Pokemon, move, or trainer balance data",
+        7,
+        (
+            "base_stats",
+            "learnsets",
+            "evolutions",
+            "data/moves",
+            "data/pokemon",
+            "trainer parties",
+            "moveset",
+        ),
+    ),
+)
+SEMANTIC_CALIBRATION_PROFILES = (
+    (
+        "runtime_cpu_state",
+        ("runtime_cpu_state",),
+        "calibrated CPU liveness runtime severity",
+        6,
+        ("cpu_liveness_state",),
+        ("runtime_rom_proof", "failed_contract"),
+        (
+            "cpu_state",
+            "halted",
+            "stopped",
+            "softlock",
+            "freeze",
+            "pc_bank_address",
+            "effect trace",
+        ),
+    ),
+    (
+        "banking_abi",
+        ("banking_abi",),
+        "calibrated banking/ABI runtime severity",
+        6,
+        (),
+        ("memory_safety", "runtime_rom_proof", "failed_contract"),
+        (
+            "gate_failed",
+            "expectation_failed",
+            "watch_hit",
+            "trace_event",
+            "reverse_attribution",
+            "dynamic write",
+            "pc_bank_address",
+            "clobber",
+            "crash",
+            "hang",
+        ),
+    ),
+    (
+        "battle_mechanics_items_hazards",
+        ("battle_mechanics_items_hazards",),
+        "calibrated item/hazard/status mechanics severity",
+        5,
+        ("battle_mechanics_state",),
+        ("runtime_rom_proof", "failed_contract"),
+        (
+            "gate_failed",
+            "expectation_failed",
+            "watch_hit",
+            "trace_event",
+            "reverse_attribution",
+            "dynamic write",
+            "pc_bank_address",
+            "state-patch",
+        ),
+    ),
+    (
+        "maps_scripts_text",
+        ("maps_scripts_text",),
+        "calibrated map/script/text runtime severity",
+        5,
+        (),
+        ("progression_content_state", "script_vm_behavior", "runtime_probe_route", "failed_contract"),
+        (
+            "content_scenario",
+            "content_state_",
+            "content_mirror_failed",
+            "scenario_type=",
+            "precondition=",
+            "behavioral_probe=",
+            "runtime_route=",
+            "watch_symbol=",
+            "trace_symbol=",
+            "state-patch",
+            "trace-instructions",
+            "expectation_failed",
+            "gate_failed",
+            "compare_gap",
+        ),
+    ),
+    (
+        "graphics_audio_ui",
+        ("graphics_audio_ui",),
+        "calibrated graphics/audio/UI runtime severity",
+        5,
+        (),
+        ("audiovisual_content_state", "runtime_probe_route", "failed_contract"),
+        (
+            "content_scenario",
+            "content_state_",
+            "content_mirror_failed",
+            "audio_engine_entry",
+            "audio_channel",
+            "behavioral_probe=",
+            "runtime_route=",
+            "watch_symbol=",
+            "trace_symbol=",
+            "asset=",
+            "incbin",
+            "2bpp",
+            "expectation_failed",
+            "gate_failed",
+        ),
+    ),
+    (
+        "pokemon_move_data",
+        ("pokemon_move_data",),
+        "calibrated Pokemon/move-data gameplay severity",
+        4,
+        (),
+        ("balance_data_state", "failed_contract", "runtime_probe_route"),
+        (
+            "content_scenario",
+            "content_state_",
+            "content_mirror_failed",
+            "expectation_failed",
+            "gate_failed",
+            "compare_gap",
+            "state-patch",
+        ),
+    ),
+)
 
 
 def build_impact_report(
@@ -201,10 +560,13 @@ def build_impact_report(
         items.extend(items_from_report(loaded["data"], source=loaded["source"]))
     items.extend(input_items(changed_files=changed_files, symbols=symbols, symptom=symptom, root=root))
 
+    learning_profiles = impact_learning_profiles(loaded_reports)
     impacted = [
         score_item(item)
         for item in merge_items(items)
     ]
+    if learning_profiles:
+        impacted = [apply_learned_impact(item, learning_profiles) for item in impacted]
     impacted.sort(
         key=lambda item: (
             -int(item["impact_score"]),
@@ -232,6 +594,8 @@ def build_impact_report(
         "symbols": list(symbols),
         "symptom": symptom,
         "impact_count": len(impacted),
+        "proof_status_counts": proof_status_counts(impacted),
+        "learned_profile_count": len(learning_profiles),
         "error_count": len(errors),
         "errors": errors,
         "items": impacted,
@@ -240,8 +604,8 @@ def build_impact_report(
         "runnable_commands": [command for command in commands if command_is_runnable(command)][:30],
         "blocked_commands": [command for command in commands if not command_is_runnable(command)][:30],
         "known_limits": [
-            "Impact is a deterministic ROM-aware priority model, not proof of a bug by itself.",
-            "Subsystem-specific semantic impact is still strongest for damage and Boss AI until every ROM surface has dynamic mirrors and reducers.",
+            "Impact ranking is prioritization, not proof of a bug by itself.",
+            "Learned impact priors only apply when supplied feedback reports match a surface plus concrete file, symbol, item type, or semantic factor evidence.",
         ],
     }
 
@@ -267,8 +631,15 @@ def item_from_finding(finding: dict[str, Any]) -> dict[str, Any]:
         confidence=float(finding.get("confidence", 0.5)),
         evidence=string_items(finding.get("evidence")),
         next_actions=string_items(finding.get("next_actions")),
-        related_symbols=related["symbols"],
-        related_files=related["files"],
+        related_symbols=unique_list(
+            [*string_items(finding.get("related_symbols")), *related["symbols"]]
+        ),
+        related_files=unique_list(
+            [*string_items(finding.get("related_files")), *related["files"]]
+        ),
+        related_addresses=string_items(finding.get("related_addresses")),
+        proof_status=str(finding.get("proof_status", "")),
+        evidence_atoms=finding.get("evidence_atoms"),
     )
 
 
@@ -341,6 +712,7 @@ def watch_items(report: dict[str, Any], *, source: str) -> list[dict[str, Any]]:
     for event in dict_items(report.get("events")):
         watch = str(event.get("watch", ""))
         pc_label = str(event.get("pc_label", ""))
+        address = event_related_address(event)
         out.append(
             impact_item(
                 item_type="watch_hit",
@@ -350,11 +722,13 @@ def watch_items(report: dict[str, Any], *, source: str) -> list[dict[str, Any]]:
                 confidence=0.82,
                 evidence=[
                     f"{event.get('old_hex')} -> {event.get('new_hex')}",
+                    f"address={address}" if address else "",
                     pc_label,
                     f"context_frames={event.get('dynamic_context', {}).get('context_frame_count', 0)}",
                 ],
                 next_actions=string_items(event.get("commands")) or string_items(event.get("suggested_commands")),
-                related_symbols=[watch, pc_label],
+                related_symbols=unique_list([symbol_if_not_address(watch), pc_label]),
+                related_addresses=[address] if address else [],
             )
         )
     return out
@@ -362,6 +736,20 @@ def watch_items(report: dict[str, Any], *, source: str) -> list[dict[str, Any]]:
 
 def taint_items(report: dict[str, Any], *, source: str) -> list[dict[str, Any]]:
     out = []
+    for route in trace_synthesis_routes(report)[:20]:
+        out.append(
+            impact_item(
+                item_type="trace_synthesis_planned",
+                title=trace_synthesis_title(route),
+                source=source,
+                severity=trace_synthesis_severity(route),
+                confidence=0.78,
+                evidence=trace_synthesis_evidence(route),
+                next_actions=string_items(route.get("commands"))[:8] or string_items(report.get("commands"))[:8],
+                related_symbols=trace_synthesis_related_symbols(route),
+                related_addresses=trace_synthesis_related_addresses(route),
+            )
+        )
     for path in dict_items(report.get("paths"))[:20]:
         out.append(
             impact_item(
@@ -374,9 +762,13 @@ def taint_items(report: dict[str, Any], *, source: str) -> list[dict[str, Any]]:
                 next_actions=string_items(path.get("commands"))[:5],
                 related_symbols=string_items(path.get("related_symbols")),
                 related_files=string_items(path.get("related_files")),
+                related_addresses=string_items(path.get("related_addresses")),
+                proof_status=str(path.get("proof_status") or ""),
+                evidence_atoms=path.get("evidence_atoms"),
             )
         )
     for attribution in dict_items(report.get("write_attributions"))[:20]:
+        addresses = attribution_related_addresses(attribution)
         out.append(
             impact_item(
                 item_type="reverse_attribution",
@@ -384,12 +776,103 @@ def taint_items(report: dict[str, Any], *, source: str) -> list[dict[str, Any]]:
                 source=source,
                 severity=min(92, max(SEVERITY_BASE["reverse_attribution"], int(attribution.get("score", 0)))),
                 confidence=float(attribution.get("confidence", 0.72)),
-                evidence=string_items(attribution.get("evidence"))[:5],
+                evidence=[
+                    *string_items(attribution.get("evidence"))[:5],
+                    *attribution_proof_evidence(attribution),
+                    *[f"address={address}" for address in addresses],
+                ],
                 next_actions=string_items(attribution.get("commands"))[:5],
                 related_symbols=string_items(attribution.get("related_symbols")),
                 related_files=string_items(attribution.get("related_files")),
+                related_addresses=addresses,
+                proof_status=str(attribution.get("proof_status") or ""),
+                evidence_atoms=attribution.get("evidence_atoms"),
             )
         )
+    return out
+
+
+def trace_synthesis_routes(report: dict[str, Any]) -> list[dict[str, Any]]:
+    plan = report.get("trace_synthesis_plan") if isinstance(report.get("trace_synthesis_plan"), dict) else {}
+    return dict_items(plan.get("routes"))
+
+
+def trace_synthesis_title(route: dict[str, Any]) -> str:
+    match_id = str(route.get("match_id") or route.get("source_kind") or route.get("id") or "route")
+    return f"Dynamic-taint trace synthesis planned: {match_id}"
+
+
+def trace_synthesis_severity(route: dict[str, Any]) -> int:
+    status = str(route.get("state_status", ""))
+    base = SEVERITY_BASE["trace_synthesis_planned"]
+    return base + 4 if status.startswith("requires") else base
+
+
+def trace_synthesis_evidence(route: dict[str, Any]) -> list[str]:
+    return [
+        f"source_kind={route.get('source_kind', '')}",
+        f"match_id={route.get('match_id', '')}",
+        f"state_status={route.get('state_status', '')}",
+        f"scenario_ids={','.join(string_items(route.get('scenario_ids'))[:6])}",
+        f"source_symbols={','.join(string_items(route.get('source_symbols'))[:8])}",
+        f"source_mems={','.join(string_items(route.get('source_mems'))[:8])}",
+        f"sink_symbols={','.join(string_items(route.get('sink_symbols'))[:8])}",
+        f"sink_addresses={','.join(string_items(route.get('sink_addresses'))[:8])}",
+        f"save_state={route.get('save_state', '')}",
+        f"trace_output={route.get('trace_output', '')}",
+    ]
+
+
+def trace_synthesis_related_symbols(route: dict[str, Any]) -> list[str]:
+    return unique_list(
+        [
+            *string_items(route.get("sink_symbols")),
+            *string_items(route.get("source_symbols")),
+            *source_mem_origins(route),
+        ]
+    )
+
+
+def trace_synthesis_related_addresses(route: dict[str, Any]) -> list[str]:
+    return unique_addresses(
+        [
+            *string_items(route.get("sink_addresses")),
+            *source_mem_addresses(route),
+        ]
+    )
+
+
+def source_mem_origins(route: dict[str, Any]) -> list[str]:
+    return unique_list(
+        [
+            origin
+            for _, origin in source_mem_parts(route)
+            if origin
+        ]
+    )
+
+
+def source_mem_addresses(route: dict[str, Any]) -> list[str]:
+    return unique_list(
+        [
+            address
+            for address, _ in source_mem_parts(route)
+            if address
+        ]
+    )
+
+
+def source_mem_parts(route: dict[str, Any]) -> list[tuple[str, str]]:
+    out: list[tuple[str, str]] = []
+    for value in string_items(route.get("source_mems")):
+        text = str(value).strip()
+        if not text:
+            continue
+        if "=" in text:
+            address, origin = text.split("=", 1)
+            out.append((address.strip(), origin.strip()))
+        else:
+            out.append((text, ""))
     return out
 
 
@@ -409,6 +892,7 @@ def instruction_trace_items(report: dict[str, Any], *, source: str) -> list[dict
                 next_actions=string_items(report.get("commands"))[:8]
                 or ["python -m tools.debugger setup --report <instruction_trace.json>"],
                 related_symbols=instruction_trace_related_symbols(report, validation),
+                related_addresses=instruction_trace_related_addresses(report, validation),
             )
         )
     missing_functions = string_items(validation.get("missing_function_symbols"))
@@ -423,6 +907,7 @@ def instruction_trace_items(report: dict[str, Any], *, source: str) -> list[dict
                 evidence=instruction_trace_validation_evidence(report, validation),
                 next_actions=string_items(report.get("commands"))[:8],
                 related_symbols=instruction_trace_related_symbols(report, validation),
+                related_addresses=instruction_trace_related_addresses(report, validation),
             )
         )
     if validation.get("trace_record_limit_hit"):
@@ -436,6 +921,7 @@ def instruction_trace_items(report: dict[str, Any], *, source: str) -> list[dict
                 evidence=instruction_trace_validation_evidence(report, validation),
                 next_actions=instruction_trace_limit_commands(report, trace_path=trace_path),
                 related_symbols=instruction_trace_related_symbols(report, validation),
+                related_addresses=instruction_trace_related_addresses(report, validation),
             )
         )
     if validation.get("ready_for_dynamic_taint"):
@@ -449,6 +935,7 @@ def instruction_trace_items(report: dict[str, Any], *, source: str) -> list[dict
                 evidence=instruction_trace_validation_evidence(report, validation),
                 next_actions=instruction_trace_dynamic_taint_commands(report, validation, trace_path=trace_path),
                 related_symbols=instruction_trace_related_symbols(report, validation),
+                related_addresses=instruction_trace_related_addresses(report, validation),
             )
         )
     for function in dict_items(report.get("functions"))[:12]:
@@ -481,6 +968,7 @@ def instruction_trace_validation_evidence(report: dict[str, Any], validation: di
         f"hit_functions={','.join(string_items(validation.get('hit_function_symbols'))[:8])}",
         f"missing_functions={','.join(string_items(validation.get('missing_function_symbols'))[:8])}",
         f"watch_symbols={','.join(string_items(validation.get('watch_symbols'))[:8])}",
+        f"watch_addresses={','.join(instruction_trace_related_addresses(report, validation)[:8])}",
         f"trace={instruction_trace_output_path(report)}",
         f"save_state={report.get('effective_save_state') or report.get('save_state', '')}",
         *string_items(report.get("warnings"))[:4],
@@ -492,12 +980,72 @@ def instruction_trace_output_path(report: dict[str, Any]) -> str:
     return str(trace_output.get("path") or "")
 
 
+def instruction_trace_watch_sinks(report: dict[str, Any], validation: dict[str, Any]) -> dict[str, list[str]]:
+    symbols: list[str] = []
+    addresses: list[str] = []
+    address_watch_names: set[str] = set()
+    for watch in dict_items(report.get("watches")):
+        name = str(watch.get("name") or watch.get("symbol") or watch.get("watch") or "")
+        if watch.get("address_watch"):
+            if name:
+                address_watch_names.add(name)
+            address = (
+                instruction_trace_address_arg(str(watch.get("raw") or ""))
+                or instruction_trace_address_arg(str(watch.get("bank_address") or ""))
+                or instruction_trace_address_arg(name)
+            )
+            if address:
+                addresses.append(address)
+        elif name:
+            symbols.append(name)
+    for address in string_items(report.get("watch_addresses")):
+        parsed = instruction_trace_address_arg(address)
+        if parsed:
+            addresses.append(parsed)
+    for address in string_items(validation.get("watch_addresses")):
+        parsed = instruction_trace_address_arg(address)
+        if parsed:
+            addresses.append(parsed)
+    for watch in string_items(validation.get("watch_symbols")):
+        if watch in address_watch_names:
+            continue
+        address = instruction_trace_address_arg(watch)
+        if address:
+            addresses.append(address)
+        else:
+            symbols.append(watch)
+    return {
+        "symbols": unique_list(symbols),
+        "addresses": unique_addresses(addresses),
+    }
+
+
+def instruction_trace_address_arg(value: str) -> str:
+    text = str(value).strip()
+    if not text:
+        return ""
+    if "=" in text:
+        text = text.split("=", 1)[1].strip()
+    stripped = text.replace("$", "")
+    if stripped.startswith(("0x", "0X")):
+        stripped = stripped[2:]
+    hex_digits = "0123456789abcdefABCDEF"
+    has_address_shape = (
+        text.startswith("$")
+        or text.startswith(("0x", "0X"))
+        or ":" in text
+        or (len(stripped) == 4 and all(char in hex_digits for char in stripped))
+    )
+    return text if has_address_shape else ""
+
+
 def instruction_trace_related_symbols(report: dict[str, Any], validation: dict[str, Any]) -> list[str]:
+    sinks = instruction_trace_watch_sinks(report, validation)
     return unique_list(
         [
             *string_items(validation.get("hit_function_symbols")),
             *string_items(validation.get("missing_function_symbols")),
-            *string_items(validation.get("watch_symbols")),
+            *sinks["symbols"],
             *[
                 str(function.get("symbol", ""))
                 for function in dict_items(report.get("functions"))
@@ -507,6 +1055,10 @@ def instruction_trace_related_symbols(report: dict[str, Any], validation: dict[s
     )
 
 
+def instruction_trace_related_addresses(report: dict[str, Any], validation: dict[str, Any]) -> list[str]:
+    return unique_addresses(instruction_trace_watch_sinks(report, validation)["addresses"])
+
+
 def instruction_trace_dynamic_taint_commands(
     report: dict[str, Any],
     validation: dict[str, Any],
@@ -514,16 +1066,47 @@ def instruction_trace_dynamic_taint_commands(
     trace_path: str,
 ) -> list[str]:
     commands = []
+    sinks = instruction_trace_watch_sinks(report, validation)
+    watch_size = instruction_trace_watch_size(report, validation)
+    sink_size_arg = f" --sink-size {watch_size}" if watch_size != 1 else ""
     if trace_path:
         commands.append(f"python -m tools.debugger trace-index --trace {trace_path}")
         commands.append(f"python -m tools.debugger minimize --trace {trace_path} --expect event=control_flow")
-        for watch in string_items(validation.get("watch_symbols"))[:4]:
+        for watch in sinks["symbols"][:4]:
             commands.append(
                 f"python -m tools.debugger dynamic-taint --trace {trace_path} --sink-symbol {watch} --source-reg <register-or-origin>"
             )
             commands.append(f"python -m tools.debugger expect --trace {trace_path} --expect contains={watch}")
+        for address in sinks["addresses"][:4]:
+            command_address = command_address_arg(address)
+            commands.append(
+                f"python -m tools.debugger dynamic-taint --trace {trace_path} --sink-address {command_address}{sink_size_arg} --source-reg <register-or-origin>"
+            )
+            commands.append(f"python -m tools.debugger expect --trace {trace_path} --expect contains={command_address}")
     commands.extend(string_items(report.get("commands"))[:4])
     return unique_list(commands)
+
+
+def instruction_trace_watch_size(report: dict[str, Any], validation: dict[str, Any]) -> int:
+    sizes = []
+    for value in (
+        report.get("watch_size"),
+        report.get("sink_size"),
+        validation.get("watch_size"),
+        validation.get("sink_size"),
+    ):
+        size = positive_int(value)
+        if size:
+            sizes.append(size)
+    for watch in dict_items(report.get("watches")):
+        size = positive_int(watch.get("watch_size") or watch.get("size"))
+        if size:
+            sizes.append(size)
+    for event in dict_items(report.get("events")):
+        size = positive_int(event.get("watch_size") or event.get("sink_size") or event.get("size"))
+        if size:
+            sizes.append(size)
+    return max(sizes) if sizes else 1
 
 
 def instruction_trace_limit_commands(report: dict[str, Any], *, trace_path: str) -> list[str]:
@@ -577,6 +1160,7 @@ def trace_index_items(report: dict[str, Any], *, source: str) -> list[dict[str, 
             continue
         state = str(event.get("state_symbol") or event.get("bank_address") or event.get("address") or "state")
         source_symbol = str(event.get("source_symbol") or event.get("pc_symbol") or event.get("rule_id") or "trace")
+        address = event_related_address(event)
         out.append(
             impact_item(
                 item_type="trace_event",
@@ -594,11 +1178,13 @@ def trace_index_items(report: dict[str, Any], *, source: str) -> list[dict[str, 
                     ]
                 ),
                 related_files=string_items(event.get("source_file")),
+                related_addresses=[address] if address else [],
             )
         )
     for path in dict_items(report.get("causal_paths"))[:20]:
         if int(path.get("score", 0)) < 65:
             continue
+        proof_status = trace_index_item_proof_status(path, report)
         out.append(
             impact_item(
                 item_type="causal_path",
@@ -606,13 +1192,17 @@ def trace_index_items(report: dict[str, Any], *, source: str) -> list[dict[str, 
                 source=source,
                 severity=min(95, int(path.get("score", 0))),
                 confidence=float(path.get("confidence", 0.65)),
-                evidence=string_items(path.get("evidence")),
+                evidence=trace_index_item_evidence(path, proof_status=proof_status),
                 next_actions=string_items(path.get("commands")),
                 related_symbols=string_items(path.get("related_symbols")),
                 related_files=string_items(path.get("related_files")),
+                related_addresses=string_items(path.get("related_addresses")),
+                proof_status=proof_status,
+                evidence_atoms=path.get("evidence_atoms"),
             )
         )
     for item in dict_items(report.get("reverse_attributions"))[:20]:
+        proof_status = trace_index_item_proof_status(item, report)
         out.append(
             impact_item(
                 item_type="reverse_attribution",
@@ -620,13 +1210,30 @@ def trace_index_items(report: dict[str, Any], *, source: str) -> list[dict[str, 
                 source=source,
                 severity=72,
                 confidence=float(item.get("confidence", 0.65)),
-                evidence=string_items(item.get("evidence")),
+                evidence=trace_index_item_evidence(item, proof_status=proof_status),
                 next_actions=string_items(item.get("commands")),
                 related_symbols=string_items(item.get("related_symbols")),
                 related_files=string_items(item.get("related_files")),
+                related_addresses=string_items(item.get("related_addresses")),
+                proof_status=proof_status,
+                evidence_atoms=item.get("evidence_atoms"),
             )
         )
     return out
+
+
+def trace_index_item_proof_status(item: dict[str, Any], report: dict[str, Any]) -> str:
+    return (
+        normalize_proof_status(item.get("proof_status"))
+        or normalize_proof_status(report.get("proof_status"))
+        or "planned_only"
+    )
+
+
+def trace_index_item_evidence(item: dict[str, Any], *, proof_status: str) -> list[str]:
+    evidence = string_items(item.get("evidence"))
+    marker = f"proof_status={proof_status}"
+    return unique_list([*evidence, marker])
 
 
 def event_next_actions(event: dict[str, Any]) -> list[str]:
@@ -641,7 +1248,7 @@ def event_next_actions(event: dict[str, Any]) -> list[str]:
         commands.append(f"python -m tools.debugger explain --symbol {symbol}")
         commands.append(f"python -m tools.debugger replay --symbol {symbol}")
     if event.get("address"):
-        commands.append(f"python -m tools.debugger trace-index --address {event.get('address')}")
+        commands.append(f"python -m tools.debugger trace-index --address {command_address_arg(event.get('address'))}")
     if event.get("rule_id"):
         commands.append(f"python -m tools.debugger coverage --rule {event.get('rule_id')}")
     if event.get("source_file"):
@@ -704,6 +1311,7 @@ def localization_items(report: dict[str, Any], *, source: str) -> list[dict[str,
                 next_actions=commands[:6],
                 related_symbols=[candidate_id] if candidate_type == "symbol" else [],
                 related_files=[candidate_id] if candidate_type == "source_file" else [],
+                related_addresses=[candidate_id] if candidate_type == "address" else [],
             )
         )
     return out
@@ -734,6 +1342,9 @@ def minimization_items(report: dict[str, Any], *, source: str) -> list[dict[str,
         )
     state_patch_minimization = report.get("state_patch_minimization")
     if isinstance(state_patch_minimization, dict) and state_patch_minimization.get("preserved"):
+        related_symbols = state_patch_minimization_related_symbols(state_patch_minimization)
+        related_files = string_items(state_patch_minimization.get("source_files"))
+        related_addresses = state_patch_minimization_related_addresses(state_patch_minimization)
         out.append(
             impact_item(
                 item_type="minimization_route",
@@ -744,12 +1355,42 @@ def minimization_items(report: dict[str, Any], *, source: str) -> list[dict[str,
                 evidence=[
                     f"{state_patch_minimization.get('original_patch_count', 0)} -> {state_patch_minimization.get('minimized_patch_count', 0)} patches",
                     f"artifact: {state_patch_minimization.get('out_report', '')}",
+                    f"semantic_watch={state_patch_minimization.get('semantic_watch_rerun_count', 0)}/{state_patch_minimization.get('semantic_watch_rerun_attempt_count', 0)}",
+                    f"semantic_replay={state_patch_minimization.get('semantic_replay_rerun_count', 0)}/{state_patch_minimization.get('semantic_replay_rerun_attempt_count', 0)}",
+                    *save_state_delta_evidence(
+                        minimized_state_patch_save_state_delta(state_patch_minimization),
+                        prefix="minimized_save_state_delta",
+                    ),
+                    "watch_addresses=" + ",".join(string_items(state_patch_minimization.get("watch_addresses"))[:6]),
+                    "source_mems=" + ",".join(string_items(state_patch_minimization.get("source_mems"))[:6]),
+                    "semantic_reducer_surfaces=" + ",".join(string_items(state_patch_minimization.get("semantic_reducer_surfaces"))[:6]),
                 ],
-                next_actions=string_items(state_patch_minimization.get("commands")),
-                related_symbols=string_items(state_patch_minimization.get("symbols")),
-                related_files=string_items(state_patch_minimization.get("source_files")),
+                next_actions=state_patch_minimization_next_actions(state_patch_minimization, source=source),
+                related_symbols=related_symbols,
+                related_files=related_files,
+                related_addresses=related_addresses,
             )
         )
+        for route in dict_items(state_patch_minimization.get("semantic_reducer_routes"))[:12]:
+            route_id = str(route.get("id") or route.get("surface") or "semantic_reducer")
+            out.append(
+                impact_item(
+                    item_type="semantic_reducer_route",
+                    title=f"Semantic reducer route: {route_id}",
+                    source=source,
+                    severity=57,
+                    confidence=0.74,
+                    evidence=[
+                        f"surface={route.get('surface', '')}",
+                        str(route.get("reason", "")),
+                        f"commands={route.get('command_count', 0)}",
+                    ],
+                    next_actions=string_items(route.get("commands")),
+                    related_symbols=related_symbols,
+                    related_files=unique_list([*related_files, *string_items(route.get("source_file"))]),
+                    related_addresses=related_addresses,
+                )
+            )
     if not steps:
         return out
     surfaces = string_items(report.get("surfaces"))
@@ -776,6 +1417,30 @@ def minimization_items(report: dict[str, Any], *, source: str) -> list[dict[str,
         )
     )
     return out
+
+
+def state_patch_minimization_next_actions(item: dict[str, Any], *, source: str) -> list[str]:
+    actions = []
+    if source:
+        actions.extend(
+            [
+                f"python -m tools.debugger provenance --report {source}",
+                f"python -m tools.debugger taint --report {source}",
+                f"python -m tools.debugger slice --report {source}",
+            ]
+        )
+    actions.extend(string_items(item.get("commands")))
+    out_report = str(item.get("out_report", ""))
+    if out_report:
+        actions.extend(
+            [
+                f"python -m tools.debugger setup --report {out_report}",
+                f"python -m tools.debugger replay --report {out_report}",
+                f"python -m tools.debugger localize --report {out_report}",
+                f"python -m tools.debugger coverage --report {out_report}",
+            ]
+        )
+    return unique_list(actions)
 
 
 def generation_items(report: dict[str, Any], *, source: str) -> list[dict[str, Any]]:
@@ -844,8 +1509,9 @@ def fuzz_items(report: dict[str, Any], *, source: str) -> list[dict[str, Any]]:
     out = []
     for campaign in dict_items(report.get("campaigns")):
         proof_level = str(campaign.get("proof_level", "planning"))
-        item_type = "fuzz_campaign" if proof_level == "dynamic" else "test_gap"
-        severity = 60 if proof_level == "dynamic" else SEVERITY_BASE["test_gap"]
+        dynamic_proof = is_dynamic_proof_level(proof_level)
+        item_type = "fuzz_campaign" if dynamic_proof else "test_gap"
+        severity = 60 if dynamic_proof else SEVERITY_BASE["test_gap"]
         out.append(
             impact_item(
                 item_type=item_type,
@@ -859,30 +1525,108 @@ def fuzz_items(report: dict[str, Any], *, source: str) -> list[dict[str, Any]]:
                     *string_items(campaign.get("gaps"))[:3],
                 ],
                 next_actions=string_items(campaign.get("commands"))[:8],
-                related_symbols=string_items(campaign.get("symbols")),
+                related_symbols=unique_list(
+                    [
+                        *string_items(campaign.get("symbols")),
+                        *string_items(campaign.get("related_symbols")),
+                    ]
+                ),
                 related_files=string_items(campaign.get("changed_files")),
+                related_addresses=string_items(campaign.get("related_addresses")),
             )
         )
     for case in dict_items(report.get("fuzz_cases"))[:20]:
+        evidence = string_items(case.get("expectations"))[:4] or string_items(case.get("notes"))[:4]
+        if case.get("runtime_targets") or case.get("behavioral_probes") or case.get("state_preconditions"):
+            evidence = unique_list([*evidence, *content_scenario_evidence(case)[:10]])
+        related_symbols = unique_list(
+            [
+                *string_items(case.get("symbols")),
+                *string_items(case.get("related_symbols")),
+                *content_scenario_related_symbols(case),
+            ]
+        )
+        related_files = unique_list(
+            [
+                *string_items(case.get("changed_file")),
+                *content_scenario_related_files(case),
+            ]
+        )
+        proof_level = str(case.get("proof_level", "planning"))
+        dynamic_proof = is_dynamic_proof_level(proof_level)
         out.append(
             impact_item(
-                item_type="fuzz_campaign" if case.get("proof_level") == "dynamic" else "test_gap",
+                item_type="fuzz_campaign" if dynamic_proof else "test_gap",
                 title=f"Fuzz case: {case.get('id', '<unknown>')}",
                 source=source,
-                severity=48 if case.get("proof_level") == "dynamic" else 36,
+                severity=48 if dynamic_proof else 36,
                 confidence=0.6,
-                evidence=string_items(case.get("expectations"))[:4] or string_items(case.get("notes"))[:4],
-                next_actions=string_items(case.get("commands"))[:6],
-                related_symbols=string_items(case.get("symbols")),
-                related_files=string_items(case.get("changed_file")),
+                evidence=unique_list(
+                    [
+                        f"proof_level={proof_level}",
+                        f"counterexample_source={case.get('counterexample_source')}" if case.get("counterexample_source") else "",
+                        *evidence,
+                    ]
+                ),
+                next_actions=content_scenario_commands(case)[:12],
+                related_symbols=related_symbols,
+                related_files=related_files,
+                related_addresses=string_items(case.get("related_addresses")),
             )
         )
     return out
 
 
+def state_patch_minimization_related_symbols(item: dict[str, Any]) -> list[str]:
+    symbols = [
+        *string_items(item.get("symbols")),
+        *string_items(item.get("source_symbols")),
+        *string_items(item.get("watch_symbols")),
+        *source_mem_origins(item),
+    ]
+    for result in dict_items(item.get("results")):
+        symbols.extend(string_items(result.get("semantic_watch_symbols")))
+        symbols.extend(string_items(result.get("semantic_replay_watch_symbols")))
+        symbols.extend(source_mem_origins(result))
+    return unique_list(symbols)
+
+
+def state_patch_minimization_related_addresses(item: dict[str, Any]) -> list[str]:
+    addresses = [
+        *string_items(item.get("watch_addresses")),
+        *source_mem_addresses(item),
+    ]
+    for result in dict_items(item.get("results")):
+        addresses.extend(string_items(result.get("semantic_watch_addresses")))
+        addresses.extend(string_items(result.get("semantic_replay_watch_addresses")))
+        addresses.extend(source_mem_addresses(result))
+    return unique_addresses(addresses)
+
+
+def is_dynamic_proof_level(value: Any) -> bool:
+    text = str(value)
+    return text == "dynamic" or text.startswith("dynamic_") or text.startswith("positioned_state_dynamic")
+
+
 def compare_items(report: dict[str, Any], *, source: str) -> list[dict[str, Any]]:
     out = []
     for match in dict_items(report.get("matches")):
+        if match.get("status") == "passed":
+            out.append(
+                impact_item(
+                    item_type="mirror_passed",
+                    title=f"Mirror passed: {match.get('id', '<unknown>')}",
+                    source=source,
+                    severity=SEVERITY_BASE["mirror_passed"],
+                    confidence=0.82,
+                    evidence=string_items(match.get("evidence"))[:8],
+                    next_actions=string_items(match.get("commands"))[:4],
+                    related_symbols=string_items(match.get("related_symbols")),
+                    related_files=string_items(match.get("source_files")),
+                    related_addresses=string_items(match.get("related_addresses")),
+                    proof_status=str(match.get("proof_status") or "mirror_passed"),
+                )
+            )
         for gap in string_items(match.get("gaps")):
             item_type = "mirror_uncovered" if match.get("id") == "uncovered_surface" else "compare_gap"
             out.append(
@@ -892,11 +1636,15 @@ def compare_items(report: dict[str, Any], *, source: str) -> list[dict[str, Any]
                     source=source,
                     severity=SEVERITY_BASE[item_type],
                     confidence=0.68,
-                    evidence=[gap],
+                    evidence=[gap, *string_items(match.get("evidence"))[:4]],
                     next_actions=[
                         *string_items(match.get("commands")),
                         *string_items(match.get("materialization_commands")),
                     ],
+                    related_symbols=string_items(match.get("related_symbols")),
+                    related_files=string_items(match.get("source_files")),
+                    related_addresses=string_items(match.get("related_addresses")),
+                    proof_status=str(match.get("proof_status") or ""),
                 )
             )
     return out
@@ -960,22 +1708,76 @@ def content_scenario_items(report: dict[str, Any], *, source: str) -> list[dict[
                 source=source,
                 severity=46,
                 confidence=0.72,
-                evidence=[
-                    f"{source_file}:{scenario.get('line', 0)}",
-                    *string_items(scenario.get("expected"))[:4],
-                ],
+                evidence=content_scenario_evidence(scenario),
                 next_actions=content_scenario_commands(scenario),
-                related_files=[source_file] if source_file else [],
+                related_symbols=content_scenario_related_symbols(scenario),
+                related_files=content_scenario_related_files(scenario),
             )
         )
     return out
 
 
 def content_scenario_commands(scenario: dict[str, Any]) -> list[str]:
-    commands = string_items(scenario.get("commands"))
+    materialization_request = scenario.get("materialization_request")
+    commands: list[str] = []
+    if isinstance(materialization_request, dict):
+        commands.extend(string_items(materialization_request.get("commands")))
+    probe_commands: list[str] = []
     for probe in dict_items(scenario.get("behavioral_probes")):
-        commands.extend(string_items(probe.get("command")))
+        probe_commands.extend(string_items(probe.get("command")))
+    commands.extend(probe_commands)
+    commands.extend(string_items(scenario.get("commands")))
     return unique_list(commands)
+
+
+def content_scenario_evidence(scenario: dict[str, Any]) -> list[str]:
+    source_file = str(scenario.get("source_file", ""))
+    runtime_targets = scenario.get("runtime_targets") if isinstance(scenario.get("runtime_targets"), dict) else {}
+    out = [
+        f"{source_file}:{scenario.get('line', 0)}" if source_file else "",
+        f"scenario_type={scenario.get('scenario_type')}" if scenario.get("scenario_type") else "",
+        f"proof_level={scenario.get('proof_level')}" if scenario.get("proof_level") else "",
+        f"runtime_route={runtime_targets.get('runtime_route')}" if runtime_targets.get("runtime_route") else "",
+    ]
+    for precondition in dict_items(scenario.get("state_preconditions")):
+        kind = str(precondition.get("kind", ""))
+        if kind:
+            out.append(f"precondition={kind}")
+        out.extend(f"watch_symbol={symbol}" for symbol in string_items(precondition.get("watch_symbols")))
+    for probe in dict_items(scenario.get("behavioral_probes")):
+        probe_id = str(probe.get("id", ""))
+        if probe_id:
+            out.append(f"behavioral_probe={probe_id}")
+    for key in ("source_symbols", "script_symbols", "trace_symbols", "watch_symbols"):
+        role = key[:-1] if key.endswith("s") else key
+        out.extend(f"{role}={symbol}" for symbol in string_items(runtime_targets.get(key)))
+    out.extend(string_items(scenario.get("expected"))[:6])
+    return unique_list(item for item in out if item)
+
+
+def content_scenario_related_symbols(scenario: dict[str, Any]) -> list[str]:
+    runtime_targets = scenario.get("runtime_targets") if isinstance(scenario.get("runtime_targets"), dict) else {}
+    symbols = [
+        *string_items(scenario.get("related_symbols")),
+        *string_items(scenario.get("symbols")),
+    ]
+    for key in ("source_symbols", "script_symbols", "trace_symbols", "watch_symbols"):
+        symbols.extend(string_items(runtime_targets.get(key)))
+    for precondition in dict_items(scenario.get("state_preconditions")):
+        symbols.extend(string_items(precondition.get("watch_symbols")))
+    return unique_list(symbol for symbol in symbols if symbol)
+
+
+def content_scenario_related_files(scenario: dict[str, Any]) -> list[str]:
+    runtime_targets = scenario.get("runtime_targets") if isinstance(scenario.get("runtime_targets"), dict) else {}
+    files = [
+        str(scenario.get("source_file", "")),
+        *string_items(scenario.get("related_files")),
+        *string_items(runtime_targets.get("source_files")),
+    ]
+    for probe in dict_items(scenario.get("behavioral_probes")):
+        files.extend(string_items(probe.get("source_file")))
+    return unique_list(normalize_path(path) for path in files if path)
 
 
 def content_state_items(report: dict[str, Any], *, source: str) -> list[dict[str, Any]]:
@@ -1059,6 +1861,7 @@ def content_state_items(report: dict[str, Any], *, source: str) -> list[dict[str
                     f"out_state={out_state}",
                     f"applied_patches={len(applied_patches)}",
                     *content_state_patch_evidence(applied_patches),
+                    *save_state_delta_evidence(materialized_save_state_delta(report)),
                 ],
                 next_actions=content_state_execution_commands(
                     source=source,
@@ -1267,6 +2070,7 @@ def state_space_items(report: dict[str, Any], *, source: str) -> list[dict[str, 
                     f"out_state={out_state}",
                     f"applied_patches={len(applied_patches)}",
                     *content_state_patch_evidence(applied_patches),
+                    *save_state_delta_evidence(materialized_save_state_delta(report)),
                 ],
                 next_actions=state_space_commands(
                     source=source,
@@ -1564,59 +2368,308 @@ def input_items(
 
 
 def score_item(item: dict[str, Any]) -> dict[str, Any]:
+    item = with_proof_status(item)
     surface_id, surface, surface_score = infer_surface(item)
     severity = int(item.get("severity", 40))
     item_type = str(item.get("type", ""))
     evidence_bonus = TYPE_EVIDENCE_BONUS.get(item_type, 5)
-    proof_bonus = proof_score(string_items(item.get("next_actions")))
+    proof_status = str(item.get("proof_status", "planned_only"))
+    proof_bonus = proof_score(string_items(item.get("next_actions"))) + proof_status_score(proof_status)
+    semantic_bonus, semantic_factors = semantic_risk_profile(item, surface_id=surface_id)
     confidence_bonus = round(float(item.get("confidence", 0.0)) * 8)
-    score = clamp_score(round(severity * 0.52 + surface_score + evidence_bonus + proof_bonus + confidence_bonus))
+    score = clamp_score(
+        round(
+            severity * 0.48
+            + surface_score
+            + evidence_bonus
+            + proof_bonus
+            + min(24, semantic_bonus)
+            + confidence_bonus
+        )
+    )
     scored = dict(item)
     scored["surface_id"] = surface_id
     scored["surface"] = surface
     scored["surface_score"] = surface_score
     scored["evidence_score"] = evidence_bonus
+    scored["proof_status"] = proof_status
     scored["proof_score"] = proof_bonus
+    scored["semantic_score"] = semantic_bonus
+    scored["semantic_factors"] = semantic_factors
+    scored["semantic_calibration_profiles"] = semantic_profile_ids(semantic_factors)
+    scored["learned_impact_score"] = 0
+    scored["learned_impact_profiles"] = []
     scored["impact_score"] = score
-    scored["next_actions"] = string_items(scored.get("next_actions"))[:8]
+    scored["next_actions"] = string_items(scored.get("next_actions"))[:12]
     scored["evidence"] = string_items(scored.get("evidence"))[:8]
+    scored["evidence_atoms"] = merge_evidence_atoms(scored.get("evidence_atoms"), limit=12)
     scored["related_symbols"] = unique_list(string_items(scored.get("related_symbols")))[:12]
     scored["related_files"] = unique_list(normalize_path(path) for path in string_items(scored.get("related_files")))[:12]
+    scored["related_addresses"] = unique_addresses(string_items(scored.get("related_addresses")))[:12]
     return scored
 
 
-def infer_surface(item: dict[str, Any]) -> tuple[str, str, int]:
-    primary_text = " ".join(
+def semantic_risk_profile(item: dict[str, Any], *, surface_id: str) -> tuple[int, list[str]]:
+    text = impact_search_text(item, include_evidence=True)
+    score = 0
+    factors: list[str] = []
+    for factor_id, label, bonus, hints in SEMANTIC_RISK_FACTORS:
+        if any(hint_matches(hint, text) for hint in hints):
+            score += bonus
+            factors.append(f"{factor_id}: {label} (+{bonus})")
+    if surface_id == "battle_mechanics_items_hazards" and not any(
+        factor.startswith("battle_mechanics_state:") for factor in factors
+    ):
+        score += 8
+        factors.append("battle_mechanics_state: player-visible battle mechanics state (+8)")
+    calibration_score, calibration_factors = semantic_calibration_profile(
+        surface_id=surface_id,
+        text=text,
+        factors=factors,
+    )
+    score += calibration_score
+    factors.extend(calibration_factors)
+    return score, factors
+
+
+def semantic_calibration_profile(
+    *,
+    surface_id: str,
+    text: str,
+    factors: list[str],
+) -> tuple[int, list[str]]:
+    factor_ids = semantic_factor_ids(factors)
+    score = 0
+    out: list[str] = []
+    for (
+        profile_id,
+        surface_ids,
+        label,
+        bonus,
+        required_all_factors,
+        required_any_factors,
+        evidence_hints,
+    ) in SEMANTIC_CALIBRATION_PROFILES:
+        if surface_id not in surface_ids:
+            continue
+        if required_all_factors and not set(required_all_factors).issubset(factor_ids):
+            continue
+        if required_any_factors and factor_ids.isdisjoint(required_any_factors):
+            continue
+        if evidence_hints and not any(hint_matches(hint, text) for hint in evidence_hints):
+            continue
+        score += bonus
+        out.append(f"semantic_calibration:{profile_id}: {label} (+{bonus})")
+    return score, out
+
+
+def semantic_factor_ids(factors: list[str]) -> set[str]:
+    return {factor.split(":", 1)[0] for factor in factors if factor}
+
+
+def semantic_profile_ids(factors: list[str]) -> list[str]:
+    out: list[str] = []
+    for factor in factors:
+        parts = factor.split(":", 2)
+        if len(parts) >= 2 and parts[0] == "semantic_calibration":
+            out.append(parts[1])
+    return unique_list(out)
+
+
+def impact_learning_profiles(loaded_reports: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    profiles: list[dict[str, Any]] = []
+    for loaded in loaded_reports:
+        report = loaded.get("data")
+        if not isinstance(report, dict) or not report.get("valid", True):
+            continue
+        raw_profiles: list[dict[str, Any]] = []
+        if report.get("kind") == "unified_debugger_impact_feedback":
+            raw_profiles.extend(dict_items(report.get("outcomes")))
+            raw_profiles.extend(dict_items(report.get("profiles")))
+            raw_profiles.extend(dict_items(report.get("feedback")))
+        raw_profiles.extend(dict_items(report.get("impact_feedback")))
+        for index, raw in enumerate(raw_profiles, start=1):
+            profile = normalize_impact_learning_profile(raw, source=str(loaded.get("source", "")), index=index)
+            if profile:
+                profiles.append(profile)
+    return profiles
+
+
+def normalize_impact_learning_profile(raw: dict[str, Any], *, source: str, index: int) -> dict[str, Any] | None:
+    bonus = learned_impact_bonus(raw)
+    if bonus == 0:
+        return None
+    surface_id = normalize_surface_id(str(raw.get("surface_id") or raw.get("surface") or ""))
+    profile = {
+        "id": str(raw.get("id") or raw.get("name") or f"{source}#{index}"),
+        "source": source,
+        "surface_id": surface_id,
+        "bonus": bonus,
+        "confidence": clamp_float(raw.get("confidence", 0.75), minimum=0.0, maximum=1.0),
+        "outcome": str(raw.get("outcome") or raw.get("status") or "feedback"),
+        "evidence": string_items(raw.get("evidence"))[:4],
+        "item_types": set(string_items(raw.get("item_types")) or string_items(raw.get("types"))),
+        "symbols": set(string_items(raw.get("symbols")) or string_items(raw.get("related_symbols"))),
+        "file_prefixes": tuple(
+            normalize_path(path)
+            for path in (
+                string_items(raw.get("file_prefixes"))
+                or string_items(raw.get("path_prefixes"))
+                or string_items(raw.get("source_files"))
+                or string_items(raw.get("related_files"))
+                or string_items(raw.get("source_file"))
+            )
+        ),
+        "semantic_factor_ids": set(
+            factor_id_from_text(factor)
+            for factor in (
+                string_items(raw.get("semantic_factor_ids"))
+                or string_items(raw.get("factor_ids"))
+                or string_items(raw.get("semantic_factors"))
+            )
+            if factor_id_from_text(factor)
+        ),
+        "semantic_profiles": set(
+            string_items(raw.get("semantic_calibration_profiles"))
+            or string_items(raw.get("calibration_profiles"))
+        ),
+        "title_keywords": tuple(keyword.lower() for keyword in string_items(raw.get("title_keywords"))),
+    }
+    has_match_constraint = any(
         [
-            str(item.get("type", "")),
-            str(item.get("title", "")),
-            " ".join(string_items(item.get("related_symbols"))),
-            " ".join(string_items(item.get("related_files"))),
+            profile["item_types"],
+            profile["symbols"],
+            profile["file_prefixes"],
+            profile["semantic_factor_ids"],
+            profile["semantic_profiles"],
+            profile["title_keywords"],
         ]
-    ).lower().replace("\\", "/")
+    )
+    return profile if surface_id and has_match_constraint else None
+
+
+def learned_impact_bonus(raw: dict[str, Any]) -> int:
+    explicit = signed_int(
+        raw.get("impact_bonus")
+        or raw.get("severity_bonus")
+        or raw.get("impact_delta")
+        or raw.get("score_delta")
+    )
+    if explicit:
+        return max(-12, min(12, explicit))
+    outcome = str(raw.get("outcome") or raw.get("status") or "").lower()
+    if any(word in outcome for word in ("false_positive", "not_a_bug", "dismissed")):
+        return -8
+    if any(word in outcome for word in ("blocker", "softlock", "crash")):
+        return 12
+    if any(word in outcome for word in ("confirmed", "regression", "playtest")):
+        return 8
+    if "minor" in outcome:
+        return 3
+    return 0
+
+
+def apply_learned_impact(item: dict[str, Any], profiles: list[dict[str, Any]]) -> dict[str, Any]:
+    matched = [profile for profile in profiles if impact_learning_profile_matches(item, profile)]
+    if not matched:
+        scored = dict(item)
+        scored["learned_impact_score"] = 0
+        scored["learned_impact_profiles"] = []
+        return scored
+    learned_score = max(-18, min(18, round(sum(profile["bonus"] * profile["confidence"] for profile in matched))))
+    scored = dict(item)
+    scored["learned_impact_score"] = learned_score
+    scored["learned_impact_profiles"] = [profile["id"] for profile in matched]
+    scored["impact_score"] = clamp_score(int(scored.get("impact_score", 0)) + learned_score)
+    scored["evidence"] = unique_list(
+        [
+            *string_items(scored.get("evidence")),
+            *(
+                f"learned_impact={profile['id']} outcome={profile['outcome']} ({learned_score:+d})"
+                for profile in matched[:3]
+            ),
+        ]
+    )[:8]
+    return scored
+
+
+def impact_learning_profile_matches(item: dict[str, Any], profile: dict[str, Any]) -> bool:
+    if profile["surface_id"] != item.get("surface_id"):
+        return False
+    if profile["item_types"] and str(item.get("type", "")) not in profile["item_types"]:
+        return False
+    item_symbols = set(string_items(item.get("related_symbols")))
+    if profile["symbols"] and item_symbols.isdisjoint(profile["symbols"]):
+        return False
+    item_files = [normalize_path(path) for path in string_items(item.get("related_files"))]
+    if profile["file_prefixes"] and not any(
+        item_file == prefix or item_file.startswith(prefix.rstrip("/") + "/")
+        for item_file in item_files
+        for prefix in profile["file_prefixes"]
+    ):
+        return False
+    item_factor_ids = semantic_factor_ids(string_items(item.get("semantic_factors")))
+    if profile["semantic_factor_ids"] and item_factor_ids.isdisjoint(profile["semantic_factor_ids"]):
+        return False
+    item_profiles = set(string_items(item.get("semantic_calibration_profiles")))
+    if profile["semantic_profiles"] and item_profiles.isdisjoint(profile["semantic_profiles"]):
+        return False
+    title = str(item.get("title", "")).lower()
+    if profile["title_keywords"] and not any(keyword in title for keyword in profile["title_keywords"]):
+        return False
+    return True
+
+
+def normalize_surface_id(value: str) -> str:
+    text = value.strip().lower()
+    if not text:
+        return ""
+    for surface_id, title, _score, _hints in SURFACE_HINTS:
+        if text in {surface_id.lower(), title.lower()}:
+            return surface_id
+    return text if any(surface_id == text for surface_id, _title, _score, _hints in SURFACE_HINTS) else ""
+
+
+def factor_id_from_text(value: str) -> str:
+    text = str(value).strip()
+    return text.split(":", 1)[0] if text else ""
+
+
+def infer_surface(item: dict[str, Any]) -> tuple[str, str, int]:
+    primary_text = impact_search_text(item, include_evidence=False)
     primary_match = first_surface_match(primary_text)
     if primary_match:
         return primary_match
 
-    evidence_text = " ".join(
-        [
-            primary_text,
-            " ".join(string_items(item.get("evidence"))),
-        ]
-    ).lower().replace("\\", "/")
+    evidence_text = impact_search_text(item, include_evidence=True)
     evidence_match = first_surface_match(evidence_text)
     if evidence_match:
         return evidence_match
-    action_text = " ".join(
-        [
-            primary_text,
-            " ".join(string_items(item.get("next_actions"))),
-        ]
-    ).lower().replace("\\", "/")
+    action_text = impact_search_text(item, include_evidence=True, include_actions=True)
     action_match = first_surface_match(action_text)
     if action_match:
         return action_match
     return "general", "General ROM surface", 10
+
+
+def impact_search_text(
+    item: dict[str, Any],
+    *,
+    include_evidence: bool,
+    include_actions: bool = False,
+) -> str:
+    parts = [
+        str(item.get("type", "")),
+        str(item.get("title", "")),
+        " ".join(string_items(item.get("related_symbols"))),
+        " ".join(string_items(item.get("related_files"))),
+        " ".join(string_items(item.get("related_addresses"))),
+    ]
+    if include_evidence:
+        parts.append(" ".join(string_items(item.get("evidence"))))
+    if include_actions:
+        parts.append(" ".join(string_items(item.get("next_actions"))))
+    return " ".join(parts).lower().replace("\\", "/")
 
 
 def first_surface_match(text: str) -> tuple[str, str, int] | None:
@@ -1663,8 +2716,11 @@ def impact_item(
     next_actions: list[str] | None = None,
     related_symbols: list[str] | None = None,
     related_files: list[str] | None = None,
+    related_addresses: list[str] | None = None,
+    proof_status: str | None = None,
+    evidence_atoms: Any = None,
 ) -> dict[str, Any]:
-    return {
+    out = {
         "type": item_type,
         "title": title,
         "source": source,
@@ -1674,7 +2730,10 @@ def impact_item(
         "next_actions": unique_list(next_actions or []),
         "related_symbols": unique_list(related_symbols or []),
         "related_files": unique_list(normalize_path(path) for path in (related_files or []) if path),
+        "related_addresses": unique_addresses(related_addresses or []),
+        "evidence_atoms": merge_evidence_atoms(evidence_atoms),
     }
+    return with_proof_status({**out, "proof_status": proof_status or ""})
 
 
 def merge_items(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -1698,6 +2757,13 @@ def merge_items(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
         )
         existing["related_files"] = unique_list(
             [*string_items(existing.get("related_files")), *string_items(item.get("related_files"))]
+        )
+        existing["related_addresses"] = unique_addresses(
+            [*string_items(existing.get("related_addresses")), *string_items(item.get("related_addresses"))]
+        )
+        existing["evidence_atoms"] = merge_evidence_atoms(existing.get("evidence_atoms"), item.get("evidence_atoms"))
+        existing["proof_status"] = strongest_proof_status(
+            [existing.get("proof_status"), item.get("proof_status")]
         )
     return list(merged.values())
 
@@ -1803,10 +2869,123 @@ def string_items(value: Any) -> list[str]:
     return [str(value)] if value else []
 
 
+def positive_int(value: Any) -> int:
+    try:
+        if isinstance(value, int):
+            parsed = value
+        else:
+            text = str(value).strip()
+            if not text:
+                return 0
+            if text.startswith("$"):
+                parsed = int(text[1:], 16)
+            elif text.startswith(("0x", "0X")):
+                parsed = int(text, 16)
+            else:
+                parsed = int(text, 10)
+    except (TypeError, ValueError):
+        return 0
+    return parsed if parsed > 0 else 0
+
+
+def signed_int(value: Any) -> int:
+    try:
+        if isinstance(value, int):
+            return value
+        text = str(value).strip()
+        if not text:
+            return 0
+        if text.startswith("$"):
+            return int(text[1:], 16)
+        if text.startswith(("0x", "0X")):
+            return int(text, 16)
+        return int(text, 10)
+    except (TypeError, ValueError):
+        return 0
+
+
+def clamp_float(value: Any, *, minimum: float, maximum: float) -> float:
+    try:
+        parsed = float(value)
+    except (TypeError, ValueError):
+        parsed = minimum
+    return max(minimum, min(maximum, parsed))
+
+
 def dict_items(value: Any) -> list[dict[str, Any]]:
     if not isinstance(value, list | tuple):
         return []
     return [item for item in value if isinstance(item, dict)]
+
+
+def event_related_address(event: dict[str, Any]) -> str:
+    bank_address = str(event.get("bank_address") or "")
+    if bank_address:
+        return bank_address
+    address = event.get("address")
+    if isinstance(address, int):
+        return f"{address:04X}"
+    return str(address or "")
+
+
+def symbol_if_not_address(value: str) -> str:
+    text = str(value).strip()
+    if not text:
+        return ""
+    stripped = text.replace("$", "")
+    if ":" in stripped:
+        stripped = stripped.split(":", 1)[1]
+    if stripped.startswith(("0x", "0X")):
+        stripped = stripped[2:]
+    if len(stripped) == 4 and all(char in "0123456789abcdefABCDEF" for char in stripped):
+        return ""
+    return text
+
+
+def attribution_related_addresses(attribution: dict[str, Any]) -> list[str]:
+    return unique_addresses(
+        [
+            str(attribution.get("bank_address") or ""),
+            str(attribution.get("address") or ""),
+            str(attribution.get("sink_address") or ""),
+        ]
+    )
+
+
+def attribution_proof_evidence(attribution: dict[str, Any]) -> list[str]:
+    keys = (
+        "proof_status",
+        "match_precision",
+        "bank_match",
+        "bank_source",
+        "proof_downgrade_reason",
+        "evidence_source_proof_status",
+        "effect_evidence_source",
+        "effect_proof_status",
+    )
+    evidence: list[str] = []
+    for key in keys:
+        values = string_items(attribution.get(key))
+        evidence.extend(f"{key}={value}" for value in values if value)
+    return evidence
+
+
+def unique_addresses(values: Any) -> list[str]:
+    out: list[str] = []
+    seen: set[str] = set()
+    for value in values:
+        text = str(value).strip()
+        if not text:
+            continue
+        key = text.upper().replace("$", "")
+        if ":" in key:
+            key = key.split(":", 1)[1]
+        key = key[-4:] if len(key) >= 4 else key
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(text)
+    return out
 
 
 def unique_list(values: Any) -> list[str]:

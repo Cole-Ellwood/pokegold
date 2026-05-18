@@ -5,8 +5,10 @@ from typing import Any
 
 from tools.trace import runtime as trace_runtime
 
+from .address import parse_address_int, parse_address_spec
 from .catalog import ROOT, triage_request
 from .ingest import sha256_file
+from .input_log import build_input_playback, play_inputs_for_frame
 from .provenance import (
     build_provenance_report,
     display_path,
@@ -23,9 +25,12 @@ DEFAULT_SYMBOLS = "pokegold.sym"
 def build_watch_report(
     *,
     watch_symbols: tuple[str, ...],
+    watch_addresses: tuple[str, ...] = (),
+    watch_size: int = 1,
     rom_path: str = DEFAULT_ROM,
     symbols_path: str = DEFAULT_SYMBOLS,
     save_state: str = "",
+    input_logs: tuple[str, ...] = (),
     frames: int = 60,
     context_frames: int = 12,
     execute: bool = False,
@@ -40,17 +45,22 @@ def build_watch_report(
         errors.append("--frames must be non-negative")
     if context_frames < 0:
         errors.append("--context-frames must be non-negative")
-    if not watch_symbols:
-        errors.append("at least one --watch-symbol is required")
+    if watch_size < 1:
+        errors.append("--watch-size must be positive")
+    if not watch_symbols and not watch_addresses:
+        errors.append("at least one --watch-symbol or --watch-address is required")
     if not rom.exists():
         errors.append(f"missing ROM: {rom_path}")
     if not sym.exists():
         errors.append(f"missing symbols: {symbols_path}")
     if save is not None and not save.exists():
         errors.append(f"missing save-state: {save_state}")
+    input_playback = build_input_playback(input_logs, root=root, max_events=0)
+    errors.extend(input_playback["errors"])
+    warnings.extend(input_playback["warnings"])
 
     symbol_table = parse_symbol_table(sym) if sym.exists() else {}
-    watches = [
+    symbol_watches = [
         build_watch_spec(
             symbol,
             symbol_table,
@@ -59,7 +69,10 @@ def build_watch_report(
         )
         for symbol in watch_symbols
     ]
-    for watch in watches:
+    address_watches, address_watch_errors = address_watch_specs(watch_addresses, size=watch_size)
+    errors.extend(address_watch_errors)
+    watches = [*symbol_watches, *address_watches]
+    for watch in symbol_watches:
         if not watch["found"]:
             errors.append(f"watch symbol not found in symbols: {watch['name']}")
 
@@ -72,31 +85,39 @@ def build_watch_report(
         "symbols": display_path(sym, root=root),
         "symbols_sha256": sha256_file(sym) if sym.exists() else "",
         "save_state": display_path(save, root=root) if save is not None else "",
+        "input_logs": list(input_logs),
+        "input_playback": input_playback,
+        "watch_symbols": list(watch_symbols),
+        "watch_addresses": list(watch_addresses),
+        "watch_size": watch_size,
         "frames": frames,
         "context_frames": context_frames,
         "executed": execute,
         "valid": not errors,
         "hit_count": 0,
+        "played_input_count": 0,
         "dynamic_context_event_count": 0,
         "errors": errors,
         "warnings": warnings,
         "watches": watches,
         "events": [],
+        "played_inputs": [],
         "provenance": build_provenance_report(
             symbols_path=str(sym),
             symbols=tuple(watch_symbols),
             max_hits=8,
             root=root,
-        ) if sym.exists() else None,
+        ) if sym.exists() and watch_symbols else None,
         "known_limits": [
             "This is forward replay with polling plus bounded frame-context snapshots, not hardware watchpoints or reverse execution.",
+            "When input logs are supplied, supported text log steps are played before each frame tick and watch polling samples the resulting forward execution.",
             "Use trace-index, expectation minimization, or subsystem replay tools for exact cause reduction after a hit.",
         ],
     }
     if errors or not execute:
         return report
 
-    events = execute_watch(
+    events, played_inputs = execute_watch(
         rom=rom,
         save_state=save,
         watches=watches,
@@ -104,10 +125,13 @@ def build_watch_report(
         context_frames=context_frames,
         symbol_table=symbol_table,
         symbols_path=sym,
+        input_playback=input_playback,
         root=root,
     )
     report["events"] = events
     report["hit_count"] = len(events)
+    report["played_inputs"] = played_inputs
+    report["played_input_count"] = len(played_inputs)
     report["dynamic_context_event_count"] = sum(
         int(event.get("dynamic_context", {}).get("context_frame_count", 0))
         for event in events
@@ -154,6 +178,63 @@ def build_watch_spec(
     }
 
 
+def address_watch_specs(raw_addresses: tuple[str, ...], *, size: int) -> tuple[list[dict[str, Any]], list[str]]:
+    watches: list[dict[str, Any]] = []
+    errors: list[str] = []
+    seen: set[str] = set()
+    for raw in raw_addresses:
+        parsed, parse_errors = parse_watch_address_spec(raw, size=size)
+        errors.extend(parse_errors)
+        if not parsed:
+            continue
+        key = str(parsed["name"])
+        if key in seen:
+            continue
+        seen.add(key)
+        watches.append(parsed)
+    return watches, errors
+
+
+def parse_watch_address_spec(raw: str, *, size: int) -> tuple[dict[str, Any] | None, list[str]]:
+    text = str(raw).strip()
+    if not text:
+        return None, ["empty watch address"]
+    name = ""
+    address_text = text
+    if "=" in text:
+        name, address_text = [part.strip() for part in text.split("=", 1)]
+    try:
+        bank, address = parse_bank_address(address_text)
+    except ValueError as exc:
+        return None, [str(exc)]
+    label = name or (f"${bank:02X}:{address:04X}" if bank else f"${address:04X}")
+    return {
+        "name": label,
+        "found": True,
+        "bank": bank,
+        "address": address,
+        "bank_address": f"{bank:02X}:{address:04X}" if bank else f"{address:04X}",
+        "size": size,
+        "address_watch": True,
+        "raw": text,
+        "triage_match_ids": [],
+        "suggested_commands": [],
+    }, []
+
+
+def parse_bank_address(raw: str) -> tuple[int, int]:
+    try:
+        spec = parse_address_spec(raw)
+    except ValueError as exc:
+        message = str(exc).replace("address", "watch address", 1)
+        raise ValueError(message) from exc
+    return int(spec.bank or 0), int(spec.address)
+
+
+def parse_integer(value: Any) -> int:
+    return parse_address_int(value)
+
+
 def execute_watch(
     *,
     rom: Path,
@@ -163,8 +244,9 @@ def execute_watch(
     context_frames: int,
     symbol_table: dict[str, dict[str, Any]],
     symbols_path: Path,
+    input_playback: dict[str, Any],
     root: Path,
-) -> list[dict[str, Any]]:
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     pyboy = trace_runtime.open_pyboy(
         rom,
         "PyBoy is required for unified debugger watch replay. Import failed",
@@ -180,6 +262,7 @@ def execute_watch(
             if watch["found"]
         }
         events: list[dict[str, Any]] = []
+        played_inputs: list[dict[str, Any]] = []
         cause_cache: dict[tuple[str, str], dict[str, Any]] = {}
         history: list[dict[str, Any]] = []
         for frame in range(frames + 1):
@@ -233,6 +316,10 @@ def execute_watch(
                         {
                             "frame": frame,
                             "watch": name,
+                            "address": int(watch["address"]),
+                            "bank": int(watch["bank"]),
+                            "bank_address": str(watch["bank_address"]),
+                            "watch_size": int(watch["size"]),
                             "old_bytes": list(previous),
                             "new_bytes": list(value),
                             "old_hex": bytes_hex(previous),
@@ -242,6 +329,7 @@ def execute_watch(
                             "pc_bank_address": f"{pc_bank:02X}:{pc:04X}",
                             "pc_label": pc_label,
                             "registers": snapshot.get("registers", {}),
+                            "input_context": input_context_for_frame(played_inputs, frame=frame),
                             "dynamic_context": dynamic_context,
                             "source_cause": cause_cache[cache_key],
                             "triage_match_ids": [
@@ -256,13 +344,27 @@ def execute_watch(
             if len(history) > max(1, context_frames):
                 history = history[-max(1, context_frames):]
             if frame < frames:
+                played_inputs.extend(play_inputs_for_frame(pyboy, input_playback, frame))
                 pyboy.tick(1, False, False)
-        return events
+        return events, played_inputs
     finally:
         try:
             pyboy.stop(save=False)
         except TypeError:
             pyboy.stop()
+
+
+def input_context_for_frame(played_inputs: list[dict[str, Any]], *, frame: int, limit: int = 4) -> dict[str, Any]:
+    relevant = [
+        item
+        for item in played_inputs
+        if int(item.get("frame", -1)) <= int(frame)
+    ][-max(1, limit):]
+    return {
+        "played_input_count": len(relevant),
+        "played_inputs": relevant,
+        "last_input": relevant[-1] if relevant else None,
+    }
 
 
 def read_watch_bytes(pyboy, watch: dict[str, Any]) -> tuple[int, ...]:

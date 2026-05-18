@@ -5,10 +5,11 @@ from typing import Any
 
 from .catalog import ROOT, keyword_matches, triage_request
 from .mirrors import build_compare_plan
+from .provenance import parse_symbol_table, resolve_path
 from .reporting import load_reports
 from .slicing import build_slice_report
 from .testgen import suggest_tests
-from .workflow import build_gate_plan, command_is_runnable
+from .workflow import build_gate_plan, command_address_arg, command_is_runnable
 
 
 PHASE_TITLES = {
@@ -108,6 +109,8 @@ def build_localization_plan(
     *,
     changed_files: tuple[str, ...] = (),
     symbols: tuple[str, ...] = (),
+    addresses: tuple[str, ...] = (),
+    watch_size: int = 1,
     symptom: str = "",
     reports: tuple[str, ...] = (),
     symbols_path: str = "pokegold.sym",
@@ -115,19 +118,30 @@ def build_localization_plan(
     root: Path = ROOT,
 ) -> dict[str, Any]:
     loaded_reports, load_errors = load_reports(reports=reports, root=root)
+    effective_watch_size = localization_watch_size(
+        requested=watch_size,
+        loaded_reports=loaded_reports,
+    )
+    sym_path = resolve_path(symbols_path, root=root)
+    symbol_table = parse_symbol_table(sym_path) if sym_path.exists() else {}
+    address_symbols = symbols_for_addresses(addresses, symbol_table=symbol_table)
     signals = collect_signals(
         changed_files=changed_files,
         symbols=symbols,
+        addresses=addresses,
+        address_symbols=address_symbols,
         symptom=symptom,
         loaded_reports=loaded_reports,
     )
     candidate_scores = score_candidates(signals)
     candidate_symbols = top_names(candidate_scores["symbols"], max_candidates)
     candidate_files = top_names(candidate_scores["files"], max_candidates)
+    candidate_addresses = top_names(candidate_scores["addresses"], max_candidates)
 
-    if candidate_symbols:
+    if candidate_symbols or candidate_files:
         slice_report = build_slice_report(
             symbols_path=symbols_path,
+            reports=reports,
             symbols=tuple(candidate_symbols),
             source_files=tuple(candidate_files),
             max_depth=2,
@@ -138,6 +152,7 @@ def build_localization_plan(
         candidate_scores = score_candidates(signals)
         candidate_symbols = top_names(candidate_scores["symbols"], max_candidates)
         candidate_files = top_names(candidate_scores["files"], max_candidates)
+        candidate_addresses = top_names(candidate_scores["addresses"], max_candidates)
     else:
         slice_report = None
 
@@ -173,12 +188,15 @@ def build_localization_plan(
     candidates = build_candidates(
         symbol_scores=candidate_scores["symbols"],
         file_scores=candidate_scores["files"],
+        address_scores=candidate_scores["addresses"],
         signals=signals,
         max_candidates=max_candidates,
     )
     phase_steps = build_phase_steps(
         symbols=tuple(candidate_symbols or symbols),
         changed_files=tuple(candidate_files or changed_files),
+        addresses=tuple(candidate_addresses or addresses),
+        watch_size=effective_watch_size,
         reports=reports,
         triage=triage,
         tests=tests,
@@ -198,6 +216,8 @@ def build_localization_plan(
         "errors": errors,
         "changed_files": list(changed_files),
         "symbols": list(symbols),
+        "addresses": list(addresses),
+        "watch_size": effective_watch_size,
         "symptom": symptom,
         "input_reports": [item["source"] for item in loaded_reports],
         "signal_count": len(signals),
@@ -230,10 +250,54 @@ def build_localization_plan(
     }
 
 
+def localization_watch_size(*, requested: int, loaded_reports: list[dict[str, Any]]) -> int:
+    sizes = [positive_int(requested)]
+    for loaded in loaded_reports:
+        sizes.extend(report_watch_sizes(loaded.get("data", {})))
+    return max([size for size in sizes if size > 0] or [1])
+
+
+def report_watch_sizes(data: Any) -> list[int]:
+    sizes: list[int] = []
+    if isinstance(data, dict):
+        for key in ("watch_size", "sink_size"):
+            size = positive_int(data.get(key))
+            if size:
+                sizes.append(size)
+        if watch_like_record(data):
+            size = positive_int(data.get("size"))
+            if size:
+                sizes.append(size)
+        for value in data.values():
+            sizes.extend(report_watch_sizes(value))
+    elif isinstance(data, list):
+        for item in data:
+            sizes.extend(report_watch_sizes(item))
+    return sizes
+
+
+def watch_like_record(data: dict[str, Any]) -> bool:
+    if data.get("address_watch"):
+        return True
+    return any(key in data for key in ("watch", "watch_address", "sink_address", "raw")) and any(
+        key in data for key in ("address", "bank_address", "size")
+    )
+
+
+def positive_int(value: Any) -> int:
+    try:
+        number = int(value)
+    except (TypeError, ValueError):
+        return 0
+    return number if number > 0 else 0
+
+
 def collect_signals(
     *,
     changed_files: tuple[str, ...],
     symbols: tuple[str, ...],
+    addresses: tuple[str, ...],
+    address_symbols: dict[str, list[str]],
     symptom: str,
     loaded_reports: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
@@ -242,6 +306,18 @@ def collect_signals(
         signals.append(signal("explicit_change", file=normalize_path(path), weight=80))
     for symbol in symbols:
         signals.append(signal("explicit_symbol", symbol=symbol, weight=80))
+    for address in addresses:
+        signals.append(signal("explicit_address", address=address, note=address, weight=78))
+        for symbol_name in address_symbols.get(address, [])[:6]:
+            signals.append(
+                signal(
+                    "address_resolved_symbol",
+                    symbol=symbol_name,
+                    address=address,
+                    note=f"{address} resolves to {symbol_name}",
+                    weight=82,
+                )
+            )
     if symptom:
         signals.append(signal("symptom", note=symptom, weight=35))
         signals.extend(signals_from_symptom(symptom))
@@ -334,18 +410,28 @@ def signals_from_report(report: dict[str, Any], *, source: str) -> list[dict[str
     elif kind in {"unified_debugger_compare_plan", "unified_debugger_test_suggestions"}:
         for match in dict_items(report.get("matches")):
             weight = 55 if match.get("id") != "uncovered_surface" else 35
+            note = str(match.get("id", ""))
             out.append(
                 signal(
                     "tool_match",
-                    note=str(match.get("id", "")),
+                    note=note,
                     source=source,
                     weight=weight,
                 )
             )
+            for path in string_items(match.get("source_files")):
+                out.append(signal("tool_match_source", file=normalize_path(path), note=note, source=source, weight=weight + 10))
+            for symbol in string_items(match.get("related_symbols")):
+                out.append(signal("tool_match_symbol", symbol=symbol, note=note, source=source, weight=weight + 12))
+            for scenario_id in string_items(match.get("scenario_ids")):
+                out.append(signal("tool_match_scenario", note=scenario_id, source=source, weight=weight + 6))
     elif kind == "unified_debugger_content_mirror":
         out.extend(signals_from_content_mirror(report, source=source))
     elif kind == "unified_debugger_content_scenarios":
         out.extend(signals_from_content_scenarios(report, source=source))
+    elif kind == "unified_debugger_fuzz_plan":
+        out.extend(signals_from_fuzz_campaigns(report, source=source))
+        out.extend(signals_from_content_fuzz_cases(report, source=source))
     elif kind == "unified_debugger_ingest_manifest":
         for artifact in dict_items(report.get("artifacts")):
             if artifact.get("kind") == "source_change":
@@ -359,7 +445,51 @@ def signals_from_report(report: dict[str, Any], *, source: str) -> list[dict[str
                 )
             for error in artifact.get("errors", []):
                 out.append(signal("artifact_error", note=str(error), source=source, weight=85))
-    return [item for item in out if item.get("symbol") or item.get("file") or item.get("note")]
+    out.extend(raw_address_signals_from_report(report, source=source))
+    return [item for item in out if item.get("symbol") or item.get("file") or item.get("address") or item.get("note")]
+
+
+def raw_address_signals_from_report(report: dict[str, Any], *, source: str) -> list[dict[str, Any]]:
+    out = address_signals_from_mapping(report, source=source, weight=58, signal_type="report_address")
+    for key in (
+        "events",
+        "findings",
+        "items",
+        "write_attributions",
+        "targets",
+        "watches",
+        "sample_records",
+    ):
+        for item in dict_items(report.get(key)):
+            out.extend(
+                address_signals_from_mapping(
+                    item,
+                    source=source,
+                    weight=66,
+                    signal_type=f"{key.rstrip('s')}_address",
+                )
+            )
+    return out
+
+
+def address_signals_from_mapping(
+    item: dict[str, Any],
+    *,
+    source: str,
+    weight: int,
+    signal_type: str,
+) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for key in ("address", "bank_address", "pc_bank_address", "score_pointer", "target"):
+        value = item.get(key)
+        if value is not None and address_match_key(str(value)):
+            address = str(value)
+            out.append(signal(signal_type, address=address, note=f"{key}={address}", source=source, weight=weight))
+    for key in ("addresses", "related_addresses", "watch_addresses", "sink_addresses"):
+        for address in string_items(item.get(key)):
+            if address_match_key(address):
+                out.append(signal(signal_type, address=address, note=f"{key}={address}", source=source, weight=weight))
+    return out
 
 
 def signals_from_content_mirror(report: dict[str, Any], *, source: str) -> list[dict[str, Any]]:
@@ -384,21 +514,50 @@ def signals_from_content_mirror(report: dict[str, Any], *, source: str) -> list[
 def signals_from_content_scenarios(report: dict[str, Any], *, source: str) -> list[dict[str, Any]]:
     out: list[dict[str, Any]] = []
     for scenario in dict_items(report.get("scenarios")):
-        scenario_id = str(scenario.get("id") or scenario.get("scenario_id") or "content scenario")
-        source_file = str(scenario.get("source_file", ""))
-        if source_file:
-            out.append(signal("content_scenario_file", file=source_file, note=scenario_id, source=source, weight=62))
-        runtime_targets = scenario.get("runtime_targets") if isinstance(scenario.get("runtime_targets"), dict) else {}
-        for symbol_name in string_items(runtime_targets.get("source_symbols")):
-            out.append(signal("content_scenario_source_symbol", symbol=symbol_name, note=scenario_id, source=source, weight=64))
-        for symbol_name in string_items(runtime_targets.get("script_symbols")):
-            out.append(signal("content_scenario_script_symbol", symbol=symbol_name, note=scenario_id, source=source, weight=70))
-        for symbol_name in string_items(runtime_targets.get("trace_symbols")):
-            out.append(signal("content_scenario_trace_symbol", symbol=symbol_name, note=scenario_id, source=source, weight=58))
-        for symbol_name in string_items(runtime_targets.get("watch_symbols")):
-            out.append(signal("content_scenario_watch_symbol", symbol=symbol_name, note=scenario_id, source=source, weight=56))
-        for symbol_name in string_items(scenario.get("related_symbols")):
-            out.append(signal("content_scenario_related_symbol", symbol=symbol_name, note=scenario_id, source=source, weight=52))
+        out.extend(signals_from_content_runtime_record(scenario, source=source, prefix="content_scenario"))
+    return out
+
+
+def signals_from_content_fuzz_cases(report: dict[str, Any], *, source: str) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for case in dict_items(report.get("fuzz_cases")):
+        if not case.get("runtime_targets") and not case.get("scenario_type"):
+            continue
+        out.extend(signals_from_content_runtime_record(case, source=source, prefix="content_fuzz"))
+    return out
+
+
+def signals_from_fuzz_campaigns(report: dict[str, Any], *, source: str) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for campaign in dict_items(report.get("campaigns")):
+        note = str(campaign.get("id") or campaign.get("title") or "fuzz campaign")
+        for symbol_name in string_items(campaign.get("related_symbols")):
+            out.append(signal("fuzz_campaign_symbol", symbol=symbol_name, note=note, source=source, weight=74))
+        for address in string_items(campaign.get("related_addresses")):
+            out.append(signal("fuzz_campaign_address", address=address, note=note, source=source, weight=78))
+        for path in string_items(campaign.get("changed_files")):
+            if looks_like_source_path(path):
+                out.append(signal("fuzz_campaign_file", file=path, note=note, source=source, weight=62))
+    return out
+
+
+def signals_from_content_runtime_record(record: dict[str, Any], *, source: str, prefix: str) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    scenario_id = str(record.get("scenario_id") or record.get("id") or "content runtime")
+    source_file = str(record.get("source_file") or record.get("changed_file") or "")
+    if source_file:
+        out.append(signal(f"{prefix}_file", file=source_file, note=scenario_id, source=source, weight=62))
+    runtime_targets = record.get("runtime_targets") if isinstance(record.get("runtime_targets"), dict) else {}
+    for symbol_name in string_items(runtime_targets.get("source_symbols")):
+        out.append(signal(f"{prefix}_source_symbol", symbol=symbol_name, note=scenario_id, source=source, weight=64))
+    for symbol_name in string_items(runtime_targets.get("script_symbols")):
+        out.append(signal(f"{prefix}_script_symbol", symbol=symbol_name, note=scenario_id, source=source, weight=70))
+    for symbol_name in string_items(runtime_targets.get("trace_symbols")):
+        out.append(signal(f"{prefix}_trace_symbol", symbol=symbol_name, note=scenario_id, source=source, weight=58))
+    for symbol_name in string_items(runtime_targets.get("watch_symbols")):
+        out.append(signal(f"{prefix}_watch_symbol", symbol=symbol_name, note=scenario_id, source=source, weight=56))
+    for symbol_name in string_items(record.get("related_symbols")):
+        out.append(signal(f"{prefix}_related_symbol", symbol=symbol_name, note=scenario_id, source=source, weight=52))
     return out
 
 
@@ -537,20 +696,44 @@ def signals_from_expectations(report: dict[str, Any], *, source: str) -> list[di
                     weight=max(35, weight - 20),
                 )
             )
+        for address in expectation_addresses(expectation):
+            out.append(
+                signal(
+                    "failed_expectation_address" if failed else "passed_expectation_address",
+                    address=address,
+                    note=note,
+                    source=source,
+                    weight=max(42, weight - 6),
+                )
+            )
     evidence = report.get("evidence_summary") if isinstance(report.get("evidence_summary"), dict) else {}
     for symbol_name in string_items(evidence.get("symbols")):
         out.append(signal("expectation_evidence_symbol", symbol=symbol_name, source=source, weight=54))
     for path in string_items(evidence.get("source_files")):
         out.append(signal("expectation_evidence_file", file=path, source=source, weight=50))
+    for address in string_items(evidence.get("addresses")):
+        if address_match_key(address):
+            out.append(signal("expectation_evidence_address", address=address, source=source, weight=54))
     return out
+
+
+def expectation_addresses(expectation: dict[str, Any]) -> list[str]:
+    addresses: list[str] = []
+    for key in ("address", "bank_address", "watch_address", "sink_address"):
+        for address in string_items(expectation.get(key)):
+            if address_match_key(address):
+                addresses.append(address)
+    for key in ("addresses", "related_addresses", "watch_addresses", "sink_addresses"):
+        for address in string_items(expectation.get(key)):
+            if address_match_key(address):
+                addresses.append(address)
+    return unique_commands(addresses)
 
 
 def signals_from_minimization(report: dict[str, Any], *, source: str) -> list[dict[str, Any]]:
     out: list[dict[str, Any]] = []
     evidence_minimization = report.get("evidence_minimization")
-    if not isinstance(evidence_minimization, dict):
-        return out
-    if evidence_minimization.get("preserved"):
+    if isinstance(evidence_minimization, dict) and evidence_minimization.get("preserved"):
         note = (
             f"evidence minimized {evidence_minimization.get('original_count', 0)}"
             f" -> {evidence_minimization.get('minimized_count', 0)}"
@@ -559,6 +742,90 @@ def signals_from_minimization(report: dict[str, Any], *, source: str) -> list[di
             out.append(signal("minimized_trace_symbol", symbol=symbol_name, note=note, source=source, weight=78))
         if evidence_minimization.get("out_trace"):
             out.append(signal("minimized_trace_output", note=str(evidence_minimization["out_trace"]), source=source, weight=55))
+    state_patch_minimization = report.get("state_patch_minimization")
+    if isinstance(state_patch_minimization, dict) and state_patch_minimization.get("attempted"):
+        preserved = bool(state_patch_minimization.get("preserved"))
+        weight = 88 if preserved else 68
+        note = (
+            f"state patches {state_patch_minimization.get('original_patch_count', 0)}"
+            f" -> {state_patch_minimization.get('minimized_patch_count', 0)}"
+        )
+        if state_patch_minimization.get("out_report"):
+            out.append(
+                signal(
+                    "minimized_state_patch_report",
+                    note=str(state_patch_minimization["out_report"]),
+                    source=source,
+                    weight=max(45, weight - 22),
+                )
+            )
+        for symbol_name in state_patch_minimization_related_symbols(state_patch_minimization):
+            out.append(signal("minimized_state_patch_symbol", symbol=symbol_name, note=note, source=source, weight=weight))
+        for path in string_items(state_patch_minimization.get("source_files")):
+            out.append(signal("minimized_state_patch_file", file=normalize_path(path), note=note, source=source, weight=weight))
+        for address in state_patch_minimization_related_addresses(state_patch_minimization):
+            if address_match_key(address):
+                out.append(signal("minimized_state_patch_address", address=address, note=note, source=source, weight=weight))
+    return out
+
+
+def state_patch_minimization_related_symbols(item: dict[str, Any]) -> list[str]:
+    symbols = [
+        *string_items(item.get("symbols")),
+        *string_items(item.get("source_symbols")),
+        *string_items(item.get("watch_symbols")),
+        *source_mem_origins(item),
+    ]
+    for result in dict_items(item.get("results")):
+        symbols.extend(string_items(result.get("semantic_watch_symbols")))
+        symbols.extend(string_items(result.get("semantic_replay_watch_symbols")))
+        symbols.extend(source_mem_origins(result))
+    return unique_commands(symbols)
+
+
+def state_patch_minimization_related_addresses(item: dict[str, Any]) -> list[str]:
+    addresses = [
+        *string_items(item.get("watch_addresses")),
+        *source_mem_addresses(item),
+    ]
+    for result in dict_items(item.get("results")):
+        addresses.extend(string_items(result.get("semantic_watch_addresses")))
+        addresses.extend(string_items(result.get("semantic_replay_watch_addresses")))
+        addresses.extend(source_mem_addresses(result))
+    return unique_commands(addresses)
+
+
+def source_mem_origins(route: dict[str, Any]) -> list[str]:
+    return unique_commands(
+        [
+            origin
+            for _, origin in source_mem_parts(route)
+            if origin
+        ]
+    )
+
+
+def source_mem_addresses(route: dict[str, Any]) -> list[str]:
+    return unique_commands(
+        [
+            address
+            for address, _ in source_mem_parts(route)
+            if address
+        ]
+    )
+
+
+def source_mem_parts(route: dict[str, Any]) -> list[tuple[str, str]]:
+    out: list[tuple[str, str]] = []
+    for value in string_items(route.get("source_mems")):
+        text = str(value).strip()
+        if not text:
+            continue
+        if "=" in text:
+            address, origin = text.split("=", 1)
+            out.append((address.strip(), origin.strip()))
+        else:
+            out.append((text, ""))
     return out
 
 
@@ -685,15 +952,32 @@ def signals_from_slice(report: dict[str, Any], *, source: str = "slice") -> list
         for path in target.get("impact_files", []):
             out.append(signal("slice_impact_file", file=path, source=source, weight=30))
     for source_file in dict_items(report.get("source_files")):
-        if source_file.get("path"):
+        source_path = str(source_file.get("path") or "")
+        if source_path:
             out.append(
                 signal(
                     "slice_source_file",
-                    file=str(source_file["path"]),
+                    file=source_path,
                     source=source,
                     weight=40,
                 )
             )
+        for label in dict_items(source_file.get("labels"))[:24]:
+            label_name = str(label.get("label") or "")
+            if label_name:
+                out.append(
+                    signal(
+                        "slice_source_label",
+                        symbol=label_name,
+                        file=source_path,
+                        source=source,
+                        weight=52,
+                    )
+                )
+        for edge in source_file.get("incoming", [])[:24]:
+            out.append(signal_from_edge(edge, "slice_source_incoming", source=source, weight=46))
+        for edge in source_file.get("outgoing", [])[:24]:
+            out.append(signal_from_edge(edge, "slice_source_outgoing", source=source, weight=38))
     return out
 
 
@@ -722,14 +1006,74 @@ def signals_from_symptom(symptom: str) -> list[dict[str, Any]]:
     return out
 
 
+def symbols_for_addresses(
+    addresses: tuple[str, ...],
+    *,
+    symbol_table: dict[str, dict[str, Any]],
+) -> dict[str, list[str]]:
+    out: dict[str, list[str]] = {}
+    if not addresses or not symbol_table:
+        return out
+    for raw_address in addresses:
+        wanted = address_match_key(raw_address)
+        if not wanted:
+            continue
+        matches: list[str] = []
+        for symbol_name, info in symbol_table.items():
+            candidate = address_match_key(str(info.get("bank_address", "")))
+            if not candidate:
+                continue
+            bank_matches = wanted[0] == "" or wanted[0] == candidate[0]
+            if bank_matches and wanted[1] == candidate[1]:
+                matches.append(symbol_name)
+        if matches:
+            out[raw_address] = sorted(matches)
+    return out
+
+
+def address_match_key(value: str) -> tuple[str, str] | None:
+    text = str(value).strip()
+    if not text:
+        return None
+    bank = ""
+    if ":" in text:
+        raw_bank, text = text.split(":", 1)
+        bank = normalize_hex_token(raw_bank, width=2)
+        if not bank:
+            return None
+    address = normalize_hex_token(text, width=4)
+    if not address:
+        return None
+    return (bank, address)
+
+
+def normalize_hex_token(value: str, *, width: int) -> str:
+    text = str(value).strip()
+    if text.startswith("$"):
+        text = text[1:]
+    if text.lower().startswith("0x"):
+        text = text[2:]
+    if not text or len(text) > width:
+        return ""
+    try:
+        number = int(text, 16)
+    except ValueError:
+        return ""
+    if number >= 16 ** width:
+        return ""
+    return f"{number:0{width}X}"
+
+
 def score_candidates(signals: list[dict[str, Any]]) -> dict[str, dict[str, int]]:
     symbol_scores: dict[str, int] = {}
     file_scores: dict[str, int] = {}
+    address_scores: dict[str, int] = {}
     for item in signals:
         weight = int(item.get("weight", 0))
         symbol_name = item.get("symbol")
         routine = item.get("routine")
         file_name = item.get("file")
+        address = item.get("address")
         if symbol_name:
             symbol_scores[str(symbol_name)] = symbol_scores.get(str(symbol_name), 0) + weight
         if routine and not routine.startswith("$"):
@@ -737,13 +1081,17 @@ def score_candidates(signals: list[dict[str, Any]]) -> dict[str, dict[str, int]]
         if file_name:
             normalized = normalize_path(str(file_name))
             file_scores[normalized] = file_scores.get(normalized, 0) + weight
-    return {"symbols": symbol_scores, "files": file_scores}
+        if address:
+            address_text = str(address)
+            address_scores[address_text] = address_scores.get(address_text, 0) + weight
+    return {"symbols": symbol_scores, "files": file_scores, "addresses": address_scores}
 
 
 def build_candidates(
     *,
     symbol_scores: dict[str, int],
     file_scores: dict[str, int],
+    address_scores: dict[str, int],
     signals: list[dict[str, Any]],
     max_candidates: int,
 ) -> list[dict[str, Any]]:
@@ -766,6 +1114,15 @@ def build_candidates(
                 "evidence": evidence_for(signals, file=file_name),
             }
         )
+    for address, score in sorted(address_scores.items(), key=lambda item: (-item[1], item[0])):
+        candidates.append(
+            {
+                "type": "address",
+                "id": address,
+                "score": score,
+                "evidence": evidence_for(signals, address=address),
+            }
+        )
     return sorted(candidates, key=lambda item: (-int(item["score"]), item["type"], item["id"]))[:max_candidates]
 
 
@@ -773,6 +1130,8 @@ def build_phase_steps(
     *,
     symbols: tuple[str, ...],
     changed_files: tuple[str, ...],
+    addresses: tuple[str, ...],
+    watch_size: int,
     reports: tuple[str, ...],
     triage: dict[str, Any],
     tests: dict[str, Any],
@@ -791,6 +1150,23 @@ def build_phase_steps(
             f"python -m tools.debugger rank {report_args}",
             "Normalize existing report failures before rerunning expensive tools.",
         )
+    if addresses:
+        for address in addresses[:5]:
+            command_address = command_address_arg(address)
+            watch_size_arg = f" --watch-size {watch_size}" if watch_size != 1 else ""
+            safe_address = safe_name(command_address)
+            add_step(
+                steps_by_phase,
+                "reproduce",
+                f"python -m tools.debugger replay --watch-address {command_address}{watch_size_arg} --execute-watch --json-out .local\\tmp\\debugger_replay_{safe_address}.json",
+                f"Replay and watch raw address {address}.",
+            )
+            add_step(
+                steps_by_phase,
+                "observe",
+                f"python -m tools.debugger watch --watch-address {command_address}{watch_size_arg} --execute --frames 300 --json-out .local\\tmp\\debugger_watch_{safe_address}.json",
+                f"Observe raw address {address} for the first dynamic state change.",
+            )
     if symbols:
         for symbol_name in symbols[:5]:
             if is_watchable_symbol(symbol_name):
@@ -866,6 +1242,7 @@ def signal(
     symbol: str = "",
     routine: str = "",
     file: str = "",
+    address: str = "",
     note: str = "",
     source: str = "input",
     weight: int = 0,
@@ -875,6 +1252,7 @@ def signal(
         "symbol": symbol,
         "routine": routine,
         "file": normalize_path(file) if file else "",
+        "address": address,
         "note": note,
         "source": source,
         "weight": int(weight),
@@ -889,6 +1267,7 @@ def merge_duplicate_signals(signals: list[dict[str, Any]]) -> list[dict[str, Any
             str(item.get("symbol", "")),
             str(item.get("routine", "")),
             str(item.get("file", "")),
+            str(item.get("address", "")),
             str(item.get("note", "")),
         )
         if key not in merged:
@@ -903,12 +1282,15 @@ def evidence_for(
     *,
     symbol: str = "",
     file: str = "",
+    address: str = "",
 ) -> list[str]:
     evidence: list[str] = []
     for item in signals:
         if symbol and symbol not in {item.get("symbol"), item.get("routine")}:
             continue
         if file and normalize_path(str(item.get("file", ""))) != file:
+            continue
+        if address and str(item.get("address", "")) != address:
             continue
         note = item.get("note") or item.get("source") or item.get("type")
         evidence.append(f"{item['type']}: {note}")

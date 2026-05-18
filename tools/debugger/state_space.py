@@ -6,7 +6,7 @@ from typing import Any
 from tools.trace import runtime as trace_runtime
 
 from .catalog import ROOT
-from .content_state import read_byte, write_byte
+from .content_state import read_byte, save_state_delta_summary, stop_pyboy, write_byte
 from .localize import normalize_path
 from .minimize import unique_list
 from .provenance import display_path, parse_symbol_table, resolve_path
@@ -80,9 +80,26 @@ def build_state_space_report(
             **patch,
             "executed": bool(execution.get("executed")),
             "applied": bool(patch.get("applied", False)),
+            "actual_proof_status": patch_actual_proof_status(patch=patch, executed=bool(execution.get("executed"))),
+            "expected_proof_status": str(patch.get("expected_proof_status") or "runtime_observed"),
+            "expected_sinks": patch_expected_sinks(patch),
+            "observed_sinks": patch_observed_sinks(patch, executed=bool(execution.get("executed"))),
         }
         for patch in (execution.get("applied_patches") or patch_records)
     ]
+    expected_sinks = unique_list(
+        sink
+        for patch in final_patches
+        for sink in patch.get("expected_sinks", [])
+        if sink
+    )
+    observed_sinks = unique_list(
+        sink
+        for patch in final_patches
+        for sink in patch.get("observed_sinks", [])
+        if sink
+    )
+    actual_proof_status = aggregate_actual_proof_status(final_patches)
     commands = state_space_commands(
         patch_specs=patches,
         patch_records=patch_records,
@@ -109,12 +126,17 @@ def build_state_space_report(
         "symbols": display_path(symbols, root=root),
         "base_save_state": display_path(base_state, root=root) if base_state is not None else "",
         "out_state": display_path(output_state, root=root) if output_state is not None else out_state,
+        "save_state_delta": execution.get("save_state_delta", {}),
         "scenario_id": scenario_id,
         "source_files": [normalize_path(path) for path in source_files],
         "symptom": symptom,
         "patch_specs": list(patches),
         "patch_count": len(final_patches),
         "watch_symbols": tuple_to_list(unique_list([*watch_symbols, *[patch["base_symbol"] for patch in final_patches if patch.get("base_symbol")]])),
+        "actual_proof_status": actual_proof_status,
+        "expected_proof_status": "runtime_observed",
+        "expected_sinks": expected_sinks,
+        "observed_sinks": observed_sinks,
         "state_space": {
             "scenario_ids": [scenario_id] if scenario_id else [],
             "source_files": [normalize_path(path) for path in source_files],
@@ -122,8 +144,13 @@ def build_state_space_report(
             "patches": final_patches,
             "patch_count": len(final_patches),
             "watch_symbols": tuple_to_list(unique_list([*watch_symbols, *[patch["base_symbol"] for patch in final_patches if patch.get("base_symbol")]])),
+            "actual_proof_status": actual_proof_status,
+            "expected_proof_status": "runtime_observed",
+            "expected_sinks": expected_sinks,
+            "observed_sinks": observed_sinks,
             "base_save_state": display_path(base_state, root=root) if base_state is not None else "",
             "out_state": display_path(output_state, root=root) if output_state is not None else out_state,
+            "save_state_delta": execution.get("save_state_delta", {}),
         },
         "execution": execution,
         "command_count": len(commands),
@@ -171,6 +198,10 @@ def build_patch_records(
                     "materialization_status": "planned",
                     "executed": False,
                     "applied": False,
+                    "actual_proof_status": "planned_only" if record.get("errors") else "ready_to_run",
+                    "expected_proof_status": "runtime_observed",
+                    "expected_sinks": [str(record.get("symbol", ""))] if record.get("symbol") else [],
+                    "observed_sinks": [],
                     "patch_spec": raw,
                 }
             )
@@ -303,6 +334,10 @@ def execute_state_space(
                     "applied": True,
                     "status": "applied",
                     "materialization_status": "applied",
+                    "actual_proof_status": "state_materialized" if observed == int(patch["value"]) else "planned_only",
+                    "expected_proof_status": str(patch.get("expected_proof_status") or "runtime_observed"),
+                    "expected_sinks": patch_expected_sinks(patch),
+                    "observed_sinks": patch_expected_sinks(patch) if observed == int(patch["value"]) else [],
                     "out_state": display_path(output_state, root=root),
                 }
             )
@@ -310,9 +345,7 @@ def execute_state_space(
         with output_state.open("wb") as fh:
             pyboy.save_state(fh)
     finally:
-        stop = getattr(pyboy, "stop", None)
-        if stop is not None:
-            stop(save=False)
+        stop_pyboy(pyboy)
     errors = [
         f"patch verification failed: {patch['symbol']} expected {patch['value_hex']} observed {patch['observed_hex']}"
         for patch in applied
@@ -322,6 +355,7 @@ def execute_state_space(
         "executed": not errors,
         "base_save_state": display_path(base_state, root=root),
         "out_state": display_path(output_state, root=root),
+        "save_state_delta": save_state_delta_summary(base_state=base_state, output_state=output_state, root=root),
         "patch_count": len(applied),
         "applied_patches": applied,
         "errors": errors,
@@ -338,6 +372,46 @@ def skipped_execution(*, execute: bool, out_state: str) -> dict[str, Any]:
         "errors": [],
         "warnings": [] if not execute else ["execution skipped because the state-space report was not ready"],
     }
+
+
+def patch_expected_sinks(patch: dict[str, Any]) -> list[str]:
+    existing = patch.get("expected_sinks")
+    return unique_list(
+        [
+            *([str(item) for item in existing if item] if isinstance(existing, list) else []),
+            str(patch.get("symbol", "")),
+        ]
+    )
+
+
+def patch_observed_sinks(patch: dict[str, Any], *, executed: bool) -> list[str]:
+    if isinstance(patch.get("observed_sinks"), list) and patch.get("observed_sinks"):
+        return [str(item) for item in patch.get("observed_sinks", []) if item]
+    if executed and bool(patch.get("verified", patch.get("applied", False))):
+        return patch_expected_sinks(patch)
+    return []
+
+
+def patch_actual_proof_status(*, patch: dict[str, Any], executed: bool) -> str:
+    explicit = str(patch.get("actual_proof_status") or "")
+    if explicit:
+        return explicit
+    if executed and bool(patch.get("verified", patch.get("applied", False))):
+        return "state_materialized"
+    if patch.get("errors"):
+        return "planned_only"
+    return "ready_to_run"
+
+
+def aggregate_actual_proof_status(patches: list[dict[str, Any]]) -> str:
+    statuses = {str(patch.get("actual_proof_status") or "planned_only") for patch in patches}
+    if not statuses:
+        return "planned_only"
+    if statuses == {"state_materialized"}:
+        return "state_materialized"
+    if "ready_to_run" in statuses and statuses <= {"ready_to_run", "state_materialized"}:
+        return "ready_to_run"
+    return "planned_only"
 
 
 def state_space_commands(

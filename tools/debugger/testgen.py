@@ -6,6 +6,8 @@ from typing import Any
 
 from .catalog import ROOT, keyword_matches, triage_request
 from .provenance import build_provenance_report
+from .reporting import load_reports
+from .workflow import command_address_arg
 
 
 @dataclass(frozen=True)
@@ -153,14 +155,16 @@ GENERATOR_RULES = (
 
 def suggest_tests(
     *,
+    reports: tuple[str, ...] = (),
     changed_files: tuple[str, ...] = (),
     symbols: tuple[str, ...] = (),
     symptom: str = "",
     root: Path = ROOT,
 ) -> dict[str, Any]:
+    loaded_reports, report_errors = load_reports(reports=reports, root=root)
     normalized_paths = tuple(path.replace("\\", "/").lower() for path in changed_files)
     symptom_text = symptom.lower()
-    matches = []
+    matches = report_based_suggestions(loaded_reports)
     for rule in GENERATOR_RULES:
         path_hit = any(
             any(path.startswith(prefix.lower()) for prefix in rule.path_prefixes)
@@ -202,6 +206,7 @@ def suggest_tests(
         )
         if related_files:
             return suggest_tests(
+                reports=reports,
                 changed_files=tuple(related_files),
                 symbols=symbols,
                 symptom=symptom,
@@ -234,6 +239,10 @@ def suggest_tests(
         "schema_version": 1,
         "kind": "unified_debugger_test_suggestions",
         "root": str(root),
+        "valid": not report_errors,
+        "error_count": len(report_errors),
+        "errors": report_errors,
+        "input_reports": [item["source"] for item in loaded_reports],
         "changed_files": list(changed_files),
         "symbols": list(symbols),
         "symptom": symptom,
@@ -242,6 +251,312 @@ def suggest_tests(
         "commands": unique_commands(matches, "commands"),
         "counterexample_commands": unique_commands(matches, "counterexample_commands"),
     }
+
+
+def report_based_suggestions(loaded_reports: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    matches = []
+    for loaded in loaded_reports:
+        data = loaded.get("data", {})
+        if not isinstance(data, dict):
+            continue
+        if data.get("kind") == "unified_debugger_fuzz_plan":
+            match = content_fuzz_report_suggestion(data, source=str(loaded.get("source", "")))
+            if match:
+                matches.append(match)
+        elif data.get("kind") == "unified_debugger_dynamic_taint_report":
+            match = dynamic_taint_trace_synthesis_suggestion(data, source=str(loaded.get("source", "")))
+            if match:
+                matches.append(match)
+        elif data.get("kind") == "unified_debugger_minimization_plan":
+            match = state_patch_minimization_suggestion(data, source=str(loaded.get("source", "")))
+            if match:
+                matches.append(match)
+    return matches
+
+
+def dynamic_taint_trace_synthesis_suggestion(report: dict[str, Any], *, source: str) -> dict[str, Any] | None:
+    routes = trace_synthesis_routes(report)
+    if not routes:
+        return None
+    commands = [
+        f"python -m tools.debugger coverage --report {source}",
+        f"python -m tools.debugger rank --report {source}",
+        f"python -m tools.debugger impact --report {source}",
+        f"python -m tools.debugger visualize --report {source}",
+    ]
+    counterexample_commands = [
+        command
+        for route in routes[:6]
+        for command in string_items(route.get("commands"))
+    ]
+    statuses = unique_list(str(route.get("state_status", "")) for route in routes if route.get("state_status"))
+    sinks = unique_list(
+        [
+            *[
+                symbol
+                for route in routes
+                for symbol in string_items(route.get("sink_symbols"))
+            ],
+            *[
+                address
+                for route in routes
+                for address in string_items(route.get("sink_addresses"))
+            ],
+        ]
+    )
+    source_mems = unique_list(
+        [
+            source_mem
+            for route in routes
+            for source_mem in string_items(route.get("source_mems"))
+        ]
+    )
+    sources = trace_synthesis_related_sources(routes)
+    addresses = trace_synthesis_related_addresses(routes)
+    return {
+        "id": "dynamic_taint_trace_synthesis_counterexamples",
+        "title": "Dynamic-taint trace-synthesis counterexamples",
+        "matched_by": ["report"],
+        "commands": unique_list(commands),
+        "counterexample_commands": unique_list(counterexample_commands),
+        "related_symbols": sources,
+        "related_addresses": addresses,
+        "notes": unique_list(
+            [
+                f"{len(routes)} trace-synthesis route(s) found in {source}",
+                "state_status=" + ",".join(statuses) if statuses else "",
+                "sources=" + ",".join(sources[:8]) if sources else "",
+                "source_mems=" + ",".join(source_mems[:8]) if source_mems else "",
+                "sinks=" + ",".join(sinks[:8]) if sinks else "",
+                "Run setup/materialization commands before trace and dynamic-taint commands when a route requires a base save state.",
+            ]
+        ),
+    }
+
+
+def state_patch_minimization_suggestion(report: dict[str, Any], *, source: str) -> dict[str, Any] | None:
+    minimization = report.get("state_patch_minimization")
+    if not isinstance(minimization, dict) or not minimization.get("attempted"):
+        return None
+    source_symbols = state_patch_minimization_source_symbols(minimization)
+    watch_symbols = state_patch_minimization_watch_symbols(minimization)
+    watch_addresses = state_patch_minimization_watch_addresses(minimization)
+    source_mems = state_patch_minimization_source_mems(minimization)
+    out_report = str(minimization.get("out_report", ""))
+    if not (source_symbols or watch_symbols or watch_addresses or source_mems or out_report):
+        return None
+    watch_size = positive_int(minimization.get("watch_size"))
+    watch_size_arg = f" --watch-size {watch_size}" if watch_size > 1 else ""
+    sink_size_arg = f" --sink-size {watch_size}" if watch_size > 1 else ""
+    commands = [
+        f"python -m tools.debugger provenance --report {source}",
+        f"python -m tools.debugger taint --report {source}",
+        f"python -m tools.debugger slice --report {source}",
+        f"python -m tools.debugger dynamic-taint --report {source} --execute-synthesis",
+        f"python -m tools.debugger coverage --report {source}",
+        f"python -m tools.debugger rank --report {source}",
+        f"python -m tools.debugger impact --report {source}",
+        f"python -m tools.debugger visualize --report {source}",
+    ]
+    trace_args = [f"--report {out_report or source}"]
+    for symbol in source_symbols[:6]:
+        trace_args.append(f"--symbol {symbol}")
+    for address in watch_addresses[:6]:
+        trace_args.append(f"--watch-address {command_address_arg(address)}")
+    if watch_size > 1:
+        trace_args.append(f"--watch-size {watch_size}")
+    trace_args.extend(["--execute", "--require-hit"])
+    counterexample_commands = [
+        *string_items(minimization.get("commands")),
+        "python -m tools.debugger trace-instructions " + " ".join(trace_args),
+        f"python -m tools.debugger dynamic-taint --report {source} --execute-synthesis",
+    ]
+    for address in watch_addresses[:4]:
+        command_address = command_address_arg(address)
+        counterexample_commands.append(
+            f"python -m tools.debugger replay --report {out_report or source} --watch-address {command_address}{watch_size_arg} --execute-watch"
+        )
+        counterexample_commands.append(
+            f"python -m tools.debugger dynamic-taint --report {source} --sink-address {command_address}{sink_size_arg} --execute-synthesis"
+        )
+    return {
+        "id": "state_patch_minimization_counterexamples",
+        "title": "State-patch minimization trace counterexamples",
+        "matched_by": ["report"],
+        "commands": unique_list(commands),
+        "counterexample_commands": unique_list(counterexample_commands),
+        "related_symbols": unique_list([*watch_symbols, *source_symbols]),
+        "related_addresses": watch_addresses,
+        "notes": unique_list(
+            [
+                f"state_patch_minimization found in {source}",
+                "preserved=" + str(bool(minimization.get("preserved"))),
+                "out_report=" + out_report if out_report else "",
+                "source_symbols=" + ",".join(source_symbols[:8]) if source_symbols else "",
+                "watch_symbols=" + ",".join(watch_symbols[:8]) if watch_symbols else "",
+                "source_mems=" + ",".join(source_mems[:8]) if source_mems else "",
+                "watch_addresses=" + ",".join(watch_addresses[:8]) if watch_addresses else "",
+                "Use the minimized state report for replay/trace proof before claiming behavior.",
+            ]
+        ),
+    }
+
+
+def trace_synthesis_routes(report: dict[str, Any]) -> list[dict[str, Any]]:
+    plan = report.get("trace_synthesis_plan") if isinstance(report.get("trace_synthesis_plan"), dict) else {}
+    return dict_items(plan.get("routes"))
+
+
+def trace_synthesis_related_sources(routes: list[dict[str, Any]]) -> list[str]:
+    return unique_list(
+        [
+            *[
+                symbol
+                for route in routes
+                for symbol in string_items(route.get("sink_symbols"))
+            ],
+            *[
+                symbol
+                for route in routes
+                for symbol in string_items(route.get("source_symbols"))
+            ],
+            *[
+                origin
+                for route in routes
+                for _, origin in source_mem_parts(route)
+                if origin
+            ],
+        ]
+    )
+
+
+def trace_synthesis_related_addresses(routes: list[dict[str, Any]]) -> list[str]:
+    return unique_list(
+        [
+            *[
+                address
+                for route in routes
+                for address in string_items(route.get("sink_addresses"))
+            ],
+            *[
+                address
+                for route in routes
+                for address, _ in source_mem_parts(route)
+                if address
+            ],
+        ]
+    )
+
+
+def source_mem_parts(route: dict[str, Any]) -> list[tuple[str, str]]:
+    out: list[tuple[str, str]] = []
+    for value in string_items(route.get("source_mems")):
+        text = str(value).strip()
+        if not text:
+            continue
+        if "=" in text:
+            address, origin = text.split("=", 1)
+            out.append((address.strip(), origin.strip()))
+        else:
+            out.append((text, ""))
+    return out
+
+
+def state_patch_minimization_source_symbols(item: dict[str, Any]) -> list[str]:
+    symbols = string_items(item.get("source_symbols"))
+    for result in dict_items(item.get("results")):
+        symbols.extend(string_items(result.get("source_symbols")))
+    return unique_list(symbol for symbol in symbols if symbol)
+
+
+def state_patch_minimization_watch_symbols(item: dict[str, Any]) -> list[str]:
+    symbols = [
+        *string_items(item.get("watch_symbols")),
+        *string_items(item.get("semantic_watch_symbols")),
+    ]
+    for _address, origin in source_mem_parts(item):
+        if origin:
+            symbols.append(origin)
+    for result in dict_items(item.get("results")):
+        symbols.extend(string_items(result.get("semantic_watch_symbols")))
+        for _address, origin in source_mem_parts(result):
+            if origin:
+                symbols.append(origin)
+    return unique_list(symbol for symbol in symbols if symbol)
+
+
+def state_patch_minimization_watch_addresses(item: dict[str, Any]) -> list[str]:
+    addresses = [
+        *string_items(item.get("watch_addresses")),
+        *[address for address, _origin in source_mem_parts(item)],
+    ]
+    for result in dict_items(item.get("results")):
+        addresses.extend(string_items(result.get("semantic_watch_addresses")))
+        addresses.extend(string_items(result.get("semantic_replay_watch_addresses")))
+        addresses.extend(address for address, _origin in source_mem_parts(result))
+    return unique_list(addresses)
+
+
+def state_patch_minimization_source_mems(item: dict[str, Any]) -> list[str]:
+    source_mems = string_items(item.get("source_mems"))
+    for result in dict_items(item.get("results")):
+        source_mems.extend(string_items(result.get("source_mems")))
+    return unique_list(source_mems)
+
+
+def positive_int(value: Any) -> int:
+    try:
+        number = int(value)
+    except (TypeError, ValueError):
+        return 0
+    return number if number > 0 else 0
+
+
+def content_fuzz_report_suggestion(report: dict[str, Any], *, source: str) -> dict[str, Any] | None:
+    cases = [
+        case
+        for case in dict_items(report.get("fuzz_cases"))
+        if case.get("scenario_id") and (case.get("runtime_targets") or case.get("state_preconditions"))
+    ]
+    if not cases:
+        return None
+    scenario_ids = unique_list(str(case.get("scenario_id", "")) for case in cases if case.get("scenario_id"))
+    commands = [
+        f"python -m tools.debugger compare --report {source}",
+        f"python -m tools.debugger coverage --report {source}",
+        *[
+            f"python -m tools.debugger expect --report {source} --expect scenario={scenario_id}"
+            for scenario_id in scenario_ids[:6]
+        ],
+    ]
+    counterexample_commands = [
+        command
+        for case in cases[:6]
+        for command in content_fuzz_case_commands(case)
+    ]
+    return {
+        "id": "content_fuzz_report_counterexamples",
+        "title": "Content fuzz report counterexamples",
+        "matched_by": ["report"],
+        "commands": unique_list(commands),
+        "counterexample_commands": unique_list(counterexample_commands),
+        "notes": [
+            f"{len(cases)} content fuzz cases found in {source}",
+            "Run materialization and replay/watch commands before treating planned content behavior as emulator proof.",
+        ],
+    }
+
+
+def content_fuzz_case_commands(case: dict[str, Any]) -> list[str]:
+    commands = []
+    request = case.get("materialization_request") if isinstance(case.get("materialization_request"), dict) else {}
+    commands.extend(string_items(request.get("commands")))
+    commands.extend(string_items(case.get("commands")))
+    for probe in dict_items(case.get("behavioral_probes")):
+        command = str(probe.get("command", ""))
+        if command:
+            commands.append(command)
+    return commands
 
 
 def unique_commands(matches: list[dict[str, Any]], key: str) -> list[str]:
@@ -253,4 +568,30 @@ def unique_commands(matches: list[dict[str, Any]], key: str) -> list[str]:
                 continue
             seen.add(command)
             out.append(command)
+    return out
+
+
+def dict_items(value: Any) -> list[dict[str, Any]]:
+    if not isinstance(value, list | tuple):
+        return []
+    return [item for item in value if isinstance(item, dict)]
+
+
+def string_items(value: Any) -> list[str]:
+    if isinstance(value, str):
+        return [value] if value else []
+    if not isinstance(value, list | tuple):
+        return []
+    return [str(item) for item in value if item]
+
+
+def unique_list(values: Any) -> list[str]:
+    out: list[str] = []
+    seen: set[str] = set()
+    for value in values:
+        text = str(value)
+        if not text or text in seen:
+            continue
+        seen.add(text)
+        out.append(text)
     return out

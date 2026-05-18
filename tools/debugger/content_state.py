@@ -7,13 +7,20 @@ from typing import Any
 from tools.trace import runtime as trace_runtime
 
 from .catalog import ROOT
+from .content_scenarios import (
+    EVENT_RUNTIME_ROUTE_KIND,
+    EVENT_RUNTIME_ROUTE_KEY,
+    EVENT_RUNTIME_ROUTE_LEGACY_KEY,
+    event_runtime_materialization_route,
+    output_sink_ids,
+)
 from .ingest import sha256_file
 from .localize import normalize_path
 from .minimize import load_scenario_files, unique_list
 from .provenance import display_path, parse_symbol_table, resolve_path
 from .reporting import load_reports
 from .setup_plan import collect_content_setup_scenarios, setup_scenario_id_for
-from .workflow import command_is_runnable
+from .workflow import command_address_arg, command_is_runnable
 
 
 MAP_GROUP_RE = re.compile(r"^MapGroup_(?P<name>[A-Za-z0-9_]+):")
@@ -35,6 +42,29 @@ AUDIO_ENTRY_WATCH_SYMBOLS = (
     "wChannel3Flags1",
     "wChannel4Flags1",
 )
+AUDIO_HARDWARE_OUTPUTS = (
+    ("rAUD1SWEEP", "$FF10"),
+    ("rAUD1LEN", "$FF11"),
+    ("rAUD1ENV", "$FF12"),
+    ("rAUD1LOW", "$FF13"),
+    ("rAUD1HIGH", "$FF14"),
+    ("rAUD2LEN", "$FF16"),
+    ("rAUD2ENV", "$FF17"),
+    ("rAUD2LOW", "$FF18"),
+    ("rAUD2HIGH", "$FF19"),
+    ("rAUD3ENA", "$FF1A"),
+    ("rAUD3LEN", "$FF1B"),
+    ("rAUD3LEVEL", "$FF1C"),
+    ("rAUD3LOW", "$FF1D"),
+    ("rAUD3HIGH", "$FF1E"),
+    ("rAUD4LEN", "$FF20"),
+    ("rAUD4ENV", "$FF21"),
+    ("rAUD4POLY", "$FF22"),
+    ("rAUD4GO", "$FF23"),
+    ("rAUDVOL", "$FF24"),
+    ("rAUDTERM", "$FF25"),
+    ("rAUDENA", "$FF26"),
+)
 ASSET_REQUEST_WATCH_SYMBOLS = (
     "wRequested2bppSource",
     "wRequested2bppDest",
@@ -42,6 +72,22 @@ ASSET_REQUEST_WATCH_SYMBOLS = (
     "wRequested1bppSource",
     "wRequested1bppDest",
     "wRequested1bppSize",
+)
+UI_OUTPUT_WATCH_SYMBOLS = (
+    "wTilemap",
+    "wAttrmap",
+    "hBGMapMode",
+    "hBGMapAddress",
+)
+UI_TILEMAP_HELPERS = (
+    "PlaceString",
+    "CopyBytes",
+    "ByteFill",
+    "LoadTilemapToTempTilemap",
+    "LoadStandardFont",
+    "LoadFontsExtra",
+    "WaitBGMap",
+    "ApplyTilemap",
 )
 PLAYER_OBJECT = 0x00
 SCRIPT_RUNNING_MAPSCRIPT = 0xFF
@@ -118,6 +164,7 @@ def build_content_state_report(
         execute=execute,
         root=root,
     ) if execute and executable else skipped_execution(execute=execute, out_state=out_state)
+    materializations = promote_route_after_execution(materializations=materializations, execution=execution)
     errors.extend(execution.get("errors", []))
     warnings.extend(execution.get("warnings", []))
     commands = materialization_commands(
@@ -145,6 +192,7 @@ def build_content_state_report(
         "symbols_sha256": sha256_file(symbols) if symbols.exists() else "",
         "base_save_state": display_path(base_state, root=root) if base_state is not None else "",
         "out_state": display_path(output_state, root=root) if output_state is not None else out_state,
+        "save_state_delta": execution.get("save_state_delta", {}),
         "input_reports": [item["source"] for item in loaded_reports],
         "input_scenarios": [item["source"] for item in loaded_scenarios],
         "input_scenario_ids": list(scenario_ids),
@@ -161,7 +209,8 @@ def build_content_state_report(
             "This materializes content preconditions by patching known WRAM symbols on top of an existing base save state.",
             "Map-position patches prove the selected map/x/y state values are installed; they do not by themselves prove the game engine has rebuilt every derived map object structure.",
             "Movement-entry patches install the movement data pointer fields; they do not synthesize the selected object's full object struct or visibility state.",
-            "Audio and asset-loader entries currently emit explicit runtime trace/watch proof routes but require an owning caller or save state before they can be executed.",
+            "Audio channel headers and audio command streams emit explicit runtime trace/watch proof routes for music WRAM and rAUD hardware registers, while asset-loader entries emit loader request watch routes; both require an owning caller or save state before they can be executed.",
+            "UI output-sink entries emit tilemap/attrmap watch, instruction-trace, and dynamic-taint routes, but still require a runtime caller or save state that reaches the selected drawing helper.",
             "Use replay/watch/trace-instructions after the patched state to prove the trigger reaches the intended helper code.",
         ],
     }
@@ -241,6 +290,9 @@ def materializations_for_scenario(
             if kind == "asset_loader_entry":
                 out.append(asset_loader_entry_materialization(scenario=scenario, precondition=precondition, scenario_id=scenario_id))
                 continue
+            if kind == "ui_output_sink":
+                out.append(ui_output_sink_materialization(scenario=scenario, precondition=precondition, scenario_id=scenario_id))
+                continue
             out.append(non_patch_materialization(scenario, precondition, reason=f"unsupported precondition kind: {kind}"))
             continue
         out.append(
@@ -254,7 +306,122 @@ def materializations_for_scenario(
                 root=root,
             )
         )
-    return out
+    preconditions_by_id = {
+        str(precondition.get("id", "")): precondition
+        for precondition in dict_items(scenario.get("state_preconditions"))
+        if precondition.get("id")
+    }
+    return [
+        attach_event_runtime_route(
+            materialization,
+            preconditions_by_id.get(str(materialization.get("precondition_id", "")), {}),
+        )
+        for materialization in out
+    ]
+
+
+def attach_event_runtime_route(materialization: dict[str, Any], precondition: dict[str, Any]) -> dict[str, Any]:
+    row = dict(materialization)
+    route = {}
+    if isinstance(precondition, dict):
+        route = precondition.get(EVENT_RUNTIME_ROUTE_KEY) or precondition.get(EVENT_RUNTIME_ROUTE_LEGACY_KEY) or {}
+    if not isinstance(route, dict) or not route:
+        route = event_runtime_materialization_route(
+            scenario_id=str(row.get("scenario_id", "")),
+            scenario_type=str(row.get("scenario_type", "")),
+            precondition_id=str(row.get("precondition_id", "")),
+            precondition_kind=str(row.get("precondition_kind", "")),
+            values=row.get("values") if isinstance(row.get("values"), dict) else {},
+            watch_symbols=string_items(row.get("watch_symbols")),
+            outputs=dict_items(row.get("outputs")),
+        )
+    else:
+        route = dict(route)
+    if route.get("kind") == EVENT_RUNTIME_ROUTE_LEGACY_KEY or not route.get("kind"):
+        route["kind"] = EVENT_RUNTIME_ROUTE_KIND
+    expected_sinks = unique_list(
+        [
+            *string_items(route.get("expected_sinks")),
+            *string_items(row.get("watch_symbols")),
+            *output_sink_ids(dict_items(row.get("outputs"))),
+            *[str(patch.get("symbol", "")) for patch in dict_items(row.get("patches")) if patch.get("symbol")],
+        ]
+    )
+    actual_proof_status = materialization_actual_proof_status(row)
+    observed_sinks = string_items(row.get("observed_sinks"))
+    route.update(
+        {
+            "actual_proof_status": actual_proof_status,
+            "expected_sinks": expected_sinks,
+            "observed_sinks": observed_sinks,
+        }
+    )
+    row[EVENT_RUNTIME_ROUTE_KEY] = route
+    row[EVENT_RUNTIME_ROUTE_LEGACY_KEY] = route
+    row["actual_proof_status"] = actual_proof_status
+    row["expected_proof_status"] = str(route.get("expected_proof_status") or "runtime_observed")
+    row["expected_sinks"] = expected_sinks
+    row["observed_sinks"] = observed_sinks
+    return row
+
+
+def materialization_actual_proof_status(materialization: dict[str, Any]) -> str:
+    if str(materialization.get("actual_proof_status", "")):
+        return str(materialization.get("actual_proof_status"))
+    if str(materialization.get("status", "")) == "ready":
+        return "ready_to_run"
+    return "planned_only"
+
+
+def promote_route_after_execution(
+    *,
+    materializations: list[dict[str, Any]],
+    execution: dict[str, Any],
+) -> list[dict[str, Any]]:
+    if not execution.get("executed"):
+        return materializations
+    verified = {
+        patch_identity(patch)
+        for patch in dict_items(execution.get("applied_patches"))
+        if patch.get("verified", True)
+    }
+    promoted: list[dict[str, Any]] = []
+    for materialization in materializations:
+        row = dict(materialization)
+        patches = dict_items(row.get("patches"))
+        if patches and all(patch_identity(patch) in verified for patch in patches):
+            observed_sinks = unique_list(
+                [
+                    *string_items(row.get("observed_sinks")),
+                    *[str(patch.get("symbol", "")) for patch in patches if patch.get("symbol")],
+                ]
+            )
+            row["actual_proof_status"] = "state_materialized"
+            row["observed_sinks"] = observed_sinks
+            route = dict(
+                row.get(EVENT_RUNTIME_ROUTE_KEY)
+                if isinstance(row.get(EVENT_RUNTIME_ROUTE_KEY), dict)
+                else row.get(EVENT_RUNTIME_ROUTE_LEGACY_KEY)
+                if isinstance(row.get(EVENT_RUNTIME_ROUTE_LEGACY_KEY), dict)
+                else {}
+            )
+            if route.get("kind") == EVENT_RUNTIME_ROUTE_LEGACY_KEY or not route.get("kind"):
+                route["kind"] = EVENT_RUNTIME_ROUTE_KIND
+            route["actual_proof_status"] = "state_materialized"
+            route["observed_sinks"] = observed_sinks
+            row[EVENT_RUNTIME_ROUTE_KEY] = route
+            row[EVENT_RUNTIME_ROUTE_LEGACY_KEY] = route
+        promoted.append(row)
+    return promoted
+
+
+def patch_identity(patch: dict[str, Any]) -> tuple[str, str, str, str]:
+    return (
+        str(patch.get("symbol", "")),
+        str(patch.get("bank_address", "")),
+        str(patch.get("value_hex", "")),
+        str(patch.get("value", "")),
+    )
 
 
 def selected_precondition_kinds(scenarios: list[dict[str, Any]]) -> set[str]:
@@ -488,7 +655,37 @@ def audio_engine_entry_materialization(
 ) -> dict[str, Any]:
     values = precondition.get("values") if isinstance(precondition.get("values"), dict) else {}
     music_label = str(values.get("music_label") or scenario.get("label") or "").strip()
+    runtime_symbols = ["PlayMusic", "_PlayMusic", "ParseMusic", "ParseMusicCommand"]
+    trace_symbols = " ".join(f"--symbol {symbol}" for symbol in runtime_symbols)
     watch_args = " ".join(f"--watch-symbol {symbol}" for symbol in AUDIO_ENTRY_WATCH_SYMBOLS)
+    trace_report = f".local\\tmp\\debugger_audio_output_trace_{scenario_id}.json"
+    trace_path = f".local\\tmp\\debugger_audio_output_trace_{scenario_id}.jsonl"
+    output_records = materialization_outputs(
+        scenario=scenario,
+        precondition=precondition,
+        fallback=[
+            {
+                "kind": "audio_engine_output",
+                "state_symbol": symbol,
+                "size": 1,
+                "producer_symbol": "PlayMusic",
+                "source_function": music_label or "PlayMusic",
+            }
+            for symbol in AUDIO_ENTRY_WATCH_SYMBOLS
+        ] + [
+            {
+                "kind": "audio_hardware_output",
+                "address": address,
+                "address_label": hardware_label,
+                "size": 1,
+                "producer_symbol": "PlayMusic",
+                "source_function": music_label or "PlayMusic",
+            }
+            for hardware_label, address in AUDIO_HARDWARE_OUTPUTS
+        ],
+    )
+    sink_args = sink_args_for_outputs(output_records)
+    watch_address_args = watch_address_args_for_outputs(output_records)
     return {
         "scenario_id": scenario_id,
         "scenario_type": str(scenario.get("scenario_type", "")),
@@ -501,25 +698,72 @@ def audio_engine_entry_materialization(
         "patch_count": 0,
         "patches": [],
         "watch_symbols": list(AUDIO_ENTRY_WATCH_SYMBOLS),
-        "runtime_symbols": ["PlayMusic", "_PlayMusic"],
+        "runtime_symbols": runtime_symbols,
+        "outputs": output_records,
         "errors": [],
         "notes": [
-            "Audio content currently needs an owning caller or save state that invokes PlayMusic for the selected music header.",
-            "The planned proof watches music id/bank and channel flags while tracing PlayMusic/_PlayMusic.",
+            "Audio content currently needs an owning caller or save state that invokes PlayMusic/_PlayMusic for the selected music data.",
+            "The planned proof watches music id/bank and channel flags while tracing PlayMusic/_PlayMusic and ParseMusic helpers, then feeds the trace to dynamic taint.",
         ],
         "commands": [
             (
                 "python -m tools.debugger trace-instructions "
-                "--symbol PlayMusic --symbol _PlayMusic "
-                f"{watch_args} --save-state <runtime-state> --execute --require-hit"
+                f"{trace_symbols} "
+                f"{watch_args} {watch_address_args} --save-state <runtime-state> "
+                f"--execute --require-hit --out-trace {trace_path} --json-out {trace_report}"
             ),
             (
                 "python -m tools.debugger replay "
                 f"--scenario-id {scenario_id} --save-state <runtime-state> "
-                f"--symbol PlayMusic --symbol _PlayMusic {watch_args} --execute-watch"
+                f"{trace_symbols} {watch_args} {watch_address_args} --execute-watch"
             ),
+            (
+                "python -m tools.debugger dynamic-taint "
+                f"--report {trace_report} {sink_args}"
+            ).strip(),
         ],
     }
+
+
+def materialization_outputs(
+    *,
+    scenario: dict[str, Any],
+    precondition: dict[str, Any],
+    fallback: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    outputs = precondition.get("outputs") if isinstance(precondition.get("outputs"), list) else scenario.get("outputs", [])
+    return [
+        output
+        for output in outputs
+        if isinstance(output, dict)
+    ] or fallback
+
+
+def sink_args_for_outputs(output_records: list[dict[str, Any]]) -> str:
+    symbol_args = [
+        f"--sink-symbol {symbol}"
+        for symbol in unique_list(str(output.get("state_symbol", "")) for output in output_records if output.get("state_symbol"))
+    ]
+    address_args = [
+        f"--sink-address {command_address_arg(address)}"
+        for address in unique_list(
+            str(output.get("address") or output.get("watch_address") or output.get("sink_address") or "")
+            for output in output_records
+            if output.get("address") or output.get("watch_address") or output.get("sink_address")
+        )
+    ]
+    return " ".join([*symbol_args, *address_args])
+
+
+def watch_address_args_for_outputs(output_records: list[dict[str, Any]]) -> str:
+    return " ".join(
+        f"--watch-address {command_address_arg(address)}"
+        for address in unique_list(
+            str(output.get("address") or output.get("watch_address") or output.get("sink_address") or "")
+            for output in output_records
+            if output.get("address") or output.get("watch_address") or output.get("sink_address")
+        )
+    )
 
 
 def asset_loader_entry_materialization(
@@ -532,6 +776,24 @@ def asset_loader_entry_materialization(
     asset = str(values.get("asset") or "").strip()
     label = str(values.get("label") or scenario.get("label") or "").strip()
     watch_args = " ".join(f"--watch-symbol {symbol}" for symbol in ASSET_REQUEST_WATCH_SYMBOLS)
+    trace_report = f".local\\tmp\\debugger_asset_output_trace_{scenario_id}.json"
+    trace_path = f".local\\tmp\\debugger_asset_output_trace_{scenario_id}.jsonl"
+    output_records = materialization_outputs(
+        scenario=scenario,
+        precondition=precondition,
+        fallback=[
+            {
+                "kind": "asset_request_output",
+                "state_symbol": symbol,
+                "size": 1,
+                "producer_symbol": "Request2bpp",
+                "source_function": label or "Request2bpp",
+                "asset": asset,
+            }
+            for symbol in ASSET_REQUEST_WATCH_SYMBOLS
+        ],
+    )
+    sink_args = sink_args_for_outputs(output_records)
     return {
         "scenario_id": scenario_id,
         "scenario_type": str(scenario.get("scenario_type", "")),
@@ -546,22 +808,91 @@ def asset_loader_entry_materialization(
         "patches": [],
         "watch_symbols": list(ASSET_REQUEST_WATCH_SYMBOLS),
         "runtime_symbols": ["Request2bpp", "Get1bpp", "Decompress"],
+        "outputs": output_records,
         "errors": [],
         "notes": [
             "Asset content currently needs an owning graphics/data loader or save state that requests this INCBIN payload.",
-            "The planned proof watches 1bpp/2bpp request queues while tracing the graphics loader helpers.",
+            "The planned proof watches 1bpp/2bpp request queues while tracing the graphics loader helpers, then feeds the trace to dynamic taint.",
         ],
         "commands": [
             (
                 "python -m tools.debugger trace-instructions "
                 "--symbol Request2bpp --symbol Get1bpp --symbol Decompress "
-                f"{watch_args} --save-state <runtime-state> --execute --require-hit"
+                f"{watch_args} --save-state <runtime-state> "
+                f"--execute --require-hit --out-trace {trace_path} --json-out {trace_report}"
             ),
             (
                 "python -m tools.debugger replay "
                 f"--scenario-id {scenario_id} --save-state <runtime-state> "
                 f"--symbol Request2bpp --symbol Get1bpp --symbol Decompress {watch_args} --execute-watch"
             ),
+            (
+                "python -m tools.debugger dynamic-taint "
+                f"--report {trace_report} {sink_args}"
+            ).strip(),
+        ],
+    }
+
+
+def ui_output_sink_materialization(
+    *,
+    scenario: dict[str, Any],
+    precondition: dict[str, Any],
+    scenario_id: str,
+) -> dict[str, Any]:
+    values = precondition.get("values") if isinstance(precondition.get("values"), dict) else {}
+    ui_label = str(values.get("ui_label") or scenario.get("label") or "").strip()
+    helper = str(values.get("helper") or "PlaceString").strip()
+    runtime_symbols = unique_list([helper, *UI_TILEMAP_HELPERS])
+    watch_args = " ".join(f"--watch-symbol {symbol}" for symbol in UI_OUTPUT_WATCH_SYMBOLS)
+    trace_symbols = " ".join(f"--symbol {symbol}" for symbol in runtime_symbols[:8])
+    trace_report = f".local\\tmp\\debugger_ui_output_trace_{scenario_id}.json"
+    trace_path = f".local\\tmp\\debugger_ui_output_trace_{scenario_id}.jsonl"
+    output_records = materialization_outputs(
+        scenario=scenario,
+        precondition=precondition,
+        fallback=[
+            {"kind": "ui_tilemap_output", "state_symbol": "wTilemap", "size": 1, "producer_symbol": helper, "source_function": ui_label or helper},
+            {"kind": "ui_attrmap_output", "state_symbol": "wAttrmap", "size": 1, "producer_symbol": helper, "source_function": ui_label or helper},
+        ],
+    )
+    sink_args = sink_args_for_outputs(output_records)
+    watch_address_args = watch_address_args_for_outputs(output_records)
+    return {
+        "scenario_id": scenario_id,
+        "scenario_type": str(scenario.get("scenario_type", "")),
+        "precondition_id": str(precondition.get("id", "")),
+        "precondition_kind": "ui_output_sink",
+        "status": "planned",
+        "source_file": normalize_path(str(scenario.get("source_file") or values.get("source_file") or "")),
+        "ui_label": ui_label,
+        "helper": helper,
+        "values": dict(values),
+        "patch_count": 0,
+        "patches": [],
+        "watch_symbols": list(UI_OUTPUT_WATCH_SYMBOLS),
+        "runtime_symbols": runtime_symbols,
+        "outputs": output_records,
+        "errors": [],
+        "notes": [
+            "UI output content needs a runtime caller or save state that reaches the selected drawing helper.",
+            "The planned proof watches tilemap/attrmap and BG-map control state while tracing UI tilemap helpers, then feeds the trace to dynamic taint.",
+        ],
+        "commands": [
+            (
+                "python -m tools.debugger trace-instructions "
+                f"{trace_symbols} {watch_args} {watch_address_args} --save-state <runtime-state> "
+                f"--execute --require-hit --out-trace {trace_path} --json-out {trace_report}"
+            ).strip(),
+            (
+                "python -m tools.debugger replay "
+                f"--scenario-id {scenario_id} --save-state <runtime-state> "
+                f"{trace_symbols} {watch_args} {watch_address_args} --execute-watch"
+            ).strip(),
+            (
+                "python -m tools.debugger dynamic-taint "
+                f"--report {trace_report} {sink_args}"
+            ).strip(),
         ],
     }
 
@@ -651,9 +982,7 @@ def execute_materialization(
         with output_state.open("wb") as fh:
             pyboy.save_state(fh)
     finally:
-        stop = getattr(pyboy, "stop", None)
-        if stop is not None:
-            stop(save=False)
+        stop_pyboy(pyboy)
     errors = [
         f"patch verification failed: {patch['symbol']} expected {patch['value_hex']} observed {patch['observed_hex']}"
         for patch in applied
@@ -663,11 +992,100 @@ def execute_materialization(
         "executed": not errors,
         "base_save_state": display_path(base_state, root=root),
         "out_state": display_path(output_state, root=root),
+        "save_state_delta": save_state_delta_summary(base_state=base_state, output_state=output_state, root=root),
         "patch_count": len(applied),
         "applied_patches": applied,
         "errors": errors,
         "warnings": [],
     }
+
+
+def save_state_delta_summary(
+    *,
+    base_state: Path | None,
+    output_state: Path | None,
+    root: Path,
+    max_offsets: int = 64,
+    max_samples: int = 24,
+) -> dict[str, Any]:
+    base_display = display_path(base_state, root=root) if base_state is not None else ""
+    output_display = display_path(output_state, root=root) if output_state is not None else ""
+    if base_state is None or output_state is None:
+        return {
+            "attempted": False,
+            "proof_status": "planned_only",
+            "base_save_state": base_display,
+            "out_state": output_display,
+            "changed_byte_count": 0,
+            "changed_offsets": [],
+            "samples": [],
+            "errors": ["base and output save states are required for delta comparison"],
+        }
+    try:
+        base_bytes = base_state.read_bytes()
+        output_bytes = output_state.read_bytes()
+    except OSError as exc:
+        return {
+            "attempted": True,
+            "proof_status": "planned_only",
+            "base_save_state": base_display,
+            "out_state": output_display,
+            "changed_byte_count": 0,
+            "changed_offsets": [],
+            "samples": [],
+            "errors": [str(exc)],
+        }
+    changed_offsets: list[int] = []
+    samples: list[dict[str, Any]] = []
+    changed_count = 0
+    for offset in range(max(len(base_bytes), len(output_bytes))):
+        before = base_bytes[offset] if offset < len(base_bytes) else None
+        after = output_bytes[offset] if offset < len(output_bytes) else None
+        if before == after:
+            continue
+        changed_count += 1
+        if len(changed_offsets) < max_offsets:
+            changed_offsets.append(offset)
+        if len(samples) < max_samples:
+            samples.append(save_state_delta_sample(offset=offset, before=before, after=after))
+    return {
+        "attempted": True,
+        "proof_status": "state_materialized",
+        "base_save_state": base_display,
+        "out_state": output_display,
+        "base_size_bytes": len(base_bytes),
+        "out_size_bytes": len(output_bytes),
+        "size_changed": len(base_bytes) != len(output_bytes),
+        "base_sha256": sha256_file(base_state),
+        "out_sha256": sha256_file(output_state),
+        "changed_byte_count": changed_count,
+        "changed_offsets": changed_offsets,
+        "changed_offsets_truncated": changed_count > len(changed_offsets),
+        "sample_count": len(samples),
+        "samples": samples,
+        "errors": [],
+    }
+
+
+def save_state_delta_sample(*, offset: int, before: int | None, after: int | None) -> dict[str, Any]:
+    return {
+        "offset": offset,
+        "offset_hex": f"{offset:06X}",
+        "before": before,
+        "before_hex": "" if before is None else f"{before:02X}",
+        "after": after,
+        "after_hex": "" if after is None else f"{after:02X}",
+    }
+
+
+def stop_pyboy(pyboy: Any) -> None:
+    stop = getattr(pyboy, "stop", None)
+    if stop is None:
+        return
+    try:
+        stop(save=False)
+    except TypeError:
+        stop()
 
 
 def skipped_execution(*, execute: bool, out_state: str) -> dict[str, Any]:
@@ -789,12 +1207,20 @@ def dict_items(value: Any) -> list[dict[str, Any]]:
     return []
 
 
+def string_items(value: Any) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, str):
+        return [value] if value else []
+    if isinstance(value, list | tuple | set):
+        return [nested for item in value for nested in string_items(item)]
+    return [str(value)] if value else []
+
+
 def cmd_arg(value: str) -> str:
     text = str(value)
     if not text:
         return '""'
     if any(char.isspace() for char in text):
-        import json
-
-        return json.dumps(text)
+        return '"' + text.replace('"', '\\"') + '"'
     return text

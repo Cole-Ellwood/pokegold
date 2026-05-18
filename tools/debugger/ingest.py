@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from .catalog import ROOT, triage_request
+from .input_log import build_input_playback
 
 
 SYMBOL_RE = re.compile(r"^(?P<bank>[0-9A-Fa-f]{2}):(?P<addr>[0-9A-Fa-f]{4})\s+(?P<label>\S+)")
@@ -18,6 +19,7 @@ def ingest_artifacts(
     symbols: tuple[str, ...] = (),
     traces: tuple[str, ...] = (),
     save_states: tuple[str, ...] = (),
+    input_logs: tuple[str, ...] = (),
     scenarios: tuple[str, ...] = (),
     changed_files: tuple[str, ...] = (),
     root: Path = ROOT,
@@ -31,6 +33,8 @@ def ingest_artifacts(
         artifacts.append(inspect_artifact("trace", path, root=root))
     for path in save_states:
         artifacts.append(inspect_artifact("save_state", path, root=root))
+    for path in input_logs:
+        artifacts.append(inspect_artifact("input_log", path, root=root))
     for path in scenarios:
         artifacts.append(inspect_artifact("scenario", path, root=root))
     for path in changed_files:
@@ -95,6 +99,8 @@ def inspect_artifact(
         inspect_scenario(path, artifact)
     elif kind == "save_state":
         inspect_save_state(path, artifact)
+    elif kind == "input_log":
+        inspect_input_log(path, artifact)
     elif kind == "source_change":
         inspect_source_change(path, artifact)
     return artifact
@@ -222,11 +228,15 @@ def summarize_trace_data(data: Any, metadata: dict[str, Any]) -> None:
     keys: set[str] = set()
     symbols: list[str] = []
     source_files: list[str] = []
-    walk_trace_data(data, keys=keys, symbols=symbols, source_files=source_files)
+    hashes = {"rom": [], "symbols": [], "save_state": []}
+    walk_trace_data(data, keys=keys, symbols=symbols, source_files=source_files, hashes=hashes)
     metadata["key_count"] = len(keys)
     metadata["keys_sample"] = sorted(keys)[:12]
     metadata["symbol_sample"] = unique_list(symbols)[:12]
     metadata["source_file_sample"] = unique_list(source_files)[:12]
+    metadata["rom_sha256_sample"] = unique_list(hashes["rom"])[:4]
+    metadata["symbols_sha256_sample"] = unique_list(hashes["symbols"])[:4]
+    metadata["save_state_sha256_sample"] = unique_list(hashes["save_state"])[:4]
 
 
 def walk_trace_data(
@@ -235,18 +245,40 @@ def walk_trace_data(
     keys: set[str],
     symbols: list[str],
     source_files: list[str],
+    hashes: dict[str, list[str]],
 ) -> None:
     if isinstance(data, dict):
         for key, value in data.items():
-            keys.add(str(key))
+            key_text = str(key)
+            keys.add(key_text)
             if key in {"full_symbol", "symbol", "pc_label", "watch", "query", "resolved"} and isinstance(value, str):
                 symbols.append(value)
             if key == "source_file" and isinstance(value, str):
                 source_files.append(value)
-            walk_trace_data(value, keys=keys, symbols=symbols, source_files=source_files)
+            collect_trace_hash(key_text, value, hashes=hashes)
+            walk_trace_data(value, keys=keys, symbols=symbols, source_files=source_files, hashes=hashes)
     elif isinstance(data, list):
         for item in data:
-            walk_trace_data(item, keys=keys, symbols=symbols, source_files=source_files)
+            walk_trace_data(item, keys=keys, symbols=symbols, source_files=source_files, hashes=hashes)
+
+
+def collect_trace_hash(key: str, value: Any, *, hashes: dict[str, list[str]]) -> None:
+    if not isinstance(value, str) or not looks_like_sha256(value):
+        return
+    lowered = key.lower()
+    if "rom" in lowered and "sha256" in lowered:
+        hashes["rom"].append(value)
+    elif "symbol" in lowered and "sha256" in lowered:
+        hashes["symbols"].append(value)
+    elif "state" in lowered and "sha256" in lowered:
+        hashes["save_state"].append(value)
+
+
+def looks_like_sha256(value: str) -> bool:
+    text = value.strip()
+    if len(text) != 64:
+        return False
+    return all(char in "0123456789abcdefABCDEF" for char in text)
 
 
 def inspect_scenario(path: Path, artifact: dict[str, Any]) -> None:
@@ -321,6 +353,24 @@ def inspect_save_state(path: Path, artifact: dict[str, Any]) -> None:
     metadata["opaque"] = True
     if artifact["size_bytes"] == 0:
         artifact["errors"].append("save-state file is empty.")
+
+
+def inspect_input_log(path: Path, artifact: dict[str, Any]) -> None:
+    text = path.read_text(encoding="utf-8", errors="replace")
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    playback = build_input_playback((str(path),), root=path.parent)
+    metadata = artifact["metadata"]
+    metadata["format"] = "text"
+    metadata["line_count"] = len(text.splitlines())
+    metadata["input_count"] = len(lines)
+    metadata["playback_valid"] = playback["valid"]
+    metadata["playback_frame_count"] = playback["total_frames"]
+    metadata["button_event_count"] = playback["button_event_count"]
+    metadata["first_inputs"] = lines[:12]
+    metadata["button_sample"] = playback["button_sample"]
+    if not lines:
+        artifact["errors"].append("input log is empty.")
+    artifact["errors"].extend(playback["errors"])
 
 
 def inspect_source_change(path: Path, artifact: dict[str, Any]) -> None:

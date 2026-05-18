@@ -5,8 +5,28 @@ from pathlib import Path
 from typing import Any
 
 from .catalog import ROOT, keyword_matches, triage_request
+from .content_scenarios import EVENT_RUNTIME_ROUTE_KEY, EVENT_RUNTIME_ROUTE_LEGACY_KEY
 from .provenance import build_provenance_report
 from .reporting import load_reports
+from .workflow import command_address_arg
+
+
+OUTPUT_RUNTIME_EVIDENCE_KINDS = {
+    "watch",
+    "replay_watch",
+    "instruction_trace",
+    "effect_trace",
+    "dynamic_taint",
+    "visual_snapshot",
+    "audio_snapshot",
+}
+OUTPUT_RUNTIME_STRONG_PROOF_STATUSES = {
+    "runtime_observed",
+    "instruction_observed",
+    "taint_proven",
+    "mirror_passed",
+    "observed",
+}
 
 
 @dataclass(frozen=True)
@@ -168,10 +188,17 @@ def build_compare_plan(
     changed_files: tuple[str, ...] = (),
     symbols: tuple[str, ...] = (),
     symptom: str = "",
+    runtime_observations: tuple[dict[str, Any], ...] = (),
     root: Path = ROOT,
 ) -> dict[str, Any]:
     loaded_reports, report_errors = load_reports(reports=reports, root=root)
-    matches = content_state_mirror_matches(loaded_reports)
+    runtime_observation_records = collect_runtime_observations(
+        loaded_reports=loaded_reports,
+        supplied=runtime_observations,
+    )
+    matches = content_state_mirror_matches(loaded_reports, runtime_observations=runtime_observation_records)
+    matches.extend(content_fuzz_mirror_matches(loaded_reports))
+    matches.extend(dynamic_expectation_mirror_matches(loaded_reports))
     matches.extend(match_mirrors(
         changed_files=changed_files,
         symbols=symbols,
@@ -239,8 +266,17 @@ def build_compare_plan(
     }
 
 
-def content_state_mirror_matches(loaded_reports: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def content_state_mirror_matches(
+    loaded_reports: list[dict[str, Any]],
+    *,
+    runtime_observations: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
     matches = []
+    runtime_evidence = [
+        evidence
+        for loaded in loaded_reports
+        for evidence in runtime_mirror_evidence(loaded)
+    ]
     for loaded in loaded_reports:
         data = loaded.get("data", {})
         if not isinstance(data, dict):
@@ -253,60 +289,913 @@ def content_state_mirror_matches(loaded_reports: list[dict[str, Any]]) -> list[d
             for item in dict_items(data.get("materializations"))
             if item.get("patches")
         ]
-        if not materializations:
+        output_materializations = [
+            item
+            for item in dict_items(data.get("materializations"))
+            if item.get("outputs")
+        ]
+        if not materializations and not output_materializations:
             continue
-        scenario_ids = unique_list(
-            str(item.get("scenario_id", ""))
-            for item in materializations
-            if item.get("scenario_id")
-        )
-        patch_symbols = unique_list(
-            str(patch.get("symbol", ""))
-            for materialization in materializations
-            for patch in dict_items(materialization.get("patches"))
-            if patch.get("symbol")
-        )
         execution = data.get("execution") if isinstance(data.get("execution"), dict) else {}
         out_state = str(execution.get("out_state") or data.get("out_state") or "")
         executed = bool(data.get("executed") or execution.get("executed"))
+        if materializations:
+            scenario_ids = unique_list(
+                str(item.get("scenario_id", ""))
+                for item in materializations
+                if item.get("scenario_id")
+            )
+            patch_symbols = unique_list(
+                str(patch.get("symbol", ""))
+                for materialization in materializations
+                for patch in dict_items(materialization.get("patches"))
+                if patch.get("symbol")
+            )
+            commands = [
+                command
+                for materialization in materializations[:6]
+                for command in content_state_expect_commands(source=source, materialization=materialization)
+            ]
+            materialization_commands = [
+                *[
+                    f"python -m tools.debugger replay --report {source} --scenario-id {scenario_id} --execute-watch"
+                    for scenario_id in scenario_ids[:6]
+                ],
+                *content_state_watch_commands(out_state=out_state, patch_symbols=patch_symbols),
+            ]
+            status = "state_materialized" if executed else "planned"
+            proof_status = "state_materialized" if executed else "planned_only"
+            route_status = content_state_runtime_route_status(
+                materializations=materializations,
+                executed=executed,
+                runtime_observations=runtime_observations,
+            )
+            if route_status["mirror_status"] == "passed":
+                status = "passed"
+                proof_status = "mirror_passed"
+            gaps = []
+            if executed:
+                gaps.append(
+                    "Patched content state was materialized, but replay/watch from that state is still required before claiming final runtime behavior."
+                )
+            else:
+                gaps.append(
+                    "Content-state patches are planned but no patched save state was executed; run the content-state --execute command before treating this as final emulator behavior."
+                )
+            evidence = [
+                f"report={source}",
+                f"scenarios={len(scenario_ids)}",
+                f"patches={sum(len(item.get('patches', [])) for item in materializations)}",
+                f"status={status}",
+                f"proof_status={proof_status}",
+                f"mirror_status={route_status['mirror_status']}",
+                f"actual_proof_status={route_status['actual_proof_status']}",
+            ]
+            if out_state:
+                evidence.append(f"state={out_state}")
+            matches.append(
+                {
+                    "id": "content_state_behavioral_mirror",
+                    "title": "Content WRAM patch and replay mirror",
+                    "scope": "Content scenarios with generated map-position, script-entry, or movement-entry WRAM state patches and replay targets.",
+                    "confidence": "high for selected WRAM map-position/script-entry/movement-entry state; runtime transition confidence requires replay/watch from the patched state",
+                    "matched_by": ["content_state_report"],
+                    "status": status,
+                    "proof_status": proof_status,
+                    "mirror_status": route_status["mirror_status"],
+                    "actual_proof_status": route_status["actual_proof_status"],
+                    "expected_proof_status": route_status["expected_proof_status"],
+                    "expected_sinks": route_status["expected_sinks"],
+                    "observed_sinks": route_status["observed_sinks"],
+                    "evidence": evidence,
+                    "commands": unique_list(commands),
+                    "materialization_commands": unique_list(materialization_commands),
+                    "gaps": gaps,
+                    "runtime_evidence_gaps": route_status["runtime_evidence_gaps"],
+                }
+            )
+        if output_materializations:
+            scenario_ids = unique_list(
+                str(item.get("scenario_id", ""))
+                for item in output_materializations
+                if item.get("scenario_id")
+            )
+            output_symbols = content_state_output_symbols(output_materializations)
+            output_addresses = content_state_output_addresses(output_materializations)
+            commands = content_output_expect_commands(
+                source=source,
+                materializations=output_materializations[:6],
+            )
+            mirror_status = content_output_mirror_status(
+                output_symbols=output_symbols,
+                output_addresses=output_addresses,
+                runtime_evidence=runtime_evidence,
+            )
+            gaps = []
+            if mirror_status["status"] == "planned":
+                gaps.append(
+                    "Output-sink mirrors are planned until replay, watch, effect-trace, instruction tracing, or dynamic taint proves the selected helper writes the watched output state."
+                )
+            elif mirror_status["status"] == "partial":
+                gaps.append(
+                    f"Only {mirror_status['covered_count']} of {mirror_status['output_count']} output sink(s) have runtime evidence; add trace/watch coverage for the remaining output sinks."
+                )
+            materialization_commands = unique_list(
+                [
+                    *[
+                        command
+                        for materialization in output_materializations[:6]
+                        for command in scalar_string_items(materialization.get("commands"))
+                    ],
+                    *[
+                        f"python -m tools.debugger replay --report {source} --scenario-id {scenario_id} --execute-watch"
+                        for scenario_id in scenario_ids[:6]
+                    ],
+                    (
+                        "python -m tools.debugger dynamic-taint "
+                        f"--report {source} "
+                        + " ".join(f"--sink-symbol {symbol}" for symbol in output_symbols[:6])
+                        + " "
+                        + " ".join(f"--sink-address {command_address_arg(address)}" for address in output_addresses[:6])
+                    ).strip(),
+                ]
+            )
+            matches.append(
+                {
+                    "id": "content_output_behavioral_mirror",
+                    "title": "Content output sink behavioral mirror",
+                    "scope": "UI/graphics/audio output-sink scenarios with generated watch, replay, instruction-trace, and dynamic-taint proof routes.",
+                    "confidence": content_output_mirror_confidence(mirror_status),
+                    "matched_by": ["content_state_output_report"],
+                    "status": mirror_status["status"],
+                    "proof_status": mirror_status["proof_status"],
+                    "covered_output_count": mirror_status["covered_count"],
+                    "output_count": mirror_status["output_count"],
+                    "runtime_reports": mirror_status["runtime_reports"],
+                    "runtime_kinds": mirror_status["runtime_kinds"],
+                    "weak_runtime_reports": mirror_status["weak_runtime_reports"],
+                    "weak_runtime_kinds": mirror_status["weak_runtime_kinds"],
+                    "evidence": [
+                        f"report={source}",
+                        f"scenarios={len(scenario_ids)}",
+                        f"outputs={len(output_symbols) + len(output_addresses)}",
+                        f"observed_outputs={mirror_status['covered_count']}",
+                        f"status={mirror_status['status']}",
+                        *mirror_status["evidence"],
+                    ],
+                    "scenario_ids": scenario_ids,
+                    "related_symbols": output_symbols,
+                    "related_addresses": output_addresses,
+                    "commands": unique_list(commands),
+                    "materialization_commands": materialization_commands,
+                    "gaps": gaps,
+                    "runtime_evidence_gaps": mirror_status["runtime_evidence_gaps"],
+                }
+            )
+    return matches
+
+
+def content_state_runtime_route_status(
+    *,
+    materializations: list[dict[str, Any]],
+    executed: bool,
+    runtime_observations: list[dict[str, Any]],
+) -> dict[str, Any]:
+    scenario_ids = unique_list(
+        str(item.get("scenario_id", ""))
+        for item in materializations
+        if item.get("scenario_id")
+    )
+    expected_sinks = content_state_expected_sinks(materializations)
+    observed_sinks = observed_sinks_for_scenarios(
+        scenario_ids=scenario_ids,
+        runtime_observations=runtime_observations,
+    )
+    missing_sinks = [sink for sink in expected_sinks if sink not in observed_sinks]
+    materialization_status = aggregate_materialization_proof_status(materializations, executed=executed)
+    has_executed_floor = executed or materialization_status in {"state_materialized", "executed", "observed"}
+    if expected_sinks and not missing_sinks and has_executed_floor:
+        mirror_status = "passed"
+        actual_proof_status = "observed"
+    elif observed_sinks:
+        mirror_status = "inconclusive"
+        actual_proof_status = materialization_status
+    else:
+        mirror_status = materialization_status if materialization_status != "planned_only" else "planned_only"
+        actual_proof_status = materialization_status
+    runtime_evidence_gaps = []
+    if missing_sinks:
+        runtime_evidence_gaps.append("Runtime observations missing expected sink(s): " + ", ".join(missing_sinks))
+    if observed_sinks and not has_executed_floor:
+        runtime_evidence_gaps.append("Runtime observations cannot pass this mirror until the content state is executed or otherwise state-materialized.")
+    if expected_sinks and not observed_sinks:
+        runtime_evidence_gaps.append("No runtime observations were supplied for the expected sink set.")
+    return {
+        "mirror_status": mirror_status,
+        "actual_proof_status": actual_proof_status,
+        "expected_proof_status": "runtime_observed",
+        "expected_sinks": expected_sinks,
+        "observed_sinks": observed_sinks,
+        "runtime_evidence_gaps": runtime_evidence_gaps,
+    }
+
+
+def content_state_expected_sinks(materializations: list[dict[str, Any]]) -> list[str]:
+    return unique_list(
+        sink
+        for materialization in materializations
+        for route in [
+            materialization.get(EVENT_RUNTIME_ROUTE_KEY)
+            if isinstance(materialization.get(EVENT_RUNTIME_ROUTE_KEY), dict)
+            else materialization.get(EVENT_RUNTIME_ROUTE_LEGACY_KEY)
+            if isinstance(materialization.get(EVENT_RUNTIME_ROUTE_LEGACY_KEY), dict)
+            else {}
+        ]
+        for sink in [
+            *scalar_string_items(materialization.get("expected_sinks")),
+            *scalar_string_items(route.get("expected_sinks")),
+            *[
+                str(patch.get("symbol", ""))
+                for patch in dict_items(materialization.get("patches"))
+                if patch.get("symbol")
+            ],
+        ]
+        if sink
+    )
+
+
+def aggregate_materialization_proof_status(materializations: list[dict[str, Any]], *, executed: bool) -> str:
+    if executed:
+        return "state_materialized"
+    statuses = {
+        str(item.get("actual_proof_status") or "")
+        for item in materializations
+        if item.get("actual_proof_status")
+    }
+    if "state_materialized" in statuses:
+        return "state_materialized"
+    if "ready_to_run" in statuses or any(str(item.get("status", "")) == "ready" for item in materializations):
+        return "ready_to_run"
+    return "planned_only"
+
+
+def collect_runtime_observations(
+    *,
+    loaded_reports: list[dict[str, Any]],
+    supplied: tuple[dict[str, Any], ...],
+) -> list[dict[str, Any]]:
+    observations = [normalize_runtime_observation(item) for item in supplied if isinstance(item, dict)]
+    for loaded in loaded_reports:
+        data = loaded.get("data")
+        if not isinstance(data, dict):
+            continue
+        for item in dict_items(data.get("runtime_observations")):
+            observation = normalize_runtime_observation(item)
+            if loaded.get("source") and not observation.get("source"):
+                observation["source"] = str(loaded.get("source", ""))
+            observations.append(observation)
+    return observations
+
+
+def normalize_runtime_observation(item: dict[str, Any]) -> dict[str, Any]:
+    observed_sinks = unique_list(
+        [
+            *scalar_string_items(item.get("observed_sinks")),
+            *scalar_string_items(item.get("sinks")),
+            *scalar_string_items(item.get("symbols")),
+            *scalar_string_items(item.get("addresses")),
+        ]
+    )
+    return {
+        **item,
+        "scenario_id": str(item.get("scenario_id", "")),
+        "observed_sinks": observed_sinks,
+    }
+
+
+def observed_sinks_for_scenarios(
+    *,
+    scenario_ids: list[str],
+    runtime_observations: list[dict[str, Any]],
+) -> list[str]:
+    scenario_id_set = set(scenario_ids)
+    return unique_list(
+        sink
+        for observation in runtime_observations
+        if not observation.get("scenario_id") or str(observation.get("scenario_id", "")) in scenario_id_set
+        for sink in scalar_string_items(observation.get("observed_sinks"))
+    )
+
+
+def content_fuzz_mirror_matches(loaded_reports: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    matches = []
+    for loaded in loaded_reports:
+        data = loaded.get("data", {})
+        if not isinstance(data, dict):
+            continue
+        if data.get("kind") != "unified_debugger_fuzz_plan":
+            continue
+        source = str(loaded.get("source", ""))
+        cases = [
+            item
+            for item in dict_items(data.get("fuzz_cases"))
+            if is_content_fuzz_case(item)
+        ]
+        if not cases:
+            continue
+        scenario_ids = unique_list(str(case.get("scenario_id", "")) for case in cases if case.get("scenario_id"))
+        source_files = unique_list(str(case.get("source_file", "")) for case in cases if case.get("source_file"))
+        related_symbols = unique_list(
+            symbol
+            for case in cases
+            for symbol in content_fuzz_case_symbols(case)
+        )
+        runtime_routes = unique_list(content_case_runtime_route(case) for case in cases)
         commands = [
-            command
-            for materialization in materializations[:6]
-            for command in content_state_expect_commands(source=source, materialization=materialization)
+            *content_fuzz_expect_commands(source=source, cases=cases),
+            *[
+                f"python -m tools.debugger content-mirror --source-file {path}"
+                for path in source_files[:6]
+            ],
         ]
         materialization_commands = [
-            *[
-                f"python -m tools.debugger replay --report {source} --scenario-id {scenario_id} --execute-watch"
-                for scenario_id in scenario_ids[:6]
-            ],
-            *content_state_watch_commands(out_state=out_state, patch_symbols=patch_symbols),
+            command
+            for case in cases[:6]
+            for command in content_fuzz_materialization_commands(case)
         ]
-        gaps = []
-        if not executed:
-            gaps.append(
-                "Content-state patches are planned but no patched save state was executed; run the content-state --execute command before treating this as final emulator behavior."
-            )
+        materialization_commands.extend(
+            f"python -m tools.debugger replay --report {source} --scenario-id {scenario_id} --execute-watch"
+            for scenario_id in scenario_ids[:6]
+        )
         evidence = [
             f"report={source}",
+            f"cases={len(cases)}",
             f"scenarios={len(scenario_ids)}",
-            f"patches={sum(len(item.get('patches', [])) for item in materializations)}",
         ]
-        if out_state:
-            evidence.append(f"state={out_state}")
+        if runtime_routes:
+            evidence.append(f"runtime_routes={','.join(runtime_routes)}")
         matches.append(
             {
-                "id": "content_state_behavioral_mirror",
-                "title": "Content WRAM patch and replay mirror",
-                "scope": "Content scenarios with generated map-position, script-entry, or movement-entry WRAM state patches and replay targets.",
-                "confidence": "high for selected WRAM map-position/script-entry/movement-entry state; runtime transition confidence requires replay/watch from the patched state",
-                "matched_by": ["content_state_report"],
+                "id": "content_fuzz_behavioral_mirror",
+                "title": "Content fuzz expectation and behavioral mirror",
+                "scope": "Content fuzz cases with generated scenario, state-precondition, runtime probe, and content mirror routes.",
+                "confidence": "medium-high for generated content cases; runtime confidence requires state materialization plus replay/watch proof",
+                "matched_by": ["content_fuzz_report"],
                 "evidence": evidence,
+                "scenario_ids": scenario_ids,
+                "source_files": source_files,
+                "related_symbols": related_symbols,
+                "runtime_routes": runtime_routes,
                 "commands": unique_list(commands),
                 "materialization_commands": unique_list(materialization_commands),
+                "gaps": [
+                    "Content fuzz reports describe planned behavioral routes; run the materialization and replay/watch commands before treating them as final emulator behavior."
+                ],
+            }
+        )
+    return matches
+
+
+def dynamic_expectation_mirror_matches(loaded_reports: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    expectation_reports = [
+        loaded
+        for loaded in loaded_reports
+        if isinstance(loaded.get("data"), dict)
+        and loaded["data"].get("kind") == "unified_debugger_expectation_report"
+        and loaded["data"].get("valid", True)
+        and int(loaded["data"].get("expectation_count", 0)) > 0
+    ]
+    runtime_evidence = [
+        evidence
+        for loaded in loaded_reports
+        for evidence in runtime_mirror_evidence(loaded)
+    ]
+    if not expectation_reports or not runtime_evidence:
+        return []
+
+    matches = []
+    runtime_sources = unique_list(item["source"] for item in runtime_evidence)
+    runtime_kinds = unique_list(item["kind"] for item in runtime_evidence)
+    runtime_symbols = unique_list(
+        symbol
+        for item in runtime_evidence
+        for symbol in scalar_string_items(item.get("symbols"))
+    )
+    runtime_addresses = unique_list(
+        address
+        for item in runtime_evidence
+        for address in scalar_string_items(item.get("addresses"))
+    )
+    runtime_files = unique_list(
+        path
+        for item in runtime_evidence
+        for path in scalar_string_items(item.get("source_files"))
+    )
+    materialization_commands = unique_list(
+        command
+        for item in runtime_evidence
+        for command in scalar_string_items(item.get("commands"))
+    )
+    for loaded in expectation_reports:
+        report = loaded["data"]
+        source = str(loaded.get("source", ""))
+        passed = bool(report.get("passed"))
+        failed_count = int(report.get("failed_count", 0))
+        skipped_count = int(report.get("skipped_count", 0))
+        gaps = []
+        if not passed:
+            gaps.append(
+                "Expectation mirror did not pass; this is a dynamic mirror failure to triage, not proof of correctness."
+            )
+        if skipped_count:
+            gaps.append(
+                f"{skipped_count} expectation(s) were skipped; add stronger runtime evidence or expectation syntax before treating the mirror as complete."
+            )
+        evidence = [
+            f"expectation_report={source}",
+            f"expectations={report.get('expectation_count', 0)}",
+            f"passed={report.get('passed')}",
+            f"runtime_reports={len(runtime_sources)}",
+            f"runtime_kinds={','.join(runtime_kinds)}",
+        ]
+        summary = report.get("evidence_summary") if isinstance(report.get("evidence_summary"), dict) else {}
+        scenario_ids = unique_list(scalar_string_items(summary.get("scenario_ids")))
+        commands = unique_list(
+            [
+                *scalar_string_items(report.get("commands")),
+                f"python -m tools.debugger expect --report {source}",
+                f"python -m tools.debugger report --report {source}",
+                f"python -m tools.debugger visualize --report {source} --format html --out .local\\tmp\\debugger_expectation_mirror.html",
+            ]
+        )
+        matches.append(
+            {
+                "id": "runtime_expectation_dynamic_mirror",
+                "title": "Execution-backed expectation mirror",
+                "scope": "High-level expectations checked against executed ROM watch, replay, instruction-trace, dynamic-taint, visual/audio snapshot, or content-state evidence from any ROM surface.",
+                "confidence": "high when passed with instruction/dynamic/write/framebuffer evidence; failure is treated as a dynamic mirror counterexample",
+                "matched_by": ["expectation_report", "runtime_report"],
+                "expectation_report": source,
+                "expectation_status": "passed" if passed else "failed",
+                "status": "passed" if passed else "failed",
+                "proof_status": "mirror_passed" if passed and not skipped_count else "mirror_failed",
+                "passed": passed,
+                "failed_count": failed_count,
+                "runtime_reports": runtime_sources,
+                "runtime_kinds": runtime_kinds,
+                "scenario_ids": scenario_ids,
+                "source_files": unique_list([*runtime_files, *scalar_string_items(summary.get("source_files"))]),
+                "related_symbols": unique_list([*runtime_symbols, *scalar_string_items(summary.get("symbols"))]),
+                "related_addresses": unique_list([*runtime_addresses, *scalar_string_items(summary.get("addresses"))]),
+                "evidence": evidence,
+                "commands": commands,
+                "materialization_commands": materialization_commands,
                 "gaps": gaps,
             }
         )
     return matches
+
+
+def content_output_mirror_status(
+    *,
+    output_symbols: list[str],
+    output_addresses: list[str],
+    runtime_evidence: list[dict[str, Any]],
+) -> dict[str, Any]:
+    requested_symbols = unique_list(output_symbols)
+    requested_addresses = unique_addresses(output_addresses)
+    strong_evidence = [item for item in runtime_evidence if output_runtime_evidence_is_strong(item)]
+    weak_evidence = [
+        item
+        for item in runtime_evidence
+        if not output_runtime_evidence_is_strong(item)
+        and runtime_evidence_mentions_outputs(
+            item,
+            requested_symbols=requested_symbols,
+            requested_addresses=requested_addresses,
+        )
+    ]
+    observed_symbols = unique_list(
+        symbol
+        for item in strong_evidence
+        for symbol in scalar_string_items(item.get("symbols"))
+    )
+    observed_addresses = unique_addresses(
+        address
+        for item in strong_evidence
+        for address in scalar_string_items(item.get("addresses"))
+    )
+    covered_symbols = [symbol for symbol in requested_symbols if symbol in observed_symbols]
+    covered_addresses = [address for address in requested_addresses if normalized_address(address) in {normalized_address(item) for item in observed_addresses}]
+    output_count = len(requested_symbols) + len(requested_addresses)
+    covered_count = len(covered_symbols) + len(covered_addresses)
+    if output_count and covered_count == output_count:
+        status = "passed"
+        proof_status = "mirror_passed"
+    elif covered_count:
+        status = "partial"
+        proof_status = "instruction_observed"
+    else:
+        status = "planned"
+        proof_status = "planned_only"
+    return {
+        "status": status,
+        "proof_status": proof_status,
+        "output_count": output_count,
+        "covered_count": covered_count,
+        "covered_symbols": covered_symbols,
+        "covered_addresses": covered_addresses,
+        "runtime_reports": unique_list(item["source"] for item in strong_evidence if item.get("source")),
+        "runtime_kinds": unique_list(item["kind"] for item in strong_evidence if item.get("kind")),
+        "weak_runtime_reports": unique_list(item["source"] for item in weak_evidence if item.get("source")),
+        "weak_runtime_kinds": unique_list(item["kind"] for item in weak_evidence if item.get("kind")),
+        "evidence": unique_list(
+            [
+                *[f"symbol_observed={symbol}" for symbol in covered_symbols],
+                *[f"address_observed={address}" for address in covered_addresses],
+            ]
+        ),
+        "runtime_evidence_gaps": weak_runtime_evidence_gaps(weak_evidence),
+    }
+
+
+def content_output_mirror_confidence(mirror_status: dict[str, Any]) -> str:
+    status = str(mirror_status.get("status", "planned"))
+    if status == "passed":
+        return "high for output sink write coverage in supplied runtime evidence; semantic correctness still depends on the requested expectation"
+    if status == "partial":
+        return "medium for observed output sinks; incomplete until every requested output sink has runtime evidence"
+    return "medium-high for selected output sinks; final confidence requires a runtime state or executed trace that reaches the drawing/audio/loader helper"
+
+
+def output_runtime_evidence_is_strong(item: dict[str, Any]) -> bool:
+    kind = str(item.get("kind", ""))
+    if kind not in OUTPUT_RUNTIME_EVIDENCE_KINDS:
+        return False
+    proof_status = str(item.get("proof_status") or "")
+    if kind == "dynamic_taint" and not proof_status:
+        return False
+    return not proof_status or proof_status in OUTPUT_RUNTIME_STRONG_PROOF_STATUSES
+
+
+def runtime_evidence_mentions_outputs(
+    item: dict[str, Any],
+    *,
+    requested_symbols: list[str],
+    requested_addresses: list[str],
+) -> bool:
+    item_symbols = set(scalar_string_items(item.get("symbols")))
+    if item_symbols.intersection(requested_symbols):
+        return True
+    requested_address_keys = {normalized_address(address) for address in requested_addresses}
+    item_address_keys = {normalized_address(address) for address in scalar_string_items(item.get("addresses"))}
+    return bool(requested_address_keys.intersection(item_address_keys))
+
+
+def weak_runtime_evidence_gaps(weak_evidence: list[dict[str, Any]]) -> list[str]:
+    gaps = []
+    for item in weak_evidence:
+        kind = str(item.get("kind") or "unknown")
+        source = str(item.get("source") or "<unknown>")
+        proof_status = str(item.get("proof_status") or "unspecified")
+        if kind not in OUTPUT_RUNTIME_EVIDENCE_KINDS:
+            gaps.append(
+                f"Ignored {kind} evidence from {source} for output-sink mirror coverage; it is not runtime output evidence."
+            )
+            continue
+        gaps.append(
+            f"Ignored {kind} evidence from {source} for output-sink mirror coverage because proof_status={proof_status}."
+        )
+    return unique_list(gaps)
+
+
+def runtime_mirror_evidence(loaded: dict[str, Any]) -> list[dict[str, Any]]:
+    data = loaded.get("data")
+    source = str(loaded.get("source", ""))
+    if not isinstance(data, dict) or not source:
+        return []
+    kind = str(data.get("kind", ""))
+    if kind == "unified_debugger_watch_report":
+        events = dict_items(data.get("events"))
+        if not events:
+            return []
+        return [
+            runtime_evidence_record(
+                source=source,
+                kind="watch",
+                symbols=[
+                    symbol
+                    for event in events
+                    for symbol in (str(event.get("watch", "")), str(event.get("pc_label", "")))
+                    if symbol and not looks_like_address(symbol)
+                ],
+                addresses=[address for event in events for address in event_addresses(event)],
+                commands=report_commands(data),
+                proof_status="runtime_observed",
+            )
+        ]
+    if kind == "unified_debugger_replay_plan":
+        watch_report = data.get("watch_report") if isinstance(data.get("watch_report"), dict) else {}
+        nested = runtime_mirror_evidence({"source": source, "data": watch_report}) if watch_report else []
+        for item in nested:
+            item["kind"] = "replay_watch"
+            item["commands"] = unique_list([*scalar_string_items(item.get("commands")), *report_commands(data)])
+        return nested
+    if kind == "unified_debugger_instruction_trace":
+        validation = data.get("execution_validation") if isinstance(data.get("execution_validation"), dict) else {}
+        hit = bool(validation.get("hit") or validation.get("ready_for_dynamic_taint"))
+        if not data.get("executed") and not hit:
+            return []
+        symbols = unique_list(
+            [
+                *scalar_string_items(validation.get("hit_function_symbols")),
+                *scalar_string_items(validation.get("watch_symbols")),
+                *[
+                    str(function.get("symbol", ""))
+                    for function in dict_items(data.get("functions"))
+                ],
+            ]
+        )
+        return [
+            runtime_evidence_record(
+                source=source,
+                kind="instruction_trace",
+                symbols=symbols,
+                addresses=scalar_string_items(validation.get("watch_addresses")) + scalar_string_items(data.get("watch_addresses")),
+                source_files=[
+                    str(function.get("source_file", ""))
+                    for function in dict_items(data.get("functions"))
+                    if function.get("source_file")
+                ],
+                commands=report_commands(data),
+                proof_status="instruction_observed",
+            )
+        ]
+    if kind == "unified_debugger_dynamic_taint_report":
+        attributions = dict_items(data.get("write_attributions"))
+        paths = dict_items(data.get("paths"))
+        if not attributions and not paths:
+            return []
+        return [
+            runtime_evidence_record(
+                source=source,
+                kind="dynamic_taint",
+                symbols=[
+                    *scalar_string_items(item.get("related_symbols")),
+                    *(
+                        []
+                        if looks_like_address(str(item.get("sink", "")))
+                        else [str(item.get("sink", ""))]
+                    ),
+                    str(item.get("sink_symbol", "")),
+                ],
+                addresses=[
+                    address
+                    for address in [
+                        *event_addresses(item),
+                        *scalar_string_items(item.get("related_addresses")),
+                        str(item.get("sink", "")) if looks_like_address(str(item.get("sink", ""))) else "",
+                        str(item.get("sink_address", "")),
+                    ]
+                    if address
+                ],
+                source_files=[
+                    path
+                    for path in scalar_string_items(item.get("related_files"))
+                ],
+                commands=report_commands(data),
+                proof_status=runtime_item_proof_status(item),
+            )
+            for item in [*attributions, *paths]
+        ]
+    if kind == "unified_debugger_effect_trace":
+        write_index = [
+            item
+            for item in dict_items(data.get("write_index"))
+            if int(item.get("write_count", 0) or 0) > 0
+        ]
+        if not write_index:
+            return []
+        watch_sinks = split_symbol_address_values(data.get("watch_symbols"))
+        watch_addresses = unique_addresses(
+            [
+                *watch_sinks["addresses"],
+                *scalar_string_items(data.get("watch_addresses")),
+                *[
+                    str(watch.get("name") or watch.get("address") or "")
+                    for watch in dict_items(data.get("watches"))
+                    if not watch.get("symbol")
+                ],
+            ]
+        )
+        return [
+            runtime_evidence_record(
+                source=source,
+                kind="effect_trace",
+                symbols=[
+                    *watch_sinks["symbols"],
+                    *[
+                        str(watch.get("symbol") or watch.get("name") or "")
+                        for watch in dict_items(data.get("watches"))
+                        if watch.get("symbol")
+                    ],
+                ],
+                addresses=[
+                    *watch_addresses,
+                    *[str(item.get("address", "")) for item in write_index],
+                ],
+                commands=report_commands(data),
+                proof_status="instruction_observed",
+            )
+        ]
+    if kind == "unified_debugger_visual_snapshot":
+        if not data.get("executed"):
+            return []
+        surfaces = dict_items(data.get("surfaces"))
+        screen_frame = data.get("screen_frame") if isinstance(data.get("screen_frame"), dict) else {}
+        return [
+            runtime_evidence_record(
+                source=source,
+                kind="visual_snapshot",
+                symbols=[str(surface.get("name", "")) for surface in surfaces if surface.get("name")],
+                addresses=[str(surface.get("address", "")) for surface in surfaces if surface.get("address")],
+                commands=report_commands(data),
+                artifacts=[str(screen_frame.get("framebuffer") or data.get("framebuffer") or "")],
+                proof_status="runtime_observed",
+            )
+        ]
+    if kind == "unified_debugger_audio_snapshot":
+        if not data.get("executed"):
+            return []
+        register_details = dict_items(data.get("register_details"))
+        symbol_state = dict_items(data.get("symbol_state"))
+        wave_ram = data.get("wave_ram") if isinstance(data.get("wave_ram"), dict) else {}
+        return [
+            runtime_evidence_record(
+                source=source,
+                kind="audio_snapshot",
+                symbols=[
+                    *[str(register.get("name", "")) for register in register_details if register.get("name")],
+                    *[str(item.get("symbol", "")) for item in symbol_state if item.get("symbol")],
+                ],
+                addresses=[
+                    *[str(register.get("address", "")) for register in register_details if register.get("address")],
+                    *[str(item.get("address", "")) for item in symbol_state if item.get("address")],
+                    str(wave_ram.get("address", "")) if wave_ram.get("address") else "",
+                ],
+                commands=report_commands(data),
+                artifacts=[str(wave_ram.get("sha256", "")) if wave_ram.get("sha256") else ""],
+                proof_status="runtime_observed",
+            )
+        ]
+    if kind == "unified_debugger_content_state_materialization":
+        execution = data.get("execution") if isinstance(data.get("execution"), dict) else {}
+        if not data.get("executed") and not execution.get("executed"):
+            return []
+        patches = [
+            patch
+            for materialization in dict_items(data.get("materializations"))
+            for patch in dict_items(materialization.get("patches"))
+        ]
+        return [
+            runtime_evidence_record(
+                source=source,
+                kind="content_state",
+                symbols=[
+                    *[str(patch.get("symbol", "")) for patch in patches if patch.get("symbol")],
+                    *[
+                        str(output.get("state_symbol", ""))
+                        for materialization in dict_items(data.get("materializations"))
+                        for output in dict_items(materialization.get("outputs"))
+                        if output.get("state_symbol")
+                    ],
+                ],
+                addresses=[str(patch.get("bank_address", "")) for patch in patches if patch.get("bank_address")],
+                source_files=[
+                    str(materialization.get("source_file", ""))
+                    for materialization in dict_items(data.get("materializations"))
+                    if materialization.get("source_file")
+                ],
+                commands=report_commands(data),
+                proof_status="state_materialized",
+            )
+        ]
+    return []
+
+
+def runtime_evidence_record(
+    *,
+    source: str,
+    kind: str,
+    symbols: list[str] | None = None,
+    addresses: list[str] | None = None,
+    source_files: list[str] | None = None,
+    artifacts: list[str] | None = None,
+    commands: list[str] | None = None,
+    proof_status: str = "",
+) -> dict[str, Any]:
+    record = {
+        "source": source,
+        "kind": kind,
+        "symbols": unique_list(symbols or []),
+        "addresses": unique_list(addresses or []),
+        "source_files": unique_list(normalize_path(path) for path in source_files or [] if path),
+        "artifacts": unique_list(artifacts or []),
+        "commands": unique_list(commands or []),
+    }
+    if proof_status:
+        record["proof_status"] = proof_status
+    return record
+
+
+def runtime_item_proof_status(item: dict[str, Any]) -> str:
+    return str(item.get("proof_status") or item.get("match_proof_status") or "planned_only")
+
+
+def report_commands(data: dict[str, Any]) -> list[str]:
+    commands = scalar_string_items(data.get("commands"))
+    commands.extend(scalar_string_items(data.get("runnable_commands")))
+    commands.extend(scalar_string_items(data.get("materialization_commands")))
+    return unique_list(commands)
+
+
+def event_addresses(event: dict[str, Any]) -> list[str]:
+    return unique_list(
+        str(value)
+        for value in (
+            event.get("bank_address"),
+            event.get("address"),
+            event.get("sink_address"),
+            event.get("target") if looks_like_address(str(event.get("target", ""))) else "",
+        )
+        if value
+    )
+
+
+def is_content_fuzz_case(case: dict[str, Any]) -> bool:
+    if not case.get("scenario_id"):
+        return False
+    if case.get("state_preconditions"):
+        return True
+    runtime_targets = case.get("runtime_targets") if isinstance(case.get("runtime_targets"), dict) else {}
+    return bool(runtime_targets or case.get("scenario_type") or case.get("runtime_route"))
+
+
+def content_case_runtime_route(case: dict[str, Any]) -> str:
+    runtime_targets = case.get("runtime_targets") if isinstance(case.get("runtime_targets"), dict) else {}
+    return str(runtime_targets.get("runtime_route") or case.get("runtime_route") or "")
+
+
+def content_fuzz_case_symbols(case: dict[str, Any]) -> list[str]:
+    runtime_targets = case.get("runtime_targets") if isinstance(case.get("runtime_targets"), dict) else {}
+    out = [
+        *string_items(case.get("symbols")),
+        *string_items(case.get("related_symbols")),
+    ]
+    for key in ("source_symbols", "script_symbols", "trace_symbols", "watch_symbols"):
+        out.extend(string_items(runtime_targets.get(key)))
+    for precondition in dict_items(case.get("state_preconditions")):
+        out.extend(string_items(precondition.get("watch_symbols")))
+    for output in dict_items(case.get("outputs")):
+        out.extend(string_items(output.get("state_symbol")))
+        out.extend(string_items(output.get("producer_symbol")))
+    return unique_list(out)
+
+
+def content_fuzz_expect_commands(*, source: str, cases: list[dict[str, Any]]) -> list[str]:
+    commands = []
+    for case in cases[:6]:
+        scenario_id = str(case.get("scenario_id", ""))
+        if not scenario_id:
+            continue
+        commands.append(f"python -m tools.debugger expect --report {source} --expect scenario={scenario_id}")
+        for precondition in dict_items(case.get("state_preconditions"))[:3]:
+            kind = str(precondition.get("kind", ""))
+            if not kind:
+                continue
+            watch_symbols = unique_list(string_items(precondition.get("watch_symbols")))
+            if not watch_symbols:
+                commands.append(
+                    f"python -m tools.debugger expect --report {source} --expect precondition={kind},scenario={scenario_id}"
+                )
+                continue
+            for symbol in watch_symbols[:3]:
+                commands.append(
+                    f"python -m tools.debugger expect --report {source} --expect precondition={kind},scenario={scenario_id},symbol={symbol}"
+                )
+    return commands
+
+
+def content_fuzz_materialization_commands(case: dict[str, Any]) -> list[str]:
+    commands = []
+    request = case.get("materialization_request") if isinstance(case.get("materialization_request"), dict) else {}
+    commands.extend(string_items(request.get("commands")))
+    commands.extend(string_items(case.get("commands")))
+    for probe in dict_items(case.get("behavioral_probes")):
+        command = str(probe.get("command", ""))
+        if command:
+            commands.append(command)
+    return commands
 
 
 def content_state_expect_commands(*, source: str, materialization: dict[str, Any]) -> list[str]:
@@ -334,6 +1223,56 @@ def content_state_watch_commands(*, out_state: str, patch_symbols: list[str]) ->
         + " ".join(f"--watch-symbol {symbol}" for symbol in patch_symbols[:6])
         + f" --save-state {out_state} --execute"
     ]
+
+
+def content_output_expect_commands(*, source: str, materializations: list[dict[str, Any]]) -> list[str]:
+    commands = []
+    for materialization in materializations:
+        scenario_id = str(materialization.get("scenario_id", ""))
+        kind = str(materialization.get("precondition_kind") or materialization.get("kind") or "output_sink")
+        scenario_arg = f",scenario={scenario_id}" if scenario_id else ""
+        output_symbols = unique_list(
+            str(output.get("state_symbol") or output.get("output_symbol") or "")
+            for output in dict_items(materialization.get("outputs"))
+            if output.get("state_symbol") or output.get("output_symbol")
+        )
+        output_addresses = unique_addresses(
+            str(output.get("address") or output.get("watch_address") or output.get("sink_address") or "")
+            for output in dict_items(materialization.get("outputs"))
+            if output.get("address") or output.get("watch_address") or output.get("sink_address")
+        )
+        if not output_symbols and not output_addresses:
+            commands.append(
+                f"python -m tools.debugger expect --report {source} --expect precondition={kind}{scenario_arg}"
+            )
+            continue
+        for symbol in output_symbols[:3]:
+            commands.append(
+                f"python -m tools.debugger expect --report {source} --expect precondition={kind}{scenario_arg},symbol={symbol}"
+            )
+        for address in output_addresses[:3]:
+            commands.append(
+                f"python -m tools.debugger expect --report {source} --expect precondition={kind}{scenario_arg},address={command_address_arg(address)}"
+            )
+    return unique_list(commands)
+
+
+def content_state_output_symbols(materializations: list[dict[str, Any]]) -> list[str]:
+    return unique_list(
+        str(output.get("state_symbol") or output.get("output_symbol") or "")
+        for materialization in materializations
+        for output in dict_items(materialization.get("outputs"))
+        if output.get("state_symbol") or output.get("output_symbol")
+    )
+
+
+def content_state_output_addresses(materializations: list[dict[str, Any]]) -> list[str]:
+    return unique_list(
+        str(output.get("address") or output.get("watch_address") or output.get("sink_address") or "")
+        for materialization in materializations
+        for output in dict_items(materialization.get("outputs"))
+        if output.get("address") or output.get("watch_address") or output.get("sink_address")
+    )
 
 
 def match_mirrors(
@@ -391,6 +1330,10 @@ def normalized_changed_path(raw_path: str, *, root: Path) -> str:
     return raw_path.replace("\\", "/")
 
 
+def normalize_path(raw_path: str) -> str:
+    return str(raw_path).replace("\\", "/").strip()
+
+
 def path_matches_prefix(path: str, prefixes: tuple[str, ...]) -> bool:
     for prefix in prefixes:
         normalized_prefix = prefix.lower()
@@ -417,6 +1360,26 @@ def dict_items(value: Any) -> list[dict[str, Any]]:
     return [item for item in value if isinstance(item, dict)]
 
 
+def string_items(value: Any) -> list[str]:
+    if not isinstance(value, list | tuple):
+        return []
+    return [str(item) for item in value if item]
+
+
+def scalar_string_items(value: Any) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, str):
+        return [value] if value else []
+    if isinstance(value, list | tuple | set):
+        return [
+            nested
+            for item in value
+            for nested in scalar_string_items(item)
+        ]
+    return [str(value)] if value else []
+
+
 def unique_list(values: Any) -> list[str]:
     out: list[str] = []
     seen: set[str] = set()
@@ -427,3 +1390,64 @@ def unique_list(values: Any) -> list[str]:
         seen.add(text)
         out.append(text)
     return out
+
+
+def unique_addresses(values: Any) -> list[str]:
+    out: list[str] = []
+    seen: set[str] = set()
+    if values is None:
+        items: list[Any] | Any = []
+    elif isinstance(values, str):
+        items = [values]
+    else:
+        try:
+            items = iter(values)
+        except TypeError:
+            items = [values]
+    for value in items:
+        for item in scalar_string_items(value):
+            text = str(item)
+            key = normalized_address(text)
+            if not text or key in seen:
+                continue
+            seen.add(key)
+            out.append(text)
+    return out
+
+
+def normalized_address(value: Any) -> str:
+    text = str(value).strip()
+    if "=" in text:
+        text = text.rsplit("=", 1)[1].strip()
+    return command_address_arg(text).upper()
+
+
+def split_symbol_address_values(value: Any) -> dict[str, list[str]]:
+    symbols: list[str] = []
+    addresses: list[str] = []
+    for item in scalar_string_items(value):
+        if looks_like_address(item):
+            addresses.append(item)
+        else:
+            symbols.append(item)
+    return {
+        "symbols": unique_list(symbols),
+        "addresses": unique_addresses(addresses),
+    }
+
+
+def looks_like_address(value: str) -> bool:
+    text = str(value).strip()
+    if "=" in text:
+        text = text.rsplit("=", 1)[1].strip()
+    if text.startswith("$"):
+        text = text[1:]
+    if ":" in text:
+        bank, address = text.split(":", 1)
+        return is_hex(bank, 2) and is_hex(address.lstrip("$"), 4)
+    return is_hex(text, 4)
+
+
+def is_hex(value: str, max_length: int) -> bool:
+    text = str(value).strip()
+    return bool(text) and len(text) <= max_length and all(char in "0123456789abcdefABCDEF" for char in text)
