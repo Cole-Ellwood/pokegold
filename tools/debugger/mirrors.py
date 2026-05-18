@@ -196,8 +196,15 @@ def build_compare_plan(
         loaded_reports=loaded_reports,
         supplied=runtime_observations,
     )
+    runtime_attempt_records = collect_runtime_attempts(loaded_reports=loaded_reports)
     matches = content_state_mirror_matches(loaded_reports, runtime_observations=runtime_observation_records)
-    matches.extend(content_fuzz_mirror_matches(loaded_reports, runtime_observations=runtime_observation_records))
+    matches.extend(
+        content_fuzz_mirror_matches(
+            loaded_reports,
+            runtime_observations=runtime_observation_records,
+            runtime_attempts=runtime_attempt_records,
+        )
+    )
     matches.extend(dynamic_expectation_mirror_matches(loaded_reports))
     matches.extend(match_mirrors(
         changed_files=changed_files,
@@ -558,6 +565,14 @@ def collect_runtime_observations(
     return observations
 
 
+def collect_runtime_attempts(*, loaded_reports: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [
+        attempt
+        for loaded in loaded_reports
+        for attempt in runtime_attempts_from_report(loaded)
+    ]
+
+
 def runtime_observations_from_report(loaded: dict[str, Any]) -> list[dict[str, Any]]:
     observations = []
     scenario_ids = report_scenario_ids(loaded.get("data") if isinstance(loaded.get("data"), dict) else {})
@@ -576,6 +591,63 @@ def runtime_observations_from_report(loaded: dict[str, Any]) -> list[dict[str, A
         )
         observations.append(observation)
     return observations
+
+
+def runtime_attempts_from_report(loaded: dict[str, Any]) -> list[dict[str, Any]]:
+    data = loaded.get("data")
+    if not isinstance(data, dict):
+        return []
+    source = str(loaded.get("source", ""))
+    kind = str(data.get("kind", ""))
+    scenario_ids = report_scenario_ids(data)
+    if kind == "unified_debugger_watch_report":
+        events = dict_items(data.get("events"))
+        if not data.get("executed") and not events:
+            return []
+        return [
+            normalize_runtime_attempt(
+                {
+                    "source": source,
+                    "runtime_kind": "watch",
+                    "proof_status": "runtime_observed",
+                    "scenario_ids": scenario_ids,
+                    "attempted_sinks": watch_attempt_sinks(data),
+                }
+            )
+        ]
+    if kind == "unified_debugger_replay_plan":
+        attempts = []
+        replay_targets = data.get("replay_targets") if isinstance(data.get("replay_targets"), dict) else {}
+        replay_target_sinks = [
+            *scalar_string_items(replay_targets.get("watch_symbols")),
+            *scalar_string_items(replay_targets.get("watch_addresses")),
+        ]
+        watch_report = data.get("watch_report") if isinstance(data.get("watch_report"), dict) else {}
+        if watch_report:
+            attempts.extend(runtime_attempts_from_report({"source": source, "data": watch_report}))
+            for attempt in attempts:
+                attempt["runtime_kind"] = "replay_watch"
+                attempt["scenario_ids"] = unique_list(
+                    [*scenario_ids, *scalar_string_items(attempt.get("scenario_ids"))]
+                )
+                attempt["scenario_id"] = attempt["scenario_ids"][0] if len(attempt["scenario_ids"]) == 1 else ""
+                attempt["attempted_sinks"] = unique_list(
+                    [*scalar_string_items(attempt.get("attempted_sinks")), *replay_target_sinks]
+                )
+        if not attempts and data.get("executed_watch"):
+            attempts.append(
+                normalize_runtime_attempt(
+                    {
+                        "source": source,
+                        "runtime_kind": "replay_watch",
+                        "proof_status": "runtime_observed",
+                        "scenario_ids": scenario_ids,
+                        "attempted_sinks": replay_target_sinks,
+                    }
+                )
+            )
+        return attempts
+    return []
 
 
 def normalize_runtime_observation(item: dict[str, Any]) -> dict[str, Any]:
@@ -601,6 +673,29 @@ def normalize_runtime_observation(item: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def normalize_runtime_attempt(item: dict[str, Any]) -> dict[str, Any]:
+    scenario_ids = unique_list(
+        [
+            *scalar_string_items(item.get("scenario_id")),
+            *scalar_string_items(item.get("scenario_ids")),
+        ]
+    )
+    attempted_sinks = unique_list(
+        [
+            *scalar_string_items(item.get("attempted_sinks")),
+            *scalar_string_items(item.get("sinks")),
+            *scalar_string_items(item.get("symbols")),
+            *scalar_string_items(item.get("addresses")),
+        ]
+    )
+    return {
+        **item,
+        "scenario_id": scenario_ids[0] if len(scenario_ids) == 1 else str(item.get("scenario_id", "")),
+        "scenario_ids": scenario_ids,
+        "attempted_sinks": attempted_sinks,
+    }
+
+
 def observed_sinks_for_scenarios(
     *,
     scenario_ids: list[str],
@@ -612,6 +707,31 @@ def observed_sinks_for_scenarios(
         for observation in runtime_observations
         if runtime_observation_applies_to_scenarios(observation, scenario_id_set=scenario_id_set)
         for sink in scalar_string_items(observation.get("observed_sinks"))
+    )
+
+
+def runtime_attempts_for_scenarios(
+    *,
+    scenario_ids: list[str],
+    runtime_attempts: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    scenario_id_set = set(scenario_ids)
+    return [
+        attempt
+        for attempt in runtime_attempts
+        if runtime_observation_applies_to_scenarios(attempt, scenario_id_set=scenario_id_set)
+    ]
+
+
+def attempted_sinks_for_scenarios(
+    *,
+    scenario_ids: list[str],
+    runtime_attempts: list[dict[str, Any]],
+) -> list[str]:
+    return unique_list(
+        sink
+        for attempt in runtime_attempts_for_scenarios(scenario_ids=scenario_ids, runtime_attempts=runtime_attempts)
+        for sink in scalar_string_items(attempt.get("attempted_sinks"))
     )
 
 
@@ -647,6 +767,7 @@ def content_fuzz_mirror_matches(
     loaded_reports: list[dict[str, Any]],
     *,
     runtime_observations: list[dict[str, Any]],
+    runtime_attempts: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
     matches = []
     for loaded in loaded_reports:
@@ -676,9 +797,24 @@ def content_fuzz_mirror_matches(
             scenario_ids=scenario_ids,
             runtime_observations=runtime_observations,
         )
+        relevant_attempts = runtime_attempts_for_scenarios(
+            scenario_ids=scenario_ids,
+            runtime_attempts=runtime_attempts,
+        )
+        runtime_attempt_kinds = unique_list(
+            str(item.get("runtime_kind", ""))
+            for item in relevant_attempts
+            if item.get("runtime_kind")
+        )
+        attempted_sinks = attempted_sinks_for_scenarios(
+            scenario_ids=scenario_ids,
+            runtime_attempts=runtime_attempts,
+        )
         route_status = content_fuzz_runtime_route_status(
             expected_sinks=expected_sinks,
             observed_sinks=observed_sinks,
+            attempted_sinks=attempted_sinks,
+            runtime_attempt_kinds=runtime_attempt_kinds,
         )
         commands = [
             *content_fuzz_expect_commands(source=source, cases=cases),
@@ -709,6 +845,8 @@ def content_fuzz_mirror_matches(
                 f"actual_proof_status={route_status['actual_proof_status']}",
             ]
         )
+        if route_status["runtime_attempt_kinds"]:
+            evidence.append(f"runtime_attempt_kinds={','.join(route_status['runtime_attempt_kinds'])}")
         gaps = []
         if route_status["mirror_status"] != "passed":
             gaps.append(
@@ -727,7 +865,10 @@ def content_fuzz_mirror_matches(
                 "actual_proof_status": route_status["actual_proof_status"],
                 "expected_proof_status": "runtime_observed",
                 "expected_sinks": expected_sinks,
+                "attempted_sinks": route_status["attempted_sinks"],
                 "observed_sinks": route_status["observed_sinks"],
+                "runtime_attempt_reports": unique_list(str(item.get("source", "")) for item in relevant_attempts if item.get("source")),
+                "runtime_attempt_kinds": route_status["runtime_attempt_kinds"],
                 "evidence": evidence,
                 "scenario_ids": scenario_ids,
                 "source_files": source_files,
@@ -742,9 +883,17 @@ def content_fuzz_mirror_matches(
     return matches
 
 
-def content_fuzz_runtime_route_status(*, expected_sinks: list[str], observed_sinks: list[str]) -> dict[str, Any]:
+def content_fuzz_runtime_route_status(
+    *,
+    expected_sinks: list[str],
+    observed_sinks: list[str],
+    attempted_sinks: list[str],
+    runtime_attempt_kinds: list[str],
+) -> dict[str, Any]:
     covered_sinks = [sink for sink in expected_sinks if sink in observed_sinks]
     missing_sinks = [sink for sink in expected_sinks if sink not in observed_sinks]
+    attempted_expected_sinks = [sink for sink in expected_sinks if sink in attempted_sinks]
+    missing_attempted_sinks = [sink for sink in expected_sinks if sink not in attempted_sinks]
     if expected_sinks and not missing_sinks:
         status = "passed"
         proof_status = "mirror_passed"
@@ -755,16 +904,35 @@ def content_fuzz_runtime_route_status(*, expected_sinks: list[str], observed_sin
         proof_status = "instruction_observed"
         mirror_status = "inconclusive"
         actual_proof_status = "instruction_observed"
+    elif expected_sinks and not missing_attempted_sinks:
+        status = "failed"
+        proof_status = "mirror_failed"
+        mirror_status = "failed"
+        actual_proof_status = "runtime_observed"
+    elif attempted_expected_sinks:
+        status = "partial"
+        proof_status = "instruction_observed"
+        mirror_status = "inconclusive"
+        actual_proof_status = "runtime_observed"
     else:
         status = "planned"
         proof_status = "planned_only"
-        mirror_status = "planned_only"
+        mirror_status = "not_run"
         actual_proof_status = "planned_only"
     runtime_evidence_gaps = []
     if missing_sinks:
         runtime_evidence_gaps.append("Runtime observations missing expected fuzz sink(s): " + ", ".join(missing_sinks))
-    if expected_sinks and not observed_sinks:
+    if expected_sinks and not observed_sinks and not attempted_expected_sinks:
         runtime_evidence_gaps.append("No runtime observations were supplied for the expected fuzz sink set.")
+    if expected_sinks and attempted_expected_sinks and not observed_sinks:
+        runtime_evidence_gaps.append(
+            "Runtime attempted expected fuzz sink(s) but observed no expected sink changes: "
+            + ", ".join(attempted_expected_sinks)
+        )
+    if missing_attempted_sinks and attempted_expected_sinks:
+        runtime_evidence_gaps.append(
+            "Runtime attempts did not cover expected fuzz sink(s): " + ", ".join(missing_attempted_sinks)
+        )
     if not expected_sinks:
         runtime_evidence_gaps.append("No expected runtime sinks were declared for these content fuzz cases.")
     return {
@@ -772,7 +940,9 @@ def content_fuzz_runtime_route_status(*, expected_sinks: list[str], observed_sin
         "proof_status": proof_status,
         "mirror_status": mirror_status,
         "actual_proof_status": actual_proof_status,
+        "attempted_sinks": unique_list([sink for sink in attempted_sinks if sink in set(expected_sinks)]),
         "observed_sinks": unique_list([sink for sink in observed_sinks if sink in set(expected_sinks)]),
+        "runtime_attempt_kinds": unique_list(runtime_attempt_kinds),
         "runtime_evidence_gaps": runtime_evidence_gaps,
     }
 
@@ -1250,6 +1420,33 @@ def event_addresses(event: dict[str, Any]) -> list[str]:
             event.get("target") if looks_like_address(str(event.get("target", ""))) else "",
         )
         if value
+    )
+
+
+def watch_attempt_sinks(data: dict[str, Any]) -> list[str]:
+    events = dict_items(data.get("events"))
+    watches = dict_items(data.get("watches"))
+    return unique_list(
+        [
+            *scalar_string_items(data.get("watch_symbols")),
+            *scalar_string_items(data.get("watch_addresses")),
+            *scalar_string_items(data.get("effective_watch_symbols")),
+            *scalar_string_items(data.get("effective_watch_addresses")),
+            *[
+                str(watch.get("symbol") or watch.get("name") or watch.get("address") or "")
+                for watch in watches
+            ],
+            *[
+                str(event.get("watch", ""))
+                for event in events
+                if event.get("watch")
+            ],
+            *[
+                address
+                for event in events
+                for address in event_addresses(event)
+            ],
+        ]
     )
 
 

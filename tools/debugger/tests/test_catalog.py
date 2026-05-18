@@ -22402,7 +22402,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("runtime_routes=script_engine", match["evidence"])
         self.assertEqual(match["status"], "planned")
         self.assertEqual(match["proof_status"], "planned_only")
-        self.assertEqual(match["mirror_status"], "planned_only")
+        self.assertEqual(match["mirror_status"], "not_run")
         self.assertIn("wScriptPos", match["expected_sinks"])
         self.assertEqual(match["observed_sinks"], [])
         self.assertIn(scenario_id, match["scenario_ids"])
@@ -22439,6 +22439,103 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         )
         self.assertIn("content-state --scenario fuzz_cases.jsonl", dynamic_execute_commands)
         self.assertNotIn("trace-instructions --report compare.json", dynamic_execute_commands)
+
+    def test_compare_content_fuzz_mirror_fails_when_watch_attempt_observes_no_expected_sinks(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "scripts").mkdir()
+            (root / "scripts" / "unit_script.asm").write_text(
+                "UnitScript:\n\topentext\n\tclosetext\n\tend\n",
+                encoding="utf-8",
+            )
+            fuzz_report = build_fuzz_plan(
+                changed_files=("scripts/unit_script.asm",),
+                out_cases="fuzz_cases.jsonl",
+                max_cases=4,
+                seed=20,
+                root=root,
+            )
+            content_case = next(item for item in fuzz_report["fuzz_cases"] if item["fuzz_type"] == "script_command_stream")
+            scenario_id = content_case["scenario_id"]
+            expected_sinks = content_case["runtime_targets"]["watch_symbols"]
+            (root / "fuzz.json").write_text(json.dumps(fuzz_report), encoding="utf-8")
+            (root / "watch.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_watch_report",
+                        "valid": True,
+                        "executed": True,
+                        "scenario_ids": [scenario_id],
+                        "watch_symbols": expected_sinks,
+                        "events": [],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            report = build_compare_plan(reports=("fuzz.json", "watch.json"), root=root)
+
+        match = next(item for item in report["matches"] if item["id"] == "content_fuzz_behavioral_mirror")
+
+        self.assertEqual(match["status"], "failed")
+        self.assertEqual(match["proof_status"], "mirror_failed")
+        self.assertEqual(match["mirror_status"], "failed")
+        self.assertEqual(match["actual_proof_status"], "runtime_observed")
+        self.assertEqual(match["observed_sinks"], [])
+        self.assertIn("watch", match["runtime_attempt_kinds"])
+        self.assertTrue(any("attempted" in gap for gap in match["runtime_evidence_gaps"]))
+
+    def test_compare_content_fuzz_mirror_fails_when_replay_watch_attempt_observes_no_expected_sinks(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "scripts").mkdir()
+            (root / "scripts" / "unit_script.asm").write_text(
+                "UnitScript:\n\topentext\n\tclosetext\n\tend\n",
+                encoding="utf-8",
+            )
+            fuzz_report = build_fuzz_plan(
+                changed_files=("scripts/unit_script.asm",),
+                out_cases="fuzz_cases.jsonl",
+                max_cases=4,
+                seed=21,
+                root=root,
+            )
+            content_case = next(item for item in fuzz_report["fuzz_cases"] if item["fuzz_type"] == "script_command_stream")
+            scenario_id = content_case["scenario_id"]
+            expected_sinks = content_case["runtime_targets"]["watch_symbols"]
+            (root / "fuzz.json").write_text(json.dumps(fuzz_report), encoding="utf-8")
+            (root / "replay.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_replay_plan",
+                        "valid": True,
+                        "executed_watch": True,
+                        "replay_targets": {
+                            "scenario_ids": [scenario_id],
+                            "watch_symbols": expected_sinks,
+                        },
+                        "watch_report": {
+                            "kind": "unified_debugger_watch_report",
+                            "valid": True,
+                            "executed": True,
+                            "events": [],
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            report = build_compare_plan(reports=("fuzz.json", "replay.json"), root=root)
+
+        match = next(item for item in report["matches"] if item["id"] == "content_fuzz_behavioral_mirror")
+
+        self.assertEqual(match["status"], "failed")
+        self.assertEqual(match["proof_status"], "mirror_failed")
+        self.assertEqual(match["mirror_status"], "failed")
+        self.assertEqual(match["actual_proof_status"], "runtime_observed")
+        self.assertEqual(match["observed_sinks"], [])
+        self.assertIn("replay_watch", match["runtime_attempt_kinds"])
+        self.assertTrue(any("attempted" in gap for gap in match["runtime_evidence_gaps"]))
 
     def test_compare_content_fuzz_mirror_passes_with_real_watch_observations(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

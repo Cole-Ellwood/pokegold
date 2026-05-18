@@ -3211,3 +3211,49 @@ Validation after patch:
 Remaining priority from Pro:
 
 - This gives generated content fuzz mirrors real runtime-observation gating, but it still does not implement arbitrary event-engine state generation, full script VM execution semantics, pixel/audio behavioral mirrors, emulator-backed checkpoint replay, full reverse execution, or broader SM83 adapter unification.
+
+## Implementation Note - Content Fuzz Runtime Attempt Outcomes
+
+Date: 2026-05-18.
+
+Context:
+
+- `content_fuzz_behavioral_mirror` could now pass from real runtime observations, but the no-evidence path still collapsed two different states:
+  - no runtime watch/replay attempt was supplied.
+  - a runtime watch/replay attempt ran against the expected sinks and observed no expected sink changes.
+- That made an executed but empty watch report look like a planned route instead of a failed behavioral mirror attempt.
+
+Implemented fix:
+
+- `tools/debugger/mirrors.py`
+  - adds a runtime-attempt stream alongside runtime observations.
+  - extracts attempted sinks from executed watch reports, watch report `watches`, watch report events, and nested replay watch reports.
+  - keeps observations as the only path to `mirror_passed`.
+  - reports no-attempt content fuzz mirrors as `status=planned`, `proof_status=planned_only`, `mirror_status=not_run`, and `actual_proof_status=planned_only`.
+  - reports an attempted full expected sink set with no observed expected sink changes as `status=failed`, `proof_status=mirror_failed`, `mirror_status=failed`, and `actual_proof_status=runtime_observed`.
+  - adds `attempted_sinks`, `runtime_attempt_reports`, and `runtime_attempt_kinds` to the content-fuzz mirror match without removing existing fields.
+
+Regression strengthened:
+
+- `test_compare_plan_consumes_content_fuzz_behavioral_mirror`
+  - now verifies no supplied runtime report is explicitly `mirror_status=not_run`.
+- `test_compare_content_fuzz_mirror_fails_when_watch_attempt_observes_no_expected_sinks`
+  - verifies an executed watch attempt over every expected script sink with zero events becomes a failed mirror attempt.
+- `test_compare_content_fuzz_mirror_fails_when_replay_watch_attempt_observes_no_expected_sinks`
+  - verifies a nested replay watch attempt inherits the replay target sinks and becomes a failed mirror attempt when no expected sink changes are observed.
+- `test_compare_content_fuzz_mirror_passes_with_real_watch_observations`
+  - continues to verify that full watch observations promote the same mirror to `passed`.
+
+Validation after patch:
+
+- Focused content-fuzz attempt regressions: 4 passed.
+- Adjacent content-fuzz compare/investigate/generate/suggest/dynamic-taint handoff regressions: 6 passed.
+- Event-runtime materialization tests: 17 passed.
+- Full `test_catalog`: 440 passed.
+- Full debugger suite: 457 passed.
+- `python -m tools.debugger audit`: `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- `py_compile` passed for touched debugger Python files.
+
+Remaining priority from Pro:
+
+- This closes another behavioral mirror claim-calibration gap, but it still does not implement arbitrary event-engine state generation, full script VM execution semantics, pixel/audio behavioral mirrors, emulator-backed checkpoint replay, full reverse execution, or broader SM83 adapter unification.
