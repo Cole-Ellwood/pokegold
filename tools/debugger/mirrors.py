@@ -411,6 +411,10 @@ def content_state_mirror_matches(
                 output_symbols=output_symbols,
                 output_addresses=output_addresses,
                 runtime_evidence=runtime_evidence,
+                runtime_attempts=runtime_attempts_for_scenarios(
+                    scenario_ids=scenario_ids,
+                    runtime_attempts=runtime_attempts,
+                ),
             )
             gaps = []
             if mirror_status["status"] == "planned":
@@ -420,6 +424,10 @@ def content_state_mirror_matches(
             elif mirror_status["status"] == "partial":
                 gaps.append(
                     f"Only {mirror_status['covered_count']} of {mirror_status['output_count']} output sink(s) have runtime evidence; add trace/watch coverage for the remaining output sinks."
+                )
+            elif mirror_status["status"] == "failed":
+                gaps.append(
+                    "A runtime watch/replay attempt covered every requested output sink but observed no requested output change."
                 )
             materialization_commands = unique_list(
                 [
@@ -450,10 +458,17 @@ def content_state_mirror_matches(
                     "matched_by": ["content_state_output_report"],
                     "status": mirror_status["status"],
                     "proof_status": mirror_status["proof_status"],
+                    "mirror_status": mirror_status["mirror_status"],
+                    "actual_proof_status": mirror_status["actual_proof_status"],
                     "covered_output_count": mirror_status["covered_count"],
+                    "attempted_output_count": mirror_status["attempted_count"],
                     "output_count": mirror_status["output_count"],
+                    "attempted_symbols": mirror_status["attempted_symbols"],
+                    "attempted_addresses": mirror_status["attempted_addresses"],
                     "runtime_reports": mirror_status["runtime_reports"],
                     "runtime_kinds": mirror_status["runtime_kinds"],
+                    "runtime_attempt_reports": mirror_status["runtime_attempt_reports"],
+                    "runtime_attempt_kinds": mirror_status["runtime_attempt_kinds"],
                     "weak_runtime_reports": mirror_status["weak_runtime_reports"],
                     "weak_runtime_kinds": mirror_status["weak_runtime_kinds"],
                     "evidence": [
@@ -1097,6 +1112,7 @@ def content_output_mirror_status(
     output_symbols: list[str],
     output_addresses: list[str],
     runtime_evidence: list[dict[str, Any]],
+    runtime_attempts: list[dict[str, Any]],
 ) -> dict[str, Any]:
     requested_symbols = unique_list(output_symbols)
     requested_addresses = unique_addresses(output_addresses)
@@ -1123,42 +1139,144 @@ def content_output_mirror_status(
     )
     covered_symbols = [symbol for symbol in requested_symbols if symbol in observed_symbols]
     covered_addresses = [address for address in requested_addresses if normalized_address(address) in {normalized_address(item) for item in observed_addresses}]
+    attempted_symbols, attempted_addresses = content_output_attempted_sinks(
+        requested_symbols=requested_symbols,
+        requested_addresses=requested_addresses,
+        runtime_attempts=runtime_attempts,
+    )
     output_count = len(requested_symbols) + len(requested_addresses)
     covered_count = len(covered_symbols) + len(covered_addresses)
+    attempted_count = len(attempted_symbols) + len(attempted_addresses)
     if output_count and covered_count == output_count:
         status = "passed"
         proof_status = "mirror_passed"
+        mirror_status = "passed"
+        actual_proof_status = "observed"
     elif covered_count:
         status = "partial"
         proof_status = "instruction_observed"
+        mirror_status = "inconclusive"
+        actual_proof_status = "instruction_observed"
+    elif output_count and attempted_count == output_count:
+        status = "failed"
+        proof_status = "mirror_failed"
+        mirror_status = "failed"
+        actual_proof_status = "runtime_observed"
     else:
         status = "planned"
         proof_status = "planned_only"
+        mirror_status = "inconclusive" if attempted_count else "not_run"
+        actual_proof_status = "runtime_observed" if attempted_count else "planned_only"
     return {
         "status": status,
         "proof_status": proof_status,
+        "mirror_status": mirror_status,
+        "actual_proof_status": actual_proof_status,
         "output_count": output_count,
         "covered_count": covered_count,
+        "attempted_count": attempted_count,
         "covered_symbols": covered_symbols,
         "covered_addresses": covered_addresses,
+        "attempted_symbols": attempted_symbols,
+        "attempted_addresses": attempted_addresses,
         "runtime_reports": unique_list(item["source"] for item in strong_evidence if item.get("source")),
         "runtime_kinds": unique_list(item["kind"] for item in strong_evidence if item.get("kind")),
+        "runtime_attempt_reports": unique_list(str(item.get("source", "")) for item in runtime_attempts if item.get("source")),
+        "runtime_attempt_kinds": unique_list(str(item.get("runtime_kind", "")) for item in runtime_attempts if item.get("runtime_kind")),
         "weak_runtime_reports": unique_list(item["source"] for item in weak_evidence if item.get("source")),
         "weak_runtime_kinds": unique_list(item["kind"] for item in weak_evidence if item.get("kind")),
         "evidence": unique_list(
             [
                 *[f"symbol_observed={symbol}" for symbol in covered_symbols],
                 *[f"address_observed={address}" for address in covered_addresses],
+                *[f"symbol_attempted={symbol}" for symbol in attempted_symbols],
+                *[f"address_attempted={address}" for address in attempted_addresses],
             ]
         ),
-        "runtime_evidence_gaps": weak_runtime_evidence_gaps(weak_evidence),
+        "runtime_evidence_gaps": content_output_runtime_evidence_gaps(
+            weak_evidence=weak_evidence,
+            requested_symbols=requested_symbols,
+            requested_addresses=requested_addresses,
+            covered_symbols=covered_symbols,
+            covered_addresses=covered_addresses,
+            attempted_symbols=attempted_symbols,
+            attempted_addresses=attempted_addresses,
+        ),
     }
+
+
+def content_output_attempted_sinks(
+    *,
+    requested_symbols: list[str],
+    requested_addresses: list[str],
+    runtime_attempts: list[dict[str, Any]],
+) -> tuple[list[str], list[str]]:
+    attempted_symbols = unique_list(
+        sink
+        for attempt in runtime_attempts
+        for sink in scalar_string_items(attempt.get("attempted_sinks"))
+        if sink in requested_symbols
+    )
+    attempted_address_keys = {
+        normalized_address(sink)
+        for attempt in runtime_attempts
+        for sink in scalar_string_items(attempt.get("attempted_sinks"))
+        if looks_like_address(str(sink))
+    }
+    attempted_addresses = [
+        address
+        for address in requested_addresses
+        if normalized_address(address) in attempted_address_keys
+    ]
+    return attempted_symbols, attempted_addresses
+
+
+def content_output_runtime_evidence_gaps(
+    *,
+    weak_evidence: list[dict[str, Any]],
+    requested_symbols: list[str],
+    requested_addresses: list[str],
+    covered_symbols: list[str],
+    covered_addresses: list[str],
+    attempted_symbols: list[str],
+    attempted_addresses: list[str],
+) -> list[str]:
+    gaps = weak_runtime_evidence_gaps(weak_evidence)
+    missing_symbols = [symbol for symbol in requested_symbols if symbol not in covered_symbols]
+    missing_addresses = [
+        address
+        for address in requested_addresses
+        if normalized_address(address) not in {normalized_address(item) for item in covered_addresses}
+    ]
+    attempted_missing_symbols = [symbol for symbol in missing_symbols if symbol in attempted_symbols]
+    attempted_missing_addresses = [
+        address
+        for address in missing_addresses
+        if normalized_address(address) in {normalized_address(item) for item in attempted_addresses}
+    ]
+    if attempted_missing_symbols:
+        gaps.append(
+            "Runtime attempted output symbol(s) but observed no requested output change: "
+            + ", ".join(attempted_missing_symbols)
+        )
+    if attempted_missing_addresses:
+        gaps.append(
+            "Runtime attempted output address(es) but observed no requested output change: "
+            + ", ".join(attempted_missing_addresses)
+        )
+    if missing_symbols and attempted_symbols and len(attempted_symbols) < len(requested_symbols):
+        gaps.append("Runtime attempts did not cover output symbol(s): " + ", ".join(missing_symbols))
+    if missing_addresses and attempted_addresses and len(attempted_addresses) < len(requested_addresses):
+        gaps.append("Runtime attempts did not cover output address(es): " + ", ".join(missing_addresses))
+    return unique_list(gaps)
 
 
 def content_output_mirror_confidence(mirror_status: dict[str, Any]) -> str:
     status = str(mirror_status.get("status", "planned"))
     if status == "passed":
         return "high for output sink write coverage in supplied runtime evidence; semantic correctness still depends on the requested expectation"
+    if status == "failed":
+        return "high for the attempted runtime route not observing requested output sink changes; semantic root cause still needs localization"
     if status == "partial":
         return "medium for observed output sinks; incomplete until every requested output sink has runtime evidence"
     return "medium-high for selected output sinks; final confidence requires a runtime state or executed trace that reaches the drawing/audio/loader helper"

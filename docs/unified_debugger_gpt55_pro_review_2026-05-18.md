@@ -3298,3 +3298,44 @@ Validation after patch:
 Remaining priority from Pro:
 
 - This closes the same attempted-but-empty runtime boundary for materialized content-state mirrors, but it still does not implement arbitrary event-engine state generation, full script VM execution semantics, pixel/audio behavioral mirrors, emulator-backed checkpoint replay, full reverse execution, or broader SM83 adapter unification.
+
+## Implementation Note - Output-Sink Runtime Attempt Outcomes
+
+Date: 2026-05-18.
+
+Context:
+
+- `content_output_behavioral_mirror` already required strong runtime evidence before promoting output sinks to `mirror_passed`.
+- It still treated an executed watch/replay-watch attempt over every requested output sink with zero observed output changes as merely `planned`.
+- That hid a real negative runtime attempt for UI/audio/asset output mirrors.
+
+Implemented fix:
+
+- `tools/debugger/mirrors.py`
+  - feeds scenario-scoped runtime attempts into output-sink mirror status.
+  - matches attempted output symbols and normalized attempted output addresses against requested output sinks.
+  - keeps strong runtime evidence as the only path to `status=passed`, `proof_status=mirror_passed`.
+  - reports full attempted output coverage with no observed output write as `status=failed`, `proof_status=mirror_failed`, `mirror_status=failed`, and `actual_proof_status=runtime_observed`.
+  - adds `attempted_output_count`, `attempted_symbols`, `attempted_addresses`, `runtime_attempt_reports`, `runtime_attempt_kinds`, `mirror_status`, and `actual_proof_status` to output mirror matches without removing existing fields.
+  - keeps partial attempts inconclusive rather than treating them as a mirror failure.
+
+Regression strengthened:
+
+- `test_compare_output_sink_mirror_fails_when_watch_attempt_observes_no_outputs`
+  - verifies an executed watch over `wTilemap` and `wAttrmap` with zero events fails the output mirror.
+- `test_compare_output_sink_mirror_fails_when_replay_watch_attempt_observes_no_address_output`
+  - verifies a nested replay watch attempt over `$9800` with zero events fails the output mirror.
+- Existing output mirror regressions still verify strong effect-trace evidence passes, planned dynamic taint stays weak, and content-state metadata alone cannot pass.
+
+Validation after patch:
+
+- Focused output attempt/pass/weak-evidence regressions: 5 passed.
+- Event-runtime materialization tests: 19 passed.
+- Full `test_catalog`: 442 passed.
+- Full debugger suite: 461 passed.
+- `python -m tools.debugger audit`: `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- `py_compile` passed for touched debugger Python files.
+
+Remaining priority from Pro:
+
+- This closes the attempted-but-empty runtime boundary across content-state, content-fuzz, and output-sink mirrors. The remaining full-goal blockers are still real: arbitrary event-engine state generation, full script VM execution semantics, pixel/audio behavioral mirrors, emulator-backed checkpoint replay, full reverse execution, and broader SM83 adapter unification.

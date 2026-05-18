@@ -24844,6 +24844,132 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(match["weak_runtime_kinds"], ["content_state"])
         self.assertTrue(any("content_state" in gap for gap in match["runtime_evidence_gaps"]))
 
+    def test_compare_output_sink_mirror_fails_when_watch_attempt_observes_no_outputs(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "content_state.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_content_state_materialization",
+                        "valid": True,
+                        "executed": True,
+                        "materializations": [
+                            {
+                                "scenario_id": "content_scenario_22_0000",
+                                "scenario_type": "ui_tilemap_update",
+                                "precondition_kind": "ui_output_sink",
+                                "status": "ready",
+                                "source_file": "engine/menus/unit_menu.asm",
+                                "outputs": [
+                                    {
+                                        "kind": "ui_tilemap_output",
+                                        "state_symbol": "wTilemap",
+                                        "producer_symbol": "PlaceString",
+                                    },
+                                    {
+                                        "kind": "ui_attrmap_output",
+                                        "state_symbol": "wAttrmap",
+                                        "producer_symbol": "PlaceString",
+                                    },
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            (root / "watch.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_watch_report",
+                        "valid": True,
+                        "executed": True,
+                        "scenario_ids": ["content_scenario_22_0000"],
+                        "watch_symbols": ["wTilemap", "wAttrmap"],
+                        "events": [],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            compare = build_compare_plan(reports=("content_state.json", "watch.json"), root=root)
+
+        match = next(item for item in compare["matches"] if item["id"] == "content_output_behavioral_mirror")
+
+        self.assertEqual(match["status"], "failed")
+        self.assertEqual(match["proof_status"], "mirror_failed")
+        self.assertEqual(match["mirror_status"], "failed")
+        self.assertEqual(match["actual_proof_status"], "runtime_observed")
+        self.assertEqual(match["covered_output_count"], 0)
+        self.assertEqual(match["attempted_output_count"], 2)
+        self.assertEqual(set(match["attempted_symbols"]), {"wTilemap", "wAttrmap"})
+        self.assertIn("watch", match["runtime_attempt_kinds"])
+        self.assertTrue(any("attempted" in gap for gap in match["runtime_evidence_gaps"]))
+
+    def test_compare_output_sink_mirror_fails_when_replay_watch_attempt_observes_no_address_output(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "content_state.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_content_state_materialization",
+                        "valid": True,
+                        "executed": True,
+                        "materializations": [
+                            {
+                                "scenario_id": "content_scenario_22_0000",
+                                "scenario_type": "ui_tilemap_update",
+                                "precondition_kind": "ui_output_sink",
+                                "status": "ready",
+                                "source_file": "engine/menus/unit_menu.asm",
+                                "outputs": [
+                                    {
+                                        "kind": "ui_tilemap_output",
+                                        "address": "$9800",
+                                        "producer_symbol": "PlaceString",
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            (root / "replay.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_replay_plan",
+                        "valid": True,
+                        "executed_watch": True,
+                        "replay_targets": {
+                            "scenario_ids": ["content_scenario_22_0000"],
+                            "watch_addresses": ["$9800"],
+                        },
+                        "watch_report": {
+                            "kind": "unified_debugger_watch_report",
+                            "valid": True,
+                            "executed": True,
+                            "events": [],
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            compare = build_compare_plan(reports=("content_state.json", "replay.json"), root=root)
+
+        match = next(item for item in compare["matches"] if item["id"] == "content_output_behavioral_mirror")
+
+        self.assertEqual(match["status"], "failed")
+        self.assertEqual(match["proof_status"], "mirror_failed")
+        self.assertEqual(match["mirror_status"], "failed")
+        self.assertEqual(match["actual_proof_status"], "runtime_observed")
+        self.assertEqual(match["covered_output_count"], 0)
+        self.assertEqual(match["attempted_output_count"], 1)
+        self.assertEqual(match["attempted_addresses"], ["$9800"])
+        self.assertIn("replay_watch", match["runtime_attempt_kinds"])
+        self.assertTrue(any("attempted" in gap for gap in match["runtime_evidence_gaps"]))
+
     def test_compare_output_mirror_uses_materialization_precondition_kind(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
