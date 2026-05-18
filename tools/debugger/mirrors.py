@@ -197,7 +197,11 @@ def build_compare_plan(
         supplied=runtime_observations,
     )
     runtime_attempt_records = collect_runtime_attempts(loaded_reports=loaded_reports)
-    matches = content_state_mirror_matches(loaded_reports, runtime_observations=runtime_observation_records)
+    matches = content_state_mirror_matches(
+        loaded_reports,
+        runtime_observations=runtime_observation_records,
+        runtime_attempts=runtime_attempt_records,
+    )
     matches.extend(
         content_fuzz_mirror_matches(
             loaded_reports,
@@ -277,6 +281,7 @@ def content_state_mirror_matches(
     loaded_reports: list[dict[str, Any]],
     *,
     runtime_observations: list[dict[str, Any]],
+    runtime_attempts: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
     matches = []
     runtime_evidence = [
@@ -336,10 +341,14 @@ def content_state_mirror_matches(
                 materializations=materializations,
                 executed=executed,
                 runtime_observations=runtime_observations,
+                runtime_attempts=runtime_attempts,
             )
             if route_status["mirror_status"] == "passed":
                 status = "passed"
                 proof_status = "mirror_passed"
+            elif route_status["mirror_status"] == "failed":
+                status = "failed"
+                proof_status = "mirror_failed"
             gaps = []
             if executed:
                 gaps.append(
@@ -360,6 +369,8 @@ def content_state_mirror_matches(
             ]
             if out_state:
                 evidence.append(f"state={out_state}")
+            if route_status["runtime_attempt_kinds"]:
+                evidence.append(f"runtime_attempt_kinds={','.join(route_status['runtime_attempt_kinds'])}")
             matches.append(
                 {
                     "id": "content_state_behavioral_mirror",
@@ -373,7 +384,10 @@ def content_state_mirror_matches(
                     "actual_proof_status": route_status["actual_proof_status"],
                     "expected_proof_status": route_status["expected_proof_status"],
                     "expected_sinks": route_status["expected_sinks"],
+                    "attempted_sinks": route_status["attempted_sinks"],
                     "observed_sinks": route_status["observed_sinks"],
+                    "runtime_attempt_reports": route_status["runtime_attempt_reports"],
+                    "runtime_attempt_kinds": route_status["runtime_attempt_kinds"],
                     "evidence": evidence,
                     "commands": unique_list(commands),
                     "materialization_commands": unique_list(materialization_commands),
@@ -467,6 +481,7 @@ def content_state_runtime_route_status(
     materializations: list[dict[str, Any]],
     executed: bool,
     runtime_observations: list[dict[str, Any]],
+    runtime_attempts: list[dict[str, Any]],
 ) -> dict[str, Any]:
     scenario_ids = unique_list(
         str(item.get("scenario_id", ""))
@@ -478,7 +493,17 @@ def content_state_runtime_route_status(
         scenario_ids=scenario_ids,
         runtime_observations=runtime_observations,
     )
+    relevant_attempts = runtime_attempts_for_scenarios(
+        scenario_ids=scenario_ids,
+        runtime_attempts=runtime_attempts,
+    )
+    attempted_sinks = attempted_sinks_for_scenarios(
+        scenario_ids=scenario_ids,
+        runtime_attempts=runtime_attempts,
+    )
     missing_sinks = [sink for sink in expected_sinks if sink not in observed_sinks]
+    attempted_expected_sinks = [sink for sink in expected_sinks if sink in attempted_sinks]
+    missing_attempted_sinks = [sink for sink in expected_sinks if sink not in attempted_sinks]
     materialization_status = aggregate_materialization_proof_status(materializations, executed=executed)
     has_executed_floor = executed or materialization_status in {"state_materialized", "executed", "observed"}
     if expected_sinks and not missing_sinks and has_executed_floor:
@@ -486,7 +511,13 @@ def content_state_runtime_route_status(
         actual_proof_status = "observed"
     elif observed_sinks:
         mirror_status = "inconclusive"
-        actual_proof_status = materialization_status
+        actual_proof_status = "runtime_observed" if has_executed_floor else materialization_status
+    elif expected_sinks and has_executed_floor and attempted_expected_sinks and not missing_attempted_sinks:
+        mirror_status = "failed"
+        actual_proof_status = "runtime_observed"
+    elif attempted_expected_sinks:
+        mirror_status = "inconclusive"
+        actual_proof_status = "runtime_observed" if has_executed_floor else materialization_status
     else:
         mirror_status = materialization_status if materialization_status != "planned_only" else "planned_only"
         actual_proof_status = materialization_status
@@ -495,14 +526,28 @@ def content_state_runtime_route_status(
         runtime_evidence_gaps.append("Runtime observations missing expected sink(s): " + ", ".join(missing_sinks))
     if observed_sinks and not has_executed_floor:
         runtime_evidence_gaps.append("Runtime observations cannot pass this mirror until the content state is executed or otherwise state-materialized.")
-    if expected_sinks and not observed_sinks:
+    if attempted_expected_sinks and not has_executed_floor:
+        runtime_evidence_gaps.append("Runtime attempts cannot pass or fail this mirror until the content state is executed or otherwise state-materialized.")
+    if expected_sinks and not observed_sinks and not attempted_expected_sinks:
         runtime_evidence_gaps.append("No runtime observations were supplied for the expected sink set.")
+    if expected_sinks and attempted_expected_sinks and not observed_sinks:
+        runtime_evidence_gaps.append(
+            "Runtime attempted expected sink(s) but observed no expected sink changes: "
+            + ", ".join(attempted_expected_sinks)
+        )
+    if missing_attempted_sinks and attempted_expected_sinks:
+        runtime_evidence_gaps.append(
+            "Runtime attempts did not cover expected sink(s): " + ", ".join(missing_attempted_sinks)
+        )
     return {
         "mirror_status": mirror_status,
         "actual_proof_status": actual_proof_status,
         "expected_proof_status": "runtime_observed",
         "expected_sinks": expected_sinks,
+        "attempted_sinks": unique_list([sink for sink in attempted_sinks if sink in set(expected_sinks)]),
         "observed_sinks": observed_sinks,
+        "runtime_attempt_reports": unique_list(str(item.get("source", "")) for item in relevant_attempts if item.get("source")),
+        "runtime_attempt_kinds": unique_list(str(item.get("runtime_kind", "")) for item in relevant_attempts if item.get("runtime_kind")),
         "runtime_evidence_gaps": runtime_evidence_gaps,
     }
 

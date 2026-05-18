@@ -3257,3 +3257,44 @@ Validation after patch:
 Remaining priority from Pro:
 
 - This closes another behavioral mirror claim-calibration gap, but it still does not implement arbitrary event-engine state generation, full script VM execution semantics, pixel/audio behavioral mirrors, emulator-backed checkpoint replay, full reverse execution, or broader SM83 adapter unification.
+
+## Implementation Note - Content-State Runtime Attempt Outcomes
+
+Date: 2026-05-18.
+
+Context:
+
+- `content_state_behavioral_mirror` could pass from real runtime observations and correctly stopped at `state_materialized` without runtime evidence.
+- It still did not distinguish "no runtime attempt was supplied" from "a replay/watch attempt ran over every expected sink and observed no expected sink changes."
+- That left an executed but empty watch/replay-watch report looking like an unattempted materialized route.
+
+Implemented fix:
+
+- `tools/debugger/mirrors.py`
+  - feeds the runtime-attempt stream into content-state mirror construction.
+  - carries `attempted_sinks`, `runtime_attempt_reports`, and `runtime_attempt_kinds` on content-state mirror matches.
+  - keeps no-attempt materialized routes at `mirror_status=state_materialized`, preserving the materialization proof floor.
+  - keeps observations as the only path to `mirror_status=passed`.
+  - reports a materialized route whose watch/replay-watch attempt covers every expected sink but observes no expected sink changes as `status=failed`, `proof_status=mirror_failed`, `mirror_status=failed`, and `actual_proof_status=runtime_observed`.
+  - treats partial attempted sink coverage as inconclusive rather than a mirror failure.
+
+Regression strengthened:
+
+- `test_compare_fails_state_materialized_route_when_watch_attempt_observes_no_expected_sinks`
+  - verifies an executed watch report with the expected map-position sinks and zero events fails the content-state behavioral mirror.
+- `test_compare_fails_state_materialized_route_when_replay_watch_attempt_observes_no_expected_sinks`
+  - verifies the same failure through a nested replay watch report that inherits replay target sinks.
+- Existing content-state runtime observation tests still verify full watch/replay-watch observations promote the mirror to `passed`.
+
+Validation after patch:
+
+- Focused content-state runtime attempt regressions plus existing no-evidence/pass cases: 5 passed.
+- Event-runtime materialization tests: 19 passed.
+- Full `test_catalog`: 440 passed.
+- Full debugger suite: 459 passed.
+- `python -m tools.debugger audit`: `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- `py_compile` passed for touched debugger Python files.
+
+Remaining priority from Pro:
+
+- This closes the same attempted-but-empty runtime boundary for materialized content-state mirrors, but it still does not implement arbitrary event-engine state generation, full script VM execution semantics, pixel/audio behavioral mirrors, emulator-backed checkpoint replay, full reverse execution, or broader SM83 adapter unification.

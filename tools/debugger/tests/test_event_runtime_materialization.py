@@ -377,6 +377,85 @@ class EventRuntimeMaterializationTests(unittest.TestCase):
         self.assertEqual(match["observed_sinks"], [])
         self.assertTrue(match["runtime_evidence_gaps"])
 
+    def test_compare_fails_state_materialized_route_when_watch_attempt_observes_no_expected_sinks(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write_content_state_report(
+                root,
+                executed=True,
+                materialization_status="ready",
+                actual_proof_status="state_materialized",
+            )
+            (root / "watch.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_watch_report",
+                        "valid": True,
+                        "executed": True,
+                        "scenario_ids": ["content_scenario_1_0000"],
+                        "watch_symbols": ["wMapGroup", "wMapNumber"],
+                        "events": [],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            report = build_compare_plan(reports=("content_state.json", "watch.json"), root=root)
+
+        match = next(item for item in report["matches"] if item["id"] == "content_state_behavioral_mirror")
+
+        self.assertEqual(match["status"], "failed")
+        self.assertEqual(match["proof_status"], "mirror_failed")
+        self.assertEqual(match["mirror_status"], "failed")
+        self.assertEqual(match["actual_proof_status"], "runtime_observed")
+        self.assertEqual(match["observed_sinks"], [])
+        self.assertEqual(set(match["attempted_sinks"]), {"wMapGroup", "wMapNumber"})
+        self.assertIn("watch", match["runtime_attempt_kinds"])
+        self.assertTrue(any("attempted" in gap for gap in match["runtime_evidence_gaps"]))
+
+    def test_compare_fails_state_materialized_route_when_replay_watch_attempt_observes_no_expected_sinks(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write_content_state_report(
+                root,
+                executed=True,
+                materialization_status="ready",
+                actual_proof_status="state_materialized",
+            )
+            (root / "replay.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_replay_plan",
+                        "valid": True,
+                        "executed_watch": True,
+                        "replay_targets": {
+                            "scenario_ids": ["content_scenario_1_0000"],
+                            "watch_symbols": ["wMapGroup", "wMapNumber"],
+                        },
+                        "watch_report": {
+                            "kind": "unified_debugger_watch_report",
+                            "valid": True,
+                            "executed": True,
+                            "events": [],
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            report = build_compare_plan(reports=("content_state.json", "replay.json"), root=root)
+
+        match = next(item for item in report["matches"] if item["id"] == "content_state_behavioral_mirror")
+
+        self.assertEqual(match["status"], "failed")
+        self.assertEqual(match["proof_status"], "mirror_failed")
+        self.assertEqual(match["mirror_status"], "failed")
+        self.assertEqual(match["actual_proof_status"], "runtime_observed")
+        self.assertEqual(match["observed_sinks"], [])
+        self.assertEqual(set(match["attempted_sinks"]), {"wMapGroup", "wMapNumber"})
+        self.assertIn("replay_watch", match["runtime_attempt_kinds"])
+        self.assertTrue(any("attempted" in gap for gap in match["runtime_evidence_gaps"]))
+
     def test_compare_passes_executed_route_when_runtime_observations_cover_expected_sinks(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
