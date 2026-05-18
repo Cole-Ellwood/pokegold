@@ -82,8 +82,19 @@ DoPoisonStep::
 ; check if mon has fainted as a result of poison damage
 	ld a, b
 	or c
+	jr z, .fainted
+
+; if HP is exactly 1, clear poison but leave the mon alive
+	dec a
+	or b
 	jr nz, .not_fainted
 
+	ld a, MON_STATUS
+	call GetPartyParamLocation
+	res PSN, [hl]
+	jr .not_fainted
+
+.fainted
 ; the mon has fainted, reset its status, set carry, and return %10
 	ld a, MON_STATUS
 	call GetPartyParamLocation
