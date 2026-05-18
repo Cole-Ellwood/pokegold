@@ -22400,6 +22400,11 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertTrue(report["valid"])
         self.assertIn("content_fuzz_report", match["matched_by"])
         self.assertIn("runtime_routes=script_engine", match["evidence"])
+        self.assertEqual(match["status"], "planned")
+        self.assertEqual(match["proof_status"], "planned_only")
+        self.assertEqual(match["mirror_status"], "planned_only")
+        self.assertIn("wScriptPos", match["expected_sinks"])
+        self.assertEqual(match["observed_sinks"], [])
         self.assertIn(scenario_id, match["scenario_ids"])
         self.assertIn("scripts/unit_script.asm", match["source_files"])
         self.assertIn("RunScriptCommand", match["related_symbols"])
@@ -22434,6 +22439,104 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         )
         self.assertIn("content-state --scenario fuzz_cases.jsonl", dynamic_execute_commands)
         self.assertNotIn("trace-instructions --report compare.json", dynamic_execute_commands)
+
+    def test_compare_content_fuzz_mirror_passes_with_real_watch_observations(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "scripts").mkdir()
+            (root / "scripts" / "unit_script.asm").write_text(
+                "\n".join(
+                    [
+                        "UnitScript:",
+                        "\topentext",
+                        "\twritetext UnitText",
+                        "\twaitbutton",
+                        "\tclosetext",
+                        "\tend",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            fuzz_report = build_fuzz_plan(
+                changed_files=("scripts/unit_script.asm",),
+                out_cases="fuzz_cases.jsonl",
+                max_cases=4,
+                seed=19,
+                root=root,
+            )
+            content_case = next(item for item in fuzz_report["fuzz_cases"] if item["fuzz_type"] == "script_command_stream")
+            scenario_id = content_case["scenario_id"]
+            (root / "fuzz.json").write_text(json.dumps(fuzz_report), encoding="utf-8")
+            (root / "watch.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_watch_report",
+                        "valid": True,
+                        "executed": True,
+                        "scenario_ids": [scenario_id],
+                        "events": [
+                            {
+                                "frame": 12,
+                                "watch": "wScriptBank",
+                                "address": 0xDA10,
+                                "bank": 1,
+                                "bank_address": "01:DA10",
+                                "old_hex": "00",
+                                "new_hex": "01",
+                            },
+                            {
+                                "frame": 12,
+                                "watch": "wScriptPos",
+                                "address": 0xDA11,
+                                "bank": 1,
+                                "bank_address": "01:DA11",
+                                "old_hex": "00",
+                                "new_hex": "10",
+                            },
+                            {
+                                "frame": 12,
+                                "watch": "wScriptRunning",
+                                "address": 0xDA12,
+                                "bank": 1,
+                                "bank_address": "01:DA12",
+                                "old_hex": "00",
+                                "new_hex": "01",
+                            },
+                            {
+                                "frame": 12,
+                                "watch": "wScriptMode",
+                                "address": 0xDA13,
+                                "bank": 1,
+                                "bank_address": "01:DA13",
+                                "old_hex": "00",
+                                "new_hex": "02",
+                            },
+                            {
+                                "frame": 13,
+                                "watch": "wScriptVar",
+                                "address": 0xD173,
+                                "bank": 1,
+                                "bank_address": "01:D173",
+                                "old_hex": "00",
+                                "new_hex": "01",
+                            },
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            report = build_compare_plan(reports=("fuzz.json", "watch.json"), root=root)
+
+        match = next(item for item in report["matches"] if item["id"] == "content_fuzz_behavioral_mirror")
+
+        self.assertEqual(match["status"], "passed")
+        self.assertEqual(match["proof_status"], "mirror_passed")
+        self.assertEqual(match["mirror_status"], "passed")
+        self.assertEqual(match["actual_proof_status"], "observed")
+        self.assertIn("wScriptPos", match["observed_sinks"])
+        self.assertEqual(match["runtime_evidence_gaps"], [])
 
     def test_compare_plan_promotes_runtime_expectation_dynamic_mirror(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

@@ -197,7 +197,7 @@ def build_compare_plan(
         supplied=runtime_observations,
     )
     matches = content_state_mirror_matches(loaded_reports, runtime_observations=runtime_observation_records)
-    matches.extend(content_fuzz_mirror_matches(loaded_reports))
+    matches.extend(content_fuzz_mirror_matches(loaded_reports, runtime_observations=runtime_observation_records))
     matches.extend(dynamic_expectation_mirror_matches(loaded_reports))
     matches.extend(match_mirrors(
         changed_files=changed_files,
@@ -643,7 +643,11 @@ def report_scenario_ids(data: dict[str, Any]) -> list[str]:
     )
 
 
-def content_fuzz_mirror_matches(loaded_reports: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def content_fuzz_mirror_matches(
+    loaded_reports: list[dict[str, Any]],
+    *,
+    runtime_observations: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
     matches = []
     for loaded in loaded_reports:
         data = loaded.get("data", {})
@@ -667,6 +671,15 @@ def content_fuzz_mirror_matches(loaded_reports: list[dict[str, Any]]) -> list[di
             for symbol in content_fuzz_case_symbols(case)
         )
         runtime_routes = unique_list(content_case_runtime_route(case) for case in cases)
+        expected_sinks = content_fuzz_expected_sinks(cases)
+        observed_sinks = observed_sinks_for_scenarios(
+            scenario_ids=scenario_ids,
+            runtime_observations=runtime_observations,
+        )
+        route_status = content_fuzz_runtime_route_status(
+            expected_sinks=expected_sinks,
+            observed_sinks=observed_sinks,
+        )
         commands = [
             *content_fuzz_expect_commands(source=source, cases=cases),
             *[
@@ -690,6 +703,17 @@ def content_fuzz_mirror_matches(loaded_reports: list[dict[str, Any]]) -> list[di
         ]
         if runtime_routes:
             evidence.append(f"runtime_routes={','.join(runtime_routes)}")
+        evidence.extend(
+            [
+                f"mirror_status={route_status['mirror_status']}",
+                f"actual_proof_status={route_status['actual_proof_status']}",
+            ]
+        )
+        gaps = []
+        if route_status["mirror_status"] != "passed":
+            gaps.append(
+                "Content fuzz reports describe planned behavioral routes; run the materialization and replay/watch commands before treating them as final emulator behavior."
+            )
         matches.append(
             {
                 "id": "content_fuzz_behavioral_mirror",
@@ -697,6 +721,13 @@ def content_fuzz_mirror_matches(loaded_reports: list[dict[str, Any]]) -> list[di
                 "scope": "Content fuzz cases with generated scenario, state-precondition, runtime probe, and content mirror routes.",
                 "confidence": "medium-high for generated content cases; runtime confidence requires state materialization plus replay/watch proof",
                 "matched_by": ["content_fuzz_report"],
+                "status": route_status["status"],
+                "proof_status": route_status["proof_status"],
+                "mirror_status": route_status["mirror_status"],
+                "actual_proof_status": route_status["actual_proof_status"],
+                "expected_proof_status": "runtime_observed",
+                "expected_sinks": expected_sinks,
+                "observed_sinks": route_status["observed_sinks"],
                 "evidence": evidence,
                 "scenario_ids": scenario_ids,
                 "source_files": source_files,
@@ -704,12 +735,46 @@ def content_fuzz_mirror_matches(loaded_reports: list[dict[str, Any]]) -> list[di
                 "runtime_routes": runtime_routes,
                 "commands": unique_list(commands),
                 "materialization_commands": unique_list(materialization_commands),
-                "gaps": [
-                    "Content fuzz reports describe planned behavioral routes; run the materialization and replay/watch commands before treating them as final emulator behavior."
-                ],
+                "gaps": gaps,
+                "runtime_evidence_gaps": route_status["runtime_evidence_gaps"],
             }
         )
     return matches
+
+
+def content_fuzz_runtime_route_status(*, expected_sinks: list[str], observed_sinks: list[str]) -> dict[str, Any]:
+    covered_sinks = [sink for sink in expected_sinks if sink in observed_sinks]
+    missing_sinks = [sink for sink in expected_sinks if sink not in observed_sinks]
+    if expected_sinks and not missing_sinks:
+        status = "passed"
+        proof_status = "mirror_passed"
+        mirror_status = "passed"
+        actual_proof_status = "observed"
+    elif covered_sinks:
+        status = "partial"
+        proof_status = "instruction_observed"
+        mirror_status = "inconclusive"
+        actual_proof_status = "instruction_observed"
+    else:
+        status = "planned"
+        proof_status = "planned_only"
+        mirror_status = "planned_only"
+        actual_proof_status = "planned_only"
+    runtime_evidence_gaps = []
+    if missing_sinks:
+        runtime_evidence_gaps.append("Runtime observations missing expected fuzz sink(s): " + ", ".join(missing_sinks))
+    if expected_sinks and not observed_sinks:
+        runtime_evidence_gaps.append("No runtime observations were supplied for the expected fuzz sink set.")
+    if not expected_sinks:
+        runtime_evidence_gaps.append("No expected runtime sinks were declared for these content fuzz cases.")
+    return {
+        "status": status,
+        "proof_status": proof_status,
+        "mirror_status": mirror_status,
+        "actual_proof_status": actual_proof_status,
+        "observed_sinks": unique_list([sink for sink in observed_sinks if sink in set(expected_sinks)]),
+        "runtime_evidence_gaps": runtime_evidence_gaps,
+    }
 
 
 def dynamic_expectation_mirror_matches(loaded_reports: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -1216,6 +1281,36 @@ def content_fuzz_case_symbols(case: dict[str, Any]) -> list[str]:
         out.extend(string_items(output.get("state_symbol")))
         out.extend(string_items(output.get("producer_symbol")))
     return unique_list(out)
+
+
+def content_fuzz_expected_sinks(cases: list[dict[str, Any]]) -> list[str]:
+    return unique_list(
+        sink
+        for case in cases
+        for sink in [
+            *content_fuzz_case_watch_sinks(case),
+            *[
+                str(output.get("state_symbol") or output.get("output_symbol") or output.get("address") or output.get("watch_address") or output.get("sink_address") or "")
+                for output in dict_items(case.get("outputs"))
+            ],
+        ]
+        if sink
+    )
+
+
+def content_fuzz_case_watch_sinks(case: dict[str, Any]) -> list[str]:
+    runtime_targets = case.get("runtime_targets") if isinstance(case.get("runtime_targets"), dict) else {}
+    return unique_list(
+        [
+            *string_items(runtime_targets.get("watch_symbols")),
+            *string_items(runtime_targets.get("watch_addresses")),
+            *[
+                symbol
+                for precondition in dict_items(case.get("state_preconditions"))
+                for symbol in string_items(precondition.get("watch_symbols"))
+            ],
+        ]
+    )
 
 
 def content_fuzz_expect_commands(*, source: str, cases: list[dict[str, Any]]) -> list[str]:

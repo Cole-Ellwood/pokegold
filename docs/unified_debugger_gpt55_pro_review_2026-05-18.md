@@ -3172,3 +3172,42 @@ Validation after patch:
 Remaining priority from Pro:
 
 - This connects existing real runtime reports to content-state behavioral mirror gating, but it does not implement emulator-backed checkpoint replay, full reverse execution, arbitrary event/runtime generation, full behavioral mirrors, or broader SM83 adapter unification.
+
+## Implementation Note - Content Fuzz Behavioral Mirror Runtime Gating
+
+Date: 2026-05-18.
+
+Context:
+
+- `content_fuzz_behavioral_mirror` described generated content runtime routes, but it did not expose `status`, `proof_status`, `mirror_status`, expected sinks, observed sinks, or runtime evidence gaps.
+- A generated script/map/movement/audio/UI fuzz route could be handed to replay/setup/trace tools, but compare could not distinguish "planned route" from "real watch/replay evidence observed every declared sink."
+
+Implemented fix:
+
+- `tools/debugger/mirrors.py`
+  - passes the already normalized runtime observation stream into content-fuzz mirror construction.
+  - derives expected fuzz sinks from runtime-target watch symbols/addresses, state-precondition watch symbols, and declared output sinks.
+  - emits `status`, `proof_status`, `mirror_status`, `actual_proof_status`, `expected_proof_status`, `expected_sinks`, `observed_sinks`, and `runtime_evidence_gaps` on content-fuzz mirror matches.
+  - keeps no-runtime content-fuzz mirrors at `status=planned`, `proof_status=planned_only`, and `mirror_status=planned_only`.
+  - promotes content-fuzz mirrors to `passed` / `mirror_passed` only when real runtime observations cover every declared expected sink for the scenario set.
+
+Regression strengthened:
+
+- `test_compare_plan_consumes_content_fuzz_behavioral_mirror`
+  - now verifies generated script fuzz mirrors expose planned proof state and expected runtime sinks when no runtime evidence is supplied.
+- `test_compare_content_fuzz_mirror_passes_with_real_watch_observations`
+  - verifies a generated script fuzz mirror promotes to `passed` only after a real watch report observes every declared script-entry sink.
+
+Validation after patch:
+
+- Focused content-fuzz mirror regressions: 2 passed.
+- Adjacent content-fuzz compare/investigate/generate/suggest/dynamic-taint handoff regressions: 5 passed.
+- Full `test_catalog`: 438 passed.
+- Event-runtime materialization tests: 17 passed.
+- Full debugger suite: 455 passed.
+- `python -m tools.debugger audit`: `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- `py_compile` and `git diff --check` passed for touched debugger files.
+
+Remaining priority from Pro:
+
+- This gives generated content fuzz mirrors real runtime-observation gating, but it still does not implement arbitrary event-engine state generation, full script VM execution semantics, pixel/audio behavioral mirrors, emulator-backed checkpoint replay, full reverse execution, or broader SM83 adapter unification.
