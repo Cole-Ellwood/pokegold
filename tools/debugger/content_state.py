@@ -66,6 +66,7 @@ OBJECT_STRUCT_OFFSETS = {
 }
 OBJECT_EVENT_CONSTANT_FILES = (
     "constants/ram_constants.asm",
+    "constants/misc_constants.asm",
     "constants/item_constants.asm",
     "constants/sprite_constants.asm",
     "constants/sprite_data_constants.asm",
@@ -134,6 +135,25 @@ COUNTER_TILE_SYMBOLS_BY_FACING = {
     "OW_LEFT": "wTileLeft",
     "OW_RIGHT": "wTileRight",
 }
+TIMEOFDAY_SYMBOL = "wTimeOfDay"
+HOURS_SYMBOL = "hHours"
+TIME_OF_DAY_ORDER = ("MORN", "DAY", "NITE")
+TIME_OF_DAY_HOUR_CONSTANTS = {
+    "MORN": "MORN_HOUR",
+    "DAY": "DAY_HOUR",
+    "NITE": "NITE_HOUR",
+}
+TIME_OF_DAY_DEFAULT_VALUES = {
+    "MORN_F": 0,
+    "DAY_F": 1,
+    "NITE_F": 2,
+    "MORN_HOUR": 4,
+    "DAY_HOUR": 10,
+    "NITE_HOUR": 18,
+    "MAX_HOUR": 24,
+}
+LARGE_OBJECT_COLLISION_MODEL = "WillObjectIntersectBigObject_fixed_2x2"
+LARGE_OBJECT_SIZE_SOURCE = "engine/overworld/npc_movement.asm:WillObjectIntersectBigObject"
 SCRIPT_ENTRY_PATCH_SYMBOLS = ("wScriptBank", "wScriptPos", "wScriptRunning", "wScriptMode", "wScriptStackSize")
 MOVEMENT_ENTRY_PATCH_SYMBOLS = (
     "wMovementObject",
@@ -796,6 +816,8 @@ def event_engine_player_context(*, scenario_type: str, values: dict[str, Any], r
         context["large_object"] = True
         context["large_object_width"] = 2
         context["large_object_height"] = 2
+        context["large_object_collision_model"] = str(values.get("large_object_collision_model") or LARGE_OBJECT_COLLISION_MODEL)
+        context["large_object_size_source"] = str(values.get("large_object_size_source") or LARGE_OBJECT_SIZE_SOURCE)
     return context
 
 
@@ -942,13 +964,13 @@ def map_position_known_limits(*, scenario_type: str) -> list[str]:
             "Object events require a live object struct discoverable by IsNPCAtCoord; this materialization patches one generated visible object and still requires runtime proof that TryObjectEvent consumes it.",
         )
         limits.append(
-            "Multi-object map-event materialization patches the selected source object's wMapNObject row and source-order companion map rows; object mask/event-flag, selected hour-filter, and selected-hour-compatible companion filters are still planned state, while time-of-day masks and runtime occupancy still need replay/watch/trace evidence.",
+            "Multi-object map-event materialization patches the selected source object's wMapNObject row and source-order companion map rows; object mask/event-flag and generated source time-context filters are still planned state, while runtime occupancy and arbitrary hour/runtime time contexts beyond generated candidates still need replay/watch/trace evidence.",
         )
         limits.append(
             "Companion object materialization filters object structs through the InitializeVisibleSprites player-viewport model, but replay/watch/trace must still prove the runtime object-loader chose the same loaded set and object struct indexes.",
         )
         limits.append(
-            "Large-object object-event variants patch the object struct BIG_OBJECT palette bit and player positions outside the 2x2 footprint; replay/watch/trace must still prove IsNPCAtCoord used the large-object intersection path.",
+            "Large-object object-event variants patch the object struct BIG_OBJECT palette bit and player positions outside the engine-fixed 2x2 footprint; replay/watch/trace must still prove IsNPCAtCoord used the WillObjectIntersectBigObject path.",
         )
         limits.append(
             "Counter-tile object-event variants patch one cached facing-tile collision byte and require replay/watch/trace proof that CheckCounterTile reflected the target coordinates.",
@@ -1257,6 +1279,7 @@ def companion_objects_context_patch(
             object_event_time_visibility(
                 entry_values=entry_values,
                 selected_time_context=selected_time_context,
+                constants=constants,
                 symbol_table=symbol_table,
             )
             if not entry_unresolved
@@ -1570,7 +1593,10 @@ def object_event_time_context(
     *,
     entry_values: dict[str, Any],
     symbol_table: dict[str, dict[str, Any]],
+    constants: dict[str, int],
+    requested_time_context: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    requested_time_context = requested_time_context or {}
     hour_1 = int(entry_values["hour_1"])
     hour_2 = int(entry_values["hour_2"])
     context = {
@@ -1581,17 +1607,91 @@ def object_event_time_context(
         "hour_end": hour_2,
     }
     if hour_1 < 0:
+        if hour_2 >= 0:
+            mask = hour_2 & 0xFF
+            choices = timeofday_mask_choices(mask, constants)
+            if not choices:
+                return {
+                    **context,
+                    "time_model": "timeofday_mask_unresolved",
+                    "timeofday_mask": mask,
+                    "timeofday_choices": [],
+                    "required_symbol": TIMEOFDAY_SYMBOL,
+                    "required_symbols": [TIMEOFDAY_SYMBOL],
+                    "time_symbol_available": TIMEOFDAY_SYMBOL in symbol_table,
+                    "hour_symbol_available": HOURS_SYMBOL in symbol_table,
+                }
+            requested_choice = requested_timeofday_choice(choices, requested_time_context, constants=constants)
+            if requested_timeofday_context_present(requested_time_context) and requested_choice is None:
+                return {
+                    **context,
+                    "time_model": "timeofday_mask_unavailable",
+                    "timeofday_mask": mask,
+                    "timeofday_choices": choices,
+                    "requested_timeofday": str(requested_time_context.get("selected_timeofday") or ""),
+                    "requested_timeofday_value": parse_int(requested_time_context.get("selected_timeofday_value")),
+                    "selected_time_context_source": str(requested_time_context.get("selected_time_context_source") or "requested_time_context"),
+                    "time_selection_valid": False,
+                    "time_selection_error": "selected_timeofday_not_allowed_by_object_mask",
+                    "required_symbol": TIMEOFDAY_SYMBOL,
+                    "required_symbols": [TIMEOFDAY_SYMBOL],
+                    "time_symbol_available": TIMEOFDAY_SYMBOL in symbol_table,
+                    "hour_symbol_available": HOURS_SYMBOL in symbol_table,
+                }
+            selected = requested_choice or choices[0]
+            required_symbols = [TIMEOFDAY_SYMBOL]
+            if "required_hour" in selected:
+                required_symbols.append(HOURS_SYMBOL)
+            return {
+                **context,
+                "time_model": "timeofday_mask",
+                "timeofday_mask": mask,
+                "timeofday_choices": choices,
+                "required_symbol": TIMEOFDAY_SYMBOL,
+                "required_symbols": required_symbols,
+                "required_timeofday": selected["name"],
+                "required_timeofday_value": selected["value"],
+                "required_timeofday_mask": selected["mask"],
+                **({"required_hour": selected["required_hour"]} if "required_hour" in selected else {}),
+                "selected_time_context_source": str(
+                    requested_time_context.get("selected_time_context_source")
+                    or ("requested_timeofday" if requested_choice else "default_first_timeofday_choice")
+                ),
+                "time_selection_valid": True,
+                "time_symbol_available": TIMEOFDAY_SYMBOL in symbol_table,
+                "hour_symbol_available": HOURS_SYMBOL in symbol_table,
+            }
         return {
             **context,
-            "time_model": "always" if hour_2 < 0 else "timeofday_mask_unmaterialized",
+            "time_model": "always",
             "time_symbol_available": False,
         }
+    requested_hour = requested_hour_context_value(requested_time_context, constants=constants)
+    if requested_hour is not None and not hour_in_object_range(hour=int(requested_hour), start=hour_1, end=hour_2):
+        return {
+            **context,
+            "time_model": "hour_range_unavailable",
+            "required_symbol": HOURS_SYMBOL,
+            "required_symbols": [HOURS_SYMBOL],
+            "requested_hour": int(requested_hour) & 0xFF,
+            "selected_time_context_source": str(requested_time_context.get("selected_time_context_source") or "requested_time_context"),
+            "time_selection_valid": False,
+            "time_selection_error": "selected_hour_not_allowed_by_object_range",
+            "time_symbol_available": HOURS_SYMBOL in symbol_table,
+        }
+    required_hour = int(requested_hour) & 0xFF if requested_hour is not None else hour_1 & 0xFF
     return {
         **context,
         "time_model": "hour_range",
-        "required_symbol": "hHours",
-        "required_hour": hour_1 & 0xFF,
-        "time_symbol_available": "hHours" in symbol_table,
+        "required_symbol": HOURS_SYMBOL,
+        "required_symbols": [HOURS_SYMBOL],
+        "required_hour": required_hour,
+        "selected_time_context_source": str(
+            requested_time_context.get("selected_time_context_source")
+            or ("requested_hour" if requested_hour is not None else "default_hour_range_start")
+        ),
+        "time_selection_valid": True,
+        "time_symbol_available": HOURS_SYMBOL in symbol_table,
     }
 
 
@@ -1599,22 +1699,37 @@ def object_event_time_visibility(
     *,
     entry_values: dict[str, Any],
     selected_time_context: dict[str, Any],
+    constants: dict[str, int],
     symbol_table: dict[str, dict[str, Any]],
 ) -> dict[str, Any]:
-    object_time = object_event_time_context(entry_values=entry_values, symbol_table=symbol_table)
-    if object_time.get("time_model") != "hour_range":
+    object_time = object_event_time_context(entry_values=entry_values, symbol_table=symbol_table, constants=constants)
+    time_model = object_time.get("time_model")
+    if time_model not in {"hour_range", "timeofday_mask"}:
         return {
             "visible": True,
-            "time_filter_reason": str(object_time.get("time_model") or "not_hour_filtered"),
+            "time_filter_reason": str(time_model or "not_time_filtered"),
             "object_time_context": object_time,
         }
-    if selected_time_context.get("time_model") != "hour_range":
+    if time_model == "timeofday_mask":
+        selected_timeofday = selected_timeofday_value(selected_time_context, constants=constants)
+        if selected_timeofday is None:
+            return {
+                "visible": True,
+                "time_filter_reason": "selected_timeofday_unresolved",
+                "object_time_context": object_time,
+            }
+        visible = timeofday_mask_allows_value(
+            mask=int(object_time.get("timeofday_mask", 0)),
+            timeofday_value=int(selected_timeofday),
+            constants=constants,
+        )
         return {
-            "visible": True,
-            "time_filter_reason": "selected_time_context_not_hour_range",
+            "visible": visible,
+            "time_filter_reason": "timeofday_mask_contains_selected_timeofday" if visible else "timeofday_mask_excludes_selected_timeofday",
+            "selected_timeofday": int(selected_timeofday),
             "object_time_context": object_time,
         }
-    selected_hour = parse_int(selected_time_context.get("required_hour"))
+    selected_hour = selected_hour_value(selected_time_context)
     if selected_hour is None:
         return {
             "visible": True,
@@ -1634,6 +1749,118 @@ def object_event_time_visibility(
     }
 
 
+def selected_hour_value(selected_time_context: dict[str, Any]) -> int | None:
+    selected_hour = parse_int(selected_time_context.get("required_hour"))
+    return int(selected_hour) if selected_hour is not None else None
+
+
+def selected_timeofday_value(selected_time_context: dict[str, Any], *, constants: dict[str, int]) -> int | None:
+    selected_timeofday = parse_int(selected_time_context.get("required_timeofday_value"))
+    if selected_timeofday is not None:
+        return int(selected_timeofday)
+    selected_hour = selected_hour_value(selected_time_context)
+    if selected_hour is None:
+        return None
+    return timeofday_value_for_hour(int(selected_hour), constants=constants)
+
+
+def requested_timeofday_choice(
+    choices: list[dict[str, Any]],
+    requested_time_context: dict[str, Any],
+    *,
+    constants: dict[str, int],
+) -> dict[str, Any] | None:
+    requested_name = str(requested_time_context.get("selected_timeofday") or "").strip().upper()
+    if requested_name:
+        for choice in choices:
+            if requested_name == str(choice.get("name") or "").upper():
+                return choice
+    requested_value = parse_int(requested_time_context.get("selected_timeofday_value"))
+    if requested_value is None and requested_name:
+        if requested_name.endswith("_F"):
+            requested_value = constant_with_default(requested_name, constants)
+        else:
+            requested_value = constant_with_default(f"{requested_name}_F", constants)
+    if requested_value is None:
+        return None
+    for choice in choices:
+        if int(choice.get("value", -1)) == (int(requested_value) & 0xFF):
+            return choice
+    return None
+
+
+def requested_timeofday_context_present(requested_time_context: dict[str, Any]) -> bool:
+    return any(requested_time_context.get(key) not in {"", None} for key in ("selected_timeofday", "selected_timeofday_value"))
+
+
+def requested_hour_context_value(requested_time_context: dict[str, Any], *, constants: dict[str, int]) -> int | None:
+    for key in ("selected_hour", "required_hour", "requested_hour"):
+        if requested_time_context.get(key) in {"", None}:
+            continue
+        value = constant_or_int(requested_time_context.get(key), constants)
+        if value is not None:
+            return int(value) & 0xFF
+    return None
+
+
+def timeofday_mask_choices(mask: int, constants: dict[str, int]) -> list[dict[str, Any]]:
+    choices: list[dict[str, Any]] = []
+    for name in TIME_OF_DAY_ORDER:
+        mask_value = constant_with_default(name, constants)
+        timeofday_value = constant_with_default(f"{name}_F", constants)
+        if mask_value is None or timeofday_value is None or not (int(mask) & int(mask_value)):
+            continue
+        choice: dict[str, Any] = {
+            "name": name,
+            "mask": int(mask_value) & 0xFF,
+            "value": int(timeofday_value) & 0xFF,
+        }
+        hour = constant_with_default(TIME_OF_DAY_HOUR_CONSTANTS[name], constants)
+        if hour is not None:
+            choice["required_hour"] = int(hour) & 0xFF
+        choices.append(choice)
+    return choices
+
+
+def timeofday_mask_allows_value(*, mask: int, timeofday_value: int, constants: dict[str, int]) -> bool:
+    for choice in timeofday_mask_choices(mask, constants):
+        if int(choice["value"]) == (int(timeofday_value) & 0xFF):
+            return True
+    return False
+
+
+def timeofday_value_for_hour(hour: int, *, constants: dict[str, int]) -> int | None:
+    hour &= 0xFF
+    morn_hour = int(constant_with_default("MORN_HOUR", constants) or 4)
+    day_hour = int(constant_with_default("DAY_HOUR", constants) or 10)
+    nite_hour = int(constant_with_default("NITE_HOUR", constants) or 18)
+    if day_hour <= hour < nite_hour:
+        return int(constant_with_default("DAY_F", constants) or 1)
+    if morn_hour <= hour < day_hour:
+        return int(constant_with_default("MORN_F", constants) or 0)
+    return int(constant_with_default("NITE_F", constants) or 2)
+
+
+def constant_with_default(name: str, constants: dict[str, int]) -> int | None:
+    value = constants.get(name)
+    if value is not None:
+        return int(value)
+    default = TIME_OF_DAY_DEFAULT_VALUES.get(name)
+    return int(default) if default is not None else None
+
+
+def object_event_time_watch_symbols(time_context: dict[str, Any]) -> list[str]:
+    symbols: list[str] = []
+    if time_context.get("time_model") == "hour_range" and time_context.get("time_symbol_available"):
+        symbols.append(HOURS_SYMBOL)
+    if time_context.get("time_model") == "timeofday_mask":
+        if time_context.get("time_symbol_available"):
+            symbols.append(TIMEOFDAY_SYMBOL)
+        if time_context.get("hour_symbol_available"):
+            symbols.append(HOURS_SYMBOL)
+    return symbols
+
+
 def hour_in_object_range(*, hour: int, start: int, end: int) -> bool:
     hour &= 0xFF
     start &= 0xFF
@@ -1648,22 +1875,51 @@ def hour_in_object_range(*, hour: int, start: int, end: int) -> bool:
 def object_event_time_patch_records(
     *,
     entry_values: dict[str, Any],
+    constants: dict[str, int],
+    requested_time_context: dict[str, Any] | None = None,
     symbol_table: dict[str, dict[str, Any]],
     symbols_path: Path,
     root: Path,
 ) -> list[dict[str, Any]]:
-    time_context = object_event_time_context(entry_values=entry_values, symbol_table=symbol_table)
-    if time_context.get("time_model") != "hour_range" or "hHours" not in symbol_table:
-        return []
-    return [
-        patch_record(
-            "hHours",
-            int(time_context["required_hour"]),
-            symbol_table=symbol_table,
-            symbols_path=symbols_path,
-            root=root,
+    time_context = object_event_time_context(
+        entry_values=entry_values,
+        symbol_table=symbol_table,
+        constants=constants,
+        requested_time_context=requested_time_context,
+    )
+    patches: list[dict[str, Any]] = []
+    if time_context.get("time_model") == "hour_range" and HOURS_SYMBOL in symbol_table:
+        patches.append(
+            patch_record(
+                HOURS_SYMBOL,
+                int(time_context["required_hour"]),
+                symbol_table=symbol_table,
+                symbols_path=symbols_path,
+                root=root,
+            )
         )
-    ]
+    if time_context.get("time_model") == "timeofday_mask":
+        if TIMEOFDAY_SYMBOL in symbol_table:
+            patches.append(
+                patch_record(
+                    TIMEOFDAY_SYMBOL,
+                    int(time_context["required_timeofday_value"]),
+                    symbol_table=symbol_table,
+                    symbols_path=symbols_path,
+                    root=root,
+                )
+            )
+        if "required_hour" in time_context and HOURS_SYMBOL in symbol_table:
+            patches.append(
+                patch_record(
+                    HOURS_SYMBOL,
+                    int(time_context["required_hour"]),
+                    symbol_table=symbol_table,
+                    symbols_path=symbols_path,
+                    root=root,
+                )
+            )
+    return patches
 
 
 def map_object_row_patch_records(
@@ -1753,7 +2009,12 @@ def object_event_object_state_patch(
     map_object_index = map_object_index_for_values(values)
     selected_entry_values, _selected_entry_unresolved = object_event_entry_values(values, constants=constants, script_symbol=script_symbol)
     selected_time_context = (
-        object_event_time_context(entry_values=selected_entry_values, symbol_table=symbol_table)
+        object_event_time_context(
+            entry_values=selected_entry_values,
+            symbol_table=symbol_table,
+            constants=constants,
+            requested_time_context=values,
+        )
         if selected_entry_values
         else {}
     )
@@ -1798,6 +2059,8 @@ def object_event_object_state_patch(
         unresolved_values.append("script")
     if companion_context.get("selected_object_found") and companion_context.get("selected_object_struct_index") is None:
         unresolved_values.append("selected_object_not_visible_for_player_context")
+    if selected_time_context.get("time_selection_valid") is False:
+        unresolved_values.append(str(selected_time_context.get("time_selection_error") or "selected_time_context"))
     missing_symbols.extend(string_items(companion_context.get("missing_symbols")))
     unresolved_values.extend(string_items(companion_context.get("unresolved_values")))
     if missing_symbols or unresolved_values:
@@ -1853,7 +2116,12 @@ def object_event_object_state_patch(
         map_object_index=map_object_index,
         symbol_table=symbol_table,
     )
-    object_time_context = object_event_time_context(entry_values=selected_entry_values, symbol_table=symbol_table)
+    object_time_context = object_event_time_context(
+        entry_values=selected_entry_values,
+        symbol_table=symbol_table,
+        constants=constants,
+        requested_time_context=values,
+    )
     patches = [
         *object_struct_patch_records(
             object_struct_symbol=object_struct_symbol,
@@ -1874,6 +2142,8 @@ def object_event_object_state_patch(
         ),
         *object_event_time_patch_records(
             entry_values=selected_entry_values,
+            constants=constants,
+            requested_time_context=values,
             symbol_table=symbol_table,
             symbols_path=symbols_path,
             root=root,
@@ -1920,6 +2190,8 @@ def object_event_object_state_patch(
         "large_object": bool(sprite_movement_attrs.get("large_object")),
         "large_object_width": 2 if sprite_movement_attrs.get("large_object") else 1,
         "large_object_height": 2 if sprite_movement_attrs.get("large_object") else 1,
+        "large_object_collision_model": LARGE_OBJECT_COLLISION_MODEL if sprite_movement_attrs.get("large_object") else "",
+        "large_object_size_source": LARGE_OBJECT_SIZE_SOURCE if sprite_movement_attrs.get("large_object") else "",
         "script_label": script_label,
         "script_bank": script_bank,
         "script_address": script_address,
@@ -1931,7 +2203,7 @@ def object_event_object_state_patch(
                 *string_items(companion_context.get("watch_symbols")),
                 *(["wObjectMasks"] if object_mask_context.get("object_masks_symbol_available") else []),
                 *(["wEventFlags"] if object_mask_context.get("event_flag") >= 0 and object_mask_context.get("event_flag_symbol_available") else []),
-                *(["hHours"] if object_time_context.get("time_symbol_available") else []),
+                *object_event_time_watch_symbols(object_time_context),
             ]
         ),
         "object_mask_context": object_mask_context,
@@ -2162,25 +2434,53 @@ def load_object_event_constants(*, root: Path) -> dict[str, int]:
 
 def parse_constant_source(lines: list[str], constants: dict[str, int]) -> None:
     const_value = 0
+    const_inc = 1
     for raw in lines:
         line = strip_comment(raw)
         if not line:
             continue
         if line.startswith("const_def"):
             fields = line.split(maxsplit=1)
-            const_value = constant_expression_value(fields[1], constants) if len(fields) > 1 else 0
+            args = split_macro_args(fields[1]) if len(fields) > 1 else []
+            eval_constants = {**constants, "const_value": const_value, "const_inc": const_inc}
+            const_value = constant_expression_value(args[0], eval_constants) if args else 0
             if const_value is None:
                 const_value = 0
+            const_inc = constant_expression_value(args[1], eval_constants) if len(args) > 1 else 1
+            if const_inc is None:
+                const_inc = 1
             continue
         if line.startswith("const "):
             fields = line.split()
             if len(fields) >= 2:
                 constants[fields[1]] = const_value
-                const_value += 1
+                const_value += const_inc
+            continue
+        if line.startswith("shift_const "):
+            fields = line.split()
+            if len(fields) >= 2:
+                constants[fields[1]] = 1 << const_value
+                constants[f"{fields[1]}_F"] = const_value
+                const_value += const_inc
+            continue
+        if line.startswith("const_skip"):
+            fields = line.split(maxsplit=1)
+            eval_constants = {**constants, "const_value": const_value, "const_inc": const_inc}
+            count = constant_expression_value(fields[1], eval_constants) if len(fields) > 1 else 1
+            const_value += const_inc * int(count if count is not None else 1)
+            continue
+        if line.startswith("const_next"):
+            fields = line.split(maxsplit=1)
+            if len(fields) > 1:
+                eval_constants = {**constants, "const_value": const_value, "const_inc": const_inc}
+                next_value = constant_expression_value(fields[1], eval_constants)
+                if next_value is not None:
+                    const_value = next_value
             continue
         match = re.match(r"DEF\s+(?P<name>[A-Za-z0-9_]+)\s+EQU\s+(?P<expr>.+)", line)
         if match:
-            value = constant_expression_value(match.group("expr"), constants)
+            eval_constants = {**constants, "const_value": const_value, "const_inc": const_inc}
+            value = constant_expression_value(match.group("expr"), eval_constants)
             if value is not None:
                 constants[match.group("name")] = value
 

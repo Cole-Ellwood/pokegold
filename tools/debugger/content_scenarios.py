@@ -62,6 +62,12 @@ OBJECT_COUNTER_TILE_CANDIDATES = (
     ("left", "OW_LEFT", "wTileLeft"),
     ("right", "OW_RIGHT", "wTileRight"),
 )
+OBJECT_TIMEOFDAY_CANDIDATES = (
+    ("morn", "MORN", "MORN_HOUR"),
+    ("day", "DAY", "DAY_HOUR"),
+    ("nite", "NITE", "NITE_HOUR"),
+)
+OBJECT_TIME_WATCH_SYMBOLS = ("wTimeOfDay", "hHours")
 OBJECT_LARGE_TILE_CANDIDATES = (
     ("top_left", "OW_DOWN", 0, 0),
     ("top_right", "OW_DOWN", 1, 0),
@@ -77,6 +83,8 @@ OBJECT_LARGE_MOVEMENT_TOKENS = {
     "SPRITEMOVEDATA_BIGDOLLASYM",
     "SPRITEMOVEDATA_BIGDOLL",
 }
+LARGE_OBJECT_COLLISION_MODEL = "WillObjectIntersectBigObject_fixed_2x2"
+LARGE_OBJECT_SIZE_SOURCE = "engine/overworld/npc_movement.asm:WillObjectIntersectBigObject"
 MOVEMENT_STATE_WATCH_SYMBOLS = (
     "wMovementObject",
     "wMovementDataBank",
@@ -330,13 +338,13 @@ def content_scenario_records(
             continue
         normalized = display_path(path, root=root)
         text = path.read_text(encoding="utf-8", errors="replace")
-        records.extend(records_from_source(text, source_file=normalized, seed=seed, start_index=len(records)))
+        records.extend(records_from_source(text, source_file=normalized, seed=seed, start_index=len(records), root=root))
         if len(records) >= max_cases:
             break
     return records[:max_cases]
 
 
-def records_from_source(text: str, *, source_file: str, seed: int, start_index: int) -> list[dict[str, Any]]:
+def records_from_source(text: str, *, source_file: str, seed: int, start_index: int, root: Path = ROOT) -> list[dict[str, Any]]:
     records: list[dict[str, Any]] = []
     current_label = ""
     lines = text.splitlines()
@@ -363,6 +371,7 @@ def records_from_source(text: str, *, source_file: str, seed: int, start_index: 
                 seed=seed,
                 case_index=start_index + len(records),
                 source_object_ordinal=object_event_ordinal if token == "object_event" else None,
+                root=root,
             )
             if scenario:
                 records.append(scenario)
@@ -388,6 +397,7 @@ def records_from_source(text: str, *, source_file: str, seed: int, start_index: 
                             f"channel_count={block['expected']}",
                             f"channel_declarations={len(block['channels'])}",
                         ],
+                        root=root,
                     )
                 )
             continue
@@ -403,6 +413,7 @@ def records_from_source(text: str, *, source_file: str, seed: int, start_index: 
                     case_index=start_index + len(records),
                     trigger={"asset": asset_path},
                     expected=[f"incbin_asset={asset_path}"],
+                    root=root,
                 )
             )
     records.extend(
@@ -450,6 +461,7 @@ def records_from_source(text: str, *, source_file: str, seed: int, start_index: 
                         f"command_count={len(commands)}",
                         *[f"script_command={name}" for name in commands[:6]],
                     ],
+                    root=root,
                 )
             )
     for block in parse_text_blocks(lines):
@@ -479,6 +491,7 @@ def records_from_source(text: str, *, source_file: str, seed: int, start_index: 
                     f"command_count={len(commands)}",
                     *[f"text_command={name}" for name in commands[:6]],
                 ],
+                root=root,
             )
         )
     for block in parse_movement_blocks(lines):
@@ -508,6 +521,7 @@ def records_from_source(text: str, *, source_file: str, seed: int, start_index: 
                     f"command_count={len(commands)}",
                     *[f"movement_command={name}" for name in commands[:6]],
                 ],
+                root=root,
             )
         )
     return records
@@ -584,6 +598,7 @@ def scenario_from_event(
     seed: int,
     case_index: int,
     source_object_ordinal: int | None = None,
+    root: Path = ROOT,
 ) -> dict[str, Any] | None:
     if len(fields) < 2:
         return None
@@ -610,6 +625,7 @@ def scenario_from_event(
             case_index=case_index,
             trigger=trigger,
             expected=expected,
+            root=root,
         )
     if event_macro == "coord_event":
         trigger = {
@@ -627,6 +643,7 @@ def scenario_from_event(
             case_index=case_index,
             trigger=trigger,
             expected=["event_macro=coord_event", f"scene={trigger['scene']}", f"script={trigger['script']}"],
+            root=root,
         )
     if event_macro == "bg_event":
         trigger = {
@@ -644,6 +661,7 @@ def scenario_from_event(
             case_index=case_index,
             trigger=trigger,
             expected=["event_macro=bg_event", f"event_type={trigger['event_type']}", f"script={trigger['script']}"],
+            root=root,
         )
     if event_macro == "object_event":
         object_ordinal = int(source_object_ordinal or 0)
@@ -679,6 +697,7 @@ def scenario_from_event(
                 f"script={trigger['script']}",
                 f"event_flag={trigger['event_flag']}",
             ],
+            root=root,
         )
     return None
 
@@ -764,6 +783,7 @@ def scenario_record(
     case_index: int,
     trigger: dict[str, Any],
     expected: list[str],
+    root: Path = ROOT,
 ) -> dict[str, Any]:
     scenario_id = f"content_scenario_{seed}_{case_index:04d}"
     trigger_preconditions = state_preconditions_for_scenario(
@@ -772,6 +792,7 @@ def scenario_record(
         source_file=source_file,
         label=label,
         trigger=trigger,
+        root=root,
     )
     outputs = output_sinks_for_scenario(
         scenario_type=scenario_type,
@@ -811,6 +832,7 @@ def state_preconditions_for_scenario(
     source_file: str,
     label: str,
     trigger: dict[str, Any],
+    root: Path = ROOT,
 ) -> list[dict[str, Any]]:
     if scenario_type.startswith("map_"):
         values = {
@@ -840,11 +862,13 @@ def state_preconditions_for_scenario(
         ):
             if trigger.get(key) not in {"", None}:
                 values[key] = trigger[key]
-        large_object = object_event_movement_is_large(trigger.get("movement"))
+        large_object = object_event_movement_is_large(trigger.get("movement"), root=root)
         if scenario_type == "map_object_event" and large_object:
             values["large_object"] = True
             values["large_object_width"] = 2
             values["large_object_height"] = 2
+            values["large_object_collision_model"] = LARGE_OBJECT_COLLISION_MODEL
+            values["large_object_size_source"] = LARGE_OBJECT_SIZE_SOURCE
         preconditions = [
             {
                 "id": f"{scenario_type}_position",
@@ -897,6 +921,8 @@ def state_preconditions_for_scenario(
                                 "large_object_surface_y": surface_y,
                                 "large_object_width": 2,
                                 "large_object_height": 2,
+                                "large_object_collision_model": LARGE_OBJECT_COLLISION_MODEL,
+                                "large_object_size_source": LARGE_OBJECT_SIZE_SOURCE,
                             },
                             "watch_symbols": list(MAP_STATE_WATCH_SYMBOLS),
                             "notes": [
@@ -905,6 +931,26 @@ def state_preconditions_for_scenario(
                             ],
                         }
                     )
+            for suffix, timeofday, hour_constant in object_event_timeofday_candidates(trigger):
+                preconditions.append(
+                    {
+                        "id": f"{scenario_type}_timeofday_{suffix}_position",
+                        "surface": "content_static",
+                        "kind": "map_position",
+                        "status": "planned",
+                        "values": {
+                            **values,
+                            "selected_timeofday": timeofday,
+                            "selected_hour": hour_constant,
+                            "selected_time_context_source": "source_timeofday_mask_candidate",
+                        },
+                        "watch_symbols": unique_list([*MAP_STATE_WATCH_SYMBOLS, *OBJECT_TIME_WATCH_SYMBOLS]),
+                        "notes": [
+                            "Load or synthesize an overworld state with the selected time-of-day mask candidate before firing the trigger.",
+                            "Use wTimeOfDay, hHours, map state, and object-loader watches to prove CheckObjectTime consumed this exact source-declared time context.",
+                        ],
+                    }
+                )
         return attach_event_runtime_routes(preconditions, scenario_id=scenario_id, scenario_type=scenario_type)
     if scenario_type in {"audio_channel_block", "audio_command_stream"}:
         stream_value = trigger.get("stream", "")
@@ -1028,8 +1074,41 @@ def state_preconditions_for_scenario(
     return []
 
 
-def object_event_movement_is_large(value: Any) -> bool:
-    return str(value or "").strip().upper() in OBJECT_LARGE_MOVEMENT_TOKENS
+def object_event_movement_is_large(value: Any, *, root: Path = ROOT) -> bool:
+    token = str(value or "").strip().upper()
+    return bool(token) and token in large_object_movement_tokens(root=root)
+
+
+def object_event_timeofday_candidates(trigger: dict[str, Any]) -> list[tuple[str, str, str]]:
+    hour_1 = str(trigger.get("hour_1") or "").strip().upper()
+    hour_2 = str(trigger.get("hour_2") or "").strip().upper()
+    if hour_1 not in {"-1", "$FF", "255"} or not hour_2 or hour_2 in {"-1", "$FF", "255"}:
+        return []
+    tokens = set(re.findall(r"\b[A-Za-z_][A-Za-z0-9_]*\b", hour_2))
+    if "ANYTIME" in tokens:
+        tokens.update({"MORN", "DAY", "NITE"})
+    return [
+        (suffix, timeofday, hour_constant)
+        for suffix, timeofday, hour_constant in OBJECT_TIMEOFDAY_CANDIDATES
+        if timeofday in tokens
+    ]
+
+
+def large_object_movement_tokens(*, root: Path = ROOT) -> set[str]:
+    tokens = set(OBJECT_LARGE_MOVEMENT_TOKENS)
+    path = resolve_path("data/sprites/map_objects.asm", root=root)
+    if not path.exists():
+        return tokens
+    current = ""
+    for raw in path.read_text(encoding="utf-8", errors="replace").splitlines():
+        comment_match = re.match(r"^\s*;\s*(SPRITEMOVEDATA_[A-Za-z0-9_]+)\b", raw)
+        if comment_match:
+            current = comment_match.group(1).upper()
+            continue
+        code = strip_comment(raw).strip()
+        if current and code.startswith("db ") and "BIG_OBJECT" in code.upper():
+            tokens.add(current)
+    return tokens
 
 
 def attach_event_runtime_routes(
