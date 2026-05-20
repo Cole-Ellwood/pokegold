@@ -375,6 +375,10 @@ def content_state_mirror_matches(
                 evidence.append(f"state={out_state}")
             if route_status["runtime_attempt_kinds"]:
                 evidence.append(f"runtime_attempt_kinds={','.join(route_status['runtime_attempt_kinds'])}")
+            if route_status["required_runtime_symbols"]:
+                evidence.append(f"required_runtime_symbols={','.join(route_status['required_runtime_symbols'])}")
+            if route_status["observed_runtime_symbols"]:
+                evidence.append(f"observed_runtime_symbols={','.join(route_status['observed_runtime_symbols'])}")
             matches.append(
                 {
                     "id": "content_state_behavioral_mirror",
@@ -390,6 +394,8 @@ def content_state_mirror_matches(
                     "expected_sinks": route_status["expected_sinks"],
                     "attempted_sinks": route_status["attempted_sinks"],
                     "observed_sinks": route_status["observed_sinks"],
+                    "required_runtime_symbols": route_status["required_runtime_symbols"],
+                    "observed_runtime_symbols": route_status["observed_runtime_symbols"],
                     "runtime_attempt_reports": route_status["runtime_attempt_reports"],
                     "runtime_attempt_kinds": route_status["runtime_attempt_kinds"],
                     "evidence": evidence,
@@ -512,6 +518,11 @@ def content_state_runtime_route_status(
         scenario_ids=scenario_ids,
         runtime_observations=runtime_observations,
     )
+    required_runtime_symbols = content_state_required_runtime_symbols(materializations)
+    observed_runtime_symbols = observed_runtime_symbols_for_scenarios(
+        scenario_ids=scenario_ids,
+        runtime_observations=runtime_observations,
+    )
     relevant_attempts = runtime_attempts_for_scenarios(
         scenario_ids=scenario_ids,
         runtime_attempts=runtime_attempts,
@@ -521,11 +532,14 @@ def content_state_runtime_route_status(
         runtime_attempts=runtime_attempts,
     )
     missing_sinks = [sink for sink in expected_sinks if sink not in observed_sinks]
+    missing_runtime_symbols = [
+        symbol for symbol in required_runtime_symbols if symbol not in observed_runtime_symbols
+    ]
     attempted_expected_sinks = [sink for sink in expected_sinks if sink in attempted_sinks]
     missing_attempted_sinks = [sink for sink in expected_sinks if sink not in attempted_sinks]
     materialization_status = aggregate_materialization_proof_status(materializations, executed=executed)
     has_executed_floor = executed or materialization_status in {"state_materialized", "executed", "observed"}
-    if expected_sinks and not missing_sinks and has_executed_floor:
+    if expected_sinks and not missing_sinks and not missing_runtime_symbols and has_executed_floor:
         mirror_status = "passed"
         actual_proof_status = "observed"
     elif observed_sinks:
@@ -543,6 +557,10 @@ def content_state_runtime_route_status(
     runtime_evidence_gaps = []
     if missing_sinks:
         runtime_evidence_gaps.append("Runtime observations missing expected sink(s): " + ", ".join(missing_sinks))
+    if missing_runtime_symbols:
+        runtime_evidence_gaps.append(
+            "Runtime observations missing required runtime symbol(s): " + ", ".join(missing_runtime_symbols)
+        )
     if observed_sinks and not has_executed_floor:
         runtime_evidence_gaps.append("Runtime observations cannot pass this mirror until the content state is executed or otherwise state-materialized.")
     if attempted_expected_sinks and not has_executed_floor:
@@ -565,6 +583,8 @@ def content_state_runtime_route_status(
         "expected_sinks": expected_sinks,
         "attempted_sinks": unique_list([sink for sink in attempted_sinks if sink in set(expected_sinks)]),
         "observed_sinks": observed_sinks,
+        "required_runtime_symbols": required_runtime_symbols,
+        "observed_runtime_symbols": observed_runtime_symbols,
         "runtime_attempt_reports": unique_list(str(item.get("source", "")) for item in relevant_attempts if item.get("source")),
         "runtime_attempt_kinds": unique_list(str(item.get("runtime_kind", "")) for item in relevant_attempts if item.get("runtime_kind")),
         "runtime_evidence_gaps": runtime_evidence_gaps,
@@ -592,6 +612,25 @@ def content_state_expected_sinks(materializations: list[dict[str, Any]]) -> list
             ],
         ]
         if sink
+    )
+
+
+def content_state_required_runtime_symbols(materializations: list[dict[str, Any]]) -> list[str]:
+    return unique_list(
+        symbol
+        for materialization in materializations
+        for route in [
+            materialization.get(EVENT_RUNTIME_ROUTE_KEY)
+            if isinstance(materialization.get(EVENT_RUNTIME_ROUTE_KEY), dict)
+            else materialization.get(EVENT_RUNTIME_ROUTE_LEGACY_KEY)
+            if isinstance(materialization.get(EVENT_RUNTIME_ROUTE_LEGACY_KEY), dict)
+            else {}
+        ]
+        for symbol in [
+            *scalar_string_items(materialization.get("required_runtime_symbols")),
+            *scalar_string_items(route.get("required_runtime_symbols")),
+        ]
+        if symbol
     )
 
 
@@ -733,11 +772,20 @@ def normalize_runtime_observation(item: dict[str, Any]) -> dict[str, Any]:
             *scalar_string_items(item.get("addresses")),
         ]
     )
+    observed_runtime_symbols = unique_list(
+        [
+            *scalar_string_items(item.get("observed_runtime_symbols")),
+            *scalar_string_items(item.get("runtime_symbols")),
+            *scalar_string_items(item.get("symbols")),
+            *scalar_string_items(item.get("hit_function_symbols")),
+        ]
+    )
     return {
         **item,
         "scenario_id": scenario_ids[0] if len(scenario_ids) == 1 else str(item.get("scenario_id", "")),
         "scenario_ids": scenario_ids,
         "observed_sinks": observed_sinks,
+        "observed_runtime_symbols": observed_runtime_symbols,
     }
 
 
@@ -775,6 +823,20 @@ def observed_sinks_for_scenarios(
         for observation in runtime_observations
         if runtime_observation_applies_to_scenarios(observation, scenario_id_set=scenario_id_set)
         for sink in scalar_string_items(observation.get("observed_sinks"))
+    )
+
+
+def observed_runtime_symbols_for_scenarios(
+    *,
+    scenario_ids: list[str],
+    runtime_observations: list[dict[str, Any]],
+) -> list[str]:
+    scenario_id_set = set(scenario_ids)
+    return unique_list(
+        symbol
+        for observation in runtime_observations
+        if runtime_observation_applies_to_scenarios(observation, scenario_id_set=scenario_id_set)
+        for symbol in scalar_string_items(observation.get("observed_runtime_symbols"))
     )
 
 

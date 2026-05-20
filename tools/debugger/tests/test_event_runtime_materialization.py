@@ -86,6 +86,23 @@ class EventRuntimeMaterializationTests(unittest.TestCase):
         self.assertEqual(route["observed_sinks"], ["wScriptPos"])
         self.assertIn("instruction_trace", route["evidence_kinds"])
 
+    def test_route_helper_can_require_runtime_consumer_symbols(self) -> None:
+        route = event_runtime_materialization_route(
+            scenario_id="content_scenario_1_0003",
+            scenario_type="map_object_event",
+            precondition_kind="map_position",
+            precondition_id="map_object_event_runtime_hour_17_position",
+            values={"selected_hour": 17, "runtime_hour_candidate": True},
+            watch_symbols=["hHours", "wTimeOfDay"],
+            trace_symbols=["TryObjectEvent"],
+            required_runtime_symbols=["CheckObjectTime"],
+        )
+
+        self.assertEqual(route["required_runtime_symbols"], ["CheckObjectTime"])
+        self.assertEqual(route["trace_symbols"], ["TryObjectEvent", "CheckObjectTime"])
+        self.assertIn("instruction_trace", route["evidence_kinds"])
+        self.assertIn("--symbol CheckObjectTime", " ".join(route["expected_proof_commands"]))
+
     def test_content_scenarios_output_route_lists_output_sinks(self) -> None:
         route = event_runtime_materialization_route(
             scenario_id="content_scenario_1_0001",
@@ -485,6 +502,64 @@ class EventRuntimeMaterializationTests(unittest.TestCase):
         self.assertEqual(set(match["observed_sinks"]), {"wMapGroup", "wMapNumber"})
         self.assertEqual(match["runtime_evidence_gaps"], [])
 
+    def test_compare_requires_runtime_symbols_when_route_declares_consumer(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write_content_state_report(
+                root,
+                executed=True,
+                materialization_status="ready",
+                actual_proof_status="state_materialized",
+                required_runtime_symbols=("CheckObjectTime",),
+            )
+
+            report = build_compare_plan(
+                reports=("content_state.json",),
+                runtime_observations=(
+                    {
+                        "scenario_id": "content_scenario_1_0000",
+                        "observed_sinks": ["wMapGroup", "wMapNumber"],
+                    },
+                ),
+                root=root,
+            )
+
+        match = next(item for item in report["matches"] if item["id"] == "content_state_behavioral_mirror")
+
+        self.assertEqual(match["mirror_status"], "inconclusive")
+        self.assertEqual(match["required_runtime_symbols"], ["CheckObjectTime"])
+        self.assertEqual(match["observed_runtime_symbols"], [])
+        self.assertTrue(any("CheckObjectTime" in gap for gap in match["runtime_evidence_gaps"]))
+
+    def test_compare_passes_required_runtime_symbols_when_instruction_evidence_observes_consumer(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write_content_state_report(
+                root,
+                executed=True,
+                materialization_status="ready",
+                actual_proof_status="state_materialized",
+                required_runtime_symbols=("CheckObjectTime",),
+            )
+
+            report = build_compare_plan(
+                reports=("content_state.json",),
+                runtime_observations=(
+                    {
+                        "scenario_id": "content_scenario_1_0000",
+                        "observed_sinks": ["wMapGroup", "wMapNumber"],
+                        "symbols": ["CheckObjectTime"],
+                    },
+                ),
+                root=root,
+            )
+
+        match = next(item for item in report["matches"] if item["id"] == "content_state_behavioral_mirror")
+
+        self.assertEqual(match["mirror_status"], "passed")
+        self.assertEqual(match["observed_runtime_symbols"], ["CheckObjectTime"])
+        self.assertEqual(match["runtime_evidence_gaps"], [])
+
     def test_compare_harvests_runtime_observations_from_loaded_reports(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -634,6 +709,7 @@ def write_content_state_report(
     executed: bool,
     materialization_status: str,
     actual_proof_status: str,
+    required_runtime_symbols: tuple[str, ...] = (),
 ) -> None:
     route = event_runtime_materialization_route(
         scenario_id="content_scenario_1_0000",
@@ -641,6 +717,7 @@ def write_content_state_report(
         precondition_kind="map_position",
         values={"map_label": "UnitMap_MapEvents", "x": 4, "y": 5},
         watch_symbols=["wMapGroup", "wMapNumber"],
+        required_runtime_symbols=required_runtime_symbols,
         outputs=[],
     )
     route["actual_proof_status"] = actual_proof_status
@@ -654,6 +731,7 @@ def write_content_state_report(
         "expected_proof_status": "runtime_observed",
         "expected_sinks": ["wMapGroup", "wMapNumber"],
         "observed_sinks": ["wMapGroup", "wMapNumber"] if executed else [],
+        "required_runtime_symbols": list(required_runtime_symbols),
         "event_runtime_materialization_route": route,
         "patches": [
             {"symbol": "wMapGroup", "value": 24, "value_hex": "18", "bank_address": "01:DA00"},

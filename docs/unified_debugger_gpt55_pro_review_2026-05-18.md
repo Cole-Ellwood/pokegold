@@ -5451,3 +5451,46 @@ Remaining priority:
 - This expands event-state generation, but it does not prove runtime behavior by itself.
 - Runtime-observed `CheckObjectTime` consumption for generated hour states, runtime-verified multi-object occupancy, big-object collision/occupancy proof, full script VM behavior under arbitrary event-engine context, pixel/audio playback mirrors, causal proof, and side-effect-complete reverse execution remain incomplete.
 - The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
+
+## Implementation Note - Runtime Consumer Requirements for Generated-Hour Mirrors
+
+Date: 2026-05-20.
+
+Context:
+
+- The runtime-hour generator created concrete `hHours`/`wTimeOfDay` states, but a generic content-state behavioral mirror could still pass when runtime observations covered only state sinks.
+- For generated object-event hour states, sink observations alone do not prove the event engine consumed the selected hour through `CheckObjectTime`.
+- That was a proof-promotion boundary risk between content-state generation and compare/report mirrors.
+
+References used:
+
+- Local engine source: `home/map_objects.asm:CheckObjectTime`.
+- Local RTC source: `engine/rtc/rtc.asm:GetTimeOfDay`.
+- pret pokegold upstream source cross-check for `CheckObjectTime`: `https://raw.githubusercontent.com/pret/pokegold/master/home/map_objects.asm`
+
+Implemented fix:
+
+- `tools/debugger/content_scenarios.py`
+  - attaches `trace_symbols=["TryObjectEvent", "CheckObjectTime"]` and `required_runtime_symbols=["CheckObjectTime"]` to generated runtime-hour object-event preconditions.
+  - carries those symbols into `event_runtime_materialization` routes.
+  - adds a focused trace-instruction command for route-declared runtime symbols instead of leaving generated-hour proof as a watch-only route.
+- `tools/debugger/mirrors.py`
+  - aggregates route-declared `required_runtime_symbols` from content-state materializations.
+  - keeps content-state behavioral mirrors inconclusive when all expected sinks are observed but required runtime symbols are missing.
+  - exposes `required_runtime_symbols`, `observed_runtime_symbols`, and explicit runtime evidence gaps in compare output.
+- `tools/debugger/catalog.py`
+  - updates the differential mirror blocker wording to make the generated-hour consumer-symbol requirement visible in the audit.
+- `tools/debugger/tests/test_event_runtime_materialization.py` and `tools/debugger/tests/test_catalog.py`
+  - verify route construction includes `CheckObjectTime` as a required runtime symbol and trace target.
+  - verify compare refuses to pass a generated-hour mirror until runtime evidence includes the required consumer symbol.
+
+Validation after patch:
+
+- Focused event-runtime materialization and generated-hour route regressions: 24 passed.
+- `python -m py_compile tools\debugger\content_scenarios.py tools\debugger\mirrors.py tools\debugger\tests\test_event_runtime_materialization.py tools\debugger\tests\test_catalog.py`: passed.
+
+Remaining priority:
+
+- This prevents a generated-hour state from promoting to behavioral proof without a `CheckObjectTime` trace, but it still does not execute that trace for arbitrary maps/states.
+- Runtime-verified multi-object occupancy, big-object collision/occupancy proof, full script VM behavior under arbitrary event-engine context, pixel/audio playback mirrors, causal proof, and side-effect-complete reverse execution remain incomplete.
+- The whole-ROM proof-substrate goal remains incomplete and `ready=False`.

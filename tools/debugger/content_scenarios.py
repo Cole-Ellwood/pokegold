@@ -975,6 +975,8 @@ def state_preconditions_for_scenario(
                             "runtime_hour_candidate": True,
                         },
                         "watch_symbols": unique_list([*MAP_STATE_WATCH_SYMBOLS, *OBJECT_TIME_WATCH_SYMBOLS]),
+                        "trace_symbols": ["TryObjectEvent", "CheckObjectTime"],
+                        "required_runtime_symbols": ["CheckObjectTime"],
                         "notes": [
                             "Load or synthesize an overworld state with this hHours value before firing the object trigger.",
                             "Use hHours, wTimeOfDay, map state, and object-loader watches to prove CheckObjectTime consumed the generated runtime hour context.",
@@ -1213,6 +1215,8 @@ def attach_event_runtime_routes(
             precondition_kind=str(row.get("kind", "")),
             values=row.get("values") if isinstance(row.get("values"), dict) else {},
             watch_symbols=string_items(row.get("watch_symbols")),
+            trace_symbols=string_items(row.get("trace_symbols")),
+            required_runtime_symbols=string_items(row.get("required_runtime_symbols")),
             outputs=dict_items(row.get("outputs")),
         )
         row[EVENT_RUNTIME_ROUTE_KEY] = route
@@ -1233,17 +1237,23 @@ def event_runtime_materialization_route(
     source_file: str = "",
     actual_proof_status: str = PROOF_STATUS_PLANNED_ONLY,
     observed_sinks: list[str] | tuple[str, ...] = (),
+    trace_symbols: list[str] | tuple[str, ...] = (),
+    required_runtime_symbols: list[str] | tuple[str, ...] = (),
 ) -> dict[str, Any]:
     profile = RUNTIME_ROUTE_PROFILES.get(precondition_kind, {})
     runtime_route = str(profile.get("runtime_route") or runtime_route_for_scenario(scenario_type))
     values = dict(values or {})
     watch_symbols = string_items(watch_symbols)
+    required_runtime_symbols = string_items(required_runtime_symbols)
+    trace_symbols = unique_list([*string_items(trace_symbols), *required_runtime_symbols])
     outputs = dict_items(outputs)
     source_file = source_file or str(values.get("source_file", ""))
     expected_proof_status = str(profile.get("expected_proof_status") or "runtime_observed")
     evidence_kinds = tuple(profile.get("evidence_kinds", ()))
     if not evidence_kinds:
         evidence_kinds = ("instruction_trace", "watch") if expected_proof_status == "instruction_observed" else ("watch",)
+    if trace_symbols:
+        evidence_kinds = tuple(unique_list([*evidence_kinds, "instruction_trace"]))
     expected_sinks = unique_list([*watch_symbols, *output_sink_ids(outputs)])
     return {
         "kind": EVENT_RUNTIME_ROUTE_KIND,
@@ -1268,12 +1278,14 @@ def event_runtime_materialization_route(
             source_file=source_file,
             precondition_kind=precondition_kind,
             watch_symbols=watch_symbols,
-            trace_symbols=(),
+            trace_symbols=trace_symbols,
         ),
         "expected_proof_status": expected_proof_status,
         "actual_proof_status": actual_proof_status,
         "expected_sinks": expected_sinks,
         "observed_sinks": string_items(observed_sinks),
+        "trace_symbols": trace_symbols,
+        "required_runtime_symbols": required_runtime_symbols,
         "evidence_kinds": list(evidence_kinds),
     }
 
@@ -1289,8 +1301,15 @@ def build_runtime_proof_commands(
     profile = RUNTIME_ROUTE_PROFILES.get(precondition_kind, {})
     commands = list(profile.get("expected_proof_commands", ()))
     if commands:
-        return commands
-    watch_arg = " ".join(f"--watch {symbol}" for symbol in unique_list(watch_symbols))
+        if trace_symbols:
+            scenario_arg = f" --scenario-id {scenario_id}" if scenario_id else ""
+            trace_arg = " ".join(f"--symbol {symbol}" for symbol in unique_list(trace_symbols))
+            watch_arg = " ".join(f"--watch-symbol {symbol}" for symbol in unique_list(watch_symbols))
+            commands.append(
+                f"python -m tools.debugger trace-instructions{scenario_arg} {trace_arg} {watch_arg} --execute --require-hit".strip()
+            )
+        return unique_list(commands)
+    watch_arg = " ".join(f"--watch-symbol {symbol}" for symbol in unique_list(watch_symbols))
     trace_arg = " ".join(f"--symbol {symbol}" for symbol in unique_list(trace_symbols))
     source_arg = f" --source {source_file}" if source_file else ""
     scenario_arg = f" --scenario-id {scenario_id}" if scenario_id else ""

@@ -27418,6 +27418,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         runtime_patches = {patch["symbol"]: patch for patch in runtime_materialization["patches"]}
         object_context = materialization["object_context"]
         runtime_time_context = runtime_materialization["object_context"]["object_time_context"]
+        runtime_route = runtime_materialization["event_runtime_materialization"]
 
         self.assertTrue(report["valid"])
         self.assertIn("map_object_event_runtime_hour_09_position", candidate_ids)
@@ -27440,6 +27441,8 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(runtime_time_context["required_hour"], 15)
         self.assertEqual(runtime_time_context["selected_time_context_source"], "runtime_hour_candidate")
         self.assertEqual(runtime_patches["hHours"]["value"], 15)
+        self.assertEqual(runtime_route["required_runtime_symbols"], ["CheckObjectTime"])
+        self.assertIn("CheckObjectTime", runtime_route["trace_symbols"])
 
     def test_content_state_materializes_selected_object_event_timeofday_mask_state(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -27959,6 +27962,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         )
         runtime_patches = {patch["symbol"]: patch for patch in runtime_materialization["patches"]}
         runtime_time_context = runtime_materialization["object_context"]["object_time_context"]
+        runtime_route = runtime_materialization["event_runtime_materialization"]
         self.assertEqual(runtime_materialization["status"], "ready")
         self.assertEqual(runtime_materialization["values"]["selected_hour"], 17)
         self.assertEqual(runtime_time_context["required_timeofday"], "DAY")
@@ -27967,6 +27971,8 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(runtime_time_context["selected_time_context_source"], "runtime_hour_candidate")
         self.assertEqual(runtime_patches["wTimeOfDay"]["value"], 1)
         self.assertEqual(runtime_patches["hHours"]["value"], 17)
+        self.assertEqual(runtime_route["required_runtime_symbols"], ["CheckObjectTime"])
+        self.assertIn("--symbol CheckObjectTime", " ".join(runtime_route["expected_proof_commands"]))
 
     def test_content_scenarios_feed_replay_localize_and_coverage_targets(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
