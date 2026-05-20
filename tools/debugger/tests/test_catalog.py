@@ -32514,6 +32514,54 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("dynamic_write", report["content"])
         self.assertIn("Workflow Waterfall", report["content"])
 
+    def test_visualization_preserves_compare_proof_boundary_detail(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "compare.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_compare_plan",
+                        "valid": True,
+                        "match_count": 1,
+                        "matches": [
+                            {
+                                "id": "content_output_behavioral_mirror",
+                                "title": "Content output sink behavioral mirror",
+                                "status": "passed",
+                                "mirror_status": "passed",
+                                "proof_status": "runtime_observed",
+                                "actual_proof_status": "runtime_observed",
+                                "related_symbols": ["wTilemap"],
+                                "observed_runtime_symbols": ["PlaceString"],
+                                "evidence": [
+                                    "hardware_proof_statuses=not_proven",
+                                    "proof_downgrade_reason=emulator_snapshot_not_hardware_proof",
+                                    "runtime_symbol_evidence=PlaceString:trace.json:instruction_trace:instruction_observed",
+                                ],
+                                "runtime_evidence_gaps": [
+                                    "PyBoy visual/audio snapshot evidence proves emulator-observed digest/sample state only; hardware PPU/APU behavior remains unproven.",
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            report = build_visualization_report(reports=("compare.json",), root=root)
+
+        event = next(item for item in report["timeline"] if item["type"] == "content_output_behavioral_mirror")
+
+        self.assertEqual(event["proof_status"], "runtime_observed")
+        self.assertIn("status=passed", event["detail"])
+        self.assertIn("mirror_status=passed", event["detail"])
+        self.assertIn("hardware_proof_statuses=not_proven", event["detail"])
+        self.assertIn("proof_downgrade_reason=emulator_snapshot_not_hardware_proof", event["detail"])
+        self.assertIn("runtime_symbol_evidence=PlaceString:trace.json:instruction_trace:instruction_observed", event["detail"])
+        self.assertIn("runtime_gap=PyBoy visual/audio snapshot evidence proves emulator-observed digest/sample state only", event["detail"])
+        self.assertIn("wTilemap", event["symbols"])
+        self.assertIn("PlaceString", event["symbols"])
+
     def test_visualization_preserves_watch_report_runtime_proof_status(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

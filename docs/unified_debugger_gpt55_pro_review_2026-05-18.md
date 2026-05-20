@@ -6738,3 +6738,39 @@ Remaining priority:
 
 - This makes the default compare report preserve proof boundaries visibly, but it does not add the missing full script VM behavior, pixel-accurate graphics/UI behavior, audio playback/mixer behavior, arbitrary map interactions, or non-mutating hardware event recorder.
 - The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
+
+## Implementation Note - Visualization Timeline Compare Proof Boundaries
+
+Date: 2026-05-20.
+
+Context:
+
+- Compare-plan matches now preserve proof status, runtime evidence, helper evidence, hardware proof status, and runtime-evidence gaps.
+- The visualization timeline still reduced compare-plan matches to title plus broad mirror gaps.
+- That meant a visual review could miss whether a mirror was only emulator-observed, hardware-not-proven, or backed by a specific runtime sink/helper evidence record.
+
+Primary references used:
+
+- No new external primary references were needed for this slice; it is an internal visualization/report-boundary patch.
+
+Implemented fix:
+
+- `tools/debugger/visualization.py`
+  - adds compare timeline detail for match status, mirror status, and actual proof status.
+  - carries runtime sink/helper evidence, proof downgrade evidence, hardware proof status evidence, and runtime evidence gaps into visualization timeline details.
+  - includes observed runtime helper symbols on compare timeline events.
+- `tools/debugger/tests/test_catalog.py`
+  - proves visualization timeline events preserve compare proof-boundary detail, including `hardware_proof_statuses=not_proven`, PyBoy snapshot downgrade evidence, runtime helper evidence, and runtime evidence gaps.
+
+Validation after patch:
+
+- Focused visualization compare proof-boundary regression: 1 passed.
+- Full debugger unittest discovery: 552 passed.
+- `python -m tools.debugger audit`: passed as a command, still `ready=False`; reports 8 complete buckets, 3 partial buckets, and 3 blocking gaps.
+- `python -m tools.debugger hardware-regression-gate --execute`: passed as a command, still intentionally `passed=False`; reported 0/10 cases passing, 10 blocking cases, 4 runtime-observed emulator cases, 0 hardware-proof cases, and 10 static-blocker cases.
+- `PYTHONPYCACHEPREFIX=.local\tmp\pycompile_cache python -m py_compile tools\debugger\visualization.py tools\debugger\tests\test_catalog.py`: passed.
+
+Remaining priority:
+
+- This keeps visualization from hiding compare proof boundaries, but it does not add the missing full script VM behavior, pixel-accurate graphics/UI behavior, audio playback/mixer behavior, arbitrary map interactions, or non-mutating hardware event recorder.
+- The whole-ROM proof-substrate goal remains incomplete and `ready=False`.

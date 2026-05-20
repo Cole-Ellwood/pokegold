@@ -34,6 +34,13 @@ PROOF_STATUS_RANK = {
     "mirror_passed": 6,
     "mirror_failed": 7,
 }
+COMPARE_BOUNDARY_EVIDENCE_PREFIXES = (
+    "runtime_sink_evidence=",
+    "runtime_symbol_evidence=",
+    "proof_downgrade_reason=",
+    "hardware_proof_statuses=",
+    "hardware_proof_boundary=",
+)
 
 
 def build_visualization_report(
@@ -737,7 +744,14 @@ def collect_report_timeline(data: dict[str, Any], *, source: str, out: list[dict
                     event_type=str(match.get("id", "mirror")),
                     title=str(match.get("title", match.get("id", ""))),
                     source=source,
-                    detail=", ".join(string_items(match.get("gaps"))[:2]),
+                    detail=", ".join(compare_timeline_detail(match)),
+                    symbols=unique_list(
+                        [
+                            *string_items(match.get("related_symbols")),
+                            *string_items(match.get("observed_runtime_symbols")),
+                        ]
+                    ),
+                    addresses=string_items(match.get("related_addresses")),
                     severity=55 if match.get("gaps") else 35,
                     proof_status=match.get("proof_status"),
                 )
@@ -2440,6 +2454,26 @@ def render_html_inspector(
 def write_visualization(report: dict[str, Any], path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(report["content"], encoding="utf-8", newline="\n")
+
+
+def compare_timeline_detail(match: dict[str, Any]) -> list[str]:
+    detail = []
+    for key in ("status", "mirror_status", "actual_proof_status"):
+        value = match.get(key)
+        if value not in (None, "", []):
+            detail.append(f"{key}={value}")
+    detail.extend(compare_boundary_evidence(match)[:4])
+    detail.extend(f"runtime_gap={gap}" for gap in string_items(match.get("runtime_evidence_gaps"))[:2])
+    detail.extend(string_items(match.get("gaps"))[:2])
+    return unique_list(detail)
+
+
+def compare_boundary_evidence(match: dict[str, Any]) -> list[str]:
+    return [
+        str(item)
+        for item in string_items(match.get("evidence"))
+        if any(str(item).startswith(prefix) for prefix in COMPARE_BOUNDARY_EVIDENCE_PREFIXES)
+    ]
 
 
 def timeline_event(
