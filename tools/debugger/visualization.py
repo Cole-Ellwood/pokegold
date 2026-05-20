@@ -18,6 +18,7 @@ from .ranking import (
     materialized_save_state_delta,
     minimized_state_patch_save_state_delta,
     save_state_delta_evidence,
+    trace_index_item_proof_status,
 )
 from .reporting import load_reports
 
@@ -381,7 +382,7 @@ def collect_report_timeline(data: dict[str, Any], *, source: str, out: list[dict
                     files=string_items(item.get("related_files")),
                     addresses=related_addresses(item),
                     severity=72,
-                    proof_status=item.get("proof_status") or data.get("proof_status"),
+                    proof_status=trace_index_item_proof_status(item, data),
                 )
             )
     elif kind in {"unified_debugger_taint_report", "unified_debugger_dynamic_taint_report"}:

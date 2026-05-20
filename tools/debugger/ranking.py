@@ -11,7 +11,7 @@ from .address_boundary import (
     reverse_query_address_boundary_fields,
 )
 from .catalog import ROOT
-from .evidence import merge_evidence_atoms
+from .evidence import evidence_atoms, merge_evidence_atoms
 from .workflow import command_address_arg
 
 
@@ -2770,17 +2770,30 @@ def trace_index_findings(report: dict[str, Any], *, source: str) -> list[dict[st
 
 
 def trace_index_item_proof_status(item: dict[str, Any], report: dict[str, Any]) -> str:
-    return (
-        normalize_proof_status(item.get("proof_status"))
-        or normalize_proof_status(report.get("proof_status"))
-        or "planned_only"
-    )
+    explicit = normalize_proof_status(item.get("proof_status")) if item.get("proof_status") else ""
+    if explicit:
+        return explicit
+    atom_statuses = [
+        normalize_proof_status(atom.get("proof_status"))
+        for atom in evidence_atoms(item.get("evidence_atoms"))
+        if atom.get("proof_status")
+    ]
+    if atom_statuses:
+        return weakest_proof_status(atom_statuses)
+    return normalize_proof_status(report.get("proof_status")) or "planned_only"
 
 
 def trace_index_item_evidence(item: dict[str, Any], *, proof_status: str) -> list[str]:
     evidence = string_items(item.get("evidence"))[:4]
     marker = f"proof_status={proof_status}"
     return unique_string_items([*evidence, marker])
+
+
+def weakest_proof_status(values: Any) -> str:
+    statuses = [normalize_proof_status(value) for value in values if normalize_proof_status(value)]
+    if not statuses:
+        return ""
+    return min(statuses, key=lambda status: PROOF_STATUS_RANK.get(status, 0))
 
 
 def event_commands(event: dict[str, Any]) -> list[str]:

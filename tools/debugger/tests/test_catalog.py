@@ -20340,6 +20340,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
                     {
                         "kind": "unified_debugger_trace_index",
                         "valid": True,
+                        "proof_status": "instruction_observed",
                         "matched_event_count": 1,
                         "events": [],
                         "causal_paths": [
@@ -20347,7 +20348,6 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
                                 "title": "planned compact path",
                                 "score": 80,
                                 "confidence": 0.7,
-                                "proof_status": "planned_only",
                                 "evidence": ["compact path only"],
                                 "evidence_atoms": [evidence_atom],
                                 "related_symbols": ["wCurDamage"],
@@ -20356,7 +20356,6 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
                         "reverse_attributions": [
                             {
                                 "title": "planned compact attribution",
-                                "proof_status": "planned_only",
                                 "evidence": ["compact attribution only"],
                                 "evidence_atoms": [evidence_atom],
                                 "related_symbols": ["wCurDamage"],
@@ -20369,14 +20368,17 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
 
             ranked = rank_findings(reports=("trace_index.json",), root=root)
             impact = build_impact_report(reports=("trace_index.json",), root=root)
+            visual = build_visualization_report(reports=("trace_index.json",), root=root)
 
         ranked_by_type = {item["type"]: item for item in ranked["findings"]}
         impact_by_type = {item["type"]: item for item in impact["items"]}
+        visual_reverse = next(item for item in visual["timeline"] if item["type"] == "reverse_attribution")
 
         self.assertEqual(ranked_by_type["reverse_attribution"]["proof_status"], "planned_only")
         self.assertEqual(ranked_by_type["causal_path"]["proof_status"], "planned_only")
         self.assertEqual(impact_by_type["reverse_attribution"]["proof_status"], "planned_only")
         self.assertEqual(impact_by_type["causal_path"]["proof_status"], "planned_only")
+        self.assertEqual(visual_reverse["proof_status"], "planned_only")
         self.assertEqual(
             ranked_by_type["reverse_attribution"]["evidence_atoms"][0]["proof_status"],
             "planned_only",

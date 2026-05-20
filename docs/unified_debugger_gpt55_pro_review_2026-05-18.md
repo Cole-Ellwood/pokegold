@@ -6175,3 +6175,39 @@ Remaining priority:
 - This closes another UI/report promotion path, but it does not create the missing non-mutating event recorder or hardware regressions.
 - The audit still requires side-effect-complete reverse execution, subsystem-boundary causal proof, arbitrary runtime/event generation, and script/graphics/audio/map behavioral mirrors before `ready=True` is valid.
 - The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
+
+## Implementation Note - Trace-Index Evidence-Atom Proof Boundary
+
+Date: 2026-05-20.
+
+Context:
+
+- Trace-index causal paths and reverse attributions can carry item-level `evidence_atoms` whose proof is weaker than the enclosing report's global `proof_status`.
+- Ranking and impact already preserved explicit item `proof_status`, but if an item omitted the flat field while carrying planned-only evidence atoms, the surfaces fell back to the report-level proof.
+- Visualization did the same for reverse-attribution timeline entries. That could make compact/static trace-index facts appear instruction-observed after aggregation.
+
+Implemented fix:
+
+- `tools/debugger/ranking.py`
+  - derives trace-index item proof from the weakest supplied evidence-atom proof before considering report-level proof.
+  - exposes a shared `weakest_proof_status()` helper for downstream consumers.
+- `tools/debugger/impact.py`
+  - applies the same evidence-atom-first trace-index item proof rule.
+- `tools/debugger/visualization.py`
+  - uses the ranking helper for trace-index reverse-attribution timeline proof instead of directly falling back to the report proof.
+- `tools/debugger/tests/test_catalog.py`
+  - updates the trace-index planned-proof regression so the report is `instruction_observed`, the items omit flat `proof_status`, and planned-only evidence atoms still keep ranked, impact, and visualization outputs planned-only.
+
+Validation after patch:
+
+- Focused trace-index proof-boundary regression: 1 passed.
+- Full debugger unittest discovery: 534 passed.
+- `PYTHONPYCACHEPREFIX=.local\tmp\pycompile_cache python -m py_compile tools\debugger\ranking.py tools\debugger\impact.py tools\debugger\visualization.py tools\debugger\tests\test_catalog.py`: passed.
+- `python -m tools.debugger hardware-regression-gate --execute`: passed as a command, still intentionally `passed=False`; reported 0/10 cases passing, 10 blocking cases, 4 runtime-observed emulator cases, 0 hardware-proof cases, and 10 static-blocker cases.
+- `python -m tools.debugger audit`: passed as a command, still `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+
+Remaining priority:
+
+- This prevents one more aggregation-layer proof promotion, but it does not add new runtime evidence.
+- Trace-index compact/static facts remain useful routing evidence, not replacements for dynamic subsystem proof.
+- The whole-ROM proof-substrate goal remains incomplete and `ready=False`.

@@ -6,7 +6,7 @@ from typing import Any
 
 from .address_boundary import reverse_query_address_boundary_fields
 from .catalog import ROOT, triage_request
-from .evidence import merge_evidence_atoms
+from .evidence import evidence_atoms, merge_evidence_atoms
 from .ranking import (
     PROOF_STATUS_RANK,
     SEVERITY_BASE,
@@ -18,6 +18,7 @@ from .ranking import (
     rank_findings,
     save_state_delta_evidence,
     strongest_proof_status,
+    weakest_proof_status,
     with_proof_status,
 )
 from .reporting import load_reports
@@ -1227,11 +1228,17 @@ def trace_index_items(report: dict[str, Any], *, source: str) -> list[dict[str, 
 
 
 def trace_index_item_proof_status(item: dict[str, Any], report: dict[str, Any]) -> str:
-    return (
-        normalize_proof_status(item.get("proof_status"))
-        or normalize_proof_status(report.get("proof_status"))
-        or "planned_only"
-    )
+    explicit = normalize_proof_status(item.get("proof_status")) if item.get("proof_status") else ""
+    if explicit:
+        return explicit
+    atom_statuses = [
+        normalize_proof_status(atom.get("proof_status"))
+        for atom in evidence_atoms(item.get("evidence_atoms"))
+        if atom.get("proof_status")
+    ]
+    if atom_statuses:
+        return weakest_proof_status(atom_statuses)
+    return normalize_proof_status(report.get("proof_status")) or "planned_only"
 
 
 def trace_index_item_evidence(item: dict[str, Any], *, proof_status: str) -> list[str]:
