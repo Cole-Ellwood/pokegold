@@ -6618,3 +6618,40 @@ Remaining priority:
 
 - This is a catalog-scope correction, not new substrate functionality.
 - The whole-ROM proof-substrate goal remains incomplete and `ready=False`; the remaining blockers are still whole-ROM replay/localization, generation/fuzzing/counterexamples, and differential mirrors.
+
+## Implementation Note - Output-Sink Runtime Helper Evidence
+
+Date: 2026-05-20.
+
+Context:
+
+- Output-sink content mirrors already required declared helper runtime-symbol groups before passing asset/UI/audio helper routes.
+- The report exposed `observed_runtime_symbols`, but that list alone did not preserve which runtime evidence item proved each helper symbol.
+- That made UI/report consumers inspect a summary field without a direct source/kind/proof-status record for the helper hit.
+
+Primary references used:
+
+- No new external primary references were needed for this slice; it is an internal report-boundary patch that preserves observed runtime evidence without changing emulator or hardware semantics.
+
+Implemented fix:
+
+- `tools/debugger/mirrors.py`
+  - adds `observed_runtime_symbol_evidence` to output-sink mirror status and content-state mirror matches.
+  - records helper symbol, source report, evidence kind, proof status, and optional evidence class for each runtime helper observation.
+  - emits compact `runtime_symbol_evidence=<symbol>:<source>:<kind>:<proof_status>` evidence strings for required helper symbols.
+- `tools/debugger/tests/test_catalog.py`
+  - asserts dynamic related/source symbols still do not satisfy runtime helper requirements.
+  - asserts a dynamic-taint PC-label helper hit records the exact report source, kind, and proof status that made the mirror pass.
+
+Validation after patch:
+
+- Focused output-sink helper regressions: 3 passed.
+- Full debugger unittest discovery: 549 passed.
+- `python -m tools.debugger audit`: passed as a command, still `ready=False`; reports 8 complete buckets, 3 partial buckets, and 3 blocking gaps.
+- `python -m tools.debugger hardware-regression-gate --execute`: passed as a command, still intentionally `passed=False`; reported 0/10 cases passing, 10 blocking cases, 4 runtime-observed emulator cases, 0 hardware-proof cases, and 10 static-blocker cases.
+- `PYTHONPYCACHEPREFIX=.local\tmp\pycompile_cache python -m py_compile tools\debugger\mirrors.py tools\debugger\tests\test_catalog.py`: passed.
+
+Remaining priority:
+
+- This makes output-helper proof provenance visible at the report boundary, but it does not add the missing full script VM behavior, pixel-accurate graphics/UI behavior, audio playback/mixer behavior, arbitrary map interactions, or non-mutating hardware event recorder.
+- The whole-ROM proof-substrate goal remains incomplete and `ready=False`.

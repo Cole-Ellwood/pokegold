@@ -481,6 +481,7 @@ def content_state_mirror_matches(
                     "attempted_addresses": mirror_status["attempted_addresses"],
                     "required_runtime_symbol_groups": mirror_status["required_runtime_symbol_groups"],
                     "observed_runtime_symbols": mirror_status["observed_runtime_symbols"],
+                    "observed_runtime_symbol_evidence": mirror_status["observed_runtime_symbol_evidence"],
                     "missing_runtime_symbol_groups": mirror_status["missing_runtime_symbol_groups"],
                     "runtime_reports": mirror_status["runtime_reports"],
                     "runtime_kinds": mirror_status["runtime_kinds"],
@@ -1387,6 +1388,7 @@ def content_output_mirror_status(
         for item in strong_evidence
         for symbol in runtime_evidence_observed_runtime_symbols(item)
     )
+    observed_runtime_symbol_evidence = runtime_symbol_evidence_records(strong_evidence)
     missing_runtime_symbol_groups = [
         group
         for group in required_runtime_symbol_groups
@@ -1462,6 +1464,7 @@ def content_output_mirror_status(
         "attempted_addresses": attempted_addresses,
         "required_runtime_symbol_groups": required_runtime_symbol_groups,
         "observed_runtime_symbols": observed_runtime_symbols,
+        "observed_runtime_symbol_evidence": observed_runtime_symbol_evidence,
         "missing_runtime_symbol_groups": missing_runtime_symbol_groups,
         "runtime_reports": unique_list(item["source"] for item in strong_evidence if item.get("source")),
         "runtime_kinds": unique_list(item["kind"] for item in strong_evidence if item.get("kind")),
@@ -1475,6 +1478,10 @@ def content_output_mirror_status(
                 *[f"symbol_observed={symbol}" for symbol in covered_symbols],
                 *[f"address_observed={address}" for address in covered_addresses],
                 *[f"runtime_symbol_observed={symbol}" for symbol in observed_runtime_symbols if any(symbol in group for group in required_runtime_symbol_groups)],
+                *runtime_symbol_evidence_strings(
+                    observed_runtime_symbol_evidence,
+                    required_runtime_symbol_groups=required_runtime_symbol_groups,
+                ),
                 *[f"required_runtime_symbol_group={'/'.join(group)}" for group in required_runtime_symbol_groups],
                 *(runtime_snapshot_hardware_evidence(hardware_summary) if hardware_summary else []),
                 *[f"symbol_attempted={symbol}" for symbol in attempted_symbols],
@@ -1503,6 +1510,50 @@ def runtime_evidence_observed_runtime_symbols(item: dict[str, Any]) -> list[str]
             *scalar_string_items(item.get("runtime_symbols")),
             *scalar_string_items(item.get("hit_function_symbols")),
         ]
+    )
+
+
+def runtime_symbol_evidence_records(runtime_evidence: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    records: list[dict[str, Any]] = []
+    seen: set[tuple[str, str, str, str]] = set()
+    for item in runtime_evidence:
+        source = str(item.get("source", ""))
+        kind = str(item.get("kind", ""))
+        proof_status = str(item.get("proof_status", ""))
+        for symbol in runtime_evidence_observed_runtime_symbols(item):
+            key = (symbol, source, kind, proof_status)
+            if key in seen:
+                continue
+            seen.add(key)
+            record = {
+                "symbol": symbol,
+                "source": source,
+                "kind": kind,
+                "proof_status": proof_status,
+            }
+            evidence_class = str(item.get("evidence_class", ""))
+            if evidence_class:
+                record["evidence_class"] = evidence_class
+            records.append(record)
+    return records
+
+
+def runtime_symbol_evidence_strings(
+    records: list[dict[str, Any]],
+    *,
+    required_runtime_symbol_groups: list[list[str]],
+) -> list[str]:
+    required_symbols = {
+        symbol
+        for group in required_runtime_symbol_groups
+        for symbol in group
+    }
+    return unique_list(
+        "runtime_symbol_evidence="
+        f"{record.get('symbol', '')}:{record.get('source', '')}:"
+        f"{record.get('kind', '')}:{record.get('proof_status', '')}"
+        for record in records
+        if record.get("symbol") in required_symbols
     )
 
 

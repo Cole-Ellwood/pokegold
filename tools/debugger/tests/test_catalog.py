@@ -30118,6 +30118,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(match["required_runtime_symbol_groups"], [["PlaceString"]])
         self.assertEqual(match["missing_runtime_symbol_groups"], [["PlaceString"]])
         self.assertEqual(match["observed_runtime_symbols"], [])
+        self.assertEqual(match["observed_runtime_symbol_evidence"], [])
         self.assertTrue(any("PlaceString" in gap for gap in match["runtime_evidence_gaps"]))
         self.assertFalse(any(item["type"] == "mirror_passed" for item in ranked["findings"]))
 
@@ -30177,6 +30178,16 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(match["proof_status"], "mirror_passed")
         self.assertEqual(match["missing_runtime_symbol_groups"], [])
         self.assertIn("PlaceString", match["observed_runtime_symbols"])
+        self.assertIn(
+            {
+                "symbol": "PlaceString",
+                "source": "taint.json",
+                "kind": "dynamic_taint",
+                "proof_status": "taint_proven",
+            },
+            match["observed_runtime_symbol_evidence"],
+        )
+        self.assertIn("runtime_symbol_evidence=PlaceString:taint.json:dynamic_taint:taint_proven", match["evidence"])
 
     def test_compare_output_sink_mirror_does_not_use_dynamic_source_symbol_as_runtime_helper(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
