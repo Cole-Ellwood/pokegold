@@ -6698,3 +6698,43 @@ Remaining priority:
 
 - This prevents weak runtime-observation summaries from promoting behavioral mirrors and makes runtime evidence auditable, but it does not add the missing full script VM behavior, pixel-accurate graphics/UI behavior, audio playback/mixer behavior, arbitrary map interactions, or non-mutating hardware event recorder.
 - The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
+
+## Implementation Note - Compare Text Proof-Boundary Output
+
+Date: 2026-05-20.
+
+Context:
+
+- Compare-plan JSON now carries proof status, actual proof status, mirror status, hardware proof boundaries, runtime evidence gaps, and per-sink/per-helper evidence strings.
+- The default human-facing compare formatter still showed only title, confidence, and broad gaps.
+- That made the CLI/report surface weaker than the JSON boundary: a user could see a mirror listed without seeing whether it was only emulator-observed, hardware-not-proven, or backed by specific runtime sink/helper evidence.
+
+Primary references used:
+
+- No new external primary references were needed for this slice; it is an internal CLI/report formatting patch.
+
+Implemented fix:
+
+- `tools/debugger/__main__.py`
+  - prints compare match status, mirror status, proof status, and actual proof status.
+  - prints hardware proof statuses when present.
+  - prints observed runtime helpers when present.
+  - surfaces compact runtime sink/helper evidence and hardware/proof downgrade evidence from match evidence.
+  - prints runtime evidence gaps separately from broad mirror gaps.
+- `tools/debugger/tests/test_event_runtime_materialization.py`
+  - proves the text formatter exposes runtime sink evidence for a passed behavioral mirror.
+- `tools/debugger/tests/test_catalog.py`
+  - proves the text formatter exposes the PyBoy snapshot downgrade and `hardware_proof_statuses=not_proven` boundary.
+
+Validation after patch:
+
+- Focused compare formatter regressions: 2 passed.
+- Full debugger unittest discovery: 551 passed.
+- `python -m tools.debugger audit`: passed as a command, still `ready=False`; reports 8 complete buckets, 3 partial buckets, and 3 blocking gaps.
+- `python -m tools.debugger hardware-regression-gate --execute`: passed as a command, still intentionally `passed=False`; reported 0/10 cases passing, 10 blocking cases, 4 runtime-observed emulator cases, 0 hardware-proof cases, and 10 static-blocker cases.
+- `PYTHONPYCACHEPREFIX=.local\tmp\pycompile_cache python -m py_compile tools\debugger\__main__.py tools\debugger\tests\test_catalog.py tools\debugger\tests\test_event_runtime_materialization.py`: passed.
+
+Remaining priority:
+
+- This makes the default compare report preserve proof boundaries visibly, but it does not add the missing full script VM behavior, pixel-accurate graphics/UI behavior, audio playback/mixer behavior, arbitrary map interactions, or non-mutating hardware event recorder.
+- The whole-ROM proof-substrate goal remains incomplete and `ready=False`.

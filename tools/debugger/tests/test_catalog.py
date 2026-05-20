@@ -13,7 +13,7 @@ from unittest.mock import patch
 from tools.damage_debugger.disasm import Instruction, render_mnemonic
 from tools.damage_debugger.taint import Sink as DamageSink
 from tools.damage_debugger.taint import SyntheticFrame, TaintEngine
-from tools.debugger.__main__ import main as debugger_main
+from tools.debugger.__main__ import format_compare_plan, main as debugger_main
 from tools.debugger.address import address_key, address_spec_requires_exact_key, observed_address_key, parse_address_spec
 from tools.debugger.causal_graph import build_causal_graph_report
 from tools.debugger.catalog import (
@@ -29719,6 +29719,14 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("hardware_behavior_proven=False", ranked_pass["evidence"])
         self.assertEqual(impact_pass["proof_status"], "runtime_observed")
         self.assertIn("hardware_behavior_proven=False", impact_pass["evidence"])
+        text = format_compare_plan(compare)
+        self.assertIn("proof: status=passed mirror=passed proof=runtime_observed actual=runtime_observed", text)
+        self.assertIn("hardware: statuses=not_proven", text)
+        self.assertIn("evidence: proof_downgrade_reason=emulator_snapshot_not_hardware_proof", text)
+        self.assertIn(
+            "runtime gap: PyBoy visual/audio snapshot evidence proves emulator-observed digest/sample state only; hardware PPU/APU behavior remains unproven.",
+            text,
+        )
 
     def test_compare_output_sink_mirror_does_not_pass_from_compact_effect_index(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

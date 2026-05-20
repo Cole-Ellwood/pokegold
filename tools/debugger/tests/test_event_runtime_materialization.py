@@ -15,6 +15,7 @@ from tools.debugger.content_scenarios import (
     event_runtime_materialization_route,
 )
 from tools.debugger.content_state import build_content_state_report
+from tools.debugger.__main__ import format_compare_plan
 from tools.debugger.mirrors import build_compare_plan
 from tools.debugger.state_space import build_state_space_report
 
@@ -514,6 +515,9 @@ class EventRuntimeMaterializationTests(unittest.TestCase):
         )
         self.assertIn("runtime_sink_evidence=wMapGroup:::runtime_observed", match["evidence"])
         self.assertEqual(match["runtime_evidence_gaps"], [])
+        text = format_compare_plan(report)
+        self.assertIn("proof: status=passed mirror=passed proof=mirror_passed actual=observed", text)
+        self.assertIn("evidence: runtime_sink_evidence=wMapGroup:::runtime_observed", text)
 
     def test_compare_does_not_pass_from_planned_runtime_observations(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

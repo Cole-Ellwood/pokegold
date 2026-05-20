@@ -2922,8 +2922,34 @@ def format_compare_plan(report: dict[str, Any]) -> str:
             f"({', '.join(match['matched_by'])})"
         )
         lines.append(f"      confidence: {match['confidence']}")
+        proof_parts = []
+        for key, label in (
+            ("status", "status"),
+            ("mirror_status", "mirror"),
+            ("proof_status", "proof"),
+            ("actual_proof_status", "actual"),
+        ):
+            value = match.get(key)
+            if value not in (None, "", []):
+                proof_parts.append(f"{label}={value}")
+        if proof_parts:
+            lines.append("      proof: " + " ".join(proof_parts))
+        if match.get("hardware_proof_statuses"):
+            lines.append(
+                "      hardware: statuses="
+                + ", ".join(str(item) for item in match.get("hardware_proof_statuses", []))
+            )
+        if match.get("observed_runtime_symbols"):
+            lines.append(
+                "      observed runtime helpers: "
+                + ", ".join(str(item) for item in match.get("observed_runtime_symbols", []))
+            )
+        for evidence in compare_boundary_evidence(match)[:4]:
+            lines.append(f"      evidence: {evidence}")
         for gap in match.get("gaps", [])[:2]:
             lines.append(f"      gap: {gap}")
+        for gap in match.get("runtime_evidence_gaps", [])[:2]:
+            lines.append(f"      runtime gap: {gap}")
     lines.extend(["", "Compare commands:"])
     for command in report["commands"]:
         lines.append(f"  - {command}")
@@ -2931,6 +2957,21 @@ def format_compare_plan(report: dict[str, Any]) -> str:
     for command in report["materialization_commands"]:
         lines.append(f"  - {command}")
     return "\n".join(lines)
+
+
+def compare_boundary_evidence(match: dict[str, Any]) -> list[str]:
+    prefixes = (
+        "runtime_sink_evidence=",
+        "runtime_symbol_evidence=",
+        "proof_downgrade_reason=",
+        "hardware_proof_statuses=",
+        "hardware_proof_boundary=",
+    )
+    return [
+        str(item)
+        for item in match.get("evidence", [])
+        if any(str(item).startswith(prefix) for prefix in prefixes)
+    ]
 
 
 def format_content_mirror(report: dict[str, Any]) -> str:
