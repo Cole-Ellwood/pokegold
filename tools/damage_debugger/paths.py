@@ -33,7 +33,14 @@ def find_artifact(name: str, start: Path | None = None) -> Path:
         if candidate.exists():
             return candidate.resolve()
     raise FileNotFoundError(
-        f"Could not find {name!r} in any ancestor of {start} (searched {len(seen)} roots)"
+        f"Could not find {name!r} in any ancestor of {start} (searched {len(seen)} roots). "
+        "Build matching debug artifacts in this worktree before running ROM-backed "
+        "damage checks. Usual Windows/WSL command: "
+        "bash -lc 'cd \"<repo-wsl-path>\" && make -j4 PYTHON=python3 "
+        "RGBASM=rgbds-1.0.1/rgbasm.exe RGBLINK=rgbds-1.0.1/rgblink.exe "
+        "RGBFIX=rgbds-1.0.1/rgbfix.exe RGBGFX=rgbds-1.0.1/rgbgfx.exe "
+        "pokegold_debug.gbc'. If this is an external git worktree, build in that "
+        "worktree; using another checkout's ROM can hide source/ROM mismatches."
     )
 
 

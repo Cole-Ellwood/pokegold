@@ -314,8 +314,11 @@ def _hint_for_bucket(step: str) -> str:
             "DittoMetalPowder, TruncateHL_BC.",
         "DamageCalc":
             "Bug between BattleCommand_DamageStats and BattleCommand_DamageCalc end. "
-            "Likely sites: TypeBoostItems, ApplyLateGenDamageMultipliers_Far, "
-            ".CriticalMultiplier, the cap-then-add-MIN_DAMAGE block.",
+            "Likely sites: ApplyLateGenDamageStatsItemMods_Far / DittoMetalPowder_Far "
+            "register preservation in engine/battle/late_gen_held_items.asm, "
+            "TypeBoostItems, ApplyLateGenDamageMultipliers_Far, .CriticalMultiplier, "
+            "the cap-then-add-MIN_DAMAGE block. If clobber_smoke shows TPCat_done "
+            "followed by ALGDS_* with C changed, inspect the AG-08 c-mirror path first.",
         "Stab":
             "Bug between DamageCalc end and BattleCommand_Stab matchup loop entry. "
             "Likely site: STAB +50% scaling block at BattleCommand_Stab.stab.",
@@ -658,6 +661,10 @@ def _self_test() -> int:
     may still match, but the Stab and TypeMatchup buckets get swapped or
     collapsed and the diagnostic points at the wrong asm site.
     """
+    damage_calc_hint = _hint_for_bucket("DamageCalc")
+    assert "engine/battle/late_gen_held_items.asm" in damage_calc_hint
+    assert "AG-08 c-mirror" in damage_calc_hint
+
     expected_steps = {
         "physical_type_boost_item": {"Stab": 41, "TypeMatchup": 41, "TypePassive": 41},
         "special_expert_belt": {"Stab": 41, "TypeMatchup": 82, "TypePassive": 82},

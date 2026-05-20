@@ -765,6 +765,49 @@ def _format_snapshot(s: HookSnapshot, symbols: SymbolTable | None = None) -> str
     )
 
 
+def _format_bc(s: HookSnapshot) -> str:
+    return f"{s.b:02x}{s.c:02x}"
+
+
+def _diagnose_clobber_footprints(snapshots: list[HookSnapshot]) -> list[str]:
+    """Turn hook snapshots into fix-region hints for known clobber footprints."""
+    diagnoses: list[str] = []
+
+    for i, snap in enumerate(snapshots):
+        if snap.label != "ALGDS_far_entry":
+            continue
+        entry = snap
+        tpcat_done_index = None
+        for j in range(i + 1, len(snapshots)):
+            candidate = snapshots[j]
+            if candidate.label == "TPCat_done":
+                tpcat_done_index = j
+                continue
+            if candidate.label in {"ALGDS_far_done", "DMP_entry", "Truncate_entry", "Stab_entry"}:
+                break
+            if tpcat_done_index is None:
+                continue
+            if not candidate.label.startswith("ALGDS_"):
+                continue
+            if candidate.c == entry.c:
+                break
+            diagnoses.append(
+                "Likely AG-08 c-mirror clobber: "
+                f"ApplyLateGenDamageStatsItemMods_Far entered with BC={_format_bc(entry)} "
+                f"(load-bearing C={entry.c:02x}) but resumed at {candidate.label} "
+                f"after TypePassive_GetEffectiveMoveCategory_Far with BC={_format_bc(candidate)}. "
+                "Fix region: engine/battle/late_gen_held_items.asm; preserve bc around "
+                "the in-bank TypePassive_GetEffectiveMoveCategory_Far calls in "
+                "ApplyLateGenDamageStatsItemMods_Far and DittoMetalPowder_Far before "
+                "the value reaches TruncateHL_BC."
+            )
+            break
+        if diagnoses:
+            break
+
+    return diagnoses
+
+
 def _self_test() -> int:
     table = SymbolTable([
         Symbol(bank=1, address=0x4000, name="Fixture"),
@@ -790,6 +833,66 @@ def _self_test() -> int:
     rendered = _format_snapshot(snap, symbols=table)
     assert "Fixture.next+0x1" in rendered
     assert "PC=$01:4003" in rendered
+
+    diagnosis = _diagnose_clobber_footprints([
+        HookSnapshot(
+            label="ALGDS_far_entry",
+            seq=1,
+            bank=0x11,
+            pc=0x4AE1,
+            a=0,
+            f=0,
+            b=0,
+            c=9,
+            d=0,
+            e=0,
+            h=0,
+            l=0,
+            sp=0xDFDF,
+        ),
+        HookSnapshot(
+            label="TPCat_done",
+            seq=2,
+            bank=0x11,
+            pc=0x52A8,
+            a=0x21,
+            f=0,
+            b=0,
+            c=9,
+            d=0,
+            e=0,
+            h=0,
+            l=0,
+            sp=0xDFD3,
+        ),
+        HookSnapshot(
+            label="ALGDS_choice_band",
+            seq=3,
+            bank=0x11,
+            pc=0x4AFE,
+            a=0,
+            f=0,
+            b=0,
+            c=0,
+            d=0,
+            e=0,
+            h=0,
+            l=0,
+            sp=0xDFD9,
+        ),
+    ])
+    assert len(diagnosis) == 1
+    assert "engine/battle/late_gen_held_items.asm" in diagnosis[0]
+    assert "ApplyLateGenDamageStatsItemMods_Far" in diagnosis[0]
+    assert "DittoMetalPowder_Far" in diagnosis[0]
+
+    no_diagnosis = _diagnose_clobber_footprints([
+        HookSnapshot("ALGDS_far_entry", 1, 0x11, 0x4AE1, 0, 0, 0, 9, 0, 0, 0, 0, 0),
+        HookSnapshot("TPCat_done", 2, 0x11, 0x52A8, 0, 0, 0, 9, 0, 0, 0, 0, 0),
+        HookSnapshot("ALGDS_choice_band", 3, 0x11, 0x4AFE, 0, 0, 0, 9, 0, 0, 0, 0, 0),
+    ])
+    assert no_diagnosis == []
+
     print("clobber_smoke self-test: PASS")
     return 0
 
@@ -932,6 +1035,11 @@ def _emit_diagnostic_traces(
         if not snapshots:
             log("    (no hook snapshots -- symbols missing from sym table)")
             continue
+        diagnoses = _diagnose_clobber_footprints(snapshots)
+        if diagnoses:
+            log("    likely clobber diagnosis:")
+            for diagnosis in diagnoses:
+                log(f"      - {diagnosis}")
         log(f"    {len(snapshots)} hook hits along the chain:")
         for snap in snapshots:
             log(_format_snapshot(snap, symbols=symbols))
