@@ -6376,3 +6376,41 @@ Remaining priority:
 
 - This closes a stale-report/UI proof-promotion fallback, but it does not add the missing non-mutating hardware event recorder, complete hardware side-effect proof, or new behavioral mirror execution.
 - The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
+
+## Implementation Note - Dynamic-Taint Unmodeled-Write Runtime Boundary
+
+Date: 2026-05-20.
+
+Context:
+
+- Dynamic-taint unmodeled-write diagnostics are useful when an instruction frame proves that an instruction executed but the trace lacks the address register needed to attribute the write target.
+- Current generated diagnostics carry explicit `proof_status=instruction_observed`.
+- Legacy or hand-authored diagnostics without explicit proof fields were still ranked as `instruction_observed` by default, which blurred static/planned diagnostics with actual instruction-frame runtime evidence.
+
+Primary references used:
+
+- No new external primary references were needed for this slice; it is an internal report-shape/proof-promotion patch.
+
+Implemented fix:
+
+- `tools/debugger/ranking.py`
+  - derives unmodeled-write diagnostic proof from explicit `proof_status`, then weakest `evidence_atoms[].proof_status`, then a narrow runtime-observation signature.
+  - treats proofless diagnostics as `planned_only` unless they explicitly state `runtime_observation=instruction_frame`, `evidence_source=instruction_frame_missing_register`, and a concrete PC/PC-bank address.
+  - adds visible evidence such as `proof_downgrade_reason=missing_explicit_unmodeled_write_proof_status` or `proof_status_source=runtime_observation`.
+- `tools/debugger/tests/test_catalog.py`
+  - adds a regression proving proofless unmodeled-write diagnostics remain `planned_only` in ranking and impact.
+  - adds a regression proving legacy instruction-frame diagnostics without flat `proof_status` can still remain `instruction_observed` when they carry the runtime-observation fields.
+
+Validation after patch:
+
+- Focused dynamic-taint unmodeled-write proof-boundary regressions plus existing generated-runtime diagnostic regression: 3 passed.
+- Full debugger unittest discovery: 543 passed.
+- `PYTHONPYCACHEPREFIX=.local\tmp\pycompile_cache python -m py_compile tools\debugger\ranking.py tools\debugger\tests\test_catalog.py`: passed.
+- `python -m tools.debugger hardware-regression-gate --execute`: passed as a command, still intentionally `passed=False`; reported 0/10 cases passing, 10 blocking cases, 4 runtime-observed emulator cases, 0 hardware-proof cases, and 10 static-blocker cases.
+- `python -m tools.debugger audit`: passed as a command, still `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- `git diff --check`: passed with unrelated pre-existing CRLF warnings in Boss AI trace/generated/doc fixture files.
+
+Remaining priority:
+
+- This prevents another planned/static diagnostic from becoming observed proof at ranking/impact boundaries, but it does not add missing trace registers, complete side-effect reverse execution, the non-mutating hardware event recorder, or new behavioral mirror execution.
+- The whole-ROM proof-substrate goal remains incomplete and `ready=False`.

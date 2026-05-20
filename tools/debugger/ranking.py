@@ -1537,6 +1537,7 @@ def taint_findings(report: dict[str, Any], *, source: str) -> list[dict[str, Any
             )
         )
     for diagnostic in dynamic_taint_unmodeled_write_diagnostics(report)[:20]:
+        proof_status = dynamic_taint_unmodeled_write_proof_status(diagnostic)
         out.append(
             finding(
                 finding_type="dynamic_taint_unmodeled_write",
@@ -1544,11 +1545,11 @@ def taint_findings(report: dict[str, Any], *, source: str) -> list[dict[str, Any
                 source=source,
                 severity=SEVERITY_BASE["dynamic_taint_unmodeled_write"],
                 confidence=0.72,
-                evidence=dynamic_taint_unmodeled_write_evidence(diagnostic),
+                evidence=dynamic_taint_unmodeled_write_evidence(diagnostic, proof_status=proof_status),
                 next_actions=string_items(diagnostic.get("commands"))[:6] or string_items(report.get("commands"))[:6],
                 related_symbols=string_items(diagnostic.get("related_symbols")),
                 related_addresses=string_items(diagnostic.get("related_addresses")),
-                proof_status=str(diagnostic.get("proof_status") or "instruction_observed"),
+                proof_status=proof_status,
                 evidence_atoms=diagnostic.get("evidence_atoms"),
             )
         )
@@ -1609,19 +1610,72 @@ def dynamic_taint_unmodeled_write_diagnostics(report: dict[str, Any]) -> list[di
     ]
 
 
-def dynamic_taint_unmodeled_write_evidence(diagnostic: dict[str, Any]) -> list[str]:
-    evidence = string_items(diagnostic.get("evidence"))
-    if evidence:
-        return evidence[:8]
-    return [
-        f"seq={diagnostic.get('seq')}",
-        f"pc={diagnostic.get('pc_bank_address', '')}",
-        f"operation={diagnostic.get('operation', '')}",
-        "missing=" + ",".join(string_items(diagnostic.get("missing_registers"))),
-        f"address_source={diagnostic.get('address_source', '')}",
-        f"target_match_proof_status={diagnostic.get('target_match_proof_status', '')}",
-        f"attribution_status={diagnostic.get('attribution_status', '')}",
+def dynamic_taint_unmodeled_write_proof_status(diagnostic: dict[str, Any]) -> str:
+    explicit = normalize_proof_status(diagnostic.get("proof_status"))
+    if explicit:
+        return explicit
+    atom_statuses = [
+        normalize_proof_status(atom.get("proof_status"))
+        for atom in evidence_atoms(diagnostic.get("evidence_atoms"))
+        if atom.get("proof_status")
     ]
+    if atom_statuses:
+        return weakest_proof_status(atom_statuses)
+    if dynamic_taint_unmodeled_write_runtime_observed(diagnostic):
+        return "instruction_observed"
+    return "planned_only"
+
+
+def dynamic_taint_unmodeled_write_runtime_observed(diagnostic: dict[str, Any]) -> bool:
+    if str(diagnostic.get("runtime_observation") or "") != "instruction_frame":
+        return False
+    if str(diagnostic.get("evidence_source") or "") != "instruction_frame_missing_register":
+        return False
+    return bool(diagnostic.get("pc") is not None or diagnostic.get("pc_bank_address"))
+
+
+def dynamic_taint_unmodeled_write_evidence(diagnostic: dict[str, Any], *, proof_status: str) -> list[str]:
+    evidence = string_items(diagnostic.get("evidence"))[:8]
+    if not evidence:
+        evidence = [
+            f"seq={diagnostic.get('seq')}",
+            f"pc={diagnostic.get('pc_bank_address', '')}",
+            f"operation={diagnostic.get('operation', '')}",
+            "missing=" + ",".join(string_items(diagnostic.get("missing_registers"))),
+            f"address_source={diagnostic.get('address_source', '')}",
+            f"target_match_proof_status={diagnostic.get('target_match_proof_status', '')}",
+            f"attribution_status={diagnostic.get('attribution_status', '')}",
+        ]
+    if normalize_proof_status(diagnostic.get("proof_status")):
+        return evidence
+    atom_statuses = [
+        normalize_proof_status(atom.get("proof_status"))
+        for atom in evidence_atoms(diagnostic.get("evidence_atoms"))
+        if atom.get("proof_status")
+    ]
+    if atom_statuses:
+        return unique_string_items(
+            [
+                *evidence,
+                "proof_status_source=evidence_atoms",
+                f"proof_status={proof_status}",
+            ]
+        )
+    if dynamic_taint_unmodeled_write_runtime_observed(diagnostic):
+        return unique_string_items(
+            [
+                *evidence,
+                "proof_status_source=runtime_observation",
+                f"proof_status={proof_status}",
+            ]
+        )
+    return unique_string_items(
+        [
+            *evidence,
+            f"proof_status={proof_status}",
+            "proof_downgrade_reason=missing_explicit_unmodeled_write_proof_status",
+        ]
+    )
 
 
 def trace_synthesis_routes(report: dict[str, Any]) -> list[dict[str, Any]]:

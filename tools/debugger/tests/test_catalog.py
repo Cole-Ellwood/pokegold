@@ -11528,6 +11528,76 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(dynamic_item["proof_status"], "instruction_observed")
         self.assertIn("attribution_status=unresolved_missing_register", dynamic_item["evidence"])
 
+    def test_rank_and_impact_do_not_promote_proofless_dynamic_unmodeled_write_diagnostic(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "dynamic_taint.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_dynamic_taint_report",
+                        "valid": True,
+                        "unmodeled_write_diagnostics": [
+                            {
+                                "pc_label": "StaticPlanned",
+                                "operation": "ld [hl], a",
+                                "evidence": ["planned diagnostic only"],
+                                "related_symbols": ["StaticPlanned"],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            ranked = rank_findings(reports=("dynamic_taint.json",), root=root)
+            impact = build_impact_report(reports=("dynamic_taint.json",), root=root)
+
+        finding = next(item for item in ranked["findings"] if item["type"] == "dynamic_taint_unmodeled_write")
+        item = next(item for item in impact["items"] if item["type"] == "dynamic_taint_unmodeled_write")
+
+        self.assertEqual(finding["proof_status"], "planned_only")
+        self.assertIn("proof_downgrade_reason=missing_explicit_unmodeled_write_proof_status", finding["evidence"])
+        self.assertEqual(item["proof_status"], "planned_only")
+        self.assertIn("proof_downgrade_reason=missing_explicit_unmodeled_write_proof_status", item["evidence"])
+
+    def test_rank_and_impact_preserve_runtime_dynamic_unmodeled_write_diagnostic(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "dynamic_taint.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_dynamic_taint_report",
+                        "valid": True,
+                        "unmodeled_write_diagnostics": [
+                            {
+                                "source_kind": "instruction_trace_unmodeled_write",
+                                "seq": 7,
+                                "pc": 0x4000,
+                                "pc_bank_address": "01:4000",
+                                "pc_label": "RuntimeWriter",
+                                "operation": "ld [hl], a",
+                                "runtime_observation": "instruction_frame",
+                                "evidence_source": "instruction_frame_missing_register",
+                                "missing_registers": ["HL"],
+                                "related_symbols": ["RuntimeWriter"],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            ranked = rank_findings(reports=("dynamic_taint.json",), root=root)
+            impact = build_impact_report(reports=("dynamic_taint.json",), root=root)
+
+        finding = next(item for item in ranked["findings"] if item["type"] == "dynamic_taint_unmodeled_write")
+        item = next(item for item in impact["items"] if item["type"] == "dynamic_taint_unmodeled_write")
+
+        self.assertEqual(finding["proof_status"], "instruction_observed")
+        self.assertIn("proof_status_source=runtime_observation", finding["evidence"])
+        self.assertEqual(item["proof_status"], "instruction_observed")
+        self.assertIn("proof_status_source=runtime_observation", item["evidence"])
+
     def test_effect_trace_models_register_write_from_memory_load(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
