@@ -1442,6 +1442,7 @@ def main() -> int:
 
     check_save_format_version()
     check_no_stale_shipped_claims()
+    check_unified_debugger_ready()
     check_farcall_hl_clobber()
     check_farcall_a_clobber()
     check_ld_a_zero()
@@ -1476,6 +1477,10 @@ def check_save_format_version() -> None:
 
 def check_no_stale_shipped_claims() -> None:
     _run_subaudit("check_no_stale_shipped_claims.py", "no stale shipped claims")
+
+
+def check_unified_debugger_ready() -> None:
+    _run_subaudit("check_unified_debugger_ready.py", "unified debugger readiness")
 
 
 def check_farcall_hl_clobber() -> None:
