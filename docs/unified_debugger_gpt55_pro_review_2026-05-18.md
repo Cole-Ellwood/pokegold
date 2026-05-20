@@ -5056,3 +5056,53 @@ Remaining priority from Pro:
 - This makes the hardware gate safer for UI/report consumers, but it does not add the missing non-mutating event recorder or dedicated Pan Docs runtime case runner.
 - TIMA A/B-cycle behavior, OAM DMA timing/RAM-access restriction, GP/HBlank VRAM DMA timing, interrupt-entry stack writes, boot-ROM end state, and LCD dot/mode edge timing remain unproven hardware cases.
 - The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
+
+## Implementation Note - Runtime Bank-State Address Fact Boundary
+
+Date: 2026-05-20.
+
+Context:
+
+- Address proof needs a clean boundary between requested/static address syntax and observed runtime address facts.
+- External instruction traces can carry raw bank-register values. If those raw values are used directly as address-key banks, the debugger can create impossible exact keys such as `wramx:00:D141` or `vram:FE:8000`.
+- Pan Docs defines ROMX as banks 1-NN, CGB VRAM as bank 0/1, and CGB WRAM D000-DFFF as banks 1-7 with FF70 value 0 mapping to bank 1. The debugger should canonicalize runtime bank state before generating proof keys and reject impossible exact requested bank keys.
+
+References used:
+
+- Pan Docs memory map, including ROMX bank 1-NN, VRAM bank 0/1, and WRAM bank 1-7 address ranges: `https://gbdev.io/pandocs/Memory_Map.html`
+- Pan Docs FF4F VRAM bank register: `https://gbdev.io/pandocs/CGB_Registers.html#ff4f--vbk-cgb-mode-only-vram-bank`
+- Pan Docs FF70 WRAM bank register: `https://gbdev.io/pandocs/CGB_Registers.html#ff70--svbk-cgb-mode-only-wram-bank`
+
+Implemented fix:
+
+- `tools/debugger/address.py`
+  - rejects impossible exact requested bank keys for ROMX, CGB WRAMX, and VRAM: ROMX must be bank 1+, WRAMX must be bank 1-7, and VRAM must be bank 0-1.
+  - keeps static bank 0 prefixes for unbanked spaces such as WRAM0/IO as non-exact compatibility syntax.
+  - keeps invalid observed bank requests visible through `requested_bank`, `bank_semantics`, and `bank_valid=false` rather than producing an exact runtime key.
+- `tools/debugger/dynamic_taint.py`
+  - canonicalizes parsed runtime bank state before effect tracing uses it: WRAM values are masked to 0-7 with 0 remapped to 1, VRAM values are masked to bit 0, and ROM bank 0 is normalized to bank 1 for the current MBC-style observed ROM bank field.
+  - derives canonical WRAM/VRAM banks from raw `wram_raw`/`vram_raw` fields when a trace only supplies raw register bytes.
+  - stops treating bank 0 as "unbanked" for banked VRAM/ROM watch-value matching.
+- `tools/debugger/reverse_query.py`
+  - adds additive `requested_static_address`, `observed_runtime_address`, and `address_fact_boundary` objects to each reverse-query result.
+  - preserves existing result fields while making exact matches, bus-address fallback, ambiguous runtime banks, and proof downgrades machine-visible for downstream UI/report consumers.
+- `tools/debugger/catalog.py`
+  - updates the replay/localization blocker wording to mention canonicalized runtime bank state and requested-static versus observed-runtime address boundaries.
+- `tools/debugger/tests/test_catalog.py`
+  - adds regressions for invalid requested WRAMX/VRAM bank syntax, invalid observed bank requests, raw runtime bank-state canonicalization, VRAM bank-0 watch matching, and reverse-query address fact boundaries.
+
+Validation after patch:
+
+- Focused address/bank/reverse-query regressions: 8 passed.
+- `python -m py_compile tools\debugger\address.py tools\debugger\dynamic_taint.py tools\debugger\effect_trace.py tools\debugger\reverse_query.py tools\debugger\catalog.py tools\debugger\tests\test_catalog.py`: passed.
+- Full debugger unittest discovery: 505 passed.
+- `python -m tools.debugger audit`: passed as a command, still `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- Final touched-file `py_compile`: passed.
+- `git diff --check`: passed; it only reported existing CRLF normalization warnings in unrelated dirty files.
+
+Remaining priority from Pro:
+
+- This improves address/bank precision for reverse proof and prevents impossible exact bank keys, but it is not a full typed `BankState` object or side-effect-complete reverse executor.
+- Runtime bank proof still depends on supplied trace bank-state evidence or inferred bank writes in the captured window.
+- Full script VM behavior, arbitrary event-engine state generation, pixel/audio hardware mirrors, and dedicated Pan Docs runtime hardware cases remain incomplete.
+- The whole-ROM proof-substrate goal remains incomplete and `ready=False`.

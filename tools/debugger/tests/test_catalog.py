@@ -152,6 +152,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("modeled checkpoint-to-writer effect-span consistency", gap_text)
         self.assertIn("Pan Docs hardware regression gate", gap_text)
         self.assertIn("observed emulator/runtime facts", gap_text)
+        self.assertIn("requested-static versus observed-runtime address fact boundaries", gap_text)
         self.assertIn("hardware-gated effect-trace side effects and bank-unverified watch hits", gap_text)
         self.assertIn(
             "python -m tools.debugger hardware-regression-gate --execute",
@@ -2577,7 +2578,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
     def test_address_spec_preserves_bank_space_and_cli_evidence_forms(self) -> None:
         unbanked = parse_address_spec("$D141")
         banked = parse_address_spec("01:$D141")
-        romx = parse_address_spec("10:8000")
+        romx = parse_address_spec("10:4000")
 
         self.assertEqual(unbanked.address, 0xD141)
         self.assertIsNone(unbanked.bank)
@@ -2590,18 +2591,19 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(banked.cli(), "01:D141")
         self.assertEqual(banked.evidence(), "01:$D141")
         self.assertEqual(romx.bank, 0x10)
-        self.assertEqual(romx.address, 0x8000)
+        self.assertEqual(romx.address, 0x4000)
         self.assertNotEqual(address_key("$D141"), address_key("01:$D141"))
 
     def test_address_spec_rejects_impossible_bank_for_unbanked_space(self) -> None:
         exact_specs = [
             parse_address_spec("10:$4000"),
+            parse_address_spec("00:$8000"),
             parse_address_spec("01:$8000"),
             parse_address_spec("03:$A000"),
             parse_address_spec("02:$D141"),
         ]
 
-        self.assertEqual([spec.space for spec in exact_specs], ["romx", "vram", "sram", "wramx"])
+        self.assertEqual([spec.space for spec in exact_specs], ["romx", "vram", "vram", "sram", "wramx"])
         self.assertTrue(all(address_spec_requires_exact_key(spec) for spec in exact_specs))
         fixed_wram0 = parse_address_spec("00:$C000")
         fixed_io = parse_address_spec("00:$FF12")
@@ -2610,7 +2612,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertFalse(address_spec_requires_exact_key(fixed_wram0))
         self.assertFalse(address_spec_requires_exact_key(fixed_io))
 
-        for raw in ("01:$C000", "01:$FE00", "01:$FF12", "01:$FF80", "01:$FFFF"):
+        for raw in ("00:$4000", "00:$D141", "08:$D141", "02:$8000", "01:$C000", "01:$FE00", "01:$FF12", "01:$FF80", "01:$FFFF"):
             with self.subTest(raw=raw):
                 with self.assertRaises(ValueError):
                     parse_address_spec(raw)
@@ -2618,6 +2620,8 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
     def test_address_spec_and_observed_address_key_share_compatibility_fields(self) -> None:
         requested = parse_address_spec("02:$D141").as_dict()
         observed = observed_address_key(0xD141, bank=2, bank_source="bank_state.wram").as_dict()
+        aliased_wram = observed_address_key(0xD141, bank=0, bank_source="bank_state.wram").as_dict()
+        invalid_vram = observed_address_key(0x8000, bank=2, bank_source="bank_state.vram").as_dict()
         invalid_observed = observed_address_key(
             0xC000,
             bank=1,
@@ -2634,6 +2638,17 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(observed["bank_semantics"], "runtime_bank_required")
         self.assertTrue(observed["bank_valid"])
         self.assertEqual(observed["bank_source"], "bank_state.wram")
+        self.assertEqual(aliased_wram["address_key"], "wram:--:D141")
+        self.assertIsNone(aliased_wram["bank"])
+        self.assertEqual(aliased_wram["requested_bank"], 0)
+        self.assertEqual(aliased_wram["bank_semantics"], "invalid_wramx_bank_range")
+        self.assertFalse(aliased_wram["bank_valid"])
+        self.assertFalse(aliased_wram["exact_key_required"])
+        self.assertEqual(invalid_vram["address_key"], "vram:--:8000")
+        self.assertIsNone(invalid_vram["bank"])
+        self.assertEqual(invalid_vram["requested_bank"], 2)
+        self.assertEqual(invalid_vram["bank_semantics"], "invalid_vram_bank_range")
+        self.assertFalse(invalid_vram["bank_valid"])
         self.assertEqual(invalid_observed["address_key"], "wram0:--:C000")
         self.assertEqual(invalid_observed["key"], "wram0:--:C000")
         self.assertIsNone(invalid_observed["bank"])
@@ -12429,6 +12444,76 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertGreaterEqual(dynamic["write_attribution_count"], 1)
         self.assertEqual(wramx_attribution["address"], "D141")
 
+    def test_effect_trace_normalizes_raw_runtime_bank_state_before_keying_addresses(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "test.sym").write_text("01:4000 UnitFunc\n", encoding="utf-8")
+            (root / "instruction_trace.jsonl").write_text(
+                "\n".join(
+                    json.dumps(record)
+                    for record in [
+                        {
+                            "seq": 0,
+                            "bank": 1,
+                            "pc": 0x4000,
+                            "pc_label": "UnitFunc",
+                            "opcode": 0xEA,
+                            "operand": [0x41, 0xD1],
+                            "regs": {"A": 0x2A, "SP": 0xDFF0},
+                            "bank_state": {"wram_raw": 0xF0},
+                        },
+                        {
+                            "seq": 1,
+                            "bank": 1,
+                            "pc": 0x4003,
+                            "pc_label": "UnitFunc+3",
+                            "opcode": 0x77,
+                            "regs": {"A": 0x55, "HL": 0x8000, "SP": 0xDFF0},
+                            "bank_state": {"vram_raw": 0xFE},
+                        },
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            report = build_effect_trace_report(
+                traces=("instruction_trace.jsonl",),
+                symbols_path="test.sym",
+                watch_addresses=("01:$D141", "00:$8000"),
+                root=root,
+            )
+
+        writes = [
+            item
+            for event in report["events"]
+            for item in event["effects"]
+            if item.get("kind") == "memory_write"
+        ]
+        writes_by_address = {item["address_hex"]: item for item in writes}
+        hit_watches = [
+            hit["watch"]
+            for event in report["events"]
+            for hit in event["watch_hits"]
+            if hit["access"] == "write"
+        ]
+        first_bank_state = report["events"][0]["bank_state"]
+        second_bank_state = report["events"][1]["bank_state"]
+
+        self.assertTrue(report["valid"])
+        self.assertEqual(first_bank_state["wram"], 1)
+        self.assertEqual(first_bank_state["wram_raw"], 0xF0)
+        self.assertEqual(second_bank_state["vram"], 0)
+        self.assertEqual(second_bank_state["vram_raw"], 0xFE)
+        self.assertEqual(writes_by_address["D141"]["bank"], 1)
+        self.assertEqual(writes_by_address["D141"]["address_key"], "wramx:01:D141")
+        self.assertEqual(writes_by_address["8000"]["bank"], 0)
+        self.assertEqual(writes_by_address["8000"]["address_key"], "vram:00:8000")
+        self.assertIn("01:$D141", hit_watches)
+        self.assertIn("00:$8000", hit_watches)
+        self.assertNotIn("wramx:00:D141", {item["address_key"] for item in writes})
+        self.assertNotIn("vram:FE:8000", {item["address_key"] for item in writes})
+
     def test_effect_trace_uses_observed_rom_and_sram_bank_state_for_data_accesses(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -13713,12 +13798,22 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(missing["result_count"], 0)
         self.assertTrue(banked["valid"])
         self.assertEqual(banked["result_count"], 1)
-        self.assertEqual(banked["results"][0]["matched_address_key"], "wramx:01:D141")
-        self.assertEqual(banked["results"][0]["last_writer_pc"], "01:4003")
-        self.assertEqual(banked["results"][0]["last_value_hex"], "55")
-        self.assertEqual(banked["results"][0]["last_writer"]["address_key"], "wramx:01:D141")
-        self.assertEqual(banked["results"][0]["last_writer"]["space"], "wramx")
-        self.assertEqual([item["value_hex"] for item in banked["results"][0]["history"]], ["55"])
+        result = banked["results"][0]
+        self.assertEqual(result["matched_address_key"], "wramx:01:D141")
+        self.assertEqual(result["last_writer_pc"], "01:4003")
+        self.assertEqual(result["last_value_hex"], "55")
+        self.assertEqual(result["last_writer"]["address_key"], "wramx:01:D141")
+        self.assertEqual(result["last_writer"]["space"], "wramx")
+        self.assertEqual([item["value_hex"] for item in result["history"]], ["55"])
+        self.assertEqual(result["requested_static_address"]["fact_type"], "requested_static_address")
+        self.assertEqual(result["requested_static_address"]["address_key"], "wramx:01:D141")
+        self.assertTrue(result["requested_static_address"]["exact_key_required"])
+        self.assertEqual(result["observed_runtime_address"]["fact_type"], "observed_runtime_address")
+        self.assertEqual(result["observed_runtime_address"]["address_key"], "wramx:01:D141")
+        self.assertEqual(result["address_fact_boundary"]["kind"], "requested_static_vs_observed_runtime_address")
+        self.assertTrue(result["address_fact_boundary"]["target_exact_key_required"])
+        self.assertTrue(result["address_fact_boundary"]["runtime_key_exact"])
+        self.assertTrue(result["address_fact_boundary"]["exact_runtime_address_proven"])
 
     def test_reverse_query_banked_symbol_requires_exact_effect_key(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -13890,6 +13985,17 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual({result["matched_address_key"] for result in report["results"]}, {"wramx:01:D141", "wramx:02:D141"})
         for result in report["results"]:
             self.assertEqual(result["ambiguous_address_keys"], ["wramx:01:D141", "wramx:02:D141"])
+            self.assertEqual(result["requested_static_address"]["fact_type"], "requested_static_address")
+            self.assertEqual(result["requested_static_address"]["address_key"], "wram:--:D141")
+            self.assertFalse(result["requested_static_address"]["exact_key_required"])
+            self.assertEqual(result["observed_runtime_address"]["fact_type"], "observed_runtime_address")
+            self.assertIn(result["observed_runtime_address"]["address_key"], {"wramx:01:D141", "wramx:02:D141"})
+            self.assertEqual(result["observed_runtime_address"]["bank_match"], "ambiguous_runtime_bank")
+            self.assertEqual(result["address_fact_boundary"]["kind"], "requested_static_vs_observed_runtime_address")
+            self.assertFalse(result["address_fact_boundary"]["target_exact_key_required"])
+            self.assertTrue(result["address_fact_boundary"]["runtime_key_exact"])
+            self.assertFalse(result["address_fact_boundary"]["exact_runtime_address_proven"])
+            self.assertEqual(result["address_fact_boundary"]["proof_status"], "planned_only")
             self.assertEqual(
                 result["address_match"],
                 {

@@ -252,6 +252,18 @@ def evidence_address(value: Any) -> str:
 def address_bank_semantics(*, space: str, bank: int | None) -> tuple[str, bool]:
     if bank is None:
         return "not_requested", True
+    if space == "wramx":
+        if 1 <= bank <= 7:
+            return "runtime_bank_required", True
+        return "invalid_wramx_bank_range", False
+    if space == "vram":
+        if bank in {0, 1}:
+            return "runtime_bank_required", True
+        return "invalid_vram_bank_range", False
+    if space == "romx":
+        if bank >= 1:
+            return "runtime_bank_required", True
+        return "invalid_romx_bank_range", False
     if space in BANK_QUALIFIED_SPACES:
         return "runtime_bank_required", True
     if bank == 0:

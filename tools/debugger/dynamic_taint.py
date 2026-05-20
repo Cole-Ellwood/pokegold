@@ -2671,7 +2671,7 @@ def parse_watch_value_specs_memory(record: dict[str, Any], *, out: dict[int, int
 
 
 def watch_value_spec_observed_on_bus(record: dict[str, Any], *, address: int, bank: int | None) -> bool:
-    if bank in {None, 0}:
+    if bank is None:
         return True
     address &= 0xFFFF
     state = record.get("bank_state") if isinstance(record.get("bank_state"), dict) else {}
@@ -2679,10 +2679,12 @@ def watch_value_spec_observed_on_bus(record: dict[str, Any], *, address: int, ba
         return bank_state_value(state, "wram") == bank
     if 0x8000 <= address <= 0x9FFF:
         return bank_state_value(state, "vram") == bank
+    if 0x4000 <= address <= 0x7FFF:
+        return bank_state_value(state, "rom") == bank
     if 0xA000 <= address <= 0xBFFF:
         enabled = bank_state_value(state, "sram_enabled")
         return enabled != 0 and bank_state_value(state, "sram") == bank
-    return False
+    return bank == 0
 
 
 def bank_state_value(state: dict[str, Any], key: str) -> int | None:
@@ -2725,10 +2727,27 @@ def parse_bank_state(record: dict[str, Any]) -> tuple[tuple[str, int], ...]:
         if value in {None, ""}:
             continue
         try:
-            out[key] = parse_int(value)
+            out[key] = normalize_bank_state_value(key, parse_int(value))
         except ValueError:
             continue
+    if "wram" not in out and "wram_raw" in out:
+        out["wram"] = normalize_bank_state_value("wram", out["wram_raw"])
+    if "vram" not in out and "vram_raw" in out:
+        out["vram"] = normalize_bank_state_value("vram", out["vram_raw"])
     return tuple(sorted(out.items()))
+
+
+def normalize_bank_state_value(key: str, value: int) -> int:
+    value &= 0xFF
+    if key == "wram":
+        bank = value & 0x07
+        return bank if bank else 1
+    if key == "vram":
+        return value & 0x01
+    if key == "rom":
+        bank = value & 0x7F
+        return bank if bank else 1
+    return value
 
 
 def register_value(data: dict[str, Any], name: str) -> Any:

@@ -244,6 +244,12 @@ def reverse_query_results_for_report(
             symbols_path=symbols_path,
             watch_size=watch_size,
         )
+        proof_status = result_proof_status(
+            entry=entry,
+            last_write=last_write,
+            validation=validation,
+            hardware_gate=hardware_gate,
+        )
         result = {
             "source": source,
             "target": target,
@@ -266,12 +272,18 @@ def reverse_query_results_for_report(
             "bounded_effect_span_validation": bounded_effect_span,
             "hardware_side_effect_gate": hardware_gate,
             "validation_routes": validation_routes,
-            "proof_status": result_proof_status(
+            "requested_static_address": requested_static_address_fact(target),
+            "observed_runtime_address": observed_runtime_address_fact(
                 entry=entry,
                 last_write=last_write,
-                validation=validation,
-                hardware_gate=hardware_gate,
+                proof_status=proof_status,
             ),
+            "address_fact_boundary": address_fact_boundary(
+                target=target,
+                entry=entry,
+                proof_status=proof_status,
+            ),
+            "proof_status": proof_status,
             "evidence": result_evidence(target=target, entry=entry, last_write=last_write),
             "commands": result_commands(target),
         }
@@ -355,6 +367,74 @@ def result_has_observed_write(result: dict[str, Any]) -> bool:
     if result.get("proof_status") not in {None, "", "instruction_observed"}:
         return False
     return concrete_observed_write(result.get("last_writer"))
+
+
+def requested_static_address_fact(target: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "fact_type": "requested_static_address",
+        "source": "query_target",
+        "target_type": str(target.get("type", "")),
+        "symbol": str(target.get("symbol", "")),
+        "label": str(target.get("label", "")),
+        "address": str(target.get("address_hex", "")),
+        "address_key": str(target.get("key") or target.get("address_key") or ""),
+        "space": str(target.get("space", "")),
+        "bank": target.get("bank"),
+        "bank_semantics": str(target.get("bank_semantics", "")),
+        "bank_valid": target.get("bank_valid", True) is not False,
+        "exact_key_required": target_requires_exact_key(target),
+        "proof_status": "planned_only",
+    }
+
+
+def observed_runtime_address_fact(
+    *,
+    entry: dict[str, Any],
+    last_write: dict[str, Any] | None,
+    proof_status: str,
+) -> dict[str, Any]:
+    return {
+        "fact_type": "observed_runtime_address",
+        "source": "effect_trace.write_index",
+        "address": str(entry.get("address", "")),
+        "address_key": str(entry.get("address_key", "")),
+        "space": str(entry.get("space", "")),
+        "bank": entry.get("bank"),
+        "bank_source": str(entry.get("bank_source") or (last_write or {}).get("bank_source", "")),
+        "match_precision": str(entry.get("match_precision", "")),
+        "bank_match": str(entry.get("bank_match", "")),
+        "ambiguous_address_keys": string_items(entry.get("ambiguous_address_keys")),
+        "last_writer_seq": (last_write or {}).get("seq", entry.get("last_writer_seq")),
+        "last_writer_pc": str((last_write or {}).get("pc") or entry.get("last_writer_pc") or ""),
+        "proof_status": proof_status,
+    }
+
+
+def address_fact_boundary(*, target: dict[str, Any], entry: dict[str, Any], proof_status: str) -> dict[str, Any]:
+    entry_key = str(entry.get("address_key", ""))
+    match_precision = str(entry.get("match_precision", ""))
+    bank_match = str(entry.get("bank_match", ""))
+    runtime_key_exact = address_key_requires_exact_match(entry_key)
+    exact_runtime_address_proven = bool(
+        proof_status == "instruction_observed"
+        and (
+            match_precision == "exact_address_key"
+            or (match_precision == "bus_address" and bank_match == "not_required" and not runtime_key_exact)
+        )
+    )
+    return {
+        "kind": "requested_static_vs_observed_runtime_address",
+        "requested_fact_type": "requested_static_address",
+        "observed_fact_type": "observed_runtime_address",
+        "target_exact_key_required": target_requires_exact_key(target),
+        "runtime_key_exact": runtime_key_exact,
+        "match_precision": match_precision,
+        "bank_match": bank_match,
+        "ambiguous_address_keys": string_items(entry.get("ambiguous_address_keys")),
+        "exact_runtime_address_proven": exact_runtime_address_proven,
+        "proof_status": proof_status,
+        "proof_downgrade_reason": str(entry.get("proof_downgrade_reason", "")),
+    }
 
 
 def result_proof_status(
