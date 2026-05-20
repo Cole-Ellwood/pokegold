@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import subprocess
+import sys
 import time
 from pathlib import Path
 from typing import Any
@@ -13,6 +14,7 @@ MATCH_PRIORITIES = {
     "damage_chain": 10,
     "boss_ai": 10,
     "banking_and_abi": 20,
+    "pokemon_data": 25,
     "graphics_audio_maps": 30,
     "general": 40,
 }
@@ -168,6 +170,8 @@ def execute_step(step: dict[str, Any], *, root: Path, timeout_seconds: int) -> N
         step["status"] = "skipped"
         step["stderr_tail"] = ["empty command"]
         return
+    if argv[0] == "python":
+        argv[0] = sys.executable
     started = time.perf_counter()
     try:
         completed = subprocess.run(

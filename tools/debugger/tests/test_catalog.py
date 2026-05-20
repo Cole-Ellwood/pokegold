@@ -207,6 +207,30 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("tools.boss_ai_debugger", commands)
         self.assertIn("check_boss_ai_debugger_done.py", commands)
 
+    def test_learnset_edit_triages_to_pokemon_data_checks(self) -> None:
+        report = triage_request(
+            changed_files=("data/pokemon/evos_attacks.asm",),
+            symptom="give Chikorita a new level-up move and verify the ROM uses it",
+        )
+        match_ids = {match["id"] for match in report["matches"]}
+        commands = "\n".join(report["commands"])
+
+        self.assertIn("pokemon_data", match_ids)
+        self.assertIn("content-mirror --changed-file data/pokemon/evos_attacks.asm", commands)
+        self.assertIn(
+            "expect --source-file data/pokemon/evos_attacks.asm --expect source=data/pokemon/evos_attacks.asm",
+            commands,
+        )
+        self.assertIn("provenance --source-file data/pokemon/evos_attacks.asm", commands)
+        self.assertIn("check_release_smoke.py", commands)
+        self.assertNotIn("<changed_file>", commands)
+
+    def test_learnset_symptom_without_file_keeps_pokemon_data_route(self) -> None:
+        report = triage_request(symptom="give Chikorita a new level-up move and verify the ROM uses it")
+        match_ids = {match["id"] for match in report["matches"]}
+
+        self.assertIn("pokemon_data", match_ids)
+
     def test_symptom_keyword_matching_does_not_match_inside_words(self) -> None:
         report = triage_request(symptom="Air Balloon Ground immunity")
         tests = suggest_tests(symptom="Air Balloon Ground immunity")
@@ -3119,8 +3143,23 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
 
         self.assertFalse(report["executed"])
         self.assertIn("python -m tools.damage_debugger.clobber_smoke", commands)
-        self.assertIn("python tools\\audit\\check_cross_bank_call.py", commands)
+        self.assertIn("python tools/audit/check_cross_bank_call.py", commands)
         self.assertEqual(report["steps"][0]["priority"], 10)
+
+    def test_gate_plan_routes_learnset_edits_to_runnable_pokemon_data_checks(self) -> None:
+        report = build_gate_plan(changed_files=("data/pokemon/evos_attacks.asm",))
+        commands = [step["command"] for step in report["steps"]]
+        pokemon_steps = [step for step in report["steps"] if step["match_id"] == "pokemon_data"]
+
+        self.assertTrue(pokemon_steps)
+        self.assertTrue(all(step["runnable"] for step in pokemon_steps))
+        self.assertIn("python -m tools.debugger content-mirror --changed-file data/pokemon/evos_attacks.asm", commands)
+        self.assertIn(
+            "python -m tools.debugger expect --source-file data/pokemon/evos_attacks.asm --expect source=data/pokemon/evos_attacks.asm",
+            commands,
+        )
+        self.assertIn("python -m tools.debugger provenance --source-file data/pokemon/evos_attacks.asm", commands)
+        self.assertNotIn("<changed_file>", "\n".join(commands))
 
     def test_gate_marks_placeholder_commands_not_runnable(self) -> None:
         self.assertFalse(command_is_runnable("python -m tool <scenario>"))
@@ -3173,6 +3212,31 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIsInstance(argv, list)
         self.assertIn(state_path, argv)
         self.assertFalse(kwargs["shell"])
+
+    def test_execute_step_substitutes_python_for_sys_executable(self) -> None:
+        import sys as _sys
+
+        class Completed:
+            returncode = 0
+            stdout = "ok\n"
+            stderr = ""
+
+        step = {
+            "command": "python -m tools.debugger audit",
+            "runnable": True,
+            "status": "pending",
+            "returncode": None,
+            "elapsed_seconds": 0.0,
+            "stdout_tail": [],
+            "stderr_tail": [],
+        }
+
+        with patch("tools.debugger.workflow.subprocess.run", return_value=Completed()) as run:
+            execute_step(step, root=Path("."), timeout_seconds=5)
+
+        argv = run.call_args.args[0]
+        self.assertEqual(argv[0], _sys.executable)
+        self.assertEqual(step["status"], "passed")
 
     def test_instruction_trace_command_symbol_parsing_preserves_quoted_paths(self) -> None:
         state_path = "C:\\Users\\lolno\\Downloads\\pokemon gold hack\\runtime state.sav"
@@ -5684,6 +5748,45 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertGreaterEqual(by_query["wCurDamage"]["source_hit_count"], 2)
         self.assertEqual(by_query["wCurDamage"]["source_hits"][0]["kind"], "definition")
         self.assertEqual(report["source_files"][0]["symbols_matched_count"], 1)
+
+    def test_provenance_source_file_only_treats_missing_symbols_as_warning(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "data" / "pokemon").mkdir(parents=True)
+            (root / "data" / "pokemon" / "evos_attacks.asm").write_text(
+                "ChikoritaEvosAttacks:\n\tdb 0 ; no more evolutions\n\tdb 10, REFLECT\n\tdb 0 ; no more level-up moves\n",
+                encoding="utf-8",
+            )
+
+            report = build_provenance_report(
+                source_files=("data/pokemon/evos_attacks.asm",),
+                symbols_path="missing.sym",
+                root=root,
+            )
+
+        self.assertTrue(report["valid"])
+        self.assertEqual(report["error_count"], 0)
+        self.assertEqual(report["warning_count"], 1)
+        self.assertIn("missing symbol file", report["warnings"][0])
+        self.assertEqual(report["source_files"][0]["label_count"], 1)
+
+    def test_provenance_symbol_query_still_requires_symbols(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "engine").mkdir()
+            (root / "engine" / "battle.asm").write_text(
+                "BattleCommand_Test:\n\tret\n",
+                encoding="utf-8",
+            )
+
+            report = build_provenance_report(
+                symbols=("BattleCommand_Test",),
+                symbols_path="missing.sym",
+                root=root,
+            )
+
+        self.assertFalse(report["valid"])
+        self.assertIn("missing symbol file", report["errors"][0])
 
     def test_provenance_derives_symbols_from_state_patch_minimization_report(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -23909,6 +24012,24 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("content_static_counterexamples", {match["id"] for match in report["matches"]})
         self.assertIn("tools.debugger expect --source-file", commands)
         self.assertIn("contains=<expected_text>", counterexamples)
+
+    def test_suggest_tests_routes_learnset_edit_to_concrete_pokemon_data_checks(self) -> None:
+        report = suggest_tests(changed_files=("data/pokemon/evos_attacks.asm",))
+        commands = "\n".join(report["commands"])
+        counterexamples = "\n".join(report["counterexample_commands"])
+
+        self.assertIn("pokemon_data_counterexamples", {match["id"] for match in report["matches"]})
+        self.assertIn("content-mirror --changed-file data/pokemon/evos_attacks.asm", commands)
+        self.assertIn(
+            "expect --source-file data/pokemon/evos_attacks.asm --expect source=data/pokemon/evos_attacks.asm",
+            commands,
+        )
+        self.assertIn("provenance --source-file data/pokemon/evos_attacks.asm", commands)
+        self.assertIn(
+            "expect --source-file data/pokemon/evos_attacks.asm --expect contains=<expected_text>",
+            counterexamples,
+        )
+        self.assertNotIn("<changed_file>", commands + counterexamples)
 
     def test_suggest_tests_consumes_content_fuzz_reports(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

@@ -39,14 +39,18 @@ def build_provenance_report(
     symbol_table: dict[str, dict[str, Any]] = {}
     if sym_path.exists():
         symbol_table = parse_symbol_table(sym_path)
-    else:
-        errors.append(f"missing symbol file: {symbols_path}")
 
     loaded_reports, report_errors = load_reports(reports=reports, root=root)
     errors.extend(report_errors)
     derived_inputs = derive_report_provenance_inputs(loaded_reports)
     effective_symbols = tuple(unique_list([*symbols, *derived_inputs["symbols"]]))
     effective_source_files = tuple(unique_list([*source_files, *derived_inputs["source_files"]]))
+    if not sym_path.exists():
+        missing_symbol_file = f"missing symbol file: {symbols_path}"
+        if effective_symbols:
+            errors.append(missing_symbol_file)
+        else:
+            warnings.append(missing_symbol_file)
 
     source_paths = collect_source_paths(
         root=root,

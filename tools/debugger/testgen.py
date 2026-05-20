@@ -19,6 +19,7 @@ class TestGeneratorRule:
     symptom_keywords: tuple[str, ...]
     commands: tuple[str, ...]
     counterexample_commands: tuple[str, ...]
+    excluded_path_prefixes: tuple[str, ...] = ()
     notes: tuple[str, ...] = ()
 
 
@@ -115,14 +116,52 @@ GENERATOR_RULES = (
         symbols=("hROMBank", "FarCall", "Bankswitch"),
         symptom_keywords=("bank", "farcall", "register", "stack", "crash", "hang"),
         commands=(
-            "python tools\\audit\\check_farcall_a_clobber.py",
-            "python tools\\audit\\check_farcall_hl_clobber.py",
-            "python tools\\audit\\check_cross_bank_call.py",
-            "python tools\\audit\\check_release_smoke.py",
+            "python tools/audit/check_farcall_a_clobber.py",
+            "python tools/audit/check_farcall_hl_clobber.py",
+            "python tools/audit/check_cross_bank_call.py",
+            "python tools/audit/check_release_smoke.py",
         ),
         counterexample_commands=(
             "python -m tools.debugger watch --watch-symbol hROMBank --execute --frames 120",
             "python -m tools.debugger provenance --symbol hROMBank --symbol FarCall",
+        ),
+    ),
+    TestGeneratorRule(
+        id="pokemon_data_counterexamples",
+        title="Pokemon species, learnset, and move-data source checks",
+        path_prefixes=(
+            "data/pokemon/evos_attacks.asm",
+            "data/pokemon/egg_moves.asm",
+            "data/pokemon/base_stats/",
+            "data/moves/",
+        ),
+        symbols=(),
+        symptom_keywords=(
+            "learnset",
+            "level-up",
+            "level up",
+            "level-up move",
+            "tm compatibility",
+            "hm compatibility",
+            "egg move",
+            "evolution",
+            "evolve",
+            "species data",
+            "pokemon data",
+        ),
+        commands=(
+            "python -m tools.debugger content-mirror --changed-file <changed_file>",
+            "python -m tools.debugger expect --source-file <changed_file> --expect source=<changed_file>",
+            "python -m tools.debugger provenance --source-file <changed_file>",
+            "python tools/audit/check_release_smoke.py",
+        ),
+        counterexample_commands=(
+            "python -m tools.debugger expect --source-file <changed_file> --expect contains=<expected_text>",
+            "python -m tools.debugger content-mirror --source-file <changed_file>",
+            "python -m tools.debugger provenance --source-file <changed_file>",
+        ),
+        notes=(
+            "For a concrete learnset edit, replace <expected_text> with the exact source row such as 'db 10, REFLECT'.",
         ),
     ),
     TestGeneratorRule(
@@ -132,9 +171,9 @@ GENERATOR_RULES = (
         symbols=(),
         symptom_keywords=("map", "warp", "graphics", "palette", "audio", "text", "sprite"),
         commands=(
-            "python tools\\audit\\check_release_smoke.py",
-            "python tools\\audit\\check_layout_orgs.py",
-            "python tools\\audit\\check_pic_bank_pressure.py",
+            "python tools/audit/check_release_smoke.py",
+            "python tools/audit/check_layout_orgs.py",
+            "python tools/audit/check_pic_bank_pressure.py",
             "python -m tools.debugger content-mirror --changed-file <changed_file>",
             "python -m tools.debugger content-scenarios --changed-file <changed_file> --out-scenarios .local\\tmp\\debugger_content_scenarios.jsonl",
             "python -m tools.debugger expect --source-file <changed_file>",
@@ -148,6 +187,12 @@ GENERATOR_RULES = (
         ),
         notes=(
             "This surface can use semantic content mirrors, source-derived scenarios, and static expectations now, but still needs dedicated dynamic ROM replay/fuzz generators.",
+        ),
+        excluded_path_prefixes=(
+            "data/pokemon/evos_attacks.asm",
+            "data/pokemon/egg_moves.asm",
+            "data/pokemon/base_stats/",
+            "data/moves/",
         ),
     ),
 )
@@ -168,6 +213,7 @@ def suggest_tests(
     for rule in GENERATOR_RULES:
         path_hit = any(
             any(path.startswith(prefix.lower()) for prefix in rule.path_prefixes)
+            and not any(path.startswith(prefix.lower()) for prefix in rule.excluded_path_prefixes)
             for path in normalized_paths
         )
         symbol_hit = any(symbol in rule.symbols for symbol in symbols)
@@ -176,24 +222,24 @@ def suggest_tests(
         )
         if not path_hit and not symbol_hit and not symptom_hit:
             continue
-        matches.append(
-            {
-                "id": rule.id,
-                "title": rule.title,
-                "matched_by": [
-                    name
-                    for name, hit in (
-                        ("changed_file", path_hit),
-                        ("symbol", symbol_hit),
-                        ("symptom", symptom_hit),
-                    )
-                    if hit
-                ],
-                "commands": list(rule.commands),
-                "counterexample_commands": list(rule.counterexample_commands),
-                "notes": list(rule.notes),
-            }
-        )
+        match = {
+            "id": rule.id,
+            "title": rule.title,
+            "matched_by": [
+                name
+                for name, hit in (
+                    ("changed_file", path_hit),
+                    ("symbol", symbol_hit),
+                    ("symptom", symptom_hit),
+                )
+                if hit
+            ],
+            "commands": list(rule.commands),
+            "counterexample_commands": list(rule.counterexample_commands),
+            "notes": list(rule.notes),
+        }
+        materialize_changed_file_commands(match, changed_files=changed_files)
+        matches.append(match)
 
     if not matches and symbols:
         provenance = build_provenance_report(symbols=symbols, root=root, max_hits=20)
@@ -569,6 +615,23 @@ def unique_commands(matches: list[dict[str, Any]], key: str) -> list[str]:
             seen.add(command)
             out.append(command)
     return out
+
+
+def materialize_changed_file_commands(match: dict[str, Any], *, changed_files: tuple[str, ...]) -> None:
+    concrete_changed_file = single_changed_file_command_arg(changed_files)
+    if not concrete_changed_file:
+        return
+    for key in ("commands", "counterexample_commands"):
+        match[key] = [
+            command.replace("<changed_file>", concrete_changed_file)
+            for command in string_items(match.get(key))
+        ]
+
+
+def single_changed_file_command_arg(changed_files: tuple[str, ...]) -> str:
+    if len(changed_files) != 1:
+        return ""
+    return changed_files[0].replace("\\", "/").strip()
 
 
 def dict_items(value: Any) -> list[dict[str, Any]]:

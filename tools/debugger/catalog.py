@@ -37,6 +37,7 @@ class TriageRule:
     symptom_keywords: tuple[str, ...]
     reason: str
     commands: tuple[str, ...]
+    excluded_path_prefixes: tuple[str, ...] = ()
     gaps: tuple[str, ...] = ()
 
 
@@ -47,7 +48,7 @@ SUBSYSTEMS = (
         scope="Boss move/switch policy, trace replay, ROM materialization, review queues.",
         entrypoints=(
             "python -m tools.boss_ai_debugger --help",
-            "python tools\\audit\\check_boss_ai_debugger_done.py",
+            "python tools/audit/check_boss_ai_debugger_done.py",
         ),
         evidence_paths=(
             "tools/boss_ai_debugger/__main__.py",
@@ -74,8 +75,8 @@ SUBSYSTEMS = (
         title="Trace runtime",
         scope="PyBoy runtime helpers, symbol parsing, trace capture, save-state replay plumbing.",
         entrypoints=(
-            "python tools\\trace\\boss_ai_trace_batch.py --execute",
-            "python tools\\trace\\boss_ai_state_factory.py --all --update-manifest",
+            "python tools/trace/boss_ai_trace_batch.py --execute",
+            "python tools/trace/boss_ai_state_factory.py --all --update-manifest",
         ),
         evidence_paths=(
             "tools/trace/runtime.py",
@@ -88,8 +89,8 @@ SUBSYSTEMS = (
         title="Static and release audits",
         scope="Source-level invariant checks and release smoke gates across broad ROM surfaces.",
         entrypoints=(
-            "python tools\\audit\\check_release_smoke.py",
-            "python tools\\audit\\check_battle_math_safety.py",
+            "python tools/audit/check_release_smoke.py",
+            "python tools/audit/check_battle_math_safety.py",
         ),
         evidence_paths=(
             "tools/audit/check_release_smoke.py",
@@ -163,7 +164,7 @@ TRIAGE_RULES = (
         ),
         reason="Boss AI has the most complete state-of-the-art debugger workflow in this repo.",
         commands=(
-            "python tools\\audit\\check_boss_ai_debugger_done.py",
+            "python tools/audit/check_boss_ai_debugger_done.py",
             "python -m tools.boss_ai_debugger run-suite --profile changed-ai --count 24 --seed 1",
             "python -m tools.boss_ai_debugger diff --trace-dir audit\\boss_ai_trace",
             "python -m tools.boss_ai_debugger review-queue --scenarios <scenarios.jsonl>",
@@ -189,13 +190,43 @@ TRIAGE_RULES = (
         ),
         reason="Static ABI audits catch common ROM-wide assembly hazards before a focused emulator trace.",
         commands=(
-            "python tools\\audit\\check_farcall_a_clobber.py",
-            "python tools\\audit\\check_farcall_hl_clobber.py",
-            "python tools\\audit\\check_cross_bank_call.py",
-            "python tools\\audit\\check_release_smoke.py",
+            "python tools/audit/check_farcall_a_clobber.py",
+            "python tools/audit/check_farcall_hl_clobber.py",
+            "python tools/audit/check_cross_bank_call.py",
+            "python tools/audit/check_release_smoke.py",
         ),
         gaps=(
             "There is no generic whole-ROM dataflow/provenance debugger for arbitrary register symptoms yet.",
+        ),
+    ),
+    TriageRule(
+        id="pokemon_data",
+        title="Pokemon species, learnset, or move data",
+        path_prefixes=(
+            "data/pokemon/evos_attacks.asm",
+            "data/pokemon/egg_moves.asm",
+            "data/pokemon/base_stats/",
+            "data/moves/",
+        ),
+        symptom_keywords=(
+            "learnset",
+            "level-up",
+            "level up",
+            "level-up move",
+            "tm compatibility",
+            "hm compatibility",
+            "egg move",
+            "evolution",
+            "evolve",
+            "species data",
+            "pokemon data",
+        ),
+        reason="Pokemon data edits need source-derived content checks plus the learnset/order smoke gate before a ROM build.",
+        commands=(
+            "python -m tools.debugger content-mirror --changed-file <changed_file>",
+            "python -m tools.debugger expect --source-file <changed_file> --expect source=<changed_file>",
+            "python -m tools.debugger provenance --source-file <changed_file>",
+            "python tools/audit/check_release_smoke.py",
         ),
     ),
     TriageRule(
@@ -221,9 +252,15 @@ TRIAGE_RULES = (
         ),
         reason="These surfaces currently rely more on static audits and release smoke than focused debuggers.",
         commands=(
-            "python tools\\audit\\check_release_smoke.py",
-            "python tools\\audit\\check_layout_orgs.py",
-            "python tools\\audit\\check_pic_bank_pressure.py",
+            "python tools/audit/check_release_smoke.py",
+            "python tools/audit/check_layout_orgs.py",
+            "python tools/audit/check_pic_bank_pressure.py",
+        ),
+        excluded_path_prefixes=(
+            "data/pokemon/evos_attacks.asm",
+            "data/pokemon/egg_moves.asm",
+            "data/pokemon/base_stats/",
+            "data/moves/",
         ),
         gaps=(
             "Focused ROM replay, fuzzing, and causal provenance are not yet generalized for this surface.",
@@ -319,7 +356,7 @@ def build_capability_report(root: Path = ROOT) -> dict[str, Any]:
                 "docs/boss_ai_debugger_state_of_art_implementation_plan_2026-05-15.md",
             ),
             gaps=(),
-            commands=("python tools\\audit\\check_boss_ai_debugger_done.py",),
+            commands=("python tools/audit/check_boss_ai_debugger_done.py",),
         ),
         _capability(
             id="whole_rom_ingest",
@@ -469,8 +506,8 @@ def build_capability_report(root: Path = ROOT) -> dict[str, Any]:
                 "python -m tools.debugger fuzz --symbol wCurDamage",
                 "python -m tools.debugger generate --symbol wCurDamage --execute --max-execute-commands 8",
                 "python -m tools.debugger fuzz --symbol wCurDamage --execute --max-execute-commands 8",
-                "python -m tools.debugger generate --changed-file home\\farcall.asm --out-scenarios .local\\tmp\\debugger_banking_seeds.jsonl",
-                "python -m tools.debugger fuzz --changed-file home\\farcall.asm --out-cases .local\\tmp\\debugger_banking_cases.jsonl",
+                "python -m tools.debugger generate --changed-file home/farcall.asm --out-scenarios .local/tmp/debugger_banking_seeds.jsonl",
+                "python -m tools.debugger fuzz --changed-file home/farcall.asm --out-cases .local/tmp/debugger_banking_cases.jsonl",
                 "python -m tools.debugger generate --report <instruction-trace-report.json>",
                 "python -m tools.debugger fuzz --report <instruction-trace-report.json>",
                 "python -m tools.debugger suggest-tests --symbol wCurDamage",
@@ -502,8 +539,8 @@ def build_capability_report(root: Path = ROOT) -> dict[str, Any]:
             commands=(
                 "python -m tools.debugger compare --symbol wCurDamage",
                 "python -m tools.debugger compare --report <expectation-report.json> --report <watch-or-trace-report.json>",
-                "python -m tools.debugger content-mirror --changed-file maps\\NewBarkTown.asm",
-                "python -m tools.debugger content-scenarios --changed-file maps\\NewBarkTown.asm --out-scenarios .local\\tmp\\debugger_content_scenarios.jsonl",
+                "python -m tools.debugger content-mirror --changed-file maps/NewBarkTown.asm",
+                "python -m tools.debugger content-scenarios --changed-file maps/NewBarkTown.asm --out-scenarios .local/tmp/debugger_content_scenarios.jsonl",
                 "python -m tools.debugger expect --expect no-errors --report <report.json>",
                 "python -m tools.debugger visual-snapshot --save-state <state> --execute",
                 "python -m tools.debugger audio-snapshot --save-state <state> --execute",
@@ -572,6 +609,7 @@ def triage_request(
     for rule in TRIAGE_RULES:
         path_hit = any(
             any(path.startswith(prefix.lower()) for prefix in rule.path_prefixes)
+            and not any(path.startswith(prefix.lower()) for prefix in rule.excluded_path_prefixes)
             for path in normalized_paths
         )
         matched_keywords = _matching_keywords(rule.symptom_keywords, symptom_text) if symptom_text else []
@@ -585,6 +623,7 @@ def triage_request(
                 path_hit=path_hit,
                 symptom_hit=symptom_hit,
                 matched_symptom_keywords=matched_keywords,
+                changed_files=changed_files,
             )
         )
 
@@ -597,8 +636,8 @@ def triage_request(
                 "reason": "No focused subsystem matched; start with broad static and release checks.",
                 "commands": [
                     "python -m tools.debugger audit",
-                    "python tools\\audit\\check_release_smoke.py",
-                    "python tools\\audit\\check_workspace_hygiene.py",
+                    "python tools/audit/check_release_smoke.py",
+                    "python tools/audit/check_workspace_hygiene.py",
                 ],
                 "gaps": [
                     "The unified debugger cannot yet localize arbitrary unknown symptoms without a subsystem hint.",
@@ -611,7 +650,15 @@ def triage_request(
         for path in normalized_paths
     ):
         rule = next(item for item in TRIAGE_RULES if item.id == "banking_and_abi")
-        matches.append(_triage_match(rule, path_hit=True, symptom_hit=False, matched_symptom_keywords=[]))
+        matches.append(
+            _triage_match(
+                rule,
+                path_hit=True,
+                symptom_hit=False,
+                matched_symptom_keywords=[],
+                changed_files=changed_files,
+            )
+        )
 
     return {
         "schema_version": 1,
@@ -719,6 +766,7 @@ def _triage_match(
     path_hit: bool,
     symptom_hit: bool,
     matched_symptom_keywords: list[str],
+    changed_files: tuple[str, ...] = (),
 ) -> dict[str, Any]:
     matched_by = []
     if path_hit:
@@ -730,12 +778,28 @@ def _triage_match(
         "title": rule.title,
         "matched_by": matched_by,
         "reason": rule.reason,
-        "commands": list(rule.commands),
+        "commands": _materialize_commands(rule.commands, changed_files=changed_files),
         "gaps": list(rule.gaps),
     }
     if matched_symptom_keywords:
         match["matched_symptom_keywords"] = matched_symptom_keywords
     return match
+
+
+def _materialize_commands(commands: tuple[str, ...], *, changed_files: tuple[str, ...]) -> list[str]:
+    concrete_changed_file = _single_changed_file_command_arg(changed_files)
+    return [
+        command.replace("<changed_file>", concrete_changed_file)
+        if concrete_changed_file
+        else command
+        for command in commands
+    ]
+
+
+def _single_changed_file_command_arg(changed_files: tuple[str, ...]) -> str:
+    if len(changed_files) != 1:
+        return ""
+    return changed_files[0].replace("\\", "/").strip()
 
 
 def _unique_command_list(matches: list[dict[str, Any]]) -> list[str]:
