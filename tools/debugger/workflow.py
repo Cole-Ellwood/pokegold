@@ -15,6 +15,7 @@ MATCH_PRIORITIES = {
     "boss_ai": 10,
     "banking_and_abi": 20,
     "pokemon_data": 25,
+    "type_matchup": 25,
     "graphics_audio_maps": 30,
     "general": 40,
 }

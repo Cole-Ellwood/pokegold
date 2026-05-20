@@ -231,6 +231,24 @@ TRIAGE_RULES = (
         ),
     ),
     TriageRule(
+        id="type_matchup",
+        title="Pokemon type-matchup snapshot",
+        path_prefixes=(
+            "data/pokemon/base_stats/",
+        ),
+        symptom_keywords=(
+            "type matchup",
+            "type effectiveness",
+            "matchup",
+            "immune",
+            "immunity",
+        ),
+        reason="Base-stats edits often change current hack type interactions; this prints the source-derived defensive and offensive matchup snapshot.",
+        commands=(
+            "python -m tools.debugger type-matchup --species <species>",
+        ),
+    ),
+    TriageRule(
         id="graphics_audio_maps",
         title="Graphics, audio, map, or content behavior",
         path_prefixes=(
@@ -816,18 +834,30 @@ def _inferred_changed_file_for_rule(rule_id: str, symptom_text: str) -> str:
 
 def _materialize_commands(commands: tuple[str, ...], *, changed_files: tuple[str, ...]) -> list[str]:
     concrete_changed_file = _single_changed_file_command_arg(changed_files)
-    return [
-        command.replace("<changed_file>", concrete_changed_file)
-        if concrete_changed_file
-        else command
-        for command in commands
-    ]
+    concrete_species = _single_base_stats_species_arg(changed_files)
+    materialized = []
+    for command in commands:
+        if concrete_changed_file:
+            command = command.replace("<changed_file>", concrete_changed_file)
+        if concrete_species:
+            command = command.replace("<species>", concrete_species)
+        materialized.append(command)
+    return materialized
 
 
 def _single_changed_file_command_arg(changed_files: tuple[str, ...]) -> str:
     if len(changed_files) != 1:
         return ""
     return changed_files[0].replace("\\", "/").strip()
+
+
+def _single_base_stats_species_arg(changed_files: tuple[str, ...]) -> str:
+    changed_file = _single_changed_file_command_arg(changed_files)
+    prefix = "data/pokemon/base_stats/"
+    suffix = ".asm"
+    if not changed_file.startswith(prefix) or not changed_file.endswith(suffix):
+        return ""
+    return changed_file[len(prefix):-len(suffix)]
 
 
 def _unique_command_list(matches: list[dict[str, Any]]) -> list[str]:

@@ -3259,6 +3259,23 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("python -m tools.debugger provenance --source-file data/pokemon/evos_attacks.asm", commands)
         self.assertNotIn("<changed_file>", "\n".join(commands))
 
+    def test_gate_plan_routes_base_stats_edits_to_type_matchup_snapshot(self) -> None:
+        report = build_gate_plan(changed_files=("data/pokemon/base_stats/aerodactyl.asm",))
+        commands = [step["command"] for step in report["steps"]]
+        type_steps = [step for step in report["steps"] if step["match_id"] == "type_matchup"]
+
+        self.assertTrue(type_steps)
+        self.assertTrue(all(step["runnable"] for step in type_steps))
+        self.assertIn("python -m tools.debugger type-matchup --species aerodactyl", commands)
+        self.assertNotIn("<species>", "\n".join(commands))
+
+    def test_triage_type_matchup_symptom_keeps_species_placeholder_when_unknown(self) -> None:
+        report = triage_request(symptom="type matchup looks wrong")
+        type_match = next(match for match in report["matches"] if match["id"] == "type_matchup")
+
+        self.assertIn("symptom", type_match["matched_by"])
+        self.assertIn("python -m tools.debugger type-matchup --species <species>", report["commands"])
+
     def test_gate_marks_placeholder_commands_not_runnable(self) -> None:
         self.assertFalse(command_is_runnable("python -m tool <scenario>"))
         self.assertFalse(command_is_runnable("python -m tools.debugger watch --save-state path\\to\\state --execute"))
