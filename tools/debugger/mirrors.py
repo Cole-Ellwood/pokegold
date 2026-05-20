@@ -929,6 +929,11 @@ def content_fuzz_mirror_matches(
             scenario_ids=scenario_ids,
             runtime_observations=runtime_observations,
         )
+        required_runtime_symbols = content_fuzz_required_runtime_symbols(cases)
+        observed_runtime_symbols = observed_runtime_symbols_for_scenarios(
+            scenario_ids=scenario_ids,
+            runtime_observations=runtime_observations,
+        )
         relevant_attempts = runtime_attempts_for_scenarios(
             scenario_ids=scenario_ids,
             runtime_attempts=runtime_attempts,
@@ -947,6 +952,8 @@ def content_fuzz_mirror_matches(
             observed_sinks=observed_sinks,
             attempted_sinks=attempted_sinks,
             runtime_attempt_kinds=runtime_attempt_kinds,
+            required_runtime_symbols=required_runtime_symbols,
+            observed_runtime_symbols=observed_runtime_symbols,
         )
         commands = [
             *content_fuzz_expect_commands(source=source, cases=cases),
@@ -979,6 +986,10 @@ def content_fuzz_mirror_matches(
         )
         if route_status["runtime_attempt_kinds"]:
             evidence.append(f"runtime_attempt_kinds={','.join(route_status['runtime_attempt_kinds'])}")
+        if route_status["required_runtime_symbols"]:
+            evidence.append(f"required_runtime_symbols={','.join(route_status['required_runtime_symbols'])}")
+        if route_status["observed_runtime_symbols"]:
+            evidence.append(f"observed_runtime_symbols={','.join(route_status['observed_runtime_symbols'])}")
         gaps = []
         if route_status["mirror_status"] != "passed":
             gaps.append(
@@ -999,6 +1010,8 @@ def content_fuzz_mirror_matches(
                 "expected_sinks": expected_sinks,
                 "attempted_sinks": route_status["attempted_sinks"],
                 "observed_sinks": route_status["observed_sinks"],
+                "required_runtime_symbols": route_status["required_runtime_symbols"],
+                "observed_runtime_symbols": route_status["observed_runtime_symbols"],
                 "runtime_attempt_reports": unique_list(str(item.get("source", "")) for item in relevant_attempts if item.get("source")),
                 "runtime_attempt_kinds": route_status["runtime_attempt_kinds"],
                 "evidence": evidence,
@@ -1021,12 +1034,17 @@ def content_fuzz_runtime_route_status(
     observed_sinks: list[str],
     attempted_sinks: list[str],
     runtime_attempt_kinds: list[str],
+    required_runtime_symbols: list[str],
+    observed_runtime_symbols: list[str],
 ) -> dict[str, Any]:
     covered_sinks = [sink for sink in expected_sinks if sink in observed_sinks]
     missing_sinks = [sink for sink in expected_sinks if sink not in observed_sinks]
+    missing_runtime_symbols = [
+        symbol for symbol in required_runtime_symbols if symbol not in observed_runtime_symbols
+    ]
     attempted_expected_sinks = [sink for sink in expected_sinks if sink in attempted_sinks]
     missing_attempted_sinks = [sink for sink in expected_sinks if sink not in attempted_sinks]
-    if expected_sinks and not missing_sinks:
+    if expected_sinks and not missing_sinks and not missing_runtime_symbols:
         status = "passed"
         proof_status = "mirror_passed"
         mirror_status = "passed"
@@ -1054,6 +1072,10 @@ def content_fuzz_runtime_route_status(
     runtime_evidence_gaps = []
     if missing_sinks:
         runtime_evidence_gaps.append("Runtime observations missing expected fuzz sink(s): " + ", ".join(missing_sinks))
+    if missing_runtime_symbols:
+        runtime_evidence_gaps.append(
+            "Runtime observations missing required runtime symbol(s): " + ", ".join(missing_runtime_symbols)
+        )
     if expected_sinks and not observed_sinks and not attempted_expected_sinks:
         runtime_evidence_gaps.append("No runtime observations were supplied for the expected fuzz sink set.")
     if expected_sinks and attempted_expected_sinks and not observed_sinks:
@@ -1074,6 +1096,10 @@ def content_fuzz_runtime_route_status(
         "actual_proof_status": actual_proof_status,
         "attempted_sinks": unique_list([sink for sink in attempted_sinks if sink in set(expected_sinks)]),
         "observed_sinks": unique_list([sink for sink in observed_sinks if sink in set(expected_sinks)]),
+        "required_runtime_symbols": unique_list(required_runtime_symbols),
+        "observed_runtime_symbols": unique_list(
+            [symbol for symbol in observed_runtime_symbols if symbol in set(required_runtime_symbols)]
+        ),
         "runtime_attempt_kinds": unique_list(runtime_attempt_kinds),
         "runtime_evidence_gaps": runtime_evidence_gaps,
     }
@@ -2003,15 +2029,43 @@ def content_fuzz_case_symbols(case: dict[str, Any]) -> list[str]:
     out = [
         *string_items(case.get("symbols")),
         *string_items(case.get("related_symbols")),
+        *string_items(case.get("required_runtime_symbols")),
     ]
-    for key in ("source_symbols", "script_symbols", "trace_symbols", "watch_symbols"):
+    for key in ("source_symbols", "script_symbols", "trace_symbols", "watch_symbols", "required_runtime_symbols"):
         out.extend(string_items(runtime_targets.get(key)))
     for precondition in dict_items(case.get("state_preconditions")):
         out.extend(string_items(precondition.get("watch_symbols")))
+        out.extend(string_items(precondition.get("required_runtime_symbols")))
+        for route in event_runtime_routes_for_row(precondition):
+            out.extend(string_items(route.get("required_runtime_symbols")))
     for output in dict_items(case.get("outputs")):
         out.extend(string_items(output.get("state_symbol")))
         out.extend(string_items(output.get("producer_symbol")))
     return unique_list(out)
+
+
+def content_fuzz_required_runtime_symbols(cases: list[dict[str, Any]]) -> list[str]:
+    out: list[str] = []
+    for case in cases:
+        runtime_targets = case.get("runtime_targets") if isinstance(case.get("runtime_targets"), dict) else {}
+        out.extend(string_items(case.get("required_runtime_symbols")))
+        out.extend(string_items(runtime_targets.get("required_runtime_symbols")))
+        for precondition in dict_items(case.get("state_preconditions")):
+            out.extend(string_items(precondition.get("required_runtime_symbols")))
+            for route in event_runtime_routes_for_row(precondition):
+                out.extend(string_items(route.get("required_runtime_symbols")))
+    return unique_list(out)
+
+
+def event_runtime_routes_for_row(row: dict[str, Any]) -> list[dict[str, Any]]:
+    return [
+        route
+        for route in (
+            row.get(EVENT_RUNTIME_ROUTE_KEY),
+            row.get(EVENT_RUNTIME_ROUTE_LEGACY_KEY),
+        )
+        if isinstance(route, dict)
+    ]
 
 
 def content_fuzz_expected_sinks(cases: list[dict[str, Any]]) -> list[str]:

@@ -560,6 +560,54 @@ class EventRuntimeMaterializationTests(unittest.TestCase):
         self.assertEqual(match["observed_runtime_symbols"], ["CheckObjectTime"])
         self.assertEqual(match["runtime_evidence_gaps"], [])
 
+    def test_content_fuzz_requires_runtime_symbols_when_route_declares_consumer(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write_content_fuzz_report(root, required_runtime_symbols=("CheckObjectTime",))
+
+            report = build_compare_plan(
+                reports=("fuzz.json",),
+                runtime_observations=(
+                    {
+                        "scenario_id": "content_scenario_1_0000",
+                        "observed_sinks": ["hHours", "wTimeOfDay"],
+                    },
+                ),
+                root=root,
+            )
+
+        match = next(item for item in report["matches"] if item["id"] == "content_fuzz_behavioral_mirror")
+
+        self.assertEqual(match["mirror_status"], "inconclusive")
+        self.assertEqual(match["status"], "partial")
+        self.assertEqual(match["required_runtime_symbols"], ["CheckObjectTime"])
+        self.assertEqual(match["observed_runtime_symbols"], [])
+        self.assertIn("CheckObjectTime", match["related_symbols"])
+        self.assertTrue(any("CheckObjectTime" in gap for gap in match["runtime_evidence_gaps"]))
+
+    def test_content_fuzz_passes_required_runtime_symbols_when_instruction_evidence_observes_consumer(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write_content_fuzz_report(root, required_runtime_symbols=("CheckObjectTime",))
+
+            report = build_compare_plan(
+                reports=("fuzz.json",),
+                runtime_observations=(
+                    {
+                        "scenario_id": "content_scenario_1_0000",
+                        "observed_sinks": ["hHours", "wTimeOfDay"],
+                        "symbols": ["CheckObjectTime"],
+                    },
+                ),
+                root=root,
+            )
+
+        match = next(item for item in report["matches"] if item["id"] == "content_fuzz_behavioral_mirror")
+
+        self.assertEqual(match["mirror_status"], "passed")
+        self.assertEqual(match["observed_runtime_symbols"], ["CheckObjectTime"])
+        self.assertEqual(match["runtime_evidence_gaps"], [])
+
     def test_compare_harvests_runtime_observations_from_loaded_reports(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -752,6 +800,56 @@ def write_content_state_report(
                     "out_state": "patched.state",
                     "applied_patches": materialization["patches"] if executed else [],
                 },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+
+def write_content_fuzz_report(
+    root: Path,
+    *,
+    required_runtime_symbols: tuple[str, ...] = (),
+) -> None:
+    route = event_runtime_materialization_route(
+        scenario_id="content_scenario_1_0000",
+        scenario_type="map_object_event",
+        precondition_kind="map_position",
+        precondition_id="map_object_event_runtime_hour_17_position",
+        values={"selected_hour": 17, "runtime_hour_candidate": True},
+        watch_symbols=["hHours", "wTimeOfDay"],
+        trace_symbols=["TryObjectEvent"],
+        required_runtime_symbols=required_runtime_symbols,
+        outputs=[],
+    )
+    precondition = {
+        "id": "map_object_event_runtime_hour_17_position",
+        "kind": "map_position",
+        "watch_symbols": ["hHours", "wTimeOfDay"],
+        "required_runtime_symbols": list(required_runtime_symbols),
+        "event_runtime_materialization": route,
+        "event_runtime_materialization_route": route,
+    }
+    fuzz_case = {
+        "id": "content_scenario_1_0000_runtime_hour",
+        "fuzz_type": "map_object_event",
+        "scenario_id": "content_scenario_1_0000",
+        "scenario_type": "map_object_event",
+        "source_file": "maps/UnitMap.asm",
+        "state_preconditions": [precondition],
+        "runtime_targets": {
+            "runtime_route": "overworld_event_engine",
+            "trace_symbols": ["TryObjectEvent"],
+            "watch_symbols": ["hHours", "wTimeOfDay"],
+            "required_runtime_symbols": list(required_runtime_symbols),
+        },
+    }
+    (root / "fuzz.json").write_text(
+        json.dumps(
+            {
+                "kind": "unified_debugger_fuzz_plan",
+                "valid": True,
+                "fuzz_cases": [fuzz_case],
             }
         ),
         encoding="utf-8",

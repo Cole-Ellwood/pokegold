@@ -5494,3 +5494,46 @@ Remaining priority:
 - This prevents a generated-hour state from promoting to behavioral proof without a `CheckObjectTime` trace, but it still does not execute that trace for arbitrary maps/states.
 - Runtime-verified multi-object occupancy, big-object collision/occupancy proof, full script VM behavior under arbitrary event-engine context, pixel/audio playback mirrors, causal proof, and side-effect-complete reverse execution remain incomplete.
 - The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
+
+## Implementation Note - Runtime Consumer Requirements for Content-Fuzz Mirrors
+
+Date: 2026-05-20.
+
+Context:
+
+- The content-state mirror now refused to pass generated-hour object-event states without observing the route-declared runtime consumer symbol, but `content_fuzz_behavioral_mirror` still used only expected sink coverage.
+- For generated object-event hour fuzz cases, observing patched `hHours`/`wTimeOfDay` sinks is not enough to prove the event route consumed those values through `CheckObjectTime`.
+- This left a second proof-promotion boundary at compare/report consumers of content fuzz manifests.
+
+References used:
+
+- Local engine source: `home/map_objects.asm:CheckObjectTime`.
+- Local RTC source: `engine/rtc/rtc.asm:GetTimeOfDay`.
+- pret pokegold upstream source cross-check for `CheckObjectTime`: `https://raw.githubusercontent.com/pret/pokegold/master/home/map_objects.asm`
+
+Implemented fix:
+
+- `tools/debugger/mirrors.py`
+  - aggregates `required_runtime_symbols` from content fuzz cases, runtime targets, state preconditions, and event-runtime materialization routes.
+  - keeps content-fuzz behavioral mirrors inconclusive when all expected sinks are observed but required runtime symbols are missing.
+  - exposes `required_runtime_symbols`, `observed_runtime_symbols`, and explicit runtime evidence gaps in content-fuzz compare output.
+  - includes required runtime symbols in content-fuzz related symbols so localization/trace consumers can see the required consumer.
+- `tools/debugger/catalog.py`
+  - updates the differential mirror blocker wording to say generated-hour object-event content-state and content-fuzz mirrors both require route-declared runtime consumer symbols such as `CheckObjectTime` before passing.
+- `tools/debugger/tests/test_event_runtime_materialization.py`
+  - verifies content-fuzz mirrors do not pass from sink coverage alone when `CheckObjectTime` is required.
+  - verifies they pass once runtime evidence observes both the sinks and the required runtime consumer symbol.
+
+Validation after patch:
+
+- Focused content-fuzz runtime-consumer regressions: 2 passed.
+- Adjacent event-runtime/content-fuzz mirror regressions: 28 passed.
+- Full debugger unittest discovery: 521 passed.
+- `python -m tools.debugger audit`: passed as a command, still `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- `python -m py_compile tools\debugger\mirrors.py tools\debugger\catalog.py tools\debugger\tests\test_event_runtime_materialization.py`: passed, with isolated `PYTHONPYCACHEPREFIX=.local\tmp\pycompile_cache` during the final syntax check.
+
+Remaining priority:
+
+- This prevents content fuzz manifests from promoting generated-hour behavioral proof without a `CheckObjectTime` observation, but it still does not execute the trace for arbitrary event-engine states.
+- Runtime-verified multi-object occupancy, big-object collision/occupancy proof, full script VM behavior under arbitrary event-engine context, pixel/audio playback mirrors, causal proof, side-effect-complete reverse execution, and the non-mutating hardware event recorder remain incomplete.
+- The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
