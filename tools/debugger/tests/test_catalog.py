@@ -28546,6 +28546,91 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("wTilemap", ranked_pass["related_symbols"])
         self.assertEqual(impact_pass["proof_status"], "mirror_passed")
 
+    def test_compare_output_sink_mirror_keeps_snapshot_hardware_boundary_visible(self) -> None:
+        digest = hashlib.sha256(bytes(range(12))).hexdigest()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "content_state.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_content_state_materialization",
+                        "valid": True,
+                        "executed": False,
+                        "materializations": [
+                            {
+                                "scenario_id": "content_scenario_22_0000",
+                                "scenario_type": "ui_tilemap_update",
+                                "precondition_kind": "ui_output_sink",
+                                "status": "planned",
+                                "source_file": "engine/menus/unit_menu.asm",
+                                "outputs": [
+                                    {
+                                        "kind": "ui_tilemap_output",
+                                        "state_symbol": "wTilemap",
+                                        "size": 1,
+                                        "producer_symbol": "PlaceString",
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            (root / "visual_snapshot.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_visual_snapshot",
+                        "valid": True,
+                        "executed": True,
+                        "proof_status": "runtime_observed",
+                        "hardware_behavior_proven": False,
+                        "hardware_proof_status": "not_proven",
+                        "screen_frame_count": 1,
+                        "framebuffer": f"sha256:{digest}",
+                        "screen_frame": {
+                            "kind": "visual_framebuffer_snapshot",
+                            "framebuffer": f"sha256:{digest}",
+                            "sha256": digest,
+                            "byte_count": 12,
+                        },
+                        "surfaces": [
+                            {
+                                "kind": "symbol_surface",
+                                "name": "wTilemap",
+                                "address": "C3A0",
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            compare = build_compare_plan(reports=("content_state.json", "visual_snapshot.json"), root=root)
+            (root / "compare.json").write_text(json.dumps(compare), encoding="utf-8")
+            ranked = rank_findings(reports=("compare.json",), root=root)
+            impact = build_impact_report(reports=("compare.json",), root=root)
+
+        match = next(item for item in compare["matches"] if item["id"] == "content_output_behavioral_mirror")
+        ranked_pass = next(item for item in ranked["findings"] if item["type"] == "mirror_passed")
+        impact_pass = next(item for item in impact["items"] if item["type"] == "mirror_passed")
+
+        self.assertEqual(match["status"], "passed")
+        self.assertEqual(match["mirror_status"], "passed")
+        self.assertEqual(match["proof_status"], "runtime_observed")
+        self.assertEqual(match["actual_proof_status"], "runtime_observed")
+        self.assertFalse(match["hardware_behavior_proven"])
+        self.assertEqual(match["hardware_proof_statuses"], ["not_proven"])
+        self.assertEqual(match["emulator_observed_runtime_kinds"], ["visual_snapshot"])
+        self.assertEqual(match["non_snapshot_covered_symbols"], [])
+        self.assertIn("hardware_behavior_proven=False", match["evidence"])
+        self.assertIn("proof_downgrade_reason=emulator_snapshot_not_hardware_proof", match["evidence"])
+        self.assertTrue(any("hardware PPU/APU behavior remains unproven" in gap for gap in match["runtime_evidence_gaps"]))
+        self.assertEqual(ranked_pass["proof_status"], "runtime_observed")
+        self.assertIn("hardware_behavior_proven=False", ranked_pass["evidence"])
+        self.assertEqual(impact_pass["proof_status"], "runtime_observed")
+        self.assertIn("hardware_behavior_proven=False", impact_pass["evidence"])
+
     def test_compare_output_sink_mirror_does_not_pass_from_compact_effect_index(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

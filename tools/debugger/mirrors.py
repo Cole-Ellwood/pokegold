@@ -473,6 +473,8 @@ def content_state_mirror_matches(
                     "covered_output_count": mirror_status["covered_count"],
                     "attempted_output_count": mirror_status["attempted_count"],
                     "output_count": mirror_status["output_count"],
+                    "non_snapshot_covered_symbols": mirror_status["non_snapshot_covered_symbols"],
+                    "non_snapshot_covered_addresses": mirror_status["non_snapshot_covered_addresses"],
                     "attempted_symbols": mirror_status["attempted_symbols"],
                     "attempted_addresses": mirror_status["attempted_addresses"],
                     "runtime_reports": mirror_status["runtime_reports"],
@@ -481,6 +483,11 @@ def content_state_mirror_matches(
                     "runtime_attempt_kinds": mirror_status["runtime_attempt_kinds"],
                     "weak_runtime_reports": mirror_status["weak_runtime_reports"],
                     "weak_runtime_kinds": mirror_status["weak_runtime_kinds"],
+                    "hardware_behavior_proven": mirror_status.get("hardware_behavior_proven"),
+                    "hardware_proof_statuses": mirror_status.get("hardware_proof_statuses", []),
+                    "hardware_proof_boundaries": mirror_status.get("hardware_proof_boundaries", []),
+                    "emulator_observed_runtime_kinds": mirror_status.get("emulator_observed_runtime_kinds", []),
+                    "proof_downgrade_reason": mirror_status.get("proof_downgrade_reason", ""),
                     "evidence": [
                         f"report={source}",
                         f"scenarios={len(scenario_ids)}",
@@ -1336,6 +1343,11 @@ def content_output_mirror_status(
     requested_symbols = unique_list(output_symbols)
     requested_addresses = unique_addresses(output_addresses)
     strong_evidence = [item for item in runtime_evidence if output_runtime_evidence_is_strong(item)]
+    non_snapshot_evidence = [
+        item
+        for item in strong_evidence
+        if str(item.get("kind", "")) not in SNAPSHOT_RUNTIME_KINDS
+    ]
     weak_evidence = [
         item
         for item in runtime_evidence
@@ -1358,6 +1370,22 @@ def content_output_mirror_status(
     )
     covered_symbols = [symbol for symbol in requested_symbols if symbol in observed_symbols]
     covered_addresses = [address for address in requested_addresses if normalized_address(address) in {normalized_address(item) for item in observed_addresses}]
+    non_snapshot_symbols = unique_list(
+        symbol
+        for item in non_snapshot_evidence
+        for symbol in scalar_string_items(item.get("symbols"))
+    )
+    non_snapshot_addresses = unique_addresses(
+        address
+        for item in non_snapshot_evidence
+        for address in scalar_string_items(item.get("addresses"))
+    )
+    non_snapshot_covered_symbols = [symbol for symbol in requested_symbols if symbol in non_snapshot_symbols]
+    non_snapshot_covered_addresses = [
+        address
+        for address in requested_addresses
+        if normalized_address(address) in {normalized_address(item) for item in non_snapshot_addresses}
+    ]
     attempted_symbols, attempted_addresses = content_output_attempted_sinks(
         requested_symbols=requested_symbols,
         requested_addresses=requested_addresses,
@@ -1365,12 +1393,20 @@ def content_output_mirror_status(
     )
     output_count = len(requested_symbols) + len(requested_addresses)
     covered_count = len(covered_symbols) + len(covered_addresses)
+    non_snapshot_covered_count = len(non_snapshot_covered_symbols) + len(non_snapshot_covered_addresses)
     attempted_count = len(attempted_symbols) + len(attempted_addresses)
+    hardware_summary = runtime_snapshot_hardware_summary(strong_evidence, enabled=True)
+    snapshot_runtime_required = bool(
+        hardware_summary
+        and hardware_summary.get("hardware_behavior_proven") is False
+        and covered_count == output_count
+        and non_snapshot_covered_count < output_count
+    )
     if output_count and covered_count == output_count:
         status = "passed"
-        proof_status = "mirror_passed"
+        proof_status = "runtime_observed" if snapshot_runtime_required else "mirror_passed"
         mirror_status = "passed"
-        actual_proof_status = "observed"
+        actual_proof_status = "runtime_observed" if snapshot_runtime_required else "observed"
     elif covered_count:
         status = "partial"
         proof_status = "instruction_observed"
@@ -1396,6 +1432,8 @@ def content_output_mirror_status(
         "attempted_count": attempted_count,
         "covered_symbols": covered_symbols,
         "covered_addresses": covered_addresses,
+        "non_snapshot_covered_symbols": non_snapshot_covered_symbols,
+        "non_snapshot_covered_addresses": non_snapshot_covered_addresses,
         "attempted_symbols": attempted_symbols,
         "attempted_addresses": attempted_addresses,
         "runtime_reports": unique_list(item["source"] for item in strong_evidence if item.get("source")),
@@ -1404,10 +1442,12 @@ def content_output_mirror_status(
         "runtime_attempt_kinds": unique_list(str(item.get("runtime_kind", "")) for item in runtime_attempts if item.get("runtime_kind")),
         "weak_runtime_reports": unique_list(item["source"] for item in weak_evidence if item.get("source")),
         "weak_runtime_kinds": unique_list(item["kind"] for item in weak_evidence if item.get("kind")),
+        **hardware_summary,
         "evidence": unique_list(
             [
                 *[f"symbol_observed={symbol}" for symbol in covered_symbols],
                 *[f"address_observed={address}" for address in covered_addresses],
+                *(runtime_snapshot_hardware_evidence(hardware_summary) if hardware_summary else []),
                 *[f"symbol_attempted={symbol}" for symbol in attempted_symbols],
                 *[f"address_attempted={address}" for address in attempted_addresses],
             ]
@@ -1420,7 +1460,8 @@ def content_output_mirror_status(
             covered_addresses=covered_addresses,
             attempted_symbols=attempted_symbols,
             attempted_addresses=attempted_addresses,
-        ),
+        )
+        + scalar_string_items(hardware_summary.get("runtime_evidence_gaps")),
     }
 
 
@@ -1493,6 +1534,8 @@ def content_output_runtime_evidence_gaps(
 def content_output_mirror_confidence(mirror_status: dict[str, Any]) -> str:
     status = str(mirror_status.get("status", "planned"))
     if status == "passed":
+        if mirror_status.get("hardware_behavior_proven") is False:
+            return "high for emulator-observed output sink coverage; hardware PPU/APU behavior remains unproven"
         return "high for output sink write coverage in supplied runtime evidence; semantic correctness still depends on the requested expectation"
     if status == "failed":
         return "high for the attempted runtime route not observing requested output sink changes; semantic root cause still needs localization"

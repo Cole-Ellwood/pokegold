@@ -5537,3 +5537,45 @@ Remaining priority:
 - This prevents content fuzz manifests from promoting generated-hour behavioral proof without a `CheckObjectTime` observation, but it still does not execute the trace for arbitrary event-engine states.
 - Runtime-verified multi-object occupancy, big-object collision/occupancy proof, full script VM behavior under arbitrary event-engine context, pixel/audio playback mirrors, causal proof, side-effect-complete reverse execution, and the non-mutating hardware event recorder remain incomplete.
 - The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
+
+## Implementation Note - Snapshot Hardware Boundary for Output-Sink Mirrors
+
+Date: 2026-05-20.
+
+Context:
+
+- Visual/audio expectation mirrors already kept PyBoy framebuffer and sound-buffer digest evidence distinct from hardware proof.
+- Content output-sink mirrors could also consume visual/audio snapshot runtime evidence, but their match shape did not carry the same hardware downgrade fields.
+- That left a UI/report risk where a passed output-sink mirror backed only by PyBoy snapshot evidence could be overread as hardware PPU/APU behavior proof.
+
+References used:
+
+- Local visual/audio snapshot contracts in `tools/debugger/visual_snapshot.py` and `tools/debugger/audio_snapshot.py`.
+- Existing compare snapshot boundary handling in `tools/debugger/mirrors.py`.
+
+Implemented fix:
+
+- `tools/debugger/mirrors.py`
+  - distinguishes non-snapshot runtime coverage from visual/audio snapshot coverage for content output-sink mirrors.
+  - keeps snapshot-only output-sink passes at `proof_status=runtime_observed` and `actual_proof_status=runtime_observed` instead of `mirror_passed`/`observed`.
+  - exposes `hardware_behavior_proven`, `hardware_proof_statuses`, `hardware_proof_boundaries`, `emulator_observed_runtime_kinds`, `proof_downgrade_reason`, and `non_snapshot_covered_*` fields on output-sink mirror matches.
+  - preserves `mirror_status=passed` when the requested output sink was observed, while making the hardware boundary explicit in evidence and runtime evidence gaps.
+- `tools/debugger/catalog.py`
+  - updates the differential mirror blocker wording so output-sink mirrors promote to strong passed mirrors only for non-snapshot runtime evidence, while snapshot-only evidence remains runtime-observed/hardware-unproven.
+- `tools/debugger/tests/test_catalog.py`
+  - verifies effect-trace output-sink evidence still promotes to `mirror_passed`.
+  - verifies snapshot-only output-sink evidence remains `runtime_observed`, carries `hardware_behavior_proven=false`, and propagates the downgrade through rank and impact reports.
+
+Validation after patch:
+
+- Focused snapshot/output-sink boundary regressions: 4 passed.
+- Adjacent output-sink mirror regressions: 10 passed.
+- Full debugger unittest discovery: 522 passed.
+- `python -m tools.debugger audit`: passed as a command, still `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- `PYTHONPYCACHEPREFIX=.local\tmp\pycompile_cache python -m py_compile tools\debugger\mirrors.py tools\debugger\catalog.py tools\debugger\tests\test_catalog.py`: passed.
+
+Remaining priority:
+
+- This is a report/proof-boundary fence only; it does not add pixel-accurate PPU playback, full APU playback/mixer proof, or hardware behavior validation for PyBoy snapshot evidence.
+- Full script VM behavior under arbitrary event-engine state, runtime-verified object occupancy, causal proof, side-effect-complete reverse execution, and the non-mutating hardware event recorder remain incomplete.
+- The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
