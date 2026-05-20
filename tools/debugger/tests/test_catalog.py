@@ -268,6 +268,37 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertTrue(case["hardware_passed"])
         self.assertFalse(report["passed"])
 
+    def test_hardware_regression_gate_rejects_case_pass_without_hardware_proof(self) -> None:
+        weak = {
+            "kind": "dedicated_hardware_regression_result",
+            "valid": True,
+            "cases": [
+                {
+                    "id": "oam_dma_160_mcycle_timing",
+                    "passed": True,
+                    "hardware_behavior_proven": False,
+                    "detail": "emulator-only timing check",
+                }
+            ],
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "weak.json").write_text(json.dumps(weak), encoding="utf-8")
+            report = build_hardware_regression_report(reports=("weak.json",), root=root)
+
+        case = next(case for case in report["cases"] if case["id"] == "oam_dma_160_mcycle_timing")
+        weak_evidence = next(
+            item
+            for item in case["evidence"]
+            if item["class"] == "explicit_hardware_case_result"
+        )
+
+        self.assertFalse(report["passed"])
+        self.assertFalse(case["hardware_passed"])
+        self.assertEqual(case["proof_status"], "planned_only")
+        self.assertEqual(weak_evidence["status"], "declared_pass_without_hardware_proof")
+        self.assertIn("hardware_behavior_proven=true is missing", weak_evidence["detail"])
+
     def test_cli_hardware_regression_gate_writes_json_and_strict_fails(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             out = Path(tmp) / "hardware.json"

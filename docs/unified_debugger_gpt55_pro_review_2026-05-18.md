@@ -4882,3 +4882,44 @@ Remaining priority from Pro:
 - This closes another UI/report proof-promotion leak, but it does not implement pixel-accurate graphics/UI behavior, full audio playback/mixer behavior, arbitrary script/event runtime generation, side-effect-complete reverse execution, or subsystem-complete causal proof.
 - PyBoy framebuffer and sound-buffer evidence remains useful runtime observation, not hardware proof.
 - The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
+
+## Implementation Note - Hardware Gate Explicit Evidence Proof Boundary
+
+Date: 2026-05-20.
+
+Context:
+
+- The Pan Docs hardware regression gate accepts external/dedicated case-result reports so future hardware-event recorders or test ROM runners can feed it.
+- That import path must not let a generic `passed=true` case result close a hardware side-effect gate unless the result also explicitly proves hardware behavior.
+- This matters because the top blocker is specifically about TIMA overflow cycles, DMA timing/bus restrictions, interrupt entry, boot-ROM end state, and LCD mode edges; emulator-only or modeled checks should remain evidence, not proof.
+
+References used:
+
+- Pan Docs OAM DMA timing and bus conflict model: `https://gbdev.io/pandocs/OAM_DMA_Transfer.html`
+- Pan Docs TIMA overflow A/B-cycle behavior: `https://gbdev.io/pandocs/Timer_Obscure_Behaviour.html`
+- Pan Docs CGB VRAM DMA timing model: `https://gbdev.io/pandocs/CGB_Registers.html#ff51ff55--hdma1hdma5-vram-dma`
+- PyBoy API docs for current emulator/runtime integration context: `https://docs.pyboy.dk/`
+
+Implemented fix:
+
+- `tools/debugger/hardware_regression.py`
+  - requires imported per-case `passed`/`hardware_passed` records to also carry `hardware_behavior_proven=true`, `hardware_event_observed=true`, or an explicit hardware-event evidence marker before classifying them as `explicit_hardware_case_pass`.
+  - records weak case results as `explicit_hardware_case_result` with `status=declared_pass_without_hardware_proof` so they remain visible evidence without satisfying the gate.
+- `tools/debugger/catalog.py`
+  - updates the top blocker wording to state that dedicated case-pass evidence must carry `hardware_behavior_proven=true`.
+- `tools/debugger/tests/test_catalog.py`
+  - adds a regression proving a `passed=true` OAM DMA case without hardware proof stays `planned_only` and does not close the gate.
+
+Validation after patch:
+
+- Focused hardware-gate proof-boundary regressions: 4 passed.
+- `python -m py_compile tools\debugger\hardware_regression.py tools\debugger\catalog.py tools\debugger\tests\test_catalog.py`: passed.
+- Full debugger unittest discovery: 500 passed.
+- `python -m tools.debugger audit`: passed as a command, still `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- `git diff --check`: passed; it only reported existing CRLF normalization warnings in unrelated dirty files.
+
+Remaining priority from Pro:
+
+- This closes an import/proof-promotion leak, but it still does not implement the dedicated Pan Docs runtime case runner for TIMA A/B-cycle behavior, OAM DMA timing and RAM-access restriction, GP/HBlank VRAM DMA timing, interrupt entry, boot-ROM end state, or LCD dot-mode edges.
+- The hardware gate remains intentionally blocking until those side effects have explicit runtime hardware-event evidence or proven dedicated case results.
+- The whole-ROM proof-substrate goal remains incomplete and `ready=False`.

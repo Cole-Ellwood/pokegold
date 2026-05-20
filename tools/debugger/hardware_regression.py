@@ -358,13 +358,23 @@ def explicit_case_result_evidence(case: dict[str, Any], report: dict[str, Any], 
     for item in [*dict_items(report.get("cases")), *dict_items(report.get("hardware_regression_cases"))]:
         if str(item.get("id", "")) != case["id"]:
             continue
-        passed = bool(item.get("hardware_passed") or item.get("passed"))
+        declared_pass = bool(item.get("hardware_passed") or item.get("passed"))
+        passed = declared_pass and explicit_case_item_hardware_proven(item)
+        if declared_pass and not passed:
+            status = "declared_pass_without_hardware_proof"
+            detail = (
+                str(item.get("detail") or item.get("title") or case["title"])
+                + "; ignored as a hardware pass because hardware_behavior_proven=true is missing"
+            )
+        else:
+            status = "passed" if passed else str(item.get("gate_status", "not_passed"))
+            detail = str(item.get("detail") or item.get("title") or case["title"])
         out.append(
             {
                 "class": "explicit_hardware_case_pass" if passed else "explicit_hardware_case_result",
-                "status": "passed" if passed else str(item.get("gate_status", "not_passed")),
+                "status": status,
                 "source": source,
-                "detail": str(item.get("detail") or item.get("title") or case["title"]),
+                "detail": detail,
             }
         )
     for case_id in string_items(report.get("hardware_regression_case_ids")):
@@ -390,6 +400,21 @@ def explicit_case_result_evidence(case: dict[str, Any], report: dict[str, Any], 
             }
         )
     return out
+
+
+def explicit_case_item_hardware_proven(item: dict[str, Any]) -> bool:
+    if item.get("hardware_behavior_proven") is True:
+        return True
+    if item.get("hardware_event_observed") is True:
+        return True
+    proof_status = str(item.get("proof_status") or "")
+    evidence_source = str(item.get("evidence_source") or "")
+    evidence_status = str(item.get("evidence_status") or "")
+    return (
+        proof_status in EXPLICIT_HARDWARE_EVIDENCE
+        or evidence_source in EXPLICIT_HARDWARE_EVIDENCE
+        or evidence_status in EXPLICIT_HARDWARE_EVIDENCE
+    )
 
 
 def hook_order_case_evidence(case: dict[str, Any], report: dict[str, Any], *, source: str) -> list[dict[str, Any]]:
