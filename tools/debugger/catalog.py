@@ -372,6 +372,7 @@ def build_capability_report(root: Path = ROOT) -> dict[str, Any]:
             ),
             commands=(
                 "python -m tools.debugger hardware-regression-gate --execute",
+                "python -m tools.debugger hardware-event-stream --execute",
                 "python -m tools.debugger hook-order-probe --execute",
                 "python -m tools.debugger setup --symbol wCurDamage --watch-address D141 --watch-size 2",
                 "python -m tools.debugger replay --symbol wCurDamage",

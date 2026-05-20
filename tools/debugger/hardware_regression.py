@@ -264,6 +264,12 @@ def build_hardware_regression_report(
         generated_reports.append({"source": "<executed-hook-order-probe>", "data": hook_order})
         if not hook_order.get("valid"):
             warnings.extend(str(error) for error in hook_order.get("errors", []))
+        from .hardware_event_stream import build_hardware_event_stream_report
+
+        event_stream = build_hardware_event_stream_report(execute=True, rom_path=rom_path, root=root)
+        generated_reports.append({"source": "<executed-hardware-event-stream>", "data": event_stream})
+        if not event_stream.get("valid"):
+            warnings.extend(str(error) for error in event_stream.get("errors", []))
 
     all_reports = [*loaded_reports, *generated_reports]
     pyboy_source_gaps = scan_pyboy_source_gaps()
@@ -328,6 +334,7 @@ def build_hardware_regression_report(
         "warnings": warnings,
         "commands": [
             "python -m tools.debugger hardware-regression-gate --execute",
+            "python -m tools.debugger hardware-event-stream --execute",
             "python -m tools.debugger hook-order-probe --execute",
         ],
         "known_limits": [

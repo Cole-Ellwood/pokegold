@@ -13,6 +13,7 @@ from .dynamic_taint import build_dynamic_taint_report
 from .expect import build_expectation_report
 from .fuzz import build_fuzz_plan
 from .generate import build_generation_plan
+from .hardware_event_stream import build_hardware_event_stream_report
 from .hardware_regression import build_hardware_regression_report
 from .ingest import ingest_artifacts
 from .instruction_trace import build_instruction_trace_report
@@ -41,6 +42,7 @@ __all__ = [
     "build_expectation_report",
     "build_fuzz_plan",
     "build_generation_plan",
+    "build_hardware_event_stream_report",
     "build_hardware_regression_report",
     "build_gate_plan",
     "build_instruction_trace_report",

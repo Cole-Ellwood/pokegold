@@ -31,6 +31,7 @@ from tools.debugger.explain import build_explanation_report
 from tools.debugger.expect import build_expectation_report
 from tools.debugger.fuzz import build_fuzz_plan
 from tools.debugger.generate import build_generation_plan
+from tools.debugger.hardware_event_stream import build_hardware_event_stream_report
 from tools.debugger.hardware_regression import build_hardware_regression_report
 from tools.debugger.hook_order import build_hook_order_probe_report
 from tools.debugger.impact import build_impact_report, merge_items
@@ -159,6 +160,12 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("hardware-gated effect-trace side effects and bank-unverified watch hits", gap_text)
         self.assertIn(
             "python -m tools.debugger hardware-regression-gate --execute",
+            next(
+                capability for capability in report["capabilities"] if capability["id"] == "whole_rom_replay_localization"
+            )["commands"],
+        )
+        self.assertIn(
+            "python -m tools.debugger hardware-event-stream --execute",
             next(
                 capability for capability in report["capabilities"] if capability["id"] == "whole_rom_replay_localization"
             )["commands"],
@@ -547,6 +554,140 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertFalse(case["hardware_passed"])
         self.assertEqual(case["hardware_proof_fact_count"], 0)
         self.assertEqual(event_evidence["status"], "event_stream_without_hardware_proof")
+
+    def test_hardware_event_stream_probe_reports_missing_recorder_without_proof(self) -> None:
+        class FakePyBoy:
+            mb = object()
+
+            def tick(self, *_args: Any) -> bool:
+                return True
+
+            def stop(self, *_args: Any, **_kwargs: Any) -> None:
+                return None
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "probe.gbc").write_bytes(b"\0" * 0x8000)
+            with patch("tools.debugger.hardware_event_stream.trace_runtime.open_pyboy", return_value=FakePyBoy()):
+                report = build_hardware_event_stream_report(execute=True, rom_path="probe.gbc", root=root)
+
+        self.assertTrue(report["valid"])
+        self.assertTrue(report["executed"])
+        self.assertFalse(report["recorder_available"])
+        self.assertFalse(report["hardware_behavior_proven"])
+        self.assertEqual(report["proof_status"], "planned_only")
+        self.assertEqual(report["event_count"], 0)
+        self.assertIn("no supported non-mutating hardware event recorder", report["warnings"][0])
+
+    def test_hardware_event_stream_probe_normalizes_non_mutating_recorder_events(self) -> None:
+        class FakeRecorder:
+            non_mutating_event_recorder = True
+
+            def __init__(self) -> None:
+                self.started = False
+                self.stopped = False
+                self.events = [
+                    {"event_type": "oam-dma-start", "seq": 1},
+                    {"event_type": "oam_dma_copy", "seq": 2},
+                    {"event_type": "oam_dma_end", "seq": 3},
+                    {"event_type": "elapsed_160_mcycles", "seq": 4},
+                ]
+
+            def start(self) -> None:
+                self.started = True
+
+            def stop(self) -> None:
+                self.stopped = True
+
+        class FakePyBoy:
+            def __init__(self) -> None:
+                self.hardware_event_recorder = FakeRecorder()
+
+            def tick(self, *_args: Any) -> bool:
+                return True
+
+            def stop(self, *_args: Any, **_kwargs: Any) -> None:
+                return None
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "probe.gbc").write_bytes(b"\0" * 0x8000)
+            with patch("tools.debugger.hardware_event_stream.trace_runtime.open_pyboy", return_value=FakePyBoy()):
+                report = build_hardware_event_stream_report(execute=True, rom_path="probe.gbc", frames=3, root=root)
+
+        self.assertTrue(report["valid"])
+        self.assertTrue(report["recorder_available"])
+        self.assertTrue(report["non_mutating_event_recorder"])
+        self.assertTrue(report["hardware_behavior_proven"])
+        self.assertEqual(report["executed_frames"], 3)
+        self.assertEqual(report["event_count"], 4)
+        self.assertEqual(report["events"][0]["event_type"], "oam_dma_start")
+        self.assertIn("oam_dma_160_mcycle_timing", report["events"][0]["hardware_regression_case_ids"])
+        coverage = next(item for item in report["case_event_coverage"] if item["case_id"] == "oam_dma_160_mcycle_timing")
+        self.assertTrue(coverage["complete"])
+
+    def test_hardware_regression_execute_imports_hardware_event_stream_probe(self) -> None:
+        class FakeRecorder:
+            non_mutating_event_recorder = True
+            events = [
+                {"event_type": "interrupt_enter"},
+                {"event_type": "stack_write"},
+            ]
+
+        class FakePyBoy:
+            def __init__(self) -> None:
+                self.hardware_event_recorder = FakeRecorder()
+
+            def tick(self, *_args: Any) -> bool:
+                return True
+
+            def stop(self, *_args: Any, **_kwargs: Any) -> None:
+                return None
+
+        hook_order = {
+            "kind": "unified_debugger_hook_order_probe",
+            "valid": True,
+            "passed": False,
+            "event_matrix": [],
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "probe.gbc").write_bytes(b"\0" * 0x8000)
+            with patch("tools.debugger.hardware_regression.build_hook_order_probe_report", return_value=hook_order):
+                with patch("tools.debugger.hardware_event_stream.trace_runtime.open_pyboy", return_value=FakePyBoy()):
+                    report = build_hardware_regression_report(execute=True, rom_path="probe.gbc", root=root)
+
+        case = next(case for case in report["cases"] if case["id"] == "interrupt_entry_stack_writes_current_pc")
+
+        self.assertEqual(report["generated_report_count"], 2)
+        self.assertTrue(any(item["kind"] == "unified_debugger_hardware_event_stream" for item in report["generated_reports"]))
+        self.assertEqual(case["gate_status"], "passed")
+        self.assertTrue(case["hardware_passed"])
+        self.assertEqual(case["hardware_proof_facts"][0]["fact_type"], "non_mutating_hardware_event_stream_case_proof")
+        self.assertFalse(report["passed"])
+
+    def test_cli_hardware_event_stream_writes_json_report(self) -> None:
+        class FakePyBoy:
+            def tick(self, *_args: Any) -> bool:
+                return True
+
+            def stop(self, *_args: Any, **_kwargs: Any) -> None:
+                return None
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            rom = root / "probe.gbc"
+            out = root / "events.json"
+            rom.write_bytes(b"\0" * 0x8000)
+            with patch("tools.debugger.hardware_event_stream.trace_runtime.open_pyboy", return_value=FakePyBoy()):
+                with redirect_stdout(io.StringIO()):
+                    code = debugger_main(["hardware-event-stream", "--execute", "--rom", str(rom), "--json-out", str(out)])
+            data = json.loads(out.read_text(encoding="utf-8"))
+
+        self.assertEqual(code, 0)
+        self.assertEqual(data["kind"], "unified_debugger_hardware_event_stream")
+        self.assertTrue(data["executed"])
+        self.assertFalse(data["hardware_behavior_proven"])
 
     def test_hardware_regression_gate_rejects_case_pass_without_hardware_proof(self) -> None:
         weak = {

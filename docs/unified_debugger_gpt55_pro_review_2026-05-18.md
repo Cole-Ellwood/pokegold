@@ -5352,3 +5352,56 @@ Remaining priority from Pro:
 - This creates the report contract needed by a non-mutating event recorder, but it still does not implement the recorder inside PyBoy/CPU/DMA/interrupt execution.
 - The live hardware gate remains blocked because stock PyBoy supplies hook-matrix observations and source-gap scans, not proof-grade event streams for TIMA, DMA, interrupt, boot-ROM, or LCD cases.
 - The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
+
+## Implementation Note - Executable Hardware Event Stream Probe
+
+Date: 2026-05-20.
+
+Context:
+
+- The gate could consume `unified_debugger_hardware_event_stream` reports, but the debugger had no executable route to ask the active PyBoy runtime whether such a recorder exists.
+- That left the strategic PyBoy fork direction only as an import contract. The proof substrate needs a command that stock PyBoy can run and truthfully report "no proof-grade recorder here", while an instrumented fork can feed case events into the Pan Docs gate.
+
+References used:
+
+- PyBoy API docs for hooks and the opcode-replacement warning: `https://docs.pyboy.dk/index.html`
+- Pan Docs OAM DMA timing and bus restrictions: `https://gbdev.io/pandocs/OAM_DMA_Transfer.html`
+- Pan Docs interrupt entry stack/PC behavior: `https://gbdev.io/pandocs/Interrupts.html`
+
+Implemented fix:
+
+- `tools/debugger/hardware_event_stream.py`
+  - adds `build_hardware_event_stream_report()` and the report kind `unified_debugger_hardware_event_stream`.
+  - probes `pyboy.hardware_event_recorder` or `pyboy.mb.hardware_event_recorder`.
+  - accepts only recorders marked `non_mutating_event_recorder` / `non_mutating` / `recorder_kind=non_mutating_event_recorder` as proof-grade.
+  - normalizes recorder events to stable `event_type` values and infers candidate Pan Docs case ids from the required event types.
+  - reports stock PyBoy as valid executed evidence with `recorder_available=false`, `hardware_behavior_proven=false`, and `proof_status=planned_only`.
+- `tools/debugger/__main__.py` and `tools/debugger/__init__.py`
+  - add `python -m tools.debugger hardware-event-stream --execute`.
+  - add a concise text formatter that makes missing-recorder status visible.
+- `tools/debugger/hardware_regression.py`
+  - runs the hardware event stream probe during `hardware-regression-gate --execute` in addition to the hook-order matrix.
+  - includes the generated event-stream report in gate evidence, while stock PyBoy still contributes no hardware proof facts.
+- `tools/debugger/catalog.py`
+  - adds the event-stream probe command to the whole-ROM replay/localization capability.
+- `tools/debugger/tests/test_catalog.py`
+  - verifies missing recorder stays planned-only.
+  - verifies a fake proof-grade recorder normalizes OAM DMA events into complete case coverage.
+  - verifies `hardware-regression-gate --execute` imports the event-stream probe and can pass exactly the interrupt-entry case when a fake non-mutating recorder emits `interrupt_enter` and `stack_write`.
+  - verifies the CLI writes a JSON event-stream report.
+
+Validation after patch:
+
+- Focused hardware event-stream probe regressions: 5 passed.
+- `python -m tools.debugger hardware-event-stream --execute`: passed as a command; reported `recorder_available=false`, `hardware_behavior_proven=false`, and `proof=planned_only` on stock PyBoy.
+- `python -m tools.debugger hardware-regression-gate --execute`: passed as a command, still intentionally `passed=False`; reported 0/10 cases passing, 10 blocking cases, 4 runtime-observed emulator cases, 0 hardware-proof cases, and 10 static-blocker cases.
+- Full debugger unittest discovery: 516 passed.
+- `python -m tools.debugger audit`: passed as a command, still `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- `PYTHONPYCACHEPREFIX=.local\tmp\pycompile_cache python -m py_compile tools\debugger\hardware_event_stream.py tools\debugger\hardware_regression.py tools\debugger\__main__.py tools\debugger\__init__.py tools\debugger\catalog.py tools\debugger\tests\test_catalog.py`: passed. A first plain `py_compile` attempt hit a Windows pycache rename permission error in `tools\debugger\tests\__pycache__`, so syntax was verified with an isolated pycache prefix.
+- `git diff --check`: passed; it only reported existing CRLF normalization warnings in unrelated dirty files.
+
+Remaining priority from Pro:
+
+- This adds the executable integration point for a non-mutating recorder, but stock PyBoy still lacks that recorder and still uses opcode-replacement hooks for debugger callbacks.
+- The next strategic implementation step remains the PyBoy fork/instrumentation layer that emits `before_execute`, `after_execute`, `interrupt_enter`, `stack_write`, `oam_dma_copy`, and `hdma_block_copy` events from inside CPU/interrupt/DMA execution.
+- The whole-ROM proof-substrate goal remains incomplete and `ready=False`.

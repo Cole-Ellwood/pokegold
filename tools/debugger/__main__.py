@@ -19,6 +19,7 @@ from .explain import build_explanation_report
 from .expect import build_expectation_report
 from .fuzz import build_fuzz_plan
 from .generate import build_generation_plan
+from .hardware_event_stream import build_hardware_event_stream_report
 from .hardware_regression import build_hardware_regression_report
 from .hook_order import build_hook_order_probe_report
 from .impact import build_impact_report
@@ -339,6 +340,13 @@ def build_parser() -> argparse.ArgumentParser:
     hook_order_probe.add_argument("--frames", type=int, default=90)
     add_output_args(hook_order_probe)
     hook_order_probe.set_defaults(func=cmd_hook_order_probe)
+
+    hardware_event_stream = subparsers.add_parser("hardware-event-stream")
+    hardware_event_stream.add_argument("--execute", action="store_true")
+    hardware_event_stream.add_argument("--rom", default="pokegold.gbc")
+    hardware_event_stream.add_argument("--frames", type=int, default=90)
+    add_output_args(hardware_event_stream)
+    hardware_event_stream.set_defaults(func=cmd_hardware_event_stream)
 
     hardware_regression = subparsers.add_parser("hardware-regression-gate")
     hardware_regression.add_argument("--report", action="append", default=[])
@@ -936,6 +944,16 @@ def cmd_hook_order_probe(args: argparse.Namespace) -> int:
     return 0 if report["valid"] else 1
 
 
+def cmd_hardware_event_stream(args: argparse.Namespace) -> int:
+    report = build_hardware_event_stream_report(
+        execute=args.execute,
+        rom_path=args.rom,
+        frames=args.frames,
+    )
+    emit_report(report, args)
+    return 0 if report["valid"] else 1
+
+
 def cmd_trace_instructions(args: argparse.Namespace) -> int:
     report = build_instruction_trace_report(
         function_symbols=tuple(args.symbol),
@@ -1264,6 +1282,8 @@ def emit_report(report: dict[str, Any], args: argparse.Namespace) -> None:
         print(format_reverse_query(report))
     elif report["kind"] == "unified_debugger_hardware_regression_gate":
         print(format_hardware_regression_gate(report))
+    elif report["kind"] == "unified_debugger_hardware_event_stream":
+        print(format_hardware_event_stream(report))
     elif report["kind"] == "unified_debugger_hook_order_probe":
         print(format_hook_order_probe(report))
     elif report["kind"] == "unified_debugger_watch_report":
@@ -2404,6 +2424,40 @@ def format_hardware_regression_gate(report: dict[str, Any]) -> str:
                     f"      evidence: {evidence.get('class')} {evidence.get('status')} "
                     f"{evidence.get('detail', '')}"
                 )
+    if report.get("commands"):
+        lines.extend(["", "Commands:"])
+        lines.extend(f"  - {command}" for command in report["commands"][:4])
+    for warning in report.get("warnings", [])[:5]:
+        lines.append(f"warning: {warning}")
+    for error in report.get("errors", [])[:5]:
+        lines.append(f"error: {error}")
+    for limit in report.get("known_limits", [])[:3]:
+        lines.append(f"limit: {limit}")
+    return "\n".join(lines)
+
+
+def format_hardware_event_stream(report: dict[str, Any]) -> str:
+    lines = [
+        "Unified Pokemon Gold romhack debugger hardware event stream",
+        (
+            f"valid={report['valid']} executed={report.get('executed')} "
+            f"proof={report.get('proof_status', '')} recorder={report.get('recorder_kind', '') or '<none>'} "
+            f"available={report.get('recorder_available')} events={report.get('event_count', 0)}"
+        ),
+        (
+            f"hardware_behavior_proven={report.get('hardware_behavior_proven')} "
+            f"non_mutating_event_recorder={report.get('non_mutating_event_recorder')}"
+        ),
+    ]
+    if report.get("case_event_coverage"):
+        lines.extend(["", "Case event coverage:"])
+        for item in report["case_event_coverage"][:10]:
+            missing = ",".join(item.get("missing_event_types", []))
+            lines.append(
+                f"  - {item.get('case_id')} complete={item.get('complete')} "
+                f"observed={','.join(item.get('observed_event_types', []))} "
+                f"missing={missing}"
+            )
     if report.get("commands"):
         lines.extend(["", "Commands:"])
         lines.extend(f"  - {command}" for command in report["commands"][:4])
