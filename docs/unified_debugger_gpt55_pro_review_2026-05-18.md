@@ -6048,3 +6048,48 @@ Remaining priority:
 - This tightens report classification, but it does not implement the non-mutating PyBoy recorder or prove the TIMA, OAM DMA, CGB VRAM DMA, interrupt-entry, boot-ROM, or LCD cases.
 - The hardware-regression gate remains intentionally blocked until exact runtime side-effect events or dedicated hardware case proofs exist.
 - The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
+
+## Implementation Note - Hardware-Gated Watch-Hit UI Boundary
+
+Date: 2026-05-20.
+
+Context:
+
+- Hardware-gated effect writes were downgraded at the effect level, but exact watch hits over those writes still received `target_match_proof_status=instruction_observed`.
+- That let ranking, causal graph, and visualization surfaces make a DMA/timer/interrupt/LCD watched write look stronger than the underlying hardware side-effect proof.
+- Watch-hit proof must inherit the weakest relevant boundary: exact address matching is not enough when the matched effect itself is `planned_only` because a hardware side effect lacks explicit runtime event evidence.
+
+Primary references used:
+
+- PyBoy public docs for hook behavior and opcode replacement: `https://docs.pyboy.dk/#pyboy.PyBoy.hook_register`
+- Pan Docs OAM DMA timing and bus restrictions: `https://gbdev.io/pandocs/OAM_DMA_Transfer.html`
+- Pan Docs CGB GP/HBlank VRAM DMA timing model: `https://gbdev.io/pandocs/CGB_Registers.html#ff51ff55--hdma1hdma5-vram-dma`
+- Pan Docs TIMA overflow A/B-cycle behavior: `https://gbdev.io/pandocs/Timer_Obscure_Behaviour.html`
+
+Implemented fix:
+
+- `tools/debugger/effect_trace.py`
+  - now sets watch-hit `target_match_proof_status=planned_only` when the matched effect is `planned_only`, requires a hardware runtime event that is absent, or carries `hardware_proof_gate=explicit_runtime_event_missing`.
+  - carries the effect downgrade reason into the watch hit so the UI can explain why an exact watch address still is not proof-grade.
+- `tools/debugger/ranking.py`
+  - excludes planned-only watch writes from the "verified watched write" count.
+  - keeps the `effect_trace_observed` finding at `planned_only` when all write hits are hardware-gated or bank-unverified, and adds `planned_only_watch_writes` evidence.
+- `tools/debugger/causal_graph.py` and `tools/debugger/visualization.py`
+  - make watch-hit nodes, edges, and timeline entries inherit `planned_only` from hardware-gated effect proof.
+  - expose `effect_proof_status`, `target_match_proof_status`, `hardware_proof_gate`, and downgrade reason in watch-hit visualization details.
+- `tools/debugger/tests/test_catalog.py`
+  - adds a regression where an FF46-triggered OAM DMA watch on `$FE00` stays planned-only across effect trace, ranking, causal graph, and visualization even though the watch address matches exactly.
+
+Validation after patch:
+
+- Focused watch-hit proof-boundary regressions: 3 passed.
+- Full debugger unittest discovery: 533 passed.
+- `PYTHONPYCACHEPREFIX=.local\tmp\pycompile_cache python -m py_compile tools\debugger\effect_trace.py tools\debugger\ranking.py tools\debugger\causal_graph.py tools\debugger\visualization.py tools\debugger\tests\test_catalog.py`: passed.
+- `python -m tools.debugger hardware-regression-gate --execute`: passed as a command, still intentionally `passed=False`; reported 0/10 cases passing, 10 blocking cases, 4 runtime-observed emulator cases, 0 hardware-proof cases, and 10 static-blocker cases.
+- `python -m tools.debugger audit`: passed as a command, still `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+
+Remaining priority:
+
+- This closes a UI/report promotion path for watched hardware side effects, but the underlying side-effect-complete reverse execution remains missing.
+- The non-mutating recorder and dedicated hardware regressions are still required before DMA, timer, interrupt, LCD, or boot-ROM paths can become hardware proof.
+- The whole-ROM proof-substrate goal remains incomplete and `ready=False`.

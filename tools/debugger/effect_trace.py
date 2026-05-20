@@ -2627,9 +2627,9 @@ def watch_hits(effects: list[dict[str, Any]], watches: list[dict[str, Any]]) -> 
                         "match_precision": match_precision,
                         "bank_match": bank_match,
                         "bank_source": item.get("bank_source", ""),
-                        "target_match_proof_status": watch_target_match_proof_status(match_precision),
+                        "target_match_proof_status": watch_target_match_proof_status(match_precision, item),
                         "effect_proof_status": str(item.get("proof_status") or "instruction_observed"),
-                        "proof_downgrade_reason": watch_proof_downgrade_reason(match_precision),
+                        "proof_downgrade_reason": watch_proof_downgrade_reason(match_precision, item),
                         "effect_evidence_source": item.get("evidence_source", ""),
                         "effect_evidence_status": item.get("evidence_status", ""),
                         "effect_proof_downgrade_reason": item.get("proof_downgrade_reason", ""),
@@ -2663,16 +2663,30 @@ def watch_match_precision(bank_match: str) -> str:
     return "bus_address"
 
 
-def watch_target_match_proof_status(match_precision: str) -> str:
+def watch_target_match_proof_status(match_precision: str, item: dict[str, Any] | None = None) -> str:
+    if item and effect_proof_blocks_target_match(item):
+        return "planned_only"
     if match_precision == "bus_address_unverified_bank":
         return "planned_only"
     return "instruction_observed"
 
 
-def watch_proof_downgrade_reason(match_precision: str) -> str:
+def watch_proof_downgrade_reason(match_precision: str, item: dict[str, Any] | None = None) -> str:
+    if item and effect_proof_blocks_target_match(item):
+        return str(item.get("proof_downgrade_reason") or "effect_proof_status_planned_only")
     if match_precision == "bus_address_unverified_bank":
         return "bank-qualified watch matched effect by bus address without runtime bank state"
     return ""
+
+
+def effect_proof_blocks_target_match(item: dict[str, Any]) -> bool:
+    if str(item.get("proof_status") or "") == "planned_only":
+        return True
+    if item.get("hardware_event_required") and not item.get("hardware_runtime_event"):
+        return True
+    if str(item.get("hardware_proof_gate") or "") == "explicit_runtime_event_missing":
+        return True
+    return False
 
 
 def watch_bank_match_status(watch: dict[str, Any], item: dict[str, Any]) -> str:

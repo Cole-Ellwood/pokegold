@@ -2049,6 +2049,13 @@ def watch_hit_proof_status(hit: dict[str, Any]) -> str:
     explicit = normalize_proof_status(hit.get("proof_status")) if hit.get("proof_status") else ""
     if explicit:
         return explicit
+    effect_proof = normalize_proof_status(hit.get("effect_proof_status")) if hit.get("effect_proof_status") else ""
+    if effect_proof == "planned_only":
+        return "planned_only"
+    if hit.get("hardware_event_required") and not hit.get("hardware_runtime_event"):
+        return "planned_only"
+    if str(hit.get("hardware_proof_gate") or "") == "explicit_runtime_event_missing":
+        return "planned_only"
     target_match = normalize_proof_status(hit.get("target_match_proof_status")) if hit.get("target_match_proof_status") else ""
     if target_match:
         return target_match

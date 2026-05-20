@@ -14986,6 +14986,75 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertTrue(gated_graph_nodes)
         self.assertTrue(all(node["proof_status"] == "planned_only" for node in gated_graph_nodes))
 
+    def test_hardware_gated_watch_hits_do_not_promote_report_surfaces(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "test.sym").write_text("01:4000 DmaWriter\n", encoding="utf-8")
+            (root / "instruction_trace.jsonl").write_text(
+                json.dumps(
+                    {
+                        "seq": 0,
+                        "bank": 1,
+                        "pc": 0x4000,
+                        "pc_label": "DmaWriter",
+                        "opcode": 0xE0,
+                        "operand": [0x46],
+                        "regs": {"A": 0xC0, "SP": 0xDFF0},
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            effect = build_effect_trace_report(
+                traces=("instruction_trace.jsonl",),
+                symbols_path="test.sym",
+                watch_addresses=("$FE00",),
+                root=root,
+            )
+            (root / "effect_trace.json").write_text(json.dumps(effect), encoding="utf-8")
+            graph = build_causal_graph_report(
+                reports=("effect_trace.json",),
+                max_nodes=1000,
+                max_edges=2000,
+                root=root,
+            )
+            ranked = rank_findings(reports=("effect_trace.json",), root=root)
+            visual = build_visualization_report(reports=("effect_trace.json",), root=root)
+
+        write_hits = [
+            hit
+            for event in effect["events"]
+            for hit in event["watch_hits"]
+            if hit.get("access") == "write" and hit.get("watch") == "$FE00"
+        ]
+        graph_watch_nodes = [node for node in graph["nodes"] if node["kind"] == "watch_hit"]
+        graph_watch_edges = [
+            edge
+            for edge in graph["edges"]
+            if edge["relation"] in {"hits_watch", "matches_watch"}
+        ]
+        ranked_effect = next(item for item in ranked["findings"] if item["type"] == "effect_trace_observed")
+        watch_timeline = next(item for item in visual["timeline"] if item["type"] == "effect_watch_hit")
+
+        self.assertTrue(effect["valid"])
+        self.assertTrue(write_hits)
+        self.assertTrue(all(hit["hardware_event_required"] for hit in write_hits))
+        self.assertTrue(all(hit["hardware_runtime_event"] is False for hit in write_hits))
+        self.assertTrue(all(hit["target_match_proof_status"] == "planned_only" for hit in write_hits))
+        self.assertTrue(
+            all(hit["proof_downgrade_reason"] == "oam_dma_requires_explicit_runtime_event" for hit in write_hits)
+        )
+        self.assertTrue(graph_watch_nodes)
+        self.assertTrue(all(node["proof_status"] == "planned_only" for node in graph_watch_nodes))
+        self.assertTrue(graph_watch_edges)
+        self.assertTrue(all(edge["proof_status"] == "planned_only" for edge in graph_watch_edges))
+        self.assertEqual(ranked_effect["proof_status"], "planned_only")
+        self.assertIn("planned_only_watch_writes=1", ranked_effect["evidence"])
+        self.assertIn("effect_proof_status=planned_only", ranked_effect["evidence"])
+        self.assertIn("target_match_proof_status=planned_only", ranked_effect["evidence"])
+        self.assertEqual(watch_timeline["proof_status"], "planned_only")
+        self.assertIn("hardware_proof_gate=explicit_runtime_event_missing", watch_timeline["detail"])
+
     def test_reverse_query_does_not_event_validate_banked_index_by_bus_address(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

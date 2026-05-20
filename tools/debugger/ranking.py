@@ -1812,14 +1812,22 @@ def effect_trace_findings(report: dict[str, Any], *, source: str) -> list[dict[s
             for hit in watch_hits
             if hit.get("access") == "write" and str(hit.get("bank_match", "")) == "bus_address_unverified_bank"
         )
+        planned_only_write_hits = sum(
+            1
+            for hit in watch_hits
+            if hit.get("access") == "write"
+            and str(hit.get("target_match_proof_status", "")) == "planned_only"
+        )
         verified_watch_write_hits = sum(
             1
             for hit in watch_hits
             if hit.get("access") == "write" and str(hit.get("bank_match", "")) != "bus_address_unverified_bank"
+            and str(hit.get("target_match_proof_status", "")) != "planned_only"
         )
         target_match_proof_status = effect_trace_target_match_proof_status(
             bank_unverified_write_hits=bank_unverified_write_hits,
             verified_watch_write_hits=verified_watch_write_hits,
+            planned_only_write_hits=planned_only_write_hits,
         )
         post_value_matches = int(report.get("post_value_match_count", 0) or 0)
         post_value_mismatches = int(report.get("post_value_mismatch_count", 0) or 0)
@@ -1899,9 +1907,11 @@ def effect_trace_findings(report: dict[str, Any], *, source: str) -> list[dict[s
                     f"effect_events={report.get('effect_event_count', 0)}",
                     f"bank_unverified_watch_hits={bank_unverified_hits}" if bank_unverified_hits else "",
                     "effect_proof_status=instruction_observed" if bank_unverified_hits else "",
+                    f"planned_only_watch_writes={planned_only_write_hits}" if planned_only_write_hits else "",
+                    "effect_proof_status=planned_only" if planned_only_write_hits else "",
                     (
                         f"target_match_proof_status={target_match_proof_status}"
-                        if bank_unverified_hits
+                        if bank_unverified_hits or planned_only_write_hits
                         else ""
                     ),
                     (
@@ -1969,8 +1979,9 @@ def effect_trace_target_match_proof_status(
     *,
     bank_unverified_write_hits: int,
     verified_watch_write_hits: int,
+    planned_only_write_hits: int = 0,
 ) -> str:
-    if bank_unverified_write_hits and not verified_watch_write_hits:
+    if (bank_unverified_write_hits or planned_only_write_hits) and not verified_watch_write_hits:
         return "planned_only"
     return "instruction_observed"
 
