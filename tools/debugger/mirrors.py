@@ -379,6 +379,15 @@ def content_state_mirror_matches(
                 evidence.append(f"required_runtime_symbols={','.join(route_status['required_runtime_symbols'])}")
             if route_status["observed_runtime_symbols"]:
                 evidence.append(f"observed_runtime_symbols={','.join(route_status['observed_runtime_symbols'])}")
+            evidence.extend(runtime_sink_evidence_strings(route_status["observed_sink_evidence"]))
+            evidence.extend(
+                runtime_symbol_evidence_strings(
+                    route_status["observed_runtime_symbol_evidence"],
+                    required_runtime_symbol_groups=[
+                        [symbol] for symbol in route_status["required_runtime_symbols"]
+                    ],
+                )
+            )
             matches.append(
                 {
                     "id": "content_state_behavioral_mirror",
@@ -394,8 +403,10 @@ def content_state_mirror_matches(
                     "expected_sinks": route_status["expected_sinks"],
                     "attempted_sinks": route_status["attempted_sinks"],
                     "observed_sinks": route_status["observed_sinks"],
+                    "observed_sink_evidence": route_status["observed_sink_evidence"],
                     "required_runtime_symbols": route_status["required_runtime_symbols"],
                     "observed_runtime_symbols": route_status["observed_runtime_symbols"],
+                    "observed_runtime_symbol_evidence": route_status["observed_runtime_symbol_evidence"],
                     "runtime_attempt_reports": route_status["runtime_attempt_reports"],
                     "runtime_attempt_kinds": route_status["runtime_attempt_kinds"],
                     "evidence": evidence,
@@ -531,10 +542,20 @@ def content_state_runtime_route_status(
         scenario_ids=scenario_ids,
         runtime_observations=runtime_observations,
     )
+    observed_sink_evidence = runtime_sink_evidence_records(
+        scenario_ids=scenario_ids,
+        runtime_observations=runtime_observations,
+        expected_sinks=expected_sinks,
+    )
     required_runtime_symbols = content_state_required_runtime_symbols(materializations)
     observed_runtime_symbols = observed_runtime_symbols_for_scenarios(
         scenario_ids=scenario_ids,
         runtime_observations=runtime_observations,
+    )
+    observed_runtime_symbol_evidence = runtime_observation_symbol_evidence_records(
+        scenario_ids=scenario_ids,
+        runtime_observations=runtime_observations,
+        required_runtime_symbols=required_runtime_symbols,
     )
     relevant_attempts = runtime_attempts_for_scenarios(
         scenario_ids=scenario_ids,
@@ -589,6 +610,14 @@ def content_state_runtime_route_status(
         runtime_evidence_gaps.append(
             "Runtime attempts did not cover expected sink(s): " + ", ".join(missing_attempted_sinks)
         )
+    runtime_evidence_gaps.extend(
+        weak_runtime_observation_gaps(
+            scenario_ids=scenario_ids,
+            runtime_observations=runtime_observations,
+            expected_sinks=expected_sinks,
+            required_runtime_symbols=required_runtime_symbols,
+        )
+    )
     return {
         "mirror_status": mirror_status,
         "actual_proof_status": actual_proof_status,
@@ -596,8 +625,10 @@ def content_state_runtime_route_status(
         "expected_sinks": expected_sinks,
         "attempted_sinks": unique_list([sink for sink in attempted_sinks if sink in set(expected_sinks)]),
         "observed_sinks": observed_sinks,
+        "observed_sink_evidence": observed_sink_evidence,
         "required_runtime_symbols": required_runtime_symbols,
         "observed_runtime_symbols": observed_runtime_symbols,
+        "observed_runtime_symbol_evidence": observed_runtime_symbol_evidence,
         "runtime_attempt_reports": unique_list(str(item.get("source", "")) for item in relevant_attempts if item.get("source")),
         "runtime_attempt_kinds": unique_list(str(item.get("runtime_kind", "")) for item in relevant_attempts if item.get("runtime_kind")),
         "runtime_evidence_gaps": runtime_evidence_gaps,
@@ -843,6 +874,7 @@ def observed_sinks_for_scenarios(
         sink
         for observation in runtime_observations
         if runtime_observation_applies_to_scenarios(observation, scenario_id_set=scenario_id_set)
+        and runtime_observation_is_strong(observation)
         for sink in scalar_string_items(observation.get("observed_sinks"))
     )
 
@@ -857,8 +889,120 @@ def observed_runtime_symbols_for_scenarios(
         symbol
         for observation in runtime_observations
         if runtime_observation_applies_to_scenarios(observation, scenario_id_set=scenario_id_set)
+        and runtime_observation_is_strong(observation)
         for symbol in scalar_string_items(observation.get("observed_runtime_symbols"))
     )
+
+
+def runtime_sink_evidence_records(
+    *,
+    scenario_ids: list[str],
+    runtime_observations: list[dict[str, Any]],
+    expected_sinks: list[str],
+) -> list[dict[str, Any]]:
+    scenario_id_set = set(scenario_ids)
+    expected = set(expected_sinks)
+    records: list[dict[str, Any]] = []
+    seen: set[tuple[str, str, str, str]] = set()
+    for observation in runtime_observations:
+        if not runtime_observation_applies_to_scenarios(observation, scenario_id_set=scenario_id_set):
+            continue
+        if not runtime_observation_is_strong(observation):
+            continue
+        for sink in scalar_string_items(observation.get("observed_sinks")):
+            if sink not in expected:
+                continue
+            key = (
+                sink,
+                runtime_evidence_source(observation),
+                runtime_evidence_kind(observation),
+                runtime_observation_proof_status(observation),
+            )
+            if key in seen:
+                continue
+            seen.add(key)
+            records.append(
+                {
+                    "sink": sink,
+                    "source": key[1],
+                    "kind": key[2],
+                    "proof_status": key[3],
+                }
+            )
+    return records
+
+
+def runtime_observation_symbol_evidence_records(
+    *,
+    scenario_ids: list[str],
+    runtime_observations: list[dict[str, Any]],
+    required_runtime_symbols: list[str],
+) -> list[dict[str, Any]]:
+    scenario_id_set = set(scenario_ids)
+    required = set(required_runtime_symbols)
+    return runtime_symbol_evidence_records(
+        [
+            observation
+            for observation in runtime_observations
+            if runtime_observation_applies_to_scenarios(observation, scenario_id_set=scenario_id_set)
+            and runtime_observation_is_strong(observation)
+            and required.intersection(scalar_string_items(observation.get("observed_runtime_symbols")))
+        ]
+    )
+
+
+def runtime_sink_evidence_strings(records: list[dict[str, Any]]) -> list[str]:
+    return unique_list(
+        "runtime_sink_evidence="
+        f"{record.get('sink', '')}:{record.get('source', '')}:"
+        f"{record.get('kind', '')}:{record.get('proof_status', '')}"
+        for record in records
+    )
+
+
+def runtime_observation_is_strong(observation: dict[str, Any]) -> bool:
+    return runtime_observation_proof_status(observation) in OUTPUT_RUNTIME_STRONG_PROOF_STATUSES
+
+
+def runtime_observation_proof_status(observation: dict[str, Any]) -> str:
+    return str(observation.get("proof_status") or "runtime_observed")
+
+
+def runtime_evidence_source(item: dict[str, Any]) -> str:
+    return str(item.get("source", ""))
+
+
+def runtime_evidence_kind(item: dict[str, Any]) -> str:
+    return str(item.get("kind") or item.get("runtime_kind") or "")
+
+
+def weak_runtime_observation_gaps(
+    *,
+    scenario_ids: list[str],
+    runtime_observations: list[dict[str, Any]],
+    expected_sinks: list[str],
+    required_runtime_symbols: list[str],
+) -> list[str]:
+    scenario_id_set = set(scenario_ids)
+    expected = set(expected_sinks)
+    required = set(required_runtime_symbols)
+    gaps = []
+    for observation in runtime_observations:
+        if runtime_observation_is_strong(observation):
+            continue
+        if not runtime_observation_applies_to_scenarios(observation, scenario_id_set=scenario_id_set):
+            continue
+        mentioned_sinks = expected.intersection(scalar_string_items(observation.get("observed_sinks")))
+        mentioned_symbols = required.intersection(scalar_string_items(observation.get("observed_runtime_symbols")))
+        if not mentioned_sinks and not mentioned_symbols:
+            continue
+        source = runtime_evidence_source(observation) or "<supplied>"
+        kind = runtime_evidence_kind(observation) or "runtime_observation"
+        proof_status = runtime_observation_proof_status(observation)
+        gaps.append(
+            f"Ignored {kind} observation from {source} for behavioral mirror coverage because proof_status={proof_status}."
+        )
+    return unique_list(gaps)
 
 
 def runtime_attempts_for_scenarios(
@@ -950,10 +1094,20 @@ def content_fuzz_mirror_matches(
             scenario_ids=scenario_ids,
             runtime_observations=runtime_observations,
         )
+        observed_sink_evidence = runtime_sink_evidence_records(
+            scenario_ids=scenario_ids,
+            runtime_observations=runtime_observations,
+            expected_sinks=expected_sinks,
+        )
         required_runtime_symbols = content_fuzz_required_runtime_symbols(cases)
         observed_runtime_symbols = observed_runtime_symbols_for_scenarios(
             scenario_ids=scenario_ids,
             runtime_observations=runtime_observations,
+        )
+        observed_runtime_symbol_evidence = runtime_observation_symbol_evidence_records(
+            scenario_ids=scenario_ids,
+            runtime_observations=runtime_observations,
+            required_runtime_symbols=required_runtime_symbols,
         )
         relevant_attempts = runtime_attempts_for_scenarios(
             scenario_ids=scenario_ids,
@@ -1009,13 +1163,29 @@ def content_fuzz_mirror_matches(
             evidence.append(f"runtime_attempt_kinds={','.join(route_status['runtime_attempt_kinds'])}")
         if route_status["required_runtime_symbols"]:
             evidence.append(f"required_runtime_symbols={','.join(route_status['required_runtime_symbols'])}")
-        if route_status["observed_runtime_symbols"]:
-            evidence.append(f"observed_runtime_symbols={','.join(route_status['observed_runtime_symbols'])}")
+            if route_status["observed_runtime_symbols"]:
+                evidence.append(f"observed_runtime_symbols={','.join(route_status['observed_runtime_symbols'])}")
+        evidence.extend(runtime_sink_evidence_strings(observed_sink_evidence))
+        evidence.extend(
+            runtime_symbol_evidence_strings(
+                observed_runtime_symbol_evidence,
+                required_runtime_symbol_groups=[[symbol] for symbol in required_runtime_symbols],
+            )
+        )
         gaps = []
         if route_status["mirror_status"] != "passed":
             gaps.append(
                 "Content fuzz reports describe planned behavioral routes; run the materialization and replay/watch commands before treating them as final emulator behavior."
             )
+        runtime_evidence_gaps = [
+            *route_status["runtime_evidence_gaps"],
+            *weak_runtime_observation_gaps(
+                scenario_ids=scenario_ids,
+                runtime_observations=runtime_observations,
+                expected_sinks=expected_sinks,
+                required_runtime_symbols=required_runtime_symbols,
+            ),
+        ]
         matches.append(
             {
                 "id": "content_fuzz_behavioral_mirror",
@@ -1031,8 +1201,10 @@ def content_fuzz_mirror_matches(
                 "expected_sinks": expected_sinks,
                 "attempted_sinks": route_status["attempted_sinks"],
                 "observed_sinks": route_status["observed_sinks"],
+                "observed_sink_evidence": observed_sink_evidence,
                 "required_runtime_symbols": route_status["required_runtime_symbols"],
                 "observed_runtime_symbols": route_status["observed_runtime_symbols"],
+                "observed_runtime_symbol_evidence": observed_runtime_symbol_evidence,
                 "runtime_attempt_reports": unique_list(str(item.get("source", "")) for item in relevant_attempts if item.get("source")),
                 "runtime_attempt_kinds": route_status["runtime_attempt_kinds"],
                 "evidence": evidence,
@@ -1043,7 +1215,7 @@ def content_fuzz_mirror_matches(
                 "commands": unique_list(commands),
                 "materialization_commands": unique_list(materialization_commands),
                 "gaps": gaps,
-                "runtime_evidence_gaps": route_status["runtime_evidence_gaps"],
+                "runtime_evidence_gaps": runtime_evidence_gaps,
             }
         )
     return matches
@@ -1517,9 +1689,9 @@ def runtime_symbol_evidence_records(runtime_evidence: list[dict[str, Any]]) -> l
     records: list[dict[str, Any]] = []
     seen: set[tuple[str, str, str, str]] = set()
     for item in runtime_evidence:
-        source = str(item.get("source", ""))
-        kind = str(item.get("kind", ""))
-        proof_status = str(item.get("proof_status", ""))
+        source = runtime_evidence_source(item)
+        kind = runtime_evidence_kind(item)
+        proof_status = runtime_observation_proof_status(item)
         for symbol in runtime_evidence_observed_runtime_symbols(item):
             key = (symbol, source, kind, proof_status)
             if key in seen:

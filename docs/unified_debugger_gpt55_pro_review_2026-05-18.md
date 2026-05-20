@@ -6655,3 +6655,46 @@ Remaining priority:
 
 - This makes output-helper proof provenance visible at the report boundary, but it does not add the missing full script VM behavior, pixel-accurate graphics/UI behavior, audio playback/mixer behavior, arbitrary map interactions, or non-mutating hardware event recorder.
 - The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
+
+## Implementation Note - Runtime-Observation Proof Boundary for Behavioral Mirrors
+
+Date: 2026-05-20.
+
+Context:
+
+- Content-state and content-fuzz behavioral mirrors could already require runtime consumer symbols such as `RunScriptCommand`, `ApplyMovement`, `CheckObjectTime`, `InitializeVisibleSprites`, and `IsNPCAtCoord`.
+- The mirror reports exposed summary fields like `observed_sinks` and `observed_runtime_symbols`, but they did not preserve per-sink/per-helper source, evidence kind, and proof status.
+- Supplied or loaded `runtime_observations` with weak proof status could be flattened into observed sink/helper coverage at the mirror boundary.
+
+Primary references used:
+
+- No new external primary references were needed for this slice; it is an internal JSON/report proof-boundary patch.
+
+Implemented fix:
+
+- `tools/debugger/mirrors.py`
+  - requires runtime observations to have a strong runtime proof status before they can satisfy content-state/content-fuzz sink or helper coverage.
+  - keeps backwards-compatible explicit `runtime_observations` without a proof field as `runtime_observed`, while ignoring `planned_only` observations for pass/fail promotion.
+  - adds `observed_sink_evidence` records with sink, source, kind, and proof status.
+  - adds `observed_runtime_symbol_evidence` records for required helper symbols on content-state/content-fuzz behavioral mirrors.
+  - emits compact `runtime_sink_evidence=<sink>:<source>:<kind>:<proof_status>` and `runtime_symbol_evidence=<symbol>:<source>:<kind>:<proof_status>` evidence strings.
+- `tools/debugger/catalog.py`
+  - updates the generation/fuzzing and differential-mirror gap text so the audit advertises the new planned-only runtime-observation fence and per-evidence reporting boundary.
+- `tools/debugger/tests/test_event_runtime_materialization.py`
+  - proves planned-only runtime observations cannot make content-state or content-fuzz behavioral mirrors pass.
+  - proves strong runtime observations expose per-sink and per-helper evidence records.
+- `tools/debugger/tests/test_catalog.py`
+  - asserts the audit gap text keeps this new boundary visible while the whole goal remains incomplete.
+
+Validation after patch:
+
+- Focused runtime-observation proof-boundary regressions plus catalog audit-text regression: 29 passed.
+- Full debugger unittest discovery: 551 passed.
+- `python -m tools.debugger audit`: passed as a command, still `ready=False`; reports 8 complete buckets, 3 partial buckets, and 3 blocking gaps.
+- `python -m tools.debugger hardware-regression-gate --execute`: passed as a command, still intentionally `passed=False`; reported 0/10 cases passing, 10 blocking cases, 4 runtime-observed emulator cases, 0 hardware-proof cases, and 10 static-blocker cases.
+- `PYTHONPYCACHEPREFIX=.local\tmp\pycompile_cache python -m py_compile tools\debugger\catalog.py tools\debugger\mirrors.py tools\debugger\tests\test_catalog.py tools\debugger\tests\test_event_runtime_materialization.py`: passed.
+
+Remaining priority:
+
+- This prevents weak runtime-observation summaries from promoting behavioral mirrors and makes runtime evidence auditable, but it does not add the missing full script VM behavior, pixel-accurate graphics/UI behavior, audio playback/mixer behavior, arbitrary map interactions, or non-mutating hardware event recorder.
+- The whole-ROM proof-substrate goal remains incomplete and `ready=False`.

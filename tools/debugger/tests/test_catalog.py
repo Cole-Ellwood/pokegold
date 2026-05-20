@@ -169,6 +169,8 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("required case-specific hardware event types", gap_text)
         self.assertIn("hardware_proven_case_ids/incomplete_case_event_ids", gap_text)
         self.assertIn("requested-static versus observed-runtime address fact boundaries", gap_text)
+        self.assertIn("planned-only runtime-observation summaries", gap_text)
+        self.assertIn("per-sink and per-helper runtime evidence", gap_text)
         self.assertNotIn("the bridge still does not replace subsystem dynamic proof", gap_text)
         self.assertNotIn("hardware-gated effect-trace side effects and bank-unverified watch hits", gap_text)
         self.assertIn(

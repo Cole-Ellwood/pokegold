@@ -503,7 +503,48 @@ class EventRuntimeMaterializationTests(unittest.TestCase):
         self.assertEqual(match["actual_proof_status"], "observed")
         self.assertEqual(match["expected_proof_status"], "runtime_observed")
         self.assertEqual(set(match["observed_sinks"]), {"wMapGroup", "wMapNumber"})
+        self.assertIn(
+            {
+                "sink": "wMapGroup",
+                "source": "",
+                "kind": "",
+                "proof_status": "runtime_observed",
+            },
+            match["observed_sink_evidence"],
+        )
+        self.assertIn("runtime_sink_evidence=wMapGroup:::runtime_observed", match["evidence"])
         self.assertEqual(match["runtime_evidence_gaps"], [])
+
+    def test_compare_does_not_pass_from_planned_runtime_observations(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write_content_state_report(
+                root,
+                executed=True,
+                materialization_status="ready",
+                actual_proof_status="state_materialized",
+            )
+
+            report = build_compare_plan(
+                reports=("content_state.json",),
+                runtime_observations=(
+                    {
+                        "scenario_id": "content_scenario_1_0000",
+                        "source": "planned_trace.json",
+                        "runtime_kind": "instruction_trace",
+                        "proof_status": "planned_only",
+                        "observed_sinks": ["wMapGroup", "wMapNumber"],
+                    },
+                ),
+                root=root,
+            )
+
+        match = next(item for item in report["matches"] if item["id"] == "content_state_behavioral_mirror")
+
+        self.assertNotEqual(match["mirror_status"], "passed")
+        self.assertEqual(match["observed_sinks"], [])
+        self.assertEqual(match["observed_sink_evidence"], [])
+        self.assertTrue(any("planned_only" in gap for gap in match["runtime_evidence_gaps"]))
 
     def test_compare_requires_runtime_symbols_when_route_declares_consumer(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -561,7 +602,45 @@ class EventRuntimeMaterializationTests(unittest.TestCase):
 
         self.assertEqual(match["mirror_status"], "passed")
         self.assertEqual(match["observed_runtime_symbols"], ["CheckObjectTime"])
+        self.assertIn(
+            {
+                "symbol": "CheckObjectTime",
+                "source": "",
+                "kind": "",
+                "proof_status": "runtime_observed",
+            },
+            match["observed_runtime_symbol_evidence"],
+        )
         self.assertEqual(match["runtime_evidence_gaps"], [])
+
+    def test_content_fuzz_does_not_pass_from_planned_runtime_observations(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write_content_fuzz_report(root, required_runtime_symbols=("CheckObjectTime",))
+
+            report = build_compare_plan(
+                reports=("fuzz.json",),
+                runtime_observations=(
+                    {
+                        "scenario_id": "content_scenario_1_0000",
+                        "source": "planned_trace.json",
+                        "runtime_kind": "instruction_trace",
+                        "proof_status": "planned_only",
+                        "observed_sinks": ["hHours", "wTimeOfDay"],
+                        "observed_runtime_symbols": ["CheckObjectTime"],
+                    },
+                ),
+                root=root,
+            )
+
+        match = next(item for item in report["matches"] if item["id"] == "content_fuzz_behavioral_mirror")
+
+        self.assertNotEqual(match["mirror_status"], "passed")
+        self.assertEqual(match["observed_sinks"], [])
+        self.assertEqual(match["observed_runtime_symbols"], [])
+        self.assertEqual(match["observed_sink_evidence"], [])
+        self.assertEqual(match["observed_runtime_symbol_evidence"], [])
+        self.assertTrue(any("planned_only" in gap for gap in match["runtime_evidence_gaps"]))
 
     def test_content_fuzz_requires_runtime_symbols_when_route_declares_consumer(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -649,6 +728,28 @@ class EventRuntimeMaterializationTests(unittest.TestCase):
         self.assertEqual(match["mirror_status"], "passed")
         self.assertEqual(match["observed_sinks"], ["hHours", "wTimeOfDay"])
         self.assertEqual(match["observed_runtime_symbols"], ["CheckObjectTime"])
+        self.assertIn(
+            {
+                "sink": "hHours",
+                "source": "instruction_trace.json",
+                "kind": "instruction_trace",
+                "proof_status": "instruction_observed",
+            },
+            match["observed_sink_evidence"],
+        )
+        self.assertIn(
+            {
+                "symbol": "CheckObjectTime",
+                "source": "instruction_trace.json",
+                "kind": "instruction_trace",
+                "proof_status": "instruction_observed",
+            },
+            match["observed_runtime_symbol_evidence"],
+        )
+        self.assertIn(
+            "runtime_symbol_evidence=CheckObjectTime:instruction_trace.json:instruction_trace:instruction_observed",
+            match["evidence"],
+        )
         self.assertEqual(match["runtime_evidence_gaps"], [])
 
     def test_compare_harvests_runtime_observations_from_loaded_reports(self) -> None:
