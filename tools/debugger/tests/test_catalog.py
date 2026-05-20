@@ -377,6 +377,51 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(report["computed_modified"], 362)
         self.assertNotEqual(report["computed_modified"], report["base"] * 2)
 
+    def test_stat_at_base_50_plus_two_is_not_base_75_equivalent(self) -> None:
+        from tools.debugger.stat_at import build_stat_at_report
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "data" / "pokemon" / "base_stats").mkdir(parents=True)
+            (root / "data" / "battle").mkdir(parents=True)
+            (root / "data" / "pokemon" / "base_stats" / "unitmon.asm").write_text(
+                "db UNITMON ; 2\n"
+                "db 50, 50, 50, 50, 50, 50\n",
+                encoding="utf-8",
+            )
+            (root / "data" / "pokemon" / "base_stats" / "base75mon.asm").write_text(
+                "db BASE75MON ; 3\n"
+                "db 75, 75, 75, 75, 75, 75\n",
+                encoding="utf-8",
+            )
+            (root / "data" / "battle" / "stat_multipliers.asm").write_text(
+                "db   1,   1 ;  0 = 100%\n"
+                "db   2,   1 ; +2 = 200%\n",
+                encoding="utf-8",
+            )
+
+            plus_two = build_stat_at_report(
+                species="unitmon",
+                stat="atk",
+                level=50,
+                modifier=2,
+                root=root,
+            )
+            base_75 = build_stat_at_report(
+                species="base75mon",
+                stat="atk",
+                level=50,
+                modifier=0,
+                root=root,
+            )
+
+        self.assertTrue(plus_two["valid"])
+        self.assertTrue(base_75["valid"])
+        self.assertEqual(plus_two["computed_neutral"], 101)
+        self.assertEqual(plus_two["computed_modified"], 202)
+        self.assertEqual(base_75["computed_neutral"], 126)
+        self.assertNotEqual(plus_two["computed_modified"], base_75["computed_neutral"])
+
     def test_stat_at_hp_ignores_modifier(self) -> None:
         from tools.debugger.stat_at import build_stat_at_report
 
@@ -402,6 +447,37 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
 
         self.assertTrue(report["valid"])
         self.assertEqual(report["computed_modified"], 999)
+
+    def test_stat_at_negative_stage_floors_at_one_after_modifier(self) -> None:
+        from tools.debugger.stat_at import build_stat_at_report
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "data" / "pokemon" / "base_stats").mkdir(parents=True)
+            (root / "data" / "battle").mkdir(parents=True)
+            (root / "data" / "pokemon" / "base_stats" / "unitmon.asm").write_text(
+                "db UNITMON ; 2\n"
+                "db 1, 1, 1, 1, 1, 1\n",
+                encoding="utf-8",
+            )
+            (root / "data" / "battle" / "stat_multipliers.asm").write_text(
+                "db  25, 100 ; -6 =  25%\n",
+                encoding="utf-8",
+            )
+
+            report = build_stat_at_report(
+                species="unitmon",
+                stat="atk",
+                level=1,
+                modifier=-6,
+                iv=0,
+                ev=0,
+                root=root,
+            )
+
+        self.assertTrue(report["valid"])
+        self.assertEqual(report["computed_neutral"], 5)
+        self.assertEqual(report["computed_modified"], 1)
 
     def test_stat_at_invalid_stat_returns_error(self) -> None:
         from tools.debugger.stat_at import build_stat_at_report
