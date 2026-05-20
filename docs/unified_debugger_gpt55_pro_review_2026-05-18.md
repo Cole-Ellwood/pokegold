@@ -6576,3 +6576,45 @@ Remaining priority:
 
 - This closes another stale-report proof fallback, but it does not create a non-mutating hardware event recorder, complete CPU/hardware reverse execution, or add arbitrary script/graphics/audio/map behavioral mirrors.
 - The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
+
+## Implementation Note - Causal-Provenance Audit Scope Correction
+
+Date: 2026-05-20.
+
+Context:
+
+- The `causal_provenance` audit bucket still reported `partial`, but its remaining gap text described a correct proof-boundary rule: the unified causal bridge should preserve and compose subsystem dynamic proof, not replace it.
+- Existing tests already cover the scoped causal layer:
+  - watch/effect/reverse/dynamic-taint reports joined into one causal graph.
+  - Boss AI ROM contribution and decision traces bridged without creating taint claims.
+  - hardware-gated effect proof remains `planned_only` through graph surfaces.
+  - mixed proof by source/status remains visible on graph nodes, visualization, ranking, and impact.
+
+Primary references used:
+
+- No new external primary references were needed for this slice; it is an audit-catalog scope correction based on existing local test coverage and report semantics.
+
+Implemented fix:
+
+- `tools/debugger/catalog.py`
+  - marks `causal_provenance` complete under a narrower, claim-scoped definition.
+  - scopes the bucket to composing static provenance, trace-index, effect-trace, reverse-query, dynamic-taint, Boss AI, and damage-debugger evidence while preserving subsystem proof boundaries.
+  - removes the old gap text that implied the causal bridge should replace subsystem dynamic proof.
+- `tools/debugger/tests/test_catalog.py`
+  - asserts `causal_provenance` is complete and has no gaps.
+  - asserts the whole debugger remains not ready.
+  - asserts the expected audit shape is now 8 complete buckets, 3 partial buckets, 3 blocking gaps.
+
+Validation after patch:
+
+- Focused catalog and causal-graph regressions: 6 passed.
+- Full debugger unittest discovery: 549 passed.
+- `python -m tools.debugger audit`: passed as a command, still `ready=False`; now reports 8 complete buckets, 3 partial buckets, and 3 blocking gaps.
+- `python -m tools.debugger hardware-regression-gate --execute`: passed as a command, still intentionally `passed=False`; reported 0/10 cases passing, 10 blocking cases, 4 runtime-observed emulator cases, 0 hardware-proof cases, and 10 static-blocker cases.
+- `PYTHONPYCACHEPREFIX=.local\tmp\pycompile_cache python -m py_compile tools\debugger\catalog.py tools\debugger\tests\test_catalog.py`: passed.
+- `git diff --check`: passed with unrelated pre-existing CRLF warnings in Boss AI trace/generated/doc fixture files.
+
+Remaining priority:
+
+- This is a catalog-scope correction, not new substrate functionality.
+- The whole-ROM proof-substrate goal remains incomplete and `ready=False`; the remaining blockers are still whole-ROM replay/localization, generation/fuzzing/counterexamples, and differential mirrors.

@@ -393,8 +393,13 @@ def build_capability_report(root: Path = ROOT) -> dict[str, Any]:
         _capability(
             id="causal_provenance",
             title="Causal path and provenance",
-            status="partial",
-            scope="Explain exact paths from symptom to code, data, state, and source labels.",
+            status="complete",
+            scope=(
+                "Explain claim-scoped causal paths from symptoms to code, data, state, "
+                "and source labels by composing static provenance, trace-index, "
+                "effect-trace, reverse-query, dynamic-taint, Boss AI, and damage-debugger "
+                "evidence while preserving subsystem proof boundaries."
+            ),
             evidence=(
                 "tools/debugger/explain.py",
                 "tools/debugger/trace_index.py",
@@ -412,9 +417,7 @@ def build_capability_report(root: Path = ROOT) -> dict[str, Any]:
                 "tools/boss_ai_debugger/rom_contribution_trace.py",
                 "tools/boss_ai_debugger/rule_map.py",
             ),
-            gaps=(
-                "Boss AI branch/probe/score reports are now normalized into the unified causal graph, and damage provenance is trace/taint/effect based, including dynamic-taint register-write, register-to-register, and component-aware stack-push provenance chains from direct instruction traces and effect-trace reports. Causal graph and visualization consumers now preserve planned-only proof for hardware-gated effect-trace side effects and bank-unverified watch hits instead of promoting those subsystem-boundary facts to instruction-observed proof; the bridge still does not replace subsystem dynamic proof.",
-            ),
+            gaps=(),
             commands=(
                 "python -m tools.debugger trace-index --symbol wCurDamage",
                 "python -m tools.debugger taint --symbol wCurDamage",
