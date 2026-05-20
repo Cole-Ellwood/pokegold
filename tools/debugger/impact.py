@@ -7,6 +7,7 @@ from typing import Any
 from .catalog import ROOT, triage_request
 from .evidence import merge_evidence_atoms
 from .ranking import (
+    PROOF_STATUS_RANK,
     SEVERITY_BASE,
     materialized_save_state_delta,
     minimized_state_patch_save_state_delta,
@@ -2736,6 +2737,81 @@ def impact_item(
     return with_proof_status({**out, "proof_status": proof_status or ""})
 
 
+def proof_status_sort_key(status: str) -> tuple[int, str]:
+    return (PROOF_STATUS_RANK.get(status, 0), status)
+
+
+def normalized_proof_status_values(*values: Any) -> list[str]:
+    statuses: list[str] = []
+    for value in values:
+        for raw in string_items(value):
+            for part in raw.replace(";", ",").split(","):
+                status = normalize_proof_status(part.strip())
+                if status:
+                    statuses.append(status)
+    return sorted(unique_list(statuses), key=proof_status_sort_key)
+
+
+def item_proof_statuses(item: dict[str, Any]) -> list[str]:
+    statuses = normalized_proof_status_values(
+        item.get("proof_status"),
+        item.get("proof_statuses"),
+        item.get("proof_min"),
+        item.get("proof_max"),
+    )
+    by_source = item.get("proof_status_by_source")
+    if isinstance(by_source, dict):
+        statuses = normalized_proof_status_values(statuses, list(by_source.values()))
+    return statuses
+
+
+def merge_proof_status_by_source(existing: dict[str, Any], item: dict[str, Any]) -> dict[str, str]:
+    merged: dict[str, str] = {}
+    for source_map in (existing.get("proof_status_by_source"), item.get("proof_status_by_source")):
+        if not isinstance(source_map, dict):
+            continue
+        for source, status_value in source_map.items():
+            source_key = str(source or "").strip()
+            status = normalize_proof_status(status_value)
+            if not source_key or not status:
+                continue
+            if source_key in merged:
+                status = strongest_proof_status([merged[source_key], status])
+            merged[source_key] = status
+    return {source: merged[source] for source in sorted(merged)}
+
+
+def merged_proof_vector(existing: dict[str, Any], item: dict[str, Any]) -> list[dict[str, Any]]:
+    merged: list[dict[str, Any]] = []
+    seen: set[tuple[tuple[str, str], ...]] = set()
+    for entry in [*dict_items(existing.get("proof_vector")), *dict_items(item.get("proof_vector"))]:
+        key = tuple(sorted((str(field), str(value)) for field, value in entry.items()))
+        if key in seen:
+            continue
+        seen.add(key)
+        merged.append(dict(entry))
+    return merged
+
+
+def apply_mixed_proof_summary(item: dict[str, Any], statuses: list[str]) -> None:
+    if len(statuses) <= 1:
+        return
+    proof_min = min(statuses, key=proof_status_sort_key)
+    proof_max = strongest_proof_status(statuses)
+    item["proof_statuses"] = statuses
+    item["proof_min"] = proof_min
+    item["proof_max"] = proof_max
+    item["proof_badge"] = "mixed"
+    item["evidence"] = unique_list(
+        [
+            *string_items(item.get("evidence")),
+            f"proof_statuses={','.join(statuses)}",
+            f"proof_min={proof_min}",
+            f"proof_max={proof_max}",
+        ]
+    )
+
+
 def merge_items(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
     merged: dict[tuple[str, str, str], dict[str, Any]] = {}
     for item in items:
@@ -2762,9 +2838,19 @@ def merge_items(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
             [*string_items(existing.get("related_addresses")), *string_items(item.get("related_addresses"))]
         )
         existing["evidence_atoms"] = merge_evidence_atoms(existing.get("evidence_atoms"), item.get("evidence_atoms"))
-        existing["proof_status"] = strongest_proof_status(
-            [existing.get("proof_status"), item.get("proof_status")]
+        source_statuses = merge_proof_status_by_source(existing, item)
+        if source_statuses:
+            existing["proof_status_by_source"] = source_statuses
+        proof_vector = merged_proof_vector(existing, item)
+        if proof_vector:
+            existing["proof_vector"] = proof_vector
+        proof_statuses = normalized_proof_status_values(
+            item_proof_statuses(existing),
+            item_proof_statuses(item),
+            list(source_statuses.values()),
         )
+        existing["proof_status"] = strongest_proof_status(proof_statuses)
+        apply_mixed_proof_summary(existing, proof_statuses)
     return list(merged.values())
 
 

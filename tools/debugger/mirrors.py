@@ -1042,6 +1042,11 @@ def dynamic_expectation_mirror_matches(loaded_reports: list[dict[str, Any]]) -> 
         for item in runtime_evidence
         for path in scalar_string_items(item.get("source_files"))
     )
+    runtime_artifacts = unique_list(
+        artifact
+        for item in runtime_evidence
+        for artifact in scalar_string_items(item.get("artifacts"))
+    )
     materialization_commands = unique_list(
         command
         for item in runtime_evidence
@@ -1098,6 +1103,7 @@ def dynamic_expectation_mirror_matches(loaded_reports: list[dict[str, Any]]) -> 
                 "source_files": unique_list([*runtime_files, *scalar_string_items(summary.get("source_files"))]),
                 "related_symbols": unique_list([*runtime_symbols, *scalar_string_items(summary.get("symbols"))]),
                 "related_addresses": unique_list([*runtime_addresses, *scalar_string_items(summary.get("addresses"))]),
+                "artifacts": runtime_artifacts,
                 "evidence": evidence,
                 "commands": commands,
                 "materialization_commands": materialization_commands,
@@ -1287,9 +1293,7 @@ def output_runtime_evidence_is_strong(item: dict[str, Any]) -> bool:
     if kind not in OUTPUT_RUNTIME_EVIDENCE_KINDS:
         return False
     proof_status = str(item.get("proof_status") or "")
-    if kind == "dynamic_taint" and not proof_status:
-        return False
-    return not proof_status or proof_status in OUTPUT_RUNTIME_STRONG_PROOF_STATUSES
+    return bool(proof_status) and proof_status in OUTPUT_RUNTIME_STRONG_PROOF_STATUSES
 
 
 def runtime_evidence_mentions_outputs(
@@ -1315,6 +1319,12 @@ def weak_runtime_evidence_gaps(weak_evidence: list[dict[str, Any]]) -> list[str]
         if kind not in OUTPUT_RUNTIME_EVIDENCE_KINDS:
             gaps.append(
                 f"Ignored {kind} evidence from {source} for output-sink mirror coverage; it is not runtime output evidence."
+            )
+            continue
+        reason = str(item.get("proof_downgrade_reason") or "")
+        if reason:
+            gaps.append(
+                f"Ignored {kind} evidence from {source} for output-sink mirror coverage because proof_status={proof_status}: {reason}."
             )
             continue
         gaps.append(
@@ -1428,7 +1438,13 @@ def runtime_mirror_evidence(loaded: dict[str, Any]) -> list[dict[str, Any]]:
             for item in dict_items(data.get("write_index"))
             if int(item.get("write_count", 0) or 0) > 0
         ]
-        if not write_index:
+        events = dict_items(data.get("events"))
+        concrete_writes = effect_trace_concrete_writes(events)
+        strong_watch_hits = effect_trace_watch_hits(events, proof_status="instruction_observed")
+        weak_watch_hits = effect_trace_watch_hits(events, proof_status="planned_only")
+        compact_only_write_index = write_index if not concrete_writes else []
+        records: list[dict[str, Any]] = []
+        if not write_index and not concrete_writes and not weak_watch_hits:
             return []
         watch_sinks = split_symbol_address_values(data.get("watch_symbols"))
         watch_addresses = unique_addresses(
@@ -1442,28 +1458,62 @@ def runtime_mirror_evidence(loaded: dict[str, Any]) -> list[dict[str, Any]]:
                 ],
             ]
         )
-        return [
-            runtime_evidence_record(
-                source=source,
-                kind="effect_trace",
-                symbols=[
-                    *watch_sinks["symbols"],
-                    *[
-                        str(watch.get("symbol") or watch.get("name") or "")
-                        for watch in dict_items(data.get("watches"))
-                        if watch.get("symbol")
+        if concrete_writes or strong_watch_hits:
+            records.append(
+                runtime_evidence_record(
+                    source=source,
+                    kind="effect_trace",
+                    symbols=[
+                        *[
+                            str(hit.get("watch", ""))
+                            for hit in strong_watch_hits
+                            if hit.get("watch") and not looks_like_address(str(hit.get("watch", "")))
+                        ],
+                        *[
+                            str(watch.get("symbol") or watch.get("name") or "")
+                            for watch in dict_items(data.get("watches"))
+                            if watch.get("symbol")
+                            and any(str(hit.get("watch", "")) == str(watch.get("symbol") or watch.get("name") or "") for hit in strong_watch_hits)
+                        ],
                     ],
-                ],
-                addresses=[
-                    *watch_addresses,
-                    *[str(item.get("address", "")) for item in write_index],
-                ],
-                commands=report_commands(data),
-                proof_status="instruction_observed",
+                    addresses=[
+                        *[str(hit.get("address", "")) for hit in strong_watch_hits if hit.get("address")],
+                        *[str(item.get("address_hex", "")) for item in concrete_writes if item.get("address_hex")],
+                    ],
+                    commands=report_commands(data),
+                    proof_status="instruction_observed",
+                )
             )
-        ]
+        if compact_only_write_index or weak_watch_hits:
+            records.append(
+                runtime_evidence_record(
+                    source=source,
+                    kind="effect_trace",
+                    symbols=[
+                        *watch_sinks["symbols"],
+                        *[
+                            str(hit.get("watch", ""))
+                            for hit in weak_watch_hits
+                            if hit.get("watch") and not looks_like_address(str(hit.get("watch", "")))
+                        ],
+                    ],
+                    addresses=[
+                        *watch_addresses,
+                        *[str(item.get("address", "")) for item in compact_only_write_index],
+                        *[str(hit.get("address", "")) for hit in weak_watch_hits if hit.get("address")],
+                    ],
+                    commands=report_commands(data),
+                    proof_status="planned_only",
+                    proof_downgrade_reason=effect_trace_weak_output_reason(
+                        has_events=bool(events),
+                        weak_watch_hits=weak_watch_hits,
+                    ),
+                )
+            )
+        return records
     if kind == "unified_debugger_visual_snapshot":
-        if not data.get("executed"):
+        proof_status = runtime_snapshot_proof_status(data)
+        if not proof_status or not visual_snapshot_has_runtime_samples(data):
             return []
         surfaces = dict_items(data.get("surfaces"))
         screen_frame = data.get("screen_frame") if isinstance(data.get("screen_frame"), dict) else {}
@@ -1475,15 +1525,17 @@ def runtime_mirror_evidence(loaded: dict[str, Any]) -> list[dict[str, Any]]:
                 addresses=[str(surface.get("address", "")) for surface in surfaces if surface.get("address")],
                 commands=report_commands(data),
                 artifacts=[str(screen_frame.get("framebuffer") or data.get("framebuffer") or "")],
-                proof_status="runtime_observed",
+                proof_status=proof_status,
             )
         ]
     if kind == "unified_debugger_audio_snapshot":
-        if not data.get("executed"):
+        proof_status = runtime_snapshot_proof_status(data)
+        if not proof_status or not audio_snapshot_has_runtime_samples(data):
             return []
         register_details = dict_items(data.get("register_details"))
         symbol_state = dict_items(data.get("symbol_state"))
         wave_ram = data.get("wave_ram") if isinstance(data.get("wave_ram"), dict) else {}
+        sound_buffer = data.get("sound_buffer") if isinstance(data.get("sound_buffer"), dict) else {}
         return [
             runtime_evidence_record(
                 source=source,
@@ -1491,6 +1543,7 @@ def runtime_mirror_evidence(loaded: dict[str, Any]) -> list[dict[str, Any]]:
                 symbols=[
                     *[str(register.get("name", "")) for register in register_details if register.get("name")],
                     *[str(item.get("symbol", "")) for item in symbol_state if item.get("symbol")],
+                    str(sound_buffer.get("source", "")) if sound_buffer.get("source") else "",
                 ],
                 addresses=[
                     *[str(register.get("address", "")) for register in register_details if register.get("address")],
@@ -1498,8 +1551,13 @@ def runtime_mirror_evidence(loaded: dict[str, Any]) -> list[dict[str, Any]]:
                     str(wave_ram.get("address", "")) if wave_ram.get("address") else "",
                 ],
                 commands=report_commands(data),
-                artifacts=[str(wave_ram.get("sha256", "")) if wave_ram.get("sha256") else ""],
-                proof_status="runtime_observed",
+                artifacts=[
+                    str(wave_ram.get("sha256", "")) if wave_ram.get("sha256") else "",
+                    str(sound_buffer.get("source", "")) if sound_buffer.get("source") else "",
+                    str(sound_buffer.get("sha256", "")) if sound_buffer.get("sha256") else "",
+                    str(sound_buffer.get("buffer", "")) if sound_buffer.get("buffer") else "",
+                ],
+                proof_status=proof_status,
             )
         ]
     if kind == "unified_debugger_content_state_materialization":
@@ -1537,6 +1595,38 @@ def runtime_mirror_evidence(loaded: dict[str, Any]) -> list[dict[str, Any]]:
     return []
 
 
+def runtime_snapshot_proof_status(data: dict[str, Any]) -> str:
+    if data.get("valid", True) is False or not data.get("executed"):
+        return ""
+    proof_status = str(data.get("proof_status") or "")
+    return proof_status if proof_status in OUTPUT_RUNTIME_STRONG_PROOF_STATUSES else ""
+
+
+def visual_snapshot_has_runtime_samples(data: dict[str, Any]) -> bool:
+    if dict_items(data.get("surfaces")):
+        return True
+    screen_frame = data.get("screen_frame") if isinstance(data.get("screen_frame"), dict) else {}
+    return bool(screen_frame.get("framebuffer") or screen_frame.get("sha256") or data.get("framebuffer"))
+
+
+def audio_snapshot_has_runtime_samples(data: dict[str, Any]) -> bool:
+    registers = data.get("registers") if isinstance(data.get("registers"), dict) else {}
+    audio_state = data.get("audio_state") if isinstance(data.get("audio_state"), dict) else {}
+    wave_ram = data.get("wave_ram") if isinstance(data.get("wave_ram"), dict) else {}
+    sound_buffer = data.get("sound_buffer") if isinstance(data.get("sound_buffer"), dict) else {}
+    return bool(
+        registers
+        or dict_items(data.get("register_details"))
+        or dict_items(data.get("symbol_state"))
+        or audio_state
+        or wave_ram.get("sha256")
+        or wave_ram.get("sample_hex")
+        or sound_buffer.get("sha256")
+        or sound_buffer.get("sample_hex")
+        or sound_buffer.get("buffer")
+    )
+
+
 def runtime_evidence_record(
     *,
     source: str,
@@ -1547,6 +1637,7 @@ def runtime_evidence_record(
     artifacts: list[str] | None = None,
     commands: list[str] | None = None,
     proof_status: str = "",
+    proof_downgrade_reason: str = "",
 ) -> dict[str, Any]:
     record = {
         "source": source,
@@ -1559,11 +1650,40 @@ def runtime_evidence_record(
     }
     if proof_status:
         record["proof_status"] = proof_status
+    if proof_downgrade_reason:
+        record["proof_downgrade_reason"] = proof_downgrade_reason
     return record
 
 
 def runtime_item_proof_status(item: dict[str, Any]) -> str:
     return str(item.get("proof_status") or item.get("match_proof_status") or "planned_only")
+
+
+def effect_trace_concrete_writes(events: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [
+        item
+        for event in events
+        for item in dict_items(event.get("effects"))
+        if item.get("access") == "write" and item.get("address_hex")
+    ]
+
+
+def effect_trace_watch_hits(events: list[dict[str, Any]], *, proof_status: str) -> list[dict[str, Any]]:
+    return [
+        hit
+        for event in events
+        for hit in dict_items(event.get("watch_hits"))
+        if hit.get("access") == "write"
+        and str(hit.get("target_match_proof_status") or hit.get("proof_status") or "") == proof_status
+    ]
+
+
+def effect_trace_weak_output_reason(*, has_events: bool, weak_watch_hits: list[dict[str, Any]]) -> str:
+    if weak_watch_hits:
+        return "effect-trace watch hit target match is bank-unverified; concrete output behavior was not proven"
+    if not has_events:
+        return "compact effect-trace write_index has no concrete effect events; output behavior was not proven"
+    return "effect-trace output evidence did not include a strong concrete write match"
 
 
 def report_commands(data: dict[str, Any]) -> list[str]:

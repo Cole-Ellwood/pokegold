@@ -171,6 +171,12 @@ def collect_report_timeline(data: dict[str, Any], *, source: str, out: list[dict
         )
     elif kind == "unified_debugger_visual_snapshot":
         lcd = data.get("lcd_state") if isinstance(data.get("lcd_state"), dict) else {}
+        runtime_samples = visual_snapshot_has_runtime_samples(data)
+        proof = snapshot_report_proof_status(
+            data,
+            runtime_samples=runtime_samples,
+            downgrade_reason="no_visual_runtime_samples",
+        )
         out.append(
             timeline_event(
                 lane="visual",
@@ -178,9 +184,15 @@ def collect_report_timeline(data: dict[str, Any], *, source: str, out: list[dict
                 title="Visual/UI snapshot",
                 source=source,
                 detail=(
-                    f"executed={data.get('executed')} surfaces={data.get('surface_count', 0)} "
+                    f"executed={data.get('executed')} runtime_samples={runtime_samples} "
+                    f"surfaces={data.get('surface_count', 0)} "
                     f"lcd={lcd.get('lcd_enabled', '')} mode={lcd.get('ppu_mode', '')} "
                     f"screen_frames={data.get('screen_frame_count', 0)} framebuffer={data.get('framebuffer', '')}"
+                    + snapshot_proof_downgrade_detail(
+                        data,
+                        runtime_samples=runtime_samples,
+                        downgrade_reason="no_visual_runtime_samples",
+                    )
                 ).strip(),
                 addresses=[
                     str(surface.get("address", ""))
@@ -188,10 +200,18 @@ def collect_report_timeline(data: dict[str, Any], *, source: str, out: list[dict
                     if surface.get("address")
                 ],
                 severity=62,
+                proof_status=proof,
             )
         )
     elif kind == "unified_debugger_audio_snapshot":
         audio = data.get("audio_state") if isinstance(data.get("audio_state"), dict) else {}
+        sound_buffer = data.get("sound_buffer") if isinstance(data.get("sound_buffer"), dict) else {}
+        runtime_samples = audio_snapshot_has_runtime_samples(data)
+        proof = snapshot_report_proof_status(
+            data,
+            runtime_samples=runtime_samples,
+            downgrade_reason="no_audio_runtime_samples",
+        )
         out.append(
             timeline_event(
                 lane="audio",
@@ -199,8 +219,15 @@ def collect_report_timeline(data: dict[str, Any], *, source: str, out: list[dict
                 title="Audio snapshot",
                 source=source,
                 detail=(
-                    f"executed={data.get('executed')} registers={data.get('register_count', 0)} "
-                    f"audio={audio.get('audio_enabled', '')} mask={audio.get('channel_enable_mask', '')}"
+                    f"executed={data.get('executed')} runtime_samples={runtime_samples} "
+                    f"registers={data.get('register_count', 0)} "
+                    f"audio={audio.get('audio_enabled', '')} mask={audio.get('channel_enable_mask', '')} "
+                    f"sound_buffer={sound_buffer.get('sha256', '')}"
+                    + snapshot_proof_downgrade_detail(
+                        data,
+                        runtime_samples=runtime_samples,
+                        downgrade_reason="no_audio_runtime_samples",
+                    )
                 ).strip(),
                 addresses=[
                     str(register.get("address", ""))
@@ -208,12 +235,14 @@ def collect_report_timeline(data: dict[str, Any], *, source: str, out: list[dict
                     if register.get("address")
                 ],
                 severity=61,
+                proof_status=proof,
             )
         )
     elif is_boss_ai_report(data):
         collect_boss_ai_timeline(data, source=source, out=out)
     elif kind == "unified_debugger_watch_report":
         for event in dict_items(data.get("events")):
+            proof = watch_event_proof_status(event, report=data)
             out.append(
                 timeline_event(
                     lane="runtime",
@@ -228,6 +257,7 @@ def collect_report_timeline(data: dict[str, Any], *, source: str, out: list[dict
                     ],
                     addresses=related_addresses(event),
                     severity=70,
+                    proof_status=proof,
                 )
             )
     elif kind == "unified_debugger_reverse_query":
@@ -237,6 +267,7 @@ def collect_report_timeline(data: dict[str, Any], *, source: str, out: list[dict
             validation = result.get("validation") if isinstance(result.get("validation"), dict) else {}
             checkpoint = result.get("checkpoint_validation") if isinstance(result.get("checkpoint_validation"), dict) else {}
             span = result.get("bounded_effect_span_validation") if isinstance(result.get("bounded_effect_span_validation"), dict) else {}
+            proof = reverse_query_result_proof_status(result, report=data)
             out.append(
                 timeline_event(
                     lane="reverse",
@@ -256,6 +287,7 @@ def collect_report_timeline(data: dict[str, Any], *, source: str, out: list[dict
                         str(result.get("matched_address") or ""),
                     ]),
                     severity=66,
+                    proof_status=proof,
                 )
             )
     elif kind == "unified_debugger_replay_plan":
@@ -288,6 +320,7 @@ def collect_report_timeline(data: dict[str, Any], *, source: str, out: list[dict
                     files=string_items(path.get("related_files")),
                     addresses=related_addresses(path),
                     severity=int(path.get("score", 0)),
+                    proof_status=path.get("proof_status"),
                 )
             )
     elif kind == "unified_debugger_causal_graph":
@@ -307,6 +340,7 @@ def collect_report_timeline(data: dict[str, Any], *, source: str, out: list[dict
                     files=string_items(path.get("related_files")),
                     addresses=related_addresses(path),
                     severity=int(path.get("score", 0)),
+                    proof_status=path.get("proof_status"),
                 )
             )
     elif kind == "unified_debugger_trace_index":
@@ -322,6 +356,7 @@ def collect_report_timeline(data: dict[str, Any], *, source: str, out: list[dict
                     files=string_items(item.get("related_files")),
                     addresses=related_addresses(item),
                     severity=72,
+                    proof_status=item.get("proof_status") or data.get("proof_status"),
                 )
             )
     elif kind in {"unified_debugger_taint_report", "unified_debugger_dynamic_taint_report"}:
@@ -336,23 +371,30 @@ def collect_report_timeline(data: dict[str, Any], *, source: str, out: list[dict
                     symbols=trace_synthesis_related_symbols(route),
                     addresses=trace_synthesis_related_addresses(route),
                     severity=trace_synthesis_severity(route),
+                    proof_status=route.get("proof_status") or "planned_only",
                 )
             )
         for path in dict_items(data.get("paths")):
+            proof = normalize_proof_status(path.get("proof_status")) or "planned_only"
             out.append(
                 timeline_event(
                     lane="causal",
                     event_type="taint_path",
                     title=str(path.get("title", "")),
                     source=source,
-                    detail=f"contributors={len(dict_items(path.get('contributors')))} confidence={path.get('confidence', 0)}",
+                    detail=(
+                        f"contributors={len(dict_items(path.get('contributors')))} "
+                        f"confidence={path.get('confidence', 0)}"
+                    ),
                     symbols=string_items(path.get("related_symbols")),
                     files=string_items(path.get("related_files")),
                     addresses=related_addresses(path),
                     severity=int(path.get("score", 0)),
+                    proof_status=proof,
                 )
             )
         for attribution in dict_items(data.get("write_attributions")):
+            attribution_proof = normalize_proof_status(attribution.get("proof_status")) or "planned_only"
             out.append(
                 timeline_event(
                     lane="causal",
@@ -365,9 +407,11 @@ def collect_report_timeline(data: dict[str, Any], *, source: str, out: list[dict
                     files=string_items(attribution.get("related_files")),
                     addresses=related_addresses(attribution),
                     severity=int(attribution.get("score", 0)),
+                    proof_status=attribution_proof,
                 )
             )
             for provenance in dict_items(attribution.get("register_provenance")):
+                provenance_proof = normalize_proof_status(provenance.get("proof_status")) or attribution_proof
                 out.append(
                     timeline_event(
                         lane="causal",
@@ -386,6 +430,7 @@ def collect_report_timeline(data: dict[str, Any], *, source: str, out: list[dict
                         files=string_items(attribution.get("related_files")),
                         addresses=related_addresses(attribution),
                         severity=max(64, int(attribution.get("score", 0))),
+                        proof_status=provenance_proof,
                     )
                 )
     elif kind == "unified_debugger_effect_trace":
@@ -524,6 +569,7 @@ def collect_report_timeline(data: dict[str, Any], *, source: str, out: list[dict
                     files=string_items(item.get("related_files")),
                     addresses=related_addresses(item),
                     severity=int(item.get("impact_score", 0)),
+                    proof_status=item.get("proof_status"),
                 )
             )
     elif kind == "unified_debugger_ranked_findings":
@@ -542,6 +588,7 @@ def collect_report_timeline(data: dict[str, Any], *, source: str, out: list[dict
                     files=string_items(finding.get("related_files")),
                     addresses=related_addresses(finding),
                     severity=int(finding.get("severity", 0)),
+                    proof_status=finding.get("proof_status"),
                 )
             )
     elif kind == "unified_debugger_coverage_report":
@@ -662,6 +709,7 @@ def collect_report_timeline(data: dict[str, Any], *, source: str, out: list[dict
                     source=source,
                     detail=", ".join(string_items(match.get("gaps"))[:2]),
                     severity=55 if match.get("gaps") else 35,
+                    proof_status=match.get("proof_status"),
                 )
             )
     elif kind == "unified_debugger_content_mirror":
@@ -707,6 +755,7 @@ def collect_instruction_trace_validation_timeline(data: dict[str, Any], *, sourc
     if not validation.get("attempted"):
         return
     status = instruction_trace_validation_status(validation)
+    proof = instruction_trace_validation_proof_status(data, validation)
     out.append(
         timeline_event(
             lane="instruction_trace",
@@ -717,6 +766,7 @@ def collect_instruction_trace_validation_timeline(data: dict[str, Any], *, sourc
             symbols=instruction_trace_validation_symbols(data, validation),
             files=[],
             severity=int(status["severity"]),
+            proof_status=proof,
         )
     )
     if validation.get("trace_record_limit_hit"):
@@ -729,12 +779,14 @@ def collect_instruction_trace_validation_timeline(data: dict[str, Any], *, sourc
                 detail=instruction_trace_validation_detail(data, validation),
                 symbols=instruction_trace_validation_symbols(data, validation),
                 severity=68,
+                proof_status=proof,
                 )
             )
 
 
 def collect_played_input_timeline(data: dict[str, Any], *, source: str, out: list[dict[str, Any]]) -> None:
     for played in dict_items(data.get("played_inputs"))[:120]:
+        proof = played_input_proof_status(data, played)
         out.append(
             timeline_event(
                 lane="inputs",
@@ -744,6 +796,7 @@ def collect_played_input_timeline(data: dict[str, Any], *, source: str, out: lis
                 frame=played.get("frame"),
                 detail=played_input_detail(played),
                 severity=58,
+                proof_status=proof,
             )
         )
 
@@ -758,9 +811,10 @@ def collect_played_input_graph(
     report_id = f"{source}:report"
     add_graph_node(nodes, report_id, source, "report", source)
     for played in dict_items(data.get("played_inputs"))[:200]:
+        proof = played_input_proof_status(data, played)
         input_id = played_input_graph_id(source, played)
-        add_graph_node(nodes, input_id, played_input_title(played), "played_input", source, "runtime_observed")
-        add_graph_edge(edges, report_id, input_id, "played_input", source, "runtime_observed")
+        add_graph_node(nodes, input_id, played_input_title(played), "played_input", source, proof)
+        add_graph_edge(edges, report_id, input_id, "played_input", source, proof)
 
 
 def played_input_graph_id(source: str, played: dict[str, Any]) -> str:
@@ -864,6 +918,15 @@ def played_input_detail(played: dict[str, Any]) -> str:
         f"line={played.get('line')}" if played.get("line") else "",
     ]
     return " ".join(part for part in parts if part)
+
+
+def played_input_proof_status(data: dict[str, Any], played: dict[str, Any]) -> str:
+    explicit = normalize_proof_status(played.get("proof_status")) if played.get("proof_status") else ""
+    if explicit:
+        return explicit
+    if data.get("executed") and bool(data.get("valid", True)):
+        return "runtime_observed"
+    return "planned_only"
 
 
 def instruction_trace_validation_status(validation: dict[str, Any]) -> dict[str, Any]:
@@ -1455,39 +1518,55 @@ def collect_graph(*, loaded_reports: list[dict[str, Any]]) -> dict[str, list[dic
                     add_graph_node(nodes, output_id, produced, "planned_output", source, "planned_only")
                     add_graph_edge(edges, route_id, output_id, "produces_report", source, "planned_only")
         elif kind == "unified_debugger_visual_snapshot":
+            proof = snapshot_report_proof_status(
+                data,
+                runtime_samples=visual_snapshot_has_runtime_samples(data),
+                downgrade_reason="no_visual_runtime_samples",
+            )
             snapshot_id = f"{source}:visual_snapshot"
-            add_graph_node(nodes, snapshot_id, "Visual/UI snapshot", "visual_snapshot", source)
+            add_graph_node(nodes, snapshot_id, "Visual/UI snapshot", "visual_snapshot", source, proof)
             for surface in dict_items(data.get("surfaces")):
                 name = str(surface.get("name") or surface.get("address") or "surface")
                 surface_id = f"{source}:visual_surface:{name}:{surface.get('address', '')}:{surface.get('bank', '')}"
-                add_graph_node(nodes, surface_id, name, "visual_surface", source)
-                add_graph_edge(edges, snapshot_id, surface_id, "samples_surface", source)
+                add_graph_node(nodes, surface_id, name, "visual_surface", source, proof)
+                add_graph_edge(edges, snapshot_id, surface_id, "samples_surface", source, proof)
         elif kind == "unified_debugger_audio_snapshot":
+            proof = snapshot_report_proof_status(
+                data,
+                runtime_samples=audio_snapshot_has_runtime_samples(data),
+                downgrade_reason="no_audio_runtime_samples",
+            )
             snapshot_id = f"{source}:audio_snapshot"
-            add_graph_node(nodes, snapshot_id, "Audio snapshot", "audio_snapshot", source)
+            add_graph_node(nodes, snapshot_id, "Audio snapshot", "audio_snapshot", source, proof)
             for register in dict_items(data.get("register_details")):
                 name = str(register.get("name") or register.get("address") or "audio_register")
                 register_id = f"{source}:audio_register:{name}:{register.get('address', '')}"
-                add_graph_node(nodes, register_id, name, "audio_register", source)
-                add_graph_edge(edges, snapshot_id, register_id, "samples_audio_register", source)
+                add_graph_node(nodes, register_id, name, "audio_register", source, proof)
+                add_graph_edge(edges, snapshot_id, register_id, "samples_audio_register", source, proof)
             for item in dict_items(data.get("symbol_state")):
                 symbol = str(item.get("symbol") or item.get("address") or "audio_symbol")
                 symbol_id = f"{source}:audio_symbol_state:{symbol}:{item.get('address', '')}:{item.get('bank', '')}"
-                add_graph_node(nodes, symbol_id, symbol, "audio_symbol_state", source)
-                add_graph_edge(edges, snapshot_id, symbol_id, "samples_audio_state", source)
+                add_graph_node(nodes, symbol_id, symbol, "audio_symbol_state", source, proof)
+                add_graph_edge(edges, snapshot_id, symbol_id, "samples_audio_state", source, proof)
             wave = data.get("wave_ram") if isinstance(data.get("wave_ram"), dict) else {}
             if wave:
                 wave_id = f"{source}:audio_wave_ram:{wave.get('address', '')}"
-                add_graph_node(nodes, wave_id, "Wave RAM", "audio_wave_ram", source)
-                add_graph_edge(edges, snapshot_id, wave_id, "samples_audio_wave_ram", source)
+                add_graph_node(nodes, wave_id, "Wave RAM", "audio_wave_ram", source, proof)
+                add_graph_edge(edges, snapshot_id, wave_id, "samples_audio_wave_ram", source, proof)
+            sound_buffer = data.get("sound_buffer") if isinstance(data.get("sound_buffer"), dict) else {}
+            if sound_buffer:
+                sound_id = f"{source}:audio_sound_buffer:{sound_buffer.get('source', '')}:{sound_buffer.get('sha256', '')}"
+                add_graph_node(nodes, sound_id, "PyBoy sound buffer", "audio_sound_buffer", source, proof)
+                add_graph_edge(edges, snapshot_id, sound_id, "samples_audio_sound_buffer", source, proof)
         elif kind == "unified_debugger_watch_report":
             for index, event in enumerate(dict_items(data.get("events"))):
                 watch_name = str(event.get("watch", ""))
                 event_id = f"{source}:watch:{index}:{watch_name}"
                 pc_label = str(event.get("pc_label", ""))
-                add_graph_node(nodes, event_id, watch_name or "watch event", "watch_event", source)
-                add_graph_node(nodes, pc_label, pc_label, "instruction", source)
-                add_graph_edge(edges, pc_label, event_id, "writes", source)
+                proof = watch_event_proof_status(event, report=data)
+                add_graph_node(nodes, event_id, watch_name or "watch event", "watch_event", source, proof)
+                add_graph_node(nodes, pc_label, pc_label, "instruction", source, proof)
+                add_graph_edge(edges, pc_label, event_id, "writes", source, proof)
                 input_context = event.get("input_context") if isinstance(event.get("input_context"), dict) else {}
                 for played in dict_items(input_context.get("played_inputs")):
                     input_id = played_input_graph_id(source, played)
@@ -1495,11 +1574,11 @@ def collect_graph(*, loaded_reports: list[dict[str, Any]]) -> dict[str, list[dic
                     add_graph_edge(edges, input_id, event_id, "precedes_observed_change", source, "runtime_observed")
                 symbol = symbol_if_not_address(watch_name)
                 if symbol:
-                    add_graph_node(nodes, symbol, symbol, "watch_symbol", source)
-                    add_graph_edge(edges, event_id, symbol, "observes", source)
+                    add_graph_node(nodes, symbol, symbol, "watch_symbol", source, proof)
+                    add_graph_edge(edges, event_id, symbol, "observes", source, proof)
                 for address in related_addresses(event):
-                    add_graph_node(nodes, address, address, "watch_address", source)
-                    add_graph_edge(edges, event_id, address, "observes_address", source)
+                    add_graph_node(nodes, address, address, "watch_address", source, proof)
+                    add_graph_edge(edges, event_id, address, "observes_address", source, proof)
         elif kind == "unified_debugger_effect_trace":
             collect_effect_trace_graph(data, source=source, nodes=nodes, edges=edges)
         elif kind == "unified_debugger_reverse_query":
@@ -1507,7 +1586,7 @@ def collect_graph(*, loaded_reports: list[dict[str, Any]]) -> dict[str, list[dic
                 target = result.get("target") if isinstance(result.get("target"), dict) else {}
                 label = str(target.get("label") or target.get("symbol") or result.get("matched_address") or "target")
                 query_id = f"{source}:reverse_query:{label}:{result.get('last_writer_seq', '')}"
-                result_proof = result.get("proof_status") or data.get("proof_status")
+                result_proof = reverse_query_result_proof_status(result, report=data)
                 add_graph_node(nodes, query_id, f"Reverse query {label}", "reverse_query", source, result_proof)
                 checkpoint = result.get("checkpoint_validation") if isinstance(result.get("checkpoint_validation"), dict) else {}
                 if checkpoint.get("checkpointed"):
@@ -1572,87 +1651,96 @@ def collect_graph(*, loaded_reports: list[dict[str, Any]]) -> dict[str, list[dic
                     add_graph_edge(edges, str(edge.get("source", "")), str(edge.get("target", "")), str(edge.get("access", "")), source)
         elif kind in {"unified_debugger_taint_report", "unified_debugger_dynamic_taint_report"}:
             for route in trace_synthesis_routes(data):
+                proof = normalize_proof_status(route.get("proof_status")) or "planned_only"
                 route_id = str(route.get("id") or f"{source}:trace_synthesis:{route.get('match_id', '')}")
-                add_graph_node(nodes, route_id, trace_synthesis_title(route), "trace_synthesis", source)
+                add_graph_node(nodes, route_id, trace_synthesis_title(route), "trace_synthesis", source, proof)
                 trace_output = str(route.get("trace_output", ""))
                 if trace_output:
-                    add_graph_node(nodes, trace_output, trace_output, "instruction_trace_output", source)
-                    add_graph_edge(edges, route_id, trace_output, "plans_trace", source)
+                    add_graph_node(nodes, trace_output, trace_output, "instruction_trace_output", source, proof)
+                    add_graph_edge(edges, route_id, trace_output, "plans_trace", source, proof)
                 save_state = str(route.get("save_state", ""))
                 if save_state:
-                    add_graph_node(nodes, save_state, save_state, "save_state", source)
-                    add_graph_edge(edges, save_state, route_id, "loads_state", source)
+                    add_graph_node(nodes, save_state, save_state, "save_state", source, proof)
+                    add_graph_edge(edges, save_state, route_id, "loads_state", source, proof)
                 for symbol in string_items(route.get("sink_symbols")):
-                    add_graph_node(nodes, symbol, symbol, "dynamic_taint_sink", source)
-                    add_graph_edge(edges, route_id, symbol, "watches", source)
+                    add_graph_node(nodes, symbol, symbol, "dynamic_taint_sink", source, proof)
+                    add_graph_edge(edges, route_id, symbol, "watches", source, proof)
                 for address in string_items(route.get("sink_addresses")):
-                    add_graph_node(nodes, address, address, "dynamic_taint_sink_address", source)
-                    add_graph_edge(edges, route_id, address, "watches_address", source)
+                    add_graph_node(nodes, address, address, "dynamic_taint_sink_address", source, proof)
+                    add_graph_edge(edges, route_id, address, "watches_address", source, proof)
                 for symbol in string_items(route.get("source_symbols")):
-                    add_graph_node(nodes, symbol, symbol, "dynamic_taint_source", source)
-                    add_graph_edge(edges, symbol, route_id, "seeds_trace", source)
+                    add_graph_node(nodes, symbol, symbol, "dynamic_taint_source", source, proof)
+                    add_graph_edge(edges, symbol, route_id, "seeds_trace", source, proof)
                 for address, origin in source_mem_parts(route):
                     if origin:
-                        add_graph_node(nodes, origin, origin, "dynamic_taint_source", source)
-                        add_graph_edge(edges, origin, route_id, "seeds_trace", source)
+                        add_graph_node(nodes, origin, origin, "dynamic_taint_source", source, proof)
+                        add_graph_edge(edges, origin, route_id, "seeds_trace", source, proof)
                     if address:
-                        add_graph_node(nodes, address, address, "dynamic_taint_source_address", source)
-                        add_graph_edge(edges, address, route_id, "seeds_memory", source)
+                        add_graph_node(nodes, address, address, "dynamic_taint_source_address", source, proof)
+                        add_graph_edge(edges, address, route_id, "seeds_memory", source, proof)
                         if origin:
-                            add_graph_edge(edges, origin, address, "labels_memory", source)
+                            add_graph_edge(edges, origin, address, "labels_memory", source, proof)
                 for index, command in enumerate(string_items(route.get("commands"))[:6]):
                     command_id = f"{route_id}:command:{index}"
-                    add_graph_node(nodes, command_id, command, "workflow_command", source)
-                    add_graph_edge(edges, route_id, command_id, "runs", source)
+                    add_graph_node(nodes, command_id, command, "workflow_command", source, proof)
+                    add_graph_edge(edges, route_id, command_id, "runs", source, proof)
             for path in dict_items(data.get("paths")):
+                proof = normalize_proof_status(path.get("proof_status")) or "planned_only"
                 target = str(path.get("target", ""))
-                add_graph_node(nodes, target, target, "taint_target", source)
+                add_graph_node(nodes, target, target, "taint_target", source, proof)
                 for contributor in dict_items(path.get("contributors")):
                     symbol = str(contributor.get("symbol", ""))
-                    add_graph_node(nodes, symbol, symbol, "taint_source", source)
-                    add_graph_edge(edges, symbol, target, str(contributor.get("relation", "taints")), source)
+                    add_graph_node(nodes, symbol, symbol, "taint_source", source, proof)
+                    add_graph_edge(edges, symbol, target, str(contributor.get("relation", "taints")), source, proof)
                 add_related_evidence_graph(nodes, edges, target, path, source=source)
             for attribution in dict_items(data.get("write_attributions")):
+                attribution_proof = normalize_proof_status(attribution.get("proof_status")) or "planned_only"
                 target = str(attribution.get("target", ""))
                 pc_label = str(attribution.get("pc_label", ""))
                 write_id = str(attribution.get("id") or f"{target}:{pc_label}:{attribution.get('seq', '')}")
-                add_graph_node(nodes, target, target, "dynamic_write_target", source)
-                add_graph_node(nodes, pc_label, pc_label, "instruction", source)
-                add_graph_node(nodes, write_id, str(attribution.get("mnemonic", write_id)), "dynamic_write", source)
-                add_graph_edge(edges, pc_label, write_id, "executes", source)
-                add_graph_edge(edges, write_id, target, "writes", source)
+                add_graph_node(nodes, target, target, "dynamic_write_target", source, attribution_proof)
+                add_graph_node(nodes, pc_label, pc_label, "instruction", source, attribution_proof)
+                add_graph_node(nodes, write_id, str(attribution.get("mnemonic", write_id)), "dynamic_write", source, attribution_proof)
+                add_graph_edge(edges, pc_label, write_id, "executes", source, attribution_proof)
+                add_graph_edge(edges, write_id, target, "writes", source, attribution_proof)
                 for operand in dict_items(attribution.get("source_operands")):
                     operand_label = source_operand_label(operand)
-                    add_graph_node(nodes, operand_label, operand_label, "write_operand", source)
-                    add_graph_edge(edges, operand_label, write_id, "feeds", source)
+                    add_graph_node(nodes, operand_label, operand_label, "write_operand", source, attribution_proof)
+                    add_graph_edge(edges, operand_label, write_id, "feeds", source, attribution_proof)
                     operand_provenance = operand.get("register_provenance") if isinstance(operand.get("register_provenance"), dict) else {}
                     if operand_provenance:
+                        operand_provenance_proof = (
+                            normalize_proof_status(operand_provenance.get("proof_status")) or attribution_proof
+                        )
                         provenance_id = register_provenance_id(operand_provenance)
-                        add_graph_node(nodes, provenance_id, register_provenance_title(operand_provenance), "dynamic_register_provenance", source, operand_provenance.get("proof_status"))
-                        add_graph_edge(edges, provenance_id, operand_label, "explains_register_operand", source, operand_provenance.get("proof_status"))
+                        add_graph_node(nodes, provenance_id, register_provenance_title(operand_provenance), "dynamic_register_provenance", source, operand_provenance_proof)
+                        add_graph_edge(edges, provenance_id, operand_label, "explains_register_operand", source, operand_provenance_proof)
                     via_register = str(operand.get("via_register", ""))
                     if via_register:
                         provenance = register_provenance_for_operand(operand, attribution)
+                        provenance_proof = normalize_proof_status(provenance.get("proof_status")) or attribution_proof
                         provenance_id = register_provenance_id(provenance)
-                        add_graph_node(nodes, provenance_id, register_provenance_title(provenance), "dynamic_register_provenance", source, provenance.get("proof_status"))
-                        add_graph_edge(edges, operand_label, provenance_id, "feeds_register", source, provenance.get("proof_status"))
+                        add_graph_node(nodes, provenance_id, register_provenance_title(provenance), "dynamic_register_provenance", source, provenance_proof)
+                        add_graph_edge(edges, operand_label, provenance_id, "feeds_register", source, dynamic_taint_edge_proof_status(provenance_proof, has_taint=bool(operand.get("origin") or operand.get("symbol"))))
                 for provenance in dict_items(attribution.get("register_provenance")):
+                    provenance_proof = normalize_proof_status(provenance.get("proof_status")) or attribution_proof
                     provenance_id = register_provenance_id(provenance)
                     register = str(provenance.get("register", ""))
                     register_id = f"register:{register}" if register else ""
-                    add_graph_node(nodes, provenance_id, register_provenance_title(provenance), "dynamic_register_provenance", source, provenance.get("proof_status"))
+                    add_graph_node(nodes, provenance_id, register_provenance_title(provenance), "dynamic_register_provenance", source, provenance_proof)
                     if register_id:
-                        add_graph_node(nodes, register_id, register_id, "dynamic_register", source, provenance.get("proof_status"))
-                        add_graph_edge(edges, provenance_id, register_id, "defines_register", source, provenance.get("proof_status"))
-                        add_graph_edge(edges, register_id, write_id, "register_feeds_write", source, attribution.get("proof_status"))
+                        add_graph_node(nodes, register_id, register_id, "dynamic_register", source, provenance_proof)
+                        add_graph_edge(edges, provenance_id, register_id, "defines_register", source, provenance_proof)
+                        add_graph_edge(edges, register_id, write_id, "register_feeds_write", source, attribution_proof)
                     pc = str(provenance.get("pc_label", ""))
                     if pc:
-                        add_graph_node(nodes, pc, pc, "instruction", source, provenance.get("proof_status"))
-                        add_graph_edge(edges, pc, provenance_id, "writes_register", source, provenance.get("proof_status"))
-                    add_graph_edge(edges, provenance_id, write_id, "register_feeds_write", source, attribution.get("proof_status"))
+                        add_graph_node(nodes, pc, pc, "instruction", source, provenance_proof)
+                        add_graph_edge(edges, pc, provenance_id, "writes_register", source, provenance_proof)
+                    add_graph_edge(edges, provenance_id, write_id, "register_feeds_write", source, attribution_proof)
                     for taint in string_items(provenance.get("taint")):
-                        add_graph_node(nodes, taint, taint, "dynamic_taint_source", source, attribution.get("proof_status"))
-                        add_graph_edge(edges, taint, provenance_id, "taints_register", source, attribution.get("proof_status"))
+                        taint_proof = dynamic_taint_edge_proof_status(attribution_proof, has_taint=True)
+                        add_graph_node(nodes, taint, taint, "dynamic_taint_source", source, taint_proof)
+                        add_graph_edge(edges, taint, provenance_id, "taints_register", source, taint_proof)
                 add_related_evidence_graph(nodes, edges, write_id, attribution, source=source)
         elif kind == "unified_debugger_instruction_trace":
             collect_instruction_trace_validation_graph(data, source=source, nodes=nodes, edges=edges)
@@ -1835,27 +1923,28 @@ def collect_instruction_trace_validation_graph(
         "event_type": "validation_planned",
         "severity": 0,
     }
+    proof = instruction_trace_validation_proof_status(data, validation)
     validation_id = f"{source}:instruction_trace_validation"
-    add_graph_node(nodes, validation_id, str(status["title"]), "instruction_trace_validation", source)
+    add_graph_node(nodes, validation_id, str(status["title"]), "instruction_trace_validation", source, proof)
     trace_path = instruction_trace_output_path(data)
     if trace_path:
         trace_output = data.get("trace_output") if isinstance(data.get("trace_output"), dict) else {}
-        add_graph_node(nodes, trace_path, trace_path, "instruction_trace_output", source)
+        add_graph_node(nodes, trace_path, trace_path, "instruction_trace_output", source, proof)
         relation = "writes_trace" if trace_output.get("written") else "plans_trace"
-        add_graph_edge(edges, validation_id, trace_path, relation, source)
+        add_graph_edge(edges, validation_id, trace_path, relation, source, proof)
     save_state = instruction_trace_save_state(data)
     if save_state:
-        add_graph_node(nodes, save_state, save_state, "save_state", source)
-        add_graph_edge(edges, save_state, validation_id, "loads_state", source)
+        add_graph_node(nodes, save_state, save_state, "save_state", source, proof)
+        add_graph_edge(edges, save_state, validation_id, "loads_state", source, proof)
     for symbol in string_items(validation.get("hit_function_symbols")):
-        add_graph_node(nodes, symbol, symbol, "instruction_hit", source)
-        add_graph_edge(edges, symbol, validation_id, "hit", source)
+        add_graph_node(nodes, symbol, symbol, "instruction_hit", source, proof)
+        add_graph_edge(edges, symbol, validation_id, "hit", source, proof)
     for symbol in string_items(validation.get("missing_function_symbols")):
-        add_graph_node(nodes, symbol, symbol, "instruction_miss", source)
-        add_graph_edge(edges, symbol, validation_id, "missed", source)
+        add_graph_node(nodes, symbol, symbol, "instruction_miss", source, proof)
+        add_graph_edge(edges, symbol, validation_id, "missed", source, proof)
     for symbol in string_items(validation.get("watch_symbols")):
-        add_graph_node(nodes, symbol, symbol, "watch", source)
-        add_graph_edge(edges, validation_id, symbol, "observes", source)
+        add_graph_node(nodes, symbol, symbol, "watch", source, proof)
+        add_graph_edge(edges, validation_id, symbol, "observes", source, proof)
 
 
 def collect_lanes(
@@ -2297,8 +2386,10 @@ def timeline_event(
     files: list[str] | None = None,
     addresses: list[str] | None = None,
     severity: int = 0,
+    proof_status: Any = None,
 ) -> dict[str, Any]:
-    return {
+    proof = normalize_proof_status(proof_status)
+    event = {
         "lane": lane,
         "type": event_type,
         "event_type": event_type,
@@ -2312,6 +2403,11 @@ def timeline_event(
         "addresses": unique_list([item for item in addresses or [] if item]),
         "severity": int(severity),
     }
+    if proof:
+        event["proof_status"] = proof
+        if "proof=" not in event["detail"]:
+            event["detail"] = " ".join([part for part in (event["detail"], f"proof={proof}") if part])
+    return event
 
 
 def waterfall_step(*, phase: str, title: str, source: str, status: str, detail: str, order: int) -> dict[str, Any]:
@@ -2592,6 +2688,126 @@ def add_graph_edge(
 def normalize_proof_status(value: Any) -> str:
     text = str(value or "").strip()
     return text if text in PROOF_STATUS_RANK else ""
+
+
+def visual_snapshot_has_runtime_samples(data: dict[str, Any]) -> bool:
+    screen_frame = data.get("screen_frame") if isinstance(data.get("screen_frame"), dict) else {}
+    io_registers = data.get("io_registers") if isinstance(data.get("io_registers"), dict) else {}
+    return bool(
+        dict_items(data.get("surfaces"))
+        or io_registers
+        or screen_frame
+        or data.get("framebuffer")
+        or int_value(data.get("screen_frame_count"))
+    )
+
+
+def audio_snapshot_has_runtime_samples(data: dict[str, Any]) -> bool:
+    registers = data.get("registers") if isinstance(data.get("registers"), dict) else {}
+    wave = data.get("wave_ram") if isinstance(data.get("wave_ram"), dict) else {}
+    sound_buffer = data.get("sound_buffer") if isinstance(data.get("sound_buffer"), dict) else {}
+    return bool(
+        registers
+        or dict_items(data.get("register_details"))
+        or dict_items(data.get("symbol_state"))
+        or wave.get("sha256")
+        or wave.get("sample_hex")
+        or sound_buffer.get("sha256")
+        or sound_buffer.get("sample_hex")
+        or sound_buffer.get("buffer")
+    )
+
+
+def snapshot_report_proof_status(
+    data: dict[str, Any],
+    *,
+    runtime_samples: bool,
+    downgrade_reason: str,
+) -> str:
+    explicit = normalize_proof_status(data.get("proof_status")) if data.get("proof_status") else ""
+    if runtime_samples:
+        return explicit or ("runtime_observed" if data.get("executed") else "planned_only")
+    if snapshot_proof_downgrade_detail(
+        data,
+        runtime_samples=runtime_samples,
+        downgrade_reason=downgrade_reason,
+    ):
+        return "planned_only"
+    return explicit or "planned_only"
+
+
+def snapshot_proof_downgrade_detail(
+    data: dict[str, Any],
+    *,
+    runtime_samples: bool,
+    downgrade_reason: str,
+) -> str:
+    explicit = normalize_proof_status(data.get("proof_status")) if data.get("proof_status") else ""
+    if runtime_samples:
+        return ""
+    if bool(data.get("executed")) or explicit in {
+        "runtime_observed",
+        "instruction_observed",
+        "taint_proven",
+        "mirror_passed",
+        "mirror_failed",
+    }:
+        return f" proof_downgrade_reason={downgrade_reason}"
+    return ""
+
+
+def watch_event_proof_status(event: dict[str, Any], *, report: dict[str, Any]) -> str:
+    explicit = normalize_proof_status(event.get("proof_status")) if event.get("proof_status") else ""
+    if explicit:
+        return explicit
+    report_proof = normalize_proof_status(report.get("proof_status")) if report.get("proof_status") else ""
+    if report_proof:
+        return report_proof
+    return "planned_only"
+
+
+def instruction_trace_validation_proof_status(data: dict[str, Any], validation: dict[str, Any]) -> str:
+    validation_proof = normalize_proof_status(validation.get("proof_status")) if validation.get("proof_status") else ""
+    if validation_proof:
+        return validation_proof
+    report_proof = normalize_proof_status(data.get("proof_status")) if data.get("proof_status") else ""
+    if report_proof:
+        return report_proof
+    return "planned_only"
+
+
+def reverse_query_result_proof_status(result: dict[str, Any], *, report: dict[str, Any] | None = None) -> str:
+    explicit = normalize_proof_status(result.get("proof_status")) if result.get("proof_status") else ""
+    if explicit:
+        return explicit
+    validation = result.get("validation") if isinstance(result.get("validation"), dict) else {}
+    validation_proof = normalize_proof_status(validation.get("proof_status")) if validation.get("proof_status") else ""
+    if validation_proof:
+        return validation_proof
+    report_proof = normalize_proof_status(report.get("proof_status")) if isinstance(report, dict) and report.get("proof_status") else ""
+    if report_proof:
+        return report_proof
+    return "instruction_observed" if concrete_reverse_last_writer(result) else "planned_only"
+
+
+def concrete_reverse_last_writer(result: dict[str, Any]) -> bool:
+    last_writer = result.get("last_writer") if isinstance(result.get("last_writer"), dict) else {}
+    if not last_writer:
+        return False
+    seq = last_writer.get("seq", result.get("last_writer_seq"))
+    if seq is None or str(seq) == "":
+        return False
+    pc = str(last_writer.get("pc_label") or last_writer.get("pc") or result.get("last_writer_pc") or "")
+    address = str(last_writer.get("address") or last_writer.get("address_key") or result.get("matched_address") or "")
+    if not pc or not address:
+        return False
+    access = str(last_writer.get("access") or "").lower()
+    kind = str(last_writer.get("kind") or "").lower()
+    if access and "write" not in access:
+        return False
+    if kind and kind not in {"write", "memory_write", "stack_write", "watch_hit"}:
+        return False
+    return True
 
 
 def strongest_proof_status(values: list[Any]) -> str:
@@ -3415,8 +3631,15 @@ def register_provenance_for_operand(operand: dict[str, Any], attribution: dict[s
         "seq": operand.get("via_register_write_seq"),
         "pc": str(operand.get("via_register_write_pc", "")),
         "operation": "",
-        "proof_status": str(attribution.get("proof_status", "instruction_observed")),
+        "proof_status": normalize_proof_status(attribution.get("proof_status")) or "planned_only",
     }
+
+
+def dynamic_taint_edge_proof_status(proof_status: Any, *, has_taint: bool) -> str:
+    proof = normalize_proof_status(proof_status) or "planned_only"
+    if has_taint and proof in {"runtime_observed", "instruction_observed", "taint_proven"}:
+        return "taint_proven"
+    return proof
 
 
 def register_provenance_id(provenance: dict[str, Any]) -> str:

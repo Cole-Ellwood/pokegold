@@ -3162,26 +3162,38 @@ def visual_snapshot_findings(report: dict[str, Any], *, source: str) -> list[dic
     surfaces = dict_items(report.get("surfaces")) or dict_items(report.get("planned_surfaces"))
     lcd_state = report.get("lcd_state") if isinstance(report.get("lcd_state"), dict) else {}
     executed = bool(report.get("executed"))
+    runtime_samples = visual_snapshot_has_runtime_samples(report)
+    proof_status = snapshot_report_proof_status(
+        report,
+        runtime_samples=runtime_samples,
+        downgrade_reason="no_visual_runtime_samples",
+    )
     out.append(
         finding(
             finding_type="visual_snapshot",
             title="Visual/UI snapshot captured" if executed else "Visual/UI snapshot planned",
             source=source,
-            severity=SEVERITY_BASE["visual_snapshot"] if executed else 40,
-            confidence=0.78 if executed else 0.55,
+            severity=SEVERITY_BASE["visual_snapshot"] if proof_status == "runtime_observed" else 40,
+            confidence=0.78 if proof_status == "runtime_observed" else 0.55,
             evidence=[
                 f"executed={executed}",
+                f"runtime_samples={runtime_samples}",
                 f"surfaces={report.get('surface_count') or len(surfaces)}",
                 f"lcd_enabled={lcd_state.get('lcd_enabled')}" if lcd_state else "",
                 f"ppu_mode={lcd_state.get('ppu_mode')}" if lcd_state else "",
                 f"screen_frames={report.get('screen_frame_count', 0)}",
                 f"framebuffer={report.get('framebuffer', '')}" if report.get("framebuffer") else "",
                 f"save_state={report.get('save_state', '')}",
+                snapshot_proof_downgrade_evidence(
+                    report,
+                    runtime_samples=runtime_samples,
+                    downgrade_reason="no_visual_runtime_samples",
+                ),
             ],
             next_actions=string_items(report.get("commands"))[:8],
             related_symbols=visual_snapshot_symbols(surfaces),
             related_addresses=visual_snapshot_addresses(surfaces),
-            proof_status=str(report.get("proof_status") or ("runtime_observed" if executed else "planned_only")),
+            proof_status=proof_status,
         )
     )
     return out
@@ -3192,33 +3204,118 @@ def audio_snapshot_findings(report: dict[str, Any], *, source: str) -> list[dict
     symbol_state = dict_items(report.get("symbol_state")) or dict_items(report.get("planned_symbols"))
     register_details = dict_items(report.get("register_details"))
     audio_state = report.get("audio_state") if isinstance(report.get("audio_state"), dict) else {}
+    sound_buffer = report.get("sound_buffer") if isinstance(report.get("sound_buffer"), dict) else {}
     executed = bool(report.get("executed"))
+    runtime_samples = audio_snapshot_has_runtime_samples(report)
+    proof_status = snapshot_report_proof_status(
+        report,
+        runtime_samples=runtime_samples,
+        downgrade_reason="no_audio_runtime_samples",
+    )
     out.append(
         finding(
             finding_type="audio_snapshot",
             title="Audio snapshot captured" if executed else "Audio snapshot planned",
             source=source,
-            severity=SEVERITY_BASE["audio_snapshot"] if executed else 40,
-            confidence=0.78 if executed else 0.55,
+            severity=SEVERITY_BASE["audio_snapshot"] if proof_status == "runtime_observed" else 40,
+            confidence=0.78 if proof_status == "runtime_observed" else 0.55,
             evidence=[
                 f"executed={executed}",
+                f"runtime_samples={runtime_samples}",
                 f"symbols={report.get('symbol_state_count') or len(symbol_state)}",
                 f"registers={report.get('register_count') or len(register_details)}",
                 f"audio_enabled={audio_state.get('audio_enabled')}" if audio_state else "",
                 f"channel_enable_mask={audio_state.get('channel_enable_mask')}" if audio_state else "",
+                f"sound_buffer_source={sound_buffer.get('source')}" if sound_buffer else "",
+                f"sound_buffer_sha256={sound_buffer.get('sha256')}" if sound_buffer else "",
                 f"save_state={report.get('save_state', '')}",
+                snapshot_proof_downgrade_evidence(
+                    report,
+                    runtime_samples=runtime_samples,
+                    downgrade_reason="no_audio_runtime_samples",
+                ),
             ],
             next_actions=string_items(report.get("commands"))[:8],
-            related_symbols=audio_snapshot_symbols(symbol_state=symbol_state, register_details=register_details),
+            related_symbols=audio_snapshot_symbols(
+                symbol_state=symbol_state,
+                register_details=register_details,
+                sound_buffer=sound_buffer,
+            ),
             related_addresses=audio_snapshot_addresses(
                 symbol_state=symbol_state,
                 register_details=register_details,
                 wave_ram=report.get("wave_ram") if isinstance(report.get("wave_ram"), dict) else {},
             ),
-            proof_status=str(report.get("proof_status") or ("runtime_observed" if executed else "planned_only")),
+            proof_status=proof_status,
         )
     )
     return out
+
+
+def visual_snapshot_has_runtime_samples(report: dict[str, Any]) -> bool:
+    screen_frame = report.get("screen_frame") if isinstance(report.get("screen_frame"), dict) else {}
+    io_registers = report.get("io_registers") if isinstance(report.get("io_registers"), dict) else {}
+    return bool(
+        dict_items(report.get("surfaces"))
+        or io_registers
+        or screen_frame
+        or report.get("framebuffer")
+        or positive_int(report.get("screen_frame_count"))
+    )
+
+
+def audio_snapshot_has_runtime_samples(report: dict[str, Any]) -> bool:
+    registers = report.get("registers") if isinstance(report.get("registers"), dict) else {}
+    wave_ram = report.get("wave_ram") if isinstance(report.get("wave_ram"), dict) else {}
+    sound_buffer = report.get("sound_buffer") if isinstance(report.get("sound_buffer"), dict) else {}
+    return bool(
+        registers
+        or dict_items(report.get("register_details"))
+        or dict_items(report.get("symbol_state"))
+        or wave_ram.get("sha256")
+        or wave_ram.get("sample_hex")
+        or sound_buffer.get("sha256")
+        or sound_buffer.get("sample_hex")
+        or sound_buffer.get("buffer")
+    )
+
+
+def snapshot_report_proof_status(
+    report: dict[str, Any],
+    *,
+    runtime_samples: bool,
+    downgrade_reason: str,
+) -> str:
+    explicit = normalize_proof_status(report.get("proof_status")) if report.get("proof_status") else ""
+    if runtime_samples:
+        return explicit or ("runtime_observed" if report.get("executed") else "planned_only")
+    if snapshot_proof_downgrade_evidence(
+        report,
+        runtime_samples=runtime_samples,
+        downgrade_reason=downgrade_reason,
+    ):
+        return "planned_only"
+    return explicit or "planned_only"
+
+
+def snapshot_proof_downgrade_evidence(
+    report: dict[str, Any],
+    *,
+    runtime_samples: bool,
+    downgrade_reason: str,
+) -> str:
+    explicit = normalize_proof_status(report.get("proof_status")) if report.get("proof_status") else ""
+    if runtime_samples:
+        return ""
+    if bool(report.get("executed")) or explicit in {
+        "runtime_observed",
+        "instruction_observed",
+        "taint_proven",
+        "mirror_passed",
+        "mirror_failed",
+    }:
+        return f"proof_downgrade_reason={downgrade_reason}"
+    return ""
 
 
 def report_error_findings(report: dict[str, Any], *, source: str, title: str) -> list[dict[str, Any]]:
@@ -3252,7 +3349,13 @@ def visual_snapshot_addresses(surfaces: list[dict[str, Any]]) -> list[str]:
     )
 
 
-def audio_snapshot_symbols(*, symbol_state: list[dict[str, Any]], register_details: list[dict[str, Any]]) -> list[str]:
+def audio_snapshot_symbols(
+    *,
+    symbol_state: list[dict[str, Any]],
+    register_details: list[dict[str, Any]],
+    sound_buffer: dict[str, Any] | None = None,
+) -> list[str]:
+    sound = sound_buffer or {}
     return unique_string_items(
         [
             *[
@@ -3265,6 +3368,7 @@ def audio_snapshot_symbols(*, symbol_state: list[dict[str, Any]], register_detai
                 for item in register_details
                 if item.get("name")
             ],
+            str(sound.get("source", "")),
         ]
     )
 
@@ -3327,8 +3431,13 @@ def visualization_findings(report: dict[str, Any], *, source: str) -> list[dict[
                 source=source,
                 severity=severity,
                 confidence=0.65,
-                evidence=[str(item.get("detail", "")), str(item.get("source", ""))],
+                evidence=[
+                    str(item.get("detail", "")),
+                    str(item.get("source", "")),
+                    f"proof_status={item.get('proof_status')}" if item.get("proof_status") else "",
+                ],
                 next_actions=[],
+                proof_status=str(item.get("proof_status") or ""),
             )
         )
     if not report.get("timeline_event_count") and not report.get("graph_node_count"):

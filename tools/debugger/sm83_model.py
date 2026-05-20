@@ -250,6 +250,38 @@ class HardwareTriggerSemantics:
 
 
 @dataclass(frozen=True)
+class TimerOverflowSemantics:
+    side_effect_kind: str = "timer_tima_overflow"
+    reload_write_kind: str = "timer_tima_reload_write"
+    interrupt_write_kind: str = "timer_interrupt_request_write"
+    operation: str = "TIMA overflow reloads TMA and requests timer interrupt"
+    reload_operation: str = "TIMA reload from TMA after overflow"
+    interrupt_operation: str = "timer interrupt request sets IF bit 2"
+    interrupt_bit: int = 2
+    hardware_model: str = "timer_tima_overflow"
+
+    @property
+    def interrupt_mask(self) -> int:
+        return 1 << self.interrupt_bit
+
+    def observed_reload_and_interrupt(
+        self,
+        *,
+        current_tima: int,
+        current_tma: int,
+        next_tima: int,
+        current_if: int,
+        next_if: int,
+    ) -> bool:
+        return (
+            (int(current_tima) & 0xFF) == 0xFF
+            and (int(next_tima) & 0xFF) == (int(current_tma) & 0xFF)
+            and not (int(current_if) & self.interrupt_mask)
+            and bool(int(next_if) & self.interrupt_mask)
+        )
+
+
+@dataclass(frozen=True)
 class LoadSemantics:
     opcode: int
     target: str
@@ -620,6 +652,10 @@ INTERRUPT_VECTORS = {
 PPU_IO_RANGES = ((0xFF40, 0xFF4B), (0xFF68, 0xFF6B))
 AUDIO_IO_RANGE = (0xFF10, 0xFF3F)
 TIMER_IO_RANGE = (0xFF04, 0xFF07)
+TIMER_TIMA_ADDRESS = 0xFF05
+TIMER_TMA_ADDRESS = 0xFF06
+TIMER_TAC_ADDRESS = 0xFF07
+INTERRUPT_FLAG_ADDRESS = 0xFF0F
 CGB_VRAM_DMA_RANGE = (0xFF51, 0xFF55)
 CGB_VRAM_DMA_REGISTERS = {
     0xFF51: "rVDMA_SRC_HIGH",
@@ -740,6 +776,10 @@ def interrupt_entry_semantics(vector: int) -> InterruptEntrySemantics:
     except KeyError as exc:
         raise ValueError(f"address is not an SM83 interrupt vector: 0x{vector:04X}") from exc
     return InterruptEntrySemantics(vector=vector, name=name, operation=f"{name} interrupt entry")
+
+
+def timer_overflow_semantics() -> TimerOverflowSemantics:
+    return TimerOverflowSemantics()
 
 
 def hardware_trigger_semantics(address: int, *, write_kind: str = "io_write") -> tuple[HardwareTriggerSemantics, ...]:

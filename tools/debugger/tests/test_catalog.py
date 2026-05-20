@@ -32,7 +32,7 @@ from tools.debugger.expect import build_expectation_report
 from tools.debugger.fuzz import build_fuzz_plan
 from tools.debugger.generate import build_generation_plan
 from tools.debugger.hook_order import build_hook_order_probe_report
-from tools.debugger.impact import build_impact_report
+from tools.debugger.impact import build_impact_report, merge_items
 from tools.debugger.ingest import ingest_artifacts
 from tools.debugger.input_log import build_input_playback
 from tools.debugger.instruction_trace import build_instruction_trace_report, symbols_from_command
@@ -950,8 +950,52 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(match["runtime_kinds"], ["visual_snapshot"])
         self.assertIn("runtime_kinds=visual_snapshot", match["evidence"])
 
+    def test_expectation_ignores_unexecuted_visual_snapshot_framebuffer(self) -> None:
+        digest = hashlib.sha256(bytes(range(12))).hexdigest()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "visual_snapshot.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_visual_snapshot",
+                        "valid": True,
+                        "executed": False,
+                        "proof_status": "planned_only",
+                        "screen_frame_count": 1,
+                        "framebuffer": f"sha256:{digest}",
+                        "screen_frame": {
+                            "kind": "visual_framebuffer_snapshot",
+                            "frame": 0,
+                            "screen_source": "screen.ndarray",
+                            "width": 2,
+                            "height": 2,
+                            "mode": "3ch",
+                            "byte_count": 12,
+                            "sha256": digest,
+                            "framebuffer": f"sha256:{digest}",
+                        },
+                        "surfaces": [],
+                        "commands": [],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            expectations = build_expectation_report(
+                reports=("visual_snapshot.json",),
+                expectations=(f"framebuffer=sha256:{digest}",),
+                root=root,
+            )
+
+        self.assertTrue(expectations["valid"])
+        self.assertFalse(expectations["passed"])
+        self.assertEqual(expectations["evidence_framebuffer_count"], 0)
+        self.assertEqual(expectations["expectations"][0]["status"], "failed")
+
     def test_expectation_and_compare_use_audio_snapshot_evidence(self) -> None:
         wave_digest = hashlib.sha256(bytes(range(16))).hexdigest()
+        sound_buffer_bytes = bytes(range(32, 48))
+        sound_buffer_digest = hashlib.sha256(sound_buffer_bytes).hexdigest()
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             (root / "audio_snapshot.json").write_text(
@@ -991,6 +1035,18 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
                             "sha256": wave_digest,
                             "sample_hex": bytes(range(16)).hex().upper(),
                         },
+                        "sound_buffer_count": 1,
+                        "sound_buffer": {
+                            "kind": "pyboy_sound_buffer",
+                            "source": "pyboy.sound.ndarray",
+                            "sample_rate": 48000,
+                            "raw_buffer_head": 8,
+                            "byte_count": len(sound_buffer_bytes),
+                            "sample_size": len(sound_buffer_bytes),
+                            "sha256": sound_buffer_digest,
+                            "buffer": f"sha256:{sound_buffer_digest}",
+                            "sample_hex": sound_buffer_bytes.hex().upper(),
+                        },
                         "commands": [
                             "python -m tools.debugger audio-snapshot --save-state bug.state --execute"
                         ],
@@ -1006,6 +1062,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
                     "audio-symbol=wMusicID=1F",
                     "audio-state=audio_enabled=true",
                     f"audio-wave-sha256=sha256:{wave_digest}",
+                    f"audio-buffer-sha256=sha256:{sound_buffer_digest}",
                 ),
                 root=root,
             )
@@ -1023,13 +1080,198 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertTrue(all(item["status"] == "passed" for item in expectations["expectations"]))
         self.assertIn("audio-snapshot --rom pokegold.gbc", commands)
         self.assertIn("expect --report audio_snapshot.json --expect audio-register=rAUDENA=8F", commands)
+        self.assertIn(f"expect --report audio_snapshot.json --expect audio-buffer-sha256={sound_buffer_digest}", commands)
         self.assertEqual(match["status"], "passed")
         self.assertEqual(match["proof_status"], "mirror_passed")
         self.assertEqual(match["runtime_kinds"], ["audio_snapshot"])
         self.assertIn("rAUDENA", match["related_symbols"])
         self.assertIn("wMusicID", match["related_symbols"])
+        self.assertIn("pyboy.sound.ndarray", match["artifacts"])
         self.assertIn("FF26", match["related_addresses"])
         self.assertIn("runtime_kinds=audio_snapshot", match["evidence"])
+
+    def test_expectation_ignores_audio_snapshot_without_runtime_proof(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "audio_snapshot.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_audio_snapshot",
+                        "valid": True,
+                        "executed": True,
+                        "proof_status": "planned_only",
+                        "registers": {"rAUDENA": "8F"},
+                        "register_details": [
+                            {"name": "rAUDENA", "address": "FF26", "value_hex": "8F", "value": 0x8F}
+                        ],
+                        "audio_state": {"audio_enabled": True},
+                        "symbol_state": [],
+                        "wave_ram": {},
+                        "sound_buffer_count": 1,
+                        "sound_buffer": {
+                            "kind": "pyboy_sound_buffer",
+                            "source": "pyboy.sound.ndarray",
+                            "sample_rate": 48000,
+                            "byte_count": 1,
+                            "sha256": hashlib.sha256(b"x").hexdigest(),
+                            "sample_hex": "78",
+                        },
+                        "commands": [],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            expectations = build_expectation_report(
+                reports=("audio_snapshot.json",),
+                expectations=("audio-register=rAUDENA=8F",),
+                root=root,
+            )
+
+        self.assertTrue(expectations["valid"])
+        self.assertFalse(expectations["passed"])
+        self.assertEqual(expectations["evidence_audio_snapshot_count"], 0)
+        self.assertEqual(expectations["expectations"][0]["status"], "failed")
+
+    def test_compare_does_not_promote_empty_snapshot_envelope_to_runtime_expectation_mirror(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "visual_snapshot.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_visual_snapshot",
+                        "valid": True,
+                        "executed": True,
+                        "proof_status": "runtime_observed",
+                        "surface_count": 0,
+                        "surfaces": [],
+                        "screen_frame_count": 0,
+                        "screen_frame": {},
+                        "framebuffer": "",
+                        "commands": [],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            (root / "audio_snapshot.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_audio_snapshot",
+                        "valid": True,
+                        "executed": True,
+                        "proof_status": "runtime_observed",
+                        "register_count": 0,
+                        "registers": {},
+                        "register_details": [],
+                        "symbol_state_count": 0,
+                        "symbol_state": [],
+                        "audio_state": {},
+                        "wave_ram": {},
+                        "commands": [],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            (root / "expectation.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_expectation_report",
+                        "valid": True,
+                        "passed": True,
+                        "expectation_count": 1,
+                        "passed_count": 1,
+                        "failed_count": 0,
+                        "skipped_count": 0,
+                        "evidence_summary": {"symbols": ["wTilemap"], "addresses": ["C3A0"]},
+                        "commands": [],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            compare = build_compare_plan(
+                reports=("visual_snapshot.json", "audio_snapshot.json", "expectation.json"),
+                root=root,
+            )
+
+        self.assertFalse(any(match["id"] == "runtime_expectation_dynamic_mirror" for match in compare["matches"]))
+
+    def test_snapshot_consumers_do_not_promote_empty_executed_reports_to_runtime(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "visual_snapshot.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_visual_snapshot",
+                        "valid": True,
+                        "executed": True,
+                        "proof_status": "runtime_observed",
+                        "surface_count": 0,
+                        "surfaces": [],
+                        "io_registers": {},
+                        "lcd_state": {},
+                        "screen_frame_count": 0,
+                        "screen_frame": {},
+                        "framebuffer": "",
+                        "commands": [],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            (root / "audio_snapshot.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_audio_snapshot",
+                        "valid": True,
+                        "executed": True,
+                        "proof_status": "runtime_observed",
+                        "symbol_state_count": 0,
+                        "symbol_state": [],
+                        "register_count": 0,
+                        "registers": {},
+                        "register_details": [],
+                        "audio_state": {},
+                        "channel_state": [],
+                        "wave_ram": {},
+                        "commands": [],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            ranked = rank_findings(reports=("visual_snapshot.json", "audio_snapshot.json"), root=root)
+            impact = build_impact_report(reports=("visual_snapshot.json", "audio_snapshot.json"), root=root)
+            graph = build_causal_graph_report(reports=("visual_snapshot.json", "audio_snapshot.json"), root=root)
+            visualization = build_visualization_report(
+                reports=("visual_snapshot.json", "audio_snapshot.json"),
+                root=root,
+            )
+
+        ranked_by_type = {item["type"]: item for item in ranked["findings"]}
+        impact_by_type = {item["type"]: item for item in impact["items"]}
+        graph_snapshot_nodes = [
+            node for node in graph["nodes"] if node["kind"] in {"visual_snapshot", "audio_snapshot"}
+        ]
+        visual_snapshot_events = [
+            event for event in visualization["timeline"] if event["event_type"] in {"visual_snapshot", "audio_snapshot"}
+        ]
+        visual_snapshot_nodes = [
+            node for node in visualization["graph"]["nodes"] if node["type"] in {"visual_snapshot", "audio_snapshot"}
+        ]
+        ranked_evidence = "\n".join(
+            [*ranked_by_type["visual_snapshot"]["evidence"], *ranked_by_type["audio_snapshot"]["evidence"]]
+        )
+
+        self.assertEqual(ranked_by_type["visual_snapshot"]["proof_status"], "planned_only")
+        self.assertEqual(ranked_by_type["audio_snapshot"]["proof_status"], "planned_only")
+        self.assertEqual(impact_by_type["visual_snapshot"]["proof_status"], "planned_only")
+        self.assertEqual(impact_by_type["audio_snapshot"]["proof_status"], "planned_only")
+        self.assertTrue(all(node["proof_status"] == "planned_only" for node in graph_snapshot_nodes))
+        self.assertTrue(all(node["proof_status"] == "planned_only" for node in visual_snapshot_nodes))
+        self.assertTrue(all(event["proof_status"] == "planned_only" for event in visual_snapshot_events))
+        self.assertTrue(all("proof=planned_only" in event["detail"] for event in visual_snapshot_events))
+        self.assertIn("proof_downgrade_reason=no_visual_runtime_samples", ranked_evidence)
+        self.assertIn("proof_downgrade_reason=no_audio_runtime_samples", ranked_evidence)
 
     def test_audio_snapshot_captures_registers_symbols_and_visualization(self) -> None:
         class FakeMemory:
@@ -1065,8 +1307,29 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
                     return (address - 0xFF30) * 3
                 return io.get(address, address & 0xFF)
 
+        class FakeSoundArray:
+            shape = (8, 2)
+            dtype = "int8"
+
+            def __init__(self) -> None:
+                self.data = bytes(range(0x20, 0x30))
+
+            def copy(self) -> "FakeSoundArray":
+                return self
+
+            def tobytes(self) -> bytes:
+                return self.data
+
+        class FakeSound:
+            sample_rate = 48000
+            raw_buffer_format = "b"
+            raw_buffer_length = 1602
+            raw_buffer_head = 8
+            ndarray = FakeSoundArray()
+
         class FakePyBoy:
             memory = FakeMemory()
+            sound = FakeSound()
 
             def load_state(self, _fh: Any) -> None:
                 return None
@@ -1114,6 +1377,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
 
         symbol_state = {item["symbol"]: item for item in snapshot["symbol_state"]}
         register_details = {item["name"]: item for item in snapshot["register_details"]}
+        sound_buffer_digest = hashlib.sha256(bytes(range(0x20, 0x30))).hexdigest()
         graph_node_kinds = {node["kind"] for node in graph["nodes"]}
         graph_relations = {edge["relation"] for edge in graph["edges"]}
         visual_node_types = {node["type"] for node in visualization["graph"]["nodes"]}
@@ -1137,20 +1401,30 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(symbol_state["wMusicID"]["value_hex"], "1F")
         self.assertEqual(snapshot["wave_ram"]["address"], "FF30")
         self.assertEqual(snapshot["wave_ram"]["sample_hex"], "000306090C0F1215181B1E2124272A2D")
+        self.assertEqual(snapshot["sound_buffer_count"], 1)
+        self.assertEqual(snapshot["sound_buffer"]["source"], "pyboy.sound.ndarray")
+        self.assertEqual(snapshot["sound_buffer"]["sample_rate"], 48000)
+        self.assertEqual(snapshot["sound_buffer"]["raw_buffer_head"], 8)
+        self.assertEqual(snapshot["sound_buffer"]["sha256"], sound_buffer_digest)
+        self.assertEqual(snapshot["sound_buffer"]["sample_hex"], "202122232425262728292A2B2C2D2E2F")
         self.assertIn("audio_snapshot", graph_node_kinds)
         self.assertIn("audio_register", graph_node_kinds)
         self.assertIn("audio_symbol_state", graph_node_kinds)
         self.assertIn("audio_wave_ram", graph_node_kinds)
+        self.assertIn("audio_sound_buffer", graph_node_kinds)
         self.assertIn("samples_audio_register", graph_relations)
         self.assertIn("samples_audio_state", graph_relations)
         self.assertIn("samples_audio_wave_ram", graph_relations)
+        self.assertIn("samples_audio_sound_buffer", graph_relations)
         self.assertIn("audio_snapshot", visual_event_types)
         self.assertIn("audio_register", visual_node_types)
         self.assertIn("audio_symbol_state", visual_node_types)
         self.assertIn("audio_wave_ram", visual_node_types)
+        self.assertIn("audio_sound_buffer", visual_node_types)
         self.assertEqual(snapshot_finding["proof_status"], "runtime_observed")
         self.assertIn("wMusicID", snapshot_finding["related_symbols"])
         self.assertIn("rAUDENA", snapshot_finding["related_symbols"])
+        self.assertIn("pyboy.sound.ndarray", snapshot_finding["related_symbols"])
         self.assertIn("FF26", snapshot_finding["related_addresses"])
         self.assertEqual(snapshot_impact["proof_status"], "runtime_observed")
         self.assertEqual(snapshot_impact["surface"], "Graphics, audio, and UI")
@@ -11392,6 +11666,173 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
             "modeled_hardware_side_effect",
         )
 
+    def test_effect_trace_models_observed_tima_overflow_reload_and_interrupt_request(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "test.sym").write_text("01:4000 UnitFunc\n01:4001 UnitNext\n", encoding="utf-8")
+            (root / "instruction_trace.jsonl").write_text(
+                "\n".join(
+                    json.dumps(record)
+                    for record in [
+                        {
+                            "seq": 0,
+                            "bank": 1,
+                            "pc": 0x4000,
+                            "pc_label": "UnitFunc",
+                            "opcode": 0x00,
+                            "regs": {"F": 0x00, "SP": 0xC100},
+                            "watch_values": {
+                                "FF05": "FF",
+                                "FF06": "23",
+                                "FF0F": "E0",
+                            },
+                        },
+                        {
+                            "seq": 1,
+                            "bank": 1,
+                            "pc": 0x4001,
+                            "pc_label": "UnitNext",
+                            "opcode": 0x00,
+                            "regs": {"F": 0x00, "SP": 0xC100},
+                            "watch_values": {
+                                "FF05": "23",
+                                "FF06": "23",
+                                "FF0F": "E4",
+                            },
+                        },
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            report = build_effect_trace_report(
+                traces=("instruction_trace.jsonl",),
+                symbols_path="test.sym",
+                watch_addresses=("FF05", "FF0F"),
+                root=root,
+            )
+            (root / "effect_trace.json").write_text(json.dumps(report), encoding="utf-8")
+            reverse = build_reverse_query_report(
+                reports=("effect_trace.json",),
+                addresses=("FF05", "FF0F"),
+                symbols_path="test.sym",
+                root=root,
+            )
+            dynamic = build_dynamic_taint_report(
+                reports=("effect_trace.json",),
+                sink_addresses=("FF05", "FF0F"),
+                symbols_path="test.sym",
+                root=root,
+            )
+
+        effects = report["events"][0]["effects"]
+        side_effects = {item["kind"]: item for item in report["side_effect_index"]}
+        write_index = {item["address"]: item for item in report["write_index"]}
+        watch_writes = [
+            (hit["watch"], hit["value_hex"], hit["effect_kind"])
+            for hit in report["events"][0]["watch_hits"]
+            if hit["access"] == "write"
+        ]
+        reload_write = next(item for item in effects if item.get("kind") == "timer_tima_reload_write")
+        if_write = next(item for item in effects if item.get("kind") == "timer_interrupt_request_write")
+        reverse_by_address = {
+            result["matched_address"]: result
+            for result in reverse["results"]
+        }
+        dynamic_writes = {
+            (item["address"], item["write_kind"]): item
+            for item in dynamic["write_attributions"]
+        }
+
+        self.assertTrue(report["valid"])
+        self.assertEqual(report["timer_overflow_count"], 1)
+        self.assertEqual(report["timer_interrupt_request_count"], 1)
+        self.assertEqual(report["unmodeled_observed_change_count"], 0)
+        self.assertIn("timer_tima_overflow", side_effects)
+        self.assertEqual(side_effects["timer_tima_overflow"]["triggers"][0]["operation"], "TIMA overflow reloads TMA and requests timer interrupt")
+        self.assertEqual(reload_write["address"], 0xFF05)
+        self.assertEqual(reload_write["value_hex"], "23")
+        self.assertEqual(reload_write["value_source"], "observed_tma_reload")
+        self.assertEqual(reload_write["source_operands"][0]["address"], "FF06")
+        self.assertEqual(reload_write["source_operands"][0]["value"], "23")
+        self.assertEqual(reload_write["evidence_source"], "observed_adjacent_timer_overflow")
+        self.assertEqual(reload_write["evidence_status"], "observed_hardware_side_effect")
+        self.assertEqual(reload_write["post_value_status"], "matched")
+        self.assertEqual(if_write["address"], 0xFF0F)
+        self.assertEqual(if_write["value_hex"], "E4")
+        self.assertEqual(if_write["old_value_hex"], "E0")
+        self.assertEqual(if_write["timer_interrupt_bit"], 2)
+        self.assertEqual(if_write["post_value_status"], "matched")
+        self.assertEqual(write_index["FF05"]["last_writer_seq"], 0)
+        self.assertEqual(write_index["FF05"]["last_value_hex"], "23")
+        self.assertEqual(write_index["FF0F"]["last_value_hex"], "E4")
+        self.assertIn(("$FF05", "23", "timer_tima_reload_write"), watch_writes)
+        self.assertIn(("$FF0F", "E4", "timer_interrupt_request_write"), watch_writes)
+        self.assertTrue(reverse["valid"])
+        self.assertEqual(reverse_by_address["FF05"]["last_writer"]["kind"], "timer_tima_reload_write")
+        self.assertEqual(reverse_by_address["FF0F"]["last_writer"]["kind"], "timer_interrupt_request_write")
+        self.assertTrue(dynamic["valid"])
+        self.assertIn(("FF05", "timer_tima_reload_write"), dynamic_writes)
+        self.assertIn(("FF0F", "timer_interrupt_request_write"), dynamic_writes)
+
+    def test_effect_trace_requires_observed_timer_if_transition_for_overflow_proof(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "test.sym").write_text("01:4000 UnitFunc\n01:4001 UnitNext\n", encoding="utf-8")
+            (root / "instruction_trace.jsonl").write_text(
+                "\n".join(
+                    json.dumps(record)
+                    for record in [
+                        {
+                            "seq": 0,
+                            "bank": 1,
+                            "pc": 0x4000,
+                            "pc_label": "UnitFunc",
+                            "opcode": 0x00,
+                            "regs": {"F": 0x00, "SP": 0xC100},
+                            "watch_values": {
+                                "FF05": "FF",
+                                "FF06": "23",
+                                "FF0F": "E4",
+                            },
+                        },
+                        {
+                            "seq": 1,
+                            "bank": 1,
+                            "pc": 0x4001,
+                            "pc_label": "UnitNext",
+                            "opcode": 0x00,
+                            "regs": {"F": 0x00, "SP": 0xC100},
+                            "watch_values": {
+                                "FF05": "23",
+                                "FF06": "23",
+                                "FF0F": "E4",
+                            },
+                        },
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            report = build_effect_trace_report(
+                traces=("instruction_trace.jsonl",),
+                symbols_path="test.sym",
+                watch_addresses=("FF05", "FF0F"),
+                root=root,
+            )
+
+        effects = report["events"][0]["effects"]
+
+        self.assertTrue(report["valid"])
+        self.assertEqual(report["timer_overflow_count"], 0)
+        self.assertEqual(report["timer_interrupt_request_count"], 0)
+        self.assertEqual(report["unmodeled_observed_change_count"], 1)
+        self.assertFalse(any(item.get("kind") == "timer_tima_overflow" for item in effects))
+        self.assertFalse(any(item.get("kind") == "timer_tima_reload_write" for item in effects))
+        self.assertFalse(any(item.get("kind") == "timer_interrupt_request_write" for item in effects))
+
     def test_effect_trace_raw_banked_watch_requires_matching_effect_key(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -15375,6 +15816,93 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("plans_evidence_route (planned_only)", visualization["mermaid_graph"])
         self.assertIn("proves_taint_to (taint_proven)", visualization["mermaid_graph"])
 
+    def test_visualization_timeline_preserves_planned_dynamic_taint_proof_status(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "dynamic_plan.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_dynamic_taint_report",
+                        "valid": True,
+                        "paths": [
+                            {
+                                "id": "dynamic_taint_path_0001",
+                                "title": "planned seed -> wCurDamage",
+                                "target": "wCurDamage",
+                                "proof_status": "planned_only",
+                                "related_symbols": ["wCurDamage"],
+                                "related_addresses": ["D141"],
+                                "evidence": ["match_precision=bus_address_unverified_bank"],
+                                "score": 92,
+                                "confidence": 0.8,
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            visualization = build_visualization_report(reports=("dynamic_plan.json",), root=root)
+            (root / "visualization.json").write_text(json.dumps(visualization), encoding="utf-8")
+            ranked = rank_findings(reports=("visualization.json",), root=root)
+
+        event = next(item for item in visualization["timeline"] if item["event_type"] == "taint_path")
+        visual_finding = next(item for item in ranked["findings"] if item["type"] == "visual_causal")
+
+        self.assertEqual(event["proof_status"], "planned_only")
+        self.assertIn("proof=planned_only", event["detail"])
+        self.assertEqual(visual_finding["proof_status"], "planned_only")
+        self.assertIn("proof_status=planned_only", visual_finding["evidence"])
+
+    def test_impact_merge_preserves_mixed_proof_status_vector(self) -> None:
+        merged = merge_items(
+            [
+                {
+                    "type": "causal_path",
+                    "title": "wCurDamage causal path",
+                    "source": "impact.json",
+                    "severity": 35,
+                    "confidence": 0.45,
+                    "evidence": ["planned route only"],
+                    "next_actions": [],
+                    "related_symbols": ["wCurDamage"],
+                    "related_files": [],
+                    "related_addresses": ["D141"],
+                    "proof_status": "planned_only",
+                    "proof_status_by_source": {"packet.json": "planned_only"},
+                },
+                {
+                    "type": "causal_path",
+                    "title": "wCurDamage causal path",
+                    "source": "impact.json",
+                    "severity": 88,
+                    "confidence": 0.9,
+                    "evidence": ["dynamic taint proof"],
+                    "next_actions": [],
+                    "related_symbols": ["wCurDamage"],
+                    "related_files": [],
+                    "related_addresses": ["D141"],
+                    "proof_status": "taint_proven",
+                    "proof_status_by_source": {"dynamic_taint.json": "taint_proven"},
+                },
+            ]
+        )
+
+        item = merged[0]
+        evidence = "\n".join(item["evidence"])
+
+        self.assertEqual(item["proof_status"], "taint_proven")
+        self.assertEqual(item["proof_statuses"], ["planned_only", "taint_proven"])
+        self.assertEqual(item["proof_min"], "planned_only")
+        self.assertEqual(item["proof_max"], "taint_proven")
+        self.assertEqual(item["proof_badge"], "mixed")
+        self.assertEqual(
+            item["proof_status_by_source"],
+            {"dynamic_taint.json": "taint_proven", "packet.json": "planned_only"},
+        )
+        self.assertIn("proof_min=planned_only", evidence)
+        self.assertIn("proof_max=taint_proven", evidence)
+        self.assertIn("proof_statuses=planned_only,taint_proven", evidence)
+
     def test_rank_and_impact_preserve_causal_path_proof_summary(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -17479,6 +18007,127 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(impact_by_type["taint_path"]["proof_status"], "planned_only")
         self.assertEqual(impact_by_type["reverse_attribution"]["proof_status"], "planned_only")
 
+    def test_graph_and_visualization_default_proofless_dynamic_taint_path_to_planned(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "dynamic_taint.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_dynamic_taint_report",
+                        "valid": True,
+                        "paths": [
+                            {
+                                "title": "legacy taint-looking path",
+                                "target": "wCurDamage",
+                                "score": 88,
+                                "confidence": 0.8,
+                                "taint": ["move_power"],
+                                "evidence": ["taint=move_power"],
+                                "related_symbols": ["wCurDamage", "move_power"],
+                                "contributors": [
+                                    {
+                                        "symbol": "move_power",
+                                        "relation": "register_taints_sink",
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            graph = build_causal_graph_report(reports=("dynamic_taint.json",), root=root)
+            visualization = build_visualization_report(reports=("dynamic_taint.json",), root=root)
+
+        graph_taint_node = next(node for node in graph["nodes"] if node["kind"] == "taint_path")
+        graph_taint_edge = next(edge for edge in graph["edges"] if edge["relation"] == "proves_taint_to")
+        visual_taint_event = next(event for event in visualization["timeline"] if event["event_type"] == "taint_path")
+        visual_taint_nodes = [
+            node for node in visualization["graph"]["nodes"] if node["type"] in {"taint_target", "taint_source"}
+        ]
+        visual_taint_edges = [
+            edge for edge in visualization["graph"]["edges"] if edge["relation"] == "register_taints_sink"
+        ]
+
+        self.assertEqual(graph_taint_node["proof_status"], "planned_only")
+        self.assertEqual(graph_taint_edge["proof_status"], "planned_only")
+        self.assertEqual(visual_taint_event["proof_status"], "planned_only")
+        self.assertIn("proof=planned_only", visual_taint_event["detail"])
+        self.assertTrue(visual_taint_nodes)
+        self.assertTrue(visual_taint_edges)
+        self.assertTrue(all(node["proof_status"] == "planned_only" for node in visual_taint_nodes))
+        self.assertTrue(all(edge["proof_status"] == "planned_only" for edge in visual_taint_edges))
+
+    def test_graph_and_visualization_keep_proofless_register_provenance_planned(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "dynamic_taint.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_dynamic_taint_report",
+                        "valid": True,
+                        "write_attributions": [
+                            {
+                                "target": "wCurDamage",
+                                "address": "D141",
+                                "pc_label": "LegacyWriter",
+                                "seq": 4,
+                                "mnemonic": "ld [wCurDamage], a",
+                                "score": 82,
+                                "confidence": 0.7,
+                                "source_operands": [
+                                    {
+                                        "kind": "memory",
+                                        "address": "D200",
+                                        "origin": "seed_byte",
+                                        "via_register": "a",
+                                        "via_register_write_seq": 1,
+                                        "via_register_write_pc": "01:4000",
+                                    }
+                                ],
+                                "register_provenance": [
+                                    {
+                                        "register": "b",
+                                        "source": "legacy",
+                                        "seq": 7,
+                                        "pc": "01:4010",
+                                        "pc_label": "LegacyLoad",
+                                        "operation": "ld b, [wSeed]",
+                                        "taint": ["seed_byte"],
+                                    }
+                                ],
+                                "evidence": ["legacy write attribution without proof fields"],
+                                "related_symbols": ["wCurDamage", "seed_byte"],
+                                "related_addresses": ["D141"],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            graph = build_causal_graph_report(reports=("dynamic_taint.json",), root=root)
+            visualization = build_visualization_report(reports=("dynamic_taint.json",), root=root)
+
+        graph_provenance_nodes = [node for node in graph["nodes"] if node["kind"] == "register_provenance"]
+        graph_taint_edges = [edge for edge in graph["edges"] if edge["relation"] in {"feeds_register", "taints_register"}]
+        visual_provenance_nodes = [
+            node for node in visualization["graph"]["nodes"] if node["type"] == "dynamic_register_provenance"
+        ]
+        visual_provenance_events = [
+            event for event in visualization["timeline"] if event["event_type"] == "register_provenance"
+        ]
+
+        self.assertTrue(graph_provenance_nodes)
+        self.assertTrue(visual_provenance_nodes)
+        self.assertTrue(visual_provenance_events)
+        self.assertTrue(all(node["proof_status"] == "planned_only" for node in graph_provenance_nodes))
+        self.assertTrue(all(edge["proof_status"] == "planned_only" for edge in graph_taint_edges))
+        self.assertTrue(all(node["proof_status"] == "planned_only" for node in visual_provenance_nodes))
+        self.assertTrue(all(event["proof_status"] == "planned_only" for event in visual_provenance_events))
+        self.assertTrue(all("proof=planned_only" in event["detail"] for event in visual_provenance_events))
+
     def test_rank_and_impact_default_proofless_reverse_query_result_to_planned(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -17504,12 +18153,18 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
 
             ranked = rank_findings(reports=("reverse.json",), root=root)
             impact = build_impact_report(reports=("reverse.json",), root=root)
+            visualization = build_visualization_report(reports=("reverse.json",), root=root)
 
         reverse_finding = next(item for item in ranked["findings"] if item["type"] == "reverse_query")
         reverse_item = next(item for item in impact["items"] if item["type"] == "reverse_query")
+        reverse_event = next(item for item in visualization["timeline"] if item["event_type"] == "reverse_query")
+        reverse_node = next(item for item in visualization["graph"]["nodes"] if item["type"] == "reverse_query")
 
         self.assertEqual(reverse_finding["proof_status"], "planned_only")
         self.assertEqual(reverse_item["proof_status"], "planned_only")
+        self.assertEqual(reverse_event["proof_status"], "planned_only")
+        self.assertIn("proof=planned_only", reverse_event["detail"])
+        self.assertEqual(reverse_node["proof_status"], "planned_only")
 
     def test_rank_impact_report_and_visualize_dynamic_taint_trace_synthesis(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -17573,6 +18228,12 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         event_types = {event["type"] for event in visualization["timeline"]}
         node_types = {node["type"] for node in visualization["graph"]["nodes"]}
         trace_event = next(event for event in visualization["timeline"] if event["type"] == "trace_synthesis")
+        graph_nodes_by_type = {}
+        for node in visualization["graph"]["nodes"]:
+            graph_nodes_by_type.setdefault(node["type"], []).append(node)
+        graph_edges_by_relation = {}
+        for edge in visualization["graph"]["edges"]:
+            graph_edges_by_relation.setdefault(edge["relation"], []).append(edge)
         waterfall_titles = "\n".join(step["title"] for step in visualization["waterfall"])
         covered = {target["id"]: target for target in coverage["targets"]}
 
@@ -17606,6 +18267,14 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("wScriptSeed", trace_event["symbols"])
         self.assertIn("DA11", trace_event["addresses"])
         self.assertIn("source_mems=DA11=wScriptSeed", trace_event["detail"])
+        self.assertEqual(trace_event["proof_status"], "planned_only")
+        self.assertIn("proof=planned_only", trace_event["detail"])
+        self.assertTrue(all(node["proof_status"] == "planned_only" for node in graph_nodes_by_type["trace_synthesis"]))
+        self.assertTrue(all(node["proof_status"] == "planned_only" for node in graph_nodes_by_type["dynamic_taint_source"]))
+        self.assertTrue(all(node["proof_status"] == "planned_only" for node in graph_nodes_by_type["dynamic_taint_sink"]))
+        self.assertTrue(all(edge["proof_status"] == "planned_only" for edge in graph_edges_by_relation["plans_trace"]))
+        self.assertTrue(all(edge["proof_status"] == "planned_only" for edge in graph_edges_by_relation["seeds_trace"]))
+        self.assertTrue(all(edge["proof_status"] == "planned_only" for edge in graph_edges_by_relation["watches"]))
         self.assertIn("dynamic-taint --trace trace.jsonl", waterfall_titles)
         self.assertEqual(covered["wScriptPos"]["status"], "covered")
         self.assertEqual(covered["UnitSeedRoutine"]["status"], "covered")
@@ -24176,6 +24845,1433 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("tools.debugger trace-instructions --report .local\\tmp\\debugger_content_state_content_scenario_5_0002.json", commands)
         self.assertIn("tools.debugger expect --source-file maps/UnitMap.asm --expect contains=warp_event", commands)
 
+    def test_content_state_materializes_coord_event_scene_variable(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "maps").mkdir()
+            (root / "data" / "maps").mkdir(parents=True)
+            (root / "data" / "maps" / "maps.asm").write_text(
+                "MapGroup_Unit:\n\tmap UnitMap, TILESET_JOHTO, TOWN, LANDMARK_UNIT, MUSIC_NONE, FALSE, PALETTE_AUTO, FISHGROUP_SHORE\n",
+                encoding="utf-8",
+            )
+            (root / "data" / "maps" / "scenes.asm").write_text(
+                "MapScenes::\n\tscene_var UNIT_MAP, wUnitMapSceneID\n\tdb -1 ; end\n",
+                encoding="utf-8",
+            )
+            (root / "maps" / "UnitMap.asm").write_text(
+                "\n".join(
+                    [
+                        "UnitMap_MapScripts:",
+                        "\tdef_scene_scripts",
+                        "\tscene_script UnitMapNoopScene,  SCENE_UNITMAP_NOOP",
+                        "\tscene_script UnitMapRivalScene, SCENE_UNITMAP_RIVAL",
+                        "UnitMapNoopScene:",
+                        "\tend",
+                        "UnitMapRivalScene:",
+                        "\tend",
+                        "UnitMap_MapEvents:",
+                        "\tdef_warp_events",
+                        "\tdef_coord_events",
+                        "\tcoord_event 2, 3, SCENE_UNITMAP_RIVAL, UnitMapRivalScene",
+                        "\tdef_bg_events",
+                        "\tdef_object_events",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (root / "test.sym").write_text(
+                "\n".join(
+                    [
+                        "01:D000 wMapGroup",
+                        "01:D001 wMapNumber",
+                        "01:D002 wXCoord",
+                        "01:D003 wYCoord",
+                        "01:D010 wUnitMapSceneID",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            scenario_report = build_content_scenario_report(
+                source_files=("maps/UnitMap.asm",),
+                out_scenarios="content_scenarios.jsonl",
+                max_cases=4,
+                seed=31,
+                root=root,
+            )
+            coord_scenario = next(item for item in scenario_report["scenarios"] if item["scenario_type"] == "map_coord_event")
+            report = build_content_state_report(
+                scenarios=("content_scenarios.jsonl",),
+                scenario_ids=(coord_scenario["id"],),
+                symbols_path="test.sym",
+                root=root,
+            )
+
+        materialization = report["materializations"][0]
+        patches = {patch["symbol"]: patch for patch in materialization["patches"]}
+        route = materialization["event_runtime_materialization"]
+        commands = "\n".join(materialization["commands"])
+
+        self.assertTrue(report["valid"])
+        self.assertEqual(materialization["precondition_kind"], "map_position")
+        self.assertEqual(materialization["status"], "ready")
+        self.assertEqual(patches["wUnitMapSceneID"]["value"], 1)
+        self.assertEqual(patches["wUnitMapSceneID"]["bank_address"], "01:D010")
+        self.assertEqual(patches["wUnitMapSceneID"]["validation_kind"], "source_scene_var_and_scene_script_order")
+        self.assertEqual(patches["wUnitMapSceneID"]["source_scene_token"], "SCENE_UNITMAP_RIVAL")
+        self.assertEqual(materialization["event_context"]["scene_symbol"], "wUnitMapSceneID")
+        self.assertEqual(materialization["event_context"]["scene_value"], 1)
+        self.assertEqual(materialization["event_context"]["scene_token"], "SCENE_UNITMAP_RIVAL")
+        self.assertEqual(materialization["event_context"]["validation_kind"], "source_scene_var_and_scene_script_order")
+        self.assertIn("wUnitMapSceneID", materialization["watch_symbols"])
+        self.assertIn("wUnitMapSceneID", materialization["expected_sinks"])
+        self.assertIn("wUnitMapSceneID", route["expected_sinks"])
+        self.assertIn("--watch-symbol wUnitMapSceneID", commands)
+
+    def test_content_state_materializes_bg_event_player_facing_state(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "maps").mkdir()
+            (root / "data" / "maps").mkdir(parents=True)
+            (root / "data" / "maps" / "maps.asm").write_text(
+                "MapGroup_Unit:\n\tmap UnitMap, TILESET_JOHTO, TOWN, LANDMARK_UNIT, MUSIC_NONE, FALSE, PALETTE_AUTO, FISHGROUP_SHORE\n",
+                encoding="utf-8",
+            )
+            (root / "maps" / "UnitMap.asm").write_text(
+                "\n".join(
+                    [
+                        "UnitMap_MapEvents:",
+                        "\tdef_warp_events",
+                        "\tdef_coord_events",
+                        "\tdef_bg_events",
+                        "\tbg_event 4, 5, BGEVENT_UP, UnitMapSign",
+                        "\tdef_object_events",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (root / "test.sym").write_text(
+                "\n".join(
+                    [
+                        "01:D000 wMapGroup",
+                        "01:D001 wMapNumber",
+                        "01:D002 wYCoord",
+                        "01:D003 wXCoord",
+                        "01:D205 wPlayerDirection",
+                        "01:D20D wPlayerMapX",
+                        "01:D20E wPlayerMapY",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            scenario_report = build_content_scenario_report(
+                source_files=("maps/UnitMap.asm",),
+                out_scenarios="content_scenarios.jsonl",
+                max_cases=4,
+                seed=32,
+                root=root,
+            )
+            bg_scenario = next(item for item in scenario_report["scenarios"] if item["scenario_type"] == "map_bg_event")
+            report = build_content_state_report(
+                scenarios=("content_scenarios.jsonl",),
+                scenario_ids=(bg_scenario["id"],),
+                symbols_path="test.sym",
+                root=root,
+            )
+
+        materialization = report["materializations"][0]
+        patches = {patch["symbol"]: patch for patch in materialization["patches"]}
+        event_context = materialization["event_context"]
+        commands = "\n".join(materialization["commands"])
+
+        self.assertTrue(report["valid"])
+        self.assertEqual(materialization["precondition_kind"], "map_position")
+        self.assertEqual(materialization["status"], "ready")
+        self.assertEqual(patches["wXCoord"]["value"], 4)
+        self.assertEqual(patches["wYCoord"]["value"], 6)
+        self.assertEqual(patches["wPlayerMapX"]["value"], 8)
+        self.assertEqual(patches["wPlayerMapY"]["value"], 10)
+        self.assertEqual(patches["wPlayerDirection"]["value"], 4)
+        self.assertEqual(event_context["validation_kind"], "event_engine_player_position_and_facing")
+        self.assertEqual(event_context["proof_status"], "state_patch_planned")
+        self.assertEqual(event_context["player_x"], 4)
+        self.assertEqual(event_context["player_y"], 6)
+        self.assertEqual(event_context["facing_direction"], "OW_UP")
+        self.assertIn("wPlayerMapX", materialization["watch_symbols"])
+        self.assertIn("wPlayerDirection", materialization["expected_sinks"])
+        self.assertIn("--watch-symbol wPlayerMapX", commands)
+        self.assertIn("--watch-symbol wPlayerDirection", commands)
+
+    def test_content_state_materializes_bg_event_hidden_item_flag_state(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "maps").mkdir()
+            (root / "data" / "maps").mkdir(parents=True)
+            (root / "constants").mkdir()
+            (root / "data" / "maps" / "maps.asm").write_text(
+                "MapGroup_Unit:\n\tmap UnitMap, TILESET_JOHTO, TOWN, LANDMARK_UNIT, MUSIC_NONE, FALSE, PALETTE_AUTO, FISHGROUP_SHORE\n",
+                encoding="utf-8",
+            )
+            (root / "constants" / "event_flags.asm").write_text(
+                "\n".join(
+                    [
+                        "const_def",
+                        "const EVENT_UNUSED_0",
+                        "const EVENT_UNUSED_1",
+                        "const EVENT_UNUSED_2",
+                        "const EVENT_UNUSED_3",
+                        "const EVENT_UNUSED_4",
+                        "const EVENT_UNUSED_5",
+                        "const EVENT_UNUSED_6",
+                        "const EVENT_UNUSED_7",
+                        "const EVENT_UNUSED_8",
+                        "const EVENT_UNUSED_9",
+                        "const EVENT_UNIT_HIDDEN_FULL_HEAL",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (root / "constants" / "item_constants.asm").write_text(
+                "const_def $20\n\tconst FULL_HEAL\n",
+                encoding="utf-8",
+            )
+            (root / "maps" / "UnitMap.asm").write_text(
+                "\n".join(
+                    [
+                        "UnitHiddenFullHeal:",
+                        "\thiddenitem FULL_HEAL, EVENT_UNIT_HIDDEN_FULL_HEAL",
+                        "UnitMap_MapEvents:",
+                        "\tdef_warp_events",
+                        "\tdef_coord_events",
+                        "\tdef_bg_events",
+                        "\tbg_event 4, 5, BGEVENT_ITEM, UnitHiddenFullHeal",
+                        "\tdef_object_events",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (root / "test.sym").write_text(
+                "\n".join(
+                    [
+                        "01:D000 wMapGroup",
+                        "01:D001 wMapNumber",
+                        "01:D002 wYCoord",
+                        "01:D003 wXCoord",
+                        "01:D205 wPlayerDirection",
+                        "01:D20D wPlayerMapX",
+                        "01:D20E wPlayerMapY",
+                        "01:D7B7 wEventFlags",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            scenario_report = build_content_scenario_report(
+                source_files=("maps/UnitMap.asm",),
+                out_scenarios="content_scenarios.jsonl",
+                max_cases=4,
+                seed=35,
+                root=root,
+            )
+            bg_scenario = next(item for item in scenario_report["scenarios"] if item["scenario_type"] == "map_bg_event")
+            report = build_content_state_report(
+                scenarios=("content_scenarios.jsonl",),
+                scenario_ids=(bg_scenario["id"],),
+                symbols_path="test.sym",
+                root=root,
+            )
+
+        materialization = report["materializations"][0]
+        patches = {patch["symbol"]: patch for patch in materialization["patches"]}
+        event_context = materialization["event_context"]
+        route = materialization["event_runtime_materialization"]
+
+        self.assertTrue(report["valid"])
+        self.assertEqual(materialization["status"], "ready")
+        self.assertEqual(event_context["validation_kind"], "source_bg_event_flag_macro_and_event_flags")
+        self.assertEqual(event_context["proof_status"], "state_patch_planned")
+        self.assertEqual(event_context["event_flag_token"], "EVENT_UNIT_HIDDEN_FULL_HEAL")
+        self.assertEqual(event_context["event_flag_value"], 10)
+        self.assertEqual(event_context["event_flag_byte_offset"], 1)
+        self.assertEqual(event_context["event_flag_bit_mask"], 4)
+        self.assertEqual(event_context["required_flag_state"], "reset")
+        self.assertEqual(event_context["hidden_item_token"], "FULL_HEAL")
+        self.assertEqual(event_context["hidden_item_value"], 0x20)
+        self.assertEqual(patches["wEventFlags+1"]["patch_kind"], "bit")
+        self.assertEqual(patches["wEventFlags+1"]["bit_operation"], "reset")
+        self.assertEqual(patches["wEventFlags+1"]["bit_mask"], 4)
+        self.assertEqual(patches["wEventFlags+1"]["bank_address"], "01:D7B8")
+        self.assertIn("wEventFlags", materialization["watch_symbols"])
+        self.assertIn("wEventFlags+1", materialization["expected_sinks"])
+        self.assertIn("wEventFlags+1", route["expected_sinks"])
+
+    def test_content_state_materializes_bg_event_conditional_flag_state(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "maps").mkdir()
+            (root / "data" / "maps").mkdir(parents=True)
+            (root / "constants").mkdir()
+            (root / "data" / "maps" / "maps.asm").write_text(
+                "MapGroup_Unit:\n\tmap UnitMap, TILESET_JOHTO, TOWN, LANDMARK_UNIT, MUSIC_NONE, FALSE, PALETTE_AUTO, FISHGROUP_SHORE\n",
+                encoding="utf-8",
+            )
+            (root / "constants" / "event_flags.asm").write_text(
+                "const_def\n\tconst EVENT_UNUSED_0\n\tconst EVENT_UNUSED_1\n\tconst EVENT_UNUSED_2\n\tconst EVENT_UNIT_POSTER_VISIBLE\n",
+                encoding="utf-8",
+            )
+            (root / "maps" / "UnitMap.asm").write_text(
+                "\n".join(
+                    [
+                        "UnitPosterScript:",
+                        "\tconditional_event EVENT_UNIT_POSTER_VISIBLE, .Visible",
+                        ".Visible:",
+                        "\tend",
+                        "UnitMap_MapEvents:",
+                        "\tdef_warp_events",
+                        "\tdef_coord_events",
+                        "\tdef_bg_events",
+                        "\tbg_event 4, 5, BGEVENT_IFSET, UnitPosterScript",
+                        "\tdef_object_events",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (root / "test.sym").write_text(
+                "\n".join(
+                    [
+                        "01:D000 wMapGroup",
+                        "01:D001 wMapNumber",
+                        "01:D002 wYCoord",
+                        "01:D003 wXCoord",
+                        "01:D205 wPlayerDirection",
+                        "01:D20D wPlayerMapX",
+                        "01:D20E wPlayerMapY",
+                        "01:D7B7 wEventFlags",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            scenario_report = build_content_scenario_report(
+                source_files=("maps/UnitMap.asm",),
+                out_scenarios="content_scenarios.jsonl",
+                max_cases=4,
+                seed=36,
+                root=root,
+            )
+            bg_scenario = next(item for item in scenario_report["scenarios"] if item["scenario_type"] == "map_bg_event")
+            report = build_content_state_report(
+                scenarios=("content_scenarios.jsonl",),
+                scenario_ids=(bg_scenario["id"],),
+                symbols_path="test.sym",
+                root=root,
+            )
+
+        patches = {patch["symbol"]: patch for patch in report["materializations"][0]["patches"]}
+        event_context = report["materializations"][0]["event_context"]
+
+        self.assertTrue(report["valid"])
+        self.assertEqual(report["materializations"][0]["status"], "ready")
+        self.assertEqual(event_context["event_flag_token"], "EVENT_UNIT_POSTER_VISIBLE")
+        self.assertEqual(event_context["event_flag_value"], 3)
+        self.assertEqual(event_context["required_flag_state"], "set")
+        self.assertEqual(patches["wEventFlags+0"]["patch_kind"], "bit")
+        self.assertEqual(patches["wEventFlags+0"]["bit_operation"], "set")
+        self.assertEqual(patches["wEventFlags+0"]["bit_mask"], 8)
+
+    def test_content_state_does_not_mark_object_event_ready_without_object_struct(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "maps").mkdir()
+            (root / "data" / "maps").mkdir(parents=True)
+            (root / "data" / "maps" / "maps.asm").write_text(
+                "MapGroup_Unit:\n\tmap UnitMap, TILESET_JOHTO, TOWN, LANDMARK_UNIT, MUSIC_NONE, FALSE, PALETTE_AUTO, FISHGROUP_SHORE\n",
+                encoding="utf-8",
+            )
+            (root / "maps" / "UnitMap.asm").write_text(
+                "\n".join(
+                    [
+                        "UnitMap_MapEvents:",
+                        "\tdef_warp_events",
+                        "\tdef_coord_events",
+                        "\tdef_bg_events",
+                        "\tdef_object_events",
+                        "\tobject_event 6, 7, SPRITE_CHRIS, SPRITEMOVEDATA_STANDING_DOWN, 0, 0, -1, -1, 0, OBJECTTYPE_SCRIPT, 0, UnitMapNPCScript, -1",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (root / "test.sym").write_text(
+                "\n".join(
+                    [
+                        "01:D000 wMapGroup",
+                        "01:D001 wMapNumber",
+                        "01:D002 wYCoord",
+                        "01:D003 wXCoord",
+                        "01:D205 wPlayerDirection",
+                        "01:D20D wPlayerMapX",
+                        "01:D20E wPlayerMapY",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            scenario_report = build_content_scenario_report(
+                source_files=("maps/UnitMap.asm",),
+                out_scenarios="content_scenarios.jsonl",
+                max_cases=4,
+                seed=33,
+                root=root,
+            )
+            object_scenario = next(item for item in scenario_report["scenarios"] if item["scenario_type"] == "map_object_event")
+            report = build_content_state_report(
+                scenarios=("content_scenarios.jsonl",),
+                scenario_ids=(object_scenario["id"],),
+                symbols_path="test.sym",
+                root=root,
+            )
+
+        materialization = report["materializations"][0]
+        patches = {patch["symbol"]: patch for patch in materialization["patches"]}
+        event_context = materialization["event_context"]
+
+        self.assertTrue(report["valid"])
+        self.assertEqual(materialization["precondition_kind"], "map_position")
+        self.assertEqual(materialization["status"], "blocked")
+        self.assertIn("object_struct_not_materialized", materialization["proof_blockers"])
+        self.assertEqual(patches["wXCoord"]["value"], 6)
+        self.assertEqual(patches["wYCoord"]["value"], 8)
+        self.assertEqual(patches["wPlayerMapX"]["value"], 10)
+        self.assertEqual(patches["wPlayerMapY"]["value"], 12)
+        self.assertEqual(patches["wPlayerDirection"]["value"], 4)
+        self.assertEqual(event_context["validation_kind"], "object_event_object_struct_and_map_object_state")
+        self.assertEqual(event_context["proof_status"], "state_patch_planned")
+        self.assertEqual(event_context["player_context"]["validation_kind"], "event_engine_player_position_and_facing")
+        self.assertEqual(event_context["facing_choice_source"], "default_adjacent_object_tile")
+        self.assertIn("wPlayerMapX", materialization["watch_symbols"])
+        self.assertIn("wPlayerDirection", materialization["expected_sinks"])
+
+    def test_content_state_materializes_object_event_object_struct_state(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "maps").mkdir()
+            (root / "data" / "maps").mkdir(parents=True)
+            (root / "data" / "maps" / "maps.asm").write_text(
+                "MapGroup_Unit:\n\tmap UnitMap, TILESET_JOHTO, TOWN, LANDMARK_UNIT, MUSIC_NONE, FALSE, PALETTE_AUTO, FISHGROUP_SHORE\n",
+                encoding="utf-8",
+            )
+            (root / "maps" / "UnitMap.asm").write_text(
+                "\n".join(
+                    [
+                        "UnitMap_MapEvents:",
+                        "\tdef_warp_events",
+                        "\tdef_coord_events",
+                        "\tdef_bg_events",
+                        "\tdef_object_events",
+                        "\tobject_event 6, 7, SPRITE_CHRIS, SPRITEMOVEDATA_STANDING_DOWN, 0, 0, -1, -1, 0, OBJECTTYPE_SCRIPT, 0, UnitMapNPCScript, -1",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (root / "test.sym").write_text(
+                "\n".join(
+                    [
+                        "02:5000 UnitMapNPCScript",
+                        "01:D000 wMapGroup",
+                        "01:D001 wMapNumber",
+                        "01:D002 wYCoord",
+                        "01:D003 wXCoord",
+                        "01:D205 wPlayerDirection",
+                        "01:D20D wPlayerMapX",
+                        "01:D20E wPlayerMapY",
+                        "01:D225 wObject1Struct",
+                        "01:D24D wObject2Struct",
+                        "01:D465 wMap2ObjectStructID",
+                        "01:D466 wMap2ObjectSprite",
+                        "01:D467 wMap2ObjectYCoord",
+                        "01:D468 wMap2ObjectXCoord",
+                        "01:D469 wMap2ObjectMovement",
+                        "01:D46A wMap2ObjectRadius",
+                        "01:D46B wMap2ObjectHour1",
+                        "01:D46C wMap2ObjectHour2",
+                        "01:D46D wMap2ObjectType",
+                        "01:D46E wMap2ObjectSightRange",
+                        "01:D46F wMap2ObjectScript",
+                        "01:D471 wMap2ObjectEventFlag",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            scenario_report = build_content_scenario_report(
+                source_files=("maps/UnitMap.asm",),
+                out_scenarios="content_scenarios.jsonl",
+                max_cases=4,
+                seed=34,
+                root=root,
+            )
+            object_scenario = next(item for item in scenario_report["scenarios"] if item["scenario_type"] == "map_object_event")
+            report = build_content_state_report(
+                scenarios=("content_scenarios.jsonl",),
+                scenario_ids=(object_scenario["id"],),
+                symbols_path="test.sym",
+                root=root,
+            )
+
+        materialization = report["materializations"][0]
+        patches = {patch["symbol"]: patch for patch in materialization["patches"]}
+        event_context = materialization["event_context"]
+        object_context = materialization["object_context"]
+        route = materialization["event_runtime_materialization"]
+        commands = "\n".join(materialization["commands"])
+
+        self.assertTrue(report["valid"])
+        self.assertEqual(materialization["status"], "ready")
+        self.assertEqual(materialization["proof_blockers"], [])
+        self.assertEqual(event_context["validation_kind"], "object_event_object_struct_and_map_object_state")
+        self.assertEqual(event_context["proof_status"], "state_patch_planned")
+        self.assertEqual(object_context["object_struct_symbol"], "wObject1Struct")
+        self.assertEqual(object_context["map_object_index"], 2)
+        self.assertEqual(object_context["object_struct_index"], 1)
+        self.assertEqual(object_context["script_address"], 0x5000)
+        self.assertEqual(patches["wObject1Struct+OBJECT_SPRITE"]["value"], 1)
+        self.assertEqual(patches["wObject1Struct+OBJECT_MAP_OBJECT_INDEX"]["value"], 2)
+        self.assertEqual(patches["wObject1Struct+OBJECT_WALKING"]["value"], 0xFF)
+        self.assertEqual(patches["wObject1Struct+OBJECT_MAP_X"]["value"], 10)
+        self.assertEqual(patches["wObject1Struct+OBJECT_MAP_Y"]["value"], 11)
+        self.assertEqual(patches["wMap2ObjectStructID"]["value"], 1)
+        self.assertEqual(patches["wMap2ObjectSprite"]["value"], 1)
+        self.assertEqual(patches["wMap2ObjectXCoord"]["value"], 10)
+        self.assertEqual(patches["wMap2ObjectYCoord"]["value"], 11)
+        self.assertEqual(patches["wMap2ObjectScript"]["value"], 0x00)
+        self.assertEqual(patches["wMap2ObjectScript+1"]["value"], 0x50)
+        self.assertEqual(patches["wMap2ObjectEventFlag"]["value"], 0xFF)
+        self.assertEqual(patches["wMap2ObjectEventFlag+1"]["value"], 0xFF)
+        self.assertIn("wObject1Struct", materialization["watch_symbols"])
+        self.assertIn("wMap2ObjectScript", materialization["expected_sinks"])
+        self.assertIn("wObject1Struct+OBJECT_MAP_X", route["expected_sinks"])
+        self.assertIn("--watch-symbol wObject1Struct", commands)
+
+    def test_content_state_materializes_counter_tile_object_event_state(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "maps").mkdir()
+            (root / "data" / "maps").mkdir(parents=True)
+            (root / "constants").mkdir()
+            (root / "data" / "maps" / "maps.asm").write_text(
+                "MapGroup_Unit:\n\tmap UnitMap, TILESET_JOHTO, TOWN, LANDMARK_UNIT, MUSIC_NONE, FALSE, PALETTE_AUTO, FISHGROUP_SHORE\n",
+                encoding="utf-8",
+            )
+            (root / "constants" / "collision_constants.asm").write_text(
+                "DEF COLL_COUNTER EQU $90\n",
+                encoding="utf-8",
+            )
+            (root / "maps" / "UnitMap.asm").write_text(
+                "\n".join(
+                    [
+                        "UnitMap_MapEvents:",
+                        "\tdef_warp_events",
+                        "\tdef_coord_events",
+                        "\tdef_bg_events",
+                        "\tdef_object_events",
+                        "\tobject_event 6, 7, SPRITE_CHRIS, SPRITEMOVEDATA_STANDING_DOWN, 0, 0, -1, -1, 0, OBJECTTYPE_SCRIPT, 0, UnitMapNPCScript, -1",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (root / "test.sym").write_text(
+                "\n".join(
+                    [
+                        "02:5000 UnitMapNPCScript",
+                        "00:CEA4 wTileUp",
+                        "01:D000 wMapGroup",
+                        "01:D001 wMapNumber",
+                        "01:D002 wYCoord",
+                        "01:D003 wXCoord",
+                        "01:D205 wPlayerDirection",
+                        "01:D20D wPlayerMapX",
+                        "01:D20E wPlayerMapY",
+                        "01:D225 wObject1Struct",
+                        "01:D24D wObject2Struct",
+                        "01:D465 wMap2ObjectStructID",
+                        "01:D466 wMap2ObjectSprite",
+                        "01:D467 wMap2ObjectYCoord",
+                        "01:D468 wMap2ObjectXCoord",
+                        "01:D469 wMap2ObjectMovement",
+                        "01:D46A wMap2ObjectRadius",
+                        "01:D46B wMap2ObjectHour1",
+                        "01:D46C wMap2ObjectHour2",
+                        "01:D46D wMap2ObjectType",
+                        "01:D46E wMap2ObjectSightRange",
+                        "01:D46F wMap2ObjectScript",
+                        "01:D471 wMap2ObjectEventFlag",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            scenario_report = build_content_scenario_report(
+                source_files=("maps/UnitMap.asm",),
+                out_scenarios="content_scenarios.jsonl",
+                max_cases=4,
+                seed=35,
+                root=root,
+            )
+            object_scenario = next(item for item in scenario_report["scenarios"] if item["scenario_type"] == "map_object_event")
+            report = build_content_state_report(
+                scenarios=("content_scenarios.jsonl",),
+                scenario_ids=(object_scenario["id"],),
+                symbols_path="test.sym",
+                root=root,
+            )
+
+        position_preconditions = [
+            precondition
+            for precondition in object_scenario["state_preconditions"]
+            if precondition.get("kind") == "map_position"
+        ]
+        counter_materialization = next(
+            item
+            for item in report["materializations"]
+            if item.get("values", {}).get("counter_tile") is True
+        )
+        patches = {patch["symbol"]: patch for patch in counter_materialization["patches"]}
+        event_context = counter_materialization["event_context"]
+        route = counter_materialization["event_runtime_materialization"]
+        commands = "\n".join(counter_materialization["commands"])
+
+        self.assertTrue(report["valid"])
+        self.assertEqual(len(position_preconditions), 5)
+        self.assertEqual(counter_materialization["precondition_id"], "map_object_event_counter_tile_up_position")
+        self.assertEqual(counter_materialization["status"], "ready")
+        self.assertEqual(counter_materialization["proof_blockers"], [])
+        self.assertEqual(patches["wXCoord"]["value"], 6)
+        self.assertEqual(patches["wYCoord"]["value"], 9)
+        self.assertEqual(patches["wPlayerMapX"]["value"], 10)
+        self.assertEqual(patches["wPlayerMapY"]["value"], 13)
+        self.assertEqual(patches["wPlayerDirection"]["value"], 4)
+        self.assertEqual(patches["wTileUp"]["value"], 0x90)
+        self.assertEqual(patches["wTileUp"]["bank_address"], "00:CEA4")
+        self.assertEqual(patches["wObject1Struct+OBJECT_MAP_X"]["value"], 10)
+        self.assertEqual(patches["wObject1Struct+OBJECT_MAP_Y"]["value"], 11)
+        self.assertEqual(event_context["counter_tile"], True)
+        self.assertEqual(event_context["counter_tile_symbol"], "wTileUp")
+        self.assertEqual(event_context["counter_tile_value"], 0x90)
+        self.assertEqual(event_context["counter_facing_direction"], "OW_UP")
+        self.assertEqual(event_context["player_context"]["facing_choice_source"], "counter_tile_object_path")
+        self.assertIn("wTileUp", counter_materialization["watch_symbols"])
+        self.assertIn("wTileUp", counter_materialization["expected_sinks"])
+        self.assertIn("wTileUp", route["expected_sinks"])
+        self.assertIn("--watch-symbol wTileUp", commands)
+
+    def test_content_state_materializes_large_object_event_state(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "maps").mkdir()
+            (root / "data" / "maps").mkdir(parents=True)
+            (root / "data" / "sprites").mkdir(parents=True)
+            (root / "constants").mkdir()
+            (root / "data" / "maps" / "maps.asm").write_text(
+                "MapGroup_Unit:\n\tmap UnitMap, TILESET_JOHTO, TOWN, LANDMARK_UNIT, MUSIC_NONE, FALSE, PALETTE_AUTO, FISHGROUP_SHORE\n",
+                encoding="utf-8",
+            )
+            (root / "constants" / "map_object_constants.asm").write_text(
+                "const_def $21\n\tconst SPRITEMOVEDATA_BIGDOLL\n",
+                encoding="utf-8",
+            )
+            (root / "data" / "sprites" / "map_objects.asm").write_text(
+                "\n".join(
+                    [
+                        "; SPRITEMOVEDATA_BIGDOLL",
+                        "\tdb SPRITEMOVEFN_STRENGTH ; movement function",
+                        "\tdb DOWN ; facing",
+                        "\tdb OBJECT_ACTION_BIG_DOLL ; action",
+                        "\tdb WONT_DELETE | FIXED_FACING | SLIDING | MOVE_ANYWHERE ; flags1",
+                        "\tdb LOW_PRIORITY ; flags2",
+                        "\tdb STRENGTH_BOULDER | BIG_OBJECT ; palette flags",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (root / "maps" / "UnitMap.asm").write_text(
+                "\n".join(
+                    [
+                        "UnitMap_MapEvents:",
+                        "\tdef_warp_events",
+                        "\tdef_coord_events",
+                        "\tdef_bg_events",
+                        "\tdef_object_events",
+                        "\tobject_event 6, 7, SPRITE_CHRIS, SPRITEMOVEDATA_BIGDOLL, 0, 0, -1, -1, 0, OBJECTTYPE_SCRIPT, 0, UnitMapBigDollScript, -1",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (root / "test.sym").write_text(
+                "\n".join(
+                    [
+                        "02:5000 UnitMapBigDollScript",
+                        "01:D000 wMapGroup",
+                        "01:D001 wMapNumber",
+                        "01:D002 wYCoord",
+                        "01:D003 wXCoord",
+                        "01:D205 wPlayerDirection",
+                        "01:D20D wPlayerMapX",
+                        "01:D20E wPlayerMapY",
+                        "01:D225 wObject1Struct",
+                        "01:D24D wObject2Struct",
+                        "01:D465 wMap2ObjectStructID",
+                        "01:D466 wMap2ObjectSprite",
+                        "01:D467 wMap2ObjectYCoord",
+                        "01:D468 wMap2ObjectXCoord",
+                        "01:D469 wMap2ObjectMovement",
+                        "01:D46A wMap2ObjectRadius",
+                        "01:D46B wMap2ObjectHour1",
+                        "01:D46C wMap2ObjectHour2",
+                        "01:D46D wMap2ObjectType",
+                        "01:D46E wMap2ObjectSightRange",
+                        "01:D46F wMap2ObjectScript",
+                        "01:D471 wMap2ObjectEventFlag",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            scenario_report = build_content_scenario_report(
+                source_files=("maps/UnitMap.asm",),
+                out_scenarios="content_scenarios.jsonl",
+                max_cases=4,
+                seed=36,
+                root=root,
+            )
+            object_scenario = next(item for item in scenario_report["scenarios"] if item["scenario_type"] == "map_object_event")
+            report = build_content_state_report(
+                scenarios=("content_scenarios.jsonl",),
+                scenario_ids=(object_scenario["id"],),
+                symbols_path="test.sym",
+                root=root,
+            )
+
+        position_preconditions = [
+            precondition
+            for precondition in object_scenario["state_preconditions"]
+            if precondition.get("kind") == "map_position"
+        ]
+        materialization = next(
+            item
+            for item in report["materializations"]
+            if item.get("precondition_id") == "map_object_event_position"
+        )
+        patches = {patch["symbol"]: patch for patch in materialization["patches"]}
+        event_context = materialization["event_context"]
+        object_context = materialization["object_context"]
+        route = materialization["event_runtime_materialization"]
+
+        self.assertTrue(report["valid"])
+        self.assertEqual(len(position_preconditions), 13)
+        self.assertEqual(materialization["status"], "ready")
+        self.assertEqual(materialization["proof_blockers"], [])
+        self.assertEqual(patches["wXCoord"]["value"], 6)
+        self.assertEqual(patches["wYCoord"]["value"], 9)
+        self.assertEqual(patches["wPlayerMapX"]["value"], 10)
+        self.assertEqual(patches["wPlayerMapY"]["value"], 13)
+        self.assertEqual(patches["wPlayerDirection"]["value"], 4)
+        self.assertEqual(patches["wObject1Struct+OBJECT_MAP_X"]["value"], 10)
+        self.assertEqual(patches["wObject1Struct+OBJECT_MAP_Y"]["value"], 11)
+        self.assertEqual(patches["wObject1Struct+OBJECT_FLAGS1"]["value"], 0x2E)
+        self.assertEqual(patches["wObject1Struct+OBJECT_FLAGS2"]["value"], 0x01)
+        self.assertEqual(patches["wObject1Struct+OBJECT_PALETTE"]["value"], 0xC0)
+        self.assertEqual(event_context["large_object"], True)
+        self.assertEqual(event_context["large_object_width"], 2)
+        self.assertEqual(event_context["large_object_height"], 2)
+        self.assertEqual(event_context["player_context"]["facing_choice_source"], "large_object_bottom_left_tile")
+        self.assertEqual(object_context["sprite_movement_palette_flags"], 0xC0)
+        self.assertEqual(object_context["large_object"], True)
+        self.assertIn("wObject1Struct+OBJECT_PALETTE", route["expected_sinks"])
+
+    def test_content_state_materializes_multi_object_event_row(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "maps").mkdir()
+            (root / "data" / "maps").mkdir(parents=True)
+            (root / "data" / "maps" / "maps.asm").write_text(
+                "MapGroup_Unit:\n\tmap UnitMap, TILESET_JOHTO, TOWN, LANDMARK_UNIT, MUSIC_NONE, FALSE, PALETTE_AUTO, FISHGROUP_SHORE\n",
+                encoding="utf-8",
+            )
+            (root / "maps" / "UnitMap.asm").write_text(
+                "\n".join(
+                    [
+                        "UnitMap_MapEvents:",
+                        "\tdef_warp_events",
+                        "\tdef_coord_events",
+                        "\tdef_bg_events",
+                        "\tdef_object_events",
+                        "\tobject_event 2, 3, SPRITE_CHRIS, SPRITEMOVEDATA_STANDING_DOWN, 0, 0, -1, -1, 0, OBJECTTYPE_SCRIPT, 0, UnitMapFirstScript, -1",
+                        "\tobject_event 6, 7, SPRITE_CHRIS, SPRITEMOVEDATA_STANDING_DOWN, 0, 0, -1, -1, 0, OBJECTTYPE_SCRIPT, 0, UnitMapSecondScript, -1",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (root / "test.sym").write_text(
+                "\n".join(
+                    [
+                        "02:5000 UnitMapFirstScript",
+                        "02:5100 UnitMapSecondScript",
+                        "01:D000 wMapGroup",
+                        "01:D001 wMapNumber",
+                        "01:D002 wYCoord",
+                        "01:D003 wXCoord",
+                        "01:D205 wPlayerDirection",
+                        "01:D20D wPlayerMapX",
+                        "01:D20E wPlayerMapY",
+                        "01:D225 wObject1Struct",
+                        "01:D24D wObject2Struct",
+                        "01:D465 wMap2ObjectStructID",
+                        "01:D466 wMap2ObjectSprite",
+                        "01:D467 wMap2ObjectYCoord",
+                        "01:D468 wMap2ObjectXCoord",
+                        "01:D469 wMap2ObjectMovement",
+                        "01:D46A wMap2ObjectRadius",
+                        "01:D46B wMap2ObjectHour1",
+                        "01:D46C wMap2ObjectHour2",
+                        "01:D46D wMap2ObjectType",
+                        "01:D46E wMap2ObjectSightRange",
+                        "01:D46F wMap2ObjectScript",
+                        "01:D471 wMap2ObjectEventFlag",
+                        "01:D475 wMap3ObjectStructID",
+                        "01:D476 wMap3ObjectSprite",
+                        "01:D477 wMap3ObjectYCoord",
+                        "01:D478 wMap3ObjectXCoord",
+                        "01:D479 wMap3ObjectMovement",
+                        "01:D47A wMap3ObjectRadius",
+                        "01:D47B wMap3ObjectHour1",
+                        "01:D47C wMap3ObjectHour2",
+                        "01:D47D wMap3ObjectType",
+                        "01:D47E wMap3ObjectSightRange",
+                        "01:D47F wMap3ObjectScript",
+                        "01:D481 wMap3ObjectEventFlag",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            scenario_report = build_content_scenario_report(
+                source_files=("maps/UnitMap.asm",),
+                out_scenarios="content_scenarios.jsonl",
+                max_cases=8,
+                seed=37,
+                root=root,
+            )
+            object_scenario = next(
+                item
+                for item in scenario_report["scenarios"]
+                if item["scenario_type"] == "map_object_event"
+                and item["trigger"]["script"] == "UnitMapSecondScript"
+            )
+            report = build_content_state_report(
+                scenarios=("content_scenarios.jsonl",),
+                scenario_ids=(object_scenario["id"],),
+                symbols_path="test.sym",
+                root=root,
+            )
+
+        materialization = next(
+            item
+            for item in report["materializations"]
+            if item.get("precondition_id") == "map_object_event_position"
+        )
+        patches = {patch["symbol"]: patch for patch in materialization["patches"]}
+        object_context = materialization["object_context"]
+        route = materialization["event_runtime_materialization"]
+        commands = "\n".join(materialization["commands"])
+
+        self.assertTrue(report["valid"])
+        self.assertEqual(object_scenario["trigger"]["source_object_ordinal"], 1)
+        self.assertEqual(object_scenario["trigger"]["map_object_index"], 3)
+        self.assertEqual(materialization["status"], "ready")
+        self.assertEqual(materialization["proof_blockers"], [])
+        self.assertEqual(object_context["map_object_index"], 3)
+        self.assertEqual(object_context["map_object_symbol_prefix"], "wMap3Object")
+        self.assertEqual(object_context["object_struct_symbol"], "wObject2Struct")
+        self.assertEqual(object_context["object_struct_index"], 2)
+        self.assertEqual(patches["wObject2Struct+OBJECT_MAP_OBJECT_INDEX"]["value"], 3)
+        self.assertEqual(patches["wMap3ObjectStructID"]["value"], 2)
+        self.assertEqual(patches["wMap3ObjectXCoord"]["value"], 10)
+        self.assertEqual(patches["wMap3ObjectYCoord"]["value"], 11)
+        self.assertEqual(patches["wMap3ObjectScript"]["value"], 0x00)
+        self.assertEqual(patches["wMap3ObjectScript+1"]["value"], 0x51)
+        self.assertEqual(patches["wMap2ObjectStructID"]["value"], 1)
+        self.assertIn("wMap3ObjectScript", materialization["watch_symbols"])
+        self.assertIn("wMap3ObjectScript", materialization["expected_sinks"])
+        self.assertIn("wMap3ObjectScript", route["expected_sinks"])
+        self.assertIn("--watch-symbol wMap3ObjectScript", commands)
+
+    def test_content_state_materializes_companion_object_structs(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "maps").mkdir()
+            (root / "data" / "maps").mkdir(parents=True)
+            (root / "data" / "maps" / "maps.asm").write_text(
+                "MapGroup_Unit:\n\tmap UnitMap, TILESET_JOHTO, TOWN, LANDMARK_UNIT, MUSIC_NONE, FALSE, PALETTE_AUTO, FISHGROUP_SHORE\n",
+                encoding="utf-8",
+            )
+            (root / "maps" / "UnitMap.asm").write_text(
+                "\n".join(
+                    [
+                        "UnitMap_MapEvents:",
+                        "\tdef_warp_events",
+                        "\tdef_coord_events",
+                        "\tdef_bg_events",
+                        "\tdef_object_events",
+                        "\tobject_event 2, 3, SPRITE_CHRIS, SPRITEMOVEDATA_STANDING_DOWN, 0, 0, -1, -1, 0, OBJECTTYPE_SCRIPT, 0, UnitMapFirstScript, -1",
+                        "\tobject_event 6, 7, SPRITE_CHRIS, SPRITEMOVEDATA_STANDING_DOWN, 0, 0, -1, -1, 0, OBJECTTYPE_SCRIPT, 0, UnitMapSecondScript, -1",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (root / "test.sym").write_text(
+                "\n".join(
+                    [
+                        "02:5000 UnitMapFirstScript",
+                        "02:5100 UnitMapSecondScript",
+                        "01:D000 wMapGroup",
+                        "01:D001 wMapNumber",
+                        "01:D002 wYCoord",
+                        "01:D003 wXCoord",
+                        "01:D205 wPlayerDirection",
+                        "01:D20D wPlayerMapX",
+                        "01:D20E wPlayerMapY",
+                        "01:D225 wObject1Struct",
+                        "01:D24D wObject2Struct",
+                        "01:D465 wMap2ObjectStructID",
+                        "01:D466 wMap2ObjectSprite",
+                        "01:D467 wMap2ObjectYCoord",
+                        "01:D468 wMap2ObjectXCoord",
+                        "01:D469 wMap2ObjectMovement",
+                        "01:D46A wMap2ObjectRadius",
+                        "01:D46B wMap2ObjectHour1",
+                        "01:D46C wMap2ObjectHour2",
+                        "01:D46D wMap2ObjectType",
+                        "01:D46E wMap2ObjectSightRange",
+                        "01:D46F wMap2ObjectScript",
+                        "01:D471 wMap2ObjectEventFlag",
+                        "01:D475 wMap3ObjectStructID",
+                        "01:D476 wMap3ObjectSprite",
+                        "01:D477 wMap3ObjectYCoord",
+                        "01:D478 wMap3ObjectXCoord",
+                        "01:D479 wMap3ObjectMovement",
+                        "01:D47A wMap3ObjectRadius",
+                        "01:D47B wMap3ObjectHour1",
+                        "01:D47C wMap3ObjectHour2",
+                        "01:D47D wMap3ObjectType",
+                        "01:D47E wMap3ObjectSightRange",
+                        "01:D47F wMap3ObjectScript",
+                        "01:D481 wMap3ObjectEventFlag",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            scenario_report = build_content_scenario_report(
+                source_files=("maps/UnitMap.asm",),
+                out_scenarios="content_scenarios.jsonl",
+                max_cases=8,
+                seed=38,
+                root=root,
+            )
+            object_scenario = next(
+                item
+                for item in scenario_report["scenarios"]
+                if item["scenario_type"] == "map_object_event"
+                and item["trigger"]["script"] == "UnitMapSecondScript"
+            )
+            report = build_content_state_report(
+                scenarios=("content_scenarios.jsonl",),
+                scenario_ids=(object_scenario["id"],),
+                symbols_path="test.sym",
+                root=root,
+            )
+
+        materialization = next(
+            item
+            for item in report["materializations"]
+            if item.get("precondition_id") == "map_object_event_position"
+        )
+        patches = {patch["symbol"]: patch for patch in materialization["patches"]}
+        object_context = materialization["object_context"]
+        route = materialization["event_runtime_materialization"]
+
+        self.assertTrue(report["valid"])
+        self.assertEqual(materialization["status"], "ready")
+        self.assertEqual(materialization["proof_blockers"], [])
+        self.assertEqual(object_context["object_struct_symbol"], "wObject2Struct")
+        self.assertEqual(object_context["object_struct_index"], 2)
+        self.assertEqual(object_context["companion_object_count"], 1)
+        self.assertEqual(object_context["loaded_object_count"], 2)
+        self.assertEqual(patches["wObject1Struct+OBJECT_MAP_OBJECT_INDEX"]["value"], 2)
+        self.assertEqual(patches["wObject1Struct+OBJECT_MAP_X"]["value"], 6)
+        self.assertEqual(patches["wObject1Struct+OBJECT_MAP_Y"]["value"], 7)
+        self.assertEqual(patches["wObject2Struct+OBJECT_MAP_OBJECT_INDEX"]["value"], 3)
+        self.assertEqual(patches["wObject2Struct+OBJECT_MAP_X"]["value"], 10)
+        self.assertEqual(patches["wObject2Struct+OBJECT_MAP_Y"]["value"], 11)
+        self.assertEqual(patches["wMap2ObjectStructID"]["value"], 1)
+        self.assertEqual(patches["wMap3ObjectStructID"]["value"], 2)
+        self.assertIn("wObject1Struct", materialization["watch_symbols"])
+        self.assertIn("wObject2Struct", materialization["watch_symbols"])
+        self.assertIn("wObject1Struct+OBJECT_MAP_X", route["expected_sinks"])
+        self.assertIn("wObject2Struct+OBJECT_MAP_X", route["expected_sinks"])
+
+    def test_content_state_skips_offscreen_companion_object_structs(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "maps").mkdir()
+            (root / "data" / "maps").mkdir(parents=True)
+            (root / "data" / "maps" / "maps.asm").write_text(
+                "MapGroup_Unit:\n\tmap UnitMap, TILESET_JOHTO, TOWN, LANDMARK_UNIT, MUSIC_NONE, FALSE, PALETTE_AUTO, FISHGROUP_SHORE\n",
+                encoding="utf-8",
+            )
+            (root / "maps" / "UnitMap.asm").write_text(
+                "\n".join(
+                    [
+                        "UnitMap_MapEvents:",
+                        "\tdef_warp_events",
+                        "\tdef_coord_events",
+                        "\tdef_bg_events",
+                        "\tdef_object_events",
+                        "\tobject_event 40, 40, SPRITE_CHRIS, SPRITEMOVEDATA_STANDING_DOWN, 0, 0, -1, -1, 0, OBJECTTYPE_SCRIPT, 0, UnitMapFarScript, -1",
+                        "\tobject_event 6, 7, SPRITE_CHRIS, SPRITEMOVEDATA_STANDING_DOWN, 0, 0, -1, -1, 0, OBJECTTYPE_SCRIPT, 0, UnitMapSecondScript, -1",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (root / "test.sym").write_text(
+                "\n".join(
+                    [
+                        "02:5000 UnitMapFarScript",
+                        "02:5100 UnitMapSecondScript",
+                        "01:D000 wMapGroup",
+                        "01:D001 wMapNumber",
+                        "01:D002 wYCoord",
+                        "01:D003 wXCoord",
+                        "01:D205 wPlayerDirection",
+                        "01:D20D wPlayerMapX",
+                        "01:D20E wPlayerMapY",
+                        "01:D225 wObject1Struct",
+                        "01:D24D wObject2Struct",
+                        "01:D465 wMap2ObjectStructID",
+                        "01:D466 wMap2ObjectSprite",
+                        "01:D467 wMap2ObjectYCoord",
+                        "01:D468 wMap2ObjectXCoord",
+                        "01:D469 wMap2ObjectMovement",
+                        "01:D46A wMap2ObjectRadius",
+                        "01:D46B wMap2ObjectHour1",
+                        "01:D46C wMap2ObjectHour2",
+                        "01:D46D wMap2ObjectType",
+                        "01:D46E wMap2ObjectSightRange",
+                        "01:D46F wMap2ObjectScript",
+                        "01:D471 wMap2ObjectEventFlag",
+                        "01:D475 wMap3ObjectStructID",
+                        "01:D476 wMap3ObjectSprite",
+                        "01:D477 wMap3ObjectYCoord",
+                        "01:D478 wMap3ObjectXCoord",
+                        "01:D479 wMap3ObjectMovement",
+                        "01:D47A wMap3ObjectRadius",
+                        "01:D47B wMap3ObjectHour1",
+                        "01:D47C wMap3ObjectHour2",
+                        "01:D47D wMap3ObjectType",
+                        "01:D47E wMap3ObjectSightRange",
+                        "01:D47F wMap3ObjectScript",
+                        "01:D481 wMap3ObjectEventFlag",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            scenario_report = build_content_scenario_report(
+                source_files=("maps/UnitMap.asm",),
+                out_scenarios="content_scenarios.jsonl",
+                max_cases=8,
+                seed=39,
+                root=root,
+            )
+            object_scenario = next(
+                item
+                for item in scenario_report["scenarios"]
+                if item["scenario_type"] == "map_object_event"
+                and item["trigger"]["script"] == "UnitMapSecondScript"
+            )
+            report = build_content_state_report(
+                scenarios=("content_scenarios.jsonl",),
+                scenario_ids=(object_scenario["id"],),
+                symbols_path="test.sym",
+                root=root,
+            )
+
+        materialization = next(
+            item
+            for item in report["materializations"]
+            if item.get("precondition_id") == "map_object_event_position"
+        )
+        patches = {patch["symbol"]: patch for patch in materialization["patches"]}
+        object_context = materialization["object_context"]
+        companion_context = object_context["companion_context"]
+
+        self.assertTrue(report["valid"])
+        self.assertEqual(materialization["status"], "ready")
+        self.assertEqual(object_context["object_struct_symbol"], "wObject1Struct")
+        self.assertEqual(object_context["object_struct_index"], 1)
+        self.assertEqual(object_context["companion_object_count"], 0)
+        self.assertEqual(object_context["loaded_object_count"], 1)
+        self.assertEqual(companion_context["offscreen_object_count"], 1)
+        self.assertEqual(companion_context["map_row_object_count"], 1)
+        self.assertEqual(companion_context["offscreen_objects"][0]["map_object_index"], 2)
+        self.assertEqual(companion_context["offscreen_objects"][0]["visibility_reason"], "outside_player_viewport")
+        self.assertEqual(patches["wMap2ObjectStructID"]["value"], 0xFF)
+        self.assertEqual(patches["wMap2ObjectXCoord"]["value"], 44)
+        self.assertEqual(patches["wMap2ObjectYCoord"]["value"], 44)
+        self.assertEqual(patches["wMap3ObjectStructID"]["value"], 1)
+        self.assertEqual(patches["wObject1Struct+OBJECT_MAP_OBJECT_INDEX"]["value"], 3)
+        self.assertNotIn("wObject2Struct", materialization["watch_symbols"])
+
+    def test_content_state_materializes_object_event_flag_mask_state(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "maps").mkdir()
+            (root / "data" / "maps").mkdir(parents=True)
+            (root / "constants").mkdir()
+            (root / "constants" / "event_flags.asm").write_text(
+                "\n".join(
+                    [
+                        "\tconst_def",
+                        "\tconst EVENT_UNIT_UNUSED",
+                        "\tconst EVENT_UNIT_HIDE_NPC",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (root / "data" / "maps" / "maps.asm").write_text(
+                "MapGroup_Unit:\n\tmap UnitMap, TILESET_JOHTO, TOWN, LANDMARK_UNIT, MUSIC_NONE, FALSE, PALETTE_AUTO, FISHGROUP_SHORE\n",
+                encoding="utf-8",
+            )
+            (root / "maps" / "UnitMap.asm").write_text(
+                "\n".join(
+                    [
+                        "UnitMap_MapEvents:",
+                        "\tdef_warp_events",
+                        "\tdef_coord_events",
+                        "\tdef_bg_events",
+                        "\tdef_object_events",
+                        "\tobject_event 6, 7, SPRITE_CHRIS, SPRITEMOVEDATA_STANDING_DOWN, 0, 0, -1, -1, 0, OBJECTTYPE_SCRIPT, 0, UnitMapNPCScript, EVENT_UNIT_HIDE_NPC",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (root / "test.sym").write_text(
+                "\n".join(
+                    [
+                        "02:5000 UnitMapNPCScript",
+                        "01:D000 wMapGroup",
+                        "01:D001 wMapNumber",
+                        "01:D002 wYCoord",
+                        "01:D003 wXCoord",
+                        "01:D205 wPlayerDirection",
+                        "01:D20D wPlayerMapX",
+                        "01:D20E wPlayerMapY",
+                        "01:D225 wObject1Struct",
+                        "01:D465 wMap2ObjectStructID",
+                        "01:D466 wMap2ObjectSprite",
+                        "01:D467 wMap2ObjectYCoord",
+                        "01:D468 wMap2ObjectXCoord",
+                        "01:D469 wMap2ObjectMovement",
+                        "01:D46A wMap2ObjectRadius",
+                        "01:D46B wMap2ObjectHour1",
+                        "01:D46C wMap2ObjectHour2",
+                        "01:D46D wMap2ObjectType",
+                        "01:D46E wMap2ObjectSightRange",
+                        "01:D46F wMap2ObjectScript",
+                        "01:D471 wMap2ObjectEventFlag",
+                        "01:D545 wObjectMasks",
+                        "01:D7B7 wEventFlags",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            scenario_report = build_content_scenario_report(
+                source_files=("maps/UnitMap.asm",),
+                out_scenarios="content_scenarios.jsonl",
+                max_cases=8,
+                seed=40,
+                root=root,
+            )
+            object_scenario = next(item for item in scenario_report["scenarios"] if item["scenario_type"] == "map_object_event")
+            report = build_content_state_report(
+                scenarios=("content_scenarios.jsonl",),
+                scenario_ids=(object_scenario["id"],),
+                symbols_path="test.sym",
+                root=root,
+            )
+
+        materialization = next(
+            item
+            for item in report["materializations"]
+            if item.get("precondition_id") == "map_object_event_position"
+        )
+        patches = {patch["symbol"]: patch for patch in materialization["patches"]}
+        object_context = materialization["object_context"]
+        route = materialization["event_runtime_materialization"]
+
+        self.assertTrue(report["valid"])
+        self.assertEqual(materialization["status"], "ready")
+        self.assertEqual(object_context["object_mask_context"]["event_flag"], 1)
+        self.assertEqual(object_context["object_mask_context"]["event_flag_required_state"], "reset")
+        self.assertEqual(object_context["object_mask_context"]["object_mask_symbol"], "wObjectMasks+2")
+        self.assertEqual(patches["wObjectMasks+2"]["value"], 0)
+        self.assertEqual(patches["wObjectMasks+2"]["bank_address"], "01:D547")
+        self.assertEqual(patches["wEventFlags+0"]["patch_kind"], "bit")
+        self.assertEqual(patches["wEventFlags+0"]["bit_operation"], "reset")
+        self.assertEqual(patches["wEventFlags+0"]["bit_mask"], 2)
+        self.assertEqual(patches["wMap2ObjectEventFlag"]["value"], 1)
+        self.assertEqual(patches["wMap2ObjectEventFlag+1"]["value"], 0)
+        self.assertIn("wObjectMasks", materialization["watch_symbols"])
+        self.assertIn("wEventFlags", materialization["watch_symbols"])
+        self.assertIn("wObjectMasks+2", materialization["expected_sinks"])
+        self.assertIn("wEventFlags+0", route["expected_sinks"])
+
+    def test_content_state_materializes_selected_object_event_hour_state(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "maps").mkdir()
+            (root / "data" / "maps").mkdir(parents=True)
+            (root / "data" / "maps" / "maps.asm").write_text(
+                "MapGroup_Unit:\n\tmap UnitMap, TILESET_JOHTO, TOWN, LANDMARK_UNIT, MUSIC_NONE, FALSE, PALETTE_AUTO, FISHGROUP_SHORE\n",
+                encoding="utf-8",
+            )
+            (root / "maps" / "UnitMap.asm").write_text(
+                "\n".join(
+                    [
+                        "UnitMap_MapEvents:",
+                        "\tdef_warp_events",
+                        "\tdef_coord_events",
+                        "\tdef_bg_events",
+                        "\tdef_object_events",
+                        "\tobject_event 6, 7, SPRITE_CHRIS, SPRITEMOVEDATA_STANDING_DOWN, 0, 0, 9, 17, 0, OBJECTTYPE_SCRIPT, 0, UnitMapDayScript, -1",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (root / "test.sym").write_text(
+                "\n".join(
+                    [
+                        "02:5000 UnitMapDayScript",
+                        "00:FF96 hHours",
+                        "01:D000 wMapGroup",
+                        "01:D001 wMapNumber",
+                        "01:D002 wYCoord",
+                        "01:D003 wXCoord",
+                        "01:D205 wPlayerDirection",
+                        "01:D20D wPlayerMapX",
+                        "01:D20E wPlayerMapY",
+                        "01:D225 wObject1Struct",
+                        "01:D465 wMap2ObjectStructID",
+                        "01:D466 wMap2ObjectSprite",
+                        "01:D467 wMap2ObjectYCoord",
+                        "01:D468 wMap2ObjectXCoord",
+                        "01:D469 wMap2ObjectMovement",
+                        "01:D46A wMap2ObjectRadius",
+                        "01:D46B wMap2ObjectHour1",
+                        "01:D46C wMap2ObjectHour2",
+                        "01:D46D wMap2ObjectType",
+                        "01:D46E wMap2ObjectSightRange",
+                        "01:D46F wMap2ObjectScript",
+                        "01:D471 wMap2ObjectEventFlag",
+                        "01:D545 wObjectMasks",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            scenario_report = build_content_scenario_report(
+                source_files=("maps/UnitMap.asm",),
+                out_scenarios="content_scenarios.jsonl",
+                max_cases=8,
+                seed=41,
+                root=root,
+            )
+            object_scenario = next(item for item in scenario_report["scenarios"] if item["scenario_type"] == "map_object_event")
+            report = build_content_state_report(
+                scenarios=("content_scenarios.jsonl",),
+                scenario_ids=(object_scenario["id"],),
+                symbols_path="test.sym",
+                root=root,
+            )
+
+        materialization = next(
+            item
+            for item in report["materializations"]
+            if item.get("precondition_id") == "map_object_event_position"
+        )
+        patches = {patch["symbol"]: patch for patch in materialization["patches"]}
+        object_context = materialization["object_context"]
+
+        self.assertTrue(report["valid"])
+        self.assertEqual(materialization["status"], "ready")
+        self.assertEqual(object_context["object_time_context"]["time_model"], "hour_range")
+        self.assertEqual(object_context["object_time_context"]["required_hour"], 9)
+        self.assertEqual(object_context["object_time_context"]["hour_start"], 9)
+        self.assertEqual(object_context["object_time_context"]["hour_end"], 17)
+        self.assertEqual(patches["hHours"]["value"], 9)
+        self.assertEqual(patches["wMap2ObjectHour1"]["value"], 9)
+        self.assertEqual(patches["wMap2ObjectHour2"]["value"], 17)
+        self.assertEqual(patches["wObjectMasks+2"]["value"], 0)
+        self.assertIn("hHours", materialization["watch_symbols"])
+        self.assertIn("hHours", materialization["expected_sinks"])
+
+    def test_content_state_skips_time_filtered_companion_object_structs(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "maps").mkdir()
+            (root / "data" / "maps").mkdir(parents=True)
+            (root / "data" / "maps" / "maps.asm").write_text(
+                "MapGroup_Unit:\n\tmap UnitMap, TILESET_JOHTO, TOWN, LANDMARK_UNIT, MUSIC_NONE, FALSE, PALETTE_AUTO, FISHGROUP_SHORE\n",
+                encoding="utf-8",
+            )
+            (root / "maps" / "UnitMap.asm").write_text(
+                "\n".join(
+                    [
+                        "UnitMap_MapEvents:",
+                        "\tdef_warp_events",
+                        "\tdef_coord_events",
+                        "\tdef_bg_events",
+                        "\tdef_object_events",
+                        "\tobject_event 2, 3, SPRITE_CHRIS, SPRITEMOVEDATA_STANDING_DOWN, 0, 0, 18, 23, 0, OBJECTTYPE_SCRIPT, 0, UnitMapNightScript, -1",
+                        "\tobject_event 6, 7, SPRITE_CHRIS, SPRITEMOVEDATA_STANDING_DOWN, 0, 0, 9, 17, 0, OBJECTTYPE_SCRIPT, 0, UnitMapDayScript, -1",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (root / "test.sym").write_text(
+                "\n".join(
+                    [
+                        "02:5000 UnitMapNightScript",
+                        "02:5100 UnitMapDayScript",
+                        "00:FF96 hHours",
+                        "01:D000 wMapGroup",
+                        "01:D001 wMapNumber",
+                        "01:D002 wYCoord",
+                        "01:D003 wXCoord",
+                        "01:D205 wPlayerDirection",
+                        "01:D20D wPlayerMapX",
+                        "01:D20E wPlayerMapY",
+                        "01:D225 wObject1Struct",
+                        "01:D24D wObject2Struct",
+                        "01:D465 wMap2ObjectStructID",
+                        "01:D466 wMap2ObjectSprite",
+                        "01:D467 wMap2ObjectYCoord",
+                        "01:D468 wMap2ObjectXCoord",
+                        "01:D469 wMap2ObjectMovement",
+                        "01:D46A wMap2ObjectRadius",
+                        "01:D46B wMap2ObjectHour1",
+                        "01:D46C wMap2ObjectHour2",
+                        "01:D46D wMap2ObjectType",
+                        "01:D46E wMap2ObjectSightRange",
+                        "01:D46F wMap2ObjectScript",
+                        "01:D471 wMap2ObjectEventFlag",
+                        "01:D475 wMap3ObjectStructID",
+                        "01:D476 wMap3ObjectSprite",
+                        "01:D477 wMap3ObjectYCoord",
+                        "01:D478 wMap3ObjectXCoord",
+                        "01:D479 wMap3ObjectMovement",
+                        "01:D47A wMap3ObjectRadius",
+                        "01:D47B wMap3ObjectHour1",
+                        "01:D47C wMap3ObjectHour2",
+                        "01:D47D wMap3ObjectType",
+                        "01:D47E wMap3ObjectSightRange",
+                        "01:D47F wMap3ObjectScript",
+                        "01:D481 wMap3ObjectEventFlag",
+                        "01:D545 wObjectMasks",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            scenario_report = build_content_scenario_report(
+                source_files=("maps/UnitMap.asm",),
+                out_scenarios="content_scenarios.jsonl",
+                max_cases=8,
+                seed=42,
+                root=root,
+            )
+            object_scenario = next(
+                item
+                for item in scenario_report["scenarios"]
+                if item["scenario_type"] == "map_object_event"
+                and item["trigger"]["script"] == "UnitMapDayScript"
+            )
+            report = build_content_state_report(
+                scenarios=("content_scenarios.jsonl",),
+                scenario_ids=(object_scenario["id"],),
+                symbols_path="test.sym",
+                root=root,
+            )
+
+        materialization = next(
+            item
+            for item in report["materializations"]
+            if item.get("precondition_id") == "map_object_event_position"
+        )
+        patches = {patch["symbol"]: patch for patch in materialization["patches"]}
+        object_context = materialization["object_context"]
+        companion_context = object_context["companion_context"]
+
+        self.assertTrue(report["valid"])
+        self.assertEqual(materialization["status"], "ready")
+        self.assertEqual(object_context["object_struct_symbol"], "wObject1Struct")
+        self.assertEqual(object_context["object_struct_index"], 1)
+        self.assertEqual(object_context["loaded_object_count"], 1)
+        self.assertEqual(companion_context["companion_object_count"], 0)
+        self.assertEqual(companion_context["time_filtered_object_count"], 1)
+        self.assertEqual(companion_context["time_filtered_objects"][0]["map_object_index"], 2)
+        self.assertEqual(companion_context["time_filtered_objects"][0]["time_filter_reason"], "hour_range_excludes_selected_hour")
+        self.assertEqual(companion_context["time_filtered_objects"][0]["object_time_context"]["required_hour"], 18)
+        self.assertEqual(patches["hHours"]["value"], 9)
+        self.assertEqual(patches["wMap2ObjectStructID"]["value"], 0xFF)
+        self.assertEqual(patches["wObjectMasks+2"]["value"], 0xFF)
+        self.assertEqual(patches["wMap3ObjectStructID"]["value"], 1)
+        self.assertEqual(patches["wObject1Struct+OBJECT_MAP_OBJECT_INDEX"]["value"], 3)
+        self.assertNotIn("wObject2Struct", materialization["watch_symbols"])
+
     def test_content_scenarios_feed_replay_localize_and_coverage_targets(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -24747,6 +26843,72 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(ranked_pass["proof_status"], "mirror_passed")
         self.assertIn("wTilemap", ranked_pass["related_symbols"])
         self.assertEqual(impact_pass["proof_status"], "mirror_passed")
+
+    def test_compare_output_sink_mirror_does_not_pass_from_compact_effect_index(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "content_state.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_content_state_materialization",
+                        "valid": True,
+                        "executed": False,
+                        "materializations": [
+                            {
+                                "scenario_id": "content_scenario_22_0000",
+                                "scenario_type": "ui_tilemap_update",
+                                "precondition_kind": "ui_output_sink",
+                                "status": "planned",
+                                "source_file": "engine/menus/unit_menu.asm",
+                                "outputs": [
+                                    {
+                                        "kind": "ui_tilemap_output",
+                                        "state_symbol": "wTilemap",
+                                        "size": 1,
+                                        "producer_symbol": "PlaceString",
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            (root / "effect_trace_compact.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_effect_trace",
+                        "valid": True,
+                        "proof_status": "instruction_observed",
+                        "watch_symbols": ["wTilemap"],
+                        "write_index": [
+                            {
+                                "address": "C3A0",
+                                "address_key": "wram0:--:C3A0",
+                                "write_count": 1,
+                            }
+                        ],
+                        "events": [],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            compare = build_compare_plan(
+                reports=("content_state.json", "effect_trace_compact.json"),
+                root=root,
+            )
+            (root / "compare.json").write_text(json.dumps(compare), encoding="utf-8")
+            ranked = rank_findings(reports=("compare.json",), root=root)
+
+        match = next(item for item in compare["matches"] if item["id"] == "content_output_behavioral_mirror")
+
+        self.assertEqual(match["status"], "planned")
+        self.assertEqual(match["proof_status"], "planned_only")
+        self.assertEqual(match["covered_output_count"], 0)
+        self.assertEqual(match["weak_runtime_kinds"], ["effect_trace"])
+        self.assertTrue(any("compact" in gap for gap in match["runtime_evidence_gaps"]))
+        self.assertFalse(any(item["type"] == "mirror_passed" for item in ranked["findings"]))
 
     def test_compare_output_sink_mirror_ignores_planned_dynamic_taint_evidence(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -27062,6 +29224,148 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("dynamic_write", report["content"])
         self.assertIn("Workflow Waterfall", report["content"])
 
+    def test_visualization_preserves_watch_report_runtime_proof_status(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "watch.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_watch_report",
+                        "valid": True,
+                        "proof_status": "runtime_observed",
+                        "events": [
+                            {
+                                "frame": 7,
+                                "watch": "wCurDamage",
+                                "old_hex": "0000",
+                                "new_hex": "002A",
+                                "pc_label": "BattleCommand_Test",
+                                "pc_bank_address": "01:4000",
+                                "address": "D141",
+                                "proof_status": "runtime_observed",
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            visualization = build_visualization_report(reports=("watch.json",), root=root)
+
+        watch_event = next(event for event in visualization["timeline"] if event["event_type"] == "watch")
+        graph_nodes_by_kind = {}
+        for node in visualization["graph"]["nodes"]:
+            graph_nodes_by_kind.setdefault(node["type"], []).append(node)
+        graph_edges_by_relation = {}
+        for edge in visualization["graph"]["edges"]:
+            graph_edges_by_relation.setdefault(edge["relation"], []).append(edge)
+
+        self.assertEqual(watch_event["proof_status"], "runtime_observed")
+        self.assertIn("proof=runtime_observed", watch_event["detail"])
+        for kind in ("watch_event", "instruction", "watch_symbol", "watch_address"):
+            self.assertTrue(graph_nodes_by_kind[kind])
+            self.assertTrue(
+                all(node["proof_status"] == "runtime_observed" for node in graph_nodes_by_kind[kind]),
+                graph_nodes_by_kind[kind],
+            )
+        for relation in ("writes", "observes", "observes_address"):
+            self.assertTrue(graph_edges_by_relation[relation])
+            self.assertTrue(
+                all(edge["proof_status"] == "runtime_observed" for edge in graph_edges_by_relation[relation]),
+                graph_edges_by_relation[relation],
+            )
+
+    def test_visualization_does_not_promote_unexecuted_played_inputs_to_runtime(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "executed_watch.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_watch_report",
+                        "valid": True,
+                        "executed": True,
+                        "played_inputs": [
+                            {
+                                "frame": 3,
+                                "buttons": ["a"],
+                                "hold_frames": 1,
+                                "line": 1,
+                                "source": "bug.inputs",
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            (root / "planned_watch.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_watch_report",
+                        "valid": True,
+                        "executed": False,
+                        "played_inputs": [
+                            {
+                                "frame": 4,
+                                "buttons": ["b"],
+                                "hold_frames": 1,
+                                "line": 2,
+                                "source": "planned.inputs",
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            visualization = build_visualization_report(
+                reports=("executed_watch.json", "planned_watch.json"),
+                root=root,
+            )
+
+        runtime_event = next(
+            event
+            for event in visualization["timeline"]
+            if event["event_type"] == "played_input" and event["source"] == "executed_watch.json"
+        )
+        planned_event = next(
+            event
+            for event in visualization["timeline"]
+            if event["event_type"] == "played_input" and event["source"] == "planned_watch.json"
+        )
+        runtime_nodes = [
+            node
+            for node in visualization["graph"]["nodes"]
+            if node["type"] == "played_input" and node["source"] == "executed_watch.json"
+        ]
+        planned_nodes = [
+            node
+            for node in visualization["graph"]["nodes"]
+            if node["type"] == "played_input" and node["source"] == "planned_watch.json"
+        ]
+        runtime_edges = [
+            edge
+            for edge in visualization["graph"]["edges"]
+            if edge["relation"] == "played_input" and edge["source"] == "executed_watch.json"
+        ]
+        planned_edges = [
+            edge
+            for edge in visualization["graph"]["edges"]
+            if edge["relation"] == "played_input" and edge["source"] == "planned_watch.json"
+        ]
+
+        self.assertEqual(runtime_event["proof_status"], "runtime_observed")
+        self.assertIn("proof=runtime_observed", runtime_event["detail"])
+        self.assertEqual(planned_event["proof_status"], "planned_only")
+        self.assertIn("proof=planned_only", planned_event["detail"])
+        self.assertTrue(runtime_nodes)
+        self.assertTrue(planned_nodes)
+        self.assertTrue(runtime_edges)
+        self.assertTrue(planned_edges)
+        self.assertTrue(all(node["proof_status"] == "runtime_observed" for node in runtime_nodes))
+        self.assertTrue(all(node["proof_status"] == "planned_only" for node in planned_nodes))
+        self.assertTrue(all(edge["proof_status"] == "runtime_observed" for edge in runtime_edges))
+        self.assertTrue(all(edge["proof_status"] == "planned_only" for edge in planned_edges))
+
     def test_cli_visualize_writes_static_file(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -27413,6 +29717,76 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("ready dynamic-taint trace: .local\\tmp\\ready_trace.jsonl", static_report["content"])
         self.assertIn("instruction trace missed functions: CallScript", static_report["content"])
         self.assertIn("instruction trace validation: hit=True", static_report["content"])
+
+    def test_visualization_preserves_instruction_trace_validation_proof_status(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "instruction_trace.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_instruction_trace",
+                        "valid": True,
+                        "proof_status": "instruction_observed",
+                        "executed": True,
+                        "effective_save_state": "patched.state",
+                        "execution_validation": {
+                            "attempted": True,
+                            "required": True,
+                            "proof_status": "instruction_observed",
+                            "planned_hook_count": 5,
+                            "captured_frame_count": 3,
+                            "hit": True,
+                            "hit_function_symbols": ["RunScriptCommand"],
+                            "missing_function_symbols": [],
+                            "watch_symbols": ["wScriptPos"],
+                            "ready_for_dynamic_taint": True,
+                            "trace_record_limit_hit": True,
+                        },
+                        "trace_output": {
+                            "path": ".local\\tmp\\instruction_trace.jsonl",
+                            "written": True,
+                            "record_count": 3,
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            visualization = build_visualization_report(reports=("instruction_trace.json",), root=root)
+
+        validation_events = [
+            event
+            for event in visualization["timeline"]
+            if event["event_type"] in {"validation_ready", "validation_limit"}
+        ]
+        graph_nodes_by_type = {}
+        for node in visualization["graph"]["nodes"]:
+            graph_nodes_by_type.setdefault(node["type"], []).append(node)
+        graph_edges_by_relation = {}
+        for edge in visualization["graph"]["edges"]:
+            graph_edges_by_relation.setdefault(edge["relation"], []).append(edge)
+
+        self.assertEqual({event["event_type"] for event in validation_events}, {"validation_ready", "validation_limit"})
+        self.assertTrue(all(event["proof_status"] == "instruction_observed" for event in validation_events))
+        self.assertTrue(all("proof=instruction_observed" in event["detail"] for event in validation_events))
+        for node_type in (
+            "instruction_trace_validation",
+            "instruction_trace_output",
+            "save_state",
+            "instruction_hit",
+            "watch",
+        ):
+            self.assertTrue(graph_nodes_by_type[node_type])
+            self.assertTrue(
+                all(node["proof_status"] == "instruction_observed" for node in graph_nodes_by_type[node_type]),
+                graph_nodes_by_type[node_type],
+            )
+        for relation in ("writes_trace", "loads_state", "hit", "observes"):
+            self.assertTrue(graph_edges_by_relation[relation])
+            self.assertTrue(
+                all(edge["proof_status"] == "instruction_observed" for edge in graph_edges_by_relation[relation]),
+                graph_edges_by_relation[relation],
+            )
 
     def test_static_report_summarizes_findings_and_commands(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

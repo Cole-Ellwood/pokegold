@@ -335,7 +335,11 @@ class GraphBuilder:
             self.add_edge(report_id, input_id, "played_input", source=source, proof_status="runtime_observed", evidence=played_input_evidence(played), seq=played.get("frame"))
 
     def add_visual_snapshot_report(self, data: dict[str, Any], *, source: str, report_id: str) -> None:
-        proof = normalize_proof_status(data.get("proof_status")) or "planned_only"
+        proof = snapshot_report_proof_status(
+            data,
+            runtime_samples=visual_snapshot_has_runtime_samples(data),
+            downgrade_reason="no_visual_runtime_samples",
+        )
         snapshot_id = node_id("visual_snapshot", source)
         self.add_node(
             snapshot_id,
@@ -373,7 +377,11 @@ class GraphBuilder:
             self.add_edge(snapshot_id, surface_id, "samples_surface", source=source, proof_status=proof)
 
     def add_audio_snapshot_report(self, data: dict[str, Any], *, source: str, report_id: str) -> None:
-        proof = normalize_proof_status(data.get("proof_status")) or "planned_only"
+        proof = snapshot_report_proof_status(
+            data,
+            runtime_samples=audio_snapshot_has_runtime_samples(data),
+            downgrade_reason="no_audio_runtime_samples",
+        )
         snapshot_id = node_id("audio_snapshot", source)
         self.add_node(
             snapshot_id,
@@ -423,6 +431,18 @@ class GraphBuilder:
                 evidence=audio_wave_ram_evidence(wave),
             )
             self.add_edge(snapshot_id, wave_id, "samples_audio_wave_ram", source=source, proof_status=proof)
+        sound_buffer = data.get("sound_buffer") if isinstance(data.get("sound_buffer"), dict) else {}
+        if sound_buffer:
+            sound_id = node_id("audio_sound_buffer", f"{source}:{sound_buffer.get('source', '')}:{sound_buffer.get('sha256', '')}")
+            self.add_node(
+                sound_id,
+                "PyBoy sound buffer",
+                "audio_sound_buffer",
+                source=source,
+                proof_status=proof,
+                evidence=audio_sound_buffer_evidence(sound_buffer),
+            )
+            self.add_edge(snapshot_id, sound_id, "samples_audio_sound_buffer", source=source, proof_status=proof)
 
     def add_effect_trace_report(self, data: dict[str, Any], *, source: str, report_id: str) -> None:
         for validation_index, validation in enumerate(dict_items(data.get("hook_order_validations"))):
@@ -658,7 +678,7 @@ class GraphBuilder:
         pc_label = str(attribution.get("pc_label") or "")
         pc_id = node_id("instruction", pc_label)
         write_id = node_id("write", attribution.get("id") or f"{source}:{target}:{attribution.get('seq', '')}")
-        proof = normalize_proof_status(attribution.get("proof_status")) or "instruction_observed"
+        proof = normalize_proof_status(attribution.get("proof_status"))
         self.add_node(target_id, target, target_kind(target), source=source, proof_status=proof, symbols=attribution.get("related_symbols"), addresses=attribution.get("related_addresses"), files=attribution.get("related_files"))
         self.add_node(pc_id, pc_label, "instruction", source=source, proof_status=proof)
         self.add_node(write_id, str(attribution.get("mnemonic") or "dynamic write"), "write", source=source, proof_status=proof, symbols=attribution.get("related_symbols"), addresses=attribution.get("related_addresses"))
@@ -689,7 +709,10 @@ class GraphBuilder:
             via_register = str(operand.get("via_register") or "")
             if via_register:
                 provenance = register_provenance_for_operand(operand, attribution)
-                feeds_register_proof = "taint_proven" if operand.get("origin") or operand.get("symbol") else proof
+                feeds_register_proof = dynamic_taint_edge_proof_status(
+                    proof,
+                    has_taint=bool(operand.get("origin") or operand.get("symbol")),
+                )
                 provenance_id = self.add_register_provenance(
                     provenance,
                     source=source,
@@ -713,8 +736,9 @@ class GraphBuilder:
             )
             for taint in string_items(provenance.get("taint")):
                 taint_id = target_node_id(taint)
-                self.add_node(taint_id, taint, target_kind(taint), source=source, proof_status="taint_proven")
-                self.add_edge(taint_id, provenance_id, "taints_register", source=source, proof_status="taint_proven", evidence=register_provenance_evidence(provenance), seq=provenance.get("seq"))
+                taint_proof = dynamic_taint_edge_proof_status(proof, has_taint=True)
+                self.add_node(taint_id, taint, target_kind(taint), source=source, proof_status=taint_proof)
+                self.add_edge(taint_id, provenance_id, "taints_register", source=source, proof_status=taint_proof, evidence=register_provenance_evidence(provenance), seq=provenance.get("seq"))
 
     def add_register_provenance(
         self,
@@ -1889,8 +1913,15 @@ def register_provenance_for_operand(operand: dict[str, Any], attribution: dict[s
         "pc": str(operand.get("via_register_write_pc") or ""),
         "pc_label": "",
         "operation": "",
-        "proof_status": str(attribution.get("proof_status") or "instruction_observed"),
+        "proof_status": normalize_proof_status(attribution.get("proof_status")),
     }
+
+
+def dynamic_taint_edge_proof_status(proof_status: str, *, has_taint: bool) -> str:
+    proof = normalize_proof_status(proof_status)
+    if has_taint and proof in {"runtime_observed", "instruction_observed", "taint_proven"}:
+        return "taint_proven"
+    return proof
 
 
 def reverse_query_result_proof_status(result: dict[str, Any]) -> str:
@@ -2039,15 +2070,22 @@ def playtest_route_evidence(route: dict[str, Any]) -> list[str]:
 
 def visual_snapshot_evidence(data: dict[str, Any]) -> list[str]:
     lcd = data.get("lcd_state") if isinstance(data.get("lcd_state"), dict) else {}
+    runtime_samples = visual_snapshot_has_runtime_samples(data)
     return unique_list(
         [
             f"executed={data.get('executed')}",
+            f"runtime_samples={runtime_samples}",
             f"surfaces={data.get('surface_count', 0)}",
             f"screen_frames={data.get('screen_frame_count', 0)}",
             f"framebuffer={data.get('framebuffer', '')}" if data.get("framebuffer") else "",
             f"save_state={data.get('save_state', '')}",
             f"lcd_enabled={lcd.get('lcd_enabled', '')}",
             f"ppu_mode={lcd.get('ppu_mode', '')}",
+            snapshot_proof_downgrade_evidence(
+                data,
+                runtime_samples=runtime_samples,
+                downgrade_reason="no_visual_runtime_samples",
+            ),
         ]
     )
 
@@ -2078,16 +2116,92 @@ def visual_surface_evidence(surface: dict[str, Any]) -> list[str]:
 
 def audio_snapshot_evidence(data: dict[str, Any]) -> list[str]:
     state = data.get("audio_state") if isinstance(data.get("audio_state"), dict) else {}
+    sound_buffer = data.get("sound_buffer") if isinstance(data.get("sound_buffer"), dict) else {}
+    runtime_samples = audio_snapshot_has_runtime_samples(data)
     return unique_list(
         [
             f"executed={data.get('executed')}",
+            f"runtime_samples={runtime_samples}",
             f"registers={data.get('register_count', 0)}",
             f"symbols={data.get('symbol_state_count', 0)}",
+            f"sound_buffer={sound_buffer.get('source', '')}" if sound_buffer else "",
+            f"sound_buffer_sha256={sound_buffer.get('sha256', '')}" if sound_buffer else "",
             f"save_state={data.get('save_state', '')}",
             f"audio_enabled={state.get('audio_enabled', '')}",
             f"channel_mask={state.get('channel_enable_mask', '')}",
+            snapshot_proof_downgrade_evidence(
+                data,
+                runtime_samples=runtime_samples,
+                downgrade_reason="no_audio_runtime_samples",
+            ),
         ]
     )
+
+
+def visual_snapshot_has_runtime_samples(data: dict[str, Any]) -> bool:
+    screen_frame = data.get("screen_frame") if isinstance(data.get("screen_frame"), dict) else {}
+    io_registers = data.get("io_registers") if isinstance(data.get("io_registers"), dict) else {}
+    return bool(
+        dict_items(data.get("surfaces"))
+        or io_registers
+        or screen_frame
+        or data.get("framebuffer")
+        or positive_int(data.get("screen_frame_count"))
+    )
+
+
+def audio_snapshot_has_runtime_samples(data: dict[str, Any]) -> bool:
+    registers = data.get("registers") if isinstance(data.get("registers"), dict) else {}
+    wave = data.get("wave_ram") if isinstance(data.get("wave_ram"), dict) else {}
+    sound_buffer = data.get("sound_buffer") if isinstance(data.get("sound_buffer"), dict) else {}
+    return bool(
+        registers
+        or dict_items(data.get("register_details"))
+        or dict_items(data.get("symbol_state"))
+        or wave.get("sha256")
+        or wave.get("sample_hex")
+        or sound_buffer.get("sha256")
+        or sound_buffer.get("sample_hex")
+        or sound_buffer.get("buffer")
+    )
+
+
+def snapshot_report_proof_status(
+    data: dict[str, Any],
+    *,
+    runtime_samples: bool,
+    downgrade_reason: str,
+) -> str:
+    explicit = normalize_proof_status(data.get("proof_status")) if data.get("proof_status") else ""
+    if runtime_samples:
+        return explicit or ("runtime_observed" if data.get("executed") else "planned_only")
+    if snapshot_proof_downgrade_evidence(
+        data,
+        runtime_samples=runtime_samples,
+        downgrade_reason=downgrade_reason,
+    ):
+        return "planned_only"
+    return explicit or "planned_only"
+
+
+def snapshot_proof_downgrade_evidence(
+    data: dict[str, Any],
+    *,
+    runtime_samples: bool,
+    downgrade_reason: str,
+) -> str:
+    explicit = normalize_proof_status(data.get("proof_status")) if data.get("proof_status") else ""
+    if runtime_samples:
+        return ""
+    if bool(data.get("executed")) or explicit in {
+        "runtime_observed",
+        "instruction_observed",
+        "taint_proven",
+        "mirror_passed",
+        "mirror_failed",
+    }:
+        return f"proof_downgrade_reason={downgrade_reason}"
+    return ""
 
 
 def audio_register_evidence(register: dict[str, Any]) -> list[str]:
@@ -2117,6 +2231,18 @@ def audio_wave_ram_evidence(wave: dict[str, Any]) -> list[str]:
             f"size={wave.get('size', '')}",
             f"nonzero={wave.get('nonzero_count', '')}",
             f"sha256={wave.get('sha256', '')}",
+        ]
+    )
+
+
+def audio_sound_buffer_evidence(sound_buffer: dict[str, Any]) -> list[str]:
+    return unique_list(
+        [
+            f"source={sound_buffer.get('source', '')}",
+            f"sample_rate={sound_buffer.get('sample_rate', '')}",
+            f"raw_buffer_head={sound_buffer.get('raw_buffer_head', '')}",
+            f"byte_count={sound_buffer.get('byte_count', '')}",
+            f"sha256={sound_buffer.get('sha256', '')}",
         ]
     )
 

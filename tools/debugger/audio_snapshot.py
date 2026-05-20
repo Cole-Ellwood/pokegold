@@ -51,6 +51,7 @@ AUDIO_REGISTERS = {
 }
 WAVE_RAM_START = 0xFF30
 WAVE_RAM_SIZE = 0x10
+SOUND_BUFFER_SAMPLE_BYTES = 512
 
 
 def build_audio_snapshot_report(
@@ -113,12 +114,15 @@ def build_audio_snapshot_report(
         "audio_state": {},
         "channel_state": [],
         "wave_ram": {},
+        "sound_buffer_count": 0,
+        "sound_buffer": {},
         "command_count": len(commands),
         "commands": commands,
         "runnable_commands": [command for command in commands if command_is_runnable(command)],
         "blocked_commands": [command for command in commands if not command_is_runnable(command)],
         "known_limits": [
             "This captures CPU-visible audio engine state and hardware registers from a bounded runtime point; it is not a full audio playback or mixer mirror.",
+            "Sound buffer evidence is a bounded PyBoy frame buffer digest/sample; it proves emulator-visible samples existed at this capture point but does not prove full song playback quality.",
             "Audio output quality still requires listening, waveform capture, or a dedicated APU mirror.",
             "Use effect traces or dynamic taint to prove which instruction wrote an audio register or music-engine state after a snapshot differs from expectation.",
         ],
@@ -182,6 +186,7 @@ def execute_audio_snapshot(
             size=WAVE_RAM_SIZE,
         )
         symbol_state = audio_symbol_state(pyboy, symbol_table=symbol_table)
+        sound_buffer = sound_buffer_snapshot(pyboy)
         return {
             "symbol_state_count": len(symbol_state),
             "symbol_state": symbol_state,
@@ -191,6 +196,8 @@ def execute_audio_snapshot(
             "audio_state": audio_state(registers),
             "channel_state": channel_state(registers),
             "wave_ram": wave_ram,
+            "sound_buffer_count": 1 if sound_buffer else 0,
+            "sound_buffer": sound_buffer,
         }
     finally:
         try:
@@ -234,6 +241,127 @@ def memory_block_snapshot(pyboy: Any, *, name: str, address: int, size: int) -> 
         "unique_byte_count": len(set(values)),
         "sample_hex": bytes(values).hex().upper(),
     }
+
+
+def sound_buffer_snapshot(pyboy: Any) -> dict[str, Any]:
+    sound = getattr(pyboy, "sound", None)
+    if sound is None:
+        return {}
+    buffer_value, source = sound_buffer_value(sound)
+    data = buffer_to_bytes(buffer_value)
+    if not data:
+        return {}
+    sample = data[:SOUND_BUFFER_SAMPLE_BYTES]
+    digest = hashlib.sha256(data).hexdigest()
+    shape = buffer_shape(buffer_value)
+    out: dict[str, Any] = {
+        "kind": "pyboy_sound_buffer",
+        "source": source,
+        "sample_rate": int_or_zero(getattr(sound, "sample_rate", 0)),
+        "raw_buffer_head": int_or_zero(getattr(sound, "raw_buffer_head", 0)),
+        "raw_buffer_format": str(getattr(sound, "raw_buffer_format", "")),
+        "raw_buffer_length": int_or_zero(getattr(sound, "raw_buffer_length", 0)),
+        "byte_count": len(data),
+        "sample_size": len(sample),
+        "sha256": digest,
+        "buffer": f"sha256:{digest}",
+        "sample_hex": sample.hex().upper(),
+        "truncated": len(sample) < len(data),
+    }
+    if shape:
+        out["shape"] = shape
+        out["sample_count"] = int_or_zero(shape[0])
+        if len(shape) > 1:
+            out["channel_count"] = int_or_zero(shape[1])
+    dtype = getattr(buffer_value, "dtype", "")
+    if dtype:
+        out["dtype"] = str(dtype)
+    return out
+
+
+def sound_buffer_value(sound: Any) -> tuple[Any, str]:
+    try:
+        value = getattr(sound, "ndarray")
+        if callable(value):
+            value = value()
+        copied = buffer_copy(value)
+        if buffer_to_bytes(copied):
+            return copied, "pyboy.sound.ndarray"
+    except Exception:
+        pass
+    try:
+        raw = getattr(sound, "raw_buffer")
+        if callable(raw):
+            raw = raw()
+        head = int_or_zero(getattr(sound, "raw_buffer_head", 0))
+        if head > 0:
+            raw = raw[:head]
+        return buffer_copy(raw), "pyboy.sound.raw_buffer"
+    except Exception:
+        return b"", ""
+
+
+def buffer_copy(value: Any) -> Any:
+    copier = getattr(value, "copy", None)
+    if callable(copier):
+        try:
+            return copier()
+        except Exception:
+            return value
+    return value
+
+
+def buffer_to_bytes(value: Any) -> bytes:
+    if value is None:
+        return b""
+    if isinstance(value, bytes):
+        return value
+    if isinstance(value, bytearray):
+        return bytes(value)
+    if isinstance(value, memoryview):
+        return value.tobytes()
+    tobytes = getattr(value, "tobytes", None)
+    if callable(tobytes):
+        try:
+            data = tobytes()
+        except Exception:
+            data = b""
+        return bytes(data) if data else b""
+    if isinstance(value, (list, tuple)):
+        return bytes(flatten_buffer_values(value))
+    try:
+        return bytes(value)
+    except (TypeError, ValueError):
+        return b""
+
+
+def flatten_buffer_values(value: Any) -> list[int]:
+    if isinstance(value, (list, tuple)):
+        out: list[int] = []
+        for item in value:
+            out.extend(flatten_buffer_values(item))
+        return out
+    try:
+        return [int(value) & 0xFF]
+    except (TypeError, ValueError):
+        return []
+
+
+def buffer_shape(value: Any) -> list[int]:
+    shape = getattr(value, "shape", None)
+    if shape is None:
+        return []
+    try:
+        return [int(part) for part in shape]
+    except (TypeError, ValueError):
+        return []
+
+
+def int_or_zero(value: Any) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return 0
 
 
 def audio_register_details(registers: dict[str, str]) -> list[dict[str, Any]]:

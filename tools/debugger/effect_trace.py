@@ -23,8 +23,11 @@ from .provenance import display_path, parse_symbol_table, resolve_path
 from .reporting import load_reports
 from .sm83_model import (
     CGB_VRAM_DMA_REGISTERS,
+    INTERRUPT_FLAG_ADDRESS,
     INTERRUPT_VECTORS,
     SM83_MODEL_SOURCE,
+    TIMER_TIMA_ADDRESS,
+    TIMER_TMA_ADDRESS,
     accumulator_flag_semantics,
     add_hl_semantics,
     alu_semantics,
@@ -41,6 +44,7 @@ from .sm83_model import (
     sp_relative_semantics,
     stack_pop_register_value,
     stack_control_semantics,
+    timer_overflow_semantics,
 )
 
 
@@ -112,7 +116,9 @@ def build_effect_trace_report(
         for validation in hook_order_validations
     )
     attach_rmw_pre_state_proof(events, hook_order_validations)
+    attach_observed_timer_overflow_effects(events)
     attach_next_frame_write_validation(events)
+    refresh_watch_hits(events, watches)
     attach_effect_evidence_atoms(events)
     errors.extend(parse_errors[:20])
     write_index = build_write_index(events)
@@ -173,6 +179,8 @@ def build_effect_trace_report(
         "dma_copy_write_count": count_effects(events, "dma_write"),
         "bank_switch_side_effect_count": count_side_effects(events, category="banking"),
         "interrupt_entry_count": count_effects(events, "interrupt_entry"),
+        "timer_overflow_count": count_effects(events, "timer_tima_overflow"),
+        "timer_interrupt_request_count": count_effects(events, "timer_interrupt_request_write"),
         "watch_hit_count": count_watch_hits(events),
         "watch_read_count": count_watch_effects(events, access="read"),
         "watch_write_count": count_watch_effects(events, access="write"),
@@ -193,10 +201,10 @@ def build_effect_trace_report(
         "output": output,
         "known_limits": [
             "Effect traces are inferred from captured instruction frames; code outside the trace window is not observed.",
-            "Effect traces now record CPU-visible reads/writes, byte-level values and value-source provenance for direct known writes and observed-memory read-modify-write attribution, stack transfers, IO loads/stores, control-flow, EI/DI/RETI IME changes, HALT/STOP CPU-state transitions, and common hardware-trigger side effects including OAM DMA triggers, observed general-mode CGB VRAM DMA copies, DIV reset writes, MBC bank writes, WRAM/VRAM bank-select IO writes, PPU/audio/timer/interrupt register writes, and trace-proven interrupt-entry stack pushes.",
+            "Effect traces now record CPU-visible reads/writes, byte-level values and value-source provenance for direct known writes and observed-memory read-modify-write attribution, stack transfers, IO loads/stores, control-flow, EI/DI/RETI IME changes, HALT/STOP CPU-state transitions, and common hardware-trigger side effects including OAM DMA triggers, observed general-mode CGB VRAM DMA copies, DIV reset writes, observed adjacent-frame TIMA overflow reload/IF request effects, MBC bank writes, WRAM/VRAM bank-select IO writes, PPU/audio/timer/interrupt register writes, and trace-proven interrupt-entry stack pushes.",
             "Register writes for memory-load and stack-pop instructions are modeled from pre-instruction frames and adjacent next-frame register snapshots when available; this is still bounded trace evidence, not complete CPU emulation.",
             "WRAM/VRAM/ROM/SRAM bank provenance is runtime-sampled when bank_state is present on instruction frames; otherwise effect tracing can carry bank state forward only from observed bank-register writes in the same captured trace window and labels that source as inferred_bank_state.",
-            "OAM DMA triggers are expanded into modeled source reads and OAM writes for reverse queries; CGB VRAM general DMA is expanded only when FF51-FF55 setup writes are observed in the same trace window, while HBlank DMA and missing setup remain trigger-only. Interrupt entries are inferred only from adjacent PC/SP trace evidence. PPU pixels, audio mixer output, and timer ticks still require richer emulator-backed capture unless those effects are present in the trace window.",
+            "OAM DMA triggers are expanded into modeled source reads and OAM writes for reverse queries; CGB VRAM general DMA is expanded only when FF51-FF55 setup writes are observed in the same trace window, while HBlank DMA and missing setup remain trigger-only. Interrupt entries are inferred only from adjacent PC/SP trace evidence. TIMA overflow reload/IF request effects are inferred only when adjacent captured pre-instruction frames observe TIMA=$FF, matching TMA reload, and the timer IF bit transition. PPU pixels, audio mixer output, and unobserved timer ticks still require richer emulator-backed capture unless those effects are present in the trace window.",
             "Trace-window checkpoints are pre-instruction register/bank/watch snapshots from the captured trace; they support modeled effect-span checks from a nearby checkpoint, not arbitrary emulator reverse execution.",
             "When adjacent captured instruction frames observe a modeled write address, the effect records whether the next pre-instruction snapshot confirmed the modeled byte value.",
             "Observed byte changes between adjacent captured frames that are not explained by a modeled write are reported as unattributed changes instead of being indexed as known writers.",
@@ -339,6 +347,126 @@ def attach_next_frame_write_validation(events: list[dict[str, Any]]) -> None:
                 )
                 summary["unmodeled_change_count"] = len(unmodeled)
         attach_next_frame_register_validation(event, next_event)
+
+
+def attach_observed_timer_overflow_effects(events: list[dict[str, Any]]) -> None:
+    for index, event in enumerate(events[:-1]):
+        next_event = events[index + 1]
+        if not adjacent_trace_events(event, next_event):
+            continue
+        effects = observed_timer_overflow_effects(event, next_event)
+        if not effects:
+            continue
+        event.setdefault("effects", []).extend(effects)
+        event["timer_overflow_observation"] = {
+            "source": "adjacent_instruction_pre_state",
+            "next_seq": next_event.get("seq"),
+            "next_pc": next_event.get("pc_bank_address", ""),
+            "effect_count": len(effects),
+        }
+
+
+def observed_timer_overflow_effects(event: dict[str, Any], next_event: dict[str, Any]) -> list[dict[str, Any]]:
+    if event_writes_any_address(event, {"FF05", "FF06", "FF07", "FF0F"}):
+        return []
+    current = observed_memory_by_address(event.get("observed_memory"))
+    observed = observed_memory_by_address(next_event.get("observed_memory"))
+    current_tima = observed_byte(current, TIMER_TIMA_ADDRESS)
+    current_tma = observed_byte(current, TIMER_TMA_ADDRESS)
+    current_if = observed_byte(current, INTERRUPT_FLAG_ADDRESS)
+    next_tima = observed_byte(observed, TIMER_TIMA_ADDRESS)
+    next_if = observed_byte(observed, INTERRUPT_FLAG_ADDRESS)
+    if None in {current_tima, current_tma, current_if, next_tima, next_if}:
+        return []
+    model = timer_overflow_semantics()
+    if not model.observed_reload_and_interrupt(
+        current_tima=current_tima,
+        current_tma=current_tma,
+        next_tima=next_tima,
+        current_if=current_if,
+        next_if=next_if,
+    ):
+        return []
+    base = {
+        "category": "timer",
+        "hardware_model": model.hardware_model,
+        "evidence_source": "observed_adjacent_timer_overflow",
+        "evidence_status": "observed_hardware_side_effect",
+        "runtime_observation": "adjacent_instruction_pre_state",
+        "model_source": SM83_MODEL_SOURCE,
+        "trigger_address": f"{TIMER_TIMA_ADDRESS:04X}",
+        "trigger_address_key": effect_address_key("timer_tima", TIMER_TIMA_ADDRESS, bank=None),
+        "old_tima_hex": f"{current_tima:02X}",
+        "tma_hex": f"{current_tma:02X}",
+        "old_if_hex": f"{current_if:02X}",
+        "new_if_hex": f"{next_if:02X}",
+        "timer_interrupt_bit": model.interrupt_bit,
+        "timer_interrupt_mask": f"{model.interrupt_mask:02X}",
+        "modeled_from_trigger": True,
+    }
+    side = {
+        "kind": model.side_effect_kind,
+        "access": "side_effect",
+        "operation": model.operation,
+        **base,
+    }
+    reload_write = effect(
+        model.reload_write_kind,
+        TIMER_TIMA_ADDRESS,
+        operation=model.reload_operation,
+        source=memory_operand(TIMER_TMA_ADDRESS, value=current_tma, value_source="observed_memory_snapshot"),
+        value=next_tima,
+        value_source="observed_tma_reload",
+    )
+    reload_write.update(
+        {
+            **base,
+            "old_value_hex": f"{current_tima:02X}",
+            "post_value_expected_source": "adjacent_instruction_pre_state",
+        }
+    )
+    if_write = effect(
+        model.interrupt_write_kind,
+        INTERRUPT_FLAG_ADDRESS,
+        operation=model.interrupt_operation,
+        source=memory_operand(INTERRUPT_FLAG_ADDRESS, value=current_if, value_source="observed_memory_snapshot"),
+        value=next_if,
+        value_source="observed_timer_interrupt_request",
+    )
+    if_write.update(
+        {
+            **base,
+            "trigger_address": f"{INTERRUPT_FLAG_ADDRESS:04X}",
+            "trigger_address_key": effect_address_key("timer_interrupt", INTERRUPT_FLAG_ADDRESS, bank=None),
+            "old_value_hex": f"{current_if:02X}",
+            "post_value_expected_source": "adjacent_instruction_pre_state",
+        }
+    )
+    return [side, reload_write, if_write]
+
+
+def event_writes_any_address(event: dict[str, Any], addresses: set[str]) -> bool:
+    for item in event.get("effects", []):
+        if item.get("access") != "write":
+            continue
+        if str(item.get("address_hex", "")).upper() in addresses:
+            return True
+    return False
+
+
+def observed_byte(observed: dict[str, str], address: int) -> int | None:
+    text = observed.get(f"{address & 0xFFFF:04X}")
+    if not text:
+        return None
+    try:
+        return int(str(text).replace("$", ""), 16) & 0xFF
+    except ValueError:
+        return None
+
+
+def refresh_watch_hits(events: list[dict[str, Any]], watches: list[dict[str, Any]]) -> None:
+    for event in events:
+        event["watch_hits"] = watch_hits(event.get("effects", []), watches)
 
 
 def ensure_next_observed_state(event: dict[str, Any], next_event: dict[str, Any]) -> None:
@@ -2440,6 +2568,7 @@ def watch_hits(effects: list[dict[str, Any]], watches: list[dict[str, Any]]) -> 
                         "effect_evidence_source": item.get("evidence_source", ""),
                         "effect_evidence_status": item.get("evidence_status", ""),
                         "access": item.get("access", ""),
+                        "effect_kind": item.get("kind", ""),
                         "address": item.get("address_hex", ""),
                         "operation": item.get("operation", ""),
                         "value_hex": item.get("value_hex", ""),

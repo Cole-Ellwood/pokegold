@@ -29,6 +29,13 @@ EVENT_MATCH_FIELDS = (
     "delta",
     "operation",
 )
+RUNTIME_SNAPSHOT_PROOF_STATUSES = {
+    "runtime_observed",
+    "instruction_observed",
+    "taint_proven",
+    "mirror_passed",
+    "observed",
+}
 
 
 def build_expectation_report(
@@ -325,6 +332,12 @@ def parse_cli_expectation(raw: str) -> dict[str, Any]:
     if text.startswith("audio-wave-sha256="):
         value = text.removeprefix("audio-wave-sha256=")
         return {"id": f"cli_audio_wave_{safe_name(value)}", "type": "audio_snapshot_observed", "audio_wave_sha256": value, "source": "cli"}
+    if text.startswith("audio-buffer-sha256:"):
+        value = text.removeprefix("audio-buffer-sha256:")
+        return {"id": f"cli_audio_buffer_{safe_name(value)}", "type": "audio_snapshot_observed", "audio_buffer_sha256": value, "source": "cli"}
+    if text.startswith("audio-buffer-sha256="):
+        value = text.removeprefix("audio-buffer-sha256=")
+        return {"id": f"cli_audio_buffer_{safe_name(value)}", "type": "audio_snapshot_observed", "audio_buffer_sha256": value, "source": "cli"}
     if text.startswith("event:"):
         event_type = text[6:]
         return {"id": f"cli_event_{safe_name(event_type)}", "type": "event_observed", "event_type": event_type, "source": "cli"}
@@ -537,6 +550,7 @@ def infer_expectation_type(expectation: dict[str, Any]) -> str:
         or expectation.get("audio_symbol")
         or expectation.get("audio_state_key")
         or expectation.get("audio_wave_sha256")
+        or expectation.get("audio_buffer_sha256")
     ):
         return "audio_snapshot_observed"
     if expectation.get("framebuffer") or expectation.get("framebuffer_sha256") or expectation.get("sha256"):
@@ -693,9 +707,9 @@ def collect_structured_state_evidence(data: dict[str, Any], *, source: str, evid
 
 
 def collect_visual_snapshot_evidence(data: dict[str, Any], *, source: str, evidence: dict[str, Any]) -> None:
-    screen_frame = data.get("screen_frame") if isinstance(data.get("screen_frame"), dict) else {}
-    if not screen_frame:
+    if not visual_snapshot_has_runtime_framebuffer(data):
         return
+    screen_frame = data.get("screen_frame") if isinstance(data.get("screen_frame"), dict) else {}
     record = {
         "source": source,
         "framebuffer": str(screen_frame.get("framebuffer") or data.get("framebuffer") or ""),
@@ -715,13 +729,14 @@ def collect_visual_snapshot_evidence(data: dict[str, Any], *, source: str, evide
 
 
 def collect_audio_snapshot_evidence(data: dict[str, Any], *, source: str, evidence: dict[str, Any]) -> None:
-    if not data.get("executed"):
+    if not audio_snapshot_has_runtime_samples(data):
         return
     registers = data.get("registers") if isinstance(data.get("registers"), dict) else {}
     register_details = dict_items(data.get("register_details"))
     symbol_state = dict_items(data.get("symbol_state"))
     audio_state = data.get("audio_state") if isinstance(data.get("audio_state"), dict) else {}
     wave_ram = data.get("wave_ram") if isinstance(data.get("wave_ram"), dict) else {}
+    sound_buffer = data.get("sound_buffer") if isinstance(data.get("sound_buffer"), dict) else {}
     record = {
         "source": source,
         "proof_status": str(data.get("proof_status") or ""),
@@ -730,6 +745,7 @@ def collect_audio_snapshot_evidence(data: dict[str, Any], *, source: str, eviden
         "symbol_state": symbol_state,
         "audio_state": dict(audio_state),
         "wave_ram": dict(wave_ram),
+        "sound_buffer": dict(sound_buffer),
     }
     if record not in evidence["audio_snapshots"]:
         evidence["audio_snapshots"].append(record)
@@ -754,6 +770,46 @@ def collect_audio_snapshot_evidence(data: dict[str, Any], *, source: str, eviden
     for key in ("sha256", "sample_hex"):
         if wave_ram.get(key):
             evidence["texts"].append(str(wave_ram[key]))
+    for key in ("source", "sha256", "buffer", "sample_hex"):
+        if sound_buffer.get(key):
+            evidence["texts"].append(str(sound_buffer[key]))
+
+
+def visual_snapshot_has_runtime_framebuffer(data: dict[str, Any]) -> bool:
+    if not snapshot_has_runtime_proof(data):
+        return False
+    screen_frame = data.get("screen_frame") if isinstance(data.get("screen_frame"), dict) else {}
+    if not screen_frame:
+        return False
+    return bool(screen_frame.get("framebuffer") or screen_frame.get("sha256") or data.get("framebuffer"))
+
+
+def audio_snapshot_has_runtime_samples(data: dict[str, Any]) -> bool:
+    if not snapshot_has_runtime_proof(data):
+        return False
+    registers = data.get("registers") if isinstance(data.get("registers"), dict) else {}
+    audio_state = data.get("audio_state") if isinstance(data.get("audio_state"), dict) else {}
+    wave_ram = data.get("wave_ram") if isinstance(data.get("wave_ram"), dict) else {}
+    sound_buffer = data.get("sound_buffer") if isinstance(data.get("sound_buffer"), dict) else {}
+    return bool(
+        registers
+        or dict_items(data.get("register_details"))
+        or dict_items(data.get("symbol_state"))
+        or audio_state
+        or wave_ram.get("sha256")
+        or wave_ram.get("sample_hex")
+        or sound_buffer.get("sha256")
+        or sound_buffer.get("sample_hex")
+        or sound_buffer.get("buffer")
+    )
+
+
+def snapshot_has_runtime_proof(data: dict[str, Any]) -> bool:
+    return (
+        data.get("valid", True) is not False
+        and bool(data.get("executed"))
+        and str(data.get("proof_status") or "") in RUNTIME_SNAPSHOT_PROOF_STATUSES
+    )
 
 
 def collect_content_state_patch_evidence(data: dict[str, Any], *, source: str, evidence: dict[str, Any]) -> None:
@@ -1220,12 +1276,20 @@ def audio_snapshot_matches(snapshot: dict[str, Any], expectation: dict[str, Any]
     state_key = str(expectation.get("audio_state_key") or "").strip()
     if state_key and not audio_state_matches(snapshot, state_key, expectation.get("value", "")):
         return False
+    wave = snapshot.get("wave_ram") if isinstance(snapshot.get("wave_ram"), dict) else {}
     wave_sha256 = str(expectation.get("audio_wave_sha256") or "").strip()
     if wave_sha256 and normalize_digest(wave_sha256) != normalize_digest(
-        str(snapshot.get("wave_ram", {}).get("sha256", ""))
+        str(wave.get("sha256", ""))
     ):
         return False
-    return bool(register or symbol or state_key or wave_sha256)
+    sound = snapshot.get("sound_buffer") if isinstance(snapshot.get("sound_buffer"), dict) else {}
+    buffer_sha256 = str(expectation.get("audio_buffer_sha256") or "").strip()
+    if buffer_sha256 and normalize_digest(buffer_sha256) not in {
+        normalize_digest(str(sound.get("sha256", ""))),
+        normalize_digest(str(sound.get("buffer", ""))),
+    }:
+        return False
+    return bool(register or symbol or state_key or wave_sha256 or buffer_sha256)
 
 
 def audio_register_matches(snapshot: dict[str, Any], register: str, expected_value: str) -> bool:
@@ -1428,7 +1492,7 @@ def commands_for_expectation(expectation: dict[str, Any], result: dict[str, Any]
         commands.append(f"python -m tools.debugger expect --report visual_snapshot.json --expect framebuffer={expected}")
     if expectation.get("type") == "audio_snapshot_observed" or any(
         expectation.get(key)
-        for key in ("audio_register", "audio_symbol", "audio_state_key", "audio_wave_sha256")
+        for key in ("audio_register", "audio_symbol", "audio_state_key", "audio_wave_sha256", "audio_buffer_sha256")
     ):
         commands.append("python -m tools.debugger audio-snapshot --rom pokegold.gbc --symbols pokegold.sym --save-state <state> --execute --json-out audio_snapshot.json")
         commands.append(f"python -m tools.debugger expect --report audio_snapshot.json --expect {audio_expectation_cli(expectation)}")
@@ -1466,6 +1530,8 @@ def audio_expectation_cli(expectation: dict[str, Any]) -> str:
         return f"audio-state={expectation['audio_state_key']}{suffix}"
     if expectation.get("audio_wave_sha256"):
         return f"audio-wave-sha256={expectation['audio_wave_sha256']}"
+    if expectation.get("audio_buffer_sha256"):
+        return f"audio-buffer-sha256={normalize_digest(str(expectation['audio_buffer_sha256']))}"
     return "audio-register=<register>=<value>"
 
 
@@ -1540,6 +1606,9 @@ def audio_snapshot_evidence(snapshots: list[dict[str, Any]], expectation: dict[s
         elif expectation.get("audio_wave_sha256"):
             wave = snapshot.get("wave_ram") if isinstance(snapshot.get("wave_ram"), dict) else {}
             out.append(f"{source} captured wave_ram sha256={wave.get('sha256')}")
+        elif expectation.get("audio_buffer_sha256"):
+            sound = snapshot.get("sound_buffer") if isinstance(snapshot.get("sound_buffer"), dict) else {}
+            out.append(f"{source} captured sound_buffer sha256={sound.get('sha256')}")
         else:
             out.append(f"{source} captured audio snapshot")
     return out
@@ -1565,6 +1634,7 @@ def audio_snapshot_summary(snapshots: list[dict[str, Any]]) -> list[dict[str, An
     for snapshot in snapshots:
         registers = snapshot.get("registers") if isinstance(snapshot.get("registers"), dict) else {}
         wave = snapshot.get("wave_ram") if isinstance(snapshot.get("wave_ram"), dict) else {}
+        sound = snapshot.get("sound_buffer") if isinstance(snapshot.get("sound_buffer"), dict) else {}
         out.append(
             {
                 "source": snapshot.get("source", ""),
@@ -1572,6 +1642,8 @@ def audio_snapshot_summary(snapshots: list[dict[str, Any]]) -> list[dict[str, An
                 "register_count": len(registers),
                 "symbol_state_count": len(dict_items(snapshot.get("symbol_state"))),
                 "wave_ram_sha256": wave.get("sha256", ""),
+                "sound_buffer_sha256": sound.get("sha256", ""),
+                "sound_buffer_source": sound.get("source", ""),
             }
         )
     return out

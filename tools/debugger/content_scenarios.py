@@ -56,6 +56,27 @@ AUDIO_COMMAND_TOKENS = {
     "volume_envelope",
 }
 MAP_STATE_WATCH_SYMBOLS = ("wMapGroup", "wMapNumber", "wXCoord", "wYCoord")
+OBJECT_COUNTER_TILE_CANDIDATES = (
+    ("up", "OW_UP", "wTileUp"),
+    ("down", "OW_DOWN", "wTileDown"),
+    ("left", "OW_LEFT", "wTileLeft"),
+    ("right", "OW_RIGHT", "wTileRight"),
+)
+OBJECT_LARGE_TILE_CANDIDATES = (
+    ("top_left", "OW_DOWN", 0, 0),
+    ("top_right", "OW_DOWN", 1, 0),
+    ("bottom_left", "OW_UP", 0, 1),
+    ("bottom_right", "OW_UP", 1, 1),
+    ("left_top", "OW_RIGHT", 0, 0),
+    ("left_bottom", "OW_RIGHT", 0, 1),
+    ("right_top", "OW_LEFT", 1, 0),
+    ("right_bottom", "OW_LEFT", 1, 1),
+)
+OBJECT_LARGE_MOVEMENT_TOKENS = {
+    "SPRITEMOVEDATA_BIGDOLLSYM",
+    "SPRITEMOVEDATA_BIGDOLLASYM",
+    "SPRITEMOVEDATA_BIGDOLL",
+}
 MOVEMENT_STATE_WATCH_SYMBOLS = (
     "wMovementObject",
     "wMovementDataBank",
@@ -319,6 +340,7 @@ def records_from_source(text: str, *, source_file: str, seed: int, start_index: 
     records: list[dict[str, Any]] = []
     current_label = ""
     lines = text.splitlines()
+    object_event_ordinal = 0
     for index, raw_line in enumerate(lines, start=1):
         clean = strip_comment(raw_line).strip()
         if not clean:
@@ -327,6 +349,9 @@ def records_from_source(text: str, *, source_file: str, seed: int, start_index: 
         if label and not label.startswith("."):
             current_label = label
         token = first_token(code)
+        if token == "def_object_events":
+            object_event_ordinal = 0
+            continue
         if token in EVENT_MACROS:
             fields = split_macro_args(code[len(token):])
             scenario = scenario_from_event(
@@ -337,9 +362,12 @@ def records_from_source(text: str, *, source_file: str, seed: int, start_index: 
                 line=index,
                 seed=seed,
                 case_index=start_index + len(records),
+                source_object_ordinal=object_event_ordinal if token == "object_event" else None,
             )
             if scenario:
                 records.append(scenario)
+            if token == "object_event":
+                object_event_ordinal += 1
             continue
         if token == "channel_count":
             block = parse_channel_block(lines, index - 1)
@@ -555,6 +583,7 @@ def scenario_from_event(
     line: int,
     seed: int,
     case_index: int,
+    source_object_ordinal: int | None = None,
 ) -> dict[str, Any] | None:
     if len(fields) < 2:
         return None
@@ -617,14 +646,24 @@ def scenario_from_event(
             expected=["event_macro=bg_event", f"event_type={trigger['event_type']}", f"script={trigger['script']}"],
         )
     if event_macro == "object_event":
+        object_ordinal = int(source_object_ordinal or 0)
+        map_object_index = object_ordinal + 2
         trigger = {
             "x": x,
             "y": y,
             "sprite": field_at(fields, 2),
             "movement": field_at(fields, 3),
+            "radius_x": field_at(fields, 4),
+            "radius_y": field_at(fields, 5),
+            "hour_1": field_at(fields, 6),
+            "hour_2": field_at(fields, 7),
+            "palette": field_at(fields, 8),
             "object_type": field_at(fields, 9),
+            "sight_range": field_at(fields, 10),
             "script": field_at(fields, 11),
             "event_flag": field_at(fields, 12),
+            "source_object_ordinal": object_ordinal,
+            "map_object_index": map_object_index,
         }
         return scenario_record(
             scenario_type="map_object_event",
@@ -778,9 +817,34 @@ def state_preconditions_for_scenario(
             "map_label": label,
             "source_file": source_file,
         }
-        for key in ("x", "y", "scene", "event_type", "script", "object_type", "event_flag", "destination_map", "destination_warp"):
+        for key in (
+            "x",
+            "y",
+            "scene",
+            "event_type",
+            "script",
+            "sprite",
+            "movement",
+            "radius_x",
+            "radius_y",
+            "hour_1",
+            "hour_2",
+            "palette",
+            "object_type",
+            "sight_range",
+            "event_flag",
+            "source_object_ordinal",
+            "map_object_index",
+            "destination_map",
+            "destination_warp",
+        ):
             if trigger.get(key) not in {"", None}:
                 values[key] = trigger[key]
+        large_object = object_event_movement_is_large(trigger.get("movement"))
+        if scenario_type == "map_object_event" and large_object:
+            values["large_object"] = True
+            values["large_object_width"] = 2
+            values["large_object_height"] = 2
         preconditions = [
             {
                 "id": f"{scenario_type}_position",
@@ -795,6 +859,52 @@ def state_preconditions_for_scenario(
                 ],
             }
         ]
+        if scenario_type == "map_object_event":
+            for suffix, direction, tile_symbol in OBJECT_COUNTER_TILE_CANDIDATES:
+                preconditions.append(
+                    {
+                        "id": f"{scenario_type}_counter_tile_{suffix}_position",
+                        "surface": "content_static",
+                        "kind": "map_position",
+                        "status": "planned",
+                        "values": {
+                            **values,
+                            "counter_tile": True,
+                            "counter_facing_direction": direction,
+                            "counter_tile_symbol": tile_symbol,
+                            "counter_tile_collision": "COLL_COUNTER",
+                        },
+                        "watch_symbols": unique_list([*MAP_STATE_WATCH_SYMBOLS, tile_symbol]),
+                        "notes": [
+                            "Load or synthesize an overworld state two tiles from the object with the intervening facing tile marked as a counter collision.",
+                            "Use wMapGroup/wMapNumber, player coordinate watches, and the facing-tile collision byte to prove the positioned counter interaction before tracing TryObjectEvent.",
+                        ],
+                    }
+                )
+            if large_object:
+                for suffix, direction, surface_x, surface_y in OBJECT_LARGE_TILE_CANDIDATES:
+                    preconditions.append(
+                        {
+                            "id": f"{scenario_type}_large_object_{suffix}_position",
+                            "surface": "content_static",
+                            "kind": "map_position",
+                            "status": "planned",
+                            "values": {
+                                **values,
+                                "large_object": True,
+                                "large_object_facing_direction": direction,
+                                "large_object_surface_x": surface_x,
+                                "large_object_surface_y": surface_y,
+                                "large_object_width": 2,
+                                "large_object_height": 2,
+                            },
+                            "watch_symbols": list(MAP_STATE_WATCH_SYMBOLS),
+                            "notes": [
+                                "Load or synthesize an overworld state outside the selected tile of a 2x2 object footprint.",
+                                "Use player coordinate/facing watches plus the object-struct BIG_OBJECT palette bit to prove IsNPCAtCoord can use big-object intersection before tracing TryObjectEvent.",
+                            ],
+                        }
+                    )
         return attach_event_runtime_routes(preconditions, scenario_id=scenario_id, scenario_type=scenario_type)
     if scenario_type in {"audio_channel_block", "audio_command_stream"}:
         stream_value = trigger.get("stream", "")
@@ -916,6 +1026,10 @@ def state_preconditions_for_scenario(
         ]
         return attach_event_runtime_routes(preconditions, scenario_id=scenario_id, scenario_type=scenario_type)
     return []
+
+
+def object_event_movement_is_large(value: Any) -> bool:
+    return str(value or "").strip().upper() in OBJECT_LARGE_MOVEMENT_TOKENS
 
 
 def attach_event_runtime_routes(

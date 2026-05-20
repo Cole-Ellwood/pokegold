@@ -2454,6 +2454,13 @@ def format_audio_snapshot(report: dict[str, Any]) -> str:
             "registers="
             + " ".join(f"{key}={value}" for key, value in list(regs.items())[:8])
         )
+    sound = report.get("sound_buffer") if isinstance(report.get("sound_buffer"), dict) else {}
+    if sound:
+        lines.append(
+            "sound_buffer="
+            f"source={sound.get('source', '')} bytes={sound.get('byte_count', 0)} "
+            f"sha256={str(sound.get('sha256', ''))[:12]}"
+        )
     if report.get("channel_state"):
         lines.extend(["", "Channels:"])
         for channel in report["channel_state"][:4]:

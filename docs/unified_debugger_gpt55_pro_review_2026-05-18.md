@@ -3339,3 +3339,1188 @@ Validation after patch:
 Remaining priority from Pro:
 
 - This closes the attempted-but-empty runtime boundary across content-state, content-fuzz, and output-sink mirrors. The remaining full-goal blockers are still real: arbitrary event-engine state generation, full script VM execution semantics, pixel/audio behavioral mirrors, emulator-backed checkpoint replay, full reverse execution, and broader SM83 adapter unification.
+
+## Implementation Note - Compact Effect-Index Output Mirror Boundary
+
+Date: 2026-05-19.
+
+Context:
+
+- `content_output_behavioral_mirror` could promote an effect-trace report to `mirror_passed` from `write_index` alone.
+- That meant a compact/index-only report with `write_count > 0` and no concrete effect events could pass an output-sink mirror.
+- This violated the current proof rule: compact or proofless evidence must not become runtime, instruction, taint, causal, or mirror proof.
+
+Implemented fix:
+
+- `tools/debugger/mirrors.py`
+  - requires concrete effect events or strong write watch hits before effect-trace output evidence can cover an output sink.
+  - keeps compact `write_index` evidence as weak diagnostic evidence with `proof_status=planned_only`.
+  - adds `proof_downgrade_reason` to weak runtime evidence records and includes that reason in output mirror evidence gaps.
+  - requires every output runtime evidence record to carry an explicit strong proof status before it can cover an output sink.
+
+Regression strengthened:
+
+- `test_compare_output_sink_mirror_does_not_pass_from_compact_effect_index`
+  - verifies a compact effect-trace `write_index` with no concrete `events` stays `planned_only`, appears as weak effect-trace evidence, and does not create ranked `mirror_passed` findings.
+- Existing output mirror tests still verify real concrete effect traces can pass and planned dynamic-taint/content-state metadata cannot.
+
+Validation after patch:
+
+- Focused compact/effect/output mirror regression: passed.
+- Adjacent output mirror regressions: 6 passed.
+- Full debugger suite: 462 passed.
+- `python -m tools.debugger audit`: `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- `py_compile` passed for touched debugger Python files.
+
+Remaining priority from Pro:
+
+- This closes another proof-promotion boundary at the mirror/report consumer layer. It does not implement arbitrary event-engine state generation, full script VM execution semantics, full pixel/audio behavioral mirrors, emulator-backed checkpoint replay, full reverse execution, or broader SM83 adapter unification. The whole-ROM proof-substrate goal remains incomplete.
+
+## Implementation Note - Visualization Timeline Proof Preservation
+
+Date: 2026-05-19.
+
+Context:
+
+- Visualization timeline events for dynamic-taint paths, dynamic writes, reverse queries, causal paths, compare matches, ranked findings, and impact items could omit explicit `proof_status`.
+- A planned or downgraded path could still appear as a high-severity visualization event, and downstream ranked visualization findings had to infer proof from generic text.
+- That was another UI/report boundary where proof vectors were easy to lose.
+
+Implemented fix:
+
+- `tools/debugger/visualization.py`
+  - adds optional `proof_status` to timeline events.
+  - appends `proof=<status>` to timeline details when a proof status is supplied and the detail does not already include one.
+  - passes source proof status through major causal/report timeline paths: reverse query, causal explanation/graph, trace-index reverse attribution, dynamic-taint trace synthesis/path/write, impact items, ranked findings, and compare-plan matches.
+- `tools/debugger/ranking.py`
+  - ranked visualization findings now preserve timeline `proof_status` instead of relying on inference.
+  - finding evidence now includes `proof_status=<status>` when present.
+
+Regression strengthened:
+
+- `test_visualization_timeline_preserves_planned_dynamic_taint_proof_status`
+  - verifies a high-severity `planned_only` dynamic-taint path keeps `proof_status=planned_only` in the visualization timeline and in ranked visualization findings.
+
+Validation after patch:
+
+- Focused visualization proof regression: passed.
+- Related proof-boundary cluster: 5 passed.
+- Full debugger suite: 463 passed.
+- `python -m tools.debugger audit`: `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- `py_compile` passed for touched debugger Python files.
+
+Remaining priority from Pro:
+
+- This closes a visualization/report proof-preservation leak. It does not implement arbitrary event-engine state generation, full script VM execution semantics, full pixel/audio behavioral mirrors, emulator-backed checkpoint replay, full reverse execution, or broader SM83 adapter unification. The whole-ROM proof-substrate goal remains incomplete.
+
+## Implementation Note - Impact Merge Mixed-Proof Preservation
+
+Date: 2026-05-19.
+
+Context:
+
+- Impact aggregation merged duplicate items by keeping only the strongest scalar `proof_status`.
+- That preserved older JSON consumers, but it could hide that a single finding mixed `planned_only` evidence with `taint_proven`, `instruction_observed`, or other stronger proof.
+- The proof-substrate rule requires report/UI/impact boundaries to preserve proof vectors, proof min/max, source-specific proof, and mixed-proof display rather than silently promoting the whole finding.
+
+Implemented fix:
+
+- `tools/debugger/impact.py`
+  - keeps compatibility by leaving merged `proof_status` as the strongest observed status.
+  - adds mixed-proof fields when duplicate items carry different proof statuses: `proof_statuses`, `proof_min`, `proof_max`, and `proof_badge=mixed`.
+  - appends `proof_statuses=...`, `proof_min=...`, and `proof_max=...` to merged evidence text.
+  - merges `proof_status_by_source` maps instead of dropping one duplicate item's source proof.
+  - merges `proof_vector` entries from duplicate items when present.
+
+Regression strengthened:
+
+- `test_impact_merge_preserves_mixed_proof_status_vector`
+  - failed before the patch because duplicate impact items had no `proof_statuses`.
+  - now verifies the merged item keeps `proof_status=taint_proven` for compatibility while exposing `proof_statuses=["planned_only", "taint_proven"]`, `proof_min=planned_only`, `proof_max=taint_proven`, `proof_badge=mixed`, merged source proof, and mixed-proof evidence strings.
+
+Validation after patch:
+
+- Focused mixed-proof impact regression: passed.
+- Related proof-boundary cluster: 4 passed.
+- Full debugger suite: 464 passed.
+- `python -m tools.debugger audit`: `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- `py_compile` passed for touched debugger Python files.
+- `git diff --check` passed.
+
+Remaining priority from Pro:
+
+- This closes another impact/report proof-promotion leak. It does not implement arbitrary event-engine state generation, full script VM execution semantics, full pixel/audio behavioral mirrors, emulator-backed checkpoint replay, full reverse execution, or broader SM83 adapter unification. The whole-ROM proof-substrate goal remains incomplete.
+
+## Implementation Note - Proofless Register-Provenance Boundary
+
+Date: 2026-05-19.
+
+Context:
+
+- Rank and impact reports already default proofless dynamic-taint paths and write attributions to `planned_only`.
+- Causal graph and visualization still had a narrower register-provenance leak:
+  - synthetic register provenance created from a `via_register` operand could default to `instruction_observed`;
+  - graph edges such as `feeds_register` and `taints_register` could become `taint_proven` from a proofless attribution;
+  - visualization register-provenance timeline events could omit the proof floor entirely.
+- That allowed a report/UI boundary to make proofless or legacy attribution data look observed/proven.
+
+Implemented fix:
+
+- `tools/debugger/causal_graph.py`
+  - defaults proofless dynamic write attributions and synthetic register provenance to `planned_only`.
+  - only upgrades register-taint edges to `taint_proven` when the attribution proof is runtime/instruction/taint-backed.
+  - keeps proofless/planned `feeds_register` and `taints_register` edges at `planned_only`.
+- `tools/debugger/visualization.py`
+  - gives dynamic write, operand, register-provenance, and register-taint graph nodes/edges an explicit planned proof floor when the source attribution has no proof.
+  - adds `proof_status` to register-provenance timeline events, so markdown/HTML/ranking consumers see `proof=planned_only` rather than an unqualified causal event.
+
+Regression strengthened:
+
+- `test_graph_and_visualization_keep_proofless_register_provenance_planned`
+  - failed before the patch because causal-graph register-provenance nodes could carry `instruction_observed`.
+  - now verifies graph provenance nodes, `feeds_register`/`taints_register` edges, visualization provenance nodes, and timeline provenance events all stay `planned_only` for proofless dynamic-taint attribution input.
+- Observed register-provenance tests still verify real direct/effect trace chains keep their observed and taint-proven edges.
+
+Validation after patch:
+
+- Focused proofless register-provenance regression: passed.
+- Related observed/proofless register-provenance cluster: 4 passed.
+- Full debugger suite: 465 passed.
+- `python -m tools.debugger audit`: `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- `py_compile` passed for touched debugger Python files.
+- `git diff --check` passed.
+
+Remaining priority from Pro:
+
+- This closes another causal graph/visualization proof-promotion boundary. It does not implement arbitrary event-engine state generation, full script VM execution semantics, full pixel/audio behavioral mirrors, emulator-backed checkpoint replay, full reverse execution, or broader SM83 adapter unification. The whole-ROM proof-substrate goal remains incomplete.
+
+## Implementation Note - Empty Snapshot Runtime-Proof Boundary
+
+Date: 2026-05-19.
+
+Context:
+
+- Visual and audio snapshot consumers could preserve or infer `runtime_observed` from an `executed=True` report, even when the report carried no sampled visual surfaces, framebuffer, IO registers, audio registers, audio symbols, or wave RAM.
+- That made report/UI boundaries trust an execution-looking envelope instead of runtime-visible evidence.
+- This was especially risky for the remaining graphics/audio mirror work: empty or malformed snapshot reports must not become runtime proof.
+
+Implemented fix:
+
+- `tools/debugger/ranking.py`
+  - visual/audio snapshot findings now require concrete runtime samples before using `runtime_observed`.
+  - empty executed-looking reports are downgraded to `planned_only`.
+  - evidence now includes `runtime_samples=<bool>` and `proof_downgrade_reason=no_visual_runtime_samples` or `proof_downgrade_reason=no_audio_runtime_samples` when downgraded.
+- `tools/debugger/causal_graph.py`
+  - visual/audio snapshot graph nodes and sampled-state edges now use the same runtime-sample gate.
+  - empty executed-looking snapshot reports remain `planned_only` in graph proof.
+- `tools/debugger/visualization.py`
+  - visual/audio snapshot timeline events and graph nodes/edges now carry explicit proof status.
+  - empty executed-looking reports show `proof=planned_only` plus the downgrade reason in timeline detail.
+
+Regression strengthened:
+
+- `test_snapshot_consumers_do_not_promote_empty_executed_reports_to_runtime`
+  - failed before the patch because ranked visual snapshot proof was `runtime_observed`.
+  - now verifies rank, impact, causal graph, visualization graph, and visualization timeline all keep empty executed-looking visual/audio snapshots at `planned_only`.
+- Existing visual/audio snapshot tests still verify real sampled UI surfaces, framebuffer, audio registers, symbol state, and wave RAM promote to `runtime_observed`.
+
+Validation after patch:
+
+- Focused empty-snapshot runtime-proof regression: passed.
+- Existing sampled visual/audio snapshot regressions: 4 passed.
+- Full debugger suite: 466 passed.
+- `python -m tools.debugger audit`: `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- `py_compile` passed for touched debugger Python files.
+- `git diff --check` passed.
+
+Remaining priority from Pro:
+
+- This closes another graphics/audio report-boundary proof leak. It does not implement arbitrary event-engine state generation, full script VM execution semantics, full pixel/audio behavioral mirrors, emulator-backed checkpoint replay, full reverse execution, or broader SM83 adapter unification. The whole-ROM proof-substrate goal remains incomplete.
+
+## Implementation Note - Proofless Dynamic-Taint Visualization Boundary
+
+Date: 2026-05-19.
+
+Context:
+
+- Rank and impact already default proofless dynamic-taint paths to `planned_only`.
+- Causal graph also normalizes missing dynamic-taint path proof to `planned_only`.
+- Visualization still omitted the proof floor for proofless dynamic-taint paths:
+  - timeline `taint_path` events could appear without `proof_status`;
+  - visualization graph taint source/target nodes and contributor edges could appear without proof status.
+- That did not promote the data to `taint_proven`, but it still lost the required proof floor at a report/UI boundary.
+
+Implemented fix:
+
+- `tools/debugger/visualization.py`
+  - dynamic-taint timeline path events now default missing proof to `planned_only`.
+  - graph taint target/source nodes and contributor edges now carry the same explicit proof.
+  - proofless dynamic-taint visualization details now include `proof=planned_only`.
+
+Regression strengthened:
+
+- `test_graph_and_visualization_default_proofless_dynamic_taint_path_to_planned`
+  - failed before the patch because the visualization timeline event had no `proof_status`.
+  - now verifies causal graph path proof remains planned and visualization timeline/graph proof is explicitly `planned_only` for legacy proofless dynamic-taint paths.
+- Adjacent dynamic-taint proof-boundary tests still verify planned paths stay planned and real register-provenance paths keep their observed/proven proof.
+
+Validation after patch:
+
+- Focused proofless dynamic-taint visualization regression: passed.
+- Adjacent dynamic-taint proof-boundary cluster: 5 passed.
+- Full debugger suite: 467 passed.
+- `python -m tools.debugger audit`: `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- `py_compile` passed for touched debugger Python files.
+- `git diff --check` passed.
+
+Remaining priority from Pro:
+
+- This closes another visualization proof-preservation leak. It does not implement arbitrary event-engine state generation, full script VM execution semantics, full pixel/audio behavioral mirrors, emulator-backed checkpoint replay, full reverse execution, or broader SM83 adapter unification. The whole-ROM proof-substrate goal remains incomplete.
+
+## Implementation Note - Trace-Synthesis Visualization Graph Proof Floor
+
+Date: 2026-05-19.
+
+Context:
+
+- Trace-synthesis routes are planned proof routes until the generated content-state, instruction-trace, and dynamic-taint commands are actually executed.
+- Rank, impact, and visualization timeline output already carried `planned_only` for trace-synthesis routes.
+- Visualization graph output still omitted proof status for trace-synthesis route nodes, planned trace outputs, save-state/source/sink nodes, workflow commands, and their edges.
+- That lost the explicit proof floor at a UI/report boundary and made planned runtime routes visually indistinguishable from unqualified graph facts.
+
+Implemented fix:
+
+- `tools/debugger/visualization.py`
+  - trace-synthesis graph route nodes now carry the route proof, defaulting to `planned_only`.
+  - planned trace-output, save-state, source, sink, source-memory, and workflow-command nodes inherit the same route proof.
+  - `plans_trace`, `loads_state`, `watches`, `watches_address`, `seeds_trace`, `seeds_memory`, `labels_memory`, and `runs` edges now preserve that proof.
+
+Regression strengthened:
+
+- `test_rank_impact_report_and_visualize_dynamic_taint_trace_synthesis`
+  - now verifies the visualization timeline event and graph route/source/sink nodes and route edges all carry `planned_only`.
+  - failed before the patch because the graph `trace_synthesis` node had no `proof_status`.
+
+Validation after patch:
+
+- Focused trace-synthesis visualization regression: passed.
+- Adjacent trace-synthesis/dynamic-taint proof cluster: 4 passed.
+- Full debugger suite: 467 passed.
+- `python -m tools.debugger audit`: `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- `py_compile` passed for touched debugger Python files.
+- `git diff --check` passed.
+
+Remaining priority from Pro:
+
+- This closes another planned-runtime-route visualization proof leak. It does not implement arbitrary event-engine state generation, full script VM execution semantics, full pixel/audio behavioral mirrors, emulator-backed checkpoint replay, full reverse execution, or broader SM83 adapter unification. The whole-ROM proof-substrate goal remains incomplete.
+
+## Implementation Note - Reverse-Query Visualization Proof Derivation
+
+Date: 2026-05-19.
+
+Context:
+
+- Rank, impact, and causal graph already avoid promoting proofless legacy reverse-query results to observed proof.
+- Visualization timeline and graph output only read explicit result/report proof fields.
+- A proofless reverse-query result could therefore appear without a visible proof floor in visualization, even when rank/impact correctly treated it as `planned_only`.
+
+Implemented fix:
+
+- `tools/debugger/visualization.py`
+  - now derives reverse-query result proof from explicit result proof, validation proof, report proof, or concrete last-writer evidence.
+  - falls back to `planned_only` when the result has no concrete last-writer proof.
+  - uses the derived proof for reverse-query timeline events and graph nodes.
+  - keeps concrete last-writer legacy compatibility by promoting only when a last-writer object has seq, pc, address, and write-like access/kind evidence.
+
+Regression strengthened:
+
+- `test_rank_and_impact_default_proofless_reverse_query_result_to_planned`
+  - now also checks visualization timeline and graph proof.
+  - failed before the patch because the visualization timeline reverse-query event had no `proof_status`.
+- Adjacent reverse-query proof tests still verify planned no-writer cases stay planned and concrete writer cases can be observed.
+
+Validation after patch:
+
+- Focused reverse-query visualization regression: passed.
+- Adjacent reverse-query proof cluster: 4 passed.
+- Full debugger suite: 467 passed.
+- `python -m tools.debugger audit`: `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- `py_compile` passed for touched debugger Python files.
+- `git diff --check` passed.
+
+Remaining priority from Pro:
+
+- This closes another visualization proof-derivation leak. It does not implement arbitrary event-engine state generation, full script VM execution semantics, full pixel/audio behavioral mirrors, emulator-backed checkpoint replay, full reverse execution, or broader SM83 adapter unification. The whole-ROM proof-substrate goal remains incomplete.
+
+## Implementation Note - Watch Report Visualization Runtime Proof Preservation
+
+Date: 2026-05-19.
+
+Context:
+
+- `unified_debugger_watch_report` events are runtime evidence when the report or event explicitly carries `proof_status="runtime_observed"`.
+- Visualization timeline and graph output still omitted that proof status for watch events, watch writer instructions, watched symbols, watched addresses, and their edges.
+- That did not create new runtime evidence, but it dropped the explicit proof vector at a UI/report boundary and made runtime watch observations visually indistinguishable from unqualified facts.
+
+Implemented fix:
+
+- `tools/debugger/visualization.py`
+  - watch timeline events now preserve event-level proof first, then report-level proof.
+  - watch graph event/instruction/symbol/address nodes now carry the same proof.
+  - watch graph `writes`, `observes`, and `observes_address` edges now carry the same proof.
+  - proofless legacy watch events now receive an explicit conservative `planned_only` floor instead of being silently unqualified.
+
+Regression strengthened:
+
+- `test_visualization_preserves_watch_report_runtime_proof_status`
+  - failed before the patch because the watch timeline event had no `proof_status`.
+  - now verifies the watch timeline event includes `proof_status=runtime_observed` and `proof=runtime_observed`.
+  - now verifies watch graph nodes and edges preserve `runtime_observed`.
+
+Validation after patch:
+
+- Focused watch visualization proof regression: passed.
+- Adjacent visualization/watch regressions: 3 passed.
+- Full debugger suite: 468 passed.
+- `python -m tools.debugger audit`: `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- `py_compile` passed for touched debugger Python files.
+- `git diff --check` passed.
+
+Remaining priority from Pro:
+
+- This closes another runtime-proof visualization preservation leak. It does not implement arbitrary event-engine state generation, full script VM execution semantics, full pixel/audio behavioral mirrors, emulator-backed checkpoint replay, full reverse execution, or broader SM83 adapter unification. The whole-ROM proof-substrate goal remains incomplete.
+
+## Implementation Note - Instruction-Trace Validation Visualization Proof Preservation
+
+Date: 2026-05-19.
+
+Context:
+
+- `unified_debugger_instruction_trace` reports can carry explicit instruction-level proof on `execution_validation` or the report itself.
+- Visualization timeline events for validation hit/ready/partial/miss/limit states did not preserve that proof.
+- Visualization graph nodes and edges for validation status, trace output, save states, hit/missed functions, watched symbols, and trace writes also omitted proof status.
+- That dropped instruction-observed proof at a UI/report boundary and made executed validation evidence visually indistinguishable from proofless validation records.
+
+Implemented fix:
+
+- `tools/debugger/visualization.py`
+  - instruction-trace validation timeline events now preserve validation-level proof first, then report-level proof.
+  - validation-limit timeline events use the same proof as the validation event.
+  - validation graph nodes and `writes_trace`, `plans_trace`, `loads_state`, `hit`, `missed`, and `observes` edges now carry that proof.
+  - proofless validation records now receive an explicit conservative `planned_only` floor.
+
+Regression strengthened:
+
+- `test_visualization_preserves_instruction_trace_validation_proof_status`
+  - failed before the patch because validation timeline events had no `proof_status`.
+  - now verifies validation timeline events include `proof_status=instruction_observed` and `proof=instruction_observed`.
+  - now verifies validation graph nodes and edges preserve `instruction_observed`.
+
+Validation after patch:
+
+- Focused instruction-trace visualization proof regression: passed.
+- Adjacent instruction-trace visualization consumer regression: passed.
+- Full debugger suite: 469 passed.
+- `python -m tools.debugger audit`: `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- `py_compile` passed for touched debugger Python files.
+- `git diff --check` passed, with unrelated CRLF warnings from the broader dirty worktree.
+
+Remaining priority from Pro:
+
+- This closes another instruction-proof visualization preservation leak. It does not implement arbitrary event-engine state generation, full script VM execution semantics, full pixel/audio behavioral mirrors, emulator-backed checkpoint replay, full reverse execution, or broader SM83 adapter unification. The whole-ROM proof-substrate goal remains incomplete.
+
+## Implementation Note - Played-Input Visualization Proof Boundary
+
+Date: 2026-05-19.
+
+Context:
+
+- Visualization collected top-level `played_inputs` from reports before dispatching by report kind.
+- Timeline played-input events omitted proof status entirely.
+- Graph played-input nodes and `played_input` edges were always marked `runtime_observed`, even if a malformed, synthetic, or planned report carried `played_inputs` without a valid executed run.
+- That was a proof promotion risk at a UI/report boundary: requested/static or proofless played-input records could look like observed runtime input playback.
+
+Implemented fix:
+
+- `tools/debugger/visualization.py`
+  - played-input timeline events now carry explicit per-input proof when provided.
+  - absent explicit proof, valid executed reports mark played inputs as `runtime_observed`.
+  - unexecuted, invalid, or proofless played-input records now stay `planned_only`.
+  - played-input graph nodes and `played_input` edges use the same proof rule instead of always forcing `runtime_observed`.
+
+Regression strengthened:
+
+- `test_visualization_does_not_promote_unexecuted_played_inputs_to_runtime`
+  - failed before the patch because timeline played-input events had no `proof_status`.
+  - also guards the graph-side over-promotion by verifying unexecuted played-input nodes and edges stay `planned_only`.
+  - verifies valid executed played-input evidence still displays as `runtime_observed`.
+
+Validation after patch:
+
+- Focused played-input visualization proof regression: passed.
+- Adjacent replay/input visualization regressions: 3 passed.
+- Full debugger suite: 470 passed.
+- `python -m tools.debugger audit`: `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- `py_compile` passed for touched debugger Python files.
+- `git diff --check` passed, with unrelated CRLF warnings from the broader dirty worktree.
+
+Remaining priority from Pro:
+
+- This closes another runtime-proof promotion leak in visualization. It does not implement arbitrary event-engine state generation, full script VM execution semantics, full pixel/audio behavioral mirrors, emulator-backed checkpoint replay, full reverse execution, or broader SM83 adapter unification. The whole-ROM proof-substrate goal remains incomplete.
+
+## Implementation Note - Observed TIMA Overflow Side-Effect Evidence
+
+Date: 2026-05-20.
+
+Context:
+
+- The replay/localization audit bucket already covered bounded instruction effects, DIV reset writes, IO register writes, DMA expansion, interrupt entry, and observed post-write validation.
+- It still had a real hardware side-effect gap around timer overflow behavior: TIMA can reload from TMA and request the timer interrupt between adjacent captured instructions without a CPU instruction write to `$FF05` or `$FF0F`.
+- The patch intentionally uses primary Game Boy references and bounded runtime evidence instead of claiming cycle-accurate timer emulation.
+
+Web references used:
+
+- Pan Docs, Timer and Divider Registers: `https://gbdev.io/pandocs/Timer_and_Divider_Registers.html`
+- Pan Docs, Interrupts: `https://gbdev.io/pandocs/Interrupts.html`
+- Pan Docs, Timer Obscure Behaviour: `https://gbdev.io/pandocs/Timer_Obscure_Behaviour.html`
+
+Implemented fix:
+
+- `tools/debugger/sm83_model.py`
+  - adds shared `TimerOverflowSemantics` for the TIMA reload and timer IF request model.
+  - adds named constants for `$FF05` TIMA, `$FF06` TMA, `$FF07` TAC, and `$FF0F` IF.
+- `tools/debugger/effect_trace.py`
+  - detects a conservative adjacent-frame timer-overflow proof only when the current pre-instruction frame observes TIMA=`$FF`, TMA=`X`, IF bit 2 clear, and the next pre-instruction frame observes TIMA=`X` plus IF bit 2 set.
+  - emits a `timer_tima_overflow` side effect, a `timer_tima_reload_write` to `$FF05`, and a `timer_interrupt_request_write` to `$FF0F`.
+  - labels those effects as `observed_adjacent_timer_overflow` / `observed_hardware_side_effect`.
+  - refreshes watch hits after late-attached hardware effects so reverse query and dynamic taint can see the runtime writes.
+- `tools/debugger/catalog.py`
+  - updates the replay/localization audit wording to name the newly observed TIMA overflow reload and IF timer-interrupt request evidence.
+
+Regression strengthened:
+
+- `test_effect_trace_models_observed_tima_overflow_reload_and_interrupt_request`
+  - failed before the patch because no `timer_tima_reload_write` or `timer_interrupt_request_write` existed.
+  - now verifies effect trace, write index, watch hits, reverse query, and dynamic taint all preserve the observed hardware side-effect evidence.
+- `test_effect_trace_requires_observed_timer_if_transition_for_overflow_proof`
+  - guards against over-promotion: a TIMA-looking reload without an observed IF bit-2 transition stays unmodeled/unattributed instead of being promoted to timer-overflow proof.
+
+Validation after patch:
+
+- Focused timer/hardware regression cluster: 5 passed.
+- Full debugger suite: 472 passed.
+- `python -m tools.debugger audit`: `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- `py_compile` passed for touched debugger Python files.
+- `git diff --check` passed, with unrelated CRLF warnings from the broader dirty worktree.
+
+Remaining priority from Pro:
+
+- This is a bounded observed hardware side-effect slice, not full reverse execution or full timer emulation. Unobserved timer ticks, cycle-accurate TIMA/TMA/TAC corner cases, arbitrary event-engine state generation, full script VM behavior, pixel-accurate graphics mirrors, and audio playback/mixer mirrors remain blockers. The whole-ROM proof-substrate goal remains incomplete.
+
+## Implementation Note - Visual/Audio Snapshot Runtime Evidence Gate
+
+Date: 2026-05-20.
+
+Context:
+
+- Visual and audio snapshots are useful runtime evidence only when they carry concrete runtime samples from an executed, runtime-proven capture.
+- `expect` could still count framebuffer/audio fields from an unexecuted or planned snapshot envelope.
+- `compare` could treat an empty executed-looking visual/audio snapshot report as runtime evidence for the dynamic expectation mirror.
+- That was another report-boundary promotion risk: JSON fields that looked like samples could become expectation or mirror proof without executed runtime evidence.
+
+Web references used:
+
+- PyBoy screen API: `https://docs.pyboy.dk/api/screen.html`
+- PyBoy sound API: `https://docs.pyboy.dk/api/sound.html`
+
+Implemented fix:
+
+- `tools/debugger/expect.py`
+  - visual framebuffer expectations now only collect framebuffer evidence from valid, executed snapshots with strong runtime proof and a concrete framebuffer hash/sample field.
+  - audio expectations now only collect audio evidence from valid, executed snapshots with strong runtime proof and concrete register, symbol, audio-state, or wave-RAM samples.
+- `tools/debugger/mirrors.py`
+  - visual/audio snapshot runtime mirror evidence now requires valid executed reports, strong runtime proof, and at least one concrete visual/audio sample.
+  - empty executed-looking visual/audio snapshot envelopes no longer satisfy the dynamic expectation mirror's runtime evidence requirement.
+  - existing JSON fields remain compatible; this only tightens consumer interpretation.
+
+Regression strengthened:
+
+- `test_expectation_ignores_unexecuted_visual_snapshot_framebuffer`
+  - failed before the patch because an unexecuted planned visual snapshot with a `screen_frame` field passed `framebuffer=...`.
+- `test_expectation_ignores_audio_snapshot_without_runtime_proof`
+  - failed before the patch because an executed-looking but `planned_only` audio snapshot passed `audio-register=...`.
+- `test_compare_does_not_promote_empty_snapshot_envelope_to_runtime_expectation_mirror`
+  - failed before the patch because empty visual/audio snapshot envelopes were enough to create a passed runtime expectation mirror.
+
+Validation after patch:
+
+- Focused visual/audio snapshot proof-boundary cluster: 6 passed.
+- Adjacent compare/expectation mirror cluster: 6 passed.
+- Full debugger suite: 475 passed.
+- `python -m tools.debugger audit`: `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- `py_compile` passed for touched debugger Python files.
+- `git diff --check` passed, with unrelated CRLF warnings from the broader dirty worktree.
+
+Remaining priority from Pro:
+
+- This closes a visual/audio expectation and mirror proof-promotion boundary. It does not implement pixel-accurate graphics playback, full audio playback/mixer mirrors, arbitrary event-engine state generation, full script VM behavior, emulator-backed reverse execution, or subsystem-complete causal proof. The whole-ROM proof-substrate goal remains incomplete.
+
+## Implementation Note - Bounded PyBoy Sound-Buffer Snapshot Evidence
+
+Date: 2026-05-20.
+
+Context:
+
+- The previous audio snapshot patch correctly prevented proof promotion from planned or empty audio snapshot envelopes.
+- The audio snapshot itself still only exposed CPU-visible audio registers, Wave RAM, audio-state summaries, and music-engine WRAM state.
+- Per the PyBoy sound API, executed emulator frames can also expose a bounded sound buffer and metadata such as sample rate, raw-buffer head, and buffer format. That is useful emulator-visible audio evidence, but it is not a full APU or playback-quality mirror.
+
+Web references used:
+
+- PyBoy sound API: `https://docs.pyboy.dk/api/sound.html`
+
+Implemented fix:
+
+- `tools/debugger/audio_snapshot.py`
+  - captures `pyboy.sound.ndarray` when PyBoy exposes it, falling back to `pyboy.sound.raw_buffer` if needed.
+  - records a bounded `sound_buffer` packet with source, sample rate, raw-buffer metadata, byte count, SHA-256 digest, sample hex, shape/dtype when available, and a `sound_buffer_count`.
+  - keeps known limits explicit: the buffer digest/sample proves bounded emulator-visible samples at the capture point, not full song playback or mixer correctness.
+- `tools/debugger/expect.py`
+  - adds `audio-buffer-sha256=...` expectations.
+  - collects sound-buffer evidence only from valid, executed, runtime-proven audio snapshots with concrete runtime samples.
+  - keeps planned/proofless sound-buffer-shaped fields out of expectation evidence.
+- `tools/debugger/mirrors.py`
+  - carries sound-buffer source/digest artifacts into execution-backed expectation mirrors without treating them as sufficient unless the audio snapshot passes the runtime proof gate.
+- `tools/debugger/ranking.py`, `tools/debugger/causal_graph.py`, `tools/debugger/visualization.py`, and `tools/debugger/__main__.py`
+  - surface sound-buffer source/digest evidence in ranking, graph nodes/edges, visualization, and CLI report output.
+- `tools/debugger/catalog.py`
+  - updates the differential-mirror audit wording to include bounded PyBoy sound-buffer digest/sample evidence while retaining the full audio playback/mixer blocker.
+
+Regression strengthened:
+
+- `test_expectation_and_compare_use_audio_snapshot_evidence`
+  - now verifies `audio-buffer-sha256` expectations, dynamic mirror artifacts, and sound-buffer evidence flow.
+- `test_expectation_ignores_audio_snapshot_without_runtime_proof`
+  - now verifies sound-buffer-shaped fields in a `planned_only` audio snapshot do not become expectation proof.
+- `test_audio_snapshot_captures_registers_symbols_and_visualization`
+  - now verifies executed audio snapshots capture PyBoy sound-buffer metadata/digest/sample and expose distinct `audio_sound_buffer` graph/visualization nodes and `samples_audio_sound_buffer` edges.
+
+Validation after patch:
+
+- Focused audio snapshot proof/evidence cluster: passed.
+- Full debugger suite: 475 passed.
+- `python -m tools.debugger audit`: `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- `py_compile` passed for touched debugger Python files.
+- `git diff --check` passed, with unrelated CRLF warnings from the broader dirty worktree.
+
+Remaining priority from Pro:
+
+- This upgrades audio snapshots from register/Wave-RAM/WRAM state to bounded emulator-visible sample evidence. It still does not implement full audio playback/mixer mirrors, arbitrary event-engine state generation, full script VM behavior, pixel-accurate graphics/UI behavior, emulator-backed reverse execution, or subsystem-complete causal proof. The whole-ROM proof-substrate goal remains incomplete.
+
+## Implementation Note - Coord-Event Scene Variable Materialization
+
+Date: 2026-05-20.
+
+Context:
+
+- Map coord events are not triggered by position alone; they also include a scene id in the `coord_event x, y, scene_id, script` record.
+- The content-state materializer could patch `wMapGroup`, `wMapNumber`, `wXCoord`, and `wYCoord`, then mark the generated map-position state as ready even when the selected coord event required a map-specific scene variable value.
+- That left an event-engine generation gap: a positioned state could be ready while still missing the scene gate needed to make `CheckCurrentMapCoordEvents` reach the intended script.
+
+Web references used:
+
+- pret pokecrystal map event script reference: `https://pret.github.io/pokecrystal/map_event_scripts.html`
+- upstream pokegold `home/map.asm` reference for coord-event scene checks: `https://git.poke.blue/pokegold/tree/home/map.asm?id=dd73b278b585266922424e09cd99faeeba02a2f4`
+
+Implemented fix:
+
+- `tools/debugger/content_state.py`
+  - parses `data/maps/scenes.asm` `scene_var MAP, wMapSceneID` rows into a normalized map-to-scene-variable index.
+  - resolves coord-event `SCENE_*` ids from the selected map source's `scene_script` order, matching the local `scene_script` macro behavior.
+  - adds a map-specific scene-variable patch to coord-event map-position materializations when the scene var and scene id can be resolved.
+  - carries `event_context` with `scene_token`, `scene_symbol`, `scene_value`, `validation_kind=source_scene_var_and_scene_script_order`, and source line/file provenance.
+  - adds the scene variable to `watch_symbols`, `expected_sinks`, and route commands so later replay/watch/trace proof has the exact missing state gate in view.
+- `tools/debugger/catalog.py`
+  - updates the generation/fuzzing audit wording to name coord-event scene-variable patch generation.
+
+Regression strengthened:
+
+- `test_content_state_materializes_coord_event_scene_variable`
+  - failed before the patch because coord-event materialization never patched `wUnitMapSceneID`.
+  - now verifies scene-variable resolution through `data/maps/scenes.asm`, scene id resolution through `scene_script` order, patch value/address/provenance, watch-symbol inclusion, expected-sink inclusion, and command routing.
+
+Validation after patch:
+
+- Focused content scenario/materialization cluster: passed.
+- Full debugger suite: 476 passed.
+- `python -m tools.debugger audit`: `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- `py_compile` passed for touched debugger Python files.
+- `git diff --check` passed, with unrelated CRLF warnings from the broader dirty worktree.
+
+Remaining priority from Pro:
+
+- This moves coord-event generation beyond position-only patches, but it still does not synthesize full object structs, full BG/object event facing and flag state, arbitrary event-engine contexts, full script VM behavior, pixel/audio behavioral mirrors, emulator-backed reverse execution, or subsystem-complete causal proof. The whole-ROM proof-substrate goal remains incomplete.
+
+## Implementation Note - BG-Event Player Facing Materialization
+
+Date: 2026-05-20.
+
+Context:
+
+- BG events are not triggered by standing on the event tile. The event engine derives the tile the player is facing from `wPlayerDirection` and `wPlayerMapX/Y`, converts the buffered map coordinates back to event-table coordinates, then matches that tile against the map's BG-event table.
+- The content-state materializer previously patched the target event tile into `wXCoord/wYCoord`, which is not enough for a facing BG event and can be the wrong player position.
+- That left another event-engine generation gap: a generated BG-event case could look map-position-ready while missing the player-facing state needed for `CheckFacingBGEvent`.
+
+Web references used:
+
+- pret pokecrystal map event script reference for `bg_event x, y, type, script`: `https://pret.github.io/pokecrystal/map_event_scripts.html`
+- upstream pokegold `home/map.asm` reference for `GetFacingTileCoord` and `CheckFacingBGEvent`: `https://git.poke.blue/pokegold/tree/home/map.asm?id=dd73b278b585266922424e09cd99faeeba02a2f4`
+
+Implemented fix:
+
+- `tools/debugger/content_state.py`
+  - derives a planned player position and facing direction for BG events from the selected BG-event tile and `BGEVENT_UP/DOWN/LEFT/RIGHT` direction.
+  - patches `wXCoord/wYCoord` to the player tile, not the event tile, for BG-event scenarios.
+  - patches `wPlayerMapX`, `wPlayerMapY`, and `wPlayerDirection` when those symbols exist, including the +4 buffered-map coordinate offset used by the engine.
+  - carries `event_context` / `player_context` with target coordinates, player coordinates, facing direction/value, `validation_kind=event_engine_player_position_and_facing`, and `proof_status=state_patch_planned`.
+  - adds the player-map and facing symbols to watch symbols, expected sinks, and commands so later runtime proof has the exact state gate in view.
+- `tools/debugger/catalog.py`
+  - updates the generation/fuzzing audit wording to name BG-event player-coordinate/facing patch generation.
+
+Regression strengthened:
+
+- `test_content_state_materializes_bg_event_player_facing_state`
+  - failed before the patch because BG-event materialization patched `wYCoord` to the event tile instead of the player tile and did not patch `wPlayerMapX/Y` or `wPlayerDirection`.
+  - now verifies the player tile, buffered player-map coordinates, facing value, planned proof status, watch-symbol inclusion, expected-sink inclusion, and command routing.
+
+Validation after patch:
+
+- Focused BG-event + coord-event regression pair: passed.
+- Focused content scenario/materialization cluster: 9 passed.
+- Full debugger suite: 477 passed.
+- `python -m tools.debugger audit`: passed as a command, still `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- `py_compile` passed for touched debugger Python files.
+- `git diff --check` passed, with unrelated CRLF warnings from the broader dirty worktree.
+
+Remaining priority from Pro:
+
+- This moves BG-event generation beyond target-tile-only patches, but it still does not synthesize BG-event flag/item payloads, full object structs, arbitrary event-engine contexts, full script VM behavior, pixel/audio behavioral mirrors, emulator-backed reverse execution, or subsystem-complete causal proof. The whole-ROM proof-substrate goal remains incomplete.
+
+## Implementation Note - Object-Event Ready-State Downgrade
+
+Date: 2026-05-20.
+
+Context:
+
+- Object events are reached through `CheckFacingObject`, which uses `GetFacingTileCoord` and then requires `IsNPCAtCoord` to find a standing object struct at the facing coordinates.
+- The content-state materializer previously treated object-event map-position patches as `ready` after installing only map/x/y state.
+- That was a proof promotion bug: map position alone cannot prove or even fully prepare an object-event trigger, because the NPC/object struct and visibility state still matter.
+
+Web references used:
+
+- pret pokecrystal map event script reference for `object_event` records: `https://pret.github.io/pokecrystal/map_event_scripts.html`
+- upstream pokegold `home/map.asm` / local `engine/overworld/npc_movement.asm` behavior for facing-tile and object checks: `https://git.poke.blue/pokegold/tree/home/map.asm?id=dd73b278b585266922424e09cd99faeeba02a2f4`
+
+Implemented fix:
+
+- `tools/debugger/content_scenarios.py`
+  - preserves object-event `sprite` and `movement` fields in map-position precondition values for future object-struct materialization.
+- `tools/debugger/content_state.py`
+  - derives a planned adjacent player tile and `OW_UP` facing for object-event scenarios, including buffered `wPlayerMapX/Y` and `wPlayerDirection` patches when symbols exist.
+  - keeps the proof explicit as `proof_status=state_patch_planned`.
+  - adds `proof_blockers=["object_struct_not_materialized"]` and marks object-event materializations `blocked` instead of `ready` until object struct state is synthesized or observed.
+  - carries known limits that map/player state is not enough for object-event execution proof.
+- `tools/debugger/catalog.py`
+  - updates the generation/fuzzing audit wording to preserve this blocker instead of implying object events are fully materialized.
+
+Regression strengthened:
+
+- `test_content_state_does_not_mark_object_event_ready_without_object_struct`
+  - failed before the patch because object-event materialization was `ready`.
+  - now verifies the materialization is blocked, carries the object-struct proof blocker, patches planned player-facing state, and exposes the right watch/expected sink symbols for later runtime proof.
+
+Validation after patch:
+
+- Focused object-event regression: passed.
+- Focused content scenario/materialization cluster: 10 passed.
+- Full debugger suite: 478 passed.
+- `python -m tools.debugger audit`: passed as a command, still `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- `py_compile` passed for touched debugger Python files.
+- `git diff --check` passed, with unrelated CRLF warnings from the broader dirty worktree.
+
+Remaining priority from Pro:
+
+- This prevents object-event proof promotion and preserves enough requested/static fields for the next generator step, but it does not synthesize object structs, object visibility, movement state, arbitrary event-engine contexts, full script VM behavior, pixel/audio behavioral mirrors, emulator-backed reverse execution, or subsystem-complete causal proof. The whole-ROM proof-substrate goal remains incomplete.
+
+## Implementation Note - Object-Event Object Struct Materialization
+
+Date: 2026-05-20.
+
+Context:
+
+- The previous object-event patch correctly stopped map-position-only evidence from becoming ready.
+- The next runtime-generation blocker was concrete: `TryObjectEvent` calls `CheckFacingObject`, which requires `IsNPCAtCoord` to find a nonzero object struct whose `OBJECT_WALKING` is `STANDING`, then uses `OBJECT_MAP_OBJECT_INDEX` to load the corresponding `wMapObjects` row and script pointer.
+- Source `object_event` coordinates are macro-expanded with a +4 map-buffer offset, so generated object structs and `wMap2Object` rows must use buffered coordinates while `wXCoord/wYCoord` stay player map coordinates.
+
+Web references used:
+
+- pret pokecrystal map event script reference for `object_event` fields: `https://pret.github.io/pokecrystal/map_event_scripts.html`
+- upstream pokegold `home/map.asm` reference plus local `engine/overworld/player_object.asm`, `engine/overworld/npc_movement.asm`, and `constants/map_object_constants.asm` for object struct layout and facing-object behavior: `https://git.poke.blue/pokegold/tree/home/map.asm?id=dd73b278b585266922424e09cd99faeeba02a2f4`
+
+Implemented fix:
+
+- `tools/debugger/content_scenarios.py`
+  - preserves object-event radius, time, palette, sight range, sprite, movement, object type, script, and event flag fields in precondition values.
+- `tools/debugger/content_state.py`
+  - resolves object-event constants from local constant files, with minimal test fallbacks for core object-event tokens.
+  - patches a generated visible `wObject1Struct` object struct for the selected object event: sprite, map-object index, movement, standing state, direction, buffered current/last/init coordinates, radius, and range.
+  - patches the matching first visible map-object row (`wMap2Object*`): struct id, sprite, buffered coordinates, movement, radius, time, type/palette, sight range, script pointer, and event flag.
+  - marks the materialization `ready` only when object struct symbols, map-object symbols, script pointer, and constants all resolve.
+  - keeps `proof_status=state_patch_planned`; replay/watch/trace still must prove `TryObjectEvent` consumes the patched state.
+- `tools/debugger/catalog.py`
+  - updates the generation/fuzzing audit wording from object-event blocker-only to bounded object-event object-struct generation, while retaining multi-object/counter-tile/large-object/arbitrary event-engine blockers.
+
+Regression strengthened:
+
+- `test_content_state_materializes_object_event_object_struct_state`
+  - failed before the patch because object-event materialization had no `object_context` and stayed blocked even when all object struct and map-object symbols were available.
+  - now verifies generated object struct patches, map-object row patches, script pointer word patches, event flag word patches, planned proof status, route expected sinks, and watch routing.
+- `test_content_state_does_not_mark_object_event_ready_without_object_struct`
+  - still verifies object-event materialization remains blocked when the object struct/map-object state cannot be generated.
+
+Validation after patch:
+
+- Focused object-event positive/negative regression pair: passed.
+- Focused content scenario/materialization cluster: 11 passed.
+- Full debugger suite: 479 passed.
+- `python -m tools.debugger audit`: passed as a command, still `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- `py_compile` passed for touched debugger Python files.
+- `git diff --check` passed, with unrelated CRLF warnings from the broader dirty worktree.
+
+Remaining priority from Pro:
+
+- This is bounded object-event state generation, not arbitrary event runtime generation. It still does not prove runtime execution without replay/watch/trace evidence, and it does not cover counter-tile interaction distance, large objects, multiple loaded objects, object visibility edge cases, full script VM behavior, pixel/audio behavioral mirrors, emulator-backed reverse execution, or subsystem-complete causal proof. The whole-ROM proof-substrate goal remains incomplete.
+
+## Implementation Note - BG-Event Flag State Materialization
+
+Date: 2026-05-20.
+
+Context:
+
+- The BG-event facing patch handled player coordinates and direction, but `BGEVENT_ITEM`, `BGEVENT_COPY`, `BGEVENT_IFSET`, and `BGEVENT_IFNOTSET` also call `CheckBGEventFlag`.
+- The engine reads an event flag id from the pointed `hiddenitem` or `conditional_event` payload, then checks the corresponding bit in `wEventFlags`.
+- Without a generated event-flag bit patch, hidden items and conditional BG events could look positioned and facing-ready while the actual BG-event branch condition remained unsatisfied.
+
+Web references used:
+
+- pret pokecrystal map event script reference for BG event records and script payloads: `https://pret.github.io/pokecrystal/map_event_scripts.html`
+- local/upstream pokegold event-engine references: `engine/overworld/events.asm`, `macros/scripts/maps.asm`, `home/flag.asm`, and upstream `home/map.asm` at `https://git.poke.blue/pokegold/tree/home/map.asm?id=dd73b278b585266922424e09cd99faeeba02a2f4`
+
+Implemented fix:
+
+- `tools/debugger/content_state.py`
+  - resolves `hiddenitem ITEM, EVENT_*` and `conditional_event EVENT_*, script` payloads from the selected map source label.
+  - resolves event flags and hidden-item constants from local constant files.
+  - adds planned bit patches for `wEventFlags+N` with `patch_kind=bit`, `bit_operation=set/reset`, `bit_index`, `bit_mask`, and `preserves_other_bits=True`.
+  - updates execution-time patching so bit patches preserve neighboring flags in the same byte when `content-state --execute` writes a save state.
+  - carries `event_context` fields for flag token/value, byte offset, bit mask, required flag state, source payload macro, source line, and hidden-item token/value when present.
+  - keeps `proof_status=state_patch_planned`; replay/watch/trace still must prove `CheckBGEventFlag` or the BG event branch executed.
+- `tools/debugger/catalog.py`
+  - updates the generation/fuzzing audit wording to include hidden-item/conditional BG-event flag bit generation while retaining arbitrary event-engine blockers.
+
+Regression strengthened:
+
+- `test_content_state_materializes_bg_event_hidden_item_flag_state`
+  - failed before the patch because BG-event materialization only exposed player/facing context and did not patch `wEventFlags`.
+  - now verifies hidden-item payload resolution, event flag value, byte offset, bit mask, reset operation, hidden item value, route expected sinks, and watch routing.
+- `test_content_state_materializes_bg_event_conditional_flag_state`
+  - verifies `BGEVENT_IFSET` requests a set-bit patch with the correct flag bit mask.
+
+Validation after patch:
+
+- Focused BG-event flag regression pair: passed.
+- Focused content scenario/materialization cluster: 13 passed.
+- Full debugger suite: 481 passed.
+- `python -m tools.debugger audit`: passed as a command, still `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- `py_compile` passed for touched debugger Python files.
+- `git diff --check` passed, with unrelated CRLF warnings from the broader dirty worktree.
+
+Remaining priority from Pro:
+
+- This closes another bounded event-engine state-generation slice, but it still does not provide runtime proof by itself. It does not cover counter-tile interaction distance, large-object BG/object geometry, full script VM behavior under arbitrary context, pixel/audio behavioral mirrors, emulator-backed reverse execution, or subsystem-complete causal proof. The whole-ROM proof-substrate goal remains incomplete.
+
+## Implementation Note - Counter-Tile Object-Event State Materialization
+
+Date: 2026-05-20.
+
+Context:
+
+- `CheckFacingObject` first calls `GetFacingTileCoord`; if that facing tile is a counter collision, `CheckCounterTile` reflects the facing coordinates across the player before `IsNPCAtCoord`.
+- The object-event object-struct patch could generate adjacent object interactions, but counter interactions still needed a distinct two-tile-away player state plus the cached facing-tile collision byte.
+- Treating the object struct alone as sufficient for counter interactions would be another planned-state overclaim, because the reflected path depends on `wTileDown`, `wTileUp`, `wTileLeft`, or `wTileRight`.
+
+Web references used:
+
+- pret pokecrystal map event script reference for `object_event` records: `https://pret.github.io/pokecrystal/map_event_scripts.html`
+- upstream pokecrystal facing-object/counter-tile behavior: `https://github.com/pret/pokecrystal/blob/master/engine/overworld/npc_movement.asm`
+- local/upstream pokegold references: `home/map.asm`, `home/map_objects.asm`, `engine/overworld/npc_movement.asm`, `constants/collision_constants.asm`
+
+Implemented fix:
+
+- `tools/debugger/content_scenarios.py`
+  - adds four additional planned map-position preconditions for each `map_object_event`, one for each counter-tile facing direction.
+  - preserves compatibility by adding fields (`counter_tile`, `counter_facing_direction`, `counter_tile_symbol`, `counter_tile_collision`) instead of changing existing object-event fields.
+- `tools/debugger/content_state.py`
+  - materializes counter-tile object-event candidates by positioning the player two tiles from the object and patching `wPlayerMapX/Y`, `wPlayerDirection`, the generated object struct/map-object row, and the selected cached facing-tile collision byte.
+  - resolves `COLL_COUNTER` from `constants/collision_constants.asm` with the existing constant parser.
+  - blocks counter-tile candidates, without invalidating the whole report, when the facing-tile symbol or collision constant cannot be resolved.
+  - carries counter-tile event-context fields and keeps `proof_status=state_patch_planned`; replay/watch/trace must still prove `CheckCounterTile` and `TryObjectEvent` consumed the patched state.
+- `tools/debugger/catalog.py`
+  - updates the generation/fuzzing audit wording from counter-tile blocker to bounded four-direction counter-tile candidate generation, while retaining multi-object, large-object, arbitrary event-engine, script VM, graphics, audio, and mirror blockers.
+
+Regression strengthened:
+
+- `test_content_state_materializes_counter_tile_object_event_state`
+  - failed before the patch because no counter-tile object-event materialization existed.
+  - now verifies the added counter-tile preconditions, two-tile player placement, `wTileUp=COLL_COUNTER` patch, reflected target object struct coordinates, event-context fields, route expected sinks, and watch routing.
+
+Validation after patch:
+
+- Focused counter-tile object-event regression: passed.
+- Focused map/content materialization cluster: 8 passed.
+- Focused generic content-state materialization cluster: 3 passed.
+- Full debugger suite: 482 passed.
+- `python -m tools.debugger audit`: passed as a command, still `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- `py_compile` passed for touched debugger Python files.
+- `git diff --check` passed for touched debugger Python files before this documentation update.
+
+Remaining priority from Pro:
+
+- This closes the bounded counter-tile state-generation slice, but it is still planned state evidence until replay/watch/trace observes the event engine consuming it. It does not implement multi-object or large-object event-state generation, arbitrary event-engine states, full script VM behavior under arbitrary context, pixel-accurate graphics/UI mirrors, full audio playback/mixer mirrors, emulator-backed reverse execution, or subsystem-complete causal proof. The whole-ROM proof-substrate goal remains incomplete.
+
+## Implementation Note - Large-Object Object-Event State Materialization
+
+Date: 2026-05-20.
+
+Context:
+
+- `IsNPCAtCoord` does not treat every object as 1x1. If `OBJECT_PALETTE` has the `BIG_OBJECT` bit, it calls `WillObjectIntersectBigObject`, which accepts any facing tile inside the object's 2x2 footprint.
+- `SPRITEMOVEDATA_BIGDOLLSYM`, `SPRITEMOVEDATA_BIGDOLLASYM`, and `SPRITEMOVEDATA_BIGDOLL` set that bit through `data/sprites/map_objects.asm`.
+- The previous object-event state patch could synthesize an object struct, but for big dolls it left `OBJECT_PALETTE=0` and used the ordinary one-tile-below player position, which can place the player inside the 2x2 footprint instead of outside it.
+
+Web references used:
+
+- upstream pokecrystal facing-object/big-object behavior: `https://github.com/pret/pokecrystal/blob/master/engine/overworld/npc_movement.asm`
+- local/upstream pokegold references: `engine/overworld/npc_movement.asm`, `home/map_objects.asm`, `data/sprites/map_objects.asm`, `constants/map_object_constants.asm`
+
+Implemented fix:
+
+- `tools/debugger/content_scenarios.py`
+  - marks known big-doll movement tokens as `large_object` and adds eight planned large-object map-position candidates around the 2x2 footprint.
+  - preserves the original object-event precondition shape while adding `large_object_*` fields for the generated candidates.
+- `tools/debugger/content_state.py`
+  - parses sprite movement attributes from `data/sprites/map_objects.asm`.
+  - patches object-struct `OBJECT_FLAGS1`, `OBJECT_FLAGS2`, and `OBJECT_PALETTE` from the sprite movement data instead of forcing them to zero.
+  - detects large-object movement data and places the default object-event player outside the 2x2 footprint.
+  - carries `large_object`, width/height, and sprite-movement flag evidence in the event/object context while keeping `proof_status=state_patch_planned`.
+- `tools/debugger/catalog.py`
+  - updates the generation/fuzzing audit wording from generic large-object blocker to bounded 2x2 large-object footprint candidate generation, while retaining multi-object, custom large-object, arbitrary event-engine, script VM, graphics, audio, and mirror blockers.
+
+Regression strengthened:
+
+- `test_content_state_materializes_large_object_event_state`
+  - failed before the patch because only normal/counter preconditions existed and the object struct did not carry the big-object palette bit.
+  - now verifies large-object candidate generation, outside-footprint player placement, movement-data-derived flags, `OBJECT_PALETTE=BIG_OBJECT|STRENGTH_BOULDER`, large-object event context, and expected-sink routing.
+
+Validation after patch:
+
+- Focused large-object object-event regression: passed.
+- Focused map/content materialization cluster: 9 passed.
+- Full debugger suite: 483 passed.
+- `python -m tools.debugger audit`: passed as a command, still `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- `py_compile` passed for touched debugger Python files.
+- `git diff --check` passed for touched debugger Python files before this documentation update.
+
+Remaining priority from Pro:
+
+- This closes the bounded known-2x2-large-object state-generation slice, but it remains planned state evidence until replay/watch/trace observes `IsNPCAtCoord` consuming the big-object intersection path. It does not implement multi-object map-object rows, custom non-2x2 large-object geometry, arbitrary event-engine states, full script VM behavior under arbitrary context, pixel-accurate graphics/UI mirrors, full audio playback/mixer mirrors, emulator-backed reverse execution, or subsystem-complete causal proof. The whole-ROM proof-substrate goal remains incomplete.
+
+## Implementation Note - Selected Map-Object Row Materialization
+
+Date: 2026-05-20.
+
+Context:
+
+- `ReadObjectEvents` copies source `object_event` records into `wMap2Object` onward. `wMapObjects` index 0 is the player object and visible object initialization starts at map object index 2.
+- `TryObjectEvent` uses `OBJECT_MAP_OBJECT_INDEX` from the found object struct, then calls `GetMapObject`. A second source object therefore needs `OBJECT_MAP_OBJECT_INDEX=3` and a `wMap3Object*` row, not the hardcoded `wMap2Object*` row.
+- The previous materializer was correct for the first source object only. On maps with several object events, it could prepare the selected script label but attach it to the wrong map-object row.
+
+Web references used:
+
+- pret/pokecrystal map-object macro reference for source `object_event` layout: `https://raw.githubusercontent.com/pret/pokecrystal/master/macros/scripts/maps.asm`
+- local/upstream pokegold references: `home/map.asm`, `home/map_objects.asm`, `engine/overworld/player_object.asm`, `ram/wram.asm`, `constants/map_object_constants.asm`
+
+Implemented fix:
+
+- `tools/debugger/content_scenarios.py`
+  - tracks the source object ordinal after `def_object_events`.
+  - adds `source_object_ordinal` and `map_object_index` to `map_object_event` triggers and map-position precondition values.
+- `tools/debugger/content_state.py`
+  - derives the target map-object row from `map_object_index`/`source_object_ordinal`.
+  - patches the selected `wMapNObject*` row rather than always patching `wMap2Object*`.
+  - writes the selected map-object index into `wObject1Struct+OBJECT_MAP_OBJECT_INDEX`.
+  - routes watch symbols, expected sinks, commands, and event context through the selected `wMapNObject` prefix.
+- `tools/debugger/catalog.py`
+  - updates the generation/fuzzing audit wording from generic multi-object row blocker to selected map-object row generation while retaining full multi-loaded-object occupancy, custom large-object, arbitrary event-engine, script VM, graphics, audio, and mirror blockers.
+
+Regression strengthened:
+
+- `test_content_state_materializes_multi_object_event_row`
+  - failed before the patch because no source object ordinal was preserved and the second object still materialized through `wMap2Object`.
+  - now verifies the second source object gets `map_object_index=3`, `wObject1Struct+OBJECT_MAP_OBJECT_INDEX=3`, the `wMap3Object*` row patches, selected-row watch symbols, expected sinks, and replay/watch command routing.
+
+Validation after patch:
+
+- Focused multi-object row regression: passed.
+- Focused map/content materialization cluster: 10 passed.
+- Full debugger suite: 484 passed.
+- `python -m tools.debugger audit`: passed as a command, still `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- `py_compile` passed for touched debugger Python files.
+- `git diff --check` passed for touched debugger Python files before this documentation update.
+
+Remaining priority from Pro:
+
+- This closes selected map-object row generation for one targeted visible object, but it remains planned state evidence until replay/watch/trace observes `TryObjectEvent` consuming it. It does not synthesize every visible object struct on the map, object occupancy/collision interactions among multiple loaded objects, custom non-2x2 large-object geometry, arbitrary event-engine states, full script VM behavior under arbitrary context, pixel-accurate graphics/UI mirrors, full audio playback/mixer mirrors, emulator-backed reverse execution, or subsystem-complete causal proof. The whole-ROM proof-substrate goal remains incomplete.
+
+## Implementation Note - Source-Order Companion Object Occupancy Materialization
+
+Date: 2026-05-20.
+
+Context:
+
+- `InitializeVisibleSprites` scans source map-object rows from `wMap2Object` upward and `CopyObjectStruct` fills object structs from `wObject1Struct` upward.
+- The selected-row patch wrote the right `wMapNObject` row, but still let a second source object occupy `wObject1Struct`, which is not the source-order loaded-object shape.
+- That was useful for a narrow selected target, but it did not model companion occupancy well enough to investigate object-object collision or wrong-NPC interaction cases.
+
+Web references used:
+
+- upstream pokecrystal player-object/object-loader reference: `https://raw.githubusercontent.com/pret/pokecrystal/master/engine/overworld/player_object.asm`
+- pret/pokecrystal map-object macro reference: `https://raw.githubusercontent.com/pret/pokecrystal/master/macros/scripts/maps.asm`
+- local/upstream pokegold references: `engine/overworld/player_object.asm`, `home/map.asm`, `home/map_objects.asm`, `ram/wram.asm`, `constants/map_object_constants.asm`
+
+Implemented fix:
+
+- `tools/debugger/content_state.py`
+  - parses sibling `object_event` records from the selected map source file.
+  - patches source-order companion map-object rows and object structs for the selected event state.
+  - assigns the selected source object to the corresponding source-order object struct (`source ordinal + 1`) instead of always using `wObject1Struct`.
+  - carries companion occupancy context (`companion_object_count`, `loaded_object_count`, `occupancy_model=source_order_all_visible_candidate`) while keeping `proof_status=state_patch_planned`.
+- `tools/debugger/catalog.py`
+  - updates the generation/fuzzing audit wording to include source-order companion occupancy candidates while retaining runtime-verified occupancy, custom large-object, arbitrary event-engine, script VM, graphics, audio, and mirror blockers.
+
+Regression strengthened:
+
+- `test_content_state_materializes_companion_object_structs`
+  - failed before the patch because the second source object still used `wObject1Struct` and no companion object struct was patched.
+  - now verifies the first source object occupies `wObject1Struct`/`wMap2Object`, the selected second source object occupies `wObject2Struct`/`wMap3Object`, both object structs are watched, and both object-struct coordinate sinks are routed.
+- `test_content_state_materializes_multi_object_event_row`
+  - updated to match the source-order struct assignment while preserving selected `wMap3Object` row coverage.
+
+Validation after patch:
+
+- Focused companion + selected-row regressions: 2 passed.
+- Focused map/content materialization cluster: 11 passed.
+- Full debugger suite: 485 passed.
+- `python -m tools.debugger audit`: passed as a command, still `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- `py_compile` passed for touched debugger Python files.
+- `git diff --check` passed for touched debugger Python files before this documentation update.
+
+Remaining priority from Pro:
+
+- This closes a bounded source-order all-visible companion occupancy candidate, but it remains planned state evidence until replay/watch/trace observes the object loader and `TryObjectEvent` consuming the same loaded set. It does not prove actual runtime visibility, offscreen pruning, object masks/event flags/time-of-day filtering, custom non-2x2 large-object geometry, arbitrary event-engine states, full script VM behavior under arbitrary context, pixel-accurate graphics/UI mirrors, full audio playback/mixer mirrors, emulator-backed reverse execution, or subsystem-complete causal proof. The whole-ROM proof-substrate goal remains incomplete.
+
+## Implementation Note - Viewport-Filtered Companion Object Occupancy
+
+Date: 2026-05-20.
+
+Context:
+
+- `ReadObjectEvents` copies source `object_event` rows into `wMap2Object` onward with `MAPOBJECT_OBJECT_STRUCT_ID=-1`.
+- `InitializeVisibleSprites` then scans those rows in source order and only calls `CopyObjectStruct` when the object's buffered map coordinates are inside the player-relative `MAPOBJECT_SCREEN_WIDTH`/`MAPOBJECT_SCREEN_HEIGHT` window.
+- The previous source-order companion patch treated every sibling object as visible. That could promote an offscreen source row into a live object struct and shift the selected object into the wrong `wObjectNStruct`, which is a proof-boundary overclaim.
+
+Web references used:
+
+- upstream pokecrystal player-object/object-loader reference: `https://raw.githubusercontent.com/pret/pokecrystal/master/engine/overworld/player_object.asm`
+- pret/pokecrystal map-object macro reference: `https://raw.githubusercontent.com/pret/pokecrystal/master/macros/scripts/maps.asm`
+- local pokegold references: `engine/overworld/player_object.asm`, `home/map.asm`, `constants/map_object_constants.asm`, `ram/wram.asm`
+
+Implemented fix:
+
+- `tools/debugger/content_state.py`
+  - separates copied map-object rows from runtime-loaded visible object structs.
+  - computes companion visibility with the same player-relative viewport predicate used by `InitializeVisibleSprites`: `object_x + 1 - wXCoord` and `object_y + 1 - wYCoord` must be within `MAPOBJECT_SCREEN_WIDTH`/`MAPOBJECT_SCREEN_HEIGHT`.
+  - patches offscreen companion rows with `StructID=$ff` but does not synthesize an object struct or watch a nonexistent `wObjectNStruct` for them.
+  - assigns selected object-struct indexes by visible source-order rank, so a selected second source object can correctly occupy `wObject1Struct` when the first source object is offscreen.
+  - adds compatibility fields rather than reshaping the report: `offscreen_object_count`, `offscreen_objects`, `map_row_object_count`, `selected_visibility`, `visibility_model=InitializeVisibleSprites_player_viewport`, and `occupancy_model=source_order_viewport_visible_candidate`.
+- `tools/debugger/catalog.py`
+  - updates generation/fuzzing audit wording from source-order all-visible companion candidates to viewport-filtered companion map-row/object-struct candidates.
+  - keeps object masks, event flags, time filters, custom large objects, arbitrary event-engine states, script VM, graphics, audio, and runtime-verified occupancy as blockers.
+
+Regression strengthened:
+
+- `test_content_state_skips_offscreen_companion_object_structs`
+  - failed before the patch because an offscreen first source object consumed `wObject1Struct` and forced the selected second source object into `wObject2Struct`.
+  - now verifies the offscreen row remains materialized as `wMap2Object*` with `StructID=$ff`, the selected row gets `wMap3ObjectStructID=1`, the selected object uses `wObject1Struct`, and `wObject2Struct` is not watched.
+
+Validation after patch:
+
+- Focused offscreen companion regression: passed.
+- Focused object-event materialization cluster: 6 passed.
+- Focused map/content materialization cluster: 11 passed.
+- Full debugger suite: 486 passed.
+- `python -m tools.debugger audit`: passed as a command, still `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- `py_compile` passed for touched debugger Python files.
+- `git diff --check` passed for touched debugger Python files and this review doc.
+
+Remaining priority from Pro:
+
+- This closes the bounded offscreen-pruning proof boundary for source-order object struct materialization, but it remains planned state evidence until replay/watch/trace observes the object loader and `TryObjectEvent` consuming the same loaded set. It still does not prove object mask/event-flag/time-of-day filtering, custom non-2x2 large-object geometry, arbitrary event-engine states, full script VM behavior under arbitrary context, pixel-accurate graphics/UI mirrors, full audio playback/mixer mirrors, emulator-backed reverse execution, or subsystem-complete causal proof. The whole-ROM proof-substrate goal remains incomplete.
+
+## Implementation Note - Object-Event Mask/Event-Flag State Materialization
+
+Date: 2026-05-20.
+
+Context:
+
+- `LoadObjectMasks` clears `wObjectMasks`, then uses `GetObjectTimeMask` and `CheckObjectFlag` to decide whether each map object is masked.
+- `CheckObjectFlag` treats a source object with no sprite as masked, `EVENT_FLAG=-1` as unmasked, and a real event flag as hidden when that flag bit is set.
+- `CopyObjectStruct` calls `CheckObjectMask` before allocating a live object struct. The previous materializer could patch a visible object struct while leaving the object-mask/event-flag precondition unmodeled.
+
+Web references used:
+
+- upstream pokecrystal object-mask loader reference: `https://raw.githubusercontent.com/pret/pokecrystal/master/engine/overworld/map_objects_2.asm`
+- upstream pokecrystal player-object/object-loader reference: `https://raw.githubusercontent.com/pret/pokecrystal/master/engine/overworld/player_object.asm`
+- local pokegold references: `engine/overworld/map_objects_2.asm`, `engine/overworld/player_object.asm`, `home/map.asm`, `home/flag.asm`, `engine/overworld/scripting.asm`, `constants/map_object_constants.asm`
+
+Implemented fix:
+
+- `tools/debugger/content_state.py`
+  - adds planned object-mask state for object events: `wObjectMasks+N=0` when `wObjectMasks` resolves.
+  - adds bit-preserving event-flag reset patches for object events with a real `MAPOBJECT_EVENT_FLAG` when `wEventFlags` resolves.
+  - threads the same mask/event-flag preconditions through selected objects, visible companion objects, and offscreen companion map rows.
+  - records `object_mask_context` with validation kind, map-object index, required unmasked state, event flag id, bit offset/mask, symbol availability, and `proof_status=state_patch_planned`.
+  - keeps compatibility by adding fields and patches, not reshaping existing JSON.
+- `tools/debugger/catalog.py`
+  - updates generation/fuzzing audit wording to include object-event event-flag reset and `wObjectMasks` unmask preconditions while keeping time filtering, runtime occupancy, custom large-object generation, arbitrary event-engine states, script VM, graphics, and audio blockers.
+
+Regression strengthened:
+
+- `test_content_state_materializes_object_event_flag_mask_state`
+  - failed before the patch because object-event materialization had no object-mask/event-flag state context.
+  - now verifies `wObjectMasks+2=0`, bit-preserving `wEventFlags+0` reset for `EVENT_UNIT_HIDE_NPC`, selected `wMap2ObjectEventFlag` bytes, watch symbols, and runtime-route expected sinks.
+
+Validation after patch:
+
+- Focused object-event flag/mask regression: passed.
+- Focused object-event materialization cluster: 7 passed.
+- Focused map/content materialization cluster: 12 passed.
+- Full debugger suite: 487 passed.
+- `python -m tools.debugger audit`: passed as a command, still `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- `py_compile` passed for touched debugger Python files.
+- `git diff --check` passed for touched debugger Python files and this review doc.
+
+Remaining priority from Pro:
+
+- This closes a bounded object-event mask/event-flag state-generation slice, but it remains planned state evidence until replay/watch/trace observes `LoadObjectMasks`, `CheckObjectFlag`, `CheckObjectMask`, and `TryObjectEvent` consuming the same state. It still does not prove time-of-day/hour filtering, runtime object occupancy, custom non-2x2 large-object geometry, arbitrary event-engine states, full script VM behavior under arbitrary context, pixel-accurate graphics/UI mirrors, full audio playback/mixer mirrors, emulator-backed reverse execution, or subsystem-complete causal proof. The whole-ROM proof-substrate goal remains incomplete.
+
+## Implementation Note - Selected Object-Event Hour State Materialization
+
+Date: 2026-05-20.
+
+Context:
+
+- `LoadObjectMasks` calls `GetObjectTimeMask`, which calls `CheckObjectTime`, before `CopyObjectStruct` can allocate a live object.
+- For object events with `MAPOBJECT_HOUR_1 != -1`, `CheckObjectTime` compares the current `hHours` value against the object's hour range.
+- The previous materializer could patch the selected object struct and row but leave the clock precondition unmodeled, which made hour-gated object events look ready from object state alone.
+
+Web references used:
+
+- upstream pokecrystal object-mask/time loader reference: `https://raw.githubusercontent.com/pret/pokecrystal/master/engine/overworld/map_objects_2.asm`
+- local pokegold references: `home/map_objects.asm`, `engine/overworld/map_objects_2.asm`, `engine/overworld/player_object.asm`, `constants/map_object_constants.asm`
+
+Implemented fix:
+
+- `tools/debugger/content_state.py`
+  - adds `object_time_context` for selected object-event materializations.
+  - for selected hour-range objects, patches `hHours` to the range start when `hHours` resolves.
+  - preserves `proof_status=state_patch_planned`; this is a generated state precondition, not proof that `CheckObjectTime` or `LoadObjectMasks` executed.
+- `tools/debugger/catalog.py`
+  - updates generation/fuzzing audit wording to include selected object-event hour-filter `hHours` preconditions.
+  - keeps runtime-verified multi-object occupancy, time-of-day masks, companion time filtering, custom large-object generation, arbitrary event-engine states, script VM, graphics, and audio blockers.
+
+Regression strengthened:
+
+- `test_content_state_materializes_selected_object_event_hour_state`
+  - failed before the patch because selected hour-gated object events had no time-state context or `hHours` patch.
+  - now verifies `object_time_context`, `hHours=9`, selected `wMap2ObjectHour1/Hour2`, object mask state, watch symbols, and runtime-route sinks.
+
+Validation after patch:
+
+- Focused selected object-event hour regression: passed.
+- Focused map/content materialization cluster: 13 passed.
+- Full debugger suite: 488 passed.
+- `python -m tools.debugger audit`: passed as a command, still `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- `py_compile` passed for touched debugger Python files.
+- `git diff --check` passed for touched debugger Python files and this review doc.
+
+Remaining priority from Pro:
+
+- This closes a selected-object hour-filter state-generation slice, but it remains planned state evidence until replay/watch/trace observes `GetObjectTimeMask`, `CheckObjectTime`, `LoadObjectMasks`, and `TryObjectEvent` consuming the same state. It still does not prove time-of-day mask selection, companion time-filter compatibility, runtime object occupancy, custom non-2x2 large-object geometry, arbitrary event-engine states, full script VM behavior under arbitrary context, pixel-accurate graphics/UI mirrors, full audio playback/mixer mirrors, emulator-backed reverse execution, or subsystem-complete causal proof. The whole-ROM proof-substrate goal remains incomplete.
+
+## Implementation Note - Companion Hour-Filter Object Occupancy
+
+Date: 2026-05-20.
+
+Context:
+
+- `InitializeVisibleSprites` allocates object structs only after `LoadObjectMasks` has built `wObjectMasks`.
+- `LoadObjectMasks` calls `CheckObjectTime` for every copied `wMapNObject` row, not just the selected target.
+- The previous selected-hour patch set `hHours` for the target object but still let a visible companion with an incompatible hour range consume an object struct, which shifted the selected target into the wrong `wObjectNStruct`.
+
+Web references used:
+
+- upstream pokecrystal object-mask/time loader reference: `https://raw.githubusercontent.com/pret/pokecrystal/master/engine/overworld/map_objects_2.asm`
+- upstream pokecrystal player-object/object-loader reference: `https://raw.githubusercontent.com/pret/pokecrystal/master/engine/overworld/player_object.asm`
+- local pokegold references: `home/map_objects.asm`, `engine/overworld/map_objects_2.asm`, `engine/overworld/player_object.asm`, `constants/map_object_constants.asm`
+
+Implemented fix:
+
+- `tools/debugger/content_state.py`
+  - applies the selected hour context to source-order companion allocation.
+  - leaves hour-incompatible companions as copied map rows with `StructID=$ff` and `wObjectMasks+N=$ff` instead of synthesizing a live object struct.
+  - records `time_filtered_object_count`, `time_filtered_objects`, the companion `object_time_context`, and the selected time context.
+  - preserves `proof_status=state_patch_planned`; replay/watch/trace must still prove the loader consumed this state.
+- `tools/debugger/catalog.py`
+  - updates audit wording to include selected-hour companion hour filtering.
+  - keeps time-of-day masks, runtime-verified occupancy, custom large-object generation, arbitrary event-engine states, script VM, graphics, and audio blockers.
+
+Regression strengthened:
+
+- `test_content_state_skips_time_filtered_companion_object_structs`
+  - failed before the patch because a night-only visible companion consumed `wObject1Struct` even when the selected generated state set `hHours=9` for a day-only target.
+  - now verifies the night-only row remains `wMap2Object*` with `StructID=$ff`, `wObjectMasks+2=$ff`, the selected day object gets `wMap3ObjectStructID=1`, and `wObject2Struct` is not watched.
+
+Validation after patch:
+
+- Focused companion time-filter regression: passed.
+- Focused object-event materialization cluster: 9 passed.
+- Focused map/content materialization cluster: 14 passed.
+- Full debugger suite: 489 passed.
+- `python -m tools.debugger audit`: passed as a command, still `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- `py_compile` passed for touched debugger Python files.
+- `git diff --check` passed for touched debugger Python files and this review doc.
+
+Remaining priority from Pro:
+
+- This closes selected-hour-compatible companion pruning, but it remains planned state evidence until replay/watch/trace observes `LoadObjectMasks`, `CheckObjectTime`, `InitializeVisibleSprites`, and `TryObjectEvent` consuming the same state. It still does not prove time-of-day mask selection, arbitrary time contexts across all companions, runtime object occupancy, custom non-2x2 large-object geometry, arbitrary event-engine states, full script VM behavior under arbitrary context, pixel-accurate graphics/UI mirrors, full audio playback/mixer mirrors, emulator-backed reverse execution, or subsystem-complete causal proof. The whole-ROM proof-substrate goal remains incomplete.
