@@ -5,6 +5,12 @@ import json
 from pathlib import Path
 from typing import Any
 
+from .address_boundary import (
+    reverse_query_address_boundary_addresses,
+    reverse_query_address_boundary_evidence,
+    reverse_query_address_boundary_fields,
+    reverse_query_address_boundary_summary,
+)
 from .catalog import ROOT
 from .coverage import load_traces
 from .ranking import (
@@ -268,28 +274,31 @@ def collect_report_timeline(data: dict[str, Any], *, source: str, out: list[dict
             checkpoint = result.get("checkpoint_validation") if isinstance(result.get("checkpoint_validation"), dict) else {}
             span = result.get("bounded_effect_span_validation") if isinstance(result.get("bounded_effect_span_validation"), dict) else {}
             proof = reverse_query_result_proof_status(result, report=data)
-            out.append(
-                timeline_event(
-                    lane="reverse",
-                    event_type="reverse_query",
-                    title=f"Reverse query {label}",
-                    source=source,
-                    detail=(
-                        f"writer={result.get('last_writer_pc', '')} "
-                        f"validation={validation.get('status', '')} "
-                        f"checkpoint={checkpoint.get('status', '')} "
-                        f"effect_span={span.get('status', '')} "
-                        f"routes={len(dict_items(result.get('validation_routes')))}"
-                    ).strip(),
-                    symbols=string_items(target.get("symbol")),
-                    addresses=unique_list([
-                        str(target.get("evidence") or ""),
-                        str(result.get("matched_address") or ""),
-                    ]),
-                    severity=66,
-                    proof_status=proof,
-                )
+            boundary_summary = reverse_query_address_boundary_summary(result)
+            event = timeline_event(
+                lane="reverse",
+                event_type="reverse_query",
+                title=f"Reverse query {label}",
+                source=source,
+                detail=(
+                    f"writer={result.get('last_writer_pc', '')} "
+                    f"validation={validation.get('status', '')} "
+                    f"checkpoint={checkpoint.get('status', '')} "
+                    f"effect_span={span.get('status', '')} "
+                    f"routes={len(dict_items(result.get('validation_routes')))} "
+                    f"{boundary_summary}"
+                ).strip(),
+                symbols=string_items(target.get("symbol")),
+                addresses=unique_list([
+                    *reverse_query_address_boundary_addresses(result),
+                    str(target.get("evidence") or ""),
+                    str(result.get("matched_address") or ""),
+                ]),
+                severity=66,
+                proof_status=proof,
             )
+            event.update(reverse_query_address_boundary_fields(result))
+            out.append(event)
     elif kind == "unified_debugger_replay_plan":
         watch_report = data.get("watch_report")
         if isinstance(watch_report, dict):
@@ -1592,7 +1601,29 @@ def collect_graph(*, loaded_reports: list[dict[str, Any]]) -> dict[str, list[dic
                 label = str(target.get("label") or target.get("symbol") or result.get("matched_address") or "target")
                 query_id = f"{source}:reverse_query:{label}:{result.get('last_writer_seq', '')}"
                 result_proof = reverse_query_result_proof_status(result, report=data)
-                add_graph_node(nodes, query_id, f"Reverse query {label}", "reverse_query", source, result_proof)
+                address_boundary_fields = reverse_query_address_boundary_fields(result)
+                address_boundary_evidence = reverse_query_address_boundary_evidence(result)
+                query_node = add_graph_node(nodes, query_id, f"Reverse query {label}", "reverse_query", source, result_proof)
+                if query_node is not None:
+                    query_node.update(address_boundary_fields)
+                    query_node["addresses"] = unique_list(
+                        [
+                            *string_items(query_node.get("addresses")),
+                            *reverse_query_address_boundary_addresses(result),
+                        ]
+                    )
+                    query_node["evidence"] = unique_list(
+                        [*string_items(query_node.get("evidence")), *address_boundary_evidence]
+                    )
+                collect_reverse_query_address_boundary_graph(
+                    result,
+                    source=source,
+                    label=label,
+                    query_id=query_id,
+                    query_proof=result_proof,
+                    nodes=nodes,
+                    edges=edges,
+                )
                 checkpoint = result.get("checkpoint_validation") if isinstance(result.get("checkpoint_validation"), dict) else {}
                 if checkpoint.get("checkpointed"):
                     checkpoint_data = checkpoint.get("checkpoint") if isinstance(checkpoint.get("checkpoint"), dict) else {}
@@ -2615,6 +2646,72 @@ def walk_trace(data: Any, *, out: list[dict[str, str]]) -> None:
             walk_trace(item, out=out)
 
 
+def collect_reverse_query_address_boundary_graph(
+    result: dict[str, Any],
+    *,
+    source: str,
+    label: str,
+    query_id: str,
+    query_proof: str,
+    nodes: dict[str, dict[str, Any]],
+    edges: dict[tuple[str, str, str], dict[str, Any]],
+) -> None:
+    requested = result.get("requested_static_address") if isinstance(result.get("requested_static_address"), dict) else {}
+    observed = result.get("observed_runtime_address") if isinstance(result.get("observed_runtime_address"), dict) else {}
+    boundary = result.get("address_fact_boundary") if isinstance(result.get("address_fact_boundary"), dict) else {}
+    if not requested and not observed and not boundary:
+        return
+    boundary_fields = reverse_query_address_boundary_fields(result)
+    boundary_evidence = reverse_query_address_boundary_evidence(result)
+    requested_key = str(requested.get("address_key") or requested.get("address") or "")
+    observed_key = str(observed.get("address_key") or observed.get("address") or "")
+    requested_id = ""
+    observed_id = ""
+    if requested_key:
+        requested_id = f"{source}:requested_static_address:{label}:{requested_key}"
+        requested_node = add_graph_node(
+            nodes,
+            requested_id,
+            f"Requested static address {requested_key}",
+            "requested_static_address",
+            source,
+            "planned_only",
+        )
+        if requested_node is not None:
+            requested_node.update(boundary_fields)
+            requested_node["addresses"] = unique_list([*string_items(requested_node.get("addresses")), requested_key])
+            requested_node["evidence"] = unique_list([*string_items(requested_node.get("evidence")), *boundary_evidence])
+        edge = add_graph_edge(edges, query_id, requested_id, "requests_static_address", source, "planned_only")
+        if edge is not None:
+            edge.update(boundary_fields)
+            edge["evidence"] = unique_list([*string_items(edge.get("evidence")), *boundary_evidence])
+    if observed_key:
+        observed_id = f"{source}:observed_runtime_address:{label}:{observed_key}:{result.get('last_writer_seq', '')}"
+        observed_proof = normalize_proof_status(observed.get("proof_status")) or query_proof
+        observed_node = add_graph_node(
+            nodes,
+            observed_id,
+            f"Observed runtime address {observed_key}",
+            "observed_runtime_address",
+            source,
+            observed_proof,
+        )
+        if observed_node is not None:
+            observed_node.update(boundary_fields)
+            observed_node["addresses"] = unique_list([*string_items(observed_node.get("addresses")), observed_key])
+            observed_node["evidence"] = unique_list([*string_items(observed_node.get("evidence")), *boundary_evidence])
+        edge = add_graph_edge(edges, observed_id, query_id, "supplies_runtime_address", source, observed_proof)
+        if edge is not None:
+            edge.update(boundary_fields)
+            edge["evidence"] = unique_list([*string_items(edge.get("evidence")), *boundary_evidence])
+    if requested_id and observed_id:
+        boundary_proof = query_proof if boundary.get("exact_runtime_address_proven") is True else "planned_only"
+        edge = add_graph_edge(edges, requested_id, observed_id, "address_fact_boundary", source, boundary_proof)
+        if edge is not None:
+            edge.update(boundary_fields)
+            edge["evidence"] = unique_list([*string_items(edge.get("evidence")), *boundary_evidence])
+
+
 def add_graph_node(
     nodes: dict[str, dict[str, Any]],
     node_id: str,
@@ -2625,9 +2722,9 @@ def add_graph_node(
     *,
     proof_status_by_source: Any = None,
     proof_summary: Any = None,
-) -> None:
+) -> dict[str, Any] | None:
     if not node_id:
-        return
+        return None
     safe = safe_id(node_id)
     node = nodes.setdefault(
         safe,
@@ -2661,6 +2758,7 @@ def add_graph_node(
     node["proof_min"] = summary["min"]
     node["proof_max"] = summary["max"]
     node["proof_badge"] = graph_node_proof_badge(summary)
+    return node
 
 
 def add_graph_edge(
@@ -2670,9 +2768,9 @@ def add_graph_edge(
     relation: str,
     source: str,
     proof_status: Any = None,
-) -> None:
+) -> dict[str, Any] | None:
     if not source_id or not target_id:
-        return
+        return None
     from_id = safe_id(source_id)
     to_id = safe_id(target_id)
     key = (from_id, to_id, relation)
@@ -2688,6 +2786,7 @@ def add_graph_edge(
     proof = normalize_proof_status(proof_status)
     if proof:
         edge["proof_status"] = strongest_proof_status([edge.get("proof_status"), proof])
+    return edge
 
 
 def normalize_proof_status(value: Any) -> str:

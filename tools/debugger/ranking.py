@@ -4,6 +4,11 @@ import json
 from pathlib import Path
 from typing import Any
 
+from .address_boundary import (
+    reverse_query_address_boundary_addresses,
+    reverse_query_address_boundary_evidence,
+    reverse_query_address_boundary_fields,
+)
 from .catalog import ROOT
 from .evidence import merge_evidence_atoms
 from .workflow import command_address_arg
@@ -2201,6 +2206,7 @@ def reverse_query_findings(report: dict[str, Any], *, source: str) -> list[dict[
         label = str(target.get("label") or target.get("symbol") or result.get("matched_address") or "target")
         last_writer = result.get("last_writer") if isinstance(result.get("last_writer"), dict) else {}
         result_evidence = string_items(result.get("evidence"))
+        address_boundary_evidence = reverse_query_address_boundary_evidence(result)
         value_source_evidence = [
             item
             for item in result_evidence
@@ -2221,38 +2227,40 @@ def reverse_query_findings(report: dict[str, Any], *, source: str) -> list[dict[
             for item in result_evidence
             if item.startswith("pre_state_")
         ]
-        out.append(
-            finding(
-                finding_type="reverse_query",
-                title=f"Reverse query: {label} last written at {result.get('last_writer_pc', '')}",
-                source=source,
-                severity=SEVERITY_BASE["reverse_query"] + min(8, int(result.get("write_count", 0) or 0)),
-                confidence=0.88 if last_writer else 0.68,
-                evidence=[
-                    *result_evidence[:6],
-                    *value_source_evidence[:2],
-                    *observed_memory_evidence[:4],
-                    *register_evidence[:4],
-                    *pre_state_evidence[:4],
-                    f"validation={result.get('validation', {}).get('status', '')}" if isinstance(result.get("validation"), dict) else "",
-                    f"history={len(dict_items(result.get('history')))}",
-                ],
-                next_actions=reverse_query_next_actions(result, report),
-                related_symbols=string_items(target.get("symbol")),
-                related_addresses=unique_string_items(
-                    [
-                        str(target.get("evidence") or ""),
-                        str(result.get("matched_address") or ""),
-                        *[
-                            str(item.get("address", ""))
-                            for item in dict_items(result.get("history"))
-                            if item.get("address")
-                        ],
-                    ]
-                ),
-                proof_status=str(result.get("proof_status") or report.get("proof_status") or "planned_only"),
-            )
+        finding_item = finding(
+            finding_type="reverse_query",
+            title=f"Reverse query: {label} last written at {result.get('last_writer_pc', '')}",
+            source=source,
+            severity=SEVERITY_BASE["reverse_query"] + min(8, int(result.get("write_count", 0) or 0)),
+            confidence=0.88 if last_writer else 0.68,
+            evidence=[
+                *address_boundary_evidence,
+                *result_evidence[:6],
+                *value_source_evidence[:2],
+                *observed_memory_evidence[:4],
+                *register_evidence[:4],
+                *pre_state_evidence[:4],
+                f"validation={result.get('validation', {}).get('status', '')}" if isinstance(result.get("validation"), dict) else "",
+                f"history={len(dict_items(result.get('history')))}",
+            ],
+            next_actions=reverse_query_next_actions(result, report),
+            related_symbols=string_items(target.get("symbol")),
+            related_addresses=unique_string_items(
+                [
+                    *reverse_query_address_boundary_addresses(result),
+                    str(target.get("evidence") or ""),
+                    str(result.get("matched_address") or ""),
+                    *[
+                        str(item.get("address", ""))
+                        for item in dict_items(result.get("history"))
+                        if item.get("address")
+                    ],
+                ]
+            ),
+            proof_status=str(result.get("proof_status") or report.get("proof_status") or "planned_only"),
         )
+        finding_item.update(reverse_query_address_boundary_fields(result))
+        out.append(finding_item)
     return out
 
 

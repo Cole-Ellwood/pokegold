@@ -10,6 +10,7 @@ from .address import (
     command_address_text,
     parse_address_spec,
 )
+from .address_boundary import reverse_query_address_boundary_evidence
 from .catalog import ROOT
 from .evidence import evidence_atom, merge_evidence_atoms
 from .effect_trace import build_effect_trace_report
@@ -287,6 +288,10 @@ def reverse_query_results_for_report(
             "evidence": result_evidence(target=target, entry=entry, last_write=last_write),
             "commands": result_commands(target),
         }
+        result["evidence"] = [
+            *reverse_query_address_boundary_evidence(result),
+            *result["evidence"],
+        ]
         if hardware_gate.get("requires_runtime_event") and not hardware_gate.get("runtime_event_present"):
             result["proof_downgrade_reason"] = hardware_gate.get("reason", "")
             result["evidence"].extend(hardware_gate_evidence(hardware_gate))
@@ -342,6 +347,21 @@ def reverse_query_result_evidence_atoms(result: dict[str, Any]) -> list[dict[str
                 "bank_match": result.get("bank_match", ""),
                 "ambiguous_address_keys": string_items(result.get("ambiguous_address_keys")),
                 "proof_downgrade_reason": result.get("proof_downgrade_reason", ""),
+                "requested_static_address_key": (
+                    result.get("requested_static_address", {}).get("address_key", "")
+                    if isinstance(result.get("requested_static_address"), dict)
+                    else ""
+                ),
+                "observed_runtime_address_key": (
+                    result.get("observed_runtime_address", {}).get("address_key", "")
+                    if isinstance(result.get("observed_runtime_address"), dict)
+                    else ""
+                ),
+                "exact_runtime_address_proven": (
+                    result.get("address_fact_boundary", {}).get("exact_runtime_address_proven", False)
+                    if isinstance(result.get("address_fact_boundary"), dict)
+                    else False
+                ),
             },
             validation={
                 "status": validation.get("status", ""),

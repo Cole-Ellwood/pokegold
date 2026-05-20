@@ -13966,6 +13966,12 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
                 symbols_path="test.sym",
                 root=root,
             )
+            (root / "reverse_query.json").write_text(json.dumps(report), encoding="utf-8")
+            ranked = rank_findings(reports=("reverse_query.json",), root=root)
+            impact = build_impact_report(reports=("reverse_query.json",), root=root)
+            static_report = build_static_report(reports=("reverse_query.json",), root=root)
+            graph = build_causal_graph_report(reports=("reverse_query.json",), root=root)
+            visualization = build_visualization_report(reports=("reverse_query.json",), root=root)
 
         self.assertTrue(report["valid"])
         self.assertEqual(report["result_count"], 2)
@@ -14014,6 +14020,42 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
                 "ambiguous_address_keys=wramx:01:D141,wramx:02:D141",
                 result["evidence"],
             )
+            self.assertIn("requested_static_address=wram:--:D141", result["evidence"])
+            self.assertIn("observed_runtime_address=" + result["matched_address_key"], result["evidence"])
+            self.assertIn("address_boundary_exact_runtime_address_proven=false", result["evidence"])
+
+        reverse_finding = next(item for item in ranked["findings"] if item["type"] == "reverse_query")
+        reverse_item = next(item for item in impact["items"] if item["type"] == "reverse_query")
+        graph_node_kinds = {node["kind"] for node in graph["nodes"]}
+        graph_boundary_edges = [edge for edge in graph["edges"] if edge["relation"] == "address_fact_boundary"]
+        visual_event = next(event for event in visualization["timeline"] if event["event_type"] == "reverse_query")
+        visual_node_types = {node["type"] for node in visualization["graph"]["nodes"]}
+        visual_boundary_edges = [edge for edge in visualization["graph"]["edges"] if edge["relation"] == "address_fact_boundary"]
+
+        self.assertEqual(reverse_finding["proof_status"], "planned_only")
+        self.assertEqual(reverse_finding["address_fact_boundary"]["kind"], "requested_static_vs_observed_runtime_address")
+        self.assertFalse(reverse_finding["address_fact_boundary"]["exact_runtime_address_proven"])
+        self.assertIn("requested_static_address=wram:--:D141", reverse_finding["evidence"])
+        self.assertIn("address_boundary_exact_runtime_address_proven=false", reverse_finding["evidence"])
+        self.assertIn("wramx:01:D141", reverse_finding["related_addresses"])
+        self.assertIn("wramx:02:D141", reverse_finding["related_addresses"])
+        self.assertEqual(reverse_item["proof_status"], "planned_only")
+        self.assertEqual(reverse_item["address_fact_boundary"]["kind"], "requested_static_vs_observed_runtime_address")
+        self.assertIn("address_boundary_exact_runtime_address_proven=false", reverse_item["evidence"])
+        self.assertIn("address_fact_boundary", static_report["content"])
+        self.assertIn("address_boundary_exact_runtime_address_proven=false", static_report["content"])
+        self.assertIn("requested_static_address", graph_node_kinds)
+        self.assertIn("observed_runtime_address", graph_node_kinds)
+        self.assertTrue(graph_boundary_edges)
+        self.assertTrue(all(edge["proof_status"] == "planned_only" for edge in graph_boundary_edges))
+        self.assertTrue(all(edge["address_fact_boundary"]["exact_runtime_address_proven"] is False for edge in graph_boundary_edges))
+        self.assertEqual(visual_event["proof_status"], "planned_only")
+        self.assertEqual(visual_event["address_fact_boundary"]["kind"], "requested_static_vs_observed_runtime_address")
+        self.assertIn("address_boundary_exact_runtime_address_proven=false", visual_event["detail"])
+        self.assertIn("requested_static_address", visual_node_types)
+        self.assertIn("observed_runtime_address", visual_node_types)
+        self.assertTrue(visual_boundary_edges)
+        self.assertTrue(all(edge["proof_status"] == "planned_only" for edge in visual_boundary_edges))
 
     def test_reverse_query_write_count_without_history_is_not_instruction_observed(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

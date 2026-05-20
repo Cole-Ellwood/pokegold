@@ -4,6 +4,7 @@ import re
 from pathlib import Path
 from typing import Any
 
+from .address_boundary import reverse_query_address_boundary_fields
 from .catalog import ROOT, triage_request
 from .evidence import merge_evidence_atoms
 from .ranking import (
@@ -624,7 +625,7 @@ def item_from_finding(finding: dict[str, Any]) -> dict[str, Any]:
         ]
     )
     related = extract_related(text)
-    return impact_item(
+    item = impact_item(
         item_type=str(finding.get("type", "ranked_finding")),
         title=normalized_finding_title(finding),
         source=str(finding.get("source", "rank")),
@@ -642,6 +643,8 @@ def item_from_finding(finding: dict[str, Any]) -> dict[str, Any]:
         proof_status=str(finding.get("proof_status", "")),
         evidence_atoms=finding.get("evidence_atoms"),
     )
+    item.update(reverse_query_address_boundary_fields(finding))
+    return item
 
 
 def items_from_report(report: dict[str, Any], *, source: str) -> list[dict[str, Any]]:

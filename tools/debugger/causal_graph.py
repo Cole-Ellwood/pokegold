@@ -3,6 +3,11 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from .address_boundary import (
+    reverse_query_address_boundary_addresses,
+    reverse_query_address_boundary_evidence,
+    reverse_query_address_boundary_fields,
+)
 from .catalog import ROOT
 from .coverage import load_traces
 from .dynamic_taint import trace_records
@@ -176,9 +181,9 @@ class GraphBuilder:
         seq: Any = None,
         confidence: Any = None,
         score: Any = None,
-    ) -> None:
+    ) -> dict[str, Any] | None:
         if not from_id or not to_id or not relation:
-            return
+            return None
         key = (from_id, to_id, relation, source)
         edge = self.edges.setdefault(
             key,
@@ -202,6 +207,7 @@ class GraphBuilder:
             edge["confidence"] = confidence
         if score is not None:
             edge["score"] = score
+        return edge
 
     def add_report(self, loaded: dict[str, Any]) -> None:
         data = loaded.get("data") if isinstance(loaded.get("data"), dict) else {}
@@ -786,24 +792,38 @@ class GraphBuilder:
             target_id = target_node_id(label)
             query_id = node_id("reverse_query", f"{source}:{label}:{result.get('last_writer_seq', '')}")
             proof = reverse_query_result_proof_status(result)
-            self.add_node(
+            address_boundary_evidence = reverse_query_address_boundary_evidence(result)
+            address_boundary_fields = reverse_query_address_boundary_fields(result)
+            query_node = self.add_node(
                 query_id,
                 f"Reverse query {label}",
                 "reverse_query",
                 source=source,
                 proof_status=proof,
+                addresses=reverse_query_address_boundary_addresses(result),
+                evidence=address_boundary_evidence,
                 evidence_atoms=result.get("evidence_atoms"),
             )
+            query_node.update(address_boundary_fields)
             self.add_node(target_id, label, target_kind(label), source=source, proof_status=proof)
             self.add_edge(report_id, query_id, "contains", source=source)
-            self.add_edge(
+            target_edge = self.add_edge(
                 query_id,
                 target_id,
                 "answers_target",
                 source=source,
                 proof_status=proof,
-                evidence=result.get("evidence"),
+                evidence=[*address_boundary_evidence, *string_items(result.get("evidence"))],
                 evidence_atoms=result.get("evidence_atoms"),
+            )
+            if target_edge is not None:
+                target_edge.update(address_boundary_fields)
+            self.add_reverse_query_address_boundary(
+                result,
+                source=source,
+                query_id=query_id,
+                label=label,
+                proof=proof,
             )
             last_writer = result.get("last_writer") if isinstance(result.get("last_writer"), dict) else {}
             writer_label = str(last_writer.get("pc_label") or result.get("last_writer_pc") or "")
@@ -846,16 +866,18 @@ class GraphBuilder:
                     evidence_atoms=last_writer.get("evidence_atoms"),
                     seq=result.get("last_writer_seq"),
                 )
-                self.add_edge(
+                last_write_edge = self.add_edge(
                     write_id,
                     query_id,
                     "answers_last_write",
                     source=source,
                     proof_status=proof,
-                    evidence=result.get("evidence"),
+                    evidence=[*address_boundary_evidence, *string_items(result.get("evidence"))],
                     evidence_atoms=result.get("evidence_atoms"),
                     seq=result.get("last_writer_seq"),
                 )
+                if last_write_edge is not None:
+                    last_write_edge.update(address_boundary_fields)
                 for operand in dict_items(last_writer.get("source_operands")):
                     operand_id = source_operand_node_id(operand)
                     self.add_node(
@@ -911,6 +933,87 @@ class GraphBuilder:
                     output_id = node_id("planned_output", produced)
                     self.add_node(output_id, produced, "planned_output", source=source, proof_status="planned_only")
                     self.add_edge(route_id, output_id, "produces_report", source=source, proof_status="planned_only")
+
+    def add_reverse_query_address_boundary(
+        self,
+        result: dict[str, Any],
+        *,
+        source: str,
+        query_id: str,
+        label: str,
+        proof: str,
+    ) -> None:
+        requested = result.get("requested_static_address") if isinstance(result.get("requested_static_address"), dict) else {}
+        observed = result.get("observed_runtime_address") if isinstance(result.get("observed_runtime_address"), dict) else {}
+        boundary = result.get("address_fact_boundary") if isinstance(result.get("address_fact_boundary"), dict) else {}
+        if not requested and not observed and not boundary:
+            return
+        boundary_evidence = reverse_query_address_boundary_evidence(result)
+        boundary_fields = reverse_query_address_boundary_fields(result)
+        requested_key = str(requested.get("address_key") or requested.get("address") or "")
+        observed_key = str(observed.get("address_key") or observed.get("address") or "")
+        requested_id = ""
+        observed_id = ""
+        if requested_key:
+            requested_id = node_id("requested_static_address", f"{source}:{label}:{requested_key}")
+            requested_node = self.add_node(
+                requested_id,
+                f"Requested static address {requested_key}",
+                "requested_static_address",
+                source=source,
+                proof_status="planned_only",
+                addresses=[requested_key],
+                evidence=boundary_evidence,
+            )
+            requested_node.update(boundary_fields)
+            edge = self.add_edge(
+                query_id,
+                requested_id,
+                "requests_static_address",
+                source=source,
+                proof_status="planned_only",
+                evidence=boundary_evidence,
+            )
+            if edge is not None:
+                edge.update(boundary_fields)
+        if observed_key:
+            observed_id = node_id(
+                "observed_runtime_address",
+                f"{source}:{label}:{observed_key}:{result.get('last_writer_seq', '')}",
+            )
+            observed_proof = normalize_proof_status(observed.get("proof_status")) or proof
+            observed_node = self.add_node(
+                observed_id,
+                f"Observed runtime address {observed_key}",
+                "observed_runtime_address",
+                source=source,
+                proof_status=observed_proof,
+                addresses=[observed_key],
+                evidence=boundary_evidence,
+            )
+            observed_node.update(boundary_fields)
+            edge = self.add_edge(
+                observed_id,
+                query_id,
+                "supplies_runtime_address",
+                source=source,
+                proof_status=observed_proof,
+                evidence=boundary_evidence,
+            )
+            if edge is not None:
+                edge.update(boundary_fields)
+        if requested_id and observed_id:
+            boundary_proof = proof if boundary.get("exact_runtime_address_proven") is True else "planned_only"
+            edge = self.add_edge(
+                requested_id,
+                observed_id,
+                "address_fact_boundary",
+                source=source,
+                proof_status=boundary_proof,
+                evidence=boundary_evidence,
+            )
+            if edge is not None:
+                edge.update(boundary_fields)
 
     def add_causal_explanation(self, data: dict[str, Any], *, source: str, report_id: str) -> None:
         for path in dict_items(data.get("paths")):

@@ -5106,3 +5106,52 @@ Remaining priority from Pro:
 - Runtime bank proof still depends on supplied trace bank-state evidence or inferred bank writes in the captured window.
 - Full script VM behavior, arbitrary event-engine state generation, pixel/audio hardware mirrors, and dedicated Pan Docs runtime hardware cases remain incomplete.
 - The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
+
+## Implementation Note - Reverse Query Boundary Propagation
+
+Date: 2026-05-20.
+
+Context:
+
+- The reverse-query report now distinguishes requested/static address facts from observed/runtime address facts.
+- Downstream consumers still formed ranked findings, impact items, causal graph nodes/edges, visualization events, and static report evidence primarily from older `matched_address`, `match_precision`, and `bank_match` strings.
+- That made a UI/report boundary capable of flattening "requested D141" into "observed banked writer" unless a reader opened the raw reverse-query result.
+
+References used:
+
+- Local source truth: `tools/debugger/reverse_query.py`, `tools/debugger/ranking.py`, `tools/debugger/impact.py`, `tools/debugger/causal_graph.py`, `tools/debugger/visualization.py`, and `tools/debugger/reporting.py`.
+
+Implemented fix:
+
+- `tools/debugger/address_boundary.py`
+  - adds shared formatting for reverse-query address-boundary fields, evidence strings, related address keys, and timeline summaries.
+- `tools/debugger/reverse_query.py`
+  - prepends boundary evidence to each result and includes requested/observed address keys plus `exact_runtime_address_proven` in evidence atoms.
+- `tools/debugger/ranking.py`
+  - carries `requested_static_address`, `observed_runtime_address`, and `address_fact_boundary` into reverse-query findings.
+  - puts boundary evidence first so static reports and humans see proof caveats before older writer evidence.
+- `tools/debugger/impact.py`
+  - preserves reverse-query boundary fields when converting ranked findings into impact items.
+- `tools/debugger/causal_graph.py`
+  - adds requested-static-address and observed-runtime-address nodes.
+  - adds `requests_static_address`, `supplies_runtime_address`, and `address_fact_boundary` edges.
+  - keeps the boundary edge `planned_only` unless `exact_runtime_address_proven=true`.
+- `tools/debugger/visualization.py`
+  - carries boundary fields into timeline events and graph nodes/edges.
+  - adds visible requested/observed address nodes and boundary relations in the visualization graph.
+- `tools/debugger/tests/test_catalog.py`
+  - extends the ambiguous WRAM bank-collision reverse-query regression through ranked findings, impact items, static reports, causal graph, and visualization surfaces.
+
+Validation after patch:
+
+- Focused reverse-query boundary propagation regressions: 9 passed.
+- `python -m py_compile tools\debugger\address_boundary.py tools\debugger\reverse_query.py tools\debugger\ranking.py tools\debugger\impact.py tools\debugger\causal_graph.py tools\debugger\visualization.py tools\debugger\tests\test_catalog.py`: passed.
+- Full debugger unittest discovery: 505 passed.
+- `python -m tools.debugger audit`: passed as a command, still `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- `git diff --check`: passed; it only reported existing CRLF normalization warnings in unrelated dirty files.
+
+Remaining priority from Pro:
+
+- This closes a UI/report flattening path for requested/static versus observed/runtime address facts, but it does not add new runtime hardware events, a non-mutating PyBoy event recorder, or side-effect-complete reverse execution.
+- Full script VM behavior, arbitrary event-engine runtime generation, pixel/audio hardware mirrors, dedicated Pan Docs runtime hardware cases, and subsystem-complete causal proof remain incomplete.
+- The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
