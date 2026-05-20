@@ -623,9 +623,7 @@ def hardware_event_stream_proof_declared(report: dict[str, Any]) -> bool:
         return True
     if str(report.get("source_kind", "")) == "non_mutating_event_recorder":
         return True
-    evidence_source = str(report.get("evidence_source") or "")
-    evidence_status = str(report.get("evidence_status") or "")
-    return evidence_source in EXPLICIT_HARDWARE_EVIDENCE or evidence_status in EXPLICIT_HARDWARE_EVIDENCE
+    return False
 
 
 def explicit_case_item_proof(case: dict[str, Any], item: dict[str, Any]) -> dict[str, Any]:

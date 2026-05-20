@@ -5848,3 +5848,44 @@ Remaining priority:
 - This closes a report/UI overclaim path for future non-mutating event recorder output, but it does not implement the recorder itself.
 - TIMA A/B-cycle cases, OAM DMA timing/RAM-access restriction, CGB GP/HBlank VRAM DMA timing, interrupt-entry stack writes, boot-ROM end state, and LCD dot/mode timing remain unproven without exact runtime case evidence.
 - The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
+
+## Implementation Note - Hardware Event Stream Recorder Identity Boundary
+
+Date: 2026-05-20.
+
+Context:
+
+- The previous event-stream patch separated observed events from case-complete proof, but `hardware_regression.py` still treated generic evidence-source labels as enough to make a hardware-event-stream report proof-grade.
+- For this proof path, the identity boundary needs to be narrower: generic `runtime_hardware_event_observed` labels can describe runtime facts, but Pan Docs case proof from an event stream requires the stream to identify as a non-mutating recorder.
+
+Primary references used:
+
+- PyBoy public docs for `tick()` and hook-based fine control: `https://docs.pyboy.dk/`
+- Pan Docs OAM DMA timing and bus restrictions: `https://gbdev.io/pandocs/OAM_DMA_Transfer.html`
+- Pan Docs CGB GP/HBlank VRAM DMA timing model: `https://gbdev.io/pandocs/CGB_Registers.html#ff51ff55--hdma1hdma5-vram-dma`
+- Pan Docs TIMA overflow A/B-cycle behavior: `https://gbdev.io/pandocs/Timer_Obscure_Behaviour.html`
+
+Implemented fix:
+
+- `tools/debugger/hardware_regression.py`
+  - now accepts `unified_debugger_hardware_event_stream` evidence as proof-grade only when the report declares `non_mutating_event_recorder=true`, `recorder_kind=non_mutating_event_recorder`, or `source_kind=non_mutating_event_recorder`.
+  - no longer lets generic evidence-source/status labels satisfy the event-stream recorder identity requirement.
+- `tools/debugger/catalog.py`
+  - updates the replay/localization blocker wording to require proof-grade recorder identity in addition to `hardware_behavior_proven=true` and required event types.
+- `tools/debugger/tests/test_catalog.py`
+  - verifies a complete interrupt event stream with only generic runtime evidence labels remains runtime-observed, not case proof.
+
+Validation after patch:
+
+- Focused recorder-identity regressions: 5 passed.
+- Full debugger unittest discovery: 527 passed.
+- `PYTHONPYCACHEPREFIX=.local\tmp\pycompile_cache python -m py_compile tools\debugger\hardware_regression.py tools\debugger\catalog.py tools\debugger\tests\test_catalog.py`: passed.
+- `python -m tools.debugger hardware-regression-gate --execute`: passed as a command, still intentionally `passed=False`; reported 0/10 cases passing, 10 blocking cases, 4 runtime-observed emulator cases, 0 hardware-proof cases, and 10 static-blocker cases.
+- `python -m tools.debugger audit`: passed as a command, still `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- `git diff --check`: passed with unrelated CRLF warnings from pre-existing dirty files outside this debugger slice.
+
+Remaining priority:
+
+- This closes another proof-promotion path for future recorder reports, but it still does not implement the PyBoy fork or non-mutating CPU/DMA/interrupt event recorder.
+- The hardware gate remains blocked on exact runtime evidence for TIMA, OAM DMA, CGB VRAM DMA, interrupt entry, boot ROM end state, and LCD dot/mode timing.
+- The whole-ROM proof-substrate goal remains incomplete and `ready=False`.

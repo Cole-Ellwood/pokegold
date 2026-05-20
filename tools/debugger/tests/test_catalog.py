@@ -155,6 +155,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("observed emulator/runtime facts", gap_text)
         self.assertIn("downstream proof_scope values", gap_text)
         self.assertIn("non-mutating hardware event-stream evidence", gap_text)
+        self.assertIn("proof-grade recorder identity", gap_text)
         self.assertIn("required case-specific hardware event types", gap_text)
         self.assertIn("hardware_proven_case_ids/incomplete_case_event_ids", gap_text)
         self.assertIn("requested-static versus observed-runtime address fact boundaries", gap_text)
@@ -534,6 +535,36 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
             "kind": "unified_debugger_hardware_event_stream",
             "valid": True,
             "hardware_behavior_proven": True,
+            "events": [
+                {"hardware_regression_case_id": "interrupt_entry_stack_writes_current_pc", "event_type": "interrupt_enter"},
+                {"hardware_regression_case_id": "interrupt_entry_stack_writes_current_pc", "event_type": "stack_write"},
+            ],
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "events.json").write_text(json.dumps(event_stream), encoding="utf-8")
+            report = build_hardware_regression_report(reports=("events.json",), root=root)
+
+        case = next(case for case in report["cases"] if case["id"] == "interrupt_entry_stack_writes_current_pc")
+        event_evidence = next(
+            item
+            for item in case["evidence"]
+            if item["class"] == "hardware_event_stream_result"
+        )
+
+        self.assertEqual(case["gate_status"], "runtime_observed_not_case_complete")
+        self.assertFalse(case["hardware_passed"])
+        self.assertEqual(case["hardware_proof_fact_count"], 0)
+        self.assertEqual(event_evidence["status"], "event_stream_without_hardware_proof")
+
+    def test_hardware_regression_gate_rejects_event_stream_with_generic_evidence_label(self) -> None:
+        event_stream = {
+            "kind": "unified_debugger_hardware_event_stream",
+            "valid": True,
+            "hardware_behavior_proven": True,
+            "hardware_event_observed": True,
+            "evidence_source": "runtime_hardware_event_observed",
+            "evidence_status": "runtime_hardware_event_observed",
             "events": [
                 {"hardware_regression_case_id": "interrupt_entry_stack_writes_current_pc", "event_type": "interrupt_enter"},
                 {"hardware_regression_case_id": "interrupt_entry_stack_writes_current_pc", "event_type": "stack_write"},
