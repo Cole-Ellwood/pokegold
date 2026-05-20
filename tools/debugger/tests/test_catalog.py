@@ -26000,6 +26000,59 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(mismatch["failed_rom_mirror_count"], 1)
         self.assertIn("first_mismatch=", "\n".join(mismatch["rom_mirrors"][0]["evidence"]))
 
+    def test_content_mirror_compares_base_stats_record_to_positional_rom_bytes(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "constants").mkdir()
+            (root / "data" / "pokemon" / "base_stats").mkdir(parents=True)
+            (root / "constants" / "unit_constants.asm").write_text(
+                "DEF UNITMON EQU 2\n"
+                "DEF BASE_DATA_SIZE EQU 6\n"
+                "DEF GENDER_F12_5 EQU 12 percent + 1\n",
+                encoding="utf-8",
+            )
+            source = root / "data" / "pokemon" / "base_stats" / "unitmon.asm"
+            source.write_text(
+                "db UNITMON ; 2\n"
+                "db 1, 2\n"
+                "db GENDER_F12_5\n"
+                "dw NULL\n",
+                encoding="utf-8",
+            )
+            rom = bytearray(0x8000)
+            offset = 0x4000 + 6
+            rom[offset:offset + 6] = bytes([2, 1, 2, 31, 0, 0])
+            (root / "test.gbc").write_bytes(bytes(rom))
+            (root / "test.sym").write_text("01:4000 BaseData\n", encoding="utf-8")
+
+            report = build_content_mirror_report(
+                source_files=("data/pokemon/base_stats/unitmon.asm",),
+                rom_path="test.gbc",
+                symbols_path="test.sym",
+                root=root,
+            )
+            rom[offset + 4] = 1
+            (root / "test.gbc").write_bytes(bytes(rom))
+            mismatch = build_content_mirror_report(
+                source_files=("data/pokemon/base_stats/unitmon.asm",),
+                rom_path="test.gbc",
+                symbols_path="test.sym",
+                root=root,
+            )
+
+        mirror = next(item for item in report["rom_mirrors"] if item["type"] == "base_stats_rom_bytes")
+        failed = next(item for item in mismatch["rom_mirrors"] if item["type"] == "base_stats_rom_bytes")
+
+        self.assertEqual(report["rom_mirror_count"], 1)
+        self.assertEqual(report["passed_rom_mirror_count"], 1)
+        self.assertEqual(mirror["status"], "passed")
+        self.assertIn("species=UNITMON", "\n".join(mirror["evidence"]))
+        self.assertIn("rom_offset=$004006", "\n".join(mirror["evidence"]))
+        self.assertFalse(mismatch["passed"])
+        self.assertEqual(mismatch["failed_rom_mirror_count"], 1)
+        self.assertEqual(failed["status"], "failed")
+        self.assertIn("first_mismatch=4", "\n".join(failed["evidence"]))
+
     def test_content_mirror_compares_script_commands_to_rom_bytes(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
