@@ -4524,3 +4524,361 @@ Validation after patch:
 Remaining priority from Pro:
 
 - This closes selected-hour-compatible companion pruning, but it remains planned state evidence until replay/watch/trace observes `LoadObjectMasks`, `CheckObjectTime`, `InitializeVisibleSprites`, and `TryObjectEvent` consuming the same state. It still does not prove time-of-day mask selection, arbitrary time contexts across all companions, runtime object occupancy, custom non-2x2 large-object geometry, arbitrary event-engine states, full script VM behavior under arbitrary context, pixel-accurate graphics/UI mirrors, full audio playback/mixer mirrors, emulator-backed reverse execution, or subsystem-complete causal proof. The whole-ROM proof-substrate goal remains incomplete.
+
+## Implementation Note - Time-of-Day Object-Event Mask Materialization
+
+Date: 2026-05-20.
+
+Context:
+
+- `CheckObjectTime` treats `MAPOBJECT_HOUR_1 == -1` as the time-of-day mask path: it reads `MAPOBJECT_TIMEOFDAY`, indexes the local `.TimesOfDay` table by `wTimeOfDay`, and requires the selected `MORN`/`DAY`/`NITE` bit to overlap the object mask.
+- The previous materializer could resolve numeric hour ranges but treated `-1, DAY` or `-1, NITE` object events as unmaterialized, so time-of-day-gated map objects stayed blocked or could be miscounted during source-order companion occupancy.
+- The parser also did not model the local `shift_const` macro, so `MORN`, `DAY`, `NITE`, and their `_F` index constants were unavailable to content-state generation.
+
+References used:
+
+- RGBDS language docs for `DEF`, `EQU`, variables, macros, and shift expressions: `https://rgbds.gbdev.io/docs/v0.8.0/rgbasm.5`
+- Pan Docs memory map for WRAM/HRAM address-space background: `https://gbdev.io/pandocs/Memory_Map.html`
+- upstream pret object-time reference consulted: `https://raw.githubusercontent.com/pret/pokecrystal/master/home/map_objects.asm`
+- local pokegold source truth: `macros/const.asm`, `home/map_objects.asm`, `constants/ram_constants.asm`, `constants/misc_constants.asm`, `engine/rtc/rtc.asm`
+
+Implemented fix:
+
+- `tools/debugger/content_state.py`
+  - loads `constants/misc_constants.asm` for `MORN_HOUR`, `DAY_HOUR`, and `NITE_HOUR`.
+  - extends `parse_constant_source` to model `const_def`, `const`, `shift_const`, `const_skip`, and `const_next` closely enough for the object-event constant files.
+  - adds `object_time_context` support for time-of-day masks with `timeofday_mask`, `required_timeofday`, `required_timeofday_value`, and coherent `required_hour`.
+  - patches `wTimeOfDay` and `hHours` when the symbols resolve, preserving `proof_status=state_patch_planned`.
+  - applies selected time-of-day state to companion filtering so incompatible visible companions become masked map rows instead of generated object structs.
+- `tools/debugger/catalog.py`
+  - updates the generation/fuzzing gap text to credit selected time-of-day mask preconditions and companion filtering.
+  - keeps `ready=False` blockers for runtime-verified occupancy, arbitrary time contexts beyond selected source masks, script VM, graphics, audio, reverse execution, and causal proof.
+
+Regression strengthened:
+
+- `test_content_state_materializes_selected_object_event_timeofday_mask_state`
+  - failed before the patch because `DAY` was unresolved and no `wTimeOfDay`/coherent `hHours` patch existed.
+  - now verifies `timeofday_mask=2`, `required_timeofday=DAY`, `required_timeofday_value=1`, `required_hour=10`, selected row hour fields, watch symbols, and runtime-route sinks.
+- `test_content_state_skips_timeofday_mask_filtered_companion_object_structs`
+  - failed before the patch because `NITE`/`DAY` masks could not drive companion visibility.
+  - now verifies a NITE companion is copied as a masked row with `StructID=$ff`, while the selected DAY object keeps `wObject1Struct`.
+
+Validation after patch:
+
+- Focused time-of-day regressions: 2 passed.
+- Focused object-event materialization cluster: 7 passed.
+- Full debugger unittest discovery: 491 passed.
+- `python -m tools.debugger audit`: passed as a command, still `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- `python -m py_compile tools/debugger/content_state.py tools/debugger/catalog.py tools/debugger/tests/test_catalog.py`: passed.
+- `git diff --check`: passed; it only reported existing CRLF normalization warnings in unrelated dirty files.
+
+Remaining priority from Pro:
+
+- This closes bounded selected-source time-of-day mask state generation and selected-time companion pruning, but it remains planned state evidence until replay/watch/trace observes `LoadObjectMasks`, `CheckObjectTime`, `InitializeVisibleSprites`, and `TryObjectEvent` consuming the same state. It still does not prove runtime object occupancy, arbitrary time contexts beyond selected source masks, custom non-2x2 large-object geometry, arbitrary event-engine states, full script VM behavior under arbitrary context, pixel-accurate graphics/UI mirrors, full audio playback/mixer mirrors, emulator-backed reverse execution, or subsystem-complete causal proof. The whole-ROM proof-substrate goal remains incomplete.
+
+## Implementation Note - Custom BIG_OBJECT Movement Candidate Generation
+
+Date: 2026-05-20.
+
+Context:
+
+- `WillObjectIntersectBigObject` in local source uses a fixed `cp 2` width and `cp 2` height check. There is no current engine support for arbitrary non-2x2 object geometry.
+- The real remaining generation gap was narrower: `content_scenarios.py` only recognized three hardcoded big-doll movement tokens when deciding whether to emit all eight large-object surface candidates.
+- A custom romhack movement row with `BIG_OBJECT` in `data/sprites/map_objects.asm` would be materialized as a big object by `content_state.py`, but it would not receive the full source-scenario candidate set.
+
+References used:
+
+- RGBDS macro/expression docs: `https://rgbds.gbdev.io/docs/v1.0.1/rgbasm.5`
+- upstream pret sprite movement data reference: `https://raw.githubusercontent.com/pret/pokecrystal/master/data/sprites/map_objects.asm`
+- local pokegold source truth: `data/sprites/map_objects.asm`, `constants/map_object_constants.asm`, `engine/overworld/npc_movement.asm`
+
+Implemented fix:
+
+- `tools/debugger/content_scenarios.py`
+  - passes the active repo root through source scenario generation so object-event preconditions can inspect the current movement-data table.
+  - discovers custom large-object movement tokens by reading `data/sprites/map_objects.asm` comment labels and `BIG_OBJECT` palette-flag rows.
+  - keeps the historical known big-doll fallback tokens for compatibility.
+  - adds `large_object_collision_model=WillObjectIntersectBigObject_fixed_2x2` and `large_object_size_source=engine/overworld/npc_movement.asm:WillObjectIntersectBigObject` to generated values.
+- `tools/debugger/content_state.py`
+  - carries the fixed 2x2 collision model and source through player/object event contexts.
+  - keeps known limits focused on runtime proof of `WillObjectIntersectBigObject`, not nonexistent arbitrary-size geometry.
+- `tools/debugger/catalog.py`
+  - updates the generation/fuzzing audit wording to credit custom `BIG_OBJECT` movement candidate generation.
+  - keeps runtime-observed big-object collision/occupancy as an open blocker.
+
+Regression strengthened:
+
+- `test_content_scenarios_materialize_custom_big_object_movement_candidates`
+  - failed before the patch because `SPRITEMOVEDATA_CUSTOM_STATUE` was not in the hardcoded token set, so no large-object surface preconditions were emitted.
+  - now verifies 13 map-position preconditions, the `right_bottom` surface candidate, fixed collision-model metadata, `OBJECT_PALETTE=BIG_OBJECT`, and ready planned-state materialization.
+
+Validation after patch:
+
+- Focused custom/large-object/counter-tile regressions: 3 passed.
+- Focused time-of-day regressions from the prior patch: 2 passed.
+- Full debugger unittest discovery: 492 passed.
+- `python -m tools.debugger audit`: passed as a command, still `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- `python -m py_compile tools/debugger/content_scenarios.py tools/debugger/content_state.py tools/debugger/catalog.py tools/debugger/tests/test_catalog.py`: passed.
+- `git diff --check`: passed; it only reported existing CRLF normalization warnings in unrelated dirty files.
+
+Remaining priority from Pro:
+
+- This closes source-discovered custom `BIG_OBJECT` candidate generation for the engine's fixed 2x2 collision path, but it remains planned state evidence until replay/watch/trace observes `IsNPCAtCoord` and `WillObjectIntersectBigObject` consuming the same object struct and player/facing state. It still does not prove runtime object occupancy, arbitrary time contexts beyond selected source masks, arbitrary event-engine states, full script VM behavior under arbitrary context, pixel-accurate graphics/UI mirrors, full audio playback/mixer mirrors, emulator-backed reverse execution, or subsystem-complete causal proof. The whole-ROM proof-substrate goal remains incomplete.
+
+## Implementation Note - Source Time-of-Day Candidate Generation
+
+Date: 2026-05-20.
+
+Context:
+
+- `CheckObjectTime` accepts a time-of-day object when `wTimeOfDay` indexes `.TimesOfDay` to a bit that overlaps `MAPOBJECT_TIMEOFDAY`.
+- The previous time-of-day materializer chose one valid time for the selected object, which made `ANYTIME` or multi-bit masks materially under-covered: MORN/DAY/NITE were source-legal, but only the first choice became a generated state.
+- Planned state still must not be mistaken for runtime proof. These candidates only prepare source-declared contexts; replay/watch/trace must still observe `CheckObjectTime` and the object loader consuming them.
+
+References used:
+
+- upstream pret `CheckObjectTime` reference: `https://raw.githubusercontent.com/pret/pokecrystal/master/home/map_objects.asm`
+- upstream pret RTC time-of-day reference: `https://raw.githubusercontent.com/pret/pokecrystal/master/engine/rtc/rtc.asm`
+- local pokegold source truth: `home/map_objects.asm`, `engine/rtc/rtc.asm`, `constants/ram_constants.asm`, `constants/misc_constants.asm`
+
+Implemented fix:
+
+- `tools/debugger/content_scenarios.py`
+  - emits `map_object_event_timeofday_morn/day/nite_position` preconditions for source masks that explicitly include `MORN`, `DAY`, `NITE`, or `ANYTIME`.
+  - adds `selected_timeofday`, `selected_hour`, and `selected_time_context_source=source_timeofday_mask_candidate` to those precondition values.
+  - adds `wTimeOfDay` and `hHours` to the generated watch symbols for those candidates.
+- `tools/debugger/content_state.py`
+  - honors requested `selected_timeofday` and `selected_hour` values when materializing object-event time context.
+  - patches coherent `wTimeOfDay`/`hHours` values for the requested source time.
+  - rejects requested time contexts that are not allowed by the object mask/range instead of silently falling back to the first valid time.
+- `tools/debugger/catalog.py`
+  - updates the generation/fuzzing gap text to credit source-declared MORN/DAY/NITE candidate preconditions.
+  - keeps arbitrary hour/runtime time contexts and runtime-verified occupancy as blockers.
+
+Regression strengthened:
+
+- `test_content_scenarios_materialize_all_timeofday_mask_candidates`
+  - failed before the patch because an `ANYTIME` object had no separate MORN/DAY/NITE precondition ids.
+  - now verifies the three candidate ids exist, the NITE candidate materializes `required_timeofday=NITE`, `required_timeofday_value=2`, `required_hour=18`, `wTimeOfDay=2`, `hHours=18`, and both time watches.
+
+Validation after patch:
+
+- Focused time-context/custom-object regressions: 4 passed.
+- Full debugger unittest discovery: 493 passed.
+- `python -m tools.debugger audit`: passed as a command, still `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- `python -m py_compile tools/debugger/content_scenarios.py tools/debugger/content_state.py tools/debugger/catalog.py tools/debugger/tests/test_catalog.py`: passed.
+- `git diff --check`: passed; it only reported existing CRLF normalization warnings in unrelated dirty files.
+
+Remaining priority from Pro:
+
+- This closes generated state coverage for source-declared MORN/DAY/NITE mask candidates, but it remains planned state evidence until replay/watch/trace observes `GetObjectTimeMask`, `CheckObjectTime`, `LoadObjectMasks`, `InitializeVisibleSprites`, and `TryObjectEvent` consuming the same state. It still does not prove runtime object occupancy, arbitrary hour/runtime time contexts beyond generated source candidates, arbitrary event-engine states, full script VM behavior under arbitrary context, pixel-accurate graphics/UI mirrors, full audio playback/mixer mirrors, emulator-backed reverse execution, or subsystem-complete causal proof. The whole-ROM proof-substrate goal remains incomplete.
+
+## Implementation Note - PyBoy Hook-Order Matrix and Hardware Proof Gates
+
+Date: 2026-05-20.
+
+Context:
+
+- The `whole_rom_replay_localization` blocker was aimed at the wrong abstraction level: PyBoy hooks are debugger-style opcode-replacement breakpoints, not a clean non-mutating before/after instruction event stream.
+- The new hook-order probe must therefore be treated as ground-truth about the current PyBoy hook mechanism only. It can say what the callback observes around specific opcodes and side effects, but it cannot prove hardware-accurate CPU/PPU/APU timing.
+- Last-writer, dynamic-taint, visual, and audio reports must not promote emulator-observed facts into hardware proof when the evidence path crosses DMA, timer overflow, LCD mode edges, interrupt entry, framebuffer digests, or sound-buffer digests.
+
+References used:
+
+- Supervisor Deep Research report: `C:\Users\lolno\Downloads\codex-supervisor\consults\2026-05-19T2327-response.md`
+- PyBoy API docs for `hook_register`: `https://docs.pyboy.dk/`
+- Pan Docs OAM DMA timing and bus conflict model: `https://gbdev.io/pandocs/OAM_DMA_Transfer.html`
+- Pan Docs CGB VRAM DMA length/mode/timing model: `https://gbdev.io/pandocs/CGB_Registers.html#ff51ff55--hdma1hdma5-vram-dma`
+- Pan Docs TIMA overflow A/B-cycle behavior: `https://gbdev.io/pandocs/Timer_Obscure_Behaviour.html`
+- Pan Docs interrupt-entry stack/PC behavior: `https://gbdev.io/pandocs/Interrupts.html`
+- Pan Docs rendering/dot-mode timing model: `https://gbdev.io/pandocs/Rendering.html`
+
+Implemented fix:
+
+- `tools/debugger/hook_order.py`
+  - upgrades `python -m tools.debugger hook-order-probe --execute` from a narrow RMW check into a seven-scenario micro-ROM matrix: `INC [HL]`, `PUSH rr`, taken `CALL`, taken `RST`, interrupt entry, FF46 OAM DMA write, and CGB FF55 VRAM DMA write.
+  - emits machine-readable rows with `observes_pre_fetch`, `observes_pre_write`, `observes_post_write`, `observes_post_interrupt`, and `observes_post_dma`.
+  - labels the mechanism as `pyboy_opcode_replacement_breakpoint`, with `non_mutating_instruction_events=false` and `pre_fetch_runtime_observed=false`.
+- `tools/debugger/effect_trace.py`
+  - fences modeled DMA, TIMA overflow, interrupt-entry, and LCD-mode-edge side effects behind explicit runtime hardware-event evidence.
+  - downgrades matching side-effect items to `planned_only` with `hardware_proof_gate=explicit_runtime_event_missing` when the chain has only modeled/emulator-adjacent evidence.
+- `tools/debugger/reverse_query.py`
+  - prevents reverse-query last-writer results from promoting to strong proof when a required hardware event is missing.
+  - carries the downgrade reason into report evidence atoms and normalized history.
+- `tools/debugger/dynamic_taint.py`
+  - preserves effect-level proof downgrades through sink matching so taint attribution cannot silently promote gated hardware writes.
+- `tools/debugger/visual_snapshot.py`, `tools/debugger/audio_snapshot.py`, `tools/debugger/ranking.py`, and `tools/debugger/__main__.py`
+  - label PyBoy framebuffer and sound-buffer digests as emulator-observed evidence with `hardware_behavior_proven=false`.
+  - keep UI/report wording visibly distinct from hardware graphics/audio proof.
+- `tools/debugger/catalog.py`
+  - updates the audit wording for `whole_rom_replay_localization` and content mirrors so the capability bucket advertises the new guardrails without claiming side-effect-complete reverse execution.
+- `tools/debugger/tests/test_catalog.py`
+  - locks the hook-order matrix shape, hardware side-effect proof gate, dynamic-taint downgrade propagation, and visual/audio evidence-class boundaries.
+
+Validation after patch:
+
+- `python -m tools.debugger hook-order-probe --execute --json-out .local\tmp\hook_order_matrix.json`
+  - passed: 7 scenarios, 14 observations, 14/14 rows matched expected callback-state observations.
+  - observed no pre-fetch/non-mutating instruction event source; observed post-write/post-interrupt/post-DMA callback state only where the current PyBoy mechanism exposes it.
+- Focused hook/reverse-query/effect-trace/visual/audio regressions: 8 passed.
+- Broader validation is still required after this note: full debugger unittest discovery, `python -m tools.debugger audit`, py_compile for touched Python, and `git diff --check`.
+
+Remaining priority from Pro:
+
+- Build the Pan Docs regression suite for TIMA overflow A/B-cycle cases, OAM DMA RAM-access/timing cases, GP/HBlank VRAM DMA timing cases, interrupt-entry stack writes, and boot-ROM end-state cases.
+- Treat a small PyBoy fork or instrumentation layer as the strategic direction: add a non-mutating event recorder inside `cpu.fetch_and_execute()` and `cpu.handle_interrupt()` with explicit events such as `before_execute`, `after_execute`, `interrupt_enter`, `stack_write`, `oam_dma_copy`, and `hdma_block_copy`.
+- Keep `ready=False` until a fresh audit proves every capability bucket complete with zero blocking gaps and no remaining unproven claims around side-effect-complete reverse execution, subsystem-boundary causal proof, arbitrary runtime/event generation, or script/graphics/audio/map behavioral mirrors.
+
+## Implementation Note - Pan Docs Hardware Regression Gate
+
+Date: 2026-05-20.
+
+Context:
+
+- The hook-order matrix gives a useful self-check for PyBoy's debugger hook boundary, but it is not a Pan Docs hardware-conformance suite.
+- The proof substrate now needs an explicit fence for the exact hardware side effects named in the top blocker: TIMA overflow A/B-cycle writes, OAM DMA timing and bus restrictions, CGB GP/HBlank VRAM DMA timing, interrupt-entry stack writes, boot-ROM end state, and LCD dot/mode edges.
+- Hook observations, modeled effect traces, framebuffer digests, and sound-buffer digests must remain emulator-observed evidence unless an evidence chain contains explicit runtime hardware events or dedicated case-pass results for the exact hardware case.
+
+References used:
+
+- Supervisor Deep Research report: `C:\Users\lolno\Downloads\codex-supervisor\consults\2026-05-19T2327-response.md`
+- Pan Docs OAM DMA timing and bus conflict model: `https://gbdev.io/pandocs/OAM_DMA_Transfer.html`
+- Pan Docs TIMA overflow A/B-cycle behavior: `https://gbdev.io/pandocs/Timer_Obscure_Behaviour.html`
+- Pan Docs CGB VRAM DMA length/mode/timing model: `https://gbdev.io/pandocs/CGB_Registers.html#ff51ff55--hdma1hdma5-vram-dma`
+- Pan Docs interrupt-entry stack/PC behavior: `https://gbdev.io/pandocs/Interrupts.html`
+- Pan Docs boot/power-up state model: `https://gbdev.io/pandocs/Power_Up_Sequence.html`
+- Pan Docs rendering/dot-mode timing model: `https://gbdev.io/pandocs/Rendering.html`
+- PyBoy hook API docs for opcode-replacement hooks: `https://docs.pyboy.dk/`
+- Local installed PyBoy source inspected: `C:\Users\lolno\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pyboy\pyboy.py`, `core\mb.py`, `core\lcd.py`, and `core\timer.py`.
+
+Implemented fix:
+
+- `tools/debugger/hardware_regression.py`
+  - adds `build_hardware_regression_report()` and a strict `unified_debugger_hardware_regression_gate` report.
+  - defines ten Pan Docs-backed cases: three TIMA overflow A/B-cycle write cases, OAM DMA 160 M-cycle timing, DMG OAM DMA RAM-access restriction, CGB GP DMA CPU-halt timing, CGB HBlank DMA block timing, interrupt-entry stack writes, boot-ROM plus Pokemon Gold end state, and LCD dot/mode edge timing.
+  - scans the installed PyBoy source for known fidelity gaps: opcode-replacement hook model, instant OAM DMA TODO, GP DMA cycle TODO, fixed HBlank DMA cycle cost with double-speed TODO, fixed LCD mode buckets, and direct TIMA reload without Pan Docs A/B-cycle semantics.
+  - accepts explicit dedicated case-pass evidence only when a matching case carries `hardware_behavior_proven=true` or equivalent passed case metadata.
+  - records hook-order matrix rows as `emulator_observed_not_hardware`, so FF46/FF55/interrupt observations can inform investigation without satisfying hardware proof.
+- `tools/debugger/__main__.py`
+  - adds `python -m tools.debugger hardware-regression-gate`.
+  - supports `--execute` to attach a fresh hook-order probe, `--report` for external evidence, `--bootrom` and `--rom` paths, `--strict`, `--json`, and `--json-out`.
+- `tools/debugger/catalog.py`
+  - makes `python -m tools.debugger hardware-regression-gate --execute` the first command for the `whole_rom_replay_localization` blocker.
+  - updates the gap text to state that the Pan Docs gate remains blocking unless each side-effect case has explicit runtime hardware-event or dedicated case-pass evidence.
+- `tools/debugger/tests/test_catalog.py`
+  - locks the case list, hook-matrix downgrade behavior, explicit-case-pass behavior, strict CLI exit behavior, JSON output, and audit/catalog wording.
+
+Validation after patch:
+
+- `python -m py_compile tools\debugger\hardware_regression.py tools\debugger\__main__.py tools\debugger\__init__.py tools\debugger\catalog.py tools\debugger\tests\test_catalog.py`: passed.
+- `python -m tools.debugger hardware-regression-gate --execute --json-out .local\tmp\hardware_regression_gate.json`: passed as a command, intentionally `passed=False`; reported 0/10 cases proven, 10 blocking cases, 6 PyBoy source gaps, and status counts `blocked_pyboy_fidelity_gap=5`, `emulator_observed_not_hardware=4`, `missing_artifact=1`.
+- Full debugger unittest discovery: 498 passed.
+- `python -m tools.debugger audit`: passed as a command, still `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+
+Remaining priority from Pro:
+
+- The Pan Docs gate is now present, but every case is still unproven hardware behavior until real runtime hardware-event evidence or dedicated Pan Docs regression case results exist.
+- The boot-ROM case still needs a real boot ROM artifact plus Pokemon Gold execution evidence; file presence alone is deliberately insufficient.
+- Stock PyBoy still has the local source gaps named above, so a small fork or instrumentation layer remains the likely strategic direction: record non-mutating `before_execute`, `after_execute`, `interrupt_enter`, `stack_write`, `oam_dma_copy`, and `hdma_block_copy` events from inside CPU/interrupt/DMA execution instead of treating opcode-replacement hooks as proof-grade attribution.
+- The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
+
+## Implementation Note - Causal Graph Proof Boundary Preservation
+
+Date: 2026-05-20.
+
+Context:
+
+- `effect_trace.py` now marks hardware-modeled DMA/timer/interrupt/LCD side-effect items as `proof_status=planned_only` when the chain lacks explicit runtime hardware-event evidence.
+- `effect_trace.py` also marks bank-qualified watch hits as `target_match_proof_status=planned_only` when a requested banked target only matched by 16-bit bus address without runtime bank state.
+- The causal graph and visualization consumers still need to preserve those downgrades. Otherwise a downstream report can make a planned hardware model or bank-unverified target hit look like instruction-observed proof.
+
+References used:
+
+- Pan Docs memory map for bank-qualified versus unbanked address spaces: `https://gbdev.io/pandocs/Memory_Map.html`
+- Pan Docs OAM DMA timing and bus conflict model: `https://gbdev.io/pandocs/OAM_DMA_Transfer.html`
+- Local source truth: `tools/debugger/address.py`, `tools/debugger/effect_trace.py`, `tools/debugger/causal_graph.py`, `tools/debugger/visualization.py`
+
+Implemented fix:
+
+- `tools/debugger/causal_graph.py`
+  - derives graph effect-node and effect-edge proof from each effect item's `proof_status`, `hardware_event_required`, and `hardware_proof_gate` instead of hardcoding `instruction_observed`.
+  - derives watch-hit node and edge proof from `target_match_proof_status`, `proof_status`, and bank-match status.
+  - keeps observed instruction nodes as `instruction_observed`, while the claimed effect/target relationship can remain `planned_only`.
+  - includes proof-gate and downgrade fields in effect evidence without dropping existing transfer-blocked evidence.
+- `tools/debugger/effect_trace.py`
+  - carries aggregate `proof_status` and `proof_statuses` through `side_effect_index` entries and side-effect triggers.
+- `tools/debugger/visualization.py`
+  - shows planned-only proof on bank-unverified effect watch-hit timeline events.
+  - preserves effect proof on visualization graph nodes/edges for post-value, register-write, and unmodeled-effect surfaces.
+  - derives side-effect timeline proof from the side-effect index instead of silently omitting it.
+- `tools/debugger/catalog.py`
+  - updates the `causal_provenance` blocker to credit the new proof-preserving consumer boundary while keeping the bucket partial.
+
+Regression strengthened:
+
+- `test_effect_trace_banked_symbol_watch_requires_runtime_bank_match`
+  - now verifies causal graph watch-hit nodes/edges and the visualization timeline keep bank-unverified target matches at `planned_only`.
+- `test_causal_graph_preserves_hardware_gated_effect_proof_status`
+  - covers an FF46 OAM DMA trigger where modeled DMA copy reads/writes are present but hardware runtime events are missing.
+  - verifies the graph keeps those DMA copy effect nodes and address edges at `planned_only`.
+- `test_capability_report_keeps_whole_rom_goal_incomplete`
+  - now checks the audit text advertises this boundary without claiming causal proof completion.
+
+Validation after patch:
+
+- Focused causal/effect/visual proof-boundary regressions: 4 passed.
+- Full debugger unittest discovery: 499 passed.
+- `python -m py_compile tools\debugger\causal_graph.py tools\debugger\effect_trace.py tools\debugger\visualization.py tools\debugger\catalog.py tools\debugger\tests\test_catalog.py`: passed.
+- `python -m tools.debugger audit`: passed as a command, still `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- `git diff --check`: passed; it only reported existing CRLF normalization warnings in unrelated dirty files.
+
+Remaining priority from Pro:
+
+- This prevents a concrete downstream proof promotion path, but it does not replace subsystem dynamic proof.
+- Whole-ROM causal proof still needs a non-mutating event source for hardware side effects, stronger checkpointed reverse execution, and runtime evidence for script/graphics/audio/map behavioral mirrors.
+- The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
+
+## Implementation Note - Visual/Audio Snapshot Mirror Proof Boundary
+
+Date: 2026-05-20.
+
+Context:
+
+- Visual and audio snapshot reports already carried `hardware_behavior_proven=false`, but the expectation-to-compare bridge could still turn a passed framebuffer or audio-sample expectation into `proof_status=mirror_passed`.
+- That blurred the UI/report distinction between "PyBoy framebuffer or sound buffer digest observed" and "hardware PPU/APU behavior proven."
+- The proof substrate must let these expectations pass as emulator-observed evidence without promoting them to hardware behavioral mirrors.
+
+References used:
+
+- PyBoy screen API docs: `https://docs.pyboy.dk/api/screen.html`
+- PyBoy sound API docs: `https://docs.pyboy.dk/api/sound.html`
+- Local source truth: `tools/debugger/visual_snapshot.py`, `tools/debugger/audio_snapshot.py`, `tools/debugger/expect.py`, `tools/debugger/mirrors.py`, `tools/debugger/ranking.py`, and `tools/debugger/impact.py`
+
+Implemented fix:
+
+- `tools/debugger/expect.py`
+  - carries `evidence_class`, `hardware_behavior_proven`, `hardware_proof_status`, and `hardware_proof_boundary` into visual framebuffer and audio snapshot expectation evidence.
+  - keeps framebuffer/audio expectations passable when executed PyBoy snapshot evidence exists, but exposes that the evidence is emulator-observed and not hardware-proven.
+- `tools/debugger/mirrors.py`
+  - carries the same hardware-boundary fields through runtime mirror evidence records for visual/audio snapshots.
+  - adds `mirror_status`, `actual_proof_status`, `expected_proof_status`, `runtime_proof_statuses`, `hardware_proof_statuses`, `emulator_observed_runtime_kinds`, and `proof_downgrade_reason` to snapshot-backed dynamic expectation mirror matches.
+  - keeps `status=passed` and `mirror_status=passed` for satisfied expectations, but downgrades snapshot-backed proof from `mirror_passed` to `runtime_observed` when the evidence chain only proves PyBoy framebuffer/audio snapshot state.
+- `tools/debugger/catalog.py`
+  - updates the `differential_mirrors` gap text to say snapshot-backed compare/expectation matches stay `runtime_observed` with `hardware_proof_statuses=not_proven` rather than promoting to hardware mirror proof.
+- `tools/debugger/tests/test_catalog.py`
+  - strengthens visual/audio expectation and compare tests so expectation pass, compare match, ranking, and impact all preserve the hardware-not-proven boundary.
+
+Validation after patch:
+
+- Focused visual/audio expectation boundary regressions: 6 passed.
+- Sampled snapshot and adjacent output-mirror proof-boundary regressions: 9 passed.
+- Full debugger unittest discovery: 499 passed.
+- `python -m py_compile tools\debugger\expect.py tools\debugger\mirrors.py tools\debugger\catalog.py tools\debugger\tests\test_catalog.py`: passed.
+- `python -m tools.debugger audit`: passed as a command, still `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- `git diff --check`: passed; it only reported existing CRLF normalization warnings in unrelated dirty files.
+
+Remaining priority from Pro:
+
+- This closes another UI/report proof-promotion leak, but it does not implement pixel-accurate graphics/UI behavior, full audio playback/mixer behavior, arbitrary script/event runtime generation, side-effect-complete reverse execution, or subsystem-complete causal proof.
+- PyBoy framebuffer and sound-buffer evidence remains useful runtime observation, not hardware proof.
+- The whole-ROM proof-substrate goal remains incomplete and `ready=False`.

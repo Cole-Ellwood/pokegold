@@ -3183,6 +3183,11 @@ def visual_snapshot_findings(report: dict[str, Any], *, source: str) -> list[dic
                 f"ppu_mode={lcd_state.get('ppu_mode')}" if lcd_state else "",
                 f"screen_frames={report.get('screen_frame_count', 0)}",
                 f"framebuffer={report.get('framebuffer', '')}" if report.get("framebuffer") else "",
+                f"evidence_class={report.get('evidence_class', '')}" if report.get("evidence_class") else "",
+                f"hardware_behavior_proven={report.get('hardware_behavior_proven')}"
+                if "hardware_behavior_proven" in report
+                else "",
+                f"hardware_proof_status={report.get('hardware_proof_status', '')}" if report.get("hardware_proof_status") else "",
                 f"save_state={report.get('save_state', '')}",
                 snapshot_proof_downgrade_evidence(
                     report,
@@ -3228,6 +3233,11 @@ def audio_snapshot_findings(report: dict[str, Any], *, source: str) -> list[dict
                 f"channel_enable_mask={audio_state.get('channel_enable_mask')}" if audio_state else "",
                 f"sound_buffer_source={sound_buffer.get('source')}" if sound_buffer else "",
                 f"sound_buffer_sha256={sound_buffer.get('sha256')}" if sound_buffer else "",
+                f"evidence_class={report.get('evidence_class', '')}" if report.get("evidence_class") else "",
+                f"hardware_behavior_proven={report.get('hardware_behavior_proven')}"
+                if "hardware_behavior_proven" in report
+                else "",
+                f"hardware_proof_status={report.get('hardware_proof_status', '')}" if report.get("hardware_proof_status") else "",
                 f"save_state={report.get('save_state', '')}",
                 snapshot_proof_downgrade_evidence(
                     report,

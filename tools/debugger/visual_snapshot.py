@@ -81,6 +81,10 @@ def build_visual_snapshot_report(
         "root": str(root),
         "valid": not errors,
         "proof_status": "runtime_observed" if execute and not errors else "planned_only",
+        "evidence_class": "pyboy_visual_snapshot",
+        "hardware_behavior_proven": False,
+        "hardware_proof_status": "not_proven",
+        "hardware_proof_boundary": "PyBoy framebuffer and memory digests are emulator-observed, not hardware PPU proof.",
         "executed": execute and not errors,
         "rom": display_path(rom, root=root),
         "rom_sha256": sha256_file(rom) if rom.exists() else "",
@@ -183,6 +187,8 @@ def execute_visual_snapshot(
             "lcd_state": lcd_state(io_registers),
         }
         if screen_frame:
+            screen_frame["evidence_class"] = "pyboy_framebuffer_digest"
+            screen_frame["hardware_behavior_proven"] = False
             snapshot.update(
                 {
                     "screen_frame_count": 1,

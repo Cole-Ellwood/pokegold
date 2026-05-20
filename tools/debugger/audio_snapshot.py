@@ -93,6 +93,10 @@ def build_audio_snapshot_report(
         "root": str(root),
         "valid": not errors,
         "proof_status": "runtime_observed" if execute and not errors else "planned_only",
+        "evidence_class": "pyboy_audio_snapshot",
+        "hardware_behavior_proven": False,
+        "hardware_proof_status": "not_proven",
+        "hardware_proof_boundary": "PyBoy APU register and sound-buffer digests are emulator-observed, not hardware audio proof.",
         "executed": execute and not errors,
         "rom": display_path(rom, root=root),
         "rom_sha256": sha256_file(rom) if rom.exists() else "",
@@ -256,6 +260,8 @@ def sound_buffer_snapshot(pyboy: Any) -> dict[str, Any]:
     shape = buffer_shape(buffer_value)
     out: dict[str, Any] = {
         "kind": "pyboy_sound_buffer",
+        "evidence_class": "pyboy_sound_buffer_digest",
+        "hardware_behavior_proven": False,
         "source": source,
         "sample_rate": int_or_zero(getattr(sound, "sample_rate", 0)),
         "raw_buffer_head": int_or_zero(getattr(sound, "raw_buffer_head", 0)),

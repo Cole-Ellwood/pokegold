@@ -710,8 +710,10 @@ def collect_visual_snapshot_evidence(data: dict[str, Any], *, source: str, evide
     if not visual_snapshot_has_runtime_framebuffer(data):
         return
     screen_frame = data.get("screen_frame") if isinstance(data.get("screen_frame"), dict) else {}
+    hardware_behavior_proven = data.get("hardware_behavior_proven") is True
     record = {
         "source": source,
+        "evidence_class": str(data.get("evidence_class") or "pyboy_visual_snapshot"),
         "framebuffer": str(screen_frame.get("framebuffer") or data.get("framebuffer") or ""),
         "sha256": str(screen_frame.get("sha256") or ""),
         "screen_source": str(screen_frame.get("screen_source") or ""),
@@ -719,6 +721,12 @@ def collect_visual_snapshot_evidence(data: dict[str, Any], *, source: str, evide
         "height": int(screen_frame.get("height", 0) or 0),
         "mode": str(screen_frame.get("mode") or ""),
         "proof_status": str(data.get("proof_status") or ""),
+        "hardware_behavior_proven": hardware_behavior_proven,
+        "hardware_proof_status": str(data.get("hardware_proof_status") or ("proven" if hardware_behavior_proven else "not_proven")),
+        "hardware_proof_boundary": str(
+            data.get("hardware_proof_boundary")
+            or "PyBoy framebuffer digest is emulator-observed output, not proof of hardware PPU behavior."
+        ),
     }
     if record not in evidence["framebuffers"]:
         evidence["framebuffers"].append(record)
@@ -737,9 +745,17 @@ def collect_audio_snapshot_evidence(data: dict[str, Any], *, source: str, eviden
     audio_state = data.get("audio_state") if isinstance(data.get("audio_state"), dict) else {}
     wave_ram = data.get("wave_ram") if isinstance(data.get("wave_ram"), dict) else {}
     sound_buffer = data.get("sound_buffer") if isinstance(data.get("sound_buffer"), dict) else {}
+    hardware_behavior_proven = data.get("hardware_behavior_proven") is True
     record = {
         "source": source,
+        "evidence_class": str(data.get("evidence_class") or "pyboy_audio_snapshot"),
         "proof_status": str(data.get("proof_status") or ""),
+        "hardware_behavior_proven": hardware_behavior_proven,
+        "hardware_proof_status": str(data.get("hardware_proof_status") or ("proven" if hardware_behavior_proven else "not_proven")),
+        "hardware_proof_boundary": str(
+            data.get("hardware_proof_boundary")
+            or "PyBoy audio snapshot is emulator-observed output, not proof of hardware APU behavior."
+        ),
         "registers": {str(key): str(value) for key, value in registers.items()},
         "register_details": register_details,
         "symbol_state": symbol_state,
@@ -1584,6 +1600,12 @@ def framebuffer_evidence(frames: list[dict[str, Any]]) -> list[str]:
         framebuffer = frame.get("framebuffer") or frame.get("sha256") or "framebuffer"
         size = f"{frame.get('width', 0)}x{frame.get('height', 0)}"
         out.append(f"{frame.get('source', 'visual')} captured {framebuffer} size={size}")
+        if "hardware_behavior_proven" in frame:
+            out.append(f"hardware_behavior_proven={frame.get('hardware_behavior_proven')}")
+        if frame.get("hardware_proof_status"):
+            out.append(f"hardware_proof_status={frame.get('hardware_proof_status')}")
+        if frame.get("evidence_class"):
+            out.append(f"evidence_class={frame.get('evidence_class')}")
     return out
 
 
@@ -1611,6 +1633,12 @@ def audio_snapshot_evidence(snapshots: list[dict[str, Any]], expectation: dict[s
             out.append(f"{source} captured sound_buffer sha256={sound.get('sha256')}")
         else:
             out.append(f"{source} captured audio snapshot")
+        if "hardware_behavior_proven" in snapshot:
+            out.append(f"hardware_behavior_proven={snapshot.get('hardware_behavior_proven')}")
+        if snapshot.get("hardware_proof_status"):
+            out.append(f"hardware_proof_status={snapshot.get('hardware_proof_status')}")
+        if snapshot.get("evidence_class"):
+            out.append(f"evidence_class={snapshot.get('evidence_class')}")
     return out
 
 
@@ -1639,6 +1667,9 @@ def audio_snapshot_summary(snapshots: list[dict[str, Any]]) -> list[dict[str, An
             {
                 "source": snapshot.get("source", ""),
                 "proof_status": snapshot.get("proof_status", ""),
+                "evidence_class": snapshot.get("evidence_class", ""),
+                "hardware_behavior_proven": snapshot.get("hardware_behavior_proven"),
+                "hardware_proof_status": snapshot.get("hardware_proof_status", ""),
                 "register_count": len(registers),
                 "symbol_state_count": len(dict_items(snapshot.get("symbol_state"))),
                 "wave_ram_sha256": wave.get("sha256", ""),

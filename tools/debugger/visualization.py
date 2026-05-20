@@ -512,6 +512,7 @@ def collect_report_timeline(data: dict[str, Any], *, source: str, out: list[dict
                         symbols=[symbol_if_not_address(watch), str(event.get("pc_label", ""))],
                         addresses=unique_list([address, str(hit.get("effect_key", "")), str(hit.get("watch_key", ""))]),
                         severity=74 if access == "write" else 60,
+                        proof_status=watch_hit_proof_status(hit),
                     )
                 )
         for item in dict_items(data.get("side_effect_index"))[:24]:
@@ -527,6 +528,7 @@ def collect_report_timeline(data: dict[str, Any], *, source: str, out: list[dict
                     detail=side_effect_timeline_detail(item),
                     symbols=side_effect_timeline_symbols(item),
                     severity=82 if is_cpu_state else 62,
+                    proof_status=side_effect_index_proof_status(item),
                 )
             )
     elif kind == "unified_debugger_instruction_trace":
@@ -847,30 +849,32 @@ def collect_effect_trace_graph(
             effect_id = f"{source}:effect:{event.get('seq', '')}:{effect_index}:{address}:{effect.get('operation', '')}"
             validation_id = f"{source}:post_value:{event.get('seq', '')}:{effect_index}:{status}:{address}:{effect.get('post_observed_pc', '')}"
             relation = "post_value_mismatch" if status == "mismatch" else "post_value_confirmed"
-            add_graph_node(nodes, effect_id, str(effect.get("operation") or "effect"), "effect", source, "instruction_observed")
-            add_graph_node(nodes, validation_id, effect_post_value_title(effect), "post_value_validation", source, "instruction_observed")
-            add_graph_edge(edges, pc_id, effect_id, "executes_effect", source, "instruction_observed")
-            add_graph_edge(edges, effect_id, validation_id, relation, source, "instruction_observed")
+            proof = effect_item_proof_status(effect)
+            add_graph_node(nodes, effect_id, str(effect.get("operation") or "effect"), "effect", source, proof)
+            add_graph_node(nodes, validation_id, effect_post_value_title(effect), "post_value_validation", source, proof)
+            add_graph_edge(edges, pc_id, effect_id, "executes_effect", source, proof)
+            add_graph_edge(edges, effect_id, validation_id, relation, source, proof)
             if address:
-                add_graph_node(nodes, address, address, "address", source, "instruction_observed")
-                add_graph_edge(edges, validation_id, address, "checks_address_value", source, "instruction_observed")
+                add_graph_node(nodes, address, address, "address", source, proof)
+                add_graph_edge(edges, validation_id, address, "checks_address_value", source, proof)
         for effect_index, effect in enumerate(dict_items(event.get("effects"))):
             if effect.get("access") != "register_write":
                 continue
             register = str(effect.get("register") or "")
             effect_id = f"{source}:register_write:{event.get('seq', '')}:{effect_index}:{register}:{effect.get('operation', '')}"
             register_id = f"{source}:register:{register}"
-            add_graph_node(nodes, effect_id, effect_register_write_title(effect), "register_write", source, "instruction_observed")
-            add_graph_node(nodes, register_id, register, "register", source, "instruction_observed")
-            add_graph_edge(edges, pc_id, effect_id, "executes_effect", source, "instruction_observed")
-            add_graph_edge(edges, effect_id, register_id, "writes_register", source, "instruction_observed")
+            proof = effect_item_proof_status(effect)
+            add_graph_node(nodes, effect_id, effect_register_write_title(effect), "register_write", source, proof)
+            add_graph_node(nodes, register_id, register, "register", source, proof)
+            add_graph_edge(edges, pc_id, effect_id, "executes_effect", source, proof)
+            add_graph_edge(edges, effect_id, register_id, "writes_register", source, proof)
             status = str(effect.get("post_register_status") or "")
             if status:
                 validation_id = f"{source}:post_register:{event.get('seq', '')}:{effect_index}:{status}:{register}:{effect.get('post_observed_pc', '')}"
                 relation = "post_register_mismatch" if status == "mismatch" else "post_register_confirmed"
-                add_graph_node(nodes, validation_id, effect_register_validation_title(effect), "post_register_validation", source, "instruction_observed")
-                add_graph_edge(edges, effect_id, validation_id, relation, source, "instruction_observed")
-                add_graph_edge(edges, validation_id, register_id, "checks_register_value", source, "instruction_observed")
+                add_graph_node(nodes, validation_id, effect_register_validation_title(effect), "post_register_validation", source, proof)
+                add_graph_edge(edges, effect_id, validation_id, relation, source, proof)
+                add_graph_edge(edges, validation_id, register_id, "checks_register_value", source, proof)
         for change_index, change in enumerate(dict_items(event.get("unmodeled_observed_changes"))):
             address = str(change.get("address") or "")
             if not address:
@@ -884,8 +888,9 @@ def collect_effect_trace_graph(
             if effect.get("access") != "unmodeled":
                 continue
             effect_id = f"{source}:unmodeled_effect:{event.get('seq', '')}:{effect_index}:{effect.get('operation', '')}"
-            add_graph_node(nodes, effect_id, effect_unmodeled_effect_title(effect), "unmodeled_effect", source, "instruction_observed")
-            add_graph_edge(edges, pc_id, effect_id, "has_unmodeled_effect", source, "instruction_observed")
+            proof = effect_item_proof_status(effect)
+            add_graph_node(nodes, effect_id, effect_unmodeled_effect_title(effect), "unmodeled_effect", source, proof)
+            add_graph_edge(edges, pc_id, effect_id, "has_unmodeled_effect", source, proof)
 
 
 def watch_timeline_detail(event: dict[str, Any]) -> str:
@@ -2766,6 +2771,29 @@ def watch_event_proof_status(event: dict[str, Any], *, report: dict[str, Any]) -
     return "planned_only"
 
 
+def effect_item_proof_status(effect: dict[str, Any]) -> str:
+    explicit = normalize_proof_status(effect.get("proof_status")) if effect.get("proof_status") else ""
+    if explicit:
+        return explicit
+    if effect.get("hardware_event_required") and not effect.get("hardware_runtime_event"):
+        return "planned_only"
+    if str(effect.get("hardware_proof_gate") or "") == "explicit_runtime_event_missing":
+        return "planned_only"
+    return "instruction_observed"
+
+
+def watch_hit_proof_status(hit: dict[str, Any]) -> str:
+    explicit = normalize_proof_status(hit.get("proof_status")) if hit.get("proof_status") else ""
+    if explicit:
+        return explicit
+    target_match = normalize_proof_status(hit.get("target_match_proof_status")) if hit.get("target_match_proof_status") else ""
+    if target_match:
+        return target_match
+    if str(hit.get("bank_match") or "") in {"bus_address_unverified_bank", "ambiguous_runtime_bank"}:
+        return "planned_only"
+    return "instruction_observed"
+
+
 def instruction_trace_validation_proof_status(data: dict[str, Any], validation: dict[str, Any]) -> str:
     validation_proof = normalize_proof_status(validation.get("proof_status")) if validation.get("proof_status") else ""
     if validation_proof:
@@ -2824,6 +2852,20 @@ def weakest_proof_status(values: Any) -> str:
     if not statuses:
         return ""
     return min(statuses, key=lambda status: PROOF_STATUS_RANK.get(status, 0))
+
+
+def side_effect_index_proof_status(item: dict[str, Any]) -> str:
+    explicit = normalize_proof_status(item.get("proof_status")) if item.get("proof_status") else ""
+    if explicit:
+        return explicit
+    trigger_statuses = [
+        normalize_proof_status(trigger.get("proof_status"))
+        for trigger in dict_items(item.get("triggers"))
+        if trigger.get("proof_status")
+    ]
+    if trigger_statuses:
+        return weakest_proof_status(trigger_statuses)
+    return "instruction_observed"
 
 
 def graph_node_proof_summary(values: Any) -> dict[str, Any]:

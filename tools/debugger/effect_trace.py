@@ -54,6 +54,20 @@ CONDITIONAL_JUMPS = {0x20: "nz", 0x28: "z", 0x30: "nc", 0x38: "c", 0xC2: "nz", 0
 RST_TARGETS = {0xC7: 0x00, 0xCF: 0x08, 0xD7: 0x10, 0xDF: 0x18, 0xE7: 0x20, 0xEF: 0x28, 0xF7: 0x30, 0xFF: 0x38}
 INDEX_REG = {0: "b", 1: "c", 2: "d", 3: "e", 4: "h", 5: "l", 6: "[hl]", 7: "a"}
 CPU_STATE_OPCODES = {0x10, 0x76, 0xD9, 0xF3, 0xFB}
+HARDWARE_EVENT_REQUIRED_MODELS = {
+    "oam_dma",
+    "cgb_vram_dma",
+    "timer_tima_overflow",
+    "interrupt_entry",
+    "lcd_mode_edge",
+    "ppu_lcd_mode",
+}
+EXPLICIT_HARDWARE_RUNTIME_EVIDENCE = {
+    "emulator_hardware_event",
+    "non_mutating_event_recorder",
+    "hardware_event_observed",
+    "runtime_hardware_event_observed",
+}
 
 
 def build_effect_trace_report(
@@ -117,6 +131,7 @@ def build_effect_trace_report(
     )
     attach_rmw_pre_state_proof(events, hook_order_validations)
     attach_observed_timer_overflow_effects(events)
+    attach_hardware_side_effect_proof_gates(events)
     attach_next_frame_write_validation(events)
     refresh_watch_hits(events, watches)
     attach_effect_evidence_atoms(events)
@@ -201,7 +216,8 @@ def build_effect_trace_report(
         "output": output,
         "known_limits": [
             "Effect traces are inferred from captured instruction frames; code outside the trace window is not observed.",
-            "Effect traces now record CPU-visible reads/writes, byte-level values and value-source provenance for direct known writes and observed-memory read-modify-write attribution, stack transfers, IO loads/stores, control-flow, EI/DI/RETI IME changes, HALT/STOP CPU-state transitions, and common hardware-trigger side effects including OAM DMA triggers, observed general-mode CGB VRAM DMA copies, DIV reset writes, observed adjacent-frame TIMA overflow reload/IF request effects, MBC bank writes, WRAM/VRAM bank-select IO writes, PPU/audio/timer/interrupt register writes, and trace-proven interrupt-entry stack pushes.",
+            "Effect traces now record CPU-visible reads/writes, byte-level values and value-source provenance for direct known writes and observed-memory read-modify-write attribution, stack transfers, IO loads/stores, control-flow, EI/DI/RETI IME changes, HALT/STOP CPU-state transitions, and common hardware-trigger side effects including OAM DMA triggers, modeled general-mode CGB VRAM DMA copies when setup writes are observed, DIV reset writes, adjacent-frame TIMA overflow reload/IF request candidates, MBC bank writes, WRAM/VRAM bank-select IO writes, PPU/audio/timer/interrupt register writes, and trace-inferred interrupt-entry stack pushes.",
+            "DMA, timer-overflow, LCD-mode-edge, and interrupt-entry items are proof-gated: modeled or adjacent-frame evidence remains planned_only for strong attribution until an explicit runtime hardware-event source is attached.",
             "Register writes for memory-load and stack-pop instructions are modeled from pre-instruction frames and adjacent next-frame register snapshots when available; this is still bounded trace evidence, not complete CPU emulation.",
             "WRAM/VRAM/ROM/SRAM bank provenance is runtime-sampled when bank_state is present on instruction frames; otherwise effect tracing can carry bank state forward only from observed bank-register writes in the same captured trace window and labels that source as inferred_bank_state.",
             "OAM DMA triggers are expanded into modeled source reads and OAM writes for reverse queries; CGB VRAM general DMA is expanded only when FF51-FF55 setup writes are observed in the same trace window, while HBlank DMA and missing setup remain trigger-only. Interrupt entries are inferred only from adjacent PC/SP trace evidence. TIMA overflow reload/IF request effects are inferred only when adjacent captured pre-instruction frames observe TIMA=$FF, matching TMA reload, and the timer IF bit transition. PPU pixels, audio mixer output, and unobserved timer ticks still require richer emulator-backed capture unless those effects are present in the trace window.",
@@ -443,6 +459,66 @@ def observed_timer_overflow_effects(event: dict[str, Any], next_event: dict[str,
         }
     )
     return [side, reload_write, if_write]
+
+
+def attach_hardware_side_effect_proof_gates(events: list[dict[str, Any]]) -> None:
+    for event in events:
+        for item in dict_items(event.get("effects")):
+            if not hardware_side_effect_requires_runtime_event(item):
+                continue
+            runtime_event = has_explicit_hardware_runtime_event(item)
+            item["hardware_event_required"] = True
+            item["hardware_runtime_event"] = runtime_event
+            item["hardware_proof_gate"] = (
+                "explicit_runtime_event_present"
+                if runtime_event
+                else "explicit_runtime_event_missing"
+            )
+            if runtime_event:
+                item.setdefault("proof_status", "instruction_observed")
+                continue
+            item["proof_status"] = "planned_only"
+            reason = hardware_side_effect_downgrade_reason(item)
+            item["proof_downgrade_reason"] = reason
+            if item.get("access") == "write":
+                item["target_match_proof_status"] = "planned_only"
+
+
+def hardware_side_effect_requires_runtime_event(item: dict[str, Any]) -> bool:
+    model = str(item.get("hardware_model") or "")
+    if model in HARDWARE_EVENT_REQUIRED_MODELS:
+        return True
+    kind = str(item.get("kind") or "")
+    if kind in {
+        "dma_read",
+        "dma_write",
+        "timer_tima_overflow",
+        "timer_tima_reload_write",
+        "timer_interrupt_request_write",
+        "interrupt_entry",
+    }:
+        return True
+    return False
+
+
+def has_explicit_hardware_runtime_event(item: dict[str, Any]) -> bool:
+    if bool(item.get("hardware_runtime_event")):
+        return True
+    evidence_source = str(item.get("evidence_source") or "")
+    evidence_status = str(item.get("evidence_status") or "")
+    runtime_observation = str(item.get("runtime_observation") or "")
+    event_source = str(item.get("event_source") or "")
+    return bool(
+        evidence_source in EXPLICIT_HARDWARE_RUNTIME_EVIDENCE
+        or evidence_status in EXPLICIT_HARDWARE_RUNTIME_EVIDENCE
+        or runtime_observation in EXPLICIT_HARDWARE_RUNTIME_EVIDENCE
+        or event_source in EXPLICIT_HARDWARE_RUNTIME_EVIDENCE
+    )
+
+
+def hardware_side_effect_downgrade_reason(item: dict[str, Any]) -> str:
+    model = str(item.get("hardware_model") or item.get("kind") or "hardware_side_effect")
+    return f"{model}_requires_explicit_runtime_event"
 
 
 def event_writes_any_address(event: dict[str, Any], addresses: set[str]) -> bool:
@@ -2563,10 +2639,15 @@ def watch_hits(effects: list[dict[str, Any]], watches: list[dict[str, Any]]) -> 
                         "bank_match": bank_match,
                         "bank_source": item.get("bank_source", ""),
                         "target_match_proof_status": watch_target_match_proof_status(match_precision),
-                        "effect_proof_status": "instruction_observed",
+                        "effect_proof_status": str(item.get("proof_status") or "instruction_observed"),
                         "proof_downgrade_reason": watch_proof_downgrade_reason(match_precision),
                         "effect_evidence_source": item.get("evidence_source", ""),
                         "effect_evidence_status": item.get("evidence_status", ""),
+                        "effect_proof_downgrade_reason": item.get("proof_downgrade_reason", ""),
+                        "hardware_model": item.get("hardware_model", ""),
+                        "hardware_event_required": item.get("hardware_event_required", False),
+                        "hardware_runtime_event": item.get("hardware_runtime_event", False),
+                        "hardware_proof_gate": item.get("hardware_proof_gate", ""),
                         "access": item.get("access", ""),
                         "effect_kind": item.get("kind", ""),
                         "address": item.get("address_hex", ""),
@@ -2658,6 +2739,13 @@ def build_write_index(events: list[dict[str, Any]]) -> list[dict[str, Any]]:
                     "address_key": item.get("address_key", ""),
                     "value_hex": item.get("value_hex", ""),
                     "value_source": item.get("value_source", ""),
+                    "proof_status": item.get("proof_status", ""),
+                    "proof_downgrade_reason": item.get("proof_downgrade_reason", ""),
+                    "category": item.get("category", ""),
+                    "hardware_model": item.get("hardware_model", ""),
+                    "hardware_event_required": item.get("hardware_event_required", False),
+                    "hardware_runtime_event": item.get("hardware_runtime_event", False),
+                    "hardware_proof_gate": item.get("hardware_proof_gate", ""),
                     "evidence_source": item.get("evidence_source", ""),
                     "evidence_status": item.get("evidence_status", ""),
                     "runtime_observation": item.get("runtime_observation", ""),
@@ -2736,6 +2824,11 @@ def effect_item_evidence_atom(event: dict[str, Any], item: dict[str, Any]) -> di
             "evidence_status": item.get("evidence_status", ""),
             "value_source": item.get("value_source", ""),
             "model_source": item.get("model_source", ""),
+            "hardware_model": item.get("hardware_model", ""),
+            "hardware_event_required": item.get("hardware_event_required", ""),
+            "hardware_runtime_event": item.get("hardware_runtime_event", ""),
+            "hardware_proof_gate": item.get("hardware_proof_gate", ""),
+            "proof_downgrade_reason": item.get("proof_downgrade_reason", ""),
         },
         validation={
             "pre_state_sample": item.get("pre_state_sample", ""),
@@ -2780,12 +2873,17 @@ def build_side_effect_index(events: list[dict[str, Any]]) -> list[dict[str, Any]
                     "count": 0,
                     "last_seq": None,
                     "last_pc": "",
+                    "proof_statuses": [],
+                    "proof_status": "instruction_observed",
                     "triggers": [],
                 },
             )
             entry["count"] += 1
             entry["last_seq"] = event.get("seq")
             entry["last_pc"] = event.get("pc_bank_address", "")
+            proof = str(item.get("proof_status") or "instruction_observed")
+            entry["proof_statuses"] = unique_list([*string_items(entry.get("proof_statuses")), proof])
+            entry["proof_status"] = weakest_effect_proof_status(entry["proof_statuses"])
             trigger = {
                 "seq": event.get("seq"),
                 "pc": event.get("pc_bank_address", ""),
@@ -2793,6 +2891,7 @@ def build_side_effect_index(events: list[dict[str, Any]]) -> list[dict[str, Any]
                 "operation": item.get("operation", ""),
                 "trigger_address": item.get("trigger_address", ""),
                 "source_value": item.get("source_value", ""),
+                "proof_status": proof,
             }
             if item.get("mode"):
                 trigger["mode"] = item.get("mode", "")
@@ -2808,6 +2907,10 @@ def build_side_effect_index(events: list[dict[str, Any]]) -> list[dict[str, Any]
                 trigger["transfer_blocked_reason"] = item.get("transfer_blocked_reason", "")
             if item.get("model_source"):
                 trigger["model_source"] = item.get("model_source", "")
+            if item.get("proof_downgrade_reason"):
+                trigger["proof_downgrade_reason"] = item.get("proof_downgrade_reason", "")
+            if item.get("hardware_proof_gate"):
+                trigger["hardware_proof_gate"] = item.get("hardware_proof_gate", "")
             if item.get("source_range"):
                 trigger["source_range"] = item.get("source_range", "")
             if item.get("target_range"):
@@ -3335,6 +3438,37 @@ def u16_from_operand(instruction: Instruction) -> int:
 def signed8(value: int) -> int:
     value &= 0xFF
     return value - 0x100 if value & 0x80 else value
+
+
+def weakest_effect_proof_status(values: Any) -> str:
+    order = {
+        "planned_only": 0,
+        "state_materialized": 1,
+        "runtime_observed": 2,
+        "instruction_observed": 3,
+        "taint_proven": 4,
+    }
+    statuses = [normalize_effect_proof_status(value) for value in string_items(values)]
+    return min(statuses or ["instruction_observed"], key=lambda status: order.get(status, 0))
+
+
+def normalize_effect_proof_status(value: Any) -> str:
+    text = str(value or "").strip().lower().replace("-", "_").replace(" ", "_")
+    aliases = {
+        "planned": "planned_only",
+        "instruction": "instruction_observed",
+        "runtime": "runtime_observed",
+        "observed": "runtime_observed",
+        "taint": "taint_proven",
+    }
+    text = aliases.get(text, text)
+    return text if text in {
+        "planned_only",
+        "state_materialized",
+        "runtime_observed",
+        "instruction_observed",
+        "taint_proven",
+    } else "planned_only"
 
 
 def unique_list(values: Any) -> list[str]:

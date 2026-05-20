@@ -30,6 +30,28 @@ COMMAND_INPUT_OPTIONS = (
     "--state",
     "--rom",
 )
+HARDWARE_EVENT_REQUIRED_MODELS = {
+    "oam_dma",
+    "cgb_vram_dma",
+    "timer_tima_overflow",
+    "interrupt_entry",
+    "lcd_mode_edge",
+    "ppu_lcd_mode",
+}
+HARDWARE_EVENT_REQUIRED_KINDS = {
+    "dma_read",
+    "dma_write",
+    "timer_tima_overflow",
+    "timer_tima_reload_write",
+    "timer_interrupt_request_write",
+    "interrupt_entry",
+}
+EXPLICIT_HARDWARE_RUNTIME_EVIDENCE = {
+    "emulator_hardware_event",
+    "non_mutating_event_recorder",
+    "hardware_event_observed",
+    "runtime_hardware_event_observed",
+}
 
 
 def build_reverse_query_report(
@@ -213,6 +235,7 @@ def reverse_query_results_for_report(
             checkpoint=checkpoint,
             last_write=last_write,
         )
+        hardware_gate = hardware_side_effect_gate(last_write)
         validation_routes = result_validation_routes(
             target=target,
             source=source,
@@ -241,11 +264,20 @@ def reverse_query_results_for_report(
             "validation": validation,
             "checkpoint_validation": checkpoint,
             "bounded_effect_span_validation": bounded_effect_span,
+            "hardware_side_effect_gate": hardware_gate,
             "validation_routes": validation_routes,
-            "proof_status": result_proof_status(entry=entry, last_write=last_write, validation=validation),
+            "proof_status": result_proof_status(
+                entry=entry,
+                last_write=last_write,
+                validation=validation,
+                hardware_gate=hardware_gate,
+            ),
             "evidence": result_evidence(target=target, entry=entry, last_write=last_write),
             "commands": result_commands(target),
         }
+        if hardware_gate.get("requires_runtime_event") and not hardware_gate.get("runtime_event_present"):
+            result["proof_downgrade_reason"] = hardware_gate.get("reason", "")
+            result["evidence"].extend(hardware_gate_evidence(hardware_gate))
         result["evidence_atoms"] = reverse_query_result_evidence_atoms(result)
         results.append(result)
     return results
@@ -262,6 +294,11 @@ def reverse_query_result_evidence_atoms(result: dict[str, Any]) -> list[dict[str
     last_writer = result.get("last_writer") if isinstance(result.get("last_writer"), dict) else {}
     validation = result.get("validation") if isinstance(result.get("validation"), dict) else {}
     checkpoint = result.get("checkpoint_validation") if isinstance(result.get("checkpoint_validation"), dict) else {}
+    hardware_gate = (
+        result.get("hardware_side_effect_gate")
+        if isinstance(result.get("hardware_side_effect_gate"), dict)
+        else {}
+    )
     bounded_span = (
         result.get("bounded_effect_span_validation")
         if isinstance(result.get("bounded_effect_span_validation"), dict)
@@ -299,10 +336,15 @@ def reverse_query_result_evidence_atoms(result: dict[str, Any]) -> list[dict[str
                 "proof_status": validation.get("proof_status", ""),
                 "checkpoint_status": checkpoint.get("status", ""),
                 "bounded_span_status": bounded_span.get("status", ""),
+                "hardware_event_required": hardware_gate.get("requires_runtime_event", False),
+                "hardware_runtime_event": hardware_gate.get("runtime_event_present", False),
+                "hardware_proof_gate": hardware_gate.get("status", ""),
             },
             detail={
                 "last_value_hex": result.get("last_value_hex", ""),
                 "operation": last_writer.get("operation", ""),
+                "hardware_model": hardware_gate.get("hardware_model", ""),
+                "proof_downgrade_reason": hardware_gate.get("reason", ""),
             },
         ),
         last_writer.get("evidence_atoms"),
@@ -320,10 +362,13 @@ def result_proof_status(
     entry: dict[str, Any],
     last_write: dict[str, Any] | None,
     validation: dict[str, Any] | None = None,
+    hardware_gate: dict[str, Any] | None = None,
 ) -> str:
     if entry.get("match_precision") == "bus_address_unverified_bank":
         return "planned_only"
     if not concrete_observed_write(last_write):
+        return "planned_only"
+    if hardware_gate and hardware_gate.get("requires_runtime_event") and not hardware_gate.get("runtime_event_present"):
         return "planned_only"
     if not validation:
         return "instruction_observed"
@@ -347,6 +392,83 @@ def concrete_observed_write(value: Any) -> bool:
     pc = str(value.get("pc") or value.get("pc_bank_address") or value.get("last_writer_pc") or "")
     address = str(value.get("address_key") or value.get("address") or value.get("address_hex") or "")
     return bool(pc and address)
+
+
+def hardware_side_effect_gate(value: Any) -> dict[str, Any]:
+    if not isinstance(value, dict):
+        return {
+            "requires_runtime_event": False,
+            "runtime_event_present": False,
+            "status": "not_hardware_side_effect",
+            "reason": "",
+        }
+    requires = hardware_side_effect_requires_runtime_event(value)
+    runtime_event = has_explicit_hardware_runtime_event(value)
+    model = str(value.get("hardware_model") or "")
+    kind = str(value.get("kind") or "")
+    reason = ""
+    status = "not_required"
+    if requires:
+        status = "explicit_runtime_event_present" if runtime_event else "explicit_runtime_event_missing"
+        if not runtime_event:
+            reason = hardware_side_effect_downgrade_reason(value)
+    return {
+        "requires_runtime_event": requires,
+        "runtime_event_present": runtime_event,
+        "status": status,
+        "hardware_model": model,
+        "kind": kind,
+        "category": str(value.get("category") or ""),
+        "evidence_source": str(value.get("evidence_source") or ""),
+        "evidence_status": str(value.get("evidence_status") or ""),
+        "runtime_observation": str(value.get("runtime_observation") or ""),
+        "reason": reason,
+    }
+
+
+def hardware_side_effect_requires_runtime_event(value: dict[str, Any]) -> bool:
+    if bool(value.get("hardware_event_required")):
+        return True
+    model = str(value.get("hardware_model") or "")
+    if model in HARDWARE_EVENT_REQUIRED_MODELS:
+        return True
+    kind = str(value.get("kind") or "")
+    if kind in HARDWARE_EVENT_REQUIRED_KINDS:
+        return True
+    return False
+
+
+def has_explicit_hardware_runtime_event(value: dict[str, Any]) -> bool:
+    if bool(value.get("hardware_runtime_event")):
+        return True
+    evidence_source = str(value.get("evidence_source") or "")
+    evidence_status = str(value.get("evidence_status") or "")
+    runtime_observation = str(value.get("runtime_observation") or "")
+    event_source = str(value.get("event_source") or "")
+    return bool(
+        evidence_source in EXPLICIT_HARDWARE_RUNTIME_EVIDENCE
+        or evidence_status in EXPLICIT_HARDWARE_RUNTIME_EVIDENCE
+        or runtime_observation in EXPLICIT_HARDWARE_RUNTIME_EVIDENCE
+        or event_source in EXPLICIT_HARDWARE_RUNTIME_EVIDENCE
+    )
+
+
+def hardware_side_effect_downgrade_reason(value: dict[str, Any]) -> str:
+    model = str(value.get("hardware_model") or value.get("kind") or "hardware_side_effect")
+    return f"{model}_requires_explicit_runtime_event"
+
+
+def hardware_gate_evidence(gate: dict[str, Any]) -> list[str]:
+    return [
+        item
+        for item in [
+            f"hardware_side_effect_gate={gate.get('status', '')}",
+            f"hardware_model={gate.get('hardware_model', '')}" if gate.get("hardware_model") else "",
+            f"hardware_kind={gate.get('kind', '')}" if gate.get("kind") else "",
+            f"proof_downgrade_reason={gate.get('reason', '')}" if gate.get("reason") else "",
+        ]
+        if item
+    ]
 
 
 def result_validation(
@@ -1210,6 +1332,13 @@ def entry_history(entry: dict[str, Any], *, events: list[dict[str, Any]], max_hi
                     "bank": item.get("bank"),
                     "value_hex": item.get("value_hex", ""),
                     "value_source": item.get("value_source", ""),
+                    "proof_status": item.get("proof_status", ""),
+                    "proof_downgrade_reason": item.get("proof_downgrade_reason", ""),
+                    "category": item.get("category", ""),
+                    "hardware_model": item.get("hardware_model", ""),
+                    "hardware_event_required": item.get("hardware_event_required", False),
+                    "hardware_runtime_event": item.get("hardware_runtime_event", False),
+                    "hardware_proof_gate": item.get("hardware_proof_gate", ""),
                     "evidence_source": item.get("evidence_source", ""),
                     "evidence_status": item.get("evidence_status", ""),
                     "runtime_observation": item.get("runtime_observation", ""),
@@ -1244,6 +1373,13 @@ def normalize_index_history(entry: dict[str, Any], *, max_history: int) -> list[
         copied.setdefault("trace_source", entry.get("last_writer_trace_source", ""))
         copied.setdefault("source_operands", [])
         copied.setdefault("value_source", "")
+        copied.setdefault("proof_status", "")
+        copied.setdefault("proof_downgrade_reason", "")
+        copied.setdefault("category", "")
+        copied.setdefault("hardware_model", "")
+        copied.setdefault("hardware_event_required", False)
+        copied.setdefault("hardware_runtime_event", False)
+        copied.setdefault("hardware_proof_gate", "")
         copied.setdefault("pc_label", "")
         copied.setdefault("evidence_source", "")
         copied.setdefault("evidence_status", "")
@@ -1296,6 +1432,16 @@ def result_evidence(*, target: dict[str, Any], entry: dict[str, Any], last_write
     value_source = str(last_write.get("value_source", "") if last_write else "")
     if value_source:
         evidence.append(f"value_source={value_source}")
+    if last_write and last_write.get("proof_status"):
+        evidence.append(f"effect_proof_status={last_write.get('proof_status', '')}")
+    if last_write and last_write.get("hardware_model"):
+        evidence.append(f"hardware_model={last_write.get('hardware_model', '')}")
+    if last_write and last_write.get("hardware_event_required"):
+        evidence.append(f"hardware_event_required={last_write.get('hardware_event_required')}")
+    if last_write and last_write.get("hardware_runtime_event") not in {None, ""}:
+        evidence.append(f"hardware_runtime_event={last_write.get('hardware_runtime_event')}")
+    if last_write and last_write.get("hardware_proof_gate"):
+        evidence.append(f"hardware_proof_gate={last_write.get('hardware_proof_gate', '')}")
     if last_write and last_write.get("pre_state_sample"):
         evidence.extend(
             item

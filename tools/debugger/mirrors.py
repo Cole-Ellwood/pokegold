@@ -27,6 +27,8 @@ OUTPUT_RUNTIME_STRONG_PROOF_STATUSES = {
     "mirror_passed",
     "observed",
 }
+SNAPSHOT_RUNTIME_KINDS = {"visual_snapshot", "audio_snapshot"}
+SNAPSHOT_HARDWARE_DOWNGRADE_REASON = "emulator_snapshot_not_hardware_proof"
 
 
 @dataclass(frozen=True)
@@ -1058,6 +1060,23 @@ def dynamic_expectation_mirror_matches(loaded_reports: list[dict[str, Any]]) -> 
         passed = bool(report.get("passed"))
         failed_count = int(report.get("failed_count", 0))
         skipped_count = int(report.get("skipped_count", 0))
+        uses_snapshot_evidence = expectation_report_uses_snapshot_evidence(report)
+        hardware_summary = runtime_snapshot_hardware_summary(
+            runtime_evidence,
+            enabled=uses_snapshot_evidence,
+        )
+        proof_status = dynamic_expectation_proof_status(
+            passed=passed,
+            skipped_count=skipped_count,
+            uses_snapshot_evidence=uses_snapshot_evidence,
+            hardware_summary=hardware_summary,
+        )
+        mirror_status = "passed" if passed else "failed"
+        runtime_proof_statuses = unique_list(
+            str(item.get("proof_status", ""))
+            for item in runtime_evidence
+            if item.get("proof_status")
+        )
         gaps = []
         if not passed:
             gaps.append(
@@ -1071,9 +1090,19 @@ def dynamic_expectation_mirror_matches(loaded_reports: list[dict[str, Any]]) -> 
             f"expectation_report={source}",
             f"expectations={report.get('expectation_count', 0)}",
             f"passed={report.get('passed')}",
-            f"runtime_reports={len(runtime_sources)}",
-            f"runtime_kinds={','.join(runtime_kinds)}",
+            f"mirror_status={mirror_status}",
+            f"proof_status={proof_status}",
         ]
+        if runtime_proof_statuses:
+            evidence.append(f"runtime_proof_statuses={','.join(runtime_proof_statuses)}")
+        if hardware_summary:
+            evidence.extend(runtime_snapshot_hardware_evidence(hardware_summary))
+        evidence.extend(
+            [
+                f"runtime_reports={len(runtime_sources)}",
+                f"runtime_kinds={','.join(runtime_kinds)}",
+            ]
+        )
         summary = report.get("evidence_summary") if isinstance(report.get("evidence_summary"), dict) else {}
         scenario_ids = unique_list(scalar_string_items(summary.get("scenario_ids")))
         commands = unique_list(
@@ -1094,16 +1123,21 @@ def dynamic_expectation_mirror_matches(loaded_reports: list[dict[str, Any]]) -> 
                 "expectation_report": source,
                 "expectation_status": "passed" if passed else "failed",
                 "status": "passed" if passed else "failed",
-                "proof_status": "mirror_passed" if passed and not skipped_count else "mirror_failed",
+                "proof_status": proof_status,
+                "mirror_status": mirror_status,
+                "actual_proof_status": proof_status,
+                "expected_proof_status": "mirror_passed",
                 "passed": passed,
                 "failed_count": failed_count,
                 "runtime_reports": runtime_sources,
                 "runtime_kinds": runtime_kinds,
+                "runtime_proof_statuses": runtime_proof_statuses,
                 "scenario_ids": scenario_ids,
                 "source_files": unique_list([*runtime_files, *scalar_string_items(summary.get("source_files"))]),
                 "related_symbols": unique_list([*runtime_symbols, *scalar_string_items(summary.get("symbols"))]),
                 "related_addresses": unique_list([*runtime_addresses, *scalar_string_items(summary.get("addresses"))]),
                 "artifacts": runtime_artifacts,
+                **hardware_summary,
                 "evidence": evidence,
                 "commands": commands,
                 "materialization_commands": materialization_commands,
@@ -1111,6 +1145,89 @@ def dynamic_expectation_mirror_matches(loaded_reports: list[dict[str, Any]]) -> 
             }
         )
     return matches
+
+
+def expectation_report_uses_snapshot_evidence(report: dict[str, Any]) -> bool:
+    if safe_int(report.get("evidence_framebuffer_count")) > 0:
+        return True
+    if safe_int(report.get("evidence_audio_snapshot_count")) > 0:
+        return True
+    summary = report.get("evidence_summary") if isinstance(report.get("evidence_summary"), dict) else {}
+    return bool(dict_items(summary.get("framebuffers")) or dict_items(summary.get("audio_snapshots")))
+
+
+def dynamic_expectation_proof_status(
+    *,
+    passed: bool,
+    skipped_count: int,
+    uses_snapshot_evidence: bool,
+    hardware_summary: dict[str, Any],
+) -> str:
+    if not passed or skipped_count:
+        return "mirror_failed"
+    if (
+        uses_snapshot_evidence
+        and hardware_summary.get("hardware_behavior_proven") is False
+        and hardware_summary.get("emulator_observed_runtime_kinds")
+    ):
+        return "runtime_observed"
+    return "mirror_passed"
+
+
+def runtime_snapshot_hardware_summary(
+    runtime_evidence: list[dict[str, Any]],
+    *,
+    enabled: bool,
+) -> dict[str, Any]:
+    if not enabled:
+        return {}
+    records = [
+        item
+        for item in runtime_evidence
+        if item.get("kind") in SNAPSHOT_RUNTIME_KINDS
+        and "hardware_behavior_proven" in item
+    ]
+    if not records:
+        return {}
+    unproven = [item for item in records if item.get("hardware_behavior_proven") is not True]
+    hardware_behavior_proven = not unproven
+    summary: dict[str, Any] = {
+        "hardware_behavior_proven": hardware_behavior_proven,
+        "hardware_proof_statuses": unique_list(
+            str(item.get("hardware_proof_status", ""))
+            for item in records
+            if item.get("hardware_proof_status")
+        ),
+        "hardware_proof_boundaries": unique_list(
+            str(item.get("hardware_proof_boundary", ""))
+            for item in records
+            if item.get("hardware_proof_boundary")
+        ),
+        "emulator_observed_runtime_kinds": unique_list(
+            str(item.get("kind", ""))
+            for item in unproven
+            if item.get("kind")
+        ),
+    }
+    if unproven:
+        summary["proof_downgrade_reason"] = SNAPSHOT_HARDWARE_DOWNGRADE_REASON
+        summary["runtime_evidence_gaps"] = [
+            "PyBoy visual/audio snapshot evidence proves emulator-observed digest/sample state only; hardware PPU/APU behavior remains unproven."
+        ]
+    return summary
+
+
+def runtime_snapshot_hardware_evidence(summary: dict[str, Any]) -> list[str]:
+    evidence = [f"hardware_behavior_proven={summary.get('hardware_behavior_proven')}"]
+    statuses = scalar_string_items(summary.get("hardware_proof_statuses"))
+    if statuses:
+        evidence.append(f"hardware_proof_statuses={','.join(statuses)}")
+    runtime_kinds = scalar_string_items(summary.get("emulator_observed_runtime_kinds"))
+    if runtime_kinds:
+        evidence.append(f"emulator_observed_runtime_kinds={','.join(runtime_kinds)}")
+    if summary.get("proof_downgrade_reason"):
+        evidence.append(f"proof_downgrade_reason={summary.get('proof_downgrade_reason')}")
+    return evidence
 
 
 def content_output_mirror_status(
@@ -1517,6 +1634,7 @@ def runtime_mirror_evidence(loaded: dict[str, Any]) -> list[dict[str, Any]]:
             return []
         surfaces = dict_items(data.get("surfaces"))
         screen_frame = data.get("screen_frame") if isinstance(data.get("screen_frame"), dict) else {}
+        hardware_behavior_proven = data.get("hardware_behavior_proven") is True
         return [
             runtime_evidence_record(
                 source=source,
@@ -1526,6 +1644,18 @@ def runtime_mirror_evidence(loaded: dict[str, Any]) -> list[dict[str, Any]]:
                 commands=report_commands(data),
                 artifacts=[str(screen_frame.get("framebuffer") or data.get("framebuffer") or "")],
                 proof_status=proof_status,
+                proof_downgrade_reason=str(data.get("proof_downgrade_reason") or "")
+                or ("" if hardware_behavior_proven else SNAPSHOT_HARDWARE_DOWNGRADE_REASON),
+                evidence_class=str(data.get("evidence_class") or "pyboy_visual_snapshot"),
+                hardware_behavior_proven=hardware_behavior_proven,
+                hardware_proof_status=str(
+                    data.get("hardware_proof_status")
+                    or ("proven" if hardware_behavior_proven else "not_proven")
+                ),
+                hardware_proof_boundary=str(
+                    data.get("hardware_proof_boundary")
+                    or "PyBoy framebuffer digest is emulator-observed output, not proof of hardware PPU behavior."
+                ),
             )
         ]
     if kind == "unified_debugger_audio_snapshot":
@@ -1536,6 +1666,7 @@ def runtime_mirror_evidence(loaded: dict[str, Any]) -> list[dict[str, Any]]:
         symbol_state = dict_items(data.get("symbol_state"))
         wave_ram = data.get("wave_ram") if isinstance(data.get("wave_ram"), dict) else {}
         sound_buffer = data.get("sound_buffer") if isinstance(data.get("sound_buffer"), dict) else {}
+        hardware_behavior_proven = data.get("hardware_behavior_proven") is True
         return [
             runtime_evidence_record(
                 source=source,
@@ -1558,6 +1689,18 @@ def runtime_mirror_evidence(loaded: dict[str, Any]) -> list[dict[str, Any]]:
                     str(sound_buffer.get("buffer", "")) if sound_buffer.get("buffer") else "",
                 ],
                 proof_status=proof_status,
+                proof_downgrade_reason=str(data.get("proof_downgrade_reason") or "")
+                or ("" if hardware_behavior_proven else SNAPSHOT_HARDWARE_DOWNGRADE_REASON),
+                evidence_class=str(data.get("evidence_class") or "pyboy_audio_snapshot"),
+                hardware_behavior_proven=hardware_behavior_proven,
+                hardware_proof_status=str(
+                    data.get("hardware_proof_status")
+                    or ("proven" if hardware_behavior_proven else "not_proven")
+                ),
+                hardware_proof_boundary=str(
+                    data.get("hardware_proof_boundary")
+                    or "PyBoy audio snapshot is emulator-observed output, not proof of hardware APU behavior."
+                ),
             )
         ]
     if kind == "unified_debugger_content_state_materialization":
@@ -1638,6 +1781,10 @@ def runtime_evidence_record(
     commands: list[str] | None = None,
     proof_status: str = "",
     proof_downgrade_reason: str = "",
+    evidence_class: str = "",
+    hardware_behavior_proven: bool | None = None,
+    hardware_proof_status: str = "",
+    hardware_proof_boundary: str = "",
 ) -> dict[str, Any]:
     record = {
         "source": source,
@@ -1652,6 +1799,14 @@ def runtime_evidence_record(
         record["proof_status"] = proof_status
     if proof_downgrade_reason:
         record["proof_downgrade_reason"] = proof_downgrade_reason
+    if evidence_class:
+        record["evidence_class"] = evidence_class
+    if hardware_behavior_proven is not None:
+        record["hardware_behavior_proven"] = hardware_behavior_proven
+    if hardware_proof_status:
+        record["hardware_proof_status"] = hardware_proof_status
+    if hardware_proof_boundary:
+        record["hardware_proof_boundary"] = hardware_proof_boundary
     return record
 
 
@@ -2021,6 +2176,13 @@ def unique_list(values: Any) -> list[str]:
         seen.add(text)
         out.append(text)
     return out
+
+
+def safe_int(value: Any) -> int:
+    try:
+        return int(value or 0)
+    except (TypeError, ValueError):
+        return 0
 
 
 def unique_addresses(values: Any) -> list[str]:

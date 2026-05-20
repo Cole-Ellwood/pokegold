@@ -4278,6 +4278,10 @@ def effect_sink_match(sink: Sink, *, effect_item: dict[str, Any], address: int) 
                 match_precision="exact_address_key",
                 bank_match="exact",
                 bank_source=str(effect_item.get("bank_source", "")),
+                effect_proof_status=str(effect_item.get("proof_status", "")),
+                effect_proof_downgrade_reason=str(effect_item.get("proof_downgrade_reason", "")),
+                hardware_model=str(effect_item.get("hardware_model", "")),
+                hardware_proof_gate=str(effect_item.get("hardware_proof_gate", "")),
             )
         return None
     if address_key_requires_exact_match(effect_key):
@@ -4287,12 +4291,20 @@ def effect_sink_match(sink: Sink, *, effect_item: dict[str, Any], address: int) 
             bank_match="bus_address_unverified_bank",
             bank_source=str(effect_item.get("bank_source", "")),
             proof_downgrade_reason="unbanked sink matched a bank-qualified runtime key by bus address",
+            effect_proof_status=str(effect_item.get("proof_status", "")),
+            effect_proof_downgrade_reason=str(effect_item.get("proof_downgrade_reason", "")),
+            hardware_model=str(effect_item.get("hardware_model", "")),
+            hardware_proof_gate=str(effect_item.get("hardware_proof_gate", "")),
         )
     return address_match_record(
         address_key=effect_key,
         match_precision="bus_address",
         bank_match="not_required",
         bank_source=str(effect_item.get("bank_source", "")),
+        effect_proof_status=str(effect_item.get("proof_status", "")),
+        effect_proof_downgrade_reason=str(effect_item.get("proof_downgrade_reason", "")),
+        hardware_model=str(effect_item.get("hardware_model", "")),
+        hardware_proof_gate=str(effect_item.get("hardware_proof_gate", "")),
     )
 
 
@@ -4364,6 +4376,10 @@ def address_match_record(
     bank_match: str,
     bank_source: str = "",
     proof_downgrade_reason: str = "",
+    effect_proof_status: str = "",
+    effect_proof_downgrade_reason: str = "",
+    hardware_model: str = "",
+    hardware_proof_gate: str = "",
 ) -> dict[str, Any]:
     return {
         "address_key": address_key,
@@ -4371,11 +4387,17 @@ def address_match_record(
         "bank_match": bank_match,
         "bank_source": bank_source,
         "proof_downgrade_reason": proof_downgrade_reason,
+        "effect_proof_status": effect_proof_status,
+        "effect_proof_downgrade_reason": effect_proof_downgrade_reason,
+        "hardware_model": hardware_model,
+        "hardware_proof_gate": hardware_proof_gate,
     }
 
 
 def match_proof_status(match: dict[str, Any]) -> str:
     if match.get("match_precision") == "bus_address_unverified_bank":
+        return "planned_only"
+    if str(match.get("effect_proof_status", "")) == "planned_only":
         return "planned_only"
     return "instruction_observed"
 
@@ -4390,6 +4412,14 @@ def match_evidence(match: dict[str, Any]) -> list[str]:
             f"proof_downgrade_reason={match.get('proof_downgrade_reason', '')}"
             if match.get("proof_downgrade_reason")
             else "",
+            f"effect_proof_status={match.get('effect_proof_status', '')}"
+            if match.get("effect_proof_status")
+            else "",
+            f"effect_proof_downgrade_reason={match.get('effect_proof_downgrade_reason', '')}"
+            if match.get("effect_proof_downgrade_reason")
+            else "",
+            f"hardware_model={match.get('hardware_model', '')}" if match.get("hardware_model") else "",
+            f"hardware_proof_gate={match.get('hardware_proof_gate', '')}" if match.get("hardware_proof_gate") else "",
         ]
     )
 

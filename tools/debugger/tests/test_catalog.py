@@ -31,6 +31,7 @@ from tools.debugger.explain import build_explanation_report
 from tools.debugger.expect import build_expectation_report
 from tools.debugger.fuzz import build_fuzz_plan
 from tools.debugger.generate import build_generation_plan
+from tools.debugger.hardware_regression import build_hardware_regression_report
 from tools.debugger.hook_order import build_hook_order_probe_report
 from tools.debugger.impact import build_impact_report, merge_items
 from tools.debugger.ingest import ingest_artifacts
@@ -149,6 +150,14 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("python -m tools.debugger causal-graph --report <watch-or-taint-or-effect-report.json>", causal["commands"])
         gap_text = "\n".join(report["blocking_gaps"])
         self.assertIn("modeled checkpoint-to-writer effect-span consistency", gap_text)
+        self.assertIn("Pan Docs hardware regression gate", gap_text)
+        self.assertIn("hardware-gated effect-trace side effects and bank-unverified watch hits", gap_text)
+        self.assertIn(
+            "python -m tools.debugger hardware-regression-gate --execute",
+            next(
+                capability for capability in report["capabilities"] if capability["id"] == "whole_rom_replay_localization"
+            )["commands"],
+        )
         self.assertNotIn("effect replay validation", gap_text)
 
     def test_damage_changed_file_triages_to_damage_debugger(self) -> None:
@@ -194,6 +203,84 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
             code = debugger_main(["audit", "--strict"])
 
         self.assertEqual(code, 1)
+
+    def test_hardware_regression_gate_lists_pandocs_blockers(self) -> None:
+        report = build_hardware_regression_report()
+        case_ids = {case["id"] for case in report["cases"]}
+
+        self.assertTrue(report["valid"])
+        self.assertFalse(report["passed"])
+        self.assertFalse(report["hardware_behavior_proven"])
+        self.assertGreaterEqual(report["blocking_gate_count"], 8)
+        self.assertIn("tima_overflow_cycle_a_tima_write_cancels_reload", case_ids)
+        self.assertIn("tima_overflow_cycle_b_tima_write_ignored", case_ids)
+        self.assertIn("tima_overflow_cycle_b_tma_write_copies_to_tima", case_ids)
+        self.assertIn("oam_dma_160_mcycle_timing", case_ids)
+        self.assertIn("oam_dma_dmg_ram_access_restricted", case_ids)
+        self.assertIn("cgb_gp_vram_dma_cpu_halt_timing", case_ids)
+        self.assertIn("cgb_hblank_vram_dma_block_timing", case_ids)
+        self.assertIn("interrupt_entry_stack_writes_current_pc", case_ids)
+        self.assertIn("boot_rom_pokemon_gold_end_state", case_ids)
+        self.assertIn("lcd_dot_mode_edge_timing", case_ids)
+        self.assertTrue(all(not case["hardware_passed"] for case in report["cases"]))
+        self.assertTrue(all(case["pan_docs_url"].startswith("https://gbdev.io/pandocs/") for case in report["cases"]))
+
+    def test_hardware_regression_gate_uses_hook_order_without_promoting_to_hardware(self) -> None:
+        hook_order = {
+            "kind": "unified_debugger_hook_order_probe",
+            "valid": True,
+            "passed": True,
+            "event_matrix": [
+                {"id": "interrupt_entry", "observes_post_interrupt": True},
+                {"id": "oam_dma_ff46", "observes_post_dma": True},
+                {"id": "cgb_vram_dma_ff55", "observes_post_dma": True},
+            ],
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "hook.json").write_text(json.dumps(hook_order), encoding="utf-8")
+            report = build_hardware_regression_report(reports=("hook.json",), root=root)
+
+        cases = {case["id"]: case for case in report["cases"]}
+
+        self.assertTrue(report["valid"])
+        self.assertFalse(report["passed"])
+        self.assertEqual(cases["interrupt_entry_stack_writes_current_pc"]["gate_status"], "emulator_observed_not_hardware")
+        self.assertEqual(cases["oam_dma_160_mcycle_timing"]["gate_status"], "emulator_observed_not_hardware")
+        self.assertEqual(cases["cgb_gp_vram_dma_cpu_halt_timing"]["gate_status"], "emulator_observed_not_hardware")
+        self.assertFalse(cases["interrupt_entry_stack_writes_current_pc"]["hardware_behavior_proven"])
+
+    def test_hardware_regression_gate_accepts_explicit_case_pass(self) -> None:
+        explicit = {
+            "kind": "dedicated_hardware_regression_result",
+            "valid": True,
+            "hardware_behavior_proven": True,
+            "hardware_regression_case_id": "interrupt_entry_stack_writes_current_pc",
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "explicit.json").write_text(json.dumps(explicit), encoding="utf-8")
+            report = build_hardware_regression_report(reports=("explicit.json",), root=root)
+
+        case = next(case for case in report["cases"] if case["id"] == "interrupt_entry_stack_writes_current_pc")
+
+        self.assertEqual(case["gate_status"], "passed")
+        self.assertTrue(case["hardware_passed"])
+        self.assertFalse(report["passed"])
+
+    def test_cli_hardware_regression_gate_writes_json_and_strict_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / "hardware.json"
+            with redirect_stdout(io.StringIO()):
+                code = debugger_main(["hardware-regression-gate", "--json-out", str(out)])
+            with redirect_stdout(io.StringIO()):
+                strict_code = debugger_main(["hardware-regression-gate", "--strict"])
+            data = json.loads(out.read_text(encoding="utf-8"))
+
+        self.assertEqual(code, 0)
+        self.assertEqual(strict_code, 1)
+        self.assertEqual(data["kind"], "unified_debugger_hardware_regression_gate")
+        self.assertFalse(data["passed"])
 
     def test_cli_writes_json_report(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -824,6 +911,9 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertTrue(snapshot["valid"])
         self.assertTrue(snapshot["executed"])
         self.assertEqual(snapshot["proof_status"], "runtime_observed")
+        self.assertEqual(snapshot["evidence_class"], "pyboy_visual_snapshot")
+        self.assertFalse(snapshot["hardware_behavior_proven"])
+        self.assertEqual(snapshot["hardware_proof_status"], "not_proven")
         self.assertEqual(snapshot["io_registers"]["rLCDC"], "93")
         self.assertTrue(snapshot["lcd_state"]["lcd_enabled"])
         self.assertEqual(snapshot["lcd_state"]["ppu_mode"], 1)
@@ -833,6 +923,8 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(snapshot["screen_frame"]["height"], 2)
         self.assertEqual(snapshot["screen_frame"]["mode"], "3ch")
         self.assertEqual(snapshot["screen_frame"]["sha256"], expected_framebuffer_hash)
+        self.assertEqual(snapshot["screen_frame"]["evidence_class"], "pyboy_framebuffer_digest")
+        self.assertFalse(snapshot["screen_frame"]["hardware_behavior_proven"])
         self.assertEqual(snapshot["framebuffer"], f"sha256:{expected_framebuffer_hash}")
         self.assertIn("wTilemap", surfaces)
         self.assertIn("wAttrmap", surfaces)
@@ -853,6 +945,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(visualization["emulator_frames"][0]["framebuffer"], f"sha256:{expected_framebuffer_hash}")
         self.assertEqual(snapshot_finding["proof_status"], "runtime_observed")
         self.assertIn(f"framebuffer=sha256:{expected_framebuffer_hash}", snapshot_finding["evidence"])
+        self.assertIn("hardware_behavior_proven=False", snapshot_finding["evidence"])
         self.assertIn("wTilemap", snapshot_finding["related_symbols"])
         self.assertIn("00:C3A0", snapshot_finding["related_addresses"])
         self.assertEqual(snapshot_impact["proof_status"], "runtime_observed")
@@ -937,18 +1030,37 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
             )
             (root / "expectation.json").write_text(json.dumps(expectations), encoding="utf-8")
             compare = build_compare_plan(reports=("visual_snapshot.json", "expectation.json"), root=root)
+            (root / "compare.json").write_text(json.dumps(compare), encoding="utf-8")
+            ranked = rank_findings(reports=("compare.json",), root=root)
+            impact = build_impact_report(reports=("compare.json",), root=root)
 
         match = next(item for item in compare["matches"] if item["id"] == "runtime_expectation_dynamic_mirror")
+        ranked_match = next(item for item in ranked["findings"] if item["type"] == "mirror_passed")
+        impact_match = next(item for item in impact["items"] if item["type"] == "mirror_passed")
 
         self.assertTrue(expectations["valid"])
         self.assertTrue(expectations["passed"])
         self.assertEqual(expectations["evidence_framebuffer_count"], 1)
         self.assertEqual(expectations["expectations"][0]["type"], "framebuffer_observed")
         self.assertEqual(expectations["expectations"][0]["status"], "passed")
+        self.assertIn("hardware_behavior_proven=False", expectations["expectations"][0]["evidence"])
+        self.assertIn("hardware_proof_status=not_proven", expectations["expectations"][0]["evidence"])
         self.assertEqual(match["status"], "passed")
-        self.assertEqual(match["proof_status"], "mirror_passed")
+        self.assertEqual(match["mirror_status"], "passed")
+        self.assertEqual(match["proof_status"], "runtime_observed")
+        self.assertEqual(match["actual_proof_status"], "runtime_observed")
+        self.assertEqual(match["expected_proof_status"], "mirror_passed")
+        self.assertFalse(match["hardware_behavior_proven"])
+        self.assertEqual(match["hardware_proof_statuses"], ["not_proven"])
+        self.assertEqual(match["emulator_observed_runtime_kinds"], ["visual_snapshot"])
         self.assertEqual(match["runtime_kinds"], ["visual_snapshot"])
+        self.assertIn("proof_downgrade_reason=emulator_snapshot_not_hardware_proof", match["evidence"])
+        self.assertIn("hardware_behavior_proven=False", match["evidence"])
         self.assertIn("runtime_kinds=visual_snapshot", match["evidence"])
+        self.assertEqual(ranked_match["proof_status"], "runtime_observed")
+        self.assertIn("hardware_behavior_proven=False", ranked_match["evidence"])
+        self.assertEqual(impact_match["proof_status"], "runtime_observed")
+        self.assertIn("hardware_behavior_proven=False", impact_match["evidence"])
 
     def test_expectation_ignores_unexecuted_visual_snapshot_framebuffer(self) -> None:
         digest = hashlib.sha256(bytes(range(12))).hexdigest()
@@ -1068,8 +1180,13 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
             )
             (root / "expectation.json").write_text(json.dumps(expectations), encoding="utf-8")
             compare = build_compare_plan(reports=("audio_snapshot.json", "expectation.json"), root=root)
+            (root / "compare.json").write_text(json.dumps(compare), encoding="utf-8")
+            ranked = rank_findings(reports=("compare.json",), root=root)
+            impact = build_impact_report(reports=("compare.json",), root=root)
 
         match = next(item for item in compare["matches"] if item["id"] == "runtime_expectation_dynamic_mirror")
+        ranked_match = next(item for item in ranked["findings"] if item["type"] == "mirror_passed")
+        impact_match = next(item for item in impact["items"] if item["type"] == "mirror_passed")
         expectation_types = {item["type"] for item in expectations["expectations"]}
         commands = "\n".join(expectations["commands"])
 
@@ -1078,17 +1195,31 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(expectations["evidence_audio_snapshot_count"], 1)
         self.assertEqual(expectation_types, {"audio_snapshot_observed"})
         self.assertTrue(all(item["status"] == "passed" for item in expectations["expectations"]))
+        self.assertTrue(all("hardware_behavior_proven=False" in item["evidence"] for item in expectations["expectations"]))
+        self.assertTrue(all("hardware_proof_status=not_proven" in item["evidence"] for item in expectations["expectations"]))
         self.assertIn("audio-snapshot --rom pokegold.gbc", commands)
         self.assertIn("expect --report audio_snapshot.json --expect audio-register=rAUDENA=8F", commands)
         self.assertIn(f"expect --report audio_snapshot.json --expect audio-buffer-sha256={sound_buffer_digest}", commands)
         self.assertEqual(match["status"], "passed")
-        self.assertEqual(match["proof_status"], "mirror_passed")
+        self.assertEqual(match["mirror_status"], "passed")
+        self.assertEqual(match["proof_status"], "runtime_observed")
+        self.assertEqual(match["actual_proof_status"], "runtime_observed")
+        self.assertEqual(match["expected_proof_status"], "mirror_passed")
+        self.assertFalse(match["hardware_behavior_proven"])
+        self.assertEqual(match["hardware_proof_statuses"], ["not_proven"])
+        self.assertEqual(match["emulator_observed_runtime_kinds"], ["audio_snapshot"])
         self.assertEqual(match["runtime_kinds"], ["audio_snapshot"])
         self.assertIn("rAUDENA", match["related_symbols"])
         self.assertIn("wMusicID", match["related_symbols"])
         self.assertIn("pyboy.sound.ndarray", match["artifacts"])
         self.assertIn("FF26", match["related_addresses"])
+        self.assertIn("proof_downgrade_reason=emulator_snapshot_not_hardware_proof", match["evidence"])
+        self.assertIn("hardware_behavior_proven=False", match["evidence"])
         self.assertIn("runtime_kinds=audio_snapshot", match["evidence"])
+        self.assertEqual(ranked_match["proof_status"], "runtime_observed")
+        self.assertIn("hardware_behavior_proven=False", ranked_match["evidence"])
+        self.assertEqual(impact_match["proof_status"], "runtime_observed")
+        self.assertIn("hardware_behavior_proven=False", impact_match["evidence"])
 
     def test_expectation_ignores_audio_snapshot_without_runtime_proof(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -1388,6 +1519,9 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertTrue(snapshot["valid"])
         self.assertTrue(snapshot["executed"])
         self.assertEqual(snapshot["proof_status"], "runtime_observed")
+        self.assertEqual(snapshot["evidence_class"], "pyboy_audio_snapshot")
+        self.assertFalse(snapshot["hardware_behavior_proven"])
+        self.assertEqual(snapshot["hardware_proof_status"], "not_proven")
         self.assertEqual(snapshot["registers"]["rAUDENA"], "8F")
         self.assertEqual(register_details["rAUDENA"]["address"], "FF26")
         self.assertTrue(snapshot["audio_state"]["audio_enabled"])
@@ -1402,6 +1536,8 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(snapshot["wave_ram"]["address"], "FF30")
         self.assertEqual(snapshot["wave_ram"]["sample_hex"], "000306090C0F1215181B1E2124272A2D")
         self.assertEqual(snapshot["sound_buffer_count"], 1)
+        self.assertEqual(snapshot["sound_buffer"]["evidence_class"], "pyboy_sound_buffer_digest")
+        self.assertFalse(snapshot["sound_buffer"]["hardware_behavior_proven"])
         self.assertEqual(snapshot["sound_buffer"]["source"], "pyboy.sound.ndarray")
         self.assertEqual(snapshot["sound_buffer"]["sample_rate"], 48000)
         self.assertEqual(snapshot["sound_buffer"]["raw_buffer_head"], 8)
@@ -1422,6 +1558,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("audio_wave_ram", visual_node_types)
         self.assertIn("audio_sound_buffer", visual_node_types)
         self.assertEqual(snapshot_finding["proof_status"], "runtime_observed")
+        self.assertIn("hardware_behavior_proven=False", snapshot_finding["evidence"])
         self.assertIn("wMusicID", snapshot_finding["related_symbols"])
         self.assertIn("rAUDENA", snapshot_finding["related_symbols"])
         self.assertIn("pyboy.sound.ndarray", snapshot_finding["related_symbols"])
@@ -1681,10 +1818,33 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         class FakeHookRegisters:
             PC = 0
             F = 0
+            A = 0
+            B = 0
+            C = 0
+            D = 0
+            E = 0
+            H = 0
+            L = 0
+            SP = 0xFFFE
 
         class FakeHookMemory:
             def __init__(self) -> None:
-                self.values = {0xC200: 0}
+                self.values = {
+                    0xC200: 0,
+                    0xC300: 0,
+                    0xC400: 0,
+                    0xFE00: 0,
+                    0xFF55: 0xFF,
+                    0xFFFC: 0,
+                    0xFFFD: 0,
+                    0xFFFA: 0,
+                    0xFFFB: 0,
+                    0xFFF8: 0,
+                    0xFFF9: 0,
+                    0xFFF6: 0,
+                    0xFFF7: 0,
+                    0x8000: 0,
+                }
 
             def __getitem__(self, key: Any) -> int:
                 return self.values.get(int(key), 0)
@@ -1698,13 +1858,20 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
                 self.memory = FakeHookMemory()
                 self.callbacks = {}
                 self.sequence = [
-                    (0x0159, 0x00, 0x0F),
-                    (0x015A, 0x00, 0x10),
-                    (0x015B, 0x00, 0x0F),
-                    (0x015C, 0x10, 0x0F),
-                    (0x015E, 0x00, 0x1F),
-                    (0x015F, 0x80, 0x1F),
-                    (0x0161, 0x00, 0x0F),
+                    (0x015C, 0x80, 0xFFFE, {0xC200: 0x0F}),
+                    (0x015D, 0x20, 0xFFFE, {0xC200: 0x10}),
+                    (0x0164, 0x20, 0xFFFE, {}),
+                    (0x0165, 0x20, 0xFFFC, {0xFFFC: 0x34, 0xFFFD: 0x12}),
+                    (0x0169, 0x20, 0xFFFC, {}),
+                    (0x01D0, 0x20, 0xFFFA, {0xFFFA: 0x6C, 0xFFFB: 0x01}),
+                    (0x0170, 0x20, 0xFFFA, {}),
+                    (0x0030, 0x20, 0xFFF8, {0xFFF8: 0x71, 0xFFF9: 0x01}),
+                    (0x0180, 0x80, 0xFFF8, {}),
+                    (0x0040, 0x80, 0xFFF6, {0xFFF6: 0x82, 0xFFF7: 0x01}),
+                    (0x0189, 0x10, 0xFFF6, {0xC300: 0xA5, 0xFE00: 0x00}),
+                    (0x018B, 0x10, 0xFFF6, {0xFE00: 0xA5}),
+                    (0x01A0, 0x80, 0xFFF6, {0xC400: 0x5A, 0x8000: 0x00, 0xFF55: 0xFF}),
+                    (0x01A2, 0x80, 0xFFF6, {0x8000: 0x5A, 0xFF55: 0xFF}),
                 ]
 
             def hook_register(self, _bank: int, pc: int, callback: Any, _ctx: Any) -> None:
@@ -1714,10 +1881,12 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
                 self.callbacks.pop(pc, None)
 
             def tick(self, *_args: Any) -> None:
-                for pc, flags, value in self.sequence:
+                for pc, flags, sp, memory_values in self.sequence:
                     self.register_file.PC = pc
                     self.register_file.F = flags
-                    self.memory[0xC200] = value
+                    self.register_file.SP = sp
+                    for address, value in memory_values.items():
+                        self.memory[address] = value
                     callback = self.callbacks.get(pc)
                     if callback:
                         callback(None)
@@ -1857,10 +2026,33 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         class FakeHookRegisters:
             PC = 0
             F = 0
+            A = 0
+            B = 0
+            C = 0
+            D = 0
+            E = 0
+            H = 0
+            L = 0
+            SP = 0xFFFE
 
         class FakeHookMemory:
             def __init__(self) -> None:
-                self.values = {0xC200: 0}
+                self.values = {
+                    0xC200: 0,
+                    0xC300: 0,
+                    0xC400: 0,
+                    0xFE00: 0,
+                    0xFF55: 0xFF,
+                    0xFFFC: 0,
+                    0xFFFD: 0,
+                    0xFFFA: 0,
+                    0xFFFB: 0,
+                    0xFFF8: 0,
+                    0xFFF9: 0,
+                    0xFFF6: 0,
+                    0xFFF7: 0,
+                    0x8000: 0,
+                }
 
             def __getitem__(self, key: Any) -> int:
                 return self.values.get(int(key), 0)
@@ -1874,13 +2066,20 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
                 self.memory = FakeHookMemory()
                 self.callbacks = {}
                 self.sequence = [
-                    (0x0159, 0x00, 0x0F),
-                    (0x015A, 0x00, 0x10),
-                    (0x015B, 0x00, 0x0F),
-                    (0x015C, 0x10, 0x0F),
-                    (0x015E, 0x00, 0x1F),
-                    (0x015F, 0x80, 0x1F),
-                    (0x0161, 0x00, 0x0F),
+                    (0x015C, 0x80, 0xFFFE, {0xC200: 0x0F}),
+                    (0x015D, 0x20, 0xFFFE, {0xC200: 0x10}),
+                    (0x0164, 0x20, 0xFFFE, {}),
+                    (0x0165, 0x20, 0xFFFC, {0xFFFC: 0x34, 0xFFFD: 0x12}),
+                    (0x0169, 0x20, 0xFFFC, {}),
+                    (0x01D0, 0x20, 0xFFFA, {0xFFFA: 0x6C, 0xFFFB: 0x01}),
+                    (0x0170, 0x20, 0xFFFA, {}),
+                    (0x0030, 0x20, 0xFFF8, {0xFFF8: 0x71, 0xFFF9: 0x01}),
+                    (0x0180, 0x80, 0xFFF8, {}),
+                    (0x0040, 0x80, 0xFFF6, {0xFFF6: 0x82, 0xFFF7: 0x01}),
+                    (0x0189, 0x10, 0xFFF6, {0xC300: 0xA5, 0xFE00: 0x00}),
+                    (0x018B, 0x10, 0xFFF6, {0xFE00: 0xA5}),
+                    (0x01A0, 0x80, 0xFFF6, {0xC400: 0x5A, 0x8000: 0x00, 0xFF55: 0xFF}),
+                    (0x01A2, 0x80, 0xFFF6, {0x8000: 0x5A, 0xFF55: 0xFF}),
                 ]
 
             def hook_register(self, _bank: int, pc: int, callback: Any, _ctx: Any) -> None:
@@ -1890,10 +2089,12 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
                 self.callbacks.pop(pc, None)
 
             def tick(self, *_args: Any) -> None:
-                for pc, flags, value in self.sequence:
+                for pc, flags, sp, memory_values in self.sequence:
                     self.register_file.PC = pc
                     self.register_file.F = flags
-                    self.memory[0xC200] = value
+                    self.register_file.SP = sp
+                    for address, value in memory_values.items():
+                        self.memory[address] = value
                     callback = self.callbacks.get(pc)
                     if callback:
                         callback(None)
@@ -6352,10 +6553,33 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         class FakeRegisters:
             PC = 0
             F = 0
+            A = 0
+            B = 0
+            C = 0
+            D = 0
+            E = 0
+            H = 0
+            L = 0
+            SP = 0xFFFE
 
         class FakeMemory:
             def __init__(self) -> None:
-                self.values = {0xC200: 0}
+                self.values = {
+                    0xC200: 0,
+                    0xC300: 0,
+                    0xC400: 0,
+                    0xFE00: 0,
+                    0xFF55: 0xFF,
+                    0xFFFC: 0,
+                    0xFFFD: 0,
+                    0xFFFA: 0,
+                    0xFFFB: 0,
+                    0xFFF8: 0,
+                    0xFFF9: 0,
+                    0xFFF6: 0,
+                    0xFFF7: 0,
+                    0x8000: 0,
+                }
 
             def __getitem__(self, key):
                 return self.values.get(key, 0)
@@ -6369,13 +6593,20 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
                 self.memory = FakeMemory()
                 self.callbacks = {}
                 self.sequence = [
-                    (0x0159, 0x00, 0x0F),
-                    (0x015A, 0x00, 0x10),
-                    (0x015B, 0x00, 0x0F),
-                    (0x015C, 0x10, 0x0F),
-                    (0x015E, 0x00, 0x1F),
-                    (0x015F, 0x80, 0x1F),
-                    (0x0161, 0x00, 0x0F),
+                    (0x015C, 0x80, 0xFFFE, {0xC200: 0x0F}),
+                    (0x015D, 0x20, 0xFFFE, {0xC200: 0x10}),
+                    (0x0164, 0x20, 0xFFFE, {}),
+                    (0x0165, 0x20, 0xFFFC, {0xFFFC: 0x34, 0xFFFD: 0x12}),
+                    (0x0169, 0x20, 0xFFFC, {}),
+                    (0x01D0, 0x20, 0xFFFA, {0xFFFA: 0x6C, 0xFFFB: 0x01}),
+                    (0x0170, 0x20, 0xFFFA, {}),
+                    (0x0030, 0x20, 0xFFF8, {0xFFF8: 0x71, 0xFFF9: 0x01}),
+                    (0x0180, 0x80, 0xFFF8, {}),
+                    (0x0040, 0x80, 0xFFF6, {0xFFF6: 0x82, 0xFFF7: 0x01}),
+                    (0x0189, 0x10, 0xFFF6, {0xC300: 0xA5, 0xFE00: 0x00}),
+                    (0x018B, 0x10, 0xFFF6, {0xFE00: 0xA5}),
+                    (0x01A0, 0x80, 0xFFF6, {0xC400: 0x5A, 0x8000: 0x00, 0xFF55: 0xFF}),
+                    (0x01A2, 0x80, 0xFFF6, {0x8000: 0x5A, 0xFF55: 0xFF}),
                 ]
 
             def hook_register(self, bank, pc, callback, _ctx) -> None:
@@ -6385,10 +6616,12 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
                 self.callbacks.pop(pc, None)
 
             def tick(self, *_args) -> None:
-                for pc, flags, value in self.sequence:
+                for pc, flags, sp, memory_values in self.sequence:
                     self.register_file.PC = pc
                     self.register_file.F = flags
-                    self.memory[0xC200] = value
+                    self.register_file.SP = sp
+                    for address, value in memory_values.items():
+                        self.memory[address] = value
                     callback = self.callbacks.get(pc)
                     if callback:
                         callback(None)
@@ -6402,14 +6635,18 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertTrue(report["valid"])
         self.assertTrue(report["passed"])
         self.assertEqual(report["proof_status"], "runtime_observed")
-        self.assertEqual(report["observation_count"], 7)
+        self.assertEqual(report["observation_count"], 14)
+        self.assertEqual(report["event_matrix_count"], 7)
+        self.assertFalse(report["non_mutating_instruction_events"])
+        self.assertFalse(report["pre_fetch_runtime_observed"])
         self.assertTrue(all(check["passed"] for check in report["checks"]))
-        rl_check = next(check for check in report["checks"] if check["id"] == "rl_pre")
-        rr_check = next(check for check in report["checks"] if check["id"] == "rr_pre")
-        self.assertEqual(rl_check["observed_value_hex"], "0F")
-        self.assertTrue(rl_check["observed_carry"])
-        self.assertEqual(rr_check["observed_value_hex"], "1F")
-        self.assertFalse(rr_check["observed_carry"])
+        matrix = {row["id"]: row for row in report["event_matrix"]}
+        self.assertFalse(matrix["inc_hl"]["observes_pre_fetch"])
+        self.assertTrue(matrix["inc_hl"]["observes_pre_write"])
+        self.assertTrue(matrix["inc_hl"]["observes_post_write"])
+        self.assertTrue(matrix["interrupt_entry"]["observes_post_interrupt"])
+        self.assertTrue(matrix["oam_dma_ff46"]["observes_post_dma"])
+        self.assertTrue(matrix["cgb_vram_dma_ff55"]["observes_post_dma"])
 
     def test_cli_hook_order_probe_writes_json(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -11928,6 +12165,16 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
             for edge in fallback_graph["edges"]
             for evidence in edge.get("evidence", [])
         }
+        fallback_unverified_graph_edges = [
+            edge
+            for edge in fallback_graph["edges"]
+            if edge["relation"] == "matches_watch_unverified_bank"
+        ]
+        fallback_unverified_graph_nodes = [
+            node
+            for node in fallback_graph["nodes"]
+            if node["kind"] == "watch_hit"
+        ]
         fallback_effect_finding = next(item for item in fallback_ranked["findings"] if item["type"] == "effect_trace_observed")
         fallback_effect_item = next(item for item in fallback_impact["items"] if item["type"] == "effect_trace_observed")
         fallback_timeline = next(
@@ -11959,6 +12206,10 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertTrue(fallback_graph["valid"])
         self.assertIn("matches_watch_unverified_bank", fallback_graph_relations)
         self.assertIn("bank_match=bus_address_unverified_bank", fallback_graph_evidence)
+        self.assertTrue(fallback_unverified_graph_edges)
+        self.assertTrue(all(edge["proof_status"] == "planned_only" for edge in fallback_unverified_graph_edges))
+        self.assertTrue(fallback_unverified_graph_nodes)
+        self.assertTrue(all(node["proof_status"] == "planned_only" for node in fallback_unverified_graph_nodes))
         self.assertIn("bank_unverified_watch_hits=1", fallback_effect_finding["evidence"])
         self.assertIn("effect_proof_status=instruction_observed", fallback_effect_finding["evidence"])
         self.assertIn("target_match_proof_status=planned_only", fallback_effect_finding["evidence"])
@@ -11967,6 +12218,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(fallback_effect_item["proof_status"], "planned_only")
         self.assertIn("target_match_proof_status=planned_only", fallback_effect_item["evidence"])
         self.assertEqual(fallback_timeline["type"], "effect_watch_hit")
+        self.assertEqual(fallback_timeline["proof_status"], "planned_only")
         self.assertIn("bank_match=bus_address_unverified_bank", fallback_timeline["detail"])
 
     def test_effect_trace_uses_runtime_bank_state_for_wramx_and_vram_keys(self) -> None:
@@ -13586,6 +13838,157 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(result["validation"]["status"], "no_observed_write")
         self.assertEqual(report["validation_summary"]["no_observed_write"], 1)
         self.assertIsNone(result["last_writer"])
+
+    def test_reverse_query_hardware_side_effect_requires_explicit_runtime_event(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "test.sym").write_text("01:4000 DmaWriter\n", encoding="utf-8")
+            dma_write = {
+                "seq": 3,
+                "pc": "01:4000",
+                "pc_label": "DmaWriter",
+                "access": "write",
+                "kind": "dma_write",
+                "category": "dma",
+                "hardware_model": "oam_dma",
+                "hardware_event_required": True,
+                "hardware_runtime_event": False,
+                "hardware_proof_gate": "explicit_runtime_event_missing",
+                "proof_status": "planned_only",
+                "proof_downgrade_reason": "oam_dma_requires_explicit_runtime_event",
+                "operation": "OAM DMA OAM write",
+                "address": "FE00",
+                "address_key": "oam:--:FE00",
+                "space": "oam",
+                "value_hex": "A5",
+                "evidence_source": "modeled_from_oam_dma_trigger",
+                "evidence_status": "modeled_hardware_side_effect",
+                "runtime_observation": "instruction_frame",
+            }
+            (root / "effect_dma.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_effect_trace",
+                        "valid": True,
+                        "write_index": [
+                            {
+                                "address_key": "oam:--:FE00",
+                                "space": "oam",
+                                "address": "FE00",
+                                "read_count": 0,
+                                "write_count": 1,
+                                "last_writer_seq": 3,
+                                "last_writer_pc": "01:4000",
+                                "last_value_hex": "A5",
+                                "history": [dma_write],
+                            }
+                        ],
+                        "events": [
+                            {
+                                "seq": 3,
+                                "pc_bank_address": "01:4000",
+                                "pc_label": "DmaWriter",
+                                "effects": [
+                                    {
+                                        **dma_write,
+                                        "address": 0xFE00,
+                                        "address_hex": "FE00",
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            report = build_reverse_query_report(
+                reports=("effect_dma.json",),
+                addresses=("FE00",),
+                symbols_path="test.sym",
+                root=root,
+            )
+            dynamic = build_dynamic_taint_report(
+                reports=("effect_dma.json",),
+                sink_addresses=("FE00",),
+                symbols_path="test.sym",
+                root=root,
+            )
+
+        result = report["results"][0]
+        attribution = dynamic["write_attributions"][0]
+
+        self.assertTrue(report["valid"])
+        self.assertEqual(report["proof_status"], "planned_only")
+        self.assertEqual(result["proof_status"], "planned_only")
+        self.assertEqual(result["validation"]["status"], "effect_event_matched")
+        self.assertEqual(result["hardware_side_effect_gate"]["status"], "explicit_runtime_event_missing")
+        self.assertIn("hardware_side_effect_gate=explicit_runtime_event_missing", result["evidence"])
+        self.assertIn("proof_downgrade_reason=oam_dma_requires_explicit_runtime_event", result["evidence"])
+        self.assertTrue(dynamic["valid"])
+        self.assertEqual(attribution["proof_status"], "planned_only")
+        self.assertIn("effect_proof_status=planned_only", attribution["evidence"])
+        self.assertIn("hardware_proof_gate=explicit_runtime_event_missing", attribution["evidence"])
+
+    def test_causal_graph_preserves_hardware_gated_effect_proof_status(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "test.sym").write_text("01:4000 DmaWriter\n", encoding="utf-8")
+            (root / "instruction_trace.jsonl").write_text(
+                json.dumps(
+                    {
+                        "seq": 0,
+                        "bank": 1,
+                        "pc": 0x4000,
+                        "pc_label": "DmaWriter",
+                        "opcode": 0xE0,
+                        "operand": [0x46],
+                        "regs": {"A": 0xC0, "SP": 0xDFF0},
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            effect = build_effect_trace_report(
+                traces=("instruction_trace.jsonl",),
+                symbols_path="test.sym",
+                root=root,
+            )
+            (root / "effect_trace.json").write_text(json.dumps(effect), encoding="utf-8")
+            graph = build_causal_graph_report(
+                reports=("effect_trace.json",),
+                max_nodes=1000,
+                max_edges=2000,
+                root=root,
+            )
+
+        gated_effects = [
+            item
+            for event in effect["events"]
+            for item in event["effects"]
+            if item.get("hardware_proof_gate") == "explicit_runtime_event_missing"
+        ]
+        gated_graph_edges = [
+            edge
+            for edge in graph["edges"]
+            if edge["relation"] in {"reads_address", "writes_address"}
+            and "hardware_model=oam_dma" in edge.get("evidence", [])
+        ]
+        gated_graph_nodes = [
+            node
+            for node in graph["nodes"]
+            if node["kind"] == "effect"
+            and "hardware_model=oam_dma" in node.get("evidence", [])
+        ]
+
+        self.assertTrue(effect["valid"])
+        self.assertTrue(gated_effects)
+        self.assertTrue(all(item["proof_status"] == "planned_only" for item in gated_effects))
+        self.assertTrue(graph["valid"])
+        self.assertTrue(gated_graph_edges)
+        self.assertTrue(all(edge["proof_status"] == "planned_only" for edge in gated_graph_edges))
+        self.assertTrue(gated_graph_nodes)
+        self.assertTrue(all(node["proof_status"] == "planned_only" for node in gated_graph_nodes))
 
     def test_reverse_query_does_not_event_validate_banked_index_by_bus_address(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -25607,6 +26010,121 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(object_context["large_object"], True)
         self.assertIn("wObject1Struct+OBJECT_PALETTE", route["expected_sinks"])
 
+    def test_content_scenarios_materialize_custom_big_object_movement_candidates(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "maps").mkdir()
+            (root / "data" / "maps").mkdir(parents=True)
+            (root / "data" / "sprites").mkdir(parents=True)
+            (root / "constants").mkdir()
+            (root / "data" / "maps" / "maps.asm").write_text(
+                "MapGroup_Unit:\n\tmap UnitMap, TILESET_JOHTO, TOWN, LANDMARK_UNIT, MUSIC_NONE, FALSE, PALETTE_AUTO, FISHGROUP_SHORE\n",
+                encoding="utf-8",
+            )
+            (root / "constants" / "map_object_constants.asm").write_text(
+                "const_def $40\n\tconst SPRITEMOVEDATA_CUSTOM_STATUE\n",
+                encoding="utf-8",
+            )
+            (root / "data" / "sprites" / "map_objects.asm").write_text(
+                "\n".join(
+                    [
+                        "; SPRITEMOVEDATA_CUSTOM_STATUE",
+                        "\tdb SPRITEMOVEFN_STRENGTH ; movement function",
+                        "\tdb DOWN ; facing",
+                        "\tdb OBJECT_ACTION_BIG_DOLL ; action",
+                        "\tdb WONT_DELETE | FIXED_FACING | SLIDING | MOVE_ANYWHERE ; flags1",
+                        "\tdb LOW_PRIORITY ; flags2",
+                        "\tdb BIG_OBJECT ; palette flags",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (root / "maps" / "UnitMap.asm").write_text(
+                "\n".join(
+                    [
+                        "UnitMap_MapEvents:",
+                        "\tdef_warp_events",
+                        "\tdef_coord_events",
+                        "\tdef_bg_events",
+                        "\tdef_object_events",
+                        "\tobject_event 6, 7, SPRITE_CHRIS, SPRITEMOVEDATA_CUSTOM_STATUE, 0, 0, -1, -1, 0, OBJECTTYPE_SCRIPT, 0, UnitMapStatueScript, -1",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (root / "test.sym").write_text(
+                "\n".join(
+                    [
+                        "02:5000 UnitMapStatueScript",
+                        "01:D000 wMapGroup",
+                        "01:D001 wMapNumber",
+                        "01:D002 wYCoord",
+                        "01:D003 wXCoord",
+                        "01:D205 wPlayerDirection",
+                        "01:D20D wPlayerMapX",
+                        "01:D20E wPlayerMapY",
+                        "01:D225 wObject1Struct",
+                        "01:D465 wMap2ObjectStructID",
+                        "01:D466 wMap2ObjectSprite",
+                        "01:D467 wMap2ObjectYCoord",
+                        "01:D468 wMap2ObjectXCoord",
+                        "01:D469 wMap2ObjectMovement",
+                        "01:D46A wMap2ObjectRadius",
+                        "01:D46B wMap2ObjectHour1",
+                        "01:D46C wMap2ObjectHour2",
+                        "01:D46D wMap2ObjectType",
+                        "01:D46E wMap2ObjectSightRange",
+                        "01:D46F wMap2ObjectScript",
+                        "01:D471 wMap2ObjectEventFlag",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            scenario_report = build_content_scenario_report(
+                source_files=("maps/UnitMap.asm",),
+                out_scenarios="content_scenarios.jsonl",
+                max_cases=4,
+                seed=45,
+                root=root,
+            )
+            object_scenario = next(item for item in scenario_report["scenarios"] if item["scenario_type"] == "map_object_event")
+            report = build_content_state_report(
+                scenarios=("content_scenarios.jsonl",),
+                scenario_ids=(object_scenario["id"],),
+                symbols_path="test.sym",
+                root=root,
+            )
+
+        position_preconditions = [
+            precondition
+            for precondition in object_scenario["state_preconditions"]
+            if precondition.get("kind") == "map_position"
+        ]
+        candidate_ids = {precondition["id"] for precondition in position_preconditions}
+        materialization = next(
+            item
+            for item in report["materializations"]
+            if item.get("precondition_id") == "map_object_event_large_object_right_bottom_position"
+        )
+        patches = {patch["symbol"]: patch for patch in materialization["patches"]}
+        event_context = materialization["event_context"]
+        object_context = materialization["object_context"]
+
+        self.assertTrue(report["valid"])
+        self.assertEqual(len(position_preconditions), 13)
+        self.assertIn("map_object_event_large_object_right_bottom_position", candidate_ids)
+        self.assertEqual(materialization["status"], "ready")
+        self.assertEqual(event_context["large_object"], True)
+        self.assertEqual(event_context["large_object_collision_model"], "WillObjectIntersectBigObject_fixed_2x2")
+        self.assertEqual(event_context["player_context"]["large_object_collision_model"], "WillObjectIntersectBigObject_fixed_2x2")
+        self.assertEqual(object_context["large_object_collision_model"], "WillObjectIntersectBigObject_fixed_2x2")
+        self.assertEqual(object_context["sprite_movement_palette_flags"], 0x80)
+        self.assertEqual(patches["wObject1Struct+OBJECT_PALETTE"]["value"], 0x80)
+
     def test_content_state_materializes_multi_object_event_row(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -26156,6 +26674,129 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("hHours", materialization["watch_symbols"])
         self.assertIn("hHours", materialization["expected_sinks"])
 
+    def test_content_state_materializes_selected_object_event_timeofday_mask_state(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "maps").mkdir()
+            (root / "data" / "maps").mkdir(parents=True)
+            (root / "constants").mkdir()
+            (root / "constants" / "ram_constants.asm").write_text(
+                "\n".join(
+                    [
+                        "\tconst_def",
+                        "\tshift_const MORN",
+                        "\tshift_const DAY",
+                        "\tshift_const NITE",
+                        "\tshift_const DARKNESS",
+                        "\tDEF ANYTIME EQU MORN | DAY | NITE",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (root / "constants" / "misc_constants.asm").write_text(
+                "\n".join(
+                    [
+                        "\tDEF MORN_HOUR EQU 4",
+                        "\tDEF DAY_HOUR EQU 10",
+                        "\tDEF NITE_HOUR EQU 18",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (root / "data" / "maps" / "maps.asm").write_text(
+                "MapGroup_Unit:\n\tmap UnitMap, TILESET_JOHTO, TOWN, LANDMARK_UNIT, MUSIC_NONE, FALSE, PALETTE_AUTO, FISHGROUP_SHORE\n",
+                encoding="utf-8",
+            )
+            (root / "maps" / "UnitMap.asm").write_text(
+                "\n".join(
+                    [
+                        "UnitMap_MapEvents:",
+                        "\tdef_warp_events",
+                        "\tdef_coord_events",
+                        "\tdef_bg_events",
+                        "\tdef_object_events",
+                        "\tobject_event 6, 7, SPRITE_CHRIS, SPRITEMOVEDATA_STANDING_DOWN, 0, 0, -1, DAY, 0, OBJECTTYPE_SCRIPT, 0, UnitMapDayScript, -1",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (root / "test.sym").write_text(
+                "\n".join(
+                    [
+                        "02:5000 UnitMapDayScript",
+                        "00:FF96 hHours",
+                        "01:D269 wTimeOfDay",
+                        "01:D000 wMapGroup",
+                        "01:D001 wMapNumber",
+                        "01:D002 wYCoord",
+                        "01:D003 wXCoord",
+                        "01:D205 wPlayerDirection",
+                        "01:D20D wPlayerMapX",
+                        "01:D20E wPlayerMapY",
+                        "01:D225 wObject1Struct",
+                        "01:D465 wMap2ObjectStructID",
+                        "01:D466 wMap2ObjectSprite",
+                        "01:D467 wMap2ObjectYCoord",
+                        "01:D468 wMap2ObjectXCoord",
+                        "01:D469 wMap2ObjectMovement",
+                        "01:D46A wMap2ObjectRadius",
+                        "01:D46B wMap2ObjectHour1",
+                        "01:D46C wMap2ObjectHour2",
+                        "01:D46D wMap2ObjectType",
+                        "01:D46E wMap2ObjectSightRange",
+                        "01:D46F wMap2ObjectScript",
+                        "01:D471 wMap2ObjectEventFlag",
+                        "01:D545 wObjectMasks",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            scenario_report = build_content_scenario_report(
+                source_files=("maps/UnitMap.asm",),
+                out_scenarios="content_scenarios.jsonl",
+                max_cases=8,
+                seed=43,
+                root=root,
+            )
+            object_scenario = next(item for item in scenario_report["scenarios"] if item["scenario_type"] == "map_object_event")
+            report = build_content_state_report(
+                scenarios=("content_scenarios.jsonl",),
+                scenario_ids=(object_scenario["id"],),
+                symbols_path="test.sym",
+                root=root,
+            )
+
+        materialization = next(
+            item
+            for item in report["materializations"]
+            if item.get("precondition_id") == "map_object_event_position"
+        )
+        patches = {patch["symbol"]: patch for patch in materialization["patches"]}
+        object_context = materialization["object_context"]
+        time_context = object_context["object_time_context"]
+        route = materialization["event_runtime_materialization"]
+
+        self.assertTrue(report["valid"])
+        self.assertEqual(materialization["status"], "ready")
+        self.assertEqual(time_context["time_model"], "timeofday_mask")
+        self.assertEqual(time_context["timeofday_mask"], 2)
+        self.assertEqual(time_context["required_timeofday"], "DAY")
+        self.assertEqual(time_context["required_timeofday_value"], 1)
+        self.assertEqual(time_context["required_hour"], 10)
+        self.assertEqual(patches["wTimeOfDay"]["value"], 1)
+        self.assertEqual(patches["hHours"]["value"], 10)
+        self.assertEqual(patches["wMap2ObjectHour1"]["value"], 0xFF)
+        self.assertEqual(patches["wMap2ObjectHour2"]["value"], 2)
+        self.assertIn("wTimeOfDay", materialization["watch_symbols"])
+        self.assertIn("hHours", materialization["watch_symbols"])
+        self.assertIn("wTimeOfDay", materialization["expected_sinks"])
+        self.assertIn("wTimeOfDay", route["expected_sinks"])
+
     def test_content_state_skips_time_filtered_companion_object_structs(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -26271,6 +26912,276 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(patches["wMap3ObjectStructID"]["value"], 1)
         self.assertEqual(patches["wObject1Struct+OBJECT_MAP_OBJECT_INDEX"]["value"], 3)
         self.assertNotIn("wObject2Struct", materialization["watch_symbols"])
+
+    def test_content_state_skips_timeofday_mask_filtered_companion_object_structs(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "maps").mkdir()
+            (root / "data" / "maps").mkdir(parents=True)
+            (root / "constants").mkdir()
+            (root / "constants" / "ram_constants.asm").write_text(
+                "\n".join(
+                    [
+                        "\tconst_def",
+                        "\tshift_const MORN",
+                        "\tshift_const DAY",
+                        "\tshift_const NITE",
+                        "\tshift_const DARKNESS",
+                        "\tDEF ANYTIME EQU MORN | DAY | NITE",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (root / "constants" / "misc_constants.asm").write_text(
+                "\n".join(
+                    [
+                        "\tDEF MORN_HOUR EQU 4",
+                        "\tDEF DAY_HOUR EQU 10",
+                        "\tDEF NITE_HOUR EQU 18",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (root / "data" / "maps" / "maps.asm").write_text(
+                "MapGroup_Unit:\n\tmap UnitMap, TILESET_JOHTO, TOWN, LANDMARK_UNIT, MUSIC_NONE, FALSE, PALETTE_AUTO, FISHGROUP_SHORE\n",
+                encoding="utf-8",
+            )
+            (root / "maps" / "UnitMap.asm").write_text(
+                "\n".join(
+                    [
+                        "UnitMap_MapEvents:",
+                        "\tdef_warp_events",
+                        "\tdef_coord_events",
+                        "\tdef_bg_events",
+                        "\tdef_object_events",
+                        "\tobject_event 2, 3, SPRITE_CHRIS, SPRITEMOVEDATA_STANDING_DOWN, 0, 0, -1, NITE, 0, OBJECTTYPE_SCRIPT, 0, UnitMapNightScript, -1",
+                        "\tobject_event 6, 7, SPRITE_CHRIS, SPRITEMOVEDATA_STANDING_DOWN, 0, 0, -1, DAY, 0, OBJECTTYPE_SCRIPT, 0, UnitMapDayScript, -1",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (root / "test.sym").write_text(
+                "\n".join(
+                    [
+                        "02:5000 UnitMapNightScript",
+                        "02:5100 UnitMapDayScript",
+                        "00:FF96 hHours",
+                        "01:D269 wTimeOfDay",
+                        "01:D000 wMapGroup",
+                        "01:D001 wMapNumber",
+                        "01:D002 wYCoord",
+                        "01:D003 wXCoord",
+                        "01:D205 wPlayerDirection",
+                        "01:D20D wPlayerMapX",
+                        "01:D20E wPlayerMapY",
+                        "01:D225 wObject1Struct",
+                        "01:D24D wObject2Struct",
+                        "01:D465 wMap2ObjectStructID",
+                        "01:D466 wMap2ObjectSprite",
+                        "01:D467 wMap2ObjectYCoord",
+                        "01:D468 wMap2ObjectXCoord",
+                        "01:D469 wMap2ObjectMovement",
+                        "01:D46A wMap2ObjectRadius",
+                        "01:D46B wMap2ObjectHour1",
+                        "01:D46C wMap2ObjectHour2",
+                        "01:D46D wMap2ObjectType",
+                        "01:D46E wMap2ObjectSightRange",
+                        "01:D46F wMap2ObjectScript",
+                        "01:D471 wMap2ObjectEventFlag",
+                        "01:D475 wMap3ObjectStructID",
+                        "01:D476 wMap3ObjectSprite",
+                        "01:D477 wMap3ObjectYCoord",
+                        "01:D478 wMap3ObjectXCoord",
+                        "01:D479 wMap3ObjectMovement",
+                        "01:D47A wMap3ObjectRadius",
+                        "01:D47B wMap3ObjectHour1",
+                        "01:D47C wMap3ObjectHour2",
+                        "01:D47D wMap3ObjectType",
+                        "01:D47E wMap3ObjectSightRange",
+                        "01:D47F wMap3ObjectScript",
+                        "01:D481 wMap3ObjectEventFlag",
+                        "01:D545 wObjectMasks",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            scenario_report = build_content_scenario_report(
+                source_files=("maps/UnitMap.asm",),
+                out_scenarios="content_scenarios.jsonl",
+                max_cases=8,
+                seed=44,
+                root=root,
+            )
+            object_scenario = next(
+                item
+                for item in scenario_report["scenarios"]
+                if item["scenario_type"] == "map_object_event"
+                and item["trigger"]["script"] == "UnitMapDayScript"
+            )
+            report = build_content_state_report(
+                scenarios=("content_scenarios.jsonl",),
+                scenario_ids=(object_scenario["id"],),
+                symbols_path="test.sym",
+                root=root,
+            )
+
+        materialization = next(
+            item
+            for item in report["materializations"]
+            if item.get("precondition_id") == "map_object_event_position"
+        )
+        patches = {patch["symbol"]: patch for patch in materialization["patches"]}
+        object_context = materialization["object_context"]
+        companion_context = object_context["companion_context"]
+
+        self.assertTrue(report["valid"])
+        self.assertEqual(materialization["status"], "ready")
+        self.assertEqual(object_context["object_struct_symbol"], "wObject1Struct")
+        self.assertEqual(object_context["object_struct_index"], 1)
+        self.assertEqual(object_context["loaded_object_count"], 1)
+        self.assertEqual(companion_context["companion_object_count"], 0)
+        self.assertEqual(companion_context["time_filtered_object_count"], 1)
+        self.assertEqual(companion_context["time_filtered_objects"][0]["map_object_index"], 2)
+        self.assertEqual(companion_context["time_filtered_objects"][0]["time_filter_reason"], "timeofday_mask_excludes_selected_timeofday")
+        self.assertEqual(companion_context["time_filtered_objects"][0]["object_time_context"]["required_timeofday"], "NITE")
+        self.assertEqual(patches["wTimeOfDay"]["value"], 1)
+        self.assertEqual(patches["hHours"]["value"], 10)
+        self.assertEqual(patches["wMap2ObjectStructID"]["value"], 0xFF)
+        self.assertEqual(patches["wObjectMasks+2"]["value"], 0xFF)
+        self.assertEqual(patches["wMap3ObjectStructID"]["value"], 1)
+        self.assertNotIn("wObject2Struct", materialization["watch_symbols"])
+
+    def test_content_scenarios_materialize_all_timeofday_mask_candidates(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "maps").mkdir()
+            (root / "data" / "maps").mkdir(parents=True)
+            (root / "constants").mkdir()
+            (root / "constants" / "ram_constants.asm").write_text(
+                "\n".join(
+                    [
+                        "\tconst_def",
+                        "\tshift_const MORN",
+                        "\tshift_const DAY",
+                        "\tshift_const NITE",
+                        "\tshift_const DARKNESS",
+                        "\tDEF ANYTIME EQU MORN | DAY | NITE",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (root / "constants" / "misc_constants.asm").write_text(
+                "\n".join(
+                    [
+                        "\tDEF MORN_HOUR EQU 4",
+                        "\tDEF DAY_HOUR EQU 10",
+                        "\tDEF NITE_HOUR EQU 18",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (root / "data" / "maps" / "maps.asm").write_text(
+                "MapGroup_Unit:\n\tmap UnitMap, TILESET_JOHTO, TOWN, LANDMARK_UNIT, MUSIC_NONE, FALSE, PALETTE_AUTO, FISHGROUP_SHORE\n",
+                encoding="utf-8",
+            )
+            (root / "maps" / "UnitMap.asm").write_text(
+                "\n".join(
+                    [
+                        "UnitMap_MapEvents:",
+                        "\tdef_warp_events",
+                        "\tdef_coord_events",
+                        "\tdef_bg_events",
+                        "\tdef_object_events",
+                        "\tobject_event 6, 7, SPRITE_CHRIS, SPRITEMOVEDATA_STANDING_DOWN, 0, 0, -1, ANYTIME, 0, OBJECTTYPE_SCRIPT, 0, UnitMapAnytimeScript, -1",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (root / "test.sym").write_text(
+                "\n".join(
+                    [
+                        "02:5000 UnitMapAnytimeScript",
+                        "00:FF96 hHours",
+                        "01:D269 wTimeOfDay",
+                        "01:D000 wMapGroup",
+                        "01:D001 wMapNumber",
+                        "01:D002 wYCoord",
+                        "01:D003 wXCoord",
+                        "01:D205 wPlayerDirection",
+                        "01:D20D wPlayerMapX",
+                        "01:D20E wPlayerMapY",
+                        "01:D225 wObject1Struct",
+                        "01:D465 wMap2ObjectStructID",
+                        "01:D466 wMap2ObjectSprite",
+                        "01:D467 wMap2ObjectYCoord",
+                        "01:D468 wMap2ObjectXCoord",
+                        "01:D469 wMap2ObjectMovement",
+                        "01:D46A wMap2ObjectRadius",
+                        "01:D46B wMap2ObjectHour1",
+                        "01:D46C wMap2ObjectHour2",
+                        "01:D46D wMap2ObjectType",
+                        "01:D46E wMap2ObjectSightRange",
+                        "01:D46F wMap2ObjectScript",
+                        "01:D471 wMap2ObjectEventFlag",
+                        "01:D545 wObjectMasks",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            scenario_report = build_content_scenario_report(
+                source_files=("maps/UnitMap.asm",),
+                out_scenarios="content_scenarios.jsonl",
+                max_cases=8,
+                seed=46,
+                root=root,
+            )
+            object_scenario = next(item for item in scenario_report["scenarios"] if item["scenario_type"] == "map_object_event")
+            report = build_content_state_report(
+                scenarios=("content_scenarios.jsonl",),
+                scenario_ids=(object_scenario["id"],),
+                symbols_path="test.sym",
+                root=root,
+            )
+
+        position_preconditions = [
+            precondition
+            for precondition in object_scenario["state_preconditions"]
+            if precondition.get("kind") == "map_position"
+        ]
+        candidate_ids = {precondition["id"] for precondition in position_preconditions}
+        materialization = next(
+            item
+            for item in report["materializations"]
+            if item.get("precondition_id") == "map_object_event_timeofday_nite_position"
+        )
+        patches = {patch["symbol"]: patch for patch in materialization["patches"]}
+        object_context = materialization["object_context"]
+        time_context = object_context["object_time_context"]
+
+        self.assertTrue(report["valid"])
+        self.assertIn("map_object_event_timeofday_morn_position", candidate_ids)
+        self.assertIn("map_object_event_timeofday_day_position", candidate_ids)
+        self.assertIn("map_object_event_timeofday_nite_position", candidate_ids)
+        self.assertEqual(materialization["status"], "ready")
+        self.assertEqual(materialization["values"]["selected_timeofday"], "NITE")
+        self.assertEqual(time_context["required_timeofday"], "NITE")
+        self.assertEqual(time_context["required_timeofday_value"], 2)
+        self.assertEqual(time_context["required_hour"], 18)
+        self.assertEqual(time_context["selected_time_context_source"], "source_timeofday_mask_candidate")
+        self.assertEqual(patches["wTimeOfDay"]["value"], 2)
+        self.assertEqual(patches["hHours"]["value"], 18)
+        self.assertIn("wTimeOfDay", materialization["watch_symbols"])
+        self.assertIn("hHours", materialization["watch_symbols"])
 
     def test_content_scenarios_feed_replay_localize_and_coverage_targets(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
