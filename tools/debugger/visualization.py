@@ -14,6 +14,7 @@ from .address_boundary import (
 )
 from .catalog import ROOT
 from .coverage import load_traces
+from .evidence import evidence_atoms
 from .ranking import (
     materialized_save_state_delta,
     minimized_state_patch_save_state_delta,
@@ -401,7 +402,7 @@ def collect_report_timeline(data: dict[str, Any], *, source: str, out: list[dict
                 )
             )
         for path in dict_items(data.get("paths")):
-            proof = normalize_proof_status(path.get("proof_status")) or "planned_only"
+            proof = dynamic_taint_path_proof_status(path)
             out.append(
                 timeline_event(
                     lane="causal",
@@ -1753,7 +1754,7 @@ def collect_graph(*, loaded_reports: list[dict[str, Any]]) -> dict[str, list[dic
                     add_graph_node(nodes, command_id, command, "workflow_command", source, proof)
                     add_graph_edge(edges, route_id, command_id, "runs", source, proof)
             for path in dict_items(data.get("paths")):
-                proof = normalize_proof_status(path.get("proof_status")) or "planned_only"
+                proof = dynamic_taint_path_proof_status(path)
                 target = str(path.get("target", ""))
                 add_graph_node(nodes, target, target, "taint_target", source, proof)
                 for contributor in dict_items(path.get("contributors")):
@@ -2961,6 +2962,20 @@ def add_graph_edge(
 def normalize_proof_status(value: Any) -> str:
     text = str(value or "").strip()
     return text if text in PROOF_STATUS_RANK else ""
+
+
+def dynamic_taint_path_proof_status(path: dict[str, Any]) -> str:
+    explicit = normalize_proof_status(path.get("proof_status")) if path.get("proof_status") else ""
+    if explicit:
+        return explicit
+    atom_statuses = [
+        normalize_proof_status(atom.get("proof_status"))
+        for atom in evidence_atoms(path.get("evidence_atoms"))
+        if atom.get("proof_status")
+    ]
+    if atom_statuses:
+        return weakest_proof_status(atom_statuses)
+    return "planned_only"
 
 
 def visual_snapshot_has_runtime_samples(data: dict[str, Any]) -> bool:

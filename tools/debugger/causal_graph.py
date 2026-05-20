@@ -12,7 +12,7 @@ from .address_boundary import (
 from .catalog import ROOT
 from .coverage import load_traces
 from .dynamic_taint import trace_records
-from .evidence import merge_evidence_atoms
+from .evidence import evidence_atoms, merge_evidence_atoms
 from .reporting import load_reports
 from .workflow import command_address_arg, command_is_runnable
 
@@ -678,16 +678,60 @@ class GraphBuilder:
             target = str(path.get("target") or "")
             target_id = target_node_id(target)
             path_id = node_id("taint_path", path.get("id") or f"{source}:{target}:{path.get('seq', '')}")
-            proof = normalize_proof_status(path.get("proof_status")) or "taint_proven"
-            self.add_node(path_id, str(path.get("title") or "taint path"), "taint_path", source=source, proof_status=proof, symbols=path.get("related_symbols"), addresses=path.get("related_addresses"), files=path.get("related_files"))
-            self.add_node(target_id, target, target_kind(target), source=source, proof_status=proof)
+            proof = dynamic_taint_path_proof_status(path)
+            self.add_node(
+                path_id,
+                str(path.get("title") or "taint path"),
+                "taint_path",
+                source=source,
+                proof_status=proof,
+                symbols=path.get("related_symbols"),
+                addresses=path.get("related_addresses"),
+                files=path.get("related_files"),
+                evidence_atoms=path.get("evidence_atoms"),
+            )
+            self.add_node(
+                target_id,
+                target,
+                target_kind(target),
+                source=source,
+                proof_status=proof,
+                evidence_atoms=path.get("evidence_atoms"),
+            )
             self.add_edge(report_id, path_id, "contains", source=source)
-            self.add_edge(path_id, target_id, "proves_taint_to", source=source, proof_status=proof, evidence=path.get("evidence"), seq=path.get("seq"), confidence=path.get("confidence"), score=path.get("score"))
+            self.add_edge(
+                path_id,
+                target_id,
+                "proves_taint_to",
+                source=source,
+                proof_status=proof,
+                evidence=path.get("evidence"),
+                evidence_atoms=path.get("evidence_atoms"),
+                seq=path.get("seq"),
+                confidence=path.get("confidence"),
+                score=path.get("score"),
+            )
             for contributor in dict_items(path.get("contributors")):
                 symbol = str(contributor.get("symbol") or contributor.get("address") or "")
                 source_id = target_node_id(symbol)
-                self.add_node(source_id, symbol, target_kind(symbol), source=source, proof_status=proof)
-                self.add_edge(source_id, path_id, str(contributor.get("relation") or "taints"), source=source, proof_status=proof, evidence=path.get("evidence"), confidence=contributor.get("confidence"))
+                self.add_node(
+                    source_id,
+                    symbol,
+                    target_kind(symbol),
+                    source=source,
+                    proof_status=proof,
+                    evidence_atoms=path.get("evidence_atoms"),
+                )
+                self.add_edge(
+                    source_id,
+                    path_id,
+                    str(contributor.get("relation") or "taints"),
+                    source=source,
+                    proof_status=proof,
+                    evidence=path.get("evidence"),
+                    evidence_atoms=path.get("evidence_atoms"),
+                    confidence=contributor.get("confidence"),
+                )
         for attribution in dict_items(data.get("write_attributions")):
             self.add_write_attribution(attribution, source=source, report_id=report_id)
 
@@ -2869,6 +2913,26 @@ def safe_id(value: Any) -> str:
     if not text:
         return "unknown"
     return "".join(char if char.isalnum() or char in {"_", "-", ".", ":"} else "_" for char in text)[:180]
+
+
+def dynamic_taint_path_proof_status(path: dict[str, Any]) -> str:
+    explicit = explicit_proof_status(path.get("proof_status"))
+    if explicit:
+        return explicit
+    atom_statuses = [
+        normalize_proof_status(atom.get("proof_status"))
+        for atom in evidence_atoms(path.get("evidence_atoms"))
+        if atom.get("proof_status")
+    ]
+    if atom_statuses:
+        return weakest_proof_status(atom_statuses)
+    return "planned_only"
+
+
+def explicit_proof_status(value: Any) -> str:
+    if value in {None, ""}:
+        return ""
+    return normalize_proof_status(value)
 
 
 def normalize_proof_status(value: Any) -> str:

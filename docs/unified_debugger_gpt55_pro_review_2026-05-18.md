@@ -6414,3 +6414,42 @@ Remaining priority:
 
 - This prevents another planned/static diagnostic from becoming observed proof at ranking/impact boundaries, but it does not add missing trace registers, complete side-effect reverse execution, the non-mutating hardware event recorder, or new behavioral mirror execution.
 - The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
+
+## Implementation Note - Dynamic-Taint Path EvidenceAtom Proof Propagation
+
+Date: 2026-05-20.
+
+Context:
+
+- Ranking and impact already preserve dynamic-taint path proof status, and proofless paths remain `planned_only`.
+- Causal graph and visualization had a narrower gap: when a dynamic-taint path omitted the flat `proof_status` field but carried `evidence_atoms[].proof_status`, those report surfaces ignored the atom proof.
+- That could make graph/UI proof weaker or less precise than the underlying typed evidence, and it kept dynamic-taint path atoms from being first-class causal/report evidence.
+
+Primary references used:
+
+- No new external primary references were needed for this slice; it is an internal EvidenceAtom propagation patch.
+
+Implemented fix:
+
+- `tools/debugger/causal_graph.py`
+  - derives dynamic-taint path proof from explicit `proof_status`, then weakest `evidence_atoms[].proof_status`, otherwise `planned_only`.
+  - preserves dynamic-taint path `evidence_atoms` on path nodes, target/source nodes, and taint edges.
+- `tools/debugger/visualization.py`
+  - uses the same proof derivation for dynamic-taint timeline events and direct visualization graph nodes/edges.
+- `tools/debugger/tests/test_catalog.py`
+  - adds a regression proving a path with atom-level `taint_proven` proof but no flat proof field remains proven through causal graph and visualization.
+  - keeps the existing proofless dynamic-taint path regression planned-only.
+
+Validation after patch:
+
+- Focused causal graph / visualization dynamic-taint path proof regressions: 3 passed.
+- `PYTHONPYCACHEPREFIX=.local\tmp\pycompile_cache python -m py_compile tools\debugger\causal_graph.py tools\debugger\visualization.py tools\debugger\tests\test_catalog.py`: passed.
+- Full debugger unittest discovery: 544 passed.
+- `python -m tools.debugger hardware-regression-gate --execute`: passed as a command, still intentionally `passed=False`; reported 0/10 cases passing, 10 blocking cases, 4 runtime-observed emulator cases, 0 hardware-proof cases, and 10 static-blocker cases.
+- `python -m tools.debugger audit`: passed as a command, still `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- `git diff --check`: passed with unrelated pre-existing CRLF warnings in Boss AI trace/generated/doc fixture files.
+
+Remaining priority:
+
+- This improves proof precision for supplied typed evidence, but it does not create new dynamic-taint evidence, complete causal proof across subsystem boundaries, side-effect-complete reverse execution, or behavioral script/graphics/audio/map mirrors.
+- The whole-ROM proof-substrate goal remains incomplete and `ready=False`.

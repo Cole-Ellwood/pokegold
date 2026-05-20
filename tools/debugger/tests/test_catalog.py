@@ -19762,6 +19762,67 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertTrue(all(node["proof_status"] == "planned_only" for node in visual_taint_nodes))
         self.assertTrue(all(edge["proof_status"] == "planned_only" for edge in visual_taint_edges))
 
+    def test_graph_and_visualization_use_dynamic_taint_path_evidence_atom_proof_status(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "dynamic_taint.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_dynamic_taint_report",
+                        "valid": True,
+                        "paths": [
+                            {
+                                "title": "atom-proven path",
+                                "target": "wCurDamage",
+                                "score": 88,
+                                "confidence": 0.8,
+                                "taint": ["move_power"],
+                                "evidence": ["taint=move_power"],
+                                "related_symbols": ["wCurDamage", "move_power"],
+                                "contributors": [
+                                    {
+                                        "symbol": "move_power",
+                                        "relation": "register_taints_sink",
+                                    }
+                                ],
+                                "evidence_atoms": [
+                                    {
+                                        "claim_type": "dynamic_taint.path",
+                                        "origin": "dynamic_taint",
+                                        "observation_type": "dynamic_trace",
+                                        "subject": "wCurDamage",
+                                        "proof_status": "taint_proven",
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            graph = build_causal_graph_report(reports=("dynamic_taint.json",), root=root)
+            visualization = build_visualization_report(reports=("dynamic_taint.json",), root=root)
+
+        graph_taint_node = next(node for node in graph["nodes"] if node["kind"] == "taint_path")
+        graph_taint_edge = next(edge for edge in graph["edges"] if edge["relation"] == "proves_taint_to")
+        visual_taint_event = next(event for event in visualization["timeline"] if event["event_type"] == "taint_path")
+        visual_taint_nodes = [
+            node for node in visualization["graph"]["nodes"] if node["type"] in {"taint_target", "taint_source"}
+        ]
+        visual_taint_edges = [
+            edge for edge in visualization["graph"]["edges"] if edge["relation"] == "register_taints_sink"
+        ]
+
+        self.assertEqual(graph_taint_node["proof_status"], "taint_proven")
+        self.assertEqual(graph_taint_edge["proof_status"], "taint_proven")
+        self.assertEqual(graph_taint_edge["evidence_atoms"][0]["proof_status"], "taint_proven")
+        self.assertEqual(visual_taint_event["proof_status"], "taint_proven")
+        self.assertTrue(visual_taint_nodes)
+        self.assertTrue(visual_taint_edges)
+        self.assertTrue(all(node["proof_status"] == "taint_proven" for node in visual_taint_nodes))
+        self.assertTrue(all(edge["proof_status"] == "taint_proven" for edge in visual_taint_edges))
+
     def test_graph_and_visualization_keep_proofless_register_provenance_planned(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
