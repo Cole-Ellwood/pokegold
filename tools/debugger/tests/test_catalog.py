@@ -553,6 +553,42 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(weak_evidence["missing_event_types"], ["stack_write"])
         self.assertIn("stack_write", weak_evidence["detail"])
 
+    def test_hardware_regression_gate_rejects_dedicated_case_with_generic_event_label(self) -> None:
+        weak = {
+            "kind": "dedicated_hardware_regression_result",
+            "valid": True,
+            "cases": [
+                {
+                    "id": "interrupt_entry_stack_writes_current_pc",
+                    "passed": True,
+                    "hardware_event_observed": True,
+                    "evidence_source": "runtime_hardware_event_observed",
+                    "hardware_events": [
+                        {"event_type": "interrupt_enter"},
+                        {"event_type": "stack_write"},
+                    ],
+                }
+            ],
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "weak.json").write_text(json.dumps(weak), encoding="utf-8")
+            report = build_hardware_regression_report(reports=("weak.json",), root=root)
+
+        case = next(case for case in report["cases"] if case["id"] == "interrupt_entry_stack_writes_current_pc")
+        weak_evidence = next(
+            item
+            for item in case["evidence"]
+            if item["class"] == "explicit_hardware_case_result"
+        )
+
+        self.assertFalse(report["passed"])
+        self.assertFalse(case["hardware_passed"])
+        self.assertEqual(case["proof_status"], "planned_only")
+        self.assertEqual(case["hardware_proof_fact_count"], 0)
+        self.assertEqual(weak_evidence["status"], "declared_pass_without_hardware_proof")
+        self.assertIn("hardware_behavior_proven=true is missing", weak_evidence["detail"])
+
     def test_hardware_regression_gate_accepts_non_mutating_event_stream_case_pass(self) -> None:
         event_stream = {
             "kind": "unified_debugger_hardware_event_stream",

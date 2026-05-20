@@ -5935,3 +5935,38 @@ Remaining priority:
 - This closes a proof-promotion leak for generic hardware event labels, but it still does not create the non-mutating PyBoy recorder or prove hardware behavior for DMA, timer, interrupt, LCD, or boot-ROM cases.
 - The next audit blocker remains the same strategic one: execute the hook-order micro-ROM matrix and/or add a proof-grade recorder plus Pan Docs regressions before allowing side-effect-complete reverse execution claims.
 - The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
+
+## Implementation Note - Dedicated Hardware Case Proof Boundary
+
+Date: 2026-05-20.
+
+Context:
+
+- `hardware_regression.py` already required hardware-event-stream evidence to identify as a proof-grade non-mutating recorder before case proof.
+- Dedicated hardware-regression case rows still had a weaker boundary: a row with `passed=true`, required event types, and generic hardware evidence labels such as `hardware_event_observed` or `runtime_hardware_event_observed` could satisfy `explicit_case_item_proof()` without declaring `hardware_behavior_proven=true`.
+- That could blur "a hardware event was observed" with "this exact Pan Docs case has been proven."
+
+Primary references used:
+
+- Pan Docs OAM DMA timing and bus restrictions: `https://gbdev.io/pandocs/OAM_DMA_Transfer.html`
+- Pan Docs CGB GP/HBlank VRAM DMA timing model: `https://gbdev.io/pandocs/CGB_Registers.html#ff51ff55--hdma1hdma5-vram-dma`
+- Pan Docs TIMA overflow A/B-cycle behavior: `https://gbdev.io/pandocs/Timer_Obscure_Behaviour.html`
+- PyBoy hook docs showing opcode replacement rather than non-mutating event capture: `https://docs.pyboy.dk/#pyboy.PyBoy.hook_register`
+
+Implemented fix:
+
+- `tools/debugger/hardware_regression.py`
+  - now accepts dedicated case proof only when the case item explicitly declares `hardware_behavior_proven=true` and contains all required event types.
+  - no longer treats `hardware_event_observed`, `proof_status`, `evidence_source`, or `evidence_status` labels as equivalent to case-level hardware proof.
+- `tools/debugger/tests/test_catalog.py`
+  - adds a dedicated-case regression where a row declares `passed=true`, includes complete interrupt event types, and carries generic runtime hardware labels, but lacks `hardware_behavior_proven=true`; the gate keeps it `planned_only`.
+
+Validation after patch:
+
+- Focused dedicated hardware case regressions: 5 passed.
+
+Remaining priority:
+
+- Dedicated case rows are now proof-fenced, but no TIMA, OAM DMA, CGB VRAM DMA, interrupt-entry, boot-ROM, or LCD case is actually proven on stock PyBoy.
+- The hardware-regression gate remains intentionally failing until exact case evidence or proof-grade non-mutating recorder evidence lands.
+- The whole-ROM proof-substrate goal remains incomplete and `ready=False`.

@@ -641,18 +641,7 @@ def explicit_case_item_proof(case: dict[str, Any], item: dict[str, Any]) -> dict
 
 
 def explicit_case_item_declares_hardware_proof(item: dict[str, Any]) -> bool:
-    if item.get("hardware_behavior_proven") is True:
-        return True
-    if item.get("hardware_event_observed") is True:
-        return True
-    proof_status = str(item.get("proof_status") or "")
-    evidence_source = str(item.get("evidence_source") or "")
-    evidence_status = str(item.get("evidence_status") or "")
-    return (
-        proof_status in EXPLICIT_HARDWARE_EVIDENCE
-        or evidence_source in EXPLICIT_HARDWARE_EVIDENCE
-        or evidence_status in EXPLICIT_HARDWARE_EVIDENCE
-    )
+    return item.get("hardware_behavior_proven") is True
 
 
 def explicit_case_item_failure_status(proof: dict[str, Any]) -> str:
