@@ -151,6 +151,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         gap_text = "\n".join(report["blocking_gaps"])
         self.assertIn("modeled checkpoint-to-writer effect-span consistency", gap_text)
         self.assertIn("Pan Docs hardware regression gate", gap_text)
+        self.assertIn("observed emulator/runtime facts", gap_text)
         self.assertIn("hardware-gated effect-trace side effects and bank-unverified watch hits", gap_text)
         self.assertIn(
             "python -m tools.debugger hardware-regression-gate --execute",
@@ -224,6 +225,13 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("lcd_dot_mode_edge_timing", case_ids)
         self.assertTrue(all(not case["hardware_passed"] for case in report["cases"]))
         self.assertTrue(all(case["pan_docs_url"].startswith("https://gbdev.io/pandocs/") for case in report["cases"]))
+        self.assertIn("observed_runtime_case_count", report)
+        self.assertIn("hardware_proof_case_count", report)
+        self.assertIn("static_blocker_case_count", report)
+        bootrom = next(case for case in report["cases"] if case["id"] == "boot_rom_pokemon_gold_end_state")
+        self.assertGreaterEqual(bootrom["static_blocker_count"], 1)
+        self.assertEqual(bootrom["requested_static_facts"]["requires_bootrom"], True)
+        self.assertEqual(bootrom["observed_runtime_fact_count"], 0)
 
     def test_hardware_regression_gate_uses_hook_order_without_promoting_to_hardware(self) -> None:
         hook_order = {
@@ -249,6 +257,14 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(cases["oam_dma_160_mcycle_timing"]["gate_status"], "emulator_observed_not_hardware")
         self.assertEqual(cases["cgb_gp_vram_dma_cpu_halt_timing"]["gate_status"], "emulator_observed_not_hardware")
         self.assertFalse(cases["interrupt_entry_stack_writes_current_pc"]["hardware_behavior_proven"])
+        self.assertEqual(report["observed_runtime_case_count"], 4)
+        self.assertEqual(report["hardware_proof_case_count"], 0)
+        interrupt = cases["interrupt_entry_stack_writes_current_pc"]
+        self.assertEqual(interrupt["observed_runtime_fact_count"], 1)
+        self.assertEqual(interrupt["emulator_observed_fact_count"], 1)
+        self.assertEqual(interrupt["hardware_proof_fact_count"], 0)
+        self.assertEqual(interrupt["observed_runtime_facts"][0]["fact_type"], "emulator_runtime_observation")
+        self.assertEqual(interrupt["requested_static_facts"]["hardware_models"], ["interrupt_entry"])
 
     def test_hardware_regression_gate_accepts_explicit_case_pass(self) -> None:
         explicit = {
@@ -266,6 +282,8 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
 
         self.assertEqual(case["gate_status"], "passed")
         self.assertTrue(case["hardware_passed"])
+        self.assertEqual(case["hardware_proof_fact_count"], 1)
+        self.assertEqual(case["hardware_proof_facts"][0]["fact_type"], "dedicated_hardware_case_proof")
         self.assertFalse(report["passed"])
 
     def test_hardware_regression_gate_rejects_case_pass_without_hardware_proof(self) -> None:
@@ -332,6 +350,9 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(strict_code, 1)
         self.assertEqual(data["kind"], "unified_debugger_hardware_regression_gate")
         self.assertFalse(data["passed"])
+        self.assertIn("observed_runtime_case_count", data)
+        self.assertIn("hardware_proof_case_count", data)
+        self.assertIn("static_blocker_case_count", data)
 
     def test_cli_writes_json_report(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

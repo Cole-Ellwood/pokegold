@@ -5004,3 +5004,55 @@ Remaining priority from Pro:
 
 - This closes a report-ingestion proof-promotion leak. It does not add the missing runtime generators, hardware event recorder, full script VM mirror, pixel/audio hardware mirrors, side-effect-complete reverse execution, or subsystem-complete causal proof.
 - The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
+
+## Implementation Note - Hardware Gate Fact-Class Separation
+
+Date: 2026-05-20.
+
+Context:
+
+- The Pan Docs hardware gate deliberately keeps PyBoy hook observations and modeled traces from satisfying hardware cases.
+- Its case records still exposed the original mixed `evidence` list as the main machine surface, which made static case requirements, static source blockers, emulator/runtime observations, and hardware-proof evidence easy for downstream reports to blur.
+- The proof substrate needs these fact classes separated without breaking existing JSON/report consumers.
+
+References used:
+
+- Pan Docs TIMA overflow A/B-cycle behavior: `https://gbdev.io/pandocs/Timer_Obscure_Behaviour.html`
+- Pan Docs OAM DMA timing and bus conflict model: `https://gbdev.io/pandocs/OAM_DMA_Transfer.html`
+- Pan Docs CGB VRAM DMA GP/HBlank timing model: `https://gbdev.io/pandocs/CGB_Registers.html#ff51ff55--hdma1hdma5-vram-dma`
+- Pan Docs interrupt-entry stack/PC behavior: `https://gbdev.io/pandocs/Interrupts.html`
+- Pan Docs boot/power-up state model: `https://gbdev.io/pandocs/Power_Up_Sequence.html`
+- Pan Docs rendering/dot-mode timing model: `https://gbdev.io/pandocs/Rendering.html`
+- PyBoy hook/API documentation: `https://docs.pyboy.dk/`
+
+Implemented fix:
+
+- `tools/debugger/hardware_regression.py`
+  - keeps the existing per-case `evidence` list intact for compatibility.
+  - adds per-case `requested_static_facts`, `observed_runtime_facts`, `emulator_observed_facts`, `hardware_proof_facts`, and `static_blocker_facts` with matching counts.
+  - adds top-level `observed_runtime_case_count`, `hardware_proof_case_count`, and `static_blocker_case_count`.
+  - labels fact summaries with explicit `fact_type` values such as `emulator_runtime_observation`, `static_source_gap`, and `dedicated_hardware_case_proof`.
+- `tools/debugger/__main__.py`
+  - prints the new hardware-gate fact counts in the text report so the CLI visibly separates emulator observations from hardware proof.
+- `tools/debugger/catalog.py`
+  - updates the replay/localization blocker wording to advertise the new boundary while keeping the bucket partial.
+- `tools/debugger/tests/test_catalog.py`
+  - verifies hook-order evidence increments runtime/emulator fact counts without incrementing hardware-proof counts.
+  - verifies explicit dedicated hardware passes populate hardware-proof facts.
+  - verifies boot-ROM missing-artifact evidence remains a static blocker and not runtime observation.
+
+Validation after patch:
+
+- Focused hardware-gate fact separation regressions: 7 passed.
+- `python -m py_compile tools\debugger\hardware_regression.py tools\debugger\__main__.py tools\debugger\catalog.py tools\debugger\tests\test_catalog.py`: passed.
+- `python -m tools.debugger hardware-regression-gate --execute`: passed as a command, still intentionally `passed=False`; reported 4 runtime-observed emulator cases, 0 hardware-proof cases, and 10 static-blocker cases.
+- Full debugger unittest discovery: 504 passed.
+- `python -m tools.debugger audit`: passed as a command, still `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- Final touched-file `py_compile`: passed.
+- `git diff --check`: passed; it only reported existing CRLF normalization warnings in unrelated dirty files.
+
+Remaining priority from Pro:
+
+- This makes the hardware gate safer for UI/report consumers, but it does not add the missing non-mutating event recorder or dedicated Pan Docs runtime case runner.
+- TIMA A/B-cycle behavior, OAM DMA timing/RAM-access restriction, GP/HBlank VRAM DMA timing, interrupt-entry stack writes, boot-ROM end state, and LCD dot/mode edge timing remain unproven hardware cases.
+- The whole-ROM proof-substrate goal remains incomplete and `ready=False`.

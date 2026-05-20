@@ -179,6 +179,10 @@ EXPLICIT_HARDWARE_EVIDENCE = {
     "non_mutating_event_recorder",
     "runtime_hardware_event_observed",
 }
+STATIC_BLOCKER_EVIDENCE_CLASSES = {"pyboy_source_gap", "missing_artifact"}
+EMULATOR_RUNTIME_EVIDENCE_CLASSES = {"pyboy_hook_matrix", "modeled_effect_trace"}
+RUNTIME_EVIDENCE_CLASSES = {*EMULATOR_RUNTIME_EVIDENCE_CLASSES, "runtime_hardware_event"}
+HARDWARE_PROOF_EVIDENCE_CLASSES = {"runtime_hardware_event", "explicit_hardware_case_pass"}
 
 
 def build_hardware_regression_report(
@@ -215,6 +219,9 @@ def build_hardware_regression_report(
     ]
     blocking_cases = [case for case in cases if not case["hardware_passed"]]
     status_counts = count_by(cases, "gate_status")
+    observed_runtime_case_count = sum(1 for case in cases if case["observed_runtime_fact_count"])
+    hardware_proof_case_count = sum(1 for case in cases if case["hardware_proof_fact_count"])
+    static_blocker_case_count = sum(1 for case in cases if case["static_blocker_count"])
     pyboy_gap_count = sum(1 for gap in pyboy_source_gaps if gap["present"])
     errors = list(load_errors)
     return {
@@ -230,6 +237,9 @@ def build_hardware_regression_report(
         "passed_count": len(cases) - len(blocking_cases),
         "blocking_gate_count": len(blocking_cases),
         "case_status_counts": status_counts,
+        "observed_runtime_case_count": observed_runtime_case_count,
+        "hardware_proof_case_count": hardware_proof_case_count,
+        "static_blocker_case_count": static_blocker_case_count,
         "pyboy_source_gap_count": pyboy_gap_count,
         "pyboy_source_gaps": pyboy_source_gaps,
         "reports": list(reports),
@@ -329,6 +339,34 @@ def build_case_result(
         gate_status = "missing_runtime_hardware_evidence"
         proof_status = "planned_only"
 
+    requested_static_facts = {
+        "pan_docs_url": case["pan_docs_url"],
+        "required_evidence": case["required_evidence"],
+        "hardware_models": list(case.get("hardware_models", ())),
+        "pyboy_gap_ids": list(case.get("pyboy_gap_ids", ())),
+        "requires_bootrom": bool(case.get("requires_bootrom")),
+    }
+    observed_runtime_facts = [
+        summarize_evidence_fact(item)
+        for item in evidence
+        if item.get("class") in RUNTIME_EVIDENCE_CLASSES
+    ]
+    emulator_observed_facts = [
+        summarize_evidence_fact(item)
+        for item in evidence
+        if item.get("class") in EMULATOR_RUNTIME_EVIDENCE_CLASSES
+    ]
+    hardware_proof_facts = [
+        summarize_evidence_fact(item)
+        for item in evidence
+        if item.get("class") in HARDWARE_PROOF_EVIDENCE_CLASSES
+    ]
+    static_blocker_facts = [
+        summarize_evidence_fact(item)
+        for item in evidence
+        if item.get("class") in STATIC_BLOCKER_EVIDENCE_CLASSES
+    ]
+
     return {
         "id": case["id"],
         "bucket": case["bucket"],
@@ -342,6 +380,15 @@ def build_case_result(
         "proof_status": proof_status,
         "evidence_count": len(evidence),
         "evidence": evidence,
+        "requested_static_facts": requested_static_facts,
+        "observed_runtime_fact_count": len(observed_runtime_facts),
+        "observed_runtime_facts": observed_runtime_facts,
+        "emulator_observed_fact_count": len(emulator_observed_facts),
+        "emulator_observed_facts": emulator_observed_facts,
+        "hardware_proof_fact_count": len(hardware_proof_facts),
+        "hardware_proof_facts": hardware_proof_facts,
+        "static_blocker_count": len(static_blocker_facts),
+        "static_blocker_facts": static_blocker_facts,
     }
 
 
@@ -480,6 +527,37 @@ def hardware_runtime_event_present(item: dict[str, Any]) -> bool:
         or str(item.get("evidence_status", "")) in EXPLICIT_HARDWARE_EVIDENCE
         or str(item.get("runtime_observation", "")) in EXPLICIT_HARDWARE_EVIDENCE
     )
+
+
+def summarize_evidence_fact(item: dict[str, Any]) -> dict[str, str]:
+    class_name = str(item.get("class", ""))
+    return {
+        "class": class_name,
+        "fact_type": evidence_fact_type(class_name),
+        "status": str(item.get("status", "")),
+        "source": str(item.get("source", "")),
+        "detail": str(item.get("detail", "")),
+    }
+
+
+def evidence_fact_type(class_name: str) -> str:
+    if class_name == "pyboy_source_gap":
+        return "static_source_gap"
+    if class_name == "missing_artifact":
+        return "static_missing_artifact"
+    if class_name == "pyboy_hook_matrix":
+        return "emulator_runtime_observation"
+    if class_name == "modeled_effect_trace":
+        return "modeled_runtime_trace"
+    if class_name == "runtime_hardware_event":
+        return "runtime_hardware_event"
+    if class_name == "explicit_hardware_case_pass":
+        return "dedicated_hardware_case_proof"
+    if class_name == "explicit_hardware_case_result":
+        return "external_case_result"
+    if class_name == "invalid_report":
+        return "invalid_report_ignored"
+    return "other"
 
 
 def scan_pyboy_source_gaps() -> list[dict[str, Any]]:

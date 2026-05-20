@@ -2382,6 +2382,11 @@ def format_hardware_regression_gate(report: dict[str, Any]) -> str:
             f"blocking={report.get('blocking_gate_count', 0)} pyboy_source_gaps={report.get('pyboy_source_gap_count', 0)}"
         ),
         f"status_counts={report.get('case_status_counts', {})}",
+        (
+            f"runtime_observed_cases={report.get('observed_runtime_case_count', 0)} "
+            f"hardware_proof_cases={report.get('hardware_proof_case_count', 0)} "
+            f"static_blocker_cases={report.get('static_blocker_case_count', 0)}"
+        ),
     ]
     if report.get("cases"):
         lines.extend(["", "Cases:"])
@@ -2389,7 +2394,10 @@ def format_hardware_regression_gate(report: dict[str, Any]) -> str:
             state = "pass" if case.get("hardware_passed") else "block"
             lines.append(
                 f"  - {state}: {case.get('id')} status={case.get('gate_status')} "
-                f"bucket={case.get('bucket')} evidence={case.get('evidence_count', 0)}"
+                f"bucket={case.get('bucket')} evidence={case.get('evidence_count', 0)} "
+                f"runtime={case.get('observed_runtime_fact_count', 0)} "
+                f"hardware_proof={case.get('hardware_proof_fact_count', 0)} "
+                f"static_blockers={case.get('static_blocker_count', 0)}"
             )
             for evidence in case.get("evidence", [])[:2]:
                 lines.append(
