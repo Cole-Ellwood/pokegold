@@ -22286,6 +22286,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
 
         materialization = report["materializations"][0]
         patches = {patch["symbol"]: patch for patch in materialization["patches"]}
+        route = materialization["event_runtime_materialization"]
         commands = "\n".join(materialization["commands"])
 
         self.assertTrue(report["valid"])
@@ -22303,6 +22304,9 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(patches["wScriptStackSize"]["value"], 0x00)
         self.assertIn("--symbol ScriptEvents --symbol RunScriptCommand", commands)
         self.assertIn("--watch-symbol wScriptPos --watch-symbol wScriptVar", commands)
+        self.assertEqual(route["required_runtime_symbols"], ["RunScriptCommand"])
+        self.assertEqual(route["trace_symbols"], ["ScriptEvents", "RunScriptCommand"])
+        self.assertIn("--symbol RunScriptCommand", " ".join(route["expected_proof_commands"]))
 
     def test_content_state_materializes_movement_entry_patches(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -22361,6 +22365,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
 
         materialization = report["materializations"][0]
         patches = {patch["symbol"]: patch for patch in materialization["patches"]}
+        route = materialization["event_runtime_materialization"]
         commands = "\n".join(materialization["commands"])
 
         self.assertTrue(report["valid"])
@@ -22380,6 +22385,9 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(patches["wScriptMode"]["value"], 0x02)
         self.assertIn("--symbol ApplyMovement --symbol GetMovementData --symbol HandleMovementData", commands)
         self.assertIn("--watch-symbol wMovementDataAddress --watch-symbol wMovementPointer", commands)
+        self.assertEqual(route["required_runtime_symbols"], ["ApplyMovement", "HandleMovementData"])
+        self.assertEqual(route["trace_symbols"], ["ApplyMovement", "GetMovementData", "HandleMovementData"])
+        self.assertIn("--symbol HandleMovementData", " ".join(route["expected_proof_commands"]))
 
     def test_content_state_plans_audio_and_asset_runtime_proofs(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -24446,6 +24454,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
                             {
                                 "frame": 12,
                                 "watch": "wScriptPos",
+                                "pc_label": "RunScriptCommand",
                                 "address": 0xDA11,
                                 "bank": 1,
                                 "bank_address": "01:DA11",
@@ -24494,6 +24503,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(match["mirror_status"], "passed")
         self.assertEqual(match["actual_proof_status"], "observed")
         self.assertIn("wScriptPos", match["observed_sinks"])
+        self.assertEqual(match["observed_runtime_symbols"], ["RunScriptCommand"])
         self.assertEqual(match["runtime_evidence_gaps"], [])
 
     def test_compare_plan_promotes_runtime_expectation_dynamic_mirror(self) -> None:

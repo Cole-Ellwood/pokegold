@@ -66,6 +66,8 @@ class EventRuntimeMaterializationTests(unittest.TestCase):
         self.assertIn("RunScriptCommand", " ".join(route["expected_proof_commands"]))
         self.assertEqual(route["state_preconditions"][0]["kind"], "script_entry")
         self.assertIn("wScriptPos", route["expected_sinks"])
+        self.assertEqual(route["required_runtime_symbols"], ["RunScriptCommand"])
+        self.assertEqual(route["trace_symbols"], ["ScriptEvents", "RunScriptCommand"])
 
     def test_route_helper_accepts_claude_contract_signature(self) -> None:
         route = event_runtime_materialization_route(
@@ -85,6 +87,7 @@ class EventRuntimeMaterializationTests(unittest.TestCase):
         self.assertEqual(route["actual_proof_status"], "ready_to_run")
         self.assertEqual(route["observed_sinks"], ["wScriptPos"])
         self.assertIn("instruction_trace", route["evidence_kinds"])
+        self.assertEqual(route["required_runtime_symbols"], ["RunScriptCommand"])
 
     def test_route_helper_can_require_runtime_consumer_symbols(self) -> None:
         route = event_runtime_materialization_route(

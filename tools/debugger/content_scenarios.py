@@ -208,6 +208,8 @@ RUNTIME_ROUTE_PROFILES = {
         "expected_proof_status": "instruction_observed",
         "required_inputs": ("rom", "symbols", "base_save_state", "scenario_manifest"),
         "evidence_kinds": ("instruction_trace", "watch"),
+        "trace_symbols": ("ScriptEvents", "RunScriptCommand"),
+        "required_runtime_symbols": ("RunScriptCommand",),
         "expected_proof_commands": (
             "python -m tools.debugger content-state --scenario <scenario_manifest> --scenario-id <scenario_id> --execute",
             "python -m tools.debugger trace-instructions --report <content_state_report> --scenario-id <scenario_id> --symbol RunScriptCommand --execute --require-hit",
@@ -218,6 +220,8 @@ RUNTIME_ROUTE_PROFILES = {
         "expected_proof_status": "instruction_observed",
         "required_inputs": ("rom", "symbols", "base_save_state", "scenario_manifest"),
         "evidence_kinds": ("instruction_trace", "watch"),
+        "trace_symbols": ("ApplyMovement", "GetMovementData", "HandleMovementData"),
+        "required_runtime_symbols": ("ApplyMovement", "HandleMovementData"),
         "expected_proof_commands": (
             "python -m tools.debugger content-state --scenario <scenario_manifest> --scenario-id <scenario_id> --execute",
             "python -m tools.debugger trace-instructions --report <content_state_report> --scenario-id <scenario_id> --symbol ApplyMovement --execute --require-hit",
@@ -1246,8 +1250,19 @@ def event_runtime_materialization_route(
     runtime_route = str(profile.get("runtime_route") or runtime_route_for_scenario(scenario_type))
     values = dict(values or {})
     watch_symbols = string_items(watch_symbols)
-    required_runtime_symbols = string_items(required_runtime_symbols)
-    trace_symbols = unique_list([*string_items(trace_symbols), *required_runtime_symbols])
+    required_runtime_symbols = unique_list(
+        [
+            *string_items(profile.get("required_runtime_symbols")),
+            *string_items(required_runtime_symbols),
+        ]
+    )
+    trace_symbols = unique_list(
+        [
+            *string_items(profile.get("trace_symbols")),
+            *string_items(trace_symbols),
+            *required_runtime_symbols,
+        ]
+    )
     outputs = dict_items(outputs)
     source_file = source_file or str(values.get("source_file", ""))
     expected_proof_status = str(profile.get("expected_proof_status") or "runtime_observed")

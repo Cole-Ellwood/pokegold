@@ -5712,3 +5712,48 @@ Remaining priority:
 - This is a proof-promotion fence and route-upgrade patch; it does not execute the loader/collision traces across arbitrary event-engine states.
 - Runtime-verified multi-object occupancy across arbitrary maps, runtime-observed big-object collision across arbitrary maps, full script VM behavior under arbitrary event-engine context, pixel/audio playback mirrors, causal proof, side-effect-complete reverse execution, and the non-mutating hardware event recorder remain incomplete.
 - The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
+
+## Implementation Note - Script and Movement Entry Runtime Consumers
+
+Date: 2026-05-20.
+
+Context:
+
+- Script-entry and movement-entry content-state routes already produced trace commands, but the route contract did not mark the dispatcher/engine helpers as required runtime consumer symbols.
+- That left a proof-promotion gap: patched `wScriptPos`/movement-pointer WRAM sinks could be observed without proving `RunScriptCommand` or the movement engine consumed the entry state.
+- The audit still requires full script VM behavior under arbitrary event-engine context; this patch only prevents patched entry state from being overread as that behavior.
+
+References used:
+
+- Local engine source: `engine/overworld/scripting.asm:ScriptEvents` dispatches to `RunScriptCommand`.
+- Local engine source: `engine/overworld/scripting.asm:ApplyMovement`, `home/map.asm:GetMovementData`, and `engine/overworld/map_objects.asm:HandleMovementData`.
+- Upstream pret pokecrystal source cross-check for the script dispatcher: `https://github.com/pret/pokecrystal/blob/master/engine/overworld/scripting.asm`
+- Upstream pret pokecrystal source cross-check for movement handling: `https://github.com/pret/pokecrystal/blob/master/engine/overworld/map_objects.asm`
+
+Implemented fix:
+
+- `tools/debugger/content_scenarios.py`
+  - adds default profile `trace_symbols` and `required_runtime_symbols` for `script_entry` routes.
+  - adds default profile `trace_symbols` and `required_runtime_symbols` for `movement_entry` routes.
+  - merges profile-required runtime symbols with call-site required symbols while preserving existing route fields.
+- `tools/debugger/catalog.py`
+  - updates generation and differential-mirror blocker wording to state that script-entry mirrors require `RunScriptCommand` evidence and movement-entry mirrors require `ApplyMovement`/`HandleMovementData` evidence.
+- `tools/debugger/tests/test_event_runtime_materialization.py`
+  - verifies route helper defaults include required script runtime consumer symbols.
+- `tools/debugger/tests/test_catalog.py`
+  - verifies materialized script-entry routes require `RunScriptCommand`.
+  - verifies materialized movement-entry routes require `ApplyMovement` and `HandleMovementData`.
+
+Validation after patch:
+
+- Focused script/movement route and materialization regressions: 4 passed.
+- Adjacent event-runtime/script/movement/catalog regressions: 31 passed.
+- Full debugger unittest discovery: 524 passed.
+- `PYTHONPYCACHEPREFIX=.local\tmp\pycompile_cache python -m py_compile tools\debugger\content_scenarios.py tools\debugger\catalog.py tools\debugger\tests\test_event_runtime_materialization.py tools\debugger\tests\test_catalog.py`: passed.
+- `python -m tools.debugger audit`: passed as a command, still `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+
+Remaining priority:
+
+- This prevents script/movement entry state from promoting without required consumer hits, but it still does not implement a full script VM mirror or arbitrary event-engine execution context.
+- Pixel/audio playback mirrors, arbitrary map interactions, causal proof, side-effect-complete reverse execution, and the non-mutating hardware event recorder remain incomplete.
+- The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
