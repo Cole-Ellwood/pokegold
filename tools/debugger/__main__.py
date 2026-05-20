@@ -9,6 +9,7 @@ from typing import Any, Sequence
 from .audio_snapshot import build_audio_snapshot_report
 from .causal_graph import build_causal_graph_report
 from .catalog import build_capability_report, build_inventory, triage_request
+from .clobber_chain import build_clobber_chain_report, format_text as format_clobber_chain
 from .content_mirror import build_content_mirror_report
 from .content_scenarios import build_content_scenario_report
 from .content_state import build_content_state_report
@@ -617,6 +618,13 @@ def build_parser() -> argparse.ArgumentParser:
     stat_at.add_argument("--ev", type=int, default=65_535)
     add_output_args(stat_at)
     stat_at.set_defaults(func=cmd_stat_at)
+
+    clobber_chain = subparsers.add_parser("clobber-chain")
+    clobber_chain.add_argument("--function", required=True)
+    clobber_chain.add_argument("--register", default="")
+    clobber_chain.add_argument("--max-depth", type=int, default=8)
+    add_output_args(clobber_chain)
+    clobber_chain.set_defaults(func=cmd_clobber_chain)
 
     return parser
 
@@ -1283,6 +1291,16 @@ def cmd_stat_at(args: argparse.Namespace) -> int:
     return 0 if report.get("valid") else 1
 
 
+def cmd_clobber_chain(args: argparse.Namespace) -> int:
+    report = build_clobber_chain_report(
+        function=args.function,
+        register=args.register or None,
+        max_depth=args.max_depth,
+    )
+    emit_report(report, args)
+    return 0 if report.get("valid") else 1
+
+
 def emit_report(report: dict[str, Any], args: argparse.Namespace) -> None:
     if args.json_out:
         write_json(report, Path(args.json_out))
@@ -1374,6 +1392,8 @@ def emit_report(report: dict[str, Any], args: argparse.Namespace) -> None:
         print(format_type_matchup(report))
     elif report["kind"] == "unified_debugger_stat_at":
         print(format_stat_at(report))
+    elif report["kind"] == "unified_debugger_clobber_chain":
+        print(format_clobber_chain(report))
     else:
         print(json.dumps(report, indent=2, sort_keys=True))
 

@@ -136,6 +136,7 @@ TRIAGE_RULES = (
         ),
         reason="Damage has the strongest ROM-vs-oracle and register-clobber tooling today.",
         commands=(
+            "python -m tools.debugger clobber-chain --function <function> --register <register>",
             "python -m tools.damage_debugger.clobber_smoke",
             "python -m tools.damage_debugger.oracle",
             "python -m tools.damage_debugger.fuzz --self-check-workers=2",
@@ -190,13 +191,14 @@ TRIAGE_RULES = (
         ),
         reason="Static ABI audits catch common ROM-wide assembly hazards before a focused emulator trace.",
         commands=(
+            "python -m tools.debugger clobber-chain --function <function> --register <register>",
             "python tools/audit/check_farcall_a_clobber.py",
             "python tools/audit/check_farcall_hl_clobber.py",
             "python tools/audit/check_cross_bank_call.py",
             "python tools/audit/check_release_smoke.py",
         ),
         gaps=(
-            "There is no generic whole-ROM dataflow/provenance debugger for arbitrary register symptoms yet.",
+            "The static clobber-chain report is conservative; use runtime traces for path-sensitive liveness proof.",
         ),
     ),
     TriageRule(
@@ -357,6 +359,7 @@ def build_capability_report(root: Path = ROOT) -> dict[str, Any]:
             gaps=(),
             commands=(
                 "python -m tools.damage_debugger.clobber_smoke",
+                "python -m tools.debugger clobber-chain --function <function> --register <register>",
                 "python -m tools.damage_debugger.fuzz --self-check-workers=2",
             ),
         ),
