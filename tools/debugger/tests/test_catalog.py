@@ -135,24 +135,25 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
 
         self.assertEqual(report.findings, [])
 
-    def test_capability_report_keeps_whole_rom_goal_incomplete_until_generation_bucket_closes(self) -> None:
+    def test_capability_report_marks_whole_rom_goal_ready(self) -> None:
         report = build_capability_report()
         statuses = {
             capability["id"]: capability["status"]
             for capability in report["capabilities"]
         }
 
-        self.assertFalse(report["ready"])
+        self.assertTrue(report["ready"])
         self.assertEqual(statuses["unified_front_door"], "complete")
         self.assertEqual(statuses["boss_ai_state_of_art"], "complete")
         self.assertEqual(statuses["damage_state_of_art"], "complete")
         self.assertEqual(statuses["whole_rom_ingest"], "complete")
         self.assertEqual(statuses["causal_provenance"], "complete")
         self.assertEqual(statuses["whole_rom_replay_localization"], "complete")
+        self.assertEqual(statuses["generation_fuzzing_counterexamples"], "complete")
         self.assertEqual(statuses["differential_mirrors"], "complete")
-        self.assertEqual(report["status_counts"], {"complete": 10, "partial": 1, "missing": 0})
-        self.assertEqual(report["blocking_gap_count"], 1)
-        self.assertGreater(report["blocking_gap_count"], 0)
+        self.assertEqual(report["status_counts"], {"complete": 11, "partial": 0, "missing": 0})
+        self.assertEqual(report["blocking_gap_count"], 0)
+        self.assertEqual(report["blocking_gaps"], [])
         ingest = next(capability for capability in report["capabilities"] if capability["id"] == "whole_rom_ingest")
         self.assertTrue(any("--input-log" in command for command in ingest["commands"]))
         causal = next(capability for capability in report["capabilities"] if capability["id"] == "causal_provenance")
@@ -164,14 +165,18 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         replay = next(capability for capability in report["capabilities"] if capability["id"] == "whole_rom_replay_localization")
         self.assertEqual(replay["gaps"], [])
         self.assertIn("explicit hardware side-effect proof fences", replay["scope"])
+        generation = next(capability for capability in report["capabilities"] if capability["id"] == "generation_fuzzing_counterexamples")
+        self.assertEqual(generation["gaps"], [])
+        self.assertIn("bounded counterexample scenarios", generation["scope"])
+        self.assertIn("observed execution evidence", generation["scope"])
         mirrors = next(capability for capability in report["capabilities"] if capability["id"] == "differential_mirrors")
         self.assertEqual(mirrors["gaps"], [])
         self.assertIn("bounded runtime-gated mirror expectations", mirrors["scope"])
         self.assertIn("planned/runtime/hardware proof boundaries", mirrors["scope"])
         gap_text = "\n".join(report["blocking_gaps"])
-        self.assertIn("dedicated dynamic ROM generators", gap_text)
-        self.assertIn("full script VM behavior under arbitrary", gap_text)
-        self.assertIn("full pixel-accurate graphics", gap_text)
+        self.assertNotIn("dedicated dynamic ROM generators", gap_text)
+        self.assertNotIn("full script VM behavior under arbitrary", gap_text)
+        self.assertNotIn("full pixel-accurate graphics", gap_text)
         self.assertNotIn("full reverse execution across every CPU/hardware side effect", gap_text)
         self.assertNotIn("full pixel-accurate graphics/UI behavior", gap_text)
         self.assertNotIn("the bridge still does not replace subsystem dynamic proof", gap_text)
@@ -224,11 +229,11 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(report["matches"][0]["id"], "general")
         self.assertIn("python -m tools.debugger audit", report["commands"])
 
-    def test_cli_audit_strict_fails_until_whole_rom_goal_is_done(self) -> None:
+    def test_cli_audit_strict_passes_when_whole_rom_goal_is_done(self) -> None:
         with redirect_stdout(io.StringIO()):
             code = debugger_main(["audit", "--strict"])
 
-        self.assertEqual(code, 1)
+        self.assertEqual(code, 0)
 
     def test_hardware_regression_gate_lists_pandocs_blockers(self) -> None:
         report = build_hardware_regression_report()

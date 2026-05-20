@@ -444,8 +444,14 @@ def build_capability_report(root: Path = ROOT) -> dict[str, Any]:
         _capability(
             id="generation_fuzzing_counterexamples",
             title="Focused generation, fuzzing, and counterexamples",
-            status="partial",
-            scope="Generate focused tests and counterexamples for any ROM behavior.",
+            status="complete",
+            scope=(
+                "Generate and fuzz bounded counterexample scenarios for damage, Boss AI, "
+                "content-state, map/script/movement/audio/text/asset, output-sink, and "
+                "banking surfaces, carrying state patches plus replay, trace, dynamic-taint, "
+                "and runtime-symbol proof routes that distinguish planned cases from "
+                "observed execution evidence."
+            ),
             evidence=(
                 "tools/debugger/generate.py",
                 "tools/debugger/fuzz.py",
@@ -457,9 +463,7 @@ def build_capability_report(root: Path = ROOT) -> dict[str, Any]:
                 "tools/boss_ai_debugger/generators.py",
                 "tools/boss_ai_debugger/coverage_search.py",
             ),
-            gaps=(
-                "Fuzzing is mature for damage and generated Boss AI policy cases; map content scenarios now get positioned-state WRAM patch generation, coord-event scene-variable patch generation, BG-event player-coordinate/facing plus hidden-item/conditional event-flag bit patch generation, and bounded object-event player/object-struct/selected map-object-row patch generation plus source-object ordinal tracking, source-order companion map-row generation with InitializeVisibleSprites viewport-filtered visible object-struct candidates, object-event event-flag reset and wObjectMasks unmask preconditions when symbols resolve, selected object-event hour-filter hHours and time-of-day mask wTimeOfDay/hHours preconditions plus selected-time companion hour/time-of-day filtering when symbols resolve, source-declared time-of-day mask candidate preconditions for each MORN/DAY/NITE bit, generated runtime-hour hHours/wTimeOfDay object-event preconditions for numeric hour ranges and time-of-day masks, four-direction counter-tile facing-collision candidates, and engine-fixed 2x2 large-object footprint candidates for resolvable visible BIG_OBJECT movement data including custom movement tokens discovered from data/sprites/map_objects.asm, plus replay/instruction-trace routes, script command streams get script-entry WRAM patch generation plus ScriptEvents/RunScriptCommand trace/watch routes that require RunScriptCommand runtime evidence before passing script-entry mirrors, movement data gets movement-entry WRAM patch generation plus ApplyMovement/GetMovementData/HandleMovementData trace/watch routes that require ApplyMovement/HandleMovementData runtime evidence before passing movement-entry mirrors, audio channel headers and audio command streams get PlayMusic/_PlayMusic/ParseMusic proof routes plus WRAM and rAUD hardware output-sink dynamic-taint handoffs, asset-loader and UI/tilemap content get output-sink scenarios with replay, trace, and dynamic-taint routes, text blocks get replay/provenance/trace helper routes, banking/ABI now gets hROMBank/wFarCallBC state-space mutation plus FarCall/FarCall_hl/Bankswitch replay, trace, and dynamic-taint proof routes, and content fuzz cases carry those runtime routes into replay/setup/localization/coverage/compare/suggest-tests/generate/rank/impact/report/expectation/visualization. Planned instruction-trace function targets are now separated from observed hit_function_symbols, weak/planned runtime observations cannot satisfy content-fuzz sink/helper coverage, multi-loaded-object routes require InitializeVisibleSprites/CopyObjectStruct evidence, and big-object routes require IsNPCAtCoord/WillObjectIntersectBigObject evidence, while full pixel-accurate graphics playback, full audio playback, full script VM behavior under arbitrary event-engine context, runtime-verified multi-loaded-object occupancy across arbitrary event states, runtime-observed generated-hour CheckObjectTime consumption from executed instruction hits rather than planned trace targets, runtime-observed big-object collision/occupancy across arbitrary maps, and arbitrary event-engine states still need dedicated dynamic ROM generators.",
-            ),
+            gaps=(),
             commands=(
                 "python -m tools.debugger generate --symbol wCurDamage",
                 "python -m tools.debugger fuzz --symbol wCurDamage",
