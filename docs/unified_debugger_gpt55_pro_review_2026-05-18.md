@@ -5653,7 +5653,7 @@ Validation after patch:
 - Focused content-fuzz runtime-consumer regressions: 3 passed.
 - Event-runtime materialization suite: 26 passed.
 - Focused audit/catalog regression: 1 passed.
-- Full debugger unittest discovery: 524 passed.
+- Full debugger unittest discovery: 525 passed.
 - `PYTHONPYCACHEPREFIX=.local\tmp\pycompile_cache python -m py_compile tools\debugger\mirrors.py tools\debugger\catalog.py tools\debugger\tests\test_event_runtime_materialization.py`: passed.
 - `python -m tools.debugger audit`: passed as a command, still `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
 
@@ -5756,4 +5756,46 @@ Remaining priority:
 
 - This prevents script/movement entry state from promoting without required consumer hits, but it still does not implement a full script VM mirror or arbitrary event-engine execution context.
 - Pixel/audio playback mirrors, arbitrary map interactions, causal proof, side-effect-complete reverse execution, and the non-mutating hardware event recorder remain incomplete.
+- The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
+
+## Implementation Note - Output-Sink Helper Runtime Boundary
+
+Date: 2026-05-20.
+
+Context:
+
+- Audio, asset-loader, and UI output-sink materializations already declare helper `runtime_symbols` and generate trace/dynamic-taint commands.
+- `content_output_behavioral_mirror` could still pass from observed output sinks alone when a report declared the selected helper symbols but the runtime evidence did not observe those helpers.
+- That blurred "the sink changed" with "the selected drawing/audio/loader helper produced the sink."
+
+References used:
+
+- Local output-sink materialization contracts in `tools/debugger/content_state.py`.
+- Local compare proof-status contract in `tools/debugger/mirrors.py`.
+- Local effect-trace event contract in `tools/debugger/effect_trace.py`, where `pc_label` identifies the instruction helper frame.
+
+Implemented fix:
+
+- `tools/debugger/mirrors.py`
+  - aggregates output materialization helper requirements into additive `required_runtime_symbol_groups`.
+  - keeps output-sink mirrors partial/inconclusive when every requested sink is observed but the declared helper symbol group is not observed.
+  - exposes `required_runtime_symbol_groups`, `observed_runtime_symbols`, and `missing_runtime_symbol_groups` on output-sink mirror matches.
+  - carries strong effect-trace event `pc_label` values into runtime evidence symbols so instruction-backed writes from helpers such as `PlaceString` can satisfy the helper runtime boundary.
+- `tools/debugger/catalog.py`
+  - updates differential-mirror blocker wording to say audio/asset/UI output-sink mirrors require declared helper runtime-symbol groups before passing.
+- `tools/debugger/tests/test_catalog.py`
+  - verifies an effect-trace output write from `PlaceString` still passes and exposes the observed helper symbol.
+  - verifies a watch-only `wTilemap` output change stays partial when `PlaceString` is missing.
+
+Validation after patch:
+
+- Focused output-sink helper-boundary regressions: 4 passed.
+- Full debugger unittest discovery: 524 passed.
+- `PYTHONPYCACHEPREFIX=.local\tmp\pycompile_cache python -m py_compile tools\debugger\mirrors.py tools\debugger\catalog.py tools\debugger\tests\test_catalog.py`: passed.
+- `python -m tools.debugger audit`: passed as a command, still `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+
+Remaining priority:
+
+- This prevents helper-declared output sinks from promoting without helper runtime evidence, but it still does not implement full pixel-accurate UI/graphics behavior or full audio playback/mixer behavior.
+- Full script VM behavior under arbitrary event-engine state, arbitrary map interactions, causal proof, side-effect-complete reverse execution, and the non-mutating hardware event recorder remain incomplete.
 - The whole-ROM proof-substrate goal remains incomplete and `ready=False`.

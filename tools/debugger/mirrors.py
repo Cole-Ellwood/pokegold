@@ -413,6 +413,7 @@ def content_state_mirror_matches(
             )
             output_symbols = content_state_output_symbols(output_materializations)
             output_addresses = content_state_output_addresses(output_materializations)
+            required_runtime_symbol_groups = content_state_output_required_runtime_symbol_groups(output_materializations)
             commands = content_output_expect_commands(
                 source=source,
                 materializations=output_materializations[:6],
@@ -420,6 +421,7 @@ def content_state_mirror_matches(
             mirror_status = content_output_mirror_status(
                 output_symbols=output_symbols,
                 output_addresses=output_addresses,
+                required_runtime_symbol_groups=required_runtime_symbol_groups,
                 runtime_evidence=runtime_evidence,
                 runtime_attempts=runtime_attempts_for_scenarios(
                     scenario_ids=scenario_ids,
@@ -477,6 +479,9 @@ def content_state_mirror_matches(
                     "non_snapshot_covered_addresses": mirror_status["non_snapshot_covered_addresses"],
                     "attempted_symbols": mirror_status["attempted_symbols"],
                     "attempted_addresses": mirror_status["attempted_addresses"],
+                    "required_runtime_symbol_groups": mirror_status["required_runtime_symbol_groups"],
+                    "observed_runtime_symbols": mirror_status["observed_runtime_symbols"],
+                    "missing_runtime_symbol_groups": mirror_status["missing_runtime_symbol_groups"],
                     "runtime_reports": mirror_status["runtime_reports"],
                     "runtime_kinds": mirror_status["runtime_kinds"],
                     "runtime_attempt_reports": mirror_status["runtime_attempt_reports"],
@@ -1348,6 +1353,7 @@ def content_output_mirror_status(
     *,
     output_symbols: list[str],
     output_addresses: list[str],
+    required_runtime_symbol_groups: list[list[str]],
     runtime_evidence: list[dict[str, Any]],
     runtime_attempts: list[dict[str, Any]],
 ) -> dict[str, Any]:
@@ -1379,6 +1385,16 @@ def content_output_mirror_status(
         for item in strong_evidence
         for address in scalar_string_items(item.get("addresses"))
     )
+    observed_runtime_symbols = unique_list(
+        symbol
+        for item in strong_evidence
+        for symbol in runtime_evidence_observed_runtime_symbols(item)
+    )
+    missing_runtime_symbol_groups = [
+        group
+        for group in required_runtime_symbol_groups
+        if not any(symbol in observed_runtime_symbols for symbol in group)
+    ]
     covered_symbols = [symbol for symbol in requested_symbols if symbol in observed_symbols]
     covered_addresses = [address for address in requested_addresses if normalized_address(address) in {normalized_address(item) for item in observed_addresses}]
     non_snapshot_symbols = unique_list(
@@ -1413,7 +1429,7 @@ def content_output_mirror_status(
         and covered_count == output_count
         and non_snapshot_covered_count < output_count
     )
-    if output_count and covered_count == output_count:
+    if output_count and covered_count == output_count and not missing_runtime_symbol_groups:
         status = "passed"
         proof_status = "runtime_observed" if snapshot_runtime_required else "mirror_passed"
         mirror_status = "passed"
@@ -1447,6 +1463,9 @@ def content_output_mirror_status(
         "non_snapshot_covered_addresses": non_snapshot_covered_addresses,
         "attempted_symbols": attempted_symbols,
         "attempted_addresses": attempted_addresses,
+        "required_runtime_symbol_groups": required_runtime_symbol_groups,
+        "observed_runtime_symbols": observed_runtime_symbols,
+        "missing_runtime_symbol_groups": missing_runtime_symbol_groups,
         "runtime_reports": unique_list(item["source"] for item in strong_evidence if item.get("source")),
         "runtime_kinds": unique_list(item["kind"] for item in strong_evidence if item.get("kind")),
         "runtime_attempt_reports": unique_list(str(item.get("source", "")) for item in runtime_attempts if item.get("source")),
@@ -1458,6 +1477,8 @@ def content_output_mirror_status(
             [
                 *[f"symbol_observed={symbol}" for symbol in covered_symbols],
                 *[f"address_observed={address}" for address in covered_addresses],
+                *[f"runtime_symbol_observed={symbol}" for symbol in observed_runtime_symbols if any(symbol in group for group in required_runtime_symbol_groups)],
+                *[f"required_runtime_symbol_group={'/'.join(group)}" for group in required_runtime_symbol_groups],
                 *(runtime_snapshot_hardware_evidence(hardware_summary) if hardware_summary else []),
                 *[f"symbol_attempted={symbol}" for symbol in attempted_symbols],
                 *[f"address_attempted={address}" for address in attempted_addresses],
@@ -1471,9 +1492,16 @@ def content_output_mirror_status(
             covered_addresses=covered_addresses,
             attempted_symbols=attempted_symbols,
             attempted_addresses=attempted_addresses,
+            missing_runtime_symbol_groups=missing_runtime_symbol_groups,
         )
         + scalar_string_items(hardware_summary.get("runtime_evidence_gaps")),
     }
+
+
+def runtime_evidence_observed_runtime_symbols(item: dict[str, Any]) -> list[str]:
+    if "observed_runtime_symbols" in item:
+        return scalar_string_items(item.get("observed_runtime_symbols"))
+    return scalar_string_items(item.get("symbols"))
 
 
 def content_output_attempted_sinks(
@@ -1511,6 +1539,7 @@ def content_output_runtime_evidence_gaps(
     covered_addresses: list[str],
     attempted_symbols: list[str],
     attempted_addresses: list[str],
+    missing_runtime_symbol_groups: list[list[str]],
 ) -> list[str]:
     gaps = weak_runtime_evidence_gaps(weak_evidence)
     missing_symbols = [symbol for symbol in requested_symbols if symbol not in covered_symbols]
@@ -1539,6 +1568,11 @@ def content_output_runtime_evidence_gaps(
         gaps.append("Runtime attempts did not cover output symbol(s): " + ", ".join(missing_symbols))
     if missing_addresses and attempted_addresses and len(attempted_addresses) < len(requested_addresses):
         gaps.append("Runtime attempts did not cover output address(es): " + ", ".join(missing_addresses))
+    if missing_runtime_symbol_groups:
+        gaps.append(
+            "Runtime observations missing required output helper symbol group(s): "
+            + "; ".join("/".join(group) for group in missing_runtime_symbol_groups)
+        )
     return unique_list(gaps)
 
 
@@ -1745,6 +1779,7 @@ def runtime_mirror_evidence(loaded: dict[str, Any]) -> list[dict[str, Any]]:
                     source=source,
                     kind="effect_trace",
                     symbols=[
+                        *effect_trace_strong_event_labels(events),
                         *[
                             str(hit.get("watch", ""))
                             for hit in strong_watch_hits
@@ -2005,6 +2040,18 @@ def effect_trace_concrete_write_is_strong(item: dict[str, Any]) -> bool:
     if proof_status:
         return proof_status in OUTPUT_RUNTIME_STRONG_PROOF_STATUSES
     return True
+
+
+def effect_trace_strong_event_labels(events: list[dict[str, Any]]) -> list[str]:
+    return unique_list(
+        str(event.get("pc_label", ""))
+        for event in events
+        if event.get("pc_label")
+        and (
+            any(effect_trace_concrete_write_is_strong(item) for item in dict_items(event.get("effects")))
+            or effect_trace_watch_hits([event], proof_status="instruction_observed")
+        )
+    )
 
 
 def effect_trace_watch_hits(events: list[dict[str, Any]], *, proof_status: str) -> list[dict[str, Any]]:
@@ -2278,6 +2325,31 @@ def content_state_output_addresses(materializations: list[dict[str, Any]]) -> li
         for output in dict_items(materialization.get("outputs"))
         if output.get("address") or output.get("watch_address") or output.get("sink_address")
     )
+
+
+def content_state_output_required_runtime_symbol_groups(materializations: list[dict[str, Any]]) -> list[list[str]]:
+    groups: list[list[str]] = []
+    for materialization in materializations:
+        raw_groups = materialization.get("required_runtime_symbol_groups")
+        if isinstance(raw_groups, list):
+            for group in raw_groups:
+                symbols = scalar_string_items(group)
+                if symbols:
+                    groups.append(symbols)
+        for symbol in scalar_string_items(materialization.get("required_runtime_symbols")):
+            groups.append([symbol])
+        runtime_symbols = scalar_string_items(materialization.get("runtime_symbols"))
+        if runtime_symbols:
+            groups.append(runtime_symbols)
+    unique_groups: list[list[str]] = []
+    seen: set[tuple[str, ...]] = set()
+    for group in groups:
+        normalized = tuple(unique_list(group))
+        if not normalized or normalized in seen:
+            continue
+        seen.add(normalized)
+        unique_groups.append(list(normalized))
+    return unique_groups
 
 
 def match_mirrors(

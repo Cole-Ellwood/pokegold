@@ -28606,10 +28606,76 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(match["output_count"], 1)
         self.assertEqual(match["runtime_kinds"], ["effect_trace"])
         self.assertIn("symbol_observed=wTilemap", match["evidence"])
+        self.assertEqual(match["required_runtime_symbol_groups"], [["PlaceString"]])
+        self.assertIn("PlaceString", match["observed_runtime_symbols"])
+        self.assertIn("runtime_symbol_observed=PlaceString", match["evidence"])
         self.assertEqual(match["gaps"], [])
         self.assertEqual(ranked_pass["proof_status"], "mirror_passed")
         self.assertIn("wTilemap", ranked_pass["related_symbols"])
         self.assertEqual(impact_pass["proof_status"], "mirror_passed")
+
+    def test_compare_output_sink_mirror_requires_runtime_helper_symbol(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "content_state.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_content_state_materialization",
+                        "valid": True,
+                        "executed": False,
+                        "materializations": [
+                            {
+                                "scenario_id": "content_scenario_22_0000",
+                                "scenario_type": "ui_tilemap_update",
+                                "precondition_kind": "ui_output_sink",
+                                "status": "planned",
+                                "source_file": "engine/menus/unit_menu.asm",
+                                "runtime_symbols": ["PlaceString"],
+                                "outputs": [
+                                    {
+                                        "kind": "ui_tilemap_output",
+                                        "state_symbol": "wTilemap",
+                                        "size": 1,
+                                        "producer_symbol": "PlaceString",
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            (root / "watch.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_watch_report",
+                        "valid": True,
+                        "executed": True,
+                        "scenario_ids": ["content_scenario_22_0000"],
+                        "events": [
+                            {
+                                "frame": 12,
+                                "watch": "wTilemap",
+                                "address": "C3A0",
+                                "old_hex": "00",
+                                "new_hex": "42",
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            compare = build_compare_plan(reports=("content_state.json", "watch.json"), root=root)
+
+        match = next(item for item in compare["matches"] if item["id"] == "content_output_behavioral_mirror")
+
+        self.assertEqual(match["status"], "partial")
+        self.assertEqual(match["mirror_status"], "inconclusive")
+        self.assertEqual(match["covered_output_count"], 1)
+        self.assertEqual(match["required_runtime_symbol_groups"], [["PlaceString"]])
+        self.assertEqual(match["missing_runtime_symbol_groups"], [["PlaceString"]])
+        self.assertTrue(any("PlaceString" in gap for gap in match["runtime_evidence_gaps"]))
 
     def test_compare_output_sink_mirror_keeps_snapshot_hardware_boundary_visible(self) -> None:
         digest = hashlib.sha256(bytes(range(12))).hexdigest()
