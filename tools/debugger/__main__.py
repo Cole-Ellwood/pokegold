@@ -1460,14 +1460,24 @@ def format_playtest_packet(report: dict[str, Any]) -> str:
 
 
 def format_gate(report: dict[str, Any]) -> str:
+    summary = (
+        f"executed=True status={report.get('status', '')} passed={report['passed']} "
+        f"steps={report['step_count']} failed={report['failed_count']} "
+        f"skipped={report['skipped_count']}"
+    )
+    if not report.get("executed"):
+        summary = (
+            f"executed=False status={report.get('status', 'planned_only')} "
+            f"steps={report['step_count']} runnable="
+            f"{sum(1 for step in report['steps'] if step['runnable'])} "
+            f"needs_input={sum(1 for step in report['steps'] if not step['runnable'])}"
+        )
     lines = [
         "Unified Pokemon Gold romhack debugger gate",
-        (
-            f"executed={report['executed']} passed={report['passed']} "
-            f"steps={report['step_count']} failed={report['failed_count']} "
-            f"skipped={report['skipped_count']}"
-        ),
+        summary,
     ]
+    if not report.get("executed"):
+        lines.append("plan_only=true; rerun with --execute to run these commands")
     if report["changed_files"]:
         lines.append("changed_files=" + ", ".join(report["changed_files"]))
     if report["symptom"]:
@@ -1478,9 +1488,27 @@ def format_gate(report: dict[str, Any]) -> str:
         lines.append(
             f"  - P{step['priority']} {step['status']}: {step['command']} ({runnable})"
         )
-        for line in step["stderr_tail"][:2]:
+        if step.get("failure_summary"):
+            lines.append(f"      error: {step['failure_summary']}")
+        for line in gate_step_diagnostic_lines(step, "stderr"):
             lines.append(f"      stderr: {line}")
+        if step.get("status") == "failed" and not step.get("stderr_tail"):
+            for line in gate_step_diagnostic_lines(step, "stdout"):
+                lines.append(f"      stdout: {line}")
     return "\n".join(lines)
+
+
+def gate_step_diagnostic_lines(step: dict[str, Any], stream: str) -> list[str]:
+    lines = list(step.get(f"{stream}_tail", []))
+    if step.get("status") != "failed" or len(lines) <= 2:
+        return lines[:2]
+    selected = [lines[0], *lines[-2:]]
+    out = []
+    for line in selected:
+        if line in out:
+            continue
+        out.append(line)
+    return out
 
 
 def format_investigation_run(report: dict[str, Any]) -> str:

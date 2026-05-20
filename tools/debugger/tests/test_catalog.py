@@ -13,7 +13,7 @@ from unittest.mock import patch
 from tools.damage_debugger.disasm import Instruction, render_mnemonic
 from tools.damage_debugger.taint import Sink as DamageSink
 from tools.damage_debugger.taint import SyntheticFrame, TaintEngine
-from tools.debugger.__main__ import format_compare_plan, main as debugger_main
+from tools.debugger.__main__ import format_compare_plan, format_gate, main as debugger_main
 from tools.debugger.address import address_key, address_spec_requires_exact_key, observed_address_key, parse_address_spec
 from tools.debugger.causal_graph import build_causal_graph_report
 from tools.debugger.catalog import (
@@ -3155,9 +3155,18 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         commands = [step["command"] for step in report["steps"]]
 
         self.assertFalse(report["executed"])
+        self.assertEqual(report["status"], "planned_only")
         self.assertIn("python -m tools.damage_debugger.clobber_smoke", commands)
         self.assertIn("python tools/audit/check_cross_bank_call.py", commands)
         self.assertEqual(report["steps"][0]["priority"], 10)
+
+    def test_gate_plan_text_marks_plan_only_without_failed_passed_signal(self) -> None:
+        report = build_gate_plan(changed_files=("data/pokemon/evos_attacks.asm",))
+        text = format_gate(report)
+
+        self.assertIn("status=planned_only", text)
+        self.assertIn("plan_only=true; rerun with --execute", text)
+        self.assertNotIn("passed=False", text)
 
     def test_gate_plan_routes_learnset_edits_to_runnable_pokemon_data_checks(self) -> None:
         report = build_gate_plan(changed_files=("data/pokemon/evos_attacks.asm",))
@@ -3250,6 +3259,50 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         argv = run.call_args.args[0]
         self.assertEqual(argv[0], _sys.executable)
         self.assertEqual(step["status"], "passed")
+
+    def test_gate_failed_traceback_surfaces_exception_summary(self) -> None:
+        class Completed:
+            returncode = 1
+            stdout = ""
+            stderr = (
+                "Traceback (most recent call last):\n"
+                "  File \"probe.py\", line 1, in <module>\n"
+                "    import pyboy\n"
+                "ModuleNotFoundError: No module named 'pyboy'\n"
+            )
+
+        step = {
+            "command": "python -m tools.debugger audio-snapshot --execute",
+            "runnable": True,
+            "priority": 25,
+            "status": "pending",
+            "returncode": None,
+            "elapsed_seconds": 0.0,
+            "stdout_tail": [],
+            "stderr_tail": [],
+        }
+
+        with patch("tools.debugger.workflow.subprocess.run", return_value=Completed()):
+            execute_step(step, root=Path("."), timeout_seconds=5)
+
+        report = {
+            "kind": "unified_debugger_gate_plan",
+            "executed": True,
+            "status": "failed",
+            "passed": False,
+            "step_count": 1,
+            "failed_count": 1,
+            "skipped_count": 0,
+            "changed_files": [],
+            "symptom": "",
+            "steps": [step],
+        }
+        text = format_gate(report)
+
+        self.assertEqual(step["status"], "failed")
+        self.assertEqual(step["failure_summary"], "ModuleNotFoundError: No module named 'pyboy'")
+        self.assertIn("error: ModuleNotFoundError: No module named 'pyboy'", text)
+        self.assertIn("stderr: ModuleNotFoundError: No module named 'pyboy'", text)
 
     def test_instruction_trace_command_symbol_parsing_preserves_quoted_paths(self) -> None:
         state_path = "C:\\Users\\lolno\\Downloads\\pokemon gold hack\\runtime state.sav"

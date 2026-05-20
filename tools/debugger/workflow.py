@@ -46,6 +46,7 @@ def build_gate_plan(
 
     failed = [step for step in steps if step["status"] == "failed"]
     skipped = [step for step in steps if step["status"] == "skipped"]
+    status = "planned_only" if not execute else ("failed" if failed else "passed")
     return {
         "schema_version": 1,
         "kind": "unified_debugger_gate_plan",
@@ -53,6 +54,7 @@ def build_gate_plan(
         "changed_files": list(changed_files),
         "symptom": symptom,
         "executed": execute,
+        "status": status,
         "passed": execute and not failed,
         "step_count": len(steps),
         "failed_count": len(failed),
@@ -188,6 +190,7 @@ def execute_step(step: dict[str, Any], *, root: Path, timeout_seconds: int) -> N
         step["elapsed_seconds"] = time.perf_counter() - started
         step["stdout_tail"] = tail(exc.stdout or "")
         step["stderr_tail"] = tail((exc.stderr or "") + "\ncommand timed out")
+        step["failure_summary"] = "command timed out"
         return
     except OSError as exc:
         step["status"] = "failed"
@@ -195,14 +198,35 @@ def execute_step(step: dict[str, Any], *, root: Path, timeout_seconds: int) -> N
         step["elapsed_seconds"] = time.perf_counter() - started
         step["stdout_tail"] = []
         step["stderr_tail"] = tail(str(exc))
+        step["failure_summary"] = str(exc)
         return
     step["elapsed_seconds"] = time.perf_counter() - started
     step["returncode"] = completed.returncode
     step["stdout_tail"] = tail(completed.stdout)
     step["stderr_tail"] = tail(completed.stderr)
     step["status"] = "passed" if completed.returncode == 0 else "failed"
+    if step["status"] == "failed":
+        step["failure_summary"] = summarize_failure(
+            completed.stderr,
+            completed.stdout,
+            returncode=completed.returncode,
+        )
 
 
 def tail(text: str, *, max_lines: int = 12) -> list[str]:
     lines = [line.rstrip() for line in text.splitlines() if line.strip()]
     return lines[-max_lines:]
+
+
+def summarize_failure(stderr: str, stdout: str = "", *, returncode: int | None = None) -> str:
+    lines = [line.strip() for line in (stderr + "\n" + stdout).splitlines() if line.strip()]
+    for line in reversed(lines):
+        if line.startswith(("ModuleNotFoundError:", "ImportError:", "FileNotFoundError:", "RuntimeError:", "OSError:")):
+            return line
+        if "No module named" in line or "can't open file" in line:
+            return line
+    if lines:
+        return lines[-1]
+    if returncode is not None:
+        return f"command exited with code {returncode}"
+    return "command failed"
