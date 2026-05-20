@@ -41,6 +41,7 @@ from .state_space import build_state_space_report
 from .slicing import build_slice_report
 from .testgen import suggest_tests
 from .taint import build_taint_report
+from .stat_at import build_stat_at_report, format_text as format_stat_at
 from .trace_index import build_trace_index_report
 from .type_matchup import build_type_matchup_report, format_text as format_type_matchup
 from .visual_snapshot import build_visual_snapshot_report
@@ -606,6 +607,16 @@ def build_parser() -> argparse.ArgumentParser:
     type_matchup.add_argument("--species", required=True)
     add_output_args(type_matchup)
     type_matchup.set_defaults(func=cmd_type_matchup)
+
+    stat_at = subparsers.add_parser("stat-at")
+    stat_at.add_argument("--species", required=True)
+    stat_at.add_argument("--stat", required=True, help="hp/atk/def/spd/sat/sdf")
+    stat_at.add_argument("--level", type=int, default=50)
+    stat_at.add_argument("--modifier", type=int, default=0, help="stat-stage modifier -6..+6")
+    stat_at.add_argument("--iv", type=int, default=15)
+    stat_at.add_argument("--ev", type=int, default=65_535)
+    add_output_args(stat_at)
+    stat_at.set_defaults(func=cmd_stat_at)
 
     return parser
 
@@ -1259,6 +1270,19 @@ def cmd_type_matchup(args: argparse.Namespace) -> int:
     return 0 if report.get("valid") else 1
 
 
+def cmd_stat_at(args: argparse.Namespace) -> int:
+    report = build_stat_at_report(
+        species=args.species,
+        stat=args.stat,
+        level=args.level,
+        modifier=args.modifier,
+        iv=args.iv,
+        ev=args.ev,
+    )
+    emit_report(report, args)
+    return 0 if report.get("valid") else 1
+
+
 def emit_report(report: dict[str, Any], args: argparse.Namespace) -> None:
     if args.json_out:
         write_json(report, Path(args.json_out))
@@ -1348,6 +1372,8 @@ def emit_report(report: dict[str, Any], args: argparse.Namespace) -> None:
         print(format_visualization(report))
     elif report["kind"] == "unified_debugger_type_matchup":
         print(format_type_matchup(report))
+    elif report["kind"] == "unified_debugger_stat_at":
+        print(format_stat_at(report))
     else:
         print(json.dumps(report, indent=2, sort_keys=True))
 

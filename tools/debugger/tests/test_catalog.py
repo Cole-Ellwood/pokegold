@@ -347,6 +347,109 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("ROCK/FLYING", output)
         self.assertIn("immune: GROUND", output)
 
+    def test_stat_at_aerodactyl_speed_neutral_max_ev(self) -> None:
+        from tools.debugger.stat_at import build_stat_at_report
+
+        report = build_stat_at_report(
+            species="aerodactyl",
+            stat="spd",
+            level=50,
+            modifier=0,
+        )
+
+        self.assertTrue(report["valid"])
+        self.assertEqual(report["species"], "AERODACTYL")
+        self.assertEqual(report["base"], 130)
+        self.assertEqual(report["computed_neutral"], 181)
+
+    def test_stat_at_modifier_multiplies_computed_not_base(self) -> None:
+        from tools.debugger.stat_at import build_stat_at_report
+
+        report = build_stat_at_report(
+            species="aerodactyl",
+            stat="spd",
+            level=50,
+            modifier=2,
+        )
+
+        self.assertTrue(report["valid"])
+        self.assertEqual(report["computed_neutral"], 181)
+        self.assertEqual(report["computed_modified"], 362)
+        self.assertNotEqual(report["computed_modified"], report["base"] * 2)
+
+    def test_stat_at_hp_ignores_modifier(self) -> None:
+        from tools.debugger.stat_at import build_stat_at_report
+
+        report = build_stat_at_report(
+            species="aerodactyl",
+            stat="hp",
+            level=50,
+            modifier=6,
+        )
+
+        self.assertTrue(report["valid"])
+        self.assertEqual(report["computed_modified"], report["computed_neutral"])
+
+    def test_stat_at_caps_at_999(self) -> None:
+        from tools.debugger.stat_at import build_stat_at_report
+
+        report = build_stat_at_report(
+            species="shuckle",
+            stat="def",
+            level=50,
+            modifier=6,
+        )
+
+        self.assertTrue(report["valid"])
+        self.assertEqual(report["computed_modified"], 999)
+
+    def test_stat_at_invalid_stat_returns_error(self) -> None:
+        from tools.debugger.stat_at import build_stat_at_report
+
+        report = build_stat_at_report(
+            species="aerodactyl",
+            stat="happiness",
+            level=50,
+        )
+
+        self.assertFalse(report["valid"])
+        self.assertTrue(report["errors"])
+
+    def test_stat_at_out_of_range_modifier_returns_error(self) -> None:
+        from tools.debugger.stat_at import build_stat_at_report
+
+        report = build_stat_at_report(
+            species="aerodactyl",
+            stat="spd",
+            level=50,
+            modifier=99,
+        )
+
+        self.assertFalse(report["valid"])
+        self.assertTrue(report["errors"])
+
+    def test_cli_stat_at_subcommand_emits_report(self) -> None:
+        buffer = io.StringIO()
+        with redirect_stdout(buffer):
+            code = debugger_main(
+                [
+                    "stat-at",
+                    "--species",
+                    "aerodactyl",
+                    "--stat",
+                    "spd",
+                    "--modifier",
+                    "2",
+                ]
+            )
+
+        self.assertEqual(code, 0)
+        output = buffer.getvalue()
+        self.assertIn("AERODACTYL", output)
+        self.assertIn("computed at +0", output)
+        self.assertIn("computed at +2", output)
+        self.assertIn("multiplies the COMPUTED stat", output)
+
     def test_hardware_regression_gate_lists_pandocs_blockers(self) -> None:
         report = build_hardware_regression_report()
         case_ids = {case["id"] for case in report["cases"]}
