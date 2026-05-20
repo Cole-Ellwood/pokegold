@@ -5579,3 +5579,44 @@ Remaining priority:
 - This is a report/proof-boundary fence only; it does not add pixel-accurate PPU playback, full APU playback/mixer proof, or hardware behavior validation for PyBoy snapshot evidence.
 - Full script VM behavior under arbitrary event-engine state, runtime-verified object occupancy, causal proof, side-effect-complete reverse execution, and the non-mutating hardware event recorder remain incomplete.
 - The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
+
+## Implementation Note - Hook-Order Boundary Propagation for RMW Pre-State Proof
+
+Date: 2026-05-20.
+
+Context:
+
+- The hook-order probe correctly reports PyBoy debugger-hook timing as opcode-replacement breakpoint evidence, not a non-mutating CPU event stream.
+- Effect traces could use a passed hook-order matrix to mark RMW old-byte pre-state samples as runtime-observed, but downstream effect history, reverse-query evidence, ranking, and causal graph evidence did not carry the hook mechanism/proof-boundary details.
+- That made the evidence easier to overread as proof-grade before-execute CPU instrumentation instead of PyBoy hook callback timing.
+
+References used:
+
+- PyBoy API documentation for `hook_register`, including the hook replacement behavior: `https://docs.pyboy.dk/index.html`
+- Local hook-order probe contract in `tools/debugger/hook_order.py`.
+
+Implemented fix:
+
+- `tools/debugger/effect_trace.py`
+  - propagates `proof_boundary`, `hook_mechanism`, `non_mutating_instruction_events`, and `pre_fetch_runtime_observed` from hook-order reports into effect-trace hook-order validations.
+  - exposes aggregate `hook_order_proof_boundary`, `hook_order_mechanisms`, and `hook_order_non_mutating_instruction_events` on effect-trace reports.
+  - attaches `pre_state_observation_model`, `pre_state_proof_boundary`, and `pre_state_non_mutating_instruction_event` to RMW memory effects, source operands, write-index history, and evidence atoms.
+- `tools/debugger/reverse_query.py`
+  - preserves those pre-state boundary fields in reverse-query history and result evidence.
+- `tools/debugger/causal_graph.py` and `tools/debugger/ranking.py`
+  - surface hook mechanism and non-mutating-event boundary fields in causal validation evidence and ranked effect-trace evidence.
+- `tools/debugger/catalog.py`
+  - updates the replay/localization blocker wording to state that RMW pre-state proof now carries the hook mechanism/non-mutating-event boundary.
+- `tools/debugger/tests/test_catalog.py`
+  - verifies the boundary fields survive from hook-order report ingestion through effect trace, write index, reverse query, causal graph, and ranking.
+
+Validation after patch:
+
+- Focused hook-order/effect/reverse/causal regressions: 4 passed.
+- `PYTHONPYCACHEPREFIX=.local\tmp\pycompile_cache python -m py_compile tools\debugger\effect_trace.py tools\debugger\reverse_query.py tools\debugger\causal_graph.py tools\debugger\ranking.py tools\debugger\catalog.py tools\debugger\tests\test_catalog.py`: passed.
+
+Remaining priority:
+
+- This prevents PyBoy hook-order evidence from losing its observation-model boundary, but it does not replace the hook path with a non-mutating CPU/hardware event recorder.
+- Full side-effect-complete reverse execution, hardware side-effect event streams, arbitrary event-engine execution, script/graphics/audio/map behavioral mirrors, and subsystem-complete causal proof remain incomplete.
+- The whole-ROM proof-substrate goal remains incomplete and `ready=False`.

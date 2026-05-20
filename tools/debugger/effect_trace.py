@@ -129,6 +129,7 @@ def build_effect_trace_report(
         validation.get("passed") and validation.get("proof_status") == "runtime_observed"
         for validation in hook_order_validations
     )
+    hook_order_boundary = aggregate_hook_order_boundary(hook_order_validations)
     attach_rmw_pre_state_proof(events, hook_order_validations)
     attach_observed_timer_overflow_effects(events)
     attach_hardware_side_effect_proof_gates(events)
@@ -161,6 +162,9 @@ def build_effect_trace_report(
         "hook_order_validation_count": len(hook_order_validations),
         "hook_order_pre_state_proven": hook_order_pre_state_proven,
         "hook_order_proof_status": "runtime_observed" if hook_order_pre_state_proven else "planned_only",
+        "hook_order_proof_boundary": hook_order_boundary.get("proof_boundary", ""),
+        "hook_order_mechanisms": hook_order_boundary.get("hook_mechanisms", []),
+        "hook_order_non_mutating_instruction_events": hook_order_boundary.get("non_mutating_instruction_events", ""),
         "hook_order_validations": hook_order_validations,
         "rmw_pre_state_sample_count": count_rmw_pre_state_samples(events),
         "rmw_pre_state_runtime_observed_count": count_rmw_pre_state_samples(events, proof_status="runtime_observed"),
@@ -2757,6 +2761,9 @@ def build_write_index(events: list[dict[str, Any]]) -> list[dict[str, Any]]:
                     "pre_state_validation_kind": item.get("pre_state_validation_kind", ""),
                     "pre_state_validation_source": item.get("pre_state_validation_source", ""),
                     "pre_state_validation_count": item.get("pre_state_validation_count", 0),
+                    "pre_state_observation_model": item.get("pre_state_observation_model", ""),
+                    "pre_state_proof_boundary": item.get("pre_state_proof_boundary", ""),
+                    "pre_state_non_mutating_instruction_event": item.get("pre_state_non_mutating_instruction_event", ""),
                     "evidence_atoms": item.get("evidence_atoms", []),
                     "source_operands": item.get("source_operands", []),
                     "pre_registers": event.get("pre_registers", {}),
@@ -2836,6 +2843,9 @@ def effect_item_evidence_atom(event: dict[str, Any], item: dict[str, Any]) -> di
             "pre_state_validation": item.get("pre_state_validation", ""),
             "pre_state_validation_kind": item.get("pre_state_validation_kind", ""),
             "pre_state_validation_source": item.get("pre_state_validation_source", ""),
+            "pre_state_observation_model": item.get("pre_state_observation_model", ""),
+            "pre_state_proof_boundary": item.get("pre_state_proof_boundary", ""),
+            "pre_state_non_mutating_instruction_event": item.get("pre_state_non_mutating_instruction_event", ""),
             "post_value_status": item.get("post_value_status", ""),
             "post_register_status": item.get("post_register_status", ""),
         },
@@ -3101,6 +3111,10 @@ def hook_order_validations_from_reports(loaded_reports: list[dict[str, Any]]) ->
                 "executed": bool(data.get("executed")),
                 "passed": bool(data.get("passed")),
                 "proof_status": str(data.get("proof_status", "planned_only")),
+                "proof_boundary": str(data.get("proof_boundary", "")),
+                "hook_mechanism": str(data.get("hook_mechanism", "")),
+                "non_mutating_instruction_events": bool(data.get("non_mutating_instruction_events")),
+                "pre_fetch_runtime_observed": bool(data.get("pre_fetch_runtime_observed")),
                 "observation_count": int(data.get("observation_count", 0) or 0),
                 "expected_target_count": int(data.get("expected_target_count", 0) or 0),
                 "check_count": int(data.get("check_count", 0) or 0),
@@ -3108,6 +3122,31 @@ def hook_order_validations_from_reports(loaded_reports: list[dict[str, Any]]) ->
             }
         )
     return validations
+
+
+def aggregate_hook_order_boundary(hook_order_validations: list[dict[str, Any]]) -> dict[str, Any]:
+    if not hook_order_validations:
+        return {}
+    boundaries = unique_list(
+        str(validation.get("proof_boundary", ""))
+        for validation in hook_order_validations
+        if validation.get("proof_boundary")
+    )
+    mechanisms = unique_list(
+        str(validation.get("hook_mechanism", ""))
+        for validation in hook_order_validations
+        if validation.get("hook_mechanism")
+    )
+    non_mutating_values = {
+        bool(validation.get("non_mutating_instruction_events"))
+        for validation in hook_order_validations
+        if "non_mutating_instruction_events" in validation
+    }
+    return {
+        "proof_boundary": ",".join(boundaries),
+        "hook_mechanisms": mechanisms,
+        "non_mutating_instruction_events": all(non_mutating_values) if non_mutating_values else "",
+    }
 
 
 def attach_rmw_pre_state_proof(
@@ -3127,33 +3166,50 @@ def attach_rmw_pre_state_proof(
             item["pre_state_validation"] = proof["validation"]
             item["pre_state_validation_kind"] = "hook_order_probe"
             item["pre_state_validation_count"] = len(hook_order_validations)
+            item["pre_state_observation_model"] = proof["hook_mechanism"]
+            item["pre_state_proof_boundary"] = proof["proof_boundary"]
+            if proof["non_mutating_instruction_event"] != "":
+                item["pre_state_non_mutating_instruction_event"] = proof["non_mutating_instruction_event"]
             if proof["source"]:
                 item["pre_state_validation_source"] = proof["source"]
             operand["pre_state_sample"] = item["pre_state_sample"]
             operand["pre_state_proof_status"] = item["pre_state_proof_status"]
             operand["pre_state_validation"] = item["pre_state_validation"]
+            operand["pre_state_observation_model"] = item["pre_state_observation_model"]
+            operand["pre_state_proof_boundary"] = item["pre_state_proof_boundary"]
+            if "pre_state_non_mutating_instruction_event" in item:
+                operand["pre_state_non_mutating_instruction_event"] = item["pre_state_non_mutating_instruction_event"]
             if proof["source"]:
                 operand["pre_state_validation_source"] = proof["source"]
 
 
-def rmw_pre_state_proof(hook_order_validations: list[dict[str, Any]]) -> dict[str, str]:
+def rmw_pre_state_proof(hook_order_validations: list[dict[str, Any]]) -> dict[str, Any]:
     for validation in hook_order_validations:
         if validation.get("passed") and validation.get("proof_status") == "runtime_observed":
             return {
                 "proof_status": "runtime_observed",
                 "validation": "hook_order_probe_passed",
                 "source": str(validation.get("source", "")),
+                "proof_boundary": str(validation.get("proof_boundary", "")),
+                "hook_mechanism": str(validation.get("hook_mechanism", "")),
+                "non_mutating_instruction_event": validation.get("non_mutating_instruction_events"),
             }
     if hook_order_validations:
         return {
             "proof_status": "planned_only",
             "validation": "hook_order_probe_not_validated",
             "source": str(hook_order_validations[0].get("source", "")),
+            "proof_boundary": str(hook_order_validations[0].get("proof_boundary", "")),
+            "hook_mechanism": str(hook_order_validations[0].get("hook_mechanism", "")),
+            "non_mutating_instruction_event": hook_order_validations[0].get("non_mutating_instruction_events", ""),
         }
     return {
         "proof_status": "planned_only",
         "validation": "missing_hook_order_probe",
         "source": "",
+        "proof_boundary": "",
+        "hook_mechanism": "",
+        "non_mutating_instruction_event": "",
     }
 
 

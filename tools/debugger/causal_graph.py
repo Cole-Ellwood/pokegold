@@ -1868,6 +1868,11 @@ def hook_order_validation_evidence(validation: dict[str, Any]) -> list[str]:
             f"executed={bool(validation.get('executed'))}",
             f"passed={bool(validation.get('passed'))}",
             f"proof_status={validation.get('proof_status', '')}",
+            f"proof_boundary={validation.get('proof_boundary', '')}" if validation.get("proof_boundary") else "",
+            f"hook_mechanism={validation.get('hook_mechanism', '')}" if validation.get("hook_mechanism") else "",
+            f"non_mutating_instruction_events={validation.get('non_mutating_instruction_events')}"
+            if validation.get("non_mutating_instruction_events") not in {None, ""}
+            else "",
             f"observations={validation.get('observation_count', 0)}/{validation.get('expected_target_count', 0)}",
             f"checks={validation.get('check_count', 0)}",
             f"failed_checks={','.join(string_items(validation.get('failed_checks')))}"
@@ -1903,6 +1908,11 @@ def effect_evidence(effect: dict[str, Any]) -> list[str]:
             f"pre_state_proof={effect.get('pre_state_proof_status', '')}" if effect.get("pre_state_proof_status") else "",
             f"pre_state_validation={effect.get('pre_state_validation', '')}" if effect.get("pre_state_validation") else "",
             f"pre_state_validation_source={effect.get('pre_state_validation_source', '')}" if effect.get("pre_state_validation_source") else "",
+            f"pre_state_observation_model={effect.get('pre_state_observation_model', '')}" if effect.get("pre_state_observation_model") else "",
+            f"pre_state_proof_boundary={effect.get('pre_state_proof_boundary', '')}" if effect.get("pre_state_proof_boundary") else "",
+            f"pre_state_non_mutating_instruction_event={effect.get('pre_state_non_mutating_instruction_event')}"
+            if effect.get("pre_state_non_mutating_instruction_event") not in {None, ""}
+            else "",
             f"post_value_status={effect.get('post_value_status', '')}" if effect.get("post_value_status") else "",
             f"post_value=0x{effect.get('post_value_hex', '')}" if effect.get("post_value_hex") else "",
             f"post_register_status={effect.get('post_register_status', '')}" if effect.get("post_register_status") else "",

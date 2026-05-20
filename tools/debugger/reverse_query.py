@@ -1449,6 +1449,9 @@ def entry_history(entry: dict[str, Any], *, events: list[dict[str, Any]], max_hi
                     "pre_state_validation": item.get("pre_state_validation", ""),
                     "pre_state_validation_kind": item.get("pre_state_validation_kind", ""),
                     "pre_state_validation_source": item.get("pre_state_validation_source", ""),
+                    "pre_state_observation_model": item.get("pre_state_observation_model", ""),
+                    "pre_state_proof_boundary": item.get("pre_state_proof_boundary", ""),
+                    "pre_state_non_mutating_instruction_event": item.get("pre_state_non_mutating_instruction_event", ""),
                     "evidence_atoms": item.get("evidence_atoms", []),
                     "source_operands": item.get("source_operands", []),
                     "pre_registers": event.get("pre_registers", {}),
@@ -1495,6 +1498,9 @@ def normalize_index_history(entry: dict[str, Any], *, max_history: int) -> list[
         copied.setdefault("pre_state_validation", "")
         copied.setdefault("pre_state_validation_kind", "")
         copied.setdefault("pre_state_validation_source", "")
+        copied.setdefault("pre_state_observation_model", "")
+        copied.setdefault("pre_state_proof_boundary", "")
+        copied.setdefault("pre_state_non_mutating_instruction_event", "")
         normalized.append(copied)
     return normalized
 
@@ -1558,6 +1564,15 @@ def result_evidence(*, target: dict[str, Any], entry: dict[str, Any], last_write
                 else "",
                 f"pre_state_validation_source={last_write.get('pre_state_validation_source', '')}"
                 if last_write.get("pre_state_validation_source")
+                else "",
+                f"pre_state_observation_model={last_write.get('pre_state_observation_model', '')}"
+                if last_write.get("pre_state_observation_model")
+                else "",
+                f"pre_state_proof_boundary={last_write.get('pre_state_proof_boundary', '')}"
+                if last_write.get("pre_state_proof_boundary")
+                else "",
+                f"pre_state_non_mutating_instruction_event={last_write.get('pre_state_non_mutating_instruction_event')}"
+                if last_write.get("pre_state_non_mutating_instruction_event") not in {None, ""}
                 else "",
             ]
             if item

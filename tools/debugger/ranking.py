@@ -1926,6 +1926,15 @@ def effect_trace_findings(report: dict[str, Any], *, source: str) -> list[dict[s
                     f"hook_order_proof={report.get('hook_order_proof_status', '')}"
                     if report.get("hook_order_validation_count")
                     else "",
+                    f"hook_order_proof_boundary={report.get('hook_order_proof_boundary', '')}"
+                    if report.get("hook_order_proof_boundary")
+                    else "",
+                    (
+                        "hook_order_non_mutating_instruction_events="
+                        f"{report.get('hook_order_non_mutating_instruction_events')}"
+                    )
+                    if report.get("hook_order_non_mutating_instruction_events") not in {None, ""}
+                    else "",
                     *watch_hit_summaries[:8],
                     *[
                         f"{item.get('address', '')}: writes={item.get('write_count', 0)} last={item.get('last_writer_pc', '')}"

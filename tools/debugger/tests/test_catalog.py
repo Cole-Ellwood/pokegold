@@ -13530,6 +13530,9 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
                         "executed": True,
                         "passed": True,
                         "proof_status": "runtime_observed",
+                        "proof_boundary": "debugger_hook_runtime_matrix_not_non_mutating_cpu_event_stream",
+                        "hook_mechanism": "pyboy_opcode_replacement_breakpoint",
+                        "non_mutating_instruction_events": False,
                         "observation_count": 4,
                         "expected_target_count": 4,
                         "check_count": 4,
@@ -13564,6 +13567,15 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
                 watch_addresses=("C200",),
                 root=root,
             )
+            (root / "effect_trace.json").write_text(json.dumps(report), encoding="utf-8")
+            reverse = build_reverse_query_report(
+                reports=("effect_trace.json",),
+                addresses=("C200",),
+                symbols_path="test.sym",
+                root=root,
+            )
+            graph = build_causal_graph_report(reports=("effect_trace.json",), root=root)
+            ranked = rank_findings(reports=("effect_trace.json",), root=root)
 
         write = next(
             item
@@ -13571,13 +13583,45 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
             for item in event["effects"]
             if item.get("kind") == "memory_write" and item.get("address_hex") == "C200"
         )
+        write_index_entry = next(
+            item
+            for item in report["write_index"]
+            if item.get("address") == "C200" and item.get("write_count") == 1
+        )
+        history_write = next(item for item in write_index_entry["history"] if item.get("access") == "write")
+        reverse_evidence = "\n".join(reverse["results"][0]["evidence"])
+        graph_evidence = "\n".join(
+            field
+            for node in graph["nodes"]
+            if node.get("kind") == "hook_order_validation"
+            for field in node.get("evidence", [])
+        )
+        ranked_evidence = "\n".join(
+            next(item for item in ranked["findings"] if item["type"] == "effect_trace_observed")["evidence"]
+        )
 
         self.assertEqual(write["operation"], "rl [hl]")
+        self.assertEqual(report["hook_order_proof_boundary"], "debugger_hook_runtime_matrix_not_non_mutating_cpu_event_stream")
+        self.assertEqual(report["hook_order_mechanisms"], ["pyboy_opcode_replacement_breakpoint"])
+        self.assertFalse(report["hook_order_non_mutating_instruction_events"])
         self.assertEqual(write["pre_state_sample"], "hook_pre_instruction")
         self.assertEqual(write["pre_state_value_hex"], "7F")
         self.assertEqual(write["pre_state_proof_status"], "runtime_observed")
         self.assertEqual(write["pre_state_validation"], "hook_order_probe_passed")
         self.assertEqual(write["pre_state_validation_source"], "hook_order.json")
+        self.assertEqual(write["pre_state_observation_model"], "pyboy_opcode_replacement_breakpoint")
+        self.assertEqual(write["pre_state_proof_boundary"], "debugger_hook_runtime_matrix_not_non_mutating_cpu_event_stream")
+        self.assertFalse(write["pre_state_non_mutating_instruction_event"])
+        self.assertEqual(history_write["pre_state_observation_model"], "pyboy_opcode_replacement_breakpoint")
+        self.assertEqual(history_write["pre_state_proof_boundary"], "debugger_hook_runtime_matrix_not_non_mutating_cpu_event_stream")
+        self.assertFalse(history_write["pre_state_non_mutating_instruction_event"])
+        self.assertIn("pre_state_observation_model=pyboy_opcode_replacement_breakpoint", reverse_evidence)
+        self.assertIn("pre_state_proof_boundary=debugger_hook_runtime_matrix_not_non_mutating_cpu_event_stream", reverse_evidence)
+        self.assertIn("pre_state_non_mutating_instruction_event=False", reverse_evidence)
+        self.assertIn("hook_mechanism=pyboy_opcode_replacement_breakpoint", graph_evidence)
+        self.assertIn("non_mutating_instruction_events=False", graph_evidence)
+        self.assertIn("hook_order_proof_boundary=debugger_hook_runtime_matrix_not_non_mutating_cpu_event_stream", ranked_evidence)
+        self.assertIn("hook_order_non_mutating_instruction_events=False", ranked_evidence)
         self.assertEqual(report["rmw_pre_state_sample_count"], 1)
         self.assertEqual(report["rmw_pre_state_runtime_observed_count"], 1)
         self.assertEqual(report["rmw_pre_state_unvalidated_count"], 0)
