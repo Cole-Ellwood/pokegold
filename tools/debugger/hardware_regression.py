@@ -239,8 +239,13 @@ EXPLICIT_HARDWARE_EVIDENCE = {
 }
 STATIC_BLOCKER_EVIDENCE_CLASSES = {"pyboy_source_gap", "missing_artifact"}
 EMULATOR_RUNTIME_EVIDENCE_CLASSES = {"pyboy_hook_matrix", "modeled_effect_trace"}
-RUNTIME_EVIDENCE_CLASSES = {*EMULATOR_RUNTIME_EVIDENCE_CLASSES, "runtime_hardware_event"}
-HARDWARE_PROOF_EVIDENCE_CLASSES = {"explicit_hardware_case_pass"}
+HARDWARE_EVENT_STREAM_EVIDENCE_CLASSES = {"hardware_event_stream_result"}
+RUNTIME_EVIDENCE_CLASSES = {
+    *EMULATOR_RUNTIME_EVIDENCE_CLASSES,
+    *HARDWARE_EVENT_STREAM_EVIDENCE_CLASSES,
+    "runtime_hardware_event",
+}
+HARDWARE_PROOF_EVIDENCE_CLASSES = {"explicit_hardware_case_pass", "hardware_event_stream_case_pass"}
 
 
 def build_hardware_regression_report(
@@ -327,7 +332,7 @@ def build_hardware_regression_report(
         ],
         "known_limits": [
             "This gate is intentionally strict: PyBoy hook observations and modeled effect traces do not satisfy Pan Docs hardware cases by themselves.",
-            "A case passes only when a dedicated hardware-regression result marks that exact case passed and includes the case-specific required hardware event types.",
+            "A case passes only when a dedicated hardware-regression result or non-mutating hardware event stream marks that exact case passed and includes the case-specific required hardware event types.",
             "Boot-ROM end-state proof needs a real boot ROM artifact and Pokemon Gold ROM runtime evidence; file presence alone is not enough.",
         ],
     }
@@ -380,11 +385,14 @@ def build_case_result(
                 }
             )
 
-    hardware_passed = any(item["class"] == "explicit_hardware_case_pass" for item in evidence)
+    hardware_passed = any(item["class"] in HARDWARE_PROOF_EVIDENCE_CLASSES for item in evidence)
     if hardware_passed:
         gate_status = "passed"
         proof_status = "runtime_observed"
     elif any(item["class"] == "runtime_hardware_event" for item in evidence):
+        gate_status = "runtime_observed_not_case_complete"
+        proof_status = "planned_only"
+    elif any(item["class"] == "hardware_event_stream_result" for item in evidence):
         gate_status = "runtime_observed_not_case_complete"
         proof_status = "planned_only"
     elif any(item["class"] == "pyboy_hook_matrix" for item in evidence):
@@ -467,6 +475,7 @@ def report_case_evidence(case: dict[str, Any], report: dict[str, Any], *, source
         ]
     evidence: list[dict[str, Any]] = []
     evidence.extend(explicit_case_result_evidence(case, report, source=source))
+    evidence.extend(hardware_event_stream_case_evidence(case, report, source=source))
     evidence.extend(hook_order_case_evidence(case, report, source=source))
     evidence.extend(effect_trace_case_evidence(case, report, source=source))
     return evidence
@@ -547,6 +556,69 @@ def explicit_case_result_evidence(case: dict[str, Any], report: dict[str, Any], 
 
 def explicit_case_item_hardware_proven(case: dict[str, Any], item: dict[str, Any]) -> bool:
     return bool(explicit_case_item_proof(case, item)["passed"])
+
+
+def hardware_event_stream_case_evidence(case: dict[str, Any], report: dict[str, Any], *, source: str) -> list[dict[str, Any]]:
+    if report.get("kind") != "unified_debugger_hardware_event_stream":
+        return []
+    case_events = hardware_event_stream_events_for_case(case, report)
+    if not case_events:
+        return []
+    item = {
+        "hardware_behavior_proven": bool(report.get("hardware_behavior_proven")),
+        "hardware_event_observed": bool(report.get("hardware_event_observed")),
+        "evidence_source": str(report.get("evidence_source", "")),
+        "evidence_status": str(report.get("evidence_status", "")),
+        "hardware_events": case_events,
+    }
+    proof = explicit_case_item_proof(case, item)
+    recorder_proven = hardware_event_stream_proof_declared(report)
+    passed = bool(proof["passed"] and recorder_proven)
+    if passed:
+        status = "passed"
+        detail = "non-mutating hardware event stream covers required case event types"
+    elif not recorder_proven:
+        status = "event_stream_without_hardware_proof"
+        detail = "event stream is not declared as non-mutating hardware proof"
+    else:
+        status = "event_stream_missing_required_events"
+        detail = explicit_case_item_failure_detail(proof)
+    evidence = explicit_case_evidence_item(passed, status=status, source=source, detail=detail, proof=proof)
+    evidence["class"] = "hardware_event_stream_case_pass" if passed else "hardware_event_stream_result"
+    evidence["event_count"] = len(case_events)
+    evidence["recorder_kind"] = str(report.get("recorder_kind") or report.get("source_kind") or "")
+    return [evidence]
+
+
+def hardware_event_stream_events_for_case(case: dict[str, Any], report: dict[str, Any]) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    case_id = str(case.get("id", ""))
+    for event in dict_items(report.get("events")):
+        event_case_ids = event_case_id_values(event)
+        if not event_case_ids and str(report.get("hardware_regression_case_id", "")) == case_id:
+            event_case_ids = {case_id}
+        if case_id in event_case_ids:
+            out.append(event)
+    return out
+
+
+def event_case_id_values(event: dict[str, Any]) -> set[str]:
+    out: set[str] = set()
+    for key in ("hardware_regression_case_id", "hardware_regression_case_ids", "case_id", "case_ids"):
+        out.update(string_items(event.get(key)))
+    return out
+
+
+def hardware_event_stream_proof_declared(report: dict[str, Any]) -> bool:
+    if report.get("non_mutating_event_recorder") is True:
+        return True
+    if str(report.get("recorder_kind", "")) == "non_mutating_event_recorder":
+        return True
+    if str(report.get("source_kind", "")) == "non_mutating_event_recorder":
+        return True
+    evidence_source = str(report.get("evidence_source") or "")
+    evidence_status = str(report.get("evidence_status") or "")
+    return evidence_source in EXPLICIT_HARDWARE_EVIDENCE or evidence_status in EXPLICIT_HARDWARE_EVIDENCE
 
 
 def explicit_case_item_proof(case: dict[str, Any], item: dict[str, Any]) -> dict[str, Any]:
@@ -740,8 +812,12 @@ def evidence_fact_type(class_name: str) -> str:
         return "modeled_runtime_trace"
     if class_name == "runtime_hardware_event":
         return "runtime_hardware_event"
+    if class_name == "hardware_event_stream_result":
+        return "hardware_event_stream"
     if class_name == "explicit_hardware_case_pass":
         return "dedicated_hardware_case_proof"
+    if class_name == "hardware_event_stream_case_pass":
+        return "non_mutating_hardware_event_stream_case_proof"
     if class_name == "explicit_hardware_case_result":
         return "external_case_result"
     if class_name == "invalid_report":
@@ -758,7 +834,11 @@ def evidence_proof_scope(class_name: str) -> str:
         return "modeled_not_hardware_proof"
     if class_name == "runtime_hardware_event":
         return "observed_runtime_not_case_complete"
+    if class_name == "hardware_event_stream_result":
+        return "observed_runtime_not_case_complete"
     if class_name == "explicit_hardware_case_pass":
+        return "case_hardware_proof"
+    if class_name == "hardware_event_stream_case_pass":
         return "case_hardware_proof"
     if class_name == "explicit_hardware_case_result":
         return "external_case_result_not_proof"

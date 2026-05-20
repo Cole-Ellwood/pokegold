@@ -153,6 +153,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("Pan Docs hardware regression gate", gap_text)
         self.assertIn("observed emulator/runtime facts", gap_text)
         self.assertIn("downstream proof_scope values", gap_text)
+        self.assertIn("non-mutating hardware event-stream evidence", gap_text)
         self.assertIn("required case-specific hardware event types", gap_text)
         self.assertIn("requested-static versus observed-runtime address fact boundaries", gap_text)
         self.assertIn("hardware-gated effect-trace side effects and bank-unverified watch hits", gap_text)
@@ -461,6 +462,91 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(weak_evidence["status"], "declared_pass_without_required_hardware_events")
         self.assertEqual(weak_evidence["missing_event_types"], ["stack_write"])
         self.assertIn("stack_write", weak_evidence["detail"])
+
+    def test_hardware_regression_gate_accepts_non_mutating_event_stream_case_pass(self) -> None:
+        event_stream = {
+            "kind": "unified_debugger_hardware_event_stream",
+            "valid": True,
+            "hardware_behavior_proven": True,
+            "non_mutating_event_recorder": True,
+            "events": [
+                {"hardware_regression_case_id": "oam_dma_160_mcycle_timing", "event_type": "oam_dma_start"},
+                {"hardware_regression_case_id": "oam_dma_160_mcycle_timing", "event_type": "oam_dma_copy"},
+                {"hardware_regression_case_id": "oam_dma_160_mcycle_timing", "event_type": "oam_dma_end"},
+                {"hardware_regression_case_id": "oam_dma_160_mcycle_timing", "event_type": "elapsed_160_mcycles"},
+            ],
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "events.json").write_text(json.dumps(event_stream), encoding="utf-8")
+            report = build_hardware_regression_report(reports=("events.json",), root=root)
+
+        case = next(case for case in report["cases"] if case["id"] == "oam_dma_160_mcycle_timing")
+
+        self.assertEqual(case["gate_status"], "passed")
+        self.assertTrue(case["hardware_passed"])
+        self.assertEqual(case["hardware_proof_fact_count"], 1)
+        self.assertEqual(case["hardware_proof_facts"][0]["fact_type"], "non_mutating_hardware_event_stream_case_proof")
+        self.assertEqual(case["hardware_proof_facts"][0]["proof_scope"], "case_hardware_proof")
+        self.assertIn("elapsed_160_mcycles", case["hardware_proof_facts"][0]["observed_event_types"])
+        self.assertFalse(report["passed"])
+
+    def test_hardware_regression_gate_keeps_incomplete_event_stream_runtime_only(self) -> None:
+        event_stream = {
+            "kind": "unified_debugger_hardware_event_stream",
+            "valid": True,
+            "hardware_behavior_proven": True,
+            "non_mutating_event_recorder": True,
+            "events": [
+                {"hardware_regression_case_id": "oam_dma_160_mcycle_timing", "event_type": "oam_dma_start"},
+                {"hardware_regression_case_id": "oam_dma_160_mcycle_timing", "event_type": "oam_dma_copy"},
+                {"hardware_regression_case_id": "oam_dma_160_mcycle_timing", "event_type": "oam_dma_end"},
+            ],
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "events.json").write_text(json.dumps(event_stream), encoding="utf-8")
+            report = build_hardware_regression_report(reports=("events.json",), root=root)
+
+        case = next(case for case in report["cases"] if case["id"] == "oam_dma_160_mcycle_timing")
+        runtime_fact = next(
+            fact
+            for fact in case["observed_runtime_facts"]
+            if fact["fact_type"] == "hardware_event_stream"
+        )
+
+        self.assertEqual(case["gate_status"], "runtime_observed_not_case_complete")
+        self.assertFalse(case["hardware_passed"])
+        self.assertEqual(case["hardware_proof_fact_count"], 0)
+        self.assertEqual(runtime_fact["proof_scope"], "observed_runtime_not_case_complete")
+        self.assertEqual(runtime_fact["missing_event_types"], ["elapsed_160_mcycles"])
+
+    def test_hardware_regression_gate_rejects_event_stream_without_proof_grade_recorder(self) -> None:
+        event_stream = {
+            "kind": "unified_debugger_hardware_event_stream",
+            "valid": True,
+            "hardware_behavior_proven": True,
+            "events": [
+                {"hardware_regression_case_id": "interrupt_entry_stack_writes_current_pc", "event_type": "interrupt_enter"},
+                {"hardware_regression_case_id": "interrupt_entry_stack_writes_current_pc", "event_type": "stack_write"},
+            ],
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "events.json").write_text(json.dumps(event_stream), encoding="utf-8")
+            report = build_hardware_regression_report(reports=("events.json",), root=root)
+
+        case = next(case for case in report["cases"] if case["id"] == "interrupt_entry_stack_writes_current_pc")
+        event_evidence = next(
+            item
+            for item in case["evidence"]
+            if item["class"] == "hardware_event_stream_result"
+        )
+
+        self.assertEqual(case["gate_status"], "runtime_observed_not_case_complete")
+        self.assertFalse(case["hardware_passed"])
+        self.assertEqual(case["hardware_proof_fact_count"], 0)
+        self.assertEqual(event_evidence["status"], "event_stream_without_hardware_proof")
 
     def test_hardware_regression_gate_rejects_case_pass_without_hardware_proof(self) -> None:
         weak = {

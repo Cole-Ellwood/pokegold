@@ -2509,6 +2509,11 @@ def hardware_fact_evidence(prefix: str, fact: dict[str, Any]) -> list[str]:
         f"{prefix}_proof_scope={fact.get('proof_scope', '')}" if fact.get("proof_scope") else "",
         f"{prefix}_source={fact.get('source', '')}" if fact.get("source") else "",
         (
+            f"{prefix}_observed_event_types=" + ",".join(string_items(fact.get("observed_event_types")))
+            if fact.get("observed_event_types")
+            else ""
+        ),
+        (
             f"{prefix}_missing_event_types=" + ",".join(string_items(fact.get("missing_event_types")))
             if fact.get("missing_event_types")
             else ""
