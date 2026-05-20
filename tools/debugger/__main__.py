@@ -42,6 +42,7 @@ from .slicing import build_slice_report
 from .testgen import suggest_tests
 from .taint import build_taint_report
 from .trace_index import build_trace_index_report
+from .type_matchup import build_type_matchup_report, format_text as format_type_matchup
 from .visual_snapshot import build_visual_snapshot_report
 from .visualization import build_visualization_report, write_visualization
 from .workflow import build_gate_plan, command_is_runnable
@@ -600,6 +601,11 @@ def build_parser() -> argparse.ArgumentParser:
     visualize.add_argument("--max-items", type=int, default=80)
     add_output_args(visualize)
     visualize.set_defaults(func=cmd_visualize)
+
+    type_matchup = subparsers.add_parser("type-matchup")
+    type_matchup.add_argument("--species", required=True)
+    add_output_args(type_matchup)
+    type_matchup.set_defaults(func=cmd_type_matchup)
 
     return parser
 
@@ -1247,6 +1253,12 @@ def cmd_visualize(args: argparse.Namespace) -> int:
     return 0 if report["valid"] else 1
 
 
+def cmd_type_matchup(args: argparse.Namespace) -> int:
+    report = build_type_matchup_report(species=args.species)
+    emit_report(report, args)
+    return 0 if report.get("valid") else 1
+
+
 def emit_report(report: dict[str, Any], args: argparse.Namespace) -> None:
     if args.json_out:
         write_json(report, Path(args.json_out))
@@ -1334,6 +1346,8 @@ def emit_report(report: dict[str, Any], args: argparse.Namespace) -> None:
         print(format_static_report(report))
     elif report["kind"] == "unified_debugger_visualization":
         print(format_visualization(report))
+    elif report["kind"] == "unified_debugger_type_matchup":
+        print(format_type_matchup(report))
     else:
         print(json.dumps(report, indent=2, sort_keys=True))
 

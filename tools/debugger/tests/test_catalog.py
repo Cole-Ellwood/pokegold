@@ -283,6 +283,70 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
 
         self.assertEqual(code, 0)
 
+    def test_type_matchup_aerodactyl_resolves_rock_flying_with_ground_immunity(self) -> None:
+        from tools.debugger.type_matchup import build_type_matchup_report
+
+        report = build_type_matchup_report(species="aerodactyl")
+
+        self.assertTrue(report["valid"])
+        self.assertEqual(report["species"], "AERODACTYL")
+        self.assertEqual(report["types"], ["ROCK", "FLYING"])
+        defensive = report["defensive_multipliers"]
+        self.assertEqual(defensive["GROUND"], 0.0)
+        self.assertEqual(defensive["WATER"], 2.0)
+        self.assertEqual(defensive["ICE"], 2.0)
+        self.assertEqual(defensive["STEEL"], 2.0)  # hack divergence: STEEL SE vs ROCK
+        self.assertEqual(defensive["NORMAL"], 0.5)
+        self.assertEqual(defensive["FIGHTING"], 1.0)
+
+    def test_type_matchup_gyarados_water_dragon_not_4x_electric(self) -> None:
+        from tools.debugger.type_matchup import build_type_matchup_report
+
+        report = build_type_matchup_report(species="gyarados")
+
+        self.assertTrue(report["valid"])
+        self.assertEqual(report["types"], ["WATER", "DRAGON"])
+        defensive = report["defensive_multipliers"]
+        # vanilla Gen 2 Gyarados is Water/Flying and takes 4x Electric;
+        # this hack retypes it to Water/Dragon so Electric is neutral.
+        self.assertEqual(defensive["ELECTRIC"], 1.0)
+        # 0.25x double-resists from Water + Dragon stacking.
+        self.assertEqual(defensive["FIRE"], 0.25)
+        self.assertEqual(defensive["WATER"], 0.25)
+        self.assertEqual(defensive["DRAGON"], 2.0)
+
+    def test_type_matchup_mono_type_does_not_double_multiply(self) -> None:
+        from tools.debugger.type_matchup import build_type_matchup_report
+
+        report = build_type_matchup_report(species="snorlax")
+
+        self.assertTrue(report["valid"])
+        self.assertEqual(report["types"], ["NORMAL"])
+        defensive = report["defensive_multipliers"]
+        # hack divergence: POISON is SUPER_EFFECTIVE vs NORMAL here.
+        self.assertEqual(defensive["POISON"], 2.0)
+        self.assertEqual(defensive["GHOST"], 0.0)
+        self.assertEqual(defensive["NORMAL"], 1.0)
+
+    def test_type_matchup_unknown_species_returns_invalid_report(self) -> None:
+        from tools.debugger.type_matchup import build_type_matchup_report
+
+        report = build_type_matchup_report(species="not_a_real_species")
+
+        self.assertFalse(report["valid"])
+        self.assertTrue(report["errors"])
+
+    def test_cli_type_matchup_subcommand_emits_report(self) -> None:
+        buffer = io.StringIO()
+        with redirect_stdout(buffer):
+            code = debugger_main(["type-matchup", "--species", "aerodactyl"])
+
+        self.assertEqual(code, 0)
+        output = buffer.getvalue()
+        self.assertIn("AERODACTYL", output)
+        self.assertIn("ROCK/FLYING", output)
+        self.assertIn("immune: GROUND", output)
+
     def test_hardware_regression_gate_lists_pandocs_blockers(self) -> None:
         report = build_hardware_regression_report()
         case_ids = {case["id"] for case in report["cases"]}
