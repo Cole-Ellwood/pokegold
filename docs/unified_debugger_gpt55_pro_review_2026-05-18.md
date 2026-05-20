@@ -6256,3 +6256,40 @@ Remaining priority:
 
 - This prevents stale or hostile reports from bypassing the hardware gate with a flat proof label, but it does not implement the required non-mutating event recorder or Pan Docs case proofs.
 - The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
+
+## Implementation Note - Same-Source Mixed Graph Node Proof Summaries
+
+Date: 2026-05-20.
+
+Context:
+
+- Causal graph and visualization nodes keep `proof_status` at the strongest observed value for compatibility.
+- Node proof summaries already exposed mixed proof across multiple report sources, but repeated contributions from the same report source were still collapsed to that source's strongest proof.
+- A single report could therefore attach both planned-only and taint-proven evidence to the same symbol while the node summary appeared strong-only.
+
+Implemented fix:
+
+- `tools/debugger/causal_graph.py`
+  - adds additive `proof_status_counts` to graph nodes.
+  - computes node `proof_summary.min/max` from all proof-status contributions while preserving `proof_status_by_source` and strongest `proof_status` for compatibility.
+  - keeps `source_count` as the number of contributing sources and adds `status_count` for contribution count.
+- `tools/debugger/visualization.py`
+  - carries graph-node `proof_status_counts` into visualization nodes.
+  - computes direct visualization graph node badges from all same-source proof contributions when an imported summary is not supplied.
+  - preserves imported `status_count` in explicit proof summaries.
+- `tools/debugger/tests/test_catalog.py`
+  - adds a same-source mixed-proof regression where one dynamic-taint report contributes a planned reverse attribution and a taint-proven path to the same symbol. The node remains compatibility-strong, but its summary and visualization badge show `planned_only -> taint_proven`.
+
+Validation after patch:
+
+- Focused same-source/cross-source graph proof regressions: 3 passed.
+- Full debugger unittest discovery: 536 passed.
+- `PYTHONPYCACHEPREFIX=.local\tmp\pycompile_cache python -m py_compile tools\debugger\causal_graph.py tools\debugger\visualization.py tools\debugger\tests\test_catalog.py`: passed.
+- `python -m tools.debugger hardware-regression-gate --execute`: passed as a command, still intentionally `passed=False`; reported 0/10 cases passing, 10 blocking cases, 4 runtime-observed emulator cases, 0 hardware-proof cases, and 10 static-blocker cases.
+- `python -m tools.debugger audit`: passed as a command, still `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- `git diff --check`: passed with unrelated pre-existing CRLF warnings in Boss AI trace/generated/doc fixture files.
+
+Remaining priority:
+
+- This closes a graph summarization proof-promotion path, but graph joins remain summaries of supplied evidence, not independent dynamic subsystem proof.
+- The whole-ROM proof-substrate goal remains incomplete and `ready=False`.

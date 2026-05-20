@@ -17302,6 +17302,62 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(visual_node["proof_status_by_source"], node["proof_status_by_source"])
         self.assertEqual(visual_node["proof_summary"], node["proof_summary"])
 
+    def test_graph_nodes_preserve_same_source_mixed_proof_contributions(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "dynamic.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_dynamic_taint_report",
+                        "valid": True,
+                        "write_attributions": [
+                            {
+                                "id": "planned_attribution",
+                                "target": "wCurDamage",
+                                "pc_label": "PlannedWriter",
+                                "mnemonic": "planned write",
+                                "seq": 3,
+                                "proof_status": "planned_only",
+                                "related_symbols": ["wCurDamage"],
+                            }
+                        ],
+                        "paths": [
+                            {
+                                "id": "dynamic_taint_path_0001",
+                                "title": "move_power -> wCurDamage",
+                                "target": "wCurDamage",
+                                "proof_status": "taint_proven",
+                                "related_symbols": ["move_power", "wCurDamage"],
+                                "evidence": ["taint=move_power"],
+                                "score": 92,
+                                "confidence": 0.9,
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            graph = build_causal_graph_report(reports=("dynamic.json",), root=root)
+            visualization = build_visualization_report(reports=("dynamic.json",), root=root)
+
+        node = next(item for item in graph["nodes"] if item["label"] == "wCurDamage")
+        visual_node = next(item for item in visualization["graph"]["nodes"] if item["label"] == "wCurDamage")
+
+        self.assertEqual(node["proof_status"], "taint_proven")
+        self.assertEqual(node["proof_status_by_source"], {"dynamic.json": "taint_proven"})
+        self.assertEqual(node["proof_status_counts"]["planned_only"], 1)
+        self.assertEqual(node["proof_status_counts"]["taint_proven"], 1)
+        self.assertEqual(node["proof_summary"]["min"], "planned_only")
+        self.assertEqual(node["proof_summary"]["max"], "taint_proven")
+        self.assertEqual(node["proof_summary"]["source_count"], 1)
+        self.assertEqual(node["proof_summary"]["status_count"], 2)
+        self.assertEqual(visual_node["proof_status"], "taint_proven")
+        self.assertEqual(visual_node["proof_badge"], "mixed")
+        self.assertEqual(visual_node["proof_min"], "planned_only")
+        self.assertEqual(visual_node["proof_max"], "taint_proven")
+        self.assertEqual(visual_node["proof_status_counts"]["planned_only"], 1)
+        self.assertEqual(visual_node["proof_status_counts"]["taint_proven"], 1)
+
     def test_visualization_preserves_causal_graph_edge_proof_statuses(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

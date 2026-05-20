@@ -2894,12 +2894,18 @@ def add_graph_node(
             "source": source,
             "sources": [],
             "proof_status_by_source": {},
+            "proof_status_counts": {},
         },
     )
     proof = normalize_proof_status(proof_status)
     node["sources"] = unique_list([*string_items(node.get("sources")), source])
     if proof:
         node["proof_status"] = strongest_proof_status([node.get("proof_status"), proof])
+        proof_counts = node.get("proof_status_counts")
+        if not isinstance(proof_counts, dict):
+            proof_counts = {}
+        proof_counts[proof] = int(proof_counts.get(proof, 0) or 0) + 1
+        node["proof_status_counts"] = dict(sorted(proof_counts.items()))
     source_proofs = node.get("proof_status_by_source")
     if not isinstance(source_proofs, dict):
         source_proofs = {}
@@ -2912,7 +2918,11 @@ def add_graph_node(
     elif source:
             source_proofs[str(source)] = strongest_proof_status([source_proofs.get(str(source)), proof])
     node["proof_status_by_source"] = dict(sorted(source_proofs.items()))
-    summary = normalized_graph_node_proof_summary(proof_summary) or graph_node_proof_summary(source_proofs.values())
+    summary = (
+        normalized_graph_node_proof_summary(proof_summary)
+        or graph_node_proof_summary_from_counts(node.get("proof_status_counts"), source_count=len(source_proofs))
+        or graph_node_proof_summary(source_proofs.values())
+    )
     node["proof_summary"] = summary
     node["proof_min"] = summary["min"]
     node["proof_max"] = summary["max"]
@@ -3200,6 +3210,22 @@ def graph_node_proof_summary(values: Any) -> dict[str, Any]:
     }
 
 
+def graph_node_proof_summary_from_counts(value: Any, *, source_count: int) -> dict[str, Any] | None:
+    if not isinstance(value, dict):
+        return None
+    statuses = [
+        normalize_proof_status(status)
+        for status, count in value.items()
+        if normalize_proof_status(status) and int_value(count) > 0
+    ]
+    if not statuses:
+        return None
+    summary = graph_node_proof_summary(statuses)
+    summary["source_count"] = source_count
+    summary["status_count"] = sum(int_value(count) for count in value.values())
+    return summary
+
+
 def normalized_graph_node_proof_summary(value: Any) -> dict[str, Any] | None:
     if not isinstance(value, dict):
         return None
@@ -3214,6 +3240,7 @@ def normalized_graph_node_proof_summary(value: Any) -> dict[str, Any] | None:
         "max": max_status or min_status,
         "min": min_status or max_status,
         "source_count": source_count,
+        **({"status_count": int_value(value.get("status_count"))} if int_value(value.get("status_count")) > 0 else {}),
     }
 
 

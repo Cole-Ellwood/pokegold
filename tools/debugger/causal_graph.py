@@ -136,6 +136,7 @@ class GraphBuilder:
                 "role": role,
                 "proof_status": normalize_proof_status(proof_status),
                 "proof_status_by_source": {},
+                "proof_status_counts": {},
                 "proof_summary": {
                     "max": normalize_proof_status(proof_status),
                     "min": normalize_proof_status(proof_status),
@@ -164,7 +165,12 @@ class GraphBuilder:
         if source_key:
             proof_by_source[source_key] = strongest_proof_status([proof_by_source.get(source_key), proof])
         node["proof_status_by_source"] = dict(sorted(proof_by_source.items()))
-        node["proof_summary"] = proof_summary(proof_by_source.values())
+        proof_counts = node.get("proof_status_counts")
+        if not isinstance(proof_counts, dict):
+            proof_counts = {}
+        proof_counts[proof] = int(proof_counts.get(proof, 0) or 0) + 1
+        node["proof_status_counts"] = dict(sorted(proof_counts.items()))
+        node["proof_summary"] = node_proof_summary(proof_by_source=proof_by_source, proof_counts=proof_counts)
         if role and not node.get("role"):
             node["role"] = role
         return node
@@ -2896,6 +2902,20 @@ def proof_summary(values: Any) -> dict[str, Any]:
         "min": weakest_proof_status(statuses),
         "source_count": len(statuses),
     }
+
+
+def node_proof_summary(*, proof_by_source: dict[str, Any], proof_counts: dict[str, Any]) -> dict[str, Any]:
+    statuses = [
+        status
+        for status, count in proof_counts.items()
+        if normalize_proof_status(status) and int(count or 0) > 0
+    ]
+    if not statuses:
+        statuses = [normalize_proof_status(value) for value in proof_by_source.values()]
+    summary = proof_summary(statuses)
+    summary["source_count"] = len(proof_by_source)
+    summary["status_count"] = sum(int(count or 0) for count in proof_counts.values())
+    return summary
 
 
 def proof_status_counts(items: list[dict[str, Any]]) -> dict[str, int]:
