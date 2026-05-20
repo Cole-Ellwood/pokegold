@@ -29624,6 +29624,126 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(match["weak_runtime_kinds"], ["dynamic_taint"])
         self.assertTrue(any("planned_only" in gap for gap in match["runtime_evidence_gaps"]))
 
+    def test_compare_output_sink_mirror_does_not_use_dynamic_related_symbols_as_runtime_helpers(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "content_state.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_content_state_materialization",
+                        "valid": True,
+                        "executed": False,
+                        "materializations": [
+                            {
+                                "scenario_id": "content_scenario_22_0000",
+                                "scenario_type": "ui_tilemap_update",
+                                "precondition_kind": "ui_output_sink",
+                                "status": "planned",
+                                "source_file": "engine/menus/unit_menu.asm",
+                                "runtime_symbols": ["PlaceString"],
+                                "outputs": [
+                                    {
+                                        "kind": "ui_tilemap_output",
+                                        "state_symbol": "wTilemap",
+                                        "producer_symbol": "PlaceString",
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            (root / "taint.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_dynamic_taint_report",
+                        "valid": True,
+                        "paths": [
+                            {
+                                "sink": "wTilemap",
+                                "related_symbols": ["wTilemap", "PlaceString"],
+                                "proof_status": "taint_proven",
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            compare = build_compare_plan(reports=("content_state.json", "taint.json"), root=root)
+            (root / "compare.json").write_text(json.dumps(compare), encoding="utf-8")
+            ranked = rank_findings(reports=("compare.json",), root=root)
+
+        match = next(item for item in compare["matches"] if item["id"] == "content_output_behavioral_mirror")
+
+        self.assertEqual(match["status"], "partial")
+        self.assertEqual(match["proof_status"], "instruction_observed")
+        self.assertEqual(match["mirror_status"], "inconclusive")
+        self.assertEqual(match["covered_output_count"], 1)
+        self.assertEqual(match["required_runtime_symbol_groups"], [["PlaceString"]])
+        self.assertEqual(match["missing_runtime_symbol_groups"], [["PlaceString"]])
+        self.assertEqual(match["observed_runtime_symbols"], [])
+        self.assertTrue(any("PlaceString" in gap for gap in match["runtime_evidence_gaps"]))
+        self.assertFalse(any(item["type"] == "mirror_passed" for item in ranked["findings"]))
+
+    def test_compare_output_sink_mirror_accepts_dynamic_pc_label_as_runtime_helper(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "content_state.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_content_state_materialization",
+                        "valid": True,
+                        "executed": False,
+                        "materializations": [
+                            {
+                                "scenario_id": "content_scenario_22_0000",
+                                "scenario_type": "ui_tilemap_update",
+                                "precondition_kind": "ui_output_sink",
+                                "status": "planned",
+                                "source_file": "engine/menus/unit_menu.asm",
+                                "runtime_symbols": ["PlaceString"],
+                                "outputs": [
+                                    {
+                                        "kind": "ui_tilemap_output",
+                                        "state_symbol": "wTilemap",
+                                        "producer_symbol": "PlaceString",
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            (root / "taint.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_dynamic_taint_report",
+                        "valid": True,
+                        "write_attributions": [
+                            {
+                                "target": "wTilemap",
+                                "pc_label": "PlaceString+0x3",
+                                "related_symbols": ["wTilemap"],
+                                "proof_status": "taint_proven",
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            compare = build_compare_plan(reports=("content_state.json", "taint.json"), root=root)
+
+        match = next(item for item in compare["matches"] if item["id"] == "content_output_behavioral_mirror")
+
+        self.assertEqual(match["status"], "passed")
+        self.assertEqual(match["proof_status"], "mirror_passed")
+        self.assertEqual(match["missing_runtime_symbol_groups"], [])
+        self.assertIn("PlaceString", match["observed_runtime_symbols"])
+
     def test_compare_output_sink_mirror_does_not_pass_from_content_state_metadata(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

@@ -6128,6 +6128,7 @@ Validation after patch:
 - `PYTHONPYCACHEPREFIX=.local\tmp\pycompile_cache python -m py_compile tools\debugger\mirrors.py tools\debugger\tests\test_catalog.py`: passed.
 - `python -m tools.debugger hardware-regression-gate --execute`: passed as a command, still intentionally `passed=False`; reported 0/10 cases passing, 10 blocking cases, 4 runtime-observed emulator cases, 0 hardware-proof cases, and 10 static-blocker cases.
 - `python -m tools.debugger audit`: passed as a command, still `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- `git diff --check`: passed with unrelated pre-existing CRLF warnings in Boss AI trace/generated/doc fixture files.
 
 Remaining priority:
 
@@ -6292,4 +6293,43 @@ Validation after patch:
 Remaining priority:
 
 - This closes a graph summarization proof-promotion path, but graph joins remain summaries of supplied evidence, not independent dynamic subsystem proof.
+- The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
+
+## Implementation Note - Output-Sink Helper Runtime Symbol Boundary
+
+Date: 2026-05-20.
+
+Context:
+
+- Output-sink mirrors use broad runtime evidence `symbols` to decide whether a requested sink such as `wTilemap` was covered.
+- The same broad field was also being used as a fallback for required runtime helper proof, so dynamic-taint `related_symbols=["wTilemap", "PlaceString"]` could make a helper such as `PlaceString` look observed even when no runtime PC/helper label was captured.
+- That collapsed static/related metadata into observed runtime facts at the mirror boundary.
+
+Primary references used:
+
+- No new external primary references were needed for this slice; it is an internal report-shape/proof-promotion patch. The broader hardware boundary remains governed by the PyBoy hook and Pan Docs references recorded in the hardware-gate notes above.
+
+Implemented fix:
+
+- `tools/debugger/mirrors.py`
+  - keeps broad `symbols` usable for output sink coverage.
+  - stops using broad derived evidence `symbols` as required helper runtime proof.
+  - records explicit `observed_runtime_symbols` for watch PC labels, effect-trace strong event labels, and dynamic-taint PC/source/writer labels.
+  - preserves explicit `runtime_observations=(..., {"symbols": [...]})` compatibility for callers that supply observed helper evidence directly.
+- `tools/debugger/tests/test_catalog.py`
+  - adds a regression where dynamic-taint related symbols name `PlaceString` but the output-sink mirror remains partial because no observed runtime helper label exists.
+  - adds a positive regression where a dynamic write attribution at `PlaceString+0x3` satisfies the `PlaceString` helper requirement through an observed PC label.
+
+Validation after patch:
+
+- Focused output-sink helper regressions plus existing effect-trace/watch helper regressions: 4 passed.
+- Focused event-runtime materialization compatibility regressions: 2 passed.
+- Full debugger unittest discovery: 538 passed.
+- `PYTHONPYCACHEPREFIX=.local\tmp\pycompile_cache python -m py_compile tools\debugger\mirrors.py tools\debugger\tests\test_catalog.py`: passed.
+- `python -m tools.debugger hardware-regression-gate --execute`: passed as a command, still intentionally `passed=False`; reported 0/10 cases passing, 10 blocking cases, 4 runtime-observed emulator cases, 0 hardware-proof cases, and 10 static-blocker cases.
+- `python -m tools.debugger audit`: passed as a command, still `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+
+Remaining priority:
+
+- This fences another UI/report proof promotion path, but it does not add the missing non-mutating hardware event recorder or new behavioral mirror execution.
 - The whole-ROM proof-substrate goal remains incomplete and `ready=False`.

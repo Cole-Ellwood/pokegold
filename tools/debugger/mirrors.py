@@ -703,10 +703,7 @@ def runtime_observations_from_report(loaded: dict[str, Any]) -> list[dict[str, A
                 *scalar_string_items(evidence.get("addresses")),
             ]
         )
-        if "observed_runtime_symbols" in evidence:
-            observed_runtime_symbols = scalar_string_items(evidence.get("observed_runtime_symbols"))
-        else:
-            observed_runtime_symbols = scalar_string_items(evidence.get("symbols"))
+        observed_runtime_symbols = runtime_evidence_observed_runtime_symbols(evidence)
         observation = normalize_runtime_observation(
             {
                 "source": evidence.get("source", loaded.get("source", "")),
@@ -1501,7 +1498,12 @@ def content_output_mirror_status(
 def runtime_evidence_observed_runtime_symbols(item: dict[str, Any]) -> list[str]:
     if "observed_runtime_symbols" in item:
         return scalar_string_items(item.get("observed_runtime_symbols"))
-    return scalar_string_items(item.get("symbols"))
+    return unique_list(
+        [
+            *scalar_string_items(item.get("runtime_symbols")),
+            *scalar_string_items(item.get("hit_function_symbols")),
+        ]
+    )
 
 
 def content_output_attempted_sinks(
@@ -1657,6 +1659,13 @@ def runtime_mirror_evidence(loaded: dict[str, Any]) -> list[dict[str, Any]]:
                     if symbol and not looks_like_address(symbol)
                 ],
                 addresses=[address for event in events for address in event_addresses(event)],
+                observed_runtime_symbols=observed_runtime_symbol_labels(
+                    [
+                        str(event.get("pc_label", ""))
+                        for event in events
+                        if event.get("pc_label")
+                    ]
+                ),
                 commands=report_commands(data),
                 proof_status="runtime_observed",
             )
@@ -1736,6 +1745,7 @@ def runtime_mirror_evidence(loaded: dict[str, Any]) -> list[dict[str, Any]]:
                     path
                     for path in scalar_string_items(item.get("related_files"))
                 ],
+                observed_runtime_symbols=dynamic_taint_observed_runtime_symbols(item),
                 commands=report_commands(data),
                 proof_status=runtime_item_proof_status(item),
             )
@@ -1774,12 +1784,13 @@ def runtime_mirror_evidence(loaded: dict[str, Any]) -> list[dict[str, Any]]:
             ]
         )
         if strong_concrete_writes or strong_watch_hits:
+            strong_event_labels = effect_trace_strong_event_labels(events)
             records.append(
                 runtime_evidence_record(
                     source=source,
                     kind="effect_trace",
                     symbols=[
-                        *effect_trace_strong_event_labels(events),
+                        *strong_event_labels,
                         *[
                             str(hit.get("watch", ""))
                             for hit in strong_watch_hits
@@ -1792,6 +1803,7 @@ def runtime_mirror_evidence(loaded: dict[str, Any]) -> list[dict[str, Any]]:
                             and any(str(hit.get("watch", "")) == str(watch.get("symbol") or watch.get("name") or "") for hit in strong_watch_hits)
                         ],
                     ],
+                    observed_runtime_symbols=observed_runtime_symbol_labels(strong_event_labels),
                     addresses=[
                         *[str(hit.get("address", "")) for hit in strong_watch_hits if hit.get("address")],
                         *[str(item.get("address_hex", "")) for item in strong_concrete_writes if item.get("address_hex")],
@@ -2022,6 +2034,46 @@ def runtime_evidence_record(
 
 def runtime_item_proof_status(item: dict[str, Any]) -> str:
     return str(item.get("proof_status") or item.get("match_proof_status") or "planned_only")
+
+
+def dynamic_taint_observed_runtime_symbols(item: dict[str, Any]) -> list[str]:
+    return observed_runtime_symbol_labels(
+        [
+            str(item.get("pc_label", "")),
+            str(item.get("pc_symbol", "")),
+            str(item.get("source_symbol", "")),
+            str(item.get("writer_symbol", "")),
+            *[
+                str(step.get(key, ""))
+                for step in dict_items(item.get("steps"))
+                for key in ("pc_label", "pc_symbol", "source_symbol", "writer_symbol")
+            ],
+        ]
+    )
+
+
+def observed_runtime_symbol_labels(values: Any) -> list[str]:
+    labels: list[str] = []
+    for value in scalar_string_items(values):
+        text = value.strip()
+        if not text or looks_like_address(text):
+            continue
+        labels.append(text)
+        base = base_runtime_symbol_label(text)
+        if base and base != text:
+            labels.append(base)
+    return unique_list(labels)
+
+
+def base_runtime_symbol_label(label: str) -> str:
+    text = str(label).strip()
+    if not text or text.startswith("$"):
+        return ""
+    if "+" in text:
+        text = text.split("+", 1)[0]
+    if ":" in text and text[:2].isalnum():
+        return ""
+    return text
 
 
 def effect_trace_concrete_writes(events: list[dict[str, Any]]) -> list[dict[str, Any]]:
