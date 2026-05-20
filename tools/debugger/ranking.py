@@ -655,6 +655,7 @@ def compare_findings(report: dict[str, Any], *, source: str) -> list[dict[str, A
     out = []
     for match in report.get("matches", []):
         if match.get("status") == "passed":
+            proof_status = compare_match_proof_status(match)
             out.append(
                 finding(
                     finding_type="mirror_passed",
@@ -662,12 +663,12 @@ def compare_findings(report: dict[str, Any], *, source: str) -> list[dict[str, A
                     source=source,
                     severity=SEVERITY_BASE["mirror_passed"],
                     confidence=0.82,
-                    evidence=string_items(match.get("evidence"))[:8],
+                    evidence=compare_match_evidence(match, proof_status=proof_status),
                     next_actions=list(match.get("commands", []))[:4],
                     related_symbols=string_items(match.get("related_symbols")),
                     related_addresses=string_items(match.get("related_addresses")),
                     related_files=string_items(match.get("source_files")),
-                    proof_status=str(match.get("proof_status") or "mirror_passed"),
+                    proof_status=proof_status,
                 )
             )
         for gap in match.get("gaps", []):
@@ -699,6 +700,57 @@ def compare_findings(report: dict[str, Any], *, source: str) -> list[dict[str, A
                 )
             )
     return out
+
+
+def compare_match_proof_status(match: dict[str, Any]) -> str:
+    explicit = normalize_proof_status(match.get("proof_status"))
+    if explicit:
+        return explicit
+    actual = normalize_proof_status(match.get("actual_proof_status"))
+    if actual:
+        return actual
+    atom_statuses = [
+        normalize_proof_status(atom.get("proof_status"))
+        for atom in evidence_atoms(match.get("evidence_atoms"))
+        if atom.get("proof_status")
+    ]
+    if atom_statuses:
+        return weakest_proof_status(atom_statuses)
+    return "planned_only"
+
+
+def compare_match_evidence(match: dict[str, Any], *, proof_status: str) -> list[str]:
+    evidence = string_items(match.get("evidence"))[:8]
+    if normalize_proof_status(match.get("proof_status")):
+        return evidence
+    if normalize_proof_status(match.get("actual_proof_status")):
+        return unique_string_items(
+            [
+                *evidence,
+                f"proof_status={proof_status}",
+                "proof_status_source=actual_proof_status",
+            ]
+        )
+    atom_statuses = [
+        normalize_proof_status(atom.get("proof_status"))
+        for atom in evidence_atoms(match.get("evidence_atoms"))
+        if atom.get("proof_status")
+    ]
+    if atom_statuses:
+        return unique_string_items(
+            [
+                *evidence,
+                f"proof_status={proof_status}",
+                "proof_status_source=evidence_atoms",
+            ]
+        )
+    return unique_string_items(
+        [
+            *evidence,
+            f"proof_status={proof_status}",
+            "proof_downgrade_reason=missing_explicit_match_proof_status",
+        ]
+    )
 
 
 def content_mirror_findings(report: dict[str, Any], *, source: str) -> list[dict[str, Any]]:

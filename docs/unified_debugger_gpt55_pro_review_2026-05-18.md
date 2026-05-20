@@ -6335,3 +6335,44 @@ Remaining priority:
 
 - This fences another UI/report proof promotion path, but it does not add the missing non-mutating hardware event recorder or new behavioral mirror execution.
 - The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
+
+## Implementation Note - Legacy Passed Compare Match Proof Fencing
+
+Date: 2026-05-20.
+
+Context:
+
+- `compare` reports now usually emit explicit `proof_status`/`actual_proof_status` fields on passed mirror matches.
+- Ranking and impact still had a legacy fallback that converted any `status=passed` compare match with no explicit proof field into `proof_status=mirror_passed`.
+- That was a UI/report proof-promotion risk for stale or hand-authored compare reports: the compatibility item type could stay `mirror_passed`, but the proof label must not imply strong mirror proof unless the compare report supplied explicit proof evidence.
+
+Primary references used:
+
+- No new external primary references were needed for this slice; it is an internal report-shape/proof-promotion patch.
+
+Implemented fix:
+
+- `tools/debugger/ranking.py`
+  - adds shared compare-match proof helpers.
+  - keeps passed compare matches as `type=mirror_passed` for report compatibility.
+  - derives the proof label from explicit `proof_status`, then explicit `actual_proof_status`, then weakest `evidence_atoms[].proof_status`, and otherwise defaults to `planned_only`.
+  - adds visible evidence such as `proof_downgrade_reason=missing_explicit_match_proof_status` when a legacy passed match is downgraded.
+- `tools/debugger/impact.py`
+  - uses the same helper so impact reports cannot re-promote the same legacy compare match.
+- `tools/debugger/tests/test_catalog.py`
+  - adds regressions proving ranking and impact keep a legacy passed match without proof fields at `planned_only`.
+  - adds regressions proving `actual_proof_status=runtime_observed` is preserved without promoting to `mirror_passed`.
+
+Validation after patch:
+
+- Focused legacy passed compare proof-fencing regressions plus existing output-sink pass regression: 3 passed.
+- Full debugger unittest discovery: 541 passed.
+- `PYTHONPYCACHEPREFIX=.local\tmp\pycompile_cache python -m py_compile tools\debugger\ranking.py tools\debugger\impact.py tools\debugger\tests\test_catalog.py`: passed.
+- `python -m tools.debugger hardware-regression-gate --execute`: passed as a command, still intentionally `passed=False`; reported 0/10 cases passing, 10 blocking cases, 4 runtime-observed emulator cases, 0 hardware-proof cases, and 10 static-blocker cases.
+- `python -m tools.debugger audit`: passed as a command, still `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- `git diff --check`: passed with unrelated pre-existing CRLF warnings in Boss AI trace/generated/doc fixture files.
+
+Remaining priority:
+
+- This closes a stale-report/UI proof-promotion fallback, but it does not add the missing non-mutating hardware event recorder, complete hardware side-effect proof, or new behavioral mirror execution.
+- The whole-ROM proof-substrate goal remains incomplete and `ready=False`.

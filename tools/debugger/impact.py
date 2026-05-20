@@ -10,6 +10,8 @@ from .evidence import evidence_atoms, merge_evidence_atoms
 from .ranking import (
     PROOF_STATUS_RANK,
     SEVERITY_BASE,
+    compare_match_evidence,
+    compare_match_proof_status,
     materialized_save_state_delta,
     minimized_state_patch_save_state_delta,
     normalize_proof_status,
@@ -1623,6 +1625,7 @@ def compare_items(report: dict[str, Any], *, source: str) -> list[dict[str, Any]
     out = []
     for match in dict_items(report.get("matches")):
         if match.get("status") == "passed":
+            proof_status = compare_match_proof_status(match)
             out.append(
                 impact_item(
                     item_type="mirror_passed",
@@ -1630,12 +1633,12 @@ def compare_items(report: dict[str, Any], *, source: str) -> list[dict[str, Any]
                     source=source,
                     severity=SEVERITY_BASE["mirror_passed"],
                     confidence=0.82,
-                    evidence=string_items(match.get("evidence"))[:8],
+                    evidence=compare_match_evidence(match, proof_status=proof_status),
                     next_actions=string_items(match.get("commands"))[:4],
                     related_symbols=string_items(match.get("related_symbols")),
                     related_files=string_items(match.get("source_files")),
                     related_addresses=string_items(match.get("related_addresses")),
-                    proof_status=str(match.get("proof_status") or "mirror_passed"),
+                    proof_status=proof_status,
                 )
             )
         for gap in string_items(match.get("gaps")):

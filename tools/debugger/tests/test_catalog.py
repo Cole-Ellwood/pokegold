@@ -29136,6 +29136,71 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("wTilemap", ranked_pass["related_symbols"])
         self.assertEqual(impact_pass["proof_status"], "mirror_passed")
 
+    def test_rank_and_impact_do_not_promote_legacy_passed_compare_match_without_proof_status(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "compare.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_compare_plan",
+                        "valid": True,
+                        "matches": [
+                            {
+                                "id": "content_output_behavioral_mirror",
+                                "status": "passed",
+                                "evidence": ["symbol_observed=wTilemap"],
+                                "related_symbols": ["wTilemap"],
+                                "related_addresses": ["$C3A0"],
+                                "source_files": ["home/video.asm"],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            ranked = rank_findings(reports=("compare.json",), root=root)
+            impact = build_impact_report(reports=("compare.json",), root=root)
+
+        ranked_pass = next(item for item in ranked["findings"] if item["type"] == "mirror_passed")
+        impact_pass = next(item for item in impact["items"] if item["type"] == "mirror_passed")
+
+        self.assertEqual(ranked_pass["proof_status"], "planned_only")
+        self.assertIn("proof_downgrade_reason=missing_explicit_match_proof_status", ranked_pass["evidence"])
+        self.assertEqual(impact_pass["proof_status"], "planned_only")
+        self.assertIn("proof_downgrade_reason=missing_explicit_match_proof_status", impact_pass["evidence"])
+
+    def test_rank_and_impact_use_actual_proof_status_for_legacy_passed_compare_match(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "compare.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_compare_plan",
+                        "valid": True,
+                        "matches": [
+                            {
+                                "id": "content_output_behavioral_mirror",
+                                "status": "passed",
+                                "actual_proof_status": "runtime_observed",
+                                "evidence": ["symbol_observed=wTilemap"],
+                                "related_symbols": ["wTilemap"],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            ranked = rank_findings(reports=("compare.json",), root=root)
+            impact = build_impact_report(reports=("compare.json",), root=root)
+
+        ranked_pass = next(item for item in ranked["findings"] if item["type"] == "mirror_passed")
+        impact_pass = next(item for item in impact["items"] if item["type"] == "mirror_passed")
+
+        self.assertEqual(ranked_pass["proof_status"], "runtime_observed")
+        self.assertIn("proof_status_source=actual_proof_status", ranked_pass["evidence"])
+        self.assertEqual(impact_pass["proof_status"], "runtime_observed")
+        self.assertIn("proof_status_source=actual_proof_status", impact_pass["evidence"])
+
     def test_compare_output_sink_mirror_requires_runtime_helper_symbol(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
