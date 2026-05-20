@@ -46,6 +46,7 @@ SEVERITY_BASE = {
     "effect_trace_unmodeled_change": 82,
     "effect_trace_unmodeled_effect": 80,
     "dynamic_taint_unmodeled_write": 78,
+    "hardware_regression_blocker": 86,
     "cpu_state_side_effect": 80,
     "visual_snapshot": 52,
     "audio_snapshot": 52,
@@ -345,6 +346,8 @@ def findings_from_report(report: dict[str, Any], *, source: str) -> list[dict[st
         return effect_trace_findings(report, source=source)
     if kind == "unified_debugger_reverse_query":
         return reverse_query_findings(report, source=source)
+    if kind == "unified_debugger_hardware_regression_gate":
+        return hardware_regression_findings(report, source=source)
     if kind == "unified_debugger_visual_snapshot":
         return visual_snapshot_findings(report, source=source)
     if kind == "unified_debugger_audio_snapshot":
@@ -3214,6 +3217,70 @@ def visual_snapshot_findings(report: dict[str, Any], *, source: str) -> list[dic
         )
     )
     return out
+
+
+def hardware_regression_findings(report: dict[str, Any], *, source: str) -> list[dict[str, Any]]:
+    out = report_error_findings(report, source=source, title="Hardware regression gate input error")
+    for case in dict_items(report.get("cases"))[:30]:
+        if case.get("hardware_passed"):
+            continue
+        status = str(case.get("gate_status") or "missing_runtime_hardware_evidence")
+        out.append(
+            finding(
+                finding_type="hardware_regression_blocker",
+                title=f"Pan Docs hardware case blocked: {case.get('id', '<case>')}",
+                source=source,
+                severity=SEVERITY_BASE["hardware_regression_blocker"],
+                confidence=0.9,
+                evidence=hardware_regression_case_evidence(case),
+                next_actions=string_items(report.get("commands"))[:6],
+                related_addresses=hardware_regression_case_addresses(case),
+                semantic_factors=[f"hardware_case:{case.get('bucket', '')}", f"gate_status:{status}"],
+                proof_status=str(case.get("proof_status") or "planned_only"),
+            )
+        )
+    return out
+
+
+def hardware_regression_case_evidence(case: dict[str, Any]) -> list[str]:
+    evidence = [
+        f"gate_status={case.get('gate_status', '')}",
+        f"hardware_proof_fact_count={case.get('hardware_proof_fact_count', 0)}",
+        f"observed_runtime_fact_count={case.get('observed_runtime_fact_count', 0)}",
+    ]
+    for fact in dict_items(case.get("observed_runtime_facts"))[:4]:
+        evidence.extend(hardware_fact_evidence("observed_runtime_fact", fact))
+    for fact in dict_items(case.get("hardware_proof_facts"))[:4]:
+        evidence.extend(hardware_fact_evidence("hardware_proof_fact", fact))
+    for fact in dict_items(case.get("static_blocker_facts"))[:4]:
+        evidence.extend(hardware_fact_evidence("static_blocker_fact", fact))
+    evidence.extend([
+        f"hardware_behavior_proven={case.get('hardware_behavior_proven')}",
+        f"static_blocker_count={case.get('static_blocker_count', 0)}",
+        f"required_evidence={case.get('required_evidence', '')}",
+        f"pan_docs_url={case.get('pan_docs_url', '')}",
+    ])
+    return unique_string_items([item for item in evidence if item and not item.endswith("=")])
+
+
+def hardware_fact_evidence(prefix: str, fact: dict[str, Any]) -> list[str]:
+    return [
+        f"{prefix}={fact.get('fact_type', '')}:{fact.get('status', '')}",
+        f"{prefix}_proof_scope={fact.get('proof_scope', '')}" if fact.get("proof_scope") else "",
+        f"{prefix}_source={fact.get('source', '')}" if fact.get("source") else "",
+    ]
+
+
+def hardware_regression_case_addresses(case: dict[str, Any]) -> list[str]:
+    addresses: list[str] = []
+    for item in dict_items(case.get("evidence")):
+        detail = str(item.get("detail") or "")
+        for raw in detail.replace(";", " ").replace(",", " ").split():
+            if raw.startswith("$") and len(raw) in {5, 6}:
+                addresses.append(raw)
+            elif len(raw) == 4 and all(char in "0123456789abcdefABCDEF" for char in raw):
+                addresses.append(raw)
+    return unique_string_items(addresses)
 
 
 def audio_snapshot_findings(report: dict[str, Any], *, source: str) -> list[dict[str, Any]]:

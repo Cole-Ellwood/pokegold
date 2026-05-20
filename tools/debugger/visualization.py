@@ -247,6 +247,21 @@ def collect_report_timeline(data: dict[str, Any], *, source: str, out: list[dict
         )
     elif is_boss_ai_report(data):
         collect_boss_ai_timeline(data, source=source, out=out)
+    elif kind == "unified_debugger_hardware_regression_gate":
+        for case in dict_items(data.get("cases")):
+            if case.get("hardware_passed"):
+                continue
+            out.append(
+                timeline_event(
+                    lane="hardware",
+                    event_type="hardware_regression_case",
+                    title=f"Pan Docs hardware case {case.get('id', '<case>')}",
+                    source=source,
+                    detail=hardware_regression_case_detail(case),
+                    severity=86,
+                    proof_status=case.get("proof_status") or "planned_only",
+                )
+            )
     elif kind == "unified_debugger_watch_report":
         for event in dict_items(data.get("events")):
             proof = watch_event_proof_status(event, report=data)
@@ -1596,6 +1611,8 @@ def collect_graph(*, loaded_reports: list[dict[str, Any]]) -> dict[str, list[dic
                     add_graph_edge(edges, event_id, address, "observes_address", source, proof)
         elif kind == "unified_debugger_effect_trace":
             collect_effect_trace_graph(data, source=source, nodes=nodes, edges=edges)
+        elif kind == "unified_debugger_hardware_regression_gate":
+            collect_hardware_regression_graph(data, source=source, nodes=nodes, edges=edges)
         elif kind == "unified_debugger_reverse_query":
             for result in dict_items(data.get("results")):
                 target = result.get("target") if isinstance(result.get("target"), dict) else {}
@@ -2711,6 +2728,118 @@ def collect_reverse_query_address_boundary_graph(
         if edge is not None:
             edge.update(boundary_fields)
             edge["evidence"] = unique_list([*string_items(edge.get("evidence")), *boundary_evidence])
+
+
+def collect_hardware_regression_graph(
+    data: dict[str, Any],
+    *,
+    source: str,
+    nodes: dict[str, dict[str, Any]],
+    edges: dict[tuple[str, str, str], dict[str, Any]],
+) -> None:
+    gate_id = f"{source}:hardware_regression_gate"
+    gate_proof = normalize_proof_status(data.get("proof_status")) or "planned_only"
+    add_graph_node(nodes, gate_id, "Pan Docs hardware regression gate", "hardware_regression_gate", source, gate_proof)
+    for case in dict_items(data.get("cases")):
+        case_id = f"{source}:hardware_case:{case.get('id', '')}"
+        case_proof = normalize_proof_status(case.get("proof_status")) or "planned_only"
+        case_node = add_graph_node(
+            nodes,
+            case_id,
+            str(case.get("title") or case.get("id") or "hardware case"),
+            "hardware_regression_case",
+            source,
+            case_proof,
+        )
+        if case_node is not None:
+            case_node["evidence"] = unique_list(
+                [*string_items(case_node.get("evidence")), *hardware_regression_case_evidence(case)]
+            )
+            case_node["hardware_behavior_proven"] = bool(case.get("hardware_behavior_proven"))
+            case_node["hardware_proof_fact_count"] = int_value(case.get("hardware_proof_fact_count"))
+            case_node["observed_runtime_fact_count"] = int_value(case.get("observed_runtime_fact_count"))
+        add_graph_edge(edges, gate_id, case_id, "contains_hardware_case", source, case_proof)
+        for index, fact in enumerate(dict_items(case.get("observed_runtime_facts"))):
+            fact_id = f"{case_id}:observed_runtime_fact:{index}:{fact.get('fact_type', '')}"
+            fact_node = add_graph_node(
+                nodes,
+                fact_id,
+                str(fact.get("fact_type") or "observed runtime fact"),
+                "hardware_runtime_fact",
+                source,
+                "planned_only",
+            )
+            if fact_node is not None:
+                fact_node["evidence"] = unique_list(
+                    [*string_items(fact_node.get("evidence")), *hardware_fact_evidence("observed_runtime_fact", fact)]
+                )
+                fact_node["proof_scope"] = str(fact.get("proof_scope") or "")
+            add_graph_edge(edges, fact_id, case_id, "observes_runtime_not_case_proof", source, "planned_only")
+        for index, fact in enumerate(dict_items(case.get("hardware_proof_facts"))):
+            fact_id = f"{case_id}:hardware_proof_fact:{index}:{fact.get('fact_type', '')}"
+            fact_node = add_graph_node(
+                nodes,
+                fact_id,
+                str(fact.get("fact_type") or "hardware proof fact"),
+                "hardware_proof_fact",
+                source,
+                case_proof,
+            )
+            if fact_node is not None:
+                fact_node["evidence"] = unique_list(
+                    [*string_items(fact_node.get("evidence")), *hardware_fact_evidence("hardware_proof_fact", fact)]
+                )
+                fact_node["proof_scope"] = str(fact.get("proof_scope") or "")
+            add_graph_edge(edges, fact_id, case_id, "proves_hardware_case", source, case_proof)
+        for index, fact in enumerate(dict_items(case.get("static_blocker_facts"))):
+            fact_id = f"{case_id}:static_blocker_fact:{index}:{fact.get('fact_type', '')}"
+            fact_node = add_graph_node(
+                nodes,
+                fact_id,
+                str(fact.get("fact_type") or "static blocker fact"),
+                "hardware_static_blocker_fact",
+                source,
+                "planned_only",
+            )
+            if fact_node is not None:
+                fact_node["evidence"] = unique_list(
+                    [*string_items(fact_node.get("evidence")), *hardware_fact_evidence("static_blocker_fact", fact)]
+                )
+                fact_node["proof_scope"] = str(fact.get("proof_scope") or "")
+            add_graph_edge(edges, fact_id, case_id, "blocks_hardware_case", source, "planned_only")
+
+
+def hardware_regression_case_detail(case: dict[str, Any]) -> str:
+    return " ".join(hardware_regression_case_evidence(case)[:12])
+
+
+def hardware_regression_case_evidence(case: dict[str, Any]) -> list[str]:
+    evidence = [
+        f"gate_status={case.get('gate_status', '')}",
+        f"hardware_proof_fact_count={case.get('hardware_proof_fact_count', 0)}",
+        f"observed_runtime_fact_count={case.get('observed_runtime_fact_count', 0)}",
+    ]
+    for fact in dict_items(case.get("observed_runtime_facts"))[:4]:
+        evidence.extend(hardware_fact_evidence("observed_runtime_fact", fact))
+    for fact in dict_items(case.get("hardware_proof_facts"))[:4]:
+        evidence.extend(hardware_fact_evidence("hardware_proof_fact", fact))
+    for fact in dict_items(case.get("static_blocker_facts"))[:4]:
+        evidence.extend(hardware_fact_evidence("static_blocker_fact", fact))
+    evidence.extend([
+        f"hardware_behavior_proven={case.get('hardware_behavior_proven')}",
+        f"static_blocker_count={case.get('static_blocker_count', 0)}",
+        f"required_evidence={case.get('required_evidence', '')}",
+        f"pan_docs_url={case.get('pan_docs_url', '')}",
+    ])
+    return unique_list([item for item in evidence if item and not item.endswith("=")])
+
+
+def hardware_fact_evidence(prefix: str, fact: dict[str, Any]) -> list[str]:
+    return [
+        f"{prefix}={fact.get('fact_type', '')}:{fact.get('status', '')}",
+        f"{prefix}_proof_scope={fact.get('proof_scope', '')}" if fact.get("proof_scope") else "",
+        f"{prefix}_source={fact.get('source', '')}" if fact.get("source") else "",
+    ]
 
 
 def add_graph_node(

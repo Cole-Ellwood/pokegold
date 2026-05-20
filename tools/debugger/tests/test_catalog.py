@@ -152,6 +152,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("modeled checkpoint-to-writer effect-span consistency", gap_text)
         self.assertIn("Pan Docs hardware regression gate", gap_text)
         self.assertIn("observed emulator/runtime facts", gap_text)
+        self.assertIn("downstream proof_scope values", gap_text)
         self.assertIn("requested-static versus observed-runtime address fact boundaries", gap_text)
         self.assertIn("hardware-gated effect-trace side effects and bank-unverified watch hits", gap_text)
         self.assertIn(
@@ -307,6 +308,102 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(case["observed_runtime_facts"][0]["proof_scope"], "observed_runtime_not_case_complete")
         if case["static_blocker_facts"]:
             self.assertEqual(case["static_blocker_facts"][0]["proof_scope"], "static_blocker")
+
+    def test_hardware_regression_fact_scope_survives_rank_report_visualization_and_graph(self) -> None:
+        effect_trace = {
+            "kind": "unified_debugger_effect_trace",
+            "valid": True,
+            "events": [
+                {
+                    "seq": 7,
+                    "effects": [
+                        {
+                            "kind": "stack_write",
+                            "hardware_model": "interrupt_entry",
+                            "hardware_runtime_event": True,
+                            "hardware_proof_gate": "explicit_runtime_event_present",
+                            "evidence_source": "runtime_hardware_event_observed",
+                        }
+                    ],
+                }
+            ],
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "effect.json").write_text(json.dumps(effect_trace), encoding="utf-8")
+            hardware = build_hardware_regression_report(reports=("effect.json",), root=root)
+            (root / "hardware.json").write_text(json.dumps(hardware), encoding="utf-8")
+
+            ranked = rank_findings(reports=("hardware.json",), root=root)
+            impact = build_impact_report(reports=("hardware.json",), root=root)
+            static_report = build_static_report(reports=("hardware.json",), root=root)
+            visualization = build_visualization_report(reports=("hardware.json",), root=root)
+            graph = build_causal_graph_report(reports=("hardware.json",), root=root)
+
+        finding = next(
+            item
+            for item in ranked["findings"]
+            if item["type"] == "hardware_regression_blocker"
+            and "interrupt_entry_stack_writes_current_pc" in item["title"]
+        )
+        impact_item = next(
+            item
+            for item in impact["items"]
+            if item["type"] == "hardware_regression_blocker"
+            and "interrupt_entry_stack_writes_current_pc" in item["title"]
+        )
+        timeline_event = next(
+            item
+            for item in visualization["timeline"]
+            if item["event_type"] == "hardware_regression_case"
+            and "interrupt_entry_stack_writes_current_pc" in item["title"]
+        )
+        visual_case_node = next(
+            item
+            for item in visualization["graph"]["nodes"]
+            if item["type"] == "hardware_regression_case"
+            and "Interrupt entry" in item["label"]
+        )
+        visual_runtime_fact = next(
+            item
+            for item in visualization["graph"]["nodes"]
+            if item["type"] == "hardware_runtime_fact"
+            and item.get("proof_scope") == "observed_runtime_not_case_complete"
+        )
+        graph_case_node = next(
+            item
+            for item in graph["nodes"]
+            if item["kind"] == "hardware_regression_case"
+            and "Interrupt entry" in item["label"]
+        )
+        graph_runtime_fact = next(
+            item
+            for item in graph["nodes"]
+            if item["kind"] == "hardware_runtime_fact"
+            and item.get("proof_scope") == "observed_runtime_not_case_complete"
+        )
+        graph_runtime_edge = next(
+            item
+            for item in graph["edges"]
+            if item["relation"] == "observes_runtime_not_case_proof"
+        )
+
+        self.assertEqual(finding["proof_status"], "planned_only")
+        self.assertIn("gate_status=runtime_observed_not_case_complete", finding["evidence"])
+        self.assertIn("hardware_proof_fact_count=0", finding["evidence"])
+        self.assertIn("observed_runtime_fact_proof_scope=observed_runtime_not_case_complete", finding["evidence"])
+        self.assertEqual(impact_item["proof_status"], "planned_only")
+        self.assertIn("observed_runtime_fact_proof_scope=observed_runtime_not_case_complete", impact_item["evidence"])
+        self.assertIn("hardware_proof_fact_count=0", static_report["content"])
+        self.assertEqual(timeline_event["proof_status"], "planned_only")
+        self.assertIn("observed_runtime_fact_proof_scope=observed_runtime_not_case_complete", timeline_event["detail"])
+        self.assertEqual(visual_case_node["proof_status"], "planned_only")
+        self.assertEqual(visual_case_node["hardware_proof_fact_count"], 0)
+        self.assertEqual(visual_runtime_fact["proof_status"], "planned_only")
+        self.assertEqual(graph_case_node["proof_status"], "planned_only")
+        self.assertEqual(graph_case_node["hardware_proof_fact_count"], 0)
+        self.assertEqual(graph_runtime_fact["proof_status"], "planned_only")
+        self.assertEqual(graph_runtime_edge["proof_status"], "planned_only")
 
     def test_hardware_regression_gate_accepts_explicit_case_pass(self) -> None:
         explicit = {

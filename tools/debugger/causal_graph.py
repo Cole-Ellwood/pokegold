@@ -231,6 +231,8 @@ class GraphBuilder:
             self.add_dynamic_taint_report(data, source=source, report_id=report_id)
         elif kind == "unified_debugger_reverse_query":
             self.add_reverse_query_report(data, source=source, report_id=report_id)
+        elif kind == "unified_debugger_hardware_regression_gate":
+            self.add_hardware_regression_report(data, source=source, report_id=report_id)
         elif kind == "unified_debugger_causal_explanation":
             self.add_causal_explanation(data, source=source, report_id=report_id)
         elif kind == "unified_debugger_provenance_report":
@@ -1015,6 +1017,70 @@ class GraphBuilder:
             )
             if edge is not None:
                 edge.update(boundary_fields)
+
+    def add_hardware_regression_report(self, data: dict[str, Any], *, source: str, report_id: str) -> None:
+        gate_id = node_id("hardware_regression_gate", source)
+        gate_proof = normalize_proof_status(data.get("proof_status")) or "planned_only"
+        self.add_node(
+            gate_id,
+            "Pan Docs hardware regression gate",
+            "hardware_regression_gate",
+            source=source,
+            proof_status=gate_proof,
+            evidence=hardware_regression_gate_evidence(data),
+        )
+        self.add_edge(report_id, gate_id, "contains", source=source, proof_status=gate_proof)
+        for case in dict_items(data.get("cases")):
+            case_id = node_id("hardware_regression_case", f"{source}:{case.get('id', '')}")
+            case_proof = normalize_proof_status(case.get("proof_status")) or "planned_only"
+            case_node = self.add_node(
+                case_id,
+                str(case.get("title") or case.get("id") or "hardware case"),
+                "hardware_regression_case",
+                source=source,
+                proof_status=case_proof,
+                evidence=hardware_regression_case_evidence(case),
+            )
+            case_node["hardware_behavior_proven"] = bool(case.get("hardware_behavior_proven"))
+            case_node["hardware_proof_fact_count"] = int_value(case.get("hardware_proof_fact_count"))
+            case_node["observed_runtime_fact_count"] = int_value(case.get("observed_runtime_fact_count"))
+            self.add_edge(gate_id, case_id, "contains_hardware_case", source=source, proof_status=case_proof)
+            for index, fact in enumerate(dict_items(case.get("observed_runtime_facts"))):
+                fact_id = node_id("hardware_runtime_fact", f"{source}:{case.get('id', '')}:{index}:{fact.get('fact_type', '')}")
+                fact_node = self.add_node(
+                    fact_id,
+                    str(fact.get("fact_type") or "observed runtime fact"),
+                    "hardware_runtime_fact",
+                    source=source,
+                    proof_status="planned_only",
+                    evidence=hardware_fact_evidence("observed_runtime_fact", fact),
+                )
+                fact_node["proof_scope"] = str(fact.get("proof_scope") or "")
+                self.add_edge(fact_id, case_id, "observes_runtime_not_case_proof", source=source, proof_status="planned_only")
+            for index, fact in enumerate(dict_items(case.get("hardware_proof_facts"))):
+                fact_id = node_id("hardware_proof_fact", f"{source}:{case.get('id', '')}:{index}:{fact.get('fact_type', '')}")
+                fact_node = self.add_node(
+                    fact_id,
+                    str(fact.get("fact_type") or "hardware proof fact"),
+                    "hardware_proof_fact",
+                    source=source,
+                    proof_status=case_proof,
+                    evidence=hardware_fact_evidence("hardware_proof_fact", fact),
+                )
+                fact_node["proof_scope"] = str(fact.get("proof_scope") or "")
+                self.add_edge(fact_id, case_id, "proves_hardware_case", source=source, proof_status=case_proof)
+            for index, fact in enumerate(dict_items(case.get("static_blocker_facts"))):
+                fact_id = node_id("hardware_static_blocker_fact", f"{source}:{case.get('id', '')}:{index}:{fact.get('fact_type', '')}")
+                fact_node = self.add_node(
+                    fact_id,
+                    str(fact.get("fact_type") or "static blocker fact"),
+                    "hardware_static_blocker_fact",
+                    source=source,
+                    proof_status="planned_only",
+                    evidence=hardware_fact_evidence("static_blocker_fact", fact),
+                )
+                fact_node["proof_scope"] = str(fact.get("proof_scope") or "")
+                self.add_edge(fact_id, case_id, "blocks_hardware_case", source=source, proof_status="planned_only")
 
     def add_causal_explanation(self, data: dict[str, Any], *, source: str, report_id: str) -> None:
         for path in dict_items(data.get("paths")):
@@ -2395,6 +2461,56 @@ def validation_route_evidence(route: dict[str, Any]) -> list[str]:
             str(route.get("command", "")),
         ]
     )
+
+
+def hardware_regression_gate_evidence(data: dict[str, Any]) -> list[str]:
+    return unique_list(
+        [
+            f"passed={data.get('passed')}",
+            f"hardware_behavior_proven={data.get('hardware_behavior_proven')}",
+            f"passed_count={data.get('passed_count', 0)}",
+            f"blocking_gate_count={data.get('blocking_gate_count', 0)}",
+            f"hardware_proof_case_count={data.get('hardware_proof_case_count', 0)}",
+            f"observed_runtime_case_count={data.get('observed_runtime_case_count', 0)}",
+            f"static_blocker_case_count={data.get('static_blocker_case_count', 0)}",
+        ]
+    )
+
+
+def hardware_regression_case_evidence(case: dict[str, Any]) -> list[str]:
+    evidence = [
+        f"gate_status={case.get('gate_status', '')}",
+        f"hardware_proof_fact_count={case.get('hardware_proof_fact_count', 0)}",
+        f"observed_runtime_fact_count={case.get('observed_runtime_fact_count', 0)}",
+    ]
+    for fact in dict_items(case.get("observed_runtime_facts"))[:4]:
+        evidence.extend(hardware_fact_evidence("observed_runtime_fact", fact))
+    for fact in dict_items(case.get("hardware_proof_facts"))[:4]:
+        evidence.extend(hardware_fact_evidence("hardware_proof_fact", fact))
+    for fact in dict_items(case.get("static_blocker_facts"))[:4]:
+        evidence.extend(hardware_fact_evidence("static_blocker_fact", fact))
+    evidence.extend([
+        f"hardware_behavior_proven={case.get('hardware_behavior_proven')}",
+        f"static_blocker_count={case.get('static_blocker_count', 0)}",
+        f"required_evidence={case.get('required_evidence', '')}",
+        f"pan_docs_url={case.get('pan_docs_url', '')}",
+    ])
+    return unique_list([item for item in evidence if item and not item.endswith("=")])
+
+
+def hardware_fact_evidence(prefix: str, fact: dict[str, Any]) -> list[str]:
+    return [
+        f"{prefix}={fact.get('fact_type', '')}:{fact.get('status', '')}",
+        f"{prefix}_proof_scope={fact.get('proof_scope', '')}" if fact.get("proof_scope") else "",
+        f"{prefix}_source={fact.get('source', '')}" if fact.get("source") else "",
+    ]
+
+
+def int_value(value: Any) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return 0
 
 
 def trace_checkpoint_evidence(checkpoint: dict[str, Any]) -> list[str]:

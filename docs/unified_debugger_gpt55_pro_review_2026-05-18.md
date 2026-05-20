@@ -5204,3 +5204,55 @@ Remaining priority from Pro:
 - This fixes a hardware-gate fact classification leak, but it still does not create the missing dedicated Pan Docs runtime case runner or non-mutating PyBoy event recorder.
 - TIMA A/B-cycle cases, OAM DMA timing/RAM-access restriction, CGB GP/HBlank VRAM DMA timing, interrupt-entry stack writes, boot-ROM end state, and LCD dot/mode edge timing remain unproven unless exact hardware case evidence is supplied.
 - The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
+
+## Implementation Note - Hardware Fact Scope Report Propagation
+
+Date: 2026-05-20.
+
+Context:
+
+- `unified_debugger_hardware_regression_gate` now emits `proof_scope` distinctions, but ranked/static/impact reports previously treated the report as an unsupported kind.
+- Visualization and causal graph output also lacked first-class Pan Docs hardware case nodes, so runtime observations could become visible only through generic report blobs instead of explicit "observed runtime, not case proof" relationships.
+- This is another subsystem-boundary proof-promotion risk: the hardware gate can be honest internally while downstream UI/report surfaces lose the distinction.
+
+References used:
+
+- Pan Docs OAM DMA timing and bus restrictions: `https://gbdev.io/pandocs/OAM_DMA_Transfer.html`
+- Pan Docs CGB VRAM DMA GP/HBlank timing: `https://gbdev.io/pandocs/CGB_Registers.html#ff51ff55--hdma1hdma5-vram-dma`
+- Pan Docs TIMA overflow A/B-cycle behavior: `https://gbdev.io/pandocs/Timer_Obscure_Behaviour.html`
+- Pan Docs interrupt entry stack/PC behavior: `https://gbdev.io/pandocs/Interrupts.html`
+
+Implemented fix:
+
+- `tools/debugger/ranking.py`
+  - adds first-class `hardware_regression_blocker` findings for blocked Pan Docs cases.
+  - includes gate status, hardware proof counts, observed runtime counts, `proof_scope`, required evidence, and Pan Docs URLs in finding evidence.
+- `tools/debugger/impact.py`
+  - receives the new findings through the existing ranked-finding pipeline, preserving planned-only proof and fact-scope evidence.
+- `tools/debugger/reporting.py`
+  - receives the new findings through the existing static report pipeline, so static reports no longer show hardware gates as unsupported report kinds.
+- `tools/debugger/visualization.py`
+  - adds hardware regression timeline events and graph nodes for cases, runtime facts, hardware proof facts, and static blockers.
+  - uses `observes_runtime_not_case_proof` edges for runtime observations that do not prove the case.
+- `tools/debugger/causal_graph.py`
+  - adds matching hardware gate, case, runtime-fact, proof-fact, and static-blocker nodes.
+  - keeps runtime-fact edges planned-only unless exact case proof is present.
+- `tools/debugger/catalog.py`
+  - updates the replay/localization blocker wording to mention downstream `proof_scope` propagation.
+- `tools/debugger/tests/test_catalog.py`
+  - verifies a runtime interrupt hardware event remains planned-only through rank, impact, static report, visualization, and causal graph surfaces.
+
+Validation after patch:
+
+- Focused hardware fact-scope propagation regressions: 5 passed.
+- `python -m tools.debugger hardware-regression-gate --execute`: passed as a command, still intentionally `passed=False`; reported 0/10 cases passing, 10 blocking cases, 4 runtime-observed emulator cases, 0 hardware-proof cases, and 10 static-blocker cases.
+- Full debugger unittest discovery: 508 passed.
+- `python -m tools.debugger audit`: passed as a command, still `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- `python -m py_compile tools\debugger\ranking.py tools\debugger\visualization.py tools\debugger\causal_graph.py tools\debugger\catalog.py tools\debugger\tests\test_catalog.py`: passed.
+- `git diff --check`: passed; it only reported existing CRLF normalization warnings in unrelated dirty files.
+
+Remaining priority from Pro:
+
+- This closes a downstream report/UI propagation leak for Pan Docs hardware case evidence, but it still does not add the missing dedicated hardware runner or non-mutating event recorder.
+- The hardware gate still reports no case-level proof for TIMA A/B-cycle behavior, OAM DMA timing/RAM-access restriction, CGB GP/HBlank VRAM DMA timing, interrupt-entry stack writes, boot-ROM end state, or LCD dot/mode edge timing without explicit exact evidence.
+- The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
