@@ -47,8 +47,20 @@ from .visualization import build_visualization_report, write_visualization
 from .workflow import build_gate_plan, command_is_runnable
 
 
+FRONT_DOOR_HINT = """Start here:
+  I'm changing a file: python -m tools.debugger triage --changed-file path/to/file.asm
+  Validate that change: python -m tools.debugger gate --changed-file path/to/file.asm --execute
+  I have a symptom: python -m tools.debugger investigate --symptom "what the player noticed"
+"""
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
+    if argv is None:
+        argv = sys.argv[1:]
+    if not argv:
+        parser.print_help()
+        return 0
     args = parser.parse_args(argv)
     return int(args.func(args))
 
@@ -57,6 +69,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="python -m tools.debugger",
         description="Unified Pokemon Gold romhack debugger inventory, audit, and triage front door.",
+        epilog=FRONT_DOOR_HINT,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 

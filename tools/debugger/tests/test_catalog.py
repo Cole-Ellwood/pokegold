@@ -68,6 +68,17 @@ from tools.trace.runtime import Symbol, read_word
 
 
 class UnifiedDebuggerCatalogTests(unittest.TestCase):
+    def test_cli_front_door_prints_start_here_hint(self) -> None:
+        stdout = io.StringIO()
+        with redirect_stdout(stdout):
+            code = debugger_main([])
+
+        text = stdout.getvalue()
+        self.assertEqual(code, 0)
+        self.assertIn("I'm changing a file", text)
+        self.assertIn("python -m tools.debugger triage --changed-file path/to/file.asm", text)
+        self.assertIn("python -m tools.debugger gate --changed-file path/to/file.asm --execute", text)
+
     def test_inventory_lists_existing_debugger_subsystems(self) -> None:
         report = build_inventory()
         subsystem_ids = {subsystem["id"] for subsystem in report["subsystems"]}
