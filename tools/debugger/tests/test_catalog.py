@@ -156,6 +156,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("downstream proof_scope values", gap_text)
         self.assertIn("non-mutating hardware event-stream evidence", gap_text)
         self.assertIn("required case-specific hardware event types", gap_text)
+        self.assertIn("hardware_proven_case_ids/incomplete_case_event_ids", gap_text)
         self.assertIn("requested-static versus observed-runtime address fact boundaries", gap_text)
         self.assertIn("hardware-gated effect-trace side effects and bank-unverified watch hits", gap_text)
         self.assertIn(
@@ -575,9 +576,42 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertTrue(report["executed"])
         self.assertFalse(report["recorder_available"])
         self.assertFalse(report["hardware_behavior_proven"])
+        self.assertFalse(report["hardware_event_observed"])
+        self.assertEqual(report["hardware_proof_status"], "not_proven")
         self.assertEqual(report["proof_status"], "planned_only")
         self.assertEqual(report["event_count"], 0)
         self.assertIn("no supported non-mutating hardware event recorder", report["warnings"][0])
+
+    def test_hardware_event_stream_probe_keeps_incomplete_case_events_runtime_only(self) -> None:
+        class FakeRecorder:
+            non_mutating_event_recorder = True
+            events = [{"event_type": "oam_dma_start", "seq": 1}]
+
+        class FakePyBoy:
+            def __init__(self) -> None:
+                self.hardware_event_recorder = FakeRecorder()
+
+            def tick(self, *_args: Any) -> bool:
+                return True
+
+            def stop(self, *_args: Any, **_kwargs: Any) -> None:
+                return None
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "probe.gbc").write_bytes(b"\0" * 0x8000)
+            with patch("tools.debugger.hardware_event_stream.trace_runtime.open_pyboy", return_value=FakePyBoy()):
+                report = build_hardware_event_stream_report(execute=True, rom_path="probe.gbc", frames=1, root=root)
+
+        self.assertTrue(report["valid"])
+        self.assertTrue(report["proof_grade_event_stream"])
+        self.assertTrue(report["hardware_event_observed"])
+        self.assertFalse(report["hardware_behavior_proven"])
+        self.assertEqual(report["hardware_proof_status"], "observed_runtime_not_case_complete")
+        self.assertEqual(report["proof_status"], "runtime_observed")
+        self.assertEqual(report["hardware_proven_case_count"], 0)
+        self.assertGreater(report["incomplete_case_event_count"], 0)
+        self.assertIn("oam_dma_160_mcycle_timing", report["incomplete_case_event_ids"])
 
     def test_hardware_event_stream_probe_normalizes_non_mutating_recorder_events(self) -> None:
         class FakeRecorder:
@@ -618,9 +652,14 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertTrue(report["valid"])
         self.assertTrue(report["recorder_available"])
         self.assertTrue(report["non_mutating_event_recorder"])
+        self.assertTrue(report["proof_grade_event_stream"])
+        self.assertTrue(report["hardware_event_observed"])
         self.assertTrue(report["hardware_behavior_proven"])
+        self.assertEqual(report["hardware_proof_status"], "case_hardware_proof")
         self.assertEqual(report["executed_frames"], 3)
         self.assertEqual(report["event_count"], 4)
+        self.assertEqual(report["hardware_proven_case_count"], 1)
+        self.assertIn("oam_dma_160_mcycle_timing", report["hardware_proven_case_ids"])
         self.assertEqual(report["events"][0]["event_type"], "oam_dma_start")
         self.assertIn("oam_dma_160_mcycle_timing", report["events"][0]["hardware_regression_case_ids"])
         coverage = next(item for item in report["case_event_coverage"] if item["case_id"] == "oam_dma_160_mcycle_timing")

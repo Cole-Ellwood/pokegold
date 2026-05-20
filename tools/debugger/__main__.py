@@ -2446,7 +2446,14 @@ def format_hardware_event_stream(report: dict[str, Any]) -> str:
         ),
         (
             f"hardware_behavior_proven={report.get('hardware_behavior_proven')} "
-            f"non_mutating_event_recorder={report.get('non_mutating_event_recorder')}"
+            f"hardware_event_observed={report.get('hardware_event_observed')} "
+            f"hardware_proof_status={report.get('hardware_proof_status', '')}"
+        ),
+        (
+            f"proof_grade_event_stream={report.get('proof_grade_event_stream')} "
+            f"non_mutating_event_recorder={report.get('non_mutating_event_recorder')} "
+            f"hardware_proven_cases={report.get('hardware_proven_case_count', 0)} "
+            f"incomplete_cases={report.get('incomplete_case_event_count', 0)}"
         ),
     ]
     if report.get("case_event_coverage"):

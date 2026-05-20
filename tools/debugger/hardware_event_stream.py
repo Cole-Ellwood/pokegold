@@ -46,7 +46,17 @@ def build_hardware_event_stream_report(
         warnings.append("hardware event stream probe was planned only; rerun with --execute")
 
     non_mutating = recorder_kind == "non_mutating_event_recorder"
-    hardware_behavior_proven = bool(execute and recorder_available and non_mutating and events)
+    proof_grade_event_stream = bool(execute and recorder_available and non_mutating and events)
+    coverage = case_event_coverage(events)
+    complete_coverage = [item for item in coverage if item.get("complete")]
+    incomplete_coverage = [item for item in coverage if not item.get("complete")]
+    hardware_event_observed = proof_grade_event_stream
+    hardware_behavior_proven = proof_grade_event_stream and bool(complete_coverage)
+    hardware_proof_status = (
+        "case_hardware_proof"
+        if hardware_behavior_proven
+        else ("observed_runtime_not_case_complete" if hardware_event_observed else "not_proven")
+    )
     return {
         "schema_version": 1,
         "kind": "unified_debugger_hardware_event_stream",
@@ -59,15 +69,22 @@ def build_hardware_event_stream_report(
         "recorder_available": recorder_available,
         "recorder_kind": recorder_kind,
         "supported_recorder_protocol": list(SUPPORTED_RECORDER_PROTOCOL),
+        "proof_grade_event_stream": proof_grade_event_stream,
         "non_mutating_event_recorder": non_mutating,
         "hardware_behavior_proven": hardware_behavior_proven,
-        "hardware_event_observed": hardware_behavior_proven,
-        "proof_status": "runtime_observed" if hardware_behavior_proven else "planned_only",
-        "evidence_source": "non_mutating_event_recorder" if hardware_behavior_proven else "",
-        "evidence_status": "non_mutating_event_recorder" if hardware_behavior_proven else "",
+        "hardware_event_observed": hardware_event_observed,
+        "hardware_proof_status": hardware_proof_status,
+        "proof_status": "runtime_observed" if hardware_event_observed else "planned_only",
+        "evidence_source": "non_mutating_event_recorder" if hardware_event_observed else "",
+        "evidence_status": "non_mutating_event_recorder" if hardware_event_observed else "",
         "event_count": len(events),
         "events": events,
-        "case_event_coverage": case_event_coverage(events),
+        "case_event_coverage": coverage,
+        "case_event_coverage_count": len(coverage),
+        "hardware_proven_case_count": len(complete_coverage),
+        "hardware_proven_case_ids": [str(item.get("case_id", "")) for item in complete_coverage if item.get("case_id")],
+        "incomplete_case_event_count": len(incomplete_coverage),
+        "incomplete_case_event_ids": [str(item.get("case_id", "")) for item in incomplete_coverage if item.get("case_id")],
         "error_count": len(errors),
         "warning_count": len(warnings),
         "errors": errors,
@@ -77,6 +94,7 @@ def build_hardware_event_stream_report(
             "Stock PyBoy does not expose a non-mutating hardware event recorder through the public API.",
             "Debugger hooks remain opcode-replacement breakpoints and are intentionally not converted into this event stream.",
             "This report is proof-grade only when an instrumented runtime exposes a non-mutating hardware event recorder.",
+            "Observed hardware events are not case-complete hardware proof unless the matching Pan Docs case coverage is complete.",
         ],
     }
 

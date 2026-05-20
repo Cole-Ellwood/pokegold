@@ -5799,3 +5799,52 @@ Remaining priority:
 - This prevents helper-declared output sinks from promoting without helper runtime evidence, but it still does not implement full pixel-accurate UI/graphics behavior or full audio playback/mixer behavior.
 - Full script VM behavior under arbitrary event-engine state, arbitrary map interactions, causal proof, side-effect-complete reverse execution, and the non-mutating hardware event recorder remain incomplete.
 - The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
+
+## Implementation Note - Hardware Event Stream Case-Proof Boundary
+
+Date: 2026-05-20.
+
+Context:
+
+- The supervisor review correctly framed stock PyBoy hooks as debugger breakpoints, not non-mutating CPU/hardware events.
+- The local `hardware-event-stream` placeholder had the right strategic direction, but a future non-mutating recorder with any event could mark the stream-level `hardware_behavior_proven=true` before any Pan Docs case had complete required event coverage.
+- That was a UI/report proof-promotion risk: "hardware event observed" and "case-complete hardware behavior proven" need to be visibly separate before a PyBoy fork starts emitting real events.
+
+Primary references used:
+
+- PyBoy public docs for frame-level `tick()` plus hook-based fine control: `https://docs.pyboy.dk/`
+- Pan Docs OAM DMA timing and bus restrictions: `https://gbdev.io/pandocs/OAM_DMA_Transfer.html`
+- Pan Docs CGB GP/HBlank VRAM DMA timing model: `https://gbdev.io/pandocs/CGB_Registers.html#ff51ff55--hdma1hdma5-vram-dma`
+- Pan Docs TIMA overflow A/B-cycle behavior: `https://gbdev.io/pandocs/Timer_Obscure_Behaviour.html`
+
+Implemented fix:
+
+- `tools/debugger/hardware_event_stream.py`
+  - separates `proof_grade_event_stream`, `hardware_event_observed`, `hardware_behavior_proven`, and `hardware_proof_status`.
+  - sets stream-level `hardware_behavior_proven=true` only after a proof-grade non-mutating stream contains at least one complete Pan Docs case event coverage set.
+  - exposes `hardware_proven_case_count`, `hardware_proven_case_ids`, `incomplete_case_event_count`, and `incomplete_case_event_ids`.
+  - keeps stock PyBoy output at `hardware_event_observed=false`, `hardware_behavior_proven=false`, `hardware_proof_status=not_proven`.
+- `tools/debugger/__main__.py`
+  - prints observed-event and case-proof fields separately in `hardware-event-stream` output.
+- `tools/debugger/catalog.py`
+  - updates the replay/localization blocker wording so the audit names the hardware-event-stream case-proof boundary.
+- `tools/debugger/tests/test_catalog.py`
+  - verifies missing recorders remain planned-only.
+  - verifies incomplete non-mutating event streams are runtime-observed but not hardware-proven.
+  - verifies complete OAM DMA timing event coverage still reports case-level proof.
+
+Validation after patch:
+
+- Focused hardware-event-stream and hardware-regression regressions: 6 passed.
+- `python -m tools.debugger hardware-event-stream --execute`: passed as a command on stock PyBoy, reported `hardware_event_observed=False`, `hardware_behavior_proven=False`, `hardware_proof_status=not_proven`.
+- `python -m tools.debugger hardware-regression-gate --execute`: passed as a command, still intentionally `passed=False`; reported 0/10 cases passing, 10 blocking cases, 4 runtime-observed emulator cases, 0 hardware-proof cases, and 10 static-blocker cases.
+- Full debugger unittest discovery: 526 passed.
+- `PYTHONPYCACHEPREFIX=.local\tmp\pycompile_cache python -m py_compile tools\debugger\hardware_event_stream.py tools\debugger\__main__.py tools\debugger\catalog.py tools\debugger\tests\test_catalog.py`: passed.
+- `python -m tools.debugger audit`: passed as a command, still `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- `git diff --check`: passed with unrelated CRLF warnings from pre-existing dirty files outside this debugger slice.
+
+Remaining priority:
+
+- This closes a report/UI overclaim path for future non-mutating event recorder output, but it does not implement the recorder itself.
+- TIMA A/B-cycle cases, OAM DMA timing/RAM-access restriction, CGB GP/HBlank VRAM DMA timing, interrupt-entry stack writes, boot-ROM end state, and LCD dot/mode timing remain unproven without exact runtime case evidence.
+- The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
