@@ -135,7 +135,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
 
         self.assertEqual(report.findings, [])
 
-    def test_capability_report_keeps_whole_rom_goal_incomplete_until_remaining_buckets_close(self) -> None:
+    def test_capability_report_keeps_whole_rom_goal_incomplete_until_generation_bucket_closes(self) -> None:
         report = build_capability_report()
         statuses = {
             capability["id"]: capability["status"]
@@ -149,8 +149,9 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(statuses["whole_rom_ingest"], "complete")
         self.assertEqual(statuses["causal_provenance"], "complete")
         self.assertEqual(statuses["whole_rom_replay_localization"], "complete")
-        self.assertEqual(report["status_counts"], {"complete": 9, "partial": 2, "missing": 0})
-        self.assertEqual(report["blocking_gap_count"], 2)
+        self.assertEqual(statuses["differential_mirrors"], "complete")
+        self.assertEqual(report["status_counts"], {"complete": 10, "partial": 1, "missing": 0})
+        self.assertEqual(report["blocking_gap_count"], 1)
         self.assertGreater(report["blocking_gap_count"], 0)
         ingest = next(capability for capability in report["capabilities"] if capability["id"] == "whole_rom_ingest")
         self.assertTrue(any("--input-log" in command for command in ingest["commands"]))
@@ -163,12 +164,16 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         replay = next(capability for capability in report["capabilities"] if capability["id"] == "whole_rom_replay_localization")
         self.assertEqual(replay["gaps"], [])
         self.assertIn("explicit hardware side-effect proof fences", replay["scope"])
+        mirrors = next(capability for capability in report["capabilities"] if capability["id"] == "differential_mirrors")
+        self.assertEqual(mirrors["gaps"], [])
+        self.assertIn("bounded runtime-gated mirror expectations", mirrors["scope"])
+        self.assertIn("planned/runtime/hardware proof boundaries", mirrors["scope"])
         gap_text = "\n".join(report["blocking_gaps"])
-        self.assertIn("planned-only runtime-observation summaries", gap_text)
-        self.assertIn("per-sink and per-helper runtime evidence", gap_text)
+        self.assertIn("dedicated dynamic ROM generators", gap_text)
         self.assertIn("full script VM behavior under arbitrary", gap_text)
         self.assertIn("full pixel-accurate graphics", gap_text)
         self.assertNotIn("full reverse execution across every CPU/hardware side effect", gap_text)
+        self.assertNotIn("full pixel-accurate graphics/UI behavior", gap_text)
         self.assertNotIn("the bridge still does not replace subsystem dynamic proof", gap_text)
         self.assertNotIn("hardware-gated effect-trace side effects and bank-unverified watch hits", gap_text)
         self.assertIn(

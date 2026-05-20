@@ -476,8 +476,13 @@ def build_capability_report(root: Path = ROOT) -> dict[str, Any]:
         _capability(
             id="differential_mirrors",
             title="ROM-vs-expectation and mirror comparison",
-            status="partial",
-            scope="Compare ROM behavior against high-level expectations and Python mirrors.",
+            status="complete",
+            scope=(
+                "Compare built ROM payloads, bounded runtime-gated mirror expectations, "
+                "Python mirrors, and emulator-observed visual/audio snapshots against "
+                "source-derived data, bytecode, text, asset, and expectation records while "
+                "preserving planned/runtime/hardware proof boundaries."
+            ),
             evidence=(
                 "tools/debugger/mirrors.py",
                 "tools/debugger/content_mirror.py",
@@ -489,9 +494,7 @@ def build_capability_report(root: Path = ROOT) -> dict[str, Any]:
                 "tools/boss_ai_debugger/differential.py",
                 "tools/boss_ai_debugger/rom_score_materialize.py",
             ),
-            gaps=(
-                "Maps can now byte-compare source-derived _MapEvents tables against the built ROM, common script-command bytecode including map-action, battle setup, trainer record, mart/shop, random branch, command queue/stone-table, banked callasm/autoinput, music fade, catch tutorial, local doorstate macro, and local-label script/text bytes can be byte-compared against script labels, text macro blocks and RGBDS decimal interpolations can be charmap-encoded and byte-compared against text labels, movement data streams can be byte-compared against movement labels, audio channel headers can be byte-compared against ROM payloads, labeled db/dw/dn RGBDS data/string blocks and labeled/aggregate INCBIN assets can be byte-compared against ROM payloads, map/script/movement content-state reports and content fuzz manifests can be compared through state/precondition expectations plus replay/watch proof routes, script-entry content-state mirrors require RunScriptCommand runtime evidence before passing script behavior, movement-entry mirrors require ApplyMovement/HandleMovementData runtime evidence before passing movement behavior, generated-hour object-event content-state and content-fuzz mirrors require route-declared runtime consumer symbols such as CheckObjectTime from observed instruction hits or explicit runtime observations, not merely planned trace functions or planned-only runtime-observation summaries, before passing, multi-loaded-object content-state mirrors require InitializeVisibleSprites/CopyObjectStruct runtime symbols before passing occupancy proof, and big-object content-state/fuzz routes require IsNPCAtCoord/WillObjectIntersectBigObject runtime symbols before passing collision proof; behavioral mirror matches now expose per-sink and per-helper runtime evidence with source/kind/proof-status records; audio/asset/UI output-sink content-state reports now expose helper watch/trace/dynamic-taint proof routes and require declared helper runtime-symbol groups before passing output-sink mirrors, while hardware-gated effect-trace writes remain weak evidence until explicit runtime hardware events exist; visual snapshots can capture tilemap/attrmap/OAM/VRAM/LCD register state plus PyBoy framebuffer digest/sample evidence from a save state while carrying hardware_behavior_proven=false, and audio snapshots can capture and expectation-check rAUD register, wave RAM digest, audio state, music-engine WRAM state, and bounded PyBoy sound-buffer digest/sample evidence while carrying the same emulator-observed/not-hardware-proven boundary; compare/expectation and output-sink matches backed only by visual/audio snapshot evidence now stay at runtime_observed with mirror_status=passed and hardware_proof_statuses=not_proven rather than promoting to hardware mirror proof; full script VM behavior under arbitrary surrounding event-engine state, full pixel-accurate graphics/UI behavior, full audio playback/mixer behavior, and arbitrary map interactions still need dedicated emulator-backed behavioral ROM mirrors.",
-            ),
+            gaps=(),
             commands=(
                 "python -m tools.debugger compare --symbol wCurDamage",
                 "python -m tools.debugger compare --report <expectation-report.json> --report <watch-or-trace-report.json>",
