@@ -14827,6 +14827,62 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("effect_proof_status=planned_only", attribution["evidence"])
         self.assertIn("hardware_proof_gate=explicit_runtime_event_missing", attribution["evidence"])
 
+    def test_dynamic_taint_generic_hardware_event_label_does_not_promote_effect_attribution(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "test.sym").write_text("01:4000 DmaWriter\n", encoding="utf-8")
+            (root / "effect_dma.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_effect_trace",
+                        "valid": True,
+                        "proof_status": "instruction_observed",
+                        "events": [
+                            {
+                                "seq": 3,
+                                "pc": 0x4000,
+                                "pc_bank_address": "01:4000",
+                                "pc_label": "DmaWriter",
+                                "effects": [
+                                    {
+                                        "access": "write",
+                                        "kind": "dma_write",
+                                        "category": "dma",
+                                        "hardware_model": "oam_dma",
+                                        "evidence_source": "hardware_event_observed",
+                                        "proof_status": "instruction_observed",
+                                        "operation": "OAM DMA OAM write",
+                                        "address": 0xFE00,
+                                        "address_hex": "FE00",
+                                        "address_key": "oam:--:FE00",
+                                        "space": "oam",
+                                        "value_hex": "A5",
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            dynamic = build_dynamic_taint_report(
+                reports=("effect_dma.json",),
+                sink_addresses=("FE00",),
+                symbols_path="test.sym",
+                root=root,
+            )
+
+        attribution = dynamic["write_attributions"][0]
+
+        self.assertTrue(dynamic["valid"])
+        self.assertEqual(attribution["proof_status"], "planned_only")
+        self.assertIn("effect_proof_status=instruction_observed", attribution["evidence"])
+        self.assertIn("hardware_event_required=True", attribution["evidence"])
+        self.assertIn("hardware_runtime_event=False", attribution["evidence"])
+        self.assertIn("hardware_event_identity=generic_hardware_event_label", attribution["evidence"])
+        self.assertIn("hardware_proof_gate=explicit_runtime_event_missing", attribution["evidence"])
+
     def test_causal_graph_preserves_hardware_gated_effect_proof_status(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

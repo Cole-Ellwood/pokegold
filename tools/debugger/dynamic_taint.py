@@ -19,6 +19,7 @@ from .catalog import ROOT
 from .coverage import load_traces
 from .evidence import evidence_atom, merge_evidence_atoms
 from .explain import base_label
+from .hardware_evidence import hardware_runtime_event_boundary
 from .ingest import sha256_file
 from .provenance import display_path, parse_symbol_table, resolve_path
 from .reporting import load_reports
@@ -50,6 +51,22 @@ INDEX_REG = {0: "b", 1: "c", 2: "d", 3: "e", 4: "h", 5: "l", 6: "[hl]", 7: "a"}
 CONDITIONAL_CALLS = {0xC4: "nz", 0xCC: "z", 0xD4: "nc", 0xDC: "c"}
 CONDITIONAL_RETS = {0xC0: "nz", 0xC8: "z", 0xD0: "nc", 0xD8: "c"}
 RST_TARGETS = {0xC7: 0x00, 0xCF: 0x08, 0xD7: 0x10, 0xDF: 0x18, 0xE7: 0x20, 0xEF: 0x28, 0xF7: 0x30, 0xFF: 0x38}
+HARDWARE_EVENT_REQUIRED_MODELS = {
+    "oam_dma",
+    "cgb_vram_dma",
+    "timer_tima_overflow",
+    "interrupt_entry",
+    "lcd_mode_edge",
+    "ppu_lcd_mode",
+}
+HARDWARE_EVENT_REQUIRED_KINDS = {
+    "dma_read",
+    "dma_write",
+    "timer_tima_overflow",
+    "timer_tima_reload_write",
+    "timer_interrupt_request_write",
+    "interrupt_entry",
+}
 OUTPUT_CONTAINER_KEYS = {
     "output",
     "outputs",
@@ -4299,8 +4316,7 @@ def effect_sink_match(sink: Sink, *, effect_item: dict[str, Any], address: int) 
                 bank_source=str(effect_item.get("bank_source", "")),
                 effect_proof_status=str(effect_item.get("proof_status", "")),
                 effect_proof_downgrade_reason=str(effect_item.get("proof_downgrade_reason", "")),
-                hardware_model=str(effect_item.get("hardware_model", "")),
-                hardware_proof_gate=str(effect_item.get("hardware_proof_gate", "")),
+                **effect_hardware_match_fields(effect_item),
             )
         return None
     if address_key_requires_exact_match(effect_key):
@@ -4312,8 +4328,7 @@ def effect_sink_match(sink: Sink, *, effect_item: dict[str, Any], address: int) 
             proof_downgrade_reason="unbanked sink matched a bank-qualified runtime key by bus address",
             effect_proof_status=str(effect_item.get("proof_status", "")),
             effect_proof_downgrade_reason=str(effect_item.get("proof_downgrade_reason", "")),
-            hardware_model=str(effect_item.get("hardware_model", "")),
-            hardware_proof_gate=str(effect_item.get("hardware_proof_gate", "")),
+            **effect_hardware_match_fields(effect_item),
         )
     return address_match_record(
         address_key=effect_key,
@@ -4322,8 +4337,7 @@ def effect_sink_match(sink: Sink, *, effect_item: dict[str, Any], address: int) 
         bank_source=str(effect_item.get("bank_source", "")),
         effect_proof_status=str(effect_item.get("proof_status", "")),
         effect_proof_downgrade_reason=str(effect_item.get("proof_downgrade_reason", "")),
-        hardware_model=str(effect_item.get("hardware_model", "")),
-        hardware_proof_gate=str(effect_item.get("hardware_proof_gate", "")),
+        **effect_hardware_match_fields(effect_item),
     )
 
 
@@ -4398,6 +4412,11 @@ def address_match_record(
     effect_proof_status: str = "",
     effect_proof_downgrade_reason: str = "",
     hardware_model: str = "",
+    hardware_event_required: bool = False,
+    hardware_runtime_event: bool = False,
+    hardware_event_identity: str = "",
+    hardware_event_labels: list[str] | None = None,
+    hardware_generic_event_label_present: bool = False,
     hardware_proof_gate: str = "",
 ) -> dict[str, Any]:
     return {
@@ -4409,12 +4428,50 @@ def address_match_record(
         "effect_proof_status": effect_proof_status,
         "effect_proof_downgrade_reason": effect_proof_downgrade_reason,
         "hardware_model": hardware_model,
+        "hardware_event_required": hardware_event_required,
+        "hardware_runtime_event": hardware_runtime_event,
+        "hardware_event_identity": hardware_event_identity,
+        "hardware_event_labels": hardware_event_labels or [],
+        "hardware_generic_event_label_present": hardware_generic_event_label_present,
         "hardware_proof_gate": hardware_proof_gate,
     }
 
 
+def effect_hardware_match_fields(effect_item: dict[str, Any]) -> dict[str, Any]:
+    required = effect_requires_hardware_runtime_event(effect_item)
+    boundary = hardware_runtime_event_boundary(effect_item)
+    runtime_event = bool(boundary["runtime_event_present"])
+    return {
+        "hardware_model": str(effect_item.get("hardware_model", "")),
+        "hardware_event_required": required,
+        "hardware_runtime_event": runtime_event,
+        "hardware_event_identity": str(boundary.get("hardware_event_identity", "")),
+        "hardware_event_labels": list(boundary.get("hardware_event_labels", [])),
+        "hardware_generic_event_label_present": bool(boundary.get("hardware_generic_event_label_present")),
+        "hardware_proof_gate": (
+            str(effect_item.get("hardware_proof_gate", ""))
+            or ("explicit_runtime_event_present" if required and runtime_event else "")
+            or ("explicit_runtime_event_missing" if required else "")
+        ),
+    }
+
+
+def effect_requires_hardware_runtime_event(effect_item: dict[str, Any]) -> bool:
+    if bool(effect_item.get("hardware_event_required")):
+        return True
+    if str(effect_item.get("hardware_model", "")) in HARDWARE_EVENT_REQUIRED_MODELS:
+        return True
+    if str(effect_item.get("kind", "")) in HARDWARE_EVENT_REQUIRED_KINDS:
+        return True
+    return False
+
+
 def match_proof_status(match: dict[str, Any]) -> str:
     if match.get("match_precision") == "bus_address_unverified_bank":
+        return "planned_only"
+    if match.get("hardware_event_required") and not match.get("hardware_runtime_event"):
+        return "planned_only"
+    if str(match.get("hardware_proof_gate", "")) == "explicit_runtime_event_missing":
         return "planned_only"
     if str(match.get("effect_proof_status", "")) == "planned_only":
         return "planned_only"
@@ -4438,6 +4495,18 @@ def match_evidence(match: dict[str, Any]) -> list[str]:
             if match.get("effect_proof_downgrade_reason")
             else "",
             f"hardware_model={match.get('hardware_model', '')}" if match.get("hardware_model") else "",
+            f"hardware_event_required={match.get('hardware_event_required')}" if match.get("hardware_event_required") else "",
+            (
+                f"hardware_runtime_event={match.get('hardware_runtime_event')}"
+                if match.get("hardware_event_required")
+                else ""
+            ),
+            f"hardware_event_identity={match.get('hardware_event_identity', '')}" if match.get("hardware_event_identity") else "",
+            (
+                f"hardware_generic_event_label_present={match.get('hardware_generic_event_label_present')}"
+                if match.get("hardware_generic_event_label_present")
+                else ""
+            ),
             f"hardware_proof_gate={match.get('hardware_proof_gate', '')}" if match.get("hardware_proof_gate") else "",
         ]
     )

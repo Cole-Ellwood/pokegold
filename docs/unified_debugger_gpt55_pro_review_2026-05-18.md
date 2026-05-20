@@ -5970,3 +5970,41 @@ Remaining priority:
 - Dedicated case rows are now proof-fenced, but no TIMA, OAM DMA, CGB VRAM DMA, interrupt-entry, boot-ROM, or LCD case is actually proven on stock PyBoy.
 - The hardware-regression gate remains intentionally failing until exact case evidence or proof-grade non-mutating recorder evidence lands.
 - The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
+
+## Implementation Note - Dynamic Taint Hardware Side-Effect Boundary
+
+Date: 2026-05-20.
+
+Context:
+
+- Reverse-query and effect-trace hardware gates had been tightened, but dynamic-taint effect-report attribution still derived `proof_status` from address precision and `effect_proof_status` only.
+- An imported effect trace could therefore present a hardware-side-effect write with `proof_status=instruction_observed`, a generic `hardware_event_observed` label, and no explicit runtime side-effect event, and dynamic taint would preserve the attribution as instruction-observed.
+- That is a downstream proof-promotion gap for DMA, timer-overflow, LCD-mode-edge, interrupt-entry, and CGB VRAM DMA effects.
+
+Primary references used:
+
+- PyBoy public docs for hook behavior and opcode replacement: `https://docs.pyboy.dk/#pyboy.PyBoy.hook_register`
+- Pan Docs OAM DMA timing and bus restrictions: `https://gbdev.io/pandocs/OAM_DMA_Transfer.html`
+- Pan Docs CGB GP/HBlank VRAM DMA timing model: `https://gbdev.io/pandocs/CGB_Registers.html#ff51ff55--hdma1hdma5-vram-dma`
+- Pan Docs TIMA overflow A/B-cycle behavior: `https://gbdev.io/pandocs/Timer_Obscure_Behaviour.html`
+
+Implemented fix:
+
+- `tools/debugger/dynamic_taint.py`
+  - uses the shared hardware runtime-event boundary for effect-report sink matches.
+  - treats hardware-required models/kinds as `planned_only` unless an explicit runtime hardware event is present.
+  - carries additive `hardware_event_required`, `hardware_runtime_event`, `hardware_event_identity`, `hardware_event_labels`, and `hardware_generic_event_label_present` fields through dynamic-taint match/evidence records.
+  - keeps generic labels such as `hardware_event_observed` visible in evidence while preventing them from promoting dynamic write attribution.
+- `tools/debugger/tests/test_catalog.py`
+  - adds a regression where an OAM DMA write with `proof_status=instruction_observed` and only a generic hardware event label remains `planned_only` in dynamic-taint attribution.
+
+Validation after patch:
+
+- Focused dynamic-taint hardware-boundary regression: 2 passed.
+- Adjacent reverse-query/causal/dynamic bank+hardware boundary regressions: 6 passed.
+
+Remaining priority:
+
+- This prevents one more downstream proof promotion path, but it does not provide a side-effect-complete reverse execution engine or proof-grade non-mutating hardware recorder.
+- Dynamic-taint still depends on the supplied trace/effect-report window; writers outside that window, unmodeled CPU effects, and unproven hardware side effects remain blockers.
+- The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
