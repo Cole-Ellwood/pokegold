@@ -27852,6 +27852,79 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertTrue(any("compact" in gap for gap in match["runtime_evidence_gaps"]))
         self.assertFalse(any(item["type"] == "mirror_passed" for item in ranked["findings"]))
 
+    def test_compare_output_sink_mirror_does_not_pass_from_hardware_gated_effect_write(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "content_state.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_content_state_materialization",
+                        "valid": True,
+                        "executed": False,
+                        "materializations": [
+                            {
+                                "scenario_id": "content_scenario_22_0000",
+                                "scenario_type": "audio_hardware_output",
+                                "precondition_kind": "audio_output_sink",
+                                "status": "planned",
+                                "source_file": "audio/unit.asm",
+                                "outputs": [
+                                    {
+                                        "kind": "audio_hardware_output",
+                                        "address": "$FF46",
+                                        "address_label": "rDMA",
+                                        "producer_symbol": "PlayMusic",
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            (root / "effect_trace.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_effect_trace",
+                        "valid": True,
+                        "proof_status": "instruction_observed",
+                        "watch_addresses": ["$FF46"],
+                        "events": [
+                            {
+                                "seq": 7,
+                                "effects": [
+                                    {
+                                        "kind": "oam_dma_trigger",
+                                        "access": "write",
+                                        "address_hex": "FF46",
+                                        "hardware_model": "oam_dma",
+                                        "proof_status": "planned_only",
+                                        "hardware_event_required": True,
+                                        "hardware_runtime_event": False,
+                                        "hardware_proof_gate": "explicit_runtime_event_missing",
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            compare = build_compare_plan(reports=("content_state.json", "effect_trace.json"), root=root)
+            (root / "compare.json").write_text(json.dumps(compare), encoding="utf-8")
+            ranked = rank_findings(reports=("compare.json",), root=root)
+
+        match = next(item for item in compare["matches"] if item["id"] == "content_output_behavioral_mirror")
+
+        self.assertEqual(match["status"], "planned")
+        self.assertEqual(match["proof_status"], "planned_only")
+        self.assertEqual(match["covered_output_count"], 0)
+        self.assertEqual(match["weak_runtime_kinds"], ["effect_trace"])
+        self.assertIn("$FF46", match["related_addresses"])
+        self.assertTrue(any("hardware-gated" in gap for gap in match["runtime_evidence_gaps"]))
+        self.assertFalse(any(item["type"] == "mirror_passed" for item in ranked["findings"]))
+
     def test_compare_output_sink_mirror_ignores_planned_dynamic_taint_evidence(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

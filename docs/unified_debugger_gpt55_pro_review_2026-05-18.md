@@ -4923,3 +4923,44 @@ Remaining priority from Pro:
 - This closes an import/proof-promotion leak, but it still does not implement the dedicated Pan Docs runtime case runner for TIMA A/B-cycle behavior, OAM DMA timing and RAM-access restriction, GP/HBlank VRAM DMA timing, interrupt entry, boot-ROM end state, or LCD dot-mode edges.
 - The hardware gate remains intentionally blocking until those side effects have explicit runtime hardware-event evidence or proven dedicated case results.
 - The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
+
+## Implementation Note - Output Sink Mirror Hardware-Gated Effect Boundary
+
+Date: 2026-05-20.
+
+Context:
+
+- Content output-sink mirrors can pass when supplied runtime evidence observes every requested sink.
+- `effect_trace` now marks hardware-modeled side effects such as OAM DMA, CGB VRAM DMA, timer overflow, LCD mode edges, and interrupt-entry effects as `planned_only` unless explicit runtime hardware-event evidence exists.
+- The compare bridge must preserve that downgrade. A modeled hardware effect write to a requested output address is useful evidence, but it is not a strong output-sink mirror pass without the hardware event.
+
+References used:
+
+- Pan Docs OAM DMA timing and bus conflict model: `https://gbdev.io/pandocs/OAM_DMA_Transfer.html`
+- Local source truth: `tools/debugger/effect_trace.py`, `tools/debugger/mirrors.py`, `tools/debugger/catalog.py`, and `tools/debugger/tests/test_catalog.py`
+
+Implemented fix:
+
+- `tools/debugger/mirrors.py`
+  - splits effect-trace concrete writes into strong and weak records.
+  - treats concrete writes as strong only when they are not missing a required hardware runtime event and their proof status is strong enough.
+  - carries hardware-gated concrete writes into weak output-sink evidence with a downgrade reason instead of letting them satisfy `content_output_behavioral_mirror`.
+- `tools/debugger/catalog.py`
+  - updates the `differential_mirrors` blocker text to say hardware-gated effect-trace writes remain weak evidence until explicit runtime hardware events exist.
+- `tools/debugger/tests/test_catalog.py`
+  - adds `test_compare_output_sink_mirror_does_not_pass_from_hardware_gated_effect_write`, covering an FF46 output sink backed only by a planned-only OAM DMA effect write.
+
+Validation after patch:
+
+- Focused output-sink mirror proof-boundary regressions: 4 passed.
+- `python -m py_compile tools\debugger\mirrors.py tools\debugger\tests\test_catalog.py`: passed.
+- Full debugger unittest discovery: 501 passed.
+- `python -m py_compile tools\debugger\mirrors.py tools\debugger\catalog.py tools\debugger\tests\test_catalog.py`: passed.
+- `python -m tools.debugger audit`: passed as a command, still `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- `git diff --check`: passed; it only reported existing CRLF normalization warnings in unrelated dirty files.
+
+Remaining priority from Pro:
+
+- This closes a concrete compare/mirror proof-promotion path, but it does not produce the missing hardware runtime events.
+- Full script VM behavior, pixel-accurate graphics/UI behavior, full audio playback/mixer behavior, arbitrary map interactions, side-effect-complete reverse execution, and subsystem-complete causal proof remain incomplete.
+- The whole-ROM proof-substrate goal remains incomplete and `ready=False`.

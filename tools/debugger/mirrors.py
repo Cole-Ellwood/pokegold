@@ -1557,6 +1557,12 @@ def runtime_mirror_evidence(loaded: dict[str, Any]) -> list[dict[str, Any]]:
         ]
         events = dict_items(data.get("events"))
         concrete_writes = effect_trace_concrete_writes(events)
+        strong_concrete_writes = [
+            item for item in concrete_writes if effect_trace_concrete_write_is_strong(item)
+        ]
+        weak_concrete_writes = [
+            item for item in concrete_writes if not effect_trace_concrete_write_is_strong(item)
+        ]
         strong_watch_hits = effect_trace_watch_hits(events, proof_status="instruction_observed")
         weak_watch_hits = effect_trace_watch_hits(events, proof_status="planned_only")
         compact_only_write_index = write_index if not concrete_writes else []
@@ -1575,7 +1581,7 @@ def runtime_mirror_evidence(loaded: dict[str, Any]) -> list[dict[str, Any]]:
                 ],
             ]
         )
-        if concrete_writes or strong_watch_hits:
+        if strong_concrete_writes or strong_watch_hits:
             records.append(
                 runtime_evidence_record(
                     source=source,
@@ -1595,13 +1601,13 @@ def runtime_mirror_evidence(loaded: dict[str, Any]) -> list[dict[str, Any]]:
                     ],
                     addresses=[
                         *[str(hit.get("address", "")) for hit in strong_watch_hits if hit.get("address")],
-                        *[str(item.get("address_hex", "")) for item in concrete_writes if item.get("address_hex")],
+                        *[str(item.get("address_hex", "")) for item in strong_concrete_writes if item.get("address_hex")],
                     ],
                     commands=report_commands(data),
                     proof_status="instruction_observed",
                 )
             )
-        if compact_only_write_index or weak_watch_hits:
+        if compact_only_write_index or weak_watch_hits or weak_concrete_writes:
             records.append(
                 runtime_evidence_record(
                     source=source,
@@ -1618,12 +1624,14 @@ def runtime_mirror_evidence(loaded: dict[str, Any]) -> list[dict[str, Any]]:
                         *watch_addresses,
                         *[str(item.get("address", "")) for item in compact_only_write_index],
                         *[str(hit.get("address", "")) for hit in weak_watch_hits if hit.get("address")],
+                        *[str(item.get("address_hex", "")) for item in weak_concrete_writes if item.get("address_hex")],
                     ],
                     commands=report_commands(data),
                     proof_status="planned_only",
                     proof_downgrade_reason=effect_trace_weak_output_reason(
                         has_events=bool(events),
                         weak_watch_hits=weak_watch_hits,
+                        weak_concrete_writes=weak_concrete_writes,
                     ),
                 )
             )
@@ -1823,6 +1831,15 @@ def effect_trace_concrete_writes(events: list[dict[str, Any]]) -> list[dict[str,
     ]
 
 
+def effect_trace_concrete_write_is_strong(item: dict[str, Any]) -> bool:
+    if item.get("hardware_event_required") and not item.get("hardware_runtime_event"):
+        return False
+    proof_status = str(item.get("proof_status") or "")
+    if proof_status:
+        return proof_status in OUTPUT_RUNTIME_STRONG_PROOF_STATUSES
+    return True
+
+
 def effect_trace_watch_hits(events: list[dict[str, Any]], *, proof_status: str) -> list[dict[str, Any]]:
     return [
         hit
@@ -1833,7 +1850,14 @@ def effect_trace_watch_hits(events: list[dict[str, Any]], *, proof_status: str) 
     ]
 
 
-def effect_trace_weak_output_reason(*, has_events: bool, weak_watch_hits: list[dict[str, Any]]) -> str:
+def effect_trace_weak_output_reason(
+    *,
+    has_events: bool,
+    weak_watch_hits: list[dict[str, Any]],
+    weak_concrete_writes: list[dict[str, Any]] | None = None,
+) -> str:
+    if weak_concrete_writes:
+        return "effect-trace concrete write proof is hardware-gated or otherwise not instruction-observed; output behavior was not proven"
     if weak_watch_hits:
         return "effect-trace watch hit target match is bank-unverified; concrete output behavior was not proven"
     if not has_events:
