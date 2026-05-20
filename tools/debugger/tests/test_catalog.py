@@ -265,7 +265,48 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(interrupt["emulator_observed_fact_count"], 1)
         self.assertEqual(interrupt["hardware_proof_fact_count"], 0)
         self.assertEqual(interrupt["observed_runtime_facts"][0]["fact_type"], "emulator_runtime_observation")
+        self.assertEqual(interrupt["observed_runtime_facts"][0]["proof_scope"], "emulator_observed_not_hardware")
         self.assertEqual(interrupt["requested_static_facts"]["hardware_models"], ["interrupt_entry"])
+
+    def test_hardware_regression_runtime_event_is_not_case_proof_by_itself(self) -> None:
+        effect_trace = {
+            "kind": "unified_debugger_effect_trace",
+            "valid": True,
+            "events": [
+                {
+                    "seq": 7,
+                    "effects": [
+                        {
+                            "kind": "stack_write",
+                            "hardware_model": "interrupt_entry",
+                            "hardware_runtime_event": True,
+                            "hardware_proof_gate": "explicit_runtime_event_present",
+                            "evidence_source": "runtime_hardware_event_observed",
+                            "detail": "interrupt_enter and stack_write observed without case-level Pan Docs assertion",
+                        }
+                    ],
+                }
+            ],
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "effect.json").write_text(json.dumps(effect_trace), encoding="utf-8")
+            report = build_hardware_regression_report(reports=("effect.json",), root=root)
+
+        case = next(case for case in report["cases"] if case["id"] == "interrupt_entry_stack_writes_current_pc")
+
+        self.assertFalse(report["passed"])
+        self.assertEqual(report["hardware_proof_case_count"], 0)
+        self.assertEqual(case["gate_status"], "runtime_observed_not_case_complete")
+        self.assertEqual(case["proof_status"], "planned_only")
+        self.assertFalse(case["hardware_passed"])
+        self.assertFalse(case["hardware_behavior_proven"])
+        self.assertEqual(case["observed_runtime_fact_count"], 1)
+        self.assertEqual(case["hardware_proof_fact_count"], 0)
+        self.assertEqual(case["observed_runtime_facts"][0]["fact_type"], "runtime_hardware_event")
+        self.assertEqual(case["observed_runtime_facts"][0]["proof_scope"], "observed_runtime_not_case_complete")
+        if case["static_blocker_facts"]:
+            self.assertEqual(case["static_blocker_facts"][0]["proof_scope"], "static_blocker")
 
     def test_hardware_regression_gate_accepts_explicit_case_pass(self) -> None:
         explicit = {
@@ -285,6 +326,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertTrue(case["hardware_passed"])
         self.assertEqual(case["hardware_proof_fact_count"], 1)
         self.assertEqual(case["hardware_proof_facts"][0]["fact_type"], "dedicated_hardware_case_proof")
+        self.assertEqual(case["hardware_proof_facts"][0]["proof_scope"], "case_hardware_proof")
         self.assertFalse(report["passed"])
 
     def test_hardware_regression_gate_rejects_case_pass_without_hardware_proof(self) -> None:

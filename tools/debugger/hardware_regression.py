@@ -182,7 +182,7 @@ EXPLICIT_HARDWARE_EVIDENCE = {
 STATIC_BLOCKER_EVIDENCE_CLASSES = {"pyboy_source_gap", "missing_artifact"}
 EMULATOR_RUNTIME_EVIDENCE_CLASSES = {"pyboy_hook_matrix", "modeled_effect_trace"}
 RUNTIME_EVIDENCE_CLASSES = {*EMULATOR_RUNTIME_EVIDENCE_CLASSES, "runtime_hardware_event"}
-HARDWARE_PROOF_EVIDENCE_CLASSES = {"runtime_hardware_event", "explicit_hardware_case_pass"}
+HARDWARE_PROOF_EVIDENCE_CLASSES = {"explicit_hardware_case_pass"}
 
 
 def build_hardware_regression_report(
@@ -326,6 +326,9 @@ def build_case_result(
     if hardware_passed:
         gate_status = "passed"
         proof_status = "runtime_observed"
+    elif any(item["class"] == "runtime_hardware_event" for item in evidence):
+        gate_status = "runtime_observed_not_case_complete"
+        proof_status = "planned_only"
     elif any(item["class"] == "pyboy_hook_matrix" for item in evidence):
         gate_status = "emulator_observed_not_hardware"
         proof_status = "planned_only"
@@ -534,6 +537,7 @@ def summarize_evidence_fact(item: dict[str, Any]) -> dict[str, str]:
     return {
         "class": class_name,
         "fact_type": evidence_fact_type(class_name),
+        "proof_scope": evidence_proof_scope(class_name),
         "status": str(item.get("status", "")),
         "source": str(item.get("source", "")),
         "detail": str(item.get("detail", "")),
@@ -557,6 +561,24 @@ def evidence_fact_type(class_name: str) -> str:
         return "external_case_result"
     if class_name == "invalid_report":
         return "invalid_report_ignored"
+    return "other"
+
+
+def evidence_proof_scope(class_name: str) -> str:
+    if class_name in STATIC_BLOCKER_EVIDENCE_CLASSES:
+        return "static_blocker"
+    if class_name == "pyboy_hook_matrix":
+        return "emulator_observed_not_hardware"
+    if class_name == "modeled_effect_trace":
+        return "modeled_not_hardware_proof"
+    if class_name == "runtime_hardware_event":
+        return "observed_runtime_not_case_complete"
+    if class_name == "explicit_hardware_case_pass":
+        return "case_hardware_proof"
+    if class_name == "explicit_hardware_case_result":
+        return "external_case_result_not_proof"
+    if class_name == "invalid_report":
+        return "ignored"
     return "other"
 
 

@@ -5160,3 +5160,47 @@ Remaining priority from Pro:
 - This closes a UI/report flattening path for requested/static versus observed/runtime address facts, but it does not add new runtime hardware events, a non-mutating PyBoy event recorder, or side-effect-complete reverse execution.
 - Full script VM behavior, arbitrary event-engine runtime generation, pixel/audio hardware mirrors, dedicated Pan Docs runtime hardware cases, and subsystem-complete causal proof remain incomplete.
 - The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
+
+## Implementation Note - Hardware Runtime Event Fact Scope
+
+Date: 2026-05-20.
+
+Context:
+
+- The Pan Docs hardware gate already separated requested/static case facts, emulator/runtime observations, static blockers, and hardware-proof facts.
+- A runtime hardware-event fact was still counted under `hardware_proof_facts` even when the case did not assert `hardware_behavior_proven=true` and did not pass the exact Pan Docs case.
+- That is a proof-promotion risk: an observed interrupt/OAM/HDMA/timer event is useful runtime evidence, but it is not by itself proof of the full case-specific timing, bus, or A/B-cycle behavior.
+
+References used:
+
+- Pan Docs OAM DMA timing and bus restrictions: `https://gbdev.io/pandocs/OAM_DMA_Transfer.html`
+- Pan Docs CGB VRAM DMA GP/HBlank timing: `https://gbdev.io/pandocs/CGB_Registers.html#ff51ff55--hdma1hdma5-vram-dma`
+- Pan Docs TIMA overflow A/B-cycle behavior: `https://gbdev.io/pandocs/Timer_Obscure_Behaviour.html`
+- Pan Docs interrupt entry stack/PC behavior: `https://gbdev.io/pandocs/Interrupts.html`
+
+Implemented fix:
+
+- `tools/debugger/hardware_regression.py`
+  - keeps `runtime_hardware_event` in observed runtime facts.
+  - removes `runtime_hardware_event` from hardware-proof facts; only explicit case passes with hardware proof now populate `hardware_proof_facts`.
+  - adds `proof_scope` to summarized evidence facts so downstream reports can distinguish `observed_runtime_not_case_complete` from `case_hardware_proof`.
+  - adds `runtime_observed_not_case_complete` gate status when runtime hardware events exist but no exact case-level hardware proof is supplied.
+- `tools/debugger/tests/test_catalog.py`
+  - verifies hook-order emulator facts carry `proof_scope=emulator_observed_not_hardware`.
+  - verifies an effect-trace runtime hardware event for interrupt entry remains observed runtime evidence, keeps `hardware_proof_fact_count=0`, and leaves the case planned-only until exact case proof exists.
+  - verifies explicit dedicated case passes still populate `hardware_proof_facts` with `proof_scope=case_hardware_proof`.
+
+Validation after patch:
+
+- Focused hardware-regression fact-scope regressions: 7 passed.
+- `python -m tools.debugger hardware-regression-gate --execute`: passed as a command, still intentionally `passed=False`; reported 0/10 cases passing, 10 blocking cases, 4 runtime-observed emulator cases, 0 hardware-proof cases, and 10 static-blocker cases.
+- Full debugger unittest discovery: 507 passed.
+- `python -m tools.debugger audit`: passed as a command, still `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- `python -m py_compile tools\debugger\hardware_regression.py tools\debugger\tests\test_catalog.py`: passed.
+- `git diff --check`: passed; it only reported existing CRLF normalization warnings in unrelated dirty files.
+
+Remaining priority from Pro:
+
+- This fixes a hardware-gate fact classification leak, but it still does not create the missing dedicated Pan Docs runtime case runner or non-mutating PyBoy event recorder.
+- TIMA A/B-cycle cases, OAM DMA timing/RAM-access restriction, CGB GP/HBlank VRAM DMA timing, interrupt-entry stack writes, boot-ROM end state, and LCD dot/mode edge timing remain unproven unless exact hardware case evidence is supplied.
+- The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
