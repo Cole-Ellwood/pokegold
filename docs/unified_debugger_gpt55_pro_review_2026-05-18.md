@@ -6314,17 +6314,19 @@ Implemented fix:
 - `tools/debugger/mirrors.py`
   - keeps broad `symbols` usable for output sink coverage.
   - stops using broad derived evidence `symbols` as required helper runtime proof.
-  - records explicit `observed_runtime_symbols` for watch PC labels, effect-trace strong event labels, and dynamic-taint PC/source/writer labels.
+  - records explicit `observed_runtime_symbols` for watch PC labels, effect-trace strong event labels, and dynamic-taint PC labels.
+  - keeps dynamic-taint `source_symbol` and `writer_symbol` metadata out of helper-runtime proof because those fields can describe requested/static taint attribution rather than an observed executed helper.
   - preserves explicit `runtime_observations=(..., {"symbols": [...]})` compatibility for callers that supply observed helper evidence directly.
 - `tools/debugger/tests/test_catalog.py`
   - adds a regression where dynamic-taint related symbols name `PlaceString` but the output-sink mirror remains partial because no observed runtime helper label exists.
   - adds a positive regression where a dynamic write attribution at `PlaceString+0x3` satisfies the `PlaceString` helper requirement through an observed PC label.
+  - adds a regression where dynamic-taint `source_symbol="PlaceString"` does not satisfy the helper requirement without an observed PC label.
 
 Validation after patch:
 
-- Focused output-sink helper regressions plus existing effect-trace/watch helper regressions: 4 passed.
+- Focused output-sink helper regressions plus existing effect-trace/watch helper regressions: 5 passed.
 - Focused event-runtime materialization compatibility regressions: 2 passed.
-- Full debugger unittest discovery: 538 passed.
+- Full debugger unittest discovery: 539 passed.
 - `PYTHONPYCACHEPREFIX=.local\tmp\pycompile_cache python -m py_compile tools\debugger\mirrors.py tools\debugger\tests\test_catalog.py`: passed.
 - `python -m tools.debugger hardware-regression-gate --execute`: passed as a command, still intentionally `passed=False`; reported 0/10 cases passing, 10 blocking cases, 4 runtime-observed emulator cases, 0 hardware-proof cases, and 10 static-blocker cases.
 - `python -m tools.debugger audit`: passed as a command, still `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.

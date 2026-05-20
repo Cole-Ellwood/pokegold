@@ -2041,12 +2041,10 @@ def dynamic_taint_observed_runtime_symbols(item: dict[str, Any]) -> list[str]:
         [
             str(item.get("pc_label", "")),
             str(item.get("pc_symbol", "")),
-            str(item.get("source_symbol", "")),
-            str(item.get("writer_symbol", "")),
             *[
                 str(step.get(key, ""))
                 for step in dict_items(item.get("steps"))
-                for key in ("pc_label", "pc_symbol", "source_symbol", "writer_symbol")
+                for key in ("pc_label", "pc_symbol")
             ],
         ]
     )

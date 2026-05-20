@@ -29744,6 +29744,63 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(match["missing_runtime_symbol_groups"], [])
         self.assertIn("PlaceString", match["observed_runtime_symbols"])
 
+    def test_compare_output_sink_mirror_does_not_use_dynamic_source_symbol_as_runtime_helper(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "content_state.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_content_state_materialization",
+                        "valid": True,
+                        "executed": False,
+                        "materializations": [
+                            {
+                                "scenario_id": "content_scenario_22_0000",
+                                "scenario_type": "ui_tilemap_update",
+                                "precondition_kind": "ui_output_sink",
+                                "status": "planned",
+                                "source_file": "engine/menus/unit_menu.asm",
+                                "runtime_symbols": ["PlaceString"],
+                                "outputs": [
+                                    {
+                                        "kind": "ui_tilemap_output",
+                                        "state_symbol": "wTilemap",
+                                        "producer_symbol": "PlaceString",
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            (root / "taint.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_dynamic_taint_report",
+                        "valid": True,
+                        "paths": [
+                            {
+                                "sink": "wTilemap",
+                                "related_symbols": ["wTilemap"],
+                                "source_symbol": "PlaceString",
+                                "proof_status": "taint_proven",
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            compare = build_compare_plan(reports=("content_state.json", "taint.json"), root=root)
+
+        match = next(item for item in compare["matches"] if item["id"] == "content_output_behavioral_mirror")
+
+        self.assertEqual(match["status"], "partial")
+        self.assertEqual(match["covered_output_count"], 1)
+        self.assertEqual(match["missing_runtime_symbol_groups"], [["PlaceString"]])
+        self.assertEqual(match["observed_runtime_symbols"], [])
+
     def test_compare_output_sink_mirror_does_not_pass_from_content_state_metadata(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
