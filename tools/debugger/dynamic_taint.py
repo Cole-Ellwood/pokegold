@@ -17,7 +17,7 @@ from .address import (
 )
 from .catalog import ROOT
 from .coverage import load_traces
-from .evidence import evidence_atom, merge_evidence_atoms
+from .evidence import evidence_atom, evidence_atoms, merge_evidence_atoms, normalize_proof_status
 from .explain import base_label
 from .hardware_evidence import hardware_runtime_event_boundary
 from .ingest import sha256_file
@@ -51,6 +51,15 @@ INDEX_REG = {0: "b", 1: "c", 2: "d", 3: "e", 4: "h", 5: "l", 6: "[hl]", 7: "a"}
 CONDITIONAL_CALLS = {0xC4: "nz", 0xCC: "z", 0xD4: "nc", 0xDC: "c"}
 CONDITIONAL_RETS = {0xC0: "nz", 0xC8: "z", 0xD0: "nc", 0xD8: "c"}
 RST_TARGETS = {0xC7: 0x00, 0xCF: 0x08, 0xD7: 0x10, 0xDF: 0x18, 0xE7: 0x20, 0xEF: 0x28, 0xF7: 0x30, 0xFF: 0x38}
+PROOF_STATUS_RANK = {
+    "planned_only": 0,
+    "state_materialized": 1,
+    "mirror_passed": 2,
+    "runtime_observed": 3,
+    "instruction_observed": 4,
+    "taint_proven": 5,
+    "mirror_failed": 5,
+}
 HARDWARE_EVENT_REQUIRED_MODELS = {
     "oam_dma",
     "cgb_vram_dma",
@@ -1943,6 +1952,13 @@ def instruction_findings_from_write_attributions(write_attributions: list[dict[s
         contributors = dict_items(attribution.get("contributors"))
         if not taint or not contributors:
             continue
+        proof_status = write_attribution_finding_proof_status(attribution)
+        proof_downgrade_reason = str(attribution.get("proof_downgrade_reason", ""))
+        if not attribution.get("proof_status") and not evidence_atoms(attribution.get("evidence_atoms")):
+            proof_downgrade_reason = (
+                proof_downgrade_reason
+                or "missing_explicit_write_attribution_proof_status"
+            )
         findings.append(
             {
                 "source": str(attribution.get("source", "")),
@@ -1957,13 +1973,26 @@ def instruction_findings_from_write_attributions(write_attributions: list[dict[s
                 "match_precision": str(attribution.get("match_precision", "")),
                 "bank_match": str(attribution.get("bank_match", "")),
                 "bank_source": str(attribution.get("bank_source", "")),
-                "proof_downgrade_reason": str(attribution.get("proof_downgrade_reason", "")),
+                "proof_downgrade_reason": proof_downgrade_reason,
                 "taint": taint,
-                "proof_status": str(attribution.get("proof_status") or "instruction_observed"),
+                "proof_status": proof_status,
+                "evidence_atoms": merge_evidence_atoms(attribution.get("evidence_atoms")),
                 "evidence": string_items(attribution.get("evidence")),
             }
         )
     return findings
+
+
+def write_attribution_finding_proof_status(attribution: dict[str, Any]) -> str:
+    if attribution.get("proof_status"):
+        return normalize_proof_status(attribution.get("proof_status"))
+    atom_statuses = [
+        normalize_proof_status(atom.get("proof_status"))
+        for atom in evidence_atoms(attribution.get("evidence_atoms"))
+    ]
+    if atom_statuses:
+        return min(atom_statuses, key=lambda status: PROOF_STATUS_RANK.get(status, 0))
+    return "planned_only"
 
 
 def instruction_finding_key(finding: dict[str, Any]) -> tuple[int, int, str]:
@@ -4971,7 +5000,7 @@ def build_paths(
                     }
                 ],
                 "evidence": evidence,
-                "evidence_atoms": [
+                "evidence_atoms": merge_evidence_atoms(
                     dynamic_path_evidence_atom(
                         target=target,
                         source=source,
@@ -4982,8 +5011,9 @@ def build_paths(
                         address=address,
                         taint=taint,
                         contributors=contributors,
-                    )
-                ],
+                    ),
+                    finding.get("evidence_atoms"),
+                ),
                 "related_symbols": unique_list(
                     [
                         target if not target_address(target) else "",

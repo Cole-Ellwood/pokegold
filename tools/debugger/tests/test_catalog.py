@@ -25,7 +25,12 @@ from tools.debugger.content_mirror import build_content_mirror_report
 from tools.debugger.content_scenarios import build_content_scenario_report
 from tools.debugger.content_state import build_content_state_report
 from tools.debugger.coverage import build_coverage_report
-from tools.debugger.dynamic_taint import build_dynamic_taint_report, build_paths, public_finding
+from tools.debugger.dynamic_taint import (
+    build_dynamic_taint_report,
+    build_paths,
+    instruction_findings_from_write_attributions,
+    public_finding,
+)
 from tools.debugger.effect_trace import attach_hardware_side_effect_proof_gates, build_effect_trace_report
 from tools.debugger.explain import build_explanation_report
 from tools.debugger.expect import build_expectation_report
@@ -8423,6 +8428,116 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(paths[0]["proof_status"], "planned_only")
         self.assertEqual(paths[0]["evidence_source_proof_status"], "planned_only")
         self.assertIn("legacy engine finding without explicit proof", paths[0]["evidence"])
+
+    def test_dynamic_taint_write_attribution_defaults_proofless_claim_to_planned(self) -> None:
+        findings = instruction_findings_from_write_attributions(
+            [
+                {
+                    "source": "legacy_instruction_trace.json",
+                    "seq": 0,
+                    "pc": 0x4000,
+                    "pc_label": "LegacyWriter",
+                    "mnemonic": "ld [nn], a",
+                    "sink": "wCurDamage",
+                    "address": 0xD141,
+                    "taint": ["move_power"],
+                    "contributors": [{"symbol": "move_power", "register": "a"}],
+                    "evidence": ["legacy write attribution without explicit proof"],
+                }
+            ]
+        )
+        paths = build_paths(
+            findings=findings,
+            sinks=[DamageSink("wCurDamage", 0xD141, 2)],
+            register_sources={"a": "move_power"},
+            source_memory={},
+            max_paths=10,
+        )
+
+        self.assertEqual(findings[0]["proof_status"], "planned_only")
+        self.assertEqual(
+            findings[0]["proof_downgrade_reason"],
+            "missing_explicit_write_attribution_proof_status",
+        )
+        self.assertEqual(paths[0]["proof_status"], "planned_only")
+        self.assertEqual(paths[0]["evidence_source_proof_status"], "planned_only")
+        self.assertEqual(
+            paths[0]["proof_downgrade_reason"],
+            "missing_explicit_write_attribution_proof_status",
+        )
+
+    def test_dynamic_taint_write_attribution_preserves_explicit_observed_proof(self) -> None:
+        findings = instruction_findings_from_write_attributions(
+            [
+                {
+                    "source": "instruction_trace.json",
+                    "seq": 0,
+                    "pc": 0x4000,
+                    "pc_label": "ObservedWriter",
+                    "mnemonic": "ld [nn], a",
+                    "sink": "wCurDamage",
+                    "address": 0xD141,
+                    "taint": ["move_power"],
+                    "contributors": [{"symbol": "move_power", "register": "a"}],
+                    "proof_status": "instruction_observed",
+                    "evidence": ["runtime instruction trace write attribution"],
+                }
+            ]
+        )
+        paths = build_paths(
+            findings=findings,
+            sinks=[DamageSink("wCurDamage", 0xD141, 2)],
+            register_sources={"a": "move_power"},
+            source_memory={},
+            max_paths=10,
+        )
+
+        self.assertEqual(findings[0]["proof_status"], "instruction_observed")
+        self.assertEqual(findings[0]["proof_downgrade_reason"], "")
+        self.assertEqual(paths[0]["proof_status"], "taint_proven")
+        self.assertEqual(paths[0]["evidence_source_proof_status"], "instruction_observed")
+
+    def test_dynamic_taint_write_attribution_uses_atom_proof_without_flat_status(self) -> None:
+        findings = instruction_findings_from_write_attributions(
+            [
+                {
+                    "source": "instruction_trace.json",
+                    "seq": 0,
+                    "pc": 0x4000,
+                    "pc_label": "AtomWriter",
+                    "mnemonic": "ld [nn], a",
+                    "sink": "wCurDamage",
+                    "address": 0xD141,
+                    "taint": ["move_power"],
+                    "contributors": [{"symbol": "move_power", "register": "a"}],
+                    "evidence_atoms": [
+                        {
+                            "claim_type": "dynamic_taint.write_attribution",
+                            "origin": "dynamic_taint",
+                            "observation_type": "instruction_trace_write_attribution",
+                            "proof_status": "instruction_observed",
+                            "source_report": "instruction_trace.json",
+                            "source_kind": "instruction_trace_write_attribution",
+                        }
+                    ],
+                }
+            ]
+        )
+        paths = build_paths(
+            findings=findings,
+            sinks=[DamageSink("wCurDamage", 0xD141, 2)],
+            register_sources={"a": "move_power"},
+            source_memory={},
+            max_paths=10,
+        )
+
+        self.assertEqual(findings[0]["proof_status"], "instruction_observed")
+        self.assertEqual(findings[0]["proof_downgrade_reason"], "")
+        self.assertEqual(paths[0]["proof_status"], "taint_proven")
+        self.assertEqual(paths[0]["evidence_source_proof_status"], "instruction_observed")
+        claim_types = [atom["claim_type"] for atom in paths[0]["evidence_atoms"]]
+        self.assertEqual(claim_types[0], "dynamic_taint.path")
+        self.assertIn("dynamic_taint.write_attribution", claim_types)
 
     def test_dynamic_taint_public_engine_finding_preserves_bank_unverified_match_proof(self) -> None:
         class Finding:

@@ -6453,3 +6453,42 @@ Remaining priority:
 
 - This improves proof precision for supplied typed evidence, but it does not create new dynamic-taint evidence, complete causal proof across subsystem boundaries, side-effect-complete reverse execution, or behavioral script/graphics/audio/map mirrors.
 - The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
+
+## Implementation Note - Dynamic-Taint Write-Attribution Proof Derivation
+
+Date: 2026-05-20.
+
+Context:
+
+- `tools/debugger/dynamic_taint.py` already kept proofless public dynamic-taint findings and path records at `planned_only`.
+- A narrower reconciliation path still converted legacy write-attribution records with taint/contributors but no explicit proof field into `instruction_observed` findings.
+- Those synthesized findings could then become `taint_proven` paths at a report/UI boundary even though the originating write attribution did not carry explicit proof.
+
+Primary references used:
+
+- No new external primary references were needed for this slice; it is an internal report-shape/proof-promotion patch.
+
+Implemented fix:
+
+- `tools/debugger/dynamic_taint.py`
+  - derives reconciled write-attribution finding proof from explicit `proof_status`, then weakest `evidence_atoms[].proof_status`, otherwise `planned_only`.
+  - adds `proof_downgrade_reason=missing_explicit_write_attribution_proof_status` for proofless legacy attributions.
+  - carries originating write-attribution `evidence_atoms` onto derived dynamic-taint paths so atom-backed proof is preserved across path/report consumers.
+- `tools/debugger/tests/test_catalog.py`
+  - adds a regression proving proofless legacy write attributions stay `planned_only`.
+  - adds a regression proving explicit `instruction_observed` attribution proof still promotes through a tainted observed path.
+  - adds a regression proving atom-level proof is honored even when the flat attribution proof field is absent.
+
+Validation after patch:
+
+- Focused dynamic-taint attribution/path proof regressions: 5 passed.
+- Full debugger unittest discovery: 547 passed.
+- `python -m tools.debugger audit`: passed as a command, still `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- `python -m tools.debugger hardware-regression-gate --execute`: passed as a command, still intentionally `passed=False`; reported 0/10 cases passing, 10 blocking cases, 4 runtime-observed emulator cases, 0 hardware-proof cases, and 10 static-blocker cases.
+- `PYTHONPYCACHEPREFIX=.local\tmp\pycompile_cache python -m py_compile tools\debugger\dynamic_taint.py tools\debugger\tests\test_catalog.py`: passed.
+- `git diff --check`: passed with unrelated pre-existing CRLF warnings in Boss AI trace/generated/doc fixture files.
+
+Remaining priority:
+
+- This closes another dynamic-taint proof-promotion path, but it does not add the missing non-mutating hardware event recorder, prove hardware side effects, complete reverse execution across CPU/hardware boundaries, or add full behavioral mirrors.
+- The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
