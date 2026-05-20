@@ -2073,10 +2073,22 @@ def effect_trace_weak_output_reason(
     if weak_concrete_writes:
         return "effect-trace concrete write proof is hardware-gated or otherwise not instruction-observed; output behavior was not proven"
     if weak_watch_hits:
+        if any(effect_trace_watch_hit_is_hardware_gated(hit) for hit in weak_watch_hits):
+            return "effect-trace watch hit is hardware-gated and lacks explicit runtime hardware-event evidence; output behavior was not proven"
         return "effect-trace watch hit target match is bank-unverified; concrete output behavior was not proven"
     if not has_events:
         return "compact effect-trace write_index has no concrete effect events; output behavior was not proven"
     return "effect-trace output evidence did not include a strong concrete write match"
+
+
+def effect_trace_watch_hit_is_hardware_gated(hit: dict[str, Any]) -> bool:
+    if hit.get("hardware_event_required") and not hit.get("hardware_runtime_event"):
+        return True
+    if str(hit.get("hardware_proof_gate") or "") == "explicit_runtime_event_missing":
+        return True
+    if str(hit.get("proof_downgrade_reason") or "").endswith("_requires_explicit_runtime_event"):
+        return True
+    return False
 
 
 def report_commands(data: dict[str, Any]) -> list[str]:

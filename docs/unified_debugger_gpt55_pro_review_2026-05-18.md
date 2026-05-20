@@ -6096,3 +6096,41 @@ Remaining priority:
 - This closes a UI/report promotion path for watched hardware side effects, but the underlying side-effect-complete reverse execution remains missing.
 - The non-mutating recorder and dedicated hardware regressions are still required before DMA, timer, interrupt, LCD, or boot-ROM paths can become hardware proof.
 - The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
+
+## Implementation Note - Output Mirror Hardware-Gated Watch-Hit Gap Reason
+
+Date: 2026-05-20.
+
+Context:
+
+- Content output-sink mirrors already rejected weak effect-trace evidence when a write/watch path was planned-only.
+- The weak runtime-evidence explanation for watch-hit paths was still too generic: all weak watch hits were described as bank-unverified even when the actual blocker was a hardware-gated DMA/timer/interrupt/LCD side effect with no explicit runtime hardware-event evidence.
+- This did not promote the mirror to passed, but it weakened the report boundary by pointing future agents at the wrong cause.
+
+Primary references used:
+
+- PyBoy public docs for hook behavior and opcode replacement: `https://docs.pyboy.dk/#pyboy.PyBoy.hook_register`
+- Pan Docs OAM DMA timing and bus restrictions: `https://gbdev.io/pandocs/OAM_DMA_Transfer.html`
+
+Implemented fix:
+
+- `tools/debugger/mirrors.py`
+  - now distinguishes hardware-gated weak effect-trace watch hits from bank-unverified weak watch hits when building output-sink mirror runtime-evidence gaps.
+  - preserves planned-only mirror status; this is an explanatory/report-boundary patch, not a proof promotion.
+- `tools/debugger/tests/test_catalog.py`
+  - keeps the existing hardware-gated concrete-write output-sink mirror regression.
+  - adds a separate hardware-gated weak watch-hit fixture and verifies the mirror gap names the missing explicit runtime hardware-event evidence.
+
+Validation after patch:
+
+- Focused output-sink mirror regressions: 2 passed.
+- Full debugger unittest discovery: 534 passed.
+- `PYTHONPYCACHEPREFIX=.local\tmp\pycompile_cache python -m py_compile tools\debugger\mirrors.py tools\debugger\tests\test_catalog.py`: passed.
+- `python -m tools.debugger hardware-regression-gate --execute`: passed as a command, still intentionally `passed=False`; reported 0/10 cases passing, 10 blocking cases, 4 runtime-observed emulator cases, 0 hardware-proof cases, and 10 static-blocker cases.
+- `python -m tools.debugger audit`: passed as a command, still `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+
+Remaining priority:
+
+- This improves blocker routing for output-sink mirrors, but it does not produce the missing runtime hardware events.
+- Full script/graphics/audio/map behavioral mirrors and side-effect-complete reverse execution remain incomplete.
+- The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
