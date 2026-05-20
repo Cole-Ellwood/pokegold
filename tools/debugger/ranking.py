@@ -3258,6 +3258,11 @@ def hardware_regression_case_evidence(case: dict[str, Any]) -> list[str]:
         f"hardware_behavior_proven={case.get('hardware_behavior_proven')}",
         f"static_blocker_count={case.get('static_blocker_count', 0)}",
         f"required_evidence={case.get('required_evidence', '')}",
+        (
+            "required_event_types=" + ",".join(string_items(case.get("required_event_types")))
+            if case.get("required_event_types")
+            else ""
+        ),
         f"pan_docs_url={case.get('pan_docs_url', '')}",
     ])
     return unique_string_items([item for item in evidence if item and not item.endswith("=")])
@@ -3268,6 +3273,11 @@ def hardware_fact_evidence(prefix: str, fact: dict[str, Any]) -> list[str]:
         f"{prefix}={fact.get('fact_type', '')}:{fact.get('status', '')}",
         f"{prefix}_proof_scope={fact.get('proof_scope', '')}" if fact.get("proof_scope") else "",
         f"{prefix}_source={fact.get('source', '')}" if fact.get("source") else "",
+        (
+            f"{prefix}_missing_event_types=" + ",".join(string_items(fact.get("missing_event_types")))
+            if fact.get("missing_event_types")
+            else ""
+        ),
     ]
 
 

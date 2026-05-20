@@ -16,6 +16,12 @@ PAN_DOCS_CASES: tuple[dict[str, Any], ...] = (
         "title": "TIMA overflow cycle A write cancels reload and IF request",
         "pan_docs_url": "https://gbdev.io/pandocs/Timer_Obscure_Behaviour.html",
         "required_evidence": "cycle-exact TIMA overflow runtime event with a TIMA write during cycle A",
+        "required_event_types": (
+            "timer_overflow",
+            "tima_write_cycle_a",
+            "overflow_reload_cancelled",
+            "if_timer_request_cancelled",
+        ),
         "hardware_models": ("timer_tima_overflow",),
         "pyboy_gap_ids": ("pyboy_timer_no_overflow_ab_cycle_model",),
     },
@@ -25,6 +31,12 @@ PAN_DOCS_CASES: tuple[dict[str, Any], ...] = (
         "title": "TIMA overflow cycle B TIMA write is overwritten by TMA reload",
         "pan_docs_url": "https://gbdev.io/pandocs/Timer_Obscure_Behaviour.html",
         "required_evidence": "cycle-exact TIMA overflow runtime event with a TIMA write during cycle B",
+        "required_event_types": (
+            "timer_overflow",
+            "tima_write_cycle_b",
+            "tma_reload_to_tima",
+            "if_timer_request",
+        ),
         "hardware_models": ("timer_tima_overflow",),
         "pyboy_gap_ids": ("pyboy_timer_no_overflow_ab_cycle_model",),
     },
@@ -34,6 +46,12 @@ PAN_DOCS_CASES: tuple[dict[str, Any], ...] = (
         "title": "TIMA overflow cycle B TMA write also changes the TIMA reload value",
         "pan_docs_url": "https://gbdev.io/pandocs/Timer_Obscure_Behaviour.html",
         "required_evidence": "cycle-exact TIMA overflow runtime event with a TMA write during cycle B",
+        "required_event_types": (
+            "timer_overflow",
+            "tma_write_cycle_b",
+            "tma_reload_to_tima",
+            "if_timer_request",
+        ),
         "hardware_models": ("timer_tima_overflow",),
         "pyboy_gap_ids": ("pyboy_timer_no_overflow_ab_cycle_model",),
     },
@@ -43,6 +61,12 @@ PAN_DOCS_CASES: tuple[dict[str, Any], ...] = (
         "title": "FF46 OAM DMA consumes 160 M-cycles before normal CPU access resumes",
         "pan_docs_url": "https://gbdev.io/pandocs/OAM_DMA_Transfer.html",
         "required_evidence": "runtime OAM DMA start/copy/end events with elapsed 160 M-cycles",
+        "required_event_types": (
+            "oam_dma_start",
+            "oam_dma_copy",
+            "oam_dma_end",
+            "elapsed_160_mcycles",
+        ),
         "hardware_models": ("oam_dma",),
         "hook_matrix_row": "oam_dma_ff46",
         "hook_observation": "observes_post_dma",
@@ -54,6 +78,11 @@ PAN_DOCS_CASES: tuple[dict[str, Any], ...] = (
         "title": "DMG OAM DMA restricts CPU access to HRAM during the transfer",
         "pan_docs_url": "https://gbdev.io/pandocs/OAM_DMA_Transfer.html",
         "required_evidence": "runtime OAM DMA bus-conflict event proving non-HRAM access is blocked during transfer",
+        "required_event_types": (
+            "oam_dma_start",
+            "oam_dma_bus_conflict",
+            "cpu_non_hram_blocked",
+        ),
         "hardware_models": ("oam_dma",),
         "hook_matrix_row": "oam_dma_ff46",
         "hook_observation": "observes_post_dma",
@@ -65,6 +94,12 @@ PAN_DOCS_CASES: tuple[dict[str, Any], ...] = (
         "title": "CGB general-purpose VRAM DMA halts CPU until all requested bytes complete",
         "pan_docs_url": "https://gbdev.io/pandocs/CGB_Registers.html#ff51ff55--hdma1hdma5-vram-dma",
         "required_evidence": "runtime FF55 GP DMA event with source/destination/length and elapsed block timing",
+        "required_event_types": (
+            "hdma_start",
+            "hdma_block_copy",
+            "gp_dma_cpu_halt",
+            "ff55_complete",
+        ),
         "hardware_models": ("cgb_vram_dma",),
         "hook_matrix_row": "cgb_vram_dma_ff55",
         "hook_observation": "observes_post_dma",
@@ -76,6 +111,13 @@ PAN_DOCS_CASES: tuple[dict[str, Any], ...] = (
         "title": "CGB HBlank VRAM DMA transfers one 16-byte block per HBlank with correct speed timing",
         "pan_docs_url": "https://gbdev.io/pandocs/CGB_Registers.html#ff51ff55--hdma1hdma5-vram-dma",
         "required_evidence": "runtime HBlank DMA block events tied to LCD mode 0 and double-speed timing",
+        "required_event_types": (
+            "hdma_start",
+            "hdma_block_copy",
+            "lcd_mode_edge",
+            "hblank_block_timing",
+            "double_speed_timing",
+        ),
         "hardware_models": ("cgb_vram_dma", "lcd_mode_edge"),
         "pyboy_gap_ids": ("pyboy_hdma_double_speed_todo", "pyboy_lcd_fixed_bucket_modes"),
     },
@@ -85,6 +127,10 @@ PAN_DOCS_CASES: tuple[dict[str, Any], ...] = (
         "title": "Interrupt entry pushes the current PC to the stack before jumping to the vector",
         "pan_docs_url": "https://gbdev.io/pandocs/Interrupts.html",
         "required_evidence": "runtime interrupt_enter and stack_write events with vector, SP, and pushed PC",
+        "required_event_types": (
+            "interrupt_enter",
+            "stack_write",
+        ),
         "hardware_models": ("interrupt_entry",),
         "hook_matrix_row": "interrupt_entry",
         "hook_observation": "observes_post_interrupt",
@@ -96,6 +142,12 @@ PAN_DOCS_CASES: tuple[dict[str, Any], ...] = (
         "title": "Real boot ROM plus Pokemon Gold reaches documented CGB/DMG post-boot CPU and register state",
         "pan_docs_url": "https://gbdev.io/pandocs/Power_Up_Sequence.html",
         "required_evidence": "runtime boot-ROM execution with real boot ROM artifact, Pokemon Gold ROM hash, and post-boot register/IO state",
+        "required_event_types": (
+            "boot_rom_execute",
+            "pokemon_gold_rom_hash",
+            "post_boot_cpu_registers",
+            "post_boot_io_registers",
+        ),
         "hardware_models": ("boot_rom_end_state",),
         "pyboy_gap_ids": (),
         "requires_bootrom": True,
@@ -106,6 +158,12 @@ PAN_DOCS_CASES: tuple[dict[str, Any], ...] = (
         "title": "LCD mode edges and memory access restrictions match dot-level rendering timing",
         "pan_docs_url": "https://gbdev.io/pandocs/Rendering.html",
         "required_evidence": "runtime LCD mode-edge events with dot position, mode, and VRAM/OAM accessibility",
+        "required_event_types": (
+            "lcd_mode_edge",
+            "dot_position",
+            "vram_access_restriction",
+            "oam_access_restriction",
+        ),
         "hardware_models": ("lcd_mode_edge", "ppu_lcd_mode"),
         "pyboy_gap_ids": ("pyboy_lcd_fixed_bucket_modes",),
     },
@@ -269,7 +327,7 @@ def build_hardware_regression_report(
         ],
         "known_limits": [
             "This gate is intentionally strict: PyBoy hook observations and modeled effect traces do not satisfy Pan Docs hardware cases by themselves.",
-            "A case passes only when explicit hardware-event evidence or a dedicated hardware-regression result marks that exact case passed.",
+            "A case passes only when a dedicated hardware-regression result marks that exact case passed and includes the case-specific required hardware event types.",
             "Boot-ROM end-state proof needs a real boot ROM artifact and Pokemon Gold ROM runtime evidence; file presence alone is not enough.",
         ],
     }
@@ -345,6 +403,7 @@ def build_case_result(
     requested_static_facts = {
         "pan_docs_url": case["pan_docs_url"],
         "required_evidence": case["required_evidence"],
+        "required_event_types": list(case.get("required_event_types", ())),
         "hardware_models": list(case.get("hardware_models", ())),
         "pyboy_gap_ids": list(case.get("pyboy_gap_ids", ())),
         "requires_bootrom": bool(case.get("requires_bootrom")),
@@ -376,6 +435,7 @@ def build_case_result(
         "title": case["title"],
         "pan_docs_url": case["pan_docs_url"],
         "required_evidence": case["required_evidence"],
+        "required_event_types": list(case.get("required_event_types", ())),
         "hardware_models": list(case.get("hardware_models", ())),
         "hardware_passed": hardware_passed,
         "hardware_behavior_proven": hardware_passed,
@@ -418,50 +478,92 @@ def explicit_case_result_evidence(case: dict[str, Any], report: dict[str, Any], 
         if str(item.get("id", "")) != case["id"]:
             continue
         declared_pass = bool(item.get("hardware_passed") or item.get("passed"))
-        passed = declared_pass and explicit_case_item_hardware_proven(item)
+        proof = explicit_case_item_proof(case, item)
+        passed = declared_pass and bool(proof["passed"])
         if declared_pass and not passed:
-            status = "declared_pass_without_hardware_proof"
+            status = explicit_case_item_failure_status(proof)
             detail = (
                 str(item.get("detail") or item.get("title") or case["title"])
-                + "; ignored as a hardware pass because hardware_behavior_proven=true is missing"
+                + "; "
+                + explicit_case_item_failure_detail(proof)
             )
         else:
             status = "passed" if passed else str(item.get("gate_status", "not_passed"))
             detail = str(item.get("detail") or item.get("title") or case["title"])
-        out.append(
-            {
-                "class": "explicit_hardware_case_pass" if passed else "explicit_hardware_case_result",
-                "status": status,
-                "source": source,
-                "detail": detail,
-            }
-        )
+        out.append(explicit_case_evidence_item(passed, status=status, source=source, detail=detail, proof=proof))
     for case_id in string_items(report.get("hardware_regression_case_ids")):
-        if case_id == case["id"] and bool(report.get("hardware_behavior_proven")):
+        if case_id != case["id"] or not bool(report.get("hardware_behavior_proven")):
+            continue
+        proof = explicit_case_item_proof(case, report)
+        if proof["passed"]:
             out.append(
-                {
-                    "class": "explicit_hardware_case_pass",
-                    "status": "passed",
-                    "source": source,
-                    "detail": "report declares hardware_behavior_proven for this case id",
-                }
+                explicit_case_evidence_item(
+                    True,
+                    status="passed",
+                    source=source,
+                    detail="report declares hardware_behavior_proven and required hardware event types for this case id",
+                    proof=proof,
+                )
+            )
+        else:
+            out.append(
+                explicit_case_evidence_item(
+                    False,
+                    status=explicit_case_item_failure_status(proof),
+                    source=source,
+                    detail="report declares hardware_behavior_proven for this case id; "
+                    + explicit_case_item_failure_detail(proof),
+                    proof=proof,
+                )
             )
     if (
         str(report.get("hardware_regression_case_id", "")) == case["id"]
         and bool(report.get("hardware_behavior_proven"))
     ):
-        out.append(
-            {
-                "class": "explicit_hardware_case_pass",
-                "status": "passed",
-                "source": source,
-                "detail": "report declares hardware_behavior_proven for this case id",
-            }
-        )
+        proof = explicit_case_item_proof(case, report)
+        if proof["passed"]:
+            out.append(
+                explicit_case_evidence_item(
+                    True,
+                    status="passed",
+                    source=source,
+                    detail="report declares hardware_behavior_proven and required hardware event types for this case id",
+                    proof=proof,
+                )
+            )
+        else:
+            out.append(
+                explicit_case_evidence_item(
+                    False,
+                    status=explicit_case_item_failure_status(proof),
+                    source=source,
+                    detail="report declares hardware_behavior_proven for this case id; "
+                    + explicit_case_item_failure_detail(proof),
+                    proof=proof,
+                )
+            )
     return out
 
 
-def explicit_case_item_hardware_proven(item: dict[str, Any]) -> bool:
+def explicit_case_item_hardware_proven(case: dict[str, Any], item: dict[str, Any]) -> bool:
+    return bool(explicit_case_item_proof(case, item)["passed"])
+
+
+def explicit_case_item_proof(case: dict[str, Any], item: dict[str, Any]) -> dict[str, Any]:
+    hardware_proven = explicit_case_item_declares_hardware_proof(item)
+    required = [normalize_event_type(event_type) for event_type in string_items(case.get("required_event_types"))]
+    observed = sorted(hardware_event_types(item))
+    missing = [event_type for event_type in required if event_type not in observed]
+    return {
+        "passed": hardware_proven and not missing,
+        "hardware_proven_declared": hardware_proven,
+        "required_event_types": required,
+        "observed_event_types": observed,
+        "missing_event_types": missing,
+    }
+
+
+def explicit_case_item_declares_hardware_proof(item: dict[str, Any]) -> bool:
     if item.get("hardware_behavior_proven") is True:
         return True
     if item.get("hardware_event_observed") is True:
@@ -474,6 +576,84 @@ def explicit_case_item_hardware_proven(item: dict[str, Any]) -> bool:
         or evidence_source in EXPLICIT_HARDWARE_EVIDENCE
         or evidence_status in EXPLICIT_HARDWARE_EVIDENCE
     )
+
+
+def explicit_case_item_failure_status(proof: dict[str, Any]) -> str:
+    if not proof.get("hardware_proven_declared"):
+        return "declared_pass_without_hardware_proof"
+    return "declared_pass_without_required_hardware_events"
+
+
+def explicit_case_item_failure_detail(proof: dict[str, Any]) -> str:
+    if not proof.get("hardware_proven_declared"):
+        return "ignored as a hardware pass because hardware_behavior_proven=true is missing"
+    missing = string_items(proof.get("missing_event_types"))
+    if missing:
+        return "ignored as a hardware pass because required hardware event types are missing: " + ", ".join(missing)
+    return "ignored as a hardware pass because required hardware event coverage was not proven"
+
+
+def explicit_case_evidence_item(
+    passed: bool,
+    *,
+    status: str,
+    source: str,
+    detail: str,
+    proof: dict[str, Any],
+) -> dict[str, Any]:
+    return {
+        "class": "explicit_hardware_case_pass" if passed else "explicit_hardware_case_result",
+        "status": status,
+        "source": source,
+        "detail": detail,
+        "required_event_types": string_items(proof.get("required_event_types")),
+        "observed_event_types": string_items(proof.get("observed_event_types")),
+        "missing_event_types": string_items(proof.get("missing_event_types")),
+    }
+
+
+def hardware_event_types(item: dict[str, Any]) -> set[str]:
+    out: set[str] = set()
+    for key in (
+        "hardware_event_type",
+        "hardware_event_types",
+        "event_type",
+        "event_types",
+        "observed_event_type",
+        "observed_event_types",
+    ):
+        out.update(event_type_values(item.get(key)))
+    for event in [*dict_items(item.get("hardware_events")), *dict_items(item.get("events"))]:
+        for key in (
+            "hardware_event_type",
+            "hardware_event_types",
+            "event_type",
+            "event_types",
+            "type",
+            "kind",
+        ):
+            out.update(event_type_values(event.get(key)))
+    return {event_type for event_type in out if event_type}
+
+
+def event_type_values(value: Any) -> set[str]:
+    if isinstance(value, dict):
+        out: set[str] = set()
+        for key in ("hardware_event_type", "event_type", "type", "kind"):
+            out.update(event_type_values(value.get(key)))
+        return out
+    if isinstance(value, (list, tuple)):
+        out: set[str] = set()
+        for item in value:
+            out.update(event_type_values(item))
+        return out
+    if value in {None, ""}:
+        return set()
+    return {normalize_event_type(str(value))}
+
+
+def normalize_event_type(value: str) -> str:
+    return str(value).strip().lower().replace("-", "_").replace(" ", "_")
 
 
 def hook_order_case_evidence(case: dict[str, Any], report: dict[str, Any], *, source: str) -> list[dict[str, Any]]:
@@ -532,9 +712,9 @@ def hardware_runtime_event_present(item: dict[str, Any]) -> bool:
     )
 
 
-def summarize_evidence_fact(item: dict[str, Any]) -> dict[str, str]:
+def summarize_evidence_fact(item: dict[str, Any]) -> dict[str, Any]:
     class_name = str(item.get("class", ""))
-    return {
+    fact: dict[str, Any] = {
         "class": class_name,
         "fact_type": evidence_fact_type(class_name),
         "proof_scope": evidence_proof_scope(class_name),
@@ -542,6 +722,11 @@ def summarize_evidence_fact(item: dict[str, Any]) -> dict[str, str]:
         "source": str(item.get("source", "")),
         "detail": str(item.get("detail", "")),
     }
+    for key in ("required_event_types", "observed_event_types", "missing_event_types"):
+        values = string_items(item.get(key))
+        if values:
+            fact[key] = values
+    return fact
 
 
 def evidence_fact_type(class_name: str) -> str:

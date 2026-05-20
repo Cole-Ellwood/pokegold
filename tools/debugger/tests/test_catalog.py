@@ -153,6 +153,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("Pan Docs hardware regression gate", gap_text)
         self.assertIn("observed emulator/runtime facts", gap_text)
         self.assertIn("downstream proof_scope values", gap_text)
+        self.assertIn("required case-specific hardware event types", gap_text)
         self.assertIn("requested-static versus observed-runtime address fact boundaries", gap_text)
         self.assertIn("hardware-gated effect-trace side effects and bank-unverified watch hits", gap_text)
         self.assertIn(
@@ -233,6 +234,8 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         bootrom = next(case for case in report["cases"] if case["id"] == "boot_rom_pokemon_gold_end_state")
         self.assertGreaterEqual(bootrom["static_blocker_count"], 1)
         self.assertEqual(bootrom["requested_static_facts"]["requires_bootrom"], True)
+        self.assertIn("post_boot_cpu_registers", bootrom["required_event_types"])
+        self.assertIn("post_boot_cpu_registers", bootrom["requested_static_facts"]["required_event_types"])
         self.assertEqual(bootrom["observed_runtime_fact_count"], 0)
 
     def test_hardware_regression_gate_uses_hook_order_without_promoting_to_hardware(self) -> None:
@@ -411,6 +414,10 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
             "valid": True,
             "hardware_behavior_proven": True,
             "hardware_regression_case_id": "interrupt_entry_stack_writes_current_pc",
+            "hardware_events": [
+                {"event_type": "interrupt_enter"},
+                {"event_type": "stack_write"},
+            ],
         }
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -424,7 +431,36 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(case["hardware_proof_fact_count"], 1)
         self.assertEqual(case["hardware_proof_facts"][0]["fact_type"], "dedicated_hardware_case_proof")
         self.assertEqual(case["hardware_proof_facts"][0]["proof_scope"], "case_hardware_proof")
+        self.assertEqual(case["hardware_proof_facts"][0]["observed_event_types"], ["interrupt_enter", "stack_write"])
         self.assertFalse(report["passed"])
+
+    def test_hardware_regression_gate_rejects_case_pass_without_case_events(self) -> None:
+        weak = {
+            "kind": "dedicated_hardware_regression_result",
+            "valid": True,
+            "hardware_behavior_proven": True,
+            "hardware_regression_case_id": "interrupt_entry_stack_writes_current_pc",
+            "hardware_events": [{"event_type": "interrupt_enter"}],
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "weak.json").write_text(json.dumps(weak), encoding="utf-8")
+            report = build_hardware_regression_report(reports=("weak.json",), root=root)
+
+        case = next(case for case in report["cases"] if case["id"] == "interrupt_entry_stack_writes_current_pc")
+        weak_evidence = next(
+            item
+            for item in case["evidence"]
+            if item["class"] == "explicit_hardware_case_result"
+        )
+
+        self.assertFalse(report["passed"])
+        self.assertFalse(case["hardware_passed"])
+        self.assertEqual(case["proof_status"], "planned_only")
+        self.assertEqual(case["hardware_proof_fact_count"], 0)
+        self.assertEqual(weak_evidence["status"], "declared_pass_without_required_hardware_events")
+        self.assertEqual(weak_evidence["missing_event_types"], ["stack_write"])
+        self.assertIn("stack_write", weak_evidence["detail"])
 
     def test_hardware_regression_gate_rejects_case_pass_without_hardware_proof(self) -> None:
         weak = {
@@ -456,6 +492,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(case["proof_status"], "planned_only")
         self.assertEqual(weak_evidence["status"], "declared_pass_without_hardware_proof")
         self.assertIn("hardware_behavior_proven=true is missing", weak_evidence["detail"])
+        self.assertIn("oam_dma_copy", weak_evidence["missing_event_types"])
 
     def test_hardware_regression_gate_ignores_invalid_explicit_case_pass(self) -> None:
         invalid = {

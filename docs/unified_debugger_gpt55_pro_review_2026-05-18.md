@@ -5256,3 +5256,51 @@ Remaining priority from Pro:
 - This closes a downstream report/UI propagation leak for Pan Docs hardware case evidence, but it still does not add the missing dedicated hardware runner or non-mutating event recorder.
 - The hardware gate still reports no case-level proof for TIMA A/B-cycle behavior, OAM DMA timing/RAM-access restriction, CGB GP/HBlank VRAM DMA timing, interrupt-entry stack writes, boot-ROM end state, or LCD dot/mode edge timing without explicit exact evidence.
 - The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
+
+## Implementation Note - Case-Specific Hardware Event Requirements
+
+Date: 2026-05-20.
+
+Context:
+
+- The hardware regression gate correctly required `hardware_behavior_proven=true` for imported dedicated case passes, but a bare case pass could still omit the actual event coverage that made the Pan Docs claim true.
+- That was another proof-promotion boundary risk: a future hardware runner or PyBoy fork should be able to close cases, but only by supplying the event types that match the exact timer, DMA, interrupt, boot-ROM, or LCD behavior under test.
+
+References used:
+
+- Pan Docs TIMA overflow A/B-cycle behavior: `https://gbdev.io/pandocs/Timer_Obscure_Behaviour.html`
+- Pan Docs OAM DMA timing and bus restrictions: `https://gbdev.io/pandocs/OAM_DMA_Transfer.html`
+- Pan Docs CGB VRAM DMA GP/HBlank timing: `https://gbdev.io/pandocs/CGB_Registers.html#ff51ff55--hdma1hdma5-vram-dma`
+- Pan Docs interrupt entry stack/PC behavior: `https://gbdev.io/pandocs/Interrupts.html`
+- Pan Docs boot-ROM register end state: `https://gbdev.io/pandocs/Power_Up_Sequence.html`
+- Pan Docs rendering dot/mode timing and memory restrictions: `https://gbdev.io/pandocs/Rendering.html`
+
+Implemented fix:
+
+- `tools/debugger/hardware_regression.py`
+  - adds `required_event_types` to every Pan Docs hardware case.
+  - rejects imported dedicated case passes that declare `hardware_behavior_proven=true` but do not include the required case-specific event types in `hardware_events`, `event_types`, or related event fields.
+  - records observed and missing event types on explicit case evidence, preserving the report shape while adding proof-auditable fields.
+- `tools/debugger/ranking.py`, `tools/debugger/causal_graph.py`, and `tools/debugger/visualization.py`
+  - surface `required_event_types` and missing event types so downstream UI/report consumers do not flatten a weak external case result into hardware proof.
+- `tools/debugger/catalog.py`
+  - updates the replay/localization blocker wording to say hardware passes require both `hardware_behavior_proven=true` and the required case-specific hardware event types.
+- `tools/debugger/tests/test_catalog.py`
+  - verifies Pan Docs cases expose required event types.
+  - verifies a valid interrupt-entry case pass with `interrupt_enter` and `stack_write` events still passes that one case.
+  - verifies an imported pass missing `stack_write` stays planned-only and does not populate `hardware_proof_facts`.
+
+Validation after patch:
+
+- Focused hardware event-requirement regressions: 6 passed.
+- `python -m tools.debugger hardware-regression-gate --execute`: passed as a command, still intentionally `passed=False`; reported 0/10 cases passing, 10 blocking cases, 4 runtime-observed emulator cases, 0 hardware-proof cases, and 10 static-blocker cases.
+- Full debugger unittest discovery: 509 passed.
+- `python -m tools.debugger audit`: passed as a command, still `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- `python -m py_compile tools\debugger\hardware_regression.py tools\debugger\ranking.py tools\debugger\visualization.py tools\debugger\causal_graph.py tools\debugger\catalog.py tools\debugger\tests\test_catalog.py`: passed.
+- `git diff --check`: passed; it only reported existing CRLF normalization warnings in unrelated dirty files.
+
+Remaining priority from Pro:
+
+- This closes a dedicated-case import overclaim path, but it still does not implement the actual Pan Docs runtime case runner or non-mutating event recorder.
+- TIMA A/B-cycle cases, OAM DMA timing/RAM-access restriction, CGB GP/HBlank VRAM DMA timing, interrupt-entry stack writes, boot-ROM end state, and LCD dot/mode edge timing remain unproven without exact runtime case evidence.
+- The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
