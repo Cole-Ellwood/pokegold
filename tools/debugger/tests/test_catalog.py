@@ -228,8 +228,21 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
     def test_learnset_symptom_without_file_keeps_pokemon_data_route(self) -> None:
         report = triage_request(symptom="give Chikorita a new level-up move and verify the ROM uses it")
         match_ids = {match["id"] for match in report["matches"]}
+        commands = "\n".join(report["commands"])
+        pokemon_match = next(match for match in report["matches"] if match["id"] == "pokemon_data")
 
         self.assertIn("pokemon_data", match_ids)
+        self.assertEqual(pokemon_match["inferred_changed_file"], "data/pokemon/evos_attacks.asm")
+        self.assertIn("content-mirror --changed-file data/pokemon/evos_attacks.asm", commands)
+        self.assertNotIn("<changed_file>", commands)
+
+    def test_pokemon_data_symptom_infers_tmhm_source_file(self) -> None:
+        report = triage_request(symptom="add a new TM compatibility and verify it")
+        pokemon_match = next(match for match in report["matches"] if match["id"] == "pokemon_data")
+        commands = "\n".join(report["commands"])
+
+        self.assertEqual(pokemon_match["inferred_changed_file"], "data/moves/tmhm_moves.asm")
+        self.assertIn("content-mirror --changed-file data/moves/tmhm_moves.asm", commands)
 
     def test_symptom_keyword_matching_does_not_match_inside_words(self) -> None:
         report = triage_request(symptom="Air Balloon Ground immunity")
@@ -24030,6 +24043,15 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
             counterexamples,
         )
         self.assertNotIn("<changed_file>", commands + counterexamples)
+
+    def test_suggest_tests_infers_learnset_source_from_symptom(self) -> None:
+        report = suggest_tests(symptom="give Chikorita a new level-up move and verify the ROM uses it")
+        commands = "\n".join(report["commands"])
+        match = next(item for item in report["matches"] if item["id"] == "pokemon_data_counterexamples")
+
+        self.assertEqual(match["inferred_changed_file"], "data/pokemon/evos_attacks.asm")
+        self.assertIn("content-mirror --changed-file data/pokemon/evos_attacks.asm", commands)
+        self.assertNotIn("<changed_file>", commands)
 
     def test_suggest_tests_consumes_content_fuzz_reports(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

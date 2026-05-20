@@ -616,6 +616,12 @@ def triage_request(
         symptom_hit = bool(matched_keywords)
         if not path_hit and not symptom_hit:
             continue
+        command_changed_files = changed_files
+        inferred_changed_file = ""
+        if not command_changed_files and symptom_hit:
+            inferred_changed_file = _inferred_changed_file_for_rule(rule.id, symptom_text)
+            if inferred_changed_file:
+                command_changed_files = (inferred_changed_file,)
         seen.add(rule.id)
         matches.append(
             _triage_match(
@@ -623,7 +629,8 @@ def triage_request(
                 path_hit=path_hit,
                 symptom_hit=symptom_hit,
                 matched_symptom_keywords=matched_keywords,
-                changed_files=changed_files,
+                changed_files=command_changed_files,
+                inferred_changed_file=inferred_changed_file,
             )
         )
 
@@ -767,6 +774,7 @@ def _triage_match(
     symptom_hit: bool,
     matched_symptom_keywords: list[str],
     changed_files: tuple[str, ...] = (),
+    inferred_changed_file: str = "",
 ) -> dict[str, Any]:
     matched_by = []
     if path_hit:
@@ -783,7 +791,26 @@ def _triage_match(
     }
     if matched_symptom_keywords:
         match["matched_symptom_keywords"] = matched_symptom_keywords
+    if inferred_changed_file:
+        match["inferred_changed_file"] = inferred_changed_file
     return match
+
+
+def _inferred_changed_file_for_rule(rule_id: str, symptom_text: str) -> str:
+    if rule_id != "pokemon_data":
+        return ""
+    if keyword_matches("egg move", symptom_text):
+        return "data/pokemon/egg_moves.asm"
+    if keyword_matches("tm compatibility", symptom_text) or keyword_matches("hm compatibility", symptom_text):
+        return "data/moves/tmhm_moves.asm"
+    if (
+        keyword_matches("level-up", symptom_text)
+        or keyword_matches("level up", symptom_text)
+        or keyword_matches("learnset", symptom_text)
+        or keyword_matches("level-up move", symptom_text)
+    ):
+        return "data/pokemon/evos_attacks.asm"
+    return ""
 
 
 def _materialize_commands(commands: tuple[str, ...], *, changed_files: tuple[str, ...]) -> list[str]:

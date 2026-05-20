@@ -222,6 +222,12 @@ def suggest_tests(
         )
         if not path_hit and not symbol_hit and not symptom_hit:
             continue
+        command_changed_files = changed_files
+        inferred_changed_file = ""
+        if not command_changed_files and symptom_hit:
+            inferred_changed_file = inferred_changed_file_for_rule(rule.id, symptom_text)
+            if inferred_changed_file:
+                command_changed_files = (inferred_changed_file,)
         match = {
             "id": rule.id,
             "title": rule.title,
@@ -238,7 +244,9 @@ def suggest_tests(
             "counterexample_commands": list(rule.counterexample_commands),
             "notes": list(rule.notes),
         }
-        materialize_changed_file_commands(match, changed_files=changed_files)
+        if inferred_changed_file:
+            match["inferred_changed_file"] = inferred_changed_file
+        materialize_changed_file_commands(match, changed_files=command_changed_files)
         matches.append(match)
 
     if not matches and symbols:
@@ -632,6 +640,23 @@ def single_changed_file_command_arg(changed_files: tuple[str, ...]) -> str:
     if len(changed_files) != 1:
         return ""
     return changed_files[0].replace("\\", "/").strip()
+
+
+def inferred_changed_file_for_rule(rule_id: str, symptom_text: str) -> str:
+    if rule_id != "pokemon_data_counterexamples":
+        return ""
+    if keyword_matches("egg move", symptom_text):
+        return "data/pokemon/egg_moves.asm"
+    if keyword_matches("tm compatibility", symptom_text) or keyword_matches("hm compatibility", symptom_text):
+        return "data/moves/tmhm_moves.asm"
+    if (
+        keyword_matches("level-up", symptom_text)
+        or keyword_matches("level up", symptom_text)
+        or keyword_matches("learnset", symptom_text)
+        or keyword_matches("level-up move", symptom_text)
+    ):
+        return "data/pokemon/evos_attacks.asm"
+    return ""
 
 
 def dict_items(value: Any) -> list[dict[str, Any]]:
