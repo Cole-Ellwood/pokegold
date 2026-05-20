@@ -73,6 +73,11 @@ def reverse_query_address_boundary_summary(result: dict[str, Any]) -> str:
     return " ".join(evidence[:6])
 
 
+def reverse_query_address_boundary_blocks_proof(result: dict[str, Any]) -> bool:
+    boundary = dict_value(result.get("address_fact_boundary"))
+    return bool(boundary and boundary.get("exact_runtime_address_proven") is False)
+
+
 def address_fact_key(value: dict[str, Any]) -> str:
     return str(value.get("address_key") or value.get("address") or "")
 

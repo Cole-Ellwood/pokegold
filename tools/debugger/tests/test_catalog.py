@@ -18832,6 +18832,85 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("proof=planned_only", reverse_event["detail"])
         self.assertEqual(reverse_node["proof_status"], "planned_only")
 
+    def test_reverse_query_address_boundary_false_blocks_downstream_proof_promotion(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "reverse.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_reverse_query",
+                        "valid": True,
+                        "proof_status": "instruction_observed",
+                        "results": [
+                            {
+                                "target": {"symbol": "wCurDamage", "evidence": "wCurDamage"},
+                                "matched_address": "D141",
+                                "matched_address_key": "wramx:01:D141",
+                                "match_precision": "bus_address_unverified_bank",
+                                "bank_match": "ambiguous_runtime_bank",
+                                "last_writer_seq": 1,
+                                "last_writer_pc": "01:4000",
+                                "last_writer": {
+                                    "seq": 1,
+                                    "pc_label": "Writer",
+                                    "access": "write",
+                                    "kind": "memory_write",
+                                    "address": "D141",
+                                    "address_key": "wramx:01:D141",
+                                },
+                                "validation": {
+                                    "status": "effect_event_matched",
+                                    "proof_status": "instruction_observed",
+                                },
+                                "requested_static_address": {
+                                    "fact_type": "requested_static_address",
+                                    "address_key": "wram:--:D141",
+                                },
+                                "observed_runtime_address": {
+                                    "fact_type": "observed_runtime_address",
+                                    "address_key": "wramx:01:D141",
+                                    "proof_status": "instruction_observed",
+                                },
+                                "address_fact_boundary": {
+                                    "kind": "requested_static_vs_observed_runtime_address",
+                                    "target_exact_key_required": False,
+                                    "runtime_key_exact": True,
+                                    "match_precision": "bus_address_unverified_bank",
+                                    "bank_match": "ambiguous_runtime_bank",
+                                    "exact_runtime_address_proven": False,
+                                    "proof_status": "planned_only",
+                                },
+                                "evidence": ["contradictory imported packet"],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            ranked = rank_findings(reports=("reverse.json",), root=root)
+            impact = build_impact_report(reports=("reverse.json",), root=root)
+            graph = build_causal_graph_report(reports=("reverse.json",), root=root)
+            visualization = build_visualization_report(reports=("reverse.json",), root=root)
+
+        reverse_finding = next(item for item in ranked["findings"] if item["type"] == "reverse_query")
+        reverse_item = next(item for item in impact["items"] if item["type"] == "reverse_query")
+        reverse_node = next(item for item in graph["nodes"] if item["kind"] == "reverse_query")
+        reverse_event = next(item for item in visualization["timeline"] if item["event_type"] == "reverse_query")
+        visual_node = next(item for item in visualization["graph"]["nodes"] if item["type"] == "reverse_query")
+        graph_boundary_edge = next(edge for edge in graph["edges"] if edge["relation"] == "address_fact_boundary")
+        visual_boundary_edge = next(edge for edge in visualization["graph"]["edges"] if edge["relation"] == "address_fact_boundary")
+
+        self.assertEqual(reverse_finding["proof_status"], "planned_only")
+        self.assertEqual(reverse_item["proof_status"], "planned_only")
+        self.assertEqual(reverse_node["proof_status"], "planned_only")
+        self.assertEqual(reverse_event["proof_status"], "planned_only")
+        self.assertEqual(visual_node["proof_status"], "planned_only")
+        self.assertEqual(graph_boundary_edge["proof_status"], "planned_only")
+        self.assertEqual(visual_boundary_edge["proof_status"], "planned_only")
+        self.assertIn("address_boundary_exact_runtime_address_proven=false", reverse_finding["evidence"])
+        self.assertIn("proof=planned_only", reverse_event["detail"])
+
     def test_rank_impact_report_and_visualize_dynamic_taint_trace_synthesis(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

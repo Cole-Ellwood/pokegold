@@ -5,6 +5,7 @@ from typing import Any
 
 from .address_boundary import (
     reverse_query_address_boundary_addresses,
+    reverse_query_address_boundary_blocks_proof,
     reverse_query_address_boundary_evidence,
     reverse_query_address_boundary_fields,
 )
@@ -2058,6 +2059,8 @@ def dynamic_taint_edge_proof_status(proof_status: str, *, has_taint: bool) -> st
 
 
 def reverse_query_result_proof_status(result: dict[str, Any]) -> str:
+    if reverse_query_address_boundary_blocks_proof(result):
+        return "planned_only"
     explicit = normalize_proof_status(result.get("proof_status")) if result.get("proof_status") else ""
     if explicit:
         return explicit

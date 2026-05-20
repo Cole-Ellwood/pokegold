@@ -6,6 +6,7 @@ from typing import Any
 
 from .address_boundary import (
     reverse_query_address_boundary_addresses,
+    reverse_query_address_boundary_blocks_proof,
     reverse_query_address_boundary_evidence,
     reverse_query_address_boundary_fields,
 )
@@ -2227,6 +2228,9 @@ def reverse_query_findings(report: dict[str, Any], *, source: str) -> list[dict[
             for item in result_evidence
             if item.startswith("pre_state_")
         ]
+        proof_status = str(result.get("proof_status") or report.get("proof_status") or "planned_only")
+        if reverse_query_address_boundary_blocks_proof(result):
+            proof_status = "planned_only"
         finding_item = finding(
             finding_type="reverse_query",
             title=f"Reverse query: {label} last written at {result.get('last_writer_pc', '')}",
@@ -2257,7 +2261,7 @@ def reverse_query_findings(report: dict[str, Any], *, source: str) -> list[dict[
                     ],
                 ]
             ),
-            proof_status=str(result.get("proof_status") or report.get("proof_status") or "planned_only"),
+            proof_status=proof_status,
         )
         finding_item.update(reverse_query_address_boundary_fields(result))
         out.append(finding_item)

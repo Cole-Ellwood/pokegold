@@ -5125,26 +5125,31 @@ Implemented fix:
 
 - `tools/debugger/address_boundary.py`
   - adds shared formatting for reverse-query address-boundary fields, evidence strings, related address keys, and timeline summaries.
+  - exposes a boundary veto used by downstream consumers when `exact_runtime_address_proven=false`.
 - `tools/debugger/reverse_query.py`
   - prepends boundary evidence to each result and includes requested/observed address keys plus `exact_runtime_address_proven` in evidence atoms.
 - `tools/debugger/ranking.py`
   - carries `requested_static_address`, `observed_runtime_address`, and `address_fact_boundary` into reverse-query findings.
   - puts boundary evidence first so static reports and humans see proof caveats before older writer evidence.
+  - forces planned-only proof when an imported reverse-query result carries an unproven exact runtime address boundary, even if the rest of the packet claims stronger proof.
 - `tools/debugger/impact.py`
   - preserves reverse-query boundary fields when converting ranked findings into impact items.
 - `tools/debugger/causal_graph.py`
   - adds requested-static-address and observed-runtime-address nodes.
   - adds `requests_static_address`, `supplies_runtime_address`, and `address_fact_boundary` edges.
   - keeps the boundary edge `planned_only` unless `exact_runtime_address_proven=true`.
+  - treats `exact_runtime_address_proven=false` as a downstream proof-promotion veto for reverse-query nodes and edges.
 - `tools/debugger/visualization.py`
   - carries boundary fields into timeline events and graph nodes/edges.
   - adds visible requested/observed address nodes and boundary relations in the visualization graph.
+  - treats `exact_runtime_address_proven=false` as a downstream proof-promotion veto for reverse-query timeline and graph surfaces.
 - `tools/debugger/tests/test_catalog.py`
   - extends the ambiguous WRAM bank-collision reverse-query regression through ranked findings, impact items, static reports, causal graph, and visualization surfaces.
+  - adds a contradictory imported reverse-query packet regression where validation and report-level proof claim instruction-observed, but `exact_runtime_address_proven=false` keeps ranking, impact, graph, and visualization planned-only.
 
 Validation after patch:
 
-- Focused reverse-query boundary propagation regressions: 9 passed.
+- Focused reverse-query boundary propagation regressions: 10 passed.
 - `python -m py_compile tools\debugger\address_boundary.py tools\debugger\reverse_query.py tools\debugger\ranking.py tools\debugger\impact.py tools\debugger\causal_graph.py tools\debugger\visualization.py tools\debugger\tests\test_catalog.py`: passed.
 - Full debugger unittest discovery: 505 passed.
 - `python -m tools.debugger audit`: passed as a command, still `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
