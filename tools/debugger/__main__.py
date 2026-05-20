@@ -19,6 +19,7 @@ from .explain import build_explanation_report
 from .expect import build_expectation_report
 from .fuzz import build_fuzz_plan
 from .generate import build_generation_plan
+from .hardware_regression import build_hardware_regression_report
 from .hook_order import build_hook_order_probe_report
 from .impact import build_impact_report
 from .ingest import ingest_artifacts
@@ -338,6 +339,19 @@ def build_parser() -> argparse.ArgumentParser:
     hook_order_probe.add_argument("--frames", type=int, default=90)
     add_output_args(hook_order_probe)
     hook_order_probe.set_defaults(func=cmd_hook_order_probe)
+
+    hardware_regression = subparsers.add_parser("hardware-regression-gate")
+    hardware_regression.add_argument("--report", action="append", default=[])
+    hardware_regression.add_argument("--execute", action="store_true")
+    hardware_regression.add_argument("--bootrom", default="")
+    hardware_regression.add_argument("--rom", default="pokegold.gbc")
+    hardware_regression.add_argument(
+        "--strict",
+        action="store_true",
+        help="exit nonzero while any Pan Docs hardware regression gate is not proven",
+    )
+    add_output_args(hardware_regression)
+    hardware_regression.set_defaults(func=cmd_hardware_regression_gate)
 
     trace_instructions = subparsers.add_parser("trace-instructions")
     trace_instructions.add_argument("--rom", default="pokegold.gbc")
@@ -900,6 +914,19 @@ def cmd_reverse_query(args: argparse.Namespace) -> int:
     return 0 if report["valid"] else 1
 
 
+def cmd_hardware_regression_gate(args: argparse.Namespace) -> int:
+    report = build_hardware_regression_report(
+        reports=tuple(args.report),
+        execute=args.execute,
+        bootrom=args.bootrom,
+        rom_path=args.rom,
+    )
+    emit_report(report, args)
+    if args.strict and not report["passed"]:
+        return 1
+    return 0 if report["valid"] else 1
+
+
 def cmd_hook_order_probe(args: argparse.Namespace) -> int:
     report = build_hook_order_probe_report(
         execute=args.execute,
@@ -1235,6 +1262,8 @@ def emit_report(report: dict[str, Any], args: argparse.Namespace) -> None:
         print(format_effect_trace(report))
     elif report["kind"] == "unified_debugger_reverse_query":
         print(format_reverse_query(report))
+    elif report["kind"] == "unified_debugger_hardware_regression_gate":
+        print(format_hardware_regression_gate(report))
     elif report["kind"] == "unified_debugger_hook_order_probe":
         print(format_hook_order_probe(report))
     elif report["kind"] == "unified_debugger_watch_report":
@@ -2313,19 +2342,25 @@ def format_hook_order_probe(report: dict[str, Any]) -> str:
             f"valid={report['valid']} executed={report['executed']} "
             f"passed={report['passed']} proof={report.get('proof_status', '')} "
             f"observations={report.get('observation_count', 0)}/{report.get('expected_target_count', 0)} "
+            f"scenarios={report.get('event_matrix_count', report.get('scenario_count', 0))} "
             f"errors={report.get('error_count', 0)} warnings={report.get('warning_count', 0)}"
         ),
         f"probe_rom_sha256={report.get('probe_rom_sha256', '')[:12]} address={report.get('probe_address', '')}",
     ]
-    if report.get("checks"):
+    if report.get("event_matrix"):
+        lines.extend(["", "Event matrix:"])
+        for row in report["event_matrix"]:
+            state = "pass" if row.get("passed") else "fail"
+            lines.append(
+                f"  - {state}: {row.get('id')} pre_fetch={row.get('observes_pre_fetch')} "
+                f"pre_write={row.get('observes_pre_write')} post_write={row.get('observes_post_write')} "
+                f"post_interrupt={row.get('observes_post_interrupt')} post_dma={row.get('observes_post_dma')}"
+            )
+    elif report.get("checks"):
         lines.extend(["", "Checks:"])
         for check in report["checks"]:
             state = "pass" if check.get("passed") else "fail"
-            lines.append(
-                f"  - {state}: {check.get('operation')} pc={check.get('expected_pc')} "
-                f"value={check.get('observed_value_hex') or '<missing>'}/{check.get('expected_value_hex')} "
-                f"carry={check.get('observed_carry')}/{check.get('expected_carry')}"
-            )
+            lines.append(f"  - {state}: {check.get('operation')} pc={check.get('expected_pc')}")
     if report.get("commands"):
         lines.extend(["", "Commands:"])
         lines.extend(f"  - {command}" for command in report["commands"][:4])
@@ -2334,6 +2369,41 @@ def format_hook_order_probe(report: dict[str, Any]) -> str:
     for error in report.get("errors", [])[:5]:
         lines.append(f"error: {error}")
     for limit in report.get("known_limits", [])[:2]:
+        lines.append(f"limit: {limit}")
+    return "\n".join(lines)
+
+
+def format_hardware_regression_gate(report: dict[str, Any]) -> str:
+    lines = [
+        "Unified Pokemon Gold romhack debugger Pan Docs hardware regression gate",
+        (
+            f"valid={report['valid']} passed={report['passed']} executed={report.get('executed')} "
+            f"proof={report.get('proof_status', '')} cases={report.get('passed_count', 0)}/{report.get('case_count', 0)} "
+            f"blocking={report.get('blocking_gate_count', 0)} pyboy_source_gaps={report.get('pyboy_source_gap_count', 0)}"
+        ),
+        f"status_counts={report.get('case_status_counts', {})}",
+    ]
+    if report.get("cases"):
+        lines.extend(["", "Cases:"])
+        for case in report["cases"]:
+            state = "pass" if case.get("hardware_passed") else "block"
+            lines.append(
+                f"  - {state}: {case.get('id')} status={case.get('gate_status')} "
+                f"bucket={case.get('bucket')} evidence={case.get('evidence_count', 0)}"
+            )
+            for evidence in case.get("evidence", [])[:2]:
+                lines.append(
+                    f"      evidence: {evidence.get('class')} {evidence.get('status')} "
+                    f"{evidence.get('detail', '')}"
+                )
+    if report.get("commands"):
+        lines.extend(["", "Commands:"])
+        lines.extend(f"  - {command}" for command in report["commands"][:4])
+    for warning in report.get("warnings", [])[:5]:
+        lines.append(f"warning: {warning}")
+    for error in report.get("errors", [])[:5]:
+        lines.append(f"error: {error}")
+    for limit in report.get("known_limits", [])[:3]:
         lines.append(f"limit: {limit}")
     return "\n".join(lines)
 
@@ -2394,6 +2464,13 @@ def format_visual_snapshot(report: dict[str, Any]) -> str:
     ]
     if report.get("save_state"):
         lines.append(f"save_state={report['save_state']}")
+    if report.get("evidence_class") or "hardware_behavior_proven" in report:
+        lines.append(
+            "proof_boundary="
+            f"evidence_class={report.get('evidence_class', '')} "
+            f"hardware_behavior_proven={report.get('hardware_behavior_proven', False)} "
+            f"hardware_proof={report.get('hardware_proof_status', '')}"
+        )
     if report.get("lcd_state"):
         lcd = report["lcd_state"]
         lines.append(
@@ -2441,6 +2518,13 @@ def format_audio_snapshot(report: dict[str, Any]) -> str:
     ]
     if report.get("save_state"):
         lines.append(f"save_state={report['save_state']}")
+    if report.get("evidence_class") or "hardware_behavior_proven" in report:
+        lines.append(
+            "proof_boundary="
+            f"evidence_class={report.get('evidence_class', '')} "
+            f"hardware_behavior_proven={report.get('hardware_behavior_proven', False)} "
+            f"hardware_proof={report.get('hardware_proof_status', '')}"
+        )
     if report.get("audio_state"):
         state = report["audio_state"]
         lines.append(

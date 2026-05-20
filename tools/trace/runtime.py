@@ -82,11 +82,13 @@ def read_range(pyboy, symbol: Symbol, size: int) -> list[int]:
 
 
 def read_word(pyboy, symbol: Symbol) -> int:
-    return (read_byte(pyboy, symbol) << 8) | read_addr(
+    low = read_byte(pyboy, symbol)
+    high = read_addr(
         pyboy,
         symbol.bank,
         symbol.address + 1,
     )
+    return low | (high << 8)
 
 
 def load_pyboy(import_error_message: str):
