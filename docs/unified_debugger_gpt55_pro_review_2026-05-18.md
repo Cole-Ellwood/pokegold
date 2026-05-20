@@ -5889,3 +5889,49 @@ Remaining priority:
 - This closes another proof-promotion path for future recorder reports, but it still does not implement the PyBoy fork or non-mutating CPU/DMA/interrupt event recorder.
 - The hardware gate remains blocked on exact runtime evidence for TIMA, OAM DMA, CGB VRAM DMA, interrupt entry, boot ROM end state, and LCD dot/mode timing.
 - The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
+
+## Implementation Note - Hardware Side-Effect Runtime Label Boundary
+
+Date: 2026-05-20.
+
+Context:
+
+- `effect_trace.py` and `reverse_query.py` still treated generic hardware labels such as `hardware_event_observed` and `emulator_hardware_event` as enough to satisfy the hardware side-effect runtime gate.
+- That left a last-writer promotion path: an OAM DMA, CGB VRAM DMA, timer-overflow, interrupt-entry, or LCD-mode-edge write could be marked `instruction_observed` from a generic event label instead of an explicit hardware runtime event source.
+- The boundary needs to preserve weak runtime labels for report/UI context while preventing them from becoming proof-grade side-effect evidence.
+
+Primary references used:
+
+- PyBoy public docs for hook behavior and opcode replacement: `https://docs.pyboy.dk/#pyboy.PyBoy.hook_register`
+- Pan Docs OAM DMA timing and bus restrictions: `https://gbdev.io/pandocs/OAM_DMA_Transfer.html`
+- Pan Docs CGB GP/HBlank VRAM DMA timing model: `https://gbdev.io/pandocs/CGB_Registers.html#ff51ff55--hdma1hdma5-vram-dma`
+- Pan Docs TIMA overflow A/B-cycle behavior: `https://gbdev.io/pandocs/Timer_Obscure_Behaviour.html`
+
+Implemented fix:
+
+- `tools/debugger/hardware_evidence.py`
+  - adds a shared hardware runtime-event boundary helper.
+  - classifies `non_mutating_event_recorder`, `runtime_hardware_event_observed`, and explicit `hardware_runtime_event=true` as side-effect runtime evidence.
+  - classifies `hardware_event_observed`, `emulator_hardware_event`, and report-level `hardware_event_observed=true` as generic labels that do not satisfy the gate by themselves.
+  - exposes additive `hardware_event_identity`, `hardware_event_labels`, `hardware_runtime_event_source_fields`, `hardware_generic_event_label_present`, and `hardware_event_types`.
+- `tools/debugger/effect_trace.py`
+  - uses the shared boundary before setting `hardware_runtime_event` and `hardware_proof_gate`.
+  - keeps generic labels visible on gated effects and watch hits but downgrades the effect to `planned_only` when no explicit side-effect runtime event is present.
+- `tools/debugger/reverse_query.py`
+  - uses the same boundary for last-writer hardware gates.
+  - exposes the hardware event identity fields in result evidence and evidence atoms so UI/report consumers can distinguish generic labels from explicit runtime side-effect evidence.
+- `tools/debugger/tests/test_catalog.py`
+  - verifies a generic hardware event label does not satisfy effect-trace hardware gates.
+  - verifies reverse-query last-writer proof stays `planned_only` for a generic-labeled OAM DMA write.
+
+Validation after patch:
+
+- Focused hardware-label boundary regressions: 2 passed.
+- Adjacent hardware-regression/event-stream regressions: 6 passed.
+- Full debugger unittest discovery: 529 passed.
+
+Remaining priority:
+
+- This closes a proof-promotion leak for generic hardware event labels, but it still does not create the non-mutating PyBoy recorder or prove hardware behavior for DMA, timer, interrupt, LCD, or boot-ROM cases.
+- The next audit blocker remains the same strategic one: execute the hook-order micro-ROM matrix and/or add a proof-grade recorder plus Pan Docs regressions before allowing side-effect-complete reverse execution claims.
+- The whole-ROM proof-substrate goal remains incomplete and `ready=False`.

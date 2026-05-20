@@ -15,6 +15,7 @@ from .catalog import ROOT
 from .evidence import evidence_atom, merge_evidence_atoms
 from .effect_trace import build_effect_trace_report
 from .provenance import parse_symbol_table, resolve_path
+from .hardware_evidence import hardware_runtime_event_boundary
 from .reporting import load_reports
 from .workflow import command_is_runnable, command_option_values, command_parts
 
@@ -47,14 +48,6 @@ HARDWARE_EVENT_REQUIRED_KINDS = {
     "timer_interrupt_request_write",
     "interrupt_entry",
 }
-EXPLICIT_HARDWARE_RUNTIME_EVIDENCE = {
-    "emulator_hardware_event",
-    "non_mutating_event_recorder",
-    "hardware_event_observed",
-    "runtime_hardware_event_observed",
-}
-
-
 def build_reverse_query_report(
     *,
     reports: tuple[str, ...] = (),
@@ -371,6 +364,9 @@ def reverse_query_result_evidence_atoms(result: dict[str, Any]) -> list[dict[str
                 "hardware_event_required": hardware_gate.get("requires_runtime_event", False),
                 "hardware_runtime_event": hardware_gate.get("runtime_event_present", False),
                 "hardware_proof_gate": hardware_gate.get("status", ""),
+                "hardware_event_identity": hardware_gate.get("hardware_event_identity", ""),
+                "hardware_generic_event_label_present": hardware_gate.get("hardware_generic_event_label_present", False),
+                "hardware_event_types": hardware_gate.get("hardware_event_types", []),
             },
             detail={
                 "last_value_hex": result.get("last_value_hex", ""),
@@ -503,7 +499,8 @@ def hardware_side_effect_gate(value: Any) -> dict[str, Any]:
             "reason": "",
         }
     requires = hardware_side_effect_requires_runtime_event(value)
-    runtime_event = has_explicit_hardware_runtime_event(value)
+    boundary = hardware_runtime_event_boundary(value)
+    runtime_event = bool(boundary["runtime_event_present"])
     model = str(value.get("hardware_model") or "")
     kind = str(value.get("kind") or "")
     reason = ""
@@ -522,6 +519,11 @@ def hardware_side_effect_gate(value: Any) -> dict[str, Any]:
         "evidence_source": str(value.get("evidence_source") or ""),
         "evidence_status": str(value.get("evidence_status") or ""),
         "runtime_observation": str(value.get("runtime_observation") or ""),
+        "hardware_event_identity": boundary["hardware_event_identity"],
+        "hardware_event_labels": boundary["hardware_event_labels"],
+        "hardware_runtime_event_source_fields": boundary["hardware_runtime_event_source_fields"],
+        "hardware_generic_event_label_present": boundary["hardware_generic_event_label_present"],
+        "hardware_event_types": boundary["hardware_event_types"],
         "reason": reason,
     }
 
@@ -538,21 +540,6 @@ def hardware_side_effect_requires_runtime_event(value: dict[str, Any]) -> bool:
     return False
 
 
-def has_explicit_hardware_runtime_event(value: dict[str, Any]) -> bool:
-    if bool(value.get("hardware_runtime_event")):
-        return True
-    evidence_source = str(value.get("evidence_source") or "")
-    evidence_status = str(value.get("evidence_status") or "")
-    runtime_observation = str(value.get("runtime_observation") or "")
-    event_source = str(value.get("event_source") or "")
-    return bool(
-        evidence_source in EXPLICIT_HARDWARE_RUNTIME_EVIDENCE
-        or evidence_status in EXPLICIT_HARDWARE_RUNTIME_EVIDENCE
-        or runtime_observation in EXPLICIT_HARDWARE_RUNTIME_EVIDENCE
-        or event_source in EXPLICIT_HARDWARE_RUNTIME_EVIDENCE
-    )
-
-
 def hardware_side_effect_downgrade_reason(value: dict[str, Any]) -> str:
     model = str(value.get("hardware_model") or value.get("kind") or "hardware_side_effect")
     return f"{model}_requires_explicit_runtime_event"
@@ -565,6 +552,12 @@ def hardware_gate_evidence(gate: dict[str, Any]) -> list[str]:
             f"hardware_side_effect_gate={gate.get('status', '')}",
             f"hardware_model={gate.get('hardware_model', '')}" if gate.get("hardware_model") else "",
             f"hardware_kind={gate.get('kind', '')}" if gate.get("kind") else "",
+            f"hardware_event_identity={gate.get('hardware_event_identity', '')}" if gate.get("hardware_event_identity") else "",
+            (
+                f"hardware_generic_event_label_present={gate.get('hardware_generic_event_label_present')}"
+                if gate.get("hardware_generic_event_label_present")
+                else ""
+            ),
             f"proof_downgrade_reason={gate.get('reason', '')}" if gate.get("reason") else "",
         ]
         if item
@@ -1438,6 +1431,13 @@ def entry_history(entry: dict[str, Any], *, events: list[dict[str, Any]], max_hi
                     "hardware_model": item.get("hardware_model", ""),
                     "hardware_event_required": item.get("hardware_event_required", False),
                     "hardware_runtime_event": item.get("hardware_runtime_event", False),
+                    "hardware_event_observed": item.get("hardware_event_observed", False),
+                    "hardware_event_identity": item.get("hardware_event_identity", ""),
+                    "hardware_event_labels": item.get("hardware_event_labels", []),
+                    "hardware_runtime_event_source_fields": item.get("hardware_runtime_event_source_fields", []),
+                    "hardware_generic_event_label_present": item.get("hardware_generic_event_label_present", False),
+                    "hardware_event_type": item.get("hardware_event_type", ""),
+                    "hardware_event_types": item.get("hardware_event_types", []),
                     "hardware_proof_gate": item.get("hardware_proof_gate", ""),
                     "evidence_source": item.get("evidence_source", ""),
                     "evidence_status": item.get("evidence_status", ""),
@@ -1482,6 +1482,13 @@ def normalize_index_history(entry: dict[str, Any], *, max_history: int) -> list[
         copied.setdefault("hardware_model", "")
         copied.setdefault("hardware_event_required", False)
         copied.setdefault("hardware_runtime_event", False)
+        copied.setdefault("hardware_event_observed", False)
+        copied.setdefault("hardware_event_identity", "")
+        copied.setdefault("hardware_event_labels", [])
+        copied.setdefault("hardware_runtime_event_source_fields", [])
+        copied.setdefault("hardware_generic_event_label_present", False)
+        copied.setdefault("hardware_event_type", "")
+        copied.setdefault("hardware_event_types", [])
         copied.setdefault("hardware_proof_gate", "")
         copied.setdefault("pc_label", "")
         copied.setdefault("evidence_source", "")
@@ -1546,6 +1553,12 @@ def result_evidence(*, target: dict[str, Any], entry: dict[str, Any], last_write
         evidence.append(f"hardware_event_required={last_write.get('hardware_event_required')}")
     if last_write and last_write.get("hardware_runtime_event") not in {None, ""}:
         evidence.append(f"hardware_runtime_event={last_write.get('hardware_runtime_event')}")
+    if last_write and last_write.get("hardware_event_identity"):
+        evidence.append(f"hardware_event_identity={last_write.get('hardware_event_identity')}")
+    if last_write and last_write.get("hardware_generic_event_label_present"):
+        evidence.append(
+            f"hardware_generic_event_label_present={last_write.get('hardware_generic_event_label_present')}"
+        )
     if last_write and last_write.get("hardware_proof_gate"):
         evidence.append(f"hardware_proof_gate={last_write.get('hardware_proof_gate', '')}")
     if last_write and last_write.get("pre_state_sample"):

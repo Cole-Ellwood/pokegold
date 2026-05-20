@@ -26,7 +26,7 @@ from tools.debugger.content_scenarios import build_content_scenario_report
 from tools.debugger.content_state import build_content_state_report
 from tools.debugger.coverage import build_coverage_report
 from tools.debugger.dynamic_taint import build_dynamic_taint_report, build_paths, public_finding
-from tools.debugger.effect_trace import build_effect_trace_report
+from tools.debugger.effect_trace import attach_hardware_side_effect_proof_gates, build_effect_trace_report
 from tools.debugger.explain import build_explanation_report
 from tools.debugger.expect import build_expectation_report
 from tools.debugger.fuzz import build_fuzz_plan
@@ -321,6 +321,87 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(case["observed_runtime_facts"][0]["proof_scope"], "observed_runtime_not_case_complete")
         if case["static_blocker_facts"]:
             self.assertEqual(case["static_blocker_facts"][0]["proof_scope"], "static_blocker")
+
+    def test_effect_trace_generic_hardware_event_label_does_not_satisfy_side_effect_gate(self) -> None:
+        events = [
+            {
+                "seq": 7,
+                "effects": [
+                    {
+                        "kind": "dma_write",
+                        "access": "write",
+                        "address": 0xFE00,
+                        "address_hex": "FE00",
+                        "address_key": address_key("$FE00"),
+                        "hardware_model": "oam_dma",
+                        "evidence_source": "hardware_event_observed",
+                    }
+                ],
+            }
+        ]
+
+        attach_hardware_side_effect_proof_gates(events)
+
+        item = events[0]["effects"][0]
+        self.assertTrue(item["hardware_event_required"])
+        self.assertFalse(item["hardware_runtime_event"])
+        self.assertEqual(item["hardware_event_identity"], "generic_hardware_event_label")
+        self.assertTrue(item["hardware_generic_event_label_present"])
+        self.assertEqual(item["hardware_proof_gate"], "explicit_runtime_event_missing")
+        self.assertEqual(item["proof_status"], "planned_only")
+
+    def test_reverse_query_generic_hardware_event_label_does_not_promote_last_writer(self) -> None:
+        oam_key = address_key("$FE00")
+        effect_trace = {
+            "kind": "unified_debugger_effect_trace",
+            "valid": True,
+            "proof_status": "instruction_observed",
+            "write_index": [
+                {
+                    "address": "FE00",
+                    "address_key": oam_key,
+                    "space": "oam",
+                    "write_count": 1,
+                    "last_writer_seq": 7,
+                    "last_writer_pc": "00:0150",
+                }
+            ],
+            "events": [
+                {
+                    "seq": 7,
+                    "pc_bank_address": "00:0150",
+                    "effects": [
+                        {
+                            "kind": "dma_write",
+                            "access": "write",
+                            "address_hex": "FE00",
+                            "address_key": oam_key,
+                            "space": "oam",
+                            "hardware_model": "oam_dma",
+                            "evidence_source": "hardware_event_observed",
+                            "value_hex": "42",
+                        }
+                    ],
+                }
+            ],
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "pokegold.sym").write_text("", encoding="utf-8")
+            (root / "effect.json").write_text(json.dumps(effect_trace), encoding="utf-8")
+
+            report = build_reverse_query_report(reports=("effect.json",), addresses=("$FE00",), root=root)
+
+        result = report["results"][0]
+        gate = result["hardware_side_effect_gate"]
+
+        self.assertEqual(result["proof_status"], "planned_only")
+        self.assertTrue(gate["requires_runtime_event"])
+        self.assertFalse(gate["runtime_event_present"])
+        self.assertEqual(gate["hardware_event_identity"], "generic_hardware_event_label")
+        self.assertTrue(gate["hardware_generic_event_label_present"])
+        self.assertEqual(gate["status"], "explicit_runtime_event_missing")
+        self.assertIn("hardware_event_identity=generic_hardware_event_label", result["evidence"])
 
     def test_hardware_regression_fact_scope_survives_rank_report_visualization_and_graph(self) -> None:
         effect_trace = {

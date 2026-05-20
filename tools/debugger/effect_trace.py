@@ -19,6 +19,7 @@ from .dynamic_taint import (
     trace_records,
 )
 from .evidence import evidence_atom, merge_evidence_atoms
+from .hardware_evidence import hardware_runtime_event_boundary
 from .provenance import display_path, parse_symbol_table, resolve_path
 from .reporting import load_reports
 from .sm83_model import (
@@ -62,14 +63,6 @@ HARDWARE_EVENT_REQUIRED_MODELS = {
     "lcd_mode_edge",
     "ppu_lcd_mode",
 }
-EXPLICIT_HARDWARE_RUNTIME_EVIDENCE = {
-    "emulator_hardware_event",
-    "non_mutating_event_recorder",
-    "hardware_event_observed",
-    "runtime_hardware_event_observed",
-}
-
-
 def build_effect_trace_report(
     *,
     traces: tuple[str, ...] = (),
@@ -470,9 +463,16 @@ def attach_hardware_side_effect_proof_gates(events: list[dict[str, Any]]) -> Non
         for item in dict_items(event.get("effects")):
             if not hardware_side_effect_requires_runtime_event(item):
                 continue
-            runtime_event = has_explicit_hardware_runtime_event(item)
+            boundary = hardware_runtime_event_boundary(item)
+            runtime_event = bool(boundary["runtime_event_present"])
             item["hardware_event_required"] = True
             item["hardware_runtime_event"] = runtime_event
+            item["hardware_event_identity"] = boundary["hardware_event_identity"]
+            item["hardware_event_labels"] = boundary["hardware_event_labels"]
+            item["hardware_runtime_event_source_fields"] = boundary["hardware_runtime_event_source_fields"]
+            item["hardware_generic_event_label_present"] = boundary["hardware_generic_event_label_present"]
+            if boundary["hardware_event_types"]:
+                item["hardware_event_types"] = boundary["hardware_event_types"]
             item["hardware_proof_gate"] = (
                 "explicit_runtime_event_present"
                 if runtime_event
@@ -503,21 +503,6 @@ def hardware_side_effect_requires_runtime_event(item: dict[str, Any]) -> bool:
     }:
         return True
     return False
-
-
-def has_explicit_hardware_runtime_event(item: dict[str, Any]) -> bool:
-    if bool(item.get("hardware_runtime_event")):
-        return True
-    evidence_source = str(item.get("evidence_source") or "")
-    evidence_status = str(item.get("evidence_status") or "")
-    runtime_observation = str(item.get("runtime_observation") or "")
-    event_source = str(item.get("event_source") or "")
-    return bool(
-        evidence_source in EXPLICIT_HARDWARE_RUNTIME_EVIDENCE
-        or evidence_status in EXPLICIT_HARDWARE_RUNTIME_EVIDENCE
-        or runtime_observation in EXPLICIT_HARDWARE_RUNTIME_EVIDENCE
-        or event_source in EXPLICIT_HARDWARE_RUNTIME_EVIDENCE
-    )
 
 
 def hardware_side_effect_downgrade_reason(item: dict[str, Any]) -> str:
@@ -2651,6 +2636,10 @@ def watch_hits(effects: list[dict[str, Any]], watches: list[dict[str, Any]]) -> 
                         "hardware_model": item.get("hardware_model", ""),
                         "hardware_event_required": item.get("hardware_event_required", False),
                         "hardware_runtime_event": item.get("hardware_runtime_event", False),
+                        "hardware_event_identity": item.get("hardware_event_identity", ""),
+                        "hardware_event_labels": item.get("hardware_event_labels", []),
+                        "hardware_generic_event_label_present": item.get("hardware_generic_event_label_present", False),
+                        "hardware_event_types": item.get("hardware_event_types", []),
                         "hardware_proof_gate": item.get("hardware_proof_gate", ""),
                         "access": item.get("access", ""),
                         "effect_kind": item.get("kind", ""),
