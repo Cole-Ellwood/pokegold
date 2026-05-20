@@ -691,14 +691,25 @@ def runtime_observations_from_report(loaded: dict[str, Any]) -> list[dict[str, A
     for evidence in runtime_mirror_evidence(loaded):
         if not output_runtime_evidence_is_strong(evidence):
             continue
+        observed_sinks = unique_list(
+            [
+                *scalar_string_items(evidence.get("observed_sinks")),
+                *scalar_string_items(evidence.get("symbols")),
+                *scalar_string_items(evidence.get("addresses")),
+            ]
+        )
+        if "observed_runtime_symbols" in evidence:
+            observed_runtime_symbols = scalar_string_items(evidence.get("observed_runtime_symbols"))
+        else:
+            observed_runtime_symbols = scalar_string_items(evidence.get("symbols"))
         observation = normalize_runtime_observation(
             {
                 "source": evidence.get("source", loaded.get("source", "")),
                 "runtime_kind": evidence.get("kind", ""),
                 "proof_status": evidence.get("proof_status", ""),
                 "scenario_ids": scenario_ids,
-                "symbols": evidence.get("symbols", []),
-                "addresses": evidence.get("addresses", []),
+                "observed_sinks": observed_sinks,
+                "observed_runtime_symbols": observed_runtime_symbols,
             }
         )
         observations.append(observation)
@@ -1628,14 +1639,17 @@ def runtime_mirror_evidence(loaded: dict[str, Any]) -> list[dict[str, Any]]:
         hit = bool(validation.get("hit") or validation.get("ready_for_dynamic_taint"))
         if not data.get("executed") and not hit:
             return []
+        hit_function_symbols = scalar_string_items(validation.get("hit_function_symbols"))
+        watch_symbols = scalar_string_items(validation.get("watch_symbols"))
+        planned_function_symbols = unique_list(
+            str(function.get("symbol", ""))
+            for function in dict_items(data.get("functions"))
+            if function.get("symbol")
+        )
         symbols = unique_list(
             [
-                *scalar_string_items(validation.get("hit_function_symbols")),
-                *scalar_string_items(validation.get("watch_symbols")),
-                *[
-                    str(function.get("symbol", ""))
-                    for function in dict_items(data.get("functions"))
-                ],
+                *hit_function_symbols,
+                *watch_symbols,
             ]
         )
         return [
@@ -1643,6 +1657,9 @@ def runtime_mirror_evidence(loaded: dict[str, Any]) -> list[dict[str, Any]]:
                 source=source,
                 kind="instruction_trace",
                 symbols=symbols,
+                observed_runtime_symbols=hit_function_symbols,
+                planned_function_symbols=planned_function_symbols,
+                target_symbols=unique_list([*symbols, *planned_function_symbols]),
                 addresses=scalar_string_items(validation.get("watch_addresses")) + scalar_string_items(data.get("watch_addresses")),
                 source_files=[
                     str(function.get("source_file", ""))
@@ -1925,6 +1942,9 @@ def runtime_evidence_record(
     kind: str,
     symbols: list[str] | None = None,
     addresses: list[str] | None = None,
+    observed_runtime_symbols: list[str] | None = None,
+    planned_function_symbols: list[str] | None = None,
+    target_symbols: list[str] | None = None,
     source_files: list[str] | None = None,
     artifacts: list[str] | None = None,
     commands: list[str] | None = None,
@@ -1944,6 +1964,12 @@ def runtime_evidence_record(
         "artifacts": unique_list(artifacts or []),
         "commands": unique_list(commands or []),
     }
+    if observed_runtime_symbols is not None:
+        record["observed_runtime_symbols"] = unique_list(observed_runtime_symbols)
+    if planned_function_symbols is not None:
+        record["planned_function_symbols"] = unique_list(planned_function_symbols)
+    if target_symbols is not None:
+        record["target_symbols"] = unique_list(target_symbols)
     if proof_status:
         record["proof_status"] = proof_status
     if proof_downgrade_reason:

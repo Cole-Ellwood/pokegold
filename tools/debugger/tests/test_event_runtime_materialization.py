@@ -608,6 +608,46 @@ class EventRuntimeMaterializationTests(unittest.TestCase):
         self.assertEqual(match["observed_runtime_symbols"], ["CheckObjectTime"])
         self.assertEqual(match["runtime_evidence_gaps"], [])
 
+    def test_content_fuzz_does_not_count_instruction_trace_planned_functions_as_observed_runtime_symbols(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write_content_fuzz_report(root, required_runtime_symbols=("CheckObjectTime",))
+            write_instruction_trace_report(
+                root,
+                hit_function_symbols=("TryObjectEvent",),
+                planned_function_symbols=("TryObjectEvent", "CheckObjectTime"),
+            )
+
+            report = build_compare_plan(reports=("fuzz.json", "instruction_trace.json"), root=root)
+
+        match = next(item for item in report["matches"] if item["id"] == "content_fuzz_behavioral_mirror")
+
+        self.assertEqual(match["mirror_status"], "inconclusive")
+        self.assertEqual(match["status"], "partial")
+        self.assertEqual(match["observed_sinks"], ["hHours", "wTimeOfDay"])
+        self.assertEqual(match["required_runtime_symbols"], ["CheckObjectTime"])
+        self.assertEqual(match["observed_runtime_symbols"], [])
+        self.assertTrue(any("CheckObjectTime" in gap for gap in match["runtime_evidence_gaps"]))
+
+    def test_content_fuzz_counts_instruction_trace_hit_functions_as_observed_runtime_symbols(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write_content_fuzz_report(root, required_runtime_symbols=("CheckObjectTime",))
+            write_instruction_trace_report(
+                root,
+                hit_function_symbols=("TryObjectEvent", "CheckObjectTime"),
+                planned_function_symbols=("TryObjectEvent", "CheckObjectTime"),
+            )
+
+            report = build_compare_plan(reports=("fuzz.json", "instruction_trace.json"), root=root)
+
+        match = next(item for item in report["matches"] if item["id"] == "content_fuzz_behavioral_mirror")
+
+        self.assertEqual(match["mirror_status"], "passed")
+        self.assertEqual(match["observed_sinks"], ["hHours", "wTimeOfDay"])
+        self.assertEqual(match["observed_runtime_symbols"], ["CheckObjectTime"])
+        self.assertEqual(match["runtime_evidence_gaps"], [])
+
     def test_compare_harvests_runtime_observations_from_loaded_reports(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -850,6 +890,37 @@ def write_content_fuzz_report(
                 "kind": "unified_debugger_fuzz_plan",
                 "valid": True,
                 "fuzz_cases": [fuzz_case],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+
+def write_instruction_trace_report(
+    root: Path,
+    *,
+    hit_function_symbols: tuple[str, ...],
+    planned_function_symbols: tuple[str, ...],
+) -> None:
+    (root / "instruction_trace.json").write_text(
+        json.dumps(
+            {
+                "kind": "unified_debugger_instruction_trace",
+                "valid": True,
+                "executed": True,
+                "input_scenario_ids": ["content_scenario_1_0000"],
+                "functions": [
+                    {"symbol": symbol, "source_file": "engine/events/overworld.asm"}
+                    for symbol in planned_function_symbols
+                ],
+                "execution_validation": {
+                    "attempted": True,
+                    "hit": bool(hit_function_symbols),
+                    "ready_for_dynamic_taint": bool(hit_function_symbols),
+                    "hit_function_symbols": list(hit_function_symbols),
+                    "watch_symbols": ["hHours", "wTimeOfDay"],
+                    "watch_addresses": [],
+                },
             }
         ),
         encoding="utf-8",

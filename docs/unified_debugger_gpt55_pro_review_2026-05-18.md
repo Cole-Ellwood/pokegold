@@ -5620,3 +5620,45 @@ Remaining priority:
 - This prevents PyBoy hook-order evidence from losing its observation-model boundary, but it does not replace the hook path with a non-mutating CPU/hardware event recorder.
 - Full side-effect-complete reverse execution, hardware side-effect event streams, arbitrary event-engine execution, script/graphics/audio/map behavioral mirrors, and subsystem-complete causal proof remain incomplete.
 - The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
+
+## Implementation Note - Instruction Trace Planned Target Runtime Boundary
+
+Date: 2026-05-20.
+
+Context:
+
+- Generated-hour content-state and content-fuzz mirrors now require route-declared runtime consumer symbols such as `CheckObjectTime` before they can pass.
+- Loaded `unified_debugger_instruction_trace` reports exposed both executed hook hits and planned `functions` targets through the same `symbols` field when compare harvested runtime observations.
+- That could let a planned trace target satisfy `required_runtime_symbols` even if the trace only observed the sink writes and never hit the consumer function.
+
+References used:
+
+- Local compare/report contracts in `tools/debugger/mirrors.py`.
+- Local generated-hour route contract in `tools/debugger/content_scenarios.py`.
+
+Implemented fix:
+
+- `tools/debugger/mirrors.py`
+  - separates runtime observation sink coverage from observed runtime consumer symbols when harvesting loaded runtime-evidence reports.
+  - keeps instruction-trace `functions` as additive `planned_function_symbols` / `target_symbols` evidence, not observed runtime symbols.
+  - counts only `execution_validation.hit_function_symbols` as instruction-trace `observed_runtime_symbols`.
+- `tools/debugger/catalog.py`
+  - updates the generation and differential-mirror blocker wording so `CheckObjectTime` proof requires observed instruction hits or explicit runtime observations, not merely planned trace functions.
+- `tools/debugger/tests/test_event_runtime_materialization.py`
+  - verifies content-fuzz mirrors remain inconclusive when `CheckObjectTime` appears only as a planned instruction-trace function.
+  - verifies the same mirror passes when `CheckObjectTime` appears in instruction-trace hit symbols.
+
+Validation after patch:
+
+- Focused content-fuzz runtime-consumer regressions: 3 passed.
+- Event-runtime materialization suite: 26 passed.
+- Focused audit/catalog regression: 1 passed.
+- Full debugger unittest discovery: 524 passed.
+- `PYTHONPYCACHEPREFIX=.local\tmp\pycompile_cache python -m py_compile tools\debugger\mirrors.py tools\debugger\catalog.py tools\debugger\tests\test_event_runtime_materialization.py`: passed.
+- `python -m tools.debugger audit`: passed as a command, still `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+
+Remaining priority:
+
+- This prevents planned instruction-trace targets from promoting generated-hour behavioral proof, but it still does not execute those runtime consumers across arbitrary event-engine states.
+- Runtime-verified multi-object occupancy, big-object collision/occupancy proof, full script VM behavior under arbitrary event-engine context, pixel/audio playback mirrors, causal proof, side-effect-complete reverse execution, and the non-mutating hardware event recorder remain incomplete.
+- The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
