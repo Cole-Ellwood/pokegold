@@ -475,6 +475,7 @@ def collect_report_timeline(data: dict[str, Any], *, source: str, out: list[dict
                         symbols=[str(event.get("pc_label", ""))],
                         addresses=effect_post_value_addresses(effect),
                         severity=86,
+                        proof_status=effect_item_proof_status(effect),
                     )
                 )
             for effect in dict_items(event.get("effects")):
@@ -3029,13 +3030,13 @@ def watch_event_proof_status(event: dict[str, Any], *, report: dict[str, Any]) -
 
 
 def effect_item_proof_status(effect: dict[str, Any]) -> str:
-    explicit = normalize_proof_status(effect.get("proof_status")) if effect.get("proof_status") else ""
-    if explicit:
-        return explicit
     if effect.get("hardware_event_required") and not effect.get("hardware_runtime_event"):
         return "planned_only"
     if str(effect.get("hardware_proof_gate") or "") == "explicit_runtime_event_missing":
         return "planned_only"
+    explicit = normalize_proof_status(effect.get("proof_status")) if effect.get("proof_status") else ""
+    if explicit:
+        return explicit
     return "instruction_observed"
 
 
@@ -3094,22 +3095,23 @@ def attach_effect_trace_report_graph_fields(node: dict[str, Any], data: dict[str
 
 
 def watch_hit_proof_status(hit: dict[str, Any]) -> str:
+    statuses: list[str] = []
+    effect_proof = normalize_proof_status(hit.get("effect_proof_status")) if hit.get("effect_proof_status") else ""
+    if effect_proof:
+        statuses.append(effect_proof)
+    if hit.get("hardware_event_required") and not hit.get("hardware_runtime_event"):
+        statuses.append("planned_only")
+    if str(hit.get("hardware_proof_gate") or "") == "explicit_runtime_event_missing":
+        statuses.append("planned_only")
     explicit = normalize_proof_status(hit.get("proof_status")) if hit.get("proof_status") else ""
     if explicit:
-        return explicit
-    effect_proof = normalize_proof_status(hit.get("effect_proof_status")) if hit.get("effect_proof_status") else ""
-    if effect_proof == "planned_only":
-        return "planned_only"
-    if hit.get("hardware_event_required") and not hit.get("hardware_runtime_event"):
-        return "planned_only"
-    if str(hit.get("hardware_proof_gate") or "") == "explicit_runtime_event_missing":
-        return "planned_only"
+        statuses.append(explicit)
     target_match = normalize_proof_status(hit.get("target_match_proof_status")) if hit.get("target_match_proof_status") else ""
     if target_match:
-        return target_match
+        statuses.append(target_match)
     if str(hit.get("bank_match") or "") in {"bus_address_unverified_bank", "ambiguous_runtime_bank"}:
-        return "planned_only"
-    return "instruction_observed"
+        statuses.append("planned_only")
+    return weakest_proof_status(statuses) or "instruction_observed"
 
 
 def instruction_trace_validation_proof_status(data: dict[str, Any], validation: dict[str, Any]) -> str:
@@ -3416,6 +3418,8 @@ def effect_post_value_detail(effect: dict[str, Any], event: dict[str, Any]) -> s
             f"observed={effect.get('post_value_hex', '')}" if effect.get("post_value_hex") else "",
             f"next_pc={effect.get('post_observed_pc', '')}" if effect.get("post_observed_pc") else "",
             f"status={effect.get('post_value_status', '')}" if effect.get("post_value_status") else "",
+            f"proof_status={effect_item_proof_status(effect)}",
+            f"hardware_proof_gate={effect.get('hardware_proof_gate', '')}" if effect.get("hardware_proof_gate") else "",
         ]
         if part
     )

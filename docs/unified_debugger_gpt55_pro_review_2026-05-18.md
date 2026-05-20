@@ -6211,3 +6211,48 @@ Remaining priority:
 - This prevents one more aggregation-layer proof promotion, but it does not add new runtime evidence.
 - Trace-index compact/static facts remain useful routing evidence, not replacements for dynamic subsystem proof.
 - The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
+
+## Implementation Note - Hardware Gate Overrides Explicit Effect Proof Labels
+
+Date: 2026-05-20.
+
+Context:
+
+- Effect-trace producers now usually mark hardware-gated DMA/timer/interrupt/LCD effects as `planned_only`.
+- Some report consumers still trusted flat item `proof_status` labels before checking `hardware_event_required`, `hardware_runtime_event`, or `hardware_proof_gate`.
+- A hostile or stale effect-trace report could therefore claim `instruction_observed` on an OAM DMA write/watch hit and make post-value mismatch, causal graph, visualization, ranking, impact, or output-sink mirror surfaces appear stronger than the explicit hardware gate allowed.
+
+Primary references used:
+
+- PyBoy hook docs note that hooks are installed by replacing the target instruction with a special opcode, so hook evidence is debugger/breakpoint evidence rather than a non-mutating hardware event stream: `https://docs.pyboy.dk/#pyboy.PyBoy.hook_register`
+- Pan Docs OAM DMA states that writing FF46 starts a transfer to FE00-FE9F and that the transfer takes 160 M-cycles, so a plain write callback is not enough to prove DMA timing/bus side effects: `https://gbdev.io/pandocs/OAM_DMA_Transfer.html`
+
+Implemented fix:
+
+- `tools/debugger/causal_graph.py`
+  - makes missing explicit runtime hardware events override flat `instruction_observed` effect and watch-hit proof labels.
+- `tools/debugger/visualization.py`
+  - applies the same override to effect/watch timeline and graph proof.
+  - adds explicit proof/gate detail to post-value mismatch timeline rows.
+- `tools/debugger/ranking.py`
+  - derives post-value mismatch findings from the weakest mismatched effect proof.
+  - derives watched-write proof from the weakest hardware/effect/explicit/target-match/bank-boundary proof instead of trusting a single flat target-match field.
+  - exposes the reported target-match proof separately when it is stronger than the effective fenced proof.
+- `tools/debugger/mirrors.py`
+  - uses the same watch-hit effective proof when deciding whether effect-trace evidence can satisfy output-sink runtime evidence.
+- `tools/debugger/tests/test_catalog.py`
+  - adds a hostile OAM-DMA effect-trace fixture where report, effect, and watch hit claim `instruction_observed`, but hardware runtime-event evidence is missing. Ranking, causal graph, visualization, impact, and mirror surfaces keep the evidence `planned_only`.
+
+Validation after patch:
+
+- Focused hardware-gated post-value/watch-hit/mirror regressions: 4 passed.
+- Full debugger unittest discovery: 535 passed.
+- `PYTHONPYCACHEPREFIX=.local\tmp\pycompile_cache python -m py_compile tools\debugger\causal_graph.py tools\debugger\ranking.py tools\debugger\visualization.py tools\debugger\mirrors.py tools\debugger\tests\test_catalog.py`: passed.
+- `python -m tools.debugger hardware-regression-gate --execute`: passed as a command, still intentionally `passed=False`; reported 0/10 cases passing, 10 blocking cases, 4 runtime-observed emulator cases, 0 hardware-proof cases, and 10 static-blocker cases.
+- `python -m tools.debugger audit`: passed as a command, still `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- `git diff --check`: passed with unrelated pre-existing CRLF warnings in Boss AI trace/generated/doc fixture files.
+
+Remaining priority:
+
+- This prevents stale or hostile reports from bypassing the hardware gate with a flat proof label, but it does not implement the required non-mutating event recorder or Pan Docs case proofs.
+- The whole-ROM proof-substrate goal remains incomplete and `ready=False`.

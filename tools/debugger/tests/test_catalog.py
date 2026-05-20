@@ -14127,6 +14127,96 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(unmodeled_item["evidence_score"], 25)
         self.assertIn("C201", unmodeled_item["related_addresses"])
 
+    def test_effect_trace_post_value_mismatch_preserves_hardware_gate(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "effect_trace.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_effect_trace",
+                        "valid": True,
+                        "proof_status": "instruction_observed",
+                        "watch_write_count": 1,
+                        "watch_symbols": ["$FF46"],
+                        "write_index": [
+                            {
+                                "address": "FF46",
+                                "address_key": "io:--:FF46",
+                                "write_count": 1,
+                            }
+                        ],
+                        "events": [
+                            {
+                                "seq": 7,
+                                "pc_bank_address": "01:4000",
+                                "pc_label": "DmaWriter",
+                                "watch_hits": [
+                                    {
+                                        "watch": "$FF46",
+                                        "access": "write",
+                                        "address": "FF46",
+                                        "value_hex": "C0",
+                                        "proof_status": "instruction_observed",
+                                        "target_match_proof_status": "instruction_observed",
+                                        "hardware_event_required": True,
+                                        "hardware_runtime_event": False,
+                                        "hardware_proof_gate": "explicit_runtime_event_missing",
+                                    }
+                                ],
+                                "effects": [
+                                    {
+                                        "kind": "oam_dma_trigger",
+                                        "access": "write",
+                                        "operation": "ldh [$FF46],a",
+                                        "address_hex": "FF46",
+                                        "address_key": "io:--:FF46",
+                                        "value_hex": "C0",
+                                        "post_value_status": "mismatch",
+                                        "post_value_hex": "00",
+                                        "post_observed_pc": "01:4001",
+                                        "proof_status": "instruction_observed",
+                                        "hardware_model": "oam_dma",
+                                        "hardware_event_required": True,
+                                        "hardware_runtime_event": False,
+                                        "hardware_proof_gate": "explicit_runtime_event_missing",
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            ranked = rank_findings(reports=("effect_trace.json",), root=root)
+            graph = build_causal_graph_report(reports=("effect_trace.json",), root=root)
+            visual = build_visualization_report(reports=("effect_trace.json",), root=root)
+            impact = build_impact_report(reports=("effect_trace.json",), root=root)
+
+        mismatch = next(item for item in ranked["findings"] if item["type"] == "effect_trace_post_value_mismatch")
+        observed = next(item for item in ranked["findings"] if item["type"] == "effect_trace_observed")
+        graph_path = next(path for path in graph["paths"] if path["relation"] == "post_value_mismatch")
+        graph_effect = next(node for node in graph["nodes"] if node["kind"] == "effect")
+        graph_watch = next(node for node in graph["nodes"] if node["kind"] == "watch_hit")
+        visual_mismatch = next(item for item in visual["timeline"] if item["type"] == "effect_post_value_mismatch")
+        visual_watch_timeline = next(item for item in visual["timeline"] if item["type"] == "effect_watch_hit")
+        visual_effect = next(node for node in visual["graph"]["nodes"] if node["type"] == "effect")
+        impact_item = next(item for item in impact["items"] if item["type"] == "effect_trace_post_value_mismatch")
+
+        self.assertEqual(mismatch["proof_status"], "planned_only")
+        self.assertIn("post_value_mismatch_proof_status=planned_only", mismatch["evidence"])
+        self.assertIn("hardware_proof_gate=explicit_runtime_event_missing", "\n".join(mismatch["evidence"]))
+        self.assertEqual(observed["proof_status"], "planned_only")
+        self.assertIn("target_match_proof_status=planned_only", observed["evidence"])
+        self.assertIn("reported_target_match_proof_status=instruction_observed", "\n".join(observed["evidence"]))
+        self.assertEqual(graph_path["proof_status"], "planned_only")
+        self.assertEqual(graph_effect["proof_status"], "planned_only")
+        self.assertEqual(graph_watch["proof_status"], "planned_only")
+        self.assertEqual(visual_mismatch["proof_status"], "planned_only")
+        self.assertIn("hardware_proof_gate=explicit_runtime_event_missing", visual_mismatch["detail"])
+        self.assertEqual(visual_watch_timeline["proof_status"], "planned_only")
+        self.assertEqual(visual_effect["proof_status"], "planned_only")
+        self.assertEqual(impact_item["proof_status"], "planned_only")
+
     def test_effect_trace_does_not_post_validate_across_hook_gaps(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -29326,7 +29416,8 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
                                         "watch": "$FE00",
                                         "access": "write",
                                         "address": "FE00",
-                                        "target_match_proof_status": "planned_only",
+                                        "proof_status": "instruction_observed",
+                                        "target_match_proof_status": "instruction_observed",
                                         "proof_downgrade_reason": "oam_dma_requires_explicit_runtime_event",
                                         "hardware_event_required": True,
                                         "hardware_runtime_event": False,

@@ -1815,14 +1815,12 @@ def effect_trace_findings(report: dict[str, Any], *, source: str) -> list[dict[s
         planned_only_write_hits = sum(
             1
             for hit in watch_hits
-            if hit.get("access") == "write"
-            and str(hit.get("target_match_proof_status", "")) == "planned_only"
+            if hit.get("access") == "write" and effect_trace_watch_hit_proof_status(hit) == "planned_only"
         )
         verified_watch_write_hits = sum(
             1
             for hit in watch_hits
-            if hit.get("access") == "write" and str(hit.get("bank_match", "")) != "bus_address_unverified_bank"
-            and str(hit.get("target_match_proof_status", "")) != "planned_only"
+            if hit.get("access") == "write" and effect_trace_watch_hit_proof_status(hit) != "planned_only"
         )
         target_match_proof_status = effect_trace_target_match_proof_status(
             bank_unverified_write_hits=bank_unverified_write_hits,
@@ -1836,6 +1834,7 @@ def effect_trace_findings(report: dict[str, Any], *, source: str) -> list[dict[s
         unmodeled_changes = int(report.get("unmodeled_observed_change_count", 0) or 0)
         mismatch_summaries = effect_trace_post_value_mismatch_summaries(report)
         if mismatch_summaries:
+            mismatch_proof = effect_trace_post_value_mismatch_proof_status(report)
             out.append(
                 finding(
                     finding_type="effect_trace_post_value_mismatch",
@@ -1845,12 +1844,13 @@ def effect_trace_findings(report: dict[str, Any], *, source: str) -> list[dict[s
                     confidence=0.78,
                     evidence=[
                         "next-frame observed byte did not match modeled write value",
+                        f"post_value_mismatch_proof_status={mismatch_proof}",
                         *mismatch_summaries[:8],
                     ],
                     next_actions=string_items(report.get("commands"))[:6]
                     or ["python -m tools.debugger hook-order-probe --execute"],
                     related_addresses=effect_trace_post_value_mismatch_addresses(report),
-                    proof_status="instruction_observed",
+                    proof_status=mismatch_proof,
                 )
             )
         unmodeled_summaries = effect_trace_unmodeled_change_summaries(report)
@@ -2011,11 +2011,54 @@ def effect_trace_post_value_mismatch_summaries(report: dict[str, Any]) -> list[s
                         f"modeled={item.get('value_hex', '')}",
                         f"observed={item.get('post_value_hex', '')}",
                         f"next_pc={item.get('post_observed_pc', '')}",
+                        f"proof_status={effect_item_proof_status(item)}",
+                        f"hardware_proof_gate={item.get('hardware_proof_gate', '')}" if item.get("hardware_proof_gate") else "",
                     ]
                     if part and not part.endswith("=")
                 )
             )
     return unique_string_items(summaries)
+
+
+def effect_trace_post_value_mismatch_proof_status(report: dict[str, Any]) -> str:
+    statuses = [
+        effect_item_proof_status(item)
+        for event in dict_items(report.get("events"))
+        for item in dict_items(event.get("effects"))
+        if item.get("post_value_status") == "mismatch"
+    ]
+    return weakest_proof_status(statuses) or "planned_only"
+
+
+def effect_item_proof_status(item: dict[str, Any]) -> str:
+    if item.get("hardware_event_required") and not item.get("hardware_runtime_event"):
+        return "planned_only"
+    if str(item.get("hardware_proof_gate") or "") == "explicit_runtime_event_missing":
+        return "planned_only"
+    explicit = normalize_proof_status(item.get("proof_status")) if item.get("proof_status") else ""
+    if explicit:
+        return explicit
+    return "instruction_observed"
+
+
+def effect_trace_watch_hit_proof_status(hit: dict[str, Any]) -> str:
+    statuses: list[str] = []
+    effect_proof = normalize_proof_status(hit.get("effect_proof_status")) if hit.get("effect_proof_status") else ""
+    if effect_proof:
+        statuses.append(effect_proof)
+    if hit.get("hardware_event_required") and not hit.get("hardware_runtime_event"):
+        statuses.append("planned_only")
+    if str(hit.get("hardware_proof_gate") or "") == "explicit_runtime_event_missing":
+        statuses.append("planned_only")
+    explicit = normalize_proof_status(hit.get("proof_status")) if hit.get("proof_status") else ""
+    if explicit:
+        statuses.append(explicit)
+    target_match = normalize_proof_status(hit.get("target_match_proof_status")) if hit.get("target_match_proof_status") else ""
+    if target_match:
+        statuses.append(target_match)
+    if str(hit.get("bank_match") or "") in {"bus_address_unverified_bank", "ambiguous_runtime_bank"}:
+        statuses.append("planned_only")
+    return weakest_proof_status(statuses) or "instruction_observed"
 
 
 def effect_trace_post_value_mismatch_addresses(report: dict[str, Any]) -> list[str]:
@@ -2098,8 +2141,14 @@ def effect_trace_watch_hit_summaries(report: dict[str, Any]) -> list[str]:
                         f"bank_match={hit.get('bank_match', '')}" if hit.get("bank_match") else "",
                         f"bank_source={hit.get('bank_source', '')}" if hit.get("bank_source") else "",
                         (
-                            f"target_match_proof_status={hit.get('target_match_proof_status', '')}"
+                            f"target_match_proof_status={effect_trace_watch_hit_proof_status(hit)}"
+                            if effect_trace_watch_hit_proof_status(hit)
+                            else ""
+                        ),
+                        (
+                            f"reported_target_match_proof_status={hit.get('target_match_proof_status', '')}"
                             if hit.get("target_match_proof_status")
+                            and hit.get("target_match_proof_status") != effect_trace_watch_hit_proof_status(hit)
                             else ""
                         ),
                         (

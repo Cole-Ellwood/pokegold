@@ -2060,8 +2060,33 @@ def effect_trace_watch_hits(events: list[dict[str, Any]], *, proof_status: str) 
         for event in events
         for hit in dict_items(event.get("watch_hits"))
         if hit.get("access") == "write"
-        and str(hit.get("target_match_proof_status") or hit.get("proof_status") or "") == proof_status
+        and effect_trace_watch_hit_proof_status(hit) == proof_status
     ]
+
+
+def effect_trace_watch_hit_proof_status(hit: dict[str, Any]) -> str:
+    statuses: list[str] = []
+    effect_proof = str(hit.get("effect_proof_status") or "")
+    if effect_proof:
+        statuses.append(effect_proof)
+    if hit.get("hardware_event_required") and not hit.get("hardware_runtime_event"):
+        statuses.append("planned_only")
+    if str(hit.get("hardware_proof_gate") or "") == "explicit_runtime_event_missing":
+        statuses.append("planned_only")
+    explicit = str(hit.get("proof_status") or "")
+    if explicit:
+        statuses.append(explicit)
+    target_match = str(hit.get("target_match_proof_status") or "")
+    if target_match:
+        statuses.append(target_match)
+    if str(hit.get("bank_match") or "") in {"bus_address_unverified_bank", "ambiguous_runtime_bank"}:
+        statuses.append("planned_only")
+    if "planned_only" in statuses:
+        return "planned_only"
+    for status in ("taint_proven", "instruction_observed", "runtime_observed", "mirror_passed"):
+        if status in statuses:
+            return status
+    return "instruction_observed"
 
 
 def effect_trace_weak_output_reason(
