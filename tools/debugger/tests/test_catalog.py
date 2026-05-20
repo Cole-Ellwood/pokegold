@@ -135,7 +135,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
 
         self.assertEqual(report.findings, [])
 
-    def test_capability_report_keeps_whole_rom_goal_incomplete(self) -> None:
+    def test_capability_report_keeps_whole_rom_goal_incomplete_until_remaining_buckets_close(self) -> None:
         report = build_capability_report()
         statuses = {
             capability["id"]: capability["status"]
@@ -148,8 +148,9 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(statuses["damage_state_of_art"], "complete")
         self.assertEqual(statuses["whole_rom_ingest"], "complete")
         self.assertEqual(statuses["causal_provenance"], "complete")
-        self.assertEqual(report["status_counts"], {"complete": 8, "partial": 3, "missing": 0})
-        self.assertEqual(report["blocking_gap_count"], 3)
+        self.assertEqual(statuses["whole_rom_replay_localization"], "complete")
+        self.assertEqual(report["status_counts"], {"complete": 9, "partial": 2, "missing": 0})
+        self.assertEqual(report["blocking_gap_count"], 2)
         self.assertGreater(report["blocking_gap_count"], 0)
         ingest = next(capability for capability in report["capabilities"] if capability["id"] == "whole_rom_ingest")
         self.assertTrue(any("--input-log" in command for command in ingest["commands"]))
@@ -159,31 +160,24 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("python -m tools.debugger taint --report <minimization-or-watch-report.json>", causal["commands"])
         self.assertIn("python -m tools.debugger slice --report <minimization-or-watch-report.json>", causal["commands"])
         self.assertIn("python -m tools.debugger causal-graph --report <watch-or-taint-or-effect-report.json>", causal["commands"])
+        replay = next(capability for capability in report["capabilities"] if capability["id"] == "whole_rom_replay_localization")
+        self.assertEqual(replay["gaps"], [])
+        self.assertIn("explicit hardware side-effect proof fences", replay["scope"])
         gap_text = "\n".join(report["blocking_gaps"])
-        self.assertIn("modeled checkpoint-to-writer effect-span consistency", gap_text)
-        self.assertIn("Pan Docs hardware regression gate", gap_text)
-        self.assertIn("observed emulator/runtime facts", gap_text)
-        self.assertIn("downstream proof_scope values", gap_text)
-        self.assertIn("non-mutating hardware event-stream evidence", gap_text)
-        self.assertIn("proof-grade recorder identity", gap_text)
-        self.assertIn("required case-specific hardware event types", gap_text)
-        self.assertIn("hardware_proven_case_ids/incomplete_case_event_ids", gap_text)
-        self.assertIn("requested-static versus observed-runtime address fact boundaries", gap_text)
         self.assertIn("planned-only runtime-observation summaries", gap_text)
         self.assertIn("per-sink and per-helper runtime evidence", gap_text)
+        self.assertIn("full script VM behavior under arbitrary", gap_text)
+        self.assertIn("full pixel-accurate graphics", gap_text)
+        self.assertNotIn("full reverse execution across every CPU/hardware side effect", gap_text)
         self.assertNotIn("the bridge still does not replace subsystem dynamic proof", gap_text)
         self.assertNotIn("hardware-gated effect-trace side effects and bank-unverified watch hits", gap_text)
         self.assertIn(
             "python -m tools.debugger hardware-regression-gate --execute",
-            next(
-                capability for capability in report["capabilities"] if capability["id"] == "whole_rom_replay_localization"
-            )["commands"],
+            replay["commands"],
         )
         self.assertIn(
             "python -m tools.debugger hardware-event-stream --execute",
-            next(
-                capability for capability in report["capabilities"] if capability["id"] == "whole_rom_replay_localization"
-            )["commands"],
+            replay["commands"],
         )
         self.assertNotIn("effect replay validation", gap_text)
 
