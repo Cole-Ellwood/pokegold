@@ -295,6 +295,8 @@ def content_state_mirror_matches(
         data = loaded.get("data", {})
         if not isinstance(data, dict):
             continue
+        if data.get("valid", True) is False:
+            continue
         if data.get("kind") != "unified_debugger_content_state_materialization":
             continue
         source = str(loaded.get("source", ""))
@@ -618,6 +620,8 @@ def collect_runtime_observations(
         data = loaded.get("data")
         if not isinstance(data, dict):
             continue
+        if data.get("valid", True) is False:
+            continue
         for item in dict_items(data.get("runtime_observations")):
             observation = normalize_runtime_observation(item)
             if loaded.get("source") and not observation.get("source"):
@@ -658,6 +662,8 @@ def runtime_observations_from_report(loaded: dict[str, Any]) -> list[dict[str, A
 def runtime_attempts_from_report(loaded: dict[str, Any]) -> list[dict[str, Any]]:
     data = loaded.get("data")
     if not isinstance(data, dict):
+        return []
+    if data.get("valid", True) is False:
         return []
     source = str(loaded.get("source", ""))
     kind = str(data.get("kind", ""))
@@ -835,6 +841,8 @@ def content_fuzz_mirror_matches(
     for loaded in loaded_reports:
         data = loaded.get("data", {})
         if not isinstance(data, dict):
+            continue
+        if data.get("valid", True) is False:
             continue
         if data.get("kind") != "unified_debugger_fuzz_plan":
             continue
@@ -1454,6 +1462,8 @@ def runtime_mirror_evidence(loaded: dict[str, Any]) -> list[dict[str, Any]]:
     data = loaded.get("data")
     source = str(loaded.get("source", ""))
     if not isinstance(data, dict) or not source:
+        return []
+    if data.get("valid", True) is False:
         return []
     kind = str(data.get("kind", ""))
     if kind == "unified_debugger_watch_report":

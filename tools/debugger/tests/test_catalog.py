@@ -299,6 +299,26 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(weak_evidence["status"], "declared_pass_without_hardware_proof")
         self.assertIn("hardware_behavior_proven=true is missing", weak_evidence["detail"])
 
+    def test_hardware_regression_gate_ignores_invalid_explicit_case_pass(self) -> None:
+        invalid = {
+            "kind": "dedicated_hardware_regression_result",
+            "valid": False,
+            "hardware_behavior_proven": True,
+            "hardware_regression_case_id": "interrupt_entry_stack_writes_current_pc",
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "invalid.json").write_text(json.dumps(invalid), encoding="utf-8")
+            report = build_hardware_regression_report(reports=("invalid.json",), root=root)
+
+        case = next(case for case in report["cases"] if case["id"] == "interrupt_entry_stack_writes_current_pc")
+        invalid_evidence = next(item for item in case["evidence"] if item["class"] == "invalid_report")
+
+        self.assertFalse(report["passed"])
+        self.assertFalse(case["hardware_passed"])
+        self.assertEqual(case["proof_status"], "planned_only")
+        self.assertEqual(invalid_evidence["status"], "ignored")
+
     def test_cli_hardware_regression_gate_writes_json_and_strict_fails(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             out = Path(tmp) / "hardware.json"
@@ -1134,6 +1154,49 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertFalse(expectations["passed"])
         self.assertEqual(expectations["evidence_framebuffer_count"], 0)
         self.assertEqual(expectations["expectations"][0]["status"], "failed")
+
+    def test_compare_ignores_invalid_runtime_report_for_dynamic_expectation_mirror(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "watch.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_watch_report",
+                        "valid": False,
+                        "executed": True,
+                        "watch_symbols": ["wTilemap"],
+                        "events": [
+                            {
+                                "frame": 1,
+                                "watch": "wTilemap",
+                                "pc_label": "PlaceString",
+                                "address": "C3A0",
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            (root / "expectation.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_expectation_report",
+                        "valid": True,
+                        "passed": True,
+                        "expectation_count": 1,
+                        "passed_count": 1,
+                        "failed_count": 0,
+                        "skipped_count": 0,
+                        "evidence_summary": {"symbols": ["wTilemap"], "addresses": ["C3A0"]},
+                        "commands": [],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            compare = build_compare_plan(reports=("watch.json", "expectation.json"), root=root)
+
+        self.assertFalse(any(match["id"] == "runtime_expectation_dynamic_mirror" for match in compare["matches"]))
 
     def test_expectation_and_compare_use_audio_snapshot_evidence(self) -> None:
         wave_digest = hashlib.sha256(bytes(range(16))).hexdigest()
@@ -27924,6 +27987,73 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("$FF46", match["related_addresses"])
         self.assertTrue(any("hardware-gated" in gap for gap in match["runtime_evidence_gaps"]))
         self.assertFalse(any(item["type"] == "mirror_passed" for item in ranked["findings"]))
+
+    def test_compare_output_sink_mirror_ignores_invalid_effect_trace_runtime_evidence(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "content_state.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_content_state_materialization",
+                        "valid": True,
+                        "executed": False,
+                        "materializations": [
+                            {
+                                "scenario_id": "content_scenario_22_0000",
+                                "scenario_type": "ui_tilemap_update",
+                                "precondition_kind": "ui_output_sink",
+                                "status": "planned",
+                                "source_file": "engine/menus/unit_menu.asm",
+                                "outputs": [
+                                    {
+                                        "kind": "ui_tilemap_output",
+                                        "state_symbol": "wTilemap",
+                                        "producer_symbol": "PlaceString",
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            (root / "invalid_effect_trace.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_effect_trace",
+                        "valid": False,
+                        "proof_status": "instruction_observed",
+                        "watch_symbols": ["wTilemap"],
+                        "events": [
+                            {
+                                "seq": 1,
+                                "effects": [
+                                    {
+                                        "kind": "memory_write",
+                                        "access": "write",
+                                        "address_hex": "C3A0",
+                                        "proof_status": "instruction_observed",
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            compare = build_compare_plan(
+                reports=("content_state.json", "invalid_effect_trace.json"),
+                root=root,
+            )
+
+        match = next(item for item in compare["matches"] if item["id"] == "content_output_behavioral_mirror")
+
+        self.assertEqual(match["status"], "planned")
+        self.assertEqual(match["proof_status"], "planned_only")
+        self.assertEqual(match["covered_output_count"], 0)
+        self.assertEqual(match["runtime_kinds"], [])
+        self.assertEqual(match["weak_runtime_kinds"], [])
 
     def test_compare_output_sink_mirror_ignores_planned_dynamic_taint_evidence(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

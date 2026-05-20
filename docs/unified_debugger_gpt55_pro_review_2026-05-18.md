@@ -4964,3 +4964,43 @@ Remaining priority from Pro:
 - This closes a concrete compare/mirror proof-promotion path, but it does not produce the missing hardware runtime events.
 - Full script VM behavior, pixel-accurate graphics/UI behavior, full audio playback/mixer behavior, arbitrary map interactions, side-effect-complete reverse execution, and subsystem-complete causal proof remain incomplete.
 - The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
+
+## Implementation Note - Invalid Runtime Report Evidence Boundary
+
+Date: 2026-05-20.
+
+Context:
+
+- Several compare/mirror import paths consume already-built debugger reports as evidence.
+- A report carrying `valid=false` must not become runtime proof, runtime attempt evidence, or hardware case-pass evidence.
+- This is a report-boundary proof-promotion issue rather than a hardware-model change: invalid packets should stay ignored or visible as invalid evidence, not close a mirror or Pan Docs gate.
+
+References used:
+
+- Local source truth: `tools/debugger/mirrors.py`, `tools/debugger/hardware_regression.py`, and `tools/debugger/tests/test_catalog.py`
+
+Implemented fix:
+
+- `tools/debugger/mirrors.py`
+  - ignores invalid loaded reports when collecting explicit runtime observations.
+  - ignores invalid watch/replay attempts.
+  - ignores invalid reports when deriving runtime mirror evidence.
+  - skips invalid content-state and content-fuzz reports before building behavioral mirror matches.
+- `tools/debugger/hardware_regression.py`
+  - treats invalid hardware evidence reports as `invalid_report` / `ignored`, so even `hardware_behavior_proven=true` inside an invalid report cannot satisfy a Pan Docs gate.
+- `tools/debugger/tests/test_catalog.py`
+  - adds regressions for invalid hardware case-pass evidence, invalid watch evidence in dynamic expectation mirrors, and invalid effect-trace evidence in output-sink mirrors.
+
+Validation after patch:
+
+- Focused invalid-report proof-boundary regressions: 5 passed.
+- `python -m py_compile tools\debugger\mirrors.py tools\debugger\hardware_regression.py tools\debugger\tests\test_catalog.py`: passed.
+- Full debugger unittest discovery: 504 passed.
+- `python -m tools.debugger audit`: passed as a command, still `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- Final touched-file `py_compile`: passed.
+- `git diff --check`: passed; it only reported existing CRLF normalization warnings in unrelated dirty files.
+
+Remaining priority from Pro:
+
+- This closes a report-ingestion proof-promotion leak. It does not add the missing runtime generators, hardware event recorder, full script VM mirror, pixel/audio hardware mirrors, side-effect-complete reverse execution, or subsystem-complete causal proof.
+- The whole-ROM proof-substrate goal remains incomplete and `ready=False`.

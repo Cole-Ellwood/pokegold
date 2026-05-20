@@ -346,6 +346,15 @@ def build_case_result(
 
 
 def report_case_evidence(case: dict[str, Any], report: dict[str, Any], *, source: str) -> list[dict[str, Any]]:
+    if report.get("valid", True) is False:
+        return [
+            {
+                "class": "invalid_report",
+                "status": "ignored",
+                "source": source,
+                "detail": "invalid hardware evidence report cannot satisfy a Pan Docs gate",
+            }
+        ]
     evidence: list[dict[str, Any]] = []
     evidence.extend(explicit_case_result_evidence(case, report, source=source))
     evidence.extend(hook_order_case_evidence(case, report, source=source))
