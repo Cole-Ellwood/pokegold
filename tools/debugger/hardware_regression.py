@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any
 
 from .catalog import ROOT
+from .hardware_evidence import hardware_runtime_event_boundary
 from .hook_order import build_hook_order_probe_report
 from .reporting import load_reports
 
@@ -231,12 +232,6 @@ PYBOY_SOURCE_GAPS: tuple[dict[str, Any], ...] = (
 )
 
 
-EXPLICIT_HARDWARE_EVIDENCE = {
-    "emulator_hardware_event",
-    "hardware_event_observed",
-    "non_mutating_event_recorder",
-    "runtime_hardware_event_observed",
-}
 STATIC_BLOCKER_EVIDENCE_CLASSES = {"pyboy_source_gap", "missing_artifact"}
 EMULATOR_RUNTIME_EVIDENCE_CLASSES = {"pyboy_hook_matrix", "modeled_effect_trace"}
 HARDWARE_EVENT_STREAM_EVIDENCE_CLASSES = {"hardware_event_stream_result"}
@@ -769,13 +764,8 @@ def effect_trace_case_evidence(case: dict[str, Any], report: dict[str, Any], *, 
 
 
 def hardware_runtime_event_present(item: dict[str, Any]) -> bool:
-    return bool(
-        item.get("hardware_runtime_event")
-        or str(item.get("hardware_proof_gate", "")) == "explicit_runtime_event_present"
-        or str(item.get("evidence_source", "")) in EXPLICIT_HARDWARE_EVIDENCE
-        or str(item.get("evidence_status", "")) in EXPLICIT_HARDWARE_EVIDENCE
-        or str(item.get("runtime_observation", "")) in EXPLICIT_HARDWARE_EVIDENCE
-    )
+    boundary = hardware_runtime_event_boundary(item)
+    return bool(boundary["runtime_event_present"])
 
 
 def summarize_evidence_fact(item: dict[str, Any]) -> dict[str, Any]:

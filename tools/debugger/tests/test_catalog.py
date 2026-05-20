@@ -322,6 +322,49 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         if case["static_blocker_facts"]:
             self.assertEqual(case["static_blocker_facts"][0]["proof_scope"], "static_blocker")
 
+    def test_hardware_regression_effect_trace_generic_label_stays_modeled_only(self) -> None:
+        effect_trace = {
+            "kind": "unified_debugger_effect_trace",
+            "valid": True,
+            "events": [
+                {
+                    "seq": 7,
+                    "effects": [
+                        {
+                            "kind": "dma_write",
+                            "hardware_model": "oam_dma",
+                            "hardware_event_required": True,
+                            "hardware_runtime_event": False,
+                            "hardware_proof_gate": "explicit_runtime_event_missing",
+                            "evidence_source": "hardware_event_observed",
+                        }
+                    ],
+                }
+            ],
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "effect.json").write_text(json.dumps(effect_trace), encoding="utf-8")
+            report = build_hardware_regression_report(reports=("effect.json",), root=root)
+
+        case = next(case for case in report["cases"] if case["id"] == "oam_dma_160_mcycle_timing")
+        modeled_evidence = next(item for item in case["evidence"] if item["class"] == "modeled_effect_trace")
+
+        self.assertFalse(report["passed"])
+        self.assertEqual(report["hardware_proof_case_count"], 0)
+        self.assertEqual(case["proof_status"], "planned_only")
+        self.assertFalse(case["hardware_passed"])
+        self.assertFalse(case["hardware_behavior_proven"])
+        self.assertEqual(case["hardware_proof_fact_count"], 0)
+        self.assertEqual(modeled_evidence["status"], "explicit_runtime_event_missing")
+        self.assertFalse(any(item["class"] == "runtime_hardware_event" for item in case["evidence"]))
+        modeled_fact = next(
+            fact
+            for fact in case["observed_runtime_facts"]
+            if fact["fact_type"] == "modeled_runtime_trace"
+        )
+        self.assertEqual(modeled_fact["proof_scope"], "modeled_not_hardware_proof")
+
     def test_effect_trace_generic_hardware_event_label_does_not_satisfy_side_effect_gate(self) -> None:
         events = [
             {

@@ -6008,3 +6008,43 @@ Remaining priority:
 - This prevents one more downstream proof promotion path, but it does not provide a side-effect-complete reverse execution engine or proof-grade non-mutating hardware recorder.
 - Dynamic-taint still depends on the supplied trace/effect-report window; writers outside that window, unmodeled CPU effects, and unproven hardware side effects remain blockers.
 - The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
+
+## Implementation Note - Hardware Regression Effect-Trace Runtime Boundary
+
+Date: 2026-05-20.
+
+Context:
+
+- `hardware_regression.py` classified effect-trace entries as `runtime_hardware_event` when they carried generic labels such as `hardware_event_observed` or `emulator_hardware_event`.
+- That did not mark a Pan Docs case as proven, but it still blurred modeled effect-trace evidence into observed hardware-runtime facts for DMA/timer/interrupt/LCD cases.
+- The hardware-regression report needs the same boundary used by effect trace, reverse query, and dynamic taint: generic labels may remain visible, but they must not become observed runtime hardware events without an explicit runtime flag or proof-grade recorder identity.
+
+Primary references used:
+
+- PyBoy public docs for hook behavior and opcode replacement: `https://docs.pyboy.dk/#pyboy.PyBoy.hook_register`
+- Pan Docs OAM DMA timing and bus restrictions: `https://gbdev.io/pandocs/OAM_DMA_Transfer.html`
+- Pan Docs CGB GP/HBlank VRAM DMA timing model: `https://gbdev.io/pandocs/CGB_Registers.html#ff51ff55--hdma1hdma5-vram-dma`
+- Pan Docs TIMA overflow A/B-cycle behavior: `https://gbdev.io/pandocs/Timer_Obscure_Behaviour.html`
+
+Implemented fix:
+
+- `tools/debugger/hardware_regression.py`
+  - now uses the shared `hardware_runtime_event_boundary()` helper when classifying effect-trace case evidence.
+  - no longer treats `hardware_event_observed`, `emulator_hardware_event`, or `hardware_proof_gate=explicit_runtime_event_present` as sufficient runtime hardware-event evidence by themselves.
+  - still accepts explicit `hardware_runtime_event=true`, `runtime_hardware_event_observed`, or `non_mutating_event_recorder` evidence as runtime-observed facts that remain below case proof until all Pan Docs case requirements are satisfied.
+- `tools/debugger/tests/test_catalog.py`
+  - adds a regression where an OAM DMA effect trace with only a generic `hardware_event_observed` label stays `modeled_effect_trace`, carries `proof_scope=modeled_not_hardware_proof`, and does not create a `runtime_hardware_event` fact.
+
+Validation after patch:
+
+- Focused hardware-regression runtime-boundary regressions: 3 passed.
+- Full debugger unittest discovery: 532 passed.
+- `PYTHONPYCACHEPREFIX=.local\tmp\pycompile_cache python -m py_compile tools\debugger\hardware_regression.py tools\debugger\tests\test_catalog.py`: passed.
+- `python -m tools.debugger hardware-regression-gate --execute`: passed as a command, still intentionally `passed=False`; reported 0/10 cases passing, 10 blocking cases, 4 runtime-observed emulator cases, 0 hardware-proof cases, and 10 static-blocker cases.
+- `python -m tools.debugger audit`: passed as a command, still `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+
+Remaining priority:
+
+- This tightens report classification, but it does not implement the non-mutating PyBoy recorder or prove the TIMA, OAM DMA, CGB VRAM DMA, interrupt-entry, boot-ROM, or LCD cases.
+- The hardware-regression gate remains intentionally blocked until exact runtime side-effect events or dedicated hardware case proofs exist.
+- The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
