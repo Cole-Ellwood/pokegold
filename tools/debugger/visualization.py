@@ -857,7 +857,19 @@ def collect_effect_trace_graph(
     edges: dict[tuple[str, str, str], dict[str, Any]],
 ) -> None:
     report_id = f"{source}:effect_trace"
-    add_graph_node(nodes, report_id, source, "effect_trace", source, data.get("proof_status"))
+    report_proof = effect_trace_report_graph_proof_status(data)
+    report_summary = effect_trace_report_graph_proof_summary(data, report_proof=report_proof)
+    report_node = add_graph_node(
+        nodes,
+        report_id,
+        source,
+        "effect_trace",
+        source,
+        report_proof,
+        proof_summary=report_summary,
+    )
+    if report_node is not None:
+        attach_effect_trace_report_graph_fields(report_node, data)
     for event in dict_items(data.get("events")):
         pc_label = str(event.get("pc_label") or event.get("pc_bank_address") or "")
         if pc_label:
@@ -2898,7 +2910,7 @@ def add_graph_node(
     elif source:
             source_proofs[str(source)] = strongest_proof_status([source_proofs.get(str(source)), proof])
     node["proof_status_by_source"] = dict(sorted(source_proofs.items()))
-    summary = graph_node_proof_summary(source_proofs.values())
+    summary = normalized_graph_node_proof_summary(proof_summary) or graph_node_proof_summary(source_proofs.values())
     node["proof_summary"] = summary
     node["proof_min"] = summary["min"]
     node["proof_max"] = summary["max"]
@@ -3026,6 +3038,60 @@ def effect_item_proof_status(effect: dict[str, Any]) -> str:
     return "instruction_observed"
 
 
+def effect_trace_report_graph_proof_status(data: dict[str, Any]) -> str:
+    statuses = effect_trace_report_effect_proof_statuses(data)
+    if statuses:
+        return weakest_proof_status(statuses)
+    report_proof = normalize_proof_status(data.get("proof_status")) if data.get("proof_status") else ""
+    return report_proof or "planned_only"
+
+
+def effect_trace_report_graph_proof_summary(data: dict[str, Any], *, report_proof: str) -> dict[str, Any]:
+    statuses = [report_proof]
+    top_level = normalize_proof_status(data.get("proof_status")) if data.get("proof_status") else ""
+    if top_level:
+        statuses.append(top_level)
+    statuses.extend(effect_trace_report_effect_proof_statuses(data))
+    return graph_node_proof_summary(statuses)
+
+
+def effect_trace_report_effect_proof_statuses(data: dict[str, Any]) -> list[str]:
+    counts = data.get("effect_proof_status_counts") if isinstance(data.get("effect_proof_status_counts"), dict) else {}
+    statuses = [
+        status
+        for status, count in counts.items()
+        if normalize_proof_status(status) and int_value(count) > 0
+    ]
+    if statuses:
+        return unique_list([normalize_proof_status(status) for status in statuses])
+    return unique_list(
+        [
+            effect_item_proof_status(effect)
+            for event in dict_items(data.get("events"))
+            for effect in dict_items(event.get("effects"))
+        ]
+    )
+
+
+def attach_effect_trace_report_graph_fields(node: dict[str, Any], data: dict[str, Any]) -> None:
+    counts = data.get("effect_proof_status_counts") if isinstance(data.get("effect_proof_status_counts"), dict) else {}
+    if counts:
+        node["effect_proof_status_counts"] = {
+            str(status): int_value(count)
+            for status, count in sorted(counts.items())
+            if normalize_proof_status(status) and int_value(count) > 0
+        }
+    for key in (
+        "hardware_gated_effect_count",
+        "hardware_runtime_event_effect_count",
+        "hardware_side_effect_count",
+        "dma_copy_write_count",
+        "interrupt_entry_count",
+    ):
+        if data.get(key) not in {None, ""}:
+            node[key] = int_value(data.get(key))
+
+
 def watch_hit_proof_status(hit: dict[str, Any]) -> str:
     explicit = normalize_proof_status(hit.get("proof_status")) if hit.get("proof_status") else ""
     if explicit:
@@ -3128,6 +3194,23 @@ def graph_node_proof_summary(values: Any) -> dict[str, Any]:
         "max": strongest_proof_status(statuses),
         "min": weakest_proof_status(statuses),
         "source_count": len(statuses),
+    }
+
+
+def normalized_graph_node_proof_summary(value: Any) -> dict[str, Any] | None:
+    if not isinstance(value, dict):
+        return None
+    min_status = normalize_proof_status(value.get("min"))
+    max_status = normalize_proof_status(value.get("max"))
+    if not min_status and not max_status:
+        return None
+    source_count = int_value(value.get("source_count"))
+    if source_count <= 0:
+        source_count = int(bool(min_status)) + int(bool(max_status and max_status != min_status))
+    return {
+        "max": max_status or min_status,
+        "min": min_status or max_status,
+        "source_count": source_count,
     }
 
 

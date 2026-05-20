@@ -6134,3 +6134,44 @@ Remaining priority:
 - This improves blocker routing for output-sink mirrors, but it does not produce the missing runtime hardware events.
 - Full script/graphics/audio/map behavioral mirrors and side-effect-complete reverse execution remain incomplete.
 - The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
+
+## Implementation Note - Effect-Trace Visualization Report Proof Boundary
+
+Date: 2026-05-20.
+
+Context:
+
+- Effect-trace item, watch-hit, ranking, causal graph, and timeline surfaces had been fenced for hardware-gated DMA/timer/interrupt/LCD effects.
+- The visualization graph's effect-trace report node still used the report-level `proof_status` directly, so a report with observed instruction callbacks but only planned hardware-side-effect effects could appear as `instruction_observed` at the report node.
+- That blurred PyBoy hook observation into side-effect-complete proof, which is unsafe because PyBoy's public hook path is breakpoint/debugger-oriented and Pan Docs require explicit DMA/HDMA timing and bus-effect handling for hardware proof.
+
+Primary references used:
+
+- PyBoy public docs for hook/breakpoint behavior: `https://docs.pyboy.dk/#pyboy.PyBoy.hook_register`
+- Pan Docs OAM DMA timing and bus restrictions: `https://gbdev.io/pandocs/OAM_DMA_Transfer.html`
+- Pan Docs CGB GP/HBlank VRAM DMA behavior and timing: `https://gbdev.io/pandocs/CGB_Registers.html#ff55--hdma5-cgb-mode-only-vram-dma-lengthmodestart`
+
+Implemented fix:
+
+- `tools/debugger/visualization.py`
+  - derives the effect-trace graph report-node `proof_status` from the weakest contained effect proof when effect proof counts are present.
+  - preserves the stronger observed instruction context as a mixed `proof_summary`/`proof_badge` instead of replacing the side-effect boundary with a global observed label.
+  - exposes additive report-node counts for effect proof statuses, hardware-gated effects, runtime hardware-event effects, hardware side effects, DMA copy writes, and interrupt entries.
+  - honors explicit graph-node `proof_summary` inputs so imported causal graph nodes and effect-trace report nodes can show mixed proof ranges.
+- `tools/debugger/tests/test_catalog.py`
+  - extends the hardware-gated OAM DMA watch-hit regression to assert the visualization graph report node remains `planned_only`, carries a mixed `planned_only -> instruction_observed` proof range, and exposes the hardware-gated effect counts.
+
+Validation after patch:
+
+- Focused hardware-gated watch-hit UI/report regression: 1 passed.
+- Full debugger unittest discovery: 534 passed.
+- `PYTHONPYCACHEPREFIX=.local\tmp\pycompile_cache python -m py_compile tools\debugger\visualization.py tools\debugger\tests\test_catalog.py`: passed.
+- `python -m tools.debugger hardware-regression-gate --execute`: passed as a command, still intentionally `passed=False`; reported 0/10 cases passing, 10 blocking cases, 4 runtime-observed emulator cases, 0 hardware-proof cases, and 10 static-blocker cases.
+- `python -m tools.debugger audit`: passed as a command, still `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- `git diff --check`: passed with unrelated pre-existing CRLF warnings in Boss AI trace/generated/doc fixture files.
+
+Remaining priority:
+
+- This closes another UI/report promotion path, but it does not create the missing non-mutating event recorder or hardware regressions.
+- The audit still requires side-effect-complete reverse execution, subsystem-boundary causal proof, arbitrary runtime/event generation, and script/graphics/audio/map behavioral mirrors before `ready=True` is valid.
+- The whole-ROM proof-substrate goal remains incomplete and `ready=False`.

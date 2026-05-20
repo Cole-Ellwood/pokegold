@@ -15019,7 +15019,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
                 root=root,
             )
             ranked = rank_findings(reports=("effect_trace.json",), root=root)
-            visual = build_visualization_report(reports=("effect_trace.json",), root=root)
+            visual = build_visualization_report(reports=("effect_trace.json",), max_items=1000, root=root)
 
         write_hits = [
             hit
@@ -15035,6 +15035,9 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         ]
         ranked_effect = next(item for item in ranked["findings"] if item["type"] == "effect_trace_observed")
         watch_timeline = next(item for item in visual["timeline"] if item["type"] == "effect_watch_hit")
+        effect_trace_node = next(
+            node for node in visual["graph"]["nodes"] if node["type"] == "effect_trace"
+        )
 
         self.assertTrue(effect["valid"])
         self.assertTrue(write_hits)
@@ -15058,6 +15061,18 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("hardware_gated_effects=320", ranked_effect["evidence"])
         self.assertEqual(watch_timeline["proof_status"], "planned_only")
         self.assertIn("hardware_proof_gate=explicit_runtime_event_missing", watch_timeline["detail"])
+        self.assertEqual(effect_trace_node["proof_status"], "planned_only")
+        self.assertEqual(effect_trace_node["proof_badge"], "mixed")
+        self.assertEqual(effect_trace_node["proof_min"], "planned_only")
+        self.assertEqual(effect_trace_node["proof_max"], "instruction_observed")
+        self.assertEqual(
+            effect_trace_node["effect_proof_status_counts"]["planned_only"],
+            effect["effect_proof_status_counts"]["planned_only"],
+        )
+        self.assertEqual(
+            effect_trace_node["hardware_gated_effect_count"],
+            effect["hardware_gated_effect_count"],
+        )
 
     def test_reverse_query_does_not_event_validate_banked_index_by_bus_address(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
