@@ -6532,3 +6532,47 @@ Remaining priority:
 
 - This closes another legacy report/UI proof fallback, but it does not produce the missing non-mutating event recorder, prove the Pan Docs hardware side-effect cases, or add arbitrary script/graphics/audio/map behavioral mirrors.
 - The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
+
+## Implementation Note - Effect-Trace Effect-Item Proof Fallback Fencing
+
+Date: 2026-05-20.
+
+Context:
+
+- Current generated effect traces attach typed `evidence_atoms` to modeled effect items after instruction-frame execution.
+- Ranking, causal graph, visualization, and effect-trace summary helpers still treated an effect item with no flat `proof_status` as `instruction_observed`.
+- That was correct for freshly generated atom-backed effect traces, but unsafe for stale or hand-authored effect-trace reports where an item lacked both a flat proof field and typed evidence atoms.
+
+Primary references used:
+
+- No new external primary references were needed for this slice; it is an internal report/UI proof-promotion patch.
+
+Implemented fix:
+
+- `tools/debugger/effect_trace.py`
+  - derives effect-item proof from explicit `proof_status`, then weakest `evidence_atoms[].proof_status`, otherwise `planned_only` for summary/count/index consumers.
+  - preserves current generated effect-trace behavior by continuing to stamp instruction-frame effect evidence atoms as observed when the generator creates the report.
+  - uses the derived proof when aggregating side-effect indexes.
+- `tools/debugger/ranking.py`
+  - uses explicit effect proof, then atom proof, then `planned_only` for post-value mismatch and related effect-item findings.
+- `tools/debugger/causal_graph.py`
+  - applies the same derivation for effect nodes, post-value validation nodes, and effect edges.
+- `tools/debugger/visualization.py`
+  - applies the same derivation for effect timeline and graph proof labels.
+- `tools/debugger/tests/test_catalog.py`
+  - adds a cross-surface regression proving a legacy effect item with no flat proof and no atoms remains `planned_only`.
+  - keeps the generated post-write validation regression proving freshly generated atom-backed effect traces still report `instruction_observed`.
+
+Validation after patch:
+
+- Focused effect-item proof fallback regressions plus generated post-value validation regression: 4 passed.
+- Full debugger unittest discovery: 549 passed.
+- `python -m tools.debugger audit`: passed as a command, still `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- `python -m tools.debugger hardware-regression-gate --execute`: passed as a command, still intentionally `passed=False`; reported 0/10 cases passing, 10 blocking cases, 4 runtime-observed emulator cases, 0 hardware-proof cases, and 10 static-blocker cases.
+- `PYTHONPYCACHEPREFIX=.local\tmp\pycompile_cache python -m py_compile tools\debugger\effect_trace.py tools\debugger\ranking.py tools\debugger\causal_graph.py tools\debugger\visualization.py tools\debugger\tests\test_catalog.py`: passed.
+- `git diff --check`: passed with unrelated pre-existing CRLF warnings in Boss AI trace/generated/doc fixture files.
+
+Remaining priority:
+
+- This closes another stale-report proof fallback, but it does not create a non-mutating hardware event recorder, complete CPU/hardware reverse execution, or add arbitrary script/graphics/audio/map behavioral mirrors.
+- The whole-ROM proof-substrate goal remains incomplete and `ready=False`.

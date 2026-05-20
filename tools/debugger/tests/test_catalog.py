@@ -14369,6 +14369,66 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(visual_watch["proof_status"], "planned_only")
         self.assertEqual(impact_item["proof_status"], "planned_only")
 
+    def test_effect_trace_proofless_effect_item_stays_planned_across_surfaces(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "effect_trace.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_effect_trace",
+                        "valid": True,
+                        "proof_status": "instruction_observed",
+                        "watch_write_count": 0,
+                        "write_index": [
+                            {
+                                "address": "D141",
+                                "write_count": 1,
+                                "last_writer_pc": "01:4000",
+                            }
+                        ],
+                        "events": [
+                            {
+                                "seq": 0,
+                                "pc_bank_address": "01:4000",
+                                "pc_label": "LegacyWriter",
+                                "watch_hits": [],
+                                "effects": [
+                                    {
+                                        "kind": "memory_write",
+                                        "access": "write",
+                                        "operation": "ld [nn],a",
+                                        "address_hex": "D141",
+                                        "address_key": "wram0:D141",
+                                        "value_hex": "12",
+                                        "post_value_status": "mismatch",
+                                        "post_value_hex": "34",
+                                        "post_observed_pc": "01:4001",
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            ranked = rank_findings(reports=("effect_trace.json",), root=root)
+            graph = build_causal_graph_report(reports=("effect_trace.json",), root=root)
+            visual = build_visualization_report(reports=("effect_trace.json",), root=root)
+            impact = build_impact_report(reports=("effect_trace.json",), root=root)
+
+        mismatch = next(item for item in ranked["findings"] if item["type"] == "effect_trace_post_value_mismatch")
+        graph_effect = next(node for node in graph["nodes"] if node["kind"] == "effect")
+        graph_path = next(path for path in graph["paths"] if path["relation"] == "post_value_mismatch")
+        visual_mismatch = next(item for item in visual["timeline"] if item["type"] == "effect_post_value_mismatch")
+        impact_item = next(item for item in impact["items"] if item["type"] == "effect_trace_post_value_mismatch")
+
+        self.assertEqual(mismatch["proof_status"], "planned_only")
+        self.assertIn("post_value_mismatch_proof_status=planned_only", mismatch["evidence"])
+        self.assertEqual(graph_effect["proof_status"], "planned_only")
+        self.assertEqual(graph_path["proof_status"], "planned_only")
+        self.assertEqual(visual_mismatch["proof_status"], "planned_only")
+        self.assertEqual(impact_item["proof_status"], "planned_only")
+
     def test_effect_trace_post_value_mismatch_preserves_hardware_gate(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

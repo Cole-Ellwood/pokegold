@@ -18,7 +18,7 @@ from .dynamic_taint import (
     parse_instruction_record,
     trace_records,
 )
-from .evidence import evidence_atom, merge_evidence_atoms
+from .evidence import evidence_atom, evidence_atoms, merge_evidence_atoms
 from .hardware_evidence import hardware_runtime_event_boundary
 from .provenance import display_path, parse_symbol_table, resolve_path
 from .reporting import load_reports
@@ -2899,7 +2899,7 @@ def build_side_effect_index(events: list[dict[str, Any]]) -> list[dict[str, Any]
             entry["count"] += 1
             entry["last_seq"] = event.get("seq")
             entry["last_pc"] = event.get("pc_bank_address", "")
-            proof = str(item.get("proof_status") or "instruction_observed")
+            proof = effect_item_proof_status(item)
             entry["proof_statuses"] = unique_list([*string_items(entry.get("proof_statuses")), proof])
             entry["proof_status"] = weakest_effect_proof_status(entry["proof_statuses"])
             trigger = {
@@ -3303,7 +3303,15 @@ def iter_effect_items(events: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 
 def effect_item_proof_status(item: dict[str, Any]) -> str:
-    return normalize_effect_proof_status(str(item.get("proof_status") or "instruction_observed"))
+    if item.get("proof_status"):
+        return normalize_effect_proof_status(str(item.get("proof_status")))
+    atom_statuses = [
+        normalize_effect_proof_status(atom.get("proof_status"))
+        for atom in evidence_atoms(item.get("evidence_atoms"))
+    ]
+    if atom_statuses:
+        return weakest_effect_proof_status(atom_statuses)
+    return "planned_only"
 
 
 def count_side_effects(events: list[dict[str, Any]], *, category: str = "") -> int:

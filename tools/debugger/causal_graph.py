@@ -2092,7 +2092,13 @@ def effect_item_proof_status(effect: dict[str, Any]) -> str:
     explicit = normalize_proof_status(effect.get("proof_status")) if effect.get("proof_status") else ""
     if explicit:
         return explicit
-    return "instruction_observed"
+    atom_statuses = [
+        normalize_proof_status(atom.get("proof_status"))
+        for atom in evidence_atoms(effect.get("evidence_atoms"))
+    ]
+    if atom_statuses:
+        return weakest_proof_status(atom_statuses)
+    return "planned_only"
 
 
 def watch_hit_proof_status(hit: dict[str, Any]) -> str:
