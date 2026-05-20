@@ -2112,7 +2112,7 @@ def watch_hit_proof_status(hit: dict[str, Any]) -> str:
         statuses.append(target_match)
     if str(hit.get("bank_match") or "") in {"bus_address_unverified_bank", "ambiguous_runtime_bank"}:
         statuses.append("planned_only")
-    return weakest_proof_status(statuses) or "instruction_observed"
+    return weakest_proof_status(statuses) or "planned_only"
 
 
 def source_operand_node_id(operand: dict[str, Any]) -> str:

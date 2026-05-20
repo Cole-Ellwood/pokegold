@@ -6492,3 +6492,43 @@ Remaining priority:
 
 - This closes another dynamic-taint proof-promotion path, but it does not add the missing non-mutating hardware event recorder, prove hardware side effects, complete reverse execution across CPU/hardware boundaries, or add full behavioral mirrors.
 - The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
+
+## Implementation Note - Effect-Trace Watch-Hit Proof Fallback Fencing
+
+Date: 2026-05-20.
+
+Context:
+
+- Generated effect-trace watch hits now carry explicit `effect_proof_status` and `target_match_proof_status` fields.
+- Ranking, causal graph, and visualization still had a legacy fallback where a proofless watch-hit record defaulted to `instruction_observed`.
+- That let stale or hand-authored effect-trace reports promote a watch-hit boundary to observed proof without an explicit effect proof, target-match proof, bank proof, or hardware side-effect proof.
+
+Primary references used:
+
+- No new external primary references were needed for this slice; it is an internal report/UI proof-promotion patch.
+
+Implemented fix:
+
+- `tools/debugger/ranking.py`
+  - defaults proofless effect-trace watch hits to `planned_only` instead of `instruction_observed`.
+  - keeps explicitly proven watch hits unchanged because `effect_proof_status`, `proof_status`, and `target_match_proof_status` still win.
+- `tools/debugger/causal_graph.py`
+  - applies the same fallback at graph watch-hit nodes and watch-match edges.
+- `tools/debugger/visualization.py`
+  - applies the same fallback for timeline and graph watch-hit proof labels.
+- `tools/debugger/tests/test_catalog.py`
+  - adds a cross-surface regression proving a legacy exact watch hit without proof fields remains `planned_only` in ranking, impact, causal graph, and visualization.
+
+Validation after patch:
+
+- Focused effect-trace watch-hit proof fallback regression plus existing hardware-gate regression: 2 passed.
+- Full debugger unittest discovery: 548 passed.
+- `python -m tools.debugger audit`: passed as a command, still `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+- `python -m tools.debugger hardware-regression-gate --execute`: passed as a command, still intentionally `passed=False`; reported 0/10 cases passing, 10 blocking cases, 4 runtime-observed emulator cases, 0 hardware-proof cases, and 10 static-blocker cases.
+- `PYTHONPYCACHEPREFIX=.local\tmp\pycompile_cache python -m py_compile tools\debugger\ranking.py tools\debugger\causal_graph.py tools\debugger\visualization.py tools\debugger\tests\test_catalog.py`: passed.
+- `git diff --check`: passed with unrelated pre-existing CRLF warnings in Boss AI trace/generated/doc fixture files.
+
+Remaining priority:
+
+- This closes another legacy report/UI proof fallback, but it does not produce the missing non-mutating event recorder, prove the Pan Docs hardware side-effect cases, or add arbitrary script/graphics/audio/map behavioral mirrors.
+- The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
