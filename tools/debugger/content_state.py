@@ -154,6 +154,8 @@ TIME_OF_DAY_DEFAULT_VALUES = {
 }
 LARGE_OBJECT_COLLISION_MODEL = "WillObjectIntersectBigObject_fixed_2x2"
 LARGE_OBJECT_SIZE_SOURCE = "engine/overworld/npc_movement.asm:WillObjectIntersectBigObject"
+OBJECT_OCCUPANCY_RUNTIME_SYMBOLS = ("InitializeVisibleSprites", "CopyObjectStruct")
+BIG_OBJECT_RUNTIME_SYMBOLS = ("IsNPCAtCoord", "WillObjectIntersectBigObject")
 SCRIPT_ENTRY_PATCH_SYMBOLS = ("wScriptBank", "wScriptPos", "wScriptRunning", "wScriptMode", "wScriptStackSize")
 MOVEMENT_ENTRY_PATCH_SYMBOLS = (
     "wMovementObject",
@@ -493,6 +495,7 @@ def attach_event_runtime_route(materialization: dict[str, Any], precondition: di
         route = dict(route)
     if route.get("kind") == EVENT_RUNTIME_ROUTE_LEGACY_KEY or not route.get("kind"):
         route["kind"] = EVENT_RUNTIME_ROUTE_KIND
+    route = attach_materialization_runtime_requirements(route, row)
     expected_sinks = unique_list(
         [
             *string_items(route.get("expected_sinks")),
@@ -517,6 +520,59 @@ def attach_event_runtime_route(materialization: dict[str, Any], precondition: di
     row["expected_sinks"] = expected_sinks
     row["observed_sinks"] = observed_sinks
     return row
+
+
+def attach_materialization_runtime_requirements(route: dict[str, Any], row: dict[str, Any]) -> dict[str, Any]:
+    required_runtime_symbols = unique_list(
+        [
+            *string_items(route.get("required_runtime_symbols")),
+            *object_event_required_runtime_symbols(row),
+        ]
+    )
+    trace_symbols = unique_list(
+        [
+            *string_items(route.get("trace_symbols")),
+            *required_runtime_symbols,
+        ]
+    )
+    if not required_runtime_symbols and not trace_symbols:
+        return route
+    updated = dict(route)
+    updated["required_runtime_symbols"] = required_runtime_symbols
+    updated["trace_symbols"] = trace_symbols
+    updated["evidence_kinds"] = unique_list([*string_items(route.get("evidence_kinds")), "instruction_trace"])
+    command_route = event_runtime_materialization_route(
+        scenario_id=str(row.get("scenario_id", "")),
+        scenario_type=str(row.get("scenario_type", "")),
+        precondition_id=str(row.get("precondition_id", "")),
+        precondition_kind=str(row.get("precondition_kind", "")),
+        source_file=str(row.get("source_file", "")),
+        values=row.get("values") if isinstance(row.get("values"), dict) else {},
+        watch_symbols=string_items(row.get("watch_symbols")),
+        outputs=dict_items(row.get("outputs")),
+        trace_symbols=trace_symbols,
+        required_runtime_symbols=required_runtime_symbols,
+        actual_proof_status=str(route.get("actual_proof_status") or row.get("actual_proof_status") or "planned_only"),
+        observed_sinks=string_items(route.get("observed_sinks")),
+    )
+    updated["expected_proof_commands"] = command_route["expected_proof_commands"]
+    return updated
+
+
+def object_event_required_runtime_symbols(row: dict[str, Any]) -> list[str]:
+    if row.get("scenario_type") != "map_object_event" or row.get("precondition_kind") != "map_position":
+        return []
+    object_context = row.get("object_context") if isinstance(row.get("object_context"), dict) else {}
+    if not object_context or object_context.get("status") != "ready":
+        return []
+    required: list[str] = []
+    loaded_object_count = parse_int(object_context.get("loaded_object_count")) or 0
+    companion_object_count = parse_int(object_context.get("companion_object_count")) or 0
+    if loaded_object_count > 1 or companion_object_count > 0:
+        required.extend(OBJECT_OCCUPANCY_RUNTIME_SYMBOLS)
+    if object_context.get("large_object"):
+        required.extend(BIG_OBJECT_RUNTIME_SYMBOLS)
+    return unique_list(required)
 
 
 def materialization_actual_proof_status(materialization: dict[str, Any]) -> str:

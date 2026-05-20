@@ -935,6 +935,8 @@ def state_preconditions_for_scenario(
                                 "large_object_size_source": LARGE_OBJECT_SIZE_SOURCE,
                             },
                             "watch_symbols": list(MAP_STATE_WATCH_SYMBOLS),
+                            "trace_symbols": ["TryObjectEvent", "IsNPCAtCoord", "WillObjectIntersectBigObject"],
+                            "required_runtime_symbols": ["IsNPCAtCoord", "WillObjectIntersectBigObject"],
                             "notes": [
                                 "Load or synthesize an overworld state outside the selected tile of a 2x2 object footprint.",
                                 "Use player coordinate/facing watches plus the object-struct BIG_OBJECT palette bit to prove IsNPCAtCoord can use big-object intersection before tracing TryObjectEvent.",

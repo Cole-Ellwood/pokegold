@@ -26798,6 +26798,8 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(object_context["sprite_movement_palette_flags"], 0xC0)
         self.assertEqual(object_context["large_object"], True)
         self.assertIn("wObject1Struct+OBJECT_PALETTE", route["expected_sinks"])
+        self.assertEqual(route["required_runtime_symbols"], ["IsNPCAtCoord", "WillObjectIntersectBigObject"])
+        self.assertIn("--symbol WillObjectIntersectBigObject", " ".join(route["expected_proof_commands"]))
 
     def test_content_scenarios_materialize_custom_big_object_movement_candidates(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -26894,6 +26896,11 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
             if precondition.get("kind") == "map_position"
         ]
         candidate_ids = {precondition["id"] for precondition in position_preconditions}
+        candidate_route = next(
+            precondition["event_runtime_materialization_route"]
+            for precondition in position_preconditions
+            if precondition["id"] == "map_object_event_large_object_right_bottom_position"
+        )
         materialization = next(
             item
             for item in report["materializations"]
@@ -26913,6 +26920,8 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(object_context["large_object_collision_model"], "WillObjectIntersectBigObject_fixed_2x2")
         self.assertEqual(object_context["sprite_movement_palette_flags"], 0x80)
         self.assertEqual(patches["wObject1Struct+OBJECT_PALETTE"]["value"], 0x80)
+        self.assertEqual(candidate_route["required_runtime_symbols"], ["IsNPCAtCoord", "WillObjectIntersectBigObject"])
+        self.assertIn("WillObjectIntersectBigObject", candidate_route["trace_symbols"])
 
     def test_content_state_materializes_multi_object_event_row(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -27149,6 +27158,8 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("wObject2Struct", materialization["watch_symbols"])
         self.assertIn("wObject1Struct+OBJECT_MAP_X", route["expected_sinks"])
         self.assertIn("wObject2Struct+OBJECT_MAP_X", route["expected_sinks"])
+        self.assertEqual(route["required_runtime_symbols"], ["InitializeVisibleSprites", "CopyObjectStruct"])
+        self.assertIn("--symbol InitializeVisibleSprites", " ".join(route["expected_proof_commands"]))
 
     def test_content_state_skips_offscreen_companion_object_structs(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

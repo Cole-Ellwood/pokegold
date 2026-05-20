@@ -5662,3 +5662,53 @@ Remaining priority:
 - This prevents planned instruction-trace targets from promoting generated-hour behavioral proof, but it still does not execute those runtime consumers across arbitrary event-engine states.
 - Runtime-verified multi-object occupancy, big-object collision/occupancy proof, full script VM behavior under arbitrary event-engine context, pixel/audio playback mirrors, causal proof, side-effect-complete reverse execution, and the non-mutating hardware event recorder remain incomplete.
 - The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
+
+## Implementation Note - Object-Event Occupancy Runtime Boundary
+
+Date: 2026-05-20.
+
+Context:
+
+- Object-event content-state materialization can patch source-order companion object structs and fixed 2x2 big-object state.
+- Those patches are still planned WRAM/map-object state until runtime evidence proves the object loader and collision path consumed them.
+- Without route-level runtime consumer requirements, a compare mirror could pass from patched object row/struct sink observations while leaving the multi-loaded-object or big-object collision path unobserved.
+
+References used:
+
+- Local engine source: `engine/overworld/player_object.asm:InitializeVisibleSprites` and `CopyObjectStruct`.
+- Local engine source: `engine/overworld/npc_movement.asm:IsNPCAtCoord` and `WillObjectIntersectBigObject`.
+- Local engine source: `engine/overworld/events.asm:TryObjectEvent`.
+- Upstream pret pokegold cross-checks:
+  - `https://raw.githubusercontent.com/pret/pokegold/master/engine/overworld/events.asm`
+  - `https://raw.githubusercontent.com/pret/pokegold/master/engine/overworld/player_object.asm`
+  - `https://raw.githubusercontent.com/pret/pokegold/master/engine/overworld/npc_movement.asm`
+
+Implemented fix:
+
+- `tools/debugger/content_state.py`
+  - augments content-state runtime routes after materialization, preserving existing route fields while adding requirements derived from the actual object context.
+  - requires `InitializeVisibleSprites` and `CopyObjectStruct` runtime evidence for materialized multi-loaded-object companion occupancy.
+  - requires `IsNPCAtCoord` and `WillObjectIntersectBigObject` runtime evidence for materialized large-object collision candidates.
+  - rebuilds route proof commands so the required symbols appear in follow-up instruction-trace commands.
+- `tools/debugger/content_scenarios.py`
+  - attaches the big-object collision runtime symbols to generated large-object content-fuzz preconditions before state materialization.
+- `tools/debugger/catalog.py`
+  - updates generation and differential-mirror blocker wording so these planned object states cannot be mistaken for runtime occupancy/collision proof.
+- `tools/debugger/tests/test_catalog.py`
+  - verifies big-object routes carry required collision symbols and proof commands.
+  - verifies custom `BIG_OBJECT` content-scenario candidates carry the same runtime requirements.
+  - verifies multi-loaded-object content-state routes require the object-loader symbols.
+
+Validation after patch:
+
+- Focused object-event occupancy regressions: 3 passed.
+- Adjacent object-event content-state cluster: 12 passed.
+- Full debugger unittest discovery: 524 passed.
+- `PYTHONPYCACHEPREFIX=.local\tmp\pycompile_cache python -m py_compile tools\debugger\content_scenarios.py tools\debugger\content_state.py tools\debugger\catalog.py tools\debugger\tests\test_catalog.py`: passed.
+- `python -m tools.debugger audit`: passed as a command, still `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
+
+Remaining priority:
+
+- This is a proof-promotion fence and route-upgrade patch; it does not execute the loader/collision traces across arbitrary event-engine states.
+- Runtime-verified multi-object occupancy across arbitrary maps, runtime-observed big-object collision across arbitrary maps, full script VM behavior under arbitrary event-engine context, pixel/audio playback mirrors, causal proof, side-effect-complete reverse execution, and the non-mutating hardware event recorder remain incomplete.
+- The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
