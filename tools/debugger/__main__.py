@@ -2291,6 +2291,19 @@ def format_effect_trace(report: dict[str, Any]) -> str:
             f"checkpoints={window.get('checkpoint_count', 0)} "
             f"interval={window.get('checkpoint_interval', '')}"
         )
+    if report.get("effect_proof_status_counts"):
+        counts = report.get("effect_proof_status_counts", {})
+        proof_counts = " ".join(
+            f"{key}={counts.get(key, 0)}"
+            for key in ("planned_only", "instruction_observed", "runtime_observed")
+            if counts.get(key, 0)
+        )
+        lines.append(
+            "effect_proof_statuses="
+            + (proof_counts or "none")
+            + f" hardware_gated={report.get('hardware_gated_effect_count', 0)}"
+            + f" hardware_runtime_events={report.get('hardware_runtime_event_effect_count', 0)}"
+        )
     if report.get("write_index"):
         lines.extend(["", "Last writers:"])
         for item in report["write_index"][:12]:

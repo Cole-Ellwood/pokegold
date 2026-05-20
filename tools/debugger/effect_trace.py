@@ -185,6 +185,11 @@ def build_effect_trace_report(
         "register_write_count": count_effects(events, "register_write"),
         "control_effect_count": count_effects(events, "control_flow"),
         "unmodeled_effect_count": count_unmodeled_effects(events),
+        "effect_proof_status_counts": count_effect_proof_statuses(events),
+        "planned_only_effect_count": count_effects_by_proof_status(events, "planned_only"),
+        "instruction_observed_effect_count": count_effects_by_proof_status(events, "instruction_observed"),
+        "hardware_gated_effect_count": count_hardware_gated_effects(events),
+        "hardware_runtime_event_effect_count": count_hardware_runtime_event_effects(events),
         "hardware_side_effect_count": count_side_effects(events),
         "dma_side_effect_count": count_side_effects(events, category="dma"),
         "dma_copy_read_count": count_effects(events, "dma_read"),
@@ -3258,6 +3263,47 @@ def trace_paths_from_data(data: Any) -> list[str]:
 
 def count_effects(events: list[dict[str, Any]], kind: str) -> int:
     return sum(1 for event in events for item in event.get("effects", []) if item.get("kind") == kind)
+
+
+def count_effect_proof_statuses(events: list[dict[str, Any]]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for item in iter_effect_items(events):
+        proof = effect_item_proof_status(item)
+        counts[proof] = counts.get(proof, 0) + 1
+    return counts
+
+
+def count_effects_by_proof_status(events: list[dict[str, Any]], proof_status: str) -> int:
+    return sum(1 for item in iter_effect_items(events) if effect_item_proof_status(item) == proof_status)
+
+
+def count_hardware_gated_effects(events: list[dict[str, Any]]) -> int:
+    return sum(
+        1
+        for item in iter_effect_items(events)
+        if item.get("hardware_event_required") and not item.get("hardware_runtime_event")
+    )
+
+
+def count_hardware_runtime_event_effects(events: list[dict[str, Any]]) -> int:
+    return sum(
+        1
+        for item in iter_effect_items(events)
+        if item.get("hardware_event_required") and item.get("hardware_runtime_event")
+    )
+
+
+def iter_effect_items(events: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [
+        item
+        for event in events
+        for item in event.get("effects", [])
+        if isinstance(item, dict)
+    ]
+
+
+def effect_item_proof_status(item: dict[str, Any]) -> str:
+    return normalize_effect_proof_status(str(item.get("proof_status") or "instruction_observed"))
 
 
 def count_side_effects(events: list[dict[str, Any]], *, category: str = "") -> int:

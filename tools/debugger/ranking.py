@@ -1925,6 +1925,12 @@ def effect_trace_findings(report: dict[str, Any], *, source: str) -> list[dict[s
                     f"io_writes={report.get('io_write_count', 0)}",
                     f"register_writes={register_write_count}",
                     f"hardware_side_effects={report.get('hardware_side_effect_count', 0)}",
+                    f"hardware_gated_effects={report.get('hardware_gated_effect_count', 0)}"
+                    if report.get("hardware_gated_effect_count")
+                    else "",
+                    f"hardware_runtime_event_effects={report.get('hardware_runtime_event_effect_count', 0)}"
+                    if report.get("hardware_runtime_event_effect_count")
+                    else "",
                     f"dma_copy_writes={report.get('dma_copy_write_count', 0)}",
                     f"interrupt_entries={report.get('interrupt_entry_count', 0)}",
                     f"unmodeled_effects={unmodeled_effect_count}" if unmodeled_effect_count else "",

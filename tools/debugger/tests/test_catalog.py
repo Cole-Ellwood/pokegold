@@ -15038,6 +15038,9 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
 
         self.assertTrue(effect["valid"])
         self.assertTrue(write_hits)
+        self.assertGreater(effect["hardware_gated_effect_count"], 0)
+        self.assertEqual(effect["hardware_runtime_event_effect_count"], 0)
+        self.assertGreater(effect["effect_proof_status_counts"]["planned_only"], 0)
         self.assertTrue(all(hit["hardware_event_required"] for hit in write_hits))
         self.assertTrue(all(hit["hardware_runtime_event"] is False for hit in write_hits))
         self.assertTrue(all(hit["target_match_proof_status"] == "planned_only" for hit in write_hits))
@@ -15052,6 +15055,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("planned_only_watch_writes=1", ranked_effect["evidence"])
         self.assertIn("effect_proof_status=planned_only", ranked_effect["evidence"])
         self.assertIn("target_match_proof_status=planned_only", ranked_effect["evidence"])
+        self.assertIn("hardware_gated_effects=320", ranked_effect["evidence"])
         self.assertEqual(watch_timeline["proof_status"], "planned_only")
         self.assertIn("hardware_proof_gate=explicit_runtime_event_missing", watch_timeline["detail"])
 

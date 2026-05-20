@@ -6071,20 +6071,23 @@ Implemented fix:
 - `tools/debugger/effect_trace.py`
   - now sets watch-hit `target_match_proof_status=planned_only` when the matched effect is `planned_only`, requires a hardware runtime event that is absent, or carries `hardware_proof_gate=explicit_runtime_event_missing`.
   - carries the effect downgrade reason into the watch hit so the UI can explain why an exact watch address still is not proof-grade.
+  - adds `effect_proof_status_counts`, `planned_only_effect_count`, `instruction_observed_effect_count`, `hardware_gated_effect_count`, and `hardware_runtime_event_effect_count` so report consumers can see the downgraded effect mix without inferring it from the global report proof label.
 - `tools/debugger/ranking.py`
   - excludes planned-only watch writes from the "verified watched write" count.
-  - keeps the `effect_trace_observed` finding at `planned_only` when all write hits are hardware-gated or bank-unverified, and adds `planned_only_watch_writes` evidence.
+  - keeps the `effect_trace_observed` finding at `planned_only` when all write hits are hardware-gated or bank-unverified, and adds `planned_only_watch_writes` plus hardware-gated effect-count evidence.
 - `tools/debugger/causal_graph.py` and `tools/debugger/visualization.py`
   - make watch-hit nodes, edges, and timeline entries inherit `planned_only` from hardware-gated effect proof.
   - expose `effect_proof_status`, `target_match_proof_status`, `hardware_proof_gate`, and downgrade reason in watch-hit visualization details.
+- `tools/debugger/__main__.py`
+  - prints effect proof-status counts and hardware-gated/runtime-event effect totals in the `effect-trace` CLI summary.
 - `tools/debugger/tests/test_catalog.py`
-  - adds a regression where an FF46-triggered OAM DMA watch on `$FE00` stays planned-only across effect trace, ranking, causal graph, and visualization even though the watch address matches exactly.
+  - adds a regression where an FF46-triggered OAM DMA watch on `$FE00` stays planned-only across effect trace, ranking, causal graph, and visualization even though the watch address matches exactly, while the report exposes hardware-gated effect counts.
 
 Validation after patch:
 
 - Focused watch-hit proof-boundary regressions: 3 passed.
 - Full debugger unittest discovery: 533 passed.
-- `PYTHONPYCACHEPREFIX=.local\tmp\pycompile_cache python -m py_compile tools\debugger\effect_trace.py tools\debugger\ranking.py tools\debugger\causal_graph.py tools\debugger\visualization.py tools\debugger\tests\test_catalog.py`: passed.
+- `PYTHONPYCACHEPREFIX=.local\tmp\pycompile_cache python -m py_compile tools\debugger\effect_trace.py tools\debugger\ranking.py tools\debugger\causal_graph.py tools\debugger\visualization.py tools\debugger\__main__.py tools\debugger\tests\test_catalog.py`: passed.
 - `python -m tools.debugger hardware-regression-gate --execute`: passed as a command, still intentionally `passed=False`; reported 0/10 cases passing, 10 blocking cases, 4 runtime-observed emulator cases, 0 hardware-proof cases, and 10 static-blocker cases.
 - `python -m tools.debugger audit`: passed as a command, still `ready=False`, 7 complete buckets, 4 partial buckets, 4 blocking gaps.
 
