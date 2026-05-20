@@ -3187,6 +3187,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertTrue(pokemon_steps)
         self.assertTrue(all(step["runnable"] for step in pokemon_steps))
         self.assertIn("python -m tools.debugger content-mirror --changed-file data/pokemon/evos_attacks.asm", commands)
+        self.assertIn("python -m tools.debugger compare --changed-file data/pokemon/evos_attacks.asm", commands)
         self.assertIn(
             "python -m tools.debugger expect --source-file data/pokemon/evos_attacks.asm --expect source=data/pokemon/evos_attacks.asm",
             commands,

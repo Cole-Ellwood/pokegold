@@ -224,6 +224,7 @@ TRIAGE_RULES = (
         reason="Pokemon data edits need source-derived content checks plus the learnset/order smoke gate before a ROM build.",
         commands=(
             "python -m tools.debugger content-mirror --changed-file <changed_file>",
+            "python -m tools.debugger compare --changed-file <changed_file>",
             "python -m tools.debugger expect --source-file <changed_file> --expect source=<changed_file>",
             "python -m tools.debugger provenance --source-file <changed_file>",
             "python tools/audit/check_release_smoke.py",
