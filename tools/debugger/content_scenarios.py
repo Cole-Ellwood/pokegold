@@ -67,6 +67,16 @@ OBJECT_TIMEOFDAY_CANDIDATES = (
     ("day", "DAY", "DAY_HOUR"),
     ("nite", "NITE", "NITE_HOUR"),
 )
+OBJECT_TIMEOFDAY_RUNTIME_HOURS = {
+    "MORN": tuple(range(4, 10)),
+    "DAY": tuple(range(10, 18)),
+    "NITE": (*range(0, 4), *range(18, 24)),
+}
+OBJECT_TIMEOFDAY_MASK_BITS = {
+    "MORN": 0x01,
+    "DAY": 0x02,
+    "NITE": 0x04,
+}
 OBJECT_TIME_WATCH_SYMBOLS = ("wTimeOfDay", "hHours")
 OBJECT_LARGE_TILE_CANDIDATES = (
     ("top_left", "OW_DOWN", 0, 0),
@@ -951,6 +961,26 @@ def state_preconditions_for_scenario(
                         ],
                     }
                 )
+            for hour in object_event_runtime_hour_candidates(trigger):
+                preconditions.append(
+                    {
+                        "id": f"{scenario_type}_runtime_hour_{hour:02d}_position",
+                        "surface": "content_static",
+                        "kind": "map_position",
+                        "status": "planned",
+                        "values": {
+                            **values,
+                            "selected_hour": hour,
+                            "selected_time_context_source": "runtime_hour_candidate",
+                            "runtime_hour_candidate": True,
+                        },
+                        "watch_symbols": unique_list([*MAP_STATE_WATCH_SYMBOLS, *OBJECT_TIME_WATCH_SYMBOLS]),
+                        "notes": [
+                            "Load or synthesize an overworld state with this hHours value before firing the object trigger.",
+                            "Use hHours, wTimeOfDay, map state, and object-loader watches to prove CheckObjectTime consumed the generated runtime hour context.",
+                        ],
+                    }
+                )
         return attach_event_runtime_routes(preconditions, scenario_id=scenario_id, scenario_type=scenario_type)
     if scenario_type in {"audio_channel_block", "audio_command_stream"}:
         stream_value = trigger.get("stream", "")
@@ -1092,6 +1122,62 @@ def object_event_timeofday_candidates(trigger: dict[str, Any]) -> list[tuple[str
         for suffix, timeofday, hour_constant in OBJECT_TIMEOFDAY_CANDIDATES
         if timeofday in tokens
     ]
+
+
+def object_event_runtime_hour_candidates(trigger: dict[str, Any]) -> list[int]:
+    hour_1 = str(trigger.get("hour_1") or "").strip().upper()
+    hour_2 = str(trigger.get("hour_2") or "").strip().upper()
+    if not hour_1 or not hour_2:
+        return []
+    if hour_1 in {"-1", "$FF", "255"} and hour_2 in {"-1", "$FF", "255"}:
+        return []
+    if hour_1 in {"-1", "$FF", "255"}:
+        return object_event_runtime_hours_for_timeofday_mask(hour_2)
+    start = parse_hour_literal(hour_1)
+    end = parse_hour_literal(hour_2)
+    if start is None or end is None:
+        return []
+    start &= 0xFF
+    end &= 0xFF
+    if start > 23 or end > 23:
+        return []
+    if start == end:
+        return list(range(24))
+    if start > end:
+        return [*range(start, 24), *range(0, end + 1)]
+    return list(range(start, end + 1))
+
+
+def object_event_runtime_hours_for_timeofday_mask(raw_mask: str) -> list[int]:
+    tokens = set(re.findall(r"\b[A-Za-z_][A-Za-z0-9_]*\b", raw_mask))
+    if "ANYTIME" in tokens:
+        tokens.update(OBJECT_TIMEOFDAY_RUNTIME_HOURS)
+    hours = [
+        hour
+        for token in ("MORN", "DAY", "NITE")
+        if token in tokens
+        for hour in OBJECT_TIMEOFDAY_RUNTIME_HOURS[token]
+    ]
+    if hours:
+        return sorted(set(hours))
+    mask = parse_hour_literal(raw_mask)
+    if mask is None:
+        return []
+    return sorted(
+        {
+            hour
+            for token, bit in OBJECT_TIMEOFDAY_MASK_BITS.items()
+            if int(mask) & bit
+            for hour in OBJECT_TIMEOFDAY_RUNTIME_HOURS[token]
+        }
+    )
+
+
+def parse_hour_literal(raw: str) -> int | None:
+    try:
+        return parse_int_literal(raw)
+    except ValueError:
+        return None
 
 
 def large_object_movement_tokens(*, root: Path = ROOT) -> set[str]:

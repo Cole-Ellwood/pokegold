@@ -27403,10 +27403,27 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
             for item in report["materializations"]
             if item.get("precondition_id") == "map_object_event_position"
         )
+        runtime_materialization = next(
+            item
+            for item in report["materializations"]
+            if item.get("precondition_id") == "map_object_event_runtime_hour_15_position"
+        )
+        position_preconditions = [
+            precondition
+            for precondition in object_scenario["state_preconditions"]
+            if precondition.get("kind") == "map_position"
+        ]
+        candidate_ids = {precondition["id"] for precondition in position_preconditions}
         patches = {patch["symbol"]: patch for patch in materialization["patches"]}
+        runtime_patches = {patch["symbol"]: patch for patch in runtime_materialization["patches"]}
         object_context = materialization["object_context"]
+        runtime_time_context = runtime_materialization["object_context"]["object_time_context"]
 
         self.assertTrue(report["valid"])
+        self.assertIn("map_object_event_runtime_hour_09_position", candidate_ids)
+        self.assertIn("map_object_event_runtime_hour_15_position", candidate_ids)
+        self.assertIn("map_object_event_runtime_hour_17_position", candidate_ids)
+        self.assertNotIn("map_object_event_runtime_hour_18_position", candidate_ids)
         self.assertEqual(materialization["status"], "ready")
         self.assertEqual(object_context["object_time_context"]["time_model"], "hour_range")
         self.assertEqual(object_context["object_time_context"]["required_hour"], 9)
@@ -27418,6 +27435,11 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(patches["wObjectMasks+2"]["value"], 0)
         self.assertIn("hHours", materialization["watch_symbols"])
         self.assertIn("hHours", materialization["expected_sinks"])
+        self.assertEqual(runtime_materialization["status"], "ready")
+        self.assertEqual(runtime_materialization["values"]["selected_hour"], 15)
+        self.assertEqual(runtime_time_context["required_hour"], 15)
+        self.assertEqual(runtime_time_context["selected_time_context_source"], "runtime_hour_candidate")
+        self.assertEqual(runtime_patches["hHours"]["value"], 15)
 
     def test_content_state_materializes_selected_object_event_timeofday_mask_state(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -27917,6 +27939,9 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("map_object_event_timeofday_morn_position", candidate_ids)
         self.assertIn("map_object_event_timeofday_day_position", candidate_ids)
         self.assertIn("map_object_event_timeofday_nite_position", candidate_ids)
+        self.assertIn("map_object_event_runtime_hour_00_position", candidate_ids)
+        self.assertIn("map_object_event_runtime_hour_17_position", candidate_ids)
+        self.assertIn("map_object_event_runtime_hour_23_position", candidate_ids)
         self.assertEqual(materialization["status"], "ready")
         self.assertEqual(materialization["values"]["selected_timeofday"], "NITE")
         self.assertEqual(time_context["required_timeofday"], "NITE")
@@ -27927,6 +27952,21 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(patches["hHours"]["value"], 18)
         self.assertIn("wTimeOfDay", materialization["watch_symbols"])
         self.assertIn("hHours", materialization["watch_symbols"])
+        runtime_materialization = next(
+            item
+            for item in report["materializations"]
+            if item.get("precondition_id") == "map_object_event_runtime_hour_17_position"
+        )
+        runtime_patches = {patch["symbol"]: patch for patch in runtime_materialization["patches"]}
+        runtime_time_context = runtime_materialization["object_context"]["object_time_context"]
+        self.assertEqual(runtime_materialization["status"], "ready")
+        self.assertEqual(runtime_materialization["values"]["selected_hour"], 17)
+        self.assertEqual(runtime_time_context["required_timeofday"], "DAY")
+        self.assertEqual(runtime_time_context["required_timeofday_value"], 1)
+        self.assertEqual(runtime_time_context["required_hour"], 17)
+        self.assertEqual(runtime_time_context["selected_time_context_source"], "runtime_hour_candidate")
+        self.assertEqual(runtime_patches["wTimeOfDay"]["value"], 1)
+        self.assertEqual(runtime_patches["hHours"]["value"], 17)
 
     def test_content_scenarios_feed_replay_localize_and_coverage_targets(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

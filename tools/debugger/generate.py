@@ -343,7 +343,7 @@ def build_generation_plan(
         "known_limits": [
             "This is the unified generator coordinator for this Pokemon Gold romhack; it only executes commands when --execute is supplied, and semantic scenario execution is strongest where a surface has a ROM materializer.",
             "The optional JSONL seed manifest is a deterministic handoff manifest, not a guarantee that every surface can be replayed directly by the ROM today.",
-            "Damage and Boss AI have mature dynamic generators; map/script/movement content, banking, UI output sinks, and audio command/header WRAM plus rAUD hardware output sinks now have dynamic proof routes, while arbitrary event-engine states, full pixel playback, and full audio playback still need deeper dynamic generators.",
+            "Damage and Boss AI have mature dynamic generators; map/script/movement content, banking, object-event runtime-hour contexts, UI output sinks, and audio command/header WRAM plus rAUD hardware output sinks now have dynamic proof routes, while arbitrary event-engine states, full pixel playback, and full audio playback still need deeper dynamic generators.",
         ],
     }
 
@@ -705,7 +705,7 @@ def build_generator(
             counterexample_commands=counterexample_commands,
             materialization_commands=materialization_commands,
             gaps=[
-                "Map content scenarios now route through positioned-state WRAM patch generation and replay; audio header/command streams now expose music WRAM and rAUD hardware output-sink proof routes, while asset, UI, and arbitrary script semantic generators still need dedicated emulator-backed state builders for final behavioral proof.",
+                "Map content scenarios now route through positioned-state WRAM patch generation, object-event runtime-hour hHours/wTimeOfDay variants, and replay; audio header/command streams now expose music WRAM and rAUD hardware output-sink proof routes, while asset, UI, and arbitrary script semantic generators still need dedicated emulator-backed state builders for final behavioral proof.",
             ],
         )
 

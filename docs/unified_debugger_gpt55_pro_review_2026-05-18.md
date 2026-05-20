@@ -5405,3 +5405,49 @@ Remaining priority from Pro:
 - This adds the executable integration point for a non-mutating recorder, but stock PyBoy still lacks that recorder and still uses opcode-replacement hooks for debugger callbacks.
 - The next strategic implementation step remains the PyBoy fork/instrumentation layer that emits `before_execute`, `after_execute`, `interrupt_enter`, `stack_write`, `oam_dma_copy`, and `hdma_block_copy` events from inside CPU/interrupt/DMA execution.
 - The whole-ROM proof-substrate goal remains incomplete and `ready=False`.
+
+## Implementation Note - Object-Event Runtime-Hour Generation
+
+Date: 2026-05-20.
+
+Context:
+
+- The generation audit still named arbitrary hour/runtime event contexts beyond source-declared candidates as a blocker.
+- `content-scenarios` already emitted object-event time-of-day mask candidates for each source-declared `MORN`/`DAY`/`NITE` bit, but that gave one representative hour per source time bucket.
+- `content-state` could patch `hHours` for numeric hour ranges, but a requested hour for time-of-day mask objects still fell back to the first allowed source mask choice unless a matching `selected_timeofday` was supplied.
+
+References used:
+
+- Local engine source: `home/map_objects.asm:CheckObjectTime` for inclusive hour ranges, overnight ranges, and `wTimeOfDay` mask checks.
+- Local RTC source: `engine/rtc/rtc.asm:GetTimeOfDay` for the default 04:00-09:59 morning, 10:00-17:59 day, and 18:00-03:59 night mapping.
+- Local object layout source: `constants/map_object_constants.asm` for `MAPOBJECT_HOUR_1`, `MAPOBJECT_HOUR_2`, and `MAPOBJECT_TIMEOFDAY`.
+- pret pokecrystal map-event docs for `object_event x, y, sprite, movement, rx, ry, h1, h2, ...`: `https://pret.github.io/pokecrystal/map_event_scripts.html`
+- pret pokegold upstream source cross-check for `CheckObjectTime`: `https://raw.githubusercontent.com/pret/pokegold/master/home/map_objects.asm`
+
+Implemented fix:
+
+- `tools/debugger/content_scenarios.py`
+  - adds runtime-hour map-position preconditions for time-filtered object events.
+  - emits every inclusive numeric hour in source hour ranges, including overnight ranges.
+  - emits the concrete `hHours` values corresponding to `MORN`, `DAY`, `NITE`, `ANYTIME`, and numeric time-of-day masks.
+  - marks those routes with `selected_time_context_source=runtime_hour_candidate` and `runtime_hour_candidate=true`.
+- `tools/debugger/content_state.py`
+  - honors a requested numeric `selected_hour` for time-of-day mask objects by deriving the matching `wTimeOfDay` value through the same hour boundaries used by `GetTimeOfDay`.
+  - rejects a requested hour whose derived time-of-day value is not allowed by the object mask instead of silently falling back to the first source-declared mask choice.
+  - keeps generated hour contexts as planned state materializations until replay/watch/trace evidence proves `CheckObjectTime` consumed them.
+- `tools/debugger/catalog.py` and `tools/debugger/generate.py`
+  - update generation-gap wording to distinguish generated runtime-hour states from runtime-observed `CheckObjectTime` proof.
+- `tools/debugger/tests/test_catalog.py`
+  - verifies numeric hour ranges emit generated runtime-hour candidates and materialize an interior hour.
+  - verifies `ANYTIME` time-of-day masks emit all runtime-hour candidates and materialize hour 17 as `DAY` with `hHours=17`.
+
+Validation after patch:
+
+- Focused object-event runtime-hour and event-runtime materialization regressions: 24 passed.
+- `python -m tools.debugger content-scenarios --source-file maps\PlayersHouse1F.asm --max-cases 24 --json-out .local\tmp\debugger_runtime_hour_scenarios.json`: passed; generated 48 runtime probes and object-event runtime-hour candidates for the PlayersHouse1F Mom morning/day/night variants.
+
+Remaining priority:
+
+- This expands event-state generation, but it does not prove runtime behavior by itself.
+- Runtime-observed `CheckObjectTime` consumption for generated hour states, runtime-verified multi-object occupancy, big-object collision/occupancy proof, full script VM behavior under arbitrary event-engine context, pixel/audio playback mirrors, causal proof, and side-effect-complete reverse execution remain incomplete.
+- The whole-ROM proof-substrate goal remains incomplete and `ready=False`.

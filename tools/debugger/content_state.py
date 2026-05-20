@@ -964,7 +964,7 @@ def map_position_known_limits(*, scenario_type: str) -> list[str]:
             "Object events require a live object struct discoverable by IsNPCAtCoord; this materialization patches one generated visible object and still requires runtime proof that TryObjectEvent consumes it.",
         )
         limits.append(
-            "Multi-object map-event materialization patches the selected source object's wMapNObject row and source-order companion map rows; object mask/event-flag and generated source time-context filters are still planned state, while runtime occupancy and arbitrary hour/runtime time contexts beyond generated candidates still need replay/watch/trace evidence.",
+            "Multi-object map-event materialization patches the selected source object's wMapNObject row and source-order companion map rows; object mask/event-flag and generated runtime-hour time-context filters are still planned state, while runtime occupancy and CheckObjectTime consumption still need replay/watch/trace evidence.",
         )
         limits.append(
             "Companion object materialization filters object structs through the InitializeVisibleSprites player-viewport model, but replay/watch/trace must still prove the runtime object-loader chose the same loaded set and object struct indexes.",
@@ -1630,9 +1630,10 @@ def object_event_time_context(
                     "timeofday_choices": choices,
                     "requested_timeofday": str(requested_time_context.get("selected_timeofday") or ""),
                     "requested_timeofday_value": parse_int(requested_time_context.get("selected_timeofday_value")),
+                    "requested_hour": requested_hour_context_value(requested_time_context, constants=constants),
                     "selected_time_context_source": str(requested_time_context.get("selected_time_context_source") or "requested_time_context"),
                     "time_selection_valid": False,
-                    "time_selection_error": "selected_timeofday_not_allowed_by_object_mask",
+                    "time_selection_error": "selected_time_context_not_allowed_by_object_mask",
                     "required_symbol": TIMEOFDAY_SYMBOL,
                     "required_symbols": [TIMEOFDAY_SYMBOL],
                     "time_symbol_available": TIMEOFDAY_SYMBOL in symbol_table,
@@ -1774,23 +1775,62 @@ def requested_timeofday_choice(
     if requested_name:
         for choice in choices:
             if requested_name == str(choice.get("name") or "").upper():
-                return choice
+                return choice_with_requested_hour(choice, requested_time_context, constants=constants)
     requested_value = parse_int(requested_time_context.get("selected_timeofday_value"))
     if requested_value is None and requested_name:
         if requested_name.endswith("_F"):
             requested_value = constant_with_default(requested_name, constants)
         else:
             requested_value = constant_with_default(f"{requested_name}_F", constants)
-    if requested_value is None:
+    if requested_value is not None:
+        for choice in choices:
+            if int(choice.get("value", -1)) == (int(requested_value) & 0xFF):
+                return choice_with_requested_hour(choice, requested_time_context, constants=constants)
+        return None
+    requested_hour = requested_hour_context_value(requested_time_context, constants=constants)
+    if requested_hour is None:
+        return None
+    requested_timeofday = timeofday_value_for_hour(int(requested_hour), constants=constants)
+    if requested_timeofday is None:
         return None
     for choice in choices:
-        if int(choice.get("value", -1)) == (int(requested_value) & 0xFF):
-            return choice
+        if int(choice.get("value", -1)) == int(requested_timeofday):
+            selected = dict(choice)
+            selected["required_hour"] = int(requested_hour) & 0xFF
+            selected["requested_hour"] = int(requested_hour) & 0xFF
+            return selected
     return None
 
 
+def choice_with_requested_hour(
+    choice: dict[str, Any],
+    requested_time_context: dict[str, Any],
+    *,
+    constants: dict[str, int],
+) -> dict[str, Any] | None:
+    requested_hour = requested_hour_context_value(requested_time_context, constants=constants)
+    if requested_hour is None:
+        return choice
+    requested_timeofday = timeofday_value_for_hour(int(requested_hour), constants=constants)
+    if requested_timeofday is None or int(choice.get("value", -1)) != int(requested_timeofday):
+        return None
+    selected = dict(choice)
+    selected["required_hour"] = int(requested_hour) & 0xFF
+    selected["requested_hour"] = int(requested_hour) & 0xFF
+    return selected
+
+
 def requested_timeofday_context_present(requested_time_context: dict[str, Any]) -> bool:
-    return any(requested_time_context.get(key) not in {"", None} for key in ("selected_timeofday", "selected_timeofday_value"))
+    return any(
+        requested_time_context.get(key) not in {"", None}
+        for key in (
+            "selected_timeofday",
+            "selected_timeofday_value",
+            "selected_hour",
+            "required_hour",
+            "requested_hour",
+        )
+    )
 
 
 def requested_hour_context_value(requested_time_context: dict[str, Any], *, constants: dict[str, int]) -> int | None:
