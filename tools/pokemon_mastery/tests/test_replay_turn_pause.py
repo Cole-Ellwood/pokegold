@@ -100,6 +100,27 @@ BATON_PASS_LOG = """\
 """
 
 
+MEAN_LOOK_PASS_LOG = """\
+|player|p1|Alice|
+|player|p2|Bob|
+|gen|2
+|tier|[Gen 2] OU
+|start
+|switch|p1a: Snorlax|Snorlax, M|100/100
+|switch|p2a: Umbreon|Umbreon, M|100/100
+|turn|1
+|move|p2a: Umbreon|Mean Look|p1a: Snorlax
+|-activate|p1a: Snorlax|trapped
+|move|p1a: Snorlax|Body Slam|p2a: Umbreon
+|-damage|p2a: Umbreon|70/100
+|turn|2
+|move|p2a: Umbreon|Baton Pass|p2a: Umbreon
+|switch|p2a: Rhydon|Rhydon, M|100/100|[from] Baton Pass
+|move|p1a: Snorlax|Earthquake|p2a: Rhydon
+|turn|3
+"""
+
+
 REST_SLEEP_LOG = """\
 |player|p1|Alice|
 |player|p2|Bob|
@@ -229,14 +250,26 @@ class ReplayTurnPauseTests(unittest.TestCase):
         self.assertIn("active Espeon HP 100/100 healthy; boosts spe+2", prompt)
         self.assertIn("Scizor 70/100 healthy; moves: Agility, Baton Pass", prompt)
 
-    def test_prompt_tracks_rest_sleep_actions(self) -> None:
+    def test_prompt_carries_mean_look_trapping_through_baton_pass(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "mean_look.log"
+            path.write_text(MEAN_LOOK_PASS_LOG, encoding="utf-8")
+
+            prompt = format_prompt(path, 3)
+
+        self.assertIn("active Snorlax HP 100/100 healthy; volatiles trapped", prompt)
+        self.assertIn("active Rhydon HP 100/100 healthy", prompt)
+        self.assertIn("Umbreon 70/100 healthy; moves: Baton Pass, Mean Look", prompt)
+
+    def test_prompt_keeps_rest_counter_after_failed_sleeptalk_rest(self) -> None:
         with TemporaryDirectory() as tmpdir:
             path = Path(tmpdir) / "rest_sleep.log"
             path.write_text(REST_SLEEP_LOG, encoding="utf-8")
 
             prompt = format_prompt(path, 4)
 
-        self.assertIn("Rest sleep actions 0", prompt)
+        self.assertIn("Rest sleep actions 2", prompt)
+        self.assertIn("will wake and can act this prompted turn in GSC", prompt)
 
     def test_prompt_marks_rest_wake_action_after_two_sleep_actions(self) -> None:
         with TemporaryDirectory() as tmpdir:
@@ -310,6 +343,20 @@ class ReplayTurnPauseTests(unittest.TestCase):
         top_three = "ranked top-three candidates"
         self.assertIn(top_three, public_prompt)
         self.assertIn(top_three, side_prompt)
+
+        route_budget = (
+            "Route-budget tiebreaker: state why #1 ranks above #2, what public "
+            "fact would make #2 become #1, and the rejected safe/default line."
+        )
+        self.assertIn(route_budget, public_prompt)
+        self.assertIn(route_budget, side_prompt)
+
+        miss_tags = (
+            "Score likely misses with route_budget, resource_identity, "
+            "reset_loop, script_too_slow, branch_punish, and positive_selection."
+        )
+        self.assertIn(miss_tags, public_prompt)
+        self.assertIn(miss_tags, side_prompt)
 
 
 if __name__ == "__main__":

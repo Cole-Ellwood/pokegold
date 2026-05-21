@@ -36,7 +36,7 @@ class ReplayState:
     )
 
 
-DECISION_RELEVANT_VOLATILES = {"Substitute", "confusion"}
+DECISION_RELEVANT_VOLATILES = {"Substitute", "confusion", "trapped"}
 
 
 def split_log_line(line: str) -> list[str]:
@@ -135,8 +135,6 @@ def apply_event(state: ReplayState, line: str) -> None:
         mon = clean_mon(parts[2])
         mon_state = get_mon(state, side, mon)
         mon_state.moves.add(parts[3])
-        if parts[3] == "Rest" and "[from] Sleep Talk" in parts[4:]:
-            set_status(mon_state, "slp", "Rest")
         return
     if tag in {"-damage", "-heal", "-sethp"} and len(parts) >= 4:
         side = side_from_slot(parts[2])
@@ -181,13 +179,13 @@ def apply_event(state: ReplayState, line: str) -> None:
         mon = clean_mon(parts[2])
         get_mon(state, side, mon).boosts = {}
         return
-    if tag in {"-start", "-end"} and len(parts) >= 4:
+    if tag in {"-start", "-end", "-activate"} and len(parts) >= 4:
         effect = parts[3]
         if effect in DECISION_RELEVANT_VOLATILES:
             side = side_from_slot(parts[2])
             mon = clean_mon(parts[2])
             volatiles = get_mon(state, side, mon).volatiles
-            if tag == "-start":
+            if tag in {"-start", "-activate"}:
                 volatiles.add(effect)
             else:
                 volatiles.discard(effect)
@@ -317,6 +315,8 @@ def format_prompt(path: Path, turn: int) -> str:
         "Before final top action, compare candidates against active target -> next owner -> counter-owner after our handoff.",
         "If recovery, hazards, removal, phazing, or sleep-turn actions can reset the route, compare reset-denial before damage.",
         "Then give top action, confidence, ranked top-three candidates, worst branch, public-info tiers, and fallback.",
+        "Route-budget tiebreaker: state why #1 ranks above #2, what public fact would make #2 become #1, and the rejected safe/default line.",
+        "Score likely misses with route_budget, resource_identity, reset_loop, script_too_slow, branch_punish, and positive_selection.",
         "",
     ]
     output.extend(format_side("p1", state.sides["p1"]))
@@ -438,6 +438,8 @@ def format_side_prompt(path: Path, turn: int, advise_side: str) -> str:
         "Before final top action, compare candidates against active target -> next owner -> counter-owner after our handoff.",
         "If recovery, hazards, removal, phazing, or sleep-turn actions can reset the route, compare reset-denial before damage.",
         "Then give top action, confidence, ranked top-three candidates, worst branch, public-info tiers, and fallback.",
+        "Route-budget tiebreaker: state why #1 ranks above #2, what public fact would make #2 become #1, and the rejected safe/default line.",
+        "Score likely misses with route_budget, resource_identity, reset_loop, script_too_slow, branch_punish, and positive_selection.",
         "",
     ]
     output.extend(format_side_known_roster(lines, advise_side))
