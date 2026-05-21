@@ -26,7 +26,7 @@ scratch paths first.
 | `audit/boss_ai_trace/live_capture_ledger.md` | Live Boss AI trace status ledger. | Evidence ledger. | Priority rows must not be marked finished without real capture files. |
 | `audit/boss_ai_trace/live_capture_manifest.json` | Trace batch manifest. | Tool input. | Add states only when they match the current trace ROM. |
 | `tools/trace/boss_ai_state_factory.py` | PyBoy state factory for real trainer live captures. | Tooling. | Use `--all --update-manifest` to regenerate trainer decision states through real map scripts. |
-| `audit/boss_ai_trace/morty_live.txt` | Current Morty live chosen-move proof. | Live emulator evidence. | First proof capsule; has current trace hashes and `chosen_id=138`. |
+| `audit/boss_ai_trace/morty_live.txt` | Current Morty live chosen-move proof. | Live emulator evidence. | First proof capsule; has current trace hashes and `chosen_id=101`. |
 | `audit/boss_ai_trace/morty_proof_capsule_attempt_2026-04-26.md` | Blocked Morty proof attempt and unblock recipe. | Negative evidence. | Shows why old RAM was not accepted as proof. |
 | `docs/agent_navigation/subsystems/` | Micro-indexes for high-friction workstreams. | Routing only. | Use after task classification, before broad search. |
 | `decisions/` | Dated reversible-judgment notes. | Tracked durable record. | Write a short file when making a project-shape call future helpers might revisit. |
