@@ -521,7 +521,7 @@ only.)
   - `ls engine/battle/ai/boss_platform.asm engine/battle/ai/boss_policy_move.asm engine/battle/ai/boss_policy_switch.asm engine/battle/ai/boss_thunks.asm` → all four exist.
   - `git log --all --diff-filter=A --oneline -- engine/battle/ai/boss_platform.asm` → `3ca2ecf6 bossai: split boss source for navigation`.
   - `python tools/audit/check_boss_ai_policy_contract.py` → PASS.
-  - `python tools/audit/check_boss_ai_debugger_done.py` → `passed=True failed_commands=0 roadmap_ready=True blocking_gaps=0` (recorded 2026-05-21 as commit `7b368233 debugger: close score-rule materialization done gate`).
+  - `python tools/audit/check_boss_ai_debugger_done.py` → `passed=True failed_commands=0 roadmap_ready=True blocking_gaps=0` (recorded 2026-05-21 on this branch; commit becomes ancestor of the dev tip once codex/overworld-poison-cadence-cure merges).
 - **Bytes recovered:** N/A (structural split; no byte-recovery target).
 - **Bank impact:** N/A at split time (byte identity); current state evolved through subsequent commits.
 - **Issues / followups:**
