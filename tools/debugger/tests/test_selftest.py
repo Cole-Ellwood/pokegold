@@ -14,7 +14,9 @@ from tools.debugger.selftest import (
     CheckResult,
     SelftestReport,
     _format_text,
+    check_coverage,
     check_hypothesis_tracker,
+    check_save_state_lab,
     main,
     run_selftest,
 )
@@ -83,6 +85,25 @@ class HypothesisTrackerCheckTests(unittest.TestCase):
         result = check_hypothesis_tracker(ROOT)
         self.assertTrue(result.ok, result.error or result.detail)
         self.assertEqual(result.component, "hypothesis_tracker")
+
+
+class CoverageCheckTests(unittest.TestCase):
+    def test_coverage_check_passes_and_asserts_canonical_schema(self) -> None:
+        result = check_coverage(ROOT)
+        self.assertTrue(result.ok, result.error or result.detail)
+        self.assertEqual(result.component, "coverage")
+        self.assertIn("targets", result.detail)
+
+
+class SaveStateLabCheckTests(unittest.TestCase):
+    """Lived smoke for the V2 save-state surface: trusted raw WRAM decodes
+    named symbols, while .sgm candidates fail closed."""
+
+    def test_save_state_lab_check_passes_in_isolation(self) -> None:
+        result = check_save_state_lab(ROOT)
+        self.assertTrue(result.ok, result.error or result.detail)
+        self.assertEqual(result.component, "save_state_lab")
+        self.assertIn("fail-closed", result.detail)
 
 
 class JsonOutputTests(unittest.TestCase):
@@ -159,6 +180,15 @@ class CliFilterTests(unittest.TestCase):
         self.assertTrue(payload["ok"])
         self.assertEqual(payload["components_total"], 1)
         self.assertEqual(payload["results"][0]["component"], "capability_audit")
+
+    def test_main_can_filter_to_save_state_lab(self) -> None:
+        captured = io.StringIO()
+        with redirect_stdout(captured):
+            rc = main(["--component", "save_state_lab"])
+        self.assertEqual(rc, 0)
+        text = captured.getvalue()
+        self.assertIn("save_state_lab", text)
+        self.assertIn("(1/1 components healthy)", text)
 
 
 class IntegrationSelftestTests(unittest.TestCase):

@@ -171,10 +171,20 @@ def check_coverage(root: Path) -> CheckResult:
 
     def inner() -> str:
         report = build_coverage_report(symbols=("wCurDamage",), root=root)
-        if "targets" not in report and "coverage_targets" not in report:
-            # Accept different key names; the point is the call succeeds.
-            pass
-        return "coverage empty-input round-trip ok"
+        if not isinstance(report, dict):
+            raise AssertionError(f"coverage returned {type(report).__name__}, not dict")
+        if report.get("kind") != "unified_debugger_coverage_report":
+            raise AssertionError(f"coverage returned unexpected kind {report.get('kind')!r}")
+        if not report.get("valid", False):
+            raise AssertionError(f"coverage returned invalid report: {report.get('errors', [])}")
+        targets = report.get("targets")
+        if not isinstance(targets, list):
+            raise AssertionError("coverage report missing canonical list key: targets")
+        if not targets:
+            raise AssertionError("coverage returned no targets for wCurDamage")
+        if not any(target.get("id") == "wCurDamage" for target in targets):
+            raise AssertionError("coverage targets did not include requested symbol wCurDamage")
+        return f"coverage round-trip ok ({len(targets)} targets)"
 
     return _capture(
         component="coverage",
@@ -330,6 +340,73 @@ def check_hypothesis_tracker(root: Path) -> CheckResult:
     )
 
 
+def check_save_state_lab(root: Path) -> CheckResult:
+    """Round-trip trusted raw WRAM and fail-closed .sgm handling."""
+
+    import tempfile
+
+    from .save_state_lab import build_save_state_inspect_report
+
+    def inner() -> str:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_root = Path(tmp)
+            symbols = tmp_root / "unit.sym"
+            symbols.write_text("00:D141 wCurDamage\n", encoding="utf-8")
+
+            raw_wram = tmp_root / "unit.wram"
+            data = bytearray(0x2000)
+            data[0xD141 - 0xC000] = 0x34
+            data[0xD142 - 0xC000] = 0x12
+            raw_wram.write_bytes(data)
+
+            inspect = build_save_state_inspect_report(
+                state_path="unit.wram",
+                symbols_path="unit.sym",
+                symbols=("wCurDamage",),
+                root=tmp_root,
+            )
+            if not inspect.get("valid", False):
+                raise AssertionError(f"raw WRAM inspect invalid: {inspect.get('errors', [])}")
+            fmt = inspect.get("format") or {}
+            if fmt.get("id") != "raw_wram_8k":
+                raise AssertionError(f"expected raw_wram_8k, got {fmt.get('id')!r}")
+            if fmt.get("decode_supported") is not True:
+                raise AssertionError("raw WRAM inspect did not report decode_supported=true")
+            if inspect.get("symbol_count", 0) <= 0:
+                raise AssertionError("raw WRAM inspect decoded no symbols")
+            values = {item.get("symbol"): item for item in inspect.get("symbols", [])}
+            cur_damage = values.get("wCurDamage")
+            if cur_damage is None:
+                raise AssertionError("raw WRAM inspect missing wCurDamage")
+            if cur_damage.get("value_hex") != "34 12":
+                raise AssertionError(
+                    f"expected wCurDamage value_hex='34 12', got {cur_damage.get('value_hex')!r}"
+                )
+
+            sgm = tmp_root / "debug1.sgm"
+            sgm.write_bytes(b"\x0c\x00\x00\x00POKEMON_GLDAAUE\x00" + bytes(256))
+            sgm_report = build_save_state_inspect_report(
+                state_path="debug1.sgm",
+                symbols_path="unit.sym",
+                symbols=("wCurDamage",),
+                root=tmp_root,
+            )
+            sgm_fmt = sgm_report.get("format") or {}
+            if sgm_fmt.get("id") != "vba_sgm_candidate":
+                raise AssertionError(f"expected vba_sgm_candidate, got {sgm_fmt.get('id')!r}")
+            if sgm_fmt.get("decode_supported") is not False:
+                raise AssertionError(".sgm candidate did not fail closed with decode_supported=false")
+            if not any(item.get("status") == "unmapped" for item in sgm_report.get("symbols", [])):
+                raise AssertionError(".sgm candidate unexpectedly decoded requested symbol")
+        return "save_state_lab raw WRAM + .sgm fail-closed round-trip ok"
+
+    return _capture(
+        component="save_state_lab",
+        next_command="python -m tools.debugger.save_state_lab inspect <state> --symbol <symbol>",
+        fn=inner,
+    )
+
+
 NAMED_CHECKS: tuple[tuple[str, Check], ...] = (
     ("capability_audit", check_capability_audit),
     ("inventory", check_inventory),
@@ -342,6 +419,7 @@ NAMED_CHECKS: tuple[tuple[str, Check], ...] = (
     ("trace_index", check_trace_index),
     ("visualization", check_visualization),
     ("hypothesis_tracker", check_hypothesis_tracker),
+    ("save_state_lab", check_save_state_lab),
 )
 
 CHECKS: tuple[Check, ...] = tuple(check for _, check in NAMED_CHECKS)
