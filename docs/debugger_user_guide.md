@@ -22,10 +22,11 @@ python -m tools.debugger.selftest
 Expected (~5s on this branch):
 
 ```
-Selftest PASS  (11/11 components healthy)
+Selftest PASS  (12/12 components healthy)
   [ok]   capability_audit  — capability audit ready=True, complete=11
   [ok]   inventory  — inventory ok (4 subsystems)
   ...
+  [ok]   save_state_lab  — save_state_lab raw WRAM + .sgm fail-closed round-trip ok
 ```
 
 If selftest fails, **fix the named component first** — the output names
@@ -167,7 +168,9 @@ python -m tools.damage_debugger.oracle
 **Hypothesis tracker hook**
 
 For AG-NN-class bugs (transitive register clobbers from ABI changes —
-see [memory: AG-NN clobber class](../../.claude/projects/C--Users-lolno-Downloads-pokemon-gold-hack/memory/feedback_ag_nn_clobber_class.md)):
+the May 2026 5x physical damage class, where a downstream ABI change
+clobbers a register a caller relied on past the dispatch boundary; see
+also [`docs/asm_authoring_guide.md`](asm_authoring_guide.md) §3.13–§3.14):
 
 ```powershell
 python -m tools.debugger.hypothesis_tracker add `
@@ -264,9 +267,10 @@ V0 trusts two surfaces: raw 64 KiB address-space dumps and raw 8 KiB
 WRAM images with named-symbol deltas via the existing `.sym` service.
 `.sgm` files (VBA / VBA-M) are classified by suffix + magic bytes and
 returned as `vba_sgm_candidate` with `decode_supported=false` — the V0
-deliberately fails closed rather than guessing a WRAM offset map (per
-[memory: VBA .sgm format](../../.claude/projects/C--Users-lolno-Downloads-pokemon-gold-hack/memory/reference_vba_sgm_format.md)
-non-contiguous bank layout).
+deliberately fails closed rather than guessing a WRAM offset map.
+VBA `.sgm` files use a non-contiguous WRAM bank layout; a bank-contiguous
+assumption silently mis-decodes them, which is why the V0 contract
+requires an explicit format proof before trusting a decode.
 
 If the inspect reports `decode_supported=false`, the workflow falls
 back to manual reading via
@@ -295,9 +299,10 @@ python -m tools.debugger.hypothesis_tracker add `
 
 ### "Graphics or audio glitch in VBA"
 
-Per [memory: user plays in VBA-M](../../.claude/projects/C--Users-lolno-Downloads-pokemon-gold-hack/memory/user_plays_in_vba.md),
-PyBoy and VBA-M can disagree (May 2026 tile jumble class). Lived play
-behavior is VBA-M's call, not PyBoy's.
+The user plays in VBA-M, not PyBoy. PyBoy and VBA-M can disagree
+(May 2026 tile jumble class). Lived play behavior is VBA-M's call,
+not PyBoy's; treat PyBoy agreement as a signal, not a proof, for any
+user-reported graphics/audio symptom.
 
 **For visible-region snapshots**
 
