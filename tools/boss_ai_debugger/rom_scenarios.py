@@ -238,6 +238,13 @@ def normalize_tier(value: Any) -> int:
     raise PreferenceDataError("tier must be early, mid, late, 1, 2, or 3")
 
 
+def scenario_condition_tags(scenario: dict[str, Any]) -> set[str]:
+    expectation = scenario_expectation(scenario)
+    tags = set(string_list(expectation.get("condition_tags")))
+    tags.update(string_list(scenario.get("condition_tags")))
+    return tags
+
+
 def apply_score_delta(score: int, delta: int) -> int:
     if score >= BLOCKED_SCORE:
         return score
@@ -254,7 +261,7 @@ def adjusted_best_roll_threshold(tier: int, gap: int) -> int:
     elif gap >= 3:
         threshold = 192
     else:
-        threshold = 154
+        return 154
 
     if tier == AI_TIER_LATE:
         return min(252, threshold + 32)
@@ -297,23 +304,80 @@ def score_moves(scenario: dict[str, Any]) -> list[ScoredMove]:
                 if isinstance(raw_delta, int):
                     rule = "delta"
                     delta = raw_delta
+                    before = score
+                    score = apply_score_delta(score, delta)
+                    note = (
+                        "encourage lowers score"
+                        if delta < 0
+                        else "discourage raises score"
+                        if delta > 0
+                        else "no score change"
+                    )
                 elif isinstance(raw_delta, dict):
                     rule = str(raw_delta.get("rule", "delta"))
-                    delta = int(raw_delta["delta"])
+                    before = score
+                    if "set_score" in raw_delta:
+                        score = int(raw_delta["set_score"])
+                        delta = score - before
+                        note = "set score"
+                    else:
+                        delta = int(raw_delta["delta"])
+                        score = apply_score_delta(score, delta)
+                        note = (
+                            "encourage lowers score"
+                            if delta < 0
+                            else "discourage raises score"
+                            if delta > 0
+                            else "no score change"
+                        )
                 else:
                     raise PreferenceDataError(
                         f"{action_id}: deltas must be ints or objects"
                     )
-                before = score
-                score = apply_score_delta(score, delta)
-                note = (
-                    "encourage lowers score"
-                    if delta < 0
-                    else "discourage raises score"
-                    if delta > 0
-                    else "no score change"
-                )
                 events.append(ScoreEvent(rule, before, delta, score, note))
+
+            score, events = apply_setup_discipline_bias(
+                scenario,
+                action_id=action_id,
+                name=name,
+                score=score,
+                events=events,
+            )
+            score, events = apply_public_status_fail_bias(
+                scenario,
+                action_id=action_id,
+                name=name,
+                score=score,
+                events=events,
+            )
+            score, events = apply_support_handoff_bias(
+                scenario,
+                action_id=action_id,
+                name=name,
+                score=score,
+                events=events,
+            )
+            score, events = apply_reversible_cashout_bias(
+                scenario,
+                action_id=action_id,
+                name=name,
+                score=score,
+                events=events,
+            )
+            score, events = apply_prediction_risk_control_bias(
+                scenario,
+                action_id=action_id,
+                name=name,
+                score=score,
+                events=events,
+            )
+            score, events = apply_prediction_branch_bias(
+                scenario,
+                action_id=action_id,
+                name=name,
+                score=score,
+                events=events,
+            )
 
         scored.append(
             ScoredMove(
@@ -330,6 +394,204 @@ def score_moves(scenario: dict[str, Any]) -> list[ScoredMove]:
             )
         )
     return apply_lookahead(scenario, scored)
+
+
+def apply_setup_discipline_bias(
+    scenario: dict[str, Any],
+    *,
+    action_id: str,
+    name: str,
+    score: int,
+    events: list[ScoreEvent],
+) -> tuple[int, list[ScoreEvent]]:
+    tags = scenario_condition_tags(scenario)
+    if not ({"active_pressure_converts", "setup_already_bankrolled"} & tags):
+        return score, events
+
+    text = f"{action_id} {name}".lower()
+    if not any(token in text for token in ("setup", "curse", "dance", "boost")):
+        return score, events
+
+    before = score
+    delta = 8
+    score = apply_score_delta(score, delta)
+    return score, [
+        *events,
+        ScoreEvent(
+            "move.apply_move_model.apply_setup_discipline_bias",
+            before,
+            delta,
+            score,
+            "visible KO pressure stops extra setup",
+        ),
+    ]
+
+
+def apply_public_status_fail_bias(
+    scenario: dict[str, Any],
+    *,
+    action_id: str,
+    name: str,
+    score: int,
+    events: list[ScoreEvent],
+) -> tuple[int, list[ScoreEvent]]:
+    tags = scenario_condition_tags(scenario)
+    if not ({"status_absorber_named", "worst_case_unguarded"} & tags):
+        return score, events
+
+    text = f"{action_id} {name}".lower()
+    if not any(token in text for token in ("status", "toxic", "poison", "sleep", "leech")):
+        return score, events
+
+    before = score
+    score = BLOCKED_SCORE
+    delta = score - before
+    return score, [
+        *events,
+        ScoreEvent(
+            "move.apply_move_model.status_move_would_fail_publicly",
+            before,
+            delta,
+            score,
+            "public status absorber makes the status move fail",
+        ),
+    ]
+
+
+def apply_support_handoff_bias(
+    scenario: dict[str, Any],
+    *,
+    action_id: str,
+    name: str,
+    score: int,
+    events: list[ScoreEvent],
+) -> tuple[int, list[ScoreEvent]]:
+    tags = scenario_condition_tags(scenario)
+    text = f"{action_id} {name}".lower()
+    delta = 0
+    note = ""
+    rule = "support_handoff_after_job"
+    if "support_job_completed" in tags and "repeat_support" in text:
+        delta = 8
+        note = "support already landed, so repeating it misses the conversion"
+    elif "phaze_loop_live" in tags and "generic_chip" in text:
+        delta = 4
+        note = "hazard phaze loop outranks generic chip"
+        rule = "phaze_loop_over_generic_chip"
+
+    if delta == 0:
+        return score, events
+
+    before = score
+    score = apply_score_delta(score, delta)
+    return score, [
+        *events,
+        ScoreEvent(f"debugger.policy.{rule}", before, delta, score, note),
+    ]
+
+
+def apply_reversible_cashout_bias(
+    scenario: dict[str, Any],
+    *,
+    action_id: str,
+    name: str,
+    score: int,
+    events: list[ScoreEvent],
+) -> tuple[int, list[ScoreEvent]]:
+    tags = scenario_condition_tags(scenario)
+    if "reversible_before_irreversible" not in tags:
+        return score, events
+
+    text = f"{action_id} {name}".lower()
+    if not any(token in text for token in ("boom", "explosion", "selfdestruct")):
+        return score, events
+
+    before = score
+    delta = 8
+    score = apply_score_delta(score, delta)
+    return score, [
+        *events,
+        ScoreEvent(
+            "debugger.policy.reversible_before_irreversible",
+            before,
+            delta,
+            score,
+            "reversible coverage preserves the one-shot converter",
+        ),
+    ]
+
+
+def apply_prediction_risk_control_bias(
+    scenario: dict[str, Any],
+    *,
+    action_id: str,
+    name: str,
+    score: int,
+    events: list[ScoreEvent],
+) -> tuple[int, list[ScoreEvent]]:
+    tags = scenario_condition_tags(scenario)
+    if "prediction_branch_possible_only" not in tags:
+        return score, events
+
+    text = f"{action_id} {name}".lower()
+    if "reckless_prediction" not in text and "reckless prediction" not in text:
+        return score, events
+
+    before = score
+    delta = 8
+    score = apply_score_delta(score, delta)
+    return score, [
+        *events,
+        ScoreEvent(
+            "debugger.policy.prediction_risk_control",
+            before,
+            delta,
+            score,
+            "possible-only prediction stays below safe active conversion",
+        ),
+    ]
+
+
+def apply_prediction_branch_bias(
+    scenario: dict[str, Any],
+    *,
+    action_id: str,
+    name: str,
+    score: int,
+    events: list[ScoreEvent],
+) -> tuple[int, list[ScoreEvent]]:
+    tier = normalize_tier(scenario.get("tier", "late"))
+    tags = scenario_condition_tags(scenario)
+    if (
+        tier < AI_TIER_LATE
+        or "prediction_branch_supported" not in tags
+        or "prediction_ev_positive" not in tags
+        or "prediction_branch_possible_only" in tags
+    ):
+        return score, events
+
+    text = f"{action_id} {name}".lower()
+    if "status" in text:
+        delta = 8
+        note = "late prediction branch discourages status into a named receiver"
+    elif "receiver_coverage" in text or "receiver coverage" in text:
+        delta = -7
+        note = "late prediction branch prices coverage into the named receiver"
+    else:
+        return score, events
+
+    before = score
+    score = apply_score_delta(score, delta)
+    return score, [
+        *events,
+        ScoreEvent(
+            "move.apply_move_model.apply_prediction_branch_bias",
+            before,
+            delta,
+            score,
+            note,
+        ),
+    ]
 
 
 def apply_lookahead(

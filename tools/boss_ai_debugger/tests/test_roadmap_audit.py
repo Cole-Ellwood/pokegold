@@ -6,6 +6,7 @@ from tools.audit.check_boss_ai_debugger_roadmap import (
     build_roadmap_audit,
     coverage_guided_status,
     differential_status,
+    score_materialization_evidence,
     score_materialization_gaps,
     score_materialization_scenarios,
     score_materialization_status,
@@ -107,6 +108,21 @@ class RoadmapAuditTests(unittest.TestCase):
 
         self.assertEqual(score_materialization_status(evidence), "partial")
         self.assertIn("score-byte agreement", "\n".join(score_materialization_gaps(evidence)))
+
+    def test_score_materialization_evidence_handles_checked_unavailable_schema(self) -> None:
+        evidence = {
+            "score_materialization": {
+                "checked": True,
+                "available": False,
+                "reason": "base state missing",
+            }
+        }
+
+        text = score_materialization_evidence(evidence)
+
+        self.assertIn("score_checked=0", text)
+        self.assertIn("errors=0", text)
+        self.assertIn("reason=base state missing", text)
 
 
 if __name__ == "__main__":

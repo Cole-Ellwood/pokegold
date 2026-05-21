@@ -6,6 +6,8 @@ from pathlib import Path
 from tools.boss_ai_debugger.generators import generate_scenarios
 from tools.boss_ai_debugger.rom_score_materialize import (
     MOVES,
+    SPECIES,
+    TYPES,
     action_id_for_slot,
     build_fast_score_report,
     chunk_scenarios,
@@ -15,11 +17,14 @@ from tools.boss_ai_debugger.rom_score_materialize import (
     move_ids_for_scenario,
     parse_optional_spikes_layers,
     parse_spikes_layers,
+    plan_id_for_tags,
     policy_verdict_from_rom_selector,
     replay_controls_from_manifest,
     scenario_condition_tags,
+    unsupported_move_score_reason,
     validate_score_materialization_base,
 )
+from tools.boss_ai_debugger.rom_scenarios import select_move
 from tools.boss_ai_preference.data import PreferenceDataError
 
 
@@ -60,6 +65,31 @@ class RomScoreMaterializeTests(unittest.TestCase):
         tags = {"spikes_layers_3", "active_revealed_rapid_spin"}
 
         self.assertEqual(parse_spikes_layers(tags), 3)
+
+    def test_set_score_delta_can_model_hard_blocks(self) -> None:
+        result = select_move(
+            {
+                "id": "set_score_hard_block",
+                "tier": "late",
+                "moves": [
+                    {
+                        "id": "spikes",
+                        "name": "Spikes",
+                        "deltas": [
+                            {
+                                "rule": "move.apply_move_model.apply_spikes_layer_bias",
+                                "set_score": 80,
+                            }
+                        ],
+                    },
+                    {"id": "attack", "name": "Attack"},
+                ],
+            }
+        )
+
+        self.assertEqual(result["moves"][0]["final_score"], 80)
+        self.assertTrue(result["moves"][0]["blocked"])
+        self.assertEqual(result["best_action_id"], "attack")
 
     def test_optional_layer_parser_defaults_to_zero(self) -> None:
         self.assertEqual(parse_optional_spikes_layers({"setup_window"}), 0)
@@ -136,6 +166,15 @@ class RomScoreMaterializeTests(unittest.TestCase):
         self.assertEqual(patches[("wEnemyMonMoves", 1)], 0xE2)
         self.assertEqual(patches[("wOTPartyCount", 0)], 2)
 
+    def test_public_policy_plan_ids_match_asm_constants(self) -> None:
+        self.assertEqual(plan_id_for_tags({"prediction_ev_positive"}), 1)
+        self.assertEqual(plan_id_for_tags({"active_pressure_converts"}), 1)
+        self.assertEqual(plan_id_for_tags({"status_absorber_named"}), 2)
+        self.assertEqual(plan_id_for_tags({"support_job_completed"}), 2)
+        self.assertEqual(plan_id_for_tags({"setup_window"}), 3)
+        self.assertEqual(plan_id_for_tags({"setup_already_bankrolled"}), 3)
+        self.assertEqual(plan_id_for_tags({"recovery_preserves_route"}), 4)
+
     def test_cashout_materialization_patches_revealed_ghost_branch(self) -> None:
         scenario = generate_scenarios(family="cashout_board_delta", count=3, seed=11)[2]
 
@@ -152,6 +191,58 @@ class RomScoreMaterializeTests(unittest.TestCase):
         self.assertEqual(patches[("wBossAISeenPlayerSpeciesCount", 0)], 2)
         self.assertEqual(patches[("wBossAISeenPlayerSpecies", 1)], 0x5E)
         self.assertEqual(patches[("wBossAISeenPlayerAliveMask", 0)], 0b00000011)
+
+    def test_cashout_reversible_materialization_exposes_public_branch(self) -> None:
+        scenario = generate_scenarios(family="cashout_board_delta", count=1, seed=11)[0]
+
+        materialization = materialization_for_scenario(
+            scenario,
+            move_name_to_id={},
+        )
+        patches = {
+            (patch.symbol_name, patch.offset): patch.value
+            for patch in materialization.patches
+        }
+
+        self.assertEqual(patches[("wBattleMonType1", 0)], TYPES["POISON"])
+        self.assertEqual(patches[("wBattleMonType2", 0)], TYPES["POISON"])
+        self.assertEqual(patches[("wBossAISeenPlayerSpecies", 1)], SPECIES["GENGAR"])
+        self.assertEqual(patches[("wBossAISeenPlayerAliveMask", 0)], 0b00000011)
+
+    def test_prediction_reckless_materialization_keeps_safe_ko_legal(self) -> None:
+        scenario = generate_scenarios(family="prediction_mix", count=2, seed=3)[1]
+
+        materialization = materialization_for_scenario(
+            scenario,
+            move_name_to_id={},
+        )
+
+        self.assertEqual(materialization.move_ids[:2], [0x59, 0xBC])
+
+    def test_resisted_explosion_materialization_encodes_cashout_window(self) -> None:
+        scenario = generate_scenarios(family="cashout_board_delta", count=2, seed=11)[1]
+
+        materialization = materialization_for_scenario(
+            scenario,
+            move_name_to_id={},
+        )
+        patches = {
+            (patch.symbol_name, patch.offset): patch.value
+            for patch in materialization.patches
+        }
+
+        self.assertEqual(patches[("wEnemyMonHP", 1)], 18)
+        self.assertEqual(patches[("wBattleMonHP", 1)], 22)
+        self.assertEqual(patches[("wBattleMonType1", 0)], TYPES["STEEL"])
+        self.assertEqual(patches[("wBattleMonType2", 0)], TYPES["STEEL"])
+
+    def test_move_score_materialization_skips_expected_best_switches(self) -> None:
+        scenario = generate_scenarios(family="support_handoff", count=1, seed=9)[0]
+
+        self.assertEqual(
+            unsupported_move_score_reason(scenario),
+            "labeled switch candidate needs switch materialization",
+        )
 
     def test_rom_policy_verdict_uses_observed_score_bytes(self) -> None:
         scenario = generate_scenarios(family="prediction_mix", count=2, seed=3)[1]
