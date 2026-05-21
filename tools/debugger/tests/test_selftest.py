@@ -1,0 +1,186 @@
+from __future__ import annotations
+
+import io
+import json
+import sys
+import unittest
+from contextlib import redirect_stdout, redirect_stderr
+from pathlib import Path
+
+from tools.debugger.catalog import ROOT
+from tools.debugger.selftest import (
+    CHECKS,
+    NAMED_CHECKS,
+    CheckResult,
+    SelftestReport,
+    _format_text,
+    check_hypothesis_tracker,
+    main,
+    run_selftest,
+)
+
+
+class CheckResultTests(unittest.TestCase):
+    def test_to_jsonable_round_trips(self) -> None:
+        r = CheckResult(
+            component="x",
+            ok=False,
+            next_command="cmd",
+            error="boom",
+            traceback="tb",
+        )
+        payload = r.to_jsonable()
+        self.assertEqual(payload["component"], "x")
+        self.assertEqual(payload["ok"], False)
+        self.assertEqual(payload["next_command"], "cmd")
+        self.assertEqual(payload["error"], "boom")
+
+
+class SelftestRunTests(unittest.TestCase):
+    def test_named_checks_registry_is_aligned_with_checks_tuple(self) -> None:
+        names = [name for name, _ in NAMED_CHECKS]
+        # Distinct names, same order as CHECKS.
+        self.assertEqual(len(set(names)), len(names))
+        self.assertEqual(len(NAMED_CHECKS), len(CHECKS))
+
+    def test_failing_check_captured_with_traceback(self) -> None:
+        def raising(_: Path) -> CheckResult:
+            try:
+                raise RuntimeError("synthetic failure")
+            except Exception:
+                from tools.debugger.selftest import _capture
+
+                return _capture("synthetic", "echo retry", lambda: (_ for _ in ()).throw(RuntimeError("synthetic failure")))
+
+        report = run_selftest(checks=(raising,))
+        self.assertFalse(report.ok)
+        self.assertEqual(len(report.results), 1)
+        r = report.results[0]
+        self.assertFalse(r.ok)
+        self.assertEqual(r.component, "synthetic")
+        self.assertEqual(r.next_command, "echo retry")
+        self.assertIn("synthetic failure", r.error)
+        self.assertIn("Traceback", r.traceback)
+
+    def test_all_passing_checks_yield_ok_report(self) -> None:
+        def healthy(_: Path) -> CheckResult:
+            from tools.debugger.selftest import _capture
+
+            return _capture("healthy", "echo retry", lambda: "ok detail")
+
+        report = run_selftest(checks=(healthy, healthy))
+        self.assertTrue(report.ok)
+        self.assertEqual(len(report.results), 2)
+        self.assertTrue(all(r.ok for r in report.results))
+        self.assertEqual(report.results[0].detail, "ok detail")
+
+
+class HypothesisTrackerCheckTests(unittest.TestCase):
+    """Lived smoke for the V2 surface: the hypothesis_tracker check runs
+    cleanly against the real module."""
+
+    def test_hypothesis_tracker_check_passes_in_isolation(self) -> None:
+        result = check_hypothesis_tracker(ROOT)
+        self.assertTrue(result.ok, result.error or result.detail)
+        self.assertEqual(result.component, "hypothesis_tracker")
+
+
+class JsonOutputTests(unittest.TestCase):
+    def test_to_jsonable_shape(self) -> None:
+        report = SelftestReport(
+            ok=False,
+            results=[
+                CheckResult(component="a", ok=True, next_command="cmd-a"),
+                CheckResult(component="b", ok=False, next_command="cmd-b", error="x"),
+            ],
+        )
+        data = report.to_jsonable()
+        self.assertFalse(data["ok"])
+        self.assertEqual(data["components_total"], 2)
+        self.assertEqual(data["components_failed"], 1)
+        self.assertEqual(len(data["results"]), 2)
+        # round-trips through json without loss
+        encoded = json.dumps(data, sort_keys=True)
+        decoded = json.loads(encoded)
+        self.assertEqual(decoded, data)
+
+
+class TextFormatTests(unittest.TestCase):
+    def test_failure_text_includes_next_command(self) -> None:
+        report = SelftestReport(
+            ok=False,
+            results=[
+                CheckResult(component="x", ok=False, next_command="run me", error="boom"),
+            ],
+        )
+        text = _format_text(report)
+        self.assertIn("Selftest FAIL", text)
+        self.assertIn("[FAIL]", text)
+        self.assertIn("run me", text)
+        self.assertIn("boom", text)
+
+    def test_pass_text_includes_per_component_detail(self) -> None:
+        report = SelftestReport(
+            ok=True,
+            results=[
+                CheckResult(component="x", ok=True, next_command="run me", detail="nice"),
+            ],
+        )
+        text = _format_text(report)
+        self.assertIn("Selftest PASS", text)
+        self.assertIn("[ok]", text)
+        self.assertIn("nice", text)
+        self.assertNotIn("[FAIL]", text)
+
+
+class CliFilterTests(unittest.TestCase):
+    def test_main_filters_to_one_component_and_passes(self) -> None:
+        captured = io.StringIO()
+        with redirect_stdout(captured):
+            rc = main(["--component", "capability_audit"])
+        self.assertEqual(rc, 0)
+        text = captured.getvalue()
+        self.assertIn("capability_audit", text)
+        self.assertIn("(1/1 components healthy)", text)
+
+    def test_main_unknown_component_returns_2(self) -> None:
+        captured_err = io.StringIO()
+        with redirect_stderr(captured_err):
+            rc = main(["--component", "does_not_exist"])
+        self.assertEqual(rc, 2)
+        self.assertIn("unknown component", captured_err.getvalue())
+
+    def test_main_json_emits_machine_readable(self) -> None:
+        captured = io.StringIO()
+        with redirect_stdout(captured):
+            rc = main(["--component", "capability_audit", "--json"])
+        self.assertEqual(rc, 0)
+        payload = json.loads(captured.getvalue())
+        self.assertTrue(payload["ok"])
+        self.assertEqual(payload["components_total"], 1)
+        self.assertEqual(payload["results"][0]["component"], "capability_audit")
+
+
+class IntegrationSelftestTests(unittest.TestCase):
+    """Pairing rule #5: workflow test (not just audit) for done. Run the
+    real full selftest against the live codebase. Expensive, but proves
+    every wired check actually exercises its component cleanly."""
+
+    def test_full_selftest_passes_on_current_branch(self) -> None:
+        report = run_selftest()
+        failed = [r for r in report.results if not r.ok]
+        if failed:
+            details = "; ".join(
+                f"{r.component}: {r.error or r.detail}" for r in failed
+            )
+            self.fail(
+                f"selftest had {len(failed)} failing component(s) on this branch: {details}"
+            )
+        # Sanity: every check is exercised.
+        component_names = {r.component for r in report.results}
+        expected = {name for name, _ in NAMED_CHECKS}
+        self.assertEqual(component_names, expected)
+
+
+if __name__ == "__main__":
+    unittest.main()

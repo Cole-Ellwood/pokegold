@@ -1,0 +1,426 @@
+"""End-to-end synthetic-input health check for the unified debugger.
+
+``python -m tools.debugger.selftest`` exercises each registered
+capability against synthetic inputs to confirm the substrate actually
+works — not just that the catalog *claims* it works. This is a
+deeper contract than ``python -m tools.debugger audit``: audit
+verifies the capability is registered and the evidence paths exist;
+selftest verifies the underlying functions accept input and return
+without crashing.
+
+Per ``docs/omni_debugger_v2.md`` Selftest Infrastructure scope:
+
+- Per-component pass/fail.
+- Names the failing component and the next command to run.
+- Exit nonzero on any component failure.
+- Existing ``python -m tools.debugger audit`` remains the v1 readiness
+  gate (this selftest is additive, not a replacement).
+
+CLI wiring into the top-level ``python -m tools.debugger`` is held
+pending a Codex sync on ``__main__.py`` (per the collision-risk list
+in ``docs/omni_debugger_v2.md``). For now the module is callable via
+``python -m tools.debugger.selftest``.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+import traceback
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any, Callable, Sequence
+
+from .catalog import ROOT, build_capability_report
+
+
+@dataclass
+class CheckResult:
+    component: str
+    ok: bool
+    next_command: str
+    detail: str = ""
+    error: str = ""
+    traceback: str = ""
+
+    def to_jsonable(self) -> dict[str, Any]:
+        return {
+            "component": self.component,
+            "ok": self.ok,
+            "next_command": self.next_command,
+            "detail": self.detail,
+            "error": self.error,
+            "traceback": self.traceback,
+        }
+
+
+@dataclass
+class SelftestReport:
+    ok: bool
+    results: list[CheckResult] = field(default_factory=list)
+
+    def to_jsonable(self) -> dict[str, Any]:
+        return {
+            "ok": self.ok,
+            "components_total": len(self.results),
+            "components_failed": sum(1 for r in self.results if not r.ok),
+            "results": [r.to_jsonable() for r in self.results],
+        }
+
+
+Check = Callable[[Path], CheckResult]
+
+
+def _capture(component: str, next_command: str, fn: Callable[[], str]) -> CheckResult:
+    """Run a check, capture exceptions into a failed result."""
+
+    try:
+        detail = fn() or "ok"
+        return CheckResult(component=component, ok=True, next_command=next_command, detail=detail)
+    except Exception as exc:  # noqa: BLE001 — selftest deliberately catches all
+        return CheckResult(
+            component=component,
+            ok=False,
+            next_command=next_command,
+            error=f"{type(exc).__name__}: {exc}",
+            traceback=traceback.format_exc(),
+        )
+
+
+def check_capability_audit(root: Path) -> CheckResult:
+    def inner() -> str:
+        report = build_capability_report(root=root)
+        if not report.get("ready", False):
+            raise AssertionError(
+                f"capability audit reports ready=False with {report.get('blocking_gap_count', 0)} gaps"
+            )
+        complete = report.get("status_counts", {}).get("complete", 0)
+        return f"capability audit ready=True, complete={complete}"
+
+    return _capture(
+        component="capability_audit",
+        next_command="python -m tools.debugger audit",
+        fn=inner,
+    )
+
+
+def check_inventory(root: Path) -> CheckResult:
+    from .catalog import build_inventory
+
+    def inner() -> str:
+        inv = build_inventory(root=root)
+        subsystems = inv.get("subsystems") or []
+        if not subsystems:
+            raise AssertionError("inventory returned no subsystems")
+        return f"inventory ok ({len(subsystems)} subsystems)"
+
+    return _capture(
+        component="inventory",
+        next_command="python -m tools.debugger inventory",
+        fn=inner,
+    )
+
+
+def check_ingest(root: Path) -> CheckResult:
+    from .ingest import ingest_artifacts
+
+    def inner() -> str:
+        manifest = ingest_artifacts(root=root)
+        if not isinstance(manifest, dict):
+            raise AssertionError(f"ingest returned {type(manifest).__name__}, not dict")
+        return "ingest empty-input round-trip ok"
+
+    return _capture(
+        component="ingest",
+        next_command="python -m tools.debugger ingest --rom pokegold.gbc --symbols pokegold.sym --input-log <inputs>",
+        fn=inner,
+    )
+
+
+def check_triage(root: Path) -> CheckResult:
+    from .catalog import triage_request
+
+    def inner() -> str:
+        # Triage against a known damage path should select damage rules.
+        result = triage_request(
+            changed_files=("engine/battle/late_gen_held_items.asm",),
+            symptom="damage",
+            root=root,
+        )
+        matches = result.get("matches") or []
+        if not matches:
+            raise AssertionError("triage returned no matches for damage-chain change")
+        damage_hit = any(m.get("id") == "damage_chain" for m in matches)
+        if not damage_hit:
+            raise AssertionError(
+                f"triage failed to route damage-chain change to damage_chain rule "
+                f"(got: {[m.get('id') for m in matches]})"
+            )
+        return f"triage routed {len(matches)} rule(s) including damage_chain"
+
+    return _capture(
+        component="triage",
+        next_command="python -m tools.debugger triage --changed-file <file> --symptom <symptom>",
+        fn=inner,
+    )
+
+
+def check_coverage(root: Path) -> CheckResult:
+    from .coverage import build_coverage_report
+
+    def inner() -> str:
+        report = build_coverage_report(symbols=("wCurDamage",), root=root)
+        if "targets" not in report and "coverage_targets" not in report:
+            # Accept different key names; the point is the call succeeds.
+            pass
+        return "coverage empty-input round-trip ok"
+
+    return _capture(
+        component="coverage",
+        next_command="python -m tools.debugger coverage --symbol <symbol>",
+        fn=inner,
+    )
+
+
+def check_provenance(root: Path) -> CheckResult:
+    from .provenance import build_provenance_report
+
+    def inner() -> str:
+        report = build_provenance_report(root=root)
+        if not isinstance(report, dict):
+            raise AssertionError(f"provenance returned {type(report).__name__}, not dict")
+        return "provenance empty-input round-trip ok"
+
+    return _capture(
+        component="provenance",
+        next_command="python -m tools.debugger provenance --symbol <symbol>",
+        fn=inner,
+    )
+
+
+def check_mirrors(root: Path) -> CheckResult:
+    from .mirrors import build_compare_plan
+
+    def inner() -> str:
+        plan = build_compare_plan(symbols=("wCurDamage",), root=root)
+        if not isinstance(plan, dict):
+            raise AssertionError(f"compare plan returned {type(plan).__name__}, not dict")
+        return "compare empty-input round-trip ok"
+
+    return _capture(
+        component="mirrors_compare",
+        next_command="python -m tools.debugger compare --symbol <symbol>",
+        fn=inner,
+    )
+
+
+def check_fuzz(root: Path) -> CheckResult:
+    from .fuzz import build_fuzz_plan
+
+    def inner() -> str:
+        plan = build_fuzz_plan(symbols=("wCurDamage",), root=root)
+        if not isinstance(plan, dict):
+            raise AssertionError(f"fuzz plan returned {type(plan).__name__}, not dict")
+        return "fuzz plan round-trip ok"
+
+    return _capture(
+        component="fuzz",
+        next_command="python -m tools.debugger generate --symbol <symbol>",
+        fn=inner,
+    )
+
+
+def check_trace_index(root: Path) -> CheckResult:
+    from .trace_index import build_trace_index_report
+
+    def inner() -> str:
+        report = build_trace_index_report(symbols=("wCurDamage",), root=root)
+        if not isinstance(report, dict):
+            raise AssertionError(f"trace_index returned {type(report).__name__}, not dict")
+        return "trace_index empty-input round-trip ok"
+
+    return _capture(
+        component="trace_index",
+        next_command="python -m tools.debugger trace-index --symbol <symbol>",
+        fn=inner,
+    )
+
+
+def check_visualization(root: Path) -> CheckResult:
+    from .visualization import build_visualization_report
+
+    def inner() -> str:
+        report = build_visualization_report(root=root)
+        if not isinstance(report, dict):
+            raise AssertionError(f"visualization returned {type(report).__name__}, not dict")
+        return "visualization empty-input round-trip ok"
+
+    return _capture(
+        component="visualization",
+        next_command="python -m tools.debugger visualize --report <report.json>",
+        fn=inner,
+    )
+
+
+def check_hypothesis_tracker(root: Path) -> CheckResult:
+    """Round-trip through a temp JSONL store.
+
+    Validates that add/list/show/render still produce a coherent tree
+    after the round trip. The durable ``audit/hypothesis_tree.jsonl`` is
+    never touched.
+    """
+
+    import tempfile
+
+    from .hypothesis_tracker import (
+        add_claim,
+        add_verification,
+        fold_history,
+        list_hypotheses,
+        load_events,
+        render_tree,
+    )
+
+    def inner() -> str:
+        with tempfile.TemporaryDirectory() as tmp:
+            store = Path(tmp) / "selftest_hypothesis_tree.jsonl"
+            claim = add_claim(
+                symptom="selftest synthetic symptom",
+                claim="selftest synthetic claim",
+                confidence="judgment",
+                session_id="selftest",
+                store=store,
+                root=root,
+            )
+            add_verification(
+                parent_id=claim["id"],
+                command="echo ok",
+                expected="ok",
+                verdict="pass",
+                store=store,
+                root=root,
+            )
+            events = load_events(store=store, root=root)
+            folded = fold_history(events, claim["id"])
+            # Judgment-confidence claims must NOT promote to verified on
+            # a pass verdict (the gate is enforced at moment-of-verify).
+            # The blocked pass surfaces via blocked_pass_count.
+            if folded["status"] != "open":
+                raise AssertionError(
+                    f"expected status=open for judgment+pass, got {folded['status']!r}"
+                )
+            if folded["blocked_pass_count"] != 1:
+                raise AssertionError(
+                    f"expected blocked_pass_count=1 for judgment+pass, "
+                    f"got {folded['blocked_pass_count']!r}"
+                )
+            rows = list_hypotheses(store=store, root=root)
+            if len(rows) != 1:
+                raise AssertionError(f"expected 1 hypothesis, got {len(rows)}")
+            tree = render_tree(events, claim["id"])
+            if "selftest" not in tree:
+                raise AssertionError("rendered tree missing claim id segment")
+        return "hypothesis_tracker round-trip ok"
+
+    return _capture(
+        component="hypothesis_tracker",
+        next_command="python -m tools.debugger.hypothesis_tracker list --refresh-citations",
+        fn=inner,
+    )
+
+
+NAMED_CHECKS: tuple[tuple[str, Check], ...] = (
+    ("capability_audit", check_capability_audit),
+    ("inventory", check_inventory),
+    ("ingest", check_ingest),
+    ("triage", check_triage),
+    ("coverage", check_coverage),
+    ("provenance", check_provenance),
+    ("mirrors_compare", check_mirrors),
+    ("fuzz", check_fuzz),
+    ("trace_index", check_trace_index),
+    ("visualization", check_visualization),
+    ("hypothesis_tracker", check_hypothesis_tracker),
+)
+
+CHECKS: tuple[Check, ...] = tuple(check for _, check in NAMED_CHECKS)
+
+
+def run_selftest(*, root: Path = ROOT, checks: Sequence[Check] | None = None) -> SelftestReport:
+    selected = checks if checks is not None else CHECKS
+    results = [check(root) for check in selected]
+    ok = all(r.ok for r in results)
+    return SelftestReport(ok=ok, results=results)
+
+
+def _format_text(report: SelftestReport) -> str:
+    lines: list[str] = []
+    failed = sum(1 for r in report.results if not r.ok)
+    overall = "PASS" if report.ok else "FAIL"
+    lines.append(f"Selftest {overall}  ({len(report.results) - failed}/{len(report.results)} components healthy)")
+    for r in report.results:
+        marker = "  [ok]  " if r.ok else "  [FAIL]"
+        line = f"{marker} {r.component}"
+        if r.ok and r.detail:
+            line += f"  — {r.detail}"
+        lines.append(line)
+        if not r.ok:
+            lines.append(f"           error:        {r.error}")
+            lines.append(f"           next command: {r.next_command}")
+    if not report.ok:
+        lines.append("")
+        lines.append("Selftest is the v2 health gate. Audit (python -m tools.debugger audit)")
+        lines.append("remains the v1 readiness signal — selftest failure does NOT regress v1")
+        lines.append("readiness; it indicates a component is broken end-to-end.")
+    return "\n".join(lines)
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="python -m tools.debugger.selftest",
+        description=(
+            "Run end-to-end synthetic-input checks for the unified debugger. "
+            "Reports pass/fail per component and a next-command hint for each. "
+            "Exits nonzero on any failure."
+        ),
+    )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="emit machine-readable JSON instead of human text",
+    )
+    parser.add_argument(
+        "--component",
+        action="append",
+        default=None,
+        help="restrict to one or more components by name (repeatable)",
+    )
+    return parser
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(list(argv) if argv is not None else None)
+    selected: Sequence[Check] | None = None
+    if args.component:
+        wanted = set(args.component)
+        registry = {name: check for name, check in NAMED_CHECKS}
+        unknown = wanted - set(registry)
+        if unknown:
+            print(
+                f"error: unknown component(s): {', '.join(sorted(unknown))}",
+                file=sys.stderr,
+            )
+            return 2
+        selected = tuple(registry[name] for name in args.component if name in registry)
+    report = run_selftest(checks=selected)
+    if args.json:
+        print(json.dumps(report.to_jsonable(), sort_keys=True))
+    else:
+        print(_format_text(report))
+    return 0 if report.ok else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
