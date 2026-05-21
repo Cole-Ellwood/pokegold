@@ -72,6 +72,15 @@ CONTROL_HOOKS = {
     "BossAI_SelectMove": "selector_start",
 }
 
+HELPER_SNAPSHOT_HOOKS = {
+    "BossAI_ApplyMoveModel.CurrentEnemyMoveDamageRank": "ai_damage_rank",
+    "BossAI_ApplyMoveModel.CurrentMoveCanBeDamageDominated": "damage_dominance_gate",
+    "BossAI_ApplyMoveModel.HasDominatingDamagingMove": "dominating_damage_scan",
+    "BossAI_ApplyMoveModel.HasMeaningfullyBetterDamagingMove": "meaningfully_better_damage_scan",
+    "BossAI_CurrentEnemyMoveScoredPower": "ai_scored_power",
+    "BossAI_CurrentEnemyMovePressureScore": "ai_pressure_score",
+}
+
 PREDICATE_BRANCH_HOOKS = {
     "BossAI_ApplyMoveModel.spikes_layer1": {
         "predicate_id": "spikes_existing_layer_count",
@@ -334,6 +343,8 @@ class SymbolIndex:
             names[name] = ("score_helper", operation)
         for name, operation in CONTROL_HOOKS.items():
             names[name] = ("control", operation)
+        for name, operation in HELPER_SNAPSHOT_HOOKS.items():
+            names[name] = ("helper_snapshot", operation)
 
         for name, (kind, operation) in names.items():
             symbol = self.symbols.get(name)
@@ -415,6 +426,7 @@ class RomContributionTracer:
         self.rule_entries: list[dict[str, Any]] = []
         self.predicate_branch_entries: list[dict[str, Any]] = []
         self.public_read_probe_entries: list[dict[str, Any]] = []
+        self.helper_snapshots: list[dict[str, Any]] = []
         self.selector_entry_scores: list[int] = []
 
     def reset(self, *, memory_patches: list[MemoryPatch] | None = None) -> None:
@@ -426,6 +438,7 @@ class RomContributionTracer:
         self.rule_entries.clear()
         self.predicate_branch_entries.clear()
         self.public_read_probe_entries.clear()
+        self.helper_snapshots.clear()
         self.selector_entry_scores = []
 
     def handle_hook(self, targets: list[HookTarget]) -> None:
@@ -440,6 +453,8 @@ class RomContributionTracer:
                 self.handle_predicate_branch(target)
             elif target.kind == "public_read_probe":
                 self.handle_public_read_probe(target)
+            elif target.kind == "helper_snapshot":
+                self.handle_helper_snapshot(target)
 
     def handle_rule(self, target: HookTarget) -> None:
         self.close_pending(trigger=target.full_symbol)
@@ -531,6 +546,53 @@ class RomContributionTracer:
             }
         )
 
+    def handle_helper_snapshot(self, target: HookTarget) -> None:
+        self.close_pending(trigger=target.full_symbol)
+        sp = int(self.pyboy.register_file.SP)
+        self.pop_returned_frames(sp)
+        self.helper_snapshots.append(
+            {
+                "index": len(self.helper_snapshots) + 1,
+                "event_type": "helper_snapshot",
+                "sp": f"{sp:04x}",
+                "helper": {
+                    "helper_id": target.operation,
+                    "helper_symbol": target.full_symbol,
+                    "evidence": "hook-snapshot",
+                },
+                "source": self.source_for_helper_snapshot(target),
+                "candidate": self.active_score_candidate(),
+                "move_struct": self.current_move_struct(),
+                "registers": self.register_snapshot(),
+                "score_bytes": self.current_score_bytes(),
+                "type_matchup": self.optional_symbol_byte("wTypeMatchup"),
+            }
+        )
+
+    def register_snapshot(self) -> dict[str, int | str]:
+        registers = self.pyboy.register_file
+        names = ("A", "B", "C", "D", "E", "H", "L", "F", "HL", "BC", "DE", "SP", "PC")
+        out: dict[str, int | str] = {}
+        for name in names:
+            try:
+                value = getattr(registers, name)
+            except Exception:
+                continue
+            try:
+                out[name.lower()] = int(value) & (0xFFFF if len(name) > 1 else 0xFF)
+            except Exception:
+                out[name.lower()] = str(value)
+        return out
+
+    def optional_symbol_byte(self, symbol_name: str) -> int | None:
+        symbol = self.symbols.get(symbol_name)
+        if symbol is None:
+            return None
+        try:
+            return self.read_symbol_offset(symbol, 0)
+        except Exception:
+            return None
+
     def score_pointer_for_helper(self, target: HookTarget) -> int:
         if target.full_symbol in POINTER_FROM_WRAM_SCORE_PTR:
             symbol = self.symbols["wBossAIScorePtr"]
@@ -547,6 +609,7 @@ class RomContributionTracer:
         if target.operation == "candidate_start":
             if not self.score_start_patches_applied:
                 apply_memory_patches(self.pyboy, self.symbols, self.memory_patches)
+                reset_boss_ai_turn_caches(self.pyboy, self.symbols)
                 self.score_start_patches_applied = True
             self.frames.clear()
         elif target.operation == "selector_start":
@@ -667,6 +730,19 @@ class RomContributionTracer:
             "public_reads": rule.get("public_reads", []) if rule else [],
             "static_public_read_hints": rule.get("public_reads", []) if rule else [],
             "dynamic_probe_legal_inputs": list(target.legal_inputs),
+            "hook_bank": f"{target.bank:02x}",
+            "hook_address": f"{target.address:04x}",
+        }
+
+    def source_for_helper_snapshot(self, target: HookTarget) -> dict[str, Any]:
+        rule = self.symbol_index.rule_for(target.full_symbol)
+        return {
+            "rule_id": rule.get("rule_id", "") if rule else "",
+            "source_label": rule.get("source_label", "") if rule else "",
+            "full_symbol": target.full_symbol,
+            "classification": rule.get("classification", "") if rule else "",
+            "public_reads": rule.get("public_reads", []) if rule else [],
+            "static_public_read_hints": rule.get("public_reads", []) if rule else [],
             "hook_bank": f"{target.bank:02x}",
             "hook_address": f"{target.address:04x}",
         }
@@ -913,6 +989,7 @@ class RomContributionTraceSession:
         with save_state.open("rb") as fh:
             self.pyboy.load_state(fh)
         apply_memory_patches(self.pyboy, self.symbols, patches)
+        reset_boss_ai_turn_caches(self.pyboy, self.symbols)
         clear_chosen_move(self.pyboy, self.symbols)
         final_values, _presses_issued = drive_replay_to_choice(
             self.pyboy,
@@ -940,6 +1017,7 @@ class RomContributionTraceSession:
             rule_entries=self.tracer.rule_entries,
             predicate_branch_entries=self.tracer.predicate_branch_entries,
             public_read_probe_entries=self.tracer.public_read_probe_entries,
+            helper_snapshots=self.tracer.helper_snapshots,
             selector_entry_scores=self.tracer.selector_entry_scores,
             move_names=self.move_names,
             memory_patches=patches,
@@ -1066,6 +1144,7 @@ def run_rom_contribution_trace_for_route(
             rule_entries=tracer.rule_entries,
             predicate_branch_entries=tracer.predicate_branch_entries,
             public_read_probe_entries=tracer.public_read_probe_entries,
+            helper_snapshots=tracer.helper_snapshots,
             selector_entry_scores=tracer.selector_entry_scores,
             move_names=move_names,
             memory_patches=memory_patches or [],
@@ -1076,6 +1155,119 @@ def run_rom_contribution_trace_for_route(
         return report
     finally:
         pyboy.stop(save=False)
+
+
+def run_seeded_ai_choose_move_trace(
+    *,
+    base_state: Path,
+    rom: Path = capture.DEFAULT_ROM,
+    symbols_path: Path = capture.DEFAULT_SYMBOLS,
+    metadata: dict[str, str] | None = None,
+    memory_patches: list[MemoryPatch] | None = None,
+    tick_budget: int = 50000,
+) -> dict[str, Any]:
+    if not base_state.exists():
+        raise PreferenceDataError(f"missing base save-state: {base_state}")
+
+    symbols = capture.parse_symbols(symbols_path)
+    capture.require_symbols(symbols)
+    require_hook_symbols(symbols)
+    if "AIChooseMove" not in symbols:
+        raise PreferenceDataError("symbols missing AIChooseMove")
+
+    symbol_index = SymbolIndex(symbols, build_rule_map())
+    move_names = capture.parse_move_names(capture.MOVE_CONSTANTS)
+    pyboy_class = trace_runtime.load_pyboy(
+        "PyBoy is required for seeded Boss AI move scoring"
+    )
+    pyboy = pyboy_class(str(rom), window="null", sound=False, log_level="ERROR")
+    trace_runtime.disable_realtime(pyboy)
+    patches = memory_patches or []
+    tracer = RomContributionTracer(
+        pyboy,
+        symbols,
+        symbol_index,
+        move_names,
+        memory_patches=patches,
+    )
+    try:
+        register_hooks(pyboy, symbol_index.hook_targets(), tracer)
+        with base_state.open("rb") as fh:
+            pyboy.load_state(fh)
+        apply_memory_patches(pyboy, symbols, patches)
+        reset_boss_ai_turn_caches(pyboy, symbols)
+        clear_chosen_move(pyboy, symbols)
+        tracer.score_start_patches_applied = True
+        call = call_ai_choose_move(pyboy, symbols, tick_budget=tick_budget)
+        tracer.close_pending(trigger="seeded_ai_choose_move_end")
+        if not call["returned"]:
+            raise PreferenceDataError(
+                "AIChooseMove did not return within "
+                f"{tick_budget} ticks; stopped at PC ${call['post_pc']:04x}"
+            )
+        values = capture.read_trace_values(pyboy, symbols)
+        if values["wCurEnemyMove"][0] == 0:
+            raise PreferenceDataError("seeded AIChooseMove returned without choosing a move")
+
+        basis = capture.build_trace_basis_metadata(
+            SimpleTraceArgs(rom=rom, symbols=symbols_path)
+        )
+        if metadata:
+            basis.update(metadata)
+        report = build_report(
+            save_state=base_state,
+            save_state_label=f"seeded:{trace_runtime.display_path(base_state)}",
+            basis=basis,
+            values=values,
+            events=tracer.events,
+            rule_entries=tracer.rule_entries,
+            predicate_branch_entries=tracer.predicate_branch_entries,
+            public_read_probe_entries=tracer.public_read_probe_entries,
+            helper_snapshots=tracer.helper_snapshots,
+            selector_entry_scores=tracer.selector_entry_scores,
+            move_names=move_names,
+            memory_patches=patches,
+        )
+        report["execution_mode"] = "seeded_ai_choose_move"
+        report["call_ticks"] = call["ticks"]
+        report["base_state"] = trace_runtime.display_path(base_state)
+        return report
+    finally:
+        pyboy.stop(save=False)
+
+
+def call_ai_choose_move(
+    pyboy: Any,
+    symbols: dict[str, capture.Symbol],
+    *,
+    tick_budget: int,
+) -> dict[str, int | bool]:
+    target = symbols["AIChooseMove"]
+    registers = pyboy.register_file
+    sentinel = 0xFFFD
+    pyboy.memory[sentinel] = 0x18
+    pyboy.memory[sentinel + 1] = 0xFE
+
+    sp = int(registers.SP)
+    new_sp = (sp - 2) & 0xFFFF
+    pyboy.memory[new_sp] = sentinel & 0xFF
+    pyboy.memory[new_sp + 1] = (sentinel >> 8) & 0xFF
+    registers.SP = new_sp
+
+    hrom_bank = symbols.get("hROMBank")
+    if hrom_bank is not None:
+        pyboy.memory[hrom_bank.address] = target.bank
+    pyboy.memory[0x2000] = target.bank
+    registers.PC = target.address
+
+    ticks = 0
+    while ticks < tick_budget:
+        pyboy.tick(1, False, False)
+        ticks += 1
+        pc = int(registers.PC)
+        if pc in (sentinel, sentinel + 2):
+            return {"ticks": ticks, "returned": True, "post_pc": pc}
+    return {"ticks": ticks, "returned": False, "post_pc": int(registers.PC)}
 
 
 def drive_route_until_choice(
@@ -1150,7 +1342,8 @@ def hook_order(target: HookTarget) -> int:
         "rule": 1,
         "predicate_branch": 2,
         "public_read_probe": 3,
-        "score_helper": 4,
+        "helper_snapshot": 4,
+        "score_helper": 5,
     }[target.kind]
 
 
@@ -1314,6 +1507,21 @@ def apply_memory_patches(
         write_symbol_offset(pyboy, symbol, patch.offset, patch.value)
 
 
+def reset_boss_ai_turn_caches(
+    pyboy: Any,
+    symbols: dict[str, capture.Symbol],
+) -> None:
+    for symbol_name in (
+        "wBossAIHasKOMoveCache",
+        "wBossAIPublicThreatCache",
+        "wBossAIRevealedPriorityCache",
+        "wBossAIPrimaryThreatCache",
+    ):
+        symbol = symbols.get(symbol_name)
+        if symbol is not None:
+            write_symbol_offset(pyboy, symbol, 0, 0xFF)
+
+
 def write_symbol_offset(
     pyboy: Any,
     symbol: capture.Symbol,
@@ -1358,15 +1566,18 @@ def build_report(
     rule_entries: list[dict[str, Any]],
     predicate_branch_entries: list[dict[str, Any]],
     public_read_probe_entries: list[dict[str, Any]],
+    helper_snapshots: list[dict[str, Any]] | None = None,
     selector_entry_scores: list[int],
     move_names: dict[int, str],
     memory_patches: list[MemoryPatch],
 ) -> dict[str, Any]:
+    helper_snapshots = helper_snapshots or []
     changed = [event for event in events if event["changed"]]
     executed_rule_ids = sorted(
         rule_ids_from_events(rule_entries)
         | rule_ids_from_events(predicate_branch_entries)
         | rule_ids_from_events(public_read_probe_entries)
+        | rule_ids_from_events(helper_snapshots)
         | rule_ids_from_events(events)
     )
     return {
@@ -1383,6 +1594,7 @@ def build_report(
             "slot_index": values["wCurEnemyMoveNum"][0],
         },
         "memory_patches": memory_patches_to_json(memory_patches),
+        "tier": values["wBossAITier"][0],
         "move_ids": values["wEnemyMonMoves"],
         "move_scores": values["wEnemyAIMoveScores"],
         "pre_model_scores": values["wBossAITracePreModelScores"],
@@ -1396,6 +1608,8 @@ def build_report(
         "predicate_branch_entries": deepcopy(predicate_branch_entries),
         "public_read_probe_entry_count": len(public_read_probe_entries),
         "public_read_probe_entries": deepcopy(public_read_probe_entries),
+        "helper_snapshot_count": len(helper_snapshots),
+        "helper_snapshots": deepcopy(helper_snapshots),
         "event_count": len(events),
         "changed_event_count": len(changed),
         "events": deepcopy(events),
@@ -1404,6 +1618,7 @@ def build_report(
             "Score events record score helper deltas and source labels, while rule entries record dynamic rule-label execution.",
             "Predicate branch entries record selected executable public-info branch labels and configured outcomes.",
             "Public-read probe entries record legal-input snapshots at configured executable labels; they are not CPU memory-read watchpoints.",
+            "Helper snapshots are hook-time entry snapshots from real execution, not standalone helper calls.",
         ],
     }
 
@@ -1543,6 +1758,9 @@ def summarize_rom_contribution_trace(
         for event in report.get("public_read_probe_entries", [])
         if isinstance(event, dict)
     ]
+    helper_snapshots = [
+        event for event in report.get("helper_snapshots", []) if isinstance(event, dict)
+    ]
     changed_events = [event for event in events if event.get("changed")]
     covered_rule_ids = sorted(rule_ids_from_events(events))
     changed_rule_ids = sorted(rule_ids_from_events(changed_events))
@@ -1550,6 +1768,7 @@ def summarize_rom_contribution_trace(
         rule_ids_from_events(rule_entries)
         | rule_ids_from_events(predicate_branch_entries)
         | rule_ids_from_events(public_read_probe_entries)
+        | rule_ids_from_events(helper_snapshots)
         | set(covered_rule_ids)
     )
     operation_counts = count_event_values(events, "operation")
@@ -1557,7 +1776,13 @@ def summarize_rom_contribution_trace(
     classification_counts = count_source_values(events, "classification")
     changed_classification_counts = count_source_values(changed_events, "classification")
     executed_classification_counts = count_source_values(
-        [*rule_entries, *predicate_branch_entries, *public_read_probe_entries, *events],
+        [
+            *rule_entries,
+            *predicate_branch_entries,
+            *public_read_probe_entries,
+            *helper_snapshots,
+            *events,
+        ],
         "classification",
     )
     predicate_counts = count_predicate_values(predicate_branch_entries, "predicate_id")

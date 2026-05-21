@@ -321,3 +321,83 @@ Next agreed lane: Spikes/Rapid Spin score-mirror repair in
 `tools/boss_ai_debugger/generators.py` plus focused tests only. Engine ASM,
 poison/save v4, and `data/pokemon/evos_attacks.asm` remain protected unless
 both agents explicitly reopen them.
+
+## Spikes/Rapid Spin Mirror Hold
+
+Codex completed the Spikes/Rapid Spin score-mirror patch in the dirty tree and
+verified it locally, but Claude and Codex agreed to hold it from commit because
+the narrow `tools/boss_ai_debugger/generators.py` / focused-test write set
+depends on unowned dirty support in `tools/boss_ai_debugger/rom_scenarios.py`
+and `tools/boss_ai_debugger/rom_score_materialize.py`.
+
+Dirty held patch:
+
+- `tools/boss_ai_debugger/generators.py`
+- `tools/boss_ai_debugger/tests/test_generators.py`
+
+Verification while dirty:
+
+- `python -m unittest tools.boss_ai_debugger.tests.test_generators tools.boss_ai_debugger.tests.test_rom_score_materialize tools.boss_ai_debugger.tests.test_roadmap_audit`
+- Generated three roadmap-selected Spikes/Rapid Spin scenarios from
+  `.local\tmp\boss_ai_debugger\all_seed1_120_after_mirror_fix.jsonl`.
+- `python -m tools.boss_ai_debugger rom-score-materialize --scenarios .local\tmp\boss_ai_debugger\roadmap_selected_spikes_after_mirror_fix.jsonl --limit 3 --compare-fast-score --json-out .local\tmp\boss_ai_debugger\roadmap_selected_spikes_after_mirror_fix.json`
+  produced `checked=3`, `score_matches=3`, `contribution_matched=3`,
+  `hook_mismatches=0`, and `contribution_mismatches=0`.
+- `python tools\audit\check_boss_ai_debugger_roadmap.py --check-rom-score-materialization --check-rom-selector-materialization`
+  reported `ready=False`, `status_counts={'complete': 14, 'partial': 2,
+  'missing': 0}`, with Spikes/Rapid Spin score materialization complete.
+
+Remaining roadmap blockers after this held patch:
+
+- `rom_score_contribution_trace`: only `65 / 77` score-trace target rule IDs
+  have dynamic ROM rule-entry coverage.
+- `final_one_command_definition_of_done`: still blocked by that score
+  contribution coverage gap.
+
+The 12 uncovered score-trace target IDs are in three groups: sleep-wake timing,
+revealed player damage/priority, and damage dominance/pressure helpers. They
+are gated on the uncommitted Boss AI policy/helper work in
+`engine/battle/ai/*` or on a larger Python mirror/materialization lane, so both
+agents intentionally left them alone at session end.
+
+## Restart Correction: Debugger Done Gate Closed
+
+Cole correctly called out the premature stop. Claude and Codex restarted the
+debugger lane instead of leaving the 12 score-trace IDs as future work.
+
+What changed after restart:
+
+- `tools/boss_ai_debugger/rom_contribution_trace.py`
+  - Helper-entry snapshots now carry rule-map `source` metadata.
+  - Helper snapshots count toward executed rule IDs, because they are real
+    PyBoy hook entries into executable helpers, not synthetic evidence.
+- `tools/boss_ai_debugger/generators.py`
+  - Spikes/Rapid Spin layer-3 score mirroring now uses the same current-ROM
+    damage-pressure helpers as the other layers.
+  - Added `score_rule_probe` generator cases for sleep/wake timing, revealed
+    player damage against Focus Punch, and high-pressure KO damage.
+- `tools/boss_ai_debugger/rom_score_materialize.py`
+  - Adopted the existing dirty materializer WIP as coherent with this lane:
+    reset Boss AI turn caches before score replay, skip move-score
+    materialization for switch-labeled expectations, and preserve public-policy
+    base-state fixes.
+  - Added `score_rule_probe` materialization with explicit WRAM patch support.
+- `tools/audit/check_boss_ai_debugger_roadmap.py`
+  - The PyBoy-backed score materialization audit now includes the exact
+    score-rule probes alongside Spikes/Rapid Spin probes.
+
+Verification after restart:
+
+- `python -m unittest tools.boss_ai_debugger.tests.test_generators tools.boss_ai_debugger.tests.test_rom_score_materialize tools.boss_ai_debugger.tests.test_rom_contribution_trace tools.boss_ai_debugger.tests.test_roadmap_audit`:
+  PASS, 52 tests.
+- `python -m tools.boss_ai_debugger rom-score-materialize --scenarios .local\tmp\boss_ai_debugger\generated_score_rule_probes.jsonl --limit 3 --compare-fast-score --json-out .local\tmp\boss_ai_debugger\generated_score_rule_probes_materialize.json`:
+  `checked=3`, `score_matches=3`, `contribution_matched=3`,
+  `hook_mismatches=0`.
+- `python tools\audit\check_boss_ai_debugger_roadmap.py --generated-count 24 --check-rom-score-materialization --check-rom-selector-materialization`:
+  `ready=True`, all 16 roadmap items complete, `blocking_gaps=0`.
+- `python tools\audit\check_boss_ai_debugger_done.py`:
+  `passed=True`, `failed_commands=0`, `roadmap_ready=True`,
+  `blocking_gaps=0`.
+
+This supersedes the earlier "14/16 complete" and "65 / 77" notes. Those were
+accurate at the time, but no longer describe the current dirty tree.

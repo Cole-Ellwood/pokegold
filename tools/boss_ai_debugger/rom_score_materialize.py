@@ -21,6 +21,7 @@ from .rom_contribution_trace import clear_chosen_move
 from .rom_contribution_trace import drive_replay_to_choice
 from .rom_contribution_trace import memory_patches_to_json
 from .rom_contribution_trace import MemoryPatch
+from .rom_contribution_trace import reset_boss_ai_turn_caches
 from .rom_contribution_trace import RomContributionTraceSession
 from .rom_contribution_trace import SimpleTraceArgs
 from .rom_scenarios import normalize_tier
@@ -43,7 +44,7 @@ PUBLIC_POLICY_FAMILIES = (
     "support_handoff",
     "cashout_board_delta",
 )
-SUPPORTED_FAMILIES = ("spikes_spin", *PUBLIC_POLICY_FAMILIES)
+SUPPORTED_FAMILIES = ("spikes_spin", "score_rule_probe", *PUBLIC_POLICY_FAMILIES)
 
 MOVE_FALLBACK_IDS = {
     "move_absorber_coverage": 0x59,
@@ -63,14 +64,14 @@ MOVE_FALLBACK_IDS = {
     "move_obvious_stab": 0xBC,
     "move_passive_reset": 0x69,
     "move_receiver_coverage": 0x59,
-    "move_reckless_prediction": 0x59,
+    "move_reckless_prediction": 0xBC,
     "move_recover": 0x69,
     "move_recover_loop": 0x69,
     "move_recover_route": 0x69,
     "move_repeat_setup": 0xAE,
     "move_repeat_support": 0x5C,
     "move_roar_loop": 0x2E,
-    "move_safe_active_ko": 0xBC,
+    "move_safe_active_ko": 0x59,
     "move_safe_default": 0xBC,
     "move_safe_handoff": 0xE2,
     "move_safe_setup": 0xAE,
@@ -254,6 +255,7 @@ class RomScoreReplaySession:
         self.selector_entry_scores = []
         self.load_state(save_state)
         apply_memory_patches(self.pyboy, self.symbols, patches)
+        reset_boss_ai_turn_caches(self.pyboy, self.symbols)
         clear_chosen_move(self.pyboy, self.symbols)
         final_values, _presses_issued = drive_replay_to_choice(
             self.pyboy,
@@ -286,6 +288,7 @@ class RomScoreReplaySession:
         if self.score_start_patches_applied:
             return
         apply_memory_patches(self.pyboy, self.symbols, self.memory_patches)
+        reset_boss_ai_turn_caches(self.pyboy, self.symbols)
         self.score_start_patches_applied = True
         self.score_start_patch_count += 1
 
@@ -482,6 +485,10 @@ def run_rom_score_materialization(
                 verdicts.append(
                     skipped_verdict(scenario_id, "unsupported scenario family")
                 )
+                continue
+            unsupported_reason = unsupported_move_score_reason(scenario)
+            if unsupported_reason:
+                verdicts.append(skipped_verdict(scenario_id, unsupported_reason))
                 continue
             try:
                 materialization = materialization_for_scenario(
@@ -755,6 +762,11 @@ def materialization_for_scenario(
 ) -> ScenarioMaterialization:
     scenario_id = str(scenario.get("id", "unnamed"))
     family = str(scenario.get("family", ""))
+    if family == "score_rule_probe":
+        return score_rule_probe_materialization_for_scenario(
+            scenario,
+            move_name_to_id=move_name_to_id,
+        )
     if family in PUBLIC_POLICY_FAMILIES:
         return public_policy_materialization_for_scenario(
             scenario,
@@ -802,6 +814,26 @@ def materialization_for_scenario(
     )
 
 
+def unsupported_move_score_reason(scenario: dict[str, Any]) -> str | None:
+    expectation = scenario_expectation(scenario)
+    score_required_ids = set(list_of_strings(expectation.get("best_action_ids")))
+    score_required_ids.update(list_of_strings(expectation.get("bad_action_ids")))
+    score_required_ids.update(list_of_strings(expectation.get("catastrophic_action_ids")))
+    if not score_required_ids:
+        return None
+
+    moves = scenario.get("moves", [])
+    if not isinstance(moves, list):
+        return None
+    for move in moves:
+        if not isinstance(move, dict):
+            continue
+        action_id = str(move.get("id", ""))
+        if action_id in score_required_ids and move.get("kind") == "switch":
+            return "labeled switch candidate needs switch materialization"
+    return None
+
+
 def public_policy_materialization_for_scenario(
     scenario: dict[str, Any],
     *,
@@ -830,6 +862,55 @@ def public_policy_materialization_for_scenario(
     )
 
 
+def score_rule_probe_materialization_for_scenario(
+    scenario: dict[str, Any],
+    *,
+    move_name_to_id: dict[str, int],
+) -> ScenarioMaterialization:
+    scenario_id = str(scenario.get("id", "unnamed"))
+    tags = scenario_condition_tags(scenario)
+    tier = normalize_tier(scenario.get("tier", "late"))
+    layers = parse_optional_spikes_layers(tags)
+    move_ids = move_ids_for_scenario(scenario, move_name_to_id=move_name_to_id)
+    patches = base_public_policy_patches(
+        tier=tier,
+        layers=layers,
+        tags=tags,
+        policy_case=str(scenario.get("policy_case", "")),
+    )
+    for offset, move_id in enumerate(move_ids):
+        patches.append(patch("wEnemyMonMoves", move_id, offset))
+        patches.append(patch("wEnemyMonPP", 30, offset))
+        patches.append(patch("wEnemyAIMoveScores", 20, offset))
+    patches.extend(extra_materialization_patches(scenario))
+    return ScenarioMaterialization(
+        scenario_id=scenario_id,
+        patches=patches,
+        move_ids=move_ids,
+        layers=layers,
+    )
+
+
+def extra_materialization_patches(scenario: dict[str, Any]) -> list[MemoryPatch]:
+    raw_patches = scenario.get("materialization_patches", [])
+    if raw_patches is None:
+        return []
+    if not isinstance(raw_patches, list):
+        raise PreferenceDataError("materialization_patches must be a list")
+    patches = []
+    for index, raw_patch in enumerate(raw_patches):
+        if not isinstance(raw_patch, dict):
+            raise PreferenceDataError("materialization_patches entries must be objects")
+        symbol_name = str(raw_patch.get("symbol_name") or raw_patch.get("symbol") or "")
+        if not symbol_name:
+            raise PreferenceDataError(f"materialization_patches[{index}] missing symbol")
+        offset = int(raw_patch.get("offset", 0))
+        raw_value = raw_patch["value"]
+        value = int(raw_value, 0) if isinstance(raw_value, str) else int(raw_value)
+        patches.append(patch(symbol_name, value, offset))
+    return patches
+
+
 def base_public_policy_patches(
     *,
     tier: int,
@@ -838,22 +919,32 @@ def base_public_policy_patches(
     policy_case: str,
 ) -> list[MemoryPatch]:
     enemy_hp = 80
-    if "recovery_preserves_route" in tags:
+    if policy_case == "resisted_explosion_free_owner":
+        enemy_hp = 18
+    elif "recovery_preserves_route" in tags:
         enemy_hp = 34
     elif "defensive_sack_owner" in tags:
         enemy_hp = 18
     player_hp = 80
-    if "active_pressure_converts" in tags:
+    if policy_case == "resisted_explosion_free_owner":
+        player_hp = 22
+    elif "active_pressure_converts" in tags:
         player_hp = 22
 
     player_type1 = TYPES["WATER"]
     player_type2 = TYPES["PSYCHIC"]
-    if "status_absorber_named" in tags:
+    if policy_case == "resisted_explosion_free_owner":
+        player_type1 = TYPES["STEEL"]
+        player_type2 = TYPES["STEEL"]
+    elif "status_absorber_named" in tags:
         player_type1 = TYPES["POISON"]
         player_type2 = TYPES["POISON"]
     elif "worst_case_unguarded" in tags:
         player_type1 = TYPES["STEEL"]
         player_type2 = TYPES["STEEL"]
+    elif policy_case == "reversible_before_irreversible":
+        player_type1 = TYPES["POISON"]
+        player_type2 = TYPES["POISON"]
     elif "prediction_branch_supported" in tags:
         player_type1 = TYPES["ELECTRIC"]
         player_type2 = TYPES["ELECTRIC"]
@@ -911,7 +1002,7 @@ def public_seen_player_patches(tags: set[str]) -> list[MemoryPatch]:
     ]
     for offset in range(6):
         patches.append(patch("wBossAISeenPlayerSpecies", 0, offset))
-    if "revealed_ghost_absorber" not in tags:
+    if not ({"revealed_ghost_absorber", "reversible_line_covers_active_and_branch"} & tags):
         return patches
     patches.extend(
         [
@@ -926,11 +1017,11 @@ def public_seen_player_patches(tags: set[str]) -> list[MemoryPatch]:
 
 def plan_id_for_tags(tags: set[str]) -> int:
     if "setup_window" in tags or "setup_already_bankrolled" in tags:
-        return 1
+        return 3
     if "support_job_completed" in tags or "status_absorber_named" in tags:
         return 2
     if "active_pressure_converts" in tags or "prediction_ev_positive" in tags:
-        return 3
+        return 1
     if "recovery_preserves_route" in tags:
         return 4
     return 0

@@ -156,6 +156,7 @@ def collect_evidence(
     score_materialization = maybe_run_score_materialization(
         scenarios,
         enabled=check_rom_score_materialization,
+        seed=seed,
     )
     coverage = build_coverage_report(
         generated_count=generated_count,
@@ -1002,6 +1003,7 @@ def maybe_run_score_materialization(
     scenarios: list[dict[str, Any]],
     *,
     enabled: bool,
+    seed: int,
 ) -> dict[str, Any]:
     if not enabled:
         return {
@@ -1009,7 +1011,12 @@ def maybe_run_score_materialization(
             "checked": False,
             "reason": "not requested; pass --check-rom-score-materialization to run it",
         }
-    score_scenarios = score_materialization_scenarios(scenarios, limit=3)
+    score_scenarios = score_materialization_scenarios(
+        scenarios,
+        limit=3,
+        include_rule_probes=True,
+        seed=seed,
+    )
     if not score_scenarios:
         return {
             "available": False,
@@ -1072,16 +1079,20 @@ def score_materialization_evidence(evidence: dict[str, Any]) -> str:
     data = evidence["score_materialization"]
     if not data.get("checked"):
         return str(data.get("reason", "score materialization not checked"))
-    return (
-        f"score_checked={data['checked_count']} "
-        f"errors={data['error_count']} "
-        f"score_matches={data['score_bytes_match_count']} "
-        f"contribution_matched={data['contribution_matched_count']} "
-        f"contribution_mismatches={data['contribution_mismatch_count']} "
-        f"hook_equivalence_checked={data['hook_equivalence_checked_count']} "
-        f"hook_equivalence_mismatches={data['hook_equivalence_mismatch_count']} "
-        f"rate={data['materializations_per_minute']:.0f}/min"
-    )
+    parts = [
+        f"score_checked={int(data.get('checked_count', 0))}",
+        f"errors={int(data.get('error_count', 0))}",
+        f"score_matches={int(data.get('score_bytes_match_count', 0))}",
+        f"contribution_matched={int(data.get('contribution_matched_count', 0))}",
+        f"contribution_mismatches={int(data.get('contribution_mismatch_count', 0))}",
+        f"hook_equivalence_checked={int(data.get('hook_equivalence_checked_count', 0))}",
+        f"hook_equivalence_mismatches={int(data.get('hook_equivalence_mismatch_count', 0))}",
+        f"rate={float(data.get('materializations_per_minute', 0.0)):.0f}/min",
+    ]
+    reason = str(data.get("reason", ""))
+    if reason:
+        parts.append(f"reason={reason}")
+    return " ".join(parts)
 
 
 def score_materialization_gaps(evidence: dict[str, Any]) -> list[str]:
@@ -1126,6 +1137,8 @@ def score_materialization_scenarios(
     scenarios: list[dict[str, Any]],
     *,
     limit: int,
+    include_rule_probes: bool = False,
+    seed: int = 1,
 ) -> list[dict[str, Any]]:
     candidates = [
         scenario
@@ -1151,7 +1164,12 @@ def score_materialization_scenarios(
             rank = 2
         return (rank, str(scenario.get("id", "")))
 
-    return sorted(candidates, key=priority)[:limit]
+    selected = sorted(candidates, key=priority)[:limit]
+    if include_rule_probes:
+        selected.extend(
+            generate_scenarios(family="score_rule_probe", count=3, seed=seed)
+        )
+    return selected
 
 
 def write_json(data: dict[str, Any], path: Path) -> None:

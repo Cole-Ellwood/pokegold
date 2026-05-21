@@ -399,6 +399,7 @@ class RomContributionTraceTests(unittest.TestCase):
                 "wCurEnemyMoveNum": [0],
                 "wEnemyMonMoves": [1, 2, 3, 4],
                 "wEnemyAIMoveScores": [1, 2, 3, 4],
+                "wBossAITier": [1],
                 "wBossAITracePreModelScores": [20, 20, 20, 20],
                 "wBossAITracePostModelScores": [19, 20, 20, 20],
             },
@@ -406,6 +407,7 @@ class RomContributionTraceTests(unittest.TestCase):
             rule_entries=[],
             predicate_branch_entries=[],
             public_read_probe_entries=[],
+            helper_snapshots=[],
             selector_entry_scores=[19, 20, 20, 20],
             move_names={1: "TEST"},
             memory_patches=[],
@@ -561,6 +563,7 @@ class RomContributionTraceTests(unittest.TestCase):
                 "rule_entry_count": 1,
                 "predicate_branch_entry_count": 1,
                 "public_read_probe_entry_count": 1,
+                "helper_snapshot_count": 1,
                 "chosen": {"move_name": "SURF", "move_id": 57, "slot_index": 0},
                 "trace_basis": {"trace_rom_sha256": "ROM", "trace_symbols_sha256": "SYM"},
                 "rule_entries": [
@@ -601,6 +604,14 @@ class RomContributionTraceTests(unittest.TestCase):
                         },
                     }
                 ],
+                "helper_snapshots": [
+                    {
+                        "source": {
+                            "rule_id": "move.helper_snapshot_rule",
+                            "classification": "internal",
+                        }
+                    }
+                ],
                 "events": [
                     {
                         "changed": True,
@@ -638,13 +649,14 @@ class RomContributionTraceTests(unittest.TestCase):
             [
                 "move.changed_rule",
                 "move.executed_only",
+                "move.helper_snapshot_rule",
                 "move.predicate_rule",
                 "move.public_probe_rule",
                 "move.rule_entry_only",
             ],
         )
         self.assertEqual(summary["changed_rule_ids"], ["move.changed_rule"])
-        self.assertEqual(summary["executed_rule_count"], 5)
+        self.assertEqual(summary["executed_rule_count"], 6)
         self.assertEqual(
             summary["operation_counts"],
             {"discourage_score": 1, "encourage_score": 1},

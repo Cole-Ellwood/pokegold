@@ -21,6 +21,7 @@ PUBLIC_POLICY_FAMILIES = (
 FAMILIES = (
     "selector_edges",
     "spikes_spin",
+    "score_rule_probe",
     "mastery_policy",
     *PUBLIC_POLICY_FAMILIES,
     "all",
@@ -58,6 +59,235 @@ ROM_TIER_WEIGHTS = {
         "risk": 1,
     },
 }
+
+
+def probe_delta(rule: str, delta: int) -> dict[str, int | str]:
+    return {"rule": rule, "delta": delta}
+
+
+def probe_set_score(rule: str, score: int) -> dict[str, int | str]:
+    return {"rule": rule, "set_score": score}
+
+
+def probe_patch(symbol: str, value: int, offset: int = 0) -> dict[str, int | str]:
+    return {"symbol": symbol, "offset": offset, "value": value}
+
+
+PROBE_CLEAR_PLAYER_USED_MOVES = [
+    probe_patch("wPlayerUsedMoves", 0, 0),
+    probe_patch("wPlayerUsedMoves", 0, 1),
+    probe_patch("wPlayerUsedMoves", 0, 2),
+    probe_patch("wPlayerUsedMoves", 0, 3),
+]
+
+PROBE_SLEEP_UNCERTAIN_PATCHES = [
+    probe_patch("wBattleMonStatus", 2),
+    probe_patch("wCurBattleMon", 0),
+    probe_patch("wBossAIPlayerSleepDeniedMon", 1),
+    probe_patch("wBossAIPlayerSleepDeniedCount", 2),
+    probe_patch("wBattleMonHP", 0, 0),
+    probe_patch("wBattleMonHP", 80, 1),
+]
+
+SCORE_RULE_PROBE_CASES = [
+    {
+        "case_id": "sleep_wake_uncertain",
+        "notes": [
+            "generated score-rule probe: slower boss prices uncertain wake timing",
+        ],
+        "moves": [
+            {
+                "id": "move_dream_eater",
+                "name": "Dream Eater",
+                "move_id": 0x8A,
+                "deltas": [
+                    probe_delta("move.apply_move_model.apply_damage_pressure_bias", 2),
+                    probe_delta("move.apply_move_model.apply_sleep_wake_risk_bias", 2),
+                ],
+                "lookahead_delta": 18,
+            },
+            {
+                "id": "move_nightmare",
+                "name": "Nightmare",
+                "move_id": 0xAB,
+                "deltas": [
+                    probe_delta("move.apply_move_model.apply_sleep_wake_risk_bias", 2),
+                ],
+                "lookahead_delta": 18,
+            },
+            {
+                "id": "move_recover",
+                "name": "Recover",
+                "move_id": 0x69,
+                "deltas": [
+                    probe_delta(
+                        "move.apply_move_model.apply_recovery_timing_discipline",
+                        6,
+                    ),
+                ],
+                "lookahead_delta": 18,
+            },
+            {
+                "id": "move_spikes",
+                "name": "Spikes",
+                "move_id": 0xBF,
+                "deltas": [
+                    probe_delta("move.apply_move_model.enemy_under_pressure", -3),
+                    probe_delta("move.apply_move_model.apply_role_bias", -3),
+                ],
+                "lookahead_delta": 18,
+            },
+        ],
+        "expectation": {
+            "best_action_ids": ["move_spikes"],
+            "acceptable_action_ids": ["move_nightmare"],
+            "condition_tags": ["sleep_probe_uncertain"],
+            "lesson_type": "score_rule_probe",
+            "confidence": "high",
+            "why": "Uncertain public wake timing makes sleep-dependent moves risky without hiding the sleep counter.",
+        },
+        "materialization_patches": [
+            *PROBE_SLEEP_UNCERTAIN_PATCHES,
+            *PROBE_CLEAR_PLAYER_USED_MOVES,
+        ],
+    },
+    {
+        "case_id": "focus_revealed_damage",
+        "notes": [
+            "generated score-rule probe: revealed damage breaks Focus Punch",
+        ],
+        "moves": [
+            {
+                "id": "move_focus_punch",
+                "name": "Focus Punch",
+                "move_id": 0x86,
+                "deltas": [
+                    probe_delta("move.apply_move_model.apply_damage_pressure_bias", 2),
+                    probe_delta("move.apply_move_model.apply_sleep_wake_risk_bias", 2),
+                    probe_delta(
+                        "move.apply_move_model.player_has_revealed_damaging_hit_vs_enemy",
+                        14,
+                    ),
+                ],
+                "lookahead_delta": 18,
+            },
+            {
+                "id": "move_nightmare",
+                "name": "Nightmare",
+                "move_id": 0xAB,
+                "deltas": [
+                    probe_delta("move.apply_move_model.apply_sleep_wake_risk_bias", 2),
+                ],
+                "lookahead_delta": 18,
+            },
+            {
+                "id": "move_recover",
+                "name": "Recover",
+                "move_id": 0x69,
+                "deltas": [
+                    probe_delta("move.apply_move_model.enemy_under_pressure", -4),
+                    probe_delta(
+                        "move.apply_move_model.apply_recovery_timing_discipline",
+                        6,
+                    ),
+                ],
+                "lookahead_delta": 18,
+            },
+            {
+                "id": "move_spikes",
+                "name": "Spikes",
+                "move_id": 0xBF,
+                "deltas": [
+                    probe_delta("move.apply_move_model.enemy_under_pressure", -2),
+                    probe_delta("move.apply_move_model.apply_role_bias", -3),
+                ],
+                "lookahead_delta": 18,
+            },
+        ],
+        "expectation": {
+            "best_action_ids": ["move_spikes"],
+            "acceptable_action_ids": ["move_focus_punch"],
+            "condition_tags": ["focus_revealed_damage_probe"],
+            "lesson_type": "score_rule_probe",
+            "confidence": "high",
+            "why": "A public revealed damaging hit can break Focus Punch when sleep is not guaranteed.",
+        },
+        "materialization_patches": [
+            *PROBE_SLEEP_UNCERTAIN_PATCHES,
+            probe_patch("wPlayerUsedMoves", 0x39, 0),
+            probe_patch("wPlayerUsedMoves", 0, 1),
+            probe_patch("wPlayerUsedMoves", 0, 2),
+            probe_patch("wPlayerUsedMoves", 0, 3),
+        ],
+    },
+    {
+        "case_id": "high_pressure_ko",
+        "notes": [
+            "generated score-rule probe: KO-pressure move enters the high-pressure gate",
+        ],
+        "moves": [
+            {
+                "id": "move_sludge_bomb",
+                "name": "Sludge Bomb",
+                "move_id": 0xBC,
+                "deltas": [
+                    probe_delta("move.apply_move_model", -7),
+                    probe_delta("move.apply_move_model.apply_damage_pressure_bias", -4),
+                    probe_delta("move.apply_move_model.apply_role_bias", -3),
+                ],
+                "lookahead_delta": 18,
+            },
+            {
+                "id": "move_nightmare",
+                "name": "Nightmare",
+                "move_id": 0xAB,
+                "deltas": [
+                    probe_set_score(
+                        "move.apply_move_model.utility_move_would_fail_publicly",
+                        80,
+                    ),
+                ],
+                "lookahead_delta": 18,
+            },
+            {
+                "id": "move_recover",
+                "name": "Recover",
+                "move_id": 0x69,
+                "deltas": [
+                    probe_delta(
+                        "move.apply_move_model.apply_recovery_timing_discipline",
+                        6,
+                    ),
+                ],
+                "lookahead_delta": 18,
+            },
+            {
+                "id": "move_spikes",
+                "name": "Spikes",
+                "move_id": 0xBF,
+                "deltas": [
+                    probe_delta("move.apply_move_model.enemy_under_pressure", -3),
+                    probe_delta("move.apply_move_model.apply_role_bias", -3),
+                ],
+                "lookahead_delta": 18,
+            },
+        ],
+        "expectation": {
+            "best_action_ids": ["move_sludge_bomb"],
+            "acceptable_action_ids": ["move_recover"],
+            "condition_tags": ["high_pressure_ko_probe"],
+            "lesson_type": "score_rule_probe",
+            "confidence": "high",
+            "why": "A public KO-pressure damage move executes the high-pressure gate and remains top.",
+        },
+        "materialization_patches": [
+            probe_patch("wBattleMonStatus", 0),
+            probe_patch("wBattleMonHP", 0, 0),
+            probe_patch("wBattleMonHP", 20, 1),
+            *PROBE_CLEAR_PLAYER_USED_MOVES,
+        ],
+    },
+]
 
 POLICY_CARD_REFS = {
     "active_pressure_before_status": (
@@ -1409,6 +1639,8 @@ def generate_one(
         return selector_edge_scenario(index, rng, seed)
     if family == "spikes_spin":
         return spikes_spin_scenario(index, rng, seed)
+    if family == "score_rule_probe":
+        return score_rule_probe_scenario(index, rng, seed)
     if family == "mastery_policy":
         return mastery_policy_scenario(index, rng, seed)
     if family in PUBLIC_POLICY_CASES:
@@ -1484,6 +1716,17 @@ def selector_edge_scenario(index: int, rng: random.Random, seed: int) -> dict[st
     }
 
 
+def score_rule_probe_scenario(index: int, rng: random.Random, seed: int) -> dict[str, Any]:
+    case = SCORE_RULE_PROBE_CASES[index % len(SCORE_RULE_PROBE_CASES)]
+    scenario = deepcopy(case)
+    scenario["id"] = (
+        f"generated_score_rule_probe_{seed}_{index:05d}_{case['case_id']}"
+    )
+    scenario["family"] = "score_rule_probe"
+    scenario["tier"] = "late"
+    return scenario
+
+
 def spikes_spin_scenario(index: int, rng: random.Random, seed: int) -> dict[str, Any]:
     tier = rng.choice(["mid", "late"])
     layers = rng.choice([0, 1, 2, 3])
@@ -1535,24 +1778,25 @@ def spikes_spin_scenario(index: int, rng: random.Random, seed: int) -> dict[str,
             "id": "move_spikes",
             "name": "Spikes",
             "deltas": rom_deltas["spikes"],
-            "lookahead_delta": 18,
+            "lookahead_delta": rom_deltas["lookahead"]["spikes"],
         },
         {
             "id": "move_sludge_bomb",
             "name": "Sludge Bomb",
             "deltas": rom_deltas["sludge_bomb"],
-            "lookahead_delta": 18,
+            "lookahead_delta": rom_deltas["lookahead"]["sludge_bomb"],
         },
         {
             "id": "move_surf",
             "name": "Surf",
             "deltas": rom_deltas["surf"],
-            "lookahead_delta": 18,
+            "lookahead_delta": rom_deltas["lookahead"]["surf"],
         },
         {
             "id": "move_explosion",
             "name": "Explosion",
             "deltas": rom_deltas["explosion"],
+            "lookahead_delta": rom_deltas["lookahead"]["explosion"],
         },
     ]
 
@@ -1631,102 +1875,225 @@ def materialized_spikes_spin_rom_deltas(
     reserve_ghost: bool,
     bench_revealed_spin: bool,
     active_species_prior: bool,
-) -> dict[str, int]:
+) -> dict[str, Any]:
     weights = ROM_TIER_WEIGHTS[tier]
     role = weights["role"]
     status = weights["status"]
     risk = weights["risk"]
-    pressure = active_species_prior and not active_ghost
     active_spinblock = active_ghost and not foresighted
     spinblock_available = active_spinblock or reserve_ghost
     revealed_spin_counts = active_revealed_spin and not active_spinblock
 
     spikes: list[dict[str, int]] = []
+    lookahead = materialized_spikes_spin_lookahead(
+        layers=layers,
+        active_revealed_spin=active_revealed_spin,
+        active_species_prior=active_species_prior,
+    )
     if layers == 0:
-        add_rom_delta(
-            spikes,
-            "move.apply_move_model.enemy_under_pressure",
-            -(status if pressure else role),
-        )
+        if revealed_spin_counts:
+            if reserve_ghost:
+                add_rom_delta(
+                    spikes,
+                    "move.apply_move_model.apply_revealed_rapid_spin_spikes_risk",
+                    8,
+                )
+            else:
+                add_rom_delta(
+                    spikes,
+                    "move.apply_move_model.apply_revealed_rapid_spin_spikes_risk",
+                    20,
+                )
+        add_rom_delta(spikes, "move.apply_move_model.enemy_under_pressure", -status)
     elif layers == 1:
-        if pressure:
-            add_rom_delta(spikes, "move.apply_move_model.enemy_under_pressure", 6)
-        else:
-            returned = False
-            if revealed_spin_counts:
-                if reserve_ghost:
-                    add_rom_delta(
-                        spikes,
-                        "move.apply_move_model.apply_revealed_rapid_spin_spikes_risk",
-                        8,
-                    )
-                else:
-                    add_rom_delta(
-                        spikes,
-                        "move.apply_move_model.boss_has_available_reserve_ghost",
-                        10,
-                    )
-                    returned = True
+        if revealed_spin_counts:
+            if reserve_ghost:
+                add_rom_delta(
+                    spikes,
+                    "move.apply_move_model.apply_revealed_rapid_spin_spikes_risk",
+                    8,
+                )
+            else:
+                add_rom_delta(
+                    spikes,
+                    "move.apply_move_model.boss_has_available_reserve_ghost",
+                    20,
+                )
     elif layers == 2:
-        if pressure:
-            add_rom_delta(spikes, "move.apply_move_model.enemy_under_pressure", 6)
-        else:
-            returned = False
-            if revealed_spin_counts:
-                if reserve_ghost:
-                    add_rom_delta(
-                        spikes,
-                        "move.apply_move_model.apply_revealed_rapid_spin_spikes_risk",
-                        8,
-                    )
-                else:
-                    add_rom_delta(
-                        spikes,
-                        "move.apply_move_model.boss_has_available_reserve_ghost",
-                        10,
-                    )
-                    returned = True
-            if not returned:
-                if not spinblock_available and bench_revealed_spin:
-                    add_rom_delta(
-                        spikes,
-                        "move.apply_move_model.apply_spikes_layer3_unrevealed_spin_risk",
-                        6,
-                    )
-                elif not spinblock_available and (active_species_prior or tier == "late"):
-                    add_rom_delta(
-                        spikes,
-                        "move.apply_move_model.apply_spikes_layer3_unrevealed_spin_risk",
-                        1,
-                    )
+        returned = False
+        if revealed_spin_counts:
+            if reserve_ghost:
+                add_rom_delta(
+                    spikes,
+                    "move.apply_move_model.apply_revealed_rapid_spin_spikes_risk",
+                    8,
+                )
+            else:
+                add_rom_delta(
+                    spikes,
+                    "move.apply_move_model.boss_has_available_reserve_ghost",
+                    20,
+                )
+                returned = True
+        if not returned:
+            if not spinblock_available and bench_revealed_spin:
                 add_rom_delta(
                     spikes,
                     "move.apply_move_model.apply_spikes_layer3_unrevealed_spin_risk",
-                    -role,
+                    6,
                 )
+            elif not spinblock_available and (active_species_prior or tier == "late"):
+                add_rom_delta(
+                    spikes,
+                    "move.apply_move_model.apply_spikes_layer3_unrevealed_spin_risk",
+                    1,
+                )
+            add_rom_delta(
+                spikes,
+                "move.apply_move_model.apply_spikes_layer3_unrevealed_spin_risk",
+                -role,
+            )
     else:
-        add_rom_delta(spikes, "move.apply_move_model.apply_spikes_layer_bias", 24)
+        add_rom_set_score(
+            spikes,
+            "move.apply_move_model.apply_spikes_layer_bias",
+            80,
+        )
+        return {
+            "spikes": spikes,
+            "sludge_bomb": materialized_sludge_bomb_deltas(
+                role=role,
+                active_species_prior=active_species_prior,
+                active_ghost=active_ghost,
+            ),
+            "surf": materialized_surf_deltas(
+                tier=tier,
+                active_species_prior=active_species_prior,
+                active_ghost=active_ghost,
+            ),
+            "explosion": materialized_explosion_deltas(
+                risk=risk,
+                active_species_prior=active_species_prior,
+            ),
+            "lookahead": lookahead,
+        }
 
     add_rom_delta(spikes, "move.apply_move_model.apply_role_bias", -role)
+    sludge_bomb = materialized_sludge_bomb_deltas(
+        role=role,
+        active_species_prior=active_species_prior,
+        active_ghost=active_ghost,
+    )
+    surf = materialized_surf_deltas(
+        tier=tier,
+        active_species_prior=active_species_prior,
+        active_ghost=active_ghost,
+    )
+    explosion = materialized_explosion_deltas(
+        risk=risk,
+        active_species_prior=active_species_prior,
+    )
     return {
         "spikes": spikes,
-        "sludge_bomb": [
-            {"rule": "move.apply_move_model.apply_role_bias", "delta": -role}
-        ],
-        "surf": [],
-        "explosion": [
-            {
-                "rule": "move.apply_move_model.apply_self_kotrade_discipline",
-                "delta": 16,
-            },
-            {"rule": "move.current_enemy_move_accuracy_risky", "delta": risk},
-        ],
+        "sludge_bomb": sludge_bomb,
+        "surf": surf,
+        "explosion": explosion,
+        "lookahead": lookahead,
+    }
+
+
+def materialized_sludge_bomb_deltas(
+    *,
+    role: int,
+    active_species_prior: bool,
+    active_ghost: bool,
+) -> list[dict[str, int]]:
+    deltas: list[dict[str, int]] = []
+    if not active_species_prior:
+        add_rom_set_score(
+            deltas,
+            "move.apply_move_model.apply_damage_pressure_bias",
+            80,
+        )
+        return deltas
+    if active_ghost:
+        add_rom_delta(deltas, "move.apply_move_model.apply_damage_pressure_bias", 2)
+    add_rom_delta(deltas, "move.apply_move_model.apply_role_bias", -role)
+    return deltas
+
+
+def materialized_surf_deltas(
+    *,
+    tier: str,
+    active_species_prior: bool,
+    active_ghost: bool,
+) -> list[dict[str, int]]:
+    deltas: list[dict[str, int]] = []
+    if not active_species_prior:
+        add_rom_set_score(
+            deltas,
+            "move.apply_move_model.apply_damage_pressure_bias",
+            80,
+        )
+        return deltas
+    pressure_delta = -2 if tier == "mid" else -4
+    add_rom_delta(deltas, "move.apply_move_model.enemy_under_pressure", pressure_delta)
+    if not active_ghost:
+        add_rom_set_score(
+            deltas,
+            "move.apply_move_model.apply_damage_pressure_bias",
+            80,
+        )
+    return deltas
+
+
+def materialized_explosion_deltas(
+    *,
+    risk: int,
+    active_species_prior: bool,
+) -> list[dict[str, int]]:
+    deltas: list[dict[str, int]] = []
+    damage_delta = 2 if active_species_prior else -3
+    add_rom_delta(deltas, "move.apply_move_model.apply_damage_pressure_bias", damage_delta)
+    add_rom_delta(
+        deltas,
+        "move.apply_move_model.apply_self_kotrade_discipline",
+        16,
+    )
+    add_rom_delta(deltas, "move.current_enemy_move_accuracy_risky", risk)
+    return deltas
+
+
+def materialized_spikes_spin_lookahead(
+    *,
+    layers: int,
+    active_revealed_spin: bool,
+    active_species_prior: bool,
+) -> dict[str, int]:
+    spikes = 0
+    explosion = 0
+    if layers == 2 and not active_revealed_spin:
+        spikes = 3
+    elif active_revealed_spin and active_species_prior:
+        spikes = 18
+    elif active_revealed_spin:
+        spikes = 4
+        explosion = 4
+    return {
+        "spikes": spikes,
+        "sludge_bomb": 18,
+        "surf": 18,
+        "explosion": explosion,
     }
 
 
 def add_rom_delta(events: list[dict[str, int]], rule: str, delta: int) -> None:
     if delta:
         events.append({"rule": rule, "delta": delta})
+
+
+def add_rom_set_score(events: list[dict[str, int]], rule: str, score: int) -> None:
+    events.append({"rule": rule, "set_score": score})
 
 
 def mastery_policy_scenario(index: int, rng: random.Random, seed: int) -> dict[str, Any]:
