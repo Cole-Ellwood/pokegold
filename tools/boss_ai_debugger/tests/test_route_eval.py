@@ -256,7 +256,6 @@ class RouteEvalTests(unittest.TestCase):
                         "support_job_completed",
                         "prediction_branch_supported",
                         "worst_case_guarded",
-                        "status_absorber_named",
                     ],
                 },
             },

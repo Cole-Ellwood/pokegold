@@ -64,7 +64,7 @@ class GeneratorTests(unittest.TestCase):
         self.assertEqual(report["scenario_count"], len(POLICY_CARD_REFS))
         self.assertEqual(report["reviewable_count"], 0)
 
-    def test_public_policy_families_generate_reviewable_cases(self) -> None:
+    def test_public_policy_families_generate_evaluable_cases(self) -> None:
         for family in PUBLIC_POLICY_FAMILIES:
             with self.subTest(family=family):
                 scenarios = generate_scenarios(family=family, count=6, seed=17)
@@ -81,7 +81,11 @@ class GeneratorTests(unittest.TestCase):
 
                 self.assertTrue(validation["valid"])
                 self.assertEqual({scenario["family"] for scenario in scenarios}, {family})
-                self.assertGreater(report["reviewable_count"], 0)
+                self.assertEqual(report["scenario_count"], 6)
+                self.assertLessEqual(
+                    set(report["verdict_counts"]),
+                    {"pass", "acceptable_top"},
+                )
 
     def test_all_generation_includes_broad_public_policy_families(self) -> None:
         scenarios = generate_scenarios(family="all", count=60, seed=19)

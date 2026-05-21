@@ -528,6 +528,16 @@ def boot_continue(pyboy, symbols: dict[str, capture.Symbol], log: list[str]) -> 
         press(pyboy, button_name, 180)
         frame += 180
         log.append(watch_line(pyboy, symbols, frame, f"BOOT_{button_name.upper()}"))
+    for attempt in range(12):
+        if (
+            read_one(pyboy, symbols, "wMapGroup") != 0
+            and read_one(pyboy, symbols, "wMapNumber") != 0
+            and read_one(pyboy, symbols, "wMapStatus") == MAPSTATUS_HANDLE
+        ):
+            return frame
+        press(pyboy, "a", 180)
+        frame += 180
+        log.append(watch_line(pyboy, symbols, frame, f"BOOT_CLOCK_A_{attempt + 1:02d}"))
     return frame
 
 
@@ -716,8 +726,17 @@ def write_manifest_hints(args: argparse.Namespace, results: list[RunResult]) -> 
     hint_file.write_text(json.dumps(hints, indent=2) + "\n", encoding="utf-8")
 
 
-def update_manifest_paths(manifest_path: Path, results: list[RunResult]) -> None:
+def update_manifest_paths(
+    manifest_path: Path,
+    results: list[RunResult],
+    rom: Path,
+    symbols: Path,
+) -> None:
     data = json.loads(manifest_path.read_text(encoding="utf-8"))
+    data["trace_rom"] = trace_runtime.display_path(rom)
+    data["trace_rom_sha256"] = trace_runtime.sha256_file(rom)
+    data["trace_symbols"] = trace_runtime.display_path(symbols)
+    data["trace_symbols_sha256"] = trace_runtime.sha256_file(symbols)
     state_paths = {
         result.route.capture_id: hint_path(result.state_path)
         for result in results
@@ -876,7 +895,7 @@ def main() -> int:
 
     write_manifest_hints(args, results)
     if args.update_manifest:
-        update_manifest_paths(args.manifest, results)
+        update_manifest_paths(args.manifest, results, args.rom, args.symbols)
     return 0
 
 
