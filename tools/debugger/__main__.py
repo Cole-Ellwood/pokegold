@@ -1532,6 +1532,24 @@ def format_audit(report: dict[str, Any]) -> str:
         lines.extend(["", "Top gaps:"])
         for gap in report["blocking_gaps"][:8]:
             lines.append(f"  - {gap}")
+    v2_surfaces = report.get("v2_surfaces") or []
+    if v2_surfaces:
+        complete = sum(1 for surface in v2_surfaces if surface.get("status") == "complete")
+        lines.extend(
+            [
+                "",
+                (
+                    f"Omni-debugger v2 surfaces ({complete}/{len(v2_surfaces)} complete; "
+                    "additive, not counted toward v1 readiness):"
+                ),
+            ]
+        )
+        for surface in v2_surfaces:
+            lines.append(
+                f"  - {surface.get('status', '?')}: {surface.get('id', '')} - {surface.get('title', '')}"
+            )
+            for command in (surface.get("commands") or [])[:1]:
+                lines.append(f"      command: {command}")
     return "\n".join(lines)
 
 

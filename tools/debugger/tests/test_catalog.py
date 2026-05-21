@@ -272,6 +272,28 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         ids = {sub["id"] for sub in inventory["subsystems"]}
         self.assertIn("omni_debugger_v2", ids)
 
+    def test_v2_audit_text_output_renders_v2_surfaces_section(self) -> None:
+        # Per Codex's review: the JSON output had v2_surfaces but the
+        # text output (format_audit) was dropping the section, so users
+        # running `python -m tools.debugger audit` couldn't see v2
+        # health. Both formats must surface v2 now.
+        from tools.debugger.__main__ import format_audit
+
+        report = build_capability_report()
+        text = format_audit(report)
+        # v1 invariants stay in the same line shape.
+        self.assertIn("ready=True", text)
+        self.assertIn("'complete': 11", text)
+        # v2 section is present, ordered after v1 capabilities, and
+        # explicitly marks itself as additive.
+        self.assertIn("Omni-debugger v2 surfaces", text)
+        self.assertIn("4/4 complete", text)
+        self.assertIn("not counted toward v1 readiness", text)
+        self.assertIn("hypothesis_tracker", text)
+        self.assertIn("debugger_selftest", text)
+        self.assertIn("save_state_lab", text)
+        self.assertIn("bisect_harness", text)
+
     def test_damage_changed_file_triages_to_damage_debugger(self) -> None:
         report = triage_request(
             changed_files=("engine/battle/late_gen_held_items.asm",),

@@ -22,11 +22,12 @@ python -m tools.debugger.selftest
 Expected (~5s on this branch):
 
 ```
-Selftest PASS  (12/12 components healthy)
+Selftest PASS  (13/13 components healthy)
   [ok]   capability_audit  — capability audit ready=True, complete=11
   [ok]   inventory  — inventory ok (4 subsystems)
   ...
   [ok]   save_state_lab  — save_state_lab raw WRAM + .sgm fail-closed round-trip ok
+  [ok]   bisect  — bisect synthetic regression localized in 2 steps
 ```
 
 If selftest fails, **fix the named component first** — the output names
@@ -470,7 +471,7 @@ python -m tools.debugger.selftest --component hypothesis_tracker
 `--component` accepts any of: `capability_audit`, `inventory`,
 `ingest`, `triage`, `coverage`, `provenance`, `mirrors_compare`,
 `fuzz`, `trace_index`, `visualization`, `hypothesis_tracker`,
-`save_state_lab`.
+`save_state_lab`, `bisect`.
 
 A passing selftest does NOT replace `python -m tools.debugger audit` —
 audit is the v1 readiness gate. Selftest is the v2 health check on
