@@ -16,7 +16,7 @@ blocked, what's done.
 | TD-001 | CRIT | partial | 2026-05-03 | re-evaluated 2026-05-03; bank-pressure picture refreshed in ADDENDUM 2026-05-03 — 0x0e no longer canary (568 free), 0x0d (Effect Commands) was 6 free → **30 free after TD-005 Pattern 3** (canary relief); pic-bank guard shipped 2026-05-03 (`tools/audit/check_pic_bank_pressure.py`); remaining work: TD-005 P2, TD-009a |
 | TD-002 | CRIT | pending-trigger | — | gated on `SAVE_FORMAT_VERSION` bump |
 | TD-003 | CRIT | partial | 2026-05-03 | Option 1 + Option 2 shipped 2026-05-03 (`tools/audit/check_layout_orgs.py` validates 5 known pins; `docs/layout_pins.md` documents each pin's purpose). Option 3 (Stadium 2 relocation) remains release-gated — needs hardware/emulator verification |
-| TD-004 | HIGH | open | — | do **after** TD-005 (needs bank headroom) |
+| TD-004 | HIGH | **done** | 2026-05-21 | boss.asm split shipped 2026-05-09 (`3ca2ecf6`): `boss_platform.asm` (PLATFORM layer) + `boss_policy_move.asm` (move POLICY) + `boss_policy_switch.asm` (switch POLICY) + `boss_thunks.asm` (HL-preserving farcall thunks); byte identity preserved; audits + nav docs rewired. AGENT_LOG entry 2026-05-21 records the historical closure |
 | TD-005 | HIGH | partial | 2026-05-03 | Patterns 1 + 3 closed (41 + 45 = 86 bytes net recovered; 24 of those in canary bank 0x0d, taking it from 6 → 30 free). Pattern 2 (multiply/divide thunk) still gated on user WIP in `engine/pokemon/experience.asm`. See `tech_debt/EVIDENCE/td_005_pattern3_sites.md` |
 | TD-006 | HIGH | open | — | escalation on values **and** names |
 | TD-007 | MED | **done** | 2026-05-03 | 47 Beta\*_Blocks pruned; 5,854 bytes recovered (banks 0x2a +3500, 0x2b +2259, 0x37 +95). SHA1/dist update needs user playtest |
@@ -62,7 +62,7 @@ churny. Other agents check by reading the log directly.
 
 ## Open count
 
-4 open + 4 partial + 3 done + 1 disputed + 1 pending-trigger = 13 total
+3 open + 4 partial + 4 done + 1 disputed + 1 pending-trigger = 13 total
 (matches `TECH_DEBT_REPORT.md` index).
 
 When the open count reaches **0** (or all remaining are `accepted` /
