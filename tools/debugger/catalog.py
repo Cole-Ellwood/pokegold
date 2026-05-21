@@ -103,16 +103,19 @@ SUBSYSTEMS = (
         title="Omni-debugger v2 surfaces",
         scope=(
             "Cross-session investigation affordances on top of the v1 unified debugger: "
-            "persistent hypothesis tree with citation grounding, end-to-end selftest, "
-            "save-state lab (raw memory + WRAM diff, .sgm fail-closed), and bisect harness."
+            "single-command session orientation, persistent hypothesis tree with citation "
+            "grounding, end-to-end selftest, save-state lab (raw memory + WRAM diff, .sgm "
+            "fail-closed), and bisect harness."
         ),
         entrypoints=(
+            "python -m tools.debugger session-start",
             "python -m tools.debugger hypothesis list",
             "python -m tools.debugger selftest",
             "python -m tools.debugger save-state-lab inspect <state>",
             "python -m tools.debugger bisect --good <c> --bad <c> -- <argv...>",
         ),
         evidence_paths=(
+            "tools/debugger/session_start.py",
             "tools/debugger/hypothesis_tracker.py",
             "tools/debugger/selftest.py",
             "tools/debugger/save_state_lab.py",

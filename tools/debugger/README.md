@@ -81,17 +81,24 @@ python -m tools.debugger hypothesis show <id>
 python -m tools.debugger save-state-lab inspect <state>
 python -m tools.debugger save-state-lab diff <a> <b>
 python -m tools.debugger bisect --good <known-good-commit> --bad HEAD -- python tools/audit/check_release_smoke.py
+python -m tools.debugger session-start
+python -m tools.debugger session-start --json
 ```
 
-Omni-debugger v2 surfaces (`hypothesis`, `selftest`, `save-state-lab`,
-`bisect`) are passthrough subcommands — the top-level CLI strips the
-subcommand name and hands the remaining argv to the module's own
-parser. So `python -m tools.debugger bisect --help` shows the bisect
-module's help, and the module-level CLI
+Omni-debugger v2 surfaces (`session-start`, `hypothesis`, `selftest`,
+`save-state-lab`, `bisect`) are passthrough subcommands — the
+top-level CLI strips the subcommand name and hands the remaining argv
+to the module's own parser. So `python -m tools.debugger bisect --help`
+shows the bisect module's help, and the module-level CLI
 (`python -m tools.debugger.bisect ...`) keeps working unchanged. The
 v2 surfaces are reported as a separate `v2_surfaces` section in
 `python -m tools.debugger audit` output and do NOT count toward the
 v1 readiness gate (see `docs/omni_debugger_v2.md`).
+
+For a fresh session, `python -m tools.debugger session-start` is the
+recommended first call — it composes the selftest health check,
+open hypothesis tree, recent commits, and working-tree summary into
+one bounded readout.
 
 Current mature subsystems:
 

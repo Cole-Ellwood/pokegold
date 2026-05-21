@@ -13,7 +13,40 @@ maps **symptoms → first command**; the README maps **commands → options**.
 
 ## Before you start
 
-Fresh session? Run the health check first.
+Fresh session? Run the orientation snapshot first — it composes the
+selftest health check, open hypothesis history, recent commits,
+working-tree summary, and recommended next commands in one read-only
+call. Exits nonzero only if the selftest health gate fails.
+
+```powershell
+python -m tools.debugger session-start
+```
+
+Expected shape (real output uses real branch + commits):
+
+```
+Pokemon Gold romhack debugger — session orientation
+
+branch: <current branch>
+
+selftest PASS (13/13 components healthy)
+
+open hypotheses: 0 (stale citations: 0)
+
+recent commits (3):
+  <sha> <commit message>
+  ...
+
+working tree: modified=0, added=0, deleted=0, untracked=<n>
+
+first recommended commands:
+  python -m tools.debugger.selftest
+  python -m tools.debugger triage --symptom "<plain English>"
+  python -m tools.debugger hypothesis list --refresh-citations
+```
+
+If session-start passes but you want a deeper component-level health
+check, drop straight to selftest:
 
 ```powershell
 python -m tools.debugger.selftest

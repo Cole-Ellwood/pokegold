@@ -51,6 +51,7 @@ from .workflow import build_gate_plan, command_is_runnable
 
 
 FRONT_DOOR_HINT = """Start here:
+  Fresh session orientation: python -m tools.debugger session-start
   I'm changing a file: python -m tools.debugger triage --changed-file path/to/file.asm
   Validate that change: python -m tools.debugger gate --changed-file path/to/file.asm --execute
   I have a symptom: python -m tools.debugger investigate --symptom "what the player noticed"
