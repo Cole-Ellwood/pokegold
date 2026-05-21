@@ -971,6 +971,29 @@ def _build_v2_surfaces(root: Path = ROOT) -> list[dict[str, Any]]:
                 "python -m tools.debugger bisect --good <commit> --bad <commit> -- <argv...>",
             ),
         ),
+        _capability(
+            id="session_start",
+            title="Session orientation (v2)",
+            status=_complete_if_paths(
+                root,
+                "tools/debugger/session_start.py",
+                "tools/debugger/tests/test_session_start.py",
+            ),
+            scope=(
+                "Single-command read-only snapshot for fresh sessions: selftest headline, "
+                "open hypotheses, latest 3 commits, working-tree summary, recommended next "
+                "commands. Exits nonzero ONLY when selftest health gate fails."
+            ),
+            evidence=(
+                "tools/debugger/session_start.py",
+                "tools/debugger/tests/test_session_start.py",
+            ),
+            gaps=(),
+            commands=(
+                "python -m tools.debugger session-start",
+                "python -m tools.debugger session-start --json",
+            ),
+        ),
     ]
     return [
         {

@@ -62,6 +62,7 @@ V2_PASSTHROUGH_MODULES = {
     "selftest": "tools.debugger.selftest",
     "save-state-lab": "tools.debugger.save_state_lab",
     "bisect": "tools.debugger.bisect",
+    "session-start": "tools.debugger.session_start",
 }
 
 
@@ -693,6 +694,19 @@ def build_parser() -> argparse.ArgumentParser:
     )
     bisect.add_argument("argv", nargs=argparse.REMAINDER)
     bisect.set_defaults(func=cmd_bisect)
+
+    session_start = subparsers.add_parser(
+        "session-start",
+        add_help=False,
+        description=(
+            "Read-only session-orientation snapshot (v2): selftest + open "
+            "hypotheses + recent commits + working-tree summary. "
+            "Delegates to `python -m tools.debugger.session_start`. "
+            "Pass `--help` for options."
+        ),
+    )
+    session_start.add_argument("argv", nargs=argparse.REMAINDER)
+    session_start.set_defaults(func=cmd_session_start)
 
     return parser
 
@@ -1401,6 +1415,10 @@ def cmd_save_state_lab(args: argparse.Namespace) -> int:
 
 def cmd_bisect(args: argparse.Namespace) -> int:
     return _delegate_to_module_main("tools.debugger.bisect", args.argv)
+
+
+def cmd_session_start(args: argparse.Namespace) -> int:
+    return _delegate_to_module_main("tools.debugger.session_start", args.argv)
 
 
 def emit_report(report: dict[str, Any], args: argparse.Namespace) -> None:

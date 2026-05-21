@@ -223,6 +223,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("debugger_selftest", ids)
         self.assertIn("save_state_lab", ids)
         self.assertIn("bisect_harness", ids)
+        self.assertIn("session_start", ids)
         # Each v2 surface ships with at least one runnable command so
         # the audit output stays decision-useful.
         for surface in surfaces:
@@ -240,7 +241,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
 
         self.assertEqual(
             set(V2_PASSTHROUGH_MODULES.keys()),
-            {"hypothesis", "selftest", "save-state-lab", "bisect"},
+            {"hypothesis", "selftest", "save-state-lab", "bisect", "session-start"},
         )
 
     def test_v2_subcommand_delegates_to_module_main(self) -> None:
@@ -287,12 +288,13 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         # v2 section is present, ordered after v1 capabilities, and
         # explicitly marks itself as additive.
         self.assertIn("Omni-debugger v2 surfaces", text)
-        self.assertIn("4/4 complete", text)
+        self.assertIn("5/5 complete", text)
         self.assertIn("not counted toward v1 readiness", text)
         self.assertIn("hypothesis_tracker", text)
         self.assertIn("debugger_selftest", text)
         self.assertIn("save_state_lab", text)
         self.assertIn("bisect_harness", text)
+        self.assertIn("session_start", text)
 
     def test_damage_changed_file_triages_to_damage_debugger(self) -> None:
         report = triage_request(

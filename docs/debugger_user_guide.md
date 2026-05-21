@@ -24,7 +24,7 @@ Expected (~5s on this branch):
 ```
 Selftest PASS  (13/13 components healthy)
   [ok]   capability_audit  — capability audit ready=True, complete=11
-  [ok]   inventory  — inventory ok (4 subsystems)
+  [ok]   inventory  — inventory ok (5 subsystems)
   ...
   [ok]   save_state_lab  — save_state_lab raw WRAM + .sgm fail-closed round-trip ok
   [ok]   bisect  — bisect synthetic regression localized in 2 steps
