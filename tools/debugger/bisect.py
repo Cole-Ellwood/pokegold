@@ -27,8 +27,11 @@ Loop:
 - ``git bisect bad <bad_sha>``
 - ``git bisect good <good_sha>``
 - Until bisect terminates: run the scenario subprocess; mark good if
-  exit 0, bad if exit nonzero. ``skip`` and ``abort`` verdicts are
-  deferred to V1.
+  exit 0, bad if exit nonzero. Exit code 125 is reserved by
+  ``git bisect run`` for "cannot test this commit, skip" — V0 deliberately
+  fails closed on 125 with a clean ``git bisect reset`` rather than
+  marking the commit bad. False first-bad is worse than "unsupported
+  in V0." ``skip`` and ``abort`` verdicts proper are deferred to V1.
 - Always ``git bisect reset`` in ``finally``.
 
 Returns the first bad commit's full SHA on success.
@@ -212,6 +215,20 @@ def run_bisect(
                 raise BisectError(
                     f"scenario command not found: {verdict_argv[0]!r}"
                 ) from exc
+            # Exit code 125 is reserved by `git bisect run` for "cannot
+            # test this commit, skip." V0 deliberately does not support
+            # skip — failing closed here is decision-useful: a false
+            # first-bad sends the user chasing a non-bug, which is worse
+            # than "your scenario hit an indeterminate exit code, fix
+            # the scenario or wait for V1 skip support."
+            if proc.returncode == 125:
+                raise BisectError(
+                    "scenario exited 125 — `git bisect run` reserves this for "
+                    "'cannot test this commit'. V0 does not support skip; "
+                    "either fix the scenario to return deterministically "
+                    "(0=good, nonzero!=125=bad), or wait for V1 skip support. "
+                    f"Last argv: {verdict_argv!r}"
+                )
             mark = "good" if proc.returncode == 0 else "bad"
             next_msg = _git(work, "bisect", mark)
             first_bad = _maybe_first_bad(next_msg)

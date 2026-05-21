@@ -208,6 +208,27 @@ class BisectRunTests(unittest.TestCase):
                 repo=self.repo,
             )
 
+    def test_bisect_fails_closed_on_exit_125(self) -> None:
+        # `git bisect run` reserves exit code 125 for "cannot test"
+        # (skip). V0 fails closed on this rather than marking the
+        # commit bad (false first-bad is worse than refusing).
+        scenario = [
+            sys.executable,
+            "-c",
+            "import sys; sys.exit(125)",
+        ]
+        with self.assertRaises(BisectError) as cm:
+            run_bisect(
+                good_ref=self.commits[0],
+                bad_ref=self.commits[4],
+                scenario_argv=scenario,
+                repo=self.repo,
+            )
+        self.assertIn("125", str(cm.exception))
+        # The bisect state must be cleaned up even on the 125 fail-
+        # closed path.
+        self.assertFalse((self.repo / ".git" / "BISECT_LOG").exists())
+
 
 if __name__ == "__main__":
     unittest.main()
