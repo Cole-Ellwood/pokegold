@@ -443,7 +443,8 @@ python -m tools.debugger.selftest --component hypothesis_tracker
 
 `--component` accepts any of: `capability_audit`, `inventory`,
 `ingest`, `triage`, `coverage`, `provenance`, `mirrors_compare`,
-`fuzz`, `trace_index`, `visualization`, `hypothesis_tracker`.
+`fuzz`, `trace_index`, `visualization`, `hypothesis_tracker`,
+`save_state_lab`.
 
 A passing selftest does NOT replace `python -m tools.debugger audit` —
 audit is the v1 readiness gate. Selftest is the v2 health check on
