@@ -51,7 +51,7 @@ DoBattle:
 	call EnemySwitch
 
 .wild
-	ld c, 40
+	ld c, 10
 	call DelayFrames
 
 .player_2
@@ -639,8 +639,7 @@ RefreshPlayerChoiceLockState:
 	ld a, [wBattleMonItem]
 	ld b, a
 	callfar GetItemHeldEffect
-	ld a, b
-	callfar IsChoiceHeldEffect_Far
+	callfar IsHeldEffectInBChoice_Far
 	jr z, .choice_item
 	xor a
 	ld [wPlayerChoiceLockedMove], a
@@ -2374,6 +2373,7 @@ EnemyPartyMonEntrance:
 	call NewEnemyMonStatus
 	call ResetEnemyStatLevels
 	call BreakAttraction
+	callfar BossAI_PickForcedReplacement
 	pop af
 	and a
 	jr nz, .set
@@ -5487,7 +5487,8 @@ MoveSelectionScreen:
 	cp HELD_ASSAULT_VEST
 	jr nz, .not_blocked
 	pop af
-	callfar IsMoveBlockedByAssaultVest_Far
+	ld b, a
+	callfar IsMoveInBBlockedByAssaultVest_Far
 	ret
 
 .not_blocked
@@ -8705,13 +8706,23 @@ BattleStartMessage:
 	cp BATTLETYPE_TREE
 	jr z, .PrintBattleStartText
 	ld hl, WildPokemonAppearedText
+	jr .PrintWildPokemonAppearedText
 
 .PrintBattleStartText:
+	call .PrintBattleStartTextbox
+	ret
+
+.PrintWildPokemonAppearedText:
+	call .PrintBattleStartTextbox
+	ld c, 8
+	call DelayFrames
+	ret
+
+.PrintBattleStartTextbox:
 	push hl
 	farcall BattleStart_TrainerHuds
 	pop hl
-	call StdBattleTextbox
-	ret
+	jp StdBattleTextbox
 
 ShowLinkBattleParticipants:
 	call IsLinkBattle

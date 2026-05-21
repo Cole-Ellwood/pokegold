@@ -66,6 +66,18 @@ Candidate ranking:
   2. [main alternative: why acceptable or worse]
   3. [bad/catastrophic action: why it fails]
 
+Why #1 over #2:
+  [the route-budget reason the top action is better]
+
+#2 becomes #1 if:
+  [public fact, branch weight, damage range, or mechanic that flips the rank]
+
+Rejected safe/default:
+  [tempting safe move and why it does not convert or preserve the route]
+
+Positive-selection check:
+  [convert, deny conversion, branch-punish, correct spend/save, or none]
+
 Opponent's best route:
   [what they are trying to make happen]
 
@@ -101,9 +113,13 @@ name what the KO or switch exposes afterward.
 8. Reject moves that expose an irreplaceable answer without opening a stronger
    route.
 9. Compare the likely opponent action with the worst plausible branch.
-10. Choose the move that improves the best live route or prevents the opponent's
+10. Break ties by route conversion, opponent route denial, resource identity,
+   wrongness cost, then next-board clarity.
+11. Choose the move that improves the best live route or prevents the opponent's
    best route.
-11. Name the next-turn plan and the information that would invalidate it.
+12. State why #1 ranks above #2, what flips the ranking, and which safe/default
+   line was rejected.
+13. Name the next-turn plan and the information that would invalidate it.
 
 ## Risk Posture
 
@@ -152,6 +168,7 @@ Useful local anchors:
 ## Common Failure Modes
 
 - Recommending damage without naming what route the damage changes.
+- Ranking a defensible safe move above the route-converting move.
 - Treating a boss Pokemon like its competitive species role without checking
   local moves, stats, passives, and roster.
 - Preserving a piece only because it is generally good, not because it has a

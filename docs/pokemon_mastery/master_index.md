@@ -20,6 +20,8 @@ cookbook or the detailed subfolder indexes.
 | Goal recreation prompt | `goal_restart_prompt.md` |
 | Study measurement loop | `measurement_minigoal_2026-05.md` |
 | Live boss turn answer shape | `boss_turn_advice_template.md` |
+| Romhack boss-AI mastery bridge | `romhack_boss_ai_mastery.md` |
+| Romhack play transfer drills | `romhack_play_mastery_transfer.md` |
 | Pre-battle boss planning worksheet | `pre_battle_route_sheet.md` |
 | Main decision cookbook | `cookbook.md` |
 | This docs audit and cleanup policy | `doc_cleanup_audit_2026-05-14.md` |
@@ -46,7 +48,9 @@ not pre-freeze move choice.
 | Review a long expert battle | `active_context.md`, then `replay_turn_pause_protocol.md` | `reviews/`; add/update `source_to_policy_ledger.md`, `paused_turn_atlas.md`, `worked_examples/` only if the lesson is reusable |
 | Take an adjacent-domain tangent | `cross_domain_autonomy_policy.md` | create STP/PTA/helper/fixture/reject note, then test against a Pokemon score |
 | Validate romhack mechanics | `romhack_deltas/` | `mechanics_fixtures/`, local source/debugger/emulator evidence |
+| Transfer GSC mastery to romhack play | `romhack_play_mastery_transfer.md` | `romhack_boss_ai_mastery.md`, `boss_route_maps/README.md`, source-derived damage checks |
 | Review cheap boss-AI policy fixes | `boss_ai_re_solve_trigger_audit_2026-05-14.md` | `tools/boss_ai_preference/benchmarks/`, `engine/battle/ai/boss_policy_move.asm`, `engine/battle/ai/boss_policy_switch.asm` |
+| Prepare boss-AI implementation policy | `romhack_boss_ai_mastery.md` | `romhack_deltas/mechanics_inventory.md`, `docs/agent_navigation/hack_mechanics_reference.md`, `engine/battle/ai/POLICY_DESIGN.md` |
 | Prepare a measurable study block | `training_cycle.md` | `measurement_progress_ledger.csv`, `measurement_minigoal_2026-05.md` |
 | Decide if boss-sim results count | `boss_sim_readiness_audit_2026-05-13.md` | `boss_sim_validation_protocol.md`, `workspace/battle_captures/README.md` |
 | Use external research returns | `workspace/external_research_returns/` | `external_research_context_packet_2026-05-14.md`, local verification before adoption |
@@ -68,6 +72,9 @@ not pre-freeze move choice.
 | `worked_examples/` | Concrete applications, live drills, stress tests, boss worksheets. | Preserve. Use `worked_examples/README.md` as the detailed index. |
 | `reviews/` | Individual battle reviews and extracted lessons. | Preserve. Do not merge into the cookbook unless the lesson has become reusable. |
 | `boss_route_maps/` | Boss-specific no-preview route maps. | Preserve. They are local roster planning artifacts. |
+| `romhack_drills/` | Machine-readable drill packets for local mechanics and boss-route transfer. | Preserve; score packets before claiming mastery. |
+| `romhack_boss_ai_mastery.md` | Public-info, mechanics-correct bridge from Pokemon mastery to boss-AI implementation policy. | Keep source-first and implementation-oriented. |
+| `romhack_play_mastery_transfer.md` | Workbench for proving GSC strategy transfer under local mechanics and current boss rosters. | Update with scored drills, damage anchors, and fixture limits. |
 | `romhack_deltas/` | Mechanics forks and local transfer rules. | Preserve. These outrank vanilla memory for romhack claims. |
 | `romhack_deltas/mechanics_pending_index.md` | Current routing index for decision-relevant mechanics that still need local proof. | Update row status when local evidence changes. |
 | `mechanics_fixtures/` | Runtime evidence for mechanics that affect advice. | Preserve and expand. |
@@ -123,6 +130,7 @@ the rows the public state demands.
 | Critical-hit math and variance | `canon/gsc_critical_hits.md` | `heuristic_core/public_info_tiers.md`; local mechanics if romhack damage thresholds matter |
 | Snorlax route, CurseLax, Lovely Kiss branch | `romhack_deltas/snorlax_context.md` | `heuristic_core/rest_curse_tempo_window.md`, `policy_cards/sleep_absorber_and_set_ambiguity.md` |
 | Branch named but not punished | `heuristic_core/branch_punish_ranking.md` | matching canon topic for the named branch |
+| Three plausible candidates but flat top rank | `heuristic_core/route_budget_tiebreaking.md` | score `#1 over #2`, `#2 becomes #1 if`, and rejected safe/default line |
 | Revealed support/package changed a role | `heuristic_core/role_package_ledger.md` | `heuristic_core/rescore_after_reveal.md`, `heuristic_core/spend_or_save_piece.md` |
 | No-Team-Preview or hidden-set uncertainty | `heuristic_core/public_info_tiers.md` | `playbook_manifest.md` |
 | Romhack type/passive/mechanics transfer | `romhack_deltas/mechanics_pending_index.md` | local source, fixtures, debugger, or emulator evidence |
@@ -142,6 +150,7 @@ trying to stop making?"
 | Using Explosion or Destiny Bond into the wrong target | `heuristic_core/spend_or_save_piece.md` | postmortem with one-time trade examples |
 | Mispricing RestTalk, sleep, or status allocation | `heuristic_core/reset_loop_denial.md` | after scoring, use sleep/status drills |
 | Naming a branch but not punishing it | `heuristic_core/branch_punish_ranking.md` | next fresh replay should track branch-punish movement |
+| Actual/pro move in top three but not promoted | `heuristic_core/route_budget_tiebreaking.md` | next packet should track route-budget and positive-selection movement |
 | Making type-effectiveness claims from vanilla memory | `romhack_deltas/type_passive_fixture_priorities.md`, `workspace/pro_notes/04_type_effectiveness_evidence_firewall.md` | local fixture or source check before advice |
 | Calling simulation win rate proof too early | `boss_sim_readiness_audit_2026-05-13.md`, `boss_sim_validation_protocol.md` | filled real boss worksheet and readiness blockers closed |
 | Producing more notes without proving improvement | `measurement_minigoal_2026-05.md`, `measurement_progress_ledger.csv` | Quick Test 001, then trend rows |

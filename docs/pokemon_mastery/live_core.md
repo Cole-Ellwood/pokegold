@@ -30,14 +30,16 @@ Do not load pre-freeze: `cookbook.md`, `source_to_policy_ledger.md`,
    making the owner handoff automatic.
 6. Rank converter before script: damage, coverage, item removal, setup, phaze,
    cash-out, handoff, or status only if it changes the named route.
-7. Rank branch punish: if a branch is named, promote the action that beats it.
-8. Spend or save piece: preserve a route job; spend only for a named converter.
-9. Deny reset loops: Spikes, Spin, Rest, Recover, phaze, Sleep Talk, and
+7. Force the route-budget tiebreaker: `#1 over #2 because`, `#2 becomes #1
+   if`, and `rejected safe/default line`.
+8. Rank branch punish: if a branch is named, promote the action that beats it.
+9. Spend or save piece: preserve a route job; spend only for a named converter.
+10. Deny reset loops: Spikes, Spin, Rest, Recover, phaze, Sleep Talk, and
    Baton Pass matter only if the loop converts or is denied in time. In Rest
    races, compare boost-now/attack-next against attack-now/reset-next.
-10. Re-score after reveal: Growth, Substitute, Baton Pass, Curse, RestTalk,
+11. Re-score after reveal: Growth, Substitute, Baton Pass, Curse, RestTalk,
    lure coverage, Thief, Roar, or Whirlwind can reclassify the whole package.
-11. State public tiers: `revealed`, `strong prior`, or `possible only`.
+12. State public tiers: `revealed`, `strong prior`, or `possible only`.
 
 ## Guardrails
 
@@ -52,9 +54,11 @@ Do not load pre-freeze: `cookbook.md`, `source_to_policy_ledger.md`,
 - Route transaction: their package -> our absorber/converter -> their next
   owner -> our punish.
 - Top move or switch after active/next/counter-owner comparison.
-- Two ranked alternatives and why each loses or stays acceptable.
+- Ranked top three, plus why #1 ranks above #2 and when #2 becomes #1.
+- Rejected safe/default line and why it does not buy the route.
 - Named branch punish: receiver/absorber/reset loop and the action into it.
 - Route piece decision: preserve, spend, sack, or hand off.
+- Positive-selection check: convert, deny, branch-punish, spend/save, or none.
 - Public-info tier and fallback for any unrevealed assumption.
 
 ## Tiny-Card Selector
@@ -65,6 +69,8 @@ and load none when this core is enough.
 
 - `name_current_owner.md`: unclear current converter or defensive owner.
 - `name_next_board_owner.md`: active may leave or a handoff is likely.
+- `route_budget_tiebreaking.md`: top-three candidates are plausible but the
+  top rank needs route-budget discrimination.
 - `converter_before_script.md`: safe status, Spikes, Spin, or switch tempts.
 - `public_info_tiers.md`: lure, item, coverage, or hidden teammate ambiguity.
 - `role_package_ledger.md`: reveal, entry, or switch pattern changes a job;

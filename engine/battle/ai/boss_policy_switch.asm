@@ -27,7 +27,12 @@ BossAI_SwitchOrTryItem:
 	call BossAI_EnemyPerishEscapeUrgent
 	jr c, .check_switch
 	call BossAI_HasAnyKOMove
-	jr nc, .check_switch
+	jr c, .has_ko_line
+	call BossAI_EarlyShouldStayForActiveCoverage
+	ret c
+	jr .check_switch
+
+.has_ko_line
 	call BossAI_IsImminentKOPrevention
 	jr c, .check_switch
 	call BossAI_ShouldRespectPotentialPlayerRevenge
@@ -50,6 +55,9 @@ BossAI_SwitchOrTryItem:
 IF DEF(BOSS_AI_TRACE)
 	ld [wBossAITraceSwitchConfidence], a
 ENDC
+	call BossAI_ShouldStayToProtectWinconFromSackSwitch
+	jr c, .stay
+	ld a, [wBossAISwitchConfidence]
 	ld b, a ; confidence
 	call BossAI_GetSwitchThreshold
 	ld c, a ; threshold
@@ -71,7 +79,8 @@ ENDC
 	add 10
 	ld c, a
 .no_wincon_bias
-	ld a, b
+	ld a, [wBossAISwitchConfidence]
+	ld b, a
 	cp c
 	jr c, .stay
 
@@ -251,6 +260,30 @@ BossAI_CheckAbleToSwitchSafe:
 	ret
 
 ; ai-layer: POLICY
+BossAI_PickForcedReplacement:
+; Pick the forced send-out after the player KOs a boss trainer's active mon.
+; This keeps free replacements aligned with the same public matchup model that
+; would otherwise switch away on the next turn.
+	ld a, [wBossAITier]
+	and a
+	ret z
+	ld a, [wBattleMode]
+	cp TRAINER_BATTLE
+	ret nz
+	ld a, [wLinkMode]
+	and a
+	ret nz
+
+	call BossAI_ResetTurnCaches
+	call BossAI_SelectPlanIfNeeded
+	call BossAI_ComputePlayerPlausibleTypeMask
+	call BossAI_FindBestForcedReplacementCandidate
+	ret nc
+	inc a
+	ld [wEnemySwitchMonIndex], a
+	ret
+
+; ai-layer: POLICY
 BossAI_FindFirstAliveSwitchCandidate:
 ; output: carry and wBossAITemp if a living bench candidate exists; clobbers bc, de, hl.
 	ld a, [wOTPartyCount]
@@ -283,6 +316,276 @@ BossAI_FindFirstAliveSwitchCandidate:
 
 .none
 	and a
+	ret
+
+; ai-layer: POLICY
+BossAI_FindBestForcedReplacementCandidate:
+; output: carry and a = zero-based party index for the best living replacement.
+	xor a
+	ld [wBossAITargetMonIdx], a
+	ld [wBossAITemp2], a ; best score
+	ld [wBossAITemp3], a ; best index
+	ld [wBossAITemp5], a ; found flag
+
+.scan_loop
+	ld a, [wBossAITargetMonIdx]
+	ld c, a
+	ld a, [wOTPartyCount]
+	cp c
+	jr z, .done
+	jr c, .done
+
+	ld a, [wCurOTMon]
+	cp c
+	jr z, .next
+
+	ld hl, wOTPartyMon1HP
+	ld a, c
+	call GetPartyLocation
+	ld a, [hli]
+	or [hl]
+	jr z, .next
+
+	ld a, [wBossAITargetMonIdx]
+	inc a
+	call BossAI_ComputeForcedSwitchCandidateScore
+	ld b, a
+	ld a, [wBossAITemp5]
+	and a
+	jr z, .take_candidate
+	ld a, [wBossAITemp2]
+	cp b
+	jr nc, .next
+
+.take_candidate
+	ld a, b
+	ld [wBossAITemp2], a
+	ld a, [wBossAITargetMonIdx]
+	ld [wBossAITemp3], a
+	ld a, 1
+	ld [wBossAITemp5], a
+
+.next
+	ld a, [wBossAITargetMonIdx]
+	inc a
+	ld [wBossAITargetMonIdx], a
+	jr .scan_loop
+
+.done
+	ld a, [wBossAITemp5]
+	and a
+	ret z
+	ld a, [wBossAITemp3]
+	scf
+	ret
+
+; ai-layer: POLICY
+BossAI_ComputeForcedSwitchCandidateScore:
+; Input: a = one-based candidate index. Higher is better.
+	ld [wBossAITemp4], a
+	call BossAI_ComputeSwitchCandidateRisk
+	ld [wBossAITemp], a
+	ld a, [wBossAITemp4]
+	call BossAI_ComputeForcedSwitchCandidatePressure
+	ld c, a
+	ld a, [wBossAITemp]
+	cp 12
+	ld a, c
+	jr nc, .apply_preservation
+	ld b, a
+	ld a, 12
+	ld c, a
+	ld a, [wBossAITemp]
+	ld d, a
+	ld a, c
+	sub d
+	add b
+.apply_preservation
+; Keep a planned ace/wincon for later unless its public replacement score is clear.
+	ld b, a
+	ld a, [wBossAIWinconMonIdx]
+	and a
+	jr z, .return_score
+	ld c, a
+	ld a, [wBossAITemp4]
+	cp c
+	jr nz, .return_score
+	ld a, b
+	sub 4
+	ret nc
+	xor a
+	ret
+.return_score
+	ld a, b
+	ret
+
+; ai-layer: POLICY
+BossAI_ComputeForcedSwitchCandidatePressure:
+; Input: a = one-based candidate index. Scores the best known owned move into
+; the current player mon without reading hidden player-party information.
+	dec a
+	ld c, a
+	ld a, [wCurSpecies]
+	push af
+
+	ld b, 0
+	ld hl, wOTPartySpecies
+	add hl, bc
+	ld a, [hl]
+	and a
+	jr z, .restore
+	cp $ff
+	jr z, .restore
+
+	ld [wCurSpecies], a
+	push bc
+	call GetBaseData
+	pop bc
+
+	ld hl, wOTPartyMon1Moves
+	ld a, c
+	call GetPartyLocation
+	ld d, NUM_MOVES
+	ld e, 0
+
+.move_loop
+	ld a, [hli]
+	and a
+	jr z, .moves_done
+	push hl
+	push de
+	call BossAI_ScoreForcedReplacementMove
+	pop de
+	cp e
+	jr c, .keep_best
+	jr z, .keep_best
+	ld e, a
+.keep_best
+	pop hl
+	dec d
+	jr nz, .move_loop
+
+.moves_done
+	ld b, e
+
+.restore
+	pop af
+	ld [wCurSpecies], a
+	and a
+	jr z, .return
+	push bc
+	call GetBaseData
+	pop bc
+.return
+	ld a, b
+	ret
+
+; ai-layer: POLICY
+BossAI_ScoreForcedReplacementMove:
+; Input: a = move id, with candidate base data loaded. Output: pressure score.
+	ld c, a
+	dec a
+	ld hl, Moves + MOVE_POWER
+	call BossAI_GetMoveAttr
+	and a
+	jr z, .no_pressure
+
+	ld b, 2
+	cp 70
+	jr c, .check_mid_power
+	ld b, 4
+	jr .score_type
+.check_mid_power
+	cp 50
+	jr c, .score_type
+	ld b, 3
+
+.score_type
+	ld a, c
+	dec a
+	ld hl, Moves + MOVE_TYPE
+	call BossAI_GetMoveAttr
+	ld d, a
+	ldh a, [hBattleTurn]
+	push af
+	ld a, 1
+	ldh [hBattleTurn], a
+	ld a, d
+	ld hl, wBattleMonType1
+	call BossAI_CheckTypeMatchupNoItem
+	pop af
+	ldh [hBattleTurn], a
+
+	ld a, [wTypeMatchup]
+	and a
+	jr z, .no_pressure
+	cp EFFECTIVE
+	jr c, .resisted
+	cp EFFECTIVE * 4
+	jr nc, .quad_effective
+	cp EFFECTIVE * 2
+	jr nc, .super_effective
+	jr .stab
+
+.quad_effective
+	inc b
+	inc b
+.super_effective
+	inc b
+	inc b
+	jr .stab
+
+.resisted
+	ld a, b
+	and a
+	jr z, .stab
+	dec b
+
+.stab
+	ld a, [wBaseType1]
+	cp d
+	jr z, .stab_bonus
+	ld a, [wBaseType2]
+	cp d
+	jr nz, .cap
+.stab_bonus
+	inc b
+
+.cap
+	call .ApplyCandidateStatPressure
+	ld a, b
+	cp 12
+	ret c
+	ld a, 12
+	ret
+
+.no_pressure
+	xor a
+	ret
+
+.ApplyCandidateStatPressure
+	ld a, d
+	cp SPECIAL
+	ld a, [wCurBaseData + BASE_ATK]
+	jr c, .got_stat
+	ld a, [wCurBaseData + BASE_SAT]
+.got_stat
+	cp 80
+	jr nc, .strong_stat
+	cp 40
+	jr c, .weak_stat
+	ret
+
+.strong_stat
+	inc b
+	inc b
+	ret
+
+.weak_stat
+	ld a, b
+	and a
+	ret z
+	dec b
 	ret
 
 endc
@@ -426,13 +729,29 @@ BossAI_IsImminentKOPrevention:
 	call AICheckEnemyQuarterHP_HL
 	jr nc, .yes
 	call BossAI_PlayerHasPublicThreatVsEnemy
-	jr c, .yes
+	jr nc, .check_revenge
+	call BossAI_PublicEnemyFaster
+	jr nc, .yes
+.check_revenge
 	call BossAI_ShouldRespectPotentialPlayerRevenge
 	jr c, .yes
 	and a
 	ret
 .yes
 	scf
+	ret
+
+; ai-layer: POLICY
+BossAI_EarlyShouldStayForActiveCoverage:
+	ld a, [wBossAITier]
+	cp AI_TIER_EARLY
+	jr nz, .no
+	call AICheckEnemyQuarterHP_HL
+	jr nc, .no
+	call BossAI_HasAnySuperEffectiveDamageMove
+	ret c
+.no
+	and a
 	ret
 
 ; ai-layer: POLICY
@@ -1259,6 +1578,109 @@ BossAI_ApplyPreservationSwitchBias:
 	cp 100
 	ret c
 	ld a, 99
+	ret
+
+; ai-layer: POLICY
+BossAI_ShouldStayToProtectWinconFromSackSwitch:
+	call BossAI_EnemyPerishEscapeUrgent
+	jr c, .no
+	call AICheckEnemyQuarterHP_HL
+	jr c, .no
+	call BossAI_HasAnyKOMove
+	jr c, .no
+	ld a, [wBossAIWinconMonIdx]
+	and a
+	jr z, .no
+	ld b, a
+	ld a, [wCurOTMon]
+	inc a
+	cp b
+	jr z, .no
+	ld a, [wEnemySwitchMonParam]
+	and $f
+	inc a
+	cp b
+	jr nz, .no
+	ld a, [wBossAITier]
+	cp AI_TIER_MID
+	jr c, .yes
+	call BossAI_SwitchTargetResistsPlayerCurrentTypes
+	jr c, .no
+.yes
+	scf
+	ret
+.no
+	and a
+	ret
+
+; ai-layer: POLICY
+BossAI_SwitchTargetResistsPlayerCurrentTypes:
+	ld a, [wCurSpecies]
+	push af
+	ld a, [wEnemySwitchMonParam]
+	and $f
+	ld c, a
+	ld b, 0
+	ld hl, wOTPartySpecies
+	add hl, bc
+	ld a, [hl]
+	and a
+	jr z, .restore_no
+	cp $ff
+	jr z, .restore_no
+	ld [wCurSpecies], a
+	call GetBaseData
+
+	ld d, 0
+	ld a, [wBattleMonType1]
+	call .CheckPlayerTypeVsTarget
+	jr c, .restore_no
+	ld a, [wBattleMonType2]
+	ld c, a
+	ld a, [wBattleMonType1]
+	cp c
+	jr z, .check_resisted
+	ld a, c
+	call .CheckPlayerTypeVsTarget
+	jr c, .restore_no
+
+.check_resisted
+	ld a, d
+	and a
+	jr z, .restore_no
+
+.restore_yes
+	pop af
+	ld [wCurSpecies], a
+	and a
+	jr z, .yes
+	call GetBaseData
+.yes
+	scf
+	ret
+
+.restore_no
+	pop af
+	ld [wCurSpecies], a
+	and a
+	jr z, .no
+	call GetBaseData
+.no
+	and a
+	ret
+
+.CheckPlayerTypeVsTarget:
+	call BossAI_CheckPlayerMoveTypeMatchupVsBaseNoItem
+	ld a, [wTypeMatchup]
+	cp EFFECTIVE * 2
+	jr nc, .unsafe
+	cp EFFECTIVE
+	ret nc
+	ld d, 1
+	and a
+	ret
+.unsafe
+	scf
 	ret
 
 ; ai-layer: POLICY

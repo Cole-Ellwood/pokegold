@@ -28,6 +28,7 @@ hVBlank:: db
 hMapEntryMethod:: db
 
 hMenuReturn:: db
+hFastTextDelayCounter::
 hUnusedByte:: db
 
 hJoypadReleased:: db

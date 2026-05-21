@@ -25,10 +25,15 @@ Treat the replay move as a pro-comparison oracle, not absolute truth.
 2. Download the raw `.log`; do not watch the replay UI.
 3. Reveal the log only up to the next decision turn. Prefer the local helper:
    `python tools\pokemon_mastery\replay_turn_pause.py path\to\replay.log prompt --turn N`.
-   The helper carries common decision-relevant volatiles such as Substitute and
-   confusion, plus Baton Pass boosts and tracked volatiles. It is not a full
-   battle engine; manually carry unsupported state such as trapping, Encore,
-   Nightmare, Perish count, Leech Seed details, or protection.
+   The helper carries common decision-relevant volatiles such as Substitute,
+   confusion, and trapped states, plus Baton Pass boosts and tracked volatiles.
+   It is not a full battle engine; manually carry unsupported state such as
+   Encore, Nightmare, Perish count, Leech Seed details, or protection.
+   Sequential packet guard: when taking multiple decisions from the same
+   replay, do not generate or inspect the prompt for turn N+1 until the answer
+   for turn N is frozen and turn N is revealed/scored. A later prompt already
+   contains the outcomes of earlier turns, so preloading same-replay prompts
+   converts the packet to `practice_not_validation`.
 4. For each side, freeze an answer before revealing that turn:
    - recommended move or switch;
    - confidence;
@@ -38,14 +43,20 @@ Treat the replay move as a pro-comparison oracle, not absolute truth.
    - critical state ledger before ranked candidates: sleep/wake counter, passed
      boosts/speed, self-KO or cash-out branch, and immediate lethal/miss/crit
      risk;
+   - sleep-action0 class when RestTalk matters: `just-rested`, `first sleep
+     action`, or `wake-eligible/ambiguous`. If action0 follows Sleep Talk
+     calling Rest or two prior sleep actions, rank the awake converter normally
+     instead of defaulting to Sleep Talk.
    - candidate comparison before final top action:
      active target value, next-owner value, and counter-owner-after-handoff
      value;
    - public role/package update when a revealed move, voluntary entry, or
      repeated switch changes a Pokemon's job;
    - ranked top three candidates when the board is nontrivial;
-   - serious alternatives;
-   - rejected tempting safe/default line;
+   - top-three-to-top-one discriminator:
+     `#1 over #2 because` and `#2 becomes #1 if`;
+   - rejected tempting safe/default line and why it does not convert, deny
+     conversion, or make the correct spend/save decision;
    - worst plausible branch;
    - information that would change the answer.
 5. Reveal the actual turn.
@@ -138,6 +149,12 @@ For each decision:
   improves board equity when a converter exists.
 - `branch_punish_chosen`: answer names the likely branch and chooses the move,
   switch, phaze, setup, coverage, or utility action that beats that branch.
+- `top_one_discrimination_obeyed`: on nontrivial turns, answer explains why
+  the #1 candidate ranks above #2 and what public fact, branch weight, damage
+  threshold, or role update would make #2 become #1.
+- `rejected_safe_line_obeyed`: on nontrivial turns, answer names the tempting
+  safe/default line and says why it is insufficient or only conditionally
+  acceptable.
 - `role_package_update_obeyed`: after a public reveal or role-signaling entry,
   answer classifies the package before ranking moves. Use classes such as
   `pressure`, `absorber`, `reset`, `trap`, `phaze`, `handoff`, `lure`,
@@ -152,8 +169,9 @@ For each decision:
 - `actual_branch_named`: the receiver, absorber, cash-out, setup, or reset
   branch that happened was named before reveal.
 - `top_rank_failure`: post-score reason the top candidate lost when the actual
-  was known or acceptable: `branch_probability`, `route_budget`,
-  `oracle_style`, `own_move_gap`, `state`, `mechanics`, `hidden_info`, or
+  was known or acceptable: `route_budget`, `resource_identity`, `reset_loop`,
+  `script_too_slow`, `branch_punish`, `branch_probability`, `oracle_style`,
+  `own_move_gap`, `state`, `mechanics`, `hidden_info`, or
   `missing_candidate`.
 - `oracle_quality`: post-score label for the actual move as an oracle:
   `clean`, `route_equivalent`, `style_or_variance`, `own_move_gap`, or
@@ -207,7 +225,14 @@ Mechanics errors:
 Positive-selection:
 Route-converting move chosen:
 Branch-punish chosen:
+Top-one discrimination obeyed:
+Rejected safe/default line obeyed:
 Role-package update obeyed:
+Route-budget misses:
+Resource-identity misses:
+Reset-loop misses:
+Script-too-slow misses:
+Branch-punish misses:
 Oracle-quality notes:
 Earliest meaningful error:
 
@@ -216,9 +241,12 @@ Earliest meaningful error:
 Public state:
 My p1 answer:
 My p2 answer:
+Top-three discriminator:
+Rejected safe/default line:
 Actual choices:
 Grade:
 Positive-selection tags:
+Top-rank failure tag:
 Reusable lesson:
 ```
 
@@ -243,5 +271,6 @@ Stop the replay and study instead when the same error class appears twice:
 - repeatedly stacking hazards without retention;
 - repeatedly treating unknown teams as previewed;
 - repeatedly choosing damage over route progress;
+- repeatedly ranking the defensible safe/default line over a converter;
 - repeatedly missing Rest, Sleep Talk, Explosion, phazing, or PP implications.
 - repeatedly missing role/package updates after public reveals.

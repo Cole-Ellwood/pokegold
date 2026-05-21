@@ -35,6 +35,10 @@ singles and practical romhack boss turns.
 - Optimize for live move choice. The central skill is decision compression:
   turning a messy board into one ranked recommendation, with the next-turn
   consequence and worst plausible branch named clearly.
+- The current training bottleneck is route-budget ranking after candidate
+  generation succeeds: given three plausible moves, promote the move that
+  converts the route, denies the opponent route, or makes the correct
+  spend/save decision.
 - Treat severe-blunder avoidance as a gate, not the main training objective.
   The next phase must improve positive move selection: choosing moves that
   convert route pressure, punish named branches, or spend/preserve the correct
@@ -97,9 +101,13 @@ Before advising a serious move, answer:
 10. What happens if we attack, switch, set hazards, use status, set up, recover,
    phaze, scout, or sacrifice?
 11. What resource does the move gain, and what does it spend?
-12. Does the move improve a concrete route, or only feel active?
-13. What is the likely next turn if this works?
-14. What information would make us abandon the plan?
+12. Why does candidate #1 rank above candidate #2?
+13. What public fact, branch weight, damage range, or role update makes #2
+    become #1?
+14. Which safe/default line is rejected because it does not buy the route?
+15. Does the move improve a concrete route, or only feel active?
+16. What is the likely next turn if this works?
+17. What information would make us abandon the plan?
 
 ## Study Cadence
 
@@ -134,8 +142,9 @@ building the reflexes needed for real boss advice:
   poker AI when hidden-information discipline, bluff/call structure, mixed
   strategy, exploitability, or subgame re-solving is the blocker.
 - Practice the live-turn answer shape until recommendations are concise:
-  move, confidence, route reason, state read, candidate ranking, next turn, and
-  missing information.
+  move, confidence, route reason, state read, candidate ranking, why #1 beats
+  #2, when #2 becomes #1, rejected safe/default line, next turn, and missing
+  information.
 - Prefer concrete boss route cards over generic metagame summaries when local
   roster data is available.
 - Use simulations and calculators to check breakpoints, mechanics, and branch
@@ -156,6 +165,11 @@ Track progress with move-quality evidence, not notebook volume:
 - positive-selection rate in fresh replay artifacts: whether the chosen move
   actively improves the route, punishes the named branch, preserves or spends
   the correct route piece, or converts pressure into progress;
+- top-three-to-top-one discrimination: when the actual/pro move appears in the
+  frozen top three, whether the answer promoted it or acceptable co-top for the
+  right route-budget reason;
+- route-budget, resource-identity, reset-loop, script-too-slow, and
+  branch-punish miss counts;
 - transfer-study artifacts that become Pokemon drills, policy entries,
   fixtures, helpers, or scored probes;
 - earliest meaningful mistake found in long reviews;

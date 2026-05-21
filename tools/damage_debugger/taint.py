@@ -265,8 +265,8 @@ class TaintEngine:
         combined = a_taint | src_taint
         self.state.set_reg("f", combined)
         if writes_a:
-            if instr.opcode == 0xAF or (instr.opcode == 0xA8 + REG_INDEX["a"]):
-                # xor a deterministically clears A.
+            if instr.opcode in {0x97, 0xAF}:
+                # sub a and xor a deterministically clear A.
                 self.state.clear_reg("a")
             else:
                 self.state.set_reg("a", combined)

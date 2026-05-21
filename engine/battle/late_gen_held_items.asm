@@ -824,6 +824,10 @@ IsChoiceHeldEffect_Far:
 	cp HELD_CHOICE_SCARF
 	ret
 
+IsHeldEffectInBChoice_Far:
+	ld a, b
+	jr IsChoiceHeldEffect_Far
+
 IsMoveBlockedByAssaultVest_Far:
 	and a
 	jr z, .blocked
@@ -859,6 +863,10 @@ IsMoveBlockedByAssaultVest_Far:
 .blocked
 	scf
 	ret
+
+IsMoveInBBlockedByAssaultVest_Far:
+	ld a, b
+	jr IsMoveBlockedByAssaultVest_Far
 
 GetSixthMaxHP_Far:
 ; output: bc

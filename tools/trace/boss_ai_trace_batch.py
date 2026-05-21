@@ -111,7 +111,12 @@ def validate_capture(entry: dict[str, Any], index: int) -> None:
         fail(f"capture {entry['id']}: invalid status {entry['status']}")
     if "save_state" in entry and not isinstance(entry["save_state"], str):
         fail(f"capture {entry['id']}: `save_state` must be a string")
-    for key in ("pre_choice_state", "choice_button"):
+    for key in (
+        "pre_choice_state",
+        "choice_button",
+        "score_materialization_state",
+        "switch_materialization_state",
+    ):
         if key in entry and not isinstance(entry[key], str):
             fail(f"capture {entry['id']}: `{key}` must be a string")
     if "choice_wait_frames" in entry and (

@@ -39,13 +39,19 @@
         "timing",
         "branch_overcorrect",
         "branch_undercorrect",
+        "route_budget",
+        "resource_identity",
+        "reset_loop",
+        "script_too_slow",
+        "branch_punish",
+        "positive_selection_miss",
         "preserved_wrong_piece",
         "spent_wrong_piece",
         "loop_freeze",
         "hit_top",
         "hit_acceptable_only"
       ],
-      "description": "Why the prediction missed. hit_top and hit_acceptable_only are not failures; they are recorded for retrieval (positive examples are still useful patterns to remember)."
+      "description": "Why the prediction missed. Route-budget labels are used when the right move was plausible but the top rank failed. hit_top and hit_acceptable_only are not failures; they are recorded for retrieval (positive examples are still useful patterns to remember)."
     },
     "hp_bucket": {
       "enum": ["0", "<=25%", "26-50%", "51-75%", "76-99%", "100%", "unknown"]

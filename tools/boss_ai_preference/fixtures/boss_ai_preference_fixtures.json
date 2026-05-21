@@ -6522,7 +6522,41 @@
               "Explosion"
             ],
             "role": "fast hazard trade piece"
-          }
+          },
+          "bench": [
+            "Tentacruel",
+            "Muk",
+            "Nidoking",
+            "Weezing",
+            "Venomoth"
+          ],
+          "bench_state": [
+            {
+              "species": "Tentacruel",
+              "hp": "100%",
+              "status": "none"
+            },
+            {
+              "species": "Muk",
+              "hp": "92%",
+              "status": "none"
+            },
+            {
+              "species": "Nidoking",
+              "hp": "100%",
+              "status": "none"
+            },
+            {
+              "species": "Weezing",
+              "hp": "100%",
+              "status": "none"
+            },
+            {
+              "species": "Venomoth",
+              "hp": "100%",
+              "status": "none"
+            }
+          ]
         },
         "player": {
           "active": {
@@ -6622,7 +6656,41 @@
               "Explosion"
             ],
             "role": "fast hazard trade piece"
-          }
+          },
+          "bench": [
+            "Tentacruel",
+            "Muk",
+            "Nidoking",
+            "Weezing",
+            "Venomoth"
+          ],
+          "bench_state": [
+            {
+              "species": "Tentacruel",
+              "hp": "100%",
+              "status": "none"
+            },
+            {
+              "species": "Muk",
+              "hp": "92%",
+              "status": "none"
+            },
+            {
+              "species": "Nidoking",
+              "hp": "100%",
+              "status": "none"
+            },
+            {
+              "species": "Weezing",
+              "hp": "100%",
+              "status": "none"
+            },
+            {
+              "species": "Venomoth",
+              "hp": "100%",
+              "status": "none"
+            }
+          ]
         },
         "player": {
           "active": {

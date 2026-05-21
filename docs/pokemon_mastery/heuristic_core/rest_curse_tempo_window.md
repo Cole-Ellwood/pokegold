@@ -10,8 +10,16 @@ Rule: solve the next two turns, not only the visible HP.
 Ask:
 - Who gains more from this Rest/sleep turn: our boost/phaze/trade route or
   their wake/Curse/attack route?
+- Two-turn active-conversion gate: before promoting a handoff, utility debuff,
+  or safe chip, compare active boost/attack this turn plus the forced next
+  board. If the active route piece boosts safely or boosted damage forces the
+  next choice before their branch acts, promote active conversion and keep the
+  handoff as fallback.
 - Does attacking now change the next forced choice, or only feed a reset?
 - Does boosting now change the next damage range or make their attack fail?
+- If the active piece is likely to die before a second utility move, direct
+  cash-out damage outranks Screech/status/setup unless the utility itself
+  creates the forced next board immediately.
 - If I guessed boost last turn, what changed that makes attack better now?
 - If I guessed attack last turn, what changed that makes boost better now?
 - Is the opponent on a Rest turn, sleeping action turn, wake/act turn, or able
@@ -30,3 +38,6 @@ window.
 
 Do not count chip as progress when it only lets the target Rest or wake into
 the same stable board.
+Do not hand off from a boosted or safely boosting active route piece unless the
+opponent's immediate branch removes, phazes, resets, or cripples it before the
+boosted attack or boost-now/attack-next line changes the next forced choice.

@@ -1,12 +1,12 @@
 PrintLetterDelay::
 ; Wait before printing the next letter.
 
-; The text speed setting in wOptions is actually a frame count:
-; 	fast: 1 frame
+; The text speed setting in wOptions is mostly a frame count:
+; 	fast: ~0.3 frames on average
 ; 	mid:  3 frames
 ; 	slow: 5 frames
 
-; wTextboxFlags[!0] and A or B override text speed with a one-frame delay.
+; wTextboxFlags[!0] and A or B cap text speed at a one-frame delay.
 ; wOptions[4] and wTextboxFlags[!1] disable the delay.
 
 	ld a, [wOptions]
@@ -38,10 +38,25 @@ PrintLetterDelay::
 ; text speed
 	ld a, [wOptions]
 	and %111
+	cp TEXT_DELAY_FAST
+	jr z, .fast
 	jr .updatedelay
 
 .fast
+; Skip 7 out of every 10 fast-text waits. This keeps FAST very quick without
+; making it fully instant.
+	ldh a, [hFastTextDelayCounter]
+	inc a
+	cp 10
+	jr c, .gotphase
+	xor a
+.gotphase
+	ldh [hFastTextDelayCounter], a
+	cp 7
 	ld a, TEXT_DELAY_FAST
+	jr nc, .updatedelay
+	xor a
+	jr .updatedelay
 
 .updatedelay
 	ld [wTextDelayFrames], a
@@ -64,6 +79,9 @@ PrintLetterDelay::
 	jr z, .wait
 
 .delay
+	ld a, [wTextDelayFrames]
+	and a
+	jr z, .end
 	call DelayFrame
 	jr .end
 

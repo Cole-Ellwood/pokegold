@@ -622,6 +622,10 @@ CheckPrimarySaveFile:
 	ld a, [sSaveFormatVersion]
 	cp SAVE_FORMAT_VERSION
 	jr z, .version_ok
+	cp 2 ; v2/v3 saves predate later fixed-size Boss AI runtime-state reshuffles.
+	jr z, .version_ok
+	cp 3
+	jr z, .version_ok
 	cp $ff ; legacy save predating the marker; v2+ must remove this
 	jr nz, .nope
 .version_ok
@@ -649,6 +653,10 @@ CheckBackupSaveFile:
 	jr nz, .nope
 	ld a, [sBackupSaveFormatVersion]
 	cp SAVE_FORMAT_VERSION
+	jr z, .version_ok
+	cp 2 ; v2/v3 saves predate later fixed-size Boss AI runtime-state reshuffles.
+	jr z, .version_ok
+	cp 3
 	jr z, .version_ok
 	cp $ff ; legacy save predating the marker; v2+ must remove this
 	jr nz, .nope

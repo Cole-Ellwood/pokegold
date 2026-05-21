@@ -974,6 +974,7 @@ def run_self_test() -> int:
     assert moves["WING_ATTACK"].bp == 80 and moves["WING_ATTACK"].type_name == "FLYING"
     assert items["SHARP_BEAK"] == oracle.HELD_SHARP_BEAK
     assert items["HELD_SHARP_BEAK"] == oracle.HELD_SHARP_BEAK
+    assert items["AIR_BALLOON"] == oracle.HELD_AIR_BALLOON
     assert types["PSYCHIC_TYPE"] == oracle.PSYCHIC_TYPE
     assert can_evolve["SQUIRTLE"] is True
     assert can_evolve["AMPHAROS"] is False
@@ -994,6 +995,7 @@ def run_self_test() -> int:
         (("GENGAR:50:trainer", "BLASTOISE:50:trainer", "SHADOW_BALL", "--opponent-status"), (54, 64)),
         (("PIKACHU:20:player", "SQUIRTLE:20:trainer", "TACKLE", "--turn", "player", "--johto-badges", "0x4"), (15, 18)),
         (("PIKACHU:20:trainer", "SQUIRTLE:20:trainer", "TACKLE", "--opponent-item", "eviolite"), (7, 9)),
+        (("MAROWAK:58:trainer", "MAGNETON:58:player", "EARTHQUAKE", "--opponent-item", "air_balloon"), (0, 0)),
     )
     for argv, expected in cases:
         _run_case(argv, expected)

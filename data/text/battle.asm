@@ -12,7 +12,7 @@ WildPokemonAppearedText:
 	text_ram wEnemyMonNickname
 	text_start
 	line "appeared!"
-	prompt
+	done
 
 HookedPokemonAttackedText:
 	text "The hooked"

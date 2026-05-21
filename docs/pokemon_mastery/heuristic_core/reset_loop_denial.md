@@ -25,6 +25,11 @@ Ask:
   spinner or status user enter and get punished harder by the active move?
 - After sleep or status lands, re-solve hazard tempo before default Spin or
   damage: who resets Spikes, who spins, and what preserves the finite job?
+- Hazard-loop branch-owner gate: when a Spiker is active, likely to enter, or
+  has just restored Spikes, separate the active breaker from the hazard-route
+  owner. The breaker pressures the setter; the spinner owns the Spikes branch.
+  If Spikes are up or strongly likely and the spinner is visible and live, it
+  must be in top three before handoff-only or damage-only branch covers.
 - Does Spin convert now, or does it spend the spinner's status/HP budget when
   a statused or immune absorber preserves the reset piece?
 - When Starmie is the spinner and Spikes are already up, does Rapid Spin cover
@@ -35,6 +40,12 @@ Ask:
   before negative-priority Roar/Whirlwind?
 - After a boosted target Rests, does phaze, pressure, or force-out convert the
   sleep window before another boost repeats unstable progress?
+- Setup-route phazer/status triad: when Defense Curl, Curse, Rollout, boost,
+  or similar setup starts, force these candidates before generic preservation:
+  preposition or act with the phazer, apply the available status clock, and
+  preserve the phazer before the boosted hit removes it. The order depends on
+  move timing: if negative-priority phaze may fail because the hit lands first,
+  status or Rest can outrank phaze for that turn.
 - If a low target is likely to Rest before negative-priority phaze, Roar or
   Whirlwind still converts after Rest when the phazer survives the turn.
 - In a setup-versus-Rest race, compare the two-turn clock: boost now then
@@ -43,6 +54,45 @@ Ask:
 - Against RestTalk, mark Rest-called-by-Sleep-Talk as a fresh Rest clock. On
   the wake-and-act turn, re-sleep, status, phaze, cash-out, or KO can outrank
   generic damage that lets the reset loop continue.
+- Sleep-turn candidate gate: before ranking any turn involving sleep, wake, or
+  RestTalk, force these legal candidates into consideration: current Sleep
+  Talk, wake-and-Rest or wake-and-attack, preselected Sleep Talk into a faster
+  sleep move, and the lower-cost preservation handoff.
+- Own-sleeper tempo-controller gate: when our sleeping RestTalker or sleeper
+  can enter or stay on an opposing asleep, passive, or low-threat target, list
+  that sleep-burn line as a controller candidate, not an automatic promotion.
+  It can preserve a unique breaker, phazer, spinblocker, or status piece while
+  turning a dead sleep turn into future Surf, Spin, Sleep Talk, Rest, or
+  absorber value. Promote it only when the opponent's immediate route is truly
+  asleep, passive, or low-threat; keep the active breaker, phazer, status move,
+  or setup controller above it when that piece must act before setup, Reflect,
+  Toxic, Spin, or a forced threshold converts.
+- Rest-loop top-three template: when the opponent has just Rested, is asleep
+  from Rest, or may Sleep Talk, the top three must include these legal roles
+  before ranking: phaze/reset denial, threshold damage or status utility, and
+  the stable sleep-loop owner. A Ground immunity, resist, or high-payoff
+  punish owner does not replace the stable owner unless it also survives the
+  likely Sleep Talk rolls and controls the next owner.
+- Fresh-Rest controller gate: when a low or statused bulky target can Rest
+  from revealed or strong-prior information, or has just reset to full HP with
+  Rest, rank against the full-HP sleep cycle, not the dying pre-Rest target.
+  Top three must include the current punish, the controller for the refreshed
+  sleeper, and the reset-denial or hazard owner. Do not promote a possible
+  pivot or Spin branch above the Rest controller unless that branch acts before
+  the controller can profit.
+- Forced-reset handoff gate: when active damage, status, or phaze pressure can
+  only trigger Rest, Recover, Spin, or another reset without preventing it,
+  include the owner of the post-reset board before repeating the active move.
+  That owner may be a broad absorber, mirror Rest-cycle controller, phazer,
+  spinner, spinblocker, or sleeper tempo piece. Keep attacking only when it
+  KOs, prevents the reset, or creates a better forced state after the reset
+  than the handoff would.
+- In GSC, preselected Sleep Talk can be a real anti-sleep branch when a faster
+  sleeper may put the user to sleep before its action. Do not generalize this
+  to awake or wake-turn Sleep Talk when no faster sleep can land first.
+- On a wake-and-act turn, Rest or handoff can be the converter when it resets
+  the route piece before the opponent turns the sleep window into damage,
+  phaze, or forced recovery.
 - Against RestTalk plus a boosted passer, price the attacking Sleep Talk rolls
   as well as Rest. If the roll removes the passer before damage converts, pass
   to a receiver or phaze instead of feeding the loop.

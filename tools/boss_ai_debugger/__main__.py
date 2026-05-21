@@ -60,6 +60,11 @@ from .decision_trace import (
     format_decision_trace,
     write_decision_trace_json,
 )
+from .damage_ai_report import (
+    format_damage_ai_report,
+    run_damage_ai_report,
+    run_self_test as run_damage_ai_report_self_test,
+)
 from .generators import (
     FAMILIES as GENERATOR_FAMILIES,
     format_generate_report,
@@ -78,6 +83,12 @@ from .metamorphic import (
     format_metamorphic_report,
     run_metamorphic_suite,
     write_metamorphic_json,
+)
+from .move_score_probe import (
+    DEFAULT_MANIFEST as DEFAULT_MOVE_SCORE_PROBE_MANIFEST,
+    format_move_score_probe,
+    run_move_score_probe,
+    run_self_test as run_move_score_probe_self_test,
 )
 from .localize import (
     format_localization_report,
@@ -783,6 +794,62 @@ def cmd_rom_contribution_trace(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_move_score_probe(args: argparse.Namespace) -> int:
+    if args.self_test:
+        return run_move_score_probe_self_test()
+    missing = [
+        name
+        for name in ("trainer", "enemy", "player_save")
+        if getattr(args, name) in {None, ""}
+    ]
+    if missing:
+        raise PreferenceDataError("missing required argument(s): " + ", ".join(missing))
+    report = run_move_score_probe(
+        trainer=args.trainer,
+        enemy=args.enemy,
+        player_save=args.player_save,
+        player_slot=args.player_slot,
+        sleep_clause=args.sleep_clause,
+        trace=args.trace,
+        rom=args.rom,
+        symbols=args.symbols,
+        manifest=args.manifest,
+    )
+    if args.json:
+        print(json.dumps(report, indent=2, sort_keys=True))
+    else:
+        print(format_move_score_probe(report))
+    return 0
+
+
+def cmd_damage_ai_report(args: argparse.Namespace) -> int:
+    if args.self_test:
+        return run_damage_ai_report_self_test()
+    missing = [
+        name
+        for name in ("trainer", "enemy", "player_save")
+        if getattr(args, name) in {None, ""}
+    ]
+    if missing:
+        raise PreferenceDataError("missing required argument(s): " + ", ".join(missing))
+    report = run_damage_ai_report(
+        trainer=args.trainer,
+        enemy=args.enemy,
+        player_save=args.player_save,
+        player_slot=args.player_slot,
+        sleep_clause=args.sleep_clause,
+        trace=args.trace,
+        rom=args.rom,
+        symbols=args.symbols,
+        manifest=args.manifest,
+    )
+    if args.json:
+        print(json.dumps(report, indent=2, sort_keys=True))
+    else:
+        print(format_damage_ai_report(report))
+    return 0
+
+
 def cmd_rom_selector_materialize(args: argparse.Namespace) -> int:
     report = run_rom_selector_materialization_from_path(
         args.scenarios,
@@ -1145,6 +1212,50 @@ def build_parser() -> argparse.ArgumentParser:
     rom_trace_cmd.add_argument("--json-out", default="")
     rom_trace_cmd.add_argument("--limit", type=int, default=80)
     rom_trace_cmd.set_defaults(func=cmd_rom_contribution_trace)
+
+    move_score_probe_cmd = subparsers.add_parser("move-score-probe")
+    move_score_probe_cmd.add_argument("--trainer")
+    move_score_probe_cmd.add_argument("--enemy")
+    move_score_probe_cmd.add_argument("--player-save", type=path_arg)
+    move_score_probe_cmd.add_argument("--player-slot", type=int, default=1)
+    move_score_probe_cmd.add_argument(
+        "--sleep-clause",
+        choices=("inactive", "active", "both"),
+        default="inactive",
+    )
+    move_score_probe_cmd.add_argument("--rom", type=path_arg, default=Path("pokegold_trace.gbc"))
+    move_score_probe_cmd.add_argument("--symbols", type=path_arg, default=Path("pokegold_trace.sym"))
+    move_score_probe_cmd.add_argument(
+        "--manifest",
+        type=path_arg,
+        default=DEFAULT_MOVE_SCORE_PROBE_MANIFEST,
+    )
+    move_score_probe_cmd.add_argument("--json", action="store_true")
+    move_score_probe_cmd.add_argument("--trace", action="store_true")
+    move_score_probe_cmd.add_argument("--self-test", action="store_true")
+    move_score_probe_cmd.set_defaults(func=cmd_move_score_probe)
+
+    damage_ai_report_cmd = subparsers.add_parser("damage-ai-report")
+    damage_ai_report_cmd.add_argument("--trainer")
+    damage_ai_report_cmd.add_argument("--enemy")
+    damage_ai_report_cmd.add_argument("--player-save", type=path_arg)
+    damage_ai_report_cmd.add_argument("--player-slot", type=int, default=1)
+    damage_ai_report_cmd.add_argument(
+        "--sleep-clause",
+        choices=("inactive", "active", "both"),
+        default="both",
+    )
+    damage_ai_report_cmd.add_argument("--rom", type=path_arg, default=Path("pokegold_trace.gbc"))
+    damage_ai_report_cmd.add_argument("--symbols", type=path_arg, default=Path("pokegold_trace.sym"))
+    damage_ai_report_cmd.add_argument(
+        "--manifest",
+        type=path_arg,
+        default=DEFAULT_MOVE_SCORE_PROBE_MANIFEST,
+    )
+    damage_ai_report_cmd.add_argument("--json", action="store_true")
+    damage_ai_report_cmd.add_argument("--trace", action="store_true")
+    damage_ai_report_cmd.add_argument("--self-test", action="store_true")
+    damage_ai_report_cmd.set_defaults(func=cmd_damage_ai_report)
 
     selector_materialize_cmd = subparsers.add_parser("rom-selector-materialize")
     selector_materialize_cmd.add_argument("--scenarios", type=path_arg, required=True)

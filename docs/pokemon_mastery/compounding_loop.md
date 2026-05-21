@@ -7,11 +7,11 @@ that wants to run one iteration of the Pokemon Mastery training loop.
 
 A durable, retrieval-augmented training cycle that drives validation
 top-move agreement with strong GSC OU players from the current ~30-50%
-plateau to the user-selected stretch gate. The diagnosis: the existing
-mastery system has full measurement infrastructure but no position-keyed
-retrieval at decision time — heuristic cards are abstract rules, not
-pattern instances. The Compounding Loop adds a retrievable case library
-that fires the right past lesson at every fresh prediction.
+plateau to the user-selected stretch gate. The current training diagnosis is
+route-budget ranking: the actual/pro move is often in the top three, but the
+system fails to promote the move that buys the route. The retrieval layer must
+therefore surface past cases before the predictor forces top-three-to-top-one
+discrimination.
 
 The loop is biased toward improvement (not mathematically guaranteed) by
 four properties: monotone case-library growth, anti-regression battery,
@@ -63,9 +63,12 @@ and what's missing from the gate:
 1. **INGEST** — fetch one unseen study-tier replay; for each scorable turn,
    reconstruct the public state, query the case library for K nearest past
    cases by fingerprint, freeze a prediction WITH explicit reference to
-   which retrieved cases fired (or "no cases fired"), reveal, score per
-   [replay_turn_pause_protocol.md](replay_turn_pause_protocol.md). Save a
-   quick_tests artifact AND append a row to [measurement_progress_ledger.csv](measurement_progress_ledger.csv).
+   which retrieved cases fired (or "no cases fired"), including `#1 over #2
+   because`, `#2 becomes #1 if`, and the rejected safe/default line. Reveal,
+   then score per [replay_turn_pause_protocol.md](replay_turn_pause_protocol.md),
+   including route-budget, resource-identity, reset-loop, script-too-slow,
+   branch-punish, and positive-selection metrics. Save a quick_tests artifact
+   AND append a row to [measurement_progress_ledger.csv](measurement_progress_ledger.csv).
 2. **DIAGNOSE+EXTRACT** — for every scored decision (miss OR hit), append a
    case row to `cases.jsonl` matching `schema.json`: fingerprint, pro_action,
    predicted_action, pro_reasoning_class (from the enum), failure_mode, lesson
@@ -135,7 +138,9 @@ To keep predictions cold:
   doesn't contaminate predictions on replay B. So rotating replays per
   session is a clean way to do many predictions.
 - **Pre-freeze context is `live_core.md` + the prompt + at most one
-  heuristic card + retrieved cases.** Don't load the case library file
+  heuristic card + retrieved cases.** If the board has three plausible
+  candidates and a flat top rank, the one card should usually be
+  `route_budget_tiebreaking.md`. Don't load the case library file
   directly (let `retrieve_cases.py` surface only the K nearest); don't load
   the cookbook, source ledger, paused atlas, or reviews until after scoring.
 
@@ -194,8 +199,9 @@ python tools/pokemon_mastery/replay_turn_pause.py \
 python tools/pokemon_mastery/fingerprint.py \
   tmp/pokemon_mastery_replays/<replay_id>.log --turn 1 --side p1
 
-# 5. Query the case library for matching past cases (once retrieve_cases.py
-#    lands), freeze a prediction, then reveal and score:
+# 5. Query the case library for matching past cases. Freeze a prediction with
+#    top three, #1-over-#2, #2-flips-if, and rejected-safe-line fields. Then
+#    reveal and score:
 python tools/pokemon_mastery/replay_turn_pause.py \
   tmp/pokemon_mastery_replays/<replay_id>.log reveal --turn 1
 

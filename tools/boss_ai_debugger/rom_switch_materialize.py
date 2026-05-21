@@ -13,6 +13,7 @@ from tools.trace import runtime as trace_runtime
 
 from .rom_contribution_trace import apply_memory_patches
 from .rom_contribution_trace import MemoryPatch
+from .rom_contribution_trace import reset_boss_ai_turn_caches
 from .rom_scenarios import load_scenario_batch
 from .rom_scenarios import normalize_tier
 from .rom_scenarios import scenario_expectation
@@ -28,15 +29,26 @@ ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_BASE_ROUTE = "shared_switch_loop"
 DEFAULT_WATCH_FRAMES = 180
 SUPPORTED_FAMILIES = ("switch_sack",)
+SWITCH_MATERIALIZATION_STATE_FIELD = "switch_materialization_state"
+
+MOVE_IDS = {
+    "HYDRO_PUMP": 0x38,
+}
 
 KNOWN_LIMITS = [
     (
         "Switch materialization replays the real BossAI_SwitchOrTryItem path from "
-        "the shared switch-loop trace state and observes switch confidence/param."
+        "the shared switch-loop BossAI_SwitchOrTryItem entry state and observes "
+        "switch confidence/param."
     ),
     (
         "This proves switch-dispatch proposal behavior, not move score bytes and "
         "not a multi-sample stochastic switch-roll probability."
+    ),
+    (
+        "When replay starts at BossAI_SwitchOrTryItem and no switch confidence, "
+        "switch index, or chosen move appears before the watch limit, the report "
+        "treats that as an observed no-switch proposal."
     ),
     (
         "Only public battle facts and boss-owned party state are patched; hidden "
@@ -91,7 +103,8 @@ class RomSwitchReplaySession:
             self.symbols,
             [*clear_switch_trace_patches(), *memory_patches],
         )
-        values, frame = drive_replay_to_switch_observation(
+        reset_boss_ai_turn_caches(self.pyboy, self.symbols)
+        values, frame, observed = drive_replay_to_switch_observation(
             self.pyboy,
             self.symbols,
             watch_frames=watch_frames,
@@ -104,6 +117,7 @@ class RomSwitchReplaySession:
             basis=basis,
             values=values,
             frame=frame,
+            observed=observed,
             memory_patches=memory_patches,
         )
 
@@ -155,9 +169,9 @@ def run_rom_switch_materialization(
         raise PreferenceDataError("--watch-frames must be positive")
 
     manifest_entry = load_manifest_save_entry(manifest_path, base_route)
-    base_state = resolve_manifest_path(str(manifest_entry["save_state"]))
+    base_state_field, base_state = switch_base_state_from_manifest_entry(manifest_entry)
     if not base_state.exists():
-        raise PreferenceDataError(f"missing switch save-state: {base_state}")
+        raise PreferenceDataError(f"missing switch {base_state_field}: {base_state}")
 
     started = time.perf_counter()
     verdicts: list[dict[str, Any]] = []
@@ -198,6 +212,7 @@ def run_rom_switch_materialization(
         "kind": "rom_switch_materialization",
         "base_route": base_route,
         "base_state": trace_runtime.display_path(base_state),
+        "base_state_field": base_state_field,
         "scenario_count": len(scenarios),
         "checked_count": len(checked),
         "skipped_count": len(verdicts) - len(checked),
@@ -258,7 +273,23 @@ def switch_materialization_patches(scenario: dict[str, Any]) -> list[MemoryPatch
     patches.extend(word_patches("wBattleMonMaxHP", 100))
     patches.extend(word_patches("wOTPartyMon2HP", 80))
     patches.extend(word_patches("wOTPartyMon2MaxHP", 100))
+    if active_converts:
+        patches.extend(active_converter_move_patches())
     return patches
+
+
+def active_converter_move_patches() -> list[MemoryPatch]:
+    return [
+        patch("wBattleMonSpecies", SPECIES["MUK"]),
+        patch("wEnemyMonMoves", MOVE_IDS["HYDRO_PUMP"], 0),
+        patch("wEnemyMonMoves", 0, 1),
+        patch("wEnemyMonMoves", 0, 2),
+        patch("wEnemyMonMoves", 0, 3),
+        patch("wEnemyMonPP", 15, 0),
+        patch("wEnemyMonPP", 0, 1),
+        patch("wEnemyMonPP", 0, 2),
+        patch("wEnemyMonPP", 0, 3),
+    ]
 
 
 def drive_replay_to_switch_observation(
@@ -266,21 +297,21 @@ def drive_replay_to_switch_observation(
     symbols: dict[str, capture.Symbol],
     *,
     watch_frames: int,
-) -> tuple[dict[str, list[int]], int]:
+) -> tuple[dict[str, list[int]], int, bool]:
     last_values: dict[str, list[int]] | None = None
     for frame in range(watch_frames + 1):
         values = capture.read_trace_values(pyboy, symbols)
         last_values = values
         if values["wBossAITraceSwitchConfidence"][0] != 0:
-            return values, frame
+            return values, frame, True
         if values["wEnemySwitchMonIndex"][0] != 0:
-            return values, frame
+            return values, frame, True
         if values["wBossAITraceChosenMove"][0] != 0:
-            return values, frame
+            return values, frame, True
         pyboy.tick(1, False, False)
     if last_values is None:
         raise PreferenceDataError("no switch observation read")
-    return last_values, watch_frames
+    return last_values, watch_frames, True
 
 
 def build_switch_report(
@@ -289,6 +320,7 @@ def build_switch_report(
     basis: dict[str, str],
     values: dict[str, list[int]],
     frame: int,
+    observed: bool,
     memory_patches: list[MemoryPatch],
 ) -> dict[str, Any]:
     param = int(values["wEnemySwitchMonParam"][0])
@@ -298,6 +330,7 @@ def build_switch_report(
         "save_state": trace_runtime.display_path(save_state),
         "trace_basis": basis,
         "frame": frame,
+        "observed": observed,
         "switch_confidence": int(values["wBossAITraceSwitchConfidence"][0]),
         "switch_param": param,
         "proposed_target_1_based": (param & 0x0F) + 1 if param else 0,
@@ -321,6 +354,11 @@ def switch_verdict_from_report(
     report: dict[str, Any],
 ) -> dict[str, Any]:
     scenario_id = str(scenario.get("id", "unnamed"))
+    if not report.get("observed", True):
+        return skipped_verdict(
+            scenario_id,
+            "no switch dispatch observation within watch window",
+        )
     expected_switch = scenario_expects_switch(scenario)
     proposed_switch = bool(report.get("proposed_switch", False))
     if expected_switch and proposed_switch:
@@ -408,6 +446,15 @@ def load_manifest_save_entry(manifest_path: Path, route_id: str) -> dict[str, An
     raise PreferenceDataError(f"unknown manifest route {route_id!r}; known: {known}")
 
 
+def switch_base_state_from_manifest_entry(entry: dict[str, Any]) -> tuple[str, Path]:
+    base_state_field = (
+        SWITCH_MATERIALIZATION_STATE_FIELD
+        if entry.get(SWITCH_MATERIALIZATION_STATE_FIELD)
+        else "save_state"
+    )
+    return base_state_field, resolve_manifest_path(str(entry[base_state_field]))
+
+
 def resolve_manifest_path(path_text: str) -> Path:
     path = Path(path_text)
     if path.is_absolute():
@@ -443,6 +490,7 @@ def format_rom_switch_materialization(
         ),
         (
             f"base_route={report['base_route']} "
+            f"base_state_field={report.get('base_state_field', 'save_state')} "
             f"base_state={report['base_state']} "
             f"rate={report['materializations_per_minute']:.0f}/min"
         ),

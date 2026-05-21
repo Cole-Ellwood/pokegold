@@ -130,7 +130,7 @@ class GeneratorTests(unittest.TestCase):
 
         result = select_move(scenario)
 
-        self.assertEqual(result["best_action_id"], "move_sludge_bomb")
+        self.assertEqual(result["best_action_id"], "move_surf")
         self.assertEqual(result["probabilities"]["move_spikes"], 0.0)
 
     def test_no_spin_second_layer_keeps_spikes_live(self) -> None:
@@ -202,24 +202,25 @@ def spikes_spin_score_scenario(**kwargs: Any) -> dict[str, Any]:
                 "id": "move_spikes",
                 "name": "Spikes",
                 "deltas": deltas["spikes"],
-                "lookahead_delta": 18,
+                "lookahead_delta": deltas["lookahead"]["spikes"],
             },
             {
                 "id": "move_sludge_bomb",
                 "name": "Sludge Bomb",
                 "deltas": deltas["sludge_bomb"],
-                "lookahead_delta": 18,
+                "lookahead_delta": deltas["lookahead"]["sludge_bomb"],
             },
             {
                 "id": "move_surf",
                 "name": "Surf",
                 "deltas": deltas["surf"],
-                "lookahead_delta": 18,
+                "lookahead_delta": deltas["lookahead"]["surf"],
             },
             {
                 "id": "move_explosion",
                 "name": "Explosion",
                 "deltas": deltas["explosion"],
+                "lookahead_delta": deltas["lookahead"]["explosion"],
             },
         ],
     }

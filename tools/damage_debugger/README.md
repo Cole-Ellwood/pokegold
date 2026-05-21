@@ -51,8 +51,8 @@ note, [chain], [post_check], [xfail])` record. The runner:
 5. Reads `wCurDamage` and asserts `expected_low <= damage <=
    expected_high`.
 6. Runs any `post_check` assertions. After-hit scenarios use this to
-   verify HP side effects (Rocky Helmet, Shell Bell, Life Orb), not only
-   that the handler exits.
+   verify item/HP side effects (Air Balloon, Rocky Helmet, Shell Bell,
+   Life Orb), not only that the handler exits.
 
 On FAIL, the captured register snapshots from every hook are dumped to
 the log so the clobber's location is visible without re-tracing. On

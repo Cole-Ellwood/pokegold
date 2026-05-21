@@ -353,6 +353,14 @@ the fourth candidate beam is hiding a real boss-quality line.
 
 Goal: prevent repetitive pivot loops while preserving smart tactical switching.
 
+### Forced replacement timing
+
+When a boss must send a new Pokemon after a KO, the selector uses public
+switch-in risk plus the candidate's known move pressure into the current active
+player Pokemon. The planned wincon/ace carries a small preservation cost, so it
+is saved for the finish unless its public matchup advantage is meaningfully
+better than the available non-ace replacements.
+
 ### Current public revenge denial
 
 Current implementation: `engine/battle/ai/boss_policy_switch.asm:170`,
@@ -755,10 +763,10 @@ Reserved block:
 - Reserved size: `140` bytes, enforced by
   `ds 140 - (wBossAIStateEnd - wBossAITier)`.
 - Current normal build: `wBossAITier = 01:d72b`,
-  `wBossAIStateEnd = 01:d793`, so normal state uses `104` bytes and leaves `36`
+  `wBossAIStateEnd = 01:d78e`, so normal state uses `99` bytes and leaves `41`
   reserved bytes.
 - Current trace field set adds `27` bytes under `BOSS_AI_TRACE`, so trace state
-  would use `131` bytes and leave `9` reserved bytes.
+  would use `126` bytes and leave `14` reserved bytes.
 
 Adding 2-3 bytes to this block is acceptable in principle, but every change must
 still be build-verified because WRAMX overall has no free unreserved space.

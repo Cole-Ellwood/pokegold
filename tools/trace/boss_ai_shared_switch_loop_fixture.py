@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import io
 import json
 import sys
 from pathlib import Path
@@ -20,6 +21,9 @@ from tools.trace import runtime as trace_runtime
 
 DEFAULT_BASE_STATE = ROOT / ".local" / "tmp" / "boss_state_factory" / "jasmine_chosen_frame_4491.state"
 DEFAULT_OUT = ROOT / ".local" / "tmp" / "boss_state_factory" / "shared_switch_loop_frame_200.state"
+DEFAULT_MATERIALIZATION_OUT = (
+    ROOT / ".local" / "tmp" / "boss_state_factory" / "shared_switch_loop_switch_entry.state"
+)
 DEFAULT_LOG = ROOT / ".local" / "tmp" / "boss_state_factory" / "shared_switch_loop_fixture.log"
 MANIFEST = ROOT / "audit" / "boss_ai_trace" / "live_capture_manifest.json"
 EARTHQUAKE = 0x59
@@ -67,6 +71,12 @@ def zero_trace(pyboy, symbols: dict[str, capture.Symbol]) -> None:
             )
 
 
+def save_state_bytes(pyboy) -> bytes:
+    buffer = io.BytesIO()
+    pyboy.save_state(buffer)
+    return buffer.getvalue()
+
+
 def prepare_repeated_switch_state(pyboy, symbols: dict[str, capture.Symbol]) -> None:
     max_hp = read_word(pyboy, symbols, "wEnemyMonMaxHP")
     factory.write_one(pyboy, symbols, "wCurOTMon", 0)
@@ -83,11 +93,43 @@ def prepare_repeated_switch_state(pyboy, symbols: dict[str, capture.Symbol]) -> 
     zero_trace(pyboy, symbols)
 
 
-def advance_with_a_presses(pyboy, frames: int) -> None:
-    for frame in range(frames):
-        if frame % 30 == 0:
-            pyboy.button("a", delay=4)
-        pyboy.tick(1, False, False)
+def advance_with_a_presses_capture_switch_entry(
+    pyboy,
+    symbols: dict[str, capture.Symbol],
+    frames: int,
+) -> tuple[bytes, int]:
+    switch_entry = symbols.get("BossAI_SwitchOrTryItem")
+    if switch_entry is None:
+        fail("symbols are missing BossAI_SwitchOrTryItem")
+    context: dict[str, int | bytes | None] = {
+        "state": None,
+        "frame": None,
+        "current_frame": 0,
+    }
+
+    def capture_entry(ctx: dict[str, int | bytes | None]) -> None:
+        if ctx["state"] is not None:
+            return
+        ctx["state"] = save_state_bytes(pyboy)
+        ctx["frame"] = ctx["current_frame"]
+
+    pyboy.hook_register(switch_entry.bank, switch_entry.address, capture_entry, context)
+    try:
+        for frame in range(frames):
+            context["current_frame"] = frame
+            if frame % 30 == 0:
+                pyboy.button("a", delay=4)
+            pyboy.tick(1, False, False)
+    finally:
+        hook_deregister = getattr(pyboy, "hook_deregister", None)
+        if hook_deregister is not None:
+            hook_deregister(switch_entry.bank, switch_entry.address)
+
+    switch_entry_state = context["state"]
+    switch_entry_frame = context["frame"]
+    if not isinstance(switch_entry_state, bytes) or not isinstance(switch_entry_frame, int):
+        fail(f"no BossAI_SwitchOrTryItem entry observed within {frames} advance frames")
+    return switch_entry_state, switch_entry_frame
 
 
 def verify_fixture(pyboy, symbols: dict[str, capture.Symbol], frames: int) -> list[str]:
@@ -136,10 +178,24 @@ def update_manifest(state_path: Path) -> None:
     fail("manifest is missing shared_switch_loop capture")
 
 
+def update_manifest_materialization_state(materialization_state_path: Path) -> None:
+    data = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    for entry in data["captures"]:
+        if entry.get("id") != "shared_switch_loop":
+            continue
+        entry["switch_materialization_state"] = trace_runtime.display_path(
+            materialization_state_path
+        )
+        MANIFEST.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+        return
+    fail("manifest is missing shared_switch_loop capture")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--base-state", type=Path, default=DEFAULT_BASE_STATE)
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT)
+    parser.add_argument("--materialization-out", type=Path, default=DEFAULT_MATERIALIZATION_OUT)
     parser.add_argument("--log", type=Path, default=DEFAULT_LOG)
     parser.add_argument("--advance-frames", type=int, default=200)
     parser.add_argument("--verify-frames", type=int, default=120)
@@ -157,10 +213,16 @@ def main() -> int:
         with args.base_state.open("rb") as fh:
             pyboy.load_state(fh)
         prepare_repeated_switch_state(pyboy, symbols)
-        advance_with_a_presses(pyboy, args.advance_frames)
+        switch_entry_state, switch_entry_frame = advance_with_a_presses_capture_switch_entry(
+            pyboy,
+            symbols,
+            args.advance_frames,
+        )
         args.out.parent.mkdir(parents=True, exist_ok=True)
         with args.out.open("wb") as fh:
             pyboy.save_state(fh)
+        args.materialization_out.parent.mkdir(parents=True, exist_ok=True)
+        args.materialization_out.write_bytes(switch_entry_state)
         observed = verify_fixture(pyboy, symbols, args.verify_frames)
     finally:
         pyboy.stop(save=False)
@@ -169,7 +231,9 @@ def main() -> int:
         "shared_switch_loop_fixture=PASS",
         f"base_state={trace_runtime.display_path(args.base_state)}",
         f"out={trace_runtime.display_path(args.out)}",
+        f"materialization_out={trace_runtime.display_path(args.materialization_out)}",
         f"advance_frames={args.advance_frames}",
+        f"switch_entry_frame={switch_entry_frame}",
         *observed,
         "setup=cur_ot=0,last_switched_out=2,cooldown=2,public_move=EARTHQUAKE,enemy_hp=full",
         "party_setup=only last-switched-out backup remains available",
@@ -178,6 +242,7 @@ def main() -> int:
     args.log.write_text("\n".join(log_lines) + "\n", encoding="utf-8")
     if args.update_manifest:
         update_manifest(args.out)
+        update_manifest_materialization_state(args.materialization_out)
     print("\n".join(log_lines))
     return 0
 

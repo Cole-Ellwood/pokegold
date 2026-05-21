@@ -2123,10 +2123,9 @@ BayleefEvosAttacks:
 	db 12, REFLECT
 	db 15, POISONPOWDER
 	db 17, LEECH_SEED
-	db 18, SUBSTITUTE
 	db 19, GIGA_DRAIN
 	db 23, SYNTHESIS
-	db 31, BODY_SLAM
+	db 27, SUBSTITUTE
 	db 39, LIGHT_SCREEN
 	db 0 ; no more level-up moves
 
@@ -2142,6 +2141,7 @@ MeganiumEvosAttacks:
 	db 23, SYNTHESIS
 	db 33, HEAL_BELL
 	db 35, GROWTH
+	db 38, SLEEP_POWDER
 	db 41, SOLARBEAM
 	db 0 ; no more level-up moves
 
@@ -2168,8 +2168,8 @@ QuilavaEvosAttacks:
 	db 12, EMBER
 	db 20, FLAME_WHEEL
 	db 21, QUICK_ATTACK
+	db 25, THUNDERPUNCH
 	db 30, FLAMETHROWER
-	db 31, THUNDERPUNCH
 	db 42, SWIFT
 	db 0 ; no more level-up moves
 
@@ -2183,9 +2183,9 @@ TyphlosionEvosAttacks:
 	db 12, EMBER
 	db 21, QUICK_ATTACK
 	db 31, FLAME_WHEEL
-	db 36, DOUBLE_EDGE
-	db 37, FIRE_BLAST
-	db 45, ANCIENTPOWER
+	db 36, SUNNY_DAY
+	db 39, DRAGONBREATH
+	db 45, FIRE_BLAST
 	db 0 ; no more level-up moves
 
 TotodileEvosAttacks:
@@ -2193,8 +2193,8 @@ TotodileEvosAttacks:
 	db 0 ; no more evolutions
 	db 1, SCRATCH
 	db 1, LEER
-	db 7, RAGE
-	db 13, SURF
+	db 7, MACH_PUNCH
+	db 13, WATER_GUN
 	db 20, BITE
 	db 27, SCARY_FACE
 	db 35, SLASH
@@ -2207,11 +2207,12 @@ CroconawEvosAttacks:
 	db 0 ; no more evolutions
 	db 1, SCRATCH
 	db 1, LEER
-	db 1, RAGE
-	db 7, RAGE
+	db 1, MACH_PUNCH
+	db 7, MACH_PUNCH
 	db 13, WATER_GUN
-	db 21, BITE
-	db 28, CROSS_CHOP
+	db 21, ROAR
+	db 25, CROSS_CHOP
+	db 29, BELLY_DRUM
 	db 37, SLASH
 	db 45, SCREECH
 	db 55, HYDRO_PUMP
@@ -2221,12 +2222,13 @@ FeraligatrEvosAttacks:
 	db 0 ; no more evolutions
 	db 1, SCRATCH
 	db 1, LEER
-	db 1, RAGE
+	db 1, MACH_PUNCH
 	db 1, WATER_GUN
-	db 7, RAGE
+	db 7, MACH_PUNCH
 	db 13, WATER_GUN
 	db 21, BITE
 	db 28, SCARY_FACE
+	db 34, ICE_PUNCH
 	db 38, SLASH
 	db 45, HYDRO_PUMP
 	db 0 ; no more level-up moves

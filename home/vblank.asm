@@ -167,7 +167,7 @@ VBlank_Cutscene::
 	jr c, .done
 
 	call UpdateBGMap
-	call Serve2bppRequest
+	call Serve2bppRequest_VBlank
 
 	call hTransferShadowOAM
 

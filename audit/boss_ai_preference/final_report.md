@@ -1,11 +1,11 @@
 # Boss AI Preference Final Readiness Report
 
-Generated: 2026-05-13T11:25:57+00:00
+Generated: 2026-05-17T16:40:11+00:00
 
 ## Summary
 
-- Fixtures: 57
-- Pairwise preferences: 52
+- Fixtures: 59
+- Pairwise preferences: 55
 - Trajectory preferences: 69
 - Plan demonstrations: 3
 - Ready for ROM scoring review: `False`
@@ -22,16 +22,16 @@ Generated: 2026-05-13T11:25:57+00:00
 
 ## Coverage
 
-- Fixture phases: `{'early': 20, 'late': 6, 'mid': 31}`
+- Fixture phases: `{'early': 20, 'late': 8, 'mid': 31}`
 - Trajectory phases: `{'early': 5, 'late': 2, 'mid': 12}`
-- Exact party anchors: 57 / 57
-- Incomplete top plan-card questions: 42
+- Exact party anchors: 59 / 59
+- Incomplete top plan-card questions: 44
 - Complete benchmark candidates: 4
-- Partial benchmark candidates: 23
-- One-label benchmark completions: 11 / 23
+- Partial benchmark candidates: 25
+- One-label benchmark completions: 13 / 25
 - Trajectory conflicts: 0
 - Stale trajectory rows: 0
-- Pairwise holdout accuracy: 83.3%
+- Pairwise holdout accuracy: 71.4%
 - Trajectory holdout accuracy: 100.0%
 
 ## Leader Trajectory Coverage
@@ -76,6 +76,7 @@ Generated: 2026-05-13T11:25:57+00:00
 
 ## Proposal Types
 
+- `fixture_update`: 1
 - `hard_rule`: 2
 - `needs_more_labels`: 15
 - `schema_only`: 1

@@ -5,7 +5,10 @@ Pokemon Gold romhack / Gym Leader Lab setting.
 
 The notebook is not meant to prove mastery by volume. It should help answer
 real turns: what the plan is, what can still win, what can lose immediately,
-which pieces matter, and which move improves a concrete route.
+which pieces matter, and which move improves a concrete route. The current
+training repair is route-budget ranking: when three moves are plausible,
+future sessions must explain why #1 ranks above #2, when #2 becomes #1, and
+which safe/default line was rejected.
 
 ## Default Context Contract
 
@@ -29,12 +32,15 @@ audits, or evidence reconstruction.
 | `playbook_manifest.md` | Load contract separating live playbook, topic retrieval, and workspace provenance. |
 | `heuristic_core/` | Small live heuristic cards and migration map from repeated old lessons. |
 | `canon/` | Compact source-linked GSC topic lookups for mechanics and matchup facts. |
+| `romhack_boss_ai_mastery.md` | Bridge from learned Pokemon strategy to public-info, mechanics-correct romhack boss-AI policy. |
+| `romhack_play_mastery_transfer.md` | Practical romhack transfer workbench with boss-meta families, damage anchors, and drills. |
 | `continue_learning_1500_elo_prompt.md` | Copy-paste prompt for continuing measured 1500-Elo Pokemon learning work with fresh web checks and local-doc grounding. |
 | `master_index.md` | Top-level table of contents and task router for the mastery docs. |
 | `study_roadmap_2026-05-14.md` | Forward roadmap focused on measured Pokemon decision improvement. |
 | `doc_cleanup_audit_2026-05-14.md` | Redundancy, keep/merge/delete, and cleanup policy. |
 | `boss_turn_advice_template.md` | Compact response shape for real Gym Leader Lab turn advice. |
 | `boss_route_maps/` | Index and local boss-specific route maps for pre-battle planning. |
+| `romhack_drills/` | Machine-readable romhack transfer drill packets. |
 | `boss_sim_validation_protocol.md` | Later-stage 50-battle matrix and 80% validation gate for testing boss advice against AI/non-self opponents. |
 | `boss_sim_readiness_audit_2026-05-13.md` | Current evidence and blockers before the 50-battle validation gate can count. |
 | `boss_ai_re_solve_trigger_audit_2026-05-14.md` | Source-grounded audit of whether the re-solve-after-reveal lesson has cheap, public-only ROM boss-AI implementation targets. |

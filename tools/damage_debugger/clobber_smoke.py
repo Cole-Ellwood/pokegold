@@ -29,7 +29,8 @@ Coverage today:
                                  Expert Belt, Metronome, Life Orb.
     type-effectiveness         — super-effective, resisted, immune rows.
     damage variation           — final 0.85-1.0 random multiplier range.
-    late-gen after-hit effects — Rocky Helmet, Shell Bell, Life Orb HP effects.
+    late-gen after-hit effects — Air Balloon pop, Rocky Helmet, Shell Bell,
+                                 Life Orb HP effects.
 """
 
 from __future__ import annotations
@@ -40,7 +41,7 @@ from pathlib import Path
 from typing import Callable
 
 from .paths import find_rom, find_sym
-from .safe_call import call_function_safe, read_be_u16_banked, write_byte_banked
+from .safe_call import call_function_safe, read_be_u16_banked, read_byte_banked, write_byte_banked
 from .symbols import Symbol, SymbolTable
 
 LOG_PATH = (
@@ -59,6 +60,7 @@ CHOICE_SPECS_ID = 0x81
 ASSAULT_VEST_ID = 0x89
 EVOLITE_ID = 0x93
 LIFE_ORB_ID = 0x46
+AIR_BALLOON_ID = 0x94
 BLACKBELT_ID = 0x62
 EXPERT_BELT_ID = 0x8D
 MUSCLE_BAND_ID = 0x8E
@@ -135,9 +137,11 @@ HOOK_TARGETS: list[tuple[str, str]] = [
     ("BattleCommand_DamageVariation", "DVariation_entry"),
     ("BattleCommand_DamageVariation.loop", "DVariation_loop"),
     ("HandleLateGenAfterHitEffects_Far", "AfterHit_entry"),
+    ("HandleLateGenAfterHitEffects_Far.MaybePopAirBalloon", "AfterHit_balloon"),
     ("HandleLateGenAfterHitEffects_Far.MaybeApplyRockyHelmetRecoil", "AfterHit_rocky"),
     ("HandleLateGenAfterHitEffects_Far.MaybeApplyShellBellHeal", "AfterHit_shell"),
     ("HandleLateGenAfterHitEffects_Far.MaybeApplyLifeOrbRecoil", "AfterHit_life"),
+    ("HandleLateGenAfterHitEffects_Far.ClearOpponentHeldItem", "AfterHit_clear_item"),
     ("HandleLateGenAfterHitEffects_Far.done", "AfterHit_done"),
 ]
 
@@ -214,6 +218,13 @@ def _read_be_u16(pyboy, name, syms) -> int | None:
     return read_be_u16_banked(pyboy, s[1], s[0])
 
 
+def _read_named_byte(pyboy, name, syms) -> int | None:
+    s = syms.get(name)
+    if s is None:
+        return None
+    return read_byte_banked(pyboy, s[1], s[0])
+
+
 def _expect_u16s(expected: dict[str, int]) -> PostCheck:
     def check(pyboy, syms) -> tuple[bool, str]:
         mismatches: list[str] = []
@@ -227,6 +238,32 @@ def _expect_u16s(expected: dict[str, int]) -> PostCheck:
             return False, "; ".join(mismatches)
         return True, ", ".join(seen)
     return check
+
+
+def _expect_afterhit_air_balloon_pop(pyboy, syms) -> tuple[bool, str]:
+    expected_bytes = {
+        "wEnemyMonItem": 0,
+        "wOTPartyMon1Item": 0,
+    }
+    expected_u16s = {
+        "wBattleMonHP": 30,
+        "wEnemyMonHP": 30,
+    }
+    mismatches: list[str] = []
+    seen: list[str] = []
+    for name, want in expected_bytes.items():
+        got = _read_named_byte(pyboy, name, syms)
+        seen.append(f"{name}={got}")
+        if got != want:
+            mismatches.append(f"{name}: expected {want}, got {got}")
+    for name, want in expected_u16s.items():
+        got = _read_be_u16(pyboy, name, syms)
+        seen.append(f"{name}={got}")
+        if got != want:
+            mismatches.append(f"{name}: expected {want}, got {got}")
+    if mismatches:
+        return False, "; ".join(mismatches)
+    return True, ", ".join(seen)
 
 
 def _seed_pidgey_attacks_cyndaquil_with_tackle(pyboy, syms):
@@ -476,6 +513,15 @@ def seed_afterhit_rocky_helmet(pyboy, syms):
     write_byte(pyboy, "wEnemyMonItem", syms, ROCKY_HELMET_ID)
 
 
+def seed_afterhit_air_balloon(pyboy, syms):
+    """Opponent Air Balloon pops after any nonzero direct-hit damage."""
+    _seed_player_tackle_afterhit_base(pyboy, syms)
+    write_byte(pyboy, "wBattleMode", syms, 2)  # TRAINER_BATTLE
+    write_byte(pyboy, "wCurOTMon", syms, 0)
+    write_byte(pyboy, "wEnemyMonItem", syms, AIR_BALLOON_ID)
+    write_byte(pyboy, "wOTPartyMon1Item", syms, AIR_BALLOON_ID)
+
+
 def seed_afterhit_shell_bell(pyboy, syms):
     """Player Shell Bell heals max(1, wCurDamage/8) after a damaging hit."""
     _seed_player_tackle_afterhit_base(pyboy, syms)
@@ -593,6 +639,14 @@ SCENARIOS = [
         "special_super_effective_variation", seed_special_super_effective, 44, 52,
         "Same super-effective FIRE case after DamageVariation; final RNG multiplier stays 0.85-1.0.",
         chain=DEFAULT_CHAIN + ("BattleCommand_DamageVariation",),
+    ),
+    Scenario(
+        "afterhit_air_balloon", seed_afterhit_air_balloon, 16, 16,
+        "Isolated after-hit handler: Air Balloon pops and clears active/party item after damage.",
+        chain=("HandleLateGenAfterHitEffects_Far",),
+        post_check=_expect_afterhit_air_balloon_pop,
+        call_budget=500,
+        allow_nonreturn=True,
     ),
     Scenario(
         "afterhit_rocky_helmet", seed_afterhit_rocky_helmet, 16, 16,
@@ -892,7 +946,6 @@ def _self_test() -> int:
         HookSnapshot("ALGDS_choice_band", 3, 0x11, 0x4AFE, 0, 0, 0, 9, 0, 0, 0, 0, 0),
     ])
     assert no_diagnosis == []
-
     print("clobber_smoke self-test: PASS")
     return 0
 
@@ -1052,7 +1105,7 @@ def _emit_diagnostic_traces(
     log("                              that's the sec 3.14 c-clobber footprint")
     log("  - TypeMatchup_done        : post-type-effectiveness boundary inside Stab")
     log("  - DVariation_*            : final 0.85-1.0 random multiplier path")
-    log("  - AfterHit_*              : Rocky Helmet / Shell Bell / Life Orb side effects")
+    log("  - AfterHit_*              : Air Balloon / Rocky Helmet / Shell Bell / Life Orb side effects")
     log("  - EnemyAtkDmg_done        : final c value just before ConfusionDamageCalc")
     log()
 

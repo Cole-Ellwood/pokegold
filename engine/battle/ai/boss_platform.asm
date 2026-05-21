@@ -76,6 +76,9 @@ BossAI_RecordPlayerSwitch:
 	ld a, [wBossAITier]
 	and a
 	ret z
+	xor a
+	ld [wBossAIPlayerSleepDeniedCount], a
+	ld [wBossAIPlayerSleepDeniedMon], a
 	ld hl, wBossAIPendingPlayerSwitchCount
 	ld a, [hl]
 	cp $ff
@@ -489,11 +492,11 @@ if DEF(BOSSAI_EMIT_PLATFORM_TURN_CACHE_RESET)
 BossAI_ResetTurnCaches:
 ; Clear the per-AI-tick memo caches consumed by the cached helpers
 ; (HasAnyKOMove / PlayerHasPublicThreatVsEnemy / PlayerHasRevealedPriorityThreat
-; / PredictPlayerSwitch / GetPrimaryThreatType). Inputs to each are stable
-; within one tick; first call computes, the rest read from cache. Saves
-; ~50 type-chart walks per LATE-tier move-pick. Sentinel is $ff for all
-; five — the GetPrimaryThreatType wrapper distinguishes "no threat" via a
-; separate $20+ band since real type ids cap at $1b.
+; / GetPrimaryThreatType). Inputs to each are stable within one tick; first
+; call computes, the rest read from cache. Saves ~50 type-chart walks per
+; LATE-tier move-pick. Sentinel is $ff for all four — the GetPrimaryThreatType
+; wrapper distinguishes "no threat" via a separate $20+ band since real type
+; ids cap at $1b.
 	ld a, $ff
 	ld [wBossAIHasKOMoveCache], a
 	ld [wBossAIPublicThreatCache], a
@@ -625,6 +628,7 @@ BossAI_CheckTypeMatchupNoItem:
 	ldh a, [hQuotient + 3]
 	ld [wTypeMatchup], a
 	pop hl
+	inc hl
 	jr .types_loop
 
 .end
@@ -825,16 +829,15 @@ BossAI_HasAnyKOMove:
 
 ; ai-layer: PLATFORM
 BossAI_HasAnyKOMoveUncached:
-	call BossAI_SaveEnemyMoveStruct
 	call BossAI_EnemyChoiceLockedMove
 	jr nc, .scan_all_moves
-	call AIGetEnemyMove_HL
-	ld a, [wEnemyMoveStruct + MOVE_POWER]
+	ld b, a
+	call BossAI_MovePowerPure
 	and a
 	jr z, .no
-	call BossAI_CurrentEnemyMoveHasKOPressure
+	ld a, b
+	call BossAI_MoveHasKOPressurePure
 	jr nc, .no
-	call BossAI_RestoreEnemyMoveStruct
 	scf
 	ret
 .scan_all_moves
@@ -846,15 +849,15 @@ BossAI_HasAnyKOMoveUncached:
 	jr z, .no
 	push bc
 	push de
-	call AIGetEnemyMove_HL
-	ld a, [wEnemyMoveStruct + MOVE_POWER]
+	ld b, a
+	call BossAI_MovePowerPure
 	and a
 	jr z, .next
-	call BossAI_CurrentEnemyMoveHasKOPressure
+	ld a, b
+	call BossAI_MoveHasKOPressurePure
 	jr nc, .next
 	pop de
 	pop bc
-	call BossAI_RestoreEnemyMoveStruct
 	scf
 	ret
 .next
@@ -864,8 +867,56 @@ BossAI_HasAnyKOMoveUncached:
 	dec c
 	jr nz, .loop
 .no
-	call BossAI_RestoreEnemyMoveStruct
 	and a
+	ret
+
+; ai-layer: PLATFORM
+BossAI_HasAnySuperEffectiveDamageMove:
+	call BossAI_EnemyChoiceLockedMove
+	jr nc, .scan_all_moves
+	ld b, a
+	call BossAI_MovePowerPure
+	and a
+	jr z, .no
+	ld a, b
+	call BossAI_CheckEnemyMoveTypeMatchupVsPlayerNoItemPure
+	ld a, [wTypeMatchup]
+	cp EFFECTIVE + 1
+	jr c, .no
+	scf
+	ret
+
+.scan_all_moves
+	ld de, wEnemyMonMoves
+	ld c, NUM_MOVES
+.loop
+	ld a, [de]
+	and a
+	jr z, .no
+	push bc
+	push de
+	ld b, a
+	call BossAI_MovePowerPure
+	and a
+	jr z, .next
+	ld a, b
+	call BossAI_CheckEnemyMoveTypeMatchupVsPlayerNoItemPure
+	ld a, [wTypeMatchup]
+	cp EFFECTIVE + 1
+	jr nc, .yes
+.next
+	pop de
+	pop bc
+	inc de
+	dec c
+	jr nz, .loop
+.no
+	and a
+	ret
+.yes
+	pop de
+	pop bc
+	scf
 	ret
 
 endc
@@ -910,34 +961,6 @@ BossAI_IsChoiceHeldEffect:
 	cp HELD_CHOICE_SPECS
 	ret z
 	cp HELD_CHOICE_SCARF
-	ret
-
-; ai-layer: PLATFORM
-BossAI_SaveEnemyMoveStruct:
-	push hl
-	push de
-	push bc
-	ld hl, wEnemyMoveStruct
-	ld de, wBossAISavedEnemyMoveStruct
-	ld bc, MOVE_LENGTH
-	call CopyBytes
-	pop bc
-	pop de
-	pop hl
-	ret
-
-; ai-layer: PLATFORM
-BossAI_RestoreEnemyMoveStruct:
-	push hl
-	push de
-	push bc
-	ld hl, wBossAISavedEnemyMoveStruct
-	ld de, wEnemyMoveStruct
-	ld bc, MOVE_LENGTH
-	call CopyBytes
-	pop bc
-	pop de
-	pop hl
 	ret
 
 endc

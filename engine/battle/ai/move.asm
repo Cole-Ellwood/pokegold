@@ -63,6 +63,8 @@ AIChooseMove:
 
 ; Apply AI scoring layers depending on the trainer class.
 .ApplyLayers:
+	call .ApplyHeldItemMoveLegality
+
 	ld a, [wBossAITier]
 	and a
 	jr nz, .BossModel
@@ -198,6 +200,63 @@ AIChooseMove:
 	ld [wCurEnemyMove], a
 	ld a, c
 	ld [wCurEnemyMoveNum], a
+	ret
+
+.ApplyHeldItemMoveLegality:
+; Shared mechanics gate: block own held-item-illegal moves before either
+; legacy trainer scoring or the boss overlay starts changing scores.
+	ld a, [wEnemyMonItem]
+	ld b, a
+	callfar GetItemHeldEffect
+
+	ld a, b
+	cp HELD_ASSAULT_VEST
+	jr z, .block_assault_vest_moves
+
+	callfar IsHeldEffectInBChoice_Far
+	ret nz
+	ld a, [wEnemyChoiceLockedMove]
+	and a
+	ret z
+	ld b, a
+	ld hl, wEnemyAIMoveScores
+	ld de, wEnemyMonMoves
+	ld c, NUM_MOVES
+.choice_loop
+	ld a, [de]
+	cp b
+	jr z, .choice_next
+	ld [hl], 80
+.choice_next
+	inc hl
+	inc de
+	dec c
+	jr nz, .choice_loop
+	ret
+
+.block_assault_vest_moves
+	ld hl, wEnemyAIMoveScores
+	ld de, wEnemyMonMoves
+	ld c, NUM_MOVES
+.assault_vest_loop
+	ld a, [de]
+	and a
+	jr z, .assault_vest_next
+	ld b, a
+	push hl
+	push de
+	push bc
+	callfar IsMoveInBBlockedByAssaultVest_Far
+	pop bc
+	pop de
+	pop hl
+	jr nc, .assault_vest_next
+	ld [hl], 80
+.assault_vest_next
+	inc hl
+	inc de
+	dec c
+	jr nz, .assault_vest_loop
 	ret
 
 AIScoringPointers:

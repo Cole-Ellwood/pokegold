@@ -1,11 +1,11 @@
 # Boss AI Multi-Turn Plan Queue
 
-Generated: 2026-05-13T09:40:17+00:00
+Generated: 2026-05-17T16:40:11+00:00
 Rollout mode: `deterministic_public_worst_case`
 
 ## Summary
 
-- Showing: 20 / 55
+- Showing: 20 / 57
 - Existing trajectory preferences: 69
 - Existing plan demonstrations: 3
 

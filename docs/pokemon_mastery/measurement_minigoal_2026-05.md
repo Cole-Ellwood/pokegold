@@ -220,7 +220,11 @@ Track:
 - mechanics error rate;
 - hidden-information error rate;
 - replay turn-pause top-match and acceptable-match rates;
+- top-three-to-top-one discrimination when the actual/pro move is in the
+  frozen top three;
 - positive-selection rate in fresh replay or focused-transfer artifacts;
+- route-budget, resource-identity, reset-loop, script-too-slow, and
+  branch-punish miss counts;
 - role-package update obedience after public reveals;
 - transfer-sprint target error rate before and after the Pokemon check;
 - simulation/emulator win rate only after readiness gates pass.
@@ -250,8 +254,9 @@ Structural-repair sample gate:
 - After changing the live decision system, collect three fresh replay packets
   or at least 90 scored side decisions before claiming the repair worked.
 - Compare against the recent fresh-replay baseline on top-match,
-  acceptable-match, positive-selection, route conversion, branch-punish, and
-  role-package obedience, with severe/hidden/state/mechanics errors still low.
+  acceptable-match, top-three-to-top-one discrimination, positive-selection,
+  route conversion, branch-punish, route-budget misses, and role-package
+  obedience, with severe/hidden/state/mechanics errors still low.
 - If the sample is regressing or blatantly flat, pause replay review and run a
   training-method review. Reconsider prompt format, replay review as the main
   practice mode, scoring oracle quality, card structure, GSC theory gaps,

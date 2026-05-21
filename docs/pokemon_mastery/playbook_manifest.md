@@ -64,4 +64,7 @@ move advice.
 
 Progress requires fresh-score movement: severe errors stay low while
 top-match, acceptable-match, route conversion, branch-punish obedience, and
-positive selection improve. Cleaner notes are not progress by themselves.
+positive selection improve. When the actual move is already in the top three,
+future sessions must measure top-three-to-top-one discrimination: why #1 ranks
+above #2, when #2 would become #1, and which safe/default line was rejected.
+Cleaner notes are not progress by themselves.

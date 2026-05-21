@@ -1575,24 +1575,24 @@ JohtoGrassWildMons:
 	; morn
 	db 2, PIDGEY
 	db 3, SENTRET
-	db 3, NIDORAN_M
-	db 2, NIDORAN_F
+	db 3, RATTATA
+	db 2, HOPPIP
 	db 4, RATTATA
 	db 4, HOPPIP
 	db 4, SENTRET
 	; day
 	db 2, PIDGEY
 	db 3, SENTRET
-	db 3, NIDORAN_F
-	db 2, NIDORAN_M
+	db 3, RATTATA
+	db 2, HOPPIP
 	db 4, RATTATA
 	db 4, HOPPIP
 	db 4, SENTRET
 	; nite
 	db 2, HOOTHOOT
-	db 3, SPINARAK
 	db 3, RATTATA
-	db 2, RATTATA
+	db 3, RATTATA
+	db 2, JIGGLYPUFF
 	db 4, RATTATA
 	db 4, JIGGLYPUFF
 	db 4, HOOTHOOT
@@ -1605,16 +1605,16 @@ JohtoGrassWildMons:
 	db 2, PIDGEY
 	db 3, CATERPIE
 	db 4, BELLSPROUT
-	db 4, METAPOD
 	db 4, NIDORAN_M
+	db 4, METAPOD
 	db 5, ODDISH
 	db 5, PICHU
 	; day
 	db 2, PIDGEY
 	db 3, CATERPIE
 	db 4, BELLSPROUT
-	db 4, METAPOD
 	db 4, NIDORAN_F
+	db 4, METAPOD
 	db 5, ODDISH
 	db 5, PICHU
 	; nite
@@ -1630,20 +1630,20 @@ JohtoGrassWildMons:
 	db 3, LEDYBA
 	db 3, WEEDLE
 	db 4, BELLSPROUT
-	db 4, KAKUNA
 	db 4, NIDORAN_F
+	db 4, KAKUNA
 	db 5, ODDISH
 	db 5, PICHU
 	; day
 	db 2, PIDGEY
 	db 3, WEEDLE
 	db 4, BELLSPROUT
-	db 4, KAKUNA
 	db 4, NIDORAN_M
+	db 4, KAKUNA
 	db 5, ODDISH
 	db 5, PICHU
 	; nite
-	db 2, HOOTHOOT
+	db 3, SPINARAK
 	db 3, RATTATA
 	db 4, HOOTHOOT
 	db 4, BELLSPROUT

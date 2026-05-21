@@ -76,6 +76,12 @@ def test_miss_case_without_investigation_fails(tmp_path, monkeypatch):
     assert any("investigation" in e.lower() for e in errors), errors
 
 
+def test_route_budget_miss_without_investigation_fails(tmp_path, monkeypatch):
+    lib = write_lib(tmp_path, [good_replay()], [base_case("c1", "route_budget")])
+    errors = run_check(lib, monkeypatch)
+    assert any("investigation" in e.lower() for e in errors), errors
+
+
 def test_miss_case_with_investigation_passes(tmp_path, monkeypatch):
     inv = {"root_cause_hypothesis": "x", "future_turn_evidence": "turn 5: x", "confidence": "high"}
     lib = write_lib(tmp_path, [good_replay()], [base_case("c1", "missed_class", investigation=inv)])

@@ -213,8 +213,17 @@ TryWildEncounter::
 	call GetMapEncounterRate
 	call ApplyMusicEffectOnEncounterRate
 	call ApplyCleanseTagEffectOnEncounterRate
+; Global QoL pass: keep each map's table rate and modifiers intact, then
+; accept only half of the would-be random encounter checks.
+	call Random
+	bit 7, a
+	jr nz, .no_encounter
 	call Random
 	cp b
+	ret
+
+.no_encounter
+	and a
 	ret
 
 GetMapEncounterRate:
@@ -383,6 +392,9 @@ RaiseWildLevelForProgression:
 ; — you'll see center-or-lower more often than center+N. The final level is
 ; max(table_level, clamp(center+offset, >= 2)) so that naturally-high routes
 ; (Mt. Silver) keep their table values while low-table routes get the spread.
+; Route 29 and Route 30 are explicitly clamped to 4..6 after this global
+; progression logic so the first wild routes do not jump into Falkner-range
+; levels immediately after the Mystery Egg return.
 ;
 ; Notes:
 ;   - GetProgressionLevelCap returns the cap in BOTH a and c. The mirror in
@@ -489,9 +501,39 @@ RaiseWildLevelForProgression:
 	ld b, a
 
 .done
+	call .ClampEarlyRoutesLevel
 	pop hl
 	pop de
 	pop af
+	ret
+
+.ClampEarlyRoutesLevel:
+	ld a, [wMapGroup]
+	cp GROUP_ROUTE_29
+	jr nz, .check_route_30
+	ld a, [wMapNumber]
+	cp MAP_ROUTE_29
+	jr z, .clamp_4_to_6
+	ret
+
+.check_route_30
+	cp GROUP_ROUTE_30
+	ret nz
+	ld a, [wMapNumber]
+	cp MAP_ROUTE_30
+	ret nz
+
+.clamp_4_to_6
+	ld a, b
+	cp 4
+	jr nc, .check_high
+	ld b, 4
+	ret
+
+.check_high
+	cp 7
+	ret c
+	ld b, 6
 	ret
 
 .GetMtSilverWildFloor:

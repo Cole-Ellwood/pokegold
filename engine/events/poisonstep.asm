@@ -73,7 +73,16 @@ DoPoisonStep::
 	or c
 	ret z
 
+; if HP is already exactly 1, clear poison but leave the mon alive
+	ld a, b
+	and a
+	jr nz, .do_damage
+	ld a, c
+	cp 1
+	jr z, .cure_poison
+
 ; do 1 HP damage
+.do_damage
 	dec bc
 	ld [hl], c
 	dec hl
@@ -85,10 +94,14 @@ DoPoisonStep::
 	jr z, .fainted
 
 ; if HP is exactly 1, clear poison but leave the mon alive
-	dec a
-	or b
+	ld a, b
+	and a
+	jr nz, .not_fainted
+	ld a, c
+	cp 1
 	jr nz, .not_fainted
 
+.cure_poison
 	ld a, MON_STATUS
 	call GetPartyParamLocation
 	res PSN, [hl]

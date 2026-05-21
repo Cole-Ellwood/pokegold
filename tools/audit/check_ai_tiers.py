@@ -75,8 +75,81 @@ ELITE_FOUR_AND_CHAMPION = {
     ("CHAMPION", "LANCE"),
 }
 
+ROCKET_EXECUTIVES = {
+    ("EXECUTIVEM", "EXECUTIVEM_1"),
+    ("EXECUTIVEM", "EXECUTIVEM_2"),
+    ("EXECUTIVEM", "EXECUTIVEM_3"),
+    ("EXECUTIVEM", "EXECUTIVEM_4"),
+    ("EXECUTIVEF", "EXECUTIVEF_1"),
+    ("EXECUTIVEF", "EXECUTIVEF_2"),
+}
+
 POSTGAME_BOSSES = {
     ("RED", "RED1"),
+}
+
+EARLY_TIER_TARGETS = {
+    ("FALKNER", "FALKNER1"),
+    ("BUGSY", "BUGSY1"),
+    ("WHITNEY", "WHITNEY1"),
+    ("RIVAL1", "RIVAL1_1_CHIKORITA"),
+    ("RIVAL1", "RIVAL1_1_CYNDAQUIL"),
+    ("RIVAL1", "RIVAL1_1_TOTODILE"),
+    ("RIVAL1", "RIVAL1_2_CHIKORITA"),
+    ("RIVAL1", "RIVAL1_2_CYNDAQUIL"),
+    ("RIVAL1", "RIVAL1_2_TOTODILE"),
+}
+
+MID_TIER_TARGETS = {
+    ("MORTY", "MORTY1"),
+    ("CHUCK", "CHUCK1"),
+    ("JASMINE", "JASMINE1"),
+    ("PRYCE", "PRYCE1"),
+    ("EXECUTIVEM", "EXECUTIVEM_1"),
+    ("EXECUTIVEM", "EXECUTIVEM_2"),
+    ("EXECUTIVEM", "EXECUTIVEM_3"),
+    ("EXECUTIVEM", "EXECUTIVEM_4"),
+    ("EXECUTIVEF", "EXECUTIVEF_1"),
+    ("EXECUTIVEF", "EXECUTIVEF_2"),
+    ("RIVAL1", "RIVAL1_3_CHIKORITA"),
+    ("RIVAL1", "RIVAL1_3_CYNDAQUIL"),
+    ("RIVAL1", "RIVAL1_3_TOTODILE"),
+    ("RIVAL1", "RIVAL1_4_CHIKORITA"),
+    ("RIVAL1", "RIVAL1_4_CYNDAQUIL"),
+    ("RIVAL1", "RIVAL1_4_TOTODILE"),
+}
+
+LATE_TIER_TARGETS = {
+    ("CLAIR", "CLAIR1"),
+    ("WILL", "WILL1"),
+    ("BRUNO", "BRUNO1"),
+    ("KOGA", "KOGA1"),
+    ("KAREN", "KAREN1"),
+    ("CHAMPION", "LANCE"),
+    ("BROCK", "BROCK1"),
+    ("MISTY", "MISTY1"),
+    ("LT_SURGE", "LT_SURGE1"),
+    ("ERIKA", "ERIKA1"),
+    ("JANINE", "JANINE1"),
+    ("SABRINA", "SABRINA1"),
+    ("BLAINE", "BLAINE1"),
+    ("BLUE", "BLUE1"),
+    ("RED", "RED1"),
+    ("RIVAL1", "RIVAL1_5_CHIKORITA"),
+    ("RIVAL1", "RIVAL1_5_CYNDAQUIL"),
+    ("RIVAL1", "RIVAL1_5_TOTODILE"),
+    ("RIVAL2", "RIVAL2_1_CHIKORITA"),
+    ("RIVAL2", "RIVAL2_1_CYNDAQUIL"),
+    ("RIVAL2", "RIVAL2_1_TOTODILE"),
+    ("RIVAL2", "RIVAL2_2_CHIKORITA"),
+    ("RIVAL2", "RIVAL2_2_CYNDAQUIL"),
+    ("RIVAL2", "RIVAL2_2_TOTODILE"),
+}
+
+EXPECTED_TIERS = {
+    **{pair: "AI_TIER_EARLY" for pair in EARLY_TIER_TARGETS},
+    **{pair: "AI_TIER_MID" for pair in MID_TIER_TARGETS},
+    **{pair: "AI_TIER_LATE" for pair in LATE_TIER_TARGETS},
 }
 
 ADAPTIVE_LEAD_TARGETS = {
@@ -100,12 +173,7 @@ ADAPTIVE_LEAD_TARGETS = {
 }
 
 TARGETS = (
-    JOHTO_LEADERS
-    | KANTO_LEADERS
-    | {("RIVAL1", trainer_id) for trainer_id in RIVAL1_IDS}
-    | {("RIVAL2", trainer_id) for trainer_id in RIVAL2_IDS}
-    | ELITE_FOUR_AND_CHAMPION
-    | POSTGAME_BOSSES
+    set(EXPECTED_TIERS)
 )
 
 NONZERO_TIERS = {"AI_TIER_EARLY", "AI_TIER_MID", "AI_TIER_LATE"}
@@ -305,19 +373,33 @@ def main() -> int:
             print(f"  - {trainer_class}, {trainer_id}", file=sys.stderr)
         return 1
 
-    zero_or_unknown = sorted(
-        (pair, tier)
-        for pair, tier in entries.items()
-        if pair in TARGETS and tier not in NONZERO_TIERS
-    )
-    if zero_or_unknown:
+    unexpected = sorted(set(entries) - TARGETS)
+    if unexpected:
         print(
-            "ERROR: required boss mappings must use non-zero tiers "
-            "(AI_TIER_EARLY/MID/LATE):",
+            "ERROR: unexpected BossAITierMap entries; general trainers must keep baseline AI:",
             file=sys.stderr,
         )
-        for (trainer_class, trainer_id), tier in zero_or_unknown:
-            print(f"  - {trainer_class}, {trainer_id} -> {tier}", file=sys.stderr)
+        for trainer_class, trainer_id in unexpected:
+            print(f"  - {trainer_class}, {trainer_id}", file=sys.stderr)
+        return 1
+
+    tier_mismatches = sorted(
+        (pair, tier)
+        for pair, tier in entries.items()
+        if pair in EXPECTED_TIERS and tier != EXPECTED_TIERS[pair]
+    )
+    if tier_mismatches:
+        print(
+            "ERROR: BossAITierMap entries do not match the exact expected tiers:",
+            file=sys.stderr,
+        )
+        for (trainer_class, trainer_id), tier in tier_mismatches:
+            expected_tier = EXPECTED_TIERS[(trainer_class, trainer_id)]
+            print(
+                f"  - {trainer_class}, {trainer_id} -> {tier} "
+                f"(expected {expected_tier})",
+                file=sys.stderr,
+            )
         return 1
 
     boss_ai_text = "\n".join(

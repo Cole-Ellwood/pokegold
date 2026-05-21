@@ -14,6 +14,7 @@ GSC topic facts when the public board needs a mechanics or matchup lookup.
 | --- | --- |
 | `name_current_owner.md` | You are not sure whose route currently matters. |
 | `name_next_board_owner.md` | A switch, sack, absorber, or handoff is likely. |
+| `route_budget_tiebreaking.md` | Three candidates are plausible and the top rank is the bottleneck. |
 | `converter_before_script.md` | A safe script move may be hiding the converter. |
 | `public_info_tiers.md` | A hidden move, item, teammate, or lure matters. |
 | `role_package_ledger.md` | A reveal or entry changes a Pokemon's public job. |

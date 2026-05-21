@@ -24,6 +24,11 @@ the absorber.
 For lead Jynx, Thief after sleep is a strong-prior package branch. For RestTalk
 Snorlax, Normal STAB and Earthquake are strong-prior attacking rolls once Sleep
 Talk is public unless revealed moves disprove them.
+For Gengar, Cloyster, Exeggutor, Forretress, Steelix, Golem, and Snorlax,
+Explosion or Self-Destruct is a strong-prior branch when the Pokemon has
+delivered its support job, is low enough to trade profitably, blocks a route
+piece, or faces a low-value absorber. Before ranking damage, status, or a
+preservation switch, list the self-KO absorber/sack and the post-trade owner.
 The inverse is also live: when our Electric enters, Ground/Steel counter-owner
 is a strong-prior class even if the exact slot is hidden. Coverage into that
 class can be top when it also keeps the active target route acceptable.

@@ -159,13 +159,17 @@ BattleCommand_CheckTurn:
 	ld hl, wBattleMonStatus
 	ld a, [hl]
 	and SLP_MASK
-	jr z, .not_asleep
+	jr nz, .player_asleep
+	call ClearBossAIPlayerSleepTracker
+	jr .not_asleep
 
+.player_asleep
 	dec a
 	ld [wBattleMonStatus], a
 	and SLP_MASK
 	jr z, .woke_up
 
+	call IncrementBossAIPlayerSleepTracker
 	xor a
 	ld [wBattleAfterAnim], a
 	ld de, ANIM_SLP
@@ -186,6 +190,7 @@ BattleCommand_CheckTurn:
 	xor a
 	ld [wEnemySleepClauseSlot], a
 .clause_skip
+	call ClearBossAIPlayerSleepTracker
 	ld hl, WokeUpText
 	call StdBattleTextbox
 	call CantMove
@@ -387,6 +392,23 @@ OpponentCantMove:
 	call BattleCommand_SwitchTurn
 	call CantMove
 	jp BattleCommand_SwitchTurn
+
+IncrementBossAIPlayerSleepTracker:
+	ld a, [wCurBattleMon]
+	inc a
+	ld [wBossAIPlayerSleepDeniedMon], a
+	ld hl, wBossAIPlayerSleepDeniedCount
+	ld a, [hl]
+	cp 4
+	ret nc
+	inc [hl]
+	ret
+
+ClearBossAIPlayerSleepTracker:
+	xor a
+	ld [wBossAIPlayerSleepDeniedCount], a
+	ld [wBossAIPlayerSleepDeniedMon], a
+	ret
 
 CheckEnemyTurn:
 	ld hl, wEnemySubStatus4
@@ -3476,21 +3498,6 @@ UpdateMoveData:
 	jp CopyName1
 
 BattleCommand_SleepTarget:
-	; Sleep Clause: each side can have at most one of the OTHER team's
-	; mons asleep due to its own move at a time. Self-sleep (Rest) is
-	; a different code path and never reaches here.
-	ldh a, [hBattleTurn]
-	and a
-	ld a, [wPlayerSleepClauseSlot]
-	jr z, .clause_check_loaded
-	ld a, [wEnemySleepClauseSlot]
-.clause_check_loaded
-	and a
-	jr z, .clause_ok
-	ld hl, SleepClauseActiveText
-	jp .fail
-.clause_ok
-
 	call GetOpponentItem
 	ld a, b
 	cp HELD_PREVENT_SLEEP
@@ -3500,7 +3507,7 @@ BattleCommand_SleepTarget:
 	ld [wNamedObjectIndex], a
 	call GetItemName
 	ld hl, ProtectedByText
-	jr .fail
+	jp .fail
 
 .not_protected_by_item
 	ld a, BATTLE_VARS_STATUS_OPP
@@ -3510,7 +3517,7 @@ BattleCommand_SleepTarget:
 	ld a, [de]
 	and SLP_MASK
 	ld hl, AlreadyAsleepText
-	jr nz, .fail
+	jp nz, .fail
 
 	ld a, [wAttackMissed]
 	and a
@@ -3524,14 +3531,34 @@ BattleCommand_SleepTarget:
 	call CheckSubstituteOpp
 	jr nz, .fail
 
+	; Sleep Clause: each side can have at most one of the OTHER team's
+	; mons asleep due to its own move at a time. Self-sleep (Rest) is
+	; a different code path and never reaches here. Check this after
+	; normal failure causes so the message names the real blocker.
+	ldh a, [hBattleTurn]
+	and a
+	ld a, [wPlayerSleepClauseSlot]
+	jr z, .clause_check_loaded
+	ld a, [wEnemySleepClauseSlot]
+.clause_check_loaded
+	and a
+	jr z, .clause_ok
+	ld hl, SleepClauseActiveText
+	jp .fail
+.clause_ok
+
 	call AnimateCurrentMove
 
 .random_loop
 	call BattleRandom
-	and SLP_MASK
+	swap a
+	and %11
+	cp 3
 	jr z, .random_loop
-	cp SLP_MASK
-	jr z, .random_loop
+; Store one more than the number of denied actions. The counter is decremented
+; before checking for wake-up, so stored 3..5 gives 2..4 sleeping actions.
+	inc a
+	inc a
 	inc a
 	ld [de], a
 	call UpdateOpponentInParty
@@ -3542,6 +3569,20 @@ BattleCommand_SleepTarget:
 
 	farcall UseHeldStatusHealingItem
 	ret nz
+
+	ldh a, [hBattleTurn]
+	and a
+	jr z, .skip_player_sleep_tracker_init
+	xor a
+	ld [wBossAIPlayerSleepDeniedCount], a
+	ld a, [wCurBattleMon]
+	inc a
+	ld [wBossAIPlayerSleepDeniedMon], a
+.skip_player_sleep_tracker_init
+
+	; If sleep lands before the target's action, that lost action should
+	; consume the first sleep turn instead of adding a free extra turn.
+	call .TickInitialSleepTurnIfUserWentFirst
 
 	; Sleep applied AND not immediately cured by held item — record clause.
 	ldh a, [hBattleTurn]
@@ -3559,6 +3600,17 @@ BattleCommand_SleepTarget:
 
 	call OpponentCantMove
 	ret
+
+.TickInitialSleepTurnIfUserWentFirst:
+	call CheckOpponentWentFirst
+	ret nz
+	ld a, BATTLE_VARS_STATUS_OPP
+	call GetBattleVarAddr
+	dec [hl]
+	ldh a, [hBattleTurn]
+	and a
+	call nz, IncrementBossAIPlayerSleepTracker
+	jp UpdateOpponentInParty
 
 .fail
 	call AnimateFailedMove

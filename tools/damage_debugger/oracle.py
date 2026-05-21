@@ -98,6 +98,7 @@ HELD_METAL_COAT = 0x8F
 HELD_DRAGON_FANG = 0x90
 HELD_WISE_GLASSES = 0x91
 HELD_EVOLITE = 0x93
+HELD_AIR_BALLOON = 0x94
 HELD_DRAGON_SCALE = 0x97
 HELD_METRONOME = 0x9A
 HELD_POLKADOT_BOW = 0xAA
@@ -475,6 +476,11 @@ def _dragons_majesty_applies(inp: BattleInputs) -> bool:
     return _type_contribution(DRAGON, inp.attacker_types) > 0
 
 
+def _air_balloon_blocks_ground(inp: BattleInputs) -> bool:
+    """Mirror `BattleCheckTypeMatchup`'s pre-table Air Balloon immunity."""
+    return inp.move_type == GROUND and inp.opponent_item == HELD_AIR_BALLOON
+
+
 def _type_matchup(inp: BattleInputs, dmg: int) -> int:
     """Loop over the matchup table; per-row multiply / 10 if it matches.
 
@@ -501,6 +507,9 @@ def _type_matchup(inp: BattleInputs, dmg: int) -> int:
       = `hQuotient[2,3]`. Net: dmg = product // 10, with min 1 if the
       pre-divide product was nonzero.
     """
+    if _air_balloon_blocks_ground(inp):
+        return 0
+
     for (att, deff), mult in _TYPE_MATCHUPS.items():
         if att != inp.move_type:
             continue
@@ -751,7 +760,14 @@ def _matchup_total(inp: BattleInputs) -> int:
     folds Dragon's Majesty into this path too (line 1499 calls
     `CheckTypeMatchup_ApplyDragonsMajestyMultiplier`), so a NO_EFFECT
     row gets converted to NOT_VERY_EFFECTIVE for DRAGON attackers.
+
+    Air Balloon is checked before the matchup table and jumps directly
+    to `.End` with wTypeMatchup = NO_EFFECT, so Dragon's Majesty does
+    not rewrite this item immunity.
     """
+    if _air_balloon_blocks_ground(inp):
+        return NO_EFFECT
+
     total = EFFECTIVE
     for (att, deff), mult in _TYPE_MATCHUPS.items():
         if att != inp.move_type:
@@ -1079,6 +1095,16 @@ def _self_test() -> list[tuple[str, int, int]]:
             attacker_level=2, move_bp=40, move_type=NORMAL, is_physical=True,
             attacker_atk=6, defender_def=9,
             attacker_types=PIDGEY_TYPES, defender_types=(GHOST, GHOST),
+        ),
+    ))
+
+    cases.append((
+        "air_balloon_ground_immune", 0,
+        BattleInputs(
+            attacker_level=50, move_bp=100, move_type=GROUND, is_physical=True,
+            attacker_atk=120, defender_def=120,
+            attacker_types=(GROUND, GROUND), defender_types=(ELECTRIC, STEEL),
+            opponent_item=HELD_AIR_BALLOON,
         ),
     ))
 

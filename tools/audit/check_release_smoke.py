@@ -256,6 +256,27 @@ def parse_equ(path: Path, name: str) -> int:
 
 def check_documented_gold_silver_bugfixes() -> None:
     require_ordered_text(
+        ROOT / "home/video.asm",
+        (
+            "Serve1bppRequest::",
+            "\tldh a, [rLY]\n\tcp LY_VBLANK\n\tret c\n\tcp LY_VBLANK + 2\n\tret nc",
+            "Serve2bppRequest::",
+            "\tldh a, [rLY]\n\tcp LY_VBLANK\n\tret c\n\tcp LY_VBLANK + 2\n\tret nc",
+            "Serve2bppRequest_VBlank::",
+            "AnimateTileset::",
+            "\tldh a, [rLY]\n\tcp LY_VBLANK\n\tret c\n\tcp LY_VBLANK + 7\n\tret nc",
+        ),
+        "VRAM request handlers enforce VBlank timing windows",
+    )
+    require_ordered_text(
+        ROOT / "home/vblank.asm",
+        (
+            "VBlank_Cutscene::",
+            "\tcall UpdateBGMap\n\tcall Serve2bppRequest_VBlank",
+        ),
+        "cutscene VBlank uses post-palette tile request entry",
+    )
+    require_ordered_text(
         ROOT / "data/text/common_3.asm",
         (
             "_CoinCaseCountText::",
@@ -944,7 +965,7 @@ def main() -> int:
 
     expected_species = {
         "meganium.asm": ([130, 75, 107, 60, 83, 100], ("GRASS", "GRASS")),
-        "typhlosion.asm": ([78, 99, 78, 100, 130, 70], ("FIRE", "NORMAL")),
+        "typhlosion.asm": ([78, 85, 78, 114, 130, 70], ("FIRE", "FIRE")),
         "feraligatr.asm": ([85, 105, 100, 87, 95, 83], ("WATER", "FIGHTING")),
     }
     for filename, (expected_stats, expected_types) in expected_species.items():
@@ -960,9 +981,13 @@ def main() -> int:
     print("PASS: level-up move order checks")
 
     expected_level_moves = {
-        "MeganiumEvosAttacks": {"HEAL_BELL": 33, "SOLARBEAM": 41},
-        "TyphlosionEvosAttacks": {"DOUBLE_EDGE": 36, "FIRE_BLAST": 37, "ANCIENTPOWER": 45},
-        "FeraligatrEvosAttacks": {"SLASH": 38, "HYDRO_PUMP": 45},
+        "BayleefEvosAttacks": {"SUBSTITUTE": 27},
+        "MeganiumEvosAttacks": {"HEAL_BELL": 33, "SLEEP_POWDER": 38, "SOLARBEAM": 41},
+        "QuilavaEvosAttacks": {"THUNDERPUNCH": 25},
+        "TyphlosionEvosAttacks": {"SUNNY_DAY": 36, "DRAGONBREATH": 39, "FIRE_BLAST": 45},
+        "TotodileEvosAttacks": {"MACH_PUNCH": 7, "WATER_GUN": 13},
+        "CroconawEvosAttacks": {"ROAR": 21, "CROSS_CHOP": 25, "BELLY_DRUM": 29},
+        "FeraligatrEvosAttacks": {"ICE_PUNCH": 34, "SLASH": 38, "HYDRO_PUMP": 45},
         "MagnetonEvosAttacks": {"THUNDERBOLT": 31, "DRAGONBREATH": 33, "EXPLOSION": 38},
         "AriadosEvosAttacks": {"SPIKES": 22, "SPIDER_WEB": 37},
         "YanmaEvosAttacks": {"LEECH_LIFE": 17, "WING_ATTACK": 25},
@@ -1443,19 +1468,24 @@ def main() -> int:
     check_save_format_version()
     check_no_stale_shipped_claims()
     check_unified_debugger_ready()
+    check_boss_ai_move_probe_reclaim()
     check_farcall_hl_clobber()
     check_farcall_a_clobber()
     check_ld_a_zero()
     check_cp_zero()
     check_matchup_cli()
+    check_battle_calc()
+    check_move_score_probe()
+    check_damage_ai_report()
+    check_overworld_poison_cure()
 
     print("ALL RELEASE SMOKE CHECKS PASSED")
     return 0
 
 
-def _run_subaudit(script: str, label: str) -> None:
+def _run_subaudit(script: str, label: str, *args: str) -> None:
     proc = subprocess.run(
-        [sys.executable, str(ROOT / "tools/audit" / script)],
+        [sys.executable, str(ROOT / "tools/audit" / script), *args],
         cwd=ROOT,
         text=True,
         stdout=subprocess.PIPE,
@@ -1483,6 +1513,14 @@ def check_unified_debugger_ready() -> None:
     _run_subaudit("check_unified_debugger_ready.py", "unified debugger readiness")
 
 
+def check_boss_ai_move_probe_reclaim() -> None:
+    _run_subaudit(
+        "check_boss_ai_move_probe_reclaim.py",
+        "Boss AI move-probe reclaim",
+        "--expect-reclaimed",
+    )
+
+
 def check_farcall_hl_clobber() -> None:
     _run_subaudit("check_farcall_hl_clobber.py", "farcall hl-clobber")
 
@@ -1501,6 +1539,22 @@ def check_cp_zero() -> None:
 
 def check_matchup_cli() -> None:
     _run_subaudit("check_matchup_cli.py", "damage matchup CLI")
+
+
+def check_battle_calc() -> None:
+    _run_subaudit("check_battle_calc.py", "battle damage calculator")
+
+
+def check_move_score_probe() -> None:
+    _run_subaudit("check_move_score_probe.py", "Boss AI move-score probe")
+
+
+def check_damage_ai_report() -> None:
+    _run_subaudit("check_damage_ai_report.py", "damage AI report")
+
+
+def check_overworld_poison_cure() -> None:
+    _run_subaudit("check_overworld_poison_cure.py", "overworld poison cure")
 
 
 if __name__ == "__main__":

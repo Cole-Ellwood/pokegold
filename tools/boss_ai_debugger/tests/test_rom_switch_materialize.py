@@ -5,6 +5,7 @@ import unittest
 from tools.boss_ai_debugger.generators import generate_scenarios
 from tools.boss_ai_debugger.rom_switch_materialize import (
     scenario_expects_switch,
+    switch_base_state_from_manifest_entry,
     switch_materialization_patches,
     switch_verdict_from_report,
 )
@@ -27,6 +28,28 @@ class RomSwitchMaterializeTests(unittest.TestCase):
         self.assertEqual(patches[("wPlayerUsedMoves", 0)], 0x59)
         self.assertEqual(patches[("wEnemySwitchMonParam", 0)], 0)
 
+    def test_switch_materialization_patches_converter_ko_move(self) -> None:
+        scenario = generate_scenarios(family="switch_sack", count=3, seed=1)[2]
+        patches = {
+            (patch.symbol_name, patch.offset): patch.value
+            for patch in switch_materialization_patches(scenario)
+        }
+
+        self.assertEqual(patches[("wBattleMonSpecies", 0)], 0x59)
+        self.assertEqual(patches[("wEnemyMonMoves", 0)], 0x38)
+        self.assertEqual(patches[("wEnemyMonPP", 0)], 15)
+
+    def test_switch_materialization_prefers_predispatch_state(self) -> None:
+        field, state = switch_base_state_from_manifest_entry(
+            {
+                "save_state": "post_dispatch.state",
+                "switch_materialization_state": "pre_dispatch.state",
+            }
+        )
+
+        self.assertEqual(field, "switch_materialization_state")
+        self.assertTrue(str(state).endswith("pre_dispatch.state"))
+
     def test_switch_verdict_flags_unwanted_switch(self) -> None:
         scenario = generate_scenarios(family="switch_sack", count=3, seed=2)[2]
 
@@ -41,6 +64,22 @@ class RomSwitchMaterializeTests(unittest.TestCase):
 
         self.assertFalse(verdict["expected_switch"])
         self.assertEqual(verdict["rom_policy"]["verdict"], "mismatch")
+
+    def test_switch_verdict_skips_unobserved_replay(self) -> None:
+        scenario = generate_scenarios(family="switch_sack", count=1, seed=1)[0]
+
+        verdict = switch_verdict_from_report(
+            scenario,
+            {
+                "observed": False,
+                "proposed_switch": False,
+                "switch_confidence": 0,
+                "switch_param": 0,
+            },
+        )
+
+        self.assertEqual(verdict["status"], "skipped")
+        self.assertIn("no switch dispatch observation", verdict["reason"])
 
 
 if __name__ == "__main__":

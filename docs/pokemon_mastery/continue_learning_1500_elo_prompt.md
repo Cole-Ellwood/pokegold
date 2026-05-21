@@ -75,7 +75,12 @@ For serious move advice, compress the position into:
 - one-sentence route reason;
 - exact public state read;
 - our live win route and the opponent's live route;
-- ranked serious alternatives;
+- ranked serious alternatives, including why #1 ranks above #2;
+- what public fact, branch weight, damage range, or role update makes #2
+  become #1;
+- rejected safe/default line and why it does not buy the route;
+- positive-selection class: convert, deny conversion, branch-punish, correct
+  spend/save, or none;
 - worst plausible branch;
 - irreplaceable piece or resource;
 - next turn if the move works;
@@ -92,8 +97,10 @@ Before every serious recommendation, answer internally:
 7. What is the worst plausible branch, not just the most likely branch?
 8. What happens if we attack, switch, status, set hazards, set up, recover,
    phaze, scout, or sacrifice?
-9. Does the move improve a concrete route, or only feel active?
-10. What reveal, damage roll, speed order, wake, miss, crit, switch, Spin, Rest,
+9. Why does candidate #1 rank above #2, and when does #2 become #1?
+10. Which safe/default line is rejected because it merely avoids punishment?
+11. Does the move improve a concrete route, or only feel active?
+12. What reveal, damage roll, speed order, wake, miss, crit, switch, Spin, Rest,
     Explosion, phaze, item, or local mechanic would force a re-plan?
 
 Study priorities:
@@ -126,7 +133,8 @@ Default work loop:
 4. Freeze predictions before revealing any replay outcome, answer key, or
    oracle.
 5. Score move quality, state completeness, mechanics accuracy, hidden-info
-   discipline, route tracking, branch pricing, and severe blunders.
+   discipline, route tracking, branch pricing, top-three-to-top-one
+   discrimination, and severe blunders.
 6. Update the smallest useful local artifact:
    - docs/pokemon_mastery/source_to_policy_ledger.md
    - docs/pokemon_mastery/policy_cards/

@@ -18,6 +18,18 @@ Treat external GSC knowledge as source material, not local truth. If the local
 status is unknown or supplied-but-unverified, cap confidence and say what
 fixture, source check, debugger output, or emulator trace would settle it.
 
+Baseline AI boundary:
+
+Base-game trainer AI should remain base-level in planning, but not base-GSC in
+mechanics. Ordinary trainers may keep the legacy move/switch/item decision
+shape, randomness, and limited route awareness, but every shared AI path must
+use romhack-correct mechanics for basic legality and effectiveness: local type
+chart, local physical/special category, capped three-layer Spikes, Rapid Spin
+clearing all layers, type passives when they alter whether a move works, and
+held-item legality or immunity when visible to the path. A base trainer making a
+simple type-chart mistake caused by the hack's changed chart is a mechanics bug,
+not acceptable low-tier behavior.
+
 Opposite boundary:
 
 Do not freeze just because a mechanic is unverified if the recommendation does
@@ -48,6 +60,7 @@ Evidence:
 - `active_goal.md`
 - `cross_domain_autonomy_policy.md`
 - `boss_ai_re_solve_trigger_audit_2026-05-14.md`
+- `romhack_deltas/mechanics_inventory.md`
 - `romhack_deltas/`
 - `mechanics_fixtures/`
 
@@ -56,3 +69,8 @@ Drill:
 Before live romhack advice, list every decision-relevant mechanic and mark each
 one `runtime_verified`, `source_verified`, `supplied_unverified`, `unknown`, or
 `not_decision_relevant`.
+
+Before changing AI tiers, split each rule into one of two buckets:
+
+- mechanics correctness shared by base and boss AI;
+- strategic strength gated behind boss tiers.

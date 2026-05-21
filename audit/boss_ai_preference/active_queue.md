@@ -1,8 +1,8 @@
 # Boss AI Active Preference Queue
 
-Generated: 2026-05-13T09:40:34+00:00
+Generated: 2026-05-17T16:54:05+00:00
 
-Showing 20 / 76 candidate(s).
+Showing 30 / 78 candidate(s).
 
 ## 1. pryce_slowking_vs_ampharos_ground_pivot
 
@@ -224,3 +224,123 @@ Showing 20 / 76 candidate(s).
 - Reasons:
   - Falkner is still under-covered
 - Current scorer top actions: Switch to Noctowl=72, Sand Attack=53
+
+## 21. lance_yanma_vs_lapras_sleep_powder_or_quiver_dance
+
+- Source: `fixture`
+- Leader: Champion Lance
+- Priority: 6
+- Teaches: `hard_rule`, `sequence_policy`
+- Reasons:
+  - contains 1 rare feature(s) in the current corpus
+- Current scorer top actions: Sleep Powder=76, Giga Drain=57
+
+## 22. trace:blue_live
+
+- Source: `trace_capture`
+- Leader: Blue
+- Priority: 6
+- Teaches: `switch_policy`
+- Reasons:
+  - live trace capture should periodically feed the review queue
+  - trace has multiple top moves: TRI_ATTACK:9,THUNDERBOLT:12,ICE_BEAM:16
+- Trace: `audit\boss_ai_trace\blue_live.txt`
+- Chosen: TRI_ATTACK
+- Top moves: TRI_ATTACK:9,THUNDERBOLT:12,ICE_BEAM:16
+
+## 23. trace:brock_live
+
+- Source: `trace_capture`
+- Leader: Brock
+- Priority: 6
+- Teaches: `switch_policy`
+- Reasons:
+  - live trace capture should periodically feed the review queue
+  - trace has multiple top moves: SPIKES:14,PROTECT:17,SURF:20
+- Trace: `audit\boss_ai_trace\brock_live.txt`
+- Chosen: SPIKES
+- Top moves: SPIKES:14,PROTECT:17,SURF:20
+
+## 24. trace:shared_switch_loop_live
+
+- Source: `trace_capture`
+- Leader: Shared switch-loop
+- Priority: 6
+- Teaches: `switch_policy`
+- Reasons:
+  - live trace capture should periodically feed the review queue
+  - trace has multiple top moves: NO_MOVE:0,NO_MOVE:0,NO_MOVE:0
+- Trace: `audit\boss_ai_trace\shared_switch_loop_live.txt`
+- Chosen: NO_MOVE
+- Top moves: NO_MOVE:0,NO_MOVE:0,NO_MOVE:0
+
+## 25. bruno_onix_vs_typhlosion_sandstorm_or_explosion
+
+- Source: `fixture`
+- Leader: Bruno
+- Priority: 5
+- Teaches: none
+- Reasons:
+  - current scorer has modest uncertainty (margin 5)
+  - no pairwise preference has been recorded for this comparison
+  - Bruno has no current preference feedback
+- Current scorer top actions: Explosion=74, Rock Slide=69
+
+## 26. external_gsc_rhydon_vs_sleeping_snorlax_curse_window
+
+- Source: `fixture`
+- Leader: External GSC
+- Priority: 5
+- Teaches: `hard_rule`, `sequence_policy`
+- Reasons:
+  - current scorer has modest uncertainty (margin 5)
+  - existing row is already high-confidence and typed
+  - contains 1 rare feature(s) in the current corpus
+- Current scorer top actions: Curse=68, Earthquake=63
+
+## 27. falkner_pidgeotto_vs_charmander_sand_attack_or_gust
+
+- Source: `fixture`
+- Leader: Falkner
+- Priority: 5
+- Teaches: none
+- Reasons:
+  - current scorer top two actions are close (margin 1)
+  - no pairwise preference has been recorded for this comparison
+  - Falkner is still under-covered
+- Current scorer top actions: Gust=55, Sand Attack=54
+
+## 28. falkner_pidgeotto_vs_pikachu_gust_or_quick_attack
+
+- Source: `fixture`
+- Leader: Falkner
+- Priority: 5
+- Teaches: none
+- Reasons:
+  - current scorer top two actions are close (margin 2)
+  - no pairwise preference has been recorded for this comparison
+  - Falkner is still under-covered
+- Current scorer top actions: Quick Attack=56, Switch to Noctowl=54
+
+## 29. jasmine_magneton_vs_quilava_thunder_wave_or_bolt
+
+- Source: `fixture`
+- Leader: Jasmine
+- Priority: 5
+- Teaches: `weight_hint`
+- Reasons:
+  - current scorer has modest uncertainty (margin 7)
+  - no pairwise preference has been recorded for this comparison
+- Current scorer top actions: Thunderbolt=63, Thunder Wave=56
+
+## 30. karen_gengar_vs_snorlax_destiny_bond_or_thunderbolt
+
+- Source: `fixture`
+- Leader: Karen
+- Priority: 5
+- Teaches: none
+- Reasons:
+  - current scorer has modest uncertainty (margin 6)
+  - no pairwise preference has been recorded for this comparison
+  - Karen has no current preference feedback
+- Current scorer top actions: Destiny Bond=63, Shadow Ball=57

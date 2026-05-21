@@ -20,8 +20,11 @@
 ; These intra-bank thunks live alongside boss.asm in bank 0x0e, so plain
 ; `call AIxxx_HL` from boss.asm reaches them. Most thunks wrap `farcall`
 ; to the bank-0x0b target with `push hl` / `pop hl` so caller's hl is
-; preserved end-to-end. AIGetEnemyMove_HL also preserves bc and passes
-; the move id through c because farcall consumes a for the target bank.
+; preserved end-to-end. Player HP fraction helpers also preserve bc/de
+; because their scoring-bank macro uses b/c as scratch, while lookahead
+; callers use b/c as route-value accumulators. AIGetEnemyMove_HL also
+; preserves bc and passes the move id through c because farcall consumes
+; a for the target bank.
 ; ROM0 was too tight for these (Home section had 13 bytes free; the
 ; 229 ROM0-free is fragmented across rst-handler gaps).
 ;
@@ -63,14 +66,22 @@ AICheckEnemyMaxHP_HL:
 ; ai-layer: THUNK
 AICheckPlayerQuarterHP_HL:
 	push hl
+	push de
+	push bc
 	farcall AICheckPlayerQuarterHP
+	pop bc
+	pop de
 	pop hl
 	ret
 
 ; ai-layer: THUNK
 AICheckPlayerHalfHP_HL:
 	push hl
+	push de
+	push bc
 	farcall AICheckPlayerHalfHP
+	pop bc
+	pop de
 	pop hl
 	ret
 

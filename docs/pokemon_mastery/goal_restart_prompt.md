@@ -62,7 +62,8 @@ Measurement loop:
 - Use rare sealed final exams before claiming major progress.
 - Track trend, not a single score.
 - Score move quality, state completeness, mechanics correctness, severe
-  blunders, hidden-information discipline, route tracking, and plan revision.
+  blunders, hidden-information discipline, route tracking, top-three-to-top-one
+  discrimination, and plan revision.
 - Do not count notebook volume, known-practice examples, or unreviewed wins as
   proof of improvement.
 - Keep final-exam prompts, teams, seeds, and answer keys sealed until after
@@ -101,6 +102,8 @@ For serious battle advice, answer with:
 - exact public state read;
 - current win condition and opponent route;
 - ranked serious alternatives;
+- why #1 ranks above #2, when #2 becomes #1, and which safe/default line was
+  rejected;
 - worst plausible branch;
 - next turn if the move works;
 - missing information that would change the answer.
@@ -116,9 +119,11 @@ Before every serious move, check:
 8. What happens if we attack, switch, set hazards, use status, set up, recover,
    phaze, scout, or sacrifice?
 9. What resource does the move gain, and what does it spend?
-10. Does the move improve a concrete route, or only feel active?
-11. What is the likely next turn if this works?
-12. What information would make us abandon the plan?
+10. Why does #1 rank above #2, and what would make #2 become #1?
+11. Which safe/default line is rejected because it does not buy the route?
+12. Does the move improve a concrete route, or only feel active?
+13. What is the likely next turn if this works?
+14. What information would make us abandon the plan?
 
 Current tactical priorities:
 - Spikes are a subgame, not a checkbox: set, retain, and convert.

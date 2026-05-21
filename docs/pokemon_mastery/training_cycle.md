@@ -12,6 +12,8 @@ live move recommendation better?
 
 ## Current Blind Spots
 
+- Route-budget ranking: promoting the route-buying move from an already
+  plausible top three.
 - Decision compression: choosing one ranked move from a messy board without
   hiding behind commentary.
 - Resource identity: knowing which HP, PP, status, hazard, sleep, and role
@@ -47,6 +49,8 @@ When there is no urgent romhack fixture or boss capture, use
 - choose an unseen Smogon GSC tournament replay;
 - reveal only the current public state;
 - predict both players' best move or switch before revealing the turn;
+- force `#1 over #2 because`, `#2 becomes #1 if`, and a rejected
+  safe/default line on nontrivial turns;
 - compare against the actual strong-player choices;
 - score agreement and error classes separately from sealed quick tests.
 
@@ -96,6 +100,9 @@ For a serious turn, the advice must include:
 - state read;
 - current win condition;
 - ranked serious candidates;
+- why #1 ranks above #2 and what would make #2 become #1;
+- rejected safe/default line, if one is tempting;
+- positive-selection class: convert, deny, branch-punish, spend/save, or none;
 - next turn if the move works;
 - missing information that would change the answer.
 

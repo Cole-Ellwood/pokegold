@@ -2464,8 +2464,9 @@ wBossAIRevealedMovesBitmap:: ds PARTY_LENGTH * 4 ; six 4-byte per-seen-species r
 wBossAILikelyTypeMaskCache:: ds 4
 wBossAISeenPlayerAliveMask:: db ; bit per seen species slot, set while publicly not fainted
 wBossAIRevealedMovesBitmapSpare:: ds 3
+wBossAIPlayerSleepDeniedCount:: db ; public sleep checks where the active player mon stayed asleep
+wBossAIPlayerSleepDeniedMon:: db ; wCurBattleMon + 1 for the tracked sleep count, or 0
 wBossAIScorePtr:: dw
-wBossAISavedEnemyMoveStruct:: ds MOVE_LENGTH
 wBossAITemp:: db
 wBossAITemp2:: db
 wBossAITemp3:: db
