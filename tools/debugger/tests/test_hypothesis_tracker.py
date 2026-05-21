@@ -164,7 +164,7 @@ class FoldHistoryTests(_TempStoreMixin, unittest.TestCase):
         events = load_events(store=store)
         folded = fold_history(events, claim["id"])
         self.assertEqual(folded["status"], "verified")
-        self.assertFalse(folded["unmet_gate"])
+        self.assertEqual(folded["blocked_pass_count"], 0)
 
     def test_verification_fail_promotes_to_refuted(self) -> None:
         store = self._store()
@@ -225,10 +225,13 @@ class FoldHistoryTests(_TempStoreMixin, unittest.TestCase):
         self.assertEqual(folded["confidence"], "repo-proven")
         self.assertIn("engine/battle/late_gen_held_items.asm:15", folded["citations"])
 
-    def test_verified_with_memory_derived_confidence_flags_unmet_gate(self) -> None:
-        # Pairing rule #4: memory-derived alone does not satisfy a
-        # verification gate. If verified without escalating confidence,
-        # the inconsistency surfaces.
+    def test_pass_verdict_on_memory_derived_does_not_promote_status(self) -> None:
+        # Pairing rule #4: memory-derived alone never satisfies a
+        # verification gate. A pass verdict against a memory-derived
+        # claim leaves status open and increments blocked_pass_count.
+        # The gate is enforced at the MOMENT of verification, not
+        # retroactively — later refinement to repo-proven does not
+        # legitimize the earlier blocked pass.
         store = self._store()
         claim = add_claim(
             symptom="x",
@@ -245,8 +248,69 @@ class FoldHistoryTests(_TempStoreMixin, unittest.TestCase):
         )
         events = load_events(store=store)
         folded = fold_history(events, claim["id"])
+        self.assertEqual(folded["status"], "open")
+        self.assertEqual(folded["blocked_pass_count"], 1)
+
+    def test_pass_verdict_after_repo_proven_refinement_verifies(self) -> None:
+        # Escalation path: claim starts as judgment, refinement adds
+        # the repo-proven cite, THEN verification runs. The pass should
+        # promote to verified.
+        store = self._store()
+        claim = add_claim(
+            symptom="x",
+            claim="initial",
+            confidence="judgment",
+            store=store,
+        )
+        add_refinement(
+            parent_id=claim["id"],
+            claim="now grounded",
+            confidence="repo-proven",
+            citations=["engine/battle/late_gen_held_items.asm:1"],
+            store=store,
+        )
+        add_verification(
+            parent_id=claim["id"],
+            command="echo ok",
+            expected="ok",
+            verdict="pass",
+            store=store,
+        )
+        events = load_events(store=store)
+        folded = fold_history(events, claim["id"])
         self.assertEqual(folded["status"], "verified")
-        self.assertTrue(folded["unmet_gate"])
+        self.assertEqual(folded["blocked_pass_count"], 0)
+
+    def test_earlier_pass_blocked_then_escalation_does_not_retroactively_verify(self) -> None:
+        # Failure to retroactively legitimize: pass runs FIRST against
+        # judgment, then refinement escalates to repo-proven. Status
+        # stays open; blocked_pass_count records the gate refusal.
+        store = self._store()
+        claim = add_claim(
+            symptom="x",
+            claim="initial",
+            confidence="judgment",
+            store=store,
+        )
+        add_verification(
+            parent_id=claim["id"],
+            command="echo ok",
+            expected="ok",
+            verdict="pass",
+            store=store,
+        )
+        add_refinement(
+            parent_id=claim["id"],
+            claim="grounded after-the-fact",
+            confidence="repo-proven",
+            citations=["engine/battle/late_gen_held_items.asm:1"],
+            store=store,
+        )
+        events = load_events(store=store)
+        folded = fold_history(events, claim["id"])
+        self.assertEqual(folded["status"], "open")
+        self.assertEqual(folded["blocked_pass_count"], 1)
+        self.assertEqual(folded["confidence"], "repo-proven")
 
 
 class ListTests(_TempStoreMixin, unittest.TestCase):
@@ -410,7 +474,7 @@ class Ag08LivedSmokeTests(_TempStoreMixin, unittest.TestCase):
 
         self.assertEqual(folded["status"], "verified")
         self.assertEqual(folded["confidence"], "repo-proven")
-        self.assertFalse(folded["unmet_gate"])
+        self.assertEqual(folded["blocked_pass_count"], 0)
         self.assertFalse(folded["citation_stale"])
         self.assertIn("engine/battle/late_gen_held_items.asm:15", folded["citations"])
         # The ascii tree should name the verification command.

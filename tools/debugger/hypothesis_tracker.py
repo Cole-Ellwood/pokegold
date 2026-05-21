@@ -373,9 +373,17 @@ def fold_history(events: Sequence[dict[str, Any]], hypothesis_id: str) -> dict[s
     - ``status``: ``open`` | ``verified`` | ``refuted``.
     - ``history``: ordered list of events touching this hypothesis.
     - ``citation_stale``: True if any citation no longer resolves.
-    - ``unmet_gate``: True if status==``verified`` but the latest
-      confidence is not in ``GATE_VALID_LABELS`` (the gate honored only
-      repo-proven; this surfaces an inconsistency).
+    - ``blocked_pass_count``: number of ``pass`` verdicts that did NOT
+      promote to verified because confidence at the time of verification
+      was not in ``GATE_VALID_LABELS``. Surfaces "the gate refused this"
+      without polluting the status filter.
+
+    Gate semantics are enforced at the moment of verification: a later
+    refinement to repo-proven does not legitimize an earlier pass that
+    ran against a memory-derived or judgment claim. V0 intentionally
+    models a single investigation thread — refinements are last-write-
+    wins on claim/confidence/cites, descendants are linearized in
+    created_at order. Explicit branching is deferred to V1.
     """
 
     root_event = next((ev for ev in events if ev.get("id") == hypothesis_id and ev.get("kind") == "claim"), None)
@@ -403,9 +411,14 @@ def fold_history(events: Sequence[dict[str, Any]], hypothesis_id: str) -> dict[s
         "status": "open",
         "history": history,
         "citation_stale": False,
-        "unmet_gate": False,
+        "blocked_pass_count": 0,
     }
 
+    # Track confidence at each step — the gate fires against the
+    # confidence at the moment of verification, not retroactively. A
+    # later refinement to repo-proven does NOT legitimize an earlier
+    # pass that ran against a memory-derived claim.
+    current_confidence = folded["confidence"]
     for ev in history[1:]:
         kind = ev.get("kind")
         if kind == "refinement":
@@ -413,6 +426,7 @@ def fold_history(events: Sequence[dict[str, Any]], hypothesis_id: str) -> dict[s
                 folded["claim"] = ev["claim"]
             if ev.get("confidence"):
                 folded["confidence"] = ev["confidence"]
+                current_confidence = ev["confidence"]
             extra = ev.get("citations") or []
             for cite in extra:
                 if cite not in folded["citations"]:
@@ -422,15 +436,16 @@ def fold_history(events: Sequence[dict[str, Any]], hypothesis_id: str) -> dict[s
         elif kind == "verification":
             verdict = ev.get("verdict")
             if verdict == "pass":
-                folded["status"] = "verified"
+                if current_confidence in GATE_VALID_LABELS:
+                    folded["status"] = "verified"
+                else:
+                    folded["blocked_pass_count"] += 1
             elif verdict == "fail":
+                # Failing verifications refute regardless of grounding.
                 folded["status"] = "refuted"
             # inconclusive leaves status alone
         elif kind == "rejection":
             folded["status"] = "refuted"
-
-    if folded["status"] == "verified" and folded["confidence"] not in GATE_VALID_LABELS:
-        folded["unmet_gate"] = True
 
     return folded
 
@@ -564,8 +579,9 @@ def _format_list(rows: Sequence[dict[str, Any]]) -> str:
         flags: list[str] = []
         if row.get("citation_stale"):
             flags.append("STALE-CITE")
-        if row.get("unmet_gate"):
-            flags.append("UNMET-GATE")
+        blocked = row.get("blocked_pass_count", 0)
+        if blocked:
+            flags.append(f"BLOCKED-PASSES={blocked}")
         flag_str = (" [" + ", ".join(flags) + "]") if flags else ""
         out.append(
             f"{row['id']}  {row['status']:<10}  {row['confidence']:<14}  "
