@@ -433,7 +433,7 @@ be reasoned about as ordinary Atk/SpA damage.
 | EA | MORNING SUN | `MORNING_SUN` | Normal | status | 0 | 100 | 5 | `EFFECT_MORNING_SUN` | 0 | no |
 | EB | SYNTHESIS | `SYNTHESIS` | Grass | status | 0 | 100 | 5 | `EFFECT_SYNTHESIS` | 0 | no |
 | EC | MOONLIGHT | `MOONLIGHT` | Normal | status | 0 | 100 | 5 | `EFFECT_MOONLIGHT` | 0 | no |
-| ED | HIDDEN POWER | `HIDDEN_POWER` | Normal | physical | 1 | 100 | 15 | `EFFECT_HIDDEN_POWER` | 0 | no |
+| ED | HIDDEN POWER | `HIDDEN_POWER` | Normal | physical | 60 | 100 | 15 | `EFFECT_HIDDEN_POWER` | 0 | no |
 | EE | CROSS CHOP | `CROSS_CHOP` | Fighting | physical | 120 | 80 | 20 | `EFFECT_NORMAL_HIT` | 0 | yes |
 | EF | TWISTER | `TWISTER` | Dragon | special | 40 | 100 | 20 | `EFFECT_TWISTER` | 20 | no |
 | F0 | RAIN DANCE | `RAIN_DANCE` | Water | status | 0 | 100 | 5 | `EFFECT_RAIN_DANCE` | 0 | no |
@@ -735,10 +735,10 @@ lives in each same file after the stat/type/item rows.
 | 009 | Blastoise | Water | 94 | 98 | 115 | 93 | 100 | 120 | 620 | `NO_ITEM`, `NO_ITEM` |
 | 010 | Caterpie | Bug | 45 | 30 | 35 | 45 | 20 | 20 | 195 | `NO_ITEM`, `NO_ITEM` |
 | 011 | Metapod | Bug | 60 | 30 | 55 | 30 | 25 | 25 | 225 | `NO_ITEM`, `NO_ITEM` |
-| 012 | Butterfree | Bug/Flying | 90 | 45 | 50 | 110 | 95 | 110 | 500 | `NO_ITEM`, `SILVERPOWDER` |
+| 012 | Butterfree | Bug/Flying | 90 | 45 | 40 | 85 | 80 | 110 | 450 | `NO_ITEM`, `SILVERPOWDER` |
 | 013 | Weedle | Bug/Poison | 40 | 35 | 30 | 50 | 20 | 20 | 195 | `NO_ITEM`, `NO_ITEM` |
 | 014 | Kakuna | Bug/Poison | 45 | 40 | 50 | 35 | 25 | 25 | 220 | `NO_ITEM`, `NO_ITEM` |
-| 015 | Beedrill | Bug/Poison | 75 | 120 | 40 | 120 | 45 | 80 | 480 | `NO_ITEM`, `POISON_BARB` |
+| 015 | Beedrill | Bug/Poison | 75 | 90 | 40 | 120 | 45 | 80 | 450 | `NO_ITEM`, `POISON_BARB` |
 | 016 | Pidgey | Normal/Flying | 50 | 45 | 40 | 56 | 35 | 35 | 261 | `NO_ITEM`, `NO_ITEM` |
 | 017 | Pidgeotto | Normal/Flying | 70 | 60 | 60 | 71 | 50 | 60 | 371 | `NO_ITEM`, `NO_ITEM` |
 | 018 | Pidgeot | Normal/Flying | 113 | 80 | 95 | 91 | 70 | 110 | 559 | `NO_ITEM`, `NO_ITEM` |
@@ -846,13 +846,13 @@ lives in each same file after the stat/type/item rows.
 | 120 | Staryu | Water | 30 | 45 | 55 | 85 | 70 | 55 | 340 | `STARDUST`, `STAR_PIECE` |
 | 121 | Starmie | Water/Psychic | 80 | 75 | 85 | 115 | 125 | 85 | 565 | `STARDUST`, `STAR_PIECE` |
 | 122 | Mr. Mime | Psychic | 40 | 45 | 65 | 90 | 100 | 180 | 520 | `NO_ITEM`, `MYSTERYBERRY` |
-| 123 | Scyther | Bug/Flying | 80 | 110 | 80 | 105 | 55 | 80 | 510 | `NO_ITEM`, `NO_ITEM` |
+| 123 | Scyther | Bug/Flying | 80 | 110 | 80 | 115 | 55 | 80 | 520 | `NO_ITEM`, `NO_ITEM` |
 | 124 | Jynx | Ice/Psychic | 75 | 50 | 55 | 115 | 135 | 95 | 525 | `ICE_BERRY`, `ICE_BERRY` |
 | 125 | Electabuzz | Electric/Fighting | 65 | 105 | 57 | 105 | 95 | 85 | 512 | `NO_ITEM`, `NO_ITEM` |
 | 126 | Magmar | Fire | 120 | 95 | 60 | 82 | 125 | 85 | 567 | `BURNT_BERRY`, `BURNT_BERRY` |
-| 127 | Pinsir | Bug | 80 | 140 | 100 | 85 | 55 | 70 | 530 | `NO_ITEM`, `NO_ITEM` |
+| 127 | Pinsir | Bug | 80 | 140 | 100 | 75 | 55 | 70 | 520 | `NO_ITEM`, `NO_ITEM` |
 | 128 | Tauros | Normal | 75 | 120 | 95 | 110 | 40 | 70 | 510 | `NO_ITEM`, `NO_ITEM` |
-| 129 | Magikarp | Water | 20 | 10 | 55 | 80 | 15 | 20 | 200 | `NO_ITEM`, `NO_ITEM` |
+| 129 | Magikarp | Water | 40 | 30 | 75 | 100 | 35 | 40 | 320 | `NO_ITEM`, `NO_ITEM` |
 | 130 | Gyarados | Water/Dragon | 100 | 125 | 79 | 81 | 90 | 100 | 575 | `NO_ITEM`, `NO_ITEM` |
 | 131 | Lapras | Water/Ice | 130 | 85 | 110 | 60 | 85 | 110 | 580 | `NO_ITEM`, `NO_ITEM` |
 | 132 | Ditto | Normal | 100 | 48 | 48 | 48 | 48 | 48 | 340 | `NO_ITEM`, `NO_ITEM` |
@@ -875,12 +875,12 @@ lives in each same file after the stat/type/item rows.
 | 149 | Dragonite | Dragon/Flying | 121 | 134 | 95 | 70 | 110 | 100 | 630 | `NO_ITEM`, `DRAGON_SCALE` |
 | 150 | Mewtwo | Psychic | 106 | 110 | 90 | 130 | 154 | 90 | 680 | `NO_ITEM`, `BERSERK_GENE` |
 | 151 | Mew | Psychic | 100 | 100 | 100 | 100 | 100 | 100 | 600 | `NO_ITEM`, `MIRACLEBERRY` |
-| 152 | Chikorita | Grass | 55 | 49 | 65 | 45 | 49 | 65 | 328 | `NO_ITEM`, `NO_ITEM` |
-| 153 | Bayleef | Grass | 70 | 72 | 80 | 60 | 73 | 80 | 435 | `NO_ITEM`, `NO_ITEM` |
+| 152 | Chikorita | Grass | 55 | 45 | 65 | 40 | 45 | 65 | 315 | `NO_ITEM`, `NO_ITEM` |
+| 153 | Bayleef | Grass | 82 | 60 | 80 | 60 | 73 | 80 | 435 | `NO_ITEM`, `NO_ITEM` |
 | 154 | Meganium | Grass | 130 | 75 | 107 | 60 | 83 | 100 | 555 | `NO_ITEM`, `NO_ITEM` |
 | 155 | Cyndaquil | Fire | 45 | 52 | 43 | 65 | 60 | 50 | 315 | `NO_ITEM`, `NO_ITEM` |
 | 156 | Quilava | Fire | 68 | 74 | 58 | 80 | 90 | 65 | 435 | `NO_ITEM`, `NO_ITEM` |
-| 157 | Typhlosion | Fire/Normal | 78 | 99 | 78 | 100 | 130 | 70 | 555 | `NO_ITEM`, `NO_ITEM` |
+| 157 | Typhlosion | Fire | 78 | 85 | 78 | 114 | 130 | 70 | 555 | `NO_ITEM`, `NO_ITEM` |
 | 158 | Totodile | Water | 50 | 65 | 64 | 43 | 44 | 48 | 314 | `NO_ITEM`, `NO_ITEM` |
 | 159 | Croconaw | Water | 75 | 90 | 90 | 58 | 59 | 63 | 435 | `NO_ITEM`, `NO_ITEM` |
 | 160 | Feraligatr | Water/Fighting | 85 | 105 | 100 | 87 | 95 | 83 | 555 | `NO_ITEM`, `NO_ITEM` |
@@ -889,7 +889,7 @@ lives in each same file after the stat/type/item rows.
 | 163 | Hoothoot | Normal/Flying | 60 | 50 | 30 | 50 | 36 | 56 | 282 | `NO_ITEM`, `NO_ITEM` |
 | 164 | Noctowl | Normal/Flying | 100 | 50 | 50 | 70 | 110 | 120 | 500 | `NO_ITEM`, `NO_ITEM` |
 | 165 | Ledyba | Bug/Flying | 40 | 40 | 30 | 55 | 40 | 80 | 285 | `NO_ITEM`, `NO_ITEM` |
-| 166 | Ledian | Bug/Flying | 80 | 100 | 50 | 105 | 45 | 120 | 500 | `NO_ITEM`, `NO_ITEM` |
+| 166 | Ledian | Bug/Flying | 80 | 100 | 50 | 90 | 45 | 105 | 470 | `NO_ITEM`, `NO_ITEM` |
 | 167 | Spinarak | Bug/Poison | 40 | 60 | 40 | 30 | 40 | 40 | 250 | `NO_ITEM`, `NO_ITEM` |
 | 168 | Ariados | Bug/Poison | 110 | 90 | 100 | 40 | 60 | 60 | 460 | `NO_ITEM`, `NO_ITEM` |
 | 169 | Crobat | Poison/Flying | 100 | 120 | 105 | 130 | 70 | 80 | 605 | `NO_ITEM`, `NO_ITEM` |
@@ -924,7 +924,7 @@ lives in each same file after the stat/type/item rows.
 | 198 | Murkrow | Dark/Flying | 110 | 100 | 80 | 91 | 100 | 80 | 561 | `NO_ITEM`, `NO_ITEM` |
 | 199 | Slowking | Water/Psychic | 95 | 75 | 80 | 30 | 120 | 110 | 510 | `NO_ITEM`, `KINGS_ROCK` |
 | 200 | Misdreavus | Ghost | 80 | 120 | 80 | 85 | 70 | 85 | 520 | `NO_ITEM`, `SPELL_TAG` |
-| 201 | Unown | Psychic | 148 | 102 | 48 | 48 | 102 | 48 | 496 | `NO_ITEM`, `NO_ITEM` |
+| 201 | Unown | Psychic | 70 | 70 | 70 | 70 | 70 | 70 | 420 | `NO_ITEM`, `NO_ITEM` |
 | 202 | Wobbuffet | Psychic | 220 | 33 | 65 | 33 | 33 | 65 | 449 | `NO_ITEM`, `NO_ITEM` |
 | 203 | Girafarig | Normal/Psychic | 70 | 80 | 65 | 112 | 90 | 65 | 482 | `NO_ITEM`, `NO_ITEM` |
 | 204 | Pineco | Bug | 80 | 65 | 90 | 15 | 35 | 35 | 320 | `NO_ITEM`, `NO_ITEM` |
@@ -935,7 +935,7 @@ lives in each same file after the stat/type/item rows.
 | 209 | Snubbull | Normal | 60 | 80 | 50 | 30 | 40 | 40 | 300 | `NO_ITEM`, `NO_ITEM` |
 | 210 | Granbull | Normal | 90 | 120 | 120 | 45 | 60 | 60 | 495 | `NO_ITEM`, `NO_ITEM` |
 | 211 | Qwilfish | Water/Poison | 85 | 105 | 130 | 95 | 65 | 65 | 545 | `NO_ITEM`, `NO_ITEM` |
-| 212 | Scizor | Bug/Steel | 70 | 130 | 120 | 65 | 55 | 80 | 520 | `NO_ITEM`, `NO_ITEM` |
+| 212 | Scizor | Bug/Steel | 80 | 130 | 120 | 65 | 45 | 80 | 520 | `NO_ITEM`, `NO_ITEM` |
 | 213 | Shuckle | Bug/Rock | 60 | 10 | 230 | 5 | 10 | 230 | 545 | `BERRY`, `BERRY` |
 | 214 | Heracross | Bug/Fighting | 80 | 125 | 75 | 105 | 40 | 95 | 520 | `NO_ITEM`, `NO_ITEM` |
 | 215 | Sneasel | Dark/Ice | 95 | 115 | 55 | 120 | 100 | 75 | 560 | `NO_ITEM`, `QUICK_CLAW` |
@@ -951,7 +951,7 @@ lives in each same file after the stat/type/item rows.
 | 225 | Delibird | Ice/Flying | 100 | 55 | 45 | 75 | 65 | 150 | 490 | `NO_ITEM`, `NO_ITEM` |
 | 226 | Mantine | Water/Flying | 95 | 40 | 85 | 90 | 105 | 140 | 555 | `NO_ITEM`, `NO_ITEM` |
 | 227 | Skarmory | Steel/Flying | 75 | 80 | 140 | 70 | 40 | 70 | 475 | `NO_ITEM`, `NO_ITEM` |
-| 228 | Houndour | Dark/Fire | 45 | 60 | 30 | 65 | 80 | 50 | 330 | `NO_ITEM`, `NO_ITEM` |
+| 228 | Houndour | Dark/Fire | 60 | 60 | 50 | 65 | 80 | 60 | 375 | `NO_ITEM`, `NO_ITEM` |
 | 229 | Houndoom | Dark/Fire | 100 | 90 | 50 | 115 | 130 | 80 | 565 | `NO_ITEM`, `NO_ITEM` |
 | 230 | Kingdra | Water/Dragon | 95 | 95 | 95 | 85 | 105 | 95 | 570 | `NO_ITEM`, `DRAGON_SCALE` |
 | 231 | Phanpy | Ground | 90 | 60 | 60 | 40 | 40 | 40 | 330 | `NO_ITEM`, `NO_ITEM` |
