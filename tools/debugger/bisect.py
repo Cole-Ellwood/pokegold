@@ -29,10 +29,15 @@ Loop:
 - Until bisect terminates: run the scenario subprocess; mark good if
   exit 0, bad if exit nonzero. Exit code 125 is reserved by
   ``git bisect run`` for "cannot test this commit, skip" — V0 deliberately
-  fails closed on 125 with a clean ``git bisect reset`` rather than
-  marking the commit bad. False first-bad is worse than "unsupported
-  in V0." ``skip`` and ``abort`` verdicts proper are deferred to V1.
-- Always ``git bisect reset`` in ``finally``.
+  fails closed on 125 with a best-effort ``git bisect reset`` rather
+  than marking the commit bad. False first-bad is worse than
+  "unsupported in V0." ``skip`` and ``abort`` verdicts proper are
+  deferred to V1.
+- Best-effort ``git bisect reset`` runs in ``finally``. If the reset
+  call itself errors (corrupted refs, missing HEAD, etc.) a warning
+  prints to stderr; we do not raise from ``finally`` because we don't
+  want a failed cleanup to mask the load-bearing bisect verdict. If
+  you see the warning, run ``git bisect reset`` manually.
 
 Returns the first bad commit's full SHA on success.
 
@@ -242,13 +247,20 @@ def run_bisect(
         )
     finally:
         if started:
-            # Best-effort. If reset fails for some reason, the user can
-            # recover with `git bisect reset` manually; we don't want
-            # to mask the original error.
+            # Best-effort reset. We do not raise from finally — a
+            # cleanup failure should not mask the load-bearing bisect
+            # verdict (or original exception). When reset fails, surface
+            # it on stderr with the recovery command so a future session
+            # sees the broken state immediately.
             try:
                 _git(work, "bisect", "reset")
-            except (subprocess.CalledProcessError, BisectError):
-                pass
+            except (subprocess.CalledProcessError, BisectError) as cleanup_exc:
+                print(
+                    f"warning: `git bisect reset` failed in {work}: "
+                    f"{cleanup_exc}. Run `git bisect reset` manually before "
+                    f"resuming work in this checkout.",
+                    file=sys.stderr,
+                )
 
 
 def _maybe_first_bad(bisect_output: str) -> str | None:

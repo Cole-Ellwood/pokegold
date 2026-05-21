@@ -375,9 +375,11 @@ good, nonzero means bad. The harness drives `git bisect` end-to-end
 and prints the first bad commit on success.
 
 Pre-flight refuses on a dirty tracked tree, unresolvable refs, or if
-the repo is already in a bisect state. `git bisect reset` runs
-unconditionally in `finally`, so a failed scenario or signal won't
-leave the repo half-bisected.
+the repo is already in a bisect state. `git bisect reset` is
+attempted in `finally` (best-effort) on every error path; if reset
+itself fails — corrupted refs, missing HEAD, etc. — the harness
+prints a warning to stderr with the manual recovery command rather
+than raising and masking the bisect verdict.
 
 **Exit code 125 fails closed.** `git bisect run` reserves 125 for
 "cannot test this commit (skip)" — the harness refuses rather than
