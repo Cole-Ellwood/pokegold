@@ -363,12 +363,23 @@ python tools/audit/check_release_smoke.py
 
 Always run when in doubt. This is the project-wide audit floor.
 
-**Bisect (v2, deferred)**
+**Bisect**
 
-`python -m tools.debugger bisect --scenario X --good <commit> --bad HEAD`
-is in the v2 backlog (`docs/omni_debugger_v2.md` A-tier). For now,
-manual `git bisect` with the relevant audit script as the criterion
-is the workflow.
+```powershell
+python -m tools.debugger.bisect --good <known-good-commit> --bad HEAD `
+  -- python tools/audit/check_release_smoke.py
+```
+
+The scenario after `--` is exec'd at each midpoint; exit 0 means
+good, nonzero means bad. The harness drives `git bisect` end-to-end
+and prints the first bad commit on success.
+
+Pre-flight refuses on a dirty tracked tree, unresolvable refs, or if
+the repo is already in a bisect state. `git bisect reset` runs
+unconditionally in `finally`, so a failed scenario or signal won't
+leave the repo half-bisected.
+
+Skip/abort verdicts and shell-string scenarios are deferred to V1.
 
 **Proof limit**
 
