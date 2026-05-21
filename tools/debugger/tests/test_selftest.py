@@ -14,6 +14,7 @@ from tools.debugger.selftest import (
     CheckResult,
     SelftestReport,
     _format_text,
+    check_bisect,
     check_coverage,
     check_hypothesis_tracker,
     check_save_state_lab,
@@ -106,6 +107,17 @@ class SaveStateLabCheckTests(unittest.TestCase):
         self.assertIn("fail-closed", result.detail)
 
 
+class BisectCheckTests(unittest.TestCase):
+    """Lived smoke for the V2 bisect surface: a synthetic regression is
+    localized and the temp repo exits bisect state."""
+
+    def test_bisect_check_passes_in_isolation(self) -> None:
+        result = check_bisect(ROOT)
+        self.assertTrue(result.ok, result.error or result.detail)
+        self.assertEqual(result.component, "bisect")
+        self.assertIn("synthetic regression", result.detail)
+
+
 class JsonOutputTests(unittest.TestCase):
     def test_to_jsonable_shape(self) -> None:
         report = SelftestReport(
@@ -188,6 +200,15 @@ class CliFilterTests(unittest.TestCase):
         self.assertEqual(rc, 0)
         text = captured.getvalue()
         self.assertIn("save_state_lab", text)
+        self.assertIn("(1/1 components healthy)", text)
+
+    def test_main_can_filter_to_bisect(self) -> None:
+        captured = io.StringIO()
+        with redirect_stdout(captured):
+            rc = main(["--component", "bisect"])
+        self.assertEqual(rc, 0)
+        text = captured.getvalue()
+        self.assertIn("bisect", text)
         self.assertIn("(1/1 components healthy)", text)
 
 

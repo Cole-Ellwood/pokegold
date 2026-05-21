@@ -407,6 +407,71 @@ def check_save_state_lab(root: Path) -> CheckResult:
     )
 
 
+def check_bisect(root: Path) -> CheckResult:
+    """Run the bisect harness against a synthetic git regression."""
+
+    import subprocess
+    import tempfile
+
+    from .bisect import run_bisect
+
+    def git(repo: Path, *args: str) -> str:
+        return subprocess.run(
+            ["git", *args],
+            cwd=str(repo),
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout
+
+    def inner() -> str:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "bisect_selftest_repo"
+            repo.mkdir()
+            git(repo, "init", "--quiet")
+            git(repo, "config", "user.email", "selftest@example.com")
+            git(repo, "config", "user.name", "Debugger Selftest")
+            git(repo, "config", "commit.gpgsign", "false")
+            git(repo, "checkout", "-b", "main")
+
+            commits: list[str] = []
+            for index in range(5):
+                (repo / "marker.txt").write_text(
+                    "broken" if index >= 3 else "good",
+                    encoding="utf-8",
+                )
+                (repo / "seq.txt").write_text(str(index), encoding="utf-8")
+                git(repo, "add", "marker.txt", "seq.txt")
+                git(repo, "commit", "-m", f"commit-{index}", "--quiet")
+                commits.append(git(repo, "rev-parse", "HEAD").strip())
+
+            scenario = [
+                sys.executable,
+                "-c",
+                "import pathlib,sys; "
+                "sys.exit(0 if pathlib.Path('marker.txt').read_text()=='good' else 1)",
+            ]
+            result = run_bisect(
+                good_ref=commits[0],
+                bad_ref=commits[-1],
+                scenario_argv=scenario,
+                repo=repo,
+            )
+            if result.first_bad_commit != commits[3]:
+                raise AssertionError(
+                    f"expected first bad commit {commits[3]}, got {result.first_bad_commit}"
+                )
+            if (repo / ".git" / "BISECT_LOG").exists():
+                raise AssertionError("bisect state remained after run")
+        return f"bisect synthetic regression localized in {result.steps} steps"
+
+    return _capture(
+        component="bisect",
+        next_command="python -m tools.debugger.bisect --good <good> --bad <bad> -- <argv...>",
+        fn=inner,
+    )
+
+
 NAMED_CHECKS: tuple[tuple[str, Check], ...] = (
     ("capability_audit", check_capability_audit),
     ("inventory", check_inventory),
@@ -420,6 +485,7 @@ NAMED_CHECKS: tuple[tuple[str, Check], ...] = (
     ("visualization", check_visualization),
     ("hypothesis_tracker", check_hypothesis_tracker),
     ("save_state_lab", check_save_state_lab),
+    ("bisect", check_bisect),
 )
 
 CHECKS: tuple[Check, ...] = tuple(check for _, check in NAMED_CHECKS)
