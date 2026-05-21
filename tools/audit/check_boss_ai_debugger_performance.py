@@ -19,7 +19,7 @@ from tools.boss_ai_debugger.rom_scenarios import evaluate_batch
 
 SCENARIO_COUNT = 5000
 ROM_REPLAY_SCENARIO_COUNT = 1000
-ROM_REPLAY_WORKERS = min(6, os.cpu_count() or 1)
+ROM_REPLAY_WORKERS = min(8, os.cpu_count() or 1)
 SEED = 23
 MIN_SCENARIOS_PER_MINUTE = 10_000
 MIN_REVIEWABLE_CHECKS_PER_MINUTE = 1_000
