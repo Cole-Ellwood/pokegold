@@ -379,7 +379,15 @@ the repo is already in a bisect state. `git bisect reset` runs
 unconditionally in `finally`, so a failed scenario or signal won't
 leave the repo half-bisected.
 
-Skip/abort verdicts and shell-string scenarios are deferred to V1.
+**Exit code 125 fails closed.** `git bisect run` reserves 125 for
+"cannot test this commit (skip)" — the harness refuses rather than
+marking the commit bad, on the principle that a false first-bad is
+worse than an explicit refusal. Make sure your scenario returns
+deterministically (0 for good, any nonzero except 125 for bad) before
+running the harness on a long bisect range.
+
+Skip-as-verdict (real `git bisect skip` semantics), shell-string
+scenarios, and `--allow-dirty` are deferred to V1.
 
 **Proof limit**
 
