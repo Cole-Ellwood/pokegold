@@ -57,13 +57,28 @@ FRONT_DOOR_HINT = """Start here:
 """
 
 
+V2_PASSTHROUGH_MODULES = {
+    "hypothesis": "tools.debugger.hypothesis_tracker",
+    "selftest": "tools.debugger.selftest",
+    "save-state-lab": "tools.debugger.save_state_lab",
+    "bisect": "tools.debugger.bisect",
+}
+
+
 def main(argv: Sequence[str] | None = None) -> int:
-    parser = build_parser()
     if argv is None:
         argv = sys.argv[1:]
     if not argv:
-        parser.print_help()
+        build_parser().print_help()
         return 0
+    # v2 passthrough: detected before the outer argparse runs so that
+    # `--help` and other tokens reach the module's own parser cleanly
+    # (argparse REMAINDER on a subparser positional interacts badly
+    # with the outer parser's built-in --help action).
+    if argv[0] in V2_PASSTHROUGH_MODULES:
+        module_name = V2_PASSTHROUGH_MODULES[argv[0]]
+        return _delegate_to_module_main(module_name, argv[1:])
+    parser = build_parser()
     args = parser.parse_args(argv)
     return int(args.func(args))
 
@@ -625,6 +640,59 @@ def build_parser() -> argparse.ArgumentParser:
     clobber_chain.add_argument("--max-depth", type=int, default=8)
     add_output_args(clobber_chain)
     clobber_chain.set_defaults(func=cmd_clobber_chain)
+
+    # Omni-debugger v2 surfaces. Each subparser captures trailing argv
+    # via REMAINDER and delegates to the module's existing main() so
+    # the top-level CLI doesn't have to duplicate every module's flags.
+    # Module-level CLI (`python -m tools.debugger.<module>`) keeps
+    # working unchanged.
+    hypothesis = subparsers.add_parser(
+        "hypothesis",
+        add_help=False,
+        description=(
+            "Persistent debugging-hypothesis tracker (v2). "
+            "Delegates to `python -m tools.debugger.hypothesis_tracker`. "
+            "Pass `--help` to see its subcommands."
+        ),
+    )
+    hypothesis.add_argument("argv", nargs=argparse.REMAINDER)
+    hypothesis.set_defaults(func=cmd_hypothesis)
+
+    selftest = subparsers.add_parser(
+        "selftest",
+        add_help=False,
+        description=(
+            "End-to-end synthetic-input health check (v2). "
+            "Delegates to `python -m tools.debugger.selftest`. "
+            "Pass `--help` for options."
+        ),
+    )
+    selftest.add_argument("argv", nargs=argparse.REMAINDER)
+    selftest.set_defaults(func=cmd_selftest)
+
+    save_state_lab = subparsers.add_parser(
+        "save-state-lab",
+        add_help=False,
+        description=(
+            "Save-state inspect / diff (v2). "
+            "Delegates to `python -m tools.debugger.save_state_lab`. "
+            "Pass `--help` for options."
+        ),
+    )
+    save_state_lab.add_argument("argv", nargs=argparse.REMAINDER)
+    save_state_lab.set_defaults(func=cmd_save_state_lab)
+
+    bisect = subparsers.add_parser(
+        "bisect",
+        add_help=False,
+        description=(
+            "Git-bisect harness (v2). "
+            "Delegates to `python -m tools.debugger.bisect`. "
+            "Pass `--help` for options."
+        ),
+    )
+    bisect.add_argument("argv", nargs=argparse.REMAINDER)
+    bisect.set_defaults(func=cmd_bisect)
 
     return parser
 
@@ -1299,6 +1367,40 @@ def cmd_clobber_chain(args: argparse.Namespace) -> int:
     )
     emit_report(report, args)
     return 0 if report.get("valid") else 1
+
+
+def _delegate_to_module_main(module_name: str, argv: Sequence[str]) -> int:
+    """Import the named module's ``main`` and call it with ``argv``.
+
+    Strips a leading literal ``--`` token from ``argv`` because
+    argparse REMAINDER includes the separator when ``--`` is used to
+    end option parsing in the parent CLI; the module's parser does not
+    expect it.
+    """
+
+    args = list(argv or [])
+    if args and args[0] == "--":
+        args = args[1:]
+    import importlib
+
+    module = importlib.import_module(module_name)
+    return int(module.main(args))
+
+
+def cmd_hypothesis(args: argparse.Namespace) -> int:
+    return _delegate_to_module_main("tools.debugger.hypothesis_tracker", args.argv)
+
+
+def cmd_selftest(args: argparse.Namespace) -> int:
+    return _delegate_to_module_main("tools.debugger.selftest", args.argv)
+
+
+def cmd_save_state_lab(args: argparse.Namespace) -> int:
+    return _delegate_to_module_main("tools.debugger.save_state_lab", args.argv)
+
+
+def cmd_bisect(args: argparse.Namespace) -> int:
+    return _delegate_to_module_main("tools.debugger.bisect", args.argv)
 
 
 def emit_report(report: dict[str, Any], args: argparse.Namespace) -> None:

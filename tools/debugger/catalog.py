@@ -98,6 +98,30 @@ SUBSYSTEMS = (
             "tools/audit/check_cross_bank_call.py",
         ),
     ),
+    Subsystem(
+        id="omni_debugger_v2",
+        title="Omni-debugger v2 surfaces",
+        scope=(
+            "Cross-session investigation affordances on top of the v1 unified debugger: "
+            "persistent hypothesis tree with citation grounding, end-to-end selftest, "
+            "save-state lab (raw memory + WRAM diff, .sgm fail-closed), and bisect harness."
+        ),
+        entrypoints=(
+            "python -m tools.debugger hypothesis list",
+            "python -m tools.debugger selftest",
+            "python -m tools.debugger save-state-lab inspect <state>",
+            "python -m tools.debugger bisect --good <c> --bad <c> -- <argv...>",
+        ),
+        evidence_paths=(
+            "tools/debugger/hypothesis_tracker.py",
+            "tools/debugger/selftest.py",
+            "tools/debugger/save_state_lab.py",
+            "tools/debugger/bisect.py",
+            "docs/omni_debugger_v2.md",
+            "docs/debugger_user_guide.md",
+            "audit/hypothesis_tree.jsonl",
+        ),
+    ),
 )
 
 
@@ -285,6 +309,78 @@ TRIAGE_RULES = (
         ),
         gaps=(
             "Focused ROM replay, fuzzing, and causal provenance are not yet generalized for this surface.",
+        ),
+    ),
+    TriageRule(
+        id="save_state_inspection",
+        title="Save state inspection / format-drift suspicion",
+        path_prefixes=(
+            "ram/",
+        ),
+        symptom_keywords=(
+            "save",
+            "save state",
+            "savestate",
+            ".sgm",
+            "sgm",
+            "save format",
+            "save load",
+            "save file",
+            "loaded weird",
+        ),
+        reason=(
+            "Save-state lab inspects raw memory + WRAM dumps and fails closed on ambiguous .sgm "
+            "before any bug-hunting assumes a working decode."
+        ),
+        commands=(
+            "python -m tools.debugger save-state-lab inspect <state>",
+            "python -m tools.debugger save-state-lab diff <a> <b>",
+            "python tools/audit/check_save_format_version.py",
+        ),
+    ),
+    TriageRule(
+        id="commit_regression",
+        title="Regression localized to a commit range",
+        path_prefixes=(),
+        symptom_keywords=(
+            "regression",
+            "regressed",
+            "broke",
+            "started failing",
+            "stopped working",
+            "since commit",
+            "bisect",
+        ),
+        reason=(
+            "Bisect harness drives `git bisect` against a deterministic scenario command "
+            "with pre-flight ref/clean-tree gates and exit-125 fail-closed semantics."
+        ),
+        commands=(
+            "python -m tools.debugger bisect --good <known-good-commit> --bad HEAD -- <argv...>",
+        ),
+    ),
+    TriageRule(
+        id="multi_step_investigation",
+        title="Multi-step investigation / persistent hypothesis tracking",
+        path_prefixes=(),
+        symptom_keywords=(
+            "hypothesis",
+            "investigation",
+            "session handoff",
+            "across sessions",
+            "persistent debug",
+            "cite",
+            "citation",
+            "grounding",
+        ),
+        reason=(
+            "Hypothesis tracker persists claims with citation grounding so a later session "
+            "inherits the investigation without re-deriving conclusions."
+        ),
+        commands=(
+            "python -m tools.debugger hypothesis list --refresh-citations",
+            "python -m tools.debugger hypothesis add --symptom <s> --claim <c> --confidence <repo-proven|memory-derived|judgment>",
+            "python -m tools.debugger hypothesis show <id>",
         ),
     ),
 )
@@ -760,7 +856,134 @@ def _report_from_capabilities(capabilities: list[Capability]) -> dict[str, Any]:
             }
             for capability in capabilities
         ],
+        "v2_surfaces": _build_v2_surfaces(),
     }
+
+
+def _build_v2_surfaces(root: Path = ROOT) -> list[dict[str, Any]]:
+    """Report on omni-debugger v2 surfaces.
+
+    Reported as a parallel section in ``build_capability_report``. By
+    design these surfaces are NOT counted in ``status_counts`` and do
+    NOT affect ``ready`` — v1 readiness keeps the 11-capability meaning
+    documented in ``docs/omni_debugger_v2.md``. v2 surfaces are
+    additive: future sessions discover them via the front-door audit
+    output but the v1 contract stays exactly stable.
+    """
+
+    surfaces = [
+        _capability(
+            id="hypothesis_tracker",
+            title="Hypothesis Tracker (v2)",
+            status=_complete_if_paths(
+                root,
+                "tools/debugger/hypothesis_tracker.py",
+                "tools/debugger/tests/test_hypothesis_tracker.py",
+                "audit/hypothesis_tree.jsonl",
+            ),
+            scope=(
+                "Append-only JSONL tree of investigation hypotheses with citation grounding. "
+                "repo-proven claims require at least one path:line citation; the gate fires "
+                "at the moment of verification, not retroactively."
+            ),
+            evidence=(
+                "tools/debugger/hypothesis_tracker.py",
+                "audit/hypothesis_tree.jsonl",
+                "docs/debugger_user_guide.md",
+            ),
+            gaps=(),
+            commands=(
+                "python -m tools.debugger hypothesis add --symptom <s> --claim <c> --confidence <label>",
+                "python -m tools.debugger hypothesis list --refresh-citations",
+                "python -m tools.debugger hypothesis show <id>",
+            ),
+        ),
+        _capability(
+            id="debugger_selftest",
+            title="Debugger selftest (v2)",
+            status=_complete_if_paths(
+                root,
+                "tools/debugger/selftest.py",
+                "tools/debugger/tests/test_selftest.py",
+            ),
+            scope=(
+                "End-to-end synthetic-input health check across every wired debugger component. "
+                "Deeper contract than the v1 capability audit: selftest exercises each component's "
+                "underlying function; audit only confirms the capability is registered with its "
+                "evidence paths."
+            ),
+            evidence=(
+                "tools/debugger/selftest.py",
+                "tools/debugger/tests/test_selftest.py",
+            ),
+            gaps=(),
+            commands=(
+                "python -m tools.debugger selftest",
+                "python -m tools.debugger selftest --json",
+                "python -m tools.debugger selftest --component <name>",
+            ),
+        ),
+        _capability(
+            id="save_state_lab",
+            title="Save-state lab (v2)",
+            status=_complete_if_paths(
+                root,
+                "tools/debugger/save_state_lab.py",
+                "tools/debugger/tests/test_save_state_lab.py",
+            ),
+            scope=(
+                "Inspect raw 64 KiB address-space dumps and 8 KiB WRAM images with named-symbol "
+                "deltas via the existing symbol service. .sgm (VBA / VBA-M) files are classified "
+                "and returned as vba_sgm_candidate with decode_supported=false; the lab "
+                "deliberately fails closed rather than guessing a WRAM offset map."
+            ),
+            evidence=(
+                "tools/debugger/save_state_lab.py",
+                "tools/debugger/tests/test_save_state_lab.py",
+            ),
+            gaps=(),
+            commands=(
+                "python -m tools.debugger save-state-lab inspect <state>",
+                "python -m tools.debugger save-state-lab diff <a> <b>",
+            ),
+        ),
+        _capability(
+            id="bisect_harness",
+            title="Bisect harness (v2)",
+            status=_complete_if_paths(
+                root,
+                "tools/debugger/bisect.py",
+                "tools/debugger/tests/test_bisect.py",
+            ),
+            scope=(
+                "Drives `git bisect` against a scenario command passed as trailing argv. "
+                "Pre-flight refuses on dirty tracked tree, unresolvable refs, or repo already "
+                "in bisect state. Scenario exit 0 = good; nonzero = bad; 125 fails closed "
+                "(git bisect run's skip convention). Best-effort `git bisect reset` in finally "
+                "with stderr warning if reset itself fails."
+            ),
+            evidence=(
+                "tools/debugger/bisect.py",
+                "tools/debugger/tests/test_bisect.py",
+            ),
+            gaps=(),
+            commands=(
+                "python -m tools.debugger bisect --good <commit> --bad <commit> -- <argv...>",
+            ),
+        ),
+    ]
+    return [
+        {
+            "id": surface.id,
+            "title": surface.title,
+            "status": surface.status,
+            "scope": surface.scope,
+            "evidence": list(surface.evidence),
+            "gaps": list(surface.gaps),
+            "commands": list(surface.commands),
+        }
+        for surface in surfaces
+    ]
 
 
 def _normalize_path(path: str) -> str:

@@ -73,7 +73,25 @@ python -m tools.debugger report --report .local\tmp\debugger_watch_smoke.json --
 python -m tools.debugger report --report .local\tmp\debugger_watch_smoke.json --format html --out .local\tmp\debugger_report.html
 python -m tools.debugger visualize --report .local\tmp\debugger_replay_boss_ai.json --report .local\tmp\debugger_explain_boss_ai.json --out .local\tmp\debugger_visualization.md
 python -m tools.debugger visualize --report .local\tmp\debugger_explain_damage.json --format html --out .local\tmp\debugger_visualization.html
+python -m tools.debugger selftest
+python -m tools.debugger selftest --component capability_audit --json
+python -m tools.debugger hypothesis add --symptom "physical damage 5x too high" --claim "AG-NN c-mirror suspected" --confidence judgment
+python -m tools.debugger hypothesis list --refresh-citations
+python -m tools.debugger hypothesis show <id>
+python -m tools.debugger save-state-lab inspect <state>
+python -m tools.debugger save-state-lab diff <a> <b>
+python -m tools.debugger bisect --good <known-good-commit> --bad HEAD -- python tools/audit/check_release_smoke.py
 ```
+
+Omni-debugger v2 surfaces (`hypothesis`, `selftest`, `save-state-lab`,
+`bisect`) are passthrough subcommands — the top-level CLI strips the
+subcommand name and hands the remaining argv to the module's own
+parser. So `python -m tools.debugger bisect --help` shows the bisect
+module's help, and the module-level CLI
+(`python -m tools.debugger.bisect ...`) keeps working unchanged. The
+v2 surfaces are reported as a separate `v2_surfaces` section in
+`python -m tools.debugger audit` output and do NOT count toward the
+v1 readiness gate (see `docs/omni_debugger_v2.md`).
 
 Current mature subsystems:
 

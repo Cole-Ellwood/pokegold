@@ -202,6 +202,76 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         )
         self.assertNotIn("effect replay validation", gap_text)
 
+    def test_v2_surfaces_reported_separately_from_v1_ready(self) -> None:
+        # Contract from docs/omni_debugger_v2.md: v2 surfaces are
+        # reported in build_capability_report but do NOT count toward
+        # v1 ready / status_counts. Adding them must not regress the
+        # v1 contract checked in test_capability_report_marks_whole_rom_goal_ready.
+        report = build_capability_report()
+        # v1 invariants — these MUST stay exactly stable.
+        self.assertTrue(report["ready"])
+        self.assertEqual(
+            report["status_counts"],
+            {"complete": 11, "partial": 0, "missing": 0},
+        )
+        # v2_surfaces is a parallel top-level key with its own list.
+        self.assertIn("v2_surfaces", report)
+        surfaces = report["v2_surfaces"]
+        self.assertIsInstance(surfaces, list)
+        ids = {surface["id"] for surface in surfaces}
+        self.assertIn("hypothesis_tracker", ids)
+        self.assertIn("debugger_selftest", ids)
+        self.assertIn("save_state_lab", ids)
+        self.assertIn("bisect_harness", ids)
+        # Each v2 surface ships with at least one runnable command so
+        # the audit output stays decision-useful.
+        for surface in surfaces:
+            self.assertTrue(
+                surface["commands"],
+                f"v2 surface {surface['id']!r} has no commands listed",
+            )
+            self.assertEqual(surface["status"], "complete")
+
+    def test_v2_subcommands_present_in_top_level_cli(self) -> None:
+        # Command presence: invoking each v2 subcommand with --help via
+        # the top-level entry should hit the module's own parser, NOT
+        # the outer "unrecognized command" path.
+        from tools.debugger.__main__ import V2_PASSTHROUGH_MODULES
+
+        self.assertEqual(
+            set(V2_PASSTHROUGH_MODULES.keys()),
+            {"hypothesis", "selftest", "save-state-lab", "bisect"},
+        )
+
+    def test_v2_subcommand_delegates_to_module_main(self) -> None:
+        # Cheap wrapper path per pairing rule #1 (decision-useful test):
+        # one v2 subcommand round-trips through the top-level CLI.
+        # `selftest --component capability_audit` is the cheapest
+        # because it just re-runs the audit (no temp files, no git).
+        stdout = io.StringIO()
+        with redirect_stdout(stdout):
+            code = debugger_main(["selftest", "--component", "capability_audit"])
+        self.assertEqual(code, 0)
+        text = stdout.getvalue()
+        self.assertIn("capability_audit", text)
+        self.assertIn("(1/1 components healthy)", text)
+
+    def test_v2_save_state_inspection_triage_does_not_steal_damage(self) -> None:
+        # Triage routing for v2 should add new rules without overriding
+        # the v1 routing for damage/boss-ai paths.
+        save_state_match = triage_request(symptom="save state loaded weird")
+        save_state_ids = {m.get("id") for m in save_state_match["matches"]}
+        self.assertIn("save_state_inspection", save_state_ids)
+        # Damage symptom keeps routing to damage_chain.
+        damage_match = triage_request(symptom="damage too high")
+        damage_ids = {m.get("id") for m in damage_match["matches"]}
+        self.assertIn("damage_chain", damage_ids)
+
+    def test_v2_inventory_lists_omni_debugger_v2_subsystem(self) -> None:
+        inventory = build_inventory()
+        ids = {sub["id"] for sub in inventory["subsystems"]}
+        self.assertIn("omni_debugger_v2", ids)
+
     def test_damage_changed_file_triages_to_damage_debugger(self) -> None:
         report = triage_request(
             changed_files=("engine/battle/late_gen_held_items.asm",),
