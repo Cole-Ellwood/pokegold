@@ -54,6 +54,8 @@ player can lose, and old knowledge is useful but incomplete.
      `docs/qol_research_report.md`
    - Graphics / emulator visual bugs:
      `docs/graphics_emulator_debugging.md`
+   - Debugger / future debugging roadmap:
+     `tools/debugger/README.md`, `docs/omni_debugger_v2.md`
    - Data rebalance history: `docs/manifest.md`
    - Build/release status: `docs/build.md`, `docs/validation_report.md`
 
