@@ -270,5 +270,81 @@ class WhenWroteGoldenLivedBugSmokeTests(unittest.TestCase):
         self.assertEqual(answer["address_key"], "wramx:01:D141")
 
 
+class WhenWroteTraceSynthesisSmokeTests(unittest.TestCase):
+    """End-to-end smoke for the --trace path (effect-trace synthesis from
+    an instruction trace JSONL, no pre-built effect-trace report).
+
+    The CLI accepts --trace alongside --report, but until this test no
+    integration test exercised the synthesis path. A silent regression
+    in the instruction-trace -> effect-trace translation would have
+    slipped through every existing report-driven test.
+    """
+
+    def test_trace_synthesis_resolves_last_writer_for_watched_address(self) -> None:
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "test.sym").write_text(
+                "01:D141 wCurDamage\n01:4000 BattleCommand_DamageCalc\n",
+                encoding="utf-8",
+            )
+            (root / "instruction_trace.jsonl").write_text(
+                json.dumps(
+                    {
+                        "seq": 0,
+                        "bank": 1,
+                        "pc": 0x4000,
+                        "pc_label": "BattleCommand_DamageCalc",
+                        "opcode": 0x34,
+                        "regs": {"HL": 0xD141},
+                        "bank_state_records": [
+                            {
+                                "name": "wram",
+                                "value": 1,
+                                "value_hex": "01",
+                                "source": "inferred_bank_state.wram",
+                                "source_kind": "inferred_bank_state",
+                                "state_kind": "inferred_from_io_write",
+                                "inferred": True,
+                                "valid_for_space": "wramx",
+                                "valid_for_spaces": ["wramx"],
+                            }
+                        ],
+                        "watch_values": {"wCurDamage": "29"},
+                        "watch_value_specs": [
+                            {
+                                "name": "wCurDamage",
+                                "value_hex": "29",
+                                "address": 0xD141,
+                                "address_hex": "D141",
+                                "bank": 1,
+                                "bank_address": "01:D141",
+                                "size": 1,
+                                "address_watch": False,
+                                "raw": "",
+                                "symbol": "wCurDamage",
+                            }
+                        ],
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            report = run_when_wrote(
+                addresses=("01:D141",),
+                traces=("instruction_trace.jsonl",),
+                symbols_path="test.sym",
+                root=root,
+            )
+
+        self.assertTrue(report["valid"], report)
+        answer = report["answers"][0]
+        self.assertEqual(answer["address_key"], "wramx:01:D141")
+        writer = answer.get("last_writer") or {}
+        self.assertEqual(writer.get("pc"), "01:4000")
+        self.assertEqual(writer.get("pc_label"), "BattleCommand_DamageCalc")
+        self.assertEqual(writer.get("value_hex"), "2A")
+
+
 if __name__ == "__main__":
     unittest.main()
