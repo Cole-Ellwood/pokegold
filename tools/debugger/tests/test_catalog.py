@@ -4962,6 +4962,141 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertGreater(data["input_log_minimization"]["reduction_step_count"], 0)
         self.assertEqual(minimized_lines, ["WAIT 1", "A"])
 
+    def test_cli_minimize_reduces_battle_scenario_with_text_predicates(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            scenario = root / "battle.jsonl"
+            scenario.write_text(
+                json.dumps(
+                    {
+                        "id": "battle_case",
+                        "enemy_party": [
+                            {"species": "PIDGEY", "moves": ["GUST"]},
+                            {"species": "MILTANK", "moves": ["TACKLE", "ROLLOUT"]},
+                            {"species": "ZUBAT", "moves": ["LEECH_LIFE"]},
+                            {"species": "HAUNTER", "moves": ["LICK", "MEAN_LOOK"]},
+                            {"species": "RATTATA", "moves": ["QUICK_ATTACK"]},
+                            {"species": "GEODUDE", "moves": ["ROCK_THROW"]},
+                        ],
+                        "modifiers": ["rain", "critical_window"],
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            out_dir = root / "shrunk"
+            out = root / "minimize.json"
+
+            with redirect_stdout(io.StringIO()):
+                code = debugger_main(
+                    [
+                        "minimize",
+                        "--domain",
+                        "battle",
+                        "--scenario",
+                        str(scenario),
+                        "--scenario-id",
+                        "battle_case",
+                        "--expect",
+                        "contains=MILTANK",
+                        "--expect",
+                        "contains=ROLLOUT",
+                        "--expect",
+                        "contains=HAUNTER",
+                        "--expect",
+                        "contains=MEAN_LOOK",
+                        "--expect",
+                        "contains=critical_window",
+                        "--out-shrunk-scenario-dir",
+                        str(out_dir),
+                        "--json-out",
+                        str(out),
+                    ]
+                )
+            data = json.loads(out.read_text(encoding="utf-8"))
+            shrunk_path = out_dir / "battle_battle_case.json"
+            shrunk = json.loads(shrunk_path.read_text(encoding="utf-8"))
+
+        battle = data["battle_minimization"]
+        self.assertEqual(code, 0)
+        self.assertTrue(data["valid"], data["errors"])
+        self.assertEqual(data["domains"], ["battle"])
+        self.assertTrue(battle["preserved"])
+        self.assertEqual(battle["best"]["shrunk_counts"]["pokemon_count"], 2)
+        self.assertEqual({mon["species"] for mon in shrunk["enemy_party"]}, {"MILTANK", "HAUNTER"})
+        self.assertTrue(battle["best"]["out_scenario"]["written"])
+        self.assertFalse(data["input_log_minimization"]["attempted"])
+
+    def test_cli_minimize_reduces_map_script_scenario_with_text_predicates(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            scenario = root / "scripts.jsonl"
+            scenario.write_text(
+                json.dumps(
+                    {
+                        "id": "script_case",
+                        "scenario_type": "map_script",
+                        "steps": [
+                            {"op": "load_map"},
+                            {"op": "face_object"},
+                            {"op": "open_text"},
+                            {"op": "jump_script", "label": "UnitNpcScript"},
+                            {"op": "show_text"},
+                            {"op": "close_text"},
+                        ],
+                        "events": [{"id": "noise"}, {"id": "unit_signpost"}],
+                        "state_preconditions": [
+                            {"kind": "map_position"},
+                            {"kind": "script_entry", "symbol": "UnitNpcScript"},
+                        ],
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            out_dir = root / "shrunk"
+            out = root / "minimize.json"
+
+            with redirect_stdout(io.StringIO()):
+                code = debugger_main(
+                    [
+                        "minimize",
+                        "--domain",
+                        "map_script",
+                        "--scenario",
+                        str(scenario),
+                        "--scenario-id",
+                        "script_case",
+                        "--expect",
+                        "contains=face_object",
+                        "--expect",
+                        "contains=jump_script",
+                        "--expect",
+                        "contains=show_text",
+                        "--expect",
+                        "contains=unit_signpost",
+                        "--expect",
+                        "contains=UnitNpcScript",
+                        "--out-shrunk-scenario-dir",
+                        str(out_dir),
+                        "--json-out",
+                        str(out),
+                    ]
+                )
+            data = json.loads(out.read_text(encoding="utf-8"))
+            shrunk_path = out_dir / "map_script_script_case.json"
+            shrunk = json.loads(shrunk_path.read_text(encoding="utf-8"))
+
+        script = data["map_script_minimization"]
+        self.assertEqual(code, 0)
+        self.assertTrue(data["valid"], data["errors"])
+        self.assertEqual(data["domains"], ["map_script"])
+        self.assertTrue(script["preserved"])
+        self.assertEqual(script["best"]["shrunk_counts"]["step_count"], 3)
+        self.assertEqual([step["op"] for step in shrunk["steps"]], ["face_object", "jump_script", "show_text"])
+        self.assertTrue(script["best"]["out_scenario"]["written"])
+        self.assertFalse(data["input_log_minimization"]["attempted"])
+
     def test_minimize_reduces_content_state_patch_report(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

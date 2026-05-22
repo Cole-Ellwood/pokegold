@@ -948,8 +948,9 @@ scenarios a human (or LLM) can read at a glance. Faster handoff.
 - `tools/debugger/shrink_map_script.py` — reduces a map-script reproducer.
 - Each shrinker writes the minimized artifact to `.local/tmp/shrunk/<id>.json` AND
   records the reduction path (Hypothesis-style "shrink trace") for postmortem.
-- CLI integration: current slice exposes `debugger minimize --domain input_log ...`;
-  add `battle` and `map_script` choices only with their shrinkers.
+- CLI integration: `debugger minimize --domain input_log|battle|map_script ...`.
+  Battle/map-script domains preserve explicit scenario text predicates until
+  a materialization/replay oracle proves the minimized scenario against ROM.
 
 **Scope (out)**: full Hypothesis library port (heavy dependency); we hand-roll
 shrinkers for these 3 domains.

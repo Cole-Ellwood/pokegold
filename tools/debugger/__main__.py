@@ -236,7 +236,7 @@ def build_parser() -> argparse.ArgumentParser:
     trace_index.set_defaults(func=cmd_trace_index)
 
     minimize = subparsers.add_parser("minimize")
-    minimize.add_argument("--domain", action="append", choices=("input_log",), default=[])
+    minimize.add_argument("--domain", action="append", choices=("input_log", "battle", "map_script"), default=[])
     minimize.add_argument("--report", action="append", default=[])
     minimize.add_argument("--trace", action="append", default=[])
     minimize.add_argument("--input-log", action="append", default=[])
@@ -255,6 +255,7 @@ def build_parser() -> argparse.ArgumentParser:
     minimize.add_argument("--out-scenarios", default="")
     minimize.add_argument("--out-trace", default="")
     minimize.add_argument("--out-input-log", default="")
+    minimize.add_argument("--out-shrunk-scenario-dir", default="")
     minimize.add_argument("--out-state-report", default="")
     minimize.add_argument("--execute-state-patches", action="store_true")
     minimize.add_argument("--execute-semantic-reducers", action="store_true")
@@ -998,6 +999,7 @@ def cmd_minimize(args: argparse.Namespace) -> int:
         out_scenarios=args.out_scenarios,
         out_trace=args.out_trace,
         out_input_log=args.out_input_log,
+        out_shrunk_scenario_dir=args.out_shrunk_scenario_dir,
         out_state_report=args.out_state_report,
         execute_state_patches=args.execute_state_patches,
         execute_semantic_reducers=args.execute_semantic_reducers,

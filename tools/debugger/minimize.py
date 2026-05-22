@@ -22,7 +22,9 @@ from .input_log import BUTTON_ALIASES, parse_input_log
 from .localize import dict_items, normalize_path
 from .provenance import display_path, parse_symbol_table, resolve_path
 from .reporting import load_reports
+from .shrink_battle import shrink_battle_scenario
 from .shrink_input_log import ddmin_items
+from .shrink_map_script import shrink_map_script_scenario
 from .testgen import suggest_tests
 from .trace_index import build_symbol_address_index, extract_trace_events, finalize_events
 from .workflow import command_address_arg, command_is_runnable, execute_step
@@ -56,6 +58,7 @@ SURFACE_KEYWORDS = {
     "boss_ai": ("boss", "ai", "selector", "score", "switch", "policy"),
 }
 CONTEXT_LIST_KEYS = ("prelude", "frames", "context", "events")
+SUPPORTED_MINIMIZATION_DOMAINS = ("input_log", "battle", "map_script")
 
 
 def build_minimization_plan(
@@ -79,6 +82,7 @@ def build_minimization_plan(
     out_scenarios: str = "",
     out_trace: str = "",
     out_input_log: str = "",
+    out_shrunk_scenario_dir: str = "",
     out_state_report: str = "",
     execute_state_patches: bool = False,
     execute_semantic_reducers: bool = False,
@@ -164,9 +168,9 @@ def build_minimization_plan(
         root=root,
     )
     domain_errors = [
-        f"unsupported minimization domain {domain!r}; supported: input_log"
+        f"unsupported minimization domain {domain!r}; supported: {', '.join(SUPPORTED_MINIMIZATION_DOMAINS)}"
         for domain in domains
-        if domain != "input_log"
+        if domain not in SUPPORTED_MINIMIZATION_DOMAINS
     ]
     input_log_minimization = (
         build_input_log_minimization(
@@ -186,6 +190,32 @@ def build_minimization_plan(
             "input_log_count": len(loaded_input_logs),
             "expectation_count": 0,
         }
+    )
+    battle_minimization = (
+        build_scenario_domain_minimization(
+            domain="battle",
+            selected_rows=selected_rows,
+            expectations=expectations,
+            expectation_files=expectation_files,
+            events=events,
+            out_shrunk_scenario_dir=out_shrunk_scenario_dir,
+            root=root,
+        )
+        if "battle" in domains
+        else disabled_scenario_domain_minimization(domain="battle", domains=domains, selected_rows=selected_rows)
+    )
+    map_script_minimization = (
+        build_scenario_domain_minimization(
+            domain="map_script",
+            selected_rows=selected_rows,
+            expectations=expectations,
+            expectation_files=expectation_files,
+            events=events,
+            out_shrunk_scenario_dir=out_shrunk_scenario_dir,
+            root=root,
+        )
+        if "map_script" in domains
+        else disabled_scenario_domain_minimization(domain="map_script", domains=domains, selected_rows=selected_rows)
     )
     surfaces = infer_surfaces(
         symbols=symbols,
@@ -218,6 +248,8 @@ def build_minimization_plan(
         *state_patch_minimization.get("errors", []),
         *evidence_minimization.get("errors", []),
         *input_log_minimization.get("errors", []),
+        *battle_minimization.get("errors", []),
+        *map_script_minimization.get("errors", []),
         *domain_errors,
     ]
     return {
@@ -248,8 +280,10 @@ def build_minimization_plan(
         "state_patch_minimization": state_patch_minimization,
         "evidence_minimization": evidence_minimization,
         "input_log_minimization": input_log_minimization,
+        "battle_minimization": battle_minimization,
+        "map_script_minimization": map_script_minimization,
         "known_limits": [
-            "This command can extract scenario subsets, minimize content-state or explicit generic state-space WRAM patch sets against explicit expectations, minimize arbitrary trace evidence, and reduce supported text input logs while preserving retained input timing; deeper semantic ddmin still runs in focused subsystem tools where they exist.",
+            "This command can extract scenario subsets, minimize content-state or explicit generic state-space WRAM patch sets against explicit expectations, minimize arbitrary trace evidence, reduce supported text input logs while preserving retained input timing, and shrink battle/map-script scenario JSON against explicit text predicates; deeper semantic ddmin still runs in focused subsystem tools where they exist.",
             "Placeholder commands need a concrete generated scenario, bug id, save state, or ROM materialization artifact before execution.",
         ],
     }
@@ -2748,6 +2782,195 @@ def build_input_log_minimization(
             "Input-log minimization preserves explicit input predicates and retained event timing in the text log; it does not prove the minimized log still reproduces the ROM symptom until replay/watch routes execute.",
         ],
     }
+
+
+def disabled_scenario_domain_minimization(
+    *,
+    domain: str,
+    domains: tuple[str, ...],
+    selected_rows: list[dict[str, Any]],
+) -> dict[str, Any]:
+    return {
+        "attempted": False,
+        "reason": (
+            f"disabled by --domain filter: {', '.join(domains)}"
+            if domains
+            else f"run with --domain {domain} to shrink {domain} scenario JSON"
+        ),
+        "errors": [],
+        "scenario_count": len(selected_rows),
+        "expectation_count": 0,
+    }
+
+
+def build_scenario_domain_minimization(
+    *,
+    domain: str,
+    selected_rows: list[dict[str, Any]],
+    expectations: tuple[str, ...],
+    expectation_files: tuple[str, ...],
+    events: tuple[str, ...],
+    out_shrunk_scenario_dir: str,
+    root: Path,
+) -> dict[str, Any]:
+    scenario_expectations, expectation_errors = scenario_text_expectations(
+        expectations=expectations,
+        expectation_files=expectation_files,
+        events=events,
+        root=root,
+    )
+    if not selected_rows:
+        return {
+            "attempted": False,
+            "reason": "no selected scenarios were available",
+            "errors": expectation_errors,
+            "scenario_count": 0,
+            "expectation_count": len(scenario_expectations),
+        }
+    if not scenario_expectations:
+        return {
+            "attempted": False,
+            "reason": "no scenario text predicate was supplied",
+            "errors": expectation_errors,
+            "scenario_count": len(selected_rows),
+            "expectation_count": 0,
+        }
+
+    predicate = scenario_text_predicate(scenario_expectations)
+    shrinker = shrink_battle_scenario if domain == "battle" else shrink_map_script_scenario
+    results = [
+        shrinker(
+            copy.deepcopy(row),
+            predicate=predicate,
+            scenario_path=scenario_id_for(row),
+            out_scenario=default_domain_shrink_path(domain, row, out_dir=out_shrunk_scenario_dir),
+            root=root,
+        )
+        for row in selected_rows
+    ]
+    preserved_results = [result for result in results if result.get("preserved")]
+    best = min(preserved_results, key=scenario_domain_score, default={})
+    errors = list(expectation_errors)
+    if not preserved_results:
+        errors.append(f"no {domain} scenario preserved the supplied text predicates")
+        for result in results:
+            errors.extend(str(error) for error in result.get("errors", []))
+    return {
+        "attempted": True,
+        "domain": domain,
+        "preserved": bool(preserved_results),
+        "scenario_count": len(selected_rows),
+        "expectation_count": len(scenario_expectations),
+        "expectations": [
+            {
+                "id": str(expectation.get("id", "")),
+                "type": str(expectation.get("type", "")),
+                "contains": str(expectation.get("contains", "")),
+            }
+            for expectation in scenario_expectations
+        ],
+        "best": public_scenario_domain_result(best) if best else {},
+        "results": [public_scenario_domain_result(result, include_scenario=False) for result in results[:8]],
+        "errors": errors,
+        "known_limits": [
+            (
+                f"{domain} minimization preserves explicit text predicates over scenario JSON; "
+                "it does not prove the minimized scenario still reproduces the ROM symptom until a "
+                "materialization/replay route executes it."
+            ),
+        ],
+    }
+
+
+def scenario_text_expectations(
+    *,
+    expectations: tuple[str, ...],
+    expectation_files: tuple[str, ...],
+    events: tuple[str, ...],
+    root: Path,
+) -> tuple[list[dict[str, Any]], list[str]]:
+    loaded_expectations, expectation_errors = load_expectation_files(
+        expectation_files=expectation_files,
+        root=root,
+    )
+    all_expectations = normalize_expectations(
+        [
+            *[parse_cli_expectation(item) for item in expectations],
+            *loaded_expectations,
+            *input_expectations(
+                symbols=(),
+                events=events,
+                rules=(),
+                addresses=(),
+                source_files=(),
+            ),
+        ]
+    )
+    return [
+        expectation
+        for expectation in all_expectations
+        if supports_scenario_text_expectation(expectation)
+    ], expectation_errors
+
+
+def supports_scenario_text_expectation(expectation: dict[str, Any]) -> bool:
+    return str(expectation.get("type", "")) in {"contains_text", "text_absent"} and bool(expectation.get("contains"))
+
+
+def scenario_text_predicate(expectations: list[dict[str, Any]]) -> Callable[[dict[str, Any]], bool]:
+    def predicate(candidate: dict[str, Any]) -> bool:
+        text = json.dumps(candidate, sort_keys=True)
+        for expectation in expectations:
+            needle = str(expectation.get("contains", ""))
+            count = text.count(needle)
+            if str(expectation.get("type", "")) == "text_absent":
+                max_count = int(expectation.get("max_count", 0) or 0)
+                if count > max_count:
+                    return False
+                continue
+            min_count = int(expectation.get("min_count", 1) or 1)
+            max_count = expectation.get("max_count")
+            if count < min_count:
+                return False
+            if max_count not in {None, ""} and count > int(max_count):
+                return False
+        return True
+
+    return predicate
+
+
+def default_domain_shrink_path(domain: str, scenario: dict[str, Any], *, out_dir: str) -> str:
+    scenario_id = safe_name(scenario_id_for(scenario)) or "selected"
+    directory = out_dir or ".local/tmp/shrunk"
+    return str(Path(directory) / f"{domain}_{scenario_id}.json")
+
+
+def scenario_domain_score(report: dict[str, Any]) -> tuple[int, str]:
+    counts = report.get("shrunk_counts", {}) if isinstance(report.get("shrunk_counts"), dict) else {}
+    score = sum(int(value) for value in counts.values() if isinstance(value, int))
+    return score, str(report.get("scenario_path", ""))
+
+
+def public_scenario_domain_result(
+    report: dict[str, Any],
+    *,
+    include_scenario: bool = True,
+) -> dict[str, Any]:
+    out = {
+        "valid": bool(report.get("valid")),
+        "preserved": bool(report.get("preserved")),
+        "scenario_path": str(report.get("scenario_path", "")),
+        "original_counts": report.get("original_counts", {}),
+        "shrunk_counts": report.get("shrunk_counts", {}),
+        "removed_counts": report.get("removed_counts", {}),
+        "reduction_step_count": int(report.get("reduction_step_count", 0) or 0),
+        "out_scenario": report.get("out_scenario", {}),
+        "errors": [str(error) for error in report.get("errors", [])],
+    }
+    if include_scenario:
+        out["shrunk_scenario"] = report.get("shrunk_scenario", {})
+        out["reduction_trace"] = report.get("reduction_trace", [])
+    return out
 
 
 def supports_input_log_expectation(expectation: dict[str, Any]) -> bool:
