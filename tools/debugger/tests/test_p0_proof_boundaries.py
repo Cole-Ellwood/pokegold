@@ -361,6 +361,18 @@ class P0ProofBoundaryAcceptanceTests(unittest.TestCase):
             ],
             "instruction_observed",
         )
+        self.assertEqual(
+            ranked_reverse["proof_status_by_source"][
+                "bank_state:last_writer:sram:inferred_bank_state.sram"
+            ],
+            "instruction_observed",
+        )
+        self.assertEqual(
+            ranked["proof_status_by_source"][
+                "bank_state:last_writer:sram:inferred_bank_state.sram"
+            ],
+            "instruction_observed",
+        )
 
     def test_dynamic_taint_consumes_typed_bank_state_records_for_runtime_bank_match(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

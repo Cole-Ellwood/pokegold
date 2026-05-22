@@ -292,6 +292,7 @@ def rank_findings(
         "errors": errors,
         "finding_count": len(findings),
         "proof_status_counts": proof_status_counts(findings),
+        "proof_status_by_source": proof_status_by_source_summary(findings),
         "findings": findings,
     }
 
@@ -3959,6 +3960,17 @@ def proof_status_counts(items: list[dict[str, Any]]) -> dict[str, int]:
     return {status: count for status, count in counts.items() if count}
 
 
+def proof_status_by_source_summary(items: list[dict[str, Any]]) -> dict[str, str]:
+    summary: dict[str, str] = {}
+    for item in items:
+        per_source = item.get("proof_status_by_source")
+        if not isinstance(per_source, dict):
+            continue
+        for key, value in per_source.items():
+            summary[str(key)] = strongest_proof_status([summary.get(str(key)), value])
+    return dict(sorted(summary.items()))
+
+
 def clamp_severity(value: int) -> int:
     return max(0, min(95, int(value)))
 
@@ -4026,7 +4038,23 @@ def finding(
         "evidence_atoms": merged_atoms,
     }
     out["proof_status"] = normalize_proof_status(proof_status) or infer_proof_status(out)
+    out["proof_status_by_source"] = bank_state_record_proof_status_by_source(merged_atoms)
     return out
+
+
+def bank_state_record_proof_status_by_source(atoms: Any) -> dict[str, str]:
+    by_source: dict[str, str] = {}
+    for atom in evidence_atoms(atoms):
+        proof = normalize_proof_status(atom.get("proof_status"))
+        for group, records in bank_state_record_groups(atom):
+            for record in records:
+                name = str(record.get("name") or "")
+                source = str(record.get("source") or record.get("source_kind") or "")
+                if not name or not source:
+                    continue
+                key = f"bank_state:{group}:{name}:{source}"
+                by_source[key] = strongest_proof_status([by_source.get(key), proof])
+    return dict(sorted(by_source.items()))
 
 
 def bank_state_record_evidence_from_atoms(atoms: Any) -> list[str]:
