@@ -118,6 +118,7 @@ def run_chaos_campaign(
         "minimal_seed": first.get("run_seed") if first else None,
         "candidate_input_log": first.get("input_log", []) if first else [],
         "divergences": divergences,
+        "adapter_capabilities": chaos_adapter_capabilities(),
         "known_limits": [
             "Chaos schedule generation is deterministic and hardware-envelope bounded; PyBoy interrupt/DMA perturbation is a follow-up adapter layer.",
             "A divergence is only as strong as the runner observation supplied by the caller.",
@@ -157,6 +158,7 @@ def run_named_chaos_scenario(
             "minimal_seed": None,
             "candidate_input_log": [],
             "divergences": [],
+            "adapter_capabilities": chaos_adapter_capabilities(),
             "known_limits": [],
             "errors": [f"unknown chaos scenario: {scenario}"],
             "warnings": [],
@@ -234,6 +236,7 @@ def drive_pyboy_with_chaos_schedule(
         "applied_perturbation_count": 0,
         "planned_not_applied": planned_not_applied,
         "planned_not_applied_count": planned_not_applied_count,
+        "adapter_capabilities": chaos_adapter_capabilities(),
         "public_api_methods_used": ["button", "tick"],
         "proof_boundary": [
             "PyBoy public API exposes frame ticks, delayed button events, memory, hooks, and save/load state.",
@@ -243,6 +246,18 @@ def drive_pyboy_with_chaos_schedule(
         "warnings": [],
         "error_count": 0,
         "warning_count": 0,
+    }
+
+
+def chaos_adapter_capabilities() -> dict[str, Any]:
+    return {
+        "pyboy_public_api": True,
+        "frame_tick_playback": True,
+        "button_playback": True,
+        "cycle_level_timing_applied": False,
+        "lower_level_backend_required": True,
+        "planned_not_applied_fields": list(PYBOY_CYCLE_LEVEL_PERTURBATION_FIELDS),
+        "unsupported_reason": PYBOY_PUBLIC_API_LIMIT_REASON,
     }
 
 

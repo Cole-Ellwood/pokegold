@@ -11,6 +11,7 @@ from tools.debugger.chaos import (
     PYBOY_PUBLIC_API_LIMIT_REASON,
     VBLANK_DELTA_CYCLES,
     build_chaos_schedule,
+    chaos_adapter_capabilities,
     drive_pyboy_with_chaos_schedule,
     format_report,
     report_json,
@@ -110,6 +111,7 @@ class ChaosModeTests(unittest.TestCase):
 
         self.assertIn("Chaos campaign", text)
         self.assertEqual(encoded["kind"], "unified_debugger_chaos_campaign")
+        self.assertFalse(encoded["adapter_capabilities"]["cycle_level_timing_applied"])
 
     def test_named_scenarios_drive_cli_contract(self) -> None:
         stable = run_named_chaos_scenario(
@@ -165,6 +167,7 @@ class ChaosModeTests(unittest.TestCase):
         report = drive_pyboy_with_chaos_schedule(pyboy, schedule)
 
         self.assertEqual(report["applied_perturbation_count"], 0)
+        self.assertFalse(report["adapter_capabilities"]["cycle_level_timing_applied"])
         self.assertGreater(report["planned_not_applied_count"], 0)
         reasons = {item["reason"] for item in report["planned_not_applied"]}
         self.assertEqual(reasons, {PYBOY_PUBLIC_API_LIMIT_REASON})
@@ -177,6 +180,14 @@ class ChaosModeTests(unittest.TestCase):
 
         self.assertTrue(report["stopped"])
         self.assertEqual(report["executed_frame_count"], 2)
+
+    def test_adapter_capabilities_are_machine_queryable(self) -> None:
+        capabilities = chaos_adapter_capabilities()
+
+        self.assertTrue(capabilities["frame_tick_playback"])
+        self.assertTrue(capabilities["button_playback"])
+        self.assertFalse(capabilities["cycle_level_timing_applied"])
+        self.assertIn("dma_cpu_phase", capabilities["planned_not_applied_fields"])
 
     def test_write_candidate_input_log_artifact(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

@@ -25733,6 +25733,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertFalse(stable["diverged"])
         self.assertGreaterEqual(stable["stable_count"], 99)
         self.assertTrue(flake["diverged"])
+        self.assertFalse(flake["adapter_capabilities"]["cycle_level_timing_applied"])
         self.assertIsInstance(flake["minimal_seed"], int)
         self.assertIn("START", flake["candidate_input_log"])
         self.assertEqual(flake_input_lines, ["A", "WAIT 6", "START"])
