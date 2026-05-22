@@ -501,6 +501,24 @@ class DapServerSetBreakpointsTests(unittest.TestCase):
         self.assertFalse(responses[0]["success"])
         self.assertIn("source object", responses[0]["message"])
 
+    def test_set_breakpoints_rejects_non_string_source_path(self) -> None:
+        server = DapServer()
+        responses = server.handle_message({
+            "seq": 8,
+            "type": "request",
+            "command": "setBreakpoints",
+            "arguments": {
+                "source": {"path": 7},
+                "breakpoints": [{"line": 120}],
+            },
+        })
+
+        self.assertFalse(responses[0]["success"])
+        self.assertIn(
+            "source.path/source.name must be strings",
+            responses[0]["message"],
+        )
+
     def test_set_breakpoints_rejects_non_integer_line(self) -> None:
         server = DapServer()
         responses = server.handle_message({

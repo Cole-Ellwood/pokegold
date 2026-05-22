@@ -381,7 +381,23 @@ class DapServer:
                 command="setBreakpoints",
                 message="setBreakpoints requires arguments.source object",
             )]
-        source_key = str(source.get("path") or source.get("name") or "").strip()
+        source_key = ""
+        for source_field in ("path", "name"):
+            raw_source_key = source.get(source_field)
+            if raw_source_key is None or raw_source_key == "":
+                continue
+            if not isinstance(raw_source_key, str):
+                return [self._error_response(
+                    request_seq=request_seq,
+                    command="setBreakpoints",
+                    message=(
+                        "setBreakpoints source.path/source.name "
+                        "must be strings"
+                    ),
+                )]
+            source_key = raw_source_key.strip()
+            if source_key:
+                break
         if not source_key:
             return [self._error_response(
                 request_seq=request_seq,
