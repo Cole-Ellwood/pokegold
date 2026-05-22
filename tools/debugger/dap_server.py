@@ -4,10 +4,9 @@
 `debugger dap --port 4711` exposes a small DAP-shaped surface so Claude
 and Codex (and VS Code, and any DAP client) can drive the debugger
 through a normalized JSON protocol instead of re-inventing per-session
-glue. This file ships the first slice: the base protocol framing
-(Content-Length headers + JSON body) and the initialize handshake.
-Later slices add stackTrace, scopes, evaluate (with tdb), setBreakpoints,
-reverseContinue, pause, continue.
+glue. Current slices ship Content-Length framing, initialize, threads,
+and evaluate(tdb). Later slices add stackTrace, scopes, setBreakpoints,
+reverseContinue, pause, and continue.
 
 Protocol shape grounded in microsoft/debug-adapter-protocol spec
 (https://microsoft.github.io/debug-adapter-protocol/specification.html).
@@ -312,9 +311,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="python -m tools.debugger.dap_server",
         description=(
-            "Minimal Debug Adapter Protocol server (P14). First slice "
-            "ships the initialize handshake; later slices add "
-            "setBreakpoints/stackTrace/scopes/evaluate(tdb)/reverseContinue."
+            "Minimal Debug Adapter Protocol server (P14). Current slices "
+            "ship initialize, threads, and evaluate(tdb); later slices add "
+            "setBreakpoints/stackTrace/scopes/reverseContinue."
         ),
     )
     parser.add_argument(

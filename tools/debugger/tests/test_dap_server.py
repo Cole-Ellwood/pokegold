@@ -5,12 +5,13 @@ import json
 import socket
 import threading
 import unittest
-from contextlib import redirect_stderr
+from contextlib import redirect_stderr, redirect_stdout
 
 from tools.debugger.dap_server import (
     DEFAULT_HOST,
     DapServer,
     encode_frame,
+    main,
     read_frame,
     serve_stream,
     serve_tcp,
@@ -277,6 +278,21 @@ class DapServerTcpTests(unittest.TestCase):
         self.assertTrue(response["success"])
         self.assertEqual(response["request_seq"], 42)
         self.assertEqual(event["event"], "initialized")
+
+
+class DapServerCliTests(unittest.TestCase):
+    def test_help_describes_current_evaluate_surface(self) -> None:
+        stdout = io.StringIO()
+
+        with self.assertRaises(SystemExit) as caught:
+            with redirect_stdout(stdout):
+                main(["--help"])
+
+        self.assertEqual(caught.exception.code, 0)
+        text = stdout.getvalue()
+        self.assertIn("evaluate(tdb)", text)
+        self.assertIn("Current slices", text)
+        self.assertNotIn("scopes/evaluate(tdb)/reverseContinue", text)
 
 
 if __name__ == "__main__":
