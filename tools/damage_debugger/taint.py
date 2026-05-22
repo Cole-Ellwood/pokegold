@@ -265,11 +265,15 @@ class TaintEngine:
         combined = a_taint | src_taint
         self.state.set_reg("f", combined)
         if writes_a:
-            if instr.opcode == 0xAF or (instr.opcode == 0xA8 + REG_INDEX["a"]):
-                # xor a deterministically clears A.
+            if instr.opcode in (0x97, 0xAF):
+                # sub a and xor a deterministically clear A and flags.
                 self.state.clear_reg("a")
+                self.state.clear_reg("f")
             else:
                 self.state.set_reg("a", combined)
+        elif instr.opcode == 0xBF:
+            # cp a leaves A unchanged, but its flags are deterministic.
+            self.state.clear_reg("f")
         return True
 
     def _step_impl(self, instr: Instruction, frame: FrameLike) -> bool:
@@ -627,6 +631,19 @@ def _self_test() -> int:
     report = _run_fixture(instrs, frames, source_reg="b", sink=Sink("wCurDamage", 0xD141, 2))
     if len(report.findings) != 1 or "source:b" not in report.findings[0].taint:
         failures.append("ALU taint combine failed")
+
+    # Deterministic self arithmetic must clear taint before a later sink store.
+    instrs = [
+        _ins(0x1350, 0x97),                    # sub a
+        _ins(0x1351, 0xEA, (0x41, 0xD1)),      # ld [$d141], a
+    ]
+    frames = [
+        _frame(0, 0x1350, A=0x2A),
+        _frame(1, 0x1351, A=0x00),
+    ]
+    report = _run_fixture(instrs, frames, source_reg="a", sink=Sink("wCurDamage", 0xD141, 1))
+    if report.findings:
+        failures.append("deterministic sub a taint clear failed")
 
     # Repeated PC: dynamic frames must be replayed in seq order. A static
     # PC dictionary loses the first write and only reports the last frame.

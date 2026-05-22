@@ -18,7 +18,7 @@ from .dynamic_taint import (
     parse_instruction_record,
     trace_records,
 )
-from .evidence import evidence_atom, evidence_atoms, merge_evidence_atoms
+from .evidence import bank_state_records, evidence_atom, evidence_atoms, merge_evidence_atoms
 from .hardware_evidence import hardware_runtime_event_boundary
 from .provenance import display_path, parse_symbol_table, resolve_path
 from .reporting import load_reports
@@ -2122,28 +2122,11 @@ def frame_bank_state_sources(frame: InstructionFrame) -> dict[str, str]:
 
 
 def frame_bank_state_records(frame: InstructionFrame) -> list[dict[str, Any]]:
-    records: list[dict[str, Any]] = []
-    for key, value in frame.bank_state:
-        name = str(key)
-        if name.endswith("_inferred"):
-            continue
-        source = frame_bank_state_source(frame, name)
-        inferred = source.startswith("inferred_bank_state.")
-        valid_spaces = list(BANK_STATE_VALID_SPACES.get(name, ()))
-        records.append(
-            {
-                "name": name,
-                "value": int(value) & 0xFF,
-                "value_hex": f"{int(value) & 0xFF:02X}",
-                "source": source,
-                "source_kind": "inferred_bank_state" if inferred else "bank_state",
-                "state_kind": "inferred_from_io_write" if inferred else "runtime_observed",
-                "inferred": inferred,
-                "valid_for_space": valid_spaces[0] if valid_spaces else "",
-                "valid_for_spaces": valid_spaces,
-            }
-        )
-    return records
+    return bank_state_records(
+        frame.bank_state,
+        source_for_name=lambda name: frame_bank_state_source(frame, name),
+        valid_spaces_by_name=BANK_STATE_VALID_SPACES,
+    )
 
 
 def effect_space(kind: str, address: int, *, bank: int | None = None) -> str:

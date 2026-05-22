@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from collections.abc import Callable, Iterable
+from dataclasses import dataclass, field
 import json
 from typing import Any
 
@@ -13,6 +15,95 @@ PROOF_STATUSES = {
     "mirror_passed",
     "mirror_failed",
 }
+
+
+BANK_STATE_VALID_SPACES = {
+    "wram": ("wramx",),
+    "wram_raw": ("wramx",),
+    "vram": ("vram",),
+    "vram_raw": ("vram",),
+    "rom": ("romx",),
+    "rom_raw": ("romx",),
+    "loaded_rom": ("romx",),
+    "sram": ("sram",),
+    "sram_raw": ("sram",),
+    "sram_enabled": ("sram",),
+    "sram_enable_raw": ("sram",),
+    "sram_rtc_select": ("sram",),
+}
+
+
+@dataclass(frozen=True)
+class EvidenceAtom:
+    claim_type: str
+    origin: str
+    observation_type: str
+    proof_status: Any
+    source_report: str = ""
+    source_kind: str = ""
+    scope: dict[str, Any] = field(default_factory=dict)
+    subjects: dict[str, Any] = field(default_factory=dict)
+    precision: dict[str, Any] = field(default_factory=dict)
+    validation: dict[str, Any] = field(default_factory=dict)
+    detail: dict[str, Any] = field(default_factory=dict)
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "schema_version": 1,
+            "claim_type": str(self.claim_type or "evidence.claim"),
+            "origin": str(self.origin or ""),
+            "observation_type": str(self.observation_type or ""),
+            "proof_status": normalize_proof_status(self.proof_status),
+            "source_report": str(self.source_report or ""),
+            "source_kind": str(self.source_kind or ""),
+            "scope": clean_mapping(self.scope),
+            "subjects": clean_subjects(self.subjects),
+            "precision": clean_mapping(self.precision),
+            "validation": clean_mapping(self.validation),
+            "detail": clean_mapping(self.detail),
+        }
+
+
+@dataclass(frozen=True)
+class BankStateRecord:
+    name: str
+    value: int | None
+    source: str
+    source_kind: str
+    state_kind: str
+    inferred: bool
+    valid_for_spaces: tuple[str, ...] = ()
+
+    def as_dict(self) -> dict[str, Any]:
+        value = None if self.value is None else int(self.value) & 0xFF
+        out = {
+            "name": str(self.name),
+            "source": str(self.source),
+            "source_kind": str(self.source_kind),
+            "state_kind": str(self.state_kind),
+            "inferred": bool(self.inferred),
+            "valid_for_space": self.valid_for_spaces[0] if self.valid_for_spaces else "",
+            "valid_for_spaces": list(self.valid_for_spaces),
+        }
+        if value is not None:
+            out["value"] = value
+            out["value_hex"] = f"{value:02X}"
+        return out
+
+
+@dataclass(frozen=True)
+class BankState:
+    records: tuple[BankStateRecord, ...] = ()
+
+    def as_records(self) -> list[dict[str, Any]]:
+        return [record.as_dict() for record in self.records]
+
+    def as_state(self) -> dict[str, int]:
+        return {
+            record.name: int(record.value) & 0xFF
+            for record in self.records
+            if record.value is not None
+        }
 
 
 def evidence_atom(
@@ -29,20 +120,72 @@ def evidence_atom(
     validation: dict[str, Any] | None = None,
     detail: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    return {
-        "schema_version": 1,
-        "claim_type": str(claim_type or "evidence.claim"),
-        "origin": str(origin or ""),
-        "observation_type": str(observation_type or ""),
-        "proof_status": normalize_proof_status(proof_status),
-        "source_report": str(source_report or ""),
-        "source_kind": str(source_kind or ""),
-        "scope": clean_mapping(scope or {}),
-        "subjects": clean_subjects(subjects or {}),
-        "precision": clean_mapping(precision or {}),
-        "validation": clean_mapping(validation or {}),
-        "detail": clean_mapping(detail or {}),
-    }
+    return EvidenceAtom(
+        claim_type=claim_type,
+        origin=origin,
+        observation_type=observation_type,
+        proof_status=proof_status,
+        source_report=source_report,
+        source_kind=source_kind,
+        scope=scope or {},
+        subjects=subjects or {},
+        precision=precision or {},
+        validation=validation or {},
+        detail=detail or {},
+    ).as_dict()
+
+
+def bank_state_records(
+    items: Iterable[tuple[str, int]],
+    *,
+    source_for_name: Callable[[str], str] | None = None,
+    valid_spaces_by_name: dict[str, tuple[str, ...]] | None = None,
+) -> list[dict[str, Any]]:
+    return BankState(
+        tuple(
+            bank_state_record(
+                name=str(name),
+                value=int(value) & 0xFF,
+                source=source_for_name(str(name)) if source_for_name else "",
+                valid_for_spaces=(valid_spaces_by_name or BANK_STATE_VALID_SPACES).get(str(name), ()),
+            )
+            for name, value in items
+            if not str(name).endswith("_inferred")
+        )
+    ).as_records()
+
+
+def bank_state_record(
+    *,
+    name: str,
+    value: int | None,
+    source: str = "",
+    valid_for_spaces: Iterable[str] = (),
+) -> BankStateRecord:
+    source_kind, state_kind, inferred = bank_state_source_semantics(name=name, value=value, source=source)
+    return BankStateRecord(
+        name=name,
+        value=value,
+        source=source,
+        source_kind=source_kind,
+        state_kind=state_kind,
+        inferred=inferred,
+        valid_for_spaces=tuple(str(space) for space in valid_for_spaces if str(space)),
+    )
+
+
+def bank_state_source_semantics(*, name: str, value: int | None, source: str) -> tuple[str, str, bool]:
+    if name == "sram_enabled" and value == 0:
+        return ("bank_state", "sram_disabled", False)
+    if source.startswith("inferred_bank_state."):
+        return ("inferred_bank_state", "inferred_from_io_write", True)
+    if source.startswith("mapper_bank_state."):
+        return ("mapper_bank_state", "mapper_derived", False)
+    if source.startswith("default_bank_state."):
+        return ("default_bank_state", "default", False)
+    if source.startswith("bank_state."):
+        return ("bank_state", "runtime_observed", False)
+    return ("unknown", "unknown", False)
 
 
 def normalize_proof_status(value: Any) -> str:
