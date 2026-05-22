@@ -22,6 +22,7 @@ from tools.debugger.rom_edit import (
     default_worktree_base,
     remove_rom_edit_worktree,
     required_green_gate_stack,
+    run_self_test,
     touches_ram,
     verify_rom_edit_worktree,
 )
@@ -908,6 +909,36 @@ class RomEditApplyToMainCliTests(unittest.TestCase):
                 any("protected target branch" in reason for reason in report["blocking_reasons"]),
                 report,
             )
+
+
+class RomEditSelfTestTests(unittest.TestCase):
+    def test_run_self_test_exercises_temp_repo_apply_loop(self) -> None:
+        report = run_self_test()
+
+        self.assertTrue(report["passed"], report)
+        self.assertEqual(report["proposal_status"], "proposed")
+        self.assertEqual(report["verify_status"], "passed")
+        self.assertEqual(report["apply_status"], "applied")
+        self.assertEqual(tuple(report["changed_files"]), ("file.txt",))
+
+    def test_self_test_cli_exits_zero(self) -> None:
+        proc = subprocess.run(
+            [
+                "python",
+                "-m",
+                "tools.debugger",
+                "rom-edit",
+                "--self-test",
+            ],
+            cwd=ROOT,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertIn("rom-edit self-test: passed", proc.stdout)
 
 
 if __name__ == "__main__":

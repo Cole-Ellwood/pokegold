@@ -20,6 +20,7 @@ from tools.debugger.selftest import (
     check_coverage,
     check_hypothesis_tracker,
     check_probe,
+    check_rom_edit,
     check_shrink_battle,
     check_shrink_input_log,
     check_shrink_map_script,
@@ -207,6 +208,16 @@ class Sm83ModelParityCheckTests(unittest.TestCase):
         self.assertIn("shared SM83", result.detail)
 
 
+class RomEditCheckTests(unittest.TestCase):
+    """P12 lived smoke: rom-edit proposes, verifies, and applies in a temp repo."""
+
+    def test_rom_edit_check_passes_in_isolation(self) -> None:
+        result = check_rom_edit(ROOT)
+        self.assertTrue(result.ok, result.error or result.detail)
+        self.assertEqual(result.component, "rom_edit")
+        self.assertIn("apply-to-main", result.detail)
+
+
 class JsonOutputTests(unittest.TestCase):
     def test_to_jsonable_shape(self) -> None:
         report = SelftestReport(
@@ -307,6 +318,15 @@ class CliFilterTests(unittest.TestCase):
         self.assertEqual(rc, 0)
         text = captured.getvalue()
         self.assertIn("sm83_model_parity", text)
+        self.assertIn("(1/1 components healthy)", text)
+
+    def test_main_can_filter_to_rom_edit(self) -> None:
+        captured = io.StringIO()
+        with redirect_stdout(captured):
+            rc = main(["--component", "rom_edit"])
+        self.assertEqual(rc, 0)
+        text = captured.getvalue()
+        self.assertIn("rom_edit", text)
         self.assertIn("(1/1 components healthy)", text)
 
 

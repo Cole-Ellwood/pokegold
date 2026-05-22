@@ -229,6 +229,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("when_wrote", ids)
         self.assertIn("tdb", ids)
         self.assertIn("chaos_mode", ids)
+        self.assertIn("rom_edit", ids)
         # Each v2 surface ships with at least one runnable command so
         # the audit output stays decision-useful.
         for surface in surfaces:
@@ -308,7 +309,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         # v2 section is present, ordered after v1 capabilities, and
         # explicitly marks itself as additive.
         self.assertIn("Omni-debugger v2 surfaces", text)
-        self.assertIn("13/13 complete", text)
+        self.assertIn("14/14 complete", text)
         self.assertIn("not counted toward v1 readiness", text)
         self.assertIn("hypothesis_tracker", text)
         self.assertIn("debugger_selftest", text)
@@ -323,6 +324,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("vram_decode", text)
         self.assertIn("probe", text)
         self.assertIn("chaos_mode", text)
+        self.assertIn("rom_edit", text)
         self.assertIn("fuzz --chaos", text)
 
     def test_damage_changed_file_triages_to_damage_debugger(self) -> None:

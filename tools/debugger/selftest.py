@@ -1221,6 +1221,24 @@ def check_sm83_model_parity(root: Path) -> CheckResult:
     )
 
 
+def check_rom_edit(root: Path) -> CheckResult:
+    """Exercise P12 rom-edit propose/verify/apply-to-main in a temp repo."""
+
+    from .rom_edit import run_self_test
+
+    def inner() -> str:
+        report = run_self_test()
+        if not report.get("passed"):
+            raise AssertionError(f"rom-edit selftest failed: {report}")
+        return "rom-edit temp repo propose/verify/apply-to-main round-trip ok"
+
+    return _capture(
+        component="rom_edit",
+        next_command="python -m tools.debugger rom-edit --self-test",
+        fn=inner,
+    )
+
+
 NAMED_CHECKS: tuple[tuple[str, Check], ...] = (
     ("capability_audit", check_capability_audit),
     ("inventory", check_inventory),
@@ -1247,6 +1265,7 @@ NAMED_CHECKS: tuple[tuple[str, Check], ...] = (
     ("handoff_log", check_handoff_log),
     ("when_wrote", check_when_wrote),
     ("sm83_model_parity", check_sm83_model_parity),
+    ("rom_edit", check_rom_edit),
 )
 
 CHECKS: tuple[Check, ...] = tuple(check for _, check in NAMED_CHECKS)

@@ -1248,6 +1248,38 @@ def _build_v2_surfaces(root: Path = ROOT) -> list[dict[str, Any]]:
                 "python tools/audit/check_two_llm_handoff_log.py [--strict]",
             ),
         ),
+        _capability(
+            id="rom_edit",
+            title="ROM-edit auto-apply gate (P12)",
+            status=_complete_if_paths(
+                root,
+                "tools/debugger/rom_edit.py",
+                "tools/debugger/tests/test_rom_edit.py",
+            ),
+            scope=(
+                "Sandboxed worktree loop for ROM-edit candidates: propose a unified "
+                "patch into an isolated worktree, run explicit verification/build "
+                "commands there, and only apply the diff back to the target checkout "
+                "when green gates plus two-LLM mutual verification authorize it. "
+                "ram/ edits require the save-format gate before auto-apply."
+            ),
+            evidence=(
+                "tools/debugger/rom_edit.py",
+                "tools/debugger/tests/test_rom_edit.py",
+                "docs/debugger_masterpiece_roadmap_codex_task.md",
+            ),
+            gaps=(
+                "default ROM build command is wired but real build smoke is still pending",
+                "remote push and protected-branch merge remain explicit refusals",
+            ),
+            commands=(
+                "python -m tools.debugger rom-edit --self-test",
+                "python -m tools.debugger rom-edit gate --changed-file <path> --gate release_smoke=pass --handoff-phase <phase> --target-branch <branch>",
+                "python -m tools.debugger rom-edit propose --file <path> --patch-file <patch.diff>",
+                "python -m tools.debugger rom-edit verify --worktree-path <path> --command <cmd>",
+                "python -m tools.debugger rom-edit apply-to-main --worktree-path <path> --changed-file <path> --gate release_smoke=pass --handoff-phase <phase> --target-branch <branch>",
+            ),
+        ),
     ]
     return [
         {

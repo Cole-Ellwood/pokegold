@@ -8,9 +8,16 @@ import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Any, Mapping, Sequence
 
-from .handoff_log import DEFAULT_STORE, ROOT, is_mutual_verified, load_rows
+from .handoff_log import (
+    DEFAULT_STORE,
+    ROOT,
+    HandoffRow,
+    is_mutual_verified,
+    load_rows,
+)
 from .workflow import command_is_runnable, execute_step
 
 
@@ -423,6 +430,74 @@ def apply_rom_edit_to_main(
     }
 
 
+def run_self_test() -> dict[str, Any]:
+    """Exercise the rom-edit propose/verify/apply loop in a temp git repo."""
+
+    phase = "P12_rom_edit_selftest_candidate"
+    with TemporaryDirectory() as tmp:
+        repo = Path(tmp) / "repo"
+        repo.mkdir()
+        _git_stdout(["init", "--quiet"], cwd=repo)
+        _git_stdout(
+            ["config", "user.email", "rom-edit-selftest@example.invalid"],
+            cwd=repo,
+        )
+        _git_stdout(["config", "user.name", "Rom Edit Selftest"], cwd=repo)
+        (repo / "file.txt").write_text("one\n", encoding="utf-8")
+        _git_stdout(["add", "file.txt"], cwd=repo)
+        _git_stdout(["commit", "-m", "initial", "--quiet"], cwd=repo)
+        _git_stdout(["checkout", "-b", "feature", "--quiet"], cwd=repo)
+
+        proposal = propose_rom_edit(
+            file_path="file.txt",
+            patch_text=_selftest_patch("two"),
+            root=repo,
+            slug="selftest",
+        )
+        worktree_path = proposal["worktree"]["path"]
+        try:
+            verify_report = verify_rom_edit_worktree(
+                worktree_path,
+                commands=(
+                    "python -c \"from pathlib import Path; "
+                    "raise SystemExit(0 if Path('file.txt').read_text(encoding='utf-8') == 'two\\n' else 1)\"",
+                ),
+                root=repo,
+                timeout_seconds=30,
+            )
+            if verify_report["passed"]:
+                apply_report = apply_rom_edit_to_main(
+                    worktree_path,
+                    changed_files=("file.txt",),
+                    gate_results=(
+                        GateResult(name=RELEASE_SMOKE_GATE_NAME, status=PASS),
+                    ),
+                    handoff_phase=phase,
+                    handoff_rows=_selftest_handoff_rows(phase),
+                    root=repo,
+                    target_branch="feature",
+                )
+            else:
+                apply_report = {"status": "skipped", "applied": False}
+            root_text = (repo / "file.txt").read_text(encoding="utf-8")
+        finally:
+            remove_rom_edit_worktree(worktree_path, root=repo)
+
+        return {
+            "kind": "rom_edit_self_test",
+            "passed": (
+                proposal["status"] == "proposed"
+                and verify_report["passed"]
+                and apply_report["applied"]
+                and root_text == "two\n"
+            ),
+            "proposal_status": proposal["status"],
+            "verify_status": verify_report["status"],
+            "apply_status": apply_report["status"],
+            "changed_files": proposal["changed_files"],
+        }
+
+
 def format_decision(decision: Mapping[str, Any]) -> str:
     status = "ALLOWED" if decision.get("allowed") else "REFUSED"
     lines = [f"rom-edit auto-apply: {status}"]
@@ -448,6 +523,10 @@ def format_decision(decision: Mapping[str, Any]) -> str:
 def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
+    if getattr(args, "self_test", False):
+        return cmd_self_test(args)
+    if not hasattr(args, "func"):
+        parser.error("the following arguments are required: command")
     try:
         return int(args.func(args))
     except RomEditWorktreeError as exc:
@@ -460,7 +539,12 @@ def build_parser() -> argparse.ArgumentParser:
         prog="python -m tools.debugger rom-edit",
         description="ROM edit proposal/apply safety tooling.",
     )
-    sub = parser.add_subparsers(dest="command", required=True)
+    parser.add_argument(
+        "--self-test",
+        action="store_true",
+        help="run a temp-repo propose/verify/apply-to-main smoke test",
+    )
+    sub = parser.add_subparsers(dest="command")
 
     gate = sub.add_parser(
         "gate",
@@ -581,6 +665,13 @@ def cmd_gate(args: argparse.Namespace) -> int:
     return 0 if decision["allowed"] else 1
 
 
+def cmd_self_test(args: argparse.Namespace) -> int:
+    report = run_self_test()
+    status = "passed" if report["passed"] else "failed"
+    print(f"rom-edit self-test: {status}")
+    return 0 if report["passed"] else 1
+
+
 def cmd_propose(args: argparse.Namespace) -> int:
     patch_text = _patch_text_from_args(args.change, args.patch_file)
     proposal = propose_rom_edit(
@@ -670,6 +761,51 @@ def _patch_text_from_args(change: str, patch_file: str) -> str:
     if patch_file:
         return Path(patch_file).read_text(encoding="utf-8")
     return change
+
+
+def _selftest_patch(new_text: str) -> str:
+    return (
+        "diff --git a/file.txt b/file.txt\n"
+        "--- a/file.txt\n"
+        "+++ b/file.txt\n"
+        "@@ -1 +1 @@\n"
+        "-one\n"
+        f"+{new_text}\n"
+    )
+
+
+def _selftest_handoff_rows(phase: str) -> list[dict[str, Any]]:
+    rows = (
+        HandoffRow(
+            phase=phase,
+            event="ack_start",
+            status="in_progress",
+            model="codex",
+            primary="codex",
+            confidence="repo-proven",
+            claim="rom-edit selftest candidate started.",
+        ),
+        HandoffRow(
+            phase=phase,
+            event="slice_update",
+            status="ready_for_review",
+            model="codex",
+            primary="codex",
+            confidence="repo-proven",
+            claim="rom-edit selftest candidate ready for review.",
+        ),
+        HandoffRow(
+            phase=phase,
+            event="slice_review",
+            status="slice_accepted",
+            model="claude",
+            primary="codex",
+            reviewer="claude",
+            confidence="repo-proven",
+            claim="rom-edit selftest candidate accepted.",
+        ),
+    )
+    return [{**row.as_dict(), "_line": index + 1} for index, row in enumerate(rows)]
 
 
 def _gate_blocking_reasons(
