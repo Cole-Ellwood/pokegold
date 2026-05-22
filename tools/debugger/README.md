@@ -83,6 +83,10 @@ python -m tools.debugger save-state-lab diff <a> <b>
 python -m tools.debugger bisect --good <known-good-commit> --bad HEAD -- python tools/audit/check_release_smoke.py
 python -m tools.debugger session-start
 python -m tools.debugger session-start --json
+python scripts\emit_bgb_sym.py --symbols pokegold.sym --out pokegold.bgb.sym
+python scripts\emit_wram_map.py --symbols pokegold.sym --out pokegold.map.txt
+python tools\audit\check_bgb_sym_parity.py --symbols pokegold.sym --bgb-symbols pokegold.bgb.sym
+make bgb_sym
 ```
 
 Omni-debugger v2 surfaces (`session-start`, `hypothesis`, `selftest`,
@@ -99,6 +103,13 @@ For a fresh session, `python -m tools.debugger session-start` is the
 recommended first call — it composes the selftest health check,
 open hypothesis tree, recent commits, and working-tree summary into
 one bounded readout.
+
+`make bgb_sym` exports `pokegold.bgb.sym` plus `pokegold.map.txt` from the
+current RGBDS linker symbols. Load `pokegold.bgb.sym` as the matching ROM symbol
+file in BGB or Emulicious, then use `pokegold.map.txt` as the compact SRAM,
+WRAM, and HRAM label reference when comparing emulator debugger state to
+`tools.debugger` reports. `python tools\audit\check_bgb_sym_parity.py` verifies
+that the exported emulator symbols preserve every label from `pokegold.sym`.
 
 Current mature subsystems:
 

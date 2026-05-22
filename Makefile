@@ -77,6 +77,7 @@ DEFINES      ?=
 	clean \
 	tidy \
 	compare \
+	bgb_sym \
 	tools
 
 all: $(roms)
@@ -100,6 +101,8 @@ tidy:
 	$(RMFILES) $(roms) \
 	           $(roms:.gbc=.sym) \
 	           $(roms:.gbc=.map) \
+	           $(roms:.gbc=.bgb.sym) \
+	           $(roms:.gbc=.map.txt) \
 	           $(patches) \
 	           $(patches:.patch=_vc.gbc) \
 	           $(patches:.patch=_vc.sym) \
@@ -116,6 +119,8 @@ tidy:
 
 compare: $(roms) $(patches)
 	@$(PYTHON) tools/verify_sha1.py roms.sha1
+
+bgb_sym: pokegold.bgb.sym pokegold.map.txt
 
 tools:
 	$(MAKE) -C tools/
@@ -198,6 +203,12 @@ pokesilver_vc.gbc:    RGBFIXFLAGS += -t POKEMON_SLV -i AAXE
 	$(RGBLINK) $(RGBLINKFLAGS) -l layout.link -n $*.sym -m $*.map -o $@ $(filter %.o,$^)
 	$(RGBFIX) $(RGBFIXFLAGS) $@
 	tools/stadium $@
+
+%.bgb.sym: %.sym scripts/emit_bgb_sym.py
+	$(PYTHON) scripts/emit_bgb_sym.py --symbols $< --out $@
+
+%.map.txt: %.sym scripts/emit_wram_map.py scripts/emit_bgb_sym.py
+	$(PYTHON) scripts/emit_wram_map.py --symbols $< --out $@
 
 
 ### LZ compression rules

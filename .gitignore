@@ -17,6 +17,7 @@
 # RGBDS linker outputs. .map/.sym are read-only address truth.
 *.map
 *.sym
+*.map.txt
 
 # Repo-local toolchain downloads and compiled helper binaries.
 *.exe
