@@ -29,7 +29,7 @@ Pokemon Gold romhack debugger — session orientation
 
 branch: <current branch>
 
-selftest PASS (27/27 components healthy)
+selftest PASS (28/28 components healthy)
 
 open hypotheses: 0 (stale citations: 0)
 
@@ -55,7 +55,7 @@ python -m tools.debugger.selftest
 Expected (~8s on this branch):
 
 ```
-Selftest PASS  (27/27 components healthy)
+Selftest PASS  (28/28 components healthy)
   [ok]   capability_audit  — capability audit ready=True, complete=11
   [ok]   inventory  — inventory ok (5 subsystems)
   ...
@@ -63,6 +63,7 @@ Selftest PASS  (27/27 components healthy)
   [ok]   bisect  — bisect synthetic regression localized in 2 steps
   [ok]   rom_edit  — rom-edit temp repo propose/build/verify/apply-to-main round-trip ok
   [ok]   crossemu  — crossemu preflight/run valid; trusted_cross_backend_count=1
+  [ok]   dap_server  — dap initialize/threads/evaluate(tdb) valid; matches=1; fail-closed/no-request ok
 ```
 
 If selftest fails, **fix the named component first** — the output names
@@ -103,6 +104,55 @@ routing, and writes a directory of evidence under
 the subsystem but the next move is still unclear.
 
 ## Recipes
+
+### "I want an editor/debug client to query a trace"
+
+Use the DAP server when a client wants a Debug Adapter Protocol-shaped
+surface instead of shelling out to `tdb` for every question. Start it
+with one or more effect-trace reports bound at launch:
+
+```powershell
+python -m tools.debugger dap `
+  --stdio `
+  --report .local/tmp/effect_trace.json
+```
+
+For TCP clients:
+
+```powershell
+python -m tools.debugger dap `
+  --port 4711 `
+  --report .local/tmp/effect_trace.json
+```
+
+Then send DAP `initialize`, `threads`, and `evaluate` requests. The
+`evaluate` expression is a `tdb` query:
+
+```json
+{
+  "seq": 3,
+  "type": "request",
+  "command": "evaluate",
+  "arguments": {
+    "expression": "writes(addr=$D141) and executes(pc=BattleCommand_DamageCalc)"
+  }
+}
+```
+
+**Success looks like**
+
+The `initialize` response returns adapter capabilities, `threads`
+returns one synthetic `sm83` thread, and `evaluate` returns
+`success=true` with `body.tdb.matches[]`. If the client cannot bind
+reports at launch, it may send `arguments.reports` as a list of report
+paths on the `evaluate` request.
+
+**Proof limit**
+
+The DAP server is a protocol surface over existing trace reports. It
+does not run the emulator, pause the CPU, or materialize stack/scopes
+yet. `setBreakpoints`, `stackTrace`, `scopes`, `variables`,
+`continue`, `pause`, and `reverseContinue` remain P14 follow-ups.
 
 ### "Player reported a bug"
 
