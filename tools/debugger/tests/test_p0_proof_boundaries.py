@@ -7,6 +7,7 @@ import unittest
 
 from tools.debugger.address import address_spec_requires_exact_key, parse_address_spec
 from tools.debugger.causal_graph import build_causal_graph_report
+from tools.debugger.dynamic_taint import build_dynamic_taint_report
 from tools.debugger.impact import build_impact_report
 from tools.debugger.ranking import rank_findings
 from tools.debugger.reverse_query import build_reverse_query_report
@@ -240,6 +241,74 @@ class P0ProofBoundaryAcceptanceTests(unittest.TestCase):
         self.assertEqual(span_checkpoint_records["sram"]["source_kind"], "inferred_bank_state")
         self.assertEqual(span_write_records["sram_enabled"]["source"], "bank_state.sram_enabled")
         self.assertEqual(atom_records["sram_enabled"]["state_kind"], "sram_disabled")
+
+    def test_dynamic_taint_consumes_typed_bank_state_records_for_runtime_bank_match(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "test.sym").write_text(
+                "01:D141 wCurDamage\n01:4000 UnitFunc\n",
+                encoding="utf-8",
+            )
+            (root / "instruction_trace.jsonl").write_text(
+                json.dumps(
+                    {
+                        "seq": 0,
+                        "bank": 1,
+                        "pc": 0x4000,
+                        "pc_label": "UnitFunc",
+                        "opcode": 0x34,
+                        "regs": {"HL": 0xD141},
+                        "bank_state_records": [
+                            {
+                                "name": "wram",
+                                "value": 1,
+                                "value_hex": "01",
+                                "source": "inferred_bank_state.wram",
+                                "source_kind": "inferred_bank_state",
+                                "state_kind": "inferred_from_io_write",
+                                "inferred": True,
+                                "valid_for_space": "wramx",
+                                "valid_for_spaces": ["wramx"],
+                            }
+                        ],
+                        "watch_values": {"wCurDamage": "0F"},
+                        "watch_value_specs": [
+                            {
+                                "name": "wCurDamage",
+                                "value_hex": "0F",
+                                "address": 0xD141,
+                                "address_hex": "D141",
+                                "bank": 1,
+                                "bank_address": "01:D141",
+                                "size": 1,
+                                "address_watch": False,
+                                "raw": "",
+                                "symbol": "wCurDamage",
+                            }
+                        ],
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            dynamic = build_dynamic_taint_report(
+                traces=("instruction_trace.jsonl",),
+                symbols_path="test.sym",
+                sink_symbols=("wCurDamage",),
+                root=root,
+            )
+
+        attribution = dynamic["write_attributions"][0]
+
+        self.assertTrue(dynamic["valid"])
+        self.assertEqual(attribution["value_hex"], "10")
+        self.assertEqual(attribution["bank_source"], "inferred_bank_state.wram")
+        self.assertEqual(attribution["source_operands"][0]["value"], "0F")
+        self.assertEqual(
+            attribution["evidence_atoms"][0]["precision"]["bank_source"],
+            "inferred_bank_state.wram",
+        )
 
 
 class dynamic_taint_report:

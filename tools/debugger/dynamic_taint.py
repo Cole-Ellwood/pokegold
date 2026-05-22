@@ -141,6 +141,7 @@ class InstructionFrame:
     SP: int = 0
     memory: tuple[tuple[int, int], ...] = ()
     bank_state: tuple[tuple[str, int], ...] = ()
+    bank_state_sources: tuple[tuple[str, str], ...] = ()
     known_registers: tuple[str, ...] = ()
 
 
@@ -2628,6 +2629,7 @@ def parse_instruction_record(record: dict[str, Any], *, default_seq: int) -> dic
         SP=registers["SP"],
         memory=parse_raw_watch_memory(record),
         bank_state=parse_bank_state(record),
+        bank_state_sources=parse_bank_state_sources(record),
         known_registers=parse_known_registers(record),
     )
     return {"error": "", "instruction": instruction, "frame": frame}
@@ -2720,7 +2722,7 @@ def watch_value_spec_observed_on_bus(record: dict[str, Any], *, address: int, ba
     if bank is None:
         return True
     address &= 0xFFFF
-    state = record.get("bank_state") if isinstance(record.get("bank_state"), dict) else {}
+    state = bank_state_mapping(record)
     if 0xD000 <= address <= 0xDFFF:
         return bank_state_value(state, "wram") == bank
     if 0x8000 <= address <= 0x9FFF:
@@ -2766,7 +2768,7 @@ def parse_hex_byte_string(value: Any) -> tuple[int, ...]:
 
 
 def parse_bank_state(record: dict[str, Any]) -> tuple[tuple[str, int], ...]:
-    state = record.get("bank_state") if isinstance(record.get("bank_state"), dict) else {}
+    state = bank_state_mapping(record)
     out: dict[str, int] = {}
     for key in ("wram", "wram_raw", "vram", "vram_raw", "rom", "loaded_rom", "sram", "sram_enabled"):
         value = state.get(key, record.get(f"{key}_bank"))
@@ -2780,6 +2782,38 @@ def parse_bank_state(record: dict[str, Any]) -> tuple[tuple[str, int], ...]:
         out["wram"] = normalize_bank_state_value("wram", out["wram_raw"])
     if "vram" not in out and "vram_raw" in out:
         out["vram"] = normalize_bank_state_value("vram", out["vram_raw"])
+    return tuple(sorted(out.items()))
+
+
+def bank_state_mapping(record: dict[str, Any]) -> dict[str, Any]:
+    out = dict(record.get("bank_state")) if isinstance(record.get("bank_state"), dict) else {}
+    for item in dict_items(record.get("bank_state_records")):
+        name = str(item.get("name") or "")
+        if not name or name.endswith("_inferred") or name in out:
+            continue
+        value = item.get("value")
+        value_hex = item.get("value_hex")
+        if (value is None or value == "") and value_hex is not None and value_hex != "":
+            value = f"0x{value_hex}"
+        if value is None or value == "":
+            continue
+        try:
+            out[name] = parse_int(value)
+        except ValueError:
+            continue
+    return out
+
+
+def parse_bank_state_sources(record: dict[str, Any]) -> tuple[tuple[str, str], ...]:
+    out: dict[str, str] = {}
+    raw_sources = record.get("bank_state_sources")
+    if isinstance(raw_sources, dict):
+        out.update({str(key): str(value) for key, value in raw_sources.items() if str(value)})
+    for item in dict_items(record.get("bank_state_records")):
+        name = str(item.get("name") or "")
+        source = str(item.get("source") or "")
+        if name and source and name not in out:
+            out[name] = source
     return tuple(sorted(out.items()))
 
 
@@ -4551,13 +4585,13 @@ def instruction_frame_address_key(frame: InstructionFrame, address: int) -> str:
 def instruction_frame_memory_bank_source(frame: InstructionFrame, address: int) -> str:
     address &= 0xFFFF
     if 0xD000 <= address <= 0xDFFF and instruction_frame_bank_state(frame, "wram") is not None:
-        return "bank_state.wram"
+        return instruction_frame_bank_state_source(frame, "wram") or "bank_state.wram"
     if 0x8000 <= address <= 0x9FFF and instruction_frame_bank_state(frame, "vram") is not None:
-        return "bank_state.vram"
+        return instruction_frame_bank_state_source(frame, "vram") or "bank_state.vram"
     if 0x4000 <= address <= 0x7FFF and instruction_frame_bank_state(frame, "rom") is not None:
-        return "bank_state.rom"
+        return instruction_frame_bank_state_source(frame, "rom") or "bank_state.rom"
     if 0xA000 <= address <= 0xBFFF and instruction_frame_bank_state(frame, "sram") is not None:
-        return "bank_state.sram"
+        return instruction_frame_bank_state_source(frame, "sram") or "bank_state.sram"
     return ""
 
 
@@ -4579,6 +4613,13 @@ def instruction_frame_bank_state(frame: InstructionFrame, key: str) -> int | Non
         if item_key == key:
             return int(value) & 0xFF
     return None
+
+
+def instruction_frame_bank_state_source(frame: InstructionFrame, key: str) -> str:
+    for item_key, source in frame.bank_state_sources:
+        if item_key == key:
+            return source
+    return ""
 
 
 def contributors_for_operands(source_operands: list[dict[str, Any]]) -> list[dict[str, Any]]:
