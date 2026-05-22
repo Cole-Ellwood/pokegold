@@ -71,6 +71,7 @@ V2_PASSTHROUGH_MODULES = {
     "heatmap": "tools.debugger.heatmap",
     "vram-snapshot": "tools.debugger.vram_snapshot",
     "vram-diff": "tools.debugger.vram_diff",
+    "probe": "tools.debugger.probe",
 }
 
 
@@ -800,6 +801,17 @@ def build_parser() -> argparse.ArgumentParser:
     )
     vram_diff.add_argument("argv", nargs=argparse.REMAINDER)
     vram_diff.set_defaults(func=cmd_vram_diff)
+
+    probe = subparsers.add_parser(
+        "probe",
+        add_help=False,
+        description=(
+            "Named probe declarations and trace hit counts (P8). Delegates to "
+            "`python -m tools.debugger.probe`. Pass `--help` for syntax."
+        ),
+    )
+    probe.add_argument("argv", nargs=argparse.REMAINDER)
+    probe.set_defaults(func=cmd_probe)
 
     return parser
 
@@ -1540,6 +1552,10 @@ def cmd_vram_snapshot(args: argparse.Namespace) -> int:
 
 def cmd_vram_diff(args: argparse.Namespace) -> int:
     return _delegate_to_module_main("tools.debugger.vram_diff", args.argv)
+
+
+def cmd_probe(args: argparse.Namespace) -> int:
+    return _delegate_to_module_main("tools.debugger.probe", args.argv)
 
 
 def emit_report(report: dict[str, Any], args: argparse.Namespace) -> None:

@@ -559,6 +559,58 @@ def check_bgb_sym_export(root: Path) -> CheckResult:
     )
 
 
+def check_probe(root: Path) -> CheckResult:
+    """Exercise P8 named probes against a synthetic trace."""
+
+    import json
+    import tempfile
+
+    from .probe import build_probe_stats_report, declare_probe
+
+    def inner() -> str:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_root = Path(tmp)
+            symbols = tmp_root / "pokegold.sym"
+            trace = tmp_root / "trace.jsonl"
+            store = tmp_root / "probes.jsonl"
+            symbols.write_text("01:5A00 BattleCommand_DamageCalc\n", encoding="utf-8")
+            trace.write_text(
+                "\n".join(
+                    json.dumps(event)
+                    for event in (
+                        {"pc_bank_address": "01:5A00", "pc_label": "BattleCommand_DamageCalc", "frame": 2, "seq": 0},
+                        {"pc_bank_address": "01:5A00", "pc_label": "BattleCommand_DamageCalc+3", "frame": 6, "seq": 1},
+                    )
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            declare = declare_probe(
+                name="damage_calc_entry",
+                pc="BattleCommand_DamageCalc",
+                store_path=str(store),
+                symbols_path=str(symbols),
+                root=tmp_root,
+            )
+            stats = build_probe_stats_report(traces=(trace,), store_path=str(store), root=tmp_root)
+        if not declare.get("valid"):
+            raise AssertionError(f"probe declare invalid: {declare.get('errors')}")
+        if not stats.get("valid"):
+            raise AssertionError(f"probe stats invalid: {stats.get('errors')}")
+        item = stats["stats"][0]
+        if item.get("fire_count") != 2:
+            raise AssertionError(f"expected 2 fires; got {item}")
+        if item.get("average_inter_fire_interval") != 4:
+            raise AssertionError(f"expected 4-frame interval; got {item}")
+        return "probe stats valid; damage_calc_entry fired 2 times across frames 2:6"
+
+    return _capture(
+        component="probe",
+        next_command="python -m tools.debugger probe stats --trace <trace.jsonl>",
+        fn=inner,
+    )
+
+
 def check_save_state_lab(root: Path) -> CheckResult:
     """Round-trip trusted raw WRAM and fail-closed .sgm handling."""
 
@@ -964,6 +1016,7 @@ NAMED_CHECKS: tuple[tuple[str, Check], ...] = (
     ("heatmap", check_heatmap),
     ("vram_decode", check_vram_decode),
     ("bgb_sym_export", check_bgb_sym_export),
+    ("probe", check_probe),
     ("save_state_lab", check_save_state_lab),
     ("bisect", check_bisect),
     ("handoff_log", check_handoff_log),

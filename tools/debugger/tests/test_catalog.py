@@ -257,6 +257,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
                 "heatmap",
                 "vram-snapshot",
                 "vram-diff",
+                "probe",
             },
         )
 
@@ -304,7 +305,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         # v2 section is present, ordered after v1 capabilities, and
         # explicitly marks itself as additive.
         self.assertIn("Omni-debugger v2 surfaces", text)
-        self.assertIn("11/11 complete", text)
+        self.assertIn("12/12 complete", text)
         self.assertIn("not counted toward v1 readiness", text)
         self.assertIn("hypothesis_tracker", text)
         self.assertIn("debugger_selftest", text)
@@ -317,6 +318,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("context_packet", text)
         self.assertIn("heatmap", text)
         self.assertIn("vram_decode", text)
+        self.assertIn("probe", text)
 
     def test_damage_changed_file_triages_to_damage_debugger(self) -> None:
         report = triage_request(

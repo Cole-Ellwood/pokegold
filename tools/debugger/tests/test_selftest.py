@@ -19,6 +19,7 @@ from tools.debugger.selftest import (
     check_context_packet,
     check_coverage,
     check_hypothesis_tracker,
+    check_probe,
     check_sm83_model_parity,
     check_save_state_lab,
     check_vram_decode,
@@ -139,6 +140,16 @@ class BgbSymExportCheckTests(unittest.TestCase):
         self.assertTrue(result.ok, result.error or result.detail)
         self.assertEqual(result.component, "bgb_sym_export")
         self.assertIn("parity ok", result.detail)
+
+
+class ProbeCheckTests(unittest.TestCase):
+    """P8 lived smoke: a declared probe counts hits in a trace."""
+
+    def test_probe_check_passes_in_isolation(self) -> None:
+        result = check_probe(ROOT)
+        self.assertTrue(result.ok, result.error or result.detail)
+        self.assertEqual(result.component, "probe")
+        self.assertIn("fired 2 times", result.detail)
 
 
 class BisectCheckTests(unittest.TestCase):

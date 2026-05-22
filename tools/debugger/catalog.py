@@ -1127,6 +1127,33 @@ def _build_v2_surfaces(root: Path = ROOT) -> list[dict[str, Any]]:
             ),
         ),
         _capability(
+            id="probe",
+            title="Named probe points + trace hit counters (P8)",
+            status=_complete_if_paths(
+                root,
+                "tools/debugger/probe.py",
+                "tools/debugger/tests/test_probe.py",
+            ),
+            scope=(
+                "Declare named PC/symbol probes in audit/probes.jsonl and "
+                "compute per-probe fire counts, frame spans, and sample hits "
+                "from instruction/effect trace events without halting execution."
+            ),
+            evidence=(
+                "tools/debugger/probe.py",
+                "tools/debugger/tests/test_probe.py",
+                "docs/debugger_masterpiece_roadmap_codex_task.md",
+            ),
+            gaps=(
+                "V0 evaluates traces after capture rather than during trace emission",
+                "conditional probes and taint overlays are deferred to later heatmap/trace slices",
+            ),
+            commands=(
+                "python -m tools.debugger probe declare --name damage_calc_entry --pc BattleCommand_DamageCalc",
+                "python -m tools.debugger probe stats --trace trace.jsonl",
+            ),
+        ),
+        _capability(
             id="when_wrote",
             title="when-wrote omniscient last-writer query (P2)",
             status=_complete_if_paths(
