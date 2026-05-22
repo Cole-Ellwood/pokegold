@@ -291,12 +291,21 @@ def rows_for_phase(rows: Sequence[dict[str, Any]], phase: str) -> list[dict[str,
     return [row for row in rows if row.get("phase") == phase]
 
 
+def is_phase_abandoned(rows: Sequence[dict[str, Any]], phase: str) -> bool:
+    return any(
+        row.get("event") == "slice_update" and row.get("status") == "abandoned"
+        for row in rows_for_phase(rows, phase)
+    )
+
+
 def is_mutual_verified(rows: Sequence[dict[str, Any]], phase: str) -> tuple[bool, list[str]]:
     """Return (verified, reasons). reasons is non-empty when not verified."""
 
     phase_rows = rows_for_phase(rows, phase)
     if not phase_rows:
         return False, [f"no rows for phase {phase!r}"]
+    if is_phase_abandoned(rows, phase):
+        return False, [f"phase {phase!r} marked abandoned"]
     primary_models = {row.get("primary", "") for row in phase_rows if row.get("primary")}
     if len(primary_models) > 1:
         return False, [
@@ -362,9 +371,11 @@ def audit_store(store: Path = DEFAULT_STORE, root: Path = ROOT) -> dict[str, Any
     phases = sorted({row.get("phase", "") for row in rows if row.get("phase")})
     phase_status = {}
     for phase in phases:
+        abandoned = is_phase_abandoned(rows, phase)
         verified, reasons = is_mutual_verified(rows, phase)
         phase_status[phase] = {
             "mutual_verified": verified,
+            "abandoned": abandoned,
             "reasons": reasons,
         }
     return {

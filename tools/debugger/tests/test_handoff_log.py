@@ -174,6 +174,27 @@ class MutualVerifiedGateTests(unittest.TestCase):
         self.assertFalse(verified)
         self.assertTrue(any("rejected" in r for r in reasons), reasons)
 
+    def test_abandoned_phase_is_closed_before_primary_conflict(self) -> None:
+        rows = self._store(
+            [
+                _ack_start("codex", "claude", phase="misfile"),
+                HandoffRow(
+                    phase="misfile",
+                    event="slice_update",
+                    status="abandoned",
+                    model="codex",
+                    primary="codex",
+                    confidence="repo-proven",
+                    claim="misfiled phase tag superseded by canonical phase",
+                ),
+            ]
+        )
+
+        verified, reasons = is_mutual_verified(rows, "misfile")
+
+        self.assertFalse(verified)
+        self.assertEqual(reasons, ["phase 'misfile' marked abandoned"])
+
     def test_self_review_by_primary_does_not_count(self) -> None:
         rows = self._store(
             [
@@ -255,6 +276,29 @@ class AppendRowIntegrationTests(unittest.TestCase):
             self.assertEqual(report["row_errors"], [])
             self.assertEqual(report["phases"], ["P0"])
             self.assertTrue(report["phase_status"]["P0"]["mutual_verified"])
+            self.assertFalse(report["phase_status"]["P0"]["abandoned"])
+
+    def test_append_then_audit_abandoned_phase(self) -> None:
+        with TemporaryDirectory() as tmp:
+            store = Path(tmp) / "handoff.jsonl"
+            append_row(_ack_start("codex", "claude", phase="misfile"), store=store, root=Path(tmp))
+            append_row(
+                HandoffRow(
+                    phase="misfile",
+                    event="slice_update",
+                    status="abandoned",
+                    model="codex",
+                    primary="codex",
+                    confidence="repo-proven",
+                    claim="misfiled phase tag superseded by canonical phase",
+                ),
+                store=store,
+                root=Path(tmp),
+            )
+            report = audit_store(store=store, root=Path(tmp))
+
+        self.assertTrue(report["phase_status"]["misfile"]["abandoned"])
+        self.assertFalse(report["phase_status"]["misfile"]["mutual_verified"])
 
     def test_append_rejects_invalid_row(self) -> None:
         bad = HandoffRow(

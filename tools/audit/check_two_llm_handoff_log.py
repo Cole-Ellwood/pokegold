@@ -72,11 +72,17 @@ def main(argv: Sequence[str] | None = None) -> int:
         phase
         for phase in report["phases"]
         if not report["phase_status"][phase]["mutual_verified"]
+        and not report["phase_status"][phase].get("abandoned")
     ]
     verified = [
         phase
         for phase in report["phases"]
         if report["phase_status"][phase]["mutual_verified"]
+    ]
+    abandoned = [
+        phase
+        for phase in report["phases"]
+        if report["phase_status"][phase].get("abandoned")
     ]
 
     print("=== two-LLM handoff log audit ===")
@@ -92,6 +98,9 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if verified:
         print(f"PASS phases (mutual-verified): {', '.join(verified)}")
+
+    if abandoned:
+        print(f"ABANDONED phases (closed without mutual verification): {', '.join(abandoned)}")
 
     if pending:
         print("PENDING phases (in-flight; no mutual sign-off yet):")
