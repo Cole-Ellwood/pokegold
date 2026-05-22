@@ -8,6 +8,7 @@ import unittest
 from tools.debugger.address import address_spec_requires_exact_key, parse_address_spec
 from tools.debugger.causal_graph import build_causal_graph_report
 from tools.debugger.dynamic_taint import build_dynamic_taint_report
+from tools.debugger.evidence import bank_state_record, evidence_atom
 from tools.debugger.impact import build_impact_report
 from tools.debugger.ranking import rank_findings
 from tools.debugger.reverse_query import build_reverse_query_report
@@ -34,6 +35,58 @@ class P0ProofBoundaryAcceptanceTests(unittest.TestCase):
         self.assertEqual(attribution["proof_status"], "planned_only")
         self.assertIn("match_precision=bus_address_unverified_bank", attribution["evidence"])
         self.assertIn("planned attribution with hypothetical write", "\n".join(attribution["evidence"]))
+
+    def test_impact_renders_typed_bank_state_records_from_evidence_atoms(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "nested_impact.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_impact_report",
+                        "valid": True,
+                        "items": [
+                            {
+                                "type": "reverse_query",
+                                "title": "Reverse query: sram A100",
+                                "severity": 70,
+                                "confidence": 0.9,
+                                "impact_score": 80,
+                                "proof_status": "instruction_observed",
+                                "evidence": ["last_writer=WriteSram"],
+                                "evidence_atoms": [
+                                    evidence_atom(
+                                        claim_type="reverse_query.last_writer",
+                                        origin="reverse_query",
+                                        observation_type="instruction",
+                                        proof_status="instruction_observed",
+                                        validation={
+                                            "last_writer_bank_state_records": [
+                                                bank_state_record(
+                                                    name="sram",
+                                                    value=2,
+                                                    source="inferred_bank_state.sram",
+                                                    valid_for_spaces=("sram",),
+                                                ).as_dict()
+                                            ]
+                                        },
+                                    )
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            impact = build_impact_report(reports=("nested_impact.json",), root=root)
+
+        reverse_item = next(item for item in impact["items"] if item["type"] == "reverse_query")
+
+        self.assertEqual(reverse_item["proof_status"], "instruction_observed")
+        self.assertIn(
+            "bank_state_record=last_writer:sram=0x02 source=inferred_bank_state.sram state=inferred_from_io_write valid_for=sram",
+            reverse_item["evidence"],
+        )
 
     def test_causal_graph_reverse_query_missing_result_proof_defaults_planned(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

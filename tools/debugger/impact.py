@@ -10,6 +10,7 @@ from .evidence import evidence_atoms, merge_evidence_atoms
 from .ranking import (
     PROOF_STATUS_RANK,
     SEVERITY_BASE,
+    bank_state_record_evidence_from_atoms,
     compare_match_evidence,
     compare_match_proof_status,
     materialized_save_state_delta,
@@ -2415,8 +2416,13 @@ def score_item(item: dict[str, Any]) -> dict[str, Any]:
     scored["learned_impact_profiles"] = []
     scored["impact_score"] = score
     scored["next_actions"] = string_items(scored.get("next_actions"))[:12]
-    scored["evidence"] = string_items(scored.get("evidence"))[:8]
     scored["evidence_atoms"] = merge_evidence_atoms(scored.get("evidence_atoms"), limit=12)
+    scored["evidence"] = unique_list(
+        [
+            *bank_state_record_evidence_from_atoms(scored["evidence_atoms"]),
+            *string_items(scored.get("evidence")),
+        ]
+    )[:8]
     scored["related_symbols"] = unique_list(string_items(scored.get("related_symbols")))[:12]
     scored["related_files"] = unique_list(normalize_path(path) for path in string_items(scored.get("related_files")))[:12]
     scored["related_addresses"] = unique_addresses(string_items(scored.get("related_addresses")))[:12]
