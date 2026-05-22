@@ -13,7 +13,11 @@ from tools.debugger.rom_edit import (
     RELEASE_SMOKE_GATE_NAME,
     SAVE_FORMAT_GATE_NAME,
     GateResult,
+    RomEditWorktreeError,
+    create_rom_edit_worktree,
     decide_auto_apply,
+    default_worktree_base,
+    remove_rom_edit_worktree,
     required_green_gate_stack,
     touches_ram,
 )
@@ -78,6 +82,32 @@ def _write_store(root: Path, *rows: HandoffRow) -> Path:
     return store
 
 
+def _git(cwd: Path, *args: str) -> str:
+    proc = subprocess.run(
+        ["git", *args],
+        cwd=cwd,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    if proc.returncode != 0:
+        raise AssertionError(
+            f"git {' '.join(args)} failed: {proc.stderr or proc.stdout}"
+        )
+    return proc.stdout
+
+
+def _init_repo(repo: Path) -> None:
+    repo.mkdir()
+    _git(repo, "init")
+    _git(repo, "config", "user.email", "rom-edit-test@example.invalid")
+    _git(repo, "config", "user.name", "Rom Edit Test")
+    (repo / "file.txt").write_text("one\n", encoding="utf-8")
+    _git(repo, "add", "file.txt")
+    _git(repo, "commit", "-m", "initial")
+
+
 class RomEditAutoApplyGateTests(unittest.TestCase):
     def test_ram_path_detection_accepts_windows_and_posix_paths(self) -> None:
         self.assertTrue(touches_ram(("ram/wram.asm",)))
@@ -140,6 +170,66 @@ class RomEditAutoApplyGateTests(unittest.TestCase):
             any(SAVE_FORMAT_GATE_NAME in reason for reason in decision["blocking_reasons"]),
             decision,
         )
+
+
+class RomEditWorktreeLifecycleTests(unittest.TestCase):
+    def test_create_and_remove_worktree_roundtrip_in_temp_repo(self) -> None:
+        with TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            _init_repo(repo)
+
+            worktree = create_rom_edit_worktree(
+                root=repo,
+                changed_files=("file.txt",),
+                slug="roundtrip",
+            )
+
+            worktree_path = Path(worktree.path)
+            self.assertTrue(worktree_path.is_dir())
+            self.assertEqual(
+                worktree_path.parent,
+                default_worktree_base(repo.resolve()).resolve(),
+            )
+            self.assertEqual(
+                (worktree_path / "file.txt").read_text(encoding="utf-8"),
+                "one\n",
+            )
+            self.assertIn("roundtrip", _git(repo, "worktree", "list"))
+
+            removed = remove_rom_edit_worktree(worktree.path, root=repo)
+
+            self.assertEqual(removed["removed"], str(worktree_path))
+            self.assertFalse(worktree_path.exists())
+
+    def test_create_refuses_existing_target_path(self) -> None:
+        with TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            _init_repo(repo)
+            existing = default_worktree_base(repo.resolve()) / "dupe"
+            existing.mkdir(parents=True)
+
+            with self.assertRaisesRegex(RomEditWorktreeError, "already exists"):
+                create_rom_edit_worktree(root=repo, slug="dupe")
+
+    def test_remove_refuses_path_outside_rom_edit_base(self) -> None:
+        with TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            _init_repo(repo)
+
+            with self.assertRaisesRegex(RomEditWorktreeError, "outside rom-edit base"):
+                remove_rom_edit_worktree(repo, root=repo)
+
+    def test_create_refuses_worktree_base_outside_local_tmp_boundary(self) -> None:
+        with TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            _init_repo(repo)
+
+            with self.assertRaisesRegex(RomEditWorktreeError, "worktree base"):
+                create_rom_edit_worktree(
+                    root=repo,
+                    base_dir=Path(tmp) / "external-worktrees",
+                    slug="outside",
+                )
 
     def test_refuses_red_save_format_audit_for_ram_edit(self) -> None:
         changed = ("ram/wram.asm",)

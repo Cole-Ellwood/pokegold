@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
+import subprocess
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping, Sequence
@@ -16,6 +19,7 @@ RELEASE_SMOKE_GATE_NAME = "release_smoke"
 SAVE_FORMAT_GATE_NAME = "save_format_version"
 RELEASE_SMOKE_COMMAND = "python tools/audit/check_release_smoke.py"
 SAVE_FORMAT_COMMAND = "python tools/audit/check_save_format_version.py"
+ROM_EDIT_WORKTREE_DIR = Path(".local") / "tmp" / "rom_edit_worktrees"
 PROTECTED_BRANCHES = frozenset(
     {
         "main",
@@ -51,6 +55,26 @@ class GateResult:
             "command": self.command,
             "detail": self.detail,
         }
+
+
+@dataclass(frozen=True)
+class RomEditWorktree:
+    path: str
+    branch: str
+    slug: str
+    base_head: str
+
+    def as_dict(self) -> dict[str, str]:
+        return {
+            "path": self.path,
+            "branch": self.branch,
+            "slug": self.slug,
+            "base_head": self.base_head,
+        }
+
+
+class RomEditWorktreeError(RuntimeError):
+    pass
 
 
 def touches_ram(changed_files: Sequence[str]) -> bool:
@@ -121,6 +145,61 @@ def decide_auto_apply(
         "push_remote": push_remote,
         "requires_mutual_verified": True,
     }
+
+
+def default_worktree_base(root: Path = ROOT) -> Path:
+    return root / ROM_EDIT_WORKTREE_DIR
+
+
+def create_rom_edit_worktree(
+    *,
+    root: Path = ROOT,
+    base_dir: Path | None = None,
+    changed_files: Sequence[str] = (),
+    slug: str = "",
+    branch_prefix: str = "rom-edit",
+) -> RomEditWorktree:
+    repo_root = root.resolve()
+    target_base = _resolve_worktree_base(repo_root, base_dir)
+    target_base.mkdir(parents=True, exist_ok=True)
+    base_head = _git_stdout(["rev-parse", "HEAD"], cwd=repo_root)
+    final_slug = slug or _make_worktree_slug(base_head, changed_files)
+    worktree_path = (target_base / final_slug).resolve()
+    if worktree_path.exists():
+        raise RomEditWorktreeError(f"worktree path already exists: {worktree_path}")
+    branch = f"{branch_prefix}/{final_slug}"
+    _git_stdout(
+        ["worktree", "add", "-b", branch, str(worktree_path), base_head],
+        cwd=repo_root,
+    )
+    return RomEditWorktree(
+        path=str(worktree_path),
+        branch=branch,
+        slug=final_slug,
+        base_head=base_head,
+    )
+
+
+def remove_rom_edit_worktree(
+    worktree_path: str | Path,
+    *,
+    root: Path = ROOT,
+    base_dir: Path | None = None,
+    force: bool = True,
+) -> dict[str, str]:
+    repo_root = root.resolve()
+    target_base = _resolve_worktree_base(repo_root, base_dir)
+    target = Path(worktree_path).resolve()
+    if not _is_relative_to(target, target_base):
+        raise RomEditWorktreeError(
+            f"refusing to remove worktree outside rom-edit base: {target}"
+        )
+    args = ["worktree", "remove"]
+    if force:
+        args.append("--force")
+    args.append(str(target))
+    _git_stdout(args, cwd=repo_root)
+    return {"removed": str(target)}
 
 
 def format_decision(decision: Mapping[str, Any]) -> str:
@@ -259,6 +338,47 @@ def _is_protected_branch(branch: str) -> bool:
 
 def _resolve_store(store: Path, root: Path) -> Path:
     return store if store.is_absolute() else root / store
+
+
+def _resolve_worktree_base(root: Path, base_dir: Path | None) -> Path:
+    default_base = default_worktree_base(root).resolve()
+    target_base = (base_dir or default_base).resolve()
+    if target_base != default_base and not _is_relative_to(target_base, default_base):
+        raise RomEditWorktreeError(
+            f"worktree base must stay under {default_base}: {target_base}"
+        )
+    return target_base
+
+
+def _make_worktree_slug(base_head: str, changed_files: Sequence[str]) -> str:
+    payload = "\n".join([base_head, *sorted(changed_files), str(time.time_ns())])
+    return hashlib.sha1(payload.encode("utf-8")).hexdigest()[:12]
+
+
+def _git_stdout(args: Sequence[str], *, cwd: Path) -> str:
+    completed = subprocess.run(
+        ["git", *args],
+        cwd=cwd,
+        shell=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    if completed.returncode != 0:
+        detail = completed.stderr.strip() or completed.stdout.strip()
+        raise RomEditWorktreeError(
+            f"git {' '.join(args)} failed with code {completed.returncode}: {detail}"
+        )
+    return completed.stdout.strip()
+
+
+def _is_relative_to(path: Path, parent: Path) -> bool:
+    try:
+        path.relative_to(parent)
+    except ValueError:
+        return False
+    return True
 
 
 if __name__ == "__main__":
