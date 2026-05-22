@@ -125,6 +125,16 @@ def read_symbol_word(pyboy, symbols: dict[str, Symbol], name: str) -> int:
     return read_word(pyboy, symbols[name])
 
 
+def read_big_endian_word(pyboy, symbol: Symbol) -> int:
+    high = read_byte(pyboy, symbol)
+    low = read_addr(pyboy, symbol.bank, symbol.address + 1)
+    return (high << 8) | low
+
+
+def read_symbol_big_endian_word(pyboy, symbols: dict[str, Symbol], name: str) -> int:
+    return read_big_endian_word(pyboy, symbols[name])
+
+
 def read_symbol_range(
     pyboy,
     symbols: dict[str, Symbol],
@@ -203,16 +213,16 @@ def party_summary(pyboy, symbols: dict[str, Symbol], battle_mode: int) -> dict[s
             "count": read_symbol(pyboy, symbols, "wPartyCount"),
             "species": read_symbol(pyboy, symbols, "wBattleMonSpecies"),
             "level": read_symbol(pyboy, symbols, "wBattleMonLevel"),
-            "hp": read_symbol_word(pyboy, symbols, "wBattleMonHP"),
-            "max_hp": read_symbol_word(pyboy, symbols, "wBattleMonMaxHP"),
+            "hp": read_symbol_big_endian_word(pyboy, symbols, "wBattleMonHP"),
+            "max_hp": read_symbol_big_endian_word(pyboy, symbols, "wBattleMonMaxHP"),
         }
     return {
         "source": 0,
         "count": read_symbol(pyboy, symbols, "wPartyCount"),
         "species": read_symbol(pyboy, symbols, "wPartyMon1Species"),
         "level": read_symbol(pyboy, symbols, "wPartyMon1Level"),
-        "hp": read_symbol_word(pyboy, symbols, "wPartyMon1HP"),
-        "max_hp": read_symbol_word(pyboy, symbols, "wPartyMon1MaxHP"),
+        "hp": read_symbol_big_endian_word(pyboy, symbols, "wPartyMon1HP"),
+        "max_hp": read_symbol_big_endian_word(pyboy, symbols, "wPartyMon1MaxHP"),
     }
 
 
