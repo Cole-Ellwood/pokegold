@@ -118,6 +118,32 @@ class DapServerHandshakeTests(unittest.TestCase):
         self.assertEqual(responses[0]["request_seq"], 0)
         self.assertIn("invalid request seq", responses[0]["message"])
 
+    def test_boolean_seq_returns_error_response(self) -> None:
+        server = DapServer()
+        responses = server.handle_message({
+            "seq": True,
+            "type": "request",
+            "command": "initialize",
+        })
+
+        self.assertEqual(len(responses), 1)
+        self.assertFalse(responses[0]["success"])
+        self.assertEqual(responses[0]["request_seq"], 0)
+        self.assertIn("invalid request seq", responses[0]["message"])
+
+    def test_float_seq_returns_error_response(self) -> None:
+        server = DapServer()
+        responses = server.handle_message({
+            "seq": 1.5,
+            "type": "request",
+            "command": "initialize",
+        })
+
+        self.assertEqual(len(responses), 1)
+        self.assertFalse(responses[0]["success"])
+        self.assertEqual(responses[0]["request_seq"], 0)
+        self.assertIn("invalid request seq", responses[0]["message"])
+
     def test_seq_increments_across_responses(self) -> None:
         server = DapServer()
         first = server.handle_message(_client_initialize_message(seq=1))

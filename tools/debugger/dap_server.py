@@ -206,10 +206,9 @@ _COMMAND_HANDLERS: dict[
 
 def _request_seq(message: dict[str, Any]) -> tuple[int, str]:
     raw = message.get("seq", 0)
-    try:
-        return int(raw), ""
-    except (TypeError, ValueError):
+    if isinstance(raw, bool) or not isinstance(raw, int):
         return 0, f"invalid request seq: {raw!r}"
+    return raw, ""
 
 
 def encode_frame(payload: dict[str, Any]) -> bytes:
