@@ -1337,8 +1337,8 @@ def _build_v2_surfaces(root: Path = ROOT) -> list[dict[str, Any]]:
                 "no VS Code launch recipe or debugger user-guide recipe yet",
             ),
             commands=(
-                "python -m tools.debugger dap --stdio",
-                "python -m tools.debugger dap --port 4711 --once",
+                "python -m tools.debugger dap --stdio --report effect.json",
+                "python -m tools.debugger dap --port 4711 --once --report effect.json",
                 "python -m tools.debugger dap --help",
             ),
         ),

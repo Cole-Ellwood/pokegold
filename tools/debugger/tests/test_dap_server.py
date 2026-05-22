@@ -6,6 +6,7 @@ import socket
 import threading
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
+from unittest.mock import patch
 
 from tools.debugger.dap_server import (
     DEFAULT_HOST,
@@ -281,6 +282,26 @@ class DapServerEvaluateTests(unittest.TestCase):
         self.assertEqual(len(matches), 1)
         self.assertEqual(matches[0].get("address_hex"), "D141")
 
+    def test_evaluate_uses_default_reports_when_request_omits_reports(self) -> None:
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            self._trace_fixture(tmp)
+            server = DapServer(default_reports=("effect.json",))
+            server.root = type(server.root)(tmp)
+            responses = server.handle_message({
+                "seq": 9,
+                "type": "request",
+                "command": "evaluate",
+                "arguments": {"expression": "writes(addr=$D141)"},
+            })
+
+        response = responses[0]
+        self.assertTrue(response["success"], response)
+        matches = response["body"]["tdb"].get("matches", [])
+        self.assertEqual(len(matches), 1)
+        self.assertEqual(matches[0].get("address_hex"), "D141")
+
     def test_evaluate_returns_tdb_errors_with_success_false(self) -> None:
         server = DapServer()
         responses = server.handle_message({
@@ -349,6 +370,14 @@ class DapServerCliTests(unittest.TestCase):
         self.assertIn("evaluate(tdb)", text)
         self.assertIn("Current slices", text)
         self.assertNotIn("scopes/evaluate(tdb)/reverseContinue", text)
+
+    def test_stdio_cli_passes_default_reports_to_server(self) -> None:
+        with patch("tools.debugger.dap_server.serve_stream") as serve_stream_mock:
+            code = main(["--stdio", "--report", "effect.json", "--report", "other.json"])
+
+        self.assertEqual(code, 0)
+        server = serve_stream_mock.call_args.args[0]
+        self.assertEqual(server.default_reports, ("effect.json", "other.json"))
 
 
 if __name__ == "__main__":

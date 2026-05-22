@@ -155,9 +155,9 @@ class DapServer:
     def _evaluate_response(
         self, message: dict[str, Any], request_seq: int
     ) -> list[dict[str, Any]]:
-        # evaluate runs the expression as a tdb query. Reports list is
-        # carried in the optional `arguments.context` ("watch" or a JSON
-        # list of report paths) or in `arguments.reports`. The result
+        # evaluate runs the expression as a tdb query. Report paths can
+        # be supplied per request via `arguments.reports` or once at
+        # server launch via repeated CLI --report args. The result
         # mirrors the CLI tdb shape: matches[] + canonical + valid + errors.
         from .tdb import run_tdb
 
@@ -339,9 +339,15 @@ def main(argv: Sequence[str] | None = None) -> int:
         action="store_true",
         help="(TCP only) accept a single client then exit",
     )
+    parser.add_argument(
+        "--report",
+        action="append",
+        default=[],
+        help="effect-trace report path available to evaluate(tdb); repeatable",
+    )
     args = parser.parse_args(list(argv) if argv is not None else None)
 
-    server = DapServer()
+    server = DapServer(default_reports=tuple(args.report))
     if args.stdio:
         serve_stream(server, sys.stdin.buffer, sys.stdout.buffer)
         return 0
