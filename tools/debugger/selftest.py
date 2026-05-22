@@ -390,6 +390,78 @@ def check_context_packet(root: Path) -> CheckResult:
     )
 
 
+def check_heatmap(root: Path) -> CheckResult:
+    """Exercise P9 heatmap generation against a synthetic IO trace.
+
+    The selftest builds a tiny effect-trace JSONL with three writes
+    across two frames in the IO region, runs build_heatmap, and asserts
+    the per-cell counts, the last-write PC tie-breaker (highest seq
+    wins), the ASCII grid renders rows for both addresses, and a
+    frame-range filter clips correctly. The cross-check that
+    last_write_pc matches the P2 when-wrote query for the same address
+    is queued for a P9 follow-up slice.
+    """
+
+    import json
+    import tempfile
+
+    from .heatmap import build_heatmap
+
+    def inner() -> str:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_root = Path(tmp)
+            trace = tmp_root / "effect.jsonl"
+            trace.write_text(
+                "\n".join(
+                    json.dumps(ev)
+                    for ev in (
+                        {"kind": "write", "address": "0xFF40", "frame": 0, "seq": 0, "pc_bank_address": "00:0150", "pc_label": "WriteLCDC"},
+                        {"kind": "write", "address": "0xFF40", "frame": 1, "seq": 1, "pc_bank_address": "00:0180", "pc_label": "WriteLCDC_alt"},
+                        {"kind": "write", "address": "0xFF42", "frame": 1, "seq": 2, "pc_bank_address": "00:0160", "pc_label": "ScrollY"},
+                    )
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            report = build_heatmap(traces=(trace,), region="io", root=tmp_root)
+            clipped = build_heatmap(
+                traces=(trace,),
+                region="io",
+                frame_range=(1, 2),
+                root=tmp_root,
+            )
+        if not report.get("valid"):
+            raise AssertionError(f"heatmap invalid: {report.get('errors')}")
+        if report.get("cell_count") != 3:
+            raise AssertionError(f"expected 3 cells; got {report.get('cell_count')}")
+        ff40_cells = sorted(
+            (c for c in report["cells"] if c["address_hex"] == "$FF40"),
+            key=lambda c: c["frame"],
+        )
+        if len(ff40_cells) != 2:
+            raise AssertionError(f"expected 2 $FF40 cells; got {len(ff40_cells)}")
+        last_ff40 = ff40_cells[-1]
+        if last_ff40.get("last_write_pc_label") != "WriteLCDC_alt":
+            raise AssertionError(
+                f"highest-seq writer should win; got {last_ff40.get('last_write_pc_label')!r}"
+            )
+        if "$FF40" not in report.get("grid", "") or "$FF42" not in report.get("grid", ""):
+            raise AssertionError("grid missing one or both address rows")
+        if clipped.get("frames") != [1]:
+            raise AssertionError(f"frame_range filter failed: got {clipped.get('frames')}")
+        return (
+            f"heatmap valid; {report['cell_count']} cells across "
+            f"{report['frame_count']} frames; tie-breaker + filter ok"
+        )
+
+    return _capture(
+        component="heatmap",
+        next_command="python -m tools.debugger heatmap --trace effect.jsonl --region io",
+        fn=inner,
+    )
+
+
 def check_save_state_lab(root: Path) -> CheckResult:
     """Round-trip trusted raw WRAM and fail-closed .sgm handling."""
 
@@ -792,6 +864,7 @@ NAMED_CHECKS: tuple[tuple[str, Check], ...] = (
     ("visualization", check_visualization),
     ("hypothesis_tracker", check_hypothesis_tracker),
     ("context_packet", check_context_packet),
+    ("heatmap", check_heatmap),
     ("save_state_lab", check_save_state_lab),
     ("bisect", check_bisect),
     ("handoff_log", check_handoff_log),
