@@ -374,6 +374,30 @@ python -m tools.debugger audio-snapshot `
   --json-out .local/tmp/audio.json
 ```
 
+**For raw VRAM/OAM state diffs (P6)**
+
+Use this only when you have trusted raw 64 KiB address-space dumps
+from before and after the visible glitch. It decodes VRAM tile maps,
+CGB attrs, OAM sprites, LCDC, and palettes, then reports structured
+tilemap/OAM/palette/LCDC deltas instead of a byte blob.
+
+```powershell
+python -m tools.debugger vram-snapshot `
+  --decode before.raw64k `
+  --json-out .local/tmp/vram_before.json
+
+python -m tools.debugger vram-diff `
+  before.raw64k after.raw64k `
+  --json-out .local/tmp/vram_diff.json
+```
+
+If the available artifact is an opaque VBA/VBA-M `.sgm` or generic
+`.state`, `vram-snapshot` and `vram-diff` refuse to decode it. That is
+intentional: guessing emulator-specific offsets would create false
+graphics evidence. Convert or export a trusted raw 64 KiB dump first,
+or keep the claim at `planned_only` and use the visual/audio snapshots
+as PyBoy-only signals.
+
 **Cross-emulator (v2, deferred)**
 
 `python -m tools.debugger crossemu --backends pyboy,sameboy,gambatte,vba-m`
