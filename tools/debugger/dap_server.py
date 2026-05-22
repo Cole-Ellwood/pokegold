@@ -4,9 +4,9 @@
 `debugger dap --port 4711` exposes a small DAP-shaped surface so Claude
 and Codex (and VS Code, and any DAP client) can drive the debugger
 through a normalized JSON protocol instead of re-inventing per-session
-glue. Current slices ship Content-Length framing, initialize, threads,
-and evaluate(tdb). Later slices add stackTrace, scopes, setBreakpoints,
-reverseContinue, pause, and continue.
+glue. Current slices ship Content-Length framing, initialize, launch,
+threads, and evaluate(tdb). Later slices add stackTrace, scopes,
+setBreakpoints, reverseContinue, pause, and continue.
 
 Protocol shape grounded in microsoft/debug-adapter-protocol spec
 (https://microsoft.github.io/debug-adapter-protocol/specification.html).
@@ -152,6 +152,37 @@ class DapServer:
             )
         ]
 
+    def _launch_response(
+        self, message: dict[str, Any], request_seq: int
+    ) -> list[dict[str, Any]]:
+        # Minimal launch handshake. DAP clients can bind trace reports
+        # through launch arguments once, then use evaluate(tdb) without
+        # repeating custom report paths on every request.
+        raw_args = message.get("arguments", {})
+        if not isinstance(raw_args, dict):
+            return [self._error_response(
+                request_seq=request_seq,
+                command="launch",
+                message="launch arguments must be an object",
+            )]
+        reports, reports_error = _report_paths_from_arguments(
+            raw_args,
+            command="launch",
+            default_reports=self.default_reports,
+        )
+        if reports_error:
+            return [self._error_response(
+                request_seq=request_seq,
+                command="launch",
+                message=reports_error,
+            )]
+        self.default_reports = reports
+        return [self._response(
+            request_seq=request_seq,
+            command="launch",
+            success=True,
+        )]
+
     def _evaluate_response(
         self, message: dict[str, Any], request_seq: int
     ) -> list[dict[str, Any]]:
@@ -175,18 +206,16 @@ class DapServer:
                 command="evaluate",
                 message="evaluate requires non-empty string arguments.expression",
             )]
-        raw_reports = args.get("reports")
-        if raw_reports is None:
-            reports = self.default_reports
-        elif isinstance(raw_reports, list) and all(
-            isinstance(item, str) for item in raw_reports
-        ):
-            reports = tuple(raw_reports)
-        else:
+        reports, reports_error = _report_paths_from_arguments(
+            args,
+            command="evaluate",
+            default_reports=self.default_reports,
+        )
+        if reports_error:
             return [self._error_response(
                 request_seq=request_seq,
                 command="evaluate",
-                message="evaluate arguments.reports must be a list of strings",
+                message=reports_error,
             )]
         tdb_result = run_tdb(query=expression, reports=reports, root=self.root)
         body = {
@@ -207,6 +236,7 @@ _COMMAND_HANDLERS: dict[
     str, Callable[[DapServer, dict[str, Any], int], list[dict[str, Any]]]
 ] = {
     "initialize": DapServer._initialize_response,
+    "launch": DapServer._launch_response,
     "threads": DapServer._threads_response,
     "evaluate": DapServer._evaluate_response,
 }
@@ -217,6 +247,22 @@ def _request_seq(message: dict[str, Any]) -> tuple[int, str]:
     if isinstance(raw, bool) or not isinstance(raw, int):
         return 0, f"invalid request seq: {raw!r}"
     return raw, ""
+
+
+def _report_paths_from_arguments(
+    args: dict[str, Any],
+    *,
+    command: str,
+    default_reports: tuple[str, ...],
+) -> tuple[tuple[str, ...], str]:
+    raw_reports = args.get("reports")
+    if raw_reports is None:
+        return default_reports, ""
+    if isinstance(raw_reports, list) and all(
+        isinstance(item, str) for item in raw_reports
+    ):
+        return tuple(raw_reports), ""
+    return (), f"{command} arguments.reports must be a list of strings"
 
 
 def encode_frame(payload: dict[str, Any]) -> bytes:
@@ -319,7 +365,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         prog="python -m tools.debugger.dap_server",
         description=(
             "Minimal Debug Adapter Protocol server (P14). Current slices "
-            "ship initialize, threads, and evaluate(tdb); later slices add "
+            "ship initialize, launch, threads, and evaluate(tdb); later slices add "
             "setBreakpoints/stackTrace/scopes/reverseContinue."
         ),
     )

@@ -6,6 +6,7 @@ import socket
 import threading
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
+from pathlib import Path
 from unittest.mock import patch
 
 from tools.debugger.dap_server import (
@@ -26,6 +27,39 @@ def _client_initialize_message(seq: int = 1) -> dict:
         "command": "initialize",
         "arguments": {"clientID": "test-client", "adapterID": "pokegold"},
     }
+
+
+def _trace_fixture(tmp_path) -> str:
+    from pathlib import Path as _Path
+
+    report = {
+        "schema_version": 1,
+        "kind": "unified_debugger_effect_trace",
+        "valid": True,
+        "events": [
+            {
+                "seq": 4,
+                "pc_bank_address": "01:5A00",
+                "pc_label": "BattleCommand_DamageCalc+6",
+                "bank_state": {"wram": 1},
+                "bank_state_sources": {"wram": "bank_state.wram"},
+                "effects": [
+                    {
+                        "access": "write",
+                        "kind": "memory_write",
+                        "address_hex": "D141",
+                        "address_key": "wramx:01:D141",
+                        "value_hex": "2A",
+                        "bank": 1,
+                        "space": "wramx",
+                    }
+                ],
+            }
+        ],
+    }
+    path = _Path(tmp_path) / "effect.json"
+    path.write_text(json.dumps(report), encoding="utf-8")
+    return str(path)
 
 
 class DapFramingTests(unittest.TestCase):
@@ -172,39 +206,61 @@ class DapServerThreadsTests(unittest.TestCase):
         self.assertEqual(body["threads"][0]["id"], 1)
 
 
+class DapServerLaunchTests(unittest.TestCase):
+    def test_launch_binds_default_reports_for_evaluate(self) -> None:
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            _trace_fixture(tmp)
+            server = DapServer(root=Path(tmp))
+            launch = server.handle_message({
+                "seq": 2,
+                "type": "request",
+                "command": "launch",
+                "arguments": {"reports": ["effect.json"]},
+            })
+            evaluate = server.handle_message({
+                "seq": 3,
+                "type": "request",
+                "command": "evaluate",
+                "arguments": {"expression": "writes(addr=$D141)"},
+            })
+
+        self.assertTrue(launch[0]["success"])
+        self.assertEqual(server.default_reports, ("effect.json",))
+        self.assertTrue(evaluate[0]["success"], evaluate)
+        matches = evaluate[0]["body"]["tdb"].get("matches", [])
+        self.assertEqual(len(matches), 1)
+        self.assertEqual(matches[0].get("address_hex"), "D141")
+
+    def test_launch_rejects_non_object_arguments(self) -> None:
+        server = DapServer()
+        responses = server.handle_message({
+            "seq": 2,
+            "type": "request",
+            "command": "launch",
+            "arguments": [],
+        })
+
+        self.assertFalse(responses[0]["success"])
+        self.assertIn("arguments must be an object", responses[0]["message"])
+
+    def test_launch_rejects_non_string_report_entries(self) -> None:
+        server = DapServer()
+        responses = server.handle_message({
+            "seq": 2,
+            "type": "request",
+            "command": "launch",
+            "arguments": {"reports": ["effect.json", 7]},
+        })
+
+        self.assertFalse(responses[0]["success"])
+        self.assertIn("reports must be a list of strings", responses[0]["message"])
+
+
 class DapServerEvaluateTests(unittest.TestCase):
     def _trace_fixture(self, tmp_path) -> str:
-        import json as _json
-        from pathlib import Path as _Path
-
-        report = {
-            "schema_version": 1,
-            "kind": "unified_debugger_effect_trace",
-            "valid": True,
-            "events": [
-                {
-                    "seq": 4,
-                    "pc_bank_address": "01:5A00",
-                    "pc_label": "BattleCommand_DamageCalc+6",
-                    "bank_state": {"wram": 1},
-                    "bank_state_sources": {"wram": "bank_state.wram"},
-                    "effects": [
-                        {
-                            "access": "write",
-                            "kind": "memory_write",
-                            "address_hex": "D141",
-                            "address_key": "wramx:01:D141",
-                            "value_hex": "2A",
-                            "bank": 1,
-                            "space": "wramx",
-                        }
-                    ],
-                }
-            ],
-        }
-        path = _Path(tmp_path) / "effect.json"
-        path.write_text(_json.dumps(report), encoding="utf-8")
-        return str(path)
+        return _trace_fixture(tmp_path)
 
     def test_evaluate_requires_arguments(self) -> None:
         server = DapServer()
@@ -260,7 +316,7 @@ class DapServerEvaluateTests(unittest.TestCase):
         import tempfile
 
         with tempfile.TemporaryDirectory() as tmp:
-            report_path = self._trace_fixture(tmp)
+            self._trace_fixture(tmp)
             server = DapServer()
             server.root = type(server.root)(tmp)
             responses = server.handle_message({

@@ -125,8 +125,22 @@ python -m tools.debugger dap `
   --report .local/tmp/effect_trace.json
 ```
 
-Then send DAP `initialize`, `threads`, and `evaluate` requests. The
-`evaluate` expression is a `tdb` query:
+Then send DAP `initialize`, optionally `launch`, `threads`, and
+`evaluate` requests. `launch` may bind reports for clients that cannot
+pass `--report` at process start:
+
+```json
+{
+  "seq": 2,
+  "type": "request",
+  "command": "launch",
+  "arguments": {
+    "reports": [".local/tmp/effect_trace.json"]
+  }
+}
+```
+
+The `evaluate` expression is a `tdb` query:
 
 ```json
 {
@@ -141,11 +155,12 @@ Then send DAP `initialize`, `threads`, and `evaluate` requests. The
 
 **Success looks like**
 
-The `initialize` response returns adapter capabilities, `threads`
-returns one synthetic `sm83` thread, and `evaluate` returns
-`success=true` with `body.tdb.matches[]`. If the client cannot bind
-reports at launch, it may send `arguments.reports` as a list of report
-paths on the `evaluate` request.
+The `initialize` response returns adapter capabilities, `launch`
+returns `success=true`, `threads` returns one synthetic `sm83` thread,
+and `evaluate` returns `success=true` with `body.tdb.matches[]`. If
+the client cannot bind reports at process start or launch, it may send
+`arguments.reports` as a list of report paths on the `evaluate`
+request.
 
 **Proof limit**
 
