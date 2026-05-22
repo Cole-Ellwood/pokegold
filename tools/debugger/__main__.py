@@ -68,6 +68,7 @@ V2_PASSTHROUGH_MODULES = {
     "when-wrote": "tools.debugger.when_wrote",
     "tdb": "tools.debugger.tdb",
     "pack": "tools.debugger.context_packet",
+    "heatmap": "tools.debugger.heatmap",
 }
 
 
@@ -762,6 +763,19 @@ def build_parser() -> argparse.ArgumentParser:
     )
     pack.add_argument("argv", nargs=argparse.REMAINDER)
     pack.set_defaults(func=cmd_pack)
+
+    heatmap = subparsers.add_parser(
+        "heatmap",
+        add_help=False,
+        description=(
+            "IO heatmap + per-frame memory-write timeline (P9). ASCII grid + "
+            "JSON for $FF00-$FFFF, $FF80-$FFFE, $D000-$DFFF write density. "
+            "Delegates to `python -m tools.debugger.heatmap`. Pass `--help` "
+            "for syntax."
+        ),
+    )
+    heatmap.add_argument("argv", nargs=argparse.REMAINDER)
+    heatmap.set_defaults(func=cmd_heatmap)
 
     return parser
 
@@ -1490,6 +1504,10 @@ def cmd_tdb(args: argparse.Namespace) -> int:
 
 def cmd_pack(args: argparse.Namespace) -> int:
     return _delegate_to_module_main("tools.debugger.context_packet", args.argv)
+
+
+def cmd_heatmap(args: argparse.Namespace) -> int:
+    return _delegate_to_module_main("tools.debugger.heatmap", args.argv)
 
 
 def emit_report(report: dict[str, Any], args: argparse.Namespace) -> None:

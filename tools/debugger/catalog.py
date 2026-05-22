@@ -1060,6 +1060,39 @@ def _build_v2_surfaces(root: Path = ROOT) -> list[dict[str, Any]]:
             ),
         ),
         _capability(
+            id="heatmap",
+            title="IO/WRAMX/HRAM memory-write heatmap (P9)",
+            status=_complete_if_paths(
+                root,
+                "tools/debugger/heatmap.py",
+                "tools/debugger/tests/test_heatmap.py",
+            ),
+            scope=(
+                "Per-frame ASCII grid + JSON of memory-write density across "
+                "$FF00-$FF7F (io), $FF80-$FFFE (hram), and $D000-$DFFF "
+                "(wramx). First slice ships write counts per (frame, address) "
+                "with last-write PC + label per cell; richer features (read "
+                "counts, taint overlay, selftest component, "
+                "test_heatmap_last_write_pc_matches_when_wrote_query "
+                "cross-check) land in P9 follow-up slices."
+            ),
+            evidence=(
+                "tools/debugger/heatmap.py",
+                "tools/debugger/tests/test_heatmap.py",
+                "docs/debugger_masterpiece_roadmap_codex_task.md",
+            ),
+            gaps=(
+                "no read-count surface yet",
+                "no taint-write overlay",
+                "no selftest component yet (P9 follow-up)",
+                "no cross-check that last_write_pc matches when-wrote query",
+            ),
+            commands=(
+                "python -m tools.debugger heatmap --trace effect.jsonl --region io",
+                "python -m tools.debugger heatmap --trace effect.jsonl --region wramx --frame-range 0:120 --json",
+            ),
+        ),
+        _capability(
             id="when_wrote",
             title="when-wrote omniscient last-writer query (P2)",
             status=_complete_if_paths(
