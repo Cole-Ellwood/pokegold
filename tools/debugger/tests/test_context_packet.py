@@ -66,6 +66,39 @@ class ContextPacketTests(unittest.TestCase):
         self.assertEqual(packet["structured"]["target"], "codex")
         self.assertEqual(packet["structured"]["citations"][0]["path"], "engine/damage.asm")
 
+    def test_codex_target_uses_punchline_first_form(self) -> None:
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            store = root / "hypothesis_store.jsonl"
+            claim_event = hypothesis_tracker.add_claim(
+                symptom="5x physical damage on wild encounter",
+                claim="GetUserItem clobbers de",
+                confidence="judgment",
+                citations=(),
+                session_id="session-test",
+                store=store,
+                root=root,
+            )
+
+            codex_packet = build_context_packet(
+                claim_event["id"],
+                target="codex",
+                root=root,
+                store=store,
+            )
+            claude_packet = build_context_packet(
+                claim_event["id"],
+                target="claude",
+                root=root,
+                store=store,
+            )
+
+        self.assertTrue(
+            codex_packet["markdown"].startswith("Status: open | Confidence: judgment")
+        )
+        self.assertIn("Claim: GetUserItem clobbers de", codex_packet["markdown"].splitlines()[:3])
+        self.assertTrue(claude_packet["markdown"].startswith("# Hypothesis context packet"))
+
     def test_stale_citation_is_marked_on_specific_markdown_entry(self) -> None:
         with TemporaryDirectory() as tmp:
             root = Path(tmp)

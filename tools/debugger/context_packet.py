@@ -5,9 +5,8 @@
 single LLM turn: the folded hypothesis state, citations, recent
 verifications, plus a markdown rendering. First slice intentionally
 ships the minimum surface (hypothesis read-back + markdown/JSON
-emission); later slices add taint/slicing spans, effect-trace
-neighbors, per-LLM punchline-first framing, and token-budget
-enforcement.
+emission); follow-up slices add taint/slicing spans, effect-trace
+neighbors, and tokenizer-backed budget enforcement.
 """
 
 from __future__ import annotations
@@ -173,6 +172,21 @@ def _render_markdown(
         if report.get("citation") is not None and not report.get("ok", True)
     }
     lines: list[str] = []
+    if target == "codex":
+        lines.append(
+            f"Status: {folded.get('status', 'open')} | "
+            f"Confidence: {folded.get('confidence', '')} | "
+            f"Hypothesis: {folded.get('id', '')}"
+        )
+        claim = (folded.get("claim") or "").strip()
+        if claim:
+            lines.append(f"Claim: {claim}")
+        if folded.get("citation_stale"):
+            lines.append("Citation drift: YES")
+        blocked = int(folded.get("blocked_pass_count", 0) or 0)
+        if blocked:
+            lines.append(f"Blocked passes: {blocked}")
+        lines.append("")
     lines.append(f"# Hypothesis context packet — {folded.get('id', '')}")
     lines.append("")
     lines.append(f"- Target reader: {target}")
@@ -225,7 +239,7 @@ def _render_markdown(
     lines.append("")
     lines.append(
         "(First-slice scaffolding: taint/slicing spans, effect-trace "
-        "neighbors, and per-LLM punchline-first framing land in P5 "
+        "neighbors, and tokenizer-backed budget enforcement land in P5 "
         "follow-up slices.)"
     )
     return "\n".join(lines).rstrip() + "\n"

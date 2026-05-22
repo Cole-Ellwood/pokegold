@@ -340,6 +340,56 @@ def check_hypothesis_tracker(root: Path) -> CheckResult:
     )
 
 
+def check_context_packet(root: Path) -> CheckResult:
+    """Exercise P5 context-packet generation against a real temp hypothesis."""
+
+    import tempfile
+
+    from .context_packet import build_context_packet
+    from .hypothesis_tracker import add_claim
+
+    def inner() -> str:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_root = Path(tmp)
+            store = tmp_root / "hypothesis_tree.jsonl"
+            (tmp_root / "engine").mkdir()
+            (tmp_root / "engine" / "damage.asm").write_text(
+                "; line 1\n; line 2\n",
+                encoding="utf-8",
+            )
+            claim = add_claim(
+                symptom="5x physical damage on wild encounter",
+                claim="GetUserItem clobbers de",
+                confidence="repo-proven",
+                citations=("engine/damage.asm:2",),
+                session_id="selftest",
+                store=store,
+                root=tmp_root,
+            )
+            packet = build_context_packet(
+                claim["id"],
+                target="codex",
+                max_tokens=4000,
+                root=tmp_root,
+                store=store,
+            )
+        if not packet.get("valid"):
+            raise AssertionError(f"context packet invalid: {packet.get('errors')}")
+        if not packet.get("within_budget"):
+            raise AssertionError(f"context packet exceeded budget: {packet.get('token_count')}")
+        if packet.get("structured", {}).get("claim") != "GetUserItem clobbers de":
+            raise AssertionError(f"context packet lost claim: {packet.get('structured')}")
+        if not str(packet.get("markdown", "")).startswith("Status: open | Confidence: repo-proven"):
+            raise AssertionError("codex target packet did not use punchline-first header")
+        return f"context packet valid and within budget ({packet.get('token_count')} tokens)"
+
+    return _capture(
+        component="context_packet",
+        next_command="python -m tools.debugger pack --hypothesis <id> --target codex",
+        fn=inner,
+    )
+
+
 def check_save_state_lab(root: Path) -> CheckResult:
     """Round-trip trusted raw WRAM and fail-closed .sgm handling."""
 
@@ -741,6 +791,7 @@ NAMED_CHECKS: tuple[tuple[str, Check], ...] = (
     ("trace_index", check_trace_index),
     ("visualization", check_visualization),
     ("hypothesis_tracker", check_hypothesis_tracker),
+    ("context_packet", check_context_packet),
     ("save_state_lab", check_save_state_lab),
     ("bisect", check_bisect),
     ("handoff_log", check_handoff_log),

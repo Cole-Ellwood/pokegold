@@ -1040,8 +1040,8 @@ def _build_v2_surfaces(root: Path = ROOT) -> list[dict[str, Any]]:
                 "Emits a single-turn-sized context packet for a hypothesis: "
                 "folded claim + citations + recent verifications + status, "
                 "rendered as both markdown and structured JSON. First slice "
-                "ships the hypothesis read-back and budget estimate (pessimistic "
-                "4-chars-per-token). Per-LLM punchline-first framing, taint "
+                "ships the hypothesis read-back, Codex punchline-first framing, "
+                "and budget estimate (pessimistic 4-chars-per-token). Taint "
                 "/slicing spans, effect-trace neighbors, and golden lived-bug "
                 "smokes land in P5 follow-up slices."
             ),
@@ -1051,7 +1051,6 @@ def _build_v2_surfaces(root: Path = ROOT) -> list[dict[str, Any]]:
                 "docs/debugger_masterpiece_roadmap_codex_task.md",
             ),
             gaps=(
-                "per-LLM punchline-first framing not yet differentiated",
                 "no taint/slicing/effect-trace integration yet",
                 "token estimate is char-based, not tokenizer-backed",
             ),

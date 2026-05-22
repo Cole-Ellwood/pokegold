@@ -15,6 +15,7 @@ from tools.debugger.selftest import (
     SelftestReport,
     _format_text,
     check_bisect,
+    check_context_packet,
     check_coverage,
     check_hypothesis_tracker,
     check_sm83_model_parity,
@@ -87,6 +88,16 @@ class HypothesisTrackerCheckTests(unittest.TestCase):
         result = check_hypothesis_tracker(ROOT)
         self.assertTrue(result.ok, result.error or result.detail)
         self.assertEqual(result.component, "hypothesis_tracker")
+
+
+class ContextPacketCheckTests(unittest.TestCase):
+    """P5 lived smoke: a temp hypothesis packs into a Codex-targeted packet."""
+
+    def test_context_packet_check_passes_in_isolation(self) -> None:
+        result = check_context_packet(ROOT)
+        self.assertTrue(result.ok, result.error or result.detail)
+        self.assertEqual(result.component, "context_packet")
+        self.assertIn("within budget", result.detail)
 
 
 class CoverageCheckTests(unittest.TestCase):
