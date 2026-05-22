@@ -109,6 +109,17 @@ def _init_repo(repo: Path) -> None:
     _git(repo, "commit", "-m", "initial")
 
 
+def _file_txt_patch(new_text: str) -> str:
+    return (
+        "diff --git a/file.txt b/file.txt\n"
+        "--- a/file.txt\n"
+        "+++ b/file.txt\n"
+        "@@ -1 +1 @@\n"
+        "-one\n"
+        f"+{new_text}\n"
+    )
+
+
 class RomEditAutoApplyGateTests(unittest.TestCase):
     def test_ram_path_detection_accepts_windows_and_posix_paths(self) -> None:
         self.assertTrue(touches_ram(("ram/wram.asm",)))
@@ -200,7 +211,9 @@ class RomEditWorktreeLifecycleTests(unittest.TestCase):
             removed = remove_rom_edit_worktree(worktree.path, root=repo)
 
             self.assertEqual(removed["removed"], str(worktree_path))
+            self.assertEqual(removed["removed_branch"], "rom-edit/roundtrip")
             self.assertFalse(worktree_path.exists())
+            self.assertNotIn("rom-edit/roundtrip", _git(repo, "branch", "--list"))
 
     def test_create_refuses_existing_target_path(self) -> None:
         with TemporaryDirectory() as tmp:
@@ -239,14 +252,7 @@ class RomEditPatchApplyTests(unittest.TestCase):
             repo = Path(tmp) / "repo"
             _init_repo(repo)
             worktree = create_rom_edit_worktree(root=repo, slug="patch-core")
-            patch = (
-                "diff --git a/file.txt b/file.txt\n"
-                "--- a/file.txt\n"
-                "+++ b/file.txt\n"
-                "@@ -1 +1 @@\n"
-                "-one\n"
-                "+two\n"
-            )
+            patch = _file_txt_patch("two")
 
             result = apply_unified_patch_to_worktree(
                 worktree.path,
@@ -284,6 +290,82 @@ class RomEditPatchApplyTests(unittest.TestCase):
 
             with self.assertRaisesRegex(RomEditWorktreeError, "outside rom-edit base"):
                 apply_unified_patch_to_worktree(repo, "not a patch", root=repo)
+
+
+class RomEditProposeCliTests(unittest.TestCase):
+    def test_propose_cli_creates_worktree_and_applies_patch(self) -> None:
+        with TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            _init_repo(repo)
+            proc = subprocess.run(
+                [
+                    "python",
+                    "-m",
+                    "tools.debugger",
+                    "rom-edit",
+                    "propose",
+                    "--root",
+                    str(repo),
+                    "--file",
+                    "file.txt",
+                    "--change",
+                    _file_txt_patch("three"),
+                    "--slug",
+                    "cli-propose",
+                    "--json",
+                ],
+                cwd=ROOT,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+            )
+
+            self.assertEqual(proc.returncode, 0, proc.stderr)
+            proposal = json.loads(proc.stdout)
+            worktree_path = Path(proposal["worktree"]["path"])
+            self.assertEqual(proposal["changed_files"], ["file.txt"])
+            self.assertEqual(
+                (worktree_path / "file.txt").read_text(encoding="utf-8"),
+                "three\n",
+            )
+            self.assertEqual((repo / "file.txt").read_text(encoding="utf-8"), "one\n")
+
+            remove_rom_edit_worktree(worktree_path, root=repo)
+
+    def test_propose_cli_cleans_up_failed_patch(self) -> None:
+        with TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            _init_repo(repo)
+            proc = subprocess.run(
+                [
+                    "python",
+                    "-m",
+                    "tools.debugger",
+                    "rom-edit",
+                    "propose",
+                    "--root",
+                    str(repo),
+                    "--file",
+                    "file.txt",
+                    "--change",
+                    "not a patch",
+                    "--slug",
+                    "bad-proposal",
+                    "--json",
+                ],
+                cwd=ROOT,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+            )
+
+            self.assertEqual(proc.returncode, 1, proc.stdout)
+            self.assertIn("git apply --check", proc.stderr)
+            self.assertFalse(
+                (default_worktree_base(repo.resolve()) / "bad-proposal").exists()
+            )
 
     def test_refuses_red_save_format_audit_for_ram_edit(self) -> None:
         changed = ("ram/wram.asm",)

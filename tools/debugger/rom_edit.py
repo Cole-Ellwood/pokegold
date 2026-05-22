@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import json
 import subprocess
+import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -194,12 +195,17 @@ def remove_rom_edit_worktree(
         raise RomEditWorktreeError(
             f"refusing to remove worktree outside rom-edit base: {target}"
         )
+    branch = _git_stdout(["branch", "--show-current"], cwd=target)
     args = ["worktree", "remove"]
     if force:
         args.append("--force")
     args.append(str(target))
     _git_stdout(args, cwd=repo_root)
-    return {"removed": str(target)}
+    removed_branch = ""
+    if branch.startswith("rom-edit/"):
+        _git_stdout(["branch", "-D", branch], cwd=repo_root)
+        removed_branch = branch
+    return {"removed": str(target), "removed_branch": removed_branch}
 
 
 def apply_unified_patch_to_worktree(
@@ -233,6 +239,43 @@ def apply_unified_patch_to_worktree(
     }
 
 
+def propose_rom_edit(
+    *,
+    file_path: str,
+    patch_text: str,
+    root: Path = ROOT,
+    slug: str = "",
+) -> dict[str, Any]:
+    normalized_file = _normalize_repo_path(file_path)
+    worktree = create_rom_edit_worktree(
+        root=root,
+        changed_files=(normalized_file,),
+        slug=slug,
+    )
+    try:
+        applied = apply_unified_patch_to_worktree(
+            worktree.path,
+            patch_text,
+            root=root,
+        )
+        if tuple(applied["changed_files"]) != (normalized_file,):
+            raise RomEditWorktreeError(
+                "patch changed files do not match declared --file: "
+                f"declared={normalized_file!r} observed={applied['changed_files']!r}"
+            )
+    except Exception:
+        remove_rom_edit_worktree(worktree.path, root=root)
+        raise
+    return {
+        "kind": "rom_edit_proposal",
+        "status": "proposed",
+        "declared_file": normalized_file,
+        "worktree": worktree.as_dict(),
+        "changed_files": applied["changed_files"],
+        "diff": applied["diff"],
+    }
+
+
 def format_decision(decision: Mapping[str, Any]) -> str:
     status = "ALLOWED" if decision.get("allowed") else "REFUSED"
     lines = [f"rom-edit auto-apply: {status}"]
@@ -258,7 +301,11 @@ def format_decision(decision: Mapping[str, Any]) -> str:
 def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
-    return int(args.func(args))
+    try:
+        return int(args.func(args))
+    except RomEditWorktreeError as exc:
+        print(f"rom-edit: {exc}", file=sys.stderr)
+        return 1
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -294,6 +341,22 @@ def build_parser() -> argparse.ArgumentParser:
     gate.add_argument("--push-remote", action="store_true")
     gate.add_argument("--json", action="store_true")
     gate.set_defaults(func=cmd_gate)
+
+    propose = sub.add_parser(
+        "propose",
+        help="Create a rom-edit worktree and apply a unified patch.",
+    )
+    propose.add_argument("--file", required=True, dest="file_path")
+    propose.add_argument("--change", default="", help="Unified diff text to apply.")
+    propose.add_argument(
+        "--patch-file",
+        default="",
+        help="Path to a file containing unified diff text.",
+    )
+    propose.add_argument("--root", default=str(ROOT))
+    propose.add_argument("--slug", default="")
+    propose.add_argument("--json", action="store_true")
+    propose.set_defaults(func=cmd_propose)
     return parser
 
 
@@ -314,6 +377,23 @@ def cmd_gate(args: argparse.Namespace) -> int:
     return 0 if decision["allowed"] else 1
 
 
+def cmd_propose(args: argparse.Namespace) -> int:
+    patch_text = _patch_text_from_args(args.change, args.patch_file)
+    proposal = propose_rom_edit(
+        file_path=args.file_path,
+        patch_text=patch_text,
+        root=Path(args.root),
+        slug=args.slug,
+    )
+    if args.json:
+        print(json.dumps(proposal, indent=2))
+    else:
+        print(f"rom-edit proposal: {proposal['status']}")
+        print(f"worktree: {proposal['worktree']['path']}")
+        print(f"changed_files: {', '.join(proposal['changed_files'])}")
+    return 0
+
+
 def _parse_gate_arg(text: str) -> GateResult:
     if "=" not in text:
         raise argparse.ArgumentTypeError("gate result must be NAME=STATUS")
@@ -321,6 +401,14 @@ def _parse_gate_arg(text: str) -> GateResult:
     if not name or not status:
         raise argparse.ArgumentTypeError("gate result must be NAME=STATUS")
     return GateResult(name=name, status=status)
+
+
+def _patch_text_from_args(change: str, patch_file: str) -> str:
+    if bool(change) == bool(patch_file):
+        raise RomEditWorktreeError("provide exactly one of --change or --patch-file")
+    if patch_file:
+        return Path(patch_file).read_text(encoding="utf-8")
+    return change
 
 
 def _gate_blocking_reasons(
