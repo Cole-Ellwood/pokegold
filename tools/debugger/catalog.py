@@ -1154,6 +1154,37 @@ def _build_v2_surfaces(root: Path = ROOT) -> list[dict[str, Any]]:
             ),
         ),
         _capability(
+            id="chaos_mode",
+            title="Chaos mode schedule fuzzing (P11)",
+            status=_complete_if_paths(
+                root,
+                "tools/debugger/chaos.py",
+                "tools/debugger/tests/test_chaos.py",
+                "docs/debugger_user_guide.md",
+            ),
+            scope=(
+                "Deterministic fuzz --chaos schedules for timing-sensitive flakes. "
+                "Runs stable and synthetic-flake scenarios, records minimal_seed and "
+                "candidate_input_log, can write the candidate input log as a plain "
+                ".inputs artifact, and exposes the PyBoy public-API adapter proof "
+                "boundary as planned_not_applied evidence."
+            ),
+            evidence=(
+                "tools/debugger/chaos.py",
+                "tools/debugger/tests/test_chaos.py",
+                "docs/debugger_user_guide.md",
+                "docs/debugger_masterpiece_roadmap_codex_task.md",
+            ),
+            gaps=(
+                "PyBoy public API adapter drives frame ticks and button playback only",
+                "cycle-level vblank/hblank/joypad-latch/DMA perturbation backend remains planned_not_applied",
+            ),
+            commands=(
+                "python -m tools.debugger fuzz --chaos --runs 100 --seed 1 --chaos-scenario stable",
+                "python -m tools.debugger fuzz --chaos --runs 100 --seed 1 --chaos-scenario synthetic_flake --out-chaos-input-log .local/tmp/chaos.flake.inputs",
+            ),
+        ),
+        _capability(
             id="when_wrote",
             title="when-wrote omniscient last-writer query (P2)",
             status=_complete_if_paths(
