@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import argparse
+import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping, Sequence
@@ -121,6 +123,96 @@ def decide_auto_apply(
     }
 
 
+def format_decision(decision: Mapping[str, Any]) -> str:
+    status = "ALLOWED" if decision.get("allowed") else "REFUSED"
+    lines = [f"rom-edit auto-apply: {status}"]
+    lines.append(f"handoff_phase: {decision.get('handoff_phase')}")
+    lines.append(
+        f"handoff_mutual_verified: {decision.get('handoff_mutual_verified')}"
+    )
+    lines.append(f"target_branch: {decision.get('target_branch')}")
+    if decision.get("merge_target"):
+        lines.append(f"merge_target: {decision.get('merge_target')}")
+    if decision.get("push_remote"):
+        lines.append("push_remote: True")
+    blocking = decision.get("blocking_reasons") or ()
+    if blocking:
+        lines.append("blocking_reasons:")
+        for reason in blocking:
+            lines.append(f"  - {reason}")
+    else:
+        lines.append("blocking_reasons: none")
+    return "\n".join(lines)
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    return int(args.func(args))
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="python -m tools.debugger rom-edit",
+        description="ROM edit proposal/apply safety tooling.",
+    )
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    gate = sub.add_parser(
+        "gate",
+        help="Evaluate the non-destructive P12 auto-apply gate decision.",
+    )
+    gate.add_argument(
+        "--changed-file",
+        action="append",
+        dest="changed_files",
+        required=True,
+        help="Repo-relative path changed by the rom-edit candidate.",
+    )
+    gate.add_argument(
+        "--gate",
+        action="append",
+        default=[],
+        type=_parse_gate_arg,
+        metavar="NAME=STATUS",
+        help="Observed green-gate result, for example release_smoke=pass.",
+    )
+    gate.add_argument("--handoff-phase", required=True)
+    gate.add_argument("--handoff-store", default="")
+    gate.add_argument("--target-branch", required=True)
+    gate.add_argument("--merge-target", default="")
+    gate.add_argument("--push-remote", action="store_true")
+    gate.add_argument("--json", action="store_true")
+    gate.set_defaults(func=cmd_gate)
+    return parser
+
+
+def cmd_gate(args: argparse.Namespace) -> int:
+    decision = decide_auto_apply(
+        changed_files=tuple(args.changed_files),
+        gate_results=tuple(args.gate),
+        handoff_phase=args.handoff_phase,
+        handoff_store=Path(args.handoff_store) if args.handoff_store else DEFAULT_STORE,
+        target_branch=args.target_branch,
+        merge_target=args.merge_target,
+        push_remote=args.push_remote,
+    )
+    if args.json:
+        print(json.dumps(decision, indent=2))
+    else:
+        print(format_decision(decision))
+    return 0 if decision["allowed"] else 1
+
+
+def _parse_gate_arg(text: str) -> GateResult:
+    if "=" not in text:
+        raise argparse.ArgumentTypeError("gate result must be NAME=STATUS")
+    name, status = text.split("=", 1)
+    if not name or not status:
+        raise argparse.ArgumentTypeError("gate result must be NAME=STATUS")
+    return GateResult(name=name, status=status)
+
+
 def _gate_blocking_reasons(
     required_gates: Sequence[GateSpec],
     gate_results: Sequence[GateResult],
@@ -167,3 +259,7 @@ def _is_protected_branch(branch: str) -> bool:
 
 def _resolve_store(store: Path, root: Path) -> Path:
     return store if store.is_absolute() else root / store
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

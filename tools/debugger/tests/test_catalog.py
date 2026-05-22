@@ -260,6 +260,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
                 "vram-snapshot",
                 "vram-diff",
                 "probe",
+                "rom-edit",
             },
         )
 

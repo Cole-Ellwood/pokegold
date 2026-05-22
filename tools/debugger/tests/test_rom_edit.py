@@ -1,8 +1,12 @@
 from __future__ import annotations
 
+import json
+import subprocess
 import unittest
+from pathlib import Path
+from tempfile import TemporaryDirectory
 
-from tools.debugger.handoff_log import HandoffRow
+from tools.debugger.handoff_log import HandoffRow, append_row
 from tools.debugger.rom_edit import (
     FAIL,
     PASS,
@@ -16,6 +20,7 @@ from tools.debugger.rom_edit import (
 
 
 PHASE = "P12_rom_edit_apply_candidate"
+ROOT = Path(__file__).resolve().parents[3]
 
 
 def _ack_start() -> HandoffRow:
@@ -64,6 +69,13 @@ def _passing_results(changed_files: tuple[str, ...]) -> tuple[GateResult, ...]:
         GateResult(name=gate.name, command=gate.command, status=PASS)
         for gate in required_green_gate_stack(changed_files)
     )
+
+
+def _write_store(root: Path, *rows: HandoffRow) -> Path:
+    store = root / "handoff.jsonl"
+    for row in rows:
+        append_row(row, store=store)
+    return store
 
 
 class RomEditAutoApplyGateTests(unittest.TestCase):
@@ -211,6 +223,89 @@ class RomEditAutoApplyGateTests(unittest.TestCase):
         self.assertFalse(decision["allowed"])
         self.assertTrue(
             any("auto-merge" in reason for reason in decision["blocking_reasons"]),
+            decision,
+        )
+
+    def test_front_door_gate_cli_allows_green_mutual_candidate(self) -> None:
+        with TemporaryDirectory() as tmp:
+            store = _write_store(
+                Path(tmp),
+                _ack_start(),
+                _slice_update(),
+                _slice_review(),
+            )
+            proc = subprocess.run(
+                [
+                    "python",
+                    "-m",
+                    "tools.debugger",
+                    "rom-edit",
+                    "gate",
+                    "--changed-file",
+                    "engine/battle/core.asm",
+                    "--gate",
+                    "release_smoke=pass",
+                    "--handoff-phase",
+                    PHASE,
+                    "--handoff-store",
+                    str(store),
+                    "--target-branch",
+                    "codex/cleanup-gsc-rebalance-split",
+                    "--json",
+                ],
+                cwd=ROOT,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+            )
+
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        decision = json.loads(proc.stdout)
+        self.assertTrue(decision["allowed"], decision)
+        self.assertTrue(decision["handoff_mutual_verified"], decision)
+
+    def test_front_door_gate_cli_refuses_red_save_format_audit(self) -> None:
+        with TemporaryDirectory() as tmp:
+            store = _write_store(
+                Path(tmp),
+                _ack_start(),
+                _slice_update(),
+                _slice_review(),
+            )
+            proc = subprocess.run(
+                [
+                    "python",
+                    "-m",
+                    "tools.debugger",
+                    "rom-edit",
+                    "gate",
+                    "--changed-file",
+                    "ram/wram.asm",
+                    "--gate",
+                    "save_format_version=fail",
+                    "--gate",
+                    "release_smoke=pass",
+                    "--handoff-phase",
+                    PHASE,
+                    "--handoff-store",
+                    str(store),
+                    "--target-branch",
+                    "codex/cleanup-gsc-rebalance-split",
+                    "--json",
+                ],
+                cwd=ROOT,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+            )
+
+        self.assertEqual(proc.returncode, 1, proc.stdout)
+        decision = json.loads(proc.stdout)
+        self.assertFalse(decision["allowed"], decision)
+        self.assertTrue(
+            any(SAVE_FORMAT_GATE_NAME in reason for reason in decision["blocking_reasons"]),
             decision,
         )
 

@@ -78,6 +78,7 @@ V2_PASSTHROUGH_MODULES = {
     "vram-snapshot": "tools.debugger.vram_snapshot",
     "vram-diff": "tools.debugger.vram_diff",
     "probe": "tools.debugger.probe",
+    "rom-edit": "tools.debugger.rom_edit",
 }
 
 
