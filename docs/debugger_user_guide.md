@@ -29,7 +29,7 @@ Pokemon Gold romhack debugger — session orientation
 
 branch: <current branch>
 
-selftest PASS (13/13 components healthy)
+selftest PASS (26/26 components healthy)
 
 open hypotheses: 0 (stale citations: 0)
 
@@ -52,15 +52,16 @@ check, drop straight to selftest:
 python -m tools.debugger.selftest
 ```
 
-Expected (~5s on this branch):
+Expected (~8s on this branch):
 
 ```
-Selftest PASS  (13/13 components healthy)
+Selftest PASS  (26/26 components healthy)
   [ok]   capability_audit  — capability audit ready=True, complete=11
   [ok]   inventory  — inventory ok (5 subsystems)
   ...
   [ok]   save_state_lab  — save_state_lab raw WRAM + .sgm fail-closed round-trip ok
   [ok]   bisect  — bisect synthetic regression localized in 2 steps
+  [ok]   rom_edit  — rom-edit temp repo propose/build/verify/apply-to-main round-trip ok
 ```
 
 If selftest fails, **fix the named component first** — the output names
@@ -647,6 +648,79 @@ python -m tools.debugger.hypothesis_tracker refine <id> `
   --citation "engine/<file>.asm:<line>"
 ```
 
+### "I need to test a ROM edit without touching my checkout"
+
+Use `rom-edit` when you have a concrete source patch to try, but you
+do not want build outputs, failed experiments, or generated artifacts
+touching the current checkout.
+
+**First command**
+
+Put the hypothesized fix in a unified diff file, then propose it into a
+sandbox worktree:
+
+```powershell
+python -m tools.debugger rom-edit propose `
+  --file engine/battle/late_gen_held_items.asm `
+  --patch-file .local/tmp/ag08_fix.diff `
+  --json
+```
+
+The JSON output includes `worktree.path`. Use that path for the rest
+of the loop.
+
+**Build and verify inside the worktree**
+
+```powershell
+python -m tools.debugger rom-edit build `
+  --worktree-path <worktree.path>
+
+python -m tools.debugger rom-edit verify `
+  --worktree-path <worktree.path> `
+  --command "python tools/audit/check_release_smoke.py" `
+  --command "python -m tools.damage_debugger.clobber_smoke"
+```
+
+`rom-edit build` uses the normal WSL/RGBDS build command and copies the
+gitignored `rgbds-1.0.1/` toolchain into the sandbox worktree before
+building. Build products stay in the sandbox.
+
+**Apply only after the mutual gate is green**
+
+```powershell
+python -m tools.debugger rom-edit apply-to-main `
+  --worktree-path <worktree.path> `
+  --changed-file engine/battle/late_gen_held_items.asm `
+  --gate release_smoke=pass `
+  --handoff-phase <phase-with-mutual-review> `
+  --target-branch <current-branch>
+```
+
+`apply-to-main` refuses protected targets (`main`/`master`), remote
+pushes, tracked-dirty target checkouts, empty diffs, red gates, and
+handoff phases without a repo-proven cross-model `slice_review`. If
+the candidate touches `ram/`, the gate stack also requires
+`save_format_version=pass`.
+
+**Cleanup**
+
+```powershell
+python -m tools.debugger rom-edit revert `
+  --worktree-path <worktree.path>
+```
+
+`revert` removes the sandbox worktree and its owned `rom-edit/<slug>`
+branch. It does not revert changes already applied to the main
+checkout.
+
+**Proof limit**
+
+`rom-edit` proves the patch built and the named verification commands
+passed in the sandbox. It does not prove player feel, emulator parity,
+or broader behavior beyond the audits you chose. For high-risk battle
+or save-format edits, keep the lived smoke in the handoff row before
+auto-apply.
+
 ## Hypothesis Tracker — workflow recipe
 
 For multi-step investigations, persist the tree at every step so a
@@ -706,7 +780,10 @@ python -m tools.debugger.selftest --component hypothesis_tracker
 `--component` accepts any of: `capability_audit`, `inventory`,
 `ingest`, `triage`, `coverage`, `provenance`, `mirrors_compare`,
 `fuzz`, `trace_index`, `visualization`, `hypothesis_tracker`,
-`save_state_lab`, `bisect`.
+`context_packet`, `heatmap`, `vram_decode`, `bgb_sym_export`, `probe`,
+`shrink_input_log`, `shrink_battle`, `shrink_map_script`, `chaos`,
+`save_state_lab`, `bisect`, `handoff_log`, `when_wrote`,
+`sm83_model_parity`, `rom_edit`.
 
 A passing selftest does NOT replace `python -m tools.debugger audit` —
 audit is the v1 readiness gate. Selftest is the v2 health check on
