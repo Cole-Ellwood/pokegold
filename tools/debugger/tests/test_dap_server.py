@@ -85,6 +85,10 @@ class DapFramingTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             read_frame(io.BytesIO(b"X-Other: 1\r\n\r\n{}"))
 
+    def test_read_frame_rejects_negative_content_length(self) -> None:
+        with self.assertRaisesRegex(ValueError, "malformed Content-Length"):
+            read_frame(io.BytesIO(b"Content-Length: -1\r\n\r\n{}"))
+
     def test_read_frame_rejects_truncated_body(self) -> None:
         with self.assertRaises(ValueError):
             read_frame(io.BytesIO(b"Content-Length: 100\r\n\r\n{}"))

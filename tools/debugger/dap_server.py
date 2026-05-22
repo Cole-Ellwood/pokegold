@@ -577,6 +577,8 @@ def read_frame(stream: BinaryIO) -> dict[str, Any] | None:
                 content_length = int(line[len(CONTENT_LENGTH_PREFIX):].strip())
             except ValueError as exc:
                 raise ValueError(f"malformed Content-Length: {line!r}") from exc
+            if content_length < 0:
+                raise ValueError(f"malformed Content-Length: {line!r}")
             break
     if content_length is None:
         raise ValueError(f"missing Content-Length header in: {header_text!r}")
