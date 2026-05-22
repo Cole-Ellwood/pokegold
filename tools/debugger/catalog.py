@@ -1303,7 +1303,6 @@ def _build_v2_surfaces(root: Path = ROOT) -> list[dict[str, Any]]:
             ),
             gaps=(
                 "SameBoy, gambatte, and VBA-M run adapters remain pending",
-                "cross-backend structural snapshot diff execution remains pending",
                 "non-PyBoy backends must pass conformance rows before cross-backend diff claims are trusted",
             ),
             commands=(

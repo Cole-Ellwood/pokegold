@@ -66,6 +66,21 @@ class FakePyBoy:
         self.stopped = True
 
 
+def _backend_result(backend: str, *, vram0: str = "aaa", screen: str = "sss") -> dict[str, object]:
+    return {
+        "backend": backend,
+        "status": "runtime_observed",
+        "proof_status": "runtime_observed",
+        "snapshot": {
+            "regions": [
+                {"name": "vram0", "sha256": vram0, "bank_read": "exact"},
+                {"name": "oam", "sha256": "ooo", "bank_read": "unbanked"},
+            ],
+            "screen_frame": {"sha256": screen},
+        },
+    }
+
+
 class CrossemuPreflightTests(unittest.TestCase):
     def test_crossemu_preflight_reports_available_backends(self) -> None:
         report = crossemu.build_preflight_report(
@@ -202,6 +217,29 @@ class CrossemuPreflightTests(unittest.TestCase):
         self.assertFalse(report["valid"])
         self.assertIn("pending adapters: sameboy", "\n".join(report["errors"]))
         self.assertEqual(report["backend_results"][0]["status"], "planned_only")
+
+    def test_snapshot_diff_reports_region_and_screen_divergence(self) -> None:
+        diff = crossemu.diff_backend_snapshots(
+            (
+                _backend_result("pyboy", vram0="aaa", screen="sss"),
+                _backend_result("sameboy", vram0="bbb", screen="ttt"),
+            )
+        )
+
+        self.assertTrue(diff["divergent"])
+        self.assertEqual(diff["status"], "diverged")
+        comparison = diff["comparisons"][0]
+        self.assertEqual(comparison["left_backend"], "pyboy")
+        self.assertEqual(comparison["right_backend"], "sameboy")
+        self.assertEqual(comparison["region_differences"][0]["kind"], "region_sha256_mismatch")
+        self.assertEqual(comparison["screen_difference"]["kind"], "screen_frame_sha256_mismatch")
+
+    def test_snapshot_diff_single_backend_stays_planned(self) -> None:
+        diff = crossemu.diff_backend_snapshots((_backend_result("pyboy"),))
+
+        self.assertFalse(diff["divergent"])
+        self.assertEqual(diff["status"], "not_enough_runtime_backends")
+        self.assertEqual(diff["proof_status"], "planned_only")
 
 
 if __name__ == "__main__":

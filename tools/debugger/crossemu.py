@@ -305,6 +305,7 @@ def build_run_report(
         "backend_preflight": preflight,
         "backend_results": backend_results,
         "backend_result_count": len(backend_results),
+        "snapshot_diff": diff_backend_snapshots(backend_results),
         "errors": errors,
         "warnings": warnings,
         "error_count": len(errors),
@@ -321,6 +322,7 @@ def build_run_report(
         pyboy_factory=pyboy_factory,
     )
     backend_results.insert(0, pyboy_result)
+    snapshot_diff = diff_backend_snapshots(backend_results)
     report.update(
         {
             "valid": not pyboy_result.get("errors"),
@@ -328,6 +330,9 @@ def build_run_report(
             "proof_status": pyboy_result.get("proof_status", "runtime_observed"),
             "backend_results": backend_results,
             "backend_result_count": len(backend_results),
+            "snapshot_diff": snapshot_diff,
+            "divergent": snapshot_diff.get("divergent", False),
+            "divergence_count": snapshot_diff.get("divergence_count", 0),
             "errors": list(pyboy_result.get("errors", [])),
             "warnings": warnings,
         }
@@ -335,6 +340,124 @@ def build_run_report(
     report["error_count"] = len(report["errors"])
     report["warning_count"] = len(report["warnings"])
     return report
+
+
+def diff_backend_snapshots(backend_results: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    observed = [
+        result
+        for result in backend_results
+        if result.get("status") == "runtime_observed"
+        and isinstance(result.get("snapshot"), Mapping)
+    ]
+    comparisons: list[dict[str, Any]] = []
+    if len(observed) >= 2:
+        left = observed[0]
+        for right in observed[1:]:
+            comparisons.append(compare_snapshot_pair(left, right))
+    divergence_count = sum(
+        int(item.get("difference_count", 0))
+        for item in comparisons
+    )
+    if not comparisons:
+        status = "not_enough_runtime_backends"
+    elif divergence_count:
+        status = "diverged"
+    else:
+        status = "matched"
+    return {
+        "kind": "unified_debugger_crossemu_snapshot_diff",
+        "schema_version": SCHEMA_VERSION,
+        "valid": True,
+        "status": status,
+        "proof_status": "runtime_observed" if comparisons else "planned_only",
+        "runtime_backend_count": len(observed),
+        "comparison_count": len(comparisons),
+        "divergent": bool(divergence_count),
+        "divergence_count": divergence_count,
+        "comparisons": comparisons,
+        "known_limits": [
+            "Snapshot diffs compare emulator-observed digests from completed backend runs.",
+            "A matching digest does not prove hardware accuracy; it only proves agreement among captured backend states.",
+        ],
+    }
+
+
+def compare_snapshot_pair(
+    left_result: Mapping[str, Any],
+    right_result: Mapping[str, Any],
+) -> dict[str, Any]:
+    left_snapshot = dict(left_result.get("snapshot") or {})
+    right_snapshot = dict(right_result.get("snapshot") or {})
+    region_differences = compare_regions(
+        left_snapshot.get("regions", []),
+        right_snapshot.get("regions", []),
+    )
+    screen_difference = compare_screen_frame(
+        left_snapshot.get("screen_frame"),
+        right_snapshot.get("screen_frame"),
+    )
+    differences = list(region_differences)
+    if screen_difference:
+        differences.append(screen_difference)
+    return {
+        "left_backend": str(left_result.get("backend", "")),
+        "right_backend": str(right_result.get("backend", "")),
+        "difference_count": len(differences),
+        "region_difference_count": len(region_differences),
+        "screen_difference": screen_difference,
+        "region_differences": region_differences,
+    }
+
+
+def compare_regions(left_regions: Any, right_regions: Any) -> list[dict[str, Any]]:
+    left_by_name = {
+        str(region.get("name")): region
+        for region in left_regions
+        if isinstance(region, Mapping) and region.get("name")
+    }
+    right_by_name = {
+        str(region.get("name")): region
+        for region in right_regions
+        if isinstance(region, Mapping) and region.get("name")
+    }
+    differences: list[dict[str, Any]] = []
+    for name in sorted(set(left_by_name) | set(right_by_name)):
+        left = left_by_name.get(name)
+        right = right_by_name.get(name)
+        if left is None:
+            differences.append({"kind": "region_missing_left", "region": name})
+            continue
+        if right is None:
+            differences.append({"kind": "region_missing_right", "region": name})
+            continue
+        if left.get("sha256") != right.get("sha256"):
+            differences.append(
+                {
+                    "kind": "region_sha256_mismatch",
+                    "region": name,
+                    "left_sha256": str(left.get("sha256", "")),
+                    "right_sha256": str(right.get("sha256", "")),
+                    "left_bank_read": str(left.get("bank_read", "")),
+                    "right_bank_read": str(right.get("bank_read", "")),
+                }
+            )
+    return differences
+
+
+def compare_screen_frame(left_screen: Any, right_screen: Any) -> dict[str, Any]:
+    if not isinstance(left_screen, Mapping) and not isinstance(right_screen, Mapping):
+        return {}
+    if not isinstance(left_screen, Mapping):
+        return {"kind": "screen_frame_missing_left"}
+    if not isinstance(right_screen, Mapping):
+        return {"kind": "screen_frame_missing_right"}
+    if left_screen.get("sha256") != right_screen.get("sha256"):
+        return {
+            "kind": "screen_frame_sha256_mismatch",
+            "left_sha256": str(left_screen.get("sha256", "")),
+            "right_sha256": str(right_screen.get("sha256", "")),
+        }
+    return {}
 
 
 def execute_pyboy_run(
@@ -514,6 +637,11 @@ def run_self_test() -> dict[str, Any]:
             command_finder=fake_command_finder,
             pyboy_factory=lambda _rom: FakePyBoy(),
         )
+    pyboy_result = run["backend_results"][0]
+    sameboy_result = json.loads(json.dumps(pyboy_result))
+    sameboy_result["backend"] = "sameboy"
+    sameboy_result["snapshot"]["regions"][0]["sha256"] = "different"
+    snapshot_diff = diff_backend_snapshots((pyboy_result, sameboy_result))
     return {
         "kind": "unified_debugger_crossemu_selftest",
         "schema_version": SCHEMA_VERSION,
@@ -522,9 +650,11 @@ def run_self_test() -> dict[str, Any]:
             and report["ready_for_cross_backend_diff"]
             and run["valid"]
             and run["executed"]
+            and snapshot_diff["divergent"]
         ),
         "preflight": report,
         "run": run,
+        "snapshot_diff": snapshot_diff,
     }
 
 
@@ -698,6 +828,14 @@ def format_run(report: Mapping[str, Any]) -> str:
             )
         if result.get("blocking_reason"):
             lines.append(f"    blocked: {result.get('blocking_reason')}")
+    snapshot_diff = report.get("snapshot_diff")
+    if isinstance(snapshot_diff, Mapping):
+        lines.append(
+            "snapshot_diff: "
+            f"{snapshot_diff.get('status')} "
+            f"comparisons={snapshot_diff.get('comparison_count', 0)} "
+            f"divergences={snapshot_diff.get('divergence_count', 0)}"
+        )
     for warning in report.get("warnings", []):
         lines.append(f"warning: {warning}")
     for error in report.get("errors", []):
