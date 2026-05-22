@@ -66,17 +66,58 @@ class FakePyBoy:
         self.stopped = True
 
 
-def _backend_result(backend: str, *, vram0: str = "aaa", screen: str = "sss") -> dict[str, object]:
+def _backend_result(
+    backend: str,
+    *,
+    vram0: str = "aaa",
+    screen: str = "sss",
+    vram0_sample: str = "00112233",
+    screen_sample: str = "44556677",
+) -> dict[str, object]:
     return {
         "backend": backend,
         "status": "runtime_observed",
         "proof_status": "runtime_observed",
         "snapshot": {
             "regions": [
-                {"name": "vram0", "sha256": vram0, "bank_read": "exact"},
-                {"name": "oam", "sha256": "ooo", "bank_read": "unbanked"},
+                {
+                    "name": "vram0",
+                    "address": "8000",
+                    "bank": "00",
+                    "sha256": vram0,
+                    "bank_read": "exact",
+                    "size": 8192,
+                    "nonzero_count": 4,
+                    "unique_byte_count": 4,
+                    "sample_size": 4,
+                    "sample_hex": vram0_sample,
+                    "truncated": True,
+                },
+                {
+                    "name": "oam",
+                    "address": "FE00",
+                    "bank": "",
+                    "sha256": "ooo",
+                    "bank_read": "unbanked",
+                    "size": 160,
+                    "nonzero_count": 0,
+                    "unique_byte_count": 1,
+                    "sample_size": 4,
+                    "sample_hex": "00000000",
+                    "truncated": True,
+                },
             ],
-            "screen_frame": {"sha256": screen},
+            "screen_frame": {
+                "sha256": screen,
+                "screen_source": "ndarray",
+                "width": 160,
+                "height": 144,
+                "mode": "RGB",
+                "byte_count": 12,
+                "sample_size": 4,
+                "sample_hex": screen_sample,
+                "truncated": True,
+            },
         },
     }
 
@@ -340,7 +381,9 @@ class CrossemuPreflightTests(unittest.TestCase):
         self.assertEqual(comparison["left_backend"], "pyboy")
         self.assertEqual(comparison["right_backend"], "sameboy")
         self.assertEqual(comparison["region_differences"][0]["kind"], "region_sha256_mismatch")
+        self.assertEqual(comparison["region_differences"][0]["left_sample_hex"], "00112233")
         self.assertEqual(comparison["screen_difference"]["kind"], "screen_frame_sha256_mismatch")
+        self.assertEqual(comparison["screen_difference"]["left_sample_hex"], "44556677")
 
     def test_snapshot_diff_single_backend_stays_planned(self) -> None:
         diff = crossemu.diff_backend_snapshots((_backend_result("pyboy"),))
