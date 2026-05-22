@@ -79,6 +79,7 @@ V2_PASSTHROUGH_MODULES = {
     "vram-diff": "tools.debugger.vram_diff",
     "probe": "tools.debugger.probe",
     "rom-edit": "tools.debugger.rom_edit",
+    "crossemu": "tools.debugger.crossemu",
 }
 
 

@@ -29,7 +29,7 @@ Pokemon Gold romhack debugger — session orientation
 
 branch: <current branch>
 
-selftest PASS (26/26 components healthy)
+selftest PASS (27/27 components healthy)
 
 open hypotheses: 0 (stale citations: 0)
 
@@ -55,13 +55,14 @@ python -m tools.debugger.selftest
 Expected (~8s on this branch):
 
 ```
-Selftest PASS  (26/26 components healthy)
+Selftest PASS  (27/27 components healthy)
   [ok]   capability_audit  — capability audit ready=True, complete=11
   [ok]   inventory  — inventory ok (5 subsystems)
   ...
   [ok]   save_state_lab  — save_state_lab raw WRAM + .sgm fail-closed round-trip ok
   [ok]   bisect  — bisect synthetic regression localized in 2 steps
   [ok]   rom_edit  — rom-edit temp repo propose/build/verify/apply-to-main round-trip ok
+  [ok]   crossemu  — crossemu preflight valid; trusted_cross_backend_count=1
 ```
 
 If selftest fails, **fix the named component first** — the output names
@@ -559,12 +560,21 @@ graphics evidence. Convert or export a trusted raw 64 KiB dump first,
 or keep the claim at `planned_only` and use the visual/audio snapshots
 as PyBoy-only signals.
 
-**Cross-emulator (v2, deferred)**
+**Cross-emulator preflight (P13)**
 
-`python -m tools.debugger crossemu --backends pyboy,sameboy,gambatte,vba-m`
-will land when SameBoy / gambatte / VBA-M binaries have a documented
-install path on this machine. Until then, manual cross-check via the
-user playing in VBA-M is the workflow.
+Start with discovery. This is read-only and works even when SameBoy,
+gambatte, or VBA-M are not installed. It reports which backends are
+available, which missing installs need action, and whether any
+cross-backend has a passing conformance row before it is trusted for a
+diff claim.
+
+```powershell
+python -m tools.debugger crossemu preflight
+python -m tools.debugger crossemu install-docs
+```
+
+Until `ready_for_cross_backend_diff: yes`, manual cross-check via the
+user playing in VBA-M remains the workflow for VBA/VBA-M-only symptoms.
 
 **Proof limit**
 

@@ -1280,6 +1280,36 @@ def _build_v2_surfaces(root: Path = ROOT) -> list[dict[str, Any]]:
                 "python -m tools.debugger rom-edit apply-to-main --worktree-path <path> --changed-file <path> --gate release_smoke=pass --handoff-phase <phase> --target-branch <branch>",
             ),
         ),
+        _capability(
+            id="crossemu",
+            title="Cross-emulator differential preflight (P13)",
+            status=_complete_if_paths(
+                root,
+                "tools/debugger/crossemu.py",
+                "tools/debugger/tests/test_crossemu.py",
+            ),
+            scope=(
+                "Preflight surface for cross-emulator differential debugging. "
+                "Discovers PyBoy, SameBoy, gambatte, and VBA-M backends, reports "
+                "what is installed, names conformance gating status, and prints "
+                "install recipes for missing cross-backends without requiring "
+                "external emulator binaries to be present."
+            ),
+            evidence=(
+                "tools/debugger/crossemu.py",
+                "tools/debugger/tests/test_crossemu.py",
+                "docs/debugger_masterpiece_roadmap_codex_task.md",
+            ),
+            gaps=(
+                "crossemu run, backend adapters, and structural snapshot diff execution remain pending",
+                "non-PyBoy backends must pass conformance rows before cross-backend diff claims are trusted",
+            ),
+            commands=(
+                "python -m tools.debugger crossemu preflight",
+                "python -m tools.debugger crossemu preflight --backends pyboy,sameboy,gambatte,vba-m --json",
+                "python -m tools.debugger crossemu install-docs",
+            ),
+        ),
     ]
     return [
         {

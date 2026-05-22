@@ -1239,6 +1239,26 @@ def check_rom_edit(root: Path) -> CheckResult:
     )
 
 
+def check_crossemu(root: Path) -> CheckResult:
+    """Exercise P13 backend discovery without requiring external emulators."""
+
+    from .crossemu import run_self_test
+
+    def inner() -> str:
+        report = run_self_test()
+        if not report.get("passed"):
+            raise AssertionError(f"crossemu selftest failed: {report}")
+        preflight = report.get("preflight", {})
+        trusted = preflight.get("trusted_cross_backend_count")
+        return f"crossemu preflight valid; trusted_cross_backend_count={trusted}"
+
+    return _capture(
+        component="crossemu",
+        next_command="python -m tools.debugger crossemu preflight",
+        fn=inner,
+    )
+
+
 NAMED_CHECKS: tuple[tuple[str, Check], ...] = (
     ("capability_audit", check_capability_audit),
     ("inventory", check_inventory),
@@ -1266,6 +1286,7 @@ NAMED_CHECKS: tuple[tuple[str, Check], ...] = (
     ("when_wrote", check_when_wrote),
     ("sm83_model_parity", check_sm83_model_parity),
     ("rom_edit", check_rom_edit),
+    ("crossemu", check_crossemu),
 )
 
 CHECKS: tuple[Check, ...] = tuple(check for _, check in NAMED_CHECKS)
