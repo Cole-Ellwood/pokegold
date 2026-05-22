@@ -62,7 +62,7 @@ Selftest PASS  (27/27 components healthy)
   [ok]   save_state_lab  — save_state_lab raw WRAM + .sgm fail-closed round-trip ok
   [ok]   bisect  — bisect synthetic regression localized in 2 steps
   [ok]   rom_edit  — rom-edit temp repo propose/build/verify/apply-to-main round-trip ok
-  [ok]   crossemu  — crossemu preflight valid; trusted_cross_backend_count=1
+  [ok]   crossemu  — crossemu preflight/run valid; trusted_cross_backend_count=1
 ```
 
 If selftest fails, **fix the named component first** — the output names
@@ -570,11 +570,14 @@ diff claim.
 
 ```powershell
 python -m tools.debugger crossemu preflight
+python -m tools.debugger crossemu run --backends pyboy --save-state <state> --frames 60
 python -m tools.debugger crossemu install-docs
 ```
 
-Until `ready_for_cross_backend_diff: yes`, manual cross-check via the
-user playing in VBA-M remains the workflow for VBA/VBA-M-only symptoms.
+The `run` command currently executes the PyBoy backend only and captures
+emulator-observed VRAM/WRAM/OAM/IO/framebuffer digests. Until
+`ready_for_cross_backend_diff: yes`, manual cross-check via the user
+playing in VBA-M remains the workflow for VBA/VBA-M-only symptoms.
 
 **Proof limit**
 

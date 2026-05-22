@@ -1,23 +1,33 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import importlib.util
 import json
 import shutil
 import sys
 from dataclasses import dataclass
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Any, Callable, Iterable, Mapping, Sequence
 
+from tools.trace import runtime as trace_runtime
+
 from .catalog import ROOT
+from .ingest import sha256_file
+from .input_log import build_input_playback, play_inputs_for_frame
+from .provenance import display_path, resolve_path
+from .visual_snapshot import IO_REGISTERS, read_byte, read_memory_range, screen_frame_snapshot
 
 
 SCHEMA_VERSION = 1
 DEFAULT_BACKEND_ORDER = ("pyboy", "sameboy", "gambatte", "vba-m")
 DEFAULT_CONFORMANCE_STORE = Path("audit") / "crossemu_conformance.jsonl"
+DEFAULT_ROM = "pokegold.gbc"
 
 ModuleFinder = Callable[[str], Any]
 CommandFinder = Callable[[str], str | None]
+PyBoyFactory = Callable[[Path], Any]
 
 
 @dataclass(frozen=True)
@@ -209,7 +219,270 @@ def build_install_docs_report(
     }
 
 
+def build_run_report(
+    *,
+    backends: str | Sequence[str] | None = ("pyboy",),
+    rom_path: str = DEFAULT_ROM,
+    save_state: str = "",
+    frames: int = 0,
+    input_logs: Sequence[str] = (),
+    root: Path = ROOT,
+    module_finder: ModuleFinder = importlib.util.find_spec,
+    command_finder: CommandFinder = shutil.which,
+    pyboy_factory: PyBoyFactory | None = None,
+) -> dict[str, Any]:
+    requested = parse_backend_list(backends)
+    rom = resolve_path(rom_path, root=root)
+    save = resolve_path(save_state, root=root) if save_state else None
+    errors = [f"unknown backend {name!r}" for name in requested if name not in BACKENDS]
+    warnings: list[str] = []
+    if frames < 0:
+        errors.append("--frames must be non-negative")
+    if not save_state:
+        errors.append("--save-state is required for crossemu run")
+    elif save is not None and not save.exists():
+        errors.append(f"missing save-state: {save_state}")
+    if not rom.exists():
+        errors.append(f"missing ROM: {rom_path}")
+
+    supported = [name for name in requested if name == "pyboy"]
+    unsupported = [name for name in requested if name in BACKENDS and name != "pyboy"]
+    if unsupported:
+        errors.append(
+            "crossemu run currently supports --backends pyboy only; "
+            f"pending adapters: {', '.join(unsupported)}"
+        )
+    if not supported and not unsupported:
+        errors.append("no runnable backend selected")
+    elif not supported and unsupported:
+        errors.append("no implemented backend selected")
+
+    preflight = build_preflight_report(
+        backends=requested,
+        conformance_rows=(),
+        root=root,
+        module_finder=module_finder,
+        command_finder=command_finder,
+    )
+    pyboy_entry = next(
+        (entry for entry in preflight.get("backends", []) if entry.get("name") == "pyboy"),
+        None,
+    )
+    if "pyboy" in supported and pyboy_entry and not pyboy_entry.get("available"):
+        errors.append("pyboy backend is not available for crossemu run")
+
+    input_playback = build_input_playback(tuple(input_logs), root=root, max_events=0)
+    errors.extend(input_playback.get("errors", []))
+    warnings.extend(input_playback.get("warnings", []))
+
+    backend_results = [
+        {
+            "backend": name,
+            "status": "planned_only",
+            "proof_status": "planned_only",
+            "blocking_reason": "backend adapter is not implemented in this slice",
+        }
+        for name in unsupported
+    ]
+    report: dict[str, Any] = {
+        "kind": "unified_debugger_crossemu_run",
+        "schema_version": SCHEMA_VERSION,
+        "valid": not errors,
+        "executed": False,
+        "proof_status": "planned_only",
+        "hardware_behavior_proven": False,
+        "hardware_proof_boundary": (
+            "PyBoy crossemu run captures emulator-observed memory/framebuffer state; "
+            "cross-emulator or hardware agreement is not proven until another backend runs."
+        ),
+        "requested_backends": list(requested),
+        "rom": display_path(rom, root=root),
+        "rom_sha256": sha256_file(rom) if rom.exists() else "",
+        "save_state": display_path(save, root=root) if save is not None else "",
+        "frames": max(0, int(frames)),
+        "input_logs": list(input_logs),
+        "input_playback": input_playback,
+        "backend_preflight": preflight,
+        "backend_results": backend_results,
+        "backend_result_count": len(backend_results),
+        "errors": errors,
+        "warnings": warnings,
+        "error_count": len(errors),
+        "warning_count": len(warnings),
+    }
+    if errors:
+        return report
+
+    pyboy_result = execute_pyboy_run(
+        rom=rom,
+        save_state=save,
+        frames=max(0, int(frames)),
+        input_playback=input_playback,
+        pyboy_factory=pyboy_factory,
+    )
+    backend_results.insert(0, pyboy_result)
+    report.update(
+        {
+            "valid": not pyboy_result.get("errors"),
+            "executed": True,
+            "proof_status": pyboy_result.get("proof_status", "runtime_observed"),
+            "backend_results": backend_results,
+            "backend_result_count": len(backend_results),
+            "errors": list(pyboy_result.get("errors", [])),
+            "warnings": warnings,
+        }
+    )
+    report["error_count"] = len(report["errors"])
+    report["warning_count"] = len(report["warnings"])
+    return report
+
+
+def execute_pyboy_run(
+    *,
+    rom: Path,
+    save_state: Path | None,
+    frames: int,
+    input_playback: Mapping[str, Any],
+    pyboy_factory: PyBoyFactory | None = None,
+) -> dict[str, Any]:
+    pyboy: Any | None = None
+    errors: list[str] = []
+    played_inputs: list[dict[str, Any]] = []
+    stopped = False
+    tick_count = 0
+    try:
+        pyboy = (
+            pyboy_factory(rom)
+            if pyboy_factory is not None
+            else trace_runtime.open_pyboy(
+                rom,
+                "PyBoy is required for crossemu run. Import failed",
+            )
+        )
+        trace_runtime.disable_realtime(pyboy)
+        if save_state is not None:
+            with save_state.open("rb") as fh:
+                pyboy.load_state(fh)
+        for frame in range(max(0, int(frames))):
+            played_inputs.extend(play_inputs_for_frame(pyboy, dict(input_playback), frame))
+            running = pyboy.tick(1, False, False)
+            tick_count += 1
+            if running is False:
+                stopped = True
+                break
+        snapshot = pyboy_runtime_snapshot(pyboy, frame=frames)
+    except SystemExit as exc:
+        errors.append(f"pyboy run failed: SystemExit: {exc.code}")
+        snapshot = {}
+    except Exception as exc:  # noqa: BLE001 - execution report carries backend failure.
+        errors.append(f"pyboy run failed: {type(exc).__name__}: {exc}")
+        snapshot = {}
+    finally:
+        if pyboy is not None:
+            try:
+                pyboy.stop(save=False)
+            except TypeError:
+                pyboy.stop()
+            except Exception:
+                pass
+    return {
+        "backend": "pyboy",
+        "status": "runtime_observed" if not errors else "failed",
+        "proof_status": "runtime_observed" if not errors else "planned_only",
+        "executed_frame_count": tick_count if not errors else 0,
+        "stopped": stopped,
+        "played_inputs": played_inputs,
+        "played_input_count": len(played_inputs),
+        "snapshot": snapshot,
+        "errors": errors,
+    }
+
+
+def pyboy_runtime_snapshot(pyboy: Any, *, frame: int, max_sample_bytes: int = 512) -> dict[str, Any]:
+    svbk = read_byte(pyboy, 0xFF70) & 0x07
+    wramx_bank = svbk or 1
+    regions = [
+        memory_region_snapshot(pyboy, name="vram0", address=0x8000, size=0x2000, bank=0, max_sample_bytes=max_sample_bytes),
+        memory_region_snapshot(pyboy, name="vram1", address=0x8000, size=0x2000, bank=1, max_sample_bytes=max_sample_bytes),
+        memory_region_snapshot(pyboy, name="wram0", address=0xC000, size=0x1000, bank=None, max_sample_bytes=max_sample_bytes),
+        memory_region_snapshot(pyboy, name="wramx", address=0xD000, size=0x1000, bank=wramx_bank, max_sample_bytes=max_sample_bytes),
+        memory_region_snapshot(pyboy, name="oam", address=0xFE00, size=0x00A0, bank=None, max_sample_bytes=max_sample_bytes),
+        memory_region_snapshot(pyboy, name="io", address=0xFF00, size=0x0080, bank=None, max_sample_bytes=max_sample_bytes),
+    ]
+    io_registers = {
+        name: f"{read_byte(pyboy, address):02X}"
+        for name, address in IO_REGISTERS.items()
+    }
+    frame_snapshot = screen_frame_snapshot(pyboy, frame=frame, max_bytes=max_sample_bytes)
+    return {
+        "kind": "pyboy_runtime_snapshot",
+        "schema_version": SCHEMA_VERSION,
+        "region_count": len(regions),
+        "regions": regions,
+        "io_registers": io_registers,
+        "screen_frame_count": 1 if frame_snapshot else 0,
+        "screen_frame": frame_snapshot,
+    }
+
+
+def memory_region_snapshot(
+    pyboy: Any,
+    *,
+    name: str,
+    address: int,
+    size: int,
+    bank: int | None,
+    max_sample_bytes: int,
+) -> dict[str, Any]:
+    values, bank_read = read_memory_range(pyboy, address=address, size=size, bank=bank)
+    data = bytes(values)
+    sample = data[:max(0, int(max_sample_bytes))]
+    return {
+        "name": name,
+        "address": f"{address & 0xFFFF:04X}",
+        "bank": "" if bank is None else f"{bank & 0xFF:02X}",
+        "bank_read": bank_read,
+        "size": size,
+        "sha256": hashlib.sha256(data).hexdigest(),
+        "nonzero_count": sum(1 for value in values if value),
+        "unique_byte_count": len(set(values)),
+        "sample_size": len(sample),
+        "sample_hex": sample.hex().upper(),
+        "truncated": len(sample) < len(data),
+    }
+
+
 def run_self_test() -> dict[str, Any]:
+    class FakeMemory:
+        def __getitem__(self, key: Any) -> int:
+            if isinstance(key, tuple):
+                bank, address = key
+                return (int(bank) * 17 + int(address)) & 0xFF
+            if int(key) == 0xFF70:
+                return 2
+            return int(key) & 0xFF
+
+    class FakeScreen:
+        def ndarray(self) -> bytes:
+            return bytes(range(16))
+
+    class FakePyBoy:
+        def __init__(self) -> None:
+            self.memory = FakeMemory()
+            self.screen = FakeScreen()
+
+        def load_state(self, _fh: Any) -> None:
+            return None
+
+        def button(self, _name: str, delay: int = 1) -> None:
+            return None
+
+        def tick(self, _count: int, _render: bool, _sound: bool) -> bool:
+            return True
+
+        def stop(self, save: bool = False) -> None:
+            return None
+
     def fake_module_finder(name: str) -> object | None:
         return object() if name == "pyboy" else None
 
@@ -225,11 +498,33 @@ def run_self_test() -> dict[str, Any]:
         module_finder=fake_module_finder,
         command_finder=fake_command_finder,
     )
+    with TemporaryDirectory() as tmp:
+        tmp_root = Path(tmp)
+        (tmp_root / "unit.gb").write_bytes(b"rom")
+        (tmp_root / "unit.state").write_bytes(b"state")
+        (tmp_root / "unit.inputs").write_text("A\nWAIT 1\n", encoding="utf-8")
+        run = build_run_report(
+            backends=("pyboy",),
+            rom_path="unit.gb",
+            save_state="unit.state",
+            frames=2,
+            input_logs=("unit.inputs",),
+            root=tmp_root,
+            module_finder=fake_module_finder,
+            command_finder=fake_command_finder,
+            pyboy_factory=lambda _rom: FakePyBoy(),
+        )
     return {
         "kind": "unified_debugger_crossemu_selftest",
         "schema_version": SCHEMA_VERSION,
-        "passed": bool(report["valid"] and report["ready_for_cross_backend_diff"]),
+        "passed": bool(
+            report["valid"]
+            and report["ready_for_cross_backend_diff"]
+            and run["valid"]
+            and run["executed"]
+        ),
         "preflight": report,
+        "run": run,
     }
 
 
@@ -381,6 +676,35 @@ def format_install_docs(report: Mapping[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def format_run(report: Mapping[str, Any]) -> str:
+    status = "PASS" if report.get("valid") else "FAIL"
+    lines = [f"crossemu run: {status}"]
+    lines.append(f"proof_status: {report.get('proof_status', '')}")
+    lines.append(f"backends: {', '.join(report.get('requested_backends', []))}")
+    lines.append(f"frames: {report.get('frames', 0)}")
+    for result in report.get("backend_results", []):
+        line = (
+            f"  {result.get('backend')}: {result.get('status')} "
+            f"proof={result.get('proof_status')}"
+        )
+        if result.get("played_input_count"):
+            line += f" inputs={result.get('played_input_count')}"
+        lines.append(line)
+        snapshot = result.get("snapshot") if isinstance(result, Mapping) else {}
+        if isinstance(snapshot, Mapping) and snapshot:
+            lines.append(
+                f"    regions={snapshot.get('region_count', 0)} "
+                f"screen_frames={snapshot.get('screen_frame_count', 0)}"
+            )
+        if result.get("blocking_reason"):
+            lines.append(f"    blocked: {result.get('blocking_reason')}")
+    for warning in report.get("warnings", []):
+        lines.append(f"warning: {warning}")
+    for error in report.get("errors", []):
+        lines.append(f"error: {error}")
+    return "\n".join(lines)
+
+
 def _yes_no(value: Any) -> str:
     return "yes" if value else "no"
 
@@ -425,6 +749,27 @@ def build_parser() -> argparse.ArgumentParser:
     )
     install_docs.add_argument("--json", action="store_true")
     install_docs.set_defaults(func=cmd_install_docs)
+
+    run = sub.add_parser(
+        "run",
+        help="Run the implemented PyBoy backend and capture a structured snapshot.",
+    )
+    run.add_argument(
+        "--backends",
+        default="pyboy",
+        help="Comma-separated backend list. This slice implements pyboy only.",
+    )
+    run.add_argument("--rom", default=DEFAULT_ROM)
+    run.add_argument("--save-state", required=True)
+    run.add_argument("--frames", type=int, default=0)
+    run.add_argument(
+        "--inputs",
+        action="append",
+        default=[],
+        help="Supported debugger text input log. Repeat for multiple logs.",
+    )
+    run.add_argument("--json", action="store_true")
+    run.set_defaults(func=cmd_run)
     return parser
 
 
@@ -449,6 +794,21 @@ def cmd_install_docs(args: argparse.Namespace) -> int:
         print(json.dumps(report, indent=2))
     else:
         print(format_install_docs(report))
+    return 0 if report["valid"] else 1
+
+
+def cmd_run(args: argparse.Namespace) -> int:
+    report = build_run_report(
+        backends=args.backends,
+        rom_path=args.rom,
+        save_state=args.save_state,
+        frames=args.frames,
+        input_logs=tuple(args.inputs),
+    )
+    if args.json:
+        print(json.dumps(report, indent=2))
+    else:
+        print(format_run(report))
     return 0 if report["valid"] else 1
 
 

@@ -1250,7 +1250,7 @@ def check_crossemu(root: Path) -> CheckResult:
             raise AssertionError(f"crossemu selftest failed: {report}")
         preflight = report.get("preflight", {})
         trusted = preflight.get("trusted_cross_backend_count")
-        return f"crossemu preflight valid; trusted_cross_backend_count={trusted}"
+        return f"crossemu preflight/run valid; trusted_cross_backend_count={trusted}"
 
     return _capture(
         component="crossemu",

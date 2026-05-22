@@ -1282,18 +1282,19 @@ def _build_v2_surfaces(root: Path = ROOT) -> list[dict[str, Any]]:
         ),
         _capability(
             id="crossemu",
-            title="Cross-emulator differential preflight (P13)",
+            title="Cross-emulator differential preflight + PyBoy run (P13)",
             status=_complete_if_paths(
                 root,
                 "tools/debugger/crossemu.py",
                 "tools/debugger/tests/test_crossemu.py",
             ),
             scope=(
-                "Preflight surface for cross-emulator differential debugging. "
+                "Preflight and PyBoy-run surface for cross-emulator differential debugging. "
                 "Discovers PyBoy, SameBoy, gambatte, and VBA-M backends, reports "
                 "what is installed, names conformance gating status, and prints "
-                "install recipes for missing cross-backends without requiring "
-                "external emulator binaries to be present."
+                "install recipes for missing cross-backends. The run command "
+                "currently executes PyBoy only and captures emulator-observed "
+                "VRAM/WRAM/OAM/IO/framebuffer digests."
             ),
             evidence=(
                 "tools/debugger/crossemu.py",
@@ -1301,11 +1302,13 @@ def _build_v2_surfaces(root: Path = ROOT) -> list[dict[str, Any]]:
                 "docs/debugger_masterpiece_roadmap_codex_task.md",
             ),
             gaps=(
-                "crossemu run, backend adapters, and structural snapshot diff execution remain pending",
+                "SameBoy, gambatte, and VBA-M run adapters remain pending",
+                "cross-backend structural snapshot diff execution remains pending",
                 "non-PyBoy backends must pass conformance rows before cross-backend diff claims are trusted",
             ),
             commands=(
                 "python -m tools.debugger crossemu preflight",
+                "python -m tools.debugger crossemu run --backends pyboy --save-state <state> --frames 60",
                 "python -m tools.debugger crossemu preflight --backends pyboy,sameboy,gambatte,vba-m --json",
                 "python -m tools.debugger crossemu install-docs",
             ),
