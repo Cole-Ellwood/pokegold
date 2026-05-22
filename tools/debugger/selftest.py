@@ -611,6 +611,53 @@ def check_probe(root: Path) -> CheckResult:
     )
 
 
+def check_shrink_input_log(root: Path) -> CheckResult:
+    """Exercise P10 input-log shrinking against a canonical input log."""
+
+    import tempfile
+
+    from .shrink_input_log import shrink_input_log
+
+    def inner() -> str:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_root = Path(tmp)
+            log = tmp_root / "ag08_inputs.txt"
+            log.write_text(
+                "\n".join(
+                    [
+                        *["WAIT 1" for _ in range(12)],
+                        "A",
+                        *["WAIT 1" for _ in range(12)],
+                        "START",
+                        *["WAIT 1" for _ in range(4)],
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            report = shrink_input_log(
+                input_log="ag08_inputs.txt",
+                root=tmp_root,
+                out_log=".local/tmp/shrunk/ag08_inputs.txt",
+                predicate=lambda candidate: "A" in candidate and "START" in candidate,
+            )
+            out_log = tmp_root / ".local/tmp/shrunk/ag08_inputs.txt"
+            out_lines = out_log.read_text(encoding="utf-8").splitlines()
+        if not report.get("valid"):
+            raise AssertionError(f"shrink_input_log invalid: {report.get('errors')}")
+        if report.get("shrunk_event_count") != 2:
+            raise AssertionError(f"expected 2 shrunk events; got {report}")
+        if out_lines != ["A", "START"]:
+            raise AssertionError(f"unexpected shrunk log: {out_lines}")
+        return "shrink_input_log reduced 30 events to canonical A/START reproducer"
+
+    return _capture(
+        component="shrink_input_log",
+        next_command="python -m tools.debugger minimize --domain input_log --input-log <log>",
+        fn=inner,
+    )
+
+
 def check_save_state_lab(root: Path) -> CheckResult:
     """Round-trip trusted raw WRAM and fail-closed .sgm handling."""
 
@@ -1017,6 +1064,7 @@ NAMED_CHECKS: tuple[tuple[str, Check], ...] = (
     ("vram_decode", check_vram_decode),
     ("bgb_sym_export", check_bgb_sym_export),
     ("probe", check_probe),
+    ("shrink_input_log", check_shrink_input_log),
     ("save_state_lab", check_save_state_lab),
     ("bisect", check_bisect),
     ("handoff_log", check_handoff_log),

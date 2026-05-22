@@ -20,6 +20,7 @@ from tools.debugger.selftest import (
     check_coverage,
     check_hypothesis_tracker,
     check_probe,
+    check_shrink_input_log,
     check_sm83_model_parity,
     check_save_state_lab,
     check_vram_decode,
@@ -150,6 +151,16 @@ class ProbeCheckTests(unittest.TestCase):
         self.assertTrue(result.ok, result.error or result.detail)
         self.assertEqual(result.component, "probe")
         self.assertIn("fired 2 times", result.detail)
+
+
+class ShrinkInputLogCheckTests(unittest.TestCase):
+    """P10 lived smoke: a long input log shrinks to a minimal reproducer."""
+
+    def test_shrink_input_log_check_passes_in_isolation(self) -> None:
+        result = check_shrink_input_log(ROOT)
+        self.assertTrue(result.ok, result.error or result.detail)
+        self.assertEqual(result.component, "shrink_input_log")
+        self.assertIn("30 events", result.detail)
 
 
 class BisectCheckTests(unittest.TestCase):
