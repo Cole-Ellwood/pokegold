@@ -205,9 +205,38 @@ class _ModuleStoreVisitor(ast.NodeVisitor):
     def visit_ClassDef(self, node: ast.ClassDef) -> None:
         return
 
+    def visit_Import(self, node: ast.Import) -> None:
+        for alias in node.names:
+            name = str(alias.asname or alias.name.split(".", 1)[0])
+            if name in SHARED_TABLE_NAMES:
+                self.stores.append(ModuleStore(path=self.path, name=name, line=node.lineno))
+
+    def visit_ImportFrom(self, node: ast.ImportFrom) -> None:
+        for alias in node.names:
+            name = str(alias.asname or alias.name)
+            if name not in SHARED_TABLE_NAMES:
+                continue
+            if _is_allowed_sm83_shared_table_import(node, alias):
+                continue
+            self.stores.append(ModuleStore(path=self.path, name=name, line=node.lineno))
+
     def visit_Name(self, node: ast.Name) -> None:
         if isinstance(node.ctx, ast.Store) and node.id in SHARED_TABLE_NAMES:
             self.stores.append(ModuleStore(path=self.path, name=node.id, line=node.lineno))
+
+    def visit_Attribute(self, node: ast.Attribute) -> None:
+        if isinstance(node.ctx, ast.Store) and node.attr in SHARED_TABLE_NAMES:
+            self.stores.append(ModuleStore(path=self.path, name=node.attr, line=node.lineno))
+        self.generic_visit(node)
+
+
+def _is_allowed_sm83_shared_table_import(node: ast.ImportFrom, alias: ast.alias) -> bool:
+    imported_name = str(alias.name)
+    module = str(node.module or "")
+    from_sm83_model = (node.level == 1 and module == "sm83_model") or (
+        node.level == 0 and module == "tools.debugger.sm83_model"
+    )
+    return from_sm83_model and imported_name in SHARED_TABLE_NAMES
 
 
 def _scan_module_stores(tree: ast.AST, *, path: str) -> list[ModuleStore]:

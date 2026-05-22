@@ -78,6 +78,64 @@ class Sm83SharedTablesConsumerAuditTests(unittest.TestCase):
 
         self.assertTrue(report["ok"], report)
 
+    def test_allows_shared_table_alias_import_from_sm83_model(self) -> None:
+        with self._repo(
+            "from .sm83_model import REGISTER_INDEX_TARGETS as INDEX_REG\n"
+            "\n"
+            "def decode(opcode):\n"
+            "    return opcode\n",
+            full_text=True,
+        ) as root:
+            report = scan_sm83_shared_tables_consumers(
+                root=root,
+                allowlist={},
+                touched_allowlist_keys=set(),
+                commit_message="",
+            )
+
+        self.assertTrue(report["ok"], report)
+
+    def test_rejects_shared_table_alias_import_from_other_module(self) -> None:
+        with self._repo(
+            "from .other_model import REGISTER_INDEX_TARGETS as INDEX_REG\n"
+            "\n"
+            "def decode(opcode):\n"
+            "    return opcode\n",
+            full_text=True,
+        ) as root:
+            report = scan_sm83_shared_tables_consumers(
+                root=root,
+                allowlist={},
+                touched_allowlist_keys=set(),
+                commit_message="",
+            )
+
+        self.assertFalse(report["ok"])
+        self.assertEqual(report["issues"][0]["function"], "<module>")
+        self.assertEqual(report["issues"][0]["name"], "INDEX_REG")
+        self.assertIn("must not be rebound", report["issues"][0]["message"])
+
+    def test_rejects_module_scope_shared_table_attribute_store(self) -> None:
+        with self._repo(
+            "import tools.debugger.sm83_model as model\n"
+            "model.REGISTER_INDEX_TARGETS = {0: 'b'}\n"
+            "\n"
+            "def decode(opcode):\n"
+            "    return opcode\n",
+            full_text=True,
+        ) as root:
+            report = scan_sm83_shared_tables_consumers(
+                root=root,
+                allowlist={},
+                touched_allowlist_keys=set(),
+                commit_message="",
+            )
+
+        self.assertFalse(report["ok"])
+        self.assertEqual(report["issues"][0]["function"], "<module>")
+        self.assertEqual(report["issues"][0]["name"], "REGISTER_INDEX_TARGETS")
+        self.assertIn("must not be rebound", report["issues"][0]["message"])
+
     def test_count_up_fails_even_with_marker(self) -> None:
         with self._repo("return INDEX_REG[opcode & 0x07], INDEX_REG[(opcode >> 3) & 0x07]") as root:
             key = ("tools/debugger/effect_trace.py", "decode", "register_index")
