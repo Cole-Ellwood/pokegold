@@ -5,16 +5,29 @@ import random
 from collections.abc import Callable
 from typing import Any
 
+from .input_log import play_inputs_for_frame
+
 
 SCHEMA_VERSION = 1
 Observation = dict[str, Any]
 ChaosRunner = Callable[[dict[str, Any]], Observation]
+ChaosObserver = Callable[[Any, dict[str, Any]], Observation]
 CHAOS_SCENARIOS = ("stable", "synthetic_flake", "synthetic-flake")
 
 VBLANK_DELTA_CYCLES = (-1, 0, 1)
 HBLANK_DELTA_CYCLES = (-1, 0, 1)
 JOYPAD_LATCH_LATENCY_CYCLES = (0, 1, 2)
 DMA_CPU_PHASES = (0, 1, 2, 3)
+PYBOY_CYCLE_LEVEL_PERTURBATION_FIELDS = (
+    "vblank_delta_cycles",
+    "hblank_delta_cycles",
+    "joypad_latch_latency_cycles",
+    "dma_cpu_phase",
+)
+PYBOY_PUBLIC_API_LIMIT_REASON = (
+    "pyboy_public_api_exposes_frame_ticks_and_button_events_"
+    "not_cycle_level_interrupt_or_dma_timing"
+)
 BASELINE_OBSERVATION = {
     "status": "ok",
     "pc": "BattleCommand_DamageCalc",
@@ -158,6 +171,78 @@ def run_named_chaos_scenario(
     )
     report["scenario"] = normalized
     return report
+
+
+def drive_pyboy_with_chaos_schedule(
+    pyboy: Any,
+    schedule: dict[str, Any],
+    *,
+    input_playback: dict[str, Any] | None = None,
+    observer: ChaosObserver | None = None,
+    render: bool = False,
+    sound: bool = False,
+    max_planned_not_applied: int = 64,
+) -> dict[str, Any]:
+    events = [event for event in schedule.get("events", []) if isinstance(event, dict)]
+    playback = input_playback or {"valid": True, "events": []}
+    played_inputs: list[dict[str, Any]] = []
+    observations: list[dict[str, Any]] = []
+    planned_not_applied: list[dict[str, Any]] = []
+    planned_not_applied_count = 0
+    tick_count = 0
+    stopped = False
+    for event in events:
+        frame = int(event.get("frame", tick_count) or 0)
+        for field in PYBOY_CYCLE_LEVEL_PERTURBATION_FIELDS:
+            if field not in event:
+                continue
+            planned_not_applied_count += 1
+            if len(planned_not_applied) < max(0, int(max_planned_not_applied)):
+                planned_not_applied.append(
+                    {
+                        "frame": frame,
+                        "field": field,
+                        "requested_value": event.get(field),
+                        "status": "planned_not_applied",
+                        "reason": PYBOY_PUBLIC_API_LIMIT_REASON,
+                    }
+                )
+        played_inputs.extend(play_inputs_for_frame(pyboy, playback, frame))
+        if observer is not None:
+            observations.append(observer(pyboy, event))
+        running = pyboy.tick(1, render, sound)
+        tick_count += 1
+        if running is False:
+            stopped = True
+            break
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "kind": "unified_debugger_chaos_pyboy_replay",
+        "valid": True,
+        "seed": schedule.get("seed"),
+        "run_index": schedule.get("run_index"),
+        "run_seed": schedule.get("run_seed"),
+        "scheduled_frame_count": len(events),
+        "executed_frame_count": tick_count,
+        "stopped": stopped,
+        "played_inputs": played_inputs,
+        "played_input_count": len(played_inputs),
+        "observations": observations,
+        "observation_count": len(observations),
+        "applied_perturbations": [],
+        "applied_perturbation_count": 0,
+        "planned_not_applied": planned_not_applied,
+        "planned_not_applied_count": planned_not_applied_count,
+        "public_api_methods_used": ["button", "tick"],
+        "proof_boundary": [
+            "PyBoy public API exposes frame ticks, delayed button events, memory, hooks, and save/load state.",
+            "The current adapter does not claim cycle-level vblank/hblank, joypad-latch, or DMA-vs-CPU perturbation application; those schedule fields are preserved as planned_not_applied evidence.",
+        ],
+        "errors": [],
+        "warnings": [],
+        "error_count": 0,
+        "warning_count": 0,
+    }
 
 
 def stable_runner(schedule: dict[str, Any]) -> Observation:
