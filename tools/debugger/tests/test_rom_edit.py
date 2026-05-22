@@ -924,6 +924,39 @@ class RomEditApplyToMainCliTests(unittest.TestCase):
             )
 
 
+class RomEditRevertCliTests(unittest.TestCase):
+    def test_revert_cli_removes_worktree_and_owned_branch(self) -> None:
+        with TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            _init_repo(repo)
+            worktree = create_rom_edit_worktree(root=repo, slug="revert-cli")
+            proc = subprocess.run(
+                [
+                    "python",
+                    "-m",
+                    "tools.debugger",
+                    "rom-edit",
+                    "revert",
+                    "--root",
+                    str(repo),
+                    "--worktree-path",
+                    worktree.path,
+                    "--json",
+                ],
+                cwd=ROOT,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+            )
+
+            self.assertEqual(proc.returncode, 0, proc.stderr)
+            report = json.loads(proc.stdout)
+            self.assertEqual(report["removed_branch"], "rom-edit/revert-cli")
+            self.assertFalse(Path(worktree.path).exists())
+            self.assertNotIn("rom-edit/revert-cli", _git(repo, "branch", "--list"))
+
+
 class RomEditSelfTestTests(unittest.TestCase):
     def test_run_self_test_exercises_temp_repo_apply_loop(self) -> None:
         report = run_self_test()

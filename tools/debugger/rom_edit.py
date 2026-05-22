@@ -631,6 +631,15 @@ def build_parser() -> argparse.ArgumentParser:
     build.add_argument("--json", action="store_true")
     build.set_defaults(func=cmd_build)
 
+    revert = sub.add_parser(
+        "revert",
+        help="Remove a rom-edit worktree and its owned rom-edit/<slug> branch.",
+    )
+    revert.add_argument("--worktree-path", required=True)
+    revert.add_argument("--root", default=str(ROOT))
+    revert.add_argument("--json", action="store_true")
+    revert.set_defaults(func=cmd_revert)
+
     apply = sub.add_parser(
         "apply-to-main",
         help="Apply a verified rom-edit worktree diff back to the target checkout.",
@@ -737,6 +746,20 @@ def cmd_build(args: argparse.Namespace) -> int:
             if step.get("failure_summary"):
                 print(f"    {step['failure_summary']}")
     return 0 if report["passed"] else 1
+
+
+def cmd_revert(args: argparse.Namespace) -> int:
+    report = remove_rom_edit_worktree(
+        args.worktree_path,
+        root=Path(args.root),
+    )
+    if args.json:
+        print(json.dumps(report, indent=2))
+    else:
+        print(f"rom-edit revert: removed {report['removed']}")
+        if report.get("removed_branch"):
+            print(f"removed_branch: {report['removed_branch']}")
+    return 0
 
 
 def cmd_apply_to_main(args: argparse.Namespace) -> int:

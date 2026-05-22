@@ -1277,6 +1277,7 @@ def _build_v2_surfaces(root: Path = ROOT) -> list[dict[str, Any]]:
                 "python -m tools.debugger rom-edit gate --changed-file <path> --gate release_smoke=pass --handoff-phase <phase> --target-branch <branch>",
                 "python -m tools.debugger rom-edit propose --file <path> --patch-file <patch.diff>",
                 "python -m tools.debugger rom-edit verify --worktree-path <path> --command <cmd>",
+                "python -m tools.debugger rom-edit revert --worktree-path <path>",
                 "python -m tools.debugger rom-edit apply-to-main --worktree-path <path> --changed-file <path> --gate release_smoke=pass --handoff-phase <phase> --target-branch <branch>",
             ),
         ),
