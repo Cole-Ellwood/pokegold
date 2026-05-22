@@ -1348,6 +1348,40 @@ def _build_v2_surfaces(root: Path = ROOT) -> list[dict[str, Any]]:
                 "python -m tools.debugger dap --help",
             ),
         ),
+        _capability(
+            id="register_flow",
+            title="Static register-flow / clobber-set analyzer (P15)",
+            status=_complete_if_paths(
+                root,
+                "tools/debugger/register_flow.py",
+                "tools/debugger/tests/test_register_flow.py",
+            ),
+            scope=(
+                "Static analysis of .asm functions: walks a function body from its "
+                "top-level label, identifies which CPU registers each instruction "
+                "writes via sm83-style regex, and emits a clobber set plus "
+                "call/branch/ret/push-pop sites. Targets the AG-NN transitive "
+                "register-clobber bug class (recurring; shipped twice as 5x-damage). "
+                "First slice: linear body scan only -- no branch following, no "
+                "inter-procedural resolution, no loop fixpoint."
+            ),
+            evidence=(
+                "tools/debugger/register_flow.py",
+                "tools/debugger/tests/test_register_flow.py",
+                "docs/asm_authoring_guide.md",
+            ),
+            gaps=(
+                "no branch following (conditional branches over-approximate writes)",
+                "calls are listed but callee clobber sets are not resolved",
+                "no loop fixpoint; loops collapse to single-pass write set",
+                "jp [hl] / dispatch-table tail-calls are OPAQUE",
+                "flags are not modeled in first-slice clobber sets",
+            ),
+            commands=(
+                "python -m tools.debugger clobbers --symbol GetUserItem",
+                "python -m tools.debugger clobbers --symbol GetUserItem --json",
+            ),
+        ),
     ]
     return [
         {

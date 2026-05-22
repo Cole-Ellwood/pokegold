@@ -21,6 +21,7 @@ from tools.debugger.selftest import (
     check_dap_server,
     check_hypothesis_tracker,
     check_probe,
+    check_register_flow,
     check_rom_edit,
     check_shrink_battle,
     check_shrink_input_log,
@@ -227,6 +228,16 @@ class DapServerCheckTests(unittest.TestCase):
         self.assertTrue(result.ok, result.error or result.detail)
         self.assertEqual(result.component, "dap_server")
         self.assertIn("fail-closed/no-request ok", result.detail)
+
+
+class RegisterFlowCheckTests(unittest.TestCase):
+    """P15 lived smoke: register-flow covers the GetUserItem clobber class."""
+
+    def test_register_flow_check_passes_in_isolation(self) -> None:
+        result = check_register_flow(ROOT)
+        self.assertTrue(result.ok, result.error or result.detail)
+        self.assertEqual(result.component, "register_flow")
+        self.assertIn("GetUserItem", result.detail)
 
 
 class JsonOutputTests(unittest.TestCase):

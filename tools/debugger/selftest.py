@@ -1366,6 +1366,42 @@ def check_dap_server(root: Path) -> CheckResult:
     )
 
 
+def check_register_flow(root: Path) -> CheckResult:
+    """Exercise P15 register-flow analysis against the AG-NN-class function."""
+
+    from .register_flow import analyze_function
+
+    def inner() -> str:
+        report = analyze_function("GetUserItem", root=root)
+        if not report.get("valid"):
+            raise AssertionError(f"register_flow invalid: {report}")
+        clobbers = set(report.get("clobber_set", []))
+        expected = {"b", "d", "e", "h", "l"}
+        if not expected.issubset(clobbers):
+            raise AssertionError(f"missing expected GetUserItem clobbers: {report}")
+        branches = report.get("branches", [])
+        if not any(
+            branch.get("target") == "GetItemHeldEffect"
+            for branch in branches
+            if isinstance(branch, dict)
+        ):
+            raise AssertionError(f"missing GetItemHeldEffect tail branch: {report}")
+        pairs = report.get("push_pop_pairs", [])
+        if not any(
+            pair.get("register_pair") == "de"
+            for pair in pairs
+            if isinstance(pair, dict)
+        ):
+            raise AssertionError(f"missing de push/pop preservation context: {report}")
+        return "register_flow GetUserItem clobbers b/d/e/h/l and de preservation context"
+
+    return _capture(
+        component="register_flow",
+        next_command="python -m tools.debugger clobbers --symbol GetUserItem",
+        fn=inner,
+    )
+
+
 NAMED_CHECKS: tuple[tuple[str, Check], ...] = (
     ("capability_audit", check_capability_audit),
     ("inventory", check_inventory),
@@ -1395,6 +1431,7 @@ NAMED_CHECKS: tuple[tuple[str, Check], ...] = (
     ("rom_edit", check_rom_edit),
     ("crossemu", check_crossemu),
     ("dap_server", check_dap_server),
+    ("register_flow", check_register_flow),
 )
 
 CHECKS: tuple[Check, ...] = tuple(check for _, check in NAMED_CHECKS)

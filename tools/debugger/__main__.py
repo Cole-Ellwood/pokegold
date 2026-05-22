@@ -81,6 +81,7 @@ V2_PASSTHROUGH_MODULES = {
     "rom-edit": "tools.debugger.rom_edit",
     "crossemu": "tools.debugger.crossemu",
     "dap": "tools.debugger.dap_server",
+    "clobbers": "tools.debugger.register_flow",
 }
 
 
