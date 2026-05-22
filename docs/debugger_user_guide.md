@@ -199,6 +199,26 @@ the question is "which write clobbered the damage byte?" The full
 `investigate` pipeline runs more analyses but is heavier; `when-wrote`
 is one second when you already know the address.
 
+**Count whether the suspected code path ran (P8 probes)**
+
+When the symptom says "damage was wrong" but the next question is
+whether a specific routine ran at all, declare a named probe once and
+count it against the trace:
+
+```powershell
+python -m tools.debugger probe declare `
+  --name damage_calc_entry `
+  --pc BattleCommand_DamageCalc
+
+python -m tools.debugger probe stats `
+  --trace <instruction-or-effect-trace.jsonl>
+```
+
+`probe stats` reports per-probe fire count, first/last frame, average
+inter-fire interval, and sample PCs. Use it to separate "this path did
+not run" from "this path ran but wrote the wrong value"; then use
+`when-wrote` for the byte-level writer.
+
 **Success looks like**
 
 `clobber_smoke` reports all scenarios PASS. If not, the named scenario
