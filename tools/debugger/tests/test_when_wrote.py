@@ -135,6 +135,59 @@ class WhenWroteCoreTests(unittest.TestCase):
             answer["proof_downgrade_reason"], "writer_seq_before_since_frame"
         )
 
+    def test_since_frame_anchor_filters_seq_zero_writer(self) -> None:
+        """Codex revision (P2 review): the old guard `if writer_seq and ...`
+        short-circuited on seq=0 and let a legitimate frame-0 writer through.
+        The fix uses an explicit known/unknown branch."""
+
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            trace = _golden_effect_trace_with_writer_at_d141()
+            trace["write_index"][0]["last_writer_seq"] = 0
+            trace["events"][0]["seq"] = 0
+            self._store_effect(root, trace)
+
+            report = run_when_wrote(
+                addresses=("01:D141",),
+                reports=("effect.json",),
+                since_frame=10,
+                root=root,
+            )
+
+        answer = report["answers"][0]
+        self.assertEqual(answer["proof_status"], "planned_only")
+        self.assertEqual(answer["last_writer"], {})
+        self.assertEqual(
+            answer["proof_downgrade_reason"], "writer_seq_before_since_frame"
+        )
+
+    def test_since_symbol_anchor_fails_closed_on_missing_pc_label(self) -> None:
+        """Codex revision (P2 review): a writer with no pc_label cannot
+        satisfy a requested since_symbol anchor. The fix downgrades with
+        writer_pc_label_missing_for_since_symbol so the answer states
+        WHY it failed instead of silently passing the writer through."""
+
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            trace = _golden_effect_trace_with_writer_at_d141()
+            trace["events"][0].pop("pc_label", None)
+            self._store_effect(root, trace)
+
+            report = run_when_wrote(
+                addresses=("01:D141",),
+                reports=("effect.json",),
+                since_symbol="BattleCommand_DamageCalc",
+                root=root,
+            )
+
+        answer = report["answers"][0]
+        self.assertEqual(answer["proof_status"], "planned_only")
+        self.assertEqual(answer["last_writer"], {})
+        self.assertEqual(
+            answer["proof_downgrade_reason"],
+            "writer_pc_label_missing_for_since_symbol",
+        )
+
 
 class WhenWroteBankExactnessTests(unittest.TestCase):
     """Per the P0 proof boundary: banked targets must NOT fall back to

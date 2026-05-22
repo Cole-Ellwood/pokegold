@@ -122,14 +122,30 @@ def _filter_to_when_wrote_answer(
 
     if isinstance(last_writer, dict) and (since_symbol or since_frame > 0):
         writer_pc_label = str(last_writer.get("pc_label") or "")
-        writer_seq = int(last_writer.get("seq") or 0)
-        if since_symbol and writer_pc_label and not writer_pc_label.startswith(since_symbol):
+        writer_seq_raw = last_writer.get("seq")
+        writer_seq_known = isinstance(writer_seq_raw, int) or (
+            isinstance(writer_seq_raw, str) and writer_seq_raw.isdigit()
+        )
+        writer_seq = int(writer_seq_raw) if writer_seq_known else None
+        # Fail closed on since_symbol when the writer carries no pc_label —
+        # an absent label cannot satisfy a requested symbol anchor.
+        if since_symbol and not (writer_pc_label and writer_pc_label.startswith(since_symbol)):
             last_writer = {}
-            downgrade_reason = downgrade_reason or "writer_pc_does_not_match_since_symbol"
+            downgrade_reason = downgrade_reason or (
+                "writer_pc_label_missing_for_since_symbol"
+                if not writer_pc_label
+                else "writer_pc_does_not_match_since_symbol"
+            )
             proof_status = "planned_only"
-        if since_frame > 0 and writer_seq and writer_seq < since_frame:
+        # Fail closed on since_frame when seq is unknown, AND filter the
+        # genuine seq=0 case that the old `and writer_seq` guard let through.
+        if since_frame > 0 and (writer_seq is None or writer_seq < since_frame):
             last_writer = {}
-            downgrade_reason = downgrade_reason or "writer_seq_before_since_frame"
+            downgrade_reason = downgrade_reason or (
+                "writer_seq_unknown_for_since_frame"
+                if writer_seq is None
+                else "writer_seq_before_since_frame"
+            )
             proof_status = "planned_only"
 
     return WhenWroteAnswer(
