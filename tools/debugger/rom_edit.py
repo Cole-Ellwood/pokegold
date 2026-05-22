@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import shutil
 import subprocess
 import sys
 import time
@@ -38,6 +39,7 @@ DEFAULT_BUILD_COMMAND = (
     "pokegold.gbc pokesilver.gbc\""
 )
 ROM_EDIT_WORKTREE_DIR = Path(".local") / "tmp" / "rom_edit_worktrees"
+IGNORED_WORKTREE_BUILD_DIRS = ("rgbds-1.0.1",)
 PROTECTED_BRANCHES = frozenset(
     {
         "main",
@@ -190,6 +192,7 @@ def create_rom_edit_worktree(
         ["worktree", "add", "-b", branch, str(worktree_path), base_head],
         cwd=repo_root,
     )
+    _copy_ignored_build_inputs(repo_root, worktree_path)
     return RomEditWorktree(
         path=str(worktree_path),
         branch=branch,
@@ -875,6 +878,19 @@ def _resolve_worktree_base(root: Path, base_dir: Path | None) -> Path:
             f"worktree base must stay under {default_base}: {target_base}"
         )
     return target_base
+
+
+def _copy_ignored_build_inputs(repo_root: Path, worktree_path: Path) -> None:
+    for relative in IGNORED_WORKTREE_BUILD_DIRS:
+        source = repo_root / relative
+        target = worktree_path / relative
+        if not source.exists() or target.exists():
+            continue
+        if source.is_dir():
+            shutil.copytree(source, target)
+        else:
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source, target)
 
 
 def _make_worktree_slug(base_head: str, changed_files: Sequence[str]) -> str:

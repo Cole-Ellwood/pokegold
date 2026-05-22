@@ -249,6 +249,19 @@ class RomEditWorktreeLifecycleTests(unittest.TestCase):
                     slug="outside",
                 )
 
+    def test_create_copies_ignored_rgbds_toolchain_into_worktree(self) -> None:
+        with TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            _init_repo(repo)
+            toolchain = repo / "rgbds-1.0.1"
+            toolchain.mkdir()
+            (toolchain / "rgbasm.exe").write_text("fake rgbasm\n", encoding="utf-8")
+
+            worktree = create_rom_edit_worktree(root=repo, slug="toolchain-copy")
+
+            copied = Path(worktree.path) / "rgbds-1.0.1" / "rgbasm.exe"
+            self.assertEqual(copied.read_text(encoding="utf-8"), "fake rgbasm\n")
+
 
 class RomEditPatchApplyTests(unittest.TestCase):
     def test_apply_unified_patch_changes_worktree_not_main_checkout(self) -> None:
