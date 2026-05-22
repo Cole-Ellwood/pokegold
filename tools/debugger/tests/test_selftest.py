@@ -20,6 +20,7 @@ from tools.debugger.selftest import (
     check_coverage,
     check_hypothesis_tracker,
     check_probe,
+    check_shrink_battle,
     check_shrink_input_log,
     check_sm83_model_parity,
     check_save_state_lab,
@@ -161,6 +162,16 @@ class ShrinkInputLogCheckTests(unittest.TestCase):
         self.assertTrue(result.ok, result.error or result.detail)
         self.assertEqual(result.component, "shrink_input_log")
         self.assertIn("30 events", result.detail)
+
+
+class ShrinkBattleCheckTests(unittest.TestCase):
+    """P10 lived smoke: a noisy battle scenario shrinks to the trigger facts."""
+
+    def test_shrink_battle_check_passes_in_isolation(self) -> None:
+        result = check_shrink_battle(ROOT)
+        self.assertTrue(result.ok, result.error or result.detail)
+        self.assertEqual(result.component, "shrink_battle")
+        self.assertIn("6 Pokemon", result.detail)
 
 
 class BisectCheckTests(unittest.TestCase):

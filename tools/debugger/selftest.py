@@ -658,6 +658,65 @@ def check_shrink_input_log(root: Path) -> CheckResult:
     )
 
 
+def check_shrink_battle(root: Path) -> CheckResult:
+    """Exercise P10 battle shrinking against a canonical six-Pokemon scenario."""
+
+    from .shrink_battle import shrink_battle_scenario
+
+    scenario = {
+        "id": "selftest_battle_repro",
+        "family": "battle",
+        "enemy_party": [
+            {"species": "PIDGEY", "moves": ["GUST", "SAND_ATTACK"]},
+            {"species": "MILTANK", "moves": ["TACKLE", "ROLLOUT", "MILK_DRINK"]},
+            {"species": "ZUBAT", "moves": ["LEECH_LIFE"]},
+            {"species": "HAUNTER", "moves": ["LICK", "MEAN_LOOK", "CURSE"]},
+            {"species": "RATTATA", "moves": ["QUICK_ATTACK"]},
+            {"species": "GEODUDE", "moves": ["DEFENSE_CURL", "ROCK_THROW"]},
+        ],
+        "modifiers": ["rain", "critical_window", "badge_boost_noise"],
+    }
+
+    def predicate(candidate: dict[str, Any]) -> bool:
+        party = candidate.get("enemy_party")
+        if not isinstance(party, list):
+            return False
+        by_species = {
+            str(mon.get("species")): mon
+            for mon in party
+            if isinstance(mon, dict)
+        }
+        miltank = by_species.get("MILTANK")
+        haunter = by_species.get("HAUNTER")
+        if not miltank or not haunter:
+            return False
+        return (
+            "ROLLOUT" in miltank.get("moves", [])
+            and "MEAN_LOOK" in haunter.get("moves", [])
+            and "critical_window" in candidate.get("modifiers", [])
+        )
+
+    def inner() -> str:
+        report = shrink_battle_scenario(scenario, predicate=predicate, root=root)
+        if not report.get("valid"):
+            raise AssertionError(f"shrink_battle invalid: {report.get('errors')}")
+        shrunk_counts = report.get("shrunk_counts", {})
+        if not isinstance(shrunk_counts, dict) or shrunk_counts.get("pokemon_count") != 2:
+            raise AssertionError(f"expected 2 retained Pokemon; got {report}")
+        shrunk = report.get("shrunk_scenario", {})
+        party = shrunk.get("enemy_party", []) if isinstance(shrunk, dict) else []
+        species = {mon.get("species") for mon in party if isinstance(mon, dict)}
+        if species != {"MILTANK", "HAUNTER"}:
+            raise AssertionError(f"unexpected retained party: {party}")
+        return "shrink_battle reduced 6 Pokemon to canonical MILTANK/HAUNTER reproducer"
+
+    return _capture(
+        component="shrink_battle",
+        next_command="python -B -m unittest tools.debugger.tests.test_shrink_battle",
+        fn=inner,
+    )
+
+
 def check_save_state_lab(root: Path) -> CheckResult:
     """Round-trip trusted raw WRAM and fail-closed .sgm handling."""
 
@@ -1065,6 +1124,7 @@ NAMED_CHECKS: tuple[tuple[str, Check], ...] = (
     ("bgb_sym_export", check_bgb_sym_export),
     ("probe", check_probe),
     ("shrink_input_log", check_shrink_input_log),
+    ("shrink_battle", check_shrink_battle),
     ("save_state_lab", check_save_state_lab),
     ("bisect", check_bisect),
     ("handoff_log", check_handoff_log),
