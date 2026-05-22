@@ -1,5 +1,7 @@
 import json
+import tempfile
 import unittest
+from pathlib import Path
 
 from tools.debugger.chaos import (
     BASELINE_OBSERVATION,
@@ -16,6 +18,7 @@ from tools.debugger.chaos import (
     run_named_chaos_scenario,
     stable_runner,
     synthetic_flake_runner,
+    write_candidate_input_log,
 )
 
 
@@ -174,6 +177,22 @@ class ChaosModeTests(unittest.TestCase):
 
         self.assertTrue(report["stopped"])
         self.assertEqual(report["executed_frame_count"], 2)
+
+    def test_write_candidate_input_log_artifact(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "candidate.inputs"
+            report = run_named_chaos_scenario(
+                scenario="synthetic_flake",
+                runs=100,
+                seed=1,
+                frames=8,
+            )
+            artifact = write_candidate_input_log(report, path)
+            lines = path.read_text(encoding="utf-8").splitlines()
+
+        self.assertTrue(artifact["written"])
+        self.assertEqual(lines, ["A", "WAIT 6", "START"])
+        self.assertEqual(report["candidate_input_log_artifact"]["event_count"], 3)
 
 
 if __name__ == "__main__":

@@ -13,6 +13,7 @@ from .chaos import (
     CHAOS_SCENARIOS,
     format_report as format_chaos_report,
     run_named_chaos_scenario,
+    write_candidate_input_log,
 )
 from .clobber_chain import build_clobber_chain_report, format_text as format_clobber_chain
 from .content_mirror import build_content_mirror_report
@@ -302,6 +303,7 @@ def build_parser() -> argparse.ArgumentParser:
     fuzz.add_argument("--runs", type=int, default=100)
     fuzz.add_argument("--chaos-frames", type=int, default=8)
     fuzz.add_argument("--chaos-scenario", choices=CHAOS_SCENARIOS, default="stable")
+    fuzz.add_argument("--out-chaos-input-log", default="")
     fuzz.add_argument("--execute", action="store_true")
     fuzz.add_argument("--max-execute-commands", type=int, default=8)
     fuzz.add_argument("--execute-timeout-seconds", type=int, default=600)
@@ -1049,6 +1051,8 @@ def cmd_fuzz(args: argparse.Namespace) -> int:
             seed=args.seed,
             frames=args.chaos_frames,
         )
+        if args.out_chaos_input_log:
+            write_candidate_input_log(report, args.out_chaos_input_log)
         emit_report(report, args)
         return 0 if report["valid"] else 1
 

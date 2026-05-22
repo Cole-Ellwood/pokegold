@@ -25687,6 +25687,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
             root = Path(tmp)
             stable_out = root / "chaos_stable.json"
             flake_out = root / "chaos_flake.json"
+            flake_inputs = root / "chaos_flake.inputs"
             with redirect_stdout(io.StringIO()):
                 stable_code = debugger_main(
                     [
@@ -25712,6 +25713,8 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
                         "1",
                         "--chaos-scenario",
                         "synthetic_flake",
+                        "--out-chaos-input-log",
+                        str(flake_inputs),
                         "--json-out",
                         str(flake_out),
                     ]
@@ -25719,6 +25722,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
 
             stable = json.loads(stable_out.read_text(encoding="utf-8"))
             flake = json.loads(flake_out.read_text(encoding="utf-8"))
+            flake_input_lines = flake_inputs.read_text(encoding="utf-8").splitlines()
 
         self.assertEqual(stable_code, 0)
         self.assertEqual(flake_code, 0)
@@ -25728,6 +25732,8 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertTrue(flake["diverged"])
         self.assertIsInstance(flake["minimal_seed"], int)
         self.assertIn("START", flake["candidate_input_log"])
+        self.assertEqual(flake_input_lines, ["A", "WAIT 6", "START"])
+        self.assertTrue(flake["candidate_input_log_artifact"]["written"])
 
     def test_compare_plan_maps_damage_symbol_to_oracle(self) -> None:
         report = build_compare_plan(symbols=("wCurDamage",))

@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import random
 from collections.abc import Callable
+from pathlib import Path
 from typing import Any
 
 from .input_log import play_inputs_for_frame
@@ -299,3 +300,26 @@ def format_report(report: dict[str, Any]) -> str:
 
 def report_json(report: dict[str, Any]) -> str:
     return json.dumps(report, sort_keys=True)
+
+
+def write_candidate_input_log(report: dict[str, Any], path: str | Path) -> dict[str, Any]:
+    target = Path(path)
+    events = [
+        str(item)
+        for item in report.get("candidate_input_log", [])
+        if str(item).strip()
+    ]
+    artifact = {
+        "path": str(target),
+        "written": False,
+        "event_count": len(events),
+    }
+    if not events:
+        artifact["reason"] = "no_candidate_input_log"
+        report["candidate_input_log_artifact"] = artifact
+        return artifact
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text("\n".join(events) + "\n", encoding="utf-8")
+    artifact["written"] = True
+    report["candidate_input_log_artifact"] = artifact
+    return artifact

@@ -222,6 +222,7 @@ python -m tools.debugger fuzz `
   --runs 100 `
   --seed 1 `
   --chaos-scenario synthetic_flake `
+  --out-chaos-input-log .local/tmp/chaos.flake.inputs `
   --json-out .local/tmp/chaos.flake.json
 ```
 
@@ -231,8 +232,10 @@ For the stable control, `diverged=false` and `stable_count` should stay
 at 99 or higher out of 100. For the synthetic flake smoke,
 `diverged=true`, `minimal_seed` is an integer, and
 `candidate_input_log` contains the replay inputs that triggered the
-flake. Feed that input log into `minimize --domain input_log` when it
-is too long to inspect.
+flake. If `--out-chaos-input-log` is set, the report's
+`candidate_input_log_artifact.written=true` and the plain text input
+log is ready for `minimize --domain input_log` when it is too long to
+inspect.
 
 **Proof limit**
 
