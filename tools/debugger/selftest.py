@@ -717,6 +717,81 @@ def check_shrink_battle(root: Path) -> CheckResult:
     )
 
 
+def check_shrink_map_script(root: Path) -> CheckResult:
+    """Exercise P10 map-script shrinking against a canonical script reproducer."""
+
+    from .shrink_map_script import shrink_map_script_scenario
+
+    scenario = {
+        "id": "selftest_script_repro",
+        "scenario_type": "map_script",
+        "steps": [
+            {"op": "load_map", "map": "UnitHouse1F"},
+            {"op": "walk", "direction": "UP"},
+            {"op": "face_object", "object": "UnitNpc"},
+            {"op": "open_text", "text": "noise"},
+            {"op": "set_flag", "flag": "EVENT_UNIT_NPC_READY"},
+            {"op": "jump_script", "label": "UnitNpcScript"},
+            {"op": "show_text", "text": "hello"},
+            {"op": "close_text"},
+            {"op": "wait", "frames": 8},
+        ],
+        "events": [
+            {"kind": "warp", "id": "noise"},
+            {"kind": "bg_event", "id": "unit_signpost"},
+            {"kind": "object_event", "id": "noise_npc"},
+        ],
+        "state_preconditions": [
+            {"kind": "map_position", "map": "UnitHouse1F"},
+            {"kind": "script_entry", "symbol": "UnitNpcScript"},
+            {"kind": "time_of_day", "value": "day"},
+        ],
+    }
+
+    def predicate(candidate: dict[str, Any]) -> bool:
+        steps = candidate.get("steps")
+        if not isinstance(steps, list):
+            return False
+        ops = [step.get("op") for step in steps if isinstance(step, dict)]
+        events = candidate.get("events") if isinstance(candidate.get("events"), list) else []
+        preconditions = (
+            candidate.get("state_preconditions")
+            if isinstance(candidate.get("state_preconditions"), list)
+            else []
+        )
+        return (
+            "face_object" in ops
+            and "jump_script" in ops
+            and "show_text" in ops
+            and any(event.get("id") == "unit_signpost" for event in events if isinstance(event, dict))
+            and any(
+                item.get("kind") == "script_entry" and item.get("symbol") == "UnitNpcScript"
+                for item in preconditions
+                if isinstance(item, dict)
+            )
+        )
+
+    def inner() -> str:
+        report = shrink_map_script_scenario(scenario, predicate=predicate, root=root)
+        if not report.get("valid"):
+            raise AssertionError(f"shrink_map_script invalid: {report.get('errors')}")
+        shrunk_counts = report.get("shrunk_counts", {})
+        if not isinstance(shrunk_counts, dict) or shrunk_counts.get("step_count") != 3:
+            raise AssertionError(f"expected 3 retained script steps; got {report}")
+        shrunk = report.get("shrunk_scenario", {})
+        steps = shrunk.get("steps", []) if isinstance(shrunk, dict) else []
+        ops = [step.get("op") for step in steps if isinstance(step, dict)]
+        if ops != ["face_object", "jump_script", "show_text"]:
+            raise AssertionError(f"unexpected retained steps: {steps}")
+        return "shrink_map_script reduced 9 steps to canonical face/jump/text reproducer"
+
+    return _capture(
+        component="shrink_map_script",
+        next_command="python -B -m unittest tools.debugger.tests.test_shrink_map_script",
+        fn=inner,
+    )
+
+
 def check_save_state_lab(root: Path) -> CheckResult:
     """Round-trip trusted raw WRAM and fail-closed .sgm handling."""
 
@@ -1125,6 +1200,7 @@ NAMED_CHECKS: tuple[tuple[str, Check], ...] = (
     ("probe", check_probe),
     ("shrink_input_log", check_shrink_input_log),
     ("shrink_battle", check_shrink_battle),
+    ("shrink_map_script", check_shrink_map_script),
     ("save_state_lab", check_save_state_lab),
     ("bisect", check_bisect),
     ("handoff_log", check_handoff_log),

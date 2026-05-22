@@ -22,6 +22,7 @@ from tools.debugger.selftest import (
     check_probe,
     check_shrink_battle,
     check_shrink_input_log,
+    check_shrink_map_script,
     check_sm83_model_parity,
     check_save_state_lab,
     check_vram_decode,
@@ -172,6 +173,16 @@ class ShrinkBattleCheckTests(unittest.TestCase):
         self.assertTrue(result.ok, result.error or result.detail)
         self.assertEqual(result.component, "shrink_battle")
         self.assertIn("6 Pokemon", result.detail)
+
+
+class ShrinkMapScriptCheckTests(unittest.TestCase):
+    """P10 lived smoke: a map-script reproducer shrinks to trigger steps."""
+
+    def test_shrink_map_script_check_passes_in_isolation(self) -> None:
+        result = check_shrink_map_script(ROOT)
+        self.assertTrue(result.ok, result.error or result.detail)
+        self.assertEqual(result.component, "shrink_map_script")
+        self.assertIn("9 steps", result.detail)
 
 
 class BisectCheckTests(unittest.TestCase):
