@@ -5,8 +5,9 @@ from pathlib import Path
 from typing import Any
 
 from .catalog import ROOT
-from .evidence import evidence_atom
+from .evidence import evidence_atom, evidence_atoms
 from .ingest import inspect_artifact
+from .ranking import bank_state_record_evidence_from_atoms
 from .workflow import command_address_arg, command_is_runnable
 
 
@@ -963,7 +964,9 @@ def json_route_output_evidence(path: Path) -> dict[str, Any]:
         }
     errors = data.get("errors") if isinstance(data.get("errors"), list) else []
     valid = bool(data.get("valid", not errors))
-    return {
+    output_atoms = nested_evidence_atoms(data)
+    bank_state_evidence = bank_state_record_evidence_from_atoms(output_atoms)
+    output = {
         "produced_output_kind": str(data.get("kind") or "json"),
         "produced_output_valid": valid,
         "produced_output_executed": bool(data.get("executed")),
@@ -971,6 +974,24 @@ def json_route_output_evidence(path: Path) -> dict[str, Any]:
         "produced_output_error_count": len(errors),
         "produced_output_errors": [str(error) for error in errors[:8]],
     }
+    if bank_state_evidence:
+        output["produced_output_bank_state_evidence_count"] = len(bank_state_evidence)
+        output["produced_output_bank_state_evidence"] = bank_state_evidence
+    return output
+
+
+def nested_evidence_atoms(value: Any) -> list[dict[str, Any]]:
+    atoms: list[dict[str, Any]] = []
+    if isinstance(value, dict):
+        atoms.extend(evidence_atoms(value.get("evidence_atoms")))
+        for nested in value.values():
+            if isinstance(nested, dict | list | tuple):
+                atoms.extend(nested_evidence_atoms(nested))
+    elif isinstance(value, list | tuple):
+        for nested in value:
+            if isinstance(nested, dict | list | tuple):
+                atoms.extend(nested_evidence_atoms(nested))
+    return atoms
 
 
 def jsonl_route_output_evidence(path: Path) -> dict[str, Any]:
