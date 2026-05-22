@@ -22,6 +22,7 @@ from .input_log import BUTTON_ALIASES, parse_input_log
 from .localize import dict_items, normalize_path
 from .provenance import display_path, parse_symbol_table, resolve_path
 from .reporting import load_reports
+from .shrink_input_log import ddmin_items
 from .testgen import suggest_tests
 from .trace_index import build_symbol_address_index, extract_trace_events, finalize_events
 from .workflow import command_address_arg, command_is_runnable, execute_step
@@ -2714,6 +2715,8 @@ def build_input_log_minimization(
         "original_event_count": len(events_with_source),
         "minimized_event_count": len(minimized["events"]) if minimized["preserved"] else 0,
         "removed_event_count": max(0, len(events_with_source) - len(minimized["events"])) if minimized["preserved"] else 0,
+        "reduction_step_count": len(minimized.get("reduction_trace", [])) if minimized["preserved"] else 0,
+        "reduction_trace": minimized.get("reduction_trace", []) if minimized["preserved"] else [],
         "written_line_count": int(output.get("line_count", 0) or 0),
         "out_input_log": output.get("path", ""),
         "written": bool(output.get("written")),
@@ -2752,10 +2755,16 @@ def minimize_input_events(
         return input_expectations_pass(candidate, expectations=expectations)
 
     initial_passed = predicate(events)
-    minimized = greedy_minimize_items(events, predicate=predicate, min_items=1) if initial_passed else events
+    trace: list[dict[str, Any]] = []
+    minimized = (
+        list(ddmin_items(events, predicate=lambda candidate: predicate(list(candidate)), trace=trace))
+        if initial_passed
+        else events
+    )
     return {
         "preserved": initial_passed,
         "events": minimized if initial_passed else [],
+        "reduction_trace": trace if initial_passed else [],
         "results": input_expectation_results(minimized if initial_passed else events, expectations=expectations),
     }
 

@@ -68,7 +68,16 @@ def shrink_input_log(
 
 
 def ddmin_lines(lines: Sequence[str], *, predicate: Predicate, trace: list[dict[str, Any]]) -> tuple[str, ...]:
-    current = tuple(lines)
+    return tuple(ddmin_items(lines, predicate=predicate, trace=trace))
+
+
+def ddmin_items(
+    items: Sequence[Any],
+    *,
+    predicate: Callable[[tuple[Any, ...]], bool],
+    trace: list[dict[str, Any]],
+) -> tuple[Any, ...]:
+    current = tuple(items)
     granularity = 2
     trial = 0
     while len(current) >= 2:

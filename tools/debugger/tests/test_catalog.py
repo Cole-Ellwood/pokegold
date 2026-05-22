@@ -4917,6 +4917,8 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(input_min["original_event_count"], 5)
         self.assertEqual(input_min["minimized_event_count"], 2)
         self.assertEqual(input_min["removed_event_count"], 3)
+        self.assertGreater(input_min["reduction_step_count"], 0)
+        self.assertTrue(any(step["accepted"] for step in input_min["reduction_trace"]))
         self.assertEqual(input_min["out_input_log"], "minimized.inputs")
         self.assertEqual(minimized_lines, ["WAIT 1", "A", "WAIT 2", "B"])
         self.assertEqual(input_min["button_sample"], ["A", "B"])
@@ -4954,6 +4956,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertTrue(data["valid"])
         self.assertTrue(data["input_log_minimization"]["preserved"])
         self.assertEqual(data["input_log_minimization"]["minimized_event_count"], 1)
+        self.assertGreater(data["input_log_minimization"]["reduction_step_count"], 0)
         self.assertEqual(minimized_lines, ["WAIT 1", "A"])
 
     def test_minimize_reduces_content_state_patch_report(self) -> None:
