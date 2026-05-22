@@ -16,6 +16,16 @@ PROOF_STATUSES = {
     "mirror_failed",
 }
 
+PROOF_STATUS_RANK = {
+    "planned_only": 0,
+    "state_materialized": 1,
+    "mirror_passed": 2,
+    "runtime_observed": 3,
+    "instruction_observed": 4,
+    "taint_proven": 5,
+    "mirror_failed": 5,
+}
+
 
 BANK_STATE_VALID_SPACES = {
     "wram": ("wramx",),
@@ -220,6 +230,118 @@ def merge_evidence_atoms(*values: Any, limit: int = 24) -> list[dict[str, Any]]:
     return out
 
 
+def proof_status_by_source_summary(items: list[dict[str, Any]]) -> dict[str, str]:
+    summary: dict[str, str] = {}
+    for item in items:
+        per_source = item.get("proof_status_by_source")
+        if not isinstance(per_source, dict):
+            continue
+        for key, value in per_source.items():
+            source_key = str(key)
+            summary[source_key] = strongest_proof_status([summary.get(source_key), value])
+    return dict(sorted(summary.items()))
+
+
+def bank_state_record_proof_status_by_source(atoms: Any) -> dict[str, str]:
+    by_source: dict[str, str] = {}
+    for atom in evidence_atoms(atoms):
+        proof = normalize_proof_status(atom.get("proof_status"))
+        for group, records in bank_state_record_groups(atom):
+            for record in records:
+                name = str(record.get("name") or "")
+                source = str(record.get("source") or record.get("source_kind") or "")
+                if not name or not source:
+                    continue
+                key = f"bank_state:{group}:{name}:{source}"
+                by_source[key] = strongest_proof_status([by_source.get(key), proof])
+    return dict(sorted(by_source.items()))
+
+
+def bank_state_record_evidence_from_atoms(atoms: Any) -> list[str]:
+    evidence: list[str] = []
+    for atom in evidence_atoms(atoms):
+        for group, records in bank_state_record_groups(atom):
+            for record in records:
+                text = format_bank_state_record_evidence(group, record)
+                if text:
+                    evidence.append(text)
+    return unique_list(evidence)[:8]
+
+
+def bank_state_record_groups(value: Any, *, group: str = "") -> list[tuple[str, list[dict[str, Any]]]]:
+    groups: list[tuple[str, list[dict[str, Any]]]] = []
+    if isinstance(value, dict):
+        for key, nested in value.items():
+            key_text = str(key)
+            if key_text.endswith("bank_state_records"):
+                records = [
+                    item
+                    for item in dict_items(nested)
+                    if item.get("name") and item.get("state_kind")
+                ]
+                if records:
+                    groups.append((bank_state_record_group_name(key_text), records))
+                continue
+            if isinstance(nested, dict | list | tuple):
+                groups.extend(bank_state_record_groups(nested, group=key_text))
+    elif isinstance(value, list | tuple):
+        for nested in value:
+            if isinstance(nested, dict | list | tuple):
+                groups.extend(bank_state_record_groups(nested, group=group))
+    return groups
+
+
+def bank_state_record_group_name(key: str) -> str:
+    text = key
+    suffix = "_bank_state_records"
+    if text.endswith(suffix):
+        text = text[: -len(suffix)]
+    if text == "bank_state_records":
+        return "bank_state"
+    return text.strip("_") or "bank_state"
+
+
+def format_bank_state_record_evidence(group: str, record: dict[str, Any]) -> str:
+    name = str(record.get("name") or "")
+    if not name:
+        return ""
+    value = bank_state_record_value_text(record)
+    pieces = [f"bank_state_record={group}:{name}"]
+    if value:
+        pieces[0] += f"=0x{value}"
+    source = str(record.get("source") or "")
+    if source:
+        pieces.append(f"source={source}")
+    state_kind = str(record.get("state_kind") or "")
+    if state_kind:
+        pieces.append(f"state={state_kind}")
+    valid_for = str(record.get("valid_for_space") or "")
+    if valid_for:
+        pieces.append(f"valid_for={valid_for}")
+    return " ".join(pieces)
+
+
+def bank_state_record_value_text(record: dict[str, Any]) -> str:
+    value_hex = str(record.get("value_hex") or "").strip()
+    if value_hex:
+        return value_hex.upper().removeprefix("0X")
+    value = record.get("value")
+    if value is None or value == "":
+        return ""
+    try:
+        return f"{int(str(value), 0) & 0xFF:02X}"
+    except ValueError:
+        return str(value)
+
+
+def strongest_proof_status(values: list[Any]) -> str:
+    statuses = [normalize_proof_status(value) for value in values]
+    statuses = [status for status in statuses if status]
+    if not statuses:
+        return "planned_only"
+    return max(statuses, key=lambda status: PROOF_STATUS_RANK.get(status, 0))
+
+
 def evidence_atoms(value: Any) -> list[dict[str, Any]]:
     if isinstance(value, dict):
         if value.get("claim_type") and value.get("proof_status"):
@@ -290,6 +412,14 @@ def string_items(value: Any) -> list[str]:
     if isinstance(value, list | tuple | set):
         return [str(item) for item in value if str(item)]
     return [str(value)] if str(value) else []
+
+
+def dict_items(value: Any) -> list[dict[str, Any]]:
+    if isinstance(value, dict):
+        return [value]
+    if isinstance(value, list | tuple):
+        return [item for item in value if isinstance(item, dict)]
+    return []
 
 
 def unique_list(values: list[str]) -> list[str]:

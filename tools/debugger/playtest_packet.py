@@ -5,9 +5,13 @@ from pathlib import Path
 from typing import Any
 
 from .catalog import ROOT
-from .evidence import evidence_atom, evidence_atoms
+from .evidence import (
+    bank_state_record_evidence_from_atoms,
+    bank_state_record_proof_status_by_source,
+    evidence_atom,
+    evidence_atoms,
+)
 from .ingest import inspect_artifact
-from .ranking import bank_state_record_evidence_from_atoms
 from .workflow import command_address_arg, command_is_runnable
 
 
@@ -966,6 +970,7 @@ def json_route_output_evidence(path: Path) -> dict[str, Any]:
     valid = bool(data.get("valid", not errors))
     output_atoms = nested_evidence_atoms(data)
     bank_state_evidence = bank_state_record_evidence_from_atoms(output_atoms)
+    bank_state_proof_status = bank_state_record_proof_status_by_source(output_atoms)
     output = {
         "produced_output_kind": str(data.get("kind") or "json"),
         "produced_output_valid": valid,
@@ -977,6 +982,8 @@ def json_route_output_evidence(path: Path) -> dict[str, Any]:
     if bank_state_evidence:
         output["produced_output_bank_state_evidence_count"] = len(bank_state_evidence)
         output["produced_output_bank_state_evidence"] = bank_state_evidence
+    if bank_state_proof_status:
+        output["produced_output_bank_state_proof_status_by_source"] = bank_state_proof_status
     return output
 
 

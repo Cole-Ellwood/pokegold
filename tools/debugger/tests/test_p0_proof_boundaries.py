@@ -82,12 +82,15 @@ class P0ProofBoundaryAcceptanceTests(unittest.TestCase):
             impact = build_impact_report(reports=("nested_impact.json",), root=root)
 
         reverse_item = next(item for item in impact["items"] if item["type"] == "reverse_query")
+        key = "bank_state:last_writer:sram:inferred_bank_state.sram"
 
         self.assertEqual(reverse_item["proof_status"], "instruction_observed")
         self.assertIn(
             "bank_state_record=last_writer:sram=0x02 source=inferred_bank_state.sram state=inferred_from_io_write valid_for=sram",
             reverse_item["evidence"],
         )
+        self.assertEqual(reverse_item["proof_status_by_source"][key], "instruction_observed")
+        self.assertEqual(impact["proof_status_by_source"][key], "instruction_observed")
 
     def test_causal_graph_reverse_query_missing_result_proof_defaults_planned(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -339,6 +342,12 @@ class P0ProofBoundaryAcceptanceTests(unittest.TestCase):
         self.assertIn(sram_bank_evidence, ranked_reverse["evidence"])
         self.assertIn(sram_bank_evidence, visualization_reverse_event["detail"])
         self.assertIn(sram_bank_evidence, packet_reverse_route["produced_output_bank_state_evidence"])
+        self.assertEqual(
+            packet_reverse_route["produced_output_bank_state_proof_status_by_source"][
+                "bank_state:last_writer:sram:inferred_bank_state.sram"
+            ],
+            "instruction_observed",
+        )
         self.assertIn(
             "bank_state_record=last_writer:sram_enabled=0x00 source=bank_state.sram_enabled state=sram_disabled valid_for=sram",
             ranked_reverse["evidence"],

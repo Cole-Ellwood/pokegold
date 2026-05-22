@@ -6,11 +6,16 @@ from typing import Any
 
 from .address_boundary import reverse_query_address_boundary_fields
 from .catalog import ROOT, triage_request
-from .evidence import evidence_atoms, merge_evidence_atoms
+from .evidence import (
+    bank_state_record_evidence_from_atoms,
+    bank_state_record_proof_status_by_source,
+    evidence_atoms,
+    merge_evidence_atoms,
+    proof_status_by_source_summary,
+)
 from .ranking import (
     PROOF_STATUS_RANK,
     SEVERITY_BASE,
-    bank_state_record_evidence_from_atoms,
     compare_match_evidence,
     compare_match_proof_status,
     materialized_save_state_delta,
@@ -601,6 +606,7 @@ def build_impact_report(
         "symptom": symptom,
         "impact_count": len(impacted),
         "proof_status_counts": proof_status_counts(impacted),
+        "proof_status_by_source": proof_status_by_source_summary(impacted),
         "learned_profile_count": len(learning_profiles),
         "error_count": len(errors),
         "errors": errors,
@@ -645,6 +651,7 @@ def item_from_finding(finding: dict[str, Any]) -> dict[str, Any]:
         ),
         related_addresses=string_items(finding.get("related_addresses")),
         proof_status=str(finding.get("proof_status", "")),
+        proof_status_by_source=source_status_map(finding.get("proof_status_by_source")),
         evidence_atoms=finding.get("evidence_atoms"),
     )
     item.update(reverse_query_address_boundary_fields(finding))
@@ -2417,6 +2424,18 @@ def score_item(item: dict[str, Any]) -> dict[str, Any]:
     scored["impact_score"] = score
     scored["next_actions"] = string_items(scored.get("next_actions"))[:12]
     scored["evidence_atoms"] = merge_evidence_atoms(scored.get("evidence_atoms"), limit=12)
+    source_statuses = proof_status_by_source_summary(
+        [
+            {"proof_status_by_source": scored.get("proof_status_by_source")},
+            {
+                "proof_status_by_source": bank_state_record_proof_status_by_source(
+                    scored["evidence_atoms"]
+                )
+            },
+        ]
+    )
+    if source_statuses:
+        scored["proof_status_by_source"] = source_statuses
     scored["evidence"] = unique_list(
         [
             *bank_state_record_evidence_from_atoms(scored["evidence_atoms"]),
@@ -2738,8 +2757,10 @@ def impact_item(
     related_files: list[str] | None = None,
     related_addresses: list[str] | None = None,
     proof_status: str | None = None,
+    proof_status_by_source: dict[str, Any] | None = None,
     evidence_atoms: Any = None,
 ) -> dict[str, Any]:
+    merged_atoms = merge_evidence_atoms(evidence_atoms)
     out = {
         "type": item_type,
         "title": title,
@@ -2751,8 +2772,16 @@ def impact_item(
         "related_symbols": unique_list(related_symbols or []),
         "related_files": unique_list(normalize_path(path) for path in (related_files or []) if path),
         "related_addresses": unique_addresses(related_addresses or []),
-        "evidence_atoms": merge_evidence_atoms(evidence_atoms),
+        "evidence_atoms": merged_atoms,
     }
+    source_statuses = proof_status_by_source_summary(
+        [
+            {"proof_status_by_source": proof_status_by_source},
+            {"proof_status_by_source": bank_state_record_proof_status_by_source(merged_atoms)},
+        ]
+    )
+    if source_statuses:
+        out["proof_status_by_source"] = source_statuses
     return with_proof_status({**out, "proof_status": proof_status or ""})
 
 
@@ -2769,6 +2798,18 @@ def normalized_proof_status_values(*values: Any) -> list[str]:
                 if status:
                     statuses.append(status)
     return sorted(unique_list(statuses), key=proof_status_sort_key)
+
+
+def source_status_map(value: Any) -> dict[str, str]:
+    if not isinstance(value, dict):
+        return {}
+    out: dict[str, str] = {}
+    for source, status_value in value.items():
+        source_key = str(source or "").strip()
+        status = normalize_proof_status(status_value)
+        if source_key and status:
+            out[source_key] = status
+    return dict(sorted(out.items()))
 
 
 def item_proof_statuses(item: dict[str, Any]) -> list[str]:
