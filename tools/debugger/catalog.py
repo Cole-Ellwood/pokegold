@@ -163,6 +163,7 @@ TRIAGE_RULES = (
         ),
         reason="Damage has the strongest ROM-vs-oracle and register-clobber tooling today.",
         commands=(
+            "python -m tools.debugger when-wrote --address <addr> --report <effect-trace.json> --since-symbol <function>",
             "python -m tools.debugger clobber-chain --function <function> --register <register>",
             "python -m tools.damage_debugger.clobber_smoke",
             "python -m tools.damage_debugger.oracle",

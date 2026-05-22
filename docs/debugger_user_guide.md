@@ -181,6 +181,24 @@ python -m tools.debugger investigate `
   --symptom "physical damage 5x too high"
 ```
 
+**Or ask the omniscient question directly (P2 when-wrote)**
+
+```powershell
+python -m tools.debugger when-wrote `
+  --address 01:D141 `
+  --report <effect-trace.json> `
+  --since-symbol BattleCommand_DamageCalc
+```
+
+`when-wrote` is the Pernosco-style "who last wrote this byte" query.
+Returns the writer's PC, symbol, bank, frame, and the proof vector
+(proof_status, match_precision). Refuses to fall back to a
+bus-address match when the target is bank-qualified — the P0 proof
+boundary holds. Use this when you have a recorded effect trace and
+the question is "which write clobbered the damage byte?" The full
+`investigate` pipeline runs more analyses but is heavier; `when-wrote`
+is one second when you already know the address.
+
 **Success looks like**
 
 `clobber_smoke` reports all scenarios PASS. If not, the named scenario
