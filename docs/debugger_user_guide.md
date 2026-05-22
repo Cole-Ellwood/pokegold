@@ -197,6 +197,53 @@ contains the declared input evidence. It does not prove the ROM symptom
 still reproduces until a replay/watch/investigation route executes the
 minimized log against the ROM.
 
+### "Bug only reproduces sometimes"
+
+Use chaos mode when the report smells like a timing-sensitive flake:
+input windows, frame-boundary races, or a bug that disappears under the
+normal deterministic replay schedule.
+
+**Known-stable control**
+
+```powershell
+python -m tools.debugger fuzz `
+  --chaos `
+  --runs 100 `
+  --seed 1 `
+  --chaos-scenario stable `
+  --json-out .local/tmp/chaos.stable.json
+```
+
+**Synthetic flake smoke**
+
+```powershell
+python -m tools.debugger fuzz `
+  --chaos `
+  --runs 100 `
+  --seed 1 `
+  --chaos-scenario synthetic_flake `
+  --json-out .local/tmp/chaos.flake.json
+```
+
+**Success looks like**
+
+For the stable control, `diverged=false` and `stable_count` should stay
+at 99 or higher out of 100. For the synthetic flake smoke,
+`diverged=true`, `minimal_seed` is an integer, and
+`candidate_input_log` contains the replay inputs that triggered the
+flake. Feed that input log into `minimize --domain input_log` when it
+is too long to inspect.
+
+**Proof limit**
+
+Current chaos mode has two layers. The schedule/campaign layer records
+deterministic hardware-envelope requests and catches synthetic flake
+divergence. The PyBoy adapter layer can drive public `tick` and
+`button` APIs, but PyBoy does not expose public cycle-level controls for
+vblank/hblank timing, joypad-latch cycles, or DMA-vs-CPU interleaving.
+Those requests are preserved as `planned_not_applied` evidence rather
+than reported as applied perturbations.
+
 ### "Generated scenario is too noisy"
 
 Use this when `generate`, `content-scenarios`, or a subsystem tool gives

@@ -1000,6 +1000,13 @@ minimal repro (combine with P10 shrink for an easy investigation).
 **Scope (out)**: real hardware-fuzzing oracles (we trust PyBoy's interrupt model;
 the May 2026 PyBoy-vs-VBA divergence is a known limit, not part of this scope).
 
+**Implementation note (2026-05-22)**: the current P11 public-API adapter drives
+PyBoy frame ticks and button playback, but preserves cycle-level vblank/hblank,
+joypad-latch, and DMA-vs-CPU requests as `planned_not_applied` proof-boundary
+evidence because stock PyBoy does not expose public controls for those timings.
+The deterministic schedule/campaign layer and CLI smoke are live; a lower-level
+perturbation backend remains the path to true cycle-level application.
+
 **Acceptance**:
 
 - `fuzz --chaos --runs 100 --seed 1` against a known-stable scenario stays stable
