@@ -6,8 +6,9 @@ and Codex (and VS Code, and any DAP client) can drive the debugger
 through a normalized JSON protocol instead of re-inventing per-session
 glue. Current slices ship Content-Length framing, initialize, launch,
 configurationDone, setBreakpoints (recorded as unverified), threads,
-evaluate(tdb), and disconnect. Later slices add stackTrace, scopes,
-reverseContinue, pause, and continue.
+synthetic stackTrace/scopes/variables, evaluate(tdb), and disconnect.
+Later slices add live CPU frame state, reverseContinue, pause, and
+continue.
 
 Protocol shape grounded in microsoft/debug-adapter-protocol spec
 (https://microsoft.github.io/debug-adapter-protocol/specification.html).
@@ -36,6 +37,8 @@ DEFAULT_HOST = "127.0.0.1"
 # Header section ends with the blank line; body is N bytes of UTF-8 JSON.
 HEADER_TERMINATOR = b"\r\n\r\n"
 CONTENT_LENGTH_PREFIX = b"Content-Length:"
+SYNTHETIC_FRAME_ID = 1
+DEBUGGER_SCOPE_VARIABLES_REFERENCE = 1
 
 
 @dataclass
@@ -155,6 +158,136 @@ class DapServer:
                 body={"threads": [{"id": 1, "name": "sm83"}]},
             )
         ]
+
+    def _stack_trace_response(
+        self, message: dict[str, Any], request_seq: int
+    ) -> list[dict[str, Any]]:
+        args = message.get("arguments")
+        if not isinstance(args, dict):
+            return [self._error_response(
+                request_seq=request_seq,
+                command="stackTrace",
+                message="stackTrace requires arguments.threadId",
+            )]
+        thread_id = args.get("threadId")
+        if isinstance(thread_id, bool) or thread_id != 1:
+            return [self._error_response(
+                request_seq=request_seq,
+                command="stackTrace",
+                message="stackTrace supports only synthetic threadId=1",
+            )]
+        return [self._response(
+            request_seq=request_seq,
+            command="stackTrace",
+            success=True,
+            body={
+                "stackFrames": [
+                    {
+                        "id": SYNTHETIC_FRAME_ID,
+                        "name": "sm83 trace-query session",
+                        "line": 1,
+                        "column": 1,
+                    }
+                ],
+                "totalFrames": 1,
+            },
+        )]
+
+    def _scopes_response(
+        self, message: dict[str, Any], request_seq: int
+    ) -> list[dict[str, Any]]:
+        args = message.get("arguments")
+        if not isinstance(args, dict):
+            return [self._error_response(
+                request_seq=request_seq,
+                command="scopes",
+                message="scopes requires arguments.frameId",
+            )]
+        frame_id = args.get("frameId")
+        if isinstance(frame_id, bool) or frame_id != SYNTHETIC_FRAME_ID:
+            return [self._error_response(
+                request_seq=request_seq,
+                command="scopes",
+                message=f"scopes supports only synthetic frameId={SYNTHETIC_FRAME_ID}",
+            )]
+        return [self._response(
+            request_seq=request_seq,
+            command="scopes",
+            success=True,
+            body={
+                "scopes": [
+                    {
+                        "name": "debugger session",
+                        "variablesReference": DEBUGGER_SCOPE_VARIABLES_REFERENCE,
+                        "expensive": False,
+                    }
+                ]
+            },
+        )]
+
+    def _variables_response(
+        self, message: dict[str, Any], request_seq: int
+    ) -> list[dict[str, Any]]:
+        args = message.get("arguments")
+        if not isinstance(args, dict):
+            return [self._error_response(
+                request_seq=request_seq,
+                command="variables",
+                message="variables requires arguments.variablesReference",
+            )]
+        variables_reference = args.get("variablesReference")
+        if (
+            isinstance(variables_reference, bool)
+            or variables_reference != DEBUGGER_SCOPE_VARIABLES_REFERENCE
+        ):
+            return [self._error_response(
+                request_seq=request_seq,
+                command="variables",
+                message=(
+                    "variables supports only debugger-session "
+                    f"variablesReference={DEBUGGER_SCOPE_VARIABLES_REFERENCE}"
+                ),
+            )]
+        breakpoint_sources = {
+            source: breakpoints
+            for source, breakpoints in self.breakpoints_by_source.items()
+            if breakpoints
+        }
+        breakpoint_count = sum(
+            len(breakpoints) for breakpoints in breakpoint_sources.values()
+        )
+        return [self._response(
+            request_seq=request_seq,
+            command="variables",
+            success=True,
+            body={
+                "variables": [
+                    {
+                        "name": "reports",
+                        "value": ", ".join(self.default_reports) or "(none)",
+                        "variablesReference": 0,
+                    },
+                    {
+                        "name": "breakpoints",
+                        "value": (
+                            f"{breakpoint_count} unverified breakpoint(s) "
+                            f"across {len(breakpoint_sources)} source(s)"
+                        ),
+                        "variablesReference": 0,
+                    },
+                    {
+                        "name": "supported_commands",
+                        "value": ", ".join(sorted(_COMMAND_HANDLERS)),
+                        "variablesReference": 0,
+                    },
+                    {
+                        "name": "runtime_state",
+                        "value": "not live; trace-query metadata only",
+                        "variablesReference": 0,
+                    },
+                ]
+            },
+        )]
 
     def _launch_response(
         self, message: dict[str, Any], request_seq: int
@@ -334,6 +467,9 @@ _COMMAND_HANDLERS: dict[
     "configurationDone": DapServer._configuration_done_response,
     "setBreakpoints": DapServer._set_breakpoints_response,
     "threads": DapServer._threads_response,
+    "stackTrace": DapServer._stack_trace_response,
+    "scopes": DapServer._scopes_response,
+    "variables": DapServer._variables_response,
     "evaluate": DapServer._evaluate_response,
     "disconnect": DapServer._disconnect_response,
 }
@@ -463,7 +599,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         description=(
             "Minimal Debug Adapter Protocol server (P14). Current slices "
             "ship initialize, launch, configurationDone, setBreakpoints, threads, "
-            "evaluate(tdb), and disconnect; later slices add stackTrace/scopes/reverseContinue."
+            "synthetic stackTrace/scopes/variables, evaluate(tdb), and disconnect; "
+            "later slices add live CPU frame state/reverseContinue."
         ),
     )
     parser.add_argument(

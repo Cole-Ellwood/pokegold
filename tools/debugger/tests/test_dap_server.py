@@ -11,7 +11,9 @@ from unittest.mock import patch
 
 from tools.debugger.dap_server import (
     DEFAULT_HOST,
+    DEBUGGER_SCOPE_VARIABLES_REFERENCE,
     DapServer,
+    SYNTHETIC_FRAME_ID,
     encode_frame,
     main,
     read_frame,
@@ -205,6 +207,101 @@ class DapServerThreadsTests(unittest.TestCase):
         self.assertEqual(len(body["threads"]), 1)
         self.assertEqual(body["threads"][0]["name"], "sm83")
         self.assertEqual(body["threads"][0]["id"], 1)
+
+
+class DapServerSyntheticStackScopeTests(unittest.TestCase):
+    def test_stack_trace_returns_synthetic_trace_query_frame(self) -> None:
+        server = DapServer()
+        responses = server.handle_message({
+            "seq": 10,
+            "type": "request",
+            "command": "stackTrace",
+            "arguments": {"threadId": 1},
+        })
+
+        self.assertTrue(responses[0]["success"], responses)
+        body = responses[0]["body"]
+        self.assertEqual(body["totalFrames"], 1)
+        frame = body["stackFrames"][0]
+        self.assertEqual(frame["id"], SYNTHETIC_FRAME_ID)
+        self.assertEqual(frame["name"], "sm83 trace-query session")
+
+    def test_stack_trace_rejects_unknown_thread(self) -> None:
+        server = DapServer()
+        responses = server.handle_message({
+            "seq": 10,
+            "type": "request",
+            "command": "stackTrace",
+            "arguments": {"threadId": 2},
+        })
+
+        self.assertFalse(responses[0]["success"])
+        self.assertIn("threadId=1", responses[0]["message"])
+
+    def test_scopes_returns_debugger_session_scope(self) -> None:
+        server = DapServer()
+        responses = server.handle_message({
+            "seq": 11,
+            "type": "request",
+            "command": "scopes",
+            "arguments": {"frameId": SYNTHETIC_FRAME_ID},
+        })
+
+        self.assertTrue(responses[0]["success"], responses)
+        scopes = responses[0]["body"]["scopes"]
+        self.assertEqual(scopes[0]["name"], "debugger session")
+        self.assertEqual(
+            scopes[0]["variablesReference"],
+            DEBUGGER_SCOPE_VARIABLES_REFERENCE,
+        )
+
+    def test_variables_describe_reports_breakpoints_and_boundary(self) -> None:
+        server = DapServer(default_reports=("effect.json",))
+        server.handle_message({
+            "seq": 8,
+            "type": "request",
+            "command": "setBreakpoints",
+            "arguments": {
+                "source": {"path": "engine/battle/effect_commands.asm"},
+                "breakpoints": [{"line": 120}, {"line": 124}],
+            },
+        })
+        responses = server.handle_message({
+            "seq": 12,
+            "type": "request",
+            "command": "variables",
+            "arguments": {
+                "variablesReference": DEBUGGER_SCOPE_VARIABLES_REFERENCE,
+            },
+        })
+
+        self.assertTrue(responses[0]["success"], responses)
+        variables = {
+            item["name"]: item["value"]
+            for item in responses[0]["body"]["variables"]
+        }
+        self.assertEqual(variables["reports"], "effect.json")
+        self.assertEqual(
+            variables["breakpoints"],
+            "2 unverified breakpoint(s) across 1 source(s)",
+        )
+        self.assertIn("evaluate", variables["supported_commands"])
+        self.assertEqual(
+            variables["runtime_state"],
+            "not live; trace-query metadata only",
+        )
+
+    def test_variables_rejects_unknown_reference(self) -> None:
+        server = DapServer()
+        responses = server.handle_message({
+            "seq": 12,
+            "type": "request",
+            "command": "variables",
+            "arguments": {"variablesReference": 99},
+        })
+
+        self.assertFalse(responses[0]["success"])
+        self.assertIn("variablesReference=1", responses[0]["message"])
 
 
 class DapServerLaunchTests(unittest.TestCase):
