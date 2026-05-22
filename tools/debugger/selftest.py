@@ -472,6 +472,60 @@ def check_bisect(root: Path) -> CheckResult:
     )
 
 
+def check_handoff_log(root: Path) -> CheckResult:
+    """Exercise the two-LLM handoff log gate end-to-end on a temp store."""
+
+    import tempfile
+
+    from .handoff_log import HandoffRow, append_row, audit_store
+
+    def inner() -> str:
+        with tempfile.TemporaryDirectory() as tmp:
+            store = Path(tmp) / "handoff.jsonl"
+
+            def add(model: str, event: str, status: str, **extras: object) -> None:
+                append_row(
+                    HandoffRow(
+                        phase="selftest",
+                        event=event,
+                        status=status,
+                        model=model,
+                        primary="codex",
+                        reviewer=str(extras.pop("reviewer", "")) if event == "slice_review" else "",
+                        confidence="repo-proven",
+                        claim=f"selftest {event} by {model}",
+                    ),
+                    store=store,
+                    root=Path(tmp),
+                )
+
+            add("codex", "ack_start", "in_progress")
+            add("codex", "slice_update", "ready_for_review")
+            report_before = audit_store(store=store, root=Path(tmp))
+            if report_before["phase_status"]["selftest"]["mutual_verified"]:
+                raise AssertionError(
+                    "mutual_verified must be False before non-primary review"
+                )
+
+            add("claude", "slice_review", "slice_accepted", reviewer="claude")
+            report_after = audit_store(store=store, root=Path(tmp))
+            if not report_after["phase_status"]["selftest"]["mutual_verified"]:
+                raise AssertionError(
+                    "mutual_verified must be True after repo-proven cross-model review"
+                )
+            if report_after["row_errors"]:
+                raise AssertionError(
+                    f"unexpected row errors: {report_after['row_errors']}"
+                )
+        return "handoff_log mutual-agreement gate round-trip ok"
+
+    return _capture(
+        component="handoff_log",
+        next_command="python -m tools.debugger handoff verify",
+        fn=inner,
+    )
+
+
 NAMED_CHECKS: tuple[tuple[str, Check], ...] = (
     ("capability_audit", check_capability_audit),
     ("inventory", check_inventory),
@@ -486,6 +540,7 @@ NAMED_CHECKS: tuple[tuple[str, Check], ...] = (
     ("hypothesis_tracker", check_hypothesis_tracker),
     ("save_state_lab", check_save_state_lab),
     ("bisect", check_bisect),
+    ("handoff_log", check_handoff_log),
 )
 
 CHECKS: tuple[Check, ...] = tuple(check for _, check in NAMED_CHECKS)

@@ -997,6 +997,41 @@ def _build_v2_surfaces(root: Path = ROOT) -> list[dict[str, Any]]:
                 "python -m tools.debugger session-start --json",
             ),
         ),
+        _capability(
+            id="handoff_log",
+            title="Two-LLM handoff log (P4)",
+            status=_complete_if_paths(
+                root,
+                "tools/debugger/handoff_log.py",
+                "tools/debugger/tests/test_handoff_log.py",
+                "tools/audit/check_two_llm_handoff_log.py",
+                "audit/masterpiece_handoff_log.jsonl",
+            ),
+            scope=(
+                "Structural enforcement of the rule-#6 mutual-agreement gate. "
+                "Append-only JSONL with typed events (ack_start/slice_update/slice_review/"
+                "phase_done) and confidence labels (repo-proven/memory-derived/judgment). "
+                "A phase is only mutual_verified when the non-primary model files a "
+                "repo-proven slice_review with status slice_accepted; solo sign-off by "
+                "primary is structurally refused. Audit is wired into the release-smoke "
+                "floor in warn-only mode initially."
+            ),
+            evidence=(
+                "tools/debugger/handoff_log.py",
+                "tools/debugger/tests/test_handoff_log.py",
+                "tools/audit/check_two_llm_handoff_log.py",
+                "audit/masterpiece_handoff_log.jsonl",
+                "docs/debugger_masterpiece_roadmap_codex_task.md",
+            ),
+            gaps=(),
+            commands=(
+                "python -m tools.debugger handoff add --phase <P> --event ack_start --status in_progress --model <claude|codex> --primary <claude|codex> --confidence <label> --claim <claim>",
+                "python -m tools.debugger handoff list [--phase <P>] [--status <s>] [--event <e>]",
+                "python -m tools.debugger handoff show <phase>",
+                "python -m tools.debugger handoff verify [--json]",
+                "python tools/audit/check_two_llm_handoff_log.py [--strict]",
+            ),
+        ),
     ]
     return [
         {

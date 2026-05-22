@@ -64,6 +64,7 @@ V2_PASSTHROUGH_MODULES = {
     "save-state-lab": "tools.debugger.save_state_lab",
     "bisect": "tools.debugger.bisect",
     "session-start": "tools.debugger.session_start",
+    "handoff": "tools.debugger.handoff_log",
 }
 
 
@@ -708,6 +709,19 @@ def build_parser() -> argparse.ArgumentParser:
     )
     session_start.add_argument("argv", nargs=argparse.REMAINDER)
     session_start.set_defaults(func=cmd_session_start)
+
+    handoff = subparsers.add_parser(
+        "handoff",
+        add_help=False,
+        description=(
+            "Two-LLM handoff log (v2). Structural enforcement of the "
+            "rule-#6 mutual-agreement gate. Delegates to "
+            "`python -m tools.debugger.handoff_log`. Pass `--help` to "
+            "see add/list/show/verify subcommands."
+        ),
+    )
+    handoff.add_argument("argv", nargs=argparse.REMAINDER)
+    handoff.set_defaults(func=cmd_handoff)
 
     return parser
 
@@ -1420,6 +1434,10 @@ def cmd_bisect(args: argparse.Namespace) -> int:
 
 def cmd_session_start(args: argparse.Namespace) -> int:
     return _delegate_to_module_main("tools.debugger.session_start", args.argv)
+
+
+def cmd_handoff(args: argparse.Namespace) -> int:
+    return _delegate_to_module_main("tools.debugger.handoff_log", args.argv)
 
 
 def emit_report(report: dict[str, Any], args: argparse.Namespace) -> None:
