@@ -380,6 +380,21 @@ class DapServerSetBreakpointsTests(unittest.TestCase):
         self.assertFalse(responses[0]["success"])
         self.assertIn("breakpoint.line must be an integer", responses[0]["message"])
 
+    def test_set_breakpoints_rejects_non_positive_line(self) -> None:
+        server = DapServer()
+        responses = server.handle_message({
+            "seq": 8,
+            "type": "request",
+            "command": "setBreakpoints",
+            "arguments": {
+                "source": {"path": "engine/battle/effect_commands.asm"},
+                "breakpoints": [{"line": 0}],
+            },
+        })
+
+        self.assertFalse(responses[0]["success"])
+        self.assertIn("breakpoint.line must be positive", responses[0]["message"])
+
 
 class DapServerEvaluateTests(unittest.TestCase):
     def _trace_fixture(self, tmp_path) -> str:

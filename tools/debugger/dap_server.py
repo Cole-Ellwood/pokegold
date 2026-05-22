@@ -243,6 +243,12 @@ class DapServer:
                     command="setBreakpoints",
                     message="setBreakpoints breakpoint.line must be an integer",
                 )]
+            if line <= 0:
+                return [self._error_response(
+                    request_seq=request_seq,
+                    command="setBreakpoints",
+                    message="setBreakpoints breakpoint.line must be positive",
+                )]
             breakpoint = {
                 "verified": False,
                 "line": line,
