@@ -13,11 +13,13 @@ from tools.debugger.session_start import (
     RECOMMENDED_COMMANDS,
     SessionStartReport,
     WorkingTreeSummary,
+    _active_probe_summary,
     _format_text,
     _truncate,
     build_session_start_report,
     main,
 )
+from tools.debugger.probe import declare_probe
 from tools.debugger.selftest import CheckResult, SelftestReport
 
 
@@ -46,6 +48,8 @@ class ReportFormatTests(unittest.TestCase):
             selftest_ok=selftest_ok,
             selftest_components_failed=fails or [],
             selftest_summary_line="selftest PASS (13/13 components healthy)" if selftest_ok else "selftest FAIL (12/13 components healthy)",
+            active_probe_count=2,
+            probe_store="audit/probes.jsonl",
             open_hypotheses=[
                 {
                     "id": "h_test_x",
@@ -84,6 +88,11 @@ class ReportFormatTests(unittest.TestCase):
         self.assertIn("repo-proven", text)
         self.assertIn("physical damage 5x too high", text)
 
+    def test_active_probe_count_is_rendered(self) -> None:
+        text = _format_text(self._sample())
+        self.assertIn("active probes: 2", text)
+        self.assertIn("audit/probes.jsonl", text)
+
     def test_recommended_commands_block_present(self) -> None:
         text = _format_text(self._sample())
         for cmd in RECOMMENDED_COMMANDS:
@@ -95,7 +104,7 @@ class ReportFormatTests(unittest.TestCase):
         # Path-dump anti-pattern: a real path string would never appear
         # in the summary form.
         self.assertNotIn(".local/", text)
-        self.assertNotIn("audit/", text)
+        self.assertNotIn("audit/boss_ai_debugger/runs", text)
 
 
 class JsonOutputTests(unittest.TestCase):
@@ -104,6 +113,8 @@ class JsonOutputTests(unittest.TestCase):
             selftest_ok=True,
             selftest_components_failed=[],
             selftest_summary_line="selftest PASS (1/1)",
+            active_probe_count=0,
+            probe_store="audit/probes.jsonl",
             open_hypotheses=[],
             open_hypothesis_count=0,
             stale_citation_count=0,
@@ -115,6 +126,7 @@ class JsonOutputTests(unittest.TestCase):
         decoded = json.loads(encoded)
         self.assertTrue(decoded["selftest_ok"])
         self.assertEqual(decoded["git_branch"], "main")
+        self.assertEqual(decoded["active_probe_count"], 0)
         self.assertEqual(decoded["working_tree"]["untracked"], 1)
 
 
@@ -134,6 +146,8 @@ class ExitCodeTests(unittest.TestCase):
                 selftest_ok=False,
                 selftest_components_failed=["capability_audit"],
                 selftest_summary_line="selftest FAIL (0/1 components healthy)",
+                active_probe_count=0,
+                probe_store="audit/probes.jsonl",
                 open_hypotheses=[],
                 open_hypothesis_count=0,
                 stale_citation_count=0,
@@ -171,9 +185,22 @@ class IntegrationTests(unittest.TestCase):
         )
         # All structural fields populated.
         self.assertIsInstance(report.latest_commits, list)
+        self.assertIsInstance(report.active_probe_count, int)
         self.assertIsInstance(report.working_tree.untracked, int)
         # Branch should be readable.
         self.assertTrue(len(report.git_branch) > 0)
+
+    def test_probe_summary_counts_active_deduped_probes(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            declare_probe(name="damage_calc_entry", pc="01:5A00", root=root)
+            declare_probe(name="damage_calc_entry", pc="02:4100", root=root)
+            declare_probe(name="boss_ai_choose", pc="02:4100", root=root)
+
+            count, store = _active_probe_summary(root)
+
+        self.assertEqual(count, 2)
+        self.assertTrue(store.endswith("audit\\probes.jsonl") or store.endswith("audit/probes.jsonl"))
 
 
 if __name__ == "__main__":

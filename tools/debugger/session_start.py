@@ -61,6 +61,8 @@ class SessionStartReport:
     selftest_ok: bool
     selftest_components_failed: list[str]
     selftest_summary_line: str
+    active_probe_count: int
+    probe_store: str
     open_hypotheses: list[dict[str, Any]]
     open_hypothesis_count: int  # may exceed len(open_hypotheses) due to MAX_HYPOTHESES cap
     stale_citation_count: int
@@ -73,6 +75,8 @@ class SessionStartReport:
             "selftest_ok": self.selftest_ok,
             "selftest_components_failed": list(self.selftest_components_failed),
             "selftest_summary_line": self.selftest_summary_line,
+            "active_probe_count": self.active_probe_count,
+            "probe_store": self.probe_store,
             "open_hypotheses": list(self.open_hypotheses),
             "open_hypothesis_count": self.open_hypothesis_count,
             "stale_citation_count": self.stale_citation_count,
@@ -108,6 +112,7 @@ def build_session_start_report(
     )
     stale_count = sum(1 for h in all_open if h.get("citation_stale"))
     bounded_open = all_open[-MAX_HYPOTHESES:]
+    active_probe_count, probe_store = _active_probe_summary(root)
 
     commits = _git_oneline(root, MAX_COMMITS)
     branch = _git_branch(root)
@@ -117,6 +122,8 @@ def build_session_start_report(
         selftest_ok=selftest.ok,
         selftest_components_failed=failed_names,
         selftest_summary_line=summary,
+        active_probe_count=active_probe_count,
+        probe_store=probe_store,
         open_hypotheses=[
             {
                 "id": h["id"],
@@ -194,6 +201,13 @@ def _working_tree_summary(root: Path) -> WorkingTreeSummary:
     return WorkingTreeSummary(modified, added, deleted, untracked)
 
 
+def _active_probe_summary(root: Path) -> tuple[int, str]:
+    from .probe import build_probe_list_report
+
+    report = build_probe_list_report(root=root)
+    return int(report.get("active_probe_count", 0)), str(report.get("store", ""))
+
+
 def _truncate(text: str, limit: int) -> str:
     if len(text) <= limit:
         return text
@@ -229,6 +243,10 @@ def _format_text(report: SessionStartReport) -> str:
             lines.append(
                 f"  ... (+{hidden} older — `python -m tools.debugger hypothesis list`)"
             )
+    lines.append("")
+    lines.append(f"active probes: {report.active_probe_count}")
+    if report.probe_store:
+        lines.append(f"probe store: {report.probe_store}")
     lines.append("")
     lines.append(f"recent commits ({len(report.latest_commits)}):")
     if report.latest_commits:
