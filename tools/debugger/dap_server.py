@@ -5,8 +5,8 @@
 and Codex (and VS Code, and any DAP client) can drive the debugger
 through a normalized JSON protocol instead of re-inventing per-session
 glue. Current slices ship Content-Length framing, initialize, launch,
-threads, and evaluate(tdb). Later slices add stackTrace, scopes,
-setBreakpoints, reverseContinue, pause, and continue.
+threads, evaluate(tdb), and disconnect. Later slices add stackTrace,
+scopes, setBreakpoints, reverseContinue, pause, and continue.
 
 Protocol shape grounded in microsoft/debug-adapter-protocol spec
 (https://microsoft.github.io/debug-adapter-protocol/specification.html).
@@ -183,6 +183,15 @@ class DapServer:
             success=True,
         )]
 
+    def _disconnect_response(
+        self, message: dict[str, Any], request_seq: int
+    ) -> list[dict[str, Any]]:
+        return [self._response(
+            request_seq=request_seq,
+            command="disconnect",
+            success=True,
+        )]
+
     def _evaluate_response(
         self, message: dict[str, Any], request_seq: int
     ) -> list[dict[str, Any]]:
@@ -239,6 +248,7 @@ _COMMAND_HANDLERS: dict[
     "launch": DapServer._launch_response,
     "threads": DapServer._threads_response,
     "evaluate": DapServer._evaluate_response,
+    "disconnect": DapServer._disconnect_response,
 }
 
 
@@ -365,7 +375,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         prog="python -m tools.debugger.dap_server",
         description=(
             "Minimal Debug Adapter Protocol server (P14). Current slices "
-            "ship initialize, launch, threads, and evaluate(tdb); later slices add "
+            "ship initialize, launch, threads, evaluate(tdb), and disconnect; later slices add "
             "setBreakpoints/stackTrace/scopes/reverseContinue."
         ),
     )

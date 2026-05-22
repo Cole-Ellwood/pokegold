@@ -258,6 +258,21 @@ class DapServerLaunchTests(unittest.TestCase):
         self.assertIn("reports must be a list of strings", responses[0]["message"])
 
 
+class DapServerDisconnectTests(unittest.TestCase):
+    def test_disconnect_returns_success_response(self) -> None:
+        server = DapServer()
+        responses = server.handle_message({
+            "seq": 6,
+            "type": "request",
+            "command": "disconnect",
+        })
+
+        self.assertEqual(len(responses), 1)
+        self.assertTrue(responses[0]["success"])
+        self.assertEqual(responses[0]["command"], "disconnect")
+        self.assertEqual(responses[0]["request_seq"], 6)
+
+
 class DapServerEvaluateTests(unittest.TestCase):
     def _trace_fixture(self, tmp_path) -> str:
         return _trace_fixture(tmp_path)
