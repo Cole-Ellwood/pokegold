@@ -219,6 +219,13 @@ def build_install_docs_report(
     }
 
 
+def write_json_report(path: str | Path, report: Mapping[str, Any]) -> Path:
+    target = Path(path)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+    return target
+
+
 def build_run_report(
     *,
     backends: str | Sequence[str] | None = ("pyboy",),
@@ -869,6 +876,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="JSONL conformance result store used to mark cross backends trusted.",
     )
     preflight.add_argument("--json", action="store_true")
+    preflight.add_argument("--json-out", default="", help="write structured JSON to a file")
     preflight.set_defaults(func=cmd_preflight)
 
     install_docs = sub.add_parser(
@@ -886,6 +894,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="Show recipes for all requested backends, not just missing ones.",
     )
     install_docs.add_argument("--json", action="store_true")
+    install_docs.add_argument("--json-out", default="", help="write structured JSON to a file")
     install_docs.set_defaults(func=cmd_install_docs)
 
     run = sub.add_parser(
@@ -907,6 +916,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="Supported debugger text input log. Repeat for multiple logs.",
     )
     run.add_argument("--json", action="store_true")
+    run.add_argument("--json-out", default="", help="write structured JSON to a file")
     run.set_defaults(func=cmd_run)
     return parser
 
@@ -916,6 +926,9 @@ def cmd_preflight(args: argparse.Namespace) -> int:
         backends=args.backends,
         conformance_store=args.conformance_store,
     )
+    if args.json_out:
+        write_json_report(args.json_out, report)
+        return 0 if report["valid"] else 1
     if args.json:
         print(json.dumps(report, indent=2))
     else:
@@ -928,6 +941,9 @@ def cmd_install_docs(args: argparse.Namespace) -> int:
         backends=args.backends,
         missing_only=not args.all,
     )
+    if args.json_out:
+        write_json_report(args.json_out, report)
+        return 0 if report["valid"] else 1
     if args.json:
         print(json.dumps(report, indent=2))
     else:
@@ -943,6 +959,9 @@ def cmd_run(args: argparse.Namespace) -> int:
         frames=args.frames,
         input_logs=tuple(args.inputs),
     )
+    if args.json_out:
+        write_json_report(args.json_out, report)
+        return 0 if report["valid"] else 1
     if args.json:
         print(json.dumps(report, indent=2))
     else:

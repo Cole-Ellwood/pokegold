@@ -1309,6 +1309,7 @@ def _build_v2_surfaces(root: Path = ROOT) -> list[dict[str, Any]]:
                 "python -m tools.debugger crossemu preflight",
                 "python -m tools.debugger crossemu run --backends pyboy --save-state <state> --frames 60",
                 "python -m tools.debugger crossemu preflight --backends pyboy,sameboy,gambatte,vba-m --json",
+                "python -m tools.debugger crossemu run --backends pyboy --save-state <state> --frames 60 --json-out .local/tmp/crossemu_run.json",
                 "python -m tools.debugger crossemu install-docs",
             ),
         ),

@@ -162,6 +162,44 @@ class CrossemuPreflightTests(unittest.TestCase):
         self.assertIn("crossemu install-docs: PASS", text)
         self.assertIn("sameboy", text)
 
+    def test_cli_preflight_json_out_writes_file_without_stdout(self) -> None:
+        with TemporaryDirectory() as tmp:
+            out = Path(tmp) / "preflight.json"
+            stdout = io.StringIO()
+            with redirect_stdout(stdout):
+                code = crossemu.main(
+                    ["preflight", "--backends", "pyboy", "--json-out", str(out)]
+                )
+
+            self.assertEqual(code, 0)
+            self.assertEqual(stdout.getvalue(), "")
+            payload = json.loads(out.read_text(encoding="utf-8"))
+        self.assertEqual(payload["kind"], "unified_debugger_crossemu_preflight")
+
+    def test_cli_run_json_out_writes_error_report(self) -> None:
+        with TemporaryDirectory() as tmp:
+            out = Path(tmp) / "run.json"
+            stdout = io.StringIO()
+            with redirect_stdout(stdout):
+                code = crossemu.main(
+                    [
+                        "run",
+                        "--backends",
+                        "sameboy",
+                        "--save-state",
+                        "missing.state",
+                        "--json-out",
+                        str(out),
+                    ]
+                )
+
+            self.assertEqual(code, 1)
+            self.assertEqual(stdout.getvalue(), "")
+            payload = json.loads(out.read_text(encoding="utf-8"))
+        self.assertEqual(payload["kind"], "unified_debugger_crossemu_run")
+        self.assertFalse(payload["valid"])
+        self.assertIn("pending adapters: sameboy", "\n".join(payload["errors"]))
+
     def test_pyboy_run_loads_state_replays_inputs_and_captures_snapshot(self) -> None:
         with TemporaryDirectory() as tmp:
             root = Path(tmp)
