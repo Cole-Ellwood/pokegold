@@ -22,7 +22,10 @@ import socket
 import sys
 import threading
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any, BinaryIO, Callable, Sequence
+
+from .catalog import ROOT
 
 
 SCHEMA_VERSION = 1
@@ -50,11 +53,13 @@ class DapServer:
         default_factory=lambda: {
             "supportsConfigurationDoneRequest": False,
             "supportsConditionalBreakpoints": False,
-            "supportsEvaluateForHovers": False,
+            "supportsEvaluateForHovers": True,
             "supportsRestartRequest": False,
             "supportsStepBack": False,
         }
     )
+    default_reports: tuple[str, ...] = ()
+    root: Path = field(default_factory=lambda: ROOT)
 
     def _next_seq(self) -> int:
         self._seq += 1
@@ -135,11 +140,68 @@ class DapServer:
             },
         ]
 
+    def _threads_response(
+        self, message: dict[str, Any], request_seq: int
+    ) -> list[dict[str, Any]]:
+        # SM83 is single-threaded; one synthetic main thread.
+        return [
+            self._response(
+                request_seq=request_seq,
+                command="threads",
+                success=True,
+                body={"threads": [{"id": 1, "name": "sm83"}]},
+            )
+        ]
+
+    def _evaluate_response(
+        self, message: dict[str, Any], request_seq: int
+    ) -> list[dict[str, Any]]:
+        # evaluate runs the expression as a tdb query. Reports list is
+        # carried in the optional `arguments.context` ("watch" or a JSON
+        # list of report paths) or in `arguments.reports`. The result
+        # mirrors the CLI tdb shape: matches[] + canonical + valid + errors.
+        from .tdb import run_tdb
+
+        args = message.get("arguments")
+        if not isinstance(args, dict):
+            return [self._error_response(
+                request_seq=request_seq,
+                command="evaluate",
+                message="evaluate requires arguments.expression",
+            )]
+        expression = args.get("expression")
+        if not isinstance(expression, str) or not expression.strip():
+            return [self._error_response(
+                request_seq=request_seq,
+                command="evaluate",
+                message="evaluate requires non-empty string arguments.expression",
+            )]
+        raw_reports = args.get("reports")
+        if isinstance(raw_reports, list):
+            reports = tuple(str(item) for item in raw_reports)
+        else:
+            reports = self.default_reports
+        tdb_result = run_tdb(query=expression, reports=reports, root=self.root)
+        body = {
+            "result": json.dumps(tdb_result, sort_keys=True),
+            "variablesReference": 0,
+            "tdb": tdb_result,
+        }
+        return [self._response(
+            request_seq=request_seq,
+            command="evaluate",
+            success=bool(tdb_result.get("valid", False)),
+            body=body,
+            message="" if tdb_result.get("valid") else "tdb query failed; see body.tdb.errors",
+        )]
+
 
 _COMMAND_HANDLERS: dict[
     str, Callable[[DapServer, dict[str, Any], int], list[dict[str, Any]]]
 ] = {
     "initialize": DapServer._initialize_response,
+    "threads": DapServer._threads_response,
+    "evaluate": DapServer._evaluate_response,
 }
 
 

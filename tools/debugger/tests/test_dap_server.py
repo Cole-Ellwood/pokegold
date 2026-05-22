@@ -128,6 +128,116 @@ class DapServerHandshakeTests(unittest.TestCase):
         self.assertEqual(second_seqs, [3, 4])
 
 
+class DapServerThreadsTests(unittest.TestCase):
+    def test_threads_returns_single_sm83_thread(self) -> None:
+        server = DapServer()
+        responses = server.handle_message({
+            "seq": 5,
+            "type": "request",
+            "command": "threads",
+        })
+
+        self.assertEqual(len(responses), 1)
+        body = responses[0]["body"]
+        self.assertEqual(len(body["threads"]), 1)
+        self.assertEqual(body["threads"][0]["name"], "sm83")
+        self.assertEqual(body["threads"][0]["id"], 1)
+
+
+class DapServerEvaluateTests(unittest.TestCase):
+    def _trace_fixture(self, tmp_path) -> str:
+        import json as _json
+        from pathlib import Path as _Path
+
+        report = {
+            "schema_version": 1,
+            "kind": "unified_debugger_effect_trace",
+            "valid": True,
+            "events": [
+                {
+                    "seq": 4,
+                    "pc_bank_address": "01:5A00",
+                    "pc_label": "BattleCommand_DamageCalc+6",
+                    "bank_state": {"wram": 1},
+                    "bank_state_sources": {"wram": "bank_state.wram"},
+                    "effects": [
+                        {
+                            "access": "write",
+                            "kind": "memory_write",
+                            "address_hex": "D141",
+                            "address_key": "wramx:01:D141",
+                            "value_hex": "2A",
+                            "bank": 1,
+                            "space": "wramx",
+                        }
+                    ],
+                }
+            ],
+        }
+        path = _Path(tmp_path) / "effect.json"
+        path.write_text(_json.dumps(report), encoding="utf-8")
+        return str(path)
+
+    def test_evaluate_requires_arguments(self) -> None:
+        server = DapServer()
+        responses = server.handle_message({
+            "seq": 1,
+            "type": "request",
+            "command": "evaluate",
+        })
+        self.assertFalse(responses[0]["success"])
+        self.assertIn("arguments.expression", responses[0]["message"])
+
+    def test_evaluate_requires_non_empty_expression(self) -> None:
+        server = DapServer()
+        responses = server.handle_message({
+            "seq": 1,
+            "type": "request",
+            "command": "evaluate",
+            "arguments": {"expression": "  "},
+        })
+        self.assertFalse(responses[0]["success"])
+
+    def test_evaluate_runs_tdb_query_against_supplied_report(self) -> None:
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            report_path = self._trace_fixture(tmp)
+            server = DapServer()
+            server.root = type(server.root)(tmp)
+            responses = server.handle_message({
+                "seq": 9,
+                "type": "request",
+                "command": "evaluate",
+                "arguments": {
+                    "expression": "writes(addr=$D141)",
+                    "reports": ["effect.json"],
+                },
+            })
+
+        self.assertEqual(len(responses), 1)
+        response = responses[0]
+        self.assertTrue(response["success"], response)
+        tdb_payload = response["body"]["tdb"]
+        self.assertTrue(tdb_payload.get("valid"))
+        matches = tdb_payload.get("matches", [])
+        self.assertEqual(len(matches), 1)
+        self.assertEqual(matches[0].get("address_hex"), "D141")
+
+    def test_evaluate_returns_tdb_errors_with_success_false(self) -> None:
+        server = DapServer()
+        responses = server.handle_message({
+            "seq": 9,
+            "type": "request",
+            "command": "evaluate",
+            "arguments": {"expression": "writes(addr=$D141)"},
+        })
+        # No reports supplied -> tdb returns valid=False with an errors list.
+        response = responses[0]
+        self.assertFalse(response["success"])
+        self.assertIn("tdb query failed", response["message"])
+
+
 class DapServerTcpTests(unittest.TestCase):
     def test_initialize_handshake_round_trip_over_tcp(self) -> None:
         server = DapServer()
