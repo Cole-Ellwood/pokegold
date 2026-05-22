@@ -286,6 +286,12 @@ def build_dynamic_taint_report(
         for run in [*trace_runs, *effect_trace_runs]
         for warning in run.get("warnings", [])
     )
+    bank_state_record_conflicts = [
+        conflict
+        for run in trace_runs
+        for conflict in dict_items(run.get("bank_state_record_conflicts"))
+    ]
+    warnings.extend(bank_state_record_conflict_warnings(bank_state_record_conflicts))
     findings = [
         finding
         for run in [*trace_runs, *effect_trace_runs]
@@ -350,6 +356,8 @@ def build_dynamic_taint_report(
         "path_count": len(paths),
         "write_attribution_count": len(write_attributions),
         "unmodeled_write_diagnostic_count": len(unmodeled_write_diagnostics),
+        "bank_state_record_conflict_count": len(bank_state_record_conflicts),
+        "bank_state_record_conflicts": bank_state_record_conflicts[:80],
         "sources": source_summary(register_sources=register_sources, source_memory=source_memory),
         "sinks": [public_sink(sink) for sink in sinks],
         "targets": targets_for_sinks(
@@ -1857,6 +1865,7 @@ def analyze_instruction_trace(
     instructions: list[Instruction] = []
     frames: list[InstructionFrame] = []
     errors: list[str] = []
+    bank_state_record_conflicts: list[dict[str, Any]] = []
     for index, record in enumerate(records):
         parsed = parse_instruction_record(record, default_seq=index)
         if parsed["error"]:
@@ -1864,6 +1873,14 @@ def analyze_instruction_trace(
             continue
         instructions.append(parsed["instruction"])
         frames.append(parsed["frame"])
+        for conflict in dict_items(parsed.get("bank_state_record_conflicts")):
+            bank_state_record_conflicts.append(
+                {
+                    "source": loaded["source"],
+                    "record_index": index,
+                    **conflict,
+                }
+            )
 
     trace_sinks = instruction_trace_sinks(sinks, frames=frames)
     trace_source_memory = instruction_trace_source_memory(
@@ -1920,12 +1937,14 @@ def analyze_instruction_trace(
         "finding_count": len(findings),
         "write_attribution_count": len(write_attributions),
         "unmodeled_write_diagnostic_count": len(unmodeled_write_diagnostics),
+        "bank_state_record_conflict_count": len(bank_state_record_conflicts),
         "skipped_bank_exact_sink_count": len(sinks) - len(trace_sinks),
         "skipped_bank_exact_source_count": len(source_memory) - len(trace_source_memory),
         "unsupported": dict(taint_report.unsupported),
         "unsupported_count": sum(int(count) for count in taint_report.unsupported.values()),
         "errors": errors,
         "warnings": [*errors[:4], *precision_warnings],
+        "bank_state_record_conflicts": bank_state_record_conflicts[:80],
         "findings": findings,
         "write_attributions": write_attributions[:120],
         "unmodeled_write_diagnostics": unmodeled_write_diagnostics[:120],
@@ -2632,7 +2651,18 @@ def parse_instruction_record(record: dict[str, Any], *, default_seq: int) -> dic
         bank_state_sources=parse_bank_state_sources(record),
         known_registers=parse_known_registers(record),
     )
-    return {"error": "", "instruction": instruction, "frame": frame}
+    return {
+        "error": "",
+        "instruction": instruction,
+        "frame": frame,
+        "bank_state_record_conflicts": bank_state_record_conflicts(
+            record,
+            seq=seq,
+            bank=bank,
+            pc=pc,
+            pc_label=pc_label,
+        ),
+    }
 
 
 def trace_records(data: Any) -> list[dict[str, Any]]:
@@ -2791,17 +2821,78 @@ def bank_state_mapping(record: dict[str, Any]) -> dict[str, Any]:
         name = str(item.get("name") or "")
         if not name or name.endswith("_inferred") or name in out:
             continue
-        value = item.get("value")
-        value_hex = item.get("value_hex")
-        if (value is None or value == "") and value_hex is not None and value_hex != "":
-            value = f"0x{value_hex}"
-        if value is None or value == "":
+        value = parsed_bank_state_record_value(item.get("value"), value_hex=item.get("value_hex"))
+        if value is None:
             continue
-        try:
-            out[name] = parse_int(value)
-        except ValueError:
-            continue
+        out[name] = value
     return out
+
+
+def bank_state_record_conflicts(
+    record: dict[str, Any],
+    *,
+    seq: int,
+    bank: int,
+    pc: int,
+    pc_label: str,
+) -> list[dict[str, Any]]:
+    legacy = record.get("bank_state")
+    if not isinstance(legacy, dict):
+        return []
+    conflicts: list[dict[str, Any]] = []
+    for item in dict_items(record.get("bank_state_records")):
+        name = str(item.get("name") or "")
+        if not name or name.endswith("_inferred") or name not in legacy:
+            continue
+        legacy_value = parsed_bank_state_record_value(legacy.get(name))
+        typed_value = parsed_bank_state_record_value(item.get("value"), value_hex=item.get("value_hex"))
+        if legacy_value is None or typed_value is None:
+            continue
+        legacy_value = normalize_bank_state_value(name, legacy_value)
+        typed_value = normalize_bank_state_value(name, typed_value)
+        if legacy_value == typed_value:
+            continue
+        conflicts.append(
+            {
+                "key": name,
+                "legacy_value": legacy_value,
+                "typed_value": typed_value,
+                "typed_source": str(item.get("source") or ""),
+                "typed_state_kind": str(item.get("state_kind") or ""),
+                "conflict_kind": "value_mismatch",
+                "frame_pc": f"{bank & 0xFF:02X}:{pc & 0xFFFF:04X}",
+                "seq": seq,
+                "pc_label": pc_label,
+                "proof_action": "preferred_legacy_for_backward_compat",
+            }
+        )
+    return conflicts
+
+
+def parsed_bank_state_record_value(value: Any, *, value_hex: Any = None) -> int | None:
+    raw = value
+    if (raw is None or raw == "") and value_hex is not None and value_hex != "":
+        raw = f"0x{value_hex}"
+    if raw is None or raw == "":
+        return None
+    try:
+        return parse_int(raw)
+    except ValueError:
+        return None
+
+
+def bank_state_record_conflict_warnings(conflicts: list[dict[str, Any]]) -> list[str]:
+    warnings: list[str] = []
+    for conflict in conflicts[:8]:
+        warnings.append(
+            "bank_state_record_conflict "
+            f"key={conflict.get('key', '')} "
+            f"legacy={conflict.get('legacy_value', '')} "
+            f"typed={conflict.get('typed_value', '')} "
+            f"frame={conflict.get('frame_pc', '')} "
+            f"action={conflict.get('proof_action', '')}"
+        )
+    return warnings
 
 
 def parse_bank_state_sources(record: dict[str, Any]) -> tuple[tuple[str, str], ...]:

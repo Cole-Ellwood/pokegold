@@ -451,6 +451,84 @@ class P0ProofBoundaryAcceptanceTests(unittest.TestCase):
             "inferred_bank_state.wram",
         )
 
+    def test_dynamic_taint_reports_legacy_typed_bank_state_conflicts(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "test.sym").write_text(
+                "01:D141 wCurDamage\n01:4000 UnitFunc\n",
+                encoding="utf-8",
+            )
+            (root / "instruction_trace.jsonl").write_text(
+                json.dumps(
+                    {
+                        "seq": 0,
+                        "bank": 1,
+                        "pc": 0x4000,
+                        "pc_label": "UnitFunc",
+                        "opcode": 0x34,
+                        "regs": {"HL": 0xD141},
+                        "bank_state": {"rom": 3},
+                        "bank_state_records": [
+                            bank_state_record(
+                                name="wram",
+                                value=1,
+                                source="inferred_bank_state.wram",
+                                valid_for_spaces=("wramx",),
+                            ).as_dict(),
+                            bank_state_record(
+                                name="rom",
+                                value=4,
+                                source="inferred_bank_state.rom",
+                                valid_for_spaces=("romx",),
+                            ).as_dict(),
+                        ],
+                        "watch_values": {"wCurDamage": "0F"},
+                        "watch_value_specs": [
+                            {
+                                "name": "wCurDamage",
+                                "value_hex": "0F",
+                                "address": 0xD141,
+                                "address_hex": "D141",
+                                "bank": 1,
+                                "bank_address": "01:D141",
+                                "size": 1,
+                                "address_watch": False,
+                                "raw": "",
+                                "symbol": "wCurDamage",
+                            }
+                        ],
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            dynamic = build_dynamic_taint_report(
+                traces=("instruction_trace.jsonl",),
+                symbols_path="test.sym",
+                sink_symbols=("wCurDamage",),
+                root=root,
+            )
+
+        conflict = dynamic["bank_state_record_conflicts"][0]
+
+        self.assertTrue(dynamic["valid"])
+        self.assertEqual(dynamic["bank_state_record_conflict_count"], 1)
+        self.assertEqual(dynamic["trace_runs"][0]["bank_state_record_conflict_count"], 1)
+        self.assertEqual(conflict["key"], "rom")
+        self.assertEqual(conflict["legacy_value"], 3)
+        self.assertEqual(conflict["typed_value"], 4)
+        self.assertEqual(conflict["typed_source"], "inferred_bank_state.rom")
+        self.assertEqual(conflict["typed_state_kind"], "inferred_from_io_write")
+        self.assertEqual(conflict["conflict_kind"], "value_mismatch")
+        self.assertEqual(conflict["frame_pc"], "01:4000")
+        self.assertEqual(conflict["proof_action"], "preferred_legacy_for_backward_compat")
+        self.assertIn(
+            "bank_state_record_conflict key=rom legacy=3 typed=4 frame=01:4000 "
+            "action=preferred_legacy_for_backward_compat",
+            dynamic["warnings"],
+        )
+
 
 class dynamic_taint_report:
     def __enter__(self) -> Path:
