@@ -24,6 +24,10 @@ from .ingest import sha256_file
 from .provenance import display_path, parse_symbol_table, resolve_path
 from .reporting import load_reports
 from .sm83_model import (
+    CONDITIONAL_CALLS,
+    CONDITIONAL_RETS,
+    REGISTER_INDEX_TARGETS as INDEX_REG,
+    RST_TARGETS,
     SM83_MODEL_SOURCE,
     accumulator_flag_semantics,
     add_hl_semantics,
@@ -47,10 +51,6 @@ from .workflow import (
 
 
 REGISTER_FIELDS = ("A", "F", "B", "C", "D", "E", "H", "L", "HL", "SP")
-INDEX_REG = {0: "b", 1: "c", 2: "d", 3: "e", 4: "h", 5: "l", 6: "[hl]", 7: "a"}
-CONDITIONAL_CALLS = {0xC4: "nz", 0xCC: "z", 0xD4: "nc", 0xDC: "c"}
-CONDITIONAL_RETS = {0xC0: "nz", 0xC8: "z", 0xD0: "nc", 0xD8: "c"}
-RST_TARGETS = {0xC7: 0x00, 0xCF: 0x08, 0xD7: 0x10, 0xDF: 0x18, 0xE7: 0x20, 0xEF: 0x28, 0xF7: 0x30, 0xFF: 0x38}
 PROOF_STATUS_RANK = {
     "planned_only": 0,
     "state_materialized": 1,

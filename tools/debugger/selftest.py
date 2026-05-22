@@ -612,6 +612,123 @@ def check_when_wrote(root: Path) -> CheckResult:
     )
 
 
+def check_sm83_model_parity(root: Path) -> CheckResult:
+    """Exercise both SM83 consumers on a shared-model-backed trace."""
+
+    import tempfile
+
+    from .dynamic_taint import build_dynamic_taint_report
+    from .effect_trace import build_effect_trace_report
+    from .sm83_model import SM83_MODEL_SOURCE
+
+    def inner() -> str:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_root = Path(tmp)
+            (tmp_root / "test.sym").write_text("01:4000 UnitFunc\n", encoding="utf-8")
+            (tmp_root / "instruction_trace.jsonl").write_text(
+                "\n".join(
+                    json.dumps(record)
+                    for record in [
+                        {
+                            "seq": 0,
+                            "bank": 1,
+                            "pc": 0x4000,
+                            "pc_label": "LoadSeed",
+                            "opcode": 0x2A,
+                            "regs": {"A": 0x00, "HL": 0xC200, "SP": 0xDFF0},
+                            "watch_values": {"$C200": "37"},
+                        },
+                        {
+                            "seq": 1,
+                            "bank": 1,
+                            "pc": 0x4001,
+                            "pc_label": "StoreSeed",
+                            "opcode": 0xEA,
+                            "operand": [0x41, 0xD1],
+                            "regs": {"A": 0x37, "HL": 0xC201, "SP": 0xDFF0},
+                        },
+                        {
+                            "seq": 2,
+                            "bank": 1,
+                            "pc": 0x4004,
+                            "pc_label": "RlB",
+                            "opcode": 0xCB,
+                            "operand": [0x10],
+                            "regs": {"B": 0x7F, "F": 0x10, "SP": 0xDFF0},
+                        },
+                        {
+                            "seq": 3,
+                            "bank": 1,
+                            "pc": 0x4006,
+                            "pc_label": "StoreB",
+                            "opcode": 0x70,
+                            "regs": {"HL": 0xC202, "B": 0xFF, "SP": 0xDFF0},
+                        },
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            effect = build_effect_trace_report(
+                traces=("instruction_trace.jsonl",),
+                symbols_path="test.sym",
+                watch_addresses=("C200", "D141", "C202"),
+                root=tmp_root,
+            )
+            dynamic = build_dynamic_taint_report(
+                traces=("instruction_trace.jsonl",),
+                symbols_path="test.sym",
+                source_mems=("C200=seed_byte",),
+                source_regs=("b=seed_b",),
+                sink_addresses=("D141", "C202"),
+                root=tmp_root,
+            )
+        if not effect.get("valid"):
+            raise AssertionError(f"effect trace invalid: {effect.get('errors', [])}")
+        if not dynamic.get("valid"):
+            raise AssertionError(f"dynamic taint invalid: {dynamic.get('errors', [])}")
+        effect_ops = {
+            item.get("operation"): item.get("model_source")
+            for event in effect.get("events", [])
+            for item in event.get("effects", [])
+            if item.get("operation") in {"ld a, [hli]", "ld a, [hli] updates hl", "rl b", "rl b flags"}
+        }
+        for operation in ("ld a, [hli]", "ld a, [hli] updates hl", "rl b", "rl b flags"):
+            if effect_ops.get(operation) != SM83_MODEL_SOURCE:
+                raise AssertionError(f"effect trace missing shared model source for {operation}: {effect_ops}")
+        seed_store = next(
+            (item for item in dynamic.get("write_attributions", []) if item.get("address") == "D141"),
+            None,
+        )
+        cb_store = next(
+            (item for item in dynamic.get("write_attributions", []) if item.get("address") == "C202"),
+            None,
+        )
+        if seed_store is None or cb_store is None:
+            raise AssertionError(f"dynamic taint missing expected attributions: {dynamic.get('write_attributions', [])}")
+        seed_provenance = seed_store.get("register_provenance") or []
+        if not any(
+            item.get("operation") == "ld a, [hli]"
+            and item.get("model_source") == SM83_MODEL_SOURCE
+            for item in seed_provenance
+        ):
+            raise AssertionError(f"seed store missing shared HLI provenance: {seed_provenance}")
+        cb_provenance = cb_store.get("register_provenance") or []
+        if not any(
+            item.get("operation") == "rl b"
+            and item.get("model_source") == SM83_MODEL_SOURCE
+            for item in cb_provenance
+        ):
+            raise AssertionError(f"CB store missing shared CB provenance: {cb_provenance}")
+        return "effect_trace and dynamic_taint agree on shared SM83 HLI/CB provenance"
+
+    return _capture(
+        component="sm83_model_parity",
+        next_command="python tools/audit/check_sm83_model_consumers.py && python -B -m unittest tools.debugger.tests.test_sm83_model_consumers",
+        fn=inner,
+    )
+
+
 NAMED_CHECKS: tuple[tuple[str, Check], ...] = (
     ("capability_audit", check_capability_audit),
     ("inventory", check_inventory),
@@ -628,6 +745,7 @@ NAMED_CHECKS: tuple[tuple[str, Check], ...] = (
     ("bisect", check_bisect),
     ("handoff_log", check_handoff_log),
     ("when_wrote", check_when_wrote),
+    ("sm83_model_parity", check_sm83_model_parity),
 )
 
 CHECKS: tuple[Check, ...] = tuple(check for _, check in NAMED_CHECKS)

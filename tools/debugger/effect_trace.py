@@ -24,8 +24,14 @@ from .provenance import display_path, parse_symbol_table, resolve_path
 from .reporting import load_reports
 from .sm83_model import (
     CGB_VRAM_DMA_REGISTERS,
+    CONDITIONAL_CALLS,
+    CONDITIONAL_JUMPS,
+    CONDITIONAL_RETS,
+    CPU_STATE_OPCODES,
     INTERRUPT_FLAG_ADDRESS,
     INTERRUPT_VECTORS,
+    REGISTER_INDEX_TARGETS as INDEX_REG,
+    RST_TARGETS,
     SM83_MODEL_SOURCE,
     TIMER_TIMA_ADDRESS,
     TIMER_TMA_ADDRESS,
@@ -49,12 +55,6 @@ from .sm83_model import (
 )
 
 
-CONDITIONAL_CALLS = {0xC4: "nz", 0xCC: "z", 0xD4: "nc", 0xDC: "c"}
-CONDITIONAL_RETS = {0xC0: "nz", 0xC8: "z", 0xD0: "nc", 0xD8: "c"}
-CONDITIONAL_JUMPS = {0x20: "nz", 0x28: "z", 0x30: "nc", 0x38: "c", 0xC2: "nz", 0xCA: "z", 0xD2: "nc", 0xDA: "c"}
-RST_TARGETS = {0xC7: 0x00, 0xCF: 0x08, 0xD7: 0x10, 0xDF: 0x18, 0xE7: 0x20, 0xEF: 0x28, 0xF7: 0x30, 0xFF: 0x38}
-INDEX_REG = {0: "b", 1: "c", 2: "d", 3: "e", 4: "h", 5: "l", 6: "[hl]", 7: "a"}
-CPU_STATE_OPCODES = {0x10, 0x76, 0xD9, 0xF3, 0xFB}
 HARDWARE_EVENT_REQUIRED_MODELS = {
     "oam_dma",
     "cgb_vram_dma",

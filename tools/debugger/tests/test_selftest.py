@@ -17,6 +17,7 @@ from tools.debugger.selftest import (
     check_bisect,
     check_coverage,
     check_hypothesis_tracker,
+    check_sm83_model_parity,
     check_save_state_lab,
     main,
     run_selftest,
@@ -118,6 +119,17 @@ class BisectCheckTests(unittest.TestCase):
         self.assertIn("synthetic regression", result.detail)
 
 
+class Sm83ModelParityCheckTests(unittest.TestCase):
+    """P1 lived smoke: both SM83 consumers preserve shared-model provenance
+    for a real synthetic instruction trace."""
+
+    def test_sm83_model_parity_check_passes_in_isolation(self) -> None:
+        result = check_sm83_model_parity(ROOT)
+        self.assertTrue(result.ok, result.error or result.detail)
+        self.assertEqual(result.component, "sm83_model_parity")
+        self.assertIn("shared SM83", result.detail)
+
+
 class JsonOutputTests(unittest.TestCase):
     def test_to_jsonable_shape(self) -> None:
         report = SelftestReport(
@@ -209,6 +221,15 @@ class CliFilterTests(unittest.TestCase):
         self.assertEqual(rc, 0)
         text = captured.getvalue()
         self.assertIn("bisect", text)
+        self.assertIn("(1/1 components healthy)", text)
+
+    def test_main_can_filter_to_sm83_model_parity(self) -> None:
+        captured = io.StringIO()
+        with redirect_stdout(captured):
+            rc = main(["--component", "sm83_model_parity"])
+        self.assertEqual(rc, 0)
+        text = captured.getvalue()
+        self.assertIn("sm83_model_parity", text)
         self.assertIn("(1/1 components healthy)", text)
 
 

@@ -531,6 +531,18 @@ RST_TARGETS = {
     0xF7: 0x30,
     0xFF: 0x38,
 }
+CONDITIONAL_CALLS = {0xC4: "nz", 0xCC: "z", 0xD4: "nc", 0xDC: "c"}
+CONDITIONAL_RETS = {0xC0: "nz", 0xC8: "z", 0xD0: "nc", 0xD8: "c"}
+CONDITIONAL_JUMPS = {
+    0x20: "nz",
+    0x28: "z",
+    0x30: "nc",
+    0x38: "c",
+    0xC2: "nz",
+    0xCA: "z",
+    0xD2: "nc",
+    0xDA: "c",
+}
 
 ALU_GROUP_NAMES = {
     0: "add",
@@ -556,6 +568,7 @@ IMMEDIATE_ALU_GROUPS = {
 
 CB_ROTATE_NAMES = ("rlc", "rrc", "rl", "rr", "sla", "sra", "swap", "srl")
 CB_TARGETS = ("b", "c", "d", "e", "h", "l", "[hl]", "a")
+REGISTER_INDEX_TARGETS = {index: target for index, target in enumerate(CB_TARGETS)}
 LOAD_TARGETS = CB_TARGETS
 IMMEDIATE_8_LOAD_TARGETS = {
     0x06: "b",
@@ -642,6 +655,7 @@ CPU_STATE_SEMANTICS = {
     0xF3: CpuStateSemantics(opcode=0xF3, kind="ime", operation="di", category="interrupt"),
     0xD9: CpuStateSemantics(opcode=0xD9, kind="ime", operation="reti", category="interrupt"),
 }
+CPU_STATE_OPCODES = frozenset(CPU_STATE_SEMANTICS)
 INTERRUPT_VECTORS = {
     0x40: "vblank",
     0x48: "lcd_stat",
