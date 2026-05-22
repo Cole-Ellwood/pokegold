@@ -12,6 +12,7 @@ from .address import (
 )
 from .address_boundary import reverse_query_address_boundary_evidence
 from .catalog import ROOT
+from .evidence import bank_state_records as typed_bank_state_records
 from .evidence import evidence_atom, merge_evidence_atoms
 from .effect_trace import build_effect_trace_report
 from .provenance import parse_symbol_table, resolve_path
@@ -304,6 +305,11 @@ def reverse_query_result_evidence_atoms(result: dict[str, Any]) -> list[dict[str
     last_writer = result.get("last_writer") if isinstance(result.get("last_writer"), dict) else {}
     validation = result.get("validation") if isinstance(result.get("validation"), dict) else {}
     checkpoint = result.get("checkpoint_validation") if isinstance(result.get("checkpoint_validation"), dict) else {}
+    checkpoint_snapshot = (
+        checkpoint.get("checkpoint")
+        if isinstance(checkpoint.get("checkpoint"), dict)
+        else {}
+    )
     hardware_gate = (
         result.get("hardware_side_effect_gate")
         if isinstance(result.get("hardware_side_effect_gate"), dict)
@@ -367,6 +373,14 @@ def reverse_query_result_evidence_atoms(result: dict[str, Any]) -> list[dict[str
                 "hardware_event_identity": hardware_gate.get("hardware_event_identity", ""),
                 "hardware_generic_event_label_present": hardware_gate.get("hardware_generic_event_label_present", False),
                 "hardware_event_types": hardware_gate.get("hardware_event_types", []),
+                "last_writer_bank_state_records": last_writer.get("bank_state_records", []),
+                "checkpoint_bank_state_records": checkpoint_snapshot.get("bank_state_records", []),
+                "bounded_span_checkpoint_bank_state_records": bounded_span.get("checkpoint_bank_state_records", []),
+                "bounded_span_write_bank_state_records": [
+                    write.get("bank_state_records", [])
+                    for write in dict_items(bounded_span.get("writes"))[:4]
+                    if write.get("bank_state_records")
+                ],
             },
             detail={
                 "last_value_hex": result.get("last_value_hex", ""),
@@ -891,6 +905,92 @@ def modeled_effect_span_base_fields() -> dict[str, Any]:
     }
 
 
+def normalized_bank_state_records(
+    value: dict[str, Any],
+    *,
+    source_overrides: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    existing = dict_items(value.get("bank_state_records"))
+    if existing:
+        return existing
+    state = value.get("bank_state") if isinstance(value.get("bank_state"), dict) else {}
+    if not state:
+        return []
+    sources = value.get("bank_state_sources") if isinstance(value.get("bank_state_sources"), dict) else {}
+    items: list[tuple[str, int]] = []
+    for raw_name, raw_value in state.items():
+        name = str(raw_name)
+        if name.endswith("_inferred"):
+            continue
+        parsed = parse_int(raw_value)
+        if parsed is None:
+            continue
+        items.append((name, parsed))
+    if not items:
+        return []
+    overrides = {
+        str(key): str(raw_value)
+        for key, raw_value in (source_overrides or {}).items()
+        if raw_value is not None and raw_value != "" and str(raw_value)
+    }
+    return typed_bank_state_records(
+        items,
+        source_for_name=lambda name: bank_state_source_for_name(
+            name,
+            state=state,
+            sources=sources,
+            overrides=overrides,
+        ),
+    )
+
+
+def bank_state_source_for_name(
+    name: str,
+    *,
+    state: dict[str, Any],
+    sources: dict[str, Any],
+    overrides: dict[str, str],
+) -> str:
+    override = overrides.get(name, "")
+    if override:
+        return override
+    explicit = str(sources.get(name) or "")
+    if explicit:
+        return explicit
+    inferred = parse_int(state.get(f"{name}_inferred"))
+    if inferred:
+        return f"inferred_bank_state.{name}"
+    return f"bank_state.{name}"
+
+
+def bank_state_source_overrides_for_effect(item: dict[str, Any]) -> dict[str, str]:
+    overrides: dict[str, str] = {}
+    bank_source = str(item.get("bank_source") or "")
+    state_name = bank_state_name_for_effect_space(str(item.get("space") or ""))
+    if bank_source and state_name:
+        overrides[state_name] = bank_source
+    sram_enabled_source = str(item.get("sram_enabled_source") or "")
+    if sram_enabled_source:
+        overrides["sram_enabled"] = sram_enabled_source
+    return overrides
+
+
+def bank_state_name_for_effect_space(space: str) -> str:
+    return {
+        "wram": "wram",
+        "wramx": "wram",
+        "wram_raw": "wram",
+        "vram": "vram",
+        "vram_raw": "vram",
+        "rom": "rom",
+        "romx": "rom",
+        "rom_raw": "rom",
+        "loaded_rom": "loaded_rom",
+        "sram": "sram",
+        "sram_raw": "sram",
+    }.get(space, "")
+
+
 def bounded_effect_span_validation(
     *,
     entry: dict[str, Any],
@@ -978,7 +1078,10 @@ def bounded_effect_span_validation(
                 "observed_memory": event.get("observed_memory", []),
                 "bank_state": event.get("bank_state", {}),
                 "bank_state_sources": event.get("bank_state_sources", {}),
-                "bank_state_records": event.get("bank_state_records", []),
+                "bank_state_records": normalized_bank_state_records(
+                    event,
+                    source_overrides=bank_state_source_overrides_for_effect(item),
+                ),
             }
             writes.append(write)
             if write["value_hex"]:
@@ -1052,7 +1155,7 @@ def bounded_span_checkpoint_context(checkpoint: dict[str, Any]) -> dict[str, Any
         "checkpoint_pc_label": snapshot.get("pc_label", ""),
         "checkpoint_bank_state": snapshot.get("bank_state", {}),
         "checkpoint_bank_state_sources": snapshot.get("bank_state_sources", {}),
-        "checkpoint_bank_state_records": snapshot.get("bank_state_records", []),
+        "checkpoint_bank_state_records": normalized_bank_state_records(snapshot),
         "checkpoint_registers": snapshot.get("registers", {}),
         "checkpoint_observed_memory": snapshot.get("observed_memory", []),
     }
@@ -1082,7 +1185,7 @@ def compact_checkpoint(checkpoint: dict[str, Any]) -> dict[str, Any]:
         "registers": checkpoint.get("registers", {}),
         "bank_state": checkpoint.get("bank_state", {}),
         "bank_state_sources": checkpoint.get("bank_state_sources", {}),
-        "bank_state_records": checkpoint.get("bank_state_records", []),
+        "bank_state_records": normalized_bank_state_records(checkpoint),
         "observed_memory": checkpoint.get("observed_memory", []),
     }
     replay_validation = checkpoint_emulator_replay_validation(checkpoint)
@@ -1423,6 +1526,9 @@ def entry_history(entry: dict[str, Any], *, events: list[dict[str, Any]], max_hi
                     "address_key": item.get("address_key", ""),
                     "space": item.get("space", ""),
                     "bank": item.get("bank"),
+                    "bank_source": item.get("bank_source", ""),
+                    "sram_enabled": item.get("sram_enabled"),
+                    "sram_enabled_source": item.get("sram_enabled_source", ""),
                     "value_hex": item.get("value_hex", ""),
                     "value_source": item.get("value_source", ""),
                     "proof_status": item.get("proof_status", ""),
@@ -1456,6 +1562,12 @@ def entry_history(entry: dict[str, Any], *, events: list[dict[str, Any]], max_hi
                     "source_operands": item.get("source_operands", []),
                     "pre_registers": event.get("pre_registers", {}),
                     "observed_memory": event.get("observed_memory", []),
+                    "bank_state": event.get("bank_state", {}),
+                    "bank_state_sources": event.get("bank_state_sources", {}),
+                    "bank_state_records": normalized_bank_state_records(
+                        event,
+                        source_overrides=bank_state_source_overrides_for_effect(item),
+                    ),
                 }
             )
     if not history:
@@ -1473,6 +1585,9 @@ def normalize_index_history(entry: dict[str, Any], *, max_history: int) -> list[
         copied.setdefault("address_key", address_key)
         copied.setdefault("space", entry.get("space", ""))
         copied.setdefault("bank", entry.get("bank"))
+        copied.setdefault("bank_source", entry.get("bank_source", ""))
+        copied.setdefault("sram_enabled", entry.get("sram_enabled"))
+        copied.setdefault("sram_enabled_source", entry.get("sram_enabled_source", ""))
         copied.setdefault("trace_source", entry.get("last_writer_trace_source", ""))
         copied.setdefault("source_operands", [])
         copied.setdefault("value_source", "")
@@ -1508,6 +1623,12 @@ def normalize_index_history(entry: dict[str, Any], *, max_history: int) -> list[
         copied.setdefault("pre_state_observation_model", "")
         copied.setdefault("pre_state_proof_boundary", "")
         copied.setdefault("pre_state_non_mutating_instruction_event", "")
+        if not isinstance(copied.get("bank_state"), dict) or not copied.get("bank_state"):
+            copied["bank_state"] = entry.get("bank_state", {})
+        if not isinstance(copied.get("bank_state_sources"), dict) or not copied.get("bank_state_sources"):
+            copied["bank_state_sources"] = entry.get("bank_state_sources", {})
+        if not dict_items(copied.get("bank_state_records")):
+            copied["bank_state_records"] = normalized_bank_state_records(copied)
         normalized.append(copied)
     return normalized
 

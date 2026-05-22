@@ -9,6 +9,7 @@ from tools.debugger.address import address_spec_requires_exact_key, parse_addres
 from tools.debugger.causal_graph import build_causal_graph_report
 from tools.debugger.impact import build_impact_report
 from tools.debugger.ranking import rank_findings
+from tools.debugger.reverse_query import build_reverse_query_report
 from tools.debugger.visualization import build_visualization_report
 
 
@@ -115,6 +116,130 @@ class P0ProofBoundaryAcceptanceTests(unittest.TestCase):
             with self.subTest(raw=raw):
                 with self.assertRaises(ValueError):
                     parse_address_spec(raw)
+
+    def test_reverse_query_synthesizes_typed_bank_state_records_from_legacy_scalar_state(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "test.sym").write_text("01:4000 UnitFunc\n", encoding="utf-8")
+            (root / "legacy_effect.json").write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "kind": "unified_debugger_effect_trace",
+                        "valid": True,
+                        "write_index": [
+                            {
+                                "address": "A100",
+                                "address_key": "sram:02:A100",
+                                "space": "sram",
+                                "bank": 2,
+                                "write_count": 1,
+                                "last_writer_seq": 2,
+                                "last_writer_pc": "01:4006",
+                                "last_value_hex": "22",
+                            }
+                        ],
+                        "events": [
+                            {
+                                "seq": 2,
+                                "trace_source": "legacy_trace.jsonl",
+                                "pc_bank_address": "01:4006",
+                                "pc_label": "WriteSram",
+                                "pre_registers": {"A": 0x22},
+                                "observed_memory": [],
+                                "bank_state": {
+                                    "sram": 2,
+                                    "sram_inferred": 1,
+                                    "sram_enabled": 0,
+                                },
+                                "bank_state_sources": {
+                                    "sram": "inferred_bank_state.sram",
+                                },
+                                "effects": [
+                                    {
+                                        "access": "write",
+                                        "kind": "memory_write",
+                                        "operation": "ld [nn], a",
+                                        "address_hex": "A100",
+                                        "address_key": "sram:02:A100",
+                                        "value_hex": "22",
+                                        "value_source": "A",
+                                        "bank": 2,
+                                        "bank_source": "inferred_bank_state.sram",
+                                        "space": "sram",
+                                        "sram_enabled": 0,
+                                        "sram_enabled_source": "bank_state.sram_enabled",
+                                        "post_value_hex": "22",
+                                        "post_value_status": "matched",
+                                        "post_observed_seq": 3,
+                                        "post_observed_pc": "01:4009",
+                                        "proof_status": "instruction_observed",
+                                    }
+                                ],
+                            }
+                        ],
+                        "trace_window": {
+                            "checkpoints": [
+                                {
+                                    "kind": "trace_checkpoint",
+                                    "checkpoint_kind": "pre_instruction_trace_frame",
+                                    "checkpoint_source": "instruction_trace",
+                                    "emulator_replay": False,
+                                    "emulator_replay_status": "not_run",
+                                    "source": "legacy_trace.jsonl",
+                                    "seq": 2,
+                                    "pc_bank_address": "01:4006",
+                                    "pc_label": "WriteSram",
+                                    "registers": {"A": 0x22},
+                                    "bank_state": {
+                                        "sram": 2,
+                                        "sram_inferred": 1,
+                                        "sram_enabled": 0,
+                                    },
+                                    "bank_state_sources": {
+                                        "sram": "inferred_bank_state.sram",
+                                    },
+                                    "observed_memory": [],
+                                }
+                            ]
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            reverse = build_reverse_query_report(
+                reports=("legacy_effect.json",),
+                addresses=("02:$A100",),
+                symbols_path="test.sym",
+                root=root,
+            )
+
+        result = reverse["results"][0]
+        span = result["bounded_effect_span_validation"]
+        last_writer_records = {item["name"]: item for item in result["last_writer"]["bank_state_records"]}
+        checkpoint_records = {
+            item["name"]: item
+            for item in result["checkpoint_validation"]["checkpoint"]["bank_state_records"]
+        }
+        span_checkpoint_records = {item["name"]: item for item in span["checkpoint_bank_state_records"]}
+        span_write_records = {item["name"]: item for item in span["writes"][-1]["bank_state_records"]}
+        atom = next(item for item in result["evidence_atoms"] if item["claim_type"] == "reverse_query.last_writer")
+        atom_records = {item["name"]: item for item in atom["validation"]["last_writer_bank_state_records"]}
+
+        self.assertTrue(reverse["valid"])
+        self.assertEqual(result["matched_address_key"], "sram:02:A100")
+        self.assertEqual(span["status"], "effect_span_consistent")
+        self.assertEqual(last_writer_records["sram"]["state_kind"], "inferred_from_io_write")
+        self.assertTrue(last_writer_records["sram"]["inferred"])
+        self.assertEqual(last_writer_records["sram_enabled"]["state_kind"], "sram_disabled")
+        self.assertFalse(last_writer_records["sram_enabled"]["inferred"])
+        self.assertNotIn("sram_inferred", last_writer_records)
+        self.assertEqual(checkpoint_records["sram"]["source"], "inferred_bank_state.sram")
+        self.assertEqual(checkpoint_records["sram_enabled"]["state_kind"], "sram_disabled")
+        self.assertEqual(span_checkpoint_records["sram"]["source_kind"], "inferred_bank_state")
+        self.assertEqual(span_write_records["sram_enabled"]["source"], "bank_state.sram_enabled")
+        self.assertEqual(atom_records["sram_enabled"]["state_kind"], "sram_disabled")
 
 
 class dynamic_taint_report:
