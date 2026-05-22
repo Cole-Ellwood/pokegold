@@ -12,11 +12,16 @@ from .address_boundary import (
 )
 from .catalog import ROOT
 from .evidence import (
+    PROOF_STATUSES,
+    PROOF_STATUS_RANK,
     bank_state_record_evidence_from_atoms,
     bank_state_record_proof_status_by_source,
-    proof_status_by_source_summary,
     evidence_atoms,
     merge_evidence_atoms,
+    normalize_optional_proof_status as normalize_proof_status,
+    proof_status_by_source_summary,
+    strongest_proof_status,
+    weakest_proof_status as shared_weakest_proof_status,
 )
 from .workflow import command_address_arg
 
@@ -63,26 +68,6 @@ SEVERITY_BASE = {
     "instruction_trace_ready": 60,
     "provenance_warning": 30,
     "ingest_warning": 25,
-}
-
-PROOF_STATUSES = (
-    "planned_only",
-    "state_materialized",
-    "runtime_observed",
-    "instruction_observed",
-    "taint_proven",
-    "mirror_passed",
-    "mirror_failed",
-)
-
-PROOF_STATUS_RANK = {
-    "planned_only": 0,
-    "state_materialized": 1,
-    "mirror_passed": 2,
-    "runtime_observed": 3,
-    "instruction_observed": 4,
-    "taint_proven": 5,
-    "mirror_failed": 5,
 }
 
 PROOF_STATUS_SEVERITY_ADJUST = {
@@ -2959,10 +2944,7 @@ def trace_index_item_evidence(item: dict[str, Any], *, proof_status: str) -> lis
 
 
 def weakest_proof_status(values: Any) -> str:
-    statuses = [normalize_proof_status(value) for value in values if normalize_proof_status(value)]
-    if not statuses:
-        return ""
-    return min(statuses, key=lambda status: PROOF_STATUS_RANK.get(status, 0))
+    return shared_weakest_proof_status(values, default="")
 
 
 def event_commands(event: dict[str, Any]) -> list[str]:
@@ -3873,28 +3855,6 @@ def with_proof_status(item: dict[str, Any]) -> dict[str, Any]:
     return out
 
 
-def normalize_proof_status(value: Any) -> str:
-    text = str(value or "").strip().lower().replace("-", "_").replace(" ", "_")
-    aliases = {
-        "planned": "planned_only",
-        "planning": "planned_only",
-        "state_patch_planned": "planned_only",
-        "runtime_planned": "planned_only",
-        "dynamic_trace_planned": "planned_only",
-        "dynamic_state_probe_planned": "planned_only",
-        "observed": "runtime_observed",
-        "runtime": "runtime_observed",
-        "instruction": "instruction_observed",
-        "taint": "taint_proven",
-        "mirror_fail": "mirror_failed",
-        "mirror_failure": "mirror_failed",
-        "mirror_ok": "mirror_passed",
-        "mirror_pass": "mirror_passed",
-    }
-    text = aliases.get(text, text)
-    return text if text in PROOF_STATUSES else ""
-
-
 def infer_proof_status(item: dict[str, Any]) -> str:
     item_type = str(item.get("type", "")).lower()
     title = str(item.get("title", "")).lower()
@@ -3948,14 +3908,6 @@ def proof_status_severity_adjustment(proof_status: str) -> int:
 
 def proof_status_score(proof_status: str) -> int:
     return PROOF_STATUS_IMPACT_SCORE.get(normalize_proof_status(proof_status), 0)
-
-
-def strongest_proof_status(values: list[Any]) -> str:
-    statuses = [normalize_proof_status(value) for value in values]
-    statuses = [status for status in statuses if status]
-    if not statuses:
-        return "planned_only"
-    return max(statuses, key=lambda status: PROOF_STATUS_RANK.get(status, 0))
 
 
 def proof_status_counts(items: list[dict[str, Any]]) -> dict[str, int]:

@@ -6,7 +6,7 @@ import json
 from typing import Any
 
 
-PROOF_STATUSES = {
+PROOF_STATUSES = (
     "planned_only",
     "state_materialized",
     "runtime_observed",
@@ -14,7 +14,7 @@ PROOF_STATUSES = {
     "taint_proven",
     "mirror_passed",
     "mirror_failed",
-}
+)
 
 PROOF_STATUS_RANK = {
     "planned_only": 0,
@@ -198,21 +198,30 @@ def bank_state_source_semantics(*, name: str, value: int | None, source: str) ->
     return ("unknown", "unknown", False)
 
 
-def normalize_proof_status(value: Any) -> str:
+def normalize_proof_status(value: Any, *, default: str = "planned_only") -> str:
     text = str(value or "").strip().lower().replace("-", "_").replace(" ", "_")
     aliases = {
         "planned": "planned_only",
         "planning": "planned_only",
+        "state_patch_planned": "planned_only",
+        "runtime_planned": "planned_only",
+        "dynamic_trace_planned": "planned_only",
+        "dynamic_state_probe_planned": "planned_only",
         "observed": "runtime_observed",
         "runtime": "runtime_observed",
         "instruction": "instruction_observed",
         "taint": "taint_proven",
+        "mirror_failure": "mirror_failed",
         "mirror_pass": "mirror_passed",
         "mirror_ok": "mirror_passed",
         "mirror_fail": "mirror_failed",
     }
     text = aliases.get(text, text)
-    return text if text in PROOF_STATUSES else "planned_only"
+    return text if text in PROOF_STATUSES else default
+
+
+def normalize_optional_proof_status(value: Any) -> str:
+    return normalize_proof_status(value, default="")
 
 
 def merge_evidence_atoms(*values: Any, limit: int = 24) -> list[dict[str, Any]]:
@@ -334,12 +343,30 @@ def bank_state_record_value_text(record: dict[str, Any]) -> str:
         return str(value)
 
 
-def strongest_proof_status(values: list[Any]) -> str:
-    statuses = [normalize_proof_status(value) for value in values]
+def strongest_proof_status(values: Any, *, default: str = "planned_only") -> str:
+    statuses = [normalize_optional_proof_status(value) for value in proof_status_values(values)]
     statuses = [status for status in statuses if status]
     if not statuses:
-        return "planned_only"
+        return default
     return max(statuses, key=lambda status: PROOF_STATUS_RANK.get(status, 0))
+
+
+def weakest_proof_status(values: Any, *, default: str = "planned_only") -> str:
+    statuses = [normalize_optional_proof_status(value) for value in proof_status_values(values)]
+    statuses = [status for status in statuses if status]
+    if not statuses:
+        return default
+    return min(statuses, key=lambda status: PROOF_STATUS_RANK.get(status, 0))
+
+
+def proof_status_values(values: Any) -> list[Any]:
+    if values is None:
+        return []
+    if isinstance(values, str):
+        return [values]
+    if isinstance(values, list | tuple | set):
+        return list(values)
+    return [values]
 
 
 def evidence_atoms(value: Any) -> list[dict[str, Any]]:

@@ -17,7 +17,13 @@ from .address import (
 )
 from .catalog import ROOT
 from .coverage import load_traces
-from .evidence import evidence_atom, evidence_atoms, merge_evidence_atoms, normalize_proof_status
+from .evidence import (
+    PROOF_STATUS_RANK,
+    evidence_atom,
+    evidence_atoms,
+    merge_evidence_atoms,
+    normalize_proof_status,
+)
 from .explain import base_label
 from .hardware_evidence import hardware_runtime_event_boundary
 from .ingest import sha256_file
@@ -51,15 +57,6 @@ from .workflow import (
 
 
 REGISTER_FIELDS = ("A", "F", "B", "C", "D", "E", "H", "L", "HL", "SP")
-PROOF_STATUS_RANK = {
-    "planned_only": 0,
-    "state_materialized": 1,
-    "mirror_passed": 2,
-    "runtime_observed": 3,
-    "instruction_observed": 4,
-    "taint_proven": 5,
-    "mirror_failed": 5,
-}
 HARDWARE_EVENT_REQUIRED_MODELS = {
     "oam_dma",
     "cgb_vram_dma",

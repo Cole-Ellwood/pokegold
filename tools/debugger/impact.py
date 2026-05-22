@@ -7,26 +7,26 @@ from typing import Any
 from .address_boundary import reverse_query_address_boundary_fields
 from .catalog import ROOT, triage_request
 from .evidence import (
+    PROOF_STATUS_RANK,
     bank_state_record_evidence_from_atoms,
     bank_state_record_proof_status_by_source,
     evidence_atoms,
     merge_evidence_atoms,
+    normalize_optional_proof_status as normalize_proof_status,
     proof_status_by_source_summary,
+    strongest_proof_status,
+    weakest_proof_status,
 )
 from .ranking import (
-    PROOF_STATUS_RANK,
     SEVERITY_BASE,
     compare_match_evidence,
     compare_match_proof_status,
     materialized_save_state_delta,
     minimized_state_patch_save_state_delta,
-    normalize_proof_status,
     proof_status_counts,
     proof_status_score,
     rank_findings,
     save_state_delta_evidence,
-    strongest_proof_status,
-    weakest_proof_status,
     with_proof_status,
 )
 from .reporting import load_reports

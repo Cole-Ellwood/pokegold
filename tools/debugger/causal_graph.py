@@ -12,29 +12,15 @@ from .address_boundary import (
 from .catalog import ROOT
 from .coverage import load_traces
 from .dynamic_taint import trace_records
-from .evidence import evidence_atoms, merge_evidence_atoms
+from .evidence import (
+    evidence_atoms,
+    merge_evidence_atoms,
+    normalize_proof_status,
+    strongest_proof_status,
+    weakest_proof_status,
+)
 from .reporting import load_reports
 from .workflow import command_address_arg, command_is_runnable
-
-
-PROOF_STATUSES = {
-    "planned_only",
-    "state_materialized",
-    "runtime_observed",
-    "instruction_observed",
-    "taint_proven",
-    "mirror_passed",
-    "mirror_failed",
-}
-PROOF_STATUS_ORDER = {
-    "planned_only": 0,
-    "state_materialized": 1,
-    "mirror_passed": 2,
-    "runtime_observed": 3,
-    "instruction_observed": 4,
-    "taint_proven": 5,
-    "mirror_failed": 5,
-}
 
 
 def build_causal_graph_report(
@@ -2999,30 +2985,6 @@ def explicit_proof_status(value: Any) -> str:
     if value in {None, ""}:
         return ""
     return normalize_proof_status(value)
-
-
-def normalize_proof_status(value: Any) -> str:
-    text = str(value or "").strip().lower().replace("-", "_").replace(" ", "_")
-    aliases = {
-        "planned": "planned_only",
-        "planning": "planned_only",
-        "runtime": "runtime_observed",
-        "observed": "runtime_observed",
-        "instruction": "instruction_observed",
-        "taint": "taint_proven",
-    }
-    text = aliases.get(text, text)
-    return text if text in PROOF_STATUSES else "planned_only"
-
-
-def strongest_proof_status(values: Any) -> str:
-    statuses = [normalize_proof_status(value) for value in values]
-    return max(statuses or ["planned_only"], key=lambda status: PROOF_STATUS_ORDER.get(status, 0))
-
-
-def weakest_proof_status(values: Any) -> str:
-    statuses = [normalize_proof_status(value) for value in values]
-    return min(statuses or ["planned_only"], key=lambda status: PROOF_STATUS_ORDER.get(status, 0))
 
 
 def proof_summary(values: Any) -> dict[str, Any]:

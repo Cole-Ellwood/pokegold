@@ -15,7 +15,13 @@ from .address_boundary import (
 from .catalog import ROOT
 from .causal_graph import bank_state_record_proof_status_by_source
 from .coverage import load_traces
-from .evidence import evidence_atoms
+from .evidence import (
+    PROOF_STATUS_RANK,
+    evidence_atoms,
+    normalize_optional_proof_status as normalize_proof_status,
+    strongest_proof_status as shared_strongest_proof_status,
+    weakest_proof_status as shared_weakest_proof_status,
+)
 from .ranking import (
     bank_state_record_evidence_from_atoms,
     materialized_save_state_delta,
@@ -27,15 +33,6 @@ from .reporting import load_reports
 
 
 VISUALIZATION_FORMATS = {"markdown", "html"}
-PROOF_STATUS_RANK = {
-    "planned_only": 1,
-    "state_materialized": 2,
-    "runtime_observed": 3,
-    "instruction_observed": 4,
-    "taint_proven": 5,
-    "mirror_passed": 6,
-    "mirror_failed": 7,
-}
 COMPARE_BOUNDARY_EVIDENCE_PREFIXES = (
     "runtime_sink_evidence=",
     "runtime_symbol_evidence=",
@@ -3012,11 +3009,6 @@ def add_graph_edge(
     return edge
 
 
-def normalize_proof_status(value: Any) -> str:
-    text = str(value or "").strip()
-    return text if text in PROOF_STATUS_RANK else ""
-
-
 def dynamic_taint_path_proof_status(path: dict[str, Any]) -> str:
     explicit = normalize_proof_status(path.get("proof_status")) if path.get("proof_status") else ""
     if explicit:
@@ -3245,19 +3237,11 @@ def concrete_reverse_last_writer(result: dict[str, Any]) -> bool:
 
 
 def strongest_proof_status(values: list[Any]) -> str:
-    statuses = [normalize_proof_status(value) for value in values]
-    statuses = [status for status in statuses if status]
-    if not statuses:
-        return ""
-    return max(statuses, key=lambda status: PROOF_STATUS_RANK.get(status, 0))
+    return shared_strongest_proof_status(values, default="")
 
 
 def weakest_proof_status(values: Any) -> str:
-    statuses = [normalize_proof_status(value) for value in values]
-    statuses = [status for status in statuses if status]
-    if not statuses:
-        return ""
-    return min(statuses, key=lambda status: PROOF_STATUS_RANK.get(status, 0))
+    return shared_weakest_proof_status(values, default="")
 
 
 def side_effect_index_proof_status(item: dict[str, Any]) -> str:
