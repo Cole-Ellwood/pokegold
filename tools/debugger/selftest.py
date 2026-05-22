@@ -462,6 +462,58 @@ def check_heatmap(root: Path) -> CheckResult:
     )
 
 
+def check_vram_decode(root: Path) -> CheckResult:
+    """Exercise P6 structured VRAM/OAM decode and diff against raw state bytes."""
+
+    import tempfile
+
+    from .vram_diff import build_vram_diff_report
+    from .vram_snapshot import build_vram_snapshot_report
+
+    def inner() -> str:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_root = Path(tmp)
+            base = tmp_root / "base.raw"
+            other = tmp_root / "other.raw"
+            base_data = bytearray(0x10000)
+            other_data = bytearray(0x10000)
+            base_data[0x9800] = 0x11
+            other_data[0x9800] = 0x22
+            base_data[0xFE00 : 0xFE04] = bytes((56, 40, 0x21, 0x00))
+            other_data[0xFE00 : 0xFE04] = bytes((56, 40, 0x21, 0x00))
+            base_data[0xFF40] = 0x93
+            other_data[0xFF40] = 0x93
+            base.write_bytes(bytes(base_data))
+            other.write_bytes(bytes(other_data))
+            snapshot = build_vram_snapshot_report(state_path=str(base), decode=True, root=tmp_root)
+            diff = build_vram_diff_report(
+                base_state_path=str(base),
+                other_state_path=str(other),
+                root=tmp_root,
+            )
+        if not snapshot.get("valid"):
+            raise AssertionError(f"vram snapshot invalid: {snapshot.get('errors')}")
+        decoded = snapshot.get("decoded", {})
+        if decoded.get("tilemaps", {}).get("9800", {}).get("cells", [{}])[0].get("tile_hex") != "11":
+            raise AssertionError("tilemap cell 0 did not decode from raw state")
+        if decoded.get("oam", {}).get("visible_guess_count") != 1:
+            raise AssertionError("OAM visible sprite count did not decode")
+        if not diff.get("valid"):
+            raise AssertionError(f"vram diff invalid: {diff.get('errors')}")
+        structured = diff.get("diff", {})
+        if structured.get("tilemap_changed_cell_count") != 1:
+            raise AssertionError(f"expected one tilemap delta; got {structured.get('tilemap_changed_cell_count')}")
+        if "tilemap_changed_oam_stable" not in {flag["id"] for flag in structured.get("scenario_flags", [])}:
+            raise AssertionError("diff did not mark tilemap-changed/OAM-stable scenario")
+        return "vram decode valid; raw snapshot + structured diff smoke ok"
+
+    return _capture(
+        component="vram_decode",
+        next_command="python -m tools.debugger vram-snapshot --decode --save-state <raw64k>",
+        fn=inner,
+    )
+
+
 def check_save_state_lab(root: Path) -> CheckResult:
     """Round-trip trusted raw WRAM and fail-closed .sgm handling."""
 
@@ -865,6 +917,7 @@ NAMED_CHECKS: tuple[tuple[str, Check], ...] = (
     ("hypothesis_tracker", check_hypothesis_tracker),
     ("context_packet", check_context_packet),
     ("heatmap", check_heatmap),
+    ("vram_decode", check_vram_decode),
     ("save_state_lab", check_save_state_lab),
     ("bisect", check_bisect),
     ("handoff_log", check_handoff_log),

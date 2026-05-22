@@ -69,6 +69,8 @@ V2_PASSTHROUGH_MODULES = {
     "tdb": "tools.debugger.tdb",
     "pack": "tools.debugger.context_packet",
     "heatmap": "tools.debugger.heatmap",
+    "vram-snapshot": "tools.debugger.vram_snapshot",
+    "vram-diff": "tools.debugger.vram_diff",
 }
 
 
@@ -776,6 +778,28 @@ def build_parser() -> argparse.ArgumentParser:
     )
     heatmap.add_argument("argv", nargs=argparse.REMAINDER)
     heatmap.set_defaults(func=cmd_heatmap)
+
+    vram_snapshot = subparsers.add_parser(
+        "vram-snapshot",
+        add_help=False,
+        description=(
+            "Structured VRAM/OAM/tilemap snapshot decode (P6). Delegates to "
+            "`python -m tools.debugger.vram_snapshot`. Pass `--help` for syntax."
+        ),
+    )
+    vram_snapshot.add_argument("argv", nargs=argparse.REMAINDER)
+    vram_snapshot.set_defaults(func=cmd_vram_snapshot)
+
+    vram_diff = subparsers.add_parser(
+        "vram-diff",
+        add_help=False,
+        description=(
+            "Structured VRAM/OAM/tilemap diff (P6). Delegates to "
+            "`python -m tools.debugger.vram_diff`. Pass `--help` for syntax."
+        ),
+    )
+    vram_diff.add_argument("argv", nargs=argparse.REMAINDER)
+    vram_diff.set_defaults(func=cmd_vram_diff)
 
     return parser
 
@@ -1508,6 +1532,14 @@ def cmd_pack(args: argparse.Namespace) -> int:
 
 def cmd_heatmap(args: argparse.Namespace) -> int:
     return _delegate_to_module_main("tools.debugger.heatmap", args.argv)
+
+
+def cmd_vram_snapshot(args: argparse.Namespace) -> int:
+    return _delegate_to_module_main("tools.debugger.vram_snapshot", args.argv)
+
+
+def cmd_vram_diff(args: argparse.Namespace) -> int:
+    return _delegate_to_module_main("tools.debugger.vram_diff", args.argv)
 
 
 def emit_report(report: dict[str, Any], args: argparse.Namespace) -> None:

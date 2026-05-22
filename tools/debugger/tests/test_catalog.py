@@ -244,7 +244,20 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
 
         self.assertEqual(
             set(V2_PASSTHROUGH_MODULES.keys()),
-            {"hypothesis", "selftest", "save-state-lab", "bisect", "session-start", "handoff", "when-wrote", "tdb", "pack", "heatmap"},
+            {
+                "hypothesis",
+                "selftest",
+                "save-state-lab",
+                "bisect",
+                "session-start",
+                "handoff",
+                "when-wrote",
+                "tdb",
+                "pack",
+                "heatmap",
+                "vram-snapshot",
+                "vram-diff",
+            },
         )
 
     def test_v2_subcommand_delegates_to_module_main(self) -> None:
@@ -291,7 +304,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         # v2 section is present, ordered after v1 capabilities, and
         # explicitly marks itself as additive.
         self.assertIn("Omni-debugger v2 surfaces", text)
-        self.assertIn("10/10 complete", text)
+        self.assertIn("11/11 complete", text)
         self.assertIn("not counted toward v1 readiness", text)
         self.assertIn("hypothesis_tracker", text)
         self.assertIn("debugger_selftest", text)
@@ -303,6 +316,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("tdb", text)
         self.assertIn("context_packet", text)
         self.assertIn("heatmap", text)
+        self.assertIn("vram_decode", text)
 
     def test_damage_changed_file_triages_to_damage_debugger(self) -> None:
         report = triage_request(

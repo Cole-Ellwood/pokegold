@@ -20,6 +20,7 @@ from tools.debugger.selftest import (
     check_hypothesis_tracker,
     check_sm83_model_parity,
     check_save_state_lab,
+    check_vram_decode,
     main,
     run_selftest,
 )
@@ -117,6 +118,16 @@ class SaveStateLabCheckTests(unittest.TestCase):
         self.assertTrue(result.ok, result.error or result.detail)
         self.assertEqual(result.component, "save_state_lab")
         self.assertIn("fail-closed", result.detail)
+
+
+class VramDecodeCheckTests(unittest.TestCase):
+    """P6 lived smoke: raw state bytes decode into structured VRAM evidence."""
+
+    def test_vram_decode_check_passes_in_isolation(self) -> None:
+        result = check_vram_decode(ROOT)
+        self.assertTrue(result.ok, result.error or result.detail)
+        self.assertEqual(result.component, "vram_decode")
+        self.assertIn("structured diff", result.detail)
 
 
 class BisectCheckTests(unittest.TestCase):

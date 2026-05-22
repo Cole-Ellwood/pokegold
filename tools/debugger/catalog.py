@@ -1093,6 +1093,40 @@ def _build_v2_surfaces(root: Path = ROOT) -> list[dict[str, Any]]:
             ),
         ),
         _capability(
+            id="vram_decode",
+            title="VRAM/OAM/tilemap structured decode + diff (P6)",
+            status=_complete_if_paths(
+                root,
+                "tools/debugger/vram_decode.py",
+                "tools/debugger/vram_snapshot.py",
+                "tools/debugger/vram_diff.py",
+                "tools/debugger/tests/test_vram_snapshot.py",
+            ),
+            scope=(
+                "Structured decode of trusted raw 64 KiB snapshots into BG "
+                "tilemaps, CGB tile attributes when both VRAM banks are "
+                "available, OAM entries, LCDC/scroll/VBK state, DMG palettes, "
+                "and frame-pair diffs with tilemap/OAM/palette scenario flags."
+            ),
+            evidence=(
+                "tools/debugger/vram_decode.py",
+                "tools/debugger/vram_snapshot.py",
+                "tools/debugger/vram_diff.py",
+                "tools/debugger/tests/test_vram_decode.py",
+                "tools/debugger/tests/test_vram_snapshot.py",
+                "docs/debugger_masterpiece_roadmap_codex_task.md",
+            ),
+            gaps=(
+                "V0 decodes trusted raw 64 KiB address-space images only",
+                "opaque emulator state formats fail closed until offset proof lands",
+                "no pixel rendering parity claim",
+            ),
+            commands=(
+                "python -m tools.debugger vram-snapshot --decode --save-state raw64k.bin",
+                "python -m tools.debugger vram-diff baseline.raw64k jumble.raw64k",
+            ),
+        ),
+        _capability(
             id="when_wrote",
             title="when-wrote omniscient last-writer query (P2)",
             status=_complete_if_paths(
