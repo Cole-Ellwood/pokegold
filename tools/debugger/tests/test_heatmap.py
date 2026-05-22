@@ -191,5 +191,115 @@ class HeatmapTests(unittest.TestCase):
         self.assertEqual(payload["cell_count"], 1)
 
 
+class HeatmapWhenWroteCrossCheckTests(unittest.TestCase):
+    """P9 acceptance: a cell's last_write_pc must equal the writer that
+    when_wrote resolves for the same address. The two surfaces consume
+    different input schemas (effect-trace JSONL vs effect-trace report
+    JSON) so the cross-check is per-fixture: we hand both surfaces the
+    same writer information in their respective input shapes and assert
+    they converge on the same answer.
+    """
+
+    def test_heatmap_last_write_pc_matches_when_wrote_query_at_d141(self) -> None:
+        from tools.debugger.when_wrote import run_when_wrote
+
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "pokegold.sym").write_text(
+                "01:5A00 BattleCommand_DamageCalc\n",
+                encoding="utf-8",
+            )
+            heatmap_trace = root / "effect.jsonl"
+            _write_trace(
+                heatmap_trace,
+                [
+                    {
+                        "kind": "write",
+                        "address": "0xD141",
+                        "frame": 0,
+                        "seq": 4,
+                        "pc_bank_address": "01:5A00",
+                        "pc_label": "BattleCommand_DamageCalc+6",
+                    }
+                ],
+            )
+            (root / "effect.json").write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "kind": "unified_debugger_effect_trace",
+                        "valid": True,
+                        "proof_status": "instruction_observed",
+                        "write_index": [
+                            {
+                                "address": "D141",
+                                "address_key": "wramx:01:D141",
+                                "space": "wramx",
+                                "bank": 1,
+                                "write_count": 1,
+                                "last_writer_seq": 4,
+                                "last_writer_pc": "01:5A00",
+                                "last_value_hex": "2A",
+                            }
+                        ],
+                        "events": [
+                            {
+                                "seq": 4,
+                                "trace_source": "cross_check.jsonl",
+                                "pc_bank_address": "01:5A00",
+                                "pc_label": "BattleCommand_DamageCalc+6",
+                                "pre_registers": {"A": 0x2A},
+                                "bank_state": {"wram": 1},
+                                "bank_state_sources": {"wram": "bank_state.wram"},
+                                "effects": [
+                                    {
+                                        "access": "write",
+                                        "kind": "memory_write",
+                                        "operation": "ld [hl], a",
+                                        "address_hex": "D141",
+                                        "address_key": "wramx:01:D141",
+                                        "value_hex": "2A",
+                                        "value_source": "A",
+                                        "bank": 1,
+                                        "bank_source": "bank_state.wram",
+                                        "space": "wramx",
+                                        "post_value_hex": "2A",
+                                        "post_value_status": "matched",
+                                        "post_observed_seq": 5,
+                                        "post_observed_pc": "01:5A03",
+                                        "proof_status": "instruction_observed",
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            heatmap_report = build_heatmap(traces=(heatmap_trace,), region="wramx", root=root)
+            when_wrote_report = run_when_wrote(
+                addresses=("01:D141",),
+                reports=("effect.json",),
+                root=root,
+            )
+
+        heatmap_cell = next(
+            c for c in heatmap_report["cells"] if c["address_hex"] == "$D141"
+        )
+        when_wrote_answer = when_wrote_report["answers"][0]
+        when_wrote_writer = when_wrote_answer.get("last_writer") or {}
+
+        self.assertEqual(heatmap_cell["last_write_pc"], when_wrote_writer.get("pc"))
+        self.assertEqual(
+            heatmap_cell["last_write_pc_label"],
+            when_wrote_writer.get("pc_label"),
+        )
+        self.assertEqual(heatmap_cell["last_write_pc"], "01:5A00")
+        self.assertEqual(
+            heatmap_cell["last_write_pc_label"], "BattleCommand_DamageCalc+6"
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
