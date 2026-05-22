@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 from .handoff_log import DEFAULT_STORE, ROOT, is_mutual_verified, load_rows
+from .workflow import command_is_runnable, execute_step
 
 
 PASS = "pass"
@@ -20,6 +21,7 @@ RELEASE_SMOKE_GATE_NAME = "release_smoke"
 SAVE_FORMAT_GATE_NAME = "save_format_version"
 RELEASE_SMOKE_COMMAND = "python tools/audit/check_release_smoke.py"
 SAVE_FORMAT_COMMAND = "python tools/audit/check_save_format_version.py"
+DEFAULT_VERIFY_COMMANDS = (RELEASE_SMOKE_COMMAND,)
 ROM_EDIT_WORKTREE_DIR = Path(".local") / "tmp" / "rom_edit_worktrees"
 PROTECTED_BRANCHES = frozenset(
     {
@@ -276,6 +278,47 @@ def propose_rom_edit(
     }
 
 
+def verify_rom_edit_worktree(
+    worktree_path: str | Path,
+    *,
+    commands: Sequence[str] = DEFAULT_VERIFY_COMMANDS,
+    root: Path = ROOT,
+    base_dir: Path | None = None,
+    timeout_seconds: int = 600,
+) -> dict[str, Any]:
+    repo_root = root.resolve()
+    target_base = _resolve_worktree_base(repo_root, base_dir)
+    target = Path(worktree_path).resolve()
+    if not _is_relative_to(target, target_base):
+        raise RomEditWorktreeError(
+            f"refusing to verify worktree outside rom-edit base: {target}"
+        )
+    steps = []
+    for index, command in enumerate(commands, start=1):
+        step = {
+            "id": f"verify:{index}",
+            "command": command,
+            "runnable": command_is_runnable(command),
+            "status": "pending",
+            "returncode": None,
+            "elapsed_seconds": 0.0,
+            "stdout_tail": [],
+            "stderr_tail": [],
+        }
+        execute_step(step, root=target, timeout_seconds=timeout_seconds)
+        steps.append(step)
+    failed = [step for step in steps if step["status"] != "passed"]
+    return {
+        "kind": "rom_edit_verify_report",
+        "worktree_path": str(target),
+        "status": "failed" if failed else "passed",
+        "passed": not failed,
+        "step_count": len(steps),
+        "failed_count": len(failed),
+        "steps": steps,
+    }
+
+
 def format_decision(decision: Mapping[str, Any]) -> str:
     status = "ALLOWED" if decision.get("allowed") else "REFUSED"
     lines = [f"rom-edit auto-apply: {status}"]
@@ -357,6 +400,23 @@ def build_parser() -> argparse.ArgumentParser:
     propose.add_argument("--slug", default="")
     propose.add_argument("--json", action="store_true")
     propose.set_defaults(func=cmd_propose)
+
+    verify = sub.add_parser(
+        "verify",
+        help="Run verification commands inside a rom-edit worktree.",
+    )
+    verify.add_argument("--worktree-path", required=True)
+    verify.add_argument(
+        "--command",
+        action="append",
+        dest="commands",
+        default=[],
+        help="Command to execute inside the worktree. Repeat for multiple commands.",
+    )
+    verify.add_argument("--root", default=str(ROOT))
+    verify.add_argument("--timeout-seconds", type=int, default=600)
+    verify.add_argument("--json", action="store_true")
+    verify.set_defaults(func=cmd_verify)
     return parser
 
 
@@ -392,6 +452,24 @@ def cmd_propose(args: argparse.Namespace) -> int:
         print(f"worktree: {proposal['worktree']['path']}")
         print(f"changed_files: {', '.join(proposal['changed_files'])}")
     return 0
+
+
+def cmd_verify(args: argparse.Namespace) -> int:
+    report = verify_rom_edit_worktree(
+        args.worktree_path,
+        commands=tuple(args.commands) or DEFAULT_VERIFY_COMMANDS,
+        root=Path(args.root),
+        timeout_seconds=args.timeout_seconds,
+    )
+    if args.json:
+        print(json.dumps(report, indent=2))
+    else:
+        print(f"rom-edit verify: {report['status']}")
+        for step in report["steps"]:
+            print(f"  {step['status']}: {step['command']}")
+            if step.get("failure_summary"):
+                print(f"    {step['failure_summary']}")
+    return 0 if report["passed"] else 1
 
 
 def _parse_gate_arg(text: str) -> GateResult:

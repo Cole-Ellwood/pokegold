@@ -21,6 +21,7 @@ from tools.debugger.rom_edit import (
     remove_rom_edit_worktree,
     required_green_gate_stack,
     touches_ram,
+    verify_rom_edit_worktree,
 )
 
 
@@ -534,6 +535,90 @@ class RomEditProposeCliTests(unittest.TestCase):
             any(SAVE_FORMAT_GATE_NAME in reason for reason in decision["blocking_reasons"]),
             decision,
         )
+
+
+class RomEditVerifyCommandTests(unittest.TestCase):
+    def test_verify_runs_command_inside_worktree(self) -> None:
+        with TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            _init_repo(repo)
+            worktree = create_rom_edit_worktree(root=repo, slug="verify-pass")
+            command = (
+                "python -c \"from pathlib import Path; "
+                "Path('verify.txt').write_text('ok', encoding='utf-8')\""
+            )
+
+            report = verify_rom_edit_worktree(
+                worktree.path,
+                commands=(command,),
+                root=repo,
+                timeout_seconds=30,
+            )
+
+            self.assertTrue(report["passed"], report)
+            self.assertEqual(report["status"], "passed")
+            self.assertEqual(
+                (Path(worktree.path) / "verify.txt").read_text(encoding="utf-8"),
+                "ok",
+            )
+
+    def test_verify_reports_failed_command(self) -> None:
+        with TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            _init_repo(repo)
+            worktree = create_rom_edit_worktree(root=repo, slug="verify-fail")
+
+            report = verify_rom_edit_worktree(
+                worktree.path,
+                commands=("python -c \"raise SystemExit(3)\"",),
+                root=repo,
+                timeout_seconds=30,
+            )
+
+            self.assertFalse(report["passed"], report)
+            self.assertEqual(report["status"], "failed")
+            self.assertEqual(report["failed_count"], 1)
+            self.assertEqual(report["steps"][0]["returncode"], 3)
+
+    def test_verify_refuses_path_outside_rom_edit_base(self) -> None:
+        with TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            _init_repo(repo)
+
+            with self.assertRaisesRegex(RomEditWorktreeError, "outside rom-edit base"):
+                verify_rom_edit_worktree(repo, commands=("python -V",), root=repo)
+
+    def test_verify_cli_emits_json_and_exit_code(self) -> None:
+        with TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            _init_repo(repo)
+            worktree = create_rom_edit_worktree(root=repo, slug="verify-cli")
+            proc = subprocess.run(
+                [
+                    "python",
+                    "-m",
+                    "tools.debugger",
+                    "rom-edit",
+                    "verify",
+                    "--root",
+                    str(repo),
+                    "--worktree-path",
+                    worktree.path,
+                    "--command",
+                    "python -c \"print('verify ok')\"",
+                    "--json",
+                ],
+                cwd=ROOT,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+            )
+
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        report = json.loads(proc.stdout)
+        self.assertTrue(report["passed"], report)
+        self.assertEqual(report["steps"][0]["stdout_tail"], ["verify ok"])
 
 
 if __name__ == "__main__":
