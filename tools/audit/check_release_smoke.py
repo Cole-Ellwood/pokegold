@@ -1443,6 +1443,7 @@ def main() -> int:
     check_save_format_version()
     check_no_stale_shipped_claims()
     check_unified_debugger_ready()
+    check_two_llm_handoff_log()
     check_farcall_hl_clobber()
     check_farcall_a_clobber()
     check_ld_a_zero()
@@ -1481,6 +1482,13 @@ def check_no_stale_shipped_claims() -> None:
 
 def check_unified_debugger_ready() -> None:
     _run_subaudit("check_unified_debugger_ready.py", "unified debugger readiness")
+
+
+def check_two_llm_handoff_log() -> None:
+    # Warn-only mode: P4 advisor concern #4 — promote to --strict once
+    # the masterpiece roadmap closes its in-flight phases. The audit
+    # returns 0 in warn-only and only exits 1 on row schema errors.
+    _run_subaudit("check_two_llm_handoff_log.py", "two-LLM handoff log")
 
 
 def check_farcall_hl_clobber() -> None:
