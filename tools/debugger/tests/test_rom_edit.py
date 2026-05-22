@@ -14,6 +14,7 @@ from tools.debugger.rom_edit import (
     SAVE_FORMAT_GATE_NAME,
     GateResult,
     RomEditWorktreeError,
+    apply_unified_patch_to_worktree,
     create_rom_edit_worktree,
     decide_auto_apply,
     default_worktree_base,
@@ -230,6 +231,59 @@ class RomEditWorktreeLifecycleTests(unittest.TestCase):
                     base_dir=Path(tmp) / "external-worktrees",
                     slug="outside",
                 )
+
+
+class RomEditPatchApplyTests(unittest.TestCase):
+    def test_apply_unified_patch_changes_worktree_not_main_checkout(self) -> None:
+        with TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            _init_repo(repo)
+            worktree = create_rom_edit_worktree(root=repo, slug="patch-core")
+            patch = (
+                "diff --git a/file.txt b/file.txt\n"
+                "--- a/file.txt\n"
+                "+++ b/file.txt\n"
+                "@@ -1 +1 @@\n"
+                "-one\n"
+                "+two\n"
+            )
+
+            result = apply_unified_patch_to_worktree(
+                worktree.path,
+                patch,
+                root=repo,
+            )
+
+            self.assertTrue(result["patch_applied"])
+            self.assertEqual(result["changed_files"], ("file.txt",))
+            self.assertIn("+two", result["diff"])
+            self.assertEqual(
+                (Path(worktree.path) / "file.txt").read_text(encoding="utf-8"),
+                "two\n",
+            )
+            self.assertEqual((repo / "file.txt").read_text(encoding="utf-8"), "one\n")
+
+    def test_apply_unified_patch_refuses_empty_patch(self) -> None:
+        with TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            _init_repo(repo)
+            worktree = create_rom_edit_worktree(root=repo, slug="empty-patch")
+
+            with self.assertRaisesRegex(RomEditWorktreeError, "empty patch"):
+                apply_unified_patch_to_worktree(worktree.path, "\n", root=repo)
+
+            self.assertEqual(
+                (Path(worktree.path) / "file.txt").read_text(encoding="utf-8"),
+                "one\n",
+            )
+
+    def test_apply_unified_patch_refuses_path_outside_rom_edit_base(self) -> None:
+        with TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            _init_repo(repo)
+
+            with self.assertRaisesRegex(RomEditWorktreeError, "outside rom-edit base"):
+                apply_unified_patch_to_worktree(repo, "not a patch", root=repo)
 
     def test_refuses_red_save_format_audit_for_ram_edit(self) -> None:
         changed = ("ram/wram.asm",)

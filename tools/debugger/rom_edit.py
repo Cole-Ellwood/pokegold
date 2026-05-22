@@ -202,6 +202,37 @@ def remove_rom_edit_worktree(
     return {"removed": str(target)}
 
 
+def apply_unified_patch_to_worktree(
+    worktree_path: str | Path,
+    patch_text: str,
+    *,
+    root: Path = ROOT,
+    base_dir: Path | None = None,
+) -> dict[str, Any]:
+    repo_root = root.resolve()
+    target_base = _resolve_worktree_base(repo_root, base_dir)
+    target = Path(worktree_path).resolve()
+    if not _is_relative_to(target, target_base):
+        raise RomEditWorktreeError(
+            f"refusing to patch worktree outside rom-edit base: {target}"
+        )
+    if not patch_text.strip():
+        raise RomEditWorktreeError("refusing to apply an empty patch")
+    _git_stdout(["apply", "--check", "-"], cwd=target, input_text=patch_text)
+    _git_stdout(["apply", "-"], cwd=target, input_text=patch_text)
+    changed_files = tuple(
+        line
+        for line in _git_stdout(["diff", "--name-only"], cwd=target).splitlines()
+        if line
+    )
+    return {
+        "patch_applied": True,
+        "worktree_path": str(target),
+        "changed_files": changed_files,
+        "diff": _git_stdout(["diff", "--"], cwd=target),
+    }
+
+
 def format_decision(decision: Mapping[str, Any]) -> str:
     status = "ALLOWED" if decision.get("allowed") else "REFUSED"
     lines = [f"rom-edit auto-apply: {status}"]
@@ -355,12 +386,13 @@ def _make_worktree_slug(base_head: str, changed_files: Sequence[str]) -> str:
     return hashlib.sha1(payload.encode("utf-8")).hexdigest()[:12]
 
 
-def _git_stdout(args: Sequence[str], *, cwd: Path) -> str:
+def _git_stdout(args: Sequence[str], *, cwd: Path, input_text: str | None = None) -> str:
     completed = subprocess.run(
         ["git", *args],
         cwd=cwd,
         shell=False,
         text=True,
+        input=input_text,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         check=False,
