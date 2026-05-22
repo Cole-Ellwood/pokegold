@@ -4939,6 +4939,8 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
                 code = debugger_main(
                     [
                         "minimize",
+                        "--domain",
+                        "input_log",
                         "--input-log",
                         str(input_log),
                         "--expect",
@@ -4954,6 +4956,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
 
         self.assertEqual(code, 0)
         self.assertTrue(data["valid"])
+        self.assertEqual(data["domains"], ["input_log"])
         self.assertTrue(data["input_log_minimization"]["preserved"])
         self.assertEqual(data["input_log_minimization"]["minimized_event_count"], 1)
         self.assertGreater(data["input_log_minimization"]["reduction_step_count"], 0)

@@ -236,6 +236,7 @@ def build_parser() -> argparse.ArgumentParser:
     trace_index.set_defaults(func=cmd_trace_index)
 
     minimize = subparsers.add_parser("minimize")
+    minimize.add_argument("--domain", action="append", choices=("input_log",), default=[])
     minimize.add_argument("--report", action="append", default=[])
     minimize.add_argument("--trace", action="append", default=[])
     minimize.add_argument("--input-log", action="append", default=[])
@@ -979,6 +980,7 @@ def cmd_trace_index(args: argparse.Namespace) -> int:
 def cmd_minimize(args: argparse.Namespace) -> int:
     report = build_minimization_plan(
         reports=tuple(args.report),
+        domains=tuple(args.domain),
         traces=tuple(args.trace),
         input_logs=tuple(args.input_log),
         scenarios=tuple(args.scenario),

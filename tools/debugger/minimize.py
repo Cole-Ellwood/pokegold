@@ -61,6 +61,7 @@ CONTEXT_LIST_KEYS = ("prelude", "frames", "context", "events")
 def build_minimization_plan(
     *,
     reports: tuple[str, ...] = (),
+    domains: tuple[str, ...] = (),
     traces: tuple[str, ...] = (),
     input_logs: tuple[str, ...] = (),
     scenarios: tuple[str, ...] = (),
@@ -162,14 +163,29 @@ def build_minimization_plan(
         max_trace_records=max_trace_records,
         root=root,
     )
-    input_log_minimization = build_input_log_minimization(
-        loaded_input_logs=loaded_input_logs,
-        reports=reports,
-        expectations=expectations,
-        expectation_files=expectation_files,
-        events=events,
-        out_input_log=out_input_log,
-        root=root,
+    domain_errors = [
+        f"unsupported minimization domain {domain!r}; supported: input_log"
+        for domain in domains
+        if domain != "input_log"
+    ]
+    input_log_minimization = (
+        build_input_log_minimization(
+            loaded_input_logs=loaded_input_logs,
+            reports=reports,
+            expectations=expectations,
+            expectation_files=expectation_files,
+            events=events,
+            out_input_log=out_input_log,
+            root=root,
+        )
+        if not domains or "input_log" in domains
+        else {
+            "attempted": False,
+            "reason": f"disabled by --domain filter: {', '.join(domains)}",
+            "errors": [],
+            "input_log_count": len(loaded_input_logs),
+            "expectation_count": 0,
+        }
     )
     surfaces = infer_surfaces(
         symbols=symbols,
@@ -202,6 +218,7 @@ def build_minimization_plan(
         *state_patch_minimization.get("errors", []),
         *evidence_minimization.get("errors", []),
         *input_log_minimization.get("errors", []),
+        *domain_errors,
     ]
     return {
         "schema_version": 1,
@@ -211,6 +228,7 @@ def build_minimization_plan(
         "error_count": len(errors),
         "errors": errors,
         "reports": [item["source"] for item in loaded_reports],
+        "domains": list(domains),
         "traces": [item["source"] for item in loaded_traces],
         "input_logs": [item["source"] for item in loaded_input_logs],
         "scenarios": [item["source"] for item in scenario_sources],
