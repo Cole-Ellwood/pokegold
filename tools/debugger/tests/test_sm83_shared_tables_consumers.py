@@ -43,6 +43,41 @@ class Sm83SharedTablesConsumerAuditTests(unittest.TestCase):
         self.assertEqual(report["issues"][0]["dispatch_family"], "register_index")
         self.assertIn("not in the shrinking allowlist", report["issues"][0]["message"])
 
+    def test_rejects_module_scope_shared_table_shadow_assignment(self) -> None:
+        with self._repo(
+            "INDEX_REG = {0: 'b'}\n"
+            "def decode(opcode):\n"
+            "    return opcode\n",
+            full_text=True,
+        ) as root:
+            report = scan_sm83_shared_tables_consumers(
+                root=root,
+                allowlist={},
+                touched_allowlist_keys=set(),
+                commit_message="",
+            )
+
+        self.assertFalse(report["ok"])
+        self.assertEqual(report["issues"][0]["function"], "<module>")
+        self.assertEqual(report["issues"][0]["name"], "INDEX_REG")
+        self.assertIn("must not be rebound", report["issues"][0]["message"])
+
+    def test_local_shared_table_name_assignment_is_not_a_module_shadow(self) -> None:
+        with self._repo(
+            "def decode(opcode):\n"
+            "    INDEX_REG = {0: 'b'}\n"
+            "    return opcode\n",
+            full_text=True,
+        ) as root:
+            report = scan_sm83_shared_tables_consumers(
+                root=root,
+                allowlist={},
+                touched_allowlist_keys=set(),
+                commit_message="",
+            )
+
+        self.assertTrue(report["ok"], report)
+
     def test_count_up_fails_even_with_marker(self) -> None:
         with self._repo("return INDEX_REG[opcode & 0x07], INDEX_REG[(opcode >> 3) & 0x07]") as root:
             key = ("tools/debugger/effect_trace.py", "decode", "register_index")

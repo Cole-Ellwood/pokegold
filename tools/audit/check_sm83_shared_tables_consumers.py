@@ -99,6 +99,13 @@ class FunctionSpan:
     end: int
 
 
+@dataclass(frozen=True)
+class ModuleStore:
+    path: str
+    name: str
+    line: int
+
+
 class _DispatchSiteVisitor(ast.NodeVisitor):
     def __init__(self, path: str) -> None:
         self.path = path
@@ -183,6 +190,30 @@ def _shared_table_name(node: ast.AST) -> str:
     if isinstance(node, ast.Attribute) and node.attr in SHARED_TABLE_NAMES:
         return node.attr
     return ""
+
+
+class _ModuleStoreVisitor(ast.NodeVisitor):
+    def __init__(self, path: str) -> None:
+        self.path = path
+        self.stores: list[ModuleStore] = []
+
+    def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
+        return
+
+    visit_AsyncFunctionDef = visit_FunctionDef
+
+    def visit_ClassDef(self, node: ast.ClassDef) -> None:
+        return
+
+    def visit_Name(self, node: ast.Name) -> None:
+        if isinstance(node.ctx, ast.Store) and node.id in SHARED_TABLE_NAMES:
+            self.stores.append(ModuleStore(path=self.path, name=node.id, line=node.lineno))
+
+
+def _scan_module_stores(tree: ast.AST, *, path: str) -> list[ModuleStore]:
+    visitor = _ModuleStoreVisitor(path)
+    visitor.visit(tree)
+    return visitor.stores
 
 
 def _scan_dispatch_sites(tree: ast.AST, *, path: str) -> list[DispatchSite]:
@@ -309,6 +340,7 @@ def scan_sm83_shared_tables_consumers(
     allowlist = ALLOWLIST if allowlist is None else allowlist
     issues: list[ConsumerIssue] = []
     sites: list[DispatchSite] = []
+    stores: list[ModuleStore] = []
     parsed_trees: dict[str, ast.AST] = {}
     debugger_root = root / "tools" / "debugger"
     for path in sorted(debugger_root.rglob("*.py")):
@@ -332,7 +364,23 @@ def scan_sm83_shared_tables_consumers(
             continue
         rel_path = str(rel).replace("\\", "/")
         parsed_trees[rel_path] = tree
+        stores.extend(_scan_module_stores(tree, path=rel_path))
         sites.extend(_scan_dispatch_sites(tree, path=rel_path))
+
+    for store in stores:
+        issues.append(
+            ConsumerIssue(
+                path=store.path,
+                line=store.line,
+                name=store.name,
+                function="<module>",
+                dispatch_family=SHARED_TABLE_FAMILIES[store.name],
+                message=(
+                    f"{store.name} must not be rebound in a consumer module; "
+                    "shared SM83 tables live in tools.debugger.sm83_model"
+                ),
+            )
+        )
 
     counts = _count_dispatch_sites(sites)
     if touched_allowlist_keys is None:
