@@ -197,6 +197,56 @@ contains the declared input evidence. It does not prove the ROM symptom
 still reproduces until a replay/watch/investigation route executes the
 minimized log against the ROM.
 
+### "Generated scenario is too noisy"
+
+Use this when `generate`, `content-scenarios`, or a subsystem tool gives
+you a battle or map-script scenario with the right bug signal buried in
+extra party members, moves, events, or script steps.
+
+**Battle scenario**
+
+```powershell
+python -m tools.debugger minimize `
+  --domain battle `
+  --scenario .local/tmp/battle_cases.jsonl `
+  --scenario-id <case_id> `
+  --expect contains=MILTANK `
+  --expect contains=ROLLOUT `
+  --expect contains=critical_window `
+  --out-shrunk-scenario-dir .local/tmp/shrunk `
+  --json-out .local/tmp/battle.minimize.json
+```
+
+**Map-script scenario**
+
+```powershell
+python -m tools.debugger minimize `
+  --domain map_script `
+  --scenario .local/tmp/script_cases.jsonl `
+  --scenario-id <case_id> `
+  --expect contains=jump_script `
+  --expect contains=UnitNpcScript `
+  --expect contains=unit_signpost `
+  --out-shrunk-scenario-dir .local/tmp/shrunk `
+  --json-out .local/tmp/script.minimize.json
+```
+
+**Success looks like**
+
+The report has `battle_minimization.preserved=true` or
+`map_script_minimization.preserved=true`. The `best.out_scenario.path`
+points at the minimized JSON artifact, `best.removed_counts` says what
+was removed, and `best.reduction_trace` records each accepted/rejected
+candidate.
+
+**Proof limit**
+
+Battle and map-script domain minimization uses explicit text predicates
+over scenario JSON (`contains=` / `not-contains=`). It proves the reduced
+scenario still contains the named facts. It does not prove the minimized
+scenario still reproduces the ROM symptom until a materialization or
+replay route executes that artifact.
+
 ### "Damage is wrong"
 
 The most common bug class in this hack. Bind to the existing damage
