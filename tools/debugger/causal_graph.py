@@ -164,6 +164,8 @@ class GraphBuilder:
             proof_by_source = {}
         if source_key:
             proof_by_source[source_key] = strongest_proof_status([proof_by_source.get(source_key), proof])
+        for atom_source, atom_proof in bank_state_record_proof_status_by_source(node["evidence_atoms"]).items():
+            proof_by_source[atom_source] = strongest_proof_status([proof_by_source.get(atom_source), atom_proof])
         node["proof_status_by_source"] = dict(sorted(proof_by_source.items()))
         proof_counts = node.get("proof_status_counts")
         if not isinstance(proof_counts, dict):
@@ -201,13 +203,23 @@ class GraphBuilder:
                 "relation": relation,
                 "source": source,
                 "proof_status": normalize_proof_status(proof_status),
+                "proof_status_by_source": {},
                 "evidence": [],
                 "evidence_atoms": [],
             },
         )
-        edge["proof_status"] = strongest_proof_status([edge.get("proof_status"), proof_status])
         edge["evidence"] = unique_list([*string_items(edge.get("evidence")), *string_items(evidence)])[:10]
         edge["evidence_atoms"] = merge_evidence_atoms(edge.get("evidence_atoms"), evidence_atoms, limit=12)
+        proof = normalize_proof_status(proof_status)
+        edge["proof_status"] = strongest_proof_status([edge.get("proof_status"), proof])
+        proof_by_source = edge.get("proof_status_by_source")
+        if not isinstance(proof_by_source, dict):
+            proof_by_source = {}
+        if source:
+            proof_by_source[str(source)] = strongest_proof_status([proof_by_source.get(str(source)), proof])
+        for atom_source, atom_proof in bank_state_record_proof_status_by_source(edge["evidence_atoms"]).items():
+            proof_by_source[atom_source] = strongest_proof_status([proof_by_source.get(atom_source), atom_proof])
+        edge["proof_status_by_source"] = dict(sorted(proof_by_source.items()))
         if seq is not None:
             edge["seq"] = seq
         if confidence is not None:
@@ -1474,6 +1486,54 @@ class GraphBuilder:
             if previous_id:
                 self.add_edge(previous_id, instruction_id, "next_instruction", source=source, proof_status="instruction_observed", seq=record.get("seq", index))
             previous_id = instruction_id
+
+
+def bank_state_record_proof_status_by_source(atoms: Any) -> dict[str, str]:
+    by_source: dict[str, str] = {}
+    for atom in evidence_atoms(atoms):
+        proof = normalize_proof_status(atom.get("proof_status"))
+        for group, records in bank_state_record_groups(atom):
+            for record in records:
+                name = str(record.get("name") or "")
+                source = str(record.get("source") or record.get("source_kind") or "")
+                if not name or not source:
+                    continue
+                key = f"bank_state:{group}:{name}:{source}"
+                by_source[key] = strongest_proof_status([by_source.get(key), proof])
+    return dict(sorted(by_source.items()))
+
+
+def bank_state_record_groups(value: Any) -> list[tuple[str, list[dict[str, Any]]]]:
+    groups: list[tuple[str, list[dict[str, Any]]]] = []
+    if isinstance(value, dict):
+        for key, nested in value.items():
+            key_text = str(key)
+            if key_text.endswith("bank_state_records"):
+                records = [
+                    item
+                    for item in dict_items(nested)
+                    if item.get("name") and item.get("state_kind")
+                ]
+                if records:
+                    groups.append((bank_state_record_group_name(key_text), records))
+                continue
+            if isinstance(nested, dict | list | tuple):
+                groups.extend(bank_state_record_groups(nested))
+    elif isinstance(value, list | tuple):
+        for nested in value:
+            if isinstance(nested, dict | list | tuple):
+                groups.extend(bank_state_record_groups(nested))
+    return groups
+
+
+def bank_state_record_group_name(key: str) -> str:
+    text = key
+    suffix = "_bank_state_records"
+    if text.endswith(suffix):
+        text = text[: -len(suffix)]
+    if text == "bank_state_records":
+        return "bank_state"
+    return text.strip("_") or "bank_state"
 
 
 def build_paths(*, nodes: dict[str, dict[str, Any]], edges: list[dict[str, Any]], max_paths: int) -> list[dict[str, Any]]:

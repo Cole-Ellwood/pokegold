@@ -270,10 +270,13 @@ class P0ProofBoundaryAcceptanceTests(unittest.TestCase):
             )
             (root / "reverse.json").write_text(json.dumps(reverse), encoding="utf-8")
             ranked = rank_findings(reports=("reverse.json",), root=root)
+            graph = build_causal_graph_report(reports=("reverse.json",), root=root)
 
         result = reverse["results"][0]
         span = result["bounded_effect_span_validation"]
         ranked_reverse = next(item for item in ranked["findings"] if item["type"] == "reverse_query")
+        graph_reverse_node = next(item for item in graph["nodes"] if item["kind"] == "reverse_query")
+        graph_answer_edge = next(item for item in graph["edges"] if item["relation"] == "answers_target")
         last_writer_records = {item["name"]: item for item in result["last_writer"]["bank_state_records"]}
         checkpoint_records = {
             item["name"]: item
@@ -304,6 +307,18 @@ class P0ProofBoundaryAcceptanceTests(unittest.TestCase):
         self.assertIn(
             "bank_state_record=last_writer:sram_enabled=0x00 source=bank_state.sram_enabled state=sram_disabled valid_for=sram",
             ranked_reverse["evidence"],
+        )
+        self.assertEqual(
+            graph_reverse_node["proof_status_by_source"][
+                "bank_state:last_writer:sram:inferred_bank_state.sram"
+            ],
+            "instruction_observed",
+        )
+        self.assertEqual(
+            graph_answer_edge["proof_status_by_source"][
+                "bank_state:last_writer:sram_enabled:bank_state.sram_enabled"
+            ],
+            "instruction_observed",
         )
 
     def test_dynamic_taint_consumes_typed_bank_state_records_for_runtime_bank_match(self) -> None:
