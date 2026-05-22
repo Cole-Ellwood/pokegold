@@ -215,9 +215,12 @@ class P0ProofBoundaryAcceptanceTests(unittest.TestCase):
                 symbols_path="test.sym",
                 root=root,
             )
+            (root / "reverse.json").write_text(json.dumps(reverse), encoding="utf-8")
+            ranked = rank_findings(reports=("reverse.json",), root=root)
 
         result = reverse["results"][0]
         span = result["bounded_effect_span_validation"]
+        ranked_reverse = next(item for item in ranked["findings"] if item["type"] == "reverse_query")
         last_writer_records = {item["name"]: item for item in result["last_writer"]["bank_state_records"]}
         checkpoint_records = {
             item["name"]: item
@@ -241,6 +244,14 @@ class P0ProofBoundaryAcceptanceTests(unittest.TestCase):
         self.assertEqual(span_checkpoint_records["sram"]["source_kind"], "inferred_bank_state")
         self.assertEqual(span_write_records["sram_enabled"]["source"], "bank_state.sram_enabled")
         self.assertEqual(atom_records["sram_enabled"]["state_kind"], "sram_disabled")
+        self.assertIn(
+            "bank_state_record=last_writer:sram=0x02 source=inferred_bank_state.sram state=inferred_from_io_write valid_for=sram",
+            ranked_reverse["evidence"],
+        )
+        self.assertIn(
+            "bank_state_record=last_writer:sram_enabled=0x00 source=bank_state.sram_enabled state=sram_disabled valid_for=sram",
+            ranked_reverse["evidence"],
+        )
 
     def test_dynamic_taint_consumes_typed_bank_state_records_for_runtime_bank_match(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
