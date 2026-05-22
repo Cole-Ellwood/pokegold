@@ -14,6 +14,7 @@ from tools.debugger.selftest import (
     CheckResult,
     SelftestReport,
     _format_text,
+    check_bgb_sym_export,
     check_bisect,
     check_context_packet,
     check_coverage,
@@ -128,6 +129,16 @@ class VramDecodeCheckTests(unittest.TestCase):
         self.assertTrue(result.ok, result.error or result.detail)
         self.assertEqual(result.component, "vram_decode")
         self.assertIn("structured diff", result.detail)
+
+
+class BgbSymExportCheckTests(unittest.TestCase):
+    """P7 lived smoke: BGB symbols and memory map export with parity audit."""
+
+    def test_bgb_sym_export_check_passes_in_isolation(self) -> None:
+        result = check_bgb_sym_export(ROOT)
+        self.assertTrue(result.ok, result.error or result.detail)
+        self.assertEqual(result.component, "bgb_sym_export")
+        self.assertIn("parity ok", result.detail)
 
 
 class BisectCheckTests(unittest.TestCase):

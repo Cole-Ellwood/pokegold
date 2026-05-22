@@ -514,6 +514,51 @@ def check_vram_decode(root: Path) -> CheckResult:
     )
 
 
+def check_bgb_sym_export(root: Path) -> CheckResult:
+    """Exercise P7 BGB/Emulicious symbol export and parity audit."""
+
+    import tempfile
+
+    from scripts.emit_bgb_sym import write_bgb_sym
+    from scripts.emit_wram_map import write_wram_map
+    from tools.audit.check_bgb_sym_parity import build_parity_report
+
+    def inner() -> str:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_root = Path(tmp)
+            symbols = tmp_root / "unit.sym"
+            bgb = tmp_root / "unit.bgb.sym"
+            map_txt = tmp_root / "unit.map.txt"
+            symbols.write_text(
+                "01:D141 wCurDamage\n"
+                "03:4000 BattleCommand_DamageCalc\n"
+                "00:FF9F hROMBank\n",
+                encoding="utf-8",
+            )
+            bgb_report = write_bgb_sym(symbols_path=symbols, out_path=bgb)
+            map_report = write_wram_map(symbols_path=symbols, out_path=map_txt)
+            parity = build_parity_report(symbols_path=symbols, bgb_symbols_path=bgb)
+            bgb_text = bgb.read_text(encoding="utf-8")
+            map_text = map_txt.read_text(encoding="utf-8")
+        if bgb_report.get("symbol_count") != 3:
+            raise AssertionError(f"expected 3 BGB symbols; got {bgb_report}")
+        if map_report.get("label_count") != 2:
+            raise AssertionError(f"expected 2 WRAM/HRAM labels; got {map_report}")
+        if not parity.get("ok"):
+            raise AssertionError(f"parity failed: {parity}")
+        if "01:D141 wCurDamage" not in bgb_text:
+            raise AssertionError("BGB export missing wCurDamage")
+        if "WRAM 01 D141 wCurDamage" not in map_text or "HRAM 00 FF9F hROMBank" not in map_text:
+            raise AssertionError("WRAM/HRAM map missing expected rows")
+        return "BGB/Emulicious symbol export parity ok (3 symbols, 2 memory labels)"
+
+    return _capture(
+        component="bgb_sym_export",
+        next_command="make bgb_sym && python tools/audit/check_bgb_sym_parity.py",
+        fn=inner,
+    )
+
+
 def check_save_state_lab(root: Path) -> CheckResult:
     """Round-trip trusted raw WRAM and fail-closed .sgm handling."""
 
@@ -918,6 +963,7 @@ NAMED_CHECKS: tuple[tuple[str, Check], ...] = (
     ("context_packet", check_context_packet),
     ("heatmap", check_heatmap),
     ("vram_decode", check_vram_decode),
+    ("bgb_sym_export", check_bgb_sym_export),
     ("save_state_lab", check_save_state_lab),
     ("bisect", check_bisect),
     ("handoff_log", check_handoff_log),
