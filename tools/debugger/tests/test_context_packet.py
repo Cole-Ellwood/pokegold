@@ -66,6 +66,32 @@ class ContextPacketTests(unittest.TestCase):
         self.assertEqual(packet["structured"]["target"], "codex")
         self.assertEqual(packet["structured"]["citations"][0]["path"], "engine/damage.asm")
 
+    def test_stale_citation_is_marked_on_specific_markdown_entry(self) -> None:
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            store = root / "hypothesis_store.jsonl"
+            (root / "engine").mkdir()
+            cited = root / "engine" / "damage.asm"
+            cited.write_text("; line 1\n; line 2\n", encoding="utf-8")
+            claim_event = hypothesis_tracker.add_claim(
+                symptom="5x physical damage on wild encounter",
+                claim="GetUserItem clobbers de",
+                confidence="repo-proven",
+                citations=("engine/damage.asm:2",),
+                session_id="session-test",
+                store=store,
+                root=root,
+            )
+            cited.unlink()
+
+            packet = build_context_packet(claim_event["id"], root=root, store=store)
+
+        self.assertTrue(packet["valid"], packet)
+        self.assertTrue(packet["citation_stale"])
+        self.assertIn("- Citation drift: YES", packet["markdown"])
+        self.assertIn("- engine/damage.asm:2 (stale)", packet["markdown"])
+        self.assertFalse(packet["structured"]["citations"][0]["resolved"])
+
     def test_token_estimate_within_budget_for_small_packet(self) -> None:
         with TemporaryDirectory() as tmp:
             root = Path(tmp)

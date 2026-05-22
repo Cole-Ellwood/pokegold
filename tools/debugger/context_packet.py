@@ -85,7 +85,11 @@ def build_context_packet(
     citation_stale = bool(folded.get("citation_stale"))
 
     structured = _structured_payload(folded, target=target_normalized, drift_reports=drift_reports)
-    markdown = _render_markdown(folded, target=target_normalized)
+    markdown = _render_markdown(
+        folded,
+        target=target_normalized,
+        drift_reports=drift_reports,
+    )
     token_count = estimate_token_count(markdown)
 
     return {
@@ -157,7 +161,17 @@ def _structured_payload(
     }
 
 
-def _render_markdown(folded: dict[str, Any], *, target: str) -> str:
+def _render_markdown(
+    folded: dict[str, Any],
+    *,
+    target: str,
+    drift_reports: Sequence[dict[str, Any]] = (),
+) -> str:
+    stale_citations = {
+        str(report.get("citation"))
+        for report in drift_reports
+        if report.get("citation") is not None and not report.get("ok", True)
+    }
     lines: list[str] = []
     lines.append(f"# Hypothesis context packet — {folded.get('id', '')}")
     lines.append("")
@@ -187,7 +201,9 @@ def _render_markdown(folded: dict[str, Any], *, target: str) -> str:
         lines.append("## Citations")
         lines.append("")
         for cite in citations:
-            lines.append(f"- {_format_citation(cite)}")
+            lines.append(
+                f"- {_format_citation(cite, stale=str(cite) in stale_citations)}"
+            )
         lines.append("")
     verifications = [ev for ev in folded.get("history", []) if ev.get("kind") == "verification"]
     if verifications:
@@ -215,14 +231,15 @@ def _render_markdown(folded: dict[str, Any], *, target: str) -> str:
     return "\n".join(lines).rstrip() + "\n"
 
 
-def _format_citation(cite: Any) -> str:
+def _format_citation(cite: Any, *, stale: bool = False) -> str:
     if isinstance(cite, dict):
         path = str(cite.get("path") or "")
         line = cite.get("line")
         suffix = ":" + str(line) if line not in (None, "", 0) else ""
-        stale = "" if cite.get("resolved", True) else " (stale)"
-        return f"{path}{suffix}{stale}"
-    return str(cite)
+        marker = " (stale)" if stale or not cite.get("resolved", True) else ""
+        return f"{path}{suffix}{marker}"
+    marker = " (stale)" if stale else ""
+    return f"{cite}{marker}"
 
 
 def _render_missing_markdown(hypothesis_id: str, errors: Sequence[str]) -> str:
