@@ -118,6 +118,7 @@ class DapServerHandshakeTests(unittest.TestCase):
         self.assertTrue(response["success"])
         self.assertIn("supportsConfigurationDoneRequest", response["body"])
         self.assertTrue(response["body"]["supportsConfigurationDoneRequest"])
+        self.assertEqual(response["body"]["exceptionBreakpointFilters"], [])
 
         self.assertEqual(event["type"], "event")
         self.assertEqual(event["event"], "initialized")
@@ -207,6 +208,44 @@ class DapServerThreadsTests(unittest.TestCase):
         self.assertEqual(len(body["threads"]), 1)
         self.assertEqual(body["threads"][0]["name"], "sm83")
         self.assertEqual(body["threads"][0]["id"], 1)
+
+
+class DapServerSetExceptionBreakpointsTests(unittest.TestCase):
+    def test_empty_exception_breakpoints_are_noop_success(self) -> None:
+        server = DapServer()
+        responses = server.handle_message({
+            "seq": 6,
+            "type": "request",
+            "command": "setExceptionBreakpoints",
+            "arguments": {"filters": []},
+        })
+
+        self.assertTrue(responses[0]["success"], responses)
+        self.assertEqual(responses[0]["body"], {"breakpoints": []})
+
+    def test_exception_breakpoints_rejects_unsupported_filters(self) -> None:
+        server = DapServer()
+        responses = server.handle_message({
+            "seq": 6,
+            "type": "request",
+            "command": "setExceptionBreakpoints",
+            "arguments": {"filters": ["caught"]},
+        })
+
+        self.assertFalse(responses[0]["success"])
+        self.assertIn("no exception breakpoint filters", responses[0]["message"])
+
+    def test_exception_breakpoints_rejects_non_string_filter(self) -> None:
+        server = DapServer()
+        responses = server.handle_message({
+            "seq": 6,
+            "type": "request",
+            "command": "setExceptionBreakpoints",
+            "arguments": {"filters": [True]},
+        })
+
+        self.assertFalse(responses[0]["success"])
+        self.assertIn("filters must be a list of strings", responses[0]["message"])
 
 
 class DapServerSyntheticStackScopeTests(unittest.TestCase):
@@ -659,6 +698,7 @@ class DapServerCliTests(unittest.TestCase):
         self.assertEqual(caught.exception.code, 0)
         text = stdout.getvalue()
         self.assertIn("evaluate(tdb)", text)
+        self.assertIn("setExceptionBreakpoints", text)
         self.assertIn("Current slices", text)
         self.assertNotIn("scopes/evaluate(tdb)/reverseContinue", text)
 

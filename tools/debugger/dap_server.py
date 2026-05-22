@@ -5,7 +5,8 @@
 and Codex (and VS Code, and any DAP client) can drive the debugger
 through a normalized JSON protocol instead of re-inventing per-session
 glue. Current slices ship Content-Length framing, initialize, launch,
-configurationDone, setBreakpoints (recorded as unverified), threads,
+configurationDone, setExceptionBreakpoints (no-op; no filters
+advertised), setBreakpoints (recorded as unverified), threads,
 synthetic stackTrace/scopes/variables, evaluate(tdb), and disconnect.
 Later slices add live CPU frame state, reverseContinue, pause, and
 continue.
@@ -59,6 +60,7 @@ class DapServer:
             "supportsEvaluateForHovers": True,
             "supportsRestartRequest": False,
             "supportsStepBack": False,
+            "exceptionBreakpointFilters": [],
         }
     )
     default_reports: tuple[str, ...] = ()
@@ -158,6 +160,39 @@ class DapServer:
                 body={"threads": [{"id": 1, "name": "sm83"}]},
             )
         ]
+
+    def _set_exception_breakpoints_response(
+        self, message: dict[str, Any], request_seq: int
+    ) -> list[dict[str, Any]]:
+        args = message.get("arguments", {})
+        if not isinstance(args, dict):
+            return [self._error_response(
+                request_seq=request_seq,
+                command="setExceptionBreakpoints",
+                message="setExceptionBreakpoints arguments must be an object",
+            )]
+        filters = args.get("filters", [])
+        if (
+            not isinstance(filters, list)
+            or any(not isinstance(item, str) for item in filters)
+        ):
+            return [self._error_response(
+                request_seq=request_seq,
+                command="setExceptionBreakpoints",
+                message="setExceptionBreakpoints filters must be a list of strings",
+            )]
+        if filters:
+            return [self._error_response(
+                request_seq=request_seq,
+                command="setExceptionBreakpoints",
+                message="no exception breakpoint filters are supported yet",
+            )]
+        return [self._response(
+            request_seq=request_seq,
+            command="setExceptionBreakpoints",
+            success=True,
+            body={"breakpoints": []},
+        )]
 
     def _stack_trace_response(
         self, message: dict[str, Any], request_seq: int
@@ -465,6 +500,7 @@ _COMMAND_HANDLERS: dict[
     "initialize": DapServer._initialize_response,
     "launch": DapServer._launch_response,
     "configurationDone": DapServer._configuration_done_response,
+    "setExceptionBreakpoints": DapServer._set_exception_breakpoints_response,
     "setBreakpoints": DapServer._set_breakpoints_response,
     "threads": DapServer._threads_response,
     "stackTrace": DapServer._stack_trace_response,
@@ -598,9 +634,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         prog="python -m tools.debugger.dap_server",
         description=(
             "Minimal Debug Adapter Protocol server (P14). Current slices "
-            "ship initialize, launch, configurationDone, setBreakpoints, threads, "
-            "synthetic stackTrace/scopes/variables, evaluate(tdb), and disconnect; "
-            "later slices add live CPU frame state/reverseContinue."
+            "ship initialize, launch, configurationDone, setExceptionBreakpoints, "
+            "setBreakpoints, threads, synthetic stackTrace/scopes/variables, "
+            "evaluate(tdb), and disconnect; later slices add live CPU frame "
+            "state/reverseContinue."
         ),
     )
     parser.add_argument(
