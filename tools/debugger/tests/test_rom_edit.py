@@ -917,8 +917,10 @@ class RomEditSelfTestTests(unittest.TestCase):
 
         self.assertTrue(report["passed"], report)
         self.assertEqual(report["proposal_status"], "proposed")
+        self.assertEqual(report["build_status"], "passed")
         self.assertEqual(report["verify_status"], "passed")
         self.assertEqual(report["apply_status"], "applied")
+        self.assertEqual(report["removed_branch"], "rom-edit/selftest")
         self.assertEqual(tuple(report["changed_files"]), ("file.txt",))
 
     def test_self_test_cli_exits_zero(self) -> None:
@@ -938,7 +940,7 @@ class RomEditSelfTestTests(unittest.TestCase):
         )
 
         self.assertEqual(proc.returncode, 0, proc.stderr)
-        self.assertIn("rom-edit self-test: passed", proc.stdout)
+        self.assertIn("rom-edit roundtrip PASS", proc.stdout)
 
 
 if __name__ == "__main__":

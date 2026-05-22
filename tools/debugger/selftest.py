@@ -1230,7 +1230,7 @@ def check_rom_edit(root: Path) -> CheckResult:
         report = run_self_test()
         if not report.get("passed"):
             raise AssertionError(f"rom-edit selftest failed: {report}")
-        return "rom-edit temp repo propose/verify/apply-to-main round-trip ok"
+        return "rom-edit temp repo propose/build/verify/apply-to-main round-trip ok"
 
     return _capture(
         component="rom_edit",

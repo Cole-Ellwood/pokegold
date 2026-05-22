@@ -455,7 +455,14 @@ def run_self_test() -> dict[str, Any]:
             slug="selftest",
         )
         worktree_path = proposal["worktree"]["path"]
+        removed: dict[str, str] = {}
         try:
+            build_report = build_rom_edit_worktree(
+                worktree_path,
+                command="python -c \"print('rom-edit build wrapper ok')\"",
+                root=repo,
+                timeout_seconds=30,
+            )
             verify_report = verify_rom_edit_worktree(
                 worktree_path,
                 commands=(
@@ -465,7 +472,7 @@ def run_self_test() -> dict[str, Any]:
                 root=repo,
                 timeout_seconds=30,
             )
-            if verify_report["passed"]:
+            if build_report["passed"] and verify_report["passed"]:
                 apply_report = apply_rom_edit_to_main(
                     worktree_path,
                     changed_files=("file.txt",),
@@ -481,19 +488,23 @@ def run_self_test() -> dict[str, Any]:
                 apply_report = {"status": "skipped", "applied": False}
             root_text = (repo / "file.txt").read_text(encoding="utf-8")
         finally:
-            remove_rom_edit_worktree(worktree_path, root=repo)
+            removed = remove_rom_edit_worktree(worktree_path, root=repo)
 
         return {
             "kind": "rom_edit_self_test",
             "passed": (
                 proposal["status"] == "proposed"
+                and build_report["passed"]
                 and verify_report["passed"]
                 and apply_report["applied"]
+                and bool(removed.get("removed_branch"))
                 and root_text == "two\n"
             ),
             "proposal_status": proposal["status"],
+            "build_status": build_report["status"],
             "verify_status": verify_report["status"],
             "apply_status": apply_report["status"],
+            "removed_branch": removed.get("removed_branch", ""),
             "changed_files": proposal["changed_files"],
         }
 
@@ -667,8 +678,8 @@ def cmd_gate(args: argparse.Namespace) -> int:
 
 def cmd_self_test(args: argparse.Namespace) -> int:
     report = run_self_test()
-    status = "passed" if report["passed"] else "failed"
-    print(f"rom-edit self-test: {status}")
+    status = "PASS" if report["passed"] else "FAIL"
+    print(f"rom-edit roundtrip {status}")
     return 0 if report["passed"] else 1
 
 
