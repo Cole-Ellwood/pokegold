@@ -157,6 +157,46 @@ python -m tools.debugger.hypothesis_tracker add `
 
 Then refine as evidence comes in.
 
+### "Input log is too long to inspect"
+
+Use this after `capture-playtest`, `replay`, or a manual repro gives
+you a long `.inputs` file but the bug only needs a few button events.
+
+**First command**
+
+```powershell
+python -m tools.debugger minimize `
+  --domain input_log `
+  --input-log .local/tmp/bug.inputs `
+  --expect event=played_input,button=A `
+  --expect event=played_input,button=START `
+  --out-input-log .local/tmp/bug.min.inputs `
+  --json-out .local/tmp/bug.minimize.json
+```
+
+Then feed the minimized artifact back into replay or investigate:
+
+```powershell
+python -m tools.debugger replay `
+  --report .local/tmp/bug.minimize.json `
+  --input-log .local/tmp/bug.min.inputs
+```
+
+**Success looks like**
+
+The minimization report has `input_log_minimization.preserved=true`,
+a smaller `minimized_event_count`, and a non-empty `reduction_trace`.
+The output log keeps the retained events' original timing, so a long
+repro can collapse to the shortest button sequence that still satisfies
+the explicit input predicate.
+
+**Proof limit**
+
+`--domain input_log` proves only that the reduced text input log still
+contains the declared input evidence. It does not prove the ROM symptom
+still reproduces until a replay/watch/investigation route executes the
+minimized log against the ROM.
+
 ### "Damage is wrong"
 
 The most common bug class in this hack. Bind to the existing damage
