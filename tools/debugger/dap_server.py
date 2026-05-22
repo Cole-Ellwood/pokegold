@@ -5,8 +5,9 @@
 and Codex (and VS Code, and any DAP client) can drive the debugger
 through a normalized JSON protocol instead of re-inventing per-session
 glue. Current slices ship Content-Length framing, initialize, launch,
-threads, evaluate(tdb), and disconnect. Later slices add stackTrace,
-scopes, setBreakpoints, reverseContinue, pause, and continue.
+configurationDone, threads, evaluate(tdb), and disconnect. Later slices
+add stackTrace, scopes, setBreakpoints, reverseContinue, pause, and
+continue.
 
 Protocol shape grounded in microsoft/debug-adapter-protocol spec
 (https://microsoft.github.io/debug-adapter-protocol/specification.html).
@@ -50,7 +51,7 @@ class DapServer:
     _seq: int = 0
     capabilities: dict[str, Any] = field(
         default_factory=lambda: {
-            "supportsConfigurationDoneRequest": False,
+            "supportsConfigurationDoneRequest": True,
             "supportsConditionalBreakpoints": False,
             "supportsEvaluateForHovers": True,
             "supportsRestartRequest": False,
@@ -183,6 +184,15 @@ class DapServer:
             success=True,
         )]
 
+    def _configuration_done_response(
+        self, message: dict[str, Any], request_seq: int
+    ) -> list[dict[str, Any]]:
+        return [self._response(
+            request_seq=request_seq,
+            command="configurationDone",
+            success=True,
+        )]
+
     def _disconnect_response(
         self, message: dict[str, Any], request_seq: int
     ) -> list[dict[str, Any]]:
@@ -246,6 +256,7 @@ _COMMAND_HANDLERS: dict[
 ] = {
     "initialize": DapServer._initialize_response,
     "launch": DapServer._launch_response,
+    "configurationDone": DapServer._configuration_done_response,
     "threads": DapServer._threads_response,
     "evaluate": DapServer._evaluate_response,
     "disconnect": DapServer._disconnect_response,
@@ -375,7 +386,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         prog="python -m tools.debugger.dap_server",
         description=(
             "Minimal Debug Adapter Protocol server (P14). Current slices "
-            "ship initialize, launch, threads, evaluate(tdb), and disconnect; later slices add "
+            "ship initialize, launch, configurationDone, threads, evaluate(tdb), and disconnect; later slices add "
             "setBreakpoints/stackTrace/scopes/reverseContinue."
         ),
     )

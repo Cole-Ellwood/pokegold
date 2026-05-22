@@ -1325,8 +1325,8 @@ def _build_v2_surfaces(root: Path = ROOT) -> list[dict[str, Any]]:
             scope=(
                 "DAP-shaped protocol surface for debugger clients. Current slices ship "
                 "Content-Length framing, initialize and launch handshakes, single SM83 "
-                "thread enumeration, evaluate(tdb) over supplied effect-trace reports, "
-                "and clean disconnect."
+                "thread enumeration, configurationDone, evaluate(tdb) over supplied "
+                "effect-trace reports, and clean disconnect."
             ),
             evidence=(
                 "tools/debugger/dap_server.py",

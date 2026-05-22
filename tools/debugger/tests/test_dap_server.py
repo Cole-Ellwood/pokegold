@@ -115,6 +115,7 @@ class DapServerHandshakeTests(unittest.TestCase):
         self.assertEqual(response["request_seq"], 7)
         self.assertTrue(response["success"])
         self.assertIn("supportsConfigurationDoneRequest", response["body"])
+        self.assertTrue(response["body"]["supportsConfigurationDoneRequest"])
 
         self.assertEqual(event["type"], "event")
         self.assertEqual(event["event"], "initialized")
@@ -271,6 +272,21 @@ class DapServerDisconnectTests(unittest.TestCase):
         self.assertTrue(responses[0]["success"])
         self.assertEqual(responses[0]["command"], "disconnect")
         self.assertEqual(responses[0]["request_seq"], 6)
+
+
+class DapServerConfigurationDoneTests(unittest.TestCase):
+    def test_configuration_done_returns_success_response(self) -> None:
+        server = DapServer()
+        responses = server.handle_message({
+            "seq": 7,
+            "type": "request",
+            "command": "configurationDone",
+        })
+
+        self.assertEqual(len(responses), 1)
+        self.assertTrue(responses[0]["success"])
+        self.assertEqual(responses[0]["command"], "configurationDone")
+        self.assertEqual(responses[0]["request_seq"], 7)
 
 
 class DapServerEvaluateTests(unittest.TestCase):
