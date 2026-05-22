@@ -244,6 +244,9 @@ def build_instruction_trace_report(
     )
     warnings.extend(execution_validation["warnings"])
     errors.extend(execution_validation["errors"])
+    from .probe import active_probe_stats as _active_probe_stats
+
+    probe_stats = _active_probe_stats(events=captured_records, root=root)
 
     commands = build_commands(
         function_symbols=function_symbols,
@@ -303,6 +306,9 @@ def build_instruction_trace_report(
         "function_count": len(plans),
         "instruction_count": sum(int(plan.get("instruction_count", 0)) for plan in plans),
         "watch_count": len(watches),
+        "probe_count": probe_stats["active_probe_count"],
+        "probe_fire_count": probe_stats["fire_count"],
+        "probe_stats": probe_stats,
         "captured_frame_count": len(captured_records),
         "played_inputs": played_inputs,
         "played_input_count": len(played_inputs),

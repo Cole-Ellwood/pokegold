@@ -2573,6 +2573,7 @@ def format_instruction_trace(report: dict[str, Any]) -> str:
             f"valid={report['valid']} executed={report['executed']} "
             f"functions={report['function_count']} instructions={report['instruction_count']} "
             f"captured={report['captured_frame_count']} watches={report['watch_count']} "
+            f"probes={report.get('probe_count', 0)} probe_fires={report.get('probe_fire_count', 0)} "
             f"errors={report['error_count']} warnings={report['warning_count']}"
         ),
         f"rom={report['rom']} sha256={report['rom_sha256'][:12]}",
@@ -2611,6 +2612,20 @@ def format_instruction_trace(report: dict[str, Any]) -> str:
             lines.append(f"hit_functions={hit_functions}")
         if missing_functions:
             lines.append(f"missing_functions={missing_functions}")
+    probe_stats = report.get("probe_stats")
+    if isinstance(probe_stats, dict) and probe_stats.get("active_probe_count"):
+        lines.append(
+            "probe_stats="
+            f"active={probe_stats.get('active_probe_count', 0)} "
+            f"fires={probe_stats.get('fire_count', 0)}"
+        )
+        for item in probe_stats.get("stats", [])[:5]:
+            if not isinstance(item, dict):
+                continue
+            lines.append(
+                f"  probe {item.get('name', '')}: fires={item.get('fire_count', 0)} "
+                f"frames={item.get('frame_span', '')}"
+            )
     if report.get("functions"):
         lines.extend(["", "Functions:"])
         for function in report["functions"][:12]:

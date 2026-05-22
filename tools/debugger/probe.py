@@ -146,8 +146,6 @@ def build_probe_stats_report(
     root: Path = ROOT,
 ) -> dict[str, Any]:
     store = resolve_path(store_path, root=root)
-    rows = load_probe_rows(store)
-    probes = active_probes(rows)
     errors: list[str] = []
     if not traces:
         errors.append("at least one --trace is required")
@@ -160,7 +158,7 @@ def build_probe_stats_report(
         trace_events, trace_errors = load_trace_events(trace_path)
         events.extend(trace_events)
         errors.extend(f"{trace}: {error}" for error in trace_errors)
-    stats = [probe_stats(probe, events) for probe in sorted(probes.values(), key=lambda item: item["name"])]
+    summary = active_probe_stats(events=events, store_path=store_path, root=root)
     return {
         "schema_version": SCHEMA_VERSION,
         "kind": "unified_debugger_probe_stats",
@@ -169,9 +167,30 @@ def build_probe_stats_report(
         "symbols": str(resolve_path(symbols_path, root=root)),
         "trace_count": len(traces),
         "event_count": len(events),
-        "active_probe_count": len(probes),
-        "stats": stats,
+        "row_count": summary["row_count"],
+        "active_probe_count": summary["active_probe_count"],
+        "fire_count": summary["fire_count"],
+        "stats": summary["stats"],
         "errors": errors,
+    }
+
+
+def active_probe_stats(
+    *,
+    events: Sequence[Mapping[str, Any]],
+    store_path: str = DEFAULT_STORE,
+    root: Path = ROOT,
+) -> dict[str, Any]:
+    store = resolve_path(store_path, root=root)
+    rows = load_probe_rows(store)
+    probes = active_probes(rows)
+    stats = [probe_stats(probe, events) for probe in sorted(probes.values(), key=lambda item: item["name"])]
+    return {
+        "store": str(store),
+        "row_count": len(rows),
+        "active_probe_count": len(probes),
+        "fire_count": sum(int(item.get("fire_count", 0)) for item in stats),
+        "stats": stats,
     }
 
 

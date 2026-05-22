@@ -13,7 +13,7 @@ from unittest.mock import patch
 from tools.damage_debugger.disasm import Instruction, render_mnemonic
 from tools.damage_debugger.taint import Sink as DamageSink
 from tools.damage_debugger.taint import SyntheticFrame, TaintEngine
-from tools.debugger.__main__ import format_compare_plan, format_gate, main as debugger_main
+from tools.debugger.__main__ import format_compare_plan, format_gate, format_instruction_trace, main as debugger_main
 from tools.debugger.address import address_key, address_spec_requires_exact_key, observed_address_key, parse_address_spec
 from tools.debugger.causal_graph import build_causal_graph_report
 from tools.debugger.catalog import (
@@ -48,6 +48,7 @@ from tools.debugger.localize import build_localization_plan
 from tools.debugger.minimize import build_minimization_plan
 from tools.debugger.mirrors import build_compare_plan
 from tools.debugger.playtest_packet import build_playtest_packet
+from tools.debugger.probe import declare_probe
 from tools.debugger.provenance import build_provenance_report
 from tools.debugger.ranking import rank_findings
 from tools.debugger.replay import build_replay_plan
@@ -7487,6 +7488,12 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
                 encoding="utf-8",
             )
             out_trace = root / "trace.jsonl"
+            declare_probe(
+                name="unit_func_entry",
+                pc="UnitFunc",
+                symbols_path="test.sym",
+                root=root,
+            )
 
             with patch("tools.debugger.instruction_trace.trace_runtime.open_pyboy", return_value=FakePyBoy()):
                 report = build_instruction_trace_report(
@@ -7515,6 +7522,13 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(validation["missing_function_symbols"], [])
         self.assertEqual(report["captured_frame_count"], 3)
         self.assertEqual(report["trace_output"]["record_count"], 3)
+        self.assertEqual(report["probe_count"], 1)
+        self.assertEqual(report["probe_fire_count"], 3)
+        self.assertEqual(report["probe_stats"]["stats"][0]["name"], "unit_func_entry")
+        self.assertEqual(report["probe_stats"]["stats"][0]["fire_count"], 3)
+        formatted = format_instruction_trace(report)
+        self.assertIn("probes=1 probe_fires=3", formatted)
+        self.assertIn("probe unit_func_entry: fires=3", formatted)
         self.assertEqual(rows[0]["function"], "UnitFunc")
         self.assertEqual(rows[0]["watch_values"]["wCurDamage"], "002A")
 
