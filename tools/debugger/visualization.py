@@ -13,9 +13,11 @@ from .address_boundary import (
     reverse_query_address_boundary_summary,
 )
 from .catalog import ROOT
+from .causal_graph import bank_state_record_proof_status_by_source
 from .coverage import load_traces
 from .evidence import evidence_atoms
 from .ranking import (
+    bank_state_record_evidence_from_atoms,
     materialized_save_state_delta,
     minimized_state_patch_save_state_delta,
     save_state_delta_evidence,
@@ -321,6 +323,7 @@ def collect_report_timeline(data: dict[str, Any], *, source: str, out: list[dict
                 ]),
                 severity=66,
                 proof_status=proof,
+                evidence_atoms=result.get("evidence_atoms"),
             )
             event.update(reverse_query_address_boundary_fields(result))
             out.append(event)
@@ -1650,7 +1653,15 @@ def collect_graph(*, loaded_reports: list[dict[str, Any]]) -> dict[str, list[dic
                 result_proof = reverse_query_result_proof_status(result, report=data)
                 address_boundary_fields = reverse_query_address_boundary_fields(result)
                 address_boundary_evidence = reverse_query_address_boundary_evidence(result)
-                query_node = add_graph_node(nodes, query_id, f"Reverse query {label}", "reverse_query", source, result_proof)
+                query_node = add_graph_node(
+                    nodes,
+                    query_id,
+                    f"Reverse query {label}",
+                    "reverse_query",
+                    source,
+                    result_proof,
+                    evidence_atoms=result.get("evidence_atoms"),
+                )
                 if query_node is not None:
                     query_node.update(address_boundary_fields)
                     query_node["addresses"] = unique_list(
@@ -2490,8 +2501,10 @@ def timeline_event(
     addresses: list[str] | None = None,
     severity: int = 0,
     proof_status: Any = None,
+    evidence_atoms: Any = None,
 ) -> dict[str, Any]:
     proof = normalize_proof_status(proof_status)
+    bank_state_detail = " ".join(bank_state_record_evidence_from_atoms(evidence_atoms))
     event = {
         "lane": lane,
         "type": event_type,
@@ -2500,7 +2513,7 @@ def timeline_event(
         "source": source,
         "frame": frame,
         "order": int(order),
-        "detail": detail,
+        "detail": " ".join(part for part in (detail, bank_state_detail) if part),
         "symbols": unique_list([item for item in symbols or [] if item]),
         "files": unique_list([item for item in files or [] if item]),
         "addresses": unique_list([item for item in addresses or [] if item]),
@@ -2916,6 +2929,7 @@ def add_graph_node(
     *,
     proof_status_by_source: Any = None,
     proof_summary: Any = None,
+    evidence_atoms: Any = None,
 ) -> dict[str, Any] | None:
     if not node_id:
         return None
@@ -2951,11 +2965,16 @@ def add_graph_node(
                 continue
             source_proofs[source_key] = strongest_proof_status([source_proofs.get(source_key), value])
     elif source:
-            source_proofs[str(source)] = strongest_proof_status([source_proofs.get(str(source)), proof])
+        source_proofs[str(source)] = strongest_proof_status([source_proofs.get(str(source)), proof])
+    for key, value in bank_state_record_proof_status_by_source(evidence_atoms).items():
+        source_proofs[key] = strongest_proof_status([source_proofs.get(key), value])
     node["proof_status_by_source"] = dict(sorted(source_proofs.items()))
     summary = (
         normalized_graph_node_proof_summary(proof_summary)
-        or graph_node_proof_summary_from_counts(node.get("proof_status_counts"), source_count=len(source_proofs))
+        or graph_node_proof_summary_from_counts_and_sources(
+            node.get("proof_status_counts"),
+            source_proofs,
+        )
         or graph_node_proof_summary(source_proofs.values())
     )
     node["proof_summary"] = summary
@@ -3265,19 +3284,27 @@ def graph_node_proof_summary(values: Any) -> dict[str, Any]:
     }
 
 
-def graph_node_proof_summary_from_counts(value: Any, *, source_count: int) -> dict[str, Any] | None:
-    if not isinstance(value, dict):
-        return None
+def graph_node_proof_summary_from_counts_and_sources(
+    counts: Any,
+    source_proofs: dict[str, Any],
+) -> dict[str, Any] | None:
+    if not isinstance(counts, dict):
+        counts = {}
     statuses = [
         normalize_proof_status(status)
-        for status, count in value.items()
+        for status, count in counts.items()
         if normalize_proof_status(status) and int_value(count) > 0
     ]
+    statuses.extend(
+        normalize_proof_status(status)
+        for status in source_proofs.values()
+        if normalize_proof_status(status)
+    )
     if not statuses:
         return None
     summary = graph_node_proof_summary(statuses)
-    summary["source_count"] = source_count
-    summary["status_count"] = sum(int_value(count) for count in value.values())
+    summary["source_count"] = len(source_proofs)
+    summary["status_count"] = sum(int_value(count) for count in counts.values())
     return summary
 
 

@@ -271,12 +271,19 @@ class P0ProofBoundaryAcceptanceTests(unittest.TestCase):
             (root / "reverse.json").write_text(json.dumps(reverse), encoding="utf-8")
             ranked = rank_findings(reports=("reverse.json",), root=root)
             graph = build_causal_graph_report(reports=("reverse.json",), root=root)
+            visualization = build_visualization_report(reports=("reverse.json",), root=root)
 
         result = reverse["results"][0]
         span = result["bounded_effect_span_validation"]
         ranked_reverse = next(item for item in ranked["findings"] if item["type"] == "reverse_query")
         graph_reverse_node = next(item for item in graph["nodes"] if item["kind"] == "reverse_query")
         graph_answer_edge = next(item for item in graph["edges"] if item["relation"] == "answers_target")
+        visualization_reverse_event = next(
+            item for item in visualization["timeline"] if item["type"] == "reverse_query"
+        )
+        visualization_reverse_node = next(
+            item for item in visualization["graph"]["nodes"] if item["type"] == "reverse_query"
+        )
         last_writer_records = {item["name"]: item for item in result["last_writer"]["bank_state_records"]}
         checkpoint_records = {
             item["name"]: item
@@ -299,17 +306,25 @@ class P0ProofBoundaryAcceptanceTests(unittest.TestCase):
         self.assertEqual(checkpoint_records["sram_enabled"]["state_kind"], "sram_disabled")
         self.assertEqual(span_checkpoint_records["sram"]["source_kind"], "inferred_bank_state")
         self.assertEqual(span_write_records["sram_enabled"]["source"], "bank_state.sram_enabled")
-        self.assertEqual(atom_records["sram_enabled"]["state_kind"], "sram_disabled")
-        self.assertIn(
-            "bank_state_record=last_writer:sram=0x02 source=inferred_bank_state.sram state=inferred_from_io_write valid_for=sram",
-            ranked_reverse["evidence"],
+        sram_bank_evidence = (
+            "bank_state_record=last_writer:sram=0x02 source=inferred_bank_state.sram "
+            "state=inferred_from_io_write valid_for=sram"
         )
+        self.assertEqual(atom_records["sram_enabled"]["state_kind"], "sram_disabled")
+        self.assertIn(sram_bank_evidence, ranked_reverse["evidence"])
+        self.assertIn(sram_bank_evidence, visualization_reverse_event["detail"])
         self.assertIn(
             "bank_state_record=last_writer:sram_enabled=0x00 source=bank_state.sram_enabled state=sram_disabled valid_for=sram",
             ranked_reverse["evidence"],
         )
         self.assertEqual(
             graph_reverse_node["proof_status_by_source"][
+                "bank_state:last_writer:sram:inferred_bank_state.sram"
+            ],
+            "instruction_observed",
+        )
+        self.assertEqual(
+            visualization_reverse_node["proof_status_by_source"][
                 "bank_state:last_writer:sram:inferred_bank_state.sram"
             ],
             "instruction_observed",
