@@ -92,7 +92,7 @@ PHASE is not complete." The loader normalizes them on read:
 - `ready_for_claude_review` → `ready_for_review`
 - `slice_accepted_partial_P0` → `slice_accepted` with `legacy_partial_phase=True`
   attached; the gate ignores `legacy_partial_phase=True` review rows so the
-  partial-acceptance signal is preserved (Codex catch on commit `aea33f85`).
+  partial-acceptance signal is preserved.
 
 Append-only invariant: the legacy rows are NOT rewritten. New rows from
 `HandoffRow.as_dict()` ship with `schema_version=1` and skip normalization.
