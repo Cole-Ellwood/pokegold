@@ -15,6 +15,7 @@ from tools.debugger.rom_edit import (
     GateResult,
     RomEditWorktreeError,
     apply_unified_patch_to_worktree,
+    build_rom_edit_worktree,
     create_rom_edit_worktree,
     decide_auto_apply,
     default_worktree_base,
@@ -619,6 +620,65 @@ class RomEditVerifyCommandTests(unittest.TestCase):
         report = json.loads(proc.stdout)
         self.assertTrue(report["passed"], report)
         self.assertEqual(report["steps"][0]["stdout_tail"], ["verify ok"])
+
+
+class RomEditBuildCommandTests(unittest.TestCase):
+    def test_build_runs_command_inside_worktree(self) -> None:
+        with TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            _init_repo(repo)
+            worktree = create_rom_edit_worktree(root=repo, slug="build-pass")
+            command = (
+                "python -c \"from pathlib import Path; "
+                "Path('build.txt').write_text('built', encoding='utf-8')\""
+            )
+
+            report = build_rom_edit_worktree(
+                worktree.path,
+                command=command,
+                root=repo,
+                timeout_seconds=30,
+            )
+
+            self.assertTrue(report["passed"], report)
+            self.assertEqual(report["kind"], "rom_edit_build_report")
+            self.assertEqual(
+                (Path(worktree.path) / "build.txt").read_text(encoding="utf-8"),
+                "built",
+            )
+
+    def test_build_cli_emits_json_and_exit_code(self) -> None:
+        with TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            _init_repo(repo)
+            worktree = create_rom_edit_worktree(root=repo, slug="build-cli")
+            proc = subprocess.run(
+                [
+                    "python",
+                    "-m",
+                    "tools.debugger",
+                    "rom-edit",
+                    "build",
+                    "--root",
+                    str(repo),
+                    "--worktree-path",
+                    worktree.path,
+                    "--command",
+                    "python -c \"print('build ok')\"",
+                    "--json",
+                ],
+                cwd=ROOT,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+            )
+
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        report = json.loads(proc.stdout)
+        self.assertTrue(report["passed"], report)
+        self.assertEqual(report["kind"], "rom_edit_build_report")
+        self.assertEqual(report["steps"][0]["stdout_tail"], ["build ok"])
 
 
 if __name__ == "__main__":

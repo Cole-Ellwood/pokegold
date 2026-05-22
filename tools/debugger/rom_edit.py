@@ -22,6 +22,14 @@ SAVE_FORMAT_GATE_NAME = "save_format_version"
 RELEASE_SMOKE_COMMAND = "python tools/audit/check_release_smoke.py"
 SAVE_FORMAT_COMMAND = "python tools/audit/check_save_format_version.py"
 DEFAULT_VERIFY_COMMANDS = (RELEASE_SMOKE_COMMAND,)
+DEFAULT_BUILD_COMMAND = (
+    "bash -lc \"make -j4 PYTHON=python3 "
+    "RGBASM=rgbds-1.0.1/rgbasm.exe "
+    "RGBLINK=rgbds-1.0.1/rgblink.exe "
+    "RGBFIX=rgbds-1.0.1/rgbfix.exe "
+    "RGBGFX=rgbds-1.0.1/rgbgfx.exe "
+    "pokegold.gbc pokesilver.gbc\""
+)
 ROM_EDIT_WORKTREE_DIR = Path(".local") / "tmp" / "rom_edit_worktrees"
 PROTECTED_BRANCHES = frozenset(
     {
@@ -319,6 +327,26 @@ def verify_rom_edit_worktree(
     }
 
 
+def build_rom_edit_worktree(
+    worktree_path: str | Path,
+    *,
+    command: str = DEFAULT_BUILD_COMMAND,
+    root: Path = ROOT,
+    base_dir: Path | None = None,
+    timeout_seconds: int = 900,
+) -> dict[str, Any]:
+    report = verify_rom_edit_worktree(
+        worktree_path,
+        commands=(command,),
+        root=root,
+        base_dir=base_dir,
+        timeout_seconds=timeout_seconds,
+    )
+    report["kind"] = "rom_edit_build_report"
+    report["build_command"] = command
+    return report
+
+
 def format_decision(decision: Mapping[str, Any]) -> str:
     status = "ALLOWED" if decision.get("allowed") else "REFUSED"
     lines = [f"rom-edit auto-apply: {status}"]
@@ -417,6 +445,17 @@ def build_parser() -> argparse.ArgumentParser:
     verify.add_argument("--timeout-seconds", type=int, default=600)
     verify.add_argument("--json", action="store_true")
     verify.set_defaults(func=cmd_verify)
+
+    build = sub.add_parser(
+        "build",
+        help="Run the ROM build command inside a rom-edit worktree.",
+    )
+    build.add_argument("--worktree-path", required=True)
+    build.add_argument("--command", default=DEFAULT_BUILD_COMMAND)
+    build.add_argument("--root", default=str(ROOT))
+    build.add_argument("--timeout-seconds", type=int, default=900)
+    build.add_argument("--json", action="store_true")
+    build.set_defaults(func=cmd_build)
     return parser
 
 
@@ -465,6 +504,24 @@ def cmd_verify(args: argparse.Namespace) -> int:
         print(json.dumps(report, indent=2))
     else:
         print(f"rom-edit verify: {report['status']}")
+        for step in report["steps"]:
+            print(f"  {step['status']}: {step['command']}")
+            if step.get("failure_summary"):
+                print(f"    {step['failure_summary']}")
+    return 0 if report["passed"] else 1
+
+
+def cmd_build(args: argparse.Namespace) -> int:
+    report = build_rom_edit_worktree(
+        args.worktree_path,
+        command=args.command,
+        root=Path(args.root),
+        timeout_seconds=args.timeout_seconds,
+    )
+    if args.json:
+        print(json.dumps(report, indent=2))
+    else:
+        print(f"rom-edit build: {report['status']}")
         for step in report["steps"]:
             print(f"  {step['status']}: {step['command']}")
             if step.get("failure_summary"):
