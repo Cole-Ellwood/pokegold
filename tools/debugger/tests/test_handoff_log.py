@@ -186,6 +186,62 @@ class MutualVerifiedGateTests(unittest.TestCase):
         verified, _ = is_mutual_verified(rows, "P0")
         self.assertFalse(verified, "self-review by primary cannot satisfy mutual gate")
 
+    def test_legacy_partial_p0_review_does_not_verify_whole_phase(self) -> None:
+        with TemporaryDirectory() as tmp:
+            store = Path(tmp) / "handoff.jsonl"
+            store.write_text(
+                "\n".join(
+                    json.dumps(row)
+                    for row in [
+                        {
+                            "phase": "P0",
+                            "event": "codex_ack_start",
+                            "status": "in_progress",
+                            "primary": "codex",
+                            "model": "codex",
+                            "confidence": "repo-proven",
+                            "claim": "Codex started P0.",
+                        },
+                        {
+                            "phase": "P0",
+                            "event": "codex_slice_update",
+                            "status": "ready_for_claude_review",
+                            "primary": "codex",
+                            "model": "codex",
+                            "confidence": "repo-proven",
+                            "claim": "Codex first P0 slice ready for review.",
+                        },
+                        {
+                            "phase": "P0",
+                            "event": "claude_slice_review",
+                            "status": "slice_accepted_partial_P0",
+                            "primary": "codex",
+                            "reviewer": "claude",
+                            "model": "claude-opus-4-7[1m]",
+                            "confidence": "repo-proven",
+                            "claim": "Slice accepted; P0 is not phase-complete.",
+                        },
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            rows = load_rows(store)
+            report = audit_store(store=store, root=Path(tmp))
+
+        review = next(row for row in rows if row["event"] == "slice_review")
+
+        self.assertEqual(review["status"], "slice_accepted")
+        self.assertEqual(review["legacy_status"], "slice_accepted_partial_P0")
+        self.assertTrue(review["legacy_partial_phase"])
+        self.assertEqual(report["row_errors"], [])
+        self.assertFalse(report["phase_status"]["P0"]["mutual_verified"])
+        self.assertTrue(
+            any("partial" in reason for reason in report["phase_status"]["P0"]["reasons"]),
+            report["phase_status"]["P0"]["reasons"],
+        )
+
 
 class AppendRowIntegrationTests(unittest.TestCase):
     def test_append_then_audit_full_lifecycle(self) -> None:

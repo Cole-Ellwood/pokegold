@@ -240,11 +240,15 @@ def normalize_legacy_row(row: dict[str, Any]) -> dict[str, Any]:
     if model in LEGACY_MODEL_MAP:
         row["model"] = LEGACY_MODEL_MAP[model]
     legacy_status_map = {
-        "slice_accepted_partial_P0": "slice_accepted",
         "ready_for_claude_review": "ready_for_review",
         "ready_for_codex_review": "ready_for_review",
     }
     status = row.get("status", "")
+    if status == "slice_accepted_partial_P0":
+        row["legacy_status"] = status
+        row["legacy_partial_phase"] = True
+        row["status"] = "slice_accepted"
+        return row
     if status in legacy_status_map:
         row["status"] = legacy_status_map[status]
     return row
@@ -325,18 +329,25 @@ def is_mutual_verified(rows: Sequence[dict[str, Any]], phase: str) -> tuple[bool
             f"phase {phase!r} missing slice_update status=ready_for_review "
             f"from primary={primary!r}"
         ]
-    other_signed = any(
-        row.get("event") == "slice_review"
+    accepted_review_rows = [
+        row
+        for row in phase_rows
+        if row.get("event") == "slice_review"
         and row.get("model") != primary
         and row.get("status") in ACCEPT_STATUSES
         and row.get("confidence") in GATE_VALID_LABELS
-        for row in phase_rows
-    )
+    ]
+    other_signed = any(not row.get("legacy_partial_phase") for row in accepted_review_rows)
     if not other_signed:
-        return False, [
+        reasons = [
             f"phase {phase!r} missing repo-proven slice_review with "
             f"status in {sorted(ACCEPT_STATUSES)} from non-primary model"
         ]
+        if accepted_review_rows:
+            reasons.append(
+                "accepted legacy review rows are marked partial and do not satisfy the full phase gate"
+            )
+        return False, reasons
     return True, []
 
 
