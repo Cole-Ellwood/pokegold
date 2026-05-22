@@ -81,11 +81,26 @@ def _backend_result(backend: str, *, vram0: str = "aaa", screen: str = "sss") ->
     }
 
 
+def _conformance_row(backend: str, status: str = "pass") -> dict[str, object]:
+    return {
+        "kind": crossemu.CONFORMANCE_KIND,
+        "schema_version": crossemu.SCHEMA_VERSION,
+        "backend": backend,
+        "status": status,
+        "suite": "unit",
+        "rom": "unit.gb",
+        "rom_sha256": "a" * 64,
+        "command": "python -m tools.debugger crossemu conformance unit",
+        "observed_at": "2026-05-22T00:00:00Z",
+        "proof_status": "runtime_observed",
+    }
+
+
 class CrossemuPreflightTests(unittest.TestCase):
     def test_crossemu_preflight_reports_available_backends(self) -> None:
         report = crossemu.build_preflight_report(
             backends=("pyboy", "sameboy", "gambatte"),
-            conformance_rows=({"backend": "sameboy", "status": "pass"},),
+            conformance_rows=(_conformance_row("sameboy"),),
             module_finder=_module_finder("pyboy"),
             command_finder=_command_finder("sameboy-headless"),
         )
@@ -103,7 +118,7 @@ class CrossemuPreflightTests(unittest.TestCase):
     def test_crossemu_backend_conformance_gates_results(self) -> None:
         report = crossemu.build_preflight_report(
             backends=("pyboy", "sameboy"),
-            conformance_rows=({"backend": "sameboy", "status": "fail"},),
+            conformance_rows=(_conformance_row("sameboy", "fail"),),
             module_finder=_module_finder("pyboy"),
             command_finder=_command_finder("sameboy-headless"),
         )
@@ -117,6 +132,53 @@ class CrossemuPreflightTests(unittest.TestCase):
             "no conformance-passing cross-emulator backend is installed",
             report["blocking_reasons"],
         )
+
+    def test_conformance_store_rejects_arbitrary_pass_row(self) -> None:
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            store = root / "crossemu_conformance.jsonl"
+            store.write_text(
+                json.dumps({"backend": "sameboy", "status": "pass"}) + "\n",
+                encoding="utf-8",
+            )
+            report = crossemu.build_preflight_report(
+                backends=("pyboy", "sameboy"),
+                conformance_store=store,
+                root=root,
+                module_finder=_module_finder("pyboy"),
+                command_finder=_command_finder("sameboy-headless"),
+            )
+
+        by_name = {entry["name"]: entry for entry in report["backends"]}
+        self.assertFalse(report["valid"])
+        self.assertFalse(report["ready_for_cross_backend_diff"])
+        self.assertFalse(by_name["sameboy"]["trusted_for_differential"])
+        self.assertIn("kind must be", "\n".join(report["errors"]))
+
+    def test_conformance_store_accepts_schema_row(self) -> None:
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            store = root / "crossemu_conformance.jsonl"
+            store.write_text(json.dumps(_conformance_row("sameboy")) + "\n", encoding="utf-8")
+            report = crossemu.build_preflight_report(
+                backends=("pyboy", "sameboy"),
+                conformance_store=store,
+                root=root,
+                module_finder=_module_finder("pyboy"),
+                command_finder=_command_finder("sameboy-headless"),
+            )
+
+        by_name = {entry["name"]: entry for entry in report["backends"]}
+        self.assertTrue(report["valid"])
+        self.assertTrue(report["ready_for_cross_backend_diff"])
+        self.assertTrue(by_name["sameboy"]["trusted_for_differential"])
+
+    def test_conformance_pass_row_requires_runtime_observed_proof(self) -> None:
+        row = _conformance_row("sameboy")
+        row["proof_status"] = "failed"
+        errors = crossemu.validate_conformance_row(row, source="unit")
+
+        self.assertIn("unit: pass rows must have proof_status='runtime_observed'", errors)
 
     def test_unknown_backend_fails_closed(self) -> None:
         report = crossemu.build_preflight_report(

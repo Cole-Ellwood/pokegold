@@ -24,6 +24,19 @@ SCHEMA_VERSION = 1
 DEFAULT_BACKEND_ORDER = ("pyboy", "sameboy", "gambatte", "vba-m")
 DEFAULT_CONFORMANCE_STORE = Path("audit") / "crossemu_conformance.jsonl"
 DEFAULT_ROM = "pokegold.gbc"
+CONFORMANCE_KIND = "unified_debugger_crossemu_conformance"
+CONFORMANCE_REQUIRED_TEXT_FIELDS = (
+    "backend",
+    "status",
+    "suite",
+    "rom",
+    "rom_sha256",
+    "command",
+    "observed_at",
+    "proof_status",
+)
+CONFORMANCE_STATUS_VALUES = {"pass", "fail"}
+CONFORMANCE_PROOF_STATUS_VALUES = {"runtime_observed", "failed"}
 
 ModuleFinder = Callable[[str], Any]
 CommandFinder = Callable[[str], str | None]
@@ -619,11 +632,25 @@ def run_self_test() -> dict[str, Any]:
     def fake_command_finder(name: str) -> str | None:
         return "C:/tools/sameboy.exe" if name == "sameboy-headless" else None
 
+    def conformance_row(backend: str, status: str) -> dict[str, Any]:
+        return {
+            "kind": CONFORMANCE_KIND,
+            "schema_version": SCHEMA_VERSION,
+            "backend": backend,
+            "status": status,
+            "suite": "selftest",
+            "rom": "selftest.gb",
+            "rom_sha256": "0" * 64,
+            "command": "python -m tools.debugger selftest --component crossemu",
+            "observed_at": "selftest",
+            "proof_status": "runtime_observed",
+        }
+
     report = build_preflight_report(
         backends=("pyboy", "sameboy", "gambatte"),
         conformance_rows=(
-            {"backend": "sameboy", "status": "pass", "suite": "selftest"},
-            {"backend": "gambatte", "status": "fail", "suite": "selftest"},
+            conformance_row("sameboy", "pass"),
+            conformance_row("gambatte", "fail"),
         ),
         module_finder=fake_module_finder,
         command_finder=fake_command_finder,
@@ -735,6 +762,41 @@ def _latest_conformance_status(backend: str, rows: Sequence[Mapping[str, Any]]) 
     return latest
 
 
+def validate_conformance_row(row: Mapping[str, Any], *, source: str) -> list[str]:
+    errors: list[str] = []
+    if row.get("kind") != CONFORMANCE_KIND:
+        errors.append(f"{source}: kind must be {CONFORMANCE_KIND!r}")
+    if row.get("schema_version") != SCHEMA_VERSION:
+        errors.append(f"{source}: schema_version must be {SCHEMA_VERSION}")
+    for field in CONFORMANCE_REQUIRED_TEXT_FIELDS:
+        value = row.get(field)
+        if not isinstance(value, str) or not value.strip():
+            errors.append(f"{source}: {field} must be a non-empty string")
+
+    backend = normalize_backend_name(str(row.get("backend", "")))
+    if backend not in BACKENDS:
+        errors.append(f"{source}: unknown backend {row.get('backend')!r}")
+
+    status = str(row.get("status", "")).strip().lower()
+    if status and status not in CONFORMANCE_STATUS_VALUES:
+        errors.append(f"{source}: status must be one of {sorted(CONFORMANCE_STATUS_VALUES)}")
+
+    proof_status = str(row.get("proof_status", "")).strip().lower()
+    if proof_status and proof_status not in CONFORMANCE_PROOF_STATUS_VALUES:
+        errors.append(
+            f"{source}: proof_status must be one of {sorted(CONFORMANCE_PROOF_STATUS_VALUES)}"
+        )
+    if status == "pass" and proof_status and proof_status != "runtime_observed":
+        errors.append(f"{source}: pass rows must have proof_status='runtime_observed'")
+
+    rom_sha256 = str(row.get("rom_sha256", "")).strip()
+    if rom_sha256 and (
+        len(rom_sha256) != 64 or any(ch not in "0123456789abcdefABCDEF" for ch in rom_sha256)
+    ):
+        errors.append(f"{source}: rom_sha256 must be 64 hex characters")
+    return errors
+
+
 def _conformance_rows(
     *,
     conformance_store: str | Path,
@@ -742,7 +804,18 @@ def _conformance_rows(
     root: Path,
 ) -> tuple[list[Mapping[str, Any]], list[str]]:
     if conformance_rows is not None:
-        return list(conformance_rows), []
+        rows: list[Mapping[str, Any]] = []
+        errors: list[str] = []
+        for index, row in enumerate(conformance_rows, start=1):
+            row_errors = validate_conformance_row(
+                row,
+                source=f"provided conformance row {index}",
+            )
+            if row_errors:
+                errors.extend(row_errors)
+                continue
+            rows.append(row)
+        return rows, errors
     path = _resolve_path(conformance_store, root=root)
     if not path.exists():
         return [], []
@@ -758,6 +831,10 @@ def _conformance_rows(
             continue
         if not isinstance(decoded, dict):
             errors.append(f"{path}:{lineno}: expected object row")
+            continue
+        row_errors = validate_conformance_row(decoded, source=f"{path}:{lineno}")
+        if row_errors:
+            errors.extend(row_errors)
             continue
         rows.append(decoded)
     return rows, errors
