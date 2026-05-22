@@ -301,5 +301,58 @@ class HeatmapWhenWroteCrossCheckTests(unittest.TestCase):
         )
 
 
+class HeatmapAg08GoldenSmokeTests(unittest.TestCase):
+    """Rule-#11 lived smoke for the May 2026 AG-08 damage class.
+
+    The heatmap must make the damage-byte write visible as a frame +
+    writer-PC cell, not just return a non-empty grid.
+    """
+
+    def test_ag08_damage_byte_write_is_visible_in_wramx_heatmap(self) -> None:
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            trace = root / "ag08_effect.jsonl"
+            _write_trace(
+                trace,
+                [
+                    {
+                        "kind": "write",
+                        "address": "0xD040",
+                        "frame": 11,
+                        "seq": 1,
+                        "pc_bank_address": "01:5800",
+                        "pc_label": "BattleCommand_Start",
+                    },
+                    {
+                        "kind": "write",
+                        "address": "0xD141",
+                        "frame": 12,
+                        "seq": 4,
+                        "pc_bank_address": "01:5A00",
+                        "pc_label": "BattleCommand_DamageCalc+6",
+                    },
+                    {
+                        "kind": "write",
+                        "address": "0xFF40",
+                        "frame": 12,
+                        "seq": 5,
+                        "pc_bank_address": "00:0150",
+                        "pc_label": "LCDInit",
+                    },
+                ],
+            )
+
+            report = build_heatmap(traces=(trace,), region="wramx", root=root)
+
+        self.assertTrue(report["valid"], report)
+        damage_cell = next(cell for cell in report["cells"] if cell["address_hex"] == "$D141")
+        self.assertEqual(damage_cell["frame"], 12)
+        self.assertEqual(damage_cell["write_count"], 1)
+        self.assertEqual(damage_cell["last_write_pc"], "01:5A00")
+        self.assertEqual(damage_cell["last_write_pc_label"], "BattleCommand_DamageCalc+6")
+        self.assertIn("$D141", report["grid"])
+        self.assertNotIn("$FF40", report["grid"])
+
+
 if __name__ == "__main__":
     unittest.main()
