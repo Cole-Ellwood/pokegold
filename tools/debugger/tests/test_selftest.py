@@ -18,6 +18,7 @@ from tools.debugger.selftest import (
     check_bisect,
     check_context_packet,
     check_coverage,
+    check_dap_server,
     check_hypothesis_tracker,
     check_probe,
     check_rom_edit,
@@ -216,6 +217,16 @@ class RomEditCheckTests(unittest.TestCase):
         self.assertTrue(result.ok, result.error or result.detail)
         self.assertEqual(result.component, "rom_edit")
         self.assertIn("apply-to-main", result.detail)
+
+
+class DapServerCheckTests(unittest.TestCase):
+    """P14 lived smoke: DAP framing covers success and boundary failures."""
+
+    def test_dap_server_check_passes_in_isolation(self) -> None:
+        result = check_dap_server(ROOT)
+        self.assertTrue(result.ok, result.error or result.detail)
+        self.assertEqual(result.component, "dap_server")
+        self.assertIn("fail-closed/no-request ok", result.detail)
 
 
 class JsonOutputTests(unittest.TestCase):

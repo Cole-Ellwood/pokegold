@@ -1316,6 +1316,15 @@ def check_dap_server(root: Path) -> CheckResult:
                             },
                         }
                     ),
+                    encode_frame(
+                        {
+                            "seq": 4,
+                            "type": "request",
+                            "command": "evaluate",
+                            "arguments": {"expression": "writes(addr=$D141)"},
+                        }
+                    ),
+                    encode_frame({"seq": 5, "type": "event", "event": "stopped"}),
                 ]
             )
             out_stream = io.BytesIO()
@@ -1328,16 +1337,27 @@ def check_dap_server(root: Path) -> CheckResult:
                     break
                 responses.append(frame)
 
-        commands = [item.get("command") for item in responses if item.get("type") == "response"]
-        if commands != ["initialize", "threads", "evaluate"]:
+        response_items = [item for item in responses if item.get("type") == "response"]
+        commands = [item.get("command") for item in response_items]
+        if commands != ["initialize", "threads", "evaluate", "evaluate", ""]:
             raise AssertionError(f"unexpected DAP responses: {responses}")
-        evaluate = responses[-1]
-        if not evaluate.get("success"):
-            raise AssertionError(f"evaluate failed: {evaluate}")
-        matches = evaluate.get("body", {}).get("tdb", {}).get("matches", [])
+        evaluate_success = response_items[2]
+        if not evaluate_success.get("success"):
+            raise AssertionError(f"evaluate failed: {evaluate_success}")
+        matches = evaluate_success.get("body", {}).get("tdb", {}).get("matches", [])
         if len(matches) != 1 or matches[0].get("address_hex") != "D141":
             raise AssertionError(f"expected one D141 tdb match; got {matches}")
-        return "dap initialize/threads/evaluate(tdb) valid; matches=1"
+        evaluate_no_reports = response_items[3]
+        if evaluate_no_reports.get("success"):
+            raise AssertionError(f"evaluate without reports should fail closed: {evaluate_no_reports}")
+        if "tdb query failed" not in str(evaluate_no_reports.get("message", "")):
+            raise AssertionError(f"missing fail-closed tdb message: {evaluate_no_reports}")
+        non_request = response_items[4]
+        if non_request.get("success"):
+            raise AssertionError(f"non-request message should fail: {non_request}")
+        if "unsupported message type" not in str(non_request.get("message", "")):
+            raise AssertionError(f"missing non-request error: {non_request}")
+        return "dap initialize/threads/evaluate(tdb) valid; matches=1; fail-closed/no-request ok"
 
     return _capture(
         component="dap_server",
