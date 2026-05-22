@@ -9,6 +9,11 @@ from typing import Any, Sequence
 from .audio_snapshot import build_audio_snapshot_report
 from .causal_graph import build_causal_graph_report
 from .catalog import build_capability_report, build_inventory, triage_request
+from .chaos import (
+    CHAOS_SCENARIOS,
+    format_report as format_chaos_report,
+    run_named_chaos_scenario,
+)
 from .clobber_chain import build_clobber_chain_report, format_text as format_clobber_chain
 from .content_mirror import build_content_mirror_report
 from .content_scenarios import build_content_scenario_report
@@ -293,6 +298,10 @@ def build_parser() -> argparse.ArgumentParser:
     fuzz.add_argument("--out-cases", default="")
     fuzz.add_argument("--max-cases", type=int, default=64)
     fuzz.add_argument("--seed", type=int, default=1)
+    fuzz.add_argument("--chaos", action="store_true")
+    fuzz.add_argument("--runs", type=int, default=100)
+    fuzz.add_argument("--chaos-frames", type=int, default=8)
+    fuzz.add_argument("--chaos-scenario", choices=CHAOS_SCENARIOS, default="stable")
     fuzz.add_argument("--execute", action="store_true")
     fuzz.add_argument("--max-execute-commands", type=int, default=8)
     fuzz.add_argument("--execute-timeout-seconds", type=int, default=600)
@@ -1033,6 +1042,16 @@ def cmd_generate(args: argparse.Namespace) -> int:
 
 
 def cmd_fuzz(args: argparse.Namespace) -> int:
+    if args.chaos:
+        report = run_named_chaos_scenario(
+            scenario=args.chaos_scenario,
+            runs=args.runs,
+            seed=args.seed,
+            frames=args.chaos_frames,
+        )
+        emit_report(report, args)
+        return 0 if report["valid"] else 1
+
     report = build_fuzz_plan(
         reports=tuple(args.report),
         scenarios=tuple(args.scenario),
@@ -1593,6 +1612,8 @@ def emit_report(report: dict[str, Any], args: argparse.Namespace) -> None:
         print(format_generation_plan(report))
     elif report["kind"] == "unified_debugger_fuzz_plan":
         print(format_fuzz_plan(report))
+    elif report["kind"] == "unified_debugger_chaos_campaign":
+        print(format_chaos_report(report))
     elif report["kind"] == "unified_debugger_provenance_report":
         print(format_provenance(report))
     elif report["kind"] == "unified_debugger_causal_graph":

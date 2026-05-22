@@ -792,6 +792,46 @@ def check_shrink_map_script(root: Path) -> CheckResult:
     )
 
 
+def check_chaos(root: Path) -> CheckResult:
+    """Exercise P11 chaos mode against stable and synthetic flake scenarios."""
+
+    from .chaos import run_named_chaos_scenario
+
+    def inner() -> str:
+        stable = run_named_chaos_scenario(
+            scenario="stable",
+            runs=100,
+            seed=1,
+            frames=8,
+        )
+        if not stable.get("valid"):
+            raise AssertionError(f"chaos stable invalid: {stable.get('errors')}")
+        if stable.get("diverged"):
+            raise AssertionError(f"stable chaos scenario diverged: {stable}")
+        if stable.get("stable_count", 0) < 99:
+            raise AssertionError(f"stable chaos scenario below 99/100 stable: {stable}")
+
+        flake = run_named_chaos_scenario(
+            scenario="synthetic_flake",
+            runs=100,
+            seed=1,
+            frames=8,
+        )
+        if not flake.get("valid"):
+            raise AssertionError(f"chaos synthetic flake invalid: {flake.get('errors')}")
+        if not flake.get("diverged"):
+            raise AssertionError(f"chaos synthetic flake did not diverge: {flake}")
+        if not flake.get("candidate_input_log"):
+            raise AssertionError(f"chaos synthetic flake did not capture input log: {flake}")
+        return "chaos stable scenario stayed stable and synthetic flake produced replay seed"
+
+    return _capture(
+        component="chaos",
+        next_command="python -m tools.debugger fuzz --chaos --runs 100 --seed 1 --chaos-scenario synthetic_flake",
+        fn=inner,
+    )
+
+
 def check_save_state_lab(root: Path) -> CheckResult:
     """Round-trip trusted raw WRAM and fail-closed .sgm handling."""
 
@@ -1201,6 +1241,7 @@ NAMED_CHECKS: tuple[tuple[str, Check], ...] = (
     ("shrink_input_log", check_shrink_input_log),
     ("shrink_battle", check_shrink_battle),
     ("shrink_map_script", check_shrink_map_script),
+    ("chaos", check_chaos),
     ("save_state_lab", check_save_state_lab),
     ("bisect", check_bisect),
     ("handoff_log", check_handoff_log),

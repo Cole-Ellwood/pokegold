@@ -2,6 +2,7 @@ import json
 import unittest
 
 from tools.debugger.chaos import (
+    BASELINE_OBSERVATION,
     DMA_CPU_PHASES,
     HBLANK_DELTA_CYCLES,
     JOYPAD_LATCH_LATENCY_CYCLES,
@@ -10,30 +11,10 @@ from tools.debugger.chaos import (
     format_report,
     report_json,
     run_chaos_campaign,
+    run_named_chaos_scenario,
+    stable_runner,
+    synthetic_flake_runner,
 )
-
-
-BASELINE = {"status": "ok", "pc": "BattleCommand_DamageCalc", "wCurDamage": 42}
-
-
-def stable_runner(schedule: dict) -> dict:
-    return {**BASELINE, "input_log": ["A", "WAIT 1"], "run_seed": schedule["run_seed"]}
-
-
-def synthetic_flake_runner(schedule: dict) -> dict:
-    for event in schedule["events"]:
-        if (
-            event["joypad_latch_latency_cycles"] == max(JOYPAD_LATCH_LATENCY_CYCLES)
-            and event["dma_cpu_phase"] == max(DMA_CPU_PHASES)
-        ):
-            return {
-                "status": "diverged",
-                "pc": "BattleCommand_DamageCalc",
-                "wCurDamage": 210,
-                "input_log": ["A", f"WAIT {event['frame']}", "START"],
-                "run_seed": schedule["run_seed"],
-            }
-    return stable_runner(schedule)
 
 
 class ChaosModeTests(unittest.TestCase):
@@ -42,14 +23,14 @@ class ChaosModeTests(unittest.TestCase):
             runs=25,
             seed=1,
             frames=8,
-            baseline=BASELINE,
+            baseline=BASELINE_OBSERVATION,
             runner=synthetic_flake_runner,
         )
         second = run_chaos_campaign(
             runs=25,
             seed=1,
             frames=8,
-            baseline=BASELINE,
+            baseline=BASELINE_OBSERVATION,
             runner=synthetic_flake_runner,
         )
 
@@ -62,7 +43,7 @@ class ChaosModeTests(unittest.TestCase):
             runs=100,
             seed=1,
             frames=8,
-            baseline=BASELINE,
+            baseline=BASELINE_OBSERVATION,
             runner=synthetic_flake_runner,
         )
 
@@ -77,7 +58,7 @@ class ChaosModeTests(unittest.TestCase):
             runs=100,
             seed=1,
             frames=8,
-            baseline=BASELINE,
+            baseline=BASELINE_OBSERVATION,
             runner=stable_runner,
         )
 
@@ -100,7 +81,7 @@ class ChaosModeTests(unittest.TestCase):
             runs=3,
             seed=4,
             frames=2,
-            baseline=BASELINE,
+            baseline=BASELINE_OBSERVATION,
             runner=stable_runner,
         )
         text = format_report(report)
@@ -108,6 +89,27 @@ class ChaosModeTests(unittest.TestCase):
 
         self.assertIn("Chaos campaign", text)
         self.assertEqual(encoded["kind"], "unified_debugger_chaos_campaign")
+
+    def test_named_scenarios_drive_cli_contract(self) -> None:
+        stable = run_named_chaos_scenario(
+            scenario="stable",
+            runs=100,
+            seed=1,
+            frames=8,
+        )
+        flake = run_named_chaos_scenario(
+            scenario="synthetic-flake",
+            runs=100,
+            seed=1,
+            frames=8,
+        )
+
+        self.assertTrue(stable["valid"])
+        self.assertFalse(stable["diverged"])
+        self.assertGreaterEqual(stable["stable_count"], 99)
+        self.assertTrue(flake["valid"])
+        self.assertTrue(flake["diverged"])
+        self.assertIn("START", flake["candidate_input_log"])
 
 
 if __name__ == "__main__":

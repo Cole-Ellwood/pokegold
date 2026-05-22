@@ -25682,6 +25682,53 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(data["kind"], "unified_debugger_fuzz_plan")
         self.assertTrue(rows)
 
+    def test_cli_fuzz_chaos_stable_and_synthetic_flake(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            stable_out = root / "chaos_stable.json"
+            flake_out = root / "chaos_flake.json"
+            with redirect_stdout(io.StringIO()):
+                stable_code = debugger_main(
+                    [
+                        "fuzz",
+                        "--chaos",
+                        "--runs",
+                        "100",
+                        "--seed",
+                        "1",
+                        "--chaos-scenario",
+                        "stable",
+                        "--json-out",
+                        str(stable_out),
+                    ]
+                )
+                flake_code = debugger_main(
+                    [
+                        "fuzz",
+                        "--chaos",
+                        "--runs",
+                        "100",
+                        "--seed",
+                        "1",
+                        "--chaos-scenario",
+                        "synthetic_flake",
+                        "--json-out",
+                        str(flake_out),
+                    ]
+                )
+
+            stable = json.loads(stable_out.read_text(encoding="utf-8"))
+            flake = json.loads(flake_out.read_text(encoding="utf-8"))
+
+        self.assertEqual(stable_code, 0)
+        self.assertEqual(flake_code, 0)
+        self.assertEqual(stable["kind"], "unified_debugger_chaos_campaign")
+        self.assertFalse(stable["diverged"])
+        self.assertGreaterEqual(stable["stable_count"], 99)
+        self.assertTrue(flake["diverged"])
+        self.assertIsInstance(flake["minimal_seed"], int)
+        self.assertIn("START", flake["candidate_input_log"])
+
     def test_compare_plan_maps_damage_symbol_to_oracle(self) -> None:
         report = build_compare_plan(symbols=("wCurDamage",))
         commands = "\n".join(report["commands"])

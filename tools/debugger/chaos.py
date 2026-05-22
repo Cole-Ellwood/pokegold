@@ -9,11 +9,17 @@ from typing import Any
 SCHEMA_VERSION = 1
 Observation = dict[str, Any]
 ChaosRunner = Callable[[dict[str, Any]], Observation]
+CHAOS_SCENARIOS = ("stable", "synthetic_flake", "synthetic-flake")
 
 VBLANK_DELTA_CYCLES = (-1, 0, 1)
 HBLANK_DELTA_CYCLES = (-1, 0, 1)
 JOYPAD_LATCH_LATENCY_CYCLES = (0, 1, 2)
 DMA_CPU_PHASES = (0, 1, 2, 3)
+BASELINE_OBSERVATION = {
+    "status": "ok",
+    "pc": "BattleCommand_DamageCalc",
+    "wCurDamage": 42,
+}
 
 
 def derive_run_seed(seed: int, run_index: int) -> int:
@@ -87,6 +93,7 @@ def run_chaos_campaign(
     return {
         "schema_version": SCHEMA_VERSION,
         "kind": "unified_debugger_chaos_campaign",
+        "valid": True,
         "seed": int(seed),
         "runs": run_count,
         "frames": max(0, int(frames)),
@@ -101,7 +108,80 @@ def run_chaos_campaign(
             "Chaos schedule generation is deterministic and hardware-envelope bounded; PyBoy interrupt/DMA perturbation is a follow-up adapter layer.",
             "A divergence is only as strong as the runner observation supplied by the caller.",
         ],
+        "errors": [],
+        "warnings": [],
+        "error_count": 0,
+        "warning_count": 0,
     }
+
+
+def run_named_chaos_scenario(
+    *,
+    scenario: str,
+    runs: int,
+    seed: int,
+    frames: int,
+) -> dict[str, Any]:
+    normalized = scenario.replace("-", "_")
+    runners: dict[str, ChaosRunner] = {
+        "stable": stable_runner,
+        "synthetic_flake": synthetic_flake_runner,
+    }
+    if normalized not in runners:
+        return {
+            "schema_version": SCHEMA_VERSION,
+            "kind": "unified_debugger_chaos_campaign",
+            "valid": False,
+            "scenario": normalized,
+            "seed": int(seed),
+            "runs": max(0, int(runs)),
+            "frames": max(0, int(frames)),
+            "baseline": BASELINE_OBSERVATION,
+            "stable_count": 0,
+            "divergence_count": 0,
+            "diverged": False,
+            "minimal_seed": None,
+            "candidate_input_log": [],
+            "divergences": [],
+            "known_limits": [],
+            "errors": [f"unknown chaos scenario: {scenario}"],
+            "warnings": [],
+            "error_count": 1,
+            "warning_count": 0,
+        }
+    report = run_chaos_campaign(
+        runs=runs,
+        seed=seed,
+        frames=frames,
+        baseline=BASELINE_OBSERVATION,
+        runner=runners[normalized],
+    )
+    report["scenario"] = normalized
+    return report
+
+
+def stable_runner(schedule: dict[str, Any]) -> Observation:
+    return {
+        **BASELINE_OBSERVATION,
+        "input_log": ["A", "WAIT 1"],
+        "run_seed": schedule["run_seed"],
+    }
+
+
+def synthetic_flake_runner(schedule: dict[str, Any]) -> Observation:
+    for event in schedule["events"]:
+        if (
+            event["joypad_latch_latency_cycles"] == max(JOYPAD_LATCH_LATENCY_CYCLES)
+            and event["dma_cpu_phase"] == max(DMA_CPU_PHASES)
+        ):
+            return {
+                "status": "diverged",
+                "pc": "BattleCommand_DamageCalc",
+                "wCurDamage": 210,
+                "input_log": ["A", f"WAIT {event['frame']}", "START"],
+                "run_seed": schedule["run_seed"],
+            }
+    return stable_runner(schedule)
 
 
 def observation_diverged(observation: Observation, baseline: Observation) -> bool:
@@ -126,7 +206,8 @@ def format_report(report: dict[str, Any]) -> str:
         )
     return (
         "Chaos campaign\n"
-        f"runs={report.get('runs', 0)} stable={report.get('stable_count', 0)} "
+        f"scenario={report.get('scenario', 'custom')} runs={report.get('runs', 0)} "
+        f"stable={report.get('stable_count', 0)} "
         f"divergences={report.get('divergence_count', 0)} minimal_seed={report.get('minimal_seed')}"
     )
 
