@@ -245,7 +245,7 @@ def apply_unified_patch_to_worktree(
         "patch_applied": True,
         "worktree_path": str(target),
         "changed_files": changed_files,
-        "diff": _git_stdout(["diff", "--"], cwd=target),
+        "diff": _git_stdout(["diff", "--"], cwd=target, strip_output=False),
     }
 
 
@@ -345,6 +345,82 @@ def build_rom_edit_worktree(
     report["kind"] = "rom_edit_build_report"
     report["build_command"] = command
     return report
+
+
+def apply_rom_edit_to_main(
+    worktree_path: str | Path,
+    *,
+    changed_files: Sequence[str],
+    gate_results: Sequence[GateResult | Mapping[str, Any]],
+    handoff_phase: str,
+    target_branch: str,
+    root: Path = ROOT,
+    base_dir: Path | None = None,
+    handoff_rows: Sequence[dict[str, Any]] | None = None,
+    handoff_store: Path = DEFAULT_STORE,
+    merge_target: str = "",
+    push_remote: bool = False,
+) -> dict[str, Any]:
+    repo_root = root.resolve()
+    target_base = _resolve_worktree_base(repo_root, base_dir)
+    target = Path(worktree_path).resolve()
+    if not _is_relative_to(target, target_base):
+        raise RomEditWorktreeError(
+            f"refusing to apply worktree outside rom-edit base: {target}"
+        )
+    decision = decide_auto_apply(
+        changed_files=tuple(changed_files),
+        gate_results=tuple(gate_results),
+        handoff_phase=handoff_phase,
+        handoff_rows=handoff_rows,
+        handoff_store=handoff_store,
+        root=repo_root,
+        target_branch=target_branch,
+        merge_target=merge_target,
+        push_remote=push_remote,
+    )
+    blocking_reasons = list(decision["blocking_reasons"])
+    current_branch = _git_stdout(["branch", "--show-current"], cwd=repo_root)
+    if current_branch != target_branch:
+        blocking_reasons.append(
+            f"target branch mismatch: current={current_branch!r} target={target_branch!r}"
+        )
+    tracked_dirty = _git_stdout(
+        ["status", "--porcelain", "--untracked-files=no"],
+        cwd=repo_root,
+    )
+    if tracked_dirty:
+        blocking_reasons.append("target checkout has tracked dirty changes")
+    diff = _git_stdout(["diff", "--binary", "--"], cwd=target, strip_output=False)
+    if not diff.strip():
+        blocking_reasons.append("rom-edit worktree has no diff to apply")
+
+    if blocking_reasons:
+        return {
+            "kind": "rom_edit_apply_to_main_report",
+            "status": "refused",
+            "applied": False,
+            "worktree_path": str(target),
+            "changed_files": tuple(changed_files),
+            "target_branch": target_branch,
+            "current_branch": current_branch,
+            "blocking_reasons": tuple(blocking_reasons),
+            "decision": decision,
+        }
+
+    _git_stdout(["apply", "--check", "-"], cwd=repo_root, input_text=diff)
+    _git_stdout(["apply", "-"], cwd=repo_root, input_text=diff)
+    return {
+        "kind": "rom_edit_apply_to_main_report",
+        "status": "applied",
+        "applied": True,
+        "worktree_path": str(target),
+        "changed_files": tuple(changed_files),
+        "target_branch": target_branch,
+        "current_branch": current_branch,
+        "blocking_reasons": (),
+        "decision": decision,
+    }
 
 
 def format_decision(decision: Mapping[str, Any]) -> str:
@@ -609,7 +685,13 @@ def _make_worktree_slug(base_head: str, changed_files: Sequence[str]) -> str:
     return hashlib.sha1(payload.encode("utf-8")).hexdigest()[:12]
 
 
-def _git_stdout(args: Sequence[str], *, cwd: Path, input_text: str | None = None) -> str:
+def _git_stdout(
+    args: Sequence[str],
+    *,
+    cwd: Path,
+    input_text: str | None = None,
+    strip_output: bool = True,
+) -> str:
     completed = subprocess.run(
         ["git", *args],
         cwd=cwd,
@@ -625,7 +707,7 @@ def _git_stdout(args: Sequence[str], *, cwd: Path, input_text: str | None = None
         raise RomEditWorktreeError(
             f"git {' '.join(args)} failed with code {completed.returncode}: {detail}"
         )
-    return completed.stdout.strip()
+    return completed.stdout.strip() if strip_output else completed.stdout
 
 
 def _is_relative_to(path: Path, parent: Path) -> bool:

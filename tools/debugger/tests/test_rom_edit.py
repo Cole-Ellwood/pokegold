@@ -15,6 +15,7 @@ from tools.debugger.rom_edit import (
     GateResult,
     RomEditWorktreeError,
     apply_unified_patch_to_worktree,
+    apply_rom_edit_to_main,
     build_rom_edit_worktree,
     create_rom_edit_worktree,
     decide_auto_apply,
@@ -679,6 +680,120 @@ class RomEditBuildCommandTests(unittest.TestCase):
         self.assertTrue(report["passed"], report)
         self.assertEqual(report["kind"], "rom_edit_build_report")
         self.assertEqual(report["steps"][0]["stdout_tail"], ["build ok"])
+
+
+class RomEditApplyToMainCoreTests(unittest.TestCase):
+    def test_apply_to_main_applies_green_mutual_worktree_diff(self) -> None:
+        with TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            _init_repo(repo)
+            _git(repo, "checkout", "-b", "feature")
+            worktree = create_rom_edit_worktree(root=repo, slug="apply-pass")
+            apply_unified_patch_to_worktree(
+                worktree.path,
+                _file_txt_patch("applied"),
+                root=repo,
+            )
+
+            report = apply_rom_edit_to_main(
+                worktree.path,
+                changed_files=("file.txt",),
+                gate_results=(GateResult(name=RELEASE_SMOKE_GATE_NAME, status=PASS),),
+                handoff_phase=PHASE,
+                handoff_rows=_rows(_ack_start(), _slice_update(), _slice_review()),
+                root=repo,
+                target_branch="feature",
+            )
+
+            self.assertTrue(report["applied"], report)
+            self.assertEqual((repo / "file.txt").read_text(encoding="utf-8"), "applied\n")
+
+    def test_apply_to_main_refuses_single_signed_candidate(self) -> None:
+        with TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            _init_repo(repo)
+            _git(repo, "checkout", "-b", "feature")
+            worktree = create_rom_edit_worktree(root=repo, slug="apply-no-review")
+            apply_unified_patch_to_worktree(
+                worktree.path,
+                _file_txt_patch("blocked"),
+                root=repo,
+            )
+
+            report = apply_rom_edit_to_main(
+                worktree.path,
+                changed_files=("file.txt",),
+                gate_results=(GateResult(name=RELEASE_SMOKE_GATE_NAME, status=PASS),),
+                handoff_phase=PHASE,
+                handoff_rows=_rows(_ack_start(), _slice_update()),
+                root=repo,
+                target_branch="feature",
+            )
+
+            self.assertFalse(report["applied"], report)
+            self.assertEqual((repo / "file.txt").read_text(encoding="utf-8"), "one\n")
+            self.assertTrue(
+                any("not mutual-verified" in reason for reason in report["blocking_reasons"]),
+                report,
+            )
+
+    def test_apply_to_main_refuses_master_target(self) -> None:
+        with TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            _init_repo(repo)
+            worktree = create_rom_edit_worktree(root=repo, slug="apply-master")
+            apply_unified_patch_to_worktree(
+                worktree.path,
+                _file_txt_patch("blocked"),
+                root=repo,
+            )
+
+            report = apply_rom_edit_to_main(
+                worktree.path,
+                changed_files=("file.txt",),
+                gate_results=(GateResult(name=RELEASE_SMOKE_GATE_NAME, status=PASS),),
+                handoff_phase=PHASE,
+                handoff_rows=_rows(_ack_start(), _slice_update(), _slice_review()),
+                root=repo,
+                target_branch="master",
+            )
+
+            self.assertFalse(report["applied"], report)
+            self.assertEqual((repo / "file.txt").read_text(encoding="utf-8"), "one\n")
+            self.assertTrue(
+                any("protected target branch" in reason for reason in report["blocking_reasons"]),
+                report,
+            )
+
+    def test_apply_to_main_refuses_tracked_dirty_checkout(self) -> None:
+        with TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            _init_repo(repo)
+            _git(repo, "checkout", "-b", "feature")
+            worktree = create_rom_edit_worktree(root=repo, slug="apply-dirty")
+            apply_unified_patch_to_worktree(
+                worktree.path,
+                _file_txt_patch("blocked"),
+                root=repo,
+            )
+            (repo / "file.txt").write_text("dirty\n", encoding="utf-8")
+
+            report = apply_rom_edit_to_main(
+                worktree.path,
+                changed_files=("file.txt",),
+                gate_results=(GateResult(name=RELEASE_SMOKE_GATE_NAME, status=PASS),),
+                handoff_phase=PHASE,
+                handoff_rows=_rows(_ack_start(), _slice_update(), _slice_review()),
+                root=repo,
+                target_branch="feature",
+            )
+
+            self.assertFalse(report["applied"], report)
+            self.assertEqual((repo / "file.txt").read_text(encoding="utf-8"), "dirty\n")
+            self.assertIn(
+                "target checkout has tracked dirty changes",
+                report["blocking_reasons"],
+            )
 
 
 if __name__ == "__main__":
