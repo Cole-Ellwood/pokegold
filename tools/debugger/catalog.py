@@ -1269,7 +1269,6 @@ def _build_v2_surfaces(root: Path = ROOT) -> list[dict[str, Any]]:
                 "docs/debugger_masterpiece_roadmap_codex_task.md",
             ),
             gaps=(
-                "default ROM build command is wired but real build smoke is still pending",
                 "remote push and protected-branch merge remain explicit refusals",
             ),
             commands=(

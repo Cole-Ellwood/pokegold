@@ -230,6 +230,8 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("tdb", ids)
         self.assertIn("chaos_mode", ids)
         self.assertIn("rom_edit", ids)
+        rom_edit = next(surface for surface in surfaces if surface["id"] == "rom_edit")
+        self.assertNotIn("real build smoke is still pending", "\n".join(rom_edit["gaps"]))
         # Each v2 surface ships with at least one runnable command so
         # the audit output stays decision-useful.
         for surface in surfaces:
