@@ -96,6 +96,14 @@ def _conformance_row(backend: str, status: str = "pass") -> dict[str, object]:
     }
 
 
+def _run_report(*backend_results: dict[str, object]) -> dict[str, object]:
+    return {
+        "kind": "unified_debugger_crossemu_run",
+        "schema_version": crossemu.SCHEMA_VERSION,
+        "backend_results": list(backend_results),
+    }
+
+
 class CrossemuPreflightTests(unittest.TestCase):
     def test_crossemu_preflight_reports_available_backends(self) -> None:
         report = crossemu.build_preflight_report(
@@ -340,6 +348,49 @@ class CrossemuPreflightTests(unittest.TestCase):
         self.assertFalse(diff["divergent"])
         self.assertEqual(diff["status"], "not_enough_runtime_backends")
         self.assertEqual(diff["proof_status"], "planned_only")
+
+    def test_report_diff_cli_compares_saved_run_reports(self) -> None:
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            left = root / "pyboy.json"
+            right = root / "sameboy.json"
+            left.write_text(json.dumps(_run_report(_backend_result("pyboy"))), encoding="utf-8")
+            right.write_text(
+                json.dumps(_run_report(_backend_result("sameboy", vram0="bbb"))),
+                encoding="utf-8",
+            )
+            stdout = io.StringIO()
+            with redirect_stdout(stdout):
+                code = crossemu.main(
+                    ["diff", "--reports", str(left), str(right), "--json"]
+                )
+
+        self.assertEqual(code, 0)
+        payload = json.loads(stdout.getvalue())
+        self.assertEqual(payload["kind"], "unified_debugger_crossemu_report_diff")
+        self.assertTrue(payload["valid"])
+        self.assertTrue(payload["divergent"])
+        self.assertEqual(payload["snapshot_diff"]["comparison_count"], 1)
+
+    def test_report_diff_requires_two_runtime_snapshots(self) -> None:
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            left = root / "pyboy.json"
+            left.write_text(json.dumps(_run_report(_backend_result("pyboy"))), encoding="utf-8")
+            report = crossemu.build_report_diff_report(reports=(str(left),))
+
+        self.assertFalse(report["valid"])
+        self.assertIn("need at least two runtime backend snapshots", report["blocking_reasons"])
+
+    def test_report_diff_rejects_non_run_report(self) -> None:
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            bad = root / "preflight.json"
+            bad.write_text(json.dumps({"kind": "unified_debugger_crossemu_preflight"}), encoding="utf-8")
+            report = crossemu.build_report_diff_report(reports=(str(bad),))
+
+        self.assertFalse(report["valid"])
+        self.assertIn("expected crossemu run report", "\n".join(report["errors"]))
 
 
 if __name__ == "__main__":

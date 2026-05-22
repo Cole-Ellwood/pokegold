@@ -362,6 +362,82 @@ def build_run_report(
     return report
 
 
+def build_report_diff_report(
+    *,
+    reports: Sequence[str],
+    root: Path = ROOT,
+) -> dict[str, Any]:
+    errors: list[str] = []
+    report_entries: list[dict[str, Any]] = []
+    backend_results: list[Mapping[str, Any]] = []
+    for raw_path in reports:
+        path = _resolve_path(raw_path, root=root)
+        entry: dict[str, Any] = {
+            "path": display_path(path, root=root),
+            "loaded": False,
+            "backend_result_count": 0,
+            "errors": [],
+        }
+        if not path.exists():
+            error = f"missing report: {raw_path}"
+            entry["errors"].append(error)
+            errors.append(error)
+            report_entries.append(entry)
+            continue
+        try:
+            decoded = json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            error = f"{display_path(path, root=root)}: invalid JSON: {exc.msg}"
+            entry["errors"].append(error)
+            errors.append(error)
+            report_entries.append(entry)
+            continue
+        if not isinstance(decoded, Mapping):
+            error = f"{display_path(path, root=root)}: expected object report"
+            entry["errors"].append(error)
+            errors.append(error)
+            report_entries.append(entry)
+            continue
+        if decoded.get("kind") != "unified_debugger_crossemu_run":
+            error = f"{display_path(path, root=root)}: expected crossemu run report"
+            entry["errors"].append(error)
+            errors.append(error)
+            report_entries.append(entry)
+            continue
+
+        results = [
+            result
+            for result in decoded.get("backend_results", [])
+            if isinstance(result, Mapping)
+        ]
+        entry["loaded"] = True
+        entry["backend_result_count"] = len(results)
+        entry["runtime_backend_count"] = sum(
+            1 for result in results if result.get("status") == "runtime_observed"
+        )
+        backend_results.extend(results)
+        report_entries.append(entry)
+
+    snapshot_diff = diff_backend_snapshots(backend_results)
+    blocking_reasons: list[str] = []
+    if snapshot_diff.get("runtime_backend_count", 0) < 2:
+        blocking_reasons.append("need at least two runtime backend snapshots")
+    return {
+        "kind": "unified_debugger_crossemu_report_diff",
+        "schema_version": SCHEMA_VERSION,
+        "valid": not errors and not blocking_reasons,
+        "report_count": len(reports),
+        "reports": report_entries,
+        "backend_result_count": len(backend_results),
+        "snapshot_diff": snapshot_diff,
+        "divergent": snapshot_diff.get("divergent", False),
+        "divergence_count": snapshot_diff.get("divergence_count", 0),
+        "blocking_reasons": blocking_reasons,
+        "errors": errors,
+        "error_count": len(errors),
+    }
+
+
 def diff_backend_snapshots(backend_results: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
     observed = [
         result
@@ -927,6 +1003,37 @@ def format_run(report: Mapping[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def format_report_diff(report: Mapping[str, Any]) -> str:
+    status = "PASS" if report.get("valid") else "FAIL"
+    lines = [f"crossemu diff: {status}"]
+    lines.append(f"reports: {report.get('report_count', 0)}")
+    for entry in report.get("reports", []):
+        loaded = "loaded" if entry.get("loaded") else "not-loaded"
+        lines.append(
+            f"  {entry.get('path')}: {loaded} "
+            f"backend_results={entry.get('backend_result_count', 0)} "
+            f"runtime={entry.get('runtime_backend_count', 0)}"
+        )
+    snapshot_diff = report.get("snapshot_diff")
+    if isinstance(snapshot_diff, Mapping):
+        lines.append(
+            "snapshot_diff: "
+            f"{snapshot_diff.get('status')} "
+            f"comparisons={snapshot_diff.get('comparison_count', 0)} "
+            f"divergences={snapshot_diff.get('divergence_count', 0)}"
+        )
+        for comparison in snapshot_diff.get("comparisons", []):
+            lines.append(
+                f"  {comparison.get('left_backend')} vs {comparison.get('right_backend')}: "
+                f"differences={comparison.get('difference_count', 0)}"
+            )
+    for reason in report.get("blocking_reasons", []):
+        lines.append(f"blocked: {reason}")
+    for error in report.get("errors", []):
+        lines.append(f"error: {error}")
+    return "\n".join(lines)
+
+
 def _yes_no(value: Any) -> str:
     return "yes" if value else "no"
 
@@ -995,6 +1102,20 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--json", action="store_true")
     run.add_argument("--json-out", default="", help="write structured JSON to a file")
     run.set_defaults(func=cmd_run)
+
+    diff = sub.add_parser(
+        "diff",
+        help="Diff saved crossemu JSON run reports without rerunning emulators.",
+    )
+    diff.add_argument(
+        "--reports",
+        nargs="+",
+        required=True,
+        help="One or more crossemu run JSON reports produced with --json-out.",
+    )
+    diff.add_argument("--json", action="store_true")
+    diff.add_argument("--json-out", default="", help="write structured JSON to a file")
+    diff.set_defaults(func=cmd_diff)
     return parser
 
 
@@ -1043,6 +1164,18 @@ def cmd_run(args: argparse.Namespace) -> int:
         print(json.dumps(report, indent=2))
     else:
         print(format_run(report))
+    return 0 if report["valid"] else 1
+
+
+def cmd_diff(args: argparse.Namespace) -> int:
+    report = build_report_diff_report(reports=tuple(args.reports))
+    if args.json_out:
+        write_json_report(args.json_out, report)
+        return 0 if report["valid"] else 1
+    if args.json:
+        print(json.dumps(report, indent=2))
+    else:
+        print(format_report_diff(report))
     return 0 if report["valid"] else 1
 
 
