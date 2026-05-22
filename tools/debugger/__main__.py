@@ -769,7 +769,7 @@ def build_parser() -> argparse.ArgumentParser:
         add_help=False,
         description=(
             "IO heatmap + per-frame memory-write timeline (P9). ASCII grid + "
-            "JSON for $FF00-$FFFF, $FF80-$FFFE, $D000-$DFFF write density. "
+            "JSON for $FF00-$FF7F, $FF80-$FFFE, $D000-$DFFF write density. "
             "Delegates to `python -m tools.debugger.heatmap`. Pass `--help` "
             "for syntax."
         ),

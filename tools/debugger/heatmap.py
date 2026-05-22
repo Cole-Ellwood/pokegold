@@ -18,7 +18,7 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import Any, Iterable, Sequence
+from typing import Any, Iterable, Mapping, Sequence
 
 from .catalog import ROOT
 
@@ -77,6 +77,13 @@ def _parse_frame_range(spec: str | None) -> tuple[int, int] | None:
     if hi <= lo:
         return None
     return lo, hi
+
+
+def _first_present(ev: Mapping[str, Any], *keys: str) -> Any:
+    for key in keys:
+        if key in ev and ev[key] is not None:
+            return ev[key]
+    return None
 
 
 def _load_trace_events(path: Path) -> Iterable[dict[str, Any]]:
@@ -138,15 +145,18 @@ def build_heatmap(
 
     for trace in traces:
         trace_path = Path(trace) if Path(trace).is_absolute() else root / trace
+        if not trace_path.exists():
+            errors.append(f"missing trace: {trace}")
+            continue
         for ev in _load_trace_events(trace_path):
             if not isinstance(ev, dict):
                 continue
             if ev.get("kind") not in (None, "write", "memory_write"):
                 continue
-            addr = _parse_address(ev.get("address") or ev.get("addr") or ev.get("bank_address"))
+            addr = _parse_address(_first_present(ev, "address", "addr", "bank_address"))
             if addr is None or addr < lo or addr >= hi:
                 continue
-            frame = _parse_frame(ev.get("frame") or ev.get("frame_index"))
+            frame = _parse_frame(_first_present(ev, "frame", "frame_index"))
             if frame is None:
                 frame = 0
             if frame_range is not None:
@@ -169,12 +179,17 @@ def build_heatmap(
             cell["write_count"] += 1
             seq = ev.get("seq")
             seq_value = _parse_frame(seq) if seq is not None else None
-            if seq_value is None or seq_value > cell["last_write_seq"]:
+            if seq_value is not None and seq_value > cell["last_write_seq"]:
                 pc = ev.get("pc_bank_address") or ev.get("pc") or ""
                 pc_label = ev.get("pc_label") or ""
                 cell["last_write_pc"] = str(pc)
                 cell["last_write_pc_label"] = str(pc_label)
-                cell["last_write_seq"] = seq_value if seq_value is not None else cell["last_write_seq"]
+                cell["last_write_seq"] = seq_value
+            elif seq_value is None and not cell["last_write_pc"]:
+                pc = ev.get("pc_bank_address") or ev.get("pc") or ""
+                pc_label = ev.get("pc_label") or ""
+                cell["last_write_pc"] = str(pc)
+                cell["last_write_pc_label"] = str(pc_label)
             frames_seen.add(frame)
 
     cells = sorted(cells_by_key.values(), key=lambda c: (c["frame"], c["address"]))
@@ -278,11 +293,14 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="write JSON to a file (implies --json)",
     )
     args = parser.parse_args(list(argv) if argv is not None else None)
+    frame_range = _parse_frame_range(args.frame_range)
+    if args.frame_range and frame_range is None:
+        parser.error("--frame-range must be A:B with hi greater than lo")
 
     report = build_heatmap(
         traces=tuple(args.trace),
         region=args.region,
-        frame_range=_parse_frame_range(args.frame_range),
+        frame_range=frame_range,
     )
 
     if args.out is not None:

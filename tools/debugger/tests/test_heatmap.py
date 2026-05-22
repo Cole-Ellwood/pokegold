@@ -98,6 +98,62 @@ class HeatmapTests(unittest.TestCase):
         self.assertEqual(cell["last_write_pc"], "00:0180")
         self.assertEqual(cell["last_write_pc_label"], "Second")
 
+    def test_last_write_pc_unknown_seq_does_not_replace_known_seq(self) -> None:
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            trace = root / "effect.jsonl"
+            _write_trace(
+                trace,
+                [
+                    {"kind": "write", "address": "0xFF40", "frame": 0, "seq": 2, "pc_bank_address": "00:0180", "pc_label": "Known"},
+                    {"kind": "write", "address": "0xFF40", "frame": 0, "pc_bank_address": "00:0200", "pc_label": "Unknown"},
+                ],
+            )
+
+            report = build_heatmap(traces=(trace,), region="io", root=root)
+
+        cell = next(c for c in report["cells"] if c["address_hex"] == "$FF40")
+        self.assertEqual(cell["write_count"], 2)
+        self.assertEqual(cell["last_write_pc"], "00:0180")
+        self.assertEqual(cell["last_write_pc_label"], "Known")
+
+    def test_frame_zero_uses_explicit_frame_before_frame_index_fallback(self) -> None:
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            trace = root / "effect.jsonl"
+            _write_trace(
+                trace,
+                [
+                    {"kind": "write", "address": "0xFF40", "frame": 0, "frame_index": 9, "seq": 0},
+                ],
+            )
+
+            report = build_heatmap(traces=(trace,), region="io", root=root)
+
+        self.assertEqual(report["frames"], [0])
+        self.assertEqual(report["cells"][0]["frame"], 0)
+
+    def test_missing_trace_is_invalid_instead_of_empty_success(self) -> None:
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            report = build_heatmap(traces=("missing.jsonl",), region="io", root=root)
+
+        self.assertFalse(report["valid"])
+        self.assertIn("missing trace", report["errors"][0])
+        self.assertIn("no writes in window", report["grid"])
+
+    def test_cli_invalid_frame_range_fails_closed(self) -> None:
+        import contextlib
+        import io as io_mod
+
+        err = io_mod.StringIO()
+        with self.assertRaises(SystemExit) as raised:
+            with contextlib.redirect_stderr(err):
+                main(["--frame-range", "10:2", "--json"])
+
+        self.assertEqual(raised.exception.code, 2)
+        self.assertIn("hi greater than lo", err.getvalue())
+
     def test_unknown_region_returns_invalid_packet(self) -> None:
         report = build_heatmap(traces=(), region="vram")
         self.assertFalse(report["valid"])
