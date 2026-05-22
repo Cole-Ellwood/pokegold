@@ -5,12 +5,14 @@ import json
 import socket
 import threading
 import unittest
+from contextlib import redirect_stderr
 
 from tools.debugger.dap_server import (
     DEFAULT_HOST,
     DapServer,
     encode_frame,
     read_frame,
+    serve_stream,
     serve_tcp,
 )
 
@@ -49,6 +51,21 @@ class DapFramingTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             read_frame(io.BytesIO(b"Content-Length: 100\r\n\r\n{}"))
 
+    def test_read_frame_rejects_non_object_json_body(self) -> None:
+        with self.assertRaisesRegex(ValueError, "JSON object"):
+            read_frame(io.BytesIO(b"Content-Length: 2\r\n\r\n[]"))
+
+    def test_serve_stream_handles_non_object_body_without_crashing(self) -> None:
+        in_stream = io.BytesIO(b"Content-Length: 2\r\n\r\n[]")
+        out_stream = io.BytesIO()
+        stderr = io.StringIO()
+
+        with redirect_stderr(stderr):
+            serve_stream(DapServer(), in_stream, out_stream)
+
+        self.assertEqual(out_stream.getvalue(), b"")
+        self.assertIn("DAP body must be a JSON object", stderr.getvalue())
+
 
 class DapServerHandshakeTests(unittest.TestCase):
     def test_initialize_returns_capabilities_response_and_initialized_event(self) -> None:
@@ -86,6 +103,19 @@ class DapServerHandshakeTests(unittest.TestCase):
         self.assertEqual(len(responses), 1)
         self.assertFalse(responses[0]["success"])
         self.assertIn("unsupported message type", responses[0]["message"])
+
+    def test_non_integer_seq_returns_error_response(self) -> None:
+        server = DapServer()
+        responses = server.handle_message({
+            "seq": "not-int",
+            "type": "request",
+            "command": "initialize",
+        })
+
+        self.assertEqual(len(responses), 1)
+        self.assertFalse(responses[0]["success"])
+        self.assertEqual(responses[0]["request_seq"], 0)
+        self.assertIn("invalid request seq", responses[0]["message"])
 
     def test_seq_increments_across_responses(self) -> None:
         server = DapServer()

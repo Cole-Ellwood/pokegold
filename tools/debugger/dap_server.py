@@ -62,15 +62,21 @@ class DapServer:
 
     def handle_message(self, message: dict[str, Any]) -> list[dict[str, Any]]:
         msg_type = message.get("type")
+        request_seq, seq_error = _request_seq(message)
+        command = str(message.get("command", ""))
+        if seq_error:
+            return [self._error_response(
+                request_seq=0,
+                command=command,
+                message=seq_error,
+            )]
         if msg_type != "request":
             return [self._error_response(
-                request_seq=int(message.get("seq", 0)),
-                command=str(message.get("command", "")),
+                request_seq=request_seq,
+                command=command,
                 message=f"unsupported message type: {msg_type!r}",
             )]
-        command = str(message.get("command", ""))
         handler = _COMMAND_HANDLERS.get(command)
-        request_seq = int(message.get("seq", 0))
         if handler is None:
             return [self._error_response(
                 request_seq=request_seq,
@@ -137,6 +143,14 @@ _COMMAND_HANDLERS: dict[
 }
 
 
+def _request_seq(message: dict[str, Any]) -> tuple[int, str]:
+    raw = message.get("seq", 0)
+    try:
+        return int(raw), ""
+    except (TypeError, ValueError):
+        return 0, f"invalid request seq: {raw!r}"
+
+
 def encode_frame(payload: dict[str, Any]) -> bytes:
     """Serialize a DAP message with Content-Length framing."""
     body = json.dumps(payload, separators=(",", ":")).encode("utf-8")
@@ -174,9 +188,12 @@ def read_frame(stream: BinaryIO) -> dict[str, Any] | None:
             raise ValueError("stream closed mid-body")
         body += chunk
     try:
-        return json.loads(body.decode("utf-8"))
+        decoded = json.loads(body.decode("utf-8"))
     except json.JSONDecodeError as exc:
         raise ValueError(f"malformed JSON body: {exc.msg}") from exc
+    if not isinstance(decoded, dict):
+        raise ValueError("DAP body must be a JSON object")
+    return decoded
 
 
 def serve_stream(
