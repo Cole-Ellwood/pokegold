@@ -5,9 +5,9 @@
 and Codex (and VS Code, and any DAP client) can drive the debugger
 through a normalized JSON protocol instead of re-inventing per-session
 glue. Current slices ship Content-Length framing, initialize, launch,
-configurationDone, threads, evaluate(tdb), and disconnect. Later slices
-add stackTrace, scopes, setBreakpoints, reverseContinue, pause, and
-continue.
+configurationDone, setBreakpoints (recorded as unverified), threads,
+evaluate(tdb), and disconnect. Later slices add stackTrace, scopes,
+reverseContinue, pause, and continue.
 
 Protocol shape grounded in microsoft/debug-adapter-protocol spec
 (https://microsoft.github.io/debug-adapter-protocol/specification.html).
@@ -59,6 +59,9 @@ class DapServer:
         }
     )
     default_reports: tuple[str, ...] = ()
+    breakpoints_by_source: dict[str, tuple[dict[str, Any], ...]] = field(
+        default_factory=dict
+    )
     root: Path = field(default_factory=lambda: ROOT)
 
     def _next_seq(self) -> int:
@@ -193,6 +196,72 @@ class DapServer:
             success=True,
         )]
 
+    def _set_breakpoints_response(
+        self, message: dict[str, Any], request_seq: int
+    ) -> list[dict[str, Any]]:
+        args = message.get("arguments")
+        if not isinstance(args, dict):
+            return [self._error_response(
+                request_seq=request_seq,
+                command="setBreakpoints",
+                message="setBreakpoints requires arguments object",
+            )]
+        source = args.get("source")
+        if not isinstance(source, dict):
+            return [self._error_response(
+                request_seq=request_seq,
+                command="setBreakpoints",
+                message="setBreakpoints requires arguments.source object",
+            )]
+        source_key = str(source.get("path") or source.get("name") or "").strip()
+        if not source_key:
+            return [self._error_response(
+                request_seq=request_seq,
+                command="setBreakpoints",
+                message="setBreakpoints requires source.path or source.name",
+            )]
+        raw_breakpoints = args.get("breakpoints", [])
+        if not isinstance(raw_breakpoints, list):
+            return [self._error_response(
+                request_seq=request_seq,
+                command="setBreakpoints",
+                message="setBreakpoints arguments.breakpoints must be a list",
+            )]
+        response_breakpoints: list[dict[str, Any]] = []
+        stored_breakpoints: list[dict[str, Any]] = []
+        for raw_breakpoint in raw_breakpoints:
+            if not isinstance(raw_breakpoint, dict):
+                return [self._error_response(
+                    request_seq=request_seq,
+                    command="setBreakpoints",
+                    message="setBreakpoints breakpoint entries must be objects",
+                )]
+            line = raw_breakpoint.get("line")
+            if isinstance(line, bool) or not isinstance(line, int):
+                return [self._error_response(
+                    request_seq=request_seq,
+                    command="setBreakpoints",
+                    message="setBreakpoints breakpoint.line must be an integer",
+                )]
+            breakpoint = {
+                "verified": False,
+                "line": line,
+                "message": "source-line breakpoint recorded; PC binding and stop support pending",
+            }
+            stored_breakpoints.append({
+                "source": source_key,
+                "line": line,
+                "verified": False,
+            })
+            response_breakpoints.append(breakpoint)
+        self.breakpoints_by_source[source_key] = tuple(stored_breakpoints)
+        return [self._response(
+            request_seq=request_seq,
+            command="setBreakpoints",
+            success=True,
+            body={"breakpoints": response_breakpoints},
+        )]
+
     def _disconnect_response(
         self, message: dict[str, Any], request_seq: int
     ) -> list[dict[str, Any]]:
@@ -257,6 +326,7 @@ _COMMAND_HANDLERS: dict[
     "initialize": DapServer._initialize_response,
     "launch": DapServer._launch_response,
     "configurationDone": DapServer._configuration_done_response,
+    "setBreakpoints": DapServer._set_breakpoints_response,
     "threads": DapServer._threads_response,
     "evaluate": DapServer._evaluate_response,
     "disconnect": DapServer._disconnect_response,
@@ -386,8 +456,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         prog="python -m tools.debugger.dap_server",
         description=(
             "Minimal Debug Adapter Protocol server (P14). Current slices "
-            "ship initialize, launch, configurationDone, threads, evaluate(tdb), and disconnect; later slices add "
-            "setBreakpoints/stackTrace/scopes/reverseContinue."
+            "ship initialize, launch, configurationDone, setBreakpoints, threads, "
+            "evaluate(tdb), and disconnect; later slices add stackTrace/scopes/reverseContinue."
         ),
     )
     parser.add_argument(

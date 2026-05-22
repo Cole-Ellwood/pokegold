@@ -1325,8 +1325,9 @@ def _build_v2_surfaces(root: Path = ROOT) -> list[dict[str, Any]]:
             scope=(
                 "DAP-shaped protocol surface for debugger clients. Current slices ship "
                 "Content-Length framing, initialize and launch handshakes, single SM83 "
-                "thread enumeration, configurationDone, evaluate(tdb) over supplied "
-                "effect-trace reports, and clean disconnect."
+                "thread enumeration, configurationDone, unverified source-line "
+                "setBreakpoints, evaluate(tdb) over supplied effect-trace reports, "
+                "and clean disconnect."
             ),
             evidence=(
                 "tools/debugger/dap_server.py",
@@ -1334,7 +1335,8 @@ def _build_v2_surfaces(root: Path = ROOT) -> list[dict[str, Any]]:
                 "docs/debugger_masterpiece_roadmap_codex_task.md",
             ),
             gaps=(
-                "setBreakpoints, stackTrace, scopes, variables, continue, pause, and reverseContinue remain pending",
+                "setBreakpoints are recorded as unverified until source-line-to-PC binding lands",
+                "stackTrace, scopes, variables, continue, pause, and reverseContinue remain pending",
                 "no VS Code launch recipe or debugger user-guide recipe yet",
             ),
             commands=(

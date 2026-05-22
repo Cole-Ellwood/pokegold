@@ -125,9 +125,9 @@ python -m tools.debugger dap `
   --report .local/tmp/effect_trace.json
 ```
 
-Then send DAP `initialize`, optionally `launch`, `threads`, and
-`evaluate` requests. `launch` may bind reports for clients that cannot
-pass `--report` at process start:
+Then send DAP `initialize`, optionally `launch`, `setBreakpoints`,
+`threads`, and `evaluate` requests. `launch` may bind reports for
+clients that cannot pass `--report` at process start:
 
 ```json
 {
@@ -156,18 +156,20 @@ The `evaluate` expression is a `tdb` query:
 **Success looks like**
 
 The `initialize` response returns adapter capabilities, `launch`
-returns `success=true`, `threads` returns one synthetic `sm83` thread,
-and `evaluate` returns `success=true` with `body.tdb.matches[]`. If
-the client cannot bind reports at process start or launch, it may send
-`arguments.reports` as a list of report paths on the `evaluate`
-request.
+returns `success=true`, `setBreakpoints` returns `verified=false`
+breakpoints until source-line-to-PC binding lands, `threads` returns
+one synthetic `sm83` thread, and `evaluate` returns `success=true` with
+`body.tdb.matches[]`. If the client cannot bind reports at process
+start or launch, it may send `arguments.reports` as a list of report
+paths on the `evaluate` request.
 
 **Proof limit**
 
 The DAP server is a protocol surface over existing trace reports. It
 does not run the emulator, pause the CPU, or materialize stack/scopes
-yet. `setBreakpoints`, `stackTrace`, `scopes`, `variables`,
-`continue`, `pause`, and `reverseContinue` remain P14 follow-ups.
+yet. Breakpoints are recorded as unverified planning state, not live
+stops. `stackTrace`, `scopes`, `variables`, `continue`, `pause`, and
+`reverseContinue` remain P14 follow-ups.
 
 ### "Player reported a bug"
 

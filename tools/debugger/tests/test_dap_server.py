@@ -289,6 +289,98 @@ class DapServerConfigurationDoneTests(unittest.TestCase):
         self.assertEqual(responses[0]["request_seq"], 7)
 
 
+class DapServerSetBreakpointsTests(unittest.TestCase):
+    def test_set_breakpoints_records_unverified_source_lines(self) -> None:
+        server = DapServer()
+        responses = server.handle_message({
+            "seq": 8,
+            "type": "request",
+            "command": "setBreakpoints",
+            "arguments": {
+                "source": {"path": "engine/battle/effect_commands.asm"},
+                "breakpoints": [{"line": 120}, {"line": 124}],
+            },
+        })
+
+        self.assertEqual(len(responses), 1)
+        response = responses[0]
+        self.assertTrue(response["success"], response)
+        breakpoints = response["body"]["breakpoints"]
+        self.assertEqual([item["line"] for item in breakpoints], [120, 124])
+        self.assertEqual([item["verified"] for item in breakpoints], [False, False])
+        self.assertIn("PC binding", breakpoints[0]["message"])
+        self.assertEqual(
+            server.breakpoints_by_source["engine/battle/effect_commands.asm"],
+            (
+                {
+                    "source": "engine/battle/effect_commands.asm",
+                    "line": 120,
+                    "verified": False,
+                },
+                {
+                    "source": "engine/battle/effect_commands.asm",
+                    "line": 124,
+                    "verified": False,
+                },
+            ),
+        )
+
+    def test_set_breakpoints_replaces_existing_breakpoints_for_source(self) -> None:
+        server = DapServer()
+        first = {
+            "seq": 8,
+            "type": "request",
+            "command": "setBreakpoints",
+            "arguments": {
+                "source": {"path": "engine/battle/effect_commands.asm"},
+                "breakpoints": [{"line": 120}],
+            },
+        }
+        second = {
+            "seq": 9,
+            "type": "request",
+            "command": "setBreakpoints",
+            "arguments": {
+                "source": {"path": "engine/battle/effect_commands.asm"},
+                "breakpoints": [],
+            },
+        }
+
+        self.assertTrue(server.handle_message(first)[0]["success"])
+        response = server.handle_message(second)[0]
+
+        self.assertTrue(response["success"], response)
+        self.assertEqual(response["body"]["breakpoints"], [])
+        self.assertEqual(server.breakpoints_by_source["engine/battle/effect_commands.asm"], ())
+
+    def test_set_breakpoints_rejects_missing_source(self) -> None:
+        server = DapServer()
+        responses = server.handle_message({
+            "seq": 8,
+            "type": "request",
+            "command": "setBreakpoints",
+            "arguments": {"breakpoints": [{"line": 120}]},
+        })
+
+        self.assertFalse(responses[0]["success"])
+        self.assertIn("source object", responses[0]["message"])
+
+    def test_set_breakpoints_rejects_non_integer_line(self) -> None:
+        server = DapServer()
+        responses = server.handle_message({
+            "seq": 8,
+            "type": "request",
+            "command": "setBreakpoints",
+            "arguments": {
+                "source": {"path": "engine/battle/effect_commands.asm"},
+                "breakpoints": [{"line": True}],
+            },
+        })
+
+        self.assertFalse(responses[0]["success"])
+        self.assertIn("breakpoint.line must be an integer", responses[0]["message"])
+
+
 class DapServerEvaluateTests(unittest.TestCase):
     def _trace_fixture(self, tmp_path) -> str:
         return _trace_fixture(tmp_path)
