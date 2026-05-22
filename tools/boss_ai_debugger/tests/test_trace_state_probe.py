@@ -62,6 +62,39 @@ class TraceStateProbeTests(unittest.TestCase):
         self.assertEqual(summary["hp"], 300)
         self.assertEqual(summary["max_hp"], 400)
 
+    def test_battle_summary_uses_big_endian_hp_words(self) -> None:
+        class FakeMemory:
+            def __init__(self) -> None:
+                self.values = {
+                    (1, 0xD0FF): 0x01,  # wPartyCount
+                    (1, 0xD100): 0x02,  # wBattleMonSpecies
+                    (1, 0xD101): 0x2A,  # wBattleMonLevel
+                    (1, 0xD102): 0x01,  # wBattleMonHP high
+                    (1, 0xD103): 0x2C,  # wBattleMonHP low
+                    (1, 0xD104): 0x01,  # wBattleMonMaxHP high
+                    (1, 0xD105): 0x90,  # wBattleMonMaxHP low
+                }
+
+            def __getitem__(self, key):
+                return self.values[key]
+
+        class FakePyBoy:
+            def __init__(self) -> None:
+                self.memory = FakeMemory()
+
+        symbols = {
+            "wPartyCount": Symbol(1, 0xD0FF),
+            "wBattleMonSpecies": Symbol(1, 0xD100),
+            "wBattleMonLevel": Symbol(1, 0xD101),
+            "wBattleMonHP": Symbol(1, 0xD102),
+            "wBattleMonMaxHP": Symbol(1, 0xD104),
+        }
+
+        summary = party_summary(FakePyBoy(), symbols, battle_mode=1)
+
+        self.assertEqual(summary["hp"], 300)
+        self.assertEqual(summary["max_hp"], 400)
+
 
 if __name__ == "__main__":
     unittest.main()
