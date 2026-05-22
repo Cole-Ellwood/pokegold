@@ -1314,6 +1314,34 @@ def _build_v2_surfaces(root: Path = ROOT) -> list[dict[str, Any]]:
                 "python -m tools.debugger crossemu install-docs",
             ),
         ),
+        _capability(
+            id="dap_server",
+            title="Debug Adapter Protocol server (P14)",
+            status=_complete_if_paths(
+                root,
+                "tools/debugger/dap_server.py",
+                "tools/debugger/tests/test_dap_server.py",
+            ),
+            scope=(
+                "DAP-shaped protocol surface for debugger clients. Current slices ship "
+                "Content-Length framing, initialize handshake, single SM83 thread "
+                "enumeration, and evaluate(tdb) over supplied effect-trace reports."
+            ),
+            evidence=(
+                "tools/debugger/dap_server.py",
+                "tools/debugger/tests/test_dap_server.py",
+                "docs/debugger_masterpiece_roadmap_codex_task.md",
+            ),
+            gaps=(
+                "setBreakpoints, stackTrace, scopes, variables, continue, pause, and reverseContinue remain pending",
+                "no VS Code launch recipe or debugger user-guide recipe yet",
+            ),
+            commands=(
+                "python -m tools.debugger dap --stdio",
+                "python -m tools.debugger dap --port 4711 --once",
+                "python -m tools.debugger dap --help",
+            ),
+        ),
     ]
     return [
         {

@@ -1259,6 +1259,93 @@ def check_crossemu(root: Path) -> CheckResult:
     )
 
 
+def check_dap_server(root: Path) -> CheckResult:
+    """Exercise P14 DAP framing, threads, and evaluate(tdb) without opening a socket."""
+
+    import io
+    import tempfile
+
+    from .dap_server import DapServer, encode_frame, read_frame, serve_stream
+
+    def inner() -> str:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_root = Path(tmp)
+            (tmp_root / "effect.json").write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "kind": "unified_debugger_effect_trace",
+                        "valid": True,
+                        "events": [
+                            {
+                                "seq": 4,
+                                "pc_bank_address": "01:5A00",
+                                "pc_label": "BattleCommand_DamageCalc+6",
+                                "bank_state": {"wram": 1},
+                                "bank_state_sources": {"wram": "bank_state.wram"},
+                                "effects": [
+                                    {
+                                        "access": "write",
+                                        "kind": "memory_write",
+                                        "address_hex": "D141",
+                                        "address_key": "wramx:01:D141",
+                                        "value_hex": "2A",
+                                        "bank": 1,
+                                        "space": "wramx",
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            server = DapServer(root=tmp_root)
+            input_frames = b"".join(
+                [
+                    encode_frame({"seq": 1, "type": "request", "command": "initialize"}),
+                    encode_frame({"seq": 2, "type": "request", "command": "threads"}),
+                    encode_frame(
+                        {
+                            "seq": 3,
+                            "type": "request",
+                            "command": "evaluate",
+                            "arguments": {
+                                "expression": "writes(addr=$D141)",
+                                "reports": ["effect.json"],
+                            },
+                        }
+                    ),
+                ]
+            )
+            out_stream = io.BytesIO()
+            serve_stream(server, io.BytesIO(input_frames), out_stream)
+            response_stream = io.BytesIO(out_stream.getvalue())
+            responses = []
+            while True:
+                frame = read_frame(response_stream)
+                if frame is None:
+                    break
+                responses.append(frame)
+
+        commands = [item.get("command") for item in responses if item.get("type") == "response"]
+        if commands != ["initialize", "threads", "evaluate"]:
+            raise AssertionError(f"unexpected DAP responses: {responses}")
+        evaluate = responses[-1]
+        if not evaluate.get("success"):
+            raise AssertionError(f"evaluate failed: {evaluate}")
+        matches = evaluate.get("body", {}).get("tdb", {}).get("matches", [])
+        if len(matches) != 1 or matches[0].get("address_hex") != "D141":
+            raise AssertionError(f"expected one D141 tdb match; got {matches}")
+        return "dap initialize/threads/evaluate(tdb) valid; matches=1"
+
+    return _capture(
+        component="dap_server",
+        next_command="python -m tools.debugger dap --stdio",
+        fn=inner,
+    )
+
+
 NAMED_CHECKS: tuple[tuple[str, Check], ...] = (
     ("capability_audit", check_capability_audit),
     ("inventory", check_inventory),
@@ -1287,6 +1374,7 @@ NAMED_CHECKS: tuple[tuple[str, Check], ...] = (
     ("sm83_model_parity", check_sm83_model_parity),
     ("rom_edit", check_rom_edit),
     ("crossemu", check_crossemu),
+    ("dap_server", check_dap_server),
 )
 
 CHECKS: tuple[Check, ...] = tuple(check for _, check in NAMED_CHECKS)

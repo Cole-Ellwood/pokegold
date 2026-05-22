@@ -80,6 +80,7 @@ V2_PASSTHROUGH_MODULES = {
     "probe": "tools.debugger.probe",
     "rom-edit": "tools.debugger.rom_edit",
     "crossemu": "tools.debugger.crossemu",
+    "dap": "tools.debugger.dap_server",
 }
 
 

@@ -231,6 +231,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("chaos_mode", ids)
         self.assertIn("rom_edit", ids)
         self.assertIn("crossemu", ids)
+        self.assertIn("dap_server", ids)
         rom_edit = next(surface for surface in surfaces if surface["id"] == "rom_edit")
         self.assertNotIn("real build smoke is still pending", "\n".join(rom_edit["gaps"]))
         # Each v2 surface ships with at least one runnable command so
@@ -266,6 +267,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
                 "probe",
                 "rom-edit",
                 "crossemu",
+                "dap",
             },
         )
 
@@ -313,7 +315,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         # v2 section is present, ordered after v1 capabilities, and
         # explicitly marks itself as additive.
         self.assertIn("Omni-debugger v2 surfaces", text)
-        self.assertIn("15/15 complete", text)
+        self.assertIn("16/16 complete", text)
         self.assertIn("not counted toward v1 readiness", text)
         self.assertIn("hypothesis_tracker", text)
         self.assertIn("debugger_selftest", text)
@@ -330,6 +332,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("chaos_mode", text)
         self.assertIn("rom_edit", text)
         self.assertIn("crossemu", text)
+        self.assertIn("dap_server", text)
         self.assertIn("fuzz --chaos", text)
 
     def test_damage_changed_file_triages_to_damage_debugger(self) -> None:
