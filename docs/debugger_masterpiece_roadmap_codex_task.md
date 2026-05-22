@@ -341,7 +341,7 @@ behavioral gate; planned/runtime/hardware proof boundaries follow per phase.
     {
       "id": "shared_sm83_model_consumed_by_both_engines",
       "kind": "command",
-      "command": "python tools/audit/check_sm83_model_consumers.py",
+      "command": "python tools/audit/check_sm83_shared_tables_consumers.py",
       "expected_exit_code": 0
     }
   ]
@@ -463,8 +463,9 @@ model means one bug, one fix, both engines covered.
   `sm83_model`.
 - Replace ad-hoc opcode modeling in `effect_trace.py` with a consumer of
   `sm83_model`.
-- Add `tools/audit/check_sm83_model_consumers.py`: scans for opcode-specific
-  branching in non-`sm83_model` files; fails on regressions.
+- Add `tools/audit/check_sm83_shared_tables_consumers.py`: tracks shared-table
+  dispatch sites in non-`sm83_model` files with a shrinking allowlist; fails on
+  regressions.
 - Cover all opcodes including: HLI/HLD pair updates, 16-bit inc/dec, `add hl,rr`,
   `add sp,e8`, `ld hl,sp+e8`, `ld sp,hl`, CB register ops + flags, DAA, CPL, SCF,
   CCF, accumulator rotates, push/pop, call/ret/rst, RETI, interrupt entry, HALT,
@@ -479,7 +480,8 @@ model means one bug, one fix, both engines covered.
   trace input.
 - `test_shared_sm83_model_dynamic_taint_and_effect_trace_parity_ld_hli`,
   `..._cb_register`, `..._sp_update`, `..._daa` pass.
-- `check_sm83_model_consumers.py` passes (no opcode dispatch outside `sm83_model`).
+- `check_sm83_shared_tables_consumers.py` passes (no unallowlisted shared-table
+  dispatch outside `sm83_model`; allowlisted counts do not grow).
 - Full debugger unittest suite passes.
 - Selftest stays green with `sm83_model_parity` as a new component.
 
@@ -1569,7 +1571,7 @@ python tools/audit/check_release_smoke.py
 
 # Phase-specific audits (per phase)
 python tools/audit/check_two_llm_handoff_log.py     # after P4
-python tools/audit/check_sm83_model_consumers.py    # after P1
+python tools/audit/check_sm83_shared_tables_consumers.py    # after P1
 python tools/audit/check_bgb_sym_parity.py          # after P7
 
 # Workspace cleanup

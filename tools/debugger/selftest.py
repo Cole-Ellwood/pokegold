@@ -724,7 +724,7 @@ def check_sm83_model_parity(root: Path) -> CheckResult:
 
     return _capture(
         component="sm83_model_parity",
-        next_command="python tools/audit/check_sm83_model_consumers.py && python -B -m unittest tools.debugger.tests.test_sm83_model_consumers",
+        next_command="python tools/audit/check_sm83_shared_tables_consumers.py && python -B -m unittest tools.debugger.tests.test_sm83_shared_tables_consumers",
         fn=inner,
     )
 
