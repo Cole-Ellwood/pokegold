@@ -176,10 +176,18 @@ class DapServer:
                 message="evaluate requires non-empty string arguments.expression",
             )]
         raw_reports = args.get("reports")
-        if isinstance(raw_reports, list):
-            reports = tuple(str(item) for item in raw_reports)
-        else:
+        if raw_reports is None:
             reports = self.default_reports
+        elif isinstance(raw_reports, list) and all(
+            isinstance(item, str) for item in raw_reports
+        ):
+            reports = tuple(raw_reports)
+        else:
+            return [self._error_response(
+                request_seq=request_seq,
+                command="evaluate",
+                message="evaluate arguments.reports must be a list of strings",
+            )]
         tdb_result = run_tdb(query=expression, reports=reports, root=self.root)
         body = {
             "result": json.dumps(tdb_result, sort_keys=True),

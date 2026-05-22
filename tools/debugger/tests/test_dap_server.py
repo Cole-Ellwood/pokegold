@@ -225,6 +225,36 @@ class DapServerEvaluateTests(unittest.TestCase):
         })
         self.assertFalse(responses[0]["success"])
 
+    def test_evaluate_rejects_non_list_reports(self) -> None:
+        server = DapServer()
+        responses = server.handle_message({
+            "seq": 1,
+            "type": "request",
+            "command": "evaluate",
+            "arguments": {
+                "expression": "writes(addr=$D141)",
+                "reports": "effect.json",
+            },
+        })
+
+        self.assertFalse(responses[0]["success"])
+        self.assertIn("reports must be a list of strings", responses[0]["message"])
+
+    def test_evaluate_rejects_non_string_report_entries(self) -> None:
+        server = DapServer()
+        responses = server.handle_message({
+            "seq": 1,
+            "type": "request",
+            "command": "evaluate",
+            "arguments": {
+                "expression": "writes(addr=$D141)",
+                "reports": ["effect.json", {"path": "other.json"}],
+            },
+        })
+
+        self.assertFalse(responses[0]["success"])
+        self.assertIn("reports must be a list of strings", responses[0]["message"])
+
     def test_evaluate_runs_tdb_query_against_supplied_report(self) -> None:
         import tempfile
 
