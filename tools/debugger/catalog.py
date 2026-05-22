@@ -999,6 +999,36 @@ def _build_v2_surfaces(root: Path = ROOT) -> list[dict[str, Any]]:
             ),
         ),
         _capability(
+            id="tdb",
+            title="tdb trace query language (P3)",
+            status=_complete_if_paths(
+                root,
+                "tools/debugger/tdb.py",
+                "tools/debugger/tests/test_tdb.py",
+            ),
+            scope=(
+                "Declarative query language over effect-trace events. First "
+                "slice ships writes(addr=$X[, bank=N]) / reads(reg=R|addr=$X) / "
+                "executes(pc=$X|Label) predicates composed via and/or/not "
+                "with paren grouping. Matches preserve the underlying event's "
+                "proof_status; bank-unverified matches downgrade explicitly "
+                "with proof_downgrade_reason=bank_unverified. Richer "
+                "predicates (between, caller=, at bank=, frame ranges) and "
+                "--explain land in P3 follow-up slices."
+            ),
+            evidence=(
+                "tools/debugger/tdb.py",
+                "tools/debugger/tests/test_tdb.py",
+                "docs/debugger_masterpiece_roadmap_codex_task.md",
+            ),
+            gaps=(),
+            commands=(
+                "python -m tools.debugger tdb 'writes(addr=$D141)' --report effect.json",
+                "python -m tools.debugger tdb 'writes(addr=$D141) and executes(pc=BattleCommand_DamageCalc)' --report effect.json",
+                "python -m tools.debugger tdb 'reads(reg=A) or writes(addr=$D141, bank=1)' --report effect.json --json",
+            ),
+        ),
+        _capability(
             id="when_wrote",
             title="when-wrote omniscient last-writer query (P2)",
             status=_complete_if_paths(

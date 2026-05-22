@@ -66,6 +66,7 @@ V2_PASSTHROUGH_MODULES = {
     "session-start": "tools.debugger.session_start",
     "handoff": "tools.debugger.handoff_log",
     "when-wrote": "tools.debugger.when_wrote",
+    "tdb": "tools.debugger.tdb",
 }
 
 
@@ -736,6 +737,18 @@ def build_parser() -> argparse.ArgumentParser:
     )
     when_wrote.add_argument("argv", nargs=argparse.REMAINDER)
     when_wrote.set_defaults(func=cmd_when_wrote)
+
+    tdb = subparsers.add_parser(
+        "tdb",
+        add_help=False,
+        description=(
+            "Trace query language (P3). Predicate expressions over effect "
+            "trace events with AND/OR/NOT composition. Delegates to "
+            "`python -m tools.debugger.tdb`. Pass `--help` for syntax."
+        ),
+    )
+    tdb.add_argument("argv", nargs=argparse.REMAINDER)
+    tdb.set_defaults(func=cmd_tdb)
 
     return parser
 
@@ -1456,6 +1469,10 @@ def cmd_handoff(args: argparse.Namespace) -> int:
 
 def cmd_when_wrote(args: argparse.Namespace) -> int:
     return _delegate_to_module_main("tools.debugger.when_wrote", args.argv)
+
+
+def cmd_tdb(args: argparse.Namespace) -> int:
+    return _delegate_to_module_main("tools.debugger.tdb", args.argv)
 
 
 def emit_report(report: dict[str, Any], args: argparse.Namespace) -> None:
