@@ -532,6 +532,35 @@ def build_parser() -> argparse.ArgumentParser:
     build.add_argument("--timeout-seconds", type=int, default=900)
     build.add_argument("--json", action="store_true")
     build.set_defaults(func=cmd_build)
+
+    apply = sub.add_parser(
+        "apply-to-main",
+        help="Apply a verified rom-edit worktree diff back to the target checkout.",
+    )
+    apply.add_argument("--worktree-path", required=True)
+    apply.add_argument(
+        "--changed-file",
+        action="append",
+        dest="changed_files",
+        required=True,
+        help="Repo-relative file expected in the worktree diff.",
+    )
+    apply.add_argument(
+        "--gate",
+        action="append",
+        default=[],
+        type=_parse_gate_arg,
+        metavar="NAME=STATUS",
+        help="Observed green-gate result, for example release_smoke=pass.",
+    )
+    apply.add_argument("--handoff-phase", required=True)
+    apply.add_argument("--handoff-store", default="")
+    apply.add_argument("--root", default=str(ROOT))
+    apply.add_argument("--target-branch", required=True)
+    apply.add_argument("--merge-target", default="")
+    apply.add_argument("--push-remote", action="store_true")
+    apply.add_argument("--json", action="store_true")
+    apply.set_defaults(func=cmd_apply_to_main)
     return parser
 
 
@@ -603,6 +632,27 @@ def cmd_build(args: argparse.Namespace) -> int:
             if step.get("failure_summary"):
                 print(f"    {step['failure_summary']}")
     return 0 if report["passed"] else 1
+
+
+def cmd_apply_to_main(args: argparse.Namespace) -> int:
+    report = apply_rom_edit_to_main(
+        args.worktree_path,
+        changed_files=tuple(args.changed_files),
+        gate_results=tuple(args.gate),
+        handoff_phase=args.handoff_phase,
+        handoff_store=Path(args.handoff_store) if args.handoff_store else DEFAULT_STORE,
+        root=Path(args.root),
+        target_branch=args.target_branch,
+        merge_target=args.merge_target,
+        push_remote=args.push_remote,
+    )
+    if args.json:
+        print(json.dumps(report, indent=2))
+    else:
+        print(f"rom-edit apply-to-main: {report['status']}")
+        for reason in report["blocking_reasons"]:
+            print(f"  - {reason}")
+    return 0 if report["applied"] else 1
 
 
 def _parse_gate_arg(text: str) -> GateResult:

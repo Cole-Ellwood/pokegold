@@ -796,5 +796,119 @@ class RomEditApplyToMainCoreTests(unittest.TestCase):
             )
 
 
+class RomEditApplyToMainCliTests(unittest.TestCase):
+    def test_apply_to_main_cli_applies_green_mutual_worktree_diff(self) -> None:
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            repo = root / "repo"
+            _init_repo(repo)
+            _git(repo, "checkout", "-b", "feature")
+            store = _write_store(
+                root,
+                _ack_start(),
+                _slice_update(),
+                _slice_review(),
+            )
+            worktree = create_rom_edit_worktree(root=repo, slug="apply-cli")
+            apply_unified_patch_to_worktree(
+                worktree.path,
+                _file_txt_patch("cli-applied"),
+                root=repo,
+            )
+            proc = subprocess.run(
+                [
+                    "python",
+                    "-m",
+                    "tools.debugger",
+                    "rom-edit",
+                    "apply-to-main",
+                    "--root",
+                    str(repo),
+                    "--worktree-path",
+                    worktree.path,
+                    "--changed-file",
+                    "file.txt",
+                    "--gate",
+                    "release_smoke=pass",
+                    "--handoff-phase",
+                    PHASE,
+                    "--handoff-store",
+                    str(store),
+                    "--target-branch",
+                    "feature",
+                    "--json",
+                ],
+                cwd=ROOT,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+            )
+
+            self.assertEqual(proc.returncode, 0, proc.stderr)
+            report = json.loads(proc.stdout)
+            self.assertTrue(report["applied"], report)
+            self.assertEqual(
+                (repo / "file.txt").read_text(encoding="utf-8"),
+                "cli-applied\n",
+            )
+
+    def test_apply_to_main_cli_refuses_master_target(self) -> None:
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            repo = root / "repo"
+            _init_repo(repo)
+            store = _write_store(
+                root,
+                _ack_start(),
+                _slice_update(),
+                _slice_review(),
+            )
+            worktree = create_rom_edit_worktree(root=repo, slug="apply-cli-master")
+            apply_unified_patch_to_worktree(
+                worktree.path,
+                _file_txt_patch("blocked"),
+                root=repo,
+            )
+            proc = subprocess.run(
+                [
+                    "python",
+                    "-m",
+                    "tools.debugger",
+                    "rom-edit",
+                    "apply-to-main",
+                    "--root",
+                    str(repo),
+                    "--worktree-path",
+                    worktree.path,
+                    "--changed-file",
+                    "file.txt",
+                    "--gate",
+                    "release_smoke=pass",
+                    "--handoff-phase",
+                    PHASE,
+                    "--handoff-store",
+                    str(store),
+                    "--target-branch",
+                    "master",
+                    "--json",
+                ],
+                cwd=ROOT,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+            )
+
+            self.assertEqual(proc.returncode, 1, proc.stdout)
+            report = json.loads(proc.stdout)
+            self.assertFalse(report["applied"], report)
+            self.assertEqual((repo / "file.txt").read_text(encoding="utf-8"), "one\n")
+            self.assertTrue(
+                any("protected target branch" in reason for reason in report["blocking_reasons"]),
+                report,
+            )
+
+
 if __name__ == "__main__":
     unittest.main()
