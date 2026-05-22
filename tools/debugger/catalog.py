@@ -1029,6 +1029,38 @@ def _build_v2_surfaces(root: Path = ROOT) -> list[dict[str, Any]]:
             ),
         ),
         _capability(
+            id="context_packet",
+            title="bug-localization context packets (P5)",
+            status=_complete_if_paths(
+                root,
+                "tools/debugger/context_packet.py",
+                "tools/debugger/tests/test_context_packet.py",
+            ),
+            scope=(
+                "Emits a single-turn-sized context packet for a hypothesis: "
+                "folded claim + citations + recent verifications + status, "
+                "rendered as both markdown and structured JSON. First slice "
+                "ships the hypothesis read-back and budget estimate (pessimistic "
+                "4-chars-per-token). Per-LLM punchline-first framing, taint "
+                "/slicing spans, effect-trace neighbors, and golden lived-bug "
+                "smokes land in P5 follow-up slices."
+            ),
+            evidence=(
+                "tools/debugger/context_packet.py",
+                "tools/debugger/tests/test_context_packet.py",
+                "docs/debugger_masterpiece_roadmap_codex_task.md",
+            ),
+            gaps=(
+                "per-LLM punchline-first framing not yet differentiated",
+                "no taint/slicing/effect-trace integration yet",
+                "token estimate is char-based, not tokenizer-backed",
+            ),
+            commands=(
+                "python -m tools.debugger pack --hypothesis <id>",
+                "python -m tools.debugger pack --hypothesis <id> --target codex --json",
+            ),
+        ),
+        _capability(
             id="when_wrote",
             title="when-wrote omniscient last-writer query (P2)",
             status=_complete_if_paths(

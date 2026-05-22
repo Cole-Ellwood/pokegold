@@ -67,6 +67,7 @@ V2_PASSTHROUGH_MODULES = {
     "handoff": "tools.debugger.handoff_log",
     "when-wrote": "tools.debugger.when_wrote",
     "tdb": "tools.debugger.tdb",
+    "pack": "tools.debugger.context_packet",
 }
 
 
@@ -749,6 +750,18 @@ def build_parser() -> argparse.ArgumentParser:
     )
     tdb.add_argument("argv", nargs=argparse.REMAINDER)
     tdb.set_defaults(func=cmd_tdb)
+
+    pack = subparsers.add_parser(
+        "pack",
+        add_help=False,
+        description=(
+            "Bug-localization context packet (P5). Emits a single-turn-sized "
+            "markdown+JSON packet for a given hypothesis id. Delegates to "
+            "`python -m tools.debugger.context_packet`. Pass `--help` for syntax."
+        ),
+    )
+    pack.add_argument("argv", nargs=argparse.REMAINDER)
+    pack.set_defaults(func=cmd_pack)
 
     return parser
 
@@ -1473,6 +1486,10 @@ def cmd_when_wrote(args: argparse.Namespace) -> int:
 
 def cmd_tdb(args: argparse.Namespace) -> int:
     return _delegate_to_module_main("tools.debugger.tdb", args.argv)
+
+
+def cmd_pack(args: argparse.Namespace) -> int:
+    return _delegate_to_module_main("tools.debugger.context_packet", args.argv)
 
 
 def emit_report(report: dict[str, Any], args: argparse.Namespace) -> None:
