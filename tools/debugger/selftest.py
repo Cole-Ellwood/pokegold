@@ -526,6 +526,92 @@ def check_handoff_log(root: Path) -> CheckResult:
     )
 
 
+def check_when_wrote(root: Path) -> CheckResult:
+    """Run the when-wrote query against a synthetic effect trace."""
+
+    import json
+    import tempfile
+
+    from .when_wrote import run_when_wrote
+
+    def inner() -> str:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_root = Path(tmp)
+            key = "wramx:01:D141"
+            trace = {
+                "schema_version": 1,
+                "kind": "unified_debugger_effect_trace",
+                "valid": True,
+                "proof_status": "instruction_observed",
+                "write_index": [
+                    {
+                        "address": "D141",
+                        "address_key": key,
+                        "space": "wramx",
+                        "bank": 1,
+                        "write_count": 1,
+                        "last_writer_seq": 4,
+                        "last_writer_pc": "01:5A00",
+                        "last_value_hex": "2A",
+                    }
+                ],
+                "events": [
+                    {
+                        "seq": 4,
+                        "pc_bank_address": "01:5A00",
+                        "pc_label": "BattleCommand_DamageCalc+6",
+                        "bank_state": {"wram": 1},
+                        "bank_state_sources": {"wram": "bank_state.wram"},
+                        "effects": [
+                            {
+                                "access": "write",
+                                "kind": "memory_write",
+                                "operation": "ld [hl], a",
+                                "address_hex": "D141",
+                                "address_key": key,
+                                "value_hex": "2A",
+                                "value_source": "A",
+                                "bank": 1,
+                                "bank_source": "bank_state.wram",
+                                "space": "wramx",
+                                "post_value_hex": "2A",
+                                "post_value_status": "matched",
+                                "post_observed_seq": 5,
+                                "post_observed_pc": "01:5A03",
+                                "proof_status": "instruction_observed",
+                            }
+                        ],
+                    }
+                ],
+            }
+            (tmp_root / "pokegold.sym").write_text("01:5A00 BattleCommand_DamageCalc\n", encoding="utf-8")
+            (tmp_root / "effect.json").write_text(json.dumps(trace), encoding="utf-8")
+            report = run_when_wrote(
+                addresses=("01:D141",),
+                reports=("effect.json",),
+                root=tmp_root,
+            )
+            if not report.get("valid"):
+                raise AssertionError(f"when-wrote report invalid: {report}")
+            if report.get("answer_count") != 1:
+                raise AssertionError(f"expected one answer, got {report.get('answer_count')}")
+            answer = report["answers"][0]
+            if answer.get("proof_status") != "instruction_observed":
+                raise AssertionError(
+                    f"expected instruction_observed, got {answer.get('proof_status')}"
+                )
+            writer = answer.get("last_writer") or {}
+            if writer.get("pc") != "01:5A00":
+                raise AssertionError(f"unexpected writer pc: {writer}")
+        return "when-wrote returns concrete observed writer with exact bank key"
+
+    return _capture(
+        component="when_wrote",
+        next_command="python -m tools.debugger.when_wrote --address D141 --report <effect.json>",
+        fn=inner,
+    )
+
+
 NAMED_CHECKS: tuple[tuple[str, Check], ...] = (
     ("capability_audit", check_capability_audit),
     ("inventory", check_inventory),
@@ -541,6 +627,7 @@ NAMED_CHECKS: tuple[tuple[str, Check], ...] = (
     ("save_state_lab", check_save_state_lab),
     ("bisect", check_bisect),
     ("handoff_log", check_handoff_log),
+    ("when_wrote", check_when_wrote),
 )
 
 CHECKS: tuple[Check, ...] = tuple(check for _, check in NAMED_CHECKS)

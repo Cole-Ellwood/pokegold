@@ -998,6 +998,35 @@ def _build_v2_surfaces(root: Path = ROOT) -> list[dict[str, Any]]:
             ),
         ),
         _capability(
+            id="when_wrote",
+            title="when-wrote omniscient last-writer query (P2)",
+            status=_complete_if_paths(
+                root,
+                "tools/debugger/when_wrote.py",
+                "tools/debugger/tests/test_when_wrote.py",
+            ),
+            scope=(
+                "Thin wrapper over reverse_query that exposes the omniscient "
+                "last-writer question as a single command: when-wrote --address "
+                "$X [--since-symbol Y | --since-frame N]. Returns the concrete "
+                "observed writer with proof_status + match_precision + bank "
+                "key; refuses bus-address fallback for banked targets per the "
+                "P0 proof boundary. First slice; richer between-span / "
+                "predicate queries land in P3 (tdb)."
+            ),
+            evidence=(
+                "tools/debugger/when_wrote.py",
+                "tools/debugger/tests/test_when_wrote.py",
+                "docs/debugger_masterpiece_roadmap_codex_task.md",
+            ),
+            gaps=(),
+            commands=(
+                "python -m tools.debugger when-wrote --address D141 --report effect.json",
+                "python -m tools.debugger when-wrote --address 01:D141 --trace trace.jsonl --since-symbol BattleCommand_DamageCalc",
+                "python -m tools.debugger when-wrote --symbol wCurDamage --report effect.json --json",
+            ),
+        ),
+        _capability(
             id="handoff_log",
             title="Two-LLM handoff log (P4)",
             status=_complete_if_paths(

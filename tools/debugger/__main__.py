@@ -65,6 +65,7 @@ V2_PASSTHROUGH_MODULES = {
     "bisect": "tools.debugger.bisect",
     "session-start": "tools.debugger.session_start",
     "handoff": "tools.debugger.handoff_log",
+    "when-wrote": "tools.debugger.when_wrote",
 }
 
 
@@ -722,6 +723,19 @@ def build_parser() -> argparse.ArgumentParser:
     )
     handoff.add_argument("argv", nargs=argparse.REMAINDER)
     handoff.set_defaults(func=cmd_handoff)
+
+    when_wrote = subparsers.add_parser(
+        "when-wrote",
+        add_help=False,
+        description=(
+            "Omniscient last-writer query (P2). Asks who last wrote a "
+            "watched address before an optional anchor. Delegates to "
+            "`python -m tools.debugger.when_wrote`. Pass `--help` for "
+            "address/symbol/anchor/trace options."
+        ),
+    )
+    when_wrote.add_argument("argv", nargs=argparse.REMAINDER)
+    when_wrote.set_defaults(func=cmd_when_wrote)
 
     return parser
 
@@ -1438,6 +1452,10 @@ def cmd_session_start(args: argparse.Namespace) -> int:
 
 def cmd_handoff(args: argparse.Namespace) -> int:
     return _delegate_to_module_main("tools.debugger.handoff_log", args.argv)
+
+
+def cmd_when_wrote(args: argparse.Namespace) -> int:
+    return _delegate_to_module_main("tools.debugger.when_wrote", args.argv)
 
 
 def emit_report(report: dict[str, Any], args: argparse.Namespace) -> None:
