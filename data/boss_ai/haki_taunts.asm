@@ -142,6 +142,5 @@ BossAIHakiTauntBlueText:
 	prompt
 
 BossAIHakiTauntRedText:
-	text "Red says"
-	line "nothing."
+	text "…"
 	prompt
