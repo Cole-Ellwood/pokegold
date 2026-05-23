@@ -65,6 +65,29 @@ REQUIRED_FIELDS = (
 
 MIN_SCENARIOS = 6
 
+CATALOG_PATH = Path("docs") / "debugger_bug_class_catalog.md"
+
+
+def load_known_bug_classes(catalog_path: Path | None = None) -> set[str]:
+    """Parse ``docs/debugger_bug_class_catalog.md`` and return the set of
+    entry names.
+
+    Used by ``validate_scenario`` to refuse scenarios whose ``bug_class``
+    doesn't match a real catalog entry -- the taxonomy-drift gate Codex
+    flagged in P21 scaffold review.
+
+    Returns an empty set if the catalog is missing; callers should treat
+    "no known classes" as "don't enforce the cross-check" so the
+    validator stays useful when run outside the repo.
+    """
+    from tools.audit.check_debugger_bug_class_catalog import parse_catalog
+
+    path = catalog_path or (ROOT / CATALOG_PATH)
+    if not path.exists():
+        return set()
+    entries, _ = parse_catalog(path.read_text(encoding="utf-8"))
+    return {str(entry["name"]) for entry in entries if entry.get("name")}
+
 
 @dataclass(frozen=True)
 class Scenario:
@@ -129,13 +152,28 @@ class Scenario:
         return out
 
 
-def validate_scenario(row: dict[str, Any]) -> list[str]:
+def validate_scenario(
+    row: dict[str, Any],
+    *,
+    known_bug_classes: set[str] | None = None,
+) -> list[str]:
     """Return validation errors for one scenario record.
 
-    Empty list = valid. Enforces Codex's constraints from the scaffold
-    ack: baseline ``evidence_atoms`` must be non-empty; null
-    ``masterpiece_time_actual_seconds`` and null ``ratio`` are only
-    allowed when ``status == "scaffold_incomplete"``.
+    Empty list = valid. Enforces:
+
+    - All ``REQUIRED_FIELDS`` present.
+    - ``status`` in ``VALID_STATUSES``.
+    - ``baseline_commands`` and ``masterpiece_commands`` are non-empty lists.
+    - ``baseline_time_estimate_seconds`` is numeric (int or float, not str).
+    - ``evidence_atoms`` is a non-empty list AND each entry is a non-empty
+      dict (catches the ``[{}]`` taxonomy-drift gap Codex flagged).
+    - ``bug_class`` matches a name from the P20 catalog when
+      ``known_bug_classes`` is supplied (or auto-loadable from the
+      committed catalog). Passing ``known_bug_classes=set()`` skips the
+      cross-check; useful for tests that don't want to depend on the
+      catalog being present.
+    - ``masterpiece_time_actual_seconds`` / ``ratio`` are null iff
+      ``status == "scaffold_incomplete"``.
     """
     errors: list[str] = []
     for required in REQUIRED_FIELDS:
@@ -156,12 +194,39 @@ def validate_scenario(row: dict[str, Any]) -> list[str]:
     if not isinstance(masterpiece_commands, list) or not masterpiece_commands:
         errors.append("masterpiece_commands must be a non-empty list")
 
+    baseline_time = row.get("baseline_time_estimate_seconds")
+    if not isinstance(baseline_time, (int, float)) or isinstance(baseline_time, bool):
+        errors.append(
+            "baseline_time_estimate_seconds must be a number (int or float); "
+            f"got {type(baseline_time).__name__}"
+        )
+
     evidence_atoms = row.get("evidence_atoms") or []
     if not isinstance(evidence_atoms, list) or not evidence_atoms:
         errors.append(
-            "evidence_atoms must be a non-empty list; "
-            "scaffold slice requires at least the baseline-side EvidenceAtom "
-            "naming the source commit or handoff row"
+            "evidence_atoms must be a non-empty list; scaffold slice "
+            "requires at least one baseline-side EvidenceAtom naming the "
+            "source commit, doc section, or handoff row"
+        )
+    else:
+        for idx, atom in enumerate(evidence_atoms):
+            if not isinstance(atom, dict) or not atom:
+                errors.append(
+                    f"evidence_atoms[{idx}] must be a non-empty dict; "
+                    f"got {type(atom).__name__} {atom!r}"
+                )
+
+    # Catalog cross-check. The default lazily loads from the committed
+    # catalog; tests can opt out with known_bug_classes=set().
+    bug_class = row.get("bug_class")
+    if known_bug_classes is None:
+        known_bug_classes = load_known_bug_classes()
+    if known_bug_classes and bug_class not in known_bug_classes:
+        errors.append(
+            f"bug_class {bug_class!r} not in the P20 catalog "
+            f"(docs/debugger_bug_class_catalog.md); use one of "
+            f"{sorted(known_bug_classes)[:5]}... or add the class to the "
+            f"catalog first"
         )
 
     mt = row.get("masterpiece_time_actual_seconds")
@@ -188,17 +253,28 @@ def validate_scenario(row: dict[str, Any]) -> list[str]:
     return errors
 
 
-def load_scenarios(path: Path) -> tuple[list[dict[str, Any]], list[str]]:
+def load_scenarios(
+    path: Path,
+    *,
+    known_bug_classes: set[str] | None = None,
+) -> tuple[list[dict[str, Any]], list[str]]:
     """Parse the JSONL scenarios file.
 
     Returns (records, errors). Errors include per-line parse failures and
     per-record validation failures. Records are returned even when errors
     exist so the caller can render a partial table for debugging.
+
+    Loads the P20 catalog ONCE and passes the known-bug-classes set into
+    each ``validate_scenario`` call to avoid re-parsing the markdown per
+    record. Tests can override with ``known_bug_classes=set()`` to skip
+    the catalog cross-check.
     """
     records: list[dict[str, Any]] = []
     errors: list[str] = []
     if not path.exists():
         return [], [f"scenarios file not found at {path}"]
+    if known_bug_classes is None:
+        known_bug_classes = load_known_bug_classes()
     text = path.read_text(encoding="utf-8")
     for lineno, raw in enumerate(text.splitlines(), start=1):
         stripped = raw.strip()
@@ -209,7 +285,7 @@ def load_scenarios(path: Path) -> tuple[list[dict[str, Any]], list[str]]:
         except json.JSONDecodeError as exc:
             errors.append(f"line {lineno}: JSON parse error: {exc}")
             continue
-        per_record = validate_scenario(row)
+        per_record = validate_scenario(row, known_bug_classes=known_bug_classes)
         if per_record:
             for err in per_record:
                 errors.append(f"line {lineno} ({row.get('id', '?')}): {err}")

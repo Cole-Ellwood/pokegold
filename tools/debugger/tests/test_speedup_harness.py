@@ -106,6 +106,100 @@ class ValidateScenarioTests(unittest.TestCase):
         good["ratio"] = 120.0
         self.assertEqual(speedup_harness.validate_scenario(good), [])
 
+    def test_rejects_bug_class_not_in_catalog(self) -> None:
+        """Codex P21-review finding [P1]: validator must cross-check
+        bug_class against the P20 catalog so taxonomy drift doesn't slip
+        through (the value_came_from_where mislabel was caught manually;
+        this gate should catch the next instance automatically)."""
+        bad = _good_record()
+        bad["bug_class"] = "not_in_the_p20_catalog"
+        errors = speedup_harness.validate_scenario(
+            bad,
+            known_bug_classes={"ag_nn_register_clobber", "value_came_from_where"},
+        )
+        self.assertTrue(
+            any("bug_class" in e and "catalog" in e for e in errors),
+            f"expected bug_class catalog-mismatch error, got: {errors}",
+        )
+
+    def test_skips_catalog_check_when_known_set_empty(self) -> None:
+        """The cross-check is opt-out via known_bug_classes=set() so the
+        validator stays useful in environments where the catalog isn't
+        readable. Empty set means 'skip', not 'reject everything'."""
+        good = _good_record()
+        good["bug_class"] = "anything_at_all"
+        errors = speedup_harness.validate_scenario(
+            good, known_bug_classes=set()
+        )
+        self.assertEqual(errors, [])
+
+    def test_rejects_empty_dict_evidence_atom(self) -> None:
+        """Codex P21-review finding [P1]: evidence_atoms=[{}] passed the
+        old gate. Each atom must be a non-empty dict."""
+        bad = _good_record()
+        bad["evidence_atoms"] = [{}]
+        errors = speedup_harness.validate_scenario(
+            bad, known_bug_classes=set()
+        )
+        self.assertTrue(
+            any("evidence_atoms[0]" in e for e in errors),
+            f"expected empty-dict evidence_atom error, got: {errors}",
+        )
+
+    def test_rejects_non_dict_evidence_atom(self) -> None:
+        bad = _good_record()
+        bad["evidence_atoms"] = ["a string instead of a dict"]
+        errors = speedup_harness.validate_scenario(
+            bad, known_bug_classes=set()
+        )
+        self.assertTrue(any("evidence_atoms[0]" in e for e in errors))
+
+    def test_rejects_non_numeric_baseline_time(self) -> None:
+        """Codex P21-review finding [P1]: baseline_time_estimate_seconds=
+        'not-a-number' passed the old gate. Must be int or float."""
+        bad = _good_record()
+        bad["baseline_time_estimate_seconds"] = "not-a-number"
+        errors = speedup_harness.validate_scenario(
+            bad, known_bug_classes=set()
+        )
+        self.assertTrue(
+            any("baseline_time_estimate_seconds" in e and "number" in e
+                for e in errors),
+            f"expected numeric-baseline error, got: {errors}",
+        )
+
+    def test_rejects_bool_baseline_time(self) -> None:
+        """Python edge case: bool is a subclass of int, but True/False
+        aren't meaningful baseline times. Must be a real number."""
+        bad = _good_record()
+        bad["baseline_time_estimate_seconds"] = True
+        errors = speedup_harness.validate_scenario(
+            bad, known_bug_classes=set()
+        )
+        self.assertTrue(
+            any("baseline_time_estimate_seconds" in e for e in errors)
+        )
+
+    def test_codex_probe_record_now_rejected(self) -> None:
+        """The exact probe Codex ran during P21 review (bug_class=
+        'not_in_catalog', baseline_time_estimate_seconds='not-a-number',
+        evidence_atoms=[{}]) must now fail validation."""
+        probe = _good_record()
+        probe["bug_class"] = "not_in_catalog"
+        probe["baseline_time_estimate_seconds"] = "not-a-number"
+        probe["evidence_atoms"] = [{}]
+        errors = speedup_harness.validate_scenario(
+            probe,
+            known_bug_classes={"ag_nn_register_clobber"},
+        )
+        # All three Codex-named issues should now be flagged.
+        self.assertTrue(any("bug_class" in e and "catalog" in e for e in errors))
+        self.assertTrue(
+            any("baseline_time_estimate_seconds" in e and "number" in e
+                for e in errors)
+        )
+        self.assertTrue(any("evidence_atoms[0]" in e for e in errors))
+
 
 class LoadScenariosTests(unittest.TestCase):
     def test_load_real_scenarios_file(self) -> None:
