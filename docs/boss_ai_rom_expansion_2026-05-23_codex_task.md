@@ -172,10 +172,26 @@ Pause and surface (or escalate to Cole), do not push through, if:
 
 ## Disagreement resolution
 
-- **Tiebreak:** Cole via chat if reachable. He's at work today (2026-05-23); chat-only by default.
-- **If Cole away:** ntfy topic `The-CCC-Boys` per `reference_ntfy_async_cole_channel.md`. Bar for ntfy: load-bearing disagreement that blocks both LLMs.
+**Primary rule (Cole 2026-05-23):** Claude + Codex agreement IS Cole's decision. Do not pause for his feedback when the pair can decide. See `feedback_claude_codex_agreement_is_cole_decision.md`.
+
+- **Tiebreak:** Claude + Codex deliberate. Settle the question with adversarial-review passes (default: 2 passes minimum before declaring deadlock).
 - **Codex-defaults-win:** code style inside Codex's write set, idiomatic asm patterns, RGBDS quirk handling.
-- **Claude-defaults-win:** spec interpretation, when to surface, when to mark a phase done, structural-defense enforcement.
+- **Claude-defaults-win:** spec interpretation, when to surface to Cole, when to mark a phase done, structural-defense enforcement.
+
+**Escalate to Cole** only on:
+1. **Mutual deadlock** after ≥2 adversarial-review passes — the pair genuinely can't converge.
+2. **CLAUDE.md escalation-list items:** gameplay taste, playtest, save-format change, master merge, destructive irreversible.
+3. **Directive conflicts** where two Cole-stated operating directives conflict.
+
+**Escalation channel:**
+- Cole reachable via chat (in-session): default to chat.
+- Cole away: ntfy topic `The-CCC-Boys` per `reference_ntfy_async_cole_channel.md`. Bar matches the 3 escalate-to-Cole conditions above.
+
+**Anti-patterns** (do NOT do these):
+- "Want me to X first?" → just do it.
+- "Sound right? anything to add?" → strip; ship and surface result.
+- Asking Cole to choose between two approaches the pair could agree on.
+- Pausing pgoal iterations for "confirmation" of pair-verified work.
 
 ## Time / scope budget
 
@@ -186,8 +202,8 @@ Pause and surface (or escalate to Cole), do not push through, if:
 
 ## Async channel
 
-- Cole reachable via chat: assume yes, but he's at work — only interrupt for load-bearing.
-- Cole reachable via ntfy (`The-CCC-Boys`): yes — load-bearing only.
+- Cole reachable via chat: assume yes, but he's at work. Interrupt only on the 3 escalate-to-Cole conditions in Disagreement resolution. The pair owns all other in-scope decisions.
+- Cole reachable via ntfy (`The-CCC-Boys`): yes — same 3-condition bar.
 
 ## Pgoal arming plan
 
