@@ -158,6 +158,21 @@ The roadmap is *not* done when the audit reports green. The roadmap is done when
    its evidence paths.
 5. Cole, asked to demo any of the 8 north-star scenarios above, can do it in ≤2
    commands without reading the source.
+6. **(Cole end-goal, 2026-05-22)** When faulty new code lands in the ROM — via
+   `debugger rom-edit propose` or via a `git commit` on the dev branch — the
+   debugger surfaces resulting bugs *unsolicited*, with the canonical bug class
+   labeled and an LLM-pair next-step recommendation. The pair never has to ask
+   "did my last change break something?" — the watcher answers it on every code
+   landing. (Delivered by P19.)
+7. **(Cole end-goal, 2026-05-22)** The bug-class catalog is published and audit-
+   enforced — every selftest lived-smoke component maps to a named bug class,
+   every class is labeled AUTO / QUERY / JUDGMENT, and the catalog calls out
+   honestly what the debugger *cannot* auto-detect. (Delivered by P20.)
+8. **(Cole end-goal, 2026-05-22)** The 100x speedup claim is *measured*, not
+   asserted. A replayed-scenario harness emits per-scenario ratios (baseline
+   command path vs masterpiece command path) backed by `EvidenceAtom`s; the
+   distribution is honest (mix of 1-10x mechanical wins and 50-200x conceptual
+   wins, no inflation). (Delivered by P21.)
 
 Any of those failing → not done. The audit floor is necessary, not sufficient.
 
@@ -247,6 +262,44 @@ Architecture risks the GPT-5.5 supplemental review flagged that are still standi
 
 These are the inputs to P0 (which closes the GPT-5.5 review backlog before the
 masterpiece extensions begin).
+
+### Implementation status as of 2026-05-22
+
+Source of truth: `python -m tools.debugger audit` + `python -m tools.debugger
+selftest` + `git log claude/debugger-masterpiece-roadmap`. The selftest reports
+29/29 components healthy; the audit reports `ready=True` with 11/11 v1 + 17/17
+v2 surfaces complete.
+
+Phase status against §3:
+
+| Phase | Topic | Selftest component / ship signal | Status |
+|---|---|---|---|
+| P0 | GPT-5.5 backlog (proof-boundary) | implicit (all consumers green) | shipped |
+| P1 | Shared SM83 effect model | `sm83_model_parity` | shipped |
+| P2 | `when-wrote` reverse watchpoint | `when_wrote` | shipped |
+| P3 | `tdb` query language | `tdb` (v1 audit) | shipped |
+| P4 | Two-LLM handoff log + audit | `handoff_log` | shipped |
+| P5 | Bug-localization context packets | `context_packet` | shipped |
+| P6 | VRAM/OAM structured decode + diff | `vram_decode` | shipped |
+| P7 | BGB/Emulicious `.sym` export | `bgb_sym_export` | shipped |
+| P8 | Named probes + counters | `probe` | shipped |
+| P9 | IO heatmap | `heatmap` | shipped |
+| P10 | Domain shrinkers (input/battle/map-script) | `shrink_input_log`/`shrink_battle`/`shrink_map_script` | shipped |
+| P11 | Chaos mode | `chaos` (cycle-level perturbation still `planned_not_applied`) | shipped, boundary honest |
+| P12 | `rom-edit` seamless build/verify/apply | `rom_edit` + closeout 524124ac | shipped |
+| P13 | Cross-emulator differential | `crossemu` | shipped |
+| P14 | DAP server | `dap_server` (44/44 tests) | shipped |
+| P15a | Register-flow analyzer (replaces P15 symexec as the AG-NN coverage tool) | `register_flow` | shipped (3b08d4d7) |
+| P15b | Z3 symbolic execution (tail) | not started | deferred — gated on whether P20 catalog shows fuzz is insufficient |
+| P16 | Adversarial replay mode | — | not started |
+| P17 | Ghidra decompilation | — | not started (Cole taste call: heavy dependency) |
+| P18 | Static-HTML review UI | — | deferred-unless-capacity |
+| P19 | **Autonomous bug-watcher on rom-edit + commit** | new | not started (Cole end-goal extension, 2026-05-22) |
+| P20 | **Bug-class catalog + escape-hatch taxonomy** | new | not started (Cole end-goal extension, 2026-05-22) |
+| P21 | **Measured speedup harness** | new | not started (Cole end-goal extension, 2026-05-22) |
+
+Prioritization decided by Cole on 2026-05-22: **P19 → P20 → P21 first**, then
+P16 (adversarial), then P17/P18 if capacity allows. P15b stays a tail item.
 
 ---
 
@@ -343,6 +396,32 @@ behavioral gate; planned/runtime/hardware proof boundaries follow per phase.
       "kind": "command",
       "command": "python tools/audit/check_sm83_shared_tables_consumers.py",
       "expected_exit_code": 0
+    },
+    {
+      "id": "auto_watch_detects_synthetic_regression",
+      "kind": "command",
+      "command": "python -m tools.debugger auto-watch --self-test",
+      "expected_exit_code": 0,
+      "expected_output_regex": "auto-watch synthetic regression detected"
+    },
+    {
+      "id": "auto_watch_post_commit_hook_round_trip",
+      "kind": "command",
+      "command": "python scripts/install_debugger_hooks.py --dry-run --install",
+      "expected_exit_code": 0
+    },
+    {
+      "id": "bug_class_catalog_audit_green",
+      "kind": "command",
+      "command": "python tools/audit/check_debugger_bug_class_catalog.py",
+      "expected_exit_code": 0
+    },
+    {
+      "id": "speedup_harness_emits_evidence_backed_ratios",
+      "kind": "command",
+      "command": "python -m tools.debugger speedup-report --self-test",
+      "expected_exit_code": 0,
+      "expected_output_regex": "scenarios=[6-9]|scenarios=1[0-9]"
     }
   ]
 }
@@ -1218,7 +1297,48 @@ protocol is a useful schema.
 
 ---
 
-### P15. Symbolic execution of small ASM windows
+### P15a. Static register-flow analyzer (shipped 2026-05-22)
+
+**Objective**: a static SM83 walker that parses an asm function from its label,
+identifies per-instruction register writes/reads, calls, branches, conditional
+fall-through, and emits a clobber set + warnings for the AG-NN transitive
+register-clobber class. CLI: `python -m tools.debugger clobbers --symbol X`.
+
+**Why this replaced P15-as-originally-spec'd**: the AG-NN failure class is the
+one P15 was meant to cover. Z3 symbolic execution would have worked for it but
+the dependency is heavy and the analysis surface much broader than the bug
+class needs. A static-walker is enough for the AG-NN class and the boundary
+cases the audit floor already enumerates. Z3 symexec stays scheduled as P15b
+in case P20's bug-class catalog shows a remaining gap fuzz can't cover.
+
+**Shipped artifacts**:
+
+- `tools/debugger/register_flow.py` — module
+- `tools/debugger/tests/test_register_flow.py` — 36 tests
+- `tools/debugger/__main__.py` — top-level `clobbers` dispatch
+- `tools/debugger/catalog.py` — v2 surface entry
+- `tools/debugger/selftest.py` — `register_flow` component
+
+**Authorship**: Claude authored the initial module + tests; Codex preserved the
+module and hardened/integrated it (conditional call target parsing, `jp [hl]`
+opacity, flag-scope honesty for `pop af`, catalog + selftest wiring).
+
+**Commits**: 3b08d4d7 (hardening + integration), preceded by Claude's WIP
+first-slice (abandoned as a duplicate tag per Codex recommendation; live work
+collapsed into the hardening commit).
+
+**Status**: shipped, golden lived-bug smoke on `GetUserItem` (expected clobber
+set b/d/e/h/l + call to `_GetSidedHL` + tail jp to `GetItemHeldEffect`).
+
+---
+
+### P15b. Z3 symbolic execution of small ASM windows (deferred tail)
+
+**Status (2026-05-22)**: deferred. Reactivate only if the P20 bug-class catalog
+shows an AUTO-tier class that fuzz + register-flow + the rest of the
+masterpiece primitives cannot cover within ≤2 commands. Cole's call: don't add
+Z3 as a heavy dependency unless we have an honest taxonomy gap that demands
+it.
 
 **Objective**: `debugger symexec --func BattleCommand_DamageCalc --bank 0x0F` reads
 the function as bytes, runs it under a small symbolic executor (Z3 backend) with
@@ -1393,6 +1513,246 @@ snapshot view).
 `tools/debugger/visualization.py` (read-only extension).
 
 **Dependencies**: P0, all visualization extensions through prior phases.
+
+---
+
+### P19. Autonomous bug-watcher on `rom-edit` + commit
+
+**Objective**: when faulty new code lands in the ROM, the debugger surfaces
+resulting bugs *unsolicited*. Two triggers:
+
+1. **`rom-edit propose`** (already runs audits in P12) — extend to emit a
+   structured "new bug surfaced?" finding to `audit/auto_watch_findings.jsonl`
+   when any audit flips red, with the bug-class label (cross-referenced to P20
+   catalog) and an LLM-pair next-step recommendation.
+2. **`git commit` on the dev branch** — a `.git/hooks/post-commit` script invokes
+   `debugger auto-watch --on commit --commit-hash <sha>`, which runs the
+   release-smoke floor + clobber_smoke + selftest lived smokes + register_flow
+   on changed asm symbols, and emits findings to the same JSONL.
+
+**Why now**: closes Cole's stated end-goal item — "debugger makes finding many
+bugs automatic/autonomous when added into the ROM through faulty new code." Today
+every primitive is reactive: the LLM types a query, the debugger answers. P19
+makes the debugger *speak first* on code landing.
+
+**Scope (in)**:
+
+- `tools/debugger/auto_watch.py` — new module:
+  - `auto-watch --on rom-edit-propose --proposal-id X` (called by rom_edit
+    after build+verify pass)
+  - `auto-watch --on commit --commit-hash <sha> [--baseline <sha>]` (called by
+    the post-commit hook)
+  - `auto-watch report --since <sha>` (emits markdown summary of findings since
+    baseline)
+  - `auto-watch --self-test` (synthetic AG-NN-like clobber regression →
+    expected finding)
+- `scripts/install_debugger_hooks.py` — installs/uninstalls
+  `.git/hooks/post-commit`; supports `--dry-run`, `--install`, `--uninstall`.
+- Findings file `audit/auto_watch_findings.jsonl` (append-only) with rows:
+  - `{commit_hash, ts, bug_class, evidence_atoms, command_replay, llm_next_step}`
+- Findings are mirrored to `audit/masterpiece_handoff_log.jsonl` with
+  `event=auto_watch_detection` so the two-LLM handoff audit picks them up.
+- Detection inputs (run in parallel; each is short-circuited if its audit/test
+  was already green at baseline):
+  - `release_smoke` floor
+  - `damage_debugger.clobber_smoke`
+  - debugger `selftest`
+  - `register_flow` clobber audit on every asm symbol changed in the commit
+- Each detector emits a structured finding *or* a "no new bug" row; nothing is
+  silent.
+
+**Scope (out)**:
+
+- Pre-commit blocking. P19 is detect-and-report, not refuse-and-block (CLAUDE.md
+  hard-pushback rule covers any actual blocker).
+- Auto-fixing detected bugs (those go through `rom-edit propose`).
+- Watching files outside the ROM source tree.
+- Network-based notifications. Findings are local files + handoff-log rows; an
+  LLM-pair on the next loop reads them.
+
+**Acceptance**:
+
+- `debugger auto-watch --self-test` runs a synthetic AG-NN-style clobber
+  regression in a worktree, triggers a finding with the correct bug-class label,
+  and exits 0 with `auto-watch synthetic regression detected` on stdout.
+- `debugger auto-watch --on commit --commit-hash <sha> --baseline <prior>` against
+  a known-broken historical commit produces ≥1 finding referencing the bug class.
+- `debugger auto-watch report --since HEAD~10` emits a markdown table.
+- `scripts/install_debugger_hooks.py --dry-run --install` reports what it would
+  do without writing.
+- `scripts/install_debugger_hooks.py --install` adds the post-commit hook;
+  `--uninstall` reverses it.
+- `test_auto_watch_detects_synthetic_clobber_regression` passes.
+- `test_auto_watch_post_commit_hook_install_uninstall_round_trip` passes.
+- `test_auto_watch_golden_smoke_ag08_class` passes (synthetic AG-08 regression
+  → expected finding).
+- `test_auto_watch_does_not_double_fire_when_baseline_already_red` passes.
+- Selftest grows by `auto_watch` component.
+- `docs/debugger_user_guide.md` recipe added under "Bug surfaced by auto-watch".
+
+**Iteration budget**: ~22 iterations (~12-15 hours).
+
+**Primary**: Shared. Claude drives the report shape + finding-class taxonomy
+(synthesis-heavy); Codex drives the hook integration + per-detector invocation
+plumbing. Files-first split: Claude touches `auto_watch.py` / report / docs;
+Codex touches `install_debugger_hooks.py` / hooks / integration tests. Both
+sign off on the bug-class label set with reference to P20 catalog entries.
+
+**Shared collision-risk files**: `tools/debugger/auto_watch.py` (new),
+`scripts/install_debugger_hooks.py` (new), `tools/debugger/__main__.py`,
+`tools/debugger/selftest.py`, `tools/debugger/catalog.py`,
+`audit/auto_watch_findings.jsonl` (new), `audit/masterpiece_handoff_log.jsonl`,
+`docs/debugger_user_guide.md`, `tools/debugger/rom_edit.py` (integration hook).
+
+**Dependencies**: P4 (handoff log), P12 (rom-edit), P15a (register-flow as a
+detector). Soft dependency on P20 (bug-class labels) — can ship with provisional
+labels and tighten once P20 catalog lands.
+
+---
+
+### P20. Bug-class catalog + escape-hatch taxonomy
+
+**Objective**: a published, audit-enforced catalog of bug classes that explicitly
+labels every class as one of:
+
+- **AUTO** — the P19 auto-watcher catches this class without prompting; the
+  detector is named + linked.
+- **QUERY** — locatable in ≤2 commands by an LLM driving the debugger primitives;
+  the canonical command pair is named + linked.
+- **JUDGMENT** — requires human judgment (gameplay feel, balance, design taste);
+  escalation path documented.
+
+**Why now**: closes the "what bugs *can't* be auto-handled" half of Cole's end
+goal. Today each phase's "Why now" mentions a failure class but they're not
+aggregated or audited. P20 makes the inventory honest: every selftest lived-smoke
+maps to a named entry, and every catalog AUTO-entry has a passing audit/test.
+
+**Scope (in)**:
+
+- `docs/debugger_bug_class_catalog.md` — committed catalog. Each entry:
+  - **Name** + one-line description.
+  - **Tier**: AUTO / QUERY / JUDGMENT.
+  - **Lived history**: commit refs and/or audit IDs that introduced or first
+    surfaced the class.
+  - If AUTO: detector module + lived-smoke test name + audit path.
+  - If QUERY: canonical command(s) that locate it + scenario file.
+  - If JUDGMENT: escalation path (chat / ntfy / pgoal decision row) + why an
+    LLM cannot decide alone.
+- `tools/audit/check_debugger_bug_class_catalog.py`:
+  - Every selftest lived-smoke component must be referenced by ≥1 catalog entry.
+  - Every AUTO entry must reference a passing audit/test; the audit re-runs the
+    cited test and confirms exit 0.
+  - Every QUERY entry must reference a runnable command; the audit lints the
+    command for shape (must invoke `python -m tools.debugger ...`).
+  - JUDGMENT entries are passive but must name the escalation rule.
+- Catalog audit added to `check_release_smoke.py`.
+- Minimum 12 entries at acceptance covering known classes: AG-NN clobber,
+  farcall_hl, farcall_a, cross-bank call, save-format drift, type-immunity
+  softlock, wild-floor no-op, May 2026 tile jumble, rival 1 softlock, boss AI
+  bias miscount, EXP scaling drift, plus ≥1 JUDGMENT class (gameplay-feel
+  balance, e.g. "Pokémon X feels overtuned vs role").
+
+**Scope (out)**:
+
+- A general taxonomy of "all possible Pokémon Gold bugs." Only classes we've
+  actually encountered or that the debugger tests synthetically.
+- Auto-generating the catalog from selftest output. Manual curation with audit
+  enforcement is cheaper and more honest than a generator.
+
+**Acceptance**:
+
+- `docs/debugger_bug_class_catalog.md` exists with ≥12 entries.
+- Each entry has the schema fields and (if AUTO) a known-passing audit/test.
+- `check_debugger_bug_class_catalog.py` passes.
+- Audit added to release-smoke floor.
+- Selftest grows by `bug_class_catalog` component.
+- `docs/debugger_user_guide.md` cross-references the catalog under "Recognizing
+  the bug class."
+
+**Iteration budget**: ~15 iterations (~8-10 hours).
+
+**Primary**: Claude (synthesis + writing the catalog; cross-ref against repo
+history). Codex reviews each entry for technical accuracy + runs the audit.
+
+**Shared collision-risk files**: `docs/debugger_bug_class_catalog.md` (new),
+`tools/audit/check_debugger_bug_class_catalog.py` (new),
+`tools/audit/check_release_smoke.py`, `tools/debugger/selftest.py`,
+`docs/debugger_user_guide.md`.
+
+**Dependencies**: P19 (so AUTO entries can reference the watcher detectors).
+Soft dependency on every prior phase that ships a selftest component.
+
+---
+
+### P21. Measured 100x speedup harness
+
+**Objective**: a benchmark harness that replays historical lived bugs through
+the masterpiece debugger primitives and emits per-scenario ratios:
+
+- baseline command count + investigation time (from commit messages, handoff
+  logs, debug session transcripts, audit artifacts)
+- masterpiece command count + investigation time (current shortest path using
+  the masterpiece primitives)
+- ratio + EvidenceAtom citing both paths
+
+Output: `debugger speedup-report` markdown table + per-scenario JSON.
+
+**Why now**: closes Cole's "100x faster" claim with measurement. Today the
+speedup is implicit. P21 makes the claim verifiable, and the per-scenario
+distribution surfaces any primitive that *doesn't* deliver speedup — which is
+its own debugger-quality signal.
+
+**Scope (in)**:
+
+- `tools/debugger/speedup_harness.py` — replays curated scenarios from
+  `audit/lived_bug_scenarios.jsonl`.
+- Each scenario record:
+  - `id`, `bug_class` (cross-ref P20 catalog)
+  - `baseline_commands` (ordered list, from history)
+  - `baseline_time_estimate_seconds` (from session timestamps when available)
+  - `masterpiece_commands` (ordered list, current shortest path)
+  - `masterpiece_time_actual_seconds` (measured by re-running)
+  - `ratio` + `EvidenceAtom`
+- `debugger speedup-report [--markdown | --json] [--filter tier=AUTO|QUERY]`
+- Minimum acceptance set: 6 scenarios (mix of AUTO + QUERY tiers from P20).
+  Ground-truth must-include:
+  - AG-NN 5× damage (`44ca3b29`-era investigation)
+  - May 2026 wild-floor no-op (`13a6e3a3`-era)
+  - May 2026 rival 1 softlock (farcall hl clobber class)
+- Per scenario, refuse to emit a ratio if the masterpiece command path isn't
+  re-runnable (refuse-over-overclaim per §4.10).
+
+**Scope (out)**:
+
+- A single aggregate "100x faster overall" claim. Only per-scenario ratios.
+  Any summary is a *distribution*, not a single number.
+- Synthetic / fabricated baselines. Every baseline must trace to a real
+  historical investigation; otherwise the scenario is rejected.
+
+**Acceptance**:
+
+- `debugger speedup-report` runs and emits ≥6 scenario ratios with EvidenceAtoms.
+- `debugger speedup-report --self-test` exits 0 with
+  `scenarios=N` (N ≥ 6).
+- `test_speedup_harness_replays_ag_nn_lived_bug` passes (AG-NN scenario included
+  with masterpiece path actually re-runnable).
+- `test_speedup_harness_ratios_are_evidence_backed` passes (every ratio has an
+  EvidenceAtom; no orphan scalars).
+- `test_speedup_harness_refuses_to_emit_unverifiable_baseline` passes.
+- Selftest grows by `speedup_harness` component.
+- Markdown report committed at `docs/debugger_speedup_<freeze-date>.md`.
+
+**Iteration budget**: ~18 iterations (~10-12 hours).
+
+**Primary**: Shared. Claude drives scenario curation + report shape; Codex
+drives the replay engine + per-scenario `EvidenceAtom` plumbing.
+
+**Shared collision-risk files**: `tools/debugger/speedup_harness.py` (new),
+`audit/lived_bug_scenarios.jsonl` (new), `tools/debugger/selftest.py`,
+`docs/debugger_speedup_*.md` (new).
+
+**Dependencies**: every prior phase (uses the primitives); P19 (auto-watch
+ratios are included); P20 (each scenario tied to a bug-class entry).
 
 ---
 
