@@ -23,6 +23,7 @@ from .investigate import build_investigation_run
 from .localize import build_localization_plan
 from .minimize import build_minimization_plan
 from .mirrors import build_compare_plan
+from .next_steps import build_next_step, symptom_only_investigation_note
 from .provenance import build_provenance_report
 from .ranking import rank_findings
 from .replay import build_replay_plan
@@ -69,6 +70,12 @@ def build_parser() -> argparse.ArgumentParser:
     triage.add_argument("--symptom", default="")
     add_output_args(triage)
     triage.set_defaults(func=cmd_triage)
+
+    next_step = subparsers.add_parser("next")
+    next_step.add_argument("--changed-file", action="append", default=[])
+    next_step.add_argument("--symptom", default="")
+    add_output_args(next_step)
+    next_step.set_defaults(func=cmd_next)
 
     ingest = subparsers.add_parser("ingest")
     ingest.add_argument("--rom", action="append", default=[])
@@ -474,6 +481,15 @@ def cmd_triage(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_next(args: argparse.Namespace) -> int:
+    report = build_next_step(
+        changed_files=tuple(args.changed_file),
+        symptom=args.symptom,
+    )
+    emit_report(report, args)
+    return 0
+
+
 def cmd_ingest(args: argparse.Namespace) -> int:
     report = ingest_artifacts(
         roms=tuple(args.rom),
@@ -528,8 +544,31 @@ def cmd_investigate(args: argparse.Namespace) -> int:
         max_cases=args.max_cases,
         seed=args.seed,
     )
+    if args.symptom and not investigation_args_have_anchor(args):
+        report["symptom_only_next_step_note"] = symptom_only_investigation_note(report)
     emit_report(report, args)
     return 0 if report["valid"] and report["passed"] else 1
+
+
+def investigation_args_have_anchor(args: argparse.Namespace) -> bool:
+    return any(
+        (
+            args.rom,
+            args.save_state,
+            args.trace,
+            args.scenario,
+            args.report,
+            args.patch,
+            args.changed_file,
+            args.symbol,
+            args.watch_symbol,
+            args.rule,
+            args.address,
+            args.expect,
+            args.expect_file,
+            args.family,
+        )
+    )
 
 
 def cmd_localize(args: argparse.Namespace) -> int:
@@ -942,6 +981,8 @@ def emit_report(report: dict[str, Any], args: argparse.Namespace) -> None:
         print(format_audit(report))
     elif report["kind"] == "unified_debugger_triage":
         print(format_triage(report))
+    elif report["kind"] == "unified_debugger_next_step":
+        print(format_next_step(report))
     elif report["kind"] == "unified_debugger_ingest_manifest":
         print(format_ingest(report))
     elif report["kind"] == "unified_debugger_gate_plan":
@@ -1060,6 +1101,42 @@ def format_triage(report: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def format_next_step(report: dict[str, Any]) -> str:
+    rec = report["recommendation"]
+    lines = [
+        "Unified Pokemon Gold romhack debugger next step",
+        f"matched_lane={report['matched_lane']} symptom_class={rec['symptom_class']}",
+    ]
+    if report["symptom"]:
+        lines.append(f"symptom={report['symptom']}")
+    if report["changed_files"]:
+        lines.append("changed_files=" + ", ".join(report["changed_files"]))
+    lines.extend(
+        [
+            "",
+            f"First command: {rec['first_command']}",
+            "Required inputs:",
+        ]
+    )
+    for item in rec["required_inputs"]:
+        lines.append(f"  - {item}")
+    lines.extend(
+        [
+            f"Proof limit: {rec['proof_limit']}",
+            f"Escalation command: {rec['escalation_command']}",
+        ]
+    )
+    if len(report["candidates"]) > 1:
+        lines.extend(["", "Other matching paths:"])
+        for item in report["candidates"][1:]:
+            lines.append(
+                f"  - {item['symptom_class']}: {item['first_command']}"
+            )
+    if report["triage_match_ids"]:
+        lines.append("triage=" + ", ".join(report["triage_match_ids"]))
+    return "\n".join(lines)
+
+
 def format_ingest(report: dict[str, Any]) -> str:
     lines = [
         "Unified Pokemon Gold romhack debugger ingest manifest",
@@ -1145,6 +1222,9 @@ def format_investigation_run(report: dict[str, Any]) -> str:
         lines.append(f"static_report={report['static_report']}")
     if report.get("visualization"):
         lines.append(f"visualization={report['visualization']}")
+    next_note = report.get("symptom_only_next_step_note", "")
+    if next_note:
+        lines.extend(["", next_note])
     lines.extend(["", "Steps:"])
     for step in report["steps"]:
         path = f" -> {step['report_path']}" if step.get("report_path") else ""

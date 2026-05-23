@@ -30,6 +30,7 @@ from tools.debugger.investigate import build_investigation_run
 from tools.debugger.localize import build_localization_plan
 from tools.debugger.minimize import build_minimization_plan
 from tools.debugger.mirrors import build_compare_plan
+from tools.debugger.next_steps import NEXT_STEP_ROWS, build_next_step
 from tools.debugger.provenance import build_provenance_report
 from tools.debugger.ranking import rank_findings
 from tools.debugger.replay import build_replay_plan
@@ -105,6 +106,113 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
 
         self.assertEqual(report["matches"][0]["id"], "general")
         self.assertIn("python -m tools.debugger audit", report["commands"])
+
+    def test_next_step_routes_boss_ai_symptoms_to_one_proof_path(self) -> None:
+        report = build_next_step(symptom="boss selected wrong switch")
+        rec = report["recommendation"]
+
+        self.assertEqual(report["kind"], "unified_debugger_next_step")
+        self.assertEqual(rec["symptom_class"], "wrong_switch")
+        self.assertEqual(rec["matched_lane"], "boss_ai")
+        self.assertIn("rom-switch-materialize", rec["first_command"])
+        self.assertTrue(rec["required_inputs"])
+        self.assertTrue(rec["proof_limit"])
+        self.assertIn("escalation_command", rec)
+
+    def test_next_step_table_covers_rom_expansion_boss_ai_classes(self) -> None:
+        classes = {row["symptom_class"] for row in NEXT_STEP_ROWS}
+
+        self.assertGreaterEqual(
+            classes,
+            {
+                "wrong_switch",
+                "wrong_move_score",
+                "haki_taunt_read",
+                "ko_band_pressure",
+                "revealed_effect_response",
+                "observation_tendency_behavior",
+                "role_package",
+                "coach_template",
+            },
+        )
+        for row in NEXT_STEP_ROWS:
+            self.assertTrue(row["matched_lane"])
+            self.assertTrue(row["first_command"])
+            self.assertTrue(row["required_inputs"])
+            self.assertTrue(row["proof_limit"])
+            self.assertIn("escalation_command", row)
+
+    def test_next_step_routes_each_rom_expansion_boss_ai_class(self) -> None:
+        cases = {
+            "boss selected wrong switch": "wrong_switch",
+            "boss picked the wrong move score": "wrong_move_score",
+            "Haki taunt read fired oddly": "haki_taunt_read",
+            "KO-band pressure bonus looks wrong": "ko_band_pressure",
+            "revealed Protect response was wrong": "revealed_effect_response",
+            "observation tendency memory changed the fight": "observation_tendency_behavior",
+            "role package classifier tagged Dragonite wrong": "role_package",
+            "coach template picked wrong move": "coach_template",
+        }
+
+        for symptom, expected_class in cases.items():
+            with self.subTest(symptom=symptom):
+                report = build_next_step(symptom=symptom)
+                self.assertEqual(
+                    report["recommendation"]["symptom_class"],
+                    expected_class,
+                )
+
+    def test_cli_next_json_schema_is_stable(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "next.json"
+            with redirect_stdout(io.StringIO()):
+                code = debugger_main(
+                    [
+                        "next",
+                        "--symptom",
+                        "coach template picked wrong move",
+                        "--json-out",
+                        str(path),
+                    ]
+                )
+
+            self.assertEqual(code, 0)
+            data = json.loads(path.read_text(encoding="utf-8"))
+            self.assertEqual(data["kind"], "unified_debugger_next_step")
+            self.assertEqual(data["recommendation"]["symptom_class"], "coach_template")
+            for key in (
+                "matched_lane",
+                "first_command",
+                "required_inputs",
+                "proof_limit",
+                "escalation_command",
+            ):
+                self.assertIn(key, data["recommendation"])
+
+    def test_cli_investigate_symptom_only_points_to_next(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            stdout = io.StringIO()
+            with redirect_stdout(stdout):
+                code = debugger_main(
+                    [
+                        "investigate",
+                        "--symptom",
+                        "boss selected wrong switch",
+                        "--out-dir",
+                        str(Path(tmp) / "investigate"),
+                        "--max-targets",
+                        "1",
+                        "--max-events",
+                        "1",
+                        "--max-cases",
+                        "1",
+                    ]
+                )
+
+            self.assertEqual(code, 0)
+            text = stdout.getvalue()
+            self.assertIn("planning packet, not a repro", text)
+            self.assertIn("python -m tools.debugger next --symptom", text)
 
     def test_cli_audit_strict_fails_until_whole_rom_goal_is_done(self) -> None:
         with redirect_stdout(io.StringIO()):
