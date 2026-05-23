@@ -62,6 +62,7 @@ GetTrainerAttributes:
 	ld a, [hl]
 	ld [wEnemyTrainerBaseReward], a
 	call LoadBossAITier
+	call LoadBossAIPersonalityKernel
 	ret
 
 INCLUDE "data/trainers/attributes.asm"
@@ -142,4 +143,80 @@ ClearBossAIState:
 	call ByteFill
 	ret
 
+; LoadBossAIPersonalityKernel
+; Called after LoadBossAITier finishes tier/ramp resolution. Walks
+; BossAIPersonalityKernelMap looking for trainer_class + trainer_id match;
+; if none, falls back to the tier-default kernel. Copies 8 bytes into
+; wBossAIKernel. On wBossAITier == 0 (non-boss), returns without writing.
+;
+; Inputs:  wBossAITier, wTrainerClass, wOtherTrainerID must be set first.
+; Outputs: wBossAIKernel filled with BOSS_AI_KERNEL_SIZE bytes.
+; Clobbers: a, b, c, d, e, h, l.
+LoadBossAIPersonalityKernel:
+	ld a, [wBossAITier]
+	and a
+	ret z ; non-boss trainer; scoring paths gated on wBossAITier anyway
+
+	ld a, [wTrainerClass]
+	ld b, a
+	ld a, [wOtherTrainerID]
+	ld c, a
+
+	ld hl, BossAIPersonalityKernelMap
+.map_loop
+	ld a, [hl]
+	and a
+	jr z, .use_tier_default ; sentinel = end of per-leader entries
+	cp b
+	jr nz, .map_next
+	inc hl
+	ld a, [hli]
+	cp c
+	jr nz, .map_skip
+	; HL now points at the 8-byte kernel record; copy to wBossAIKernel.
+	ld de, wBossAIKernel
+	ld b, BOSS_AI_KERNEL_SIZE
+.copy_kernel
+	ld a, [hli]
+	ld [de], a
+	inc de
+	dec b
+	jr nz, .copy_kernel
+	ret
+
+.map_skip
+	; mid-entry mismatch on trainer_id; skip the 8 kernel bytes
+	ld de, BOSS_AI_KERNEL_SIZE
+	add hl, de
+	jr .map_loop
+
+.map_next
+	; first byte didn't match trainer_class; skip class + id + 8 kernel bytes = 10
+	ld de, 10
+	add hl, de
+	jr .map_loop
+
+.use_tier_default
+	; index into BossAITierDefaultKernels by (tier - 1) * BOSS_AI_KERNEL_SIZE
+	ld a, [wBossAITier]
+	dec a ; AI_TIER_EARLY (1) -> offset 0
+	ld b, 0
+	; multiply a by BOSS_AI_KERNEL_SIZE (8): shift left 3
+	add a, a
+	add a, a
+	add a, a
+	ld c, a
+	ld hl, BossAITierDefaultKernels
+	add hl, bc
+	ld de, wBossAIKernel
+	ld b, BOSS_AI_KERNEL_SIZE
+.copy_default
+	ld a, [hli]
+	ld [de], a
+	inc de
+	dec b
+	jr nz, .copy_default
+	ret
+
 INCLUDE "data/trainers/ai_tiers.asm"
+INCLUDE "data/boss_ai/personality_kernels.asm"

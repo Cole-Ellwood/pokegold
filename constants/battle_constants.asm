@@ -93,6 +93,21 @@ DEF BOSS_AI_PLAUSIBLE_HP_RISK_BIT EQU 31
 	const BOSS_PLAN_ENDGAME_PROTECT
 	const BOSS_PLAN_ANTI_SETUP_DENIAL
 
+; boss AI personality kernel layout (8 bytes per record, fixed-size).
+; Records live in data/boss_ai/personality_kernels.asm. The active record is
+; copied into wBossAIKernel at battle init by LoadBossAIPersonalityKernel.
+; P1a wires only KERNEL_PLAN_BIAS_MULTIPLIER; later phases consume the rest.
+DEF BOSS_AI_KERNEL_SIZE EQU 8
+	const_def
+	const KERNEL_PLAN_BIAS_MULTIPLIER
+	const KERNEL_SOFTMAX_TEMP
+	const KERNEL_PRESERVATION_THRESHOLD
+	const KERNEL_RISK_TOLERANCE
+	const KERNEL_SWITCH_AGGRESSION
+	const KERNEL_SETUP_PATIENCE
+	const KERNEL_FLAGS
+	const KERNEL_RESERVED
+
 ; wPlayerStatLevels and wEnemyStatLevels indexes (see wram.asm)
 ; GetStatName arguments (see data/battle/stat_names.asm)
 	const_def

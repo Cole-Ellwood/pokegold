@@ -2455,6 +2455,7 @@ wBossAITargetMonIdx:: db
 wBossAIScoutedMask:: db
 wBossAIRepeatCount:: db
 wBossAILastChosenMove:: db
+wBossAIKernel:: ds BOSS_AI_KERNEL_SIZE ; P1 personality kernel scratch; loaded at battle init by LoadBossAIPersonalityKernel
 wBossAIPlausibleTypeMaskSpecies:: db
 wBossAIPlausibleTypeMaskLevel:: db
 wBossAIPlausibleTypeMaskCache:: ds 4

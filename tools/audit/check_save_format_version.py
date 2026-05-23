@@ -70,12 +70,31 @@ def load(path: Path) -> str:
     return path.read_text(encoding="utf-8", errors="replace")
 
 
+BOSS_AI_RESERVE_BYTES = 140
+BOSS_AI_RESERVE_PAD_RE = re.compile(
+    r"^\s*ds\s+(\d+)\s*-\s*\(\s*wBossAIStateEnd\s*-\s*wBossAITier\s*\)"
+)
+
+
 def normal_build_wram_lines() -> list[str]:
-    """Return wram.asm source lines visible to normal, save-compatible builds."""
+    """Return wram.asm source lines visible to normal, save-compatible builds.
+
+    Also collapses the wBossAI* subrange (wBossAITier..wBossAIStateEnd) to
+    just its start and end markers + a padding-sentinel line. The wBossAI*
+    block lives inside wPlayerData3 and the wPlayerData3 raw-copy save
+    path persists those bytes, but the block is sized by a fixed
+    `ds 140 - (wBossAIStateEnd - wBossAITier)` reserve pad that keeps
+    wEventFlags at the same byte offset regardless of how many wBossAI*
+    labels live inside it. Treating every new wBossAI* label as save-layout
+    drift over-constrains the audit. Instead, fingerprint the wBossAI*
+    block as opaque AND assert the 140-byte reserve invariant remains.
+    """
 
     lines = load(WRAM).splitlines()
     out: list[str] = []
     trace_only_depth = 0
+    reserve_pad_found = False
+    in_boss_ai_block = False
     for line in lines:
         if trace_only_depth:
             if IF_RE.match(line):
@@ -86,9 +105,42 @@ def normal_build_wram_lines() -> list[str]:
         if TRACE_ONLY_IF_RE.match(line):
             trace_only_depth = 1
             continue
+        if BOSS_AI_RESERVE_PAD_RE.match(line):
+            pad_match = BOSS_AI_RESERVE_PAD_RE.match(line)
+            pad_size = int(pad_match.group(1))
+            if pad_size != BOSS_AI_RESERVE_BYTES:
+                fail(
+                    f"Boss AI reserve pad expected {BOSS_AI_RESERVE_BYTES} bytes, "
+                    f"got {pad_size}; wBossAI* growth would shift saved event flags. "
+                    "Either reduce wBossAI* usage or bump SAVE_FORMAT_VERSION + "
+                    "update this audit's BOSS_AI_RESERVE_BYTES constant."
+                )
+            reserve_pad_found = True
+            out.append(line)
+            in_boss_ai_block = False
+            continue
+        label_match = WRAM_LABEL_RE.match(line)
+        if label_match:
+            label_name = label_match.group(1)
+            if label_name == "wBossAITier":
+                in_boss_ai_block = True
+                out.append(line)
+                continue
+            if label_name == "wBossAIStateEnd":
+                in_boss_ai_block = False
+                out.append(line)
+                continue
+            if in_boss_ai_block:
+                # Inner wBossAI* label: opaque to the fingerprint.
+                continue
         out.append(line)
     if trace_only_depth:
         fail("wram.asm has an unterminated IF DEF(BOSS_AI_TRACE) block")
+    if not reserve_pad_found:
+        fail(
+            f"wram.asm missing `ds {BOSS_AI_RESERVE_BYTES} - (wBossAIStateEnd - wBossAITier)` "
+            "reserve pad; required to keep wEventFlags pinned regardless of wBossAI* growth."
+        )
     return out
 
 
