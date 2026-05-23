@@ -636,11 +636,13 @@ LockInPlayerChoiceMoveIfNeeded:
 	ret
 
 RefreshPlayerChoiceLockState:
+	push de
 	ld a, [wBattleMonItem]
 	ld b, a
 	callfar GetItemHeldEffect
-	ld a, b
-	callfar IsChoiceHeldEffect_Far
+	ld e, b
+	callfar IsChoiceHeldEffectFromE_Far
+	pop de
 	jr z, .choice_item
 	xor a
 	ld [wPlayerChoiceLockedMove], a
@@ -5487,7 +5489,10 @@ MoveSelectionScreen:
 	cp HELD_ASSAULT_VEST
 	jr nz, .not_blocked
 	pop af
-	callfar IsMoveBlockedByAssaultVest_Far
+	push de
+	ld e, a
+	callfar IsMoveBlockedByAssaultVestFromE_Far
+	pop de
 	ret
 
 .not_blocked
