@@ -2809,7 +2809,9 @@ ENDSECTION
 SECTION "Boss AI WRAMX2 Buffer", WRAMX, BANK[2]
 
 wBossAIWramx2Buffer::
-	ds 1 ; placeholder so the SECTION is non-empty; resized by P5
+wBossAIObsWriteIndex:: db
+wBossAIObsCount:: db
+wBossAIObsEntries:: ds BOSS_AI_OBS_ENTRY_SIZE * BOSS_AI_OBS_MAX_TURNS
 wBossAIWramx2BufferEnd::
 
 ENDSECTION

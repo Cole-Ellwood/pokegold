@@ -140,6 +140,7 @@ ClearBossAIState:
 	ld bc, wBossAIStateEnd - wBossAITier
 	xor a
 	call ByteFill
+	call BossAI_ClearObservationLog
 	ret
 
 INCLUDE "data/trainers/ai_tiers.asm"

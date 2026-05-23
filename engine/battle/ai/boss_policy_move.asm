@@ -3146,6 +3146,12 @@ BossAI_CurrentEnemyMovePressureScore:
 
 .apply_modifiers
 	call BossAI_ApplyEnemyKnownPressureModifiers
+	call BossAI_ConsultKOBandCalibration
+	and a
+	jr z, .cap
+	ld a, b
+	add 1
+	ld b, a
 
 .cap
 	ld a, b
@@ -3634,6 +3640,14 @@ BossAI_PredictPlayerSwitch:
 	ld a, [wBossAITemp]
 	add 15
 	ld [wBossAITemp], a
+	call BossAI_ConsultTendencyCounters
+	and a
+	jr z, .skip_tendency
+	ld b, a
+	ld a, [wBossAITemp]
+	add b
+	ld [wBossAITemp], a
+.skip_tendency
 
 	call BossAI_HasRevealedSuperEffectiveMove
 	jr nc, .done

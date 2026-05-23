@@ -31,6 +31,7 @@ BossAI_IncrementTurnsElapsed:
 	ld hl, wBossAIPlanPhase
 	res 7, [hl]
 	inc [hl]
+	call BossAI_AppendObservationLog
 	ld a, [wBossAIPendingPlayerSwitchCount]
 	and a
 	jr z, .no_pending_switch
