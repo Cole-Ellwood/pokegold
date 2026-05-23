@@ -55,6 +55,12 @@ audit/damage_debugger/*.tenet
 audit/boss_ai_debugger/runs/
 docs/pokemon_mastery/runs/
 
+# Ad hoc analysis exports — HTML/PDF outputs from one-shot data investigations
+# (e.g. starter evolution stat surveys, sub-500 BST evolution lists). These get
+# regenerated from source data; the artifacts are scratch by convention.
+docs/starter_evolution_stats.*
+under_30_500_bst_evolutions.pdf
+
 # Boss AI preference lab server runtime logs.
 audit/boss_ai_preference/server.*.log
 
