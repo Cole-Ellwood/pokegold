@@ -3851,6 +3851,9 @@ ENDC
 	ret
 
 .ChooseInitialPlan
+	call BossAI_TryCoachPlanTemplate
+	ret c
+
 	ld a, BOSS_PLAN_TEMPO_PRESSURE
 	ld [wBossAIPlanId], a
 	ld a, [wBossAITier]
@@ -3916,6 +3919,19 @@ ENDC
 	ret
 
 .AdaptPlan
+	call BossAI_CurrentPlanIsCoachTemplate
+	jr c, .check_coach_valid
+	call BossAI_TryCoachPlanTemplate
+	ret c
+	jr .coach_valid
+
+.check_coach_valid
+	call BossAI_CoachPlanStillValid
+	jr c, .coach_valid
+	call .DropCoachPlanToGeneric
+	ret
+
+.coach_valid
 	call .IsWinconCompromised
 	jr nc, .check_revealed
 	ld a, BOSS_PLAN_ENDGAME_PROTECT
@@ -3950,6 +3966,20 @@ ENDC
 	ret nc
 	add 2
 	ld [wBossAIPlanConfidence], a
+	ret
+
+.DropCoachPlanToGeneric
+	ld a, BOSS_PLAN_TEMPO_PRESSURE
+	ld [wBossAIPlanId], a
+	ld a, 40
+	ld [wBossAIPlanConfidence], a
+	xor a
+	ld [wBossAIPlanPhase], a
+	ld a, [wCurOTMon]
+	inc a
+	ld [wBossAIWinconMonIdx], a
+	call BossAI_GetActiveSpeciesSeenIndex
+	ld [wBossAITargetMonIdx], a
 	ret
 
 .IsWinconCompromised
@@ -3991,6 +4021,231 @@ ENDC
 .yes
 	scf
 	ret
+
+; ai-layer: POLICY
+BossAI_TryCoachPlanTemplate:
+	ld a, [wBossAITier]
+	cp AI_TIER_LATE
+	jr nc, .late
+	and a
+	ret
+.late
+	call BossAI_FindCoachPlanTemplate
+	ret nc
+	push hl
+	call BossAI_CoachTemplateStopConditionClear
+	pop hl
+	ret nc
+	ld a, [hli]
+	ld [wBossAIPlanId], a
+	ld de, 4
+	add hl, de
+	ld b, [hl]
+	xor a
+	ld [wBossAIPlanPhase], a
+	ld a, [wCurOTMon]
+	inc a
+	ld [wBossAIWinconMonIdx], a
+	push bc
+	call BossAI_GetActiveSpeciesSeenIndex
+	ld [wBossAITargetMonIdx], a
+	pop bc
+	ld a, b
+	ld [wBossAIPlanConfidence], a
+	scf
+	ret
+
+; ai-layer: POLICY
+BossAI_CoachPlanStillValid:
+	call BossAI_CurrentPlanIsCoachTemplate
+	jr c, .coach
+	scf
+	ret
+.coach
+	call BossAI_FindCoachPlanTemplate
+	ret nc
+	jp BossAI_CoachTemplateStopConditionClear
+
+; ai-layer: POLICY
+BossAI_CurrentPlanIsCoachTemplate:
+	ld a, [wBossAIPlanId]
+	cp BOSS_PLAN_TEMPLATE_SETUP_ONCE_THEN_ATTACK
+	jr z, .yes
+	cp BOSS_PLAN_TEMPLATE_PRESSURE_RECOVER_THEN_LOCK
+	jr z, .yes
+	and a
+	ret
+.yes
+	scf
+	ret
+
+; ai-layer: POLICY
+BossAI_FindCoachPlanTemplate:
+	ld a, [wTrainerClass]
+	ld b, a
+	ld a, [wOtherTrainerID]
+	ld c, a
+	ld hl, BossAICoachPlanTemplates
+.row_loop
+	ld a, [hli]
+	and a
+	jr z, .not_found
+	cp b
+	jr nz, .skip_after_class
+	ld a, [hli]
+	cp c
+	jr nz, .skip_after_id
+	ld a, [hli]
+	ld e, a
+	ld a, [wEnemyMonSpecies]
+	cp e
+	jr nz, .skip_after_species
+	scf
+	ret
+
+.skip_after_class
+	ld de, BOSS_AI_COACH_TEMPLATE_ROW_SIZE - 1
+	add hl, de
+	jr .row_loop
+
+.skip_after_id
+	ld de, BOSS_AI_COACH_TEMPLATE_ROW_SIZE - 2
+	add hl, de
+	jr .row_loop
+
+.skip_after_species
+	ld de, BOSS_AI_COACH_TEMPLATE_ROW_SIZE - 3
+	add hl, de
+	jr .row_loop
+
+.not_found
+	and a
+	ret
+
+; ai-layer: POLICY
+BossAI_CoachTemplateStopConditionClear:
+; hl = row plan-id field. Stop if the player has shown a hard public answer:
+; revealed super-effective pressure, the row's explicit stop effect, or a
+; resisted damaging lock move after the setup phase.
+	push hl
+	call BossAI_HasRevealedSuperEffectiveMove
+	pop hl
+	jr c, .blocked
+
+	push hl
+	ld de, 4
+	add hl, de
+	ld a, [hl]
+	pop hl
+	and a
+	jr z, .check_resist
+	push hl
+	call BossAI_PlayerHasRevealedEffectA_Coach
+	pop hl
+	jr c, .blocked
+
+.check_resist
+	push hl
+	call BossAI_CoachExpectedMoveResistedByPlayer
+	pop hl
+	jr c, .blocked
+	scf
+	ret
+
+.blocked
+	and a
+	ret
+
+; ai-layer: POLICY
+BossAI_CoachTemplateExpectedMoveFromHL:
+; hl = row plan-id field. Output: carry and a = expected move for this phase.
+	ld a, [wBossAIPlanPhase]
+	and $7f
+	and a
+	jr z, .phase0
+	cp 1
+	jr z, .phase1
+	ld de, 3
+	jr .load
+.phase0
+	ld de, 1
+	jr .load
+.phase1
+	ld de, 2
+.load
+	add hl, de
+	ld a, [hl]
+	and a
+	ret z
+	scf
+	ret
+
+; ai-layer: POLICY
+BossAI_CoachExpectedMoveResistedByPlayer:
+	ld a, [wBossAIPlanPhase]
+	and $7f
+	and a
+	jr z, .no
+	call BossAI_CoachTemplateExpectedMoveFromHL
+	ret nc
+	ld b, a
+	dec a
+	ld hl, Moves + MOVE_POWER
+	call BossAI_GetMoveAttr
+	and a
+	jr z, .no
+	ld a, b
+	dec a
+	ld hl, Moves + MOVE_TYPE
+	call BossAI_GetMoveAttr
+	ld c, a
+	ldh a, [hBattleTurn]
+	push af
+	ld a, 1
+	ldh [hBattleTurn], a
+	ld a, c
+	ld hl, wBaseType1
+	call BossAI_CheckTypeMatchupNoItem
+	pop af
+	ldh [hBattleTurn], a
+	ld a, [wTypeMatchup]
+	cp EFFECTIVE
+	jr c, .yes
+.no
+	and a
+	ret
+.yes
+	scf
+	ret
+
+; ai-layer: POLICY
+BossAI_PlayerHasRevealedEffectA_Coach:
+	ld [wBossAITemp], a
+	ld hl, wPlayerUsedMoves
+	ld c, NUM_MOVES
+.loop
+	ld a, [hli]
+	and a
+	jr z, .next
+	push hl
+	dec a
+	ld hl, Moves + MOVE_EFFECT
+	call BossAI_GetMoveAttr
+	ld b, a
+	pop hl
+	ld a, [wBossAITemp]
+	cp b
+	jr z, .yes
+.next
+	dec c
+	jr nz, .loop
+	and a
+	ret
+.yes
+	scf
+	ret
+
+INCLUDE "data/boss_ai/coach_plan_templates.asm"
 
 endc
 
@@ -4782,6 +5037,9 @@ BossAI_ApplyPlanMoveBias:
 	ld a, [wBossAIPlanId]
 	and a
 	ret z
+	call BossAI_ApplyCoachPlanMoveBias
+	ret c
+	ld a, [wBossAIPlanId]
 	cp BOSS_PLAN_SETUP_SWEEP
 	jr nz, .check_status
 	call BossAI_IsCurrentEnemySetupMove
@@ -4828,11 +5086,37 @@ BossAI_ApplyPlanMoveBias:
 	jp BossAI_EncourageScoreHL
 
 .check_denial
+	cp BOSS_PLAN_ANTI_SETUP_DENIAL
+	ret nz
 	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
 	call BossAI_IsDenialEffect
 	ret nc
 	ld a, 2
 	jp BossAI_EncourageScoreHL
+
+; ai-layer: POLICY
+BossAI_ApplyCoachPlanMoveBias:
+	call BossAI_CurrentPlanIsCoachTemplate
+	ret nc
+	call BossAI_FindCoachPlanTemplate
+	ret nc
+	push hl
+	call BossAI_CoachTemplateStopConditionClear
+	pop hl
+	ret nc
+	call BossAI_CoachTemplateExpectedMoveFromHL
+	ret nc
+	ld b, a
+	ld a, [wEnemyMoveStruct + MOVE_ANIM]
+	cp b
+	jr z, .encourage
+	and a
+	ret
+.encourage
+	ld a, BOSS_AI_COACH_TEMPLATE_MOVE_BONUS
+	call BossAI_EncourageScoreHL
+	scf
+	ret
 
 endc
 

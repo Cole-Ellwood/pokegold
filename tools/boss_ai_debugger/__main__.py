@@ -41,6 +41,10 @@ from .confidence_report import (
     format_confidence_report,
     write_confidence_report_json,
 )
+from .coach_plan_templates import (
+    format_coach_plan_template_report,
+    run_coach_plan_template_report,
+)
 from .counterfactuals import (
     explain_counterfactuals_for_path,
     format_counterfactual_report,
@@ -1280,6 +1284,10 @@ def build_parser() -> argparse.ArgumentParser:
     role_pkg_cmd.add_argument("--species", action="append", required=True)
     role_pkg_cmd.add_argument("--json", action="store_true")
     role_pkg_cmd.set_defaults(func=cmd_role_packages)
+
+    coach_plan_cmd = subparsers.add_parser("coach-plan-templates")
+    coach_plan_cmd.add_argument("--json", action="store_true")
+    coach_plan_cmd.set_defaults(func=cmd_coach_plan_templates)
     return parser
 
 
@@ -1306,6 +1314,15 @@ def cmd_role_packages(args: argparse.Namespace) -> int:
     else:
         print(format_role_package_rows(rows))
     return 0 if ok else 1
+
+
+def cmd_coach_plan_templates(args: argparse.Namespace) -> int:
+    report = run_coach_plan_template_report()
+    if args.json:
+        print(json.dumps(report, indent=2, sort_keys=True))
+    else:
+        print(format_coach_plan_template_report(report))
+    return 0 if report.get("ok") else 1
 
 
 def main(argv: list[str] | None = None) -> int:
