@@ -18,6 +18,10 @@
 *.map
 *.sym
 
+# Hand-exported .map.txt copies. `*.map` above doesn't cover the .txt suffix,
+# but these are still build-derived; let them stay scratch.
+pokegold.map.txt
+
 # Repo-local toolchain downloads and compiled helper binaries.
 *.exe
 rgbds-1.0.1/
@@ -42,6 +46,14 @@ rgbds-*/
 audit/damage_debugger/*.log
 audit/damage_debugger/*.jsonl
 audit/damage_debugger/*.tenet
+
+# Boss AI debugger run artifacts + Pokemon Mastery loop run artifacts. Both
+# directories hold timestamped regenerable outputs (`python -m tools.boss_ai_debugger
+# run-suite ...` and the mastery loop drivers under tools/pokemon_mastery/). The
+# tools recreate these on demand; tracking them bloats history with hundreds of
+# thousands of lines of generated JSON for no review value.
+audit/boss_ai_debugger/runs/
+docs/pokemon_mastery/runs/
 
 # Boss AI preference lab server runtime logs.
 audit/boss_ai_preference/server.*.log
