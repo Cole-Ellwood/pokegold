@@ -18,6 +18,7 @@ FishGroups:
 	fishgroup 50 percent + 1, .Remoraid_Swarm_Old,   .Remoraid_Swarm_Good,   .Remoraid_Swarm_Super
 	fishgroup 50 percent + 1, .Gyarados_Old,         .Gyarados_Good,         .Gyarados_Super
 	fishgroup 50 percent + 1, .Dratini_2_Old,        .Dratini_2_Good,        .Dratini_2_Super
+	fishgroup 50 percent + 1, .Route41_Old,          .Route41_Good,          .Route41_Super
 	fishgroup 50 percent + 1, .WhirlIslands_Old,     .WhirlIslands_Good,     .WhirlIslands_Super
 	fishgroup 50 percent + 1, .Qwilfish_Old,         .Qwilfish_Good,         .Qwilfish_Super
 	fishgroup 50 percent + 1, .Remoraid_Old,         .Remoraid_Good,         .Remoraid_Super
@@ -151,13 +152,32 @@ FishGroups:
 .Dratini_2_Good:
 	db  35 percent,     MAGIKARP,   10
 	db  70 percent,     GOLDEEN,    10
-	db  90 percent + 1, POLIWAG,    10
-	db 100 percent,     time_group 16
+	db  96 percent,     POLIWAG,    10
+	db  99 percent,     time_group 16
+	db 100 percent,     SEAKING,    10
 .Dratini_2_Super:
 	db  40 percent,     MAGIKARP,   10
-	db  70 percent,     time_group 17
-	db  90 percent + 1, GOLDEEN,    10
+	db  70 percent,     GOLDEEN,    10
+	db  96 percent,     SEAKING,    10
+	db  99 percent,     time_group 17
 	db 100 percent,     DRAGONAIR,  10
+
+.Route41_Old:
+	db  70 percent + 1, MAGIKARP,   10
+	db  85 percent + 1, TENTACOOL,  10
+	db 100 percent,     KRABBY,     10
+.Route41_Good:
+	db  35 percent,     MAGIKARP,   20
+	db  70 percent,     TENTACOOL,  20
+	db  90 percent + 1, CHINCHOU,   20
+	db 100 percent,     time_group 2
+.Route41_Super:
+	db  40 percent,     CHINCHOU,   40
+	db  70 percent,     time_group 3
+	db  90 percent + 1, TENTACRUEL, 40
+	db  98 percent,     LANTURN,    40
+	db  99 percent,     HORSEA,     40
+	db 100 percent,     LAPRAS,     40
 
 .WhirlIslands_Old:
 	db  70 percent + 1, MAGIKARP,   10

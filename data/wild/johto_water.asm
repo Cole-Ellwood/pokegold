@@ -143,7 +143,7 @@ JohtoWaterWildMons:
 	db 6 percent ; encounter rate
 	db 15, TENTACOOL
 	db 20, QWILFISH
-	db 20, TENTACRUEL
+	db 20, SLOWPOKE
 	end_water_wildmons
 
 	def_water_wildmons ROUTE_34
@@ -157,14 +157,14 @@ JohtoWaterWildMons:
 	db 4 percent ; encounter rate
 	db 20, PSYDUCK
 	db 15, POLIWAG
-	db 20, GOLDUCK
+	db 20, MARILL
 	end_water_wildmons
 
 	def_water_wildmons ROUTE_40
 	db 6 percent ; encounter rate
 	db 20, TENTACOOL
 	db 15, CHINCHOU
-	db 20, TENTACRUEL
+	db 20, SEEL
 	end_water_wildmons
 
 	def_water_wildmons ROUTE_41

@@ -76,6 +76,14 @@ gimmicks listed in the manual registry below. Continue using
 `docs/buff_backlog.md` and `docs/generated/balance_audit.md` for lower-priority
 watchlist work.
 
+## Availability Buckets
+
+Do not solve every missing-family availability gap with normal route wilds.
+Starter families should use special events. Fossil families should use fossil or
+event handling unless a deliberate alternative already exists. Legendary and
+mythical Pokemon should use explicit events unless already implemented: Lugia
+and Ho-Oh have source event battles, while Celebi still needs a real hook.
+
 ## Documented Gimmick Audit Rule
 
 `scripts/generate_balance_audit.py` parses locked rows with Power Tier `gimmick`
