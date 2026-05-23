@@ -82,6 +82,7 @@ V2_PASSTHROUGH_MODULES = {
     "crossemu": "tools.debugger.crossemu",
     "dap": "tools.debugger.dap_server",
     "clobbers": "tools.debugger.register_flow",
+    "auto-watch": "tools.debugger.auto_watch",
 }
 
 

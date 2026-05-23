@@ -1349,6 +1349,50 @@ def _build_v2_surfaces(root: Path = ROOT) -> list[dict[str, Any]]:
             ),
         ),
         _capability(
+            id="auto_watch",
+            title="Autonomous bug-watcher on rom-edit + commit (P19)",
+            status=_complete_if_paths(
+                root,
+                "tools/debugger/auto_watch.py",
+                "tools/debugger/tests/test_auto_watch.py",
+                "scripts/install_debugger_hooks.py",
+            ),
+            scope=(
+                "Detect-and-report autonomous bug surfacing on new ROM code "
+                "landings. Two triggers: rom-edit propose (integration pending) "
+                "and a git post-commit hook installable via "
+                "scripts/install_debugger_hooks.py. Both writers emit "
+                "single-shape findings to audit/auto_watch_findings.jsonl: "
+                "trigger / trigger_id / commit_hash / proposal_id / bug_class / "
+                "detector / status / severity / evidence / evidence_atoms / "
+                "command_replay (validated by auto_watch.validate_finding). "
+                "First-slice detector wraps register_flow for the AG-NN "
+                "c-clobber class; --self-test synthesizes a broken+fixed asm "
+                "pair in tmp and asserts the detector fires on broken only."
+            ),
+            evidence=(
+                "tools/debugger/auto_watch.py",
+                "tools/debugger/tests/test_auto_watch.py",
+                "scripts/install_debugger_hooks.py",
+                "tools/debugger/tests/test_install_debugger_hooks.py",
+                "docs/debugger_masterpiece_roadmap_codex_task.md",
+            ),
+            gaps=(
+                "rom-edit propose trigger integration pending (P12 hook)",
+                "heavy detectors not wired yet: release_smoke, clobber_smoke, full selftest replay",
+                "register_flow detector flags any c-writer; call-site correlation pending",
+                "no commit-baseline diff yet; first slice runs detectors on demand only",
+                "bug_class labels are provisional until the P20 catalog audit lands",
+            ),
+            commands=(
+                "python -m tools.debugger auto-watch --self-test",
+                "python -m tools.debugger auto-watch --self-test --verbose",
+                "python scripts/install_debugger_hooks.py --dry-run --install",
+                "python scripts/install_debugger_hooks.py --install",
+                "python scripts/install_debugger_hooks.py --uninstall",
+            ),
+        ),
+        _capability(
             id="register_flow",
             title="Static register-flow / clobber-set analyzer (P15)",
             status=_complete_if_paths(

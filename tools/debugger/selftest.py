@@ -1402,6 +1402,69 @@ def check_register_flow(root: Path) -> CheckResult:
     )
 
 
+def check_auto_watch(root: Path) -> CheckResult:
+    """Exercise P19 auto-watch detector + finding-row schema in-process."""
+
+    from . import auto_watch
+
+    def inner() -> str:
+        import tempfile
+
+        with tempfile.TemporaryDirectory(prefix="auto_watch_check_") as tmpdir:
+            tmp_root = Path(tmpdir)
+            engine_dir = tmp_root / "engine"
+            engine_dir.mkdir()
+            (engine_dir / "synth_broken.asm").write_text(
+                auto_watch._SYNTH_BROKEN_ASM, encoding="utf-8"
+            )
+            (engine_dir / "synth_fixed.asm").write_text(
+                auto_watch._SYNTH_FIXED_ASM, encoding="utf-8"
+            )
+            broken = auto_watch.run_register_flow_detector(
+                "TestStubBroken", root=tmp_root
+            )
+            fixed = auto_watch.run_register_flow_detector(
+                "TestStubFixed", root=tmp_root
+            )
+        if broken is None:
+            raise AssertionError("auto_watch: broken synth did not trigger")
+        if broken.status != "detected":
+            raise AssertionError(
+                f"auto_watch: broken synth status was {broken.status!r}"
+            )
+        if broken.bug_class != "ag_nn_register_clobber":
+            raise AssertionError(
+                f"auto_watch: broken synth bug_class was {broken.bug_class!r}"
+            )
+        if fixed is not None:
+            raise AssertionError(
+                f"auto_watch: fixed synth fired ({fixed.bug_class!r}); too noisy"
+            )
+        row = broken.as_dict()
+        if auto_watch.validate_finding(row):
+            raise AssertionError(
+                f"auto_watch: detector row failed validation: {row}"
+            )
+        if "evidence_atoms" not in row or not row["evidence_atoms"]:
+            raise AssertionError(
+                "auto_watch: detector row missing evidence_atoms"
+            )
+        if "command_replay" not in row or "clobbers" not in row["command_replay"]:
+            raise AssertionError(
+                "auto_watch: detector row missing/invalid command_replay"
+            )
+        return (
+            "auto_watch synth-broken triggers ag_nn_register_clobber; "
+            "synth-fixed silent; row has evidence_atoms + command_replay"
+        )
+
+    return _capture(
+        component="auto_watch",
+        next_command="python -m tools.debugger auto-watch --self-test",
+        fn=inner,
+    )
+
+
 NAMED_CHECKS: tuple[tuple[str, Check], ...] = (
     ("capability_audit", check_capability_audit),
     ("inventory", check_inventory),
@@ -1432,6 +1495,7 @@ NAMED_CHECKS: tuple[tuple[str, Check], ...] = (
     ("crossemu", check_crossemu),
     ("dap_server", check_dap_server),
     ("register_flow", check_register_flow),
+    ("auto_watch", check_auto_watch),
 )
 
 CHECKS: tuple[Check, ...] = tuple(check for _, check in NAMED_CHECKS)
