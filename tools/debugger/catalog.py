@@ -180,6 +180,9 @@ TRIAGE_RULES = (
         symptom_keywords=(
             "crash",
             "hang",
+            "reset",
+            "reboot",
+            "black screen",
             "bank",
             "farcall",
             "register",

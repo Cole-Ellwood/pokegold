@@ -33,6 +33,9 @@ python -m tools.debugger trace-instructions --report .local\tmp\debugger_watch_s
 python -m tools.debugger trace-instructions --symbol BattleCommand_DamageCalc --watch-symbol wCurDamage --execute --require-hit --out-trace .local\tmp\damagecalc_instruction_trace.jsonl
 python -m tools.debugger dynamic-taint --trace .local\tmp\instruction_trace.jsonl --source-reg a=move_power --sink-symbol wCurDamage
 python -m tools.debugger dynamic-taint --report .local\tmp\damagecalc_instruction_trace.json
+python -m tools.debugger watch --reset-sentinel --rom pokegold.gbc --symbols pokegold.sym --save-state path\to\state --frames 1200 --context-frames 20
+python -m tools.debugger wram-bank-hazards --source-file engine\battle\ai\observation_log.asm
+python -m tools.debugger repro-recipe --id first-wild-route29
 python -m tools.debugger setup --symbol wCurDamage --watch-symbol wCurDamage --out-scenarios .local\tmp\debugger_setup_scenarios.jsonl
 python -m tools.debugger generate --symbol wCurDamage --out-scenarios .local\tmp\debugger_generation_seeds.jsonl
 python -m tools.debugger generate --changed-file engine\battle\ai\boss_policy_move.asm --family all --max-cases 64 --seed 1
@@ -258,7 +261,12 @@ than a reference graph, but still not a full dynamic CPU taint engine.
 
 `watch` is the generic runtime bridge. In plan mode it resolves watch symbols,
 attaches static provenance, and reports the debugger commands likely to help. In
-`--execute` mode it opens the ROM in PyBoy, optionally loads a save state, polls
+reset-sentinel mode it can run without a watched symbol, hook the reset/start
+vectors, and dump recent PC/register context plus `hROMBank`, `hWRAMBank`,
+`wBattleMode`, and `wTempWildMonSpecies` when a replay jumps back through boot.
+Use that first for reports like "reset to intro then black screen"; it keeps
+crash handling ahead of static policy-matrix checks.
+In `--execute` mode it opens the ROM in PyBoy, optionally loads a save state, polls
 the watched symbols for a bounded number of frames, and records changes with PC
 bank/address, nearest symbol context, register snapshots, watch values, and the
 preceding `--context-frames` frame-context window. Each hit also carries a
@@ -266,6 +274,18 @@ bounded source-cause slice, so the watch output points at likely static
 writers/readers and the follow-up `trace-index`, `slice`, `explain`, `localize`,
 and `minimize` commands. It is frame-sampled forward polling, not hardware
 watchpoints, instruction-by-instruction dynamic taint, or reverse execution.
+
+`wram-bank-hazards` is a static guard for WRAMX stack/bank bugs. It flags
+`call SetWRAMBank` sites that could return through the newly selected WRAMX
+bank, explicit push/pop pairs that cross an inline WRAM bank switch, and
+routines that return before restoring WRAMX bank 1. Pair it with
+`watch --reset-sentinel` when a symptom smells like a jump to the intro or a
+black-screen reset.
+
+`repro-recipe` prints named, scenario-specific capture recipes. The first
+checked-in recipe is `first-wild-route29`, which routes new-save Route 29 wild
+encounter resets through the reset sentinel, instruction trace, and WRAM
+bank/stack hazard scan before broader static audits.
 
 `replay` is the unified reproduction coordinator. It fingerprints the ROM,
 symbols, traces, save states, scenarios, and changed files you give it; derives

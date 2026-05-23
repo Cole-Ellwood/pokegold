@@ -27,6 +27,7 @@ from .next_steps import build_next_step, symptom_only_investigation_note
 from .provenance import build_provenance_report
 from .ranking import rank_findings
 from .replay import build_replay_plan
+from .repro_recipes import build_repro_recipe_report
 from .reporting import build_static_report, write_static_report
 from .runtime_watch import build_watch_report
 from .setup_plan import build_setup_plan
@@ -36,6 +37,7 @@ from .testgen import suggest_tests
 from .taint import build_taint_report
 from .trace_index import build_trace_index_report
 from .visualization import build_visualization_report, write_visualization
+from .wram_bank_hazards import build_wram_bank_hazard_report
 from .workflow import build_gate_plan, command_is_runnable
 
 
@@ -285,8 +287,21 @@ def build_parser() -> argparse.ArgumentParser:
     watch.add_argument("--frames", type=int, default=60)
     watch.add_argument("--context-frames", type=int, default=12)
     watch.add_argument("--execute", action="store_true")
+    watch.add_argument("--reset-sentinel", action="store_true")
+    watch.add_argument("--sentinel-symbol", action="append", default=[])
     add_output_args(watch)
     watch.set_defaults(func=cmd_watch)
+
+    wram_bank_hazards = subparsers.add_parser("wram-bank-hazards")
+    wram_bank_hazards.add_argument("--source-file", action="append", default=[])
+    add_output_args(wram_bank_hazards)
+    wram_bank_hazards.set_defaults(func=cmd_wram_bank_hazards)
+
+    repro_recipe = subparsers.add_parser("repro-recipe")
+    repro_recipe.add_argument("--id", action="append", default=[])
+    repro_recipe.add_argument("--symptom", default="")
+    add_output_args(repro_recipe)
+    repro_recipe.set_defaults(func=cmd_repro_recipe)
 
     replay = subparsers.add_parser("replay")
     replay.add_argument("--rom", default="")
@@ -762,6 +777,25 @@ def cmd_watch(args: argparse.Namespace) -> int:
         frames=args.frames,
         context_frames=args.context_frames,
         execute=args.execute,
+        reset_sentinel=args.reset_sentinel,
+        sentinel_symbols=tuple(args.sentinel_symbol),
+    )
+    emit_report(report, args)
+    return 0 if report["valid"] else 1
+
+
+def cmd_wram_bank_hazards(args: argparse.Namespace) -> int:
+    report = build_wram_bank_hazard_report(
+        source_files=tuple(args.source_file),
+    )
+    emit_report(report, args)
+    return 0 if report["valid"] and report["passed"] else 1
+
+
+def cmd_repro_recipe(args: argparse.Namespace) -> int:
+    report = build_repro_recipe_report(
+        ids=tuple(args.id),
+        symptom=args.symptom,
     )
     emit_report(report, args)
     return 0 if report["valid"] else 1
@@ -1013,6 +1047,10 @@ def emit_report(report: dict[str, Any], args: argparse.Namespace) -> None:
         print(format_instruction_trace(report))
     elif report["kind"] == "unified_debugger_watch_report":
         print(format_watch(report))
+    elif report["kind"] == "unified_debugger_wram_bank_hazard_report":
+        print(format_wram_bank_hazards(report))
+    elif report["kind"] == "unified_debugger_repro_recipe_report":
+        print(format_repro_recipe(report))
     elif report["kind"] == "unified_debugger_replay_plan":
         print(format_replay_plan(report))
     elif report["kind"] == "unified_debugger_setup_plan":
@@ -1126,6 +1164,10 @@ def format_next_step(report: dict[str, Any]) -> str:
             f"Escalation command: {rec['escalation_command']}",
         ]
     )
+    if rec.get("repro_recipes"):
+        lines.append("Repro recipes:")
+        for recipe in rec["repro_recipes"]:
+            lines.append(f"  - {recipe}: python -m tools.debugger repro-recipe --id {recipe}")
     if len(report["candidates"]) > 1:
         lines.extend(["", "Other matching paths:"])
         for item in report["candidates"][1:]:
@@ -1885,7 +1927,8 @@ def format_watch(report: dict[str, Any]) -> str:
         (
             f"valid={report['valid']} executed={report['executed']} "
             f"frames={report['frames']} context={report.get('context_frames', 0)} "
-            f"hits={report['hit_count']} dynamic_context={report.get('dynamic_context_event_count', 0)}"
+            f"hits={report['hit_count']} reset_events={report.get('reset_event_count', 0)} "
+            f"dynamic_context={report.get('dynamic_context_event_count', 0)}"
         ),
         f"rom={report['rom']} sha256={report['rom_sha256'][:12]}",
         f"symbols={report['symbols']} sha256={report['symbols_sha256'][:12]}",
@@ -1897,6 +1940,22 @@ def format_watch(report: dict[str, Any]) -> str:
         lines.append(f"  - {watch['name']} {location} size={watch['size']}")
         for command in watch.get("suggested_commands", [])[:2]:
             lines.append(f"      command: {command}")
+    if report.get("reset_sentinel"):
+        lines.append("Reset sentinel targets:")
+        for target in report.get("sentinel_targets", [])[:12]:
+            lines.append(f"  - {target['bank_address']} {target['name']} ({target['source']})")
+    if report.get("reset_events"):
+        lines.append("Reset sentinel events:")
+        for event in report["reset_events"][:20]:
+            context = event.get("context_symbols", {})
+            context_text = " ".join(f"{key}={value}" for key, value in context.items())
+            lines.append(
+                f"  - frame={event['frame']} pc={event['pc_bank_address']} "
+                f"{event['pc_label']} {context_text}".rstrip()
+            )
+            dyn = event.get("dynamic_context") if isinstance(event.get("dynamic_context"), dict) else {}
+            if dyn.get("context_frame_count"):
+                lines.append(f"      context: {dyn['context_frame_count']} prior frame snapshots")
     if report["events"]:
         lines.append("Events:")
         for event in report["events"][:20]:
@@ -1917,6 +1976,57 @@ def format_watch(report: dict[str, Any]) -> str:
                     f"{candidate.get('access', 'reference')} "
                     f"{candidate.get('source_file', '')}:{candidate.get('line', '')}"
                 )
+    for error in report["errors"][:5]:
+        lines.append(f"error: {error}")
+    return "\n".join(lines)
+
+
+def format_wram_bank_hazards(report: dict[str, Any]) -> str:
+    lines = [
+        "Unified Pokemon Gold romhack debugger WRAM bank/stack hazard scan",
+        (
+            f"valid={report['valid']} passed={report['passed']} "
+            f"files={report['source_file_count']} findings={report['finding_count']} "
+            f"errors={report['error_count']} warnings={report['warning_count']}"
+        ),
+    ]
+    if report.get("source_files"):
+        lines.append("source_files=" + ", ".join(report["source_files"][:8]))
+    if report.get("findings"):
+        lines.extend(["", "Findings:"])
+        for item in report["findings"][:30]:
+            lines.append(
+                f"  - S{item['severity']} {item['type']} "
+                f"{item['source_file']}:{item['line']} {item['routine']}"
+            )
+            lines.append(f"      {item['title']}")
+            for evidence in item.get("evidence", [])[:2]:
+                lines.append(f"      evidence: {evidence}")
+    if report.get("commands"):
+        lines.extend(["", "Follow-up commands:"])
+        for command in report["commands"][:6]:
+            lines.append(f"  - {command}")
+    for error in report["errors"][:5]:
+        lines.append(f"error: {error}")
+    return "\n".join(lines)
+
+
+def format_repro_recipe(report: dict[str, Any]) -> str:
+    lines = [
+        "Unified Pokemon Gold romhack debugger repro recipes",
+        f"valid={report['valid']} recipes={report['recipe_count']}",
+    ]
+    if report.get("symptom"):
+        lines.append(f"symptom={report['symptom']}")
+    for recipe in report.get("recipes", []):
+        lines.extend(["", f"{recipe['id']}: {recipe['title']}", f"  purpose: {recipe['purpose']}"])
+        lines.append("  inputs:")
+        for item in recipe.get("inputs", [])[:6]:
+            lines.append(f"    - {item}")
+        lines.append("  commands:")
+        for command in recipe.get("commands", [])[:8]:
+            lines.append(f"    - {command}")
+        lines.append(f"  proof limit: {recipe['proof_limit']}")
     for error in report["errors"][:5]:
         lines.append(f"error: {error}")
     return "\n".join(lines)

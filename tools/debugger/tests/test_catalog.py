@@ -34,6 +34,7 @@ from tools.debugger.next_steps import NEXT_STEP_ROWS, build_next_step
 from tools.debugger.provenance import build_provenance_report
 from tools.debugger.ranking import rank_findings
 from tools.debugger.replay import build_replay_plan
+from tools.debugger.repro_recipes import build_repro_recipe_report
 from tools.debugger.reporting import build_static_report
 from tools.debugger.runtime_watch import build_watch_event_cause, build_watch_report
 from tools.debugger.setup_plan import build_setup_plan
@@ -43,6 +44,7 @@ from tools.debugger.taint import build_taint_report
 from tools.debugger.testgen import suggest_tests
 from tools.debugger.trace_index import build_trace_index_report
 from tools.debugger.visualization import build_visualization_report
+from tools.debugger.wram_bank_hazards import build_wram_bank_hazard_report
 from tools.debugger.workflow import build_gate_plan, command_is_runnable
 
 
@@ -119,12 +121,25 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertTrue(rec["proof_limit"])
         self.assertIn("escalation_command", rec)
 
+    def test_next_step_routes_reset_crashes_before_counter_substrings(self) -> None:
+        report = build_next_step(
+            symptom="first wild encounter reset to intro then black screen",
+        )
+        rec = report["recommendation"]
+
+        self.assertEqual(rec["symptom_class"], "crash_reset")
+        self.assertEqual(rec["matched_lane"], "runtime_crash")
+        self.assertIn("--reset-sentinel", rec["first_command"])
+        self.assertIn("first-wild-route29", rec["repro_recipes"])
+        self.assertNotEqual(rec["symptom_class"], "revealed_effect_response")
+
     def test_next_step_table_covers_rom_expansion_boss_ai_classes(self) -> None:
         classes = {row["symptom_class"] for row in NEXT_STEP_ROWS}
 
         self.assertGreaterEqual(
             classes,
             {
+                "crash_reset",
                 "wrong_switch",
                 "wrong_move_score",
                 "haki_taunt_read",
@@ -188,6 +203,17 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
                 "escalation_command",
             ):
                 self.assertIn(key, data["recommendation"])
+
+    def test_repro_recipe_exposes_first_wild_route29_capture_path(self) -> None:
+        report = build_repro_recipe_report(ids=("first-wild-route29",))
+        recipe = report["recipes"][0]
+        commands = "\n".join(recipe["commands"])
+
+        self.assertTrue(report["valid"])
+        self.assertEqual(recipe["id"], "first-wild-route29")
+        self.assertIn("--reset-sentinel", commands)
+        self.assertIn("wram-bank-hazards", commands)
+        self.assertIn("route29-before-grass.state", commands)
 
     def test_cli_investigate_symptom_only_points_to_next(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -3600,6 +3626,145 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(context["after"]["registers"]["register_pc"], "4003")
         self.assertEqual(context["after"]["watch_values"]["wCurDamage"], "3400")
         self.assertIn("tools.debugger trace-index --report <watch_report.json>", "\n".join(event["commands"]))
+
+    def test_watch_reset_sentinel_records_reset_context_without_watch_symbol(self) -> None:
+        class FakeRegisters:
+            A = 0x12
+            F = 0
+            B = 0
+            C = 0
+            D = 0
+            E = 0
+            H = 0
+            L = 0
+            SP = 0xDFF0
+            PC = 0x4000
+
+        class FakeMemory:
+            def __init__(self) -> None:
+                self.values = {
+                    0xFFB8: 0x0E,
+                    0xFFB9: 0x01,
+                    (1, 0xD22D): 0x00,
+                    (1, 0xD0F0): 0xA1,
+                }
+
+            def __getitem__(self, key):
+                return self.values.get(key, 0)
+
+            def __setitem__(self, key, value) -> None:
+                self.values[key] = value
+
+        class FakePyBoy:
+            def __init__(self) -> None:
+                self.register_file = FakeRegisters()
+                self.memory = FakeMemory()
+                self.hooks = {}
+
+            def hook_register(self, bank, pc, callback, context) -> None:
+                self.hooks[(bank, pc)] = callback
+
+            def hook_deregister(self, bank, pc) -> None:
+                self.hooks.pop((bank, pc), None)
+
+            def tick(self, *_args) -> None:
+                self.register_file.PC = 0x0100
+                callback = self.hooks.get((0, 0x0100))
+                if callback is not None:
+                    callback(None)
+
+            def stop(self, save=False) -> None:
+                self.stopped = True
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "test.gbc").write_bytes(bytes(0x8000))
+            (root / "test.sym").write_text(
+                "\n".join(
+                    [
+                        "00:0100 Start",
+                        "00:0594 Reset",
+                        "00:05AA _Start",
+                        "00:FFB8 hROMBank",
+                        "00:FFB9 hWRAMBank",
+                        "01:D22D wBattleMode",
+                        "01:D0F0 wTempWildMonSpecies",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            with patch("tools.debugger.runtime_watch.trace_runtime.open_pyboy", return_value=FakePyBoy()):
+                report = build_watch_report(
+                    watch_symbols=(),
+                    rom_path="test.gbc",
+                    symbols_path="test.sym",
+                    frames=1,
+                    context_frames=2,
+                    execute=True,
+                    reset_sentinel=True,
+                    root=root,
+                )
+
+        event = report["reset_events"][0]
+
+        self.assertTrue(report["valid"])
+        self.assertTrue(report["executed"])
+        self.assertEqual(report["hit_count"], 0)
+        self.assertEqual(report["reset_event_count"], 1)
+        self.assertEqual(event["pc_bank_address"], "00:0100")
+        self.assertEqual(event["pc_label"], "Start")
+        self.assertEqual(event["context_symbols"]["hWRAMBank"], "01")
+        self.assertEqual(event["context_symbols"]["wTempWildMonSpecies"], "A1")
+        self.assertEqual(event["dynamic_context"]["context_frame_count"], 1)
+
+    def test_wram_bank_hazard_report_flags_helper_call_and_cross_bank_pop(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = root / "engine" / "battle" / "ai" / "bad.asm"
+            source.parent.mkdir(parents=True)
+            source.write_text(
+                "\n".join(
+                    [
+                        "BadCall::",
+                        "\tpush af",
+                        "\tld a, 2",
+                        "\tcall SetWRAMBank",
+                        "\tpop af",
+                        "\tret",
+                        "",
+                        "BadInline::",
+                        "\tpush af",
+                        "\tboss_ai_set_wram_bank 2",
+                        "\tpop af",
+                        "\tboss_ai_set_wram_bank 1",
+                        "\tret",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            report = build_wram_bank_hazard_report(
+                source_files=("engine/battle/ai/bad.asm",),
+                root=root,
+            )
+
+        finding_types = {finding["type"] for finding in report["findings"]}
+
+        self.assertTrue(report["valid"])
+        self.assertFalse(report["passed"])
+        self.assertIn("set_wram_bank_call", finding_types)
+        self.assertIn("stack_bank_mismatch", finding_types)
+
+    def test_wram_bank_hazard_report_accepts_current_observation_log_idiom(self) -> None:
+        report = build_wram_bank_hazard_report(
+            source_files=("engine/battle/ai/observation_log.asm",),
+        )
+
+        self.assertTrue(report["valid"])
+        self.assertTrue(report["passed"])
 
     def test_cli_watch_plan_writes_json(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

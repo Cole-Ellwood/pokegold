@@ -3,10 +3,32 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from .catalog import ROOT, triage_request
+from .catalog import ROOT, keyword_matches, triage_request
 
 
 NEXT_STEP_ROWS = [
+    {
+        "symptom_class": "crash_reset",
+        "matched_lane": "runtime_crash",
+        "title": "Crash, reset, intro jump, or black screen",
+        "keywords": [
+            "crash",
+            "reset",
+            "reboot",
+            "black screen",
+            "intro",
+            "title screen",
+            "hang",
+            "locked up",
+            "first wild",
+            "wild encounter reset",
+        ],
+        "first_command": "python -m tools.debugger watch --reset-sentinel --rom pokegold.gbc --symbols pokegold.sym --save-state <state-before-trigger> --frames 1200 --context-frames 20 --json-out .local\\tmp\\debugger_reset_watch.json",
+        "required_inputs": ["save-state before the trigger, or a reproducible input route that can create one"],
+        "proof_limit": "Runtime sentinel proof: catches jumps through reset/start vectors in the supplied replay window and preserves recent PC/register/WRAM context; it does not synthesize the save by itself.",
+        "escalation_command": "python -m tools.debugger repro-recipe --id first-wild-route29",
+        "repro_recipes": ["first-wild-route29"],
+    },
     {
         "symptom_class": "haki_taunt_read",
         "matched_lane": "boss_ai",
@@ -149,7 +171,7 @@ def _matching_rows(symptom: str) -> list[dict[str, Any]]:
     for row in NEXT_STEP_ROWS:
         if row["symptom_class"] == "general":
             continue
-        if any(keyword in text for keyword in row["keywords"]):
+        if any(keyword_matches(keyword, text) for keyword in row["keywords"]):
             rows.append(row)
     return rows
 
@@ -174,6 +196,7 @@ def _public_row(row: dict[str, Any]) -> dict[str, Any]:
         "required_inputs": list(row["required_inputs"]),
         "proof_limit": row["proof_limit"],
         "escalation_command": row["escalation_command"],
+        "repro_recipes": list(row.get("repro_recipes", ())),
     }
 
 

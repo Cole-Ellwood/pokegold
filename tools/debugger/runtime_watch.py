@@ -18,6 +18,17 @@ from .slicing import build_slice_report
 
 DEFAULT_ROM = "pokegold.gbc"
 DEFAULT_SYMBOLS = "pokegold.sym"
+DEFAULT_RESET_SENTINEL_SYMBOLS = ("Start", "Reset", "_Start")
+DEFAULT_RESET_SENTINEL_ADDRESSES = (
+    ("reset_vector", 0, 0x0000),
+    ("entry_vector", 0, 0x0100),
+)
+RESET_CONTEXT_SYMBOLS = (
+    "hROMBank",
+    "hWRAMBank",
+    "wBattleMode",
+    "wTempWildMonSpecies",
+)
 
 
 def build_watch_report(
@@ -29,6 +40,8 @@ def build_watch_report(
     frames: int = 60,
     context_frames: int = 12,
     execute: bool = False,
+    reset_sentinel: bool = False,
+    sentinel_symbols: tuple[str, ...] = (),
     root: Path = ROOT,
 ) -> dict[str, Any]:
     rom = resolve_path(rom_path, root=root)
@@ -40,8 +53,8 @@ def build_watch_report(
         errors.append("--frames must be non-negative")
     if context_frames < 0:
         errors.append("--context-frames must be non-negative")
-    if not watch_symbols:
-        errors.append("at least one --watch-symbol is required")
+    if not watch_symbols and not reset_sentinel:
+        errors.append("at least one --watch-symbol or --reset-sentinel is required")
     if not rom.exists():
         errors.append(f"missing ROM: {rom_path}")
     if not sym.exists():
@@ -62,6 +75,10 @@ def build_watch_report(
     for watch in watches:
         if not watch["found"]:
             errors.append(f"watch symbol not found in symbols: {watch['name']}")
+    sentinel_targets = build_reset_sentinel_targets(
+        symbol_table,
+        sentinel_symbols=sentinel_symbols,
+    ) if reset_sentinel else []
 
     report = {
         "schema_version": 1,
@@ -75,13 +92,18 @@ def build_watch_report(
         "frames": frames,
         "context_frames": context_frames,
         "executed": execute,
+        "reset_sentinel": reset_sentinel,
+        "reset_context_symbols": list(RESET_CONTEXT_SYMBOLS),
+        "sentinel_targets": sentinel_targets,
         "valid": not errors,
         "hit_count": 0,
+        "reset_event_count": 0,
         "dynamic_context_event_count": 0,
         "errors": errors,
         "warnings": warnings,
         "watches": watches,
         "events": [],
+        "reset_events": [],
         "provenance": build_provenance_report(
             symbols_path=str(sym),
             symbols=tuple(watch_symbols),
@@ -96,7 +118,7 @@ def build_watch_report(
     if errors or not execute:
         return report
 
-    events = execute_watch(
+    events, reset_events, execution_errors = execute_watch(
         rom=rom,
         save_state=save,
         watches=watches,
@@ -104,13 +126,22 @@ def build_watch_report(
         context_frames=context_frames,
         symbol_table=symbol_table,
         symbols_path=sym,
+        reset_sentinel=reset_sentinel,
+        sentinel_targets=sentinel_targets,
         root=root,
     )
+    report["errors"].extend(execution_errors)
+    report["valid"] = not report["errors"]
     report["events"] = events
+    report["reset_events"] = reset_events
     report["hit_count"] = len(events)
+    report["reset_event_count"] = len(reset_events)
     report["dynamic_context_event_count"] = sum(
         int(event.get("dynamic_context", {}).get("context_frame_count", 0))
         for event in events
+    ) + sum(
+        int(event.get("dynamic_context", {}).get("context_frame_count", 0))
+        for event in reset_events
     )
     return report
 
@@ -163,17 +194,78 @@ def execute_watch(
     context_frames: int,
     symbol_table: dict[str, dict[str, Any]],
     symbols_path: Path,
+    reset_sentinel: bool,
+    sentinel_targets: list[dict[str, Any]],
     root: Path,
-) -> list[dict[str, Any]]:
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[str]]:
     pyboy = trace_runtime.open_pyboy(
         rom,
         "PyBoy is required for unified debugger watch replay. Import failed",
     )
     trace_runtime.disable_realtime(pyboy)
+    hooked: list[tuple[int, int]] = []
     try:
         if save_state is not None:
             with save_state.open("rb") as fh:
                 pyboy.load_state(fh)
+        reset_events: list[dict[str, Any]] = []
+        execution_errors: list[str] = []
+        current_frame = 0
+        history: list[dict[str, Any]] = []
+        if reset_sentinel:
+            if not hasattr(pyboy, "hook_register"):
+                execution_errors.append("reset sentinel requires PyBoy hook_register support")
+            else:
+                for target in sentinel_targets:
+                    bank = int(target["bank"])
+                    pc = int(target["address"])
+
+                    def make_reset_callback(row: dict[str, Any]):
+                        def callback(_ctx: Any) -> None:
+                            snapshot = runtime_snapshot(
+                                pyboy=pyboy,
+                                frame=current_frame,
+                                pc=int(row["address"]),
+                                pc_bank=int(row["bank"]),
+                                symbol_table=symbol_table,
+                                watches=watches,
+                            )
+                            reset_events.append(
+                                {
+                                    "event_type": "reset_sentinel",
+                                    "frame": current_frame,
+                                    "target": dict(row),
+                                    "pc": int(row["address"]),
+                                    "pc_bank": int(row["bank"]),
+                                    "pc_bank_address": row["bank_address"],
+                                    "pc_label": render_pc(
+                                        symbol_table,
+                                        int(row["bank"]),
+                                        int(row["address"]),
+                                    ),
+                                    "registers": snapshot.get("registers", {}),
+                                    "context_symbols": read_context_symbols(pyboy, symbol_table),
+                                    "dynamic_context": build_dynamic_context(
+                                        history=history,
+                                        after=snapshot,
+                                        context_frames=context_frames,
+                                    ),
+                                    "commands": [
+                                        "python -m tools.debugger trace-index --report <reset-watch.json>",
+                                        "python -m tools.debugger wram-bank-hazards --source-file <suspect.asm>",
+                                        "python -m tools.debugger trace-instructions --report <reset-watch.json> --execute --require-hit",
+                                    ],
+                                }
+                            )
+                        return callback
+
+                    try:
+                        pyboy.hook_register(bank, pc, make_reset_callback(target), None)
+                        hooked.append((bank, pc))
+                    except Exception as exc:
+                        execution_errors.append(
+                            f"reset sentinel hook failed for {target['bank_address']} {target['name']}: {exc}"
+                        )
         current = {
             watch["name"]: read_watch_bytes(pyboy, watch)
             for watch in watches
@@ -181,8 +273,8 @@ def execute_watch(
         }
         events: list[dict[str, Any]] = []
         cause_cache: dict[tuple[str, str], dict[str, Any]] = {}
-        history: list[dict[str, Any]] = []
         for frame in range(frames + 1):
+            current_frame = frame
             pc = int(pyboy.register_file.PC)
             pc_bank = current_pc_bank(pyboy, symbol_table, pc)
             snapshot = runtime_snapshot(
@@ -256,13 +348,75 @@ def execute_watch(
             if len(history) > max(1, context_frames):
                 history = history[-max(1, context_frames):]
             if frame < frames:
+                current_frame = frame + 1
                 pyboy.tick(1, False, False)
-        return events
+        return events, reset_events, execution_errors
     finally:
+        for bank, pc in hooked:
+            try:
+                pyboy.hook_deregister(bank, pc)
+            except Exception:
+                pass
         try:
             pyboy.stop(save=False)
         except TypeError:
             pyboy.stop()
+
+
+def build_reset_sentinel_targets(
+    symbol_table: dict[str, dict[str, Any]],
+    *,
+    sentinel_symbols: tuple[str, ...] = (),
+) -> list[dict[str, Any]]:
+    targets: list[dict[str, Any]] = []
+    for name, bank, address in DEFAULT_RESET_SENTINEL_ADDRESSES:
+        targets.append(
+            {
+                "name": name,
+                "found": True,
+                "source": "default_address",
+                "bank": bank,
+                "address": address,
+                "bank_address": f"{bank:02X}:{address:04X}",
+            }
+        )
+    for symbol in unique_list([*DEFAULT_RESET_SENTINEL_SYMBOLS, *sentinel_symbols]):
+        entry = symbol_table.get(symbol)
+        if entry is None:
+            continue
+        target = {
+            "name": symbol,
+            "found": True,
+            "source": "symbol",
+            "bank": int(entry["bank"]),
+            "address": int(entry["address"]),
+            "bank_address": entry["bank_address"],
+        }
+        key = (target["bank"], target["address"])
+        if key in {(int(item["bank"]), int(item["address"])) for item in targets}:
+            continue
+        targets.append(target)
+    return targets
+
+
+def read_context_symbols(pyboy, symbol_table: dict[str, dict[str, Any]]) -> dict[str, str]:
+    values: dict[str, str] = {}
+    for symbol in RESET_CONTEXT_SYMBOLS:
+        entry = symbol_table.get(symbol)
+        if entry is None:
+            continue
+        watch = {
+            "name": symbol,
+            "found": True,
+            "bank": entry["bank"],
+            "address": entry["address"],
+            "size": 1,
+        }
+        try:
+            values[symbol] = bytes_hex(read_watch_bytes(pyboy, watch))
+        except Exception as exc:
+            values[symbol] = f"unreadable:{exc}"
+    return values
 
 
 def read_watch_bytes(pyboy, watch: dict[str, Any]) -> tuple[int, ...]:
