@@ -296,14 +296,14 @@ Ready when you are. Please confirm the read of the roadmap and post your first `
 
 ### P0.5a — Drift restore (setup-allowlist)
 
-- **Goal**: cherry-pick `docs/llm_pairing_rules.md` from commit `0d3fbf8c` and `tools/audit/check_two_llm_handoff_log.py` from commit `da2f6644` onto this branch. Add both to the no_solo_commits `SETUP_ALLOWLIST` so subsequent edits to those files remain Claude-solo-sanctioned. v7 strict acceptance criterion becomes runnable.
+- **Goal**: cherry-pick `docs/llm_pairing_rules.md` from commit `0d3fbf8c` and `tools/audit/check_two_llm_handoff_log.py` from commit `da2f6644` onto this branch. Add setup-scope handling for both files in the no_solo_commits audit narrowly enough that the P0.5a restore is exempt, but later non-setup edits to those files still require paired review. v7 strict acceptance criterion becomes runnable.
 - **Public-info-only**: not gameplay; tooling-only.
 - **Files to touch (write set)**: `docs/llm_pairing_rules.md` (new), `tools/audit/check_two_llm_handoff_log.py` (new), `tools/audit/check_no_solo_commits_boss_ai_rom_expansion.py` (allowlist update).
 - **Acceptance criterion**: `python tools/audit/check_two_llm_handoff_log.py --strict --store audit/boss_ai_rom_expansion_2026-05-23_handoff_log.jsonl` exits 0; `python tools/audit/check_no_solo_commits_boss_ai_rom_expansion.py` exits 0.
 - **ROM cost**: 0.
 - **WRAMX cost**: 0.
 - **Play-impact**: none. Pure setup.
-- **Author**: Claude. Setup-allowlist commit acceptable; Codex slice_review post-commit acknowledged via paired row.
+- **Author**: Claude. Setup-scope restore commit acceptable; Codex slice_review post-commit acknowledged via paired row. Future edits to restored files require paired review unless a later phase explicitly allowlists them.
 
 ### P0.5b — WRAMX bank-2 plumbing (paired)
 
@@ -321,7 +321,7 @@ Ready when you are. Please confirm the read of the roadmap and post your first `
 - **Goal**: extend `tools/boss_ai_debugger/` with a `haki-coverage` subcommand that surfaces per-leader Oracle entries (which leaders have Haki, ace species, iconic move on ace, ParsePlayerAction read source line). No data structure changes; tool reads existing trainer party data + `docs/boss_ai_spec.md` roster table + asm citations.
 - **Public-info-only**: not gameplay; dev tool only.
 - **Files to touch (write set)**: `tools/boss_ai_debugger/haki_coverage.py` (new), `tools/boss_ai_debugger/__main__.py` (subcommand wiring), `tools/audit/check_haki_coverage_audit.py` (new audit that runs `haki-coverage --self-test` and verifies known leaders are listed).
-- **Acceptance criterion**: `python -m tools.boss_ai_debugger haki-coverage --self-test` exits 0 and reports all 10 Haki leaders (Morty, Chuck, Jasmine, Pryce, Clair, Will, Koga, Bruno, Karen, Lance — per `docs/boss_ai_spec.md:66-74`; Red TBD).
+- **Acceptance criterion**: `python -m tools.boss_ai_debugger haki-coverage --self-test` exits 0 and reports all 19 Haki leaders listed in `docs/boss_ai_spec.md:66-84` (Morty, Chuck, Jasmine, Pryce, Clair, Will, Koga, Bruno, Karen, Lance, Brock, Misty, Lt. Surge, Erika, Janine, Sabrina, Blaine, Blue, Red).
 - **ROM cost**: 0.
 - **WRAMX cost**: 0.
 - **Play-impact**: none directly; developer iteration velocity on later levers.
