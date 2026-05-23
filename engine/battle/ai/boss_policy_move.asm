@@ -369,17 +369,10 @@ ENDC
 	call .ApplyDarkShieldChanceBias
 	call .ApplyLifeOrbRecoilBias
 	call .ApplyDestinyBondTradeBias
-	call .ApplyRevealedDestinyBondAvoidance
 	call .ApplyCounterCoatTradeBias
-	call .ApplyRevealedCounterCoatAvoidance
+	call .ApplyRevealedEffectMatrixBias
 	call .ApplyChoiceFirstLockRegret
-	call .ApplyRevealedProtectCommitmentRisk
 	call .ApplySelfKOTradeDiscipline
-	call .ApplyRevealedRecoveryDenialBias
-	call .ApplyRevealedFastEncoreAvoidance
-	call .ApplyLastMoveEncoreTrapBias
-	call .ApplyRevealedSelfdestructProtectBias
-	call .ApplyRevealedSleepPreemptBias
 	call BossAI_ApplyScoutMoveBias
 	call BossAI_ApplyRepeatPenalty
 
@@ -1175,25 +1168,6 @@ ENDC
 	ld a, 3
 	jp BossAI_EncourageScoreHL
 
-.ApplyRevealedDestinyBondAvoidance
-	ld a, [wBossAITier]
-	cp AI_TIER_MID
-	ret c
-	ld a, [wEnemyMoveStruct + MOVE_POWER]
-	and a
-	ret z
-	call .HasKOLine
-	ret nc
-	call AICheckPlayerQuarterHP_HL
-	ret c
-	ld a, EFFECT_DESTINY_BOND
-	call .PlayerHasRevealedEffectA
-	ret nc
-	call BossAI_PublicEnemyFaster
-	ret c
-	ld a, 7
-	jp BossAI_DiscourageScoreHL
-
 .ApplyCounterCoatTradeBias
 	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
 	cp EFFECT_COUNTER
@@ -1276,40 +1250,6 @@ ENDC
 	scf
 	ret
 
-.ApplyRevealedCounterCoatAvoidance
-	ld a, [wBossAITier]
-	cp AI_TIER_MID
-	ret c
-	ld a, [wEnemyMoveStruct + MOVE_POWER]
-	and a
-	ret z
-	call .HasKOLine
-	ret c
-	call BossAI_CheckEnemyMoveTypeMatchupVsPlayerNoItem
-	ld a, [wTypeMatchup]
-	and a
-	ret z
-	call BossAI_CurrentEnemyMoveCategory
-	ld b, 0
-	cp SPECIAL
-	jr c, .counter_coat_avoid_scan
-	inc b
-.counter_coat_avoid_scan
-	call .PlayerHasRevealedCounterCoatTrap
-	ret nc
-	ld a, 5
-	jp BossAI_DiscourageScoreHL
-
-.PlayerHasRevealedCounterCoatTrap
-; b = 0 checks revealed Counter; b = 1 checks revealed Mirror Coat.
-	ld a, b
-	and a
-	ld a, EFFECT_COUNTER
-	jr z, .counter_coat_trap_scan
-	ld a, EFFECT_MIRROR_COAT
-.counter_coat_trap_scan
-	jp .PlayerHasRevealedEffectA
-
 .ApplyChoiceFirstLockRegret
 	ld a, [wEnemyMoveStruct + MOVE_POWER]
 	and a
@@ -1389,51 +1329,261 @@ ENDC
 	xor a
 	ret
 
-.ApplyRevealedProtectCommitmentRisk
-	call .PlayerHasRevealedProtect
-	ret nc
-	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
-	cp EFFECT_SELFDESTRUCT
-	jr z, .protect_hard_punish
-	cp EFFECT_HYPER_BEAM
-	ret nz
-	ld a, 4
-	jp BossAI_DiscourageScoreHL
-.protect_hard_punish
-	ld a, 10
-	jp BossAI_DiscourageScoreHL
+DEF BOSS_AI_REM_GROUP_RECOVERY EQU $e0
+DEF BOSS_AI_REM_GROUP_LAST_MOVE_ENCORE_TRAP EQU $e1
+DEF BOSS_AI_REM_GROUP_STATUS_DENIAL EQU $e2
+DEF BOSS_AI_REM_GROUP_COMMITMENT EQU $e3
+DEF BOSS_AI_REM_GROUP_SLEEP_PREEMPT EQU $e4
+DEF BOSS_AI_REM_GROUP_DAMAGING EQU $e5
+DEF BOSS_AI_REM_GROUP_PHYSICAL_DAMAGE EQU $e6
+DEF BOSS_AI_REM_GROUP_SPECIAL_DAMAGE EQU $e7
 
-.PlayerHasRevealedProtect
-	ld a, EFFECT_PROTECT
+DEF BOSS_AI_REM_RULE_DISCOURAGE EQU 1
+DEF BOSS_AI_REM_RULE_RECOVERY_STATUS_DENIAL EQU 2
+DEF BOSS_AI_REM_RULE_RECOVERY_UTILITY_DENIAL EQU 3
+DEF BOSS_AI_REM_RULE_FAST_ENCORE_AVOIDANCE EQU 4
+DEF BOSS_AI_REM_RULE_LAST_MOVE_ENCORE_TRAP EQU 5
+DEF BOSS_AI_REM_RULE_SELFDESTRUCT_PROTECT EQU 6
+DEF BOSS_AI_REM_RULE_SLEEP_PREEMPT EQU 7
+DEF BOSS_AI_REM_RULE_DESTINY_BOND_AVOIDANCE EQU 8
+DEF BOSS_AI_REM_RULE_COUNTERCOAT_AVOIDANCE EQU 9
+
+.ApplyRevealedEffectMatrixBias
+	ld hl, BossAIRevealedEffectMatrix
+.matrix_loop
+	ld a, [hli]
+	cp -1
+	ret z
+	ld [wBossAITemp], a
+	ld a, [hli]
+	ld [wBossAITemp2], a
+	ld a, [hli]
+	push af ; rule id
+	ld a, [hli]
+	ld [wBossAITemp3], a
+	push hl ; next row
+	ld a, [wBossAITemp2]
+	call .MatrixCandidateMatchesA
+	jr nc, .matrix_next
+	ld a, [wBossAITemp]
+	call .MatrixRevealedKeyMatchesA
+	jr nc, .matrix_next
+	pop hl
+	pop af
+	push hl
+	call .MatrixApplyRuleA
+	pop hl
+	jr .matrix_loop
+
+.matrix_next
+	pop hl
+	pop af
+	jr .matrix_loop
+
+.MatrixCandidateMatchesA
+	cp BOSS_AI_REM_GROUP_STATUS_DENIAL
+	jr z, .candidate_status_denial
+	cp BOSS_AI_REM_GROUP_COMMITMENT
+	jr z, .candidate_commitment
+	cp BOSS_AI_REM_GROUP_SLEEP_PREEMPT
+	jr z, .candidate_sleep_preempt
+	cp BOSS_AI_REM_GROUP_DAMAGING
+	jr z, .candidate_damaging
+	cp BOSS_AI_REM_GROUP_PHYSICAL_DAMAGE
+	jr z, .candidate_physical_damage
+	cp BOSS_AI_REM_GROUP_SPECIAL_DAMAGE
+	jr z, .candidate_special_damage
+	ld b, a
+	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
+	cp b
+	jr z, .matrix_yes
+	and a
+	ret
+.candidate_status_denial
+	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
+	cp EFFECT_TOXIC
+	jr z, .matrix_yes
+	cp EFFECT_LEECH_SEED
+	jr z, .matrix_yes
+	and a
+	ret
+.candidate_commitment
+	jp .EncorePunishableCommitmentMove
+.candidate_sleep_preempt
+	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
+	cp EFFECT_SUBSTITUTE
+	jr z, .matrix_yes
+	cp EFFECT_SAFEGUARD
+	jr z, .matrix_yes
+	and a
+	ret
+.candidate_damaging
+	ld a, [wEnemyMoveStruct + MOVE_POWER]
+	and a
+	ret z
+	jr .matrix_yes
+.candidate_physical_damage
+	ld a, [wEnemyMoveStruct + MOVE_POWER]
+	and a
+	ret z
+	call BossAI_CurrentEnemyMoveCategory
+	cp SPECIAL
+	jr c, .matrix_yes
+	and a
+	ret
+.candidate_special_damage
+	ld a, [wEnemyMoveStruct + MOVE_POWER]
+	and a
+	ret z
+	call BossAI_CurrentEnemyMoveCategory
+	cp SPECIAL
+	jr nc, .matrix_yes
+	and a
+	ret
+.matrix_yes
+	scf
+	ret
+
+.MatrixRevealedKeyMatchesA
+	cp BOSS_AI_REM_GROUP_RECOVERY
+	jp z, .PlayerHasRevealedRecovery
+	cp BOSS_AI_REM_GROUP_LAST_MOVE_ENCORE_TRAP
+	jp z, .LastPlayerMoveIsEncoreTrap
 	jp .PlayerHasRevealedEffectA
 
-.ApplyRevealedRecoveryDenialBias
-	ld a, [wBossAITier]
-	cp AI_TIER_MID
+.MatrixApplyRuleA
+	cp BOSS_AI_REM_RULE_DISCOURAGE
+	jp z, .MatrixDiscourageScore
+	cp BOSS_AI_REM_RULE_RECOVERY_STATUS_DENIAL
+	jr z, .MatrixRecoveryStatusDenial
+	cp BOSS_AI_REM_RULE_RECOVERY_UTILITY_DENIAL
+	jr z, .MatrixRecoveryUtilityDenial
+	cp BOSS_AI_REM_RULE_FAST_ENCORE_AVOIDANCE
+	jr z, .MatrixFastEncoreAvoidance
+	cp BOSS_AI_REM_RULE_LAST_MOVE_ENCORE_TRAP
+	jr z, .MatrixLastMoveEncoreTrap
+	cp BOSS_AI_REM_RULE_SELFDESTRUCT_PROTECT
+	jr z, .MatrixSelfdestructProtect
+	cp BOSS_AI_REM_RULE_SLEEP_PREEMPT
+	jr z, .MatrixSleepPreempt
+	cp BOSS_AI_REM_RULE_DESTINY_BOND_AVOIDANCE
+	jp z, .MatrixDestinyBondAvoidance
+	cp BOSS_AI_REM_RULE_COUNTERCOAT_AVOIDANCE
+	jp z, .MatrixCounterCoatAvoidance
+	ret
+
+.MatrixRecoveryStatusDenial
+	call .MatrixRequireMidTier
 	ret c
-	call .PlayerHasRevealedRecovery
-	ret nc
 	call AICheckPlayerMaxHP_HL
 	ret c
 	call .HasKOLine
 	ret c
-	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
-	cp EFFECT_TOXIC
-	jr z, .recovery_status
-	cp EFFECT_LEECH_SEED
-	jr z, .recovery_status
-	cp EFFECT_FORCE_SWITCH
+	call .StatusMoveWouldFailPublicly
+	ret c
+	jp .MatrixEncourageScore
+
+.MatrixRecoveryUtilityDenial
+	call .MatrixRequireMidTier
+	ret c
+	call AICheckPlayerMaxHP_HL
+	ret c
+	call .HasKOLine
+	ret c
+	call .UtilityMoveWouldFailPublicly
+	ret c
+	jr .MatrixEncourageScore
+
+.MatrixFastEncoreAvoidance
+	call .MatrixRequireMidTier
+	ret c
+	ld a, [wPlayerSubStatus5]
+	bit SUBSTATUS_ENCORED, a
+	ret nz
+	call BossAI_PublicEnemyFaster
+	ret c
+	jr .MatrixDiscourageScore
+
+.MatrixLastMoveEncoreTrap
+	call .MatrixRequireMidTier
+	ret c
+	ld a, [wPlayerSubStatus5]
+	bit SUBSTATUS_ENCORED, a
 	ret nz
 	call .UtilityMoveWouldFailPublicly
 	ret c
-	ld a, 3
+	call BossAI_PublicEnemyFaster
+	ret nc
+	jr .MatrixEncourageScore
+
+.MatrixSelfdestructProtect
+	call .MatrixRequireMidTier
+	ret c
+	call .UtilityMoveWouldFailPublicly
+	ret c
+	call AICheckPlayerHalfHP_HL
+	ret c
+	push hl
+	call BossAI_HasAnyKOMove
+	pop hl
+	ret c
+	jr .MatrixEncourageScore
+
+.MatrixSleepPreempt
+	call .MatrixRequireMidTier
+	ret c
+	ld a, [wEnemyMonStatus]
+	and SLP_MASK
+	ret nz
+	call .UtilityMoveWouldFailPublicly
+	ret c
+	call BossAI_PublicEnemyFaster
+	ret nc
+	jr .MatrixEncourageScore
+
+.MatrixDestinyBondAvoidance
+	call .MatrixRequireMidTier
+	ret c
+	call .HasKOLine
+	ret nc
+	call AICheckPlayerQuarterHP_HL
+	ret c
+	call BossAI_PublicEnemyFaster
+	ret c
+	jr .MatrixDiscourageScore
+
+.MatrixCounterCoatAvoidance
+	call .MatrixRequireMidTier
+	ret c
+	call .HasKOLine
+	ret c
+	call BossAI_CheckEnemyMoveTypeMatchupVsPlayerNoItem
+	ld a, [wTypeMatchup]
+	and a
+	ret z
+	jr .MatrixDiscourageScore
+
+.MatrixRequireMidTier
+	ld a, [wBossAITier]
+	cp AI_TIER_MID
+	ret
+
+.MatrixEncourageScore
+	call .MatrixLoadScorePtrHL
+	ld a, [wBossAITemp3]
 	jp BossAI_EncourageScoreHL
 
-.recovery_status
-	call .StatusMoveWouldFailPublicly
-	ret c
-	ld a, 4
-	jp BossAI_EncourageScoreHL
+.MatrixDiscourageScore
+	call .MatrixLoadScorePtrHL
+	ld a, [wBossAITemp3]
+	jp BossAI_DiscourageScoreHL
+
+.MatrixLoadScorePtrHL
+	ld a, [wBossAIScorePtr]
+	ld h, a
+	ld a, [wBossAIScorePtr + 1]
+	ld l, a
+	ret
 
 .PlayerHasRevealedRecovery
 	ld hl, wPlayerUsedMoves
@@ -1464,23 +1614,6 @@ ENDC
 	scf
 	ret
 
-.ApplyRevealedFastEncoreAvoidance
-	ld a, [wBossAITier]
-	cp AI_TIER_MID
-	ret c
-	ld a, [wPlayerSubStatus5]
-	bit SUBSTATUS_ENCORED, a
-	ret nz
-	call .EncorePunishableCommitmentMove
-	ret nc
-	ld a, EFFECT_ENCORE
-	call .PlayerHasRevealedEffectA
-	ret nc
-	call BossAI_PublicEnemyFaster
-	ret c
-	ld a, 5
-	jp BossAI_DiscourageScoreHL
-
 .EncorePunishableCommitmentMove
 	call BossAI_IsCurrentEnemySetupMove
 	ret c
@@ -1502,25 +1635,6 @@ ENDC
 .encore_commitment_yes
 	scf
 	ret
-
-.ApplyLastMoveEncoreTrapBias
-	ld a, [wBossAITier]
-	cp AI_TIER_MID
-	ret c
-	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
-	cp EFFECT_ENCORE
-	ret nz
-	ld a, [wPlayerSubStatus5]
-	bit SUBSTATUS_ENCORED, a
-	ret nz
-	call .UtilityMoveWouldFailPublicly
-	ret c
-	call BossAI_PublicEnemyFaster
-	ret nc
-	call .LastPlayerMoveIsEncoreTrap
-	ret nc
-	ld a, 6
-	jp BossAI_EncourageScoreHL
 
 .LastPlayerMoveIsEncoreTrap
 	ld a, [wLastPlayerMove]
@@ -1552,57 +1666,6 @@ ENDC
 .encore_trap_yes
 	scf
 	ret
-
-.ApplyRevealedSelfdestructProtectBias
-	ld a, [wBossAITier]
-	cp AI_TIER_MID
-	ret c
-	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
-	cp EFFECT_PROTECT
-	ret nz
-	call .UtilityMoveWouldFailPublicly
-	ret c
-	call AICheckPlayerHalfHP_HL
-	ret c
-	push hl
-	call BossAI_HasAnyKOMove
-	pop hl
-	ret c
-	call .PlayerHasRevealedSelfdestruct
-	ret nc
-	ld a, 5
-	jp BossAI_EncourageScoreHL
-
-.PlayerHasRevealedSelfdestruct
-	ld a, EFFECT_SELFDESTRUCT
-	jp .PlayerHasRevealedEffectA
-
-.ApplyRevealedSleepPreemptBias
-; Encourage Substitute / Safeguard when the player has revealed a sleep move
-; AND the boss is publicly faster — both Sub and Safeguard need to resolve
-; before the sleep move to actually preempt it. From a slower boss they fizzle
-; (the sleep lands first, so the boss is asleep before the utility move runs).
-	ld a, [wBossAITier]
-	cp AI_TIER_MID
-	ret c
-	ld a, [wEnemyMonStatus]
-	and SLP_MASK
-	ret nz
-	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
-	cp EFFECT_SUBSTITUTE
-	jr z, .candidate
-	cp EFFECT_SAFEGUARD
-	ret nz
-.candidate
-	call .UtilityMoveWouldFailPublicly
-	ret c
-	ld a, EFFECT_SLEEP
-	call .PlayerHasRevealedEffectA
-	ret nc
-	call BossAI_PublicEnemyFaster
-	ret nc
-	ld a, 5
-	jp BossAI_EncourageScoreHL
 
 .CandidateMoveMatchupVsBaseTypes
 	ldh a, [hBattleTurn]
@@ -5964,6 +6027,8 @@ BossAIRiskyEffects:
 	db EFFECT_HYPER_BEAM
 	db EFFECT_BELLY_DRUM
 	db -1
+
+INCLUDE "data/boss_ai/revealed_effect_matrix.asm"
 
 ; ============================================================
 endc

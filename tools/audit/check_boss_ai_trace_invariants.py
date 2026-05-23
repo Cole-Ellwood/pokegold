@@ -733,102 +733,128 @@ def audit_revealed_priority_pressure(boss: str) -> None:
     )
 
 
-def audit_revealed_protect_commitment_risk(boss: str) -> None:
+def audit_revealed_effect_matrix_bias(boss: str) -> None:
     score = top_block(boss, "BossAI_ApplyMoveModel")
     require_order(
         score,
         [
+            "call .ApplyCounterCoatTradeBias",
+            "call .ApplyRevealedEffectMatrixBias",
             "call .ApplyChoiceFirstLockRegret",
-            "call .ApplyRevealedProtectCommitmentRisk",
+            "call .ApplySelfKOTradeDiscipline",
             "call BossAI_ApplyScoutMoveBias",
         ],
-        "revealed Protect commitment risk runs before scout/repeat cleanup",
+        "revealed-effect matrix runs before scout/repeat cleanup",
     )
 
-    protect_risk = local_block(
-        boss,
-        ".ApplyRevealedProtectCommitmentRisk",
-        ".PlayerHasRevealedProtect",
-    )
+    matrix = local_block(boss, ".ApplyRevealedEffectMatrixBias", ".CandidateMoveMatchupVsBaseTypes")
     require_order(
-        protect_risk,
+        matrix,
         [
-            "call .PlayerHasRevealedProtect",
-            "ret nc",
-            "ld a, [wEnemyMoveStruct + MOVE_EFFECT]",
-            "cp EFFECT_SELFDESTRUCT",
-            "jr z, .protect_hard_punish",
-            "cp EFFECT_HYPER_BEAM",
-            "ret nz",
-            "ld a, 4",
-            "jp BossAI_DiscourageScoreHL",
-            ".protect_hard_punish",
-            "ld a, 10",
-            "jp BossAI_DiscourageScoreHL",
+            "ld hl, BossAIRevealedEffectMatrix",
+            "ld [wBossAITemp], a",
+            "ld [wBossAITemp2], a",
+            "ld [wBossAITemp3], a",
+            "call .MatrixCandidateMatchesA",
+            "call .MatrixRevealedKeyMatchesA",
+            "call .MatrixApplyRuleA",
         ],
-        "revealed Protect commitment risk discourages only high-commitment effects",
-    )
-
-    protect_scan = local_block(
-        boss,
-        ".PlayerHasRevealedProtect",
-        ".ApplyRevealedRecoveryDenialBias",
+        "revealed-effect matrix dispatch reads table rows into scratch and applies matching rules",
     )
     require_order(
-        protect_scan,
+        matrix,
         [
-            "ld a, EFFECT_PROTECT",
+            ".MatrixCandidateMatchesA",
+            "BOSS_AI_REM_GROUP_STATUS_DENIAL",
+            "BOSS_AI_REM_GROUP_COMMITMENT",
+            "BOSS_AI_REM_GROUP_SLEEP_PREEMPT",
+            "BOSS_AI_REM_GROUP_DAMAGING",
+            "BOSS_AI_REM_GROUP_PHYSICAL_DAMAGE",
+            "BOSS_AI_REM_GROUP_SPECIAL_DAMAGE",
+            "wEnemyMoveStruct + MOVE_EFFECT",
+            "wEnemyMoveStruct + MOVE_POWER",
+            "call BossAI_CurrentEnemyMoveCategory",
+        ],
+        "matrix candidate keys are current boss move effect/category only",
+    )
+    require_order(
+        matrix,
+        [
+            ".MatrixRevealedKeyMatchesA",
+            "BOSS_AI_REM_GROUP_RECOVERY",
+            "jp z, .PlayerHasRevealedRecovery",
+            "BOSS_AI_REM_GROUP_LAST_MOVE_ENCORE_TRAP",
+            "jp z, .LastPlayerMoveIsEncoreTrap",
             "jp .PlayerHasRevealedEffectA",
         ],
-        "revealed Protect scan uses shared exact visible player move effect helper",
-    )
-
-
-def audit_revealed_recovery_denial_bias(boss: str) -> None:
-    score = top_block(boss, "BossAI_ApplyMoveModel")
-    require_order(
-        score,
-        [
-            "call .ApplyRevealedProtectCommitmentRisk",
-            "call .ApplyRevealedRecoveryDenialBias",
-            "call .ApplyLastMoveEncoreTrapBias",
-            "call BossAI_ApplyScoutMoveBias",
-        ],
-        "revealed recovery denial runs before scout/repeat cleanup",
-    )
-
-    recovery_bias = local_block(
-        boss,
-        ".ApplyRevealedRecoveryDenialBias",
-        ".PlayerHasRevealedRecovery",
+        "matrix revealed keys use exact public revealed effects or public last move",
     )
     require_order(
-        recovery_bias,
+        matrix,
         [
-            "ld a, [wBossAITier]",
-            "cp AI_TIER_MID",
-            "ret c",
-            "call .PlayerHasRevealedRecovery",
-            "ret nc",
-            "call AICheckPlayerMaxHP",
-            "ret c",
+            ".MatrixRecoveryStatusDenial",
+            "call .MatrixRequireMidTier",
+            "call AICheckPlayerMaxHP_HL",
             "call .HasKOLine",
-            "ret c",
-            "cp EFFECT_TOXIC",
-            "jr z, .recovery_status",
-            "cp EFFECT_LEECH_SEED",
-            "jr z, .recovery_status",
-            "cp EFFECT_FORCE_SWITCH",
-            "ret nz",
-            "call .UtilityMoveWouldFailPublicly",
-            "ld a, 3",
-            "jp BossAI_EncourageScoreHL",
-            ".recovery_status",
             "call .StatusMoveWouldFailPublicly",
-            "ld a, 4",
-            "jp BossAI_EncourageScoreHL",
+            "jp .MatrixEncourageScore",
+            ".MatrixRecoveryUtilityDenial",
+            "call .UtilityMoveWouldFailPublicly",
         ],
-        "revealed recovery denial uses public recovery, current HP, and legal denial moves",
+        "matrix recovery denial keeps public tier/HP/KO/fail gates",
+    )
+    require_order(
+        matrix,
+        [
+            ".MatrixFastEncoreAvoidance",
+            "wPlayerSubStatus5",
+            "SUBSTATUS_ENCORED",
+            "call BossAI_PublicEnemyFaster",
+            "jr .MatrixDiscourageScore",
+            ".MatrixLastMoveEncoreTrap",
+            "call .UtilityMoveWouldFailPublicly",
+            "call BossAI_PublicEnemyFaster",
+            "jr .MatrixEncourageScore",
+        ],
+        "matrix Encore rows keep public lock/speed/fail gates",
+    )
+    require_order(
+        matrix,
+        [
+            ".MatrixSelfdestructProtect",
+            "call .UtilityMoveWouldFailPublicly",
+            "call AICheckPlayerHalfHP_HL",
+            "call BossAI_HasAnyKOMove",
+            "jr .MatrixEncourageScore",
+            ".MatrixSleepPreempt",
+            "wEnemyMonStatus",
+            "SLP_MASK",
+            "call BossAI_PublicEnemyFaster",
+        ],
+        "matrix self-KO and sleep-preempt rows keep public gates",
+    )
+    require_order(
+        matrix,
+        [
+            ".MatrixDestinyBondAvoidance",
+            "call .HasKOLine",
+            "call AICheckPlayerQuarterHP_HL",
+            "call BossAI_PublicEnemyFaster",
+            "jr .MatrixDiscourageScore",
+            ".MatrixCounterCoatAvoidance",
+            "call BossAI_CheckEnemyMoveTypeMatchupVsPlayerNoItem",
+            "wTypeMatchup",
+        ],
+        "matrix Destiny Bond and Counter/Mirror Coat avoidance keep public gates",
+    )
+    require_order(
+        matrix,
+        [
+            ".MatrixLoadScorePtrHL",
+            "wBossAIScorePtr",
+            "wBossAIScorePtr + 1",
+        ],
+        "matrix score updates reload the score pointer instead of depending on row-pointer hl",
     )
 
     recovery_scan = local_block(
@@ -850,51 +876,10 @@ def audit_revealed_recovery_denial_bias(boss: str) -> None:
         "revealed recovery scan uses exact visible recovery effects",
     )
 
-
-def audit_last_move_encore_trap_bias(boss: str) -> None:
-    score = top_block(boss, "BossAI_ApplyMoveModel")
-    require_order(
-        score,
-        [
-            "call .ApplyRevealedRecoveryDenialBias",
-            "call .ApplyRevealedFastEncoreAvoidance",
-            "call .ApplyLastMoveEncoreTrapBias",
-            "call BossAI_ApplyScoutMoveBias",
-        ],
-        "Encore reveal memory runs before scout/repeat cleanup",
-    )
-
-    revealed_encore = local_block(
-        boss,
-        ".ApplyRevealedFastEncoreAvoidance",
-        ".EncorePunishableCommitmentMove",
-    )
-    require_order(
-        revealed_encore,
-        [
-            "ld a, [wBossAITier]",
-            "cp AI_TIER_MID",
-            "ret c",
-            "ld a, [wPlayerSubStatus5]",
-            "bit SUBSTATUS_ENCORED, a",
-            "ret nz",
-            "call .EncorePunishableCommitmentMove",
-            "ret nc",
-            "ld a, EFFECT_ENCORE",
-            "call .PlayerHasRevealedEffectA",
-            "ret nc",
-            "call BossAI_PublicEnemyFaster",
-            "ret c",
-            "ld a, 5",
-            "jp BossAI_DiscourageScoreHL",
-        ],
-        "revealed fast Encore avoidance uses public reveal and speed gates",
-    )
-
     encore_commitment = local_block(
         boss,
         ".EncorePunishableCommitmentMove",
-        ".ApplyLastMoveEncoreTrapBias",
+        ".LastPlayerMoveIsEncoreTrap",
     )
     require_order(
         encore_commitment,
@@ -910,35 +895,6 @@ def audit_last_move_encore_trap_bias(boss: str) -> None:
             "scf",
         ],
         "revealed fast Encore avoidance targets punishable commitment moves",
-    )
-
-    encore_bias = local_block(
-        boss,
-        ".ApplyLastMoveEncoreTrapBias",
-        ".LastPlayerMoveIsEncoreTrap",
-    )
-    require_order(
-        encore_bias,
-        [
-            "ld a, [wBossAITier]",
-            "cp AI_TIER_MID",
-            "ret c",
-            "ld a, [wEnemyMoveStruct + MOVE_EFFECT]",
-            "cp EFFECT_ENCORE",
-            "ret nz",
-            "ld a, [wPlayerSubStatus5]",
-            "bit SUBSTATUS_ENCORED, a",
-            "ret nz",
-            "call .UtilityMoveWouldFailPublicly",
-            "ret c",
-            "call BossAI_PublicEnemyFaster",
-            "ret nc",
-            "call .LastPlayerMoveIsEncoreTrap",
-            "ret nc",
-            "ld a, 6",
-            "jp BossAI_EncourageScoreHL",
-        ],
-        "last-move Encore trap uses tier, public fail, and public speed gates",
     )
 
     encore_scan = local_block(
@@ -971,62 +927,38 @@ def audit_last_move_encore_trap_bias(boss: str) -> None:
         "last-move Encore trap scans only the public previous move effect",
     )
 
+    matrix_data = load(ROOT / "data" / "boss_ai" / "revealed_effect_matrix.asm")
+    required_rows = (
+        "db EFFECT_PROTECT, EFFECT_SELFDESTRUCT, BOSS_AI_REM_RULE_DISCOURAGE, 10",
+        "db EFFECT_PROTECT, EFFECT_HYPER_BEAM, BOSS_AI_REM_RULE_DISCOURAGE, 4",
+        "db BOSS_AI_REM_GROUP_RECOVERY, BOSS_AI_REM_GROUP_STATUS_DENIAL, BOSS_AI_REM_RULE_RECOVERY_STATUS_DENIAL, 4",
+        "db BOSS_AI_REM_GROUP_RECOVERY, EFFECT_FORCE_SWITCH, BOSS_AI_REM_RULE_RECOVERY_UTILITY_DENIAL, 3",
+        "db EFFECT_ENCORE, BOSS_AI_REM_GROUP_COMMITMENT, BOSS_AI_REM_RULE_FAST_ENCORE_AVOIDANCE, 5",
+        "db BOSS_AI_REM_GROUP_LAST_MOVE_ENCORE_TRAP, EFFECT_ENCORE, BOSS_AI_REM_RULE_LAST_MOVE_ENCORE_TRAP, 6",
+        "db EFFECT_SELFDESTRUCT, EFFECT_PROTECT, BOSS_AI_REM_RULE_SELFDESTRUCT_PROTECT, 5",
+        "db EFFECT_SLEEP, BOSS_AI_REM_GROUP_SLEEP_PREEMPT, BOSS_AI_REM_RULE_SLEEP_PREEMPT, 5",
+        "db EFFECT_DESTINY_BOND, BOSS_AI_REM_GROUP_DAMAGING, BOSS_AI_REM_RULE_DESTINY_BOND_AVOIDANCE, 7",
+        "db EFFECT_COUNTER, BOSS_AI_REM_GROUP_PHYSICAL_DAMAGE, BOSS_AI_REM_RULE_COUNTERCOAT_AVOIDANCE, 5",
+        "db EFFECT_MIRROR_COAT, BOSS_AI_REM_GROUP_SPECIAL_DAMAGE, BOSS_AI_REM_RULE_COUNTERCOAT_AVOIDANCE, 5",
+    )
+    for row in required_rows:
+        require_contains(matrix_data, row, "revealed-effect matrix row coverage")
+
+
+def audit_revealed_protect_commitment_risk(boss: str) -> None:
+    audit_revealed_effect_matrix_bias(boss)
+
+
+def audit_revealed_recovery_denial_bias(boss: str) -> None:
+    audit_revealed_effect_matrix_bias(boss)
+
+
+def audit_last_move_encore_trap_bias(boss: str) -> None:
+    audit_revealed_effect_matrix_bias(boss)
+
 
 def audit_revealed_selfdestruct_protect_bias(boss: str) -> None:
-    score = top_block(boss, "BossAI_ApplyMoveModel")
-    require_order(
-        score,
-        [
-            "call .ApplyLastMoveEncoreTrapBias",
-            "call .ApplyRevealedSelfdestructProtectBias",
-            "call BossAI_ApplyScoutMoveBias",
-        ],
-        "revealed Selfdestruct Protect bias runs before scout/repeat cleanup",
-    )
-
-    protect_bias = local_block(
-        boss,
-        ".ApplyRevealedSelfdestructProtectBias",
-        ".PlayerHasRevealedSelfdestruct",
-    )
-    require_order(
-        protect_bias,
-        [
-            "ld a, [wBossAITier]",
-            "cp AI_TIER_MID",
-            "ret c",
-            "ld a, [wEnemyMoveStruct + MOVE_EFFECT]",
-            "cp EFFECT_PROTECT",
-            "ret nz",
-            "call .UtilityMoveWouldFailPublicly",
-            "ret c",
-            "call AICheckPlayerHalfHP",
-            "ret c",
-            "push hl",
-            "call BossAI_HasAnyKOMove",
-            "pop hl",
-            "ret c",
-            "call .PlayerHasRevealedSelfdestruct",
-            "ret nc",
-            "ld a, 5",
-            "jp BossAI_EncourageScoreHL",
-        ],
-        "revealed Selfdestruct Protect bias gates",
-    )
-
-    selfdestruct_scan = local_block(
-        boss,
-        ".PlayerHasRevealedSelfdestruct",
-        ".CandidateMoveMatchupVsBaseTypes",
-    )
-    require_order(
-        selfdestruct_scan,
-        [
-            "ld a, EFFECT_SELFDESTRUCT",
-            "jp .PlayerHasRevealedEffectA",
-        ],
-        "revealed Selfdestruct scan uses shared exact visible move effect helper",
-    )
+    audit_revealed_effect_matrix_bias(boss)
 
 
 def audit_spikes_and_status(boss: str) -> None:
@@ -1783,8 +1715,8 @@ def audit_item_and_passive_reasoning(boss: str) -> None:
             "call .ApplyDarkShieldChanceBias",
             "call .ApplyLifeOrbRecoilBias",
             "call .ApplyDestinyBondTradeBias",
-            "call .ApplyRevealedDestinyBondAvoidance",
             "call .ApplyCounterCoatTradeBias",
+            "call .ApplyRevealedEffectMatrixBias",
             "call .ApplyChoiceFirstLockRegret",
             "call BossAI_CurrentEnemyMoveAccuracyRisky",
         ],
@@ -1892,7 +1824,7 @@ def audit_item_and_passive_reasoning(boss: str) -> None:
         "Air Balloon threat nullifier uses held effect",
     )
 
-    destiny = local_block(move_model, ".ApplyDestinyBondTradeBias", ".ApplyRevealedDestinyBondAvoidance")
+    destiny = local_block(move_model, ".ApplyDestinyBondTradeBias", ".ApplyCounterCoatTradeBias")
     require_order(
         destiny,
         [
@@ -1907,33 +1839,6 @@ def audit_item_and_passive_reasoning(boss: str) -> None:
             "jp BossAI_EncourageScoreHL",
         ],
         "Destiny Bond public trade-window gates",
-    )
-
-    destiny_avoid = local_block(
-        move_model,
-        ".ApplyRevealedDestinyBondAvoidance",
-        ".ApplyCounterCoatTradeBias",
-    )
-    require_order(
-        destiny_avoid,
-        [
-            "ld a, [wBossAITier]",
-            "cp AI_TIER_MID",
-            "ret c",
-            "wEnemyMoveStruct + MOVE_POWER",
-            "call .HasKOLine",
-            "ret nc",
-            "call AICheckPlayerQuarterHP",
-            "ret c",
-            "ld a, EFFECT_DESTINY_BOND",
-            "call .PlayerHasRevealedEffectA",
-            "ret nc",
-            "call BossAI_PublicEnemyFaster",
-            "ret c",
-            "ld a, 7",
-            "jp BossAI_DiscourageScoreHL",
-        ],
-        "revealed Destiny Bond KO avoidance gates",
     )
 
     countercoat = local_block(move_model, ".ApplyCounterCoatTradeBias", ".PlayerHasRevealedCounterCoatCategory")
@@ -1956,7 +1861,7 @@ def audit_item_and_passive_reasoning(boss: str) -> None:
         "Counter/Mirror Coat public trade-window gates",
     )
 
-    countercoat_seen = local_block(move_model, ".PlayerHasRevealedCounterCoatCategory", ".ApplyRevealedCounterCoatAvoidance")
+    countercoat_seen = local_block(move_model, ".PlayerHasRevealedCounterCoatCategory", ".ApplyChoiceFirstLockRegret")
     for needle in (
         "wPlayerUsedMoves",
         "Moves + MOVE_POWER",
@@ -1971,51 +1876,10 @@ def audit_item_and_passive_reasoning(boss: str) -> None:
         move_model,
         [
             "call .ApplyCounterCoatTradeBias",
-            "call .ApplyRevealedCounterCoatAvoidance",
+            "call .ApplyRevealedEffectMatrixBias",
             "call .ApplyChoiceFirstLockRegret",
         ],
-        "revealed Counter/Mirror Coat avoidance hook",
-    )
-
-    countercoat_avoid = local_block(
-        move_model,
-        ".ApplyRevealedCounterCoatAvoidance",
-        ".PlayerHasRevealedCounterCoatTrap",
-    )
-    require_order(
-        countercoat_avoid,
-        [
-            "wBossAITier",
-            "AI_TIER_MID",
-            "wEnemyMoveStruct + MOVE_POWER",
-            "call .HasKOLine",
-            "call BossAI_CheckEnemyMoveTypeMatchupVsPlayerNoItem",
-            "wTypeMatchup",
-            "call BossAI_CurrentEnemyMoveCategory",
-            "cp SPECIAL",
-            "call .PlayerHasRevealedCounterCoatTrap",
-            "jp BossAI_DiscourageScoreHL",
-        ],
-        "revealed Counter/Mirror Coat avoidance gates",
-    )
-
-    countercoat_trap = local_block(
-        move_model,
-        ".PlayerHasRevealedCounterCoatTrap",
-        ".ApplyChoiceFirstLockRegret",
-    )
-    require_order(
-        countercoat_trap,
-        [
-            "ld a, b",
-            "and a",
-            "ld a, EFFECT_COUNTER",
-            "jr z, .counter_coat_trap_scan",
-            "ld a, EFFECT_MIRROR_COAT",
-            ".counter_coat_trap_scan",
-            "jp .PlayerHasRevealedEffectA",
-        ],
-        "revealed Counter/Mirror Coat trap scan uses shared public effect helper",
+        "revealed Counter/Mirror Coat avoidance hook routes through matrix",
     )
 
     choice_commit = local_block(move_model, ".ApplyChoiceFirstLockRegret", ".SeenSpeciesChoiceLockRisk")
