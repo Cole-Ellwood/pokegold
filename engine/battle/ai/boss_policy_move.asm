@@ -3053,14 +3053,16 @@ BossAI_CurrentEnemyMovePressureScore:
 
 .stab_bonus
 	inc b
-	jr .imperial_scales
+	jr .ko_band_oracle
 
 .resisted
 	ld a, b
 	and a
 	jr z, .done
 	dec b
-	jr .imperial_scales
+
+.ko_band_oracle
+	farcall BossAI_ApplyKOBandOraclePressure
 
 .imperial_scales
 	ld a, [wTypeMatchup]

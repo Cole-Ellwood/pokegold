@@ -326,6 +326,9 @@ PURGE BOSSAI_EMIT_MOVE_BIAS_SUPPORT_TABLES
 INCLUDE "engine/battle/ai/boss_thunks.asm"
 INCLUDE "engine/battle/read_trainer_attributes.asm"
 
+DEF BOSSAI_EMIT_KO_BAND_ORACLE EQU 1
+INCLUDE "engine/battle/ai/ko_band_oracle.asm"
+PURGE BOSSAI_EMIT_KO_BAND_ORACLE
 
 SECTION "AI Scoring", ROMX
 
