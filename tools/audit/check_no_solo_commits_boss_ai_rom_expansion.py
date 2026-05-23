@@ -95,7 +95,7 @@ def commit_author_llm(author_email: str, subject: str) -> str | None:
     return "claude"
 
 
-def load_slice_reviews() -> list[dict]:
+def load_handoff_rows() -> list[dict]:
     if not HANDOFF_LOG.exists():
         return []
     rows = []
@@ -106,31 +106,51 @@ def load_slice_reviews() -> list[dict]:
             r = json.loads(line)
         except json.JSONDecodeError:
             continue
-        if r.get("event") != "slice_review":
-            continue
-        status = r.get("status", "")
-        if status not in {"slice_accepted", "approved", "complete"}:
-            continue
         rows.append(r)
     return rows
 
 
-def review_cites_sha(review: dict, sha: str) -> bool:
-    """Does this review row mention the commit SHA (>=7 char prefix) anywhere?"""
+def row_cites_sha(row: dict, sha: str) -> bool:
+    """Does this handoff row mention the commit SHA (>=7 char prefix) anywhere?"""
     needle = sha[:7]
     haystack_parts = []
     for key in ("claim", "reviews", "summary"):
-        val = review.get(key)
+        val = row.get(key)
         if isinstance(val, str):
             haystack_parts.append(val)
     for key in ("files_changed", "files_read", "verification_replayed", "validation", "evidence", "tests_running"):
-        val = review.get(key)
+        val = row.get(key)
         if isinstance(val, list):
             haystack_parts.extend(str(x) for x in val)
         elif isinstance(val, str):
             haystack_parts.append(val)
     haystack = " ".join(haystack_parts)
     return needle in haystack
+
+
+def load_slice_reviews(rows: list[dict]) -> list[dict]:
+    reviews = []
+    for r in rows:
+        if r.get("event") != "slice_review":
+            continue
+        status = r.get("status", "")
+        if status not in {"slice_accepted", "approved", "complete"}:
+            continue
+        reviews.append(r)
+    return reviews
+
+
+def commit_primary_from_handoff(rows: list[dict], sha: str) -> str | None:
+    """Prefer explicit paired-log primary when a slice_update cites the SHA."""
+    for row in rows:
+        if row.get("event") != "slice_update":
+            continue
+        if not row_cites_sha(row, sha):
+            continue
+        primary = (row.get("primary") or row.get("model") or "").lower()
+        if primary in {"claude", "codex"}:
+            return primary
+    return None
 
 
 def review_signer_other_than(review: dict, llm: str) -> bool:
@@ -159,17 +179,18 @@ def main() -> int:
         print(f"PASS: no post-roadmap commits on HEAD (base={base[:7]})")
         return 0
 
-    reviews = load_slice_reviews()
+    handoff_rows = load_handoff_rows()
+    reviews = load_slice_reviews(handoff_rows)
 
     violations = []
     for sha, author, subject in commits:
         if commit_only_touches_allowlist(sha):
             continue  # setup-allowlist commit, no review needed
-        llm = commit_author_llm(author, subject)
+        llm = commit_primary_from_handoff(handoff_rows, sha) or commit_author_llm(author, subject)
         # Find a paired slice_review row
         paired = [
             r for r in reviews
-            if review_signer_other_than(r, llm) and review_cites_sha(r, sha)
+            if review_signer_other_than(r, llm) and row_cites_sha(r, sha)
         ]
         if not paired:
             violations.append((sha, llm, subject))
