@@ -272,25 +272,26 @@ Ready when you are. Please confirm the read of the roadmap and post your first `
 
 ## Implementation phases (locked)
 
-**STATUS:** locked 2026-05-23 by mutual Claude+Codex slice_accepted rows 5+6 in `audit/boss_ai_rom_expansion_2026-05-23_handoff_log.jsonl`. P0.5 split into a/b/c per Codex convergence note (P0.5b is paired-review work, not setup-allowlist). P4 softmax temperature is kernel-driven per the convergence note (load-bearing in phase definition).
+**STATUS:** locked 2026-05-23 by mutual Claude+Codex slice_accepted rows in `audit/boss_ai_rom_expansion_2026-05-23_handoff_log.jsonl` (see P0_phasing_locked phase). P0.5 split into a/b/c per Codex convergence note (P0.5b is paired-review work, not setup-allowlist). **2026-05-23 pivot:** P1 (per-leader personality kernels) and P4 (kernel-driven reply-bucket softmax) were DROPPED per Cole directive — "personality is the team itself, not how the boss plays"; meta-level per-leader scoring risked making AI play *worse* without heavy curated playtest tuning. Replaced with **P1H (Uniform Haki Oracle refactor + extension + per-leader taunts)**, which lifts the existing bespoke Morty Haki into a uniform Oracle pattern across the 16-class eligible roster and adds the pre-fire taunt as the per-leader feel signal. P1a functional code (`wBossAIKernel`, kernel constants, kernel data, kernel load helper) was reverted on this branch; the save-format audit precision-fix from that slice was kept (independently good — guards against wEventFlags spillover without false-positives on padded reserve internals). See `P1a_kernel_load_mechanism` phase rows in the handoff log for the full retraction provenance. Roadmap pivot paired-contract amendment landed via handoff rows; both LLMs `slice_review` the new shape before P1H ack_start.
 
-**Phase ordering rationale**: Phase A.0.5 first (unblocks v7 strict + WRAMX-2 dependents); P1 next (per-leader kernels become the scoring substrate every later phase reads); P2 supplies the KO-band data layer; P3 cleans up scattered effect logic; P4 layers reply-buckets on top of P1's kernels; P5 introduces observation memory; P6 adds role classification; P7 puts it all into named plan templates.
+**Phase ordering rationale**: Phase A.0.5 first (unblocks v7 strict + WRAMX-2 dependents); **P1H next** (Uniform Haki Oracle lands the gate rule + per-leader taunts + extends Haki to all 16 eligible classes — needed before later phases assume the Oracle shape and to absorb the existing bespoke Morty path); P2 supplies the KO-band data layer; P3 cleans up scattered effect logic; P5 introduces observation memory; P6 adds role classification; P7 puts it all into named plan templates.
 
-**Lever-to-phase mapping reference** (for cross-checking with handoff log rows 2 and 4):
+**Lever-to-phase mapping reference** (for cross-checking with handoff log rows 2 and 4; updated 2026-05-23):
 
 | Phase | Codex levers | Claude levers | Primary author |
 | --- | --- | --- | --- |
 | P0.5a | — | (drift restore work) | Claude |
 | P0.5b | — | (WRAMX plumbing) | Both (paired) |
 | P0.5c | — | Claude #2 (revised) | Claude |
-| P1 | Codex #7 | Claude #1 | Both (paired) |
+| ~~P1~~ | ~~Codex #7~~ | ~~Claude #1~~ | DROPPED 2026-05-23 (Cole pivot) |
+| P1H | (Haki Oracle asm refactor + taunt plumbing) | (spec amendment landed Item 2; new uniform-Oracle audit) | Both (paired) |
 | P2 | Codex #1 | Claude #3 | Both (paired) |
 | P3 | Codex #5 | — | Codex |
-| P4 | Codex #6 | (reads P1 kernels) | Codex |
+| ~~P4~~ | ~~Codex #6~~ | ~~(reads P1 kernels)~~ | DROPPED 2026-05-23 (depended on P1) |
 | P5 | Codex #3, #8 | Claude #4 | Both (paired cluster) |
 | P6 | Codex #4 | — | Codex |
 | P7 | Codex #2 | — | Codex |
-| v2 | — | Claude #5, #6 | (deferred) |
+| v2 | — | ~~Claude #5~~ (promoted to P1H taunt text), Claude #6 | (Claude #6 deferred) |
 
 ---
 
@@ -327,16 +328,21 @@ Ready when you are. Please confirm the read of the roadmap and post your first `
 - **Play-impact**: none directly; developer iteration velocity on later levers.
 - **Author**: Claude. tools/ change, not setup-allowlist; paired Codex slice_review before commit OR commit-then-rereview.
 
-### P1 — Per-leader personality kernels (paired)
+### P1H — Uniform Haki Oracle refactor + extension + per-leader taunts (paired)
 
-- **Goal**: externalize scoring-weight vectors + plan-template biases + softmax-temperature into ROMX kernel data, keyed by trainer ID, with tier-default fallback. At battle start, load the kernel into existing `wBossAI*` scratch (or new WRAMX-2 if richer). Per-leader curated personalities — Falkner risk-aversive flying-pivot, Whitney stubborn-Miltank, Jasmine Steelix-protective, Lance chain-Dragonite-pressure, Karen mixed-Dark, Red elite-balanced. Adds role-aware boss party preservation table (Codex #7) keyed by same trainer ID — same data file. Includes per-leader softmax temperature byte (consumed by P4) so each leader has curated sharpness.
-- **Public-info-only**: kernels are compile-time constants per leader, weighting only public-info inputs. Boss own party introspection is legal. No hidden-info reads.
-- **Files to touch (write set)**: new `data/boss_ai/personality_kernels.asm` + per-leader includes; `engine/battle/ai/boss_platform.asm` (kernel load at battle start); existing `wBossAI*` scratch or new WRAMX-2 SECTION.
-- **Acceptance criterion**: ROM builds; `tools/boss_ai_debugger` shows different kernel selected per major-leader trainer ID; existing release-smoke + farcall audits stay green; new audit `tools/audit/check_personality_kernel_coverage.py` confirms every major-leader trainer has a kernel entry (tier-default fallback for minor trainers).
-- **ROM cost**: 1-2 banks (one of the 14 empty banks; data-driven so fits comfortably).
-- **WRAMX cost**: 0-32 bytes (scratch in bank 1 if kernel state fits; otherwise small WRAMX-2 segment).
-- **Play-impact**: very high. Serves First-Playthrough Promise directly — every major fight feels like its trainer thought through that match.
-- **Author**: paired. Codex primary on per-trainer kernel data; Claude primary on kernel-load + scoring-weight plumbing.
+- **Goal**: replace the bespoke Morty-only `BossAI_TryMortyHakiOracle` with a generic `BossAI_OracleHakiRead` that any Haki-eligible leader uses. Implement the gate rule from `docs/boss_ai_spec.md:39-44` literally (`wBossAITier != AI_TIER_EARLY` AND `wTrainerClass NOT IN BossAIHakiExcludedClasses`), extending Haki from 1 leader to the full 16-class roster (Johto post-Whitney + Silver MID+/LATE + Rocket executives + E4 + Champion + Blue + Red). Add per-leader pre-fire taunt text storage and the queue-and-flush plumbing that prints the taunt **before** the enemy action animation. Determinism: known-action re-score using the player's locked move (post-`ParsePlayerAction`) — no second-best RNG. v1 is **enemy-first only**; player-first Haki sequencing is out of scope until v2 (rephrased per Codex chat lane-shape: "enemy-first v1 only, deterministic known-action re-score, class/tier gate, queued taunt before enemy action, no P1/P4 dependencies, and no deletion of prior handoff history").
+- **Public-info-only**: Oracle reads the player's just-locked move via `ParsePlayerAction`'s output (legal per the existing Morty Haki precedent — the boss reads the input the player committed *this turn*, not unrevealed party/moves/items). Deterministic re-score; no hidden info. Taunt text is per-leader flavor with no mechanic information leakage — players learn to fear the taunt across the game, building mastery without the mechanic name ever being printed.
+- **Files to touch (write set)**:
+  - `engine/battle/ai/boss.asm` — rename `BossAI_TryMortyHakiOracle` → `BossAI_OracleHakiRead`; generalize the ace-detection + first-turn-active checks per `docs/boss_ai_spec.md` §"Hook Site".
+  - `data/trainers/ai_haki_excluded.asm` (new) — `BossAIHakiExcludedClasses` table holding `BROCK`, `MISTY`, `LT_SURGE`, `ERIKA`, `JANINE`, `SABRINA`, `BLAINE`.
+  - `data/boss_ai/haki_taunts.asm` (new) — per-leader (trainer class, trainer id) → text-pointer rows covering the 16 eligible classes.
+  - `engine/battle/ai/haki_taunt_queue.asm` (new, small) — queue-and-flush helper: store a pending taunt id at Oracle fire time; flush the print job immediately before the enemy move animation begins.
+  - `tools/audit/check_haki_oracle_uniform.py` (new) — audits (a) no bespoke `BossAI_TryMortyHakiOracle`-style entry points remain, (b) every eligible class has a taunt row, (c) every excluded class is present in `BossAIHakiExcludedClasses`, (d) the taunt-queue flush call is sequenced BEFORE the enemy-action dispatcher, not after.
+- **Acceptance criterion**: ROM builds; release-smoke + farcall audits green; `python tools/audit/check_haki_oracle_uniform.py` exits 0; `python tools/audit/check_haki_coverage_audit.py` continues to PASS; `python -m tools.boss_ai_debugger haki-coverage --self-test` exits 0; manual smoke or `tools/boss_ai_debugger` fixture shows: (1) Morty fight still fires Haki on ace's first turn (regression test for the refactor), (2) one of the newly-extended classes (e.g. Chuck or Karen) ALSO fires Haki on ace's first turn with the per-leader taunt printed BEFORE the move animation, (3) an excluded Kanto gym (e.g. Brock or Sabrina) does NOT fire Haki.
+- **ROM cost**: ~0.5–1 bank total. Taunt text data + generic helper. The generic Oracle is ~30 bytes smaller than the bespoke Morty path once duplicated branches collapse, partially offsetting the new helpers.
+- **WRAMX cost**: 1 byte (pending-taunt-id in the P0.5b-declared bank 2) + reuses existing `wHakiSpent` + the ace-first-turn bit already mentioned in the spec. No save-format change.
+- **Play-impact**: very high. Extends the "Lance's eyes narrow" / "Karen smiles slowly" pre-Haki moment from 1 leader (Morty, who currently doesn't even print a taunt) to 16 leaders. The taunt becomes a player-trainable signal of "this turn is about to be brutal" without leaking the mechanic name. Resolves the Cole-flagged complaint about the current bespoke Morty Haki shape (single-leader, no taunt, opaque to the player).
+- **Author**: paired. **Codex primary** on the asm refactor + new helpers + taunt-queue plumbing (his stated future lane). **Claude primary** on the spec amendment (already landed on this branch via Item 2 — `docs/boss_ai_spec.md` lines 31-38 + 39-44 + 67-100; see handoff log Item 2 row for provenance) + the `check_haki_oracle_uniform.py` audit + the per-leader taunt copy taste-pass. Both LLMs `slice_review` before commit; new-phase work means chat ack BEFORE ack_start per the Codex commit-then-review rule.
 
 ### P2 — KO-band oracle + matchup precompute (paired)
 
@@ -360,16 +366,9 @@ Ready when you are. Please confirm the read of the roadmap and post your first `
 - **Play-impact**: high and structurally safe. Expands tactical coverage while reducing scattered bespoke ASM drift and making audits easier.
 - **Author**: Codex primary; Claude reviews + may pair on the refactor sites.
 
-### P4 — Top-K reply-bucket payoff with kernel-driven temperature (Codex)
+### ~~P4~~ — Top-K reply-bucket payoff with kernel-driven temperature — **DROPPED 2026-05-23**
 
-- **Goal**: for late bosses only (tier 2-3), evaluate top 3-4 legal boss actions against three public reply buckets (stay/attack, preserve/switch, greed/setup). Use public payoff tables and **a controlled softmax whose temperature is per-leader, supplied by the P1 personality kernel** (Falkner sharper temp → more deterministic; Karen smoother temp → more mixed). Avoid pure determinism (memorization-exploitable) and pure randomness (no skill expression).
-- **Public-info-only**: reply buckets read public HP/status/boosts, revealed/plausible masks, observed tendencies, seen species, prior turns. Never the current selected button, never private party/moves/items.
-- **Files to touch (write set)**: new `engine/battle/ai/reply_bucket_payoff.asm`; references P1 kernel for temperature byte; new `data/boss_ai/reply_bucket_payoff_tables.asm`.
-- **Acceptance criterion**: ROM builds; `tools/boss_ai_debugger` shows non-deterministic action distribution on near-tie scenarios matching the per-leader temperature; release-smoke + farcall audits green.
-- **ROM cost**: 1-2 banks if payoff tables include plan/personality/tier variants; 0.5 bank minimal matrix over existing scores.
-- **WRAMX cost**: 0-12 bytes scratch for 4×3 scores; no persistent state.
-- **Play-impact**: high for champion/endgame and near-tie cases, medium early. ROM-friendly adaptation of modern MCTS/minimax lessons under hardware constraints.
-- **Author**: Codex primary; Claude reviews softmax-distribution choice + integration with P1 kernels.
+P4 depended on P1's per-leader softmax-temperature byte. With P1 dropped (personality = team, not play-style), the kernel-driven temperature input disappears, so P4 has no anchor. Plain top-K softmax without per-leader temperature was considered and rejected as too generic for the ROM cost — bosses would all play with the same distribution shape, which is the opposite of the curated feel the project wants. Re-evaluate as v2 only if a public-info-derived temperature source emerges (e.g. tier-driven sharpness with 3 buckets), but not as a kernel-dependent phase.
 
 ### P5 — Observation log + tendency counters + speed/damage calibration (paired cluster)
 
@@ -406,19 +405,20 @@ Ready when you are. Please confirm the read of the roadmap and post your first `
 
 ### v2 deferred
 
-- **Claude #5** — Decoupled Haki action slot with signal text. Conflicts with `docs/boss_ai_spec.md:31-33` (player-invisible Haki). Requires Cole-taste-call / contract amendment before reconsideration.
+- **Claude #5** — **PROMOTED 2026-05-23 to P1H.** Originally deferred for conflicting with player-invisible Haki; Cole amended the contract on 2026-05-23 to allow per-leader pre-fire taunt text (no mechanic naming, no other visible effect). The decoupled-Haki-with-signal-text idea now lives inside P1H as the queue-and-flush taunt mechanic.
 - **Claude #6** — Public RNG transparency surface for boss_ai_debugger. Pure dev tool, low gameplay impact. v2 unless promoted by iteration-velocity need.
+- **(new v2 candidate)** — Player-first Haki sequencing. P1H v1 keeps Haki enemy-first only. If a future fight wants Haki to read the player input AND act before the player's animation resolves (rather than just before the boss's), the engine plumbing for player-first sequencing is a meaningful new surface; defer until P1H v1 ships and the player-first feel is taste-checked.
 
 ### Phase order summary
 
 ```
-P0.5a → P0.5b → P0.5c → P1 → P2 → P3 → P4 → P5 → P6 → P7
-  ↓       ↓       ↓     ↓    ↓    ↓    ↓    ↓    ↓    ↓
-drift  wramx   haki   per   ko   eff  rep  obs  role plan
-restore plumb  audit  ldr   band mtx  buck log  cls  tmpl
+P0.5a → P0.5b → P0.5c → P1H → P2 → P3 → P5 → P6 → P7
+  ↓       ↓       ↓      ↓     ↓    ↓    ↓    ↓    ↓
+drift  wramx   haki   haki   ko   eff  obs  role plan
+restore plumb  audit  oracle band mtx  log  cls  tmpl
 ```
 
-Phase budget per slice: aim for ≤3 iterations to ship each phase. Total expected iterations: ~25-30 to ship the v1 set, leaving headroom in the 50-iter budget.
+Phase budget per slice: aim for ≤3 iterations to ship each phase. Total expected iterations after 2026-05-23 pivot: ~22-26 to ship the v1 set (P1 and P4 dropped saves ~5-7 iterations of the original ~25-30 estimate), leaving more headroom in the 50-iter budget for the P1H taunt-text taste-pass and possible v2 reach.
 
 ---
 
