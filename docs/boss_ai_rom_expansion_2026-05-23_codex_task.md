@@ -272,16 +272,153 @@ Ready when you are. Please confirm the read of the roadmap and post your first `
 
 ## Implementation phases (locked)
 
-**STATUS: empty. Filled in at end of Phase A.3 by both LLMs.**
+**STATUS:** locked 2026-05-23 by mutual Claude+Codex slice_accepted rows 5+6 in `audit/boss_ai_rom_expansion_2026-05-23_handoff_log.jsonl`. P0.5 split into a/b/c per Codex convergence note (P0.5b is paired-review work, not setup-allowlist). P4 softmax temperature is kernel-driven per the convergence note (load-bearing in phase definition).
 
-Each phase will be appended here with:
-- **Phase ID** (e.g. P1, P2, …).
-- **Goal sentence** (one line, public-info-only check inline).
-- **Files to touch** (write set with collision-risk noted).
-- **Acceptance criterion** (mechanical test or audit).
-- **ROM cost estimate** (KB or banks).
-- **WRAMX cost estimate** (bytes, if any).
-- **Play-impact note** (which fights this changes).
+**Phase ordering rationale**: Phase A.0.5 first (unblocks v7 strict + WRAMX-2 dependents); P1 next (per-leader kernels become the scoring substrate every later phase reads); P2 supplies the KO-band data layer; P3 cleans up scattered effect logic; P4 layers reply-buckets on top of P1's kernels; P5 introduces observation memory; P6 adds role classification; P7 puts it all into named plan templates.
+
+**Lever-to-phase mapping reference** (for cross-checking with handoff log rows 2 and 4):
+
+| Phase | Codex levers | Claude levers | Primary author |
+| --- | --- | --- | --- |
+| P0.5a | — | (drift restore work) | Claude |
+| P0.5b | — | (WRAMX plumbing) | Both (paired) |
+| P0.5c | — | Claude #2 (revised) | Claude |
+| P1 | Codex #7 | Claude #1 | Both (paired) |
+| P2 | Codex #1 | Claude #3 | Both (paired) |
+| P3 | Codex #5 | — | Codex |
+| P4 | Codex #6 | (reads P1 kernels) | Codex |
+| P5 | Codex #3, #8 | Claude #4 | Both (paired cluster) |
+| P6 | Codex #4 | — | Codex |
+| P7 | Codex #2 | — | Codex |
+| v2 | — | Claude #5, #6 | (deferred) |
+
+---
+
+### P0.5a — Drift restore (setup-allowlist)
+
+- **Goal**: cherry-pick `docs/llm_pairing_rules.md` from commit `0d3fbf8c` and `tools/audit/check_two_llm_handoff_log.py` from commit `da2f6644` onto this branch. Add both to the no_solo_commits `SETUP_ALLOWLIST` so subsequent edits to those files remain Claude-solo-sanctioned. v7 strict acceptance criterion becomes runnable.
+- **Public-info-only**: not gameplay; tooling-only.
+- **Files to touch (write set)**: `docs/llm_pairing_rules.md` (new), `tools/audit/check_two_llm_handoff_log.py` (new), `tools/audit/check_no_solo_commits_boss_ai_rom_expansion.py` (allowlist update).
+- **Acceptance criterion**: `python tools/audit/check_two_llm_handoff_log.py --strict --store audit/boss_ai_rom_expansion_2026-05-23_handoff_log.jsonl` exits 0; `python tools/audit/check_no_solo_commits_boss_ai_rom_expansion.py` exits 0.
+- **ROM cost**: 0.
+- **WRAMX cost**: 0.
+- **Play-impact**: none. Pure setup.
+- **Author**: Claude. Setup-allowlist commit acceptable; Codex slice_review post-commit acknowledged via paired row.
+
+### P0.5b — WRAMX bank-2 plumbing (paired)
+
+- **Goal**: declare the first WRAMX bank-2 `SECTION` in `ram/wram.asm` with explicit `BANK[02]` pin; extend the boss-AI bank-switch idiom (`hROMBank` shadow save/restore) to handle bank-2 access; verify zero regression against existing bank-1 reserve (BOSS_AI_TRACE 9-byte floor stays intact); add a `tools/audit/check_wramx_bank2_declaration.py` audit that confirms the SECTION exists and is sized within budget.
+- **Public-info-only**: not gameplay; infrastructure for future levers.
+- **Files to touch (write set)**: `ram/wram.asm` (new SECTION), boss bank-switch helper if needed, `tools/audit/check_wramx_bank2_declaration.py` (new audit).
+- **Acceptance criterion**: build green; `make compare` may diverge (new SECTION is fine, no parity claim); `dev_index.md` regenerated showing WRAMX bank 02 used bytes > 0; existing Boss AI WRAM Reserve table still shows ≥9 trace bytes free in bank 1.
+- **ROM cost**: <100 bytes (helper).
+- **WRAMX cost**: ≥1 byte placeholder in bank 2 (to make the SECTION non-empty); future levers grow this.
+- **Play-impact**: none directly; unblocks P5 + parts of P1/P7.
+- **Author**: paired. **Not setup-allowlist work** per Codex convergence note row 6 — this is real boss-AI infrastructure. Requires Codex slice_review before commit OR commit-then-rereview per `feedback_codex_commit_then_review_rule` (Codex's choice).
+
+### P0.5c — Haki-audit tool stub (tools-only)
+
+- **Goal**: extend `tools/boss_ai_debugger/` with a `haki-coverage` subcommand that surfaces per-leader Oracle entries (which leaders have Haki, ace species, iconic move on ace, ParsePlayerAction read source line). No data structure changes; tool reads existing trainer party data + `docs/boss_ai_spec.md` roster table + asm citations.
+- **Public-info-only**: not gameplay; dev tool only.
+- **Files to touch (write set)**: `tools/boss_ai_debugger/haki_coverage.py` (new), `tools/boss_ai_debugger/__main__.py` (subcommand wiring), `tools/audit/check_haki_coverage_audit.py` (new audit that runs `haki-coverage --self-test` and verifies known leaders are listed).
+- **Acceptance criterion**: `python -m tools.boss_ai_debugger haki-coverage --self-test` exits 0 and reports all 10 Haki leaders (Morty, Chuck, Jasmine, Pryce, Clair, Will, Koga, Bruno, Karen, Lance — per `docs/boss_ai_spec.md:66-74`; Red TBD).
+- **ROM cost**: 0.
+- **WRAMX cost**: 0.
+- **Play-impact**: none directly; developer iteration velocity on later levers.
+- **Author**: Claude. tools/ change, not setup-allowlist; paired Codex slice_review before commit OR commit-then-rereview.
+
+### P1 — Per-leader personality kernels (paired)
+
+- **Goal**: externalize scoring-weight vectors + plan-template biases + softmax-temperature into ROMX kernel data, keyed by trainer ID, with tier-default fallback. At battle start, load the kernel into existing `wBossAI*` scratch (or new WRAMX-2 if richer). Per-leader curated personalities — Falkner risk-aversive flying-pivot, Whitney stubborn-Miltank, Jasmine Steelix-protective, Lance chain-Dragonite-pressure, Karen mixed-Dark, Red elite-balanced. Adds role-aware boss party preservation table (Codex #7) keyed by same trainer ID — same data file. Includes per-leader softmax temperature byte (consumed by P4) so each leader has curated sharpness.
+- **Public-info-only**: kernels are compile-time constants per leader, weighting only public-info inputs. Boss own party introspection is legal. No hidden-info reads.
+- **Files to touch (write set)**: new `data/boss_ai/personality_kernels.asm` + per-leader includes; `engine/battle/ai/boss_platform.asm` (kernel load at battle start); existing `wBossAI*` scratch or new WRAMX-2 SECTION.
+- **Acceptance criterion**: ROM builds; `tools/boss_ai_debugger` shows different kernel selected per major-leader trainer ID; existing release-smoke + farcall audits stay green; new audit `tools/audit/check_personality_kernel_coverage.py` confirms every major-leader trainer has a kernel entry (tier-default fallback for minor trainers).
+- **ROM cost**: 1-2 banks (one of the 14 empty banks; data-driven so fits comfortably).
+- **WRAMX cost**: 0-32 bytes (scratch in bank 1 if kernel state fits; otherwise small WRAMX-2 segment).
+- **Play-impact**: very high. Serves First-Playthrough Promise directly — every major fight feels like its trainer thought through that match.
+- **Author**: paired. Codex primary on per-trainer kernel data; Claude primary on kernel-load + scoring-weight plumbing.
+
+### P2 — KO-band oracle + matchup precompute (paired)
+
+- **Goal**: build ROMX tables and routines estimating public damage bands, 2HKO/3HKO windows, survival bands, deny-KO odds from visible inputs (Codex #1). Pair with compile-time per-boss-roster type-matchup tables (Claude #3): defensive matchup vector per slot vs 17 types, offensive coverage vector per slot. Replace per-turn type-chart loops with table lookups.
+- **Public-info-only**: inputs are visible species/level/typing/HP/status/stages, boss-known own moves/items, revealed player moves, observed damage calibration. Player-side stat uncertainty becomes coarse banding only; never reads private stats.
+- **Files to touch (write set)**: new `engine/battle/ai/ko_band_oracle.asm` + `data/boss_ai/matchup_tables.asm`; per-leader matchup precompute generated at build time (script in `tools/build_boss_matchup_tables.py`); call sites in `engine/battle/ai/boss_policy_move.asm` `BossAI_CurrentEnemyMoveHasKOPressure` and `BossAI_CurrentEnemyMovePressureScore`.
+- **Acceptance criterion**: ROM builds; new `tools/audit/check_ko_band_oracle_self_test.py` runs an oracle self-test against known scenarios and matches expected bands; release-smoke + farcall audits stay green.
+- **ROM cost**: 2-3 banks total (1-2 for oracle + 0.5-1 for matchup tables; plus type-passive and held-item public modifiers if tableized).
+- **WRAMX cost**: 0 if recomputed per candidate; 8-16 bytes scratch in P0.5b-declared WRAMX-2 if caching.
+- **Play-impact**: very high. Improves KO, deny-KO, recovery, setup-affordability, sacrifice-cash-out, switch-confidence across every boss without omniscience.
+- **Author**: paired. Codex primary on oracle helpers + KO-band math; Claude primary on per-trainer matchup table build script + integration.
+
+### P3 — Revealed-effect interaction matrix (Codex)
+
+- **Goal**: move the growing bespoke revealed-effect interactions (Protect/Recovery/Encore/Selfdestruct/SleepPreempt/Destiny-Bond/Counter-Mirror-Coat/Disable/Mean-Look/Perish/charging-rampage/phaze-hazard) into ROMX data keyed by revealed player effect, boss candidate effect/category, tier, public speed/HP gates, board flags.
+- **Public-info-only**: only exact active revealed moves in `wPlayerUsedMoves` / per-species public memory, public last move, visible HP/status/boosts, public speed predicate, boss candidate move data. No plausible hidden move becomes an exact revealed-effect trigger.
+- **Files to touch (write set)**: new `data/boss_ai/revealed_effect_matrix.asm`; refactor of bespoke helpers around `engine/battle/ai/boss_policy_move.asm:1392-1605` into table-driven dispatch.
+- **Acceptance criterion**: ROM builds; existing boss-AI fixture tests in `tools/boss_ai_debugger/` continue to pass; release-smoke + farcall audits green; new audit `tools/audit/check_revealed_effect_matrix_coverage.py` confirms key effects represented.
+- **ROM cost**: 1 bank (one of the 14 empty banks; replaces growth pressure on tight bank 0e).
+- **WRAMX cost**: 0.
+- **Play-impact**: high and structurally safe. Expands tactical coverage while reducing scattered bespoke ASM drift and making audits easier.
+- **Author**: Codex primary; Claude reviews + may pair on the refactor sites.
+
+### P4 — Top-K reply-bucket payoff with kernel-driven temperature (Codex)
+
+- **Goal**: for late bosses only (tier 2-3), evaluate top 3-4 legal boss actions against three public reply buckets (stay/attack, preserve/switch, greed/setup). Use public payoff tables and **a controlled softmax whose temperature is per-leader, supplied by the P1 personality kernel** (Falkner sharper temp → more deterministic; Karen smoother temp → more mixed). Avoid pure determinism (memorization-exploitable) and pure randomness (no skill expression).
+- **Public-info-only**: reply buckets read public HP/status/boosts, revealed/plausible masks, observed tendencies, seen species, prior turns. Never the current selected button, never private party/moves/items.
+- **Files to touch (write set)**: new `engine/battle/ai/reply_bucket_payoff.asm`; references P1 kernel for temperature byte; new `data/boss_ai/reply_bucket_payoff_tables.asm`.
+- **Acceptance criterion**: ROM builds; `tools/boss_ai_debugger` shows non-deterministic action distribution on near-tie scenarios matching the per-leader temperature; release-smoke + farcall audits green.
+- **ROM cost**: 1-2 banks if payoff tables include plan/personality/tier variants; 0.5 bank minimal matrix over existing scores.
+- **WRAMX cost**: 0-12 bytes scratch for 4×3 scores; no persistent state.
+- **Play-impact**: high for champion/endgame and near-tie cases, medium early. ROM-friendly adaptation of modern MCTS/minimax lessons under hardware constraints.
+- **Author**: Codex primary; Claude reviews softmax-distribution choice + integration with P1 kernels.
+
+### P5 — Observation log + tendency counters + speed/damage calibration (paired cluster)
+
+- **Goal**: cluster slice — single WRAMX-2 buffer (16-32 bytes) holding last ~6 turns of structured public observations (turn_no, actor, action_class, observed_damage_band, observed_speed_relation). Codex #3 (tendency counters: switches under threat, attacks into bad public matchup, protects/recovers repeatedly, greedy setup under pressure, status fishing, low-HP sack acceptance) reads from this buffer for counter updates. Codex #8 (calibration) reads from this buffer for KO-band refinement against P2's oracle.
+- **Public-info-only**: all entries are public post-resolution facts. No current-turn input. No hidden stat reads. Updates happen at the same next-turn boundary as pending-switch observations.
+- **Files to touch (write set)**: new `engine/battle/ai/observation_log.asm` (buffer append + consult helpers); new `data/boss_ai/tendency_counter_weights.asm`; refactor of `BossAI_PredictPlayerSwitch` (engine/battle/ai/boss_policy_move.asm:3531) to consult counters; new WRAMX-2 buffer declaration in P0.5b-prepared section.
+- **Acceptance criterion**: ROM builds; new `tools/audit/check_observation_log_invariants.py` confirms append-only, public-info-only, bounded buffer; tendency counter updates traceable via `tools/boss_ai_debugger`; release-smoke + farcall audits green.
+- **ROM cost**: ~1.5 banks total (0.5 buffer + 0.5 tendency + 0.5 calibration).
+- **WRAMX cost**: 16-32 bytes in P0.5b-declared bank 2 (depends on counter width).
+- **Play-impact**: high after turn 3. Makes rematches, Elite Four, Champion, Red feel adaptive without deterministic counterpicking.
+- **Author**: paired cluster. Claude primary on observation log buffer + invariants; Codex primary on tendency counter math + calibration consumer.
+
+### P6 — Role/package classifier (Codex)
+
+- **Goal**: classify each seen player species into coarse public packages (spinner, phazer, setup-sweeper, recovery-wall, priority-revenge, sleep/status-pressure, trap/perish-line, physical/special wallbreaker). Use package bits for preservation switches, plan templates, and route valuation.
+- **Public-info-only**: inputs are visible species, public learnability, revealed moves, observed behavior, evidence. Output remains probabilistic/package-level — cannot imply exact hidden moves or four-slot sets.
+- **Files to touch (write set)**: new `data/boss_ai/role_package_classifier.asm`; consumer hooks in switch-confidence path (`engine/battle/ai/boss_policy_switch.asm`).
+- **Acceptance criterion**: ROM builds; `tools/boss_ai_debugger` correctly tags representative species; release-smoke + farcall audits green.
+- **ROM cost**: 1-2 banks for species/effect package tables + classifier (less if table only covers boss-relevant species).
+- **WRAMX cost**: 0 if recomputed for active/seen candidates; 6-12 bytes cache after observation-log lands.
+- **Play-impact**: high for veteran counterplay. Bosses stop treating every public type threat identically and start respecting roles (spinner, setup, revenge, wall) without cheating.
+- **Author**: Codex primary; Claude reviews.
+
+### P7 — Coach-plan template engine, minimal-first (Codex)
+
+- **Goal**: compact ROMX table of public-gated plan templates. Minimal-first scope of 4 templates: `attack_now`, `setup_once_then_attack`, `pressure_recover_then_lock`, `cashout_sacrifice`. Plan identity supplies action-sequence bias and stop conditions rather than a literal tree. Later slices expand if measurement supports it (full set: `sleep_then_setup`, `scout_probe_then_commit`, `switch_preserve_then_rescore`, `hazard_phaze_route`).
+- **Public-info-only**: templates inspect legal boss actions, boss roster, visible field/HP/status/boosts, seen species, revealed moves, public plausible masks, observed switch history. Must keep fixture-style separation of revealed/plausible/impossible/unknown.
+- **Files to touch (write set)**: new `data/boss_ai/coach_plan_templates.asm`; small dispatcher in `engine/battle/ai/boss_policy_move.asm` augmenting existing `BossAI_ApplyPlanMoveBias` at :4702 + `BossAI_SelectPlanIfNeeded`.
+- **Acceptance criterion**: ROM builds; `tools/boss_ai_debugger` shows correct template-id selection on representative scenarios; release-smoke + farcall audits green; boss-AI fixture replay tests continue to pass.
+- **ROM cost**: 1 bank minimal, 2-3 if full template set later.
+- **WRAMX cost**: 8-24 bytes in P0.5b-declared bank 2 for active template id/phase/target/confidence/stop flags; 0-4 bytes for one-turn stateless scoring variant.
+- **Play-impact**: very high for named fights. Directly imports existing human-labeled multi-turn lessons (Whitney, Lance, Bugsy, Clair, Koga, Jasmine, Red) into ROM behavior.
+- **Author**: Codex primary; Claude reviews.
+
+### v2 deferred
+
+- **Claude #5** — Decoupled Haki action slot with signal text. Conflicts with `docs/boss_ai_spec.md:31-33` (player-invisible Haki). Requires Cole-taste-call / contract amendment before reconsideration.
+- **Claude #6** — Public RNG transparency surface for boss_ai_debugger. Pure dev tool, low gameplay impact. v2 unless promoted by iteration-velocity need.
+
+### Phase order summary
+
+```
+P0.5a → P0.5b → P0.5c → P1 → P2 → P3 → P4 → P5 → P6 → P7
+  ↓       ↓       ↓     ↓    ↓    ↓    ↓    ↓    ↓    ↓
+drift  wramx   haki   per   ko   eff  rep  obs  role plan
+restore plumb  audit  ldr   band mtx  buck log  cls  tmpl
+```
+
+Phase budget per slice: aim for ≤3 iterations to ship each phase. Total expected iterations: ~25-30 to ship the v1 set, leaving headroom in the 50-iter budget.
 
 ---
 
