@@ -296,7 +296,7 @@ Ready when you are. Please confirm the read of the roadmap and post your first `
 
 ### P0.5a — Drift restore (setup-allowlist)
 
-- **Goal**: cherry-pick `docs/llm_pairing_rules.md` from commit `0d3fbf8c` and `tools/audit/check_two_llm_handoff_log.py` from commit `da2f6644` onto this branch. Add setup-scope handling for both files in the no_solo_commits audit narrowly enough that the P0.5a restore is exempt, but later non-setup edits to those files still require paired review. v7 strict acceptance criterion becomes runnable.
+- **Goal**: cherry-pick `docs/llm_pairing_rules.md` and `tools/audit/check_two_llm_handoff_log.py` from the debugger-masterpiece-roadmap branch's pairing-rules / handoff-log work onto this branch (concrete source SHAs preserved in the boss-AI handoff log slice_update row for P0_5a_drift_restore). Plus the `tools/debugger/handoff_log.py` module the audit imports. Add setup-scope handling for these files in the no_solo_commits audit narrowly enough that the P0.5a restore is exempt, but later non-setup edits to those files still require paired review. v7 strict acceptance criterion becomes runnable.
 - **Public-info-only**: not gameplay; tooling-only.
 - **Files to touch (write set)**: `docs/llm_pairing_rules.md` (new), `tools/audit/check_two_llm_handoff_log.py` (new), `tools/audit/check_no_solo_commits_boss_ai_rom_expansion.py` (allowlist update).
 - **Acceptance criterion**: `python tools/audit/check_two_llm_handoff_log.py --strict --store audit/boss_ai_rom_expansion_2026-05-23_handoff_log.jsonl` exits 0; `python tools/audit/check_no_solo_commits_boss_ai_rom_expansion.py` exits 0.
