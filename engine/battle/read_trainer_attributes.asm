@@ -143,3 +143,4 @@ ClearBossAIState:
 	ret
 
 INCLUDE "data/trainers/ai_tiers.asm"
+INCLUDE "data/trainers/ai_haki_excluded.asm"

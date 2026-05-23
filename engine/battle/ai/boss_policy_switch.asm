@@ -21,7 +21,7 @@ BossAI_SwitchOrTryItem:
 	call BossAI_ResetTurnCaches
 	call BossAI_SelectPlanIfNeeded
 	call BossAI_ComputePlayerPlausibleTypeMask
-	call BossAI_TryMortyHakiOracle
+	call BossAI_OracleHakiRead
 	ret nz
 
 	call BossAI_EnemyPerishEscapeUrgent
@@ -108,10 +108,11 @@ ENDC
 	jp AI_TryItem
 
 ; ai-layer: POLICY
-BossAI_TryMortyHakiOracle:
-; Quarantined Haki prototype: Morty's Gengar may spend one ace-first-turn
-; Oracle read to pick Destiny Bond into a locked, strong super-effective move.
-; This is the only normal Boss AI routine allowed to read current-turn input.
+BossAI_OracleHakiRead:
+; Uniform Haki exception: once per battle, on the ace's first active turn,
+; an eligible boss may re-score deterministically against the player's
+; already-locked move. This is the only normal Boss AI routine allowed to
+; read current-turn input.
 	ld hl, wBossAIRevealedMovesBitmapSpare + 1
 	bit BOSSAI_HAKI_SPENT_F, [hl]
 	jr nz, .no
@@ -126,19 +127,17 @@ BossAI_TryMortyHakiOracle:
 	ld a, [wEnemySubStatus5]
 	bit SUBSTATUS_ENCORED, a
 	jr nz, .no
-	call .FindDestinyBondSlot
+	ld a, [wCurPlayerMove]
+	and a
+	jr z, .no
+	call BossAI_ApplyKnownPlayerActionOracleBias
+	call BossAI_ChooseBestOracleMove
 	jr nc, .no
-	ld a, c
-	ld [wBossAITemp], a
-	call .PlayerSelectedStrongSuperEffectiveAttack
-	jr nc, .no
-	ld a, [wBossAITemp]
-	ld [wCurEnemyMoveNum], a
-	ld a, DESTINY_BOND
-	ld [wCurEnemyMove], a
 	callfar EnforceEnemyHeldMoveRestrictions_Far
 	callfar UpdateMoveData
 	call BossAI_UpdateRepeatTracker
+	call BossAI_MarkScoutedIfScoutMove
+	call BossAI_QueueHakiTaunt
 	ld hl, wBossAIRevealedMovesBitmapSpare + 1
 	set BOSSAI_HAKI_SPENT_F, [hl]
 	res BOSSAI_HAKI_ELIGIBLE_F, [hl]
@@ -157,34 +156,101 @@ ENDC
 	xor a
 	ret
 
-.FindDestinyBondSlot
-	ld hl, wEnemyMonMoves
-	ld de, wEnemyMonPP
-	ld c, 0
-.destiny_loop
-	ld a, c
-	cp NUM_MOVES
-	jr nc, .destiny_no
-	ld a, [hli]
-	cp DESTINY_BOND
-	jr z, .destiny_candidate
-	inc de
-	inc c
-	jr .destiny_loop
-.destiny_candidate
-	ld a, [wEnemyDisabledMove]
-	cp DESTINY_BOND
-	jr z, .destiny_no
+BossAI_ApplyKnownPlayerActionOracleBias:
+; Keep the base score model intact, then force only generic emergency
+; defensive effects when the locked player move is a strong public threat.
+	call BossAI_HakiPlayerSelectedStrongSuperEffectiveAttack
+	ret nc
+	ld hl, wEnemyAIMoveScores
+	ld de, wEnemyMonMoves
+	ld c, NUM_MOVES
+.bias_loop
 	ld a, [de]
-	and PP_MASK
-	jr z, .destiny_no
+	and a
+	ret z
+	ld a, [hl]
+	cp 80
+	jr nc, .bias_next
+	push hl
+	push de
+	push bc
+	ld a, [de]
+	dec a
+	ld hl, Moves + MOVE_EFFECT
+	call BossAI_GetMoveAttr
+	ld b, a
+	pop bc
+	pop de
+	pop hl
+	ld a, b
+	cp EFFECT_DESTINY_BOND
+	jr z, .force_best
+	cp EFFECT_PROTECT
+	jr z, .force_best
+	cp EFFECT_ENDURE
+	jr nz, .bias_next
+.force_best
+	xor a
+	ld [hl], a
+.bias_next
+	inc hl
+	inc de
+	dec c
+	jr nz, .bias_loop
+	ret
+
+BossAI_ChooseBestOracleMove:
+	ld hl, wEnemyAIMoveScores
+	ld de, wEnemyMonMoves
+	ld b, $ff ; best score
+	ld c, $ff ; best index
+	xor a ; current index
+.best_loop
+	cp NUM_MOVES
+	jr nc, .best_done
+	push af
+	ld a, [de]
+	and a
+	jr z, .best_done_pop
+	ld a, [hl]
+	cp 80
+	jr nc, .best_next
+	cp b
+	jr nc, .best_next
+	ld b, a
+	pop af
+	ld c, a
+	push af
+.best_next
+	pop af
+	inc hl
+	inc de
+	inc a
+	jr .best_loop
+
+.best_done_pop
+	pop af
+
+.best_done
+	ld a, c
+	cp $ff
+	jr z, .no_best
+	ld [wCurEnemyMoveNum], a
+	ld c, a
+	ld b, 0
+	ld hl, wEnemyMonMoves
+	add hl, bc
+	ld a, [hl]
+	ld [wCurEnemyMove], a
+	ld a, 1
+	ld [wBossAIMoveChoiceReady], a
 	scf
 	ret
-.destiny_no
+.no_best
 	and a
 	ret
 
-.PlayerSelectedStrongSuperEffectiveAttack
+BossAI_HakiPlayerSelectedStrongSuperEffectiveAttack:
 	ld a, [wCurPlayerMove]
 	and a
 	jr z, .selected_no

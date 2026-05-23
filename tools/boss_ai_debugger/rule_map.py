@@ -45,7 +45,7 @@ REQUIRED_LABELS = {
     ".PlayerActiveLikelyCanRapidSpin",
     ".SpeciesLevelUpHasRapidSpin",
     "BossAI_SwitchOrTryItem",
-    "BossAI_TryMortyHakiOracle",
+    "BossAI_OracleHakiRead",
     "BossAI_ComputeSwitchConfidence",
     "BossAI_ComputeSwitchCandidateRisk",
 }

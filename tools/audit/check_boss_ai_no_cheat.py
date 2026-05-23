@@ -79,14 +79,20 @@ APPROVED_FORBIDDEN_PATTERN_EXCEPTIONS = [
     ApprovedForbiddenPatternException(
         path="engine/battle/ai/boss_policy_switch.asm",
         reason="player input read",
-        top_label="BossAI_TryMortyHakiOracle",
-        approval="quarantined Morty/Gengar Haki oracle",
+        top_label="BossAI_OracleHakiRead",
+        approval="uniform Haki oracle exception",
     ),
     ApprovedForbiddenPatternException(
         path="engine/battle/ai/boss_policy_switch.asm",
         reason="player input action read",
-        top_label="BossAI_TryMortyHakiOracle",
-        approval="quarantined Morty/Gengar Haki oracle",
+        top_label="BossAI_OracleHakiRead",
+        approval="uniform Haki oracle exception",
+    ),
+    ApprovedForbiddenPatternException(
+        path="engine/battle/ai/boss_policy_switch.asm",
+        reason="player input read",
+        top_label="BossAI_HakiPlayerSelectedStrongSuperEffectiveAttack",
+        approval="uniform Haki oracle exception helper",
     ),
 ]
 

@@ -926,6 +926,7 @@ Battle_EnemyFirst:
 	ld [wEnemyGoesFirst], a
 	callfar AI_SwitchOrTryItem
 	jr c, .switch_item
+	callfar BossAI_FlushPendingHakiTaunt
 	call EnemyTurn_EndOpponentProtectEndureDestinyBond
 	ld a, [wForcedSwitch]
 	and a

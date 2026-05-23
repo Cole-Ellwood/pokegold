@@ -163,29 +163,41 @@ add WRAM. It packs spent / ace-seen / current-turn eligibility bits into
 memory review because priority-changing Oracle choices require a pre-order hook
 or an equal-priority-only contract.
 
+Current implementation note (2026-05-23): the Uniform Haki Oracle still avoids
+new WRAM layout growth. Spent / ace-seen / eligibility remain in
+`wBossAIRevealedMovesBitmapSpare` byte 1, and the queued taunt id reuses byte 2
+of the same spare block. This keeps taunt state in the `ClearBossAIState`
+cleared battle-volatile range and avoids WRAMX bank switches immediately before
+the enemy action text path.
+
 For exact addresses and current free-byte counts, see the Runtime State
 Budget section below.
 
 ## Implementation Order
 
-Land Haki one leader at a time, with trace proof, audit-script clean-up,
-and release-smoke verification between each:
+Ship Haki as one uniform Oracle path, not one bespoke leader branch at a
+time. The implementation must be table-driven by the gate rule and by
+taunt rows; adding a new eligible leader should not require a new Haki
+predicate.
 
-1. **Morty** (Gengar's first turn) — cleanest first prototype. Gengar's
-   moveset makes the input-read-then-rescore behavior visibly distinct:
-   with Haki, Gengar fires Destiny Bond on lethal incoming; without, it
-   picks a normal coverage move. Easy to confirm in trace.
-2. **Lance** (Dragonite's first turn) — second test. Champion-tier
-   trainer-class gating exercises the `CHAMPION:LANCE` constant pair
-   (different gating shape than gym leaders).
-3. **One mid-tier leader** (Misty or Surge suggested) — proves the
-   ace-detection logic works for trainers whose ace recently changed.
-4. Remaining 16 leaders may be added in any order once these three are
-   stable.
+Required proof order for the uniform rollout:
 
-Do not implement this as a compiled all-leader Haki table on day one.
-Each leader needs trace proof, memory proof, no player-visible tell, and
-a release-smoke check, before the next one ships.
+1. **Morty regression** — Gengar's first turn still fires Haki through the
+   generic path.
+2. **New eligible class smoke** — at least one non-Morty eligible class
+   (for example Chuck or Karen) fires Haki on the ace's first turn and
+   queues the leader taunt.
+3. **Excluded-class smoke** — at least one Kanto gym leader in
+   `BossAIHakiExcludedClasses` (for example Brock or Sabrina) does not
+   fire Haki despite having a non-early Boss AI tier.
+4. **Tier-gated class smoke** — at least one class with mixed tier rows
+   (Silver / `RIVAL1` or `RIVAL2`) respects the `wBossAITier !=
+   AI_TIER_EARLY` condition.
+
+Each rollout commit needs build proof, release-smoke proof, Haki coverage
+proof, uniform-Oracle audit proof, and at least one debugger or manual smoke
+from the scenarios above. The taunt text is the only player-visible tell;
+it must not name Haki or reveal the player's chosen move.
 
 ## Post-Input Oracle Move Override Contract
 

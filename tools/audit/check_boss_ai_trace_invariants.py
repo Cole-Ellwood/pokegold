@@ -423,7 +423,7 @@ def audit_switch_loop(boss: str) -> None:
         [
             "call BossAI_SelectPlanIfNeeded",
             "call BossAI_ComputePlayerPlausibleTypeMask",
-            "call BossAI_TryMortyHakiOracle",
+            "call BossAI_OracleHakiRead",
             "ret nz",
             "call BossAI_EnemyPerishEscapeUrgent",
             "jr c, .check_switch",
@@ -523,16 +523,44 @@ def audit_haki_quarantine(boss: str) -> None:
             "res BOSSAI_HAKI_ELIGIBLE_F, [hl]",
             "bit BOSSAI_HAKI_SPENT_F, [hl]",
             "bit BOSSAI_HAKI_ACE_SEEN_F, [hl]",
-            "cp MORTY",
-            "cp MORTY1",
-            "cp GENGAR",
+            "call BossAI_HakiTrainerEligible",
+            "ret nc",
+            "call BossAI_CurrentEnemyIsAce",
+            "ret nc",
             "set BOSSAI_HAKI_ACE_SEEN_F, [hl]",
             "set BOSSAI_HAKI_ELIGIBLE_F, [hl]",
         ],
-        "Morty Haki first-turn state is trainer and ace gated",
+        "Uniform Haki first-turn state is trainer-gated and ace-gated",
+    )
+    gate = top_block(boss, "BossAI_HakiTrainerEligible")
+    require_order(
+        gate,
+        [
+            "ld a, [wBossAITier]",
+            "cp AI_TIER_EARLY",
+            "ld a, [wTrainerClass]",
+            "ld hl, BossAIHakiExcludedClasses",
+            "scf",
+            "ret",
+        ],
+        "Uniform Haki trainer gate uses tier plus excluded-class table",
+    )
+    ace = top_block(boss, "BossAI_CurrentEnemyIsAce")
+    require_order(
+        ace,
+        [
+            "ld a, [wOTPartyCount]",
+            "ld hl, wOTPartyMon1Level",
+            "ld bc, PARTYMON_STRUCT_LENGTH",
+            "ld a, [wCurOTMon]",
+            "cp e",
+            "scf",
+            "ret",
+        ],
+        "Uniform Haki ace gate picks the current highest-level trainer party slot",
     )
 
-    oracle = top_block(boss, "BossAI_TryMortyHakiOracle")
+    oracle = top_block(boss, "BossAI_OracleHakiRead")
     require_order(
         oracle,
         [
@@ -541,25 +569,37 @@ def audit_haki_quarantine(boss: str) -> None:
             "bit BOSSAI_HAKI_ELIGIBLE_F, [hl]",
             "ld a, [wEnemyGoesFirst]",
             "ld a, [wBattlePlayerAction]",
-            "call .FindDestinyBondSlot",
-            "call .PlayerSelectedStrongSuperEffectiveAttack",
-            "ld [wCurEnemyMoveNum], a",
-            "ld a, DESTINY_BOND",
-            "ld [wCurEnemyMove], a",
+            "ld a, [wCurPlayerMove]",
+            "call BossAI_ApplyKnownPlayerActionOracleBias",
+            "call BossAI_ChooseBestOracleMove",
             "callfar EnforceEnemyHeldMoveRestrictions_Far",
             "callfar UpdateMoveData",
             "call BossAI_UpdateRepeatTracker",
+            "call BossAI_MarkScoutedIfScoutMove",
+            "call BossAI_QueueHakiTaunt",
             "set BOSSAI_HAKI_SPENT_F, [hl]",
         ],
-        "Morty Haki oracle is post-input, one-shot, and refreshes move data",
+        "Uniform Haki oracle is post-input, one-shot, queues taunt, and refreshes move data",
     )
     for needle in (
         "ld a, [wCurPlayerMove]",
-        "call BossAI_PlayerThreatTypeSuperEffectiveVsEnemy",
         "or 1 << BOSSAI_HAKI_TRACE_FIRED_F",
         "ld [wBossAITraceChosenMove], a",
     ):
-        require_contains(oracle, needle, "Morty Haki quarantine trace/input boundary")
+        require_contains(oracle, needle, "Uniform Haki quarantine trace/input boundary")
+
+    bias = top_block(boss, "BossAI_ApplyKnownPlayerActionOracleBias")
+    require_order(
+        bias,
+        [
+            "call BossAI_HakiPlayerSelectedStrongSuperEffectiveAttack",
+            "cp EFFECT_DESTINY_BOND",
+            "cp EFFECT_PROTECT",
+            "cp EFFECT_ENDURE",
+            "ld [hl], a",
+        ],
+        "Uniform Haki known-action bias is generic effect-based, not trainer-specific",
+    )
 
 
 def audit_revenge_denial_uses_public_seen_species(boss: str) -> None:
@@ -2439,7 +2479,7 @@ def main() -> int:
         "plausible threat source and seen-bench restoration",
         "public perish-count escape switching",
         "A->B->A loop penalty target check",
-        "Morty Haki oracle quarantine",
+        "Uniform Haki oracle quarantine",
         "public seen-species revenge denial",
         "revealed priority pressure",
         "revealed Protect commitment risk",

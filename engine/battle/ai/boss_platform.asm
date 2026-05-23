@@ -50,25 +50,75 @@ BossAI_IncrementTurnsElapsed:
 ; ai-layer: PLATFORM
 BossAI_UpdateHakiAceWindow:
 ; Byte 1 of wBossAIRevealedMovesBitmapSpare stores quarantined Haki bits.
-; Morty's Gengar prototype only: mark a one-turn window when the ace first
-; starts a battle turn active, so player switch/item turns cannot defer Haki.
+; Mark a one-turn window when any eligible trainer's ace first starts a
+; battle turn active, so player switch/item turns cannot defer Haki.
 	ld hl, wBossAIRevealedMovesBitmapSpare + 1
 	res BOSSAI_HAKI_ELIGIBLE_F, [hl]
 	bit BOSSAI_HAKI_SPENT_F, [hl]
 	ret nz
 	bit BOSSAI_HAKI_ACE_SEEN_F, [hl]
 	ret nz
-	ld a, [wTrainerClass]
-	cp MORTY
-	ret nz
-	ld a, [wOtherTrainerID]
-	cp MORTY1
-	ret nz
-	ld a, [wEnemyMonSpecies]
-	cp GENGAR
-	ret nz
+	call BossAI_HakiTrainerEligible
+	ret nc
+	call BossAI_CurrentEnemyIsAce
+	ret nc
+	ld hl, wBossAIRevealedMovesBitmapSpare + 1
 	set BOSSAI_HAKI_ACE_SEEN_F, [hl]
 	set BOSSAI_HAKI_ELIGIBLE_F, [hl]
+	ret
+
+BossAI_HakiTrainerEligible:
+	ld a, [wBossAITier]
+	and a
+	ret z
+	cp AI_TIER_EARLY
+	ret z
+	ld a, [wTrainerClass]
+	ld b, a
+	ld hl, BossAIHakiExcludedClasses
+.loop
+	ld a, [hli]
+	and a
+	jr z, .eligible
+	cp b
+	jr nz, .loop
+	and a
+	ret
+.eligible
+	scf
+	ret
+
+BossAI_CurrentEnemyIsAce:
+; Ace = highest-level party member; ties resolve to the later party slot.
+	ld a, [wOTPartyCount]
+	and a
+	jr z, .no
+	ld b, a ; remaining mons
+	ld c, 0 ; current party index
+	ld d, 0 ; best level
+	ld e, 0 ; best party index
+	ld hl, wOTPartyMon1Level
+.loop
+	ld a, [hl]
+	cp d
+	jr c, .next
+	ld d, a
+	ld e, c
+.next
+	push bc
+	ld bc, PARTYMON_STRUCT_LENGTH
+	add hl, bc
+	pop bc
+	inc c
+	dec b
+	jr nz, .loop
+	ld a, [wCurOTMon]
+	cp e
+	jr nz, .no
+	scf
+	ret
+.no
+	and a
 	ret
 
 ; ai-layer: PLATFORM

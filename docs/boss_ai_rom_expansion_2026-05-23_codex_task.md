@@ -314,7 +314,7 @@ Ready when you are. Please confirm the read of the roadmap and post your first `
 - **Acceptance criterion**: build green; `make compare` may diverge (new SECTION is fine, no parity claim); `dev_index.md` regenerated showing WRAMX bank 02 used bytes > 0; existing Boss AI WRAM Reserve table still shows ≥9 trace bytes free in bank 1.
 - **ROM cost**: <100 bytes (helper).
 - **WRAMX cost**: ≥1 byte placeholder in bank 2 (to make the SECTION non-empty); future levers grow this.
-- **Play-impact**: none directly; unblocks P5 + parts of P1/P7.
+- **Play-impact**: none directly; unblocks P1H/P5 + later plan-state work in P7.
 - **Author**: paired. **Not setup-allowlist work** per Codex convergence note row 6 — this is real boss-AI infrastructure. Requires Codex slice_review before commit OR commit-then-rereview per `feedback_codex_commit_then_review_rule` (Codex's choice).
 
 ### P0.5c — Haki-audit tool stub (tools-only)
@@ -322,7 +322,7 @@ Ready when you are. Please confirm the read of the roadmap and post your first `
 - **Goal**: extend `tools/boss_ai_debugger/` with a `haki-coverage` subcommand that surfaces per-leader Oracle entries (which leaders have Haki, ace species, iconic move on ace, ParsePlayerAction read source line). No data structure changes; tool reads existing trainer party data + `docs/boss_ai_spec.md` roster table + asm citations.
 - **Public-info-only**: not gameplay; dev tool only.
 - **Files to touch (write set)**: `tools/boss_ai_debugger/haki_coverage.py` (new), `tools/boss_ai_debugger/__main__.py` (subcommand wiring), `tools/audit/check_haki_coverage_audit.py` (new audit that runs `haki-coverage --self-test` and verifies known leaders are listed).
-- **Acceptance criterion**: `python -m tools.boss_ai_debugger haki-coverage --self-test` exits 0 and reports all 19 Haki leaders listed in `docs/boss_ai_spec.md:66-84` (Morty, Chuck, Jasmine, Pryce, Clair, Will, Koga, Bruno, Karen, Lance, Brock, Misty, Lt. Surge, Erika, Janine, Sabrina, Blaine, Blue, Red).
+- **Acceptance criterion**: originally `python -m tools.boss_ai_debugger haki-coverage --self-test` reported the 19-entry Haki roster from the then-current spec. After the 2026-05-23 Cole pivot, the same command is gate-rule based and must report all 16 included trainer classes plus all 7 excluded Kanto-gym classes from `BossAIHakiExcludedClasses`.
 - **ROM cost**: 0.
 - **WRAMX cost**: 0.
 - **Play-impact**: none directly; developer iteration velocity on later levers.
@@ -340,7 +340,7 @@ Ready when you are. Please confirm the read of the roadmap and post your first `
   - `tools/audit/check_haki_oracle_uniform.py` (new) — audits (a) no bespoke `BossAI_TryMortyHakiOracle`-style entry points remain, (b) every eligible class has a taunt row, (c) every excluded class is present in `BossAIHakiExcludedClasses`, (d) the taunt-queue flush call is sequenced BEFORE the enemy-action dispatcher, not after.
 - **Acceptance criterion**: ROM builds; release-smoke + farcall audits green; `python tools/audit/check_haki_oracle_uniform.py` exits 0; `python tools/audit/check_haki_coverage_audit.py` continues to PASS; `python -m tools.boss_ai_debugger haki-coverage --self-test` exits 0; manual smoke or `tools/boss_ai_debugger` fixture shows: (1) Morty fight still fires Haki on ace's first turn (regression test for the refactor), (2) one of the newly-extended classes (e.g. Chuck or Karen) ALSO fires Haki on ace's first turn with the per-leader taunt printed BEFORE the move animation, (3) an excluded Kanto gym (e.g. Brock or Sabrina) does NOT fire Haki.
 - **ROM cost**: ~0.5–1 bank total. Taunt text data + generic helper. The generic Oracle is ~30 bytes smaller than the bespoke Morty path once duplicated branches collapse, partially offsetting the new helpers.
-- **WRAMX cost**: 1 byte (pending-taunt-id in the P0.5b-declared bank 2) + reuses existing `wHakiSpent` + the ace-first-turn bit already mentioned in the spec. No save-format change.
+- **WRAMX cost**: estimated 1 byte for pending-taunt-id. Codex P1H implementation note: this reuses `wBossAIRevealedMovesBitmapSpare + 2` in the existing battle-volatile Boss AI reserve instead of WRAMX-2, so the taunt queue is cleared by `ClearBossAIState` and does not need WRAM bank switching. No save-format change.
 - **Play-impact**: very high. Extends the "Lance's eyes narrow" / "Karen smiles slowly" pre-Haki moment from 1 leader (Morty, who currently doesn't even print a taunt) to 16 leaders. The taunt becomes a player-trainable signal of "this turn is about to be brutal" without leaking the mechanic name. Resolves the Cole-flagged complaint about the current bespoke Morty Haki shape (single-leader, no taunt, opaque to the player).
 - **Author**: paired. **Codex primary** on the asm refactor + new helpers + taunt-queue plumbing (his stated future lane). **Claude primary** on the spec amendment (already landed on this branch via Item 2 — `docs/boss_ai_spec.md` lines 31-38 + 39-44 + 67-100; see handoff log Item 2 row for provenance) + the `check_haki_oracle_uniform.py` audit + the per-leader taunt copy taste-pass. Both LLMs `slice_review` before commit; new-phase work means chat ack BEFORE ack_start per the Codex commit-then-review rule.
 
