@@ -83,6 +83,7 @@ V2_PASSTHROUGH_MODULES = {
     "dap": "tools.debugger.dap_server",
     "clobbers": "tools.debugger.register_flow",
     "auto-watch": "tools.debugger.auto_watch",
+    "speedup-report": "tools.debugger.speedup_harness",
 }
 
 

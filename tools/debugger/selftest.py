@@ -1465,6 +1465,32 @@ def check_auto_watch(root: Path) -> CheckResult:
     )
 
 
+def check_speedup_harness(root: Path) -> CheckResult:
+    """Exercise P21 stored measured-scenario validation in-process."""
+
+    from . import speedup_harness
+
+    def inner() -> str:
+        report = speedup_harness.build_speedup_report(
+            root / "audit" / "lived_bug_scenarios.jsonl",
+            refresh=False,
+        )
+        if not report.get("ready"):
+            raise AssertionError(f"speedup_harness not ready: {report.get('errors')}")
+        measured = int(report.get("measured_count", 0))
+        if measured < speedup_harness.MIN_SCENARIOS:
+            raise AssertionError(
+                f"speedup_harness measured {measured}; need {speedup_harness.MIN_SCENARIOS}"
+            )
+        return f"speedup_harness validates {measured} measured evidence-backed scenarios"
+
+    return _capture(
+        component="speedup_harness",
+        next_command="python -m tools.debugger speedup-report --self-test",
+        fn=inner,
+    )
+
+
 NAMED_CHECKS: tuple[tuple[str, Check], ...] = (
     ("capability_audit", check_capability_audit),
     ("inventory", check_inventory),
@@ -1496,6 +1522,7 @@ NAMED_CHECKS: tuple[tuple[str, Check], ...] = (
     ("dap_server", check_dap_server),
     ("register_flow", check_register_flow),
     ("auto_watch", check_auto_watch),
+    ("speedup_harness", check_speedup_harness),
 )
 
 CHECKS: tuple[Check, ...] = tuple(check for _, check in NAMED_CHECKS)

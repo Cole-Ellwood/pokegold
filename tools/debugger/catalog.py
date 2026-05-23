@@ -1393,6 +1393,45 @@ def _build_v2_surfaces(root: Path = ROOT) -> list[dict[str, Any]]:
             ),
         ),
         _capability(
+            id="speedup_harness",
+            title="Measured 100x speedup harness (P21)",
+            status=_complete_if_paths(
+                root,
+                "tools/debugger/speedup_harness.py",
+                "tools/debugger/tests/test_speedup_harness.py",
+                "audit/lived_bug_scenarios.jsonl",
+                "docs/debugger_speedup_2026-05-22.md",
+            ),
+            scope=(
+                "Per-scenario speedup report for lived debugger bugs. The "
+                "harness loads audit/lived_bug_scenarios.jsonl, verifies each "
+                "scenario against the P20 bug-class catalog, replays the "
+                "masterpiece command path, measures elapsed time, and emits "
+                "only evidence-backed per-scenario ratios. Baseline times "
+                "remain explicit historical estimates; the harness refuses a "
+                "scenario when replay commands fail or required EvidenceAtoms "
+                "are absent."
+            ),
+            evidence=(
+                "tools/debugger/speedup_harness.py",
+                "tools/debugger/tests/test_speedup_harness.py",
+                "audit/lived_bug_scenarios.jsonl",
+                "docs/debugger_speedup_2026-05-22.md",
+                "docs/debugger_masterpiece_roadmap_codex_task.md",
+            ),
+            gaps=(
+                "ratios are per-scenario only; no aggregate 100x claim is emitted",
+                "baseline times are cited historical estimates, not re-run wall-clock baselines",
+                "future slices can add richer replay fixtures where historical traces are available",
+            ),
+            commands=(
+                "python -m tools.debugger speedup-report --self-test",
+                "python -m tools.debugger speedup-report --markdown",
+                "python -m tools.debugger speedup-report --json --no-refresh",
+                "python -m tools.debugger speedup-report --filter QUERY --no-refresh",
+            ),
+        ),
+        _capability(
             id="register_flow",
             title="Static register-flow / clobber-set analyzer (P15)",
             status=_complete_if_paths(
