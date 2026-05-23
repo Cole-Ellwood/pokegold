@@ -56,6 +56,17 @@ Init::
 	xor a
 	ldh [rLCDC], a
 
+; Set WRAMX bank to 1 before the WRAM clear loop sweeps WRAMX through bank 1.
+; The clear-loop runs the same code path on DMG (where rSVBK is open-bus), but
+; the explicit write is harmless and matches Pan Docs SVBK / asm-guide §1.6.
+; Shadow update happens after the HRAM clear below since HRAM gets zeroed.
+	ldh a, [hCGB]
+	and a
+	jr z, .skip_svbk_init
+	ld a, 1
+	ldh [rSVBK], a
+.skip_svbk_init:
+
 ; Clear WRAM
 	ld hl, STARTOF(WRAM0)
 	ld bc, SIZEOF(WRAM0) + SIZEOF(WRAMX)
@@ -80,6 +91,12 @@ Init::
 	call ByteFill
 	pop af
 	ldh [hCGB], a
+
+; Sync hWRAMBank shadow to the post-init WRAMX bank (1). Done after HRAM clear
+; zeroed the shadow byte so we set the correct value rather than depending on
+; the zeroed state matching the hardware register.
+	ld a, 1
+	ldh [hWRAMBank], a
 
 	call ClearSprites
 

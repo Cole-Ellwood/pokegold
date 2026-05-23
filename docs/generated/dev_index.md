@@ -2,7 +2,7 @@
 
 Boss AI cognition note: if you are here for the Boss AI loop, think wildly in the journal before changing source; this index is the hard memory/bank reality check for those ideas.
 
-Generated: 2026-05-15
+Generated: 2026-05-23
 ROM target: `pokegold`
 
 Generated from `layout.link`, assembly sources, `pokegold.map`, and `pokegold.sym`.
@@ -74,11 +74,11 @@ Read `docs/README.md` first for helper-doc routing, then `docs/project_context.m
 
 | Region | Used | Free | Banks |
 | --- | ---: | ---: | ---: |
-| ROM0 | 15650 | 734 |  |
-| ROMX | 1137705 | 943063 | 127 |
+| ROM0 | 15668 | 716 |  |
+| ROMX | 1137805 | 942963 | 127 |
 | SRAM | 31699 | 1069 | 4 |
 | WRAM0 | 4049 | 47 |  |
-| WRAMX | 4096 | 0 |  |
+| WRAMX | 4097 | 4095 | 2 |
 | HRAM | 127 | 0 |  |
 
 ### Boss AI WRAM Reserve
@@ -115,6 +115,7 @@ Bank numbers in this table are hexadecimal.
 | ROMX | 1c | 1 |
 | ROMX | 1f | 1 |
 | ROMX | 1a | 4 |
+| ROMX | 3e | 43 |
 | WRAM0 | 00 | 47 |
 | ROMX | 16 | 48 |
 | ROMX | 20 | 64 |
@@ -122,7 +123,6 @@ Bank numbers in this table are hexadecimal.
 | ROMX | 07 | 67 |
 | ROMX | 19 | 77 |
 | ROMX | 3a | 78 |
-| ROMX | 1d | 79 |
 
 ### Largest ROMX Free Ranges
 
@@ -149,12 +149,12 @@ Use these as candidates when moving optional code or data out of tight banks.
 
 | Section | Region | Bank/range | Size | Layout constraint | Source hints |
 | --- | --- | --- | ---: | --- | --- |
-| `Home` | ROM0 | 00:0150-3df9 | 15530 | ROM0 00 | `home.asm`, `home/array.asm`, `home/audio.asm`, `home/battle.asm`, +48 more |
+| `Home` | ROM0 | 00:0150-3e0b | 15548 | ROM0 00 | `home.asm`, `home/array.asm`, `home/audio.asm`, `home/battle.asm`, +49 more |
 | `bankB` | ROMX | 0b:4000-4b64 | 2917 | ROMX 0b | `engine/battle/ai/redundant.asm`, `engine/battle/trainer_huds.asm`, `engine/events/move_deleter.asm`, `engine/events/move_reminder.asm`, +5 more |
 | `Effect Commands` | ROMX | 0d:4000-7f30 | 16177 | ROMX 0d | `engine/battle/effect_commands.asm`, `engine/battle/used_move_text.asm`, `main.asm` |
 | `Enemy Trainers` | ROMX | 0e:4000-7584 | 13701 | ROMX 0e | `engine/battle/ai/boss_platform.asm`, `engine/battle/ai/boss_policy_move.asm`, `engine/battle/ai/boss_policy_switch.asm`, `engine/battle/ai/boss_thunks.asm`, +3 more |
 | `Battle Core` | ROMX | 0f:4000-7ac5 | 15046 | ROMX 0f | `engine/battle/core.asm`, `main.asm` |
-| `Evolutions and Attacks` | ROMX | 10:685c-7f95 | 5946 | ROMX 10 | `data/pokemon/evos_attacks.asm`, `data/pokemon/evos_attacks_pointers.asm` |
+| `Evolutions and Attacks` | ROMX | 10:685c-7f97 | 5948 | ROMX 10 | `data/pokemon/evos_attacks.asm`, `data/pokemon/evos_attacks_pointers.asm` |
 | `Late Gen Held Items` | ROMX | 11:4ae1-5880 | 3488 |  | `engine/battle/late_gen_held_items.asm`, `engine/battle/type_passive_damage_mods.asm`, `main.asm` |
 | `Maps` | ROMX | 25:4000-65f8 | 9721 | ROMX 25 | `data/maps/attributes.asm`, `data/maps/blocks.asm`, `data/maps/map_data.asm`, `data/maps/maps.asm`, +2 more |
 | `Events` | ROMX | 25:65f9-7d82 | 6026 | ROMX 25 | `data/wild/bug_contest_mons.asm`, `engine/events/trainer_scripts.asm`, `engine/overworld/cmd_queue.asm`, `engine/overworld/events.asm`, +1 more |
@@ -220,8 +220,8 @@ Use these as candidates when moving optional code or data out of tight banks.
 | `BossAI_ApplyPlausibleRiskToSwitchConfidence` | 0e:7047 | `engine/battle/ai/boss_policy_switch.asm:1148` |
 | `BossAITierMap` | 0e:74d9 | `data/trainers/ai_tiers.asm:1` |
 | `CheckPlayerMoveTypeMatchups` | 0d:49e5 | `engine/battle/ai/switch.asm:1` |
-| `AICompareSpeed` | 0b:78bd | `engine/battle/ai/scoring.asm:2638` |
-| `AIDamageCalc` | 0b:7a72 | `engine/battle/ai/scoring.asm:2965` |
+| `AICompareSpeed` | 0b:78d0 | `engine/battle/ai/scoring.asm:2650` |
+| `AIDamageCalc` | 0b:7a85 | `engine/battle/ai/scoring.asm:2977` |
 | `TypePassive_ApplyDamageModifiers_Far` | 11:5020 | `engine/battle/type_passive_damage_mods.asm:44` |
 | `TypePassive_TryDarkStatusShield_Far` | 11:55a5 | `engine/battle/type_passive_damage_mods.asm:1069` |
 | `TypePassive_MaybePoisonRetaliation_Far` | 11:5602 | `engine/battle/type_passive_damage_mods.asm:1135` |

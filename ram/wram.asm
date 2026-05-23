@@ -2798,3 +2798,18 @@ wStackTop::
 	ds 1
 
 ENDSECTION
+
+
+; --- WRAMX bank 2 ---
+; First declaration of a WRAMX bank beyond bank 1. P0.5b plumbing slice. Real
+; consumers (P5 observation log, etc.) populate the buffer in later phases.
+; Access goes through SetWRAMBank in home/wram_bank.asm; rSVBK and hWRAMBank
+; stay in sync. Bank-1 reserve is unchanged (see Boss AI WRAM Reserve in
+; docs/generated/dev_index.md).
+SECTION "Boss AI WRAMX2 Buffer", WRAMX, BANK[2]
+
+wBossAIWramx2Buffer::
+	ds 1 ; placeholder so the SECTION is non-empty; resized by P5
+wBossAIWramx2BufferEnd::
+
+ENDSECTION
