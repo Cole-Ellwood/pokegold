@@ -230,6 +230,51 @@ def check_multiplier_values(rows: list[dict]) -> tuple[bool, str]:
     return True, "(d) PASS: all multiplier bytes in {0, 5, 10, 20}."
 
 
+def _load_trainer_constants() -> set[str]:
+    """Parse constants/trainer_constants.asm and return the full set of
+    declared trainer-id constants (every `const <NAME>` line under a
+    trainerclass block).
+    """
+    path = REPO / "constants" / "trainer_constants.asm"
+    if not path.exists():
+        return set()
+    ids: set[str] = set()
+    for raw in path.read_text(encoding="utf-8").splitlines():
+        m = re.match(r"^\s*const\s+(\w+)\s*$", raw)
+        if m:
+            ids.add(m.group(1))
+    return ids
+
+
+CHAMPION_SINGLETON_ID = "LANCE"  # CHAMPION has no `const` line; ai_tiers.asm uses LANCE.
+
+
+def check_trainer_id_validity(rows: list[dict]) -> tuple[bool, str]:
+    """(f) Every emitted (class, id) pair has a matching constant.
+
+    Codex's 2026-05-23 slice_revisions_requested catch: the generator
+    can synthesize bogus IDs (EXECUTIVEM4 vs EXECUTIVEM_4, off-by-one
+    rival stage numbering) that would fail assembly when Codex's P2b
+    INCLUDEs this file. Cross-check each ID against the
+    trainer_constants.asm declared set (plus the CHAMPION:LANCE
+    singleton special case).
+    """
+    declared = _load_trainer_constants()
+    declared.add(CHAMPION_SINGLETON_ID)
+    if not declared:
+        return False, "(f) FAIL: couldn't parse constants/trainer_constants.asm"
+    bad = [(r["class"], r["id"]) for r in rows if r["id"] not in declared]
+    if bad:
+        sample = ", ".join(f"{cls}:{tid}" for cls, tid in bad[:6])
+        more = f" (+ {len(bad) - 6} more)" if len(bad) > 6 else ""
+        return False, (
+            f"(f) FAIL: emitted trainer IDs not declared in "
+            f"constants/trainer_constants.asm: {sample}{more}. "
+            f"The generator's ID-synthesis rule is out of sync with the constants."
+        )
+    return True, f"(f) PASS: all {len(rows)} emitted (class, id) pairs match declared constants."
+
+
 def check_immunity_and_super_present(rows: list[dict]) -> tuple[bool, str]:
     """(e) Sanity: table has at least one 0 (immunity) and one 20 (super)."""
     has_zero = False
@@ -266,6 +311,7 @@ def main() -> int:
         check_class_coverage(rows),
         check_byte_layout(rows),
         check_multiplier_values(rows),
+        check_trainer_id_validity(rows),
         check_immunity_and_super_present(rows),
     ]
     all_ok = ok_drift and all(ok for ok, _ in checks)

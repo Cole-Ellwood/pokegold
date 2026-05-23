@@ -232,19 +232,39 @@ TRAINER_TYPE_LAYOUT = {
 }
 
 
-def _trainer_id_from_comment(comment: str | None, group_class: str, occurrence: int) -> str:
-    """Synthesize a trainer ID from the group prefix + occurrence index.
+RIVAL_STARTERS = ("CHIKORITA", "CYNDAQUIL", "TOTODILE")
 
-    parties.asm uses `; <NAME> (N)` comments to label each entry. We extract
-    `(N)` to compose `<CLASS><N>` for most groups. RIVAL1/RIVAL2 use the
-    starter species as a suffix (e.g. RIVAL1_3_CYNDAQUIL); for those we
-    fall back to occurrence-numbered guesses that the caller can override
-    via the comment.
+
+def _synthesize_trainer_id(group_class: str, occurrence: int) -> str:
+    """Canonical trainer-ID synthesis per constants/trainer_constants.asm.
+
+    Codex's P2a slice_revisions_requested (2026-05-23) caught the previous
+    naive `f"{group_class}{occurrence}"` synthesis emitting IDs that don't
+    match the actual constants (e.g. EXECUTIVEM4 vs EXECUTIVEM_4, or
+    RIVAL1_2_CYNDAQUIL for the first Cyndaquil variant when it should be
+    RIVAL1_1_CYNDAQUIL). This function encodes the per-class rules:
+
+      - CHAMPION → "LANCE" (singleton, no number).
+      - EXECUTIVEM / EXECUTIVEF → underscored: EXECUTIVEM_1..EXECUTIVEM_4,
+        EXECUTIVEF_1..EXECUTIVEF_2.
+      - RIVAL1 / RIVAL2 → stage-major <CLASS>_<stage>_<STARTER>:
+          stage   = (occurrence - 1) // 3 + 1   (1..5 for RIVAL1, 1..2 for RIVAL2)
+          starter = (occurrence - 1) % 3        (0=CHIKORITA, 1=CYNDAQUIL, 2=TOTODILE)
+        Mirrors the const order in constants/trainer_constants.asm:
+          RIVAL1_1_CHIKORITA, RIVAL1_1_CYNDAQUIL, RIVAL1_1_TOTODILE,
+          RIVAL1_2_CHIKORITA, ... RIVAL1_5_TOTODILE,
+          RIVAL2_1_CHIKORITA, ... RIVAL2_2_TOTODILE.
+      - All other classes (MORTY, CHUCK, JASMINE, PRYCE, CLAIR, WILL,
+        BRUNO, KOGA, KAREN, BLUE, RED) → bare number suffix MORTY1, etc.
     """
-    if comment:
-        m = re.search(r"\((\d+)\)\s*$", comment.strip())
-        if m:
-            return f"{group_class}{m.group(1)}"
+    if group_class == "CHAMPION":
+        return "LANCE"
+    if group_class in ("EXECUTIVEM", "EXECUTIVEF"):
+        return f"{group_class}_{occurrence}"
+    if group_class in ("RIVAL1", "RIVAL2"):
+        stage = (occurrence - 1) // 3 + 1
+        starter = RIVAL_STARTERS[(occurrence - 1) % 3]
+        return f"{group_class}_{stage}_{starter}"
     return f"{group_class}{occurrence}"
 
 
@@ -348,12 +368,7 @@ def _emit_entry(
         slots.append(PartySlot(species=species, level=level, moves=moves))
     if not slots:
         return
-    # Trainer ID synthesis: prefer explicit "(N)" from comment.
-    trainer_id = _trainer_id_from_comment(comment, group_class, occurrence)
-    # RIVAL1/RIVAL2: append starter species suffix (the ace's species).
-    if group_class in ("RIVAL1", "RIVAL2"):
-        ace = slots[-1].species
-        trainer_id = f"{group_class}_{occurrence}_{ace}"
+    trainer_id = _synthesize_trainer_id(group_class, occurrence)
     yield LeaderRoster(trainer_class=group_class, trainer_id=trainer_id, slots=tuple(slots))
 
 

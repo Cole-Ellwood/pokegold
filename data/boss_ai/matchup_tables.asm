@@ -120,22 +120,22 @@ BossAIMatchupTables::
 	db 10, 10, 20, 20, 5, 10, 20, 10, 10, 20, 5, 5, 5, 10, 20, 10, 10 ; defensive vector
 	db 10, 10, 10, 10, 10, 5, 10, 0, 5, 10, 10, 10, 10, 5, 10, 10, 10 ; offensive vector
 
-	; RIVAL1 : RIVAL1_2_CYNDAQUIL
-	db RIVAL1, RIVAL1_2_CYNDAQUIL
+	; RIVAL1 : RIVAL1_1_CYNDAQUIL
+	db RIVAL1, RIVAL1_1_CYNDAQUIL
 	db 1
 	db CYNDAQUIL
 	db 10, 10, 10, 10, 10, 20, 5, 10, 5, 5, 20, 5, 10, 10, 5, 10, 10 ; defensive vector
 	db 10, 10, 10, 10, 10, 5, 10, 0, 5, 10, 10, 10, 10, 5, 10, 10, 10 ; offensive vector
 
-	; RIVAL1 : RIVAL1_3_TOTODILE
-	db RIVAL1, RIVAL1_3_TOTODILE
+	; RIVAL1 : RIVAL1_1_TOTODILE
+	db RIVAL1, RIVAL1_1_TOTODILE
 	db 1
 	db TOTODILE
 	db 10, 10, 10, 10, 10, 10, 10, 10, 5, 5, 5, 20, 20, 10, 5, 10, 10 ; defensive vector
 	db 10, 10, 10, 10, 10, 5, 10, 0, 5, 10, 10, 10, 10, 5, 10, 10, 10 ; offensive vector
 
-	; RIVAL1 : RIVAL1_4_BAYLEEF
-	db RIVAL1, RIVAL1_4_BAYLEEF
+	; RIVAL1 : RIVAL1_2_CHIKORITA
+	db RIVAL1, RIVAL1_2_CHIKORITA
 	db 3
 	db GASTLY
 	db 0, 0, 10, 5, 0, 5, 10, 20, 10, 10, 10, 10, 10, 5, 10, 10, 20 ; defensive vector
@@ -147,8 +147,8 @@ BossAIMatchupTables::
 	db 10, 10, 20, 20, 5, 10, 20, 10, 10, 20, 5, 5, 5, 10, 20, 10, 10 ; defensive vector
 	db 20, 20, 10, 10, 20, 20, 10, 10, 5, 10, 20, 20, 10, 10, 10, 10, 10 ; offensive vector
 
-	; RIVAL1 : RIVAL1_5_QUILAVA
-	db RIVAL1, RIVAL1_5_QUILAVA
+	; RIVAL1 : RIVAL1_2_CYNDAQUIL
+	db RIVAL1, RIVAL1_2_CYNDAQUIL
 	db 3
 	db GASTLY
 	db 0, 0, 10, 5, 0, 5, 10, 20, 10, 10, 10, 10, 10, 5, 10, 10, 20 ; defensive vector
@@ -160,8 +160,8 @@ BossAIMatchupTables::
 	db 10, 10, 10, 10, 10, 20, 5, 10, 5, 5, 20, 5, 10, 10, 5, 10, 10 ; defensive vector
 	db 10, 10, 10, 10, 10, 5, 20, 10, 20, 10, 10, 20, 10, 10, 20, 10, 10 ; offensive vector
 
-	; RIVAL1 : RIVAL1_6_CROCONAW
-	db RIVAL1, RIVAL1_6_CROCONAW
+	; RIVAL1 : RIVAL1_2_TOTODILE
+	db RIVAL1, RIVAL1_2_TOTODILE
 	db 3
 	db GASTLY
 	db 0, 0, 10, 5, 0, 5, 10, 20, 10, 10, 10, 10, 10, 5, 10, 10, 20 ; defensive vector
@@ -173,8 +173,8 @@ BossAIMatchupTables::
 	db 10, 10, 10, 10, 10, 10, 10, 10, 5, 5, 5, 20, 20, 10, 5, 10, 10 ; defensive vector
 	db 10, 10, 10, 10, 20, 20, 10, 20, 10, 20, 10, 10, 10, 20, 10, 10, 10 ; offensive vector
 
-	; RIVAL1 : RIVAL1_7_BAYLEEF
-	db RIVAL1, RIVAL1_7_BAYLEEF
+	; RIVAL1 : RIVAL1_3_CHIKORITA
+	db RIVAL1, RIVAL1_3_CHIKORITA
 	db 4
 	db HAUNTER
 	db 0, 0, 10, 5, 0, 5, 10, 20, 10, 10, 10, 10, 10, 5, 10, 10, 20 ; defensive vector
@@ -189,8 +189,8 @@ BossAIMatchupTables::
 	db 10, 10, 20, 20, 5, 10, 20, 10, 10, 20, 5, 5, 5, 10, 20, 10, 10 ; defensive vector
 	db 20, 20, 10, 10, 20, 20, 10, 10, 5, 10, 20, 20, 10, 10, 10, 10, 10 ; offensive vector
 
-	; RIVAL1 : RIVAL1_8_QUILAVA
-	db RIVAL1, RIVAL1_8_QUILAVA
+	; RIVAL1 : RIVAL1_3_CYNDAQUIL
+	db RIVAL1, RIVAL1_3_CYNDAQUIL
 	db 4
 	db HAUNTER
 	db 0, 0, 10, 5, 0, 5, 10, 20, 10, 10, 10, 10, 10, 5, 10, 10, 20 ; defensive vector
@@ -205,8 +205,8 @@ BossAIMatchupTables::
 	db 10, 10, 10, 10, 10, 20, 5, 10, 5, 5, 20, 5, 10, 10, 5, 10, 10 ; defensive vector
 	db 10, 10, 10, 10, 10, 5, 20, 10, 20, 10, 10, 20, 10, 10, 20, 10, 10 ; offensive vector
 
-	; RIVAL1 : RIVAL1_9_CROCONAW
-	db RIVAL1, RIVAL1_9_CROCONAW
+	; RIVAL1 : RIVAL1_3_TOTODILE
+	db RIVAL1, RIVAL1_3_TOTODILE
 	db 4
 	db HAUNTER
 	db 0, 0, 10, 5, 0, 5, 10, 20, 10, 10, 10, 10, 10, 5, 10, 10, 20 ; defensive vector
@@ -221,8 +221,8 @@ BossAIMatchupTables::
 	db 10, 10, 10, 10, 10, 10, 10, 10, 5, 5, 5, 20, 20, 10, 5, 10, 10 ; defensive vector
 	db 10, 10, 10, 10, 20, 20, 10, 20, 10, 20, 10, 10, 10, 20, 10, 10, 10 ; offensive vector
 
-	; RIVAL1 : RIVAL1_10_MEGANIUM
-	db RIVAL1, RIVAL1_10_MEGANIUM
+	; RIVAL1 : RIVAL1_4_CHIKORITA
+	db RIVAL1, RIVAL1_4_CHIKORITA
 	db 5
 	db SNEASEL
 	db 10, 20, 10, 10, 10, 20, 20, 5, 20, 20, 5, 10, 10, 0, 5, 10, 5 ; defensive vector
@@ -240,8 +240,8 @@ BossAIMatchupTables::
 	db 10, 10, 20, 20, 5, 10, 20, 10, 10, 20, 5, 5, 5, 10, 20, 10, 10 ; defensive vector
 	db 10, 20, 10, 10, 20, 20, 10, 10, 5, 10, 20, 10, 10, 10, 10, 10, 10 ; offensive vector
 
-	; RIVAL1 : RIVAL1_11_QUILAVA
-	db RIVAL1, RIVAL1_11_QUILAVA
+	; RIVAL1 : RIVAL1_4_CYNDAQUIL
+	db RIVAL1, RIVAL1_4_CYNDAQUIL
 	db 5
 	db SNEASEL
 	db 10, 20, 10, 10, 10, 20, 20, 5, 20, 20, 5, 10, 10, 0, 5, 10, 5 ; defensive vector
@@ -259,8 +259,8 @@ BossAIMatchupTables::
 	db 10, 10, 10, 10, 10, 20, 5, 10, 5, 5, 20, 5, 10, 10, 5, 10, 10 ; defensive vector
 	db 10, 10, 20, 10, 10, 10, 20, 10, 20, 10, 20, 20, 10, 10, 20, 10, 10 ; offensive vector
 
-	; RIVAL1 : RIVAL1_12_FERALIGATR
-	db RIVAL1, RIVAL1_12_FERALIGATR
+	; RIVAL1 : RIVAL1_4_TOTODILE
+	db RIVAL1, RIVAL1_4_TOTODILE
 	db 5
 	db SNEASEL
 	db 10, 20, 10, 10, 10, 20, 20, 5, 20, 20, 5, 10, 10, 0, 5, 10, 5 ; defensive vector
@@ -278,8 +278,8 @@ BossAIMatchupTables::
 	db 10, 10, 20, 10, 10, 5, 5, 20, 5, 5, 5, 20, 20, 20, 5, 10, 5 ; defensive vector
 	db 10, 10, 10, 10, 20, 20, 10, 20, 10, 20, 10, 10, 10, 20, 10, 10, 10 ; offensive vector
 
-	; RIVAL1 : RIVAL1_13_MEGANIUM
-	db RIVAL1, RIVAL1_13_MEGANIUM
+	; RIVAL1 : RIVAL1_5_CHIKORITA
+	db RIVAL1, RIVAL1_5_CHIKORITA
 	db 6
 	db SNEASEL
 	db 10, 20, 10, 10, 10, 20, 20, 5, 20, 20, 5, 10, 10, 0, 5, 10, 5 ; defensive vector
@@ -300,8 +300,8 @@ BossAIMatchupTables::
 	db 10, 10, 20, 20, 5, 10, 20, 10, 10, 20, 5, 5, 5, 10, 20, 10, 10 ; defensive vector
 	db 10, 10, 10, 10, 20, 20, 10, 10, 5, 10, 20, 10, 10, 10, 10, 10, 10 ; offensive vector
 
-	; RIVAL1 : RIVAL1_14_TYPHLOSION
-	db RIVAL1, RIVAL1_14_TYPHLOSION
+	; RIVAL1 : RIVAL1_5_CYNDAQUIL
+	db RIVAL1, RIVAL1_5_CYNDAQUIL
 	db 6
 	db SNEASEL
 	db 10, 20, 10, 10, 10, 20, 20, 5, 20, 20, 5, 10, 10, 0, 5, 10, 5 ; defensive vector
@@ -322,8 +322,8 @@ BossAIMatchupTables::
 	db 10, 20, 10, 20, 10, 20, 5, 0, 5, 5, 20, 5, 10, 10, 5, 10, 10 ; defensive vector
 	db 10, 10, 20, 10, 10, 10, 20, 10, 20, 20, 20, 20, 10, 10, 20, 10, 10 ; offensive vector
 
-	; RIVAL1 : RIVAL1_15_FERALIGATR
-	db RIVAL1, RIVAL1_15_FERALIGATR
+	; RIVAL1 : RIVAL1_5_TOTODILE
+	db RIVAL1, RIVAL1_5_TOTODILE
 	db 6
 	db SNEASEL
 	db 10, 20, 10, 10, 10, 20, 20, 5, 20, 20, 5, 10, 10, 0, 5, 10, 5 ; defensive vector
@@ -432,8 +432,8 @@ BossAIMatchupTables::
 	db 10, 5, 10, 5, 0, 20, 5, 10, 10, 10, 10, 5, 20, 10, 20, 10, 10 ; defensive vector
 	db 20, 20, 10, 10, 10, 5, 20, 10, 5, 10, 10, 20, 10, 10, 10, 10, 10 ; offensive vector
 
-	; CHAMPION : CHAMPION1
-	db CHAMPION, CHAMPION1
+	; CHAMPION : LANCE
+	db CHAMPION, LANCE
 	db 6
 	db STEELIX
 	db 5, 20, 5, 0, 20, 5, 5, 0, 5, 10, 5, 5, 5, 5, 10, 10, 10 ; defensive vector
@@ -454,8 +454,8 @@ BossAIMatchupTables::
 	db 10, 5, 10, 10, 0, 20, 5, 10, 10, 5, 5, 5, 10, 10, 20, 20, 10 ; defensive vector
 	db 10, 10, 10, 20, 10, 20, 10, 10, 20, 10, 10, 10, 20, 10, 10, 20, 10 ; offensive vector
 
-	; RIVAL2 : RIVAL2_1_MEGANIUM
-	db RIVAL2, RIVAL2_1_MEGANIUM
+	; RIVAL2 : RIVAL2_1_CHIKORITA
+	db RIVAL2, RIVAL2_1_CHIKORITA
 	db 6
 	db SNEASEL
 	db 10, 20, 10, 10, 10, 20, 20, 5, 20, 20, 5, 10, 10, 0, 5, 10, 5 ; defensive vector
@@ -476,8 +476,8 @@ BossAIMatchupTables::
 	db 10, 10, 20, 20, 5, 10, 20, 10, 10, 20, 5, 5, 5, 10, 20, 10, 10 ; defensive vector
 	db 10, 10, 10, 10, 20, 20, 10, 10, 5, 10, 20, 10, 10, 10, 10, 10, 10 ; offensive vector
 
-	; RIVAL2 : RIVAL2_2_TYPHLOSION
-	db RIVAL2, RIVAL2_2_TYPHLOSION
+	; RIVAL2 : RIVAL2_1_CYNDAQUIL
+	db RIVAL2, RIVAL2_1_CYNDAQUIL
 	db 6
 	db SNEASEL
 	db 10, 20, 10, 10, 10, 20, 20, 5, 20, 20, 5, 10, 10, 0, 5, 10, 5 ; defensive vector
@@ -498,8 +498,8 @@ BossAIMatchupTables::
 	db 10, 20, 10, 20, 10, 20, 5, 0, 5, 5, 20, 5, 10, 10, 5, 10, 10 ; defensive vector
 	db 10, 10, 20, 10, 10, 10, 20, 10, 20, 20, 20, 20, 10, 10, 20, 10, 10 ; offensive vector
 
-	; RIVAL2 : RIVAL2_3_FERALIGATR
-	db RIVAL2, RIVAL2_3_FERALIGATR
+	; RIVAL2 : RIVAL2_1_TOTODILE
+	db RIVAL2, RIVAL2_1_TOTODILE
 	db 6
 	db SNEASEL
 	db 10, 20, 10, 10, 10, 20, 20, 5, 20, 20, 5, 10, 10, 0, 5, 10, 5 ; defensive vector
@@ -520,8 +520,8 @@ BossAIMatchupTables::
 	db 10, 10, 20, 10, 10, 5, 5, 20, 5, 5, 5, 20, 20, 20, 5, 10, 5 ; defensive vector
 	db 20, 10, 10, 10, 20, 20, 10, 10, 20, 20, 10, 10, 10, 10, 20, 20, 20 ; offensive vector
 
-	; RIVAL2 : RIVAL2_4_MEGANIUM
-	db RIVAL2, RIVAL2_4_MEGANIUM
+	; RIVAL2 : RIVAL2_2_CHIKORITA
+	db RIVAL2, RIVAL2_2_CHIKORITA
 	db 6
 	db SNEASEL
 	db 10, 20, 10, 10, 10, 20, 20, 5, 20, 20, 5, 10, 10, 0, 5, 10, 5 ; defensive vector
@@ -542,8 +542,8 @@ BossAIMatchupTables::
 	db 10, 10, 20, 20, 5, 10, 20, 10, 10, 20, 5, 5, 5, 10, 20, 10, 10 ; defensive vector
 	db 10, 10, 10, 10, 20, 20, 10, 10, 5, 10, 20, 10, 10, 10, 10, 10, 10 ; offensive vector
 
-	; RIVAL2 : RIVAL2_5_TYPHLOSION
-	db RIVAL2, RIVAL2_5_TYPHLOSION
+	; RIVAL2 : RIVAL2_2_CYNDAQUIL
+	db RIVAL2, RIVAL2_2_CYNDAQUIL
 	db 6
 	db SNEASEL
 	db 10, 20, 10, 10, 10, 20, 20, 5, 20, 20, 5, 10, 10, 0, 5, 10, 5 ; defensive vector
@@ -564,8 +564,8 @@ BossAIMatchupTables::
 	db 10, 20, 10, 20, 10, 20, 5, 0, 5, 5, 20, 5, 10, 10, 5, 10, 10 ; defensive vector
 	db 10, 10, 20, 10, 10, 10, 20, 10, 20, 10, 20, 20, 10, 10, 20, 10, 10 ; offensive vector
 
-	; RIVAL2 : RIVAL2_6_FERALIGATR
-	db RIVAL2, RIVAL2_6_FERALIGATR
+	; RIVAL2 : RIVAL2_2_TOTODILE
+	db RIVAL2, RIVAL2_2_TOTODILE
 	db 6
 	db SNEASEL
 	db 10, 20, 10, 10, 10, 20, 20, 5, 20, 20, 5, 10, 10, 0, 5, 10, 5 ; defensive vector
@@ -586,8 +586,8 @@ BossAIMatchupTables::
 	db 10, 10, 20, 10, 10, 5, 5, 20, 5, 5, 5, 20, 20, 20, 5, 10, 5 ; defensive vector
 	db 20, 10, 10, 20, 20, 20, 10, 10, 20, 20, 10, 10, 20, 10, 20, 20, 20 ; offensive vector
 
-	; EXECUTIVEM : EXECUTIVEM1
-	db EXECUTIVEM, EXECUTIVEM1
+	; EXECUTIVEM : EXECUTIVEM_1
+	db EXECUTIVEM, EXECUTIVEM_1
 	db 3
 	db HOUNDOUR
 	db 10, 20, 10, 10, 10, 20, 10, 5, 5, 5, 20, 5, 10, 0, 5, 10, 5 ; defensive vector
@@ -599,15 +599,15 @@ BossAIMatchupTables::
 	db 10, 20, 10, 10, 10, 20, 10, 5, 5, 5, 20, 5, 10, 0, 5, 10, 5 ; defensive vector
 	db 20, 10, 10, 10, 10, 10, 20, 20, 20, 10, 10, 20, 10, 20, 20, 10, 10 ; offensive vector
 
-	; EXECUTIVEM : EXECUTIVEM2
-	db EXECUTIVEM, EXECUTIVEM2
+	; EXECUTIVEM : EXECUTIVEM_2
+	db EXECUTIVEM, EXECUTIVEM_2
 	db 1
 	db GOLBAT
 	db 10, 5, 10, 5, 0, 20, 5, 10, 10, 10, 10, 5, 20, 10, 20, 10, 10 ; defensive vector
 	db 10, 20, 10, 10, 10, 10, 20, 20, 10, 10, 10, 20, 10, 20, 10, 10, 20 ; offensive vector
 
-	; EXECUTIVEM : EXECUTIVEM3
-	db EXECUTIVEM, EXECUTIVEM3
+	; EXECUTIVEM : EXECUTIVEM_3
+	db EXECUTIVEM, EXECUTIVEM_3
 	db 6
 	db KOFFING
 	db 10, 20, 10, 5, 20, 10, 10, 5, 10, 10, 10, 5, 10, 0, 10, 10, 5 ; defensive vector
@@ -628,8 +628,8 @@ BossAIMatchupTables::
 	db 10, 20, 10, 5, 20, 10, 10, 5, 10, 10, 10, 5, 10, 0, 10, 10, 5 ; defensive vector
 	db 20, 10, 10, 10, 10, 5, 10, 5, 5, 10, 10, 20, 10, 10, 10, 10, 10 ; offensive vector
 
-	; EXECUTIVEM : EXECUTIVEM4
-	db EXECUTIVEM, EXECUTIVEM4
+	; EXECUTIVEM : EXECUTIVEM_4
+	db EXECUTIVEM, EXECUTIVEM_4
 	db 3
 	db ZUBAT
 	db 10, 5, 10, 5, 0, 20, 5, 10, 10, 10, 10, 5, 20, 10, 20, 10, 10 ; defensive vector
@@ -641,8 +641,8 @@ BossAIMatchupTables::
 	db 10, 20, 10, 5, 20, 10, 10, 5, 10, 10, 10, 5, 10, 0, 10, 10, 5 ; defensive vector
 	db 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10 ; offensive vector
 
-	; EXECUTIVEF : EXECUTIVEF1
-	db EXECUTIVEF, EXECUTIVEF1
+	; EXECUTIVEF : EXECUTIVEF_1
+	db EXECUTIVEF, EXECUTIVEF_1
 	db 3
 	db ARBOK
 	db 10, 20, 10, 5, 20, 10, 10, 5, 10, 10, 10, 5, 10, 0, 10, 10, 5 ; defensive vector
@@ -654,8 +654,8 @@ BossAIMatchupTables::
 	db 10, 10, 10, 10, 0, 20, 10, 5, 10, 10, 10, 10, 20, 0, 20, 10, 5 ; defensive vector
 	db 10, 20, 20, 10, 20, 10, 20, 20, 10, 10, 10, 20, 10, 20, 10, 20, 10 ; offensive vector
 
-	; EXECUTIVEF : EXECUTIVEF2
-	db EXECUTIVEF, EXECUTIVEF2
+	; EXECUTIVEF : EXECUTIVEF_2
+	db EXECUTIVEF, EXECUTIVEF_2
 	db 3
 	db ARBOK
 	db 10, 20, 10, 5, 20, 10, 10, 5, 10, 10, 10, 5, 10, 0, 10, 10, 5 ; defensive vector
