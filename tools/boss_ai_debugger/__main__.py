@@ -21,6 +21,7 @@ from tools.boss_ai_preference.data import (
 )
 from tools.boss_ai_preference.damage_estimates import attach_damage_estimates
 
+from . import haki_coverage
 from .coverage_report import (
     DEFAULT_COVERAGE_PATH,
     build_coverage_report,
@@ -1265,7 +1266,23 @@ def build_parser() -> argparse.ArgumentParser:
     )
     invariants_mine.add_argument("--out", default=str(DEFAULT_INVARIANTS_MD_PATH))
     invariants_mine.set_defaults(func=cmd_invariants_mine)
+
+    haki_cmd = subparsers.add_parser("haki-coverage")
+    haki_cmd.add_argument("--self-test", action="store_true")
+    haki_cmd.add_argument("--json", action="store_true")
+    haki_cmd.set_defaults(func=cmd_haki_coverage)
     return parser
+
+
+def cmd_haki_coverage(args: argparse.Namespace) -> int:
+    if args.self_test:
+        return haki_coverage.run_self_test()
+    report = haki_coverage.run_haki_coverage()
+    if args.json:
+        print(json.dumps(report, indent=2, sort_keys=True))
+    else:
+        print(haki_coverage.format_haki_coverage(report))
+    return 0 if report.get("ok") else 1
 
 
 def main(argv: list[str] | None = None) -> int:
