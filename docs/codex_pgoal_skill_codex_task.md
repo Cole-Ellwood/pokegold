@@ -1,6 +1,6 @@
 # Codex Task — Build `/codex-pgoal` Synthesis Skill
 
-**Status:** v0 spec, Cole-approved 2026-05-22 via /pgoal AskUserQuestion intake.
+**Status:** v1 + hardening spec, Cole-approved 2026-05-22 via /pgoal AskUserQuestion intake and 2026-05-23 diligence pass.
 **Pairing:** Claude (prompter, ~30%) + Codex (implementer, ~70%) under mutual approval.
 **Artifact:** `~/.claude/skills/codex-pgoal/SKILL.md` (user-level, works in any repo).
 **Roadmap home:** this file (`docs/codex_pgoal_skill_codex_task.md`) — canonical contract, both LLMs read it, update it before drift.
@@ -20,24 +20,26 @@ Cole's exact ask: *"i love how powerful pgoal is. make a synthesis skill please?
 | Codex's role | Equal partner, 70/30 work split (Codex codes, Claude prompts/reviews), mutual approval on major decisions | Mirrors today's debrief rules |
 | Loop model | Hybrid — drive between slices, poll mid-slice | Per `feedback_poll_codex_progress.md` cadence |
 
-## In scope (v1 MVP)
+## In scope (v1 hardened)
 
 1. `~/.claude/skills/codex-pgoal/SKILL.md` with valid YAML frontmatter (`name: codex-pgoal`, `description: ...` covering when to trigger).
-2. **Step 0** — Front-load roadmap via AskUserQuestion (scope, acceptance, edge cases, verification floor, branching, stop conditions, disagreement resolution, time budget, async channel). Write committed roadmap to `docs/<kebab-slug>_codex_task.md`. Commit before opening Codex. Mirror the `/codex-task` Step 0 discipline.
-3. **Step 1** — Arm `/pgoal` under the hood by shelling its CLI (`pgoal set --objective ... --replace`, `pgoal prd save --approved`, `pgoal acceptance init`). Do **not** invoke `/pgoal` as a nested skill — pgoal's safety rule forbids nesting.
-4. **Step 2** — Load computer-use tools via `ToolSearch({ query: "computer-use", max_results: 30 })`. Request the 12-app bundle (Codex, Claude, VLC, Spotify, Discord, Chrome, File Explorer, Notepad, Snipping Tool, Steam, Terminal, PowerShell) with `clipboardWrite/Read/systemKeyCombos`. Per `/codex-task` Step 2 verbatim.
-5. **Step 3** — `open_application Codex`, screenshot, orient to the right chat (left sidebar, project name). Click into existing or create new chat.
-6. **Step 4** — Compose the task block in `---CODEX-TASK---` format pointing at the committed roadmap file; send via clipboard paste (`write_clipboard` → `left_click` chat input → `key ctrl+v` → `left_click` send button at the chat-specific coordinates).
-7. **Step 5** — Hybrid loop body:
+2. **Preflight** — declare the skill Windows-first for this workstation, prove pgoal/Codex/Python/verifier prerequisites, and establish a provenance policy for proof artifacts before arming pgoal.
+3. **Step 0** — Front-load roadmap via AskUserQuestion (scope, acceptance, edge cases, verification floor, branching, stop conditions, disagreement resolution, time budget, async channel). Write committed roadmap to `docs/<kebab-slug>_codex_task.md`. Commit before opening Codex. Mirror the `/codex-task` Step 0 discipline, and point future users at `docs/codex_pgoal_examples/` as the show-don't-tell reference.
+4. **Step 1** — Arm `/pgoal` under the hood by shelling its CLI (`pgoal set --objective ... --replace`, `pgoal prd save --approved`, `pgoal acceptance init`). Use scoped verifier commands and `--no-auto-discover` by default unless the whole repo suite is in scope. Do **not** invoke `/pgoal` as a nested skill — pgoal's safety rule forbids nesting. On suspected pgoal bookkeeping/fingerprint races immediately after a state change, retry `pgoal verify --run --record` once before classifying the failure.
+5. **Step 2** — Load computer-use tools via `ToolSearch({ query: "computer-use", max_results: 30 })`. Request the 12-app bundle (Codex, Claude, VLC, Spotify, Discord, Chrome, File Explorer, Notepad, Snipping Tool, Steam, Terminal, PowerShell) with `clipboardWrite/Read/systemKeyCombos`. Classify access denials as hard blockers vs soft visibility grants; tier restrictions are not denial.
+6. **Step 3** — `open_application Codex`, screenshot, orient to the right chat (left sidebar, project name). Handle screenshot retry/fallback, multiple Codex windows, scrolled-off-screen chats, and Codex crash/reopen recovery from the roadmap plus handoff-log tail.
+7. **Step 4** — Compose the task block in `---CODEX-TASK---` format pointing at the committed roadmap file; send via clipboard paste (`write_clipboard` → `left_click` chat input → `key ctrl+v` → `left_click` send button at the chat-specific coordinates).
+8. **Step 5** — Hybrid loop body:
    - Each pgoal iteration begins with a screenshot.
    - Classify Codex state: `idle` (last slice acked, ready for next) / `mid-slice` (Thinking indicator, code edits in progress) / `waiting-on-review` (Codex posted a slice review request) / `blocked` (error, asking question).
    - If `idle` → compose next slice from the roadmap + handoff log, send via Ctrl+Enter (steer) for load-bearing messages, Enter (queue) for follow-ups.
    - If Codex is **talking/thinking** (mid-conversation, Thinking indicator, no observable coding) → screenshot every **15s** (synchronous-partnership window; do NOT start parallel coding during this window). If Codex is **observably coding** (file edits, running commands, "Running ..." status) → screenshot every **150s** (heads-down window; parallel Claude work OK if agreed in preceding talking phase). Per `feedback_poll_codex_progress.md` (2026-05-22, overwrites earlier 30s/150s and 120s/15s rules). Do NOT block on `pgoal note` — note progress with timestamps so the Stop hook keeps firing.
    - If `waiting-on-review` → read Codex's reply, run adversarial review per `reference_llm_pairing_rules.md` decision-useful bar, post verdict via clipboard.
    - If `blocked` → escalate per the disagreement-resolution rule below.
-8. **Step 6** — Mutual approval gates. Every major decision (slice spec, slice review, scope change, commit, accept, completion) requires both Claude and Codex sign-off. Use the handoff log substrate (project-local `audit/<slug>_handoff_log.jsonl` or whatever exists for the goal) with the `ack_start → slice_update → slice_review → mutual_done` event sequence. Silence is unknown, not approval. Per today's `feedback_30_70_split_mutual_approval.md` operational-protocol section.
-9. **Step 7** — Failure modes documented. Replicate `/codex-task`'s "Failure modes to avoid" section, plus today's lessons: hard-stop reflex on unapproved collision-risk ack_starts; 2-commits-or-1-hour surfacing cadence; "don't want to interrupt their good run" warning sign; queue-alarm signal from growing Steer-chip column.
-10. **Composes with `/pgoal`**, not parallel to it. Skill defers to pgoal's completion gate; never unilaterally declares done. Skill defers to pgoal's tamper-protected proof surface; doesn't bypass.
+9. **Step 6** — Mutual approval gates. Every major decision (slice spec, slice review, scope change, commit, accept, completion) requires both Claude and Codex sign-off. Use the handoff log substrate (project-local `audit/<slug>_handoff_log.jsonl` or whatever exists for the goal) with the `ack_start → slice_update → slice_review → mutual_done` event sequence. Silence is unknown, not approval. Prefer `tools/codex_pgoal_handoff_append.py` for writes and `tools/codex_pgoal_handoff_validate.py` for schema checks when present; consumers sort by `ts`, not row index.
+10. **Step 7** — Failure modes documented. Replicate `/codex-task`'s "Failure modes to avoid" section, plus today's lessons: hard-stop reflex on unapproved collision-risk ack_starts; 2-commits-or-1-hour surfacing cadence; "don't want to interrupt their good run" warning sign; queue-alarm signal from growing Steer-chip column.
+11. **Examples directory** — `docs/codex_pgoal_examples/` contains real-data examples: annotated roadmap, clean example handoff JSONL, and row-by-row explanation.
+12. **Composes with `/pgoal`**, not parallel to it. Skill defers to pgoal's completion gate; never unilaterally declares done. Skill defers to pgoal's tamper-protected proof surface; doesn't bypass.
 
 ## Out of scope (deferred)
 
@@ -46,7 +48,7 @@ Cole's exact ask: *"i love how powerful pgoal is. make a synthesis skill please?
 - Cross-emulator / cross-machine pairing.
 - Voice or video integration.
 - Auto-spawning Codex from CLI (assume desktop app installed + chat reachable).
-- An `/codex-pgoal-doctor` self-check (nice-to-have).
+- A separate `/codex-pgoal-doctor` command (nice-to-have). The skill now has an inline preflight instead.
 - Auto-detection of which Codex chat to use (skill orients via screenshot, surfaces what it landed on, user fixes if wrong).
 - In-repo backup of the user-level skill file (skip for v1; user-level path is canonical).
 
@@ -74,25 +76,34 @@ Use today's debrief operational protocol verbatim:
 - **Skill already exists.** If `~/.claude/skills/codex-pgoal/SKILL.md` is present from a prior attempt, treat as iterate-on-existing rather than fresh-create. Read first, diff intent, propose changes.
 - **Codex desktop not running.** Step 3 should `open_application Codex` and handle the load delay. If app doesn't respond after a screenshot + 10s wait, surface to user (don't loop forever).
 - **Wrong chat selected.** Step 3 includes screenshot orient. If the visible chat name doesn't match the expected project, click into the sidebar to find the right one or new-chat.
+- **Screenshot failure.** Retry once, then use a permitted fallback only if it can still prove visible Codex state. Never paste into an unseen UI.
+- **Codex crash/reopen.** Re-open Codex, re-read the roadmap and handoff-log tail sorted by `ts`, reconstruct the last durable state, and continue in the recovered chat or a new project chat.
+- **Multiple Codex windows.** Choose the window whose project/workspace, chat title, and visible context match the roadmap; if neither can be proven, create/select a clearly scoped project chat before sending.
+- **Partial app denial.** Codex/Claude/clipboard/system-key denial blocks the loop. Soft visibility app denials are recorded and tolerated unless the roadmap makes that app task-critical. Tier restrictions are not denial.
 - **Codex's reply parser fails.** If screenshot-based classification of Codex state is ambiguous (e.g., Thinking + post in same view), default to `mid-slice` and poll again rather than risk an unwanted steer.
 - **PRD/acceptance already armed.** If `pgoal status` shows an active goal at skill-creation time, the skill must `--replace` cleanly (per pgoal's `set --replace` semantics) and warn the user about the replaced goal in the chat output.
 - **Skill is being invoked recursively** (user types `/codex-pgoal` inside an active `/codex-pgoal` session). Refuse with a clear error; the pgoal nesting rule applies transitively.
+- **Auto-discovered broad pytest.** Use `--no-auto-discover` and scoped `--verify` commands by default. A whole-repo pytest is only appropriate when unrelated repo failures are in scope.
+- **Verifier race after pgoal state mutation.** If `pgoal verify --run --record` fails once immediately after pgoal state changed and the failure looks like bookkeeping/fingerprint race rather than deterministic test failure, retry once and log both results.
+- **PowerShell helper quoting.** For complex `--extra-json`, use a single-quoted here-string or temporary file. Do not rely on nested escaping for live coordination rows.
+- **Handoff row drift.** Run the validator; `ts` order drift is a normal warning from concurrent appends, but schema errors block `mutual_done`.
 
 ## Verification floor
 
 Before declaring done:
 
-1. `pgoal verify --run --record` returns green on all 5 acceptance tests.
-2. `pgoal verify --discover` returns no new auto-discoverable verifiers that should be added.
-3. The skill loads in a fresh Claude Code session — manual smoke: open a scratch project, type `/codex-pgoal hello`, confirm intake fires without error.
-4. The roadmap doc (this file) is committed and Codex can read it via `git pull`.
-5. Both LLMs sign the handoff-log row.
+1. `pgoal verify --run --record` returns green on all locked acceptance tests.
+2. `python tools/codex_pgoal_handoff_validate.py audit/codex_pgoal_handoff_log.jsonl` reports 0 errors. Expected `ts` drift warnings are acceptable in normal mode.
+3. `python tools/codex_pgoal_handoff_validate.py docs/codex_pgoal_examples/example_handoff_log.jsonl` reports 0 errors when the examples directory exists.
+4. The skill loads in a fresh Claude Code session — manual smoke: open a scratch project, type `/codex-pgoal hello`, confirm intake fires without error.
+5. The roadmap doc (this file), examples, helper scripts, verifier tests, and handoff-log proof rows are committed or have an explicit local-only exception in the roadmap and handoff log.
+6. Both LLMs sign the handoff-log row.
 
 ## Branching / commits
 
 - Work on the current branch (`claude/debugger-masterpiece-roadmap` or wherever Cole's HEAD is when the skill starts). Do not cut a new branch unless Cole requests one.
 - Codex commits the skill file directly (it's at `~/.claude/skills/...`, outside this repo — Codex uses Write tool, no commit needed; the version is whatever's on disk).
-- Codex commits the roadmap doc + handoff-log rows to this repo.
+- Codex/Claude commit roadmap, examples, helper scripts, verifier tests, and handoff-log rows according to the files-first split. Do not leave proof artifacts untracked unless the roadmap and handoff log explicitly say they are local-only.
 - Push to `claude/*` or `codex/*` branches per the pre-authorized list (no force-push to main).
 - Do NOT open a PR without Cole's explicit ask — this isn't a release.
 
@@ -147,14 +158,18 @@ The SKILL.md must NOT just copy-paste from `/codex-task` + `/pgoal`. The synthes
 3. **Hybrid loop body (Step 5)** is the NEW glue. Neither parent skill has this — `/pgoal` has the Stop-hook loop but no Codex awareness; `/codex-task` has Codex awareness but no Stop-hook durability. Step 5 is where the two meet.
 4. **Mutual-approval gates (Step 6)** import from today's debrief, which neither parent skill had.
 5. **Composes-not-nests** — the skill must shell `pgoal` CLI rather than invoking `/pgoal` as a sub-skill. Pgoal's `Do not nest /pgoal inside /pgoal` safety rule applies.
+6. **Production hardening.** Preflight, scoped pgoal verifiers, UI recovery, helper/validator tooling, examples, and committed proof artifacts are part of the final contract, not optional polish.
 
 ## Handoff-log conventions
 
 - File: `audit/codex_pgoal_handoff_log.jsonl` (this repo).
-- Phase tag for v1: `codex-pgoal-skill-v1`.
-- Events: `ack_start` (LLM about to start a slice), `slice_update` (mid-slice progress), `slice_review` (other LLM reviewed), `mutual_done` (both signed off).
-- Required fields per row: `ts` (ISO UTC), `phase`, `event`, `status` (in_progress/complete/blocked), `signed_by` (list), `summary` (one line).
+- Phase tags used by this build: `codex-pgoal-skill-v1` and `codex-pgoal-skill-v1-hardening`.
+- Events: `ack_start` (LLM about to start a slice), `slice_update` (mid-slice progress), `slice_review` (other LLM reviewed), `mutual_done` (both signed off), `verify_pass`/`verify_fail` when recording verifier results.
+- Required fields per row: `ts` (ISO UTC), `phase`, `event`, `status`, `signed_by` (list), `summary` (one line).
 - The acceptance test `mutual_done` looks for `event=mutual_done`, `phase=codex-pgoal-skill-v1`, `status=complete`.
+- Use `tools/codex_pgoal_handoff_append.py` for new rows and `tools/codex_pgoal_handoff_validate.py` before `mutual_done`, after compaction/crash recovery, and after row-shape changes.
+- Consumers sort by `ts`, not row index. Concurrent appends can create valid append-order drift.
+- See `docs/codex_pgoal_examples/example_handoff_log.jsonl` and `docs/codex_pgoal_examples/example_handoff_log_annotated.md` for known-good row shapes derived from this build.
 
 ## Iteration plan
 
@@ -162,6 +177,7 @@ The SKILL.md must NOT just copy-paste from `/codex-task` + `/pgoal`. The synthes
 - **Iter 4-6:** Polish content of each step. Codex authors examples, Claude verifies citations resolve and the steps actually compose with `/pgoal` CLI.
 - **Iter 7-9:** Smoke test — Claude invokes the skill mentally / dry-runs Step 0 / verifies pgoal CLI calls would work.
 - **Iter 10:** Append mutual_done row, run `pgoal verify --run --record`, emit pgoal-complete nonce.
+- **Hardening closeout:** Mirror final hardening additions into this roadmap, commit examples, validate the live and example handoff logs, append `mutual_done` for `codex-pgoal-skill-v1-hardening`, then run the scoped pgoal verifier.
 
 If we're past iter 15 without acceptance green, surface to Cole.
 
