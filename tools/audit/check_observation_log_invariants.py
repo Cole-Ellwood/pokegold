@@ -160,9 +160,10 @@ def main() -> int:
             "call BossAI_ClassifyCurrentObservation",
             "call BossAI_CurrentObservationDamageBand",
             "call BossAI_ObservationWindowLimit",
-            "call SetWRAMBank",
+            "boss_ai_set_wram_bank 2",
             "wBossAIObsWriteIndex",
             "wBossAIObsCount",
+            "boss_ai_set_wram_bank 1",
         ],
         "append gate and bounded write",
     )
@@ -177,10 +178,11 @@ def main() -> int:
             "xor a",
             "ret",
             "call BossAI_ObservationWindowLimit",
-            "call SetWRAMBank",
+            "boss_ai_set_wram_bank 2",
             "wBossAIObsCount",
             "BossAI_ObservationWeightForClass",
             "BOSS_AI_OBS_TENDENCY_BONUS_CAP",
+            "boss_ai_set_wram_bank 1",
         ],
         "tendency counter tier gate and bounded scan",
     )
@@ -194,8 +196,9 @@ def main() -> int:
             "jr nc, .enabled",
             "xor a",
             "ret",
-            "call SetWRAMBank",
+            "boss_ai_set_wram_bank 2",
             "BOSS_AI_OBS_SPEED_ENEMY_FIRST",
+            "boss_ai_set_wram_bank 1",
         ],
         "late-only calibration gate",
     )
@@ -208,8 +211,10 @@ def main() -> int:
         fail(f"weight table must have 7 rows, found {len(weight_values)}")
     run_golden_scenarios(weight_values)
 
-    if "[rSVBK]" in obs:
-        fail("observation log must use SetWRAMBank, not direct [rSVBK] writes")
+    if "call SetWRAMBank" in obs:
+        fail("observation log must not call SetWRAMBank from a WRAMX-stack context")
+    require(obs, "ldh [rSVBK], a", "inline WRAMX switch writes hardware bank")
+    require(obs, "ldh [hWRAMBank], a", "inline WRAMX switch updates shadow bank")
 
     print("PASS: P5 observation log invariants")
     print("  - WRAMX2 ring buffer is bounded to 3 MID / 6 LATE entries")

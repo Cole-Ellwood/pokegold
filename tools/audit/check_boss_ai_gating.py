@@ -12,6 +12,7 @@ BOSS_FILES = [
     ROOT / "engine" / "battle" / "ai" / "boss_policy_move.asm",
     ROOT / "engine" / "battle" / "ai" / "boss_policy_switch.asm",
     ROOT / "engine" / "battle" / "ai" / "boss_thunks.asm",
+    ROOT / "engine" / "battle" / "ai" / "haki_taunt_queue.asm",
 ]
 CALLSITE_FILES = [
     ROOT / "engine" / "battle" / "core.asm",
@@ -34,9 +35,10 @@ GUARDED_ENTRYPOINTS = {
     "BossAI_SelectPlanIfNeeded",
     "BossAI_ComputePlayerPlausibleTypeMask",
     "BossAI_EvaluateActionLookahead",
+    "BossAI_FlushPendingHakiTaunt",
 }
 
-LABEL_RE = re.compile(r"^([A-Za-z0-9_]+):\s*(?:;.*)?$")
+LABEL_RE = re.compile(r"^([A-Za-z0-9_]+)::?\s*(?:;.*)?$")
 CALL_RE = re.compile(r"\b(?:callfar|call|jp)\s+(BossAI_[A-Za-z0-9_]+)\b")
 
 

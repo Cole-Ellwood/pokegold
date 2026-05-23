@@ -44,6 +44,9 @@ BossAI_QueueHakiTaunt::
 
 ; ai-layer: PLATFORM
 BossAI_FlushPendingHakiTaunt::
+	ld a, [wBossAITier]
+	and a
+	ret z
 	ld a, [wBossAIRevealedMovesBitmapSpare + 2]
 	and a
 	ret z

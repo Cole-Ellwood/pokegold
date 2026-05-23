@@ -6,18 +6,23 @@
 
 if DEF(BOSSAI_EMIT_OBSERVATION_LOG)
 
+; The stack lives in WRAMX bank 1. Do not invoke SetWRAMBank when switching
+; away from bank 1: that helper's ret would read its return address from the
+; newly selected WRAMX bank.
+MACRO boss_ai_set_wram_bank
+	ld a, \1
+	ldh [rSVBK], a
+	ldh [hWRAMBank], a
+ENDM
+
 ; ai-layer: PLATFORM
 BossAI_ClearObservationLog::
-	ldh a, [hWRAMBank]
-	push af
-	ld a, 2
-	call SetWRAMBank
+	boss_ai_set_wram_bank 2
 	ld hl, wBossAIWramx2Buffer
 	ld bc, wBossAIWramx2BufferEnd - wBossAIWramx2Buffer
 	xor a
 	call ByteFill
-	pop af
-	call SetWRAMBank
+	boss_ai_set_wram_bank 1
 	ret
 
 ; ai-layer: PLATFORM
@@ -33,19 +38,19 @@ BossAI_AppendObservationLog::
 	call BossAI_CurrentObservationDamageBand
 	ld e, a
 	call BossAI_CurrentObservationSpeedRelation
-	push af
-	call BossAI_ObservationWindowLimit
-	ld h, a
-	push af
-	ld a, [wBossAITurnsElapsed]
-	ld c, a
-	ldh a, [hWRAMBank]
 	ld b, a
-	ld a, 2
-	call SetWRAMBank
+	call BossAI_ObservationWindowLimit
+	ld c, a
+	ld a, [wBossAITurnsElapsed]
+	ld h, a
+	boss_ai_set_wram_bank 2
+	push de
+	push bc
+	ld a, h
+	push af
 
 	ld a, [wBossAIObsWriteIndex]
-	cp h
+	cp c
 	jr c, .index_ok
 	xor a
 .index_ok
@@ -57,15 +62,15 @@ BossAI_AppendObservationLog::
 	ld a, HIGH(wBossAIObsEntries)
 	adc 0
 	ld h, a
-	ld a, c
+	pop af ; turn number
 	ld [hli], a
+	pop bc ; speed relation, window limit
+	pop de ; observation class, damage band
 	ld a, d
 	ld [hli], a
 	ld a, e
 	ld [hli], a
-	pop af ; window limit
-	ld c, a
-	pop af ; speed relation
+	ld a, b ; speed relation
 	ld [hli], a
 
 	ld a, [wBossAIObsWriteIndex]
@@ -89,8 +94,7 @@ BossAI_AppendObservationLog::
 .store_count
 	ld [wBossAIObsCount], a
 
-	ld a, b
-	call SetWRAMBank
+	boss_ai_set_wram_bank 1
 	ret
 
 ; ai-layer: PLATFORM
@@ -249,10 +253,7 @@ BossAI_ConsultTendencyCounters::
 	push hl
 	call BossAI_ObservationWindowLimit
 	ld c, a
-	ldh a, [hWRAMBank]
-	push af
-	ld a, 2
-	call SetWRAMBank
+	boss_ai_set_wram_bank 2
 	ld a, [wBossAIObsCount]
 	cp c
 	jr c, .count_ok
@@ -284,8 +285,7 @@ BossAI_ConsultTendencyCounters::
 	dec d
 	jr .loop
 .done
-	pop af
-	call SetWRAMBank
+	boss_ai_set_wram_bank 1
 	ld a, e
 	pop hl
 	pop de
@@ -305,10 +305,7 @@ BossAI_ConsultKOBandCalibration::
 	push bc
 	push de
 	push hl
-	ldh a, [hWRAMBank]
-	push af
-	ld a, 2
-	call SetWRAMBank
+	boss_ai_set_wram_bank 2
 	ld a, [wBossAIObsCount]
 	ld d, a
 	ld e, 0
@@ -338,8 +335,7 @@ BossAI_ConsultKOBandCalibration::
 	dec d
 	jr .loop
 .done
-	pop af
-	call SetWRAMBank
+	boss_ai_set_wram_bank 1
 	ld a, e
 	pop hl
 	pop de
