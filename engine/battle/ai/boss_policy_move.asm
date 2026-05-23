@@ -4707,7 +4707,7 @@ BossAI_ApplyPlanMoveBias:
 	jr nz, .check_status
 	call BossAI_IsCurrentEnemySetupMove
 	ret nc
-	ld a, [wBossAIKernel + KERNEL_PLAN_BIAS_MULTIPLIER]
+	ld a, 2
 	jp BossAI_EncourageScoreHL
 
 .check_status
@@ -4716,7 +4716,7 @@ BossAI_ApplyPlanMoveBias:
 	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
 	call BossAI_IsStatusEffect
 	ret nc
-	ld a, [wBossAIKernel + KERNEL_PLAN_BIAS_MULTIPLIER]
+	ld a, 2
 	jp BossAI_EncourageScoreHL
 
 .check_break
@@ -4725,7 +4725,7 @@ BossAI_ApplyPlanMoveBias:
 	ld a, [wEnemyMoveStruct + MOVE_POWER]
 	cp 80
 	ret c
-	ld a, [wBossAIKernel + KERNEL_PLAN_BIAS_MULTIPLIER]
+	ld a, 2
 	jp BossAI_EncourageScoreHL
 
 .check_protect
@@ -4745,14 +4745,14 @@ BossAI_ApplyPlanMoveBias:
 	cp EFFECT_MOONLIGHT
 	ret nz
 .protect_good
-	ld a, [wBossAIKernel + KERNEL_PLAN_BIAS_MULTIPLIER]
+	ld a, 2
 	jp BossAI_EncourageScoreHL
 
 .check_denial
 	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
 	call BossAI_IsDenialEffect
 	ret nc
-	ld a, [wBossAIKernel + KERNEL_PLAN_BIAS_MULTIPLIER]
+	ld a, 2
 	jp BossAI_EncourageScoreHL
 
 endc
