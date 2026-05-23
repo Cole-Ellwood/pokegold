@@ -20,21 +20,28 @@ AI wins by legal inference and good risk management, not hidden knowledge.
 ## Haki Exception Contract
 
 Haki is the only intentional exception to the no-cheat rule. It is one
-unfair, dramatic intervention per battle, available to 19 named bosses. The
-discipline is not making Haki fair; the discipline is **quarantining** it so
-the rest of Boss AI stays public-information-only.
+unfair, dramatic intervention per battle, available to bosses matching the
+**gate rule** below. The discipline is not making Haki fair; the discipline
+is **quarantining** it so the rest of Boss AI stays public-information-only.
 
 Hard rules:
 
 - **One activation per battle.** Cleared by `ClearBossAIState`. Trace fields
   under `BOSS_AI_TRACE` must record the fire.
-- **Player-invisible.** No text, animation, palette, aura, status, weather,
-  screen, or impossible visible outcome. The player only ever sees an
-  ordinary-looking move from the boss.
-- **Late-tier or major bosses only.** Falkner, Bugsy, and Whitney
-  intentionally have no Haki; their Boss AI must stay legal and
-  public-information-only so the early game teaches the rulebook before
-  loopholes appear.
+- **Per-leader pre-fire taunt text only.** When Haki fires, a leader-specific
+  flavor line prints **before** the boss's move animation (queued at trigger,
+  flushed immediately before enemy action). The taunt signals intensity
+  without naming the mechanic — e.g. "Lance's eyes narrow." / "Karen smiles
+  slowly." Players learn to fear the taunt across the game, building mastery
+  without information leakage. No animation, palette, aura, status, weather,
+  screen, or impossible visible outcome — only the leader-specific taunt
+  text. (Amended 2026-05-23 per Cole-approved contract change.)
+- **Gate rule.** Haki is available iff:
+  1. `wBossAITier != AI_TIER_EARLY` (effectively MID or LATE), AND
+  2. `wTrainerClass NOT IN BossAIHakiExcludedClasses`.
+  Falkner, Bugsy, and Whitney are intentionally absent via the tier
+  condition — their Boss AI must stay legal and public-information-only
+  so the early game teaches the rulebook before loopholes appear.
 - **One trigger, one fire, one outcome.** No "fires on hinge A *or* hinge
   B" tuning. New trainer = new entry; no shared smart helpers.
 
@@ -59,29 +66,30 @@ input read that lets normal scoring pick the right one.
 
 ### Per-Leader Roster
 
-Falkner, Bugsy, and Whitney are intentionally absent.
+Falkner, Bugsy, and Whitney are intentionally absent via the tier gate
+(early game = no Haki).
 
-| Leader | Ace | Ace level | Iconic move on ace |
-| --- | --- | --- | --- |
-| Morty | Gengar | 26 | Destiny Bond |
-| Chuck | Poliwrath | 34 | Focus Punch |
-| Jasmine | Steelix | 34 | Earthquake |
-| Pryce | Piloswine | 34 | Earthquake |
-| Clair | Dragonite | 39 | Outrage |
-| Will | Xatu | 43 | Future Sight |
-| Koga | Crobat | 44 | Hyper Beam |
-| Bruno | Machamp | 46 | Cross Chop |
-| Karen | Houndoom | 47 | Crunch |
-| Lance | Dragonite | 50 | Hyper Beam |
-| Brock | Golem | 60 | Earthquake |
-| Misty | Starmie | 63 | Hydro Pump |
-| Lt. Surge | Raichu | 65 | Cross Chop |
-| Erika | Victreebel | 64 | Sludge Bomb |
-| Janine | Venomoth | 64 | Sleep Powder |
-| Sabrina | Alakazam | 67 | Psychic |
-| Blaine | Magmar | 65 | Fire Blast |
-| Blue | Arcanine | 70 | Outrage |
-| Red | Pikachu | 81 | ExtremeSpeed |
+**Haki-eligible trainer classes** (when `wBossAITier != AI_TIER_EARLY`):
+
+- **Johto Gym Leaders (post-Whitney)**: `MORTY`, `CHUCK`, `JASMINE`, `PRYCE`, `CLAIR`
+- **Rival (Silver)**: `RIVAL1` stages 3–5, `RIVAL2` stages 1–2 (eligible at MID+)
+- **Team Rocket Executives**: `EXECUTIVEM` (4 IDs), `EXECUTIVEF` (2 IDs)
+- **Elite Four**: `WILL`, `BRUNO`, `KOGA`, `KAREN`
+- **Champion**: `CHAMPION` (LANCE)
+- **Special**: `BLUE` (Kanto carve-out — ex-champion), `RED`
+
+**`BossAIHakiExcludedClasses`** (post-champion Kanto gym leaders — player
+outranks them, so they don't get the unfair-intervention privilege):
+
+- `BROCK`, `MISTY`, `LT_SURGE`, `ERIKA`, `JANINE`, `SABRINA`, `BLAINE`
+
+Note: the previous Per-Leader Roster table (Ace / Ace level / Iconic move)
+was descriptive context, not load-bearing. The Uniform Haki Oracle design
+makes the "iconic move" emerge from normal scoring once the player input
+is visible — no per-leader bespoke logic, no per-leader move-id encoded
+in the Haki path. The leader-specific *feel* now lives in (a) the trainer
+party data + ace moveset, (b) the per-leader taunt text in
+`data/boss_ai/haki_taunts.asm`. (Roster format amended 2026-05-23.)
 
 Ace selection rule: **highest-level party member.** On tied highest level,
 the later party slot wins. This rule is explicit so the implementation can

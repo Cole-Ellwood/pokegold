@@ -1,13 +1,20 @@
-"""Haki coverage tool: parse the Haki Per-Leader Roster from docs/boss_ai_spec.md
-and surface it for audit and balance review.
+"""Haki coverage tool — the Cole-approved 2026-05-23 gate-rule shape.
 
-Per P0.5c (boss-AI ROM expansion roadmap 2026-05-23): this is the Claude-side
-revision of the originally-proposed "Haki playbook tables" lever. The spec
-already centralizes Haki via the Oracle pattern + per-leader ace + iconic move
-in docs/boss_ai_spec.md. The lever value isn't a new data structure; it's
-making the existing roster inspectable for Cole + the pair.
+Haki eligibility: `wBossAITier != AI_TIER_EARLY` AND `wTrainerClass NOT IN
+BossAIHakiExcludedClasses`.
 
-Tool-only, ROM cost 0, WRAMX cost 0.
+This tool surfaces, for audit + balance review:
+  - The eligibility gate as documented in docs/boss_ai_spec.md.
+  - The expected included trainer classes (Johto post-Whitney + Silver
+    MID/LATE stages + Rocket executives + E4 + Champion + Blue + Red).
+  - The expected excluded trainer classes (Kanto gyms minus Blue).
+  - A cross-check that data/trainers/ai_tiers.asm BossAITierMap actually
+    assigns each included class a tier >= MID and each excluded class is
+    still listed (so we know the gate WOULD apply if Haki tried to fire).
+
+P0.5c original v1 was the spec-table parser. This version (post-pivot) is
+the gate-rule cross-checker; both shapes co-existed during the transition
+but the Uniform Haki Oracle design drops the per-leader table format.
 """
 from __future__ import annotations
 
@@ -18,107 +25,118 @@ from pathlib import Path
 
 
 SPEC_PATH = Path("docs/boss_ai_spec.md")
-ROSTER_HEADER = "### Per-Leader Roster"
+TIER_MAP_PATH = Path("data/trainers/ai_tiers.asm")
 
-EXPECTED_LEADERS_19 = (
-    "Morty", "Chuck", "Jasmine", "Pryce", "Clair", "Will", "Koga", "Bruno",
-    "Karen", "Lance", "Brock", "Misty", "Lt. Surge", "Erika", "Janine",
-    "Sabrina", "Blaine", "Blue", "Red",
+# Trainer classes that should be Haki-eligible under the gate rule.
+# RIVAL1/RIVAL2 entries are tier-gated per-stage (some EARLY, some MID/LATE);
+# we list the classes themselves and let the audit verify ai_tiers.asm has
+# at least one MID-or-LATE row for each.
+EXPECTED_INCLUDED_CLASSES = (
+    "MORTY", "CHUCK", "JASMINE", "PRYCE", "CLAIR",   # Johto post-Whitney
+    "RIVAL1", "RIVAL2",                              # Silver
+    "EXECUTIVEM", "EXECUTIVEF",                      # Rocket
+    "WILL", "BRUNO", "KOGA", "KAREN",                # Elite Four
+    "CHAMPION",                                      # Lance
+    "BLUE", "RED",                                   # Kanto carve-out + final
 )
+
+EXPECTED_EXCLUDED_CLASSES = (
+    "BROCK", "MISTY", "LT_SURGE", "ERIKA", "JANINE", "SABRINA", "BLAINE",
+)
+
+TIER_ROW_RE = re.compile(r"^\s*db\s+(\w+)\s*,\s*\w+\s*,\s*AI_TIER_(EARLY|MID|LATE)\s*(?:;|$)")
 
 
 @dataclass(frozen=True)
-class HakiEntry:
-    leader: str
-    ace_species: str
-    ace_level: int
-    iconic_move: str
+class TierMapRow:
+    trainer_class: str
+    tier: str  # EARLY / MID / LATE
 
 
-def parse_roster(spec_text: str) -> list[HakiEntry]:
-    """Parse the 19-leader Haki roster from a boss_ai_spec.md text body."""
-    idx = spec_text.find(ROSTER_HEADER)
-    if idx < 0:
-        raise ValueError(f'roster header "{ROSTER_HEADER}" not found in spec')
-    # Take lines after the header until the next ## or ### or end of file
-    remaining = spec_text[idx + len(ROSTER_HEADER):]
-    boundary = re.search(r"\n#{2,3} ", remaining)
-    body = remaining[: boundary.start()] if boundary else remaining
-
-    entries: list[HakiEntry] = []
-    row_re = re.compile(r"^\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*(\d+)\s*\|\s*([^|]+?)\s*\|\s*$")
-    for line in body.splitlines():
-        if not line.startswith("|"):
+def parse_tier_map(text: str) -> list[TierMapRow]:
+    rows: list[TierMapRow] = []
+    in_map = False
+    for line in text.splitlines():
+        if "BossAITierMap" in line and ":" in line:
+            in_map = True
             continue
-        m = row_re.match(line)
-        if not m:
+        if "BossAITierRampMap" in line and ":" in line:
+            in_map = False
+            break
+        if not in_map:
             continue
-        leader = m.group(1).strip()
-        # Skip header row ("Leader | Ace | Ace level | Iconic move on ace")
-        # and separator row (|---|---|---|---|).
-        if leader.lower() == "leader" or set(leader) <= {"-", " "}:
-            continue
-        entries.append(
-            HakiEntry(
-                leader=leader,
-                ace_species=m.group(2).strip(),
-                ace_level=int(m.group(3)),
-                iconic_move=m.group(4).strip(),
-            )
-        )
-    return entries
+        m = TIER_ROW_RE.match(line)
+        if m:
+            rows.append(TierMapRow(trainer_class=m.group(1), tier=m.group(2)))
+    return rows
 
 
 def run_haki_coverage() -> dict:
-    """Return the parsed roster plus a coverage report."""
-    if not SPEC_PATH.exists():
-        return {"ok": False, "error": f"{SPEC_PATH} not found", "entries": []}
-    text = SPEC_PATH.read_text(encoding="utf-8")
-    try:
-        entries = parse_roster(text)
-    except ValueError as exc:
-        return {"ok": False, "error": str(exc), "entries": []}
-    leaders = [e.leader for e in entries]
-    missing = [name for name in EXPECTED_LEADERS_19 if name not in leaders]
-    extra = [name for name in leaders if name not in EXPECTED_LEADERS_19]
+    if not TIER_MAP_PATH.exists():
+        return {"ok": False, "error": f"{TIER_MAP_PATH} not found"}
+    tier_rows = parse_tier_map(TIER_MAP_PATH.read_text(encoding="utf-8"))
+    if not tier_rows:
+        return {"ok": False, "error": f"{TIER_MAP_PATH}: BossAITierMap parsed empty"}
+
+    classes_with_mid_or_late = {r.trainer_class for r in tier_rows if r.tier in ("MID", "LATE")}
+    classes_with_any_tier = {r.trainer_class for r in tier_rows}
+
+    missing_eligible = [c for c in EXPECTED_INCLUDED_CLASSES if c not in classes_with_mid_or_late]
+    missing_excluded = [c for c in EXPECTED_EXCLUDED_CLASSES if c not in classes_with_any_tier]
+
+    # Sanity: excluded classes should NOT be missing from the tier map either
+    # (they need to be listed so the gate sees them and rejects them; if they
+    # have no tier row they fall through to non-boss handling instead).
     return {
-        "ok": not missing and not extra and len(entries) == 19,
-        "entries": [e.__dict__ for e in entries],
-        "count": len(entries),
-        "expected_count": 19,
-        "missing": missing,
-        "extra": extra,
+        "ok": not missing_eligible and not missing_excluded,
+        "tier_map_path": str(TIER_MAP_PATH),
         "spec_path": str(SPEC_PATH),
+        "total_tier_rows": len(tier_rows),
+        "expected_included_count": len(EXPECTED_INCLUDED_CLASSES),
+        "expected_excluded_count": len(EXPECTED_EXCLUDED_CLASSES),
+        "missing_eligible": missing_eligible,
+        "missing_excluded": missing_excluded,
+        "included_classes_seen_with_mid_or_late": sorted(
+            c for c in EXPECTED_INCLUDED_CLASSES if c in classes_with_mid_or_late
+        ),
+        "excluded_classes_seen": sorted(
+            c for c in EXPECTED_EXCLUDED_CLASSES if c in classes_with_any_tier
+        ),
     }
 
 
 def format_haki_coverage(report: dict) -> str:
-    lines = [f"Haki coverage from {report.get('spec_path', SPEC_PATH)}:"]
+    lines = [f"Haki gate-rule coverage from {report.get('tier_map_path', TIER_MAP_PATH)}:"]
     if not report.get("ok") and report.get("error"):
         lines.append(f"  FAIL: {report['error']}")
         return "\n".join(lines)
-    lines.append(f"  leaders: {report['count']} (expected {report['expected_count']})")
-    if report.get("missing"):
-        lines.append(f"  MISSING: {', '.join(report['missing'])}")
-    if report.get("extra"):
-        lines.append(f"  EXTRA:   {', '.join(report['extra'])}")
+    lines.append(
+        f"  expected included: {report['expected_included_count']} classes; "
+        f"found with tier >= MID: {len(report['included_classes_seen_with_mid_or_late'])}"
+    )
+    lines.append(
+        f"  expected excluded: {report['expected_excluded_count']} classes; "
+        f"found in tier map: {len(report['excluded_classes_seen'])}"
+    )
+    if report.get("missing_eligible"):
+        lines.append(f"  MISSING_ELIGIBLE: {', '.join(report['missing_eligible'])}")
+    if report.get("missing_excluded"):
+        lines.append(f"  MISSING_EXCLUDED: {', '.join(report['missing_excluded'])}")
     lines.append("")
-    lines.append("  Leader        Ace             Lv  Iconic move")
-    lines.append("  ------------  --------------  --  ----------------")
-    for e in report["entries"]:
-        lines.append(
-            f"  {e['leader']:<12}  {e['ace_species']:<14}  {e['ace_level']:<2}  {e['iconic_move']}"
-        )
+    lines.append("  Eligible trainer classes (gate=tier-MID-or-LATE-and-not-excluded):")
+    for c in report["included_classes_seen_with_mid_or_late"]:
+        lines.append(f"    + {c}")
+    lines.append("")
+    lines.append("  Excluded trainer classes (Kanto gyms sans Blue — gate rejects):")
+    for c in report["excluded_classes_seen"]:
+        lines.append(f"    - {c}")
     return "\n".join(lines)
 
 
 def run_self_test() -> int:
-    """Self-test: exit 0 iff all 19 expected leaders are present."""
     report = run_haki_coverage()
     print(format_haki_coverage(report))
-    if not report.get("ok"):
-        return 1
-    return 0
+    return 0 if report.get("ok") else 1
 
 
 if __name__ == "__main__":
