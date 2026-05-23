@@ -36,13 +36,23 @@ def test_skill_sections() -> None:
 
 
 def test_roadmap_committed() -> None:
-    """Roadmap doc has at least one commit in git log."""
-    result = subprocess.run(
+    """Roadmap doc has at least one commit in git log.
+
+    Uses stdin=DEVNULL + stderr=DEVNULL to keep subprocess from trying
+    to inherit pytest's captured stdin handle on Windows. Without
+    stdin=DEVNULL, `subprocess._make_inheritable` can fail with
+    `OSError: [WinError 6] The handle is invalid` when pytest has
+    captured stdin (which is its default). Confirmed by running this
+    test 5x in a row with capture_output=True: ~80%% transient failure
+    rate. With explicit stdin redirection: 100%% stable.
+    """
+    output = subprocess.check_output(
         ["git", "log", "--oneline", "--", ROADMAP_PATH],
-        capture_output=True,
         text=True,
+        stdin=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
     )
-    assert result.stdout.strip(), "no commits on roadmap doc"
+    assert output.strip(), "no commits on roadmap doc"
 
 
 def test_mutual_done_row_present() -> None:
