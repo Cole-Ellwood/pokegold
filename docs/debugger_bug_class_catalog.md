@@ -218,10 +218,12 @@ ships and the player sees damage diverge from expected. Hand-rolling the
 Gen-2 damage formula has shipped wrong numbers twice in one session per
 `feedback_use_damage_debugger_dont_hand_calc.md`.
 **Locate:** two commands.
-`python -m tools.debugger.damage_debugger` for the scenario-replay
-harness (deterministic synth scenarios via WRAM seed + PC injection).
+`python -m tools.damage_debugger.clobber_smoke` runs the curated
+regression set against the real ROM and reports observed-vs-expected
+wCurDamage per scenario; deterministic via WRAM seed + PC injection.
 Plus `python -m tools.debugger when-wrote --address D141 --since-symbol
-BattleCommand_DamageCalc` for the specific clobber-or-input question.
+BattleCommand_DamageCalc` for the specific clobber-or-input question
+when a single damage value is anomalous.
 
 ### did_this_commit_break_x
 
