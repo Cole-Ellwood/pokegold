@@ -147,7 +147,27 @@ def check_dispatcher(policy: str, matrix: str) -> tuple[bool, str]:
         return False, f"(a) FAIL: dispatcher missing {missing}"
     if "BossAIRevealedEffectMatrix:" not in matrix:
         return False, "(a) FAIL: matrix label missing"
-    return True, "(a) PASS: revealed-effect matrix is included and dispatched from move scoring."
+    match = re.search(
+        r"\.ApplyRevealedEffectMatrixBias(?P<body>.*?)\.matrix_loop",
+        policy,
+        flags=re.S,
+    )
+    if not match:
+        return False, "(a) FAIL: couldn't locate .ApplyRevealedEffectMatrixBias body"
+    body = match.group("body")
+    tier_gate = [
+        "ld a, [wBossAITier]",
+        "cp AI_TIER_MID",
+        "ret c",
+        "ld hl, BossAIRevealedEffectMatrix",
+    ]
+    pos = -1
+    for needle in tier_gate:
+        nxt = body.find(needle, pos + 1)
+        if nxt < 0:
+            return False, f"(a) FAIL: matrix dispatcher missing tier-gate sequence `{needle}`"
+        pos = nxt
+    return True, "(a) PASS: revealed-effect matrix is included, tier-gated, and dispatched from move scoring."
 
 
 def check_runtime_rows(matrix: str) -> tuple[bool, str]:

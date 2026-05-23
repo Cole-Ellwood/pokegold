@@ -1349,6 +1349,9 @@ DEF BOSS_AI_REM_RULE_DESTINY_BOND_AVOIDANCE EQU 8
 DEF BOSS_AI_REM_RULE_COUNTERCOAT_AVOIDANCE EQU 9
 
 .ApplyRevealedEffectMatrixBias
+	ld a, [wBossAITier]
+	cp AI_TIER_MID
+	ret c
 	ld hl, BossAIRevealedEffectMatrix
 .matrix_loop
 	ld a, [hli]

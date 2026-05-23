@@ -20,6 +20,9 @@ BossAI_ApplyKOBandOraclePressure::
 ; P2a per-slot table confirms this enemy slot has public SE coverage against
 ; the player's active typing. This avoids giving one move credit for another
 ; move's coverage while still making confirmed KO-pressure lines sharper.
+	ld a, [wBossAITier]
+	cp AI_TIER_MID
+	ret c
 	ld a, [wTypeMatchup]
 	cp EFFECTIVE * 2
 	ret c

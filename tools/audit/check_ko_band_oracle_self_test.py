@@ -46,6 +46,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[2]
 GENERATOR = REPO / "scripts" / "generate_boss_matchup_tables.py"
 TABLE = REPO / "data" / "boss_ai" / "matchup_tables.asm"
+ORACLE = REPO / "engine" / "battle" / "ai" / "ko_band_oracle.asm"
 
 EXPECTED_CLASSES = (
     "MORTY", "CHUCK", "JASMINE", "PRYCE", "CLAIR",
@@ -296,6 +297,32 @@ def check_immunity_and_super_present(rows: list[dict]) -> tuple[bool, str]:
     return True, "(e) PASS: both immunities and super-effective entries present (sanity)."
 
 
+def check_runtime_tier_gate() -> tuple[bool, str]:
+    """(g) EARLY tier must not consume the P2 structural oracle."""
+    text = ORACLE.read_text(encoding="utf-8", errors="replace")
+    match = re.search(
+        r"BossAI_ApplyKOBandOraclePressure::(?P<body>.*?); ai-layer: POLICY\s+BossAI_CurrentSlotOffensiveCoverageVsPlayer:",
+        text,
+        flags=re.S,
+    )
+    if not match:
+        return False, "(g) FAIL: couldn't locate BossAI_ApplyKOBandOraclePressure body"
+    body = match.group("body")
+    required = [
+        "ld a, [wBossAITier]",
+        "cp AI_TIER_MID",
+        "ret c",
+        "ld a, [wTypeMatchup]",
+    ]
+    pos = -1
+    for needle in required:
+        nxt = body.find(needle, pos + 1)
+        if nxt < 0:
+            return False, f"(g) FAIL: KO-band oracle missing tier-gate sequence `{needle}`"
+        pos = nxt
+    return True, "(g) PASS: runtime KO-band oracle is gated off for EARLY tier."
+
+
 def main() -> int:
     ok_drift, msg_drift = check_no_drift()
     print(msg_drift)
@@ -313,6 +340,7 @@ def main() -> int:
         check_multiplier_values(rows),
         check_trainer_id_validity(rows),
         check_immunity_and_super_present(rows),
+        check_runtime_tier_gate(),
     ]
     all_ok = ok_drift and all(ok for ok, _ in checks)
     for _, m in checks:
