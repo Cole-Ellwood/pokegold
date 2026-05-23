@@ -1548,8 +1548,36 @@ makes the debugger *speak first* on code landing.
     expected finding)
 - `scripts/install_debugger_hooks.py` — installs/uninstalls
   `.git/hooks/post-commit`; supports `--dry-run`, `--install`, `--uninstall`.
-- Findings file `audit/auto_watch_findings.jsonl` (append-only) with rows:
-  - `{commit_hash, ts, bug_class, evidence_atoms, command_replay, llm_next_step}`
+- Findings file `audit/auto_watch_findings.jsonl` (append-only). Rows are
+  single-shape regardless of which writer emits them (`auto_watch.py`
+  detectors OR the post-commit hook fallback in
+  `scripts/install_debugger_hooks.py`):
+  ```
+  {
+    schema_version: 1,
+    kind: "auto_watch_finding",
+    ts: "<ISO UTC>",
+    trigger: "self-test" | "rom-edit-propose" | "commit",
+    trigger_id: "<self-test-N | proposal-id | commit-sha>",
+    commit_hash: "<sha>",            # populated when trigger=commit
+    proposal_id: "<id>",             # populated when trigger=rom-edit-propose
+    bug_class: "...",                # cross-ref P20 catalog (provisional in slice 1)
+    detector: "...",                 # register_flow | release_smoke | clobber_smoke | post_commit_hook | ...
+    status: "detected" | "watcher_unavailable" | "no_new_bug",
+    severity: "high" | "medium" | "low",
+    evidence: { command, exit_code, summary },
+    evidence_atoms: [ {kind, ...} ],  # §4.2 proof-vector array
+    command_replay: "<runnable>",     # canonical "rerun this" string
+    files: [...],
+    symbols: [...],
+    llm_next_step: "..."
+  }
+  ```
+  Validated by `tools.debugger.auto_watch.validate_finding`. The slice-1
+  reconciliation set the canonical writer in `auto_watch.py` and made the
+  hook fallback append the same shape (commit ack rows under
+  `P19_auto_watch_module` and `P19_hook_round_trip` in
+  `audit/masterpiece_handoff_log.jsonl`).
 - Findings are mirrored to `audit/masterpiece_handoff_log.jsonl` with
   `event=auto_watch_detection` so the two-LLM handoff audit picks them up.
 - Detection inputs (run in parallel; each is short-circuited if its audit/test
