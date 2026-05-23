@@ -116,6 +116,10 @@ from .replay_import import (
     write_imported_scenarios,
     write_replay_import_report,
 )
+from .role_packages import (
+    describe_species as describe_role_package_species,
+    format_role_package_rows,
+)
 from .rom_scenarios import (
     benchmark_batch,
     evaluate_batch,
@@ -1271,6 +1275,11 @@ def build_parser() -> argparse.ArgumentParser:
     haki_cmd.add_argument("--self-test", action="store_true")
     haki_cmd.add_argument("--json", action="store_true")
     haki_cmd.set_defaults(func=cmd_haki_coverage)
+
+    role_pkg_cmd = subparsers.add_parser("role-packages")
+    role_pkg_cmd.add_argument("--species", action="append", required=True)
+    role_pkg_cmd.add_argument("--json", action="store_true")
+    role_pkg_cmd.set_defaults(func=cmd_role_packages)
     return parser
 
 
@@ -1283,6 +1292,20 @@ def cmd_haki_coverage(args: argparse.Namespace) -> int:
     else:
         print(haki_coverage.format_haki_coverage(report))
     return 0 if report.get("ok") else 1
+
+
+def cmd_role_packages(args: argparse.Namespace) -> int:
+    try:
+        rows = describe_role_package_species(args.species)
+    except ValueError as exc:
+        print(str(exc))
+        return 2
+    ok = all(bool(row["committed_matches_source"]) for row in rows)
+    if args.json:
+        print(json.dumps({"ok": ok, "species": rows}, indent=2, sort_keys=True))
+    else:
+        print(format_role_package_rows(rows))
+    return 0 if ok else 1
 
 
 def main(argv: list[str] | None = None) -> int:

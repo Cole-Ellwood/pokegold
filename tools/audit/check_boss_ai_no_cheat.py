@@ -15,6 +15,7 @@ SCAN_FILES = [
     ROOT / "engine" / "battle" / "ai" / "boss_policy_move.asm",
     ROOT / "engine" / "battle" / "ai" / "boss_policy_switch.asm",
     ROOT / "engine" / "battle" / "ai" / "observation_log.asm",
+    ROOT / "data" / "boss_ai" / "role_package_classifier.asm",
     ROOT / "engine" / "battle" / "ai" / "boss_thunks.asm",
     ROOT / "engine" / "battle" / "ai" / "move.asm",
     ROOT / "engine" / "battle" / "ai" / "items.asm",

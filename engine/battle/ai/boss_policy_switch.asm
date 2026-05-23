@@ -808,6 +808,8 @@ BossAI_ComputeSwitchConfidence:
 	ld b, a
 	call BossAI_ApplyPlausibleRiskToSwitchConfidence
 	ld b, a
+	call BossAI_ApplyRolePackageSwitchBias
+	ld b, a
 	call BossAI_ApplyPlanSwitchBias
 	ld b, a
 	call BossAI_ApplyPreservationSwitchBias
@@ -1264,6 +1266,184 @@ BossAI_ApplyPlausibleRiskToSwitchConfidence:
 	ret
 
 ; ai-layer: POLICY
+BossAI_ApplyRolePackageSwitchBias::
+	ld a, [wBossAITier]
+	cp AI_TIER_MID
+	jr nc, .enabled
+	ld a, b
+	ret
+.enabled
+	push bc
+	call BossAI_ClassifyActivePlayerRolePackage
+	ld d, a
+	pop bc
+	ld a, d
+	and a
+	jr nz, .has_package
+	ld a, b
+	ret
+
+.has_package
+	ld c, 0
+	bit BOSS_AI_ROLEPKG_TRAP_PERISH_F, d
+	jr z, .no_trap_perish
+	ld a, c
+	add 10
+	ld c, a
+.no_trap_perish
+	bit BOSS_AI_ROLEPKG_SETUP_SWEEPER_F, d
+	jr z, .no_setup
+	ld a, c
+	add 8
+	ld c, a
+.no_setup
+	bit BOSS_AI_ROLEPKG_PRIORITY_REVENGE_F, d
+	jr z, .no_priority
+	ld a, c
+	add 6
+	ld c, a
+.no_priority
+	bit BOSS_AI_ROLEPKG_WALLBREAKER_F, d
+	jr z, .no_wallbreaker
+	ld a, c
+	add 6
+	ld c, a
+.no_wallbreaker
+	bit BOSS_AI_ROLEPKG_STATUS_PRESSURE_F, d
+	jr z, .no_status
+	ld a, c
+	add 4
+	ld c, a
+.no_status
+	bit BOSS_AI_ROLEPKG_PHAZER_F, d
+	jr z, .no_phazer
+	ld a, c
+	add 4
+	ld c, a
+.no_phazer
+	bit BOSS_AI_ROLEPKG_RECOVERY_WALL_F, d
+	jr z, .no_recovery
+	ld a, c
+	add 2
+	ld c, a
+.no_recovery
+	bit BOSS_AI_ROLEPKG_SPINNER_F, d
+	jr z, .cap_bonus
+	ld a, c
+	add 2
+	ld c, a
+
+.cap_bonus
+	ld a, c
+	cp BOSS_AI_ROLEPKG_SWITCH_BONUS_CAP + 1
+	jr c, .bonus_ok
+	ld a, BOSS_AI_ROLEPKG_SWITCH_BONUS_CAP
+.bonus_ok
+	add b
+	cp 100
+	ret c
+	ld a, 99
+	ret
+
+; ai-layer: POLICY
+BossAI_ClassifyActivePlayerRolePackage::
+	ld a, [wBossAITier]
+	cp AI_TIER_MID
+	jr nc, .enabled
+	xor a
+	ret
+.enabled
+	ld a, [wBattleMonSpecies]
+	and a
+	ret z
+	cp NUM_POKEMON + 1
+	jr c, .valid_species
+	xor a
+	ret
+.valid_species
+	dec a
+	ld e, a
+	ld d, 0
+	ld hl, BossAIRolePackageBySpecies
+	add hl, de
+	ld a, [hl]
+	push af
+	call BossAI_LastPlayerMoveRolePackageMask
+	ld b, a
+	pop af
+	or b
+	ret
+
+; ai-layer: POLICY
+BossAI_LastPlayerMoveRolePackageMask::
+	ld a, [wLastPlayerMove]
+	and a
+	ret z
+	cp STRUGGLE
+	jr nz, .load_effect
+	xor a
+	ret
+.load_effect
+	dec a
+	ld hl, Moves + MOVE_EFFECT
+	call BossAI_GetMoveAttr
+	ld b, a
+	ld c, 0
+	cp EFFECT_RAPID_SPIN
+	jr nz, .check_phazer
+	set BOSS_AI_ROLEPKG_SPINNER_F, c
+.check_phazer
+	ld a, b
+	cp EFFECT_FORCE_SWITCH
+	jr nz, .check_setup
+	set BOSS_AI_ROLEPKG_PHAZER_F, c
+.check_setup
+	ld a, b
+	call BossAI_IsSetupEffect
+	jr nc, .check_recovery
+	set BOSS_AI_ROLEPKG_SETUP_SWEEPER_F, c
+.check_recovery
+	ld a, b
+	cp EFFECT_HEAL
+	jr z, .set_recovery
+	cp EFFECT_MORNING_SUN
+	jr z, .set_recovery
+	cp EFFECT_SYNTHESIS
+	jr z, .set_recovery
+	cp EFFECT_MOONLIGHT
+	jr nz, .check_priority
+.set_recovery
+	set BOSS_AI_ROLEPKG_RECOVERY_WALL_F, c
+.check_priority
+	ld a, b
+	cp EFFECT_PRIORITY_HIT
+	jr nz, .check_status
+	set BOSS_AI_ROLEPKG_PRIORITY_REVENGE_F, c
+.check_status
+	ld a, b
+	call BossAI_IsStatusEffect
+	jr nc, .check_trap
+	set BOSS_AI_ROLEPKG_STATUS_PRESSURE_F, c
+.check_trap
+	ld a, b
+	cp EFFECT_TRAP_TARGET
+	jr z, .set_trap
+	cp EFFECT_PERISH_SONG
+	jr z, .set_trap
+	cp EFFECT_MEAN_LOOK
+	jr nz, .check_wallbreaker
+.set_trap
+	set BOSS_AI_ROLEPKG_TRAP_PERISH_F, c
+.check_wallbreaker
+	call BossAI_LastPlayerMovePower
+	cp 90
+	jr c, .done
+	set BOSS_AI_ROLEPKG_WALLBREAKER_F, c
+.done
+	ld a, c
+	ret
+
+; ai-layer: POLICY
 BossAI_ApplyPlanSwitchBias:
 	ld a, [wBossAIPlanId]
 	and a
@@ -1368,5 +1548,7 @@ BossAI_IsSwitchingIntoWinconRisk:
 .yes
 	scf
 	ret
+
+INCLUDE "data/boss_ai/role_package_classifier.asm"
 
 endc
