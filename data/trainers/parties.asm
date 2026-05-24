@@ -483,7 +483,7 @@ SchoolboyGroup:
 
 	; SCHOOLBOY (10)
 	db "CHAD@", TRAINERTYPE_NORMAL
-	db 19, MR__MIME
+	db 24, MR__MIME
 	db -1 ; end
 
 	; SCHOOLBOY (11)
@@ -878,7 +878,7 @@ CooltrainerMGroup:
 
 	; COOLTRAINERM (19)
 	db "ALLEN@", TRAINERTYPE_MOVES
-	db 27, CHARMELEON, EMBER, SMOKESCREEN, RAGE, SCARY_FACE
+	db 32, CHARMELEON, EMBER, SMOKESCREEN, RAGE, SCARY_FACE
 	db -1 ; end
 
 CooltrainerFGroup:
@@ -1120,17 +1120,17 @@ PokemaniacGroup:
 
 	; POKEMANIAC (5)
 	db "BEN@", TRAINERTYPE_NORMAL
-	db 19, SLOWBRO
+	db 24, SLOWBRO
 	db -1 ; end
 
 	; POKEMANIAC (6)
 	db "BRENT@", TRAINERTYPE_NORMAL
-	db 19, LICKITUNG
+	db 24, LICKITUNG
 	db -1 ; end
 
 	; POKEMANIAC (7)
 	db "RON@", TRAINERTYPE_NORMAL
-	db 19, NIDOKING
+	db 24, NIDOKING
 	db -1 ; end
 
 	; POKEMANIAC (8)
@@ -1166,7 +1166,7 @@ PokemaniacGroup:
 
 	; POKEMANIAC (13)
 	db "ZACH@", TRAINERTYPE_NORMAL
-	db 27, RHYHORN
+	db 32, RHYHORN
 	db -1 ; end
 
 GruntMGroup:
@@ -1220,7 +1220,7 @@ GruntMGroup:
 
 	; GRUNTM (8)
 	db "GRUNT@", TRAINERTYPE_NORMAL
-	db 26, WEEZING
+	db 31, WEEZING
 	db -1 ; end
 
 	; GRUNTM (9)
@@ -1250,7 +1250,7 @@ GruntMGroup:
 
 	; GRUNTM (13)
 	db "GRUNT@", TRAINERTYPE_NORMAL
-	db 27, RATTATA
+	db 32, RATTATA
 	db -1 ; end
 
 	; GRUNTM (14)
@@ -1275,7 +1275,7 @@ GruntMGroup:
 
 	; GRUNTM (17)
 	db "GRUNT@", TRAINERTYPE_NORMAL
-	db 18, GOLBAT
+	db 23, GOLBAT
 	db -1 ; end
 
 	; GRUNTM (18)
@@ -1339,7 +1339,7 @@ GruntMGroup:
 
 	; GRUNTM (28)
 	db "GRUNT@", TRAINERTYPE_NORMAL
-	db 19, RATICATE
+	db 24, RATICATE
 	db -1 ; end
 
 	; GRUNTM (29)
@@ -1385,7 +1385,7 @@ GentlemanGroup:
 
 	; GENTLEMAN (5)
 	db "ALFRED@", TRAINERTYPE_NORMAL
-	db 20, NOCTOWL
+	db 25, NOCTOWL
 	db -1 ; end
 
 SkierGroup:
@@ -1556,7 +1556,7 @@ FisherGroup:
 
 	; FISHER (7)
 	db "CHRIS@", TRAINERTYPE_NORMAL
-	db 18, QWILFISH
+	db 23, QWILFISH
 	db -1 ; end
 
 	; FISHER (8)
@@ -1924,7 +1924,7 @@ SailorGroup:
 
 	; SAILOR (3)
 	db "TERRELL@", TRAINERTYPE_NORMAL
-	db 20, POLIWHIRL
+	db 25, POLIWHIRL
 	db -1 ; end
 
 	; SAILOR (4)
@@ -1968,7 +1968,7 @@ SailorGroup:
 
 	; SAILOR (10)
 	db "HARRY@", TRAINERTYPE_NORMAL
-	db 19, WOOPER
+	db 24, WOOPER
 	db -1 ; end
 
 	; SAILOR (11)
@@ -2490,7 +2490,7 @@ BlackbeltGroup:
 
 	; BLACKBELT_T (8)
 	db "KENJI@", TRAINERTYPE_NORMAL
-	db 28, MACHOKE
+	db 33, MACHOKE
 	db -1 ; end
 
 	; BLACKBELT_T (9)
@@ -2714,7 +2714,7 @@ PicnickerGroup:
 
 	; PICNICKER (20)
 	db "TIFFANY@", TRAINERTYPE_MOVES
-	db 20, CLEFAIRY,   ENCORE, SING, DOUBLESLAP, MINIMIZE
+	db 25, CLEFAIRY,   ENCORE, SING, DOUBLESLAP, MINIMIZE
 	db -1 ; end
 
 	; PICNICKER (21)
@@ -2987,7 +2987,7 @@ PokefanMGroup:
 
 	; POKEFANM (2)
 	db "DEREK@", TRAINERTYPE_ITEM
-	db 17, PIKACHU,    BERRY
+	db 22, PIKACHU,    BERRY
 	db -1 ; end
 
 	; POKEFANM (3)
@@ -3141,7 +3141,7 @@ PokefanFGroup:
 
 	; POKEFANF (2)
 	db "RUTH@", TRAINERTYPE_ITEM
-	db 17, PIKACHU,    BERRY
+	db 22, PIKACHU,    BERRY
 	db -1 ; end
 
 	; POKEFANF (3)
@@ -3206,7 +3206,7 @@ GruntFGroup:
 
 	; GRUNTF (2)
 	db "GRUNT@", TRAINERTYPE_NORMAL
-	db 26, ARBOK
+	db 31, ARBOK
 	db -1 ; end
 
 	; GRUNTF (3)
