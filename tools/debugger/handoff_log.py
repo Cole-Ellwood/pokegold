@@ -86,6 +86,7 @@ EVENT_KINDS = ("ack_start", "slice_update", "slice_review", "phase_done")
 CONFIDENCE_LABELS = ("repo-proven", "memory-derived", "judgment")
 GATE_VALID_LABELS = frozenset({"repo-proven"})
 KNOWN_MODELS = ("claude", "codex")
+SOLO_CODEX_APPROVAL_KEY = "solo_codex_approved_by_cole"
 
 STATUS_BY_EVENT = {
     "ack_start": frozenset({"in_progress"}),
@@ -332,6 +333,21 @@ def is_mutual_verified(rows: Sequence[dict[str, Any]], phase: str) -> tuple[bool
         and row.get("confidence") in GATE_VALID_LABELS
         for row in phase_rows
     )
+    # Cole-approved solo-Codex continuations are still explicit review rows;
+    # they must opt in so ordinary paired phases keep the non-primary gate.
+    solo_codex_signed = (
+        primary == "codex"
+        and any(
+            row.get("event") == "slice_review"
+            and row.get("model") == "codex"
+            and row.get("status") in ACCEPT_STATUSES
+            and row.get("confidence") in GATE_VALID_LABELS
+            and row.get(SOLO_CODEX_APPROVAL_KEY) is True
+            for row in phase_rows
+        )
+    )
+    if solo_codex_signed:
+        return True, []
     if not other_signed:
         return False, [
             f"phase {phase!r} missing repo-proven slice_review with "
