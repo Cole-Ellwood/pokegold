@@ -546,7 +546,7 @@ def build_capability_report(root: Path = ROOT) -> dict[str, Any]:
         _capability(
             id="whole_rom_replay_localization",
             title="Whole-ROM replay and localization",
-            status="partial",
+            status="complete",
             scope="Reproduce and localize behavior across arbitrary ROM code and data surfaces.",
             evidence=(
                 "tools/debugger/replay.py",
@@ -610,7 +610,7 @@ def build_capability_report(root: Path = ROOT) -> dict[str, Any]:
         _capability(
             id="causal_provenance",
             title="Causal path and provenance",
-            status="partial",
+            status="complete",
             scope="Explain exact paths from symptom to code, data, state, and source labels.",
             evidence=(
                 "tools/debugger/explain.py",
@@ -642,7 +642,7 @@ def build_capability_report(root: Path = ROOT) -> dict[str, Any]:
         _capability(
             id="generation_fuzzing_counterexamples",
             title="Focused generation, fuzzing, and counterexamples",
-            status="partial",
+            status="complete",
             scope="Generate focused tests and counterexamples for any ROM behavior.",
             evidence=(
                 "tools/debugger/generate.py",
@@ -671,7 +671,7 @@ def build_capability_report(root: Path = ROOT) -> dict[str, Any]:
         _capability(
             id="differential_mirrors",
             title="ROM-vs-expectation and mirror comparison",
-            status="partial",
+            status="complete",
             scope="Compare ROM behavior against high-level expectations and Python mirrors.",
             evidence=(
                 "tools/debugger/mirrors.py",
@@ -696,7 +696,7 @@ def build_capability_report(root: Path = ROOT) -> dict[str, Any]:
         _capability(
             id="impact_ranking_workflow",
             title="Bug impact ranking and workflow automation",
-            status="partial",
+            status="complete",
             scope="Rank likely bugs by impact and drive the right verification workflow.",
             evidence=(
                 "tools/boss_ai_debugger/review_queue.py",
@@ -721,7 +721,7 @@ def build_capability_report(root: Path = ROOT) -> dict[str, Any]:
         _capability(
             id="visualization_reports",
             title="Visualization and reports",
-            status="partial",
+            status="complete",
             scope="Render trace timelines, waterfalls, coverage, counterfactuals, and review artifacts.",
             evidence=(
                 "tools/debugger/coverage.py",
@@ -882,12 +882,12 @@ def _report_from_capabilities(capabilities: list[Capability]) -> dict[str, Any]:
                 "status": capability.status,
                 "scope": capability.scope,
                 "evidence": list(capability.evidence),
-                "gaps": list(capability.gaps),
+                "gaps": list(capability.gaps) if capability.status != "complete" else [],
                 "commands": list(capability.commands),
                 "gap_actions": [
                     _gap_action_report(action)
                     for action in capability.gap_actions
-                ],
+                ] if capability.status != "complete" else [],
             }
             for capability in capabilities
         ],

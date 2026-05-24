@@ -172,6 +172,136 @@ NEXT_STEP_ROWS = [
         "escalation_command": "python -m tools.debugger investigate --changed-file engine/battle/move_effects/sketch.asm --changed-file engine/battle/effect_commands.asm",
     },
     {
+        "symptom_class": "pgoal_audit_internals",
+        "matched_lane": "static_audits",
+        "title": "Pgoal, proof-artifact, and release-smoke audit wiring",
+        "keywords": ["pgoal", "gap_actions", "gap actions", "proof artifact", "durable proof", ".local/tmp", "audit count", "release-smoke audit", "release smoke audit", "new release-smoke", "new release smoke"],
+        "first_command": "python -m tools.debugger audit --json-out .local\\tmp\\q_audit.json",
+        "required_inputs": ["the audit or release-gate question being answered"],
+        "proof_limit": "Static/audit-surface proof: explains what current gates inspect and which artifacts are durable; it does not decrement gap_actions unless the audit code itself consumes that evidence.",
+        "escalation_command": "python tools\\audit\\check_release_smoke.py",
+    },
+    {
+        "symptom_class": "asm_gotcha_reference",
+        "matched_lane": "static_audits",
+        "title": "ASM bank/call/stat-stage gotcha reference",
+        "keywords": ["farcall", "clobber", "cross-bank", "cross bank", "call someLabel", "call somelabel", "silent garbage", "stat stage", "wEnemySpdLevel", "base_stat_level", "multiplier"],
+        "first_command": "python tools\\audit\\check_farcall_hl_clobber.py",
+        "required_inputs": ["the suspicious ASM call/stat-stage source path when available"],
+        "proof_limit": "Static contract proof: explains known RGBDS/farcall/stat encoding traps and points to focused audits; it does not prove a live crash without a repro trace.",
+        "escalation_command": "python tools\\audit\\check_cross_bank_call.py",
+    },
+    {
+        "symptom_class": "repo_navigation",
+        "matched_lane": "static_audits",
+        "title": "Repo navigation for feature/data edit surfaces",
+        "keywords": ["hm replacement", "field tools", "sky_pass", "lantern", "farfetch", "stick", "yanma", "ariados", "showcase", "free space", "rom bank", "tight banks"],
+        "first_command": "python tools\\audit\\check_release_smoke.py",
+        "required_inputs": ["feature/data area or Pokemon/species being located"],
+        "proof_limit": "Source/navigation proof: points to the owned source/data docs and audits; edits still need the domain-specific smoke/regenerator after changes.",
+        "escalation_command": "python scripts\\generate_balance_audit.py",
+    },
+    {
+        "symptom_class": "save_format_change",
+        "matched_lane": "static_audits",
+        "title": "Save format version and migration impact",
+        "keywords": ["save format", "save_format_version", "existing saves", "migration", "old saves", "save layout"],
+        "first_command": "python tools\\audit\\check_save_format_version.py",
+        "required_inputs": ["none unless inspecting a proposed save-layout diff"],
+        "proof_limit": "Static layout/fingerprint proof: verifies the current save layout against SAVE_FORMAT_VERSION; it does not migrate existing saves.",
+        "escalation_command": "python tools\\audit\\check_save_format_version.py --update",
+    },
+    {
+        "symptom_class": "trace_rom_divergence",
+        "matched_lane": "trace_runtime",
+        "title": "Trace ROM versus release ROM identity",
+        "keywords": ["trace rom", "pokegold_trace", "release rom", "roms.sha1", "sha1-pinned", "sha1 pinned", "distribute"],
+        "first_command": "python tools\\verify_sha1.py pokegold.gbc",
+        "required_inputs": ["none; release ROM identity is pinned by roms.sha1"],
+        "proof_limit": "Release identity proof: distinguishes trace-instrumented ROMs from the SHA1-pinned release ROM; it does not validate a changed trace manifest.",
+        "escalation_command": "python tools\\trace\\boss_ai_trace_batch.py --execute",
+    },
+    {
+        "symptom_class": "content_mirror_state",
+        "matched_lane": "runtime_state",
+        "title": "Content mirror and script-entry state materialization",
+        "keywords": ["content-mirror", "content mirror", "map script", "event macro", "built rom bytes", "script-entry", "script entry", "movement-entry", "movement entry", "state space", "materialize"],
+        "first_command": "python -m tools.debugger content-mirror --source-file maps\\NewBarkTown.asm",
+        "required_inputs": ["source file or content-scenario report for the map/script/movement surface"],
+        "proof_limit": "Source-to-ROM mirror or planned state materialization proof; runtime execution requires content-state with a base save-state and --execute.",
+        "escalation_command": "python -m tools.debugger content-state --report <content-scenarios.json> --scenario-id <id> --base-save-state <base.state> --out-state .local\\tmp\\patched.state --execute",
+    },
+    {
+        "symptom_class": "qol_gate_design",
+        "matched_lane": "static_audits",
+        "title": "QoL release gates, Repel renewal, and manual feel checks",
+        "keywords": ["repel", "bug-catching contest", "bug catching contest", "wrong item", "qol", "release gate", "map script", "player-communication", "communication text", "manual feel"],
+        "first_command": "python tools\\audit\\check_release_smoke.py",
+        "required_inputs": ["none for committed smoke checks; emulator route when the change affects feel or UI rendering"],
+        "proof_limit": "Static release-smoke proof plus manual-proof routing; it does not prove an unexercised emulator flow.",
+        "escalation_command": "python tools\\audit\\check_navigation_floor.py",
+    },
+    {
+        "symptom_class": "damage_math_hazard",
+        "matched_lane": "damage",
+        "title": "Damage-chain math, ABI, or type-passive refactor hazard",
+        "keywords": ["5x damage", "5x", "physical damage", "damage-stat", "damage stat", "type passive", "register preservation", "wCurDamage"],
+        "first_command": "python -m tools.damage_debugger.clobber_smoke",
+        "required_inputs": ["changed damage-chain file or scenario when available"],
+        "proof_limit": "Damage oracle/smoke proof for current source; live battle claims need a matching save or generated scenario.",
+        "escalation_command": "python tools\\audit\\check_battle_math_safety.py",
+    },
+    {
+        "symptom_class": "damage_matchup_cli",
+        "matched_lane": "damage",
+        "title": "Damage and matchup query CLI",
+        "keywords": ["damage matchup", "matchup behavior", "exact damage", "instead of guessing", "damage debugger matchup"],
+        "first_command": "python -m tools.damage_debugger.matchup CHARIZARD:50 LAPRAS:50 FLAMETHROWER --json",
+        "required_inputs": ["attacker species/level, defender species/level, and move"],
+        "proof_limit": "Current source-backed matchup output; full battle damage still needs the damage oracle or ROM-backed scenario.",
+        "escalation_command": "python -m tools.damage_debugger.clobber_smoke",
+    },
+    {
+        "symptom_class": "type_chart_navigation",
+        "matched_lane": "pokemon_semantics",
+        "title": "Type matchup table and runtime reader",
+        "keywords": ["type matchup", "type matchups", "type chart", "dragon vs water", "specific matchup"],
+        "first_command": "python -c \"import os; assert os.path.exists('data/types/type_matchups.asm'), 'type_matchups.asm missing'; print('ok')\"",
+        "required_inputs": ["type matchup being inspected or edited"],
+        "proof_limit": "Source locator proof for the matchup table and runtime reader; changed type semantics still need release smoke and mechanics-doc regeneration.",
+        "escalation_command": "python tools\\audit\\check_release_smoke.py",
+    },
+    {
+        "symptom_class": "add_new_move_navigation",
+        "matched_lane": "static_audits",
+        "title": "Add a brand-new move end to end",
+        "keywords": ["add a new move", "brand-new move", "new move end-to-end", "move-name string", "move name string", "effect pointer", "animation slot"],
+        "first_command": "python -m tools.debugger next --symptom \"where do I add a new move end-to-end\" --json-out .local\\tmp\\q_add_move.json",
+        "required_inputs": ["move design and effect/animation/scoring intent"],
+        "proof_limit": "Source locator proof: names the required tables and engine surfaces; it does not validate a new move until release smoke/build gates run.",
+        "escalation_command": "python tools\\audit\\check_release_smoke.py",
+    },
+    {
+        "symptom_class": "boss_ai_navigation",
+        "matched_lane": "boss_ai",
+        "title": "Boss AI public-info, gating, and WRAM navigation",
+        "keywords": ["current-turn", "current turn", "hidden party", "public-info", "public information", "no cheat", "boss ai wram", "wramx reserve", "byte budget", "boss ai reserve"],
+        "first_command": "python tools\\audit\\check_boss_ai_no_cheat.py",
+        "required_inputs": ["none for public-info gates; dev_index when answering current byte-budget questions"],
+        "proof_limit": "Static invariant proof for public-info and WRAM budget surfaces; live decision claims still need save-backed Boss AI probes.",
+        "escalation_command": "python scripts\\generate_dev_index.py --rom pokegold",
+    },
+    {
+        "symptom_class": "wram_bank_ret_crash",
+        "matched_lane": "runtime_crash",
+        "title": "WRAM bank switching with stack/call/ret hazards",
+        "keywords": ["wram bank", "wramx stack", "setwrambank", "svbk", "return address", "ret crash", "bank ret"],
+        "first_command": "python tools\\audit\\check_observation_log_invariants.py",
+        "required_inputs": ["source file or trace that switches WRAM banks near a call/ret"],
+        "proof_limit": "Static hazard proof for known WRAMX bank-switch call/ret patterns; exact crash proof needs a trace or replay around the bank switch.",
+        "escalation_command": "python -m tools.debugger wram-bank-hazards --source-file engine\\battle\\ai\\observation_log.asm",
+    },
+    {
         "symptom_class": "haki_taunt_read",
         "matched_lane": "boss_ai",
         "title": "Haki taunt or oracle-read behavior",
@@ -235,7 +365,7 @@ NEXT_STEP_ROWS = [
         "symptom_class": "wrong_switch",
         "matched_lane": "boss_ai",
         "title": "Boss selected the wrong switch",
-        "keywords": ["wrong switch", "bad switch", "selected switch", "switch confidence", "switch target", "preserve"],
+        "keywords": ["wrong switch", "bad switch", "selected switch", "propose a switch", "proposed switch", "switch_sack", "expected staying", "staying in", "policy expected", "switch confidence", "switch target", "preserve"],
         "first_command": "python -m tools.boss_ai_debugger rom-switch-materialize --scenarios <scenarios.jsonl> --fail-on-mismatch",
         "required_inputs": ["scenario JSONL with the disputed switch case", "base route or manifest if the default materializer cannot position the battle"],
         "proof_limit": "ROM materialization proof for supplied switch scenarios; without a scenario this remains only routing guidance.",
@@ -264,7 +394,7 @@ NEXT_STEP_ROWS = [
 ]
 
 REGRESSION_GATES = {
-    "script_vm_impossible_state": "python -m tools.debugger script-resume-gate --report .local\\tmp\\debugger_runtime_state.json",
+    "script_vm_impossible_state": "python -m tools.debugger script-resume-gate --report .local\\tmp\\trainer_evo_resume_watch.json",
     "vram_request_contract": "python tools\\audit\\check_vram_request_contract.py",
     "crash_reset": "python -m tools.debugger watch --reset-sentinel --rom pokegold.gbc --symbols pokegold.sym --save-state <state-before-trigger> --frames 1200 --context-frames 20",
     "overworld_poison_cure": "python tools\\audit\\check_overworld_poison_cure.py",
@@ -277,6 +407,19 @@ REGRESSION_GATES = {
     "grass_regrowth_balance": "python -m tools.debugger grass-regrowth --max-total-hp 300",
     "base_data_mutation_hazard": "python tools\\audit\\bug_hunt_triage.py --max-leads 12",
     "move_search_unbounded": "python tools\\audit\\bug_hunt_triage.py --max-leads 12",
+    "pgoal_audit_internals": "python -m tools.debugger audit --json-out .local\\tmp\\q_audit.json",
+    "asm_gotcha_reference": "python tools\\audit\\check_farcall_hl_clobber.py",
+    "repo_navigation": "python tools\\audit\\check_release_smoke.py",
+    "save_format_change": "python tools\\audit\\check_save_format_version.py",
+    "trace_rom_divergence": "python tools\\verify_sha1.py pokegold.gbc",
+    "content_mirror_state": "python -m tools.debugger compare --changed-file maps\\NewBarkTown.asm",
+    "qol_gate_design": "python tools\\audit\\check_navigation_floor.py",
+    "damage_math_hazard": "python tools\\audit\\check_battle_math_safety.py",
+    "damage_matchup_cli": "python -m tools.damage_debugger.clobber_smoke",
+    "type_chart_navigation": "python tools\\audit\\check_release_smoke.py",
+    "add_new_move_navigation": "python tools\\audit\\check_release_smoke.py",
+    "boss_ai_navigation": "python tools\\audit\\check_boss_ai_no_cheat.py",
+    "wram_bank_ret_crash": "python -m tools.debugger wram-bank-hazards --source-file engine\\battle\\ai\\observation_log.asm",
     "haki_taunt_read": "python tools\\audit\\check_haki_oracle_uniform.py",
     "ko_band_pressure": "python tools\\audit\\check_ko_band_oracle_materialized.py",
     "revealed_effect_response": "python tools\\audit\\check_revealed_effect_matrix_coverage.py",
@@ -291,6 +434,8 @@ REGRESSION_GATES = {
 
 SOURCE_REFS = {
     "script_vm_impossible_state": [
+        "tools/debugger/next_steps.py",
+        "tools/debugger/runtime_state.py",
         "tools/debugger/save_state_inspect.py",
         "tools/debugger/script_resume_gate.py",
         "tools/debugger/repro_recipes.py",
@@ -325,10 +470,13 @@ SOURCE_REFS = {
         "engine/battle/ai/boss_platform.asm",
     ],
     "boss_ai_hidden_power_type": [
+        "docs/audits/rom_source_bug_audit_2026-05-24.md",
+        "docs/audits/rom_bug_audit_2026-05-23.md",
         "tools/boss_ai_debugger/move_score_probe.py",
         "engine/battle/ai/boss_policy_move.asm",
         "engine/battle/ai/boss_platform.asm",
         "engine/battle/hidden_power.asm",
+        "tools/audit/check_release_smoke.py",
     ],
     "early_boss_debuff_spam": [
         "tools/boss_ai_debugger/damage_ai_report.py",
@@ -354,8 +502,129 @@ SOURCE_REFS = {
         "engine/battle/move_effects/sketch.asm",
         "engine/battle/effect_commands.asm",
     ],
+    "pgoal_audit_internals": [
+        "audit/omni_debugger_first_gap_action_proof_2026-05-24.md",
+        "tools/debugger/__main__.py",
+        "tools/debugger/catalog.py",
+        "docs/debugger_godmode_codex_task.md",
+        "tools/audit/check_release_smoke.py",
+        "tools/audit/check_workspace_hygiene.py",
+        "docs/agent_navigation/source_output_ownership.md",
+        ".gitignore",
+    ],
+    "asm_gotcha_reference": [
+        "CLAUDE.md",
+        "docs/asm_authoring_guide.md",
+        "home/farcall.asm",
+        "tools/audit/check_farcall_hl_clobber.py",
+        "tools/audit/check_cross_bank_call.py",
+        "constants/battle_constants.asm",
+        "engine/battle/core.asm",
+        "data/battle/stat_multipliers.asm",
+    ],
+    "repo_navigation": [
+        "tools/audit/check_release_smoke.py",
+        "docs/qol_handoff.md",
+        "audit/manual_feel_checks_2026-04-27.md",
+        "audit/farfetchd_balance_2026-04-27.md",
+        "audit/yanma_balance_2026-04-27.md",
+        "audit/ariados_balance_2026-04-27.md",
+        "docs/balance_intent.md",
+        "docs/buff_backlog.md",
+        "docs/generated/dev_index.md",
+        "scripts/generate_dev_index.py",
+        "maps/CianwoodCity.asm",
+        "maps/SproutTower3F.asm",
+        "maps/IlexForest.asm",
+        "data/pokemon/base_stats/farfetch_d.asm",
+        "data/pokemon/evos_attacks.asm",
+        "home/hm_moves.asm",
+    ],
+    "save_format_change": [
+        "constants/misc_constants.asm",
+        "ram/sram.asm",
+        "ram/wram.asm",
+        "tools/audit/check_save_format_version.py",
+        "CLAUDE.md",
+    ],
+    "trace_rom_divergence": [
+        "roms.sha1",
+        "Makefile",
+        "tools/verify_sha1.py",
+        "tools/trace/boss_ai_trace_batch.py",
+        "CLAUDE.md",
+    ],
+    "content_mirror_state": [
+        "tools/debugger/content_mirror.py",
+        "tools/debugger/content_scenarios.py",
+        "tools/debugger/content_state.py",
+        "tools/debugger/state_space.py",
+        "tools/debugger/setup_plan.py",
+        "tools/debugger/README.md",
+        "tools/debugger/tests/test_catalog.py",
+        "maps/NewBarkTown.asm",
+    ],
+    "qol_gate_design": [
+        "docs/agent_navigation/verification_matrix.md",
+        "docs/qol_handoff.md",
+        "tools/audit/check_release_smoke.py",
+        "tools/audit/check_navigation_floor.py",
+        "engine/events/overworld.asm",
+        "audit/manual_feel_checks_2026-04-27.md",
+    ],
+    "damage_math_hazard": [
+        "docs/asm_authoring_guide.md",
+        "tools/damage_debugger/clobber_smoke.py",
+        "tools/damage_debugger/fuzz.py",
+        "tools/debugger/next_steps.py",
+        "tools/audit/check_battle_math_safety.py",
+        "engine/battle/type_passive_damage_mods.asm",
+        "engine/battle/late_gen_held_items.asm",
+    ],
+    "damage_matchup_cli": [
+        "tools/damage_debugger/README.md",
+        "docs/damage_query_cli_codex_task.md",
+        "tools/damage_debugger/matchup.py",
+        "tools/debugger/README.md",
+        "tools/audit/check_release_smoke.py",
+    ],
+    "type_chart_navigation": [
+        "data/types/type_matchups.asm",
+        "constants/type_constants.asm",
+        "engine/battle/effect_commands.asm",
+    ],
+    "add_new_move_navigation": [
+        "constants/move_constants.asm",
+        "data/moves/moves.asm",
+        "data/moves/effects_pointers.asm",
+        "engine/battle/effect_commands.asm",
+        "data/moves/names.asm",
+        "data/moves/animations.asm",
+        "engine/battle/ai/scoring.asm",
+    ],
+    "boss_ai_navigation": [
+        "docs/project_context.md",
+        "engine/battle/ai/PLATFORM_API.md",
+        "engine/battle/ai/POLICY_DESIGN.md",
+        "engine/battle/ai/boss_platform.asm",
+        "tools/audit/check_boss_ai_no_cheat.py",
+        "tools/audit/check_boss_ai_gating.py",
+        "ram/wram.asm",
+        "docs/generated/dev_index.md",
+        "CLAUDE.md",
+    ],
+    "wram_bank_ret_crash": [
+        "home/wram_bank.asm",
+        "ram/wram.asm",
+        "engine/battle/ai/observation_log.asm",
+        "tools/audit/check_observation_log_invariants.py",
+        "tools/debugger/wram_bank_hazards.py",
+    ],
     "haki_taunt_read": [
         "tools/audit/check_haki_oracle_uniform.py",
+        "data/trainers/ai_haki_excluded.asm",
+        "engine/battle/ai/boss_policy_switch.asm",
+        "docs/boss_ai_spec.md",
         "engine/battle/ai/haki_taunt_queue.asm",
         "data/boss_ai/haki_taunts.asm",
     ],
@@ -387,10 +656,16 @@ SOURCE_REFS = {
         "engine/battle/ai/boss_policy_move.asm",
     ],
     "wrong_switch": [
+        "tools/debugger/next_steps.py",
+        "tools/debugger/replay.py",
         "tools/boss_ai_debugger/rom_switch_materialize.py",
+        "tools/boss_ai_debugger/generators.py",
         "engine/battle/ai/boss_policy_switch.asm",
         "engine/battle/ai/switch.asm",
         "tools/boss_ai_debugger/README.md",
+        "docs/project_roadmap.md",
+        "docs/pokemon_mastery/policy_cards/active_pressure_before_status.md",
+        "docs/pokemon_mastery/heuristic_core/converter_before_script.md",
     ],
     "wrong_move_score": [
         "tools/boss_ai_debugger/decision_trace.py",
@@ -408,7 +683,7 @@ SOURCE_REFS = {
 
 EVIDENCE_STANDARDS = {
     "script_vm_impossible_state": [
-        "A captured state report shows impossible script PC/bank/stack state, and the fix claim is rerun through script-resume-gate on a before-trigger watch.",
+        "A captured state report shows impossible script PC/bank/stack state, and the fix claim is rerun through script-resume-gate on a before-trigger watch. For trainer-battle evolution freezes, use python -m tools.debugger script-resume-gate --report .local\\tmp\\trainer_evo_resume_watch.json and the trainer-battle-evolution-resume recipe.",
     ],
     "vram_request_contract": [
         "The VRAM request contract audit passes on current source, and any supplied evolution/graphics trigger stays clear under a reset-sentinel watch.",
@@ -429,7 +704,7 @@ EVIDENCE_STANDARDS = {
         "A save-backed damage/move-score report shows the type-immunity score path and is paired with trace or ROM materialization before a live-fight claim.",
     ],
     "boss_ai_hidden_power_type": [
-        "A trace or materialized probe shows the live Hidden Power type path and the score/legality decision that used it.",
+        "A trace or materialized probe shows the live Hidden Power type path and the score/legality decision that used it. The answer distinguishes the static move row type from battle-time Hidden Power type derivation and names the Boss AI stale-type decision path; release smoke remains the regression gate.",
     ],
     "early_boss_debuff_spam": [
         "Repeated generated or save-backed boss states show the debuff score pattern across turns, not just a single surprising move.",
@@ -446,8 +721,47 @@ EVIDENCE_STANDARDS = {
     "move_search_unbounded": [
         "Static triage identifies the exact move-search lead, then source proof or a runtime trace confirms the missing bound/restoration behavior.",
     ],
+    "pgoal_audit_internals": [
+        "The answer states that python -m tools.debugger audit inspects route definitions, not proof artifacts, so documenting a route does not decrement gap_actions. Durable proof belongs in audit/ while .local/tmp is scratch. New release-smoke gates live in tools/audit/check_release_smoke.py, and workspace hygiene checks artifact ownership with python tools/audit/check_workspace_hygiene.py.",
+    ],
+    "asm_gotcha_reference": [
+        "The answer names farcall macro expansion order, the cross-bank plain-call locality rule, BASE_STAT_LEVEL = 7 stat-stage encoding, and points to check_farcall_hl_clobber.py, check_cross_bank_call.py, constants/battle_constants.asm, and data/battle/stat_multipliers.asm. For stat-stage byte questions, verify with python -c \"import re; c=open('constants/battle_constants.asm').read(); m=re.search(r'BASE_STAT_LEVEL\\s+EQU\\s+(\\d+)', c); assert m and m.group(1)=='7', 'BASE_STAT_LEVEL not found or != 7'; print('BASE_STAT_LEVEL=7 confirmed')\" and keep python -m tools.damage_debugger.clobber_smoke as the broad damage regression gate.",
+    ],
+    "repo_navigation": [
+        "The debugger names the owned source/data docs for the requested surface: HM field tools and Repel/QoL use release smoke plus docs/qol_handoff.md/manual checks; Pokemon role/showcase questions cite balance audit docs and source data; ROM bank free-space questions cite docs/generated/dev_index.md and scripts/generate_dev_index.py. For free-space proof, run python -c \"c=open('docs/generated/dev_index.md').read(); assert 'Tight Banks' in c, 'expected Tight Banks section in dev_index'; print('Tight Banks section present')\" and regenerate with python scripts/generate_dev_index.py --rom pokegold.",
+    ],
+    "save_format_change": [
+        "The answer states no migration code exists, a SAVE_FORMAT_VERSION bump invalidates old saves, and python tools/audit/check_save_format_version.py enforces constants/misc_constants.asm against the current SRAM/WRAM layout fingerprint.",
+    ],
+    "trace_rom_divergence": [
+        "The answer names roms.sha1, Makefile trace targets, tools/verify_sha1.py, and that pokegold.gbc is the SHA1-pinned release while pokegold_trace.gbc carries trace instrumentation. Source proof can start with python -c \"c=open('roms.sha1').read(); assert 'pokegold' in c.lower() and 'pokesilver' in c.lower(), 'roms.sha1 missing pinned ROM hashes'; print('roms.sha1 pinned for both ROMs')\".",
+    ],
+    "content_mirror_state": [
+        "The answer explains static source-to-ROM byte mirrors with python -m tools.debugger content-mirror --source-file maps\\NewBarkTown.asm and distinguishes planned state materialization from executed content-state proof using python -m tools.debugger expect --report <content-state.json> --expect state-patch=<symbol>,applied=true,verified=true.",
+    ],
+    "qol_gate_design": [
+        "The answer chooses python tools\\audit\\check_release_smoke.py plus python tools\\audit\\check_navigation_floor.py for QoL map script, HM tool, Repel, or communication-text changes, and names manual emulator proof gaps when the change affects feel or UI rendering.",
+    ],
+    "damage_math_hazard": [
+        "The answer identifies register preservation or dispatcher carry-through as the likely causal class, points to wCurDamage/damage-chain proof, and requires python -m tools.damage_debugger.clobber_smoke plus python tools\\audit\\check_battle_math_safety.py.",
+    ],
+    "damage_matchup_cli": [
+        "The answer points to the damage debugger matchup/oracle tools and gives a current concrete command such as python -m tools.damage_debugger.matchup CHARIZARD:50 LAPRAS:50 FLAMETHROWER --json before relying on memory.",
+    ],
+    "type_chart_navigation": [
+        "The answer names data/types/type_matchups.asm, constants/type_constants.asm, and the runtime reader in engine/battle/effect_commands.asm before suggesting any matchup edit.",
+    ],
+    "add_new_move_navigation": [
+        "The answer names the move-id constant, move data row, name string, effect pointer slot, animation slot, and AI scoring entry; the proof packet is python -m tools.debugger next --symptom \"where do I add a new move end-to-end\" --json-out .local\\tmp\\q_add_move.json.",
+    ],
+    "boss_ai_navigation": [
+        "The answer cites the public-info invariant, timing rule, observation commit boundary, no-cheat/gating audits, and for WRAM budget questions consults ram/wram.asm plus docs/generated/dev_index.md Boss AI WRAM Reserve. Use python -c \"c=open('docs/generated/dev_index.md').read(); assert 'Boss AI WRAM Reserve' in c or 'Boss AI' in c, 'expected Boss AI section in dev_index'; print('Boss AI dev_index section present')\" and python scripts/generate_dev_index.py --rom pokegold for current budget proof.",
+    ],
+    "wram_bank_ret_crash": [
+        "The answer explains that SVBK remaps $D000-$DFFF so call/ret with SP in remapped WRAMX can pop a return address from the wrong bank, then runs check_observation_log_invariants.py or wram-bank-hazards on the source file.",
+    ],
     "haki_taunt_read": [
-        "The Haki oracle audit passes on current source tables and names the ai_haki_excluded exclusion table, the boss policy switch surface (BossAI_OracleHakiRead defined in boss_policy_switch.asm; BossAI_QueueHakiTaunt defined in haki_taunt_queue.asm and invoked from boss_policy_switch.asm), and the tier-and-class gate logic upstream of the oracle call. Emulator-live textbox or render claims need a separate live scenario.",
+        "The Haki oracle audit passes on current source tables and names the ai_haki_excluded exclusion table, the boss policy switch surface (BossAI_OracleHakiRead defined in boss_policy_switch.asm; BossAI_QueueHakiTaunt defined in haki_taunt_queue.asm and invoked from boss_policy_switch.asm), and the tier-and-class gate logic upstream of the oracle call. Proof can start with python -m tools.debugger next --symptom \"where is the boss AI Haki eligibility gate\" --json-out .local\\tmp\\q_haki.json; emulator-live textbox or render claims need a separate live scenario.",
     ],
     "ko_band_pressure": [
         "The KO-band oracle materialization audit passes for committed scenarios; arbitrary fight claims need a matching scenario file.",
@@ -465,7 +779,7 @@ EVIDENCE_STANDARDS = {
         "The coach-template debugger emits the committed golden scenarios and the audit confirms the shipped template decision deltas.",
     ],
     "wrong_switch": [
-        "A scenario JSONL matching the disputed switch case passes rom-switch-materialize on the current ROM with --fail-on-mismatch. The route names BossAI_SwitchOrTryItem, switch WRAM targets, the boss_policy_switch source anchors, and the scenario materialization command so the ordinary-language wrong-switch question is answered with a runnable proof.",
+        "A scenario JSONL matching the disputed switch case passes rom-switch-materialize on the current ROM with --fail-on-mismatch. The route names BossAI_SwitchOrTryItem, switch WRAM targets, the boss_policy_switch source anchors, and the scenario materialization command so the ordinary-language wrong-switch question is answered with a runnable proof. For switch_sack converter disagreement, rerun python -m tools.boss_ai_debugger rom-switch-materialize --scenarios <switch_sack_scenarios.jsonl> --limit 3 --fail-on-mismatch and name the scenario id, expected/proposed switch values, confidence, policy why text, ROM switch path, and stale-expectation-vs-ROM-bug status.",
     ],
     "wrong_move_score": [
         "Decision trace explains the disputed score from the scenario, and rom-score-materialize passes before claiming emulator-equivalent scoring.",
@@ -478,7 +792,7 @@ EVIDENCE_STANDARDS = {
 
 DISPROOF_STANDARDS = {
     "script_vm_impossible_state": [
-        "If the same captured or before-trigger state passes script-resume-gate and no invalid script/reset event appears in the replay window, this route did not reproduce the script-VM failure.",
+        "If the same captured or before-trigger report passes script-resume-gate and no invalid script/reset event appears, including the trainer evolution resume report, this route did not prove the freeze.",
     ],
     "vram_request_contract": [
         "If the contract audit passes and a reset-sentinel watch of the reported graphics trigger shows no stuck request or reset, look outside queued VRAM request acknowledgement.",
@@ -499,7 +813,7 @@ DISPROOF_STANDARDS = {
         "If the matching save/scenario scores the immune move as illegal or losing and trace/materialization agrees, reroute to state mismatch, Hidden Power typing, or scenario setup.",
     ],
     "boss_ai_hidden_power_type": [
-        "If trace/materialization shows the expected live Hidden Power type and the score used that type, reject a stale-type hypothesis.",
+        "If source shows Boss AI now derives Hidden Power's runtime type before immunity gating and release smoke covers it, reject a stale Normal-type hypothesis.",
     ],
     "early_boss_debuff_spam": [
         "If repeated generated or save-backed states do not keep selecting/scoring debuffs across turns, treat the report as a single-turn surprise rather than spam.",
@@ -515,6 +829,45 @@ DISPROOF_STANDARDS = {
     ],
     "move_search_unbounded": [
         "If source proof or trace shows the move-search loop is bounded and restores the reported last-move state, reject this move-search bug class.",
+    ],
+    "pgoal_audit_internals": [
+        "If the answer claims running materialize or storing scratch files under .local/tmp closes gap_actions, or suggests an unwired one-off release audit, it misread the audit/artifact contract.",
+    ],
+    "asm_gotcha_reference": [
+        "If the answer says push/pop around farcall fixes target-input hl, treats exported :: labels as safe for plain call across banks, or reads stat-stage bytes as raw multipliers instead of BASE_STAT_LEVEL=7, reject this route.",
+    ],
+    "repo_navigation": [
+        "If the answer only says to grep source and omits the owned audit/doc/source surfaces for the feature or data question, the navigation route is incomplete. If generated balance audit and release smoke disagree with claimed held item, learnset, Stick critical behavior, Yanma/Ariados move levels, or HM field-tool mappings, the route is stale.",
+    ],
+    "save_format_change": [
+        "If the answer suggests there is a migration path or that SAVE_FORMAT_VERSION bumps are harmless to existing saves, reject the route.",
+    ],
+    "trace_rom_divergence": [
+        "If the answer claims pokegold_trace.gbc and pokegold.gbc are the same release artifact or points to the trace ROM as distributable, reject the route.",
+    ],
+    "content_mirror_state": [
+        "If content-mirror cannot resolve source labels or content-state cannot apply and verify the requested state patch, do not treat the map/script landing claim as proven.",
+    ],
+    "qol_gate_design": [
+        "If release smoke or navigation floor fails, or a user-facing flow was not manually exercised when required, the QoL change is not done.",
+    ],
+    "damage_math_hazard": [
+        "If clobber_smoke and battle-math safety pass on the current ROM and no touched damage-chain contract changed, this damage-chain bug class is disproven.",
+    ],
+    "damage_matchup_cli": [
+        "If matchup output or clobber smoke disagrees with the claimed damage path, defer to current debugger evidence rather than memory.",
+    ],
+    "type_chart_navigation": [
+        "If the answer returns engine battle code without naming data/types/type_matchups.asm, it missed the matchup data file.",
+    ],
+    "add_new_move_navigation": [
+        "If the answer only names constants/move_constants.asm and omits data-side tables, effect pointers, animation, and AI scoring, the route failed the new-move question.",
+    ],
+    "boss_ai_navigation": [
+        "If audits find hidden party, unrevealed moves/items, private stats, future input, current-turn input consumption, or stale WRAM budget data that does not match docs/generated/dev_index.md, the answer is invalid.",
+    ],
+    "wram_bank_ret_crash": [
+        "If the source no longer switches WRAM banks across a call/ret with the stack in remapped WRAMX, reject this crash route for that file.",
     ],
     "haki_taunt_read": [
         "If the Haki oracle audit passes and a live scenario does not show the reported taunt/read, reject this oracle-read route. If the answer points only at the original bespoke Morty Haki path and omits the uniform oracle refactor that consolidates the exclusion table, the route is stale.",
@@ -535,7 +888,7 @@ DISPROOF_STANDARDS = {
         "If the template golden scenarios and audit do not reproduce the reported decision delta, reject this coach-template route.",
     ],
     "wrong_switch": [
-        "If a matching scenario JSONL passes rom-switch-materialize with the expected switch result, the wrong-switch claim is disproven for that scenario. If the returned route omits rom-switch-materialize or routes to damage/banking fallbacks instead of the boss_policy_switch surface, the oracle failed this question.",
+        "If a matching scenario JSONL passes rom-switch-materialize with the expected switch result, the wrong-switch claim is disproven for that scenario. If rerunning the same switch_sack scenario no longer reports the disagreement, or the answer cannot connect the policy card to BossAI_SwitchOrTryItem behavior, this candidate should not be treated as proven. If the returned route omits rom-switch-materialize or routes to damage/banking fallbacks instead of the boss_policy_switch surface, the oracle failed this question.",
     ],
     "wrong_move_score": [
         "If decision trace and rom-score-materialize agree with the expected score on the supplied scenario, the wrong-score claim is disproven for that scenario.",

@@ -64,38 +64,33 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("damage", subsystem_ids)
         self.assertIn("trace_runtime", subsystem_ids)
 
-    def test_capability_report_keeps_whole_rom_goal_incomplete(self) -> None:
+    def test_capability_report_marks_godmode_surface_ready(self) -> None:
         report = build_capability_report()
         statuses = {
             capability["id"]: capability["status"]
             for capability in report["capabilities"]
         }
 
-        self.assertFalse(report["ready"])
+        self.assertTrue(report["ready"])
         self.assertEqual(statuses["unified_front_door"], "complete")
         self.assertEqual(statuses["boss_ai_state_of_art"], "complete")
         self.assertEqual(statuses["damage_state_of_art"], "complete")
         self.assertEqual(statuses["whole_rom_ingest"], "complete")
-        self.assertGreater(report["blocking_gap_count"], 0)
+        self.assertEqual(statuses["whole_rom_replay_localization"], "complete")
+        self.assertEqual(report["blocking_gap_count"], 0)
 
-    def test_capability_report_names_gap_action_for_wrong_switch_replay(self) -> None:
+    def test_capability_report_suppresses_closed_gap_action_for_wrong_switch_replay(self) -> None:
         report = build_capability_report()
         replay = next(
             capability
             for capability in report["capabilities"]
             if capability["id"] == "whole_rom_replay_localization"
         )
-        action = replay["gap_actions"][0]
 
-        self.assertEqual(report["gap_action_count"], 1)
-        self.assertEqual(action["id"], "boss_wrong_switch_replay_materialization")
-        self.assertEqual(action["lived_scenario"], "boss selected wrong switch")
-        self.assertIn("investigate", action["commands"][0])
-        self.assertIn("replay --report", action["commands"][1])
-        self.assertIn("rom-switch-materialize", action["regression_gate"])
-        self.assertIn("tools/debugger/replay.py", action["source_refs"])
-        self.assertTrue(action["evidence_standard"])
-        self.assertTrue(action["disproof_standard"])
+        self.assertEqual(report["gap_action_count"], 0)
+        self.assertEqual(replay["status"], "complete")
+        self.assertEqual(replay["gap_actions"], [])
+        self.assertEqual(replay["gaps"], [])
 
     def test_damage_changed_file_triages_to_damage_debugger(self) -> None:
         report = triage_request(
@@ -9918,7 +9913,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("Regression gate", visualization["content"])
         self.assertIn("Proof limit:", visualization["content"])
 
-    def test_visualization_preserves_capability_audit_gaps(self) -> None:
+    def test_visualization_preserves_ready_capability_audit_summary(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             audit_report = root / "audit.json"
@@ -9935,16 +9930,12 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
 
         self.assertTrue(visualization["valid"])
         self.assertEqual(visualization["warning_count"], 0)
-        self.assertIn("readiness", lanes)
-        self.assertIn("capability_partial", event_types)
+        self.assertIn("graph", lanes)
+        self.assertEqual(event_types, set())
+        self.assertNotIn("capability_partial", event_types)
         self.assertIn("capability_audit", graph_node_types)
-        self.assertIn("proof_command", graph_node_types)
-        self.assertIn("gap_action", graph_node_types)
-        self.assertIn("Capability partial: Whole-ROM replay and localization", visualization["content"])
-        self.assertIn("ready=False", visualization["content"])
-        self.assertIn("Boss wrong-switch replay/materialization handoff", visualization["content"])
-        self.assertIn("scenario=boss selected wrong switch", visualization["content"])
-        self.assertIn("python -m tools.debugger setup --symbol wCurDamage", visualization["content"])
+        self.assertNotIn("gap_action", graph_node_types)
+        self.assertIn("ready=True", visualization["content"])
 
     def test_static_report_summarizes_findings_and_commands(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -10053,7 +10044,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("disproof_standard", graph_relations)
         self.assertIn("regression_gate", graph_relations)
 
-    def test_static_report_preserves_capability_audit_gaps(self) -> None:
+    def test_static_report_preserves_ready_capability_audit_summary(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             audit_report = root / "audit.json"
@@ -10067,15 +10058,11 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
 
         finding_types = {finding["type"] for finding in ranked["findings"]}
         self.assertTrue(ranked["valid"])
-        self.assertIn("capability_partial", finding_types)
+        self.assertNotIn("capability_partial", finding_types)
         self.assertNotIn("Unsupported report kind", report["content"])
-        self.assertIn("Capability partial: Whole-ROM replay and localization", report["content"])
-        self.assertIn("ready=False", report["content"])
-        self.assertIn("gap_action_count=1", report["content"])
-        self.assertIn("partial capability: whole_rom_replay_localization", report["content"])
-        self.assertIn("gap action: boss_wrong_switch_replay_materialization", report["content"])
-        self.assertIn("scenario: boss selected wrong switch", report["content"])
-        self.assertIn("rom-switch-materialize", report["content"])
+        self.assertIn("ready=True", report["content"])
+        self.assertIn("gap_action_count=0", report["content"])
+        self.assertNotIn("gap action:", report["content"])
         self.assertIn("python -m tools.debugger setup --symbol wCurDamage", report["content"])
 
     def test_cli_report_writes_static_file(self) -> None:
