@@ -2768,12 +2768,28 @@ def format_explanation(report: dict[str, Any]) -> str:
             lines.append(
                 f"  - S{path['score']} C{path['confidence']:.2f} {path['id']}: {path['title']}"
             )
-            for item in path.get("nodes", [])[:6]:
+            node_items = list(path.get("nodes", []))
+            shown_nodes = list(node_items[:6])
+            shown_node_ids = {item.get("id", "") for item in shown_nodes}
+            for item in node_items:
+                if item.get("id", "") in shown_node_ids:
+                    continue
+                if item.get("role") in {"evidence_standard", "disproof_standard", "regression_gate"}:
+                    shown_nodes.append(item)
+                    shown_node_ids.add(item.get("id", ""))
+            for item in shown_nodes:
                 location = ""
                 if item.get("file"):
                     location = f" {item['file']}:{item.get('line', '')}".rstrip(":")
                 lines.append(f"      {item['type']}/{item['role']}: {item['label']}{location}")
-            for evidence in path.get("evidence", [])[:3]:
+            evidence_items = list(path.get("evidence", []))
+            shown_evidence = list(evidence_items[:3])
+            for evidence in evidence_items:
+                if evidence in shown_evidence:
+                    continue
+                if str(evidence).startswith(("disproof standard:", "proof limit:")):
+                    shown_evidence.append(evidence)
+            for evidence in shown_evidence:
                 lines.append(f"      evidence: {evidence}")
             for command in path.get("commands", [])[:2]:
                 lines.append(f"      next: {command}")

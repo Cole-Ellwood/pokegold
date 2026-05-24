@@ -128,6 +128,7 @@ def collect_evidence(
         "events": [],
         "trace_observations": [],
         "content_scenarios": [],
+        "next_steps": [],
         "symbols": [],
         "files": [],
         "notes": [],
@@ -149,6 +150,7 @@ def collect_evidence(
         collect_from_data(loaded["data"], source=loaded["source"], evidence=evidence, base_weight=55)
     evidence["symbols"] = merge_named_items(evidence["symbols"], "symbol")
     evidence["files"] = merge_named_items(evidence["files"], "file")
+    evidence["next_steps"] = merge_next_steps(evidence["next_steps"])
     evidence["trace_observations"] = merge_trace_observations(evidence["trace_observations"])
     evidence["events"] = merge_events(evidence["events"])
     return evidence
@@ -157,6 +159,8 @@ def collect_evidence(
 def collect_from_data(data: Any, *, source: str, evidence: dict[str, Any], base_weight: int) -> None:
     if isinstance(data, dict):
         kind = str(data.get("kind", ""))
+        for next_step in next_step_reports(data):
+            collect_next_step_report(next_step, source=source, evidence=evidence, base_weight=max(base_weight, 84))
         if kind == "unified_debugger_watch_report":
             collect_watch_report(data, source=source, evidence=evidence, base_weight=max(base_weight, 90))
         elif kind == "unified_debugger_replay_plan":
@@ -182,6 +186,62 @@ def collect_from_data(data: Any, *, source: str, evidence: dict[str, Any], base_
     elif isinstance(data, list):
         for item in data:
             collect_from_data(item, source=source, evidence=evidence, base_weight=base_weight)
+
+
+def next_step_reports(data: dict[str, Any]) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    if data.get("kind") == "unified_debugger_next_step":
+        out.append(data)
+    embedded = data.get("symptom_only_next_step")
+    if isinstance(embedded, dict) and embedded.get("kind") == "unified_debugger_next_step":
+        out.append(embedded)
+    return out
+
+
+def collect_next_step_report(data: dict[str, Any], *, source: str, evidence: dict[str, Any], base_weight: int) -> None:
+    for candidate in next_step_candidates(data):
+        source_refs = string_items(candidate.get("source_refs"))
+        for source_ref in source_refs:
+            if looks_like_source_path(source_ref):
+                add_file(evidence, source_ref, source=source, weight=base_weight)
+        evidence["next_steps"].append(
+            {
+                "source": source,
+                "symptom": str(data.get("symptom", "")),
+                "matched_lane": str(candidate.get("matched_lane") or data.get("matched_lane") or ""),
+                "symptom_class": str(candidate.get("symptom_class", "")),
+                "title": str(candidate.get("title") or candidate.get("symptom_class") or "next proof path"),
+                "first_command": str(candidate.get("first_command") or ""),
+                "required_inputs": string_items(candidate.get("required_inputs")),
+                "source_refs": source_refs,
+                "evidence_standard": string_items(candidate.get("evidence_standard")),
+                "disproof_standard": string_items(candidate.get("disproof_standard")),
+                "proof_limit": str(candidate.get("proof_limit") or ""),
+                "regression_gate": str(candidate.get("regression_gate") or ""),
+                "escalation_command": str(candidate.get("escalation_command") or ""),
+                "repro_recipes": string_items(candidate.get("repro_recipes")),
+                "weight": base_weight,
+            }
+        )
+
+
+def next_step_candidates(data: dict[str, Any]) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    seen: set[tuple[str, str, str]] = set()
+    recommendation = data.get("recommendation") if isinstance(data.get("recommendation"), dict) else {}
+    for candidate in [recommendation, *dict_items(data.get("candidates"))]:
+        if not candidate:
+            continue
+        key = (
+            str(candidate.get("symptom_class", "")),
+            str(candidate.get("title", "")),
+            str(candidate.get("first_command", "")),
+        )
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(candidate)
+    return out
 
 
 def collect_watch_report(data: dict[str, Any], *, source: str, evidence: dict[str, Any], base_weight: int) -> None:
@@ -342,6 +402,11 @@ def build_causal_paths(
     for index, event in enumerate(evidence["events"], 1):
         path = path_from_event(index, event, slice_by_query=slice_by_query, symptom=symptom)
         paths.append(path)
+    next_start = len(paths) + 1
+    for offset, next_step in enumerate(evidence["next_steps"][:max_paths], next_start):
+        path = path_from_next_step(offset, next_step, symptom=symptom)
+        if path:
+            paths.append(path)
     content_start = len(paths) + 1
     for offset, scenario in enumerate(evidence["content_scenarios"][:max_paths], content_start):
         path = path_from_content_scenario(offset, scenario, slice_by_query=slice_by_query, symptom=symptom)
@@ -359,6 +424,79 @@ def build_causal_paths(
                 paths.append(path)
     paths.sort(key=lambda item: (-int(item["score"]), -float(item["confidence"]), item["id"]))
     return paths[:max_paths]
+
+
+def path_from_next_step(
+    index: int,
+    next_step: dict[str, Any],
+    *,
+    symptom: str,
+) -> dict[str, Any] | None:
+    title = str(next_step.get("title") or next_step.get("symptom_class") or "")
+    first_command = str(next_step.get("first_command") or "")
+    if not title and not first_command:
+        return None
+    source_refs = [path for path in string_items(next_step.get("source_refs")) if looks_like_source_path(path)]
+    nodes = []
+    symptom_text = symptom or str(next_step.get("symptom", ""))
+    if symptom_text:
+        nodes.append(node("symptom", "symptom", symptom_text))
+    nodes.append(
+        node(
+            "workflow",
+            "next_step",
+            title or first_command,
+            detail=" ".join(
+                part
+                for part in (
+                    f"lane={next_step.get('matched_lane', '')}",
+                    f"class={next_step.get('symptom_class', '')}",
+                )
+                if part and not part.endswith("=")
+            ),
+        )
+    )
+    if first_command:
+        nodes.append(node("proof", "first_command", first_command, detail="routed first proof command"))
+    for source_ref in source_refs[:5]:
+        nodes.append(node("source", "source_ref", source_ref, file=source_ref))
+    for standard in string_items(next_step.get("evidence_standard"))[:3]:
+        nodes.append(node("proof", "evidence_standard", standard))
+    for standard in string_items(next_step.get("disproof_standard"))[:3]:
+        nodes.append(node("proof", "disproof_standard", standard))
+    regression_gate = str(next_step.get("regression_gate") or "")
+    if regression_gate:
+        nodes.append(node("verify", "regression_gate", regression_gate))
+    evidence = [
+        f"next-step route from {next_step.get('source')}",
+        "required inputs: " + "; ".join(string_items(next_step.get("required_inputs"))),
+        "evidence standard: " + "; ".join(string_items(next_step.get("evidence_standard"))),
+        "disproof standard: " + "; ".join(string_items(next_step.get("disproof_standard"))),
+        "proof limit: " + str(next_step.get("proof_limit") or ""),
+    ]
+    commands = unique_list(
+        [
+            first_command,
+            regression_gate,
+            str(next_step.get("escalation_command") or ""),
+            *[
+                f"python -m tools.debugger repro-recipe --id {recipe}"
+                for recipe in string_items(next_step.get("repro_recipes"))
+            ],
+        ]
+    )
+    return finish_path(
+        path_id=f"next_step_{index}",
+        title=f"Next proof path: {title or first_command}",
+        score=78,
+        confidence=0.64,
+        nodes=nodes,
+        edges=path_edges(nodes),
+        evidence=evidence,
+        symbols=[],
+        files=unique_list(source_refs),
+        extra_commands=commands,
+    )
 
 
 def path_from_content_scenario(
@@ -799,6 +937,28 @@ def merge_named_items(items: list[dict[str, Any]], key: str) -> list[dict[str, A
         merged[name]["weight"] = max(int(merged[name]["weight"]), int(item.get("weight", 0)))
         merged[name]["sources"] = unique_list([*merged[name]["sources"], str(item.get("source", ""))])
     return sorted(merged.values(), key=lambda item: (-int(item["weight"]), item[key]))
+
+
+def merge_next_steps(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    merged: dict[tuple[str, str, str], dict[str, Any]] = {}
+    for item in items:
+        key = (
+            str(item.get("symptom_class", "")),
+            str(item.get("title", "")),
+            str(item.get("first_command", "")),
+        )
+        if key not in merged:
+            merged[key] = dict(item)
+            continue
+        merged[key]["weight"] = max(int(merged[key].get("weight", 0)), int(item.get("weight", 0)))
+        for field in ("required_inputs", "source_refs", "evidence_standard", "disproof_standard", "repro_recipes"):
+            merged[key][field] = unique_list(
+                [
+                    *string_items(merged[key].get(field)),
+                    *string_items(item.get(field)),
+                ]
+            )
+    return sorted(merged.values(), key=lambda item: (-int(item.get("weight", 0)), item.get("title", "")))
 
 
 def merge_trace_observations(items: list[dict[str, Any]]) -> list[dict[str, Any]]:

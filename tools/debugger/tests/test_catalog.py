@@ -754,6 +754,81 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("next_step_regression_gate", signal_types)
         self.assertIn("rom-switch-materialize --scenarios <scenarios.jsonl> --fail-on-mismatch", commands)
 
+    def test_explain_uses_embedded_next_step_as_causal_proof_path(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "tools" / "boss_ai_debugger").mkdir(parents=True)
+            (root / "engine" / "battle" / "ai").mkdir(parents=True)
+            (root / "tools" / "boss_ai_debugger" / "rom_switch_materialize.py").write_text(
+                "def main():\n    return 0\n",
+                encoding="utf-8",
+            )
+            (root / "tools" / "boss_ai_debugger" / "README.md").write_text(
+                "# Boss AI debugger\n",
+                encoding="utf-8",
+            )
+            (root / "engine" / "battle" / "ai" / "boss_policy_switch.asm").write_text(
+                "BossAI_SwitchOrTryItem:\n\tret\n",
+                encoding="utf-8",
+            )
+            (root / "engine" / "battle" / "ai" / "switch.asm").write_text(
+                "AI_SwitchOrTryItem:\n\tret\n",
+                encoding="utf-8",
+            )
+            (root / "pokegold.sym").write_text(
+                "01:4000 BossAI_SwitchOrTryItem\n01:4010 AI_SwitchOrTryItem\n",
+                encoding="utf-8",
+            )
+            investigation_report = root / "investigate.json"
+            investigation_report.write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_investigation_run",
+                        "valid": True,
+                        "passed": True,
+                        "symptom": "boss selected wrong switch",
+                        "steps": [],
+                        "top_findings": [],
+                        "top_impact": [],
+                        "commands": [],
+                        "errors": [],
+                        "warnings": [],
+                        "symptom_only_next_step": build_next_step(symptom="boss selected wrong switch"),
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            report = build_explanation_report(reports=("investigate.json",), root=root)
+
+        path = report["paths"][0]
+        roles = {
+            node["role"]
+            for causal_path in report["paths"]
+            for node in causal_path.get("nodes", [])
+        }
+        labels = {
+            node["label"]
+            for causal_path in report["paths"]
+            for node in causal_path.get("nodes", [])
+        }
+        evidence = "\n".join(path["evidence"])
+        commands = "\n".join(report["commands"])
+
+        self.assertTrue(report["valid"])
+        self.assertEqual(path["id"], "next_step_1")
+        self.assertIn("Next proof path: Boss selected the wrong switch", path["title"])
+        self.assertIn("tools/boss_ai_debugger/rom_switch_materialize.py", path["related_files"])
+        self.assertIn("first_command", roles)
+        self.assertIn("source_ref", roles)
+        self.assertIn("evidence_standard", roles)
+        self.assertIn("disproof_standard", roles)
+        self.assertIn("regression_gate", roles)
+        self.assertIn("tools/boss_ai_debugger/rom_switch_materialize.py", labels)
+        self.assertIn("evidence standard: A scenario JSONL matching the disputed switch case passes rom-switch-materialize", evidence)
+        self.assertIn("disproof standard: If a matching scenario JSONL passes rom-switch-materialize with the expected switch result", evidence)
+        self.assertIn("rom-switch-materialize --scenarios <scenarios.jsonl> --fail-on-mismatch", commands)
+
     def test_localize_uses_watch_report_events_as_strong_signal(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

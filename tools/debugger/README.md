@@ -364,6 +364,11 @@ runtime helper routines, watch symbols, and the setup/replay/coverage/provenance
 commands needed to prove the behavior. This is stronger than a raw static slice
 because runtime evidence or runtime probe targets anchor the path, but it is
 still not a full instruction-level SM83 taint graph for every memory byte.
+When a report contains an embedded `unified_debugger_next_step` route,
+`explain` emits a causal proof-path node chain with the routed first command,
+source/data anchors, evidence standard, disproof standard, proof limit, and
+regression gate, keeping symptom-only planning packets explainable without
+pretending they are ROM-backed repros.
 
 `suggest-tests` maps changed files, symbols, and symptoms to this repo's
 existing fuzzers, generators, metamorphic checks, coverage reports, and

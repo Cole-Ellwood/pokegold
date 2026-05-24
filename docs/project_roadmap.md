@@ -29,6 +29,9 @@ Follow-up in the same slice: `localize --report` now consumes that embedded
 next-step route, promotes the source/data anchors into localization candidates,
 and carries the routed proof/escalation/regression commands into the workflow
 plan.
+Next follow-up: `explain --report` now turns the embedded next-step route into a
+causal proof-path chain with first command, source/data anchors,
+evidence/disproof standards, proof limit, and regression gate.
 
 Status legend:
 
