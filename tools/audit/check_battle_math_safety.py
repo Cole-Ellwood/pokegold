@@ -431,6 +431,54 @@ def audit_dynamic_category_consumers() -> list[Issue]:
     return issues
 
 
+def audit_dark_status_shield_state() -> list[Issue]:
+    issues: list[Issue] = []
+
+    require_text(
+        TYPE_PASSIVES,
+        (
+            "TypePassive_TryDarkStatusShield_Far:\n"
+            "; return carry if the Dark shield negates this status move.\n"
+            "\tcall TypePassive_IsCurrentMoveStatus_Far\n"
+            "\tret nz\n"
+            "\tcall TypePassive_IsDarkShieldEligibleEffect_Far\n"
+            "\tret z\n"
+            "\n"
+            "\tld a, DARK\n"
+            "\tcall TypePassive_GetOpponentTypeContribution_Far\n"
+            "\tand a\n"
+            "\tret z\n"
+            "\tld b, a\n"
+            "\n"
+            "\tcall TypePassive_GetOpponentDarkShieldFlagAddr_Far\n"
+            "\tld a, [hl]\n"
+            "\tand a\n"
+            "\tret nz\n"
+            "\n"
+            "\t; Preserve the shield flag address and half/full contribution; the helper\n"
+            "\t; below uses hl/bc internally. pop does not affect flags, so ret z still\n"
+            "\t; reads the helper result.\n"
+            "\tpush hl\n"
+            "\tpush bc\n"
+            "\tcall TypePassive_StatusMoveLikelyAffectsOpponent_Far\n"
+            "\tpop bc\n"
+            "\tpop hl\n"
+            "\tret z\n"
+            "\n"
+            "\tld [hl], 1\n"
+            "\tld a, b\n"
+            "\tcp 2\n"
+            "\tjr z, .negate\n"
+            "\tcall BattleRandom\n"
+            "\tcp 50 percent + 1\n"
+        ),
+        issues,
+        "Dark status shield must preserve flag hl and half/full contribution b, and half-Dark must use an exact 128/256 coin flip",
+    )
+
+    return issues
+
+
 def main() -> int:
     issues: list[Issue] = []
     asm_paths = iter_asm_paths()
@@ -438,6 +486,7 @@ def main() -> int:
         issues.extend(scan_file(path))
     issues.extend(audit_dynamic_category_consumers())
     issues.extend(audit_late_gen_damage_multiplier_scratch_state())
+    issues.extend(audit_dark_status_shield_state())
 
     if issues:
         print("Battle math safety audit FAILED.", file=sys.stderr)
@@ -452,6 +501,7 @@ def main() -> int:
     print(f"Scanned {len(asm_paths)} ASM files.")
     print("Dynamic category consumers use the effective-category helpers.")
     print("Late-gen item stat/damage hooks preserve live battle math state and category gates.")
+    print("Dark status shield preserves live flag/contribution state across eligibility checks.")
     return 0
 
 
