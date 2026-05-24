@@ -36,7 +36,7 @@ from tools.debugger.pokemon_semantics import (
     build_grass_regrowth_report,
     build_learnset_inspection_report,
 )
-from tools.debugger.proof_runner import build_proof_card
+from tools.debugger.proof_runner import build_proof_campaign, build_proof_card, command_record
 from tools.debugger.provenance import build_provenance_report
 from tools.debugger.ranking import rank_findings
 from tools.debugger.replay import build_replay_plan
@@ -166,6 +166,35 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(report["proof_depth"], "executed")
         self.assertTrue(report["passed"])
         self.assertIn("grass-regrowth", report["chosen_command"])
+
+    def test_proof_campaign_classifies_routes_and_executes_case(self) -> None:
+        report = build_proof_campaign(
+            cases=(
+                {
+                    "id": "grass",
+                    "command": "python -m tools.debugger grass-regrowth --max-total-hp 300",
+                    "expected_exit_codes": [0],
+                },
+            ),
+            include_all_routes=True,
+            execute=True,
+            timeout_seconds=30,
+        )
+
+        self.assertEqual(report["kind"], "unified_debugger_proof_campaign")
+        self.assertTrue(report["valid"])
+        self.assertGreaterEqual(report["route_row_count"], 35)
+        self.assertGreaterEqual(report["blocked_reason_counts"]["placeholder_input"], 1)
+        self.assertEqual(report["executed_unique_command_count"], 1)
+
+    def test_proof_command_records_block_reasons(self) -> None:
+        placeholder = command_record("python -m tools.debugger triage --symptom <symptom>")
+        shell = command_record("python tools\\audit\\check_release_smoke.py & git status")
+
+        self.assertFalse(placeholder["safe"])
+        self.assertEqual(placeholder["blocked_reason"], "placeholder_input")
+        self.assertFalse(shell["safe"])
+        self.assertEqual(shell["blocked_reason"], "shell_metacharacter")
 
     def test_next_step_routes_reset_crashes_before_counter_substrings(self) -> None:
         report = build_next_step(

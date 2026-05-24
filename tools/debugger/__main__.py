@@ -29,7 +29,7 @@ from .pokemon_semantics import (
     build_learnset_inspection_report,
     build_party_inspection_report,
 )
-from .proof_runner import build_proof_card
+from .proof_runner import build_proof_campaign, build_proof_card
 from .provenance import build_provenance_report
 from .ranking import rank_findings
 from .replay import build_replay_plan
@@ -96,6 +96,9 @@ def build_parser() -> argparse.ArgumentParser:
     prove.add_argument("--execute", action="store_true")
     prove.add_argument("--timeout-seconds", type=int, default=120)
     prove.add_argument("--prefer", choices=["first", "gate", "escalation"], default="first")
+    prove.add_argument("--suite", type=Path)
+    prove.add_argument("--all-routes", action="store_true")
+    prove.add_argument("--max-commands", type=int, default=50)
     add_output_args(prove)
     prove.set_defaults(func=cmd_prove)
 
@@ -590,6 +593,18 @@ def cmd_next(args: argparse.Namespace) -> int:
 
 
 def cmd_prove(args: argparse.Namespace) -> int:
+    if args.suite or args.all_routes:
+        cases = load_jsonl(args.suite) if args.suite else []
+        report = build_proof_campaign(
+            cases=tuple(cases),
+            execute=args.execute,
+            timeout_seconds=args.timeout_seconds,
+            max_commands=args.max_commands,
+            include_all_routes=args.all_routes,
+        )
+        emit_report(report, args)
+        return 0 if report["valid"] else 1
+
     report = build_proof_card(
         changed_files=tuple(args.changed_file),
         symptom=args.symptom,
@@ -1199,6 +1214,8 @@ def emit_report(report: dict[str, Any], args: argparse.Namespace) -> None:
         print(format_next_step(report))
     elif report["kind"] == "unified_debugger_proof_card":
         print(format_proof_card(report))
+    elif report["kind"] == "unified_debugger_proof_campaign":
+        print(format_proof_campaign(report))
     elif report["kind"] == "unified_debugger_ingest_manifest":
         print(format_ingest(report))
     elif report["kind"] == "unified_debugger_gate_plan":
@@ -1430,6 +1447,38 @@ def format_proof_card(report: dict[str, Any]) -> str:
         lines.append(f"  - {item}")
     lines.append(f"Proof limit: {report['proof_limit']}")
     lines.append(f"Regression gate: {report['regression_gate']}")
+    return "\n".join(lines)
+
+
+def format_proof_campaign(report: dict[str, Any]) -> str:
+    lines = [
+        "Unified Pokemon Gold romhack debugger proof campaign",
+        (
+            f"valid={report['valid']} execute={report['execute']} "
+            f"routes={report['route_row_count']} "
+            f"classes={report['classified_symptom_class_count']} "
+            f"commands={report['unique_command_count']} "
+            f"executed={report['executed_unique_command_count']} "
+            f"elapsed={report['elapsed_seconds']:.3f}s"
+        ),
+        f"status_counts={report['status_counts']}",
+        f"blocked_reason_counts={report['blocked_reason_counts']}",
+    ]
+    executed = [item for item in report["command_records"] if item["executed"]]
+    if executed:
+        lines.append("Executed commands:")
+        for item in executed[:12]:
+            execution = item.get("execution") or {}
+            lines.append(
+                "  - "
+                f"{item['disposition']} rc={execution.get('returncode')} "
+                f"{item['command']}"
+            )
+    blocked = [item for item in report["command_records"] if item.get("blocked_reason")]
+    if blocked:
+        lines.append("Blocked examples:")
+        for item in blocked[:8]:
+            lines.append(f"  - {item['blocked_reason']}: {item['command']}")
     return "\n".join(lines)
 
 
@@ -3351,6 +3400,20 @@ def write_json(report: dict[str, Any], path: Path) -> None:
         encoding="utf-8",
         newline="\n",
     )
+
+
+def load_jsonl(path: Path) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    with path.open("r", encoding="utf-8") as handle:
+        for line_no, line in enumerate(handle, 1):
+            stripped = line.strip()
+            if not stripped:
+                continue
+            try:
+                rows.append(json.loads(stripped))
+            except json.JSONDecodeError as exc:
+                raise SystemExit(f"{path}:{line_no}: invalid JSONL: {exc}") from exc
+    return rows
 
 
 if __name__ == "__main__":

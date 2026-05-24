@@ -1,0 +1,20 @@
+{"id":"v3_vram_contract","command":"python tools\\audit\\check_vram_request_contract.py","expected_exit_codes":[0],"expected_disposition":"passed"}
+{"id":"v3_overworld_poison_cure","command":"python tools\\audit\\check_overworld_poison_cure.py","expected_exit_codes":[0],"expected_disposition":"passed"}
+{"id":"v3_base_ai_legality","command":"python tools\\audit\\check_base_ai_mechanics_correctness.py","expected_exit_codes":[0],"expected_disposition":"passed"}
+{"id":"v3_grass_regrowth","command":"python -m tools.debugger grass-regrowth --max-total-hp 300","expected_exit_codes":[0],"expected_disposition":"passed"}
+{"id":"v3_type_passive_content_mirror","command":"python -m tools.debugger content-mirror --source-file engine/battle/type_passive_damage_mods.asm","expected_exit_codes":[0],"expected_disposition":"passed"}
+{"id":"v3_farcall_hl","command":"python tools\\audit\\check_farcall_hl_clobber.py","expected_exit_codes":[0],"expected_disposition":"passed"}
+{"id":"v3_cross_bank_call","command":"python tools\\audit\\check_cross_bank_call.py","expected_exit_codes":[0],"expected_disposition":"passed"}
+{"id":"v3_save_format","command":"python tools\\audit\\check_save_format_version.py","expected_exit_codes":[0],"expected_disposition":"passed"}
+{"id":"v3_new_bark_content_mirror","command":"python -m tools.debugger content-mirror --source-file maps\\NewBarkTown.asm","expected_exit_codes":[0],"expected_disposition":"passed"}
+{"id":"v3_damage_clobber_smoke","command":"python -m tools.damage_debugger.clobber_smoke","expected_exit_codes":[0],"expected_disposition":"passed"}
+{"id":"v3_battle_math_safety","command":"python tools\\audit\\check_battle_math_safety.py","expected_exit_codes":[0],"expected_disposition":"passed"}
+{"id":"v3_damage_matchup","command":"python -m tools.damage_debugger.matchup CHARIZARD:50 LAPRAS:50 FLAMETHROWER --json","expected_exit_codes":[0],"expected_disposition":"passed"}
+{"id":"v3_boss_public_info","command":"python tools\\audit\\check_boss_ai_no_cheat.py","expected_exit_codes":[0],"expected_disposition":"passed"}
+{"id":"v3_observation_log","command":"python tools\\audit\\check_observation_log_invariants.py","expected_exit_codes":[0],"expected_disposition":"passed"}
+{"id":"v3_wram_bank_hazard","command":"python -m tools.debugger wram-bank-hazards --source-file engine\\battle\\ai\\observation_log.asm","expected_exit_codes":[0],"expected_disposition":"passed"}
+{"id":"v3_haki_uniform","command":"python tools\\audit\\check_haki_oracle_uniform.py","expected_exit_codes":[0],"expected_disposition":"passed"}
+{"id":"v3_revealed_effect_matrix","command":"python tools\\audit\\check_revealed_effect_matrix_coverage.py","expected_exit_codes":[0],"expected_disposition":"passed"}
+{"id":"v3_coach_template_cli","command":"python -m tools.boss_ai_debugger coach-plan-templates --json","expected_exit_codes":[0],"expected_disposition":"passed"}
+{"id":"v3_coach_template_audit","command":"python tools\\audit\\check_coach_plan_templates.py","expected_exit_codes":[0],"expected_disposition":"passed"}
+{"id":"v3_wrong_switch_known_disagreement","command":"python -m tools.boss_ai_debugger rom-switch-materialize --scenarios audit\\boss_ai_debugger\\runs\\20260517_164349_changed_ai\\scenarios.jsonl --limit 20 --fail-on-mismatch","expected_exit_codes":[1],"expected_disposition":"discrepancy_found","expected_stdout_contains":["policy_disagreements=2"]}
