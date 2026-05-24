@@ -4900,6 +4900,57 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertNotIn("--symbol True", commands)
         self.assertIn("maps/NewBarkTown.asm", report["replay_targets"]["source_files"])
 
+    def test_replay_plan_uses_embedded_next_step_instead_of_impact_tags(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            investigation = root / "investigate.json"
+            investigation.write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_investigation_run",
+                        "valid": True,
+                        "symptom": "boss selected wrong switch",
+                        "symptom_only_next_step": build_next_step(symptom="boss selected wrong switch"),
+                        "top_impact": [
+                            {
+                                "type": "fuzz_campaign",
+                                "title": "Fuzz campaign: fuzz_boss_ai_generated_policy",
+                                "impact_score": 100,
+                                "related_symbols": [
+                                    "Broad",
+                                    "Fuzz",
+                                    "Python",
+                                    "ROM-materialized",
+                                    "boss_ai",
+                                    "fuzz_boss_ai_generated_policy",
+                                    "proof_level",
+                                ],
+                                "related_files": ["engine/battle/ai/boss_policy_move.asm"],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            report = build_replay_plan(reports=("investigate.json",), root=root)
+
+        commands = "\n".join(report["commands"])
+        targets = report["replay_targets"]
+        self.assertTrue(report["valid"])
+        self.assertIn("BossAI_SwitchOrTryItem", targets["symbols"])
+        self.assertIn("wEnemySwitchMonIndex", targets["watch_symbols"])
+        self.assertIn("wEnemySwitchMonParam", targets["watch_symbols"])
+        self.assertIn("wEnemyAIMoveScores", targets["watch_symbols"])
+        self.assertIn("engine/battle/ai/boss_policy_switch.asm", targets["source_files"])
+        self.assertIn("--symbol BossAI_SwitchOrTryItem", commands)
+        self.assertIn("--watch-symbol wEnemySwitchMonIndex", commands)
+        self.assertNotIn("Broad", targets["symbols"])
+        self.assertNotIn("Fuzz", targets["symbols"])
+        self.assertNotIn("Python", targets["symbols"])
+        self.assertNotIn("ROM-materialized", targets["symbols"])
+        self.assertNotIn("--symbol Broad", commands)
+
     def test_cli_replay_writes_json(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

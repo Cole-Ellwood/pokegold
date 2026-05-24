@@ -351,9 +351,14 @@ subsystem minimization, mirror comparison, impact ranking, report rendering,
 and final gates. It now runs the setup planner internally, reuses scenario/report
 save-state discovery, and threads an existing discovered state into watch and
 instruction-trace commands so ROM proof starts from the concrete scenario state
-when one is available. With `--execute-watch`, it runs the generic PyBoy watch
-bridge and embeds the enriched watch report, including dynamic context windows,
-in the replay plan.
+when one is available. When a report contains an embedded
+`unified_debugger_next_step` route, `replay --report` turns that route into
+concrete trace/watch targets and source refs; for the wrong-switch route this
+means `BossAI_SwitchOrTryItem`, `wEnemySwitchMonIndex`,
+`wEnemySwitchMonParam`, and `wEnemyAIMoveScores`, not impact-report tag words
+from prose. With `--execute-watch`, it runs the generic PyBoy watch bridge and
+embeds the enriched watch report, including dynamic context windows, in the
+replay plan.
 
 `explain` turns watch/replay reports, trace-index reports, traces, symptoms,
 symbols, and changed files into ranked causal paths. For a dynamic watch hit or

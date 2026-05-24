@@ -42,7 +42,32 @@ SYMPTOM_SYMBOLS = {
     "bank": "hROMBank",
     "farcall": "hROMBank",
 }
+NEXT_STEP_REPLAY_TARGETS_BY_CLASS = {
+    "wrong_switch": {
+        "symbols": ("BossAI_SwitchOrTryItem",),
+        "watch_symbols": ("wEnemySwitchMonIndex", "wEnemySwitchMonParam", "wEnemyAIMoveScores"),
+    },
+    "wrong_move_score": {
+        "symbols": ("BossAI_SelectMove",),
+        "watch_symbols": ("wEnemyAIMoveScores",),
+    },
+}
+NEXT_STEP_REPLAY_TARGETS_BY_LANE = {
+    "boss_ai": {
+        "symbols": ("BossAI_SelectMove",),
+        "watch_symbols": ("wEnemyAIMoveScores",),
+    },
+    "damage": {
+        "symbols": ("BattleCommand_DamageCalc",),
+        "watch_symbols": ("wCurDamage",),
+    },
+    "banking_abi": {
+        "symbols": ("FarCall",),
+        "watch_symbols": ("hROMBank",),
+    },
+}
 SOURCE_EXTENSIONS = {".asm", ".inc", ".py", ".md", ".txt"}
+REPLAY_SOURCE_EXTENSIONS = {".asm", ".inc", ".py"}
 SYMBOL_STOPWORDS = {
     "ABI",
     "Battle",
@@ -347,6 +372,7 @@ def walk_data_for_signals(data: Any, *, source: str, base_weight: int, out: list
             out.extend(content_state_materialization_signals(data, source=source, base_weight=max(base_weight, 88)))
         if kind == "unified_debugger_state_space":
             out.extend(state_space_signals(data, source=source, base_weight=max(base_weight, 88)))
+        out.extend(next_step_replay_signals(data, source=source, base_weight=max(base_weight, 90)))
         for key, value in data.items():
             lowered = str(key).lower()
             if lowered in SYMBOL_KEYS:
@@ -363,6 +389,8 @@ def walk_data_for_signals(data: Any, *, source: str, base_weight: int, out: list
                         out.append(signal(f"report_{lowered}", scenario_id=item, weight=base_weight, source=source))
             elif lowered in {"related_symbols", "symbols"}:
                 for item in string_items(value):
+                    if lowered == "related_symbols" and is_impact_item(data) and not is_trusted_impact_symbol(data, item):
+                        continue
                     if looks_like_symbol(item):
                         out.append(signal(f"report_{lowered}", symbol=item, weight=max(30, base_weight - 8), source=source))
             elif lowered in {"related_files", "changed_files", "source_files"}:
@@ -373,6 +401,48 @@ def walk_data_for_signals(data: Any, *, source: str, base_weight: int, out: list
     elif isinstance(data, list):
         for item in data:
             walk_data_for_signals(item, source=source, base_weight=base_weight, out=out)
+
+
+def next_step_replay_signals(data: dict[str, Any], *, source: str, base_weight: int) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for next_step in embedded_next_step_reports(data):
+        recommendation = next_step.get("recommendation")
+        if not isinstance(recommendation, dict):
+            continue
+        targets = next_step_replay_targets(recommendation)
+        for symbol_name in targets["symbols"]:
+            if looks_like_symbol(symbol_name):
+                out.append(signal("next_step_trace_symbol", symbol=symbol_name, weight=base_weight, source=source))
+        for symbol_name in targets["watch_symbols"]:
+            if looks_like_symbol(symbol_name):
+                out.append(signal("next_step_watch_symbol", symbol=symbol_name, weight=min(100, base_weight + 6), source=source))
+        for path in string_items(recommendation.get("source_refs")):
+            if looks_like_replay_source_path(path):
+                out.append(signal("next_step_source_ref", file=path, weight=max(55, base_weight - 10), source=source))
+    return out
+
+
+def embedded_next_step_reports(data: dict[str, Any]) -> list[dict[str, Any]]:
+    if data.get("kind") == "unified_debugger_next_step":
+        return [data]
+    next_step = data.get("symptom_only_next_step")
+    if isinstance(next_step, dict) and next_step.get("kind") == "unified_debugger_next_step":
+        return [next_step]
+    return []
+
+
+def next_step_replay_targets(recommendation: dict[str, Any]) -> dict[str, tuple[str, ...]]:
+    symptom_class = str(recommendation.get("symptom_class") or "")
+    lane = str(recommendation.get("matched_lane") or "")
+    targets = (
+        NEXT_STEP_REPLAY_TARGETS_BY_CLASS.get(symptom_class)
+        or NEXT_STEP_REPLAY_TARGETS_BY_LANE.get(lane)
+        or {"symbols": (), "watch_symbols": ()}
+    )
+    return {
+        "symbols": tuple(targets["symbols"]),
+        "watch_symbols": tuple(targets["watch_symbols"]),
+    }
 
 
 def content_rom_mirror_signals(data: dict[str, Any], *, source: str, base_weight: int) -> list[dict[str, Any]]:
@@ -1127,6 +1197,38 @@ def looks_like_source_path(value: str) -> bool:
     if not text or " " in text:
         return False
     return "/" in text and Path(text).suffix.lower() in SOURCE_EXTENSIONS
+
+
+def looks_like_replay_source_path(value: str) -> bool:
+    text = normalize_path(value)
+    if not text or " " in text:
+        return False
+    return "/" in text and Path(text).suffix.lower() in REPLAY_SOURCE_EXTENSIONS
+
+
+def is_impact_item(data: dict[str, Any]) -> bool:
+    return "impact_score" in data and "title" in data
+
+
+def is_trusted_impact_symbol(data: dict[str, Any], symbol: str) -> bool:
+    if not looks_like_symbol(symbol):
+        return False
+    item_type = str(data.get("type", ""))
+    return item_type in {
+        "explicit_symbol",
+        "watch_hit",
+        "trace_event",
+        "reverse_attribution",
+        "taint_path",
+        "instruction_trace_ready",
+        "instruction_trace_partial",
+        "instruction_trace_miss",
+        "instruction_trace_limit",
+        "state_space_executed",
+        "content_state_executed",
+        "expectation_failed",
+        "save_state_anomaly",
+    }
 
 
 def is_scenario_record(data: dict[str, Any], scenario_id: str) -> bool:
