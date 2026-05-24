@@ -5830,6 +5830,55 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("--boss falkner", commands)
         self.assertIn("rom-score-materialize", commands)
 
+    def test_setup_plan_uses_embedded_next_step_instead_of_nested_report_surfaces(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            investigation = root / "investigate.json"
+            investigation.write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_investigation_run",
+                        "valid": True,
+                        "symptom": "boss selected wrong switch",
+                        "symptom_only_next_step": build_next_step(symptom="boss selected wrong switch"),
+                        "reports": [
+                            {"id": "09_fuzz", "kind": "unified_debugger_fuzz_plan", "surface": "ROM banking / ABI"},
+                            {"id": "06_explain", "kind": "unified_debugger_causal_explanation", "surface": "Battle damage"},
+                        ],
+                        "top_impact": [
+                            {
+                                "type": "fuzz_campaign",
+                                "title": "Fuzz campaign: fuzz_banking_abi_static_watch",
+                                "impact_score": 100,
+                                "surface_id": "banking_abi",
+                            },
+                            {
+                                "type": "causal_path",
+                                "title": "Causal path: Battle damage",
+                                "impact_score": 90,
+                                "surface_id": "battle_damage",
+                            },
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            report = build_setup_plan(reports=("investigate.json",), root=root)
+
+        commands = "\n".join(report["commands"])
+        self.assertTrue(report["valid"])
+        self.assertEqual(report["surfaces"], ["boss_ai"])
+        self.assertEqual(report["target_count"], 1)
+        self.assertIn("BossAI_SwitchOrTryItem", report["effective_symbols"])
+        self.assertIn("wEnemySwitchMonIndex", report["effective_watch_symbols"])
+        self.assertIn("engine/battle/ai/boss_policy_switch.asm", report["effective_changed_files"])
+        self.assertIn("--symbol BossAI_SwitchOrTryItem", commands)
+        self.assertIn("--watch-symbol wEnemySwitchMonIndex", commands)
+        self.assertNotIn("--family damage", commands)
+        self.assertNotIn("--family banking_abi", commands)
+        self.assertNotIn("hROMBank", commands)
+
     def test_rank_and_impact_consume_setup_trigger_gaps(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

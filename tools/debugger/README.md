@@ -46,6 +46,7 @@ python -m tools.debugger wram-bank-hazards --source-file engine\battle\ai\observ
 python -m tools.debugger repro-recipe --id first-wild-route29
 python -m tools.debugger repro-recipe --id trainer-battle-evolution-resume
 python -m tools.debugger setup --symbol wCurDamage --watch-symbol wCurDamage --out-scenarios .local\tmp\debugger_setup_scenarios.jsonl
+python -m tools.debugger setup --report .local\tmp\debugger_investigate_wrong_switch.json
 python -m tools.debugger generate --symbol wCurDamage --out-scenarios .local\tmp\debugger_generation_seeds.jsonl
 python -m tools.debugger generate --changed-file engine\battle\ai\boss_policy_move.asm --family all --max-cases 64 --seed 1
 python -m tools.debugger provenance --symbol wCurDamage --symbol BattleCommand_DamageCalc
@@ -281,8 +282,14 @@ concrete `state`, `save_state`, `pre_choice_state`, or materialization-state
 path, setup discovers it, prefers requested scenario IDs, and threads that state
 into replay and instruction-trace commands. When no concrete state is available,
 the recipe block shows the exact state factory, materializer, or watch/probe
-commands to run next. It plans setup and trigger work; it does not yet synthesize
-every arbitrary save state itself.
+commands to run next. When a report contains an embedded
+`unified_debugger_next_step` route, `setup --report` treats that route as the
+setup surface and target source of truth; for the wrong-switch route this keeps
+setup on Boss AI and targets `BossAI_SwitchOrTryItem`,
+`wEnemySwitchMonIndex`, `wEnemySwitchMonParam`, and `wEnemyAIMoveScores`
+instead of inheriting unrelated nested damage or banking setup lanes. It plans
+setup and trigger work; it does not yet synthesize every arbitrary save state
+itself.
 
 `fuzz` turns inferred surfaces into concrete fuzz campaigns. Damage and Boss AI
 campaigns route to the mature dynamic fuzzers/generators; banking campaigns add

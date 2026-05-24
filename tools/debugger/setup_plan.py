@@ -20,6 +20,31 @@ CONTENT_RUNTIME_HELPERS_BY_PREFIX = (
     ("audio/", ("PlayMusic",)),
     ("gfx/", ("Request2bpp", "Get1bpp", "Decompress")),
 )
+NEXT_STEP_SETUP_TARGETS_BY_CLASS = {
+    "wrong_switch": {
+        "symbols": ("BossAI_SwitchOrTryItem",),
+        "watch_symbols": ("wEnemySwitchMonIndex", "wEnemySwitchMonParam", "wEnemyAIMoveScores"),
+    },
+    "wrong_move_score": {
+        "symbols": ("BossAI_SelectMove",),
+        "watch_symbols": ("wEnemyAIMoveScores",),
+    },
+}
+NEXT_STEP_SETUP_TARGETS_BY_LANE = {
+    "boss_ai": {
+        "symbols": ("BossAI_SelectMove",),
+        "watch_symbols": ("wEnemyAIMoveScores",),
+    },
+    "damage": {
+        "symbols": ("BattleCommand_DamageCalc",),
+        "watch_symbols": ("wCurDamage",),
+    },
+    "banking_abi": {
+        "symbols": ("FarCall",),
+        "watch_symbols": ("hROMBank",),
+    },
+}
+SETUP_SOURCE_EXTENSIONS = {".asm", ".inc", ".py"}
 
 
 def build_setup_plan(
@@ -63,6 +88,9 @@ def build_setup_plan(
         watch_symbols=watch_symbols,
         symptom=symptom,
     )
+    effective_symbols = tuple(unique_list([*symbols, *signal_values(signals, kind="symbol", signal_type_prefix="next_step_trace_")]))
+    effective_watch_symbols = tuple(unique_list([*watch_symbols, *signal_values(signals, kind="symbol", signal_type_prefix="next_step_watch_")]))
+    effective_changed_files = tuple(unique_list([*[normalize_path(path) for path in changed_files], *signal_values(signals, kind="file", signal_type_prefix="next_step_source_")]))
     surfaces = infer_setup_surfaces(signals)
     content_scenarios = collect_content_setup_scenarios(
         loaded_reports=loaded_reports,
@@ -76,9 +104,9 @@ def build_setup_plan(
             symbols_path=symbols_path,
             save_state=effective_save_state,
             scenario_path=scenario_path,
-            changed_files=changed_files,
-            symbols=symbols,
-            watch_symbols=watch_symbols,
+            changed_files=effective_changed_files,
+            symbols=effective_symbols,
+            watch_symbols=effective_watch_symbols,
             scenario_ids=scenario_ids,
             content_scenarios=content_scenarios,
             symptom=symptom,
@@ -131,6 +159,9 @@ def build_setup_plan(
         "changed_files": [normalize_path(path) for path in changed_files],
         "symbols": list(symbols),
         "watch_symbols": list(watch_symbols),
+        "effective_changed_files": list(effective_changed_files),
+        "effective_symbols": list(effective_symbols),
+        "effective_watch_symbols": list(effective_watch_symbols),
         "symptom": symptom,
         "signal_count": len(signals),
         "signals": signals[:160],
@@ -382,6 +413,7 @@ def collect_setup_signals(
 
 def collect_report_setup_signals(data: Any, *, source: str, out: list[dict[str, Any]]) -> None:
     if isinstance(data, dict):
+        out.extend(next_step_setup_signals(data, source=source))
         for key, value in data.items():
             lowered = str(key).lower()
             if lowered in {"symbol", "watch", "state_symbol", "pc_symbol", "source_symbol", "resolved", "query"}:
@@ -400,6 +432,52 @@ def collect_report_setup_signals(data: Any, *, source: str, out: list[dict[str, 
     elif isinstance(data, list):
         for item in data:
             collect_report_setup_signals(item, source=source, out=out)
+
+
+def next_step_setup_signals(data: dict[str, Any], *, source: str) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for next_step in embedded_next_step_reports(data):
+        recommendation = next_step.get("recommendation")
+        if not isinstance(recommendation, dict):
+            continue
+        lane = str(recommendation.get("matched_lane") or next_step.get("matched_lane") or "")
+        surface = normalize_surface(lane)
+        if surface:
+            out.append(signal("next_step_surface", "note", surface, 130, source))
+        targets = next_step_setup_targets(recommendation)
+        for index, symbol in enumerate(targets["symbols"]):
+            if looks_like_runtime_symbol(symbol):
+                out.append(signal("next_step_trace_symbol", "symbol", symbol, max(90, 120 - index), source))
+        for index, symbol in enumerate(targets["watch_symbols"]):
+            if looks_like_runtime_symbol(symbol):
+                out.append(signal("next_step_watch_symbol", "symbol", symbol, max(90, 125 - index), source))
+        for path in string_items(recommendation.get("source_refs")):
+            if looks_like_setup_source_path(path):
+                out.append(signal("next_step_source_ref", "file", normalize_path(path), 100, source))
+    return out
+
+
+def embedded_next_step_reports(data: dict[str, Any]) -> list[dict[str, Any]]:
+    if data.get("kind") == "unified_debugger_next_step":
+        return [data]
+    next_step = data.get("symptom_only_next_step")
+    if isinstance(next_step, dict) and next_step.get("kind") == "unified_debugger_next_step":
+        return [next_step]
+    return []
+
+
+def next_step_setup_targets(recommendation: dict[str, Any]) -> dict[str, tuple[str, ...]]:
+    symptom_class = str(recommendation.get("symptom_class") or "")
+    lane = str(recommendation.get("matched_lane") or "")
+    targets = (
+        NEXT_STEP_SETUP_TARGETS_BY_CLASS.get(symptom_class)
+        or NEXT_STEP_SETUP_TARGETS_BY_LANE.get(lane)
+        or {"symbols": (), "watch_symbols": ()}
+    )
+    return {
+        "symbols": tuple(targets["symbols"]),
+        "watch_symbols": tuple(targets["watch_symbols"]),
+    }
 
 
 def collect_content_setup_scenarios(
@@ -460,6 +538,40 @@ def setup_scenario_id_for(record: dict[str, Any]) -> str:
 
 
 def infer_setup_surfaces(signals: list[dict[str, Any]]) -> list[str]:
+    routed_surfaces = unique_list(
+        normalize_surface(str(item.get("value", "")))
+        for item in signals
+        if item.get("type") == "next_step_surface"
+    )
+    routed_surfaces = [surface for surface in routed_surfaces if surface]
+    if routed_surfaces:
+        explicit_scores = score_setup_surfaces(
+            [
+                item for item in signals
+                if str(item.get("type", "")).startswith("input_") and item.get("type") != "input_symptom"
+            ]
+        )
+        explicit_surfaces = [
+            surface for surface in SURFACE_ORDER
+            if surface != "general" and explicit_scores.get(surface, 0) > 0
+        ]
+        selected = [
+            surface for surface in SURFACE_ORDER
+            if surface != "general" and surface in {*routed_surfaces, *explicit_surfaces}
+        ]
+        return selected or routed_surfaces
+
+    scores = score_setup_surfaces(signals)
+    selected = [
+        surface for surface in SURFACE_ORDER
+        if surface != "general" and scores.get(surface, 0) > 0
+    ]
+    if not selected:
+        selected = ["general"]
+    return selected
+
+
+def score_setup_surfaces(signals: list[dict[str, Any]]) -> dict[str, int]:
     scores = {surface: 0 for surface in SURFACE_ORDER}
     for item in signals:
         value = str(item.get("value", ""))
@@ -481,13 +593,7 @@ def infer_setup_surfaces(signals: list[dict[str, Any]]) -> list[str]:
 
     if scores["damage"] and scores["content_static"]:
         scores["content_static"] = max(scores["content_static"], scores["damage"] // 2)
-    selected = [
-        surface for surface in SURFACE_ORDER
-        if surface != "general" and scores.get(surface, 0) > 0
-    ]
-    if not selected:
-        selected = ["general"]
-    return selected
+    return scores
 
 
 def surfaces_for_path(path: str) -> list[str]:
@@ -1748,6 +1854,21 @@ def looks_like_runtime_symbol(value: str) -> bool:
     if text.startswith(("$", "0x", "0X", ".", "-", "<")):
         return False
     return text[0].isalpha() and all(char.isalnum() or char in {"_", "."} for char in text)
+
+
+def looks_like_setup_source_path(value: str) -> bool:
+    text = normalize_path(str(value))
+    if not text or " " in text:
+        return False
+    return "/" in text and Path(text).suffix.lower() in SETUP_SOURCE_EXTENSIONS
+
+
+def signal_values(signals: list[dict[str, Any]], *, kind: str, signal_type_prefix: str) -> list[str]:
+    return unique_list(
+        str(item.get("value", ""))
+        for item in signals
+        if item.get("kind") == kind and str(item.get("type", "")).startswith(signal_type_prefix)
+    )
 
 
 def cmd_arg(value: str) -> str:
