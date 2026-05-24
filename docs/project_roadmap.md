@@ -43,6 +43,11 @@ Setup follow-up: `setup --report` now treats an embedded next-step route as the
 setup surface/target source of truth, keeping wrong-switch setup on Boss AI
 instead of inheriting nested damage or banking setup lanes from generated
 subreports.
+Generation/fuzz follow-up: `generate --report` and `fuzz --report` now treat an
+embedded next-step route as the generator surface/family source of truth; the
+wrong-switch route stays on Boss AI `switch_sack` generation and
+`rom-switch-materialize --fail-on-mismatch`. Focused regression:
+`test_generate_uses_embedded_next_step_instead_of_nested_report_surfaces`.
 
 Status legend:
 

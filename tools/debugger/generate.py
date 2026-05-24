@@ -112,6 +112,12 @@ GENERATOR_PROOF_LEVELS = {
     "content_static": "positioned_state_dynamic_planned",
     "general": "planning",
 }
+NEXT_STEP_GENERATOR_FAMILIES_BY_CLASS = {
+    "wrong_switch": ("switch_sack",),
+}
+NEXT_STEP_GENERATOR_FAMILY_COMMAND_HINTS = (
+    ("rom-switch-materialize", "switch_sack"),
+)
 
 
 def build_generation_plan(
@@ -138,6 +144,7 @@ def build_generation_plan(
         root=root,
     )
     tests = suggest_tests(
+        reports=reports,
         changed_files=changed_files,
         symbols=symbols,
         symptom=symptom,
@@ -179,8 +186,20 @@ def build_generation_plan(
         minimization=minimization,
         impact=impact,
     )
+    effective_families = tuple(
+        unique_list(
+            [
+                *families,
+                *signal_values(
+                    signals,
+                    kind="family",
+                    signal_type_prefix="next_step_family",
+                ),
+            ]
+        )
+    )
     surfaces = infer_generation_surfaces(
-        families=families,
+        families=effective_families,
         symbols=symbols,
         changed_files=changed_files,
         symptom=symptom,
@@ -189,7 +208,7 @@ def build_generation_plan(
     generators = [
         build_generator(
             surface=surface,
-            families=families,
+            families=effective_families,
             seed=seed,
             max_cases=case_limit,
         )
@@ -198,7 +217,7 @@ def build_generation_plan(
     seed_records = build_seed_records(
         surfaces=surfaces,
         generators=generators,
-        families=families,
+        families=effective_families,
         symbols=symbols,
         changed_files=changed_files,
         symptom=symptom,
@@ -216,7 +235,7 @@ def build_generation_plan(
         surfaces=surfaces,
         generators=generators,
         out_scenarios=seed_output.get("path", ""),
-        families=families,
+        families=effective_families,
         reports=reports,
         symbols=symbols,
         changed_files=changed_files,
@@ -272,6 +291,7 @@ def build_generation_plan(
         "changed_files": list(changed_files),
         "symbols": list(symbols),
         "families": list(families),
+        "effective_families": list(effective_families),
         "symptom": symptom,
         "seed": seed,
         "max_cases": case_limit,
@@ -392,6 +412,7 @@ def collect_generation_signals(
 
 def collect_report_signals(data: Any, *, source: str, out: list[dict[str, Any]]) -> None:
     if isinstance(data, dict):
+        out.extend(next_step_generation_signals(data, source=source))
         for key, value in data.items():
             if key in {"symbol", "watch", "query", "resolved"} and isinstance(value, str):
                 out.append(signal(f"report_{key}", "symbol", value, 35, source))
@@ -407,6 +428,56 @@ def collect_report_signals(data: Any, *, source: str, out: list[dict[str, Any]])
             collect_report_signals(item, source=source, out=out)
 
 
+def next_step_generation_signals(data: dict[str, Any], *, source: str) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for next_step in embedded_next_step_reports(data):
+        recommendation = next_step.get("recommendation")
+        if not isinstance(recommendation, dict):
+            continue
+        lane = str(recommendation.get("matched_lane") or next_step.get("matched_lane") or "")
+        surface = normalize_surface(lane)
+        if surface:
+            out.append(signal("next_step_surface", "note", surface, 130, source))
+        for family in next_step_generator_families(recommendation):
+            out.append(signal("next_step_family", "family", family, 125, source))
+        for index, command in enumerate(next_step_commands(recommendation)):
+            out.append(signal("next_step_command", "command", command, max(95, 120 - index), source))
+        for path in string_items(recommendation.get("source_refs")):
+            out.append(signal("next_step_source_ref", "file", normalize_path(path), 95, source))
+    return out
+
+
+def embedded_next_step_reports(data: dict[str, Any]) -> list[dict[str, Any]]:
+    if data.get("kind") == "unified_debugger_next_step":
+        return [data]
+    next_step = data.get("symptom_only_next_step")
+    if isinstance(next_step, dict) and next_step.get("kind") == "unified_debugger_next_step":
+        return [next_step]
+    return []
+
+
+def next_step_generator_families(recommendation: dict[str, Any]) -> tuple[str, ...]:
+    symptom_class = str(recommendation.get("symptom_class") or "")
+    families = list(NEXT_STEP_GENERATOR_FAMILIES_BY_CLASS.get(symptom_class, ()))
+    for command in next_step_commands(recommendation):
+        for needle, family in NEXT_STEP_GENERATOR_FAMILY_COMMAND_HINTS:
+            if needle in command and family not in families:
+                families.append(family)
+    return tuple(families)
+
+
+def next_step_commands(recommendation: dict[str, Any]) -> list[str]:
+    return [
+        command
+        for command in (
+            str(recommendation.get("first_command") or ""),
+            str(recommendation.get("regression_gate") or ""),
+            str(recommendation.get("escalation_command") or ""),
+        )
+        if command
+    ]
+
+
 def infer_generation_surfaces(
     *,
     families: tuple[str, ...],
@@ -420,6 +491,20 @@ def infer_generation_surfaces(
         surface = normalize_surface(family)
         if surface:
             surfaces.add(surface)
+
+    routed_surfaces = {
+        normalize_surface(str(item.get("value", "")))
+        for item in signals
+        if item.get("type") == "next_step_surface"
+    }
+    routed_surfaces.discard("")
+    if routed_surfaces:
+        selected_surfaces = routed_surfaces | explicit_generation_surfaces(
+            families=families,
+            symbols=symbols,
+            changed_files=changed_files,
+        )
+        return [surface for surface in SURFACE_ORDER if surface in selected_surfaces]
 
     signal_paths = [
         str(item["value"])
@@ -465,6 +550,30 @@ def infer_generation_surfaces(
     if len(surfaces) > 1:
         surfaces.discard("general")
     return [surface for surface in SURFACE_ORDER if surface in surfaces]
+
+
+def explicit_generation_surfaces(
+    *,
+    families: tuple[str, ...],
+    symbols: tuple[str, ...],
+    changed_files: tuple[str, ...],
+) -> set[str]:
+    surfaces: set[str] = set()
+    for family in families:
+        surface = normalize_surface(family)
+        if surface:
+            surfaces.add(surface)
+    normalized_paths = [normalize_path(path).lower() for path in changed_files]
+    symbol_text = " ".join(symbols).lower()
+    for surface, rule in SURFACE_RULES.items():
+        if any(
+            any(path.startswith(prefix.lower()) or f"/{prefix.lower()}" in path for prefix in rule["path_prefixes"])
+            for path in normalized_paths
+        ):
+            surfaces.add(surface)
+        if any(hint.lower() in symbol_text for hint in rule["symbols"]):
+            surfaces.add(surface)
+    return surfaces
 
 
 def normalize_surface(value: str) -> str:
@@ -541,6 +650,11 @@ def build_generator(
             "python -m tools.boss_ai_debugger rom-score-materialize --scenarios <scenarios.jsonl> --limit 4 --compare-fast-score",
             "python -m tools.boss_ai_debugger rom-switch-materialize --scenarios <scenarios.jsonl> --limit 20",
         ]
+        if family == "switch_sack":
+            materialization_commands = [
+                f"python -m tools.boss_ai_debugger rom-switch-materialize --scenarios {scenario_path} --limit 20 --fail-on-mismatch",
+                "python -m tools.boss_ai_debugger run-suite --profile changed-ai --count 24 --seed 1",
+            ]
         return generator(
             generator_id="boss_ai_generated_policy",
             surface=surface,
@@ -1173,6 +1287,22 @@ def unique_counterexamples(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
         seen.add(command)
         out.append(item)
     return out
+
+
+def signal_values(signals: list[dict[str, Any]], *, kind: str, signal_type_prefix: str) -> list[str]:
+    return unique_list(
+        str(item.get("value", ""))
+        for item in signals
+        if item.get("kind") == kind and str(item.get("type", "")).startswith(signal_type_prefix)
+    )
+
+
+def string_items(value: Any) -> list[str]:
+    if isinstance(value, str):
+        return [value]
+    if isinstance(value, list):
+        return [str(item) for item in value if isinstance(item, (str, int))]
+    return []
 
 
 def quote_arg(value: str) -> str:

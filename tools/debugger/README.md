@@ -48,7 +48,9 @@ python -m tools.debugger repro-recipe --id trainer-battle-evolution-resume
 python -m tools.debugger setup --symbol wCurDamage --watch-symbol wCurDamage --out-scenarios .local\tmp\debugger_setup_scenarios.jsonl
 python -m tools.debugger setup --report .local\tmp\debugger_investigate_wrong_switch.json
 python -m tools.debugger generate --symbol wCurDamage --out-scenarios .local\tmp\debugger_generation_seeds.jsonl
+python -m tools.debugger generate --report .local\tmp\debugger_investigate_wrong_switch.json
 python -m tools.debugger generate --changed-file engine\battle\ai\boss_policy_move.asm --family all --max-cases 64 --seed 1
+python -m tools.debugger fuzz --report .local\tmp\debugger_investigate_wrong_switch.json
 python -m tools.debugger provenance --symbol wCurDamage --symbol BattleCommand_DamageCalc
 python -m tools.debugger provenance --source-file engine\battle\effect_commands.asm
 python -m tools.debugger slice --symbol wCurDamage
@@ -265,6 +267,12 @@ for the unified debugger workflow. Map content seeds that carry state
 preconditions now include `materialization_request` records that write a
 `content-state` report/state and replay it; other surfaces remain handoff
 records until their dedicated ROM materializers exist.
+When a report contains an embedded `unified_debugger_next_step` route,
+`generate --report` treats that route as the generator surface/family source of
+truth before nested generated subreports. For the wrong-switch route this keeps
+generation on Boss AI, selects the `switch_sack` family, and routes the produced
+scenario file to `rom-switch-materialize --fail-on-mismatch` instead of
+wandering into damage fuzzing or banking static-watch campaigns.
 
 `setup` is the bridge between “this symbol/file/report looks relevant” and
 “here is how to reach it in the ROM.” It infers the affected surface, then emits
@@ -301,6 +309,9 @@ become `dynamic_trace` fuzz campaigns and `dynamic_taint_handoff` cases. With
 fed back into `expect`, `compare`, `localize`, `rank`, `impact`, `report`, and
 `visualize`. Static fuzz cases prove source invariants, not runtime behavior,
 until paired with replay or dedicated materialization.
+Because fuzz builds on the generator coordinator, embedded next-step routes also
+scope `fuzz --report` campaigns; a wrong-switch planning packet produces only a
+Boss AI switch-sack campaign unless the caller adds an explicit extra surface.
 
 `provenance` joins the current `.sym` file with source labels and references.
 It can show where a watch symbol or routine lives, which source files mention

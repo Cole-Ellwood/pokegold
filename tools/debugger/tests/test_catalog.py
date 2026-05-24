@@ -5849,12 +5849,20 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
                             {
                                 "type": "fuzz_campaign",
                                 "title": "Fuzz campaign: fuzz_banking_abi_static_watch",
+                                "severity": 55,
+                                "confidence": 0.62,
+                                "evidence": [],
+                                "next_actions": [],
                                 "impact_score": 100,
                                 "surface_id": "banking_abi",
                             },
                             {
                                 "type": "causal_path",
                                 "title": "Causal path: Battle damage",
+                                "severity": 50,
+                                "confidence": 0.62,
+                                "evidence": [],
+                                "next_actions": [],
                                 "impact_score": 90,
                                 "surface_id": "battle_damage",
                             },
@@ -6056,6 +6064,79 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("tools.boss_ai_debugger generate", commands)
         self.assertIn("rom-score-materialize", materialization)
         self.assertIn(".local\\tmp\\debugger_boss_ai_generated.jsonl", materialization)
+
+    def test_generate_uses_embedded_next_step_instead_of_nested_report_surfaces(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            investigation = root / "investigate.json"
+            investigation.write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_investigation_run",
+                        "valid": True,
+                        "symptom": "boss selected wrong switch",
+                        "symptom_only_next_step": build_next_step(symptom="boss selected wrong switch"),
+                        "reports": [
+                            {"id": "09_fuzz", "kind": "unified_debugger_fuzz_plan", "surface": "ROM banking / ABI"},
+                            {"id": "06_explain", "kind": "unified_debugger_causal_explanation", "surface": "Battle damage"},
+                        ],
+                        "top_impact": [
+                            {
+                                "type": "fuzz_campaign",
+                                "title": "Fuzz campaign: fuzz_banking_abi_static_watch",
+                                "severity": 55,
+                                "confidence": 0.62,
+                                "evidence": [],
+                                "next_actions": [],
+                                "impact_score": 100,
+                                "surface_id": "banking_abi",
+                            },
+                            {
+                                "type": "causal_path",
+                                "title": "Causal path: Battle damage",
+                                "severity": 50,
+                                "confidence": 0.62,
+                                "evidence": [],
+                                "next_actions": [],
+                                "impact_score": 90,
+                                "surface_id": "battle_damage",
+                            },
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            report = build_generation_plan(
+                reports=("investigate.json",),
+                max_cases=8,
+                seed=3,
+                root=root,
+            )
+            fuzz = build_fuzz_plan(
+                reports=("investigate.json",),
+                max_cases=8,
+                seed=3,
+                root=root,
+            )
+
+        commands = "\n".join(report["commands"])
+        materialization = "\n".join(step["command"] for step in report["materialization_steps"])
+        fuzz_commands = "\n".join(fuzz["commands"])
+
+        self.assertTrue(report["valid"])
+        self.assertEqual(report["surfaces"], ["boss_ai"])
+        self.assertEqual(report["effective_families"], ["switch_sack"])
+        self.assertIn("boss_ai_generated_policy", {item["id"] for item in report["generators"]})
+        self.assertIn("generate --family switch_sack", commands)
+        self.assertIn("rom-switch-materialize --scenarios .local\\tmp\\debugger_boss_ai_generated.jsonl --limit 20 --fail-on-mismatch", materialization)
+        self.assertNotIn("tools.damage_debugger.fuzz", commands)
+        self.assertNotIn("check_farcall_a_clobber", commands)
+        self.assertEqual(fuzz["surfaces"], ["boss_ai"])
+        self.assertEqual({campaign["surface"] for campaign in fuzz["campaigns"]}, {"boss_ai"})
+        self.assertIn("generate --family switch_sack", fuzz_commands)
+        self.assertNotIn("tools.damage_debugger.fuzz", fuzz_commands)
+        self.assertNotIn("hROMBank", fuzz_commands)
 
     def test_generate_routes_content_to_static_expectation_seeds(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
