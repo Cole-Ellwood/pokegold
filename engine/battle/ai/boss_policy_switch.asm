@@ -50,7 +50,6 @@ BossAI_SwitchOrTryItem:
 IF DEF(BOSS_AI_TRACE)
 	ld [wBossAITraceSwitchConfidence], a
 ENDC
-	ld b, a ; confidence
 	call BossAI_GetSwitchThreshold
 	ld c, a ; threshold
 	call BossAI_NeedsLoopPenalty
@@ -71,7 +70,10 @@ ENDC
 	add 10
 	ld c, a
 .no_wincon_bias
-	ld a, b
+	; Reload confidence from WRAM. The .no_penalty / sack-bias / wincon-risk
+	; helpers above all use `b` internally, so reading `b` here would compare
+	; against helper scratch instead of the stored switch confidence.
+	ld a, [wBossAISwitchConfidence]
 	cp c
 	jr c, .stay
 
