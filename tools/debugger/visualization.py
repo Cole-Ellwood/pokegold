@@ -172,6 +172,25 @@ def collect_report_timeline(data: dict[str, Any], *, source: str, out: list[dict
                     severity=78 if status == "missing" else 64,
                 )
             )
+            for action in dict_items(capability.get("gap_actions")):
+                out.append(
+                    timeline_event(
+                        lane="readiness",
+                        event_type="gap_action",
+                        title=f"Gap action: {action_title(action)}",
+                        source=source,
+                        detail=(
+                            f"scenario={action.get('lived_scenario', '<unspecified>')} "
+                            f"gate={action.get('regression_gate', '')}"
+                        ).strip(),
+                        symbols=[
+                            str(capability.get("id", "")),
+                            str(action.get("id", "")),
+                        ],
+                        files=string_items(action.get("source_refs")),
+                        severity=66,
+                    )
+                )
     elif kind == "unified_debugger_next_step":
         for index, candidate in enumerate(next_step_candidates(data)):
             out.append(
@@ -899,6 +918,34 @@ def collect_waterfall(*, loaded_reports: list[dict[str, Any]]) -> list[dict[str,
                             order=capability_index * 10 + command_index,
                         )
                     )
+                for action_index, action in enumerate(dict_items(capability.get("gap_actions"))[:2]):
+                    action_base = capability_index * 10 + 4 + action_index * 4
+                    for command_index, command in enumerate(string_items(action.get("commands"))[:3]):
+                        steps.append(
+                            waterfall_step(
+                                phase="gap-action",
+                                title=command,
+                                source=source,
+                                status=command_status(command),
+                                detail=(
+                                    f"{action.get('id', '<unknown>')} "
+                                    f"scenario={action.get('lived_scenario', '<unspecified>')}"
+                                ),
+                                order=action_base + command_index,
+                            )
+                        )
+                    regression_gate = str(action.get("regression_gate", ""))
+                    if regression_gate:
+                        steps.append(
+                            waterfall_step(
+                                phase="gap-action-gate",
+                                title=regression_gate,
+                                source=source,
+                                status=command_status(regression_gate),
+                                detail=f"Regression gate for {action_title(action)}.",
+                                order=action_base + 3,
+                            )
+                        )
         if data.get("kind") == "unified_debugger_next_step":
             for candidate_index, candidate in enumerate(next_step_candidates(data)):
                 first_command = str(candidate.get("first_command", ""))
@@ -1072,6 +1119,28 @@ def collect_graph(*, loaded_reports: list[dict[str, Any]]) -> dict[str, list[dic
                     command_id = f"{capability_id}:command:{index}"
                     add_graph_node(nodes, command_id, command, "proof_command", source)
                     add_graph_edge(edges, capability_id, command_id, "proof_command", source)
+                for action in dict_items(capability.get("gap_actions")):
+                    action_id = f"{capability_id}:gap_action:{action.get('id', action_title(action))}"
+                    add_graph_node(nodes, action_id, action_title(action), "gap_action", source)
+                    add_graph_edge(edges, capability_id, action_id, "gap_action", source)
+                    scenario = str(action.get("lived_scenario", ""))
+                    if scenario:
+                        scenario_id = f"{action_id}:scenario"
+                        add_graph_node(nodes, scenario_id, scenario, "lived_scenario", source)
+                        add_graph_edge(edges, action_id, scenario_id, "lived_scenario", source)
+                    for index, command in enumerate(string_items(action.get("commands"))[:3]):
+                        command_id = f"{action_id}:command:{index}"
+                        add_graph_node(nodes, command_id, command, "proof_command", source)
+                        add_graph_edge(edges, action_id, command_id, "proof_command", source)
+                    regression_gate = str(action.get("regression_gate", ""))
+                    if regression_gate:
+                        gate_id = f"{action_id}:regression_gate"
+                        add_graph_node(nodes, gate_id, regression_gate, "regression_gate", source)
+                        add_graph_edge(edges, action_id, gate_id, "regression_gate", source)
+                    for source_ref in string_items(action.get("source_refs"))[:6]:
+                        source_ref_id = f"{action_id}:source_ref:{source_ref}"
+                        add_graph_node(nodes, source_ref_id, source_ref, "source_ref", source)
+                        add_graph_edge(edges, action_id, source_ref_id, "source_ref", source)
         elif kind == "unified_debugger_next_step":
             symptom = str(data.get("symptom") or "<unspecified symptom>")
             symptom_id = f"{source}:symptom:{symptom}"
@@ -1577,6 +1646,10 @@ def incomplete_capabilities(data: dict[str, Any]) -> list[dict[str, Any]]:
 
 def capability_title(capability: dict[str, Any]) -> str:
     return str(capability.get("title") or capability.get("id") or "<unknown capability>")
+
+
+def action_title(action: dict[str, Any]) -> str:
+    return str(action.get("title") or action.get("id") or "<unknown action>")
 
 
 def first_gap(capability: dict[str, Any]) -> str:

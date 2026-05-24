@@ -558,8 +558,9 @@ path inputs: the rendered report preserves the recommended first command,
 required inputs, source/data anchors, evidence/disproof standards, proof limit, regression gate, escalation command, and repro
 recipe links instead of collapsing them into an unsupported-report warning. `audit` JSON reports are
 also first-class inputs: partial or missing capabilities become ranked findings
-with readiness counts, blocker context, and the next proof commands from the
-capability audit.
+with readiness counts, blocker context, named gap actions, lived scenarios,
+evidence/disproof standards, and the next proof commands from the capability
+audit.
 
 `visualize` renders one or more unified reports and traces into a visualization
 packet. It builds a timeline of runtime/watch/trace/coverage/content/
@@ -570,7 +571,8 @@ content-state/instruction-trace artifacts, Mermaid timeline and graph blocks,
 and Markdown or HTML output. It also treats `next` and `audit` JSON as proof
 surface inputs: next-step reports become proof-route, source-ref, evidence-standard, disproof-standard, regression-gate,
 timeline/waterfall/graph items, and capability audits become readiness lanes
-with blocker capabilities and their next proof commands. HTML output includes a self-contained interactive
+with blocker capabilities, named gap actions, lived scenarios, and their next
+proof commands. HTML output includes a self-contained interactive
 evidence inspector with search, lane/source filters, severity filtering, and
 graph-edge tables. It is the unified view for scanning a debugging run; full
 emulator-coupled canvas/TUI inspectors are still a future layer.

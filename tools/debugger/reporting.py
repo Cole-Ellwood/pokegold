@@ -20,6 +20,7 @@ SUMMARY_KEYS = (
     "error_count",
     "warning_count",
     "blocking_gap_count",
+    "gap_action_count",
     "match_count",
     "expectation_count",
     "passed_count",
@@ -292,6 +293,12 @@ def collect_commands(report: dict[str, Any]) -> list[str]:
         add_strings(commands, match.get("counterexample_commands"))
     for capability in dict_items(report.get("capabilities")):
         add_strings(commands, capability.get("commands"))
+        for action in dict_items(capability.get("gap_actions")):
+            add_strings(commands, action.get("commands"))
+            add_strings(commands, action.get("regression_gate"))
+    for action in dict_items(report.get("gap_actions")):
+        add_strings(commands, action.get("commands"))
+        add_strings(commands, action.get("regression_gate"))
     for symbol in dict_items(report.get("symbols")):
         add_strings(commands, symbol.get("suggested_commands"))
     for watch in dict_items(report.get("watches")):
@@ -322,6 +329,18 @@ def collect_gaps(report: dict[str, Any]) -> list[str]:
     add_strings(gaps, report.get("blocking_gaps"))
     for capability in dict_items(report.get("capabilities")):
         add_strings(gaps, capability.get("gaps"))
+        for action in dict_items(capability.get("gap_actions")):
+            if action.get("lived_scenario"):
+                add_strings(gaps, f"gap action scenario: {action.get('lived_scenario')}")
+            add_strings(gaps, action.get("gap"))
+            add_strings(gaps, action.get("evidence_standard"))
+            add_strings(gaps, action.get("disproof_standard"))
+    for action in dict_items(report.get("gap_actions")):
+        if action.get("lived_scenario"):
+            add_strings(gaps, f"gap action scenario: {action.get('lived_scenario')}")
+        add_strings(gaps, action.get("gap"))
+        add_strings(gaps, action.get("evidence_standard"))
+        add_strings(gaps, action.get("disproof_standard"))
     for match in dict_items(report.get("matches")):
         add_strings(gaps, match.get("gaps"))
     for generator in dict_items(report.get("generators")):
@@ -399,6 +418,12 @@ def collect_candidates(report: dict[str, Any]) -> list[str]:
         candidates.append(
             f"{status} capability: {capability.get('id', '<unknown>')} - {capability.get('title', '<unknown>')}"
         )
+        for action in dict_items(capability.get("gap_actions"))[:2]:
+            candidates.append(
+                "gap action: "
+                f"{action.get('id', '<unknown>')} - {action.get('title', '<unknown>')} "
+                f"(scenario: {action.get('lived_scenario', '<unspecified>')})"
+            )
     for candidate in dict_items(report.get("candidates"))[:10]:
         if candidate.get("symptom_class") and candidate.get("first_command"):
             candidates.append(

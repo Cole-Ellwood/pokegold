@@ -1273,7 +1273,7 @@ def format_audit(report: dict[str, Any]) -> str:
     lines = [
         "Unified Pokemon Gold romhack debugger capability audit",
         f"ready={report['ready']} status_counts={report['status_counts']}",
-        f"blocking_gaps={report['blocking_gap_count']}",
+        f"blocking_gaps={report['blocking_gap_count']} gap_actions={report.get('gap_action_count', 0)}",
         "",
         "Capabilities:",
     ]
@@ -1283,6 +1283,14 @@ def format_audit(report: dict[str, Any]) -> str:
         )
         for gap in capability["gaps"][:2]:
             lines.append(f"      gap: {gap}")
+        for action in capability.get("gap_actions", [])[:1]:
+            lines.append(
+                "      gap_action: "
+                f"{action.get('id', '<unknown>')} "
+                f"scenario={action.get('lived_scenario', '<unspecified>')}"
+            )
+            for command in action.get("commands", [])[:1]:
+                lines.append(f"      proof: {command}")
         for command in capability["commands"][:1]:
             lines.append(f"      command: {command}")
     if report["blocking_gaps"]:

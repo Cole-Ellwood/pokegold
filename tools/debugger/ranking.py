@@ -317,6 +317,19 @@ def capability_findings(report: dict[str, Any], *, source: str) -> list[dict[str
         finding_type = "capability_missing" if status == "missing" else "capability_partial"
         title = str(capability.get("title") or capability.get("id") or "<unknown>")
         gaps = string_items(capability.get("gaps"))
+        gap_actions = dict_items(capability.get("gap_actions"))
+        action_evidence: list[str] = []
+        action_commands: list[str] = []
+        for action in gap_actions[:3]:
+            action_evidence.append(
+                "gap_action="
+                f"{action.get('id', '<unknown>')}"
+                f"; scenario={action.get('lived_scenario', '<unspecified>')}"
+            )
+            action_evidence.extend(string_items(action.get("evidence_standard"))[:2])
+            action_evidence.extend(string_items(action.get("disproof_standard"))[:2])
+            action_commands.extend(string_items(action.get("commands"))[:3])
+            action_commands.extend(string_items(action.get("regression_gate"))[:1])
         out.append(
             finding(
                 finding_type=finding_type,
@@ -329,8 +342,10 @@ def capability_findings(report: dict[str, Any], *, source: str) -> list[dict[str
                     f"id={capability.get('id', '')}",
                     f"scope={capability.get('scope', '')}",
                     *gaps[:4],
+                    *action_evidence[:8],
                 ],
-                next_actions=string_items(capability.get("commands"))[:6]
+                next_actions=unique_string_items(action_commands)[:6]
+                or string_items(capability.get("commands"))[:6]
                 or ["python -m tools.debugger audit"],
             )
         )

@@ -78,6 +78,25 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(statuses["whole_rom_ingest"], "complete")
         self.assertGreater(report["blocking_gap_count"], 0)
 
+    def test_capability_report_names_gap_action_for_wrong_switch_replay(self) -> None:
+        report = build_capability_report()
+        replay = next(
+            capability
+            for capability in report["capabilities"]
+            if capability["id"] == "whole_rom_replay_localization"
+        )
+        action = replay["gap_actions"][0]
+
+        self.assertEqual(report["gap_action_count"], 1)
+        self.assertEqual(action["id"], "boss_wrong_switch_replay_materialization")
+        self.assertEqual(action["lived_scenario"], "boss selected wrong switch")
+        self.assertIn("investigate", action["commands"][0])
+        self.assertIn("replay --report", action["commands"][1])
+        self.assertIn("rom-switch-materialize", action["regression_gate"])
+        self.assertIn("tools/debugger/replay.py", action["source_refs"])
+        self.assertTrue(action["evidence_standard"])
+        self.assertTrue(action["disproof_standard"])
+
     def test_damage_changed_file_triages_to_damage_debugger(self) -> None:
         report = triage_request(
             changed_files=("engine/battle/late_gen_held_items.asm",),
@@ -9920,8 +9939,11 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("capability_partial", event_types)
         self.assertIn("capability_audit", graph_node_types)
         self.assertIn("proof_command", graph_node_types)
+        self.assertIn("gap_action", graph_node_types)
         self.assertIn("Capability partial: Whole-ROM replay and localization", visualization["content"])
         self.assertIn("ready=False", visualization["content"])
+        self.assertIn("Boss wrong-switch replay/materialization handoff", visualization["content"])
+        self.assertIn("scenario=boss selected wrong switch", visualization["content"])
         self.assertIn("python -m tools.debugger setup --symbol wCurDamage", visualization["content"])
 
     def test_static_report_summarizes_findings_and_commands(self) -> None:
@@ -10049,7 +10071,11 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertNotIn("Unsupported report kind", report["content"])
         self.assertIn("Capability partial: Whole-ROM replay and localization", report["content"])
         self.assertIn("ready=False", report["content"])
+        self.assertIn("gap_action_count=1", report["content"])
         self.assertIn("partial capability: whole_rom_replay_localization", report["content"])
+        self.assertIn("gap action: boss_wrong_switch_replay_materialization", report["content"])
+        self.assertIn("scenario: boss selected wrong switch", report["content"])
+        self.assertIn("rom-switch-materialize", report["content"])
         self.assertIn("python -m tools.debugger setup --symbol wCurDamage", report["content"])
 
     def test_cli_report_writes_static_file(self) -> None:

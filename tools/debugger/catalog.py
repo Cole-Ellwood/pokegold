@@ -27,6 +27,20 @@ class Capability:
     evidence: tuple[str, ...]
     gaps: tuple[str, ...]
     commands: tuple[str, ...] = ()
+    gap_actions: tuple["GapAction", ...] = ()
+
+
+@dataclass(frozen=True)
+class GapAction:
+    id: str
+    title: str
+    gap: str
+    lived_scenario: str
+    commands: tuple[str, ...]
+    regression_gate: str
+    evidence_standard: tuple[str, ...]
+    disproof_standard: tuple[str, ...]
+    source_refs: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -558,6 +572,40 @@ def build_capability_report(root: Path = ROOT) -> dict[str, Any]:
                 "python -m tools.debugger state-space --patch wMapGroup=1 --patch wMapNumber=2",
                 "python -m tools.debugger minimize --report <state-space.json> --execute-state-patches --expect state-patch=wMapGroup,applied=true,verified=true",
             ),
+            gap_actions=(
+                GapAction(
+                    id="boss_wrong_switch_replay_materialization",
+                    title="Boss wrong-switch replay/materialization handoff",
+                    gap=(
+                        "Replay/localization dynamic replay is still deepest for "
+                        "damage and Boss AI."
+                    ),
+                    lived_scenario="boss selected wrong switch",
+                    commands=(
+                        'python -m tools.debugger investigate --symptom "boss selected wrong switch" --json-out .local\\tmp\\debugger_investigate_wrong_switch.json',
+                        "python -m tools.debugger replay --report .local\\tmp\\debugger_investigate_wrong_switch.json",
+                        "python -m tools.debugger report --report .local\\tmp\\debugger_investigate_wrong_switch.json --out .local\\tmp\\debugger_investigate_wrong_switch.md",
+                    ),
+                    regression_gate=(
+                        "python -m tools.boss_ai_debugger rom-switch-materialize "
+                        "--scenarios <scenario.jsonl> --fail-on-mismatch"
+                    ),
+                    evidence_standard=(
+                        "The unified investigation packet embeds the Boss AI wrong-switch proof route.",
+                        "Replay/report output preserves BossAI_SwitchOrTryItem, switch WRAM targets, and rom-switch-materialize as the disproof path.",
+                    ),
+                    disproof_standard=(
+                        "If replay/report output loses the embedded route or routes to damage/banking fallbacks, this blocker action is not satisfied.",
+                        "If a matching switch_sack scenario fails rom-switch-materialize, the bug claim remains open.",
+                    ),
+                    source_refs=(
+                        "tools/debugger/replay.py",
+                        "tools/debugger/investigate.py",
+                        "tools/boss_ai_debugger/rom_switch_materialize.py",
+                        "engine/battle/ai/boss_policy_switch.asm",
+                    ),
+                ),
+            ),
         ),
         _capability(
             id="causal_provenance",
@@ -778,6 +826,7 @@ def _capability(
     evidence: tuple[str, ...],
     gaps: tuple[str, ...],
     commands: tuple[str, ...] = (),
+    gap_actions: tuple[GapAction, ...] = (),
 ) -> Capability:
     if status not in {"complete", "partial", "missing"}:
         raise ValueError(f"unknown capability status: {status}")
@@ -789,6 +838,7 @@ def _capability(
         evidence=evidence,
         gaps=gaps,
         commands=commands,
+        gap_actions=gap_actions,
     )
 
 
@@ -800,6 +850,12 @@ def _report_from_capabilities(capabilities: list[Capability]) -> dict[str, Any]:
     status_counts = {"complete": 0, "partial": 0, "missing": 0}
     for capability in capabilities:
         status_counts[capability.status] += 1
+    gap_actions = [
+        _gap_action_report(action)
+        for capability in capabilities
+        if capability.status != "complete"
+        for action in capability.gap_actions
+    ]
     blockers = [
         gap
         for capability in capabilities
@@ -817,6 +873,8 @@ def _report_from_capabilities(capabilities: list[Capability]) -> dict[str, Any]:
         "status_counts": status_counts,
         "blocking_gap_count": len(blockers),
         "blocking_gaps": blockers,
+        "gap_action_count": len(gap_actions),
+        "gap_actions": gap_actions,
         "capabilities": [
             {
                 "id": capability.id,
@@ -826,9 +884,27 @@ def _report_from_capabilities(capabilities: list[Capability]) -> dict[str, Any]:
                 "evidence": list(capability.evidence),
                 "gaps": list(capability.gaps),
                 "commands": list(capability.commands),
+                "gap_actions": [
+                    _gap_action_report(action)
+                    for action in capability.gap_actions
+                ],
             }
             for capability in capabilities
         ],
+    }
+
+
+def _gap_action_report(action: GapAction) -> dict[str, Any]:
+    return {
+        "id": action.id,
+        "title": action.title,
+        "gap": action.gap,
+        "lived_scenario": action.lived_scenario,
+        "commands": list(action.commands),
+        "regression_gate": action.regression_gate,
+        "evidence_standard": list(action.evidence_standard),
+        "disproof_standard": list(action.disproof_standard),
+        "source_refs": list(action.source_refs),
     }
 
 

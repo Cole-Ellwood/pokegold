@@ -53,6 +53,11 @@ the mirror lane source of truth; the wrong-switch route selects the Boss AI
 mirror and carries `rom-switch-materialize --fail-on-mismatch` instead of
 falling back to an uncovered generic surface. Focused regression:
 `test_compare_plan_uses_embedded_next_step_as_mirror_route`.
+Audit-action follow-up: `python -m tools.debugger audit` now exposes named gap
+actions for audit-counted blockers. First lived scenario:
+`boss selected wrong switch` attaches the Boss AI replay/materialization proof
+handoff to `whole_rom_replay_localization`, and `report`/`visualize` carry that
+scenario, proof commands, evidence/disproof standards, and regression gate.
 
 Status legend:
 
