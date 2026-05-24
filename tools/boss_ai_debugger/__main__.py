@@ -107,7 +107,10 @@ from .minimize import (
     write_minimized_json,
 )
 from .move_score_probe import (
+    DEFAULT_SCORE_BASE_ROUTE,
     format_move_score_probe,
+    parse_stage_overrides,
+    ProbeOverrides,
     run_move_score_probe,
     run_self_test as run_move_score_probe_self_test,
 )
@@ -779,6 +782,17 @@ def cmd_move_score_probe(args: argparse.Namespace) -> int:
         rom=args.rom,
         symbols=args.symbols,
         manifest=args.manifest,
+        score_base_route=args.score_base_route or None,
+        overrides=ProbeOverrides(
+            enemy_stat_stages=parse_stage_overrides(args.enemy_stage),
+            player_stat_stages=parse_stage_overrides(args.player_stage),
+            enemy_current_hp=args.enemy_current_hp,
+            enemy_max_hp=args.enemy_max_hp,
+            player_current_hp=args.player_current_hp,
+            player_max_hp=args.player_max_hp,
+            battle_turn=args.battle_turn,
+            boss_turns_elapsed=args.boss_turns_elapsed,
+        ),
     )
     if args.json:
         print(json.dumps(report, indent=2, sort_keys=True))
@@ -1200,6 +1214,15 @@ def build_parser() -> argparse.ArgumentParser:
         type=path_arg,
         default=Path("audit/boss_ai_trace/live_capture_manifest.json"),
     )
+    move_score_cmd.add_argument("--score-base-route", default=DEFAULT_SCORE_BASE_ROUTE)
+    move_score_cmd.add_argument("--enemy-stage", action="append", default=[])
+    move_score_cmd.add_argument("--player-stage", action="append", default=[])
+    move_score_cmd.add_argument("--enemy-current-hp", type=int)
+    move_score_cmd.add_argument("--enemy-max-hp", type=int)
+    move_score_cmd.add_argument("--player-current-hp", type=int)
+    move_score_cmd.add_argument("--player-max-hp", type=int)
+    move_score_cmd.add_argument("--battle-turn", type=int)
+    move_score_cmd.add_argument("--boss-turns-elapsed", type=int)
     move_score_cmd.add_argument("--trace", action="store_true")
     move_score_cmd.add_argument("--json", action="store_true")
     move_score_cmd.add_argument("--self-test", action="store_true")

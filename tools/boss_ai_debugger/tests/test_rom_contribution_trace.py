@@ -326,6 +326,111 @@ class RomContributionTraceTests(unittest.TestCase):
 
         self.assertEqual(tracer.selector_entry_scores, [14, 10, 19, 28])
 
+    def test_candidate_end_records_direct_score_write_residual(self) -> None:
+        pyboy = FakePyBoy()
+        pyboy.memory[1, 0xD0D3] = 20
+        pyboy.memory[1, 0xD0D4] = 20
+        pyboy.memory[1, 0xD0D5] = 20
+        pyboy.memory[1, 0xD0D6] = 20
+        pyboy.memory[1, 0xD100] = 57
+        pyboy.register_file.SP = 0xFEF0
+        tracer = RomContributionTracer(
+            pyboy,
+            {
+                "wEnemyAIMoveScores": Symbol(1, 0xD0D3),
+                "wEnemyMonMoves": Symbol(1, 0xD100),
+            },
+            FakeSymbolIndex(),
+            {57: "SURF"},
+        )
+        tracer.handle_control(
+            HookTarget(
+                kind="control",
+                full_symbol="BossAI_ApplyMoveModel.ScoreMove",
+                operation="candidate_start",
+                bank=0x0E,
+                address=0x5000,
+            )
+        )
+        tracer.frames.append(
+            RuleFrame(
+                sp=0xFEF0,
+                full_symbol="BossAI_ApplyDamageDominanceBias",
+                rule={
+                    **FakeSymbolIndex.rule,
+                    "rule_id": "move.apply_damage_dominance_bias",
+                    "source_label": "BossAI_ApplyDamageDominanceBias",
+                },
+            )
+        )
+        pyboy.memory[1, 0xD0D3] = 28
+        tracer.handle_control(
+            HookTarget(
+                kind="control",
+                full_symbol="BossAI_ApplyMoveModel.TracePostModelScore",
+                operation="candidate_end",
+                bank=0x0E,
+                address=0x5100,
+            )
+        )
+
+        self.assertEqual(len(tracer.events), 1)
+        event = tracer.events[0]
+        self.assertEqual(event["operation"], "direct_score_write")
+        self.assertEqual(event["score_before"], 20)
+        self.assertEqual(event["score_after"], 28)
+        self.assertEqual(event["delta"], 8)
+        self.assertEqual(event["candidate"]["move_name"], "SURF")
+        self.assertEqual(event["source"]["rule_id"], "move.apply_damage_dominance_bias")
+
+    def test_direct_score_write_does_not_double_count_helper_delta(self) -> None:
+        pyboy = FakePyBoy()
+        pyboy.memory[1, 0xD0D3] = 20
+        pyboy.memory[1, 0xD100] = 57
+        pyboy.register_file.A = 5
+        pyboy.register_file.HL = 0xD0D3
+        pyboy.register_file.SP = 0xFF00
+        tracer = RomContributionTracer(
+            pyboy,
+            {
+                "wEnemyAIMoveScores": Symbol(1, 0xD0D3),
+                "wEnemyMonMoves": Symbol(1, 0xD100),
+            },
+            FakeSymbolIndex(),
+            {57: "SURF"},
+        )
+
+        tracer.handle_control(
+            HookTarget(
+                kind="control",
+                full_symbol="BossAI_ApplyMoveModel.ScoreMove",
+                operation="candidate_start",
+                bank=0x0E,
+                address=0x5000,
+            )
+        )
+        tracer.handle_score_helper(
+            HookTarget(
+                kind="score_helper",
+                full_symbol="BossAI_ApplyMoveModel.EncourageScoreByA",
+                operation="encourage_score",
+                bank=0x0E,
+                address=0x6983,
+            )
+        )
+        pyboy.memory[1, 0xD0D3] = 15
+        tracer.handle_control(
+            HookTarget(
+                kind="control",
+                full_symbol="BossAI_ApplyMoveModel.TracePostModelScore",
+                operation="candidate_end",
+                bank=0x0E,
+                address=0x5100,
+            )
+        )
+
+        self.assertEqual([event["operation"] for event in tracer.events], ["encourage_score"])
+
     def test_replay_button_schedule_repeats_at_interval(self) -> None:
         frames = [
             frame

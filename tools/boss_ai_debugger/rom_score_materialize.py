@@ -21,6 +21,7 @@ from .rom_contribution_trace import clear_chosen_move
 from .rom_contribution_trace import drive_replay_to_choice
 from .rom_contribution_trace import memory_patches_to_json
 from .rom_contribution_trace import MemoryPatch
+from .rom_contribution_trace import no_choice_error
 from .rom_contribution_trace import RomContributionTraceSession
 from .rom_contribution_trace import SimpleTraceArgs
 from .rom_scenarios import normalize_tier
@@ -255,7 +256,7 @@ class RomScoreReplaySession:
         self.load_state(save_state)
         apply_memory_patches(self.pyboy, self.symbols, patches)
         clear_chosen_move(self.pyboy, self.symbols)
-        final_values, _presses_issued = drive_replay_to_choice(
+        final_values, presses_issued = drive_replay_to_choice(
             self.pyboy,
             self.symbols,
             button=button,
@@ -266,7 +267,17 @@ class RomScoreReplaySession:
         )
         if final_values is None:
             raise PreferenceDataError(
-                f"no boss move choice observed within {watch_frames} frames"
+                no_choice_error(
+                    save_state=save_state,
+                    watch_frames=watch_frames,
+                    button=button,
+                    button_delay=button_delay,
+                    button_presses=button_presses,
+                    button_interval_frames=button_interval_frames,
+                    presses_issued=presses_issued,
+                    metadata=metadata,
+                    memory_patches=patches,
+                )
             )
 
         basis = dict(self.basis)

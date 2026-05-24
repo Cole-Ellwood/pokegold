@@ -416,6 +416,8 @@ class RomContributionTracer:
         self.predicate_branch_entries: list[dict[str, Any]] = []
         self.public_read_probe_entries: list[dict[str, Any]] = []
         self.selector_entry_scores: list[int] = []
+        self.candidate_start_scores: list[int] | None = None
+        self.candidate_start_event_index = 0
 
     def reset(self, *, memory_patches: list[MemoryPatch] | None = None) -> None:
         self.memory_patches = memory_patches or []
@@ -427,6 +429,8 @@ class RomContributionTracer:
         self.predicate_branch_entries.clear()
         self.public_read_probe_entries.clear()
         self.selector_entry_scores = []
+        self.candidate_start_scores = None
+        self.candidate_start_event_index = 0
 
     def handle_hook(self, targets: list[HookTarget]) -> None:
         for target in sorted(targets, key=hook_order):
@@ -549,6 +553,10 @@ class RomContributionTracer:
                 apply_memory_patches(self.pyboy, self.symbols, self.memory_patches)
                 self.score_start_patches_applied = True
             self.frames.clear()
+            self.candidate_start_scores = self.current_score_bytes()
+            self.candidate_start_event_index = len(self.events)
+        elif target.operation == "candidate_end":
+            self.record_direct_score_writes(trigger=target.full_symbol)
         elif target.operation == "selector_start":
             self.selector_entry_scores = self.current_score_bytes()
 
@@ -588,6 +596,69 @@ class RomContributionTracer:
                 "closed_by": trigger,
             }
         )
+
+    def record_direct_score_writes(self, *, trigger: str) -> None:
+        before_scores = self.candidate_start_scores
+        if not before_scores:
+            return
+        after_scores = self.current_score_bytes()
+        if len(before_scores) != len(after_scores):
+            return
+        helper_deltas = [0] * len(after_scores)
+        for event in self.events[self.candidate_start_event_index:]:
+            candidate = event.get("candidate", {})
+            if not isinstance(candidate, dict):
+                continue
+            try:
+                slot_index = int(candidate.get("slot_index", -1))
+                delta = int(event.get("delta", 0))
+            except (TypeError, ValueError):
+                continue
+            if 0 <= slot_index < len(helper_deltas):
+                helper_deltas[slot_index] += delta
+        for slot_index, (before, after) in enumerate(zip(before_scores, after_scores)):
+            residual = (after - before) - helper_deltas[slot_index]
+            if residual == 0:
+                continue
+            self.events.append(
+                {
+                    "index": len(self.events) + 1,
+                    "event_type": "score_delta",
+                    "helper_symbol": "",
+                    "operation": "direct_score_write",
+                    "amount_register_a": 0,
+                    "score_pointer": f"{self.score_pointer_for_slot(slot_index):04x}",
+                    "score_before": after - residual,
+                    "score_after": after,
+                    "delta": residual,
+                    "changed": True,
+                    "candidate": self.candidate_for_slot(slot_index),
+                    "source": self.source_for_direct_score_write(),
+                    "closed_by": trigger,
+                }
+            )
+        self.candidate_start_scores = None
+        self.candidate_start_event_index = len(self.events)
+
+    def score_pointer_for_slot(self, slot_index: int) -> int:
+        base = self.symbols["wEnemyAIMoveScores"]
+        return base.address + slot_index
+
+    def candidate_for_slot(self, slot_index: int) -> dict[str, Any]:
+        return self.candidate_for_score_pointer(self.score_pointer_for_slot(slot_index))
+
+    def source_for_direct_score_write(self) -> dict[str, Any]:
+        frame = self.active_frame()
+        rule = frame.rule if frame is not None else None
+        return {
+            "rule_id": rule.get("rule_id", "") if rule else "",
+            "source_label": rule.get("source_label", "") if rule else "",
+            "full_symbol": frame.full_symbol if frame is not None else "",
+            "classification": rule.get("classification", "") if rule else "",
+            "public_reads": rule.get("public_reads", []) if rule else [],
+            "static_public_read_hints": rule.get("public_reads", []) if rule else [],
+            "attribution": "candidate score snapshot residual",
+        }
 
     def pop_returned_frames(self, sp: int) -> None:
         while self.frames and self.frames[-1].sp < sp:
@@ -914,7 +985,7 @@ class RomContributionTraceSession:
             self.pyboy.load_state(fh)
         apply_memory_patches(self.pyboy, self.symbols, patches)
         clear_chosen_move(self.pyboy, self.symbols)
-        final_values, _presses_issued = drive_replay_to_choice(
+        final_values, presses_issued = drive_replay_to_choice(
             self.pyboy,
             self.symbols,
             button=button,
@@ -926,7 +997,17 @@ class RomContributionTraceSession:
         self.tracer.close_pending(trigger="replay_end")
         if final_values is None:
             raise PreferenceDataError(
-                f"no boss move choice observed within {watch_frames} frames"
+                no_choice_error(
+                    save_state=save_state,
+                    watch_frames=watch_frames,
+                    button=button,
+                    button_delay=button_delay,
+                    button_presses=button_presses,
+                    button_interval_frames=button_interval_frames,
+                    presses_issued=presses_issued,
+                    metadata=metadata,
+                    memory_patches=patches,
+                )
             )
 
         basis = dict(self.basis)
@@ -1217,6 +1298,39 @@ def drive_replay_to_choice(
     return None, presses_issued
 
 
+def no_choice_error(
+    *,
+    save_state: Path,
+    watch_frames: int,
+    button: str,
+    button_delay: int,
+    button_presses: int,
+    button_interval_frames: int,
+    presses_issued: int,
+    metadata: dict[str, str] | None,
+    memory_patches: list[MemoryPatch],
+) -> str:
+    parts = [
+        f"no boss move choice observed within {watch_frames} frames",
+        f"save_state={trace_runtime.display_path(save_state)}",
+        (
+            f"replay=button:{button or '<none>'} delay:{button_delay} "
+            f"presses:{presses_issued}/{button_presses} interval:{button_interval_frames}"
+        ),
+        f"memory_patches={len(memory_patches)}",
+    ]
+    if metadata:
+        metadata_text = " ".join(
+            f"{key}={value}" for key, value in sorted(metadata.items()) if value
+        )
+        if metadata_text:
+            parts.append(f"metadata={metadata_text}")
+    parts.append(
+        "diagnostic: this usually means the base state is stale, already past the choice window, or needs different manifest replay controls"
+    )
+    return "; ".join(parts)
+
+
 def replay_tick_count(
     *,
     frame: int,
@@ -1401,7 +1515,7 @@ def build_report(
         "events": deepcopy(events),
         "known_limits": [
             "Trace events are captured by PyBoy execution hooks, not by an in-ROM WRAM ring buffer.",
-            "Score events record score helper deltas and source labels, while rule entries record dynamic rule-label execution.",
+            "Score events record score helper deltas plus candidate-start/end residual direct score writes, while rule entries record dynamic rule-label execution.",
             "Predicate branch entries record selected executable public-info branch labels and configured outcomes.",
             "Public-read probe entries record legal-input snapshots at configured executable labels; they are not CPU memory-read watchpoints.",
         ],

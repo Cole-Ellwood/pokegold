@@ -7,7 +7,7 @@ import json
 import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Sequence
+from typing import Mapping, Sequence
 
 from . import matchup
 from . import oracle
@@ -168,13 +168,17 @@ def battle_inputs_for_move(
     move_type_id = types[move.type_name] if move_type is None else move_type
     is_physical = is_physical_for_state(attacker, move, move_type=move_type_id)
     can_evolve = tables.load_can_evolve()
+    attacker_atk = attacker.atk if is_physical else attacker.sp_atk
+    defender_def = defender.defense if is_physical else defender.sp_def
+    attacker_stage_key = "atk" if is_physical else "sp_atk"
+    defender_stage_key = "def" if is_physical else "sp_def"
     return oracle.BattleInputs(
         attacker_level=attacker.level,
         move_bp=move.bp if move_bp is None else move_bp,
         move_type=move_type_id,
         is_physical=is_physical,
-        attacker_atk=attacker.atk if is_physical else attacker.sp_atk,
-        defender_def=defender.defense if is_physical else defender.sp_def,
+        attacker_atk=apply_stat_stage(attacker_atk, context.attacker_stat_stages, attacker_stage_key),
+        defender_def=apply_stat_stage(defender_def, context.defender_stat_stages, defender_stage_key),
         attacker_types=(attacker.type1, attacker.type2),
         defender_types=(defender.type1, defender.type2),
         user_item=attacker.item_id,
@@ -195,6 +199,17 @@ def battle_inputs_for_move(
         initial_cur_damage=context.initial_cur_damage,
         metronome_count=context.metronome_count,
     )
+
+
+def apply_stat_stage(
+    value: int,
+    stages: Mapping[str, int],
+    key: str,
+) -> int:
+    stage = int(stages.get(key, 0))
+    if stage >= 0:
+        return max(1, value * (2 + stage) // 2)
+    return max(1, value * 2 // (2 - stage))
 
 
 def category_for(
@@ -768,6 +783,20 @@ def run_self_test() -> int:
     ]
     if actual != expected:
         raise AssertionError(f"expected {expected}, got {actual}")
+    boosted_report = calculate_all_moves(
+        attacker,
+        defender,
+        state.BattleContext(attacker_stat_stages={"atk": 2}),
+    )
+    boosted_actual = [
+        (row.move_constant, row.damage_low, row.damage_high)
+        for row in boosted_report.moves[:2]
+    ]
+    boosted_expected = [("TACKLE", 6, 8), ("PECK", 16, 19)]
+    if boosted_actual != boosted_expected:
+        raise AssertionError(
+            f"expected +2 Attack stage damage {boosted_expected}, got {boosted_actual}"
+        )
     rival_return = [
         row
         for row in calculate_all_moves(

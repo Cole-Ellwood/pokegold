@@ -15,6 +15,7 @@ DEFAULT_RULE_MAP_PATH = ROOT / "audit" / "boss_ai_debugger" / "rule_map.json"
 SOURCE_PATHS = (
     ROOT / "engine" / "battle" / "ai" / "boss_policy_move.asm",
     ROOT / "engine" / "battle" / "ai" / "boss_policy_switch.asm",
+    ROOT / "engine" / "battle" / "ai" / "ko_band_oracle.asm",
 )
 
 LABEL_RE = re.compile(

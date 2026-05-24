@@ -8,7 +8,7 @@ import json
 from dataclasses import dataclass, replace
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any, Sequence
+from typing import Any, Mapping, Sequence
 
 from tools.boss_ai_preference.data import PreferenceDataError
 from tools.damage_debugger import battle_calc
@@ -22,14 +22,38 @@ from .rom_contribution_trace import (
     run_rom_contribution_trace,
     run_rom_contribution_trace_for_route,
 )
+from .rom_score_materialize import RomScoreReplaySession
 from .rom_scenarios import select_from_score_bytes
 
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_MANIFEST = ROOT / "audit/boss_ai_trace/live_capture_manifest.json"
+DEFAULT_SCORE_BASE_ROUTE = "koga"
 AI_TIERS = ROOT / "data/trainers/ai_tiers.asm"
 BLOCKED_SCORE = 80
 PARTY_LENGTH = 6
+DEFAULT_CHOICE_BUTTON = "a"
+DEFAULT_CHOICE_BUTTON_DELAY = 8
+DEFAULT_CHOICE_WATCH_FRAMES = 60
+DEFAULT_CHOICE_BUTTON_PRESSES = 1
+DEFAULT_CHOICE_BUTTON_INTERVAL_FRAMES = 0
+STAT_STAGE_BASE = 7
+STAT_STAGE_OFFSETS = {
+    "atk": 0,
+    "attack": 0,
+    "def": 1,
+    "defense": 1,
+    "spe": 2,
+    "speed": 2,
+    "sp_atk": 3,
+    "spatk": 3,
+    "special_attack": 3,
+    "sp_def": 4,
+    "spdef": 4,
+    "special_defense": 4,
+    "accuracy": 5,
+    "evasion": 6,
+}
 TIER_VALUES = {
     "AI_TIER_EARLY": 1,
     "AI_TIER_MID": 2,
@@ -39,6 +63,31 @@ TIER_VALUES = {
 
 class MoveScoreProbeError(PreferenceDataError):
     """User-facing move score probe error."""
+
+
+@dataclass(frozen=True)
+class ProbeOverrides:
+    enemy_stat_stages: Mapping[str, int] | None = None
+    player_stat_stages: Mapping[str, int] | None = None
+    enemy_current_hp: int | None = None
+    enemy_max_hp: int | None = None
+    player_current_hp: int | None = None
+    player_max_hp: int | None = None
+    battle_turn: int | None = None
+    boss_turns_elapsed: int | None = None
+
+
+@dataclass(frozen=True)
+class ProbeRoute:
+    route_id: str | None
+    route_state: Path | None
+    route_state_field: str = ""
+    button: str = DEFAULT_CHOICE_BUTTON
+    button_delay: int = DEFAULT_CHOICE_BUTTON_DELAY
+    watch_frames: int = DEFAULT_CHOICE_WATCH_FRAMES
+    button_presses: int = DEFAULT_CHOICE_BUTTON_PRESSES
+    button_interval_frames: int = DEFAULT_CHOICE_BUTTON_INTERVAL_FRAMES
+    warnings: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -55,7 +104,15 @@ class ProbeInputs:
     enemy_party_dvs: tuple[int, int, int, int]
     route_id: str | None
     route_state: Path | None
+    route_state_field: str
+    route_button: str
+    route_button_delay: int
+    route_watch_frames: int
+    route_button_presses: int
+    route_button_interval_frames: int
+    route_warnings: tuple[str, ...]
     battery_save: Path
+    overrides: ProbeOverrides
 
 
 def run_move_score_probe(
@@ -69,6 +126,8 @@ def run_move_score_probe(
     rom: Path = capture.DEFAULT_ROM,
     symbols: Path = capture.DEFAULT_SYMBOLS,
     manifest: Path = DEFAULT_MANIFEST,
+    score_base_route: str | None = DEFAULT_SCORE_BASE_ROUTE,
+    overrides: ProbeOverrides = ProbeOverrides(),
 ) -> dict[str, Any]:
     inputs = resolve_probe_inputs(
         trainer=trainer,
@@ -78,6 +137,8 @@ def run_move_score_probe(
         rom=rom,
         symbols=symbols,
         manifest=manifest,
+        score_base_route=score_base_route,
+        overrides=overrides,
     )
     return build_move_score_report(
         inputs,
@@ -97,7 +158,11 @@ def build_move_score_report(
     symbols: Path = capture.DEFAULT_SYMBOLS,
 ) -> dict[str, Any]:
     variants = ["inactive", "active"] if sleep_clause == "both" else [sleep_clause]
-    damage_report = battle_calc.calculate_all_moves(inputs.attacker, inputs.defender)
+    damage_report = battle_calc.calculate_all_moves(
+        inputs.attacker,
+        inputs.defender,
+        battle_context_for_probe(inputs),
+    )
     reports = []
     for variant in variants:
         reports.append(
@@ -123,6 +188,18 @@ def build_move_score_report(
         "attacker": damage_state.state_to_json(inputs.attacker),
         "defender": damage_state.state_to_json(inputs.defender),
         "damage": json.loads(battle_calc.report_to_json(damage_report)),
+        "probe_overrides": probe_overrides_to_json(inputs.overrides),
+        "route": {
+            "id": inputs.route_id,
+            "state": str(inputs.route_state) if inputs.route_state is not None else "",
+            "state_field": inputs.route_state_field,
+            "button": inputs.route_button,
+            "button_delay": inputs.route_button_delay,
+            "watch_frames": inputs.route_watch_frames,
+            "button_presses": inputs.route_button_presses,
+            "button_interval_frames": inputs.route_button_interval_frames,
+            "warnings": list(inputs.route_warnings),
+        },
         "variants": reports,
     }
 
@@ -153,9 +230,15 @@ def _self_test_noctowl_drowzee_inputs(
         sp_atk=18,
         sp_def=30,
     )
-    route_id, route_state = find_route_probe(
+    route = find_score_probe_route(
         manifest,
-        route_id_candidates(trainer_constant.trainer_class, trainer_constant.trainer_id),
+        trainer_route_ids=route_id_candidates(
+            trainer_constant.trainer_class,
+            trainer_constant.trainer_id,
+        ),
+        score_base_route=None,
+        rom=capture.DEFAULT_ROM,
+        symbols=capture.DEFAULT_SYMBOLS,
     )
     return ProbeInputs(
         trainer_id=trainer_constant.trainer_id,
@@ -168,9 +251,17 @@ def _self_test_noctowl_drowzee_inputs(
         enemy_party=enemy_party,
         enemy_party_index=enemy_party_index,
         enemy_party_dvs=dvs,
-        route_id=route_id,
-        route_state=route_state,
+        route_id=route.route_id,
+        route_state=route.route_state,
+        route_state_field=route.route_state_field,
+        route_button=route.button,
+        route_button_delay=route.button_delay,
+        route_watch_frames=route.watch_frames,
+        route_button_presses=route.button_presses,
+        route_button_interval_frames=route.button_interval_frames,
+        route_warnings=route.warnings,
         battery_save=battery_save,
+        overrides=ProbeOverrides(),
     )
 
 
@@ -200,9 +291,15 @@ def _self_test_spearow_gastly_inputs(
         sp_atk=34,
         sp_def=18,
     )
-    route_id, route_state = find_route_probe(
+    route = find_score_probe_route(
         manifest,
-        route_id_candidates(trainer_constant.trainer_class, trainer_constant.trainer_id),
+        trainer_route_ids=route_id_candidates(
+            trainer_constant.trainer_class,
+            trainer_constant.trainer_id,
+        ),
+        score_base_route=None,
+        rom=capture.DEFAULT_ROM,
+        symbols=capture.DEFAULT_SYMBOLS,
     )
     return ProbeInputs(
         trainer_id=trainer_constant.trainer_id,
@@ -215,9 +312,17 @@ def _self_test_spearow_gastly_inputs(
         enemy_party=enemy_party,
         enemy_party_index=enemy_party_index,
         enemy_party_dvs=dvs,
-        route_id=route_id,
-        route_state=route_state,
+        route_id=route.route_id,
+        route_state=route.route_state,
+        route_state_field=route.route_state_field,
+        route_button=route.button,
+        route_button_delay=route.button_delay,
+        route_watch_frames=route.watch_frames,
+        route_button_presses=route.button_presses,
+        route_button_interval_frames=route.button_interval_frames,
+        route_warnings=route.warnings,
         battery_save=battery_save,
+        overrides=ProbeOverrides(),
     )
 
 
@@ -261,6 +366,8 @@ def resolve_probe_inputs(
     rom: Path,
     symbols: Path,
     manifest: Path,
+    score_base_route: str | None,
+    overrides: ProbeOverrides,
 ) -> ProbeInputs:
     trainer_constant, party = damage_state.resolve_trainer_party(trainer)
     enemy_party_index = damage_state.select_trainer_mon_index(party, enemy)
@@ -269,7 +376,16 @@ def resolve_probe_inputs(
         damage_state.state_from_trainer_mon(party_mon, trainer_dvs=dvs)
         for party_mon in party.mons
     )
-    attacker = enemy_party[enemy_party_index]
+    attacker = apply_hp_overrides(
+        enemy_party[enemy_party_index],
+        current_hp=overrides.enemy_current_hp,
+        max_hp=overrides.enemy_max_hp,
+        label="enemy",
+    )
+    enemy_party = tuple(
+        attacker if index == enemy_party_index else party_mon
+        for index, party_mon in enumerate(enemy_party)
+    )
     if player_save.suffix.lower() == ".state":
         defender = damage_state.party_state_from_state(
             player_save,
@@ -284,9 +400,21 @@ def resolve_probe_inputs(
             rom=rom,
             symbols_path=symbols,
         )
-    route_id, route_state = find_route_probe(
+    defender = apply_hp_overrides(
+        defender,
+        current_hp=overrides.player_current_hp,
+        max_hp=overrides.player_max_hp,
+        label="player",
+    )
+    route = find_score_probe_route(
         manifest,
-        route_id_candidates(trainer_constant.trainer_class, trainer_constant.trainer_id),
+        trainer_route_ids=route_id_candidates(
+            trainer_constant.trainer_class,
+            trainer_constant.trainer_id,
+        ),
+        score_base_route=score_base_route,
+        rom=rom,
+        symbols=symbols,
     )
     return ProbeInputs(
         trainer_id=trainer_constant.trainer_id,
@@ -299,9 +427,17 @@ def resolve_probe_inputs(
         enemy_party=enemy_party,
         enemy_party_index=enemy_party_index,
         enemy_party_dvs=dvs,
-        route_id=route_id,
-        route_state=route_state,
+        route_id=route.route_id,
+        route_state=route.route_state,
+        route_state_field=route.route_state_field,
+        route_button=route.button,
+        route_button_delay=route.button_delay,
+        route_watch_frames=route.watch_frames,
+        route_button_presses=route.button_presses,
+        route_button_interval_frames=route.button_interval_frames,
+        route_warnings=route.warnings,
         battery_save=player_save,
+        overrides=overrides,
     )
 
 
@@ -352,26 +488,150 @@ def find_route_id(manifest_path: Path, route_ids: Sequence[str]) -> str | None:
         raise
 
 
-def find_route_probe(manifest_path: Path, route_ids: Sequence[str]) -> tuple[str | None, Path | None]:
+def find_score_probe_route(
+    manifest_path: Path,
+    *,
+    trainer_route_ids: Sequence[str],
+    score_base_route: str | None,
+    rom: Path,
+    symbols: Path,
+) -> ProbeRoute:
+    basis_warnings = manifest_basis_warnings(manifest_path, rom=rom, symbols=symbols)
+    if score_base_route and not basis_warnings:
+        try:
+            entry = resolve_route_entry(manifest_path, (score_base_route.lower(),))
+        except MoveScoreProbeError as exc:
+            if not (
+                str(exc).startswith("no trace manifest route")
+                or str(exc).startswith("missing Boss AI trace manifest")
+            ):
+                raise
+        else:
+            route = route_probe_from_entry(
+                entry,
+                preferred_state_fields=("score_materialization_state",),
+            )
+            if route.route_state is not None:
+                return replace(
+                    route,
+                    warnings=route.warnings
+                    + (
+                        "using score_materialization_state as a generic synthetic scoring base",
+                    ),
+                )
+    route = find_route_probe(manifest_path, trainer_route_ids)
+    if basis_warnings and route.route_state is not None:
+        route = replace(
+            route,
+            route_state=None,
+            route_state_field="",
+            warnings=route.warnings
+            + basis_warnings
+            + (
+                "ignored manifest save-state because its trace ROM/symbol hash pins do not match current files",
+            ),
+        )
+    return replace(
+        route,
+        warnings=route.warnings + (() if basis_warnings and route.route_state is None else basis_warnings),
+    )
+
+
+def find_route_probe(manifest_path: Path, route_ids: Sequence[str]) -> ProbeRoute:
     try:
         entry = resolve_route_entry(manifest_path, route_ids)
     except MoveScoreProbeError as exc:
         if str(exc).startswith("no trace manifest route") or str(exc).startswith("missing Boss AI trace manifest"):
-            return None, None
+            return ProbeRoute(route_id=None, route_state=None)
         raise
-    route_id = str(entry.get("id", "")).lower()
-    route_state = route_state_path(entry)
-    return route_id, route_state
+    return route_probe_from_entry(entry)
 
 
-def route_state_path(route_entry: dict[str, Any]) -> Path | None:
-    raw = route_entry.get("pre_choice_state") or route_entry.get("save_state")
+def route_probe_from_entry(
+    route_entry: dict[str, Any],
+    *,
+    preferred_state_fields: Sequence[str] = ("pre_choice_state", "save_state"),
+) -> ProbeRoute:
+    route_id = str(route_entry.get("id", "")).lower()
+    state_field, route_state = route_state_path(route_entry, preferred_state_fields)
+    button, button_presses = replay_button_controls(route_entry, state_field)
+    watch_frames = replay_watch_frames(route_entry, state_field)
+    return ProbeRoute(
+        route_id=route_id,
+        route_state=route_state,
+        route_state_field=state_field,
+        button=button,
+        button_delay=DEFAULT_CHOICE_BUTTON_DELAY,
+        watch_frames=watch_frames,
+        button_presses=button_presses,
+        button_interval_frames=replay_button_interval_frames(route_entry, state_field),
+    )
+
+
+def route_state_path(
+    route_entry: dict[str, Any],
+    preferred_state_fields: Sequence[str],
+) -> tuple[str, Path | None]:
+    state_field = ""
+    raw = ""
+    for field in preferred_state_fields:
+        value = route_entry.get(field)
+        if isinstance(value, str) and value:
+            state_field = field
+            raw = value
+            break
     if not isinstance(raw, str) or raw == "":
-        return None
+        return state_field, None
     path = Path(raw)
     if not path.is_absolute():
         path = ROOT / path
-    return path if path.exists() else None
+    return state_field, path if path.exists() else None
+
+
+def replay_button_controls(route_entry: dict[str, Any], state_field: str) -> tuple[str, int]:
+    if state_field == "score_materialization_state":
+        button = str(route_entry.get("score_materialization_button", ""))
+        return button, int(route_entry.get("score_materialization_button_presses", 0))
+    button = str(route_entry.get("choice_button", DEFAULT_CHOICE_BUTTON))
+    return button, DEFAULT_CHOICE_BUTTON_PRESSES
+
+
+def replay_watch_frames(route_entry: dict[str, Any], state_field: str) -> int:
+    if state_field == "score_materialization_state":
+        return int(route_entry.get("score_materialization_watch_frames", DEFAULT_CHOICE_WATCH_FRAMES))
+    return int(route_entry.get("choice_wait_frames", DEFAULT_CHOICE_WATCH_FRAMES))
+
+
+def replay_button_interval_frames(route_entry: dict[str, Any], state_field: str) -> int:
+    if state_field == "score_materialization_state":
+        return int(route_entry.get("score_materialization_button_interval_frames", 0))
+    return DEFAULT_CHOICE_BUTTON_INTERVAL_FRAMES
+
+
+def manifest_basis_warnings(manifest_path: Path, *, rom: Path, symbols: Path) -> tuple[str, ...]:
+    if not manifest_path.exists():
+        return ()
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    warnings: list[str] = []
+    manifest_rom_sha = str(manifest.get("trace_rom_sha256", "")).lower()
+    manifest_symbols_sha = str(manifest.get("trace_symbols_sha256", "")).lower()
+    try:
+        actual_rom_sha = capture.sha256_file(rom).lower()
+    except FileNotFoundError:
+        actual_rom_sha = ""
+    try:
+        actual_symbols_sha = capture.sha256_file(symbols).lower()
+    except FileNotFoundError:
+        actual_symbols_sha = ""
+    if manifest_rom_sha and actual_rom_sha and manifest_rom_sha != actual_rom_sha:
+        warnings.append(
+            "manifest trace_rom_sha256 differs from the current ROM; if replay fails, regenerate the trace base state"
+        )
+    if manifest_symbols_sha and actual_symbols_sha and manifest_symbols_sha != actual_symbols_sha:
+        warnings.append(
+            "manifest trace_symbols_sha256 differs from the current symbols; if replay fails, regenerate the trace base state"
+        )
+    return tuple(warnings)
 
 
 def run_probe_variant(
@@ -392,18 +652,18 @@ def run_probe_variant(
     base_state_label = f"route:{inputs.route_id}" if inputs.route_id is not None else ""
     if inputs.route_state is not None:
         base_state_label = str(inputs.route_state)
-        trace_report = run_rom_contribution_trace(
+        trace_report = run_score_probe_from_state(
             save_state=inputs.route_state,
             rom=rom,
-            symbols_path=symbols,
-            metadata={
-                "probe": "move-score-probe",
-                "trainer": inputs.trainer_id,
-                "enemy": inputs.attacker.species,
-                "player": inputs.defender.species,
-                "sleep_clause": sleep_clause,
-            },
+            symbols=symbols,
+            metadata=probe_metadata(inputs, sleep_clause),
             memory_patches=patches,
+            button=inputs.route_button,
+            button_delay=inputs.route_button_delay,
+            watch_frames=inputs.route_watch_frames,
+            button_presses=inputs.route_button_presses,
+            button_interval_frames=inputs.route_button_interval_frames,
+            collect_contribution_trace=trace,
         )
     elif inputs.route_id is not None:
         trace_report = run_rom_contribution_trace_for_route(
@@ -488,10 +748,64 @@ def run_probe_variant(
             "rule_entry_count": trace_report.get("rule_entry_count", 0),
             "helper_snapshot_count": trace_report.get("helper_snapshot_count", 0),
         },
+        "route_warnings": list(inputs.route_warnings),
     }
     if trace:
         result["trace_report"] = trace_report
     return result
+
+
+def probe_metadata(inputs: ProbeInputs, sleep_clause: str) -> dict[str, str]:
+    return {
+        "probe": "move-score-probe",
+        "trainer": inputs.trainer_id,
+        "enemy": inputs.attacker.species,
+        "player": inputs.defender.species,
+        "sleep_clause": sleep_clause,
+        "route_id": inputs.route_id or "",
+        "route_state_field": inputs.route_state_field,
+        "route_warnings": " | ".join(inputs.route_warnings),
+    }
+
+
+def run_score_probe_from_state(
+    *,
+    save_state: Path,
+    rom: Path,
+    symbols: Path,
+    metadata: dict[str, str],
+    memory_patches: list[MemoryPatch],
+    button: str,
+    button_delay: int,
+    watch_frames: int,
+    button_presses: int,
+    button_interval_frames: int,
+    collect_contribution_trace: bool,
+) -> dict[str, Any]:
+    if collect_contribution_trace:
+        return run_rom_contribution_trace(
+            save_state=save_state,
+            rom=rom,
+            symbols_path=symbols,
+            metadata=metadata,
+            memory_patches=memory_patches,
+            button=button,
+            button_delay=button_delay,
+            watch_frames=watch_frames,
+            button_presses=button_presses,
+            button_interval_frames=button_interval_frames,
+        )
+    with RomScoreReplaySession(rom=rom, symbols_path=symbols) as session:
+        return session.run(
+            save_state=save_state,
+            button=button,
+            button_delay=button_delay,
+            watch_frames=watch_frames,
+            button_presses=button_presses,
+            button_interval_frames=button_interval_frames,
+            metadata=metadata,
+            memory_patches=memory_patches,
+        )
 
 
 def probe_out_dir(inputs: ProbeInputs, sleep_clause: str) -> Path:
@@ -700,6 +1014,102 @@ def warnings_for_rows(rows: list[dict[str, Any]]) -> list[str]:
     ]
 
 
+def battle_context_for_probe(inputs: ProbeInputs) -> damage_state.BattleContext:
+    return damage_state.BattleContext(
+        battle_turn=byte_value(inputs.overrides.battle_turn, default=1, label="battle_turn"),
+        attacker_stat_stages=normalized_stage_map(inputs.overrides.enemy_stat_stages),
+        defender_stat_stages=normalized_stage_map(inputs.overrides.player_stat_stages),
+    )
+
+
+def apply_hp_overrides(
+    mon: damage_state.ExactPokemonState,
+    *,
+    current_hp: int | None,
+    max_hp: int | None,
+    label: str,
+) -> damage_state.ExactPokemonState:
+    resolved_max = mon.max_hp if max_hp is None else positive_word(max_hp, f"{label}_max_hp")
+    resolved_current = mon.current_hp if current_hp is None else positive_word(current_hp, f"{label}_current_hp")
+    if resolved_current > resolved_max:
+        raise MoveScoreProbeError(
+            f"{label} current HP ({resolved_current}) cannot exceed max HP ({resolved_max})"
+        )
+    return replace(mon, current_hp=resolved_current, max_hp=resolved_max)
+
+
+def stat_level_bytes(stages: Mapping[str, int] | None) -> list[int]:
+    levels = [STAT_STAGE_BASE] * 7
+    for name, stage in normalized_stage_map(stages).items():
+        levels[STAT_STAGE_OFFSETS[name]] = STAT_STAGE_BASE + stage
+    return levels
+
+
+def normalized_stage_map(stages: Mapping[str, int] | None) -> dict[str, int]:
+    out: dict[str, int] = {}
+    if not stages:
+        return out
+    canonical_names = {
+        "attack": "atk",
+        "defense": "def",
+        "speed": "spe",
+        "spatk": "sp_atk",
+        "special_attack": "sp_atk",
+        "spdef": "sp_def",
+        "special_defense": "sp_def",
+    }
+    for raw_name, raw_stage in stages.items():
+        name = str(raw_name).strip().lower().replace("-", "_")
+        name = canonical_names.get(name, name)
+        if name not in STAT_STAGE_OFFSETS:
+            known = ", ".join(sorted({"atk", "def", "spe", "sp_atk", "sp_def", "accuracy", "evasion"}))
+            raise MoveScoreProbeError(f"unknown stat stage {raw_name!r}; known: {known}")
+        stage = int(raw_stage)
+        if not -6 <= stage <= 6:
+            raise MoveScoreProbeError(f"{raw_name} stage must be between -6 and +6, got {stage}")
+        out[name] = stage
+    return out
+
+
+def byte_value(value: int | None, *, default: int, label: str) -> int:
+    resolved = default if value is None else int(value)
+    if not 0 <= resolved <= 0xFF:
+        raise MoveScoreProbeError(f"{label} must be a byte value, got {resolved}")
+    return resolved
+
+
+def positive_word(value: int, label: str) -> int:
+    if not 1 <= int(value) <= 0xFFFF:
+        raise MoveScoreProbeError(f"{label} must be 1-65535, got {value}")
+    return int(value)
+
+
+def probe_overrides_to_json(overrides: ProbeOverrides) -> dict[str, Any]:
+    return {
+        "enemy_stat_stages": normalized_stage_map(overrides.enemy_stat_stages),
+        "player_stat_stages": normalized_stage_map(overrides.player_stat_stages),
+        "enemy_current_hp": overrides.enemy_current_hp,
+        "enemy_max_hp": overrides.enemy_max_hp,
+        "player_current_hp": overrides.player_current_hp,
+        "player_max_hp": overrides.player_max_hp,
+        "battle_turn": overrides.battle_turn,
+        "boss_turns_elapsed": overrides.boss_turns_elapsed,
+    }
+
+
+def parse_stage_overrides(values: Sequence[str]) -> dict[str, int]:
+    stages: dict[str, int] = {}
+    for text in values:
+        name, sep, raw_stage = text.partition("=")
+        if sep != "=" or not name or not raw_stage:
+            raise MoveScoreProbeError(f"stage override must look like STAT=STAGE: {text}")
+        try:
+            stages[name] = int(raw_stage, 0)
+        except ValueError as exc:
+            raise MoveScoreProbeError(f"stage override has invalid integer stage: {text}") from exc
+    return normalized_stage_map(stages)
+
+
 def memory_patches_for_probe(
     inputs: ProbeInputs,
     *,
@@ -715,8 +1125,8 @@ def memory_patches_for_probe(
     patches.extend(byte_patches("wEnemyAIMoveScores", [20, 20, 20, 20]))
     patches.extend(byte_patches("wEnemyMonPP", [30, 30, 30, 30]))
     patches.extend(byte_patches("wBattleMonPP", [30, 30, 30, 30]))
-    patches.extend(byte_patches("wEnemyStatLevels", [7, 7, 7, 7, 7, 7, 7]))
-    patches.extend(byte_patches("wPlayerStatLevels", [7, 7, 7, 7, 7, 7, 7]))
+    patches.extend(byte_patches("wEnemyStatLevels", stat_level_bytes(inputs.overrides.enemy_stat_stages)))
+    patches.extend(byte_patches("wPlayerStatLevels", stat_level_bytes(inputs.overrides.player_stat_stages)))
     patches.extend(
         [
             MemoryPatch("wOtherTrainerClass", 0, trainer_class_id(inputs.trainer_class)),
@@ -727,7 +1137,7 @@ def memory_patches_for_probe(
             MemoryPatch("wBossAIMoveChoiceReady", 0, 0),
             MemoryPatch("wBattleMode", 0, 2),
             MemoryPatch("wLinkMode", 0, 0),
-            MemoryPatch("hBattleTurn", 0, 1),
+            MemoryPatch("hBattleTurn", 0, byte_value(inputs.overrides.battle_turn, default=1, label="battle_turn")),
             MemoryPatch("wCurBattleMon", 0, max(0, inputs.player_slot - 1)),
             MemoryPatch("wCurOTMon", 0, inputs.enemy_party_index),
             MemoryPatch("wCurEnemyMove", 0, 0),
@@ -741,6 +1151,14 @@ def memory_patches_for_probe(
             MemoryPatch("wPlayerSleepClauseSlot", 0, 0),
         ]
     )
+    if inputs.overrides.boss_turns_elapsed is not None:
+        patches.append(
+            MemoryPatch(
+                "wBossAITurnsElapsed",
+                0,
+                byte_value(inputs.overrides.boss_turns_elapsed, default=0, label="boss_turns_elapsed"),
+            )
+        )
     for symbol_name in (
         "wPlayerSubStatus1",
         "wPlayerSubStatus2",
@@ -1056,7 +1474,15 @@ def run_self_test() -> int:
             route_id_candidates(will_constant.trainer_class, will_constant.trainer_id),
         ),
         route_state=None,
+        route_state_field="",
+        route_button=DEFAULT_CHOICE_BUTTON,
+        route_button_delay=DEFAULT_CHOICE_BUTTON_DELAY,
+        route_watch_frames=DEFAULT_CHOICE_WATCH_FRAMES,
+        route_button_presses=DEFAULT_CHOICE_BUTTON_PRESSES,
+        route_button_interval_frames=DEFAULT_CHOICE_BUTTON_INTERVAL_FRAMES,
+        route_warnings=(),
         battery_save=Path("unused.state"),
+        overrides=ProbeOverrides(),
     )
     if will_inputs.route_id is not None:
         raise AssertionError("expected seeded probes not to require a manifest route")
@@ -1132,6 +1558,15 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--rom", type=Path, default=capture.DEFAULT_ROM)
     parser.add_argument("--symbols", type=Path, default=capture.DEFAULT_SYMBOLS)
     parser.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)
+    parser.add_argument("--score-base-route", default=DEFAULT_SCORE_BASE_ROUTE)
+    parser.add_argument("--enemy-stage", action="append", default=[], help="enemy stat stage override, e.g. atk=2")
+    parser.add_argument("--player-stage", action="append", default=[], help="player stat stage override, e.g. def=-1")
+    parser.add_argument("--enemy-current-hp", type=int)
+    parser.add_argument("--enemy-max-hp", type=int)
+    parser.add_argument("--player-current-hp", type=int)
+    parser.add_argument("--player-max-hp", type=int)
+    parser.add_argument("--battle-turn", type=int)
+    parser.add_argument("--boss-turns-elapsed", type=int)
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--trace", action="store_true")
     parser.add_argument("--self-test", action="store_true")
@@ -1161,6 +1596,17 @@ def main(argv: list[str] | None = None) -> int:
             rom=args.rom,
             symbols=args.symbols,
             manifest=args.manifest,
+            score_base_route=args.score_base_route or None,
+            overrides=ProbeOverrides(
+                enemy_stat_stages=parse_stage_overrides(args.enemy_stage),
+                player_stat_stages=parse_stage_overrides(args.player_stage),
+                enemy_current_hp=args.enemy_current_hp,
+                enemy_max_hp=args.enemy_max_hp,
+                player_current_hp=args.player_current_hp,
+                player_max_hp=args.player_max_hp,
+                battle_turn=args.battle_turn,
+                boss_turns_elapsed=args.boss_turns_elapsed,
+            ),
         )
         print(json.dumps(report, indent=2, sort_keys=True) if args.json else format_move_score_probe(report))
         return 0
