@@ -105,7 +105,7 @@ DoBattle:
 	call SpikesDamage
 	ld a, [wLinkMode]
 	and a
-	jr z, .not_linked_2
+	jr z, .initial_enemy_imposter
 	ldh a, [hSerialConnectionStatus]
 	cp USING_INTERNAL_CLOCK
 	jr nz, .not_linked_2
@@ -117,12 +117,25 @@ DoBattle:
 	call EnemySwitch
 	call SetEnemyTurn
 	call SpikesDamage
+	jr .not_linked_2
+
+.initial_enemy_imposter
+	call TryInitialEnemyDittoImposter
 
 .not_linked_2
 	jp BattleTurn
 
 .tutorial_debug
 	jp BattleMenu
+
+TryInitialEnemyDittoImposter:
+	ldh a, [hBattleTurn]
+	push af
+	call SetEnemyTurn
+	callfar TryActivateDittoImposter
+	pop af
+	ldh [hBattleTurn], a
+	ret
 
 WildFled_EnemyFled_LinkBattleCanceled:
 	call SafeLoadTempTilemapToTilemap
