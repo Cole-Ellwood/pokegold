@@ -3528,11 +3528,10 @@ BattleCommand_SleepTarget:
 
 .random_loop
 	call BattleRandom
-	and SLP_MASK
-	jr z, .random_loop
-	cp SLP_MASK
-	jr z, .random_loop
-	inc a
+	and %11
+	cp SLEEP_DENIED_ACTION_RANGE
+	jr nc, .random_loop
+	add SLEEP_MIN_DENIED_ACTIONS + 1
 	ld [de], a
 	call UpdateOpponentInParty
 	call RefreshBattleHuds

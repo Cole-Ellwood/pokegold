@@ -30,6 +30,16 @@ REQUIRED_BOSS_LABELS = (
     "BossAI_ShouldScout:",
 )
 
+REQUIRED_BOSS_SNIPPETS = (
+    "call .DamagingMoveBlockedByTypeImmunity\n\tret c",
+    ".DamagingMoveBlockedByTypeImmunity\n\tld a, [wEnemyMoveStruct + MOVE_POWER]",
+    "push hl\n\tcall BossAI_CheckEnemyMoveTypeMatchupVsPlayerNoItem\n\tpop hl\n\tld a, [wTypeMatchup]\n\tand a\n\tjr nz, .damage_type_legal\n\tld a, 80\n\tcall BossAI_SetScoreHL",
+    "call .StatusMoveWouldFailPublicly\n\tjr nc, .status_ok\n\tld a, 80\n\tcall BossAI_SetScoreHL",
+    "cp EFFECT_SLEEP\n\tjp z, .check_sleep",
+    ".check_sleep\n\tcall .PrimaryStatusBlocked\n\tret c",
+    "ld a, [wEnemySleepClauseSlot]\n\tand a\n\tjp nz, .status_fail",
+)
+
 REQUIRED_CONSTANTS = (
     "DEF BOSS_AI_PLAUSIBLE_MIN_POWER EQU",
     "DEF BOSS_AI_PLAUSIBLE_RISK_WEIGHT_TIER_EARLY EQU",
@@ -82,6 +92,8 @@ def main() -> int:
 
     for needle in REQUIRED_BOSS_LABELS:
         require_contains(boss, needle, "boss AI split architecture", errors)
+    for needle in REQUIRED_BOSS_SNIPPETS:
+        require_contains(boss, needle, "boss AI sleep-clause legality mirror", errors)
     for needle in REQUIRED_CONSTANTS:
         require_contains(constants, needle, "battle_constants.asm policy constants", errors)
     for needle in REQUIRED_POLICY_SNIPPETS:

@@ -1063,12 +1063,37 @@ Script_loadtrainer:
 	ret
 
 Script_startbattle:
+	xor a
+	ld [wTrainerBattleContextBackupActive], a
+	ld a, [wBattleScriptFlags]
+	bit BATTLESCRIPT_WILD_F, a
+	; Trainer resume data shares a WRAM0 union with volatile battle/evolution buffers.
+	call nz, .SaveTrainerContext
 	call BufferScreen
 	predef StartBattle
+	ld a, [wTrainerBattleContextBackupActive]
+	and a
+	call nz, .RestoreTrainerContext
 	ld a, [wBattleResult]
 	and ~BATTLERESULT_BITMASK
 	ld [wScriptVar], a
 	ret
+
+.SaveTrainerContext:
+	ld a, TRUE
+	ld [wTrainerBattleContextBackupActive], a
+	ld hl, wSeenTrainerBank
+	ld de, wTrainerBattleContextBackup
+	ld bc, wTempTrainerEnd - wSeenTrainerBank
+	jp CopyBytes
+
+.RestoreTrainerContext:
+	xor a
+	ld [wTrainerBattleContextBackupActive], a
+	ld hl, wTrainerBattleContextBackup
+	ld de, wSeenTrainerBank
+	ld bc, wTempTrainerEnd - wSeenTrainerBank
+	jp CopyBytes
 
 Script_catchtutorial:
 	call GetScriptByte

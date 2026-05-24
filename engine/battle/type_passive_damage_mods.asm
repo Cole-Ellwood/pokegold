@@ -1275,7 +1275,7 @@ HandleTypePassiveRegrowth_Far:
 	jr nz, .shift
 	ld a, 5
 .shift
-	call .ShiftBCByA_MinOne
+	call .ShiftBCByA_RoundMinOne
 	farcall SwitchTurnCore
 	farcall RestoreHP
 	farcall SwitchTurnCore
@@ -1283,8 +1283,21 @@ HandleTypePassiveRegrowth_Far:
 	call StdBattleTextbox
 	ret
 
-.ShiftBCByA_MinOne:
+.ShiftBCByA_RoundMinOne:
+; Round to nearest for the selected power-of-two denominator.
+; a = 5 -> /32, a = 6 -> /64.
 	ld e, a
+	ld hl, 1
+	dec a
+	jr z, .got_rounding_bias
+.rounding_bias_loop
+	add hl, hl
+	dec a
+	jr nz, .rounding_bias_loop
+.got_rounding_bias
+	add hl, bc
+	ld b, h
+	ld c, l
 .shift_loop
 	srl b
 	rr c

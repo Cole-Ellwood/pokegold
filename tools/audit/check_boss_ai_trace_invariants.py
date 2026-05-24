@@ -1204,13 +1204,13 @@ def audit_spikes_and_status(boss: str) -> None:
             "call BossAI_DiscourageScoreHL",
             "call .StatusMoveWouldFailPublicly",
             "jr nc, .status_ok",
-            "ld a, 24",
-            "call BossAI_DiscourageScoreHL",
+            "ld a, 80",
+            "call BossAI_SetScoreHL",
             ".status_ok",
             "ld c, 4",
             "call .EncourageByTierWeight",
         ],
-        "public fail discouragement before generic encouragement",
+        "public status fail blocking before generic encouragement",
     )
 
     utility = local_block(boss, ".UtilityMoveWouldFailPublicly", ".check_primary_status")

@@ -24,10 +24,15 @@ BattleCommand_Mimic:
 	dec c
 	jr nz, .check_already_knows_move
 	dec hl
+	ld c, NUM_MOVES
 .find_mimic
 	ld a, [hld]
 	cp MIMIC
+	jr z, .found_mimic
+	dec c
 	jr nz, .find_mimic
+	jr .fail
+.found_mimic
 	inc hl
 	ld a, BATTLE_VARS_LAST_COUNTER_MOVE_OPP
 	call GetBattleVar

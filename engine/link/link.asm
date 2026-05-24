@@ -324,14 +324,23 @@ endc
 
 	ld a, [wLinkMode]
 	cp LINK_TRADECENTER
-	jr nz, .skip_mail
+	jp nz, .skip_mail
 	ld hl, wLinkOTMail
+	ld bc, wLinkOTMailEnd - wLinkOTMail
 .loop2
+	ld a, b
+	or c
+	jp z, .skip_mail
 	ld a, [hli]
+	dec bc
 	cp SERIAL_MAIL_PREAMBLE_BYTE
 	jr nz, .loop2
 .loop3
+	ld a, b
+	or c
+	jp z, .skip_mail
 	ld a, [hli]
+	dec bc
 	cp SERIAL_NO_DATA_BYTE
 	jr z, .loop3
 	cp SERIAL_MAIL_PREAMBLE_BYTE

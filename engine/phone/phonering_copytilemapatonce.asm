@@ -12,6 +12,8 @@ PhoneRing_CopyTilemapAtOnce:
 	push af
 	xor a
 	ldh [hBGMapMode], a
+	ldh [hBGMapUpdate], a
+	ldh [hBGMapTileCount], a
 
 	ldh a, [hMapAnims]
 	push af

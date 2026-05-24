@@ -18,11 +18,16 @@ BattleCommand_Encore:
 	cp MIRROR_MOVE
 	jp z, .failed
 	ld b, a
+	ld c, NUM_MOVES
 
 .got_move
 	ld a, [hli]
 	cp b
+	jr z, .found_move
+	dec c
 	jr nz, .got_move
+	jp .failed
+.found_move
 
 	ld bc, wBattleMonPP - wBattleMonMoves - 1
 	add hl, bc

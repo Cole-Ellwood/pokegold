@@ -113,7 +113,7 @@ Request2bpp::
 	jr nc, .cycle
 
 	ld [wRequested2bppSize], a
-	call DelayFrame
+	call .wait_request
 
 	pop af
 	rst Bankswitch
@@ -126,11 +126,18 @@ Request2bpp::
 	ld a, TILES_PER_CYCLE
 	ld [wRequested2bppSize], a
 
-	call DelayFrame
+	call .wait_request
 	ld a, c
 	sub TILES_PER_CYCLE
 	ld c, a
 	jr .loop
+
+.wait_request
+	call DelayFrame
+	ld a, [wRequested2bppSize]
+	and a
+	jr nz, .wait_request
+	ret
 
 Request1bpp::
 ; Load 1bpp at b:de to occupy c tiles of hl.
@@ -158,7 +165,7 @@ Request1bpp::
 	jr nc, .cycle
 
 	ld [wRequested1bppSize], a
-	call DelayFrame
+	call .wait_request
 
 	pop af
 	rst Bankswitch
@@ -171,11 +178,18 @@ Request1bpp::
 	ld a, TILES_PER_CYCLE
 	ld [wRequested1bppSize], a
 
-	call DelayFrame
+	call .wait_request
 	ld a, c
 	sub TILES_PER_CYCLE
 	ld c, a
 	jr .loop
+
+.wait_request
+	call DelayFrame
+	ld a, [wRequested1bppSize]
+	and a
+	jr nz, .wait_request
+	ret
 
 Get2bpp::
 ; copy c 2bpp tiles from b:de to hl

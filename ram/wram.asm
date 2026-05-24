@@ -1798,7 +1798,8 @@ wPrevWarp:: db
 wPrevMapGroup:: db
 wPrevMapNumber:: db
 
-	ds 17
+wTrainerBattleContextBackup:: ds wTempTrainerEnd - wSeenTrainerBank
+wTrainerBattleContextBackupActive:: db
 
 wUnusedAddOutdoorSpritesReturnValue:: db
 

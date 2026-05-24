@@ -298,6 +298,99 @@ def check_documented_gold_silver_bugfixes() -> None:
         ROOT / "maps/Route15.asm",
         'Route15SignText:\n\ttext "ROUTE 15"',
     )
+    require_ordered_text(
+        ROOT / "engine/battle/effect_commands.asm",
+        (
+            "BattleCommand_SleepTarget:",
+            ".random_loop\n\tcall BattleRandom\n\tand %11",
+            "\tcp SLEEP_DENIED_ACTION_RANGE\n\tjr nc, .random_loop",
+            "\tadd SLEEP_MIN_DENIED_ACTIONS + 1\n\tld [de], a",
+        ),
+        "sleep moves store counters that deny exactly 2-4 actions",
+    )
+    require_ordered_text(
+        ROOT / "constants/battle_constants.asm",
+        (
+            "DEF SLEEP_MIN_DENIED_ACTIONS EQU 2",
+            "DEF SLEEP_MAX_DENIED_ACTIONS EQU 4",
+            "DEF SLEEP_DENIED_ACTION_RANGE EQU SLEEP_MAX_DENIED_ACTIONS - SLEEP_MIN_DENIED_ACTIONS + 1",
+            "DEF REST_SLEEP_TURNS EQU 2",
+        ),
+        "sleep action-count constants stay explicit",
+    )
+    require_ordered_text(
+        ROOT / "home/video.asm",
+        (
+            "Serve1bppRequest::",
+            "\tldh a, [rLY]\n\tcp LY_VBLANK\n\tret c\n\tcp LY_VBLANK + 2\n\tret nc",
+            "Serve2bppRequest::",
+            "\tldh a, [rLY]\n\tcp LY_VBLANK\n\tret c\n\tcp LY_VBLANK + 2\n\tret nc",
+            "Serve2bppRequest_VBlank::",
+            "AnimateTileset::",
+            "\tldh a, [rLY]\n\tcp LY_VBLANK\n\tret c\n\tcp LY_VBLANK + 7\n\tret nc",
+        ),
+        "VRAM request handlers are guarded to stay inside safe VBlank windows",
+    )
+    require_ordered_text(
+        ROOT / "home/vblank.asm",
+        (
+            "VBlank_Cutscene::",
+            "\tcall UpdateBGMap\n\tcall Serve2bppRequest_VBlank",
+        ),
+        "cutscene VBlank uses the pre-checked 2bpp request handler",
+    )
+    require_ordered_text(
+        ROOT / "home/gfx.asm",
+        (
+            "Request2bpp::",
+            "\tld [wRequested2bppSize], a\n\tcall .wait_request",
+            ".wait_request\n\tcall DelayFrame\n\tld a, [wRequested2bppSize]",
+            "Request1bpp::",
+            "\tld [wRequested1bppSize], a\n\tcall .wait_request",
+            ".wait_request\n\tcall DelayFrame\n\tld a, [wRequested1bppSize]",
+        ),
+        "queued tile requests wait until the VBlank handler acknowledges completion",
+    )
+    require_ordered_text(
+        ROOT / "engine/battle/type_passive_damage_mods.asm",
+        (
+            "HandleTypePassiveRegrowth_Far:",
+            "\tld a, d\n\tcp 2\n\tld a, 6\n\tjr nz, .shift\n\tld a, 5",
+            "\tcall .ShiftBCByA_RoundMinOne",
+            ".ShiftBCByA_RoundMinOne:",
+            "\tld e, a\n\tld hl, 1\n\tdec a",
+            ".rounding_bias_loop\n\tadd hl, hl\n\tdec a\n\tjr nz, .rounding_bias_loop",
+            ".got_rounding_bias\n\tadd hl, bc\n\tld b, h\n\tld c, l",
+            ".shift_loop\n\tsrl b\n\trr c",
+        ),
+        "Grass regrowth rounds the existing 1/32 and 1/64 rates instead of flooring them",
+    )
+    require_ordered_text(
+        ROOT / "home/tilemap.asm",
+        (
+            "CopyTilemapAtOnce::",
+            "\tldh [hBGMapMode], a\n\tldh [hBGMapUpdate], a\n\tldh [hBGMapTileCount], a",
+            "\tldh a, [rLY]\n\tcp LY_VBLANK - 1\n\tjr c, .wait",
+            "\tldh a, [rLY]\n\tcp LY_VBLANK - 1\n\tjr c, .wait2",
+        ),
+        "full CGB tilemap copy waits for VBlank and cancels stale incremental updates",
+    )
+    require_ordered_text(
+        ROOT / "engine/phone/phonering_copytilemapatonce.asm",
+        (
+            "PhoneRing_CopyTilemapAtOnce:",
+            "\tldh [hBGMapMode], a\n\tldh [hBGMapUpdate], a\n\tldh [hBGMapTileCount], a",
+        ),
+        "phone full-tilemap copy cancels stale incremental updates",
+    )
+    require_ordered_text(
+        ROOT / "engine/menus/savemenu_copytilemapatonce.asm",
+        (
+            "SaveMenu_CopyTilemapAtOnce:",
+            "\tldh [hBGMapMode], a\n\tldh [hBGMapUpdate], a\n\tldh [hBGMapTileCount], a",
+        ),
+        "save-menu full-tilemap copy cancels stale incremental updates",
+    )
 
 
 def check_no_stale_reward_receipt_texts() -> None:
@@ -1442,6 +1535,7 @@ def main() -> int:
 
     check_save_format_version()
     check_no_stale_shipped_claims()
+    check_vram_request_contract()
     check_farcall_hl_clobber()
     check_farcall_a_clobber()
     check_ld_a_zero()
@@ -1476,6 +1570,10 @@ def check_save_format_version() -> None:
 
 def check_no_stale_shipped_claims() -> None:
     _run_subaudit("check_no_stale_shipped_claims.py", "no stale shipped claims")
+
+
+def check_vram_request_contract() -> None:
+    _run_subaudit("check_vram_request_contract.py", "VRAM request contract")
 
 
 def check_farcall_hl_clobber() -> None:

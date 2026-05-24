@@ -57,7 +57,12 @@ BattleCommand_Sketch:
 	dec c
 	ld a, [hld]
 	cp SKETCH
-	jr nz, .find_sketch
+	jr z, .found_sketch
+	ld a, c
+	and a
+	jp z, .fail
+	jr .find_sketch
+.found_sketch
 	inc hl
 ; The Sketched move is loaded to that slot.
 	ld a, b

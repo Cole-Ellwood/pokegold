@@ -273,6 +273,8 @@ ENDC
 	ld [wBossAIMoveChoiceReady], a
 	call .HeldItemMoveBlocked
 	ret c
+	call .DamagingMoveBlockedByTypeImmunity
+	ret c
 
 	ld a, [wEnemyMoveStruct + MOVE_POWER]
 	and a
@@ -338,6 +340,7 @@ ENDC
 
 .skip_utility_fail
 	call .ApplyRecoveryTimingDiscipline
+	call .early_stat_drop_discipline
 
 	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
 	ld hl, BossAIStatusEffects
@@ -346,8 +349,8 @@ ENDC
 	jr nc, .skip_status
 	call .StatusMoveWouldFailPublicly
 	jr nc, .status_ok
-	ld a, 24
-	call BossAI_DiscourageScoreHL
+	ld a, 80
+	call BossAI_SetScoreHL
 	jr .skip_status
 .status_ok
 	ld c, 4
@@ -419,6 +422,27 @@ ENDC
 	and a
 	ret
 
+.DamagingMoveBlockedByTypeImmunity
+	ld a, [wEnemyMoveStruct + MOVE_POWER]
+	and a
+	jr z, .damage_type_legal
+	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
+	cp EFFECT_HIDDEN_POWER
+	jr z, .damage_type_legal
+	push hl
+	call BossAI_CheckEnemyMoveTypeMatchupVsPlayerNoItem
+	pop hl
+	ld a, [wTypeMatchup]
+	and a
+	jr nz, .damage_type_legal
+	ld a, 80
+	call BossAI_SetScoreHL
+	scf
+	ret
+.damage_type_legal
+	and a
+	ret
+
 .AssaultVestBlocksCurrentMove
 	ld a, [wEnemyMoveStruct + MOVE_ANIM]
 	and a
@@ -465,7 +489,7 @@ ENDC
 	cp EFFECT_TOXIC
 	jp z, .check_poison
 	cp EFFECT_SLEEP
-	jp z, .check_primary_status
+	jp z, .check_sleep
 	and a
 	ret
 
@@ -684,6 +708,16 @@ ENDC
 	call .PrimaryStatusBlocked
 	ret
 
+.check_sleep
+	call .PrimaryStatusBlocked
+	ret c
+; This scorer only evaluates enemy moves, so enemy sleep clause state is the
+; side that blocks another sleep attempt into the player's party.
+	ld a, [wEnemySleepClauseSlot]
+	and a
+	jp nz, .status_fail
+	ret
+
 .check_paralyze
 	call .PrimaryStatusBlocked
 	ret c
@@ -825,6 +859,65 @@ ENDC
 
 .status_fail
 	scf
+	ret
+
+.early_stat_drop_discipline
+	ld a, [wBossAITier]
+	cp AI_TIER_EARLY
+	ret nz
+	ld a, [wEnemyMoveStruct + MOVE_POWER]
+	and a
+	ret nz
+	call .stat_drop_index
+	ret nc
+	ld a, [wPlayerSubStatus4]
+	bit SUBSTATUS_SUBSTITUTE, a
+	jr nz, .early_stat_drop_public_fail
+	bit SUBSTATUS_MIST, a
+	jr nz, .early_stat_drop_public_fail
+	ld b, 0
+	ld hl, wPlayerStatLevels
+	add hl, bc
+	ld a, [hl]
+	cp 2
+	jr c, .early_stat_drop_public_fail
+	ld a, [wEnemyTurnsTaken]
+	and a
+	jr z, .early_stat_drop_opening
+	ld a, BOSS_AI_EARLY_STAT_DROP_AFTER_TURN_PENALTY
+	jp BossAI_DiscourageScoreHL
+
+.early_stat_drop_opening
+	ld a, BOSS_AI_EARLY_STAT_DROP_OPENING_PENALTY
+	jp BossAI_DiscourageScoreHL
+
+.early_stat_drop_public_fail
+	ld a, 24
+	jp BossAI_DiscourageScoreHL
+
+.stat_drop_index
+	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
+	cp EFFECT_ATTACK_DOWN
+	jr c, .not_stat_down
+	cp EFFECT_EVASION_DOWN + 1
+	jr c, .single_stat_down
+	cp EFFECT_ATTACK_DOWN_2
+	jr c, .not_stat_down
+	cp EFFECT_EVASION_DOWN_2 + 1
+	jr nc, .not_stat_down
+	sub EFFECT_ATTACK_DOWN_2
+	ld c, a
+	scf
+	ret
+
+.single_stat_down
+	sub EFFECT_ATTACK_DOWN
+	ld c, a
+	scf
+	ret
+
+.not_stat_down
+	and a
 	ret
 
 .ApplySetupPunishBias
@@ -3225,6 +3318,8 @@ BossAI_ScaleMovePowerByBaseStatRatio:
 	and a
 	ret z
 	ld c, a
+	ld a, [wCurSpecies]
+	push af
 
 	call BossAI_CurrentEnemyMoveCategory
 	cp SPECIAL  ; carry set if PHYSICAL, clear if SPECIAL
@@ -3277,14 +3372,23 @@ BossAI_ScaleMovePowerByBaseStatRatio:
 	or a
 	jr nz, .clamp_max
 	ldh a, [hQuotient + 3]
-	ret
+	jr .restore_species_base_data
 
 .clamp_max
 	ld a, 255
-	ret
+	jr .restore_species_base_data
 
 .div_zero
 	ld a, c
+	; fallthrough
+
+.restore_species_base_data
+	ld [wBossAITemp], a
+	pop af
+	ld [wCurSpecies], a
+	and a
+	call nz, GetBaseData
+	ld a, [wBossAITemp]
 	ret
 
 ; ai-layer: POLICY

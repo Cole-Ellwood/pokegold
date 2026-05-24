@@ -62,6 +62,8 @@ CopyTilemapAtOnce::
 	push af
 	xor a
 	ldh [hBGMapMode], a
+	ldh [hBGMapUpdate], a
+	ldh [hBGMapTileCount], a
 
 	ldh a, [hMapAnims]
 	push af
@@ -70,7 +72,7 @@ CopyTilemapAtOnce::
 
 .wait
 	ldh a, [rLY]
-	cp $80 - 1
+	cp LY_VBLANK - 1
 	jr c, .wait
 
 	di
@@ -85,7 +87,7 @@ CopyTilemapAtOnce::
 
 .wait2
 	ldh a, [rLY]
-	cp $80 - 1
+	cp LY_VBLANK - 1
 	jr c, .wait2
 	ei
 

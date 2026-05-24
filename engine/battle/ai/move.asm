@@ -63,6 +63,7 @@ AIChooseMove:
 
 ; Apply AI scoring layers depending on the trainer class.
 .ApplyLayers:
+	call .ApplyHeldItemMoveLegality
 	ld a, [wBossAITier]
 	and a
 	jr nz, .BossModel
@@ -198,6 +199,76 @@ AIChooseMove:
 	ld [wCurEnemyMove], a
 	ld a, c
 	ld [wCurEnemyMoveNum], a
+	ret
+
+.ApplyHeldItemMoveLegality:
+	ld a, [wEnemyMonItem]
+	ld b, a
+	callfar GetItemHeldEffect
+	ld e, b
+	callfar IsChoiceHeldEffectFromE_Far
+	jr z, .check_choice_lock
+	xor a
+	ld [wEnemyChoiceLockedMove], a
+	jr .check_assault_vest
+
+.check_choice_lock
+	ld a, [wEnemyChoiceLockedMove]
+	and a
+	jr z, .check_assault_vest
+	ld b, a
+	ld hl, wEnemyMonMoves
+	ld c, 0
+.choice_loop
+	ld a, [hli]
+	cp b
+	jr z, .choice_next
+	push bc
+	push hl
+	ld hl, wEnemyAIMoveScores
+	ld b, 0
+	add hl, bc
+	ld [hl], 80
+	pop hl
+	pop bc
+.choice_next
+	inc c
+	ld a, c
+	cp NUM_MOVES
+	jr nz, .choice_loop
+
+.check_assault_vest
+	ld a, [wEnemyMonItem]
+	ld b, a
+	callfar GetItemHeldEffect
+	ld e, b
+	ld a, e
+	cp HELD_ASSAULT_VEST
+	ret nz
+	ld hl, wEnemyMonMoves
+	ld c, 0
+.assault_vest_loop
+	ld a, [hli]
+	ld e, a
+	push bc
+	push hl
+	callfar IsMoveBlockedByAssaultVestFromE_Far
+	pop hl
+	pop bc
+	jr nc, .assault_vest_next
+	push bc
+	push hl
+	ld hl, wEnemyAIMoveScores
+	ld b, 0
+	add hl, bc
+	ld [hl], 80
+	pop hl
+	pop bc
+.assault_vest_next
+	inc c
+	ld a, c
+	cp NUM_MOVES
+	jr nz, .assault_vest_loop
 	ret
 
 AIScoringPointers:

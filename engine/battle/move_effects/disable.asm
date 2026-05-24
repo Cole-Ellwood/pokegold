@@ -24,12 +24,17 @@ BattleCommand_Disable:
 	jr z, .failed
 
 	ld b, a
-	ld c, $ff
+	ld c, 0
 .loop
-	inc c
 	ld a, [hli]
 	cp b
-	jr nz, .loop
+	jr z, .got_move
+	inc c
+	ld a, c
+	cp NUM_MOVES
+	jr c, .loop
+	jr .failed
+.got_move
 
 	ldh a, [hBattleTurn]
 	and a
