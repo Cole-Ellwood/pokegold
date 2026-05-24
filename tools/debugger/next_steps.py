@@ -8,6 +8,48 @@ from .catalog import ROOT, keyword_matches, triage_request
 
 NEXT_STEP_ROWS = [
     {
+        "symptom_class": "script_vm_impossible_state",
+        "matched_lane": "runtime_state",
+        "title": "Frozen overworld or impossible script VM state",
+        "keywords": [
+            "frozen",
+            "softlock",
+            "locked up",
+            "music playing",
+            "music continues",
+            "trainer battle",
+            "after battle",
+            "after trainer",
+            "script stuck",
+            "scripttalkafter",
+            "evolved flaffy",
+        ],
+        "first_command": "python -m tools.debugger state-inspect --save-state <crash-state.sgm> --rom pokegold.gbc --symbols pokegold.sym --json-out .local\\tmp\\debugger_runtime_state.json",
+        "required_inputs": ["crash-state save-state, preferably from the frozen screen"],
+        "proof_limit": "Snapshot invariant proof: detects impossible script/PC/stack state in the supplied state; it does not prove which prior write caused it without a pre-trigger watch or instruction trace.",
+        "escalation_command": "python -m tools.debugger repro-recipe --id trainer-battle-evolution-resume",
+        "repro_recipes": ["trainer-battle-evolution-resume"],
+    },
+    {
+        "symptom_class": "vram_request_contract",
+        "matched_lane": "graphics_vram",
+        "title": "Evolution, palette, tile, or VRAM graphics corruption",
+        "keywords": [
+            "vram",
+            "evolution reset",
+            "quilava",
+            "inverted colors",
+            "colors inverted",
+            "palette",
+            "garbled graphics",
+            "tile corruption",
+        ],
+        "first_command": "python tools\\audit\\check_vram_request_contract.py",
+        "required_inputs": ["none; audit reads the committed VRAM request and VBlank service routines"],
+        "proof_limit": "Static contract proof: verifies queued tile requests wait for VBlank acknowledgement; it does not prove a supplied save-state no longer resets.",
+        "escalation_command": "python -m tools.debugger watch --reset-sentinel --rom pokegold.gbc --symbols pokegold.sym --save-state <state-before-trigger> --watch-symbol wRequested2bppSize --watch-symbol wRequested1bppSize --frames 2200 --context-frames 20 --json-out .local\\tmp\\debugger_vram_reset_watch.json",
+    },
+    {
         "symptom_class": "crash_reset",
         "matched_lane": "runtime_crash",
         "title": "Crash, reset, intro jump, or black screen",
@@ -28,6 +70,106 @@ NEXT_STEP_ROWS = [
         "proof_limit": "Runtime sentinel proof: catches jumps through reset/start vectors in the supplied replay window and preserves recent PC/register/WRAM context; it does not synthesize the save by itself.",
         "escalation_command": "python -m tools.debugger repro-recipe --id first-wild-route29",
         "repro_recipes": ["first-wild-route29"],
+    },
+    {
+        "symptom_class": "overworld_poison_cure",
+        "matched_lane": "overworld_status",
+        "title": "Walking poison cure or 1 HP overworld poison behavior",
+        "keywords": ["walking poison", "overworld poison", "poison cure", "1 hp", "0 hp", "poisoned mon"],
+        "first_command": "python tools\\audit\\check_overworld_poison_cure.py",
+        "required_inputs": ["none; audit builds/runs the committed poison-step repro"],
+        "proof_limit": "Runtime audit proof for the poison-step fixture; it does not prove unrelated status or battle poison behavior.",
+        "escalation_command": "python -m tools.debugger investigate --changed-file engine/events/poisonstep.asm",
+    },
+    {
+        "symptom_class": "base_ai_move_legality",
+        "matched_lane": "base_ai_mechanics",
+        "title": "Base non-boss AI picked a held-item-illegal move",
+        "keywords": ["assault vest", "choice locked", "choice lock", "regular trainer", "non-boss", "base ai", "illegal status"],
+        "first_command": "python tools\\audit\\check_base_ai_mechanics_correctness.py",
+        "required_inputs": ["none; audit reads the shared base AI move scoring path"],
+        "proof_limit": "Static contract proof for base AI legality gates; it does not prove a specific trainer battle without an emulator scenario.",
+        "escalation_command": "python -m tools.debugger investigate --changed-file engine/battle/ai/move.asm",
+    },
+    {
+        "symptom_class": "boss_ai_sleep_clause_move_legality",
+        "matched_lane": "boss_ai",
+        "title": "Boss AI selected sleep while Sleep Clause was active",
+        "keywords": ["sleep clause", "hypnosis", "sleep active", "already asleep", "sleep already active"],
+        "first_command": "python -m tools.boss_ai_debugger damage-ai-report --trainer <TRAINER> --enemy <ENEMY> --player-save <save.sav> --player-slot <slot> --sleep-clause both",
+        "required_inputs": ["trainer id, enemy mon selector, player save, and active party slot"],
+        "proof_limit": "Exact damage plus move-score report for the supplied state; use trace mode or ROM materialization before claiming the live fight is fully reproduced.",
+        "escalation_command": "python -m tools.boss_ai_debugger move-score-probe --trainer <TRAINER> --enemy <ENEMY> --player-save <save.sav> --player-slot <slot> --sleep-clause both --trace",
+    },
+    {
+        "symptom_class": "boss_ai_type_immunity_move_choice",
+        "matched_lane": "boss_ai",
+        "title": "Boss AI selected a move blocked by type immunity",
+        "keywords": ["doesn't affect", "doesnt affect", "normal move", "normal-type", "ghost", "type immunity"],
+        "first_command": "python -m tools.boss_ai_debugger damage-ai-report --trainer <TRAINER> --enemy <ENEMY> --player-save <save.sav> --player-slot <slot> --sleep-clause both",
+        "required_inputs": ["trainer id, enemy mon selector, player save, and active party slot"],
+        "proof_limit": "Exact damage plus selector-score report for the supplied state; it does not prove an arbitrary screenshot unless the save matches that battle.",
+        "escalation_command": "python -m tools.boss_ai_debugger move-score-probe --trainer <TRAINER> --enemy <ENEMY> --player-save <save.sav> --player-slot <slot> --trace",
+    },
+    {
+        "symptom_class": "boss_ai_hidden_power_type",
+        "matched_lane": "boss_ai",
+        "title": "Boss AI Hidden Power type or immunity handling",
+        "keywords": ["hidden power", "hiddenpower", "dv-derived", "dv derived", "normal immunity", "stale normal"],
+        "first_command": "python -m tools.boss_ai_debugger move-score-probe --trainer <TRAINER> --enemy <ENEMY> --player-save <save.sav> --player-slot <slot> --trace",
+        "required_inputs": ["trainer id, enemy mon selector, player save, and active party slot"],
+        "proof_limit": "Move-score probe can expose score changes and callsites, but Hidden Power's live type still needs ROM trace/materialization proof.",
+        "escalation_command": "python -m tools.debugger investigate --symbol BossAI_CheckEnemyMoveTypeMatchupVsPlayerNoItem --symbol HiddenPowerDamage",
+    },
+    {
+        "symptom_class": "early_boss_debuff_spam",
+        "matched_lane": "boss_ai",
+        "title": "Early boss repeated debuffs instead of attacking",
+        "keywords": ["leer", "growl", "tail whip", "stat drop", "debuff", "spam", "never attacked"],
+        "first_command": "python -m tools.boss_ai_debugger damage-ai-report --trainer <TRAINER> --enemy <ENEMY> --player-save <save.sav> --player-slot <slot> --sleep-clause both",
+        "required_inputs": ["trainer id, enemy mon selector, player save, and active party slot"],
+        "proof_limit": "Single-turn score proof; multi-turn spam still needs repeated state probes or a generated scenario sequence.",
+        "escalation_command": "python -m tools.boss_ai_debugger generate --family all --count 100 --seed 1 --out .local\\tmp\\early_boss_debuff_scenarios.jsonl",
+    },
+    {
+        "symptom_class": "learnset_semantics",
+        "matched_lane": "pokemon_semantics",
+        "title": "Species learnset or save-party move question",
+        "keywords": ["learnset", "learns", "level 14", "confusion", "spite", "move set", "moveset"],
+        "first_command": "python -m tools.debugger learnset-inspect --species <SPECIES> --level <LEVEL>",
+        "required_inputs": ["species and level; add party-inspect when checking a specific save"],
+        "proof_limit": "Source learnset projection only; existing saves need party-inspect and any edit needs a separate save patcher.",
+        "escalation_command": "python -m tools.debugger party-inspect --save <save.sav> --slot <slot>",
+    },
+    {
+        "symptom_class": "grass_regrowth_balance",
+        "matched_lane": "pokemon_semantics",
+        "title": "Grass passive regrowth rate or cutoff question",
+        "keywords": ["grass heal", "grass healing", "grass regrowth", "hoppip", "passive heal", "heal cutoff"],
+        "first_command": "python -m tools.debugger grass-regrowth --max-total-hp 300",
+        "required_inputs": ["none unless a different max HP cap is wanted"],
+        "proof_limit": "Formula/cutoff mirror for current source; it does not prove a battle state is eligible to heal.",
+        "escalation_command": "python -m tools.debugger content-mirror --source-file engine/battle/type_passive_damage_mods.asm",
+    },
+    {
+        "symptom_class": "base_data_mutation_hazard",
+        "matched_lane": "static_audits",
+        "title": "Base-data or wCurSpecies mutation hazard",
+        "keywords": ["wcurSpecies", "wcur species", "base data", "getbasedata", "candidate species"],
+        "first_command": "python tools\\audit\\bug_hunt_triage.py --max-leads 12",
+        "required_inputs": ["none; triage scans current source for prior bug-family hazards"],
+        "proof_limit": "Static lead finder; each lead still needs source proof or a targeted runtime trace before patching.",
+        "escalation_command": "python -m tools.debugger provenance --symbol wCurSpecies --symbol GetBaseData",
+    },
+    {
+        "symptom_class": "move_search_unbounded",
+        "matched_lane": "static_audits",
+        "title": "Move-search corruption from copied or missing last move",
+        "keywords": ["mirror move", "sketch", "mimic", "disable", "encore", "spite", "last move"],
+        "first_command": "python tools\\audit\\bug_hunt_triage.py --max-leads 12",
+        "required_inputs": ["none; triage scans current source for prior bug-family hazards"],
+        "proof_limit": "Static lead finder; it does not execute a battle repro for Mirror Move, Mimic, Disable, Encore, or Spite.",
+        "escalation_command": "python -m tools.debugger investigate --changed-file engine/battle/move_effects/sketch.asm --changed-file engine/battle/effect_commands.asm",
     },
     {
         "symptom_class": "haki_taunt_read",
@@ -180,11 +322,53 @@ def _fallback_row(triage: dict[str, Any], symptom: str) -> dict[str, Any]:
     row = dict(next(item for item in NEXT_STEP_ROWS if item["symptom_class"] == "general"))
     matches = triage.get("matches", [])
     if matches:
-        row["matched_lane"] = str(matches[0].get("id") or row["matched_lane"])
+        match_id = str(matches[0].get("id") or row["matched_lane"])
+        row["matched_lane"] = match_id
+        if match_id in _TRIAGE_FALLBACK_ROWS:
+            row.update(_TRIAGE_FALLBACK_ROWS[match_id])
     if symptom:
         row["first_command"] = f"python -m tools.debugger triage --symptom {symptom!r}"
         row["escalation_command"] = f"python -m tools.debugger investigate --symptom {symptom!r}"
     return row
+
+
+_TRIAGE_FALLBACK_ROWS = {
+    "boss_ai_live_move": {
+        "title": "Boss AI live move-choice or legality symptom",
+        "first_command": "python -m tools.boss_ai_debugger damage-ai-report --trainer <TRAINER> --enemy <ENEMY> --player-save <save.sav> --player-slot <slot> --sleep-clause both",
+        "required_inputs": ["trainer id, enemy mon selector, player save, and active party slot"],
+        "proof_limit": "Exact damage plus move-score report for the supplied state; use trace mode or ROM materialization for final live proof.",
+        "escalation_command": "python -m tools.boss_ai_debugger move-score-probe --trainer <TRAINER> --enemy <ENEMY> --player-save <save.sav> --player-slot <slot> --trace",
+    },
+    "overworld_status": {
+        "title": "Overworld status, poison-step, or field HP state",
+        "first_command": "python tools\\audit\\check_overworld_poison_cure.py",
+        "required_inputs": ["none; audit builds/runs the committed poison-step repro"],
+        "proof_limit": "Runtime audit proof for the poison-step fixture; it does not prove unrelated battle poison behavior.",
+        "escalation_command": "python -m tools.debugger investigate --changed-file engine/events/poisonstep.asm",
+    },
+    "base_ai_mechanics": {
+        "title": "Base non-boss AI mechanics and move legality",
+        "first_command": "python tools\\audit\\check_base_ai_mechanics_correctness.py",
+        "required_inputs": ["none; audit reads the shared base AI move scoring path"],
+        "proof_limit": "Static contract proof for base AI legality gates; it does not prove a specific trainer battle without an emulator scenario.",
+        "escalation_command": "python -m tools.debugger investigate --changed-file engine/battle/ai/move.asm",
+    },
+    "pokemon_semantics": {
+        "title": "Pokemon data semantics, learnsets, party state, or type passives",
+        "first_command": "python -m tools.debugger learnset-inspect --species <SPECIES> --level <LEVEL>",
+        "required_inputs": ["species and level; use party-inspect when checking a specific save"],
+        "proof_limit": "Semantic source/save inspection only; use content mirrors or runtime probes for ROM-byte or live battle proof.",
+        "escalation_command": "python -m tools.debugger party-inspect --save <save.sav> --slot <slot>",
+    },
+    "static_bug_hunt": {
+        "title": "Static bug-family lead finder",
+        "first_command": "python tools\\audit\\bug_hunt_triage.py --max-leads 12",
+        "required_inputs": ["none; triage scans current source for prior bug-family hazards"],
+        "proof_limit": "Static lead finder; each lead still needs source proof or a targeted runtime trace before patching.",
+        "escalation_command": "python -m tools.debugger provenance --symbol wCurSpecies --symbol GetBaseData",
+    },
+}
 
 
 def _public_row(row: dict[str, Any]) -> dict[str, Any]:

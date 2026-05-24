@@ -13,6 +13,7 @@ from .workflow import command_is_runnable
 TYPE_EVIDENCE_BONUS = {
     "gate_failed": 30,
     "ingest_error": 26,
+    "save_state_anomaly": 26,
     "workflow_failed": 25,
     "watch_hit": 24,
     "trace_event": 22,
@@ -310,6 +311,8 @@ def items_from_report(report: dict[str, Any], *, source: str) -> list[dict[str, 
         return instruction_trace_items(report, source=source)
     if kind == "unified_debugger_ingest_manifest":
         return ingest_items(report, source=source)
+    if kind == "unified_debugger_save_state_inspection":
+        return save_state_inspection_items(report, source=source)
     if kind == "unified_debugger_impact_report":
         return nested_impact_items(report, source=source)
     if kind == "unified_debugger_investigation_run":
@@ -1434,6 +1437,26 @@ def ingest_items(report: dict[str, Any], *, source: str) -> list[dict[str, Any]]
                     related_files=[path] if path else [],
                 )
             )
+    return out
+
+
+def save_state_inspection_items(report: dict[str, Any], *, source: str) -> list[dict[str, Any]]:
+    out = []
+    related_symbols = ["wScriptBank", "wScriptPos", "wMapScriptsBank", "wEvolutionNewSpecies"]
+    for item in dict_items(report.get("findings")):
+        severity_level = int(item.get("severity", 3) or 3)
+        out.append(
+            impact_item(
+                item_type="save_state_anomaly",
+                title=str(item.get("title") or item.get("id") or "Save-state anomaly"),
+                source=source,
+                severity={1: 94, 2: 86}.get(severity_level, 35),
+                confidence=0.92 if severity_level <= 2 else 0.68,
+                evidence=string_items(item.get("detail")) or string_items(item.get("evidence")),
+                next_actions=string_items(report.get("commands"))[:5],
+                related_symbols=related_symbols,
+            )
+        )
     return out
 
 

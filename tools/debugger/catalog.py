@@ -102,6 +102,129 @@ SUBSYSTEMS = (
 
 TRIAGE_RULES = (
     TriageRule(
+        id="boss_ai_live_move",
+        title="Boss AI live move-choice or legality symptom",
+        path_prefixes=(
+            "engine/battle/ai/boss_policy_move.asm",
+            "tools/boss_ai_debugger/damage_ai_report.py",
+            "tools/boss_ai_debugger/move_score_probe.py",
+        ),
+        symptom_keywords=(
+            "falkner",
+            "silver",
+            "hypnosis",
+            "sleep clause",
+            "leer",
+            "normal move",
+            "doesn't affect",
+            "doesnt affect",
+            "hidden power",
+            "boss used",
+        ),
+        reason="Recent live boss-move bugs are fastest to inspect with exact damage plus move-score probes before generic damage debugging.",
+        commands=(
+            "python -m tools.boss_ai_debugger damage-ai-report --trainer <TRAINER> --enemy <ENEMY> --player-save <save.sav> --player-slot <slot> --sleep-clause both",
+            "python -m tools.boss_ai_debugger move-score-probe --trainer <TRAINER> --enemy <ENEMY> --player-save <save.sav> --player-slot <slot> --trace",
+            "python tools\\audit\\check_damage_ai_report.py",
+            "python tools\\audit\\check_move_score_probe.py",
+        ),
+    ),
+    TriageRule(
+        id="overworld_status",
+        title="Overworld status, poison-step, or field HP state",
+        path_prefixes=(
+            "engine/events/poisonstep.asm",
+            "engine/overworld/",
+        ),
+        symptom_keywords=(
+            "walking poison",
+            "overworld poison",
+            "poison cure",
+            "1 hp",
+            "0 hp",
+            "poisoned mon",
+        ),
+        reason="The poison-step bug class has a focused runtime audit; route there before broad battle damage checks.",
+        commands=(
+            "python tools\\audit\\check_overworld_poison_cure.py",
+            "python -m tools.debugger investigate --changed-file engine/events/poisonstep.asm",
+        ),
+    ),
+    TriageRule(
+        id="base_ai_mechanics",
+        title="Base non-boss AI mechanics and move legality",
+        path_prefixes=(
+            "engine/battle/ai/move.asm",
+            "engine/battle/ai/scoring.asm",
+            "engine/battle/ai/redundant.asm",
+        ),
+        symptom_keywords=(
+            "assault vest",
+            "choice lock",
+            "choice locked",
+            "regular trainer",
+            "non-boss",
+            "base ai",
+            "illegal status",
+        ),
+        reason="Base AI legality and shared scoring have a focused source audit separate from Boss AI policy.",
+        commands=(
+            "python tools\\audit\\check_base_ai_mechanics_correctness.py",
+            "python tools\\audit\\check_release_smoke.py",
+        ),
+    ),
+    TriageRule(
+        id="pokemon_semantics",
+        title="Pokemon data semantics, learnsets, party state, or type passives",
+        path_prefixes=(
+            "data/pokemon/evos_attacks.asm",
+            "data/pokemon/evos_attacks_pointers.asm",
+            "data/pokemon/base_stats/",
+            "engine/battle/type_passive_damage_mods.asm",
+        ),
+        symptom_keywords=(
+            "learnset",
+            "moveset",
+            "confusion",
+            "spite",
+            "grass heal",
+            "grass regrowth",
+            "hoppip",
+            "passive heal",
+        ),
+        reason="Pokemon data questions need semantic source/save inspection, not only byte mirroring.",
+        commands=(
+            "python -m tools.debugger learnset-inspect --species <SPECIES> --level <LEVEL>",
+            "python -m tools.debugger party-inspect --save <save.sav> --slot <slot>",
+            "python -m tools.debugger grass-regrowth --max-total-hp 300",
+        ),
+    ),
+    TriageRule(
+        id="static_bug_hunt",
+        title="Static bug-family lead finder",
+        path_prefixes=(
+            "engine/battle/move_effects/",
+            "engine/battle/ai/boss_policy_move.asm",
+        ),
+        symptom_keywords=(
+            "wcur species",
+            "wcurspecies",
+            "base data",
+            "getbasedata",
+            "mirror move",
+            "sketch",
+            "mimic",
+            "disable",
+            "encore",
+            "spite",
+        ),
+        reason="Prior real bugs in this repo cluster around global base-data mutation and unbounded move searches; the lead finder routes those patterns quickly.",
+        commands=(
+            "python tools\\audit\\bug_hunt_triage.py --max-leads 12",
+            "python -m tools.debugger provenance --symbol wCurSpecies --symbol GetBaseData",
+        ),
+    ),
+    TriageRule(
         id="damage_chain",
         title="Damage-chain or battle math change",
         path_prefixes=(
@@ -167,6 +290,70 @@ TRIAGE_RULES = (
             "python -m tools.boss_ai_debugger run-suite --profile changed-ai --count 24 --seed 1",
             "python -m tools.boss_ai_debugger diff --trace-dir audit\\boss_ai_trace",
             "python -m tools.boss_ai_debugger review-queue --scenarios <scenarios.jsonl>",
+        ),
+    ),
+    TriageRule(
+        id="vram_request_contract",
+        title="Queued VRAM tile request or evolution graphics risk",
+        path_prefixes=(
+            "home/gfx.asm",
+            "home/video.asm",
+            "home/vblank.asm",
+            "engine/movie/evolution_animation.asm",
+        ),
+        symptom_keywords=(
+            "vram",
+            "tile",
+            "tiles",
+            "palette",
+            "color",
+            "colors",
+            "inverted",
+            "evolution",
+            "evolved",
+            "quilava",
+            "garbled",
+            "corrupt",
+            "graphics",
+        ),
+        reason="Queued tile copies are timing-sensitive; this audit checks that callers wait for the VBlank service acknowledgement before continuing.",
+        commands=(
+            "python tools\\audit\\check_vram_request_contract.py",
+            "python tools\\audit\\check_release_smoke.py",
+        ),
+    ),
+    TriageRule(
+        id="script_vm_impossible_state",
+        title="Impossible script VM, PC, or stack state",
+        path_prefixes=(
+            "engine/overworld/",
+            "engine/events/",
+            "home/map.asm",
+            "maps/",
+            "ram/wram.asm",
+        ),
+        symptom_keywords=(
+            "frozen",
+            "softlock",
+            "locked up",
+            "music playing",
+            "music continues",
+            "trainer battle",
+            "after battle",
+            "after trainer",
+            "script stuck",
+            "scripttalkafter",
+            "bad script",
+        ),
+        reason="Crash-state snapshots can be checked for impossible script bank/position, bad script stack frames, and PC/SP crash signatures before guessing at graphics or battle causes.",
+        commands=(
+            "python -m tools.debugger state-inspect --save-state <crash-state.sgm> --rom pokegold.gbc --symbols pokegold.sym --json-out .local\\tmp\\debugger_runtime_state.json",
+            "python -m tools.debugger watch --watch-symbol wScriptBank --watch-symbol wScriptPos --watch-symbol wScriptStackSize --save-state <state-before-trigger> --execute",
+            "python -m tools.debugger wram-lifetime --symbol wSeenTrainerBank --symbol wScriptAfterPointer --symbol wRunningTrainerBattleScript --through Script_startbattle",
+            "python -m tools.debugger provenance --symbol wScriptBank --symbol wScriptPos --symbol wSeenTrainerBank --symbol wScriptAfterPointer",
+        ),
+        gaps=(
+            "A crash-state snapshot can prove the script VM is impossible, but a pre-trigger watch or instruction trace is still needed to prove the write that caused it.",
         ),
     ),
     TriageRule(
@@ -564,6 +751,12 @@ def triage_request(
     ):
         rule = next(item for item in TRIAGE_RULES if item.id == "banking_and_abi")
         matches.append(_triage_match(rule, path_hit=True, symptom_hit=False, matched_symptom_keywords=[]))
+
+    matches.sort(
+        key=lambda match: 0
+        if match.get("id") == "script_vm_impossible_state"
+        else 1
+    )
 
     return {
         "schema_version": 1,

@@ -11,6 +11,8 @@ from .catalog import ROOT, triage_request
 MATCH_PRIORITIES = {
     "damage_chain": 10,
     "boss_ai": 10,
+    "script_vm_impossible_state": 12,
+    "vram_request_contract": 15,
     "banking_and_abi": 20,
     "graphics_audio_maps": 30,
     "general": 40,

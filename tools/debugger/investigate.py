@@ -20,6 +20,9 @@ from .mirrors import build_compare_plan
 from .ranking import rank_findings
 from .replay import build_replay_plan
 from .reporting import build_static_report, write_static_report
+from .runtime_state import build_runtime_state_report
+from .save_state_format import is_vbam_sgm_path
+from .save_state_inspect import build_save_state_inspection_report
 from .state_space import build_state_space_report
 from .taint import build_taint_report
 from .trace_index import build_trace_index_report, unique_list
@@ -83,6 +86,51 @@ def build_investigation_run(
         output_dir=output_dir,
         root=root,
     )
+
+    if save_state:
+        if is_vbam_sgm_path(save_state):
+            save_state_inspection = build_save_state_inspection_report(
+                save_state=save_state,
+                rom_path=rom_path or "pokegold.gbc",
+                symbols_path=symbols_path,
+                root=root,
+            )
+            add_report(
+                steps,
+                produced_reports,
+                report_paths,
+                step_id="02_save_state_inspect",
+                phase="observe",
+                title="Decode VBA-M save state",
+                data=save_state_inspection,
+                output_dir=output_dir,
+                root=root,
+            )
+        runtime_state = build_runtime_state_report(
+            rom_path=rom_path or "pokegold.gbc",
+            symbols_path=symbols_path,
+            save_state=save_state,
+            root=root,
+        )
+        add_report(
+            steps,
+            produced_reports,
+            report_paths,
+            step_id="02_runtime_state",
+            phase="observe",
+            title="Inspect runtime state invariants",
+            data=runtime_state,
+            output_dir=output_dir,
+            root=root,
+        )
+    else:
+        add_skipped_step(
+            steps,
+            step_id="02_runtime_state",
+            phase="observe",
+            title="Inspect runtime state invariants",
+            reason="no save state was supplied",
+        )
 
     effective_watch_symbols = watch_symbols
     if patches:

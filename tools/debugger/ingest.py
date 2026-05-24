@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from .catalog import ROOT, triage_request
+from .save_state_format import inspect_save_state_header
 
 
 SYMBOL_RE = re.compile(r"^(?P<bank>[0-9A-Fa-f]{2}):(?P<addr>[0-9A-Fa-f]{4})\s+(?P<label>\S+)")
@@ -317,8 +318,10 @@ def collect_scenario_metadata(data: dict[str, Any], families: set[str], ids: lis
 
 def inspect_save_state(path: Path, artifact: dict[str, Any]) -> None:
     metadata = artifact["metadata"]
-    metadata["extension"] = path.suffix.lower()
-    metadata["opaque"] = True
+    metadata.update(inspect_save_state_header(path))
+    parse_warning = metadata.pop("parse_warning", "")
+    if parse_warning:
+        artifact["warnings"].append(parse_warning)
     if artifact["size_bytes"] == 0:
         artifact["errors"].append("save-state file is empty.")
 

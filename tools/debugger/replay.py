@@ -10,6 +10,7 @@ from .ingest import ingest_artifacts, resolve_path
 from .localize import is_watchable_symbol, normalize_path
 from .reporting import load_reports
 from .runtime_watch import DEFAULT_ROM, DEFAULT_SYMBOLS, build_watch_report
+from .save_state_format import is_battery_save_path, is_vbam_sgm_path
 from .setup_plan import build_setup_plan
 from .workflow import command_is_runnable
 
@@ -142,8 +143,13 @@ def build_replay_plan(
     )
     watch_report = None
     watch_errors: list[str] = []
+    watch_warnings: list[str] = []
     if execute_watch:
-        if not targets["watch_symbols"]:
+        if effective_save_state and is_vbam_sgm_path(effective_save_state):
+            watch_warnings.append(
+                "VBA-M .sgm save states are static crash evidence here; PyBoy watch replay needs a .state before the trigger."
+            )
+        elif not targets["watch_symbols"]:
             watch_errors.append("no watchable replay target was found")
         else:
             try:
@@ -151,7 +157,9 @@ def build_replay_plan(
                     watch_symbols=tuple(targets["watch_symbols"]),
                     rom_path=effective_rom,
                     symbols_path=effective_symbols,
-                    save_state=effective_save_state,
+                    save_state="" if is_battery_save_path(effective_save_state) else effective_save_state,
+                    battery_save=effective_save_state if is_battery_save_path(effective_save_state) else "",
+                    out_initial_state=".local\\tmp\\debugger_replay_continue.state" if is_battery_save_path(effective_save_state) else "",
                     frames=frames,
                     context_frames=context_frames,
                     execute=True,
@@ -175,6 +183,7 @@ def build_replay_plan(
         [
             *artifact_warnings(manifest),
             *setup_plan.get("warnings", []),
+            *watch_warnings,
             *([] if targets["watch_symbols"] else ["no watchable symbol target was selected"]),
         ]
     )
@@ -569,6 +578,7 @@ def build_replay_steps(
         "verify": [],
     }
     add_ingest_step(phases, effective_rom, effective_symbols, save_state, traces, scenarios, changed_files)
+    add_save_state_inspect_step(phases, effective_rom, effective_symbols, save_state)
     add_setup_step(
         phases,
         effective_rom,
@@ -651,6 +661,32 @@ def add_ingest_step(
     )
 
 
+def add_save_state_inspect_step(
+    phases: dict[str, list[dict[str, Any]]],
+    effective_rom: str,
+    effective_symbols: str,
+    save_state: str,
+) -> None:
+    if not save_state:
+        return
+    if is_vbam_sgm_path(save_state):
+        reason = "Decode the VBA-M crash state statically; PyBoy cannot replay .sgm directly."
+    elif is_battery_save_path(save_state):
+        reason = "Boot the battery save through Continue and inspect the resulting live runtime state."
+    else:
+        reason = "Inspect the supplied PyBoy state before replay/watch proof."
+    add_step(
+        phases,
+        "ingest",
+        (
+            "python -m tools.debugger state-inspect "
+            f"--rom {cmd_arg(effective_rom)} --symbols {cmd_arg(effective_symbols)} "
+            f"--save-state {cmd_arg(save_state)} --json-out .local\\tmp\\debugger_replay_state_inspect.json"
+        ),
+        reason,
+    )
+
+
 def add_setup_step(
     phases: dict[str, list[dict[str, Any]]],
     effective_rom: str,
@@ -710,6 +746,8 @@ def add_watch_step(
     context_frames: int,
     watch_symbols: list[str],
 ) -> None:
+    if save_state and is_vbam_sgm_path(save_state):
+        return
     if not watch_symbols:
         return
     args = [
@@ -719,7 +757,11 @@ def add_watch_step(
         cmd_arg(effective_symbols),
     ]
     if save_state:
-        args.extend(["--save-state", cmd_arg(save_state)])
+        if is_battery_save_path(save_state):
+            args.extend(["--battery-save", cmd_arg(save_state)])
+            args.extend(["--out-initial-state", ".local\\tmp\\debugger_replay_continue.state"])
+        else:
+            args.extend(["--save-state", cmd_arg(save_state)])
     for symbol in watch_symbols:
         args.extend(["--watch-symbol", cmd_arg(symbol)])
     args.extend(
@@ -849,6 +891,8 @@ def add_instruction_trace_step(
     symbols: list[str],
     watch_symbols: list[str],
 ) -> None:
+    if save_state and is_vbam_sgm_path(save_state):
+        return
     if not symbols and not watch_symbols and not reports and not changed_files and not symptom:
         return
     args = [
@@ -860,7 +904,12 @@ def add_instruction_trace_step(
         str(frames),
     ]
     if save_state:
-        args.extend(["--save-state", cmd_arg(save_state)])
+        args.extend(
+            [
+                "--save-state",
+                ".local\\tmp\\debugger_replay_continue.state" if is_battery_save_path(save_state) else cmd_arg(save_state),
+            ]
+        )
     for report in reports[:4]:
         args.extend(["--report", cmd_arg(report)])
     for path in changed_files[:4]:

@@ -24,6 +24,8 @@ SEVERITY_BASE = {
     "state_space_executed": 62,
     "state_space_ready": 58,
     "setup_trigger_gap": 64,
+    "runtime_state_impossible": 88,
+    "save_state_anomaly": 88,
     "expectation_failed": 78,
     "mirror_uncovered": 50,
     "test_gap": 45,
@@ -196,6 +198,10 @@ def findings_from_report(report: dict[str, Any], *, source: str) -> list[dict[st
         return ingest_findings(report, source=source)
     if kind == "unified_debugger_watch_report":
         return watch_findings(report, source=source)
+    if kind == "unified_debugger_runtime_state_report":
+        return runtime_state_findings(report, source=source)
+    if kind == "unified_debugger_save_state_inspection":
+        return save_state_inspection_findings(report, source=source)
     if kind == "unified_debugger_replay_plan":
         return replay_findings(report, source=source)
     if kind == "unified_debugger_setup_plan":
@@ -316,6 +322,55 @@ def watch_findings(report: dict[str, Any], *, source: str) -> list[dict[str, Any
                 confidence=0.95,
                 evidence=[error],
                 next_actions=["Fix watch inputs and rerun `python -m tools.debugger watch`."],
+            )
+        )
+    return out
+
+
+def runtime_state_findings(report: dict[str, Any], *, source: str) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for item in dict_items(report.get("findings")):
+        out.append(
+            finding(
+                finding_type=str(item.get("type", "runtime_state_impossible")),
+                title=str(item.get("title", "Runtime state invariant failed")),
+                source=source,
+                severity=int(item.get("severity", SEVERITY_BASE["runtime_state_impossible"])),
+                confidence=float(item.get("confidence", 0.88)),
+                evidence=string_items(item.get("evidence"))[:6],
+                next_actions=string_items(item.get("next_actions"))[:5]
+                or string_items(report.get("commands"))[:5],
+            )
+        )
+    if report.get("passed") is False and not out:
+        out.append(
+            finding(
+                finding_type="runtime_state_impossible",
+                title="Runtime state report did not pass",
+                source=source,
+                severity=SEVERITY_BASE["runtime_state_impossible"],
+                confidence=0.75,
+                evidence=[f"state={report.get('save_state', '')}"],
+                next_actions=string_items(report.get("commands"))[:5],
+            )
+        )
+    return out
+
+
+def save_state_inspection_findings(report: dict[str, Any], *, source: str) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for item in dict_items(report.get("findings")):
+        severity_level = int(item.get("severity", 3) or 3)
+        out.append(
+            finding(
+                finding_type="save_state_anomaly",
+                title=str(item.get("title") or item.get("id") or "Save-state anomaly"),
+                source=source,
+                severity={1: 94, 2: 86}.get(severity_level, 35),
+                confidence=0.92 if severity_level <= 2 else 0.68,
+                evidence=string_items(item.get("detail"))[:2]
+                or string_items(item.get("evidence"))[:4],
+                next_actions=string_items(report.get("commands"))[:5],
             )
         )
     return out

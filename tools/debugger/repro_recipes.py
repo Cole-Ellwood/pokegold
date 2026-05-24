@@ -49,6 +49,50 @@ REPRO_RECIPES: tuple[dict[str, Any], ...] = (
             "without that state it is a capture recipe, not a live repro."
         ),
     },
+    {
+        "id": "trainer-battle-evolution-resume",
+        "title": "Trainer battle plus post-battle evolution script-resume repro",
+        "bug_class": "post_battle_script_resume",
+        "keywords": (
+            "trainer battle evolution",
+            "post-battle evolution",
+            "music playing frozen",
+            "frozen after trainer",
+            "evolved flaffy",
+            "script resume",
+        ),
+        "purpose": (
+            "Prove that trainer after-battle context survives StartBattle and "
+            "EvolveAfterBattle before scripttalkafter resumes the map script."
+        ),
+        "inputs": (
+            "Current pokegold.gbc and pokegold.sym from this checkout.",
+            "Either the corrupted VBA-M .sgm crash state for diagnosis, or a PyBoy state before the trainer-battle/evolution trigger for replay.",
+            "Optional battery save plus route-specific input recipe when no PyBoy state already exists.",
+        ),
+        "setup_steps": (
+            "Inspect any supplied .sgm first; a post-crash state can diagnose the failure but is not a replayable before-trigger proof.",
+            "For forward replay, start before the trainer battle ends or before the evolution prompt advances.",
+            "Watch trainer resume bytes and script VM state through the return to the overworld.",
+        ),
+        "commands": (
+            "python -m tools.debugger state-inspect --save-state <crash-state.sgm> --symbols pokegold.sym --rom pokegold.gbc --json-out .local\\tmp\\trainer_evo_state_inspect.json",
+            "python -m tools.debugger script-resume-gate --report .local\\tmp\\trainer_evo_state_inspect.json",
+            "python -m tools.debugger watch --reset-sentinel --rom pokegold.gbc --symbols pokegold.sym --save-state <before-trigger.state> --watch-symbol wSeenTrainerBank --watch-symbol wScriptAfterPointer --watch-symbol wRunningTrainerBattleScript --watch-symbol wScriptBank --watch-symbol wScriptPos --watch-symbol wScriptRunning --watch-symbol wScriptMode --frames 3600 --context-frames 30 --execute --json-out .local\\tmp\\trainer_evo_resume_watch.json",
+            "python -m tools.debugger watch --reset-sentinel --rom pokegold.gbc --symbols pokegold.sym --battery-save pokegold.sav --out-initial-state .local\\tmp\\trainer_evo_continue.state --input <frame:button[:delay]> --watch-symbol wSeenTrainerBank --watch-symbol wScriptAfterPointer --watch-symbol wRunningTrainerBattleScript --watch-symbol wScriptBank --watch-symbol wScriptPos --watch-symbol wScriptRunning --watch-symbol wScriptMode --frames 3600 --context-frames 30 --execute --json-out .local\\tmp\\trainer_evo_resume_watch.json",
+            "python -m tools.debugger script-resume-gate --report .local\\tmp\\trainer_evo_resume_watch.json",
+            "python -m tools.debugger wram-ownership --symbol wSeenTrainerBank --symbol wScriptAfterPointer --symbol wRunningTrainerBattleScript",
+            "python -m tools.debugger trace-instructions --symbol Script_startbattle --symbol StartBattle --symbol EvolveAfterBattle --symbol Script_scripttalkafter --watch-symbol wScriptBank --watch-symbol wScriptPos --save-state <before-trigger.state> --frames 3600 --execute --require-hit --out-trace .local\\tmp\\trainer_evo_resume_trace.jsonl",
+        ),
+        "expected_signals": (
+            "Crash-state inspection fails old broken states with invalid_script_state, such as a banked script pointer below $4000 or a bank outside the ROM.",
+            "Forward replay passes only when reset_event_count is 0 and no invalid_script_state event appears.",
+            "wScriptAfterPointer and wSeenTrainerBank remain sane until scripttalkafter consumes them.",
+        ),
+        "proof_limit": (
+            "The .sgm inspection path diagnoses an already-corrupted state. A fix proof still requires a before-trigger PyBoy replay/watch report or an equivalent emulator-live reproduction."
+        ),
+    },
 )
 
 

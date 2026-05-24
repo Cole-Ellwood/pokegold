@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import shutil
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -23,12 +25,27 @@ DEFAULT_RESET_SENTINEL_ADDRESSES = (
     ("reset_vector", 0, 0x0000),
     ("entry_vector", 0, 0x0100),
 )
+WORD_WATCH_SYMBOLS = {
+    "wCurDamage",
+    "wScriptPos",
+    "wScriptAfterPointer",
+    "wQueuedScriptAddr",
+    "wDeferredScriptAddr",
+    "wMapScriptsPointer",
+}
+SCRIPT_MODE_NAMES = {
+    0: "off",
+    1: "read",
+    2: "wait_movement",
+    3: "wait",
+}
 RESET_CONTEXT_SYMBOLS = (
     "hROMBank",
     "hWRAMBank",
     "wBattleMode",
     "wTempWildMonSpecies",
 )
+BUTTON_NAMES = {"a", "b", "start", "select", "up", "down", "left", "right"}
 
 
 def build_watch_report(
@@ -37,6 +54,10 @@ def build_watch_report(
     rom_path: str = DEFAULT_ROM,
     symbols_path: str = DEFAULT_SYMBOLS,
     save_state: str = "",
+    battery_save: str = "",
+    boot_continue: bool = False,
+    input_events: tuple[str, ...] = (),
+    out_initial_state: str = "",
     frames: int = 60,
     context_frames: int = 12,
     execute: bool = False,
@@ -47,6 +68,8 @@ def build_watch_report(
     rom = resolve_path(rom_path, root=root)
     sym = resolve_path(symbols_path, root=root)
     save = resolve_path(save_state, root=root) if save_state else None
+    battery = resolve_path(battery_save, root=root) if battery_save else None
+    initial_state = resolve_path(out_initial_state, root=root) if out_initial_state else None
     errors: list[str] = []
     warnings: list[str] = []
     if frames < 0:
@@ -61,6 +84,13 @@ def build_watch_report(
         errors.append(f"missing symbols: {symbols_path}")
     if save is not None and not save.exists():
         errors.append(f"missing save-state: {save_state}")
+    if battery is not None and not battery.exists():
+        errors.append(f"missing battery save: {battery_save}")
+    if save is not None and battery is not None:
+        errors.append("--save-state and --battery-save are mutually exclusive")
+    input_plan, input_errors = parse_input_events(input_events)
+    errors.extend(input_errors)
+    effective_boot_continue = boot_continue or battery is not None
 
     symbol_table = parse_symbol_table(sym) if sym.exists() else {}
     watches = [
@@ -89,6 +119,10 @@ def build_watch_report(
         "symbols": display_path(sym, root=root),
         "symbols_sha256": sha256_file(sym) if sym.exists() else "",
         "save_state": display_path(save, root=root) if save is not None else "",
+        "battery_save": display_path(battery, root=root) if battery is not None else "",
+        "boot_continue": effective_boot_continue,
+        "out_initial_state": display_path(initial_state, root=root) if initial_state is not None else "",
+        "input_events": input_plan,
         "frames": frames,
         "context_frames": context_frames,
         "executed": execute,
@@ -98,7 +132,9 @@ def build_watch_report(
         "valid": not errors,
         "hit_count": 0,
         "reset_event_count": 0,
+        "script_state_event_count": 0,
         "dynamic_context_event_count": 0,
+        "runtime_summary": {},
         "errors": errors,
         "warnings": warnings,
         "watches": watches,
@@ -118,9 +154,13 @@ def build_watch_report(
     if errors or not execute:
         return report
 
-    events, reset_events, execution_errors = execute_watch(
+    events, reset_events, execution_errors, runtime_summary = execute_watch(
         rom=rom,
         save_state=save,
+        battery_save=battery,
+        boot_continue=effective_boot_continue,
+        input_plan=input_plan,
+        out_initial_state=initial_state,
         watches=watches,
         frames=frames,
         context_frames=context_frames,
@@ -132,10 +172,14 @@ def build_watch_report(
     )
     report["errors"].extend(execution_errors)
     report["valid"] = not report["errors"]
+    report["runtime_summary"] = runtime_summary
     report["events"] = events
     report["reset_events"] = reset_events
     report["hit_count"] = len(events)
     report["reset_event_count"] = len(reset_events)
+    report["script_state_event_count"] = sum(
+        1 for event in events if event.get("event_type") == "invalid_script_state"
+    )
     report["dynamic_context_event_count"] = sum(
         int(event.get("dynamic_context", {}).get("context_frame_count", 0))
         for event in events
@@ -153,7 +197,7 @@ def build_watch_spec(
     symbols_path: Path,
     root: Path,
 ) -> dict[str, Any]:
-    size = 2 if symbol in {"wCurDamage"} else 1
+    size = 2 if symbol in WORD_WATCH_SYMBOLS else 1
     entry = symbol_table.get(symbol)
     if entry is None:
         return {
@@ -189,6 +233,10 @@ def execute_watch(
     *,
     rom: Path,
     save_state: Path | None,
+    battery_save: Path | None,
+    boot_continue: bool,
+    input_plan: list[dict[str, Any]],
+    out_initial_state: Path | None,
     watches: list[dict[str, Any]],
     frames: int,
     context_frames: int,
@@ -197,21 +245,37 @@ def execute_watch(
     reset_sentinel: bool,
     sentinel_targets: list[dict[str, Any]],
     root: Path,
-) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[str]]:
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[str], dict[str, Any]]:
+    temp_dir: tempfile.TemporaryDirectory[str] | None = None
+    work_rom = rom
+    if battery_save is not None:
+        temp_dir = tempfile.TemporaryDirectory(prefix="debugger_watch_")
+        work_rom = Path(temp_dir.name) / rom.name
+        shutil.copy2(rom, work_rom)
+        shutil.copy2(battery_save, work_rom.with_suffix(work_rom.suffix + ".ram"))
     pyboy = trace_runtime.open_pyboy(
-        rom,
+        work_rom,
         "PyBoy is required for unified debugger watch replay. Import failed",
     )
     trace_runtime.disable_realtime(pyboy)
+    rom_bank_count = max(1, (rom.stat().st_size + 0x3FFF) // 0x4000) if rom.exists() else 0
     hooked: list[tuple[int, int]] = []
     try:
         if save_state is not None:
             with save_state.open("rb") as fh:
                 pyboy.load_state(fh)
+        if boot_continue:
+            press_continue(pyboy)
+        if out_initial_state is not None:
+            out_initial_state.parent.mkdir(parents=True, exist_ok=True)
+            with out_initial_state.open("wb") as fh:
+                pyboy.save_state(fh)
         reset_events: list[dict[str, Any]] = []
         execution_errors: list[str] = []
         current_frame = 0
         history: list[dict[str, Any]] = []
+        input_events_by_frame = group_input_events(input_plan)
+        applied_inputs: list[dict[str, Any]] = []
         if reset_sentinel:
             if not hasattr(pyboy, "hook_register"):
                 execution_errors.append("reset sentinel requires PyBoy hook_register support")
@@ -273,6 +337,9 @@ def execute_watch(
         }
         events: list[dict[str, Any]] = []
         cause_cache: dict[tuple[str, str], dict[str, Any]] = {}
+        seen_invalid_script_states: set[tuple[int, int, int, int]] = set()
+        initial_snapshot: dict[str, Any] = {}
+        final_snapshot: dict[str, Any] = {}
         for frame in range(frames + 1):
             current_frame = frame
             pc = int(pyboy.register_file.PC)
@@ -285,6 +352,52 @@ def execute_watch(
                 symbol_table=symbol_table,
                 watches=watches,
             )
+            if frame == 0:
+                initial_snapshot = snapshot
+            final_snapshot = snapshot
+            invalid_script = detect_invalid_script_state(
+                pyboy=pyboy,
+                symbol_table=symbol_table,
+                rom_bank_count=rom_bank_count,
+            )
+            if invalid_script:
+                signature = (
+                    int(invalid_script["bank"]),
+                    int(invalid_script["pos"]),
+                    int(invalid_script["mode"]),
+                    int(invalid_script["running"]),
+                )
+                if signature not in seen_invalid_script_states:
+                    seen_invalid_script_states.add(signature)
+                    dynamic_context = build_dynamic_context(
+                        history=history,
+                        after=snapshot,
+                        context_frames=context_frames,
+                    )
+                    events.append(
+                        {
+                            "event_type": "invalid_script_state",
+                            "frame": frame,
+                            "watch": "script_state",
+                            "pc": pc,
+                            "pc_bank": pc_bank,
+                            "pc_bank_address": f"{pc_bank:02X}:{pc:04X}",
+                            "pc_label": render_pc(symbol_table, pc_bank, pc),
+                            "registers": snapshot.get("registers", {}),
+                            "dynamic_context": dynamic_context,
+                            "script": invalid_script["bank_address"],
+                            "bank": invalid_script["bank"],
+                            "pos": invalid_script["pos"],
+                            "mode": invalid_script["mode"],
+                            "running": invalid_script["running"],
+                            "reasons": invalid_script["reasons"],
+                            "commands": [
+                                "python -m tools.debugger script-resume-gate --report <watch_report.json>",
+                                "python -m tools.debugger wram-ownership --symbol wSeenTrainerBank --symbol wScriptAfterPointer --symbol wRunningTrainerBattleScript",
+                                "python -m tools.debugger trace-instructions --symbol Script_startbattle --symbol EvolveAfterBattle --symbol Script_scripttalkafter --watch-symbol wScriptBank --watch-symbol wScriptPos --execute --require-hit",
+                            ],
+                        }
+                    )
             for watch in watches:
                 if not watch["found"]:
                     continue
@@ -344,13 +457,30 @@ def execute_watch(
                         }
                     )
                     current[name] = value
+            for input_event in input_events_by_frame.get(frame, []):
+                pyboy.button(str(input_event["button"]), delay=int(input_event["delay"]))
+                applied_inputs.append(dict(input_event))
             history.append(snapshot)
             if len(history) > max(1, context_frames):
                 history = history[-max(1, context_frames):]
             if frame < frames:
                 current_frame = frame + 1
                 pyboy.tick(1, False, False)
-        return events, reset_events, execution_errors
+        return (
+            events,
+            reset_events,
+            execution_errors,
+            {
+                "frame_count": frames + 1,
+                "battery_save_booted": battery_save is not None,
+                "boot_continue": boot_continue,
+                "out_initial_state": display_path(out_initial_state, root=root) if out_initial_state is not None else "",
+                "applied_input_count": len(applied_inputs),
+                "applied_inputs": applied_inputs[:64],
+                "initial": compact_runtime_snapshot(initial_snapshot),
+                "final": compact_runtime_snapshot(final_snapshot),
+            },
+        )
     finally:
         for bank, pc in hooked:
             try:
@@ -361,6 +491,133 @@ def execute_watch(
             pyboy.stop(save=False)
         except TypeError:
             pyboy.stop()
+        if temp_dir is not None:
+            temp_dir.cleanup()
+
+
+def parse_input_events(raw_events: tuple[str, ...]) -> tuple[list[dict[str, Any]], list[str]]:
+    events: list[dict[str, Any]] = []
+    errors: list[str] = []
+    for raw in raw_events:
+        for item in raw.split(","):
+            text = item.strip()
+            if not text:
+                continue
+            parts = text.split(":")
+            if len(parts) not in {2, 3}:
+                errors.append(f"invalid input event, expected FRAME:BUTTON[:DELAY]: {text}")
+                continue
+            try:
+                frame = int(parts[0], 0)
+            except ValueError:
+                errors.append(f"invalid input frame in event: {text}")
+                continue
+            button = parts[1].strip().lower()
+            delay = 8
+            if len(parts) == 3:
+                try:
+                    delay = int(parts[2], 0)
+                except ValueError:
+                    errors.append(f"invalid input delay in event: {text}")
+                    continue
+            if frame < 0:
+                errors.append(f"input frame must be nonnegative: {text}")
+                continue
+            if delay < 0:
+                errors.append(f"input delay must be nonnegative: {text}")
+                continue
+            if button not in BUTTON_NAMES:
+                errors.append(f"unknown input button {button!r} in event: {text}")
+                continue
+            events.append({"frame": frame, "button": button, "delay": delay, "source": text})
+    events.sort(key=lambda event: (int(event["frame"]), str(event["button"])))
+    return events, unique_list(errors)
+
+
+def group_input_events(events: list[dict[str, Any]]) -> dict[int, list[dict[str, Any]]]:
+    grouped: dict[int, list[dict[str, Any]]] = {}
+    for event in events:
+        grouped.setdefault(int(event["frame"]), []).append(event)
+    return grouped
+
+
+def press_continue(pyboy) -> None:
+    pyboy.tick(1800, False, False)
+    for button in ("start", "a", "a", "a"):
+        pyboy.button(button, delay=8)
+        pyboy.tick(180, False, False)
+
+
+def compact_runtime_snapshot(snapshot: dict[str, Any]) -> dict[str, Any]:
+    if not snapshot:
+        return {}
+    return {
+        "frame": snapshot.get("frame"),
+        "pc_bank_address": snapshot.get("pc_bank_address", ""),
+        "pc_label": snapshot.get("pc_label", ""),
+        "registers": snapshot.get("registers", {}),
+        "watch_values": snapshot.get("watch_values", {}),
+    }
+
+
+def detect_invalid_script_state(
+    *,
+    pyboy,
+    symbol_table: dict[str, dict[str, Any]],
+    rom_bank_count: int,
+) -> dict[str, Any] | None:
+    required = ("wScriptBank", "wScriptPos", "wScriptMode", "wScriptRunning")
+    if any(symbol not in symbol_table for symbol in required):
+        return None
+    bank = read_symbol_int(pyboy, symbol_table, "wScriptBank", 1)
+    pos = read_symbol_int(pyboy, symbol_table, "wScriptPos", 2)
+    mode = read_symbol_int(pyboy, symbol_table, "wScriptMode", 1)
+    running = read_symbol_int(pyboy, symbol_table, "wScriptRunning", 1)
+    if bank is None or pos is None or mode is None or running is None:
+        return None
+    if not running and mode == 0:
+        return None
+    reasons: list[str] = []
+    if mode not in SCRIPT_MODE_NAMES:
+        reasons.append(f"script mode {mode} is outside known script modes")
+    if rom_bank_count and bank >= rom_bank_count:
+        reasons.append(f"script bank ${bank:02X} is outside ROM bank count {rom_bank_count}")
+    if bank and pos < 0x4000:
+        reasons.append(f"banked script pointer ${bank:02X}:${pos:04X} points below the switchable ROM window")
+    if pos == 0:
+        reasons.append("script pointer is null")
+    if not reasons:
+        return None
+    return {
+        "bank": bank,
+        "pos": pos,
+        "mode": mode,
+        "running": running,
+        "bank_address": f"{bank:02X}:{pos:04X}",
+        "reasons": reasons,
+    }
+
+
+def read_symbol_int(
+    pyboy,
+    symbol_table: dict[str, dict[str, Any]],
+    symbol: str,
+    size: int,
+) -> int | None:
+    entry = symbol_table.get(symbol)
+    if entry is None:
+        return None
+    watch = {
+        "name": symbol,
+        "found": True,
+        "bank": entry["bank"],
+        "address": entry["address"],
+        "size": size,
+    }
+    values = read_watch_bytes(pyboy, watch)
+    if size == 1:
+        return values[0]
+    return values[0] | (values[1] << 8)
 
 
 def build_reset_sentinel_targets(

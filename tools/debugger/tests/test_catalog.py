@@ -8,6 +8,7 @@ from contextlib import redirect_stdout
 from pathlib import Path
 from unittest.mock import patch
 
+from tools.damage_debugger import state as damage_state
 from tools.debugger.__main__ import main as debugger_main
 from tools.debugger.catalog import (
     build_capability_report,
@@ -31,12 +32,17 @@ from tools.debugger.localize import build_localization_plan
 from tools.debugger.minimize import build_minimization_plan
 from tools.debugger.mirrors import build_compare_plan
 from tools.debugger.next_steps import NEXT_STEP_ROWS, build_next_step
+from tools.debugger.pokemon_semantics import (
+    build_grass_regrowth_report,
+    build_learnset_inspection_report,
+)
 from tools.debugger.provenance import build_provenance_report
 from tools.debugger.ranking import rank_findings
 from tools.debugger.replay import build_replay_plan
 from tools.debugger.repro_recipes import build_repro_recipe_report
 from tools.debugger.reporting import build_static_report
 from tools.debugger.runtime_watch import build_watch_event_cause, build_watch_report
+from tools.debugger.script_resume_gate import build_script_resume_gate_report
 from tools.debugger.setup_plan import build_setup_plan
 from tools.debugger.state_space import build_state_space_report
 from tools.debugger.slicing import build_slice_report
@@ -45,6 +51,7 @@ from tools.debugger.testgen import suggest_tests
 from tools.debugger.trace_index import build_trace_index_report
 from tools.debugger.visualization import build_visualization_report
 from tools.debugger.wram_bank_hazards import build_wram_bank_hazard_report
+from tools.debugger.wram_ownership import build_wram_ownership_report
 from tools.debugger.workflow import build_gate_plan, command_is_runnable
 
 
@@ -133,6 +140,40 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("first-wild-route29", rec["repro_recipes"])
         self.assertNotEqual(rec["symptom_class"], "revealed_effect_response")
 
+    def test_next_step_routes_frozen_music_after_trainer_to_state_inspect(self) -> None:
+        report = build_next_step(
+            symptom="music is playing but frozen after trainer battle and Flaaffy evolution",
+        )
+        rec = report["recommendation"]
+
+        self.assertEqual(rec["symptom_class"], "script_vm_impossible_state")
+        self.assertEqual(rec["matched_lane"], "runtime_state")
+        self.assertIn("state-inspect", rec["first_command"])
+        self.assertIn("trainer-battle-evolution-resume", rec["repro_recipes"])
+        self.assertIn("repro-recipe", rec["escalation_command"])
+
+    def test_triage_routes_frozen_music_after_trainer_to_runtime_state(self) -> None:
+        report = triage_request(
+            symptom="music is playing but frozen after trainer battle and Flaaffy evolution",
+        )
+
+        self.assertEqual(report["matches"][0]["id"], "script_vm_impossible_state")
+        commands = "\n".join(report["commands"])
+        self.assertIn("state-inspect", commands)
+        self.assertIn("wScriptBank", commands)
+        self.assertIn("wScriptPos", commands)
+
+    def test_next_step_routes_evolution_graphics_reset_to_vram_contract(self) -> None:
+        report = build_next_step(
+            symptom="Cyndaquil evolved to Quilava then reset and colors inverted",
+        )
+        rec = report["recommendation"]
+
+        self.assertEqual(rec["symptom_class"], "vram_request_contract")
+        self.assertEqual(rec["matched_lane"], "graphics_vram")
+        self.assertIn("check_vram_request_contract.py", rec["first_command"])
+        self.assertIn("--reset-sentinel", rec["escalation_command"])
+
     def test_next_step_table_covers_rom_expansion_boss_ai_classes(self) -> None:
         classes = {row["symptom_class"] for row in NEXT_STEP_ROWS}
 
@@ -140,6 +181,8 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
             classes,
             {
                 "crash_reset",
+                "script_vm_impossible_state",
+                "vram_request_contract",
                 "wrong_switch",
                 "wrong_move_score",
                 "haki_taunt_read",
@@ -176,6 +219,91 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
                     report["recommendation"]["symptom_class"],
                     expected_class,
                 )
+
+    def test_next_step_routes_recent_live_bug_classes_to_exact_tools(self) -> None:
+        cases = {
+            "Falkner used Hypnosis even though Sleep Clause was active": (
+                "boss_ai_sleep_clause_move_legality",
+                "damage-ai-report",
+            ),
+            "Falkner used a Normal-type move on Gastly and it doesn't affect": (
+                "boss_ai_type_immunity_move_choice",
+                "damage-ai-report",
+            ),
+            "Rival Magneton Hidden Power was treated as stale Normal immunity": (
+                "boss_ai_hidden_power_type",
+                "move-score-probe",
+            ),
+            "Silver early boss spammed Leer and never attacked": (
+                "early_boss_debuff_spam",
+                "damage-ai-report",
+            ),
+        }
+
+        for symptom, (expected_class, command_fragment) in cases.items():
+            with self.subTest(symptom=symptom):
+                report = build_next_step(symptom=symptom)
+                rec = report["recommendation"]
+                self.assertEqual(rec["symptom_class"], expected_class)
+                self.assertEqual(rec["matched_lane"], "boss_ai")
+                self.assertIn(command_fragment, rec["first_command"])
+
+    def test_next_step_routes_known_red_audits_and_semantic_questions(self) -> None:
+        cases = {
+            "walking poison took a poisoned mon from 1 HP to 0 HP": (
+                "overworld_poison_cure",
+                "check_overworld_poison_cure.py",
+            ),
+            "regular trainer Assault Vest chose an illegal status move": (
+                "base_ai_move_legality",
+                "check_base_ai_mechanics_correctness.py",
+            ),
+            "Gastly level 14 learnset should include Confusion not Spite": (
+                "learnset_semantics",
+                "learnset-inspect",
+            ),
+            "level 3 Hoppip grass heal cutoff felt wrong": (
+                "grass_regrowth_balance",
+                "grass-regrowth",
+            ),
+            "Mirror Move copied Sketch and corrupted memory": (
+                "move_search_unbounded",
+                "bug_hunt_triage.py",
+            ),
+        }
+
+        for symptom, (expected_class, command_fragment) in cases.items():
+            with self.subTest(symptom=symptom):
+                report = build_next_step(symptom=symptom)
+                rec = report["recommendation"]
+                self.assertEqual(rec["symptom_class"], expected_class)
+                self.assertIn(command_fragment, rec["first_command"])
+
+    def test_changed_pokemon_data_routes_to_semantic_inspection(self) -> None:
+        report = build_next_step(changed_files=("data/pokemon/evos_attacks.asm",))
+        rec = report["recommendation"]
+
+        self.assertEqual(rec["matched_lane"], "pokemon_semantics")
+        self.assertIn("learnset-inspect", rec["first_command"])
+
+    def test_species_id_map_ignores_unown_form_constants(self) -> None:
+        by_id = damage_state.species_name_by_id()
+
+        self.assertEqual(by_id[1], "BULBASAUR")
+        self.assertEqual(by_id[16], "PIDGEY")
+        self.assertEqual(by_id[201], "UNOWN")
+
+    def test_learnset_and_grass_semantic_reports_answer_live_questions(self) -> None:
+        learnset = build_learnset_inspection_report(species="GASTLY", level=14)
+        regrowth = build_grass_regrowth_report(max_total_hp=300)
+
+        self.assertTrue(learnset["valid"])
+        self.assertEqual(learnset["species"], "GASTLY")
+        self.assertIn("LICK", learnset["current_moves"])
+        self.assertTrue(learnset["current_moves"])
+        self.assertTrue(regrowth["valid"])
+        self.assertEqual(regrowth["cutoffs"]["full_grass"][0], {"min_hp": 1, "max_hp": 47, "heals": 1})
+        self.assertEqual(regrowth["cutoffs"]["half_grass"][0], {"min_hp": 1, "max_hp": 95, "heals": 1})
 
     def test_cli_next_json_schema_is_stable(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -214,6 +342,18 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("--reset-sentinel", commands)
         self.assertIn("wram-bank-hazards", commands)
         self.assertIn("route29-before-grass.state", commands)
+
+    def test_repro_recipe_exposes_trainer_evolution_resume_path(self) -> None:
+        report = build_repro_recipe_report(ids=("trainer-battle-evolution-resume",))
+        recipe = report["recipes"][0]
+        commands = "\n".join(recipe["commands"])
+
+        self.assertTrue(report["valid"])
+        self.assertEqual(recipe["bug_class"], "post_battle_script_resume")
+        self.assertIn("state-inspect", commands)
+        self.assertIn("script-resume-gate", commands)
+        self.assertIn("wSeenTrainerBank", commands)
+        self.assertIn("EvolveAfterBattle", commands)
 
     def test_cli_investigate_symptom_only_points_to_next(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -394,6 +534,21 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("python -m tools.damage_debugger.clobber_smoke", commands)
         self.assertIn("python tools\\audit\\check_cross_bank_call.py", commands)
         self.assertEqual(report["steps"][0]["priority"], 10)
+
+    def test_vram_graphics_triage_uses_contract_audit(self) -> None:
+        report = triage_request(
+            changed_files=("home/gfx.asm",),
+            symptom="Cyndaquil evolved to Quilava then reset and colors inverted",
+        )
+        match_ids = {match["id"] for match in report["matches"]}
+        commands = "\n".join(report["commands"])
+        gate = build_gate_plan(changed_files=("home/gfx.asm",))
+        gate_commands = [step["command"] for step in gate["steps"]]
+
+        self.assertIn("vram_request_contract", match_ids)
+        self.assertIn("banking_and_abi", match_ids)
+        self.assertIn("python tools\\audit\\check_vram_request_contract.py", commands)
+        self.assertEqual(gate_commands[0], "python tools\\audit\\check_vram_request_contract.py")
 
     def test_gate_marks_placeholder_commands_not_runnable(self) -> None:
         self.assertFalse(command_is_runnable("python -m tool <scenario>"))
@@ -3507,6 +3662,47 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(report["watches"][0]["bank_address"], "01:D141")
         self.assertEqual(report["watches"][0]["size"], 2)
 
+    def test_watch_plan_treats_script_pointers_as_words(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "test.gbc").write_bytes(bytes(0x8000))
+            (root / "test.sym").write_text(
+                "01:D160 wScriptBank\n01:D161 wScriptPos\n00:CF36 wScriptAfterPointer\n",
+                encoding="utf-8",
+            )
+
+            report = build_watch_report(
+                watch_symbols=("wScriptBank", "wScriptPos", "wScriptAfterPointer"),
+                rom_path="test.gbc",
+                symbols_path="test.sym",
+                root=root,
+            )
+
+        sizes = {watch["name"]: watch["size"] for watch in report["watches"]}
+        self.assertEqual(sizes["wScriptBank"], 1)
+        self.assertEqual(sizes["wScriptPos"], 2)
+        self.assertEqual(sizes["wScriptAfterPointer"], 2)
+
+    def test_watch_plan_records_scheduled_inputs(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "test.gbc").write_bytes(bytes(0x8000))
+            (root / "test.sym").write_text("01:D160 wScriptBank\n", encoding="utf-8")
+
+            report = build_watch_report(
+                watch_symbols=("wScriptBank",),
+                rom_path="test.gbc",
+                symbols_path="test.sym",
+                input_events=("0:a:4,45:start",),
+                root=root,
+            )
+
+        self.assertTrue(report["valid"], report["errors"])
+        self.assertEqual(
+            [(event["frame"], event["button"], event["delay"]) for event in report["input_events"]],
+            [(0, "a", 4), (45, "start", 8)],
+        )
+
     def test_watch_plan_reports_missing_symbol(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -3618,6 +3814,8 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertTrue(report["executed"])
         self.assertEqual(report["hit_count"], 1)
         self.assertEqual(report["dynamic_context_event_count"], 1)
+        self.assertEqual(report["runtime_summary"]["initial"]["registers"]["register_pc"], "4000")
+        self.assertEqual(report["runtime_summary"]["final"]["registers"]["register_sp"], "FFFE")
         self.assertEqual(event["old_hex"], "0000")
         self.assertEqual(event["new_hex"], "3400")
         self.assertEqual(context["context_frame_count"], 1)
@@ -3626,6 +3824,129 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(context["after"]["registers"]["register_pc"], "4003")
         self.assertEqual(context["after"]["watch_values"]["wCurDamage"], "3400")
         self.assertIn("tools.debugger trace-index --report <watch_report.json>", "\n".join(event["commands"]))
+
+    def test_watch_execution_applies_scheduled_inputs(self) -> None:
+        class FakeRegisters:
+            A = 0
+            F = 0
+            B = 0
+            C = 0
+            D = 0
+            E = 0
+            H = 0
+            L = 0
+            SP = 0xDFF0
+            PC = 0x4000
+
+        class FakeMemory:
+            def __getitem__(self, _key):
+                return 0
+
+            def __setitem__(self, _key, _value) -> None:
+                return None
+
+        class FakePyBoy:
+            def __init__(self) -> None:
+                self.register_file = FakeRegisters()
+                self.memory = FakeMemory()
+                self.buttons: list[tuple[str, int]] = []
+
+            def button(self, name: str, delay: int = 8) -> None:
+                self.buttons.append((name, delay))
+
+            def tick(self, *_args) -> None:
+                return None
+
+            def stop(self, save=False) -> None:
+                return None
+
+        fake = FakePyBoy()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "test.gbc").write_bytes(bytes(0x8000))
+            (root / "test.sym").write_text("01:D160 wScriptBank\n", encoding="utf-8")
+
+            with patch("tools.debugger.runtime_watch.trace_runtime.open_pyboy", return_value=fake):
+                report = build_watch_report(
+                    watch_symbols=("wScriptBank",),
+                    rom_path="test.gbc",
+                    symbols_path="test.sym",
+                    input_events=("0:a:4",),
+                    frames=1,
+                    execute=True,
+                    root=root,
+                )
+
+        self.assertTrue(report["valid"], report["errors"])
+        self.assertEqual(fake.buttons, [("a", 4)])
+        self.assertEqual(report["runtime_summary"]["applied_input_count"], 1)
+        self.assertEqual(report["runtime_summary"]["applied_inputs"][0]["button"], "a")
+
+    def test_watch_execution_can_boot_from_battery_save(self) -> None:
+        class FakeRegisters:
+            A = 0
+            F = 0
+            B = 0
+            C = 0
+            D = 0
+            E = 0
+            H = 0
+            L = 0
+            SP = 0xDFF0
+            PC = 0x4000
+
+        class FakeMemory:
+            def __getitem__(self, _key):
+                return 0
+
+            def __setitem__(self, _key, _value) -> None:
+                return None
+
+        class FakePyBoy:
+            def __init__(self) -> None:
+                self.register_file = FakeRegisters()
+                self.memory = FakeMemory()
+                self.buttons: list[str] = []
+
+            def button(self, name: str, delay: int = 8) -> None:
+                self.buttons.append(name)
+
+            def tick(self, *_args) -> None:
+                return None
+
+            def save_state(self, fh) -> None:
+                fh.write(b"state")
+
+            def stop(self, save=False) -> None:
+                return None
+
+        fake = FakePyBoy()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "test.gbc").write_bytes(bytes(0x8000))
+            (root / "test.sav").write_bytes(bytes(0x8000))
+            out_state = root / "booted.state"
+            (root / "test.sym").write_text("01:D160 wScriptBank\n", encoding="utf-8")
+
+            with patch("tools.debugger.runtime_watch.trace_runtime.open_pyboy", return_value=fake):
+                report = build_watch_report(
+                    watch_symbols=("wScriptBank",),
+                    rom_path="test.gbc",
+                    symbols_path="test.sym",
+                    battery_save="test.sav",
+                    out_initial_state="booted.state",
+                    frames=0,
+                    execute=True,
+                    root=root,
+                )
+            out_state_exists = out_state.exists()
+
+        self.assertTrue(report["valid"], report["errors"])
+        self.assertEqual(fake.buttons, ["start", "a", "a", "a"])
+        self.assertTrue(out_state_exists)
+        self.assertTrue(report["boot_continue"])
+        self.assertTrue(report["runtime_summary"]["battery_save_booted"])
+        self.assertEqual(report["runtime_summary"]["out_initial_state"], "booted.state")
 
     def test_watch_reset_sentinel_records_reset_context_without_watch_symbol(self) -> None:
         class FakeRegisters:
@@ -3719,6 +4040,271 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(event["context_symbols"]["wTempWildMonSpecies"], "A1")
         self.assertEqual(event["dynamic_context"]["context_frame_count"], 1)
 
+    def test_watch_execution_records_invalid_script_state(self) -> None:
+        class FakeRegisters:
+            A = 0
+            F = 0
+            B = 0
+            C = 0
+            D = 0
+            E = 0
+            H = 0
+            L = 0
+            SP = 0xDFF0
+            PC = 0x4000
+
+        class FakeMemory:
+            def __init__(self) -> None:
+                self.values = {
+                    (1, 0xD15E): 1,
+                    (1, 0xD15F): 1,
+                    (1, 0xD160): 0xB4,
+                    (1, 0xD161): 0x02,
+                    (1, 0xD162): 0x00,
+                }
+
+            def __getitem__(self, key):
+                return self.values.get(key, 0)
+
+            def __setitem__(self, key, value) -> None:
+                self.values[key] = value
+
+        class FakePyBoy:
+            def __init__(self) -> None:
+                self.register_file = FakeRegisters()
+                self.memory = FakeMemory()
+
+            def tick(self, *_args) -> None:
+                return None
+
+            def stop(self, save=False) -> None:
+                return None
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "test.gbc").write_bytes(bytes(0x8000))
+            (root / "test.sym").write_text(
+                "\n".join(
+                    [
+                        "01:D15E wScriptMode",
+                        "01:D15F wScriptRunning",
+                        "01:D160 wScriptBank",
+                        "01:D161 wScriptPos",
+                        "01:4000 ScriptEvents",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            with patch("tools.debugger.runtime_watch.trace_runtime.open_pyboy", return_value=FakePyBoy()):
+                report = build_watch_report(
+                    watch_symbols=("wScriptBank", "wScriptPos"),
+                    rom_path="test.gbc",
+                    symbols_path="test.sym",
+                    frames=0,
+                    execute=True,
+                    root=root,
+                )
+
+        event = report["events"][0]
+        self.assertTrue(report["valid"])
+        self.assertEqual(report["script_state_event_count"], 1)
+        self.assertEqual(event["event_type"], "invalid_script_state")
+        self.assertEqual(event["script"], "B4:0002")
+        self.assertIn("below the switchable ROM window", "\n".join(event["reasons"]))
+
+    def test_script_resume_gate_fails_unexecuted_watch_reports(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            watch_report = root / "watch.json"
+            watch_report.write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_watch_report",
+                        "valid": True,
+                        "executed": False,
+                        "reset_sentinel": False,
+                        "watches": [],
+                        "events": [],
+                        "reset_event_count": 0,
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            report = build_script_resume_gate_report(
+                reports=("watch.json",),
+                root=root,
+            )
+
+        finding_ids = {finding["id"] for finding in report["findings"]}
+
+        self.assertFalse(report["passed"])
+        self.assertIn("watch_not_executed", finding_ids)
+        self.assertIn("watch_too_short", finding_ids)
+        self.assertIn("watch_no_runtime_signal", finding_ids)
+        self.assertIn("required_watch_symbol_missing", finding_ids)
+        self.assertIn("pc_sp_snapshot_missing", finding_ids)
+
+    def test_script_resume_gate_passes_complete_clean_watch_report(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            watch_report = root / "watch.json"
+            watch_report.write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_watch_report",
+                        "valid": True,
+                        "executed": True,
+                        "frames": 60,
+                        "hit_count": 1,
+                        "reset_sentinel": True,
+                        "watches": [
+                            {"name": "wSeenTrainerBank", "found": True},
+                            {"name": "wScriptAfterPointer", "found": True},
+                            {"name": "wRunningTrainerBattleScript", "found": True},
+                            {"name": "wScriptBank", "found": True},
+                            {"name": "wScriptPos", "found": True},
+                        ],
+                        "runtime_summary": {
+                            "initial": {"registers": {"register_pc": "4000", "register_sp": "DFF0"}},
+                            "final": {"registers": {"register_pc": "5123", "register_sp": "DFE8"}},
+                        },
+                        "events": [
+                            {
+                                "event_type": "watch_change",
+                                "watch": "wScriptPos",
+                                "old_hex": "1050",
+                                "new_hex": "2050",
+                            }
+                        ],
+                        "reset_event_count": 0,
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            report = build_script_resume_gate_report(
+                reports=("watch.json",),
+                root=root,
+            )
+
+        self.assertTrue(report["passed"], report["findings"])
+        self.assertEqual(report["findings"][0]["id"], "watch_script_resume_ok")
+
+    def test_script_resume_gate_rejects_trainer_bank_only_watch_activity(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            watch_report = root / "watch.json"
+            watch_report.write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_watch_report",
+                        "valid": True,
+                        "executed": True,
+                        "frames": 30,
+                        "hit_count": 1,
+                        "reset_sentinel": True,
+                        "watches": [
+                            {"name": "wSeenTrainerBank", "found": True},
+                            {"name": "wScriptAfterPointer", "found": True},
+                            {"name": "wRunningTrainerBattleScript", "found": True},
+                            {"name": "wScriptBank", "found": True},
+                            {"name": "wScriptPos", "found": True},
+                        ],
+                        "runtime_summary": {
+                            "initial": {"registers": {"register_pc": "4000", "register_sp": "DFF0"}},
+                            "final": {"registers": {"register_pc": "4010", "register_sp": "DFE8"}},
+                        },
+                        "events": [
+                            {
+                                "event_type": "watch_change",
+                                "watch": "wSeenTrainerBank",
+                                "old_hex": "00",
+                                "new_hex": "07",
+                            }
+                        ],
+                        "reset_event_count": 0,
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            report = build_script_resume_gate_report(
+                reports=("watch.json",),
+                root=root,
+            )
+
+        finding_ids = {finding["id"] for finding in report["findings"]}
+
+        self.assertFalse(report["passed"])
+        self.assertIn("watch_no_script_resume_signal", finding_ids)
+
+    def test_script_resume_gate_fails_runtime_state_findings(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            state_report = root / "runtime_state.json"
+            state_report.write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_runtime_state_report",
+                        "valid": True,
+                        "passed": False,
+                        "findings": [
+                            {
+                                "id": "invalid_script_pc",
+                                "severity": 94,
+                                "title": "Script VM is running from an invalid ROM address",
+                                "evidence": ["wScriptBank:wScriptPos=B4:0002"],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            report = build_script_resume_gate_report(
+                reports=("runtime_state.json",),
+                root=root,
+            )
+
+        self.assertTrue(report["valid"])
+        self.assertFalse(report["passed"])
+        self.assertEqual(report["findings"][0]["id"], "invalid_script_pc")
+        self.assertIn("B4:0002", report["findings"][0]["evidence"][0])
+
+    def test_wram_ownership_reports_union_cotenants(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "ram").mkdir()
+            (root / "ram" / "wram.asm").write_text(
+                "\n".join(
+                    [
+                        "UNION",
+                        "wSeenTrainerBank:: db",
+                        "wScriptAfterPointer:: dw",
+                        "NEXTU",
+                        "wMenuItemsList:: ds 16",
+                        "ENDU",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            report = build_wram_ownership_report(
+                symbols=("wSeenTrainerBank",),
+                root=root,
+            )
+
+        owner = report["ownership"][0]
+        self.assertTrue(report["valid"])
+        self.assertEqual(owner["status"], "union_member")
+        self.assertEqual(owner["same_arm_labels"], ["wSeenTrainerBank", "wScriptAfterPointer"])
+        self.assertEqual(owner["other_union_arms"][0]["labels"], ["wMenuItemsList"])
+        self.assertEqual(owner["risk"], "high")
+
     def test_wram_bank_hazard_report_flags_helper_call_and_cross_bank_pop(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -3805,7 +4391,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
                 "00:0000 NULL\n01:D141 wCurDamage\n01:4000 BattleCommand_Test\n",
                 encoding="utf-8",
             )
-            save_state = root / "state.sgm"
+            save_state = root / "state.state"
             save_state.write_bytes(b"opaque-state")
             trace = root / "trace.json"
             trace.write_text(
@@ -3828,7 +4414,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
             report = build_replay_plan(
                 rom_path="test.gbc",
                 symbols_path="test.sym",
-                save_state="state.sgm",
+                save_state="state.state",
                 traces=("trace.json",),
                 scenarios=("scenario.jsonl",),
                 scenario_ids=("manual_case",),
@@ -4974,7 +5560,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
 
     def test_setup_trigger_coverage_is_covered_with_supplied_state(self) -> None:
         report = build_setup_plan(
-            save_state="state.sgm",
+                save_state="state.state",
             symbols=("BattleCommand_DamageCalc",),
             watch_symbols=("wCurDamage",),
         )
@@ -7892,6 +8478,40 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertTrue(report["valid"])
         self.assertEqual(report["findings"][0]["type"], "gate_failed")
         self.assertEqual(report["findings"][1]["type"], "compare_gap")
+
+    def test_rank_findings_promotes_runtime_state_impossibilities(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            runtime_report = root / "runtime_state.json"
+            runtime_report.write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_runtime_state_report",
+                        "save_state": "for_codex1.sgm",
+                        "passed": False,
+                        "commands": ["python -m tools.debugger state-inspect"],
+                        "findings": [
+                            {
+                                "id": "invalid_script_pc",
+                                "type": "runtime_state_impossible",
+                                "severity": 94,
+                                "confidence": 0.9,
+                                "title": "Script VM is running from an invalid ROM address",
+                                "evidence": ["wScriptBank:wScriptPos=B4:0002"],
+                                "next_actions": ["python -m tools.debugger watch --watch-symbol wScriptBank"],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            report = rank_findings(reports=("runtime_state.json",), root=root)
+
+        self.assertTrue(report["valid"])
+        self.assertEqual(report["findings"][0]["type"], "runtime_state_impossible")
+        self.assertGreaterEqual(report["findings"][0]["severity"], 94)
+        self.assertIn("B4:0002", report["findings"][0]["evidence"][0])
 
     def test_rank_findings_calibrates_rom_surface_severity(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

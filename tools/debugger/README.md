@@ -34,8 +34,17 @@ python -m tools.debugger trace-instructions --symbol BattleCommand_DamageCalc --
 python -m tools.debugger dynamic-taint --trace .local\tmp\instruction_trace.jsonl --source-reg a=move_power --sink-symbol wCurDamage
 python -m tools.debugger dynamic-taint --report .local\tmp\damagecalc_instruction_trace.json
 python -m tools.debugger watch --reset-sentinel --rom pokegold.gbc --symbols pokegold.sym --save-state path\to\state --frames 1200 --context-frames 20
+python -m tools.debugger watch --reset-sentinel --rom pokegold.gbc --symbols pokegold.sym --battery-save pokegold.sav --out-initial-state .local\tmp\continue.state --input 0:a:8 --watch-symbol wScriptBank --watch-symbol wScriptPos --execute
+python -m tools.debugger state-inspect --save-state for_codex1.sgm --rom pokegold.gbc --symbols pokegold.sym --json-out .local\tmp\for_codex1_runtime_state.json
+python -m tools.debugger script-resume-gate --report .local\tmp\for_codex1_runtime_state.json
+python -m tools.debugger learnset-inspect --species GASTLY --level 14
+python -m tools.debugger party-inspect --save pokegold.sav --slot 1
+python -m tools.debugger grass-regrowth --max-total-hp 300
+python -m tools.debugger wram-ownership --symbol wSeenTrainerBank --symbol wScriptAfterPointer --symbol wRunningTrainerBattleScript
+python -m tools.debugger wram-lifetime --symbol wSeenTrainerBank --symbol wScriptAfterPointer --symbol wRunningTrainerBattleScript --through Script_startbattle
 python -m tools.debugger wram-bank-hazards --source-file engine\battle\ai\observation_log.asm
 python -m tools.debugger repro-recipe --id first-wild-route29
+python -m tools.debugger repro-recipe --id trainer-battle-evolution-resume
 python -m tools.debugger setup --symbol wCurDamage --watch-symbol wCurDamage --out-scenarios .local\tmp\debugger_setup_scenarios.jsonl
 python -m tools.debugger generate --symbol wCurDamage --out-scenarios .local\tmp\debugger_generation_seeds.jsonl
 python -m tools.debugger generate --changed-file engine\battle\ai\boss_policy_move.asm --family all --max-cases 64 --seed 1
@@ -164,6 +173,42 @@ window into a failing proof step. The output JSONL is designed to feed
 `dynamic-taint`, `trace-index`, `expect`, and `minimize`. This gives the
 unified debugger a capture path for instruction-level causal evidence without
 requiring every subsystem to invent its own trace format.
+
+`state-inspect` is the read-only crash-state inspector for emulator snapshots.
+For VBA-M `.sgm` files it decompresses the state, parses CPU registers, locates
+the live WRAM window from party/map/script anchors, resolves the current map
+script bank/range, and flags impossible script VM states such as
+`wScriptBank:wScriptPos=$B4:$0002` after a trainer battle and evolution. For
+PyBoy `.state` files it loads the state through PyBoy and reads the same
+symbols. For `.sav` files it copies the ROM to a temporary path, attaches the
+save as a `.ram` sidecar, presses through Continue, and inspects that live
+state. This is diagnosis for an already-captured or booted state; fix proof
+still needs a before-trigger replay/watch.
+
+`watch` can replay from an existing PyBoy `.state`, or from a `.sav` by copying
+the ROM to a temporary work path, attaching the battery save as a `.ram` sidecar,
+pressing through Continue, and then polling the requested symbols. Scheduled
+inputs use `--input FRAME:BUTTON[:DELAY]` and are recorded in the report with
+initial/final PC/SP snapshots. This is still a faithful forward watch only for
+the supplied state/input route; it does not auto-navigate arbitrary saves to a
+trainer.
+
+`script-resume-gate` evaluates `state-inspect` and watch reports for the
+post-battle/evolution freeze class. It fails on reset sentinels, invalid script
+PCs, script-bank/current-map mismatches, echo-RAM returns, or watch-emitted
+`invalid_script_state` events. For watch reports it also requires actual
+execution, the trainer resume watch symbols, reset sentinels, and PC/SP
+snapshots. Use it with `repro-recipe
+trainer-battle-evolution-resume` to keep the distinction between a corrupted
+crash-state diagnosis and a before-trigger proof. A watch with only idle frames
+or trainer-bank-only union churn is rejected rather than treated as proof.
+
+`wram-ownership` explains static WRAM overlap risk for named symbols. It
+identifies `UNION` co-tenants and source references, which is the quick way to
+see that trainer resume bytes such as `wSeenTrainerBank`,
+`wScriptAfterPointer`, and `wRunningTrainerBattleScript` share volatile WRAM
+with other temporary contexts. It does not prove dynamic overwrite order; pair it
+with watch or instruction tracing for that.
 
 `minimize` plans the shortest path from a suspect or failing report to a
 minimal proof case. It extracts scenario IDs and bug IDs from reports and
