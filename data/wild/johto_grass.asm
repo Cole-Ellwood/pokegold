@@ -447,7 +447,7 @@ JohtoGrassWildMons:
 	; morn
 	db 6, GEODUDE
 	db 6, SANDSHREW
-	db 5, ZUBAT
+	db 5, CORSOLA
 	db 4, RATTATA
 	db 7, ZUBAT
 	db 6, GEODUDE
@@ -455,7 +455,7 @@ JohtoGrassWildMons:
 	; day
 	db 6, GEODUDE
 	db 6, SANDSHREW
-	db 5, ZUBAT
+	db 5, CORSOLA
 	db 4, RATTATA
 	db 7, ZUBAT
 	db 6, GEODUDE
@@ -463,7 +463,7 @@ JohtoGrassWildMons:
 	; nite
 	db 6, GEODUDE
 	db 6, SANDSHREW
-	db 5, ZUBAT
+	db 5, CORSOLA
 	db 4, RATTATA
 	db 7, ZUBAT
 	db 6, GEODUDE
@@ -472,7 +472,7 @@ JohtoGrassWildMons:
 	; morn
 	db 6, GEODUDE
 	db 6, RATTATA
-	db 5, ZUBAT
+	db 5, CORSOLA
 	db 4, RATTATA
 	db 7, ZUBAT
 	db 6, GEODUDE
@@ -480,7 +480,7 @@ JohtoGrassWildMons:
 	; day
 	db 6, GEODUDE
 	db 6, RATTATA
-	db 5, ZUBAT
+	db 5, CORSOLA
 	db 4, RATTATA
 	db 7, ZUBAT
 	db 6, GEODUDE
@@ -488,7 +488,7 @@ JohtoGrassWildMons:
 	; nite
 	db 6, GEODUDE
 	db 6, RATTATA
-	db 5, ZUBAT
+	db 5, CORSOLA
 	db 4, RATTATA
 	db 7, ZUBAT
 	db 6, GEODUDE
@@ -1770,7 +1770,7 @@ JohtoGrassWildMons:
 	db 6, HOPPIP
 	db 7, SPEAROW
 	db 6, SPEAROW
-	db 6, MANKEY
+	db 6, CORSOLA
 	db 8, MACHOP
 	db 4, ZUBAT
 	db 4, DUNSPARCE
@@ -1778,7 +1778,7 @@ JohtoGrassWildMons:
 	db 6, HOPPIP
 	db 7, SPEAROW
 	db 6, SPEAROW
-	db 6, MANKEY
+	db 6, CORSOLA
 	db 8, MACHOP
 	db 8, EKANS
 	db 8, DUNSPARCE
@@ -1786,7 +1786,7 @@ JohtoGrassWildMons:
 	db 6, ZUBAT
 	db 7, RATTATA
 	db 6, MANKEY
-	db 6, DROWZEE
+	db 6, CORSOLA
 	db 8, MACHOP
 	db 8, EKANS
 	db 8, DUNSPARCE
@@ -1795,7 +1795,7 @@ JohtoGrassWildMons:
 	db 6, HOPPIP
 	db 7, EKANS
 	db 6, SPEAROW
-	db 6, MEOWTH
+	db 6, CORSOLA
 	db 8, MACHOP
 	db 4, ZUBAT
 	db 4, DUNSPARCE
@@ -1803,7 +1803,7 @@ JohtoGrassWildMons:
 	db 6, HOPPIP
 	db 7, EKANS
 	db 6, SPEAROW
-	db 6, MEOWTH
+	db 6, CORSOLA
 	db 8, MACHOP
 	db 8, EKANS
 	db 8, DUNSPARCE
@@ -1811,7 +1811,7 @@ JohtoGrassWildMons:
 	db 6, ZUBAT
 	db 7, EKANS
 	db 6, MEOWTH
-	db 6, DROWZEE
+	db 6, CORSOLA
 	db 8, MACHOP
 	db 8, EKANS
 	db 8, DUNSPARCE

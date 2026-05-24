@@ -1,6 +1,6 @@
 # Generated Balance Audit
 
-Generated: 2026-05-23T14:46:29
+Generated: 2026-05-24T08:03:53
 Baseline ref: `060d4accd7c0d01b1697ac97e7d7e2da72e3646b`
 
 Do not hand-edit this file. Regenerate it with:
@@ -36,6 +36,7 @@ python scripts\generate_balance_audit.py --baseline-ref 060d4accd7c0d01b1697ac97
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 7 | `DUNSPARCE` | `current-final`, `low-bst-final`, `low-and-unbuffed-vs-baseline`, `large-bst-regression-vs-baseline` | 420 | 595 | -175 | 120/120/120/20/20/20 | HP-60, Atk-20, Def-10, Spe+5, SpA-45, SpD-45 | NORMAL/NORMAL | - | - | 6 | 29 | DOUBLE_EDGE (NORMAL 130bp 100%) | SOLARBEAM (GRASS 180bp 100%) |
 | 6 | `SUDOWOODO` | `current-final`, `watch-bst-final`, `weak-reliable-stab`, `low-and-unbuffed-vs-baseline`, `large-bst-regression-vs-baseline` | 455 | 550 | -95 | 90/105/125/45/30/60 | HP-40, Atk-45, Def-20, Spe+15, SpD-5 | ROCK/ROCK | - | - | 9 | 28 | ROCK_SLIDE (ROCK 75bp 90%) | FOCUS_PUNCH (FIGHTING 150bp 100%) |
+| 5 | `CORSOLA` | `current-final`, `low-bst-final`, `low-and-unbuffed-vs-baseline` | 445 | 520 | -75 | 65/80/90/45/75/90 | HP+10, Atk-45, Def+5, Spe+10, SpA-60, SpD+5 | WATER/ROCK | - | - | 8 | 25 | SURF (WATER 95bp 100%) | EARTHQUAKE (GROUND 100bp 100%) |
 | 5 | `TOGETIC` | `current-final`, `watch-bst-final`, `low-and-unbuffed-vs-baseline`, `large-bst-regression-vs-baseline` | 465 | 575 | -110 | 55/40/85/40/140/105 | Atk-70, Spe-100, SpA+60 | NORMAL/FLYING | - | - | 8 | 31 | HYPER_BEAM (NORMAL 180bp 90%) | SOLARBEAM (GRASS 180bp 100%) |
 | 5 | `QUAGSIRE` | `current-final`, `watch-bst-final`, `low-and-unbuffed-vs-baseline`, `large-bst-regression-vs-baseline` | 475 | 560 | -85 | 120/100/85/35/70/65 | HP-25, Atk-25, SpA-35 | WATER/GROUND | - | - | 6 | 31 | EARTHQUAKE (GROUND 100bp 100%) | HYPER_BEAM (NORMAL 180bp 90%) |
 
@@ -58,6 +59,7 @@ _No rows._
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 7 | `DUNSPARCE` | `current-final`, `low-bst-final`, `low-and-unbuffed-vs-baseline`, `large-bst-regression-vs-baseline` | 420 | 595 | -175 | 120/120/120/20/20/20 | HP-60, Atk-20, Def-10, Spe+5, SpA-45, SpD-45 | NORMAL/NORMAL | - | - | 6 | 29 | DOUBLE_EDGE (NORMAL 130bp 100%) | SOLARBEAM (GRASS 180bp 100%) |
 | 6 | `SUDOWOODO` | `current-final`, `watch-bst-final`, `weak-reliable-stab`, `low-and-unbuffed-vs-baseline`, `large-bst-regression-vs-baseline` | 455 | 550 | -95 | 90/105/125/45/30/60 | HP-40, Atk-45, Def-20, Spe+15, SpD-5 | ROCK/ROCK | - | - | 9 | 28 | ROCK_SLIDE (ROCK 75bp 90%) | FOCUS_PUNCH (FIGHTING 150bp 100%) |
+| 5 | `CORSOLA` | `current-final`, `low-bst-final`, `low-and-unbuffed-vs-baseline` | 445 | 520 | -75 | 65/80/90/45/75/90 | HP+10, Atk-45, Def+5, Spe+10, SpA-60, SpD+5 | WATER/ROCK | - | - | 8 | 25 | SURF (WATER 95bp 100%) | EARTHQUAKE (GROUND 100bp 100%) |
 | 5 | `TOGETIC` | `current-final`, `watch-bst-final`, `low-and-unbuffed-vs-baseline`, `large-bst-regression-vs-baseline` | 465 | 575 | -110 | 55/40/85/40/140/105 | Atk-70, Spe-100, SpA+60 | NORMAL/FLYING | - | - | 8 | 31 | HYPER_BEAM (NORMAL 180bp 90%) | SOLARBEAM (GRASS 180bp 100%) |
 | 5 | `QUAGSIRE` | `current-final`, `watch-bst-final`, `low-and-unbuffed-vs-baseline`, `large-bst-regression-vs-baseline` | 475 | 560 | -85 | 120/100/85/35/70/65 | HP-25, Atk-25, SpA-35 | WATER/GROUND | - | - | 6 | 31 | EARTHQUAKE (GROUND 100bp 100%) | HYPER_BEAM (NORMAL 180bp 90%) |
 | 4 | `GLIGAR` | `current-final`, `low-and-unbuffed-vs-baseline`, `large-bst-regression-vs-baseline` | 490 | 590 | -100 | 85/95/125/85/35/65 | HP-40, Def-10, SpD-50 | GROUND/FLYING | - | - | 8 | 23 | WING_ATTACK (FLYING 80bp 100%) | IRON_TAIL (STEEL 130bp 75%) |
@@ -155,7 +157,6 @@ _No rows._
 | 0 | `VICTREEBEL` | `current-final` | 552 | 580 | -28 | 95/120/65/92/120/60 | HP+5, Atk-25, Def+15, Spe-18, SpA-20, SpD+15 | GRASS/POISON | - | - | 7 | 20 | SOLARBEAM (GRASS 180bp 100%) | SOLARBEAM (GRASS 180bp 100%) |
 | 0 | `ALAKAZAM` | `current-final` | 555 | 490 | 65 | 60/50/45/120/150/130 | HP+5, SpA+15, SpD+45 | PSYCHIC_TYPE/PSYCHIC_TYPE | - | - | 9 | 27 | FUTURE_SIGHT (PSYCHIC_TYPE 120bp 90%) | HYPER_BEAM (NORMAL 180bp 90%) |
 | 0 | `CLOYSTER` | `current-final` | 555 | 525 | 30 | 80/95/180/70/85/45 | HP+30 | WATER/ICE | - | - | 7 | 19 | BLIZZARD (ICE 120bp 85%) | HYPER_BEAM (NORMAL 180bp 90%) |
-| 0 | `CORSOLA` | `current-final` | 555 | 520 | 35 | 95/80/130/45/75/130 | HP+40, Atk-45, Def+45, Spe+10, SpA-60, SpD+45 | WATER/ROCK | - | - | 8 | 25 | SURF (WATER 95bp 100%) | EARTHQUAKE (GROUND 100bp 100%) |
 | 0 | `FERALIGATR` | `current-final` | 555 | 613 | -58 | 85/105/100/87/95/83 | HP-3, Atk-22, Def-3, Spe+5, SpA-30, SpD-5 | WATER/FIGHTING | - | - | 10 | 32 | FOCUS_PUNCH (FIGHTING 150bp 100%) | HYPER_BEAM (NORMAL 180bp 90%) |
 | 0 | `MANTINE` | `current-final` | 555 | 575 | -20 | 95/40/85/90/105/140 | HP-10, Atk-40, Def+15, Spe-10, SpA+25 | WATER/FLYING | - | - | 12 | 21 | HYDRO_PUMP (WATER 120bp 80%) | TAKE_DOWN (NORMAL 120bp 85%) |
 | 0 | `POLITOED` | `current-final` | 555 | 500 | 55 | 100/70/80/85/115/105 | HP+10, Atk-5, Def+5, Spe+15, SpA+25, SpD+5 | WATER/WATER | - | - | 7 | 29 | HYDRO_PUMP (WATER 120bp 80%) | HYPER_BEAM (NORMAL 180bp 90%) |

@@ -945,7 +945,7 @@ lives in each same file after the stat/type/item rows.
 | 219 | Magcargo | Fire/Rock | 80 | 100 | 120 | 30 | 100 | 80 | 510 | `NO_ITEM`, `NO_ITEM` |
 | 220 | Swinub | Ice/Ground | 50 | 50 | 40 | 50 | 30 | 30 | 250 | `NO_ITEM`, `NO_ITEM` |
 | 221 | Piloswine | Ice/Ground | 140 | 100 | 120 | 50 | 60 | 90 | 560 | `NO_ITEM`, `NO_ITEM` |
-| 222 | Corsola | Water/Rock | 95 | 80 | 130 | 45 | 75 | 130 | 555 | `NO_ITEM`, `NO_ITEM` |
+| 222 | Corsola | Water/Rock | 65 | 80 | 90 | 45 | 75 | 90 | 445 | `NO_ITEM`, `NO_ITEM` |
 | 223 | Remoraid | Water | 35 | 65 | 35 | 65 | 65 | 35 | 300 | `NO_ITEM`, `NO_ITEM` |
 | 224 | Octillery | Water | 75 | 105 | 75 | 80 | 105 | 75 | 515 | `NO_ITEM`, `NO_ITEM` |
 | 225 | Delibird | Ice/Flying | 100 | 55 | 45 | 75 | 65 | 150 | 490 | `NO_ITEM`, `NO_ITEM` |

@@ -50,7 +50,7 @@ only visible in generated audit output.
 | `DEWGONG` | Upgraded into an Ice/Water utility spinner with Encore/Haze; Pryce now uses it instead of Starmie. | Watch midgame defensive pacing. |
 | `POLITOED` | Upgraded into a rain support Water with better mixed bulk; Misty now uses it instead of Cloyster. | Watch rain-team redundancy with Lapras. |
 | `QWILFISH` | Upgraded into a faster Poison/Water Spikes trade piece; Janine now uses it instead of Ariados. | Watch Explosion pressure. |
-| `CORSOLA` | Upgraded into a sturdier Rock/Water Recover spinner; Brock now uses it instead of Donphan. | Watch late Rock-team stall pacing. |
+| `CORSOLA` | Repositioned as an early Union Cave / Route 33 Rock/Water pickup that still grows into Brock's Recover spinner instead of Donphan. | Watch pre-Bugsy catch feel and late Rock-team stall pacing. |
 | `ELECTRODE` | Added Rapid Spin access so Electric teams can clear hazards without importing Donphan. | Watch if the fastest spinner is too clean. |
 | `DELIBIRD` | Upgraded from Present-only into an Ice/Flying utility wall with Icy Wind, Aurora Beam, Agility, Wing Attack, Haze, and late Blizzard. | Watch Silver Ice Path catch feel and Pokefan Colin's level 32 Delibird. |
 | `FARFETCH_D` | Moved into a provisional Stick-backed crit attacker role: wild Farfetch'd now commonly carry Stick, learn Wing Attack at level 23, and Stick's item text names its critical-ratio effect. | Playtest Route 38 catch feel and Bird Keeper Jose/Perry trainer showcases. |
