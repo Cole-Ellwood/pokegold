@@ -128,6 +128,8 @@ def collect_timeline(
 
 def collect_report_timeline(data: dict[str, Any], *, source: str, out: list[dict[str, Any]]) -> None:
     kind = data.get("kind", "")
+    for next_step in embedded_next_step_reports(data):
+        collect_report_timeline(next_step, source=source, out=out)
     if kind == "unified_debugger_watch_report":
         for event in dict_items(data.get("events")):
             out.append(
@@ -143,6 +145,45 @@ def collect_report_timeline(data: dict[str, Any], *, source: str, out: list[dict
                     ).strip(),
                     symbols=[str(event.get("watch", "")), str(event.get("pc_label", ""))],
                     severity=70,
+                )
+            )
+    elif kind == "unified_debugger_capability_report":
+        ready = bool(data.get("ready"))
+        status_counts = status_counts_text(data)
+        for capability in incomplete_capabilities(data):
+            status = str(capability.get("status", "partial"))
+            out.append(
+                timeline_event(
+                    lane="readiness",
+                    event_type=f"capability_{status}",
+                    title=f"Capability {status}: {capability_title(capability)}",
+                    source=source,
+                    detail=" ".join(
+                        part
+                        for part in (
+                            f"ready={ready}",
+                            status_counts,
+                            first_gap(capability),
+                        )
+                        if part
+                    ),
+                    symbols=string_items(capability.get("id")),
+                    files=string_items(capability.get("evidence")),
+                    severity=78 if status == "missing" else 64,
+                )
+            )
+    elif kind == "unified_debugger_next_step":
+        for index, candidate in enumerate(next_step_candidates(data)):
+            out.append(
+                timeline_event(
+                    lane="workflow",
+                    event_type="next_step",
+                    title=f"Next proof path: {candidate_title(candidate)}",
+                    source=source,
+                    order=index,
+                    detail=next_step_detail(candidate),
+                    symbols=string_items(candidate.get("matched_lane")),
+                    severity=52,
                 )
             )
     elif kind == "unified_debugger_replay_plan":
@@ -775,6 +816,8 @@ def collect_waterfall(*, loaded_reports: list[dict[str, Any]]) -> list[dict[str,
     for loaded in loaded_reports:
         data = loaded["data"]
         source = loaded["source"]
+        for next_step in embedded_next_step_reports(data):
+            steps.extend(collect_waterfall(loaded_reports=[{"data": next_step, "source": source}]))
         for phase in dict_items(data.get("phase_steps")):
             for index, step in enumerate(dict_items(phase.get("steps"))):
                 steps.append(
@@ -840,6 +883,60 @@ def collect_waterfall(*, loaded_reports: list[dict[str, Any]]) -> list[dict[str,
                     )
         if data.get("kind") == "unified_debugger_instruction_trace":
             collect_instruction_trace_waterfall(data, source=source, out=steps)
+        if data.get("kind") == "unified_debugger_capability_report":
+            for capability_index, capability in enumerate(incomplete_capabilities(data)):
+                for command_index, command in enumerate(string_items(capability.get("commands"))[:3]):
+                    steps.append(
+                        waterfall_step(
+                            phase="capability-audit",
+                            title=command,
+                            source=source,
+                            status=command_status(command),
+                            detail=(
+                                f"{capability.get('status', 'partial')} capability: "
+                                f"{capability.get('id', '')} - {first_gap(capability)}"
+                            ).strip(),
+                            order=capability_index * 10 + command_index,
+                        )
+                    )
+        if data.get("kind") == "unified_debugger_next_step":
+            for candidate_index, candidate in enumerate(next_step_candidates(data)):
+                first_command = str(candidate.get("first_command", ""))
+                if first_command:
+                    steps.append(
+                        waterfall_step(
+                            phase="prove",
+                            title=first_command,
+                            source=source,
+                            status=command_status(first_command),
+                            detail=next_step_detail(candidate),
+                            order=candidate_index * 10,
+                        )
+                    )
+                regression_gate = str(candidate.get("regression_gate", ""))
+                if regression_gate:
+                    steps.append(
+                        waterfall_step(
+                            phase="verify",
+                            title=regression_gate,
+                            source=source,
+                            status=command_status(regression_gate),
+                            detail=f"Regression gate for {candidate_title(candidate)}.",
+                            order=candidate_index * 10 + 1,
+                        )
+                    )
+                escalation_command = str(candidate.get("escalation_command", ""))
+                if escalation_command:
+                    steps.append(
+                        waterfall_step(
+                            phase="escalate",
+                            title=escalation_command,
+                            source=source,
+                            status=command_status(escalation_command),
+                            detail=f"Escalate after the first proof path for {candidate_title(candidate)}.",
+                            order=candidate_index * 10 + 2,
+                        )
+                    )
     return steps
 
 
@@ -850,6 +947,12 @@ def collect_graph(*, loaded_reports: list[dict[str, Any]]) -> dict[str, list[dic
         data = loaded["data"]
         source = loaded["source"]
         kind = data.get("kind", "")
+        for next_step in embedded_next_step_reports(data):
+            nested_graph = collect_graph(loaded_reports=[{"data": next_step, "source": source}])
+            for node in nested_graph["nodes"]:
+                nodes[node["id"]] = node
+            for edge in nested_graph["edges"]:
+                edges[(edge["from"], edge["to"], edge["relation"])] = edge
         if kind == "unified_debugger_causal_explanation":
             for path in dict_items(data.get("paths")):
                 for item in dict_items(path.get("nodes")):
@@ -951,6 +1054,59 @@ def collect_graph(*, loaded_reports: list[dict[str, Any]]) -> dict[str, list[dic
             collect_content_state_graph(data, source=source, nodes=nodes, edges=edges)
         elif kind == "unified_debugger_state_space":
             collect_state_space_graph(data, source=source, nodes=nodes, edges=edges)
+        elif kind == "unified_debugger_capability_report":
+            audit_id = f"{source}:capability_audit"
+            ready_label = f"Debugger audit ready={bool(data.get('ready'))}"
+            add_graph_node(nodes, audit_id, ready_label, "capability_audit", source)
+            for capability in incomplete_capabilities(data):
+                capability_id = f"{source}:capability:{capability.get('id', capability_title(capability))}"
+                add_graph_node(
+                    nodes,
+                    capability_id,
+                    capability_title(capability),
+                    str(capability.get("status", "partial")),
+                    source,
+                )
+                add_graph_edge(edges, audit_id, capability_id, str(capability.get("status", "partial")), source)
+                for index, command in enumerate(string_items(capability.get("commands"))[:3]):
+                    command_id = f"{capability_id}:command:{index}"
+                    add_graph_node(nodes, command_id, command, "proof_command", source)
+                    add_graph_edge(edges, capability_id, command_id, "proof_command", source)
+        elif kind == "unified_debugger_next_step":
+            symptom = str(data.get("symptom") or "<unspecified symptom>")
+            symptom_id = f"{source}:symptom:{symptom}"
+            add_graph_node(nodes, symptom_id, symptom, "symptom", source)
+            for candidate in next_step_candidates(data):
+                candidate_id = f"{source}:next:{candidate_title(candidate)}:{candidate.get('symptom_class', '')}"
+                add_graph_node(nodes, candidate_id, candidate_title(candidate), "next_step", source)
+                add_graph_edge(edges, symptom_id, candidate_id, "routes_to", source)
+                first_command = str(candidate.get("first_command", ""))
+                if first_command:
+                    command_id = f"{candidate_id}:first"
+                    add_graph_node(nodes, command_id, first_command, "proof_command", source)
+                    add_graph_edge(edges, candidate_id, command_id, "first_command", source)
+                for source_ref in string_items(candidate.get("source_refs"))[:6]:
+                    source_ref_id = f"source_ref:{source_ref}"
+                    add_graph_node(nodes, source_ref_id, source_ref, "source_ref", source)
+                    add_graph_edge(edges, candidate_id, source_ref_id, "source_ref", source)
+                for index, standard in enumerate(string_items(candidate.get("evidence_standard"))[:6]):
+                    standard_id = f"{candidate_id}:evidence_standard:{index}"
+                    add_graph_node(nodes, standard_id, standard, "evidence_standard", source)
+                    add_graph_edge(edges, candidate_id, standard_id, "evidence_standard", source)
+                for index, standard in enumerate(string_items(candidate.get("disproof_standard"))[:6]):
+                    standard_id = f"{candidate_id}:disproof_standard:{index}"
+                    add_graph_node(nodes, standard_id, standard, "disproof_standard", source)
+                    add_graph_edge(edges, candidate_id, standard_id, "disproof_standard", source)
+                regression_gate = str(candidate.get("regression_gate", ""))
+                if regression_gate:
+                    gate_id = f"{candidate_id}:regression"
+                    add_graph_node(nodes, gate_id, regression_gate, "regression_gate", source)
+                    add_graph_edge(edges, candidate_id, gate_id, "regression_gate", source)
+                escalation_command = str(candidate.get("escalation_command", ""))
+                if escalation_command:
+                    escalation_id = f"{candidate_id}:escalation"
+                    add_graph_node(nodes, escalation_id, escalation_command, "proof_command", source)
+                    add_graph_edge(edges, candidate_id, escalation_id, "escalates", source)
     return {
         "nodes": sorted(nodes.values(), key=lambda item: (item["type"], item["label"])),
         "edges": sorted(edges.values(), key=lambda item: (item["from"], item["to"], item["relation"])),
@@ -1397,6 +1553,8 @@ def waterfall_sort_key(item: dict[str, Any]) -> tuple[Any, ...]:
         "localize": 4,
         "prove": 5,
         "verify": 6,
+        "capability-audit": 7,
+        "escalate": 8,
     }
     return (phase_order.get(item.get("phase", ""), 50), item.get("source", ""), item.get("order", 0), item.get("title", ""))
 
@@ -1407,6 +1565,78 @@ def command_status(command: str) -> str:
     if "<" in command or ">" in command:
         return "needs-input"
     return "runnable"
+
+
+def incomplete_capabilities(data: dict[str, Any]) -> list[dict[str, Any]]:
+    return [
+        capability
+        for capability in dict_items(data.get("capabilities"))
+        if str(capability.get("status", "")) != "complete"
+    ]
+
+
+def capability_title(capability: dict[str, Any]) -> str:
+    return str(capability.get("title") or capability.get("id") or "<unknown capability>")
+
+
+def first_gap(capability: dict[str, Any]) -> str:
+    return next(iter(string_items(capability.get("gaps"))), "")
+
+
+def status_counts_text(data: dict[str, Any]) -> str:
+    status_counts = data.get("status_counts") if isinstance(data.get("status_counts"), dict) else {}
+    if not status_counts:
+        return ""
+    return "status_counts=" + ",".join(
+        f"{name}={count}" for name, count in sorted(status_counts.items())
+    )
+
+
+def next_step_candidates(data: dict[str, Any]) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    seen: set[tuple[str, str, str]] = set()
+    recommendation = data.get("recommendation") if isinstance(data.get("recommendation"), dict) else {}
+    for candidate in [recommendation, *dict_items(data.get("candidates"))]:
+        if not candidate:
+            continue
+        key = (
+            str(candidate.get("symptom_class", "")),
+            str(candidate.get("title", "")),
+            str(candidate.get("first_command", "")),
+        )
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(candidate)
+    return out
+
+
+def embedded_next_step_reports(data: dict[str, Any]) -> list[dict[str, Any]]:
+    next_step = data.get("symptom_only_next_step")
+    if isinstance(next_step, dict) and next_step.get("kind") == "unified_debugger_next_step":
+        return [next_step]
+    return []
+
+
+def candidate_title(candidate: dict[str, Any]) -> str:
+    return str(candidate.get("title") or candidate.get("symptom_class") or "<next step>")
+
+
+def next_step_detail(candidate: dict[str, Any]) -> str:
+    parts = [
+        f"lane={candidate.get('matched_lane', '')}",
+        f"class={candidate.get('symptom_class', '')}",
+        f"command={candidate.get('first_command', '')}",
+        "required=" + "; ".join(string_items(candidate.get("required_inputs"))),
+        "source_refs=" + "; ".join(string_items(candidate.get("source_refs"))),
+        "evidence_standard=" + "; ".join(string_items(candidate.get("evidence_standard"))),
+        "disproof_standard=" + "; ".join(string_items(candidate.get("disproof_standard"))),
+        f"regression_gate={candidate.get('regression_gate', '')}",
+    ]
+    proof_limit = str(candidate.get("proof_limit", ""))
+    if proof_limit:
+        parts.append(f"Proof limit: {proof_limit}")
+    return " ".join(part for part in parts if part and not part.endswith("="))
 
 
 def first_string(data: dict[str, Any], keys: tuple[str, ...]) -> str:

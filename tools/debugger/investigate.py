@@ -17,6 +17,7 @@ from .ingest import ingest_artifacts
 from .localize import build_localization_plan
 from .minimize import build_minimization_plan
 from .mirrors import build_compare_plan
+from .next_steps import build_next_step, symptom_only_investigation_note
 from .ranking import rank_findings
 from .replay import build_replay_plan
 from .reporting import build_static_report, write_static_report
@@ -65,6 +66,8 @@ def build_investigation_run(
     steps: list[dict[str, Any]] = []
     produced_reports: list[dict[str, Any]] = []
     report_paths = list(reports)
+    symptom_only_next_step: dict[str, Any] | None = None
+    symptom_only_next_step_note = ""
 
     ingest = ingest_artifacts(
         roms=(rom_path,) if rom_path else (),
@@ -86,6 +89,39 @@ def build_investigation_run(
         output_dir=output_dir,
         root=root,
     )
+
+    if symptom and not investigation_has_anchor(
+        rom_path=rom_path,
+        save_state=save_state,
+        traces=traces,
+        scenarios=scenarios,
+        reports=reports,
+        patches=patches,
+        changed_files=changed_files,
+        symbols=symbols,
+        watch_symbols=watch_symbols,
+        rules=rules,
+        addresses=addresses,
+        expectations=expectations,
+        expectation_files=expectation_files,
+        families=families,
+    ):
+        symptom_only_next_step = build_next_step(symptom=symptom, root=root)
+        symptom_only_next_step_note = symptom_only_investigation_note(
+            {"symptom": symptom},
+            next_step=symptom_only_next_step,
+        )
+        add_report(
+            steps,
+            produced_reports,
+            report_paths,
+            step_id="01_next_step",
+            phase="triage",
+            title="Route symptom-only next proof path",
+            data=symptom_only_next_step,
+            output_dir=output_dir,
+            root=root,
+        )
 
     if save_state:
         if is_vbam_sgm_path(save_state):
@@ -601,7 +637,7 @@ def build_investigation_run(
     failed_steps = [step for step in steps if step.get("status") == "failed"]
     skipped_steps = [step for step in steps if step.get("status") == "skipped"]
 
-    return {
+    result = {
         "schema_version": 1,
         "kind": "unified_debugger_investigation_run",
         "root": str(root),
@@ -646,6 +682,47 @@ def build_investigation_run(
             "Subsystem semantic reducers and exact mirrors still own behavior-specific proof where they exist.",
         ],
     }
+    if symptom_only_next_step is not None:
+        result["symptom_only_next_step_note"] = symptom_only_next_step_note
+        result["symptom_only_next_step"] = symptom_only_next_step
+    return result
+
+
+def investigation_has_anchor(
+    *,
+    rom_path: str,
+    save_state: str,
+    traces: tuple[str, ...],
+    scenarios: tuple[str, ...],
+    reports: tuple[str, ...],
+    patches: tuple[str, ...],
+    changed_files: tuple[str, ...],
+    symbols: tuple[str, ...],
+    watch_symbols: tuple[str, ...],
+    rules: tuple[str, ...],
+    addresses: tuple[str, ...],
+    expectations: tuple[str, ...],
+    expectation_files: tuple[str, ...],
+    families: tuple[str, ...],
+) -> bool:
+    return any(
+        (
+            rom_path,
+            save_state,
+            traces,
+            scenarios,
+            reports,
+            patches,
+            changed_files,
+            symbols,
+            watch_symbols,
+            rules,
+            addresses,
+            expectations,
+            expectation_files,
+            families,
+        )
+    )
 
 
 def add_report(
@@ -780,6 +857,10 @@ def summarize_report(data: dict[str, Any]) -> dict[str, Any]:
 
 def collect_report_commands(data: dict[str, Any]) -> list[str]:
     commands: list[str] = []
+    recommendation = data.get("recommendation") if isinstance(data.get("recommendation"), dict) else {}
+    add_strings(commands, recommendation.get("first_command"))
+    add_strings(commands, recommendation.get("regression_gate"))
+    add_strings(commands, recommendation.get("escalation_command"))
     add_strings(commands, data.get("commands"))
     add_strings(commands, data.get("runnable_commands"))
     add_strings(commands, data.get("blocked_commands"))

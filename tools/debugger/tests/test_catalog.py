@@ -126,6 +126,11 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("rom-switch-materialize", rec["first_command"])
         self.assertTrue(rec["required_inputs"])
         self.assertTrue(rec["proof_limit"])
+        self.assertIn("tools/boss_ai_debugger/rom_switch_materialize.py", rec["source_refs"])
+        self.assertIn("engine/battle/ai/boss_policy_switch.asm", rec["source_refs"])
+        self.assertIn("rom-switch-materialize", rec["evidence_standard"][0])
+        self.assertIn("expected switch result", rec["disproof_standard"][0])
+        self.assertIn("rom-switch-materialize", rec["regression_gate"])
         self.assertIn("escalation_command", rec)
 
     def test_next_step_routes_reset_crashes_before_counter_substrings(self) -> None:
@@ -198,6 +203,10 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
             self.assertTrue(row["first_command"])
             self.assertTrue(row["required_inputs"])
             self.assertTrue(row["proof_limit"])
+            self.assertTrue(row["source_refs"])
+            self.assertTrue(row["evidence_standard"])
+            self.assertTrue(row["disproof_standard"])
+            self.assertTrue(row["regression_gate"])
             self.assertIn("escalation_command", row)
 
     def test_next_step_routes_each_rom_expansion_boss_ai_class(self) -> None:
@@ -285,6 +294,10 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
 
         self.assertEqual(rec["matched_lane"], "pokemon_semantics")
         self.assertIn("learnset-inspect", rec["first_command"])
+        self.assertIn("data/pokemon/evos_attacks.asm", rec["source_refs"])
+        self.assertIn("Source semantic inspection", rec["evidence_standard"][0])
+        self.assertIn("expected semantics", rec["disproof_standard"][0])
+        self.assertIn("learnset-inspect", rec["regression_gate"])
 
     def test_species_id_map_ignores_unown_form_constants(self) -> None:
         by_id = damage_state.species_name_by_id()
@@ -328,6 +341,10 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
                 "first_command",
                 "required_inputs",
                 "proof_limit",
+                "source_refs",
+                "evidence_standard",
+                "disproof_standard",
+                "regression_gate",
                 "escalation_command",
             ):
                 self.assertIn(key, data["recommendation"])
@@ -357,6 +374,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
 
     def test_cli_investigate_symptom_only_points_to_next(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
+            json_out = Path(tmp) / "investigate.json"
             stdout = io.StringIO()
             with redirect_stdout(stdout):
                 code = debugger_main(
@@ -372,6 +390,8 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
                         "1",
                         "--max-cases",
                         "1",
+                        "--json-out",
+                        str(json_out),
                     ]
                 )
 
@@ -379,6 +399,18 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
             text = stdout.getvalue()
             self.assertIn("planning packet, not a repro", text)
             self.assertIn("python -m tools.debugger next --symptom", text)
+            self.assertIn("Next proof path", text)
+            self.assertIn("rom-switch-materialize", text)
+            data = json.loads(json_out.read_text(encoding="utf-8"))
+            next_step = data["symptom_only_next_step"]
+            rec = next_step["recommendation"]
+            self.assertEqual(next_step["kind"], "unified_debugger_next_step")
+            self.assertEqual(rec["symptom_class"], "wrong_switch")
+            self.assertIn("rom-switch-materialize", rec["first_command"])
+            self.assertIn("tools/boss_ai_debugger/rom_switch_materialize.py", rec["source_refs"])
+            self.assertIn("rom-switch-materialize", rec["evidence_standard"][0])
+            self.assertIn("expected switch result", rec["disproof_standard"][0])
+            self.assertIn("rom-switch-materialize", rec["regression_gate"])
 
     def test_cli_audit_strict_fails_until_whole_rom_goal_is_done(self) -> None:
         with redirect_stdout(io.StringIO()):
@@ -682,6 +714,45 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("tools.debugger watch --watch-symbol wTypeMatchup", commands)
         self.assertIn("tools.debugger slice --symbol BattleCheckTypeMatchup", commands)
         self.assertIn("tools.debugger slice --source-file engine/battle/late_gen_held_items.asm", commands)
+
+    def test_localize_uses_embedded_next_step_sources_and_proof_commands(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            investigation_report = root / "investigate.json"
+            investigation_report.write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_investigation_run",
+                        "valid": True,
+                        "passed": True,
+                        "symptom": "boss selected wrong switch",
+                        "steps": [],
+                        "top_findings": [],
+                        "top_impact": [],
+                        "commands": [],
+                        "errors": [],
+                        "warnings": [],
+                        "symptom_only_next_step": build_next_step(symptom="boss selected wrong switch"),
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            report = build_localization_plan(reports=("investigate.json",), root=root)
+
+        candidate_ids = {candidate["id"] for candidate in report["candidates"]}
+        signal_types = {item["type"] for item in report["signals"]}
+        commands = "\n".join(report["commands"])
+
+        self.assertTrue(report["valid"])
+        self.assertIn("tools/boss_ai_debugger/rom_switch_materialize.py", candidate_ids)
+        self.assertIn("engine/battle/ai/boss_policy_switch.asm", candidate_ids)
+        self.assertIn("engine/battle/ai/switch.asm", candidate_ids)
+        self.assertIn("next_step_source_ref", signal_types)
+        self.assertIn("next_step_evidence_standard", signal_types)
+        self.assertIn("next_step_disproof_standard", signal_types)
+        self.assertIn("next_step_regression_gate", signal_types)
+        self.assertIn("rom-switch-materialize --scenarios <scenarios.jsonl> --fail-on-mismatch", commands)
 
     def test_localize_uses_watch_report_events_as_strong_signal(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -9460,6 +9531,71 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("instruction trace missed functions: CallScript", static_report["content"])
         self.assertIn("instruction trace validation: hit=True", static_report["content"])
 
+    def test_visualization_preserves_next_step_proof_path(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            next_report = root / "next.json"
+            next_report.write_text(
+                json.dumps(build_next_step(symptom="boss selected wrong switch")),
+                encoding="utf-8",
+            )
+
+            visualization = build_visualization_report(reports=("next.json",), root=root)
+
+        event_types = {event["type"] for event in visualization["timeline"]}
+        waterfall_statuses = {step["status"] for step in visualization["waterfall"]}
+        graph_relations = {edge["relation"] for edge in visualization["graph"]["edges"]}
+        graph_node_types = {node["type"] for node in visualization["graph"]["nodes"]}
+        graph_labels = {node["label"] for node in visualization["graph"]["nodes"]}
+
+        self.assertTrue(visualization["valid"])
+        self.assertEqual(visualization["warning_count"], 0)
+        self.assertIn("next_step", event_types)
+        self.assertIn("needs-input", waterfall_statuses)
+        self.assertIn("first_command", graph_relations)
+        self.assertIn("source_ref", graph_relations)
+        self.assertIn("evidence_standard", graph_relations)
+        self.assertIn("disproof_standard", graph_relations)
+        self.assertIn("regression_gate", graph_relations)
+        self.assertIn("source_ref", graph_node_types)
+        self.assertIn("evidence_standard", graph_node_types)
+        self.assertIn("disproof_standard", graph_node_types)
+        self.assertIn("engine/battle/ai/boss_policy_switch.asm", graph_labels)
+        self.assertIn("regression_gate", graph_node_types)
+        self.assertIn("Next proof path", visualization["content"])
+        self.assertIn("rom-switch-materialize", visualization["content"])
+        self.assertIn("tools/boss_ai_debugger/rom_switch_materialize.py", visualization["content"])
+        self.assertIn("evidence_standard=", visualization["content"])
+        self.assertIn("disproof_standard=", visualization["content"])
+        self.assertIn("scenario JSONL with the disputed switch case", visualization["content"])
+        self.assertIn("Regression gate", visualization["content"])
+        self.assertIn("Proof limit:", visualization["content"])
+
+    def test_visualization_preserves_capability_audit_gaps(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            audit_report = root / "audit.json"
+            audit_report.write_text(
+                json.dumps(build_capability_report()),
+                encoding="utf-8",
+            )
+
+            visualization = build_visualization_report(reports=("audit.json",), root=root)
+
+        lanes = {lane["lane"] for lane in visualization["lane_summary"]}
+        event_types = {event["type"] for event in visualization["timeline"]}
+        graph_node_types = {node["type"] for node in visualization["graph"]["nodes"]}
+
+        self.assertTrue(visualization["valid"])
+        self.assertEqual(visualization["warning_count"], 0)
+        self.assertIn("readiness", lanes)
+        self.assertIn("capability_partial", event_types)
+        self.assertIn("capability_audit", graph_node_types)
+        self.assertIn("proof_command", graph_node_types)
+        self.assertIn("Capability partial: Whole-ROM replay and localization", visualization["content"])
+        self.assertIn("ready=False", visualization["content"])
+        self.assertIn("python -m tools.debugger setup --symbol wCurDamage", visualization["content"])
+
     def test_static_report_summarizes_findings_and_commands(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -9495,6 +9631,98 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("# Debug Session", report["content"])
         self.assertIn("Mirror gap", report["content"])
         self.assertIn("python compare.py", report["content"])
+
+    def test_static_report_preserves_next_step_proof_path(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            next_report = root / "next.json"
+            next_report.write_text(
+                json.dumps(build_next_step(symptom="boss selected wrong switch")),
+                encoding="utf-8",
+            )
+
+            ranked = rank_findings(reports=("next.json",), root=root)
+            report = build_static_report(reports=("next.json",), root=root)
+
+        self.assertTrue(ranked["valid"])
+        self.assertEqual(ranked["findings"][0]["type"], "next_step")
+        self.assertNotIn("Unsupported report kind", report["content"])
+        self.assertIn("Next proof path", report["content"])
+        self.assertIn("rom-switch-materialize", report["content"])
+        self.assertIn("scenario JSONL with the disputed switch case", report["content"])
+        self.assertIn("source/data: tools/boss_ai_debugger/rom_switch_materialize.py", report["content"])
+        self.assertIn("evidence standard: A scenario JSONL matching the disputed switch case passes rom-switch-materialize", report["content"])
+        self.assertIn("disproof standard: If a matching scenario JSONL passes rom-switch-materialize with the expected switch result", report["content"])
+        self.assertIn("regression gate: python -m tools.boss_ai_debugger rom-switch-materialize", report["content"])
+        self.assertIn("Proof limit:", report["content"])
+
+    def test_symptom_only_investigation_preserves_embedded_next_step(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            investigation_report = root / "investigate.json"
+            investigation_report.write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_investigation_run",
+                        "valid": True,
+                        "passed": True,
+                        "symptom": "boss selected wrong switch",
+                        "steps": [],
+                        "top_findings": [],
+                        "top_impact": [],
+                        "commands": [],
+                        "errors": [],
+                        "warnings": [],
+                        "symptom_only_next_step_note": "No runtime evidence supplied.",
+                        "symptom_only_next_step": build_next_step(symptom="boss selected wrong switch"),
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            ranked = rank_findings(reports=("investigate.json",), root=root)
+            report = build_static_report(reports=("investigate.json",), root=root)
+            visualization = build_visualization_report(reports=("investigate.json",), root=root)
+
+        finding_types = {finding["type"] for finding in ranked["findings"]}
+        graph_relations = {edge["relation"] for edge in visualization["graph"]["edges"]}
+        timeline_types = {event["type"] for event in visualization["timeline"]}
+        waterfall_titles = "\n".join(step["title"] for step in visualization["waterfall"])
+        self.assertTrue(ranked["valid"])
+        self.assertIn("next_step", finding_types)
+        self.assertIn("Next proof path", report["content"])
+        self.assertIn("rom-switch-materialize", report["content"])
+        self.assertIn("source/data: tools/boss_ai_debugger/rom_switch_materialize.py", report["content"])
+        self.assertIn("evidence standard: A scenario JSONL matching the disputed switch case passes rom-switch-materialize", report["content"])
+        self.assertIn("disproof standard: If a matching scenario JSONL passes rom-switch-materialize with the expected switch result", report["content"])
+        self.assertIn("regression gate: python -m tools.boss_ai_debugger rom-switch-materialize", report["content"])
+        self.assertIn("next_step", timeline_types)
+        self.assertIn("rom-switch-materialize", waterfall_titles)
+        self.assertIn("source_ref", graph_relations)
+        self.assertIn("evidence_standard", graph_relations)
+        self.assertIn("disproof_standard", graph_relations)
+        self.assertIn("regression_gate", graph_relations)
+
+    def test_static_report_preserves_capability_audit_gaps(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            audit_report = root / "audit.json"
+            audit_report.write_text(
+                json.dumps(build_capability_report()),
+                encoding="utf-8",
+            )
+
+            ranked = rank_findings(reports=("audit.json",), root=root)
+            report = build_static_report(reports=("audit.json",), root=root)
+
+        finding_types = {finding["type"] for finding in ranked["findings"]}
+        self.assertTrue(ranked["valid"])
+        self.assertIn("capability_partial", finding_types)
+        self.assertNotIn("Unsupported report kind", report["content"])
+        self.assertIn("Capability partial: Whole-ROM replay and localization", report["content"])
+        self.assertIn("ready=False", report["content"])
+        self.assertIn("partial capability: whole_rom_replay_localization", report["content"])
+        self.assertIn("python -m tools.debugger setup --symbol wCurDamage", report["content"])
 
     def test_cli_report_writes_static_file(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

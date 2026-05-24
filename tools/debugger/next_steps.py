@@ -263,6 +263,331 @@ NEXT_STEP_ROWS = [
     },
 ]
 
+REGRESSION_GATES = {
+    "script_vm_impossible_state": "python -m tools.debugger script-resume-gate --report .local\\tmp\\debugger_runtime_state.json",
+    "vram_request_contract": "python tools\\audit\\check_vram_request_contract.py",
+    "crash_reset": "python -m tools.debugger watch --reset-sentinel --rom pokegold.gbc --symbols pokegold.sym --save-state <state-before-trigger> --frames 1200 --context-frames 20",
+    "overworld_poison_cure": "python tools\\audit\\check_overworld_poison_cure.py",
+    "base_ai_move_legality": "python tools\\audit\\check_base_ai_mechanics_correctness.py",
+    "boss_ai_sleep_clause_move_legality": "python -m tools.boss_ai_debugger move-score-probe --trainer <TRAINER> --enemy <ENEMY> --player-save <save.sav> --player-slot <slot> --sleep-clause both --trace",
+    "boss_ai_type_immunity_move_choice": "python -m tools.boss_ai_debugger move-score-probe --trainer <TRAINER> --enemy <ENEMY> --player-save <save.sav> --player-slot <slot> --trace",
+    "boss_ai_hidden_power_type": "python -m tools.boss_ai_debugger move-score-probe --trainer <TRAINER> --enemy <ENEMY> --player-save <save.sav> --player-slot <slot> --trace",
+    "early_boss_debuff_spam": "python -m tools.boss_ai_debugger batch-simulate --scenarios .local\\tmp\\early_boss_debuff_scenarios.jsonl --limit 20",
+    "learnset_semantics": "python -m tools.debugger learnset-inspect --species <SPECIES> --level <LEVEL>",
+    "grass_regrowth_balance": "python -m tools.debugger grass-regrowth --max-total-hp 300",
+    "base_data_mutation_hazard": "python tools\\audit\\bug_hunt_triage.py --max-leads 12",
+    "move_search_unbounded": "python tools\\audit\\bug_hunt_triage.py --max-leads 12",
+    "haki_taunt_read": "python tools\\audit\\check_haki_oracle_uniform.py",
+    "ko_band_pressure": "python tools\\audit\\check_ko_band_oracle_materialized.py",
+    "revealed_effect_response": "python tools\\audit\\check_revealed_effect_matrix_coverage.py",
+    "observation_tendency_behavior": "python tools\\audit\\check_observation_log_invariants.py",
+    "role_package": "python tools\\audit\\check_role_package_classifier.py",
+    "coach_template": "python tools\\audit\\check_coach_plan_templates.py",
+    "wrong_switch": "python -m tools.boss_ai_debugger rom-switch-materialize --scenarios <scenarios.jsonl> --fail-on-mismatch",
+    "wrong_move_score": "python -m tools.boss_ai_debugger rom-score-materialize --scenarios <scenarios.jsonl> --fail-on-mismatch",
+    "general": "python -m tools.debugger audit",
+}
+
+
+SOURCE_REFS = {
+    "script_vm_impossible_state": [
+        "tools/debugger/save_state_inspect.py",
+        "tools/debugger/script_resume_gate.py",
+        "tools/debugger/repro_recipes.py",
+    ],
+    "vram_request_contract": [
+        "tools/audit/check_vram_request_contract.py",
+        "home/gfx.asm",
+        "home/video.asm",
+    ],
+    "crash_reset": [
+        "tools/debugger/runtime_watch.py",
+        "tools/debugger/repro_recipes.py",
+        "tools/debugger/wram_bank_hazards.py",
+    ],
+    "overworld_poison_cure": [
+        "tools/audit/check_overworld_poison_cure.py",
+        "engine/events/poisonstep.asm",
+    ],
+    "base_ai_move_legality": [
+        "tools/audit/check_base_ai_mechanics_correctness.py",
+        "engine/battle/ai/move.asm",
+    ],
+    "boss_ai_sleep_clause_move_legality": [
+        "tools/boss_ai_debugger/damage_ai_report.py",
+        "tools/boss_ai_debugger/move_score_probe.py",
+        "engine/battle/ai/boss_policy_move.asm",
+    ],
+    "boss_ai_type_immunity_move_choice": [
+        "tools/boss_ai_debugger/damage_ai_report.py",
+        "tools/boss_ai_debugger/move_score_probe.py",
+        "engine/battle/ai/boss_policy_move.asm",
+        "engine/battle/ai/boss_platform.asm",
+    ],
+    "boss_ai_hidden_power_type": [
+        "tools/boss_ai_debugger/move_score_probe.py",
+        "engine/battle/ai/boss_policy_move.asm",
+        "engine/battle/ai/boss_platform.asm",
+        "engine/battle/hidden_power.asm",
+    ],
+    "early_boss_debuff_spam": [
+        "tools/boss_ai_debugger/damage_ai_report.py",
+        "tools/boss_ai_debugger/rom_scenarios.py",
+        "engine/battle/ai/boss_policy_move.asm",
+    ],
+    "learnset_semantics": [
+        "tools/debugger/pokemon_semantics.py",
+        "data/pokemon/evos_attacks.asm",
+    ],
+    "grass_regrowth_balance": [
+        "tools/debugger/pokemon_semantics.py",
+        "engine/battle/type_passive_damage_mods.asm",
+    ],
+    "base_data_mutation_hazard": [
+        "tools/audit/bug_hunt_triage.py",
+        "engine/pokemon/tempmon.asm",
+        "engine/battle/ai/boss_policy_switch.asm",
+        "engine/battle/ai/boss_policy_move.asm",
+    ],
+    "move_search_unbounded": [
+        "tools/audit/bug_hunt_triage.py",
+        "engine/battle/move_effects/sketch.asm",
+        "engine/battle/effect_commands.asm",
+    ],
+    "haki_taunt_read": [
+        "tools/audit/check_haki_oracle_uniform.py",
+        "engine/battle/ai/haki_taunt_queue.asm",
+        "data/boss_ai/haki_taunts.asm",
+    ],
+    "ko_band_pressure": [
+        "tools/audit/check_ko_band_oracle_self_test.py",
+        "tools/audit/check_ko_band_oracle_materialized.py",
+        "engine/battle/ai/ko_band_oracle.asm",
+    ],
+    "revealed_effect_response": [
+        "tools/audit/check_revealed_effect_matrix_coverage.py",
+        "data/boss_ai/revealed_effect_matrix.asm",
+        "engine/battle/ai/boss_policy_move.asm",
+    ],
+    "observation_tendency_behavior": [
+        "tools/audit/check_observation_log_invariants.py",
+        "engine/battle/ai/observation_log.asm",
+        "engine/battle/ai/boss_policy_move.asm",
+    ],
+    "role_package": [
+        "tools/boss_ai_debugger/role_packages.py",
+        "tools/audit/check_role_package_classifier.py",
+        "data/boss_ai/role_package_classifier.asm",
+        "engine/battle/ai/boss_policy_switch.asm",
+    ],
+    "coach_template": [
+        "tools/boss_ai_debugger/coach_plan_templates.py",
+        "tools/audit/check_coach_plan_templates.py",
+        "data/boss_ai/coach_plan_templates.asm",
+        "engine/battle/ai/boss_policy_move.asm",
+    ],
+    "wrong_switch": [
+        "tools/boss_ai_debugger/rom_switch_materialize.py",
+        "engine/battle/ai/boss_policy_switch.asm",
+        "engine/battle/ai/switch.asm",
+        "tools/boss_ai_debugger/README.md",
+    ],
+    "wrong_move_score": [
+        "tools/boss_ai_debugger/decision_trace.py",
+        "tools/boss_ai_debugger/rom_score_materialize.py",
+        "engine/battle/ai/boss_policy_move.asm",
+        "tools/boss_ai_debugger/scorer.py",
+    ],
+    "general": [
+        "tools/debugger/README.md",
+        "docs/README.md",
+        "docs/project_roadmap.md",
+    ],
+}
+
+
+EVIDENCE_STANDARDS = {
+    "script_vm_impossible_state": [
+        "A captured state report shows impossible script PC/bank/stack state, and the fix claim is rerun through script-resume-gate on a before-trigger watch.",
+    ],
+    "vram_request_contract": [
+        "The VRAM request contract audit passes on current source, and any supplied evolution/graphics trigger stays clear under a reset-sentinel watch.",
+    ],
+    "crash_reset": [
+        "A before-trigger replay/watch either catches the reset sentinel with PC/register/WRAM context or reruns the same trigger window clean after a fix.",
+    ],
+    "overworld_poison_cure": [
+        "The committed poison-step repro audit passes; claims beyond that fixture need an exact save/replay for the reported status path.",
+    ],
+    "base_ai_move_legality": [
+        "The base AI mechanics audit proves the shared legality gate, and a specific trainer claim needs a scenario or emulator replay for that battle.",
+    ],
+    "boss_ai_sleep_clause_move_legality": [
+        "A save-backed move-score probe with active Sleep Clause shows the sleep move is rejected or explains the live score delta.",
+    ],
+    "boss_ai_type_immunity_move_choice": [
+        "A save-backed damage/move-score report shows the type-immunity score path and is paired with trace or ROM materialization before a live-fight claim.",
+    ],
+    "boss_ai_hidden_power_type": [
+        "A trace or materialized probe shows the live Hidden Power type path and the score/legality decision that used it.",
+    ],
+    "early_boss_debuff_spam": [
+        "Repeated generated or save-backed boss states show the debuff score pattern across turns, not just a single surprising move.",
+    ],
+    "learnset_semantics": [
+        "Source learnset inspection proves the current table projection; save-specific claims also inspect the party slot in the supplied save.",
+    ],
+    "grass_regrowth_balance": [
+        "The formula mirror prints the cutoff for the current source, and battle-state eligibility is proven separately when the report is live-state-specific.",
+    ],
+    "base_data_mutation_hazard": [
+        "Static triage names a concrete lead, then provenance or a targeted trace proves whether the candidate GetBaseData path mutates the reported state.",
+    ],
+    "move_search_unbounded": [
+        "Static triage identifies the exact move-search lead, then source proof or a runtime trace confirms the missing bound/restoration behavior.",
+    ],
+    "haki_taunt_read": [
+        "The Haki oracle audit passes on current source tables, and emulator-live textbox/render claims need a separate live scenario.",
+    ],
+    "ko_band_pressure": [
+        "The KO-band oracle materialization audit passes for committed scenarios; arbitrary fight claims need a matching scenario file.",
+    ],
+    "revealed_effect_response": [
+        "The revealed-effect matrix coverage audit proves dispatch/table coverage, while a specific battle branch needs scenario-backed state.",
+    ],
+    "observation_tendency_behavior": [
+        "The observation invariant audit passes its golden tendency/calibration cases, and arbitrary multi-turn claims need a reconstructed fight state.",
+    ],
+    "role_package": [
+        "The role-package debugger/table audit agrees for the species under question, and switch-confidence claims also need a scenario/control case.",
+    ],
+    "coach_template": [
+        "The coach-template debugger emits the committed golden scenarios and the audit confirms the shipped template decision deltas.",
+    ],
+    "wrong_switch": [
+        "A scenario JSONL matching the disputed switch case passes rom-switch-materialize on the current ROM with --fail-on-mismatch.",
+    ],
+    "wrong_move_score": [
+        "Decision trace explains the disputed score from the scenario, and rom-score-materialize passes before claiming emulator-equivalent scoring.",
+    ],
+    "general": [
+        "Triage chooses a concrete lane and the follow-up command is rerun with the required artifacts named by that lane.",
+    ],
+}
+
+
+DISPROOF_STANDARDS = {
+    "script_vm_impossible_state": [
+        "If the same captured or before-trigger state passes script-resume-gate and no invalid script/reset event appears in the replay window, this route did not reproduce the script-VM failure.",
+    ],
+    "vram_request_contract": [
+        "If the contract audit passes and a reset-sentinel watch of the reported graphics trigger shows no stuck request or reset, look outside queued VRAM request acknowledgement.",
+    ],
+    "crash_reset": [
+        "If the reported trigger replay never reaches reset/start vectors and PC/SP snapshots stay coherent, this route did not reproduce the reset; extend the trigger or reroute.",
+    ],
+    "overworld_poison_cure": [
+        "If the poison-step audit passes and an exact save/replay does not reproduce the reported HP/status transition, reject this poison-step bug class.",
+    ],
+    "base_ai_move_legality": [
+        "If the base AI audit passes and a matching battle scenario shows the shared legality gate rejects the reported illegal move, look outside base AI legality.",
+    ],
+    "boss_ai_sleep_clause_move_legality": [
+        "If the save-backed probe with the same Sleep Clause state rejects the sleep move and trace/materialization agrees, the reported choice is not explained by this gate.",
+    ],
+    "boss_ai_type_immunity_move_choice": [
+        "If the matching save/scenario scores the immune move as illegal or losing and trace/materialization agrees, reroute to state mismatch, Hidden Power typing, or scenario setup.",
+    ],
+    "boss_ai_hidden_power_type": [
+        "If trace/materialization shows the expected live Hidden Power type and the score used that type, reject a stale-type hypothesis.",
+    ],
+    "early_boss_debuff_spam": [
+        "If repeated generated or save-backed states do not keep selecting/scoring debuffs across turns, treat the report as a single-turn surprise rather than spam.",
+    ],
+    "learnset_semantics": [
+        "If source inspection and party inspection both show the expected move set for the named species/level/save, reject a learnset-table bug.",
+    ],
+    "grass_regrowth_balance": [
+        "If the formula mirror shows the expected cutoff and live-state eligibility is absent, reject a formula/cutoff bug and investigate battle-state gating instead.",
+    ],
+    "base_data_mutation_hazard": [
+        "If static provenance or runtime trace shows the candidate GetBaseData path restores the reported state before reuse, reject this mutation-hazard lead.",
+    ],
+    "move_search_unbounded": [
+        "If source proof or trace shows the move-search loop is bounded and restores the reported last-move state, reject this move-search bug class.",
+    ],
+    "haki_taunt_read": [
+        "If the Haki oracle audit passes and a live scenario does not show the reported taunt/read, reject this oracle-read route.",
+    ],
+    "ko_band_pressure": [
+        "If the matching scenario passes KO-band materialization without the reported pressure/deny-KO delta, reject this KO-band hypothesis.",
+    ],
+    "revealed_effect_response": [
+        "If matrix coverage passes and a matching scenario does not enter the reported revealed-effect branch, reject this matrix-response route.",
+    ],
+    "observation_tendency_behavior": [
+        "If golden invariants pass and a reconstructed multi-turn state does not reproduce the tendency/calibration delta, reject this observation-log route.",
+    ],
+    "role_package": [
+        "If debugger classification, table audit, and a scenario/control case agree on a different package or no switch-confidence effect, reject this role-package route.",
+    ],
+    "coach_template": [
+        "If the template golden scenarios and audit do not reproduce the reported decision delta, reject this coach-template route.",
+    ],
+    "wrong_switch": [
+        "If a matching scenario JSONL passes rom-switch-materialize with the expected switch result, the wrong-switch claim is disproven for that scenario.",
+    ],
+    "wrong_move_score": [
+        "If decision trace and rom-score-materialize agree with the expected score on the supplied scenario, the wrong-score claim is disproven for that scenario.",
+    ],
+    "general": [
+        "If triage cannot name a concrete lane or the lane-specific artifacts do not reproduce the symptom, do not treat the packet as evidence of a bug.",
+    ],
+}
+
+
+def _ensure_regression_gate(row: dict[str, Any]) -> dict[str, Any]:
+    if row.get("regression_gate"):
+        return row
+    row["regression_gate"] = REGRESSION_GATES.get(
+        str(row.get("symptom_class", "")),
+        str(row.get("first_command") or row.get("escalation_command") or "python -m tools.debugger audit"),
+    )
+    return row
+
+
+def _ensure_source_refs(row: dict[str, Any]) -> dict[str, Any]:
+    if row.get("source_refs"):
+        return row
+    row["source_refs"] = SOURCE_REFS.get(str(row.get("symptom_class", "")), SOURCE_REFS["general"])
+    return row
+
+
+def _ensure_evidence_standard(row: dict[str, Any]) -> dict[str, Any]:
+    if row.get("evidence_standard"):
+        return row
+    row["evidence_standard"] = EVIDENCE_STANDARDS.get(str(row.get("symptom_class", "")), EVIDENCE_STANDARDS["general"])
+    return row
+
+
+def _ensure_disproof_standard(row: dict[str, Any]) -> dict[str, Any]:
+    if row.get("disproof_standard"):
+        return row
+    row["disproof_standard"] = DISPROOF_STANDARDS.get(str(row.get("symptom_class", "")), DISPROOF_STANDARDS["general"])
+    return row
+
+
+def _ensure_row_metadata(row: dict[str, Any]) -> dict[str, Any]:
+    _ensure_regression_gate(row)
+    _ensure_source_refs(row)
+    _ensure_evidence_standard(row)
+    _ensure_disproof_standard(row)
+    return row
+
+
+for _row in NEXT_STEP_ROWS:
+    _ensure_row_metadata(_row)
+
 
 def build_next_step(
     *,
@@ -290,13 +615,18 @@ def build_next_step(
     }
 
 
-def symptom_only_investigation_note(report: dict[str, Any]) -> str:
+def symptom_only_investigation_note(
+    report: dict[str, Any],
+    *,
+    next_step: dict[str, Any] | None = None,
+) -> str:
     symptom = str(report.get("symptom") or "").strip()
     if not symptom:
         return ""
     if _has_runtime_anchor(report):
         return ""
-    next_step = build_next_step(symptom=symptom)
+    if next_step is None:
+        next_step = build_next_step(symptom=symptom)
     command = next_step["recommendation"]["first_command"]
     return (
         "No runtime evidence supplied. This is a planning packet, not a repro. "
@@ -329,7 +659,7 @@ def _fallback_row(triage: dict[str, Any], symptom: str) -> dict[str, Any]:
     if symptom:
         row["first_command"] = f"python -m tools.debugger triage --symptom {symptom!r}"
         row["escalation_command"] = f"python -m tools.debugger investigate --symptom {symptom!r}"
-    return row
+    return _ensure_row_metadata(row)
 
 
 _TRIAGE_FALLBACK_ROWS = {
@@ -338,6 +668,18 @@ _TRIAGE_FALLBACK_ROWS = {
         "first_command": "python -m tools.boss_ai_debugger damage-ai-report --trainer <TRAINER> --enemy <ENEMY> --player-save <save.sav> --player-slot <slot> --sleep-clause both",
         "required_inputs": ["trainer id, enemy mon selector, player save, and active party slot"],
         "proof_limit": "Exact damage plus move-score report for the supplied state; use trace mode or ROM materialization for final live proof.",
+        "source_refs": [
+            "tools/boss_ai_debugger/damage_ai_report.py",
+            "tools/boss_ai_debugger/move_score_probe.py",
+            "engine/battle/ai/boss_policy_move.asm",
+        ],
+        "evidence_standard": [
+            "A save-backed damage/move-score report explains the live move decision, then trace or ROM materialization confirms it before a fight-wide claim.",
+        ],
+        "disproof_standard": [
+            "If the matching save-backed report and trace/materialization agree with the expected legal move choice, reject this live move-choice route.",
+        ],
+        "regression_gate": "python -m tools.boss_ai_debugger move-score-probe --trainer <TRAINER> --enemy <ENEMY> --player-save <save.sav> --player-slot <slot> --trace",
         "escalation_command": "python -m tools.boss_ai_debugger move-score-probe --trainer <TRAINER> --enemy <ENEMY> --player-save <save.sav> --player-slot <slot> --trace",
     },
     "overworld_status": {
@@ -345,6 +687,17 @@ _TRIAGE_FALLBACK_ROWS = {
         "first_command": "python tools\\audit\\check_overworld_poison_cure.py",
         "required_inputs": ["none; audit builds/runs the committed poison-step repro"],
         "proof_limit": "Runtime audit proof for the poison-step fixture; it does not prove unrelated battle poison behavior.",
+        "source_refs": [
+            "tools/audit/check_overworld_poison_cure.py",
+            "engine/events/poisonstep.asm",
+        ],
+        "evidence_standard": [
+            "The committed poison-step repro audit passes; other status claims need a save/replay for that exact path.",
+        ],
+        "disproof_standard": [
+            "If the poison-step audit passes and the exact save/replay does not reproduce the reported status transition, reject this field-status route.",
+        ],
+        "regression_gate": "python tools\\audit\\check_overworld_poison_cure.py",
         "escalation_command": "python -m tools.debugger investigate --changed-file engine/events/poisonstep.asm",
     },
     "base_ai_mechanics": {
@@ -352,6 +705,17 @@ _TRIAGE_FALLBACK_ROWS = {
         "first_command": "python tools\\audit\\check_base_ai_mechanics_correctness.py",
         "required_inputs": ["none; audit reads the shared base AI move scoring path"],
         "proof_limit": "Static contract proof for base AI legality gates; it does not prove a specific trainer battle without an emulator scenario.",
+        "source_refs": [
+            "tools/audit/check_base_ai_mechanics_correctness.py",
+            "engine/battle/ai/move.asm",
+        ],
+        "evidence_standard": [
+            "The base AI mechanics audit proves the shared legality gate; battle-specific claims need a matching scenario or replay.",
+        ],
+        "disproof_standard": [
+            "If the audit and matching battle scenario show the legality gate rejects the reported move, reject this base-AI legality route.",
+        ],
+        "regression_gate": "python tools\\audit\\check_base_ai_mechanics_correctness.py",
         "escalation_command": "python -m tools.debugger investigate --changed-file engine/battle/ai/move.asm",
     },
     "pokemon_semantics": {
@@ -359,6 +723,18 @@ _TRIAGE_FALLBACK_ROWS = {
         "first_command": "python -m tools.debugger learnset-inspect --species <SPECIES> --level <LEVEL>",
         "required_inputs": ["species and level; use party-inspect when checking a specific save"],
         "proof_limit": "Semantic source/save inspection only; use content mirrors or runtime probes for ROM-byte or live battle proof.",
+        "source_refs": [
+            "tools/debugger/pokemon_semantics.py",
+            "data/pokemon/evos_attacks.asm",
+            "engine/battle/type_passive_damage_mods.asm",
+        ],
+        "evidence_standard": [
+            "Source semantic inspection answers table/formula questions; save-specific claims also inspect the supplied party slot or live state.",
+        ],
+        "disproof_standard": [
+            "If source inspection and save/live inspection match the expected semantics, reject this data-semantics route and investigate state or UI interpretation.",
+        ],
+        "regression_gate": "python -m tools.debugger learnset-inspect --species <SPECIES> --level <LEVEL>",
         "escalation_command": "python -m tools.debugger party-inspect --save <save.sav> --slot <slot>",
     },
     "static_bug_hunt": {
@@ -366,6 +742,18 @@ _TRIAGE_FALLBACK_ROWS = {
         "first_command": "python tools\\audit\\bug_hunt_triage.py --max-leads 12",
         "required_inputs": ["none; triage scans current source for prior bug-family hazards"],
         "proof_limit": "Static lead finder; each lead still needs source proof or a targeted runtime trace before patching.",
+        "source_refs": [
+            "tools/audit/bug_hunt_triage.py",
+            "engine/pokemon/tempmon.asm",
+            "engine/battle/effect_commands.asm",
+        ],
+        "evidence_standard": [
+            "Static triage names a concrete bug-family lead, then provenance or runtime trace proves whether that lead reaches the reported state.",
+        ],
+        "disproof_standard": [
+            "If provenance or trace shows the lead cannot reach the reported state, reject it instead of patching from static suspicion.",
+        ],
+        "regression_gate": "python tools\\audit\\bug_hunt_triage.py --max-leads 12",
         "escalation_command": "python -m tools.debugger provenance --symbol wCurSpecies --symbol GetBaseData",
     },
 }
@@ -379,7 +767,11 @@ def _public_row(row: dict[str, Any]) -> dict[str, Any]:
         "first_command": row["first_command"],
         "required_inputs": list(row["required_inputs"]),
         "proof_limit": row["proof_limit"],
+        "source_refs": list(row["source_refs"]),
+        "evidence_standard": list(row["evidence_standard"]),
+        "disproof_standard": list(row["disproof_standard"]),
         "escalation_command": row["escalation_command"],
+        "regression_gate": row["regression_gate"],
         "repro_recipes": list(row.get("repro_recipes", ())),
     }
 

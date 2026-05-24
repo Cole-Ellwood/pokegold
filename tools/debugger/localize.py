@@ -184,6 +184,7 @@ def build_localization_plan(
         tests=tests,
         compare=compare,
         gate=gate,
+        next_step_commands=next_step_phase_commands(loaded_reports),
     )
     errors = list(load_errors)
     if slice_report:
@@ -255,6 +256,8 @@ def collect_signals(
 def signals_from_report(report: dict[str, Any], *, source: str) -> list[dict[str, Any]]:
     kind = report.get("kind", "")
     out: list[dict[str, Any]] = []
+    for next_step in next_step_reports(report):
+        out.extend(signals_from_next_step(next_step, source=source))
     if kind == "unified_debugger_watch_report":
         for event in dict_items(report.get("events")):
             out.append(
@@ -360,6 +363,41 @@ def signals_from_report(report: dict[str, Any], *, source: str) -> list[dict[str
             for error in artifact.get("errors", []):
                 out.append(signal("artifact_error", note=str(error), source=source, weight=85))
     return [item for item in out if item.get("symbol") or item.get("file") or item.get("note")]
+
+
+def next_step_reports(report: dict[str, Any]) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    if report.get("kind") == "unified_debugger_next_step":
+        out.append(report)
+    embedded = report.get("symptom_only_next_step")
+    if isinstance(embedded, dict) and embedded.get("kind") == "unified_debugger_next_step":
+        out.append(embedded)
+    return out
+
+
+def signals_from_next_step(report: dict[str, Any], *, source: str) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for candidate in next_step_candidates(report):
+        title = str(candidate.get("title") or candidate.get("symptom_class") or "next proof path")
+        for source_ref in string_items(candidate.get("source_refs")):
+            if looks_like_localization_path(source_ref):
+                out.append(
+                    signal(
+                        "next_step_source_ref",
+                        file=source_ref,
+                        note=title,
+                        source=source,
+                        weight=320,
+                    )
+                )
+        for standard in string_items(candidate.get("evidence_standard")):
+            out.append(signal("next_step_evidence_standard", note=standard, source=source, weight=55))
+        for standard in string_items(candidate.get("disproof_standard")):
+            out.append(signal("next_step_disproof_standard", note=standard, source=source, weight=55))
+        regression_gate = str(candidate.get("regression_gate") or "")
+        if regression_gate:
+            out.append(signal("next_step_regression_gate", note=regression_gate, source=source, weight=60))
+    return out
 
 
 def signals_from_content_mirror(report: dict[str, Any], *, source: str) -> list[dict[str, Any]]:
@@ -778,6 +816,7 @@ def build_phase_steps(
     tests: dict[str, Any],
     compare: dict[str, Any],
     gate: dict[str, Any],
+    next_step_commands: list[dict[str, str]],
 ) -> list[dict[str, Any]]:
     steps_by_phase: dict[str, list[dict[str, Any]]] = {
         phase: [] for phase in PHASE_TITLES
@@ -790,6 +829,13 @@ def build_phase_steps(
             "reproduce",
             f"python -m tools.debugger rank {report_args}",
             "Normalize existing report failures before rerunning expensive tools.",
+        )
+    for item in next_step_commands:
+        add_step(
+            steps_by_phase,
+            item["phase"],
+            item["command"],
+            item["reason"],
         )
     if symbols:
         for symbol_name in symbols[:5]:
@@ -841,6 +887,46 @@ def build_phase_steps(
         for phase, steps in steps_by_phase.items()
         if steps
     ]
+
+
+def next_step_phase_commands(loaded_reports: list[dict[str, Any]]) -> list[dict[str, str]]:
+    commands: list[dict[str, str]] = []
+    seen: set[tuple[str, str]] = set()
+    for loaded in loaded_reports:
+        for next_step in next_step_reports(loaded["data"]):
+            for candidate in next_step_candidates(next_step):
+                title = str(candidate.get("title") or candidate.get("symptom_class") or "next proof path")
+                for phase, field, reason in (
+                    ("reproduce", "first_command", f"Run the routed next-step proof path for {title}."),
+                    ("verify", "regression_gate", f"Keep the routed regression gate green for {title}."),
+                    ("compare", "escalation_command", f"Escalate after the first next-step proof path for {title}."),
+                ):
+                    command = str(candidate.get(field) or "")
+                    key = (phase, command)
+                    if not command or key in seen:
+                        continue
+                    seen.add(key)
+                    commands.append({"phase": phase, "command": command, "reason": reason})
+    return commands
+
+
+def next_step_candidates(report: dict[str, Any]) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    seen: set[tuple[str, str, str]] = set()
+    recommendation = report.get("recommendation") if isinstance(report.get("recommendation"), dict) else {}
+    for candidate in [recommendation, *dict_items(report.get("candidates"))]:
+        if not candidate:
+            continue
+        key = (
+            str(candidate.get("symptom_class", "")),
+            str(candidate.get("title", "")),
+            str(candidate.get("first_command", "")),
+        )
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(candidate)
+    return out
 
 
 def add_step(
@@ -953,6 +1039,13 @@ def normalize_path(path: str) -> str:
 def looks_like_source_path(path: str) -> bool:
     normalized = normalize_path(path)
     return bool(normalized and "/" in normalized and Path(normalized).suffix.lower() == ".asm")
+
+
+def looks_like_localization_path(path: str) -> bool:
+    normalized = normalize_path(path)
+    if not normalized or "/" not in normalized:
+        return False
+    return Path(normalized).suffix.lower() in {".asm", ".py"}
 
 
 def safe_name(value: str) -> str:

@@ -231,8 +231,23 @@ def summarize_status(report: dict[str, Any]) -> list[str]:
     return summary
 
 
+def embedded_next_step_reports(report: dict[str, Any]) -> list[dict[str, Any]]:
+    next_step = report.get("symptom_only_next_step")
+    if isinstance(next_step, dict) and next_step.get("kind") == "unified_debugger_next_step":
+        return [next_step]
+    return []
+
+
 def collect_commands(report: dict[str, Any]) -> list[str]:
     commands: list[str] = []
+    for next_step in embedded_next_step_reports(report):
+        add_strings(commands, collect_commands(next_step))
+    recommendation = report.get("recommendation") if isinstance(report.get("recommendation"), dict) else {}
+    add_strings(commands, recommendation.get("first_command"))
+    add_strings(commands, recommendation.get("regression_gate"))
+    add_strings(commands, recommendation.get("escalation_command"))
+    for recipe in string_items(recommendation.get("repro_recipes")):
+        add_strings(commands, f"python -m tools.debugger repro-recipe --id {recipe}")
     add_strings(commands, report.get("commands"))
     add_strings(commands, report.get("materialization_commands"))
     add_strings(commands, report.get("counterexample_commands"))
@@ -299,6 +314,11 @@ def collect_commands(report: dict[str, Any]) -> list[str]:
 
 def collect_gaps(report: dict[str, Any]) -> list[str]:
     gaps: list[str] = []
+    for next_step in embedded_next_step_reports(report):
+        add_strings(gaps, collect_gaps(next_step))
+    recommendation = report.get("recommendation") if isinstance(report.get("recommendation"), dict) else {}
+    if recommendation.get("proof_limit"):
+        add_strings(gaps, f"Proof limit: {recommendation.get('proof_limit')}")
     add_strings(gaps, report.get("blocking_gaps"))
     for capability in dict_items(report.get("capabilities")):
         add_strings(gaps, capability.get("gaps"))
@@ -354,7 +374,38 @@ def collect_issues(report: dict[str, Any]) -> list[str]:
 
 def collect_candidates(report: dict[str, Any]) -> list[str]:
     candidates = []
+    for next_step in embedded_next_step_reports(report):
+        add_strings(candidates, collect_candidates(next_step))
+    recommendation = report.get("recommendation") if isinstance(report.get("recommendation"), dict) else {}
+    if recommendation:
+        candidates.append(
+            "recommended next step: "
+            f"{recommendation.get('symptom_class', '<unknown>')} - {recommendation.get('title', '<unknown>')}"
+        )
+        for required in string_items(recommendation.get("required_inputs"))[:6]:
+            candidates.append(f"required input: {required}")
+        for source_ref in string_items(recommendation.get("source_refs"))[:6]:
+            candidates.append(f"source/data: {source_ref}")
+        for standard in string_items(recommendation.get("evidence_standard"))[:6]:
+            candidates.append(f"evidence standard: {standard}")
+        for standard in string_items(recommendation.get("disproof_standard"))[:6]:
+            candidates.append(f"disproof standard: {standard}")
+        if recommendation.get("regression_gate"):
+            candidates.append(f"regression gate: {recommendation.get('regression_gate')}")
+    for capability in dict_items(report.get("capabilities"))[:12]:
+        status = str(capability.get("status", "unknown"))
+        if status == "complete":
+            continue
+        candidates.append(
+            f"{status} capability: {capability.get('id', '<unknown>')} - {capability.get('title', '<unknown>')}"
+        )
     for candidate in dict_items(report.get("candidates"))[:10]:
+        if candidate.get("symptom_class") and candidate.get("first_command"):
+            candidates.append(
+                "next-step candidate: "
+                f"{candidate.get('symptom_class', '<unknown>')} - {candidate.get('title', '<unknown>')}"
+            )
+            continue
         candidates.append(
             f"S{candidate.get('score', 0)} {candidate.get('type', 'candidate')}: {candidate.get('id', '<unknown>')}"
         )

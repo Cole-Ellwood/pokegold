@@ -13,6 +13,10 @@ Each row carries:
   first_command       — the recommended `python ...` proof command
   required_inputs     — list describing what the user must supply
   proof_limit         — explicit statement of what the first command DOES NOT prove
+  source_refs         — source/data/tool files that anchor the route
+  evidence_standard   — positive condition for evidence strong enough to trust
+  disproof_standard   — condition that should reject the route or bug claim
+  regression_gate     — test/audit command that should guard the bug class after a fix
   escalation_command  — follow-up command if the first command can't finish the diagnosis
 
 This audit confirms that the row table covers the boss-AI feature classes that
@@ -34,18 +38,24 @@ Checks:
 
   (c) Required-field presence + non-empty (excluding escalation_command which
       may legitimately be empty for terminal rows):
-        symptom_class, matched_lane, first_command, required_inputs, proof_limit
+        symptom_class, matched_lane, first_command, required_inputs, proof_limit, regression_gate
+        source_refs, evidence_standard, disproof_standard
       Plus escalation_command must be PRESENT as a key (may be empty string).
 
-  (d) Type discipline: first_command + proof_limit are strings; required_inputs
-      is a list (even if it contains exactly one "none; ..." string); keywords
-      is a list of strings when present; title is a string when present.
+  (d) Type discipline: first_command + proof_limit + regression_gate are
+      strings; required_inputs, source_refs, evidence_standard, and disproof_standard
+      are lists of strings (even if
+      required_inputs contains exactly one "none; ..." string); keywords is a
+      list of strings when present; title is a string when present.
 
   (e) No duplicate symptom_class entries (a class id appearing twice would make
       the router's symptom -> row lookup ambiguous).
 
   (f) --json output sanity: a `general` fallback row is present so the router
       always has SOMETHING to return when no keyword matches.
+
+  (g) Source anchors exist in the repo, so source_refs cannot drift into
+      unactionable stale paths.
 
 The audit is intentionally simple — it doesn't try to validate that
 first_command actually runs (that's the unittest's job) or that proof_limit
@@ -80,6 +90,10 @@ NON_EMPTY_FIELDS = (
     "first_command",
     "required_inputs",
     "proof_limit",
+    "source_refs",
+    "evidence_standard",
+    "disproof_standard",
+    "regression_gate",
 )
 
 # escalation_command must be present but may be empty for terminal rows.
@@ -140,8 +154,34 @@ def check_field_types(rows: list[dict]) -> tuple[bool, str]:
             errors.append(f"{cls}: first_command should be str, got {type(row['first_command']).__name__}")
         if "proof_limit" in row and not isinstance(row["proof_limit"], str):
             errors.append(f"{cls}: proof_limit should be str, got {type(row['proof_limit']).__name__}")
+        if "regression_gate" in row and not isinstance(row["regression_gate"], str):
+            errors.append(f"{cls}: regression_gate should be str, got {type(row['regression_gate']).__name__}")
         if "required_inputs" in row and not isinstance(row["required_inputs"], list):
             errors.append(f"{cls}: required_inputs should be list, got {type(row['required_inputs']).__name__}")
+        if "source_refs" in row:
+            if not isinstance(row["source_refs"], list):
+                errors.append(f"{cls}: source_refs should be list, got {type(row['source_refs']).__name__}")
+            else:
+                for j, source_ref in enumerate(row["source_refs"]):
+                    if not isinstance(source_ref, str):
+                        errors.append(f"{cls}: source_refs[{j}] should be str, got {type(source_ref).__name__}")
+                        break
+        if "evidence_standard" in row:
+            if not isinstance(row["evidence_standard"], list):
+                errors.append(f"{cls}: evidence_standard should be list, got {type(row['evidence_standard']).__name__}")
+            else:
+                for j, evidence_standard in enumerate(row["evidence_standard"]):
+                    if not isinstance(evidence_standard, str):
+                        errors.append(f"{cls}: evidence_standard[{j}] should be str, got {type(evidence_standard).__name__}")
+                        break
+        if "disproof_standard" in row:
+            if not isinstance(row["disproof_standard"], list):
+                errors.append(f"{cls}: disproof_standard should be list, got {type(row['disproof_standard']).__name__}")
+            else:
+                for j, disproof_standard in enumerate(row["disproof_standard"]):
+                    if not isinstance(disproof_standard, str):
+                        errors.append(f"{cls}: disproof_standard[{j}] should be str, got {type(disproof_standard).__name__}")
+                        break
         if "escalation_command" in row and not isinstance(row["escalation_command"], str):
             errors.append(f"{cls}: escalation_command should be str (possibly ''), got {type(row['escalation_command']).__name__}")
         if "keywords" in row:
@@ -185,6 +225,20 @@ def check_general_fallback(rows: list[dict]) -> tuple[bool, str]:
     return True, "(f) PASS: `general` fallback row present."
 
 
+def check_source_refs_exist(rows: list[dict]) -> tuple[bool, str]:
+    """(g) Every source_ref points at a real repo file."""
+    errors: list[str] = []
+    for i, row in enumerate(rows):
+        cls = row.get("symptom_class", f"<row {i}>")
+        for source_ref in row.get("source_refs", []):
+            path = REPO / source_ref
+            if not path.exists():
+                errors.append(f"{cls}: source_refs path does not exist: {source_ref}")
+    if errors:
+        return False, "(g) FAIL: stale source_refs:\n      " + "\n      ".join(errors[:12])
+    return True, "(g) PASS: all source_refs resolve to repo files."
+
+
 def main() -> int:
     ok_load, msg_load, rows = check_module_loads()
     print(msg_load)
@@ -196,12 +250,13 @@ def main() -> int:
         check_field_types(rows),
         check_no_duplicate_classes(rows),
         check_general_fallback(rows),
+        check_source_refs_exist(rows),
     ]
     for _, m in checks:
         print(m)
     print()
     if all(ok for ok, _ in checks):
-        print("PASS: debugger `next` symptom-row coverage green (load + coverage + fields + types + uniqueness + fallback).")
+        print("PASS: debugger `next` symptom-row coverage green (load + coverage + fields + types + uniqueness + fallback + source refs + evidence/disproof standards).")
         return 0
     print("FAIL: debugger `next` symptom-row coverage had failures above.")
     return 1

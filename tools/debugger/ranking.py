@@ -12,6 +12,8 @@ SEVERITY_BASE = {
     "ingest_error": 85,
     "workflow_failed": 82,
     "watch_hit": 75,
+    "capability_missing": 78,
+    "capability_partial": 64,
     "compare_gap": 55,
     "fuzz_campaign": 62,
     "content_mirror_failed": 76,
@@ -36,6 +38,7 @@ SEVERITY_BASE = {
     "instruction_trace_partial": 64,
     "instruction_trace_limit": 68,
     "instruction_trace_ready": 60,
+    "next_step": 52,
     "provenance_warning": 30,
     "ingest_warning": 25,
 }
@@ -196,6 +199,8 @@ def findings_from_report(report: dict[str, Any], *, source: str) -> list[dict[st
     kind = report.get("kind", "")
     if kind == "unified_debugger_ingest_manifest":
         return ingest_findings(report, source=source)
+    if kind == "unified_debugger_capability_report":
+        return capability_findings(report, source=source)
     if kind == "unified_debugger_watch_report":
         return watch_findings(report, source=source)
     if kind == "unified_debugger_runtime_state_report":
@@ -238,6 +243,8 @@ def findings_from_report(report: dict[str, Any], *, source: str) -> list[dict[st
         return trace_index_findings(report, source=source)
     if kind == "unified_debugger_instruction_trace":
         return instruction_trace_findings(report, source=source)
+    if kind == "unified_debugger_next_step":
+        return next_step_findings(report, source=source)
     if kind == "unified_debugger_minimization_plan":
         return minimization_findings(report, source=source)
     if kind == "unified_debugger_generation_plan":
@@ -290,6 +297,55 @@ def ingest_findings(report: dict[str, Any], *, source: str) -> list[dict[str, An
                     next_actions=["Inspect artifact metadata before trusting downstream output."],
                 )
             )
+    return out
+
+
+def capability_findings(report: dict[str, Any], *, source: str) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    ready = bool(report.get("ready"))
+    status_counts = report.get("status_counts") if isinstance(report.get("status_counts"), dict) else {}
+    shared_evidence = [
+        f"ready={ready}",
+        "status_counts="
+        + ",".join(f"{name}={count}" for name, count in sorted(status_counts.items())),
+        f"blocking_gap_count={report.get('blocking_gap_count', 0)}",
+    ]
+    for capability in dict_items(report.get("capabilities")):
+        status = str(capability.get("status") or "")
+        if status == "complete":
+            continue
+        finding_type = "capability_missing" if status == "missing" else "capability_partial"
+        title = str(capability.get("title") or capability.get("id") or "<unknown>")
+        gaps = string_items(capability.get("gaps"))
+        out.append(
+            finding(
+                finding_type=finding_type,
+                title=f"Capability {status}: {title}",
+                source=source,
+                severity=SEVERITY_BASE[finding_type],
+                confidence=0.88 if status == "missing" else 0.78,
+                evidence=[
+                    *shared_evidence,
+                    f"id={capability.get('id', '')}",
+                    f"scope={capability.get('scope', '')}",
+                    *gaps[:4],
+                ],
+                next_actions=string_items(capability.get("commands"))[:6]
+                or ["python -m tools.debugger audit"],
+            )
+        )
+    if not ready and not out:
+        out.append(
+            finding(
+                finding_type="capability_partial",
+                title="Debugger capability audit is not ready",
+                source=source,
+                severity=SEVERITY_BASE["capability_partial"],
+                confidence=0.7,
+                evidence=shared_evidence + string_items(report.get("blocking_gaps"))[:4],
+                next_actions=["python -m tools.debugger audit"],
+            )
+        )
     return out
 
 
@@ -1524,6 +1580,56 @@ def group_status(value: Any) -> str:
     return str(value or "")
 
 
+def next_step_findings(report: dict[str, Any], *, source: str) -> list[dict[str, Any]]:
+    recommendation = report.get("recommendation") if isinstance(report.get("recommendation"), dict) else {}
+    if not recommendation:
+        return [
+            finding(
+                finding_type="test_gap",
+                title="Next-step report has no recommendation",
+                source=source,
+                severity=SEVERITY_BASE["test_gap"],
+                confidence=0.7,
+                evidence=["rerun `python -m tools.debugger next` with a symptom or changed file"],
+                next_actions=["python -m tools.debugger next --symptom <description>"],
+            )
+        ]
+
+    first_command = str(recommendation.get("first_command") or "")
+    regression_gate = str(recommendation.get("regression_gate") or "")
+    escalation_command = str(recommendation.get("escalation_command") or "")
+    required_inputs = string_items(recommendation.get("required_inputs"))
+    source_refs = string_items(recommendation.get("source_refs"))
+    evidence_standard = string_items(recommendation.get("evidence_standard"))
+    disproof_standard = string_items(recommendation.get("disproof_standard"))
+    evidence = [
+        f"matched_lane={report.get('matched_lane', recommendation.get('matched_lane', ''))}",
+        f"symptom_class={recommendation.get('symptom_class', '')}",
+        f"symptom={report.get('symptom', '')}",
+        *[f"required_input={item}" for item in required_inputs[:4]],
+        *[f"source_ref={item}" for item in source_refs[:4]],
+        *[f"evidence_standard={item}" for item in evidence_standard[:4]],
+        *[f"disproof_standard={item}" for item in disproof_standard[:4]],
+        f"proof_limit={recommendation.get('proof_limit', '')}",
+        f"regression_gate={regression_gate}",
+    ]
+    next_actions = unique_string_items([first_command, regression_gate, escalation_command])
+    for recipe in string_items(recommendation.get("repro_recipes"))[:3]:
+        next_actions.append(f"python -m tools.debugger repro-recipe --id {recipe}")
+
+    return [
+        finding(
+            finding_type="next_step",
+            title=f"Next proof path: {recommendation.get('title', recommendation.get('symptom_class', '<unknown>'))}",
+            source=source,
+            severity=SEVERITY_BASE["next_step"],
+            confidence=0.82,
+            evidence=evidence,
+            next_actions=next_actions[:6],
+        )
+    ]
+
+
 def minimization_findings(report: dict[str, Any], *, source: str) -> list[dict[str, Any]]:
     out = []
     for error in report.get("errors", []):
@@ -1852,6 +1958,11 @@ def investigation_findings(report: dict[str, Any], *, source: str) -> list[dict[
                 next_actions=["Fix the failing investigation input and rerun `python -m tools.debugger investigate`."],
             )
         )
+    next_step = report.get("symptom_only_next_step")
+    emitted_embedded_next_step = False
+    if isinstance(next_step, dict):
+        out.extend(next_step_findings(next_step, source=source))
+        emitted_embedded_next_step = True
     for step in report.get("steps", []):
         if not isinstance(step, dict) or step.get("status") != "failed":
             continue
@@ -1873,6 +1984,8 @@ def investigation_findings(report: dict[str, Any], *, source: str) -> list[dict[
         )
     for item in report.get("top_findings", [])[:20]:
         if not isinstance(item, dict):
+            continue
+        if emitted_embedded_next_step and item.get("type") == "next_step":
             continue
         out.append(
             finding(

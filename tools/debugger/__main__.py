@@ -632,8 +632,13 @@ def cmd_investigate(args: argparse.Namespace) -> int:
         max_cases=args.max_cases,
         seed=args.seed,
     )
-    if args.symptom and not investigation_args_have_anchor(args):
-        report["symptom_only_next_step_note"] = symptom_only_investigation_note(report)
+    if args.symptom and not investigation_args_have_anchor(args) and "symptom_only_next_step" not in report:
+        next_step = build_next_step(symptom=args.symptom)
+        report["symptom_only_next_step"] = next_step
+        report["symptom_only_next_step_note"] = symptom_only_investigation_note(
+            report,
+            next_step=next_step,
+        )
     emit_report(report, args)
     return 0 if report["valid"] and report["passed"] else 1
 
@@ -1325,9 +1330,19 @@ def format_next_step(report: dict[str, Any]) -> str:
     )
     for item in rec["required_inputs"]:
         lines.append(f"  - {item}")
+    lines.append("Source/data anchors:")
+    for item in rec.get("source_refs", []):
+        lines.append(f"  - {item}")
+    lines.append("Evidence standard:")
+    for item in rec.get("evidence_standard", []):
+        lines.append(f"  - {item}")
+    lines.append("Disproof standard:")
+    for item in rec.get("disproof_standard", []):
+        lines.append(f"  - {item}")
     lines.extend(
         [
             f"Proof limit: {rec['proof_limit']}",
+            f"Regression gate: {rec['regression_gate']}",
             f"Escalation command: {rec['escalation_command']}",
         ]
     )
@@ -1434,6 +1449,9 @@ def format_investigation_run(report: dict[str, Any]) -> str:
     next_note = report.get("symptom_only_next_step_note", "")
     if next_note:
         lines.extend(["", next_note])
+    next_step = report.get("symptom_only_next_step")
+    if isinstance(next_step, dict):
+        lines.extend(["", *format_symptom_only_next_step(next_step)])
     lines.extend(["", "Steps:"])
     for step in report["steps"]:
         path = f" -> {step['report_path']}" if step.get("report_path") else ""
@@ -1474,6 +1492,26 @@ def format_investigation_run(report: dict[str, Any]) -> str:
     for error in report["errors"][:5]:
         lines.append(f"error: {error}")
     return "\n".join(lines)
+
+
+def format_symptom_only_next_step(report: dict[str, Any]) -> list[str]:
+    rec = report.get("recommendation") if isinstance(report.get("recommendation"), dict) else {}
+    if not rec:
+        return []
+    lines = [
+        "Next proof path:",
+        f"  - {rec.get('symptom_class', '<unknown>')}: {rec.get('title', '<unknown>')}",
+        f"      first command: {rec.get('first_command', '')}",
+    ]
+    for source_ref in rec.get("source_refs", [])[:4]:
+        lines.append(f"      source/data: {source_ref}")
+    for standard in rec.get("evidence_standard", [])[:2]:
+        lines.append(f"      evidence standard: {standard}")
+    for standard in rec.get("disproof_standard", [])[:2]:
+        lines.append(f"      disproof standard: {standard}")
+    if rec.get("regression_gate"):
+        lines.append(f"      regression gate: {rec['regression_gate']}")
+    return lines
 
 
 def format_localization_plan(report: dict[str, Any]) -> str:
@@ -2524,7 +2562,7 @@ def format_wram_bank_hazards(report: dict[str, Any]) -> str:
                 f"{item['source_file']}:{item['line']} {item['routine']}"
             )
             lines.append(f"      {item['title']}")
-            for evidence in item.get("evidence", [])[:2]:
+            for evidence in item.get("evidence", [])[:3]:
                 lines.append(f"      evidence: {evidence}")
     if report.get("commands"):
         lines.extend(["", "Follow-up commands:"])
@@ -2862,7 +2900,7 @@ def format_content_mirror(report: dict[str, Any]) -> str:
             line = int(item.get("line", 0))
             location = f"{item['source_file']}:{line}" if line else str(item["source_file"])
             lines.append(f"  - S{item['severity']} {item['type']}: {item['title']} ({location})")
-            for evidence in item.get("evidence", [])[:2]:
+            for evidence in item.get("evidence", [])[:3]:
                 lines.append(f"      evidence: {evidence}")
             for command in item.get("commands", [])[:2]:
                 runnable = "runnable" if command_is_runnable(command) else "needs-input"
@@ -3102,7 +3140,15 @@ def format_ranked_findings(report: dict[str, Any]) -> str:
                 f"  - S{item['severity']} C{item['confidence']:.2f} "
                 f"{item['type']}: {item['title']}"
             )
-            for evidence in item.get("evidence", [])[:2]:
+            evidence_items = list(item.get("evidence", []))
+            shown_evidence = evidence_items[:2]
+            for evidence in evidence_items:
+                if (
+                    str(evidence).startswith(("regression_gate=", "source_ref=", "evidence_standard=", "disproof_standard="))
+                    and evidence not in shown_evidence
+                ):
+                    shown_evidence.append(evidence)
+            for evidence in shown_evidence:
                 lines.append(f"      evidence: {evidence}")
             for action in item.get("next_actions", [])[:2]:
                 lines.append(f"      next: {action}")

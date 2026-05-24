@@ -116,6 +116,11 @@ visualization into a single output directory. It is the command to start with
 when a symptom has evidence but the next debugger step is unclear. A pass means
 the packet was internally consistent and any supplied expectations passed; it is
 only a bug proof when the included evidence is ROM-backed.
+When it is invoked with only `--symptom`, the output is explicitly a planning
+packet, not a repro; the JSON embeds the same `unified_debugger_next_step`
+proof path used by `next`, including required inputs, source/data anchors,
+evidence and disproof standards, and the regression gate so `rank`, `report`,
+and `visualize` keep that routing intact.
 
 `localize` combines symptoms, source changes, symbols, and existing unified JSON
 reports into a prioritized debugging plan. It scores likely symbol and source
@@ -123,6 +128,10 @@ file suspects, folds in static slices, watch hits, trace-index reverse
 attributions, expectation failures, and minimized-trace handoffs when available,
 then lays out reproduce, observe, slice, compare, minimize, and verify phases
 with the commands that can prove or reject each suspect.
+When a report contains an embedded `unified_debugger_next_step` route, such as a
+symptom-only `investigate` packet, `localize` treats its source/data anchors as
+localization signals and places the routed first proof command, escalation, and
+regression gate into the workflow phases.
 
 `coverage` normalizes coverage-like evidence from unified JSON reports, Boss AI
 contribution traces, coverage target reports, watch output, and key/value trace
@@ -504,7 +513,13 @@ suspected bug can hurt the romhack most and how to prove it.
 summary for a debugging run. It keeps the raw JSON as the source of truth, then
 extracts the highest-priority findings, input report status, gaps, issues, and
 follow-up commands so a romhack debugging session can be scanned without reading
-every JSON file by hand.
+every JSON file by hand. `next` JSON reports are treated as first-class proof
+path inputs: the rendered report preserves the recommended first command,
+required inputs, source/data anchors, evidence/disproof standards, proof limit, regression gate, escalation command, and repro
+recipe links instead of collapsing them into an unsupported-report warning. `audit` JSON reports are
+also first-class inputs: partial or missing capabilities become ranked findings
+with readiness counts, blocker context, and the next proof commands from the
+capability audit.
 
 `visualize` renders one or more unified reports and traces into a visualization
 packet. It builds a timeline of runtime/watch/trace/coverage/content/
@@ -512,7 +527,10 @@ content-state patch/instruction-trace validation/impact events, a workflow
 waterfall from replay/localization/minimization/gate/materialization/
 instruction-trace steps, a causal graph from explanation/slice/coverage/content/
 content-state/instruction-trace artifacts, Mermaid timeline and graph blocks,
-and Markdown or HTML output. HTML output includes a self-contained interactive
+and Markdown or HTML output. It also treats `next` and `audit` JSON as proof
+surface inputs: next-step reports become proof-route, source-ref, evidence-standard, disproof-standard, regression-gate,
+timeline/waterfall/graph items, and capability audits become readiness lanes
+with blocker capabilities and their next proof commands. HTML output includes a self-contained interactive
 evidence inspector with search, lane/source filters, severity filtering, and
 graph-edge tables. It is the unified view for scanning a debugging run; full
 emulator-coupled canvas/TUI inspectors are still a future layer.
