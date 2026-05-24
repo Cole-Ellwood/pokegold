@@ -48,6 +48,11 @@ embedded next-step route as the generator surface/family source of truth; the
 wrong-switch route stays on Boss AI `switch_sack` generation and
 `rom-switch-materialize --fail-on-mismatch`. Focused regression:
 `test_generate_uses_embedded_next_step_instead_of_nested_report_surfaces`.
+Compare follow-up: `compare --report` now treats an embedded next-step route as
+the mirror lane source of truth; the wrong-switch route selects the Boss AI
+mirror and carries `rom-switch-materialize --fail-on-mismatch` instead of
+falling back to an uncovered generic surface. Focused regression:
+`test_compare_plan_uses_embedded_next_step_as_mirror_route`.
 
 Status legend:
 

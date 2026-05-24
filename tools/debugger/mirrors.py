@@ -172,6 +172,7 @@ def build_compare_plan(
 ) -> dict[str, Any]:
     loaded_reports, report_errors = load_reports(reports=reports, root=root)
     matches = content_state_mirror_matches(loaded_reports)
+    matches.extend(next_step_mirror_matches(loaded_reports))
     matches.extend(match_mirrors(
         changed_files=changed_files,
         symbols=symbols,
@@ -237,6 +238,110 @@ def build_compare_plan(
             "Materialization commands are required before broad Python policy outputs become ROM behavior claims.",
         ],
     }
+
+
+def next_step_mirror_matches(loaded_reports: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    matches = []
+    for loaded in loaded_reports:
+        source = str(loaded.get("source", ""))
+        data = loaded.get("data", {})
+        if not isinstance(data, dict):
+            continue
+        for next_step in embedded_next_step_reports(data):
+            recommendation = next_step.get("recommendation")
+            if not isinstance(recommendation, dict):
+                continue
+            lane = str(recommendation.get("matched_lane") or next_step.get("matched_lane") or "")
+            rule = mirror_rule_for_lane(lane)
+            if not rule:
+                continue
+            commands = unique_list(
+                [
+                    str(recommendation.get("first_command") or ""),
+                    str(recommendation.get("regression_gate") or ""),
+                    *rule.commands,
+                ]
+            )
+            materialization_commands = unique_list(
+                [
+                    str(recommendation.get("first_command") or ""),
+                    str(recommendation.get("regression_gate") or ""),
+                    str(recommendation.get("escalation_command") or ""),
+                    *route_specific_materialization_commands(recommendation, rule=rule),
+                ]
+            )
+            matches.append(
+                {
+                    "id": rule.id,
+                    "title": rule.title,
+                    "scope": rule.scope,
+                    "confidence": rule.confidence,
+                    "matched_by": ["report", "next_step", str(recommendation.get("symptom_class") or "")],
+                    "evidence": unique_list(
+                        [
+                            f"next-step route from {source}",
+                            f"symptom_class={recommendation.get('symptom_class', '')}",
+                            f"proof limit: {recommendation.get('proof_limit', '')}",
+                            *[f"source_ref={item}" for item in string_items(recommendation.get("source_refs"))],
+                            *[f"evidence standard: {item}" for item in string_items(recommendation.get("evidence_standard"))],
+                            *[f"disproof standard: {item}" for item in string_items(recommendation.get("disproof_standard"))],
+                        ]
+                    ),
+                    "commands": commands,
+                    "materialization_commands": materialization_commands,
+                    "gaps": unique_list(
+                        [
+                            *rule.gaps,
+                            "A next-step mirror route is still a proof plan until the named materialization command runs against a matching scenario.",
+                        ]
+                    ),
+                }
+            )
+    return matches
+
+
+def embedded_next_step_reports(data: dict[str, Any]) -> list[dict[str, Any]]:
+    if data.get("kind") == "unified_debugger_next_step":
+        return [data]
+    next_step = data.get("symptom_only_next_step")
+    if isinstance(next_step, dict) and next_step.get("kind") == "unified_debugger_next_step":
+        return [next_step]
+    return []
+
+
+def mirror_rule_for_lane(lane: str) -> MirrorRule | None:
+    normalized = lane.strip().lower().replace("-", "_").replace(" ", "_")
+    if normalized in {"boss_ai", "boss"}:
+        return mirror_rule_by_id("boss_ai_policy_mirror")
+    if normalized in {"damage", "battle_damage"}:
+        return mirror_rule_by_id("damage_oracle")
+    if normalized in {
+        "banking_abi",
+        "graphics_vram",
+        "runtime_crash",
+        "runtime_state",
+        "base_ai_mechanics",
+        "pokemon_semantics",
+        "static_audits",
+        "overworld_status",
+    }:
+        return mirror_rule_by_id("static_invariant_mirror")
+    return None
+
+
+def mirror_rule_by_id(rule_id: str) -> MirrorRule | None:
+    for rule in MIRROR_RULES:
+        if rule.id == rule_id:
+            return rule
+    return None
+
+
+def route_specific_materialization_commands(recommendation: dict[str, Any], *, rule: MirrorRule) -> list[str]:
+    commands = list(rule.materialization_commands)
+    first_command = str(recommendation.get("first_command") or "")
+    if "rom-switch-materialize" in first_command:
+        return [first_command, str(recommendation.get("escalation_command") or "")]
+    return commands
 
 
 def content_state_mirror_matches(loaded_reports: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -427,3 +532,11 @@ def unique_list(values: Any) -> list[str]:
         seen.add(text)
         out.append(text)
     return out
+
+
+def string_items(value: Any) -> list[str]:
+    if isinstance(value, str):
+        return [value]
+    if isinstance(value, list | tuple):
+        return [str(item) for item in value if isinstance(item, (str, int))]
+    return []

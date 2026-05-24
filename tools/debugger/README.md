@@ -65,6 +65,7 @@ python -m tools.debugger suggest-tests --changed-file engine\battle\late_gen_hel
 python -m tools.debugger suggest-tests --symbol BossAI_SelectMove --symptom "bad switch choice"
 python -m tools.debugger suggest-tests --report .local\tmp\debugger_investigate_wrong_switch.json
 python -m tools.debugger compare --symbol wCurDamage
+python -m tools.debugger compare --report .local\tmp\debugger_investigate_wrong_switch.json
 python -m tools.debugger compare --changed-file engine\battle\ai\boss_policy_move.asm
 python -m tools.debugger content-mirror --source-file maps\NewBarkTown.asm
 python -m tools.debugger content-scenarios --source-file maps\NewBarkTown.asm --out-scenarios .local\tmp\debugger_content_scenarios.jsonl
@@ -413,6 +414,11 @@ it turns WRAM map-position patches into `state-patch` expectation commands plus
 replay/watch proof routes from the generated state report. It prints both quick
 compare commands and the materialization/proof commands needed before treating a
 result as ROM behavior.
+When a report contains an embedded `unified_debugger_next_step` route,
+`compare --report` uses that route to select the mirror lane before falling back
+to generic triage. For the wrong-switch route, it selects the Boss AI mirror and
+prints the route's `rom-switch-materialize --fail-on-mismatch` proof command
+instead of reporting an uncovered surface.
 
 `content-mirror` is the romhack-aware static mirror for maps, scripts, graphics,
 audio, text, and data. It parses RGBDS labels and macros, checks map event

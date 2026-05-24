@@ -6522,6 +6522,43 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         )
         self.assertIn("rom-score-materialize", proof)
 
+    def test_compare_plan_uses_embedded_next_step_as_mirror_route(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            investigation = root / "investigate.json"
+            investigation.write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_investigation_run",
+                        "valid": True,
+                        "symptom": "boss selected wrong switch",
+                        "symptom_only_next_step": build_next_step(symptom="boss selected wrong switch"),
+                        "reports": [
+                            {"id": "09_fuzz", "kind": "unified_debugger_fuzz_plan", "surface": "ROM banking / ABI"},
+                            {"id": "06_explain", "kind": "unified_debugger_causal_explanation", "surface": "Battle damage"},
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            report = build_compare_plan(reports=("investigate.json",), root=root)
+
+        commands = "\n".join(report["commands"])
+        proof = "\n".join(report["materialization_commands"])
+        evidence = "\n".join(item for match in report["matches"] for item in match["evidence"])
+
+        self.assertTrue(report["valid"])
+        self.assertEqual({match["id"] for match in report["matches"]}, {"boss_ai_policy_mirror"})
+        self.assertIn("next_step", report["matches"][0]["matched_by"])
+        self.assertIn("rom-switch-materialize --scenarios <scenarios.jsonl> --fail-on-mismatch", commands)
+        self.assertIn("rom-switch-materialize --scenarios <scenarios.jsonl> --fail-on-mismatch", proof)
+        self.assertIn("run-suite --profile changed-ai", proof)
+        self.assertIn("source_ref=engine/battle/ai/boss_policy_switch.asm", evidence)
+        self.assertIn("evidence standard: A scenario JSONL matching the disputed switch case passes rom-switch-materialize", evidence)
+        self.assertNotIn("damage_debugger", commands)
+        self.assertNotIn("uncovered_surface", {match["id"] for match in report["matches"]})
+
     def test_compare_plan_routes_content_to_static_expectations(self) -> None:
         report = build_compare_plan(changed_files=("maps/NewBarkTown.asm",))
         commands = "\n".join(report["commands"])
