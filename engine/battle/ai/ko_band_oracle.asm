@@ -196,6 +196,180 @@ BossAIOracleCanonicalTypeOrder:
 	db DARK
 	db -1
 
+; ai-layer: POLICY
+BossAI_ApplyDamageDominanceBias::
+	push bc
+	push de
+	push hl
+	ld a, [wEnemyMoveStruct + MOVE_POWER]
+	and a
+	jr z, .ret_regs
+	ld a, [wEnemyMoveStruct + MOVE_ANIM]
+	ld c, a
+	call .CurrentMoveDamageRank
+	and a
+	jr z, .ret_regs
+	ld [wBossAITemp2], a
+	ld a, [wEnemyMoveStruct + MOVE_ANIM]
+	ld [wBossAITemp3], a
+	ld hl, wEnemyMonMoves
+	ld b, NUM_MOVES
+
+.loop
+	ld a, [hli]
+	and a
+	jr z, .done
+	ld c, a
+	push hl
+	push bc
+	ld a, [wBossAITemp3]
+	cp c
+	jr z, .next
+	call .MoveIdNeutralSTABRank
+	ld d, a
+	ld a, [wBossAITemp2]
+	add 32
+	jr c, .next
+	cp d
+	jr z, .dominated
+	jr c, .dominated
+
+.next
+	pop bc
+	pop hl
+	dec b
+	jr nz, .loop
+
+.done
+	jr .ret_regs
+
+.ret_regs
+	pop hl
+	pop de
+	pop bc
+	ret
+
+.dominated
+	pop bc
+	pop hl
+	call .DiscourageCurrentScoreBy8
+	jr .ret_regs
+
+.CurrentMoveDamageRank
+	ld a, [wEnemyMoveStruct + MOVE_POWER]
+	ld b, a
+	ld a, [wEnemyMoveStruct + MOVE_TYPE]
+	ld c, a
+	ld a, [wTypeMatchup]
+	call .ScalePowerByMatchup
+	jr .ApplySTABToRank
+
+.MoveIdNeutralSTABRank
+	ld a, c
+	and a
+	ret z
+	dec a
+	ld hl, Moves + MOVE_POWER
+	push bc
+	ld bc, MOVE_LENGTH
+	call AddNTimes
+	ld a, BANK(Moves)
+	call GetFarByte
+	pop bc
+	and a
+	ret z
+	ld b, a
+	ld a, c
+	dec a
+	ld hl, Moves + MOVE_TYPE
+	push bc
+	ld bc, MOVE_LENGTH
+	call AddNTimes
+	ld a, BANK(Moves)
+	call GetFarByte
+	pop bc
+	ld c, a
+	ld a, b
+	jr .ApplySTABToRank
+
+.ScalePowerByMatchup
+	and a
+	ret z
+	cp EFFECTIVE
+	jr c, .resisted
+	cp SUPER_EFFECTIVE
+	jr c, .after_type
+	cp SUPER_EFFECTIVE * 2
+	jr nc, .quad_effective
+	ld a, b
+	call .Double
+	jr .store_type
+
+.quad_effective
+	ld a, b
+	call .Double
+	call .Double
+	jr .store_type
+
+.resisted
+	ld a, b
+	srl a
+	jr .store_type
+
+.after_type
+	ld a, b
+
+.store_type
+	ret
+
+.ApplySTABToRank
+	ld [wBossAITemp4], a
+	ld a, [wEnemyMonType1]
+	cp c
+	jr z, .stab
+	ld a, [wEnemyMonType2]
+	cp c
+	jr nz, .rank_done
+
+.stab
+	ld a, [wBossAITemp4]
+	call .AddHalf
+	ld [wBossAITemp4], a
+
+.rank_done
+	ld a, [wBossAITemp4]
+	ret
+
+.Double
+	add a
+	ret nc
+	ld a, $ff
+	ret
+
+.AddHalf
+	ld d, a
+	srl d
+	add d
+	ret nc
+	ld a, $ff
+	ret
+
+.DiscourageCurrentScoreBy8
+	ld a, [wBossAIScorePtr]
+	ld h, a
+	ld a, [wBossAIScorePtr + 1]
+	ld l, a
+	ld b, 8
+.discourage_loop
+	ld a, [hl]
+	cp 79
+	jr nc, .discourage_next
+	inc [hl]
+.discourage_next
+	dec b
+	jr nz, .discourage_loop
+	ret
+
 INCLUDE "data/boss_ai/matchup_tables.asm"
 
 endc

@@ -294,6 +294,8 @@ ENDC
 	ld de, 1
 	call IsInArray
 	jr nc, .skip_denyko
+	call .DenyKOMoveAnswersPublicThreat
+	jr nc, .skip_denyko
 	ld c, 1
 	call .EncourageByTierWeight
 
@@ -303,7 +305,12 @@ ENDC
 	jr z, .skip_tempo
 	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
 	cp EFFECT_PRIORITY_HIT
-	jr z, .tempo_bonus
+	jr nz, .check_type_tempo
+	call BossAI_PublicEnemyFaster
+	jr c, .skip_tempo
+	jr .tempo_bonus
+
+.check_type_tempo
 	push hl
 	call BossAI_CheckEnemyMoveTypeMatchupVsPlayerNoItem
 	pop hl
@@ -378,6 +385,10 @@ ENDC
 	call .ApplySelfKOTradeDiscipline
 	call BossAI_ApplyScoutMoveBias
 	call BossAI_ApplyRepeatPenalty
+	push hl
+	call BossAI_CheckEnemyMoveTypeMatchupVsPlayerNoItem
+	farcall BossAI_ApplyDamageDominanceBias
+	pop hl
 
 	call .HasKOLine
 	ret c
@@ -2733,6 +2744,70 @@ DEF BOSS_AI_REM_RULE_COUNTERCOAT_AVOIDANCE EQU 9
 	ret
 .hasko_no
 	and a
+	ret
+
+.DenyKOMoveAnswersPublicThreat
+	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
+	cp EFFECT_REFLECT
+	jr z, .denyko_reflect
+	cp EFFECT_LIGHT_SCREEN
+	jr z, .denyko_light_screen
+	scf
+	ret
+
+.denyko_reflect
+	call .PlayerPublicThreatCategory
+	ret nc
+	and a
+	jr z, .denyko_yes
+	jr .screen_mismatch
+
+.denyko_light_screen
+	call .PlayerPublicThreatCategory
+	ret nc
+	cp 1
+	jr z, .denyko_yes
+	jr .screen_mismatch
+
+.denyko_yes
+	scf
+	ret
+
+.screen_mismatch
+	ld a, 4
+	call BossAI_DiscourageScoreHL
+	and a
+	ret
+
+.PlayerPublicThreatCategory
+; Return carry with a = 0 for physical or 1 for special when an active
+; public STAB type threatens the enemy.
+	ld a, [wBattleMonType1]
+	call .PublicThreatCategoryForType
+	ret c
+	ld a, [wBattleMonType2]
+	call .PublicThreatCategoryForType
+	ret c
+
+.public_threat_category_no
+	and a
+	ret
+
+.PublicThreatCategoryForType
+	ld [wBossAITemp5], a
+	ld c, a
+	call BossAI_PlayerThreatTypeSuperEffectiveVsEnemy
+	ret nc
+	ld a, [wBossAITemp5]
+	cp SPECIAL
+	jr c, .public_threat_physical
+	ld a, 1
+	scf
+	ret
+
+.public_threat_physical
+	xor a
+	scf
 	ret
 
 ; ============================================================
