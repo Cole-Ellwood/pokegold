@@ -54,6 +54,9 @@ Elevator::
 .no_carry
 	dec c
 	jr nz, .loop
+	; ScrollingMenu exposes a cancel row after the counted floor items.
+	ld a, -1
+	ld [de], a
 	ret
 
 .FindCurrentFloor:
