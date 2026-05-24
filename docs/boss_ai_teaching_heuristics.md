@@ -232,9 +232,9 @@ effects, items, or hazard economics.
 
 Use these local facts when translating general singles ideas into this hack:
 
-- Sleep duration matches vanilla Gen 2: sleep is rolled at application, stores
-  a `2..7` counter, and produces 1..6 asleep turns before the wake-up turn.
-  Sleep Talk and Snore exist; Rest uses the stock Rest sleep counter.
+- Sleep duration is hack-tuned: sleep moves store a `3..5` counter and
+  produce exactly 2..4 denied actions before the wake-up action. Sleep Talk
+  and Snore exist; Rest uses a fixed two denied actions.
 - Spikes is not vanilla GSC. This hack has 3 layers:
   1 layer is max HP / 8, 2 layers is max HP / 6, and 3 layers is max HP / 4.
   Flying-types are unaffected, Rapid Spin clears all layers, and a fourth

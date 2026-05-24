@@ -293,17 +293,15 @@ Do not assert "high base Speed → high crit" here.
 
 ### Sleep
 
-- Duration is rolled at apply time:
-  `BattleCommand_SleepTarget` (`engine/battle/effect_commands.asm:3455`,
-  loop at `:3494`) rerolls until the random byte is in `1..6` (excludes
-  0 and 7), then `inc a` stores `2..7`. Counter ticks down each turn.
-  In practice that's 1..6 turns asleep before the wake-up turn, which
-  matches vanilla Gen 2.
-- `SLP_MASK = %111` (`constants/battle_constants.asm:221`). The status
-  byte's low 3 bits are the sleep counter; non-zero means asleep.
+- Duration is rolled at apply time in `BattleCommand_SleepTarget`:
+  it rolls a denied-action count in `2..4`, then stores counter values
+  `3..5`. Counter ticks down on the slept mon's action; the action where
+  it wakes is not denied. This makes sleep block exactly 2..4 actions
+  regardless of whether the target had already acted on the application turn.
+- `SLP_MASK = %111`. The status byte's low 3 bits are the sleep counter;
+  non-zero means asleep.
 - Sleep Talk and Snore exist (Gen 2 stock). Rest sleeps for
-  `REST_SLEEP_TURNS + 1` turns, then heals (see
-  `engine/battle/effect_commands.asm:5933`).
+  `REST_SLEEP_TURNS + 1` counter value, producing two denied actions.
 
 ### Freeze
 
@@ -737,7 +735,7 @@ Status-side / utility passives, abridged:
   `65c5296f`).
 - **Steel** recoil mitigation on recoil moves: ×1/2 (half) or ×0
   (full).
-- **Grass** end-of-turn regrowth: maxHP/64 (half) or maxHP/32 (full)
+- **Grass** end-of-turn regrowth: round-half-up maxHP/64 (half) or maxHP/32 (full), minimum 1
   if not statused and not full HP.
 
 This system is the design lever that gives "weak" defensive types a
@@ -776,7 +774,7 @@ about a deviation, read that file.
 | Type passives | Whole new system (§ 14) | § 14 | `engine/battle/type_passive_damage_mods.asm` |
 | Contact flags | Per-move table; Rocky Helmet / poison retaliation gated | § 6, § 7B | `data/moves/contact_flags.asm`, `engine/battle/effect_commands.asm` |
 | Spikes | 3 layers (was 1); Rapid Spin clears all | § 12 | `engine/battle/move_effects/spikes.asm` |
-| Ditto | Auto-Transform on switch-in | (see mechanics doc) | `engine/battle/effect_commands.asm` |
+| Ditto | Auto-Transform on battle entry | (see mechanics doc) | `engine/battle/core.asm`, `engine/battle/ditto_imposter.asm` |
 | Dragon Fang | Now actually boosts Dragon damage | § 7 | `data/types/type_boost_items.asm` |
 | Outrage | DRAGON physical when user's Atk > SpA | § 1, § 9 | `engine/battle/type_passive_damage_mods.asm` |
 | Burn / paralysis | Fighting-type-tuned penalties | § 5 | `engine/battle/type_passive_damage_mods.asm` |

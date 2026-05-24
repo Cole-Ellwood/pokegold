@@ -774,8 +774,8 @@ Reserved block:
 - Normal-build logical end: `wBossAIStateEnd`.
 - Reserved size: `140` bytes, enforced by
   `ds 140 - (wBossAIStateEnd - wBossAITier)`.
-- Current normal build: `wBossAITier = 01:d72b`,
-  `wBossAIStateEnd = 01:d793`, so normal state uses `104` bytes and leaves `36`
+- Current normal build: `wBossAITier = 01:d68e`,
+  `wBossAIStateEnd = 01:d6f6`, so normal state uses `104` bytes and leaves `36`
   reserved bytes.
 - Current trace field set adds `27` bytes under `BOSS_AI_TRACE`, so trace state
   would use `131` bytes and leave `9` reserved bytes.

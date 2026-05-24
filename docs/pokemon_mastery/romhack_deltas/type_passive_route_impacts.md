@@ -133,7 +133,8 @@ Boss reminders:
 ### Grass Regrowth
 
 - Grass users heal between turns if not statused and not full HP:
-  maxHP/64 for half Grass, maxHP/32 for full Grass.
+  round-half-up maxHP/64 for half Grass, round-half-up maxHP/32 for
+  full Grass, with a minimum of 1.
 - Status disables the healing.
 - Chip plans against Grass anchors need to ask whether poison, paralysis, burn,
   or sleep changes the clock more than raw damage.

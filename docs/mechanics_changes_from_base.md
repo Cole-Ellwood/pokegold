@@ -176,8 +176,8 @@ Reactive/status passives:
   - Full Steel user: recoil becomes 0
 - Grass regrowth (between turns):
   - Heals if not statused and not full HP
-  - Half Grass: `maxHP/64` (minimum 1)
-  - Full Grass: `maxHP/32` (minimum 1)
+  - Half Grass: round-half-up `maxHP/64` (implemented as `floor((maxHP + 32) / 64)`, minimum 1)
+  - Full Grass: round-half-up `maxHP/32` (implemented as `floor((maxHP + 16) / 32)`, minimum 1)
 
 ### 1.4 Spikes and Rapid Spin Rework
 
@@ -204,13 +204,13 @@ Changes:
 ### 1.5 Ditto Imposter Auto-Transform
 
 Files:
-- `engine/battle/effect_commands.asm`
-- `data/text/battle.asm`
+- `engine/battle/ditto_imposter.asm`
 - `engine/battle/core.asm`
+- `data/text/battle.asm`
 
 Changes:
-- Added `TryActivateDittoImposter` call on switch-in flow after hazard processing.
-- If incoming mon is Ditto, alive, not already transformed, and opponent is not hidden (Fly/Dig states), Ditto auto-uses Transform.
+- Added `TryActivateDittoImposter` calls on battle-entry flow after both active battlers are loaded, including normal enemy lead startup and switch-in flow after hazard processing.
+- If entering mon is Ditto, alive, not already transformed, and opponent is not hidden (Fly/Dig states), Ditto auto-uses Transform.
 - Displays explicit activation text.
 
 ### 1.6 Trainer Battle Menu and Item Access Rules

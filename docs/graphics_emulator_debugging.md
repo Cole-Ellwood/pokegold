@@ -36,6 +36,13 @@ Current fix note:
   before and after SFX waits. This fixed the starter nickname prompt tile
   jumble reported on VBA, then was tightened after a one-off Mom day/DST prompt
   report showed the same class could survive into the next textbox/menu.
+- 2026-05-23: `home/tilemap.asm` `CopyTilemapAtOnce` now waits until
+  `LY_VBLANK - 1` instead of line `$7f`, matching the safer phone-ring
+  full-copy variant. Full tilemap copy helpers also clear pending incremental
+  row/column BG-map updates because the full copy supersedes them.
+- 2026-05-23: `home/gfx.asm` `Request1bpp` and `Request2bpp` now wait until
+  the VBlank handler clears the queued request size. This keeps late-VBlank
+  skips from making callers overwrite or drop a still-pending tile copy.
 - If the same symptom returns, first check whether a path waits for SFX, cry,
   music, or animation while `hBGMapMode` is still enabled. Then inspect
   `home/window.asm`, `home/text.asm`, `home/map.asm`, and
@@ -74,5 +81,11 @@ $ram = New-Object byte[] 32768
 [System.IO.File]::WriteAllBytes(".local\pyboy_repro\repro.gbc.ram", $ram)
 ```
 
-Save states are emulator-specific. A VBA `.sgm` can be useful as evidence, but
-do not assume PyBoy can load it directly.
+Save states are emulator-specific. A VBA-M `.sgm` can be useful as static crash
+evidence, but do not assume PyBoy can load it directly. Use the omni debugger to
+decode it before trying replay:
+
+```powershell
+python -m tools.debugger state-inspect --save-state for_codex1.sgm --rom pokegold.gbc --symbols pokegold.sym --json-out .local\tmp\for_codex1_runtime_state.json
+python -m tools.debugger script-resume-gate --report .local\tmp\for_codex1_runtime_state.json
+```
