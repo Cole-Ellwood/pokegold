@@ -64,7 +64,7 @@ DoPoisonStep::
 	and 1 << PSN
 	ret z
 
-; check if mon is already fainted, return if so
+; load HP into bc; if already fainted (0), return
 	ld a, MON_HP
 	call GetPartyParamLocation
 	ld a, [hli]
@@ -73,27 +73,40 @@ DoPoisonStep::
 	or c
 	ret z
 
+; cure-and-stop if HP is already at the 1-HP floor (b == 0, c == 1)
+	ld a, b
+	or a
+	jr nz, .do_damage
+	ld a, c
+	cp 1
+	jr z, .cure_at_one_hp
+
+.do_damage
 ; do 1 HP damage
 	dec bc
 	ld [hl], c
 	dec hl
 	ld [hl], b
 
-; check if mon has fainted as a result of poison damage
+; if the decrement put HP on the 1-HP floor, cure instead of preserving status
 	ld a, b
-	or c
-	jr nz, .not_fainted
+	or a
+	jr nz, .not_at_floor
+	ld a, c
+	cp 1
+	jr z, .cure_at_one_hp
 
-; the mon has fainted, reset its status, set carry, and return %10
-	ld a, MON_STATUS
-	call GetPartyParamLocation
-	ld [hl], 0
-	ld c, %10
+.not_at_floor
+; HP > 1, poison ticked, status preserved; return %01
+	ld c, %01
 	scf
 	ret
 
-.not_fainted
-; set carry and return %01
+.cure_at_one_hp
+; HP held at 1 (skipped or post-decrement), clear status, return %01
+	ld a, MON_STATUS
+	call GetPartyParamLocation
+	ld [hl], 0
 	ld c, %01
 	scf
 	ret
