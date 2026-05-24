@@ -38,7 +38,7 @@
     "vanilla_gsc_pp_phaze_loop_save_final_whirlwind_001",
     "vanilla_gsc_sleep_setup_disruption_001"
   ],
-  "generated_at": "2026-05-13T11:25:10+00:00",
+  "generated_at": "2026-05-24T14:21:05+00:00",
   "principle_count": 19,
   "principles": [
     {
@@ -102,9 +102,9 @@
         "fixture_morty_haunter_vs_noctowl_sleep_line_001"
       ],
       "id": "gsc_sleep_is_temporary_and_resttalk_aware",
-      "policy_implication": "Sleep/setup cards must branch on miss, wake, Sleep Talk, target status, and sleep-clause state instead of continuing scripts.",
+      "policy_implication": "Sleep/setup cards must branch on miss, wake, Sleep Talk, target status, sleep-clause state, and this hack's 2-4 denied-action sleep window instead of continuing scripts.",
       "source": "https://www.smogon.com/gs/articles/status",
-      "source_claim": "The status guide notes sleep lasts 1-6 turns, waking Pokemon can act that turn, and Sleep Talk plus Rest changes sleep value.",
+      "source_claim": "The status guide treats sleep as temporary, notes waking Pokemon can act that turn, and covers Sleep Talk plus Rest value.",
       "source_scope": "vanilla_gsc_mechanics_and_strategy"
     },
     {

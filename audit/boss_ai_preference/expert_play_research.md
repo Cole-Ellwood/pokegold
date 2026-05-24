@@ -1,6 +1,6 @@
 # Expert Play Research
 
-Generated: 2026-05-13T11:25:10+00:00
+Generated: 2026-05-24T14:21:05+00:00
 
 Purpose: source-backed play principles that feed benchmark design. This is an artifact index, not a strategy essay.
 
@@ -45,8 +45,8 @@ Purpose: source-backed play principles that feed benchmark design. This is an ar
 
 - Source: https://www.smogon.com/gs/articles/status
 - Scope: `vanilla_gsc_mechanics_and_strategy`
-- Claim: The status guide notes sleep lasts 1-6 turns, waking Pokemon can act that turn, and Sleep Talk plus Rest changes sleep value.
-- Policy implication: Sleep/setup cards must branch on miss, wake, Sleep Talk, target status, and sleep-clause state instead of continuing scripts.
+- Claim: The status guide treats sleep as temporary, notes waking Pokemon can act that turn, and covers Sleep Talk plus Rest value.
+- Policy implication: Sleep/setup cards must branch on miss, wake, Sleep Talk, target status, sleep-clause state, and this hack's 2-4 denied-action sleep window instead of continuing scripts.
 - Benchmark hooks: vanilla_gsc_sleep_setup_disruption_001, long_battle_sleep_disruption_after_miss_001, external_gsc_sleeping_lax_curse_window_001, external_gsc_vaporeon_vs_restdtalk_snorlax_001, fixture_chuck_poliwrath_vs_alakazam_psychic_pivot_001, fixture_morty_haunter_vs_noctowl_sleep_line_001
 
 ### `gsc_toxic_clock_needs_survivable_transition`

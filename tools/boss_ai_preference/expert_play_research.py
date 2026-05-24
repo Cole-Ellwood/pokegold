@@ -73,8 +73,8 @@ EXPERT_PLAY_PRINCIPLES: list[dict[str, Any]] = [
         "id": "gsc_sleep_is_temporary_and_resttalk_aware",
         "source": "https://www.smogon.com/gs/articles/status",
         "source_scope": "vanilla_gsc_mechanics_and_strategy",
-        "source_claim": "The status guide notes sleep lasts 1-6 turns, waking Pokemon can act that turn, and Sleep Talk plus Rest changes sleep value.",
-        "policy_implication": "Sleep/setup cards must branch on miss, wake, Sleep Talk, target status, and sleep-clause state instead of continuing scripts.",
+        "source_claim": "The status guide treats sleep as temporary, notes waking Pokemon can act that turn, and covers Sleep Talk plus Rest value.",
+        "policy_implication": "Sleep/setup cards must branch on miss, wake, Sleep Talk, target status, sleep-clause state, and this hack's 2-4 denied-action sleep window instead of continuing scripts.",
         "benchmark_hooks": [
             "vanilla_gsc_sleep_setup_disruption_001",
             "long_battle_sleep_disruption_after_miss_001",
