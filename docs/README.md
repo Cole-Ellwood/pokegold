@@ -49,6 +49,7 @@ player can lose, and old knowledge is useful but incomplete.
    - Pokemon balance intent: `docs/balance_intent.md`,
      `docs/evolution_policy.md`, `docs/buff_backlog.md`,
      `docs/generated/balance_audit.md`
+   - Move reference: `docs/generated/move_entries.md`
    - Existing mechanics: `docs/mechanics_changes_from_base.md`
    - QoL follow-up work: `docs/qol_handoff.md`,
      `docs/qol_research_report.md`
