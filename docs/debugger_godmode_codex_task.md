@@ -44,6 +44,38 @@ From [`docs/asm_authoring_guide.md`](asm_authoring_guide.md): if any debugger wo
 | Codex chat | Continue "Advance omni-debugger" | Preserves the ~145k tokens of debugger context Codex already has loaded. |
 | Pacing | Single big pgoal | One armed goal with aggressive budget: 1800 wall-clock minutes (30 hours), 300 iterations, 3000 tool calls, max-no-progress 5, max-compactions 5. |
 
+## Per-slice north-star check (Codex amendment 2026-05-24)
+
+For every slice, the implementer must be able to answer YES to this gate before declaring slice-complete:
+
+> *A user asks a repo question in ordinary language; the debugger returns source/data locations, causal explanation, first proof command, disproof standard, and regression gate without Codex/Claude manually spelunking first.*
+
+If the slice doesn't move at least one benchmark question closer to YES, it's the wrong slice. Slices that only restructure debugger internals without making any benchmark question more answerable don't count toward the goal.
+
+## Decomposition into measurable sub-capabilities (Codex amendment 2026-05-24)
+
+"Godlike" is the ambition; the measurable slices are these six sub-capabilities that together compose a Q&A oracle. They map roughly onto the six audit `capability_partial` gaps but with explicit user-facing language:
+
+| Sub-capability | What the user sees | Closes which audit gap (roughly) |
+|---|---|---|
+| Source locator | "Where do I add X / where is Y handled?" → list of source paths + line ranges + symbol names | `whole_rom_replay_localization` (the localization half) |
+| Behavior explainer | "Why does X happen in-game?" → causal chain (input → function → data → ROM state → visible behavior) | `causal_provenance` |
+| Repro planner | "Reproduce this for me" → a save-state setup + key-press script or scenario JSONL the LLM can run cold | `generation_fuzzing_counterexamples` |
+| Proof runner | "Did my fix actually fix it?" → executable proof gate (e.g. `rom-switch-materialize --fail-on-mismatch`) | `differential_mirrors` + replay half of `whole_rom_replay_localization` |
+| Regression suggester | "What test should I add so this never regresses?" → concrete `tools/audit/check_*.py` skeleton + invariant statement | `impact_ranking_workflow` |
+| Report renderer | "Show me what you found" → rendered markdown / JSON with all five above stitched together | `visualization_reports` |
+
+Each benchmark question's `expected_answer` schema names which sub-capabilities are required to score it PASS. A slice that improves one sub-capability without changing the score on any question fails the per-slice north-star gate.
+
+## Separation: Q&A oracle vs live runtime proof (Codex amendment 2026-05-24)
+
+Two distinct proof modes; the roadmap distinguishes them so we don't over-promise:
+
+- **Source-provable answers** (locator, regression suggester, partial behavior explainer): can be answered from static source + grep + symbol table + git history. Cheap, deterministic, no ROM execution.
+- **Runtime-provable answers** (repro planner, proof runner, full behavior explainer): require save-state synthesis + ROM execution. Slower, sometimes flaky, must be marked as such in the answer.
+
+Every benchmark question record carries a `proof_mode: source|runtime|hybrid` field. The scoring rubric expects the answer to declare which mode it used and whether the proof actually ran.
+
 ## Phase structure (internal to the single pgoal)
 
 ### Phase 0 — Foundation (target: Iter 1-6)
@@ -98,9 +130,11 @@ Each iteration in Phase 1:
 6. New audits under `tools/audit/check_*.py` covering benchmark + gap-closing invariants.
 7. Build remains green (`make pokegold.gbc` exits 0); release-smoke green throughout.
 
-## Out of scope
+## Out of scope (edit-forbidden, read-required)
 
-- `engine/*`, `data/*`, `ram/*`, `constants/*`, `home/*`, `maps/*`, `gfx/*`, `audio/*`, `*.asm` — the targets the debugger investigates, NOT what the debugger edits. If a benchmark question genuinely needs an ROM-side change (e.g. a new symbol export), surface that as an out-of-scope follow-up; don't sneak it in.
+**Important distinction (Codex amendment 2026-05-24):** the directories below are EDIT-forbidden but READ-required. The debugger must read, index, parse, and trace provenance through them to do its job. Out-of-scope means the LLM pair MUST NOT modify these files; it does NOT mean the debugger can't inspect them.
+
+- `engine/*`, `data/*`, `ram/*`, `constants/*`, `home/*`, `maps/*`, `gfx/*`, `audio/*`, `*.asm` — investigation targets. Read freely; never write. If a benchmark question genuinely needs an ROM-side change (e.g. a new symbol export), surface that as a separate workstream; don't sneak it in.
 - Save-format changes — explicit Cole-escalation per CLAUDE.md.
 - Trainer roster / Pokemon stat / moveset edits — separate workstreams (`docs/balance_intent.md`, `docs/buff_backlog.md`).
 - Modernization features that change gameplay feel — First-Playthrough Promise.

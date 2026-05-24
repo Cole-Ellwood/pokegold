@@ -58,6 +58,17 @@ actions for audit-counted blockers. First lived scenario:
 `boss selected wrong switch` attaches the Boss AI replay/materialization proof
 handoff to `whole_rom_replay_localization`, and `report`/`visualize` carry that
 scenario, proof commands, evidence/disproof standards, and regression gate.
+First proof-route demonstration (2026-05-24, Iter 1 of `debugger-godmode`
+pgoal): the `boss_wrong_switch_replay_materialization` gap action was driven
+end-to-end from audit -> investigate -> `rom-switch-materialize
+--fail-on-mismatch` against existing `.local/tmp/boss_ai_debugger/all_seed1_120
+_after_mirror_fix.jsonl` data (54 switch_sack scenarios available; 3 sampled;
+1 policy disagreement detected: `generated_switch_sack_1_00002_stay_when_
+current_move_converts`, expected_switch=False, proposed_switch=True, exit
+code 1). Route is PROVEN; the audit `gap_actions` count remains 1 because the
+audit does not yet read proof artifacts and the disputed scenario remains
+unresolved (stale-expectation vs real boss-AI bug, separate investigation).
+Writeup: `audit/omni_debugger_first_gap_action_proof_2026-05-24.md`.
 
 Status legend:
 
