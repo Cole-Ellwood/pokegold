@@ -347,35 +347,65 @@ surrounding logic.
   `SCRIPT_COMMAND_SPECS` dict is pure declarative data (1:1 mirror of
   `macros/scripts/scripts.asm`) so the split fits CLAUDE.md's
   declarative-data exemption.
+- `ranking.py` package split — shipped after `3c1429fc`. Old
+  single-file `tools/debugger/ranking.py` (2,115 lines) deleted; new
+  `tools/debugger/ranking/` package replaces it with 4 files / 2,202
+  lines: `severity.py`=198 (`SEVERITY_BASE`, `ROM_SURFACE_SEVERITY_HINTS`,
+  `calibrate_finding_severity` + its two private helpers
+  `finding_search_text`, `first_rom_surface_match`),
+  `builders.py`=1,772 (the 30 `*_findings` builders + their per-family
+  support helpers: `content_state_*`, `state_space_*`,
+  `instruction_trace_*`, `content_scenario_commands`,
+  `generation_commands`, `event_commands`, `group_status`),
+  `helpers.py`=63 (the four generic data-shapers shared by both
+  builders and severity: `finding`, `string_items`, `dict_items`,
+  `unique_string_items`), `__init__.py`=169 (`rank_findings` entry,
+  `findings_from_report` dispatcher, the `_FINDINGS_BUILDERS` 31-row
+  dispatch dict, `resolve_path`/`display_path` path helpers, and the
+  public re-export of `rank_findings`/`display_path`/`resolve_path`/
+  `SEVERITY_BASE` so the six downstream importers
+  (`tools/debugger/__init__.py`, `investigate.py`, `impact.py`,
+  `reporting.py`, `commands.py`, `tests/test_catalog.py`) stay
+  unbroken). `helpers.py` exists (as in `content_mirror/`) so
+  `severity.py` and `builders.py` stay independent and the package
+  `__init__.py` doesn't end up on its own import cycle. `builders.py`
+  remains >700 lines because it's the audit-doc-endorsed home for the
+  homogeneous registry of 30 sibling builder functions (each 50–80
+  lines, same shape) — analogous to `boss_ai_debugger/generators.py`'s
+  1,840-line registry; a further sub-split by family (capability,
+  content, instruction_trace, state_space, ...) is the natural next
+  step but not required by this slice.
 
 **Tests passing post-refactor:**
 `tools.debugger.tests.test_catalog` → 230/230 (re-verified after the
 content_mirror split — every `test_content_mirror_compares_*`
-integration test still passes against the package);
+integration test still passes against the package; re-verified again
+after the ranking package split — the suite exercises `rank_findings`
+via the public API);
 `tools.boss_ai_debugger.tests` → 211/212 (1 skip; 1 pre-existing
 failure on `test_current_roadmap_audit_keeps_goal_incomplete` —
 A/B-verified pre-existing via `git stash` against the pre-refactor
 tree, concerns `audit/boss_ai_debugger/rule_map.json` data state, not
 source structure). `check_no_solo_commits_omni_debugger.py` passes
-for all four shipped phases.
+for all five shipped phases.
 
 **Remaining items, ranked by leverage:**
 
-1. **`ranking.py` split (2,115 lines, added during execution).** The
-   file-shape hook flagged this during slice 2; the split was deferred
-   to keep the registry-dict change bounded. Same "homogeneous registry
-   of similar functions" justification as the new `formatters.py`.
-   Suggested package: `ranking/severity.py` (SEVERITY_BASE,
-   ROM_SURFACE_SEVERITY_HINTS, calibrate_finding_severity),
-   `ranking/builders.py` (the 30 `*_findings` functions),
-   `ranking/__init__.py` (rank_findings + dispatcher + helpers).
-2. **Item 6 — split `tests/test_catalog.py` (10,295 lines).**
+1. **Item 6 — split `tests/test_catalog.py` (10,295 lines).**
    Mechanical; one `test_<module>.py` per `<module>.py` to mirror the
    src layout.
-3. **Item 5 — backfill `damage_debugger/tests/`.** Different shape
+2. **Item 5 — backfill `damage_debugger/tests/`.** Different shape
    (real test-writing, not structural refactor); may warrant its own
    session. Priority modules are the four that other debugger trees
    import: `disasm`, `taint`, `state`, `tables`, `battle_calc`.
+3. **Sub-split `ranking/builders.py` (1,772 lines) by builder family.**
+   Same-shape 30-function registry; a follow-up split into
+   `builders/capability.py`, `builders/content.py`,
+   `builders/instruction_trace.py`, `builders/state_space.py`,
+   `builders/traces.py`, `builders/workflow.py` would bring every file
+   under the 700-line bar without changing public surface (the
+   `_FINDINGS_BUILDERS` dispatch dict in `__init__.py` already
+   abstracts callers from where each builder lives).
 
 ## What I did *not* check
 

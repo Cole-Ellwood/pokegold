@@ -746,7 +746,7 @@ def build_capability_report(root: Path = ROOT) -> dict[str, Any]:
             evidence=(
                 "tools/boss_ai_debugger/review_queue.py",
                 "tools/debugger/workflow.py",
-                "tools/debugger/ranking.py",
+                "tools/debugger/ranking/",
                 "tools/debugger/coverage.py",
                 "tools/debugger/impact.py",
                 "tools/debugger/investigate.py",
