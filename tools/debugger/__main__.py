@@ -1464,6 +1464,10 @@ def format_proof_campaign(report: dict[str, Any]) -> str:
         f"status_counts={report['status_counts']}",
         f"blocked_reason_counts={report['blocked_reason_counts']}",
     ]
+    for error in report.get("validation_errors", []):
+        lines.append(f"validation_error: {error}")
+    for error in report.get("expectation_errors", [])[:8]:
+        lines.append(f"expectation_error: {error}")
     executed = [item for item in report["command_records"] if item["executed"]]
     if executed:
         lines.append("Executed commands:")

@@ -50,20 +50,6 @@ def require_command(command: list[str], *, timeout: int) -> tuple[float, str]:
     return elapsed, proc.stdout
 
 
-def run_godmode(timeout: int) -> tuple[dict[str, Any], float]:
-    out = ROOT / ".local" / "tmp" / "debugger_power_v3_godmode.json"
-    elapsed, _stdout = require_command(
-        [
-            sys.executable,
-            "tools/audit/check_debugger_godmode_benchmark.py",
-            "--out",
-            str(out),
-        ],
-        timeout=timeout,
-    )
-    return load_json(out), elapsed
-
-
 def run_campaign(cases: Path, *, timeout: int, max_commands: int) -> tuple[dict[str, Any], float]:
     out = ROOT / ".local" / "tmp" / "debugger_power_v3_campaign.json"
     elapsed, _stdout = require_command(
@@ -102,20 +88,26 @@ def main(argv: list[str] | None = None) -> int:
 
     errors: list[str] = []
 
+    v2_out = ROOT / ".local" / "tmp" / "debugger_power_v3_v2.json"
     v2_elapsed, _stdout = require_command(
-        [sys.executable, "tools/audit/check_debugger_power_v2.py"],
+        [
+            sys.executable,
+            "tools/audit/check_debugger_power_v2.py",
+            "--out",
+            str(v2_out),
+        ],
         timeout=120,
     )
-    v2 = load_json(ROOT / ".local" / "tmp" / "debugger_power_v2.json")
+    v2 = load_json(v2_out)
     if not v2.get("valid"):
         errors.append("V2 audit is not valid")
 
-    godmode, godmode_elapsed = run_godmode(timeout=120)
-    if godmode.get("pass_rate") != 1.0:
-        errors.append(f"godmode pass_rate={godmode.get('pass_rate')} expected 1.0")
-    if godmode.get("investigate_run_count") != 0:
+    if v2.get("benchmark_pass_rate") != 1.0:
+        errors.append(f"godmode pass_rate={v2.get('benchmark_pass_rate')} expected 1.0")
+    if v2.get("benchmark_investigate_run_count") != 0:
         errors.append(
-            f"godmode investigate_run_count={godmode.get('investigate_run_count')} expected 0"
+            "godmode investigate_run_count="
+            f"{v2.get('benchmark_investigate_run_count')} expected 0"
         )
 
     campaign, campaign_elapsed = run_campaign(
@@ -159,10 +151,10 @@ def main(argv: list[str] | None = None) -> int:
         "valid": not errors,
         "elapsed_seconds": round(elapsed_total, 3),
         "v2_elapsed_seconds": round(v2_elapsed, 3),
-        "godmode_elapsed_seconds": round(godmode_elapsed, 3),
+        "godmode_elapsed_seconds": v2.get("benchmark_elapsed_seconds"),
         "campaign_elapsed_seconds": round(campaign_elapsed, 3),
-        "godmode_pass_rate": godmode.get("pass_rate"),
-        "godmode_investigate_run_count": godmode.get("investigate_run_count"),
+        "godmode_pass_rate": v2.get("benchmark_pass_rate"),
+        "godmode_investigate_run_count": v2.get("benchmark_investigate_run_count"),
         "route_row_count": campaign.get("route_row_count"),
         "classified_symptom_class_count": campaign.get("classified_symptom_class_count"),
         "executed_unique_command_count": campaign.get("executed_unique_command_count"),

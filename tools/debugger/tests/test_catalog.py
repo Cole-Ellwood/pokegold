@@ -187,6 +187,56 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertGreaterEqual(report["blocked_reason_counts"]["placeholder_input"], 1)
         self.assertEqual(report["executed_unique_command_count"], 1)
 
+    def test_proof_campaign_rejects_execute_all_routes_without_suite(self) -> None:
+        report = build_proof_campaign(
+            cases=(),
+            include_all_routes=True,
+            execute=True,
+            timeout_seconds=30,
+        )
+
+        self.assertFalse(report["valid"])
+        self.assertIn("--execute with --all-routes requires --suite", report["validation_errors"][0])
+        self.assertEqual(report["executed_unique_command_count"], 0)
+
+    def test_proof_campaign_rejects_command_limit_truncation(self) -> None:
+        report = build_proof_campaign(
+            cases=(
+                {
+                    "id": "grass",
+                    "command": "python -m tools.debugger grass-regrowth --max-total-hp 300",
+                },
+                {
+                    "id": "mirror",
+                    "command": "python -m tools.debugger content-mirror --source-file maps\\NewBarkTown.asm",
+                },
+            ),
+            execute=True,
+            max_commands=1,
+            timeout_seconds=30,
+        )
+
+        self.assertFalse(report["valid"])
+        self.assertEqual(report["status_counts"]["not_run_limit"], 1)
+
+    def test_proof_campaign_enforces_expected_disposition(self) -> None:
+        report = build_proof_campaign(
+            cases=(
+                {
+                    "id": "wrong_expectation",
+                    "command": "python -m tools.debugger grass-regrowth --max-total-hp 300",
+                    "expected_exit_codes": [0],
+                    "expected_disposition": "discrepancy_found",
+                },
+            ),
+            execute=True,
+            timeout_seconds=30,
+        )
+
+        self.assertFalse(report["valid"])
+        self.assertEqual(report["status_counts"]["passed"], 1)
+        self.assertEqual(len(report["expectation_errors"]), 1)
+
     def test_proof_command_records_block_reasons(self) -> None:
         placeholder = command_record("python -m tools.debugger triage --symptom <symptom>")
         shell = command_record("python tools\\audit\\check_release_smoke.py & git status")

@@ -187,6 +187,9 @@ def build_proof_campaign(
     records: dict[str, dict[str, Any]] = {}
     route_row_count = 0
     route_symptom_classes: set[str] = set()
+    validation_errors: list[str] = []
+    if execute and include_all_routes and not cases:
+        validation_errors.append("--execute with --all-routes requires --suite; routes are classified only")
 
     if include_all_routes:
         route_row_count = len(NEXT_STEP_ROWS)
@@ -275,8 +278,32 @@ def build_proof_campaign(
         [record for record in command_records if record.get("blocked_reason")],
         "blocked_reason",
     )
+    expectation_errors: list[str] = []
+    for record in command_records:
+        if not record["execute_requested"]:
+            continue
+        expected = str(record["expected_disposition"])
+        actual = str(record["disposition"])
+        record["expected_disposition_match"] = actual == expected
+        if actual != expected:
+            expectation_errors.append(
+                f"{record['key']}: disposition {actual} != expected {expected}"
+            )
+
+    command_dispositions = {record["key"]: record["disposition"] for record in command_records}
+    for case_result in case_results:
+        case_result["command_dispositions"] = [
+            command_dispositions.get(key, "missing") for key in case_result["command_keys"]
+        ]
+
     failed_count = status_counts.get("failed", 0)
-    valid = failed_count == 0 and unsafe_execution_attempts == 0
+    valid = (
+        failed_count == 0
+        and status_counts.get("not_run_limit", 0) == 0
+        and unsafe_execution_attempts == 0
+        and not expectation_errors
+        and not validation_errors
+    )
 
     return {
         "schema_version": 1,
@@ -293,6 +320,8 @@ def build_proof_campaign(
         "unsafe_execution_attempts": unsafe_execution_attempts,
         "status_counts": status_counts,
         "blocked_reason_counts": blocked_reason_counts,
+        "expectation_errors": expectation_errors,
+        "validation_errors": validation_errors,
         "elapsed_seconds": round(time.perf_counter() - started, 3),
         "case_results": case_results,
         "command_records": command_records,
