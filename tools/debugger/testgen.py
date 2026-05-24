@@ -6,6 +6,7 @@ from typing import Any
 
 from .catalog import ROOT, keyword_matches, triage_request
 from .provenance import build_provenance_report
+from .reporting import load_reports
 
 
 @dataclass(frozen=True)
@@ -153,14 +154,16 @@ GENERATOR_RULES = (
 
 def suggest_tests(
     *,
+    reports: tuple[str, ...] = (),
     changed_files: tuple[str, ...] = (),
     symbols: tuple[str, ...] = (),
     symptom: str = "",
     root: Path = ROOT,
 ) -> dict[str, Any]:
+    loaded_reports, report_errors = load_reports(reports=reports, root=root)
     normalized_paths = tuple(path.replace("\\", "/").lower() for path in changed_files)
     symptom_text = symptom.lower()
-    matches = []
+    matches = next_step_test_matches(loaded_reports)
     for rule in GENERATOR_RULES:
         path_hit = any(
             any(path.startswith(prefix.lower()) for prefix in rule.path_prefixes)
@@ -205,6 +208,7 @@ def suggest_tests(
                 changed_files=tuple(related_files),
                 symbols=symbols,
                 symptom=symptom,
+                reports=reports,
                 root=root,
             )
 
@@ -234,6 +238,10 @@ def suggest_tests(
         "schema_version": 1,
         "kind": "unified_debugger_test_suggestions",
         "root": str(root),
+        "valid": not report_errors,
+        "error_count": len(report_errors),
+        "errors": report_errors,
+        "input_reports": [item["source"] for item in loaded_reports],
         "changed_files": list(changed_files),
         "symbols": list(symbols),
         "symptom": symptom,
@@ -244,13 +252,97 @@ def suggest_tests(
     }
 
 
+def next_step_test_matches(loaded_reports: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    matches = []
+    for loaded in loaded_reports:
+        for next_step in next_step_reports_from_loaded(loaded):
+            match = next_step_test_match(source=loaded["source"], next_step=next_step)
+            if match:
+                matches.append(match)
+    return matches
+
+
+def next_step_reports_from_loaded(loaded: dict[str, Any]) -> list[dict[str, Any]]:
+    data = loaded["data"]
+    if not isinstance(data, dict):
+        return []
+    if data.get("kind") == "unified_debugger_next_step":
+        return [data]
+    embedded = data.get("symptom_only_next_step")
+    if isinstance(embedded, dict) and embedded.get("kind") == "unified_debugger_next_step":
+        return [embedded]
+    return []
+
+
+def next_step_test_match(*, source: str, next_step: dict[str, Any]) -> dict[str, Any] | None:
+    recommendation = next_step.get("recommendation")
+    if not isinstance(recommendation, dict):
+        return None
+    symptom_class = str(recommendation.get("symptom_class") or "unknown")
+    title = str(recommendation.get("title") or symptom_class or "next proof route")
+    first_command = str(recommendation.get("first_command") or "")
+    regression_gate = str(recommendation.get("regression_gate") or "")
+    escalation_command = str(recommendation.get("escalation_command") or "")
+    return {
+        "id": "next_step_regression_gate",
+        "title": f"Regression gate from next proof route: {title}",
+        "matched_by": ["report", "next_step"],
+        "source": source,
+        "symptom_class": symptom_class,
+        "commands": unique_strings([first_command, regression_gate]),
+        "counterexample_commands": unique_strings([escalation_command]),
+        "notes": next_step_notes(source=source, recommendation=recommendation),
+    }
+
+
+def next_step_notes(*, source: str, recommendation: dict[str, Any]) -> list[str]:
+    notes = [
+        f"report: {source}",
+        f"symptom_class: {recommendation.get('symptom_class', 'unknown')}",
+    ]
+    for label, key in (
+        ("required input", "required_inputs"),
+        ("source/data", "source_refs"),
+        ("evidence standard", "evidence_standard"),
+        ("disproof standard", "disproof_standard"),
+    ):
+        for item in string_items(recommendation.get(key)):
+            notes.append(f"{label}: {item}")
+    proof_limit = str(recommendation.get("proof_limit") or "")
+    if proof_limit:
+        notes.append(f"proof limit: {proof_limit}")
+    return notes
+
+
 def unique_commands(matches: list[dict[str, Any]], key: str) -> list[str]:
+    return unique_strings(
+        command
+        for match in matches
+        for command in match.get(key, [])
+    )
+
+
+def string_items(value: Any) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, str):
+        return [value] if value else []
+    if isinstance(value, list | tuple):
+        return [
+            item
+            for raw in value
+            for item in string_items(raw)
+        ]
+    return []
+
+
+def unique_strings(items: Any) -> list[str]:
     seen: set[str] = set()
     out: list[str] = []
-    for match in matches:
-        for command in match[key]:
-            if command in seen:
-                continue
-            seen.add(command)
-            out.append(command)
+    for item in items:
+        command = str(item)
+        if not command or command in seen:
+            continue
+        seen.add(command)
+        out.append(command)
     return out

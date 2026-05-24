@@ -60,6 +60,7 @@ python -m tools.debugger explain --report .local\tmp\debugger_replay_boss_ai.jso
 python -m tools.debugger explain --report .local\tmp\debugger_watch_smoke.json --watch-symbol wCurDamage --symptom "damage changed unexpectedly"
 python -m tools.debugger suggest-tests --changed-file engine\battle\late_gen_held_items.asm
 python -m tools.debugger suggest-tests --symbol BossAI_SelectMove --symptom "bad switch choice"
+python -m tools.debugger suggest-tests --report .local\tmp\debugger_investigate_wrong_switch.json
 python -m tools.debugger compare --symbol wCurDamage
 python -m tools.debugger compare --changed-file engine\battle\ai\boss_policy_move.asm
 python -m tools.debugger content-mirror --source-file maps\NewBarkTown.asm
@@ -370,11 +371,16 @@ source/data anchors, evidence standard, disproof standard, proof limit, and
 regression gate, keeping symptom-only planning packets explainable without
 pretending they are ROM-backed repros.
 
-`suggest-tests` maps changed files, symbols, and symptoms to this repo's
-existing fuzzers, generators, metamorphic checks, coverage reports, and
-counterexample/minimization commands. It is the lightweight registry layer used
-by `generate`; surfaces without dedicated generators still report static
-fallback gates and notes.
+`suggest-tests` maps changed files, symbols, symptoms, and prior debugger
+reports to this repo's existing fuzzers, generators, metamorphic checks,
+coverage reports, and counterexample/minimization commands. When a report
+contains an embedded `unified_debugger_next_step` route, `suggest-tests --report`
+promotes the routed first proof command and regression gate into the
+check-command list, preserves escalation as the counterexample command, and
+keeps required inputs, source/data anchors, evidence/disproof standards, and
+proof limits in notes. It is the lightweight registry layer used by `generate`;
+surfaces without dedicated generators still report static fallback gates and
+notes.
 
 `compare` declares which mirrors/oracles can check a surface. It distinguishes
 damage's ROM-vs-oracle checks, Boss AI's Python policy/differential plus ROM

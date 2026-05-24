@@ -425,6 +425,7 @@ def build_parser() -> argparse.ArgumentParser:
     explain.set_defaults(func=cmd_explain)
 
     tests = subparsers.add_parser("suggest-tests")
+    tests.add_argument("--report", action="append", default=[])
     tests.add_argument("--changed-file", action="append", default=[])
     tests.add_argument("--symbol", action="append", default=[])
     tests.add_argument("--symptom", default="")
@@ -1016,12 +1017,13 @@ def cmd_explain(args: argparse.Namespace) -> int:
 
 def cmd_suggest_tests(args: argparse.Namespace) -> int:
     report = suggest_tests(
+        reports=tuple(args.report),
         changed_files=tuple(args.changed_file),
         symbols=tuple(args.symbol),
         symptom=args.symptom,
     )
     emit_report(report, args)
-    return 0
+    return 0 if report["valid"] else 1
 
 
 def cmd_compare(args: argparse.Namespace) -> int:
@@ -2810,20 +2812,28 @@ def format_test_suggestions(report: dict[str, Any]) -> str:
         "Unified Pokemon Gold romhack debugger test suggestions",
         f"matches={report['match_count']}",
     ]
+    if report.get("input_reports"):
+        lines.append("reports=" + ", ".join(report["input_reports"]))
     if report["changed_files"]:
         lines.append("changed_files=" + ", ".join(report["changed_files"]))
     if report["symbols"]:
         lines.append("symbols=" + ", ".join(report["symbols"]))
     if report["symptom"]:
         lines.append(f"symptom={report['symptom']}")
+    for error in report.get("errors", [])[:5]:
+        lines.append(f"error: {error}")
     lines.extend(["", "Matches:"])
     for match in report["matches"]:
         lines.append(
             f"  - {match['id']} - {match['title']} "
             f"({', '.join(match['matched_by'])})"
         )
-        for note in match.get("notes", [])[:2]:
+        note_limit = 12 if "next_step" in match.get("matched_by", []) else 2
+        notes = match.get("notes", [])
+        for note in notes[:note_limit]:
             lines.append(f"      note: {note}")
+        if len(notes) > note_limit:
+            lines.append(f"      note: ... {len(notes) - note_limit} more")
     lines.extend(["", "Generator/check commands:"])
     for command in report["commands"]:
         lines.append(f"  - {command}")
