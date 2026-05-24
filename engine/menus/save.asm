@@ -1,3 +1,115 @@
+DEF SAVE_FORMAT_VERSION_V2 EQU 2
+
+DEF SAVEFILE_CURRENT_PRIMARY EQU $1
+DEF SAVEFILE_CURRENT_BACKUP  EQU $2
+DEF SAVEFILE_V2_PRIMARY      EQU $3
+DEF SAVEFILE_V2_BACKUP       EQU $4
+
+DEF V2_PLAYER_DATA1_SIZE EQU $0226
+DEF V2_PLAYER_DATA2_SIZE EQU $01aa
+DEF V2_PLAYER_DATA3_SIZE EQU $047d
+DEF V2_CUR_MAP_DATA_SIZE EQU $0034
+DEF V2_POKEMON_DATA_SIZE EQU $04df
+DEF V2_GAME_DATA_SIZE    EQU $0d60
+
+DEF V2_WPLAYERDATA1_OFF EQU $0000
+DEF V2_WPLAYERDATA2_OFF EQU $0226
+DEF V2_WGAMETIMECAP_OFF EQU $0049
+DEF V2_WCURDAY_OFF EQU $0051
+DEF V2_WOBJECTFOLLOW_LEADER_OFF EQU $0053
+DEF V2_WCMDQUEUE_OFF EQU $0264
+DEF V2_WMAPOBJECTS_OFF EQU $02a4
+DEF V2_WUNUSEDREANCHORBGMAPFLAGS_OFF EQU $03c4
+DEF V2_WTIMEOFDAYPAL_OFF EQU $03c7
+DEF V2_WTIMEOFDAYPALFLAGS_OFF EQU $03cc
+DEF V2_WPLAYERDATA3_OFF EQU $03d0
+DEF V2_WWHICHREGISTEREDITEM_OFF EQU $04df
+DEF V2_WTRADEFLAGS_OFF EQU $04e4
+DEF V2_WMOOMOOBERRIES_OFF EQU $0506
+DEF V2_WPOKECENTER2FSCENEID_OFF EQU $0516
+DEF V2_WBOSSAITIER_OFF EQU $058a
+DEF V2_WJOYPADDISABLE_OFF EQU $0719
+DEF V2_WCURBOX_OFF EQU $071b
+DEF V2_WBOXNAMES_OFF EQU $071e
+DEF V2_WBIKEFLAGS_OFF EQU $079e
+DEF V2_WCURMAPSCENESCRIPTPOINTER_OFF EQU $07a0
+DEF V2_WDECOBED_OFF EQU $07b8
+DEF V2_WTIMEREVENTSTARTDAY_OFF EQU $07cc
+DEF V2_WFRUITTREEFLAGS_OFF EQU $07d0
+DEF V2_WLUCKYNUMBERDAYTIMER_OFF EQU $07d6
+DEF V2_WSPECIALPHONECALLID_OFF EQU $07da
+DEF V2_WBUGCONTESTSTARTTIME_OFF EQU $07de
+DEF V2_WSTEPCOUNT_OFF EQU $081c
+DEF V2_WHAPPINESSSTEPCOUNT_OFF EQU $0820
+DEF V2_WPARKBALLSREMAINING_OFF EQU $0822
+DEF V2_WLUCKYNUMBERSHOWFLAG_OFF EQU $0846
+DEF V2_WLUCKYIDNUMBER_OFF EQU $0848
+DEF V2_WCURMAPDATA_OFF EQU $084d
+DEF V2_WLASTSPAWNMAPGROUP_OFF EQU $085a
+DEF V2_WWARPNUMBER_OFF EQU $085e
+DEF V2_WPOKEMONDATA_OFF EQU $0881
+DEF V2_WPOKEDEXCAUGHT_OFF EQU $0a43
+
+DEF V2_BOX_NAMES_IN_PLAYERDATA3 EQU V2_WBOXNAMES_OFF - V2_WPLAYERDATA3_OFF
+
+MACRO copy_v2_save_chunk
+	ld hl, \1 + \2
+	ld de, \3
+	ld bc, \4 - \3
+	call CopyBytes
+ENDM
+
+MACRO copy_v2_playerdata1_chunks
+	copy_v2_save_chunk \1, V2_WPLAYERDATA1_OFF, wPlayerData1, wGameTimeCap
+	copy_v2_save_chunk \1, V2_WGAMETIMECAP_OFF, wGameTimeCap, wCurDay
+	copy_v2_save_chunk \1, V2_WCURDAY_OFF, wCurDay, wObjectFollow_Leader
+	copy_v2_save_chunk \1, V2_WOBJECTFOLLOW_LEADER_OFF, wObjectFollow_Leader, wPlayerData1End
+ENDM
+
+MACRO copy_v2_playerdata2_chunks
+	copy_v2_save_chunk \1, V2_WPLAYERDATA2_OFF, wPlayerData2, wCmdQueue
+	copy_v2_save_chunk \1, V2_WCMDQUEUE_OFF, wCmdQueue, wMapObjects
+	copy_v2_save_chunk \1, V2_WMAPOBJECTS_OFF, wMapObjects, wUnusedReanchorBGMapFlags
+	copy_v2_save_chunk \1, V2_WUNUSEDREANCHORBGMAPFLAGS_OFF, wUnusedReanchorBGMapFlags, wTimeOfDayPal
+	copy_v2_save_chunk \1, V2_WTIMEOFDAYPAL_OFF, wTimeOfDayPal, wTimeOfDayPalFlags
+	copy_v2_save_chunk \1, V2_WTIMEOFDAYPALFLAGS_OFF, wTimeOfDayPalFlags, wPlayerData2End
+ENDM
+
+MACRO copy_v2_playerdata3_chunks
+	copy_v2_save_chunk \1, V2_WPLAYERDATA3_OFF, wPlayerData3, wWhichRegisteredItem
+	copy_v2_save_chunk \1, V2_WWHICHREGISTEREDITEM_OFF, wWhichRegisteredItem, wTradeFlags
+	copy_v2_save_chunk \1, V2_WTRADEFLAGS_OFF, wTradeFlags, wMooMooBerries
+	copy_v2_save_chunk \1, V2_WMOOMOOBERRIES_OFF, wMooMooBerries, wPokecenter2FSceneID
+	copy_v2_save_chunk \1, V2_WPOKECENTER2FSCENEID_OFF, wPokecenter2FSceneID, wBossAITier
+	copy_v2_save_chunk \1, V2_WBOSSAITIER_OFF, wBossAITier, wJoypadDisable
+	copy_v2_save_chunk \1, V2_WJOYPADDISABLE_OFF, wJoypadDisable, wCurBox
+	copy_v2_save_chunk \1, V2_WCURBOX_OFF, wCurBox, wCurBox + 1
+	copy_v2_save_chunk \1, V2_WBIKEFLAGS_OFF, wBikeFlags, wCurMapSceneScriptPointer
+	copy_v2_save_chunk \1, V2_WCURMAPSCENESCRIPTPOINTER_OFF, wCurMapSceneScriptPointer, wDecoBed
+	copy_v2_save_chunk \1, V2_WDECOBED_OFF, wDecoBed, wTimerEventStartDay
+	copy_v2_save_chunk \1, V2_WTIMEREVENTSTARTDAY_OFF, wTimerEventStartDay, wFruitTreeFlags
+	copy_v2_save_chunk \1, V2_WFRUITTREEFLAGS_OFF, wFruitTreeFlags, wLuckyNumberDayTimer
+	copy_v2_save_chunk \1, V2_WLUCKYNUMBERDAYTIMER_OFF, wLuckyNumberDayTimer, wSpecialPhoneCallID
+	copy_v2_save_chunk \1, V2_WSPECIALPHONECALLID_OFF, wSpecialPhoneCallID, wBugContestStartTime
+	copy_v2_save_chunk \1, V2_WBUGCONTESTSTARTTIME_OFF, wBugContestStartTime, wStepCount
+	copy_v2_save_chunk \1, V2_WSTEPCOUNT_OFF, wStepCount, wHappinessStepCount
+	copy_v2_save_chunk \1, V2_WHAPPINESSSTEPCOUNT_OFF, wHappinessStepCount, wParkBallsRemaining
+	copy_v2_save_chunk \1, V2_WPARKBALLSREMAINING_OFF, wParkBallsRemaining, wLuckyNumberShowFlag
+	copy_v2_save_chunk \1, V2_WLUCKYNUMBERSHOWFLAG_OFF, wLuckyNumberShowFlag, wLuckyIDNumber
+	copy_v2_save_chunk \1, V2_WLUCKYIDNUMBER_OFF, wLuckyIDNumber, wPlayerData3End
+ENDM
+
+MACRO copy_v2_curmap_chunks
+	copy_v2_save_chunk \1, V2_WCURMAPDATA_OFF, wCurMapData, wLastSpawnMapGroup
+	copy_v2_save_chunk \1, V2_WLASTSPAWNMAPGROUP_OFF, wLastSpawnMapGroup, wWarpNumber
+	copy_v2_save_chunk \1, V2_WWARPNUMBER_OFF, wWarpNumber, wCurMapDataEnd
+ENDM
+
+MACRO copy_v2_pokemon_chunks
+	copy_v2_save_chunk \1, V2_WPOKEMONDATA_OFF, wPokemonData, wPokedexCaught
+	copy_v2_save_chunk \1, V2_WPOKEDEXCAUGHT_OFF, wPokedexCaught, wPokemonDataEnd
+ENDM
+
 SaveMenu:
 	call LoadStandardMenuHeader
 	lb de, 4, 0
@@ -88,7 +200,7 @@ MoveMonWOMail_InsertMon_SaveGame:
 	pop de
 	ld a, e
 	ld [wCurBox], a
-	ld a, TRUE
+	ld a, SAVEFILE_CURRENT_PRIMARY
 	ld [wSaveFileExists], a
 	farcall StageRTCTimeForSave
 	call ValidateSave
@@ -471,7 +583,7 @@ SaveBackupPlayerData:
 	ld bc, wCurMapDataEnd - wCurMapData
 	call CopyBytes
 	call CloseSRAM
-	ret
+	jp SaveBackupBoxNames
 
 SaveBackupPokemonData:
 	ld a, BANK(sBackupPokemonData)
@@ -511,6 +623,12 @@ SaveBackupChecksum:
 	call Checksum
 	pop hl
 	add hl, de
+	push hl
+	ld hl, sBackupBoxNames
+	ld bc, BOX_NAME_LENGTH * NUM_BOXES
+	call Checksum
+	pop hl
+	add hl, de
 	ld a, BANK(sBackupCurMapData)
 	call OpenSRAM
 	push hl
@@ -527,6 +645,9 @@ SaveBackupChecksum:
 	ret
 
 TryLoadSaveFile:
+	ld a, [wSaveFileExists]
+	cp SAVEFILE_V2_PRIMARY
+	jr z, .primary_v2
 	call VerifyChecksum
 	jr nz, .backup
 	call LoadPlayerData
@@ -541,11 +662,56 @@ TryLoadSaveFile:
 	and a
 	ret
 
+.primary_v2
+	call VerifyChecksumV2
+	jr nz, .backup
+	; sBoxNames lands inside the old v2 PokemonData SRAM range, so copy the
+	; old PokemonData out before LoadPlayerDataV2 migrates box names there.
+	call LoadPokemonDataV2
+	call LoadPlayerDataV2
+	call LoadBox
+	farcall RestorePartyMonMail
+	call ValidateSave
+	call SaveOptions
+	call SavePlayerData
+	call SavePokemonData
+	call SaveChecksum
+	call ValidateBackupSave
+	call SaveBackupOptions
+	call SaveBackupPlayerData
+	call SaveBackupPokemonData
+	call SaveBackupChecksum
+	and a
+	ret
+
 .backup
+	xor a
+	ld [wSaveFileExists], a
+	call CheckBackupSaveFile
+	ld a, [wSaveFileExists]
+	and a
+	jr z, .corrupt
+	cp SAVEFILE_V2_BACKUP
+	jr z, .backup_v2
 	call VerifyBackupChecksum
 	jr nz, .corrupt
 	call LoadBackupPlayerData
 	call LoadBackupPokemonData
+	call LoadBox
+	farcall RestorePartyMonMail
+	call ValidateSave
+	call SaveOptions
+	call SavePlayerData
+	call SavePokemonData
+	call SaveChecksum
+	and a
+	ret
+
+.backup_v2
+	call VerifyBackupChecksumV2
+	jr nz, .corrupt
+	call LoadBackupPlayerDataV2
+	call LoadBackupPokemonDataV2
 	call LoadBox
 	farcall RestorePartyMonMail
 	call ValidateSave
@@ -590,10 +756,22 @@ TryLoadSaveData:
 	ld a, [wSaveFileExists]
 	and a
 	jr z, .corrupt
+	cp SAVEFILE_V2_BACKUP
+	jr z, .backup_v2
 
 	ld a, BANK(sBackupPlayerData1)
 	call OpenSRAM
 	ld hl, sBackupPlayerData1 + wStartDay - wPlayerData
+	ld de, wStartDay
+	ld bc, 14
+	call CopyBytes
+	call CloseSRAM
+	ret
+
+.backup_v2
+	ld a, BANK(sBackupPlayerData3)
+	call OpenSRAM
+	ld hl, sBackupPlayerData3 + V2_PLAYER_DATA3_SIZE + V2_POKEMON_DATA_SIZE + wStartDay - wPlayerData
 	ld de, wStartDay
 	ld bc, 14
 	call CopyBytes
@@ -618,13 +796,30 @@ CheckPrimarySaveFile:
 	jr nz, .nope
 	ld a, [sCheckValue2]
 	cp SAVE_CHECK_VALUE_2
-	jr nz, .nope
+	jr nz, .try_v2
 	ld a, [sSaveFormatVersion]
 	cp SAVE_FORMAT_VERSION
-	jr z, .version_ok
-	cp $ff ; legacy save predating the marker; v2+ must remove this
+	jr z, .current_version
+.try_v2
+	ld a, [sGameData + V2_GAME_DATA_SIZE + 2]
+	cp SAVE_CHECK_VALUE_2
 	jr nz, .nope
-.version_ok
+	ld a, [sGameData + V2_GAME_DATA_SIZE + 3]
+	cp SAVE_FORMAT_VERSION_V2
+	jr z, .v2_version
+	jr nz, .nope
+.v2_version
+	ld hl, sOptions
+	ld de, wOptions
+	ld bc, wOptionsEnd - wOptions
+	call CopyBytes
+	call CloseSRAM
+	call CheckTextDelay
+	ld a, SAVEFILE_V2_PRIMARY
+	ld [wSaveFileExists], a
+	ret
+
+.current_version
 	ld hl, sOptions
 	ld de, wOptions
 	ld bc, wOptionsEnd - wOptions
@@ -633,6 +828,7 @@ CheckPrimarySaveFile:
 	call CheckTextDelay
 	ld a, TRUE
 	ld [wSaveFileExists], a
+	ret
 
 .nope
 	call CloseSRAM
@@ -646,20 +842,39 @@ CheckBackupSaveFile:
 	jr nz, .nope
 	ld a, [sBackupCheckValue2]
 	cp SAVE_CHECK_VALUE_2
-	jr nz, .nope
+	jr nz, .try_v2
 	ld a, [sBackupSaveFormatVersion]
 	cp SAVE_FORMAT_VERSION
-	jr z, .version_ok
-	cp $ff ; legacy save predating the marker; v2+ must remove this
+	jr z, .current_version
+.try_v2
+	ld a, [sBackupCurMapData + V2_CUR_MAP_DATA_SIZE + 2]
+	cp SAVE_CHECK_VALUE_2
 	jr nz, .nope
-.version_ok
+	ld a, [sBackupCurMapData + V2_CUR_MAP_DATA_SIZE + 3]
+	cp SAVE_FORMAT_VERSION_V2
+	jr z, .v2_version
+	jr nz, .nope
+.v2_version
 	ld hl, sBackupOptions
 	ld de, wOptions
 	ld bc, wOptionsEnd - wOptions
 	call CopyBytes
 	call CheckTextDelay
-	ld a, $2
+	ld a, SAVEFILE_V2_BACKUP
 	ld [wSaveFileExists], a
+	call CloseSRAM
+	ret
+
+.current_version
+	ld hl, sBackupOptions
+	ld de, wOptions
+	ld bc, wOptionsEnd - wOptions
+	call CopyBytes
+	call CheckTextDelay
+	ld a, SAVEFILE_CURRENT_BACKUP
+	ld [wSaveFileExists], a
+	call CloseSRAM
+	ret
 
 .nope
 	call CloseSRAM
@@ -729,6 +944,152 @@ VerifyChecksum:
 	pop af
 	ret
 
+VerifyChecksumV2:
+	ld hl, sGameData
+	ld bc, V2_GAME_DATA_SIZE
+	ld a, BANK(sGameData)
+	call OpenSRAM
+	call Checksum
+	ld a, [sGameData + V2_GAME_DATA_SIZE + 0]
+	cp e
+	jr nz, .fail
+	ld a, [sGameData + V2_GAME_DATA_SIZE + 1]
+	cp d
+.fail
+	push af
+	call CloseSRAM
+	pop af
+	ret
+
+LoadPlayerDataV2:
+	ld a, BANK(sGameData)
+	call OpenSRAM
+	copy_v2_playerdata1_chunks sGameData
+	copy_v2_playerdata2_chunks sGameData
+	copy_v2_playerdata3_chunks sGameData
+	copy_v2_curmap_chunks sGameData
+	ld hl, sGameData + V2_WBOXNAMES_OFF
+	ld de, sBoxNames
+	ld bc, BOX_NAME_LENGTH * NUM_BOXES
+	call CopyBytes
+	call CloseSRAM
+	ret
+
+LoadPokemonDataV2:
+	ld a, BANK(sGameData)
+	call OpenSRAM
+	copy_v2_pokemon_chunks sGameData
+	call CloseSRAM
+	ret
+
+LoadBackupPlayerDataV2:
+	ld a, BANK(sBackupPlayerData3)
+	call OpenSRAM
+	copy_v2_playerdata3_chunks (sBackupPlayerData3 - V2_WPLAYERDATA3_OFF)
+	copy_v2_playerdata1_chunks (sBackupPlayerData3 + V2_PLAYER_DATA3_SIZE + V2_POKEMON_DATA_SIZE - V2_WPLAYERDATA1_OFF)
+	call CloseSRAM
+
+	ld a, BANK(sBackupPlayerData2)
+	call OpenSRAM
+	copy_v2_playerdata2_chunks (sBackupPlayerData2 - V2_WPLAYERDATA2_OFF)
+	call CloseSRAM
+
+	ld a, BANK(sBackupCurMapData)
+	call OpenSRAM
+	copy_v2_curmap_chunks (sBackupCurMapData - V2_WCURMAPDATA_OFF)
+	call CloseSRAM
+	jp LoadBackupBoxNamesV2
+
+LoadBackupPokemonDataV2:
+	ld a, BANK(sBackupPlayerData3)
+	call OpenSRAM
+	copy_v2_pokemon_chunks (sBackupPlayerData3 + V2_PLAYER_DATA3_SIZE - V2_WPOKEMONDATA_OFF)
+	call CloseSRAM
+	ret
+
+LoadBackupBoxNamesV2:
+	ld c, 0
+.loop
+	ld a, c
+	push bc
+	ld hl, sBackupPlayerData3 + V2_BOX_NAMES_IN_PLAYERDATA3
+	ld bc, BOX_NAME_LENGTH
+	call AddNTimes
+	ld a, BANK(sBackupPlayerData3)
+	call OpenSRAM
+	ld de, wBoxNameBuffer
+	ld bc, BOX_NAME_LENGTH
+	call CopyBytes
+	pop bc
+	ld a, c
+	push bc
+	ld hl, sBoxNames
+	ld bc, BOX_NAME_LENGTH
+	call AddNTimes
+	ld d, h
+	ld e, l
+	ld a, BANK(sBoxNames)
+	call OpenSRAM
+	ld hl, wBoxNameBuffer
+	ld bc, BOX_NAME_LENGTH
+	call CopyBytes
+	pop bc
+	inc c
+	ld a, c
+	cp NUM_BOXES
+	jr c, .loop
+	call CloseSRAM
+	ret
+
+VerifyBackupChecksumV2:
+	ld a, BANK(sBackupPlayerData3)
+	call OpenSRAM
+	ld hl, sBackupPlayerData3
+	ld bc, V2_PLAYER_DATA3_SIZE
+	call Checksum
+	push de
+	ld hl, sBackupPlayerData3 + V2_PLAYER_DATA3_SIZE
+	ld bc, V2_POKEMON_DATA_SIZE
+	call Checksum
+	pop hl
+	add hl, de
+	push hl
+	ld hl, sBackupPlayerData3 + V2_PLAYER_DATA3_SIZE + V2_POKEMON_DATA_SIZE
+	ld bc, V2_PLAYER_DATA1_SIZE
+	call Checksum
+	pop hl
+	add hl, de
+
+	ld a, BANK(sBackupPlayerData2)
+	call OpenSRAM
+	push hl
+	ld hl, sBackupPlayerData2
+	ld bc, V2_PLAYER_DATA2_SIZE
+	call Checksum
+	pop hl
+	add hl, de
+
+	ld a, BANK(sBackupCurMapData)
+	call OpenSRAM
+	push hl
+	ld hl, sBackupCurMapData
+	ld bc, V2_CUR_MAP_DATA_SIZE
+	call Checksum
+	pop hl
+	add hl, de
+	ld d, h
+	ld e, l
+	ld a, [sBackupCurMapData + V2_CUR_MAP_DATA_SIZE + 0]
+	cp e
+	jr nz, .fail
+	ld a, [sBackupCurMapData + V2_CUR_MAP_DATA_SIZE + 1]
+	cp d
+.fail
+	push af
+	call CloseSRAM
+	pop af
+	ret
+
 LoadBackupPlayerData:
 	ld a, BANK(sBackupPlayerData3)
 	call OpenSRAM
@@ -758,7 +1119,7 @@ LoadBackupPlayerData:
 	ld bc, wCurMapDataEnd - wCurMapData
 	call CopyBytes
 	call CloseSRAM
-	ret
+	jp LoadBackupBoxNames
 
 LoadBackupPokemonData:
 	ld a, BANK(sBackupPokemonData)
@@ -766,6 +1127,28 @@ LoadBackupPokemonData:
 	ld hl, sBackupPokemonData
 	ld de, wPokemonData
 	ld bc, wPokemonDataEnd - wPokemonData
+	call CopyBytes
+	call CloseSRAM
+	ret
+
+SaveBackupBoxNames:
+	assert BANK(sBoxNames) == BANK(sBackupBoxNames)
+	ld a, BANK(sBoxNames)
+	call OpenSRAM
+	ld hl, sBoxNames
+	ld de, sBackupBoxNames
+	ld bc, BOX_NAME_LENGTH * NUM_BOXES
+	call CopyBytes
+	call CloseSRAM
+	ret
+
+LoadBackupBoxNames:
+	assert BANK(sBoxNames) == BANK(sBackupBoxNames)
+	ld a, BANK(sBoxNames)
+	call OpenSRAM
+	ld hl, sBackupBoxNames
+	ld de, sBoxNames
+	ld bc, BOX_NAME_LENGTH * NUM_BOXES
 	call CopyBytes
 	call CloseSRAM
 	ret
@@ -798,6 +1181,12 @@ VerifyBackupChecksum:
 	push hl
 	ld hl, sBackupPlayerData2
 	ld bc, wPlayerData2End - wPlayerData2
+	call Checksum
+	pop hl
+	add hl, de
+	push hl
+	ld hl, sBackupBoxNames
+	ld bc, BOX_NAME_LENGTH * NUM_BOXES
 	call Checksum
 	pop hl
 	add hl, de

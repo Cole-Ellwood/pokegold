@@ -1,5 +1,8 @@
 SECTION "Scratch", SRAM
 
+DEF SAVE_V2_GAME_DATA_SIZE EQU $0d60
+DEF SAVE_V2_CUR_MAP_DATA_SIZE EQU $0034
+
 UNION
 sScratch::
 sDecompressScratch::
@@ -84,7 +87,9 @@ sPlayerData2::  ds wPlayerData2End - wPlayerData2
 sPlayerData3::  ds wPlayerData3End - wPlayerData3
 sCurMapData::   ds wCurMapDataEnd - wCurMapData
 sPokemonData::  ds wPokemonDataEnd - wPokemonData
+sBoxNames::     ds BOX_NAME_LENGTH * NUM_BOXES
 sGameDataEnd::
+	ds SAVE_V2_GAME_DATA_SIZE - (sGameDataEnd - sGameData)
 
 sChecksum:: dw
 
@@ -125,6 +130,7 @@ sHallOfFameEnd::
 SECTION "Backup Save 2", SRAM
 
 sBackupPlayerData2:: ds wPlayerData2End - wPlayerData2
+sBackupBoxNames:: ds BOX_NAME_LENGTH * NUM_BOXES
 
 
 ; The PC boxes will not fit into one SRAM bank,
@@ -157,6 +163,7 @@ SECTION "Backup Save 3", SRAM
 sBackupOptions:: ds wOptionsEnd - wOptions
 sBackupCheckValue1:: db ; loaded with SAVE_CHECK_VALUE_1, used to check save corruption
 sBackupCurMapData:: ds wCurMapDataEnd - wCurMapData
+	ds SAVE_V2_CUR_MAP_DATA_SIZE - (wCurMapDataEnd - wCurMapData)
 sBackupChecksum:: dw
 sBackupCheckValue2:: db ; loaded with SAVE_CHECK_VALUE_2, used to check save corruption
 sBackupSaveFormatVersion:: db ; loaded with SAVE_FORMAT_VERSION; $FF means legacy save

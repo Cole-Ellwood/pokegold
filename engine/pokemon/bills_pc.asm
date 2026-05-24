@@ -976,11 +976,7 @@ BillsPC_BoxName:
 	inc a
 .gotbox
 	dec a
-	ld hl, wBoxNames
-	ld bc, BOX_NAME_LENGTH
-	call AddNTimes
-	ld e, l
-	ld d, h
+	call CopyBoxNameToBuffer
 	jr .print
 
 .party
@@ -2241,17 +2237,49 @@ endr
 	push de
 	ld a, [wMenuSelection]
 	dec a
-	call GetBoxName
+	call CopyBoxNameToBuffer
 	pop hl
 	call PlaceString
 	ret
 
-GetBoxName:
+CopyBoxNameToBuffer:
+	ld de, wBoxNameBuffer
+	call CopyBoxNameToDE
+	ld de, wBoxNameBuffer
+	ret
+
+CopyBoxNameToStringBuffer2:
+	ld de, wStringBuffer2
+	call CopyBoxNameToDE
+	ld de, wStringBuffer2
+	ret
+
+CopyBoxNameToDE:
+	push de
 	ld bc, BOX_NAME_LENGTH
-	ld hl, wBoxNames
+	ld hl, sBoxNames
+	call AddNTimes
+	ld a, BANK(sBoxNames)
+	call OpenSRAM
+	pop de
+	ld bc, BOX_NAME_LENGTH
+	call CopyBytes
+	call CloseSRAM
+	ret
+
+CopyBoxNameFromBuffer:
+	ld bc, BOX_NAME_LENGTH
+	ld hl, sBoxNames
 	call AddNTimes
 	ld d, h
 	ld e, l
+	ld a, BANK(sBoxNames)
+	call OpenSRAM
+	ld hl, wBoxNameBuffer
+	ld bc, BOX_NAME_LENGTH
+	call CopyBytes
+	call CloseSRAM
+	farcall SaveChecksum
 	ret
 
 BillsPC_PrintBoxCountAndCapacity:
@@ -2338,7 +2366,7 @@ BillsPC_PrintBoxName:
 	call PlaceString
 	ld a, [wCurBox]
 	and $f
-	call GetBoxName
+	call CopyBoxNameToBuffer
 	hlcoord 11, 2
 	call PlaceString
 	ret
@@ -2379,17 +2407,13 @@ BillsPC_ChangeBoxSubmenu:
 	call LoadFontsBattleExtra
 	ld a, [wMenuSelection]
 	dec a
-	call GetBoxName
-	ld e, l
-	ld d, h
+	call CopyBoxNameToStringBuffer2
 	ld hl, wBoxNameBuffer
 	ld c, BOX_NAME_LENGTH - 1
 	call InitString
 	ld a, [wMenuSelection]
 	dec a
-	call GetBoxName
-	ld de, wBoxNameBuffer
-	call CopyName2
+	call CopyBoxNameFromBuffer
 	ret
 
 	hlcoord 11, 7 ; unreferenced

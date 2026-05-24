@@ -2254,19 +2254,13 @@ wDST::
 ; bit 7: dst
 	db
 
-	ds 1
-
 wGameTimeCap::     db
 wGameTimeHours::   dw
 wGameTimeMinutes:: db
 wGameTimeSeconds:: db
 wGameTimeFrames::  db
 
-	ds 2
-
 wCurDay:: db
-
-	ds 1
 
 wObjectFollow_Leader:: db
 wObjectFollow_Follower:: db
@@ -2289,8 +2283,6 @@ ENDU
 
 wCmdQueue:: ds CMDQUEUE_CAPACITY * CMDQUEUE_ENTRY_SIZE
 
-	ds 40
-
 wMapObjects::
 wPlayerObject:: map_object wPlayer ; player is map object 0
 ; wMap1Object - wMap15Object
@@ -2303,14 +2295,10 @@ wObjectMasks:: ds NUM_OBJECTS
 wVariableSprites:: ds $100 - SPRITE_VARS
 
 wUnusedReanchorBGMapFlags:: db
-	ds 2
 wTimeOfDayPal:: db
-	ds 4
 wTimeOfDayPalFlags:: db
 wTimeOfDayPalset:: db
 wCurTimeOfDay:: db
-
-	ds 1
 
 wPlayerData2End::
 wPlayerData3::
@@ -2357,24 +2345,16 @@ wPokegearFlags::
 	db
 wRadioTuningKnob:: db
 wLastDexMode:: db
-	ds 1
 wWhichRegisteredItem:: db
 wRegisteredItem:: db
 
 wPlayerState:: db
 
 wHallOfFameCount:: db
-	ds 1
 wTradeFlags:: flag_array NUM_NPC_TRADES
-
-	ds 33
 
 wMooMooBerries:: db
 wUndergroundSwitchPositions:: db
-wTMTutorBadgesCounted:: ds 1 ; RESERVED_UNUSED
-wTMTutorCredits:: ds 1 ; RESERVED_UNUSED
-
-	ds 12
 
 wPokecenter2FSceneID::                            db
 wTradeCenterSceneID::                             db
@@ -2435,8 +2415,6 @@ wVermilionPortSceneID::                           db
 wFastShip1FSceneID::                              db
 wFastShipB1FSceneID::                             db
 wMountMoonSquareSceneID::                         db
-
-wTMTutorTMHMBackup:: ds NUM_TMS + NUM_HMS ; RESERVED_UNUSED
 
 ; Boss AI battle runtime state must live in WRAMX bank 1 because battle code
 ; reads/writes it directly without WRAM bank switching.
@@ -2509,8 +2487,6 @@ wGameTimerPaused::
 ; bit 7: game timer paused
 	db
 
-	ds 1
-
 wJoypadDisable::
 ; bits 4, 6, or 7 can be used to disable joypad input
 ; bit 4
@@ -2518,15 +2494,10 @@ wJoypadDisable::
 ; bit 7: ongoing sgb data transfer
 	db
 
-	ds 1
-
 wCurBox:: db
 
-	ds 2
-
-wBoxNames:: ds BOX_NAME_LENGTH * NUM_BOXES
-
-	ds 2
+; Box names live in SRAM and are copied through wBoxNameBuffer when displayed
+; or renamed. Keeping them out of WRAMX bank 1 frees persistent headroom.
 
 wBikeFlags::
 ; bit 0: using strength
@@ -2551,8 +2522,6 @@ wCurMapSceneScriptsPointer:: dw
 wCurMapCallbackCount:: db
 wCurMapCallbacksPointer:: dw
 
-	ds 2
-
 ; Sprite id of each decoration
 wDecoBed::           db
 wDecoCarpet::        db
@@ -2571,30 +2540,20 @@ wMomItemTriggerBalance:: ds 3
 wDailyResetTimer:: dw
 wDailyFlags1:: db
 wDailyFlags2:: db
-	ds 3
 wTimerEventStartDay:: db
-	ds 3
 
 wFruitTreeFlags:: flag_array NUM_FRUIT_TREES
 
-	ds 2
-
 wLuckyNumberDayTimer:: dw
-	ds 2
-wSpecialPhoneCallID:: db
-	ds 3
+wSpecialPhoneCallID:: dw
 wBugContestStartTime:: ds 4 ; day, hour, min, sec
 wUnusedTwoDayTimerOn:: db
 wUnusedTwoDayTimer:: db
 wUnusedTwoDayTimerStartDate:: db
 
-	ds 55
-
 wStepCount:: db
 wPoisonStepCount:: db
-	ds 2
 wHappinessStepCount:: db
-	ds 1
 
 wParkBallsRemaining::
 wSafariBallsRemaining:: db
@@ -2602,10 +2561,7 @@ wSafariTimeRemaining:: dw
 
 wPhoneList:: ds CONTACT_LIST_SIZE + 1
 
-	ds 22
-
 wLuckyNumberShowFlag:: db
-	ds 1
 wLuckyIDNumber:: dw
 
 wRepelEffect:: db ; If a Repel is in use, it contains the nr of steps it's still active
@@ -2628,12 +2584,8 @@ wBackupWarpNumber:: db
 wBackupMapGroup::   db
 wBackupMapNumber::  db
 
-	ds 3
-
 wLastSpawnMapGroup:: db
 wLastSpawnMapNumber:: db
-
-	ds 2
 
 wWarpNumber:: db
 wMapGroup:: db
@@ -2670,8 +2622,6 @@ for n, 1, PARTY_LENGTH + 1
 wPartyMon{d:n}Nickname:: ds MON_NAME_LENGTH
 endr
 wPartyMonNicknamesEnd::
-
-	ds 22
 
 wPokedexCaught:: flag_array NUM_POKEMON
 wEndPokedexCaught::

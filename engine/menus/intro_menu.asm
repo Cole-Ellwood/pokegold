@@ -136,7 +136,9 @@ endc
 	ret
 
 SetDefaultBoxNames:
-	ld hl, wBoxNames
+	ld a, BANK(sBoxNames)
+	call OpenSRAM
+	ld hl, sBoxNames
 	ld c, 0
 .loop
 	push hl
@@ -162,7 +164,7 @@ SetDefaultBoxNames:
 	ld a, c
 	cp NUM_BOXES
 	jr c, .loop
-	ret
+	jp CloseSRAM
 
 .Box:
 	db "BOX@"
