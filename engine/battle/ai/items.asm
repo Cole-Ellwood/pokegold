@@ -285,15 +285,10 @@ AI_Items:
 	dbw HYPER_POTION, .HyperPotion
 	dbw SUPER_POTION, .SuperPotion
 	dbw POTION,       .Potion
-	dbw X_ACCURACY,   .XAccuracy
 	dbw FULL_HEAL,    .FullHeal
-	dbw GUARD_SPEC,   .GuardSpec
-	dbw DIRE_HIT,     .DireHit
-	dbw X_ATTACK,     .XAttack
-	dbw X_DEFEND,     .XDefend
-	dbw X_SPEED,      .XSpeed
-	dbw X_SPECIAL,    .XSpecial
 	db -1 ; end
+; X-item AI entries (X_ACCURACY, GUARD_SPEC, DIRE_HIT, X_ATTACK, X_DEFEND,
+; X_SPEED, X_SPECIAL) were removed 2026-05-24 alongside the items.
 
 .FullHeal:
 	call .Status
@@ -409,73 +404,8 @@ AI_Items:
 	call EnemyUsedPotion
 	jp .Use
 
-.XAccuracy:
-	call .XItem
-	jp c, .DontUse
-	call EnemyUsedXAccuracy
-	jp .Use
-
-.GuardSpec:
-	call .XItem
-	jp c, .DontUse
-	call EnemyUsedGuardSpec
-	jp .Use
-
-.DireHit:
-	call .XItem
-	jp c, .DontUse
-	call EnemyUsedDireHit
-	jp .Use
-
-.XAttack:
-	call .XItem
-	jp c, .DontUse
-	call EnemyUsedXAttack
-	jp .Use
-
-.XDefend:
-	call .XItem
-	jp c, .DontUse
-	call EnemyUsedXDefend
-	jp .Use
-
-.XSpeed:
-	call .XItem
-	jp c, .DontUse
-	call EnemyUsedXSpeed
-	jp .Use
-
-.XSpecial:
-	call .XItem
-	jp c, .DontUse
-	call EnemyUsedXSpecial
-	jp .Use
-
-.XItem:
-	ld a, [wEnemyTurnsTaken]
-	and a
-	jr nz, .notfirstturnout
-	ld a, [bc]
-	bit ALWAYS_USE_F, a
-	jp nz, .Use
-	call Random
-	cp 50 percent + 1
-	jp c, .DontUse
-	ld a, [bc]
-	bit CONTEXT_USE_F, a
-	jp nz, .Use
-	call Random
-	cp 50 percent + 1
-	jp c, .DontUse
-	jp .Use
-.notfirstturnout
-	ld a, [bc]
-	bit ALWAYS_USE_F, a
-	jp z, .DontUse
-	call Random
-	cp 20 percent - 1
-	jp nc, .DontUse
-	jp .Use
+; X-item AI handlers (.XAccuracy, .GuardSpec, .DireHit, .XAttack, .XDefend,
+; .XSpeed, .XSpecial) and the shared .XItem helper were removed 2026-05-24.
 
 .DontUse:
 	scf

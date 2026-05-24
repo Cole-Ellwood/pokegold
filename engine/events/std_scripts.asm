@@ -345,10 +345,10 @@ BugContestResults_CleanUp:
 
 BugContestResults_FirstPlace:
 	setevent EVENT_TEMPORARY_UNTIL_MAP_RELOAD_1
-	getitemname STRING_BUFFER_4, SUN_STONE
+	getitemname STRING_BUFFER_4, RARE_CANDY
 	writetext ContestResults_PlayerWonAPrizeText
 	waitbutton
-	verbosegiveitem SUN_STONE
+	verbosegiveitem RARE_CANDY
 	iffalse BugContestResults_NoRoomForSunStone
 	sjump BugContestResults_ReturnAfterWinnersPrize
 

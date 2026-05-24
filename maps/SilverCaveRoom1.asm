@@ -11,14 +11,14 @@ SilverCaveRoom1_MapScripts:
 SilverCaveRoom1MaxElixer:
 	itemball MAX_ELIXER
 
-SilverCaveRoom1XAccuracy:
-	itemball X_ACCURACY
+SilverCaveRoom1MaxRevive:
+	itemball MAX_REVIVE
 
 SilverCaveRoom1EscapeRope:
 	itemball ESCAPE_ROPE
 
-SilverCaveRoom1HiddenDireHit:
-	hiddenitem DIRE_HIT, EVENT_SILVER_CAVE_ROOM_1_HIDDEN_DIRE_HIT
+SilverCaveRoom1HiddenMaxElixer:
+	hiddenitem MAX_ELIXER, EVENT_SILVER_CAVE_ROOM_1_HIDDEN_MAX_ELIXER
 
 SilverCaveRoom1HiddenUltraBall:
 	hiddenitem ULTRA_BALL, EVENT_SILVER_CAVE_ROOM_1_HIDDEN_ULTRA_BALL
@@ -33,10 +33,10 @@ SilverCaveRoom1_MapEvents:
 	def_coord_events
 
 	def_bg_events
-	bg_event 16, 23, BGEVENT_ITEM, SilverCaveRoom1HiddenDireHit
+	bg_event 16, 23, BGEVENT_ITEM, SilverCaveRoom1HiddenMaxElixer
 	bg_event 17, 12, BGEVENT_ITEM, SilverCaveRoom1HiddenUltraBall
 
 	def_object_events
 	object_event  4,  9, SPRITE_POKE_BALL, SPRITEMOVEDATA_STILL, 0, 0, -1, -1, 0, OBJECTTYPE_ITEMBALL, 0, SilverCaveRoom1MaxElixer, EVENT_SILVER_CAVE_ROOM_1_MAX_ELIXER
-	object_event 15, 29, SPRITE_POKE_BALL, SPRITEMOVEDATA_STILL, 0, 0, -1, -1, 0, OBJECTTYPE_ITEMBALL, 0, SilverCaveRoom1XAccuracy, EVENT_SILVER_CAVE_ROOM_1_X_ACCURACY
+	object_event 15, 29, SPRITE_POKE_BALL, SPRITEMOVEDATA_STILL, 0, 0, -1, -1, 0, OBJECTTYPE_ITEMBALL, 0, SilverCaveRoom1MaxRevive, EVENT_SILVER_CAVE_ROOM_1_MAX_REVIVE
 	object_event  5, 30, SPRITE_POKE_BALL, SPRITEMOVEDATA_STILL, 0, 0, -1, -1, 0, OBJECTTYPE_ITEMBALL, 0, SilverCaveRoom1EscapeRope, EVENT_SILVER_CAVE_ROOM_1_ESCAPE_ROPE

@@ -59,8 +59,8 @@ TrainerHikerLeonard:
 UnionCaveB1FMuscleBand:
 	itemball MUSCLE_BAND
 
-UnionCaveB1FXDefend:
-	itemball X_DEFEND
+UnionCaveB1FAwakening:
+	itemball AWAKENING
 
 UnionCaveB1FBoulder:
 	jumpstd StrengthBoulderScript
@@ -171,4 +171,4 @@ UnionCaveB1F_MapEvents:
 	object_event 17, 30, SPRITE_SUPER_NERD, SPRITEMOVEDATA_STANDING_LEFT, 0, 0, -1, -1, PAL_NPC_BLUE, OBJECTTYPE_TRAINER, 3, TrainerPokemaniacCalvin, -1
 	object_event  2, 16, SPRITE_POKE_BALL, SPRITEMOVEDATA_STILL, 0, 0, -1, -1, 0, OBJECTTYPE_ITEMBALL, 0, UnionCaveB1FMuscleBand, EVENT_UNION_CAVE_B1F_MUSCLE_BAND
 	object_event  7, 10, SPRITE_BOULDER, SPRITEMOVEDATA_STRENGTH_BOULDER, 0, 0, -1, -1, 0, OBJECTTYPE_SCRIPT, 0, UnionCaveB1FBoulder, -1
-	object_event 17, 23, SPRITE_POKE_BALL, SPRITEMOVEDATA_STILL, 0, 0, -1, -1, 0, OBJECTTYPE_ITEMBALL, 0, UnionCaveB1FXDefend, EVENT_UNION_CAVE_B1F_X_DEFEND
+	object_event 17, 23, SPRITE_POKE_BALL, SPRITEMOVEDATA_STILL, 0, 0, -1, -1, 0, OBJECTTYPE_ITEMBALL, 0, UnionCaveB1FAwakening, EVENT_UNION_CAVE_B1F_AWAKENING

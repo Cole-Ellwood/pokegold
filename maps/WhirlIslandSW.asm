@@ -6,8 +6,8 @@ WhirlIslandSW_MapScripts:
 
 	def_callbacks
 
-WhirlIslandSWGuardSpec:
-	itemball GUARD_SPEC
+WhirlIslandSWMaxPotion:
+	itemball MAX_POTION
 
 WhirlIslandSW_MapEvents:
 	db 0, 0 ; filler
@@ -24,4 +24,4 @@ WhirlIslandSW_MapEvents:
 	def_bg_events
 
 	def_object_events
-	object_event 15,  2, SPRITE_POKE_BALL, SPRITEMOVEDATA_STILL, 0, 0, -1, -1, 0, OBJECTTYPE_ITEMBALL, 0, WhirlIslandSWGuardSpec, EVENT_WHIRL_ISLAND_SW_GUARD_SPEC
+	object_event 15,  2, SPRITE_POKE_BALL, SPRITEMOVEDATA_STILL, 0, 0, -1, -1, 0, OBJECTTYPE_ITEMBALL, 0, WhirlIslandSWMaxPotion, EVENT_WHIRL_ISLAND_SW_MAX_POTION

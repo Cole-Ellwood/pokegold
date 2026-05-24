@@ -119,8 +119,8 @@ TrainerHikerBailey:
 Route46Sign:
 	jumptext Route46SignText
 
-Route46DireHit:
-	itemball DIRE_HIT
+Route46Ether:
+	itemball ETHER
 
 Route46FruitTree1:
 	fruittree FRUITTREE_ROUTE_46_1
@@ -211,4 +211,4 @@ Route46_MapEvents:
 	object_event  1, 15, SPRITE_LASS, SPRITEMOVEDATA_STANDING_RIGHT, 0, 0, -1, -1, PAL_NPC_GREEN, OBJECTTYPE_TRAINER, 4, TrainerPicnickerErin1, -1
 	object_event  7,  5, SPRITE_FRUIT_TREE, SPRITEMOVEDATA_STILL, 0, 0, -1, -1, 0, OBJECTTYPE_SCRIPT, 0, Route46FruitTree1, -1
 	object_event  8,  6, SPRITE_FRUIT_TREE, SPRITEMOVEDATA_STILL, 0, 0, -1, -1, 0, OBJECTTYPE_SCRIPT, 0, Route46FruitTree2, -1
-	object_event  0, 12, SPRITE_POKE_BALL, SPRITEMOVEDATA_STILL, 0, 0, -1, -1, 0, OBJECTTYPE_ITEMBALL, 0, Route46DireHit, EVENT_ROUTE_46_DIRE_HIT
+	object_event  0, 12, SPRITE_POKE_BALL, SPRITEMOVEDATA_STILL, 0, 0, -1, -1, 0, OBJECTTYPE_ITEMBALL, 0, Route46Ether, EVENT_ROUTE_46_ETHER

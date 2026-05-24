@@ -21,7 +21,7 @@ ItemEffects:
 	dw PokeBallEffect      ; POKE_BALL
 	dw TownMapEffect       ; TOWN_MAP
 	dw BicycleEffect       ; BICYCLE
-	dw EvoStoneEffect      ; MOON_STONE
+	dw NoEffect            ; MOON_STONE (removed 2026-05-24)
 	dw StatusHealingEffect ; ANTIDOTE
 	dw StatusHealingEffect ; BURN_HEAL
 	dw StatusHealingEffect ; ICE_HEAL
@@ -35,9 +35,9 @@ ItemEffects:
 	dw EscapeRopeEffect    ; ESCAPE_ROPE
 	dw RepelEffect         ; REPEL
 	dw RestorePPEffect     ; MAX_ELIXER
-	dw EvoStoneEffect      ; FIRE_STONE
-	dw EvoStoneEffect      ; THUNDERSTONE
-	dw EvoStoneEffect      ; WATER_STONE
+	dw NoEffect            ; FIRE_STONE (removed 2026-05-24)
+	dw NoEffect            ; THUNDERSTONE (removed 2026-05-24)
+	dw NoEffect            ; WATER_STONE (removed 2026-05-24)
 	dw NoEffect            ; ITEM_19
 	dw VitaminEffect       ; HP_UP
 	dw VitaminEffect       ; PROTEIN
@@ -46,27 +46,27 @@ ItemEffects:
 	dw NoEffect            ; LUCKY_PUNCH
 	dw VitaminEffect       ; CALCIUM
 	dw RareCandyEffect     ; RARE_CANDY
-	dw XAccuracyEffect     ; X_ACCURACY
-	dw EvoStoneEffect      ; LEAF_STONE
+	dw NoEffect            ; X_ACCURACY (removed 2026-05-24)
+	dw NoEffect            ; LEAF_STONE (removed 2026-05-24)
 	dw NoEffect            ; METAL_POWDER
 	dw NoEffect            ; NUGGET
 	dw PokeDollEffect      ; POKE_DOLL
 	dw StatusHealingEffect ; FULL_HEAL
 	dw ReviveEffect        ; REVIVE
 	dw ReviveEffect        ; MAX_REVIVE
-	dw GuardSpecEffect     ; GUARD_SPEC
+	dw NoEffect            ; GUARD_SPEC (removed 2026-05-24)
 	dw SuperRepelEffect    ; SUPER_REPEL
 	dw MaxRepelEffect      ; MAX_REPEL
-	dw DireHitEffect       ; DIRE_HIT
+	dw NoEffect            ; DIRE_HIT (removed 2026-05-24)
 	dw NoEffect            ; ITEM_2D
 	dw RestoreHPEffect     ; FRESH_WATER
 	dw RestoreHPEffect     ; SODA_POP
 	dw RestoreHPEffect     ; LEMONADE
-	dw XItemEffect         ; X_ATTACK
+	dw NoEffect            ; X_ATTACK (removed 2026-05-24)
 	dw NoEffect            ; ITEM_32
-	dw XItemEffect         ; X_DEFEND
-	dw XItemEffect         ; X_SPEED
-	dw XItemEffect         ; X_SPECIAL
+	dw NoEffect            ; X_DEFEND (removed 2026-05-24)
+	dw NoEffect            ; X_SPEED (removed 2026-05-24)
+	dw NoEffect            ; X_SPECIAL (removed 2026-05-24)
 	dw CoinCaseEffect      ; COIN_CASE
 	dw ItemfinderEffect    ; ITEMFINDER
 	dw PokeFluteEffect     ; POKE_FLUTE
@@ -182,7 +182,7 @@ ItemEffects:
 	dw PokeBallEffect      ; LOVE_BALL
 	dw NormalBoxEffect     ; NORMAL_BOX
 	dw GorgeousBoxEffect   ; GORGEOUS_BOX
-	dw EvoStoneEffect      ; SUN_STONE
+	dw NoEffect            ; SUN_STONE (removed 2026-05-24)
 	dw NoEffect            ; POLKADOT_BOW
 	dw LanternEffect       ; LANTERN
 	dw NoEffect            ; UP_GRADE
@@ -2082,12 +2082,9 @@ RepelUsedEarlierIsStillInEffectText:
 	text_far _RepelUsedEarlierIsStillInEffectText
 	text_end
 
-XAccuracyEffect:
-	ld hl, wPlayerSubStatus4
-	bit SUBSTATUS_X_ACCURACY, [hl]
-	jp nz, WontHaveAnyEffect_NotUsedMessage
-	set SUBSTATUS_X_ACCURACY, [hl]
-	jp UseItemText
+; XAccuracyEffect, GuardSpecEffect, DireHitEffect, XItemEffect, and the
+; XItemStats include were removed 2026-05-24 alongside the X items they
+; powered. Item slots now route to NoEffect.
 
 PokeDollEffect:
 	ld a, [wBattleMode]
@@ -2103,54 +2100,6 @@ PokeDollEffect:
 	xor a
 	ld [wItemEffectSucceeded], a
 	ret
-
-GuardSpecEffect:
-	ld hl, wPlayerSubStatus4
-	bit SUBSTATUS_MIST, [hl]
-	jp nz, WontHaveAnyEffect_NotUsedMessage
-	set SUBSTATUS_MIST, [hl]
-	jp UseItemText
-
-DireHitEffect:
-	ld hl, wPlayerSubStatus4
-	bit SUBSTATUS_FOCUS_ENERGY, [hl]
-	jp nz, WontHaveAnyEffect_NotUsedMessage
-	set SUBSTATUS_FOCUS_ENERGY, [hl]
-	jp UseItemText
-
-XItemEffect:
-	call UseItemText
-
-	ld a, [wCurItem]
-	ld hl, XItemStats
-
-.loop
-	cp [hl]
-	jr z, .got_it
-	inc hl
-	inc hl
-	jr .loop
-
-.got_it
-	inc hl
-	ld b, [hl]
-	xor a
-	ldh [hBattleTurn], a
-	ld [wAttackMissed], a
-	ld [wEffectFailed], a
-	farcall RaiseStat
-	call WaitSFX
-
-	farcall BattleCommand_StatUpMessage
-	farcall BattleCommand_StatUpFailText
-
-	ld a, [wCurBattleMon]
-	ld [wCurPartyMon], a
-	ld c, HAPPINESS_USEDXITEM
-	farcall ChangeHappiness
-	ret
-
-INCLUDE "data/items/x_stats.asm"
 
 PokeFluteEffect:
 	ld a, [wBattleMode]

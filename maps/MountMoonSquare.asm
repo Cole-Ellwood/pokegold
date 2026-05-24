@@ -15,7 +15,7 @@ MountMoonSquareNoopScene:
 	end
 
 MountMoonSquareDisappearMoonStoneCallback:
-	setevent EVENT_MOUNT_MOON_SQUARE_HIDDEN_MOON_STONE
+	setevent EVENT_MOUNT_MOON_SQUARE_HIDDEN_BIG_PEARL
 	endcallback
 
 MountMoonSquareDisappearRockCallback:
@@ -65,15 +65,15 @@ ClefairyDance:
 	disappear MOUNTMOONSQUARE_FAIRY1
 	disappear MOUNTMOONSQUARE_FAIRY2
 	stopfollow
-	clearevent EVENT_MOUNT_MOON_SQUARE_HIDDEN_MOON_STONE
+	clearevent EVENT_MOUNT_MOON_SQUARE_HIDDEN_BIG_PEARL
 	setflag ENGINE_MT_MOON_SQUARE_CLEFAIRY
 	end
 
 .NoDancing:
 	end
 
-MountMoonSquareHiddenMoonStone:
-	hiddenitem MOON_STONE, EVENT_MOUNT_MOON_SQUARE_HIDDEN_MOON_STONE
+MountMoonSquareHiddenBigPearl:
+	hiddenitem BIG_PEARL, EVENT_MOUNT_MOON_SQUARE_HIDDEN_BIG_PEARL
 
 DontLitterSign:
 	jumptext DontLitterSignText
@@ -142,7 +142,7 @@ MountMoonSquare_MapEvents:
 	coord_event  7, 11, SCENE_MOUNTMOONSQUARE_CLEFAIRY_DANCE, ClefairyDance
 
 	def_bg_events
-	bg_event  7,  7, BGEVENT_ITEM, MountMoonSquareHiddenMoonStone
+	bg_event  7,  7, BGEVENT_ITEM, MountMoonSquareHiddenBigPearl
 	bg_event 17,  7, BGEVENT_READ, DontLitterSign
 
 	def_object_events

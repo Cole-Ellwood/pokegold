@@ -7,7 +7,7 @@ ItemNames::
 	li "# BALL"
 	li "TERU-SAMA"
 	li "BICYCLE"
-	li "MOON STONE"
+	li "?????" ; was MOON STONE; removed 2026-05-24
 	li "ANTIDOTE"
 	li "BURN HEAL"
 	li "ICE HEAL"
@@ -21,9 +21,9 @@ ItemNames::
 	li "ESCAPE ROPE"
 	li "REPEL"
 	li "MAX ELIXER"
-	li "FIRE STONE"
-	li "THUNDERSTONE"
-	li "WATER STONE"
+	li "?????" ; was FIRE STONE; removed 2026-05-24
+	li "?????" ; was THUNDERSTONE; removed 2026-05-24
+	li "?????" ; was WATER STONE; removed 2026-05-24
 	li "TERU-SAMA"
 	li "HP UP"
 	li "PROTEIN"
@@ -32,27 +32,27 @@ ItemNames::
 	li "LUCKY PUNCH"
 	li "CALCIUM"
 	li "RARE CANDY"
-	li "X ACCURACY"
-	li "LEAF STONE"
+	li "?????" ; was X ACCURACY; removed 2026-05-24
+	li "?????" ; was LEAF STONE; removed 2026-05-24
 	li "METAL POWDER"
 	li "NUGGET"
 	li "# DOLL"
 	li "FULL HEAL"
 	li "REVIVE"
 	li "MAX REVIVE"
-	li "GUARD SPEC."
+	li "?????" ; was GUARD SPEC.; removed 2026-05-24
 	li "SUPER REPEL"
 	li "MAX REPEL"
-	li "DIRE HIT"
+	li "?????" ; was DIRE HIT; removed 2026-05-24
 	li "TERU-SAMA"
 	li "FRESH WATER"
 	li "SODA POP"
 	li "LEMONADE"
-	li "X ATTACK"
+	li "?????" ; was X ATTACK; removed 2026-05-24
 	li "TERU-SAMA"
-	li "X DEFEND"
-	li "X SPEED"
-	li "X SPECIAL"
+	li "?????" ; was X DEFEND; removed 2026-05-24
+	li "?????" ; was X SPEED; removed 2026-05-24
+	li "?????" ; was X SPECIAL; removed 2026-05-24
 	li "COIN CASE"
 	li "ITEMFINDER"
 	li "TERU-SAMA"
@@ -168,7 +168,7 @@ ItemNames::
 	li "LOVE BALL"
 	li "NORMAL BOX"
 	li "GORGEOUS BOX"
-	li "SUN STONE"
+	li "?????" ; was SUN STONE; removed 2026-05-24
 	li "POLKADOT BOW"
 	li "LANTERN"
 	li "UP-GRADE"

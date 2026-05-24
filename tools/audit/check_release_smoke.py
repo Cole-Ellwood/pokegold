@@ -879,9 +879,9 @@ def check_burned_tower_itemball_flags() -> None:
         ROOT / "maps/BurnedTower1F.asm",
         (
             "\titemball BURN_HEAL, 1",
-            "\titemball X_SPEED, 1",
+            "\titemball SUPER_POTION, 1",
             "BurnedTower1FBurnHeal, EVENT_BURNED_TOWER_1F_BURN_HEAL",
-            "BurnedTower1FXSpeed, EVENT_BURNED_TOWER_1F_X_SPEED",
+            "BurnedTower1FSuperPotion, EVENT_BURNED_TOWER_1F_SUPER_POTION",
         ),
         "Burned Tower item balls use matching persistence flags",
     )
