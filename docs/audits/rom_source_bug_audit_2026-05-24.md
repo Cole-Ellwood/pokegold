@@ -16,6 +16,20 @@ battle command rewrites Hidden Power's type from DVs.
 **repo-proven** I did not edit ROM source. The only writes from this pass are
 the scratchpad and this audit file.
 
+## Resolution Status (updated 2026-05-24 during worktree cleanup)
+
+**repo-proven** Finding 1 is `RESOLVED` and was already resolved at the time
+this audit was authored. Commit `c129c3b8` (`engine: fix queued rom bug
+regressions`, 2026-05-23 22:05:35 -0500) introduced the
+`.DamagingMoveBlockedByTypeImmunity` helper with the
+`cp EFFECT_HIDDEN_POWER :: jr z, .damage_type_legal` skip already in place
+(see helper body at the time of `c129c3b8`). The audit was authored ~2.5
+hours earlier (file mtime 2026-05-23 19:46) against the pre-`c129c3b8`
+source state and was obsoleted by the same-evening commit.
+
+No follow-up engine work is needed. The audit is retained as a historical
+record of the verification pass and its rejected-leads list.
+
 ## Finding 1 - Boss AI Misclassifies Hidden Power Immunity
 
 **repo-proven** `engine/battle/ai/boss_policy_move.asm:276` calls
@@ -65,6 +79,11 @@ whose real DV-derived type is not Normal.
 `EFFECT_HIDDEN_POWER` or compute the same DV-derived type used by
 `HiddenPowerDamage` before checking immunity. Do not use the static move-table
 type for Hidden Power.
+
+**Resolution (added 2026-05-24 cleanup):** `RESOLVED` — committed `c129c3b8`
+introduced `.DamagingMoveBlockedByTypeImmunity` with the `EFFECT_HIDDEN_POWER`
+skip already in place. The audit was authored against pre-`c129c3b8` source
+and missed the same-evening fix.
 
 ## Clean Passes And Rejected Leads
 
