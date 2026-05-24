@@ -315,18 +315,50 @@ def score_question(
     payloads: list[Any | None] = [next_payload]
     artifact_paths = {"next_json": repo_rel(next_path)}
 
-    if not next_only:
-        investigate_path = artifact_dir / f"{prefix}_investigate.json"
-        investigate_run, investigate_payload = run_debugger_json(
-            name="investigate",
-            args=["investigate", "--symptom", symptom],
-            json_path=investigate_path,
-            timeout=timeout,
-        )
-        command_runs.append(investigate_run)
-        payloads.append(investigate_payload)
-        artifact_paths["investigate_json"] = repo_rel(investigate_path)
+    score = build_question_score(
+        row=row,
+        command_runs=command_runs,
+        payloads=payloads,
+        artifact_paths=artifact_paths,
+        source_anchor_threshold=source_anchor_threshold,
+        standard_token_threshold=standard_token_threshold,
+    )
+    if next_only or score.passed:
+        return score
 
+    investigate_path = artifact_dir / f"{prefix}_investigate.json"
+    investigate_run, investigate_payload = run_debugger_json(
+        name="investigate",
+        args=["investigate", "--symptom", symptom],
+        json_path=investigate_path,
+        timeout=timeout,
+    )
+    command_runs.append(investigate_run)
+    payloads.append(investigate_payload)
+    artifact_paths["investigate_json"] = repo_rel(investigate_path)
+
+    return build_question_score(
+        row=row,
+        command_runs=command_runs,
+        payloads=payloads,
+        artifact_paths=artifact_paths,
+        source_anchor_threshold=source_anchor_threshold,
+        standard_token_threshold=standard_token_threshold,
+    )
+
+
+def build_question_score(
+    *,
+    row: dict[str, Any],
+    command_runs: list[CommandRun],
+    payloads: list[Any | None],
+    artifact_paths: dict[str, str],
+    source_anchor_threshold: float,
+    standard_token_threshold: int,
+) -> QuestionScore:
+    question_id = str(row["id"])
+    symptom = str(row["symptom"])
+    expected = row["expected_answer"]
     actual_strings = collect_actual_strings(payloads)
     actual_norm = [normalize_text(value) for value in actual_strings]
 
@@ -405,6 +437,7 @@ def summarize(
 ) -> dict[str, Any]:
     total = len(results)
     passed = sum(1 for result in results if result.passed)
+    command_runs = [run for result in results for run in result.command_runs]
     dimension_counts = {
         "source_anchor": sum(1 for result in results if result.source_anchor_pass),
         "proof_command": sum(1 for result in results if result.proof_command_pass),
@@ -426,6 +459,13 @@ def summarize(
         "passed": passed,
         "failed": total - passed,
         "pass_rate": round(passed / total if total else 0.0, 3),
+        "command_run_count": len(command_runs),
+        "investigate_run_count": sum(1 for run in command_runs if run.name == "investigate"),
+        "timed_out_count": sum(1 for run in command_runs if run.timed_out),
+        "total_command_duration_seconds": round(
+            sum(run.duration_seconds for run in command_runs),
+            3,
+        ),
         "dimension_counts": dimension_counts,
         "results": [asdict(result) for result in results],
     }
@@ -444,6 +484,10 @@ def write_markdown(path: Path, summary: dict[str, Any]) -> None:
         f"- Failed: {summary['failed']}",
         f"- Pass rate: {summary['pass_rate']:.3f}",
         f"- Threshold: {summary['threshold']:.3f}",
+        f"- Command runs: {summary['command_run_count']}",
+        f"- Investigate runs: {summary['investigate_run_count']}",
+        f"- Timed out runs: {summary['timed_out_count']}",
+        f"- Total command duration seconds: {summary['total_command_duration_seconds']:.3f}",
         f"- Source anchor threshold: {summary['source_anchor_threshold']:.3f}",
         f"- Standard token threshold: {summary['standard_token_threshold']}",
         f"- Next only: {summary['next_only']}",

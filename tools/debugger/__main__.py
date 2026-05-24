@@ -29,6 +29,7 @@ from .pokemon_semantics import (
     build_learnset_inspection_report,
     build_party_inspection_report,
 )
+from .proof_runner import build_proof_card
 from .provenance import build_provenance_report
 from .ranking import rank_findings
 from .replay import build_replay_plan
@@ -88,6 +89,15 @@ def build_parser() -> argparse.ArgumentParser:
     next_step.add_argument("--symptom", default="")
     add_output_args(next_step)
     next_step.set_defaults(func=cmd_next)
+
+    prove = subparsers.add_parser("prove")
+    prove.add_argument("--changed-file", action="append", default=[])
+    prove.add_argument("--symptom", default="")
+    prove.add_argument("--execute", action="store_true")
+    prove.add_argument("--timeout-seconds", type=int, default=120)
+    prove.add_argument("--prefer", choices=["first", "gate", "escalation"], default="first")
+    add_output_args(prove)
+    prove.set_defaults(func=cmd_prove)
 
     ingest = subparsers.add_parser("ingest")
     ingest.add_argument("--rom", action="append", default=[])
@@ -577,6 +587,18 @@ def cmd_next(args: argparse.Namespace) -> int:
     )
     emit_report(report, args)
     return 0
+
+
+def cmd_prove(args: argparse.Namespace) -> int:
+    report = build_proof_card(
+        changed_files=tuple(args.changed_file),
+        symptom=args.symptom,
+        execute=args.execute,
+        timeout_seconds=args.timeout_seconds,
+        prefer=args.prefer,
+    )
+    emit_report(report, args)
+    return 0 if report["passed"] else 1
 
 
 def cmd_ingest(args: argparse.Namespace) -> int:
@@ -1175,6 +1197,8 @@ def emit_report(report: dict[str, Any], args: argparse.Namespace) -> None:
         print(format_triage(report))
     elif report["kind"] == "unified_debugger_next_step":
         print(format_next_step(report))
+    elif report["kind"] == "unified_debugger_proof_card":
+        print(format_proof_card(report))
     elif report["kind"] == "unified_debugger_ingest_manifest":
         print(format_ingest(report))
     elif report["kind"] == "unified_debugger_gate_plan":
@@ -1368,6 +1392,44 @@ def format_next_step(report: dict[str, Any]) -> str:
             )
     if report["triage_match_ids"]:
         lines.append("triage=" + ", ".join(report["triage_match_ids"]))
+    return "\n".join(lines)
+
+
+def format_proof_card(report: dict[str, Any]) -> str:
+    lines = [
+        "Unified Pokemon Gold romhack debugger proof card",
+        (
+            f"symptom_class={report['symptom_class']} "
+            f"matched_lane={report['matched_lane']} "
+            f"proof_depth={report['proof_depth']} "
+            f"passed={report['passed']}"
+        ),
+    ]
+    if report["symptom"]:
+        lines.append(f"symptom={report['symptom']}")
+    lines.extend(["", f"Chosen command: {report['chosen_command'] or '<none>'}"])
+    execution = report.get("execution")
+    if isinstance(execution, dict):
+        lines.append(
+            "Execution: "
+            f"{execution['status']} rc={execution['returncode']} "
+            f"elapsed={execution['elapsed_seconds']:.3f}s"
+        )
+        for line in execution.get("stdout_tail", [])[:4]:
+            lines.append(f"  stdout: {line}")
+        for line in execution.get("stderr_tail", [])[:4]:
+            lines.append(f"  stderr: {line}")
+    lines.append("Source/data anchors:")
+    for item in report.get("source_refs", []):
+        lines.append(f"  - {item}")
+    lines.append("Evidence standard:")
+    for item in report.get("evidence_standard", []):
+        lines.append(f"  - {item}")
+    lines.append("Disproof standard:")
+    for item in report.get("disproof_standard", []):
+        lines.append(f"  - {item}")
+    lines.append(f"Proof limit: {report['proof_limit']}")
+    lines.append(f"Regression gate: {report['regression_gate']}")
     return "\n".join(lines)
 
 

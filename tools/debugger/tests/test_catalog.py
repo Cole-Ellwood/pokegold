@@ -36,6 +36,7 @@ from tools.debugger.pokemon_semantics import (
     build_grass_regrowth_report,
     build_learnset_inspection_report,
 )
+from tools.debugger.proof_runner import build_proof_card
 from tools.debugger.provenance import build_provenance_report
 from tools.debugger.ranking import rank_findings
 from tools.debugger.replay import build_replay_plan
@@ -146,6 +147,25 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("expected switch result", rec["disproof_standard"][0])
         self.assertIn("rom-switch-materialize", rec["regression_gate"])
         self.assertIn("escalation_command", rec)
+
+    def test_next_step_routes_natural_wrong_switch_phrase(self) -> None:
+        report = build_next_step(symptom="why did the boss switch when expected to stay in")
+        rec = report["recommendation"]
+
+        self.assertEqual(rec["symptom_class"], "wrong_switch")
+        self.assertIn("rom-switch-materialize", rec["first_command"])
+
+    def test_proof_card_executes_safe_fast_unified_command(self) -> None:
+        report = build_proof_card(
+            symptom="How much does grass regrowth heal at 300 hp?",
+            execute=True,
+            timeout_seconds=30,
+        )
+
+        self.assertEqual(report["kind"], "unified_debugger_proof_card")
+        self.assertEqual(report["proof_depth"], "executed")
+        self.assertTrue(report["passed"])
+        self.assertIn("grass-regrowth", report["chosen_command"])
 
     def test_next_step_routes_reset_crashes_before_counter_substrings(self) -> None:
         report = build_next_step(

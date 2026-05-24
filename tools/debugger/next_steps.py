@@ -365,7 +365,7 @@ NEXT_STEP_ROWS = [
         "symptom_class": "wrong_switch",
         "matched_lane": "boss_ai",
         "title": "Boss selected the wrong switch",
-        "keywords": ["wrong switch", "bad switch", "selected switch", "propose a switch", "proposed switch", "switch_sack", "expected staying", "staying in", "policy expected", "switch confidence", "switch target", "preserve"],
+        "keywords": ["wrong switch", "bad switch", "selected switch", "boss switch", "boss switched", "propose a switch", "proposed switch", "switch_sack", "expected staying", "expected to stay", "stay in", "staying in", "should stay", "switched when expected", "policy expected", "switch confidence", "switch target", "preserve"],
         "first_command": "python -m tools.boss_ai_debugger rom-switch-materialize --scenarios <scenarios.jsonl> --fail-on-mismatch",
         "required_inputs": ["scenario JSONL with the disputed switch case", "base route or manifest if the default materializer cannot position the battle"],
         "proof_limit": "ROM materialization proof for supplied switch scenarios; without a scenario this remains only routing guidance.",
