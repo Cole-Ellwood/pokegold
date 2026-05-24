@@ -84,7 +84,7 @@ High-risk bug areas:
 | --- | --- |
 | Boss AI or major-trainer difficulty | `docs/boss_ai_spec.md`, `engine/battle/ai/`, `data/trainers/ai_tiers.asm`, `data/trainers/parties.asm` |
 | Battle mechanics or move effects | `engine/battle/core.asm`, `engine/battle/effect_commands.asm`, `engine/battle/move_effects`, `constants/battle_constants.asm` |
-| Moves | `data/moves/moves.asm`, `data/moves/effects.asm`, `data/moves/effects_pointers.asm`, `data/moves/contact_flags.asm`, `constants/move_constants.asm` |
+| Moves | `docs/generated/move_entries.md`, `data/moves/moves.asm`, `data/moves/effects.asm`, `data/moves/effects_pointers.asm`, `data/moves/contact_flags.asm`, `constants/move_constants.asm` |
 | Pokemon stats, types, learnsets, evolutions | `docs/balance_intent.md`, `docs/evolution_policy.md`, `docs/buff_backlog.md`, `docs/generated/balance_audit.md`, `data/pokemon/base_stats/`, `data/pokemon/base_stats.asm`, `data/pokemon/evos_attacks.asm`, `constants/pokemon_constants.asm` |
 | Trainers and parties | `data/trainers/parties.asm`, `data/trainers/attributes.asm`, `data/trainers/ai_tiers.asm` |
 | Maps, events, specials, QoL scripts | `maps/`, `data/maps/`, `engine/events/`, `data/events/special_pointers.asm`, `engine/overworld/` |
