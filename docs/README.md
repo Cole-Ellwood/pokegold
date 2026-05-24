@@ -73,6 +73,26 @@ That mode may edit hand-authored docs, audit notes, `decisions/` entries, or
 `journal/` entries. It must not touch ROM behavior, generated docs,
 linker/build outputs, or unrelated dirty files.
 
+## Debugger First
+
+For bug reports, runtime questions, Boss AI behavior, route confusion, or broad
+"what should I inspect next?" prompts, use the completed unified debugger before
+old branch notes or stale worktrees:
+
+```powershell
+python -m tools.debugger next --symptom "<question>"
+python -m tools.debugger triage --symptom "<question>"
+python -m tools.debugger investigate --symptom "<question>"
+```
+
+Current completion source of truth:
+`audit/debugger_godmode_completion_2026-05-24.md`. On `master` at or after
+`fda6bbcb`, the verifier-gated debugger-godmode pgoal is complete: benchmark
+29/29, pass_rate 1.000, audit `ready=True`, and `gap_actions=0`. Do not treat
+`.claude/worktrees/*`, `.local/worktrees/debugger-masterpiece-roadmap`, or old
+branch handoff notes as current debugger truth unless the task explicitly asks
+to inspect those copies.
+
 ## Truth Precedence
 
 1. Current source files and linker outputs (`pokegold.map`, `pokegold.sym`).

@@ -64,6 +64,24 @@ For a concise change history over base Gold, read:
    banks, and free ROMX ranges.
 5. Run focused audits from `tools/audit/` when relevant.
 
+## Debugger First Route
+
+For bug reports, runtime questions, Boss AI behavior, route confusion, or "what
+should I inspect next?" prompts, start with the completed unified debugger:
+
+```powershell
+python -m tools.debugger next --symptom "<question>"
+python -m tools.debugger triage --symptom "<question>"
+python -m tools.debugger investigate --symptom "<question>"
+```
+
+Current completion proof: `audit/debugger_godmode_completion_2026-05-24.md`.
+On `master` at or after `fda6bbcb`, the verifier-gated debugger-godmode pgoal is
+complete: benchmark 29/29, pass_rate 1.000, audit `ready=True`, and
+`gap_actions=0`. If a session lands in `.claude/worktrees/*` or
+`.local/worktrees/debugger-masterpiece-roadmap`, treat that checkout as a
+historical copy until branch and `git status` prove otherwise.
+
 High-risk bug areas:
 
 - Boss AI fairness and timing: `docs/boss_ai_spec.md`,

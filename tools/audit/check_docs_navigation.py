@@ -14,6 +14,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 
+DEBUGGER_COMPLETION_ARTIFACT = "audit/debugger_godmode_completion_2026-05-24.md"
+DEBUGGER_FINAL_BENCHMARK_ARTIFACT = "audit/debugger_godmode_benchmark/final_2026-05-24.md"
+DEBUGGER_COMPLETION_COMMIT = "fda6bbcb"
+
 CORE_HELPER_DOCS = (
     "docs/README.md",
     "docs/project_context.md",
@@ -439,6 +443,105 @@ def check_helper_entrypoint(errors: list[str]) -> None:
         print("PASS: helper-doc entrypoint is present")
 
 
+def check_debugger_godmode_completion_routing(errors: list[str]) -> None:
+    if not (ROOT / DEBUGGER_COMPLETION_ARTIFACT).exists():
+        return
+
+    problems: list[str] = []
+    readme = read_repo_text("docs/README.md")
+    project_map = read_repo_text("docs/project_map.md")
+    roadmap = read_repo_text("docs/project_roadmap.md")
+
+    row_match = re.search(r"^\| DEBUGGER-001 \|.*$", roadmap, re.MULTILINE)
+    if row_match is None:
+        problems.append("docs/project_roadmap.md missing DEBUGGER-001 row")
+    else:
+        row = row_match.group(0)
+        required_row_snippets = (
+            "`COMPLETE`",
+            DEBUGGER_COMPLETION_ARTIFACT,
+            DEBUGGER_FINAL_BENCHMARK_ARTIFACT,
+            DEBUGGER_COMPLETION_COMMIT,
+            "ready=True",
+            "gap_actions=0",
+            "29/29",
+            "pass_rate 1.000",
+            'python -m tools.debugger next --symptom "<question>"',
+        )
+        for snippet in required_row_snippets:
+            if snippet not in row:
+                problems.append(
+                    f"docs/project_roadmap.md DEBUGGER-001 row missing current completion snippet: {snippet}"
+                )
+        stale_row_snippets = (
+            "`IN_PROGRESS`",
+            "ready=False",
+            "audit `gap_actions` count remains",
+            "Next slices should keep improving existing routing/report/proof surfaces",
+        )
+        for snippet in stale_row_snippets:
+            if snippet in row:
+                problems.append(
+                    f"docs/project_roadmap.md DEBUGGER-001 row still contains stale snippet: {snippet}"
+                )
+
+    status_note = section(roadmap, "Latest DEBUGGER-001 status note", "Status legend:")
+    if status_note is None:
+        problems.append("docs/project_roadmap.md missing Latest DEBUGGER-001 status note")
+    else:
+        required_note_snippets = (
+            "COMPLETE",
+            DEBUGGER_COMPLETION_ARTIFACT,
+            DEBUGGER_FINAL_BENCHMARK_ARTIFACT,
+            DEBUGGER_COMPLETION_COMMIT,
+            "ready=True",
+            "gap_actions=0",
+            "29/29",
+            "pass_rate 1.000",
+            'python -m tools.debugger next --symptom "<question>"',
+            ".local/worktrees/debugger-masterpiece-roadmap",
+        )
+        for snippet in required_note_snippets:
+            if snippet not in status_note:
+                problems.append(
+                    f"docs/project_roadmap.md Latest DEBUGGER-001 note missing current completion snippet: {snippet}"
+                )
+        stale_note_snippets = (
+            "ready=False",
+            "audit `gap_actions` count remains",
+            "unresolved (stale-expectation vs real boss-AI bug",
+        )
+        for snippet in stale_note_snippets:
+            if snippet in status_note:
+                problems.append(
+                    f"docs/project_roadmap.md Latest DEBUGGER-001 note still contains stale snippet: {snippet}"
+                )
+
+    for path, text in (
+        ("docs/README.md", readme),
+        ("docs/project_map.md", project_map),
+    ):
+        required_doc_snippets = (
+            DEBUGGER_COMPLETION_ARTIFACT,
+            DEBUGGER_COMPLETION_COMMIT,
+            "ready=True",
+            "gap_actions=0",
+            "29/29",
+            "pass_rate 1.000",
+            'python -m tools.debugger next --symptom "<question>"',
+            ".local/worktrees/debugger-masterpiece-roadmap",
+        )
+        for snippet in required_doc_snippets:
+            if snippet not in text:
+                problems.append(
+                    f"{path} missing debugger-godmode completion routing snippet: {snippet}"
+                )
+
+    errors.extend(problems)
+    if not problems:
+        print("PASS: debugger godmode completion routing is current")
+
+
 def process_output(proc: subprocess.CompletedProcess[str]) -> str:
     return proc.stderr.strip() or proc.stdout.strip() or f"exit {proc.returncode}"
 
@@ -841,6 +944,7 @@ def main() -> int:
     check_backtick_references(errors)
     check_objective_text(errors)
     check_helper_entrypoint(errors)
+    check_debugger_godmode_completion_routing(errors)
     check_generated_index(errors)
     check_generated_balance_audit(errors)
     check_python_command_paths(errors)
