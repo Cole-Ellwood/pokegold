@@ -447,7 +447,7 @@ EVIDENCE_STANDARDS = {
         "Static triage identifies the exact move-search lead, then source proof or a runtime trace confirms the missing bound/restoration behavior.",
     ],
     "haki_taunt_read": [
-        "The Haki oracle audit passes on current source tables, and emulator-live textbox/render claims need a separate live scenario.",
+        "The Haki oracle audit passes on current source tables and names the ai_haki_excluded exclusion table, the boss policy switch surface (BossAI_OracleHakiRead defined in boss_policy_switch.asm; BossAI_QueueHakiTaunt defined in haki_taunt_queue.asm and invoked from boss_policy_switch.asm), and the tier-and-class gate logic upstream of the oracle call. Emulator-live textbox or render claims need a separate live scenario.",
     ],
     "ko_band_pressure": [
         "The KO-band oracle materialization audit passes for committed scenarios; arbitrary fight claims need a matching scenario file.",
@@ -465,7 +465,7 @@ EVIDENCE_STANDARDS = {
         "The coach-template debugger emits the committed golden scenarios and the audit confirms the shipped template decision deltas.",
     ],
     "wrong_switch": [
-        "A scenario JSONL matching the disputed switch case passes rom-switch-materialize on the current ROM with --fail-on-mismatch.",
+        "A scenario JSONL matching the disputed switch case passes rom-switch-materialize on the current ROM with --fail-on-mismatch. The route names BossAI_SwitchOrTryItem, switch WRAM targets, the boss_policy_switch source anchors, and the scenario materialization command so the ordinary-language wrong-switch question is answered with a runnable proof.",
     ],
     "wrong_move_score": [
         "Decision trace explains the disputed score from the scenario, and rom-score-materialize passes before claiming emulator-equivalent scoring.",
@@ -517,7 +517,7 @@ DISPROOF_STANDARDS = {
         "If source proof or trace shows the move-search loop is bounded and restores the reported last-move state, reject this move-search bug class.",
     ],
     "haki_taunt_read": [
-        "If the Haki oracle audit passes and a live scenario does not show the reported taunt/read, reject this oracle-read route.",
+        "If the Haki oracle audit passes and a live scenario does not show the reported taunt/read, reject this oracle-read route. If the answer points only at the original bespoke Morty Haki path and omits the uniform oracle refactor that consolidates the exclusion table, the route is stale.",
     ],
     "ko_band_pressure": [
         "If the matching scenario passes KO-band materialization without the reported pressure/deny-KO delta, reject this KO-band hypothesis.",
@@ -535,7 +535,7 @@ DISPROOF_STANDARDS = {
         "If the template golden scenarios and audit do not reproduce the reported decision delta, reject this coach-template route.",
     ],
     "wrong_switch": [
-        "If a matching scenario JSONL passes rom-switch-materialize with the expected switch result, the wrong-switch claim is disproven for that scenario.",
+        "If a matching scenario JSONL passes rom-switch-materialize with the expected switch result, the wrong-switch claim is disproven for that scenario. If the returned route omits rom-switch-materialize or routes to damage/banking fallbacks instead of the boss_policy_switch surface, the oracle failed this question.",
     ],
     "wrong_move_score": [
         "If decision trace and rom-score-materialize agree with the expected score on the supplied scenario, the wrong-score claim is disproven for that scenario.",

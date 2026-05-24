@@ -1,0 +1,59 @@
+# Debugger Godmode Benchmark Baseline
+
+- Generated: 2026-05-24T20:11:42Z
+- Baseline mode: True
+- Questions: 29
+- Questions path: audit/debugger_godmode_benchmark/questions.jsonl
+- Passed: 1
+- Failed: 28
+- Pass rate: 0.034
+- Threshold: 0.850
+- Source anchor threshold: 0.500
+- Standard token threshold: 3
+- Next only: False
+
+A question passes only when source anchors, proof command, regression gate,
+evidence standard, and disproof standard all pass. `--baseline` records the
+score without failing the process when the pass rate is below the threshold.
+
+## Dimension Counts
+
+- source_anchor: 5/29
+- proof_command: 10/29
+- regression_gate: 12/29
+- evidence_standard: 6/29
+- disproof_standard: 5/29
+
+## Question Results
+
+| id | pass | source | proof | gate | evidence | disproof |
+| --- | --- | --- | --- | --- | --- | --- |
+| codex_where_boss_wrong_switch | FAIL | 2/5 | PASS | PASS | PASS | PASS |
+| codex_why_switch_sack_converter_disagreement | FAIL | 1/5 | FAIL | FAIL | FAIL | FAIL |
+| codex_what_first_wild_route29_reset_repro | PASS | 3/5 | PASS | PASS | PASS | PASS |
+| codex_why_trainer_evolution_music_frozen | FAIL | 3/5 | FAIL | PASS | PASS | PASS |
+| codex_why_physical_damage_5x | FAIL | 1/6 | PASS | FAIL | FAIL | FAIL |
+| codex_why_hidden_power_immunity | FAIL | 2/5 | FAIL | FAIL | PASS | PASS |
+| codex_where_hm_field_tools | FAIL | 1/7 | PASS | PASS | FAIL | FAIL |
+| codex_what_repel_renewal_guard | FAIL | 1/4 | PASS | PASS | FAIL | FAIL |
+| codex_where_farfetchd_stick_role | FAIL | 0/6 | FAIL | PASS | FAIL | FAIL |
+| codex_where_yanma_ariados_showcases | FAIL | 1/5 | FAIL | PASS | FAIL | FAIL |
+| codex_what_map_script_rom_mirror | FAIL | 1/5 | FAIL | FAIL | FAIL | FAIL |
+| codex_how_script_entry_state_space | FAIL | 1/5 | FAIL | FAIL | FAIL | FAIL |
+| codex_why_boss_ai_no_current_turn_input | FAIL | 1/6 | FAIL | FAIL | FAIL | FAIL |
+| codex_why_wram_bank_ret_crash | FAIL | 3/5 | PASS | FAIL | FAIL | FAIL |
+| codex_what_release_gate_for_qol_changes | FAIL | 1/5 | PASS | FAIL | FAIL | FAIL |
+| codex_where_damage_matchup_cli | FAIL | 0/5 | FAIL | PASS | FAIL | FAIL |
+| claude_where_add_new_move | FAIL | 0/7 | FAIL | FAIL | FAIL | FAIL |
+| claude_where_boss_ai_haki_eligibility_gate | FAIL | 1/3 | FAIL | PASS | PASS | PASS |
+| claude_why_farcall_clobbers_hl | FAIL | 1/3 | PASS | PASS | FAIL | FAIL |
+| claude_why_cross_bank_call_silent_garbage | FAIL | 0/3 | FAIL | FAIL | FAIL | FAIL |
+| claude_where_type_chart | FAIL | 2/3 | FAIL | FAIL | FAIL | FAIL |
+| claude_why_stat_stage_byte_not_multiplier | FAIL | 0/4 | FAIL | FAIL | FAIL | FAIL |
+| claude_what_save_format_bump_impact | FAIL | 0/5 | FAIL | FAIL | FAIL | FAIL |
+| claude_where_rom_bank_free_space | FAIL | 0/3 | FAIL | FAIL | FAIL | FAIL |
+| claude_why_trace_rom_differs_from_release | FAIL | 0/5 | FAIL | FAIL | FAIL | FAIL |
+| claude_what_new_release_smoke_audit | FAIL | 2/4 | PASS | PASS | FAIL | FAIL |
+| claude_where_boss_ai_wramx_reserve | FAIL | 1/3 | FAIL | FAIL | FAIL | FAIL |
+| claude_why_audit_says_gap_actions_1_after_iter1 | FAIL | 0/4 | FAIL | FAIL | PASS | FAIL |
+| claude_what_durable_proof_artifact | FAIL | 0/3 | PASS | PASS | FAIL | FAIL |
