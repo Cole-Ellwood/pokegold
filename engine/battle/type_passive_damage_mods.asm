@@ -1084,7 +1084,14 @@ TypePassive_TryDarkStatusShield_Far:
 	and a
 	ret nz
 
+	; Preserve the shield flag address and half/full contribution; the helper
+	; below uses hl/bc internally. pop does not affect flags, so ret z still
+	; reads the helper result.
+	push hl
+	push bc
 	call TypePassive_StatusMoveLikelyAffectsOpponent_Far
+	pop bc
+	pop hl
 	ret z
 
 	ld [hl], 1
@@ -1092,7 +1099,7 @@ TypePassive_TryDarkStatusShield_Far:
 	cp 2
 	jr z, .negate
 	call BattleRandom
-	cp 50 percent
+	cp 50 percent + 1
 	ret nc
 
 .negate
@@ -1201,8 +1208,16 @@ TypePassive_MaybePoisonRetaliation_Far:
 
 TypePassive_AdjustRecoilBCForSteel_Far:
 ; input/output: bc recoil amount
+; push/pop bc is load-bearing: TypePassive_GetUserTypeContribution_Far
+; clobbers BOTH b (set to query type) and c (set to defender's type1
+; via `ld c, a` in TypePassive_GetTypeContributionFromHL_Far at line 417).
+; Without preserving, the non-Steel `ret z` path returns with garbage bc
+; (e.g. (STEEL=9, BUG=7) = 0x0907) which underflows HP at the caller and
+; KOs the user on every recoil hit.
+	push bc
 	ld a, STEEL
 	call TypePassive_GetUserTypeContribution_Far
+	pop bc
 	and a
 	ret z
 	cp 2

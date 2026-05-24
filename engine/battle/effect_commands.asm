@@ -5559,7 +5559,16 @@ BattleCommand_Recoil:
 	jr nz, .min_damage
 	inc c
 .min_damage
+; push/pop hl is load-bearing: the farcall macro expands to
+; `ld a, BANK :: ld hl, target :: rst FarCall`, which clobbers caller's
+; hl before the target runs. The HP-subtract block below dereferences hl
+; (it must still point at the user's MaxHP). Without push/pop, hl ends
+; up wherever the target left it, the writes hit unrelated memory, and
+; AnimateHPBar reads garbage from wHPBuffer1/2/3 — HP bar overflow.
+; See docs/asm_authoring_guide.md §3.2.
+	push hl
 	farcall TypePassive_AdjustRecoilBCForSteel_Far
+	pop hl
 	ld a, b
 	or c
 	ret z
