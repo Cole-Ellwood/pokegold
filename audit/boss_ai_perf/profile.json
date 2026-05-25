@@ -1,0 +1,199 @@
+{
+  "scenario": "late_lead",
+  "rom": "pokegold",
+  "total_apply_cycles": 2668512,
+  "total_select_cycles": 140448,
+  "total_combined_cycles": 2808960,
+  "skipped_missing_sym": [],
+  "rows": [
+    {
+      "helper": "BossAI_ApplyScoutMoveBias",
+      "inclusive_cycles": 658580,
+      "pct_of_total": 23.44568808384598,
+      "call_count": 4,
+      "cycles_per_call": 164645
+    },
+    {
+      "helper": "GetFarByte",
+      "inclusive_cycles": 593456,
+      "pct_of_total": 21.127249943039416,
+      "call_count": 2558,
+      "cycles_per_call": 232
+    },
+    {
+      "helper": "BossAI_CurrentEnemyMoveHasKOPressure",
+      "inclusive_cycles": 271080,
+      "pct_of_total": 9.650546821599452,
+      "call_count": 9,
+      "cycles_per_call": 30120
+    },
+    {
+      "helper": "BossAI_CurrentEnemyMovePressureScore",
+      "inclusive_cycles": 259560,
+      "pct_of_total": 9.240430622009569,
+      "call_count": 9,
+      "cycles_per_call": 28840
+    },
+    {
+      "helper": "BossAI_GetTypeThreatSeverityVsEnemyMon",
+      "inclusive_cycles": 222712,
+      "pct_of_total": 7.928628389154705,
+      "call_count": 11,
+      "cycles_per_call": 20246
+    },
+    {
+      "helper": "BossAI_ApplyDamageDominanceBias",
+      "inclusive_cycles": 77616,
+      "pct_of_total": 2.763157894736842,
+      "call_count": 4,
+      "cycles_per_call": 19404
+    },
+    {
+      "helper": "BossAI_ApplyEnemyKnownPressureModifiers",
+      "inclusive_cycles": 28668,
+      "pct_of_total": 1.0205912508544088,
+      "call_count": 9,
+      "cycles_per_call": 3185
+    },
+    {
+      "helper": "BossAI_CheckEnemyMoveTypeMatchupVsPlayerNoItem",
+      "inclusive_cycles": 1944,
+      "pct_of_total": 0.0692071086807929,
+      "call_count": 22,
+      "cycles_per_call": 88
+    },
+    {
+      "helper": "AddNTimes",
+      "inclusive_cycles": 1340,
+      "pct_of_total": 0.04770448849396218,
+      "call_count": 335,
+      "cycles_per_call": 4
+    },
+    {
+      "helper": "BossAI_GetPrimaryThreatType",
+      "inclusive_cycles": 120,
+      "pct_of_total": 0.0042720437457279565,
+      "call_count": 4,
+      "cycles_per_call": 30
+    },
+    {
+      "helper": "BossAI_ResetTurnCaches",
+      "inclusive_cycles": 120,
+      "pct_of_total": 0.0042720437457279565,
+      "call_count": 1,
+      "cycles_per_call": 120
+    },
+    {
+      "helper": "BossAI_ApplyRepeatPenalty",
+      "inclusive_cycles": 96,
+      "pct_of_total": 0.0034176349965823645,
+      "call_count": 4,
+      "cycles_per_call": 24
+    },
+    {
+      "helper": "BossAI_ApplyPlanMoveBias",
+      "inclusive_cycles": 80,
+      "pct_of_total": 0.0028480291638186372,
+      "call_count": 4,
+      "cycles_per_call": 20
+    },
+    {
+      "helper": "BossAI_ApplyKOBandOraclePressure",
+      "inclusive_cycles": 72,
+      "pct_of_total": 0.002563226247436774,
+      "call_count": 3,
+      "cycles_per_call": 24
+    },
+    {
+      "helper": "BossAI_SelectPlanIfNeeded",
+      "inclusive_cycles": 40,
+      "pct_of_total": 0.0014240145819093186,
+      "call_count": 2,
+      "cycles_per_call": 20
+    },
+    {
+      "helper": "BossAI_SelectMove",
+      "inclusive_cycles": 40,
+      "pct_of_total": 0.0014240145819093186,
+      "call_count": 1,
+      "cycles_per_call": 40
+    },
+    {
+      "helper": "BossAI_ComputePlayerPlausibleTypeMask",
+      "inclusive_cycles": 40,
+      "pct_of_total": 0.0014240145819093186,
+      "call_count": 2,
+      "cycles_per_call": 20
+    },
+    {
+      "helper": "BossAI_ApplyLookaheadToTopMoveCandidates",
+      "inclusive_cycles": 24,
+      "pct_of_total": 0.0008544087491455911,
+      "call_count": 1,
+      "cycles_per_call": 24
+    },
+    {
+      "helper": "BossAI_ApplyMoveModel",
+      "inclusive_cycles": 20,
+      "pct_of_total": 0.0007120072909546593,
+      "call_count": 1,
+      "cycles_per_call": 20
+    },
+    {
+      "helper": "BossAI_PublicEnemyFasterUncached",
+      "inclusive_cycles": 0,
+      "pct_of_total": 0.0,
+      "call_count": 1,
+      "cycles_per_call": 0
+    },
+    {
+      "helper": "BossAI_PublicEnemyFaster",
+      "inclusive_cycles": 0,
+      "pct_of_total": 0.0,
+      "call_count": 1,
+      "cycles_per_call": 0
+    },
+    {
+      "helper": "BossAI_CurrentEnemyMoveScoredPower",
+      "inclusive_cycles": 0,
+      "pct_of_total": 0.0,
+      "call_count": 9,
+      "cycles_per_call": 0
+    },
+    {
+      "helper": "BossAI_ShouldScout",
+      "inclusive_cycles": 0,
+      "pct_of_total": 0.0,
+      "call_count": 4,
+      "cycles_per_call": 0
+    },
+    {
+      "helper": "BossAI_IsCurrentEnemySetupMove",
+      "inclusive_cycles": 0,
+      "pct_of_total": 0.0,
+      "call_count": 12,
+      "cycles_per_call": 0
+    },
+    {
+      "helper": "GetBaseData",
+      "inclusive_cycles": 0,
+      "pct_of_total": 0.0,
+      "call_count": 23,
+      "cycles_per_call": 0
+    },
+    {
+      "helper": "BossAI_ConsultKOBandCalibration",
+      "inclusive_cycles": 0,
+      "pct_of_total": 0.0,
+      "call_count": 9,
+      "cycles_per_call": 0
+    },
+    {
+      "helper": "BossAI_CheckTypeMatchupNoItem",
+      "inclusive_cycles": 0,
+      "pct_of_total": 0.0,
+      "call_count": 16,
+      "cycles_per_call": 0
+    }
+  ]
+}
