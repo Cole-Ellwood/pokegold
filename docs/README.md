@@ -103,19 +103,23 @@ python -m tools.headless_battle --scenario <scenario.json> --json
 python tools\audit\check_headless_battle_simulator.py
 ```
 
-Current scope is intentionally narrow: move-vs-move selected turns, selected
-switch actions, caller-supplied replacement after KO, explicit stats or species
-shorthand, equal-speed tie RNG, basic critical-hit checks, basic move accuracy
-with fixed/sample/exhaustive hit/miss branching, damage variation with
-fixed/sample/exhaustive RNG, selected-action `turns[]` progression with HP/RNG
-carryover, initial poison/burn/toxic residual damage after selected moves,
-pre-variation HP damage delegated to the existing ROM-backed damage oracle, and
-post-score Boss AI selector replay from known score bytes. Reports label
-byte-proven, source-mirrored, and out-of-scope surfaces; do not claim automatic
-full battle choice, automatic replacement selection, accuracy/evasion modifiers,
-status application, sleep/freeze/paralysis, RNG-consuming mechanics outside
-speed ties/critical hits/accuracy/damage variation, live Boss AI scoring, or
-scripts until the simulator report and audit say that surface exists.
+Current scope is intentionally narrow: selected move-vs-move turns, repeated
+action maps with `max_turns`, `auto_replace_or` for simple KO/send-out loops,
+ROM-mirrored `wild_random_move`, selected switch actions, caller-supplied
+replacement after KO, explicit enemy `auto_replace` using the basic source type
+chart, explicit stats or species shorthand, PP decrement, supported Rocky
+Helmet/Shell Bell/Life Orb after-hit HP effects, equal-speed tie RNG, basic
+critical-hit checks, basic move accuracy with fixed/sample/exhaustive hit/miss
+branching, damage variation with fixed/sample/exhaustive RNG, selected-action
+`turns[]` progression with HP/RNG carryover, initial poison/burn/toxic residual
+damage after selected moves, pre-variation HP damage delegated to the existing
+ROM-backed damage oracle, and post-score Boss AI selector replay/execution from
+known score bytes. Reports label byte-proven, source-mirrored, and out-of-scope
+surfaces; do not claim strategic full battle action choice, implicit
+replacement without `auto_replace_or` or `auto_replace`, accuracy/evasion
+modifiers, status application, sleep/freeze/paralysis, RNG-consuming mechanics
+outside the listed branch points, live Boss AI scoring, or scripts until the
+simulator report and audit say that surface exists.
 
 ## Truth Precedence
 
