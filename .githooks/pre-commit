@@ -29,4 +29,12 @@ if [ "${CLAUDE_MD_ALLOW_MARKERS:-0}" != "1" ]; then
     fi
 fi
 
+# 3. CLAUDE.md lint on staged Python additions.
+if [ "${CLAUDE_MD_ALLOW_LINT:-0}" != "1" ]; then
+    if ! python3 tools/audit/check_claude_md_lint.py; then
+        echo "pre-commit: CLAUDE.md lint failed (see above)." >&2
+        exit 1
+    fi
+fi
+
 exit 0
