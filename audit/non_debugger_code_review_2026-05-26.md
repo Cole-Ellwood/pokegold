@@ -802,8 +802,61 @@ separate tasks.
   cross-scenario name leak and merged the affected pair; the script was
   removed after the file passed.
 
+- **Item 6 — Backfill `tools/trace/` tests.** (§7) New
+  `tools/trace/tests/` package with four test modules covering the pure
+  surface of the boss-AI live-capture pipeline: `test_runtime.py`
+  (17 tests on the leaf module — `Symbol` dataclass, `parse_symbols`,
+  `display_path`, `sha256_file`, `read_byte`/`read_range`/`read_word`
+  via a `FakeMemory` stand-in that exercises both the flat-address and
+  WRAMX banked-access paths plus the `$FF70` SVBK fallback);
+  `test_boss_ai_trace_capture.py` (34 tests — `format_capture` golden
+  string, `decode_move`/`decode_risk_flags`/`csv_score_deltas` with the
+  `0xFF` sentinel, `format_metadata_lines` ordering,
+  `trace_signature` change-detection contract including the
+  selector-only-fields invariant, `parse_move_names` const-block
+  parsing, `require_symbols` pass/fail, `build_trace_basis_metadata`,
+  `format_symbols`); `test_boss_ai_state_factory.py` (26 tests —
+  `parse_rgb_int`/`strip_asm_comment`/`parse_simple_consts`/`parse_map_consts`/
+  `parse_trainer_consts` rgbasm const-table parsers,
+  `route_ids_from_manifest`, `selected_routes` argparse → list[BossRoute],
+  `expected_trainer` lookup with named-failure check, `ROUTES`
+  data-integrity invariants — capture_id matches dict key,
+  `BASE_REQUIRED_SYMBOLS` stays sorted, every route has trainer/map/
+  clear-event identity); `test_boss_ai_trace_batch.py` (45 tests —
+  bonus coverage on the 439-line driver: `load_manifest` JSON
+  validation, `validate_capture`/`validate_capture_ids` field-type
+  validation, `as_int`/`optional_manifest_path`/`validate_manifest_hash`
+  manifest-field coercion, the three `build_*_command` argv assemblers
+  with snapshot-only / save-state / preflight / trace-rom-override
+  branches, `command_for_display` quoting). 122 tests total, 0 PyBoy
+  dependency, runs in 0.03s. All target functions are pure or use the
+  `FakeMemory` stand-in.
+
+  Audit-doc target was "at least state_factory + trace_capture" (884 +
+  456 lines); test_runtime + test_boss_ai_trace_batch are scope
+  additions because both modules are pure-helper-dense and the marginal
+  cost was minutes per file. `boss_ai_state_replay.py` was not given
+  its own test file — `has_replay_decision` is its only pure helper,
+  not enough to justify a fifth module. `boss_ai_trace_state_probe.py`
+  and `boss_ai_shared_switch_loop_fixture.py` are PyBoy-driven; their
+  pure-helper surface is too thin for unit testing without standing up
+  a save-state fixture (out of scope for this pass; covered by the
+  trace pipeline integration audits that already gate on `pokegold_trace.gbc`).
+
+  Verification: `python -m unittest discover -s tools.trace.tests` →
+  122/122 OK in 0.028s. `python tools/audit/check_release_smoke.py` →
+  ALL RELEASE SMOKE CHECKS PASSED. No source files in `tools/trace/`
+  were modified; this commit is additive-only (new `tests/` package).
+
+  File-shape note: `test_boss_ai_trace_capture.py` lands at 407 lines,
+  just past CLAUDE.md's 400-line "design smell" line. Held cohesive
+  because every TestCase targets one src module (`boss_ai_trace_capture.py`);
+  splitting would scatter same-module coverage, mirroring the debugger
+  audit's reasoning against sub-splitting the three >700-line extracted
+  test files (`test_content_mirror.py` etc.) when the src module they
+  cover hasn't been split first.
+
 **Remaining items, ranked by leverage:**
 
-6. **Backfill `tools/trace/` tests.** (§7)
 7. **Split `tools/headless_battle/simulator.py` into a package.** (§3)
 10. **Consolidate `scripts/_rom_data.py` for the 8 generator scripts.** (§4)
