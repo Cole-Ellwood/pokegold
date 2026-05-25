@@ -4051,6 +4051,12 @@ def coverage_report() -> dict[str, Any]:
                 "source": "tools.damage_debugger.oracle.predict_damage + tools.damage_debugger.clobber_smoke",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
                 "notes": "This first slice delegates pre-variation damage to the existing ROM-backed damage oracle/smoke surface.",
+            },
+            {
+                "id": "normal_hit_fixed_rng_differential",
+                "source": "tools.headless_battle.rom_differential",
+                "gate": "python tools/audit/check_headless_battle_simulator.py",
+                "notes": "One selected NormalHit turn is ROM-differential checked end to end for the supported fixed-RNG subset: enemy Pidgey Tackle into player Cyndaquil with link RNG bytes [255, 255] matches ROM PP decrement, no-critical result, damage variation, final damage, and active HP after BattleCommand_ApplyDamage writes HP. This proves that named golden only; other source-mirrored mechanics remain pending differential.",
             }
         ],
         "source_mirrored_pending_differential": [

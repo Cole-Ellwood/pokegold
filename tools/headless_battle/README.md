@@ -8,6 +8,7 @@ Run:
 python -m tools.headless_battle --template
 python -m tools.headless_battle --scenario .local\tmp\headless_turn.json
 python -m tools.headless_battle --scenario .local\tmp\headless_turn.json --json
+python -m tools.headless_battle.rom_differential
 python tools\audit\check_headless_battle_simulator.py
 ```
 
@@ -18,6 +19,7 @@ machine-readable proof surface.
 Proof boundary:
 
 - `damage_core_pre_variation` is byte-proven through the existing `tools.damage_debugger.oracle.predict_damage` and `tools.damage_debugger.clobber_smoke` gate.
+- `normal_hit_fixed_rng_differential` is a named ROM-backed golden: enemy Pidgey Tackle into player Cyndaquil with fixed link RNG bytes `[255, 255]` must match the headless event for PP decrement, no-critical result, damage variation, final damage, and active HP after the ROM writes damage. This proves that selected NormalHit case only; broader move effects remain labeled pending differential until they get their own goldens.
 - `basic_critical_hit_rng` mirrors `BattleCommand_Critical` for the NormalHit command order: critical check first, damage variation second, accuracy third.
 - `damage_variation_rng_branching` mirrors `BattleCommand_DamageVariation`: 0/1 damage skips variation; otherwise accepted multipliers are 217..255 after the ROM's rotate-right rejection loop.
 - `basic_move_accuracy_rng` mirrors the basic `BattleCommand_CheckHit` raw-byte threshold for move accuracy, always-hit moves, and Thunder in rain.
