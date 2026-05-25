@@ -104,13 +104,13 @@ class RuntimeRng:
 
 def simulate_payload(payload: dict[str, Any]) -> dict[str, Any]:
     state = parse_state(payload.get("state", {}))
-    actions = parse_actions(payload.get("actions", {}))
+    action_plan = parse_action_plan(payload)
     rng = parse_rng(payload.get("rng", {"mode": "fixed", "values": []}))
-    outcomes = simulate_samples(state, actions, rng)
+    outcomes = simulate_samples(state, action_plan, rng)
     report = {
         "kind": REPORT_KIND,
         "schema_version": SCHEMA_VERSION,
-        "turn_count": 1,
+        "turn_count": len(action_plan),
         "outcome_count": len(outcomes),
         "rng": rng_to_json(rng),
         "coverage": coverage_report(),
@@ -122,7 +122,7 @@ def simulate_payload(payload: dict[str, Any]) -> dict[str, Any]:
 
 def simulate_samples(
     state: BattleState,
-    actions: dict[str, ActionState],
+    action_plan: tuple[dict[str, ActionState], ...],
     rng: RngConfig,
 ) -> list[dict[str, Any]]:
     if rng.mode == "sample":
@@ -130,7 +130,7 @@ def simulate_samples(
         outcomes = []
         for index in range(rng.samples):
             stream = RuntimeRng(rng, generator=generator)
-            branches = simulate_turn(state, actions, rng, stream=stream)
+            branches = simulate_battle(state, action_plan, rng, stream=stream)
             if len(branches) != 1:
                 raise AssertionError("sample mode should not create exhaustive branches")
             branch = branches[0]
@@ -140,27 +140,59 @@ def simulate_samples(
     stream = None if rng.mode == "exhaustive" else RuntimeRng(rng)
     return [
         branch_to_outcome(branch, index)
-        for index, branch in enumerate(simulate_turn(state, actions, rng, stream=stream))
+        for index, branch in enumerate(simulate_battle(state, action_plan, rng, stream=stream))
     ]
 
 
-def simulate_turn(
+def simulate_battle(
     state: BattleState,
+    action_plan: tuple[dict[str, ActionState], ...],
+    rng: RngConfig,
+    *,
+    stream: RuntimeRng | None,
+) -> list[dict[str, Any]]:
+    branches = [initial_branch(state)]
+    for actions in action_plan:
+        next_branches: list[dict[str, Any]] = []
+        for branch in branches:
+            branch_state: BattleState = branch["state"]
+            if branch_state.player.hp <= 0 or branch_state.enemy.hp <= 0:
+                next_branches.append(branch)
+                continue
+            next_branches.extend(simulate_turn(branch, actions, rng, stream=stream))
+        if len(next_branches) > rng.max_outcomes:
+            raise SimulationInputError(
+                f"rng.max_outcomes exceeded while branching ({len(next_branches)} > {rng.max_outcomes})"
+            )
+        branches = next_branches
+    return branches
+
+
+def initial_branch(state: BattleState) -> dict[str, Any]:
+    return {
+        "state": state,
+        "turn_order": [],
+        "turn_orders": [],
+        "events": [],
+        "proof_notes": [],
+        "rng_consumed": [],
+        "turns_simulated": 0,
+    }
+
+
+def simulate_turn(
+    branch: dict[str, Any],
     actions: dict[str, ActionState],
     rng: RngConfig,
     *,
     stream: RuntimeRng | None,
 ) -> list[dict[str, Any]]:
+    state: BattleState = branch["state"]
     order = turn_order(state, actions)
-    branches: list[dict[str, Any]] = [
-        {
-            "state": state,
-            "turn_order": order,
-            "events": [],
-            "proof_notes": [],
-            "rng_consumed": [],
-        }
-    ]
+    working = clone_branch(branch)
+    working["turn_order"] = order
+    working["turn_orders"].append({"turn": state.turn, "order": order})
+    branches: list[dict[str, Any]] = [working]
     for side in order:
         next_branches: list[dict[str, Any]] = []
         for branch in branches:
@@ -193,7 +225,14 @@ def simulate_turn(
                 f"rng.max_outcomes exceeded while branching ({len(next_branches)} > {rng.max_outcomes})"
             )
         branches = next_branches
-    return branches
+    completed = []
+    for branch in branches:
+        updated = clone_branch(branch)
+        updated["turns_simulated"] += 1
+        if updated["state"].player.hp > 0 and updated["state"].enemy.hp > 0:
+            updated["state"] = advance_turn(updated["state"])
+        completed.append(updated)
+    return completed
 
 
 def turn_order(state: BattleState, actions: dict[str, ActionState]) -> list[str]:
@@ -477,6 +516,27 @@ def parse_actions(raw: Any) -> dict[str, ActionState]:
     }
 
 
+def parse_action_plan(payload: dict[str, Any]) -> tuple[dict[str, ActionState], ...]:
+    turns = payload.get("turns")
+    if turns is None:
+        return (parse_actions(payload.get("actions", {})),)
+    if not isinstance(turns, list) or not turns:
+        raise SimulationInputError("turns must be a non-empty list when provided")
+    return tuple(parse_turn_actions(raw_turn, index) for index, raw_turn in enumerate(turns))
+
+
+def parse_turn_actions(raw: Any, index: int) -> dict[str, ActionState]:
+    if not isinstance(raw, dict):
+        raise SimulationInputError(f"turns[{index}] must be an object")
+    actions = raw.get("actions", raw)
+    if not isinstance(actions, dict):
+        raise SimulationInputError(f"turns[{index}].actions must be an object")
+    return {
+        "player": parse_action(actions.get("player", {"type": "move", "move": 0}), f"turns[{index}].player"),
+        "enemy": parse_action(actions.get("enemy", {"type": "move", "move": 0}), f"turns[{index}].enemy"),
+    }
+
+
 def parse_action(raw: Any, path: str) -> ActionState:
     if isinstance(raw, int):
         return ActionState(kind="move", move_index=raw)
@@ -526,6 +586,10 @@ def replace_side(state: BattleState, side: str, pokemon: PokemonState) -> Battle
     return BattleState(player=state.player, enemy=pokemon, weather=state.weather, turn=state.turn)
 
 
+def advance_turn(state: BattleState) -> BattleState:
+    return BattleState(player=state.player, enemy=state.enemy, weather=state.weather, turn=state.turn + 1)
+
+
 def replace_hp(pokemon: PokemonState, hp: int) -> PokemonState:
     return PokemonState(
         side=pokemon.side,
@@ -550,9 +614,11 @@ def clone_branch(branch: dict[str, Any]) -> dict[str, Any]:
     return {
         "state": branch["state"],
         "turn_order": list(branch["turn_order"]),
+        "turn_orders": copy.deepcopy(branch["turn_orders"]),
         "events": copy.deepcopy(branch["events"]),
         "proof_notes": copy.deepcopy(branch["proof_notes"]),
         "rng_consumed": list(branch["rng_consumed"]),
+        "turns_simulated": branch["turns_simulated"],
     }
 
 
@@ -561,6 +627,8 @@ def branch_to_outcome(branch: dict[str, Any], index: int) -> dict[str, Any]:
     data = {
         "outcome_id": str(index),
         "turn_order": branch["turn_order"],
+        "turn_orders": branch["turn_orders"],
+        "turns_simulated": branch["turns_simulated"],
         "events": branch["events"],
         "state": state_to_json(state),
         "battle_over": state.player.hp <= 0 or state.enemy.hp <= 0,
@@ -635,6 +703,12 @@ def coverage_report() -> dict[str, Any]:
                 "notes": "Priority and unequal raw-speed ordering are mirrored for move-vs-move selected turns. Quick Claw, Choice Scarf, speed ties, switches, and status speed are not in this first slice.",
             },
             {
+                "id": "multi_turn_selected_action_progression",
+                "source": "tools.headless_battle.simulator.simulate_battle",
+                "gate": "python tools/audit/check_headless_battle_simulator.py",
+                "notes": "A turns[] list carries HP/RNG state forward across selected-action turns and stops early when either active mon faints. Automatic action choice and replacement flow are still out of scope.",
+            },
+            {
                 "id": "boss_ai_selector_from_post_score_bytes",
                 "source": "tools.boss_ai_debugger.rom_scenarios.select_from_score_bytes",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
@@ -671,8 +745,15 @@ def format_text(report: dict[str, Any]) -> str:
     lines.append("")
     for outcome in report["outcomes"]:
         state = outcome["state"]
+        if outcome.get("turn_orders"):
+            order = "; ".join(
+                f"{row['turn']}:{','.join(row['order'])}"
+                for row in outcome["turn_orders"]
+            )
+        else:
+            order = ",".join(outcome["turn_order"])
         lines.append(
-            f"Outcome {outcome['outcome_id']}: order={','.join(outcome['turn_order'])} "
+            f"Outcome {outcome['outcome_id']}: order={order} "
             f"player_hp={state['player']['hp']}/{state['player']['max_hp']} "
             f"enemy_hp={state['enemy']['hp']}/{state['enemy']['max_hp']}"
         )

@@ -42,6 +42,22 @@ def main() -> int:
         )
         return 1
     print("damage_variation_exhaustive: PASS outcomes=39")
+    multi_turn_payload = scenario_template()
+    multi_turn_payload["state"]["enemy"]["moves"][0]["bp"] = 0
+    multi_turn_payload.pop("actions")
+    multi_turn_payload["turns"] = [
+        {"player": {"type": "move", "move": 0}, "enemy": {"type": "move", "move": 0}},
+        {"player": {"type": "move", "move": 0}, "enemy": {"type": "move", "move": 0}},
+    ]
+    multi_turn_report = simulate_payload(multi_turn_payload)
+    outcome = multi_turn_report["outcomes"][0]
+    if outcome.get("turns_simulated") != 2 or [row["turn"] for row in outcome.get("turn_orders", [])] != [1, 2]:
+        print(
+            f"Headless battle simulator audit FAILED: multi-turn progression mismatch: {outcome}",
+            file=sys.stderr,
+        )
+        return 1
+    print("multi_turn_selected_actions: PASS turns=2")
     proc = subprocess.run(
         [sys.executable, "-m", "tools.damage_debugger.clobber_smoke"],
         cwd=ROOT,

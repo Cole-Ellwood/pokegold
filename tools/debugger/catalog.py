@@ -170,6 +170,9 @@ TRIAGE_RULES = (
             "simulate a battle",
             "text-only battle",
             "text only battle",
+            "turn-by-turn battle",
+            "battle turn by turn",
+            "walk a battle",
             "no gui",
             "fixed rng",
             "exhaustive rng",
@@ -180,7 +183,7 @@ TRIAGE_RULES = (
             "python tools\\audit\\check_headless_battle_simulator.py",
         ),
         gaps=(
-            "Full battle automation, switch flow, speed ties, RNG-consuming mechanics outside damage variation, accuracy, status, live Boss AI scoring, and scripts remain outside the headless simulator until separately proven.",
+            "Automatic full battle choice, switch/replacement flow, speed ties, RNG-consuming mechanics outside damage variation, accuracy, status, live Boss AI scoring, and scripts remain outside the headless simulator until separately proven.",
         ),
     ),
     TriageRule(

@@ -105,10 +105,11 @@ python tools\audit\check_headless_battle_simulator.py
 
 Current scope is intentionally narrow: move-vs-move selected turns, explicit
 stats or species shorthand, damage variation with fixed/sample/exhaustive RNG,
-pre-variation HP damage delegated to the existing ROM-backed damage oracle, and
-post-score Boss AI selector replay from known score bytes. Reports label
-byte-proven, source-mirrored, and out-of-scope surfaces; do not claim full
-battle automation, status, accuracy, switch flow, RNG-consuming mechanics
+selected-action `turns[]` progression with HP/RNG carryover, pre-variation HP
+damage delegated to the existing ROM-backed damage oracle, and post-score Boss
+AI selector replay from known score bytes. Reports label byte-proven,
+source-mirrored, and out-of-scope surfaces; do not claim automatic full battle
+choice, status, accuracy, switch/replacement flow, RNG-consuming mechanics
 outside damage variation, live Boss AI scoring, or scripts until the simulator
 report and audit say that surface exists.
 

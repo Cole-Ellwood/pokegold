@@ -90,6 +90,44 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         self.assertEqual(min(multipliers), 217)
         self.assertEqual(max(multipliers), 255)
 
+    def test_turns_list_progresses_hp_across_selected_turns(self) -> None:
+        payload = scenario_template()
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+        payload["turns"] = [
+            {"player": {"type": "move", "move": 0}, "enemy": {"type": "move", "move": 0}},
+            {"player": {"type": "move", "move": 0}, "enemy": {"type": "move", "move": 0}},
+        ]
+        payload.pop("actions")
+
+        report = simulate_payload(payload)
+
+        outcome = report["outcomes"][0]
+        damage_events = [event for event in outcome["events"] if event["type"] == "damage"]
+        self.assertEqual(report["turn_count"], 2)
+        self.assertEqual(outcome["turns_simulated"], 2)
+        self.assertEqual([row["turn"] for row in outcome["turn_orders"]], [1, 2])
+        self.assertEqual([event["turn"] for event in damage_events], [1, 2])
+        self.assertLess(outcome["state"]["enemy"]["hp"], 18)
+        self.assertEqual(outcome["state"]["turn"], 3)
+
+    def test_planned_turns_stop_after_battle_over(self) -> None:
+        payload = scenario_template()
+        payload["state"]["enemy"]["hp"] = 1
+        payload["state"]["enemy"]["max_hp"] = 1
+        payload["turns"] = [
+            {"player": {"type": "move", "move": 0}, "enemy": {"type": "move", "move": 0}},
+            {"player": {"type": "move", "move": 0}, "enemy": {"type": "move", "move": 0}},
+        ]
+        payload.pop("actions")
+
+        report = simulate_payload(payload)
+
+        outcome = report["outcomes"][0]
+        self.assertTrue(outcome["battle_over"])
+        self.assertEqual(outcome["turns_simulated"], 1)
+        self.assertEqual([event["turn"] for event in outcome["events"]], [1])
+        self.assertEqual(outcome["state"]["enemy"]["hp"], 0)
+
     def test_boss_ai_selector_action_reuses_score_bytes(self) -> None:
         payload = scenario_template()
         payload["actions"]["enemy"] = {

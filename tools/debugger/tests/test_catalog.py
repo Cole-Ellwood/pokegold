@@ -421,6 +421,15 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("tools.headless_battle", rec["first_command"])
         self.assertIn("check_headless_battle_simulator.py", rec["regression_gate"])
 
+    def test_headless_battle_routes_turn_by_turn_wording(self) -> None:
+        report = build_next_step(symptom="Can the debugger walk a battle turn by turn with text only?")
+        rec = report["recommendation"]
+        triage = triage_request(symptom="Can the debugger walk a battle turn by turn with text only?")
+
+        self.assertEqual(rec["symptom_class"], "headless_battle_simulation")
+        self.assertEqual(rec["matched_lane"], "headless_battle")
+        self.assertIn("headless_battle", {match["id"] for match in triage["matches"]})
+
     def test_species_id_map_ignores_unown_form_constants(self) -> None:
         by_id = damage_state.species_name_by_id()
 
