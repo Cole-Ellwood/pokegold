@@ -66,6 +66,27 @@ def main() -> int:
         )
         return 1
     print("boss_ai_selector_execution: PASS raw=200 selected=EMBER")
+    wild_payload = scenario_template()
+    wild_payload["state"]["player"]["moves"][0]["bp"] = 0
+    wild_payload["state"]["enemy"]["moves"] = [
+        {"name": "TACKLE", "type": "NORMAL", "bp": 0, "pp": 0},
+        {"name": "EMBER", "type": "FIRE", "bp": 40, "pp": 1},
+    ]
+    wild_payload["actions"]["enemy"] = {"type": "wild_random_move"}
+    wild_payload["rng"] = {"mode": "fixed", "values": [0, 1, 255, 255]}
+    wild_report = simulate_payload(wild_payload)
+    wild_events = wild_report["outcomes"][0]["events"]
+    if (
+        wild_events[0].get("type") != "wild_random_move"
+        or wild_events[0].get("selected_slot_index") != 1
+        or wild_events[-1].get("move") != "EMBER"
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: wild random move mismatch: {wild_events}",
+            file=sys.stderr,
+        )
+        return 1
+    print("wild_random_move_choice: PASS rejected_slot=0 selected=EMBER")
     exhaustive_payload = scenario_template()
     exhaustive_payload["rng"] = {"mode": "exhaustive"}
     exhaustive_payload["state"]["player"]["moves"][0]["accuracy"] = 255

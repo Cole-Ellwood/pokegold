@@ -414,6 +414,46 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         }
         self.assertEqual(raw_ranges, {(0, 185), (186, 255)})
 
+    def test_wild_random_move_rejects_zero_pp_slot_then_executes(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["moves"][0]["bp"] = 0
+        payload["state"]["enemy"]["moves"] = [
+            {"name": "TACKLE", "type": "NORMAL", "bp": 0, "pp": 0},
+            {"name": "EMBER", "type": "FIRE", "bp": 40, "pp": 1},
+        ]
+        payload["actions"]["enemy"] = {"type": "wild_random_move"}
+        payload["rng"] = {"mode": "fixed", "values": [0, 1, 255, 255]}
+
+        report = simulate_payload(payload)
+
+        events = report["outcomes"][0]["events"]
+        self.assertEqual(events[0]["type"], "wild_random_move")
+        self.assertEqual(events[0]["selected_slot_index"], 1)
+        self.assertEqual(events[0]["selector_check"]["raw_values"], [0, 1])
+        self.assertEqual(events[2]["type"], "damage")
+        self.assertEqual(events[2]["move"], "EMBER")
+        self.assertEqual(report["outcomes"][0]["state"]["enemy"]["moves"][1]["pp"], 0)
+
+    def test_exhaustive_wild_random_move_branches_legal_slots(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["moves"][0]["bp"] = 0
+        payload["state"]["enemy"]["moves"] = [
+            {"name": "TACKLE", "type": "NORMAL", "bp": 0, "pp": 1},
+            {"name": "EMBER", "type": "FIRE", "bp": 0, "pp": 1},
+            {"name": "WATER_GUN", "type": "WATER", "bp": 0, "pp": 0},
+        ]
+        payload["actions"]["enemy"] = {"type": "wild_random_move"}
+        payload["rng"] = {"mode": "exhaustive"}
+
+        report = simulate_payload(payload)
+
+        self.assertEqual(report["outcome_count"], 2)
+        selected_slots = {
+            outcome["events"][0]["selected_slot_index"]
+            for outcome in report["outcomes"]
+        }
+        self.assertEqual(selected_slots, {0, 1})
+
     def test_report_exposes_proof_boundary(self) -> None:
         report = simulate_payload(scenario_template())
 
@@ -429,8 +469,9 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         self.assertIn("selected_switch_and_replacement", mirrored)
         self.assertIn("boss_ai_selector_from_post_score_bytes", mirrored)
         self.assertIn("boss_ai_selector_move_execution", mirrored)
+        self.assertIn("wild_random_move_choice", mirrored)
         self.assertIn(
-            "RNG-consuming mechanics outside speed ties/Boss AI selector choice/critical hits/accuracy/damage variation",
+            "RNG-consuming mechanics outside speed ties/Boss AI selector choice/wild random move choice/critical hits/accuracy/damage variation",
             "\n".join(report["coverage"]["out_of_scope"]),
         )
 

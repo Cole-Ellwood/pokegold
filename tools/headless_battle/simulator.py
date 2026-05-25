@@ -21,6 +21,7 @@ TURN_ORDER_AFFECTING_ITEMS = frozenset(
 )
 DAMAGE_VARIATION_MIN_MULTIPLIER = (85 * 255 // 100) + 1
 DAMAGE_VARIATION_MAX_MULTIPLIER = 100 * 255 // 100
+WILD_RANDOM_MOVE_SLOT_COUNT = 4
 CRITICAL_HIT_THRESHOLDS = (256 // 15, 256 // 8, 256 // 4, 256 // 3, 256 // 2, 256 // 2, 256 // 2)
 ITEM_LUCKY_PUNCH = tables.resolve_item("LUCKY_PUNCH")
 ITEM_STICK = tables.resolve_item("STICK")
@@ -302,10 +303,14 @@ def resolve_pre_turn_actions(
         next_branches: list[tuple[dict[str, Any], dict[str, ActionState]]] = []
         for working, action_map in branches:
             action = action_map[side]
-            if action.kind != "boss_ai_selector_move":
+            if action.kind == "boss_ai_selector_move":
+                selections = boss_ai_selector_move_results(working["state"], side, action, rng, stream=stream)
+            elif action.kind == "wild_random_move":
+                selections = wild_random_move_results(working["state"], side, rng, stream=stream)
+            else:
                 next_branches.append((working, action_map))
                 continue
-            for selection in boss_ai_selector_move_results(working["state"], side, action, rng, stream=stream):
+            for selection in selections:
                 updated = clone_branch(working)
                 updated["events"].append(selection["event"])
                 updated["rng_consumed"].extend(selection["raw_values"])
@@ -987,6 +992,91 @@ def boss_ai_selector_result(state: BattleState, side: str, action: ActionState) 
         raise SimulationInputError(f"invalid {action.kind} action: {exc}") from exc
 
 
+def wild_random_move_results(
+    state: BattleState,
+    side: str,
+    rng: RngConfig,
+    *,
+    stream: RuntimeRng | None,
+) -> list[dict[str, Any]]:
+    actor = get_side(state, side)
+    legal_slots = wild_random_legal_slots(actor)
+    if not legal_slots:
+        raise SimulationInputError(f"{side} has no usable random move; Struggle is out of scope")
+    if rng.mode == "exhaustive":
+        return [
+            wild_random_choice_result(
+                state,
+                side,
+                slot,
+                {
+                    "raw_values": [],
+                    "raw_low_bits": [slot],
+                    "reason": "exhaustive_legal_slot",
+                },
+            )
+            for slot in legal_slots
+        ]
+    if stream is None:
+        raise AssertionError("fixed/sample wild random move requires an RNG stream")
+    raw_values = []
+    while True:
+        raw = stream.next_byte(purpose="wild random move")
+        raw_values.append(raw)
+        slot = raw & (WILD_RANDOM_MOVE_SLOT_COUNT - 1)
+        if slot in legal_slots:
+            return [
+                wild_random_choice_result(
+                    state,
+                    side,
+                    slot,
+                    {
+                        "raw_values": raw_values,
+                        "raw_low_bits": [value & (WILD_RANDOM_MOVE_SLOT_COUNT - 1) for value in raw_values],
+                        "reason": "first_legal_slot_after_rejections",
+                    },
+                )
+            ]
+
+
+def wild_random_legal_slots(actor: PokemonState) -> list[int]:
+    legal = []
+    for slot in range(WILD_RANDOM_MOVE_SLOT_COUNT):
+        if slot >= len(actor.moves):
+            continue
+        move = actor.moves[slot]
+        if move.move_id == 0:
+            break
+        if move.pp <= 0:
+            continue
+        legal.append(slot)
+    return legal
+
+
+def wild_random_choice_result(
+    state: BattleState,
+    side: str,
+    selected_slot_index: int,
+    selector_check: dict[str, Any],
+) -> dict[str, Any]:
+    actor = get_side(state, side)
+    move = actor.moves[selected_slot_index]
+    return {
+        "move_index": selected_slot_index,
+        "raw_values": selector_check["raw_values"],
+        "event": {
+            "turn": state.turn,
+            "actor": side,
+            "type": "wild_random_move",
+            "selected_slot_index": selected_slot_index,
+            "selected_move_id": move.move_id,
+            "selected_move": move.name,
+            "selector_check": selector_check,
+            "proof_status": "source_mirrored_wild_random_move_choice",
+        },
+    }
+
+
 def parse_state(raw: Any) -> BattleState:
     if not isinstance(raw, dict):
         raise SimulationInputError("state must be an object")
@@ -1186,6 +1276,8 @@ def parse_action(raw: Any, path: str) -> ActionState:
         return ActionState(kind=kind, selector=raw)
     if kind == "boss_ai_selector_move":
         return ActionState(kind=kind, selector=raw)
+    if kind == "wild_random_move":
+        return ActionState(kind=kind)
     return ActionState(kind=kind)
 
 
@@ -1508,11 +1600,17 @@ def coverage_report() -> dict[str, Any]:
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
                 "notes": "Executable Boss AI selector actions branch fixed/sample/exhaustive RNG over already-known final score bytes, validate the selected slot/move id when available, and then run the chosen move through the existing selected-turn path. Score generation and switch confidence remain out of scope.",
             },
+            {
+                "id": "wild_random_move_choice",
+                "source": "engine/battle/core.asm enemy wild move selection loop",
+                "gate": "python tools/audit/check_headless_battle_simulator.py",
+                "notes": "wild_random_move actions mirror the four-slot wild enemy random move loop for non-empty, nonzero-PP moves. Fixed/sample modes consume raw bytes until a legal slot is selected; exhaustive mode branches one outcome per legal slot. Disabled moves, locks, and Struggle remain out of scope.",
+            },
         ],
         "out_of_scope": [
-            "automatic full battle flow, automatic action choice without caller-supplied final Boss AI score bytes, forced switch prompts, automatic replacement selection, items as actions, and trainer item turns",
+            "automatic full battle flow, trainer/Boss automatic action choice without caller-supplied final Boss AI score bytes, forced switch prompts, automatic replacement selection, items as actions, and trainer item turns",
             "Pursuit-on-switch, Spikes/switch-in entry effects, switch-triggered abilities/passives, and switch memory side effects",
-            "RNG-consuming mechanics outside speed ties/Boss AI selector choice/critical hits/accuracy/damage variation, Quick Claw/Choice Scarf turn-order effects",
+            "RNG-consuming mechanics outside speed ties/Boss AI selector choice/wild random move choice/critical hits/accuracy/damage variation, Quick Claw/Choice Scarf turn-order effects",
             "accuracy/evasion stat stages, BrightPowder, Protect, Fly/Dig, Lock-On, X Accuracy, and passive accuracy bonuses",
             "status application, sleep, freeze, paralysis, volatile effects, weather, item recovery/cures, after-hit effects, Struggle, PP Up bit packing, Mimic/Transform PP routing, and full PP legality selection",
             "Boss AI live score generation and switch candidate/confidence generation",
@@ -1568,6 +1666,11 @@ def format_text(report: dict[str, Any]) -> str:
             elif event["type"] == "boss_ai_select_move" and "selected_move" in event:
                 lines.append(
                     f"  turn {event['turn']} {event['actor']} boss_ai_select_move -> "
+                    f"{event['selected_move']} slot={event['selected_slot_index']}"
+                )
+            elif event["type"] == "wild_random_move":
+                lines.append(
+                    f"  turn {event['turn']} {event['actor']} wild_random_move -> "
                     f"{event['selected_move']} slot={event['selected_slot_index']}"
                 )
             else:
