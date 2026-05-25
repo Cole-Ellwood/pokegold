@@ -182,7 +182,12 @@ def run_rom_switch_materialization(
         switch_threshold = parse_optional_byte(switch_threshold, "switch_threshold")
 
     manifest_entry = load_manifest_save_entry(manifest_path, base_route)
-    validate_manifest_trace_basis(manifest_path, rom=rom, symbols_path=symbols_path)
+    validate_manifest_trace_basis(
+        manifest_path,
+        manifest_entry=manifest_entry,
+        rom=rom,
+        symbols_path=symbols_path,
+    )
     base_state_field = switch_materialization_state_field(manifest_entry)
     base_state = resolve_manifest_path(str(manifest_entry[base_state_field]))
     if not base_state.exists():
@@ -716,19 +721,24 @@ def load_manifest_save_entry(manifest_path: Path, route_id: str) -> dict[str, An
 def validate_manifest_trace_basis(
     manifest_path: Path,
     *,
+    manifest_entry: dict[str, Any],
     rom: Path,
     symbols_path: Path,
 ) -> None:
     data = json.loads(manifest_path.read_text(encoding="utf-8"))
     validate_manifest_hash(
-        data,
-        manifest_key="trace_rom_sha256",
+        manifest_entry,
+        manifest_fallback=data,
+        manifest_key="switch_materialization_trace_rom_sha256",
+        fallback_key="trace_rom_sha256",
         actual_path=rom,
         label="trace_rom",
     )
     validate_manifest_hash(
-        data,
-        manifest_key="trace_symbols_sha256",
+        manifest_entry,
+        manifest_fallback=data,
+        manifest_key="switch_materialization_trace_symbols_sha256",
+        fallback_key="trace_symbols_sha256",
         actual_path=symbols_path,
         label="trace_symbols",
     )
@@ -737,11 +747,17 @@ def validate_manifest_trace_basis(
 def validate_manifest_hash(
     data: dict[str, Any],
     *,
+    manifest_fallback: dict[str, Any] | None = None,
     manifest_key: str,
+    fallback_key: str | None = None,
     actual_path: Path,
     label: str,
 ) -> None:
     expected = data.get(manifest_key)
+    source_key = manifest_key
+    if (not isinstance(expected, str) or not expected) and manifest_fallback is not None:
+        source_key = fallback_key or manifest_key
+        expected = manifest_fallback.get(source_key)
     if not isinstance(expected, str) or not expected:
         raise PreferenceDataError(
             f"live capture manifest missing {manifest_key}; cannot prove switch state basis"
@@ -753,7 +769,7 @@ def validate_manifest_hash(
         raise PreferenceDataError(
             f"live capture manifest {label} hash mismatch for {actual_path}: "
             f"expected {expected.upper()}, found {actual}; regenerate the switch "
-            "materialization state for the current trace ROM/symbols"
+            f"materialization state for the current trace ROM/symbols or update {source_key}"
         )
 
 

@@ -174,9 +174,18 @@ switch setup rather than a single map trainer.
 For `shared_switch_loop`, use:
 
 ```powershell
+python tools\trace\boss_ai_state_factory.py --boss jasmine --battery-save .local\tmp\boss_state_factory\pokegold_trace.gbc.ram --out-dir .local\tmp\boss_state_factory_current --update-manifest
 python tools\trace\boss_ai_shared_switch_loop_fixture.py --update-manifest
-python tools\trace\boss_ai_trace_batch.py --execute --only shared_switch_loop
+python -m tools.boss_ai_debugger rom-switch-materialize --scenarios .local\tmp\goal_switch_sack_probe.jsonl --limit 1 --switch-threshold 70
 ```
+
+`boss_ai_shared_switch_loop_fixture.py` saves both the snapshot capture
+`save_state` and a pre-dispatch `switch_materialization_state` at
+`BossAI_SwitchOrTryItem`. The materialization state carries row-specific trace
+ROM/symbol hashes because it may be refreshed for switch proof before the full
+live-capture manifest is recaptured. Run `boss_ai_trace_batch.py --execute
+--only shared_switch_loop` only when the full manifest trace basis has also
+been refreshed.
 
 Before treating a save-state or battery-RAM sidecar as boss-position proof,
 probe it:

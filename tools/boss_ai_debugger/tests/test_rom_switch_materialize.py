@@ -213,6 +213,25 @@ class RomSwitchMaterializeTests(unittest.TestCase):
                     label="trace_rom",
                 )
 
+    def test_manifest_hash_validation_prefers_switch_materialization_basis(self) -> None:
+        with TemporaryDirectory() as tmp:
+            rom = Path(tmp) / "pokegold_trace.gbc"
+            rom.write_bytes(b"current-rom")
+            with patch(
+                "tools.boss_ai_debugger.rom_switch_materialize.capture.sha256_file",
+                return_value="B" * 64,
+            ):
+                validate_manifest_hash(
+                    {
+                        "switch_materialization_trace_rom_sha256": "b" * 64,
+                    },
+                    manifest_fallback={"trace_rom_sha256": "0" * 64},
+                    manifest_key="switch_materialization_trace_rom_sha256",
+                    fallback_key="trace_rom_sha256",
+                    actual_path=rom,
+                    label="trace_rom",
+                )
+
     def test_format_switch_materialization_prints_error_reason(self) -> None:
         report = {
             "scenario_count": 1,
