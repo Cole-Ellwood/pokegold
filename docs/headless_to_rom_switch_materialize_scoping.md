@@ -1,6 +1,11 @@
 # Scoping: headless board → `rom-switch-materialize` scenario exporter
 
-Status: scoping pass only. No exporter code shipped yet.
+Status: slice A shipped — see
+[tools/headless_battle/rom_switch_scenario_export.py](../tools/headless_battle/rom_switch_scenario_export.py)
+for the fixture-match-or-reject helper. Slice B shipped — same
+exporter with `accept_overrides=True` plus parameterized fields in
+`switch_materialization_patches`. Slice C (full board materializer
+for status/weather/screens/items) remains future work.
 
 ## Goal
 
@@ -69,11 +74,10 @@ keyhole of it. Three classes of gap:
 
 ## What the existing bridge already provides
 
-Commit `4556812b` (shipped 2026-05-25 by Codex) wired
-`rom-switch-materialize` output into `boss_ai_switch_roll` when the
-materializer's `probability_exact` is true. Commit `0e0f8f51`
-(this session) extended that with a `report_only` mode for ranged
-materializer output. So the headless side can already CONSUME
+An earlier slice wired `rom-switch-materialize` output into
+`boss_ai_switch_roll` when the materializer's `probability_exact`
+is true, and a follow-up extended that with a `report_only` mode for
+ranged materializer output. So the headless side can already CONSUME
 materializer output; what's missing is the headless side being able
 to PRODUCE the materializer's input from its own board.
 

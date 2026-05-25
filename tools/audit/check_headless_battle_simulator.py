@@ -1116,6 +1116,87 @@ def main() -> int:
         "rom_switch_scenario_export: PASS "
         "canonical_emit hp_tag_derivation extra_tag_passthrough fixture_rejection"
     )
+    # Slice B: accept_overrides=True end-to-end round trip into
+    # switch_materialization_patches. Confirms the headless exporter and the
+    # parameterized materializer agree on species/types/HP without going
+    # through the hardcoded fixture defaults.
+    override_state = {
+        "weather": "none",
+        "weather_count": 0,
+        "turn": 1,
+        "player": {
+            "species": "CYNDAQUIL",
+            "level": 50,
+            "types": ["FIRE", "FIRE"],
+            "hp": 60,
+            "max_hp": 100,
+            "stats": {"attack": 60, "defense": 60, "speed": 60, "sp_attack": 60, "sp_defense": 60},
+            "moves": [{"name": "EMBER"}],
+        },
+        "enemy": {
+            "species": "HAUNTER",
+            "level": 50,
+            "types": ["GHOST", "POISON"],
+            "hp": 50,
+            "max_hp": 80,
+            "stats": {"attack": 50, "defense": 45, "speed": 95, "sp_attack": 115, "sp_defense": 55},
+            "moves": [{"name": "LICK"}],
+            "bench": [
+                {
+                    "name": "GENGAR",
+                    "level": 50,
+                    "types": ["GHOST", "POISON"],
+                    "hp": 80,
+                    "max_hp": 100,
+                    "stats": {"attack": 65, "defense": 60, "speed": 110, "sp_attack": 130, "sp_defense": 75},
+                    "moves": [{"name": "LICK"}],
+                },
+            ],
+        },
+    }
+    override_scenario = headless_to_switch_sack_scenario(
+        override_state,
+        scenario_id="audit_exported_overrides",
+        tier="late",
+        accept_overrides=True,
+    )
+    if override_scenario.get("exporter", {}).get("fixture_domain") != "parameterized_overrides":
+        print(
+            "Headless battle simulator audit FAILED: exporter overrides emit mismatch",
+            file=sys.stderr,
+        )
+        return 1
+    overrides = override_scenario.get("overrides") or {}
+    if (
+        overrides.get("enemy_hp") != 50
+        or overrides.get("enemy_max_hp") != 80
+        or overrides.get("player_max_hp") != 100
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: exporter overrides HP mismatch: {overrides}",
+            file=sys.stderr,
+        )
+        return 1
+    from tools.boss_ai_debugger.rom_switch_materialize import switch_materialization_patches
+    override_patches = {
+        (p.symbol_name, p.offset): p.value
+        for p in switch_materialization_patches(override_scenario)
+    }
+    if (
+        override_patches.get(("wEnemyMonHP", 1)) != 50
+        or override_patches.get(("wEnemyMonMaxHP", 1)) != 80
+        or override_patches.get(("wBattleMonType1", 0)) != 0x14  # FIRE in oracle / constants
+        or override_patches.get(("wEnemyMonType1", 0)) != 0x08  # GHOST
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: override round-trip into patches mismatch: {override_patches}",
+            file=sys.stderr,
+        )
+        return 1
+    print(
+        "rom_switch_scenario_export_overrides: PASS "
+        "accept_overrides_emit override_round_trip"
+    )
     wild_payload = scenario_template()
     wild_payload["state"]["player"]["moves"][0]["bp"] = 0
     wild_payload["state"]["enemy"]["moves"] = [

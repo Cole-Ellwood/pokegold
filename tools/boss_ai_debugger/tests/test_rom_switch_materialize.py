@@ -38,6 +38,101 @@ class RomSwitchMaterializeTests(unittest.TestCase):
         self.assertEqual(patches[("wPlayerUsedMoves", 0)], 0x59)
         self.assertEqual(patches[("wEnemySwitchMonParam", 0)], 0)
 
+    def test_switch_materialization_backward_compat_without_overrides(self) -> None:
+        # No-overrides scenario must produce the same patches as before slice B.
+        scenario = {
+            "family": "switch_sack",
+            "tier": "mid",
+            "expectation": {"condition_tags": ["switch_sack", "defensive_sack_owner"]},
+        }
+        patches = {
+            (patch.symbol_name, patch.offset): patch.value
+            for patch in switch_materialization_patches(scenario)
+        }
+
+        # Hardcoded fixture defaults are still in place.
+        self.assertEqual(patches[("wBattleMonSpecies", 0)], 0x79)  # STARMIE
+        self.assertEqual(patches[("wEnemyMonSpecies", 0)], 0xD3)  # QWILFISH
+        self.assertEqual(patches[("wOTPartyMon2Species", 0)], 0x5E)  # GENGAR
+        self.assertEqual(patches[("wBattleMonType1", 0)], 0x04)  # GROUND
+        self.assertEqual(patches[("wEnemyMonType1", 0)], 0x03)  # POISON
+        self.assertEqual(patches[("wEnemyMonType2", 0)], 0x14)  # WATER
+        # defensive_sack_owner tag still drives enemy HP to 22.
+        self.assertEqual(patches[("wEnemyMonHP", 0)], 0)
+        self.assertEqual(patches[("wEnemyMonHP", 1)], 22)
+        self.assertEqual(patches[("wEnemyMonMaxHP", 1)], 100)
+        # player HP defaults to 80 when active_pressure_converts is not in tags.
+        self.assertEqual(patches[("wBattleMonHP", 1)], 80)
+
+    def test_switch_materialization_overrides_replace_defaults(self) -> None:
+        scenario = {
+            "family": "switch_sack",
+            "tier": "late",
+            "expectation": {"condition_tags": ["switch_sack"]},
+            "overrides": {
+                "player_species": "MUK",
+                "player_type1": "POISON",
+                "player_type2": "POISON",
+                "player_hp": 55,
+                "player_max_hp": 130,
+                "enemy_species": "PIKACHU",
+                "enemy_type1": "ELECTRIC",
+                "enemy_type2": "ELECTRIC",
+                "enemy_hp": 40,
+                "enemy_max_hp": 90,
+                "enemy_bench_species": "TENTACRUEL",
+                "enemy_bench_hp": 70,
+                "enemy_bench_max_hp": 120,
+            },
+        }
+        patches = {
+            (patch.symbol_name, patch.offset): patch.value
+            for patch in switch_materialization_patches(scenario)
+        }
+
+        self.assertEqual(patches[("wBattleMonSpecies", 0)], 0x59)  # MUK
+        self.assertEqual(patches[("wBattleMonType1", 0)], 0x03)  # POISON
+        self.assertEqual(patches[("wBattleMonType2", 0)], 0x03)
+        self.assertEqual(patches[("wBattleMonHP", 1)], 55)
+        self.assertEqual(patches[("wBattleMonMaxHP", 1)], 130)
+        self.assertEqual(patches[("wEnemyMonSpecies", 0)], 0x19)  # PIKACHU
+        self.assertEqual(patches[("wEnemyMonType1", 0)], 0x17)  # ELECTRIC
+        self.assertEqual(patches[("wEnemyMonHP", 1)], 40)
+        self.assertEqual(patches[("wEnemyMonMaxHP", 1)], 90)
+        self.assertEqual(patches[("wOTPartyMon2Species", 0)], 0x49)  # TENTACRUEL
+        self.assertEqual(patches[("wOTPartyMon2HP", 1)], 70)
+        self.assertEqual(patches[("wOTPartyMon2MaxHP", 1)], 120)
+        # Override HP wins over tag-derived HP defaults.
+
+    def test_switch_materialization_accepts_integer_overrides(self) -> None:
+        scenario = {
+            "family": "switch_sack",
+            "tier": "late",
+            "expectation": {"condition_tags": ["switch_sack"]},
+            "overrides": {
+                "player_species": 0x93,  # an arbitrary species id not in the small SPECIES dict
+                "enemy_species": 0x5D,  # likewise
+                "enemy_bench_species": 0x5E,  # GENGAR by id
+            },
+        }
+        patches = {
+            (patch.symbol_name, patch.offset): patch.value
+            for patch in switch_materialization_patches(scenario)
+        }
+        self.assertEqual(patches[("wBattleMonSpecies", 0)], 0x93)
+        self.assertEqual(patches[("wEnemyMonSpecies", 0)], 0x5D)
+        self.assertEqual(patches[("wOTPartyMon2Species", 0)], 0x5E)
+
+    def test_switch_materialization_rejects_non_object_overrides(self) -> None:
+        scenario = {
+            "family": "switch_sack",
+            "tier": "late",
+            "expectation": {"condition_tags": ["switch_sack"]},
+            "overrides": "not a dict",
+        }
+        with self.assertRaisesRegex(PreferenceDataError, "overrides must be an object"):
+            switch_materialization_patches(scenario)
+
     def test_switch_verdict_flags_unwanted_switch(self) -> None:
         scenario = generate_scenarios(family="switch_sack", count=3, seed=2)[2]
 

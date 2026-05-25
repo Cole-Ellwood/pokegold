@@ -173,6 +173,85 @@ class RomSwitchScenarioExportTests(unittest.TestCase):
         with self.assertRaisesRegex(SimulationInputError, "tier"):
             headless_to_switch_sack_scenario(fixture_state(), tier="ultra")
 
+    def test_accept_overrides_emits_overrides_for_arbitrary_species(self) -> None:
+        state = fixture_state()
+        state["player"]["species"] = "CYNDAQUIL"
+        state["player"]["types"] = ["FIRE", "FIRE"]
+        state["enemy"]["species"] = "HAUNTER"
+        state["enemy"]["types"] = ["GHOST", "POISON"]
+        state["enemy"]["hp"] = 60
+        state["enemy"]["max_hp"] = 90
+        state["enemy"]["bench"][0]["name"] = "DRAGONITE"
+        state["enemy"]["bench"][0]["types"] = ["DRAGON", "FLYING"]
+        state["enemy"]["bench"][0]["hp"] = 75
+        state["enemy"]["bench"][0]["max_hp"] = 120
+
+        scenario = headless_to_switch_sack_scenario(
+            state, accept_overrides=True, tier="late"
+        )
+
+        self.assertEqual(scenario["family"], "switch_sack")
+        self.assertEqual(scenario["tier"], "late")
+        self.assertEqual(scenario["exporter"]["fixture_domain"], "parameterized_overrides")
+        overrides = scenario["overrides"]
+        # Species ids are looked up via parse_species_order; spot-check by name->id.
+        from tools.boss_ai_debugger.role_packages import parse_species_order
+        order = parse_species_order()
+        cyndaquil_id = order.index("CYNDAQUIL") + 1
+        haunter_id = order.index("HAUNTER") + 1
+        dragonite_id = order.index("DRAGONITE") + 1
+        self.assertEqual(overrides["player_species"], cyndaquil_id)
+        self.assertEqual(overrides["enemy_species"], haunter_id)
+        self.assertEqual(overrides["enemy_bench_species"], dragonite_id)
+        self.assertEqual(overrides["enemy_hp"], 60)
+        self.assertEqual(overrides["enemy_max_hp"], 90)
+        self.assertEqual(overrides["enemy_bench_hp"], 75)
+        self.assertEqual(overrides["enemy_bench_max_hp"], 120)
+
+    def test_accept_overrides_still_rejects_status(self) -> None:
+        state = fixture_state()
+        state["player"]["status"] = "burn"
+        with self.assertRaisesRegex(SimulationInputError, "player.status='burn'"):
+            headless_to_switch_sack_scenario(state, accept_overrides=True)
+
+    def test_accept_overrides_still_rejects_weather(self) -> None:
+        state = fixture_state(weather="rain", weather_count=5)
+        with self.assertRaisesRegex(SimulationInputError, "weather"):
+            headless_to_switch_sack_scenario(state, accept_overrides=True)
+
+    def test_accept_overrides_still_rejects_empty_enemy_bench(self) -> None:
+        state = fixture_state()
+        state["enemy"]["bench"] = []
+        with self.assertRaisesRegex(SimulationInputError, "enemy bench is empty"):
+            headless_to_switch_sack_scenario(state, accept_overrides=True)
+
+    def test_accept_overrides_round_trips_into_materialization_patches(self) -> None:
+        # End-to-end: the headless-emitted overrides should be consumed by
+        # switch_materialization_patches and yield matching WRAM patches.
+        from tools.boss_ai_debugger.rom_switch_materialize import (
+            switch_materialization_patches,
+        )
+
+        state = fixture_state()
+        state["player"]["species"] = "CYNDAQUIL"
+        state["player"]["types"] = ["FIRE", "FIRE"]
+        state["enemy"]["species"] = "HAUNTER"
+        state["enemy"]["types"] = ["GHOST", "POISON"]
+        state["enemy"]["hp"] = 60
+        state["enemy"]["bench"][0]["name"] = "DRAGONITE"
+        state["enemy"]["bench"][0]["types"] = ["DRAGON", "FLYING"]
+        scenario = headless_to_switch_sack_scenario(state, accept_overrides=True)
+        patches = {
+            (p.symbol_name, p.offset): p.value
+            for p in switch_materialization_patches(scenario)
+        }
+        from tools.boss_ai_debugger.role_packages import parse_species_order
+        order = parse_species_order()
+        self.assertEqual(patches[("wBattleMonSpecies", 0)], order.index("CYNDAQUIL") + 1)
+        self.assertEqual(patches[("wEnemyMonSpecies", 0)], order.index("HAUNTER") + 1)
+        self.assertEqual(patches[("wOTPartyMon2Species", 0)], order.index("DRAGONITE") + 1)
+        self.assertEqual(patches[("wEnemyMonHP", 1)], 60)
+
 
 if __name__ == "__main__":
     unittest.main()

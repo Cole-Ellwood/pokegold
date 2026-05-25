@@ -254,13 +254,55 @@ def run_rom_switch_materialization(
     }
 
 
+def _resolve_species(value: Any, default: int) -> int:
+    if value is None:
+        return default
+    if isinstance(value, int):
+        return value
+    return SPECIES[str(value).upper()]
+
+
+def _resolve_type(value: Any, default: int) -> int:
+    if value is None:
+        return default
+    if isinstance(value, int):
+        return value
+    return TYPES[str(value).upper()]
+
+
+def _resolve_int(value: Any, default: int) -> int:
+    if value is None:
+        return default
+    return int(value)
+
+
 def switch_materialization_patches(scenario: dict[str, Any]) -> list[MemoryPatch]:
     tags = scenario_condition_tags(scenario)
     tier = normalize_tier(scenario.get("tier", "late"))
     active_converts = "active_pressure_converts" in tags
     defensive_sack = "defensive_sack_owner" in tags
-    enemy_hp = 22 if defensive_sack else 80
-    player_hp = 20 if active_converts else 80
+    overrides_raw = scenario.get("overrides") or {}
+    if not isinstance(overrides_raw, dict):
+        raise PreferenceDataError("scenario.overrides must be an object when present")
+
+    player_species = _resolve_species(overrides_raw.get("player_species"), SPECIES["STARMIE"])
+    player_type1 = _resolve_type(overrides_raw.get("player_type1"), TYPES["GROUND"])
+    player_type2 = _resolve_type(overrides_raw.get("player_type2"), TYPES["GROUND"])
+    player_hp = _resolve_int(overrides_raw.get("player_hp"), 20 if active_converts else 80)
+    player_max_hp = _resolve_int(overrides_raw.get("player_max_hp"), 100)
+
+    enemy_species = _resolve_species(overrides_raw.get("enemy_species"), SPECIES["QWILFISH"])
+    enemy_type1 = _resolve_type(overrides_raw.get("enemy_type1"), TYPES["POISON"])
+    enemy_type2 = _resolve_type(overrides_raw.get("enemy_type2"), TYPES["WATER"])
+    enemy_hp = _resolve_int(overrides_raw.get("enemy_hp"), 22 if defensive_sack else 80)
+    enemy_max_hp = _resolve_int(overrides_raw.get("enemy_max_hp"), 100)
+
+    enemy_bench_species = _resolve_species(
+        overrides_raw.get("enemy_bench_species"), SPECIES["GENGAR"]
+    )
+    enemy_bench_hp = _resolve_int(overrides_raw.get("enemy_bench_hp"), 80)
+    enemy_bench_max_hp = _resolve_int(overrides_raw.get("enemy_bench_max_hp"), 100)
+
     patches = [
         patch("wBossAITier", tier),
         patch("wBossAITierWeightRow", max(0, tier - 1)),
@@ -268,17 +310,17 @@ def switch_materialization_patches(scenario: dict[str, Any]) -> list[MemoryPatch
         patch("wEnemyDisabledMove", 0),
         patch("wCurOTMon", 0),
         patch("wOTPartyCount", 2),
-        patch("wOTPartySpecies", SPECIES["QWILFISH"], 0),
-        patch("wOTPartySpecies", SPECIES["GENGAR"], 1),
+        patch("wOTPartySpecies", enemy_species, 0),
+        patch("wOTPartySpecies", enemy_bench_species, 1),
         patch("wOTPartySpecies", 0xFF, 2),
-        patch("wOTPartyMon2Species", SPECIES["GENGAR"]),
+        patch("wOTPartyMon2Species", enemy_bench_species),
         patch("wOTPartyMon2Level", 50),
-        patch("wBattleMonSpecies", SPECIES["STARMIE"]),
-        patch("wBattleMonType1", TYPES["GROUND"]),
-        patch("wBattleMonType2", TYPES["GROUND"]),
-        patch("wEnemyMonSpecies", SPECIES["QWILFISH"]),
-        patch("wEnemyMonType1", TYPES["POISON"]),
-        patch("wEnemyMonType2", TYPES["WATER"]),
+        patch("wBattleMonSpecies", player_species),
+        patch("wBattleMonType1", player_type1),
+        patch("wBattleMonType2", player_type2),
+        patch("wEnemyMonSpecies", enemy_species),
+        patch("wEnemyMonType1", enemy_type1),
+        patch("wEnemyMonType2", enemy_type2),
         patch("wBattleMonStatus", 0),
         patch("wEnemyMonStatus", 0),
         patch("wEnemySwitchMonParam", 0),
@@ -297,11 +339,11 @@ def switch_materialization_patches(scenario: dict[str, Any]) -> list[MemoryPatch
         patch("wPlayerUsedMoves", 0, 3),
     ]
     patches.extend(word_patches("wEnemyMonHP", enemy_hp))
-    patches.extend(word_patches("wEnemyMonMaxHP", 100))
+    patches.extend(word_patches("wEnemyMonMaxHP", enemy_max_hp))
     patches.extend(word_patches("wBattleMonHP", player_hp))
-    patches.extend(word_patches("wBattleMonMaxHP", 100))
-    patches.extend(word_patches("wOTPartyMon2HP", 80))
-    patches.extend(word_patches("wOTPartyMon2MaxHP", 100))
+    patches.extend(word_patches("wBattleMonMaxHP", player_max_hp))
+    patches.extend(word_patches("wOTPartyMon2HP", enemy_bench_hp))
+    patches.extend(word_patches("wOTPartyMon2MaxHP", enemy_bench_max_hp))
     return patches
 
 

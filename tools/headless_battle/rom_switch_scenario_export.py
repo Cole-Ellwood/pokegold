@@ -24,8 +24,10 @@ Callers can pass additional tags (``wincon_preservation`` etc) via
 
 from __future__ import annotations
 
+from functools import lru_cache
 from typing import Any, Iterable
 
+from tools.boss_ai_debugger.role_packages import parse_species_order
 from tools.headless_battle.simulator import (
     BattleState,
     PokemonState,
@@ -48,6 +50,24 @@ ALLOWED_STAT_STAGES = (0, 0, 0, 0, 0)
 DEFAULT_POLICY_CASE = "exported_headless_board"
 
 
+@lru_cache(maxsize=1)
+def _species_name_to_id() -> dict[str, int]:
+    # parse_species_order returns 251 species in id-1-indexed order.
+    order = parse_species_order()
+    return {name.upper(): index + 1 for index, name in enumerate(order)}
+
+
+def species_id_for(name: str) -> int:
+    table = _species_name_to_id()
+    try:
+        return table[name.upper()]
+    except KeyError as exc:
+        raise SimulationInputError(
+            f"rom_switch_scenario_export: unknown species name {name!r}; "
+            "pass an integer species id directly via overrides if needed"
+        ) from exc
+
+
 def headless_to_switch_sack_scenario(
     state: BattleState | dict[str, Any],
     *,
@@ -55,28 +75,44 @@ def headless_to_switch_sack_scenario(
     tier: str = "mid",
     extra_tags: Iterable[str] | None = None,
     policy_case: str | None = None,
+    accept_overrides: bool = False,
 ) -> dict[str, Any]:
     """Return a ``family=switch_sack`` scenario dict from a headless board.
 
-    Raises ``SimulationInputError`` with a specific reason when the board
-    does not match the hardcoded fixture domain. Use slice B (the
-    parameterized materializer) for boards outside this domain.
+    By default (``accept_overrides=False``), the board must match the
+    hardcoded fixture in ``switch_materialization_patches``
+    (Starmie/Qwilfish/Gengar, no statuses, no weather, etc.) and the
+    exporter raises ``SimulationInputError`` with a specific reason
+    when it does not. This is slice A (fixture-match-or-reject).
+
+    With ``accept_overrides=True`` (slice B), the exporter emits an
+    ``overrides`` dict in the scenario carrying the board's actual
+    species/types/HP for the player active, enemy active, and enemy
+    bench[0]. The materializer picks these up. Other constraints
+    (no status / weather / spikes / safeguard / item / stat stages /
+    substitute) still apply because slice B does not patch those WRAM
+    fields. Slice C (full board materialization) is future work.
     """
     if tier not in ALLOWED_TIERS:
         raise SimulationInputError(
             f"rom_switch_scenario_export: tier {tier!r} not in {sorted(ALLOWED_TIERS)}"
         )
     battle_state = state if isinstance(state, BattleState) else parse_state(state)
-    _assert_fixture_active(battle_state.player, side="player")
-    _assert_fixture_active(battle_state.enemy, side="enemy")
-    _assert_fixture_enemy_bench(battle_state.enemy_bench)
+    if not accept_overrides:
+        _assert_fixture_active(battle_state.player, side="player")
+        _assert_fixture_active(battle_state.enemy, side="enemy")
+        _assert_fixture_enemy_bench(battle_state.enemy_bench)
+    else:
+        _assert_overridable_active(battle_state.player, side="player")
+        _assert_overridable_active(battle_state.enemy, side="enemy")
+        _assert_overridable_enemy_bench(battle_state.enemy_bench)
     _assert_no_field_state(battle_state)
     tags = _derive_hp_tags(battle_state.player, battle_state.enemy)
     if extra_tags is not None:
         for tag in extra_tags:
             tags.add(str(tag))
     tags.add("switch_sack")
-    return {
+    scenario: dict[str, Any] = {
         "id": scenario_id,
         "family": "switch_sack",
         "tier": tier,
@@ -90,11 +126,87 @@ def headless_to_switch_sack_scenario(
         ],
         "exporter": {
             "name": "headless_to_switch_sack_scenario",
-            "fixture_domain": "starmie_vs_qwilfish_gengar_bench",
+            "fixture_domain": (
+                "parameterized_overrides" if accept_overrides else "starmie_vs_qwilfish_gengar_bench"
+            ),
             "player_hp": battle_state.player.hp,
             "enemy_hp": battle_state.enemy.hp,
         },
     }
+    if accept_overrides:
+        scenario["overrides"] = _board_to_overrides(battle_state)
+    return scenario
+
+
+def _board_to_overrides(battle_state: BattleState) -> dict[str, Any]:
+    bench_lead = battle_state.enemy_bench[0]
+    return {
+        "player_species": species_id_for(battle_state.player.name),
+        "player_type1": battle_state.player.types[0],
+        "player_type2": battle_state.player.types[1],
+        "player_hp": battle_state.player.hp,
+        "player_max_hp": battle_state.player.max_hp,
+        "enemy_species": species_id_for(battle_state.enemy.name),
+        "enemy_type1": battle_state.enemy.types[0],
+        "enemy_type2": battle_state.enemy.types[1],
+        "enemy_hp": battle_state.enemy.hp,
+        "enemy_max_hp": battle_state.enemy.max_hp,
+        "enemy_bench_species": species_id_for(bench_lead.name),
+        "enemy_bench_hp": bench_lead.hp,
+        "enemy_bench_max_hp": bench_lead.max_hp,
+    }
+
+
+def _assert_overridable_active(mon: PokemonState, *, side: str) -> None:
+    if mon.status != ALLOWED_STATUS:
+        raise SimulationInputError(
+            f"rom_switch_scenario_export: {side}.status={mon.status!r}; "
+            "slice B still does not patch wBattleMonStatus / wEnemyMonStatus"
+        )
+    if mon.item != ALLOWED_HELD_ITEM:
+        raise SimulationInputError(
+            f"rom_switch_scenario_export: {side}.item={mon.item}; "
+            "slice B does not patch held-item WRAM fields"
+        )
+    stages = (
+        mon.attack_stage,
+        mon.defense_stage,
+        mon.speed_stage,
+        mon.sp_attack_stage,
+        mon.sp_defense_stage,
+    )
+    if stages != ALLOWED_STAT_STAGES:
+        raise SimulationInputError(
+            f"rom_switch_scenario_export: {side}.stat_stages={stages}; "
+            "slice B does not patch stat-stage WRAM fields"
+        )
+    if mon.substitute or mon.substitute_hp:
+        raise SimulationInputError(
+            f"rom_switch_scenario_export: {side} has Substitute active; slice B does not model it"
+        )
+    if mon.toxic_count:
+        raise SimulationInputError(
+            f"rom_switch_scenario_export: {side}.toxic_count={mon.toxic_count}; "
+            "slice B does not model toxic counters"
+        )
+    if mon.sleep_turns:
+        raise SimulationInputError(
+            f"rom_switch_scenario_export: {side}.sleep_turns={mon.sleep_turns}; "
+            "slice B does not model sleep counters"
+        )
+
+
+def _assert_overridable_enemy_bench(bench: tuple[PokemonState, ...]) -> None:
+    if not bench:
+        raise SimulationInputError(
+            "rom_switch_scenario_export: enemy bench is empty; "
+            "slice B still needs a living bench[0] target"
+        )
+    if bench[0].hp <= 0:
+        raise SimulationInputError(
+            "rom_switch_scenario_export: enemy bench[0] is fainted; "
+            "slice B still needs a living bench[0] target"
+        )
 
 
 def _assert_fixture_active(mon: PokemonState, *, side: str) -> None:
