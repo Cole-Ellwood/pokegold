@@ -1,6 +1,6 @@
 # Generated Balance Audit
 
-Generated: 2026-05-24T08:03:53
+Generated: 2026-05-25T06:45:46
 Baseline ref: `060d4accd7c0d01b1697ac97e7d7e2da72e3646b`
 
 Do not hand-edit this file. Regenerate it with:
@@ -126,7 +126,7 @@ _No rows._
 | 0 | `DONPHAN` | `current-final` | 520 | 500 | 20 | 110/120/120/50/60/60 | HP+20 | GROUND/GROUND | - | - | 8 | 25 | EARTHQUAKE (GROUND 100bp 100%) | HYPER_BEAM (NORMAL 180bp 90%) |
 | 0 | `HERACROSS` | `current-final` | 520 | 500 | 20 | 80/125/75/105/40/95 | Spe+20 | BUG/FIGHTING | - | - | 11 | 23 | FOCUS_PUNCH (FIGHTING 150bp 100%) | FOCUS_PUNCH (FIGHTING 150bp 100%) |
 | 0 | `KANGASKHAN` | `current-final` | 520 | 490 | 30 | 105/125/80/90/40/80 | Atk+30 | NORMAL/NORMAL | - | - | 9 | 37 | HYPER_BEAM (NORMAL 180bp 90%) | HYPER_BEAM (NORMAL 180bp 90%) |
-| 0 | `MISDREAVUS` | `current-final` | 520 | 435 | 85 | 80/120/80/85/70/85 | HP+20, Atk+60, Def+20, SpA-15 | GHOST/GHOST | - | - | 8 | 23 | SHADOW_BALL (GHOST 80bp 100%) | DREAM_EATER (PSYCHIC_TYPE 100bp 100%) |
+| 0 | `MISDREAVUS` | `current-final` | 520 | 435 | 85 | 100/80/90/85/70/95 | HP+40, Atk+20, Def+30, SpA-15, SpD+10 | GHOST/GHOST | - | - | 8 | 23 | SHADOW_BALL (GHOST 80bp 100%) | DREAM_EATER (PSYCHIC_TYPE 100bp 100%) |
 | 0 | `MR__MIME` | `current-final` | 520 | 460 | 60 | 40/45/65/90/100/180 | SpD+60 | PSYCHIC_TYPE/PSYCHIC_TYPE | - | - | 11 | 28 | DREAM_EATER (PSYCHIC_TYPE 100bp 100%) | SOLARBEAM (GRASS 180bp 100%) |
 | 0 | `SCIZOR` | `current-final` | 520 | 500 | 20 | 70/130/120/65/55/80 | Def+20 | BUG/STEEL | - | - | 10 | 24 | LEECH_LIFE (BUG 80bp 100%) | HYPER_BEAM (NORMAL 180bp 90%) |
 | 0 | `ARBOK` | `current-final` | 523 | 538 | -15 | 100/85/99/80/80/79 | HP-20, Def-10, SpA+15 | POISON/DARK | - | - | 10 | 22 | SLUDGE_BOMB (POISON 90bp 100%) | HYPER_BEAM (NORMAL 180bp 90%) |
