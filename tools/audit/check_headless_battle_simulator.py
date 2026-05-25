@@ -277,6 +277,41 @@ def main() -> int:
         )
         return 1
     print("auto_replacement_choice_basic_type_chart: PASS selected=WATER_RESERVE")
+    repeat_payload = scenario_template()
+    repeat_payload["state"]["enemy"]["hp"] = 1
+    repeat_payload["state"]["enemy"]["max_hp"] = 1
+    repeat_payload["state"]["enemy"]["moves"][0]["bp"] = 0
+    repeat_payload["state"]["enemy"]["bench"] = [
+        {
+            "name": "ENEMY_RESERVE",
+            "hp": 1,
+            "max_hp": 1,
+            "types": ["NORMAL", "NORMAL"],
+            "moves": [{"name": "TACKLE", "type": "NORMAL", "bp": 0}],
+        }
+    ]
+    repeat_payload.pop("actions")
+    repeat_payload["repeat"] = {
+        "max_turns": 5,
+        "actions": {
+            "player": {"type": "move", "move": 0},
+            "enemy": {"type": "auto_replace_or", "action": {"type": "move", "move": 0}},
+        },
+    }
+    repeat_report = simulate_payload(repeat_payload)
+    repeat_outcome = repeat_report["outcomes"][0]
+    if (
+        not repeat_outcome.get("battle_over")
+        or repeat_outcome.get("turns_simulated") != 2
+        or [event.get("type") for event in repeat_outcome["events"]]
+        != ["damage", "auto_replacement_choice", "replacement", "damage"]
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: repeat plan mismatch: {repeat_report}",
+            file=sys.stderr,
+        )
+        return 1
+    print("repeat_plan_auto_replace_or: PASS turns_simulated=2")
     miss_payload = scenario_template()
     miss_payload["state"]["player"]["moves"][0]["accuracy"] = 242
     miss_payload["state"]["enemy"]["moves"][0]["bp"] = 0

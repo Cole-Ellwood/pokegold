@@ -108,6 +108,7 @@ class ActionState:
     move_index: int | None = None
     switch_index: int | None = None
     selector: dict[str, Any] | None = None
+    fallback: ActionState | None = None
 
 
 @dataclass(frozen=True)
@@ -203,6 +204,9 @@ def simulate_battle(
         next_branches: list[dict[str, Any]] = []
         for branch in branches:
             branch_state: BattleState = branch["state"]
+            if battle_is_over(branch_state):
+                next_branches.append(branch)
+                continue
             if branch_state.player.hp <= 0 or branch_state.enemy.hp <= 0:
                 next_branches.extend(apply_forced_replacements(branch, actions, rng, stream=stream))
                 continue
@@ -324,6 +328,18 @@ def resolve_pre_turn_actions(
         next_branches: list[tuple[dict[str, Any], dict[str, ActionState]]] = []
         for working, action_map in branches:
             action = action_map[side]
+            if action.kind == "auto_replace_or":
+                fallback = action.fallback
+                if fallback is None:
+                    raise AssertionError("auto_replace_or action missing fallback")
+                updated_actions = dict(action_map)
+                updated_actions[side] = (
+                    ActionState(kind="auto_replace")
+                    if get_side(working["state"], side).hp <= 0
+                    else fallback
+                )
+                next_branches.append((working, updated_actions))
+                continue
             if action.kind == "boss_ai_selector_move":
                 selections = boss_ai_selector_move_results(working["state"], side, action, rng, stream=stream)
             elif action.kind == "wild_random_move":
@@ -664,7 +680,7 @@ def apply_forced_replacements(
             action = actions[side]
             if action.kind == "replace":
                 next_branches.append(apply_switch_action(working, side, action, event_type="replacement"))
-            elif action.kind == "auto_replace":
+            elif action.kind in {"auto_replace", "auto_replace_or"}:
                 next_branches.extend(apply_auto_replace_action(working, side, rng, stream=stream))
             else:
                 next_branches.append(working)
@@ -922,6 +938,17 @@ def apply_post_action_residual(branch: dict[str, Any], side: str) -> dict[str, A
         }
     )
     return updated
+
+
+def battle_is_over(state: BattleState) -> bool:
+    return side_is_defeated(state, "player") or side_is_defeated(state, "enemy")
+
+
+def side_is_defeated(state: BattleState, side: str) -> bool:
+    active = get_side(state, side)
+    if active.hp > 0:
+        return False
+    return not any(pokemon.hp > 0 for pokemon in get_bench(state, side))
 
 
 def residual_status_damage(pokemon: PokemonState) -> dict[str, Any] | None:
@@ -1613,6 +1640,20 @@ def parse_actions(raw: Any) -> dict[str, ActionState]:
 
 
 def parse_action_plan(payload: dict[str, Any]) -> tuple[dict[str, ActionState], ...]:
+    repeat = payload.get("repeat")
+    if repeat is not None:
+        if isinstance(repeat, int):
+            max_turns = parse_positive_int(repeat, "repeat")
+            repeat_actions = payload.get("actions", {})
+        elif isinstance(repeat, dict):
+            max_turns = parse_positive_int(repeat.get("max_turns", repeat.get("turns", 1)), "repeat.max_turns")
+            repeat_actions = repeat.get("actions", payload.get("actions", {}))
+        else:
+            raise SimulationInputError("repeat must be an integer or object")
+        return tuple(parse_actions(repeat_actions) for _ in range(max_turns))
+    if "max_turns" in payload:
+        max_turns = parse_positive_int(payload["max_turns"], "max_turns")
+        return tuple(parse_actions(payload.get("actions", {})) for _ in range(max_turns))
     turns = payload.get("turns")
     if turns is None:
         return (parse_actions(payload.get("actions", {})),)
@@ -1648,6 +1689,11 @@ def parse_action(raw: Any, path: str) -> ActionState:
         return ActionState(kind=kind, switch_index=parse_non_negative_int(switch_index, f"{path}.bench_index"))
     if kind == "auto_replace":
         return ActionState(kind=kind)
+    if kind == "auto_replace_or":
+        fallback = raw.get("action", raw.get("fallback"))
+        if fallback is None:
+            raise SimulationInputError(f"{path}.action is required for auto_replace_or actions")
+        return ActionState(kind=kind, fallback=parse_action(fallback, f"{path}.action"))
     if kind == "boss_ai_selector":
         if raw.get("execute") is True:
             return ActionState(kind="boss_ai_selector_move", selector=raw)
@@ -1853,7 +1899,7 @@ def branch_to_outcome(branch: dict[str, Any], index: int) -> dict[str, Any]:
         "turns_simulated": branch["turns_simulated"],
         "events": branch["events"],
         "state": state_to_json(state),
-        "battle_over": state.player.hp <= 0 or state.enemy.hp <= 0,
+        "battle_over": battle_is_over(state),
         "rng_consumed": list(branch["rng_consumed"]),
     }
     if "sample_index" in branch:
@@ -1967,6 +2013,12 @@ def coverage_report() -> dict[str, Any]:
                 "source": "tools.headless_battle.simulator.simulate_battle",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
                 "notes": "A turns[] list carries HP/RNG state forward across selected-action turns, supports caller-selected switch actions, caller-supplied replacement actions after a KO, and explicit enemy auto_replace actions. Automatic action choice is still out of scope.",
+            },
+            {
+                "id": "repeat_plan_auto_replace_or",
+                "source": "tools.headless_battle.simulator.parse_action_plan + simulate_battle",
+                "gate": "python tools/audit/check_headless_battle_simulator.py",
+                "notes": "repeat/max_turns can reuse one action map until battle-over or the turn cap. auto_replace_or lets a side use a normal fallback action while alive and explicit auto_replace after fainting, so simple text battles no longer require hand-writing every replacement step.",
             },
             {
                 "id": "selected_switch_and_replacement",

@@ -517,6 +517,42 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         self.assertEqual(report["outcome_count"], 2)
         self.assertEqual(selected_slots, {0, 1})
 
+    def test_repeat_plan_auto_replace_or_runs_until_battle_over(self) -> None:
+        payload = scenario_template()
+        payload["state"]["enemy"]["hp"] = 1
+        payload["state"]["enemy"]["max_hp"] = 1
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+        payload["state"]["enemy"]["bench"] = [
+            {
+                "name": "ENEMY_RESERVE",
+                "hp": 1,
+                "max_hp": 1,
+                "types": ["NORMAL", "NORMAL"],
+                "moves": [{"name": "TACKLE", "type": "NORMAL", "bp": 0}],
+            }
+        ]
+        payload.pop("actions")
+        payload["repeat"] = {
+            "max_turns": 5,
+            "actions": {
+                "player": {"type": "move", "move": 0},
+                "enemy": {"type": "auto_replace_or", "action": {"type": "move", "move": 0}},
+            },
+        }
+
+        report = simulate_payload(payload)
+
+        outcome = report["outcomes"][0]
+        self.assertTrue(outcome["battle_over"])
+        self.assertEqual(report["turn_count"], 5)
+        self.assertEqual(outcome["turns_simulated"], 2)
+        self.assertEqual(
+            [event["type"] for event in outcome["events"]],
+            ["damage", "auto_replacement_choice", "replacement", "damage"],
+        )
+        self.assertEqual([event["turn"] for event in outcome["events"]], [1, 1, 1, 2])
+        self.assertEqual(outcome["state"]["enemy"]["hp"], 0)
+
     def test_turns_list_progresses_hp_across_selected_turns(self) -> None:
         payload = scenario_template()
         payload["state"]["enemy"]["moves"][0]["bp"] = 0
@@ -682,6 +718,7 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         self.assertIn("basic_pp_decrement", mirrored)
         self.assertIn("supported_after_hit_item_effects", mirrored)
         self.assertIn("selected_turn_order_priority_speed", mirrored)
+        self.assertIn("repeat_plan_auto_replace_or", mirrored)
         self.assertIn("selected_switch_and_replacement", mirrored)
         self.assertIn("auto_replacement_choice_basic_type_chart", mirrored)
         self.assertIn("boss_ai_selector_from_post_score_bytes", mirrored)
