@@ -1040,6 +1040,102 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         }
         self.assertEqual(ranges, {(0, 191), (192, 255)})
 
+    def test_boss_ai_switch_roll_accepts_rom_materialization_roll(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["moves"][0]["bp"] = 0
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+        payload["state"]["enemy"]["bench"] = [
+            {
+                "name": "GENGAR",
+                "hp": 30,
+                "max_hp": 30,
+                "types": ["GHOST", "POISON"],
+                "moves": [{"name": "LICK", "type": "GHOST", "bp": 20}],
+            }
+        ]
+        payload["actions"]["enemy"] = {
+            "type": "boss_ai_switch_roll",
+            "candidate_bench_index": 0,
+            "switch_roll": {
+                "available": True,
+                "confidence": 90,
+                "threshold_source": "explicit_switch_threshold",
+                "threshold_exact": True,
+                "probability_exact": True,
+                "base_threshold": 74,
+                "assumed_effective_threshold": 70,
+                "possible_effective_thresholds": [70],
+                "switch_chance_threshold": 230,
+                "switch_probability": 230 / 256,
+                "proof_status": "source_mirrored_final_switch_roll_from_observed_confidence",
+            },
+            "fallback": {"type": "move", "move": 0},
+        }
+        payload["rng"] = {"mode": "fixed", "values": [229]}
+
+        report = simulate_payload(payload)
+
+        event = report["outcomes"][0]["events"][0]
+        self.assertEqual(event["type"], "boss_ai_switch_roll")
+        self.assertEqual(event["roll_source"], "rom_switch_materialization_switch_roll")
+        self.assertEqual(event["confidence"], 90)
+        self.assertEqual(event["threshold"], 70)
+        self.assertEqual(event["threshold_source"], "explicit_switch_threshold")
+        self.assertTrue(event["threshold_exact"])
+        self.assertTrue(event["probability_exact"])
+        self.assertEqual(event["switch_chance_threshold"], 230)
+        self.assertEqual(event["selected_action"], "switch")
+        self.assertEqual(event["proof_status"], "source_mirrored_final_switch_roll_from_observed_confidence")
+
+    def test_boss_ai_switch_roll_rejects_unavailable_materialization_roll(self) -> None:
+        payload = scenario_template()
+        payload["state"]["enemy"]["bench"] = [
+            {
+                "name": "GENGAR",
+                "hp": 30,
+                "max_hp": 30,
+                "types": ["GHOST", "POISON"],
+                "moves": [{"name": "LICK", "type": "GHOST", "bp": 20}],
+            }
+        ]
+        payload["actions"]["enemy"] = {
+            "type": "boss_ai_switch_roll",
+            "candidate_bench_index": 0,
+            "switch_roll": {
+                "available": False,
+                "reason": "no_switch_dispatch_observation",
+            },
+        }
+
+        with self.assertRaisesRegex(SimulationInputError, "no_switch_dispatch_observation"):
+            simulate_payload(payload)
+
+    def test_boss_ai_switch_roll_rejects_ranged_materialization_roll(self) -> None:
+        payload = scenario_template()
+        payload["state"]["enemy"]["bench"] = [
+            {
+                "name": "GENGAR",
+                "hp": 30,
+                "max_hp": 30,
+                "types": ["GHOST", "POISON"],
+                "moves": [{"name": "LICK", "type": "GHOST", "bp": 20}],
+            }
+        ]
+        payload["actions"]["enemy"] = {
+            "type": "boss_ai_switch_roll",
+            "candidate_bench_index": 0,
+            "switch_roll": {
+                "available": True,
+                "confidence": 90,
+                "assumed_effective_threshold": 74,
+                "probability_exact": False,
+                "possible_effective_thresholds": [74, 82, 84, 92],
+            },
+        }
+
+        with self.assertRaisesRegex(SimulationInputError, "ranged switch probability"):
+            simulate_payload(payload)
+
     def test_wild_random_move_rejects_zero_pp_slot_then_executes(self) -> None:
         payload = scenario_template()
         payload["state"]["player"]["moves"][0]["bp"] = 0
@@ -2440,6 +2536,7 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         self.assertIn("auto_replacement_choice_basic_type_chart", mirrored)
         self.assertIn("boss_ai_selector_from_post_score_bytes", mirrored)
         self.assertIn("boss_ai_selector_move_execution", mirrored)
+        self.assertIn("boss_ai_switch_roll", mirrored)
         self.assertIn("wild_random_move_choice", mirrored)
         self.assertIn(
             "RNG-consuming mechanics outside speed ties/Boss AI selector choice/wild random move choice/auto-replace fallback/critical hits/accuracy/damage variation",

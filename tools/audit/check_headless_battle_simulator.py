@@ -16,7 +16,7 @@ from tools.headless_battle.rom_differential import (
     compare_item_restore_component,
     compare_normal_hit_fixed_rng,
 )
-from tools.headless_battle.simulator import scenario_template, simulate_payload, run_self_test
+from tools.headless_battle.simulator import SimulationInputError, scenario_template, simulate_payload, run_self_test
 
 
 def main() -> int:
@@ -915,7 +915,68 @@ def main() -> int:
             file=sys.stderr,
         )
         return 1
-    print("boss_ai_switch_roll: PASS fixed_switch no_roll_stay exhaustive_switch_or_stay")
+    switch_roll_bridge = scenario_template()
+    switch_roll_bridge["state"]["player"]["moves"][0]["bp"] = 0
+    switch_roll_bridge["state"]["enemy"]["moves"][0]["bp"] = 0
+    switch_roll_bridge["state"]["enemy"]["bench"] = switch_roll_payload["state"]["enemy"]["bench"]
+    switch_roll_bridge["actions"]["enemy"] = {
+        "type": "boss_ai_switch_roll",
+        "candidate_bench_index": 0,
+        "switch_roll": {
+            "available": True,
+            "confidence": 90,
+            "threshold_source": "explicit_switch_threshold",
+            "threshold_exact": True,
+            "probability_exact": True,
+            "base_threshold": 74,
+            "assumed_effective_threshold": 70,
+            "possible_effective_thresholds": [70],
+            "switch_chance_threshold": 230,
+            "switch_probability": 230 / 256,
+            "proof_status": "source_mirrored_final_switch_roll_from_observed_confidence",
+        },
+        "fallback": {"type": "move", "move": 0},
+    }
+    switch_roll_bridge["rng"] = {"mode": "fixed", "values": [229]}
+    bridge_event = simulate_payload(switch_roll_bridge)["outcomes"][0]["events"][0]
+    if (
+        bridge_event.get("roll_source") != "rom_switch_materialization_switch_roll"
+        or bridge_event.get("selected_action") != "switch"
+        or bridge_event.get("threshold_source") != "explicit_switch_threshold"
+        or bridge_event.get("probability_exact") is not True
+        or bridge_event.get("proof_status") != "source_mirrored_final_switch_roll_from_observed_confidence"
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: materialized Boss AI switch roll bridge mismatch: {bridge_event}",
+            file=sys.stderr,
+        )
+        return 1
+    switch_roll_bridge["actions"]["enemy"]["switch_roll"] = {
+        "available": True,
+        "confidence": 90,
+        "assumed_effective_threshold": 74,
+        "probability_exact": False,
+        "possible_effective_thresholds": [74, 82, 84, 92],
+    }
+    try:
+        simulate_payload(switch_roll_bridge)
+    except SimulationInputError as exc:
+        if "ranged switch probability" not in str(exc):
+            print(
+                f"Headless battle simulator audit FAILED: unexpected ranged switch-roll error: {exc}",
+                file=sys.stderr,
+            )
+            return 1
+    else:
+        print(
+            "Headless battle simulator audit FAILED: ranged materialized switch roll was executable",
+            file=sys.stderr,
+        )
+        return 1
+    print(
+        "boss_ai_switch_roll: PASS "
+        "fixed_switch no_roll_stay exhaustive_switch_or_stay materialized_exact_bridge"
+    )
     wild_payload = scenario_template()
     wild_payload["state"]["player"]["moves"][0]["bp"] = 0
     wild_payload["state"]["enemy"]["moves"] = [

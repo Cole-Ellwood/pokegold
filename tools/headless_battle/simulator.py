@@ -3235,8 +3235,9 @@ def boss_ai_switch_roll_results(
     if action.selector is None:
         raise SimulationInputError("boss_ai_switch_roll requires selector data")
     selector = action.selector
-    confidence = parse_byte(selector.get("confidence"), "boss_ai_switch_roll.confidence")
-    threshold = parse_byte(selector.get("threshold"), "boss_ai_switch_roll.threshold")
+    roll_source = boss_ai_switch_roll_source(selector)
+    confidence = roll_source["confidence"]
+    threshold = roll_source["threshold"]
     candidate_index = parse_non_negative_int(
         selector.get("candidate_bench_index", selector.get("bench_index")),
         "boss_ai_switch_roll.candidate_bench_index",
@@ -3258,6 +3259,7 @@ def boss_ai_switch_roll_results(
                 raw_range=None,
                 reason="confidence_below_threshold",
                 action=fallback,
+                roll_source=roll_source,
             )
         ]
     if rng.mode == "exhaustive":
@@ -3274,6 +3276,7 @@ def boss_ai_switch_roll_results(
                 raw_range=[0, chance - 1],
                 reason="raw_below_switch_threshold",
                 action=ActionState(kind="switch", switch_index=candidate_index),
+                roll_source=roll_source,
             ),
             boss_ai_switch_roll_selection(
                 state,
@@ -3287,6 +3290,7 @@ def boss_ai_switch_roll_results(
                 raw_range=[chance, 255],
                 reason="raw_at_or_above_switch_threshold",
                 action=fallback,
+                roll_source=roll_source,
             ),
         ]
     if stream is None:
@@ -3306,8 +3310,54 @@ def boss_ai_switch_roll_results(
             raw_range=None,
             reason="raw_below_switch_threshold" if raw < chance else "raw_at_or_above_switch_threshold",
             action=ActionState(kind="switch", switch_index=candidate_index) if raw < chance else fallback,
+            roll_source=roll_source,
         )
     ]
+
+
+def boss_ai_switch_roll_source(selector: dict[str, Any]) -> dict[str, Any]:
+    roll = selector.get("switch_roll", selector.get("rom_switch_roll"))
+    source = "scenario_supplied_confidence_threshold"
+    event_fields: dict[str, Any] = {}
+    if roll is not None:
+        if not isinstance(roll, dict):
+            raise SimulationInputError("boss_ai_switch_roll.switch_roll must be an object")
+        if roll.get("available") is False:
+            reason = roll.get("reason", "unknown")
+            raise SimulationInputError(f"boss_ai_switch_roll.switch_roll is unavailable: {reason}")
+        if roll.get("probability_exact") is False:
+            raise SimulationInputError(
+                "boss_ai_switch_roll.switch_roll has a ranged switch probability; "
+                "provide an exact threshold before executable branching"
+            )
+        source = "rom_switch_materialization_switch_roll"
+        event_fields = {
+            key: roll[key]
+            for key in (
+                "threshold_source",
+                "threshold_exact",
+                "probability_exact",
+                "base_threshold",
+                "possible_effective_thresholds",
+                "possible_switch_probabilities",
+                "proof_status",
+            )
+            if key in roll
+        }
+    confidence_raw = selector.get("confidence")
+    if confidence_raw is None and isinstance(roll, dict):
+        confidence_raw = roll.get("confidence")
+    threshold_raw = selector.get("threshold")
+    if threshold_raw is None and isinstance(roll, dict):
+        threshold_raw = roll.get("assumed_effective_threshold")
+    confidence = parse_byte(confidence_raw, "boss_ai_switch_roll.confidence")
+    threshold = parse_byte(threshold_raw, "boss_ai_switch_roll.threshold")
+    return {
+        "confidence": confidence,
+        "threshold": threshold,
+        "source": source,
+        "event_fields": event_fields,
+    }
 
 
 def boss_ai_switch_roll_threshold(confidence: int, threshold: int) -> int:
@@ -3342,8 +3392,10 @@ def boss_ai_switch_roll_selection(
     raw_range: list[int] | None,
     reason: str,
     action: ActionState,
+    roll_source: dict[str, Any],
 ) -> dict[str, Any]:
     candidate = get_bench(state, side)[candidate_index]
+    proof_status = roll_source["event_fields"].get("proof_status", "source_mirrored_boss_ai_switch_roll")
     return {
         "action": action,
         "raw_values": raw_values,
@@ -3362,7 +3414,9 @@ def boss_ai_switch_roll_selection(
             "raw_values": raw_values,
             "raw_range": raw_range,
             "reason": reason,
-            "proof_status": "source_mirrored_boss_ai_switch_roll",
+            "roll_source": roll_source["source"],
+            **roll_source["event_fields"],
+            "proof_status": proof_status,
         },
     }
 
@@ -4463,7 +4517,7 @@ def coverage_report() -> dict[str, Any]:
                 "id": "boss_ai_switch_roll",
                 "source": "engine/battle/ai/boss_policy_switch.asm:BossAI_SwitchOrTryItem final confidence gate",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
-                "notes": "Scenario-supplied boss_ai_switch_roll actions mirror the final BossAI_SwitchOrTryItem confidence-vs-threshold check and margin-based Random roll: margin >=20 uses 230/256, >=10 uses 192/256, otherwise 141/256. Fixed/sample modes consume one switch-roll byte when confidence reaches threshold; exhaustive mode branches switch and fallback stay actions. Live switch candidate/confidence computation, item usage, Haki/perish/KO guard computation, loop/sack/wincon threshold bias computation, and ROM materialization remain out of scope.",
+                "notes": "boss_ai_switch_roll actions mirror the final BossAI_SwitchOrTryItem confidence-vs-threshold check and margin-based Random roll: margin >=20 uses 230/256, >=10 uses 192/256, otherwise 141/256. The action accepts either direct scenario-supplied confidence/threshold bytes or a switch_roll object copied from rom-switch-materialize, preserving its threshold/probability proof fields in the event. Fixed/sample modes consume one switch-roll byte when confidence reaches threshold; exhaustive mode branches switch and fallback stay actions. Live switch candidate/confidence computation, item usage, Haki/perish/KO guard computation, loop/sack/wincon threshold bias computation, and ROM materialization from headless state remain out of scope.",
             },
             {
                 "id": "wild_random_move_choice",
