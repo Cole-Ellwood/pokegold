@@ -637,6 +637,31 @@ separate tasks.
   `python tools/audit/check_headless_battle_simulator.py` PASS (27/27
   scenarios within expected damage ranges).
 
+- **Item 4 — Extract embedded HTML/CSS/JS.** (§6) Two extractions
+  in one commit.
+
+  `scripts/generate_move_progression_audit_html.py`: the 516-line
+  `css()` body and 56-line `js()` body moved to
+  `scripts/assets/move_progression.css` and
+  `scripts/assets/move_progression.js`. The two functions shrink to
+  one-line `read_text(encoding="utf-8")` calls. Generator size:
+  1,384 → 815 lines (-569).
+
+  `tools/boss_ai_preference/app.py`: the 1,989-line `HTML = """…"""`
+  constant moved to `tools/boss_ai_preference/app.html`. `app.py`
+  size: 2,361 → 372 lines (-1,989, 84% reduction).
+
+  Verification: `python scripts/generate_move_progression_audit_html.py`
+  succeeds and produces 292,179 bytes of HTML output (vs the
+  committed 292,181 baseline — diff is 2 bytes of whitespace inside
+  the `<style>` block, semantically identical; the committed
+  baseline output is not regenerated in this commit because the data
+  has separately drifted since `6625a5a2` and a regen would mix
+  whitespace and balance line-citation changes). `python -m unittest
+  discover tools.boss_ai_preference.tests` → 32/33 (same pre-existing
+  failure as item 3). `python tools/audit/check_release_smoke.py`
+  → PASS.
+
 - **Item 3 — Split `boss_ai_preference/__main__.py`.** (§1) Applied the
   d62cafec pattern that fixed `boss_ai_debugger/__main__.py`. Old
   935-line `__main__.py` (24 inlined `cmd_*` handlers + 24
