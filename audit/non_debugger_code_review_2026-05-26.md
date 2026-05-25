@@ -366,7 +366,34 @@ CI gates, not unit-tested) but worth flagging because the two largest
 checks (§2) are exactly the kind of code that would benefit from
 parametrized test fixtures.
 
-## §8 — Asm side: dense audit floor, one uncovered hazard class
+## §8 — Asm side: dense audit floor, already-covered hazard class (false-positive finding)
+
+**Reread correction (2026-05-26):** the original §8 below claimed that
+"frame-boundary register liveness across same-bank `call` sites" was an
+uncovered hazard class. **That was wrong.** A full read of
+`docs/asm_authoring_guide.md` shows §3.14 (lines 598–711) is exactly
+that section — it documents the AG-08 c-mirror trap, names the
+five defenses, and the verification floor (§6 line 1120) already
+gates `tools/audit/check_typepassive_c_mirror.py` for the two
+canonical battle-helper files. The audit exists and passes
+(`OK / 7 sites either push/pop-protected or KNOWN_SAFE`).
+
+What remains is a smaller, more targeted recommendation: the
+`check_typepassive_c_mirror.py` audit only covers
+`engine/battle/late_gen_held_items.asm` +
+`engine/battle/type_passive_damage_mods.asm`. A more general version
+that walks back from same-bank `call` sites in any `engine/battle/`
+file whose caller reads bc/de/hl post-call would extend coverage —
+but the existing audit + §3.14 doc already handle the highest-risk
+paths. Demote item 9 in the prioritized list to "consider extending
+`check_typepassive_c_mirror.py` scope" rather than "add new
+documentation."
+
+The original (incorrect) §8 framing follows for context — it
+illustrates how easy it is to read §3.13 and miss §3.14 unless you
+read the asm guide TOC carefully.
+
+---
 
 `tools/audit/check_*.py` is 65 files. Sampled the safety-critical ones:
 
@@ -526,15 +553,23 @@ Ordered by ratio of (reader-pain reduced) / (refactor risk):
 8. **Split `check_boss_ai_trace_invariants.py` by audit family.** (§2)
    Mechanical, behavior-preserving. Defer unless adding a new audit
    family.
-9. **Add asm guide §3.15 + verification-floor expansion for same-bank
-   transitive register clobber.** (§8) Doc-and-tooling. No code changes.
-   Worth doing before the next refactor of a hot battle helper.
+9. **~~Add asm guide §3.15~~ — already covered.** (§8) On reread,
+   `docs/asm_authoring_guide.md` §3.14 (lines 598–711) is exactly the
+   "same-bank transitive register clobber" section my original §8
+   claimed was missing, and §6 verification floor (line 1120) already
+   gates `tools/audit/check_typepassive_c_mirror.py` for the two
+   canonical battle-helper files. Audit passes (`PASS: all 7 sites
+   either push/pop-protected or KNOWN_SAFE`). Item demoted to:
+   *consider extending* `check_typepassive_c_mirror.py` scope to
+   other `engine/battle/` files when the next cascade reveals one.
+   Not urgent.
 10. **Consolidate `scripts/_rom_data.py` for the 8 generator scripts.**
     (§4) Lower priority than #1 because the duplication is less
     visible; pick up when next touching any generator.
 
 Items 1–4 are single-pass mechanical refactors. Items 5–8 require more
-thought but are scoped. Items 9–10 are doc-and-tooling work.
+thought but are scoped. Item 10 is the remaining doc-and-tooling work
+(item 9 was retracted on reread; see §8).
 
 ## Active workstreams to avoid colliding with
 
@@ -686,16 +721,20 @@ separate tasks.
   `tools/audit/check_boss_ai_preference.py` independently).
   `python tools/audit/check_release_smoke.py` → PASS.
 
+- **Item 9 — Retracted on reread.** (§8) Original §8 claimed an
+  uncovered hazard class (same-bank transitive register clobber).
+  Full reread of `docs/asm_authoring_guide.md` shows §3.14
+  (lines 598–711) is exactly that section with five named defenses
+  and a complete AG-NN recurrence map; §6 verification floor
+  (line 1120) already gates `check_typepassive_c_mirror.py` for the
+  canonical battle-helper files. Audit passes. No doc gap to fill.
+  Audit doc updated to flag the false-positive finding for honesty.
+
 **Remaining items, ranked by leverage:**
 
-4. **Extract embedded HTML/CSS** from
-   `scripts/generate_move_progression_audit_html.py` and
-   `tools/boss_ai_preference/app.py`. (§6)
 5. **Convert `check_headless_battle_simulator.py`'s 2,260-line `main()`
    into a fixtures list + runner.** (§2)
 6. **Backfill `tools/trace/` tests.** (§7)
 7. **Split `tools/headless_battle/simulator.py` into a package.** (§3)
 8. **Split `check_boss_ai_trace_invariants.py` by audit family.** (§2)
-9. **Add asm guide §3.15 + verification-floor expansion for same-bank
-   transitive register clobber.** (§8)
 10. **Consolidate `scripts/_rom_data.py` for the 8 generator scripts.** (§4)
