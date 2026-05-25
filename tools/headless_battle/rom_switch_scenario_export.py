@@ -112,6 +112,7 @@ def headless_to_switch_sack_scenario(
     extra_tags: Iterable[str] | None = None,
     policy_case: str | None = None,
     accept_overrides: bool = False,
+    unrevealed_player_moves: bool = False,
 ) -> dict[str, Any]:
     """Return a ``family=switch_sack`` scenario dict from a headless board.
 
@@ -128,6 +129,9 @@ def headless_to_switch_sack_scenario(
     (no status / weather / spikes / safeguard / item / stat stages /
     substitute) still apply because slice B does not patch those WRAM
     fields. Slice C (full board materialization) is future work.
+    Set ``unrevealed_player_moves=True`` when the disputed state is before
+    the active player's first attack; this clears both current and per-species
+    revealed-move mirrors in the materializer.
     """
     if tier not in ALLOWED_TIERS:
         raise SimulationInputError(
@@ -172,6 +176,10 @@ def headless_to_switch_sack_scenario(
     }
     if accept_overrides:
         scenario["overrides"] = _board_to_overrides(battle_state)
+    if unrevealed_player_moves:
+        overrides = scenario.setdefault("overrides", {})
+        overrides["player_used_moves"] = [0, 0, 0, 0]
+        overrides["species_used_moves"] = [0] * 24
     return scenario
 
 

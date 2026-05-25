@@ -208,6 +208,17 @@ class RomSwitchScenarioExportTests(unittest.TestCase):
         self.assertEqual(overrides["enemy_bench_hp"], 75)
         self.assertEqual(overrides["enemy_bench_max_hp"], 120)
 
+    def test_unrevealed_player_moves_emits_clear_move_mirrors(self) -> None:
+        scenario = headless_to_switch_sack_scenario(
+            fixture_state(),
+            accept_overrides=True,
+            unrevealed_player_moves=True,
+        )
+        overrides = scenario["overrides"]
+
+        self.assertEqual(overrides["player_used_moves"], [0, 0, 0, 0])
+        self.assertEqual(overrides["species_used_moves"], [0] * 24)
+
     def test_accept_overrides_now_accepts_sleep_status_with_turns(self) -> None:
         state = fixture_state()
         state["player"]["status"] = "sleep"

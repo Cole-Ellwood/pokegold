@@ -35,6 +35,14 @@ AI_SWITCH_THRESHOLD_LATE = 60
 AI_SWITCH_ANTI_LOOP_PENALTY = 10
 AI_SWITCH_SACK_BIAS = 8
 AI_SWITCH_WINCON_BIAS = 10
+SWITCH_DIAGNOSTIC_FIELDS: tuple[tuple[str, int], ...] = (
+    ("wBossAIPrimaryThreatCache", 1),
+    ("wBossAIPlausibleTypeMaskCache", 4),
+    ("wBossAILikelyTypeMaskCache", 4),
+    ("wTypeMatchup", 1),
+    ("wPlayerUsedMoves", 4),
+    ("wBossAISpeciesUsedMoves", 24),
+)
 # Stat-stage encoding mirrors constants/battle_constants.asm: BASE_STAT_LEVEL = 7
 # means user-facing +0; user range [-6..+6] maps to WRAM byte [1..13]. The 5
 # patched stages are Atk / Def / Spd / SAtk / SDef in that order; Acc/Eva are
@@ -123,6 +131,10 @@ class RomSwitchReplaySession:
             self.symbols,
             watch_frames=watch_frames,
         )
+        values = {
+            **values,
+            **read_switch_diagnostic_values(self.pyboy, self.symbols),
+        }
         basis = dict(self.basis)
         if metadata:
             basis.update(metadata)
@@ -281,6 +293,25 @@ def _resolve_int(value: Any, default: int) -> int:
     return int(value)
 
 
+def _resolve_byte_list(value: Any, *, length: int, label: str) -> list[int]:
+    if not isinstance(value, list) or len(value) != length:
+        raise PreferenceDataError(
+            f"overrides.{label} must be a {length}-element byte list; got {value!r}"
+        )
+    out: list[int] = []
+    for index, raw in enumerate(value):
+        if isinstance(raw, bool) or not isinstance(raw, int):
+            raise PreferenceDataError(
+                f"overrides.{label}[{index}] must be an integer byte; got {raw!r}"
+            )
+        if not 0 <= raw <= 0xFF:
+            raise PreferenceDataError(
+                f"overrides.{label}[{index}] = {raw} out of byte range [0..255]"
+            )
+        out.append(raw)
+    return out
+
+
 def _resolve_stat_stage_patches(
     value: Any, *, side: str
 ) -> list[tuple[str, int]]:
@@ -433,11 +464,22 @@ def switch_materialization_patches(scenario: dict[str, Any]) -> list[MemoryPatch
         patch("wBossAIPlanId", 1 if "wincon_preservation" in tags else 0),
         patch("wBossAIPlanPhase", 1),
         patch("wBossAIPlanConfidence", 60),
-        patch("wPlayerUsedMoves", 0x59, 0),
-        patch("wPlayerUsedMoves", 0, 1),
-        patch("wPlayerUsedMoves", 0, 2),
-        patch("wPlayerUsedMoves", 0, 3),
     ]
+    player_used_moves = _resolve_byte_list(
+        overrides_raw.get("player_used_moves", [0x59, 0, 0, 0]),
+        length=4,
+        label="player_used_moves",
+    )
+    for offset, value in enumerate(player_used_moves):
+        patches.append(patch("wPlayerUsedMoves", value, offset))
+    if "species_used_moves" in overrides_raw:
+        species_used_moves = _resolve_byte_list(
+            overrides_raw["species_used_moves"],
+            length=24,
+            label="species_used_moves",
+        )
+        for offset, value in enumerate(species_used_moves):
+            patches.append(patch("wBossAISpeciesUsedMoves", value, offset))
     patches.extend(word_patches("wEnemyMonHP", enemy_hp))
     patches.extend(word_patches("wEnemyMonMaxHP", enemy_max_hp))
     patches.extend(word_patches("wBattleMonHP", player_hp))
@@ -473,6 +515,38 @@ def drive_replay_to_switch_observation(
     return last_values, watch_frames
 
 
+def read_switch_diagnostic_values(
+    pyboy: Any,
+    symbols: dict[str, capture.Symbol],
+) -> dict[str, list[int]]:
+    values: dict[str, list[int]] = {}
+    for name, size in SWITCH_DIAGNOSTIC_FIELDS:
+        if name in symbols:
+            values[name] = trace_runtime.read_range(pyboy, symbols[name], size)
+    return values
+
+
+def switch_diagnostics_from_values(values: dict[str, list[int]]) -> dict[str, Any]:
+    primary = values.get("wBossAIPrimaryThreatCache", [])
+    primary_value = int(primary[0]) if primary else None
+    diagnostics: dict[str, Any] = {
+        "primary_threat_cache": primary_value,
+        "switch_gate_evaluated": primary_value is not None and primary_value != 0xFF,
+    }
+    optional_ranges = (
+        ("wBossAIPlausibleTypeMaskCache", "plausible_type_mask_cache"),
+        ("wBossAILikelyTypeMaskCache", "likely_type_mask_cache"),
+        ("wTypeMatchup", "type_matchup"),
+        ("wPlayerUsedMoves", "player_used_moves"),
+        ("wBossAISpeciesUsedMoves", "species_used_moves"),
+    )
+    for source, key in optional_ranges:
+        if source in values:
+            data = values[source]
+            diagnostics[key] = int(data[0]) if len(data) == 1 else list(data)
+    return diagnostics
+
+
 def build_switch_report(
     *,
     save_state: Path,
@@ -485,8 +559,10 @@ def build_switch_report(
     switch_index = int(values["wEnemySwitchMonIndex"][0])
     switch_confidence = int(values["wBossAITraceSwitchConfidence"][0])
     chosen_move = int(values["wBossAITraceChosenMove"][0])
+    diagnostics = switch_diagnostics_from_values(values)
+    switch_gate_evaluated = bool(diagnostics.get("switch_gate_evaluated", False))
     observed_switch_path = switch_confidence != 0 or param != 0 or switch_index != 0
-    observed_decision = observed_switch_path or chosen_move != 0
+    observed_decision = observed_switch_path or chosen_move != 0 or switch_gate_evaluated
     return {
         "source": "trace_rom_pyboy_switch",
         "save_state": trace_runtime.display_path(save_state),
@@ -501,11 +577,14 @@ def build_switch_report(
         "chosen_move": chosen_move,
         "observed_switch_path": observed_switch_path,
         "observed_decision": observed_decision,
+        "switch_gate_evaluated": switch_gate_evaluated,
+        "diagnostics": diagnostics,
         "observation_status": switch_observation_status(
             switch_confidence=switch_confidence,
             switch_param=param,
             switch_index=switch_index,
             chosen_move=chosen_move,
+            switch_gate_evaluated=switch_gate_evaluated,
         ),
         "memory_patches": [
             {
@@ -524,6 +603,7 @@ def switch_observation_status(
     switch_param: int,
     switch_index: int,
     chosen_move: int,
+    switch_gate_evaluated: bool = False,
 ) -> str:
     if switch_index != 0:
         return "actual_switch_observed"
@@ -533,6 +613,8 @@ def switch_observation_status(
         return "switch_confidence_observed"
     if chosen_move != 0:
         return "chosen_move_observed_without_switch_proposal"
+    if switch_gate_evaluated:
+        return "switch_gate_evaluated_no_proposal"
     return "no_decision_observed"
 
 
@@ -816,6 +898,13 @@ def clear_switch_trace_patches() -> list[MemoryPatch]:
     for name, size in capture.TRACE_FIELDS + capture.CONTEXT_FIELDS:
         for offset in range(size):
             patches.append(patch(name, 0, offset))
+    patches.append(patch("wBossAIPrimaryThreatCache", 0xFF))
+    for name, size in (
+        ("wBossAIPlausibleTypeMaskCache", 4),
+        ("wBossAILikelyTypeMaskCache", 4),
+    ):
+        for offset in range(size):
+            patches.append(patch(name, 0, offset))
     return patches
 
 
@@ -968,6 +1057,7 @@ def format_rom_switch_materialization(
             rom = verdict.get("rom", {})
             policy = verdict.get("rom_policy", {})
             roll = verdict.get("switch_roll", {})
+            diagnostics = rom.get("diagnostics", {})
             probability = roll.get("switch_probability")
             if roll.get("available") is False:
                 probability_text = f"unavailable:{roll.get('reason', 'unknown')}"
@@ -987,6 +1077,7 @@ def format_rom_switch_materialization(
                 f"expected_switch={verdict.get('expected_switch')} "
                 f"proposed_switch={rom.get('proposed_switch')} "
                 f"confidence={rom.get('switch_confidence')} "
+                f"primary_threat={diagnostics.get('primary_threat_cache', 'na')} "
                 f"observation={rom.get('observation_status', 'unknown')} "
                 f"switch_rate={probability_text}({exact_text})"
                 f"{reason_text}"

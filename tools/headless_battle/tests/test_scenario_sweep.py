@@ -195,6 +195,14 @@ class SweepAgainstTrainerTests(unittest.TestCase):
         self.assertIn("actHaunter".lower(), scenarios[0]["id"])
         self.assertIn("bnMisdreavus".lower(), scenarios[0]["id"])
 
+    def test_unrevealed_player_moves_option_clears_move_mirrors(self) -> None:
+        opts = self._base_opts(unrevealed_player_moves=True)
+        scenarios = sweep_against_trainer(opts)
+        overrides = scenarios[0]["overrides"]
+
+        self.assertEqual(overrides["player_used_moves"], [0, 0, 0, 0])
+        self.assertEqual(overrides["species_used_moves"], [0] * 24)
+
 
 class FormatSweepSummaryTests(unittest.TestCase):
     def test_summary_names_trainer_and_counts(self) -> None:
@@ -247,6 +255,7 @@ class CliMainTests(unittest.TestCase):
                         "1.0,0.6",
                         "--out",
                         str(out),
+                        "--unrevealed-player-moves",
                     ]
                 )
             text = buf.getvalue()
@@ -255,6 +264,8 @@ class CliMainTests(unittest.TestCase):
         # 2 player species x 2 player_hp x 2 enemy_hp (defaults to --hp-fractions)
         # x 1 active x 1 bench = 8
         self.assertEqual(len(data), 8)
+        first = json.loads(data[0])
+        self.assertEqual(first["overrides"]["player_used_moves"], [0, 0, 0, 0])
         self.assertIn("JASMINE", text)
         self.assertIn("scenarios emitted: 8", text)
 

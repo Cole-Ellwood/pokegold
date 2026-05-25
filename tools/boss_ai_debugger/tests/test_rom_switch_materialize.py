@@ -16,6 +16,7 @@ from tools.boss_ai_debugger.rom_switch_materialize import (
     switch_roll_frequency,
     switch_verdict_from_report,
     switch_materialization_state_field,
+    switch_diagnostics_from_values,
     validate_manifest_hash,
     validate_switch_materialization_base,
 )
@@ -125,6 +126,47 @@ class RomSwitchMaterializeTests(unittest.TestCase):
         self.assertEqual(patches[("wBattleMonSpecies", 0)], 0x93)
         self.assertEqual(patches[("wEnemyMonSpecies", 0)], 0x5D)
         self.assertEqual(patches[("wOTPartyMon2Species", 0)], 0x5E)
+
+    def test_switch_materialization_accepts_unrevealed_move_overrides(self) -> None:
+        scenario = {
+            "family": "switch_sack",
+            "tier": "mid",
+            "expectation": {"condition_tags": ["switch_sack"]},
+            "overrides": {
+                "player_species": 0x5D,  # HAUNTER
+                "player_type1": 0x08,  # GHOST
+                "player_type2": 0x18,  # PSYCHIC
+                "enemy_species": 0xC8,  # MISDREAVUS
+                "enemy_type1": 0x08,
+                "enemy_type2": 0x08,
+                "enemy_bench_species": 0x5E,  # GENGAR
+                "player_used_moves": [0, 0, 0, 0],
+                "species_used_moves": [0] * 24,
+            },
+        }
+        patches = {
+            (patch.symbol_name, patch.offset): patch.value
+            for patch in switch_materialization_patches(scenario)
+        }
+
+        self.assertEqual(patches[("wBattleMonSpecies", 0)], 0x5D)
+        self.assertEqual(patches[("wEnemyMonSpecies", 0)], 0xC8)
+        self.assertEqual(patches[("wOTPartyMon2Species", 0)], 0x5E)
+        for offset in range(4):
+            self.assertEqual(patches[("wPlayerUsedMoves", offset)], 0)
+        for offset in range(24):
+            self.assertEqual(patches[("wBossAISpeciesUsedMoves", offset)], 0)
+
+    def test_switch_materialization_rejects_wrong_sized_used_move_overrides(self) -> None:
+        scenario = {
+            "family": "switch_sack",
+            "tier": "mid",
+            "expectation": {"condition_tags": ["switch_sack"]},
+            "overrides": {"player_used_moves": [0, 0, 0]},
+        }
+
+        with self.assertRaisesRegex(PreferenceDataError, "player_used_moves"):
+            switch_materialization_patches(scenario)
 
     def test_switch_materialization_status_overrides_apply(self) -> None:
         scenario = {
@@ -404,15 +446,15 @@ class RomSwitchMaterializeTests(unittest.TestCase):
         self.assertFalse(verdict["expected_switch"])
         self.assertEqual(verdict["rom_policy"]["verdict"], "mismatch")
 
-    def test_source_base_switch_threshold_uses_shared_jasmine_class_mod(self) -> None:
+    def test_source_base_switch_threshold_uses_tier_only_threshold(self) -> None:
         scenario = {"tier": "mid"}
 
         threshold = source_base_switch_threshold(scenario, base_route="shared_switch_loop")
 
         self.assertEqual(threshold["tier"], "mid")
         self.assertEqual(threshold["trainer_class"], "JASMINE")
-        self.assertEqual(threshold["class_threshold_mod"], 4)
-        self.assertEqual(threshold["threshold"], 74)
+        self.assertEqual(threshold["class_threshold_mod"], 0)
+        self.assertEqual(threshold["threshold"], 70)
 
     def test_switch_roll_frequency_uses_explicit_threshold_for_exact_rate(self) -> None:
         scenario = generate_scenarios(family="switch_sack", count=1, seed=1)[0]
@@ -440,11 +482,11 @@ class RomSwitchMaterializeTests(unittest.TestCase):
 
         self.assertFalse(roll["threshold_exact"])
         self.assertFalse(roll["probability_exact"])
-        self.assertEqual(roll["base_threshold"], 74)
-        self.assertEqual(roll["possible_effective_thresholds"], [74, 82, 84, 92])
+        self.assertEqual(roll["base_threshold"], 70)
+        self.assertEqual(roll["possible_effective_thresholds"], [70, 78, 80, 88])
         self.assertEqual(
             [item["switch_chance_threshold"] for item in roll["possible_switch_probabilities"]],
-            [192, 141, 141, 0],
+            [230, 192, 192, 141],
         )
 
     def test_switch_roll_frequency_is_unavailable_without_switch_observation(self) -> None:
@@ -483,6 +525,30 @@ class RomSwitchMaterializeTests(unittest.TestCase):
         )
         self.assertFalse(verdict["switch_roll"]["available"])
 
+    def test_switch_verdict_treats_gate_evaluated_no_proposal_as_observed_stay(self) -> None:
+        scenario = {
+            "id": "stay_case",
+            "family": "switch_sack",
+            "tier": "mid",
+            "expectation": {"condition_tags": []},
+        }
+
+        verdict = switch_verdict_from_report(
+            scenario,
+            {
+                "observed_decision": True,
+                "observed_switch_path": False,
+                "observation_status": "switch_gate_evaluated_no_proposal",
+                "switch_gate_evaluated": True,
+                "switch_confidence": 0,
+                "proposed_switch": False,
+            },
+        )
+
+        self.assertEqual(verdict["status"], "pass")
+        self.assertEqual(verdict["rom_policy"]["verdict"], "pass")
+        self.assertFalse(verdict["expected_switch"])
+
     def test_switch_observation_status_distinguishes_timeout_from_proposal(self) -> None:
         self.assertEqual(
             switch_observation_status(
@@ -502,6 +568,29 @@ class RomSwitchMaterializeTests(unittest.TestCase):
             ),
             "switch_proposal_observed",
         )
+        self.assertEqual(
+            switch_observation_status(
+                switch_confidence=0,
+                switch_param=0,
+                switch_index=0,
+                chosen_move=0,
+                switch_gate_evaluated=True,
+            ),
+            "switch_gate_evaluated_no_proposal",
+        )
+
+    def test_switch_diagnostics_marks_primary_threat_cache_as_gate_evaluated(self) -> None:
+        diagnostics = switch_diagnostics_from_values(
+            {
+                "wBossAIPrimaryThreatCache": [0x08],
+                "wBossAIPlausibleTypeMaskCache": [0, 1, 0, 0],
+                "wPlayerUsedMoves": [0, 0, 0, 0],
+            }
+        )
+
+        self.assertTrue(diagnostics["switch_gate_evaluated"])
+        self.assertEqual(diagnostics["primary_threat_cache"], 0x08)
+        self.assertEqual(diagnostics["player_used_moves"], [0, 0, 0, 0])
 
     def test_manifest_prefers_switch_materialization_state_when_present(self) -> None:
         self.assertEqual(

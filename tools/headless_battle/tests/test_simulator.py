@@ -1062,7 +1062,7 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
                 "threshold_source": "explicit_switch_threshold",
                 "threshold_exact": True,
                 "probability_exact": True,
-                "base_threshold": 74,
+                "base_threshold": 70,
                 "assumed_effective_threshold": 70,
                 "possible_effective_thresholds": [70],
                 "switch_chance_threshold": 230,
@@ -1127,9 +1127,9 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
             "switch_roll": {
                 "available": True,
                 "confidence": 90,
-                "assumed_effective_threshold": 74,
+                "assumed_effective_threshold": 70,
                 "probability_exact": False,
-                "possible_effective_thresholds": [74, 82, 84, 92],
+                "possible_effective_thresholds": [70, 78, 80, 88],
             },
         }
 
@@ -1159,14 +1159,14 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
                 "threshold_source": "source_mirrored_base_threshold_with_untraced_bias_range",
                 "threshold_exact": True,
                 "probability_exact": False,
-                "base_threshold": 74,
-                "assumed_effective_threshold": 74,
-                "possible_effective_thresholds": [74, 82, 84, 92],
+                "base_threshold": 70,
+                "assumed_effective_threshold": 70,
+                "possible_effective_thresholds": [70, 78, 80, 88],
                 "possible_switch_probabilities": [
-                    {"effective_threshold": 74, "switch_chance_threshold": 230, "switch_probability": 230 / 256},
-                    {"effective_threshold": 82, "switch_chance_threshold": 230, "switch_probability": 230 / 256},
-                    {"effective_threshold": 84, "switch_chance_threshold": 192, "switch_probability": 192 / 256},
-                    {"effective_threshold": 92, "switch_chance_threshold": 0, "switch_probability": 0.0},
+                    {"effective_threshold": 70, "switch_chance_threshold": 230, "switch_probability": 230 / 256},
+                    {"effective_threshold": 78, "switch_chance_threshold": 192, "switch_probability": 192 / 256},
+                    {"effective_threshold": 80, "switch_chance_threshold": 192, "switch_probability": 192 / 256},
+                    {"effective_threshold": 88, "switch_chance_threshold": 141, "switch_probability": 141 / 256},
                 ],
                 "proof_status": "source_mirrored_final_switch_roll_from_observed_confidence",
             },
@@ -1183,9 +1183,9 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         self.assertFalse(report_event["probability_exact"])
         self.assertEqual(report_event["raw_values"], [])
         self.assertEqual(report_event["fallback_action_kind"], "move")
-        self.assertEqual(report_event["assumed_effective_threshold"], 74)
+        self.assertEqual(report_event["assumed_effective_threshold"], 70)
         self.assertEqual(len(report_event["possible_switch_probabilities"]), 4)
-        self.assertEqual(report_event["switch_probability_range"], [0.0, 230 / 256])
+        self.assertEqual(report_event["switch_probability_range"], [141 / 256, 230 / 256])
         self.assertEqual(
             report_event["proof_status"],
             "source_mirrored_ranged_switch_probability_report",
@@ -1215,7 +1215,7 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
                 "threshold_source": "explicit_switch_threshold",
                 "threshold_exact": True,
                 "probability_exact": True,
-                "base_threshold": 74,
+                "base_threshold": 70,
                 "assumed_effective_threshold": 70,
                 "possible_effective_thresholds": [70],
                 "switch_chance_threshold": 230,

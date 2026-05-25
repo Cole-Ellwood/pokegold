@@ -295,6 +295,7 @@ class SweepOptions:
     scenario_id_prefix: str = "sweep"
     parties_path: Path = DEFAULT_PARTIES_PATH
     limit: int = 0
+    unrevealed_player_moves: bool = False
 
 
 def sweep_against_trainer(opts: SweepOptions) -> list[dict]:
@@ -400,6 +401,7 @@ def sweep_against_trainer(opts: SweepOptions) -> list[dict]:
                 scenario_id=scenario_id,
                 tier=opts.tier,
                 accept_overrides=True,
+                unrevealed_player_moves=opts.unrevealed_player_moves,
             )
         except Exception as exc:
             errors.append(f"{scenario_id}: {exc}")
@@ -557,6 +559,14 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--scenario-id-prefix", default="sweep")
     parser.add_argument("--limit", type=int, default=0,
                         help="cap on scenarios emitted (0 = no cap)")
+    parser.add_argument(
+        "--unrevealed-player-moves",
+        action="store_true",
+        help=(
+            "emit overrides that clear wPlayerUsedMoves and "
+            "wBossAISpeciesUsedMoves for pre-attack switch reports"
+        ),
+    )
     parser.add_argument("--out", type=Path, default=None,
                         help="write scenarios as JSONL to this path")
     parser.add_argument("--json", action="store_true",
@@ -604,6 +614,7 @@ def main(argv: list[str] | None = None) -> int:
         scenario_id_prefix=args.scenario_id_prefix,
         parties_path=args.parties_path,
         limit=args.limit,
+        unrevealed_player_moves=args.unrevealed_player_moves,
     )
     roster = parse_trainer_roster(opts.trainer_class, parties_path=opts.parties_path)
     scenarios = sweep_against_trainer(opts)
