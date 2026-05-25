@@ -70,6 +70,8 @@ audit/boss_ai_preference/server.*.log
 /tmp/
 .claude/*
 !.claude/settings.json
+!.claude/hooks/
+!.claude/hooks/**
 .claude_handoffs/
 .rebalance_chain/
 *-backup
