@@ -4264,6 +4264,12 @@ def coverage_report() -> dict[str, Any]:
                 "source": "tools.headless_battle.rom_differential",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
                 "notes": "Selected drain healing is ROM-component checked for BattleCommand_DrainTarget: Giga Drain half-heal, Absorb minimum-one heal, and Giga Drain max-HP cap match the headless drain event and final active HP. This proves the post-damage drain healing component only; full LeechHit parity still relies on the separate damage oracle and NormalHit golden.",
+            },
+            {
+                "id": "item_restore_component_differential",
+                "source": "tools.headless_battle.rom_differential",
+                "gate": "python tools/audit/check_headless_battle_simulator.py",
+                "notes": "Selected active HP item restoration is ROM-component checked for GetHealingItemAmount plus RestoreHealth: Potion partial heal, Hyper Potion cap, Max Potion full heal, and Full Restore HP heal match the headless item event and final active HP. This proves the HP-restore component only; menus, inventory, trainer item dispatch, and Full Restore status cure remain separate boundaries.",
             }
         ],
         "source_mirrored_pending_differential": [
@@ -4307,7 +4313,7 @@ def coverage_report() -> dict[str, Any]:
                 "id": "explicit_active_hp_restore_items",
                 "source": "engine/items/item_effects.asm:RestoreHPEffect + FullRestoreEffect; data/items/heal_hp.asm",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
-                "notes": "Explicit item actions for active Potion, Super Potion, Hyper Potion, Max Potion, and Full Restore mirror source HP amounts, max-HP caps, Full Restore's supported status/toxic cure, turn consumption, and actor residual after the item. Bag inventory, bench targeting, revives, PP restore, X items, player trainer-battle Pack availability, and automatic trainer item dispatch remain out of scope.",
+                "notes": "Explicit item actions for active Potion, Super Potion, Hyper Potion, Max Potion, and Full Restore mirror source HP amounts, max-HP caps, Full Restore's supported status/toxic cure, turn consumption, and actor residual after the item. GetHealingItemAmount plus RestoreHealth is byte-proven by item_restore_component_differential for Potion, Hyper Potion, Max Potion, and Full Restore HP restoration; Full Restore's status cure remains source-mirrored. Bag inventory, bench targeting, revives, PP restore, X items, player trainer-battle Pack availability, and automatic trainer item dispatch remain out of scope.",
             },
             {
                 "id": "selected_weather_setup_moves",

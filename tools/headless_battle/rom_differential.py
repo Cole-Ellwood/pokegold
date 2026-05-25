@@ -32,6 +32,10 @@ EMBER_MOVE_ID = 0x34
 SLUDGE_MOVE_ID = 0x7C
 ABSORB_MOVE_ID = 0x47
 GIGA_DRAIN_MOVE_ID = 0xCA
+FULL_RESTORE_ITEM_ID = 0x0E
+MAX_POTION_ITEM_ID = 0x0F
+HYPER_POTION_ITEM_ID = 0x10
+POTION_ITEM_ID = 0x12
 NORMAL_TYPE = 0x00
 POISON_TYPE = 0x03
 FLYING_TYPE = 0x02
@@ -181,6 +185,61 @@ DRAIN_COMPONENT_SCENARIOS = (
 
 
 @dataclass(frozen=True)
+class ItemRestoreComponentScenario:
+    scenario_id: str
+    item_name: str
+    item_id: int
+    hp_before: int
+    max_hp: int
+    expected_table_amount: int
+    expected_hp_after: int
+
+    @property
+    def expected_heal(self) -> int:
+        return self.expected_hp_after - self.hp_before
+
+
+ITEM_RESTORE_COMPONENT_SCENARIOS = (
+    ItemRestoreComponentScenario(
+        scenario_id="component_potion_partial_heal",
+        item_name="POTION",
+        item_id=POTION_ITEM_ID,
+        hp_before=5,
+        max_hp=32,
+        expected_table_amount=20,
+        expected_hp_after=25,
+    ),
+    ItemRestoreComponentScenario(
+        scenario_id="component_hyper_potion_cap",
+        item_name="HYPER_POTION",
+        item_id=HYPER_POTION_ITEM_ID,
+        hp_before=180,
+        max_hp=220,
+        expected_table_amount=200,
+        expected_hp_after=220,
+    ),
+    ItemRestoreComponentScenario(
+        scenario_id="component_max_potion_full_heal",
+        item_name="MAX_POTION",
+        item_id=MAX_POTION_ITEM_ID,
+        hp_before=10,
+        max_hp=30,
+        expected_table_amount=999,
+        expected_hp_after=30,
+    ),
+    ItemRestoreComponentScenario(
+        scenario_id="component_full_restore_hp_heal",
+        item_name="FULL_RESTORE",
+        item_id=FULL_RESTORE_ITEM_ID,
+        hp_before=10,
+        max_hp=30,
+        expected_table_amount=999,
+        expected_hp_after=30,
+    ),
+)
+
+
+@dataclass(frozen=True)
 class RomNormalHitResult:
     scenario_id: str
     player_hp_before: int
@@ -223,6 +282,19 @@ class RomDrainComponentResult:
 
 
 @dataclass(frozen=True)
+class RomItemRestoreComponentResult:
+    scenario_id: str
+    item_name: str
+    hp_before: int
+    hp_after: int
+    max_hp: int
+    table_amount: int
+    get_amount_returned: bool
+    restore_returned: bool
+    hp_buffer3: int
+
+
+@dataclass(frozen=True)
 class DifferentialResult:
     scenario_id: str
     ok: bool
@@ -249,6 +321,17 @@ def _read_u16(pyboy: Any, syms: dict[str, tuple[int, int]], name: str) -> int:
 def _write_u16(pyboy: Any, syms: dict[str, tuple[int, int]], name: str, value: int) -> None:
     _write_byte(pyboy, syms, name, (value >> 8) & 0xFF)
     _write_byte(pyboy, syms, name, value & 0xFF, 1)
+
+
+def _read_hp_buffer(pyboy: Any, syms: dict[str, tuple[int, int]], name: str) -> int:
+    low = _read_byte(pyboy, syms, name)
+    high = _read_byte(pyboy, syms, name, 1)
+    return (high << 8) | low
+
+
+def _write_hp_buffer(pyboy: Any, syms: dict[str, tuple[int, int]], name: str, value: int) -> None:
+    _write_byte(pyboy, syms, name, value & 0xFF)
+    _write_byte(pyboy, syms, name, (value >> 8) & 0xFF, 1)
 
 
 def _seed_common(pyboy: Any, syms: dict[str, tuple[int, int]]) -> None:
@@ -420,6 +503,20 @@ def _seed_rom_drain_component(
     _write_u16(pyboy, syms, "wCurDamage", scenario.damage)
 
 
+def _seed_rom_item_restore_component(
+    pyboy: Any,
+    syms: dict[str, tuple[int, int]],
+    scenario: ItemRestoreComponentScenario,
+) -> None:
+    _seed_common(pyboy, syms)
+    _write_byte(pyboy, syms, "wCurPartyMon", 0)
+    _write_byte(pyboy, syms, "wCurItem", scenario.item_id)
+    _write_u16(pyboy, syms, "wPartyMon1HP", scenario.hp_before)
+    _write_u16(pyboy, syms, "wPartyMon1MaxHP", scenario.max_hp)
+    # RestoreHealth expects max HP preloaded in the little-endian HP buffer.
+    _write_hp_buffer(pyboy, syms, "wHPBuffer1", scenario.max_hp)
+
+
 def run_rom_normal_hit() -> RomNormalHitResult:
     rom = find_rom("pokegold_debug")
     syms = SymbolTable.load(find_sym("pokegold_debug")).as_legacy_dict()
@@ -521,6 +618,49 @@ def run_rom_drain_components() -> tuple[RomDrainComponentResult, ...]:
                     damage=_read_u16(pyboy, syms, "wCurDamage"),
                     returned=returned,
                     post_pc=post_pc,
+                )
+            )
+        return tuple(results)
+    finally:
+        cache.stop()
+
+
+def run_rom_item_restore_components() -> tuple[RomItemRestoreComponentResult, ...]:
+    rom = find_rom("pokegold_debug")
+    syms = SymbolTable.load(find_sym("pokegold_debug")).as_legacy_dict()
+    cache = BootStateCache(rom)
+    pyboy = cache.prime()
+    results: list[RomItemRestoreComponentResult] = []
+    try:
+        for scenario in ITEM_RESTORE_COMPONENT_SCENARIOS:
+            pyboy = cache.restore()
+            _seed_rom_item_restore_component(pyboy, syms, scenario)
+            hp_before = _read_u16(pyboy, syms, "wPartyMon1HP")
+            _, get_amount_returned, _ = call_function_safe(
+                pyboy,
+                syms,
+                "GetHealingItemAmount",
+                budget=CALL_BUDGET,
+            )
+            rf = pyboy.register_file
+            table_amount = (int(rf.D) << 8) | int(rf.E)
+            _, restore_returned, _ = call_function_safe(
+                pyboy,
+                syms,
+                "RestoreHealth",
+                budget=CALL_BUDGET,
+            )
+            results.append(
+                RomItemRestoreComponentResult(
+                    scenario_id=scenario.scenario_id,
+                    item_name=scenario.item_name,
+                    hp_before=hp_before,
+                    hp_after=_read_u16(pyboy, syms, "wPartyMon1HP"),
+                    max_hp=_read_u16(pyboy, syms, "wPartyMon1MaxHP"),
+                    table_amount=table_amount,
+                    get_amount_returned=get_amount_returned,
+                    restore_returned=restore_returned,
+                    hp_buffer3=_read_hp_buffer(pyboy, syms, "wHPBuffer3"),
                 )
             )
         return tuple(results)
@@ -681,6 +821,48 @@ def drain_component_payload(scenario: DrainComponentScenario) -> dict[str, Any]:
     }
 
 
+def item_restore_component_payload(scenario: ItemRestoreComponentScenario) -> dict[str, Any]:
+    return {
+        "rng": {"mode": "fixed", "values": []},
+        "state": {
+            "weather": "none",
+            "weather_count": 0,
+            "turn": 1,
+            "player": {
+                "species": "CYNDAQUIL",
+                "level": 5,
+                "types": ["FIRE", "FIRE"],
+                "hp": scenario.hp_before,
+                "max_hp": scenario.max_hp,
+                "stats": {
+                    "attack": 10,
+                    "defense": 9,
+                    "speed": 11,
+                    "sp_attack": 11,
+                    "sp_defense": 10,
+                },
+                "moves": [{"name": "TACKLE", "type": "NORMAL", "bp": 0}],
+            },
+            "enemy": {
+                "species": "PIDGEY",
+                "level": 5,
+                "types": ["NORMAL", "NORMAL"],
+                "hp": 40,
+                "max_hp": 40,
+                "stats": {
+                    "attack": 6,
+                    "defense": 6,
+                    "speed": 7,
+                    "sp_attack": 5,
+                    "sp_defense": 5,
+                },
+                "moves": [{"name": "TACKLE", "type": "NORMAL", "bp": 0}],
+            },
+        },
+        "actions": {"player": {"type": "item", "item": scenario.item_name}, "enemy": {"type": "move", "move": 0}},
+    }
+
+
 def compare_normal_hit_fixed_rng() -> DifferentialResult:
     rom = run_rom_normal_hit()
     report = simulate_payload(normal_hit_payload())
@@ -753,6 +935,90 @@ def compare_normal_hit_fixed_rng() -> DifferentialResult:
             "rng_consumed": outcome.get("rng_consumed", []),
             "damage_event": damage_event,
         },
+    )
+
+
+def compare_item_restore_component() -> DifferentialResult:
+    rom_results = {result.scenario_id: result for result in run_rom_item_restore_components()}
+    errors: list[str] = []
+    headless_results: dict[str, Any] = {}
+    rom_report: dict[str, Any] = {}
+
+    for scenario in ITEM_RESTORE_COMPONENT_SCENARIOS:
+        rom = rom_results[scenario.scenario_id]
+        report = simulate_payload(item_restore_component_payload(scenario))
+        outcome = report["outcomes"][0]
+        item_events = [
+            event
+            for event in outcome["events"]
+            if event.get("actor") == "player"
+            and event.get("type") == "item_restore"
+            and event.get("item_id") == scenario.item_id
+        ]
+        if len(item_events) != 1:
+            errors.append(f"{scenario.scenario_id}: expected one headless item event, got {len(item_events)}")
+            item_event: dict[str, Any] = {}
+        else:
+            item_event = item_events[0]
+
+        if item_event.get("hp_before") != scenario.hp_before or item_event.get("hp_after") != scenario.expected_hp_after:
+            errors.append(
+                f"{scenario.scenario_id}: headless HP mismatch: "
+                f"{item_event.get('hp_before')}->{item_event.get('hp_after')} "
+                f"expected={scenario.hp_before}->{scenario.expected_hp_after}"
+            )
+        if item_event.get("heal") != scenario.expected_heal:
+            errors.append(
+                f"{scenario.scenario_id}: headless heal mismatch: "
+                f"headless={item_event.get('heal')} expected={scenario.expected_heal}"
+            )
+        if outcome["state"]["player"].get("hp") != scenario.expected_hp_after:
+            errors.append(
+                f"{scenario.scenario_id}: final player HP mismatch: "
+                f"headless={outcome['state']['player'].get('hp')} expected={scenario.expected_hp_after}"
+            )
+
+        if rom.hp_before != scenario.hp_before:
+            errors.append(f"{scenario.scenario_id}: ROM hp_before={rom.hp_before}, expected {scenario.hp_before}")
+        if rom.hp_after != scenario.expected_hp_after:
+            errors.append(
+                f"{scenario.scenario_id}: ROM hp_after mismatch: "
+                f"rom={rom.hp_after} expected={scenario.expected_hp_after}"
+            )
+        if rom.hp_buffer3 != scenario.expected_hp_after:
+            errors.append(
+                f"{scenario.scenario_id}: ROM wHPBuffer3 mismatch: "
+                f"rom={rom.hp_buffer3} expected={scenario.expected_hp_after}"
+            )
+        if rom.table_amount != scenario.expected_table_amount:
+            errors.append(
+                f"{scenario.scenario_id}: ROM healing table mismatch: "
+                f"rom={rom.table_amount} expected={scenario.expected_table_amount}"
+            )
+        if not rom.get_amount_returned:
+            errors.append(f"{scenario.scenario_id}: GetHealingItemAmount did not return")
+        if not rom.restore_returned:
+            errors.append(f"{scenario.scenario_id}: RestoreHealth did not return")
+
+        rom_report[scenario.scenario_id] = {
+            "item": rom.item_name,
+            "hp_before": rom.hp_before,
+            "hp_after": rom.hp_after,
+            "max_hp": rom.max_hp,
+            "table_amount": rom.table_amount,
+            "hp_buffer3": rom.hp_buffer3,
+        }
+        headless_results[scenario.scenario_id] = {
+            "final_player_hp": outcome["state"]["player"].get("hp"),
+            "item_event": item_event,
+        }
+
+    return DifferentialResult(
+        scenario_id="item_restore_component_differential",
+        ok=not errors,
+        errors=tuple(errors),
+        rom=rom_report,
+        headless=headless_results,
     )
 
 
@@ -977,6 +1243,7 @@ def main() -> int:
     normal_result = compare_normal_hit_fixed_rng()
     status_result = compare_damaging_status_component()
     drain_result = compare_drain_component()
+    item_result = compare_item_restore_component()
     if normal_result.ok:
         print(
             "normal_hit_fixed_rng_differential: PASS "
@@ -1003,7 +1270,13 @@ def main() -> int:
         print("drain_component_differential: FAIL")
         for error in drain_result.errors:
             print(f"  - {error}")
-    return 0 if normal_result.ok and status_result.ok and drain_result.ok else 1
+    if item_result.ok:
+        print("item_restore_component_differential: PASS " + " ".join(item_result.rom.keys()))
+    else:
+        print("item_restore_component_differential: FAIL")
+        for error in item_result.errors:
+            print(f"  - {error}")
+    return 0 if normal_result.ok and status_result.ok and drain_result.ok and item_result.ok else 1
 
 
 if __name__ == "__main__":

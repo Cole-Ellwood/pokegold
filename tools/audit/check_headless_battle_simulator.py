@@ -13,6 +13,7 @@ from tools.boss_ai_debugger.rom_scenarios import select_from_score_bytes
 from tools.headless_battle.rom_differential import (
     compare_damaging_status_component,
     compare_drain_component,
+    compare_item_restore_component,
     compare_normal_hit_fixed_rng,
 )
 from tools.headless_battle.simulator import scenario_template, simulate_payload, run_self_test
@@ -63,6 +64,16 @@ def main() -> int:
             print(f"  - {error}", file=sys.stderr)
         return 1
     print("drain_component_differential: PASS " + " ".join(drain_differential.rom.keys()))
+    item_differential = compare_item_restore_component()
+    if not item_differential.ok:
+        print(
+            f"Headless battle simulator audit FAILED: {item_differential.scenario_id} mismatch:",
+            file=sys.stderr,
+        )
+        for error in item_differential.errors:
+            print(f"  - {error}", file=sys.stderr)
+        return 1
+    print("item_restore_component_differential: PASS " + " ".join(item_differential.rom.keys()))
     pp_payload = scenario_template()
     pp_report = simulate_payload(pp_payload)
     pp_outcome = pp_report["outcomes"][0]
