@@ -434,6 +434,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("drain moves", rec["proof_limit"])
         self.assertIn("sleep action denial", rec["proof_limit"])
         self.assertIn("selected held PSNCUREBERRY", rec["proof_limit"])
+        self.assertIn("Safeguard/Substitute status blockers", rec["proof_limit"])
         self.assertIn("Rocky Helmet", rec["proof_limit"])
 
     def test_headless_battle_routes_turn_by_turn_wording(self) -> None:
@@ -456,6 +457,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("Leech Life/Giga Drain drain moves", rec["evidence_standard"][0])
         self.assertIn("sleep action denial/wake handling", rec["evidence_standard"][0])
         self.assertIn("selected held PSNCUREBERRY", rec["evidence_standard"][0])
+        self.assertIn("Safeguard/Substitute status blockers", rec["evidence_standard"][0])
         self.assertIn("implicit replacement without auto_replace_or", rec["disproof_standard"][0])
 
     def test_species_id_map_ignores_unown_form_constants(self) -> None:

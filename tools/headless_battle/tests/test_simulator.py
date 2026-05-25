@@ -1059,6 +1059,34 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         self.assertEqual(event["effect_chance_check"]["raw_values"], [255])
         self.assertEqual(report["outcomes"][0]["state"]["enemy"]["status"], "none")
 
+    def test_damaging_secondary_safeguard_blocks_after_effect_chance(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["moves"] = [{"name": "EMBER"}]
+        payload["state"]["enemy"]["safeguard"] = True
+        payload["state"]["enemy"]["types"] = ["NORMAL", "NORMAL"]
+        payload["state"]["enemy"]["hp"] = 40
+        payload["state"]["enemy"]["max_hp"] = 40
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+        payload["rng"] = {"mode": "fixed", "values": [255, 255, 0]}
+
+        report = simulate_payload(payload)
+
+        outcome = report["outcomes"][0]
+        damage, status = outcome["events"][0], outcome["events"][1]
+        self.assertEqual(damage["type"], "damage")
+        self.assertLess(damage["target_hp_after"], damage["target_hp_before"])
+        self.assertEqual(status["type"], "status_no_effect")
+        self.assertEqual(status["blocked_reason"], "safeguard")
+        self.assertEqual(status["effect_chance_check"]["success"], True)
+        self.assertEqual(outcome["state"]["enemy"]["status"], "none")
+
+    def test_damaging_move_into_substitute_is_out_of_scope(self) -> None:
+        payload = scenario_template()
+        payload["state"]["enemy"]["substitute"] = True
+
+        with self.assertRaisesRegex(SimulationInputError, "Substitute is out of scope"):
+            simulate_payload(payload)
+
     def test_damaging_secondary_poison_applies_and_residual_ticks(self) -> None:
         payload = scenario_template()
         payload["state"]["player"]["moves"] = [{"name": "SLUDGE"}]
@@ -1260,6 +1288,37 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
             for outcome in report["outcomes"]
         }
         self.assertEqual(durations, {3, 4, 5})
+
+    def test_sleep_status_safeguard_blocks_before_duration_rng(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["moves"] = [{"name": "SLEEP_POWDER"}]
+        payload["state"]["enemy"]["safeguard"] = True
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+        payload["rng"] = {"mode": "fixed", "values": [0]}
+
+        report = simulate_payload(payload)
+
+        outcome = report["outcomes"][0]
+        event = outcome["events"][0]
+        self.assertEqual(event["type"], "status_no_effect")
+        self.assertEqual(event["blocked_reason"], "safeguard")
+        self.assertIsNone(event["sleep_duration"])
+        self.assertEqual(outcome["rng_consumed"], [0])
+        self.assertEqual(outcome["state"]["enemy"]["status"], "none")
+
+    def test_sleep_status_safeguard_wins_over_substitute(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["moves"] = [{"name": "SLEEP_POWDER"}]
+        payload["state"]["enemy"]["safeguard"] = True
+        payload["state"]["enemy"]["substitute"] = True
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+        payload["rng"] = {"mode": "fixed", "values": [0]}
+
+        report = simulate_payload(payload)
+
+        event = report["outcomes"][0]["events"][0]
+        self.assertEqual(event["type"], "status_no_effect")
+        self.assertEqual(event["blocked_reason"], "safeguard")
 
     def test_sleep_wake_turn_continues_selected_move(self) -> None:
         payload = scenario_template()
@@ -1560,6 +1619,19 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         self.assertEqual(outcome["state"]["enemy"]["item"], 0)
         self.assertFalse(any(event["type"] == "residual_damage" for event in events))
 
+    def test_poison_status_substitute_blocks(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["moves"] = [{"name": "POISONPOWDER"}]
+        payload["state"]["enemy"]["substitute"] = True
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+
+        report = simulate_payload(payload)
+
+        event = report["outcomes"][0]["events"][0]
+        self.assertEqual(event["type"], "status_no_effect")
+        self.assertEqual(event["blocked_reason"], "substitute")
+        self.assertEqual(report["outcomes"][0]["state"]["enemy"]["status"], "none")
+
     def test_miracleberry_cures_toxic_status_move(self) -> None:
         payload = scenario_template()
         payload["state"]["player"]["moves"] = [{"name": "TOXIC"}]
@@ -1611,6 +1683,19 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         self.assertEqual(events[1]["cured_status"], "paralyze")
         self.assertEqual(outcome["state"]["enemy"]["status"], "none")
         self.assertEqual(outcome["state"]["enemy"]["item"], 0)
+
+    def test_paralysis_status_safeguard_blocks(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["moves"] = [{"name": "THUNDER_WAVE"}]
+        payload["state"]["enemy"]["safeguard"] = True
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+
+        report = simulate_payload(payload)
+
+        event = report["outcomes"][0]["events"][0]
+        self.assertEqual(event["type"], "status_no_effect")
+        self.assertEqual(event["blocked_reason"], "safeguard")
+        self.assertEqual(report["outcomes"][0]["state"]["enemy"]["status"], "none")
 
     def test_paralysis_status_move_uses_accuracy_check(self) -> None:
         payload = scenario_template()
@@ -1793,6 +1878,7 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         self.assertIn("selected_sleep_status_moves", mirrored)
         self.assertIn("selected_rest_move", mirrored)
         self.assertIn("selected_held_status_cures", mirrored)
+        self.assertIn("selected_safeguard_substitute_blockers", mirrored)
         self.assertIn("selected_self_heal_moves", mirrored)
         self.assertIn("selected_poison_status_moves", mirrored)
         self.assertIn("selected_paralysis_status_moves", mirrored)

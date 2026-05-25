@@ -213,6 +213,7 @@ class PokemonState:
     status: str = "none"
     toxic_count: int = 0
     sleep_turns: int = 0
+    substitute: bool = False
     moves: tuple[MoveState, ...] = ()
 
 
@@ -224,6 +225,8 @@ class BattleState:
     enemy_bench: tuple[PokemonState, ...] = ()
     weather: int = oracle.WEATHER_NONE
     turn: int = 1
+    player_safeguard: bool = False
+    enemy_safeguard: bool = False
 
 
 @dataclass(frozen=True)
@@ -839,6 +842,10 @@ def apply_move_after_action_check(
             }
         )
         return [updated]
+    if target.substitute:
+        raise SimulationInputError(
+            f"{side} damaging move into active Substitute is out of scope; substitute HP routing is not implemented"
+        )
     branches = []
     for critical_check in critical_results(attacker, move, rng, stream=stream):
         pre_variation_damage = predict_pre_variation_damage(
@@ -982,7 +989,10 @@ def apply_sleep_status_move(
             )
             out.append(updated)
             continue
-        blocked_reason = sleep_status_blocked_reason(get_side(branch["state"], target_side), move)
+        blocked_reason = (
+            status_application_safeguard_blocked_reason(branch["state"], target_side)
+            or sleep_status_blocked_reason(get_side(branch["state"], target_side), move)
+        )
         if blocked_reason is not None:
             out.append(
                 apply_sleep_status_change(
@@ -1147,6 +1157,16 @@ def apply_held_status_cure(
     return updated
 
 
+def status_application_safeguard_blocked_reason(state: BattleState, target_side: str) -> str | None:
+    if side_has_safeguard(state, target_side):
+        return "safeguard"
+    return None
+
+
+def side_has_safeguard(state: BattleState, side: str) -> bool:
+    return state.player_safeguard if side == "player" else state.enemy_safeguard
+
+
 def sleep_status_blocked_reason(target: PokemonState, move: MoveState) -> str | None:
     if type_effectiveness_factor(move.move_type_name, target.type_names) == 0:
         return "type_immunity"
@@ -1154,6 +1174,8 @@ def sleep_status_blocked_reason(target: PokemonState, move: MoveState) -> str | 
         return "already_asleep"
     if target.status != "none":
         return "already_statused"
+    if target.substitute:
+        return "substitute"
     return None
 
 
@@ -1218,7 +1240,10 @@ def apply_poison_status_change(
 ) -> dict[str, Any]:
     state: BattleState = branch["state"]
     target = get_side(state, target_side)
-    blocked_reason = poison_status_blocked_reason(target, move)
+    blocked_reason = status_application_safeguard_blocked_reason(state, target_side) or poison_status_blocked_reason(
+        target,
+        move,
+    )
     updated = clone_branch(branch)
     updated["rng_consumed"].extend(hit_check["raw_values"])
     if blocked_reason is None:
@@ -1261,6 +1286,8 @@ def poison_status_blocked_reason(target: PokemonState, move: MoveState) -> str |
         return "already_poisoned"
     if target.status != "none":
         return "already_statused"
+    if target.substitute:
+        return "substitute"
     return None
 
 
@@ -1325,7 +1352,10 @@ def apply_paralysis_status_change(
 ) -> dict[str, Any]:
     state: BattleState = branch["state"]
     target = get_side(state, target_side)
-    blocked_reason = paralysis_status_blocked_reason(target, move)
+    blocked_reason = status_application_safeguard_blocked_reason(state, target_side) or paralysis_status_blocked_reason(
+        target,
+        move,
+    )
     updated = clone_branch(branch)
     updated["rng_consumed"].extend(hit_check["raw_values"])
     if blocked_reason is None:
@@ -1364,6 +1394,8 @@ def paralysis_status_blocked_reason(target: PokemonState, move: MoveState) -> st
         return "already_paralyzed"
     if target.status != "none":
         return "already_statused"
+    if target.substitute:
+        return "substitute"
     return None
 
 
@@ -1425,7 +1457,14 @@ def apply_damaging_secondary_status(
 ) -> dict[str, Any]:
     state: BattleState = branch["state"]
     target = get_side(state, target_side)
-    blocked_reason = damaging_secondary_status_blocked_reason(target, move, status, effect_chance_check)
+    blocked_reason = damaging_secondary_status_blocked_reason(
+        state,
+        target_side,
+        target,
+        move,
+        status,
+        effect_chance_check,
+    )
     updated = clone_branch(branch)
     if blocked_reason is None:
         updated_target = replace_hp(target, target.hp, status=status, toxic_count=0 if status == "poison" else target.toxic_count)
@@ -1458,6 +1497,8 @@ def apply_damaging_secondary_status(
 
 
 def damaging_secondary_status_blocked_reason(
+    state: BattleState,
+    target_side: str,
     target: PokemonState,
     move: MoveState,
     status: str,
@@ -1468,11 +1509,20 @@ def damaging_secondary_status_blocked_reason(
     if target.hp <= 0:
         return "target_fainted"
     if status == "burn":
-        return burn_status_blocked_reason(target, move)
+        return burn_status_blocked_reason(target, move) or status_application_safeguard_blocked_reason(
+            state,
+            target_side,
+        )
     if status == "poison":
-        return poison_status_blocked_reason(target, move)
+        return poison_status_blocked_reason(target, move) or status_application_safeguard_blocked_reason(
+            state,
+            target_side,
+        )
     if status == "paralyze":
-        return paralysis_status_blocked_reason(target, move)
+        return paralysis_status_blocked_reason(target, move) or status_application_safeguard_blocked_reason(
+            state,
+            target_side,
+        )
     raise AssertionError(f"unsupported damaging secondary status {status!r}")
 
 
@@ -2042,10 +2092,10 @@ def apply_switch_action(
     bench = get_bench(state, side)
     if action.switch_index >= len(bench):
         raise SimulationInputError(f"{side} bench_index out of range")
-    incoming = reset_stat_stages(bench[action.switch_index])
+    incoming = reset_switch_state(bench[action.switch_index])
     if incoming.hp <= 0:
         raise SimulationInputError(f"{side} cannot switch to fainted bench Pokemon {incoming.name}")
-    outgoing = reset_stat_stages(active)
+    outgoing = reset_switch_state(active)
     updated_bench = tuple(
         outgoing if index == action.switch_index else pokemon
         for index, pokemon in enumerate(bench)
@@ -2764,6 +2814,8 @@ def parse_state(raw: Any) -> BattleState:
         enemy_bench=parse_bench(raw.get("enemy_bench", side_bench_raw(enemy_raw)), "enemy"),
         weather=parse_weather(raw.get("weather", "none")),
         turn=parse_positive_int(raw.get("turn", 1), "state.turn"),
+        player_safeguard=parse_side_safeguard(raw, player_raw, "player"),
+        enemy_safeguard=parse_side_safeguard(raw, enemy_raw, "enemy"),
     )
 
 
@@ -2771,6 +2823,15 @@ def side_bench_raw(raw: Any) -> Any:
     if isinstance(raw, dict):
         return raw.get("bench", [])
     return []
+
+
+def parse_side_safeguard(raw: dict[str, Any], side_raw: Any, side: str) -> bool:
+    key = f"{side}_safeguard"
+    if key in raw:
+        return parse_bool(raw[key], f"state.{key}")
+    if isinstance(side_raw, dict) and "safeguard" in side_raw:
+        return parse_bool(side_raw["safeguard"], f"state.{side}.safeguard")
+    return False
 
 
 def parse_bench(raw: Any, side: str) -> tuple[PokemonState, ...]:
@@ -2857,6 +2918,7 @@ def parse_pokemon(raw: Any, side: str) -> PokemonState:
         status=status,
         toxic_count=parse_non_negative_int(raw.get("toxic_count", 0), f"state.{side}.toxic_count"),
         sleep_turns=sleep_turns,
+        substitute=parse_bool(raw.get("substitute", False), f"state.{side}.substitute"),
         moves=tuple(parse_move(move, f"state.{side}.moves[{index}]") for index, move in enumerate(moves_raw)),
     )
 
@@ -3145,6 +3207,8 @@ def replace_side(state: BattleState, side: str, pokemon: PokemonState) -> Battle
             enemy_bench=state.enemy_bench,
             weather=state.weather,
             turn=state.turn,
+            player_safeguard=state.player_safeguard,
+            enemy_safeguard=state.enemy_safeguard,
         )
     return BattleState(
         player=state.player,
@@ -3153,6 +3217,8 @@ def replace_side(state: BattleState, side: str, pokemon: PokemonState) -> Battle
         enemy_bench=state.enemy_bench,
         weather=state.weather,
         turn=state.turn,
+        player_safeguard=state.player_safeguard,
+        enemy_safeguard=state.enemy_safeguard,
     )
 
 
@@ -3164,6 +3230,8 @@ def advance_turn(state: BattleState) -> BattleState:
         enemy_bench=state.enemy_bench,
         weather=state.weather,
         turn=state.turn + 1,
+        player_safeguard=state.player_safeguard,
+        enemy_safeguard=state.enemy_safeguard,
     )
 
 
@@ -3185,6 +3253,8 @@ def replace_side_and_bench(
             enemy_bench=state.enemy_bench,
             weather=state.weather,
             turn=state.turn,
+            player_safeguard=state.player_safeguard,
+            enemy_safeguard=state.enemy_safeguard,
         )
     return BattleState(
         player=state.player,
@@ -3193,6 +3263,8 @@ def replace_side_and_bench(
         enemy_bench=bench,
         weather=state.weather,
         turn=state.turn,
+        player_safeguard=state.player_safeguard,
+        enemy_safeguard=state.enemy_safeguard,
     )
 
 
@@ -3233,6 +3305,7 @@ def replace_hp(
         status=status_after,
         toxic_count=pokemon.toxic_count if toxic_count is None else toxic_count,
         sleep_turns=sleep_turns_after,
+        substitute=pokemon.substitute,
         moves=pokemon.moves,
     )
 
@@ -3246,6 +3319,10 @@ def reset_stat_stages(pokemon: PokemonState) -> PokemonState:
         sp_attack_stage=0,
         sp_defense_stage=0,
     )
+
+
+def reset_switch_state(pokemon: PokemonState) -> PokemonState:
+    return dataclass_replace(reset_stat_stages(pokemon), substitute=False)
 
 
 def replace_stat_stage(pokemon: PokemonState, key: str, stage: int) -> PokemonState:
@@ -3281,6 +3358,7 @@ def replace_move(pokemon: PokemonState, move_index: int, move: MoveState) -> Pok
         status=pokemon.status,
         toxic_count=pokemon.toxic_count,
         sleep_turns=pokemon.sleep_turns,
+        substitute=pokemon.substitute,
         moves=moves,
     )
 
@@ -3337,6 +3415,8 @@ def state_to_json(state: BattleState) -> dict[str, Any]:
     return {
         "turn": state.turn,
         "weather": state.weather,
+        "player_safeguard": state.player_safeguard,
+        "enemy_safeguard": state.enemy_safeguard,
         "player": pokemon_to_json(state.player),
         "enemy": pokemon_to_json(state.enemy),
         "player_bench": [pokemon_to_json(pokemon) for pokemon in state.player_bench],
@@ -3357,6 +3437,7 @@ def pokemon_to_json(pokemon: PokemonState) -> dict[str, Any]:
         "status": pokemon.status,
         "toxic_count": pokemon.toxic_count,
         "sleep_turns": pokemon.sleep_turns,
+        "substitute": pokemon.substitute,
         "stats": {
             "attack": pokemon.attack,
             "defense": pokemon.defense,
@@ -3465,7 +3546,7 @@ def coverage_report() -> dict[str, Any]:
                 "id": "selected_damaging_status_secondaries",
                 "source": "data/moves/effects.asm:BurnHit/PoisonHit/ParalyzeHit + engine/battle/effect_commands.asm:BattleCommand_EffectChance/BurnTarget/PoisonTarget/ParalyzeTarget",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
-                "notes": "Selected EFFECT_BURN_HIT, EFFECT_POISON_HIT, and EFFECT_PARALYZE_HIT damaging moves consume secondary effect-chance RNG after the successful hit path, apply burn/poison/paralysis after damage when source no-effect checks pass, and preserve later residual/speed effects. Thunder, Flame Wheel, Sacred Fire, poison multi-hit, freeze/confusion/stat-down secondaries, Substitute/Safeguard, and text/animation side effects remain out of scope.",
+                "notes": "Selected EFFECT_BURN_HIT, EFFECT_POISON_HIT, and EFFECT_PARALYZE_HIT damaging moves consume secondary effect-chance RNG after the successful hit path, apply burn/poison/paralysis after damage when source no-effect checks pass, and preserve later residual/speed effects. Safeguard blocks the secondary after a successful effect-chance check. Thunder, Flame Wheel, Sacred Fire, poison multi-hit, freeze/confusion/stat-down secondaries, active Substitute damage routing, and text/animation side effects remain out of scope.",
             },
             {
                 "id": "selected_drain_moves",
@@ -3477,7 +3558,7 @@ def coverage_report() -> dict[str, Any]:
                 "id": "selected_sleep_status_moves",
                 "source": "data/moves/effects.asm:DoSleep + engine/battle/effect_commands.asm:BattleCommand_SleepTarget and sleep action checks",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
-                "notes": "Selected EFFECT_SLEEP moves consume PP, run the basic accuracy check, branch fixed/sample/exhaustive duration RNG over stored sleep counters 3..5, deny sleeping actions while decrementing the counter, and let the waking action continue. Sleep Clause state, held sleep prevent items, Snore/Sleep Talk execution, Nightmare, Dream Eater, Substitute/Safeguard, tree-mon initial sleep, and text/animation side effects remain out of scope.",
+                "notes": "Selected EFFECT_SLEEP moves consume PP, run the basic accuracy check, branch fixed/sample/exhaustive duration RNG over stored sleep counters 3..5, deny sleeping actions while decrementing the counter, and let the waking action continue. Safeguard and Substitute blockers are modeled for caller-supplied active state. Sleep Clause state, held sleep prevent items, Snore/Sleep Talk execution, Nightmare, Dream Eater, tree-mon initial sleep, and text/animation side effects remain out of scope.",
             },
             {
                 "id": "selected_rest_move",
@@ -3492,6 +3573,12 @@ def coverage_report() -> dict[str, Any]:
                 "notes": "Selected held status cures run immediately after selected poison/paralysis/sleep status moves and selected damaging burn/poison/paralysis secondaries. PSNCUREBERRY cures poison/toxic, PRZCUREBERRY cures paralysis, ICE_BERRY cures burn, MINT_BERRY cures sleep, and MIRACLEBERRY cures those modeled statuses; the simulator clears status plus toxic/sleep counters and consumes the active held item. Held prevent items, freeze/confusion cures, Sleep Clause clearing from held sleep cures, text/animations, stat recalculation side effects, and party item writes beyond active state remain out of scope.",
             },
             {
+                "id": "selected_safeguard_substitute_blockers",
+                "source": "data/moves/effects.asm:DoSleep/DoPoison/DoParalyze/BurnHit/PoisonHit/ParalyzeHit + engine/battle/effect_commands.asm:SafeCheckSafeguard/CheckSubstituteOpp",
+                "gate": "python tools/audit/check_headless_battle_simulator.py",
+                "notes": "Caller-supplied active Safeguard blocks selected poison/paralysis/sleep status moves after hit checks and before sleep-duration RNG, and blocks selected damaging burn/poison/paralysis secondaries after successful effect-chance checks. Caller-supplied active Substitute blocks selected BP=0 poison/paralysis/sleep status moves; Safeguard wins when both are active. Damaging moves into active Substitute are rejected as out of scope because Substitute HP routing is not implemented.",
+            },
+            {
                 "id": "selected_self_heal_moves",
                 "source": "engine/battle/effect_commands.asm:BattleCommand_Heal + data/moves/effects.asm:Heal",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
@@ -3501,13 +3588,13 @@ def coverage_report() -> dict[str, Any]:
                 "id": "selected_poison_status_moves",
                 "source": "data/moves/effects.asm:Toxic/DoPoison + engine/battle/effect_commands.asm:BattleCommand_Poison",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
-                "notes": "PoisonPowder, Poison Gas, and Toxic consume PP, run the basic accuracy check, apply poison/toxic to healthy non-Poison non-immune targets, initialize toxic_count at 0, and report no-effect cases for Poison-type targets, type immunity, and already-statused targets. Safeguard, Substitute, held prevent items, damaging poison secondary effects outside the selected secondary subset, and text/animation side effects remain out of scope.",
+                "notes": "PoisonPowder, Poison Gas, and Toxic consume PP, run the basic accuracy check, apply poison/toxic to healthy non-Poison non-immune targets, initialize toxic_count at 0, and report no-effect cases for Safeguard, Substitute, Poison-type targets, type immunity, and already-statused targets. Held prevent items, damaging poison secondary effects outside the selected secondary subset, and text/animation side effects remain out of scope.",
             },
             {
                 "id": "selected_paralysis_status_moves",
                 "source": "data/moves/effects.asm:DoParalyze + engine/battle/effect_commands.asm:BattleCommand_Paralyze + type_passive_damage_mods.asm:TypePassive_GetUserParalysisFailThreshold_Far",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
-                "notes": "Thunder Wave, Stun Spore, and Glare consume PP after the full-paralysis gate, run the basic accuracy check, apply paralysis to healthy non-immune targets, reduce future turn-order speed with ApplyPrzEffectOnSpeed's Electric/Fighting type-passive paralysis modifiers, and branch full-paralysis action denial with TypePassive_GetUserParalysisFailThreshold_Far's Fighting thresholds before PP decrement. Type immunity and already-statused targets report no effect. Safeguard, Substitute, held prevent items, non-paralyzed Electric speed passives, and damaging paralysis secondary effects outside the selected secondary subset remain out of scope.",
+                "notes": "Thunder Wave, Stun Spore, and Glare consume PP after the full-paralysis gate, run the basic accuracy check, apply paralysis to healthy non-immune targets, reduce future turn-order speed with ApplyPrzEffectOnSpeed's Electric/Fighting type-passive paralysis modifiers, and branch full-paralysis action denial with TypePassive_GetUserParalysisFailThreshold_Far's Fighting thresholds before PP decrement. Safeguard, Substitute, type immunity, and already-statused targets report no effect. Held prevent items, non-paralyzed Electric speed passives, and damaging paralysis secondary effects outside the selected secondary subset remain out of scope.",
             },
             {
                 "id": "multi_turn_selected_action_progression",
@@ -3557,7 +3644,7 @@ def coverage_report() -> dict[str, Any]:
             "Pursuit-on-switch, Spikes/switch-in entry effects, switch-triggered abilities/passives, and switch memory side effects",
             "RNG-consuming mechanics outside speed ties/Boss AI selector choice/wild random move choice/auto-replace fallback/critical hits/accuracy/damage variation/selected damaging status secondary chance, Quick Claw/Choice Scarf turn-order effects",
             "accuracy/evasion stat-stage move effects, damaging secondary stat effects outside selected burn/poison/paralysis status secondaries, multi-stat chains outside Dragon Dance/Calm Mind/Quiver Dance, BrightPowder, Protect, Fly/Dig, Lock-On, X Accuracy, Baton Pass/Psych Up, Substitute/Mist blockers, badge boosts, status speed modifiers, passive stat/speed/accuracy bonuses, and passive accuracy bonuses",
-            "freeze, sleep mechanics outside selected sleep moves/Rest/action denial, burn application outside selected damaging burn secondaries, Safeguard/Substitute, held status prevent items, freeze/confusion held cures, Sleep Clause clearing from held sleep cures, non-paralyzed Electric speed passives, volatile effects, weather/time healing, drain effects outside selected EFFECT_LEECH_HIT moves, Heal Bell, unsupported item recovery/cures, Air Balloon pop, Substitute-blocked contact, Focus Punch break, after-hit text/script effects outside supported HP mutations, Struggle, PP Up bit packing, Mimic/Transform PP routing, and full PP legality selection",
+            "freeze, sleep mechanics outside selected sleep moves/Rest/action denial, burn application outside selected damaging burn secondaries, Safeguard/Substitute creation and expiration, Substitute HP routing for damaging moves, held status prevent items, freeze/confusion held cures, Sleep Clause clearing from held sleep cures, non-paralyzed Electric speed passives, volatile effects, weather/time healing, drain effects outside selected EFFECT_LEECH_HIT moves, Heal Bell, unsupported item recovery/cures, Air Balloon pop, Substitute-blocked contact, Focus Punch break, after-hit text/script effects outside supported HP mutations, Struggle, PP Up bit packing, Mimic/Transform PP routing, and full PP legality selection",
             "Boss AI live score generation and switch candidate/confidence generation",
             "graphics, text scripts, animations, EXP, and party writes",
         ],

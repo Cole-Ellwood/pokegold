@@ -10,7 +10,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from tools.boss_ai_debugger.rom_scenarios import select_from_score_bytes
-from tools.headless_battle.simulator import scenario_template, simulate_payload, run_self_test
+from tools.headless_battle.simulator import SimulationInputError, scenario_template, simulate_payload, run_self_test
 
 
 def main() -> int:
@@ -441,6 +441,73 @@ def main() -> int:
         )
         return 1
     print("selected_held_status_cures: PASS psn_cure prz_cure burn_cure sleep_cure miracle_toxic")
+    sleep_safeguard_payload = scenario_template()
+    sleep_safeguard_payload["state"]["player"]["moves"] = [{"name": "SLEEP_POWDER"}]
+    sleep_safeguard_payload["state"]["enemy"]["safeguard"] = True
+    sleep_safeguard_payload["state"]["enemy"]["moves"][0]["bp"] = 0
+    sleep_safeguard_payload["rng"] = {"mode": "fixed", "values": [0]}
+    sleep_safeguard_outcome = simulate_payload(sleep_safeguard_payload)["outcomes"][0]
+    sleep_safeguard_event = sleep_safeguard_outcome["events"][0]
+    if (
+        sleep_safeguard_event.get("type") != "status_no_effect"
+        or sleep_safeguard_event.get("blocked_reason") != "safeguard"
+        or sleep_safeguard_event.get("sleep_duration") is not None
+        or sleep_safeguard_outcome.get("rng_consumed") != [0]
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: sleep safeguard mismatch: {sleep_safeguard_outcome}",
+            file=sys.stderr,
+        )
+        return 1
+    poison_substitute_payload = scenario_template()
+    poison_substitute_payload["state"]["player"]["moves"] = [{"name": "POISONPOWDER"}]
+    poison_substitute_payload["state"]["enemy"]["substitute"] = True
+    poison_substitute_payload["state"]["enemy"]["moves"][0]["bp"] = 0
+    poison_substitute_event = simulate_payload(poison_substitute_payload)["outcomes"][0]["events"][0]
+    if poison_substitute_event.get("type") != "status_no_effect" or poison_substitute_event.get("blocked_reason") != "substitute":
+        print(
+            f"Headless battle simulator audit FAILED: poison substitute mismatch: {poison_substitute_event}",
+            file=sys.stderr,
+        )
+        return 1
+    burn_safeguard_payload = scenario_template()
+    burn_safeguard_payload["state"]["player"]["moves"] = [{"name": "EMBER"}]
+    burn_safeguard_payload["state"]["enemy"]["safeguard"] = True
+    burn_safeguard_payload["state"]["enemy"]["types"] = ["NORMAL", "NORMAL"]
+    burn_safeguard_payload["state"]["enemy"]["hp"] = 40
+    burn_safeguard_payload["state"]["enemy"]["max_hp"] = 40
+    burn_safeguard_payload["state"]["enemy"]["moves"][0]["bp"] = 0
+    burn_safeguard_payload["rng"] = {"mode": "fixed", "values": [255, 255, 0]}
+    burn_safeguard_events = simulate_payload(burn_safeguard_payload)["outcomes"][0]["events"]
+    if (
+        burn_safeguard_events[0].get("type") != "damage"
+        or burn_safeguard_events[1].get("type") != "status_no_effect"
+        or burn_safeguard_events[1].get("blocked_reason") != "safeguard"
+        or burn_safeguard_events[1].get("effect_chance_check", {}).get("success") is not True
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: damaging safeguard mismatch: {burn_safeguard_events}",
+            file=sys.stderr,
+        )
+        return 1
+    damaging_substitute_payload = scenario_template()
+    damaging_substitute_payload["state"]["enemy"]["substitute"] = True
+    try:
+        simulate_payload(damaging_substitute_payload)
+    except SimulationInputError as exc:
+        if "Substitute is out of scope" not in str(exc):
+            print(
+                f"Headless battle simulator audit FAILED: damaging substitute error mismatch: {exc}",
+                file=sys.stderr,
+            )
+            return 1
+    else:
+        print(
+            "Headless battle simulator audit FAILED: damaging substitute should be out of scope",
+            file=sys.stderr,
+        )
+        return 1
+    print("selected_safeguard_substitute_blockers: PASS sleep_safeguard poison_substitute burn_safeguard damaging_substitute_boundary")
     rest_payload = scenario_template()
     rest_payload["state"]["player"]["hp"] = 10
     rest_payload["state"]["player"]["max_hp"] = 40

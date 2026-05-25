@@ -114,6 +114,7 @@ secondaries, selected Absorb/Mega Drain/Leech Life/Giga Drain drain moves,
 selected EFFECT_SLEEP moves plus Rest and sleep action denial/wake handling,
 selected held PSNCUREBERRY/PRZCUREBERRY/ICE_BERRY/MINT_BERRY/MIRACLEBERRY
 status cures after supported status applications,
+selected caller-supplied Safeguard/Substitute status blockers,
 repeated action maps with `max_turns`, `auto_replace_or` for simple KO/send-out
 loops, ROM-mirrored `wild_random_move`, selected switch actions, caller-supplied
 replacement after KO, explicit enemy `auto_replace` using the basic source type
@@ -139,10 +140,11 @@ Pass/Psych Up, Substitute/Mist blockers, badge boosts, status speed, passive
 stat/speed/accuracy bonuses, status application outside selected
 poison/paralysis/sleep-status moves and selected damaging status secondaries,
 sleep mechanics outside selected sleep moves/Rest/action denial, freeze, burn
-application outside selected damaging burn secondaries, Safeguard/Substitute,
-held status prevent items, freeze/confusion held cures, Sleep Clause clearing
-from held sleep cures, non-paralyzed Electric speed passives, weather/time
-healing, drain effects outside selected EFFECT_LEECH_HIT
+application outside selected damaging burn secondaries, Safeguard/Substitute
+creation and expiration, Substitute HP routing for damaging moves, held status
+prevent items, freeze/confusion held cures, Sleep Clause clearing from held sleep
+cures, non-paralyzed Electric speed passives, weather/time healing, drain effects
+outside selected EFFECT_LEECH_HIT
 moves, Heal Bell, RNG-consuming mechanics outside the listed branch points, live
 Boss AI scoring, or scripts until the simulator report and audit say that
 surface exists.
