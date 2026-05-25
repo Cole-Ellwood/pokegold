@@ -225,7 +225,7 @@ BossAI_ApplyDamageDominanceBias::
 	ld a, [wBossAITemp3]
 	cp c
 	jr z, .next
-	call .MoveIdNeutralSTABRank
+	call .MoveIdMatchupSTABRank
 	ld d, a
 	ld a, [wBossAITemp2]
 	add 32
@@ -264,7 +264,7 @@ BossAI_ApplyDamageDominanceBias::
 	call .ScalePowerByMatchup
 	jr .ApplySTABToRank
 
-.MoveIdNeutralSTABRank
+.MoveIdMatchupSTABRank
 	ld a, c
 	and a
 	ret z
@@ -289,7 +289,26 @@ BossAI_ApplyDamageDominanceBias::
 	call GetFarByte
 	pop bc
 	ld c, a
-	ld a, b
+	; Scale by type matchup vs the active player defender so the comparison
+	; ranks the same way .CurrentMoveDamageRank does for the current move.
+	; Cross-bank note: this file lives in bank 0x11, but the boss-AI matchup
+	; helpers live in bank 0x0e. A plain `call BossAI_CheckTypeMatchupNoItem`
+	; jumped into the BossAIMatchupTables data table (broke the first 2026-05-25
+	; build). The fix swaps the comparison move's type into
+	; wEnemyMoveStruct + MOVE_TYPE and farcalls the *uncached* wrapper, which
+	; reads MOVE_TYPE and sets hl internally, so the farcall hl-clobber is
+	; harmless and the cached current-move matchup key/result are untouched.
+	push bc
+	ld a, [wEnemyMoveStruct + MOVE_TYPE]
+	push af
+	ld a, c
+	ld [wEnemyMoveStruct + MOVE_TYPE], a
+	farcall BossAI_CheckEnemyMoveTypeMatchupVsPlayerNoItemUncached
+	pop af
+	ld [wEnemyMoveStruct + MOVE_TYPE], a
+	pop bc
+	ld a, [wTypeMatchup]
+	call .ScalePowerByMatchup
 	jr .ApplySTABToRank
 
 .ScalePowerByMatchup

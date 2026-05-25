@@ -155,8 +155,8 @@ Boss AI paths are cited per split source file below.
 | Per-boss role-effect tables (`BossAIChuckRoleEffects` etc.) | `engine/battle/ai/boss_policy_move.asm` |
 | Per-trainer tier (class+id → EARLY/MID/LATE) | `BossAITierMap:1` in `data/trainers/ai_tiers.asm`; consumed by `LoadBossAITier:69` in `engine/battle/read_trainer_attributes.asm` |
 | Per-class tier-weight-row override | `BossAITierRampMap:51` in `data/trainers/ai_tiers.asm` (default = `tier - 1`, set at `LoadBossAITier:97-98`) |
-| Tier weight table (rows indexed by tier-weight-row) | `BossAITierWeights` (`engine/battle/ai/boss_policy_move.asm:6299`) |
-| Plausible-threat type table | `BossAI_PlausibleThreatTypes` (`engine/battle/ai/boss_platform.asm:1349`) |
+| Tier weight table (rows indexed by tier-weight-row) | `BossAITierWeights` (`engine/battle/ai/boss_policy_move.asm:6328`) |
+| Plausible-threat type table | `BossAI_PlausibleThreatTypes` (`engine/battle/ai/boss_platform.asm:1387`) |
 | Trainer attributes (base reward, AI flags) — separate concern, do not confuse with tier | `data/trainers/attributes.asm` (consumed at `engine/battle/read_trainer_attributes.asm:67`) |
 
 ### Memory: per-battle state record/access
@@ -169,7 +169,7 @@ Boss AI paths are cited per split source file below.
 | Record opponent KO | `BossAI_RecordPlayerFaint` (`engine/battle/ai/boss_platform.asm:186`) |
 | Public alive bitmap (per seen species) | `BossAI_SetSeenPlayerAliveBit` (`engine/battle/ai/boss_platform.asm:217`), `BossAI_ClearSeenPlayerAliveBit` (`engine/battle/ai/boss_platform.asm:227`), `BossAI_SeenPlayerSpeciesBitFromC` (`engine/battle/ai/boss_platform.asm:238`) |
 | Add a revealed move to memory | `BossAI_RecordRevealedPlayerMove` (`engine/battle/ai/boss_platform.asm:260`), `BossAI_AddRevealedMoveToSpeciesMask` (`engine/battle/ai/boss_platform.asm:467`), `BossAI_SetRevealedSpeciesMaskBit` (`engine/battle/ai/boss_platform.asm:498`) |
-| Switch cooldown | `BossAI_DecaySwitchCooldown` (`engine/battle/ai/boss_policy_switch.asm:291`), `BossAI_OnSwitchExecuted` (`engine/battle/ai/boss_policy_switch.asm:276`) |
+| Switch cooldown | `BossAI_DecaySwitchCooldown` (`engine/battle/ai/boss_policy_switch.asm:495`), `BossAI_OnSwitchExecuted` (`engine/battle/ai/boss_policy_switch.asm:480`) |
 
 ### Memory: per-species lookup
 
@@ -179,13 +179,13 @@ slot), plus a per-species mirror of `wPlayerUsedMoves`.
 
 | Need | Label / line |
 | --- | --- |
-| Slot index for active species | `BossAI_GetActiveSpeciesSeenIndex` (`engine/battle/ai/boss_platform.asm:1004`), `BossAI_GetActiveSpeciesSeenBit` (`engine/battle/ai/boss_platform.asm:1266`) |
+| Slot index for active species | `BossAI_GetActiveSpeciesSeenIndex` (`engine/battle/ai/boss_platform.asm:1042`), `BossAI_GetActiveSpeciesSeenBit` (`engine/battle/ai/boss_platform.asm:1304`) |
 | Pointer to active species' revealed-type mask | `BossAI_GetActiveSpeciesRevealedMaskPointer` (`engine/battle/ai/boss_platform.asm:355`) |
 | Load per-species used-moves into vanilla `wPlayerUsedMoves` | `BossAI_LoadPlayerUsedMovesForActiveSpecies` (`engine/battle/ai/boss_platform.asm:374`) |
 | Mirror current `wPlayerUsedMoves` back to species slot | `BossAI_MirrorPlayerUsedMovesToSpeciesSlot` (`engine/battle/ai/boss_platform.asm:401`) |
 | Pointer to active species' used-moves slot | `BossAI_GetActiveSpeciesUsedMovesPointer` (`engine/battle/ai/boss_platform.asm:417`) |
-| Test a bit in the revealed-species mask | `BossAI_TestRevealedSpeciesMaskBit` (`engine/battle/ai/boss_platform.asm:826`) |
-| Check active species has revealed any super-effective move | `BossAI_HasRevealedSuperEffectiveMove` (`engine/battle/ai/boss_policy_move.asm:3851`) |
+| Test a bit in the revealed-species mask | `BossAI_TestRevealedSpeciesMaskBit` (`engine/battle/ai/boss_platform.asm:864`) |
+| Check active species has revealed any super-effective move | `BossAI_HasRevealedSuperEffectiveMove` (`engine/battle/ai/boss_policy_move.asm:3804`) |
 
 ### Adaptive lead pick
 
@@ -202,18 +202,18 @@ keyed on species + level.
 
 | Need | Label / line |
 | --- | --- |
-| Build mask for current player active | `BossAI_ComputePlayerPlausibleTypeMask` (`engine/battle/ai/boss_policy_move.asm:4796`) |
-| Public STAB seed | `BossAI_AddPublicSTABThreatsToMask` (`engine/battle/ai/boss_policy_move.asm:4839`) |
-| Wipe cache | `BossAI_ClearPlausibleMask` (`engine/battle/ai/boss_platform.asm:1051`) |
-| Add revealed damaging types | `BossAI_AddRevealedDamagingTypesToMask` (`engine/battle/ai/boss_policy_move.asm:4882`) |
-| Add a single move id (plausible / likely) | `BossAI_AddMoveIdToPlausibleMask` (`engine/battle/ai/boss_policy_move.asm:4910`), `BossAI_AddMoveIdToLikelyMask` (`engine/battle/ai/boss_policy_move.asm:4940`) |
-| Set bit by type id | `BossAI_SetPlausibleAndLikelyMaskBit` (`engine/battle/ai/boss_platform.asm:1069`), `BossAI_SetPlausibleMaskBit` (`engine/battle/ai/boss_platform.asm:1077`), `BossAI_SetLikelyMaskBit` (`engine/battle/ai/boss_platform.asm:1105`) |
-| Walk species + pre-evolutions | `BossAI_AddSpeciesAndPreEvolutionMovesToMask` (`engine/battle/ai/boss_policy_move.asm:4973`), `BossAI_LoadPublicThreatSourceSpecies` (`engine/battle/ai/boss_policy_move.asm:5003`), `BossAI_AdvanceToPreEvolutionThreatSource` (`engine/battle/ai/boss_policy_move.asm:5028`) |
-| Per-source contribution | `BossAI_AddCurrentSpeciesSpeculativeMoveThreats` (`engine/battle/ai/boss_policy_move.asm:5010`), `BossAI_AddCurrentSpeciesLikelyMoveThreats` (`engine/battle/ai/boss_policy_move.asm:5019`) |
-| Move-source pools | `BossAI_AddBaseTMHMMovesToMask` (`engine/battle/ai/boss_policy_move.asm:5037`), `BossAI_AddSpeciesLevelUpMovesToMask` (`engine/battle/ai/boss_policy_move.asm:5071`), `BossAI_AddSpeciesLevelUpMovesToLikelyMask` (`engine/battle/ai/boss_policy_move.asm:5128`), `BossAI_AddSpeciesEggMovesToMask` (`engine/battle/ai/boss_policy_move.asm:5185`) |
-| Test bits | `BossAI_TestPlausibleMaskBit` (`engine/battle/ai/boss_platform.asm:1136`), `BossAI_TestLikelyMaskBit` (`engine/battle/ai/boss_platform.asm:1168`) |
-| Risk weight per tier | `BossAI_GetTierPlausibleRiskWeight` (`engine/battle/ai/boss_policy_move.asm:6191`), `BossAI_GetSpeculativePlausibleRiskWeight` (`engine/battle/ai/boss_policy_move.asm:6204`) |
-| Static type tables | `BossAI_PlausibleThreatTypes` (`engine/battle/ai/boss_platform.asm:1349`), `BossAIHiddenPowerThreatTypes` (`engine/battle/ai/boss_platform.asm:1370`) |
+| Build mask for current player active | `BossAI_ComputePlayerPlausibleTypeMask` (`engine/battle/ai/boss_policy_move.asm:4749`) |
+| Public STAB seed | `BossAI_AddPublicSTABThreatsToMask` (`engine/battle/ai/boss_policy_move.asm:4792`) |
+| Wipe cache | `BossAI_ClearPlausibleMask` (`engine/battle/ai/boss_platform.asm:1089`) |
+| Add revealed damaging types | `BossAI_AddRevealedDamagingTypesToMask` (`engine/battle/ai/boss_policy_move.asm:4835`) |
+| Add a single move id (plausible / likely) | `BossAI_AddMoveIdToPlausibleMask` (`engine/battle/ai/boss_policy_move.asm:4863`), `BossAI_AddMoveIdToLikelyMask` (`engine/battle/ai/boss_policy_move.asm:4893`) |
+| Set bit by type id | `BossAI_SetPlausibleAndLikelyMaskBit` (`engine/battle/ai/boss_platform.asm:1107`), `BossAI_SetPlausibleMaskBit` (`engine/battle/ai/boss_platform.asm:1115`), `BossAI_SetLikelyMaskBit` (`engine/battle/ai/boss_platform.asm:1143`) |
+| Walk species + pre-evolutions | `BossAI_AddSpeciesAndPreEvolutionMovesToMask` (`engine/battle/ai/boss_policy_move.asm:4926`), `BossAI_LoadPublicThreatSourceSpecies` (`engine/battle/ai/boss_policy_move.asm:4956`), `BossAI_AdvanceToPreEvolutionThreatSource` (`engine/battle/ai/boss_policy_move.asm:4981`) |
+| Per-source contribution | `BossAI_AddCurrentSpeciesSpeculativeMoveThreats` (`engine/battle/ai/boss_policy_move.asm:4963`), `BossAI_AddCurrentSpeciesLikelyMoveThreats` (`engine/battle/ai/boss_policy_move.asm:4972`) |
+| Move-source pools | `BossAI_AddBaseTMHMMovesToMask` (`engine/battle/ai/boss_policy_move.asm:4990`), `BossAI_AddSpeciesLevelUpMovesToMask` (`engine/battle/ai/boss_policy_move.asm:5024`), `BossAI_AddSpeciesLevelUpMovesToLikelyMask` (`engine/battle/ai/boss_policy_move.asm:5081`), `BossAI_AddSpeciesEggMovesToMask` (`engine/battle/ai/boss_policy_move.asm:5138`) |
+| Test bits | `BossAI_TestPlausibleMaskBit` (`engine/battle/ai/boss_platform.asm:1174`), `BossAI_TestLikelyMaskBit` (`engine/battle/ai/boss_platform.asm:1206`) |
+| Risk weight per tier | `BossAI_GetTierPlausibleRiskWeight` (`engine/battle/ai/boss_policy_move.asm:6180`), `BossAI_GetSpeculativePlausibleRiskWeight` (`engine/battle/ai/boss_policy_move.asm:6193`) |
+| Static type tables | `BossAI_PlausibleThreatTypes` (`engine/battle/ai/boss_platform.asm:1387`), `BossAIHiddenPowerThreatTypes` (`engine/battle/ai/boss_platform.asm:1408`) |
 
 ### Move scoring overlay (`BossAI_ApplyMoveModel`)
 
@@ -230,20 +230,20 @@ Top-level entry and named scoring helpers:
 | Need | Label / line |
 | --- | --- |
 | Outer entry | `BossAI_ApplyMoveModel` (`engine/battle/ai/boss_policy_move.asm:172`) |
-| Score read/write helpers | `BossAI_LoadScorePointer` (`engine/battle/ai/boss_platform.asm:1210`), `BossAI_SetScoreHL` (`engine/battle/ai/boss_platform.asm:1220`), `BossAI_EncourageScoreHL` (`engine/battle/ai/boss_platform.asm:1226`), `BossAI_DiscourageScoreHL` (`engine/battle/ai/boss_platform.asm:1241`) |
-| Apply signed delta | `BossAI_ApplySignedDeltaToScore` (`engine/battle/ai/boss_policy_move.asm:5461`) |
-| Plan-driven move bias | `BossAI_ApplyPlanMoveBias` (`engine/battle/ai/boss_policy_move.asm:5218`) |
-| Scout-pivot move bias | `BossAI_ApplyScoutMoveBias` (`engine/battle/ai/boss_policy_move.asm:5313`) |
-| Repeat-move penalty | `BossAI_ApplyRepeatPenalty` (`engine/battle/ai/boss_policy_move.asm:5333`) |
-| Save / restore enemy move struct (so scoring can probe other moves non-destructively) | `BossAI_SaveEnemyMoveStruct` (`engine/battle/ai/boss_platform.asm:967`), `BossAI_RestoreEnemyMoveStruct` (`engine/battle/ai/boss_platform.asm:981`) |
+| Score read/write helpers | `BossAI_LoadScorePointer` (`engine/battle/ai/boss_platform.asm:1248`), `BossAI_SetScoreHL` (`engine/battle/ai/boss_platform.asm:1258`), `BossAI_EncourageScoreHL` (`engine/battle/ai/boss_platform.asm:1264`), `BossAI_DiscourageScoreHL` (`engine/battle/ai/boss_platform.asm:1279`) |
+| Apply signed delta | `BossAI_ApplySignedDeltaToScore` (`engine/battle/ai/boss_policy_move.asm:5414`) |
+| Plan-driven move bias | `BossAI_ApplyPlanMoveBias` (`engine/battle/ai/boss_policy_move.asm:5171`) |
+| Scout-pivot move bias | `BossAI_ApplyScoutMoveBias` (`engine/battle/ai/boss_policy_move.asm:5266`) |
+| Repeat-move penalty | `BossAI_ApplyRepeatPenalty` (`engine/battle/ai/boss_policy_move.asm:5286`) |
+| Save / restore enemy move struct (so scoring can probe other moves non-destructively) | `BossAI_SaveEnemyMoveStruct` (`engine/battle/ai/boss_platform.asm:1005`), `BossAI_RestoreEnemyMoveStruct` (`engine/battle/ai/boss_platform.asm:1019`) |
 
 Public-failure gates inside `ApplyMoveModel` (search by local label):
 
-- `.UtilityMoveWouldFailPublicly` (`engine/battle/ai/boss_policy_move.asm:507`) — Substitute, Light Screen, Reflect, Safeguard, Protect, Disable, Encore, Mean Look, Dream Eater, Nightmare, Rain/Sunny Day with weather already up.
-- `.StatusMoveWouldFailPublicly` (`engine/battle/ai/boss_policy_move.asm:487`) — already-statused target, Safeguard, etc.
-- `.DarkShieldBlocksStatusEffect` (`engine/battle/ai/boss_policy_move.asm:656`), `.DarkShieldBlocksUtilityEffect` (`engine/battle/ai/boss_policy_move.asm:672`) — full-Dark player passive shield gating.
-- `.EnemyStatusMoveTypeMissesPlayer` (`engine/battle/ai/boss_policy_move.asm:751`) — Thunder Wave into Ground, Glare into Ghost, Toxic into Poison/Steel.
-- `.HeldItemMoveBlocked` (`engine/battle/ai/boss_policy_move.asm:409`), `.AssaultVestBlocksCurrentMove` (`engine/battle/ai/boss_policy_move.asm:457`) — own held-item legality.
+- `.UtilityMoveWouldFailPublicly` (`engine/battle/ai/boss_policy_move.asm:512`) — Substitute, Light Screen, Reflect, Safeguard, Protect, Disable, Encore, Mean Look, Dream Eater, Nightmare, Rain/Sunny Day with weather already up.
+- `.StatusMoveWouldFailPublicly` (`engine/battle/ai/boss_policy_move.asm:492`) — already-statused target, Safeguard, etc.
+- `.DarkShieldBlocksStatusEffect` (`engine/battle/ai/boss_policy_move.asm:661`), `.DarkShieldBlocksUtilityEffect` (`engine/battle/ai/boss_policy_move.asm:677`) — full-Dark player passive shield gating.
+- `.EnemyStatusMoveTypeMissesPlayer` (`engine/battle/ai/boss_policy_move.asm:756`) — Thunder Wave into Ground, Glare into Ghost, Toxic into Poison/Steel.
+- `.HeldItemMoveBlocked` (`engine/battle/ai/boss_policy_move.asm:414`), `.AssaultVestBlocksCurrentMove` (`engine/battle/ai/boss_policy_move.asm:462`) — own held-item legality.
 
 For the full current behavior list (one-line each, with rationale), read
 `docs/boss_ai_post_patch_notes.md` § *Implemented Patch Summary*.
@@ -252,7 +252,7 @@ For the full current behavior list (one-line each, with rationale), read
 
 | Need | Label / line |
 | --- | --- |
-| Pick best vs. second-best, weighted dice on score gap | `BossAI_SelectMove` (`engine/battle/ai/boss_policy_move.asm:2845`) |
+| Pick best vs. second-best, weighted dice on score gap | `BossAI_SelectMove` (`engine/battle/ai/boss_policy_move.asm:2778`) |
 | Trace top-3 moves and scores | `BossAI_TraceTopMoves` in `engine/battle/ai/boss_trace_topmoves.asm` (own SECTION; called via `farcall` from `BossAI_SelectMove`) |
 
 Dice contract (comment at `engine/battle/ai/boss_policy_move.asm:137-141`): gap ≥6 → 90% best, gap ≥3 →
@@ -263,11 +263,11 @@ Dice contract (comment at `engine/battle/ai/boss_policy_move.asm:137-141`): gap 
 
 | Need | Label / line |
 | --- | --- |
-| Does current move have KO pressure? | `BossAI_CurrentEnemyMoveHasKOPressure` (`engine/battle/ai/boss_policy_move.asm:3211`) |
-| Pressure score (0-N) | `BossAI_CurrentEnemyMovePressureScore` (`engine/battle/ai/boss_policy_move.asm:3245`) |
-| Public scored power | `BossAI_CurrentEnemyMoveScoredPower` (`engine/battle/ai/boss_policy_move.asm:3343`) |
-| Apply known modifiers | `BossAI_ApplyEnemyKnownPressureModifiers` (`engine/battle/ai/boss_policy_move.asm:3470`), `BossAI_ApplyEnemyHeldItemPressure` (`engine/battle/ai/boss_policy_move.asm:3477`), `BossAI_ApplyEnemyOffensivePassivePressure` (`engine/battle/ai/boss_policy_move.asm:3542`), `BossAI_ApplyPlayerDefensivePassivePressure` (`engine/battle/ai/boss_policy_move.asm:3576`) |
-| Has any KO move at all | `BossAI_HasAnyKOMove` (`engine/battle/ai/boss_platform.asm:861`) |
+| Does current move have KO pressure? | `BossAI_CurrentEnemyMoveHasKOPressure` (`engine/battle/ai/boss_policy_move.asm:3144`) |
+| Pressure score (0-N) | `BossAI_CurrentEnemyMovePressureScore` (`engine/battle/ai/boss_policy_move.asm:3178`) |
+| Public scored power | `BossAI_CurrentEnemyMoveScoredPower` (`engine/battle/ai/boss_policy_move.asm:3276`) |
+| Apply known modifiers | `BossAI_ApplyEnemyKnownPressureModifiers` (`engine/battle/ai/boss_policy_move.asm:3403`), `BossAI_ApplyEnemyHeldItemPressure` (`engine/battle/ai/boss_policy_move.asm:3410`), `BossAI_ApplyEnemyOffensivePassivePressure` (`engine/battle/ai/boss_policy_move.asm:3475`), `BossAI_ApplyPlayerDefensivePassivePressure` (`engine/battle/ai/boss_policy_move.asm:3509`) |
+| Has any KO move at all | `BossAI_HasAnyKOMove` (`engine/battle/ai/boss_platform.asm:899`) |
 
 ### Type matchup (no-item)
 
@@ -279,24 +279,24 @@ resistance in no-item Boss AI scoring.
 
 | Need | Label / line |
 | --- | --- |
-| Player move vs. enemy active | `BossAI_CheckPlayerMoveTypeMatchupVsEnemyNoItem` (`engine/battle/ai/boss_platform.asm:565`) |
-| Player move vs. enemy bench (base) | `BossAI_CheckPlayerMoveTypeMatchupVsBaseNoItem` (`engine/battle/ai/boss_platform.asm:581`) |
-| Enemy move vs. player active | `BossAI_CheckEnemyMoveTypeMatchupVsPlayerNoItem` (`engine/battle/ai/boss_platform.asm:597`) |
-| Generic | `BossAI_CheckTypeMatchupNoItem` (`engine/battle/ai/boss_platform.asm:612`) |
-| Dragon's Majesty overlay | `BossAI_ApplyDragonsMajestyNoItem` (`engine/battle/ai/boss_platform.asm:688`) |
-| Type contribution (per-type damage component) | `BossAI_PlayerTypeContribution` (`engine/battle/ai/boss_platform.asm:771`), `BossAI_EnemyTypeContribution` (`engine/battle/ai/boss_platform.asm:776`), `BossAI_TypeContributionAtHL` (`engine/battle/ai/boss_platform.asm:780`) |
+| Player move vs. enemy active | `BossAI_CheckPlayerMoveTypeMatchupVsEnemyNoItem` (`engine/battle/ai/boss_platform.asm:577`) |
+| Player move vs. enemy bench (base) | `BossAI_CheckPlayerMoveTypeMatchupVsBaseNoItem` (`engine/battle/ai/boss_platform.asm:593`) |
+| Enemy move vs. player active | `BossAI_CheckEnemyMoveTypeMatchupVsPlayerNoItem` (`engine/battle/ai/boss_platform.asm:609`) |
+| Generic | `BossAI_CheckTypeMatchupNoItem` (`engine/battle/ai/boss_platform.asm:650`) |
+| Dragon's Majesty overlay | `BossAI_ApplyDragonsMajestyNoItem` (`engine/battle/ai/boss_platform.asm:726`) |
+| Type contribution (per-type damage component) | `BossAI_PlayerTypeContribution` (`engine/battle/ai/boss_platform.asm:809`), `BossAI_EnemyTypeContribution` (`engine/battle/ai/boss_platform.asm:814`), `BossAI_TypeContributionAtHL` (`engine/battle/ai/boss_platform.asm:818`) |
 
 ### Switch decision
 
 | Need | Label / line |
 | --- | --- |
 | Top-level switch / item dispatch | `BossAI_SwitchOrTryItem` (`engine/battle/ai/boss_policy_switch.asm:17`) |
-| Confidence dice | `BossAI_ComputeSwitchConfidence` (`engine/battle/ai/boss_policy_switch.asm:753`) (margin-based 55/75/90% — comment at `:2641-2644`) |
-| Threshold by tier | `BossAI_GetSwitchThreshold` (`engine/battle/ai/boss_policy_switch.asm:364`) |
-| Loop-prevention penalty | `BossAI_NeedsLoopPenalty` (`engine/battle/ai/boss_policy_switch.asm:444`) |
-| Predict opponent switch | `BossAI_PredictPlayerSwitch` (`engine/battle/ai/boss_policy_move.asm:3784`) |
-| Safe-to-switch check | `BossAI_CheckAbleToSwitchSafe` (`engine/battle/ai/boss_policy_switch.asm:300`), `BossAI_FindFirstAliveSwitchCandidate` (`engine/battle/ai/boss_policy_switch.asm:322`) |
-| Public faster check | `BossAI_PublicEnemyFaster` (`engine/battle/ai/boss_policy_move.asm:3709`) |
+| Confidence dice | `BossAI_ComputeSwitchConfidence` (`engine/battle/ai/boss_policy_switch.asm:878`) (margin-based 55/75/90% — comment at `:2641-2644`) |
+| Threshold by tier | `BossAI_GetSwitchThreshold` (`engine/battle/ai/boss_policy_switch.asm:568`) |
+| Loop-prevention penalty | `BossAI_NeedsLoopPenalty` (`engine/battle/ai/boss_policy_switch.asm:583`) |
+| Predict opponent switch | `BossAI_PredictPlayerSwitch` (`engine/battle/ai/boss_policy_move.asm:3737`) |
+| Safe-to-switch check | `BossAI_CheckAbleToSwitchSafe` (`engine/battle/ai/boss_policy_switch.asm:504`), `BossAI_FindFirstAliveSwitchCandidate` (`engine/battle/ai/boss_policy_switch.asm:526`) |
+| Public faster check | `BossAI_PublicEnemyFaster` (`engine/battle/ai/boss_policy_move.asm:3642`) |
 | Vanilla switch helpers used | `engine/battle/ai/switch.asm` (`CheckPlayerMoveTypeMatchups:1`, `CheckAbleToSwitch:176`, `FindAliveEnemyMons*`) |
 
 ### Switch predicates / heuristics
@@ -306,16 +306,16 @@ Adding new reasons usually means adding one of these alongside.
 
 | Need | Label / line |
 | --- | --- |
-| Public threat vs. current active | `BossAI_PlayerHasPublicThreatVsEnemy` (`engine/battle/ai/boss_policy_move.asm:3053`) |
-| Revealed priority threat | `BossAI_PlayerHasRevealedPriorityThreat` (`engine/battle/ai/boss_policy_move.asm:3128`) |
-| Imminent KO prevention | `BossAI_IsImminentKOPrevention` (`engine/battle/ai/boss_policy_switch.asm:493`) |
-| Perish escape urgency | `BossAI_EnemyPerishEscapeUrgent` (`engine/battle/ai/boss_policy_switch.asm:507`) |
-| Bench revenge respect | `BossAI_ShouldRespectPotentialPlayerRevenge` (`engine/battle/ai/boss_policy_switch.asm:523`) |
-| Scarf-swing possible | `BossAI_IsScarfSwingPossible` (`engine/battle/ai/boss_policy_switch.asm:587`) |
-| Suspicious switch-in (coverage/pivot) | `BossAI_IsSuspiciousSwitchIn` (`engine/battle/ai/boss_policy_switch.asm:593`) |
-| Immunity-pivot opportunity | `BossAI_IsImmunityPivotOpportunity` (`engine/battle/ai/boss_policy_switch.asm:635`) |
-| Ace-timing hook | `BossAI_AceTimingHook` (`engine/battle/ai/boss_policy_switch.asm:707`) |
-| HP gating | `BossAI_EnemyBelowOneThirdHP` (`engine/battle/ai/boss_policy_move.asm:3632`) |
+| Public threat vs. current active | `BossAI_PlayerHasPublicThreatVsEnemy` (`engine/battle/ai/boss_policy_move.asm:2986`) |
+| Revealed priority threat | `BossAI_PlayerHasRevealedPriorityThreat` (`engine/battle/ai/boss_policy_move.asm:3061`) |
+| Imminent KO prevention | `BossAI_IsImminentKOPrevention` (`engine/battle/ai/boss_policy_switch.asm:632`) |
+| Perish escape urgency | `BossAI_EnemyPerishEscapeUrgent` (`engine/battle/ai/boss_policy_switch.asm:646`) |
+| Bench revenge respect | `BossAI_ShouldRespectPotentialPlayerRevenge` (`engine/battle/ai/boss_policy_switch.asm:662`) |
+| Scarf-swing possible | `BossAI_IsScarfSwingPossible` (`engine/battle/ai/boss_policy_switch.asm:726`) |
+| Suspicious switch-in (coverage/pivot) | `BossAI_IsSuspiciousSwitchIn` (`engine/battle/ai/boss_policy_switch.asm:732`) |
+| Immunity-pivot opportunity | `BossAI_IsImmunityPivotOpportunity` (`engine/battle/ai/boss_policy_switch.asm:774`) |
+| Ace-timing hook | `BossAI_AceTimingHook` (`engine/battle/ai/boss_policy_switch.asm:832`) |
+| HP gating | `BossAI_EnemyBelowOneThirdHP` (`engine/battle/ai/boss_policy_move.asm:3565`) |
 
 ### Switch-candidate risk refinement
 
@@ -324,28 +324,28 @@ layer.
 
 | Need | Label / line |
 | --- | --- |
-| Refine candidate set | `BossAI_RefineSwitchCandidateForPlausibleRisk` (`engine/battle/ai/boss_policy_switch.asm:835`) |
-| Per-candidate risk score | `BossAI_ComputeSwitchCandidateRisk` (`engine/battle/ai/boss_policy_switch.asm:918`) |
-| Apply to confidence | `BossAI_ApplyPlausibleRiskToSwitchConfidence` (`engine/battle/ai/boss_policy_switch.asm:1218`) |
-| Plan bias on switch | `BossAI_ApplyPlanSwitchBias` (`engine/battle/ai/boss_policy_switch.asm:1449`) |
-| Sack-instead-of-switch | `BossAI_ShouldSackInsteadOfSwitch` (`engine/battle/ai/boss_policy_switch.asm:1513`) |
-| Wincon protection | `BossAI_IsSwitchingIntoWinconRisk` (`engine/battle/ai/boss_policy_switch.asm:1531`) |
-| Mark scout pivot | `BossAI_MaybeMarkScoutPivot` (`engine/battle/ai/boss_policy_move.asm:6285`) |
-| Public bench threat score | `BossAI_SeenBenchThreatScore` (`engine/battle/ai/boss_policy_move.asm:3907`) |
+| Refine candidate set | `BossAI_RefineSwitchCandidateForPlausibleRisk` (`engine/battle/ai/boss_policy_switch.asm:960`) |
+| Per-candidate risk score | `BossAI_ComputeSwitchCandidateRisk` (`engine/battle/ai/boss_policy_switch.asm:1043`) |
+| Apply to confidence | `BossAI_ApplyPlausibleRiskToSwitchConfidence` (`engine/battle/ai/boss_policy_switch.asm:1343`) |
+| Plan bias on switch | `BossAI_ApplyPlanSwitchBias` (`engine/battle/ai/boss_policy_switch.asm:1574`) |
+| Sack-instead-of-switch | `BossAI_ShouldSackInsteadOfSwitch` (`engine/battle/ai/boss_policy_switch.asm:1638`) |
+| Wincon protection | `BossAI_IsSwitchingIntoWinconRisk` (`engine/battle/ai/boss_policy_switch.asm:1656`) |
+| Mark scout pivot | `BossAI_MaybeMarkScoutPivot` (`engine/battle/ai/boss_policy_move.asm:6314`) |
+| Public bench threat score | `BossAI_SeenBenchThreatScore` (`engine/battle/ai/boss_policy_move.asm:3860`) |
 
 ### Held-item / Choice locking
 
 | Need | Label / line |
 | --- | --- |
-| Get own held effect | `BossAI_GetEnemyHeldEffect` (`engine/battle/ai/boss_platform.asm:932`) |
-| Currently Choice-locked? Which move? | `BossAI_EnemyChoiceLockedMove` (`engine/battle/ai/boss_platform.asm:942`), `BossAI_IsChoiceHeldEffect` (`engine/battle/ai/boss_platform.asm:958`) |
+| Get own held effect | `BossAI_GetEnemyHeldEffect` (`engine/battle/ai/boss_platform.asm:970`) |
+| Currently Choice-locked? Which move? | `BossAI_EnemyChoiceLockedMove` (`engine/battle/ai/boss_platform.asm:980`), `BossAI_IsChoiceHeldEffect` (`engine/battle/ai/boss_platform.asm:996`) |
 
 ### Plan / role / wincon
 
 | Need | Label / line |
 | --- | --- |
-| Pick or refresh plan | `BossAI_SelectPlanIfNeeded` (`engine/battle/ai/boss_policy_move.asm:4002`) |
-| Find a party mon by role tag | `BossAI_FindPartyMonByRole` (`engine/battle/ai/boss_policy_move.asm:4442`) |
+| Pick or refresh plan | `BossAI_SelectPlanIfNeeded` (`engine/battle/ai/boss_policy_move.asm:3955`) |
+| Find a party mon by role tag | `BossAI_FindPartyMonByRole` (`engine/battle/ai/boss_policy_move.asm:4395`) |
 | Per-boss role-bias dispatcher (reads `wTrainerClass`, jumps to per-boss branch) | `.ApplyRoleBias` (`engine/battle/ai/boss_policy_move.asm:2397`) (under `BossAI_ApplyMoveModel`) |
 | Per-boss scoring branches | `.falkner` (`engine/battle/ai/boss_policy_move.asm:2455`), `.rival` (`engine/battle/ai/boss_policy_move.asm:2447`), `.chuck` (`engine/battle/ai/boss_policy_move.asm:2490`), `.jasmine` (`engine/battle/ai/boss_policy_move.asm:2497`), `.pryce` (`engine/battle/ai/boss_policy_move.asm:2508`), `.clair` (`engine/battle/ai/boss_policy_move.asm:2517`), `.will` (`engine/battle/ai/boss_policy_move.asm:2524`), `.bruno` (`engine/battle/ai/boss_policy_move.asm:2531`), `.karen` (`engine/battle/ai/boss_policy_move.asm:2538`), `.koga` (`engine/battle/ai/boss_policy_move.asm:2545`), `.champion` (`engine/battle/ai/boss_policy_move.asm:2554`) |
 | Per-boss role-effect tables (consumed by the branches above) | `BossAIChuckRoleEffects` (`engine/battle/ai/boss_policy_move.asm:6362`), `BossAIJasmineRoleEffects` (`engine/battle/ai/boss_policy_move.asm:6369`), `BossAIPryceRoleEffects` (`engine/battle/ai/boss_policy_move.asm:6376`), `BossAIClairRoleEffects` (`engine/battle/ai/boss_policy_move.asm:6386`), `BossAIWillRoleEffects` (`engine/battle/ai/boss_policy_move.asm:6395`), `BossAIBrunoRoleEffects` (`engine/battle/ai/boss_policy_move.asm:6403`), `BossAIKarenRoleEffects` (`engine/battle/ai/boss_policy_move.asm:6410`), `BossAIKogaRoleEffects` (`engine/battle/ai/boss_policy_move.asm:6420`), `BossAIChampionRoleEffects` (`engine/battle/ai/boss_policy_move.asm:6429`) |
@@ -354,26 +354,26 @@ layer.
 
 | Need | Label / line |
 | --- | --- |
-| Setup effect? | `BossAI_IsSetupEffect` (`engine/battle/ai/boss_policy_move.asm:4535`), `BossAI_IsCurrentEnemySetupMove` (`engine/battle/ai/boss_policy_move.asm:4562`) |
-| Status effect? | `BossAI_IsStatusEffect` (`engine/battle/ai/boss_policy_move.asm:4762`) |
-| Denial effect? | `BossAI_IsDenialEffect` (`engine/battle/ai/boss_policy_move.asm:4773`) |
-| Move category (phys/spec/status) | `BossAI_CurrentEnemyMoveCategory` (`engine/battle/ai/boss_platform.asm:730`) |
-| Risky accuracy? | `BossAI_CurrentEnemyMoveAccuracyRisky` (`engine/battle/ai/boss_policy_move.asm:3674`) |
-| Dark-shield eligible? | `BossAI_CurrentMoveDarkShieldEligible` (`engine/battle/ai/boss_platform.asm:751`) |
-| Ghost-type enemy? | `BossAI_EnemyIsGhostType` (`engine/battle/ai/boss_policy_move.asm:2822`) |
-| Species can evolve | `BossAI_EnemySpeciesCanEvolve` (`engine/battle/ai/boss_policy_move.asm:6152`) |
-| Known item nullifies threat type | `BossAI_EnemyKnownItemNullifiesThreatType` (`engine/battle/ai/boss_policy_move.asm:6130`) |
-| Static effect tables | `BossAIDenyKOEffects` (`engine/battle/ai/boss_policy_move.asm:6311`), `BossAIStatusEffects` (`engine/battle/ai/boss_policy_move.asm:6328`), `BossAIRiskyEffects` (`engine/battle/ai/boss_policy_move.asm:6504`) |
+| Setup effect? | `BossAI_IsSetupEffect` (`engine/battle/ai/boss_policy_move.asm:4488`), `BossAI_IsCurrentEnemySetupMove` (`engine/battle/ai/boss_policy_move.asm:4515`) |
+| Status effect? | `BossAI_IsStatusEffect` (`engine/battle/ai/boss_policy_move.asm:4715`) |
+| Denial effect? | `BossAI_IsDenialEffect` (`engine/battle/ai/boss_policy_move.asm:4726`) |
+| Move category (phys/spec/status) | `BossAI_CurrentEnemyMoveCategory` (`engine/battle/ai/boss_platform.asm:768`) |
+| Risky accuracy? | `BossAI_CurrentEnemyMoveAccuracyRisky` (`engine/battle/ai/boss_policy_move.asm:3607`) |
+| Dark-shield eligible? | `BossAI_CurrentMoveDarkShieldEligible` (`engine/battle/ai/boss_platform.asm:789`) |
+| Ghost-type enemy? | `BossAI_EnemyIsGhostType` (`engine/battle/ai/boss_policy_move.asm:2755`) |
+| Species can evolve | `BossAI_EnemySpeciesCanEvolve` (`engine/battle/ai/boss_policy_move.asm:6141`) |
+| Known item nullifies threat type | `BossAI_EnemyKnownItemNullifiesThreatType` (`engine/battle/ai/boss_policy_move.asm:6119`) |
+| Static effect tables | `BossAIDenyKOEffects` (`engine/battle/ai/boss_policy_move.asm:6340`), `BossAIStatusEffects` (`engine/battle/ai/boss_policy_move.asm:6357`), `BossAIRiskyEffects` (`engine/battle/ai/boss_policy_move.asm:6367`) |
 
 ### Lookahead / multi-turn projection
 
 | Need | Label / line |
 | --- | --- |
-| Apply lookahead bonuses to top-N moves | `BossAI_ApplyLookaheadToTopMoveCandidates` (`engine/battle/ai/boss_policy_move.asm:5363`) |
-| Evaluate one action's lookahead | `BossAI_EvaluateActionLookahead` (`engine/battle/ai/boss_policy_move.asm:5494`) |
-| Multi-turn projection (tier-based future-discounted) | `BossAI_ApplyMultiTurnProjection` (`engine/battle/ai/boss_policy_move.asm:5644`) |
-| Clamp signed delta | `BossAI_ClampSignedLookaheadDelta` (`engine/battle/ai/boss_policy_move.asm:5800`) |
-| Threat type / severity probes | `BossAI_GetPrimaryThreatType` (`engine/battle/ai/boss_policy_move.asm:5829`), `BossAI_GetRevealedMoveThreatTypeAndSeverity` (`engine/battle/ai/boss_policy_move.asm:5995`), `BossAI_GetTypeThreatSeverityVsEnemyMon` (`engine/battle/ai/boss_policy_move.asm:6028`), `BossAI_AdjustThreatSeverityForEnemyKnownDefense` (`engine/battle/ai/boss_policy_move.asm:6056`) |
+| Apply lookahead bonuses to top-N moves | `BossAI_ApplyLookaheadToTopMoveCandidates` (`engine/battle/ai/boss_policy_move.asm:5316`) |
+| Evaluate one action's lookahead | `BossAI_EvaluateActionLookahead` (`engine/battle/ai/boss_policy_move.asm:5447`) |
+| Multi-turn projection (tier-based future-discounted) | `BossAI_ApplyMultiTurnProjection` (`engine/battle/ai/boss_policy_move.asm:5597`) |
+| Clamp signed delta | `BossAI_ClampSignedLookaheadDelta` (`engine/battle/ai/boss_policy_move.asm:5765`) |
+| Threat type / severity probes | `BossAI_GetPrimaryThreatType` (`engine/battle/ai/boss_policy_move.asm:5794`), `BossAI_GetRevealedMoveThreatTypeAndSeverity` (`engine/battle/ai/boss_policy_move.asm:5982`), `BossAI_GetTypeThreatSeverityVsEnemyMon` (`engine/battle/ai/boss_policy_move.asm:6017`), `BossAI_AdjustThreatSeverityForEnemyKnownDefense` (`engine/battle/ai/boss_policy_move.asm:6045`) |
 
 ### Tier ramp
 
@@ -381,26 +381,26 @@ layer.
 | --- | --- |
 | Tier value | `wBossAITier`, set in `engine/battle/read_trainer_attributes.asm:72,95` |
 | Tier weight row | `wBossAITierWeightRow`, set at `read_trainer_attributes.asm:73,98,126` |
-| Weight table | `BossAITierWeights` (`engine/battle/ai/boss_policy_move.asm:6299`) |
+| Weight table | `BossAITierWeights` (`engine/battle/ai/boss_policy_move.asm:6328`) |
 | Per-trainer tier ramp map | `BossAITierRampMap:51` in `data/trainers/ai_tiers.asm` (consumer: `read_trainer_attributes.asm:115`; design comment: `engine/battle/ai/boss_policy_move.asm:5029`) |
-| Roll thresholds | `BossAI_GetScoutRollThreshold` (`engine/battle/ai/boss_policy_move.asm:6212`), `BossAI_GetTierPlausibleRiskWeight` (`engine/battle/ai/boss_policy_move.asm:6191`) |
+| Roll thresholds | `BossAI_GetScoutRollThreshold` (`engine/battle/ai/boss_policy_move.asm:6201`), `BossAI_GetTierPlausibleRiskWeight` (`engine/battle/ai/boss_policy_move.asm:6180`) |
 
 ### Scout / repeat tracking
 
 | Need | Label / line |
 | --- | --- |
-| Has active species been scouted? | `BossAI_IsActiveSpeciesScouted` (`engine/battle/ai/boss_platform.asm:1286`) |
-| Mark scouted | `BossAI_SetActiveSpeciesScouted` (`engine/battle/ai/boss_platform.asm:1300`) |
-| Decide to scout | `BossAI_ShouldScout` (`engine/battle/ai/boss_policy_move.asm:6227`) |
-| Same-move repeat counter | `BossAI_UpdateRepeatTracker` (`engine/battle/ai/boss_platform.asm:1320`) |
-| Mark scouted if scout move | `BossAI_MarkScoutedIfScoutMove` (`engine/battle/ai/boss_policy_move.asm:6256`) |
+| Has active species been scouted? | `BossAI_IsActiveSpeciesScouted` (`engine/battle/ai/boss_platform.asm:1324`) |
+| Mark scouted | `BossAI_SetActiveSpeciesScouted` (`engine/battle/ai/boss_platform.asm:1338`) |
+| Decide to scout | `BossAI_ShouldScout` (`engine/battle/ai/boss_policy_move.asm:6216`) |
+| Same-move repeat counter | `BossAI_UpdateRepeatTracker` (`engine/battle/ai/boss_platform.asm:1358`) |
+| Mark scouted if scout move | `BossAI_MarkScoutedIfScoutMove` (`engine/battle/ai/boss_policy_move.asm:6285`) |
 
 ### Helpers used everywhere
 
 | Need | Label / line |
 | --- | --- |
 | Read move attribute / byte | `BossAI_GetMoveAttr` (`engine/battle/ai/boss_platform.asm:453`), `BossAI_GetMoveByte` (`engine/battle/ai/boss_platform.asm:462`) |
-| Decrement pressure / severity counters | `BossAI_DecPressureB` (`engine/battle/ai/boss_policy_move.asm:3624`), `BossAI_DecThreatSeverityB` (`engine/battle/ai/boss_policy_move.asm:6144`) |
+| Decrement pressure / severity counters | `BossAI_DecPressureB` (`engine/battle/ai/boss_policy_move.asm:3557`), `BossAI_DecThreatSeverityB` (`engine/battle/ai/boss_policy_move.asm:6133`) |
 
 ## Boss AI WRAM Block
 
