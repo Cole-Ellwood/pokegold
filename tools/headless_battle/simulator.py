@@ -4258,6 +4258,12 @@ def coverage_report() -> dict[str, Any]:
                 "source": "tools.headless_battle.rom_differential",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
                 "notes": "Selected damaging secondary status application is ROM-component checked for EffectChance plus BurnTarget, PoisonTarget, and ParalyzeTarget: Ember burn, Sludge poison, Body Slam paralysis, and a Body Slam effect-chance failure control match the headless status event and final target status. This proves the status/effect-chance component boundary only; full damaging-turn parity for those moves still relies on the separate damage oracle and NormalHit golden.",
+            },
+            {
+                "id": "drain_component_differential",
+                "source": "tools.headless_battle.rom_differential",
+                "gate": "python tools/audit/check_headless_battle_simulator.py",
+                "notes": "Selected drain healing is ROM-component checked for BattleCommand_DrainTarget: Giga Drain half-heal, Absorb minimum-one heal, and Giga Drain max-HP cap match the headless drain event and final active HP. This proves the post-damage drain healing component only; full LeechHit parity still relies on the separate damage oracle and NormalHit golden.",
             }
         ],
         "source_mirrored_pending_differential": [
@@ -4355,7 +4361,7 @@ def coverage_report() -> dict[str, Any]:
                 "id": "selected_drain_moves",
                 "source": "data/moves/effects.asm:LeechHit + engine/battle/effect_commands.asm:BattleCommand_DrainTarget/SapHealth",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
-                "notes": "Selected EFFECT_LEECH_HIT moves Absorb, Mega Drain, Leech Life, and Giga Drain heal the user after successful active HP damage by half actual damage with a minimum of 1 and a max-HP cap, and carry healed HP into later turns. Into active Substitute, these moves follow CheckHit's drain-substitute miss path after damage variation and before accuracy RNG. Dream Eater, Leech Seed, Big Root-style modifiers, and exact combined ordering claims with after-hit held items remain out of scope.",
+                "notes": "Selected EFFECT_LEECH_HIT moves Absorb, Mega Drain, Leech Life, and Giga Drain heal the user after successful active HP damage by half actual damage with a minimum of 1 and a max-HP cap, and carry healed HP into later turns. BattleCommand_DrainTarget's healing component is byte-proven by drain_component_differential for half-heal, minimum-one heal, and max-HP cap cases; full LeechHit turn parity remains pending. Into active Substitute, these moves follow CheckHit's drain-substitute miss path after damage variation and before accuracy RNG. Dream Eater, Leech Seed, Big Root-style modifiers, and exact combined ordering claims with after-hit held items remain out of scope.",
             },
             {
                 "id": "selected_sleep_status_moves",

@@ -30,6 +30,8 @@ TACKLE_MOVE_ID = 0x21
 BODY_SLAM_MOVE_ID = 0x22
 EMBER_MOVE_ID = 0x34
 SLUDGE_MOVE_ID = 0x7C
+ABSORB_MOVE_ID = 0x47
+GIGA_DRAIN_MOVE_ID = 0xCA
 NORMAL_TYPE = 0x00
 POISON_TYPE = 0x03
 FLYING_TYPE = 0x02
@@ -37,7 +39,7 @@ FIRE_TYPE = 0x14
 LINK_MODE = 1
 FIXED_RNG_VALUES = (255, 255)
 CALL_BUDGET = 50_000
-STATUS_TARGET_CALL_BUDGET = 100_000
+COMPONENT_NONRETURN_CALL_BUDGET = 500
 PSN_STATUS = 1 << 3
 BRN_STATUS = 1 << 4
 PAR_STATUS = 1 << 6
@@ -125,6 +127,60 @@ STATUS_COMPONENT_SCENARIOS = (
 
 
 @dataclass(frozen=True)
+class DrainComponentScenario:
+    scenario_id: str
+    move_name: str
+    move_id: int
+    hp_before: int
+    max_hp: int
+    damage: int
+    expected_raw_heal: int
+    expected_heal: int
+    expected_hp_after: int
+    headless_target_hp: int
+
+
+DRAIN_COMPONENT_SCENARIOS = (
+    DrainComponentScenario(
+        scenario_id="component_giga_drain_half_heal",
+        move_name="GIGA_DRAIN",
+        move_id=GIGA_DRAIN_MOVE_ID,
+        hp_before=5,
+        max_hp=40,
+        damage=15,
+        expected_raw_heal=7,
+        expected_heal=7,
+        expected_hp_after=12,
+        headless_target_hp=40,
+    ),
+    DrainComponentScenario(
+        scenario_id="component_absorb_min_one_heal",
+        move_name="ABSORB",
+        move_id=ABSORB_MOVE_ID,
+        hp_before=5,
+        max_hp=40,
+        damage=1,
+        expected_raw_heal=1,
+        expected_heal=1,
+        expected_hp_after=6,
+        headless_target_hp=1,
+    ),
+    DrainComponentScenario(
+        scenario_id="component_giga_drain_max_hp_cap",
+        move_name="GIGA_DRAIN",
+        move_id=GIGA_DRAIN_MOVE_ID,
+        hp_before=39,
+        max_hp=40,
+        damage=15,
+        expected_raw_heal=7,
+        expected_heal=1,
+        expected_hp_after=40,
+        headless_target_hp=40,
+    ),
+)
+
+
+@dataclass(frozen=True)
 class RomNormalHitResult:
     scenario_id: str
     player_hp_before: int
@@ -152,6 +208,18 @@ class RomStatusComponentResult:
     effect_chance_returned: bool
     target_command_returned: bool
     target_command_pc: int
+
+
+@dataclass(frozen=True)
+class RomDrainComponentResult:
+    scenario_id: str
+    move_name: str
+    hp_before: int
+    hp_after: int
+    max_hp: int
+    damage: int
+    returned: bool
+    post_pc: int
 
 
 @dataclass(frozen=True)
@@ -331,6 +399,27 @@ def _seed_rom_status_component(
     _write_byte(pyboy, syms, "wLinkBattleRNs", scenario.effect_chance_rng, 0)
 
 
+def _seed_rom_drain_component(
+    pyboy: Any,
+    syms: dict[str, tuple[int, int]],
+    scenario: DrainComponentScenario,
+) -> None:
+    _seed_common(pyboy, syms)
+
+    _write_byte(pyboy, syms, "wBattleMonSpecies", 155)
+    _write_byte(pyboy, syms, "wBattleMonLevel", 5)
+    _write_byte(pyboy, syms, "wBattleMonType1", FIRE_TYPE)
+    _write_byte(pyboy, syms, "wBattleMonType2", FIRE_TYPE)
+    _write_byte(pyboy, syms, "wBattleMonItem", 0)
+    _write_u16(pyboy, syms, "wBattleMonHP", scenario.hp_before)
+    _write_u16(pyboy, syms, "wBattleMonMaxHP", scenario.max_hp)
+    _write_byte(pyboy, syms, "wCurPlayerMove", scenario.move_id)
+    _write_byte(pyboy, syms, "wCurMoveNum", 0)
+    _write_byte(pyboy, syms, "hBattleTurn", 0)
+    _write_byte(pyboy, syms, "wBattleMode", 1)
+    _write_u16(pyboy, syms, "wCurDamage", scenario.damage)
+
+
 def run_rom_normal_hit() -> RomNormalHitResult:
     rom = find_rom("pokegold_debug")
     syms = SymbolTable.load(find_sym("pokegold_debug")).as_legacy_dict()
@@ -383,7 +472,7 @@ def run_rom_status_components() -> tuple[RomStatusComponentResult, ...]:
                 pyboy,
                 syms,
                 scenario.target_command,
-                budget=STATUS_TARGET_CALL_BUDGET,
+                budget=COMPONENT_NONRETURN_CALL_BUDGET,
             )
             results.append(
                 RomStatusComponentResult(
@@ -398,6 +487,40 @@ def run_rom_status_components() -> tuple[RomStatusComponentResult, ...]:
                     effect_chance_returned=effect_returned,
                     target_command_returned=target_returned,
                     target_command_pc=target_pc,
+                )
+            )
+        return tuple(results)
+    finally:
+        cache.stop()
+
+
+def run_rom_drain_components() -> tuple[RomDrainComponentResult, ...]:
+    rom = find_rom("pokegold_debug")
+    syms = SymbolTable.load(find_sym("pokegold_debug")).as_legacy_dict()
+    cache = BootStateCache(rom)
+    pyboy = cache.prime()
+    results: list[RomDrainComponentResult] = []
+    try:
+        for scenario in DRAIN_COMPONENT_SCENARIOS:
+            pyboy = cache.restore()
+            _seed_rom_drain_component(pyboy, syms, scenario)
+            hp_before = _read_u16(pyboy, syms, "wBattleMonHP")
+            _, returned, post_pc = call_function_safe(
+                pyboy,
+                syms,
+                "BattleCommand_DrainTarget",
+                budget=COMPONENT_NONRETURN_CALL_BUDGET,
+            )
+            results.append(
+                RomDrainComponentResult(
+                    scenario_id=scenario.scenario_id,
+                    move_name=scenario.move_name,
+                    hp_before=hp_before,
+                    hp_after=_read_u16(pyboy, syms, "wBattleMonHP"),
+                    max_hp=_read_u16(pyboy, syms, "wBattleMonMaxHP"),
+                    damage=_read_u16(pyboy, syms, "wCurDamage"),
+                    returned=returned,
+                    post_pc=post_pc,
                 )
             )
         return tuple(results)
@@ -507,6 +630,57 @@ def damaging_status_component_payload(scenario: StatusComponentScenario) -> dict
     }
 
 
+def drain_component_payload(scenario: DrainComponentScenario) -> dict[str, Any]:
+    return {
+        "rng": {"mode": "fixed", "values": [255, 255]},
+        "state": {
+            "weather": "none",
+            "weather_count": 0,
+            "turn": 1,
+            "player": {
+                "species": "CYNDAQUIL",
+                "level": 5,
+                "types": ["FIRE", "FIRE"],
+                "hp": scenario.hp_before,
+                "max_hp": scenario.max_hp,
+                "stats": {
+                    "attack": 10,
+                    "defense": 9,
+                    "speed": 11,
+                    "sp_attack": 11,
+                    "sp_defense": 10,
+                },
+                "moves": [{"name": scenario.move_name}],
+            },
+            "enemy": {
+                "species": "PIDGEY",
+                "level": 5,
+                "types": ["NORMAL", "NORMAL"],
+                "hp": scenario.headless_target_hp,
+                "max_hp": 40,
+                "stats": {
+                    "attack": 6,
+                    "defense": 6,
+                    "speed": 7,
+                    "sp_attack": 5,
+                    "sp_defense": 5,
+                },
+                "moves": [
+                    {
+                        "name": "TACKLE",
+                        "type": "NORMAL",
+                        "bp": 0,
+                        "priority": 0,
+                        "accuracy": 255,
+                        "pp": 35,
+                    }
+                ],
+            },
+        },
+        "actions": {"player": {"type": "move", "move": 0}, "enemy": {"type": "move", "move": 0}},
+    }
+
+
 def compare_normal_hit_fixed_rng() -> DifferentialResult:
     rom = run_rom_normal_hit()
     report = simulate_payload(normal_hit_payload())
@@ -579,6 +753,111 @@ def compare_normal_hit_fixed_rng() -> DifferentialResult:
             "rng_consumed": outcome.get("rng_consumed", []),
             "damage_event": damage_event,
         },
+    )
+
+
+def compare_drain_component() -> DifferentialResult:
+    rom_results = {result.scenario_id: result for result in run_rom_drain_components()}
+    errors: list[str] = []
+    headless_results: dict[str, Any] = {}
+    rom_report: dict[str, Any] = {}
+
+    for scenario in DRAIN_COMPONENT_SCENARIOS:
+        rom = rom_results[scenario.scenario_id]
+        report = simulate_payload(drain_component_payload(scenario))
+        outcome = report["outcomes"][0]
+        drain_events = [
+            event
+            for event in outcome["events"]
+            if event.get("actor") == "player"
+            and event.get("move") == scenario.move_name
+            and event.get("type") in {"drain_heal", "drain_heal_no_effect", "drain_no_effect"}
+        ]
+        damage_events = [
+            event
+            for event in outcome["events"]
+            if event.get("actor") == "player" and event.get("move") == scenario.move_name and event.get("type") == "damage"
+        ]
+        if len(drain_events) != 1:
+            errors.append(f"{scenario.scenario_id}: expected one headless drain event, got {len(drain_events)}")
+            drain_event: dict[str, Any] = {}
+        else:
+            drain_event = drain_events[0]
+        if len(damage_events) != 1:
+            errors.append(f"{scenario.scenario_id}: expected one headless damage event, got {len(damage_events)}")
+            damage_event: dict[str, Any] = {}
+        else:
+            damage_event = damage_events[0]
+
+        if damage_event.get("actual_damage") != scenario.damage:
+            errors.append(
+                f"{scenario.scenario_id}: headless damage mismatch: "
+                f"headless={damage_event.get('actual_damage')} expected={scenario.damage}"
+            )
+        if drain_event.get("damage_drained") != scenario.damage:
+            errors.append(
+                f"{scenario.scenario_id}: drain damage mismatch: "
+                f"headless={drain_event.get('damage_drained')} expected={scenario.damage}"
+            )
+        if drain_event.get("raw_heal") != scenario.expected_raw_heal:
+            errors.append(
+                f"{scenario.scenario_id}: raw heal mismatch: "
+                f"headless={drain_event.get('raw_heal')} expected={scenario.expected_raw_heal}"
+            )
+        if drain_event.get("heal") != scenario.expected_heal:
+            errors.append(
+                f"{scenario.scenario_id}: heal mismatch: "
+                f"headless={drain_event.get('heal')} expected={scenario.expected_heal}"
+            )
+        if drain_event.get("hp_before") != scenario.hp_before or drain_event.get("hp_after") != scenario.expected_hp_after:
+            errors.append(
+                f"{scenario.scenario_id}: headless HP mismatch: "
+                f"{drain_event.get('hp_before')}->{drain_event.get('hp_after')} "
+                f"expected={scenario.hp_before}->{scenario.expected_hp_after}"
+            )
+        if outcome["state"]["player"].get("hp") != scenario.expected_hp_after:
+            errors.append(
+                f"{scenario.scenario_id}: final player HP mismatch: "
+                f"headless={outcome['state']['player'].get('hp')} expected={scenario.expected_hp_after}"
+            )
+
+        if rom.hp_before != scenario.hp_before:
+            errors.append(f"{scenario.scenario_id}: ROM hp_before={rom.hp_before}, expected {scenario.hp_before}")
+        if rom.hp_after != scenario.expected_hp_after:
+            errors.append(
+                f"{scenario.scenario_id}: ROM hp_after mismatch: "
+                f"rom={rom.hp_after} expected={scenario.expected_hp_after}"
+            )
+        if rom.damage != scenario.damage:
+            errors.append(f"{scenario.scenario_id}: ROM damage={rom.damage}, expected {scenario.damage}")
+        if rom.returned:
+            errors.append(
+                f"{scenario.scenario_id}: BattleCommand_DrainTarget unexpectedly returned; "
+                "fixture expects animation/text non-return after HP write"
+            )
+
+        rom_report[scenario.scenario_id] = {
+            "move": rom.move_name,
+            "hp_before": rom.hp_before,
+            "hp_after": rom.hp_after,
+            "max_hp": rom.max_hp,
+            "damage": rom.damage,
+            "returned": rom.returned,
+            "post_pc": rom.post_pc,
+        }
+        headless_results[scenario.scenario_id] = {
+            "final_player_hp": outcome["state"]["player"].get("hp"),
+            "rng_consumed": outcome.get("rng_consumed", []),
+            "damage_event": damage_event,
+            "drain_event": drain_event,
+        }
+
+    return DifferentialResult(
+        scenario_id="drain_component_differential",
+        ok=not errors,
+        errors=tuple(errors),
+        rom=rom_report,
+        headless=headless_results,
     )
 
 
@@ -697,6 +976,7 @@ def compare_damaging_status_component() -> DifferentialResult:
 def main() -> int:
     normal_result = compare_normal_hit_fixed_rng()
     status_result = compare_damaging_status_component()
+    drain_result = compare_drain_component()
     if normal_result.ok:
         print(
             "normal_hit_fixed_rng_differential: PASS "
@@ -717,7 +997,13 @@ def main() -> int:
         print("damaging_status_component_differential: FAIL")
         for error in status_result.errors:
             print(f"  - {error}")
-    return 0 if normal_result.ok and status_result.ok else 1
+    if drain_result.ok:
+        print("drain_component_differential: PASS " + " ".join(drain_result.rom.keys()))
+    else:
+        print("drain_component_differential: FAIL")
+        for error in drain_result.errors:
+            print(f"  - {error}")
+    return 0 if normal_result.ok and status_result.ok and drain_result.ok else 1
 
 
 if __name__ == "__main__":
