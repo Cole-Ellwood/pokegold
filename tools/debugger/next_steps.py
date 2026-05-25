@@ -439,7 +439,7 @@ NEXT_STEP_ROWS = [
         "keywords": ["wrong switch", "bad switch", "selected switch", "boss switch", "boss switched", "propose a switch", "proposed switch", "switch_sack", "expected staying", "expected to stay", "stay in", "staying in", "should stay", "switched when expected", "policy expected", "switch confidence", "switch target", "preserve"],
         "first_command": "python -m tools.boss_ai_debugger rom-switch-materialize --scenarios <scenarios.jsonl> --fail-on-mismatch",
         "required_inputs": ["scenario JSONL with the disputed switch case", "base route or manifest if the default materializer cannot position the battle"],
-        "proof_limit": "ROM materialization proof for supplied switch scenarios; without a scenario this remains only routing guidance.",
+        "proof_limit": "ROM materialization proof for supplied switch scenarios, with switch_roll frequency exact only when the final threshold is supplied or the threshold-bias range collapses to one probability; without a scenario this remains only routing guidance.",
         "escalation_command": "python -m tools.boss_ai_debugger run-suite --profile changed-ai --count 24 --seed 1",
     },
     {
@@ -859,7 +859,7 @@ EVIDENCE_STANDARDS = {
         "The coach-template debugger emits the committed golden scenarios and the audit confirms the shipped template decision deltas.",
     ],
     "wrong_switch": [
-        "A scenario JSONL matching the disputed switch case passes rom-switch-materialize on the current ROM with --fail-on-mismatch. The route names BossAI_SwitchOrTryItem, switch WRAM targets, the boss_policy_switch source anchors, and the scenario materialization command so the ordinary-language wrong-switch question is answered with a runnable proof. For switch_sack converter disagreement, rerun python -m tools.boss_ai_debugger rom-switch-materialize --scenarios <switch_sack_scenarios.jsonl> --limit 3 --fail-on-mismatch and name the scenario id, expected/proposed switch values, confidence, policy why text, ROM switch path, and stale-expectation-vs-ROM-bug status.",
+        "A scenario JSONL matching the disputed switch case passes rom-switch-materialize on the current ROM with --fail-on-mismatch. The route names BossAI_SwitchOrTryItem, switch WRAM targets, the boss_policy_switch source anchors, and the scenario materialization command so the ordinary-language wrong-switch question is answered with a runnable proof. For switch_sack converter disagreement, rerun python -m tools.boss_ai_debugger rom-switch-materialize --scenarios <switch_sack_scenarios.jsonl> --limit 3 --fail-on-mismatch and name the scenario id, expected/proposed switch values, confidence, switch_roll frequency/probability_exact status, policy why text, ROM switch path, and stale-expectation-vs-ROM-bug status. Use --switch-threshold <byte> only when the final threshold is known externally and should be reported as exact.",
     ],
     "wrong_move_score": [
         "Decision trace explains the disputed score from the scenario, and rom-score-materialize passes before claiming emulator-equivalent scoring.",

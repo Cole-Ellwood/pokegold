@@ -454,7 +454,12 @@ high-throughput ROM-backed replay gate.
 generated `switch_sack` cases into public WRAM before the real
 `BossAI_SwitchOrTryItem` path reaches its switch confidence/proposal. It reports
 `rom_policy` verdicts for switch proposal disagreements separately from move
-score bytes, because switching is not a move-score selector decision.
+score bytes, because switching is not a move-score selector decision. The report
+also attaches `switch_roll`: a source-mirrored final roll frequency from observed
+ROM `switch_confidence` plus either an explicit `--switch-threshold`/scenario
+`boss_ai_switch_threshold` byte or the source-derived base threshold. When the
+loop/sack/wincon threshold biases are not traced or supplied, the frequency is
+marked as a range so agents do not present it as exact.
 
 Classify route context:
 

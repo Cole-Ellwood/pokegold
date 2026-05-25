@@ -934,6 +934,7 @@ def cmd_rom_switch_materialize(args: argparse.Namespace) -> int:
         rom=args.rom,
         symbols_path=args.symbols,
         watch_frames=args.watch_frames,
+        switch_threshold=args.switch_threshold,
     )
     if args.json_out != "":
         write_rom_switch_materialization_json(report, Path(args.json_out))
@@ -1387,6 +1388,14 @@ def build_parser() -> argparse.ArgumentParser:
     switch_materialize_cmd.add_argument("--json", action="store_true")
     switch_materialize_cmd.add_argument("--json-out", default="")
     switch_materialize_cmd.add_argument("--display-limit", type=int, default=20)
+    switch_materialize_cmd.add_argument(
+        "--switch-threshold",
+        type=int,
+        help=(
+            "explicit final BossAI_SwitchOrTryItem threshold byte for exact "
+            "switch-roll frequency reporting"
+        ),
+    )
     switch_materialize_cmd.add_argument("--fail-on-mismatch", action="store_true")
     switch_materialize_cmd.set_defaults(func=cmd_rom_switch_materialize)
 

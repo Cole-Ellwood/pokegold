@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from tools.boss_ai_preference.data import PreferenceDataError
+from tools.headless_battle.simulator import boss_ai_switch_roll_threshold
 from tools.trace import boss_ai_trace_capture as capture
 from tools.trace import runtime as trace_runtime
 
@@ -28,6 +29,24 @@ ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_BASE_ROUTE = "shared_switch_loop"
 DEFAULT_WATCH_FRAMES = 180
 SUPPORTED_FAMILIES = ("switch_sack",)
+AI_SWITCH_THRESHOLD_EARLY = 80
+AI_SWITCH_THRESHOLD_MID = 70
+AI_SWITCH_THRESHOLD_LATE = 60
+AI_SWITCH_ANTI_LOOP_PENALTY = 10
+AI_SWITCH_SACK_BIAS = 8
+AI_SWITCH_WINCON_BIAS = 10
+BASE_ROUTE_TRAINER_CLASS = {
+    "shared_switch_loop": "JASMINE",
+}
+CLASS_SWITCH_THRESHOLD_MODS = {
+    "CHAMPION": -10,
+    "KOGA": -8,
+    "CLAIR": -6,
+    "KAREN": -4,
+    "BRUNO": -4,
+    "JASMINE": 4,
+    "CHUCK": 2,
+}
 
 KNOWN_LIMITS = [
     (
@@ -35,8 +54,9 @@ KNOWN_LIMITS = [
         "the shared switch-loop trace state and observes switch confidence/param."
     ),
     (
-        "This proves switch-dispatch proposal behavior, not move score bytes and "
-        "not a multi-sample stochastic switch-roll probability."
+        "This proves switch-dispatch proposal behavior and reports the final "
+        "source-mirrored switch-roll frequency from observed confidence plus an "
+        "explicit or source-derived threshold; it does not prove move score bytes."
     ),
     (
         "Only public battle facts and boss-owned party state are patched; hidden "
@@ -124,6 +144,7 @@ def run_rom_switch_materialization_from_path(
     rom: Path = capture.DEFAULT_ROM,
     symbols_path: Path = capture.DEFAULT_SYMBOLS,
     watch_frames: int = DEFAULT_WATCH_FRAMES,
+    switch_threshold: int | None = None,
 ) -> dict[str, Any]:
     scenarios = load_scenario_batch(scenarios_path)
     if limit > 0:
@@ -135,6 +156,7 @@ def run_rom_switch_materialization_from_path(
         rom=rom,
         symbols_path=symbols_path,
         watch_frames=watch_frames,
+        switch_threshold=switch_threshold,
         source=str(scenarios_path),
     )
 
@@ -147,12 +169,15 @@ def run_rom_switch_materialization(
     rom: Path = capture.DEFAULT_ROM,
     symbols_path: Path = capture.DEFAULT_SYMBOLS,
     watch_frames: int = DEFAULT_WATCH_FRAMES,
+    switch_threshold: int | None = None,
     source: str = "inline",
 ) -> dict[str, Any]:
     if not scenarios:
         raise PreferenceDataError("no scenarios supplied for ROM switch materialization")
     if watch_frames <= 0:
         raise PreferenceDataError("--watch-frames must be positive")
+    if switch_threshold is not None:
+        switch_threshold = parse_optional_byte(switch_threshold, "switch_threshold")
 
     manifest_entry = load_manifest_save_entry(manifest_path, base_route)
     base_state = resolve_manifest_path(str(manifest_entry["save_state"]))
@@ -180,7 +205,14 @@ def run_rom_switch_materialization(
                     },
                     memory_patches=switch_materialization_patches(scenario),
                 )
-                verdicts.append(switch_verdict_from_report(scenario, report))
+                verdicts.append(
+                    switch_verdict_from_report(
+                        scenario,
+                        report,
+                        base_route=base_route,
+                        switch_threshold=switch_threshold,
+                    )
+                )
             except Exception as exc:
                 verdicts.append(skipped_verdict(scenario_id, str(exc), status="error"))
 
@@ -319,6 +351,9 @@ def build_switch_report(
 def switch_verdict_from_report(
     scenario: dict[str, Any],
     report: dict[str, Any],
+    *,
+    base_route: str = DEFAULT_BASE_ROUTE,
+    switch_threshold: int | None = None,
 ) -> dict[str, Any]:
     scenario_id = str(scenario.get("id", "unnamed"))
     expected_switch = scenario_expects_switch(scenario)
@@ -346,7 +381,196 @@ def switch_verdict_from_report(
         "expected_switch": expected_switch,
         "rom_policy": rom_policy,
         "rom": report,
+        "switch_roll": switch_roll_frequency(
+            scenario,
+            report,
+            base_route=base_route,
+            switch_threshold=switch_threshold,
+        ),
     }
+
+
+def switch_roll_frequency(
+    scenario: dict[str, Any],
+    report: dict[str, Any],
+    *,
+    base_route: str = DEFAULT_BASE_ROUTE,
+    switch_threshold: int | None = None,
+) -> dict[str, Any]:
+    confidence = parse_optional_byte(report.get("switch_confidence"), "switch_confidence")
+    threshold_basis = switch_threshold_basis(
+        scenario,
+        base_route=base_route,
+        switch_threshold=switch_threshold,
+    )
+    possible_thresholds = threshold_basis["possible_effective_thresholds"]
+    possible = [
+        {
+            "effective_threshold": threshold,
+            "switch_chance_threshold": boss_ai_switch_roll_threshold(confidence, threshold),
+            "switch_probability": boss_ai_switch_roll_threshold(confidence, threshold) / 256,
+        }
+        for threshold in possible_thresholds
+    ]
+    chance_values = {item["switch_chance_threshold"] for item in possible}
+    assumed_threshold = threshold_basis["assumed_effective_threshold"]
+    assumed_chance = boss_ai_switch_roll_threshold(confidence, assumed_threshold)
+    return {
+        "confidence": confidence,
+        "threshold_source": threshold_basis["threshold_source"],
+        "threshold_exact": threshold_basis["threshold_exact"],
+        "probability_exact": len(chance_values) == 1,
+        "base_threshold": threshold_basis["base_threshold"],
+        "assumed_effective_threshold": assumed_threshold,
+        "possible_effective_thresholds": possible_thresholds,
+        "switch_chance_threshold": assumed_chance,
+        "switch_probability": assumed_chance / 256,
+        "stay_probability": 1 - (assumed_chance / 256),
+        "possible_switch_probabilities": possible,
+        "threshold_components": threshold_basis["components"],
+        "proof_status": "source_mirrored_final_switch_roll_from_observed_confidence",
+    }
+
+
+def switch_threshold_basis(
+    scenario: dict[str, Any],
+    *,
+    base_route: str,
+    switch_threshold: int | None,
+) -> dict[str, Any]:
+    explicit_threshold = explicit_switch_threshold(scenario, switch_threshold)
+    base = source_base_switch_threshold(scenario, base_route=base_route)
+    if explicit_threshold is not None:
+        return {
+            "threshold_source": "explicit_switch_threshold",
+            "threshold_exact": True,
+            "base_threshold": base["threshold"],
+            "assumed_effective_threshold": explicit_threshold,
+            "possible_effective_thresholds": [explicit_threshold],
+            "components": {
+                **base,
+                "explicit_threshold": explicit_threshold,
+                "loop_penalty": None,
+                "sack_bias": None,
+                "wincon_bias": None,
+            },
+        }
+
+    adjustments = switch_threshold_adjustments(scenario)
+    if adjustments is not None:
+        effective = base["threshold"]
+        if adjustments["loop_penalty"]:
+            effective += AI_SWITCH_ANTI_LOOP_PENALTY
+        if adjustments["sack_bias"]:
+            effective += AI_SWITCH_SACK_BIAS
+        if adjustments["wincon_bias"]:
+            effective += AI_SWITCH_WINCON_BIAS
+        return {
+            "threshold_source": "source_mirrored_base_plus_explicit_adjustments",
+            "threshold_exact": True,
+            "base_threshold": base["threshold"],
+            "assumed_effective_threshold": effective,
+            "possible_effective_thresholds": [effective],
+            "components": {
+                **base,
+                **adjustments,
+            },
+        }
+
+    possible = sorted(
+        {
+            base["threshold"],
+            base["threshold"] + AI_SWITCH_SACK_BIAS,
+            base["threshold"] + AI_SWITCH_WINCON_BIAS,
+            base["threshold"] + AI_SWITCH_SACK_BIAS + AI_SWITCH_WINCON_BIAS,
+        }
+    )
+    return {
+        "threshold_source": "source_mirrored_base_threshold_with_untraced_bias_range",
+        "threshold_exact": False,
+        "base_threshold": base["threshold"],
+        "assumed_effective_threshold": base["threshold"],
+        "possible_effective_thresholds": possible,
+        "components": {
+            **base,
+            "loop_penalty": False,
+            "sack_bias": "untraced_possible",
+            "wincon_bias": "untraced_possible",
+        },
+    }
+
+
+def explicit_switch_threshold(
+    scenario: dict[str, Any],
+    switch_threshold: int | None,
+) -> int | None:
+    if switch_threshold is not None:
+        return parse_optional_byte(switch_threshold, "switch_threshold")
+    for key in ("boss_ai_switch_threshold", "switch_threshold"):
+        if key in scenario:
+            return parse_optional_byte(scenario[key], key)
+    return None
+
+
+def switch_threshold_adjustments(scenario: dict[str, Any]) -> dict[str, bool] | None:
+    raw = scenario.get("switch_threshold_adjustments")
+    if raw is None:
+        return None
+    if not isinstance(raw, dict):
+        raise PreferenceDataError("switch_threshold_adjustments must be an object")
+    return {
+        "loop_penalty": bool(raw.get("loop_penalty", False)),
+        "sack_bias": bool(raw.get("sack_bias", False)),
+        "wincon_bias": bool(raw.get("wincon_bias", False)),
+    }
+
+
+def source_base_switch_threshold(
+    scenario: dict[str, Any],
+    *,
+    base_route: str,
+) -> dict[str, Any]:
+    tier = normalize_tier(scenario.get("tier", "late"))
+    if tier == 1:
+        threshold = AI_SWITCH_THRESHOLD_EARLY
+        tier_name = "early"
+    elif tier == 2:
+        threshold = AI_SWITCH_THRESHOLD_MID
+        tier_name = "mid"
+    else:
+        threshold = AI_SWITCH_THRESHOLD_LATE
+        tier_name = "late"
+    trainer_class = normalized_trainer_class(scenario.get("trainer_class"), base_route)
+    class_mod = CLASS_SWITCH_THRESHOLD_MODS.get(trainer_class or "", 0)
+    threshold = apply_class_threshold_mod(threshold, class_mod)
+    return {
+        "tier": tier_name,
+        "trainer_class": trainer_class,
+        "class_threshold_mod": class_mod,
+        "threshold": threshold,
+    }
+
+
+def normalized_trainer_class(raw: Any, base_route: str) -> str | None:
+    if raw is None:
+        raw = BASE_ROUTE_TRAINER_CLASS.get(base_route)
+    if raw is None:
+        return None
+    return str(raw).strip().upper().replace(" ", "_")
+
+
+def apply_class_threshold_mod(threshold: int, class_mod: int) -> int:
+    if class_mod < 0:
+        return max(0, threshold + class_mod)
+    if class_mod > 0:
+        return min(95, threshold + class_mod)
+    return threshold
+
+
+def parse_optional_byte(raw: Any, field: str) -> int:
+    if isinstance(raw, bool) or not isinstance(raw, int) or not 0 <= raw <= 255:
+        raise PreferenceDataError(f"{field} must be an integer byte")
+    return raw
 
 
 def switch_policy_result(verdict: str, severity: int, reason: str) -> dict[str, Any]:
@@ -458,12 +682,19 @@ def format_rom_switch_materialization(
         for verdict in review[:limit]:
             rom = verdict.get("rom", {})
             policy = verdict.get("rom_policy", {})
+            roll = verdict.get("switch_roll", {})
+            probability = roll.get("switch_probability")
+            probability_text = (
+                f"{probability:.1%}" if isinstance(probability, float) else "unknown"
+            )
+            exact_text = "exact" if roll.get("probability_exact") else "range"
             lines.append(
                 f"  {verdict['scenario_id']}: "
                 f"policy={policy.get('verdict', 'unknown')} "
                 f"expected_switch={verdict.get('expected_switch')} "
                 f"proposed_switch={rom.get('proposed_switch')} "
-                f"confidence={rom.get('switch_confidence')}"
+                f"confidence={rom.get('switch_confidence')} "
+                f"switch_rate={probability_text}({exact_text})"
             )
     lines.append("")
     lines.append("Known limits:")
