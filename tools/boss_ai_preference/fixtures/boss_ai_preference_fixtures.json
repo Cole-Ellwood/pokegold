@@ -6522,7 +6522,9 @@
               "Explosion"
             ],
             "role": "fast hazard trade piece"
-          }
+          },
+          "bench": [],
+          "bench_state": []
         },
         "player": {
           "active": {
@@ -6622,7 +6624,9 @@
               "Explosion"
             ],
             "role": "fast hazard trade piece"
-          }
+          },
+          "bench": [],
+          "bench_state": []
         },
         "player": {
           "active": {

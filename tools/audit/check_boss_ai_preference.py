@@ -76,7 +76,7 @@ from tools.boss_ai_preference.threat_availability import (
 from tools.boss_ai_preference.type_evidence import build_type_evidence_report
 
 
-EXPECTED_FIXTURE_COUNT = 57
+EXPECTED_FIXTURE_COUNT = 59
 
 
 def main() -> int:
