@@ -309,6 +309,53 @@ behavior-preserving. The two highest-impact items (#1 and #2) can be
 done by a single agent in a single sitting without touching the
 surrounding logic.
 
+## Execution status (2026-05-25)
+
+**Shipped:**
+
+- Item 1 (delete `tools/damage_debugger/legacy/`) — commit `3d6ae70d`.
+- Item 2 (`__main__.py` god-router split) — `3d6ae70d` for
+  `tools/debugger/` (3,424 → 16 lines, split into `parsers.py` +
+  `commands.py` + `formatters.py` + `cli_helpers.py`); `d62cafec` for
+  `tools/boss_ai_debugger/` (1,482 → 18 lines, split into `parsers.py`
+  + `commands.py`; no `formatters.py` needed because boss_ai_debugger
+  already kept its formatters in subsystem modules).
+- Item 3 (`findings_from_report` registry dict) — `3d6ae70d`.
+- `emit_report` got the same registry-dict treatment as item 3
+  (the 96-line if/elif chain in the original `__main__.py` is now
+  a `FORMATTERS.get(kind)` lookup against the new `formatters.py`
+  registry).
+
+**Tests passing post-refactor:**
+`tools.debugger.tests.test_catalog` → 230/230;
+`tools.boss_ai_debugger.tests` → 211/212 (1 skip; 1 pre-existing
+failure on `test_current_roadmap_audit_keeps_goal_incomplete` —
+A/B-verified pre-existing via `git stash` against the pre-refactor
+tree, concerns `audit/boss_ai_debugger/rule_map.json` data state, not
+source structure). `check_no_solo_commits_omni_debugger.py` passes
+for both new commits.
+
+**Remaining items, ranked by leverage:**
+
+1. **Item 4 — split `content_mirror.py` (3,665 lines) into a
+   `content_mirror/` package by content type.** Target shape is in §3.
+   Biggest single-file readability win remaining.
+2. **`ranking.py` split (2,115 lines, added during execution).** The
+   file-shape hook flagged this during slice 2; the split was deferred
+   to keep the registry-dict change bounded. Same "homogeneous registry
+   of similar functions" justification as the new `formatters.py`.
+   Suggested package: `ranking/severity.py` (SEVERITY_BASE,
+   ROM_SURFACE_SEVERITY_HINTS, calibrate_finding_severity),
+   `ranking/builders.py` (the 30 `*_findings` functions),
+   `ranking/__init__.py` (rank_findings + dispatcher + helpers).
+3. **Item 6 — split `tests/test_catalog.py` (10,295 lines).**
+   Mechanical; one `test_<module>.py` per `<module>.py` to mirror the
+   src layout.
+4. **Item 5 — backfill `damage_debugger/tests/`.** Different shape
+   (real test-writing, not structural refactor); may warrant its own
+   session. Priority modules are the four that other debugger trees
+   import: `disasm`, `taint`, `state`, `tables`, `battle_calc`.
+
 ## What I did *not* check
 
 - Correctness of any single function. This is a structure review only.
