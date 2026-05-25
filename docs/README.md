@@ -110,11 +110,12 @@ PoisonPowder/Poison Gas/Toxic poison-status moves, selected Thunder
 Wave/Stun Spore/Glare paralysis-status moves with paralyzed speed/full-paralysis
 checks plus Fighting/Electric type-passive paralysis modifiers, selected
 EFFECT_BURN_HIT/EFFECT_POISON_HIT/EFFECT_PARALYZE_HIT damaging status
-secondaries, repeated action maps with `max_turns`, `auto_replace_or` for
-simple KO/send-out loops, ROM-mirrored `wild_random_move`, selected switch
-actions, caller-supplied replacement after KO, explicit enemy `auto_replace`
-using the basic source type chart, explicit active Potion/Super Potion/Hyper
-Potion/Max Potion/Full Restore actions, explicit
+secondaries, selected Absorb/Mega Drain/Leech Life/Giga Drain drain moves,
+repeated action maps with `max_turns`, `auto_replace_or` for simple KO/send-out
+loops, ROM-mirrored `wild_random_move`, selected switch actions, caller-supplied
+replacement after KO, explicit enemy `auto_replace` using the basic source type
+chart, explicit active Potion/Super Potion/Hyper Potion/Max Potion/Full Restore
+actions, explicit
 stats/species/stat-stage state, PP decrement, supported Rocky
 Helmet/Shell Bell/Life Orb after-hit HP effects, modified-speed turn order and
 equal-speed tie RNG, basic critical-hit checks, basic move accuracy with
@@ -136,9 +137,10 @@ stat/speed/accuracy bonuses, status application outside selected
 poison/paralysis-status moves and selected damaging status secondaries,
 sleep/freeze, burn application outside selected damaging burn secondaries,
 Safeguard/Substitute, held status prevent/cure item consumption, non-paralyzed
-Electric speed passives, Rest, weather/time healing, drain moves, Heal Bell,
-RNG-consuming mechanics outside the listed branch points, live Boss AI scoring,
-or scripts until the simulator report and audit say that surface exists.
+Electric speed passives, Rest, weather/time healing, drain effects outside
+selected EFFECT_LEECH_HIT moves, Heal Bell, RNG-consuming mechanics outside the
+listed branch points, live Boss AI scoring, or scripts until the simulator
+report and audit say that surface exists.
 
 ## Truth Precedence
 

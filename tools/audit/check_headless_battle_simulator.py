@@ -259,6 +259,63 @@ def main() -> int:
         )
         return 1
     print("selected_damaging_status_secondaries: PASS ember_burn sludge_poison body_slam_paralyze")
+    drain_payload = scenario_template()
+    drain_payload["state"]["player"]["hp"] = 5
+    drain_payload["state"]["player"]["max_hp"] = 40
+    drain_payload["state"]["player"]["moves"] = [{"name": "GIGA_DRAIN"}]
+    drain_payload["state"]["enemy"]["hp"] = 40
+    drain_payload["state"]["enemy"]["max_hp"] = 40
+    drain_payload["state"]["enemy"]["moves"][0]["bp"] = 0
+    drain_payload["rng"] = {"mode": "fixed", "values": [255, 255]}
+    drain_events = simulate_payload(drain_payload)["outcomes"][0]["events"]
+    drain_damage = drain_events[0]
+    drain_event = drain_events[1]
+    if (
+        drain_event.get("type") != "drain_heal"
+        or drain_event.get("damage_drained") != drain_damage.get("actual_damage")
+        or drain_event.get("raw_heal") != max(1, drain_damage.get("actual_damage") // 2)
+        or drain_event.get("heal") != drain_event.get("raw_heal")
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: drain move mismatch: {drain_events}",
+            file=sys.stderr,
+        )
+        return 1
+    min_drain_payload = scenario_template()
+    min_drain_payload["state"]["player"]["hp"] = 5
+    min_drain_payload["state"]["player"]["max_hp"] = 40
+    min_drain_payload["state"]["player"]["moves"] = [{"name": "ABSORB"}]
+    min_drain_payload["state"]["enemy"]["hp"] = 1
+    min_drain_payload["state"]["enemy"]["max_hp"] = 40
+    min_drain_payload["state"]["enemy"]["moves"][0]["bp"] = 0
+    min_drain_payload["rng"] = {"mode": "fixed", "values": [255, 255]}
+    min_drain_event = simulate_payload(min_drain_payload)["outcomes"][0]["events"][1]
+    if (
+        min_drain_event.get("type") != "drain_heal"
+        or min_drain_event.get("damage_drained") != 1
+        or min_drain_event.get("heal") != 1
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: minimum drain mismatch: {min_drain_event}",
+            file=sys.stderr,
+        )
+        return 1
+    miss_drain_payload = scenario_template()
+    miss_drain_payload["state"]["player"]["hp"] = 5
+    miss_drain_payload["state"]["player"]["max_hp"] = 40
+    miss_drain_payload["state"]["player"]["moves"] = [{"name": "GIGA_DRAIN", "accuracy": 1}]
+    miss_drain_payload["state"]["enemy"]["moves"][0]["bp"] = 0
+    miss_drain_payload["rng"] = {"mode": "fixed", "values": [255, 255, 255]}
+    miss_drain_events = simulate_payload(miss_drain_payload)["outcomes"][0]["events"]
+    if miss_drain_events[0].get("type") != "miss" or any(
+        event.get("type", "").startswith("drain") for event in miss_drain_events
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: drain miss mismatch: {miss_drain_events}",
+            file=sys.stderr,
+        )
+        return 1
+    print("selected_drain_moves: PASS giga_drain_half_damage absorb_min_one miss_no_heal")
     heal_payload = scenario_template()
     heal_payload["state"]["player"]["hp"] = 10
     heal_payload["state"]["player"]["max_hp"] = 40

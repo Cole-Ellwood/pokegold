@@ -102,6 +102,7 @@ DAMAGING_SECONDARY_STATUS_EFFECTS = {
     "EFFECT_POISON_HIT": "poison",
     "EFFECT_PARALYZE_HIT": "paralyze",
 }
+DRAIN_MOVE_EFFECT = "EFFECT_LEECH_HIT"
 SELF_HEALING_MOVE_NAMES = frozenset({"RECOVER", "SOFTBOILED", "MILK_DRINK"})
 FULL_PARALYSIS_THRESHOLD = 25 * 255 // 100
 TYPE_FACTOR_CONSTANTS = {
@@ -789,6 +790,7 @@ def apply_move_after_action_check(
                 for secondary_check in secondary_checks:
                     damage = variation["damage"]
                     hp_after = max(0, target.hp - damage)
+                    actual_damage = target.hp - hp_after
                     updated_target = replace_hp(target, hp_after)
                     updated_state = replace_side(state, target_side, updated_target)
                     updated = clone_branch(branch)
@@ -806,6 +808,7 @@ def apply_move_after_action_check(
                             "move": move.name,
                             "type": "damage",
                             "damage": damage,
+                            "actual_damage": actual_damage,
                             "pre_variation_damage": pre_variation_damage,
                             "target_hp_before": target.hp,
                             "target_hp_after": hp_after,
@@ -821,6 +824,14 @@ def apply_move_after_action_check(
                             "proof_status": "delegated_pre_variation_damage_plus_source_mirrored_critical_variation_accuracy",
                         }
                     )
+                    if move.effect == DRAIN_MOVE_EFFECT:
+                        updated = apply_drain_effect(
+                            updated,
+                            side,
+                            target_side,
+                            move,
+                            actual_damage,
+                        )
                     if secondary_status is not None and secondary_check is not None:
                         updated = apply_damaging_secondary_status(
                             updated,
@@ -835,7 +846,7 @@ def apply_move_after_action_check(
                         side,
                         target_side,
                         move,
-                        damage,
+                        actual_damage,
                     )
                     branches.append(updated)
     return branches
@@ -1057,6 +1068,54 @@ def paralysis_status_blocked_reason(target: PokemonState, move: MoveState) -> st
     if target.item == ITEM_PRZCUREBERRY:
         return "held_status_healing_item_out_of_scope"
     return None
+
+
+def apply_drain_effect(
+    branch: dict[str, Any],
+    side: str,
+    target_side: str,
+    move: MoveState,
+    actual_damage: int,
+) -> dict[str, Any]:
+    state: BattleState = branch["state"]
+    actor = get_side(state, side)
+    updated = clone_branch(branch)
+    if actual_damage <= 0:
+        updated["events"].append(
+            {
+                "turn": state.turn,
+                "actor": side,
+                "target": target_side,
+                "move": move.name,
+                "type": "drain_no_effect",
+                "damage_drained": actual_damage,
+                "blocked_reason": "no_damage",
+                "proof_status": "source_mirrored_selected_drain_move_no_effect",
+            }
+        )
+        return updated
+    raw_heal = max(1, actual_damage // 2)
+    hp_after = min(actor.max_hp, actor.hp + raw_heal)
+    actual_heal = hp_after - actor.hp
+    if actual_heal > 0:
+        updated["state"] = replace_side(state, side, replace_hp(actor, hp_after))
+    updated["events"].append(
+        {
+            "turn": state.turn,
+            "actor": side,
+            "target": side,
+            "move": move.name,
+            "type": "drain_heal" if actual_heal > 0 else "drain_heal_no_effect",
+            "damage_drained": actual_damage,
+            "raw_heal": raw_heal,
+            "heal": actual_heal,
+            "hp_before": actor.hp,
+            "hp_after": hp_after,
+            "source_target": target_side,
+            "proof_status": "source_mirrored_selected_drain_move",
+        }
+    )
+    return updated
 
 
 def apply_damaging_secondary_status(
@@ -3030,6 +3089,12 @@ def coverage_report() -> dict[str, Any]:
                 "notes": "Selected EFFECT_BURN_HIT, EFFECT_POISON_HIT, and EFFECT_PARALYZE_HIT damaging moves consume secondary effect-chance RNG after the successful hit path, apply burn/poison/paralysis after damage when source no-effect checks pass, and preserve later residual/speed effects. Thunder, Flame Wheel, Sacred Fire, poison multi-hit, freeze/confusion/stat-down secondaries, Substitute/Safeguard, held status item consumption, and text/animation side effects remain out of scope.",
             },
             {
+                "id": "selected_drain_moves",
+                "source": "data/moves/effects.asm:LeechHit + engine/battle/effect_commands.asm:BattleCommand_DrainTarget/SapHealth",
+                "gate": "python tools/audit/check_headless_battle_simulator.py",
+                "notes": "Selected EFFECT_LEECH_HIT moves Absorb, Mega Drain, Leech Life, and Giga Drain heal the user after successful damage by half actual damage with a minimum of 1 and a max-HP cap, and carry healed HP into later turns. Dream Eater, Leech Seed, Substitute interactions, Big Root-style modifiers, and exact combined ordering claims with after-hit held items remain out of scope.",
+            },
+            {
                 "id": "selected_self_heal_moves",
                 "source": "engine/battle/effect_commands.asm:BattleCommand_Heal + data/moves/effects.asm:Heal",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
@@ -3095,7 +3160,7 @@ def coverage_report() -> dict[str, Any]:
             "Pursuit-on-switch, Spikes/switch-in entry effects, switch-triggered abilities/passives, and switch memory side effects",
             "RNG-consuming mechanics outside speed ties/Boss AI selector choice/wild random move choice/auto-replace fallback/critical hits/accuracy/damage variation/selected damaging status secondary chance, Quick Claw/Choice Scarf turn-order effects",
             "accuracy/evasion stat-stage move effects, damaging secondary stat effects outside selected burn/poison/paralysis status secondaries, multi-stat chains outside Dragon Dance/Calm Mind/Quiver Dance, BrightPowder, Protect, Fly/Dig, Lock-On, X Accuracy, Baton Pass/Psych Up, Substitute/Mist blockers, badge boosts, status speed modifiers, passive stat/speed/accuracy bonuses, and passive accuracy bonuses",
-            "sleep, freeze, burn application outside selected damaging burn secondaries, Safeguard/Substitute, held status prevent/cure item consumption, non-paralyzed Electric speed passives, volatile effects, weather/time healing, Rest, drain moves, Heal Bell, unsupported item recovery/cures, Air Balloon pop, Substitute-blocked contact, Focus Punch break, after-hit text/script effects outside supported HP mutations, Struggle, PP Up bit packing, Mimic/Transform PP routing, and full PP legality selection",
+            "sleep, freeze, burn application outside selected damaging burn secondaries, Safeguard/Substitute, held status prevent/cure item consumption, non-paralyzed Electric speed passives, volatile effects, weather/time healing, Rest, drain effects outside selected EFFECT_LEECH_HIT moves, Heal Bell, unsupported item recovery/cures, Air Balloon pop, Substitute-blocked contact, Focus Punch break, after-hit text/script effects outside supported HP mutations, Struggle, PP Up bit packing, Mimic/Transform PP routing, and full PP legality selection",
             "Boss AI live score generation and switch candidate/confidence generation",
             "graphics, text scripts, animations, EXP, and party writes",
         ],

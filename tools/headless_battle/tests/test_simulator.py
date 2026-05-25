@@ -1120,6 +1120,105 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         self.assertEqual(event["proof_status"], "out_of_scope")
         self.assertEqual(report["outcomes"][0]["state"]["enemy"]["status"], "none")
 
+    def test_drain_move_heals_half_actual_damage(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["hp"] = 5
+        payload["state"]["player"]["max_hp"] = 40
+        payload["state"]["player"]["moves"] = [{"name": "GIGA_DRAIN"}, {"name": "TACKLE", "bp": 0}]
+        payload["state"]["enemy"]["hp"] = 40
+        payload["state"]["enemy"]["max_hp"] = 40
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+        payload["rng"] = {"mode": "fixed", "values": [255, 255]}
+
+        report = simulate_payload(payload)
+
+        events = report["outcomes"][0]["events"]
+        damage = events[0]
+        drain = events[1]
+        self.assertEqual(drain["type"], "drain_heal")
+        self.assertEqual(drain["move"], "GIGA_DRAIN")
+        self.assertEqual(drain["damage_drained"], damage["actual_damage"])
+        self.assertEqual(drain["raw_heal"], max(1, damage["actual_damage"] // 2))
+        self.assertEqual(drain["heal"], drain["raw_heal"])
+        self.assertEqual(report["outcomes"][0]["state"]["player"]["hp"], 5 + drain["heal"])
+
+    def test_drain_move_heals_at_least_one_from_one_damage(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["hp"] = 5
+        payload["state"]["player"]["max_hp"] = 40
+        payload["state"]["player"]["moves"] = [{"name": "ABSORB"}]
+        payload["state"]["enemy"]["hp"] = 1
+        payload["state"]["enemy"]["max_hp"] = 40
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+        payload["rng"] = {"mode": "fixed", "values": [255, 255]}
+
+        report = simulate_payload(payload)
+
+        drain = report["outcomes"][0]["events"][1]
+        self.assertEqual(drain["type"], "drain_heal")
+        self.assertEqual(drain["damage_drained"], 1)
+        self.assertEqual(drain["raw_heal"], 1)
+        self.assertEqual(drain["heal"], 1)
+        self.assertEqual(report["outcomes"][0]["state"]["player"]["hp"], 6)
+
+    def test_drain_move_healing_caps_at_max_hp(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["hp"] = 39
+        payload["state"]["player"]["max_hp"] = 40
+        payload["state"]["player"]["moves"] = [{"name": "MEGA_DRAIN"}]
+        payload["state"]["enemy"]["hp"] = 40
+        payload["state"]["enemy"]["max_hp"] = 40
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+        payload["rng"] = {"mode": "fixed", "values": [255, 255]}
+
+        report = simulate_payload(payload)
+
+        drain = report["outcomes"][0]["events"][1]
+        self.assertEqual(drain["type"], "drain_heal")
+        self.assertGreater(drain["raw_heal"], 0)
+        self.assertEqual(drain["heal"], 1)
+        self.assertEqual(drain["hp_after"], 40)
+        self.assertEqual(report["outcomes"][0]["state"]["player"]["hp"], 40)
+
+    def test_drain_move_miss_does_not_heal(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["hp"] = 5
+        payload["state"]["player"]["max_hp"] = 40
+        payload["state"]["player"]["moves"] = [{"name": "GIGA_DRAIN", "accuracy": 1}]
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+        payload["rng"] = {"mode": "fixed", "values": [255, 255, 255]}
+
+        report = simulate_payload(payload)
+
+        events = report["outcomes"][0]["events"]
+        self.assertEqual(events[0]["type"], "miss")
+        self.assertFalse(any(event["type"].startswith("drain") for event in events))
+        self.assertEqual(report["outcomes"][0]["state"]["player"]["hp"], 5)
+
+    def test_drain_move_healed_hp_carries_to_next_turn(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["hp"] = 5
+        payload["state"]["player"]["max_hp"] = 40
+        payload["state"]["player"]["moves"] = [{"name": "GIGA_DRAIN"}, {"name": "TACKLE", "bp": 0}]
+        payload["state"]["enemy"]["hp"] = 40
+        payload["state"]["enemy"]["max_hp"] = 40
+        payload.pop("actions")
+        payload["turns"] = [
+            {"player": {"type": "move", "move": 0}, "enemy": {"type": "move", "move": 0}},
+            {"player": {"type": "move", "move": 0}, "enemy": {"type": "move", "move": 0}},
+        ]
+        payload["state"]["enemy"]["moves"] = [{"name": "TACKLE", "bp": 0}, {"name": "TACKLE"}]
+        payload["turns"][1]["player"] = {"type": "move", "move": 1}
+        payload["turns"][1]["enemy"] = {"type": "move", "move": 1}
+        payload["rng"] = {"mode": "fixed", "values": [255, 255, 255, 255]}
+
+        report = simulate_payload(payload)
+
+        events = report["outcomes"][0]["events"]
+        drain = next(event for event in events if event["type"] == "drain_heal")
+        enemy_damage = [event for event in events if event.get("actor") == "enemy" and event["type"] == "damage"][0]
+        self.assertEqual(enemy_damage["target_hp_before"], drain["hp_after"])
+
     def test_self_heal_move_restores_half_max_hp(self) -> None:
         payload = scenario_template()
         payload["state"]["player"]["hp"] = 10
@@ -1516,6 +1615,7 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         self.assertIn("selected_stat_stage_only_moves", mirrored)
         self.assertIn("selected_multi_stat_setup_moves", mirrored)
         self.assertIn("selected_damaging_status_secondaries", mirrored)
+        self.assertIn("selected_drain_moves", mirrored)
         self.assertIn("selected_self_heal_moves", mirrored)
         self.assertIn("selected_poison_status_moves", mirrored)
         self.assertIn("selected_paralysis_status_moves", mirrored)

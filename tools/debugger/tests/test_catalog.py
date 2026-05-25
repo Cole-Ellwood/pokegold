@@ -431,6 +431,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("poison-status moves", rec["proof_limit"])
         self.assertIn("paralysis-status moves", rec["proof_limit"])
         self.assertIn("damaging status secondaries", rec["proof_limit"])
+        self.assertIn("drain moves", rec["proof_limit"])
         self.assertIn("Rocky Helmet", rec["proof_limit"])
 
     def test_headless_battle_routes_turn_by_turn_wording(self) -> None:
@@ -450,6 +451,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("poison-status moves", rec["evidence_standard"][0])
         self.assertIn("paralysis-status moves", rec["evidence_standard"][0])
         self.assertIn("damaging burn/poison/paralysis status secondaries", rec["evidence_standard"][0])
+        self.assertIn("Leech Life/Giga Drain drain moves", rec["evidence_standard"][0])
         self.assertIn("implicit replacement without auto_replace_or", rec["disproof_standard"][0])
 
     def test_species_id_map_ignores_unown_form_constants(self) -> None:
