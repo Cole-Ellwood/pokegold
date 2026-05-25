@@ -9,7 +9,6 @@ from pathlib import Path
 from typing import Any, Literal
 
 from tools.boss_ai_debugger import rom_scenarios
-from tools.boss_ai_preference.data import PreferenceDataError
 from tools.damage_debugger import oracle
 from tools.damage_debugger import tables
 
@@ -3218,7 +3217,7 @@ def boss_ai_selector_result(state: BattleState, side: str, action: ActionState) 
             scores=[int(value) for value in selector["scores"]],
             move_names=move_names,
         )
-    except (KeyError, PreferenceDataError, ValueError) as exc:
+    except (KeyError, ValueError) as exc:
         raise SimulationInputError(f"invalid {action.kind} action: {exc}") from exc
 
 

@@ -623,9 +623,22 @@ separate tasks.
   changes (the audit's expected constant lagged commit `1c256cb4`'s
   WRAMX-bank-1 relief); not caused by this work.
 
+- **Item 2 — Invert `simulator → preference` import.** (§5)
+  `tools/headless_battle/simulator.py` no longer imports
+  `PreferenceDataError`. The exception class is a `ValueError`
+  subclass ([tools/boss_ai_preference/data.py:74](tools/boss_ai_preference/data.py:74))
+  so the existing `except (KeyError, PreferenceDataError, ValueError)`
+  at line 3221 already double-covered it; the explicit reference is
+  redundant. 2-line diff: drop the import + drop `PreferenceDataError`
+  from the catch tuple. `tools/headless_battle/` is now decoupled from
+  `tools/boss_ai_preference/`.
+
+  Verification: 135/135 simulator tests OK,
+  `python tools/audit/check_headless_battle_simulator.py` PASS (27/27
+  scenarios within expected damage ranges).
+
 **Remaining items, ranked by leverage:**
 
-2. **Invert simulator → preference import.** (§5) Trivial.
 3. **Split `boss_ai_preference/__main__.py`.** (§1) Same pattern as
    `boss_ai_debugger/__main__.py` (`d62cafec`).
 4. **Extract embedded HTML/CSS** from
