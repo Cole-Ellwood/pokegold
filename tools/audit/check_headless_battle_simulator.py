@@ -10,12 +10,16 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from tools.boss_ai_debugger.rom_scenarios import select_from_score_bytes
+from tools.boss_ai_debugger.rom_switch_materialize import scenario_condition_tags
 from tools.headless_battle.rom_differential import (
     compare_damaging_status_component,
     compare_drain_component,
     compare_full_restore_status_cure,
     compare_item_restore_component,
     compare_normal_hit_fixed_rng,
+)
+from tools.headless_battle.rom_switch_scenario_export import (
+    headless_to_switch_sack_scenario,
 )
 from tools.headless_battle.simulator import SimulationInputError, scenario_template, simulate_payload, run_self_test
 
@@ -1036,6 +1040,81 @@ def main() -> int:
         "boss_ai_switch_roll: PASS "
         "fixed_switch no_roll_stay exhaustive_switch_or_stay materialized_exact_bridge "
         "ranged_report_only"
+    )
+    canonical_export_state = {
+        "weather": "none",
+        "weather_count": 0,
+        "turn": 1,
+        "player": {
+            "species": "STARMIE",
+            "level": 50,
+            "types": ["GROUND", "GROUND"],
+            "hp": 80,
+            "max_hp": 100,
+            "stats": {"attack": 70, "defense": 80, "speed": 100, "sp_attack": 90, "sp_defense": 80},
+            "moves": [{"name": "SURF"}],
+        },
+        "enemy": {
+            "species": "QWILFISH",
+            "level": 50,
+            "types": ["POISON", "WATER"],
+            "hp": 22,
+            "max_hp": 100,
+            "stats": {"attack": 70, "defense": 75, "speed": 85, "sp_attack": 55, "sp_defense": 55},
+            "moves": [{"name": "POISON_STING"}],
+            "bench": [
+                {
+                    "name": "GENGAR",
+                    "level": 50,
+                    "types": ["GHOST", "POISON"],
+                    "hp": 80,
+                    "max_hp": 100,
+                    "stats": {"attack": 65, "defense": 60, "speed": 110, "sp_attack": 130, "sp_defense": 75},
+                    "moves": [{"name": "LICK"}],
+                },
+            ],
+        },
+    }
+    exported_scenario = headless_to_switch_sack_scenario(
+        canonical_export_state,
+        scenario_id="audit_exported_canonical",
+        tier="mid",
+        extra_tags=["wincon_preservation"],
+    )
+    exported_tags = scenario_condition_tags(exported_scenario)
+    if (
+        exported_scenario.get("family") != "switch_sack"
+        or exported_scenario.get("tier") != "mid"
+        or "switch_sack" not in exported_tags
+        or "defensive_sack_owner" not in exported_tags
+        or "wincon_preservation" not in exported_tags
+        or "active_pressure_converts" in exported_tags
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: exporter scenario mismatch: {exported_scenario}",
+            file=sys.stderr,
+        )
+        return 1
+    try:
+        headless_to_switch_sack_scenario(
+            {**canonical_export_state, "player": {**canonical_export_state["player"], "species": "CYNDAQUIL"}}
+        )
+    except SimulationInputError as exc:
+        if "STARMIE" not in str(exc):
+            print(
+                f"Headless battle simulator audit FAILED: unexpected exporter rejection reason: {exc}",
+                file=sys.stderr,
+            )
+            return 1
+    else:
+        print(
+            "Headless battle simulator audit FAILED: exporter accepted out-of-fixture player species",
+            file=sys.stderr,
+        )
+        return 1
+    print(
+        "rom_switch_scenario_export: PASS "
+        "canonical_emit hp_tag_derivation extra_tag_passthrough fixture_rejection"
     )
     wild_payload = scenario_template()
     wild_payload["state"]["player"]["moves"][0]["bp"] = 0
