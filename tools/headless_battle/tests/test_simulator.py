@@ -1102,7 +1102,7 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         self.assertEqual(outcome["turn_orders"][0]["order"], ["enemy", "player"])
         self.assertEqual(outcome["turn_orders"][1]["order"], ["player", "enemy"])
 
-    def test_damaging_secondary_held_status_cure_stays_out_of_scope(self) -> None:
+    def test_damaging_secondary_held_status_cure_consumes_item(self) -> None:
         payload = scenario_template()
         payload["state"]["player"]["moves"] = [{"name": "EMBER"}]
         payload["state"]["enemy"]["types"] = ["NORMAL", "NORMAL"]
@@ -1114,11 +1114,17 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
 
         report = simulate_payload(payload)
 
-        event = report["outcomes"][0]["events"][1]
-        self.assertEqual(event["type"], "status_no_effect")
-        self.assertEqual(event["blocked_reason"], "held_status_healing_item_out_of_scope")
-        self.assertEqual(event["proof_status"], "out_of_scope")
+        events = report["outcomes"][0]["events"]
+        event = events[1]
+        cure = events[2]
+        self.assertEqual(event["type"], "status_apply")
+        self.assertEqual(event["status"], "burn")
+        self.assertEqual(cure["type"], "held_status_cure")
+        self.assertEqual(cure["source_item"], "ICE_BERRY")
+        self.assertEqual(cure["cured_status"], "burn")
+        self.assertEqual(cure["proof_status"], "source_mirrored_selected_held_status_cure_active")
         self.assertEqual(report["outcomes"][0]["state"]["enemy"]["status"], "none")
+        self.assertEqual(report["outcomes"][0]["state"]["enemy"]["item"], 0)
 
     def test_drain_move_heals_half_actual_damage(self) -> None:
         payload = scenario_template()
@@ -1286,20 +1292,27 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         self.assertEqual(event["pp_after"], 35)
         self.assertEqual(report["outcomes"][0]["state"]["player"]["moves"][0]["pp"], 35)
 
-    def test_sleep_status_healing_berry_stays_out_of_scope(self) -> None:
+    def test_sleep_status_healing_berry_consumes_item_and_allows_action(self) -> None:
         payload = scenario_template()
         payload["state"]["player"]["moves"] = [{"name": "SLEEP_POWDER"}]
         payload["state"]["enemy"]["item"] = "MINT_BERRY"
-        payload["state"]["enemy"]["moves"][0]["bp"] = 0
-        payload["rng"] = {"mode": "fixed", "values": [0]}
+        payload["rng"] = {"mode": "fixed", "values": [0, 0, 255, 255, 0]}
 
         report = simulate_payload(payload)
 
-        event = report["outcomes"][0]["events"][0]
-        self.assertEqual(event["type"], "status_no_effect")
-        self.assertEqual(event["blocked_reason"], "held_status_healing_item_out_of_scope")
-        self.assertEqual(event["proof_status"], "out_of_scope")
-        self.assertEqual(report["outcomes"][0]["state"]["enemy"]["status"], "none")
+        outcome = report["outcomes"][0]
+        events = outcome["events"]
+        self.assertEqual([event["type"] for event in events[:3]], ["status_apply", "held_status_cure", "damage"])
+        self.assertEqual(events[0]["status"], "sleep")
+        self.assertEqual(events[0]["sleep_turns_after"], 3)
+        self.assertEqual(events[1]["source_item"], "MINT_BERRY")
+        self.assertEqual(events[1]["cured_status"], "sleep")
+        self.assertEqual(events[1]["sleep_turns_after"], 0)
+        self.assertEqual(events[2]["actor"], "enemy")
+        self.assertEqual(outcome["state"]["enemy"]["status"], "none")
+        self.assertEqual(outcome["state"]["enemy"]["sleep_turns"], 0)
+        self.assertEqual(outcome["state"]["enemy"]["item"], 0)
+        self.assertEqual(outcome["state"]["enemy"]["moves"][0]["pp"], 34)
 
     def test_rest_sets_sleep_counter_and_full_hp(self) -> None:
         payload = scenario_template()
@@ -1526,7 +1539,7 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         self.assertEqual(event["blocked_reason"], "already_statused")
         self.assertEqual(report["outcomes"][0]["state"]["enemy"]["status"], "burn")
 
-    def test_poison_status_healing_berry_stays_out_of_scope(self) -> None:
+    def test_poison_status_healing_berry_consumes_item(self) -> None:
         payload = scenario_template()
         payload["state"]["player"]["moves"] = [{"name": "POISONPOWDER"}]
         payload["state"]["enemy"]["item"] = "PSNCUREBERRY"
@@ -1534,11 +1547,35 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
 
         report = simulate_payload(payload)
 
-        event = report["outcomes"][0]["events"][0]
-        self.assertEqual(event["type"], "status_no_effect")
-        self.assertEqual(event["blocked_reason"], "held_status_healing_item_out_of_scope")
-        self.assertEqual(event["proof_status"], "out_of_scope")
-        self.assertEqual(report["outcomes"][0]["state"]["enemy"]["status"], "none")
+        outcome = report["outcomes"][0]
+        events = outcome["events"]
+        self.assertEqual(events[0]["type"], "status_apply")
+        self.assertEqual(events[0]["status"], "poison")
+        self.assertEqual(events[1]["type"], "held_status_cure")
+        self.assertEqual(events[1]["source_item"], "PSNCUREBERRY")
+        self.assertEqual(events[1]["cured_status"], "poison")
+        self.assertEqual(events[1]["toxic_count_after"], 0)
+        self.assertEqual(outcome["state"]["enemy"]["status"], "none")
+        self.assertEqual(outcome["state"]["enemy"]["toxic_count"], 0)
+        self.assertEqual(outcome["state"]["enemy"]["item"], 0)
+        self.assertFalse(any(event["type"] == "residual_damage" for event in events))
+
+    def test_miracleberry_cures_toxic_status_move(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["moves"] = [{"name": "TOXIC"}]
+        payload["state"]["enemy"]["item"] = "MIRACLEBERRY"
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+
+        report = simulate_payload(payload)
+
+        outcome = report["outcomes"][0]
+        cure = outcome["events"][1]
+        self.assertEqual(cure["type"], "held_status_cure")
+        self.assertEqual(cure["source_item"], "MIRACLEBERRY")
+        self.assertEqual(cure["cured_status"], "toxic")
+        self.assertEqual(outcome["state"]["enemy"]["status"], "none")
+        self.assertEqual(outcome["state"]["enemy"]["toxic_count"], 0)
+        self.assertEqual(outcome["state"]["enemy"]["item"], 0)
 
     def test_paralysis_status_move_applies_paralysis(self) -> None:
         payload = scenario_template()
@@ -1556,6 +1593,24 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         self.assertEqual(event["pp_before"], 20)
         self.assertEqual(event["pp_after"], 19)
         self.assertEqual(report["outcomes"][0]["state"]["enemy"]["status"], "paralyze")
+
+    def test_paralysis_status_healing_berry_consumes_item(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["moves"] = [{"name": "THUNDER_WAVE"}]
+        payload["state"]["enemy"]["item"] = "PRZCUREBERRY"
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+
+        report = simulate_payload(payload)
+
+        outcome = report["outcomes"][0]
+        events = outcome["events"]
+        self.assertEqual(events[0]["type"], "status_apply")
+        self.assertEqual(events[0]["status"], "paralyze")
+        self.assertEqual(events[1]["type"], "held_status_cure")
+        self.assertEqual(events[1]["source_item"], "PRZCUREBERRY")
+        self.assertEqual(events[1]["cured_status"], "paralyze")
+        self.assertEqual(outcome["state"]["enemy"]["status"], "none")
+        self.assertEqual(outcome["state"]["enemy"]["item"], 0)
 
     def test_paralysis_status_move_uses_accuracy_check(self) -> None:
         payload = scenario_template()
@@ -1737,6 +1792,7 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         self.assertIn("selected_drain_moves", mirrored)
         self.assertIn("selected_sleep_status_moves", mirrored)
         self.assertIn("selected_rest_move", mirrored)
+        self.assertIn("selected_held_status_cures", mirrored)
         self.assertIn("selected_self_heal_moves", mirrored)
         self.assertIn("selected_poison_status_moves", mirrored)
         self.assertIn("selected_paralysis_status_moves", mirrored)

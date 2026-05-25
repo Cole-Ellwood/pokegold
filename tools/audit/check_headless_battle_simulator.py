@@ -348,6 +348,99 @@ def main() -> int:
         )
         return 1
     print("selected_sleep_status_moves: PASS sleep_powder_duration fast_asleep wake_action")
+    poison_cure_payload = scenario_template()
+    poison_cure_payload["state"]["player"]["moves"] = [{"name": "POISONPOWDER"}]
+    poison_cure_payload["state"]["enemy"]["item"] = "PSNCUREBERRY"
+    poison_cure_payload["state"]["enemy"]["moves"][0]["bp"] = 0
+    poison_cure_outcome = simulate_payload(poison_cure_payload)["outcomes"][0]
+    poison_cure_events = poison_cure_outcome["events"]
+    if (
+        [event.get("type") for event in poison_cure_events[:2]] != ["status_apply", "held_status_cure"]
+        or poison_cure_events[1].get("source_item") != "PSNCUREBERRY"
+        or poison_cure_outcome["state"]["enemy"].get("status") != "none"
+        or poison_cure_outcome["state"]["enemy"].get("item") != 0
+        or any(event.get("type") == "residual_damage" for event in poison_cure_events)
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: held poison cure mismatch: {poison_cure_outcome}",
+            file=sys.stderr,
+        )
+        return 1
+    paralysis_cure_payload = scenario_template()
+    paralysis_cure_payload["state"]["player"]["moves"] = [{"name": "THUNDER_WAVE"}]
+    paralysis_cure_payload["state"]["enemy"]["item"] = "PRZCUREBERRY"
+    paralysis_cure_payload["state"]["enemy"]["moves"][0]["bp"] = 0
+    paralysis_cure_outcome = simulate_payload(paralysis_cure_payload)["outcomes"][0]
+    paralysis_cure_events = paralysis_cure_outcome["events"]
+    if (
+        [event.get("type") for event in paralysis_cure_events[:2]] != ["status_apply", "held_status_cure"]
+        or paralysis_cure_events[1].get("source_item") != "PRZCUREBERRY"
+        or paralysis_cure_outcome["state"]["enemy"].get("status") != "none"
+        or paralysis_cure_outcome["state"]["enemy"].get("item") != 0
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: held paralysis cure mismatch: {paralysis_cure_outcome}",
+            file=sys.stderr,
+        )
+        return 1
+    burn_cure_payload = scenario_template()
+    burn_cure_payload["state"]["player"]["moves"] = [{"name": "EMBER"}]
+    burn_cure_payload["state"]["enemy"]["types"] = ["NORMAL", "NORMAL"]
+    burn_cure_payload["state"]["enemy"]["item"] = "ICE_BERRY"
+    burn_cure_payload["state"]["enemy"]["hp"] = 40
+    burn_cure_payload["state"]["enemy"]["max_hp"] = 40
+    burn_cure_payload["state"]["enemy"]["moves"][0]["bp"] = 0
+    burn_cure_payload["rng"] = {"mode": "fixed", "values": [255, 255, 0]}
+    burn_cure_outcome = simulate_payload(burn_cure_payload)["outcomes"][0]
+    burn_cure_events = burn_cure_outcome["events"]
+    if (
+        [event.get("type") for event in burn_cure_events[1:3]] != ["status_apply", "held_status_cure"]
+        or burn_cure_events[2].get("source_item") != "ICE_BERRY"
+        or burn_cure_outcome["state"]["enemy"].get("status") != "none"
+        or burn_cure_outcome["state"]["enemy"].get("item") != 0
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: held burn cure mismatch: {burn_cure_outcome}",
+            file=sys.stderr,
+        )
+        return 1
+    sleep_cure_payload = scenario_template()
+    sleep_cure_payload["state"]["player"]["moves"] = [{"name": "SLEEP_POWDER"}]
+    sleep_cure_payload["state"]["enemy"]["item"] = "MINT_BERRY"
+    sleep_cure_payload["rng"] = {"mode": "fixed", "values": [0, 0, 255, 255, 0]}
+    sleep_cure_outcome = simulate_payload(sleep_cure_payload)["outcomes"][0]
+    sleep_cure_events = sleep_cure_outcome["events"]
+    if (
+        [event.get("type") for event in sleep_cure_events[:3]] != ["status_apply", "held_status_cure", "damage"]
+        or sleep_cure_events[1].get("source_item") != "MINT_BERRY"
+        or sleep_cure_outcome["state"]["enemy"].get("status") != "none"
+        or sleep_cure_outcome["state"]["enemy"].get("sleep_turns") != 0
+        or sleep_cure_outcome["state"]["enemy"].get("item") != 0
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: held sleep cure mismatch: {sleep_cure_outcome}",
+            file=sys.stderr,
+        )
+        return 1
+    miracle_payload = scenario_template()
+    miracle_payload["state"]["player"]["moves"] = [{"name": "TOXIC"}]
+    miracle_payload["state"]["enemy"]["item"] = "MIRACLEBERRY"
+    miracle_payload["state"]["enemy"]["moves"][0]["bp"] = 0
+    miracle_outcome = simulate_payload(miracle_payload)["outcomes"][0]
+    miracle_events = miracle_outcome["events"]
+    if (
+        [event.get("type") for event in miracle_events[:2]] != ["status_apply", "held_status_cure"]
+        or miracle_events[1].get("source_item") != "MIRACLEBERRY"
+        or miracle_events[1].get("cured_status") != "toxic"
+        or miracle_outcome["state"]["enemy"].get("status") != "none"
+        or miracle_outcome["state"]["enemy"].get("toxic_count") != 0
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: MiracleBerry toxic cure mismatch: {miracle_outcome}",
+            file=sys.stderr,
+        )
+        return 1
+    print("selected_held_status_cures: PASS psn_cure prz_cure burn_cure sleep_cure miracle_toxic")
     rest_payload = scenario_template()
     rest_payload["state"]["player"]["hp"] = 10
     rest_payload["state"]["player"]["max_hp"] = 40
