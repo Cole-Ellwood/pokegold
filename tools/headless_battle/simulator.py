@@ -88,6 +88,10 @@ OPPONENT_STAT_STAGE_EFFECTS = {
     "EFFECT_SP_ATK_DOWN_2": (("sp_attack", -2),),
     "EFFECT_SP_DEF_DOWN_2": (("sp_defense", -2),),
 }
+CHAINED_SELF_STAT_STAGE_EFFECTS = {
+    "EFFECT_CALM_MIND": (("sp_attack", 1), ("sp_defense", 1)),
+    "EFFECT_QUIVER_DANCE": (("sp_attack", 1), ("sp_defense", 1), ("speed", 1)),
+}
 POISON_STATUS_EFFECTS = {
     "EFFECT_POISON": "poison",
     "EFFECT_TOXIC": "toxic",
@@ -1076,7 +1080,8 @@ def apply_stat_stage_only_move(
     *,
     stream: RuntimeRng | None,
 ) -> list[dict[str, Any]] | None:
-    effect = stat_stage_only_effect(move)
+    state: BattleState = branch["state"]
+    effect = stat_stage_only_effect(move, get_side(state, side))
     if effect is None:
         return None
     target_side = side if effect["target"] == "self" else ("enemy" if side == "player" else "player")
@@ -1120,12 +1125,23 @@ def apply_stat_stage_only_move(
     return out
 
 
-def stat_stage_only_effect(move: MoveState) -> dict[str, Any] | None:
+def stat_stage_only_effect(move: MoveState, actor: PokemonState) -> dict[str, Any] | None:
+    if move.effect == "EFFECT_DRAGON_DANCE":
+        return {"target": "self", "changes": dragon_dance_changes(actor)}
+    if move.effect in CHAINED_SELF_STAT_STAGE_EFFECTS:
+        return {"target": "self", "changes": CHAINED_SELF_STAT_STAGE_EFFECTS[move.effect]}
     if move.effect in SELF_STAT_STAGE_EFFECTS:
         return {"target": "self", "changes": SELF_STAT_STAGE_EFFECTS[move.effect]}
     if move.effect in OPPONENT_STAT_STAGE_EFFECTS:
         return {"target": "opponent", "changes": OPPONENT_STAT_STAGE_EFFECTS[move.effect]}
     return None
+
+
+def dragon_dance_changes(actor: PokemonState) -> tuple[tuple[str, int], ...]:
+    attack = apply_stat_stage(actor.attack, actor.attack_stage)
+    sp_attack = apply_stat_stage(actor.sp_attack, actor.sp_attack_stage)
+    attack_stat = "attack" if attack >= sp_attack else "sp_attack"
+    return ((attack_stat, 1), ("speed", 1))
 
 
 def apply_stat_stage_changes(
@@ -2826,7 +2842,13 @@ def coverage_report() -> dict[str, Any]:
                 "id": "selected_stat_stage_only_moves",
                 "source": "data/moves/effects.asm AttackUp/DefenseUp/SpeedUp/SpecialAttackUp/SpecialDefenseUp and matching Down/Up2/Down2 scripts + engine/battle/effect_commands.asm:RaiseStat/LowerStat",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
-                "notes": "Selected BP=0 single-stat stage moves for attack/defense/speed/sp_attack/sp_defense consume PP, run checkhit for opponent-lowering moves, mutate stages by one or two with -6..+6 caps, and report no-effect cap/floor cases. Accuracy/evasion stage moves, damaging secondary stat effects, multi-stat chain moves, Substitute/Mist blockers, and text/animation side effects remain out of scope.",
+                "notes": "Selected BP=0 single-stat stage moves for attack/defense/speed/sp_attack/sp_defense consume PP, run checkhit for opponent-lowering moves, mutate stages by one or two with -6..+6 caps, and report no-effect cap/floor cases. Accuracy/evasion stage moves, damaging secondary stat effects, multi-stat chains outside the selected setup subset, Substitute/Mist blockers, and text/animation side effects remain out of scope.",
+            },
+            {
+                "id": "selected_multi_stat_setup_moves",
+                "source": "data/moves/effects.asm:DragonDance/CalmMind/QuiverDance + engine/battle/effect_commands.asm:BattleCommand_BestAttackUp",
+                "gate": "python tools/audit/check_headless_battle_simulator.py",
+                "notes": "Dragon Dance, Calm Mind, and Quiver Dance consume PP, mutate their chained supported stat stages, report cap/no-effect through the shared stat-stage machinery, and influence later damage and turn order. Dragon Dance mirrors bestattackup using the simulator-supported current attack/sp_attack values; burn/passive attack modifiers, Curse, Psych Up, Baton Pass, Substitute/Mist blockers, and text/animation side effects remain out of scope.",
             },
             {
                 "id": "selected_self_heal_moves",
@@ -2893,7 +2915,7 @@ def coverage_report() -> dict[str, Any]:
             "automatic full battle flow, trainer/Boss automatic action choice without caller-supplied final Boss AI score bytes, forced switch prompts, implicit replacement without an auto_replace action, automatic trainer item turns, player trainer-battle Pack availability, and item inventory accounting",
             "Pursuit-on-switch, Spikes/switch-in entry effects, switch-triggered abilities/passives, and switch memory side effects",
             "RNG-consuming mechanics outside speed ties/Boss AI selector choice/wild random move choice/auto-replace fallback/critical hits/accuracy/damage variation, Quick Claw/Choice Scarf turn-order effects",
-            "accuracy/evasion stat-stage move effects, damaging secondary stat effects, multi-stat chain moves, BrightPowder, Protect, Fly/Dig, Lock-On, X Accuracy, Baton Pass/Psych Up, Substitute/Mist blockers, badge boosts, status speed modifiers, passive stat/speed/accuracy bonuses, and passive accuracy bonuses",
+            "accuracy/evasion stat-stage move effects, damaging secondary stat effects, multi-stat chains outside Dragon Dance/Calm Mind/Quiver Dance, BrightPowder, Protect, Fly/Dig, Lock-On, X Accuracy, Baton Pass/Psych Up, Substitute/Mist blockers, badge boosts, status speed modifiers, passive stat/speed/accuracy bonuses, and passive accuracy bonuses",
             "sleep, freeze, burn application, Safeguard/Substitute, held status prevent/cure item consumption, non-paralyzed Electric speed passives, volatile effects, weather/time healing, Rest, drain moves, Heal Bell, unsupported item recovery/cures, Air Balloon pop, Substitute-blocked contact, Focus Punch break, after-hit text/script effects outside supported HP mutations, Struggle, PP Up bit packing, Mimic/Transform PP routing, and full PP legality selection",
             "Boss AI live score generation and switch candidate/confidence generation",
             "graphics, text scripts, animations, EXP, and party writes",

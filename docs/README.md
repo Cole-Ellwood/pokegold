@@ -104,15 +104,16 @@ python tools\audit\check_headless_battle_simulator.py
 ```
 
 Current scope is intentionally narrow: selected move-vs-move turns, selected
-BP=0 single-stat stage moves, selected Recover/Softboiled/Milk Drink self-heal
-moves, selected PoisonPowder/Poison Gas/Toxic poison-status moves, selected
-Thunder Wave/Stun Spore/Glare paralysis-status moves with paralyzed
-speed/full-paralysis checks plus Fighting/Electric type-passive paralysis
-modifiers, repeated action maps with `max_turns`, `auto_replace_or` for simple
-KO/send-out loops, ROM-mirrored `wild_random_move`, selected switch actions,
-caller-supplied replacement after KO, explicit enemy `auto_replace` using the
-basic source type chart, explicit active Potion/Super Potion/Hyper Potion/Max
-Potion/Full Restore actions, explicit
+BP=0 single-stat stage moves, selected Dragon Dance/Calm Mind/Quiver Dance
+setup moves, selected Recover/Softboiled/Milk Drink self-heal moves, selected
+PoisonPowder/Poison Gas/Toxic poison-status moves, selected Thunder
+Wave/Stun Spore/Glare paralysis-status moves with paralyzed speed/full-paralysis
+checks plus Fighting/Electric type-passive paralysis modifiers, repeated action
+maps with `max_turns`, `auto_replace_or` for simple KO/send-out loops,
+ROM-mirrored `wild_random_move`, selected switch actions, caller-supplied
+replacement after KO, explicit enemy `auto_replace` using the basic source type
+chart, explicit active Potion/Super Potion/Hyper Potion/Max Potion/Full Restore
+actions, explicit
 stats/species/stat-stage state, PP decrement, supported Rocky
 Helmet/Shell Bell/Life Orb after-hit HP effects, modified-speed turn order and
 equal-speed tie RNG, basic critical-hit checks, basic move accuracy with
@@ -126,10 +127,11 @@ surfaces; do not claim strategic full battle action choice, automatic trainer
 item usage, player trainer-battle Pack availability, item inventory accounting,
 implicit replacement without `auto_replace_or` or `auto_replace`,
 accuracy/evasion stage moves/modifiers, damaging secondary stat effects,
-multi-stat chain moves, Baton Pass/Psych Up, Substitute/Mist blockers, badge
-boosts, status speed, passive stat/speed/accuracy bonuses, status
-application outside selected poison/paralysis-status moves, sleep/freeze, burn
-application, Safeguard/Substitute, held status prevent/cure item consumption,
+multi-stat chains outside Dragon Dance/Calm Mind/Quiver Dance, Baton
+Pass/Psych Up, Substitute/Mist blockers, badge boosts, status speed, passive
+stat/speed/accuracy bonuses, status application outside selected
+poison/paralysis-status moves, sleep/freeze, burn application,
+Safeguard/Substitute, held status prevent/cure item consumption,
 non-paralyzed Electric speed passives, Rest, weather/time healing, drain moves,
 Heal Bell, RNG-consuming mechanics outside the listed branch points, live Boss
 AI scoring, or scripts until the simulator report and audit say that surface

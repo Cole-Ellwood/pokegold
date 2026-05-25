@@ -946,6 +946,79 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         self.assertEqual(event["blocked_changes"][0]["stage_before"], 6)
         self.assertEqual(report["outcomes"][0]["state"]["player"]["stat_stages"]["attack"], 6)
 
+    def test_calm_mind_raises_special_attack_and_defense(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["moves"] = [{"name": "CALM_MIND"}]
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+
+        report = simulate_payload(payload)
+
+        outcome = report["outcomes"][0]
+        event = outcome["events"][0]
+        self.assertEqual(event["type"], "stat_stage_change")
+        self.assertEqual(event["move"], "CALM_MIND")
+        self.assertEqual(
+            [(row["stat"], row["stage_after"]) for row in event["changes"]],
+            [("sp_attack", 1), ("sp_defense", 1)],
+        )
+        self.assertEqual(event["pp_before"], 20)
+        self.assertEqual(event["pp_after"], 19)
+        self.assertEqual(outcome["state"]["player"]["stat_stages"]["sp_attack"], 1)
+        self.assertEqual(outcome["state"]["player"]["stat_stages"]["sp_defense"], 1)
+
+    def test_quiver_dance_raises_speed_and_changes_next_turn_order(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["stats"]["speed"] = 10
+        payload["state"]["enemy"]["stats"]["speed"] = 12
+        payload["state"]["player"]["moves"] = [{"name": "QUIVER_DANCE"}]
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+        payload.pop("actions")
+        payload["turns"] = [
+            {"player": {"type": "move", "move": 0}, "enemy": {"type": "move", "move": 0}},
+            {"player": {"type": "move", "move": 0}, "enemy": {"type": "move", "move": 0}},
+        ]
+
+        report = simulate_payload(payload)
+
+        outcome = report["outcomes"][0]
+        quiver = next(event for event in outcome["events"] if event.get("move") == "QUIVER_DANCE")
+        self.assertEqual(
+            [(row["stat"], row["stage_after"]) for row in quiver["changes"]],
+            [("sp_attack", 1), ("sp_defense", 1), ("speed", 1)],
+        )
+        self.assertEqual(outcome["turn_orders"][0]["order"], ["enemy", "player"])
+        self.assertEqual(outcome["turn_orders"][1]["order"], ["player", "enemy"])
+
+    def test_dragon_dance_raises_best_attack_and_speed(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["stats"]["attack"] = 20
+        payload["state"]["player"]["stats"]["sp_attack"] = 10
+        payload["state"]["player"]["moves"] = [{"name": "DRAGON_DANCE"}]
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+
+        report = simulate_payload(payload)
+
+        event = report["outcomes"][0]["events"][0]
+        self.assertEqual(
+            [(row["stat"], row["stage_after"]) for row in event["changes"]],
+            [("attack", 1), ("speed", 1)],
+        )
+
+    def test_dragon_dance_uses_special_attack_when_higher(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["stats"]["attack"] = 10
+        payload["state"]["player"]["stats"]["sp_attack"] = 20
+        payload["state"]["player"]["moves"] = [{"name": "DRAGON_DANCE"}]
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+
+        report = simulate_payload(payload)
+
+        event = report["outcomes"][0]["events"][0]
+        self.assertEqual(
+            [(row["stat"], row["stage_after"]) for row in event["changes"]],
+            [("sp_attack", 1), ("speed", 1)],
+        )
+
     def test_self_heal_move_restores_half_max_hp(self) -> None:
         payload = scenario_template()
         payload["state"]["player"]["hp"] = 10
@@ -1340,6 +1413,7 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         self.assertIn("selected_turn_order_priority_speed", mirrored)
         self.assertIn("explicit_stat_stage_state", mirrored)
         self.assertIn("selected_stat_stage_only_moves", mirrored)
+        self.assertIn("selected_multi_stat_setup_moves", mirrored)
         self.assertIn("selected_self_heal_moves", mirrored)
         self.assertIn("selected_poison_status_moves", mirrored)
         self.assertIn("selected_paralysis_status_moves", mirrored)

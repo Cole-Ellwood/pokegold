@@ -173,6 +173,38 @@ def main() -> int:
         )
         return 1
     print("selected_stat_stage_only_moves: PASS growl_attack_down screech_miss")
+    calm_payload = scenario_template()
+    calm_payload["state"]["player"]["moves"] = [{"name": "CALM_MIND"}]
+    calm_payload["state"]["enemy"]["moves"][0]["bp"] = 0
+    calm_report = simulate_payload(calm_payload)
+    calm_event = calm_report["outcomes"][0]["events"][0]
+    if (
+        calm_event.get("type") != "stat_stage_change"
+        or [(row.get("stat"), row.get("stage_after")) for row in calm_event.get("changes", [])]
+        != [("sp_attack", 1), ("sp_defense", 1)]
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: Calm Mind mismatch: {calm_report}",
+            file=sys.stderr,
+        )
+        return 1
+    dance_payload = scenario_template()
+    dance_payload["state"]["player"]["stats"]["attack"] = 10
+    dance_payload["state"]["player"]["stats"]["sp_attack"] = 20
+    dance_payload["state"]["player"]["moves"] = [{"name": "DRAGON_DANCE"}]
+    dance_payload["state"]["enemy"]["moves"][0]["bp"] = 0
+    dance_event = simulate_payload(dance_payload)["outcomes"][0]["events"][0]
+    if (
+        dance_event.get("type") != "stat_stage_change"
+        or [(row.get("stat"), row.get("stage_after")) for row in dance_event.get("changes", [])]
+        != [("sp_attack", 1), ("speed", 1)]
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: Dragon Dance bestattack mismatch: {dance_event}",
+            file=sys.stderr,
+        )
+        return 1
+    print("selected_multi_stat_setup_moves: PASS calm_mind dragon_dance_bestattack")
     heal_payload = scenario_template()
     heal_payload["state"]["player"]["hp"] = 10
     heal_payload["state"]["player"]["max_hp"] = 40
