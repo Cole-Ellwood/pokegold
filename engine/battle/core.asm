@@ -2390,6 +2390,12 @@ EnemyPartyMonEntrance:
 	call NewEnemyMonStatus
 	call ResetEnemyStatLevels
 	call BreakAttraction
+	; Bug C: let the boss AI pre-pick the faint replacement before the
+	; vanilla type-only scorer in FindMonInOTPartyToSwitchIntoBattle runs.
+	; The helper sets wEnemySwitchMonIndex if it finds a healthy non-active
+	; candidate; otherwise leaves it at 0 and vanilla picks among low-HP
+	; survivors as before. No-op for non-boss trainers.
+	callfar BossAI_PickFaintReplacement
 	pop af
 	and a
 	jr nz, .set

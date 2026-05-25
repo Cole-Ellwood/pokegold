@@ -58,6 +58,26 @@ BossAI_SwitchOrTryItem:
 	ld a, [wEnemySwitchMonParam]
 	and a
 	jp z, AI_TryItem
+	; LATE-tier categorical sack: dying low-speed non-wincon non-asleep mons
+	; stay in to use their last turn instead of letting the player get a free
+	; hit on the next mon. Soft +8 to threshold doesn't move the needle when
+	; ComputeSwitchConfidence base alone is 65-90 + bonuses.
+	call BossAI_ShouldSackHard
+	jr nc, .no_hard_sack
+	xor a
+	ld [wEnemySwitchMonParam], a
+	jp AI_TryItem
+.no_hard_sack
+	; Bug B fix: block switching INTO a low-HP candidate unless it's an
+	; immunity pivot. Without this, an AI seeing a "best-matchup" bench mon
+	; switches into it even when it has 12/60 HP and will die before
+	; contributing. The candidate's HP is otherwise never read.
+	call BossAI_SwitchCandidateLowHPBlock
+	jr nc, .no_low_hp_block
+	xor a
+	ld [wEnemySwitchMonParam], a
+	jp AI_TryItem
+.no_low_hp_block
 	push af
 	call BossAI_ComputeSwitchConfidence
 	ld [wBossAISwitchConfidence], a
@@ -899,12 +919,11 @@ BossAI_ComputeSwitchConfidence:
 .store_ko_discount
 	ld [wBossAISwitchConfidence], a
 .no_ko_discount
-	call AICheckEnemyQuarterHP_HL
-	jr c, .no_hp_bonus
-	ld a, [wBossAISwitchConfidence]
-	add 10
-	ld [wBossAISwitchConfidence], a
-.no_hp_bonus
+	; Removed the prior `+10 if active is at quarter HP` bonus. It was
+	; structurally backwards: it directly fought BossAI_ShouldSackInsteadOfSwitch's
+	; +8 to threshold and won by 2, so low active HP slightly *increased* switch
+	; likelihood instead of biasing toward sacking. Removed so the sack-bias
+	; lever can actually move the decision when the active mon is dying.
 	call BossAI_AceTimingHook
 	jr nc, .no_ace_bonus
 	ld a, [wBossAISwitchConfidence]
@@ -1646,6 +1665,250 @@ BossAI_ShouldSackInsteadOfSwitch:
 	ld a, [wBossAIWinconMonIdx]
 	cp b
 	jr z, .no
+	scf
+	ret
+.no
+	and a
+	ret
+
+; ai-layer: POLICY
+BossAI_PickFaintReplacement::
+; Bug C: pre-faint-replacement hook. When the boss's active mon faints and
+; wEnemySwitchMonIndex is 0 (vanilla scoring would otherwise pick), scan the
+; party for the first ALIVE, NOT-ACTIVE, ABOVE-QUARTER-HP candidate and set
+; wEnemySwitchMonIndex so the predetermined-switch path uses it. This stops
+; the vanilla type-only scorer from picking a candidate (Misdreavus in the
+; observed Morty chain) that the voluntary switch logic would immediately
+; try to switch back out. If no healthy candidate exists, leave the index
+; unset so vanilla picks among the only options available.
+;
+; Tier-gated: returns immediately for non-boss trainers.
+	ld a, [wBossAITier]
+	and a
+	ret z
+	ld a, [wEnemySwitchMonIndex]
+	and a
+	ret nz
+	push bc
+	push de
+	push hl
+	ld a, [wOTPartyCount]
+	ld b, a
+	ld c, 0
+	ld hl, wOTPartyMon1HP
+.scan
+	ld a, b
+	and a
+	jr z, .done
+	ld a, [wCurOTMon]
+	cp c
+	jr z, .scan_next
+	push hl
+	ld a, [hli]
+	or [hl]
+	pop hl
+	jr z, .scan_next
+	push hl
+	push bc
+	ld a, [hli]
+	ld b, a
+	ld a, [hl]
+	ld c, a
+	sla c
+	rl b
+	sla c
+	rl b
+	inc hl
+	ld a, [hli]
+	cp b
+	jr c, .above_q
+	jr nz, .at_q
+	ld a, [hl]
+	cp c
+	jr c, .above_q
+.at_q
+	pop bc
+	pop hl
+	jr .scan_next
+.above_q
+	pop bc
+	pop hl
+	ld a, c
+	inc a
+	ld [wEnemySwitchMonIndex], a
+	jr .done
+.scan_next
+	push bc
+	ld bc, PARTYMON_STRUCT_LENGTH
+	add hl, bc
+	pop bc
+	inc c
+	dec b
+	jr .scan
+.done
+	pop hl
+	pop de
+	pop bc
+	ret
+
+; ai-layer: POLICY
+BossAI_SwitchCandidateLowHPBlock:
+; Returns carry (= block voluntary switch) when the proposed switch candidate
+; in wEnemySwitchMonParam (low nibble = 0-based party idx) is at <= quarter HP
+; AND lacks any type immunity vs the active player mon's types. The immunity
+; exception preserves the Gen-2 "absorb a STAB hit with an immune mon" pivot
+; per gameplay-lead intent.
+;
+; Reads: wEnemySwitchMonParam, wOTPartyMon1HP[N], wOTPartyMon1Species[N],
+;        wBattleMonType1, wBattleMonType2
+; Writes: wCurSpecies (saved/restored), wCurBaseData (saved/restored),
+;         wBossAITemp4..5 (scratch for candidate type pair), wTypeMatchup
+	ld a, [wEnemySwitchMonParam]
+	and $f
+	ld b, a
+	push bc
+	push de
+	ld hl, wOTPartyMon1HP
+	ld a, b
+	call GetPartyLocation
+	ld a, [hli]
+	ld d, a
+	ld a, [hl]
+	ld e, a
+	sla e
+	rl d
+	sla e
+	rl d
+	inc hl
+	ld a, [hli]
+	cp d
+	jr c, .above_quarter
+	jr nz, .at_quarter
+	ld a, [hl]
+	cp e
+	jr c, .above_quarter
+.at_quarter
+	pop de
+	pop bc
+	call BossAI_CandidateImmuneToPlayerSTAB
+	jr c, .has_immunity
+	scf
+	ret
+.above_quarter
+	pop de
+	pop bc
+.has_immunity
+	and a
+	ret
+
+; ai-layer: POLICY
+BossAI_CandidateImmuneToPlayerSTAB:
+; Returns carry if the candidate (wEnemySwitchMonParam low nibble) has at
+; least one type immunity (NO_EFFECT) vs either of the active player mon's
+; types. Used by BossAI_SwitchCandidateLowHPBlock to permit a dying mon to
+; switch in if it can absorb a STAB hit at 0x.
+	push bc
+	push de
+	push hl
+	ld a, [wEnemySwitchMonParam]
+	and $f
+	ld c, a
+	ld hl, wOTPartyMon1Species
+	ld a, c
+	call GetPartyLocation
+	ld a, [hl]
+	ld c, a
+	ld a, [wCurSpecies]
+	push af
+	ld a, c
+	ld [wCurSpecies], a
+	call GetBaseData
+	ld a, [wCurBaseData + BASE_TYPE_1]
+	ld d, a
+	ld a, [wCurBaseData + BASE_TYPE_2]
+	ld e, a
+	pop af
+	ld [wCurSpecies], a
+	and a
+	call nz, GetBaseData
+	ld a, d
+	ld [wBossAITemp4], a
+	ld a, e
+	ld [wBossAITemp5], a
+	ld a, [wBattleMonType1]
+	ld hl, wBossAITemp4
+	call BossAI_CheckTypeMatchupNoItem
+	ld a, [wTypeMatchup]
+	and a
+	jr z, .immune_yes
+	ld a, [wBattleMonType1]
+	ld c, a
+	ld a, [wBattleMonType2]
+	cp c
+	jr z, .immune_no
+	ld hl, wBossAITemp4
+	call BossAI_CheckTypeMatchupNoItem
+	ld a, [wTypeMatchup]
+	and a
+	jr z, .immune_yes
+.immune_no
+	pop hl
+	pop de
+	pop bc
+	and a
+	ret
+.immune_yes
+	pop hl
+	pop de
+	pop bc
+	scf
+	ret
+
+; ai-layer: POLICY
+BossAI_ShouldSackHard:
+; LATE-tier categorical sack rule. Returns carry (= abort voluntary switch)
+; when the active mon is in a "let it die in field" state per gameplay-lead
+; intent: dying mons should spend their last turn productively instead of
+; giving the player a free hit on the next mon. Two stay-and-don't-sack
+; exceptions: fast frail mons (base speed >= 105) can outspeed and contribute
+; a last action after a switch, so keeping them in to act before dying loses
+; value; asleep mons should be switched out so the sleep-clause "slot" stays
+; banked instead of being burned by an in-field KO.
+;
+; Conditions (all must hold for sack):
+;   - wBossAITier == AI_TIER_LATE
+;   - active HP <= quarter max
+;   - active is NOT the boss's wincon mon
+;   - active is NOT asleep
+;   - active species base Speed < 105
+	ld a, [wBossAITier]
+	cp AI_TIER_LATE
+	jr c, .no
+	call AICheckEnemyQuarterHP_HL
+	jr c, .no
+	ld a, [wCurOTMon]
+	inc a
+	ld b, a
+	ld a, [wBossAIWinconMonIdx]
+	cp b
+	jr z, .no
+	ld a, [wEnemyMonStatus]
+	and SLP_MASK
+	jr nz, .no
+	ld a, [wCurSpecies]
+	push af
+	ld a, [wEnemyMonSpecies]
+	ld [wCurSpecies], a
+	call GetBaseData
+	ld a, [wCurBaseData + BASE_SPD]
+	ld b, a
+	pop af
+	ld [wCurSpecies], a
+	and a
+	call nz, GetBaseData
+	ld a, b
+	cp 105
+	jr nc, .no
 	scf
 	ret
 .no

@@ -1,9 +1,9 @@
 {
   "version": 1,
   "trace_rom": "pokegold_trace.gbc",
-  "trace_rom_sha256": "27602A6578987D77EFD4CCF70AB2D323AA6D6A2DED211602E016A2AAB2062447",
+  "trace_rom_sha256": "0F36F6FA5C35CDA2CEA336C8B0B993A5B22E12D2844ADBCF205F7514B33CAFD9",
   "trace_symbols": "pokegold_trace.sym",
-  "trace_symbols_sha256": "53CAF507E51D31C5A958A739ABD1A8097483B02DC9EB27750C28266746465D82",
+  "trace_symbols_sha256": "B12422B4A263734D27974712ED3B65239E852B4C914235AC5A4825D1A758C060",
   "default_watch_frames": 600,
   "default_poll_every": 1,
   "captures": [
@@ -280,8 +280,8 @@
       "stop_after_first_capture": true,
       "require_chosen_move": false,
       "switch_materialization_state": ".local/tmp/boss_state_factory/shared_switch_loop_predispatch.state",
-      "switch_materialization_trace_rom_sha256": "DE77F9AF9B38EBECFE06006F3051103ACE9968F36411B01CD6FC686E4F0A3FEF",
-      "switch_materialization_trace_symbols_sha256": "843814849F25FC8D254AE9C61438F9A16BCE50B9ACE1EA5B4B376DC96A063FCD",
+      "switch_materialization_trace_rom_sha256": "0F36F6FA5C35CDA2CEA336C8B0B993A5B22E12D2844ADBCF205F7514B33CAFD9",
+      "switch_materialization_trace_symbols_sha256": "B12422B4A263734D27974712ED3B65239E852B4C914235AC5A4825D1A758C060",
       "switch_materialization_base_state": ".local/tmp/boss_state_factory_current/jasmine_chosen_frame_4130.state"
     }
   ]

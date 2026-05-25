@@ -32,6 +32,7 @@ GUARDED_ENTRYPOINTS = {
     "BossAI_SelectMove",
     "BossAI_SwitchOrTryItem",
     "BossAI_OnSwitchExecuted",
+    "BossAI_PickFaintReplacement",
     "BossAI_SelectPlanIfNeeded",
     "BossAI_ComputePlayerPlausibleTypeMask",
     "BossAI_EvaluateActionLookahead",
