@@ -5,6 +5,8 @@ import re
 import sys
 from pathlib import Path
 
+from _common import fail
+
 
 ROOT = Path(__file__).resolve().parents[2]
 OBS = ROOT / "engine" / "battle" / "ai" / "observation_log.asm"
@@ -25,11 +27,6 @@ FORBIDDEN_OBS_SYMBOLS = (
     "hJoy",
     "wMenuCursor",
 )
-
-
-def fail(message: str) -> None:
-    print(f"FAIL: {message}")
-    raise SystemExit(1)
 
 
 def read(path: Path) -> str:

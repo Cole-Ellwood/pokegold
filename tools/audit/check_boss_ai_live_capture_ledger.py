@@ -9,6 +9,8 @@ import sys
 import json
 from pathlib import Path
 
+from _common import fail
+
 
 ROOT = Path(__file__).resolve().parents[2]
 LEDGER = ROOT / "audit" / "boss_ai_trace" / "live_capture_ledger.md"
@@ -88,11 +90,6 @@ LIVE_ROW_RE = re.compile(
     r"^\|\s*(?P<boss>[^|]+?)\s*\|\s*`(?P<status>[^`]+)`\s*\|"
     r"\s*(?P<checks>[^|]+?)\s*\|\s*`(?P<path>[^`]+)`\s*\|"
 )
-
-
-def fail(message: str) -> None:
-    print(f"FAIL: {message}")
-    raise SystemExit(1)
 
 
 def rel(path: Path) -> str:

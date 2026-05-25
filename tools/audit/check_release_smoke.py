@@ -8,6 +8,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from _common import fail
+
 
 ROOT = Path(__file__).resolve().parents[2]
 MART_TERMINATORS = {"-1", "CANCEL"}
@@ -30,11 +32,6 @@ class SourceCache:
 
 
 SOURCE = SourceCache()
-
-
-def fail(msg: str) -> None:
-    print(f"FAIL: {msg}")
-    raise SystemExit(1)
 
 
 def parse_moves(path: Path) -> dict[str, dict[str, str]]:

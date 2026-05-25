@@ -7,6 +7,8 @@ import re
 import sys
 from pathlib import Path
 
+from _common import fail, load
+
 
 ROOT = Path(__file__).resolve().parents[2]
 NORMAL_MAP = ROOT / "pokegold.map"
@@ -24,17 +26,6 @@ LABEL_RE = re.compile(r"^\t\s+\$(?P<address>[0-9a-fA-F]+) = (?P<name>\S+)$")
 SYM_RE = re.compile(r"^(?P<bank>[0-9a-fA-F]{2}):(?P<address>[0-9a-fA-F]{4}) (?P<name>\S+)$")
 
 BOSS_RESERVE_BYTES = 140
-
-
-def fail(message: str) -> None:
-    print(f"FAIL: {message}")
-    raise SystemExit(1)
-
-
-def load(path: Path) -> str:
-    if not path.exists():
-        fail(f"missing required file: {path.relative_to(ROOT)}")
-    return path.read_text(encoding="utf-8", errors="replace")
 
 
 def parse_sections(map_text: str) -> list[dict[str, object]]:

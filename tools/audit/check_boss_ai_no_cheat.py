@@ -6,6 +6,8 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
+from _common import strip_comment
+
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -116,12 +118,6 @@ APPROVED_FORBIDDEN_PATTERN_EXCEPTIONS = [
         approval="uniform Haki oracle defensive-pivot helper",
     ),
 ]
-
-
-def strip_comment(line: str) -> str:
-    if ";" in line:
-        return line.split(";", 1)[0]
-    return line
 
 
 def top_label_for_line(raw: list[str], index: int) -> str:

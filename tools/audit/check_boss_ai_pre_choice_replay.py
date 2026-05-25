@@ -10,6 +10,8 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
+from _common import fail
+
 
 ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
@@ -50,11 +52,6 @@ BASELINE_FIELD_KEYS = (
     "revealed_masks",
     "switch_context",
 )
-
-
-def fail(message: str) -> None:
-    print(f"FAIL: {message}")
-    raise SystemExit(1)
 
 
 def rel_or_abs(path_text: str) -> Path:

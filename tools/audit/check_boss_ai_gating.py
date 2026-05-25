@@ -5,6 +5,8 @@ import re
 import sys
 from pathlib import Path
 
+from _common import strip_comment
+
 
 ROOT = Path(__file__).resolve().parents[2]
 BOSS_FILES = [
@@ -42,12 +44,6 @@ GUARDED_ENTRYPOINTS = {
 
 LABEL_RE = re.compile(r"^([A-Za-z0-9_]+)::?\s*(?:;.*)?$")
 CALL_RE = re.compile(r"\b(?:callfar|call|jp)\s+(BossAI_[A-Za-z0-9_]+)\b")
-
-
-def strip_comment(line: str) -> str:
-    if ";" in line:
-        return line.split(";", 1)[0]
-    return line
 
 
 def load_lines(path: Path) -> list[str]:

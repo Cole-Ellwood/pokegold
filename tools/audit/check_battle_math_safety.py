@@ -8,6 +8,8 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
+from _common import strip_comment
+
 from asm_scan import ROOT, TOP_LABEL_RE, LOCAL_LABEL_RE, SECTION_RE, code_part, iter_asm_files as scan_asm_files
 
 SCAN_ROOTS = [
@@ -46,10 +48,6 @@ class Issue:
     lineno: int
     line: str
     reason: str
-
-
-def strip_comment(line: str) -> str:
-    return line.split(";", 1)[0]
 
 
 def is_allowed_exception(

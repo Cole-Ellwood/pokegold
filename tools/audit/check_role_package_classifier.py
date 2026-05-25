@@ -5,6 +5,8 @@ import re
 import sys
 from pathlib import Path
 
+from _common import fail
+
 ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
@@ -43,11 +45,6 @@ SWITCH_WEIGHTS = {
     "trap/perish-line": 10,
     "physical/special-wallbreaker": 6,
 }
-
-
-def fail(message: str) -> None:
-    print(f"FAIL: {message}")
-    raise SystemExit(1)
 
 
 def read(path: Path) -> str:

@@ -6,6 +6,8 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+from _common import fail, load
+
 
 ROOT = Path(__file__).resolve().parents[2]
 MAPS = (
@@ -21,17 +23,6 @@ SECTION_RE = re.compile(
     r'\(\$(?P<size>[0-9a-fA-F]+) bytes\) \["(?P<name>.+)"\]$'
 )
 LABEL_RE = re.compile(r"^\t\s+\$(?P<address>[0-9a-fA-F]+) = (?P<label>\S+)$")
-
-
-def fail(message: str) -> None:
-    print(f"FAIL: {message}")
-    raise SystemExit(1)
-
-
-def load(path: Path) -> str:
-    if not path.exists():
-        fail(f"missing required file: {path.relative_to(ROOT)}")
-    return path.read_text(encoding="utf-8", errors="replace")
 
 
 def parse_wramx_bank1(map_text: str) -> tuple[int, dict[str, int]]:

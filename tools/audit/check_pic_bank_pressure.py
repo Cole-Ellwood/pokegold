@@ -35,6 +35,8 @@ import json
 import re
 from pathlib import Path
 
+from _common import fail
+
 
 ROOT = Path(__file__).resolve().parents[2]
 DEV_INDEX = ROOT / "docs" / "generated" / "dev_index.md"
@@ -46,11 +48,6 @@ TIGHT_HEADER_RE = re.compile(r"^###\s+Tight Banks And Regions\s*$")
 ROW_RE = re.compile(
     r"^\|\s*(?P<region>[A-Za-z0-9]+)\s*\|\s*(?P<bank>[0-9a-fA-F]+)\s*\|\s*(?P<free>-?\d+)\s*\|"
 )
-
-
-def fail(message: str) -> None:
-    print(f"FAIL: {message}")
-    raise SystemExit(1)
 
 
 def parse_tight_banks() -> dict[str, int]:

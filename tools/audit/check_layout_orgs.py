@@ -27,6 +27,8 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+from _common import fail
+
 
 ROOT = Path(__file__).resolve().parents[2]
 LAYOUT = ROOT / "layout.link"
@@ -47,11 +49,6 @@ BANK_RE = re.compile(r"^ROMX\s+\$([0-9a-fA-F]+)\s*$")
 NON_ROMX_REGION_RE = re.compile(r"^(ROM0|WRAM0|WRAMX|VRAM|SRAM|HRAM)\b")
 ORG_RE = re.compile(r"^\s*org\s+(\$[0-9a-fA-F]+)\s*$")
 SECTION_RE = re.compile(r'^\s*"([^"]+)"\s*$')
-
-
-def fail(message: str) -> None:
-    print(f"FAIL: {message}")
-    raise SystemExit(1)
 
 
 def parse_pins(text: str) -> list[tuple[str, str, str]]:

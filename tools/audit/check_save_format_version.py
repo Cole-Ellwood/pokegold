@@ -30,6 +30,8 @@ import json
 import re
 from pathlib import Path
 
+from _common import fail, load
+
 
 ROOT = Path(__file__).resolve().parents[2]
 CONSTANTS = ROOT / "constants" / "misc_constants.asm"
@@ -57,17 +59,6 @@ LAYOUT_SECTION_RE = re.compile(r'^\s*"([^"]+)"\s*$')
 TRACE_ONLY_IF_RE = re.compile(r"^\s*IF\s+DEF\(\s*BOSS_AI_TRACE\s*\)\s*$")
 IF_RE = re.compile(r"^\s*IF\b")
 ENDC_RE = re.compile(r"^\s*ENDC\b")
-
-
-def fail(message: str) -> None:
-    print(f"FAIL: {message}")
-    raise SystemExit(1)
-
-
-def load(path: Path) -> str:
-    if not path.exists():
-        fail(f"missing required file: {path.relative_to(ROOT)}")
-    return path.read_text(encoding="utf-8", errors="replace")
 
 
 BOSS_AI_RESERVE_BYTES = 140

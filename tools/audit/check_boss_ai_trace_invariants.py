@@ -7,6 +7,8 @@ import re
 import sys
 from pathlib import Path
 
+from _common import code_lines, fail, load, strip_comment
+
 
 ROOT = Path(__file__).resolve().parents[2]
 BOSS_FILES = (
@@ -29,29 +31,8 @@ TOP_LABEL_RE = re.compile(r"^[A-Za-z0-9_]+:{1,2}\s*(?:;.*)?$")
 ADD_RE = re.compile(r"\badd\s+(\d+)\b")
 
 
-def fail(message: str) -> None:
-    print(f"FAIL: {message}")
-    raise SystemExit(1)
-
-
-def strip_comment(line: str) -> str:
-    if ";" in line:
-        return line.split(";", 1)[0]
-    return line
-
-
-def load(path: Path) -> str:
-    if not path.exists():
-        fail(f"missing required file: {path.relative_to(ROOT)}")
-    return path.read_text(encoding="utf-8", errors="replace")
-
-
 def load_boss_source() -> str:
     return "\n".join(load(path) for path in BOSS_FILES)
-
-
-def code_lines(text: str) -> list[str]:
-    return [strip_comment(line).rstrip() for line in text.splitlines()]
 
 
 def top_block(text: str, label: str) -> str:

@@ -7,6 +7,8 @@ import json
 import sys
 from pathlib import Path
 
+from _common import fail
+
 
 ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
@@ -20,11 +22,6 @@ TRACE_DIR = ROOT / "audit" / "boss_ai_trace"
 MANIFEST = TRACE_DIR / "live_capture_manifest.json"
 MIN_EXACT_CAPTURES = 19
 MIN_AGREEMENT = 0.9999
-
-
-def fail(message: str) -> None:
-    print(f"FAIL: {message}")
-    raise SystemExit(1)
 
 
 def rel_or_abs(path_text: str) -> Path:
