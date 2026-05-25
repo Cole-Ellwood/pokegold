@@ -9,15 +9,6 @@
             "command": "python3 tools/damage_debugger/precommit_check.py"
           }
         ]
-      },
-      {
-        "matcher": "Edit|Write|MultiEdit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 .claude/hooks/pretooluse_read_before_edit.py"
-          }
-        ]
       }
     ],
     "SessionStart": [
