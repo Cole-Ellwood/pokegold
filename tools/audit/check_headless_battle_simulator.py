@@ -20,6 +20,16 @@ def main() -> int:
         print(f"Headless battle simulator audit FAILED: self-test failed: {exc}", file=sys.stderr)
         return 1
     print("simulator_self_test: PASS")
+    pp_payload = scenario_template()
+    pp_report = simulate_payload(pp_payload)
+    pp_outcome = pp_report["outcomes"][0]
+    if (
+        pp_outcome["state"]["player"]["moves"][0].get("pp") != 34
+        or pp_outcome["state"]["enemy"]["moves"][0].get("pp") != 34
+    ):
+        print(f"Headless battle simulator audit FAILED: PP decrement mismatch: {pp_outcome}", file=sys.stderr)
+        return 1
+    print("basic_pp_decrement: PASS pp=35->34")
     selector = select_from_score_bytes(
         scenario_id="headless_audit_selector",
         tier="late",

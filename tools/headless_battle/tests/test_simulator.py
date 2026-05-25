@@ -31,6 +31,24 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         )
         self.assertLess(outcome["state"]["enemy"]["hp"], 18)
 
+    def test_selected_moves_decrement_pp_once(self) -> None:
+        report = simulate_payload(scenario_template())
+
+        outcome = report["outcomes"][0]
+        self.assertEqual(outcome["events"][0]["pp_before"], 35)
+        self.assertEqual(outcome["events"][0]["pp_after"], 34)
+        self.assertEqual(outcome["events"][1]["pp_before"], 35)
+        self.assertEqual(outcome["events"][1]["pp_after"], 34)
+        self.assertEqual(outcome["state"]["player"]["moves"][0]["pp"], 34)
+        self.assertEqual(outcome["state"]["enemy"]["moves"][0]["pp"], 34)
+
+    def test_zero_pp_selected_move_is_out_of_scope_until_struggle(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["moves"][0]["pp"] = 0
+
+        with self.assertRaisesRegex(SimulationInputError, "has no PP; Struggle is out of scope"):
+            simulate_payload(payload)
+
     def test_priority_changes_turn_order(self) -> None:
         payload = scenario_template()
         payload["state"]["enemy"]["moves"][0]["priority"] = 2
@@ -406,6 +424,7 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         self.assertIn("basic_move_accuracy_rng", mirrored)
         self.assertIn("basic_critical_hit_rng", mirrored)
         self.assertIn("basic_status_residual", mirrored)
+        self.assertIn("basic_pp_decrement", mirrored)
         self.assertIn("selected_turn_order_priority_speed", mirrored)
         self.assertIn("selected_switch_and_replacement", mirrored)
         self.assertIn("boss_ai_selector_from_post_score_bytes", mirrored)

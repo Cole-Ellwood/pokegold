@@ -46,6 +46,7 @@ class MoveState:
     bp: int
     priority: int = 1
     accuracy: int = 255
+    pp: int = 0
     move_id: int | None = None
 
 
@@ -408,9 +409,17 @@ def apply_move(
 ) -> list[dict[str, Any]]:
     state: BattleState = branch["state"]
     attacker = get_side(state, side)
+    move = selected_move(attacker, action)
+    if move.pp <= 0:
+        raise SimulationInputError(f"{side} move {move.name} has no PP; Struggle is out of scope")
+    pp_before = move.pp
+    branch = consume_move_pp(branch, side, action.move_index)
+    state = branch["state"]
+    attacker = get_side(state, side)
+    move = selected_move(attacker, action)
+    pp_after = move.pp
     target_side = "enemy" if side == "player" else "player"
     target = get_side(state, target_side)
-    move = selected_move(attacker, action)
     if move.bp <= 0:
         updated = clone_branch(branch)
         updated["events"].append(
@@ -420,6 +429,8 @@ def apply_move(
                 "move": move.name,
                 "type": "unsupported_noop",
                 "reason": "first slice only mutates HP for damaging moves with bp > 0",
+                "pp_before": pp_before,
+                "pp_after": pp_after,
                 "proof_status": "out_of_scope",
             }
         )
@@ -455,6 +466,8 @@ def apply_move(
                                 "raw_values": variation["raw_values"],
                             },
                             "accuracy_check": hit_check,
+                            "pp_before": pp_before,
+                            "pp_after": pp_after,
                             "proof_status": "source_mirrored_basic_critical_variation_accuracy",
                         }
                     )
@@ -482,6 +495,8 @@ def apply_move(
                         "target_hp_after": hp_after,
                         "critical_check": critical_check,
                         "accuracy_check": hit_check,
+                        "pp_before": pp_before,
+                        "pp_after": pp_after,
                         "damage_variation": {
                             "applied": variation["applied"],
                             "multiplier": variation["multiplier"],
@@ -1096,6 +1111,7 @@ def parse_move(raw: Any, path: str) -> MoveState:
         bp=parse_non_negative_int(raw.get("bp", row.bp if row is not None else 40), f"{path}.bp"),
         priority=parse_int(raw.get("priority", 1), f"{path}.priority"),
         accuracy=parse_accuracy(raw, row, f"{path}.accuracy"),
+        pp=parse_byte(raw.get("pp", row.pp if row is not None else 35), f"{path}.pp"),
         move_id=parse_optional_byte(raw.get("move_id", default_move_id), f"{path}.move_id"),
     )
 
@@ -1202,6 +1218,21 @@ def selected_move(pokemon: PokemonState, action: ActionState) -> MoveState:
     return pokemon.moves[action.move_index]
 
 
+def consume_move_pp(branch: dict[str, Any], side: str, move_index: int | None) -> dict[str, Any]:
+    if move_index is None:
+        raise SimulationInputError(f"{side} move index out of range")
+    state: BattleState = branch["state"]
+    pokemon = get_side(state, side)
+    if move_index >= len(pokemon.moves):
+        raise SimulationInputError(f"{side} move index out of range")
+    move = pokemon.moves[move_index]
+    updated_move = replace_move_pp(move, move.pp - 1)
+    updated_pokemon = replace_move(pokemon, move_index, updated_move)
+    updated = clone_branch(branch)
+    updated["state"] = replace_side(state, side, updated_pokemon)
+    return updated
+
+
 def get_side(state: BattleState, side: str) -> PokemonState:
     return state.player if side == "player" else state.enemy
 
@@ -1289,6 +1320,44 @@ def replace_hp(pokemon: PokemonState, hp: int, *, toxic_count: int | None = None
     )
 
 
+def replace_move(pokemon: PokemonState, move_index: int, move: MoveState) -> PokemonState:
+    moves = tuple(move if index == move_index else item for index, item in enumerate(pokemon.moves))
+    return PokemonState(
+        side=pokemon.side,
+        name=pokemon.name,
+        level=pokemon.level,
+        hp=pokemon.hp,
+        max_hp=pokemon.max_hp,
+        types=pokemon.types,
+        type_names=pokemon.type_names,
+        attack=pokemon.attack,
+        defense=pokemon.defense,
+        speed=pokemon.speed,
+        sp_attack=pokemon.sp_attack,
+        sp_defense=pokemon.sp_defense,
+        item=pokemon.item,
+        can_evolve=pokemon.can_evolve,
+        focus_energy=pokemon.focus_energy,
+        status=pokemon.status,
+        toxic_count=pokemon.toxic_count,
+        moves=moves,
+    )
+
+
+def replace_move_pp(move: MoveState, pp: int) -> MoveState:
+    return MoveState(
+        name=move.name,
+        effect=move.effect,
+        move_type=move.move_type,
+        move_type_name=move.move_type_name,
+        bp=move.bp,
+        priority=move.priority,
+        accuracy=move.accuracy,
+        pp=pp,
+        move_id=move.move_id,
+    )
+
+
 def clone_branch(branch: dict[str, Any]) -> dict[str, Any]:
     cloned = {
         "state": branch["state"],
@@ -1363,6 +1432,7 @@ def move_to_json(move: MoveState) -> dict[str, Any]:
         "bp": move.bp,
         "priority": move.priority,
         "accuracy": move.accuracy,
+        "pp": move.pp,
         "move_id": move.move_id,
     }
 
@@ -1403,6 +1473,12 @@ def coverage_report() -> dict[str, Any]:
                 "notes": "Initial poison, burn, and toxic residual damage is mirrored after a selected move when both active Pokemon remain alive. Status application, sleep, freeze, paralysis, Leech Seed, Nightmare, Curse, weather, Leftovers, and item/status cures remain out of scope.",
             },
             {
+                "id": "basic_pp_decrement",
+                "source": "engine/battle/effect_commands.asm:BattleCommand_DoTurn",
+                "gate": "python tools/audit/check_headless_battle_simulator.py",
+                "notes": "Selected and executable-selector moves decrement PP once before their supported effect handling. Zero-PP selected moves are rejected because Struggle and full move-legality selection are not implemented.",
+            },
+            {
                 "id": "selected_turn_order_priority_speed",
                 "source": "engine/battle/core.asm:DetermineMoveOrder",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
@@ -1438,7 +1514,7 @@ def coverage_report() -> dict[str, Any]:
             "Pursuit-on-switch, Spikes/switch-in entry effects, switch-triggered abilities/passives, and switch memory side effects",
             "RNG-consuming mechanics outside speed ties/Boss AI selector choice/critical hits/accuracy/damage variation, Quick Claw/Choice Scarf turn-order effects",
             "accuracy/evasion stat stages, BrightPowder, Protect, Fly/Dig, Lock-On, X Accuracy, and passive accuracy bonuses",
-            "status application, sleep, freeze, paralysis, volatile effects, weather, item recovery/cures, and after-hit effects",
+            "status application, sleep, freeze, paralysis, volatile effects, weather, item recovery/cures, after-hit effects, Struggle, PP Up bit packing, Mimic/Transform PP routing, and full PP legality selection",
             "Boss AI live score generation and switch candidate/confidence generation",
             "graphics, text scripts, animations, EXP, and party writes",
         ],
