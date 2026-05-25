@@ -47,6 +47,10 @@ COMPONENT_NONRETURN_CALL_BUDGET = 500
 PSN_STATUS = 1 << 3
 BRN_STATUS = 1 << 4
 PAR_STATUS = 1 << 6
+SLEEP_STATUS_BYTE_3_TURNS = 3
+SUBSTATUS_NIGHTMARE_BIT = 0
+SUBSTATUS_CONFUSED_BIT = 7
+SUBSTATUS_TOXIC_BIT = 0
 NORMAL_HIT_CHAIN = (
     "BattleCommand_DoTurn",
     "BattleCommand_Critical",
@@ -240,6 +244,72 @@ ITEM_RESTORE_COMPONENT_SCENARIOS = (
 
 
 @dataclass(frozen=True)
+class FullRestoreStatusCureScenario:
+    scenario_id: str
+    status_before: int
+    sub1_before: int  # wPlayerSubStatus1 (NIGHTMARE bit)
+    sub3_before: int  # wPlayerSubStatus3 (CONFUSED bit)
+    sub5_before: int  # wPlayerSubStatus5 (TOXIC bit)
+    headless_status: str | None  # "burn", "poison", "toxic", "paralyze", "sleep", or None
+    headless_toxic_count: int
+    headless_sleep_turns: int
+
+
+FULL_RESTORE_STATUS_CURE_SCENARIOS = (
+    FullRestoreStatusCureScenario(
+        scenario_id="component_full_restore_clears_burn",
+        status_before=BRN_STATUS,
+        sub1_before=0,
+        sub3_before=0,
+        sub5_before=0,
+        headless_status="burn",
+        headless_toxic_count=0,
+        headless_sleep_turns=0,
+    ),
+    FullRestoreStatusCureScenario(
+        scenario_id="component_full_restore_clears_paralyze",
+        status_before=PAR_STATUS,
+        sub1_before=0,
+        sub3_before=0,
+        sub5_before=0,
+        headless_status="paralyze",
+        headless_toxic_count=0,
+        headless_sleep_turns=0,
+    ),
+    FullRestoreStatusCureScenario(
+        scenario_id="component_full_restore_clears_toxic_and_poison",
+        status_before=PSN_STATUS,
+        sub1_before=0,
+        sub3_before=0,
+        sub5_before=1 << SUBSTATUS_TOXIC_BIT,
+        headless_status="toxic",
+        headless_toxic_count=3,
+        headless_sleep_turns=0,
+    ),
+    FullRestoreStatusCureScenario(
+        scenario_id="component_full_restore_clears_sleep_and_nightmare",
+        status_before=SLEEP_STATUS_BYTE_3_TURNS,
+        sub1_before=1 << SUBSTATUS_NIGHTMARE_BIT,
+        sub3_before=0,
+        sub5_before=0,
+        headless_status="sleep",
+        headless_toxic_count=0,
+        headless_sleep_turns=3,
+    ),
+    FullRestoreStatusCureScenario(
+        scenario_id="component_full_restore_clears_confusion_only",
+        status_before=0,
+        sub1_before=0,
+        sub3_before=1 << SUBSTATUS_CONFUSED_BIT,
+        sub5_before=0,
+        headless_status=None,
+        headless_toxic_count=0,
+        headless_sleep_turns=0,
+    ),
+)
+
+
+@dataclass(frozen=True)
 class RomNormalHitResult:
     scenario_id: str
     player_hp_before: int
@@ -292,6 +362,20 @@ class RomItemRestoreComponentResult:
     get_amount_returned: bool
     restore_returned: bool
     hp_buffer3: int
+
+
+@dataclass(frozen=True)
+class RomFullRestoreStatusCureResult:
+    scenario_id: str
+    status_before: int
+    status_after: int
+    sub1_before: int
+    sub1_after: int
+    sub3_before: int
+    sub3_after: int
+    sub5_before: int
+    sub5_after: int
+    heal_status_returned: bool
 
 
 @dataclass(frozen=True)
@@ -517,6 +601,23 @@ def _seed_rom_item_restore_component(
     _write_hp_buffer(pyboy, syms, "wHPBuffer1", scenario.max_hp)
 
 
+def _seed_rom_full_restore_status_cure(
+    pyboy: Any,
+    syms: dict[str, tuple[int, int]],
+    scenario: FullRestoreStatusCureScenario,
+) -> None:
+    _seed_common(pyboy, syms)
+    _write_byte(pyboy, syms, "wCurItem", FULL_RESTORE_ITEM_ID)
+    # IsItemUsedOnBattleMon needs wBattleMode != 0 and wCurPartyMon == wCurBattleMon.
+    _write_byte(pyboy, syms, "wBattleMode", 1)
+    _write_byte(pyboy, syms, "wCurPartyMon", 0)
+    _write_byte(pyboy, syms, "wCurBattleMon", 0)
+    _write_byte(pyboy, syms, "wBattleMonStatus", scenario.status_before)
+    _write_byte(pyboy, syms, "wPlayerSubStatus1", scenario.sub1_before)
+    _write_byte(pyboy, syms, "wPlayerSubStatus3", scenario.sub3_before)
+    _write_byte(pyboy, syms, "wPlayerSubStatus5", scenario.sub5_before)
+
+
 def run_rom_normal_hit() -> RomNormalHitResult:
     rom = find_rom("pokegold_debug")
     syms = SymbolTable.load(find_sym("pokegold_debug")).as_legacy_dict()
@@ -618,6 +719,50 @@ def run_rom_drain_components() -> tuple[RomDrainComponentResult, ...]:
                     damage=_read_u16(pyboy, syms, "wCurDamage"),
                     returned=returned,
                     post_pc=post_pc,
+                )
+            )
+        return tuple(results)
+    finally:
+        cache.stop()
+
+
+def run_rom_full_restore_status_cures() -> tuple[RomFullRestoreStatusCureResult, ...]:
+    rom = find_rom("pokegold_debug")
+    syms = SymbolTable.load(find_sym("pokegold_debug")).as_legacy_dict()
+    cache = BootStateCache(rom)
+    pyboy = cache.prime()
+    results: list[RomFullRestoreStatusCureResult] = []
+    try:
+        for scenario in FULL_RESTORE_STATUS_CURE_SCENARIOS:
+            pyboy = cache.restore()
+            _seed_rom_full_restore_status_cure(pyboy, syms, scenario)
+            status_before = _read_byte(pyboy, syms, "wBattleMonStatus")
+            sub1_before = _read_byte(pyboy, syms, "wPlayerSubStatus1")
+            sub3_before = _read_byte(pyboy, syms, "wPlayerSubStatus3")
+            sub5_before = _read_byte(pyboy, syms, "wPlayerSubStatus5")
+            # HealStatus farcalls CalcPlayerStats at the end, which depends on
+            # party/stat state that this proof intentionally does not seed.
+            # The status + sub-status clears happen BEFORE the farcall, so we
+            # assert against those bytes regardless of whether HealStatus
+            # fully returns within the call budget.
+            _, heal_returned, _ = call_function_safe(
+                pyboy,
+                syms,
+                "HealStatus",
+                budget=CALL_BUDGET,
+            )
+            results.append(
+                RomFullRestoreStatusCureResult(
+                    scenario_id=scenario.scenario_id,
+                    status_before=status_before,
+                    status_after=_read_byte(pyboy, syms, "wBattleMonStatus"),
+                    sub1_before=sub1_before,
+                    sub1_after=_read_byte(pyboy, syms, "wPlayerSubStatus1"),
+                    sub3_before=sub3_before,
+                    sub3_after=_read_byte(pyboy, syms, "wPlayerSubStatus3"),
+                    sub5_before=sub5_before,
+                    sub5_after=_read_byte(pyboy, syms, "wPlayerSubStatus5"),
+                    heal_status_returned=heal_returned,
                 )
             )
         return tuple(results)
@@ -863,6 +1008,55 @@ def item_restore_component_payload(scenario: ItemRestoreComponentScenario) -> di
     }
 
 
+def full_restore_status_cure_payload(scenario: FullRestoreStatusCureScenario) -> dict[str, Any]:
+    player: dict[str, Any] = {
+        "species": "CYNDAQUIL",
+        "level": 5,
+        "types": ["FIRE", "FIRE"],
+        "hp": 20,
+        "max_hp": 30,
+        "stats": {
+            "attack": 10,
+            "defense": 9,
+            "speed": 11,
+            "sp_attack": 11,
+            "sp_defense": 10,
+        },
+        "moves": [{"name": "TACKLE", "type": "NORMAL", "bp": 0}],
+    }
+    if scenario.headless_status is not None:
+        player["status"] = scenario.headless_status
+    if scenario.headless_toxic_count:
+        player["toxic_count"] = scenario.headless_toxic_count
+    if scenario.headless_sleep_turns:
+        player["sleep_turns"] = scenario.headless_sleep_turns
+    return {
+        "rng": {"mode": "fixed", "values": []},
+        "state": {
+            "weather": "none",
+            "weather_count": 0,
+            "turn": 1,
+            "player": player,
+            "enemy": {
+                "species": "PIDGEY",
+                "level": 5,
+                "types": ["NORMAL", "NORMAL"],
+                "hp": 40,
+                "max_hp": 40,
+                "stats": {
+                    "attack": 6,
+                    "defense": 6,
+                    "speed": 7,
+                    "sp_attack": 5,
+                    "sp_defense": 5,
+                },
+                "moves": [{"name": "TACKLE", "type": "NORMAL", "bp": 0}],
+            },
+        },
+        "actions": {"player": {"type": "item", "item": "FULL_RESTORE"}, "enemy": {"type": "move", "move": 0}},
+    }
+
+
 def compare_normal_hit_fixed_rng() -> DifferentialResult:
     rom = run_rom_normal_hit()
     report = simulate_payload(normal_hit_payload())
@@ -1015,6 +1209,109 @@ def compare_item_restore_component() -> DifferentialResult:
 
     return DifferentialResult(
         scenario_id="item_restore_component_differential",
+        ok=not errors,
+        errors=tuple(errors),
+        rom=rom_report,
+        headless=headless_results,
+    )
+
+
+def compare_full_restore_status_cure() -> DifferentialResult:
+    rom_results = {result.scenario_id: result for result in run_rom_full_restore_status_cures()}
+    errors: list[str] = []
+    headless_results: dict[str, Any] = {}
+    rom_report: dict[str, Any] = {}
+
+    for scenario in FULL_RESTORE_STATUS_CURE_SCENARIOS:
+        rom = rom_results[scenario.scenario_id]
+
+        # ROM side: HealStatus must clear primary status and the TOXIC /
+        # NIGHTMARE / CONFUSED sub-status bits for a Full Restore application.
+        if rom.status_before != scenario.status_before:
+            errors.append(
+                f"{scenario.scenario_id}: ROM status_before mismatch: "
+                f"rom={rom.status_before} expected={scenario.status_before}"
+            )
+        if rom.status_after != 0:
+            errors.append(
+                f"{scenario.scenario_id}: ROM did not clear wBattleMonStatus: "
+                f"{rom.status_before}->{rom.status_after}"
+            )
+        if rom.sub5_after & (1 << SUBSTATUS_TOXIC_BIT):
+            errors.append(
+                f"{scenario.scenario_id}: ROM did not clear SUBSTATUS_TOXIC: "
+                f"sub5 {rom.sub5_before:#04x}->{rom.sub5_after:#04x}"
+            )
+        if rom.sub1_after & (1 << SUBSTATUS_NIGHTMARE_BIT):
+            errors.append(
+                f"{scenario.scenario_id}: ROM did not clear SUBSTATUS_NIGHTMARE: "
+                f"sub1 {rom.sub1_before:#04x}->{rom.sub1_after:#04x}"
+            )
+        if rom.sub3_after & (1 << SUBSTATUS_CONFUSED_BIT):
+            errors.append(
+                f"{scenario.scenario_id}: ROM did not clear SUBSTATUS_CONFUSED (Full Restore is full-heal): "
+                f"sub3 {rom.sub3_before:#04x}->{rom.sub3_after:#04x}"
+            )
+
+        # Headless side: the explicit FULL_RESTORE item action must clear the
+        # statuses it models (status, toxic_count, sleep_turns). Confusion +
+        # nightmare are not yet modeled headless-side; that's the scoped
+        # boundary, not a regression.
+        report = simulate_payload(full_restore_status_cure_payload(scenario))
+        outcome = report["outcomes"][0]
+        item_events = [
+            event
+            for event in outcome["events"]
+            if event.get("actor") == "player"
+            and event.get("type") == "item_restore"
+            and event.get("item_id") == FULL_RESTORE_ITEM_ID
+        ]
+        if len(item_events) != 1:
+            errors.append(
+                f"{scenario.scenario_id}: expected one headless FULL_RESTORE item event, "
+                f"got {len(item_events)}"
+            )
+            item_event: dict[str, Any] = {}
+        else:
+            item_event = item_events[0]
+
+        player_state = outcome["state"]["player"]
+        if item_event.get("status_after", "none") != "none":
+            errors.append(
+                f"{scenario.scenario_id}: headless status_after mismatch: "
+                f"event={item_event.get('status_after')!r} expected='none'"
+            )
+        if player_state.get("status", "none") != "none":
+            errors.append(
+                f"{scenario.scenario_id}: headless final status mismatch: "
+                f"state={player_state.get('status')!r} expected='none'"
+            )
+        if player_state.get("toxic_count", 0) != 0:
+            errors.append(
+                f"{scenario.scenario_id}: headless toxic_count not cleared: "
+                f"state={player_state.get('toxic_count')}"
+            )
+        if player_state.get("sleep_turns", 0) != 0:
+            errors.append(
+                f"{scenario.scenario_id}: headless sleep_turns not cleared: "
+                f"state={player_state.get('sleep_turns')}"
+            )
+
+        rom_report[scenario.scenario_id] = {
+            "status": f"{rom.status_before:#04x}->{rom.status_after:#04x}",
+            "sub1": f"{rom.sub1_before:#04x}->{rom.sub1_after:#04x}",
+            "sub3": f"{rom.sub3_before:#04x}->{rom.sub3_after:#04x}",
+            "sub5": f"{rom.sub5_before:#04x}->{rom.sub5_after:#04x}",
+        }
+        headless_results[scenario.scenario_id] = {
+            "final_status": player_state.get("status", "none"),
+            "final_toxic_count": player_state.get("toxic_count", 0),
+            "final_sleep_turns": player_state.get("sleep_turns", 0),
+            "item_event": item_event,
+        }
+
+    return DifferentialResult(
+        scenario_id="full_restore_status_cure_component_differential",
         ok=not errors,
         errors=tuple(errors),
         rom=rom_report,
@@ -1244,6 +1541,7 @@ def main() -> int:
     status_result = compare_damaging_status_component()
     drain_result = compare_drain_component()
     item_result = compare_item_restore_component()
+    full_restore_cure_result = compare_full_restore_status_cure()
     if normal_result.ok:
         print(
             "normal_hit_fixed_rng_differential: PASS "
@@ -1276,7 +1574,26 @@ def main() -> int:
         print("item_restore_component_differential: FAIL")
         for error in item_result.errors:
             print(f"  - {error}")
-    return 0 if normal_result.ok and status_result.ok and drain_result.ok and item_result.ok else 1
+    if full_restore_cure_result.ok:
+        print(
+            "full_restore_status_cure_component_differential: PASS "
+            + " ".join(full_restore_cure_result.rom.keys())
+        )
+    else:
+        print("full_restore_status_cure_component_differential: FAIL")
+        for error in full_restore_cure_result.errors:
+            print(f"  - {error}")
+    return (
+        0
+        if (
+            normal_result.ok
+            and status_result.ok
+            and drain_result.ok
+            and item_result.ok
+            and full_restore_cure_result.ok
+        )
+        else 1
+    )
 
 
 if __name__ == "__main__":
