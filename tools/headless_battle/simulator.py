@@ -430,7 +430,8 @@ def simulate_turn(
                 next_branches.append(updated)
                 continue
             if action.kind == "switch":
-                next_branches.append(apply_switch_action(branch, side, action, event_type="switch"))
+                switched_branch = apply_switch_action(branch, side, action, event_type="switch")
+                next_branches.append(apply_post_action_residual(switched_branch, side))
                 continue
             if action.kind == "replace":
                 next_branches.append(apply_switch_action(branch, side, action, event_type="replacement"))
@@ -2505,6 +2506,15 @@ def battle_is_over(state: BattleState) -> bool:
     return side_is_defeated(state, "player") or side_is_defeated(state, "enemy")
 
 
+def replacement_pending_sides(state: BattleState) -> list[str]:
+    return [
+        side
+        for side in ("player", "enemy")
+        if get_side(state, side).hp <= 0
+        and any(pokemon.hp > 0 for pokemon in get_bench(state, side))
+    ]
+
+
 def side_is_defeated(state: BattleState, side: str) -> bool:
     active = get_side(state, side)
     if active.hp > 0:
@@ -3891,7 +3901,13 @@ def reset_stat_stages(pokemon: PokemonState) -> PokemonState:
 
 
 def reset_switch_state(pokemon: PokemonState) -> PokemonState:
-    return dataclass_replace(reset_stat_stages(pokemon), substitute=False, substitute_hp=0)
+    return dataclass_replace(
+        reset_stat_stages(pokemon),
+        focus_energy=False,
+        toxic_count=0,
+        substitute=False,
+        substitute_hp=0,
+    )
 
 
 def replace_substitute(pokemon: PokemonState, *, substitute: bool, substitute_hp: int) -> PokemonState:
@@ -3978,6 +3994,7 @@ def branch_to_outcome(branch: dict[str, Any], index: int) -> dict[str, Any]:
         "events": branch["events"],
         "state": state_to_json(state),
         "battle_over": battle_is_over(state),
+        "replacement_pending": replacement_pending_sides(state),
         "rng_consumed": list(branch["rng_consumed"]),
     }
     if "sample_index" in branch:
@@ -4112,7 +4129,7 @@ def coverage_report() -> dict[str, Any]:
                 "id": "selected_spikes_entry_damage",
                 "source": "data/moves/effects.asm:Spikes + engine/battle/move_effects/spikes.asm + engine/battle/core.asm:SpikesDamage",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
-                "notes": "Selected Spikes moves consume PP, add one layer to the opposing side up to the source three-layer cap, and selected switch/replacement/auto_replace entries take source-shaped Spikes damage: one layer = max HP / 8, two layers = max HP / 6, three layers = max HP / 4, with a minimum of 1. Flying-type entrants are not damaged. The headless audit also runs tools.damage_debugger.hazard_smoke, which ROM-checks Spikes/Rapid Spin WRAM layer state, Spikes damage fractions, and Flying immunity; full headless turn differential remains pending. Pursuit-on-switch, Ditto Imposter activation, Rapid Spin removal in headless state, groundedness overlays outside Flying typing, and other switch-in effects remain out of scope.",
+                "notes": "Selected Spikes moves consume PP, add one layer to the opposing side up to the source three-layer cap, and selected switch/replacement/auto_replace entries take source-shaped Spikes damage: one layer = max HP / 8, two layers = max HP / 6, three layers = max HP / 4, with a minimum of 1. Flying-type entrants are not damaged. If Spikes KO the entrant while a living bench Pokemon remains, the outcome exposes replacement_pending for that side. The headless audit also runs tools.damage_debugger.hazard_smoke, which ROM-checks Spikes/Rapid Spin WRAM layer state, Spikes damage fractions, and Flying immunity; full headless turn differential remains pending. Pursuit-on-switch, Ditto Imposter activation, Rapid Spin removal in headless state, groundedness overlays outside Flying typing, and other switch-in effects remain out of scope.",
             },
             {
                 "id": "selected_turn_order_priority_speed",
@@ -4220,7 +4237,7 @@ def coverage_report() -> dict[str, Any]:
                 "id": "selected_switch_and_replacement",
                 "source": "engine/battle/core.asm:TryPlayerSwitch, PlayerSwitch, DoubleSwitch, EnemySwitch",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
-                "notes": "Caller-selected switch actions swap the active Pokemon with a bench slot before the opponent's move, replace actions can continue a planned battle after a KO, and both entry paths reset stat stages. Selected Spikes entry damage is handled separately. Pursuit, non-Spikes switch-in effects, and forced prompts remain out of scope.",
+                "notes": "Caller-selected switch actions swap the active Pokemon with a bench slot before the opponent's move, run the supported residual tick for the incoming active, and reset stat stages, Focus Energy, active Substitute, and toxic counter state. Replace actions can continue a planned battle after a KO and reset the same switch-volatile state. Selected Spikes entry damage is handled separately. Pursuit, non-Spikes switch-in effects, and forced prompts remain out of scope.",
             },
             {
                 "id": "auto_replacement_choice_basic_type_chart",
@@ -4303,6 +4320,8 @@ def format_text(report: dict[str, Any]) -> str:
             f"player_hp={state['player']['hp']}/{state['player']['max_hp']} "
             f"enemy_hp={state['enemy']['hp']}/{state['enemy']['max_hp']}"
         )
+        if outcome.get("replacement_pending"):
+            lines.append(f"  replacement_pending={','.join(outcome['replacement_pending'])}")
         for event in outcome["events"]:
             if event["type"] == "damage":
                 variation = event.get("damage_variation", {})

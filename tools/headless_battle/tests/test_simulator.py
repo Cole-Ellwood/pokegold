@@ -334,6 +334,61 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         self.assertLess(outcome["state"]["enemy"]["hp"], 30)
         self.assertEqual(outcome["state"]["enemy_bench"][0]["name"], "CYNDAQUIL")
 
+    def test_selected_switch_runs_residual_on_incoming_status(self) -> None:
+        payload = scenario_template()
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+        payload["state"]["player"]["bench"] = [
+            {
+                "name": "POISONED_RESERVE",
+                "hp": 32,
+                "max_hp": 32,
+                "status": "poison",
+                "types": ["NORMAL", "NORMAL"],
+                "stats": {"attack": 10, "defense": 10, "speed": 9, "sp_attack": 10, "sp_defense": 10},
+                "moves": [{"name": "TACKLE", "type": "NORMAL", "bp": 40}],
+            }
+        ]
+        payload["actions"]["player"] = {"type": "switch", "bench_index": 0}
+
+        report = simulate_payload(payload)
+
+        outcome = report["outcomes"][0]
+        residual = next(event for event in outcome["events"] if event["type"] == "residual_damage")
+        self.assertEqual(residual["actor"], "player")
+        self.assertEqual(residual["damage"], 4)
+        self.assertEqual(residual["hp_before"], 32)
+        self.assertEqual(residual["hp_after"], 28)
+        self.assertEqual(outcome["state"]["player"]["hp"], 28)
+
+    def test_switch_resets_toxic_counter_and_focus_energy(self) -> None:
+        payload = scenario_template()
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+        payload["state"]["player"]["bench"] = [
+            {
+                "name": "TOXIC_RESERVE",
+                "hp": 160,
+                "max_hp": 160,
+                "status": "toxic",
+                "toxic_count": 5,
+                "focus_energy": True,
+                "types": ["NORMAL", "NORMAL"],
+                "stats": {"attack": 10, "defense": 10, "speed": 9, "sp_attack": 10, "sp_defense": 10},
+                "moves": [{"name": "TACKLE", "type": "NORMAL", "bp": 40}],
+            }
+        ]
+        payload["actions"]["player"] = {"type": "switch", "bench_index": 0}
+
+        report = simulate_payload(payload)
+
+        outcome = report["outcomes"][0]
+        residual = next(event for event in outcome["events"] if event["type"] == "residual_damage")
+        self.assertEqual(residual["status"], "toxic")
+        self.assertEqual(residual["toxic_count_before"], 0)
+        self.assertEqual(residual["toxic_count_after"], 1)
+        self.assertEqual(residual["damage"], 10)
+        self.assertEqual(outcome["state"]["player"]["toxic_count"], 1)
+        self.assertFalse(outcome["state"]["player"]["focus_energy"])
+
     def test_spikes_move_sets_layer_and_switch_entry_damage(self) -> None:
         payload = scenario_template()
         payload["state"]["player"]["moves"] = [
@@ -395,6 +450,39 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         self.assertEqual(entry_damage["denominator"], 4)
         self.assertEqual(entry_damage["damage"], 10)
         self.assertEqual(outcome["state"]["enemy"]["hp"], 30)
+
+    def test_spikes_ko_replacement_marks_pending_replacement(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player_spikes"] = 3
+        payload["state"]["player"]["hp"] = 0
+        payload["state"]["player"]["bench"] = [
+            {
+                "name": "ONE_HP",
+                "hp": 1,
+                "max_hp": 4,
+                "types": ["NORMAL", "NORMAL"],
+                "moves": [{"name": "TACKLE", "type": "NORMAL", "bp": 0}],
+            },
+            {
+                "name": "BACKUP",
+                "hp": 20,
+                "max_hp": 20,
+                "types": ["NORMAL", "NORMAL"],
+                "moves": [{"name": "TACKLE", "type": "NORMAL", "bp": 0}],
+            },
+        ]
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+        payload["actions"]["player"] = {"type": "replace", "bench_index": 0}
+
+        report = simulate_payload(payload)
+
+        outcome = report["outcomes"][0]
+        entry_damage = next(event for event in outcome["events"] if event["type"] == "entry_hazard_damage")
+        self.assertEqual(entry_damage["hp_after"], 0)
+        self.assertFalse(outcome["battle_over"])
+        self.assertEqual(outcome["replacement_pending"], ["player"])
+        self.assertEqual(outcome["state"]["player"]["name"], "ONE_HP")
+        self.assertEqual(outcome["state"]["player_bench"][1]["name"], "BACKUP")
 
     def test_flying_type_ignores_spikes_entry_damage(self) -> None:
         payload = scenario_template()

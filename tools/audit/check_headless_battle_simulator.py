@@ -1003,7 +1003,38 @@ def main() -> int:
             file=sys.stderr,
         )
         return 1
-    print("selected_switch_and_replacement: PASS switch_then_replace")
+    switch_boundary_payload = scenario_template()
+    switch_boundary_payload["state"]["enemy"]["moves"][0]["bp"] = 0
+    switch_boundary_payload["state"]["player"]["bench"] = [
+        {
+            "name": "TOXIC_RESERVE",
+            "hp": 160,
+            "max_hp": 160,
+            "status": "toxic",
+            "toxic_count": 5,
+            "focus_energy": True,
+            "types": ["NORMAL", "NORMAL"],
+            "moves": [{"name": "TACKLE", "type": "NORMAL", "bp": 40}],
+        }
+    ]
+    switch_boundary_payload["actions"]["player"] = {"type": "switch", "bench_index": 0}
+    switch_boundary_outcome = simulate_payload(switch_boundary_payload)["outcomes"][0]
+    switch_residual = [
+        event for event in switch_boundary_outcome["events"] if event.get("type") == "residual_damage"
+    ]
+    if (
+        len(switch_residual) != 1
+        or switch_residual[0].get("toxic_count_before") != 0
+        or switch_residual[0].get("toxic_count_after") != 1
+        or switch_residual[0].get("damage") != 10
+        or switch_boundary_outcome["state"]["player"].get("focus_energy")
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: switch boundary mismatch: {switch_boundary_outcome}",
+            file=sys.stderr,
+        )
+        return 1
+    print("selected_switch_and_replacement: PASS switch_then_replace residual_toxic_reset")
     spikes_payload = scenario_template()
     spikes_payload["state"]["player"]["moves"] = [
         {"name": "SPIKES"},
@@ -1043,6 +1074,39 @@ def main() -> int:
         )
         return 1
     print("selected_spikes_entry_damage: PASS layer_then_switch_chip")
+    spikes_pending_payload = scenario_template()
+    spikes_pending_payload["state"]["player_spikes"] = 3
+    spikes_pending_payload["state"]["player"]["hp"] = 0
+    spikes_pending_payload["state"]["player"]["bench"] = [
+        {
+            "name": "ONE_HP",
+            "hp": 1,
+            "max_hp": 4,
+            "types": ["NORMAL", "NORMAL"],
+            "moves": [{"name": "TACKLE", "type": "NORMAL", "bp": 0}],
+        },
+        {
+            "name": "BACKUP",
+            "hp": 20,
+            "max_hp": 20,
+            "types": ["NORMAL", "NORMAL"],
+            "moves": [{"name": "TACKLE", "type": "NORMAL", "bp": 0}],
+        },
+    ]
+    spikes_pending_payload["state"]["enemy"]["moves"][0]["bp"] = 0
+    spikes_pending_payload["actions"]["player"] = {"type": "replace", "bench_index": 0}
+    spikes_pending_outcome = simulate_payload(spikes_pending_payload)["outcomes"][0]
+    if (
+        spikes_pending_outcome.get("battle_over")
+        or spikes_pending_outcome.get("replacement_pending") != ["player"]
+        or spikes_pending_outcome["state"]["player"].get("hp") != 0
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: Spikes pending replacement mismatch: {spikes_pending_outcome}",
+            file=sys.stderr,
+        )
+        return 1
+    print("spikes_pending_replacement: PASS entry_ko_marks_pending")
     hazard_proc = subprocess.run(
         [sys.executable, "-m", "tools.damage_debugger.hazard_smoke"],
         cwd=ROOT,
