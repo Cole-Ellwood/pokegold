@@ -988,6 +988,45 @@ def main() -> int:
         )
         return 1
     print("selected_switch_and_replacement: PASS switch_then_replace")
+    spikes_payload = scenario_template()
+    spikes_payload["state"]["player"]["moves"] = [
+        {"name": "SPIKES"},
+        {"name": "TACKLE", "type": "NORMAL", "bp": 0},
+    ]
+    spikes_payload["state"]["enemy"]["hp"] = 40
+    spikes_payload["state"]["enemy"]["max_hp"] = 40
+    spikes_payload["state"]["enemy"]["moves"][0]["bp"] = 0
+    spikes_payload["state"]["enemy"]["bench"] = [
+        {
+            "name": "ENEMY_RESERVE",
+            "hp": 40,
+            "max_hp": 40,
+            "types": ["NORMAL", "NORMAL"],
+            "moves": [{"name": "TACKLE", "type": "NORMAL", "bp": 0}],
+        }
+    ]
+    spikes_payload.pop("actions")
+    spikes_payload["turns"] = [
+        {"player": {"type": "move", "move": 0}, "enemy": {"type": "move", "move": 0}},
+        {"player": {"type": "move", "move": 1}, "enemy": {"type": "switch", "bench_index": 0}},
+    ]
+    spikes_outcome = simulate_payload(spikes_payload)["outcomes"][0]
+    spikes_events = spikes_outcome["events"]
+    spikes_set = [event for event in spikes_events if event.get("type") == "spikes_set"]
+    entry_damage = [event for event in spikes_events if event.get("type") == "entry_hazard_damage"]
+    if (
+        len(spikes_set) != 1
+        or spikes_set[0].get("layers_after") != 1
+        or len(entry_damage) != 1
+        or entry_damage[0].get("damage") != 5
+        or spikes_outcome["state"]["enemy"].get("hp") != 35
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: Spikes entry mismatch: {spikes_outcome}",
+            file=sys.stderr,
+        )
+        return 1
+    print("selected_spikes_entry_damage: PASS layer_then_switch_chip")
     auto_replace_payload = scenario_template()
     auto_replace_payload["state"]["player"]["types"] = ["FIRE", "FIRE"]
     auto_replace_payload["state"]["enemy"]["hp"] = 0

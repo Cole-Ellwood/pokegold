@@ -334,6 +334,107 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         self.assertLess(outcome["state"]["enemy"]["hp"], 30)
         self.assertEqual(outcome["state"]["enemy_bench"][0]["name"], "CYNDAQUIL")
 
+    def test_spikes_move_sets_layer_and_switch_entry_damage(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["moves"] = [
+            {"name": "SPIKES"},
+            {"name": "TACKLE", "type": "NORMAL", "bp": 0},
+        ]
+        payload["state"]["enemy"]["hp"] = 40
+        payload["state"]["enemy"]["max_hp"] = 40
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+        payload["state"]["enemy"]["bench"] = [
+            {
+                "name": "ENEMY_RESERVE",
+                "hp": 40,
+                "max_hp": 40,
+                "types": ["NORMAL", "NORMAL"],
+                "moves": [{"name": "TACKLE", "type": "NORMAL", "bp": 0}],
+            }
+        ]
+        payload.pop("actions")
+        payload["turns"] = [
+            {"player": {"type": "move", "move": 0}, "enemy": {"type": "move", "move": 0}},
+            {"player": {"type": "move", "move": 1}, "enemy": {"type": "switch", "bench_index": 0}},
+        ]
+
+        report = simulate_payload(payload)
+
+        outcome = report["outcomes"][0]
+        spikes_set = next(event for event in outcome["events"] if event["type"] == "spikes_set")
+        entry_damage = next(event for event in outcome["events"] if event["type"] == "entry_hazard_damage")
+        self.assertEqual(spikes_set["target_side"], "enemy")
+        self.assertEqual(spikes_set["layers_after"], 1)
+        self.assertEqual(entry_damage["hazard"], "spikes")
+        self.assertEqual(entry_damage["layers"], 1)
+        self.assertEqual(entry_damage["damage"], 5)
+        self.assertEqual(outcome["state"]["enemy"]["name"], "ENEMY_RESERVE")
+        self.assertEqual(outcome["state"]["enemy"]["hp"], 35)
+        self.assertEqual(outcome["state"]["enemy_spikes"], 1)
+
+    def test_three_spikes_layers_damage_one_quarter_on_replacement(self) -> None:
+        payload = scenario_template()
+        payload["state"]["enemy_spikes"] = 3
+        payload["state"]["enemy"]["hp"] = 0
+        payload["state"]["enemy"]["bench"] = [
+            {
+                "name": "ENEMY_RESERVE",
+                "hp": 40,
+                "max_hp": 40,
+                "types": ["NORMAL", "NORMAL"],
+                "moves": [{"name": "TACKLE", "type": "NORMAL", "bp": 0}],
+            }
+        ]
+        payload["actions"]["enemy"] = {"type": "replace", "bench_index": 0}
+
+        report = simulate_payload(payload)
+
+        outcome = report["outcomes"][0]
+        entry_damage = next(event for event in outcome["events"] if event["type"] == "entry_hazard_damage")
+        self.assertEqual(entry_damage["layers"], 3)
+        self.assertEqual(entry_damage["denominator"], 4)
+        self.assertEqual(entry_damage["damage"], 10)
+        self.assertEqual(outcome["state"]["enemy"]["hp"], 30)
+
+    def test_flying_type_ignores_spikes_entry_damage(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player_spikes"] = 3
+        payload["state"]["player"]["bench"] = [
+            {
+                "name": "FLYING_RESERVE",
+                "hp": 40,
+                "max_hp": 40,
+                "types": ["FLYING", "NORMAL"],
+                "moves": [{"name": "TACKLE", "type": "NORMAL", "bp": 0}],
+            }
+        ]
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+        payload["actions"]["player"] = {"type": "switch", "bench_index": 0}
+
+        report = simulate_payload(payload)
+
+        outcome = report["outcomes"][0]
+        self.assertEqual(outcome["state"]["player"]["name"], "FLYING_RESERVE")
+        self.assertEqual(outcome["state"]["player"]["hp"], 40)
+        self.assertFalse(any(event["type"] == "entry_hazard_damage" for event in outcome["events"]))
+
+    def test_spikes_move_at_three_layers_has_no_effect(self) -> None:
+        payload = scenario_template()
+        payload["state"]["enemy_spikes"] = 3
+        payload["state"]["player"]["moves"] = [{"name": "SPIKES"}]
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+
+        report = simulate_payload(payload)
+
+        outcome = report["outcomes"][0]
+        event = next(event for event in outcome["events"] if event["type"] == "spikes_no_effect")
+        self.assertEqual(event["blocked_reason"], "max_layers")
+        self.assertEqual(event["layers_before"], 3)
+        self.assertEqual(event["layers_after"], 3)
+        self.assertEqual(event["pp_before"], 20)
+        self.assertEqual(event["pp_after"], 19)
+        self.assertEqual(outcome["state"]["enemy_spikes"], 3)
+
     def test_replacement_after_ko_allows_next_selected_turn(self) -> None:
         payload = scenario_template()
         payload["state"]["enemy"]["hp"] = 1
@@ -2191,6 +2292,7 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         self.assertIn("supported_after_hit_item_effects", mirrored)
         self.assertIn("explicit_active_hp_restore_items", mirrored)
         self.assertIn("selected_weather_setup_moves", mirrored)
+        self.assertIn("selected_spikes_entry_damage", mirrored)
         self.assertIn("selected_turn_order_priority_speed", mirrored)
         self.assertIn("explicit_stat_stage_state", mirrored)
         self.assertIn("selected_stat_stage_only_moves", mirrored)

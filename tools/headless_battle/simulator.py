@@ -120,6 +120,13 @@ WEATHER_NAMES_BY_ID = {
     oracle.WEATHER_SUN: "sun",
     oracle.WEATHER_SANDSTORM: "sandstorm",
 }
+SPIKES_MOVE_EFFECT = "EFFECT_SPIKES"
+SPIKES_MAX_LAYERS = 3
+SPIKES_DAMAGE_DENOMINATORS = {
+    1: 8,
+    2: 6,
+    3: 4,
+}
 SELF_HEALING_MOVE_NAMES = frozenset({"RECOVER", "SOFTBOILED", "MILK_DRINK"})
 REST_MOVE_NAME = "REST"
 SLEEP_BYPASS_MOVE_NAMES = frozenset({"SNORE", "SLEEP_TALK"})
@@ -245,6 +252,8 @@ class BattleState:
     turn: int = 1
     player_safeguard: bool = False
     enemy_safeguard: bool = False
+    player_spikes: int = 0
+    enemy_spikes: int = 0
 
 
 @dataclass(frozen=True)
@@ -847,6 +856,9 @@ def apply_move_after_action_check(
         weather_setup_branch = apply_weather_setup_move(branch, side, move, pp_before, pp_after)
         if weather_setup_branch is not None:
             return [weather_setup_branch]
+        spikes_branch = apply_spikes_move(branch, side, target_side, move, pp_before, pp_after)
+        if spikes_branch is not None:
+            return [spikes_branch]
         stat_stage_branches = apply_stat_stage_only_move(
             branch,
             side,
@@ -1730,6 +1742,46 @@ def apply_weather_setup_move(
     return updated
 
 
+def apply_spikes_move(
+    branch: dict[str, Any],
+    side: str,
+    target_side: str,
+    move: MoveState,
+    pp_before: int,
+    pp_after: int,
+) -> dict[str, Any] | None:
+    if move.effect != SPIKES_MOVE_EFFECT:
+        return None
+    state: BattleState = branch["state"]
+    layers_before = side_spikes(state, target_side)
+    updated = clone_branch(branch)
+    if layers_before >= SPIKES_MAX_LAYERS:
+        layers_after = layers_before
+        event_type = "spikes_no_effect"
+        blocked_reason = "max_layers"
+    else:
+        layers_after = layers_before + 1
+        event_type = "spikes_set"
+        blocked_reason = None
+        updated["state"] = replace_side_spikes(state, target_side, layers_after)
+    updated["events"].append(
+        {
+            "turn": state.turn,
+            "actor": side,
+            "target_side": target_side,
+            "move": move.name,
+            "type": event_type,
+            "layers_before": layers_before,
+            "layers_after": layers_after,
+            "blocked_reason": blocked_reason,
+            "pp_before": pp_before,
+            "pp_after": pp_after,
+            "proof_status": "source_mirrored_selected_spikes_move",
+        }
+    )
+    return updated
+
+
 def apply_rest_move(
     branch: dict[str, Any],
     side: str,
@@ -2263,10 +2315,42 @@ def apply_switch_action(
             "to": incoming.name,
             "bench_index": action.switch_index,
             "proof_status": (
-                "source_mirrored_selected_switch_no_entry_effects"
+                "source_mirrored_selected_switch"
                 if event_type == "switch"
-                else "source_mirrored_selected_replacement_no_entry_effects"
+                else "source_mirrored_selected_replacement"
             ),
+        }
+    )
+    return apply_entry_hazard_damage(updated, side)
+
+
+def apply_entry_hazard_damage(branch: dict[str, Any], side: str) -> dict[str, Any]:
+    state: BattleState = branch["state"]
+    layers = side_spikes(state, side)
+    if layers <= 0:
+        return branch
+    pokemon = get_side(state, side)
+    if "FLYING" in pokemon.type_names:
+        return branch
+    denominator = SPIKES_DAMAGE_DENOMINATORS.get(layers, 4)
+    damage = min(pokemon.hp, fraction_max_hp(pokemon.max_hp, denominator))
+    hp_after = max(0, pokemon.hp - damage)
+    updated_pokemon = replace_hp(pokemon, hp_after)
+    updated = clone_branch(branch)
+    updated["state"] = replace_side(state, side, updated_pokemon)
+    updated["events"].append(
+        {
+            "turn": state.turn,
+            "actor": side,
+            "target": side,
+            "type": "entry_hazard_damage",
+            "hazard": "spikes",
+            "layers": layers,
+            "denominator": denominator,
+            "damage": damage,
+            "hp_before": pokemon.hp,
+            "hp_after": hp_after,
+            "proof_status": "source_mirrored_selected_spikes_entry_damage",
         }
     )
     return updated
@@ -3201,6 +3285,8 @@ def parse_state(raw: Any) -> BattleState:
         turn=parse_positive_int(raw.get("turn", 1), "state.turn"),
         player_safeguard=parse_side_safeguard(raw, player_raw, "player"),
         enemy_safeguard=parse_side_safeguard(raw, enemy_raw, "enemy"),
+        player_spikes=parse_side_spikes(raw, player_raw, "player"),
+        enemy_spikes=parse_side_spikes(raw, enemy_raw, "enemy"),
     )
 
 
@@ -3217,6 +3303,22 @@ def parse_side_safeguard(raw: dict[str, Any], side_raw: Any, side: str) -> bool:
     if isinstance(side_raw, dict) and "safeguard" in side_raw:
         return parse_bool(side_raw["safeguard"], f"state.{side}.safeguard")
     return False
+
+
+def parse_side_spikes(raw: dict[str, Any], side_raw: Any, side: str) -> int:
+    key = f"{side}_spikes"
+    if key in raw:
+        return parse_spikes_layers(raw[key], f"state.{key}")
+    if isinstance(side_raw, dict) and "spikes" in side_raw:
+        return parse_spikes_layers(side_raw["spikes"], f"state.{side}.spikes")
+    return 0
+
+
+def parse_spikes_layers(raw: Any, path: str) -> int:
+    layers = parse_byte(raw, path)
+    if layers > SPIKES_MAX_LAYERS:
+        raise SimulationInputError(f"{path} must be between 0 and {SPIKES_MAX_LAYERS}")
+    return layers
 
 
 def parse_bench(raw: Any, side: str) -> tuple[PokemonState, ...]:
@@ -3611,6 +3713,8 @@ def replace_side(state: BattleState, side: str, pokemon: PokemonState) -> Battle
             turn=state.turn,
             player_safeguard=state.player_safeguard,
             enemy_safeguard=state.enemy_safeguard,
+            player_spikes=state.player_spikes,
+            enemy_spikes=state.enemy_spikes,
         )
     return BattleState(
         player=state.player,
@@ -3622,6 +3726,8 @@ def replace_side(state: BattleState, side: str, pokemon: PokemonState) -> Battle
         turn=state.turn,
         player_safeguard=state.player_safeguard,
         enemy_safeguard=state.enemy_safeguard,
+        player_spikes=state.player_spikes,
+        enemy_spikes=state.enemy_spikes,
     )
 
 
@@ -3636,6 +3742,8 @@ def advance_turn(state: BattleState) -> BattleState:
         turn=state.turn + 1,
         player_safeguard=state.player_safeguard,
         enemy_safeguard=state.enemy_safeguard,
+        player_spikes=state.player_spikes,
+        enemy_spikes=state.enemy_spikes,
     )
 
 
@@ -3650,6 +3758,42 @@ def replace_weather(state: BattleState, *, weather: int, weather_count: int) -> 
         turn=state.turn,
         player_safeguard=state.player_safeguard,
         enemy_safeguard=state.enemy_safeguard,
+        player_spikes=state.player_spikes,
+        enemy_spikes=state.enemy_spikes,
+    )
+
+
+def side_spikes(state: BattleState, side: str) -> int:
+    return state.player_spikes if side == "player" else state.enemy_spikes
+
+
+def replace_side_spikes(state: BattleState, side: str, layers: int) -> BattleState:
+    if side == "player":
+        return BattleState(
+            player=state.player,
+            enemy=state.enemy,
+            player_bench=state.player_bench,
+            enemy_bench=state.enemy_bench,
+            weather=state.weather,
+            weather_count=state.weather_count,
+            turn=state.turn,
+            player_safeguard=state.player_safeguard,
+            enemy_safeguard=state.enemy_safeguard,
+            player_spikes=layers,
+            enemy_spikes=state.enemy_spikes,
+        )
+    return BattleState(
+        player=state.player,
+        enemy=state.enemy,
+        player_bench=state.player_bench,
+        enemy_bench=state.enemy_bench,
+        weather=state.weather,
+        weather_count=state.weather_count,
+        turn=state.turn,
+        player_safeguard=state.player_safeguard,
+        enemy_safeguard=state.enemy_safeguard,
+        player_spikes=state.player_spikes,
+        enemy_spikes=layers,
     )
 
 
@@ -3674,6 +3818,8 @@ def replace_side_and_bench(
             turn=state.turn,
             player_safeguard=state.player_safeguard,
             enemy_safeguard=state.enemy_safeguard,
+            player_spikes=state.player_spikes,
+            enemy_spikes=state.enemy_spikes,
         )
     return BattleState(
         player=state.player,
@@ -3685,6 +3831,8 @@ def replace_side_and_bench(
         turn=state.turn,
         player_safeguard=state.player_safeguard,
         enemy_safeguard=state.enemy_safeguard,
+        player_spikes=state.player_spikes,
+        enemy_spikes=state.enemy_spikes,
     )
 
 
@@ -3844,6 +3992,8 @@ def state_to_json(state: BattleState) -> dict[str, Any]:
         "weather_count": state.weather_count,
         "player_safeguard": state.player_safeguard,
         "enemy_safeguard": state.enemy_safeguard,
+        "player_spikes": state.player_spikes,
+        "enemy_spikes": state.enemy_spikes,
         "player": pokemon_to_json(state.player),
         "enemy": pokemon_to_json(state.enemy),
         "player_bench": [pokemon_to_json(pokemon) for pokemon in state.player_bench],
@@ -3953,6 +4103,12 @@ def coverage_report() -> dict[str, Any]:
                 "notes": "Rain Dance and Sunny Day consume PP, set wBattleWeather to rain/sun, set wWeatherCount to 5, decrement the count once at each completed turn end, and clear weather when the count reaches 0. Damage and Thunder accuracy already read the active weather. Sandstorm damage, weather text timing beyond event records, weather healing moves, SolarBeam charge skipping, and automatic Boss AI weather-choice generation remain out of scope.",
             },
             {
+                "id": "selected_spikes_entry_damage",
+                "source": "data/moves/effects.asm:Spikes + engine/battle/move_effects/spikes.asm + engine/battle/core.asm:SpikesDamage",
+                "gate": "python tools/audit/check_headless_battle_simulator.py",
+                "notes": "Selected Spikes moves consume PP, add one layer to the opposing side up to the source three-layer cap, and selected switch/replacement/auto_replace entries take source-shaped Spikes damage: one layer = max HP / 8, two layers = max HP / 6, three layers = max HP / 4, with a minimum of 1. Flying-type entrants are not damaged. Pursuit-on-switch, Ditto Imposter activation, Rapid Spin removal, groundedness overlays outside Flying typing, and other switch-in effects remain out of scope.",
+            },
+            {
                 "id": "selected_turn_order_priority_speed",
                 "source": "engine/battle/core.asm:DetermineMoveOrder",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
@@ -4058,7 +4214,7 @@ def coverage_report() -> dict[str, Any]:
                 "id": "selected_switch_and_replacement",
                 "source": "engine/battle/core.asm:TryPlayerSwitch, PlayerSwitch, DoubleSwitch, EnemySwitch",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
-                "notes": "Caller-selected switch actions swap the active Pokemon with a bench slot before the opponent's move, replace actions can continue a planned battle after a KO, and both entry paths reset stat stages. Pursuit, Spikes, switch-in effects, and forced prompts remain out of scope.",
+                "notes": "Caller-selected switch actions swap the active Pokemon with a bench slot before the opponent's move, replace actions can continue a planned battle after a KO, and both entry paths reset stat stages. Selected Spikes entry damage is handled separately. Pursuit, non-Spikes switch-in effects, and forced prompts remain out of scope.",
             },
             {
                 "id": "auto_replacement_choice_basic_type_chart",
@@ -4093,7 +4249,7 @@ def coverage_report() -> dict[str, Any]:
         ],
         "out_of_scope": [
             "automatic full battle flow, trainer/Boss automatic action choice without caller-supplied final Boss AI score bytes, forced switch prompts, implicit replacement without an auto_replace action, automatic trainer item turns, player trainer-battle Pack availability, and item inventory accounting",
-            "Pursuit-on-switch, Spikes/switch-in entry effects, switch-triggered abilities/passives, and switch memory side effects",
+            "Pursuit-on-switch, non-Spikes switch-in entry effects, switch-triggered abilities/passives, groundedness overlays outside Flying typing, Rapid Spin hazard removal, and switch memory side effects",
             "RNG-consuming mechanics outside speed ties/Boss AI selector choice/wild random move choice/auto-replace fallback/critical hits/accuracy/damage variation/selected damaging status secondary chance, Quick Claw/Choice Scarf turn-order effects",
             "accuracy/evasion stat-stage move effects, damaging secondary stat effects outside selected burn/poison/paralysis status secondaries, multi-stat chains outside Dragon Dance/Calm Mind/Quiver Dance, BrightPowder, Protect, Fly/Dig, Lock-On, X Accuracy, Baton Pass/Psych Up, Substitute/Mist blockers, badge boosts, status speed modifiers, passive stat/speed/accuracy bonuses, and passive accuracy bonuses",
             "freeze, sleep mechanics outside selected sleep moves/Rest/action denial, burn application outside selected damaging burn secondaries, Safeguard duration/expiration, Substitute Baton Pass/multi-hit continuation details, held status prevent items, freeze/confusion held cures, Sleep Clause clearing from held sleep cures, non-paralyzed Electric speed passives, volatile effects, sandstorm/weather damage, weather/time healing moves, drain effects outside selected EFFECT_LEECH_HIT moves, Heal Bell, unsupported item recovery/cures, Air Balloon pop, Substitute-blocked contact, Focus Punch break, after-hit text/script effects outside supported HP mutations, Struggle, PP Up bit packing, Mimic/Transform PP routing, and full PP legality selection",
@@ -4209,6 +4365,21 @@ def format_text(report: dict[str, Any]) -> str:
                 )
             elif event["type"] == "weather_end":
                 lines.append(f"  turn {event['turn']} {event['weather']} ended")
+            elif event["type"] == "spikes_set":
+                lines.append(
+                    f"  turn {event['turn']} {event['actor']} {event['move']} -> "
+                    f"{event['target_side']} spikes={event['layers_after']}"
+                )
+            elif event["type"] == "spikes_no_effect":
+                lines.append(
+                    f"  turn {event['turn']} {event['actor']} {event['move']} -> "
+                    f"no effect ({event['blocked_reason']})"
+                )
+            elif event["type"] == "entry_hazard_damage":
+                lines.append(
+                    f"  turn {event['turn']} {event['hazard']} -> "
+                    f"{event['target']} {event['damage']} damage"
+                )
             elif event["type"] == "substitute_create":
                 lines.append(
                     f"  turn {event['turn']} {event['actor']} {event['move']} -> "
@@ -4269,6 +4440,8 @@ def scenario_template() -> dict[str, Any]:
         "state": {
             "weather": "none",
             "weather_count": 0,
+            "player_spikes": 0,
+            "enemy_spikes": 0,
             "turn": 1,
             "player": {
                 "species": "PIDGEY",
