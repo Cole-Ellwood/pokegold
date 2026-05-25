@@ -544,8 +544,29 @@ def speed_tie_results(rng: RngConfig, *, stream: RuntimeRng | None) -> list[dict
 def effective_speed(pokemon: PokemonState) -> int:
     speed = apply_stat_stage(pokemon.speed, pokemon.speed_stage)
     if pokemon.status == "paralyze":
-        speed = apply_stat_fraction(speed, 1, 4)
+        speed = apply_paralysis_speed_modifiers(pokemon, speed)
     return speed
+
+
+def apply_paralysis_speed_modifiers(pokemon: PokemonState, speed: int) -> int:
+    electric = type_contribution("ELECTRIC", pokemon.type_names)
+    if electric == 2:
+        speed = apply_stat_fraction(speed, 21, 20)
+    elif electric == 1:
+        speed = apply_stat_fraction(speed, 41, 40)
+
+    fighting = type_contribution("FIGHTING", pokemon.type_names)
+    if fighting == 2:
+        return apply_stat_fraction(speed, 1, 2)
+    if fighting == 1:
+        return apply_stat_fraction(speed, 3, 8)
+    return apply_stat_fraction(speed, 1, 4)
+
+
+def type_contribution(type_name: str, type_names: tuple[str, str]) -> int:
+    if type_names[0] == type_names[1]:
+        return 2 if type_names[0] == type_name else 0
+    return 1 if type_name in type_names else 0
 
 
 def full_paralysis_results(
@@ -556,7 +577,7 @@ def full_paralysis_results(
 ) -> list[dict[str, Any]] | None:
     if pokemon.status != "paralyze":
         return None
-    threshold = FULL_PARALYSIS_THRESHOLD
+    threshold = full_paralysis_threshold(pokemon)
     if rng.mode == "exhaustive":
         return [
             {
@@ -586,6 +607,15 @@ def full_paralysis_results(
             "reason": "raw_below_threshold" if raw < threshold else "raw_at_or_above_threshold",
         }
     ]
+
+
+def full_paralysis_threshold(pokemon: PokemonState) -> int:
+    fighting = type_contribution("FIGHTING", pokemon.type_names)
+    if fighting == 2:
+        return 15 * 255 // 100
+    if fighting == 1:
+        return 20 * 255 // 100
+    return FULL_PARALYSIS_THRESHOLD
 
 
 def apply_move(
@@ -2814,7 +2844,7 @@ def coverage_report() -> dict[str, Any]:
                 "id": "selected_paralysis_status_moves",
                 "source": "data/moves/effects.asm:DoParalyze + engine/battle/effect_commands.asm:BattleCommand_Paralyze + type_passive_damage_mods.asm:TypePassive_GetUserParalysisFailThreshold_Far",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
-                "notes": "Thunder Wave, Stun Spore, and Glare consume PP after the full-paralysis gate, run the basic accuracy check, apply paralysis to healthy non-immune targets, reduce future turn-order speed by the baseline 1/4 rule, and branch full-paralysis action denial before PP decrement. Type immunity and already-statused targets report no effect. Safeguard, Substitute, held prevent/cure items, Fighting/Electric type-passive paralysis modifiers, and damaging paralysis secondary effects remain out of scope.",
+                "notes": "Thunder Wave, Stun Spore, and Glare consume PP after the full-paralysis gate, run the basic accuracy check, apply paralysis to healthy non-immune targets, reduce future turn-order speed with ApplyPrzEffectOnSpeed's Electric/Fighting type-passive paralysis modifiers, and branch full-paralysis action denial with TypePassive_GetUserParalysisFailThreshold_Far's Fighting thresholds before PP decrement. Type immunity and already-statused targets report no effect. Safeguard, Substitute, held prevent/cure items, non-paralyzed Electric speed passives, and damaging paralysis secondary effects remain out of scope.",
             },
             {
                 "id": "multi_turn_selected_action_progression",
@@ -2864,7 +2894,7 @@ def coverage_report() -> dict[str, Any]:
             "Pursuit-on-switch, Spikes/switch-in entry effects, switch-triggered abilities/passives, and switch memory side effects",
             "RNG-consuming mechanics outside speed ties/Boss AI selector choice/wild random move choice/auto-replace fallback/critical hits/accuracy/damage variation, Quick Claw/Choice Scarf turn-order effects",
             "accuracy/evasion stat-stage move effects, damaging secondary stat effects, multi-stat chain moves, BrightPowder, Protect, Fly/Dig, Lock-On, X Accuracy, Baton Pass/Psych Up, Substitute/Mist blockers, badge boosts, status speed modifiers, passive stat/speed/accuracy bonuses, and passive accuracy bonuses",
-            "sleep, freeze, burn application, Safeguard/Substitute, held status prevent/cure item consumption, Fighting/Electric type-passive paralysis modifiers, volatile effects, weather/time healing, Rest, drain moves, Heal Bell, unsupported item recovery/cures, Air Balloon pop, Substitute-blocked contact, Focus Punch break, after-hit text/script effects outside supported HP mutations, Struggle, PP Up bit packing, Mimic/Transform PP routing, and full PP legality selection",
+            "sleep, freeze, burn application, Safeguard/Substitute, held status prevent/cure item consumption, non-paralyzed Electric speed passives, volatile effects, weather/time healing, Rest, drain moves, Heal Bell, unsupported item recovery/cures, Air Balloon pop, Substitute-blocked contact, Focus Punch break, after-hit text/script effects outside supported HP mutations, Struggle, PP Up bit packing, Mimic/Transform PP routing, and full PP legality selection",
             "Boss AI live score generation and switch candidate/confidence generation",
             "graphics, text scripts, animations, EXP, and party writes",
         ],

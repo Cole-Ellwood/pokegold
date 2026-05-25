@@ -277,6 +277,25 @@ def main() -> int:
         )
         return 1
     print("selected_paralysis_status_moves: PASS thunder_wave full_paralysis_no_pp")
+    fighting_para_payload = scenario_template()
+    fighting_para_payload["state"]["player"]["stats"]["speed"] = 80
+    fighting_para_payload["state"]["player"]["types"] = ["FIGHTING", "FIGHTING"]
+    fighting_para_payload["state"]["player"]["status"] = "paralyze"
+    fighting_para_payload["state"]["enemy"]["moves"][0]["bp"] = 0
+    fighting_para_payload["rng"] = {"mode": "fixed", "values": [40, 255, 255, 0]}
+    fighting_para_outcome = simulate_payload(fighting_para_payload)["outcomes"][0]
+    fighting_para_check = fighting_para_outcome["turn_orders"][0].get("turn_order_check", {})
+    if (
+        fighting_para_outcome["events"][0].get("type") != "damage"
+        or fighting_para_check.get("effective_speeds", {}).get("player") != 40
+    ):
+        print(
+            "Headless battle simulator audit FAILED: type-passive paralysis modifier mismatch: "
+            f"{fighting_para_outcome}",
+            file=sys.stderr,
+        )
+        return 1
+    print("type_passive_paralysis_modifiers: PASS mono_fighting_threshold_and_speed")
     selector = select_from_score_bytes(
         scenario_id="headless_audit_selector",
         tier="late",

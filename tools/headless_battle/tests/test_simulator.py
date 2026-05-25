@@ -1274,6 +1274,56 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         self.assertEqual(event["critical_check"]["raw_values"], [255])
         self.assertEqual(report["outcomes"][0]["state"]["player"]["moves"][0]["pp"], 34)
 
+    def test_fighting_type_passive_reduces_full_paralysis_odds(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["stats"]["speed"] = 80
+        payload["state"]["player"]["types"] = ["FIGHTING", "FIGHTING"]
+        payload["state"]["player"]["status"] = "paralyze"
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+        payload["rng"] = {"mode": "fixed", "values": [40, 255, 255, 0]}
+
+        report = simulate_payload(payload)
+
+        event = report["outcomes"][0]["events"][0]
+        self.assertEqual(event["type"], "damage")
+        self.assertEqual(report["outcomes"][0]["turn_orders"][0]["turn_order_check"]["effective_speeds"]["player"], 40)
+
+        payload["rng"] = {"mode": "fixed", "values": [37]}
+        blocked = simulate_payload(payload)
+        blocked_event = blocked["outcomes"][0]["events"][0]
+        self.assertEqual(blocked_event["type"], "fully_paralyzed")
+        self.assertEqual(blocked_event["paralysis_check"]["threshold"], 38)
+
+    def test_partial_fighting_paralysis_speed_fraction(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["stats"]["speed"] = 80
+        payload["state"]["enemy"]["stats"]["speed"] = 31
+        payload["state"]["player"]["types"] = ["FIGHTING", "NORMAL"]
+        payload["state"]["player"]["status"] = "paralyze"
+        payload["state"]["player"]["moves"][0]["bp"] = 0
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+
+        report = simulate_payload(payload)
+
+        check = report["outcomes"][0]["turn_orders"][0]["turn_order_check"]
+        self.assertEqual(check["effective_speeds"]["player"], 30)
+        self.assertEqual(report["outcomes"][0]["turn_order"], ["enemy", "player"])
+
+    def test_electric_type_passive_boosts_speed_before_paralysis_fraction(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["stats"]["speed"] = 80
+        payload["state"]["enemy"]["stats"]["speed"] = 20
+        payload["state"]["player"]["types"] = ["ELECTRIC", "ELECTRIC"]
+        payload["state"]["player"]["status"] = "paralyze"
+        payload["state"]["player"]["moves"][0]["bp"] = 0
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+
+        report = simulate_payload(payload)
+
+        check = report["outcomes"][0]["turn_orders"][0]["turn_order_check"]
+        self.assertEqual(check["effective_speeds"]["player"], 21)
+        self.assertEqual(report["outcomes"][0]["turn_order"], ["player", "enemy"])
+
     def test_report_exposes_proof_boundary(self) -> None:
         report = simulate_payload(scenario_template())
 
