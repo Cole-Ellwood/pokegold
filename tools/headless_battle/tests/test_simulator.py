@@ -205,6 +205,85 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         self.assertTrue(report["outcomes"][0]["battle_over"])
         self.assertEqual(report["outcomes"][0]["state"]["player"]["hp"], 0)
 
+    def test_player_switch_takes_enemy_attack_on_new_active(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["bench"] = [
+            {
+                "name": "RESERVE",
+                "hp": 30,
+                "max_hp": 30,
+                "types": ["NORMAL", "NORMAL"],
+                "stats": {"attack": 10, "defense": 10, "speed": 9, "sp_attack": 10, "sp_defense": 10},
+                "moves": [{"name": "TACKLE", "type": "NORMAL", "bp": 40}],
+            }
+        ]
+        payload["actions"]["player"] = {"type": "switch", "bench_index": 0}
+
+        report = simulate_payload(payload)
+
+        outcome = report["outcomes"][0]
+        self.assertEqual([event["type"] for event in outcome["events"]], ["switch", "damage"])
+        self.assertEqual(outcome["turn_order"], ["player", "enemy"])
+        self.assertEqual(outcome["state"]["player"]["name"], "RESERVE")
+        self.assertLess(outcome["state"]["player"]["hp"], 30)
+        self.assertEqual(outcome["state"]["player_bench"][0]["name"], "PIDGEY")
+        self.assertEqual(outcome["state"]["player_bench"][0]["hp"], 16)
+
+    def test_enemy_switch_takes_player_attack_on_new_active(self) -> None:
+        payload = scenario_template()
+        payload["state"]["enemy"]["bench"] = [
+            {
+                "name": "ENEMY_RESERVE",
+                "hp": 30,
+                "max_hp": 30,
+                "types": ["NORMAL", "NORMAL"],
+                "stats": {"attack": 10, "defense": 10, "speed": 8, "sp_attack": 10, "sp_defense": 10},
+                "moves": [{"name": "TACKLE", "type": "NORMAL", "bp": 40}],
+            }
+        ]
+        payload["actions"]["enemy"] = {"type": "switch", "bench_index": 0}
+
+        report = simulate_payload(payload)
+
+        outcome = report["outcomes"][0]
+        self.assertEqual([event["type"] for event in outcome["events"]], ["switch", "damage"])
+        self.assertEqual(outcome["turn_order"], ["enemy", "player"])
+        self.assertEqual(outcome["state"]["enemy"]["name"], "ENEMY_RESERVE")
+        self.assertLess(outcome["state"]["enemy"]["hp"], 30)
+        self.assertEqual(outcome["state"]["enemy_bench"][0]["name"], "CYNDAQUIL")
+
+    def test_replacement_after_ko_allows_next_selected_turn(self) -> None:
+        payload = scenario_template()
+        payload["state"]["enemy"]["hp"] = 1
+        payload["state"]["enemy"]["max_hp"] = 1
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+        payload["state"]["enemy"]["bench"] = [
+            {
+                "name": "ENEMY_RESERVE",
+                "hp": 1,
+                "max_hp": 1,
+                "types": ["NORMAL", "NORMAL"],
+                "stats": {"attack": 10, "defense": 10, "speed": 8, "sp_attack": 10, "sp_defense": 10},
+                "moves": [{"name": "TACKLE", "type": "NORMAL", "bp": 0}],
+            }
+        ]
+        payload["turns"] = [
+            {"player": {"type": "move", "move": 0}, "enemy": {"type": "move", "move": 0}},
+            {"enemy": {"type": "replace", "bench_index": 0}},
+            {"player": {"type": "move", "move": 0}, "enemy": {"type": "move", "move": 0}},
+        ]
+        payload.pop("actions")
+
+        report = simulate_payload(payload)
+
+        outcome = report["outcomes"][0]
+        self.assertTrue(outcome["battle_over"])
+        self.assertEqual([event["type"] for event in outcome["events"]], ["damage", "replacement", "damage"])
+        self.assertEqual([event["turn"] for event in outcome["events"]], [1, 1, 2])
+        self.assertEqual(outcome["turns_simulated"], 2)
+        self.assertEqual(outcome["state"]["enemy"]["name"], "ENEMY_RESERVE")
+        self.assertEqual(outcome["state"]["enemy"]["hp"], 0)
+
     def test_turns_list_progresses_hp_across_selected_turns(self) -> None:
         payload = scenario_template()
         payload["state"]["enemy"]["moves"][0]["bp"] = 0
@@ -271,6 +350,7 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         self.assertIn("basic_critical_hit_rng", mirrored)
         self.assertIn("basic_status_residual", mirrored)
         self.assertIn("selected_turn_order_priority_speed", mirrored)
+        self.assertIn("selected_switch_and_replacement", mirrored)
         self.assertIn("boss_ai_selector_from_post_score_bytes", mirrored)
         self.assertIn("RNG-consuming mechanics outside speed ties/critical hits/accuracy/damage variation", "\n".join(report["coverage"]["out_of_scope"]))
 

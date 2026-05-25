@@ -103,19 +103,19 @@ python -m tools.headless_battle --scenario <scenario.json> --json
 python tools\audit\check_headless_battle_simulator.py
 ```
 
-Current scope is intentionally narrow: move-vs-move selected turns, explicit
-stats or species shorthand, equal-speed tie RNG, basic critical-hit checks,
-basic move accuracy with fixed/sample/exhaustive hit/miss branching, damage
-variation with fixed/sample/exhaustive RNG, selected-action `turns[]`
-progression with HP/RNG carryover, initial poison/burn/toxic residual damage
-after selected moves, pre-variation HP damage delegated to the existing
-ROM-backed damage oracle, and post-score Boss AI selector replay from known
-score bytes. Reports label byte-proven, source-mirrored, and out-of-scope
-surfaces; do not claim automatic full battle choice, accuracy/evasion
-modifiers, status application, sleep/freeze/paralysis, switch/replacement flow,
-RNG-consuming mechanics outside speed ties/critical hits/accuracy/damage
-variation, live Boss AI scoring, or scripts until the simulator report and
-audit say that surface exists.
+Current scope is intentionally narrow: move-vs-move selected turns, selected
+switch actions, caller-supplied replacement after KO, explicit stats or species
+shorthand, equal-speed tie RNG, basic critical-hit checks, basic move accuracy
+with fixed/sample/exhaustive hit/miss branching, damage variation with
+fixed/sample/exhaustive RNG, selected-action `turns[]` progression with HP/RNG
+carryover, initial poison/burn/toxic residual damage after selected moves,
+pre-variation HP damage delegated to the existing ROM-backed damage oracle, and
+post-score Boss AI selector replay from known score bytes. Reports label
+byte-proven, source-mirrored, and out-of-scope surfaces; do not claim automatic
+full battle choice, automatic replacement selection, accuracy/evasion modifiers,
+status application, sleep/freeze/paralysis, RNG-consuming mechanics outside
+speed ties/critical hits/accuracy/damage variation, live Boss AI scoring, or
+scripts until the simulator report and audit say that surface exists.
 
 ## Truth Precedence
 

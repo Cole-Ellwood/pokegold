@@ -83,6 +83,58 @@ def main() -> int:
         )
         return 1
     print("multi_turn_selected_actions: PASS turns=2")
+    switch_payload = scenario_template()
+    switch_payload["state"]["player"]["bench"] = [
+        {
+            "name": "RESERVE",
+            "hp": 30,
+            "max_hp": 30,
+            "types": ["NORMAL", "NORMAL"],
+            "stats": {"attack": 10, "defense": 10, "speed": 9, "sp_attack": 10, "sp_defense": 10},
+            "moves": [{"name": "TACKLE", "type": "NORMAL", "bp": 40}],
+        }
+    ]
+    switch_payload["actions"]["player"] = {"type": "switch", "bench_index": 0}
+    switch_report = simulate_payload(switch_payload)
+    switch_outcome = switch_report["outcomes"][0]
+    if (
+        [event.get("type") for event in switch_outcome["events"]] != ["switch", "damage"]
+        or switch_outcome["state"]["player"]["name"] != "RESERVE"
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: selected switch mismatch: {switch_outcome}",
+            file=sys.stderr,
+        )
+        return 1
+    replacement_payload = scenario_template()
+    replacement_payload["state"]["enemy"]["hp"] = 1
+    replacement_payload["state"]["enemy"]["max_hp"] = 1
+    replacement_payload["state"]["enemy"]["moves"][0]["bp"] = 0
+    replacement_payload["state"]["enemy"]["bench"] = [
+        {
+            "name": "ENEMY_RESERVE",
+            "hp": 1,
+            "max_hp": 1,
+            "types": ["NORMAL", "NORMAL"],
+            "stats": {"attack": 10, "defense": 10, "speed": 8, "sp_attack": 10, "sp_defense": 10},
+            "moves": [{"name": "TACKLE", "type": "NORMAL", "bp": 0}],
+        }
+    ]
+    replacement_payload.pop("actions")
+    replacement_payload["turns"] = [
+        {"player": {"type": "move", "move": 0}, "enemy": {"type": "move", "move": 0}},
+        {"enemy": {"type": "replace", "bench_index": 0}},
+        {"player": {"type": "move", "move": 0}, "enemy": {"type": "move", "move": 0}},
+    ]
+    replacement_report = simulate_payload(replacement_payload)
+    replacement_events = [event.get("type") for event in replacement_report["outcomes"][0]["events"]]
+    if replacement_events != ["damage", "replacement", "damage"]:
+        print(
+            f"Headless battle simulator audit FAILED: replacement mismatch: {replacement_report}",
+            file=sys.stderr,
+        )
+        return 1
+    print("selected_switch_and_replacement: PASS switch_then_replace")
     miss_payload = scenario_template()
     miss_payload["state"]["player"]["moves"][0]["accuracy"] = 242
     miss_payload["state"]["enemy"]["moves"][0]["bp"] = 0

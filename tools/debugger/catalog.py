@@ -176,6 +176,8 @@ TRIAGE_RULES = (
             "no gui",
             "fixed rng",
             "exhaustive rng",
+            "battle with switches",
+            "replacement after ko",
         ),
         reason="The no-GUI selected-turn simulator has its own proof-labeled text/JSON path and audit gate.",
         commands=(
@@ -183,7 +185,7 @@ TRIAGE_RULES = (
             "python tools\\audit\\check_headless_battle_simulator.py",
         ),
         gaps=(
-            "Automatic full battle choice, switch/replacement flow, link-battle turn-order inversion, accuracy/evasion modifiers, status application, sleep/freeze/paralysis, RNG-consuming mechanics outside speed ties/critical hits/accuracy/damage variation, live Boss AI scoring, and scripts remain outside the headless simulator until separately proven.",
+            "Automatic full battle choice, automatic replacement selection, Pursuit/Spikes/switch-in effects, link-battle turn-order inversion, accuracy/evasion modifiers, status application, sleep/freeze/paralysis, RNG-consuming mechanics outside speed ties/critical hits/accuracy/damage variation, live Boss AI scoring, and scripts remain outside the headless simulator until separately proven.",
         ),
     ),
     TriageRule(

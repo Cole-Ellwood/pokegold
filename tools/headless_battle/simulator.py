@@ -74,6 +74,8 @@ class PokemonState:
 class BattleState:
     player: PokemonState
     enemy: PokemonState
+    player_bench: tuple[PokemonState, ...] = ()
+    enemy_bench: tuple[PokemonState, ...] = ()
     weather: int = oracle.WEATHER_NONE
     turn: int = 1
 
@@ -82,6 +84,7 @@ class BattleState:
 class ActionState:
     kind: str
     move_index: int | None = None
+    switch_index: int | None = None
     selector: dict[str, Any] | None = None
 
 
@@ -179,7 +182,7 @@ def simulate_battle(
         for branch in branches:
             branch_state: BattleState = branch["state"]
             if branch_state.player.hp <= 0 or branch_state.enemy.hp <= 0:
-                next_branches.append(branch)
+                next_branches.append(apply_forced_replacements(branch, actions))
                 continue
             next_branches.extend(simulate_turn(branch, actions, rng, stream=stream))
         if len(next_branches) > rng.max_outcomes:
@@ -239,6 +242,12 @@ def simulate_turn(
                 updated["events"].append(run_boss_ai_selector(branch_state, side, action))
                 next_branches.append(updated)
                 continue
+            if action.kind == "switch":
+                next_branches.append(apply_switch_action(branch, side, action, event_type="switch"))
+                continue
+            if action.kind == "replace":
+                next_branches.append(apply_switch_action(branch, side, action, event_type="replacement"))
+                continue
             if action.kind != "move":
                 updated = clone_branch(branch)
                 updated["events"].append(
@@ -279,6 +288,10 @@ def turn_order_results(
 ) -> list[dict[str, Any]]:
     player_action = actions["player"]
     enemy_action = actions["enemy"]
+    if player_action.kind in {"switch", "replace"} or enemy_action.kind in {"switch", "replace"}:
+        if player_action.kind in {"switch", "replace"}:
+            return [turn_order_result(["player", "enemy"], reason="selected_switch")]
+        return [turn_order_result(["enemy", "player"], reason="selected_switch")]
     if player_action.kind != "move" or enemy_action.kind != "move":
         return [turn_order_result(["player", "enemy"], reason="non_move_action")]
     player_move = selected_move(state.player, player_action)
@@ -435,6 +448,69 @@ def apply_move(
                 )
                 branches.append(updated)
     return branches
+
+
+def apply_forced_replacements(branch: dict[str, Any], actions: dict[str, ActionState]) -> dict[str, Any]:
+    state: BattleState = branch["state"]
+    updated = clone_branch(branch)
+    for side in ("player", "enemy"):
+        active = get_side(updated["state"], side)
+        if active.hp > 0:
+            continue
+        action = actions[side]
+        if action.kind != "replace":
+            continue
+        updated = apply_switch_action(updated, side, action, event_type="replacement")
+    state_after: BattleState = updated["state"]
+    if state_after.player.hp > 0 and state_after.enemy.hp > 0:
+        updated["state"] = advance_turn(state_after)
+    return updated
+
+
+def apply_switch_action(
+    branch: dict[str, Any],
+    side: str,
+    action: ActionState,
+    *,
+    event_type: str,
+) -> dict[str, Any]:
+    if action.switch_index is None:
+        raise SimulationInputError(f"{side} {event_type} action requires bench_index")
+    state: BattleState = branch["state"]
+    active = get_side(state, side)
+    if event_type == "switch" and active.hp <= 0:
+        raise SimulationInputError(f"{side} cannot use a selected switch action after fainting; use replace")
+    if event_type == "replacement" and active.hp > 0:
+        raise SimulationInputError(f"{side} replacement action requires a fainted active Pokemon")
+    bench = get_bench(state, side)
+    if action.switch_index >= len(bench):
+        raise SimulationInputError(f"{side} bench_index out of range")
+    incoming = bench[action.switch_index]
+    if incoming.hp <= 0:
+        raise SimulationInputError(f"{side} cannot switch to fainted bench Pokemon {incoming.name}")
+    updated_bench = tuple(
+        active if index == action.switch_index else pokemon
+        for index, pokemon in enumerate(bench)
+    )
+    updated_state = replace_side_and_bench(state, side, incoming, updated_bench)
+    updated = clone_branch(branch)
+    updated["state"] = updated_state
+    updated["events"].append(
+        {
+            "turn": state.turn,
+            "actor": side,
+            "type": event_type,
+            "from": active.name,
+            "to": incoming.name,
+            "bench_index": action.switch_index,
+            "proof_status": (
+                "source_mirrored_selected_switch_no_entry_effects"
+                if event_type == "switch"
+                else "source_mirrored_selected_replacement_no_entry_effects"
+            ),
+        }
+    )
+    return updated
 
 
 def apply_post_action_residual(branch: dict[str, Any], side: str) -> dict[str, Any]:
@@ -719,12 +795,32 @@ def run_boss_ai_selector(state: BattleState, side: str, action: ActionState) -> 
 def parse_state(raw: Any) -> BattleState:
     if not isinstance(raw, dict):
         raise SimulationInputError("state must be an object")
+    player_raw = raw.get("player")
+    enemy_raw = raw.get("enemy")
+    player = parse_pokemon(player_raw, "player")
+    enemy = parse_pokemon(enemy_raw, "enemy")
     return BattleState(
-        player=parse_pokemon(raw.get("player"), "player"),
-        enemy=parse_pokemon(raw.get("enemy"), "enemy"),
+        player=player,
+        enemy=enemy,
+        player_bench=parse_bench(raw.get("player_bench", side_bench_raw(player_raw)), "player"),
+        enemy_bench=parse_bench(raw.get("enemy_bench", side_bench_raw(enemy_raw)), "enemy"),
         weather=parse_weather(raw.get("weather", "none")),
         turn=parse_positive_int(raw.get("turn", 1), "state.turn"),
     )
+
+
+def side_bench_raw(raw: Any) -> Any:
+    if isinstance(raw, dict):
+        return raw.get("bench", [])
+    return []
+
+
+def parse_bench(raw: Any, side: str) -> tuple[PokemonState, ...]:
+    if raw is None:
+        return ()
+    if not isinstance(raw, list):
+        raise SimulationInputError(f"state.{side}_bench must be a list")
+    return tuple(parse_pokemon(item, side) for item in raw)
 
 
 def parse_pokemon(raw: Any, side: str) -> PokemonState:
@@ -875,6 +971,11 @@ def parse_action(raw: Any, path: str) -> ActionState:
     kind = str(raw.get("type", "move"))
     if kind == "move":
         return ActionState(kind="move", move_index=parse_non_negative_int(raw.get("move", 0), f"{path}.move"))
+    if kind in {"switch", "replace"}:
+        switch_index = raw.get("bench_index", raw.get("bench"))
+        if switch_index is None:
+            raise SimulationInputError(f"{path}.bench_index is required for {kind} actions")
+        return ActionState(kind=kind, switch_index=parse_non_negative_int(switch_index, f"{path}.bench_index"))
     if kind == "boss_ai_selector":
         return ActionState(kind=kind, selector=raw)
     return ActionState(kind=kind)
@@ -915,12 +1016,62 @@ def get_side(state: BattleState, side: str) -> PokemonState:
 
 def replace_side(state: BattleState, side: str, pokemon: PokemonState) -> BattleState:
     if side == "player":
-        return BattleState(player=pokemon, enemy=state.enemy, weather=state.weather, turn=state.turn)
-    return BattleState(player=state.player, enemy=pokemon, weather=state.weather, turn=state.turn)
+        return BattleState(
+            player=pokemon,
+            enemy=state.enemy,
+            player_bench=state.player_bench,
+            enemy_bench=state.enemy_bench,
+            weather=state.weather,
+            turn=state.turn,
+        )
+    return BattleState(
+        player=state.player,
+        enemy=pokemon,
+        player_bench=state.player_bench,
+        enemy_bench=state.enemy_bench,
+        weather=state.weather,
+        turn=state.turn,
+    )
 
 
 def advance_turn(state: BattleState) -> BattleState:
-    return BattleState(player=state.player, enemy=state.enemy, weather=state.weather, turn=state.turn + 1)
+    return BattleState(
+        player=state.player,
+        enemy=state.enemy,
+        player_bench=state.player_bench,
+        enemy_bench=state.enemy_bench,
+        weather=state.weather,
+        turn=state.turn + 1,
+    )
+
+
+def get_bench(state: BattleState, side: str) -> tuple[PokemonState, ...]:
+    return state.player_bench if side == "player" else state.enemy_bench
+
+
+def replace_side_and_bench(
+    state: BattleState,
+    side: str,
+    pokemon: PokemonState,
+    bench: tuple[PokemonState, ...],
+) -> BattleState:
+    if side == "player":
+        return BattleState(
+            player=pokemon,
+            enemy=state.enemy,
+            player_bench=bench,
+            enemy_bench=state.enemy_bench,
+            weather=state.weather,
+            turn=state.turn,
+        )
+    return BattleState(
+        player=state.player,
+        enemy=pokemon,
+        player_bench=state.player_bench,
+        enemy_bench=bench,
+        weather=state.weather,
+        turn=state.turn,
+    )
 
 
 def replace_hp(pokemon: PokemonState, hp: int, *, toxic_count: int | None = None) -> PokemonState:
@@ -981,6 +1132,8 @@ def state_to_json(state: BattleState) -> dict[str, Any]:
         "weather": state.weather,
         "player": pokemon_to_json(state.player),
         "enemy": pokemon_to_json(state.enemy),
+        "player_bench": [pokemon_to_json(pokemon) for pokemon in state.player_bench],
+        "enemy_bench": [pokemon_to_json(pokemon) for pokemon in state.enemy_bench],
     }
 
 
@@ -1064,7 +1217,13 @@ def coverage_report() -> dict[str, Any]:
                 "id": "multi_turn_selected_action_progression",
                 "source": "tools.headless_battle.simulator.simulate_battle",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
-                "notes": "A turns[] list carries HP/RNG state forward across selected-action turns and stops early when either active mon faints. Automatic action choice and replacement flow are still out of scope.",
+                "notes": "A turns[] list carries HP/RNG state forward across selected-action turns, supports caller-selected switch actions, and supports caller-supplied replacement actions after a KO. Automatic action choice and automatic replacement selection are still out of scope.",
+            },
+            {
+                "id": "selected_switch_and_replacement",
+                "source": "engine/battle/core.asm:TryPlayerSwitch, PlayerSwitch, DoubleSwitch, EnemySwitch",
+                "gate": "python tools/audit/check_headless_battle_simulator.py",
+                "notes": "Caller-selected switch actions swap the active Pokemon with a bench slot before the opponent's move, and replace actions can continue a planned battle after a KO. Pursuit, Spikes, switch-in effects, forced prompts, and automatic replacement choice remain out of scope.",
             },
             {
                 "id": "boss_ai_selector_from_post_score_bytes",
@@ -1074,7 +1233,8 @@ def coverage_report() -> dict[str, Any]:
             },
         ],
         "out_of_scope": [
-            "automatic full battle flow, switch actions, forced switch prompts, items as actions, and trainer item turns",
+            "automatic full battle flow, automatic action choice, forced switch prompts, automatic replacement selection, items as actions, and trainer item turns",
+            "Pursuit-on-switch, Spikes/switch-in entry effects, switch-triggered abilities/passives, and switch memory side effects",
             "RNG-consuming mechanics outside speed ties/critical hits/accuracy/damage variation, Quick Claw/Choice Scarf turn-order effects",
             "accuracy/evasion stat stages, BrightPowder, Protect, Fly/Dig, Lock-On, X Accuracy, and passive accuracy bonuses",
             "status application, sleep, freeze, paralysis, volatile effects, weather, item recovery/cures, and after-hit effects",

@@ -277,10 +277,12 @@ NEXT_STEP_ROWS = [
             "no gui",
             "fixed rng",
             "exhaustive rng",
+            "battle with switches",
+            "replacement after ko",
         ],
         "first_command": "python -m tools.headless_battle --template",
-        "required_inputs": ["scenario JSON with active mons, stats or species shorthand, selected actions or turns[], and fixed/sample/exhaustive RNG for speed ties/critical hits/accuracy/damage variation"],
-        "proof_limit": "Selected-action slice: move-vs-move priority/unequal-raw-speed order, non-link equal-speed tie RNG, basic critical-hit checks, basic move accuracy hit/miss, damage variation with fixed/sample/exhaustive RNG, initial poison/burn/toxic residual after selected moves, multi-turn turns[] progression with HP/RNG carryover, pre-variation damage delegated to the existing ROM-backed damage oracle, and post-score Boss AI selector replay from known score bytes. Automatic full battle choice, switch/replacement flow, accuracy/evasion modifiers, status application, sleep/freeze/paralysis, RNG-consuming mechanics outside speed ties/critical hits/accuracy/damage variation, live Boss AI scoring, and scripts remain out of scope until separately implemented and proven.",
+        "required_inputs": ["scenario JSON with active mons, optional bench[], selected actions or turns[], and fixed/sample/exhaustive RNG for speed ties/critical hits/accuracy/damage variation"],
+        "proof_limit": "Selected-action slice: move-vs-move priority/unequal-raw-speed order, selected switch actions, caller-supplied replacement after KO, non-link equal-speed tie RNG, basic critical-hit checks, basic move accuracy hit/miss, damage variation with fixed/sample/exhaustive RNG, initial poison/burn/toxic residual after selected moves, multi-turn turns[] progression with HP/RNG carryover, pre-variation damage delegated to the existing ROM-backed damage oracle, and post-score Boss AI selector replay from known score bytes. Automatic full battle choice, automatic replacement selection, Pursuit/Spikes/switch-in effects, accuracy/evasion modifiers, status application, sleep/freeze/paralysis, RNG-consuming mechanics outside speed ties/critical hits/accuracy/damage variation, live Boss AI scoring, and scripts remain out of scope until separately implemented and proven.",
         "escalation_command": "python tools\\audit\\check_headless_battle_simulator.py",
     },
     {
@@ -777,7 +779,7 @@ EVIDENCE_STANDARDS = {
         "The answer points to the damage debugger matchup/oracle tools and gives a current concrete command such as python -m tools.damage_debugger.matchup CHARIZARD:50 LAPRAS:50 FLAMETHROWER --json before relying on memory.",
     ],
     "headless_battle_simulation": [
-        "The answer routes to tools.headless_battle, uses a JSON state/actions-or-turns/RNG scenario, and preserves proof labels: pre-variation damage is delegated to the existing ROM-backed damage oracle, non-link equal-speed ties, basic critical hits, basic move accuracy, and damage variation have fixed/sample/exhaustive RNG branching, initial poison/burn/toxic residual is source-mirrored, selected-turn priority/unequal-raw-speed order is source-mirrored, selected-action turns[] progression carries HP/RNG state, post-score Boss AI selector replay starts from known score bytes, and unimplemented RNG/full-battle mechanics remain out of scope.",
+        "The answer routes to tools.headless_battle, uses a JSON state/actions-or-turns/RNG scenario, and preserves proof labels: pre-variation damage is delegated to the existing ROM-backed damage oracle, selected switches and caller-supplied replacements carry active/bench state, non-link equal-speed ties, basic critical hits, basic move accuracy, and damage variation have fixed/sample/exhaustive RNG branching, initial poison/burn/toxic residual is source-mirrored, selected-turn priority/unequal-raw-speed order is source-mirrored, selected-action turns[] progression carries HP/RNG state, post-score Boss AI selector replay starts from known score bytes, and unimplemented RNG/full-battle mechanics remain out of scope.",
     ],
     "type_chart_navigation": [
         "The answer names data/types/type_matchups.asm, constants/type_constants.asm, and the runtime reader in engine/battle/effect_commands.asm before suggesting any matchup edit.",
@@ -889,7 +891,7 @@ DISPROOF_STANDARDS = {
         "If matchup output or clobber smoke disagrees with the claimed damage path, defer to current debugger evidence rather than memory.",
     ],
     "headless_battle_simulation": [
-        "If the report claims automatic full battle choice, switch/replacement flow, link-battle turn-order inversion, accuracy/evasion modifiers, status application or sleep/freeze/paralysis, RNG-consuming mechanics outside speed ties/critical hits/accuracy/damage variation, live Boss AI scoring, scripts, or byte-proven turn sequencing beyond the listed coverage labels, reject the route as overclaimed.",
+        "If the report claims automatic full battle choice, automatic replacement selection, Pursuit/Spikes/switch-in effects, link-battle turn-order inversion, accuracy/evasion modifiers, status application or sleep/freeze/paralysis, RNG-consuming mechanics outside speed ties/critical hits/accuracy/damage variation, live Boss AI scoring, scripts, or byte-proven turn sequencing beyond the listed coverage labels, reject the route as overclaimed.",
     ],
     "type_chart_navigation": [
         "If the answer returns engine battle code without naming data/types/type_matchups.asm, it missed the matchup data file.",
