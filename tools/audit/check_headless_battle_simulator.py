@@ -3,6 +3,7 @@ from __future__ import annotations
 import subprocess
 import sys
 from pathlib import Path
+from unittest.mock import patch
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -1270,6 +1271,178 @@ def main() -> int:
         "rom_switch_scenario_export_overrides: PASS "
         "accept_overrides_emit override_round_trip status_override "
         "environment_override toxic_sleep_override"
+    )
+    # Phase 1 from docs/headless_batch_validation_implementation.md §5: batch
+    # switch-materialize runner output shape. We synthesize a 3-scenario report
+    # (one observed+exact, one observed+ranged, one no-decision-observed) and
+    # assert the table + summary surface the spec columns. Live PyBoy runs are
+    # covered by the existing rom-switch-materialize audits; this smoke is
+    # purely the headless formatting/wrapping layer.
+    from tools.headless_battle.batch_switch import (
+        format_batch_switch_table,
+        run_batch_switch_materialize,
+        summarize_batch_switch,
+    )
+    batch_report = {
+        "schema_version": 1,
+        "source": "audit-smoke",
+        "kind": "rom_switch_materialization",
+        "base_route": "shared_switch_loop",
+        "base_state": "audit_smoke.state",
+        "base_state_field": "switch_materialization_state",
+        "scenario_count": 3,
+        "checked_count": 2,
+        "skipped_count": 0,
+        "error_count": 1,
+        "policy_disagreement_count": 0,
+        "elapsed_seconds": 1.5,
+        "materializations_per_minute": 80.0,
+        "known_limits": ["test limit"],
+        "verdicts": [
+            {
+                "scenario_id": "audit_observed_exact",
+                "status": "pass",
+                "family": "switch_sack",
+                "expected_switch": True,
+                "rom_policy": {"verdict": "pass", "severity": 0, "reason": ""},
+                "rom": {
+                    "switch_confidence": 0x50,
+                    "observation_status": "switch_proposal_observed",
+                    "observed_switch_path": True,
+                    "proposed_switch": True,
+                    "actual_switch": False,
+                },
+                "switch_roll": {
+                    "available": True,
+                    "confidence": 0x50,
+                    "switch_probability": 0.65,
+                    "probability_exact": True,
+                    "proof_status": "source_mirrored_final_switch_roll_from_observed_confidence",
+                },
+            },
+            {
+                "scenario_id": "audit_observed_ranged",
+                "status": "pass",
+                "family": "switch_sack",
+                "expected_switch": True,
+                "rom_policy": {"verdict": "pass", "severity": 0, "reason": ""},
+                "rom": {
+                    "switch_confidence": 0x40,
+                    "observation_status": "switch_confidence_observed",
+                    "observed_switch_path": True,
+                    "proposed_switch": False,
+                    "actual_switch": False,
+                },
+                "switch_roll": {
+                    "available": True,
+                    "confidence": 0x40,
+                    "switch_probability": 0.50,
+                    "probability_exact": False,
+                    "proof_status": "source_mirrored_final_switch_roll_from_observed_confidence",
+                },
+            },
+            {
+                "scenario_id": "audit_no_observation",
+                "status": "error",
+                "family": "switch_sack",
+                "expected_switch": True,
+                "reason": "no switch materialization decision observed within watch_frames",
+                "rom": {
+                    "switch_confidence": 0,
+                    "observation_status": "no_decision_observed",
+                    "observed_switch_path": False,
+                    "proposed_switch": False,
+                    "actual_switch": False,
+                },
+                "switch_roll": {
+                    "available": False,
+                    "confidence": 0,
+                    "reason": "no_switch_dispatch_observation",
+                    "proof_status": "no_final_switch_roll_observed",
+                },
+            },
+        ],
+    }
+    batch_summary = summarize_batch_switch(batch_report)
+    if (
+        batch_summary["scenario_count"] != 3
+        or batch_summary["observed_switches"] != 2
+        or batch_summary["probability_exact_count"] != 1
+        or batch_summary["error_count"] != 1
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: batch_switch summary "
+            f"mismatch: {batch_summary}",
+            file=sys.stderr,
+        )
+        return 1
+    batch_text = format_batch_switch_table(batch_report)
+    expected_summary_line = (
+        "Summary: 3 scenarios, 2 observed switches, "
+        "1 probability_exact, errors=1"
+    )
+    if expected_summary_line not in batch_text:
+        print(
+            f"Headless battle simulator audit FAILED: batch_switch summary line "
+            f"missing from table; got:\n{batch_text}",
+            file=sys.stderr,
+        )
+        return 1
+    required_columns = (
+        "scenario_id",
+        "confidence",
+        "switch_prob",
+        "exact",
+        "proof_status",
+        "observation_status",
+    )
+    missing_columns = [col for col in required_columns if col not in batch_text]
+    if missing_columns:
+        print(
+            f"Headless battle simulator audit FAILED: batch_switch table missing "
+            f"columns {missing_columns}; got:\n{batch_text}",
+            file=sys.stderr,
+        )
+        return 1
+    required_rows = (
+        "audit_observed_exact",
+        "audit_observed_ranged",
+        "audit_no_observation",
+        "ERROR:",
+        "n/a(no_switch_dispatch_observation)",
+    )
+    missing_rows = [row for row in required_rows if row not in batch_text]
+    if missing_rows:
+        print(
+            f"Headless battle simulator audit FAILED: batch_switch table missing "
+            f"row(s) {missing_rows}; got:\n{batch_text}",
+            file=sys.stderr,
+        )
+        return 1
+    # Sanity check the run wrapper tags the report with the batch kind even
+    # when the underlying materialization fails to call PyBoy (we patch the
+    # entry point with a stub so the smoke stays headless).
+    with patch(
+        "tools.headless_battle.batch_switch.run_rom_switch_materialization_from_path",
+        return_value=batch_report,
+    ):
+        wrapped = run_batch_switch_materialize(
+            Path("audit_smoke_scenarios.jsonl"), limit=0
+        )
+    if (
+        wrapped.get("kind") != "headless_battle_batch_switch_materialize"
+        or wrapped.get("summary", {}).get("scenario_count") != 3
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: batch_switch wrapper did "
+            f"not tag report; got kind={wrapped.get('kind')} "
+            f"summary={wrapped.get('summary')}",
+            file=sys.stderr,
+        )
+        return 1
+    print(
+        "headless_batch_switch_runner: PASS "
+        "summary_counts table_columns table_rows wrapper_kind_tag"
     )
     wild_payload = scenario_template()
     wild_payload["state"]["player"]["moves"][0]["bp"] = 0
