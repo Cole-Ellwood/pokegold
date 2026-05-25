@@ -64,8 +64,10 @@ STATUS_STRING_TO_BYTE = {
 # STATUS_STRING_TO_BYTE.
 OVERRIDABLE_STATUSES = frozenset({*STATUS_STRING_TO_BYTE, "sleep"})
 SCREENS_SAFEGUARD_BIT = 2  # matches constants/battle_constants.asm SCREENS_SAFEGUARD
+SCREENS_SPIKES_MASK = 0b11  # matches constants/battle_constants.asm SCREENS_SPIKES_MASK (bits 0-1)
 SUBSTATUS_TOXIC_BIT = 0  # matches constants/battle_constants.asm SUBSTATUS_TOXIC (first const in sub5)
 SUBSTATUS_SUBSTITUTE_BIT = 4  # matches constants/battle_constants.asm SUBSTATUS_SUBSTITUTE (sub4)
+MAX_SPIKE_LAYERS = 3  # matches BattleCommand_Spikes guard: cp 3 / jr nc, .failed
 
 
 def _status_byte_for(mon: PokemonState) -> int:
@@ -197,10 +199,20 @@ def _board_to_overrides(battle_state: BattleState) -> dict[str, Any]:
     if battle_state.weather or battle_state.weather_count:
         overrides["weather"] = battle_state.weather
         overrides["weather_count"] = battle_state.weather_count
-    if battle_state.player_safeguard:
-        overrides["player_screens"] = 1 << SCREENS_SAFEGUARD_BIT
-    if battle_state.enemy_safeguard:
-        overrides["enemy_screens"] = 1 << SCREENS_SAFEGUARD_BIT
+    # Slice C-environment+spikes: screens byte combines spike-layer count
+    # (bits 0-1, value 0..3) with the SAFEGUARD bit (bit 2). Emit when EITHER
+    # side has spikes > 0 OR safeguard active so the base state's existing
+    # screens byte is preserved when both are default.
+    player_screens = _screens_byte(
+        battle_state.player_spikes, battle_state.player_safeguard
+    )
+    if player_screens:
+        overrides["player_screens"] = player_screens
+    enemy_screens = _screens_byte(
+        battle_state.enemy_spikes, battle_state.enemy_safeguard
+    )
+    if enemy_screens:
+        overrides["enemy_screens"] = enemy_screens
     # sub5 toxic bit only emitted when needed; emitting 0 would unconditionally
     # patch wPlayerSubStatus5 / wEnemySubStatus5 which the base state may have
     # used for other sub-status bits this slice doesn't model.
@@ -240,6 +252,16 @@ def _stat_stages_for(mon: PokemonState) -> tuple[int, int, int, int, int]:
         mon.speed_stage,
         mon.sp_attack_stage,
         mon.sp_defense_stage,
+    )
+
+
+def _screens_byte(spike_layers: int, safeguard: bool) -> int:
+    # Spike layers occupy bits 0-1 (value 0..3) per move_effects/spikes.asm
+    # and constants/battle_constants.asm SCREENS_SPIKES_MASK. SAFEGUARD is
+    # bit 2 per SCREENS_SAFEGUARD. Headless simulator already clamps spike
+    # layers to MAX_SPIKE_LAYERS in parse_spikes_layers, so we mask defensively.
+    return (spike_layers & SCREENS_SPIKES_MASK) | (
+        (1 << SCREENS_SAFEGUARD_BIT) if safeguard else 0
     )
 
 
@@ -364,13 +386,18 @@ def _assert_no_field_state(state: BattleState) -> None:
 
 def _assert_overridable_field_state(state: BattleState) -> None:
     # Slice C-environment patches weather (wBattleWeather + wWeatherCount) and
-    # screens (wPlayerScreens / wEnemyScreens SAFEGUARD bit) via overrides, so
-    # those are allowed here. Spikes is still slice C-spikes future work.
-    if state.player_spikes or state.enemy_spikes:
+    # screens (wPlayerScreens / wEnemyScreens SAFEGUARD bit) via overrides.
+    # Slice C-spikes packs spike layers (0..3) into bits 0-1 of the same screens
+    # byte, so non-zero spike layers are now allowed and emit the combined
+    # screens byte through _board_to_overrides. parse_spikes_layers already
+    # clamps to MAX_SPIKE_LAYERS upstream.
+    if state.player_spikes > MAX_SPIKE_LAYERS or state.enemy_spikes > MAX_SPIKE_LAYERS:
+        # Defensive: parse_spikes_layers should catch this earlier, but the
+        # exporter can be called with a raw BattleState dict that bypasses
+        # parse_state's validation.
         raise SimulationInputError(
-            f"rom_switch_scenario_export: spikes player={state.player_spikes} "
-            f"enemy={state.enemy_spikes}; slice C-spikes is future work "
-            "(needs spike-layer encoding into wPlayerScreens / wEnemyScreens)"
+            f"rom_switch_scenario_export: spike layers exceed {MAX_SPIKE_LAYERS} "
+            f"(player={state.player_spikes}, enemy={state.enemy_spikes})"
         )
 
 

@@ -1411,11 +1411,78 @@ def main() -> int:
             file=sys.stderr,
         )
         return 1
+    # Slice C-spikes: spike layers (bits 0-1 of screens byte) + safeguard
+    # (bit 2) combined into the player_screens / enemy_screens override.
+    spikes_state = {
+        "weather": "none",
+        "turn": 1,
+        "enemy_spikes": 3,
+        "player_safeguard": True,
+        "player": {
+            "species": "STARMIE",
+            "level": 50,
+            "types": ["GROUND", "GROUND"],
+            "hp": 80,
+            "max_hp": 100,
+            "stats": {"attack": 70, "defense": 80, "speed": 100, "sp_attack": 90, "sp_defense": 80},
+            "moves": [{"name": "SURF"}],
+        },
+        "enemy": {
+            "species": "QWILFISH",
+            "level": 50,
+            "types": ["POISON", "WATER"],
+            "hp": 80,
+            "max_hp": 100,
+            "stats": {"attack": 70, "defense": 75, "speed": 85, "sp_attack": 55, "sp_defense": 55},
+            "moves": [{"name": "POISON_STING"}],
+            "bench": [
+                {
+                    "name": "GENGAR",
+                    "level": 50,
+                    "types": ["GHOST", "POISON"],
+                    "hp": 80,
+                    "max_hp": 100,
+                    "stats": {"attack": 65, "defense": 60, "speed": 110, "sp_attack": 130, "sp_defense": 75},
+                    "moves": [{"name": "LICK"}],
+                },
+            ],
+        },
+    }
+    spikes_scenario = headless_to_switch_sack_scenario(
+        spikes_state, scenario_id="audit_spikes", tier="late", accept_overrides=True
+    )
+    spikes_overrides = spikes_scenario["overrides"]
+    # Player has safeguard only (no spikes) -> bit 2 = 4.
+    # Enemy has 3 spike layers (bits 0-1 = 3) -> 3.
+    if (
+        spikes_overrides.get("player_screens") != 4
+        or spikes_overrides.get("enemy_screens") != 3
+    ):
+        print(
+            "Headless battle simulator audit FAILED: spikes exporter screens "
+            f"mismatch: {spikes_overrides}",
+            file=sys.stderr,
+        )
+        return 1
+    spikes_patches = {
+        (p.symbol_name, p.offset): p.value
+        for p in switch_materialization_patches(spikes_scenario)
+    }
+    if (
+        spikes_patches.get(("wPlayerScreens", 0)) != 4
+        or spikes_patches.get(("wEnemyScreens", 0)) != 3
+    ):
+        print(
+            "Headless battle simulator audit FAILED: spikes materializer "
+            f"round-trip mismatch: {spikes_patches}",
+            file=sys.stderr,
+        )
+        return 1
     print(
         "rom_switch_scenario_export_overrides: PASS "
         "accept_overrides_emit override_round_trip status_override "
         "environment_override toxic_sleep_override stat_stages_override "
-        "substitute_override"
+        "substitute_override spike_layer_override"
     )
     # Phase 1 from docs/headless_batch_validation_implementation.md §5: batch
     # switch-materialize runner output shape. We synthesize a 3-scenario report

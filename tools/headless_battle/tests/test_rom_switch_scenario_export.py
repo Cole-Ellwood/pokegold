@@ -251,11 +251,30 @@ class RomSwitchScenarioExportTests(unittest.TestCase):
         self.assertGreater(scenario["overrides"]["weather"], 0)
         self.assertEqual(scenario["overrides"]["weather_count"], 5)
 
-    def test_accept_overrides_still_rejects_spikes(self) -> None:
+    def test_accept_overrides_now_accepts_spike_layers(self) -> None:
         state = fixture_state()
         state["enemy_spikes"] = 2
-        with self.assertRaisesRegex(SimulationInputError, "slice C-spikes"):
-            headless_to_switch_sack_scenario(state, accept_overrides=True)
+        scenario = headless_to_switch_sack_scenario(state, accept_overrides=True)
+        # 2 spike layers occupy bits 0-1 of the screens byte (value 2);
+        # no safeguard so the bit-2 SAFEGUARD bit is 0. Total = 2.
+        self.assertEqual(scenario["overrides"]["enemy_screens"], 2)
+        # Player has no spikes and no safeguard -> no override.
+        self.assertNotIn("player_screens", scenario["overrides"])
+
+    def test_accept_overrides_combines_spikes_and_safeguard(self) -> None:
+        state = fixture_state()
+        state["player_spikes"] = 3
+        state["player_safeguard"] = True
+        scenario = headless_to_switch_sack_scenario(state, accept_overrides=True)
+        # 3 spike layers (bits 0-1 = 0b11) + safeguard (bit 2 = 0b100) = 0b111 = 7.
+        self.assertEqual(scenario["overrides"]["player_screens"], 7)
+
+    def test_accept_overrides_emits_spike_only_screens(self) -> None:
+        state = fixture_state()
+        state["enemy_spikes"] = 1
+        scenario = headless_to_switch_sack_scenario(state, accept_overrides=True)
+        # 1 layer = 1; no safeguard bit.
+        self.assertEqual(scenario["overrides"]["enemy_screens"], 1)
 
     def test_accept_overrides_now_accepts_held_items(self) -> None:
         state = fixture_state()
