@@ -1033,6 +1033,121 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         self.assertEqual(event["proof_status"], "out_of_scope")
         self.assertEqual(report["outcomes"][0]["state"]["player"]["hp"], 10)
 
+    def test_poison_status_move_applies_poison_and_residual(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["moves"] = [{"name": "POISONPOWDER"}]
+        payload["state"]["enemy"]["hp"] = 32
+        payload["state"]["enemy"]["max_hp"] = 32
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+
+        report = simulate_payload(payload)
+
+        events = report["outcomes"][0]["events"]
+        self.assertEqual(events[0]["type"], "status_apply")
+        self.assertEqual(events[0]["move"], "POISONPOWDER")
+        self.assertEqual(events[0]["status"], "poison")
+        self.assertEqual(events[0]["status_before"], "none")
+        self.assertEqual(events[0]["status_after"], "poison")
+        self.assertEqual(events[0]["pp_before"], 35)
+        self.assertEqual(events[0]["pp_after"], 34)
+        self.assertEqual(events[-1]["type"], "residual_damage")
+        self.assertEqual(events[-1]["actor"], "enemy")
+        self.assertEqual(events[-1]["damage"], 4)
+        self.assertEqual(report["outcomes"][0]["state"]["enemy"]["status"], "poison")
+        self.assertEqual(report["outcomes"][0]["state"]["enemy"]["hp"], 28)
+
+    def test_toxic_status_move_sets_toxic_count_for_first_residual_tick(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["moves"] = [{"name": "TOXIC"}]
+        payload["state"]["enemy"]["hp"] = 48
+        payload["state"]["enemy"]["max_hp"] = 48
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+
+        report = simulate_payload(payload)
+
+        events = report["outcomes"][0]["events"]
+        toxic = events[0]
+        residual = events[-1]
+        self.assertEqual(toxic["type"], "status_apply")
+        self.assertEqual(toxic["status"], "toxic")
+        self.assertEqual(toxic["toxic_count_after"], 0)
+        self.assertEqual(toxic["pp_before"], 10)
+        self.assertEqual(toxic["pp_after"], 9)
+        self.assertEqual(residual["type"], "residual_damage")
+        self.assertEqual(residual["status"], "toxic")
+        self.assertEqual(residual["damage"], 3)
+        self.assertEqual(residual["toxic_count_before"], 0)
+        self.assertEqual(residual["toxic_count_after"], 1)
+        self.assertEqual(report["outcomes"][0]["state"]["enemy"]["status"], "toxic")
+        self.assertEqual(report["outcomes"][0]["state"]["enemy"]["toxic_count"], 1)
+
+    def test_poison_status_move_uses_accuracy_check(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["moves"] = [{"name": "POISON_GAS"}]
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+        payload["rng"] = {"mode": "fixed", "values": [255]}
+
+        report = simulate_payload(payload)
+
+        event = report["outcomes"][0]["events"][0]
+        self.assertEqual(event["type"], "miss")
+        self.assertEqual(event["move"], "POISON_GAS")
+        self.assertEqual(event["accuracy_check"]["threshold"], 140)
+        self.assertEqual(report["outcomes"][0]["state"]["enemy"]["status"], "none")
+
+    def test_poison_status_move_reports_no_effect_on_poison_type(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["moves"] = [{"name": "POISONPOWDER"}]
+        payload["state"]["enemy"]["types"] = ["POISON", "POISON"]
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+
+        report = simulate_payload(payload)
+
+        event = report["outcomes"][0]["events"][0]
+        self.assertEqual(event["type"], "status_no_effect")
+        self.assertEqual(event["blocked_reason"], "poison_type")
+        self.assertEqual(report["outcomes"][0]["state"]["enemy"]["status"], "none")
+
+    def test_poison_status_move_reports_no_effect_on_type_immunity(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["moves"] = [{"name": "TOXIC"}]
+        payload["state"]["enemy"]["types"] = ["STEEL", "STEEL"]
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+
+        report = simulate_payload(payload)
+
+        event = report["outcomes"][0]["events"][0]
+        self.assertEqual(event["type"], "status_no_effect")
+        self.assertEqual(event["blocked_reason"], "type_immunity")
+        self.assertEqual(report["outcomes"][0]["state"]["enemy"]["status"], "none")
+
+    def test_poison_status_move_reports_no_effect_on_existing_status(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["moves"] = [{"name": "TOXIC"}]
+        payload["state"]["enemy"]["status"] = "burn"
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+
+        report = simulate_payload(payload)
+
+        event = report["outcomes"][0]["events"][0]
+        self.assertEqual(event["type"], "status_no_effect")
+        self.assertEqual(event["blocked_reason"], "already_statused")
+        self.assertEqual(report["outcomes"][0]["state"]["enemy"]["status"], "burn")
+
+    def test_poison_status_healing_berry_stays_out_of_scope(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["moves"] = [{"name": "POISONPOWDER"}]
+        payload["state"]["enemy"]["item"] = "PSNCUREBERRY"
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+
+        report = simulate_payload(payload)
+
+        event = report["outcomes"][0]["events"][0]
+        self.assertEqual(event["type"], "status_no_effect")
+        self.assertEqual(event["blocked_reason"], "held_status_healing_item_out_of_scope")
+        self.assertEqual(event["proof_status"], "out_of_scope")
+        self.assertEqual(report["outcomes"][0]["state"]["enemy"]["status"], "none")
+
     def test_report_exposes_proof_boundary(self) -> None:
         report = simulate_payload(scenario_template())
 
@@ -1050,6 +1165,7 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         self.assertIn("explicit_stat_stage_state", mirrored)
         self.assertIn("selected_stat_stage_only_moves", mirrored)
         self.assertIn("selected_self_heal_moves", mirrored)
+        self.assertIn("selected_poison_status_moves", mirrored)
         self.assertIn("repeat_plan_auto_replace_or", mirrored)
         self.assertIn("selected_switch_and_replacement", mirrored)
         self.assertIn("auto_replacement_choice_basic_type_chart", mirrored)

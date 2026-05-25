@@ -203,6 +203,47 @@ def main() -> int:
         )
         return 1
     print("selected_self_heal_moves: PASS recover_half_hp rest_out_of_scope")
+    poison_payload = scenario_template()
+    poison_payload["state"]["player"]["moves"] = [{"name": "POISONPOWDER"}]
+    poison_payload["state"]["enemy"]["hp"] = 32
+    poison_payload["state"]["enemy"]["max_hp"] = 32
+    poison_payload["state"]["enemy"]["moves"][0]["bp"] = 0
+    poison_outcome = simulate_payload(poison_payload)["outcomes"][0]
+    poison_event = poison_outcome["events"][0]
+    poison_residual = poison_outcome["events"][-1]
+    if (
+        poison_event.get("type") != "status_apply"
+        or poison_event.get("status") != "poison"
+        or poison_outcome["state"]["enemy"].get("status") != "poison"
+        or poison_residual.get("type") != "residual_damage"
+        or poison_residual.get("damage") != 4
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: poison status move mismatch: {poison_outcome}",
+            file=sys.stderr,
+        )
+        return 1
+    toxic_payload = scenario_template()
+    toxic_payload["state"]["player"]["moves"] = [{"name": "TOXIC"}]
+    toxic_payload["state"]["enemy"]["hp"] = 48
+    toxic_payload["state"]["enemy"]["max_hp"] = 48
+    toxic_payload["state"]["enemy"]["moves"][0]["bp"] = 0
+    toxic_outcome = simulate_payload(toxic_payload)["outcomes"][0]
+    toxic_event = toxic_outcome["events"][0]
+    toxic_residual = toxic_outcome["events"][-1]
+    if (
+        toxic_event.get("type") != "status_apply"
+        or toxic_event.get("status") != "toxic"
+        or toxic_event.get("toxic_count_after") != 0
+        or toxic_residual.get("toxic_count_after") != 1
+        or toxic_residual.get("damage") != 3
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: toxic status move mismatch: {toxic_outcome}",
+            file=sys.stderr,
+        )
+        return 1
+    print("selected_poison_status_moves: PASS poisonpowder_residual toxic_count")
     selector = select_from_score_bytes(
         scenario_id="headless_audit_selector",
         tier="late",

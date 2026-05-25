@@ -88,6 +88,10 @@ OPPONENT_STAT_STAGE_EFFECTS = {
     "EFFECT_SP_ATK_DOWN_2": (("sp_attack", -2),),
     "EFFECT_SP_DEF_DOWN_2": (("sp_defense", -2),),
 }
+POISON_STATUS_EFFECTS = {
+    "EFFECT_POISON": "poison",
+    "EFFECT_TOXIC": "toxic",
+}
 SELF_HEALING_MOVE_NAMES = frozenset({"RECOVER", "SOFTBOILED", "MILK_DRINK"})
 TYPE_FACTOR_CONSTANTS = {
     "NO_EFFECT": 0,
@@ -108,6 +112,7 @@ ITEM_SUPER_POTION = tables.resolve_item("SUPER_POTION")
 ITEM_HYPER_POTION = tables.resolve_item("HYPER_POTION")
 ITEM_MAX_POTION = tables.resolve_item("MAX_POTION")
 ITEM_FULL_RESTORE = tables.resolve_item("FULL_RESTORE")
+ITEM_PSNCUREBERRY = tables.resolve_item("PSNCUREBERRY")
 LIFE_ORB_RECOIL_DENOMINATOR = 10
 ROCKY_HELMET_DENOMINATOR = 6
 SHELL_BELL_DENOMINATOR = 8
@@ -559,6 +564,18 @@ def apply_move(
     target_side = "enemy" if side == "player" else "player"
     target = get_side(state, target_side)
     if move.bp <= 0:
+        poison_status_branches = apply_poison_status_move(
+            branch,
+            side,
+            target_side,
+            move,
+            pp_before,
+            pp_after,
+            rng,
+            stream=stream,
+        )
+        if poison_status_branches is not None:
+            return poison_status_branches
         self_heal_branch = apply_self_heal_move(branch, side, move, pp_before, pp_after)
         if self_heal_branch is not None:
             return [self_heal_branch]
@@ -666,6 +683,117 @@ def apply_move(
                 )
                 branches.append(updated)
     return branches
+
+
+def apply_poison_status_move(
+    branch: dict[str, Any],
+    side: str,
+    target_side: str,
+    move: MoveState,
+    pp_before: int,
+    pp_after: int,
+    rng: RngConfig,
+    *,
+    stream: RuntimeRng | None,
+) -> list[dict[str, Any]] | None:
+    status = POISON_STATUS_EFFECTS.get(move.effect)
+    if status is None:
+        return None
+    out = []
+    for hit_check in accuracy_results(branch["state"], move, rng, stream=stream):
+        if not hit_check["hit"]:
+            updated = clone_branch(branch)
+            updated["rng_consumed"].extend(hit_check["raw_values"])
+            updated["events"].append(
+                {
+                    "turn": branch["state"].turn,
+                    "actor": side,
+                    "target": target_side,
+                    "move": move.name,
+                    "type": "miss",
+                    "accuracy_check": hit_check,
+                    "pp_before": pp_before,
+                    "pp_after": pp_after,
+                    "proof_status": "source_mirrored_poison_status_move_accuracy",
+                }
+            )
+            out.append(updated)
+            continue
+        out.append(
+            apply_poison_status_change(
+                branch,
+                side,
+                target_side,
+                move,
+                status,
+                hit_check,
+                pp_before,
+                pp_after,
+            )
+        )
+    return out
+
+
+def apply_poison_status_change(
+    branch: dict[str, Any],
+    side: str,
+    target_side: str,
+    move: MoveState,
+    status: str,
+    hit_check: dict[str, Any],
+    pp_before: int,
+    pp_after: int,
+) -> dict[str, Any]:
+    state: BattleState = branch["state"]
+    target = get_side(state, target_side)
+    blocked_reason = poison_status_blocked_reason(target, move)
+    updated = clone_branch(branch)
+    updated["rng_consumed"].extend(hit_check["raw_values"])
+    if blocked_reason is None:
+        updated_target = replace_hp(target, target.hp, status=status, toxic_count=0)
+        updated["state"] = replace_side(state, target_side, updated_target)
+    updated["events"].append(
+        {
+            "turn": state.turn,
+            "actor": side,
+            "target": target_side,
+            "move": move.name,
+            "type": "status_apply" if blocked_reason is None else "status_no_effect",
+            "status": status,
+            "status_before": target.status,
+            "status_after": status if blocked_reason is None else target.status,
+            "toxic_count_before": target.toxic_count,
+            "toxic_count_after": 0 if blocked_reason is None else target.toxic_count,
+            "blocked_reason": blocked_reason,
+            "accuracy_check": hit_check,
+            "pp_before": pp_before,
+            "pp_after": pp_after,
+            "proof_status": (
+                "source_mirrored_selected_poison_status_move"
+                if blocked_reason is None
+                else (
+                    "out_of_scope"
+                    if blocked_reason == "held_status_healing_item_out_of_scope"
+                    else "source_mirrored_selected_poison_status_no_effect"
+                )
+            ),
+        }
+    )
+    return updated
+
+
+def poison_status_blocked_reason(target: PokemonState, move: MoveState) -> str | None:
+    if type_effectiveness_factor(move.move_type_name, target.type_names) == 0:
+        return "type_immunity"
+    if "POISON" in target.type_names:
+        return "poison_type"
+    if target.status in {"poison", "toxic"}:
+        return "already_poisoned"
+    if target.status != "none":
+        return "already_statused"
+    if target.item == ITEM_PSNCUREBERRY:
+        return "held_status_healing_item_out_of_scope"
+    return None
 
 
 def apply_self_heal_move(
@@ -2470,6 +2598,12 @@ def coverage_report() -> dict[str, Any]:
                 "notes": "Recover, Softboiled, and Milk Drink consume PP, restore half max HP with max-HP cap, report full-HP no-effect cases, and preserve post-action residual. Rest branches through the same command but adds full HP restoration, sleep/status handling, and stat recalculation, so Rest remains out of scope until sleep/status move effects are modeled.",
             },
             {
+                "id": "selected_poison_status_moves",
+                "source": "data/moves/effects.asm:Toxic/DoPoison + engine/battle/effect_commands.asm:BattleCommand_Poison",
+                "gate": "python tools/audit/check_headless_battle_simulator.py",
+                "notes": "PoisonPowder, Poison Gas, and Toxic consume PP, run the basic accuracy check, apply poison/toxic to healthy non-Poison non-immune targets, initialize toxic_count at 0, and report no-effect cases for Poison-type targets, type immunity, and already-statused targets. Safeguard, Substitute, held status-healing item consumption, damaging poison secondary effects, and text/animation side effects remain out of scope.",
+            },
+            {
                 "id": "multi_turn_selected_action_progression",
                 "source": "tools.headless_battle.simulator.simulate_battle",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
@@ -2517,7 +2651,7 @@ def coverage_report() -> dict[str, Any]:
             "Pursuit-on-switch, Spikes/switch-in entry effects, switch-triggered abilities/passives, and switch memory side effects",
             "RNG-consuming mechanics outside speed ties/Boss AI selector choice/wild random move choice/auto-replace fallback/critical hits/accuracy/damage variation, Quick Claw/Choice Scarf turn-order effects",
             "accuracy/evasion stat-stage move effects, damaging secondary stat effects, multi-stat chain moves, BrightPowder, Protect, Fly/Dig, Lock-On, X Accuracy, Baton Pass/Psych Up, Substitute/Mist blockers, badge boosts, status speed modifiers, passive stat/speed/accuracy bonuses, and passive accuracy bonuses",
-            "status application, sleep, freeze, paralysis, volatile effects, weather/time healing, Rest, drain moves, Heal Bell, unsupported item recovery/cures, Air Balloon pop, Substitute-blocked contact, Focus Punch break, after-hit text/script effects outside supported HP mutations, Struggle, PP Up bit packing, Mimic/Transform PP routing, and full PP legality selection",
+            "sleep, freeze, paralysis, burn application, Safeguard/Substitute, held status-healing item consumption, volatile effects, weather/time healing, Rest, drain moves, Heal Bell, unsupported item recovery/cures, Air Balloon pop, Substitute-blocked contact, Focus Punch break, after-hit text/script effects outside supported HP mutations, Struggle, PP Up bit packing, Mimic/Transform PP routing, and full PP legality selection",
             "Boss AI live score generation and switch candidate/confidence generation",
             "graphics, text scripts, animations, EXP, and party writes",
         ],
@@ -2597,6 +2731,21 @@ def format_text(report: dict[str, Any]) -> str:
                 lines.append(
                     f"  turn {event['turn']} {event['actor']} {event['move']} -> "
                     f"+{event['heal']} hp"
+                )
+            elif event["type"] == "status_apply":
+                lines.append(
+                    f"  turn {event['turn']} {event['actor']} {event['move']} -> "
+                    f"{event['target']} {event['status']}"
+                )
+            elif event["type"] == "status_no_effect":
+                lines.append(
+                    f"  turn {event['turn']} {event['actor']} {event['move']} -> "
+                    f"no effect ({event['blocked_reason']})"
+                )
+            elif event["type"] == "residual_damage":
+                lines.append(
+                    f"  turn {event['turn']} {event['actor']} {event['status']} residual -> "
+                    f"{event['damage']} damage"
                 )
             elif event["type"] == "stat_stage_change":
                 changes = ", ".join(
