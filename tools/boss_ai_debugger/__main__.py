@@ -944,7 +944,9 @@ def cmd_rom_switch_materialize(args: argparse.Namespace) -> int:
         print(format_rom_switch_materialization(report, limit=args.display_limit))
         if args.json_out != "":
             print(f"wrote {args.json_out}")
-    if args.fail_on_mismatch and report["policy_disagreement_count"] > 0:
+    if args.fail_on_mismatch and (
+        report["policy_disagreement_count"] > 0 or report["error_count"] > 0
+    ):
         return 1
     return 0
 

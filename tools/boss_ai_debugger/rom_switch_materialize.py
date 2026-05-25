@@ -325,18 +325,30 @@ def build_switch_report(
 ) -> dict[str, Any]:
     param = int(values["wEnemySwitchMonParam"][0])
     switch_index = int(values["wEnemySwitchMonIndex"][0])
+    switch_confidence = int(values["wBossAITraceSwitchConfidence"][0])
+    chosen_move = int(values["wBossAITraceChosenMove"][0])
+    observed_switch_path = switch_confidence != 0 or param != 0 or switch_index != 0
+    observed_decision = observed_switch_path or chosen_move != 0
     return {
         "source": "trace_rom_pyboy_switch",
         "save_state": trace_runtime.display_path(save_state),
         "trace_basis": basis,
         "frame": frame,
-        "switch_confidence": int(values["wBossAITraceSwitchConfidence"][0]),
+        "switch_confidence": switch_confidence,
         "switch_param": param,
         "proposed_target_1_based": (param & 0x0F) + 1 if param else 0,
         "switch_index": switch_index,
         "actual_switch": switch_index != 0,
         "proposed_switch": param != 0,
-        "chosen_move": int(values["wBossAITraceChosenMove"][0]),
+        "chosen_move": chosen_move,
+        "observed_switch_path": observed_switch_path,
+        "observed_decision": observed_decision,
+        "observation_status": switch_observation_status(
+            switch_confidence=switch_confidence,
+            switch_param=param,
+            switch_index=switch_index,
+            chosen_move=chosen_move,
+        ),
         "memory_patches": [
             {
                 "symbol_name": item.symbol_name,
@@ -348,6 +360,24 @@ def build_switch_report(
     }
 
 
+def switch_observation_status(
+    *,
+    switch_confidence: int,
+    switch_param: int,
+    switch_index: int,
+    chosen_move: int,
+) -> str:
+    if switch_index != 0:
+        return "actual_switch_observed"
+    if switch_param != 0:
+        return "switch_proposal_observed"
+    if switch_confidence != 0:
+        return "switch_confidence_observed"
+    if chosen_move != 0:
+        return "chosen_move_observed_without_switch_proposal"
+    return "no_decision_observed"
+
+
 def switch_verdict_from_report(
     scenario: dict[str, Any],
     report: dict[str, Any],
@@ -356,6 +386,21 @@ def switch_verdict_from_report(
     switch_threshold: int | None = None,
 ) -> dict[str, Any]:
     scenario_id = str(scenario.get("id", "unnamed"))
+    if report.get("observed_decision") is False:
+        return {
+            "scenario_id": scenario_id,
+            "status": "error",
+            "family": scenario.get("family", ""),
+            "expected_switch": scenario_expects_switch(scenario),
+            "reason": "no switch materialization decision observed within watch_frames",
+            "rom": report,
+            "switch_roll": switch_roll_frequency(
+                scenario,
+                report,
+                base_route=base_route,
+                switch_threshold=switch_threshold,
+            ),
+        }
     expected_switch = scenario_expects_switch(scenario)
     proposed_switch = bool(report.get("proposed_switch", False))
     if expected_switch and proposed_switch:
@@ -398,6 +443,14 @@ def switch_roll_frequency(
     switch_threshold: int | None = None,
 ) -> dict[str, Any]:
     confidence = parse_optional_byte(report.get("switch_confidence"), "switch_confidence")
+    if report.get("observed_switch_path") is False:
+        return {
+            "available": False,
+            "confidence": confidence,
+            "reason": "no_switch_dispatch_observation",
+            "observation_status": report.get("observation_status", "no_decision_observed"),
+            "proof_status": "no_final_switch_roll_observed",
+        }
     threshold_basis = switch_threshold_basis(
         scenario,
         base_route=base_route,
@@ -416,6 +469,7 @@ def switch_roll_frequency(
     assumed_threshold = threshold_basis["assumed_effective_threshold"]
     assumed_chance = boss_ai_switch_roll_threshold(confidence, assumed_threshold)
     return {
+        "available": True,
         "confidence": confidence,
         "threshold_source": threshold_basis["threshold_source"],
         "threshold_exact": threshold_basis["threshold_exact"],
@@ -684,16 +738,21 @@ def format_rom_switch_materialization(
             policy = verdict.get("rom_policy", {})
             roll = verdict.get("switch_roll", {})
             probability = roll.get("switch_probability")
-            probability_text = (
-                f"{probability:.1%}" if isinstance(probability, float) else "unknown"
-            )
-            exact_text = "exact" if roll.get("probability_exact") else "range"
+            if roll.get("available") is False:
+                probability_text = f"unavailable:{roll.get('reason', 'unknown')}"
+                exact_text = "no-observation"
+            else:
+                probability_text = (
+                    f"{probability:.1%}" if isinstance(probability, float) else "unknown"
+                )
+                exact_text = "exact" if roll.get("probability_exact") else "range"
             lines.append(
                 f"  {verdict['scenario_id']}: "
                 f"policy={policy.get('verdict', 'unknown')} "
                 f"expected_switch={verdict.get('expected_switch')} "
                 f"proposed_switch={rom.get('proposed_switch')} "
                 f"confidence={rom.get('switch_confidence')} "
+                f"observation={rom.get('observation_status', 'unknown')} "
                 f"switch_rate={probability_text}({exact_text})"
             )
     lines.append("")

@@ -459,7 +459,11 @@ also attaches `switch_roll`: a source-mirrored final roll frequency from observe
 ROM `switch_confidence` plus either an explicit `--switch-threshold`/scenario
 `boss_ai_switch_threshold` byte or the source-derived base threshold. When the
 loop/sack/wincon threshold biases are not traced or supplied, the frequency is
-marked as a range so agents do not present it as exact.
+marked as a range so agents do not present it as exact. If the replay reaches
+the watch-frame cap without observing switch confidence, a switch proposal, an
+actual switch, or a chosen move, `switch_roll.available=false`; do not report
+that as a zero-percent switch chance. Those no-decision replays are marked as
+materialization errors, and `--fail-on-mismatch` exits nonzero for them.
 
 Classify route context:
 

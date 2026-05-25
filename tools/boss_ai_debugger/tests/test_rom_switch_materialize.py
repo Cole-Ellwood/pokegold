@@ -7,6 +7,7 @@ from tools.boss_ai_debugger.rom_switch_materialize import (
     scenario_expects_switch,
     source_base_switch_threshold,
     switch_materialization_patches,
+    switch_observation_status,
     switch_roll_frequency,
     switch_verdict_from_report,
 )
@@ -85,6 +86,62 @@ class RomSwitchMaterializeTests(unittest.TestCase):
         self.assertEqual(
             [item["switch_chance_threshold"] for item in roll["possible_switch_probabilities"]],
             [192, 141, 141, 0],
+        )
+
+    def test_switch_roll_frequency_is_unavailable_without_switch_observation(self) -> None:
+        scenario = {"tier": "mid"}
+
+        roll = switch_roll_frequency(
+            scenario,
+            {
+                "switch_confidence": 0,
+                "observed_switch_path": False,
+                "observation_status": "no_decision_observed",
+            },
+        )
+
+        self.assertFalse(roll["available"])
+        self.assertEqual(roll["reason"], "no_switch_dispatch_observation")
+        self.assertEqual(roll["proof_status"], "no_final_switch_roll_observed")
+
+    def test_switch_verdict_marks_no_decision_observation_as_error(self) -> None:
+        scenario = generate_scenarios(family="switch_sack", count=1, seed=1)[0]
+
+        verdict = switch_verdict_from_report(
+            scenario,
+            {
+                "observed_decision": False,
+                "observed_switch_path": False,
+                "observation_status": "no_decision_observed",
+                "switch_confidence": 0,
+            },
+        )
+
+        self.assertEqual(verdict["status"], "error")
+        self.assertEqual(
+            verdict["reason"],
+            "no switch materialization decision observed within watch_frames",
+        )
+        self.assertFalse(verdict["switch_roll"]["available"])
+
+    def test_switch_observation_status_distinguishes_timeout_from_proposal(self) -> None:
+        self.assertEqual(
+            switch_observation_status(
+                switch_confidence=0,
+                switch_param=0,
+                switch_index=0,
+                chosen_move=0,
+            ),
+            "no_decision_observed",
+        )
+        self.assertEqual(
+            switch_observation_status(
+                switch_confidence=0x30,
+                switch_param=0x21,
+                switch_index=0,
+                chosen_move=0,
+            ),
+            "switch_proposal_observed",
         )
 
 
