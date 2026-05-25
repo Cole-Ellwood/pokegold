@@ -58,6 +58,19 @@ def main() -> int:
         )
         return 1
     print("multi_turn_selected_actions: PASS turns=2")
+    miss_payload = scenario_template()
+    miss_payload["state"]["player"]["moves"][0]["accuracy"] = 242
+    miss_payload["state"]["enemy"]["moves"][0]["bp"] = 0
+    miss_payload["rng"] = {"mode": "fixed", "values": [255]}
+    miss_report = simulate_payload(miss_payload)
+    miss_event = miss_report["outcomes"][0]["events"][0]
+    if miss_event.get("type") != "miss" or miss_event.get("accuracy_check", {}).get("threshold") != 242:
+        print(
+            f"Headless battle simulator audit FAILED: accuracy miss mismatch: {miss_event}",
+            file=sys.stderr,
+        )
+        return 1
+    print("basic_accuracy_miss: PASS threshold=242 raw=255")
     proc = subprocess.run(
         [sys.executable, "-m", "tools.damage_debugger.clobber_smoke"],
         cwd=ROOT,

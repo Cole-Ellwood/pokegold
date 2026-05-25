@@ -30,6 +30,7 @@ class SimulationInputError(Exception):
 @dataclass(frozen=True)
 class MoveState:
     name: str
+    effect: str
     move_type: int
     move_type_name: str
     bp: int
@@ -79,6 +80,7 @@ class RngConfig:
     samples: int = 1
     seed: int | None = None
     default: int = 255
+    accuracy_default: int = 0
     max_outcomes: int = 2048
 
 
@@ -88,17 +90,19 @@ class RuntimeRng:
         self.generator = generator
         self.offset = 0
 
-    def next_byte(self) -> int:
+    def next_byte(self, *, purpose: str) -> int:
         if self.config.mode == "sample":
             if self.generator is None:
                 raise AssertionError("sample RNG requires a generator")
             return self.generator.randrange(256)
         if self.config.values:
             if self.offset >= len(self.config.values):
-                raise SimulationInputError("rng.values exhausted while resolving damage variation")
+                raise SimulationInputError(f"rng.values exhausted while resolving {purpose}")
             value = self.config.values[self.offset]
             self.offset += 1
             return value
+        if purpose == "accuracy":
+            return self.config.accuracy_default
         return self.config.default
 
 
@@ -282,35 +286,117 @@ def apply_move(
         return [updated]
     pre_variation_damage = predict_pre_variation_damage(state, attacker, target, move)
     branches = []
-    for variation in damage_variation_results(pre_variation_damage, rng, stream=stream):
-        damage = variation["damage"]
-        hp_after = max(0, target.hp - damage)
-        updated_target = replace_hp(target, hp_after)
-        updated_state = replace_side(state, target_side, updated_target)
-        updated = clone_branch(branch)
-        updated["state"] = updated_state
-        updated["rng_consumed"].extend(variation["raw_values"])
-        updated["events"].append(
-            {
-                "turn": state.turn,
-                "actor": side,
-                "target": target_side,
-                "move": move.name,
-                "type": "damage",
-                "damage": damage,
-                "pre_variation_damage": pre_variation_damage,
-                "target_hp_before": target.hp,
-                "target_hp_after": hp_after,
-                "damage_variation": {
-                    "applied": variation["applied"],
-                    "multiplier": variation["multiplier"],
-                    "raw_values": variation["raw_values"],
-                },
-                "proof_status": "delegated_pre_variation_damage_plus_source_mirrored_variation",
-            }
-        )
-        branches.append(updated)
+    for hit_check in accuracy_results(state, move, rng, stream=stream):
+        if not hit_check["hit"]:
+            updated = clone_branch(branch)
+            updated["rng_consumed"].extend(hit_check["raw_values"])
+            updated["events"].append(
+                {
+                    "turn": state.turn,
+                    "actor": side,
+                    "target": target_side,
+                    "move": move.name,
+                    "type": "miss",
+                    "accuracy_check": hit_check,
+                    "proof_status": "source_mirrored_basic_accuracy",
+                }
+            )
+            branches.append(updated)
+            continue
+        for variation in damage_variation_results(pre_variation_damage, rng, stream=stream):
+            damage = variation["damage"]
+            hp_after = max(0, target.hp - damage)
+            updated_target = replace_hp(target, hp_after)
+            updated_state = replace_side(state, target_side, updated_target)
+            updated = clone_branch(branch)
+            updated["state"] = updated_state
+            updated["rng_consumed"].extend(hit_check["raw_values"])
+            updated["rng_consumed"].extend(variation["raw_values"])
+            updated["events"].append(
+                {
+                    "turn": state.turn,
+                    "actor": side,
+                    "target": target_side,
+                    "move": move.name,
+                    "type": "damage",
+                    "damage": damage,
+                    "pre_variation_damage": pre_variation_damage,
+                    "target_hp_before": target.hp,
+                    "target_hp_after": hp_after,
+                    "accuracy_check": hit_check,
+                    "damage_variation": {
+                        "applied": variation["applied"],
+                        "multiplier": variation["multiplier"],
+                        "raw_values": variation["raw_values"],
+                    },
+                    "proof_status": "delegated_pre_variation_damage_plus_source_mirrored_variation",
+                }
+            )
+            branches.append(updated)
     return branches
+
+
+def accuracy_results(
+    state: BattleState,
+    move: MoveState,
+    rng: RngConfig,
+    *,
+    stream: RuntimeRng | None,
+) -> list[dict[str, Any]]:
+    threshold = effective_accuracy_threshold(state, move)
+    if threshold is None:
+        return [
+            {
+                "hit": True,
+                "threshold": None,
+                "raw_values": [],
+                "raw_range": None,
+                "reason": "always_hit",
+            }
+        ]
+    if rng.mode == "exhaustive":
+        out = []
+        if threshold > 0:
+            out.append(
+                {
+                    "hit": True,
+                    "threshold": threshold,
+                    "raw_values": [],
+                    "raw_range": [0, threshold - 1],
+                    "reason": "raw_below_threshold",
+                }
+            )
+        if threshold < 256:
+            out.append(
+                {
+                    "hit": False,
+                    "threshold": threshold,
+                    "raw_values": [],
+                    "raw_range": [threshold, 255],
+                    "reason": "raw_at_or_above_threshold",
+                }
+            )
+        return out
+    if stream is None:
+        raise AssertionError("fixed/sample accuracy requires an RNG stream")
+    raw = stream.next_byte(purpose="accuracy")
+    return [
+        {
+            "hit": raw < threshold,
+            "threshold": threshold,
+            "raw_values": [raw],
+            "raw_range": None,
+            "reason": "raw_below_threshold" if raw < threshold else "raw_at_or_above_threshold",
+        }
+    ]
+
+
+def effective_accuracy_threshold(state: BattleState, move: MoveState) -> int | None:
+    if move.effect == "EFFECT_ALWAYS_HIT" or move.accuracy == 255:
+        return None
+    if move.effect == "EFFECT_THUNDER" and state.weather == oracle.WEATHER_RAIN:
+        return None
+    return move.accuracy
 
 
 def damage_variation_results(
@@ -335,7 +421,7 @@ def damage_variation_results(
         raise AssertionError("fixed/sample damage variation requires an RNG stream")
     raw_values = []
     while True:
-        raw = stream.next_byte()
+        raw = stream.next_byte(purpose="damage variation")
         raw_values.append(raw)
         multiplier = rotate_right_byte(raw)
         if multiplier >= DAMAGE_VARIATION_MIN_MULTIPLIER:
@@ -498,13 +584,28 @@ def parse_move(raw: Any, path: str) -> MoveState:
     move_type_name, move_type = parse_type(type_name, f"{path}.type")
     return MoveState(
         name=name,
+        effect=str(raw.get("effect", row.effect if row is not None else "EFFECT_NORMAL_HIT")),
         move_type=move_type,
         move_type_name=move_type_name,
         bp=parse_non_negative_int(raw.get("bp", row.bp if row is not None else 40), f"{path}.bp"),
         priority=parse_int(raw.get("priority", 1), f"{path}.priority"),
-        accuracy=parse_byte(raw.get("accuracy", 255), f"{path}.accuracy"),
+        accuracy=parse_accuracy(raw, row, f"{path}.accuracy"),
         move_id=parse_optional_byte(raw.get("move_id"), f"{path}.move_id"),
     )
+
+
+def parse_accuracy(raw: dict[str, Any], row: tables.MoveRow | None, path: str) -> int:
+    if "accuracy" in raw:
+        return parse_byte(raw["accuracy"], path)
+    if "accuracy_percent" in raw:
+        return accuracy_percent_to_byte(parse_percentage(raw["accuracy_percent"], f"{path}_percent"))
+    if row is not None:
+        return accuracy_percent_to_byte(row.accuracy)
+    return 255
+
+
+def accuracy_percent_to_byte(percent: int) -> int:
+    return percent * 0xFF // 100
 
 
 def parse_actions(raw: Any) -> dict[str, ActionState]:
@@ -566,6 +667,7 @@ def parse_rng(raw: Any) -> RngConfig:
         samples=parse_positive_int(raw.get("samples", 1), "rng.samples"),
         seed=None if seed is None else parse_int(seed, "rng.seed"),
         default=parse_byte(raw.get("default", 255), "rng.default"),
+        accuracy_default=parse_byte(raw.get("accuracy_default", 0), "rng.accuracy_default"),
         max_outcomes=parse_positive_int(raw.get("max_outcomes", 2048), "rng.max_outcomes"),
     )
 
@@ -671,6 +773,7 @@ def pokemon_to_json(pokemon: PokemonState) -> dict[str, Any]:
 def move_to_json(move: MoveState) -> dict[str, Any]:
     return {
         "name": move.name,
+        "effect": move.effect,
         "type": move.move_type_name,
         "bp": move.bp,
         "priority": move.priority,
@@ -697,6 +800,12 @@ def coverage_report() -> dict[str, Any]:
                 "notes": "0/1 damage skips variation; otherwise RNG bytes are rotated right, rejected below 217, and accepted multipliers 217..255 scale damage over 255. Fixed/sample/exhaustive modes are implemented for this mechanic only.",
             },
             {
+                "id": "basic_move_accuracy_rng",
+                "source": "engine/battle/effect_commands.asm:BattleCommand_CheckHit",
+                "gate": "python tools/audit/check_headless_battle_simulator.py",
+                "notes": "Move accuracy bytes, always-hit moves, and Thunder-in-rain bypass are mirrored. Fixed/sample/exhaustive modes branch hit/miss for the basic raw-byte threshold check. Accuracy/evasion stat stages, BrightPowder, Protect, Fly/Dig, Lock-On, X Accuracy, and passive bonuses are not in this slice.",
+            },
+            {
                 "id": "selected_turn_order_priority_speed",
                 "source": "engine/battle/core.asm:DetermineMoveOrder",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
@@ -717,8 +826,9 @@ def coverage_report() -> dict[str, Any]:
         ],
         "out_of_scope": [
             "automatic full battle flow, switch actions, forced switch prompts, items as actions, and trainer item turns",
-            "RNG-consuming mechanics outside damage variation, speed ties, Quick Claw/Choice Scarf turn-order effects",
-            "critical hits, accuracy misses, status effects, volatile effects, between-turn effects, and after-hit effects",
+            "RNG-consuming mechanics outside accuracy/damage variation, speed ties, Quick Claw/Choice Scarf turn-order effects",
+            "accuracy/evasion stat stages, BrightPowder, Protect, Fly/Dig, Lock-On, X Accuracy, and passive accuracy bonuses",
+            "critical hits, status effects, volatile effects, between-turn effects, and after-hit effects",
             "Boss AI live score generation and switch candidate/confidence generation",
             "graphics, text scripts, animations, EXP, and party writes",
         ],
@@ -911,6 +1021,13 @@ def parse_byte(raw: Any, path: str) -> int:
     return value
 
 
+def parse_percentage(raw: Any, path: str) -> int:
+    value = parse_int(raw, path)
+    if value < 0 or value > 100:
+        raise SimulationInputError(f"{path} must be in percent range 0..100")
+    return value
+
+
 def parse_optional_byte(raw: Any, path: str) -> int | None:
     if raw is None:
         return None
@@ -923,6 +1040,8 @@ def rng_to_json(rng: RngConfig) -> dict[str, Any]:
         data["values"] = list(rng.values)
     if rng.default != 255:
         data["default"] = rng.default
+    if rng.accuracy_default != 0:
+        data["accuracy_default"] = rng.accuracy_default
     if rng.mode == "sample":
         data["samples"] = rng.samples
         data["seed"] = rng.seed
