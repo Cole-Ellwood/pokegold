@@ -1132,6 +1132,7 @@ def main() -> int:
             "max_hp": 100,
             "stats": {"attack": 60, "defense": 60, "speed": 60, "sp_attack": 60, "sp_defense": 60},
             "moves": [{"name": "EMBER"}],
+            "status": "burn",
         },
         "enemy": {
             "species": "HAUNTER",
@@ -1141,6 +1142,7 @@ def main() -> int:
             "max_hp": 80,
             "stats": {"attack": 50, "defense": 45, "speed": 95, "sp_attack": 115, "sp_defense": 55},
             "moves": [{"name": "LICK"}],
+            "status": "paralyze",
             "bench": [
                 {
                     "name": "GENGAR",
@@ -1187,6 +1189,8 @@ def main() -> int:
         or override_patches.get(("wEnemyMonMaxHP", 1)) != 80
         or override_patches.get(("wBattleMonType1", 0)) != 0x14  # FIRE in oracle / constants
         or override_patches.get(("wEnemyMonType1", 0)) != 0x08  # GHOST
+        or override_patches.get(("wBattleMonStatus", 0)) != 16  # burn = 1<<BRN
+        or override_patches.get(("wEnemyMonStatus", 0)) != 64  # paralyze = 1<<PAR
     ):
         print(
             f"Headless battle simulator audit FAILED: override round-trip into patches mismatch: {override_patches}",
@@ -1195,7 +1199,7 @@ def main() -> int:
         return 1
     print(
         "rom_switch_scenario_export_overrides: PASS "
-        "accept_overrides_emit override_round_trip"
+        "accept_overrides_emit override_round_trip status_override"
     )
     wild_payload = scenario_template()
     wild_payload["state"]["player"]["moves"][0]["bp"] = 0

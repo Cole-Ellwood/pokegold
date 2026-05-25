@@ -208,11 +208,31 @@ class RomSwitchScenarioExportTests(unittest.TestCase):
         self.assertEqual(overrides["enemy_bench_hp"], 75)
         self.assertEqual(overrides["enemy_bench_max_hp"], 120)
 
-    def test_accept_overrides_still_rejects_status(self) -> None:
+    def test_accept_overrides_still_rejects_sleep_status(self) -> None:
+        # Slice C-status covers burn/poison/paralyze/none; sleep needs
+        # slice C-sleep (status byte packs the sleep_turns counter) and
+        # toxic needs slice C-toxic (SUBSTATUS_TOXIC bit on sub5).
+        state = fixture_state()
+        state["player"]["status"] = "sleep"
+        state["player"]["sleep_turns"] = 3
+        with self.assertRaisesRegex(SimulationInputError, "player.status='sleep'"):
+            headless_to_switch_sack_scenario(state, accept_overrides=True)
+
+    def test_accept_overrides_now_accepts_burn_status(self) -> None:
         state = fixture_state()
         state["player"]["status"] = "burn"
-        with self.assertRaisesRegex(SimulationInputError, "player.status='burn'"):
-            headless_to_switch_sack_scenario(state, accept_overrides=True)
+        scenario = headless_to_switch_sack_scenario(state, accept_overrides=True)
+        # 1 << BRN = 16
+        self.assertEqual(scenario["overrides"]["player_status"], 16)
+        self.assertEqual(scenario["overrides"]["enemy_status"], 0)
+
+    def test_accept_overrides_now_accepts_paralyze_and_poison(self) -> None:
+        state = fixture_state()
+        state["player"]["status"] = "paralyze"
+        state["enemy"]["status"] = "poison"
+        scenario = headless_to_switch_sack_scenario(state, accept_overrides=True)
+        self.assertEqual(scenario["overrides"]["player_status"], 1 << 6)
+        self.assertEqual(scenario["overrides"]["enemy_status"], 1 << 3)
 
     def test_accept_overrides_still_rejects_weather(self) -> None:
         state = fixture_state(weather="rain", weather_count=5)

@@ -303,6 +303,9 @@ def switch_materialization_patches(scenario: dict[str, Any]) -> list[MemoryPatch
     enemy_bench_hp = _resolve_int(overrides_raw.get("enemy_bench_hp"), 80)
     enemy_bench_max_hp = _resolve_int(overrides_raw.get("enemy_bench_max_hp"), 100)
 
+    player_status = _resolve_int(overrides_raw.get("player_status"), 0)
+    enemy_status = _resolve_int(overrides_raw.get("enemy_status"), 0)
+
     patches = [
         patch("wBossAITier", tier),
         patch("wBossAITierWeightRow", max(0, tier - 1)),
@@ -321,8 +324,8 @@ def switch_materialization_patches(scenario: dict[str, Any]) -> list[MemoryPatch
         patch("wEnemyMonSpecies", enemy_species),
         patch("wEnemyMonType1", enemy_type1),
         patch("wEnemyMonType2", enemy_type2),
-        patch("wBattleMonStatus", 0),
-        patch("wEnemyMonStatus", 0),
+        patch("wBattleMonStatus", player_status),
+        patch("wEnemyMonStatus", enemy_status),
         patch("wEnemySwitchMonParam", 0),
         patch("wEnemySwitchMonIndex", 0),
         patch("wBossAISwitchCooldown", 0),

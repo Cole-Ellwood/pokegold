@@ -63,6 +63,9 @@ class RomSwitchMaterializeTests(unittest.TestCase):
         self.assertEqual(patches[("wEnemyMonMaxHP", 1)], 100)
         # player HP defaults to 80 when active_pressure_converts is not in tags.
         self.assertEqual(patches[("wBattleMonHP", 1)], 80)
+        # Status defaults remain 0 (no status) for backward compat.
+        self.assertEqual(patches[("wBattleMonStatus", 0)], 0)
+        self.assertEqual(patches[("wEnemyMonStatus", 0)], 0)
 
     def test_switch_materialization_overrides_replace_defaults(self) -> None:
         scenario = {
@@ -122,6 +125,20 @@ class RomSwitchMaterializeTests(unittest.TestCase):
         self.assertEqual(patches[("wBattleMonSpecies", 0)], 0x93)
         self.assertEqual(patches[("wEnemyMonSpecies", 0)], 0x5D)
         self.assertEqual(patches[("wOTPartyMon2Species", 0)], 0x5E)
+
+    def test_switch_materialization_status_overrides_apply(self) -> None:
+        scenario = {
+            "family": "switch_sack",
+            "tier": "late",
+            "expectation": {"condition_tags": ["switch_sack"]},
+            "overrides": {"player_status": 16, "enemy_status": 8},  # burn / poison
+        }
+        patches = {
+            (patch.symbol_name, patch.offset): patch.value
+            for patch in switch_materialization_patches(scenario)
+        }
+        self.assertEqual(patches[("wBattleMonStatus", 0)], 16)
+        self.assertEqual(patches[("wEnemyMonStatus", 0)], 8)
 
     def test_switch_materialization_rejects_non_object_overrides(self) -> None:
         scenario = {

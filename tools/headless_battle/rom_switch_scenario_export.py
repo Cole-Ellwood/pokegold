@@ -48,6 +48,17 @@ ALLOWED_HELD_ITEM = 0  # oracle.HELD_NONE; matches wEnemyMonItem = NO_ITEM in th
 ALLOWED_STATUS = "none"
 ALLOWED_STAT_STAGES = (0, 0, 0, 0, 0)
 DEFAULT_POLICY_CASE = "exported_headless_board"
+# Status strings that slice C-status can materialize. Sleep needs the
+# sleep_turns counter packed into the status byte (slice C-sleep), and
+# toxic needs the SUBSTATUS_TOXIC bit in wPlayerSubStatus5/wEnemySubStatus5
+# (slice C-toxic) -- both deferred.
+STATUS_STRING_TO_BYTE = {
+    "none": 0,
+    "burn": 1 << 4,
+    "poison": 1 << 3,
+    "paralyze": 1 << 6,
+}
+OVERRIDABLE_STATUSES = frozenset(STATUS_STRING_TO_BYTE)
 
 
 @lru_cache(maxsize=1)
@@ -146,11 +157,13 @@ def _board_to_overrides(battle_state: BattleState) -> dict[str, Any]:
         "player_type2": battle_state.player.types[1],
         "player_hp": battle_state.player.hp,
         "player_max_hp": battle_state.player.max_hp,
+        "player_status": STATUS_STRING_TO_BYTE[battle_state.player.status],
         "enemy_species": species_id_for(battle_state.enemy.name),
         "enemy_type1": battle_state.enemy.types[0],
         "enemy_type2": battle_state.enemy.types[1],
         "enemy_hp": battle_state.enemy.hp,
         "enemy_max_hp": battle_state.enemy.max_hp,
+        "enemy_status": STATUS_STRING_TO_BYTE[battle_state.enemy.status],
         "enemy_bench_species": species_id_for(bench_lead.name),
         "enemy_bench_hp": bench_lead.hp,
         "enemy_bench_max_hp": bench_lead.max_hp,
@@ -158,10 +171,10 @@ def _board_to_overrides(battle_state: BattleState) -> dict[str, Any]:
 
 
 def _assert_overridable_active(mon: PokemonState, *, side: str) -> None:
-    if mon.status != ALLOWED_STATUS:
+    if mon.status not in OVERRIDABLE_STATUSES:
         raise SimulationInputError(
-            f"rom_switch_scenario_export: {side}.status={mon.status!r}; "
-            "slice B still does not patch wBattleMonStatus / wEnemyMonStatus"
+            f"rom_switch_scenario_export: {side}.status={mon.status!r} not in "
+            f"{sorted(OVERRIDABLE_STATUSES)}; sleep/toxic need slice C-sleep / C-toxic"
         )
     if mon.item != ALLOWED_HELD_ITEM:
         raise SimulationInputError(
