@@ -506,6 +506,7 @@ SECTION "Standard Scripts", ROMX
 
 INCLUDE "engine/events/std_scripts.asm"
 INCLUDE "data/text/battle.asm"
+INCLUDE "data/text/boss_ai_haki_taunts.asm"
 
 
 SECTION "Phone Scripts", ROMX
