@@ -104,6 +104,7 @@ DAMAGING_SECONDARY_STATUS_EFFECTS = {
     "EFFECT_PARALYZE_HIT": "paralyze",
 }
 DRAIN_MOVE_EFFECT = "EFFECT_LEECH_HIT"
+SUBSTITUTE_MOVE_EFFECT = "EFFECT_SUBSTITUTE"
 SELF_HEALING_MOVE_NAMES = frozenset({"RECOVER", "SOFTBOILED", "MILK_DRINK"})
 REST_MOVE_NAME = "REST"
 SLEEP_BYPASS_MOVE_NAMES = frozenset({"SNORE", "SLEEP_TALK"})
@@ -815,6 +816,9 @@ def apply_move_after_action_check(
         )
         if paralysis_status_branches is not None:
             return paralysis_status_branches
+        substitute_branch = apply_substitute_move(branch, side, move, pp_before, pp_after)
+        if substitute_branch is not None:
+            return [substitute_branch]
         self_heal_branch = apply_self_heal_move(branch, side, move, pp_before, pp_after)
         if self_heal_branch is not None:
             return [self_heal_branch]
@@ -1570,6 +1574,57 @@ def burn_status_blocked_reason(target: PokemonState, move: MoveState) -> str | N
     if target.status != "none":
         return "already_statused"
     return None
+
+
+def apply_substitute_move(
+    branch: dict[str, Any],
+    side: str,
+    move: MoveState,
+    pp_before: int,
+    pp_after: int,
+) -> dict[str, Any] | None:
+    if move.effect != SUBSTITUTE_MOVE_EFFECT:
+        return None
+    state: BattleState = branch["state"]
+    actor = get_side(state, side)
+    substitute_hp = actor.max_hp // 4
+    hp_after = actor.hp - substitute_hp
+    blocked_reason = None
+    if actor.substitute:
+        blocked_reason = "already_has_substitute"
+    elif substitute_hp <= 0 or hp_after <= 0:
+        blocked_reason = "too_weak"
+    updated = clone_branch(branch)
+    if blocked_reason is None:
+        updated_actor = replace_substitute(
+            replace_hp(actor, hp_after),
+            substitute=True,
+            substitute_hp=substitute_hp,
+        )
+        updated["state"] = replace_side(state, side, updated_actor)
+    updated["events"].append(
+        {
+            "turn": state.turn,
+            "actor": side,
+            "target": side,
+            "move": move.name,
+            "type": "substitute_create" if blocked_reason is None else "substitute_no_effect",
+            "blocked_reason": blocked_reason,
+            "hp_before": actor.hp,
+            "hp_after": hp_after if blocked_reason is None else actor.hp,
+            "substitute_hp": substitute_hp if blocked_reason is None else actor.substitute_hp,
+            "substitute_before": actor.substitute,
+            "substitute_after": actor.substitute if blocked_reason is not None else True,
+            "pp_before": pp_before,
+            "pp_after": pp_after,
+            "proof_status": (
+                "source_mirrored_selected_substitute_move"
+                if blocked_reason is None
+                else "source_mirrored_selected_substitute_move_no_effect"
+            ),
+        }
+    )
+    return updated
 
 
 def apply_self_heal_move(
@@ -3672,10 +3727,16 @@ def coverage_report() -> dict[str, Any]:
                 "notes": "Caller-supplied active Safeguard blocks selected poison/paralysis/sleep status moves after hit checks and before sleep-duration RNG, and blocks selected damaging burn/poison/paralysis secondaries after successful effect-chance checks. Caller-supplied active Substitute blocks selected BP=0 poison/paralysis/sleep status moves and blocks selected damaging secondary effect-chance before secondary RNG; Safeguard wins when both are active for BP=0 status moves.",
             },
             {
+                "id": "selected_substitute_move",
+                "source": "engine/battle/move_effects/substitute.asm:BattleCommand_Substitute",
+                "gate": "python tools/audit/check_headless_battle_simulator.py",
+                "notes": "Selected Substitute moves consume PP, fail when the user already has Substitute or would be too weak after paying floor(max_hp/4), otherwise subtract that HP cost, set active Substitute, and store substitute_hp for later damage routing. Trapping clear, animations/text, and volatile side effects outside active Substitute HP remain out of scope.",
+            },
+            {
                 "id": "selected_substitute_hp_routing",
                 "source": "engine/battle/effect_commands.asm:DoEnemyDamage/DoPlayerDamage/DoSubstituteDamage + engine/battle/late_gen_held_items.asm:HandleLateGenAfterHitEffects_Far",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
-                "notes": "Caller-supplied active Substitute HP routes selected non-drain damaging hits into the one-byte Substitute HP buffer, leaves active HP unchanged, clears Substitute when damage meets or exceeds remaining Substitute HP, skips after-hit item effects because DoSubstituteDamage resets wCurDamage, and preserves source ordering where Substitute blocks selected damaging secondary effect-chance before damage. Selected drain moves into Substitute are treated as CheckHit misses before accuracy RNG. Substitute move creation, Baton Pass, multi-hit continuation details, Focus Punch/contact side effects, and text/animations remain out of scope.",
+                "notes": "Caller-supplied or move-created active Substitute HP routes selected non-drain damaging hits into the one-byte Substitute HP buffer, leaves active HP unchanged, clears Substitute when damage meets or exceeds remaining Substitute HP, skips after-hit item effects because DoSubstituteDamage resets wCurDamage, and preserves source ordering where Substitute blocks selected damaging secondary effect-chance before damage. Selected drain moves into Substitute are treated as CheckHit misses before accuracy RNG. Baton Pass, multi-hit continuation details, Focus Punch/contact side effects, and text/animations remain out of scope.",
             },
             {
                 "id": "selected_self_heal_moves",
@@ -3743,7 +3804,7 @@ def coverage_report() -> dict[str, Any]:
             "Pursuit-on-switch, Spikes/switch-in entry effects, switch-triggered abilities/passives, and switch memory side effects",
             "RNG-consuming mechanics outside speed ties/Boss AI selector choice/wild random move choice/auto-replace fallback/critical hits/accuracy/damage variation/selected damaging status secondary chance, Quick Claw/Choice Scarf turn-order effects",
             "accuracy/evasion stat-stage move effects, damaging secondary stat effects outside selected burn/poison/paralysis status secondaries, multi-stat chains outside Dragon Dance/Calm Mind/Quiver Dance, BrightPowder, Protect, Fly/Dig, Lock-On, X Accuracy, Baton Pass/Psych Up, Substitute/Mist blockers, badge boosts, status speed modifiers, passive stat/speed/accuracy bonuses, and passive accuracy bonuses",
-            "freeze, sleep mechanics outside selected sleep moves/Rest/action denial, burn application outside selected damaging burn secondaries, Safeguard/Substitute creation and expiration, Substitute move creation/Baton Pass/multi-hit continuation details, held status prevent items, freeze/confusion held cures, Sleep Clause clearing from held sleep cures, non-paralyzed Electric speed passives, volatile effects, weather/time healing, drain effects outside selected EFFECT_LEECH_HIT moves, Heal Bell, unsupported item recovery/cures, Air Balloon pop, Substitute-blocked contact, Focus Punch break, after-hit text/script effects outside supported HP mutations, Struggle, PP Up bit packing, Mimic/Transform PP routing, and full PP legality selection",
+            "freeze, sleep mechanics outside selected sleep moves/Rest/action denial, burn application outside selected damaging burn secondaries, Safeguard duration/expiration, Substitute Baton Pass/multi-hit continuation details, held status prevent items, freeze/confusion held cures, Sleep Clause clearing from held sleep cures, non-paralyzed Electric speed passives, volatile effects, weather/time healing, drain effects outside selected EFFECT_LEECH_HIT moves, Heal Bell, unsupported item recovery/cures, Air Balloon pop, Substitute-blocked contact, Focus Punch break, after-hit text/script effects outside supported HP mutations, Struggle, PP Up bit packing, Mimic/Transform PP routing, and full PP legality selection",
             "Boss AI live score generation and switch candidate/confidence generation",
             "graphics, text scripts, animations, EXP, and party writes",
         ],
@@ -3831,6 +3892,16 @@ def format_text(report: dict[str, Any]) -> str:
                 lines.append(
                     f"  turn {event['turn']} {event['actor']} {event['move']} -> "
                     f"+{event['heal']} hp"
+                )
+            elif event["type"] == "substitute_create":
+                lines.append(
+                    f"  turn {event['turn']} {event['actor']} {event['move']} -> "
+                    f"Substitute hp={event['substitute_hp']} ({event['hp_before']}->{event['hp_after']})"
+                )
+            elif event["type"] == "substitute_no_effect":
+                lines.append(
+                    f"  turn {event['turn']} {event['actor']} {event['move']} -> "
+                    f"no effect ({event['blocked_reason']})"
                 )
             elif event["type"] == "status_apply":
                 lines.append(

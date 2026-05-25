@@ -1080,6 +1080,57 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         self.assertEqual(status["effect_chance_check"]["success"], True)
         self.assertEqual(outcome["state"]["enemy"]["status"], "none")
 
+    def test_substitute_move_creates_substitute_hp(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["moves"] = [{"name": "SUBSTITUTE"}]
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+
+        report = simulate_payload(payload)
+
+        event = report["outcomes"][0]["events"][0]
+        player = report["outcomes"][0]["state"]["player"]
+        self.assertEqual(event["type"], "substitute_create")
+        self.assertEqual(event["hp_before"], 16)
+        self.assertEqual(event["hp_after"], 12)
+        self.assertEqual(event["substitute_hp"], 4)
+        self.assertTrue(player["substitute"])
+        self.assertEqual(player["substitute_hp"], 4)
+        self.assertEqual(player["hp"], 12)
+
+    def test_substitute_move_fails_when_too_weak_or_already_active(self) -> None:
+        weak_payload = scenario_template()
+        weak_payload["state"]["player"]["moves"] = [{"name": "SUBSTITUTE"}]
+        weak_payload["state"]["player"]["hp"] = 4
+        weak_payload["state"]["enemy"]["moves"][0]["bp"] = 0
+        weak_event = simulate_payload(weak_payload)["outcomes"][0]["events"][0]
+        self.assertEqual(weak_event["type"], "substitute_no_effect")
+        self.assertEqual(weak_event["blocked_reason"], "too_weak")
+
+        active_payload = scenario_template()
+        active_payload["state"]["player"]["moves"] = [{"name": "SUBSTITUTE"}]
+        active_payload["state"]["player"]["substitute"] = True
+        active_payload["state"]["player"]["substitute_hp"] = 4
+        active_payload["state"]["enemy"]["moves"][0]["bp"] = 0
+        active_event = simulate_payload(active_payload)["outcomes"][0]["events"][0]
+        self.assertEqual(active_event["type"], "substitute_no_effect")
+        self.assertEqual(active_event["blocked_reason"], "already_has_substitute")
+
+    def test_created_substitute_absorbs_later_same_turn_damage(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["moves"] = [{"name": "SUBSTITUTE"}]
+
+        report = simulate_payload(payload)
+
+        events = report["outcomes"][0]["events"]
+        player = report["outcomes"][0]["state"]["player"]
+        self.assertEqual(events[0]["type"], "substitute_create")
+        self.assertEqual(events[1]["type"], "damage")
+        self.assertEqual(events[1]["damage_target"], "substitute")
+        self.assertTrue(events[1]["substitute_broke"])
+        self.assertEqual(player["hp"], 12)
+        self.assertFalse(player["substitute"])
+        self.assertEqual(player["substitute_hp"], 0)
+
     def test_damaging_move_routes_damage_to_substitute_hp(self) -> None:
         payload = scenario_template()
         payload["state"]["enemy"]["substitute"] = True

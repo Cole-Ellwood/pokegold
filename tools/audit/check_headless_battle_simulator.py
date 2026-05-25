@@ -491,6 +491,38 @@ def main() -> int:
         )
         return 1
     print("selected_safeguard_substitute_blockers: PASS sleep_safeguard poison_substitute burn_safeguard")
+    create_substitute_payload = scenario_template()
+    create_substitute_payload["state"]["player"]["moves"] = [{"name": "SUBSTITUTE"}]
+    create_substitute_payload["state"]["enemy"]["moves"][0]["bp"] = 0
+    create_substitute_outcome = simulate_payload(create_substitute_payload)["outcomes"][0]
+    create_substitute_event = create_substitute_outcome["events"][0]
+    if (
+        create_substitute_event.get("type") != "substitute_create"
+        or create_substitute_event.get("hp_before") != 16
+        or create_substitute_event.get("hp_after") != 12
+        or create_substitute_event.get("substitute_hp") != 4
+        or create_substitute_outcome["state"]["player"].get("substitute_hp") != 4
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: Substitute create mismatch: {create_substitute_outcome}",
+            file=sys.stderr,
+        )
+        return 1
+    weak_substitute_payload = scenario_template()
+    weak_substitute_payload["state"]["player"]["moves"] = [{"name": "SUBSTITUTE"}]
+    weak_substitute_payload["state"]["player"]["hp"] = 4
+    weak_substitute_payload["state"]["enemy"]["moves"][0]["bp"] = 0
+    weak_substitute_event = simulate_payload(weak_substitute_payload)["outcomes"][0]["events"][0]
+    if (
+        weak_substitute_event.get("type") != "substitute_no_effect"
+        or weak_substitute_event.get("blocked_reason") != "too_weak"
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: Substitute weak failure mismatch: {weak_substitute_event}",
+            file=sys.stderr,
+        )
+        return 1
+    print("selected_substitute_move: PASS create_hp_cost too_weak_no_effect")
     damaging_substitute_payload = scenario_template()
     damaging_substitute_payload["state"]["enemy"]["substitute"] = True
     damaging_substitute_payload["state"]["enemy"]["substitute_hp"] = 40
