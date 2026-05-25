@@ -27,7 +27,7 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         self.assertEqual(outcome["events"][0]["type"], "damage")
         self.assertEqual(
             outcome["events"][0]["proof_status"],
-            "delegated_pre_variation_damage_plus_source_mirrored_variation",
+            "delegated_pre_variation_damage_plus_source_mirrored_critical_variation_accuracy",
         )
         self.assertLess(outcome["state"]["enemy"]["hp"], 18)
 
@@ -51,11 +51,12 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         payload["state"]["enemy"]["moves"][0]["bp"] = 0
         payload["state"]["player"]["moves"][0]["accuracy"] = 242
         max_roll = simulate_payload(payload)["outcomes"][0]["events"][0]
-        payload["rng"] = {"mode": "fixed", "values": [0, 179]}
+        payload["rng"] = {"mode": "fixed", "values": [255, 179, 0]}
 
         report = simulate_payload(payload)
 
         event = report["outcomes"][0]["events"][0]
+        self.assertEqual(event["critical_check"]["raw_values"], [255])
         self.assertEqual(event["accuracy_check"]["raw_values"], [0])
         self.assertEqual(event["damage_variation"]["raw_values"], [179])
         self.assertEqual(event["damage_variation"]["multiplier"], 217)
@@ -65,7 +66,7 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         payload = scenario_template()
         payload["state"]["enemy"]["moves"][0]["bp"] = 0
         payload["state"]["player"]["moves"][0]["accuracy"] = 242
-        payload["rng"] = {"mode": "fixed", "values": [0]}
+        payload["rng"] = {"mode": "fixed", "values": [255]}
 
         with self.assertRaisesRegex(SimulationInputError, "rng.values exhausted"):
             simulate_payload(payload)
@@ -74,14 +75,29 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         payload = scenario_template()
         payload["state"]["enemy"]["moves"][0]["bp"] = 0
         payload["state"]["player"]["moves"][0]["accuracy"] = 242
-        payload["rng"] = {"mode": "fixed", "values": [255]}
+        payload["rng"] = {"mode": "fixed", "values": [255, 255, 255]}
 
         report = simulate_payload(payload)
 
         event = report["outcomes"][0]["events"][0]
         self.assertEqual(event["type"], "miss")
+        self.assertEqual(event["critical_check"]["raw_values"], [255])
+        self.assertEqual(event["damage_variation"]["raw_values"], [255])
         self.assertEqual(event["accuracy_check"]["threshold"], 242)
         self.assertEqual(report["outcomes"][0]["state"]["enemy"]["hp"], 18)
+
+    def test_fixed_critical_hit_boosts_pre_variation_damage(self) -> None:
+        payload = scenario_template()
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+        payload["rng"] = {"mode": "fixed", "values": [0, 255, 0]}
+        critical = simulate_payload(payload)["outcomes"][0]["events"][0]
+        payload["rng"] = {"mode": "fixed", "values": [255, 255, 0]}
+
+        normal = simulate_payload(payload)["outcomes"][0]["events"][0]
+
+        self.assertTrue(critical["critical_check"]["critical"])
+        self.assertFalse(normal["critical_check"]["critical"])
+        self.assertGreater(critical["pre_variation_damage"], normal["pre_variation_damage"])
 
     def test_sample_rng_returns_requested_sample_count(self) -> None:
         payload = scenario_template()
@@ -105,7 +121,12 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
             outcome["events"][0]["damage_variation"]["multiplier"]
             for outcome in report["outcomes"]
         }
-        self.assertEqual(report["outcome_count"], 39)
+        critical_values = {
+            outcome["events"][0]["critical_check"]["critical"]
+            for outcome in report["outcomes"]
+        }
+        self.assertEqual(report["outcome_count"], 78)
+        self.assertEqual(critical_values, {False, True})
         self.assertEqual(min(multipliers), 217)
         self.assertEqual(max(multipliers), 255)
 
@@ -117,8 +138,8 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
 
         report = simulate_payload(payload)
 
-        self.assertEqual(report["outcome_count"], 40)
-        self.assertEqual(sum(1 for outcome in report["outcomes"] if outcome["events"][0]["type"] == "miss"), 1)
+        self.assertEqual(report["outcome_count"], 156)
+        self.assertEqual(sum(1 for outcome in report["outcomes"] if outcome["events"][0]["type"] == "miss"), 78)
 
     def test_turns_list_progresses_hp_across_selected_turns(self) -> None:
         payload = scenario_template()
@@ -183,9 +204,10 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         self.assertIn("damage_core_pre_variation", byte_proven)
         self.assertIn("damage_variation_rng_branching", mirrored)
         self.assertIn("basic_move_accuracy_rng", mirrored)
+        self.assertIn("basic_critical_hit_rng", mirrored)
         self.assertIn("selected_turn_order_priority_speed", mirrored)
         self.assertIn("boss_ai_selector_from_post_score_bytes", mirrored)
-        self.assertIn("RNG-consuming mechanics outside accuracy/damage variation", "\n".join(report["coverage"]["out_of_scope"]))
+        self.assertIn("RNG-consuming mechanics outside critical hits/accuracy/damage variation", "\n".join(report["coverage"]["out_of_scope"]))
 
     def test_cli_json_out(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

@@ -21,6 +21,15 @@ TURN_ORDER_AFFECTING_ITEMS = frozenset(
 )
 DAMAGE_VARIATION_MIN_MULTIPLIER = (85 * 255 // 100) + 1
 DAMAGE_VARIATION_MAX_MULTIPLIER = 100 * 255 // 100
+CRITICAL_HIT_THRESHOLDS = (256 // 15, 256 // 8, 256 // 4, 256 // 3, 256 // 2, 256 // 2, 256 // 2)
+ITEM_LUCKY_PUNCH = tables.resolve_item("LUCKY_PUNCH")
+ITEM_STICK = tables.resolve_item("STICK")
+ITEM_SCOPE_LENS = tables.resolve_item("SCOPE_LENS")
+HIGH_CRIT_MOVES = {
+    line.strip().removeprefix("db ").strip()
+    for line in (tables.ROOT / "data/moves/critical_hit_moves.asm").read_text(encoding="utf-8").splitlines()
+    if line.strip().startswith("db ") and "-1" not in line
+}
 
 
 class SimulationInputError(Exception):
@@ -55,6 +64,7 @@ class PokemonState:
     sp_defense: int
     item: int = oracle.HELD_NONE
     can_evolve: bool = False
+    focus_energy: bool = False
     moves: tuple[MoveState, ...] = ()
 
 
@@ -79,6 +89,7 @@ class RngConfig:
     values: tuple[int, ...] = ()
     samples: int = 1
     seed: int | None = None
+    critical_default: int = 255
     default: int = 255
     accuracy_default: int = 0
     max_outcomes: int = 2048
@@ -101,6 +112,8 @@ class RuntimeRng:
             value = self.config.values[self.offset]
             self.offset += 1
             return value
+        if purpose == "critical":
+            return self.config.critical_default
         if purpose == "accuracy":
             return self.config.accuracy_default
         return self.config.default
@@ -284,56 +297,142 @@ def apply_move(
             }
         )
         return [updated]
-    pre_variation_damage = predict_pre_variation_damage(state, attacker, target, move)
     branches = []
-    for hit_check in accuracy_results(state, move, rng, stream=stream):
-        if not hit_check["hit"]:
-            updated = clone_branch(branch)
-            updated["rng_consumed"].extend(hit_check["raw_values"])
-            updated["events"].append(
-                {
-                    "turn": state.turn,
-                    "actor": side,
-                    "target": target_side,
-                    "move": move.name,
-                    "type": "miss",
-                    "accuracy_check": hit_check,
-                    "proof_status": "source_mirrored_basic_accuracy",
-                }
-            )
-            branches.append(updated)
-            continue
+    for critical_check in critical_results(attacker, move, rng, stream=stream):
+        pre_variation_damage = predict_pre_variation_damage(
+            state,
+            attacker,
+            target,
+            move,
+            is_critical=critical_check["critical"],
+        )
         for variation in damage_variation_results(pre_variation_damage, rng, stream=stream):
-            damage = variation["damage"]
-            hp_after = max(0, target.hp - damage)
-            updated_target = replace_hp(target, hp_after)
-            updated_state = replace_side(state, target_side, updated_target)
-            updated = clone_branch(branch)
-            updated["state"] = updated_state
-            updated["rng_consumed"].extend(hit_check["raw_values"])
-            updated["rng_consumed"].extend(variation["raw_values"])
-            updated["events"].append(
+            for hit_check in accuracy_results(state, move, rng, stream=stream):
+                if not hit_check["hit"]:
+                    updated = clone_branch(branch)
+                    updated["rng_consumed"].extend(critical_check["raw_values"])
+                    updated["rng_consumed"].extend(variation["raw_values"])
+                    updated["rng_consumed"].extend(hit_check["raw_values"])
+                    updated["events"].append(
+                        {
+                            "turn": state.turn,
+                            "actor": side,
+                            "target": target_side,
+                            "move": move.name,
+                            "type": "miss",
+                            "critical_check": critical_check,
+                            "pre_variation_damage": pre_variation_damage,
+                            "damage_variation": {
+                                "applied": variation["applied"],
+                                "multiplier": variation["multiplier"],
+                                "raw_values": variation["raw_values"],
+                            },
+                            "accuracy_check": hit_check,
+                            "proof_status": "source_mirrored_basic_critical_variation_accuracy",
+                        }
+                    )
+                    branches.append(updated)
+                    continue
+                damage = variation["damage"]
+                hp_after = max(0, target.hp - damage)
+                updated_target = replace_hp(target, hp_after)
+                updated_state = replace_side(state, target_side, updated_target)
+                updated = clone_branch(branch)
+                updated["state"] = updated_state
+                updated["rng_consumed"].extend(critical_check["raw_values"])
+                updated["rng_consumed"].extend(variation["raw_values"])
+                updated["rng_consumed"].extend(hit_check["raw_values"])
+                updated["events"].append(
+                    {
+                        "turn": state.turn,
+                        "actor": side,
+                        "target": target_side,
+                        "move": move.name,
+                        "type": "damage",
+                        "damage": damage,
+                        "pre_variation_damage": pre_variation_damage,
+                        "target_hp_before": target.hp,
+                        "target_hp_after": hp_after,
+                        "critical_check": critical_check,
+                        "accuracy_check": hit_check,
+                        "damage_variation": {
+                            "applied": variation["applied"],
+                            "multiplier": variation["multiplier"],
+                            "raw_values": variation["raw_values"],
+                        },
+                        "proof_status": "delegated_pre_variation_damage_plus_source_mirrored_critical_variation_accuracy",
+                    }
+                )
+                branches.append(updated)
+    return branches
+
+
+def critical_results(
+    attacker: PokemonState,
+    move: MoveState,
+    rng: RngConfig,
+    *,
+    stream: RuntimeRng | None,
+) -> list[dict[str, Any]]:
+    threshold = critical_threshold(attacker, move)
+    if rng.mode == "exhaustive":
+        out = []
+        if threshold > 0:
+            out.append(
                 {
-                    "turn": state.turn,
-                    "actor": side,
-                    "target": target_side,
-                    "move": move.name,
-                    "type": "damage",
-                    "damage": damage,
-                    "pre_variation_damage": pre_variation_damage,
-                    "target_hp_before": target.hp,
-                    "target_hp_after": hp_after,
-                    "accuracy_check": hit_check,
-                    "damage_variation": {
-                        "applied": variation["applied"],
-                        "multiplier": variation["multiplier"],
-                        "raw_values": variation["raw_values"],
-                    },
-                    "proof_status": "delegated_pre_variation_damage_plus_source_mirrored_variation",
+                    "critical": True,
+                    "threshold": threshold,
+                    "raw_values": [],
+                    "raw_range": [0, threshold - 1],
+                    "level": critical_level(attacker, move),
+                    "reason": "raw_below_threshold",
                 }
             )
-            branches.append(updated)
-    return branches
+        if threshold < 256:
+            out.append(
+                {
+                    "critical": False,
+                    "threshold": threshold,
+                    "raw_values": [],
+                    "raw_range": [threshold, 255],
+                    "level": critical_level(attacker, move),
+                    "reason": "raw_at_or_above_threshold",
+                }
+            )
+        return out
+    if stream is None:
+        raise AssertionError("fixed/sample critical hit check requires an RNG stream")
+    raw = stream.next_byte(purpose="critical")
+    level = critical_level(attacker, move)
+    return [
+        {
+            "critical": raw < threshold,
+            "threshold": threshold,
+            "raw_values": [raw],
+            "raw_range": None,
+            "level": level,
+            "reason": "raw_below_threshold" if raw < threshold else "raw_at_or_above_threshold",
+        }
+    ]
+
+
+def critical_threshold(attacker: PokemonState, move: MoveState) -> int:
+    return CRITICAL_HIT_THRESHOLDS[min(critical_level(attacker, move), len(CRITICAL_HIT_THRESHOLDS) - 1)]
+
+
+def critical_level(attacker: PokemonState, move: MoveState) -> int:
+    if attacker.name == "CHANSEY" and attacker.item == ITEM_LUCKY_PUNCH:
+        return 2
+    elif attacker.name == "FARFETCH_D" and attacker.item == ITEM_STICK:
+        return 2
+    level = 0
+    if attacker.focus_energy:
+        level += 1
+    if move.name in HIGH_CRIT_MOVES:
+        level += 2
+    if attacker.item == ITEM_SCOPE_LENS:
+        level += 1
+    return level
 
 
 def accuracy_results(
@@ -448,6 +547,8 @@ def predict_pre_variation_damage(
     attacker: PokemonState,
     target: PokemonState,
     move: MoveState,
+    *,
+    is_critical: bool = False,
 ) -> int:
     is_physical = tables.is_physical_type(move.move_type)
     inputs = oracle.BattleInputs(
@@ -463,6 +564,7 @@ def predict_pre_variation_damage(
         opponent_item=target.item,
         can_evolve_attacker=attacker.can_evolve,
         can_evolve_defender=target.can_evolve,
+        is_critical=is_critical,
         weather=state.weather,
         battle_turn=0 if attacker.side == "player" else 1,
     )
@@ -565,6 +667,7 @@ def parse_pokemon(raw: Any, side: str) -> PokemonState:
         ),
         item=parse_item(raw.get("item", 0)),
         can_evolve=bool(raw.get("can_evolve", can_evolve)),
+        focus_energy=bool(raw.get("focus_energy", False)),
         moves=tuple(parse_move(move, f"state.{side}.moves[{index}]") for index, move in enumerate(moves_raw)),
     )
 
@@ -666,6 +769,7 @@ def parse_rng(raw: Any) -> RngConfig:
         values=tuple(parse_byte(value, f"rng.values[{index}]") for index, value in enumerate(values)),
         samples=parse_positive_int(raw.get("samples", 1), "rng.samples"),
         seed=None if seed is None else parse_int(seed, "rng.seed"),
+        critical_default=parse_byte(raw.get("critical_default", 255), "rng.critical_default"),
         default=parse_byte(raw.get("default", 255), "rng.default"),
         accuracy_default=parse_byte(raw.get("accuracy_default", 0), "rng.accuracy_default"),
         max_outcomes=parse_positive_int(raw.get("max_outcomes", 2048), "rng.max_outcomes"),
@@ -708,6 +812,7 @@ def replace_hp(pokemon: PokemonState, hp: int) -> PokemonState:
         sp_defense=pokemon.sp_defense,
         item=pokemon.item,
         can_evolve=pokemon.can_evolve,
+        focus_energy=pokemon.focus_energy,
         moves=pokemon.moves,
     )
 
@@ -759,6 +864,7 @@ def pokemon_to_json(pokemon: PokemonState) -> dict[str, Any]:
         "max_hp": pokemon.max_hp,
         "types": list(pokemon.type_names),
         "item": pokemon.item,
+        "focus_energy": pokemon.focus_energy,
         "stats": {
             "attack": pokemon.attack,
             "defense": pokemon.defense,
@@ -806,6 +912,12 @@ def coverage_report() -> dict[str, Any]:
                 "notes": "Move accuracy bytes, always-hit moves, and Thunder-in-rain bypass are mirrored. Fixed/sample/exhaustive modes branch hit/miss for the basic raw-byte threshold check. Accuracy/evasion stat stages, BrightPowder, Protect, Fly/Dig, Lock-On, X Accuracy, and passive bonuses are not in this slice.",
             },
             {
+                "id": "basic_critical_hit_rng",
+                "source": "engine/battle/effect_commands.asm:BattleCommand_Critical",
+                "gate": "python tools/audit/check_headless_battle_simulator.py",
+                "notes": "Critical-hit level and raw-byte threshold are mirrored for normal damaging moves, including Focus Energy, high-critical moves, Lucky Punch, Stick, and Scope Lens. Fixed/sample/exhaustive modes branch critical/non-critical before damage variation and accuracy, matching the NormalHit command order.",
+            },
+            {
                 "id": "selected_turn_order_priority_speed",
                 "source": "engine/battle/core.asm:DetermineMoveOrder",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
@@ -826,9 +938,9 @@ def coverage_report() -> dict[str, Any]:
         ],
         "out_of_scope": [
             "automatic full battle flow, switch actions, forced switch prompts, items as actions, and trainer item turns",
-            "RNG-consuming mechanics outside accuracy/damage variation, speed ties, Quick Claw/Choice Scarf turn-order effects",
+            "RNG-consuming mechanics outside critical hits/accuracy/damage variation, speed ties, Quick Claw/Choice Scarf turn-order effects",
             "accuracy/evasion stat stages, BrightPowder, Protect, Fly/Dig, Lock-On, X Accuracy, and passive accuracy bonuses",
-            "critical hits, status effects, volatile effects, between-turn effects, and after-hit effects",
+            "critical hit messaging, status effects, volatile effects, between-turn effects, and after-hit effects",
             "Boss AI live score generation and switch candidate/confidence generation",
             "graphics, text scripts, animations, EXP, and party writes",
         ],
@@ -873,6 +985,8 @@ def format_text(report: dict[str, Any]) -> str:
                 suffix = ""
                 if variation.get("applied"):
                     suffix = f" (pre={event['pre_variation_damage']} mult={variation['multiplier']})"
+                if event.get("critical_check", {}).get("critical"):
+                    suffix += " critical"
                 lines.append(
                     f"  turn {event['turn']} {event['actor']} {event['move']} -> "
                     f"{event['target']} {event['damage']} damage{suffix}"
@@ -1038,6 +1152,8 @@ def rng_to_json(rng: RngConfig) -> dict[str, Any]:
     data: dict[str, Any] = {"mode": rng.mode}
     if rng.values:
         data["values"] = list(rng.values)
+    if rng.critical_default != 255:
+        data["critical_default"] = rng.critical_default
     if rng.default != 255:
         data["default"] = rng.default
     if rng.accuracy_default != 0:

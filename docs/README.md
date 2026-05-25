@@ -104,16 +104,16 @@ python tools\audit\check_headless_battle_simulator.py
 ```
 
 Current scope is intentionally narrow: move-vs-move selected turns, explicit
-stats or species shorthand, basic move accuracy with fixed/sample/exhaustive
-hit/miss branching, damage variation with fixed/sample/exhaustive RNG,
-selected-action `turns[]` progression with HP/RNG carryover, pre-variation HP
-damage delegated to the existing ROM-backed damage oracle, and post-score Boss
-AI selector replay from known score bytes. Reports label byte-proven,
-source-mirrored, and out-of-scope surfaces; do not claim automatic full battle
-choice, accuracy/evasion modifiers, status, switch/replacement flow,
-RNG-consuming mechanics outside accuracy/damage variation, live Boss AI
-scoring, or scripts until the simulator report and audit say that surface
-exists.
+stats or species shorthand, basic critical-hit checks, basic move accuracy with
+fixed/sample/exhaustive hit/miss branching, damage variation with
+fixed/sample/exhaustive RNG, selected-action `turns[]` progression with HP/RNG
+carryover, pre-variation HP damage delegated to the existing ROM-backed damage
+oracle, and post-score Boss AI selector replay from known score bytes. Reports
+label byte-proven, source-mirrored, and out-of-scope surfaces; do not claim
+automatic full battle choice, accuracy/evasion modifiers, status,
+switch/replacement flow, RNG-consuming mechanics outside critical
+hits/accuracy/damage variation, live Boss AI scoring, or scripts until the
+simulator report and audit say that surface exists.
 
 ## Truth Precedence
 

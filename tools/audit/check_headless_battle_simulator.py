@@ -32,16 +32,27 @@ def main() -> int:
     print("boss_ai_selector_reuse: PASS best_slot=0")
     exhaustive_payload = scenario_template()
     exhaustive_payload["rng"] = {"mode": "exhaustive"}
+    exhaustive_payload["state"]["player"]["moves"][0]["accuracy"] = 255
     exhaustive_payload["state"]["enemy"]["moves"][0]["bp"] = 0
     exhaustive_report = simulate_payload(exhaustive_payload)
-    if exhaustive_report.get("outcome_count") != 39:
+    if exhaustive_report.get("outcome_count") != 78:
         print(
             "Headless battle simulator audit FAILED: exhaustive damage variation "
-            f"expected 39 outcomes, got {exhaustive_report.get('outcome_count')}",
+            f"expected 78 critical/damage-variation outcomes, got {exhaustive_report.get('outcome_count')}",
             file=sys.stderr,
         )
         return 1
-    print("damage_variation_exhaustive: PASS outcomes=39")
+    critical_values = {
+        outcome["events"][0]["critical_check"]["critical"]
+        for outcome in exhaustive_report["outcomes"]
+    }
+    if critical_values != {False, True}:
+        print(
+            f"Headless battle simulator audit FAILED: critical branches missing: {critical_values}",
+            file=sys.stderr,
+        )
+        return 1
+    print("damage_variation_exhaustive: PASS outcomes=78 includes_critical=True")
     multi_turn_payload = scenario_template()
     multi_turn_payload["state"]["enemy"]["moves"][0]["bp"] = 0
     multi_turn_payload.pop("actions")
@@ -61,7 +72,7 @@ def main() -> int:
     miss_payload = scenario_template()
     miss_payload["state"]["player"]["moves"][0]["accuracy"] = 242
     miss_payload["state"]["enemy"]["moves"][0]["bp"] = 0
-    miss_payload["rng"] = {"mode": "fixed", "values": [255]}
+    miss_payload["rng"] = {"mode": "fixed", "values": [255, 255, 255]}
     miss_report = simulate_payload(miss_payload)
     miss_event = miss_report["outcomes"][0]["events"][0]
     if miss_event.get("type") != "miss" or miss_event.get("accuracy_check", {}).get("threshold") != 242:
@@ -71,6 +82,17 @@ def main() -> int:
         )
         return 1
     print("basic_accuracy_miss: PASS threshold=242 raw=255")
+    crit_payload = scenario_template()
+    crit_payload["state"]["enemy"]["moves"][0]["bp"] = 0
+    crit_payload["rng"] = {"mode": "fixed", "values": [0, 255, 0]}
+    crit_event = simulate_payload(crit_payload)["outcomes"][0]["events"][0]
+    if not crit_event.get("critical_check", {}).get("critical"):
+        print(
+            f"Headless battle simulator audit FAILED: fixed critical mismatch: {crit_event}",
+            file=sys.stderr,
+        )
+        return 1
+    print("basic_critical_hit: PASS raw=0")
     proc = subprocess.run(
         [sys.executable, "-m", "tools.damage_debugger.clobber_smoke"],
         cwd=ROOT,
