@@ -1207,6 +1207,49 @@ def main() -> int:
         )
         return 1
     print("basic_accuracy_miss: PASS threshold=242 raw=255")
+    thunder_sun_payload = scenario_template()
+    thunder_sun_payload["state"]["weather"] = "sun"
+    thunder_sun_payload["state"]["weather_count"] = 3
+    thunder_sun_payload["state"]["player"]["moves"] = [{"name": "THUNDER"}]
+    thunder_sun_payload["state"]["enemy"]["moves"][0]["bp"] = 0
+    thunder_sun_payload["rng"] = {"mode": "fixed", "values": [255, 150]}
+    thunder_sun_event = simulate_payload(thunder_sun_payload)["outcomes"][0]["events"][0]
+    if (
+        thunder_sun_event.get("type") != "miss"
+        or thunder_sun_event.get("accuracy_check", {}).get("threshold") != 128
+        or thunder_sun_event.get("damage_variation", {}).get("raw_values") != []
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: Thunder sun accuracy mismatch: {thunder_sun_event}",
+            file=sys.stderr,
+        )
+        return 1
+    thunder_rain_payload = scenario_template()
+    thunder_rain_payload["state"]["weather"] = "rain"
+    thunder_rain_payload["state"]["weather_count"] = 3
+    thunder_rain_payload["state"]["player"]["moves"] = [{"name": "THUNDER"}]
+    thunder_rain_payload["state"]["enemy"]["types"] = ["NORMAL", "NORMAL"]
+    thunder_rain_payload["state"]["enemy"]["hp"] = 80
+    thunder_rain_payload["state"]["enemy"]["max_hp"] = 80
+    thunder_rain_payload["state"]["enemy"]["moves"][0]["bp"] = 0
+    thunder_rain_payload["rng"] = {"mode": "fixed", "values": [255, 0, 255, 255]}
+    thunder_rain_outcome = simulate_payload(thunder_rain_payload)["outcomes"][0]
+    thunder_rain_damage = thunder_rain_outcome["events"][0]
+    thunder_rain_status = thunder_rain_outcome["events"][1]
+    if (
+        thunder_rain_damage.get("type") != "damage"
+        or thunder_rain_damage.get("accuracy_check", {}).get("reason") != "thunder_rain"
+        or thunder_rain_damage.get("damage_variation", {}).get("raw_values") != [255]
+        or thunder_rain_status.get("type") != "status_apply"
+        or thunder_rain_status.get("effect_chance_check", {}).get("raw_values") != [0]
+        or thunder_rain_outcome.get("rng_consumed", [])[:3] != [255, 0, 255]
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: Thunder rain order mismatch: {thunder_rain_outcome}",
+            file=sys.stderr,
+        )
+        return 1
+    print("selected_thunder_weather_order: PASS sun_accuracy rain_effectchance_before_variation")
     crit_payload = scenario_template()
     crit_payload["state"]["enemy"]["moves"][0]["bp"] = 0
     crit_payload["rng"] = {"mode": "fixed", "values": [0, 255, 0]}

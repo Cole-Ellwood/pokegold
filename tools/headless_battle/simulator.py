@@ -110,6 +110,7 @@ DAMAGING_SECONDARY_STATUS_EFFECTS = {
 }
 DRAIN_MOVE_EFFECT = "EFFECT_LEECH_HIT"
 SUBSTITUTE_MOVE_EFFECT = "EFFECT_SUBSTITUTE"
+THUNDER_MOVE_EFFECT = "EFFECT_THUNDER"
 WEATHER_SETUP_TURN_COUNT = 5
 WEATHER_SETUP_EFFECTS = {
     "EFFECT_RAIN_DANCE": ("rain", oracle.WEATHER_RAIN),
@@ -885,6 +886,8 @@ def apply_move_after_action_check(
             }
         )
         return [updated]
+    if move.effect == THUNDER_MOVE_EFFECT:
+        return apply_thunder_move(branch, side, target_side, move, pp_before, pp_after, rng, stream=stream)
     branches = []
     for critical_check in critical_results(attacker, move, rng, stream=stream):
         pre_variation_damage = predict_pre_variation_damage(
@@ -1018,6 +1021,118 @@ def apply_move_after_action_check(
                             secondary_status,
                             secondary_check,
                         )
+                    updated = apply_after_hit_effects(
+                        updated,
+                        side,
+                        target_side,
+                        move,
+                        actual_damage,
+                    )
+                    branches.append(updated)
+    return branches
+
+
+def apply_thunder_move(
+    branch: dict[str, Any],
+    side: str,
+    target_side: str,
+    move: MoveState,
+    pp_before: int,
+    pp_after: int,
+    rng: RngConfig,
+    *,
+    stream: RuntimeRng | None,
+) -> list[dict[str, Any]]:
+    state: BattleState = branch["state"]
+    attacker = get_side(state, side)
+    target = get_side(state, target_side)
+    branches = []
+    for critical_check in critical_results(attacker, move, rng, stream=stream):
+        pre_variation_damage = predict_pre_variation_damage(
+            state,
+            attacker,
+            target,
+            move,
+            is_critical=critical_check["critical"],
+        )
+        for hit_check in thunder_accuracy_results(state, move, rng, stream=stream):
+            if not hit_check["hit"]:
+                updated = clone_branch(branch)
+                updated["rng_consumed"].extend(critical_check["raw_values"])
+                updated["rng_consumed"].extend(hit_check["raw_values"])
+                updated["events"].append(
+                    {
+                        "turn": state.turn,
+                        "actor": side,
+                        "target": target_side,
+                        "move": move.name,
+                        "type": "miss",
+                        "critical_check": critical_check,
+                        "pre_variation_damage": pre_variation_damage,
+                        "damage_variation": {
+                            "applied": False,
+                            "multiplier": None,
+                            "raw_values": [],
+                        },
+                        "accuracy_check": hit_check,
+                        "pp_before": pp_before,
+                        "pp_after": pp_after,
+                        "proof_status": "source_mirrored_thunder_accuracy_before_variation",
+                    }
+                )
+                branches.append(updated)
+                continue
+            secondary_checks = (
+                [substitute_blocked_effect_chance(move)]
+                if target.substitute
+                else effect_chance_results(move, rng, stream=stream)
+            )
+            for secondary_check in secondary_checks:
+                for variation in damage_variation_results(pre_variation_damage, rng, stream=stream):
+                    damage = variation["damage"]
+                    damage_result = apply_hp_or_substitute_damage(target, damage)
+                    actual_damage = damage_result["actual_damage"]
+                    updated_target = damage_result["target"]
+                    updated_state = replace_side(state, target_side, updated_target)
+                    updated = clone_branch(branch)
+                    updated["state"] = updated_state
+                    updated["rng_consumed"].extend(critical_check["raw_values"])
+                    updated["rng_consumed"].extend(hit_check["raw_values"])
+                    updated["rng_consumed"].extend(secondary_check["raw_values"])
+                    updated["rng_consumed"].extend(variation["raw_values"])
+                    updated["events"].append(
+                        {
+                            "turn": state.turn,
+                            "actor": side,
+                            "target": target_side,
+                            "move": move.name,
+                            "type": "damage",
+                            "damage": damage,
+                            "actual_damage": actual_damage,
+                            "pre_variation_damage": pre_variation_damage,
+                            "target_hp_before": target.hp,
+                            "target_hp_after": updated_target.hp,
+                            "critical_check": critical_check,
+                            "accuracy_check": hit_check,
+                            "pp_before": pp_before,
+                            "pp_after": pp_after,
+                            "damage_variation": {
+                                "applied": variation["applied"],
+                                "multiplier": variation["multiplier"],
+                                "raw_values": variation["raw_values"],
+                            },
+                            "proof_status": "source_mirrored_thunder_accuracy_effectchance_variation_order",
+                            **damage_result["event_fields"],
+                        }
+                    )
+                    updated = apply_damaging_secondary_status(
+                        updated,
+                        side,
+                        target_side,
+                        move,
+                        "paralyze",
+                        secondary_check,
+                    )
                     updated = apply_after_hit_effects(
                         updated,
                         side,
@@ -2668,11 +2783,74 @@ def accuracy_results(
     ]
 
 
+def thunder_accuracy_results(
+    state: BattleState,
+    move: MoveState,
+    rng: RngConfig,
+    *,
+    stream: RuntimeRng | None,
+) -> list[dict[str, Any]]:
+    threshold = effective_thunder_accuracy_threshold(state, move)
+    if threshold is None:
+        return [
+            {
+                "hit": True,
+                "threshold": None,
+                "raw_values": [],
+                "raw_range": None,
+                "reason": "thunder_rain",
+            }
+        ]
+    if rng.mode == "exhaustive":
+        out = []
+        if threshold > 0:
+            out.append(
+                {
+                    "hit": True,
+                    "threshold": threshold,
+                    "raw_values": [],
+                    "raw_range": [0, threshold - 1],
+                    "reason": "raw_below_threshold",
+                }
+            )
+        if threshold < 256:
+            out.append(
+                {
+                    "hit": False,
+                    "threshold": threshold,
+                    "raw_values": [],
+                    "raw_range": [threshold, 255],
+                    "reason": "raw_at_or_above_threshold",
+                }
+            )
+        return out
+    if stream is None:
+        raise AssertionError("fixed/sample Thunder accuracy requires an RNG stream")
+    raw = stream.next_byte(purpose="thunder accuracy")
+    return [
+        {
+            "hit": raw < threshold,
+            "threshold": threshold,
+            "raw_values": [raw],
+            "raw_range": None,
+            "reason": "raw_below_threshold" if raw < threshold else "raw_at_or_above_threshold",
+        }
+    ]
+
+
 def effective_accuracy_threshold(state: BattleState, move: MoveState) -> int | None:
     if move.effect == "EFFECT_ALWAYS_HIT" or move.accuracy == 255:
         return None
     if move.effect == "EFFECT_THUNDER" and state.weather == oracle.WEATHER_RAIN:
         return None
+    return move.accuracy
+
+
+def effective_thunder_accuracy_threshold(state: BattleState, move: MoveState) -> int | None:
+    if state.weather == oracle.WEATHER_RAIN:
+        return None
+    if state.weather == oracle.WEATHER_SUN:
+        return min(255, accuracy_percent_to_byte(50) + 1)
     return move.accuracy
 
 
@@ -4087,7 +4265,7 @@ def coverage_report() -> dict[str, Any]:
                 "id": "basic_move_accuracy_rng",
                 "source": "engine/battle/effect_commands.asm:BattleCommand_CheckHit",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
-                "notes": "Move accuracy bytes, always-hit moves, and Thunder-in-rain bypass are mirrored. Fixed/sample/exhaustive modes branch hit/miss for the basic raw-byte threshold check. Accuracy/evasion stat stages, BrightPowder, Protect, Fly/Dig, Lock-On, X Accuracy, and passive bonuses are not in this slice.",
+                "notes": "Move accuracy bytes and always-hit moves are mirrored for the basic raw-byte threshold check. EFFECT_THUNDER uses a dedicated selected path for rain bypass and sun's 50 percent + 1 threshold. Fixed/sample/exhaustive modes branch hit/miss for these supported checks. Accuracy/evasion stat stages, BrightPowder, Protect, Fly/Dig, Lock-On, X Accuracy, and passive bonuses are not in this slice.",
             },
             {
                 "id": "basic_critical_hit_rng",
@@ -4159,7 +4337,13 @@ def coverage_report() -> dict[str, Any]:
                 "id": "selected_damaging_status_secondaries",
                 "source": "data/moves/effects.asm:BurnHit/PoisonHit/ParalyzeHit + engine/battle/effect_commands.asm:BattleCommand_EffectChance/BurnTarget/PoisonTarget/ParalyzeTarget",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
-                "notes": "Selected EFFECT_BURN_HIT, EFFECT_POISON_HIT, and EFFECT_PARALYZE_HIT damaging moves consume secondary effect-chance RNG after the successful hit path unless the target is behind a Substitute, apply burn/poison/paralysis after damage when source no-effect checks pass, and preserve later residual/speed effects. Safeguard blocks the secondary after a successful effect-chance check. Thunder, Flame Wheel, Sacred Fire, poison multi-hit, freeze/confusion/stat-down secondaries, and text/animation side effects remain out of scope.",
+                "notes": "Selected EFFECT_BURN_HIT, EFFECT_POISON_HIT, and EFFECT_PARALYZE_HIT damaging moves consume secondary effect-chance RNG after the successful hit path unless the target is behind a Substitute, apply burn/poison/paralysis after damage when source no-effect checks pass, and preserve later residual/speed effects. Safeguard blocks the secondary after a successful effect-chance check. Thunder has a separate selected path because its command order differs. Flame Wheel, Sacred Fire, poison multi-hit, freeze/confusion/stat-down secondaries, and text/animation side effects remain out of scope.",
+            },
+            {
+                "id": "selected_thunder_weather_order",
+                "source": "data/moves/effects.asm:Thunder + engine/battle/move_effects/thunder.asm",
+                "gate": "python tools/audit/check_headless_battle_simulator.py",
+                "notes": "Selected Thunder follows its source command order for the modeled subset: critical and damage stats/calculation first, then Thunder weather accuracy, checkhit, secondary effect chance, STAB/pre-variation damage, and damage variation. Rain bypasses accuracy RNG; sun changes the hit threshold to 50 percent + 1. The paralysis secondary uses the supported damaging-secondary status path. Fly/Dig interactions, Protect, BrightPowder, accuracy/evasion stages, Lock-On, and text/animation side effects remain out of scope.",
             },
             {
                 "id": "selected_drain_moves",

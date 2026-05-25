@@ -1455,6 +1455,47 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         self.assertEqual(status["effect_chance_check"]["success"], True)
         self.assertEqual(outcome["state"]["enemy"]["status"], "none")
 
+    def test_thunder_in_sun_checks_accuracy_before_variation(self) -> None:
+        payload = scenario_template()
+        payload["state"]["weather"] = "sun"
+        payload["state"]["weather_count"] = 3
+        payload["state"]["player"]["moves"] = [{"name": "THUNDER"}]
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+        payload["rng"] = {"mode": "fixed", "values": [255, 150]}
+
+        report = simulate_payload(payload)
+
+        outcome = report["outcomes"][0]
+        event = outcome["events"][0]
+        self.assertEqual(event["type"], "miss")
+        self.assertEqual(event["accuracy_check"]["threshold"], 128)
+        self.assertEqual(event["accuracy_check"]["raw_values"], [150])
+        self.assertEqual(event["damage_variation"]["raw_values"], [])
+        self.assertEqual(outcome["rng_consumed"], [255, 150])
+
+    def test_thunder_in_rain_runs_effect_chance_before_variation(self) -> None:
+        payload = scenario_template()
+        payload["state"]["weather"] = "rain"
+        payload["state"]["weather_count"] = 3
+        payload["state"]["player"]["moves"] = [{"name": "THUNDER"}]
+        payload["state"]["enemy"]["types"] = ["NORMAL", "NORMAL"]
+        payload["state"]["enemy"]["hp"] = 80
+        payload["state"]["enemy"]["max_hp"] = 80
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+        payload["rng"] = {"mode": "fixed", "values": [255, 0, 255, 255]}
+
+        report = simulate_payload(payload)
+
+        outcome = report["outcomes"][0]
+        damage, paralyze = outcome["events"][0], outcome["events"][1]
+        self.assertEqual(damage["type"], "damage")
+        self.assertEqual(damage["accuracy_check"]["reason"], "thunder_rain")
+        self.assertEqual(damage["damage_variation"]["raw_values"], [255])
+        self.assertEqual(paralyze["type"], "status_apply")
+        self.assertEqual(paralyze["status"], "paralyze")
+        self.assertEqual(paralyze["effect_chance_check"]["raw_values"], [0])
+        self.assertEqual(outcome["rng_consumed"][:3], [255, 0, 255])
+
     def test_substitute_move_creates_substitute_hp(self) -> None:
         payload = scenario_template()
         payload["state"]["player"]["moves"] = [{"name": "SUBSTITUTE"}]
