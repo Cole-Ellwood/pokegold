@@ -573,6 +573,61 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         self.assertLess(outcome["state"]["enemy"]["hp"], 18)
         self.assertEqual(outcome["state"]["turn"], 3)
 
+    def test_rain_dance_sets_weather_and_countdown(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["moves"] = [{"name": "RAIN_DANCE"}]
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+
+        report = simulate_payload(payload)
+
+        outcome = report["outcomes"][0]
+        events = outcome["events"]
+        weather_start = next(event for event in events if event["type"] == "weather_start")
+        weather_tick = next(event for event in events if event["type"] == "weather_continue")
+        self.assertEqual(weather_start["weather"], "rain")
+        self.assertEqual(weather_start["weather_count_after"], 5)
+        self.assertEqual(weather_tick["weather_count_before"], 5)
+        self.assertEqual(weather_tick["weather_count_after"], 4)
+        self.assertEqual(outcome["state"]["weather"], 1)
+        self.assertEqual(outcome["state"]["weather_count"], 4)
+
+    def test_sunny_day_countdown_clears_weather_after_five_turns(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["moves"] = [
+            {"name": "SUNNY_DAY"},
+            {"name": "TACKLE", "type": "NORMAL", "bp": 0},
+        ]
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+        payload.pop("actions")
+        payload["turns"] = [
+            {"player": {"type": "move", "move": 0}, "enemy": {"type": "move", "move": 0}},
+            {"player": {"type": "move", "move": 1}, "enemy": {"type": "move", "move": 0}},
+            {"player": {"type": "move", "move": 1}, "enemy": {"type": "move", "move": 0}},
+            {"player": {"type": "move", "move": 1}, "enemy": {"type": "move", "move": 0}},
+            {"player": {"type": "move", "move": 1}, "enemy": {"type": "move", "move": 0}},
+        ]
+
+        report = simulate_payload(payload)
+
+        outcome = report["outcomes"][0]
+        weather_events = [
+            event for event in outcome["events"] if event["type"].startswith("weather_")
+        ]
+        self.assertEqual(weather_events[0]["type"], "weather_start")
+        self.assertEqual(weather_events[0]["weather"], "sun")
+        self.assertEqual([event["weather_count_after"] for event in weather_events[1:]], [4, 3, 2, 1, 0])
+        self.assertEqual(weather_events[-1]["type"], "weather_end")
+        self.assertEqual(outcome["state"]["weather"], 0)
+        self.assertEqual(outcome["state"]["weather_count"], 0)
+        self.assertEqual(outcome["state"]["turn"], 6)
+
+    def test_weather_count_requires_active_weather(self) -> None:
+        payload = scenario_template()
+        payload["state"]["weather_count"] = 3
+
+        with self.assertRaisesRegex(SimulationInputError, "weather_count requires active"):
+            simulate_payload(payload)
+
     def test_planned_turns_stop_after_battle_over(self) -> None:
         payload = scenario_template()
         payload["state"]["enemy"]["hp"] = 1
@@ -2134,6 +2189,7 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         self.assertIn("basic_pp_decrement", mirrored)
         self.assertIn("supported_after_hit_item_effects", mirrored)
         self.assertIn("explicit_active_hp_restore_items", mirrored)
+        self.assertIn("selected_weather_setup_moves", mirrored)
         self.assertIn("selected_turn_order_priority_speed", mirrored)
         self.assertIn("explicit_stat_stage_state", mirrored)
         self.assertIn("selected_stat_stage_only_moves", mirrored)

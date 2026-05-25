@@ -110,6 +110,16 @@ DAMAGING_SECONDARY_STATUS_EFFECTS = {
 }
 DRAIN_MOVE_EFFECT = "EFFECT_LEECH_HIT"
 SUBSTITUTE_MOVE_EFFECT = "EFFECT_SUBSTITUTE"
+WEATHER_SETUP_TURN_COUNT = 5
+WEATHER_SETUP_EFFECTS = {
+    "EFFECT_RAIN_DANCE": ("rain", oracle.WEATHER_RAIN),
+    "EFFECT_SUNNY_DAY": ("sun", oracle.WEATHER_SUN),
+}
+WEATHER_NAMES_BY_ID = {
+    oracle.WEATHER_RAIN: "rain",
+    oracle.WEATHER_SUN: "sun",
+    oracle.WEATHER_SANDSTORM: "sandstorm",
+}
 SELF_HEALING_MOVE_NAMES = frozenset({"RECOVER", "SOFTBOILED", "MILK_DRINK"})
 REST_MOVE_NAME = "REST"
 SLEEP_BYPASS_MOVE_NAMES = frozenset({"SNORE", "SLEEP_TALK"})
@@ -231,6 +241,7 @@ class BattleState:
     player_bench: tuple[PokemonState, ...] = ()
     enemy_bench: tuple[PokemonState, ...] = ()
     weather: int = oracle.WEATHER_NONE
+    weather_count: int = 0
     turn: int = 1
     player_safeguard: bool = False
     enemy_safeguard: bool = False
@@ -448,6 +459,7 @@ def simulate_turn(
         updated.pop("actions", None)
         updated["turns_simulated"] += 1
         if updated["state"].player.hp > 0 and updated["state"].enemy.hp > 0:
+            updated = apply_end_of_turn_weather(updated)
             updated["state"] = advance_turn(updated["state"])
         completed.append(updated)
     return completed
@@ -832,6 +844,9 @@ def apply_move_after_action_check(
         self_heal_branch = apply_self_heal_move(branch, side, move, pp_before, pp_after)
         if self_heal_branch is not None:
             return [self_heal_branch]
+        weather_setup_branch = apply_weather_setup_move(branch, side, move, pp_before, pp_after)
+        if weather_setup_branch is not None:
+            return [weather_setup_branch]
         stat_stage_branches = apply_stat_stage_only_move(
             branch,
             side,
@@ -1678,6 +1693,43 @@ def apply_self_heal_move(
     return updated
 
 
+def apply_weather_setup_move(
+    branch: dict[str, Any],
+    side: str,
+    move: MoveState,
+    pp_before: int,
+    pp_after: int,
+) -> dict[str, Any] | None:
+    setup = WEATHER_SETUP_EFFECTS.get(move.effect)
+    if setup is None:
+        return None
+    weather_name, weather = setup
+    state: BattleState = branch["state"]
+    updated = clone_branch(branch)
+    updated["state"] = replace_weather(
+        state,
+        weather=weather,
+        weather_count=WEATHER_SETUP_TURN_COUNT,
+    )
+    updated["events"].append(
+        {
+            "turn": state.turn,
+            "actor": side,
+            "move": move.name,
+            "type": "weather_start",
+            "weather": weather_name,
+            "weather_before": state.weather,
+            "weather_after": weather,
+            "weather_count_before": state.weather_count,
+            "weather_count_after": WEATHER_SETUP_TURN_COUNT,
+            "pp_before": pp_before,
+            "pp_after": pp_after,
+            "proof_status": "source_mirrored_selected_weather_setup_move",
+        }
+    )
+    return updated
+
+
 def apply_rest_move(
     branch: dict[str, Any],
     side: str,
@@ -2319,6 +2371,47 @@ def apply_post_action_residual(branch: dict[str, Any], side: str) -> dict[str, A
             "toxic_count_before": residual["toxic_count_before"],
             "toxic_count_after": residual["toxic_count_after"],
             "proof_status": "source_mirrored_basic_status_residual",
+        }
+    )
+    return updated
+
+
+def apply_end_of_turn_weather(branch: dict[str, Any]) -> dict[str, Any]:
+    state: BattleState = branch["state"]
+    if state.weather == oracle.WEATHER_NONE or state.weather_count <= 0:
+        return branch
+    weather_name = WEATHER_NAMES_BY_ID.get(state.weather, f"weather_{state.weather}")
+    updated = clone_branch(branch)
+    if state.weather not in {oracle.WEATHER_RAIN, oracle.WEATHER_SUN}:
+        updated["events"].append(
+            {
+                "turn": state.turn,
+                "type": "unsupported_noop",
+                "reason": f"end-of-turn {weather_name} handling is out of scope for this simulator slice",
+                "weather": weather_name,
+                "weather_count_before": state.weather_count,
+                "weather_count_after": state.weather_count,
+                "proof_status": "out_of_scope",
+            }
+        )
+        return updated
+    count_after = max(0, state.weather_count - 1)
+    weather_after = oracle.WEATHER_NONE if count_after == 0 else state.weather
+    updated["state"] = replace_weather(
+        state,
+        weather=weather_after,
+        weather_count=count_after,
+    )
+    updated["events"].append(
+        {
+            "turn": state.turn,
+            "type": "weather_end" if count_after == 0 else "weather_continue",
+            "weather": weather_name,
+            "weather_before": state.weather,
+            "weather_after": weather_after,
+            "weather_count_before": state.weather_count,
+            "weather_count_after": count_after,
+            "proof_status": "source_mirrored_selected_weather_countdown",
         }
     )
     return updated
@@ -3094,12 +3187,17 @@ def parse_state(raw: Any) -> BattleState:
     enemy_raw = raw.get("enemy")
     player = parse_pokemon(player_raw, "player")
     enemy = parse_pokemon(enemy_raw, "enemy")
+    weather = parse_weather(raw.get("weather", "none"))
+    weather_count = parse_byte(raw.get("weather_count", 0), "state.weather_count")
+    if weather == oracle.WEATHER_NONE and weather_count != 0:
+        raise SimulationInputError("state.weather_count requires active state.weather")
     return BattleState(
         player=player,
         enemy=enemy,
         player_bench=parse_bench(raw.get("player_bench", side_bench_raw(player_raw)), "player"),
         enemy_bench=parse_bench(raw.get("enemy_bench", side_bench_raw(enemy_raw)), "enemy"),
-        weather=parse_weather(raw.get("weather", "none")),
+        weather=weather,
+        weather_count=weather_count,
         turn=parse_positive_int(raw.get("turn", 1), "state.turn"),
         player_safeguard=parse_side_safeguard(raw, player_raw, "player"),
         enemy_safeguard=parse_side_safeguard(raw, enemy_raw, "enemy"),
@@ -3509,6 +3607,7 @@ def replace_side(state: BattleState, side: str, pokemon: PokemonState) -> Battle
             player_bench=state.player_bench,
             enemy_bench=state.enemy_bench,
             weather=state.weather,
+            weather_count=state.weather_count,
             turn=state.turn,
             player_safeguard=state.player_safeguard,
             enemy_safeguard=state.enemy_safeguard,
@@ -3519,6 +3618,7 @@ def replace_side(state: BattleState, side: str, pokemon: PokemonState) -> Battle
         player_bench=state.player_bench,
         enemy_bench=state.enemy_bench,
         weather=state.weather,
+        weather_count=state.weather_count,
         turn=state.turn,
         player_safeguard=state.player_safeguard,
         enemy_safeguard=state.enemy_safeguard,
@@ -3532,7 +3632,22 @@ def advance_turn(state: BattleState) -> BattleState:
         player_bench=state.player_bench,
         enemy_bench=state.enemy_bench,
         weather=state.weather,
+        weather_count=state.weather_count,
         turn=state.turn + 1,
+        player_safeguard=state.player_safeguard,
+        enemy_safeguard=state.enemy_safeguard,
+    )
+
+
+def replace_weather(state: BattleState, *, weather: int, weather_count: int) -> BattleState:
+    return BattleState(
+        player=state.player,
+        enemy=state.enemy,
+        player_bench=state.player_bench,
+        enemy_bench=state.enemy_bench,
+        weather=weather,
+        weather_count=weather_count,
+        turn=state.turn,
         player_safeguard=state.player_safeguard,
         enemy_safeguard=state.enemy_safeguard,
     )
@@ -3555,6 +3670,7 @@ def replace_side_and_bench(
             player_bench=bench,
             enemy_bench=state.enemy_bench,
             weather=state.weather,
+            weather_count=state.weather_count,
             turn=state.turn,
             player_safeguard=state.player_safeguard,
             enemy_safeguard=state.enemy_safeguard,
@@ -3565,6 +3681,7 @@ def replace_side_and_bench(
         player_bench=state.player_bench,
         enemy_bench=bench,
         weather=state.weather,
+        weather_count=state.weather_count,
         turn=state.turn,
         player_safeguard=state.player_safeguard,
         enemy_safeguard=state.enemy_safeguard,
@@ -3724,6 +3841,7 @@ def state_to_json(state: BattleState) -> dict[str, Any]:
     return {
         "turn": state.turn,
         "weather": state.weather,
+        "weather_count": state.weather_count,
         "player_safeguard": state.player_safeguard,
         "enemy_safeguard": state.enemy_safeguard,
         "player": pokemon_to_json(state.player),
@@ -3808,7 +3926,7 @@ def coverage_report() -> dict[str, Any]:
                 "id": "basic_status_residual",
                 "source": "engine/battle/core.asm:ResidualDamage",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
-                "notes": "Initial poison, burn, and toxic residual damage is mirrored after a selected move when both active Pokemon remain alive. Status application outside selected poison/paralysis moves, sleep, freeze, Leech Seed, Nightmare, Curse, weather, Leftovers, and item/status cures outside the explicit active Full Restore and selected held-status-cure subsets remain out of scope.",
+                "notes": "Initial poison, burn, and toxic residual damage is mirrored after a selected move when both active Pokemon remain alive. Status application outside selected poison/paralysis moves, sleep, freeze, Leech Seed, Nightmare, Curse, sandstorm/weather damage, Leftovers, and item/status cures outside the explicit active Full Restore and selected held-status-cure subsets remain out of scope.",
             },
             {
                 "id": "basic_pp_decrement",
@@ -3827,6 +3945,12 @@ def coverage_report() -> dict[str, Any]:
                 "source": "engine/items/item_effects.asm:RestoreHPEffect + FullRestoreEffect; data/items/heal_hp.asm",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
                 "notes": "Explicit item actions for active Potion, Super Potion, Hyper Potion, Max Potion, and Full Restore mirror source HP amounts, max-HP caps, Full Restore's supported status/toxic cure, turn consumption, and actor residual after the item. Bag inventory, bench targeting, revives, PP restore, X items, player trainer-battle Pack availability, and automatic trainer item dispatch remain out of scope.",
+            },
+            {
+                "id": "selected_weather_setup_moves",
+                "source": "data/moves/effects.asm:RainDance/SunnyDay + engine/battle/move_effects/rain_dance.asm + engine/battle/move_effects/sunny_day.asm + engine/battle/core.asm:HandleWeather",
+                "gate": "python tools/audit/check_headless_battle_simulator.py",
+                "notes": "Rain Dance and Sunny Day consume PP, set wBattleWeather to rain/sun, set wWeatherCount to 5, decrement the count once at each completed turn end, and clear weather when the count reaches 0. Damage and Thunder accuracy already read the active weather. Sandstorm damage, weather text timing beyond event records, weather healing moves, SolarBeam charge skipping, and automatic Boss AI weather-choice generation remain out of scope.",
             },
             {
                 "id": "selected_turn_order_priority_speed",
@@ -3972,7 +4096,7 @@ def coverage_report() -> dict[str, Any]:
             "Pursuit-on-switch, Spikes/switch-in entry effects, switch-triggered abilities/passives, and switch memory side effects",
             "RNG-consuming mechanics outside speed ties/Boss AI selector choice/wild random move choice/auto-replace fallback/critical hits/accuracy/damage variation/selected damaging status secondary chance, Quick Claw/Choice Scarf turn-order effects",
             "accuracy/evasion stat-stage move effects, damaging secondary stat effects outside selected burn/poison/paralysis status secondaries, multi-stat chains outside Dragon Dance/Calm Mind/Quiver Dance, BrightPowder, Protect, Fly/Dig, Lock-On, X Accuracy, Baton Pass/Psych Up, Substitute/Mist blockers, badge boosts, status speed modifiers, passive stat/speed/accuracy bonuses, and passive accuracy bonuses",
-            "freeze, sleep mechanics outside selected sleep moves/Rest/action denial, burn application outside selected damaging burn secondaries, Safeguard duration/expiration, Substitute Baton Pass/multi-hit continuation details, held status prevent items, freeze/confusion held cures, Sleep Clause clearing from held sleep cures, non-paralyzed Electric speed passives, volatile effects, weather/time healing, drain effects outside selected EFFECT_LEECH_HIT moves, Heal Bell, unsupported item recovery/cures, Air Balloon pop, Substitute-blocked contact, Focus Punch break, after-hit text/script effects outside supported HP mutations, Struggle, PP Up bit packing, Mimic/Transform PP routing, and full PP legality selection",
+            "freeze, sleep mechanics outside selected sleep moves/Rest/action denial, burn application outside selected damaging burn secondaries, Safeguard duration/expiration, Substitute Baton Pass/multi-hit continuation details, held status prevent items, freeze/confusion held cures, Sleep Clause clearing from held sleep cures, non-paralyzed Electric speed passives, volatile effects, sandstorm/weather damage, weather/time healing moves, drain effects outside selected EFFECT_LEECH_HIT moves, Heal Bell, unsupported item recovery/cures, Air Balloon pop, Substitute-blocked contact, Focus Punch break, after-hit text/script effects outside supported HP mutations, Struggle, PP Up bit packing, Mimic/Transform PP routing, and full PP legality selection",
             "Boss AI live score generation, switch candidate/confidence generation, AI_TryItem, and ROM materialization from headless state",
             "graphics, text scripts, animations, EXP, and party writes",
         ],
@@ -4067,6 +4191,18 @@ def format_text(report: dict[str, Any]) -> str:
                     f"  turn {event['turn']} {event['actor']} {event['move']} -> "
                     f"+{event['heal']} hp"
                 )
+            elif event["type"] == "weather_start":
+                lines.append(
+                    f"  turn {event['turn']} {event['actor']} {event['move']} -> "
+                    f"{event['weather']} weather count={event['weather_count_after']}"
+                )
+            elif event["type"] == "weather_continue":
+                lines.append(
+                    f"  turn {event['turn']} {event['weather']} continues -> "
+                    f"count={event['weather_count_after']}"
+                )
+            elif event["type"] == "weather_end":
+                lines.append(f"  turn {event['turn']} {event['weather']} ended")
             elif event["type"] == "substitute_create":
                 lines.append(
                     f"  turn {event['turn']} {event['actor']} {event['move']} -> "
@@ -4126,6 +4262,7 @@ def scenario_template() -> dict[str, Any]:
         "rng": {"mode": "fixed", "values": []},
         "state": {
             "weather": "none",
+            "weather_count": 0,
             "turn": 1,
             "player": {
                 "species": "PIDGEY",

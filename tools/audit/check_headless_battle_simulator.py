@@ -115,6 +115,27 @@ def main() -> int:
         )
         return 1
     print("explicit_active_hp_restore_items: PASS potion_then_residual full_restore_cures")
+    weather_payload = scenario_template()
+    weather_payload["state"]["player"]["moves"] = [{"name": "RAIN_DANCE"}]
+    weather_payload["state"]["enemy"]["moves"][0]["bp"] = 0
+    weather_outcome = simulate_payload(weather_payload)["outcomes"][0]
+    weather_events = weather_outcome["events"]
+    weather_start = [event for event in weather_events if event.get("type") == "weather_start"]
+    weather_tick = [event for event in weather_events if event.get("type") == "weather_continue"]
+    if (
+        len(weather_start) != 1
+        or weather_start[0].get("weather") != "rain"
+        or weather_start[0].get("weather_count_after") != 5
+        or len(weather_tick) != 1
+        or weather_tick[0].get("weather_count_after") != 4
+        or weather_outcome["state"].get("weather_count") != 4
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: weather setup mismatch: {weather_outcome}",
+            file=sys.stderr,
+        )
+        return 1
+    print("selected_weather_setup_moves: PASS rain_dance_countdown")
     stage_payload = scenario_template()
     stage_payload["state"]["enemy"]["moves"][0]["bp"] = 0
     stage_baseline_damage = simulate_payload(stage_payload)["outcomes"][0]["events"][0]["pre_variation_damage"]
