@@ -24,6 +24,11 @@ DAMAGE_VARIATION_MIN_MULTIPLIER = (85 * 255 // 100) + 1
 DAMAGE_VARIATION_MAX_MULTIPLIER = 100 * 255 // 100
 WILD_RANDOM_MOVE_SLOT_COUNT = 4
 PARTY_LENGTH = 6
+BOSS_AI_SWITCH_ROLL_HIGH_MARGIN = 20
+BOSS_AI_SWITCH_ROLL_MID_MARGIN = 10
+BOSS_AI_SWITCH_ROLL_HIGH_THRESHOLD = 230
+BOSS_AI_SWITCH_ROLL_MID_THRESHOLD = 192
+BOSS_AI_SWITCH_ROLL_LOW_THRESHOLD = 141
 EFFECTIVE_FACTOR = 10
 STAT_STAGE_MIN = -6
 STAT_STAGE_MAX = 6
@@ -476,6 +481,8 @@ def resolve_pre_turn_actions(
                 continue
             if action.kind == "boss_ai_selector_move":
                 selections = boss_ai_selector_move_results(working["state"], side, action, rng, stream=stream)
+            elif action.kind == "boss_ai_switch_roll":
+                selections = boss_ai_switch_roll_results(working["state"], side, action, rng, stream=stream)
             elif action.kind == "wild_random_move":
                 selections = wild_random_move_results(working["state"], side, rng, stream=stream)
             else:
@@ -486,7 +493,10 @@ def resolve_pre_turn_actions(
                 updated["events"].append(selection["event"])
                 updated["rng_consumed"].extend(selection["raw_values"])
                 updated_actions = dict(action_map)
-                updated_actions[side] = ActionState(kind="move", move_index=selection["move_index"])
+                if "action" in selection:
+                    updated_actions[side] = selection["action"]
+                else:
+                    updated_actions[side] = ActionState(kind="move", move_index=selection["move_index"])
                 next_branches.append((updated, updated_actions))
         branches = next_branches
         if len(branches) > rng.max_outcomes:
@@ -2847,6 +2857,151 @@ def boss_ai_selector_result(state: BattleState, side: str, action: ActionState) 
         raise SimulationInputError(f"invalid {action.kind} action: {exc}") from exc
 
 
+def boss_ai_switch_roll_results(
+    state: BattleState,
+    side: str,
+    action: ActionState,
+    rng: RngConfig,
+    *,
+    stream: RuntimeRng | None,
+) -> list[dict[str, Any]]:
+    if side != "enemy":
+        raise SimulationInputError("boss_ai_switch_roll only supports enemy Boss AI actions")
+    if action.selector is None:
+        raise SimulationInputError("boss_ai_switch_roll requires selector data")
+    selector = action.selector
+    confidence = parse_byte(selector.get("confidence"), "boss_ai_switch_roll.confidence")
+    threshold = parse_byte(selector.get("threshold"), "boss_ai_switch_roll.threshold")
+    candidate_index = parse_non_negative_int(
+        selector.get("candidate_bench_index", selector.get("bench_index")),
+        "boss_ai_switch_roll.candidate_bench_index",
+    )
+    validate_switch_index(state, side, candidate_index)
+    fallback = action.fallback or ActionState(kind="move", move_index=0)
+    chance = boss_ai_switch_roll_threshold(confidence, threshold)
+    if chance == 0:
+        return [
+            boss_ai_switch_roll_selection(
+                state,
+                side,
+                candidate_index,
+                confidence,
+                threshold,
+                chance,
+                selected_action="stay",
+                raw_values=[],
+                raw_range=None,
+                reason="confidence_below_threshold",
+                action=fallback,
+            )
+        ]
+    if rng.mode == "exhaustive":
+        return [
+            boss_ai_switch_roll_selection(
+                state,
+                side,
+                candidate_index,
+                confidence,
+                threshold,
+                chance,
+                selected_action="switch",
+                raw_values=[],
+                raw_range=[0, chance - 1],
+                reason="raw_below_switch_threshold",
+                action=ActionState(kind="switch", switch_index=candidate_index),
+            ),
+            boss_ai_switch_roll_selection(
+                state,
+                side,
+                candidate_index,
+                confidence,
+                threshold,
+                chance,
+                selected_action="stay",
+                raw_values=[],
+                raw_range=[chance, 255],
+                reason="raw_at_or_above_switch_threshold",
+                action=fallback,
+            ),
+        ]
+    if stream is None:
+        raise AssertionError("fixed/sample boss ai switch roll requires an RNG stream")
+    raw = stream.next_byte(purpose="boss ai switch roll")
+    selected_action = "switch" if raw < chance else "stay"
+    return [
+        boss_ai_switch_roll_selection(
+            state,
+            side,
+            candidate_index,
+            confidence,
+            threshold,
+            chance,
+            selected_action=selected_action,
+            raw_values=[raw],
+            raw_range=None,
+            reason="raw_below_switch_threshold" if raw < chance else "raw_at_or_above_switch_threshold",
+            action=ActionState(kind="switch", switch_index=candidate_index) if raw < chance else fallback,
+        )
+    ]
+
+
+def boss_ai_switch_roll_threshold(confidence: int, threshold: int) -> int:
+    if confidence < threshold:
+        return 0
+    margin = confidence - threshold
+    if margin >= BOSS_AI_SWITCH_ROLL_HIGH_MARGIN:
+        return BOSS_AI_SWITCH_ROLL_HIGH_THRESHOLD
+    if margin >= BOSS_AI_SWITCH_ROLL_MID_MARGIN:
+        return BOSS_AI_SWITCH_ROLL_MID_THRESHOLD
+    return BOSS_AI_SWITCH_ROLL_LOW_THRESHOLD
+
+
+def validate_switch_index(state: BattleState, side: str, bench_index: int) -> None:
+    bench = get_bench(state, side)
+    if bench_index >= len(bench):
+        raise SimulationInputError(f"{side} switch bench_index out of range")
+    if bench[bench_index].hp <= 0:
+        raise SimulationInputError(f"{side} switch target has no HP")
+
+
+def boss_ai_switch_roll_selection(
+    state: BattleState,
+    side: str,
+    candidate_index: int,
+    confidence: int,
+    threshold: int,
+    chance: int,
+    *,
+    selected_action: str,
+    raw_values: list[int],
+    raw_range: list[int] | None,
+    reason: str,
+    action: ActionState,
+) -> dict[str, Any]:
+    candidate = get_bench(state, side)[candidate_index]
+    return {
+        "action": action,
+        "raw_values": raw_values,
+        "event": {
+            "turn": state.turn,
+            "actor": side,
+            "type": "boss_ai_switch_roll",
+            "candidate_bench_index": candidate_index,
+            "candidate": candidate.name,
+            "confidence": confidence,
+            "threshold": threshold,
+            "margin": max(0, confidence - threshold),
+            "switch_chance_threshold": chance,
+            "switch_probability": chance / 256,
+            "selected_action": selected_action,
+            "raw_values": raw_values,
+            "raw_range": raw_range,
+            "reason": reason,
+            "proof_status": "source_mirrored_boss_ai_switch_roll",
+        },
+    }
+
+
 def wild_random_move_results(
     state: BattleState,
     side: str,
@@ -3260,6 +3415,13 @@ def parse_action(raw: Any, path: str) -> ActionState:
         return ActionState(kind=kind, selector=raw)
     if kind == "boss_ai_selector_move":
         return ActionState(kind=kind, selector=raw)
+    if kind == "boss_ai_switch_roll":
+        fallback = raw.get("fallback", raw.get("stay_action", raw.get("action")))
+        return ActionState(
+            kind=kind,
+            selector=raw,
+            fallback=None if fallback is None else parse_action(fallback, f"{path}.fallback"),
+        )
     if kind == "wild_random_move":
         return ActionState(kind=kind)
     return ActionState(kind=kind)
@@ -3793,6 +3955,12 @@ def coverage_report() -> dict[str, Any]:
                 "notes": "Executable Boss AI selector actions branch fixed/sample/exhaustive RNG over already-known final score bytes, validate the selected slot/move id when available, and then run the chosen move through the existing selected-turn path. Score generation and switch confidence remain out of scope.",
             },
             {
+                "id": "boss_ai_switch_roll",
+                "source": "engine/battle/ai/boss_policy_switch.asm:BossAI_SwitchOrTryItem final confidence gate",
+                "gate": "python tools/audit/check_headless_battle_simulator.py",
+                "notes": "Scenario-supplied boss_ai_switch_roll actions mirror the final BossAI_SwitchOrTryItem confidence-vs-threshold check and margin-based Random roll: margin >=20 uses 230/256, >=10 uses 192/256, otherwise 141/256. Fixed/sample modes consume one switch-roll byte when confidence reaches threshold; exhaustive mode branches switch and fallback stay actions. Live switch candidate/confidence computation, item usage, Haki/perish/KO guard computation, loop/sack/wincon threshold bias computation, and ROM materialization remain out of scope.",
+            },
+            {
                 "id": "wild_random_move_choice",
                 "source": "engine/battle/core.asm enemy wild move selection loop",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
@@ -3805,7 +3973,7 @@ def coverage_report() -> dict[str, Any]:
             "RNG-consuming mechanics outside speed ties/Boss AI selector choice/wild random move choice/auto-replace fallback/critical hits/accuracy/damage variation/selected damaging status secondary chance, Quick Claw/Choice Scarf turn-order effects",
             "accuracy/evasion stat-stage move effects, damaging secondary stat effects outside selected burn/poison/paralysis status secondaries, multi-stat chains outside Dragon Dance/Calm Mind/Quiver Dance, BrightPowder, Protect, Fly/Dig, Lock-On, X Accuracy, Baton Pass/Psych Up, Substitute/Mist blockers, badge boosts, status speed modifiers, passive stat/speed/accuracy bonuses, and passive accuracy bonuses",
             "freeze, sleep mechanics outside selected sleep moves/Rest/action denial, burn application outside selected damaging burn secondaries, Safeguard duration/expiration, Substitute Baton Pass/multi-hit continuation details, held status prevent items, freeze/confusion held cures, Sleep Clause clearing from held sleep cures, non-paralyzed Electric speed passives, volatile effects, weather/time healing, drain effects outside selected EFFECT_LEECH_HIT moves, Heal Bell, unsupported item recovery/cures, Air Balloon pop, Substitute-blocked contact, Focus Punch break, after-hit text/script effects outside supported HP mutations, Struggle, PP Up bit packing, Mimic/Transform PP routing, and full PP legality selection",
-            "Boss AI live score generation and switch candidate/confidence generation",
+            "Boss AI live score generation, switch candidate/confidence generation, AI_TryItem, and ROM materialization from headless state",
             "graphics, text scripts, animations, EXP, and party writes",
         ],
     }
@@ -3867,6 +4035,12 @@ def format_text(report: dict[str, Any]) -> str:
                 lines.append(
                     f"  turn {event['turn']} {event['actor']} boss_ai_select_move -> "
                     f"{event['selected_move']} slot={event['selected_slot_index']}"
+                )
+            elif event["type"] == "boss_ai_switch_roll":
+                lines.append(
+                    f"  turn {event['turn']} {event['actor']} boss_ai_switch_roll -> "
+                    f"{event['selected_action']} candidate={event['candidate']} "
+                    f"confidence={event['confidence']} threshold={event['threshold']}"
                 )
             elif event["type"] == "wild_random_move":
                 lines.append(

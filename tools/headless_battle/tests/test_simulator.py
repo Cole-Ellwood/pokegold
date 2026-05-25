@@ -665,6 +665,136 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         }
         self.assertEqual(raw_ranges, {(0, 185), (186, 255)})
 
+    def test_boss_ai_switch_roll_can_select_switch(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["moves"][0]["bp"] = 0
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+        payload["state"]["enemy"]["bench"] = [
+            {
+                "name": "GENGAR",
+                "hp": 30,
+                "max_hp": 30,
+                "types": ["GHOST", "POISON"],
+                "moves": [{"name": "LICK", "type": "GHOST", "bp": 20}],
+            }
+        ]
+        payload["actions"]["enemy"] = {
+            "type": "boss_ai_switch_roll",
+            "candidate_bench_index": 0,
+            "confidence": 90,
+            "threshold": 70,
+            "fallback": {"type": "move", "move": 0},
+        }
+        payload["rng"] = {"mode": "fixed", "values": [0]}
+
+        report = simulate_payload(payload)
+
+        events = report["outcomes"][0]["events"]
+        switch_roll = events[0]
+        self.assertEqual(switch_roll["type"], "boss_ai_switch_roll")
+        self.assertEqual(switch_roll["selected_action"], "switch")
+        self.assertEqual(switch_roll["switch_chance_threshold"], 230)
+        self.assertEqual(switch_roll["raw_values"], [0])
+        self.assertEqual(events[1]["type"], "switch")
+        self.assertEqual(report["outcomes"][0]["state"]["enemy"]["name"], "GENGAR")
+
+    def test_boss_ai_switch_roll_can_stay_and_use_fallback(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["moves"][0]["bp"] = 0
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+        payload["state"]["enemy"]["bench"] = [
+            {
+                "name": "GENGAR",
+                "hp": 30,
+                "max_hp": 30,
+                "types": ["GHOST", "POISON"],
+                "moves": [{"name": "LICK", "type": "GHOST", "bp": 20}],
+            }
+        ]
+        payload["actions"]["enemy"] = {
+            "type": "boss_ai_switch_roll",
+            "candidate_bench_index": 0,
+            "confidence": 79,
+            "threshold": 70,
+            "fallback": {"type": "move", "move": 0},
+        }
+        payload["rng"] = {"mode": "fixed", "values": [255]}
+
+        report = simulate_payload(payload)
+
+        events = report["outcomes"][0]["events"]
+        switch_roll = events[0]
+        self.assertEqual(switch_roll["selected_action"], "stay")
+        self.assertEqual(switch_roll["switch_chance_threshold"], 141)
+        self.assertEqual(switch_roll["raw_values"], [255])
+        self.assertFalse(any(event.get("type") == "switch" for event in events))
+        self.assertEqual(report["outcomes"][0]["state"]["enemy"]["name"], "CYNDAQUIL")
+
+    def test_boss_ai_switch_roll_below_threshold_does_not_consume_rng(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["moves"][0]["bp"] = 0
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+        payload["state"]["enemy"]["bench"] = [
+            {
+                "name": "GENGAR",
+                "hp": 30,
+                "max_hp": 30,
+                "types": ["GHOST", "POISON"],
+                "moves": [{"name": "LICK", "type": "GHOST", "bp": 20}],
+            }
+        ]
+        payload["actions"]["enemy"] = {
+            "type": "boss_ai_switch_roll",
+            "candidate_bench_index": 0,
+            "confidence": 69,
+            "threshold": 70,
+            "fallback": {"type": "move", "move": 0},
+        }
+        payload["rng"] = {"mode": "fixed", "values": [0]}
+
+        report = simulate_payload(payload)
+
+        outcome = report["outcomes"][0]
+        switch_roll = outcome["events"][0]
+        self.assertEqual(switch_roll["selected_action"], "stay")
+        self.assertEqual(switch_roll["switch_chance_threshold"], 0)
+        self.assertEqual(switch_roll["raw_values"], [])
+        self.assertEqual(outcome["rng_consumed"], [])
+        self.assertFalse(any(event.get("type") == "switch" for event in outcome["events"]))
+
+    def test_exhaustive_boss_ai_switch_roll_branches_switch_and_stay(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["moves"][0]["bp"] = 0
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+        payload["state"]["enemy"]["bench"] = [
+            {
+                "name": "GENGAR",
+                "hp": 30,
+                "max_hp": 30,
+                "types": ["GHOST", "POISON"],
+                "moves": [{"name": "LICK", "type": "GHOST", "bp": 20}],
+            }
+        ]
+        payload["actions"]["enemy"] = {
+            "type": "boss_ai_switch_roll",
+            "candidate_bench_index": 0,
+            "confidence": 80,
+            "threshold": 70,
+            "fallback": {"type": "move", "move": 0},
+        }
+        payload["rng"] = {"mode": "exhaustive"}
+
+        report = simulate_payload(payload)
+
+        self.assertEqual(report["outcome_count"], 2)
+        selected = {outcome["events"][0]["selected_action"] for outcome in report["outcomes"]}
+        self.assertEqual(selected, {"switch", "stay"})
+        ranges = {
+            tuple(outcome["events"][0]["raw_range"])
+            for outcome in report["outcomes"]
+        }
+        self.assertEqual(ranges, {(0, 191), (192, 255)})
+
     def test_wild_random_move_rejects_zero_pp_slot_then_executes(self) -> None:
         payload = scenario_template()
         payload["state"]["player"]["moves"][0]["bp"] = 0

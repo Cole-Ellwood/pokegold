@@ -120,8 +120,8 @@ damaging hits,
 repeated action maps with `max_turns`, `auto_replace_or` for simple KO/send-out
 loops, ROM-mirrored `wild_random_move`, selected switch actions, caller-supplied
 replacement after KO, explicit enemy `auto_replace` using the basic source type
-chart, explicit active Potion/Super Potion/Hyper Potion/Max Potion/Full Restore
-actions, explicit
+chart, scenario-supplied Boss AI switch-roll branching, explicit active
+Potion/Super Potion/Hyper Potion/Max Potion/Full Restore actions, explicit
 stats/species/stat-stage state, PP decrement, supported Rocky
 Helmet/Shell Bell/Life Orb after-hit HP effects, modified-speed turn order and
 equal-speed tie RNG, basic critical-hit checks, basic move accuracy with
@@ -148,8 +148,8 @@ status prevent items, freeze/confusion held cures, Sleep Clause clearing from
 held sleep cures, non-paralyzed Electric speed passives, weather/time healing,
 drain effects outside selected EFFECT_LEECH_HIT
 moves, Heal Bell, RNG-consuming mechanics outside the listed branch points, live
-Boss AI scoring, or scripts until the simulator report and audit say that
-surface exists.
+Boss AI scoring, Boss AI switch candidate/confidence generation, AI_TryItem, or
+scripts until the simulator report and audit say that surface exists.
 
 ## Truth Precedence
 

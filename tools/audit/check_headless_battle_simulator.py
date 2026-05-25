@@ -757,6 +757,90 @@ def main() -> int:
         )
         return 1
     print("boss_ai_selector_execution: PASS raw=200 selected=EMBER")
+    switch_roll_payload = scenario_template()
+    switch_roll_payload["state"]["player"]["moves"][0]["bp"] = 0
+    switch_roll_payload["state"]["enemy"]["moves"][0]["bp"] = 0
+    switch_roll_payload["state"]["enemy"]["bench"] = [
+        {
+            "name": "GENGAR",
+            "hp": 30,
+            "max_hp": 30,
+            "types": ["GHOST", "POISON"],
+            "moves": [{"name": "LICK", "type": "GHOST", "bp": 20}],
+        }
+    ]
+    switch_roll_payload["actions"]["enemy"] = {
+        "type": "boss_ai_switch_roll",
+        "candidate_bench_index": 0,
+        "confidence": 90,
+        "threshold": 70,
+        "fallback": {"type": "move", "move": 0},
+    }
+    switch_roll_payload["rng"] = {"mode": "fixed", "values": [0]}
+    switch_roll_outcome = simulate_payload(switch_roll_payload)["outcomes"][0]
+    switch_roll_event = switch_roll_outcome["events"][0]
+    if (
+        switch_roll_event.get("type") != "boss_ai_switch_roll"
+        or switch_roll_event.get("selected_action") != "switch"
+        or switch_roll_event.get("switch_chance_threshold") != 230
+        or switch_roll_event.get("raw_values") != [0]
+        or switch_roll_outcome["events"][1].get("type") != "switch"
+        or switch_roll_outcome["state"]["enemy"].get("name") != "GENGAR"
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: Boss AI switch roll mismatch: {switch_roll_outcome}",
+            file=sys.stderr,
+        )
+        return 1
+    switch_roll_no_roll = scenario_template()
+    switch_roll_no_roll["state"]["player"]["moves"][0]["bp"] = 0
+    switch_roll_no_roll["state"]["enemy"]["moves"][0]["bp"] = 0
+    switch_roll_no_roll["state"]["enemy"]["bench"] = switch_roll_payload["state"]["enemy"]["bench"]
+    switch_roll_no_roll["actions"]["enemy"] = {
+        "type": "boss_ai_switch_roll",
+        "candidate_bench_index": 0,
+        "confidence": 69,
+        "threshold": 70,
+        "fallback": {"type": "move", "move": 0},
+    }
+    switch_roll_no_roll["rng"] = {"mode": "fixed", "values": [0]}
+    no_roll_outcome = simulate_payload(switch_roll_no_roll)["outcomes"][0]
+    no_roll_event = no_roll_outcome["events"][0]
+    if (
+        no_roll_event.get("selected_action") != "stay"
+        or no_roll_event.get("switch_chance_threshold") != 0
+        or no_roll_event.get("raw_values") != []
+        or no_roll_outcome.get("rng_consumed") != []
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: Boss AI no-roll stay mismatch: {no_roll_outcome}",
+            file=sys.stderr,
+        )
+        return 1
+    switch_roll_exhaustive = scenario_template()
+    switch_roll_exhaustive["state"]["player"]["moves"][0]["bp"] = 0
+    switch_roll_exhaustive["state"]["enemy"]["moves"][0]["bp"] = 0
+    switch_roll_exhaustive["state"]["enemy"]["bench"] = switch_roll_payload["state"]["enemy"]["bench"]
+    switch_roll_exhaustive["actions"]["enemy"] = {
+        "type": "boss_ai_switch_roll",
+        "candidate_bench_index": 0,
+        "confidence": 80,
+        "threshold": 70,
+        "fallback": {"type": "move", "move": 0},
+    }
+    switch_roll_exhaustive["rng"] = {"mode": "exhaustive"}
+    switch_roll_report = simulate_payload(switch_roll_exhaustive)
+    if (
+        switch_roll_report.get("outcome_count") != 2
+        or {outcome["events"][0].get("selected_action") for outcome in switch_roll_report["outcomes"]}
+        != {"switch", "stay"}
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: exhaustive Boss AI switch roll mismatch: {switch_roll_report}",
+            file=sys.stderr,
+        )
+        return 1
+    print("boss_ai_switch_roll: PASS fixed_switch no_roll_stay exhaustive_switch_or_stay")
     wild_payload = scenario_template()
     wild_payload["state"]["player"]["moves"][0]["bp"] = 0
     wild_payload["state"]["enemy"]["moves"] = [
