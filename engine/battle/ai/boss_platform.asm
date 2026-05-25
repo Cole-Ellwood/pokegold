@@ -555,6 +555,13 @@ BossAI_ResetTurnCaches:
 	ld [wBossAILookaheadDepthCache], a
 	ld [wBossAILastMatchupType], a
 	ld [wBossAIShouldScoutPrereqCache], a
+	; Defensive: wBossAIShouldScoutMatchupValue is only READ on the hit
+	; path (when prereq cache = 1, which is only set after matchup value
+	; is written), so it doesn't strictly need a sentinel reset today.
+	; Resetting anyway keeps the cache-clear story uniform and protects
+	; against future refactors that might set prereq cache = 1 without
+	; first writing matchup value.
+	ld [wBossAIShouldScoutMatchupValue], a
 	ret
 
 endc

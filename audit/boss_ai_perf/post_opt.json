@@ -6,70 +6,70 @@
     "mid_lead": {
       "tier": 2,
       "apply": {
-        "mean": 2247164,
-        "median": 2247164,
-        "max": 2247168,
-        "min": 2247160,
+        "mean": 2247168,
+        "median": 2247168,
+        "max": 2247172,
+        "min": 2247164,
         "count": 3
       },
       "select": {
-        "mean": 421346,
-        "median": 421348,
+        "mean": 421342,
+        "median": 421344,
         "max": 421348,
-        "min": 421344,
+        "min": 421336,
         "count": 3
       },
       "total": {
         "mean": 2668510,
         "median": 2668512,
-        "max": 2668512,
-        "min": 2668508,
+        "max": 2668516,
+        "min": 2668504,
         "count": 3
       },
       "all_returned": true,
       "raw_total": [
-        2668508,
         2668512,
-        2668512
+        2668504,
+        2668516
       ]
     },
     "late_lead": {
       "tier": 3,
       "apply": {
-        "mean": 2387617,
-        "median": 2387616,
-        "max": 2387620,
-        "min": 2387616,
+        "mean": 2387609,
+        "median": 2387608,
+        "max": 2387612,
+        "min": 2387608,
         "count": 3
       },
       "select": {
-        "mean": 795870,
-        "median": 842684,
-        "max": 842692,
-        "min": 702236,
+        "mean": 795878,
+        "median": 842692,
+        "max": 842696,
+        "min": 702248,
         "count": 3
       },
       "total": {
         "mean": 3183488,
         "median": 3230300,
-        "max": 3230308,
-        "min": 3089856,
+        "max": 3230304,
+        "min": 3089860,
         "count": 3
       },
       "all_returned": true,
       "raw_total": [
-        3089856,
-        3230300,
-        3230308
+        3089860,
+        3230304,
+        3230300
       ]
     },
     "late_lookahead_heavy": {
       "tier": 3,
       "apply": {
         "mean": 2387614,
-        "median": 2387612,
-        "max": 2387624,
-        "min": 2387608,
+        "median": 2387616,
+        "max": 2387616,
+        "min": 2387612,
         "count": 3
       },
       "select": {
@@ -81,16 +81,16 @@
       },
       "total": {
         "mean": 3230304,
-        "median": 3230300,
-        "max": 3230312,
-        "min": 3230300,
+        "median": 3230304,
+        "max": 3230304,
+        "min": 3230304,
         "count": 3
       },
       "all_returned": true,
       "raw_total": [
-        3230300,
-        3230312,
-        3230300
+        3230304,
+        3230304,
+        3230304
       ]
     }
   },
