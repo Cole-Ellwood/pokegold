@@ -877,6 +877,75 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         with self.assertRaisesRegex(SimulationInputError, "accuracy/evasion stages"):
             simulate_payload(payload)
 
+    def test_stat_stage_move_lowers_target_attack(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["moves"] = [{"name": "GROWL"}]
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+
+        report = simulate_payload(payload)
+
+        outcome = report["outcomes"][0]
+        event = outcome["events"][0]
+        self.assertEqual(event["type"], "stat_stage_change")
+        self.assertEqual(event["move"], "GROWL")
+        self.assertEqual(event["target"], "enemy")
+        self.assertEqual(event["changes"][0]["stat"], "attack")
+        self.assertEqual(event["changes"][0]["stage_after"], -1)
+        self.assertEqual(event["pp_before"], 40)
+        self.assertEqual(event["pp_after"], 39)
+        self.assertEqual(outcome["state"]["enemy"]["stat_stages"]["attack"], -1)
+
+    def test_stat_stage_move_uses_accuracy_check_for_lowering_move(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["moves"] = [{"name": "SCREECH"}]
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+        payload["rng"] = {"mode": "fixed", "values": [255]}
+
+        report = simulate_payload(payload)
+
+        outcome = report["outcomes"][0]
+        event = outcome["events"][0]
+        self.assertEqual(event["type"], "miss")
+        self.assertEqual(event["move"], "SCREECH")
+        self.assertEqual(event["accuracy_check"]["threshold"], 216)
+        self.assertEqual(outcome["state"]["enemy"]["stat_stages"]["defense"], 0)
+
+    def test_stat_stage_move_raises_actor_speed_and_changes_next_turn_order(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["stats"]["speed"] = 10
+        payload["state"]["enemy"]["stats"]["speed"] = 12
+        payload["state"]["player"]["moves"] = [{"name": "AGILITY"}]
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+        payload.pop("actions")
+        payload["turns"] = [
+            {"player": {"type": "move", "move": 0}, "enemy": {"type": "move", "move": 0}},
+            {"player": {"type": "move", "move": 0}, "enemy": {"type": "move", "move": 0}},
+        ]
+
+        report = simulate_payload(payload)
+
+        outcome = report["outcomes"][0]
+        agility = next(event for event in outcome["events"] if event.get("move") == "AGILITY")
+        self.assertEqual(agility["type"], "stat_stage_change")
+        self.assertEqual(agility["changes"][0]["stat"], "speed")
+        self.assertEqual(agility["changes"][0]["stage_after"], 2)
+        self.assertEqual(outcome["turn_orders"][0]["order"], ["enemy", "player"])
+        self.assertEqual(outcome["turn_orders"][1]["order"], ["player", "enemy"])
+
+    def test_stat_stage_move_reports_no_effect_at_cap(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["stat_stages"] = {"attack": 6}
+        payload["state"]["player"]["moves"] = [{"name": "SWORDS_DANCE"}]
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+
+        report = simulate_payload(payload)
+
+        event = report["outcomes"][0]["events"][0]
+        self.assertEqual(event["type"], "stat_stage_no_effect")
+        self.assertEqual(event["blocked_changes"][0]["stat"], "attack")
+        self.assertEqual(event["blocked_changes"][0]["stage_before"], 6)
+        self.assertEqual(report["outcomes"][0]["state"]["player"]["stat_stages"]["attack"], 6)
+
     def test_report_exposes_proof_boundary(self) -> None:
         report = simulate_payload(scenario_template())
 
@@ -892,6 +961,7 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         self.assertIn("explicit_active_hp_restore_items", mirrored)
         self.assertIn("selected_turn_order_priority_speed", mirrored)
         self.assertIn("explicit_stat_stage_state", mirrored)
+        self.assertIn("selected_stat_stage_only_moves", mirrored)
         self.assertIn("repeat_plan_auto_replace_or", mirrored)
         self.assertIn("selected_switch_and_replacement", mirrored)
         self.assertIn("auto_replacement_choice_basic_type_chart", mirrored)

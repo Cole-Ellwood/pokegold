@@ -4,7 +4,7 @@ import copy
 import json
 import random
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, replace as dataclass_replace
 from pathlib import Path
 from typing import Any, Literal
 
@@ -62,6 +62,31 @@ STAT_STAGE_MULTIPLIERS = {
     4: (3, 1),
     5: (35, 10),
     6: (4, 1),
+}
+SELF_STAT_STAGE_EFFECTS = {
+    "EFFECT_ATTACK_UP": (("attack", 1),),
+    "EFFECT_DEFENSE_UP": (("defense", 1),),
+    "EFFECT_SPEED_UP": (("speed", 1),),
+    "EFFECT_SP_ATK_UP": (("sp_attack", 1),),
+    "EFFECT_SP_DEF_UP": (("sp_defense", 1),),
+    "EFFECT_ATTACK_UP_2": (("attack", 2),),
+    "EFFECT_DEFENSE_UP_2": (("defense", 2),),
+    "EFFECT_SPEED_UP_2": (("speed", 2),),
+    "EFFECT_SP_ATK_UP_2": (("sp_attack", 2),),
+    "EFFECT_SP_DEF_UP_2": (("sp_defense", 2),),
+    "EFFECT_DEFENSE_CURL": (("defense", 1),),
+}
+OPPONENT_STAT_STAGE_EFFECTS = {
+    "EFFECT_ATTACK_DOWN": (("attack", -1),),
+    "EFFECT_DEFENSE_DOWN": (("defense", -1),),
+    "EFFECT_SPEED_DOWN": (("speed", -1),),
+    "EFFECT_SP_ATK_DOWN": (("sp_attack", -1),),
+    "EFFECT_SP_DEF_DOWN": (("sp_defense", -1),),
+    "EFFECT_ATTACK_DOWN_2": (("attack", -2),),
+    "EFFECT_DEFENSE_DOWN_2": (("defense", -2),),
+    "EFFECT_SPEED_DOWN_2": (("speed", -2),),
+    "EFFECT_SP_ATK_DOWN_2": (("sp_attack", -2),),
+    "EFFECT_SP_DEF_DOWN_2": (("sp_defense", -2),),
 }
 TYPE_FACTOR_CONSTANTS = {
     "NO_EFFECT": 0,
@@ -533,6 +558,17 @@ def apply_move(
     target_side = "enemy" if side == "player" else "player"
     target = get_side(state, target_side)
     if move.bp <= 0:
+        stat_stage_branches = apply_stat_stage_only_move(
+            branch,
+            side,
+            move,
+            pp_before,
+            pp_after,
+            rng,
+            stream=stream,
+        )
+        if stat_stage_branches is not None:
+            return stat_stage_branches
         updated = clone_branch(branch)
         updated["events"].append(
             {
@@ -540,7 +576,7 @@ def apply_move(
                 "actor": side,
                 "move": move.name,
                 "type": "unsupported_noop",
-                "reason": "first slice only mutates HP for damaging moves with bp > 0",
+                "reason": "bp=0 move effect is out of scope for this simulator slice",
                 "pp_before": pp_before,
                 "pp_after": pp_after,
                 "proof_status": "out_of_scope",
@@ -626,6 +662,120 @@ def apply_move(
                 )
                 branches.append(updated)
     return branches
+
+
+def apply_stat_stage_only_move(
+    branch: dict[str, Any],
+    side: str,
+    move: MoveState,
+    pp_before: int,
+    pp_after: int,
+    rng: RngConfig,
+    *,
+    stream: RuntimeRng | None,
+) -> list[dict[str, Any]] | None:
+    effect = stat_stage_only_effect(move)
+    if effect is None:
+        return None
+    target_side = side if effect["target"] == "self" else ("enemy" if side == "player" else "player")
+    checks = (
+        accuracy_results(branch["state"], move, rng, stream=stream)
+        if effect["target"] == "opponent"
+        else [{"hit": True, "threshold": None, "raw_values": [], "raw_range": None, "reason": "self_stat_move"}]
+    )
+    out = []
+    for hit_check in checks:
+        if not hit_check["hit"]:
+            updated = clone_branch(branch)
+            updated["rng_consumed"].extend(hit_check["raw_values"])
+            updated["events"].append(
+                {
+                    "turn": branch["state"].turn,
+                    "actor": side,
+                    "target": target_side,
+                    "move": move.name,
+                    "type": "miss",
+                    "accuracy_check": hit_check,
+                    "pp_before": pp_before,
+                    "pp_after": pp_after,
+                    "proof_status": "source_mirrored_stat_stage_move_accuracy",
+                }
+            )
+            out.append(updated)
+            continue
+        out.append(
+            apply_stat_stage_changes(
+                branch,
+                side,
+                target_side,
+                move,
+                effect["changes"],
+                hit_check,
+                pp_before,
+                pp_after,
+            )
+        )
+    return out
+
+
+def stat_stage_only_effect(move: MoveState) -> dict[str, Any] | None:
+    if move.effect in SELF_STAT_STAGE_EFFECTS:
+        return {"target": "self", "changes": SELF_STAT_STAGE_EFFECTS[move.effect]}
+    if move.effect in OPPONENT_STAT_STAGE_EFFECTS:
+        return {"target": "opponent", "changes": OPPONENT_STAT_STAGE_EFFECTS[move.effect]}
+    return None
+
+
+def apply_stat_stage_changes(
+    branch: dict[str, Any],
+    side: str,
+    target_side: str,
+    move: MoveState,
+    changes: tuple[tuple[str, int], ...],
+    hit_check: dict[str, Any],
+    pp_before: int,
+    pp_after: int,
+) -> dict[str, Any]:
+    state: BattleState = branch["state"]
+    target = get_side(state, target_side)
+    updated_target = target
+    applied = []
+    blocked = []
+    for stat, delta in changes:
+        before = stat_stage(updated_target, stat)
+        after = max(STAT_STAGE_MIN, min(STAT_STAGE_MAX, before + delta))
+        row = {
+            "stat": stat,
+            "stage_before": before,
+            "stage_after": after,
+            "delta_requested": delta,
+            "delta_applied": after - before,
+        }
+        if after == before:
+            blocked.append(row)
+        else:
+            applied.append(row)
+            updated_target = replace_stat_stage(updated_target, stat, after)
+    updated = clone_branch(branch)
+    if applied:
+        updated["state"] = replace_side(state, target_side, updated_target)
+    event_type = "stat_stage_change" if applied else "stat_stage_no_effect"
+    updated["events"].append(
+        {
+            "turn": state.turn,
+            "actor": side,
+            "target": target_side,
+            "move": move.name,
+            "type": event_type,
+            "changes": applied,
+            "blocked_changes": blocked,
+            "accuracy_check": hit_check,
+            "pp_before": pp_before,
+            "pp_after": pp_after,
+            "proof_status": "source_mirrored_selected_stat_stage_only_move",
+        }
+    )
+    return updated
 
 
 def apply_after_hit_effects(
@@ -2059,26 +2209,21 @@ def replace_hp(
 
 
 def reset_stat_stages(pokemon: PokemonState) -> PokemonState:
-    return PokemonState(
-        side=pokemon.side,
-        name=pokemon.name,
-        level=pokemon.level,
-        hp=pokemon.hp,
-        max_hp=pokemon.max_hp,
-        types=pokemon.types,
-        type_names=pokemon.type_names,
-        attack=pokemon.attack,
-        defense=pokemon.defense,
-        speed=pokemon.speed,
-        sp_attack=pokemon.sp_attack,
-        sp_defense=pokemon.sp_defense,
-        item=pokemon.item,
-        can_evolve=pokemon.can_evolve,
-        focus_energy=pokemon.focus_energy,
-        status=pokemon.status,
-        toxic_count=pokemon.toxic_count,
-        moves=pokemon.moves,
+    return dataclass_replace(
+        pokemon,
+        attack_stage=0,
+        defense_stage=0,
+        speed_stage=0,
+        sp_attack_stage=0,
+        sp_defense_stage=0,
     )
+
+
+def replace_stat_stage(pokemon: PokemonState, key: str, stage: int) -> PokemonState:
+    field_name = f"{key}_stage"
+    if not hasattr(pokemon, field_name):
+        raise AssertionError(f"unknown stat stage key {key!r}")
+    return dataclass_replace(pokemon, **{field_name: stage})
 
 
 def replace_move(pokemon: PokemonState, move_index: int, move: MoveState) -> PokemonState:
@@ -2269,7 +2414,13 @@ def coverage_report() -> dict[str, Any]:
                 "id": "explicit_stat_stage_state",
                 "source": "data/battle/stat_multipliers.asm + engine/battle/effect_commands.asm:CalcBattleStats + engine/battle/core.asm:DetermineMoveOrder",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
-                "notes": "Scenario-supplied active attack/defense/speed/sp_attack/sp_defense stages in the -6..+6 user-facing range use the ROM percentage table for damage stats and turn-order speed; switch/replacement resets stages. Critical-hit stat handling mirrors CheckDamageStatsCritical's rule: use modified stats only when the attacker's offensive stage is higher than the defender's matching defensive stage. Stage-changing move effects, accuracy/evasion stages, Baton Pass/Psych Up, badge boosts, status speed, and passive stat modifiers remain out of scope.",
+                "notes": "Scenario-supplied active attack/defense/speed/sp_attack/sp_defense stages in the -6..+6 user-facing range use the ROM percentage table for damage stats and turn-order speed; switch/replacement resets stages. Critical-hit stat handling mirrors CheckDamageStatsCritical's rule: use modified stats only when the attacker's offensive stage is higher than the defender's matching defensive stage. Stage-changing move effects outside the selected single-stat BP=0 subset, accuracy/evasion stages, Baton Pass/Psych Up, badge boosts, status speed, and passive stat modifiers remain out of scope.",
+            },
+            {
+                "id": "selected_stat_stage_only_moves",
+                "source": "data/moves/effects.asm AttackUp/DefenseUp/SpeedUp/SpecialAttackUp/SpecialDefenseUp and matching Down/Up2/Down2 scripts + engine/battle/effect_commands.asm:RaiseStat/LowerStat",
+                "gate": "python tools/audit/check_headless_battle_simulator.py",
+                "notes": "Selected BP=0 single-stat stage moves for attack/defense/speed/sp_attack/sp_defense consume PP, run checkhit for opponent-lowering moves, mutate stages by one or two with -6..+6 caps, and report no-effect cap/floor cases. Accuracy/evasion stage moves, damaging secondary stat effects, multi-stat chain moves, Substitute/Mist blockers, and text/animation side effects remain out of scope.",
             },
             {
                 "id": "multi_turn_selected_action_progression",
@@ -2318,7 +2469,7 @@ def coverage_report() -> dict[str, Any]:
             "automatic full battle flow, trainer/Boss automatic action choice without caller-supplied final Boss AI score bytes, forced switch prompts, implicit replacement without an auto_replace action, automatic trainer item turns, player trainer-battle Pack availability, and item inventory accounting",
             "Pursuit-on-switch, Spikes/switch-in entry effects, switch-triggered abilities/passives, and switch memory side effects",
             "RNG-consuming mechanics outside speed ties/Boss AI selector choice/wild random move choice/auto-replace fallback/critical hits/accuracy/damage variation, Quick Claw/Choice Scarf turn-order effects",
-            "stage-changing move effects, accuracy/evasion stat stages, BrightPowder, Protect, Fly/Dig, Lock-On, X Accuracy, Baton Pass/Psych Up, badge boosts, status speed modifiers, passive stat/speed/accuracy bonuses, and passive accuracy bonuses",
+            "accuracy/evasion stat-stage move effects, damaging secondary stat effects, multi-stat chain moves, BrightPowder, Protect, Fly/Dig, Lock-On, X Accuracy, Baton Pass/Psych Up, Substitute/Mist blockers, badge boosts, status speed modifiers, passive stat/speed/accuracy bonuses, and passive accuracy bonuses",
             "status application, sleep, freeze, paralysis, volatile effects, weather, unsupported item recovery/cures, Air Balloon pop, Substitute-blocked contact, Focus Punch break, after-hit text/script effects outside supported HP mutations, Struggle, PP Up bit packing, Mimic/Transform PP routing, and full PP legality selection",
             "Boss AI live score generation and switch candidate/confidence generation",
             "graphics, text scripts, animations, EXP, and party writes",
@@ -2394,6 +2545,15 @@ def format_text(report: dict[str, Any]) -> str:
                 lines.append(
                     f"  turn {event['turn']} {event['actor']} {event['item']} -> "
                     f"+{event['heal']} hp"
+                )
+            elif event["type"] == "stat_stage_change":
+                changes = ", ".join(
+                    f"{row['stat']} {row['stage_before']}->{row['stage_after']}"
+                    for row in event["changes"]
+                )
+                lines.append(
+                    f"  turn {event['turn']} {event['actor']} {event['move']} -> "
+                    f"{event['target']} {changes}"
                 )
             elif event["type"] == "auto_replacement_choice":
                 lines.append(

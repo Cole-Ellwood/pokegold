@@ -103,12 +103,13 @@ python -m tools.headless_battle --scenario <scenario.json> --json
 python tools\audit\check_headless_battle_simulator.py
 ```
 
-Current scope is intentionally narrow: selected move-vs-move turns, repeated
-action maps with `max_turns`, `auto_replace_or` for simple KO/send-out loops,
-ROM-mirrored `wild_random_move`, selected switch actions, caller-supplied
-replacement after KO, explicit enemy `auto_replace` using the basic source type
-chart, explicit active Potion/Super Potion/Hyper Potion/Max Potion/Full Restore
-actions, explicit stats/species/stat-stage state, PP decrement, supported Rocky
+Current scope is intentionally narrow: selected move-vs-move turns, selected
+BP=0 single-stat stage moves, repeated action maps with `max_turns`,
+`auto_replace_or` for simple KO/send-out loops, ROM-mirrored `wild_random_move`,
+selected switch actions, caller-supplied replacement after KO, explicit enemy
+`auto_replace` using the basic source type chart, explicit active Potion/Super
+Potion/Hyper Potion/Max Potion/Full Restore actions, explicit
+stats/species/stat-stage state, PP decrement, supported Rocky
 Helmet/Shell Bell/Life Orb after-hit HP effects, modified-speed turn order and
 equal-speed tie RNG, basic critical-hit checks, basic move accuracy with
 fixed/sample/exhaustive hit/miss branching, damage variation with
@@ -120,8 +121,9 @@ known score bytes. Reports label byte-proven, source-mirrored, and out-of-scope
 surfaces; do not claim strategic full battle action choice, automatic trainer
 item usage, player trainer-battle Pack availability, item inventory accounting,
 implicit replacement without `auto_replace_or` or `auto_replace`,
-stage-changing move effects, accuracy/evasion modifiers, Baton Pass/Psych Up,
-badge boosts, status speed, passive stat/speed/accuracy bonuses, status
+accuracy/evasion stage moves/modifiers, damaging secondary stat effects,
+multi-stat chain moves, Baton Pass/Psych Up, Substitute/Mist blockers, badge
+boosts, status speed, passive stat/speed/accuracy bonuses, status
 application, sleep/freeze/paralysis, RNG-consuming mechanics outside the listed
 branch points, live Boss AI scoring, or scripts until the simulator report and
 audit say that surface exists.

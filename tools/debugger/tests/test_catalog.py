@@ -425,6 +425,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("wild_random_move", rec["proof_limit"])
         self.assertIn("Full Restore", rec["proof_limit"])
         self.assertIn("stat-stage", rec["proof_limit"])
+        self.assertIn("single-stat stage moves", rec["proof_limit"])
         self.assertIn("Rocky Helmet", rec["proof_limit"])
 
     def test_headless_battle_routes_turn_by_turn_wording(self) -> None:
@@ -438,6 +439,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("actions-or-turns-or-repeat", rec["evidence_standard"][0])
         self.assertIn("active HP restore item actions", rec["evidence_standard"][0])
         self.assertIn("stat-stage state", rec["evidence_standard"][0])
+        self.assertIn("single-stat stage moves", rec["evidence_standard"][0])
         self.assertIn("implicit replacement without auto_replace_or", rec["disproof_standard"][0])
 
     def test_species_id_map_ignores_unown_form_constants(self) -> None:

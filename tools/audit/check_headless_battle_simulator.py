@@ -146,6 +146,33 @@ def main() -> int:
         )
         return 1
     print("explicit_stat_stage_state: PASS attack_stage_damage speed_stage_order")
+    stat_move_payload = scenario_template()
+    stat_move_payload["state"]["player"]["moves"] = [{"name": "GROWL"}]
+    stat_move_payload["state"]["enemy"]["moves"][0]["bp"] = 0
+    stat_move_report = simulate_payload(stat_move_payload)
+    stat_move_event = stat_move_report["outcomes"][0]["events"][0]
+    if (
+        stat_move_event.get("type") != "stat_stage_change"
+        or stat_move_event.get("move") != "GROWL"
+        or stat_move_report["outcomes"][0]["state"]["enemy"]["stat_stages"].get("attack") != -1
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: stat stage move mismatch: {stat_move_report}",
+            file=sys.stderr,
+        )
+        return 1
+    screech_payload = scenario_template()
+    screech_payload["state"]["player"]["moves"] = [{"name": "SCREECH"}]
+    screech_payload["state"]["enemy"]["moves"][0]["bp"] = 0
+    screech_payload["rng"] = {"mode": "fixed", "values": [255]}
+    screech_event = simulate_payload(screech_payload)["outcomes"][0]["events"][0]
+    if screech_event.get("type") != "miss" or screech_event.get("accuracy_check", {}).get("threshold") != 216:
+        print(
+            f"Headless battle simulator audit FAILED: stat stage move miss mismatch: {screech_event}",
+            file=sys.stderr,
+        )
+        return 1
+    print("selected_stat_stage_only_moves: PASS growl_attack_down screech_miss")
     selector = select_from_score_bytes(
         scenario_id="headless_audit_selector",
         tier="late",
