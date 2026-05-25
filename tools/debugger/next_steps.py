@@ -276,8 +276,8 @@ NEXT_STEP_ROWS = [
             "exhaustive rng",
         ],
         "first_command": "python -m tools.headless_battle --template",
-        "required_inputs": ["scenario JSON with active mons, stats or species shorthand, selected actions, and fixed deterministic RNG"],
-        "proof_limit": "First selected-turn slice: move-vs-move priority/unequal-raw-speed order, fixed RNG with no consumed RNG bytes, pre-variation damage delegated to the existing ROM-backed damage oracle, and post-score Boss AI selector replay from known score bytes. Full battle automation, switch flow, damage variation, speed ties, accuracy, status, sample/exhaustive RNG, live Boss AI scoring, and scripts remain out of scope until separately implemented and proven.",
+        "required_inputs": ["scenario JSON with active mons, stats or species shorthand, selected actions, and fixed/sample/exhaustive RNG for damage variation"],
+        "proof_limit": "Selected-turn slice: move-vs-move priority/unequal-raw-speed order, damage variation with fixed/sample/exhaustive RNG, pre-variation damage delegated to the existing ROM-backed damage oracle, and post-score Boss AI selector replay from known score bytes. Full battle automation, switch flow, speed ties, accuracy, status, RNG-consuming mechanics outside damage variation, live Boss AI scoring, and scripts remain out of scope until separately implemented and proven.",
         "escalation_command": "python tools\\audit\\check_headless_battle_simulator.py",
     },
     {
@@ -774,7 +774,7 @@ EVIDENCE_STANDARDS = {
         "The answer points to the damage debugger matchup/oracle tools and gives a current concrete command such as python -m tools.damage_debugger.matchup CHARIZARD:50 LAPRAS:50 FLAMETHROWER --json before relying on memory.",
     ],
     "headless_battle_simulation": [
-        "The answer routes to tools.headless_battle, uses a JSON state/actions/fixed-RNG scenario, and preserves proof labels: pre-variation damage is delegated to the existing ROM-backed damage oracle, selected-turn priority/unequal-raw-speed order is source-mirrored, post-score Boss AI selector replay starts from known score bytes, and unimplemented RNG/full-battle mechanics remain out of scope.",
+        "The answer routes to tools.headless_battle, uses a JSON state/actions/RNG scenario, and preserves proof labels: pre-variation damage is delegated to the existing ROM-backed damage oracle, damage variation has fixed/sample/exhaustive RNG branching, selected-turn priority/unequal-raw-speed order is source-mirrored, post-score Boss AI selector replay starts from known score bytes, and unimplemented RNG/full-battle mechanics remain out of scope.",
     ],
     "type_chart_navigation": [
         "The answer names data/types/type_matchups.asm, constants/type_constants.asm, and the runtime reader in engine/battle/effect_commands.asm before suggesting any matchup edit.",
@@ -886,7 +886,7 @@ DISPROOF_STANDARDS = {
         "If matchup output or clobber smoke disagrees with the claimed damage path, defer to current debugger evidence rather than memory.",
     ],
     "headless_battle_simulation": [
-        "If the report claims full battle automation, switch flow, speed ties, sample/exhaustive RNG, damage variation, accuracy, status, live Boss AI scoring, scripts, or byte-proven turn sequencing beyond the listed coverage labels, reject the route as overclaimed.",
+        "If the report claims full battle automation, switch flow, speed ties, RNG-consuming mechanics outside damage variation, accuracy, status, live Boss AI scoring, scripts, or byte-proven turn sequencing beyond the listed coverage labels, reject the route as overclaimed.",
     ],
     "type_chart_navigation": [
         "If the answer returns engine battle code without naming data/types/type_matchups.asm, it missed the matchup data file.",

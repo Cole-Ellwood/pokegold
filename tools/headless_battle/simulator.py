@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import json
+import random
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
@@ -18,6 +19,8 @@ RngMode = Literal["fixed", "sample", "exhaustive"]
 TURN_ORDER_AFFECTING_ITEMS = frozenset(
     tables.resolve_item(name) for name in ("QUICK_CLAW", "CHOICE_SCARF")
 )
+DAMAGE_VARIATION_MIN_MULTIPLIER = (85 * 255 // 100) + 1
+DAMAGE_VARIATION_MAX_MULTIPLIER = 100 * 255 // 100
 
 
 class SimulationInputError(Exception):
@@ -75,13 +78,34 @@ class RngConfig:
     values: tuple[int, ...] = ()
     samples: int = 1
     seed: int | None = None
+    default: int = 255
+    max_outcomes: int = 2048
+
+
+class RuntimeRng:
+    def __init__(self, config: RngConfig, *, generator: random.Random | None = None) -> None:
+        self.config = config
+        self.generator = generator
+        self.offset = 0
+
+    def next_byte(self) -> int:
+        if self.config.mode == "sample":
+            if self.generator is None:
+                raise AssertionError("sample RNG requires a generator")
+            return self.generator.randrange(256)
+        if self.config.values:
+            if self.offset >= len(self.config.values):
+                raise SimulationInputError("rng.values exhausted while resolving damage variation")
+            value = self.config.values[self.offset]
+            self.offset += 1
+            return value
+        return self.config.default
 
 
 def simulate_payload(payload: dict[str, Any]) -> dict[str, Any]:
     state = parse_state(payload.get("state", {}))
     actions = parse_actions(payload.get("actions", {}))
     rng = parse_rng(payload.get("rng", {"mode": "fixed", "values": []}))
-    validate_supported_rng(rng)
     outcomes = simulate_samples(state, actions, rng)
     report = {
         "kind": REPORT_KIND,
@@ -101,37 +125,75 @@ def simulate_samples(
     actions: dict[str, ActionState],
     rng: RngConfig,
 ) -> list[dict[str, Any]]:
-    return [branch_to_outcome(simulate_turn(state, actions), 0)]
+    if rng.mode == "sample":
+        generator = random.Random(rng.seed)
+        outcomes = []
+        for index in range(rng.samples):
+            stream = RuntimeRng(rng, generator=generator)
+            branches = simulate_turn(state, actions, rng, stream=stream)
+            if len(branches) != 1:
+                raise AssertionError("sample mode should not create exhaustive branches")
+            branch = branches[0]
+            branch["sample_index"] = index
+            outcomes.append(branch_to_outcome(branch, index))
+        return outcomes
+    stream = None if rng.mode == "exhaustive" else RuntimeRng(rng)
+    return [
+        branch_to_outcome(branch, index)
+        for index, branch in enumerate(simulate_turn(state, actions, rng, stream=stream))
+    ]
 
 
-def simulate_turn(state: BattleState, actions: dict[str, ActionState]) -> dict[str, Any]:
+def simulate_turn(
+    state: BattleState,
+    actions: dict[str, ActionState],
+    rng: RngConfig,
+    *,
+    stream: RuntimeRng | None,
+) -> list[dict[str, Any]]:
     order = turn_order(state, actions)
-    branch: dict[str, Any] = {
-        "state": state,
-        "turn_order": order,
-        "events": [],
-        "proof_notes": [],
-    }
+    branches: list[dict[str, Any]] = [
+        {
+            "state": state,
+            "turn_order": order,
+            "events": [],
+            "proof_notes": [],
+            "rng_consumed": [],
+        }
+    ]
     for side in order:
-        action = actions[side]
-        if action.kind == "boss_ai_selector":
-            branch["events"].append(run_boss_ai_selector(state, side, action))
-            continue
-        if action.kind != "move":
-            branch["events"].append(
-                {
-                    "turn": state.turn,
-                    "actor": side,
-                    "type": "unsupported_noop",
-                    "reason": f"unsupported action kind {action.kind!r}",
-                    "proof_status": "out_of_scope",
-                }
+        next_branches: list[dict[str, Any]] = []
+        for branch in branches:
+            branch_state: BattleState = branch["state"]
+            if branch_state.player.hp <= 0 or branch_state.enemy.hp <= 0:
+                next_branches.append(branch)
+                continue
+            action = actions[side]
+            if action.kind == "boss_ai_selector":
+                updated = clone_branch(branch)
+                updated["events"].append(run_boss_ai_selector(branch_state, side, action))
+                next_branches.append(updated)
+                continue
+            if action.kind != "move":
+                updated = clone_branch(branch)
+                updated["events"].append(
+                    {
+                        "turn": branch_state.turn,
+                        "actor": side,
+                        "type": "unsupported_noop",
+                        "reason": f"unsupported action kind {action.kind!r}",
+                        "proof_status": "out_of_scope",
+                    }
+                )
+                next_branches.append(updated)
+                continue
+            next_branches.extend(apply_move(branch, side, action, rng, stream=stream))
+        if len(next_branches) > rng.max_outcomes:
+            raise SimulationInputError(
+                f"rng.max_outcomes exceeded while branching ({len(next_branches)} > {rng.max_outcomes})"
             )
-            continue
-        branch = apply_move(branch, side, action)
-        if branch["state"].player.hp <= 0 or branch["state"].enemy.hp <= 0:
-            break
-    return branch
+        branches = next_branches
+    return branches
 
 
 def turn_order(state: BattleState, actions: dict[str, ActionState]) -> list[str]:
@@ -153,7 +215,14 @@ def turn_order(state: BattleState, actions: dict[str, ActionState]) -> list[str]
     raise SimulationInputError("equal-speed turn order requires RNG speed-tie logic and is out of scope")
 
 
-def apply_move(branch: dict[str, Any], side: str, action: ActionState) -> dict[str, Any]:
+def apply_move(
+    branch: dict[str, Any],
+    side: str,
+    action: ActionState,
+    rng: RngConfig,
+    *,
+    stream: RuntimeRng | None,
+) -> list[dict[str, Any]]:
     state: BattleState = branch["state"]
     attacker = get_side(state, side)
     target_side = "enemy" if side == "player" else "player"
@@ -171,27 +240,82 @@ def apply_move(branch: dict[str, Any], side: str, action: ActionState) -> dict[s
                 "proof_status": "out_of_scope",
             }
         )
-        return updated
-    damage = predict_pre_variation_damage(state, attacker, target, move)
-    hp_after = max(0, target.hp - damage)
-    updated_target = replace_hp(target, hp_after)
-    updated_state = replace_side(state, target_side, updated_target)
-    updated = clone_branch(branch)
-    updated["state"] = updated_state
-    updated["events"].append(
-        {
-            "turn": state.turn,
-            "actor": side,
-            "target": target_side,
-            "move": move.name,
-            "type": "damage",
-            "damage": damage,
-            "target_hp_before": target.hp,
-            "target_hp_after": hp_after,
-            "proof_status": "delegated_damage_oracle_pre_variation",
-        }
-    )
-    return updated
+        return [updated]
+    pre_variation_damage = predict_pre_variation_damage(state, attacker, target, move)
+    branches = []
+    for variation in damage_variation_results(pre_variation_damage, rng, stream=stream):
+        damage = variation["damage"]
+        hp_after = max(0, target.hp - damage)
+        updated_target = replace_hp(target, hp_after)
+        updated_state = replace_side(state, target_side, updated_target)
+        updated = clone_branch(branch)
+        updated["state"] = updated_state
+        updated["rng_consumed"].extend(variation["raw_values"])
+        updated["events"].append(
+            {
+                "turn": state.turn,
+                "actor": side,
+                "target": target_side,
+                "move": move.name,
+                "type": "damage",
+                "damage": damage,
+                "pre_variation_damage": pre_variation_damage,
+                "target_hp_before": target.hp,
+                "target_hp_after": hp_after,
+                "damage_variation": {
+                    "applied": variation["applied"],
+                    "multiplier": variation["multiplier"],
+                    "raw_values": variation["raw_values"],
+                },
+                "proof_status": "delegated_pre_variation_damage_plus_source_mirrored_variation",
+            }
+        )
+        branches.append(updated)
+    return branches
+
+
+def damage_variation_results(
+    damage: int,
+    rng: RngConfig,
+    *,
+    stream: RuntimeRng | None,
+) -> list[dict[str, Any]]:
+    if damage < 2:
+        return [{"damage": damage, "applied": False, "multiplier": None, "raw_values": []}]
+    if rng.mode == "exhaustive":
+        return [
+            {
+                "damage": damage * multiplier // DAMAGE_VARIATION_MAX_MULTIPLIER,
+                "applied": True,
+                "multiplier": multiplier,
+                "raw_values": [rotate_left_byte(multiplier)],
+            }
+            for multiplier in range(DAMAGE_VARIATION_MIN_MULTIPLIER, DAMAGE_VARIATION_MAX_MULTIPLIER + 1)
+        ]
+    if stream is None:
+        raise AssertionError("fixed/sample damage variation requires an RNG stream")
+    raw_values = []
+    while True:
+        raw = stream.next_byte()
+        raw_values.append(raw)
+        multiplier = rotate_right_byte(raw)
+        if multiplier >= DAMAGE_VARIATION_MIN_MULTIPLIER:
+            return [
+                {
+                    "damage": damage * multiplier // DAMAGE_VARIATION_MAX_MULTIPLIER,
+                    "applied": True,
+                    "multiplier": multiplier,
+                    "raw_values": raw_values,
+                }
+            ]
+
+
+def rotate_right_byte(value: int) -> int:
+    return ((value >> 1) | ((value & 1) << 7)) & 0xFF
+
+
+def rotate_left_byte(value: int) -> int:
+    return (((value << 1) & 0xFF) | (value >> 7)) & 0xFF
 
 
 def predict_pre_variation_damage(
@@ -381,18 +505,9 @@ def parse_rng(raw: Any) -> RngConfig:
         values=tuple(parse_byte(value, f"rng.values[{index}]") for index, value in enumerate(values)),
         samples=parse_positive_int(raw.get("samples", 1), "rng.samples"),
         seed=None if seed is None else parse_int(seed, "rng.seed"),
+        default=parse_byte(raw.get("default", 255), "rng.default"),
+        max_outcomes=parse_positive_int(raw.get("max_outcomes", 2048), "rng.max_outcomes"),
     )
-
-
-def validate_supported_rng(rng: RngConfig) -> None:
-    if rng.mode != "fixed":
-        raise SimulationInputError(
-            "rng.mode sample/exhaustive is planned, but this first slice only supports fixed deterministic turns"
-        )
-    if rng.values:
-        raise SimulationInputError(
-            "rng.values are not consumed until an RNG-consuming mechanic is implemented and proven"
-        )
 
 
 def selected_move(pokemon: PokemonState, action: ActionState) -> MoveState:
@@ -437,6 +552,7 @@ def clone_branch(branch: dict[str, Any]) -> dict[str, Any]:
         "turn_order": list(branch["turn_order"]),
         "events": copy.deepcopy(branch["events"]),
         "proof_notes": copy.deepcopy(branch["proof_notes"]),
+        "rng_consumed": list(branch["rng_consumed"]),
     }
 
 
@@ -448,10 +564,10 @@ def branch_to_outcome(branch: dict[str, Any], index: int) -> dict[str, Any]:
         "events": branch["events"],
         "state": state_to_json(state),
         "battle_over": state.player.hp <= 0 or state.enemy.hp <= 0,
+        "rng_consumed": list(branch["rng_consumed"]),
     }
     if "sample_index" in branch:
         data["sample_index"] = branch["sample_index"]
-        data["sample_seed_byte"] = branch["sample_seed_byte"]
     return data
 
 
@@ -507,6 +623,12 @@ def coverage_report() -> dict[str, Any]:
         ],
         "source_mirrored_pending_differential": [
             {
+                "id": "damage_variation_rng_branching",
+                "source": "engine/battle/effect_commands.asm:BattleCommand_DamageVariation",
+                "gate": "python tools/audit/check_headless_battle_simulator.py",
+                "notes": "0/1 damage skips variation; otherwise RNG bytes are rotated right, rejected below 217, and accepted multipliers 217..255 scale damage over 255. Fixed/sample/exhaustive modes are implemented for this mechanic only.",
+            },
+            {
                 "id": "selected_turn_order_priority_speed",
                 "source": "engine/battle/core.asm:DetermineMoveOrder",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
@@ -521,8 +643,8 @@ def coverage_report() -> dict[str, Any]:
         ],
         "out_of_scope": [
             "automatic full battle flow, switch actions, forced switch prompts, items as actions, and trainer item turns",
-            "sample/exhaustive RNG, consumed fixed RNG bytes, speed ties, Quick Claw/Choice Scarf turn-order effects",
-            "damage variation, critical hits, accuracy misses, status effects, volatile effects, between-turn effects, and after-hit effects",
+            "RNG-consuming mechanics outside damage variation, speed ties, Quick Claw/Choice Scarf turn-order effects",
+            "critical hits, accuracy misses, status effects, volatile effects, between-turn effects, and after-hit effects",
             "Boss AI live score generation and switch candidate/confidence generation",
             "graphics, text scripts, animations, EXP, and party writes",
         ],
@@ -556,9 +678,13 @@ def format_text(report: dict[str, Any]) -> str:
         )
         for event in outcome["events"]:
             if event["type"] == "damage":
+                variation = event.get("damage_variation", {})
+                suffix = ""
+                if variation.get("applied"):
+                    suffix = f" (pre={event['pre_variation_damage']} mult={variation['multiplier']})"
                 lines.append(
                     f"  turn {event['turn']} {event['actor']} {event['move']} -> "
-                    f"{event['target']} {event['damage']} damage"
+                    f"{event['target']} {event['damage']} damage{suffix}"
                 )
             else:
                 lines.append(f"  turn {event.get('turn')} {event.get('actor', '')} {event['type']}")
@@ -714,7 +840,11 @@ def rng_to_json(rng: RngConfig) -> dict[str, Any]:
     data: dict[str, Any] = {"mode": rng.mode}
     if rng.values:
         data["values"] = list(rng.values)
+    if rng.default != 255:
+        data["default"] = rng.default
     if rng.mode == "sample":
         data["samples"] = rng.samples
         data["seed"] = rng.seed
+    if rng.mode == "exhaustive":
+        data["max_outcomes"] = rng.max_outcomes
     return data

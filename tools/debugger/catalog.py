@@ -180,7 +180,7 @@ TRIAGE_RULES = (
             "python tools\\audit\\check_headless_battle_simulator.py",
         ),
         gaps=(
-            "Full battle automation, switch flow, speed ties, sample/exhaustive RNG, consumed fixed RNG bytes, damage variation, accuracy, status, live Boss AI scoring, and scripts remain outside the headless simulator until separately proven.",
+            "Full battle automation, switch flow, speed ties, RNG-consuming mechanics outside damage variation, accuracy, status, live Boss AI scoring, and scripts remain outside the headless simulator until separately proven.",
         ),
     ),
     TriageRule(
