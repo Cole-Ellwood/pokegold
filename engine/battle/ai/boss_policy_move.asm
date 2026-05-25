@@ -1462,7 +1462,11 @@ ENDC
 	ret c
 	call AICheckEnemyQuarterHP_HL
 	ret c
-	call .HasKOLine
+	; Bug: `.HasKOLine` checks the CURRENT scored move's KO pressure. Destiny
+	; Bond has MOVE_POWER = 0, so .HasKOLine ALWAYS returns "no KO" and this
+	; gate never fires — DB gets encouraged even when the boss has a normal
+	; KO move available. Use BossAI_HasAnyKOMove (scans all 4 moveset slots).
+	call BossAI_HasAnyKOMove
 	ret c
 	call BossAI_PlayerHasPublicThreatVsEnemy
 	ret nc
@@ -1852,7 +1856,11 @@ DEF BOSS_AI_REM_RULE_COUNTERCOAT_AVOIDANCE EQU 9
 .MatrixDestinyBondAvoidance
 	call .MatrixRequireMidTier
 	ret c
-	call .HasKOLine
+	; See .ApplyDestinyBondTradeBias: .HasKOLine on a 0-power move (DB) always
+	; returns "no KO", so this discouragement branch never fired. Switch to
+	; BossAI_HasAnyKOMove so the rule actually triggers when the boss has a
+	; conventional KO line available.
+	call BossAI_HasAnyKOMove
 	ret nc
 	call AICheckPlayerQuarterHP_HL
 	ret c

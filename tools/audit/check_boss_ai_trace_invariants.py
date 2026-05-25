@@ -973,7 +973,7 @@ def audit_revealed_effect_matrix_bias(boss: str) -> None:
         matrix,
         [
             ".MatrixDestinyBondAvoidance",
-            "call .HasKOLine",
+            "call BossAI_HasAnyKOMove",
             "call AICheckPlayerQuarterHP_HL",
             "call BossAI_PublicEnemyFaster",
             "jr .MatrixDiscourageScore",
@@ -2052,7 +2052,10 @@ def audit_item_and_passive_reasoning(boss: str) -> None:
             "wBossAITier",
             "AI_TIER_MID",
             "call AICheckEnemyQuarterHP",
-            "call .HasKOLine",
+            # Use BossAI_HasAnyKOMove (whole-moveset scan), not .HasKOLine which
+            # only checks the currently-scored move's KO pressure — DB has
+            # MOVE_POWER = 0 so .HasKOLine always reports "no KO".
+            "call BossAI_HasAnyKOMove",
             "call BossAI_PlayerHasPublicThreatVsEnemy",
             "call BossAI_PublicEnemyFaster",
             "call .EncourageByTierWeight",

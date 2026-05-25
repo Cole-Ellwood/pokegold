@@ -204,6 +204,12 @@ BossAI_ApplyDamageDominanceBias::
 	ld a, [wEnemyMoveStruct + MOVE_POWER]
 	and a
 	jr z, .ret_regs
+	; Save current move's matchup to wBossAITemp5 BEFORE any rank computation
+	; runs. `.MoveIdMatchupSTABRank` (called in the loop) farcalls the
+	; matchup helper, which overwrites wTypeMatchup. The "coverage trumps
+	; STAB" rule below needs the original to compare both moves' SE-ness.
+	ld a, [wTypeMatchup]
+	ld [wBossAITemp5], a
 	ld a, [wEnemyMoveStruct + MOVE_ANIM]
 	ld c, a
 	call .CurrentMoveDamageRank
@@ -227,6 +233,27 @@ BossAI_ApplyDamageDominanceBias::
 	jr z, .next
 	call .MoveIdMatchupSTABRank
 	ld d, a
+	; Coverage-trumps-STAB rule: if comparison is SE and current is NOT SE,
+	; drop the +32 buffer and use strict-less rank comparison. Without this,
+	; a STAB-neutral move (Haunter Shadow Ball, 80 × 1.5 = 120 effective rank)
+	; could tie with a non-STAB SE move (Ice Punch, 75 × 2 = 150) within the
+	; 32-point buffer and avoid being dominated. The buffer's purpose is
+	; tolerance between same-matchup-tier moves; it shouldn't shelter a
+	; neutral move from an SE alternative.
+	ld a, [wTypeMatchup]
+	cp SUPER_EFFECTIVE
+	jr c, .standard_buffer
+	ld a, [wBossAITemp5]
+	cp SUPER_EFFECTIVE
+	jr nc, .standard_buffer
+	; comparison SE, current not SE → strict-less dominance (equal rank does
+	; not dominate so two equal-rank SE moves don't both get discouraged
+	; against each other).
+	ld a, [wBossAITemp2]
+	cp d
+	jr c, .dominated
+	jr .next
+.standard_buffer
 	ld a, [wBossAITemp2]
 	add 32
 	jr c, .next
