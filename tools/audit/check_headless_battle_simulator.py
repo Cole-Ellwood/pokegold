@@ -1027,6 +1027,21 @@ def main() -> int:
         )
         return 1
     print("selected_spikes_entry_damage: PASS layer_then_switch_chip")
+    hazard_proc = subprocess.run(
+        [sys.executable, "-m", "tools.damage_debugger.hazard_smoke"],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    if hazard_proc.stdout:
+        print(hazard_proc.stdout, end="" if hazard_proc.stdout.endswith("\n") else "\n")
+    if hazard_proc.stderr:
+        print(hazard_proc.stderr, end="" if hazard_proc.stderr.endswith("\n") else "\n", file=sys.stderr)
+    if hazard_proc.returncode != 0:
+        print("Headless battle simulator audit FAILED: hazard smoke failed.", file=sys.stderr)
+        return 1
     auto_replace_payload = scenario_template()
     auto_replace_payload["state"]["player"]["types"] = ["FIRE", "FIRE"]
     auto_replace_payload["state"]["enemy"]["hp"] = 0

@@ -4106,7 +4106,7 @@ def coverage_report() -> dict[str, Any]:
                 "id": "selected_spikes_entry_damage",
                 "source": "data/moves/effects.asm:Spikes + engine/battle/move_effects/spikes.asm + engine/battle/core.asm:SpikesDamage",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
-                "notes": "Selected Spikes moves consume PP, add one layer to the opposing side up to the source three-layer cap, and selected switch/replacement/auto_replace entries take source-shaped Spikes damage: one layer = max HP / 8, two layers = max HP / 6, three layers = max HP / 4, with a minimum of 1. Flying-type entrants are not damaged. Pursuit-on-switch, Ditto Imposter activation, Rapid Spin removal, groundedness overlays outside Flying typing, and other switch-in effects remain out of scope.",
+                "notes": "Selected Spikes moves consume PP, add one layer to the opposing side up to the source three-layer cap, and selected switch/replacement/auto_replace entries take source-shaped Spikes damage: one layer = max HP / 8, two layers = max HP / 6, three layers = max HP / 4, with a minimum of 1. Flying-type entrants are not damaged. The headless audit also runs tools.damage_debugger.hazard_smoke, which ROM-checks Spikes/Rapid Spin WRAM layer state, Spikes damage fractions, and Flying immunity; full headless turn differential remains pending. Pursuit-on-switch, Ditto Imposter activation, Rapid Spin removal in headless state, groundedness overlays outside Flying typing, and other switch-in effects remain out of scope.",
             },
             {
                 "id": "selected_turn_order_priority_speed",
