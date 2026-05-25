@@ -39,12 +39,20 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
 
         self.assertEqual(report["outcomes"][0]["turn_order"], ["enemy", "player"])
 
-    def test_equal_speed_tie_is_rejected_until_rng_order_is_proven(self) -> None:
+    def test_fixed_speed_tie_rng_changes_turn_order(self) -> None:
         payload = scenario_template()
         payload["state"]["enemy"]["stats"]["speed"] = payload["state"]["player"]["stats"]["speed"]
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+        payload["rng"] = {"mode": "fixed", "values": [0, 255, 255, 0]}
 
-        with self.assertRaisesRegex(SimulationInputError, "speed-tie logic"):
-            simulate_payload(payload)
+        player_first = simulate_payload(payload)
+        payload["rng"] = {"mode": "fixed", "values": [128, 255, 255, 0]}
+        enemy_first = simulate_payload(payload)
+
+        self.assertEqual(player_first["outcomes"][0]["turn_order"], ["player", "enemy"])
+        self.assertEqual(enemy_first["outcomes"][0]["turn_order"], ["enemy", "player"])
+        self.assertEqual(player_first["outcomes"][0]["turn_orders"][0]["turn_order_check"]["raw_values"], [0])
+        self.assertEqual(enemy_first["outcomes"][0]["turn_orders"][0]["turn_order_check"]["raw_values"], [128])
 
     def test_fixed_rng_values_drive_damage_variation(self) -> None:
         payload = scenario_template()
@@ -141,6 +149,21 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         self.assertEqual(report["outcome_count"], 156)
         self.assertEqual(sum(1 for outcome in report["outcomes"] if outcome["events"][0]["type"] == "miss"), 78)
 
+    def test_exhaustive_speed_tie_branches_turn_order(self) -> None:
+        payload = scenario_template()
+        payload["rng"] = {"mode": "exhaustive"}
+        payload["state"]["player"]["moves"][0]["bp"] = 0
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+        payload["state"]["enemy"]["stats"]["speed"] = payload["state"]["player"]["stats"]["speed"]
+
+        report = simulate_payload(payload)
+
+        self.assertEqual(report["outcome_count"], 2)
+        self.assertEqual(
+            {tuple(outcome["turn_order"]) for outcome in report["outcomes"]},
+            {("player", "enemy"), ("enemy", "player")},
+        )
+
     def test_turns_list_progresses_hp_across_selected_turns(self) -> None:
         payload = scenario_template()
         payload["state"]["enemy"]["moves"][0]["bp"] = 0
@@ -207,7 +230,7 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         self.assertIn("basic_critical_hit_rng", mirrored)
         self.assertIn("selected_turn_order_priority_speed", mirrored)
         self.assertIn("boss_ai_selector_from_post_score_bytes", mirrored)
-        self.assertIn("RNG-consuming mechanics outside critical hits/accuracy/damage variation", "\n".join(report["coverage"]["out_of_scope"]))
+        self.assertIn("RNG-consuming mechanics outside speed ties/critical hits/accuracy/damage variation", "\n".join(report["coverage"]["out_of_scope"]))
 
     def test_cli_json_out(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

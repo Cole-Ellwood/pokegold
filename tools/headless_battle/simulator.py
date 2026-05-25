@@ -89,6 +89,7 @@ class RngConfig:
     values: tuple[int, ...] = ()
     samples: int = 1
     seed: int | None = None
+    speed_tie_default: int = 0
     critical_default: int = 255
     default: int = 255
     accuracy_default: int = 0
@@ -112,6 +113,8 @@ class RuntimeRng:
             value = self.config.values[self.offset]
             self.offset += 1
             return value
+        if purpose == "speed tie":
+            return self.config.speed_tie_default
         if purpose == "critical":
             return self.config.critical_default
         if purpose == "accuracy":
@@ -205,14 +208,25 @@ def simulate_turn(
     stream: RuntimeRng | None,
 ) -> list[dict[str, Any]]:
     state: BattleState = branch["state"]
-    order = turn_order(state, actions)
-    working = clone_branch(branch)
-    working["turn_order"] = order
-    working["turn_orders"].append({"turn": state.turn, "order": order})
-    branches: list[dict[str, Any]] = [working]
-    for side in order:
+    branches: list[dict[str, Any]] = []
+    for order_result in turn_order_results(state, actions, rng, stream=stream):
+        working = clone_branch(branch)
+        order = order_result["order"]
+        working["turn_order"] = order
+        row = {"turn": state.turn, "order": order}
+        if order_result["reason"] == "speed_tie":
+            row["turn_order_check"] = order_result
+        working["turn_orders"].append(row)
+        working["rng_consumed"].extend(order_result["raw_values"])
+        branches.append(working)
+    max_order_len = max(len(item["turn_order"]) for item in branches)
+    for order_index in range(max_order_len):
         next_branches: list[dict[str, Any]] = []
         for branch in branches:
+            if order_index >= len(branch["turn_order"]):
+                next_branches.append(branch)
+                continue
+            side = branch["turn_order"][order_index]
             branch_state: BattleState = branch["state"]
             if branch_state.player.hp <= 0 or branch_state.enemy.hp <= 0:
                 next_branches.append(branch)
@@ -252,23 +266,75 @@ def simulate_turn(
     return completed
 
 
-def turn_order(state: BattleState, actions: dict[str, ActionState]) -> list[str]:
+def turn_order_results(
+    state: BattleState,
+    actions: dict[str, ActionState],
+    rng: RngConfig,
+    *,
+    stream: RuntimeRng | None,
+) -> list[dict[str, Any]]:
     player_action = actions["player"]
     enemy_action = actions["enemy"]
     if player_action.kind != "move" or enemy_action.kind != "move":
-        return ["player", "enemy"]
+        return [turn_order_result(["player", "enemy"], reason="non_move_action")]
     player_move = selected_move(state.player, player_action)
     enemy_move = selected_move(state.enemy, enemy_action)
     if player_move.priority != enemy_move.priority:
-        return ["player", "enemy"] if player_move.priority > enemy_move.priority else ["enemy", "player"]
+        order = ["player", "enemy"] if player_move.priority > enemy_move.priority else ["enemy", "player"]
+        return [turn_order_result(order, reason="move_priority")]
     for pokemon in (state.player, state.enemy):
         if pokemon.item in TURN_ORDER_AFFECTING_ITEMS:
             raise SimulationInputError(
                 f"{pokemon.side} item {tables.display_item(pokemon.item)} modifies turn order and is out of scope"
             )
     if state.player.speed != state.enemy.speed:
-        return ["player", "enemy"] if state.player.speed > state.enemy.speed else ["enemy", "player"]
-    raise SimulationInputError("equal-speed turn order requires RNG speed-tie logic and is out of scope")
+        order = ["player", "enemy"] if state.player.speed > state.enemy.speed else ["enemy", "player"]
+        return [turn_order_result(order, reason="raw_speed")]
+    return speed_tie_results(rng, stream=stream)
+
+
+def turn_order_result(order: list[str], *, reason: str) -> dict[str, Any]:
+    return {
+        "order": order,
+        "reason": reason,
+        "threshold": None,
+        "raw_values": [],
+        "raw_range": None,
+    }
+
+
+def speed_tie_results(rng: RngConfig, *, stream: RuntimeRng | None) -> list[dict[str, Any]]:
+    threshold = 128
+    if rng.mode == "exhaustive":
+        return [
+            {
+                "order": ["player", "enemy"],
+                "reason": "speed_tie",
+                "threshold": threshold,
+                "raw_values": [],
+                "raw_range": [0, threshold - 1],
+            },
+            {
+                "order": ["enemy", "player"],
+                "reason": "speed_tie",
+                "threshold": threshold,
+                "raw_values": [],
+                "raw_range": [threshold, 255],
+            },
+        ]
+    if stream is None:
+        raise AssertionError("fixed/sample speed tie requires an RNG stream")
+    raw = stream.next_byte(purpose="speed tie")
+    order = ["player", "enemy"] if raw < threshold else ["enemy", "player"]
+    return [
+        {
+            "order": order,
+            "reason": "speed_tie",
+            "threshold": threshold,
+            "raw_values": [raw],
+            "raw_range": None,
+        }
+    ]
 
 
 def apply_move(
@@ -769,6 +835,7 @@ def parse_rng(raw: Any) -> RngConfig:
         values=tuple(parse_byte(value, f"rng.values[{index}]") for index, value in enumerate(values)),
         samples=parse_positive_int(raw.get("samples", 1), "rng.samples"),
         seed=None if seed is None else parse_int(seed, "rng.seed"),
+        speed_tie_default=parse_byte(raw.get("speed_tie_default", 0), "rng.speed_tie_default"),
         critical_default=parse_byte(raw.get("critical_default", 255), "rng.critical_default"),
         default=parse_byte(raw.get("default", 255), "rng.default"),
         accuracy_default=parse_byte(raw.get("accuracy_default", 0), "rng.accuracy_default"),
@@ -921,7 +988,7 @@ def coverage_report() -> dict[str, Any]:
                 "id": "selected_turn_order_priority_speed",
                 "source": "engine/battle/core.asm:DetermineMoveOrder",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
-                "notes": "Priority and unequal raw-speed ordering are mirrored for move-vs-move selected turns. Quick Claw, Choice Scarf, speed ties, switches, and status speed are not in this first slice.",
+                "notes": "Priority, unequal raw-speed ordering, and the non-link equal-speed tie RNG threshold are mirrored for move-vs-move selected turns. Quick Claw, Choice Scarf, switches, link-battle inversion, and status speed are not in this slice.",
             },
             {
                 "id": "multi_turn_selected_action_progression",
@@ -938,7 +1005,7 @@ def coverage_report() -> dict[str, Any]:
         ],
         "out_of_scope": [
             "automatic full battle flow, switch actions, forced switch prompts, items as actions, and trainer item turns",
-            "RNG-consuming mechanics outside critical hits/accuracy/damage variation, speed ties, Quick Claw/Choice Scarf turn-order effects",
+            "RNG-consuming mechanics outside speed ties/critical hits/accuracy/damage variation, Quick Claw/Choice Scarf turn-order effects",
             "accuracy/evasion stat stages, BrightPowder, Protect, Fly/Dig, Lock-On, X Accuracy, and passive accuracy bonuses",
             "critical hit messaging, status effects, volatile effects, between-turn effects, and after-hit effects",
             "Boss AI live score generation and switch candidate/confidence generation",
@@ -1152,6 +1219,8 @@ def rng_to_json(rng: RngConfig) -> dict[str, Any]:
     data: dict[str, Any] = {"mode": rng.mode}
     if rng.values:
         data["values"] = list(rng.values)
+    if rng.speed_tie_default != 0:
+        data["speed_tie_default"] = rng.speed_tie_default
     if rng.critical_default != 255:
         data["critical_default"] = rng.critical_default
     if rng.default != 255:

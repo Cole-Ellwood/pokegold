@@ -53,6 +53,20 @@ def main() -> int:
         )
         return 1
     print("damage_variation_exhaustive: PASS outcomes=78 includes_critical=True")
+    speed_tie_payload = scenario_template()
+    speed_tie_payload["rng"] = {"mode": "exhaustive"}
+    speed_tie_payload["state"]["player"]["moves"][0]["bp"] = 0
+    speed_tie_payload["state"]["enemy"]["moves"][0]["bp"] = 0
+    speed_tie_payload["state"]["enemy"]["stats"]["speed"] = speed_tie_payload["state"]["player"]["stats"]["speed"]
+    speed_tie_report = simulate_payload(speed_tie_payload)
+    orders = {tuple(outcome["turn_order"]) for outcome in speed_tie_report["outcomes"]}
+    if speed_tie_report.get("outcome_count") != 2 or orders != {("player", "enemy"), ("enemy", "player")}:
+        print(
+            f"Headless battle simulator audit FAILED: speed-tie branches mismatch: {speed_tie_report}",
+            file=sys.stderr,
+        )
+        return 1
+    print("speed_tie_exhaustive: PASS outcomes=2")
     multi_turn_payload = scenario_template()
     multi_turn_payload["state"]["enemy"]["moves"][0]["bp"] = 0
     multi_turn_payload.pop("actions")
